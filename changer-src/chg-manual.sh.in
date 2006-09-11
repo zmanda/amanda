@@ -1,0 +1,310 @@
+#!@SHELL@ 
+#
+# Exit Status:
+# 0 Alles Ok
+# 1 Illegal Request
+# 2 Fatal Error
+#
+
+# try to hit all the possibilities here
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+sbindir=@sbindir@
+libexecdir=@libexecdir@
+
+PATH=$sbindir:$libexecdir:/usr/bin:/bin:/usr/sbin:/sbin:/usr/ucb
+export PATH
+
+if [ -d "@AMANDA_DBGDIR@" ]; then
+	logfile=@AMANDA_DBGDIR@/changer.debug
+else
+	logfile=/dev/null
+fi
+
+USE_VERSION_SUFFIXES="@USE_VERSION_SUFFIXES@"
+if test "$USE_VERSION_SUFFIXES" = "yes"; then
+	SUF="-@VERSION@"
+else
+	SUF=
+fi
+
+myname=$0
+
+EGREP='@EGREP@'
+
+if [ -x $sbindir/ammt$SUF ]; then
+	MT=$sbindir/ammt$SUF
+	MTF=-f
+elif [ -x "@MT@" ]; then
+	MT=@MT@
+	MTF=@MT_FILE_FLAG@
+else
+	answer="<none> $myname: mt program not found"
+	code=1
+	echo "Exit -> $answer" >> $logfile
+	echo "$answer"
+	exit $code
+fi
+echo MT "->" $MT $MTF >> $logfile
+
+if [ -x $sbindir/amdd$SUF ]; then
+	DD=$sbindir/amdd$SUF
+elif [ -x "@DD@" ]; then
+	DD=@DD@
+else
+	answer="<none> $myname: dd program not found"
+	code=1
+	echo "Exit -> $answer" >> $logfile
+	echo "$answer"
+	exit $code
+fi
+echo DD "->" $DD >> $logfile
+
+MAILER=@MAILER@
+ONLINEREGEX="ONLINE|READY|sense[_ ]key[(]0x0[)]|sense key error = 0|^er=0$|, mt_erreg: 0x0|^Current Driver State: at rest$"
+REPORTTO=`amgetconf$SUF mailto`
+tape=`amgetconf$SUF tapedev`
+ORG=`amgetconf$SUF ORG`
+
+firstslot=1
+lastslot=99
+
+changerfile=`amgetconf$SUF changerfile`
+
+cleanfile=$changerfile-clean
+accessfile=$changerfile-access
+slotfile=$changerfile-slot
+[ ! -f $cleanfile ] && echo 0 > $cleanfile
+[ ! -f $accessfile ] && echo 0 > $accessfile
+[ ! -f $slotfile ] && echo $firstslot > $slotfile
+cleancount=`cat $cleanfile`
+accesscount=`cat $accessfile`
+slot=`cat $slotfile`
+
+request() {
+	echo "insert tape into slot $1 and press return" >/dev/tty
+	read ANSWER </dev/tty
+}
+
+###
+# If $changerfile exists, source it into this script.  One reason is to
+# override the request() function above which gets called to request
+# that a tape be mounted.  Here is an alternate versions of request()
+# that does things more asynchronous:
+#
+#  request() {
+#	# Send E-mail about the mount request and wait for the drive
+#	# to go ready by checking the status once a minute.  Repeat
+#       # the E-mail once an hour in case it gets lost.
+#	timeout=0
+#	while true;do
+#	    if [ $timeout -le 0 ]; then
+#		echo "insert Amanda tape into slot $1 ($tape)" \
+#		  | $MAILER -s "$ORG AMANDA TAPE MOUNT REQUEST FOR SLOT $1" \
+#		          $REPORTTO
+#		timeout=`expr 60 \* 60`
+#	    fi
+#	    echo "     -> rewind $tape" >> $logfile
+#	    $MT $MTF $tape rewind >> $logfile 2>&1
+#	    echo "     -> status $tape" >> $logfile
+#	    used=`$MT $MTF $tape status 2>&1 | tee -a $logfile | $EGREP "$ONLINEREGEX"`
+#	    echo "     -> loaded <$used>" >> $logfile
+#	    if [ ! -z "$used" ];then
+#		break
+#	    fi
+#	    sleep 60
+#	    timeout=`expr $timeout - 60`
+#	done
+#  }
+#
+# Instead of sending mail, you might write the message to /dev/console
+# or use "logger" to send it via syslog, etc.
+###
+
+if [ -f $changerfile ]; then
+	. $changerfile
+fi
+
+#
+
+eject() { 
+	echo "     -> rewind $tape" >> $logfile
+	$MT $MTF $tape rewind >> $logfile 2>&1
+	echo "     -> status $tape" >> $logfile
+	used=`$MT $MTF $tape status 2>&1 | tee -a $logfile | $EGREP "$ONLINEREGEX"`
+	echo "     -> loaded <$used>" >> $logfile
+	if [ ! -z "$used" ];then
+		echo "     -> offline $tape" >> $logfile
+		$MT $MTF $tape offline >> $logfile 2>&1
+		echo 0 > $slotfile
+		answer="$slot $tape"
+		code=0
+	else
+		answer="<none> $myname: Drive was not loaded"
+		code=1
+	fi
+	echo "Exit -> $answer" >> $logfile
+	echo "$answer"
+	exit $code
+}
+
+#
+
+reset() {
+	echo "     -> rewind $tape" >> $logfile
+	$MT $MTF $tape rewind >> $logfile 2>&1
+	echo "     -> status $tape" >> $logfile
+	used=`$MT $MTF $tape status 2>&1 | tee -a $logfile | $EGREP "$ONLINEREGEX"`
+	echo "     -> loaded <$used>" >> $logfile
+	if [ ! -z "$used" ];then
+		answer="$slot $tape"
+	else
+		answer="0 $tape"
+	fi
+	echo "Exit -> $answer" >> $logfile
+	echo "$answer"
+	exit 0
+}
+
+# load #
+
+loadslot() {
+	echo "     -> rewind $tape" >> $logfile
+	$MT $MTF $tape rewind >> $logfile 2>&1
+	echo "     -> status $tape" >> $logfile
+	used=`$MT $MTF $tape status 2>&1 | tee -a $logfile | $EGREP "$ONLINEREGEX"`
+	echo "     -> loaded <$used>" >> $logfile
+	whichslot=$1
+	case $whichslot in
+	current)
+		load=$slot
+		[ $load -eq 0 ] && load=$firstslot
+		[ $load -gt $lastslot ] && load=$firstslot
+		[ $load -lt $firstslot ] && load=$lastslot
+		;;
+	next|advance)
+		load=`expr $slot + 1`
+		[ $load -gt $lastslot ] && load=$firstslot
+		;;
+	prev)
+		load=`expr $slot - 1`
+		[ $load -lt $firstslot ] && load=$lastslot
+		;;
+	first)
+		load=$firstslot
+		;;
+	last)
+		load=$lastslot
+		;;
+	[0-9]|[0-9][0-9])
+		if [ $1 -lt $firstslot -o $1 -gt $lastslot ]; then
+			answer="<none> $myname: slot must be $firstslot .. $lastslot"
+			echo "Exit -> $answer" >> $logfile
+			echo "$answer"
+			exit 1
+		fi
+		load=$1
+		;;
+	*)
+		answer="<none> $myname: illegal slot: $1"
+		echo "Exit -> $answer" >> $logfile
+		echo "$answer"
+		exit 1
+		;;
+	esac
+	#
+	if [ ! -z "$used" -a $load = $slot ];then
+		# already loaded
+		answer="$slot $tape"
+		echo "Exit -> $answer" >> $logfile
+		echo "$answer"
+		exit 0
+	fi
+
+	# if [ $load = $ecleanslot ]; then
+	# expr $cleancount + 1 > $cleanfile
+	# echo 0 > $accessfile
+	# else
+	expr $accesscount + 1 > $accessfile
+	# if [ $accesscount -gt 9 ]; then
+	# $myname -slot $cleanslot >/dev/null
+	# used=0
+	# fi
+	# fi	
+
+	#
+	if [ ! -z "$used" ]; then
+		echo "     -> offline $tape" >> $logfile
+		$MT $MTF $tape offline >> $logfile 2>&1
+		used=""
+	fi
+	if [ $whichslot = advance ]; then
+		tape=/dev/null
+	else
+		echo "     -> load   $load" >> $logfile
+		while [ -z "$used" ]; do
+			request $load
+			echo "     -> rewind $tape" >> $logfile
+			$MT $MTF $tape rewind >> $logfile 2>&1
+			echo "     -> status $tape" >> $logfile
+			used=`$MT $MTF $tape status 2>&1 | tee -a $logfile | $EGREP "$ONLINEREGEX"`
+			echo "     -> loaded <$used>" >> $logfile
+		done
+		$DD if=$tape bs=32k count=1 >> $logfile 2>&1
+	fi
+	echo $load > $slotfile
+	answer="$load $tape"
+	echo "Exit -> $answer" >> $logfile
+	echo "$answer"
+	exit 0
+}
+
+#
+
+info() {
+	echo "     -> rewind $tape" >> $logfile
+	$MT $MTF $tape rewind >> $logfile 2>&1
+	echo "     -> status $tape" >> $logfile
+	used=`$MT $MTF $tape status 2>&1 | tee -a $logfile | $EGREP "$ONLINEREGEX"`
+	echo "     -> loaded <$used>" >> $logfile
+	if [ -z "$used" ];then
+		answer="0 $lastslot 1"
+	else
+		answer="$slot $lastslot 1"
+	fi
+	echo "Exit -> $answer" >> $logfile
+	echo "$answer"
+	exit 0
+}
+
+#
+# main part
+#
+
+echo Args "->" "$@" >> $logfile
+while [ $# -ge 1 ];do
+	case $1 in
+	-slot)
+		shift
+		loadslot $*
+		;;
+	-info)
+		shift
+		info
+		;;
+	-reset)
+		shift
+		reset
+		;;
+	-eject)
+		shift
+		eject
+		;;
+	*)
+		echo "<none> $myname: Unknown option $1"
+		exit 2
+		;;
+	esac
+done
+
+exit 0
