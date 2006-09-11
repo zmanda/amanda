@@ -1,0 +1,90 @@
+Index: regex2.h
+===================================================================
+RCS file: /homes/amcore/cvsroot/amanda-2/regex-src/regex2.h,v
+retrieving revision 1.2
+retrieving revision 1.4
+diff -u -r1.2 -r1.4
+--- regex2.h	1997/09/30 06:28:57	1.2
++++ regex2.h	1997/11/07 20:43:30	1.4
+@@ -44,28 +44,40 @@
+ #define	OP(n)	((n)&OPRMASK)
+ #define	OPND(n)	((n)&OPDMASK)
+ #define	SOP(op, opnd)	((op)|(opnd))
++
++#ifndef UNSIGNEDLONG1
++#ifndef NO_UL_CNSTS
++#define UNSIGNEDLONG1 1ul
++#else
++#define UNSIGNEDLONG1 ((unsigned long)1)
++#endif
++#endif
++
++#define MAKE_UNSIGNED_LONG(num) (UNSIGNEDLONG1*num)
++#define SHIFTED_UL(num) (MAKE_UNSIGNED_LONG(num) << OPSHIFT)
++
+ /* operators			   meaning	operand			*/
+ /*						(back, fwd are offsets)	*/
+-#define	OEND	(1ul<<OPSHIFT)	/* endmarker	-			*/
+-#define	OCHAR	(2ul<<OPSHIFT)	/* character	unsigned char		*/
+-#define	OBOL	(3ul<<OPSHIFT)	/* left anchor	-			*/
+-#define	OEOL	(4ul<<OPSHIFT)	/* right anchor	-			*/
+-#define	OANY	(5ul<<OPSHIFT)	/* .		-			*/
+-#define	OANYOF	(6ul<<OPSHIFT)	/* [...]	set number		*/
+-#define	OBACK_	(7ul<<OPSHIFT)	/* begin \d	paren number		*/
+-#define	O_BACK	(8ul<<OPSHIFT)	/* end \d	paren number		*/
+-#define	OPLUS_	(9ul<<OPSHIFT)	/* + prefix	fwd to suffix		*/
+-#define	O_PLUS	(10ul<<OPSHIFT)	/* + suffix	back to prefix		*/
+-#define	OQUEST_	(11ul<<OPSHIFT)	/* ? prefix	fwd to suffix		*/
+-#define	O_QUEST	(12ul<<OPSHIFT)	/* ? suffix	back to prefix		*/
+-#define	OLPAREN	(13ul<<OPSHIFT)	/* (		fwd to )		*/
+-#define	ORPAREN	(14ul<<OPSHIFT)	/* )		back to (		*/
+-#define	OCH_	(15ul<<OPSHIFT)	/* begin choice	fwd to OOR2		*/
+-#define	OOR1	(16ul<<OPSHIFT)	/* | pt. 1	back to OOR1 or OCH_	*/
+-#define	OOR2	(17ul<<OPSHIFT)	/* | pt. 2	fwd to OOR2 or O_CH	*/
+-#define	O_CH	(18ul<<OPSHIFT)	/* end choice	back to OOR1		*/
+-#define	OBOW	(19ul<<OPSHIFT)	/* begin word	-			*/
+-#define	OEOW	(20ul<<OPSHIFT)	/* end word	-			*/
++#define	OEND	(SHIFTED_UL(1))	/* endmarker	-			*/
++#define	OCHAR	(SHIFTED_UL(2))	/* character	unsigned char		*/
++#define	OBOL	(SHIFTED_UL(3))	/* left anchor	-			*/
++#define	OEOL	(SHIFTED_UL(4))	/* right anchor	-			*/
++#define	OANY	(SHIFTED_UL(5))	/* .		-			*/
++#define	OANYOF	(SHIFTED_UL(6))	/* [...]	set number		*/
++#define	OBACK_	(SHIFTED_UL(7))	/* begin \d	paren number		*/
++#define	O_BACK	(SHIFTED_UL(8))	/* end \d	paren number		*/
++#define	OPLUS_	(SHIFTED_UL(9))	/* + prefix	fwd to suffix		*/
++#define	O_PLUS	(SHIFTED_UL(10))	/* + suffix	back to prefix		*/
++#define	OQUEST_	(SHIFTED_UL(11))	/* ? prefix	fwd to suffix		*/
++#define	O_QUEST	(SHIFTED_UL(12))	/* ? suffix	back to prefix		*/
++#define	OLPAREN	(SHIFTED_UL(13))	/* (		fwd to )		*/
++#define	ORPAREN	(SHIFTED_UL(14))	/* )		back to (		*/
++#define	OCH_	(SHIFTED_UL(15))	/* begin choice	fwd to OOR2		*/
++#define	OOR1	(SHIFTED_UL(16))	/* | pt. 1	back to OOR1 or OCH_	*/
++#define	OOR2	(SHIFTED_UL(17))	/* | pt. 2	fwd to OOR2 or O_CH	*/
++#define	O_CH	(SHIFTED_UL(18))	/* end choice	back to OOR1		*/
++#define	OBOW	(SHIFTED_UL(19))	/* begin word	-			*/
++#define	OEOW	(SHIFTED_UL(20))	/* end word	-			*/
+ 
+ /*
+  * Structure for [] character-set representation.  Character sets are
+Index: regexec.c
+===================================================================
+RCS file: /homes/amcore/cvsroot/amanda-2/regex-src/regexec.c,v
+retrieving revision 1.2
+retrieving revision 1.4
+diff -u -r1.2 -r1.4
+--- regexec.c	1997/09/30 06:28:59	1.2
++++ regexec.c	1997/11/07 20:43:32	1.4
+@@ -22,9 +22,9 @@
+ #define	states	long
+ #define	states1	states		/* for later use in regexec() decision */
+ #define	CLEAR(v)	((v) = 0)
+-#define	SET0(v, n)	((v) &= ~(1ul << (n)))
+-#define	SET1(v, n)	((v) |= 1ul << (n))
+-#define	ISSET(v, n)	((v) & (1ul << (n)))
++#define	SET0(v, n)	((v) &= ~(MAKE_UNSIGNED_LONG(1) << (n)))
++#define	SET1(v, n)	((v) |= (MAKE_UNSIGNED_LONG(1)) << (n))
++#define	ISSET(v, n)	((v) & ((MAKE_UNSIGNED_LONG(1)) << (n)))
+ #define	ASSIGN(d, s)	((d) = (s))
+ #define	EQ(a, b)	((a) == (b))
+ #define	STATEVARS	int dummy	/* dummy version */
