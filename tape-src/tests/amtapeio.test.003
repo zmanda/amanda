@@ -1,0 +1,20 @@
+###
+# Test negative fsf at end of file.
+###
+
+open $TAPE 2
+
+rewind
+write 5
+eof
+write 3
+
+rewind
+fsf
+read
+fsf -1
+read
+fsf -2
+read
+
+close

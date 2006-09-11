@@ -1,0 +1,51 @@
+#!/bin/ksh
+
+###
+# Run amtapeio against two types of "tape".
+###
+
+Pgm=${0##*/}
+
+if (($# != 3))
+then
+    print -u2 "usage: $Pgm tape1 tape2 script"
+    exit 1
+fi
+
+tape1=$1
+tape2=$2
+
+o1=$(print $tape1 | sed s,/,_,g)
+o2=$(print $tape2 | sed s,/,_,g)
+s=${3##*/}
+
+if [[ -t 0 && -s $s.$o1 ]]
+then
+    rm -i $s.$o1
+fi
+if [[ ! -s $s.$o1 ]]
+then
+    print +++ Testing $tape1 +++
+    TAPE=$tape1 ../amtapeio < $3 > $s.$o1 2>&1
+fi
+
+if [[ -t 0 && -s $s.$o2 ]]
+then
+    rm -i $s.$o2
+fi
+if [[ ! -s $s.$o2 ]]
+then
+    print +++ Testing $tape2 +++
+    TAPE=$tape2 ../amtapeio < $3 > $s.$o2 2>&1
+fi
+
+print +++ Checking result +++
+rm -f $s.$o1.diff $s.$o2.diff $s.$$ || exit 1
+sed 's/tapefd_open("[^"]*"/tapefd_open("xxx"/' < $s.$o1 > $s.$o1.diff
+sed 's/tapefd_open("[^"]*"/tapefd_open("xxx"/' < $s.$o2 > $s.$o2.diff
+diff -u $s.$o1.diff $s.$o2.diff | tee $s.$$
+integer e
+(( e = ( $(wc -l < $s.$$) != 0 ) ))
+rm -f $s.$o1.diff $s.$o2.diff $s.$$ || exit 1
+
+exit $e

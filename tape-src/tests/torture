@@ -1,0 +1,42 @@
+#!/bin/ksh
+
+###
+# Generate new random test cases and run them.
+###
+
+Pgm=${0##*/}
+
+if (($# != 2))
+then
+    print -u2 "usage: $Pgm tape1 tape2"
+    exit 1
+fi
+
+tape1=$1
+tape2=$2
+
+integer run=100
+
+while [[ -f amtapeio.test.$run && $run -lt 1000 ]]
+do
+    ((run = run + 1))
+done
+if ((run >= 1000))
+then
+    print -u2 "$Pgm: 1000 test cases already present"
+    exit 1
+fi
+
+while ((run < 1000))
+do
+    print +++ Generating test $run
+    ./newtest > amtapeio.test.$run		# generate a new run
+    ./runtest $tape1 $tape2 amtapeio.test.$run	# do it
+    if (($? != 0))
+    then
+	break					# stop on every error
+    fi
+    ((run = run + 1))
+done
+
+exit 0

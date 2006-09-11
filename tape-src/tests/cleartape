@@ -1,0 +1,15 @@
+#!/bin/ksh
+
+###
+# Clear a tape.
+###
+
+../amtapeio << CMDS
+open $TAPE 2
+
+rewind
+eof
+rewind
+
+close
+CMDS

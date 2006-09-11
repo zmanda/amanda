@@ -1,0 +1,54 @@
+###
+# Test write after read at various tape positions.
+###
+
+open $TAPE 2
+rewind
+weof 1
+rewind
+close
+
+open $TAPE 2
+read
+write 5
+rewind
+weof 2
+rewind
+close
+
+open $TAPE 2
+read
+write 5
+rewind
+weof 2
+rewind
+close
+
+open $TAPE 2
+fsf 1
+read
+write 5
+rewind
+weof 2
+rewind
+close
+
+open $TAPE 2
+fsf 1
+close
+open $TAPE 2
+read
+write 5
+rewind
+weof 2
+rewind
+close
+
+open $TAPE 2
+fsf 2
+read
+write 5
+rewind
+weof 2
+rewind
+close

@@ -1,0 +1,259 @@
+#!/bin/ksh
+
+###
+# Generate a new random test case.
+###
+
+if (($# >= 1))
+then
+    integer seed=$1
+else
+    integer seed=$$
+fi
+
+RANDOM=$seed					# initialize the generator
+
+print "###"
+print "# seed is $seed"
+print "###"
+print
+
+###
+# Functions to generate operations.  The first two, do_open and do_close,
+# are not directly used during generation, but are used indirectly through
+# do_reopen.  They are used directly at the start and end of the test.
+###
+
+last_op=
+last_arg=
+
+function do_open {
+    integer count=$((RANDOM % 100))
+
+    #  5% -> no arg
+    #  5% -> 0 (O_RDONLY)
+    # 90% -> 2 (O_RDWR)
+
+    if ((count < 5))
+    then
+	mode=
+    elif ((count < 10))
+    then
+	mode=0
+    else
+	mode=2
+    fi
+
+    print open '$TAPE' $mode
+
+    last_op=open
+    last_arg=$mode
+
+    return 0
+}
+
+function do_close {
+    print close
+
+    last_op=close
+    last_arg=
+
+    return 0
+}
+
+function do_reopen {
+    if [[ $last_op = reopen ]]
+    then
+	return 1
+    fi
+
+    do_close
+    do_open
+
+    last_op=reopen
+    last_arg=
+
+    return 0
+}
+
+function do_weof {
+    if [[ $last_op = weof ]]
+    then
+	return 1
+    fi
+
+    integer count=$((RANDOM % 100))
+
+    #  5% -> -1
+    #  5% -> 0
+    # 20% -> 1
+    # 20% -> 2
+    # 20% -> 3
+    # 20% -> 4
+    # 10% -> 5
+
+    if ((count < 5))
+    then
+        count=-1
+    elif ((count < 10))
+    then
+        count=0
+    else
+        ((count = ((count - 10) / 20) + 1))
+    fi
+
+    print weof $count
+
+    last_op=weof
+    last_arg=$count
+
+    return 0
+}
+
+function do_fsf {
+    if [[ $last_op = fsf ]]
+    then
+	return 1
+    fi
+
+    integer count=$((RANDOM % 100))
+
+    # even distribution -> -10 .. 9
+
+    ((count = (count / 5) - 10))
+
+    print fsf $count
+
+    last_op=fsf
+    last_arg=$count
+
+    return 0
+}
+
+function do_rewind {
+    if [[ $last_op = rewind ]]
+    then
+	return 1
+    fi
+
+    print rewind
+
+    last_op=rewind
+    last_arg=
+
+    return 0
+}
+
+function do_read {
+    if [[ $last_op = read && -z $last_arg ]]
+    then
+	return 1
+    fi
+
+    integer count=$((RANDOM % 100))
+
+    # 15% -> 1 .. 15
+    # 85% -> no arg (all)
+
+    if ((count < 15))
+    then
+	((count = count + 1))
+    else
+	unset count
+    fi
+    print read $count
+
+    last_op=read
+    last_arg=$count
+
+    return 0
+}
+
+function do_write {
+    integer count=$((RANDOM % 100))
+
+    # even distribution -> 1 .. 10
+
+    ((count = (count / 10) + 1))
+
+    print write $count
+
+    last_op=write
+    last_arg=$count
+
+    return 0
+}
+
+###
+# The following two arrays control the function calls.  "func" is
+# the list of functions.  "fact" is the percentage of calls that
+# will be made to that function.
+###
+
+set -A func do_reopen do_weof do_fsf do_rewind do_read do_write
+set -A pc           5      10     10        10      40       25
+
+###
+# Convert pc to sums.
+###
+
+integer sum=0
+integer i=0
+for v in ${pc[*]}
+do
+    ((sum = sum + $v))
+    pc[$i]=$sum
+    ((i = i + 1))
+done
+
+###
+# Always make sure the "tape" is empty to start.
+###
+
+print "###"
+print "# Clear the tape."
+print "###"
+print
+
+print open '$TAPE' 2
+print rewind
+print weof
+print rewind
+print close
+print
+
+###
+# Generate the new test.
+###
+
+integer cmds=$(((RANDOM % 25) + 5))		# how many commands to generate
+
+print "###"
+print "# Start of test."
+print "###"
+print
+
+do_open						# always start with an open
+
+while ((cmds > 0))
+do
+    integer n=$((RANDOM % 100))
+    integer i=0
+
+    for v in ${pc[*]}
+    do
+	if (($n < $v))
+	then
+	    if ${func[$i]}			# do the function
+	    then
+		((cmds = cmds - 1))
+		break
+	    fi
+	fi
+	((i = i + 1))
+    done
+done
+
+do_close					# always end with a close
+
+exit 0

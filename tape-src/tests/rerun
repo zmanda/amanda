@@ -1,0 +1,31 @@
+#!/bin/ksh
+
+###
+# Rerun all the tests with a new driver for $2.
+###
+
+Pgm=${0##*/}
+
+if (($# != 2))
+then
+    print -u2 "usage: $Pgm tape1 tape2"
+    exit 1
+fi
+
+tape1=$1
+tape2=$2
+
+for f in amtapeio.test.[0-9][0-9][0-9]
+do
+    t=$(print $tape2 | sed s,/,_,g)
+    rm -f $f.$t
+    print +++ Rerun test ${f##*.}
+    if ./runtest $tape1 $tape2 $f < /dev/null
+    then
+	:
+    else
+	break
+    fi
+done
+
+exit 0

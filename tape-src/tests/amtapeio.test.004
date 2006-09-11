@@ -1,0 +1,23 @@
+###
+# Write two files then rewind and read part of them both back.
+###
+
+open $TAPE 2
+
+rewind
+write 5
+eof
+write 3
+
+rewind
+read 1
+fsf
+read 1
+fsf
+
+read					# should get an EOF
+fsf
+
+read					# should get an error
+
+close

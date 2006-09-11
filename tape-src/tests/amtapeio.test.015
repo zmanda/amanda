@@ -1,0 +1,16 @@
+###
+# Test fsf after write.
+###
+
+open $TAPE 2
+
+rewind
+write 5
+fsf 1
+write 3
+eof
+write 5
+fsf 2
+write 3
+
+close

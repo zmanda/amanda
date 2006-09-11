@@ -1,0 +1,19 @@
+###
+# Test tape rewrite after weof.
+###
+
+open $TAPE 2
+
+rewind
+write 5
+eof
+read 1
+write 3
+
+rewind
+write 5
+eof
+read 2
+write 3
+
+close

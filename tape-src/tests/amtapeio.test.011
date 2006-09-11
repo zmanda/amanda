@@ -1,0 +1,18 @@
+###
+# Test tape rewrite after reading a file.
+###
+
+open $TAPE 2
+
+rewind
+write 5
+eof
+write 3
+eof
+write 2
+
+rewind
+read
+write 4
+
+close

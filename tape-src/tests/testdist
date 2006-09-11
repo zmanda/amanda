@@ -1,0 +1,40 @@
+#!/bin/ksh
+
+integer loop=0
+integer same_count=0
+integer last_count=0
+
+while ((loop < 100))
+do
+    integer count=$loop
+
+    ### Put code here ...
+
+    # even distribution -> 1 .. 10
+
+    ((count = (count / 10) + 1))
+
+    ### End of test code ...
+
+    if ((loop == 0))
+    then
+	((last_count = count))
+    fi
+
+    if ((count != last_count))
+    then
+	print -- $same_count $last_count
+	((last_count = count))
+	((same_count = 1))
+    else
+	((same_count = same_count + 1))
+    fi
+    ((loop = loop + 1))
+done
+
+if ((same_count > 0))
+then
+    print -- $same_count $count
+fi
+
+exit 0

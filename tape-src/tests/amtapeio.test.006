@@ -1,0 +1,22 @@
+###
+# Test read at EOF.
+###
+
+open $TAPE 2
+
+rewind
+write 5
+eof
+write 3
+
+rewind
+read
+read
+read
+
+fsf
+read
+read
+read
+
+close

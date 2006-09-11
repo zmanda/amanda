@@ -1,0 +1,22 @@
+###
+# Simple write, close, open, rewind, read test.
+###
+
+open $TAPE 2
+
+rewind
+write 5
+
+close
+open $TAPE
+
+rewind
+read
+fsf
+
+read					# should get an EOF
+fsf
+
+read					# should get an error
+
+close

@@ -1,0 +1,21 @@
+###
+# Test read after write.
+###
+
+open $TAPE 2
+
+rewind
+write 5
+read
+write 3
+read 3
+write 2
+
+rewind
+read
+fsf
+read
+fsf
+read
+
+close
