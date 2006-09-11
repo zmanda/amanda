@@ -1,0 +1,188 @@
+
+Chapter 5. Backup PC hosts using Samba
+Prev  Part I. Installation        Next
+
+-------------------------------------------------------------------------------
+
+Chapter 5. Backup PC hosts using Samba
+
+
+Michael Zucchi
+
+Original text
+School of Computer and Information Science University of South Australia
+<M.Zucchi@CIS.UniSA.Edu.Au>
+
+John R. Jackson
+
+Updates
+AMANDA Core Team
+<jrj@purdue.edu>
+
+Stefan G. Weichinger
+
+XML-conversion;Updates
+AMANDA Core Team
+<sgw@amanda.org>
+Table of Contents
+
+
+  Installation
+
+  Setup
+
+  Example
+
+  Bugs_and_notes
+
+
+Note
+
+Refer to http://www.amanda.org/docs/samba.html for the current version of this
+document.
+
+ Installation
+
+Amanda is able to back up Microsoft Windows shared disks by using Samba, a
+package that implements a SMB client and server for Unix:
+http://www.samba.org
+
+Note
+
+This is old stuff and will be (re)moved soon:
+Releases from 1.9.18p5 up to 1.9.18p10 logged information in the tar files
+produced, making them unusable! If you really must use a release prior to Samba
+2.0.6, a patch that fixes the problem is available in the Amanda patches page:
+http://www.amanda.org/patches/
+Amanda no longer supports Samba releases prior to 1.9.18. If you're using Samba
+from 1.9.18 through 1.9.18p3, make sure you don't set a low logging/debugging
+level in smb.conf. This flag may prevent estimate sizes from printing correctly
+and Amanda will report an estimate failure.
+This problem may also occur if you have large (>2GB) shares with Samba prior to
+2.0.4. In this case, apply samba2-largefs.patch from the Amanda patches page
+(http://www.amanda.org/patches/).
+After building and installing Samba, Amanda must be configured with support for
+smbclient. Amanda will automatically find smbclient if it is in your PATH when
+you run configure, or you may add the following argument:
+
+  --with-smbclient=/full/path/to/smbclient
+
+
+ Setup
+
+Once Amanda and Samba are installed, the only difference between a Unix client/
+disk and PC client/share is in how the backup disks are specified in the file
+disklist. For each PC share, the entry lists the 'samba server' host (where the
+patched Samba software is installed) and the disk field is the share name. The
+remaining fields are like any other DLE.
+A user must be created on the PC with full access rights (read/write) to the
+share. Amanda, via the Samba server, will connect to the PC via this user. If
+the user does not have full access, incremental backups will not work and the
+whole share will be backed up every time (the archive bits are never reset).
+The file /etc/amandapass must be created by hand. It contains share name to
+user name, password and workgroup mapping. Each line consists of two or three
+fields, separated by whitespace:
+
+* Share name followed by optional directory.
+  You have to use forward slashes (/), not backslashes (\). This must match the
+  disklist entry exactly (case sensitive). This may be asterisk (*) to match
+  all remaining shares for this Samba server. The first match in the file is
+  used, so specific entries must be listed first. The directory is appended to
+  the share name as full MS network path. Like //thepc/c$/mydir. No blanks are
+  allowed in directory!
+* User name and password.
+  Separated by a percent sign (%). See the description of the -U option in the
+  manpage of smbclient. No whitespace is allowed in either the user name or
+  password.
+* Workgroup (optional).
+
+This file must be owned by the Amanda-user, and disallow world access
+privileges. Blank lines are ignored. A "#" on a line at the start of a field
+(including start of line) causes the rest of the line to be ignored.
+
+ Example
+
+The Amanda client software and (patched) Samba is installed on host "pcserver".
+A share to be backed up called "backupc" is on PC "thepc". The share will be
+accessed via PC user "bozo" and password "f00bar" and does not require a
+workgroup.
+The entry in the file disklist is:
+
+  pcserver	//thepc/backupc		nocomp-user-gnutar
+
+  ^ samba installed unix host
+                  ^ pc host and share name
+  					^ dumptype must include the tar option
+
+In /etc/amandapass on the machine 'pcserver':
+
+  //thepc/backupc		bozo%f00bar
+
+If smbclient requires a workgroup specification (-W), you may add it as a third
+argument in the line in the file /etc/amandapass :
+
+  //thepc/backupc		bozo%f00bar	NTGROUP
+
+This will cause smbclient to be invoked with -W NTGROUP.
+An example dumptype in amanda.conf would be:
+
+  define dumptype nocomp-user-gnutar {
+      program "GNUTAR"
+      comment "user partitions dumped with tar and no compression"
+      options no-compress
+      priority medium
+  }
+
+Essentially, the entry in disklist is a 'pseudo-disk' which contains all the
+relevant information needed by smbclient to backup the disk, but in a way that
+is compatible to Amanda.
+amcheck does a quick check to see if smbclient exists and tries to connect to
+the PC clients. It also checks for the existence and permissions of /etc/
+amandapass.
+
+ Bugs and notes
+
+Samba will not back up open files (such as PAGEFILE.SYS and registry files) nor
+Access Control List data. Furthermore, at restore time, smbclient is unable to
+overwrite read-only files. Hence, Amanda+Samba is not a perfect solution for
+backing up (restoring, actually) system disks.
+Samba does not use the Windows Backup API, so configuring the Amanda backup
+user as a member of group backup on the Windows host is useless. You will
+probably have to configure it as an Administrator, and make sure it can read
+and change permission of all files in the share.
+It seems impossible to detect when a per-user based login fails, e.g. the
+username doesn't have sufficient access. It connects but cannot see any files
+(e.g. backups do nothing). The selfcheck code isn't particularly robust in this
+area either, so you may get no warnings when a disk isn't being backed up. Just
+check to see that level 0 dumps are bigger than 64K, otherwise it means the
+backup was empty.
+The estimate and totals are probably a bit off since tar pads to the nearest
+512 bytes after each file (I think). Not sure how much of a problem this is.
+smbclient only supports excluding a single file from the command line, not a
+file of patterns like GNU tar. So "exclude" is supported from a dumptype but
+not "exclude list".
+
+Note
+
+Also the new option "exclude append" is not yet supported with smbclient.
+
+Note
+
+Since Samba-3.0.2a smbclient supports multiple exclusion-patterns. It is one of
+the "Ongoing Projects" to make use of this in Amanda. Refer to http://
+www.amanda.org/ongoing.php for details.
+The size estimate calculation does not use the same method as the dump, so it
+may be inaccurate. It also does not support any type of exclusion ("exclude" is
+ignored). Things are done this way because doing a simulated dump to /dev/null,
+like other dump programs, would take forever with current implementations of
+Samba.
+If you compile with support for smbclient, GNU-tar support is automatically
+enabled. If you aren't using the GNU-tar part, you may get warnings about the
+availability of /usr/local/bin/gtar (or whatever it was compiled with). These
+may safely be ignored, unless you enable index generation for those
+filesystems.
+-------------------------------------------------------------------------------
+
+Prev                              Up                 Next
+Chapter 4. Indexing with Amanda  Home  Chapter 6. Restore
+

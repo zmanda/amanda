@@ -1,0 +1,181 @@
+
+Attributions
+Prev     Next
+
+-------------------------------------------------------------------------------
+
+Attributions
+
+Amanda_2.5.0_-_System-Specific_Installation_Notes
+
+* Stefan G. Weichinger <sgw@amanda.org> (XML-conversion;Updates)
+
+Amanda_Installation_Notes
+
+* James da Silva <jds@amanda.org> (Original text)
+* Stefan G. Weichinger <sgw@amanda.org> (XML-conversion, Updates)
+
+Excluding
+
+* Andrew Hall (Original text)
+* Stefan G. Weichinger <sgw@amanda.org> (XML-conversion;Updates)
+
+Indexing_with_Amanda
+
+* Alan M. McIvor (Original text)
+* Stefan G. Weichinger <sgw@amanda.org> (XML-conversion;Updates)
+
+Backup_PC_hosts_using_Samba
+
+* Michael Zucchi <M.Zucchi@CIS.UniSA.Edu.Au> (Original text)
+* John R. Jackson <jrj@purdue.edu> (Updates)
+* Stefan G. Weichinger <sgw@amanda.org> (XML-conversion;Updates)
+
+Restore
+
+* Daniel Moore (Original text)
+* Alexandre Oliva <oliva@dcc.unicamp.br> (Substantial rewriting)
+* Murf (Corrections and additions)
+* Ralf Fassel (Corrections and additions)
+* Stefan G. Weichinger <sgw@amanda.org> (XML-conversion;Updates)
+
+Amanda_Tape_Changer_Support
+
+* James da Silva <jds@amanda.org> (Original text)
+* Stefan G. Weichinger <sgw@amanda.org> (XML-conversion;Updates)
+
+chg-scsi
+
+* Jason X (report real name to sgw@amanda.org) (Original version)
+* Stefan G. Weichinger <sgw@amanda.org> (XML-conversion;Updates)
+
+RAIT_(Redundant_Array_of_Inexpensive_Tape)_Support
+
+* Marc Mengel (Original text)
+* Stefan G. Weichinger <sgw@amanda.org> (XML-conversion;Updates)
+
+Printing_of_Labels
+
+* Stefan G. Weichinger <sgw@amanda.org> (XML-conversion;Updates)
+
+Amanda_on_Cygwin_HOWTO
+
+* Doug Kingston (Original text)
+* Stefan G. Weichinger <sgw@amanda.org> (XML-conversion)
+
+How_to_use_the_Amanda_file-driver
+
+* Stefan G. Weichinger <sgw@amanda.org> (Original text;XML-conversion;Updates)
+
+AFS_HOWTO
+
+* Stefan G. Weichinger <sgw@amanda.org> (XML-conversion;Updates)
+
+How_to_use_a_wrapper
+
+* Bert de Ridder (Original text)
+* Paul Bijnens (Original text)
+* Stefan G. Weichinger <sgw@amanda.org> (XML-conversion; Updates)
+
+How_to_do_Amanda-server-side_gpg-encrypted_backups.
+
+* Stefan G. Weichinger <sgw@amanda.org> (Original text)
+
+How_to_use_different_auth_with_Amanda
+
+* Jean-Louis Martineau <martinea@iro.umontreal.ca> (Original text;XML-
+  conversion;Updates)
+
+Using_Amanda
+
+* John R. Jackson <jrj@purdue.edu> (Original text)
+* Gavin Henry <ghenry@suretecsystems.com> (XML-conversion)
+* Stefan G. Weichinger <sgw@amanda.org> (XML-conversion, Updates)
+
+Amanda_FAQ
+
+* Stefan G. Weichinger <sgw@amanda.org> (XML-conversion;Updates)
+
+Collection_of_the_top_ten_Amanda_questions._And_answers.
+
+* Stefan G. Weichinger <sgw@amanda.org> (Original text; Conversion to Docbook/
+  XML)
+
+Amanda_WISHLIST
+
+* Jean-Louis Martineau <martinea@iro.umontreal.ca> (Additions and Updates)
+* Stefan G. Weichinger <sgw@amanda.org> (XML-conversion; Additions and Updates)
+
+How_Amanda_uses_UDP_and_TCP_ports
+
+* John R. Jackson <jrj@purdue.edu> (Original text)
+* Stefan G. Weichinger <sgw@amanda.org> (XML-conversion;Updates)
+
+Amanda_dumper_API
+
+* Alexandre Oliva <oliva@dcc.unicamp.br> (Original text)
+* Stefan G. Weichinger <sgw@amanda.org> (XML-conversion;Updates)
+
+Amanda_Internals
+
+* George Scott (Original text)
+* Stefan G. Weichinger <sgw@amanda.org> (XML-conversion)
+
+Amanda_Event_API
+
+* Mike Grupenhoff <kashmir@munge.com> (Original text)
+* Stefan G. Weichinger <sgw@amanda.org> (XML-conversion;Updates)
+
+Amanda_Security_API
+
+* Mike Grupenhoff <kashmir@munge.com> (Original text)
+* Stefan G. Weichinger <sgw@amanda.org> (XML-conversion;Updates)
+
+Virtual_Tape_API
+
+* Stefan G. Weichinger <sgw@amanda.org> (XML-conversion)
+
+Using_Kerberos_with_Amanda
+
+* Stefan G. Weichinger <sgw@amanda.org> (XML-conversion;Updates)
+
+Response_to_CPIO_Security_Notice_Issue_11:
+
+* Stefan G. Weichinger <sgw@amanda.org> (XML-conversion;Updates)
+
+Upgrade_Issues
+
+* Stefan G. Weichinger <sgw@amanda.org> (XML-conversion)
+
+What_once_was_new
+
+* Stefan G. Weichinger <sgw@amanda.org> (XML-conversion, Updates)
+
+Multitape_support_in_Amanda_2.2
+
+* James da Silva <jds@amanda.org> (Original text)
+* Stefan G. Weichinger <sgw@amanda.org> (XML-conversion;Updates)
+
+Thoughts_about_a_Strategy_API
+
+* Alexandre Oliva <oliva@dcc.unicamp.br> (Original text)
+* Stefan G. Weichinger <sgw@amanda.org> (XML-conversion)
+
+Y2K_Compliancy
+
+* Stefan G. Weichinger <sgw@amanda.org> (XML-conversion)
+
+Usage_of_floppy_tape_drives_on_Linux
+
+* Albrecht Gebhardt (Original text)
+* Stefan G. Weichinger <sgw@amanda.org> (XML-conversion,Updates)
+
+Web_Ressources
+
+* Stefan G. Weichinger <sgw@amanda.org> (Original text)
+
+-------------------------------------------------------------------------------
+
+Prev                                         Next
+Copyright Information  Home  Part I. Installation
+

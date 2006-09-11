@@ -1,0 +1,676 @@
+
+     Chapter 8. Amanda Tape Changer Support
+Prev  Part II. About Tapes and Changers  Next
+
+-------------------------------------------------------------------------------
+
+Chapter 8. Amanda Tape Changer Support
+
+
+James da Silva
+
+Original text
+AMANDA Core Team
+<jds@amanda.org>
+
+Stefan G. Weichinger
+
+XML-conversion;Updates
+AMANDA Core Team
+<sgw@amanda.org>
+Table of Contents
+
+
+  Introduction
+
+  Specifying_a_tape_changer_in_amanda.conf
+
+  Device-specific_tapechanger_script
+
+  Slot_names_and_the_"current"_slot
+
+  Operator_interface
+
+  How_amdump_interacts_with_the_tape_changer
+
+  Builtin_tape-changers
+
+
+        chg-multi_(formerly_chg-generic)
+
+        chg-manual_(formerly_no-changer)
+
+        chg-mtx_(formerly_hp-changer)
+
+        chg-zd-mtx
+
+        chg-scsi-chio_(formerly_seagate-changer,_then_chg-chio)
+
+        chg-scsi_(new_interface,_try_to_drive_a_robot_with_direct_scsi
+        commands)
+
+        chg-chio
+
+        chg-chs
+
+        chg-rth
+
+        chg-juke
+
+        chg-rait
+
+        chg-disk
+
+        chg-iomega
+
+        chg-null
+
+
+
+Note
+
+Refer to http://www.amanda.org/docs/tapechangers.html for the current version
+of this document.
+
+ Introduction
+
+This document outlines the tape changer support design of Amanda 2.2 and
+beyond. It defines a small interface for changer software to follow so that
+Amanda can remain device-independent but still support the widest range of tape
+software and hardware possible.
+The interface is a bit simplistic and has only had complications added when
+there is a body of field experience.
+
+ Specifying a tape changer in amanda.conf
+
+All device-specifics are hidden by a glue program that the rest of Amanda calls
+to interact with the tape changer.
+The name of this changer program is given by the "tpchanger" variable in the
+file amanda.conf. Example entry:
+
+  tpchanger "chg-multi"	   # use multi-unit tape changer emulator
+  	
+
+The tapedev parameter is ignored if a tpchanger program is specified, unless
+the changer program itself reads tapedev from amanda.conf. The chg-multi
+changer doesn't, as it reads all its configuration arguments from its own
+configuration file, specified as changerfile.
+If the tpchanger program does not begin with a '/', Amanda expects it to reside
+in libexecdir, and possibly have the version suffix appended depending on how
+Amanda was configured.
+Two other amanda.conf parameters are available for changer use, however their
+definition is left entirely up to the changer script itself. They are
+changerfile and changerdev. Typically changerfile will point to the
+configuration file specific to the changer, or be a base name of several
+related changer files. The changerdev variable may point to the /dev entry used
+to access the changer device.
+See the documentation with the specific changer you're interested in to see
+exaclty how these variables are used (if at all).
+
+ Device-specific tapechanger script
+
+The tape changer script/program is always from the directory with amanda.conf.
+It is never passed the configuration name it is running on behalf of, but since
+amgetconf works without a name from the current directory, that should be
+sufficient.
+The script/program must support the following commands:
+
+* <tpchanger> -slot <slot-specifier>
+
+If changer is loaded, unloads the current slot (if different than "slot-
+specifier") and puts that tape away, then loads the requested slot. See the
+next section for the list of valid slot requests.
+Outputs to stdout the slot name and name of the device file to access the tape
+on success, or a slot name and error text.
+Returns 0 on success.
+Returns 1 on positioning error (eg at bottom of gravity stacker or slot empty).
+Returns 2 any other fatal error. The slot name may be invalid, but must be
+present. Error message goes to stdout in place of device name.
+Examples:
+
+  		% chg-multi -slot 0
+  		0 /dev/nrst8			# exitcode returned is 0
+
+  		% chg-multi -slot 1
+  		1 slot 1 is empty		# exitcode returned is 1
+
+  		% chg-multi -slot bogus-slot
+  		<none> no slot `bogus-slot'	# exitcode returned is 2
+
+
+* <tpchanger> -info
+
+Outputs to stdout three or more fields:
+The current slot string (required)
+The number of slots (required)
+Flag indicating whether the changer can go backwards
+(0 if it can't, 1 if it can). (required)
+Flag indicating whether the changer is searchable
+(optional). Shows whether the changer supports the -search and -label commands
+and is able to load a tape given only the Amanda label string (0 or omitted if
+it can't, 1 if it can). (optional)
+Examples:
+
+  		% chg-multi -info
+  		0 10 1				# exitcode returned is 0
+
+  		% chg-zd-mtx -info
+  		0 10 1 1
+
+
+* <tpchanger> -reset
+
+Resets the changer to known state and loads the first slot.
+Output and error handling are the same as
+"<tpchanger> -slot first"
+In the case of a gravity stacker that must be reset by hand, this could be run
+(via " amtape <conf> reset") to inform the software the stacker is positioned
+back at the top.
+Examples:
+
+  		% chg-multi -reset
+  		0 /dev/nrst8			# exitcode returned is 0
+
+  		% chg-multi -reset
+  		0 slot 0 is empty		# exitcode returned is 1
+
+  		% chg-multi -reset
+  		0 tape-changer not responding	# exitcode returned is 2
+
+
+* <tpchanger> -eject
+
+Unloads the current slot (if loaded) and puts that tape away.
+Output and error handling are the same as the -slot command.
+Note that a tape may or may not be loaded when this command completes,
+depending on the hardware.
+Examples:
+
+  		% chg-multi -eject
+  		0 /dev/nrst8			# exitcode returned is 0
+
+  		% chg-multi -eject
+  		0 drive was not loaded		# exitcode returned is 1
+
+The tape changer program MAY support the following commands:
+
+* <tpchanger> -search <labelstr>
+
+Loads an Amanda tape by name (labelstr).
+Output and error handling are the same as the -slot command.
+taper, amcheck and amtape will use this command if the changer reports it is
+searchable.
+Example:
+
+  		% chg-zd-mtx -search DailySet005
+  		5 /dev/nrst8			# exitcode returned is 0
+
+-<tpchanger> -label <labelstr> Associates the Amanda label <labelstr> with the
+barcode of the currently loaded (in the tape drive) tape.
+Outputs to stdout the current slot and tape device. amlabel will use this
+command if your changer is searchable to build up the barcode database.
+Example:
+
+  		% chg-zd-mtx -label DailySet006
+  		6 /dev/nrst8			# exitcode returned is 0
+
+For all the commands:
+An exit code of 0 implies that the operation was completely successful, and the
+output may be parsed by the Amanda code as described above.
+For non-zero exit codes, the first field is still the slot name, but the actual
+error messages are not fixed. They are just displayed and/or logged as-is by
+the calling Amanda program.
+An exit code of 1 implies the operation failed in a benign way, for example an
+empty slot or an attempt to go backwards in a gravity stacker. The calling
+Amanda program will print the error message if appropriate and continue,
+perhaps requesting a different slot be loaded.
+Any other exit code is considered fatal and will cause Amanda to stop
+attempting to talk to the tape changer.
+
+ Slot names and the "current" slot
+
+Some tape changers, such as carousels and gravity stackers, have a hardware
+notion of current position. Others have no current position when no tape is
+loaded: all tapes are in their slots and the changer arm is docked away from
+the slots.
+Nevertheless, Amanda requires tape-changer scripts to maintain the notion of a
+"current" position. This is for performance reasons: as tapes tend to be loaded
+into the rack in order, and Amanda uses them in order, the next tape to use can
+be found much quicker if the position of the current one is remembered. As an
+example, the chg-multi script maintains the current position in a chg-
+multi.state file (or any other file specified in a `statefile' line in the
+changer configuration file).
+Amanda does not care how slots are available or how they are named. They could
+be numbered 0 to N-1, numbered 1 to N, or even designated by letter, A .. Z.
+The only requirement is that the names do not contain whitespace and that the
+names "current", "next", "prev", "first", "last" and "advance" retain their
+meaning as follows:
+current The position of the last loaded tape, as described above
+next The position after current, wrapping from the last slot to the first.
+prev The position before current, wrapping from the first slot to the last.
+first The first slot in the tape rack.
+last The last slot in the tape rack.
+advance The same as "next" except the next tape may not be loaded if the
+changer supports advancing to the next slot without putting that tape in the
+drive.
+The current position must be updated even if there is a positioning error (such
+as "empty slot"). This allows amanda to step through the entire tape rack by
+issuing successive "slot next" positioning commands.
+
+ Operator interface
+
+The amtape program is the main operator interface to Amanda's tape changer
+support. The commands supported include:
+amtape <conf> slot <slot-specifier> Load the tape from the specified slot into
+the drive
+amtape <conf> eject Send an eject command to the tape-changer. Effect is
+changer specific.
+amtape <conf> reset Send a reset command to the tape-changer. Effect is changer
+specific.
+amtape <conf> show Go through the entire tape rack, showing the labels of all
+amanda tapes encountered.
+amtape <conf> label <label> Find and load the tape with the specified label
+amtape <conf> taper Perform taper's scan algorithm (see below), loading the
+tape which would be picked for the next amdump run.
+amtape <conf> clean If a cleaning tape is defined by the changer, load it in
+the drive and put it away when done.
+amtape <conf> device Output the current tape device name.
+amtape <conf> current Display the contents of the current slot.
+amtape <conf> update Scan the entire tape rack and update the barcode database.
+See the amtape(8) man page for more details.
+In addition to amtape, amlabel has been modified to allow optionally specifying
+a slot:
+amlabel <conf> <label> [slot <slot-specifier>]
+amcheck looks for the next tape in the rack the same way the taper does. If
+multiple tapes are used in one night, amcheck attempts to find all the needed
+tapes in turn if the tape-changer is random access. On a one-way gravity
+stacker, amcheck only finds the first tape, since finding the subsequent ones
+would put the first one out of reach of that night's amdump run.
+amrestore and amrecover do not yet include any tape changer support directly,
+as amrestore knows nothing about the amanda.conf files or server-side
+databases. This is a deliberate decision to keep amrestore independent, so it
+can be run from any host with a tape drive, even if the original tape server
+host is down. To use amrestore in a tape-changer environment, use amtape to
+find the right tape, then run amrestore giving the resulting tape device name.
+
+ How amdump interacts with the tape changer
+
+Amanda does not require a particular tape label for a run. Any label that
+matches the labelstr regex and is determined to be "inactive" according to the
+tapelist database, may be written to. However, there is a preferred 'next'
+tape, the one that is next in the cycle implied by the current tapelist.
+amdump uses two algorithms, depending on whether the tape changer can go
+backwards in the rack or not. If multiple tapes are needed in a single run,
+this algorithm is repeated in turn whenever a new tape is required.
+Normal tape changers (those that can go backwards):
+With a full-access tape changer, amdump searches the entire rack for the
+preferred tape label. This tape will usually be found at the current or next
+position, but might be located anywhere. If the tape is found, it is used. If
+it is not found, the first tape encountered that matches the labelstr and is
+not active is picked.
+Gravity stackers (anything that can not go backwards):
+To avoid going all the way to the bottom of the stacker only to find that the
+preferred tape isn't present and nothing can be done, Amanda picks the first
+tape (starting at the current position) that matches the labelstr and is not
+active, regardless of whether it is the preferred tape.
+
+ Builtin tape-changers
+
+
+ chg-multi (formerly chg-generic)
+
+This tape changer script supports several common configurations:
+
+* Using multiple tape drives in a single host to emulate a tape changer. This
+  can also be used with a single physical drive to write several tapes in an
+  Amanda run.
+
+
+* Using a gravity stacker or a real changer configured to sequentially load the
+  next tape when the current one is ejected. Also supports a changer which
+  cycles to the first tape after loading the last one.
+
+
+* Using a changer accessed through several "virtual" tape devices which
+  determine which slot actually gets loaded in the tape drive.
+
+The advantage of this changer script is that you do not need to get into the
+complexity of dealing with a real changer interface. All the action goes
+through the tape device interface with standard mt commands, which eases many
+portability issues. Many common tape jukeboxes can be configured in a
+sequential or cycle mode.
+chg-multi ignores `tapedev' and `changerdev' because `changerfile' may specify
+several tape devices to be used. A sample configuration file may be found in
+example/chg-multi.conf.
+
+ chg-manual (formerly no-changer)
+
+This is a poor man's tape changer that requires the backup operator to change
+tapes manually. It expects `tapedev' in amanda.conf to point to a valid tape
+device, and stores some status data in files whose names start with the
+`changerfile'. `changerdev' is ignored.
+
+ chg-mtx (formerly hp-changer)
+
+An mtx-based tape changer script. `changerdev' must specify the tape device
+controlled by the mtx program, and `tapedev' must point to the no-rewind tape
+device to be used. More than likely, both `changerdev' and `tapedev' will
+reference the same device file. `changerfile' must specify a prefix for status
+files maintained by this script. It will maintain files named `changerfile'/
+changer-clean and `changerfile'/changer-access. You may have to edit the script
+to specify which slot contains a cleaning tape (cleanslot).
+The mtx program must support commands such as `-s', `-l' and `-u'. If the one
+you've got requires `status', `load' and `unload', you should use chg-zd-mtx
+instead (see below).
+
+ chg-zd-mtx
+
+Based on chg-mtx, but modified in order to support the Zubkoff/Dandelion
+version of mtx. Eric DOUTRELEAU <Eric.Doutreleau@int-evry.fr>, who contributed
+this script, reported that it works on a Solaris/sparc box with a HP 1557A
+stacker.
+In addition to the `changerfile'-clean and the `changerfile'-access files, it
+maintains a `changerfile'-slot file that indicates the currently loaded slot.
+There are lots of comments at the start of the script describing how to set it
+up.
+
+ chg-scsi-chio (formerly seagate-changer, then chg-chio)
+
+A C program that relies on scsi tape-changer interfaces. It may either use the
+tape changer interface specified in chio.h (Gerd Knor's SCSI media changer
+driver, a Linux kernel loadable module), or it may use built-in tape changer
+interfaces available on HPUX, Solaris 2.5, IRIX and possibly others, but only
+the chio and HPUX interfaces are currently implemented . `tapedev' specifies
+the tape device to be used; `changer_dev' is the device used to talk to the
+kernel module (for chio, usually /dev/ch0), and `changerfile' specifies a
+filename in which the current slot number will be stored.
+Now there is another way, to get the chg-scsi a little bit more flexible. If
+you use only one digit in the `tapedev' parameter, the chg-scsi expects that
+changerfile points to a real configuration file, not only a counting file. In
+this configuration file you may specify that the tapedrive needs an eject
+command and an optional waittime, necessary after inserting the tape into the
+drive. You are also able to configure a range of slots which should be used by
+your configuration. The idea behind this is, that you don't want Amanda to
+cycle all the tapes if Amanda searches exactly one tape. If you have a library
+which supports more than one drive you can also specify which drive to use. For
+each configuration (there should be at least one) you have to specify a file,
+where Amanda remembers which tape is actually in the drive. For future use
+there is also some stuff for cleaning the drives.
+In amanda.conf:
+
+  tapedev "x"       with x between 0 and 9, selects the configuration to use
+  changerfile "filename"            specifies the changer configuration file
+  	
+
+In the changer-config-file the following could be set:
+
+  number_configs x
+  #	x between 0 and 9 	number of configurations defined. This should be the
+  first parameter in the config-file.
+  eject	x
+  #	x 0 or 1		1 means that the drives need an eject command, before the robot
+  can handle the tape.
+  sleep	x
+  #	x between 0 and MAX_INT specifies the seconds to wait before the drive
+  could be used after inserting a tape. 5 should be OK.
+  cleanmax x	
+  #	x some positive int	How many cleanings does a cleaning tape survive
+  changerdev  <device>
+  #				The device for the robot
+  	
+
+And then there come some configuration sections, separated by the word `config`
+followed by the ordinal of that configuration (0 to 9). In each configuration
+section you should specify:
+
+  drivenum x		x between 0 and the number of drives in the library
+  This one specifies the drive to
+  use with this configuration
+  dev	<device>				The device for the tapedrive
+  startuse    x		x between 0 and maximum slotnumber of your library
+  Starting here we may use the tapes
+  enduse	 x		x between start and maximum slotnumber
+  This is the last tape we may use
+  in this configuration. If we reach
+  this one the next will be start..
+  statfile <filename>				Here we remember the last used
+  slot for this configuration
+  cleancart	x	x between 0 and maximum slotnumber
+  In this slot we find the
+  cleaning tape
+  cleanfile <filename>				Here we will remember how
+  often we used the cleaning tape
+  usagecount <filename>				This points to a file which is
+  deleted after cleaning the drive
+  e.g. the usagetime of the drive
+  	
+
+Comments begin with an '#' until end of line. Allowed separators are TAB and
+SPACE.
+
+ chg-scsi (new interface, try to drive a robot with direct scsi commands)
+
+The config and the syntax is the same as for chg-scsi-chio. New is the config
+type
+emubarcode 1
+With this option and the option labelfile chg-scsi will try to create an
+inventory. With this inventory it should be possible to use the search feature
+for loading tapes.
+debuglevel x:y
+This option will set the debug level and select for which part debug messages
+should be sent to the debug file. In case of problems you should set it to 9:0
+havebarcode 1
+This will force the program to read the barcodes, and don not try to figure out
+if there is an barcode reader available.
+scsitapedev <devicename>
+This device is used to control the tape, read status infos etc.
+tapestatus <filename>
+If this option is given on every eject/move the log pages of the tape device
+will be dumped in this file. There are 2 log pages were you can see how many
+read/write errors (corrected) are processed by the tape
+labelfile <filename>
+This file is used for the mapping from barcode labels to Amanda volume labels.
+It is used if the changer has a barcode reader. To initialize run amtape show,
+this will add the mapping for the tapes in the magazine.
+eject > 1
+Use the mtio ioctl to eject the tape, use only if the standard (1) does not
+work, and send the debug output (/tmp/amanda/chg-scsi.debug) to th@ant.han.de
+changerident <ident>
+With this it is possible to specify which internal driver to use for
+controlling/error handling of the robot
+tapeident <ident>
+Some as above but for the tape.
+New command line option: -status
+[all|types|robot|sense|ModeSenseRobot|ModeSenseTape|fd]
+<all> will show the result form all options. <types> will list the known driver
+types. <robot> will show the status of all elements (tape/robot/slots..)
+<sense> will show the result from a request sense <ModeSenseRobot> will show
+the sense page from the robot <ModeSenseTape> will show the sense page from the
+tape <fd> will show the devices which are open, and some info about it.
+At the moment changer with tape and robot on the same SCSI id ( but on
+different luns) will run on the following platforms:
+- HP_UX 10.20 - IRIX 6.x - Solaris - Linux - AIX - FreeBSD 3.0/4.0
+Tape and robot on different IDs run native on - Linux - HP-UX 10.20 - Irix 6.x
+- FreeBSD
+Tape and robot on different IDs with special modules run on: Solaris with sst
+kernel module, which is not any longer needed in solaris 2.8. See in the
+contrib/sst directory The configuration on solaris 2.8 with the sgen driver is
+done by creating the file /kernel/drv/sgen.conf
+This file should contain at the beginning the following device-type-config-
+list="changer","sequential"
+This will force the driver to attach only to the devices with type either
+changer (the robot) and sequential (the tape). Next you must tell the driver on
+which id it should check for devices (tape on id 5, robot on id 6 in this
+example),
+name="sgen" class="scsi" target=5 lun=0; name="sgen" class="scsi" target=6
+lun=0;
+This will create the 2 device files /dev/scsi/sequential/c0t5d0 (scsitapedev
+option in chg-scsi.conf) /dev/scsi/changer/c0t6d0 (changer option in chg-
+scsi.conf)
+So the complete sgen.conf looks like: device-type-config-
+list="changer","sequential name="sgen" class="scsi" target=5 lun=0; name="sgen"
+class="scsi" target=6 lun=0;
+For HP you have to create the special device files for the pass throu
+interface. Check if the ctl driver is installed. Example:
+
+  # lsdev -C ctl
+      Character     Block       Driver          Class
+        203          -1         sctl            ctl
+
+Next check on which bus your drives are connected. (ioscan) with the Character
+device num form the lsdev and the card instance from ioscan create the special
+file. Example:
+
+  mknod /dev/scsi/1 c 203 0x001000
+                            ||||
+                            ||| LUN of device
+                            ||SCSI ID of the device
+                            2 digit instance number from ioscan
+
+On FreeBSD 4.0 the syntax for the device files has changed. Now you have to
+tell chg-scsi the bus:target:lun combination. If you for example on your scsi
+bus 0 target 3 an robot the syntax is changerdev 0:3:0 To get this info you can
+use the camcontrol command, <camcontrl devlist> will give you a list of known
+devices. Don't specify dev and scsitapedev in your chg-scsi.conf !!, this will
+not work.
+On Linux you need either sg (generic scsi) as module or it must be compiled
+into the kernel. If the sg driver doses not work try to use the ioctl
+interface. For that you have to undef the LINUX_CHG define in changer-src/scsi-
+linux.c Also you have to change the NORMAL_TIMEOUT in /usr/src/linux/drivers/
+scsi/scsi_ioctl.c from (10 * HZ) to (5 * 60 * HZ). On linux it does not run if
+you are using an aha1542 SCSI controller. The driver can not handle the
+extended request sense.
+On IRIX you find the SCSI pass through interfaces for every device in /dev/
+scsi.
+chg-scsi has been tested/run with the following devices: Exabyte 10h and eliant
+tape HP-Surestore 1200e and C1553A tape BreeceHill Q2.15 (EXB-120) and DLT7000
+tape Powerstor L200 and DLT7000 ARCHIVE Python 28849-XXX TANDBERG TDS 1420 ADIC
+VLS DLT Library
+It is now possible with a changer that has barcode reader to load tapes faster.
+Also amdump will find tapes faster. Every time a tape is labeled the
+information in the labelfile will be updated. To initialize the label mapping
+you can also do an amtape config show. This will put the mapping for all tapes
+in the magazine into the mapping file.
+For all problems please contact th@ant.han.de. Please include in your mail the
+debug file. (/tmp/amanda/chg-scsi.debug)
+
+chg-chio
+
+(new perl script that replaces the original chg-chio written in C) This script
+is based on the FreeBSD version of chio, a program to communicate with the
+jukebox. This script has for the moment only been test with FreeBSD and is
+likely not to work on any other system. Let me know if this is the case and
+send me the output of the chio program for your version of chio. It does not
+restrict the number of tapes, except that if there is only one tape in the
+juke, it is supposed to be in max_slot and not in slot 1. [This is the first
+version of the changer script and I would appreciate all comments on it, at
+nick.hibma@jrc.it. It has been tested only with FreeBSD 2.2.5 and the
+accompanying chio program.]
+
+chg-chs
+
+(formerly chs-changer) A tape changer script very similar to chg-multi, that
+uses the `chs' program to change tapes. As in chg-multi, `tapedev' is ignored.
+`changerfile' names its configuration file, similar to chg-multi.conf.
+`changerdev' will be passed to CHS in a -f command-line switch, unless it is
+set to an empty string or "/dev/null" (watch out for default values!)
+
+chg-rth
+
+(formerly rth-changer) A perl5 script that controls an HPc1553 tape drive via a
+Peripheral Vision Inc. SCSI control subsystem that interprets commands sent on
+the SCSI bus. It expects `tapedev' to specify the tape device to be used.
+`changerfile' and `changerdev' are ignored.
+
+chg-juke
+
+A shell script that uses the Fermilab "juke" software (see http://www.fnal.gov/
+fermitools, the "juke" link) to control tape chagners. It supports mounting
+multiple tapes for RAIT tapedrive sets, both multiple jukeboxes, or one jukebox
+with multiple tape drives, or combinations. 'juke' must be configured to know
+tape drives by the same name Amanda calls them. It uses 'changerfile' to track
+Amanda's current tape state, 'tapedev' must be the tape drive (or RAIT set)
+name, and 'changerdev' is the juke software's name for the changer, or a csh-
+glob that expands to several jukebox names (i.e. "changer{a,b,c}").
+
+chg-rait
+
+A shell script that runs other changers in tandem, and returns a rait:
+{dev1,dev2,...} tape device based on the results of each other changer. So if
+you wanted to have 2 stackers striped with no parity, and you have chg-mtx
+support for your stackers, you would use the follwing changerfile:
+
+
+     nchangers=3
+     tpchanger_1="chg-mtx"
+     changerdev_1="/dev/mtx1"
+     changerfile_1="/some/file1"
+     tapedev_1="/some/dev"
+     tpchanger_2="chg-mtx"
+     changerdev_2="/dev/mtx2"
+     changerfile_2="/some/file2"
+     tapedev_2="/some/dev"
+     tpchanger_3="chg-null"
+     changerdev_3="/dev/null"
+     changerfile_3="/some/file3"
+     tapedev_3="/some/dev"
+
+The third uses the null changer. The tapedev_n entries are only needed if the
+changerfile in question uses them.
+
+chg-disk
+
+Clone of the chg-zd-mtx, but modified to be applied on local directories
+instead of tapes. This changer emulates a robotic that uses virtual tapes
+instead of real ones, where the virtual tapes are real directories on a hard
+disk.
+The directory tree should be:
+
+  slot_root_dir -|
+                 |- info
+                 |- data -> slot1/
+                 |- slot1/
+                 |- slot2/
+                 |- ...
+                 |- slotn/
+
+Where "slot_root_dir" is the tapedev "file:xxx" parameter and "n" the tapecycle
+parameter.
+Please refer to How_to_use_the_Amanda_file-driver for details of usage.
+
+chg-iomega
+
+This changer script is designed for IOMEGA or JAZZ disks of various sizes as
+well as any other removable disk media. This is a PURELY MANUAL changer. It
+requests insertion of disk media via messages on /dev/tty. So it cannot be used
+via crontab. Make sure you comply with any of the following. - Add statements
+
+          tpchanger "chg-iomega"
+          tapedev "file:<mount_point_of_removable_disk>"
+          (e.g. tapedev "file:/mnt/iomega" )
+          tapetype IOMEGA
+
+
+          define tapetype IOMEGA {
+              comment "IOMega 250 MB floppys"
+              length 250 mbytes
+              filemark 100 kbytes
+              speed 1 mbytes
+          }
+
+to your amanda.conf. - Add entry to /etc/fstab to specify mount point of
+removable disk and make this disk mountable by any user. - Format all disks,
+add a "data" sub directory and label all disks by using amlabel. - Be aware
+that as of version 2.4.4p1, Amanda can't handle backups that are larger than
+the size of the removable disk media. So make sure /etc/amanda/<backup_set>/
+disklist specifies chunks smaller than the disk size.
+
+chg-null
+
+A trivial changer which loads/unloads on a null: device. Useful with chg-rait
+to throw away a parity stripe by puttin on a null jukebox, or for testing.
+-------------------------------------------------------------------------------
+
+Prev                   Up                  Next
+Chapter 7. Tapetypes  Home  Chapter 9. chg-scsi
+

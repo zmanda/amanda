@@ -1,0 +1,112 @@
+
+Part II. About Tapes and Changers
+Prev                         Next
+
+-------------------------------------------------------------------------------
+
+
+Part II. About Tapes and Changers
+
+
+
+Tape-Drives and Tape-Changers
+
+Amanda is able to use a wide range of Tape-Drives and Tape-Changers. This
+section contains information on the concept of the tapetypes as well as
+information on how to make use of your tape-changer by using the appropriate
+changer-scripts.
+Table of Contents
+
+
+  7._Tapetypes
+
+  8._Amanda_Tape_Changer_Support
+
+
+        Introduction
+
+        Specifying_a_tape_changer_in_amanda.conf
+
+        Device-specific_tapechanger_script
+
+        Slot_names_and_the_"current"_slot
+
+        Operator_interface
+
+        How_amdump_interacts_with_the_tape_changer
+
+        Builtin_tape-changers
+
+
+              chg-multi_(formerly_chg-generic)
+
+              chg-manual_(formerly_no-changer)
+
+              chg-mtx_(formerly_hp-changer)
+
+              chg-zd-mtx
+
+              chg-scsi-chio_(formerly_seagate-changer,_then_chg-chio)
+
+              chg-scsi_(new_interface,_try_to_drive_a_robot_with_direct_scsi
+              commands)
+
+              chg-chio
+
+              chg-chs
+
+              chg-rth
+
+              chg-juke
+
+              chg-rait
+
+              chg-disk
+
+              chg-iomega
+
+              chg-null
+
+
+
+  9._chg-scsi
+
+
+        Command_line_options
+
+        Notes_about_changer.conf
+
+        Amanda's_actual_usage_of_chg-scsi
+
+        Configuration_notes
+
+        Hacking_notes
+
+
+  10._RAIT_(Redundant_Array_of_Inexpensive_Tape)_Support
+
+
+        What_is_a_RAIT?
+
+        Using_a_RAIT
+
+        Disaster_Recovery
+
+
+  11._Printing_of_Labels
+
+
+        The_New_Feature
+
+        Labels_provided
+
+        History
+
+        How_it_works
+
+
+-------------------------------------------------------------------------------
+
+Prev                                      Next
+Chapter 6. Restore  Home  Chapter 7. Tapetypes
+

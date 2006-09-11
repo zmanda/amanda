@@ -1,0 +1,150 @@
+
+                             amrestore
+Prev  Chapter 36. The Amanda Manual Pages.  Next
+
+-------------------------------------------------------------------------------
+
+Name
+
+amrestore  extract backup images from an Amanda tape
+
+Synopsis
+
+amrestore [ -r | -c | -C ] [ -b | blocksize ] [ -f | fileno ] [ -l | label ] [-
+p] [-h] tapedevice | holdingfile [ hostname [ diskname [ datestamp [ hostname
+[ diskname [ datestamp | ... ]]]]]]
+
+DESCRIPTION
+
+Amrestore extracts backup images from the tape mounted on tapedevice or from
+the holding disk file holdingfile that match hostname, diskname and datestamp
+patterns given on the command line. The tape or holding file must be in a
+format written by the amdump or amflush program.
+If diskname is not specified, all backups on the tape for the previous hostname
+are candidates. If datestamp is not specified, all backups on the tape for the
+previous hostname and diskname are candidates. If no hostname, diskname or
+datestamp are specified, every backup on the tape is a candidate.
+Hostname and diskname are special expressions described in the "HOST & DISK
+EXPRESSION" section of amanda(8). Datestamp are special expression described in
+the "DATESTAMP EXPRESSION" section of amanda(8). For example, if diskname is
+"rz[23]a", it would match disks rz2a and rz3a.
+Datestamp is useful if amflush writes multiple backup runs to a single tape.
+Unless -p is used, candidate backup images are extracted to files in the
+current directory named:
+hostname.diskname.datestamp.dumplevel
+Amrestore doesn't use a changer, it restore from the tape already loaded in the
+tapedevice.
+
+OPTIONS
+
+
+
+  -b
+      Set the blocksize used to read the tape or holding file. All holding
+      files must be read with a blocksize of 32 KBytes. Amrestore should
+      normally be able to determine the blocksize for tapes on its own and not
+      need this parameter.
+
+The default is 32 KBytes.
+
+
+  -f
+      Do a rewind followed by a fsf <fileno> before trying to restore an image.
+
+  -l
+      Check if we restoring from the tape with the right label
+
+  -p
+      Pipe output. The first matching backup image is sent to standard output,
+      which is normally a pipe to restore or tar, then amrestore quits. It may
+      be run again to continue selecting backups to process. Make sure you
+      specify the no-rewind tapedevice when doing this.
+
+Note: restore may report "short read" errors when reading from a pipe. Most
+versions of restore support a blocking factor option to let you set the read
+block size, and you should set it to 2. See the example below.
+
+
+  -c
+      Compress output using the fastest method the compression program
+      provides. Amrestore normally writes output files in a format understood
+      by restore or tar, even if the backups on the tape are compressed. With
+      the -c or -C option, amrestore writes all files in compressed format,
+      even if the backups on the tape are not compressed. Output file names
+      will have a .Z or .gz extension depending on whether compress or gzip is
+      the preferred compression program. This option is useful when the current
+      directory disk is small.
+
+  -C
+      Compress output using the best method the compression program provides
+      (may be very CPU intensive). See the notes above about the -c option.
+
+  -r
+      Raw output. Backup images are output exactly as they are on the tape,
+      including the amdump headers. Output file names will have a .RAW
+      extension. This option is only useful for debugging and other strange
+      circumstances.
+
+  -h
+      Header output. The tape header block is output at the beginning of each
+      file. This is like -r except -c or -C may also be used to compress the
+      result. Amrecover uses the header to determine the restore program to
+      use.
+
+If a header is written (-r or -h), only 32 KBytes are output regardless of the
+tape blocksize. This makes the resulting image usable as a holding file.
+
+
+  -o configoption
+      See the "CONFIGURATION OVERWRITE" section in amanda(8).
+
+
+EXAMPLES
+
+The following does an interactive restore of disk rz3g from host seine, to
+restore particular files. Note the use of the b option to restore, which causes
+it to read in units of two 512-byte blocks (1 Kbyte) at a time. This helps keep
+it from complaining about short reads.
+
+% amrestore -p /dev/nrmt9 seine rz3g | restore -ivbf 2 -
+The next example extracts all backup images for host seine. This is the usual
+way to extract all data for a host after a disk crash.
+
+% amrestore /dev/nrmt9 seine
+If the backup datestamp in the above example is 19910125 and seine has level 0
+backups of disks rz1a and rz1g on the tape, these files will be created in the
+current directory:
+
+seine.rz1a.19910125.0
+seine.rz1g.19910125.0
+You may also use amrestore to extract a backup image from a holding disk file
+that has not yet been flushed to tape:
+
+% amrestore -p /amanda/20001119/seine.rz1a.2 | restore -ivbf 2 -
+Amrestore may be used to generate a listing of images on a tape:
+
+% mt -f /dev/nrmt9 rewind
+% amrestore -p /dev/nrmt9 no-such-host > /dev/null
+This asks amrestore to find images for host no-such-host. It will not find any
+entries that match, but along the way will report each image it skips.
+
+CAVEATS
+
+GNU-tar must be used to restore files from backup images created with the
+GNUTAR dumptype. Vendor tar programs sometimes fail to read GNU tar images.
+
+AUTHOR
+
+James da Silva, <jds@amanda.org>, University of Maryland, College Park:
+Original text
+Stefan G. Weichinger, <sgw@amanda.org>, maintainer of the Amanda-documentation:
+XML-conversion
+
+SEE ALSO
+
+amanda(8), amdump(8), amflush(8), tar(1) restore(8)
+-------------------------------------------------------------------------------
+
+Prev       Up       Next
+amreport  Home  amrmtape
+

@@ -1,0 +1,197 @@
+
+Chapter 17. How to use different auth with Amanda
+Prev  Part III. HOWTOs                       Next
+
+-------------------------------------------------------------------------------
+
+Chapter 17. How to use different auth with Amanda
+
+
+Jean-Louis Martineau
+
+Original text;XML-conversion;Updates
+AMANDA Core Team
+<martinea@iro.umontreal.ca>
+Table of Contents
+
+
+  Introduction
+
+  BSD
+
+  BSDTCP
+
+  BSDUDP
+
+  KRB4
+
+  KRB5
+
+  RSH
+
+  SSH
+
+
+        For_amdump:
+
+        For_amrecover:
+
+
+
+Note
+
+Refer to http://www.amanda.org/docs/howto-auth.html for the current version of
+this document.
+This document covers the use of the auth in Amanda 2.5.1 and higher.
+
+Introduction
+
+
+ BSD
+
+You must configure amanda with --with-bsd-security and --with-amandahosts.
+The xinetd.d/amanda file on the client:
+
+  service amanda
+  {
+        only_from               = 127.0.0.1
+        socket_type             = dgram
+        protocol                = udp
+        wait                    = yes
+        user                    = amanda
+        group                   = amanda
+        groups                  = yes
+        server                  = /path/to/amandad
+        server_args             = -auth=bsd amdump
+        disable                 = no
+  }
+
+The only_from line should list your tape server ip address.
+The ~amanda/.amandahosts file on the client:
+
+  tapeserver.fqdn amanda amdump
+
+If you want to also enable amindexd and amidxtaped, you must change the
+server_args line in the xinetd.d/amanda file on the tape server:
+
+        server_args             = -auth=bsd amdump amindexd amidxtaped
+
+The only_from line should list all machine that can use amdump/amrecover. It's
+the .amandahosts that will limit which client can use amdump/amindexd/
+amidxtaped.
+The ~amanda/.amandahosts file on the tape server must have a line for each
+machi ne:
+
+  clientmachine1 amanda amindexd amidxtaped
+  clientmachine2 amanda amindexd amidxtaped
+
+
+ BSDTCP
+
+Like bsd but you must configure amanda with --with-bsdtcp-security and --with-
+amandahosts and do 4 changes in the xinetd.d/amanda file:
+
+        socket_type             = stream
+        protocol                = tcp
+        wait                    = no
+        server_args             = -auth=bsdtcp amdump
+
+
+ BSDUDP
+
+Like bsd but you must configure amanda with --with-bsdudp-security and --with-
+amandahosts and do 1 change in the xinetd.d/amanda file:
+
+        server_args             = -auth=bsdudp amdump
+
+
+ KRB4
+
+You must configure amanda with --with-krb4-security.
+
+ KRB5
+
+You must configure amanda with --with-krb5-security.
+
+ RSH
+
+You must configure amanda with --with-rsh-security.
+It's your system that should allow your server user to rsh to your client user.
+If your server username and client username are different, you must add the
+client_username option in all DLE for that host.
+
+  client_username "client_username"
+
+If your server amandad path and client amandad path are different, you must set
+the amandad_path option in all DLE for that hosts.
+
+  amandad_path "client/amandad/path"
+
+
+ SSH
+
+You must configure amanda with --with-ssh-security.
+
+ For amdump:
+
+You must create an ssh key for your server. In this example, the key is put in
+the id_rsa_amdump file:
+
+  ssh-keygen -t rsa
+  Enter file in which to save the key (/home/amanda/.ssh/id_rsa)? /home/
+  amanda/.ssh/id_rsa_amdump
+
+You must set the ssh_keys option in all DLE for that host:
+
+  ssh_keys "/home/amanda/.ssh/id_rsa_amdump"
+
+You mush append the /home/amanda/.ssh/id_rsa_amdump.pub file to the .ssh/
+authorized_keys file of all client host.
+For security reason, you must prepend the line with the following:
+
+  from="tape_server_fqdn_name",no-port-forwarding,no-X11-forwarding,no-agent-
+  forwarding,command="/path/to/amandad -auth=ssh amdump"
+
+That will limit that key to connect only from your server and only be able to
+execute amandad.
+Like rsh if your server username and client username are different, you must
+add the client_username option in all DLE for that
+host:
+
+  client_username "client_username"
+
+Like rsh, if your server amandad path and client amandad path are different,
+you must set the amandad_path option in all DLE for that hosts:
+
+  amandad_path "client/amandad/path"
+
+
+ For amrecover:
+
+You must create an ssh key for root on all clients that can use amrecover. In
+this example, the key is put in the /root/.ssh/id_ rsa_amrecover file:
+Log in as root:
+
+  ssh-keygen -t rsa
+  Enter file in which to save the key (/root/.ssh/id_rsa)? /root/.ssh/
+  id_rsa_amrecover
+
+You must set the ssh_keys option in the amanda_client.conf file
+
+  ssh_keys "/root/.ssh/id_rsa_amrecover"
+
+You mush append all client /home/root/.ssh/id_rsa_amrecover.pub file to the /
+home/amanda/.ssh/authorized_keys of the server.
+For security reason, you must prefix all lines with the following:
+
+  from="aclient_fqdn_name",no-port-forwarding,no-X11-forwarding,no-agent-
+  forwarding,command="/path/to/amandad -auth=ssh amindexd amidxtaped"
+
+That will limit every client key to connect from the client and only be able to
+execute amandad.
+-------------------------------------------------------------------------------
+
+Prev                                      Up                           Next
+Chapter 16. How to do Amanda-server-side Home  Part IV. Various Information
+gpg-encrypted backups. 
+

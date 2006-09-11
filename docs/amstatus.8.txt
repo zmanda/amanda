@@ -1,0 +1,80 @@
+
+                              amstatus
+Prev  Chapter 36. The Amanda Manual Pages.  Next
+
+-------------------------------------------------------------------------------
+
+Name
+
+amstatus  display the state of an Amanda run
+
+Synopsis
+
+amstatus [--config ] config [ --file amdumpfile ] [--summary ] [--dumping ] [--
+waitdumping ] [--waittaper ] [--dumpingtape ] [--writingtape ] [--finished ] [-
+-failed ] [--estimate ] [--gestimate ] [--stats ]
+
+DESCRIPTION
+
+Amstatus gives the current state of the Amanda run specified by the config
+configuration. If there is no active Amanda running, it summarizes the result
+of the last run. It may also be used to summarize the results of a previous
+run.
+See the amanda(8) man page for more details about Amanda.
+
+OPTIONS
+
+All options may be abbreviated to the shortest non-ambiguous sub-string. If no
+options are given, everything is displayed.
+
+
+  [--config] config
+      Specify the Amanda configuration you want to display the state for.
+
+  --file amdumpfile
+      Specify an alternate file instead of the amdump or amflush file.
+
+  --summary
+      Display a summary of the state of the run.
+
+  --dumping
+      Display all partitions that are dumping.
+
+  --waitdumping|wdumping
+      Display all partitions that are waiting to be dumped.
+
+  --waittaper|wtaper
+      Display all partitions dumped that are waiting to be written to tape.
+
+  --dumpingtape|dtape
+      Display all partitions that are dumping directly to tape.
+
+  --writingtape|wtape
+      Display all partitions that are writing to tape.
+
+  --finished
+      Display all partitions that are dumped and written to tape.
+
+  --failed|error
+      Display all partitions that failed.
+
+  --estimate
+      Display all partitions whose estimate is finished. Works only during the
+      estimate phase.
+
+  --gestimate|gettingestimate
+      Display all partitions whose estimate is not finished. Works only during
+      the estimate phase.
+
+  --stats|statistics
+      Display statistics about active-time of taper and dumpers.
+
+
+SEE ALSO
+
+amanda(8), amcheck(8), amdump(8), amrestore(8), amadmin(8)
+-------------------------------------------------------------------------------
+
+Prev       Up     Next
+amrmtape  Home  amtape
+

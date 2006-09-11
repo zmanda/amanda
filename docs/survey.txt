@@ -1,0 +1,623 @@
+
+     Chapter 20. AMANDA Survey Results
+Prev  Part IV. Various Information  Next
+
+-------------------------------------------------------------------------------
+
+Chapter 20. AMANDA Survey Results
+
+
+Jon LaBadie
+
+Original text
+AMANDA Core Team
+<jon@jgcomp.com>
+
+Stefan G. Weichinger
+
+XML-conversion
+AMANDA Core Team
+<sgw@amanda.org>
+
+Note
+
+Refer to http://www.amanda.org/docs/survey.html for the current version of this
+document.
+
+Note
+
+This chapter still needs much more formatting, there are many tables and lists,
+that need to get added. Volunteers welcome. sgw, April, 2005.
+
+Introduction
+
+AMANDA (Advanced Maryland Automatic Network Disk Archiver) is a backup system
+freely available available in source form. For more information about AMANDA
+visit the website http://www.amanda.org.
+Readers of the amanda-users mailing list (approximately 1100 subscribers) were
+asked in April of 2003 to describe their use of the backup system by filling
+out a survey questionnaire that was posted to the mailing list weekly. Seventy
+two (72) surveys were submitted during the month-long collection period.
+In several postings that follow, I will report summaries of the collected data.
+In some cases I've included comments (Surveyor's Notes) of my own reaction to
+the data.
+Later, I plan to recast these results in the form of questions and answers to
+add to the FOM (FAQ-O-Matic) at amanda.org. Should you have any thoughts on
+this please let me know via the list or personal email.
+Jon LaBadie
+<jon@jgcomp.com>
+
+Note
+
+[Surveyor's Note] While the number of submitted surveys neither surprised me,
+nor disappointed me, what did greatly disappoint me personally was this fact:
+Of the twenty five (25) individuals most active on the list (based on number of
+postings for 12 months), only seven (7) bothered to respond to the survey.
+
+Organizations
+
+What follows is a summarization of the responses describing the organizations
+using AMANDA.
+ _____________________________________________________________________________
+|Types_of_organizations_using_AMANDA|___|_____________________________________|
+|Category___________________________|Num|Type_________________________________|
+|University_Department______________|20_|_____________________________________|
+|Research_Organizations_____________|10_|medical,_scientific,_engineering,____|
+|___________________________________|___|oceanography,_statistical,_behavioral|
+|Internet_Service_Providers_________|5__|_____________________________________|
+|Data Processing Services           |11 |software, graphics, integration,     |
+|___________________________________|___|consulting___________________________|
+|Manufacturers (DP)                 |5  |computers, electronics,              |
+|___________________________________|___|semiconductors_______________________|
+|Manufacturers_(non-DP)_____________|4__|rubber,_chemical,_turbine,_video_____|
+|Government_Related_________________|3__|federal,_local,_public_defender______|
+|Service Organizations              |4  |publishing, power utility, forestry, |
+|___________________________________|___|money_management_____________________|
+|Small_Office/Home_Office___________|6__|_____________________________________|
+|Others                             |3  |natural history museum, education    |
+|___________________________________|___|charity,_national_opera_and_ballet.__|
+
+
+Note
+
+[Surveyor's Note] The `Categories' were my grouping, they were not on the
+survey. I expected more in the SOHO category.
+
+Note
+
+[Surveyor's Note] Extent of AMANDA usage was asked on the survey. Few indicated
+that their entire firm based their backups on AMANDA, and then only relatively
+small companies (like JG Computing :). Thus the category is `University
+Department' not `University'. Similarly, AMANDA is used by a groups within
+organizations like the chemical manufacturer or computer manufacturer or
+federal government noted above, not the entire entity. But AMANDA may have
+helped produce the tires you are riding on, the workstation you are typing on,
+or to collect the taxes you pay :))
+ _________________________________________________
+|Location_of_organizations_using_AMANDA___________|
+|1_Belgium|1_Japan_______________|2_Poland________|
+|1_Canada_|1_Mexico______________|2_Switzerland___|
+|1_Estonia|1_Norway______________|3_Sweden________|
+|1_Finland|1_Portugal____________|5_Germany_______|
+|1_France_|1_United_Arab_Emirates|5_United_Kingdom|
+|1_Italy__|2_The_Netherlands_____|45_United_States|
+
+
+Note
+
+[Surveyor's Note] The totals are greater than number of submitted surveys as
+some respondents described multi-national installations.
+
+Note
+
+[Surveyor's Note] Americans must be procrastinators. For a while, the number of
+non-US submitted surveys exceeded the ones from the US.
+ _________________________________________
+|Length_of_AMANDA_usage_at_organization|__|
+|0_-_1_years___________________________|25|
+|1_-_2_years___________________________|8_|
+|2_-_3_years___________________________|13|
+|3_-_4_years___________________________|10|
+|4_-_5_years___________________________|8_|
+|5_-_6_years___________________________|2_|
+|7_-_8_years___________________________|2_|
+|8_-_9_years___________________________|2_|
+|9+_years______________________________|1_|
+|10%_of_responders_>_5_years_use_______|__|
+|33%_of_responders_>_3_years_use_______|__|
+|50%_of_responders_>_2_years_use_______|__|
+|33%_of_responders_<_1_year_use________|__|
+
+Mean and Median are ~29 months (2.5 years)
+
+Note
+
+[Surveyor's Note] Some really long time users of AMANDA. It must do the job.
+
+Servers and Clients
+
+
+AMANDA servers
+
+ _________
+|Number|__|
+|1_____|53|
+|2_____|11|
+|3_____|5_|
+|5_____|1_|
+|6_____|1_|
+|7_____|1_|
+
+Table 20.1. Operating Systems Running on AMANDA Server Hosts
+ _____________________________________
+|FreeBSD:_______|Total_10,_including__|
+|2______________|4-STABLE_____________|
+|1______________|4.7__________________|
+|1______________|4x___________________|
+|HP-UX:_________|Total_2,_including___|
+|1______________|10.20________________|
+|1______________|11.00________________|
+|Irix:__________|Total_2,_including___|
+|1______________|6.5__________________|
+|SCO_Openserver:|Total_1,_including___|
+|1______________|5.0.6________________|
+|Solaris:_______|Total_14,_including__|
+|5______________|8____________________|
+|1______________|8_x86________________|
+|3______________|9____________________|
+|Tru64:_________|Total_4,_including___|
+|2______________|5.1__________________|
+|Linux:_________|Total_48,_including__|
+|13_____________|Debian_Total_________|
+|1______________|2.4__________________|
+|2______________|3.0__________________|
+|3______________|Woody________________|
+|14_____________|RedHat_Total_________|
+|1______________|6.2__________________|
+|2______________|7.1__________________|
+|1______________|7.2__________________|
+|6______________|7.3__________________|
+|3______________|8.0__________________|
+|1______________|8.0_with_RHNet_kernel|
+|1______________|Slackware_Total______|
+|1______________|7____________________|
+|3______________|SuSE_Total___________|
+|2______________|8.1__________________|
+
+
+AMANDA Versions Run on Server Hosts
+
+2.4.1: Total 2, including
+1 2.4.1p1
+2.4.2: Total 33, including
+1 2.4.2p1
+28 2.4.2p2
+2.4.3: Total 21, including
+1 2.4.3b2
+1 2.4.3b3
+2 2.4.3b4
+2.4.4: Total 21, including
+2 2.4.4-20030415
+1 2.4.4-20030426
+[Surveyor's Note] The percentage of older versions surprised me.
+Shouldn't have as I just upgraded 2 months ago. If it works why fix it?
+
+AMANDA CLIENTS
+
+
+Number of AMANDA Clients
+
+client num.
+hosts sites
+14
+25
+36
+46
+57
+a6-1012
+b11-2013
+21-3012
+31-505
+61-704
+
+Operating Systems Run on AMANDA Clients
+
+(mentions, not number of hosts)
+AIX, total 4, including Linux (all variants), 86 total including
+1 4 Debian, 17 total
+1 2.2
+Darwin, total 1 1 2.4
+2 3.0
+FreeBSD total 17, including 1 potato
+1 2.2.5 2 sarge
+1 3.2 1 sid
+1 3.3 1 stable
+1 3.4 2 woody
+2 4-STABLE Mandrake, 1 total
+1 4.1 1 8
+1 4.7 RedHat, 26 total
+1 5.0 1 5.0
+1 6.0
+HP-UX, 8 total, including 2 6.2
+1 10 1 6.2 Alpha
+2 10.20 2 6.2 Sparc
+3 11 3 7.1
+2 7.2
+Irix, 8 total, including 4 7.3
+3 6.5 5 8.0
+1 6.5 MIPS 1 9
+Slackware, 3 total
+MacOS X, 6 total, including 2 7.0
+1 10.1 PowerPC 1 8.1
+1 10.2 PowerPC SuSe, 4 total
+2 8.1
+NetBSD, 1 total, including Yellowdog, 1 total
+1 1.6 1 2.3 PowerPC
+OpenBSD, 1 total, including Tru64, 8 total, including
+1 3.2 1 4.0 Alpha
+1 5.1
+Snap, 1 total
+Windows, 22 total, including
+Solaris, 39 total, including 1 95
+2 2.5 2 98
+2 2.6 4 NT
+5 7 1 NT 4 server
+11 8 7 2000
+4 9 3 XP
+3 8 x86
+1 9 x86
+SunOS, 1 total, including
+1 SunOS 4.1.4
+
+AMANDA Versions of Run on Client Hosts
+
+2.4.1, 4 total, including
+3 2.4.1p1
+2.4.2, 42 total, including
+1 2.4.2p1
+33 2.4.2p2
+2.4.3, 30 total, including
+1 2.4.3b2
+1 2.4.3b3
+1 2.4.3b4
+2.4.4, 25 total, including
+2 2.4.4-20030415
+1 2.4.4-20030426
+1 2.4.4b1
+
+Installation Properties
+
+
+Total Disk Capacity of Clients
+
+smallest: 20 GB
+largest: 5000 GB
+13 20 to 100 GB
+22 101 to 200 GB
+16 201 to 500 GB
+12 501 to 1000 GB
+5 1001 to 2000 GB
+6 2001 to 5000 GB
+
+Total Data Currently Stored on Clients Disks
+
+smallest: 3 GB
+largest: 4000 GB
+22 3 to 50 GB
+14 51 to 100 GB
+15 101 to 200 GB
+10 201 to 500 GB
+7 501 to 1000 GB
+5 1001 to 4000 GB
+
+Average Size of a Single Backup
+
+smallest: 0.3 GB
+largest: 700 GB
+22 0.3 to 10 GB
+11 11 to 20 GB
+22 21 to 50 GB
+13 51 to 100 GB
+8 101 to 200 GB
+1 350 GB
+1 700 GB
+
+Backup Program Used
+
+72 use gnutar or some tar variant including:
+3 hfstar
+1 nttar
+1 smbtar
+50 use dump or some dump variant including:
+1 e2fsdump
+2 ext2dump
+12 ufsdump
+2 vdump
+1 vfsdump
+2 vxdump
+5 xfsdump
+
+Dumpcycle
+
+5 0 days
+3 1 days
+1 2 days
+6 3 days
+5 5 days
+34 7 days
+17 8 days - 2 weeks
+10 15 days - 4 weeks
+5 30 days - 75 days
+1 4 months
+1 6 months
+1 1 year
+1 1000 days
+
+Frequency of Backups
+
+6 1/week
+4 2/week
+4 3/week
+5 4/week
+36 5/week
+6 6/week
+31 7/week
+2 1/month
+
+Type of Compression Used
+
+1 gpg
+15 none
+17 hw
+31 sw - server
+46 sw - client
+
+Installed Hardware
+
+
+Brand and Model of Tape Drive Used at AMANDA Installations
+
+The number of mentions of each brand is shown
+followed by specific models where reported.
+3 Archive, including: 2 Qualstar TLS-4200
+Python 04106
+Python 06408 10 Quantum, including:
+DLT-VS80
+5 Compaq, including: DLT-4000
+AIT-2 DLT-7000
+DLT-90 DLT-8000
+MSL5126-S2
+SDLT320 10 Seagate, including:
+DAT
+1 Dell DLT-IV 12/24G
+20/40G
+5 Ecrix, including: CTL-96/4586N
+VXA-1 DDS4
+DDS3 Scorpion-24/STD124000N
+5 Exabyte, including: 13 Sony, including:
+8500 AIT-1
+Eliant 820 AIT-2
+VXA-2 AIT-3
+DLT-IV
+15 HP, including: DLT-9000
+A4845A SDX-500C
+C1533A Sony SDX-700C
+C1557
+C6280-7000 3 Sun, including:
+DDS-4 DDS3
+DLT vs80 7000
+ESL9595 Python
+SureStor DAT-24
+SureStor DAT-8 7 Tandberg, including:
+Surestore Ultrium 230e DLT vs80
+Ultrium 1 SDLT 220
+SDLT-320
+1 IBM DDS4 SLR5
+SLR7
+1 Mammoth
+2 Wang, including:
+3 None, backup to disk only DAT 3400DX
+2 Overland Data, including:
+Loaderexpress DLT8000
+
+Native Tape Capacity of the Above Drives
+
+7 4 GB 8 35 GB
+1 7 GB 13 40 GB
+2 10 GB 8 50 GB
+11 12 GB 1 60 GB
+1 15 GB 1 80 GB
+1 17 GB 7 100 GB
+10 20 GB 1 110 GB
+1 22 GB 3 160 GB
+4 25 GB 1 500 GB
+2 30 GB
+
+Preferred Brand of Tape
+
+2 Compaq
+1 Dell
+4 Exabyte
+3 Fujifilm
+5 HP
+1 Imation
+2 Maxell
+2 Quantum
+11 Sony
+1 Verbatim
+16 No Preference
+
+Tape Format
+
+1 4mm 1 EXA
+4 8mm 3 LTO
+2 AIT 1 Mammoth
+1 AIT-1 4 sDLT
+7 AIT-2 1 sDLT320
+3 AIT-3 1 SLR
+8 DDS-2 1 SLR25
+12 DDS-3 1 SLR7
+6 DDS-4 1 Travan-20
+15 DLT 1 VXA
+1 DLT-80 1 VXA V-23
+7 DLT-IV 1 VXA-2
+
+Tape Changers/Libraries Used at AMANDA Installations
+
+[Surveyor's Note] A total of 28 of 72 respondents reported having using
+tape changer or library. Several of those reported having more than one.
+Surprisingly, the 28 respondents reported 26 distinct models of changer/
+library.
+The table below shows the models reported by 28 respondents. Where multiple
+reports for the same model existed, only one entry is show. Where the
+multiple reports showed different configurations (eg. 1 drive vs 2 drive),
+only the larger configuration is shown.
+BRAND MODEL # of # of total
+drives tapes capacity
+ADIC ?? 1 4 200 GB
+ADIC FastStor DLT 1 7 245 GB
+Compaq MSL5126 1 25 4000 GB
+Compaq SSL2020 2 20 1000 GB
+Dell Powervault 122T 1 8 320 GB
+Hewlett-Packard A4845A 5 588 20000 GB
+Hewlett-Packard C1557A 1 6 72 GB
+Hewlett-Packard ESL9595 2 595 70000 GB
+Hewlett-Packard MSL5026S2 2 26 4160 GB
+Hewlett-Packard SureStore 6x40 1 6 120 GB
+Hewlett-Packard SureStore 6x24 1 6 72 GB
+Overland Data LXB 4120 1 10 150 GB
+Overland Data Library Pro 1 19 1900 GB
+Overland Data LoaderXpress 1 15 525 GB
+Qualstar 6220 2 20 700 GB
+Qualstar TLS-4200 2 20 2000 GB
+Quantum DLT7000 2560 1 8 320 GB
+Segate CTL-96/4586N 1 4 14 GB
+Sony TSL-9000 1 8 96 GB
+SpectraLogic Bullfrog 10000 3 40 10000 GB
+SpectraLogic Treefrog 2000 1 15 750 GB
+StorageTek Timberwolf 9730 2 30 1000 GB
+Straightline Harrier/830 2 30 1500 GB
+Sun L20 2 20 2000 GB
+Sun L40 2 40 1600 GB
+Sun Storedge L9 1 9 360 GB
+
+Special Feature Usage
+
+What follows is a summarization of the responses describing the
+use of two special features of recent versions of AMANDA, the
+"file:driver" to use a hard disk drive as a backup device and
+RAIT (Redundant Array of 'Inexpensive' Tapedrives) to allow
+mirroring or striping of backups across multiple drives.
+
+The file:driver
+
+Do you use the <file:driver>?
+53 no
+11 yes
+5 what is the <file:driver>
+If not, do you expect to?
+32 no
+14 yes
+8 maybe
+
+RAIT
+
+Do you use RAIT?
+68 no
+0 yes
+If not, do you expect to?
+40 no
+8 yes
+3 maybe
+[Surveyor's Note] I was mildly surprised, and amused, by the 5 "what is the
+<file:driver> responses. And considering those responses, but the lack of
+similar responses to the RAIT question.
+[Surveyor's Note] No respondent uses RAIT! Disappointing. I wonder if any
+site is currently using this feature.
+
+Non UNIX Clients
+
+What follows is a summarization of the responses describing the
+various methods to backup 'non-unix' clients, mostly PC's running
+versions of Windows.
+
+PC's Backed Up Using SAMBA Connections to AMANDA Clients
+
+A total of 22 survey respondents (of 72) report
+they use amanda and samba to backup PC clients.
+10 have 1 PC client
+10 have 2 - 5 PC clients
+1 has 15 PC clients
+1 has 40 PC clients
+[Surveyor's Note] From these results it seems to me that amanda/samba
+is seldom a first choice for backing up PC's. Instead it seems to be
+used when a site has an existing amanda installation and would like
+to implement some form of PC backup.
+The respondents mentioned the following Operating Systems
+were being run on the PC clients. The number is the number
+of mentions, not number of PC's.
+1 Windows 95 2 Windows 2000 Server
+1 Windows 98 5 Windows XP
+3 Windows NT 1 Windows XP Pro
+2 Windows NT 4 1 Snap Server
+9 Windows 2000
+[Surveyor's Note] Of interest to users running Lotus Domino:
+One respondent reported using "The Open File Manager"
+from http://www.stbernard.com to create online backups of
+their Lotus Domino database files which then could be
+backed up to their amanda host using samba.
+
+PC's Backed Up Using Cygwin/AMANDA Client Software
+
+A total of 4 survey respondents (of 72) report
+they use a cygwin/amanda client to backup PC clients.
+2 have 1 PC client
+1 has 3 PC clients
+1 has 15 PC clients
+The only PC operating systems mentioned were
+Windows 2000 and Windows 2000 Server.
+
+PC's Backed Up by AMANDA Using Other Techniques
+
+A variety of techniques, other than samba or cygwin,
+were described by respondents to backup PC's
+1. Two respondents installed an NFS server on Windows 2000
+and then NFS mounted the PC disks on the amanda host
+and backed them up as local file systems.
+2. Similarly, two respondents mounted PC shares of Windows 95,
+Windows NT, and Windows 2000 on the amanda host using 'smbmount'
+and backed them up as local 'smbfs' file systems.
+3. Several respondents reported they first backed up their PC's
+(Windows 98, Windows 2000, Windows XP, Windows 2000 Server)
+to disk files on the PC's and then backed that file up using
+amanda; presumably using samba or some file transfer technique.
+One mentioned that the backup stream was sent directly to a
+Linux host and backed up there as a local file.
+The backup programs the respondents mentioned included:
+'Windows backup program'
+'BackupPC', a Linux opensource program
+'Win2000 Backup Tool'
+'Backup Exec'
+4. One respondent noted their firewall was a PC running linux.
+That system was mirrored using rsync and the mirror was backed up.
+
+Other Backup Techniques Mentioned
+
+Five respondents described backing up systems using "non-traditional"
+methods. These methods were used to backup systems running either
+MacOS or Windows. They included:
+1. MacOS 9, mounted (NFS?) onto a Linux host and backing up the mounts as
+local filesystems.
+2. Backing up 37 MacOS 8 and MacOS 9 systems using the program Retrospect.
+The output of Retrospect was transferred to a Linux host using ftp and
+preserved with amanda.
+3. Build a native amanda client on MacOS X and use hfstar instead of gnutar.
+4. Backup 6 Windows XP hosts using a native windows amanda client.
+5. Backup 12 Windows 2000 Server hosts using a native windows amanda client.
+This respondent also noted their intention to switch to a cygwin/amanda
+client in the near future.
+-------------------------------------------------------------------------------
+
+Prev                          Up                           Next
+Chapter 19. AMANDA WISHLIST  Home  Part V. Technical Background
+

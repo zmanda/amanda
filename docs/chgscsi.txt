@@ -1,0 +1,266 @@
+
+                   Chapter 9. chg-scsi
+Prev  Part II. About Tapes and Changers  Next
+
+-------------------------------------------------------------------------------
+
+Chapter 9. chg-scsi
+
+
+Jason X (report real name to <sgw@amanda.org>)
+
+Original version
+
+Stefan G. Weichinger
+
+XML-conversion;Updates
+AMANDA Core Team
+<sgw@amanda.org>
+Table of Contents
+
+
+  Command_line_options
+
+  Notes_about_changer.conf
+
+  Amanda's_actual_usage_of_chg-scsi
+
+  Configuration_notes
+
+  Hacking_notes
+
+
+Note
+
+Refer to http://www.amanda.org/docs/chgscsi.html for the current version of
+this document.
+Jason's new and improved chg-scsi documentation.
+This documentation will also include an occasional reference to the mtx suite
+as I have attempted to use chg-zd-mtx. I use mtx often as a fast query tool.
+Please also refer to Amanda_Tape_Changer_Support for additional details.
+My equipment list is as follows:
+
+* Redhat 7.0 machine
+*
+  o Dual Processor P-III
+  o Sony DDS3 tape drive
+  o lots of hard disk space
+
+* Quantum/ATL L500 SCSI changer
+* DLT tape drive (three possible)
+* barcode reader fourteen tape slots
+
+I base this documentation on the following:
+
+* mtx version 1.2.16rel
+* Amanda version 2.4.3b3
+* SCSI2 specification: X3T9.2/375R revision 10L
+* Quantum/ATL Field Service Manual 6321101-03 Ver.3, rel.0
+* Quantum DLT800 Tape system product manual 02 April, 2001 81-60118-04
+* the SCSI bus and IDE interface 2nd ed by Friedhelm Schmidt pub: Addison-
+  Wesley 1998
+
+Note that Quantum/ATL's L-series changers follow the SCSI command set, and do
+not use any proprietary commands. Thus, it was fairly simple to make this work.
+I had to install Amanda --with-suffixes and setup my server's client side of
+things using Amanda-2.4.2p2 --with-suffixes.
+Please note that my usage of "barcode" and "barcode reader" throughout this
+document really refers to "physical tape identification system". for example:
+the EEPROM in the AIT cartridge.
+
+ Command line options
+
+chg-scsi's command line options:
+
+  -slot <param>
+  -info
+  -reset
+  -eject
+  -clean
+  -label <param>
+  -search <param>
+  -status <param>
+  -trace <param>
+  -inventory
+  -dumpdb
+  -scan
+  -genconf
+
+Note that chg-scsi is called by Amanda in the context of whatever Amanda
+configuration Amanda is currently using. In short, to call chg-scsi by hand,
+change to your Amanda configuration directory, then run chg-scsi.
+-slot <param> command:
+this command takes either a slot number, or any one of the following: current,
+next, prev, first, last, advance
+It then loads the appropriate tape into the drive.
+Note that if the tape is already loaded, no changer motion will happen. No
+reading of the tape is done here.
+-info command:
+four numbers are printed: <slot# loaded> <number of slots> <reversable>
+<searchable>
+with chg-scsi, the reversable number is always 1. Searchable is set based on if
+a barcode reader is available and working correctly.
+-reset command:
+Tape is unloaded, and slot 0 is loaded. No actual reset command is sent to the
+changer.
+-eject command:
+Tape is unloaded, and put back into its original slot.
+-clean command:
+Cleaning tape (if configured) is loaded into the tape. It is probably unloaded
+when done. I haven't looked closely at this yet.
+-label <param> command:
+This appears to take the currently loaded tape's barcode and write it to the
+labelfile with the given parameter as it's tape header. I have not tested this.
+-search <param> command:
+this only should be used if a barcode reader is present, or emulate barcode is
+turned on.
+the required parameter is an Amanda tape label. The label searched in the
+labelfile. If a barcode is found, then that tape is loaded directly.
+I believe the fallback is to search the entire magazine.
+-status command:
+The tape changer is queried, and the results are printed out. Values printed
+are what slots exist, are they full or empty, and what volume labels (barcodes)
+they are.
+Q. what about changers that don't retain current slot? A. this is what the
+"statfile" is for.
+-trace command:
+present only for a particular type of changer.
+-inventory: (this takes a LONG time to do)
+unloads tape back to its slot issues command to changer to do an inventory of
+itself (read all barcodes...)
+loads each tape, retrieves the barcode, and reads the Amanda
+label off of the tape itself stores/updates the label database file
+-dumpdb:
+prints out in human readable form the label database contents from the
+labelfile.
+-scan: (aka scanbus)
+scans the SCSI generic interfaces (eg: linux sg), and prints out the device
+name and the device types. I found that linux didn't classify either of my tape
+devices as generic, but this facility did.
+USE THIS FOR FINDING VALUE OF SCSItapedev. Be certain though you have the
+correct tape drive: I came close to wreaking havoc with my DDS3 drive while it
+was flushing Amanda data...and my changer has a DLT drive! Please refer to my
+configuration notes below.
+-genconf:
+prints out a SAMPLE changer.conf file. Note that I said sample. except for that
+it also does a scanbus. if you have more than one tape drive, please be certain
+it is correct as chg-scsi uses the first one it finds.
+Please refer to my configuration notes below.
+
+ Notes about changer.conf
+
+Here, I try to be a bit more clear on what these config values mean.
+"number_configs" MUST be the first entry (not counting comments)
+"emubarcode" will set this value in chg-scsi regardless of the value you try to
+assign it. If you don't want "emubarcode" set, don't list it!
+"havebarcode" have barcode is tempered by what devices chg-scsi is aware of. if
+chg-scsi doesn't know about your changer explicitly, it will default to a
+default changer. the default changer has no barcode reader.
+In a patch I plan to post, I have added a generic changer that does use a
+barcode. set "changerident" to "genericbarcode" to use this.
+"sleep" number of seconds for chg-scsi to wait for a "tape drive ready" command
+after loading a new tape. Mine is 140 as I have a DLT tape drive, and my tape
+drive manual reports a max of 133 seconds to be ready.
+"config" this is a header telling chg-scsi that all values following, up to the
+next "config" line apply to this drive number. It is this number that is
+refered to in your amanda.conf file as line tapedev
+"drivenum" this is the tape drive number in your changer. For a single tape
+drive, this is zero. Mine can handle up to three, so I expect I could make this
+0, 1, or 2.
+"dev" the SCSI device of your tape drive. under linux, in my case it is /dev/
+nst1. This MUST be defined.
+"SCSItapedev" The generic SCSI device of your tape drive. this is simply the
+generic interface to the device "dev" above. This entry is optional. In my
+case, it is /dev/sg2. If this entry exists and is legitimate, then SCSI
+commands are formed directly instead of using ioctl commands.
+"startuse" "enduse" The start and end slots of your changer. Note that these
+also start with zero.
+"eject" chg-scsi tells the tape changer to eject. You might need to explicitly
+tell the tape drive to unload first. That's what this setting is for. Have you
+ever removed a loaded VCR tape by hand?
+"changerident" chg-scsi will first read the changer's identification from the
+return of the SCSI "inquiry" command. If changerident is set in the
+configuration file, the SCSI inquiry's value is overridden. chg-scsi will
+attempt to match the value with its built-in changertypes.
+"generic" is what the chg-scsi will default to "genericbarcode" is a hack of
+mine that forces the changer's barcode reader to work. Note that if your
+changer uses a superset of the SCSI command set, this probably won't work.
+"L500" is another addition of mine that will enable a quantum/atl L500 to work
+correctly. It might even work with an L200.
+other values are (taken from the code)
+
+* C1553A (HP Auto Loader)
+* EXB-10e, EXB-120 (Exabyte Robot)
+* EXB-85058HE-0000 (Exabyte Tape)
+* TDS 1420 (Tandberg Robot)
+* VLS DLT, VLS SDX (ADIC VLS DLT Library)
+* FastStor DLT (ADIC FastStor DLT Library)
+* Scalar DLT 448 (ADIC DLT 448)
+* 215 (Spectra Logic TreeFrog)
+* Quad 7 (Breece Hill)
+* DLT7000, DLT4000 (DLT Tape)
+
+"debuglevel" setting this to "9:0" is very informative.
+"statfile" stores which "slot" that the tape in the drive came from
+"labelfile" binary file that stores the tape header and barcode information
+cleanmax cleancart cleanfile I have my changer set to autoclean, and the slot
+the cleaning cartridge is in is not available for any other use.
+
+ Amanda's actual usage of chg-scsi
+
+this should be brief: Amanda really only issues "slot next" type commands.
+Currently Amanda doesn't ask chg-scsi to load "tape x with label Daily_set023".
+the chg-scsi mechanism is there for use, and functions quite well for the user
+to load a particular tape. I understand they (the Amanda team) are working on
+this.
+
+ Configuration notes
+
+(assuming one changer with one tape drive!)
+in amanda.conf:
+set tpchanger to chg-scsi set changerfile to <pathname>/changer.conf set
+tapedev to 0 set changerdev to /dev/<changer generic device>
+
+* this value is usually listed in the system boot messages or will be printed
+  via syslog when the appropriate kernel module is loaded. eg: linux modprobe
+  sg
+
+in changer.conf: set number_configs to 1 set dev to <non-rewinding tape device
+eg: /dev/nst1> set debug to 9:0
+run "chg-scsi -scan" from your Amanda configuration directory I get: name /dev/
+sg0 Tape Count 1 name /dev/sg1 Changer Count 2 name /dev/sg2 Tape Count 3
+I set SCSItapedev to /dev/sg0 to test with, then ran chg-scsi -info. Check the
+chg-scsi debug file for tapeidentification details. This is where I discoverd
+that "sg0" was not the correct tape!
+set SCSItapedev to "/dev/<generic device>"
+if you have no barcode, try "changerident generic" if you have a barcode reader
+try "changerident genericbarcode"
+
+ Hacking notes
+
+My hacks are:
+
+* adding printout of "emubarcode" values in the debug file
+* added dlt8000 tape drive to ChangerIO[], and SenseType[]
+* added genericbarcode to ChangerIO[], and SenseType[]
+* added L500 to ChangerIO[], and SenseType[]
+* added a couple of basic sensecodes listed in the SCSI specs for the generic
+  and genericbarcode tape changers.
+
+My desires are:
+
+* modify the sensecode code such that all SCSI devices inherit the standard
+  SCSI codes and may override or append to them as needed.
+
+
+* modify the configuration reading code and the inquiry command to allow
+  spaces. eg: my changer displays the following ident data: "L500 6320000" but
+  I had to create a type called "L500" or else the spaces would throw off the
+  comparisons.
+
+-------------------------------------------------------------------------------
+
+Prev                            Up                                   Next
+Chapter 8. Amanda Tape Changer Home  Chapter 10. RAIT (Redundant Array of
+Support                                         Inexpensive Tape) Support
+

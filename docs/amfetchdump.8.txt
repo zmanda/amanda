@@ -1,0 +1,147 @@
+
+                           amfetchdump
+Prev  Chapter 36. The Amanda Manual Pages.  Next
+
+-------------------------------------------------------------------------------
+
+Name
+
+amfetchdump  extract backup images from multiple Amanda tapes.
+
+Synopsis
+
+amfetchdump [-pcClawns] [-d device] [-O directory] [-i logfile] [-b blocksize]
+config hostname [ disk [ date [ level [ hostname [...] ] ] ] ] [ -o |
+configoption ]*
+
+DESCRIPTION
+
+Amfetchdump pulls one or more matching dumps from tape or from the holding
+disk, handling the reassembly of multi-tape split dump files as well as any
+tape autochanger operations.
+It will automatically use the logs created by amdump(8) to locate available
+dumps on tape, in the same way that the find feature of amadmin(8) lists
+available dumps. If these logs are unavailable, it can search tape-by-tape to
+find what it needs, and can generate new logs to serve as an emergency tape
+inventory.
+The hostname, diskname, datestamp, and level dump pattern-matching works as in
+amrestore(8), with the added requirement that at minimum a hostname must be
+specified when not in inventory mode.
+Unless -p is used, backup images are extracted to files in the current
+directory named:
+hostname.diskname.datestamp.dumplevel
+
+OPTIONS
+
+
+
+  -p
+      Pipe exactly one complete dump file to stdout, instead of writing the
+      file to disk. This will restore only the first matching dumpfile (where
+      "first" is determined by the dump log search facility).
+
+  -d device
+      Restore from this tape device instead of the default.
+
+  -O directory
+      Output restored files to this directory, instead of to the current
+      working directory.
+
+  -c
+      Compress output, fastest method available.
+
+  -C
+      Compress output, smallest file size method available.
+
+  -l
+      Leave dumps in the compressed/uncompressed state in which they were found
+      on tape. By default, amfetchdump will automatically uncompress when
+      restoring.
+
+  -a
+      Assume that all tapes are already available, via tape changer or
+      otherwise, instead of prompting the operator to ensure that all tapes are
+      loaded.
+
+  -i filename
+      Generate an inventory of all dumps "seen" on the tapes we search, for
+      later use as a log.
+
+  -w
+      Wait to put split dumps together until all chunks have been restored.
+      Normally, amfetchdump will attempt to read pieces of a split file from
+      tape in order, so that it can assemble them simply by appending each file
+      to the first. This option disables the appending behavior, and instead
+      restores each piece as an individual file and reassembles them only after
+      all have been restored.
+
+      Note
+
+      This requires at least double the size of your dump in free disk space,
+      in order to build the final assembled dumpfile.
+      This behavior is implicitly invoked in circumstances where knowing the
+      location of all dumps on tape in advance is not possible, such as when
+      you are restoring without log files.
+
+  -n
+      Do not reassemble split dump files at all, just restore each piece as an
+      individual file.
+
+  -s
+      Do not fast-forward straight to needed files on tape. This will slow down
+      most restores substantially. Only use this option if your tape drive does
+      not properly support the fast-forward operation.
+
+  -b blocksize
+      Force a particular block size when reading from tapes. This value will
+      usually be autodetected, and should not normally need to be set.
+
+  -o configoption
+      See the "CONFIGURATION OVERWRITE" section in amanda(8).
+
+
+EXAMPLES
+
+All the examples here assume your configuration is called SetA.
+Here's a simple case, restoring all known dumps of the host vanya to the
+current working directory.
+
+$ amfetchdump SetA vanya
+A more likely scenario involves restoring a particular dump from a particular
+date. We'll pipe this one to GNU-tar as well, to automatically extract the
+dump.
+
+$ amfetchdump -p SetA vanya /home 20051020 | gtar -xvpf -
+In a situation where all of our dump logs have been wiped out, we could also
+use amfetchdump to inventory our tapes and recreate an imitation of those logs,
+which we'll send to stdout for casual perusal.
+
+$ amfetchdump -i - SetA
+Note that you can specify a restore while in inventory mode, and amfetchdump
+will continue searching for more dumps from this host even after successfully
+restoring a dump, inventorying all the while. If your backup searcher has been
+trashed, this is a handy way to recover what you have.
+
+$ amfetchdump -i /var/amanda/log SetA backupserver
+
+CAVEATS
+
+Amfetchdump is dependent on accessing your server's config, tape changer, and
+(normally) dump logs. As such, it's not necessarily the most useful tool when
+those have all been wiped out and you desperately need to pull things from your
+tape. Pains have been taken to make it as capable as possible, but for
+seriously minimialist restores, look to amrestore(8) or dd(8) instead.
+
+AUTHOR
+
+John Stange, <building@nap.edu>, National Academies Press
+Ian Turner, <ian@zmanda.com>: XML-conversion
+
+SEE ALSO
+
+amanda(8), amadmin(8), amrestore(8), tar(1) restore(8)
+-------------------------------------------------------------------------------
+
+Prev     Up      Next
+amdump  Home  amflush
+

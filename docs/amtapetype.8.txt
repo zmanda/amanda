@@ -1,0 +1,100 @@
+
+                            amtapetype
+Prev  Chapter 36. The Amanda Manual Pages.  Next
+
+-------------------------------------------------------------------------------
+
+Name
+
+amtapetype  generate a tapetype definition.
+
+Synopsis
+
+amtapetype [-h ] [-c ] [-o ] [-b blocksize] [-e estsize] [-f tapedev] [-
+t typename]
+
+DESCRIPTION
+
+amtapetype generates a tapetype entry for Amanda.
+
+OPTIONS
+
+
+
+  -h
+      Display an help message.
+
+  -c
+      Run only the hardware compression detection heuristic test and stop. This
+      takes a few minutes only.
+
+  -o
+      Overwrite the tape, even if it's an Amanda tape.
+
+  -bblocksize
+      record block size (default: 32k)
+
+  -eestsize
+      estimated tape size (default: 1g == 1024m)
+
+  -ftapedev
+      tape device name (default: $TAPE) The device to perform the test.
+
+  -ttypename
+      tapetype name (default: unknown-tapetype)
+
+
+EXAMPLE
+
+Generate a tapetype definition for your tape device:
+
+% amtapetype -f /dev/nst0
+
+NOTES
+
+Hardware compression is detected by measuring the writing speed difference of
+the tape drive when writing an amount of compressable and uncompresseable data.
+It does not rely on the status bits of the tape drive or the OS parameters. If
+your tape drive has very large buffers or is very fast, the program could fail
+to detect hardware compression status reliably.
+During the first pass, it writes files that are estimated to be 1% of the
+expected tape capacity. It gets the expected capacity from the -e command line
+flag, or defaults to 1 GByte. In a perfect world (which means there is zero
+chance of this happening with tapes :-), there would be 100 files and 100 file
+marks.
+During the second pass, the file size is cut in half. In that same fairyland
+world, this means 200 files and 200 file marks.
+In both passes the total amount of data written is summed as well as the number
+of file marks written. At the end of the second pass, quoting from the code:
+* Compute the size of a filemark as the difference in data written between pass
+1 and pass 2 divided by the difference in number of file marks written between
+pass 1 and pass 2. ... *
+So if we wrote 1.0 GBytes on the first pass and 100 file marks, and 0.9 GBytes
+on the second pass with 200 file marks, those additional 100 file marks in the
+second pass took 0.1 GBytes and therefor a file mark is 0.001 GBytes (1 MByte).
+Note that if the estimated capacity is wrong, the only thing that happens is a
+lot more (or less, but unlikely) files, and thus, file marks, get written. But
+the math still works out the same. The -e flag is there to keep the number of
+file marks down because they can be slow (since they force the drive to flush
+all its buffers to physical media).
+All sorts of things might happen to cause the amount of data written to vary
+enough to generate a big file mark size guess. A little more "shoe shining"
+because of the additional file marks (and flushes), dirt left on the heads from
+the first pass of a brand new tape, the temperature/humidity changed during the
+multi-hour run, a different amount of data was written after the last file mark
+before EOT was reported, etc.
+Note that the file mark size might really be zero for whatever device this is,
+and it was just the measured capacity variation that caused amtapetype to think
+those extra file marks in pass 2 actually took up space.
+It also explains why amtapetype used to sometimes report a negative file mark
+size if the math happened to end up that way. When that happens now we just
+report it as zero.
+
+SEE ALSO
+
+amanda(8)
+-------------------------------------------------------------------------------
+
+Prev     Up    Next
+amtape  Home  amtoc
+

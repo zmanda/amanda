@@ -1,0 +1,109 @@
+
+Chapter 35. Usage of floppy tape drives on Linux
+Prev  Part VI. Historical files             Next
+
+-------------------------------------------------------------------------------
+
+Chapter 35. Usage of floppy tape drives on Linux
+
+
+Albrecht Gebhardt
+
+Original text<albrecht.gebhardt@uni-klu.ac.at>
+
+Stefan G. Weichinger
+
+XML-conversion,Updates
+AMANDA Core Team
+<sgw@amanda.org>
+
+Note
+
+Refer to http://www.amanda.org/docs/zftape.html for the current version of this
+document.
+Amanda now supports the ftape driver version 3.04d (see http://www-
+math.math.rwth-aachen.de/~LBFM/claus/ftape ). It adjusts the blocksize
+automatically to 32k and supports QIC volume tables.
+It uses only one open() call for writing backups to one tape, so the "busy"-
+lamp of the drive will be on all the time. (With normal Amanda code it would be
+off in pauses between two files written to tape.)
+For volume table support you have to get libvtblc first (available at ftp://
+pc02-stat.sci.uni-klu.ac.at/pub/Linux/libvtblc.) This library contains the
+functions and subroutines from the vtblc utility, distributed with ftape.
+(Maybe this library will be part of a future ftape package).
+You have to set the raw tape device for volume table operations, usually /dev/
+rawft0, either via configure --with-ftape-rawdevice= or with rawtapedev in
+amanda.conf (configure checks for /dev/rawft[0-3], to get a guess for this
+value). Dont forget to make this device read/writeable for your backup user.
+For compilation you need the header files from ftape 3.04d in your include
+tree.
+The volumetable of a tape "amlabeled" TEST-VOL2 with 4 backups on it would look
+like (listed with vtblc utility from ftape):
+
+  prompt: vtblc
+
+   Nr  Id          Label                   Date           Start      End
+  Space
+
+    0 VTBL TEST-VOL2               23:08:06 03/15/98        3        4    0.00
+  %
+    1 VTBL gamma //beta/C 0        00:00:00 03/15/98        5      374    0.68
+  %
+    2 VTBL gamma sda2 0            00:00:00 03/15/98      375     1029    1.21
+  %
+    3 VTBL alpha sda2 0            00:00:00 03/15/98     1030     1906    1.62
+  %
+    4 VTBL alpha sda6 0            00:00:00 03/15/98     1907     8092   11.45
+  %
+    5 VTBL Amanda Tape End         01:45:15 03/16/98     8093     8094    0.00
+  %
+
+With lvtblc, currently available with the libvtblc library, you can list the
+complete label strings (44 characters, not only the first 22 characters as with
+vtblc):
+
+
+  prompt: lvtblc -l
+
+   Nr  Id          Label                                         Date
+
+    0 VTBL TEST-VOL2                                     23:08:06 03/15/98
+    1 VTBL gamma //beta/C 0                              00:00:00 03/15/98
+    2 VTBL gamma sda2 0                                  00:00:00 03/15/98
+    3 VTBL alpha sda2 0                                  00:00:00 03/15/98
+    4 VTBL alpha sda6 0                                  00:00:00 03/15/98
+    5 VTBL Amanda Tape End                               01:45:15 03/16/98
+
+Note on datestamps: volume 0 (Amanda label): reflects the time of starting the
+backup volume i (backup files): Amanda datestamps of the backup files last
+volume (end marker) : reflects the time of finishing the backup
+I tested this on a Linux machine (P90 / 96Mb RAM / 256 Mb swap) with two other
+clients (Linux / WfW) using
+
+* Linux Kernel 2.0.33,
+* ftape 3.04d,
+* Amanda 2.4.0b6p4
+
+with an internal Iomega Ditto 3200 (TR-3) drive attached to an Iomega Ditto
+Dash controller (at 2000 Kbps). My tapetype follows:
+
+  define tapetype DITTO-TR3 {
+      comment "Iomega DITTO 3200 Travan 3 tape drives"
+      length 1500 mbytes          #
+      filemark 29 kbytes          # ???
+      speed 256 kbytes            # = 2000 Kbit/s ?
+  }
+  	
+
+
+Note
+
+Filemarks are not written to the tape (they are written to the header segment
+and use there 128 byte), so their size could even be 0. But a tape segment
+takes at least 29 kb (+3 kb ecc-code = 32 kb), so in the worst case an eof will
+waste 29 kb.
+-------------------------------------------------------------------------------
+
+Prev                         Up                   Next
+Chapter 34. Y2K Compliancy  Home  Part VII. Appendixes
+

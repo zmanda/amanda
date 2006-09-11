@@ -1,0 +1,80 @@
+
+                             amgetconf
+Prev  Chapter 36. The Amanda Manual Pages.  Next
+
+-------------------------------------------------------------------------------
+
+Name
+
+amgetconf  look up amanda.conf variables
+
+Synopsis
+
+amgetconf [config] parameter [ -o | configoption ]*
+
+DESCRIPTION
+
+Amgetconf looks up parameters in amanda.conf, the Amanda configuration file, or
+from the build and runtime environment, and returns their corresponding value.
+If config is not specified, amgetconf assumes it is being run from the
+configuration directory and that amanda.conf is present.
+If parameter begins with build., the (case insensitive) string following the
+period is a build environment variable. Variables without a value (e.g. XFSDUMP
+on a system that does not support that type of file system) will not report an
+error and will return an empty string as the value. Flag variables (e.g.
+USE_AMANDAHOSTS) will return 1 if the flag is set or an empty string if it is
+not.
+If parameter begins with dbopen., the string following the period is a program
+name and an Amanda debug file will be created for the caller. The name of the
+file is returned.
+If parameter begins with dbclose., the string following the period is a program
+name previously used with dbopen., followed by a colon (:) and the previously
+opened file name.
+See the amanda(8) man page for more details about Amanda.
+
+OPTIONS
+
+
+
+  -o configoption
+      See the "CONFIGURATION OVERWRITE" section in amanda(8).
+
+
+EXAMPLE
+
+Find out the path to the log file directory:
+
+% amgetconf daily logdir
+/usr/local/etc/amanda//daily
+Find out the current tape type:
+
+% amgetconf daily tapetype
+DLT4000-IV
+Find out the default configuration directory:
+
+% amgetconf daily build.CONFIG_DIR
+/usr/local/etc/amanda/
+Create, use and close a debug file in a script:
+
+% set debug_file = `amgetconf daily dbopen.myscript`
+% echo debug information >> $debug_file
+% amgetconf daily dbclose.myscript:$debug_file
+
+MESSAGES
+
+
+
+  amgetconf: no such parameter param
+      Parameter param is not a known keyword (e.g. not a valid amanda.conf
+      keyword). In this case, amgetconf will write "BUGGY" to stdout as the
+      value.
+
+
+SEE ALSO
+
+amanda(8)
+-------------------------------------------------------------------------------
+
+Prev      Up      Next
+amflush  Home  amlabel
+

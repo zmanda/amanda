@@ -1,0 +1,624 @@
+
+                           amanda.conf
+Prev  Chapter 36. The Amanda Manual Pages.  Next
+
+-------------------------------------------------------------------------------
+
+Name
+
+amanda.conf  Main configuration file for Amanda, the Advanced Maryland
+Automatic Network Disk Archiver
+
+DESCRIPTION
+
+amanda.conf is the main configuration file for Amanda. This manpage lists the
+relevant sections and parameters of this file for quick reference.
+
+PARAMETERS
+
+There are a number of configuration parameters that control the behavior of the
+Amanda programs. All have default values, so you need not specify the parameter
+in amanda.conf if the default is suitable.
+Lines starting with # are ignored, as are blank lines. Comments may be placed
+on a line with a directive by starting the comment with a #. The remainder of
+the line is ignored.
+Keywords are case insensitive, i.e. mailto and MailTo are treated the same.
+Integer arguments may have one of the following (case insensitive) suffixes,
+some of which have a multiplier effect:
+
+POSSIBLE SUFFIXES
+
+
+
+  b byte bytes
+      Some number of bytes.
+
+  bps
+      Some number of bytes per second.
+
+  k kb kbyte kbytes kilobyte kilobytes
+      Some number of kilobytes (bytes*1024).
+
+  kps kbps
+      Some number of kilobytes per second (bytes*1024).
+
+  m mb meg mbyte mbytes megabyte megabytes
+      Some number of megabytes (bytes*1024*1024).
+
+  mps mbps
+      Some number of megabytes per second (bytes*1024*1024).
+
+  g gb gbyte gbytes gigabyte gigabytes
+      Some number of gigabytes (bytes*1024*1024*1024).
+
+  tape tapes
+      Some number of tapes.
+
+  day days
+      Some number of days.
+
+  week weeks
+      Some number of weeks (days*7).
+
+      Note
+
+      The value inf may be used in most places where an integer is expected to
+      mean an infinite amount.
+      Boolean arguments may have any of the values y, yes, t, true or on to
+      indicate a true state, or n, no, f, false or off to indicate a false
+      state. If no argument is given, true is assumed.
+
+
+PARAMETERS
+
+
+
+  includefile string
+      Default: none. The name of an Amanda configuration file to include within
+      the current file. Useful for sharing dumptypes, tapetypes and interface
+      definitions among several configurations.
+
+
+HOLDINGDISK SECTION
+
+The amanda.conf file may define one or more holding disks used as buffers to
+hold backup images before they are written to tape. The syntax is:
+
+  holdingdisk name {
+      holdingdisk-option holdingdisk-value
+      ...
+  }
+
+Name is a logical name for this holding disk.
+The options and values are:
+
+
+  comment string
+      Default: none. A comment string describing this holding disk.
+
+  directory disk
+      Default: /dumps/amanda. The path to this holding area.
+
+  use int
+      Default: 0 Gb. Amount of space that can be used in this holding disk
+      area. If the value is zero, all available space on the file system is
+      used. If the value is negative, Amanda will use all available space minus
+      that value.
+
+  chunksize int
+      Default: 1 Gb. Holding disk chunk size. Dumps larger than the specified
+      size will be stored in multiple holding disk files. The size of each
+      chunk will not exceed the specified value. However, even though dump
+      images are split in the holding disk, they are concatenated as they are
+      written to tape, so each dump image still corresponds to a single
+      continuous tape section. If 0 is specified, Amanda will create holding
+      disk chunks as large as ((INT_MAX/1024)-64) Kbytes. Each holding disk
+      chunk includes a 32 Kbyte header, so the minimum chunk size is 64 Kbytes
+      (but that would be really silly). Operating systems that are limited to a
+      maximum file size of 2 Gbytes actually cannot handle files that large.
+      They must be at least one byte less than 2 Gbytes. Since Amanda works
+      with 32 Kbyte blocks, and to handle the final read at the end of the
+      chunk, the chunk size should be at least 64 Kbytes (2 * 32 Kbytes)
+      smaller than the maximum file size, e.g. 2047 Mbytes.
+
+
+DUMPTYPE SECTION
+
+The amanda.conf file may define multiple sets of backup options and refer to
+them by name from the disklist file. For instance, one set of options might be
+defined for file systems that can benefit from high compression, another set
+that does not compress well, another set for file systems that should always
+get a full backup and so on.
+A set of backup options are entered in a dumptype section, which looks like
+this:
+
+  define dumptype name {
+      dumptype-option dumptype-value
+      ...
+  }
+
+Name is the name of this set of backup options. It is referenced from the
+disklist file.
+Some of the options in a dumptype section are the same as those in the main
+part of amanda.conf. The main option value is used to set the default for all
+dumptype sections. For instance, setting dumpcycle to 50 in the main part of
+the config file causes all following dumptype sections to start with that
+value, but the value may be changed on a section by section basis. Changes to
+variables in the main part of the config file must be done before (earlier in
+the file) any dumptypes are defined.
+The dumptype options and values are:
+
+
+  auth string
+      Default: bsd. Type of authorization to perform between tape server and
+      backup client hosts.
+      bsd, bsd authorization with udp initial connection and one tcp connection
+      by data stream.
+      bsdtcp, bsd authorization but use only one tcp connection.
+      bsdudp, like bsd, but will use only one tcp connection for all data
+      stream.
+      krb4 to use Kerberos-IV authorization.
+      krb5 to use Kerberos-V authorization.
+      rsh to use rsh authorization.
+      ssh to use OpenSSH authorization.
+
+  amandad_path string
+      Default: $libexec/amandad. Specify the amandad path of the client, only
+      use with rsh/ssh authentification.
+
+  client_username string
+      Default: CLIENT_LOGIN. Specify the username to connect on the client,
+      only use with rsh/ssh authentification.
+
+  bumpsize int
+      Default: 10 Mbytes. The minimum savings required to trigger an automatic
+      bump from one incremental level to the next, expressed as size. If Amanda
+      determines that the next higher backup level will be this much smaller
+      than the current level, it will do the next level. The value of this
+      parameter is used only if the parameter bumppercent is set to 0.
+      See also the options bumppercent, bumpmult and bumpdays.
+
+  bumppercent int
+      Default: 0 percent. The minimum savings required to trigger an automatic
+      bump from one incremental level to the next, expressed as percentage of
+      the current size of the DLE (size of current level 0). If Amanda
+      determines that the next higher backup level will be this much smaller
+      than the current level, it will do the next level.
+      If this parameter is set to 0, the value of the parameter bumpsize is
+      used to trigger bumping.
+      See also the options bumpsize, bumpmult and bumpdays.
+
+  bumpmult float
+      Default: 1.5. The bump size multiplier. Amanda multiplies bumpsize by
+      this factor for each level. This prevents active filesystems from bumping
+      too much by making it harder to bump to the next level. For example, with
+      the default bumpsize and bumpmult set to 2.0, the bump threshold will be
+      10 Mbytes for level one, 20 Mbytes for level two, 40 Mbytes for level
+      three, and so on.
+
+  bumpdays int
+      Default: 2 days. To insure redundancy in the dumps, Amanda keeps
+      filesystems at the same incremental level for at least bumpdays days,
+      even if the other bump threshold criteria are met.
+
+  comment string
+      Default: none. A comment string describing this set of backup options.
+
+  comprate float [, float ]
+      Default: 0.50, 0.50. The expected full and incremental compression factor
+      for dumps. It is only used if Amanda does not have any history
+      information on compression rates for a filesystem, so should not usually
+      need to be set. However, it may be useful for the first time a very large
+      filesystem that compresses very little is backed up.
+
+  compress [client|server] string
+      Default: client fast. If Amanda does compression of the backup images, it
+      can do so either on the backup client host before it crosses the network
+      or on the tape server host as it goes from the network into the holding
+      disk or to tape. Which place to do compression (if at all) depends on how
+      well the dump image usually compresses, the speed and load on the client
+      or server, network capacity, holding disk capacity, availability of tape
+      hardware compression, etc.
+      For either type of compression, Amanda also allows the selection of three
+      styles of compression. Best is the best compression available, often at
+      the expense of CPU overhead. Fast is often not as good a compression as
+      best, but usually less CPU overhead. Or to specify Custom to use your own
+      compression method. (See dumptype custom-compress in example/amanda.conf
+      for reference)
+      So the compress options line may be one of:
+
+      * compress none
+      * compress [client] fast
+      * compress [client] best
+      * compress client custom
+        Specify client_custom_compress "PROG"
+        PROG must not contain white space and it must accept -d for uncompress.
+      * compress server fast
+      * compress server best
+      * compress server custom
+        Specify server_custom_compress "PROG"
+        PROG must not contain white space and it must accept -d for uncompress.
+
+      Note that some tape devices do compression and this option has nothing to
+      do with whether that is used. If hardware compression is used (usually
+      via a particular tape device name or mt option), Amanda (software)
+      compression should be disabled.
+
+  dumpcycle int
+      Default: 10 days. The number of days in the backup cycle. Each disk using
+      this set of options will get a full backup at least this of ten. Setting
+      this to zero tries to do a full backup each run.
+
+  encrypt [none|client|server]
+      Default: none. To encrypt backup images, it can do so either on the
+      backup client host before it crosses the network or on the tape server
+      host as it goes from the network into the holding disk or to tape.
+      So the encrypt options line may be one of:
+
+      * encrypt none
+      * encrypt client
+        Specify client_encrypt "PROG"
+        PROG must not contain white space.
+        Specify client_decrypt_option "decryption-parameter" Default: "-d"
+        decryption-parameter must not contain white space.
+        (See dumptype server-encrypt-fast in example/amanda.conf for reference)
+      * encrypt server
+        Specify server_encrypt "PROG"
+        PROG must not contain white space.
+        Specify server_decrypt_option "decryption-parameter" Default: "-d"
+        decryption-parameter must not contain white space.
+        (See dumptype client-encrypt-nocomp in example/amanda.conf for
+        reference)
+
+
+  estimate client|calcsize|server
+      Default: client. Determine the way Amanda does it's estimate.
+
+      * client:
+        Use the same program as the dumping program, this is the most accurate
+        way to do estimates, but it can take a long time.
+      * calcsize:
+        Use a faster program to do estimates, but the result is less accurate.
+      * server:
+        Use only statistics from the previous run to give an estimate, it takes
+        only a few seconds but the result is not accurate if your disk usage
+        changes from day to day.
+
+
+  exclude [ list|file ][[optional][ append ][ string ]+]
+      Default: file. There are two exclude lists, exclude file and exclude
+      list. With exclude file , the string is a GNU-tar exclude expression.
+      With exclude list , the string is a file name on the client containing
+      GNU-tar exclude expressions. The path to the specified exclude list file,
+      if present (see description of 'optional' below), must be readable by the
+      Amanda user.
+      All exclude expressions are concatenated in one file and passed to GNU-
+      tar as an --exclude-from argument.
+      Exclude expressions must always be specified as relative to the head
+      directory of the DLE.
+      With the append keyword, the string is appended to the current list,
+      without it, the string overwrites the list.
+      If optional is specified for exclude list, then amcheck will not complain
+      if the file doesn't exist or is not readable.
+      For exclude list, if the file name is relative, the disk name being
+      backed up is prepended. So if this is entered:
+
+            exclude list ".amanda.excludes"
+
+      the actual file used would be /var/.amanda.excludes for a backup of /var,
+      /usr/local/.amanda.excludes for a backup of /usr/local, and so on.
+
+  holdingdisk boolean
+      Default: yes. Whether a holding disk should be used for these backups or
+      whether they should go directly to tape. If the holding disk is a portion
+      of another file system that Amanda is backing up, that file system should
+      refer to a dumptype with holdingdisk set to no to avoid backing up the
+      holding disk into itself.
+
+  ignore boolean
+      Default: no. Whether disks associated with this backup type should be
+      backed up or not. This option is useful when the disklist file is shared
+      among several configurations, some of which should not back up all the
+      listed file systems.
+
+  include [ list|file ][[optional][ append ][ string ]+]
+      Default: file ".". There are two include lists, include file and include
+      list. With include file , the string is a glob expression. With include
+      list , the string is a file name on the client containing glob
+      expressions.
+      All include expressions are expanded by Amanda, concatenated in one file
+      and passed to GNU-tar as a --files-from argument. They must start with
+      "./" and contain no other "/".
+      Include expressions must always be specified as relative to the head
+      directory of the DLE.
+
+      Note
+
+      For globbing to work at all, even the limited single level, the top level
+      directory of the DLE must be readable by the Amanda user.
+      With the append keyword, the string is appended to the current list,
+      without it, the string overwrites the list.
+      If optional is specified for include list, then amcheck will not complain
+      if the file doesn't exist or is not readable.
+      For include list, If the file name is relative, the disk name being
+      backed up is prepended.
+
+  index boolean
+      Default: no. Whether an index (catalogue) of the backup should be
+      generated and saved in indexdir. These catalogues are used by the
+      amrecover utility.
+
+  kencrypt boolean
+      Default: no. Whether the backup image should be encrypted by Kerberos as
+      it is sent across the network from the backup client host to the tape
+      server host.
+
+  maxdumps int
+      Default: 1. The maximum number of backups from a single host that Amanda
+      will attempt to run in parallel. See also the main section parameter
+      inparallel.
+
+  maxpromoteday int
+      Default: 10000. The maximum number of day for a promotion, set it 0 if
+      you don't want promotion, set it to 1 or 2 if your disks get
+      overpromoted.
+
+  priority string
+      Default: medium. When there is no tape to write to, Amanda will do
+      incremental backups in priority order to the holding disk. The priority
+      may be high (2), medium (1), low (0) or a number of your choice.
+
+  program string
+      Default: DUMP. The type of backup to perform. Valid values are DUMP for
+      the native operating system backup program, and GNUTAR to use GNU-tar or
+      to do PC backups using Samba.
+
+  record boolean
+      Default: yes. Whether to ask the backup program to update its database
+      (e.g. /etc/dumpdates for DUMP or /usr/local/var/amanda/gnutar-lists for
+      GNUTAR) of time stamps. This is normally enabled for daily backups and
+      turned off for periodic archival runs.
+
+  skip-full boolean
+      Default: no. If true and planner has scheduled a full backup, these disks
+      will be skipped, and full backups should be run off-line on these days.
+      It was reported that Amanda only schedules level 1 incrementals in this
+      configuration; this is probably a bug.
+
+  skip-incr boolean
+      Default: no. If true and planner has scheduled an incremental backup,
+      these disks will be skipped.
+
+  starttime int
+      Default: none. Backups will not start until after this time of day. The
+      value should be hh*100+mm, e.g. 6:30PM (18:30) would be entered as 1830.
+
+  strategy string
+      Default: standard. Strategy to use when planning what level of backup to
+      run next. Values are:
+
+
+        standard
+            The standard Amanda schedule.
+
+        nofull
+            Never do full backups, only level 1 incrementals.
+
+        noinc
+            Never do incremental backups, only full dumps.
+
+        skip
+            Never do backups (useful when sharing the disklist file).
+
+        incronly
+            Only do incremental dumps. amadmin force should be used to tell
+            Amanda that a full dump has been performed off-line, so that it
+            resets to level 1. It is similar to skip-full, but with incronly
+            full dumps may be scheduled manually. Unfortunately, it appears
+            that Amanda will perform full backups with this configuration,
+            which is probably a bug.
+
+
+  tape_splitsize int
+      Default: none. Split dump file on tape into pieces of a specified size.
+      This allows dumps to be spread across multiple tapes, and can potentially
+      make more efficient use of tape space. Note that if this value is too
+      large (more than half the size of the average dump being split),
+      substantial tape space can be wasted. If too small, large dumps will be
+      split into innumerable tiny dumpfiles, adding to restoration complexity.
+      A good rule of thumb, usually, is 1/10 of the size of your tape.
+
+  split_diskbuffer string
+      Default: none. When dumping a split dump in PORT-WRITE mode (usually
+      meaning "no holding disk"), buffer the split chunks to a file in the
+      directory specified by this option.
+
+  fallback_splitsize int
+      Default: 10M. When dumping a split dump in PORT-WRITE mode, if no
+      split_diskbuffer is specified (or if we somehow fail to use our
+      split_diskbuffer), we must buffer split chunks in memory. This specifies
+      the maximum size split chunks can be in this scenario, and thus the
+      maximum amount of memory consumed for in-memory splitting. The size of
+      this buffer can be changed from its (very conservative) default to a
+      value reflecting the amount of memory that each taper process on the dump
+      server may reasonably consume.
+
+The following dumptype entries are predefined by Amanda:
+
+  define dumptype no-compress {
+      compress none
+  }
+  define dumptype compress-fast {
+      compress client fast
+  }
+  define dumptype compress-best {
+      compress client best
+  }
+  define dumptype srvcompress {
+      compress server fast
+  }
+  define dumptype bsd-auth {
+      auth bsd
+  }
+  define dumptype krb4-auth {
+      auth krb4
+  }
+  define dumptype no-record {
+      record no
+  }
+  define dumptype no-hold {
+      holdingdisk no
+  }
+  define dumptype no-full {
+      skip-full yes
+  }
+
+In addition to options in a dumptype section, one or more other dumptype names
+may be entered, which make this dumptype inherit options from other previously
+defined dumptypes. For instance, two sections might be the same except for the
+record option:
+
+  define dumptype normal {
+      comment "Normal backup, no compression, do indexing"
+      no-compress
+      index yes
+      maxdumps 2
+  }
+  define dumptype testing {
+      comment "Test backup, no compression, do indexing, no recording"
+      normal
+      record no
+  }
+
+Amanda provides a dumptype named global in the sample amanda.conf file that all
+dumptypes should reference. This provides an easy place to make changes that
+will affect every dumptype.
+
+TAPETYPE SECTION
+
+The amanda.conf file may define multiple types of tape media and devices. The
+information is entered in a tapetype section, which looks like this in the
+config file:
+
+  define tapetype name {
+      tapetype-option tapetype-value
+      ...
+  }
+
+Name is the name of this type of tape medium/device. It is referenced from the
+tapetype option in the main part of the config file.
+The tapetype options and values are:
+
+
+  comment string
+      Default: none. A comment string describing this set of tape information.
+
+  filemark int
+      Default: 1000 bytes. How large a file mark (tape mark) is, measured in
+      bytes. If the size is only known in some linear measurement (e.g.
+      inches), convert it to bytes using the device density.
+
+  length int
+      Default: 2000 kbytes. How much data will fit on a tape.
+      Note that this value is only used by Amanda to schedule which backups
+      will be run. Once the backups start, Amanda will continue to write to a
+      tape until it gets an error, regardless of what value is entered for
+      length (but see the section OUTPUT DRIVERS in the amanda(8) manpage for
+      exceptions).
+
+  blocksize int
+      Default: 32. How much data will be written in each tape record expressed
+      in KiloBytes. The tape record size (= blocksize) can not be reduced below
+      the default 32 KBytes. The parameter blocksize can only be raised if
+      Amanda was compiled with the configure option --with-maxtapeblocksize=N
+      set with "N" greater than 32 during configure.
+
+  file-pad boolean
+      Default: true. If true, every record, including the last one in the file,
+      will have the same length. This matches the way Amanda wrote tapes prior
+      to the availability of this parameter. It may also be useful on devices
+      that only support a fixed blocksize.
+      Note that the last record on the tape probably includes trailing null
+      byte padding, which will be passed back to gzip, compress or the restore
+      program. Most programs just ignore this (although possibly with a
+      warning).
+      If this parameter is false, the last record in a file may be shorter than
+      the block size. The file will contain the same amount of data the dump
+      program generated, without trailing null byte padding. When read, the
+      same amount of data that was written will be returned.
+
+  speed int
+      Default: 200 bps. How fast the drive will accept data, in bytes per
+      second. This parameter is NOT currently used by Amanda.
+
+  lbl-templ string
+      A PostScript template file used by amreport to generate labels. Several
+      sample files are provided with the Amanda sources in the example
+      directory. See the amreport(8) man page for more information.
+
+In addition to options, another tapetype name may be entered, which makes this
+tapetype inherit options from another tapetype. For instance, the only
+difference between a DLT4000 tape drive using Compact-III tapes and one using
+Compact-IV tapes is the length of the tape. So they could be entered as:
+
+  define tapetype DLT4000-III {
+      comment "DLT4000 tape drives with Compact-III tapes"
+      length 12500 mbytes         # 10 Gig tapes with some compression
+      filemark 2000 kbytes
+      speed 1536 kps
+  }
+  define tapetype DLT4000-IV {
+      DLT4000-III
+      comment "DLT4000 tape drives with Compact-IV tapes"
+      length 25000 mbytes         # 20 Gig tapes with some compression
+  }
+
+
+INTERFACE SECTION
+
+The amanda.conf file may define multiple types of network interfaces. The
+information is entered in an interface section, which looks like this:
+
+  define interface name {
+      interface-option interface-value
+      ...
+  }
+
+name is the name of this type of network interface. It is referenced from the
+disklist file.
+Note that these sections define network interface characteristics, not the
+actual interface that will be used. Nor do they impose limits on the bandwidth
+that will actually be taken up by Amanda. Amanda computes the estimated
+bandwidth each file system backup will take based on the estimated size and
+time, then compares that plus any other running backups with the limit as
+another of the criteria when deciding whether to start the backup. Once a
+backup starts, Amanda will use as much of the network as it can leaving
+throttling up to the operating system and network hardware.
+The interface options and values are:
+
+
+  comment string
+      Default: none. A comment string describing this set of network
+      information.
+
+  use int
+      Default: 300 Kbps. The speed of the interface in Kbytes per second.
+
+In addition to options, another interface name may be entered, which makes this
+interface inherit options from another interface. At the moment, this is of
+little use.
+
+AUTHOR
+
+James da Silva, <jds@amanda.org>: Original text
+Stefan G. Weichinger, <sgw@amanda.org>, maintainer of the Amanda-documentation:
+XML-conversion, major update, splitting
+
+SEE ALSO
+
+amanda(8), amanda-client.conf(5), amcrypt(8), aespipe(1),
+-------------------------------------------------------------------------------
+
+Prev     Up                 Next
+amanda  Home  amanda-client.conf
+

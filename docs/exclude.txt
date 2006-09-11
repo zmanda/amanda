@@ -1,0 +1,339 @@
+
+         Chapter 3. Excluding
+Prev  Part I. Installation  Next
+
+-------------------------------------------------------------------------------
+
+Chapter 3. Excluding
+
+
+Andrew Hall
+
+Original text
+
+Stefan G. Weichinger
+
+XML-conversion;Updates
+AMANDA Core Team
+<sgw@amanda.org>
+Table of Contents
+
+
+  Introduction
+
+  Please_Read
+
+  Before_We_Begin
+
+  Choosing_an_exclude_mechanism
+
+
+        Exclude_Mechanisms
+
+
+  Expression
+
+  Wildcard_Expansion
+
+  Troubleshooting
+
+
+        Broken_gnutar?
+
+        The_ps_command_is_your_friend.
+
+
+
+Note
+
+Refer to http://www.amanda.org/docs/exclude.html for the current version of
+this document.
+
+ Introduction
+
+There are times when data needs to be excluded from a backup. When these times
+arise be confident that Amanda has this capability. (Actually it's not Amanda,
+it's tar.) There are three ways of excluding data in an Amanda backup:
+
+* Exclude an individual item explicitly in the dumptype
+* Utilize an "Exclude List"
+* Do not include the data in the disklist
+
+This document is based on Amanda 2.4.2 and some of this might not work with
+older versions. This was compiled from my personal experience and with help
+from the members of the amanda-users mailing list (mailto://amanda-
+users@amanda.org) when I was originally setting this up, to whom I wish to
+thank for all of their support.
+
+ Please Read
+
+As far as I am able to tell the only way to exclude files or directories with
+Amanda is to use GNU-tar as the dump program (others?). The file system dump
+programs provided with unix systems (e.g. dump, ufsdump) get data at a raw
+drive level and generally do not allow exclusion of specific files or
+directories.
+The GNU version of tar, (GNU-tar or gtar), reads its data at a file system, (or
+higher), level and does include the option to exclude specific files and/or
+directories. It should be mentioned here that tar will change the access times
+on files. Tar has the ability to preserve the access times however, doing so
+effectively disables incremental backups since resetting the access time alters
+the inode change time, which in turn causes the file to look like it needs to
+be archived again.
+The only exception that I am aware of is to just not include the data in
+question in the disklist. This option may not be suitable for everyone's needs
+and can confuse the issue some, so I have elected to include this mechanism in
+its own section named Do_not_include_the_data_in_the_disklist.
+For the purpose of this document an Amanda backup configuration named "exclude-
+test" will be used. The machine that contains the tape drive which receives
+data to be archived will be referred to as "SERVER". The machine that data is
+being archived from will be referred to as "CLIENT". These two systems are
+usually different machines but are not required to be, and may be the same
+machine. Parts of this setup are on the server and some are on the client.
+
+Note
+
+When Amanda attempts to exclude a file or directory it does so relative to the
+area being archived. For example if /var is in your disklist and you want to
+exclude /var/log/somefile, then your exclude file would contain ./log/somefile.
+You may use one exclude file in multiple dumptypes without any restriction.
+
+ Before We Begin
+
+The first step that should be taken is to verify that backups are currently
+working. Connect to SERVER and run amcheck as your Amanda user, to verify that
+there are no errors in the current setup.
+
+  $ amcheck -cl CLIENT
+
+Output should look something like below for success:
+
+  	Amanda Tape Server Host Check
+  	-----------------------------
+
+  	/path/to/holding-disk: 4771300 KB disk space available, that's plenty.
+  	Amanda Backup Client Hosts Check
+  	--------------------------------
+  	Client check: 1 host checked in 0.084 seconds, 0 problems found.
+
+Next make sure that GNU-tar is the dump program currently in use. The easiest
+way to tell if your dumptype is using gnutar is to run the following:
+
+  $ amadmin exclude-test disklist CLIENT
+
+Among all the output is the "program" value currently in use. This value is
+also specified with the "program" option in the dumptype. If the dumptype has
+the line "program GNUTAR" your setup should be ready to exclude data.
+If GNU-tar is not in use add the line "program GNUTAR" to the dumptype, and
+then run amcheck again to verify that backups should work. The capitalization
+of GNUTAR is required.
+The dumptype should look something like:
+
+  define dumptype exclude-test {
+  comment "test dumptype for documentation"
+  priority high
+  program "GNUTAR"
+  }
+
+
+ Choosing an exclude mechanism
+
+If the need is to exclude only one file or directory then the easiest way to
+accomplish this is to exclude an individual item explicitly in the dumptype. If
+the need is to exclude multiple files or directories then use an Exclude List.
+
+ Exclude Mechanisms
+
+
+ Exclude an individual item explicitly in the dumptype
+
+The easiest way to exclude a file or directory is to specify it with the
+"exclude" option in the dumptype. This option accepts an argument of the file
+or directory to be excluded. Amanda allows only one exclude option in any
+dumptype at a time.
+
+Note
+
+UPDATE: Recent Amanda-releases bring the option "exclude append" which enables
+the administrator to define more than one exclusion-pattern within one dumptype
+without using a exclude-list. Please look at the amanda.conf.5-manpage for
+details.
+Any path specified to be excluded must be encapsulated with quotes. Continuing
+with our example from above /var/log/somefile and using the same dumptype as
+above, the dumptype would now look like:
+
+  define dumptype exclude-test {
+  comment "test dumptype for documentation"
+  priority high
+  program "GNUTAR"
+  exclude "./log/somefile"
+  }
+
+Next run amcheck again to verify that there are no problems with the revised
+Amanda configuration. If the data is not being excluded as expected please see
+the Troubleshooting section below. This completes the setup of excluding an
+individual item in the dumptype.
+
+ Utilize an Exclude List
+
+An exclude list is a file that resides on the CLIENT machine and contains paths
+to be excluded, one per line. This file can be in any location on the CLIENT so
+long as the same path is specified in the dumptype. Some find /usr/local/etc/
+amanda an appropriate location, but it is up to you. I personally like to have
+a subdirectory for exclude files but it is up to you where you place this file.
+The exclude file may also be placed in the area being archived. This is an easy
+way to have a different exclusion file for each disklist entry without needing
+separate dumptype definitions. To use this technique, enter a path relative to
+the area being archived as the exclude file below instead of an absolute path.
+Connect to CLIENT and create the exclude directory as root. For example:
+
+  $ mkdir -p /usr/local/etc/amanda/exclude
+  $ cd /usr/local/etc/amanda/exclude
+
+Next create the exclude list for Amanda to use. You can name the exclude file
+anything you wish it to be. Create a file, and in this file place all paths to
+files and directories that are to be excluded. Keeping with the /var example,
+assume that /var/log/XFree86.0.log, and /var/log/maillog need to be excluded.
+Remember that all paths are relative. The exclude list would look like:
+
+  ./log/XFree86.0.log
+  ./log/maillog
+
+Make sure that permissions are restricted on this file. Run the following as
+root, where exclude-filename is the name of the file you just created. For
+example:
+
+  $ chmod 644 /usr/local/etc/amanda/exclude/exclude-filename
+
+This concludes the necessary configuration on the client.
+Connect to SERVER and cd to the exclude-test Amanda configuration directory.
+Edit the Amanda configuration file e.g. amanda.conf. Add an entry similar to
+the following line, to the dumptype for the client in question, where the
+exclude-filename is the file that was created on CLIENT in the step above
+including the quotes. For example:
+
+  exclude list "/usr/local/etc/amanda/exclude/exclude-filename"
+
+The new dumptype should look something like:
+
+  define dumptype exclude-test{
+  comment "test dumptype for documentation"
+  priority high
+  program "GNUTAR"
+  exclude list "/usr/local/etc/amanda/exclude/exclude-filename"
+  }
+
+Save the file. Run amcheck again to verify that there are no problems with the
+revised Amanda configuration. If amcheck succeeds then run amdump to verify the
+data is being excluded correctly. If the data is not being excluded as expected
+please see the Troubleshooting section below. This completes the setup of an
+exclude list.
+
+ Do not include the data in the disklist
+
+Amanda uses disklist entries to define which directories or partitions should
+be archived. This allows us to exclude data by just not placing the data in
+question in the disklist. Assume that there is a disk mounted on /example. The
+directory /example has five subdirectories "a", "b", "c", "d", and "e". The
+directories "a", "b", and "c" need to be archived, while "d" and "e" should
+not. This can be accomplished by not specifying "d" and "e" in the disklist.
+Using the same dumptype and host in the above examples the disklist would
+contain:
+
+  CLIENT /examples/a	exclude-test
+  CLIENT /examples/b	exclude-test
+  CLIENT /examples/c	exclude-test
+
+Run amcheck to verify that Amanda is working correctly. If the data is not
+being excluded as expected please see the Troubleshooting section below. This
+completes the setup of using a disklist to exclude data.
+
+ Expression
+
+Quiz: what is the difference between the following entries in an exclude list?
+
+  ./foo
+  ./foo/
+  ./foo/*
+
+case 1 : directory ./foo won't be in the backup image (that's what you want)
+case 2 : matches nothing (don't use it) case 3 : directory ./foo will be in the
+backup image but nothing below it.
+
+ Wildcard Expansion
+
+Amanda has the ability to use wildcard expansion while excluding data as
+implemented by tar(1). The only places that wildcard expansion is allowed is in
+the "exclude" option in the dumptype, or in the exclude list. Some simple
+examples:
+Exclude any file or directory that ends in ".log" e.g. ppp.log, XFree86.0.log
+
+  ./*.log
+
+Exclude any file or directory with the string "log" e.g. logfile, maillog,
+syslog, ppp.log, XFree86.0.log
+
+  */*log*
+
+Exclude any file or directory that starts with string "cron" and ends in ".gz"
+e.g. cron.1.gz, cron.2.gz, log/cron.1.gz
+
+  ./*cron*.gz
+
+The question mark can be used to specify a single character. e.g. log.1, log.2,
+etc
+
+  ./log.?
+
+
+ Troubleshooting
+
+If you find that you are having trouble getting the exclude patterns to match
+correctly, check out this really cool script written by John R. Jackson.
+ftp://gandalf.cc.purdue.edu/pub/amanda/gtartest-exclude
+This script allows you to test your patterns before placing them in an exclude
+list or in the dumptype. Instructions on how to run the script are included in
+the script.
+
+ Broken gnutar?
+
+There are versions of GNU-tar that do not correctly exclude data. Version 1.12
+(plus the Amanda patches from http://www.amanda.org) are known to work
+correctly, as does version 1.13.19 (and later). Anything else is questionable.
+
+Note
+
+UPDATE:Using GNU-tar 1.13.25 is recommended.
+
+ The ps command is your friend.
+
+Connect to CLIENT and run a
+
+  ps ax | grep tar
+
+(or
+
+  ps ef | grep tar
+
+on Solaris)
+to see exactly how the tar command is running. Look in the output for the --
+exclude or --exclude-from options in the running tar process. For example:
+
+  $ ps ax | grep tar
+
+  ?        R      0:37 /bin/tar --create --directory /var
+  --listed-incremental /var/lib/amanda/gnutar-lists/CLIENTvar_0.new
+  --sparse --one-file-system --ignore-failed-read --totals --file
+  /dev/null --exclude-from=/usr/local/etc/amanda/exclude-test/exclude.var
+  .
+
+In the above output notice the string "--exclude-from=". The string following
+the "=" is the exclude file currently in use. If the string was "--exclude"
+then the string following the "=" is the file or directory that is currently
+set to be excluded.
+Contact the amanda-users mailing list: mailto://amanda-users@amanda.org.
+Subscription information is available at http://www.amanda.org.
+-------------------------------------------------------------------------------
+
+Prev                                   Up                              Next
+Chapter 2. Amanda Installation Notes  Home  Chapter 4. Indexing with Amanda
+

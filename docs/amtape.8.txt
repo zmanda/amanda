@@ -1,0 +1,114 @@
+
+                               amtape
+Prev  Chapter 36. The Amanda Manual Pages.  Next
+
+-------------------------------------------------------------------------------
+
+Name
+
+amtape  user interface to Amanda tape changer controls
+
+Synopsis
+
+amtape config command [ command options ]
+
+DESCRIPTION
+
+Amtape performs tape changer control operations. It uses the underlying tape
+changer script defined by the tpchanger option for a particular Amanda
+configuration as specified by the config argument.
+Tape changers maintain a notion of the current and next slot for each
+configuration. These may or may not correspond to an actual physical state of
+the device, but do tend to minimize searching through the tape storage slots.
+If the desired tape is in the current slot, it is likely the next tape needed
+is in the next slot rather than at some random position in the storage slots.
+See the amanda(8) man page for more details about Amanda.
+
+COMMANDS
+
+
+
+  reset
+      Reset the tape changer to a known state. The current slot is set to the
+      first slot. Other device-specific side effects may occur. Some gravity
+      stackers need to be reset to the top position by hand. This command
+      notifies Amanda the stacker is back in that position.
+
+  eject
+      If a tape is loaded in the drive, it is ejected and returned to the slot
+      from which it was loaded.
+
+  clean
+      If a cleaning tape is defined for the changer, it is used to clean the
+      drive.
+
+  show
+      Show the contents of all slots. This can be slow.
+
+  label label
+      Search for and load the Amanda tape with label label.
+
+  taper
+      Perform the taper scan algorithm. Load the next tape in the
+      configuration's tape sequence, or a fresh tape with a suitable label.
+
+  device
+      Display the name of the current tape device on stdout.
+
+  current
+      Display the current slot.
+
+  update
+      Update the changer label database, if it has one, to match the tapes now
+      available.
+
+  slot slot
+      Eject any tape in the drive and put it away, then load the tape from slot
+      slot and reset current.
+
+  slot current
+      Eject any tape in the drive and put it away, then load the tape from the
+      current slot.
+
+  slot prev
+      Eject any tape in the drive and put it away, then load the tape from the
+      previous slot and reset current.
+
+  slot next
+      Eject any tape in the drive and put it away, then load the tape from the
+      next slot and reset current.
+
+  slot first
+      Eject any tape in the drive and put it away, then load the tape from the
+      first slot and reset current.
+
+  slot last
+      Eject any tape in the drive and put it away, then load the tape from the
+      last slot and reset current.
+
+  slot advance
+      Eject any tape in the drive and put it away. Advance current to the next
+      tape, but do not load it.
+
+This is useful with non-gravity stackers to unload the last tape used and set
+up Amanda for the next run. If you just use eject, the current tape will be
+mounted again in the next run, where it will be rejected as being still in use,
+ejected and the next tape requested. Using slot next followed by eject does an
+unnecessary mount.
+Note: most changers optimize the slot commands to not eject the loaded tape if
+it is the one being requested.
+
+AUTHOR
+
+James da Silva, <jds@amanda.org> : Original text
+Stefan G. Weichinger, <sgw@amanda.org>, maintainer of the Amanda-documentation:
+XML-conversion
+
+SEE ALSO
+
+amanda(8)
+-------------------------------------------------------------------------------
+
+Prev       Up         Next
+amstatus  Home  amtapetype
+

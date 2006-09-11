@@ -1,0 +1,301 @@
+
+Chapter 15. How to use a wrapper
+Prev  Part III. HOWTOs      Next
+
+-------------------------------------------------------------------------------
+
+Chapter 15. How to use a wrapper
+
+
+Bert de Ridder
+
+Original text
+
+Paul Bijnens
+
+Original text
+
+Stefan G. Weichinger
+
+XML-conversion; Updates
+AMANDA Core Team
+<sgw@amanda.org>
+Table of Contents
+
+
+  Bert_de_Ridder's_suggestions
+
+  Paul_Bijnens's_suggestions
+
+
+Note
+
+Refer to http://www.amanda.org/docs/howto-wrapper.html for the current version
+of this document.
+
+Note
+
+The script used in this document is not part of the official Amanda release.
+The Amanda core team does not take any responsibility for this script.
+
+Bert de Ridder's suggestions
+
+This is a mini-howto explaining how to control other running tasks on a server
+where the Amanda software is used to backup data.
+Problem : Lots of software is picky about their datafiles being backed up while
+the files are in use. It sometimes is even necessary to know the state of the
+datafiles at the moment of backup so that when restoring you know exactly
+*what* you are restoring. And most of the time there are dependencies between
+the datafiles as well (for instance, the pure datafiles and the controlfiles of
+an Oracle database.)
+The solution is actually quite simple; you just use a custom made backupscript
+instead of the standard tar command. Inside this tar command, you do some
+necessary processing before executing the tar command and - if necessary - do
+some more processing. This way, you can easily stop an Oracle database, tar the
+files, send them to the tape server and restart the Oracle database. This of
+course is just an example, anything you can do in a shell script can be done.
+
+  1. Create the script
+     This is the most important step, this script is the work horse of the
+     solution. I've called it /bin/amandatar. You can call it whatever you want
+     though. It's a Perl script, it may not be very pretty code, but it does
+     the job. In the script, an example is given for the backup of a Lotus
+     Notes Domino server.
+
+       #!/usr/bin/perl
+
+       # Tar wrapper for Amanda's tar.
+       #
+
+       use Getopt::Long qw(:config pass_through);
+
+       # Obtain directory and file information from the command line.
+
+       $result = GetOptions (
+        'directory=s' => \$dir,
+        'file=s' => \$file
+       );
+
+       # Check whether Amanda wants to do some administrative task (eg.
+       indexinfo
+       # or obtain the number of bytes to be backed up)
+       # if file = /dev/null it's an administrative task and most of the time,
+       no extra
+       #   processing is necessary.
+
+       # What you see here is just a log of the backup start time, and – more
+       important
+       #   the stopping of the domino server
+
+       if ( $file ne '/dev/null' )
+       {
+         if ( $dir eq '/local/notesdata' )
+         {
+           system "echo 'Start backup notes at ' >> /var/lib/amanda/runtime" ;
+           system "date >> /var/lib/amanda/runtime";
+           system ( "/etc/init.d/domino stop >> /var/lib/amanda/runtime" );
+         }
+       }
+
+       # The command line is being 'reconstructed'. Necessary because the
+       GetOptions
+       #   call above has stripped the file and directory information.
+       # This is what I meant with 'ugly'  code ;-)
+
+       while ( $ARGV[0] ne '' )
+       {
+         $val = $ARGV[0] ;
+         unshift ( @NEWARGV, $val, ) ;
+         shift @ARGV;
+       }
+
+       while ( $NEWARGV[0] ne '' )
+       {
+         $val = $NEWARGV[0] ;
+         unshift ( @ARGV, $val ) ;
+         shift @NEWARGV;
+       }
+
+       if ( $dir ne '' )
+       {
+         unshift ( @ARGV, '--directory', $dir );
+       }
+       if ( $file ne '' )
+       {
+         unshift ( @ARGV, '--file', $file );
+       }
+
+       if ( $file ne '/dev/null' )
+       {
+         system "echo 'Backing up directory ' $dir >> /var/lib/amanda/runtime"
+       ;
+       }
+
+       # And finally make sure tar is called :-)
+       #   (path may differ on your installation)
+       unshift ( @ARGV , "/bin/tar" ) ;
+
+       system ( @ARGV ) ;
+
+       # Postprocessing
+       #
+       # If Notes backup was requested, restart the server.
+       # Log the backup end time.
+       #
+
+       if ( $file ne '/dev/null' )
+       {
+         if ( $dir eq '/local/notesdata' )
+         {
+           system ( "/etc/init.d/domino start >> /var/lib/amanda/runtime" );
+           system "echo 'End backup notes at ' >> /var/lib/amanda/runtime" ;
+           system "date >> /var/lib/amanda/runtime";
+         }
+       }
+
+       exit 0;
+
+       # End script
+
+     On some systems it may be necessary to setuid root the script.
+  2. Rebuild Amanda so that it uses your newly created script.
+     Download the sources, untar them to a directory. I'm sure there are lots
+     of documents already available on how to do this, so I won't go into too
+     much detail. (Refer to Amanda_Installation_Notes).
+     fast path :
+
+       /usr/local/src # tar -xvzf amanda-source.tar.gz
+       /usr/local/src # cd amanda-version
+       /usr/local/src/amanda-version # ./configure \
+         --with-user=amanda \
+         --prefix=/usr/local \
+         --exec-prefix=/usr \
+         --bindir=/usr/bin \
+         --sbindir=/usr/sbin \
+         --libexecdir=/usr/lib/amanda \
+         --with-configdir=/etc/amanda \
+         --with-group=disk \
+         --with-gnutar=/bin/amandatar \
+         --with-gnutar-listdir=/var/lib/amanda/gnutar-lists \
+         --with-tmpdir=/tmp/amanda \
+         --with-smbclient=/usr/bin/smbclient \
+         --mandir=/usr/local/man
+
+     Here, it may be necessary to adjust some paths to match your installation.
+     This setup works on SuSE Linux (also SLES) and MacOSX although you may
+     have to use another binary tar.
+     As you see, you may also "replace" the smbclient if necessary. I haven't
+     yet tested it though. I'll leave it as an exercise for the reader <g>.
+
+       /usr/local/src/amanda-version # make
+       /usr/local/src/amanda-version # make install
+
+     Now proceed as with a "normal" installation.
+
+
+Paul Bijnens's suggestions
+
+How do I run pre- and post dump programs, e.g. database stop/start?
+Currently (Amanda 2.4.5) there is no direct support to run a program before or
+after a backup on a client. But there is an easy workaround by using a wrapper
+for GNU-tar that does the additional tasks.
+Let's suppose you want to stop a database before the backup, and start it up
+again when the backup is finished. You have already two scripts "shutdb" and
+"startdb" to shutdown and startup the database.
+First you have to configure Amanda on the client to use the gnutar-wrapper
+instead of the real GNU-tar:
+
+  ./configure ... --with-gnutar=/usr/local/bin/amgtar ...
+
+and re-compile Amanda. The program "amgtar" can be a simple link to the real
+GNU-tar-binary on clients that don't need special handling, or it can be a
+script.
+Amanda expects that the bytestream on stdout is the backup image, and the
+bytestream on stderr are messages. The stderr messages are filtered against a
+known set of strings, and anything unexpected is flagged as "STRANGE" in the
+Amanda report. The return-codes of the program should be the same as the
+return-codes of GNU-tar:
+
+* 0 = ok (backup image will be put on tape)
+* 1 = not ok (backup image will not be put on tape, same level will be tried
+  next time).
+
+The arguments passed to the program are pretty static (see in the sources
+client-src/sendbackup-gnutar.c, line 483). To decide if you need to stop/start
+the database you have to check if:
+
+* this run makes a backup and not a restore: look for "--create"
+* this it is not an estimate run: look for "--file /dev/null" (estimate) or "--
+  file -" (real run)
+* this run is for the database directory: look for "--directory /my/data/base"
+
+In all other cases, we just pass the args and run the real GNU-tar.
+Here is an example script in Bourne shell:
+Example 15.1. 
+
+  #!/bin/sh
+
+  # # uncomment next block to follow the flow
+  # LOG=/tmp/amanda/mytar.debug
+  # date >> $LOG
+  # echo "$@" >> $LOG
+  # if [ "$3" = "/dev/null" ]
+  # then echo "Estimate only" >> $LOG
+  # else echo "Real backup" >> $LOG
+  # fi
+
+  # - Avoid output to stdout! (the backup stream by tar)
+  # - Any output to stderr is flagged as "strange" by amanda
+  #   and may be used to pass error messages into the report
+
+  if [ "$1" = "--create"  -a  "$3" = "-"  -a  "$5" = "/my/dir" ]
+  then
+      # echo "/my/dir: want to execute some progs first" >>$LOG
+      /usr/local/bin/shutdb thedb >&2
+      /usr/local/bin/gtar "$@"
+      rc=$?
+      # echo "Finished the real backup; some postprocessing" >>$LOG
+      /usr/local/bin/startdb thedb >&2
+      exit $rc
+  else
+      /usr/local/bin/gtar "$@"
+  fi
+
+Here is an example script in perl:
+Example 15.2. 
+
+  #!/usr/bin/perl -w
+
+  use Getopt::Long qw(:config pass_through);
+
+  my @saveopts = @ARGV;
+  GetOptions (
+          'create' => \$create,
+          'directory=s' => \$dir,
+          'file=s' => \$file,
+  );
+  @ARGV = @saveopts;
+
+  my $postproc = 0;
+  if ($create  &&  $dir eq '/my/data/base' &&  $file ne '/dev/null') {
+      system '/usr/local/bin/dbshut thedb >/tmp/amanda/dbshut.debug 2>&1';
+      $postproc = 1;
+  }
+
+  unshift(@ARGV, "/usr/local/bin/gtar");
+  system @ARGV;
+
+  my $rc = $? >> 8;
+
+  if ($postproc) {
+      system '/usr/local/bin/dbstart thedb >/tmp/amanda/dbstart.debug 2>&1';
+  }
+
+  exit $rc;
+
+-------------------------------------------------------------------------------
+
+Prev                    Up                                            Next
+Chapter 14. AFS HOWTO  Home  Chapter 16. How to do Amanda-server-side gpg-
+                                                        encrypted backups.
+

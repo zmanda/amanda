@@ -1,0 +1,261 @@
+
+Chapter 12. Amanda on Cygwin HOWTO
+Prev  Part III. HOWTOs        Next
+
+-------------------------------------------------------------------------------
+
+Chapter 12. Amanda on Cygwin HOWTO
+
+
+Doug Kingston
+
+Original text<dpk@randomnotes.org>
+
+Stefan G. Weichinger
+
+XML-conversion
+AMANDA Core Team
+<sgw@amanda.org>
+Table of Contents
+
+
+  Install_Cygwin
+
+  Other_Preparation
+
+  Compile_Amanda
+
+  Configure_Cygwin_files
+
+  Configure_Windows_System_Files
+
+  Configure_inetd_to_run_automatically_as_a_service
+
+  Windows_98/ME
+
+  Windows_NT/2000/XP
+
+  Notes_on_Amanda_backup_options
+
+
+        Compression
+
+        Exclude_Lists
+
+        Debugging_Files
+
+
+
+Note
+
+Refer to http://www.amanda.org/docs/howto-cygwin.html for the current version
+of this document.
+by Doug Kingston, 30 January 2003. Based on Cygwin 1.3.18, and Amanda 2.4.3-
+20021027 and some fixes which will be in the official release by the time you
+see this.
+With thanks to Enrico Bernardini from whom I have borrowed some material from
+an earlier attempt at documenting the installation of Amanda on Cygwin in 2001.
+Please send annotations and corrections to mailto://amanda-hackers@amanda.org.
+I can be reached as dpk (at) randomnotes.org (do the obvious).
+
+ Install Cygwin
+
+The following Cygwin packages are required for binary installation (may be
+incomplete):
+
+* Category BASE: standard
+* Category MISC: gzip
+* Category MISC: tar
+* Category NET: inetutils
+
+You need also these packages to build from source (may be incomplete):
+
+* Category DEVELOP: ALL
+* Category INTERPRETERS: m4, gawk ?
+* Category LIBS:default selection? (libc, libiconv, others?)
+
+I have most or the basic utilities and libraries installed so I cannot give you
+a more specific list of what is required. If someone has a more definitive
+list, I would appreciate and email to mailto://amanda-hackers@amanda.org.
+One user reported some problems with access rights when running under Cygwin,
+which he solved by setting the CYGWIN environment variable to nontsec. I do not
+believe this is necessary if you run the Amanda daemon as System (see below).
+
+ Other Preparation
+
+When doing backups on a NT, Windows 2000 or Windows XP system, the choice of
+user and group will be important if you are to properly interact with the
+security mechanisms of these more modern Microsoft product. For Windows 95/98/
+ME this is probably a non-issue. The most privileged account on the Windows
+systems is 'System', and I have chosen to use this account for Amanda backups
+to ensure that I can access the widest set of files. On Unix we would run as
+root, with equivalent access permissions. I have also chose to run under the
+'Administrators' group, another standard Windows group. Ensure these exist
+before you continue - or identify another account to use. The Cygwin
+installation postinstall script should have already populated /etc/passwd and
+etc/group with these entries.
+
+* Make sure that System (or SYSTEM) has a home directory specified in /etc/
+  passwd.
+
+I used _/home/root_. You'll need to put the file .amandahosts here later. The
+relevant lines from my file /etc/passwd are:
+
+  SYSTEM:*:18:18:,S-1-5-18:/home/root:
+  root:*:18:18:,S-1-5-18:/home/root:
+
+
+ Compile Amanda
+
+After installing Cygwin, unpack the Amanda sources, typically in /usr/src/
+Amanda or something similar. In the Amanda directory, you will need to execute:
+
+  automake  # this may not be necessary in the official release
+  autoconf  # this may not be necessary in the official release
+
+  ./configure --without-server \
+    --without-force-uid \
+    --with-user=yourlogin \
+    --with-group=Administrators
+  make
+  make       # yes, I needed to run it a second time
+  make install
+
+The use of your own login instead of SYSTEM requires some explanation. If you
+were to call runconfigure with SYSTEM instead of your own login id as part of
+the -with-user parameter, the installation process will fail due to the way
+Cygwin and the NT/W2K/XP security system interact. Once you chown a file to
+another user (like SYSTEM) you are no longer able to chgrp or chmod the file.
+The installation process will abort at this point. By installing the files
+owned by yourself, you will be able to chgrp and chmod them as expected. Note
+that you still RUN as SYSTEM from /etc/inetd.conf (see below).
+
+ Configure Cygwin files
+
+You have to modify some config files:
+
+* /etc/inetd.conf: cleanup un-needed entries: Comment out any entries you do
+  not need by placing a '#' at the start of the lines. This is just good
+  practice, and if any of the entries reference non- existent users (e.g. uucp)
+  inetd may not start up.
+
+
+* /etc/inetd.conf: add
+
+               amanda dgram udp wait System /usr/local/libexec/amandad amandad
+
+  ATTENTION: Use tabs, don't use spaces.
+
+
+* create _/home/root/.amandahosts_ (or whereever System's home directory is):
+  <amanda server> <amanda user>
+
+Then create the following Amanda directories and the file amandates:
+
+       mkdir -p /usr/local/var/amanda/gnutar-lists
+
+       mkdir /tmp/amanda
+
+       touch /etc/amandates
+
+
+ Configure Windows System Files
+
+Update the Windows services list
+
+* WINDIR\Services: add
+
+               amanda 	10080/udp	# Amanda backup services
+               amandaidx 	10082/tcp	# Amanda backup services
+               amidxtape 	10083/tcp	# Amanda backup services
+
+
+where WINDIR is C:\WINNT\system32\drivers\etc or something similar. The last
+two lines are needed if you want to use amrecover.
+Ensure that the default Windows PATH environment variable include your Cygwin /
+bin directory. This is necessary since inetd and hence the amandad that it
+spawns will not have the advantage of being started by the standard bash shell
+startup script and won't find the needed dynamic libraries (e.g. cygwin1.dll).
+My PATH is:
+
+  _%SystemRoot%\system32;%SystemRoot%;%SystemRoot%\System32\Wbem;C:\cygwin\bin_
+
+This is on XP; My Computer, right click Properties, click on Environment
+Variables (at the bottom). Yours may vary, but make sure the Cygwin bin
+directory is represented somewhere in the PATH.
+
+ Configure inetd to run automatically as a service
+
+If you want to test your installation, you can call inetd from bash prompt:
+
+  /usr/sbin/inetd -d
+
+
+ Windows 98/ME
+
+
+* To start after the user logs in: Create a shortcut to c:
+  \cygwin\usr\sbin\inetd.exe in WINDIR\start menu\programs\startup
+
+
+* To start before the user logs in: Add the string key
+
+    CygwinInetd=C:\cygwin\usr\sbin\inetd.exe
+
+  under
+
+    HKLM\Software\Microsoft\Windows\CurrentVersion\RunServices
+
+  in the registry. You'll see a dos-like window on the startup: I did not find
+  a solution to iconize or to make invisible (suggestions are welcome).
+
+
+ Windows NT/2000/XP
+
+From bash prompt, type:
+
+  /usr/sbin/inetd --install-as-service
+
+Then, to start/stop the inetd service use the Services control panel or the
+following Windows command:
+net start/stop inetd
+
+ Notes on Amanda backup options
+
+
+ Compression
+
+Currently, client side compression does not work, probably due to problems in
+pipe emulation in Cygwin. I have not tried to debug this yet. This may be
+addressed in a subsequent release, or it could be fixed in later releases of
+Cygwin. Due to this issue, we recommend that if you want compressed dumps from
+Windows clients, you configure Amanda for server compression in amanda.conf on
+your Amanda server:
+
+  define dumptype srv-comp-tar {
+      global
+      comment "partitions dumped via tar with server compression"
+      program "GNUTAR"
+      compress server fast
+      exclude list ".Amanda.exclude"
+  }
+
+
+ Exclude Lists
+
+A note on exclude lists is also in order. If you specify a relative path, it
+will be expected that the file is in or relative to the root of the directory
+you are planning to dump. Typically this will not be '/' but '/cygdrive/c' or
+something similar if you want to get the Windows files and the Cygwin files. '/
+' is taken to be the root of the Cygwin tree, normally something like C:
+\cygwin or possibly C:\Program Files\cygwin.
+
+ Debugging Files
+
+Amanda will leave debugging files in /tmp/amanda if it exists. I have
+recommended to create this directory above.
+-------------------------------------------------------------------------------
+
+Prev               Up                                            Next
+Part III. HOWTOs  Home  Chapter 13. How to use the Amanda file-driver
+

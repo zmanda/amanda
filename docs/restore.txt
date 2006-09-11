@@ -1,0 +1,201 @@
+
+          Chapter 6. Restore
+Prev  Part I. Installation  Next
+
+-------------------------------------------------------------------------------
+
+Chapter 6. Restore
+
+
+Daniel Moore
+
+Original text<dmoore@jeffco.k12.co.us>
+
+Alexandre Oliva
+
+Substantial rewriting
+AMANDA Core Team
+<oliva@dcc.unicamp.br>>
+
+Murf
+
+Corrections and additions<jam@philabs.research.philips.com>
+
+Ralf Fassel
+
+Corrections and additions<ralf@atg.venture.de>
+
+Stefan G. Weichinger
+
+XML-conversion;Updates
+AMANDA Core Team
+<sgw@amanda.org>
+
+Note
+
+Refer to http://www.amanda.org/docs/restore.html for the current version of
+this document.
+This document describes how to restore files backed up with Amanda either with
+or without Amanda tools.
+All these cases assume you're trying to restore a complete disk, that is,
+you've replaced the lost disk with a new one, or created a new filesystem on
+it. Tweaking with the arguments to restore (not amrestore), you will be able to
+restore individual files.
+Also, this text does not cover amrecover, a program that provides a text user
+interface similar to interactive restore (restore -i), but it allows you to
+select individual files to recover and automatically determines the tapes where
+they were stored. The backups must be performed with the `index' option enabled
+for this to work.
+I considered the following cases.
+The server machine (machine Aaron) runs solaris, the client machine (machine
+Barney) runs sunos.
+
+  1. Client machine fails, non-system critical.
+     Example: /home fails on Barney.
+     First, use amadmin to find the tapes most recently used to backup the
+     partition.
+
+       amadmin <config> info Barney '/home$'
+
+       Current info for Barney /home:
+         Stats: dump rates (kps), Full:   41.1,  33.1,  38.8
+                           Incremental:    9.5,   2.1,  24.7
+                 compressed size, Full:  63.1%, 54.0%, 52.9%
+                           Incremental:  43.7%, 15.5%, 47.8%
+         Dumps: lev datestmp  tape             file   origK   compK secs
+                 0  19971223  Barney01           16  329947  208032 5060
+                 1  19980108  Barney16            8    1977     864   91
+                 2  19971222  Barney06            7    1874     672   83
+                 3  19970926  Barney03           11   12273    3040  211
+
+     This tells us that we will need two tapes to do a full restore (Barney01,
+     Barney16). Note that, even if Barney06 and Barney03 are listed, they are
+     actually older than the full backup, so they should not be used to restore
+     any data.
+     Log into Barney. Cd to the /home directory. Insert the tape with the level
+     0 dump on it into the tape drive of Aaron.
+     Become super-user in the client host and run (replace <amanda> with the
+     username under which amanda runs):
+
+       rsh -n -l <amanda> Aaron amrestore -p /dev/rmt/0cn Barney '/home\$' |
+       restore -ivbf 2 -
+
+     This requires client root to have login access to <amanda>@Aaron, with a
+     .rhosts entry (.amandahosts won't do). If you use ssh, you may be able to
+     type a password in order to be authenticated. Another alternative is to
+     start the operation in the server, and rsh to the client. You should be
+     the amanda user or root in the tape server and run:
+
+       amrestore -p /dev/rmt/0cn Barney '/home$' |
+       rsh Barney -l root /usr/etc/restore -ivbf 2 -
+
+     If you don't want to use rsh at all, you may run:
+
+       amrestore /dev/rmt/0cn Barney '/home$'
+
+     This should create a file whose name contains the hostname, directory
+     name, dump level and dump date of the backup. Now you have to move this
+     file to the client somehow: you may use NFS, rcp, ftp, floppy disks :-),
+     whatever. Suppose you rename that file to `home.0'. Then, on the client,
+     you should become root and run:
+
+       restore -ivbf 2 home.0
+
+     Repeat one of these steps, incrementing the level of the dump, until there
+     are no more available backups.
+  2. Client machine fails, system critical disk.
+     Example: / fails on Barney.
+     First of all, boot off the CD, and reinstall the system critical
+     partition, restoring it to vendor supplied state. Then, go through all of
+     Scenario 1.
+  3. Server machine fails, non-system critical, non-Amanda disk.
+     Proceed just as described in Scenario 1. However, you won't have to go
+     through the rsh process, because you can just use amrestore to replace the
+     lost data directly.
+  4. Server machine fails, system critical, non-Amanda disk.
+     Example: / on Aaron
+     First of all, boot off the CD, and reinstall the system critical
+     partition, restoring it to vendor supplied state.
+     Then, follow steps in Scenario 3.
+  5. Server machine fails, non-system critical, Amanda disk, with db.
+     Example: /opt on Aaron
+     If the disk that contains the Amanda database is toast, then you need to
+     rebuild the database. The easiest way to do it is to take the text file
+     that you had mailed to you via the 'amadmin export' command, and import
+     via the 'amadmin import' command. Then you should be able to follow the
+     steps outlined in Scenario 4.
+     Note that Amanda does not mail the exported database automatically; you
+     may add this to the crontab entry that runs amanda.
+     Maybe it's a good idea to print out the text files as well and store the
+     last 2 dumpcycles worth of paper (the disc text files might have got
+     toasted as well). From the paper you still are able to reconstruct where
+     your discs are.
+  6. Server machine fails, non-system critical, Amanda disk, with binaries.
+     Example: /usr/local on Aaron
+     This is where things get hairy. If the disk with the amanda binaries on it
+     is toast, you have three options.
+
+       i. reinstall the Amanda binaries from another tape, on which you have
+          conveniently backed up the binaries within the last couple of weeks
+          (not using Amanda).
+      ii. recompile Amanda, making sure not to overwrite your db files.
+     iii. use dd to read Amanda formatted tapes. This is the option I am going
+          to explore most fully, because this seems the most likely to occur.
+
+            a. Find out the device name used by Amanda, by looking in
+               amanda.conf. Turns out to be /dev/rmt/0cn for this system.
+               If amanda.conf isn't at hand: this must be a non-rewinding tape
+               device specifier (which I believe the trailing `n' stands for).
+            b. Look over the copy of the output of 'amadmin <config> export',
+               and find out which tapes /usr/local was backed up on.
+            c. Grab the tapes that /opt was backed up on, and stick the level 0
+               into the drive. cd to /usr/local.
+            d. Skip the first record, which is just the tape header, by using
+               the appropriate tape command.
+
+                 mt -f /dev/rmt/0cn fsf 1
+
+            e. Now you want to start looking for /usr/local on this tape.
+
+                 dd if=/dev/rmt/0cn bs=32k skip=1 | gzip -d | /usr/sbin/
+                 ufsrestore -ivf -
+
+               This command gives us an interactive restore of this record,
+               including telling us what partition, what host, and what level
+               the backup was. The gzip -d portion of the pipe can be omitted
+               if there was no compression.
+            f. If you don't find /usr/local on the first try, quit ufsrestore,
+               and move forward one record.
+
+                 mt -f /dev/rmt/0cn fsf 1
+
+               and try the dd/restore command shown above. Do this until you
+               find /opt on the disk.
+               Another possibility: quick and dirty tape index in case you
+               don't know which partition /usr/local was on: (from
+               <ralf@atg.venture.de>)
+
+                 #!/bin/sh
+                 TAPEDEV=/dev/nrtape
+                 while mt -f $TAPEDEV fsf 1 ; do
+                   dd if=$TAPEDEV bs=32k count=1 | head -1
+                   sleep 1
+                 done
+
+               Example output:
+
+                 Amanda: FILE 19971220 uri /root-sun4 lev 1 comp .gz program
+                 DUMP
+                 Amanda: FILE 19971220 uri /misc lev 1 comp .gz program DUMP
+                 Amanda: FILE 19971220 uri / lev 1 comp .gz program DUMP
+
+            g. Restore the Amanda binaries (what else do you need??), and then
+               bail out of ufsrestore. You can use amrestore, as in Scenario 3.
+
+
+
+-------------------------------------------------------------------------------
+
+Prev                                     Up                                Next
+Chapter 5. Backup PC hosts using Samba  Home  Part II. About Tapes and Changers
+

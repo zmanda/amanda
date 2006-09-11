@@ -1,0 +1,253 @@
+
+ Chapter 28. Using Kerberos with Amanda
+Prev  Part V. Technical Background  Next
+
+-------------------------------------------------------------------------------
+
+Chapter 28. Using Kerberos with Amanda
+
+
+Amanda Core Team
+
+Original text
+AMANDA Core Team
+
+Stefan G. Weichinger
+
+XML-conversion;Updates
+AMANDA Core Team
+<sgw@amanda.org>
+Table of Contents
+
+
+  Amanda_2.5.0_-_KERBEROS_v4_SUPPORT_NOTES
+
+
+        Configuration
+
+        Installation
+
+        conf_file
+
+
+  Amanda_2.5.0_-_KERBEROS_v5_SUPPORT_NOTES
+
+
+        Building
+
+        Installation
+
+        conf_file
+
+        Destination_Host_Permissions_file
+
+
+
+Note
+
+Refer to http://www.amanda.org/docs/kerberos.html for the current version of
+this document.
+
+ Amanda 2.5.0 - KERBEROS v4 SUPPORT NOTES
+
+
+ Configuration
+
+The configure script defaults to:
+
+  #  define SERVER_HOST_PRINCIPLE "amanda"
+  #  define SERVER_HOST_INSTANCE  ""
+  #  define SERVER_HOST_KEY_FILE  "/.amanda"
+
+  #  define CLIENT_HOST_PRINCIPLE "rcmd"
+  #  define CLIENT_HOST_INSTANCE  HOSTNAME_INSTANCE
+  #  define CLIENT_HOST_KEY_FILE  KEYFILE
+
+  #  define TICKET_LIFETIME       128
+  	
+
+You can override these with configure options if you so desire, with:
+
+       --with-server-principal=ARG    server host principal  [amanda]
+       --with-server-instance=ARG     server host instance   []
+       --with-server-keyfile=ARG      server host key file   [/.amanda]
+       --with-client-principal=ARG    client host principal  [rcmd]
+       --with-client-instance=ARG     client host instance
+  [HOSTNAME_INSTANCE]
+       --with-client-keyfile=ARG      client host key file   [KEYFILE]
+       --with-ticket-lifetime=ARG     ticket lifetime        [128]
+  	
+
+The configure script will search under /usr/kerberos/lib, /usr/cygnus/lib, /
+usr/lib, and /opt/kerberos/lib for libkrb.a. (in that order) for the kerberos
+bits. If it finds them, kerberos support will be added in, if it doesn't, it
+won't. If the kerberos bits are found under some other hierarchy, you can
+specify this via the --with-krb4-security=DIR, where DIR is where the kerberos
+bits live. It'll look under the 'lib' directory under this hierarchy for
+libkrb.a.
+
+ Installation
+
+The kerberized Amanda service uses a different port on the client hosts. The /
+etc/services line is:
+
+  kamanda      10081/udp
+  	
+
+And the /etc/inetd.conf line is:
+
+  kamanda dgram udp wait root /usr/local/libexec/amanda/amandad amandad -
+  auth=krb4
+  	
+
+Note that you're running this as root, rather than as your dump user. Amanda
+will set it's uid down to the dump user at times it doesn't need to read the
+srvtab file, and give up root permissions entirely before it goes off and runs
+dump. Alternately you can change your srvtab files to be readable by user
+amanda.
+
+ conf file
+
+The following dumptype options apply to krb4:
+
+  auth "krb4"	# use krb4 auth for this host
+  		# (you can mingle krb hosts & bsd .rhosts in one conf)
+  kencrypt	# encrypt this filesystem over the net using the krb4
+  		# session key.  About 2x slower.  Good for those root
+  		# partitions containing your keyfiles.  Don't want to
+  		# give away the keys to an ethernet sniffer!
+  		# This is currently always enabled.  There is no
+  		# way to disable it.  This is a bug.
+  	
+
+
+ Amanda 2.5.0 - KERBEROS v5 SUPPORT NOTES
+
+
+ Building
+
+You must specify --with-krb5-security to configure, otherwise there will be no
+attempt to look for kerberos binaries. You may specify a path that the system
+should look for the kerberos libraries, or leave it to the default.
+By default, when --with-krb5-security is specified with with no path, the
+configure script will search under /usr/kerberos/lib, /usr/cygnus/lib, /usr/
+lib, and /opt/kerberos/lib for libkrb.a. (in that order) for the kerberos bits.
+If it finds them, kerberos support will be added in, if it doesn't, it won't.
+If the kerberos bits are found under some other hierarchy, you can specify this
+via the --with-krb5-security=DIR, where DIR is where the kerberos bits live.
+It'll look under the 'lib' directory under this hierarchy for libkrb.a.
+The krb5 driver script defaults to:
+
+  /*
+   * The lifetime of our tickets in minutes.
+   */
+  #define Amanda_TKT_LIFETIME     (12*60)
+
+  /*
+   * The name of the service in /etc/services.
+   */
+  #define Amanda_KRB5_SERVICE_NAME        "k5amanda"
+  	
+
+You can currently only override these by editing the source.
+The principal and keytab file that the amanda uses are genearlly set in the
+amanda.conf file (see below). You can hardcode this in the source if you really
+want to and that's described in common-src/krb5-security.c
+
+ Installation
+
+The kerberized Amanda service uses a different port on the client hosts. The /
+etc/services line is:
+
+  k5amanda      10082/tcp
+  	
+
+And the /etc/inetd.conf line is:
+
+  k5amanda stream tcp nowait root /usr/local/libexec/amanda/amandad amandad -
+  auth=krb5
+  	
+
+Note that you're running this as root, rather than as your dump user. Amanda
+will set it's uid down to the dump user at times it doesn't need to read the
+keytab file, and give up root permissions entirely before it goes off and runs
+dump. Alternately you can change your keytab files to be readable by user
+amanda. You should understand the security implications of this before changing
+the permissions on the keytab.
+
+ conf file
+
+The following dumptype options apply to krb5:
+
+  auth "krb5"	# use krb5 auth for this host
+  		# (you can mingle krb hosts & bsd .rhosts in one conf)
+  	
+
+The following two configuration directives are required in the amanda.conf file
+for kerberos 5 dumps to work:
+
+  krb5keytab
+  krb5principal
+  	
+
+For example:
+
+  krb5keytab	"/etc/krb5.keytab-amanda"
+  krb5principal	"amanda/saidin.omniscient.com"
+  	
+
+The principal in the second option must be contained in the first. The keytab
+should be readable by the amanda user. (and definitely not world readable!)
+This is (obviously) on the server. In MIT's kadmin, the following:
+
+  addprinc -randkey amanda/saidin.omniscient.com
+  ktadd -k /etc/krb5.keytab-amanda amanda/saidin.omniscient.com
+  	
+
+will do the trick. You will obviously want to change the principal name to
+reflect something appropriate for the conventions at your site.
+You must also configure each client to allow the amanda principal in for dumps.
+This is described in section 4.
+
+ Destination Host Permissions file
+
+There are several ways to go about authorizing a server to connect to a client.
+The normal way is via a .k5amandausers file or a .k5login file in the client
+user's home directory. The determination of which file to use is based on the
+way you ran configure on Amanda. By default, Amanda will use .k5amandahosts,
+but if you configured with --without-amandahosts, Amanda will use .k5login.
+(similar to the default for .rhosts/.amandahosts-style security). The .k5login
+file syntax is a superset of the default krb5 .k5login. The routines to check
+it are implemented in amanda rather than using krb5_kuserok because the
+connections are actually gssapi based.
+This .k5amandahosts/.k5login is a hybrid of the .amandahosts and a .k5login
+file. You can just list principal names, as in a .k5login file and the
+principal will be permitted in from any host. If you do NOT specify a realm,
+then there is no attempt to validate the realm (this is only really a concern
+if you have cross-realm authentication set up with another realm or something
+else that allows you multiple realms in your kdc. If you do specify a realm,
+only that principal@realm will be permitted to connect.
+You may prepend this with a hostname and whitespace, and only that principal
+(with optional realm as above) will be permitted to access from that hostname.
+Here are examples of valid entries in the .k5amandahosts:
+
+  service/amanda
+  service/amanda@TEST.COM
+  dumpmaster.test.com service/amanda
+  dumpmaster.test.com service/amanda@TEST.COM
+  	
+
+Rather than using a .k5amandahosts or .k5login file, the easiest way is to use
+a principal named after the destination user, (such as amanda@TEST.COM in our
+example) and not have either a .k5amandahosts or .k5login file in the
+destination user's home directory.
+
+Note
+
+There is no attempt to verify the realm in this case (only a concern if you
+have cross-realm authentication setup).
+-------------------------------------------------------------------------------
+
+Prev                           Up                        Next
+Chapter 27. Virtual Tape API  Home  Part VI. Historical files
+

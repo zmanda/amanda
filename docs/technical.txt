@@ -1,0 +1,219 @@
+
+Part V. Technical Background
+Prev                    Next
+
+-------------------------------------------------------------------------------
+
+
+Part V. Technical Background
+
+
+
+How Amanda really works ...
+
+This section contains some papers which describe the technical concepts behind
+Amanda. You find descriptions of the various APIs as well as a basic draft of
+the internals of Amanda.
+Table of Contents
+
+
+  22._How_Amanda_uses_UDP_and_TCP_ports
+
+
+        TCP_port_allocation
+
+        User_TCP_port_range_(--with-tcpportrange)_summary
+
+        UDP_port_allocation
+
+        User_UDP_port_range_(--with-udpportrange)_summary
+
+        Firewalls_and_NAT
+
+
+  23._Amanda_dumper_API
+
+
+        Introduction
+
+        The_Problem
+
+        Overview_of_the_API
+
+
+              The_`support'_command
+
+
+        The_`selfcheck'_command
+
+        The_`estimate'_and_`estimate-parse'_commands
+
+        The_`backup'_and_`backup-parse'_commands
+
+        The_`index-from-output'_and_`index-from-image'_commands
+
+        The_`restore'_command
+
+        The_`print-command'_command
+
+        Conclusion
+
+
+  24._Amanda_Internals
+
+
+        Protocols
+
+        server_and_amandad_on_client
+
+        planner_and_driver
+
+        driver_and_dumper
+
+        taper(read)_and_taper(write)
+
+
+  25._Amanda_Event_API
+
+
+        Introduction
+
+        The_API
+
+
+              event_register
+
+              event_release
+
+              event_loop
+
+              event_wait
+
+              event_wakeup
+
+
+        Data_types
+
+
+              event_handle_t
+
+              event_id_t
+
+              event_type_t
+
+              event_fn_t
+
+
+        Event_Types
+
+
+              EV_READFD
+
+              EV_WRITEFD
+
+              EV_SIG
+
+              EV_TIME
+
+              EV_WAIT
+
+
+
+  26._Amanda_Security_API
+
+
+        Introduction
+
+        The_Problem
+
+        The_API
+
+
+              protocol_packet_transmission_functions
+
+              stream_functions
+
+
+        Data_Types
+
+
+              security_driver_t
+
+              security_handle_t
+
+              security_stream_t
+
+              security_status_t
+
+
+        SECURITY_DRIVERS
+
+
+              name
+
+              connect
+
+              accept
+
+              close
+
+              sendpkt
+
+              recvpkt
+
+              recvpkt_cancel
+
+              stream_server
+
+              stream_accept
+
+              stream_client
+
+              stream_close
+
+              stream_auth
+
+              stream_id
+
+              stream_write
+
+              stream_read
+
+              stream_read_cancel
+
+
+
+  27._Virtual_Tape_API
+
+  28._Using_Kerberos_with_Amanda
+
+
+        Amanda_2.5.0_-_KERBEROS_v4_SUPPORT_NOTES
+
+
+              Configuration
+
+              Installation
+
+              conf_file
+
+
+        Amanda_2.5.0_-_KERBEROS_v5_SUPPORT_NOTES
+
+
+              Building
+
+              Installation
+
+              conf_file
+
+              Destination_Host_Permissions_file
+
+
+
+-------------------------------------------------------------------------------
+
+Prev                                                                  Next
+Chapter 21. Amanda WISHLIST  Home  Chapter 22. How Amanda uses UDP and TCP
+                                                                     ports
+

@@ -1,0 +1,100 @@
+
+                              amlabel
+Prev  Chapter 36. The Amanda Manual Pages.  Next
+
+-------------------------------------------------------------------------------
+
+Name
+
+amlabel  label an Amanda tape
+
+Synopsis
+
+amlabel [-f ] config label [ slot | slot ] [ -o | configoption ]*
+
+DESCRIPTION
+
+All Amanda tapes must be pre-labeled before they are used. Amanda verifies the
+label in amdump and amflush before writing to make sure the proper tape is
+loaded.
+Amlabel writes an Amanda label on the tape in the device specified by the
+amanda.conf file in /usr/local/etc/amanda/config. Label may be any string that
+does not contain whitespace and that matches the amanda.conf labelstr regular
+expression option. It is up to the system administrator to define a naming
+convention.
+Amlabel appends the new tape to the tapelist file so it will be used by Amanda
+before it reuses any other tapes. When you amlabel multiple tapes, they will be
+used in the order you amlabel them.
+Amlabel will not write the label if the tape contains an active Amanda tape or
+if the label specified is on an active tape. The -f (force) flag bypasses these
+verifications.
+An optional slot may be specified after the tape label. If a tape changer is in
+use, amlabel will label the tape in the specified slot instead of the currently
+loaded tape.
+See the amanda(8) man page for more details about Amanda.
+
+OPTIONS
+
+
+
+  -o configoption
+      See the "CONFIGURATION OVERWRITE" section in amanda(8).
+
+
+EXAMPLE
+
+Write an Amanda label with the string "DMP000" on the tape loaded in the device
+named in the tapedev option in /usr/local/etc/amanda/daily/amanda.conf:
+
+  % amlabel daily DMP000
+
+Label the tape in slot 3 of the currently configured tape changer with the
+string "DMP003":
+
+  % amlabel daily DMP003 slot 3
+
+
+MESSAGES
+
+
+
+  label label doesn't match labelstr str
+      Label label on the command line does not match the labelstr regular
+      expression str from amanda.conf.
+
+  label label already on a tape
+      Label label is already listed as an active Amanda tape.
+
+  no tpchanger specified in path , so slot command invalid
+      The command line has the slot parameter but the amanda.conf file in path
+      does not have a tape changer configured.
+
+  reading label label, tape is in another amanda configuration
+      This tape appears to be a valid Amanda tape, but label does not match
+      labelstr for this configuration so it is probably part of a different
+      Amanda configuration.
+
+  reading label label, tape is active
+      Tape label appears to already be part of this Amanda configuration and
+      active, i.e. has valid data on it.
+
+  no label found, are you sure tape is non-rewinding?
+      While checking that the label was written correctly, amlabel got an error
+      that might be caused by mis-configuring Amanda with a rewinding tape
+      device name instead of a non-rewinding device name for tape.
+
+
+AUTHOR
+
+James da Silva, <jds@amanda.org>: Original text
+Stefan G. Weichinger, <sgw@amanda.org>, maintainer of the Amanda-documentation:
+XML-conversion
+
+SEE ALSO
+
+amanda(8) amdump(8) amflush(8)
+-------------------------------------------------------------------------------
+
+Prev        Up   Next
+amgetconf  Home  ammt
+

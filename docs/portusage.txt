@@ -1,0 +1,209 @@
+
+Chapter 22. How Amanda uses UDP and TCP ports
+Prev  Part V. Technical Background       Next
+
+-------------------------------------------------------------------------------
+
+Chapter 22. How Amanda uses UDP and TCP ports
+
+
+John R. Jackson
+
+Original text
+AMANDA Core Team
+<jrj@purdue.edu>
+
+Stefan G. Weichinger
+
+XML-conversion;Updates
+AMANDA Core Team
+<sgw@amanda.org>
+Table of Contents
+
+
+  TCP_port_allocation
+
+  User_TCP_port_range_(--with-tcpportrange)_summary
+
+  UDP_port_allocation
+
+  User_UDP_port_range_(--with-udpportrange)_summary
+
+  Firewalls_and_NAT
+
+
+Note
+
+Refer to http://www.amanda.org/docs/portusage.html for the current version of
+this document.
+Amanda uses both UDP and TCP ports during its operation. The amandad service is
+listening (via inetd/xinetd) at a well known (fixed) port on each client for
+UDP connections. The amindexd and amidxtaped services are listening (also via
+inetd/xinetd) at well known ports on the tape server for TCP connections.
+When a process on the tape server wants to talk to a client, it creates a UDP
+socket and binds it to a port on its side, then sends the packet to the well
+known amandad service port on the client. Because security information is
+passed, the port bound on the connecting (tape server) side must be privileged
+(less than 1024). This "proves" to amandad whoever is connecting is running as
+root, and therefore is trustworthy (there are all sorts of issues with the
+validity of this "trust" that are beyond the scope of this document).
+A similar sequence of events happens when amrecover on a client wants to
+contact amindexd or amidxtaped on the tape server. The port that amrecover
+binds to its TCP socket must be privileged, which is one of the reasons it must
+be run as root.
+Amanda also uses TCP connections for transmitting the backup image, messages
+and (optionally) the index list from a client back to the dumper process on the
+tape server. A process called sendbackup is started by amandad on the client.
+It creates two (or three, if indexing is enabled) TCP sockets and sends their
+port numbers back to dumper in a UDP message. Then dumper creates and binds TCP
+sockets on its side and connects to the waiting sendbackup.
+Because sendbackup does not run as root on the client, it cannot allocate
+privileged TCP ports to listen on. The dumper process is setuid root and could
+bind privileged ports on its side (it currently does not), but because
+sendbackup does not care what port connects back to it (it assumes the only
+process that could have knowledge of the port numbers to use is dumper), it
+does not check the peer (connecting) port number.
+
+ TCP port allocation
+
+When Amanda creates a TCP server socket to listen for incoming connections
+( sendbackup), it goes through the following bind steps:
+
+* try for the user TCP port range (--with-tcpportrange), if defined. If that
+  fails ...
+
+
+* try for a privileged port (512 .. 1023). If that fails ...
+
+
+* get any available port.
+
+In all cases, it will not use a port that has been assigned to other well-known
+services. This sequence is implemented in stream_server().
+When Amanda ( dumper) creates an unprivileged TCP client socket to connect to a
+server, it goes through the following bind steps:
+
+* try for the user TCP port range (--with-tcpportrange), if defined. If that
+  fails ...
+
+
+* get any available port.
+
+In all cases, it will not use a port that has been assigned to other well-known
+services. This sequence is implemented in stream_client().
+When Amanda ( amrecover) creates a privileged TCP client socket to connect to a
+server, it goes through the following bind step:
+
+* try for a privileged port (512 .. 1023). If that fails, the whole request is
+  aborted.
+
+This sequence is implemented in stream_client_privileged().
+The stream_server() routine is used in two ways:
+
+* taper to set up direct to tape communication with dumper on localhost.
+
+If a user TCP port range is defined, it needs to be unprivileged because taper
+is not running as root.
+
+* sendbackup to set up a transfer with its dumper.
+
+If a user TCP port range (--with-tcpportrange) is defined, it needs to be
+unprivileged because sendbackup is not running as root.
+A user TCP port range needs to be large enough for three ports (data, message
+and index) times the number of simultaneous backups the client may be asked to
+perform ("maxdumps" in amanda.conf).
+The stream_client() routine is used in two ways:
+
+* dumper to connect to taper for a direct to tape operation. Except for making
+  sure what is connecting is not (ftp) port 20 (a common attack entry point),
+  taper does not pay any attention to the source ( dumper) port number.
+
+
+* dumper to connect to sendbackup on a client. Again, except for port 20,
+  sendbackup does not care what port the request comes from.
+
+If a user TCP port range (--with-tcpportrange) is defined, it needs to be
+unprivileged because dumper is not running as root (at this point).
+A user TCP port range needs to be large enough for two ports (one to sendbackup
+on the client, and possibly one to taper) times the number of dumpers
+("inparallel" in amanda.conf).
+The stream_client_privileged() routine is used in one way:
+
+* amrecover to connect to amindexd and amidxtaped.
+
+Because security information is passed, amindexd/ amidxtaped (via security_ok()
+in security.c) insist the other end ( amrecover) be bound to a privileged port.
+
+ User TCP port range (--with-tcpportrange) summary
+
+Pick the max of (2 * inparallel) and (3 * largest maxdumps). Allocate at least
+that many ports in the unprivileged (1024 or larger) range. Stay away from
+other well known ports (e.g. in your /etc/services file) or account for their
+potential use by making the portrange larger.
+
+ UDP port allocation
+
+When Amanda creates a UDP socket, the same order of assignment as above is used
+by dgram_bind():
+
+* try for the user UDP port range (--with-udpportrange), if defined. If that
+  fails ...
+
+
+* try for a privileged port (512 .. 1023). If that fails ...
+
+
+* get any available port.
+
+In all cases, it will not use a port that has been assigned to other well-known
+services. The dgram_bind() routine is called from three places, amcheck,
+planner and dumper. In each case, a connection to amandad on a client is being
+set up. amandad, in turn, calls security_ok(), which insists the other end of
+the connection be a privileged port, so a user UDP port range (--with-
+udpportrange) must specify privileged port numbers.
+A user UDP port range must allow for one port for each client that might be
+contacted at a time. planner and amcheck use a single socket to contact all
+their clients, but there may be multiple dumpers (based on "inparallel" in
+amanda.conf) and each needs its own port.
+
+ User UDP port range (--with-udpportrange) summary
+
+Allocate at least "inparallel" many ports in the privileged (1023 or smaller)
+range. Stay away from other well known ports (e.g. in your /etc/services file)
+or account for their potential use by making the portrange larger.
+
+ Firewalls and NAT
+
+I'm not familiar with firewalls or NAT -- one of the benefits of working in a
+University environment :-). So the following is likely to be completely wrong,
+but I have tried to get the advice of folks who do really understand this
+stuff.
+Firewalls and Amanda should be pretty easy to set up. Just pick user UDP and
+TCP port ranges, build Amanda with them (--with-udpportrange and --with-
+tcpportrange) and let them through the firewall. You also need to let the well
+known Amanda ports through, just as you would ftp or telnet.
+NAT has other issues. If the Amanda client is "outside" NAT, there should not
+be a problem for backups. Sendbackup will set up the ports and tell dumper what
+they are. Then dumper will connect to them from "inside" and NAT should leave
+that alone, although it doesn't really matter since sendbackup does not care
+who connects to it (other than it not be ftp port 20).
+If the Amanda tape server is outside, NAT will have to be told how to translate
+the incoming connections from dumper to the client. To do that, the UDP and TCP
+port ranges will have to be known and only one client can be inside.
+The reverse is true for amrecover. If amrecover is run from inside NAT, there
+should not be a problem -- it's just like running ftp or telnet. But from the
+outside, NAT will have to know where the amindexd/amidxtaped services are and
+allow them through (much like ftp or telnet daemons). Since they are on known
+port numbers, the user TCP port range is not an issue.
+A user TCP port range is probably not important in the case of dumper and taper
+talking to each other since only the one machine (localhost) is involved and so
+it does not go through a firewall. But I could be wrong, especially if NAT is
+involved.
+The details of how you configure a specific firewall or NAT are beyond the
+scope of this document (although examples would be welcome). You need to read
+up on the documentation that comes with them.
+-------------------------------------------------------------------------------
+
+Prev                           Up                            Next
+Part V. Technical Background  Home  Chapter 23. Amanda dumper API
+

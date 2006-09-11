@@ -1,0 +1,370 @@
+
+Chapter 4. Indexing with Amanda
+Prev  Part I. Installation  Next
+
+-------------------------------------------------------------------------------
+
+Chapter 4. Indexing with Amanda
+
+
+Alan M. McIvor
+
+Original text
+
+Stefan G. Weichinger
+
+XML-conversion;Updates
+AMANDA Core Team
+<sgw@amanda.org>
+Table of Contents
+
+
+  Database_Format
+
+  Database_Browsing
+
+  File_Extraction
+
+  Protocol_Between_amindexd_and_amrecover
+
+  Installation_Notes
+
+  Permissions
+
+  Changes_from_amindex-1.0
+
+  Changes_from_amindex-0.3
+
+  Changes_from_amindex-0.2
+
+  Changes_from_amindex-0.1
+
+  Changes/additions_to_2.3.0
+
+  Known_Bugs
+
+
+Note
+
+Refer to http://www.amanda.org/docs/indexing.html for the current version of
+this document.
+This file describes how the index files are generated and how amrecover is
+used.
+
+ Database Format
+
+The database consists of a directory tree of the format: $host/$disk/
+$date_$level.gz
+The host and disk are those listed in the disklist file, the "$host/$disk/" is
+like the curinfo database, '/' are changed for '_'. There is an index file for
+each dump, the name of the file is made of the date and the level, they will
+have the .gz suffix if they are compressed with gzip.
+ex. The file foo/_usr/19991231_0.gz is the index of the level 0 made on
+19991231 of the disk /usr of the host foo.
+The files are ASCII text files containing a list of the directory and files of
+the dump, one per line. Each entry is the filename relative to the mount point,
+starting with a /, e.g., /home/user1/data from the disk mounted on /home would
+generate the entry /user1/data. The index files are stored in compressed format
+(eg gzip or compress).
+
+ Database Browsing
+
+The client is called amrecover and is loosely based on the functionality of the
+program recover from Backup Copilot. A user starts up amrecover. This requires
+specifying the index server and the Amanda config name (defaults for both are
+compiled in as part of the installation). Then the user has to specify the name
+of the host information is wanted about, the disk name, and (optionally) the
+disk mount point. Finally a date needs to be specified. Given all this, the
+user can then roam around a virtual file system using ls and cd much like in a
+FTP client. The file system contains all files backed up on the specified date,
+or before that date, back to the last level 0 backup. Only the most recent
+version of any file is shown.
+As the file system is traversed, the user can add and delete files to a
+"shopping list", and print the list out.
+
+ File Extraction
+
+When a user has built up a list of files to extract, they can be extracted by
+issuing the command extract within amrecover.
+Files are extracted by the following, for each different tape needed.
+As part of the installation, a "tape server" daemon amidxtaped is installed on
+one or more designated hosts, which have an attached tape drive. This is used
+to read the tapes. See the config files for the options for specifying a
+default.
+amrecover contacts amidxtaped on the tape server host specifying which tape
+device to use, which host and disk files are needed for. On the tape server
+host, amidxtaped executes amrestore to get the dump image file off the tape,
+and returns the data to amrecover.
+If dumps are stored compressed for the client, then amrecover pipes the data
+through the appropriate uncompression routine to uncompress it before piping it
+into restore, which then extracts the required files from the dump image.
+Note that a user can only extract files from a host running the same operating
+system as he/she is executing amrecover on, since the native dump/restore tools
+are used - unless GNU-tar is used.
+
+ Protocol Between amindexd and amrecover
+
+The protocol talked between amindexd and amrecover is a simple ASCII chat
+protocol based on that used in FTP. amrecover sends a 1 line command, and
+amindexd replies with a 1 line or multi-line reply. Each line of the reply
+starts with a three digit code, starting with a '5' if an error occurred. For 1
+line replies, and the last line of a multi-line reply, the 4th character is a
+space. For all but the last line of a multi-line reply, the 4th character is a
+'-'.
+The commands and replies other than acknowledgments are:
+Table 4.1. Protocol between amindexd and amrecover
+ ____________________________________________________________________________
+|QUIT_______________|finish_up_and_close_connection__________________________|
+|HOST_<host>________|set_host_to_host________________________________________|
+|DISK_<disk>________|set_disk_to_disk________________________________________|
+|LISTDISK_[<device>]|list_the_disks_for_the_current_host_____________________|
+|SCNF_<config>______|set_Amanda_configuration_to_config______________________|
+|DATE_<date>________|set_date_to_date________________________________________|
+|DHST_______________|return_dump_history_of_current_disk_____________________|
+|                   |Opaque is directory? query. Is the directory dir present|
+|OISD <dir>         |in the backups of the current disk back to and including|
+|___________________|the_last_level_0_dump.__________________________________|
+|                   |Opaque list directory. Give all filenames present in dir|
+|OLSD <dir>         |in the backups of the current disk back to and including|
+|___________________|the_last_level_0_dump.__________________________________|
+|                   |Opaque recursive list directory. Give all filenames     |
+|ORLD <dir>         |present in dir and subdir in the backups of the current |
+|___________________|disk_back_to_and_including_the_last_level_0_dump._______|
+|TAPE_______________|return_value_of_tapedev_from_amanda.conf_if_set.________|
+|DCMP               |returns "YES" if dumps for disk are compressed, "NO" if |
+|___________________|dumps_aren't.___________________________________________|
+
+
+ Installation Notes
+
+
+  1. Whether or not an index is created for a disk is controlled by a disk
+     configuration option index. So, in amanda.conf you need to define a
+     disktype with this option, e.g.,
+
+       define dumptype comp-user-index {
+       comment "Non-root partitions on reasonably fast machines"
+       compress client fast
+       index yes
+       priority medium
+       }
+
+  2. You need to define disks that you want to generate an index for to
+     be of one of the disktypes you defined which contain the index option.
+     This cause sendbackup-dump on the client machine to generate an index file
+     which is stored local to the client, for later recovery by amgetidx (which
+     is called by amdump).
+  3. Amanda saves all the index files under a directory specified by
+     "indexdir" in amanda.conf. You need to create this directory by hand. It
+     needs to have read/write permissions set for the user you defined to run
+     Amanda.
+     If you are using the "text database" option you may set indexdir and
+     infofile to be the same directory.
+  4. The index browser, amrecover, currently gets installed as part of the
+     client software. Its location may not be appropriate for your system and
+     you may need to move it to a more accessible place such as /usr/local/bin.
+     See its man page for how to use it.
+     Note that amindexd, amgetidx, amidxtaped, and amtrmidx all write debug
+     files on the server in /tmp (unless this feature is disabled in the source
+     code), which are useful for diagnosing problems. amrecover writes a debug
+     file in /tmp on the machine it is invoked.
+
+
+ Permissions
+
+The userid chosen to run the Amanda client code must have permission to run
+restore since this is used by createindex-dump to generate the index files.
+For a user to be able to restore files from within amrecover, that user must
+have permission to run restore.
+
+ Changes from amindex-1.0
+
+Get index directory from amanda.conf.
+Integration into Amanda-2.3.0.4.
+Rewriting of amgetidx to use amandad instead of using rsh/rcp.
+
+ Changes from amindex-0.3
+
+Support for index generation using GNU-tar.
+Support for restoring files from within amrecover.
+Bug fixes:
+
+* index/client/amrecover.c (guess_disk): Removed inclusion of mntent.h and use
+  of MAXMNTSTR since this was non-portable, as pointed out by Izzy Ergas
+  <erga00@nbhd.org>.
+
+
+* index/client/display_commands.c (list_directory): Removed point where
+  list_directory() could sleep for ever waiting for input that wasn't going to
+  come.
+
+
+* index/server/amindexd.c index/client/uscan.l Installed patches from Les
+  Gondor <les@trigraph.on.ca> to make amrecover handle spaces in file names.
+
+
+* server-src/amcontrol.sh: As pointed out by Neal Becker <neal@ctd.comsat.com>
+  there were still a few sh-style comments that needed conversion to c-style.
+
+
+ Changes from amindex-0.2
+
+
+* index/client/Makefile.in
+* index/client/help.c
+* index/client/amrecover.h
+* index/client/uparse.y
+* index/client/uscan.l Added a help command.
+
+
+* index/client/set_commands.c: set_disk() and set_host() now check for empty
+  extract list.
+
+
+* index/client/extract_list.c:
+* index/client/amrecover.h:
+* index/client/uparse.y:
+* index/client/uscan.l: Added clear extract list command.
+
+
+* index/client/set_commands.c (set_disk): Added code so working directory set
+  to mount point.
+
+
+* index/client/extract_list.c: If the last item on a tape list is deleted, the
+  tape list itself is now deleted from the extract list.
+
+
+* index/client/amrecover.c:
+* index/server/amindex.c: If the server started up and found that the index dir
+  doesn't exist, then it exited immediately and the client got informative
+  message. Corrected this so it is obvious what is wrong to the user, since
+  this is most likely to occur when somebody is setting up for the first time
+  and needs all the help they can get.
+
+
+* server-src/amgetidx.c Added patch from Pete Geenhuizen
+  <pete@gasbuggy.rockledge.fl.us> so that it works even when remote shell is
+  csh.
+
+
+* server-src/amcontrol.sh
+* server-src/Makefile.in Amcontrol is now parameterized like other scripts and
+  run through munge to generate installable version.
+
+
+* index/server/amindexd.c (main): Added code to set userid if FORCE_USERID set.
+
+
+* index/server/amindexd.c Removed #define for full path of grep. Assumed now to
+  be on path.
+
+
+* client-src/createindex-dump.c
+* client-src/sendbackup-dump.c
+* man/Makefile.in Added patch from Philippe Charnier <charnier@lirmm.fr> so
+  they work when things are installed with version numbers. This was also
+  reported by Neal Becker <neal@ctd.comsat.com>. Also patch to set installed
+  man page modes and create directory if needed.
+
+
+* config/options.h-sunos4 Corrected definition for flex library.
+
+
+* server-src/amtrmidx.c Added some pclose() commands, used remove() instead of
+  system("rm .."). Problems reported by Pete Geenhuizen
+  (<pete@gasbuggy.rockledge.fl.us>) on a system with small ulimits set.
+
+
+* index/server/amindexd.[ch]
+* index/server/list_dir.c
+* index/client/amrecover.c
+* index/client/set_commands.c
+* index/client/uparse.y Changes developed with the help of Pete Geenhuizen
+  <pete@gasbuggy.rockledge.fl.us> to support disks specified by logical names.
+  Also, now debug files generated by amrecover include PID so multiple users
+  can use amrecover simultaneously and without file deletion permission
+  problems.
+
+
+* config/config.h-hpux:
+* config/config-common.h:
+* server-src/amgetidx.c: Changes from Neal Becker re remote shell, making it a
+  configuration parameter.
+
+
+* config/options.h-sunos4 Had -Lfl instead of -lfl
+
+
+ Changes from amindex-0.1
+
+
+* index/client/uscan.l: added support for abbreviated date specs
+
+
+* index/client/amrecover.c (guess_disk): guess_disk got disk_path wrong if
+  mount point other than / (as subsequently pointed out by Eir Doutreleau
+  <ed@cti.ecp.fr>)
+
+
+* server-src/amtrmidx: Added amtrmidx which removes old index files.
+
+
+* index/client: Added a pwd command
+
+
+* server-src/amgetidx.c (main): Added use of CLIENT_LOGIN username on r
+  commands. (as pointed out by Eric Payan <Eric.Payan@ufrima.imag.fr>)
+
+
+* server-src/amgetidx.c: Bug: It was copying from all clients irrespective of
+  whether the client was configured for indices. A '}' in the wrong place.
+
+
+* server-src/amgetidx.c: Removed user configuration section. Instead include
+  amindexd.h to get information.
+
+
+ Changes/additions to 2.3.0
+
+common-src/conffile.[ch]
+
+* added "index" as a valid option
+
+server-src/driverio.c
+
+* added code to optionstr() to write "index" into option string
+
+client-src/sendback-dump.c
+
+* added code to generate index if requested.
+
+client-src/indexfilename.[ch] client-src/createindex-dump.c
+
+* code to generate index.
+
+client-src/Makefile.in
+
+* a new target. Another file for sendbackup-dump
+
+config/config-common.h
+
+* added def of restore.
+
+
+ Known Bugs
+
+
+* Empty directories don't get into the listing for a dump (at all dump levels).
+
+
+* When amrecover starts up, it tries to guess the disk and mount point from the
+  current directory of the working system. This doesn't work for disks
+  specified by logical names, nor when an automounter is being used, or a link
+  is in the path.
+
+-------------------------------------------------------------------------------
+
+Prev                   Up                                     Next
+Chapter 3. Excluding  Home  Chapter 5. Backup PC hosts using Samba
+

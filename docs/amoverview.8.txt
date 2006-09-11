@@ -1,0 +1,97 @@
+
+                            amoverview
+Prev  Chapter 36. The Amanda Manual Pages.  Next
+
+-------------------------------------------------------------------------------
+
+Name
+
+amoverview  display file systems processed by Amanda over time
+
+Synopsis
+
+amoverview [[-config ] config ] [-hostwidth width] [-diskwidth width] [-
+skipmissed] [-last] [-num0] [-togo0] [-verbose]
+
+DESCRIPTION
+
+Amoverview displays a chart showing hosts and file systems processed by Amanda
+along with the backup level performed each day.
+See the amanda(8) man page for more details about Amanda.
+
+OPTIONS
+
+
+
+  -config config
+      Use configuration config instead of configuration daily.
+
+  -hostwidth width
+      Set host field column width to width characters instead of 8.
+
+  -diskwidth width
+      Set disk field column width to width characters instead of 20.
+
+  -skipmissed
+      Compacts the output by only printing stats for the days Amanda actually
+      ran.
+
+  -last
+      Outputs the last status of each disk at the start. Useful for long
+      tapecycles and/or sparse reports.
+
+  -num0
+      Outputs the number of level 0 dumps for each disk.
+
+  -togo0
+      Outputs the number of runs until the last level 0 dump is overwritten.
+
+  -verbose
+      Amoverview can take a long while on large systems. This option reports
+      intermediate steps while it is working.
+
+
+RESULTS
+
+amoverview is a summary of the output of " amadmin <config> find ". When the
+last column of amadmin find contains anything other than "OK", amoverview
+translates this into "E" for that day.
+A number indicates the level of backup and it succeeded. An "E" indicates an
+error for that day. You get an "E" for all errors, like failed to connect,
+datatimeout, computer crashed, etc, but also for failing to write to tape.
+You can have an "E" followed by a number if a filesystem ran into end-of-tape
+once (gives an "E", and later that day, you flush it to a second tape (a
+number: the level, indicating success). If the flush failed too, you get a
+double "EE" for that day.
+You can also have a double code if you have two tapes in the changer and Amanda
+failed to write to tape the first time because it hit end of tape (resulting in
+"E0", for a full, "E1" for an incremental etc.) or twice with error ("EE"), and
+may a successful flush afterwards giving maybe "EE0". (Only the latest 2
+characters are printed).
+
+EXAMPLE
+
+This shows the /home file system on host2 was backed up at level 3 on the 8th,
+9th and 10th of December, had a full backup on the 11th, a level 1 on the 12th
+and a level 2 on the 13th.
+
+  # amoverview
+                           date 12 12 12 12 12 12
+  host     disk                 08 09 10 11 12 13
+
+  host1    /                     0  1  1  1  1  1
+  host1    /var                  0  1  1  1  1  1
+  host2    /                     1  1  1  1  1  0
+  host2    /home                 3  3  3  0  1  2
+  host2    /opt                  1  1  1  1  1  1
+  host2    /var                  1  1  0  1  1  1
+
+
+SEE ALSO
+
+amadmin(8), amanda(8)
+-------------------------------------------------------------------------------
+
+Prev   Up     Next
+ammt  Home  amplot
+

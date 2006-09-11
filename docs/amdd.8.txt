@@ -1,0 +1,85 @@
+
+                                 amdd
+Prev  Chapter 36. The Amanda Manual Pages.  Next
+
+-------------------------------------------------------------------------------
+
+Name
+
+amdd  Amanda version of dd
+
+Synopsis
+
+amdd [-d ] [if=input] [of=output] [bs=blocksize] [skip=count] [count=count]
+
+DESCRIPTION
+
+Amdd provides just enough of the standard UNIX dd command for the needs of
+Amanda. This is handy when doing a full restore and the standard dd program has
+not yet been found.
+Amdd also provides access to the Amanda output drivers that support various
+tape simulations. This may be used for debugging or to convert from one format
+to another.
+See the amanda(8) man page for more details about Amanda. See the OUTPUT
+DRIVERS section of amanda(8) for more information on the Amanda output drivers.
+
+OPTIONS
+
+
+
+  -d
+      Turn on debugging output.
+
+  -llength
+      Set the output length. If the output driver limits the output size, this
+      controls when end of tape will be simulated.
+      Length may have a multiplier suffix:
+
+      k -> 1024 (Kilobytes)
+      b -> 512 (Blocks)
+      M -> 1024*1024 (Megabytes)
+      The default is no multiplier (bytes).
+
+
+
+  if=input
+      Input to dd. Default is stdin.
+
+  of=output
+      Where to send the output of dd. Default is stdout.
+
+  bs=blocksize
+      Size of each record. Input records smaller than this will not be padded.
+      Output records will be the same size as the corresponding input record.
+      Default is 512 bytes.
+      Blocksize may have a multiplier suffix:
+
+      k -> 1024 (Kilobytes)
+      b -> 512 (Blocks)
+      M -> 1024*1024 (Megabytes)
+      The default is no multiplier (bytes).
+
+
+
+  count=count
+      Number of records to copy. Default is all records until end of file.
+
+  skip=count
+      Number of records to skip before copying input to output. Default is
+      zero.
+
+
+AUTHOR
+
+Marc Mengel <mengel@fnal.gov>, John R. Jackson <jrj@purdue.edu> : Original text
+Stefan G. Weichinger, <sgw@amanda.org>, maintainer of the Amanda-documentation:
+XML-conversion
+
+SEE ALSO
+
+amanda(8)
+-------------------------------------------------------------------------------
+
+Prev                Up     Next
+amcrypt-ossl-asym  Home  amdump
+

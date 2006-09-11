@@ -1,0 +1,182 @@
+
+Chapter 32. Multitape support in Amanda 2.2
+Prev  Part VI. Historical files        Next
+
+-------------------------------------------------------------------------------
+
+Chapter 32. Multitape support in Amanda 2.2
+
+
+James da Silva
+
+Original text
+AMANDA Core Team
+<jds@amanda.org>
+
+Stefan G. Weichinger
+
+XML-conversion;Updates
+AMANDA Core Team
+<sgw@amanda.org>
+Draft 1 - jds 3/29/94
+Table of Contents
+
+
+  Introduction
+
+  New_Planner_Algorithm
+
+
+        Time
+
+        Full_Backups
+
+        Schedule_Balancing
+
+        Overwrite_Detection
+
+
+  Taper_Algorithm
+
+
+        Choosing_a_tape
+
+        End_of_tape_handling
+
+        Tape_Format_Changes
+
+        Tapelist_File_Changes
+
+
+
+Note
+
+Refer to http://www.amanda.org/docs/multitape.html for the current version of
+this document.
+
+ Introduction
+
+The goal of this enhancement is to make Amanda independent of the number of
+tapes used per run or even per dump cycle. Specifically, I would like Amanda to
+handle the following:
+
+* output of amdump run goes to more than one tape
+* a single dump file can straddle two tapes
+* more than one amdump run can be done in a single day
+* planner should not care how many runs per cycle occur
+
+And later:
+
+* multiple runs of amdump can go onto one tape (eg an append mode)
+* any dump files from a previous run that are on the holding disk are written
+  to tape in this run (eg eliminate amflush)
+* taper write to multiple tape drives simultaneously
+
+
+ New Planner Algorithm
+
+
+ Time
+
+Previously, planner marked time by the number of amdump runs, which it equated
+with number of tapes, and number of days. In Amanda 2.2, Amanda keeps track of
+the real passage of time, and doesn't generally care about the number of runs
+or tapes between any two events.
+While Amanda 2.2 doesn't care about spacing between runs, dump cycles are still
+in terms of days, to make things easy to understand for the user. So, time
+differences are rounded to the nearest 24 hours:
+days_diff(A,B) = (<B> - <A> + 86400/2) / 86400
+Where the times A and B are in seconds since the Unix epoch, and 86400 is the
+number of seconds per day. This rounds a 2.49 day difference down to 2 days,
+and a 2.5 day difference up to 3 days. No, Olafur, Unix time does not handle
+leap seconds. Give me a break. :-)
+
+ Full Backups
+
+The first thing planner does is calculate when each filesystem is due for a
+full backup. This is trivial for normal backups:
+full_is_due = days_diff(<time of last full>, <curtime>) >= dumpcycle
+There is a complication for "skip-full" filesystems. Under 2.2, these will be
+skipped on any runs that occur on the day the full is due, but we have to do
+the right thing if multiple runs are done that day, and if no runs are done
+that day (in which case we should be doing an incremental). Also, the time of
+last full dump is a fiction maintained by the planner -- Amanda has no way to
+tell whether the full backup was actually done or when it was done:
+
+  	if(skip-full) {
+  		if(full_is_due)
+  			<time of last full> += dumpcycle;
+  		if(days_diff(<time of last full>, <curtime>) == 0)
+  			skip the filesystem on this run;
+  		else
+  			do an incremental dump of this filesystem;
+  	}
+  	
+
+
+ Schedule Balancing
+
+The runtapes parameter tells planner how many tapes it should plan to use each
+run. It multiplies this by the tape length to get the size available for the
+run. (NOTE: later amend this size if appending to tapes, or if there are dumps
+on the holding disk waiting to be flushed). Other than the size calculation,
+planner doesn't really care how many tapes will be written to.
+The fundamental problem with attempting to balance the schedule is that we no
+longer know how many amdump runs will be done in a full cycle. The number may
+change from cycle to cycle if there are extenuating circumstances.
+So, planner must guess at how many runs will be done in one cycle, by looking
+at the information for the last cycle, or, if this is the first cycle, assuming
+one run for each day in the dump cycle.
+
+ Overwrite Detection
+
+When can a tape be overwritten, considering that it might have old dumps on it?
+We want to be able to warn when full dumps are going to be overwritten, but
+given the possibility of old files on the tape, how can we know when the tape
+is no longer needed? I think we can get this when going through the info file,
+considering each full dump and what tape it is on. Make sure we correctly
+handle stale information.
+
+ Taper Algorithm
+
+
+ Choosing a tape
+
+taper must now handle writing to multiple tapes in one night, but choosing the
+tapes from the tape rack is done one at a time as needed, re-applying the same
+algorithm each time (see Amanda_Tape_Changer_Support).
+
+ End of tape handling
+
+As in earlier versions of Amanda, taper itself does not try to restrict writing
+to the tape size given in the config file. It relied on planner having
+correctly estimated backup sizes and limiting itself to what would fit on one
+tape.
+Now, taper needs to switch to a new tape when the current tape has filled up.
+The tape is considered full when taper gets a write error. This will most
+likely occur in the middle of writing a (potentially large) backup file,
+perhaps even from a direct-to-tape socket, so there is no possibility of
+starting the backup file over again on the next tape, it must start from where
+it left off, rewriting the block that got the error on the next tape.
+To insure correct operation, the file header of the continued file should
+contain an indication that it is a continuation, and at what offset. amrestore
+of course needs to be aware of this scheme and handle it correctly, perhaps by
+double-buffering internally. XXX provide more alg details here, or just leave
+it with the general idea?
+
+ Tape Format Changes
+
+We need to specify the sequence number of the tape in the run, in the tape
+header file. The file header block specifies whether it is a continuation file
+or not.
+
+ Tapelist File Changes
+
+The lines in the tapelist file should contain the sequence number of the tape
+in its run, as well as the amount of data written on the tape, and perhaps
+whether or not the end of tape was reached.
+-------------------------------------------------------------------------------
+
+Prev                            Up                                        Next
+Chapter 31. What once was new  Home  Chapter 33. Thoughts about a Strategy API
+

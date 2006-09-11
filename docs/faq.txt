@@ -1,0 +1,583 @@
+
+             Chapter 19. Amanda FAQ
+Prev  Part IV. Various Information  Next
+
+-------------------------------------------------------------------------------
+
+Chapter 19. Amanda FAQ
+
+
+Amanda Core Team
+
+AMANDA Core Team
+
+Stefan G. Weichinger
+
+XML-conversion;Updates
+AMANDA Core Team
+<sgw@amanda.org>
+
+Note
+
+Refer to http://www.amanda.org/docs/faq.html for the current version of this
+document.
+This file contains answers to some questions that are frequently asked in the
+Amanda mailing lists, specially by new users. Please take a look at this file
+before posting, this can save us time that could be spent improving Amanda and
+its documentation.
+New entries and modifications are welcome; send them to mailto://amanda-
+users@amanda.org or mailto://amanda-hackers@amanda.org.
+You may also want to take a look at the Amanda FAQ-O-Matic http://
+www.amanda.org/fom-serve/cache/1.html.
+
+
+  Why_does_Amanda_fail_to_build_on_my_system?
+
+  Why_does_amdump_report_that_all_disks_failed?
+
+  Why_does_amcheck_say_"port_NNN_is_not_secure"?
+
+  Why_does_amcheck_claim_that_the_tape_is_"not_an_Amanda_tape"?
+
+  Why_does_amcheck_report_"selfcheck_request_timed_out"?
+
+  Why_does_amandad.debug_contain_"error_receiving_message"?
+
+  Why_does_amcheck_say_"access_as_<username>_not_allowed..."?
+
+  Why_does_amcheck_report_"ip_address_#.#.#.#"_is_not_in_the_ip_list_list_for
+  <hostname>'?
+
+  Why_does_amcheck_say_"cannot_overwrite_active_tape"?
+
+  Why_does_amcheck_tell_me_"DUMP_program_not_available"?
+
+  Which_tape_changer_configuration_should_I_use_in_amanda.conf?
+
+  Where_do_I_get_my_tapetype-definition_from?_Do_I_have_to_run_amtapetype?
+
+  Should_I_use_software_or_hardware_compression?
+
+  How_can_I_configure_Amanda_so_that_it_performs_full_backups_on_the_week-end
+  and_incrementals_on_weekdays?
+
+  What_if_my_tape_unit_uses_expensive_tapes,_and_I_don't_want_to_use_one_tape
+  per_day?_Can't_Amanda_append_to_tapes?
+
+  How_can_I_configure_Amanda_for_long-term_archiving?
+
+  Can_I_backup_separate_disks_of_the_same_host_in_different_configurations?
+
+  Can_Amanda_span_large_filesystems_across_multiple_tapes?
+
+  What's_the_difference_between_option_"skip-full"_and_"strategy_nofull"?
+
+  Why_does_amdump_report_"results_missing"?
+
+  Why_does_amdump_report_"disk_offline"?
+
+  What_if_amdump_reports_"dumps_way_too_big,_must_skip_incremental_dumps"?
+
+  amdump_reported_"infofile_update_failed"._What_should_I_do?
+
+  Why_does_Amanda_sometimes_promote_full_dumps?
+
+  Why_does_amrecover_report_"no_index_records"_or_"disk_not_found"?
+
+  Ok,_I'm_done_with_testing_Amanda,_now_I_want_to_put_it_in_production._How_can
+  I_reset_its_databases_so_as_to_start_from_scratch?
+
+  The_man-page_of_dump_says_that_active_filesystems_may_be_backed_up
+  inconsistently._What_does_Amanda_do_to_prevent_inconsistent_backups?
+
+  Which_version_of_GNU-tar_should_I_use?
+
+  What_does_"bumping"_mean?
+
+  How_do_I_backup_a_Windows_server?
+
+  How_do_I_tell_my_iptables-based_firewall_to_allow_Amanda_through?
+
+  How_do_I_get_rid_of_pressing_"q"_to_get_rid_of_a_pager_prompt_when_using
+  amrecover?
+
+  Is_there_a_way_to_tell_the_pager_that_my_terminal_has_"y"_lines?
+
+
+ Why does Amanda fail to build on my system?
+ One of the most common reasons for compile-time errors is stale information in
+ config.cache, after a build on a different platform using the same build tree.
+ In order to avoid this problem, make sure you don't ever reuse build trees
+ across platforms, or at least run make distclean before running configure on
+ another platform.
+ Another common reason for failure, that causes link-time errors, is a problem
+ in libtool that causes it to search for symbols in already-installed amanda
+ libraries, instead of in the just-built ones. This problem is known to affect
+ SunOS 4.1.3 and FreeBSD. You can usually work around it by specifying a
+ different prefix when you configure the new version of Amanda. However, it may
+ not work if the previous version of Amanda was installed in /usr/local and gcc
+ searches this directory by default; in this case, you must either remove the
+ old libraries (which you don't want to do, right? :-) or call configure with
+ the flag --disable-libtool. In this case, Amanda won't create shared
+ libraries, so binaries will be larger, but you may worry about that later.
+ You may also want to take a look at Amanda_2.5.0_-_System-Specific
+ Installation_Notes, as well as to the Amanda Patches Page (http://
+ www.amanda.org/patches/) for other known problems. If everything fails, you
+ should read the manual, but since we don't have one yet, just post a help
+ request to the amanda-users mailing list (mailto://amanda-users@amanda.org),
+ showing the last few lines of the failed build.
+ Why does amdump report that all disks failed?
+ Probably because the Amanda clients are not properly configured. Before you
+ ever run amdump, make sure amcheck succeeds. When it does, so should amdump.
+ Make sure you run amcheck as the same user that is supposed to start amdump,
+ otherwise you may get incorrect results.
+ Why does amcheck say "port NNN is not secure"?
+ Because amcheck, as some other Amanda programs, must be installed as setuid-
+ root. Run make install as "root", or chown all Amanda setuid programs to
+ "root", then chown u+s them again, if chown drops the setuid bit.
+ Why does amcheck claim that the tape is "not an Amanda tape"?
+ Because Amanda requires you to label tapes before it uses them. Run amlabel in
+ order to label a tape.
+ If, even after labeling a tape, amcheck still complains about it, make sure
+ the regular expression specified in amanda.conf matches the label you have
+ specified, and check whether you have configured non-rewinding tape devices
+ for Amanda to use. For example, use /dev/nrst0 instead of /dev/rst0, /dev/rmt/
+ 0bn instead of /dev/rmt/0b, or some other system-dependent device name that
+ contains an "n", instead of one that does not. The "n" stands for non-
+ rewinding.
+ If you have labeled any tapes using the rewiding device configuration, you'll
+ have to label them again.
+ Why does amcheck report "selfcheck request timed out"?
+ This can occur under several different situations. First, make sure this
+ problem is repeatable; if Amanda programs are NFS-auto-mounted, some clients
+ may fail to mount the Amanda binaries in time.
+ If the error is repeatable, log into the client, and check whether the
+ directory /tmp/amanda exists, and a file named amandad.debug exists in there:
+ amandad will create this file whenever it starts. If this file does not exist,
+ amandad is not starting properly, or it lacks permission to create /tmp/
+ amanda/amandad.debug.
+ In the latter case, wipe out /tmp/amanda, and amandad should create it next
+ time it runs. In the former case, check your inetd configuration. Make sure
+ you have added the Amanda services to /etc/services (or the NIS services map),
+ that /etc/inetd.conf was properly configured, and that you have signalled
+ inetd to reread this file (some systems may need rebooting). Check section 2.2
+ from in the Amanda_Installation_Notes for details. Check the inetd man-page
+ for possible differences between the standard format of /etc/inetd.conf and
+ the one in your system.
+ Pay special attention to typos in /etc/inetd.conf; error messages will
+ probably appear in /var/adm/messages or /var/log/messages if you have typed
+ the amandad program name incorrectly. Make sure the same user that you have
+ specified at configure-time (configure --with-user=<USERNAME>) is listed in /
+ etc/inetd.conf. Check whether this user has permission to run amandad, as well
+ as any shared libraries amandad depends upon, by running the specified amandad
+ command by hand, as the Amanda user. It should just time-out after 30 seconds
+ waiting for a UDP packet. If you type anything, it will abort immediately,
+ because it can't read a UDP packet from the keyboard.
+ As soon as you have properly configured /etc/inetd.conf so as to run amandad,
+ you should no longer get the "selfcheck request timed out" message. A nice
+ tool to help make sure inetd is really listening on the amandad port is lsof,
+ available at ftp://vic.cc.purdue.edu/pub/tools/unix/lsof.
+ Why does amandad.debug contain "error receiving message"?
+ One possibility is that you have run amandad from the command line prompt and
+ typed anything instead of waiting for it to time-out: in this case, it will
+ try to read a UDP packet from the keyboard, and this was reported not to work
+ on most keyboards :-). However, if you have run amandad as any user other than
+ the one listed in /etc/inetd.conf, it may have created a /tmp/amanda directory
+ that the Amanda user cannot write to, so you should wipe it out.
+ Another possibility is that the Amanda service was not properly configured as
+ a UDP service; check /etc/services and /etc/inetd.conf.
+ Why does amcheck say "access as <username> not allowed..."?
+ There must be something wrong with .amandahosts configuration (or .rhosts, if
+ you have configured --without-amandahosts).
+ First, if the <username> is not what you expect (i.e., not what you have
+ specified in the --with-user flag, at configure time), check the inetd
+ configuration file: you must have specified the wrong username there.
+ Make sure you specify the names exactly as they appear in the error message
+ after the `@' sign in .amandahosts/.rhosts. You'll need a fully-qualified
+ domain name or not, depending on how your client resolves IP addresses to host
+ names.
+ Why does amcheck report "ip address #.#.#.#" is not in the ip list list for
+ <hostname>'?
+ Check your DNS configuration tables. In order to avoid DNS-spoofing, Amanda
+ double-checks hostname<->IP address mapping. If the IP address the request
+ comes from maps to a hostname, but this hostname does not map back to the
+ incoming IP address, the request is denied.
+ Why does amcheck say "cannot overwrite active tape"?
+ Because, if you configure Amanda to use N tapes, by setting tapecycle to N in
+ amanda.conf, before Amanda overwrites a tape, it must write to at least other
+ N-1 tapes. Of course, Amanda will always refuse to overwrite a tape marked for
+ `noreuse' with amadmin. Furthermore, such tapes are not counted when Amanda
+ computes `N-1' tapes.
+ If, for some reason, you want to tell Amanda to overwrite a particular tape,
+ regardless of its position in the cycle, use amrmtape. This command will
+ remove this tape from the tapelist file, that is used to manage the tape
+ cycle, and will delete information about backups stored in that tape from the
+ Amanda database.
+ Why does amcheck tell me "DUMP program not available"?
+ Because configure could not find dump when it was first run. This is a common
+ problem on Linux hosts, because most Linux distributions do not install dump
+ by default.
+ If you don't have a DUMP program installed, install it, remove config.cache,
+ run configure again and rebuild Amanda. While configure is running, make sure
+ it can find the installed DUMP program. If it cannot, you may have to set the
+ environment variables DUMP and RESTORE by hand, before running configure.
+ If you can't or don't want to install DUMP, you may use GNU tar, but make sure
+ it as release 1.12 or newer; release 1.11.8 may work, but estimates will be
+ slow as hell.
+ Which tape changer configuration should I use in amanda.conf?
+ If you only have one tape unit, you have two choices:
+
+   i. Don't use a tape changer at all, i.e., set runtapes to 1, set tapedev to
+      the non-rewinding device corresponding to the tape unit, and comment out
+      tpchanger, changerfile and changerdev
+  ii. Set up chg-manual, so that you can change tapes manually. If you select
+      chg-manual, you will not be able to start amdump as a cron job, and you
+      should always run amflush -f, because chg-manual will ask you to press
+      return in the terminal where you started the controlling program.
+
+ If you have several tape units, which you want to use to emulate a tape
+ changer, you want chg-multi. Even if you do own a real tape changer, that
+ operates based on ejecting a tape or such, chg-multi may be useful.
+ Actual tape changers usually require specialized changer programs, such as
+ mtx, chio or specific system calls. The availability of these programs is much
+ more dependent on the operating system you're running than on the particular
+ tape changer hardware you have.
+ mtx, for example, is available for several platforms. However, even if you
+ find it for your platform, beware that there exist several different programs
+ named mtx, that require different command line arguments, and print different
+ output, and Amanda's chg-mtx does not support them all. You may have to edit
+ the script, which shouldn't be hard to do.
+ In section BUILT-IN TAPE CHANGERS of Amanda_Tape_Changer_Support you will find
+ details about the tape changer interfacing programs provided with Amanda, that
+ can interact with common tape changer programs and with tape changer-related
+ system calls provided by some operating system. If none of them matches your
+ needs, you may have to develop your own tape changer interface script.
+ Before posting a question to the Amanda mailing lists, *please* search the
+ archives, and try to obtain as much information about driving your tape
+ changer hardware from the vendor of the changer hardware and of the operating
+ system, rather than from the Amanda mailing lists. We usually don't have much
+ to say about tape changer units, and several questions about them remain
+ unanswered. :-(
+ Anyway, if you decide to post a question, make sure you specify both the tape
+ changer hardware *and* the OS/platform that is going to interface with it.
+ Good luck! :-)
+ Where do I get my tapetype-definition from? Do I have to run amtapetype?
+ It is not mandatory to run amtapetype at installation-time. It is very likely
+ that your tapedrive or -changer is one of the devices that are already covered
+ by one of the existing tapetype-definitions.
+ You may find tapetype-definitions in the example amanda.conf, in the
+ mailinglist-archives of the amanda-users-mailinglist at http://
+ marc.theaimsgroup.com/?l=amanda-users or in the Amanda-FAQ-O-Matic at http://
+ www.amanda.org/fom-serve/cache/1.html.
+ Reasons to run amtapetype for your device:
+
+ * You want to generate your own tapetype-definition because you can't find any
+   suitable tapetype-definition for your device.
+ * You want to determine the performance of your device.
+ * You want to determine if your device has hardware-compression enabled.
+
+ If you decide to run amtapetype, please refer to the chapter Tapetypes and the
+ manpage amtapetype(8).
+ Should I use software or hardware compression?
+ When you enable software compression, you drastically reduce the compression
+ that might be achieved by hardware. In fact, tape drives will usually use
+ *more* tape if you tell them to try to further compress already compressed
+ data.
+ Thus, you must choose whether you're going to use software or hardware
+ compression; don't ever enable both unless you want to waste tape space.
+ Since Amanda prefers to have complete information about tape sizes and
+ compression rates, it can do a better job if you use software compression.
+ However, if you can't afford the extra CPU usage, Amanda can live with the
+ unpredictability of hardware compression, but you'll have to be very
+ conservative about the specified tape size, specially if there are filesystems
+ that contain mostly uncompressible data.
+ You might want to run amtapetype to determine if you have hardware-compression
+ enabled for your tape-drive.
+ How can I configure Amanda so that it performs full backups on the week-end
+ and incrementals on weekdays?
+ You can't. Amanda doesn't work this way. You just have to tell Amanda how many
+ tapes you have (tapecycle), and how often you want it to perform full backups
+ of each filesystem (dumpcycle). If you don't run it once a daily (including
+ Saturdays and Sundays :-), you'll also want to tell Amanda how many times
+ you'll run it per dumpcycle (runspercycle). It will spread full backups along
+ the dumpcycle, so you won't have any full-only or incremental-only runs.
+ Please also refer to "the friday-tape-question" in Collection_of_the_top_ten
+ Amanda_questions._And_answers..
+ What if my tape unit uses expensive tapes, and I don't want to use one tape
+ per day? Can't Amanda append to tapes?
+ It can't, and this is good. Tape drives and OS drivers are (in)famous for
+ rewinding tapes at unexpected times, without telling the program that's
+ writing to them. If you have a month's worth of backups in that tape, you
+ really don't want them to be overwritten, so Amanda has taken the safe
+ approach of requiring tapes to be written from the beginning on every run.
+ This can be wasteful, specially if you have a small amount of data to back up,
+ but expensive large-capacity tapes. One possible approach is to run amdump
+ with tapes only, say once a week, to perform full backups, and run it without
+ tape on the other days, so that it performs incremental backups and stores
+ them in the holding disk. Once or twice a week, you flush all backups in the
+ holding disk to a single tape.
+ If you don't trust your holding disk, and you'd rather have all your data on
+ tapes daily, you can create an alternate configuration, with two tapes, that
+ backs up the holding disk only, always as a full backup. You'd run this
+ configuration always after your regular backup, so you always have a complete
+ image of the holding disk on tape, just in case it fails.
+ How can I configure Amanda for long-term archiving?
+ The best approach is to create a separate configuration for your archive
+ backups. It should use a separate set of tapes, and have all dumptypes
+ configured with `record no', so it doesn't interfere with regular backups.
+ Can I backup separate disks of the same host in different configurations?
+ Yes, but you have to be careful. Amanda uses UDP to issue estimate and backup
+ requests and, although replies to backup requests are immediate (so that TCP
+ connections for the actual backup can be established), replies to estimate
+ requests are not and, while one request is being processed, any other request
+ is ignored. The effect is two-fold:
+
+   i. If another configuration requests for estimates, the request will be
+      ignored, and the requester will end up timing out;
+  ii. If another configuration has already finished the estimates, and is now
+      requesting for backups, the backup requests will time-out.
+
+ So, there are two easy ways out:
+
+   i. Ensure that the configurations never run concurrently, or
+  ii. set up two different installations of the Amanda server, using different
+      services names to contact the clients, i.e., different port numbers. This
+      can be attained with the configure flag --with-testing=<service-suffix>.
+      Yes, the flag name is not appropriate, but so what?
+
+ If you don't want to set up two installations of Amanda (I agree, it's
+ overkill), but you still want to back up disks of the same host in separate
+ configurations, you can set up Amanda so that one configuration only starts
+ after the first one has already finished its One possible way to work-around
+ this limitation is to start one configuration only after you know the
+ estimates for the first one have already finished (modifying the crontab
+ entries, according to history data). You'll also have to delay the starttime
+ (a dumptype option) of the disks in the first configuration, so that they
+ don't start backing up before the estimates of the second configuration
+ finish.
+ Can Amanda span large filesystems across multiple tapes?
+ Not yet :-(
+ This is an open project, looking for developers. If you'd like to help, please
+ take a look at the Amanda Ongoing Projects Page (http://www.amanda.org/
+ ongoing.php), where more up-to-date information is likely to be found about
+ this project.
+ Update September 2004: Refer to the archive of the amanda-hackers mailinglist
+ (http://marc.theaimsgroup.com/?l=amanda-hackers). A patch by John Stange is
+ being discussed there, which allows splitting and spanning.
+ The current work-around is to use GNU tar to back up subdirectories of the
+ huge filesystem separately. But be aware of the problems listed in the
+ question about "results missing".
+ What's the difference between option "skip-full" and "strategy nofull"?
+ "strategy nofull" is supposed to handle the following situation: you run a
+ full dump off-line once a millenium :-), because that disk isn't supposed to
+ change at all and, if it does, changes are minimal. Amanda will run only level
+ 1 backups of that filesystem, to avoid the risk of overwriting a level 1
+ backup needed to do a restore. Remember, you run full dumps once a millenium,
+ and your tape cycle probably won't last that long :-)
+ "skip-full", OTOH, is supposed to let the user run full dumps off-line
+ regularly (i.e., as often as specified in the dumpcycle), while Amanda takes
+ care of the incrementals. Currently, Amanda will tell you when you're supposed
+ to run the level 0 backups but, if you fail to do so, Amanda will not only
+ skip a full day's worth of valuable backups of the filesystem, on the day it
+ told you to the full backup manually, but it will also run a level 1 backup on
+ the next day, even if you have not performed the full backup yet. Worse yet:
+ it might perform a level 2 on the next day, just after you have run the level
+ 0, so, if the disk should crash, you'd have to restore a level 0 then a level
+ 2, but not the level 1! Not a real problem, but definitely strange, eh?
+ Why does amdump report "results missing"?
+ One of the possible reasons is that you have requested too many backups of the
+ host. In this case, the estimate request or the reply may not fit in a UDP
+ packet. This will cause Amanda not to perform some of the backups. Fixing this
+ problem involves modifying the way estimate requests are issued, so that no
+ packet exceeds the maximum packet size, and issuing additional requests that
+ did not fit in a UDP packet after a reply for the previous set is obtained.
+ The probability of getting this problem has been considerably reduced since we
+ increased the maximum UDP packet size from 1Kb to 64Kb, but some operating
+ systems may not support such large packets.
+ One possible work-around is to try to shorten the pathnames of the directories
+ and the exclude file names, so that more requests fit in the UDP packet. You
+ may create short-named links in some directory closer to the root (/) so as to
+ reduce the length of names. I.e., instead of backing up /usr/home/foo and /
+ usr/home/bar, create the following links:
+
+   /.foo -> /usr/home/foo
+   /.bar -> /usr/home/bar
+
+ then list /.foo and /.bar in the disklist.
+ Another approach is to group sub-directories in backup sets, instead of
+ backing up them all separately. For example, create /usr/home/.bkp1 and move
+ `foo' and `bar' into it, then create links so that the original pathnames
+ remain functional. Then, list /usr/home/.bkp1 in the disklist. You may create
+ as many `.bkp<N>' directories as you need.
+ A simpler approach, that may work for you, is to backup only a subset of the
+ subdirectories of a filesystem separately. The others can be backed up
+ together with the root of the filesystem, using an exclude list that prevents
+ duplicate backups.
+ Why does amdump report "disk offline"?
+ Well, assuming the disk is not really off line :-), it may be a permission
+ problem, but then, amcheck would have reported it.
+ Another possible reason for this failure is a filesystem error, that causes
+ DUMP to crash before it estimates the backup size; a fsck may help.
+ Yet another possibility is that the filesystem is so large that the backup
+ program is incorrectly reporting the estimated size, for example, by printing
+ a negative value that Amanda will not accept as a valid estimate. If you are
+ using dump, contact your vendor and request a patch for dump that fixes this
+ bug. If you are using GNU-tar, make sure it is release 1.12 or newer; 1.11.8
+ won't do! Even release 1.12 may require a patch to correctly report estimates
+ and dump sizes, as well as to handle sparse files correctly and quickly
+ instead of printing error messages like `Read error at byte 0, reading 512
+ bytes, in file ./var/log/lastlog: Bad file number' in sendsize.debug and being
+ very slow. Check the patches directory of the Amanda distribution.
+ What if amdump reports "dumps way too big, must skip incremental dumps"?
+ It means Amanda couldn't back up some disk because it wouldn't fit in the tape
+ (s) you have configured Amanda to use. It considered performing some
+ incrementals instead of full dumps, so that all disks would fit, but this
+ wouldn't be enough, so the disk really had to be dropped in this run.
+ In general, you can just ignore this message if it happens only once in a
+ while. Low-priority disks are discarded first, so you'll hardly miss really
+ important data.
+ One real work-around is to configure Amanda to use more tapes: increase
+ `runtapes' in amanda.conf. Even if you don't have a real tape changer, you can
+ act yourself as a changer (`chg-manual'; more details in the question about
+ tape changer configuration), or use `chg-multi' with a single tape unit, and
+ lie to Amanda that it will have two tapes to use. If you have a holding disk
+ as large as a tape, and configure Amanda (2.4.1b1 or newer) not to reserve any
+ space for degraded dumps, dumps that would be stored in the second tape of a
+ run will be performed to the holding disk, so you can flush them to tape in
+ the morning.
+ amdump reported "infofile update failed". What should I do?
+ Make sure all directories and files are readable and writable by the Amanda
+ user, within the directory you specified as `infofile' in amanda.conf. From
+ then on, only run amanda server commands ( amadmin, amdump, amflush,
+ amcleanup) as the Amanda user, not as root.
+ Why does Amanda sometimes promote full dumps?
+ To spread the full dumps along the dumpcycle, so that daily runs take roughly
+ the same amount of tape and time. As soon as you start using Amanda, it will
+ run full dumps of all filesystems. Then, on the following runs, it will
+ promote some backups, so as to adjust the balance. After one or two
+ dumpcycles, it should stop promoting dumps. You can see how well it is doing
+ with amadmin <conf> balance. If you find the results surprising, you may want
+ to adjust dumpcycle or runspercycle.
+ Why does amrecover report "no index records" or "disk not found"?
+ The most common cause of this problem is not having enabled index generation
+ in amanda.conf. The `index yes' option must be present in every dumptype for
+ whose disks indexes should be generated.
+ Another possibility is that amrecover is not selecting the configuration name
+ that contains the backups for the selected disk. You may specify a
+ configuration name with the `-C' switch, when you invoke amrecover. The
+ default configuration name can only be specified at Amanda configure time
+ (configure --with-config=<name>).
+ Indexes are currently generated at backup-time only, so, if a backup was
+ performed without creating an index, you won't be able to use amrecover to
+ restore it, you'll have to use amrestore.
+ Ok, I'm done with testing Amanda, now I want to put it in production. How can
+ I reset its databases so as to start from scratch?
+ First, remove the `curinfo' database. By default, it is a directory, but, if
+ you have selected any other database format (don't, they're deprecated), they
+ may be files with extensions such as .dir and .pag.
+ Then, remove any log files from the log directory: log.<TIMESTAMP>.<count> and
+ amdump.<count>. Finally, remove the tapelist file, stored in the directory
+ that contains amanda.conf, unless amanda.conf specifies otherwise. Depending
+ on the tape changer you have selected, you may also want to reset its state
+ file.
+ The man-page of dump says that active filesystems may be backed up
+ inconsistently. What does Amanda do to prevent inconsistent backups?
+ Nothing. When you back up an active filesystem, there are two possibilities:
+ dump may print strange error messages about invalid blocks, then fail; in this
+ case, Amanda will retry the backup on the next run.
+ Files that are modified while dump runs may be backed up inconsistently. But
+ then, they will be included in the next incremental backup, which should
+ usually be enough.
+ Large, critical files such as databases should be locked somehow, to avoid
+ inconsistent backups, but there's no direct support for that in Amanda. The
+ best bet is to configure Amanda to use a wrapper to dump, that locks and
+ unlocks the database when appropriate.
+ Which version of GNU-tar should I use?
+ (This answer was slightly adapted from a posting by Paul Bijnens
+ <paul.bijnens@xplanation.com>, Mon, 11 Apr 2005):
+
+ * 1.13.19 is good.
+   However it still sets return code 2 for some infrequent conditions even with
+   --ignore-failed-read option. This results in Amanda thinking the total
+   archive is bad, and drops the complete archive. Those conditions are very
+   rare on a quiet filesystem.
+ * 1.13.25 is good: no problems found (yet).
+ * 1.13.9x is not good.
+   It has changed the format of "tar -t", resulting in amrecover not able to
+   use the indexes.
+ * 1.14.x is not good.
+   It writes good archives, but when restoring, it has trouble with sparse
+   files; the sparse file itself, and *all* files after it cannot be read
+   anymore. But you can read the archive with a good tar version (i.e. the tar
+   images produced are fine).
+ * 1.15.1 is good: no problems found (yet).
+   Paul Bijnens: "I'm using this version on most of my clients since january
+   this year (2005), and have already done successful restore too."
+
+ What does "bumping" mean?
+ The term "bumping" is used to describe the change from one backup-level to the
+ next higher level. If Amanda changes from Level 0 to Level 1 for a specific
+ DLE, it "bumps".
+ The basic goal of "bumping" is to save precious space on the backup media as
+ higher level incremental backups are smaller in size than lower level
+ incremental backups.
+ The disadvantage of increasing backup levels is the fact that restoring from
+ higher level incremental backups needs more tapes. This increases the amount
+ of work time that are needed to fully restore a DLE as well as the possibility
+ of tape-errors and similar problems during the process of restore. So in
+ general it is recommended to keep the levels as low as possible with the given
+ hardware and data.
+ There are various amanda.conf parameters to control and fine-tune Amanda's
+ behavior when it comes to "bumping":
+ Please refer to the amanda-manpage and the example amanda.conf for details on
+ the parameters bumppercent, bumpsize, bumpdays and bumpmult.
+ How do I backup a Windows server?
+ Amanda is able to use smbclient to dump SMB/CIFS-shares. Refer to the Backup
+ PC_hosts_using_Samba for details.
+ How do I tell my iptables-based firewall to allow Amanda through?
+ posted by Matt Hyclak <hyclak@math.ohiou.edu>:
+ Use something like
+
+        iptables -A INPUT -p udp -s $AMANDA_SERVER -d $AMANDA_CLIENT --dport
+   10080 -j ACCEPT
+
+ and load the ip_conntrack_amanda kernel module. I use the following in /etc/
+ modprobe.conf:
+
+        options ip_conntrack_amanda master_timeout=2400
+        install ip_tables /sbin/modprobe --ignore-install ip_tables && /sbin/
+   modprobe ip_conntrack_amanda
+
+ This sets the UDP timeout for Amanda packets to 2400 seconds, up from the
+ default 300 (don't hold me to that, it might be 600). I was getting estimate
+ timeouts since they were taking longer than 300/600 seconds and the firewall
+ would close the port.
+ Makes things a little more secure than opening up everything > 1024 ;-)
+ How do I get rid of pressing "q" to get rid of a pager prompt when using
+ amrecover?
+ compiled from postings by Paul Bijnens <paul.bijnens@xplanation.com> and Jon
+ LaBadie <jon@jgcomp.com>
+ Paul Bijnens wrote:
+ If you have to press "q" all the time in amrecover this is related to the
+ pager-binary you use. If you use Linux this will be most likely less. To teach
+ less to quit when hitting EOF, you need to set something like LESS=--QUIT-AT-
+ EOF; export LESS, for example in your .profile. Refer to the manpage of less
+ for details.
+ Jon LaBadie wrote:
+ If you don't like the quit at EOF behavior "except" when in amrecover create
+ an alias or a wrapper; something like:
+ alias amrecov='LESS="$LESS -E" _pathto_your_amrecover'
+ Is there a way to tell the pager that my terminal has "y" lines?
+ Jon LaBadie <jon@jgcomp.com> wrote:
+ The pager normally does it's best to find out how many lines your terminal
+ has, given the right TERM-variable. Even terminals with elastic boundaries
+ (e.g. xterms) work. But I have to admit that on Solaris the settings are not
+ always correct. You can fix it quickly by setting an environment variable to
+ e.g. LINES=24 (and export it).
+
+-------------------------------------------------------------------------------
+
+Prev                       Up                                           Next
+Chapter 18. Using Amanda  Home  Chapter 20. Collection of the top ten Amanda
+                                                     questions. And answers.
+

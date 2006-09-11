@@ -1,0 +1,104 @@
+
+Chapter 10. RAIT (Redundant Array of Inexpensive Tape) Support
+Prev  Part II. About Tapes and Changers                   Next
+
+-------------------------------------------------------------------------------
+
+Chapter 10. RAIT (Redundant Array of Inexpensive Tape) Support
+
+
+Marc Mengel
+
+Original text<mengel@fnal.gov>
+
+Stefan G. Weichinger
+
+XML-conversion;Updates
+AMANDA Core Team
+<sgw@amanda.org>
+Table of Contents
+
+
+  What_is_a_RAIT?
+
+  Using_a_RAIT
+
+  Disaster_Recovery
+
+
+Note
+
+Refer to http://www.amanda.org/docs/rait.html for the current version of this
+document.
+Currently it is only integrated with the chg-manual changer script;
+collaboration on integrating it with the other tape changers is needed.
+
+ What is a RAIT?
+
+RAIT is an acronym for "Redundant Array of Inexpensive Tapes", where data is
+striped over several tape drives, with one drive writing an exclusive-or-sum of
+the others which can be used for error recovery. Any one of the data streams
+can be lost, and the data can still be recovered.
+This means that a 3-drive RAIT set will write 2 "data" streams and one "parity"
+stream, and give you twice the capacity, twice the throughput, and the square
+of the failure rate (i.e. a 1/100 failure rate becomes 1/10,000, since a
+double-tape failure is required to lose data).
+Similarly, a 5-drive RAIT set will give you 4 times the capacity, 4 times the
+throughput (with sufficient bus bandwidth), and the square of the failure rate.
+This means you can back up partitions as large as four times your tape size
+with Amanda, with higher reliability and speed.
+
+ Using a RAIT
+
+If you have several tape devices on your system [currently either 3 or 5 drive
+sets are supported] you tell Amanda to use them as a RAIT by listing them as a
+single tape device using /bin/csh curly-brace-and-comma notation, as in:
+
+  	tapedev = "rait:/dev/rmt/tps0d{4,5,6}n"
+  		
+
+which means that /dev/rmt/tps0d4n, /dev/rmt/tps0d5n, and /dev/rmt/tps0d6n are
+to be treated as a RAIT set. You can now mount three tapes, and label them with
+amlabel, etc.
+Also, you want to create a new tape-type entry, which lists an n-drive RAIT
+set, for this RAIT-set. So if you were using an entry like:
+
+  	define tapetype EXB-8500 {
+  	    comment "Exabyte EXB-8500 drive on decent machine"
+  	    length 4200 mbytes
+  	    filemark 48 kbytes
+  	    speed 474 kbytes
+  	}
+  		
+
+You would want to make a new one like:
+
+
+  	define tapetype EXB-8500x3 {
+  	    comment "Exabyte EXB-8500 3 drive stripe on decent machine"
+  	    length 8400 mbytes
+  	    filemark 200 kbytes
+  	    speed 948 kbytes
+  	}
+  		
+
+and change your tapetype entry to:
+
+  	tapetype EXB-8500x3
+  		
+
+to tell Amanda about the multiple drive set.
+
+ Disaster Recovery
+
+To assist in disaster recovery (as well as changer scripts) the Amanda package
+now also includes amdd, which is a simple dd(1) replacement which supports
+(only) the "if=xxx", "of=xxx", "bs=nnn[kMb]" "skip=nnn" and "count=nnn"
+options, but which can read and write RAIT tapesets.
+Using amdd and your usual Amanda unpack instructions will suffice for disaster
+recovery from RAIT tape-sets.
+-------------------------------------------------------------------------------
+
+Prev                  Up                             Next
+Chapter 9. chg-scsi  Home  Chapter 11. Printing of Labels
+
