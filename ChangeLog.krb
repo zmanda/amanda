@@ -1,0 +1,207 @@
+1999-06-02  Mike Grupenhoff <kashmir@munge.com>
+
+	* common-src/krb5-security.c (conn_read_callback): only accept
+	one connection per process.  After that, remove the accept
+	reference on the connection fd.
+
+1999-06-01  Mike Grupenhoff <kashmir@munge.com>
+
+	* common-src/krb5-security.c (gss_client): make this take a
+	krb5_handle instead of a krb5_stream
+	(krb5_stream_server): no need to mess with kh->hostname
+	(stream_read_callback): kh->hostname needs to be on the heap.
+
+1999-05-24  Mike Grupenhoff <kashmir@munge.com>
+
+	* common-src/krb4-security.c, common-src/krb5-security.c: isupper
+	takes an int arg.  Cast chars to ints.
+
+1999-05-20  Mike Grupenhoff <kashmir@munge.com>
+
+	* common-src/krb5-security.c (conn_run_frameq): don't free EOF
+	frames - let all callers see them.  Let conn_put free them
+	when the connection is shut down.
+
+1999-05-14  Mike Grupenhoff <kashmir@munge.com>
+
+	* common-src/krb5-security.c (GSS_TIMEOUT): bump to 30 seconds, for
+	especially slow/overloaded machines.
+	* common-src/krb5-security.c (init): after the gethostname(), look
+	it up in DNS to attempt to fully qualify it.  Don't fail if not
+	found.  Also, lowercase the whole thing under the assumption
+	that it will be lowercase in the keytab.
+
+1999-05-14  Mike Grupenhoff <kashmir@munge.com>
+
+	* common-src/krb5-security.c (min): definition moved to amanda.h
+
+1999-05-11  Mike Grupenhoff <kashmir@munge.com>
+
+	* common-src/krb5-security.c (recvpkt_callback):  EOF error
+	messages were getting overwritten by an improper fallthrough
+	case stmt.
+
+1999-05-10  Mike Grupenhoff <kashmir@munge.com>
+
+	* common-src/krb5-security.c: limit the number of outgoing
+	connections per-process to 40 to keep us from running into file
+	descriptor limits.
+
+1999-05-07  Mike Grupenhoff <kashmir@munge.com>
+
+	* common-src/krb4-security.c (krb4_connect): don't assert
+	a variable that we haven't assigned yet.
+
+1999-05-07  Mike Grupenhoff <kashmir@munge.com>
+
+	* common-src/krb5-security.c (krb5_connect): don't assert
+	a variable that we haven't assigned yet.
+	(conn_run_frameq): EOF frames weren't being removed from the
+	queue, or freed properly.
+
+1999-04-28  Mike Grupenhoff <kashmir@munge.com>
+
+	* common-src/krb5-security.c (gss_server): lowercase the host
+	instance before calling gss_acquire_cred().
+
+1999-04-20  Mike Grupenhoff <kashmir@munge.com>
+
+	* common-src/krb5-security.c: dumper assumes that streams will
+	block when not read.  So, we can't just drop packets that
+	have no listeners.  Instead queue up unread packets and
+	flush them out when a stream read is issued.
+
+1999-04-20  Mike Grupenhoff <kashmir@munge.com>
+
+	* common-src/krb5-security.c: wrap encryption support with
+	#ifdef AMANDA_KRB5_ENCRYPT so it can be turned off if the
+	performance hit is too much.
+
+1999-04-19  Mike Grupenhoff <kashmir@munge.com>
+
+	* common-src/krb5-security.c (cleanup): strip the ccache type
+	before passing it to unlink
+	* common-src/krb5-security.c (send_token, recv_token): limit the
+	size of transmitted packets
+
+1999-04-18  Mike Grupenhoff <kashmir@munge.com>
+
+	* common-src/krb5-security.c (get_tgt): apparently,
+	krb5_get_init_creds_keytab() was not brought over from Cygnus
+	kerbnet to MIT krb until after the 1.0 branch.  So, rewrite to
+	use krb5_build_principal_ext and krb5_get_in_tkt_with_keytab().
+	* common-src/krb5-security.c: rename encrypt/decrypt to 
+	kencrypt/kdecrypt to avoid a collision with prototypes in
+	NetBSD's <unistd.h>.
+
+1999-04-16  Mike Grupenhoff <kashmir@munge.com>
+
+	* common-src/krb5-security.c (conn_read_callback): cast
+	event_wakeup() arg to event_id_t.
+
+1999-04-16  Mike Grupenhoff <kashmir@munge.com>
+
+	* common-src/krb4-security.c, common-src/krb5-security.c:
+	update copyright to 1999
+
+1999-04-16  Mike Grupenhoff <kashmir@munge.com>
+
+	* common-src/krb5-security.c (krb5_stream_read): cast first
+	arg of event_register() to event_id_t.
+
+1999-04-15  Mike Grupenhoff <kashmir@munge.com>
+
+	* common-src/krb5-security.c (AMANDA_TKT_LIFETIME): this is
+	in seconds, not minutes (duh)
+	* common-src/krb5-security.c (cleanup): new function.  If we're
+	using FILE ccaches, register an atexit handler to unlink them
+	when done.
+	* common-src/krb5-security.c (krb5_connect): call get_tgt here
+	instead of in init(), and pass it's error message back.
+	* common-src/krb5_security.c (gss_client): explicitly request
+	a session lifetime of AMANDA_TKT_LIFETIME seconds instead of
+	defaulting to the life of the host ticket we receive.
+
+1999-04-15  Mike Grupenhoff <kashmir@munge.com>
+
+	* common-src/krb5-security.c (gss_client, gss_server): if
+	recv_token returns 0, kc->errmsg will not contain anything
+	valid.  Make the error message indicate EOF in this case.
+	* common-src/krb5-security.c (get_tgt): MEMORY ccaches seem to
+	corrupt the heap in a big way.  Don't use them, even though in
+	theory they're perfect for this application.
+	* common-src/krb5-security.c (gss_error): msg should have been
+	static since it returns data that the caller expects to persist
+	until the next invocation.
+
+1999-04-12  Mike Grupenhoff <kashmir@munge.com>
+
+	* common-src/krb5-security.c: dgram.h and base64.h not needed
+
+1999-04-12  Mike Grupenhoff <kashmir@munge.com>
+
+	* common-src/krb4-security.c: wrap entire file in #ifdef
+	KRB4_SECURITY
+	* common-src/krb5-security.c: wrap entire file in #ifdef
+	KRB5_SECURITY
+
+1999-04-12  Mike Grupenhoff <kashmir@munge.com>
+
+	* common-src/krb4-security.c: quell some warnings.
+
+1999-04-10  Mike Grupenhoff <kashmir@munge.com>
+
+	* ap_snprintf -> snprintf, ap_vsnprintf -> vsnprintf
+
+1999-04-09  Mike Grupenhoff <kashmir@munge.com>
+
+	* common-src/krb4-security.c: fix NetBSD warnings with printf
+	formats and prototypes.
+
+1999-04-09  Mike Grupenhoff <kashmir@munge.com>
+
+	* common-src/krb4-security.c: rewrite for the security api
+	Is currently unstable.
+
+1999-04-06  Mike Grupenhoff <kashmir@munge.com>
+
+	* common-src/krb5-security.c: severe rewrite.  All
+	communication takes place over a tcp connection.  We open one
+	connection per host, and mux protocol and stream data over that
+	connection.  This makes the krb library happier and also makes
+	router filters happier.
+
+1999-01-25  Mike Grupenhoff <kashmir@munge.com>
+
+	* common-src/krb5-security.c (krb5_close): don't free the handle;
+	the security layer takes care of that
+	* common-src/krb5-security.c (recvpkt_callback): if recv_token()
+	returns an error, just return.
+	* common-src/krb5-security.c (recv_security_ok): initialize tok to
+	make purify happy.  Don't do a strncpy of len is 0.
+	* common-src/krb5-security.c (gss_server): Initialize kh->gss_context
+	earlier in case we error out.
+
+1998-12-14  Mike Grupenhoff <kashmir@munge.com>
+
+	* common-src/krb5-security.c (gss_server): cast void pointers in
+	gss tokens to char pointers before trying to print them as strings.
+
+1998-12-14  Mike Grupenhoff <kashmir@munge.com>
+
+	* common-src/krb5-security.c (crypto_write): nuke some unused vars
+
+1998-12-10  Mike Grupenhoff <kashmir@munge.com>
+
+	* server-src/dumper-krb4.c (NAUGHTY_BITS): catch up with
+	databuf changes
+
+1998-12-02  Mike Grupenhoff <kashmir@munge.com>
+
+	* common-src/krb5-security.c: new file, krb5 security driver
+
+Local Variables:
+mode: change-log
+left-margin: 8
+fill-column: 76
+End:
