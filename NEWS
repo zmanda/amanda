@@ -1,0 +1,451 @@
+Changes in release 2.5.1
+
+   * Defects found by Coverity scan and Klocwork K7 analysis tools fixed.
+   * Works with GNU tar 1.15.91 - work with new gtar state file format.
+   * Open SSL encryption support
+   * Two new authentication methods: bsdtcp, bsdudp.
+   * Unlimited number of DLEs on a client with bsdtcp, rsh and ssh
+     authentication methods.
+   * Recovery process amrecover uses Secure API. amoldrecover command
+     (same syntax and functionality as amrecover command) is provided for
+     compatibility with old Amanda releases. amoldrecover command uses old
+     amidxtaped/amindexd protocol.
+   * Amanda debug files are separated into client/server/amandad and
+     are also classified based on Amanda configuration name.
+
+   * Amanda command changes
+         o amfetchdump -o is replaced by -O.
+         o amcheck -w option does all tests including the tape writable test.
+           Use amcheck -t -w to do only the tape writable test.
+         o -o command option to override Amanda configuration. See amanda man
+           page for details.
+         o amgetconf command doesn't write the BUGGY message when a entry
+           is not found in the configuration file.
+
+   * Amanda configuration file changes
+         o amanda.conf changes
+               + amrecover_do_fsf in amanda.conf defaults to yes
+               + amrecover_check_label in amanda.conf defaults to yes
+               + usetimestamps in amanda.conf to support multiple
+                 backup runs in a calendar day.
+               + holdingdisk in amanda.conf supports new values:
+                 NEVER, AUTO, REQUIRED.
+               + amandad_path, client_username and ssh_keys in
+                 amanda.conf for ssh/rsh authentication.
+         o New amanda client configuration file - amanda-client.conf.
+           Different client configuration file can be used for each Amanda
+           configuration.
+               + gnutar_list-dir and amandates can be specified in
+                 Amanda client configuration file - amanda-client.conf
+         o .amandahosts format changes to allow use of secure API for recovery.
+         o Amanda service entries in xinetd configuration has changed. 
+
+
+Changes in release 2.5.0p2
+
+* listhost subcommand in amrecover
+
+Changes in release 2.5.0p1
+
+* Add the 'amtape update' command.
+
+Changes in release 2.5.0
+
+* Communication security/authentication: Kerberos 4/5, OpenSSH
+* Data security: Symmetric/Assymetric encrytion algorithms (aesutil
+  and gpg encryption),  Encryption can be done on server or client,
+  Custom encryption utilities can be used.
+* Compression: Ability to add custom compression tools. This is a
+  really useful feature especially since it can specified for a DLE.  You
+  can use different compression algorithm for images, binaries, ascii files
+  and so on.
+* Dump images spanning multiple media volumes - Dump images are no
+  longer restricted to a single media volume (tape or vtape).  Data restoration
+  can be done using amrecover and amfetchdump commands.
+* Auto tape labelling - This optional feature is good for disk backups.
+
+Change in release 2.4.5p1
+
+* New [--days <num>] argument to 'amadmin <conf> tape'.
+* New amoverview -last -num0 -togo0 options.
+
+Change in release 2.4.5
+
+* new displayunit global option to select the unit use to display number
+  k=kilo, m=mega, g=giga, t=tera.
+* new amoverview -skipmissed option.
+
+Change in release 2.4.5b1
+
+* holding disk disk use timestamped directory.
+* autoflush flush today's dump.
+* new bumppercent global option, this should improve bumping criteria,
+  the bumpsize is set to a fixed value which can be adequate for small
+  and large disk.
+* bumpsize, bumppercent, bumpdays and bumpmult can be in a dumptype.
+* calcsize support include and exclude like gnutar.
+* new 'estimate' dumptype option to select estimate type:
+    CLIENT: estimate by the dumping program.
+    CALCSIZE: estimate by the calcsize program, a lot faster but less acurate.
+    SERVER: estimate based on statistic from previous run, take second but
+            can be wrong on the estimate size.
+
+Changes in release 2.4.4p3
+
+* new chg-iomega changer script.
+* amanda will not use a tape if it's label is not in the tapelist file
+  (eg. after an amrmtape).
+
+Changes in release 2.4.4p2
+
+* new initial_poll_delay config in chg-zd-mtx
+* 'amadmin find' list disk removed from the disklist.
+* amrecover can recover a disk removed from the disklist file.
+* amanda works with samba3.
+* new chg-disk changer script to use with the file: driver.
+* Kerberos 4 support integrated and functional again.
+
+Changes in release 2.4.4p1
+
+* amverify do not advance to next tape at the end.
+* new amflush -b and -s options, change -f behavior.
+* new chg-mcutil changer.
+* amrecover_changer works with chg-multi.
+* default driveslot for chg-zd-mtx is now 0.
+* amplot generate color postscript by default.
+* amplot -b flag to generate b/w postscript.
+* rait: works with file:
+* print a postscript label for each tape used.
+
+Changes in release 2.4.4
+
+* New -a option to amcheck to always send an email.
+
+Changes in release 2.4.4b1
+
+* maxpromoteday: New option for a dumptype.
+* New amtapetype program (replace tapetype)
+* Client compile on CYGWIN
+* amrestore -f <fileno> : amrestore can do fsf before reading the tape
+* amrestore -l <label>  : amrestore can check the label before restoring.
+* New config options:
+  amrecover_do_fsf: Amrecover will use the -f flag of amrestore to position the
+                    tape.
+  amrecover_check_label: amrecover will pass the -l flag to amrestore.
+  amrecover_changer: amrecover will use your changer.
+  maxdumpsize: The maximum size of the dumps during a run,
+               default to tapesize * runtapes
+  taperalgo: select your algo for the taper, try 'largestfit', it can improve
+             tape usage.
+* amrecover allow to retry a skip a tape.
+* New --days option to 'amadmin <config> balance' command.
+* New --date option to amstatus
+* amreport print an usage by tape.
+* Newer promote algorithm that try to reduce the number of full on a
+  single host in a run.
+* New changer: chg-juke, chg-null and chg-rait
+
+Changes in release 2.4.3
+
+* Few small bug fixed
+* New runtapes argument to amverify.
+* New amverifyrun program.
+* 2.4.3 client works with older server.
+
+Changes in release 2.4.3b4
+
+* new noop packet type. It allow the server to know the client features.
+* exclude list with relative path is working again.
+* amstatus is working again.
+
+Changes in release 2.4.3b3
+
+* --with-maxtapeblocksize configure options
+* blocksize tapetype option
+* file-pad tapetype option
+* Multiple exclude in dumptype
+* Option include in dumptype
+* New disklist syntax:
+*   hostname diskname [ diskdevice ] dumptype [ spindle [ interface ] ]
+* chg-zd-mtx: Major cleanup and general overhaul.
+* amrecover: new listdisk command.
+
+Changes in release 2.4.3b2
+
+* amrestore try to find the next chunk in the current directory.
+* amrecover: You can change the tape device between each tape.
+* amstatus work with amflush.
+
+Changes in release 2.4.3b1
+
+* tapeio.
+* New [host [disk]*]* arguments to amdump, amcheck, amadmin and amflush.
+* New [-D datastamp]* arguments to amflush.
+* amrecover: cd accept shell wildcard, new command cdx accept regex.
+* new autoflush option.
+* new dumperstr option to specify the priority order of each dumper.
+
+Changes in release 2.4.2
+
+* Samba passwords are now sent to smbclient via a pipe and never displayed.
+* Debug files in /tmp/amanda (--with-debug-dir) are now timestamped and old
+  ones automatically cleaned out.  This means more space (a few KBytes) will
+  be used since in a given run, several of the programs are called more than
+  once.  But it also means important debugging information should no longer
+  be lost by the file being overwritten.  The length of time to keep the
+  files is controlled by --with-debug-days (default: 4).  The old flag
+  --with-pid-debug-files is no longer needed and is ignored.
+* dumptypes can be specialized in the disklist file
+* Amanda will never use more space than specified (use) for an holding
+  disk
+* A dump on holding disk can spread multiple holding disks
+* negative chunksize is no longer supported
+* chunksize is now 1 Gb by default
+* ufsdump -S is now supported on Solaris
+* Samba 2.0.0 is now supported
+* New `incronly' strategy, similar to skip-full, but allows manual
+  scheduling of full backups
+* chg-scsi was ported to several platforms
+* --with-amandahosts is now enabled by default
+* new force-bump, force-no-bump and unforce-bump command in amadmin.
+* Increased the maximum number of filesystems that can be backed up
+  from a single host, by increasing the maximum UDP request packet
+  size.
+* A new `dtimeout' keyword in amanda.conf to replace the READ_TIMEOUT
+  constant in dumper.c.
+* A new `ctimeout' keyword in amanda.conf to replace the CHECK_TIMEOUT
+  constant in amcheck.c.
+* new amtrmlog command
+* --with-samba-user is deprecated, the username go in the amandapass file
+
+Changes in release 2.4.1
+
+* FAQ for new users, in docs/FAQ.
+* A new `runspercycle' keyword in amanda.conf to specify the number
+  of amdump runs in a dumpcycle. The default is one run every day.
+  A value of 0 (the default) means the same value as dumpcycle.  
+  A value of -1 means guess the number of runs from the tapelist file,
+  which is the number of tape used in the last dumpcycle days / runtapes.
+  If you don't run amdump every days, you must set runspercycle
+  otherwise amanda will noy be able to balance the dump. You must
+  set runspercycle to -1 if you want the same behavior as previous
+  version of amanda.
+* Space to be use as holding disk can now be "use all space except ??? Kb"
+  using a negative value for the 'use' parameter.
+* amrecover will restore SAMBA backups using SAMBA.
+* New `amstatus' program.
+* New `chg-scsi' tape changer program, that replaces `chg-chio' and uses
+  tape-changer-related ioctls on OSs that support them.
+* Reporter can now print tape labels.
+* ZFTAPEs are now supported on Linux.
+* amrestore now accepts a list of filesystems to be restored.
+* New `clean' amtape command.
+* amlabel will only overwrite an Amanda tape if `-f' is specified.
+* Tapes can now be marked so as not to be recycled with amadmin no-reuse.
+* amidxtrm will no longer remove index files of backups in active tapes.
+* Large dumps can now be split into multiple files on holding disk
+  (but they won't span across tapes yet).
+* A total estimate time-out may be specified.
+* Fixed skip-incr and skip-full support.
+* amcheck now accepts -Maddress to send e-mail to the specified address.
+* amdump, amflush and amcheck will use the log files as locks, so as
+  to avoid running concurrently.
+* driver now supports configurable level-0 dumps in degraded mode via
+  new amanda.conf keyword "reserve"; see docs/WHATS.NEW for details.
+* Configure now looks for vxdump and vxrestore in /usr/lib/fs/vxfs for Solaris
+  systems and will use it vxdump/vxrestore automatically on vxfs filesystems.
+* New `killpgrp' setuid-root program, that kills estimate dumps even
+  if they are setuid-root.
+
+Changes in release 2.4.0p1
+
+* Fixed kerberos encryption
+* New --with-owner configure option, to specify owner of installed files
+* amcheck now checks for the existence of gnutar-listdir and of a
+  compressor on the server (for indexes and server compression)
+* Implemented dumptype option `strategy skip'
+* Updated to libtool 1.2a
+* Minor portability-related bugfixes.
+
+Changes in release 2.4.0
+
+* Several security-related fixes, see docs/SECURITY for details.
+* New configuration file syntax: dumptypes can now be used as keywords.
+* New text database format, to replace dbm/ndbm/gdbm/db databases with
+  a more portable and user-friendly format.
+* Index files are now sent through a separate TCP connection, as they
+  are generated, instead of being stored in /tmp.  This breaks Amanda
+  protocol backward compatibility.
+* Estimates are now performed concurrently, if maxdumps>1.
+* At configure time, it is now possible to specify a suffix for amanda
+  service names (--with-testing=suffix) and a directory for debugging
+  files (--with-debugging=/directory/name)
+* New tape changer configuration keywords, that partially standardize
+  tape changer script configuration interface.
+* amrecover can now handle GNU tar and AIX dump restores; it must now
+  be run as root.
+* Shared libraries are built by default, using GNU libtool.
+* Extended regular expression syntax has been adopted.
+* amcheck will no longer report failures about unused programs.
+* It is now possible to specify a SAMBA username at configure time.
+* BSD security is now enabled by default.
+* A time-out for estimate requests can now be specified in amanda.conf.
+* New patch-system script, for editing /etc/services and /etc/inetd.conf.
+* Amdump will wait if a file named `hold' exists in the log directory.
+* Various bugfixes and new ports.
+
+Changes in release 2.3.0.4
+* New chg-generic.conf option 'multieject' added which lets
+  chg-generic work on tape drives that need multiple 'mt offline'
+  commands.  See examples/chg-generic.conf for more information.
+* New configure options:
+  --with-db=DBLIB	   Force database library choice from {db,dbm,gdbm,ndbm}
+  --enable-buffered-dump   Use buffered sockets on server for faster dumps
+  --with-group=GROUPNAME   Install all files into group GROUPNAME
+* Include the file seagate-changer.c which controls
+  Seagate/Conner/Archive autoloading DAT drive on NetBSD systems.
+* Add a new amanda.conf option named "starttime" which is used in the
+  dumptype configuration.  It takes one argument which is a time of day
+  (local timezone) formated as either hhmm or hmm (no `.'s, no `:'s,
+  just an integer).  This tells Amanda to start a particular dump at
+  the given time.
+* Index files are now retrieved from the clients through amandad, not rsh/rcp.
+* Fix configure bug when multiple invocations would not do the correct things.
+* Better fully qualified domain name support.
+* Many little dumper fixes.
+* Remove C style comments from amrmtape and fix a bug when there is
+  only one tape in the tapelist.
+* More declarations of Unix system functions for those OSes that do not
+  have declarations.
+* Fix --with-mmap configure bug.
+
+Changes in release 2.3.0.4b3
+* Include amplot-2.2.6 which makes plots of the amdump files for performance
+  improvements.  Amplot requires gnuplot and a version of awk that
+  understands command line variable assignment.
+* Include amoverview which creates a list of each disk dumped and the level
+  and success or failure of those dumps over a complete tapecycle.
+* Amanda now supports backups of clients in different domains.  Requires
+  using the configure --with-fqdn options and fully qualified domain
+  names (FQDNs) in the disklist file.
+* rth-changer checks all system calls for valid returns.
+* no-changer and hp-changer use different status files and do more checking.
+* amrestore works again with gzip compressed tapes.
+* New setuid program rundump for systems where dump must run as root.
+* Setuid programs are now installed o-rwx for tighter security.
+* Fix bug where if Amanda was not configured using the --with-bsd-security
+  configure option, Amanda would not connect to the client machines.  This
+  is now fixed.
+* Rundump and runtar now check if the proper user is invoking them.
+* Amanda now can use gdbm if the compatibility header files are not installed.
+* Bug fixes for gnutar file exclusions.
+* Fix bug in sendsize which would loop forever if debugging was not turned on.
+* Bug fixes in Samba code.
+* More configure and bug fixes for HP-UX, m88k-motorola-sysv4, SGI, OSF, and
+  Ultrix systems.
+
+Changes in release 2.3.0.4b2
+* New tape changer script (rth-changer) for the Robotic Tape Handling system.
+* Include amindex-1.0 from Alan McIvor.
+* Gnutar incrementals should now work.
+* amgetidx now caches if a remote client is reachable.
+* amanda.conf settings used before --with-dbdir and --with-logdir settings
+  in various scripts.
+* New configure options:
+  --with-mmap				force mmap() instead of shared memory
+  --with-gnutar-listed-incremental=DIR	gnutar directory lists go in DIR
+  --enable-gnutar-atime-preserve	gnutar preserves atime, do not use
+  --with-pid-debug-files		use pid in /tmp debugging filenames
+* Samba support must now be explicitly included using --with-smblcient.
+* Amanda now compiles with K&R compilers.
+* Better AIX, Linux, OSF support.
+* configure checks if /dev/r devices exist or not.
+* Amanda uses POSIX fcntl locking before flock or lockf locking if available.
+* dumper.c uses less aggressive I/O values for SunOS server support.
+* Many bug fixes in the configure script for various platforms.
+* Many bug fixes to codes.
+
+Changes in release 2.3.0.4b1
+* Configuration now uses configure.  Build environment now uses
+  automake and autoconf.
+* Samba PC client backup support added.
+* New programs and scripts:
+  amrmtape: invalidate the contents of an existing backup tape
+  amverify: check Amanda tapes for gnutar driven backups.
+  hp-changer: script for a HP DAT changer.
+  no-changer: make a single tape appear like an infinite count tape stacker.
+* New options added to programs:
+  amadmin: `amadmin <conf> version' shows version information.
+  amtape: `amtape <conf> current' shows the current tape label,
+* Amanda now supports server side compression of dumps on the tape
+  host.  Use the srvcompress option in amanda.conf.
+* Better gnutar support for indexing.  Amanda now lets you exclude
+  files from the dump.
+* Tape planning improvements.
+* Email reports have better formating for disks with long mount points.
+* Tighter DNS checking added to amandad.
+* More debugging added to several programs.
+* Amdump now calls amgetidx and amtrmidx.
+* Better support for multidomain environments.
+* Contains amindex-0.3 from Alan McIvor.
+* Many bug fixes and compiler warnings handled.
+
+Changes in release 2.3.0.3
+* Amadmin uses regular expression matching to match disks.
+* Expand the column width of the disk names from reporter.
+* Contains amindex-0.2 from Alan McIvor.
+* Many bug fixes.
+
+Changes in release 2.3.0.2
+* Bug fixes.
+
+Changes in release 2.3.0.1
+* Contains amindex-0.1 from Alan McIvor.
+* Bug fixes.
+
+Changes in release 2.3.0 alpha
+* A number of material bugs fixed, including fixes incorporated into
+  John Stoffel's WPI patches to amanda, which he called 2.2.6.5.
+* Backup files larger than 2 GB now supported.  The current limit is
+  2^31 Kbytes (2 terabytes), which should hold us for a few more years
+  (1/2 :-).
+* Support for GNUTAR-based backups.
+* Support for writing to multiple tapes (sequentially) in one run.
+* Support for multiple backups in parallel from the same client host.
+* Records from the curinfo database can be exported and imported
+  to/from a textual format.  This allows fixing a corrupted database by
+  running the text version through a script and reimporting it.
+  Individual records or the entire database can be exported/imported.
+
+Changes in release 2.2.6
+* A number of material bugs fixed.
+* A lot of lint picked in the whole package.
+* The documentation is now reasonably up to date.
+* This version has been locally compiled and at least the client side
+  tested on the following systems:
+	SunOS 4.1.3	IRIX 5.2
+	Solaris 2.3	BSDI BSD/386 1.1
+	Ultrix 4.2	NetBSD 1.0
+	DEC OSF/1 2.0	AIX 3.2
+  I don't have any HP/UX machines locally to try it on, but I've
+  tracked patches submitted by Neal Becker <neal@ctd.comset.com>, so
+  I'm reasonably confident that 2.2.6 shouldn't be far from the mark on
+  that platform.
+
+Changes in release 2.2.5
+* SYSV shared memory no longer required on server side if mmap is
+  available.
+* Supports GZIP compression.
+* Supports use of mount names as well as device names in disk list
+  (eg "/usr" instead of "sd0g").
+* Amanda now thinks in real-time - you may run it several times a day
+  if you wish, and it won't get confused.
+* Supports Kerberos 4 security as well as BSD-style .rhosts, including
+  encrypting files over the net.  The Kerberos support is available as
+  a separate add-on package - see the file KERBEROS.HOW-TO-GET on the
+  ftp site.
+* Improved network protocol - faster startup, no longer dump specific,
+  hooks in place for non-dump clients.
+* Client-side checks in amcheck - can check sanity of all client hosts
+  very quickly.
+* Supports multiple holding disks, and load balances between them.
