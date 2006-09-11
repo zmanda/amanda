@@ -1,0 +1,1003 @@
+%!
+%%BoundingBox: 25 25 290 900
+%%Title: AMANDA Full Page Label
+%%Creator: Amanda reporter
+%%Pages: 1
+%%EndComments
+
+%%%%
+%% This template file is used by AMANDA to create PostScript dump log
+%% listings for each run suitable for three-hole punching.
+%%
+%% This prologue is based on one from Steven Freed <sfreed@gilasoft.com>
+%% called 8.5x11.ps and was enhanced with assistance from Dale Talcott
+%% <aeh@purdue.edu>.
+%%
+%% John R. Jackson, Technical Software Specialist, jrj@purdue.edu
+%%%%
+
+/pageSave save def
+
+%%%
+% If you are printing duplex, change the 0 to a 1 in the following line:
+%%%
+
+/DoDuplex 0 def
+
+%%%
+% The following string (inside the parenthesis) will be displayed as
+% the "Location" (e.g. organization) on each page (see the page format
+% below).
+%%%
+
+/LocationString		(Magic Software Development, Inc.) def
+
+%%%
+% Set the margin widths.  This may need adjustment based on how your
+% printer defines the printable area on a page.
+%%%
+
+/inch {
+	72 mul					% one inch == 72 points
+} def
+/mm {
+	25.4 div				% one inch == 25.4 mm
+	inch					% convert inches to points
+} def
+
+/TopMargin		0.25 inch def
+/BottomMargin		0.25 inch def
+
+/OddLeftMargin		0.625 inch def		% 5/8 inch
+/OddRightMargin		0.25 inch def
+
+DoDuplex 0 eq {
+	% even and odd are the same if duplex is not used
+	/EvenLeftMargin OddLeftMargin def
+	/EvenRightMargin OddRightMargin def
+} {
+	% otherwise they are reversed
+	/EvenLeftMargin OddRightMargin def
+	/EvenRightMargin OddLeftMargin def
+} ifelse
+
+%%%
+% A page is made up of these parts.  The base name of the internal variable
+% related to each is shown in parenthesis:
+%
+%	tape name				(Title)
+%	page number				(Page)
+%	version of Amanda			(Vers)
+%	location (e.g. organisation)		(Loc)
+%	date					(Date)
+%	statistics (about the Amanda run)	(Stat)
+%	message (how to do a restore)		(Mess)
+%	header for the filesystem list		(Heading)
+%	filesystem list				(Host)
+%
+% Geometrically, an odd numbered page looks like this:
+%
+%   +----+-------------------+
+%   |        TAPE_NAME  page |   <- section 'A'
+%   | version  location date |   <- section 'B'
+%   +------------------------+
+%   |statistics  |  message  |   <- section 'C' | 'F'
+%   +----+--+--------+-------+
+%   | f# hst fs lvl O-KB C-KB|   <- section 'D'
+%   +-------+--------+-------+
+%   |       |        |       |   <- section 'E'
+%   |       |        |       |
+%   v       v        v       v
+%
+% Even numbered pages look the same unless DoDuplex is turned on, in
+% which case the "page" field is on the left and the gutter width for
+% the punch is on the right (instead of the left).
+%%%
+
+%%%
+% section 'A' fonts and strings
+%%%
+
+/TitleFontSize		24 def			% 24 point Helvetica-Bold
+/TitleFont
+	/Helvetica-Bold findfont
+	TitleFontSize scalefont
+def
+
+/PageFontSize		11 def			% 11 point Palatino-Bold
+/PageFont
+	/Palatino-Bold findfont
+	PageFontSize scalefont
+def
+/PageString1		(Page ) def
+/PageString2		( of ) def
+
+%%%
+% section 'B' fonts and strings
+%%%
+
+/VersFontSize		11 def			% 11 point Palatino-Bold
+/VersFont
+	/Palatino-Bold findfont
+	VersFontSize scalefont
+def
+
+/LocFontSize		12 def			% 12 point Helvetica-Bold
+/LocFont
+	/Helvetica-Bold findfont
+	LocFontSize scalefont
+def
+
+/DateFontSize		11 def			% 11 point Palatino-Bold
+/DateFont
+	/Palatino-Bold findfont
+	DateFontSize scalefont
+def
+
+%%%
+% section 'C' font
+%%%
+
+/StatFontSize		9 def			% 9 point Courier
+/StatFont
+	/Courier findfont
+	StatFontSize scalefont
+def
+
+%%%
+% section 'D' font and strings
+%%%
+
+/HeadingFontSize	9 def			% 9 point Palatino-Bold
+/HeadingFont
+	/Palatino-Bold findfont
+	HeadingFontSize scalefont
+def
+
+/HeadingFileString	(File #) def
+/HeadingHostString	(Host) def
+/HeadingFsString	(File System) def
+/HeadingLvlString	(Level) def
+/HeadingOSizeString1	(Original) def
+/HeadingOSizeString2	(File Size (KB)) def
+/HeadingCSizeString1	(Compressed) def
+/HeadingCSizeString2	(File Size (KB)) def
+
+%%%
+% section 'E' font
+%%%
+
+/HostFontSize		9 def			% 9 point Courier
+/HostFont
+	/Courier findfont
+	HostFontSize scalefont
+def
+
+%%%
+% section 'F' font and strings
+%%%
+
+/MessFontSize		9 def			% 9 point Courier
+/MessFont
+	/Courier findfont
+	MessFontSize scalefont
+def
+
+/MessString1 (To restore:) def
+/MessString2 (   position tape at the start of the file and run:) def
+/MessString3 (      dd if=$TAPE bs=32k skip=1 | zcat | restore -ibf 2 -) def
+/MessString4 (   or run:) def
+/MessString5 (      amrestore -p $TAPE <host> <filesystem> | restore -ibf 2 -) def
+
+%%%%
+%% END OF USER-CONFIGURABLE OPTIONS
+%%
+%% The rest of this file contains the internal functions used to draw
+%% the page and (hopefully) do not need any changes.
+%%%%
+
+/setTitleFont {
+	TitleFont setfont			% make TitleFont current
+} def
+/setPageFont {
+	PageFont setfont			% make PageFont current
+} def
+/setVersFont {
+	VersFont setfont			% make VersFont current
+} def
+/setLocFont {
+	LocFont setfont				% make LocFont current
+} def
+/setDateFont {
+	DateFont setfont			% make DateFont current
+} def
+/setStatFont {
+	StatFont setfont			% make StatFont current
+} def
+/setHeadingFont {
+	HeadingFont setfont			% make HeadingFont current
+} def
+/setHostFont {
+	HostFont setfont			% make HostFont current
+} def
+/setMessFont {
+	MessFont setfont			% make MessFont current
+} def
+
+%%%
+% apush -- increase an array size by one and push a value on the end
+% usage:	value array apush array
+% example:	/jj 0 array def
+%		/jj (first) jj apush def
+%		/jj (second) jj apush def
+%		/jj (third) jj apush def
+%%%
+
+/apush {
+	exch					% [ array value ]
+	/.apush exch def			% save and pop the value
+						% [ array ]
+	aload					% [ old ... array ]
+	length					% length of the old array
+						% [ old ... length ]
+	1 add					% bump it by one
+						% [ old ... length+1 ]
+	array					% create the new array
+						% [ old ... newarray ]
+	.apush exch				% [ old ... value newarray ]
+	astore					% store the values
+						% [ newarray ]
+} def
+
+%%%
+% box -- draw a box
+% usage:	llx lly urx ury box -
+%%%
+
+/box {
+	3 index 2 1 add index moveto
+	3 index 0 1 add index lineto
+	1 index 0 1 add index lineto
+	1 index 2 1 add index lineto
+	pop pop pop pop
+	closepath
+} def
+
+%%%
+% concat -- join two strings
+% usage:	str1 str2 concat new
+%%%
+
+/concat {
+	exch					% str2 str1
+	dup					% str2 str1
+	length					% str2 str1 str1l
+	2 index					% str2 str1 str1l str2
+	length add string			% str2 str1 new
+	dup dup					% str2 str1 new new new
+	4 2 roll				% str2 new new str1 new
+	copy					% str2 new new (str1)
+	length					% str2 new new newl
+	4 -1 roll				% new new newl str2
+	putinterval				% new
+} bind def
+
+%%%
+% max -- return the max of two numbers
+% usage:	a b max a_or_b
+%%%
+
+/max {
+	1 index 1 index				% [ a b a b ]
+	lt {
+		exch				% [ b a ]
+	} if
+	pop
+} def
+
+%%%
+% Set the basic drawable area width and height.
+%%%
+
+clippath					% make the clip area the path
+pathbbox					% and get its bounding box
+						% [ llx lly urx ury ]
+exch						% [ llx lly ury urx ]
+4 1 roll					% [ urx llx lly ury ]
+exch sub					% total height
+TopMargin sub BottomMargin sub			% minus the margins
+/PageHeight exch def				% [ urx llx ]
+sub						% total width
+EvenLeftMargin sub EvenRightMargin sub		% minus the margins
+/PageWidth exch def
+newpath						% zap the path
+
+%%%
+% Define rectangles to separate the regions.
+%%%
+
+/TitleBox {
+	0					% [ llx ]
+	PageHeight				% [ llx PageHeight ]
+	  TitleFontSize PageFontSize max	% 'A' height
+	  2 add					% space between 'A' and 'B'
+	  4 add					% space below 'B'
+	  VersFontSize LocFontSize max
+		       DateFontSize max		% 'B' height
+	  add					% 'A' height+space+'B' height
+	  sub					% [ llx lly ]
+	PageWidth				% [ llx lly urx ]
+	PageHeight				% [ llx lly urx ury ]
+} bind def
+
+/StatBox {
+	TitleBox				% [ llx lly urx ury ]
+	pop					% [ llx lly urx ]
+	3 1 roll dup				% [ urx llx lly lly ]
+	StatStrings length			% number of status lines
+	StatFontSize mul			% height of status lines
+	MessStrings length			% number of message lines
+	MessFontSize mul			% height of message lines
+	max					% max height
+	2 add					% space above
+	4 add					% space below
+	sub					% [ urx llx ury lly ]
+	exch					% [ urx llx lly ury ]
+	4 -1 roll				% [ llx lly ury urx ]
+	exch					% [ llx lly urx ury ]
+} def
+
+/CFLine {
+	StatBox					% [ llx lly urx ury ]
+	3 1 roll				% [ llx ury lly urx ]
+	pop exch				% [ llx lly ury ]
+	3 -1 roll				% [ lly ury llx ]
+	setStatFont
+	0
+	StatStrings {
+		stringwidth pop max
+	} forall
+	add
+	(nn) stringwidth pop add		% left and right padding
+	dup					% [ ly uy x x ]
+	3 1 roll				% [ ly x uy x ]
+	4 1 roll				% [ x ly x uy ]
+} def
+
+/HeadingBox {
+	StatBox					% [ llx lly urx ury ]
+	pop					% [ llx lly urx ]
+	3 1 roll dup				% [ urx llx lly lly ]
+	HeadingFontSize 2 mul			% two heading lines
+	2 add					% space above
+	4 add					% space below
+	sub					% [ urx llx ury lly ]
+	exch					% [ urx llx lly ury ]
+	4 -1 roll				% [ llx lly ury urx ]
+	exch					% [ llx lly urx ury ]
+} def
+
+/HostBox {
+	HeadingBox				% [ llx lly urx ury ]
+	pop					% [ llx lly urx ]
+	3 1 roll 0				% [ urx llx lly 0 ]
+	exch					% [ urx llx lly ury ]
+	4 -1 roll				% [ llx lly ury urx ]
+	exch					% [ llx lly urx ury ]
+} def
+
+%%%
+% Compute the center point for the section 'A' title text.
+%%%
+
+/TitlePos {
+	TitleBox				% [ llx lly urx ury ]
+	TitleFontSize sub			% [ llx lly urx y ]
+	3 -1 roll				% [ llx urx y lly ]
+	pop					% [ llx urx y ]
+	3 1 roll				% [ y llx urx ]
+	exch dup				% [ y urx llx llx ]
+	3 -1 roll				% [ y llx llx urx ]
+	exch sub 2 div add			% [ y x ]
+	exch					% [ x y ]
+} def
+
+%%%
+% Compute the position of the odd page string (right adjusted).
+%%%
+
+/OddPagePos {
+	TitleBox				% [ llx lly urx ury ]
+	4 -2 roll				% [ urx ury llx lly ]
+	pop pop					% [ x y ]
+	exch					% [ y x ]
+	setPageFont
+	(n) stringwidth pop sub			% a little padding
+	exch					% [ x y ]
+	PageFontSize sub
+	2 sub					% space above
+} def
+
+%%%
+% Compute the position of the even page string (left adjusted).
+% Not used if DoDuplex is off.
+%%%
+
+/EvenPagePos {
+	TitleBox				% [ llx lly urx ury ]
+	4 1 roll				% [ ury llx lly urx ]
+	pop pop					% [ y x ]
+	setPageFont
+	(n) stringwidth pop add			% a little padding
+	exch					% [ x y ]
+	PageFontSize sub
+	2 sub					% space above
+} def
+
+%%%
+% Compute the position of the version string.
+%%%
+
+/VersPos {
+	TitleBox				% [ llx lly urx ury ]
+	pop pop					% [ llx lly ]
+	exch					% [ lly llx ]
+	setVersFont
+	(n) stringwidth pop add			% a little padding
+	exch					% [ x y ]
+	4 add					% space below
+} def
+
+%%%
+% Compute the position of the location string (centered).
+%%%
+
+/LocPos {
+	TitleBox				% [ llx lly urx ury ]
+	pop					% [ llx lly urx ]
+	3 -1 roll				% [ lly urx llx ]
+	dup					% [ lly urx llx llx ]
+	3 -1 roll				% [ lly llx llx urx ]
+	exch sub 2 div add			% [ y x ]
+	exch					% [ x y ]
+	4 add					% space below
+} def
+
+%%%
+% Compute the position of the date string (right adjusted).
+%%%
+
+/DatePos {
+	TitleBox				% [ llx lly urx ury ]
+	pop					% [ llx lly urx ]
+	3 -1 roll				% [ lly urx llx ]
+	pop					% [ y x ]
+	setDateFont
+	(n) stringwidth pop sub			% a little padding
+	exch					% [ x y ]
+	4 add					% space below
+} def
+
+%%%
+% Compute the position of the top status string.
+%%%
+
+/StatPos {
+	StatBox					% [ llx lly urx ury ]
+	exch pop				% [ llx lly ury ]
+	dup					% [ llx lly ury ury ]
+	3 1 roll				% [ llx ury lly ury ]
+	exch sub				% [ llx ury box_height ]
+	StatStrings length			% number of status lines
+	StatFontSize mul			% height of status lines
+	sub 2 div				% [ llx ury space_above ]
+	sub
+	StatFontSize sub			% [ llx y ]
+	2 add					% space above
+	exch					% [ y llx ]
+	setStatFont
+	(n) stringwidth pop add			% a little padding
+	exch					% [ x y ]
+} def
+
+%%%
+% Compute the position of the top message string.
+%%%
+
+/MessPos {
+	CFLine					% [ lx ly ux uy ]
+	exch pop				% [ lx ly uy ]
+	dup					% [ lx ly uy uy ]
+	3 1 roll				% [ lx uy ly uy ]
+	exch sub				% [ lx uy box_height ]
+	MessStrings length			% number of status lines
+	MessFontSize mul			% height of status lines
+	sub 2 div				% [ lx uy space_above ]
+	sub
+	MessFontSize sub			% [ lx y ]
+	2 add					% space above
+	exch					% [ y lx ]
+	setMessFont
+	(n) stringwidth pop add			% a little padding
+	exch					% [ x y ]
+} def
+
+%%%
+% Compute the heading positions that start at the left.
+%%%
+
+/HeadingFilePos {
+	HeadingBox				% [ llx lly urx ury ]
+	pop pop					% [ llx lly ]
+	exch					% [ y x ]
+	setHeadingFont
+	(n) stringwidth pop add			% a little padding
+	dup
+	HeadingFileString stringwidth pop add
+	/HeadingFilePosX exch def		% for BuildHost
+	exch					% [ x y ]
+	4 add					% space below
+} def
+
+/HeadingHostPos {
+	HeadingFilePos				% [ x y ]
+	exch					% [ y x ]
+	setHeadingFont
+	(nn) stringwidth pop add		% a little padding
+	HeadingFileString stringwidth pop add
+	dup /HeadingHostPosX exch def		% for BuildHost
+	exch					% [ x y ]
+} def
+
+/HeadingFsPos {
+	HeadingHostPos				% [ x y ]
+	exch					% [ y x ]
+	setHostFont				% use the host font for sizes
+	HostNameWidth add
+	(nn) stringwidth pop add		% a little padding
+	dup /HeadingFsPosX exch def		% for BuildHost
+	exch					% [ x y ]
+	setHeadingFont				% leave it in the heading font
+} def
+
+%%%
+% Compute the heading positions that start at the right (and are right
+% justified).
+%%%
+
+/HeadingCSizePos2 {
+	HeadingBox				% [ llx lly urx ury ]
+	pop					% [ llx lly urx ]
+	3 -1 roll				% [ lly urx llx ]
+	pop					% [ lly urx ]
+	setHeadingFont
+	(n) stringwidth pop sub			% a little padding
+	dup /HeadingCSizePosX exch def		% for BuildHost
+	exch					% [ x y ]
+	4 add					% space below
+} def
+
+/HeadingCSizePos1 {
+	HeadingCSizePos2
+	HeadingFontSize add
+} def
+
+/HeadingOSizePos2 {
+	HeadingCSizePos2			% [ x y ]
+	exch					% [ y x ]
+	setHeadingFont
+	HeadingCSizeString1 stringwidth pop
+	HeadingCSizeString2 stringwidth pop
+	max					% widest string
+	sub					% [ y x ]
+	(n) stringwidth pop sub			% a little padding
+	dup /HeadingOSizePosX exch def		% for BuildHost
+	exch					% [ x y ]
+} def
+
+/HeadingOSizePos1 {
+	HeadingOSizePos2
+	HeadingFontSize add
+} def
+
+/HeadingLvlPos {
+	HeadingOSizePos2			% [ x y ]
+	exch					% [ y x ]
+	setHeadingFont
+	HeadingOSizeString1 stringwidth pop
+	HeadingOSizeString2 stringwidth pop
+	max					% widest string
+	sub					% [ y x ]
+	HeadingLvlString stringwidth pop
+	2 div sub				% set up for centering
+	(n) stringwidth pop sub			% a little padding
+	dup /HeadingLvlPosX exch def		% for BuildHost
+	exch					% [ x y ]
+} def
+
+%%%%
+%% The following functions save strings for each kind of information
+%% and handle the calls generated by amreport.
+%%%%
+
+%%%
+% DrawStat saves a string in the next position for section 'A'.
+%%%
+
+/StatStrings 0 array def
+
+/DrawStat {
+	/StatStrings exch			% [ /StatStrings value ]
+	StatStrings apush def
+} def
+
+%%%
+% DrawMess saves a string in the next position for section 'F'.
+%%%
+
+/MessStrings 0 array def
+
+/DrawMess {
+	/MessStrings exch			% [ /MessStrings value ]
+	MessStrings apush def
+} def
+
+MessString1 DrawMess
+MessString2 DrawMess
+MessString3 DrawMess
+MessString4 DrawMess
+MessString5 DrawMess
+
+%%%
+% DrawTitle saves the title string.
+%%%
+
+/TitleString () def
+
+/DrawTitle {
+	/TitleString exch def
+} def
+
+%%%
+% DrawDate save the date string.
+%%%
+
+/DateString () def
+
+/DrawDate {
+	/DateString exch def
+} def
+
+%%%
+% DrawLoc saves the location string.  Amreport does not generate this
+% call and the initial value has been set at the start of this file
+% in the user-changeable area.
+%%%
+
+/DrawLoc {
+	/LocationString exch def
+} def
+
+%%%
+% DrawVers saves the Amanda version string.
+%%%
+
+/VersionString () def
+
+/DrawVers {
+	/VersionString exch def
+} def
+
+%%%
+% DrawHost expects six strings on the stack:
+%
+%	Host Name
+%	Partition Name
+%	Dump Level
+%	Tape File Number
+%	Original Size
+%	Compressed Size
+%
+% They are saved for processing by the final showpage.
+%%%
+
+/HostStrings 0 array def
+/HostNameWidth 0 def
+
+/DrawHost {
+	setHostFont
+	5 index					% copy of host name
+	stringwidth pop
+	HostNameWidth max
+	/HostNameWidth exch def			% find maximum host name width
+	6 array astore				% convert args to an array
+	/HostStrings exch			% [ /HostStrings value ]
+	HostStrings apush def
+} def
+
+%%%%
+%% Functions used during actual page drawing.
+%%%%
+
+%%%
+% Center a string on the current point.
+%%%
+
+/Center {
+	dup stringwidth pop
+	2 div
+	neg 0 rmoveto
+} bind def
+
+%%%
+% Right justify a string on the current point.
+%%%
+
+/RightJustify {
+	dup					% [ (str) (str) ]
+	stringwidth pop				% [ (str) width ]
+	neg 0 rmoveto
+} bind def
+
+%%%
+% The main page drawing function called when a new page is started.
+%%%
+
+/PageCount 1 def
+
+/BuildPage {
+
+	% translate to leave room for the margins
+
+	PageCount 2 mod 1 eq {
+		OddLeftMargin
+	} {
+		EvenLeftMargin
+	} ifelse
+	BottomMargin translate
+
+	% draw the boxes
+
+	currentgray				% save the gray value
+	0 setgray				% turn off gray
+	currentlinewidth			% save the current line width
+	2 setlinewidth				% thick lines
+
+	StatBox box stroke
+	TitleBox box stroke
+	HeadingBox box stroke
+	HostBox box stroke
+	CFLine moveto lineto stroke
+
+	setlinewidth				% restore the line width
+	setgray					% restore the gray value
+
+	% draw the title
+
+	setTitleFont
+	TitleString
+	TitlePos moveto
+	Center
+	show
+
+	% draw the page number string
+
+	setPageFont
+	PageCount
+	32 string				% big enough for the number
+	cvs					% convert the number
+	PageString1 exch concat			% (Page NN)
+	PageString2 concat			% (Page NN of )
+	PageMaxString concat			% (Page NN of MM)
+	PageCount 2 mod 1 eq {
+		OddPagePos moveto
+		RightJustify
+	} {
+		DoDuplex 0 eq {
+			OddPagePos moveto
+			RightJustify
+		} {
+			EvenPagePos moveto
+		} ifelse
+	} ifelse
+	show
+	/PageCount PageCount 1 add def		% bump the page counter
+
+	% draw the version string
+
+	setVersFont
+	VersionString
+	VersPos moveto
+	show
+
+	% draw the location
+
+	setLocFont
+        LocationString
+	LocPos moveto
+	Center
+	show
+
+	% draw the date string
+
+	setDateFont
+	DateString
+	DatePos moveto
+	RightJustify
+	show
+
+	% draw the status lines
+
+	setStatFont
+	StatPos
+	/CurrentY exch def
+	StatStrings {
+		exch dup CurrentY moveto
+		exch show
+		/CurrentY CurrentY StatFontSize sub def
+	} forall
+	pop					% get rid of the X value
+
+	% draw the messages
+
+        setMessFont
+	MessPos
+	/CurrentY exch def
+	MessStrings {
+		exch dup CurrentY moveto
+		exch show
+		/CurrentY CurrentY MessFontSize sub def
+	} forall
+	pop					% get rid of the X value
+
+	% draw the headings
+
+	setHeadingFont
+	HeadingFilePos moveto
+	  HeadingFileString
+	  show
+	HeadingHostPos moveto
+	  HeadingHostString
+	  show
+	HeadingFsPos moveto
+	  HeadingFsString
+	  show
+	HeadingLvlPos moveto
+	  HeadingLvlString
+	  Center
+	  show
+	HeadingOSizePos1 moveto
+	  HeadingOSizeString1
+	  RightJustify
+	  show
+	HeadingOSizePos2 moveto
+	  HeadingOSizeString2
+	  RightJustify
+	  show
+	HeadingCSizePos1 moveto
+	  HeadingCSizeString1
+	  RightJustify
+	  show
+	HeadingCSizePos2 moveto
+	  HeadingCSizeString2
+	  RightJustify
+	  show
+
+	% reset the host position variables
+
+	HeadingBox				% [ llx lly urx ury ]
+	pop pop exch pop			% [ lly ]
+	HostFontSize sub
+	/CurrentY exch def
+} def
+
+%%%
+% Build the host line on the page.
+%%%
+
+/BuildHost {
+	setHostFont
+	HeadingCSizePosX CurrentY moveto
+	  RightJustify
+	  show					% compressed size
+	HeadingOSizePosX CurrentY moveto
+	  RightJustify
+	  show					% original size
+	HeadingFilePosX CurrentY moveto
+	  RightJustify
+	  show					% tape file number
+	HeadingLvlPosX CurrentY moveto
+	  show					% dump level
+	HeadingFsPosX CurrentY moveto
+	  show					% file system
+	HeadingHostPosX CurrentY moveto
+	  show					% host
+
+	HostCount 0 gt {			% if not at end of page
+		currentlinewidth		% save the line width
+		.25 setlinewidth		% thin lines
+
+		CurrentY
+		dup				% keep this CurrentY
+		HostFontSize 2 add sub
+		/CurrentY exch def		% update CurrentY for next host
+
+		2 sub				% move down a little
+		dup
+		0 exch				% [ y 0 y ]
+		moveto
+		PageWidth exch			% [ PageWidth y ]
+		lineto stroke
+		setlinewidth			% restore the line width
+	} if
+} def
+
+%%%
+% Magic time -- the input consists of lots of calls to the /DrawXXX
+% functions, which gather the text into memory.  It ends with a showpage,
+% which we hook here to do all the real imaging after everything has
+% been collected.  The only reason to do all this is so we can know
+% how many pages will be generated for the "Page N of M" line.
+%%%
+
+25 dict begin					% emperically enough entries
+	/*showpage /showpage load def		% rename showpage to *showpage
+						% in our dictionary
+	/showpage {
+		HostBox				% [ llx lly urx ury ]
+		exch pop			% [ llx lly ury ]
+		exch sub			% [ llx height ]
+		exch pop			% [ height ]
+		cvi				% idiv requires integers
+		HostFontSize
+		2 add				% space below each line
+		idiv				% hosts per page
+		dup
+		/HostMax exch def
+
+		dup
+		/HostCount exch def		% initialize the counter
+
+		dup				% [ HostMax HostMax ]
+		HostStrings length		% number of hosts
+		add 1 sub exch idiv		% number of pages
+		32 string cvs
+		/PageMaxString exch def
+
+		/HavePage 0 def			% flag that page is built
+
+		HostStrings {
+			aload pop		% put host strings on the stack
+			HostCount HostMax eq {
+				BuildPage	% time to build a new page
+				/HavePage 1 def
+			} if
+			/HostCount HostCount 1 sub def
+			BuildHost		% build this host line
+			HostCount 0 le {
+				*showpage	% time to dump a page
+				/HavePage 0 def
+				/HostCount HostMax def
+			} if
+		} forall
+
+		HavePage 1 eq {
+			*showpage		% dump the last page
+		} if
+
+		% Clean up.  Ideally this would be in the page epilog,
+		% but reporter.c only emits the "showpage".
+		end				% end the dict in which this
+						% showpage redefinition lives
+		pageSave restore		% free up memory
+		
+	} def
+%%%
+% Normally there would be an "end" here to match the "begin" for our
+% dictionary, but we want to leave it on top of the dictionary stack
+% so the final showpage runs our showpage replacement.
+%%%
+
+%%%%
+%% END OF TEMPLATE FILE
+%%%% 
