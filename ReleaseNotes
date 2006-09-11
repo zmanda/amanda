@@ -1,0 +1,48 @@
+		Release Notes for amanda-2.5.1
+
+
+usetimestamps
+
+  This new feature will record all dump with timestamp instead of datestamp,
+  it will allow to do many dump in a day and recover easily anyone of them.
+
+  If you use this features, you will not be able to downgrade to 2.5.0 or
+  earlier.
+
+  see the usetimestamps section of 'man amanda.conf'
+
+
+bsdudp/bsdtcp
+
+  These are 2 new auth, they still use bsd authentification like bsd, but
+  use less port.
+
+  bsdudp is like bsd, it use udp for connecting to client but it will use
+  only one tcp port for all data stream.
+
+  bsdtcp use tcp to connect the to client and it's the only network
+  connection use.  It doesn't have the udp packet size limit, so you can
+  have an unlimited number of DLE for a single host.
+
+amrecover use the security-api
+
+  amrecover now use the security-api, You don't need to configure an
+  amindexd and an amidxtaped services in your xinetd.
+  amindexd and amidxtaped will be launched by amandad like any other services.
+  You must do modification to your xinetd configuration and .amandahosts toi
+  allow connection to amindexd and amidxtaped.
+
+new format of xinetd.d/amanda
+
+  amandad get in arguments the list of services it can launch, you must add
+  theses services in the server_args options.
+
+new format of .amandahosts
+
+  You must append to each line the services this client can launch, the
+  default is "amdump"
+
+
+See the AUTHORIZATION section of the amanda man page and the
+docs/howto-auth.txt
+
