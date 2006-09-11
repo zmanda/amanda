@@ -1,0 +1,327 @@
+#!@SHELL@
+#
+# Amanda, The Advanced Maryland Automatic Network Disk Archiver
+# Copyright (c) 1991-1998 University of Maryland at College Park
+# All Rights Reserved.
+#
+# Permission to use, copy, modify, distribute, and sell this software and its
+# documentation for any purpose is hereby granted without fee, provided that
+# the above copyright notice appear in all copies and that both that
+# copyright notice and this permission notice appear in supporting
+# documentation, and that the name of U.M. not be used in advertising or
+# publicity pertaining to distribution of the software without specific,
+# written prior permission.  U.M. makes no representations about the
+# suitability of this software for any purpose.  It is provided "as is"
+# without express or implied warranty.
+#
+# U.M. DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING ALL
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT SHALL U.M.
+# BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+# WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION
+# OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
+# CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+#
+# Author: James da Silva, Systems Design and Analysis Group
+#			   Computer Science Department
+#			   University of Maryland at College Park
+#
+
+#
+# amcleanup.sh - clean up and generate a report after a crash.
+
+# try to hit all the possibilities here
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libexecdir=@libexecdir@
+sbindir=@sbindir@
+
+confdir=@CONFIG_DIR@
+
+PATH=$sbindir:$libexecdir:/usr/bin:/bin:/usr/sbin:/sbin:/usr/ucb
+export PATH
+
+USE_VERSION_SUFFIXES="@USE_VERSION_SUFFIXES@"
+if test "$USE_VERSION_SUFFIXES" = yes; then
+	SUF=-@VERSION@
+else
+	SUF=
+fi
+
+if test -h /proc/1/exe ; then
+	if test $# -eq 1 ; then
+		KILL_ENABLE=0
+		conf=$1
+		shift;
+	elif test $# -eq 2 && test "$1" == "-k" ; then
+		KILL_ENABLE=1
+		conf=$2
+		shift
+		shift
+	else
+		echo "Usage: amcleanup [-k] conf"
+		exit 1
+	fi
+else
+	if test $# -ne 1 ; then
+		echo "Usage: amcleanup conf"
+		exit 1
+	else
+		conf=$1
+		KILL_ENABLE=0
+	fi
+fi
+
+if test ! -d $confdir/$conf ; then
+	echo "amcleanup: could not cd into $confdir/$conf"
+	exit 1
+fi
+
+cd $confdir/$conf
+
+logdir=`amgetconf$SUF $conf logdir "$@"`
+rc=$?
+if test $rc -ne 0 ; then
+	echo "amcleanup: 'amgetconf$SUF logdir' exited with status: $rc" 1>&2
+	exit 1
+fi
+logfile=$logdir/log
+errfile=$logdir/amdump
+erramflush=$logdir/amflush
+tapecycle=`amgetconf$SUF $conf tapecycle "$@"`
+rc=$?
+if test $rc -ne 0 ; then
+	echo "amcleanup: 'amgetconf$SUF tapecycle' exited with status: $rc " 1>&2
+	exit 1
+fi
+dumpuser=`amgetconf$SUF $conf dumpuser "$@"`
+rc=$?
+if test $rc -ne 0 ; then
+	echo "amcleanup: 'amgetconf$SUF $conf dumpuser' exited with status: $rc" 1>&2
+	exit 1
+fi
+
+# Check for running processes which should not be
+# running right now.
+if test ${KILL_ENABLE} -eq 1 ; then
+	if test -h /proc/1/exe ; then
+		USER_PROCESS_NAMES="\
+			@libexecdir@/amandad \
+			@libexecdir@/amcleanupdisk \
+			@libexecdir@/amidxtaped \
+			@libexecdir@/amindexd \
+			@libexecdir@/amlogroll \
+			@libexecdir@/amtrmidx \
+			@libexecdir@/amtrmlog \
+			@libexecdir@/chg-chio \
+			@libexecdir@/chg-chs \
+			@libexecdir@/chg-disk \
+			@libexecdir@/chg-iomega \
+			@libexecdir@/chg-juke \
+			@libexecdir@/chg-manual \
+			@libexecdir@/chg-mcutil \
+			@libexecdir@/chg-mtx \
+			@libexecdir@/chg-multi \
+			@libexecdir@/chg-null \
+			@libexecdir@/chg-rait \
+			@libexecdir@/chg-rth \
+			@libexecdir@/chg-scsi \
+			@libexecdir@/chg-zd-mtx \
+			@libexecdir@/chunker \
+			@libexecdir@/driver \
+			@libexecdir@/generic-dumper \
+			@libexecdir@/gnutar \
+			@libexecdir@/noop \
+			@libexecdir@/patch-system \
+			@libexecdir@/selfcheck \
+			@libexecdir@/sendbackup \
+			@libexecdir@/sendsize \
+			@libexecdir@/star \
+			@libexecdir@/taper \
+			@libexecdir@/versionsuffix \
+			@sbindir@/amaddclient \
+			@sbindir@/amadmin \
+			@sbindir@/amaespipe \
+			@sbindir@/amcheckdb \
+			@sbindir@/amcrypt \
+			@sbindir@/amcryptsimple \
+			@sbindir@/amdd \
+			@sbindir@/amdump \
+			@sbindir@/amfetchdump \
+			@sbindir@/amflush \
+			@sbindir@/amgetconf \
+			@sbindir@/amgpgcrypt \
+			@sbindir@/amlabel \
+			@sbindir@/ammt \
+			@sbindir@/amoverview \
+			@sbindir@/amplot \
+			@sbindir@/amrecover \
+			@sbindir@/amreport \
+			@sbindir@/amrestore \
+			@sbindir@/amrmtape \
+			@sbindir@/amserverconfig \
+			@sbindir@/amstatus \
+			@sbindir@/amtape \
+			@sbindir@/amtapetype \
+			@sbindir@/amtoc \
+			@sbindir@/amverify \
+			@sbindir@/amverifyrun"
+
+		ROOT_PROCESS_NAMES="\
+			@libexecdir@/calcsize \
+			@libexecdir@/killpgrp \
+			@libexecdir@/rundump \
+			@libexecdir@/runtar \
+			@libexecdir@/dumper \
+			@libexecdir@/planner \
+			@sbindir@/amcheck"
+
+		PREVIOUS_DIR="`pwd`"
+		cd /proc
+		PIDS_FOUND=0
+		KEEP_CHECKING=1
+		while test ${KEEP_CHECKING} -ne 0 ; do
+			PIDS_THIS_PASS=0
+			for search_user in ${dumpuser} root ; do
+				if test "${search_user}" == "${dumpuser}" ; then
+					PROCESS_NAMES=${USER_PROCESS_NAMES}
+				elif test "${search_user}" == "root" ; then
+					PROCESS_NAMES=${ROOT_PROCESS_NAMES}
+				fi
+				for search_pid in [0-9]* ; do
+					for search_name in ${PROCESS_NAMES} ; do
+						ls -l /proc/${search_pid}/exe 2>/dev/null | grep ${search_name} >/dev/null
+						match_name=$?
+						pid_uid="`cat /proc/${search_pid}/status 2>/dev/null | grep Uid | awk '//{split($_,i); print i[2]}'`"
+						if test ${match_name} -eq 0  && test "${pid_uid}" == "${search_user}" ; then
+							echo "amcleanup: Process ${search_name} found running at pid #${search_pid}."
+							kill_pid=${search_pid}
+							kill_name=${search_name}
+							PIDS_FOUND=`expr ${PIDS} + 1`
+							PIDS_THIS_PASS=1
+							break
+						else
+							kill_pid=""
+							continue
+						fi
+					done
+					if test ! -z "${kill_pid}" ; then
+						if test -d /proc/${kill_pid} ; then
+							echo "amcleanup: Sending process ${kill_pid} the TERM signal."
+							kill -15 -- ${kill_pid}
+							sleep 5
+							if test -d /proc/${kill_pid} ; then
+								echo "amcleanup: Sending process  ${kill_pid} the KILL signal."
+								kill -9 -- ${kill_pid}
+							fi
+							sleep 5
+							if test -d /proc/${kill_pid} ; then
+								echo "amcleanup: Process ${kill_pid} did not respond to the KILL signal (and may be hung)!" 1>&2
+								KILL_FAILURES=`expr ${KILL_FAILURES} + 1`
+							fi
+						else
+							echo "amcleanup: Process ${kill_pid} no longer running.  Skipping..."
+						fi
+					fi
+				done
+			done
+			if test ${PIDS_THIS_PASS} -eq 0 ; then
+				KEEP_CHECKING=0
+			else
+				KEEP_CHECKING=1
+			fi
+		done
+		if test ${PIDS_FOUND} -gt 0 ; then
+			echo "amcleanup: ${PIDS_FOUND} Amanda processes were found running."
+			echo "amcleanup: ${KILL_FAILURES} processes failed to terminate."
+		else
+			echo "amcleanup: No Amanda processes were found running."
+		fi
+		cd "${PREVIOUS_DIR}"
+	fi
+fi
+
+retstatus=0
+if test -f $logfile ; then
+	echo "amcleanup: processing outstanding log file."
+	exec </dev/null >/dev/null 2>&1
+	amreport$SUF $conf "$@"
+	rc=$?
+	if test $rc -ne 0 ; then
+		echo "amcleanup: amreport exited with status: $rc" 1>&2
+		retstatus=`expr $retstatus + 1`
+	fi
+
+	# Roll the log file to its datestamped name.
+	amlogroll$SUF $conf "$@"
+	rc=$?
+	if test $rc -ne 0 ; then
+		echo "acmleanup: amlogroll exited with status: $rc" 1>&2
+		retstatus=`expr $retstatus + 2`
+	fi
+
+	# Trim the index file to those for dumps that still exist.
+	amtrmidx$SUF $conf "$@"
+	rc=$?
+	if test $rc -ne 0 ; then
+		echo "amcleanup: amtrmidx exited with status: $rc" 1>&2
+		retstatus=`expr $retstatus + 4`
+	fi
+
+else
+	echo "amcleanup: no unprocessed logfile to clean up."
+fi
+
+if test -f $errfile ; then
+    # if log was found, this will have been directed to /dev/null,
+    # which is fine.
+    echo "amcleanup: $errfile exists, renaming it."
+
+    # Keep debug log through the tapecycle plus a couple days
+    maxdays=`expr $tapecycle + 2`
+
+    days=1
+    # First, find out the last existing errfile,
+    # to avoid ``infinite'' loops if tapecycle is infinite
+    while test $days -lt $maxdays  && test -f $errfile.$days ; do
+	days=`expr $days + 1`
+    done
+    # Now, renumber the existing log files
+    while test $days -ge 2 ; do
+	ndays=`expr $days - 1`
+	mv $errfile.$ndays $errfile.$days
+	days=$ndays
+    done
+    mv $errfile $errfile.1
+fi
+
+if test -f $erramflush ; then
+    # if log was found, this will have been directed to /dev/null,
+    # which is fine.
+    echo "amcleanup: $erramflush exists, renaming it."
+
+    # Keep debug log through the tapecycle plus a couple days
+    maxdays=`expr $tapecycle + 2`
+
+    days=1
+    # First, find out the last existing erramflush,
+    # to avoid ``infinite'' loops if tapecycle is infinite
+    while test $days -lt $maxdays  && test -f $erramflush.$days ; do
+	days=`expr $days + 1`
+    done
+    # Now, renumber the existing log files
+    while test $days -ge 2 ; do
+	ndays=`expr $days - 1`
+	mv $erramflush.$ndays $erramflush.$days
+	days=$ndays
+    done
+    mv $erramflush $erramflush.1
+fi
+
+$libexecdir/amcleanupdisk $conf "$@"
+rc=$?
+if test $rc -ne 0 ; then
+	echo "amcleanup: amcleanupdisk exited with status: $rc" 1>&2
+	retstatus=`expr $retstatus + 8`
+fi
+
+exit $retstatus
