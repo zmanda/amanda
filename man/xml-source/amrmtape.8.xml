@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"
+[
+  <!-- entities files to use -->
+  <!ENTITY % global_entities SYSTEM '../entities/global.entities'>
+  %global_entities;
+]>
+
+<!-- lifted from troff+man by doclifter -->
+<refentry id='amrmtape.8'>
+
+<refmeta>
+<refentrytitle>amrmtape</refentrytitle>
+<manvolnum>8</manvolnum>
+</refmeta>
+<refnamediv>
+<refname>amrmtape</refname>
+<refpurpose>remove a tape from the &A; database</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv>
+<cmdsynopsis>
+  <command>amrmtape</command>    
+    <arg choice='opt'>-n </arg>
+    <arg choice='opt'>-v </arg>
+    <arg choice='opt'>-q </arg>
+    <arg choice='opt'>-d </arg>
+    <arg choice='plain'><replaceable>config</replaceable></arg>
+    <arg choice='plain'><replaceable>label</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1><title>DESCRIPTION</title>
+<para><emphasis remap='B'>Amrmtape</emphasis>
+invalidates the contents of an existing backup tape
+in the configuration database.
+This is meant as a recovery mechanism when a
+good backup is damaged either by faulty hardware or user error,
+e.g. the tape is eaten by the drive or is overwritten.</para>
+
+<para>See the
+<citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+man page for more details about &A;.</para>
+</refsect1>
+
+<refsect1><title>OPTIONS</title>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><option>-n</option></term>
+  <listitem>
+<para>Generate new
+<emphasis remap='I'>tapelist</emphasis>
+and database files with
+<emphasis remap='I'>label</emphasis>
+removed, but leave them in
+<filename>/tmp</filename>
+and do not update the original copies.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-v</option></term>
+  <listitem>
+<para>List backups of hosts and disks that are being discarded.  Enabled by default.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-q</option></term>
+  <listitem>
+<para>Opposite of
+<option>-v</option>.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-d</option></term>
+  <listitem>
+<para>Run in debugging mode so all executed commands are shown.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1><title>EXAMPLE</title>
+<para>Remove tape labeled
+<emphasis remap='I'>DAILY034</emphasis>
+from the
+<emphasis remap='I'>DailySet1</emphasis>
+configuration.</para>
+
+<programlisting>
+# amrmtape DailySet1 DAILY034
+</programlisting>
+</refsect1>
+
+<refsect1><title>AUTHOR</title>
+<para>Adrian T. Filipi-Martin <email>atf3r@cs.virginia.edu</email>: Original text</para>
+<para>&maintainer.sgw;: XML-conversion</para>
+</refsect1>
+
+<refsect1><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>amadmin</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry></para>
+</refsect1>
+</refentry>
+

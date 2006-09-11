@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"
+[
+  <!-- entities files to use -->
+  <!ENTITY % global_entities SYSTEM '../entities/global.entities'>
+  %global_entities;
+]>
+
+<!-- lifted from troff+man+tkman by doclifter -->
+<refentry id='amdd.8'>
+
+<!-- CO listing suppressed (not used) -->
+<refmeta>
+<refentrytitle>amdd</refentrytitle>
+<manvolnum>8</manvolnum>
+</refmeta>
+<refnamediv>
+<refname>amdd</refname>
+<refpurpose>&A; version of dd</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv>
+<cmdsynopsis>
+  <command>amdd</command>    
+    <arg choice='opt'>-d </arg>
+    <arg choice='opt'><replaceable>if=input</replaceable></arg>
+    <arg choice='opt'><replaceable>of=output</replaceable></arg>
+    <arg choice='opt'><replaceable>bs=blocksize</replaceable></arg>
+    <arg choice='opt'><replaceable>skip=count</replaceable></arg>
+    <arg choice='opt'><replaceable>count=count</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1><title>DESCRIPTION</title>
+<para><emphasis remap='B'>Amdd</emphasis>
+provides just enough of the standard UNIX
+<emphasis remap='B'>dd</emphasis>
+command for the needs of &A;.
+This is handy when doing a full restore and the standard
+<emphasis remap='B'>dd</emphasis>
+program has not yet been found.</para>
+
+<para><emphasis remap='B'>Amdd</emphasis>
+also provides access to the &A; output drivers that support various tape simulations.
+This may be used for debugging or to convert from one format to another.</para>
+
+<para>See the
+<citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+man page for more details about &A;.
+See the
+<emphasis remap='B'>OUTPUT DRIVERS</emphasis>
+section of
+<emphasis remap='I'>amanda(8)</emphasis>
+for more information on the &A; output drivers.</para>
+</refsect1>
+
+<refsect1><title>OPTIONS</title>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><option>-d</option></term>
+  <listitem>
+<para>Turn on debugging output.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-l</option><replaceable>length</replaceable></term>
+  <listitem>
+<para>Set the output length.
+If the output driver limits the output size, this controls
+when end of tape will be simulated.</para>
+<para><emphasis remap='I'>Length</emphasis>
+may have a multiplier suffix:</para>
+
+<literallayout>
+k -> 1024 (Kilobytes)
+b -> 512 (Blocks)
+M -> 1024*1024 (Megabytes)
+</literallayout>
+
+<para>The default is no multiplier (bytes).</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><emphasis remap='B'>if=</emphasis><emphasis remap='I'>input</emphasis></term>
+  <listitem>
+<para>Input to
+<emphasis remap='B'>dd</emphasis>.
+Default is stdin.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>of=</emphasis><emphasis remap='I'>output</emphasis></term>
+  <listitem>
+<para>Where to send the output of
+<emphasis remap='B'>dd</emphasis>.
+Default is stdout.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>bs=</emphasis><emphasis remap='I'>blocksize</emphasis></term>
+  <listitem>
+<para>Size of each record.
+Input records smaller than this will
+<emphasis remap='I'>not</emphasis>
+be padded.
+Output records will be the same size as the corresponding input record.
+Default is 512 bytes.</para>
+<para><emphasis remap='I'>Blocksize</emphasis>
+may have a multiplier suffix:</para>
+<literallayout>
+k -> 1024 (Kilobytes)
+b -> 512 (Blocks)
+M -> 1024*1024 (Megabytes)
+</literallayout>
+<para>The default is no multiplier (bytes).</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><emphasis remap='B'>count=</emphasis><emphasis remap='I'>count</emphasis></term>
+  <listitem>
+<para>Number of records to copy.
+Default is all records until end of file.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>skip=</emphasis><emphasis remap='I'>count</emphasis></term>
+  <listitem>
+<para>Number of records to skip before copying input to output.
+Default is zero.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1><title>AUTHOR</title>
+<para>Marc Mengel <email>mengel@fnal.gov</email>, John R. Jackson
+<email>jrj@purdue.edu</email> : Original text</para>
+<para>&maintainer.sgw;: XML-conversion</para>
+</refsect1>
+
+<refsect1><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry></para>
+</refsect1>
+</refentry>
+

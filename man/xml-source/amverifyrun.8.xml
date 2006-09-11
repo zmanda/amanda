@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"
+[
+  <!-- entities files to use -->
+  <!ENTITY % global_entities SYSTEM '../entities/global.entities'>
+  %global_entities;
+]>
+
+<!-- lifted from troff+man by doclifter -->
+<refentry id='amverifyrun.8'>
+<refmeta>
+<refentrytitle>amverifyrun</refentrytitle>
+<manvolnum>8</manvolnum>
+</refmeta>
+<refnamediv>
+<refname>amverifyrun</refname>
+<refpurpose>check the tapes written by the last &A; run</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv>
+<cmdsynopsis>
+  <command>amverifyrun</command>    
+    <arg choice='plain'><replaceable>config</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1><title>DESCRIPTION</title>
+<para><emphasis remap='B'>Amverifyrun</emphasis>
+read the log from the last &A; run to find the slot of the first tape
+used and the number of tapes used.
+It call
+<emphasis remap='B'>amverify</emphasis>
+with these argument.</para>
+
+</refsect1>
+
+<refsect1><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>amverify</refentrytitle><manvolnum>8</manvolnum></citerefentry></para>
+</refsect1>
+</refentry>
+

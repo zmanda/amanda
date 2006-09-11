@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd" [
+
+  <!-- entities files to use -->
+  <!ENTITY % global_entities SYSTEM '../entities/global.entities'>
+  %global_entities;
+
+]>
+
+<!-- lifted from troff+man by doclifter -->
+<refentry id='amtapetype.8'>
+
+<refmeta>
+<refentrytitle>amtapetype</refentrytitle>
+<manvolnum>8</manvolnum>
+</refmeta>
+<refnamediv>
+<refname>amtapetype</refname>
+<refpurpose>generate a tapetype definition.</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv>
+<cmdsynopsis>
+  <command>amtapetype</command>    
+    <arg choice='opt'>-h </arg>
+    <arg choice='opt'>-c </arg>
+    <arg choice='opt'>-o </arg>
+    <arg choice='opt'>-b <replaceable>blocksize</replaceable></arg>
+    <arg choice='plain'>-e <replaceable>estsize</replaceable></arg>
+    <arg choice='opt'>-f <replaceable>tapedev</replaceable></arg>
+    <arg choice='opt'>-t <replaceable>typename</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1><title>DESCRIPTION</title>
+<para><emphasis remap='B'>amtapetype</emphasis>
+generates a tapetype entry for &A;.</para>
+</refsect1>
+
+<refsect1><title>OPTIONS</title>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><option>-h</option></term>
+  <listitem>
+<para>Display an help message.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-c</option></term>
+  <listitem>
+<para>Run only the hardware compression detection heuristic test and stop.
+This takes a few minutes only.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-o</option></term>
+  <listitem>
+<para>Overwrite the tape, even if it's an &A; tape.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-b</option><replaceable> blocksize</replaceable></term>
+  <listitem>
+<para>record block size (default: 32k)</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-e</option><replaceable> estsize</replaceable></term>
+  <listitem>
+<para>estimated tape size (No default!)</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-f</option><replaceable> tapedev</replaceable></term>
+  <listitem>
+<para>tape device name (default: $TAPE)
+The device to perform the test.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-t</option><replaceable> typename</replaceable></term>
+  <listitem>
+<para>tapetype name (default: unknown-tapetype)</para>
+<!-- .PD -->
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1><title>EXAMPLE</title>
+<para>Generate a tapetype definition for your tape device:</para>
+
+<!-- .RS -->
+<literallayout remap='.nf'>
+% amtapetype -f /dev/nst0 -e 150G
+</literallayout></refsect1>
+
+<refsect1><title>NOTES</title>
+<para>Hardware compression is detected by measuring
+the writing speed difference of the tape drive
+when writing an amount of compressable and uncompresseable data.
+It does not rely on the status bits of the tape drive or the OS parameters.
+If your tape drive has very large buffers or is very fast, the program
+could fail to detect hardware compression status reliably.</para>
+
+<para>During the first pass, it writes files that are estimated to be 1%
+of the expected tape capacity.  It gets the expected capacity from
+the -e command line flag, or defaults to 1 GByte.  In a perfect world
+(which means there is zero chance of this happening with tapes :-),
+there would be 100 files and 100 file marks.</para>
+
+<para>During the second pass, the file size is cut in half.  In that same
+fairyland world, this means 200 files and 200 file marks.</para>
+
+<para>In both passes the total amount of data written is summed as well as the
+number of file marks written.  At the end of the second pass, quoting
+from the code:</para>
+
+<para>* Compute the size of a filemark as the difference in data written
+between pass 1 and pass 2 divided by the difference in number of
+file marks written between pass 1 and pass 2. ... *</para>
+
+<para>So if we wrote 1.0 GBytes on the first pass and 100 file marks, and
+0.9 GBytes on the second pass with 200 file marks, those additional 100
+file marks in the second pass took 0.1 GBytes and therefor a file mark
+is 0.001 GBytes (1 MByte).</para>
+
+<para>Note that if the estimated capacity is wrong, the only thing that happens
+is a lot more (or less, but unlikely) files, and thus, file marks,
+get written.  But the math still works out the same.  The -e flag is
+there to keep the number of file marks down because they can be slow
+(since they force the drive to flush all its buffers to physical media).</para>
+
+<para>All sorts of things might happen to cause the amount of data
+written to vary enough to generate a big file mark size guess.  A little
+more &quot;shoe shining&quot; because of the additional file marks (and flushes),
+dirt left on the heads from the first pass of a brand new tape, the
+temperature/humidity changed during the multi-hour run, a different amount
+of data was written after the last file mark before EOT was reported, etc.</para>
+
+<para>Note that the file mark size might really be zero for whatever device this
+is, and it was just the measured capacity variation that caused &amtapetype;
+to think those extra file marks in pass 2 actually took up space.</para>
+
+<para>It also explains why &amtapetype; used to sometimes report a negative file
+mark size if the math happened to end up that way.  When that happens
+now we just report it as zero.</para>
+</refsect1>
+
+<refsect1><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry></para>
+</refsect1>
+</refentry>
+

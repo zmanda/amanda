@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"
+[
+  <!-- entities files to use -->
+  <!ENTITY % global_entities SYSTEM '../entities/global.entities'>
+  %global_entities;
+]>
+
+<!-- lifted from troff+man by doclifter -->
+<refentry id='amdump.8'>
+
+<refmeta>
+<refentrytitle>amdump</refentrytitle>
+<manvolnum>8</manvolnum>
+</refmeta>
+<refnamediv>
+<refname>amdump</refname>
+<refpurpose>back up all disks in an &A; configuration</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv>
+<cmdsynopsis>
+  <command>amdump</command>    
+    <arg choice='plain'><replaceable>config</replaceable></arg>
+    <group><arg choice='plain'><replaceable>host</replaceable></arg><arg choice='opt'><replaceable>disk</replaceable></arg>*</group>*
+    <group><arg choice='plain'>-o</arg><arg choice='plain'><replaceable>configoption</replaceable></arg></group>*
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1><title>DESCRIPTION</title>
+<para><emphasis remap='B'>Amdump</emphasis>
+switches to the appropriate &A; configuration directory,
+e.g. /usr/local/etc/amanda/<emphasis remap='I'>config</emphasis>,
+then attempts to back up every disk specified by the
+<emphasis remap='I'>amanda.conf</emphasis>
+file.
+<emphasis remap='B'>Amdump</emphasis>
+is normally run by
+<emphasis remap='B'>cron</emphasis>.</para>
+
+<para>You can specify many host/disk expressions, only disks that
+match an expression will be dumped. All disks are dumped if no
+expressions are given.</para>
+
+<para>If the file /usr/local/etc/amanda/<emphasis remap='I'>config</emphasis>/hold exists,
+<command>amdump</command>
+will wait until it is removed before starting the backups.
+This allows scheduled backups to be delayed when circumstances warrant, for example, 
+if the tape device is being used for some other purpose.
+While waiting,
+<command>amdump</command>
+checks for the hold file every minute.</para>
+
+<para>See the
+<citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+man page for more details about &A;.</para>
+</refsect1>
+
+<refsect1><title>OPTIONS</title>
+<variablelist remap='TP'>
+
+  <varlistentry>
+  <term><replaceable>host</replaceable> [<replaceable>disk</replaceable>]*</term>
+  <listitem>
+<para>Specify the host and disk on which the command will work.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><emphasis remap='B'>-o</emphasis> <replaceable>configoption</replaceable></term>
+  <listitem>
+<para>See the "<emphasis remap='B'>CONFIGURATION OVERWRITE</emphasis>" section in <citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>.</para>
+  </listitem>
+  </varlistentry>
+
+</variablelist>
+</refsect1>
+
+<refsect1><title>EXAMPLE</title>
+<para>Here is a typical crontab entry. It runs
+<command>amdump</command>
+every weeknight at 1 a.m. as user
+<emphasis remap='B'>bin</emphasis>:</para>
+
+<programlisting>
+0 1 * * 1-5 bin /usr/local/sbin/amdump daily
+</programlisting>
+
+<para>Please see the 
+<citerefentry><refentrytitle>crontab</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+or
+<citerefentry><refentrytitle>crontab</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+manual page for the correct crontab format for your system.</para>
+</refsect1>
+
+<refsect1><title>MESSAGES</title>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term>amdump: waiting for hold file to be removed</term>
+  <listitem>
+<para>The &quot;hold&quot; file exists and &amdump; is waiting for it to be removed
+before starting backups.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term>amdump: amdump or amflush is already running, or you must run amcleanup</term>
+  <listitem>
+<para>Amdump detected another &amdump; or &amflush; running,
+or the remains of a previous incomplete &amdump; or &amflush; run.
+This run is terminated.
+If the problem is caused by the remains of a previous run,
+you must execute
+<citerefentry><refentrytitle>amcleanup</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+and then rerun
+<command>amdump</command>.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1><title>AUTHOR</title>
+<para>James da Silva, &email.jds; : Original text</para>
+<para>&maintainer.sgw;: XML-conversion</para>
+</refsect1>
+
+<refsect1><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>amcheck</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>amcleanup</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>amrestore</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>amflush</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>cron</refentrytitle><manvolnum>8</manvolnum></citerefentry></para>
+</refsect1>
+</refentry>
+

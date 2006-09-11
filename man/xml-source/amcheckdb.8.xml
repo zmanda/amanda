@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"
+[
+  <!-- entities files to use -->
+  <!ENTITY % global_entities SYSTEM '../entities/global.entities'>
+  %global_entities;
+]>
+
+<!-- lifted from troff+man by doclifter -->
+<refentry id='amcheckdb.8'>
+
+<refmeta>
+<refentrytitle>amcheckdb</refentrytitle>
+<manvolnum>8</manvolnum>
+</refmeta>
+<refnamediv>
+<refname>amcheckdb</refname>
+<refpurpose>check &A; database for tape consistency</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv>
+<cmdsynopsis>
+  <command>amcheckdb</command>    
+    <arg choice='plain'><replaceable>config</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1><title>DESCRIPTION</title>
+<para><emphasis remap='B'>Amcheckdb</emphasis>
+verifies that every tape mentioned in the &A; database
+is still valid in the
+<emphasis remap='I'>tapelist</emphasis>
+file.</para>
+
+<para>See the
+<citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+man page for more details about &A;.</para>
+</refsect1>
+
+<refsect1><title>EXAMPLE</title>
+<para>This shows a normal response:</para>
+
+<programlisting>
+# amcheckdb daily
+Ready.
+</programlisting>
+
+<para>This shows tape
+<emphasis remap='I'>DMP014</emphasis>
+is still listed in the database but is no longer listed in the
+<emphasis remap='I'>tapelist</emphasis>
+file:</para>
+
+<programlisting>
+# amcheckdb daily
+Tape DMP014 missing in /usr/local/etc/amanda//daily/tapelist
+Ready.
+</programlisting>
+</refsect1>
+
+<refsect1><title>AUTHOR</title>
+<para>Adrian T. Filipi-Martin &lt;atf3r@cs.virginia.edu&gt;: Original text</para>
+<para>&maintainer.sgw;: XML-conversion</para>
+</refsect1>
+
+<refsect1><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>amadmin</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>amrmtape</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry></para>
+</refsect1>
+</refentry>
+

@@ -1,0 +1,99 @@
+<!-- Global Entities File -->
+
+<!ENTITY email.sgw '<email>sgw@amanda.org</email>'>
+<!ENTITY maintainer.sgw 'Stefan G. Weichinger, &email.sgw;, maintainer of the
+&A;-documentation'>
+<!ENTITY email.jds '<email>jds@amanda.org</email>'>
+<!ENTITY email.itt '<email>ian@zmanda.com</email>'>
+<!ENTITY email.jstange '<email>building@nap.edu</email>'>
+<!ENTITY A '<application><emphasis>Amanda</emphasis></application>'>
+
+<!-- IDs for AMANDA files-->
+<!ENTITY amandaddebug ' <filename>amandad.debug</filename>'>
+<!ENTITY amconf '<filename>amanda.conf</filename>'>
+<!ENTITY amclientconf '<filename>amanda-client.conf</filename>'>
+<!ENTITY amandahosts '<filename>.amandahosts</filename>'>
+<!ENTITY disklist '<filename>disklist</filename>'>
+<!ENTITY amandapass '<filename>/etc/amandapass</filename>'>
+<!ENTITY inetdconf '<filename>/etc/inetd.conf</filename>'>
+<!ENTITY tapelist '<filename>tapelist</filename>'>
+
+<!-- IDs for files used by AMANDA-->
+<!ENTITY dumpdates '<filename>/etc/dumpdates</filename>'>
+
+<!-- IDs for AMANDA commands-->
+<!ENTITY amadmin ' <command>amadmin</command>'>
+<!ENTITY amaespipe ' <command>amaespipe</command>'>
+<!ENTITY amcheck ' <command>amcheck</command>'>
+<!ENTITY amcheckdb ' <command>amcheckdb</command>'>
+<!ENTITY amcleanup ' <command>amcleanup</command>'>
+<!ENTITY amcrypt ' <command>amcrypt</command>'>
+<!ENTITY amcryptsimple ' <command>amcryptsimple</command>'>
+<!ENTITY amcryptossl ' <command>amcrypt-ossl</command>'>
+<!ENTITY amcryptosslasym ' <command>amcrypt-ossl-asym</command>'>
+<!ENTITY amgpgcrypt ' <command>amgpgcrypt</command>'>
+<!ENTITY amdd ' <command>amdd</command>'>
+<!ENTITY amaddclient ' <command>amaddclient</command>'>
+<!ENTITY amdump ' <command>amdump</command>'>
+<!ENTITY amflush ' <command>amflush</command>'>
+<!ENTITY amgetconf ' <command>amgetconf</command>'>
+<!ENTITY amlabel ' <command>amlabel</command>'>
+<!ENTITY ammt ' <command>ammt</command>'>
+<!ENTITY amoverview ' <command>amoverview</command>'>
+<!ENTITY amplot ' <command>amplot</command>'>
+<!ENTITY amrecover ' <command>amrecover</command>'>
+<!ENTITY amreport ' <command>amreport</command>'>
+<!ENTITY amrestore ' <command>amrestore</command>'>
+<!ENTITY amrmtape ' <command>amrmtape</command>'>
+<!ENTITY amserverconfig ' <command>amserverconfig</command>'>
+<!ENTITY amstatus ' <command>amstatus</command>'>
+<!ENTITY amtape ' <command>amtape</command>'>
+<!ENTITY amtapetype ' <command>amtapetype</command>'>
+<!ENTITY amtoc ' <command>amtoc</command>'>
+<!ENTITY amverify ' <command>amverify</command>'>
+<!ENTITY amverifyrun ' <command>amverifyrun</command>'>
+
+<!ENTITY amandad ' <command>amandad</command>'>
+<!ENTITY amandaidx ' <command>amandaidx</command>'>
+<!ENTITY amgetidx ' <command>amgetidx</command>'>
+<!ENTITY amidxtape ' <command>amidxtape </command>'>
+<!ENTITY amidxtaped ' <command>amidxtaped</command>'>
+<!ENTITY amindexd ' <command>amindexd</command>'>
+<!ENTITY amtrmidx ' <command>amtrmidx</command>'>
+<!ENTITY calcsize ' <command>calcsize</command>'>
+<!ENTITY driver ' <command>driver</command>'>
+<!ENTITY dumper ' <command>dumper</command>'>
+<!ENTITY planner ' <command>planner</command>'>
+<!ENTITY reporter ' <command>reporter</command>'>
+<!ENTITY runtar ' <command>runtar</command>'>
+<!ENTITY selfcheck ' <command>selfcheck</command>'>
+<!ENTITY sendbackup ' <command>sendbackup</command>'>
+<!ENTITY sendsize ' <command>sendsize</command>'>
+<!ENTITY taper ' <command>taper</command>'>
+
+<!-- IDs for commands used by AMANDA-->
+<!ENTITY mt '<command>mt</command>'>
+<!ENTITY mtx '<command>mtx</command>'>
+<!ENTITY tar '<command>tar</command>'>
+<!ENTITY gnutar '<command>GNU-tar</command>'>
+<!ENTITY gzip '<command>GNU-zip</command>'>
+
+<!ENTITY dump '<command>dump</command>'>
+<!ENTITY restore.binary '<command>restore</command>'>
+
+<!ENTITY dd '<command>dd</command>'>
+<!ENTITY cpio '<command>cpio</command>'>
+
+<!ENTITY gcc '<command>gcc</command>'>
+<!ENTITY configure '<command>configure</command>'>
+<!ENTITY make '<command>make</command>'>
+<!ENTITY ssh '<command>ssh</command>'>
+<!ENTITY rsh '<command>rsh</command>'>
+<!ENTITY inetd '<command>inetd</command>'>
+<!ENTITY xinetd '<command>xinetd</command>'>
+<!ENTITY lsof '<command>lsof</command>'>
+
+<!ENTITY runtapes '<command>runtapes</command>'>
+<!ENTITY dumpers '<command>dumpers</command>'>
+<!ENTITY dumptype '<command>dumptype</command>'>
+<!ENTITY dumpcycle '<command>dumpcycle</command>'>

@@ -1,0 +1,252 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"
+[
+  <!-- entities files to use -->
+  <!ENTITY % global_entities SYSTEM '../entities/global.entities'>
+  %global_entities;
+]>
+
+<refentry id='amanda-client.conf.5'>
+
+<refmeta>
+<refentrytitle>amanda-client.conf</refentrytitle>
+<manvolnum>5</manvolnum>
+</refmeta>
+<refnamediv>
+<refname>amanda-client.conf</refname>
+<refpurpose>Client configuration file for &A;, the Advanced Maryland Automatic Network Disk Archiver</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+
+<refsect1><title>DESCRIPTION</title>
+<para>&amclientconf; is the client configuration file for &A;. This manpage lists the
+relevant sections and parameters of this file for quick reference.</para> 
+<para> The files <emphasis remap='B'>&lt;CONFIG_DIR&gt;/amanda-client.conf</emphasis> and <emphasis remap='B'>&lt;CONFIG_DIR&gt;/&lt;config&gt;/amanda-client.conf</emphasis> are loaded.</para>
+</refsect1>
+
+<refsect1><title>PARAMETERS</title>
+
+<para>There are a number of configuration parameters that control the
+behavior of the &A; programs.
+All have default values,
+so you need not specify the parameter in
+<emphasis remap='B'>amanda-client.conf</emphasis>
+if the default is suitable.</para>
+
+<para>Lines starting with # are ignored, as are blank lines.
+Comments may be placed on a line with a directive by starting
+the comment with a #.
+The remainder of the line is ignored.</para>
+
+<para>Keywords are case insensitive, i.e.
+<emphasis remap='B'>auth</emphasis>
+and
+<emphasis remap='B'>Auth</emphasis>
+are treated the same.</para>
+
+<para>Integer arguments may have one of the following (case insensitive) suffixes,
+some of which have a multiplier effect:</para>
+
+<refsect2><title>POSSIBLE SUFFIXES</title>
+
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><emphasis remap='B'>b byte bytes</emphasis></term>
+  <listitem>
+<para>Some number of bytes.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>bps</emphasis></term>
+  <listitem>
+<para>Some number of bytes per second.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>k kb kbyte kbytes kilobyte kilobytes</emphasis></term>
+  <listitem>
+<para>Some number of kilobytes (bytes*1024).</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>kps kbps</emphasis></term>
+  <listitem>
+<para>Some number of kilobytes per second (bytes*1024).</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>m mb meg mbyte mbytes megabyte megabytes</emphasis></term>
+  <listitem>
+<para>Some number of megabytes (bytes*1024*1024).</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>mps mbps</emphasis></term>
+  <listitem>
+<para>Some number of megabytes per second (bytes*1024*1024).</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>g gb gbyte gbytes gigabyte gigabytes</emphasis></term>
+  <listitem>
+<para>Some number of gigabytes (bytes*1024*1024*1024).</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>tape tapes</emphasis></term>
+  <listitem>
+<para>Some number of tapes.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>day days</emphasis></term>
+  <listitem>
+<para>Some number of days.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>week weeks</emphasis></term>
+  <listitem>
+<para>Some number of weeks (days*7).</para>
+
+<note>The value
+<emphasis remap='B'>inf</emphasis>
+may be used in most places where an integer is expected
+to mean an infinite amount.
+
+<para>Boolean arguments may have any of the values
+<emphasis remap='B'>y</emphasis>,
+<emphasis remap='B'>yes</emphasis>,
+<emphasis remap='B'>t</emphasis>,
+<emphasis remap='B'>true</emphasis>
+or
+<emphasis remap='B'>on</emphasis>
+to indicate a true state, or
+<emphasis remap='B'>n</emphasis>,
+<emphasis remap='B'>no</emphasis>,
+<emphasis remap='B'>f</emphasis>,
+<emphasis remap='B'>false</emphasis>
+or
+<emphasis remap='B'>off</emphasis>
+to indicate a false state.
+If no argument is given,
+<emphasis remap='B'>true</emphasis>
+is assumed.
+</para>
+</note>
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect2>
+
+<refsect2>
+<title>PARAMETERS</title>
+
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><emphasis remap='B'>conf</emphasis> <emphasis remap='I'> string</emphasis></term>
+  <listitem>
+<para>Default:
+<emphasis remap='I'>Set by configure</emphasis>.
+The conf use by amrecover.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><emphasis remap='B'>index_server</emphasis> <emphasis remap='I'> string</emphasis></term>
+  <listitem>
+<para>Default:
+<emphasis remap='I'>Set by configure</emphasis>.
+The amindexd server amrecover will connect to.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><emphasis remap='B'>tape_server</emphasis> <emphasis remap='I'> string</emphasis></term>
+  <listitem>
+<para>Default:
+<emphasis remap='I'>Set by configure</emphasis>.
+The amidxtaped server amrecover will connect to.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><emphasis remap='B'>tapedev</emphasis> <emphasis remap='I'> string</emphasis></term>
+  <listitem>
+<para>Default:
+<emphasis remap='I'>Set by configure</emphasis>.
+The tapedev amrecover will use.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><emphasis remap='B'>auth</emphasis> <emphasis remap='I'> string</emphasis></term>
+  <listitem>
+<para>Default:
+<emphasis remap='I'>bsd</emphasis>.
+Type of authorization to perform between tape server and backup client hosts.</para>
+<para><emphasis remap='B'>bsd</emphasis>, bsd authorization with udp initial
+connection and one tcp connection by data stream.</para>
+<para><emphasis remap='B'>bsdtcp</emphasis>, bsd authorization but use only
+one tcp connection.</para>
+<para><emphasis remap='B'>bsdudp</emphasis>, like bsd, but will use only one
+tcp connection for all data stream.</para>
+<para><emphasis remap='B'>krb4</emphasis> to use Kerberos-IV
+authorization.</para>
+<para><emphasis remap='B'>krb5</emphasis> to use Kerberos-V
+authorization.</para>
+<para><emphasis remap='B'>rsh</emphasis> to use rsh
+authorization.</para>
+<para><emphasis remap='B'>ssh</emphasis> to use OpenSSH
+authorization.</para>
+
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><emphasis remap='B'>ssh_keys</emphasis> <emphasis remap='I'> string</emphasis></term>
+  <listitem>
+<para>Default:
+<emphasis remap='I'>No default</emphasis>.
+The key file the ssh auth will use, it must be the private key. If this parameter is not specified, then the deafult ssh key will be used.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><emphasis remap='B'>gnutar_list_dir</emphasis> <emphasis remap='I'> string</emphasis></term>
+  <listitem>
+<para>Default from configure 
+<emphasis remap='I'>--with-gnutar-listdir=DIR</emphasis>.
+The directory where gnutar keep its state file.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><emphasis remap='B'>amandates</emphasis> <emphasis remap='I'> string</emphasis></term>
+  <listitem>
+<para>Default: 
+<emphasis remap='I'>/etc/amandates</emphasis>.
+The file where amanda keep the last date of each dumplevel.</para>
+  </listitem>
+  </varlistentry>
+
+</variablelist>
+</refsect2>
+</refsect1>
+
+<refsect1><title>AUTHOR</title>
+<para>James da Silva, &email.jds;: Original text</para>
+<para>&maintainer.sgw;: XML-conversion, major update, splitting</para>
+</refsect1>
+
+<refsect1><title>SEE ALSO</title>
+<para>
+<citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>amanda.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>amcrypt</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>aespipe</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+</para>
+</refsect1>
+</refentry>
+

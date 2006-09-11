@@ -1,0 +1,348 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"
+[
+  <!-- entities files to use -->
+  <!ENTITY % global_entities SYSTEM '../entities/global.entities'>
+  %global_entities;
+]>
+
+<!-- lifted from troff+man by doclifter -->
+<refentry id='amrestore.8'>
+
+<refmeta>
+<refentrytitle>amrestore</refentrytitle>
+<manvolnum>8</manvolnum>
+</refmeta>
+<refnamediv>
+<refname>amrestore</refname>
+<refpurpose>extract backup images from an &A; tape</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv>
+<cmdsynopsis>
+  <command>amrestore</command>    
+    <group choice='opt'><arg choice='plain'>-r </arg><arg choice='plain'>-c </arg><arg choice='plain'>-C </arg></group>
+    <group><arg choice='plain'>-b</arg><arg choice='plain'><replaceable>blocksize</replaceable></arg></group>
+    <group><arg choice='plain'>-f</arg><arg choice='plain'><replaceable>fileno</replaceable></arg></group>
+    <group><arg choice='plain'>-l </arg><arg choice='plain'><replaceable>label</replaceable></arg></group>
+    <arg choice='opt'>-p</arg>
+    <arg choice='opt'>-h</arg>
+    <arg choice='plain'><arg choice='plain'><replaceable>tapedevice</replaceable></arg>|<arg choice='plain'><replaceable>holdingfile</replaceable></arg></arg>
+    <group><arg choice='plain'><replaceable>hostname</replaceable></arg><group><arg choice='plain'><replaceable>diskname</replaceable></arg><group><arg choice='plain'><replaceable>datestamp</replaceable></arg><group><arg choice='plain'><replaceable>hostname</replaceable></arg><group><arg choice='plain'><replaceable>diskname</replaceable></arg><group><arg choice='plain'><replaceable>datestamp</replaceable></arg><arg choice='plain'>...</arg></group></group></group></group></group></group>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1><title>DESCRIPTION</title>
+<para><emphasis remap='B'>Amrestore</emphasis>
+extracts backup images from the tape mounted on
+<emphasis remap='I'>tapedevice</emphasis>
+or from the holding disk file
+<emphasis remap='I'>holdingfile</emphasis>
+that match
+<emphasis remap='I'>hostname</emphasis>,
+<emphasis remap='I'>diskname</emphasis>
+and
+<emphasis remap='I'>datestamp</emphasis>
+patterns given on the command line.
+The tape or holding file must be in a format written by the
+<emphasis remap='B'>amdump</emphasis>
+or
+<emphasis remap='B'>amflush</emphasis>
+program.</para>
+
+<para>If
+<emphasis remap='I'>diskname</emphasis>
+is not specified, all backups on the tape for the previous
+<emphasis remap='I'>hostname</emphasis>
+are candidates.
+If
+<emphasis remap='I'>datestamp</emphasis>
+is not specified, all backups on the tape for the previous
+<emphasis remap='I'>hostname</emphasis>
+and
+<emphasis remap='I'>diskname</emphasis>
+are candidates.
+If no
+<emphasis remap='I'>hostname</emphasis>,
+<emphasis remap='I'>diskname</emphasis>
+or
+<emphasis remap='I'>datestamp</emphasis>
+are specified, every backup on the tape is a candidate.</para>
+
+<para><emphasis remap='I'>Hostname</emphasis>
+and
+<emphasis remap='I'>diskname</emphasis>
+are special expressions described in the &quot;HOST &amp; DISK EXPRESSION&quot; section
+of
+<citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>.
+<emphasis remap='I'>Datestamp</emphasis>
+are special expression described in the &quot;DATESTAMP EXPRESSION&quot; section
+of
+<citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>.
+For example, if
+<emphasis remap='I'>diskname</emphasis>
+is &quot;rz[23]a&quot;, it would match disks
+<emphasis remap='B'>rz2a</emphasis>
+and
+<emphasis remap='B'>rz3a</emphasis>.</para>
+
+<para><emphasis remap='I'>Datestamp</emphasis>
+is useful if
+<emphasis remap='B'>amflush</emphasis>
+writes multiple backup runs to a single tape.</para>
+
+<para>Unless
+<option>-p</option>
+is used,
+candidate backup images are extracted to files
+in the current directory named:</para>
+
+<!-- .RS -->
+<para><emphasis remap='I'>hostname.diskname.datestamp.dumplevel</emphasis></para>
+<!-- .RE -->
+
+<para>Amrestore doesn't use a changer, it restore from the tape already loaded
+in the
+<emphasis remap='I'>tapedevice.</emphasis></para>
+</refsect1>
+
+<refsect1><title>OPTIONS</title>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><option>-b</option></term>
+  <listitem>
+<para>Set the blocksize used to read the tape or holding file.
+All holding files must be read with a blocksize of 32 KBytes.
+<emphasis remap='B'>Amrestore</emphasis>
+should normally be able to determine the blocksize for tapes
+on its own and not need this parameter.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+
+<para>The default is 32 KBytes.</para>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><option>-f</option></term>
+  <listitem>
+<para>Do a rewind followed by a fsf &lt;fileno&gt; before trying to restore an image.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-l</option></term>
+  <listitem>
+<para>Check if we restoring from the tape with the right
+<emphasis remap='I'>label</emphasis></para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-p</option></term>
+  <listitem>
+<para>Pipe output.
+The first matching backup image is sent to standard output,
+which is normally a pipe to
+<emphasis remap='B'>restore</emphasis>
+or
+<emphasis remap='B'>tar</emphasis>,
+then
+<command>amrestore</command>
+quits.
+It may be run again to continue selecting backups to process.
+Make sure you specify the no-rewind
+<emphasis remap='I'>tapedevice</emphasis>
+when doing this.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+
+<para>Note:
+<emphasis remap='B'>restore</emphasis>
+may report &quot;short read&quot; errors when reading from a pipe.
+Most versions of
+<emphasis remap='B'>restore</emphasis>
+support a blocking factor option to let you set the read block size,
+and you should set it to 2.
+See the example below.</para>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><option>-c</option></term>
+  <listitem>
+<para>Compress output using the fastest method the compression program provides.
+<emphasis remap='B'>Amrestore</emphasis>
+normally writes output files in a format understood by
+<emphasis remap='B'>restore</emphasis>
+or
+<emphasis remap='B'>tar</emphasis>,
+even if the backups on the tape are compressed.
+With the
+<option>-c</option>
+or
+<option>-C</option>
+option,
+<command>amrestore</command>
+writes all files in compressed format,
+even if the backups on the tape are not compressed.
+Output file names will have a
+<markup>.Z</markup>
+or
+<markup>.gz</markup>
+extension depending on whether
+<emphasis remap='B'>compress</emphasis>
+or
+<emphasis remap='B'>gzip</emphasis>
+is the preferred compression program.
+This option is useful when the current directory disk is small.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-C</option></term>
+  <listitem>
+<para>Compress output using the best method the compression program provides
+(may be very CPU intensive).
+See the notes above about the
+<option>-c</option>
+option.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-r</option></term>
+  <listitem>
+<para>Raw output.
+Backup images are output exactly as they are on the tape,
+including the
+<emphasis remap='B'>amdump</emphasis>
+headers.
+Output file names will have a
+<markup>.RAW</markup>
+extension.
+This option is only useful for debugging and other strange circumstances.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-h</option></term>
+  <listitem>
+<para>Header output.
+The tape header block is output at the beginning of each file.
+This is like
+<option>-r</option>
+except
+<option>-c</option>
+or
+<option>-C</option>
+may also be used to compress the result.
+<emphasis remap='B'>Amrecover</emphasis>
+uses the header to determine the restore program to use.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+
+<para>If a header is written (-r or -h),
+only 32 KBytes are output regardless of the tape blocksize.
+This makes the resulting image usable as a holding file.</para>
+
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><emphasis remap='B'>-o</emphasis> <replaceable>configoption</replaceable></term>
+  <listitem>
+<para>See the "<emphasis remap='B'>CONFIGURATION OVERWRITE</emphasis>" section in <citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+
+</refsect1>
+
+<refsect1><title>EXAMPLES</title>
+<para>The following does an interactive restore of disk
+<emphasis remap='I'>rz3g</emphasis>
+from host
+<emphasis remap='I'>seine</emphasis>,
+to restore particular files.
+Note the use of the
+<emphasis remap='B'>b</emphasis>
+option to
+<emphasis remap='B'>restore</emphasis>,
+which causes it to read in units of two 512-byte blocks (1 Kbyte)
+at a time.
+This helps keep it from complaining about short reads.</para>
+
+<!-- .RS -->
+<literallayout remap='.nf'>
+% amrestore -p /dev/nrmt9 seine rz3g | restore -ivbf 2 -
+</literallayout> <!-- .fi -->
+
+<para>The next example extracts all backup images for host
+<emphasis remap='I'>seine</emphasis>.
+This is the usual way to extract all data for a host after a disk crash.</para>
+
+<!-- .RS -->
+<literallayout remap='.nf'>
+% amrestore /dev/nrmt9 seine
+</literallayout> <!-- .fi -->
+
+<para>If the backup datestamp in the above example is
+<literal>19910125</literal>
+and
+<emphasis remap='I'>seine</emphasis>
+has level 0 backups of disks
+<emphasis remap='I'>rz1a</emphasis>
+and
+<emphasis remap='I'>rz1g</emphasis>
+on the tape,
+these files will be created in the current directory:</para>
+
+<!-- .RS -->
+<literallayout remap='.nf'>
+seine.rz1a.19910125.0
+seine.rz1g.19910125.0
+</literallayout> <!-- .fi -->
+
+<para>You may also use
+<command>amrestore</command>
+to extract a backup image from a holding disk
+file that has not yet been flushed to tape:</para>
+
+<!-- .RS -->
+<literallayout remap='.nf'>
+% amrestore -p /amanda/20001119/seine.rz1a.2 | restore -ivbf 2 -
+</literallayout> <!-- .fi -->
+
+<para><emphasis remap='B'>Amrestore</emphasis>
+may be used to generate a listing of images on a tape:</para>
+
+<!-- .RS -->
+<literallayout remap='.nf'>
+% mt -f /dev/nrmt9 rewind
+% amrestore -p /dev/nrmt9 no-such-host &gt; /dev/null
+</literallayout> <!-- .fi -->
+
+<para>This asks
+<command>amrestore</command>
+to find images for host
+<emphasis remap='B'>no-such-host</emphasis>.
+It will not find any entries that match, but along the way will report
+each image it skips.</para>
+</refsect1>
+
+<refsect1><title>CAVEATS</title>
+<para>&gnutar; must be used to restore files from backup images created with
+the GNUTAR dumptype.
+Vendor tar programs sometimes fail to read GNU tar images.</para>
+</refsect1>
+
+<refsect1><title>AUTHOR</title>
+<para>James da Silva, &email.jds;, University of Maryland,
+College Park: Original text</para>
+<para>&maintainer.sgw;: XML-conversion</para>
+</refsect1>
+
+<refsect1><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>amdump</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>amflush</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>tar</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+<citerefentry><refentrytitle>restore</refentrytitle><manvolnum>8</manvolnum></citerefentry></para>
+</refsect1>
+</refentry>
+

@@ -1,0 +1,1088 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"
+[
+  <!-- entities files to use -->
+  <!ENTITY % global_entities SYSTEM '../entities/global.entities'>
+  %global_entities;
+]>
+
+<!-- lifted from troff+man by doclifter -->
+<refentry id='amanda.8'>
+
+<refmeta>
+<refentrytitle>amanda</refentrytitle>
+<manvolnum>8</manvolnum>
+</refmeta>
+<refnamediv>
+<refname>amanda</refname>
+<refpurpose>Advanced Maryland Automatic Network Disk Archiver</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv>
+
+<cmdsynopsis>
+    <command>amadmin</command>
+    <arg choice='plain'><replaceable>config</replaceable></arg>
+    <arg choice='plain'><replaceable>command</replaceable></arg>
+    <arg choice='opt'><replaceable>options</replaceable></arg>
+    <sbr/>
+</cmdsynopsis>
+
+<cmdsynopsis>
+    <command>amcheck</command>
+    <arg choice='opt'><replaceable>options</replaceable></arg>
+    <arg choice='plain'><replaceable>config</replaceable></arg>
+    <sbr/>
+</cmdsynopsis>
+
+<cmdsynopsis>
+    <command>amcheckdb</command>
+    <arg choice='plain'><replaceable>config</replaceable></arg>
+    <sbr/>
+</cmdsynopsis>
+
+
+<cmdsynopsis>
+    <command>amcleanup</command>
+    <arg choice='plain'><replaceable>config</replaceable></arg>
+    <sbr/>
+</cmdsynopsis>
+
+<cmdsynopsis>
+    <command>amcrypt</command>
+    <sbr/>
+</cmdsynopsis>
+
+<cmdsynopsis>
+  <command>amdd</command>    
+    <arg choice='opt'><replaceable>options</replaceable></arg>
+</cmdsynopsis>
+
+<cmdsynopsis>
+  <command>amdump</command>    
+    <arg choice='plain'><replaceable>config</replaceable></arg>
+    <sbr/>
+</cmdsynopsis>
+
+<cmdsynopsis>
+    <command>amaespipe</command>
+    <sbr/>
+</cmdsynopsis>
+
+<cmdsynopsis>
+  <command>amflush</command>    
+    <arg choice='opt'>-f </arg>
+    <arg choice='plain'><replaceable>config</replaceable></arg>
+    <sbr/>
+</cmdsynopsis>
+
+<cmdsynopsis>
+    <command>amgetconf</command>
+    <arg choice='opt'><replaceable>config</replaceable></arg>
+    <arg choice='plain'><replaceable>parameter</replaceable></arg>
+    <sbr/>
+</cmdsynopsis>
+
+<cmdsynopsis>
+    <command>amlabel</command>
+    <arg choice='plain'><replaceable>config</replaceable></arg>
+    <arg choice='plain'><replaceable>label</replaceable></arg>
+    <arg choice='opt'><arg choice='plain'><replaceable>slot</replaceable></arg><arg choice='plain'><replaceable>slot</replaceable></arg></arg>
+    <sbr/>
+</cmdsynopsis>
+
+<cmdsynopsis>
+  <command>ammt</command>    
+    <arg choice='opt'><replaceable>options</replaceable></arg>
+</cmdsynopsis>
+
+<cmdsynopsis>
+    <command>amoverview</command>
+    <arg choice='plain'><replaceable>config</replaceable></arg>
+    <arg choice='opt'><replaceable>options</replaceable></arg>
+    <sbr/>
+</cmdsynopsis>
+
+<cmdsynopsis>
+    <command>amplot</command>
+    <arg choice='opt'><replaceable>options</replaceable></arg>
+    <arg choice='plain'><replaceable>amdump-files</replaceable></arg>
+    <sbr/>
+</cmdsynopsis>
+
+<cmdsynopsis>
+    <command>amrecover</command>
+    <arg choice='opt'><replaceable>config</replaceable></arg>
+    <arg choice='opt'><replaceable>options</replaceable></arg>
+    <sbr/>
+</cmdsynopsis>
+
+<cmdsynopsis>
+    <command>amreport</command>
+    <arg choice='opt'><replaceable>config</replaceable></arg>
+    <arg choice='opt'><replaceable>options</replaceable></arg>
+    <sbr/>
+</cmdsynopsis>
+
+<cmdsynopsis>
+    <command>amrestore</command>
+    <arg choice='opt'><replaceable>options</replaceable></arg>
+    <arg choice='plain'><replaceable>tapedevice</replaceable></arg>
+    <arg choice='opt'><arg choice='plain'><replaceable>hostname</replaceable></arg><arg choice='opt'><replaceable>diskname</replaceable></arg></arg>
+    <sbr/>
+</cmdsynopsis>
+
+<cmdsynopsis>
+    <command>amfetchdump</command>
+    <arg choice='opt'><replaceable>options</replaceable></arg>
+    <arg choice='plain'><replaceable>config</replaceable></arg>
+    <arg choice='opt'><arg choice='plain'><replaceable>hostname</replaceable></arg><arg choice='opt'><arg choice='plain'><replaceable>diskname</replaceable></arg><arg choice='opt'><arg choice='plain'><replaceable>date</replaceable></arg><arg choice='opt'>level</arg></arg></arg></arg>
+</cmdsynopsis>
+
+<cmdsynopsis>
+    <command>amrmtape</command>
+    <arg choice='opt'><replaceable>options</replaceable></arg>
+    <arg choice='plain'><replaceable>config</replaceable></arg>
+    <arg choice='plain'><replaceable>label</replaceable></arg>
+    <sbr/>
+</cmdsynopsis>
+
+<cmdsynopsis>
+    <command>amstatus</command>
+    <arg choice='plain'><replaceable>config</replaceable></arg>
+    <arg choice='opt'><replaceable>options</replaceable></arg>
+    <sbr/>
+</cmdsynopsis>
+
+<cmdsynopsis>
+    <command>amtape</command>
+    <arg choice='plain'><replaceable>config</replaceable></arg>
+    <arg choice='plain'><replaceable>command</replaceable></arg>
+    <arg choice='opt'><replaceable>options</replaceable></arg>
+    <sbr/>
+</cmdsynopsis>
+
+<cmdsynopsis>
+  <command>amtapetype</command>    
+    <arg choice='opt'><replaceable>options</replaceable></arg>
+</cmdsynopsis>
+
+<cmdsynopsis>
+    <command>amtoc</command>
+    <arg choice='opt'><replaceable>options</replaceable></arg>
+    <arg choice='plain'><replaceable>logfile</replaceable></arg>
+    <sbr/>
+</cmdsynopsis>
+
+<cmdsynopsis>
+    <command>amverify</command>
+    <arg choice='plain'><replaceable>config</replaceable></arg>
+    <sbr/>
+</cmdsynopsis>
+
+<cmdsynopsis>
+  <command>amverifyrun</command>    
+    <arg choice='plain'><replaceable>config</replaceable></arg>
+</cmdsynopsis>
+
+</refsynopsisdiv>
+
+
+<refsect1><title>DESCRIPTION</title>
+<para>&A; is the 
+&quot;Advanced Maryland Automatic Network Disk Archiver&quot;.
+This manual page gives an overview of the &A; commands and
+configuration files for quick reference.</para>
+
+<para>Here are all the &A; commands.
+Each one has its own manual page.
+See them for all the gory details.</para>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><emphasis remap='B'>amdump</emphasis></term>
+  <listitem>
+<para>Take care of automatic &A; backups.
+This is normally executed by
+<emphasis remap='B'>cron</emphasis>
+on a computer called the
+<emphasis remap='I'>tape server host</emphasis>
+and requests backups of file systems located on
+<emphasis remap='I'>backup</emphasis>
+<emphasis remap='I'>clients</emphasis>.
+<emphasis remap='B'>Amdump</emphasis>
+backs up all disks in the
+<emphasis remap='I'>disklist</emphasis>
+file (discussed below) to tape or, if there is a problem, to a special
+<emphasis remap='I'>holding</emphasis>
+<emphasis remap='I'>disk</emphasis>.
+After all backups are done,
+<command>amdump</command>
+sends mail reporting failures and successes.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>amflush</emphasis></term>
+  <listitem>
+<para>Flush backups from the holding disk to tape.
+<emphasis remap='B'>Amflush</emphasis>
+is used after
+<command>amdump</command>
+has reported it could not write backups to tape for some reason.
+When this happens, backups stay in the holding disk.
+Run <emphasis remap='B'>amflush</emphasis> after the tape problem is corrected
+to write backups from the holding disk to tape.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>amcleanup</emphasis></term>
+  <listitem>
+<para>Clean up after an interrupted
+<command>amdump</command>.
+This command is only needed if
+<command>amdump</command>
+was unable to complete for some reason, usually because the
+tape server host crashed while
+<command>amdump</command>
+was running.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>amrecover</emphasis></term>
+  <listitem>
+<para>Provides an interactive interface to browse the &A; index files
+(backup image catalogues)
+and select which tapes to recover files from.
+It can also run
+<emphasis remap='B'>amrestore</emphasis>
+and a restore program (e.g.
+<emphasis remap='B'>tar</emphasis>)
+to actually recover the files.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>amrestore</emphasis></term>
+  <listitem>
+<para>Read an &A; tape, searching for requested backups.
+<emphasis remap='B'>Amrestore</emphasis>
+is suitable for everything from interactive restores of single files
+to a full restore of all partitions on a failed disk.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>amfetchdump</emphasis></term>
+  <listitem>
+<para>Performs &A; tape restoration, similar to <emphasis
+  remap='B'>amrestore</emphasis>. Additional capabilities include
+  "hands-off" searching of multiple tapes, automatic
+  retrieval of specific dump files based on dump logs, and assembly of
+  tape-spanning split dump files.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>amlabel</emphasis></term>
+  <listitem>
+<para>Write an &A; format label onto a tape.
+All &A; tapes must be labeled with
+<emphasis remap='B'>amlabel</emphasis>.
+<emphasis remap='B'>Amdump</emphasis>
+and
+<emphasis remap='B'>amflush</emphasis>
+will not write to an unlabeled tape (see TAPE MANAGEMENT below).</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>amcheck</emphasis></term>
+  <listitem>
+<para>Verify the correct tape is mounted and all file systems on all backup client systems
+are ready to be backed up. Often run by
+<emphasis remap='B'>cron</emphasis>
+before
+<command>amdump</command>
+to generate a mail warning that backups might fail
+unless corrective action is taken.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>amadmin</emphasis></term>
+  <listitem>
+<para>Take care of administrative tasks like finding out which
+tapes are needed to restore a filesystem,
+forcing hosts to do full backups of selected disks
+and looking at schedule balance information.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>amtape</emphasis></term>
+  <listitem>
+<para>Take care of tape changer control operations like loading particular tapes,
+ejecting tapes and scanning the tape storage slots.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>amverify</emphasis></term>
+  <listitem>
+<para>Check &A; backup tapes for errors.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>amrmtape</emphasis></term>
+  <listitem>
+<para>Delete a tape from the &A; databases.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>amstatus</emphasis></term>
+  <listitem>
+<para>Report the status of a running or completed
+<command>amdump</command>.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>amoverview</emphasis></term>
+  <listitem>
+<para>Display a chart of hosts and file systems backed up every run.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>amplot</emphasis></term>
+  <listitem>
+<para>Generate utilization plots of &A; runs for performance tuning.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>amreport</emphasis></term>
+  <listitem>
+<para>Generate an &A; summary E-mail report.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>amtoc</emphasis></term>
+  <listitem>
+<para>Generate table of content files for &A; tapes.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>amcheckdb</emphasis></term>
+  <listitem>
+<para>Verify every tape &A; knows about is consistent in the database.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>amgetconf</emphasis></term>
+  <listitem>
+<para>Look up parameters in the &A; configuration file.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>amtapetype</emphasis></term>
+  <listitem>
+<para>Generate a tapetype definition.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>amaespipe</emphasis></term>
+  <listitem>
+<para>Wrapper program from aespipe (data encryption utility)</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>amcrypt</emphasis></term>
+  <listitem>
+<para>Reference encryption program for Amanda symmetric data encryption</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1><title>CONFIGURATION</title>
+<para>There are three user-editable files that control the behavior of &A;.
+</para>
+<para>
+The first is
+<emphasis remap='B'>amanda.conf</emphasis>,
+the main configuration file.
+It contains parameters to customize &A; for the site.
+Refer to the 
+<citerefentry><refentrytitle>amanda.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
+manpage for details on &A; configuration parameters.
+</para>
+<para>
+Second is the
+<emphasis remap='I'>disklist</emphasis>
+file, which lists hosts and disk partitions to back up.
+</para>
+<para>
+Third is the
+<emphasis remap='I'>tapelist</emphasis>
+file, which lists tapes that are currently active.
+These files are described in more detail in the following sections.</para>
+
+<para>All files are stored in individual configuration
+directories under <filename>/usr/local/etc/amanda/</filename>.
+A site will often have more than
+one configuration.
+For example, it might have a
+<emphasis remap='I'>normal</emphasis>
+configuration for everyday backups and an
+<emphasis remap='I'>archive</emphasis>
+configuration for infrequent full archival backups.
+The configuration files would be stored under directories
+<filename>/usr/local/etc/amanda/normal/</filename> and
+<filename>/usr/local/etc/amanda/archive/</filename>, respectively.
+Part of the job of an &A; administrator is to create,
+populate and maintain these directories.</para>
+
+<para>All log and database files generated by &A; go in corresponding
+directories somewhere.
+The exact location is controlled by entries in
+<emphasis remap='B'>amanda.conf</emphasis>.
+A typical location would be under <filename>/var/adm/amanda</filename>.
+For the above example, the files might go in
+<filename>/var/adm/amanda/normal/</filename> and
+<filename>/var/adm/amanda/archive/</filename>.
+</para>
+
+<para>As log files are no longer needed (no longer contain relevant information),
+&A; cycles them out in various ways, depending on the type of file.</para>
+
+<para>Detailed information about
+<command>amdump</command>
+runs are stored in files named
+<emphasis remap='B'>amdump.</emphasis><emphasis remap='I'>NN</emphasis>
+where
+<emphasis remap='I'>NN</emphasis>
+is a sequence number, with 1 being the most recent file.
+<emphasis remap='B'>Amdump</emphasis>
+rotates these files each run, keeping roughly the last
+<emphasis remap='B'>tapecycle</emphasis>
+(see below)
+worth of them.</para>
+
+<para>The file used by
+<emphasis remap='B'>amreport</emphasis>
+to generate the mail summary is named
+<emphasis remap='B'>log.</emphasis><emphasis remap='I'>YYYYMMDD.NN</emphasis>
+where
+<emphasis remap='I'>YYYYMMDD</emphasis>
+is the datestamp of the start of the
+<command>amdump</command>
+run and
+<emphasis remap='I'>NN</emphasis>
+is a sequence number started at 0.
+At the end of each
+<command>amdump</command>
+run,
+log files for runs whose tapes have been reused are renamed
+into a subdirectory of the main log directory (see the
+<emphasis remap='B'>logdir</emphasis>
+parameter below)
+named
+<emphasis remap='B'>oldlog</emphasis>.
+It is up to the &A; administrator to remove them from this
+directory when desired.</para>
+
+<para>Index (backup image catalogue) files older than the full dump
+matching the oldest backup image for a given client and disk
+are removed by
+<command>amdump</command>
+at the end of each run.</para>
+</refsect1>
+
+<refsect1><title>DISKLIST FILE</title>
+<para>The
+<emphasis remap='I'>disklist</emphasis>
+file determines which disks will be backed up by &A;.
+The file usually contains one line per disk:</para>
+
+<programlisting>
+<emphasis>hostname diskname</emphasis> [<emphasis>diskdevice</emphasis>] <emphasis>dumptype</emphasis> [<emphasis>spindle</emphasis> [<emphasis>interface</emphasis>] ]
+</programlisting>
+
+<para>All pairs [ <emphasis>hostname diskname</emphasis> ] must be unique.</para>
+
+<para>Lines starting with # are ignored, as are blank lines.
+The fields have the following meanings:</para>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><emphasis remap='I'>hostname</emphasis></term>
+  <listitem>
+<para>The name of the host to be backed up.
+If
+<emphasis remap='B'>diskdevice</emphasis>
+refers to a PC share, this is the host &A; will run the Samba
+<emphasis remap='B'>smbclient</emphasis> program on to back up the share.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='I'>diskname</emphasis></term>
+  <listitem>
+<para>The name of the disk (a label).
+In most case, you set your
+<emphasis remap='B'>diskname</emphasis>
+to the
+<emphasis remap='B'>diskdevice</emphasis>
+and you don't set the
+<emphasis remap='B'>diskdevice.</emphasis>
+If you want multiple entries with the same
+<emphasis remap='B'>diskdevice</emphasis>,
+you must set a different
+<emphasis remap='B'>diskname</emphasis>
+for each entry. It's the
+<emphasis remap='B'>diskname</emphasis>
+that you use on the commandline for any &A; command.
+Look at the example/disklist file for example.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='I'>diskdevice</emphasis></term>
+  <listitem>
+<para>Default: same as diskname.
+The name of the disk device to be backed up. It may be a full device name,
+a device name without the
+<filename>/dev/</filename>
+prefix, e.g.
+<emphasis remap='I'>sd0a</emphasis>,
+or a mount point such as
+<filename>/usr</filename>.</para>
+
+<para>It may also refer to a PC share by starting the name with two (forward) slashes, e.g.
+<filename>//some-pc/home</filename>.
+In this case, the
+<emphasis remap='B'>program</emphasis>
+option in the associated
+<emphasis remap='B'>dumptype</emphasis>
+must be entered as
+<emphasis remap='B'>GNUTAR</emphasis>.
+It is the combination of the double slash disk name and
+<emphasis remap='B'>program GNUTAR</emphasis>
+in the
+<emphasis remap='B'>dumptype</emphasis>
+that triggers the use of Samba.</para>
+</listitem>
+</varlistentry>
+  
+  <varlistentry>
+  <term><emphasis remap='I'>dumptype</emphasis></term>
+  <listitem>
+<para>Refers to a
+<emphasis remap='B'>dumptype</emphasis>
+defined in the
+<emphasis remap='B'>amanda.conf</emphasis>
+file.
+<emphasis remap='I'>Dumptype</emphasis>s
+specify backup related parameters,
+such as whether to compress the backups,
+whether to record backup results in
+<filename>/etc/dumpdates</filename>, the disk's relative priority, etc.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='I'>spindle</emphasis></term>
+  <listitem>
+<para>Default:
+<option>-1</option>.
+A number used to balance backup load on a host.
+&A; will not run multiple backups at the same time
+on the same spindle, unless the spindle number is -1,
+which means there is no spindle restriction.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='I'>interface</emphasis></term>
+  <listitem>
+<para>Default:
+<emphasis remap='I'>local</emphasis>.
+The name of a network interface definition in the
+<emphasis remap='B'>amanda.conf</emphasis>
+file, used to balance network load.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+
+<para>Instead of naming a
+<emphasis remap='B'>dumptype</emphasis>,
+it is possible to define one in-line, enclosing
+<emphasis remap='B'>dumptype</emphasis>
+options within curly braces, one per line, just like a
+<emphasis remap='B'>dumptype</emphasis>
+definition in
+<emphasis remap='B'>amanda.conf</emphasis>.
+Since pre-existing
+<emphasis remap='B'>dumptype</emphasis>s
+are valid option names, this syntax may be used to customize
+<emphasis remap='B'>dumptype</emphasis>s
+for particular disks.</para>
+
+<para>A line break
+<emphasis remap='B'>must</emphasis>
+follow the left curly bracket.</para>
+
+<para>For instance, if a
+<emphasis remap='B'>dumptype</emphasis>
+named
+<emphasis remap='I'>normal</emphasis>
+is used for most disks, but use of the holding disk needs to be disabled
+for the file system that holds it, this would work instead of defining
+a new dumptype:</para>
+
+<programlisting>
+<emphasis remap='I'>hostname diskname</emphasis> [ <emphasis remap='I'>diskdevice</emphasis> ] {
+  normal
+  holdingdisk never
+} [ <emphasis remap='I'>spindle</emphasis> [ <emphasis remap='I'>interface</emphasis> ] ]
+</programlisting>
+
+</refsect1>
+
+<refsect1><title>TAPE MANAGEMENT</title>
+<para>The
+<emphasis remap='I'>tapelist</emphasis>
+file contains the list of tapes in active use.
+This file is maintained entirely by &A; and should not be created
+or edited during normal operation.
+It contains lines of the form:</para>
+
+<para><programlisting>YYYYMMDD label flags
+</programlisting></para>
+
+<para>Where
+<emphasis remap='I'>YYYYMMDD</emphasis>
+is the date the tape was written,
+<emphasis remap='I'>label</emphasis>
+is a label for the tape as written by
+<emphasis remap='B'>amlabel</emphasis>
+and
+<emphasis remap='I'>flags</emphasis>
+tell &A; whether the tape may be reused, etc (see the
+<emphasis remap='B'>reuse</emphasis>
+options of
+<emphasis remap='B'>amadmin</emphasis>).</para>
+
+<para><emphasis remap='B'>Amdump</emphasis>
+and
+<emphasis remap='B'>amflush</emphasis>
+will refuse to write to an unlabeled tape, or to a labeled tape that is considered active.
+There must be more tapes in active rotation (see the
+<emphasis remap='B'>tapecycle</emphasis>
+option) than there are runs in the backup cycle (see the
+<emphasis remap='B'>dumpcycle</emphasis>
+option) to prevent overwriting a backup image that would be needed to do a full recovery.</para>
+</refsect1>
+
+<refsect1 id='output_drivers'><title>OUTPUT DRIVERS</title>
+<para>The normal value for the
+<emphasis remap='B'>tapedev</emphasis>
+parameter, or for what a tape changer returns,
+is a full path name to a non-rewinding tape device, such as
+<filename>/dev/nst0</filename>
+or
+<filename>/dev/rmt/0mn</filename>
+or
+<filename>/dev/nst0.1</filename>
+or whatever conventions the operating system uses. &A; provides additional application level drivers that
+support non-traditional tape-simulations or features. To access a specific output driver, set
+<emphasis remap='B'>tapedev</emphasis>
+(or configure your changer to return) a string of the form
+<emphasis remap='I'>driver</emphasis>:<emphasis remap='I'>driver-info</emphasis>
+where
+<emphasis remap='I'>driver</emphasis>
+is one of the supported drivers and
+<emphasis remap='I'>driver-info</emphasis>
+is optional additional information needed by the driver.</para>
+
+<para>The supported drivers are:</para>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><emphasis remap='I'>tape</emphasis></term>
+  <listitem>
+<para>This is the default driver.
+The
+<emphasis remap='I'>driver-info</emphasis>
+is the tape device name.
+Entering
+<programlisting>tapedev /dev/rmt/0mn
+</programlisting>
+is really a short hand for
+<programlisting>tapedev tape:/dev/rmt/0mn
+</programlisting>.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='I'>null</emphasis></term>
+  <listitem>
+<para>This driver throws away anything written to it and returns EOF
+for any reads except a special case is made for reading a label,
+in which case a &quot;fake&quot; value is returned that &A; checks for
+and allows through regardless of what you have set in
+<emphasis remap='B'>labelstr</emphasis>.
+The
+<emphasis remap='I'>driver-info</emphasis>
+field is not used and may be left blank:</para>
+
+<para><programlisting>tapedev null:
+</programlisting></para>
+
+<para>The <emphasis remap='I'>length</emphasis>
+value from the associated
+<emphasis remap='B'>tapetype</emphasis>
+is used to limit the amount of data written. When the limit is reached, the driver will simulate end of tape.</para>
+
+<note>This driver should only be used for debugging and testing,
+and probably only with the
+<emphasis remap='B'>record</emphasis>
+option set to
+<emphasis remap='I'>no</emphasis>.</note>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><emphasis remap='I'>rait</emphasis></term>
+  <listitem>
+<para><emphasis remap='I'>R</emphasis>edundant
+<emphasis remap='I'>A</emphasis>rray
+of
+<emphasis remap='I'>I</emphasis>nexpensive (?)
+<emphasis remap='I'>T</emphasis>apes.
+Reads and writes tapes mounted on multiple drives by spreading
+the data across N-1 drives and using the last drive for a checksum.
+See docs/RAIT for more information.</para>
+
+<para>The
+<emphasis remap='I'>driver-info</emphasis>
+field describes the devices to use. Curly braces indicate multiple replacements in the string.
+For instance:</para>
+
+<para><programlisting>tapedev rait:/dev/rmt/tps0d{4,5,6}n
+</programlisting></para>
+
+<para>would use the following devices:</para>
+
+<para><filename>/dev/rmt/tps0d4n</filename>
+<filename>/dev/rmt/tps0d5n</filename>
+<filename>/dev/rmt/tps0d6n</filename>
+</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><emphasis remap='I'>file</emphasis></term>
+  <listitem>
+<para>This driver emulates a tape device with a set of files in a directory.
+The
+<emphasis remap='I'>driver-info</emphasis>
+field must be the name of an existing directory.
+The driver will test for a subdirectory of that named
+<emphasis remap='I'>data</emphasis>
+and return
+<emphasis remap='B'>offline</emphasis>
+until it is present.
+When present, the driver uses two files in the
+<emphasis remap='I'>data</emphasis>
+subdirectory for each tape file. One contains the actual data.
+The other contains record length information.</para>
+
+<para>The driver uses a file named
+<emphasis remap='I'>status</emphasis>
+in the
+<emphasis remap='B'>file</emphasis>
+device directory to hold driver status information, such as tape position.
+If not present, the driver will create it as though the device is rewound.</para>
+
+<para>The
+<emphasis remap='I'>length</emphasis>
+value from the associated
+<emphasis remap='B'>tapetype</emphasis>
+is used to limit the amount of data written.
+When the limit is reached, the driver will simulate end of tape.</para>
+
+<para>One way to use this driver with a real device such as a CD-writer is to
+create a directory for the
+<emphasis remap='B'>file</emphasis>
+device and one or more other directories for the actual data.
+Create a symlink named
+<emphasis remap='I'>data</emphasis>
+in the
+<emphasis remap='B'>file</emphasis>
+directory to one of the data directories.
+Set the
+<emphasis remap='B'>tapetype</emphasis>
+length to whatever the medium will hold.</para>
+
+<para>When &A; fills the
+<emphasis remap='B'>file</emphasis>
+device, remove the symlink and (optionally) create a new symlink to another
+data area.
+Use a CD writer software package to burn the image from the first data area.</para>
+
+<para>To read the CD, mount it and create the
+<emphasis remap='I'>data</emphasis>
+symlink in the
+<emphasis remap='B'>file</emphasis>
+device directory.</para>
+</listitem>
+</varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1><title>AUTHORIZATION</title>
+<para>&A; processes on the tape server host run as the
+<emphasis remap='B'>dumpuser</emphasis>
+user listed in
+<emphasis remap='B'>amanda.conf</emphasis>.
+When they connect to a backup client, they do so with an &A;-specific protocol.
+They do not, for instance, use
+<emphasis remap='B'>rsh</emphasis>
+or
+<emphasis remap='B'>ssh</emphasis>
+directly.</para>
+
+<para>On the client side, the
+<emphasis remap='B'>amandad</emphasis>
+daemon validates the connection using one of several methods,
+depending on how it was compiled and on options it is passed:</para>
+
+<variablelist remap='IP'>
+  <varlistentry>
+  <term>.rhosts</term>
+  <listitem>
+<para>Even though &A; does not use
+<emphasis remap='B'>rsh</emphasis>,
+it can use
+<markup>.rhosts</markup>-style
+authentication and a
+<markup>.rhosts</markup>
+file.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term>.amandahosts</term>
+  <listitem>
+<para>This is essentially the same as
+<markup>.rhosts</markup>
+authentication except a different file, with almost the same format, is used.
+This is the default mechanism built into &A;.</para>
+
+<para>The format of the
+<filename>.amandahosts</filename>
+file is:</para>
+
+<para><emphasis remap='I'>hostname</emphasis>
+[
+<emphasis remap='I'>username</emphasis>
+[
+<emphasis remap='I'>service</emphasis>
+]*]</para>
+
+<para>If
+<emphasis remap='I'>username</emphasis>
+is ommitted, it defaults to the user running
+<emphasis remap='B'>amandad</emphasis>,
+i.e. the user listed in the
+<emphasis remap='B'>inetd</emphasis>
+or
+<emphasis remap='B'>xinetd</emphasis>
+configuration file.</para>
+<para>The <emphasis remap='I'>service</emphasis> is a list of the service the client is authorized to execute:
+<emphasis remap='B'>amdump</emphasis>,
+<emphasis remap='B'>noop</emphasis>,
+<emphasis remap='B'>selfcheck</emphasis>,
+<emphasis remap='B'>sendsize</emphasis>,
+<emphasis remap='B'>sendbackup</emphasis>,
+<emphasis remap='B'>amindexd</emphasis>,
+<emphasis remap='B'>amidxtaped</emphasis>.
+<emphasis remap='B'>amdump</emphasis> is a shortcut for "noop selfcheck sendsize sendbackup"</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term>Kerberos</term>
+  <listitem>
+<para>&A; may use the Kerberos authentication system.
+Further information is in the
+<emphasis remap='B'>docs/KERBEROS</emphasis>
+<!-- TODO: edit link -->
+file that comes with an &A; distribution.</para>
+
+<para>For Samba access,
+&A; needs a file on the Samba server (which may
+or may not also be the tape server) named
+<filename>/etc/amandapass</filename>
+with share names, (clear text) passwords and (optional) domain names,
+in that order, one per line, whitespace separated.
+By default, the user used to connect to the PC is the same for all
+PC's and is compiled into &A;.
+It may be changed on a host by host basis
+by listing it first in the password field followed
+by a percent sign and then the password.
+For instance:</para>
+
+<programlisting>
+  //some-pc/home normalpw
+  //another-pc/disk otheruser%otherpw
+</programlisting>
+
+With clear text passwords, this file should obviously be tightly protected.
+It only needs to be readable by the &A;-user on the Samba server.
+
+<para>You can find further information in the
+<emphasis remap='B'>docs/SAMBA</emphasis>
+<!-- TODO: edit link -->
+file that comes with an &A; distribution.</para>
+
+</listitem>
+</varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1><title>HOST &amp; DISK EXPRESSION</title>
+<para>All host and disk arguments to programs are special expressions.
+The command applies to all disks that match your arguments.
+This section describes the matcher.</para>
+
+<para>The matcher matches by word, each word is a glob expression, words
+are separated by the separator '.' for host and '/' for disk. You
+can anchor the expression at left with a '^'. You can
+anchor the expression at right with a '$'. The matcher
+is case insensitive for host but is case sensitive for disk. A match
+succeeds if all words in your expression match contiguous words in 
+the host or disk.</para>
+
+
+<literallayout remap='.nf'>
+. 	word separator for a host
+/ 	word separator for a disk
+^ 	anchor at left
+$ 	anchor at right
+? 	match exactly one character except the separator
+* 	match zero or more characters except the separator
+**	match zero or more characters including the separator
+</literallayout>
+
+
+<para>Some examples:</para>
+
+<literallayout remap='.nf'>
+EXPRESSION     WILL MATCH           WILL NOT MATCH
+hosta          hosta                hostb
+               hoSTA.dOMAIna.ORG 
+               foo.hosta.org 
+host           host                 hosta
+host?          hosta                host
+               hostb 
+ho*na          hoina                ho.aina.org
+ho**na         hoina 
+               ho.aina.org 
+^hosta         hosta                foo.hosta.org
+sda*           /dev/sda1 
+               /dev/sda12 
+/opt/          opt (disk)           opt (host)
+.opt.          opt (host)           opt (disk)
+/              /                    any other disk
+/usr           /usr 
+               /usr/opt 
+/usr$          /usr                 /usr/opt
+</literallayout>
+
+
+</refsect1>
+
+<refsect1><title>DATESTAMP EXPRESSION</title>
+<para>A
+<emphasis remap='I'>datestamp</emphasis>
+expression is a range expression where we only match the prefix.
+Leading ^ is removed. Trailing $ forces an exact match.</para>
+
+<informaltable frame="all">
+<tgroup cols="2" alignment="left">
+<tbody>
+
+<row>
+<entry>20001212-14</entry>
+<entry>match all dates beginning with 20001212, 20001213 or 20001214</entry>
+</row>
+
+<row>
+<entry>20001212-4</entry>
+<entry>same as previous</entry>
+</row>
+
+<row>
+<entry>20001212-24</entry>
+<entry>match all dates between 20001212 and 20001224</entry>
+</row>
+
+<row>
+<entry>2000121</entry>
+<entry>match all dates that start with 2000121 (20001210-20001219)</entry>
+</row>
+
+<row>
+<entry>2</entry>
+<entry>match all dates that start with 2 (20000101-29991231)</entry>
+</row>
+
+<row>
+<entry>2000-10</entry>
+<entry>match all dates between 20000101-20101231</entry>
+</row>
+
+<row>
+<entry>200010$</entry>
+<entry>match only 200010</entry>
+</row>
+
+</tbody>
+</tgroup>
+</informaltable>
+<para/>
+
+</refsect1>
+
+<refsect1><title>CONFIGURATION OVERWRITE</title>
+<para>Most command allow to overwrite any configuration parameter on
+the command line with the -o option.</para>
+<para>-o NAME=value</para>
+<para>eg. -o runtapes=2</para>
+<para>eg. -o DUMPTYPE:no-compress:compress="server fast"</para>
+<para>eg. -o TAPETYPE:HP-DAT:length=2000m</para>
+<para>eg. -o INTERFACE:local:use="2000 kbps"</para>
+
+
+</refsect1>
+
+<refsect1><title>AUTHOR</title>
+<para>James da Silva, &email.jds; : Original text</para>
+<para>&maintainer.sgw;: XML-conversion, major update</para>
+</refsect1>
+
+<refsect1><title>SEE ALSO</title>
+<para>
+<citerefentry><refentrytitle>amadmin</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>amanda.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>amanda-client.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>amcheck</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>amcheckdb</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>amcleanup</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>amdd</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>amdump</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>amfetchdump</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+<citerefentry><refentrytitle>amflush</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>amgetconf</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>amlabel</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>ammt</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>amoverview</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>amplot</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>amrecover</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>amreport</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>amrestore</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>amrmtape</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>amstatus</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>amtape</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>amtapetype</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>amtoc</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>amverify</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>amverifyrun</refentrytitle><manvolnum>8</manvolnum></citerefentry></para>
+</refsect1>
+</refentry>
+

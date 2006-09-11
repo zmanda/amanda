@@ -1,0 +1,219 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"
+[
+  <!-- entities files to use -->
+  <!ENTITY % global_entities SYSTEM '../entities/global.entities'>
+  %global_entities;
+]>
+
+<!-- lifted from troff+man by doclifter -->
+<refentry id='amtape.8'>
+
+<refmeta>
+<refentrytitle>amtape</refentrytitle>
+<manvolnum>8</manvolnum>
+</refmeta>
+<refnamediv>
+<refname>amtape</refname>
+<refpurpose>user interface to &A; tape changer controls</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv>
+<cmdsynopsis>
+  <command>amtape</command>    
+    <arg choice='plain'><replaceable>config</replaceable></arg>
+    <arg choice='plain'><replaceable>command</replaceable></arg>
+    <arg choice='opt'><arg choice='plain'><replaceable>command</replaceable></arg><arg choice='plain'><replaceable>options</replaceable></arg></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1><title>DESCRIPTION</title>
+<para><emphasis remap='B'>Amtape</emphasis>
+performs tape changer control operations.
+It uses the underlying tape changer script defined by the
+<emphasis remap='B'>tpchanger</emphasis>
+option for a particular &A;
+configuration as specified by the
+<emphasis remap='I'>config</emphasis>
+argument.</para>
+
+<para>Tape changers maintain a notion of the
+<emphasis remap='I'>current</emphasis>
+and
+<emphasis remap='I'>next</emphasis>
+slot for each configuration.
+These may or may not correspond to an actual physical state of the device,
+but do tend to minimize searching through the tape storage slots.
+If the desired tape is in the current slot,
+it is likely the next tape needed is in the next slot
+rather than at some random position in the storage slots.</para>
+
+<para>See the
+<citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+man page for more details about &A;.</para>
+</refsect1>
+
+<refsect1><title>COMMANDS</title>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><emphasis remap='B'>reset</emphasis></term>
+  <listitem>
+<para>Reset the tape changer to a known state.
+The
+<emphasis remap='I'>current</emphasis>
+slot is set to the
+<emphasis remap='I'>first</emphasis>
+slot.
+Other device-specific side effects may occur.
+Some gravity stackers need to be reset to the top position by hand.
+This command notifies &A; the stacker is back in that position.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>eject</emphasis></term>
+  <listitem>
+<para>If a tape is loaded in the drive, it is ejected and returned to the
+slot from which it was loaded.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>clean</emphasis></term>
+  <listitem>
+<para>If a cleaning tape is defined for the changer,
+it is used to clean the drive.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>show</emphasis></term>
+  <listitem>
+<para>Show the contents of all slots.
+This can be slow.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>label</emphasis> <emphasis remap='I'>label</emphasis></term>
+  <listitem>
+<para>Search for and load the &A; tape with label
+<emphasis remap='I'>label</emphasis>.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>taper</emphasis></term>
+  <listitem>
+<para>Perform the
+<emphasis remap='B'>taper</emphasis>
+scan algorithm.
+Load the next tape in the configuration's tape sequence,
+or a fresh tape with a suitable label.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>device</emphasis></term>
+  <listitem>
+<para>Display the name of the current tape device on
+<emphasis remap='I'>stdout</emphasis>.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>current</emphasis></term>
+  <listitem>
+<para>Display the current slot.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>update</emphasis></term>
+  <listitem>
+<para>Update the changer label database, if it has one,
+to match the tapes now available.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>slot</emphasis> <emphasis remap='I'>slot</emphasis></term>
+  <listitem>
+<para>Eject any tape in the drive and put it away,
+then load the tape from slot
+<emphasis remap='I'>slot</emphasis>
+and reset
+<emphasis remap='I'>current</emphasis>.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>slot current</emphasis></term>
+  <listitem>
+<para>Eject any tape in the drive and put it away,
+then load the tape from the current slot.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>slot prev</emphasis></term>
+  <listitem>
+<para>Eject any tape in the drive and put it away,
+then load the tape from the previous slot and reset
+<emphasis remap='I'>current</emphasis>.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>slot next</emphasis></term>
+  <listitem>
+<para>Eject any tape in the drive and put it away,
+then load the tape from the next slot and reset
+<emphasis remap='I'>current</emphasis>.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>slot first</emphasis></term>
+  <listitem>
+<para>Eject any tape in the drive and put it away,
+then load the tape from the first slot and reset
+<emphasis remap='I'>current</emphasis>.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>slot last</emphasis></term>
+  <listitem>
+<para>Eject any tape in the drive and put it away,
+then load the tape from the last slot and reset
+<emphasis remap='I'>current</emphasis>.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>slot advance</emphasis></term>
+  <listitem>
+<para>Eject any tape in the drive and put it away.
+Advance
+<emphasis remap='I'>current</emphasis>
+to the next tape, but do not load it.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+
+<para>This is useful with non-gravity stackers to unload the last tape used
+and set up &A; for the next run.
+If you just use
+<emphasis remap='B'>eject</emphasis>,
+the current tape will be mounted again in the next run,
+where it will be rejected as being still in use,
+ejected and the next tape requested.
+Using
+<emphasis remap='B'>slot next</emphasis>
+followed by
+<emphasis remap='B'>eject</emphasis>
+does an unnecessary mount.</para>
+
+<para>Note: most changers optimize the
+<emphasis remap='B'>slot</emphasis>
+commands to not eject the loaded tape if it is the one being requested.</para>
+</refsect1>
+
+<refsect1><title>AUTHOR</title>
+<para>James da Silva, &email.jds; : Original text</para>
+<para>&maintainer.sgw;: XML-conversion</para>
+</refsect1>
+
+<refsect1><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry></para>
+</refsect1>
+</refentry>
+

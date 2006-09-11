@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"
+[
+  <!-- entities files to use -->
+  <!ENTITY % global_entities SYSTEM '../entities/global.entities'>
+  %global_entities;
+]>
+
+<!-- lifted from troff+man by doclifter -->
+<refentry id='amgetconf.8'>
+
+<refmeta>
+<refentrytitle>amgetconf</refentrytitle>
+<manvolnum>8</manvolnum>
+</refmeta>
+<refnamediv>
+<refname>amgetconf</refname>
+<refpurpose>look up amanda.conf variables</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv>
+<cmdsynopsis>
+  <command>amgetconf</command>    
+    <arg choice='opt'><replaceable>config</replaceable></arg>
+    <arg choice='plain'><replaceable>parameter</replaceable></arg>
+    <group><arg choice='plain'>-o</arg><arg choice='plain'><replaceable>configoption</replaceable></arg></group>*
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1><title>DESCRIPTION</title>
+<para><emphasis remap='B'>Amgetconf</emphasis>
+looks up parameters in
+<emphasis remap='I'>amanda.conf</emphasis>,
+the &A; configuration file,
+or from the build and runtime environment,
+and returns their corresponding value.</para>
+
+<para>If
+<emphasis remap='I'>config</emphasis>
+is not specified,
+<command>amgetconf</command>
+assumes it is being run from the configuration directory and that
+<emphasis remap='I'>amanda.conf</emphasis>
+is present.</para>
+
+<para>If
+<emphasis remap='I'>parameter</emphasis>
+begins with
+<emphasis remap='I'>build.</emphasis>,
+the (case insensitive) string following the period
+is a build environment variable.
+Variables without a value (e.g.
+<emphasis remap='I'>XFSDUMP</emphasis>
+on a system that does not support that type of file system)
+will not report an error and will return an empty string as the value.
+Flag variables (e.g.
+<emphasis remap='I'>USE_AMANDAHOSTS</emphasis>)
+will return
+<literal>1</literal>
+if the flag is set or an empty string if it is not.</para>
+
+<para>If
+<emphasis remap='I'>parameter</emphasis>
+begins with
+<emphasis remap='I'>dbopen.</emphasis>,
+the string following the period is a program name and an &A; debug
+file will be created for the caller.
+The name of the file is returned.</para>
+
+<para>If
+<emphasis remap='I'>parameter</emphasis>
+begins with
+<emphasis remap='I'>dbclose.</emphasis>,
+the string following the period is a program name previously used with
+<emphasis remap='I'>dbopen.</emphasis>,
+followed by a colon (:) and the previously opened file name.</para>
+
+<para>See the
+<citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+man page for more details about &A;.</para>
+</refsect1>
+
+<refsect1><title>OPTIONS</title>
+<variablelist remap='TP'>
+
+  <varlistentry>
+  <term><emphasis remap='B'>-o</emphasis> <replaceable>configoption</replaceable></term>
+  <listitem>
+<para>See the "<emphasis remap='B'>CONFIGURATION OVERWRITE</emphasis>" section in <citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>.</para>
+  </listitem>
+  </varlistentry>
+
+
+</variablelist>
+</refsect1>
+
+<refsect1><title>EXAMPLE</title>
+<para>Find out the path to the log file directory:</para>
+
+<!-- .RS -->
+<literallayout remap='.nf'>
+% amgetconf daily logdir
+/usr/local/etc/amanda//daily
+</literallayout> <!-- .fi -->
+
+<para>Find out the current tape type:</para>
+
+<!-- .RS -->
+<literallayout remap='.nf'>
+% amgetconf daily tapetype
+DLT4000-IV
+</literallayout> <!-- .fi -->
+
+<para>Find out the default configuration directory:</para>
+
+<!-- .RS -->
+<literallayout remap='.nf'>
+% amgetconf daily build.CONFIG_DIR
+/usr/local/etc/amanda/
+</literallayout> <!-- .fi -->
+
+<para>Create, use and close a debug file in a script:</para>
+
+<!-- .RS -->
+<literallayout remap='.nf'>
+% set debug_file = `amgetconf daily dbopen.myscript`
+% echo debug information &gt;&gt; $debug_file
+% amgetconf daily dbclose.myscript:$debug_file
+</literallayout> <!-- .fi -->
+</refsect1>
+
+<refsect1><title>MESSAGES</title>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term>amgetconf: no such parameter <emphasis remap='I'>param</emphasis></term>
+  <listitem>
+<para>Parameter
+<emphasis remap='I'>param</emphasis>
+is not a known keyword
+(e.g. not a valid
+<emphasis remap='I'>amanda.conf</emphasis>
+keyword).
+</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry></para>
+</refsect1>
+</refentry>
+

@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"
+[
+  <!-- entities files to use -->
+  <!ENTITY % global_entities SYSTEM '../entities/global.entities'>
+  %global_entities;
+]>
+
+<!-- lifted from troff+man by doclifter -->
+<refentry id='amlabel.8'>
+
+<refmeta>
+<refentrytitle>amlabel</refentrytitle>
+<manvolnum>8</manvolnum>
+</refmeta>
+<refnamediv>
+<refname>amlabel</refname>
+<refpurpose>label an &A; tape</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv>
+<cmdsynopsis>
+  <command>amlabel</command>    
+    <arg choice='opt'>-f </arg>
+    <arg choice='plain'><replaceable>config</replaceable></arg>
+    <arg choice='plain'><replaceable>label</replaceable></arg>
+    <group><arg choice='plain'>slot</arg><arg choice='plain'><replaceable>slot</replaceable></arg></group>
+    <group><arg choice='plain'>-o</arg><arg choice='plain'><replaceable>configoption</replaceable></arg></group>*
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1><title>DESCRIPTION</title>
+<para>All &A; tapes must be pre-labeled before they are used.
+&A; verifies the label in
+<emphasis remap='B'>amdump</emphasis>
+and
+<emphasis remap='B'>amflush</emphasis>
+before writing to make sure the proper tape is loaded.</para>
+
+<para><emphasis remap='B'>Amlabel</emphasis>
+writes an &A; label on the tape in the device specified by the
+<emphasis remap='I'>amanda.conf</emphasis>
+file in /usr/local/etc/amanda/<emphasis remap='I'>config</emphasis>.
+<emphasis remap='I'>Label</emphasis>
+may be any string that does not contain whitespace and that matches the
+<emphasis remap='I'>amanda.conf</emphasis>
+<emphasis remap='B'>labelstr</emphasis>
+regular expression option.
+It is up to the system administrator to define a naming convention.</para>
+
+<para><emphasis remap='B'>Amlabel</emphasis>
+appends the new tape to the
+<emphasis remap='I'>tapelist</emphasis>
+file so it will be used by &A; before it reuses any other tapes.
+When you
+<command>amlabel</command>
+multiple tapes, they will be used in the order you
+<command>amlabel</command>
+them.</para>
+
+<para><emphasis remap='B'>Amlabel</emphasis>
+will not write the label if the tape contains an active
+&A; tape or if the label specified is on an active tape.
+The
+<option>-f</option>
+(force) flag bypasses these verifications.</para>
+
+<para>An optional
+<emphasis remap='I'>slot</emphasis>
+may be specified after the tape label.
+If a tape changer is in use,
+<command>amlabel</command>
+will label the tape in the specified slot instead of the currently loaded tape.</para>
+
+<para>See the
+<citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+man page for more details about &A;.</para>
+</refsect1>
+
+<refsect1><title>OPTIONS</title>
+<variablelist remap='TP'>
+
+  <varlistentry>
+  <term><emphasis remap='B'>-o</emphasis> <replaceable>configoption</replaceable></term>
+  <listitem>
+<para>See the "<emphasis remap='B'>CONFIGURATION OVERWRITE</emphasis>" section in <citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>.</para>
+  </listitem>
+  </varlistentry>
+
+
+</variablelist>
+</refsect1>
+
+<refsect1><title>EXAMPLE</title>
+<para>Write an &A; label with the string &quot;DMP000&quot; on
+the tape loaded in the device named in the
+<emphasis remap='B'>tapedev</emphasis>
+option in /usr/local/etc/amanda/daily/amanda.conf:</para>
+
+<programlisting>
+% amlabel daily DMP000 
+</programlisting>
+
+<para>Label the tape in slot 3 of the currently configured tape changer
+with the string &quot;DMP003&quot;:</para>
+
+<programlisting>
+% amlabel daily DMP003 slot 3 
+</programlisting>
+</refsect1>
+
+<refsect1><title>MESSAGES</title>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term>label <emphasis remap='I'>label</emphasis> doesn't match labelstr <emphasis remap='I'>str</emphasis></term>
+  <listitem>
+<para>Label
+<emphasis remap='I'>label</emphasis>
+on the command line does not match the
+<emphasis remap='I'>labelstr</emphasis>
+regular expression
+<emphasis remap='I'>str</emphasis>
+from
+<emphasis remap='I'>amanda.conf</emphasis>.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term>label <emphasis remap='I'>label</emphasis> already on a tape</term>
+  <listitem>
+<para>Label
+<emphasis remap='I'>label</emphasis>
+is already listed as an active &A; tape.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term>no tpchanger specified in <emphasis remap='I'>path</emphasis> , so slot command invalid</term>
+  <listitem>
+<para>The command line has the
+<emphasis remap='B'>slot</emphasis>
+parameter but the
+<emphasis remap='I'>amanda.conf</emphasis>
+file in
+<emphasis remap='I'>path</emphasis>
+does not have a tape changer configured.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term>reading label <emphasis remap='I'>label</emphasis>, tape is in another amanda configuration</term>
+  <listitem>
+<para>This tape appears to be a valid &A; tape,
+but label does not match
+<emphasis remap='B'>labelstr</emphasis>
+for this configuration so it is probably part of a different &A; configuration.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term>reading label <emphasis remap='I'>label</emphasis>, tape is active</term>
+  <listitem>
+<para>Tape
+<emphasis remap='I'>label</emphasis>
+appears to already be part of this &A; configuration
+and active, i.e. has valid data on it.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term>no label found, are you sure <emphasis remap='I'>tape</emphasis> is non-rewinding?</term>
+  <listitem>
+<para>While checking that the label was written correctly,
+<command>amlabel</command>
+got an error that might be caused by mis-configuring &A;
+with a rewinding tape device name
+instead of a non-rewinding device name for
+<emphasis remap='I'>tape.</emphasis></para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1><title>AUTHOR</title>
+<para>James da Silva, &email.jds;: Original text</para>
+<para>&maintainer.sgw;: XML-conversion</para>
+</refsect1>
+
+<refsect1><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+<citerefentry><refentrytitle>amdump</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+<citerefentry><refentrytitle>amflush</refentrytitle><manvolnum>8</manvolnum></citerefentry></para>
+</refsect1>
+</refentry>
+

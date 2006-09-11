@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"
+[
+  <!-- entities files to use -->
+  <!ENTITY % global_entities SYSTEM '../entities/global.entities'>
+  %global_entities;
+]>
+
+<!-- lifted from troff+man by doclifter -->
+<refentry id='amreport.8'>
+
+<refmeta>
+<refentrytitle>amreport</refentrytitle>
+<manvolnum>8</manvolnum>
+</refmeta>
+<refnamediv>
+<refname>amreport</refname>
+<refpurpose>generate a formatted output of statistics for an &A; run</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv>
+<cmdsynopsis>
+  <command>amreport</command>    
+    <arg choice='opt'><replaceable>config</replaceable></arg>
+    <arg choice='opt'>-i</arg>
+    <group><arg choice='plain'>-M</arg><arg choice='plain'><replaceable>address</replaceable></arg></group>
+    <group><arg choice='plain'>-l</arg><arg choice='plain'><replaceable>logfile</replaceable></arg></group>
+    <group><arg choice='plain'>-f</arg><arg choice='plain'><replaceable>outputfile</replaceable></arg></group>
+    <group><arg choice='plain'>-p</arg><arg choice='plain'><replaceable>postscriptfile</replaceable></arg></group>
+    <group><arg choice='plain'>-o</arg><arg choice='plain'><replaceable>configoption</replaceable></arg></group>*
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1><title>DESCRIPTION</title>
+<para><emphasis remap='B'>Amreport</emphasis>
+generates a summary report of an
+<citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+backup run.
+If no configuration name is specified, amanda.conf is
+read from the current directory.</para>
+
+<para>See the
+<citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+man page for more details about &A;.</para>
+</refsect1>
+
+<refsect1><title>OPTIONS</title>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><emphasis remap='I'>config</emphasis></term>
+  <listitem>
+<para>Name of the configuration to process.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-i</option></term>
+  <listitem>
+<para>Don't email the report.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-M</option> <replaceable>address</replaceable></term>
+  <listitem>
+<para>Mail the report to
+<emphasis remap='I'>address</emphasis>
+instead of the
+<emphasis remap='B'>mailto</emphasis>
+value from
+<emphasis remap='I'>amanda.conf</emphasis>.
+</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-l</option> <replaceable>logfile</replaceable></term>
+  <listitem>
+<para>Name of the log file to parse to generate the report.
+If a log file is not specified, it defaults to the file:</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+
+<!-- .RS -->
+<!-- .RS -->
+<para><emphasis remap='I'>logdir</emphasis>/log</para>
+<!-- .RE -->
+<!-- .RE -->
+
+<para>where
+<emphasis remap='I'>logdir</emphasis>
+is the log directory defined in amanda.conf.</para>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><option>-f</option> <replaceable>outputfile</replaceable></term>
+  <listitem>
+<para>Normally,
+<command>amreport</command>
+sends the report via e-mail to the
+<emphasis remap='I'>mailto</emphasis>
+user as defined in the amanda.conf file.
+If
+<emphasis remap='I'>outputfile</emphasis>
+is specified, then the report is put in
+<emphasis remap='I'>outputfile</emphasis>.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-p</option> <replaceable>postscriptfile</replaceable></term>
+  <listitem>
+<para>Send the postscript output to the file
+<emphasis remap='I'>postscriptfile</emphasis>
+instead of to the
+<citerefentry><refentrytitle>lpr</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+command.
+This option has an effect only if the
+<emphasis remap='I'>lbl-templ</emphasis>
+directive is specified in amanda.conf.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><emphasis remap='B'>-o</emphasis> <replaceable>configoption</replaceable></term>
+  <listitem>
+<para>See the "<emphasis remap='B'>CONFIGURATION OVERWRITE</emphasis>" section in <citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>.</para>
+  </listitem>
+  </varlistentry>
+
+</variablelist>
+</refsect1>
+
+<refsect1><title>LABEL PRINTING</title>
+<para>&A; can print postscript labels describing the contents
+of tape(s) written in a run.
+The labels are designed to be folded and
+inserted into the tape case along with the tape or hole punched and put 
+in a 3-ring binder.
+Various label templates are provided to
+format data for different tape sizes.</para>
+
+<para>The information printed varies slightly between label templates
+due to size constraints.
+Labels contain one line for each host/file-system
+pair and may also contain the file number on the tape,
+the level of the dump,
+the original size of the dump
+and the size of the (possibly compressed) tape file.</para>
+
+<para>Add the
+<emphasis remap='I'>lbl-templ</emphasis>
+parameter to the tapetype definition in amanda.conf to enable labels.
+If you don't add this line to your
+tapetype definition,
+<command>amreport</command>
+will not print tape labels.</para>
+
+<para>You may use the
+<emphasis>remap='I'>printer</emphasis>
+keyword in amanda.conf to print to other than the system default printer.</para>
+
+</refsect1>
+
+<refsect1><title>TEMPLATES</title>
+
+<para>&A; provides label templates for the following tape types.
+These are pretty generic labels and should be easy to customize for
+other tape types or particular site needs.</para>
+
+<!-- .RS -->
+<!-- .RS -->
+<literallayout remap='.nf'>
+* ExaByte 8mm tapes
+* DAT 4mm tapes
+* DLT tapes
+* 3-ring binder
+</literallayout> <!-- .fi -->
+
+<para>The 3-ring binder type is the most generic.
+It may be used to make a hardcopy log of the tapes.</para>
+</refsect1>
+
+<refsect1><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>amflush</refentrytitle><manvolnum>8</manvolnum></citerefentry></para>
+</refsect1>
+</refentry>
+

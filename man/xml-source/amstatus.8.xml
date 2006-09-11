@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"
+[
+  <!-- entities files to use -->
+  <!ENTITY % global_entities SYSTEM '../entities/global.entities'>
+  %global_entities;
+]>
+
+<!-- lifted from troff+man by doclifter -->
+
+<refentry id='amstatus.8'>
+
+<refmeta>
+<refentrytitle>amstatus</refentrytitle>
+<manvolnum>8</manvolnum>
+</refmeta>
+<refnamediv>
+<refname>amstatus</refname>
+<refpurpose>display the state of an &A; run</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv>
+<cmdsynopsis>
+  <command>amstatus</command>    
+    <arg choice='opt'>--config </arg>
+    <arg choice='plain'><replaceable>config</replaceable></arg>
+    <arg choice='opt'><arg choice='plain'>--file </arg><arg choice='plain'><replaceable>amdumpfile</replaceable></arg></arg>
+    <arg choice='opt'>--summary </arg>
+    <arg choice='opt'>--dumping </arg>
+    <arg choice='opt'>--waitdumping </arg>
+    <arg choice='opt'>--waittaper </arg>
+    <arg choice='opt'>--dumpingtape </arg>
+    <arg choice='opt'>--writingtape </arg>
+    <arg choice='opt'>--finished </arg>
+    <arg choice='opt'>--failed </arg>
+    <arg choice='opt'>--estimate </arg>
+    <arg choice='opt'>--gestimate </arg>
+    <arg choice='opt'>--stats </arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1><title>DESCRIPTION</title>
+<para><emphasis remap='B'>Amstatus</emphasis>
+gives the current state of the &A; run specified by the 
+<emphasis remap='I'>config</emphasis>
+configuration.
+If there is no active &A; running, it summarizes the result of the last run.
+It may also be used to summarize the results of a previous run.</para>
+
+<para>See the
+<citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+man page for more details about &A;.</para>
+</refsect1>
+
+<refsect1><title>OPTIONS</title>
+<para>All options may be abbreviated to the shortest non-ambiguous sub-string.
+If no options are given, everything is displayed.</para>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><emphasis remap='B'>[--config] config</emphasis></term>
+  <listitem>
+<para>Specify the &A; configuration you want to display the state for.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>--file amdumpfile</option></term>
+  <listitem>
+<para>Specify an alternate file instead of the
+<emphasis remap='I'>amdump</emphasis>
+or
+<emphasis remap='I'>amflush</emphasis>
+file.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>--summary</option></term>
+  <listitem>
+<para>Display a summary of the state of the run.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>--dumping</option></term>
+  <listitem>
+<para>Display all partitions that are dumping.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>--waitdumping|wdumping</option></term>
+  <listitem>
+<para>Display all partitions that are waiting to be dumped.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>--waittaper|wtaper</option></term>
+  <listitem>
+<para>Display all partitions dumped that are waiting to be written to tape.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>--dumpingtape|dtape</option></term>
+  <listitem>
+<para>Display all partitions that are dumping directly to tape.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>--writingtape|wtape</option></term>
+  <listitem>
+<para>Display all partitions that are writing to tape.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>--finished</option></term>
+  <listitem>
+<para>Display all partitions that are dumped and written to tape.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>--failed|error</option></term>
+  <listitem>
+<para>Display all partitions that failed.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>--estimate</option></term>
+  <listitem>
+<para>Display all partitions whose estimate is finished.
+Works only during the estimate phase.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>--gestimate|gettingestimate</option></term>
+  <listitem>
+<para>Display all partitions whose estimate is not finished.
+Works only during the estimate phase.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>--stats|statistics</option></term>
+  <listitem>
+<para>Display statistics about active-time of taper and dumpers.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>amcheck</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>amdump</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>amrestore</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>amadmin</refentrytitle><manvolnum>8</manvolnum></citerefentry></para>
+</refsect1>
+</refentry>
+

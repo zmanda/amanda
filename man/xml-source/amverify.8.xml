@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"
+[
+  <!-- entities files to use -->
+  <!ENTITY % global_entities SYSTEM '../entities/global.entities'>
+  %global_entities;
+]>
+
+<!-- lifted from troff+man by doclifter -->
+<refentry id='amverify.8'>
+
+<refmeta>
+<refentrytitle>amverify</refentrytitle>
+<manvolnum>8</manvolnum>
+</refmeta>
+<refnamediv>
+<refname>amverify</refname>
+<refpurpose>check an Amanda tape for errors</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv>
+<cmdsynopsis>
+  <command>amverify</command>    
+    <arg choice='plain'><replaceable>config</replaceable></arg>
+    <arg choice='opt'><arg choice='plain'><replaceable>slot</replaceable></arg><arg choice='opt'><replaceable>runtapes</replaceable></arg></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1><title>DESCRIPTION</title>
+<para><emphasis remap='B'>Amverify</emphasis>
+reads an Amanda format tape and makes sure each backup image
+can be processed by
+<emphasis remap='B'>amrestore</emphasis>
+and, if possible, the appropriate restore program (e.g.
+<emphasis remap='B'>tar</emphasis>).</para>
+
+<para><emphasis remap='B'>Amverify</emphasis>
+runs
+<emphasis remap='B'>amrestore</emphasis>
+on each file of the tape and pipes the output
+to a restore program (if available) with an option to create a catalogue
+of the backup.
+The catalogue itself is discarded.
+Only the success or failure of the operation itself is reported.</para>
+
+<para>If the backup image cannot be processed by the restore program,
+e.g. if it was written on a different operating system,
+the image is sent through
+<emphasis remap='B'>dd</emphasis>
+to /dev/null.
+This still determines if the tape is readable,
+but does not do any internal consistency check on the image.</para>
+
+<para>If
+<emphasis remap='I'>config</emphasis>
+is set up to use a tape changer,
+the
+<emphasis remap='I'>slot</emphasis>
+argument may be used to choose the first tape to process.
+Otherwise,
+the
+<emphasis remap='B'>current</emphasis>
+slot is used.</para>
+
+<para>The
+<emphasis remap='B'>runtapes</emphasis>
+configuration parameter determines how many tapes are processed unless
+it is specified on the command line.</para>
+
+<para>See the
+<citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+man page for more details about Amanda.</para>
+</refsect1>
+
+<refsect1><title>AUTHOR</title>
+<para>Axel Zinser <email>fifi@icem.de</email> : Original text</para>
+<para>&maintainer.sgw;: XML-conversion</para>
+</refsect1>
+
+<refsect1><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>amrestore</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>amverifyrun</refentrytitle><manvolnum>8</manvolnum></citerefentry></para>
+</refsect1>
+</refentry>
+

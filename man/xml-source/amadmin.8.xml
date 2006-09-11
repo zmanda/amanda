@@ -1,0 +1,416 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"
+[
+  <!-- entities files to use -->
+  <!ENTITY % global_entities SYSTEM '../entities/global.entities'>
+  %global_entities;
+]>
+
+<!-- lifted from troff+man by doclifter -->
+<refentry id='amadmin.8'>
+
+<refmeta>
+<refentrytitle>amadmin</refentrytitle>
+<manvolnum>8</manvolnum>
+</refmeta>
+<refnamediv>
+<refname>amadmin</refname>
+<refpurpose>administrative interface to control &A; backups</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv>
+<cmdsynopsis>
+  <command>amadmin</command>    
+    <arg choice='plain'><replaceable>config</replaceable></arg>
+    <arg choice='plain'><replaceable>command</replaceable></arg>
+    <group><replaceable><arg choice='plain'>command</arg><arg choice='plain'>options</arg></replaceable></group>
+    <group><arg choice='plain'>-o</arg><arg choice='plain'><replaceable>configoption</replaceable></arg></group>*
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1><title>DESCRIPTION</title>
+<para><emphasis remap='B'>Amadmin</emphasis>
+performs various administrative tasks on the
+<emphasis remap='I'>config</emphasis>
+&A; configuration.</para>
+
+<para>See the
+<citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+man page for more details about &A;.</para>
+</refsect1>
+
+<refsect1><title>COMMANDS</title>
+<para>Commands that take a
+<emphasis remap='I'>hostname</emphasis>
+[
+<emphasis remap='I'>disks</emphasis>
+]
+parameter pair operate on all disks in the
+<emphasis remap='I'>disklist</emphasis>
+for that
+<emphasis remap='I'>hostname</emphasis>
+if no disks are specified.
+Where
+<emphasis remap='I'>hostname</emphasis>
+is also marked as being optional,
+the command operates on all hosts and disks in the
+<emphasis remap='I'>disklist</emphasis>.
+Both
+<emphasis remap='I'>hostname</emphasis>
+and
+<emphasis remap='I'>disks</emphasis>
+are special expressions, see the &quot;HOST &amp; DISK EXPRESSION&quot; section
+of 
+<citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+for a description.</para>
+
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><emphasis remap='B'>version</emphasis></term>
+  <listitem>
+<para>Show the current version and some compile time and runtime parameters.
+The
+<emphasis remap='I'>config</emphasis>
+parameter must be present but is ignored.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>force-bump</emphasis> [ <emphasis remap='I'>hostname</emphasis> [ <emphasis remap='I'>disks</emphasis> ]* ]+</term>
+  <listitem>
+<para>Force the
+<emphasis remap='I'>disks</emphasis>
+on
+<emphasis remap='I'>hostname</emphasis>
+to bump to a new incremental level during the next &A; run.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>force-no-bump</emphasis> [ <emphasis remap='I'>hostname</emphasis> [ <emphasis remap='I'>disks</emphasis> ]* ]+</term>
+  <listitem>
+<para>Force the
+<emphasis remap='I'>disks</emphasis>
+on
+<emphasis remap='I'>hostname</emphasis>
+to not bump to a new incremental level during the next &A; run.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>unforce-bump</emphasis> [ <emphasis remap='I'>hostname</emphasis> [ <emphasis remap='I'>disks</emphasis> ]* ]+</term>
+  <listitem>
+<para>Undo a previous
+<emphasis remap='B'>force-bump</emphasis>
+or
+<emphasis remap='B'>force-no-bump</emphasis>
+command.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>force</emphasis> [ <emphasis remap='I'>hostname</emphasis> [ <emphasis remap='I'>disks</emphasis> ]* ]+</term>
+  <listitem>
+<para>Force the
+<emphasis remap='I'>disks</emphasis>
+on
+<emphasis remap='I'>hostname</emphasis>
+to do a full (level 0) backup during the next &A; run.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>unforce</emphasis> [ <emphasis remap='I'>hostname</emphasis> [ <emphasis remap='I'>disks</emphasis> ]* ]+</term>
+  <listitem>
+<para>Undo a previous
+<emphasis remap='B'>force</emphasis>
+command.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>reuse</emphasis> <emphasis remap='I'>tapelabel</emphasis> [ ... ]</term>
+  <listitem>
+<para>The tapes listed
+will be available for reuse at their point in the tape cycle.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>no-reuse</emphasis> <emphasis remap='I'>tapelabel</emphasis> [ ... ]</term>
+  <listitem>
+<para>The tapes listed
+will not be reused when their turn comes up again in the tape cycle.
+Note that if this causes the number of reusable tapes to drop below the
+<emphasis remap='B'>amanda.conf</emphasis>
+<emphasis remap='I'>tapecycle</emphasis>
+value, &A; will request new tapes until the count is satisfied again.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>due</emphasis> [ <emphasis remap='I'>hostname</emphasis> [ <emphasis remap='I'>disks</emphasis> ]* ]*</term>
+  <listitem>
+<para>Show when the next full dump is due.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>find</emphasis> [ <option>--sort</option> <replaceable>hkdlpb</replaceable> ]<emphasis remap='B'></emphasis> [ <emphasis remap='I'>hostname</emphasis> [ <emphasis remap='I'>disks</emphasis> ]* ]*</term>
+  <listitem>
+<para>Display all backups currently on tape or in the holding disk.
+The tape label or holding disk filename,
+file number,
+and status are displayed.</para>
+<para>The <option>--sort</option> option changes the sort order using the following flags:</para>
+
+<para><emphasis remap='B'>h</emphasis>	host name
+<emphasis remap='B'>k</emphasis>	disk name
+<emphasis remap='B'>d</emphasis>	dump date
+<emphasis remap='B'>l</emphasis>	backup level
+<emphasis remap='B'>p</emphasis>        dump part
+<emphasis remap='B'>b</emphasis>	tape label</para>
+
+<para>An uppercase letter reverses the sort order for that key.
+The default sort order is <emphasis remap='B'>hkdlpb</emphasis>.</para>
+</listitem>
+</varlistentry>
+
+  <varlistentry>
+  <term><emphasis remap='B'>delete</emphasis> [ <emphasis remap='I'>hostname</emphasis> [ <emphasis remap='I'>disks</emphasis> ]* ]+</term>
+  <listitem>
+<para>Delete the specified
+<emphasis remap='I'>disks</emphasis>
+on
+<emphasis remap='I'>hostname</emphasis>
+from the &A; database.</para>
+<note>If you do not also remove the disk from the
+<emphasis remap='I'>disklist</emphasis>
+file, &A; will treat it as a new disk during the next run.</note>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><emphasis remap='B'>tape</emphasis></term>
+  <listitem>
+<para>Display the tape(s) &A; expects to write to during the next run.
+See also
+<citerefentry><refentrytitle>amcheck</refentrytitle><manvolnum>8</manvolnum></citerefentry>.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>bumpsize</emphasis></term>
+  <listitem>
+<para>Display the current bump threshold parameters, calculated for all backup
+levels.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>balance</emphasis> [ <option>--days</option> <replaceable>&lt;num&gt;</replaceable> ]<emphasis remap='B'></emphasis> <emphasis remap='I'></emphasis> <emphasis remap='I'></emphasis></term>
+  <listitem>
+<para>Display the distribution of full backups throughout the dump schedule.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>export</emphasis> [ <emphasis remap='I'>hostname</emphasis> [ <emphasis remap='I'>disks</emphasis> ]* ]*</term>
+  <listitem>
+<para>Convert records from the &A; database
+to a text format that may be transmitted to another &A; machine and
+<emphasis remap='B'>import</emphasis>ed.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>import</emphasis></term>
+  <listitem>
+<para>Convert
+<emphasis remap='B'>export</emphasis>ed
+records read from standard input to a form &A; uses
+and insert them into the database on this machine.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>disklist</emphasis> [ <emphasis remap='I'>hostname</emphasis> [ <emphasis remap='I'>disks</emphasis> ]* ]*</term>
+  <listitem>
+<para>Display the
+<emphasis remap='I'>disklist</emphasis>
+information for each of the
+<emphasis remap='I'>disks</emphasis>
+on
+<emphasis remap='I'>hostname</emphasis>
+(or all hosts).
+Mostly used for debugging.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>info</emphasis> [ <emphasis remap='I'>hostname</emphasis> [ <emphasis remap='I'>disks</emphasis> ]* ]*</term>
+  <listitem>
+<para>Display the
+database record for each of the
+<emphasis remap='I'>disks</emphasis>
+on
+<emphasis remap='I'>hostname</emphasis>
+(or all hosts).
+Mostly used for debugging.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><emphasis remap='B'>-o</emphasis> <replaceable>configoption</replaceable></term>
+  <listitem>
+<para>See the "<emphasis remap='B'>CONFIGURATION OVERWRITE</emphasis>"
+ section in <citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>.</para>
+  </listitem>
+  </varlistentry>
+
+</variablelist>
+</refsect1>
+
+<refsect1><title>EXAMPLES</title>
+<para>Request three specific file systems on
+<emphasis remap='I'>machine-a</emphasis>
+get a full level 0 backup during the next &A; run.</para>
+
+<programlisting>
+$ amadmin daily force machine-a / /var /usr
+amadmin: machine-a:/ is set to a forced level 0 tonight.
+amadmin: machine-a:/var is set to a forced level 0 tonight.
+amadmin: machine-a:/usr is set to a forced level 0 tonight.
+</programlisting>
+
+<para>Request all file systems on
+<emphasis remap='I'>machine-b</emphasis>
+get a full level 0 backup during the next &A; run.</para>
+
+<programlisting>
+$ amadmin daily force machine-b
+amadmin: machine-b:/ is set to a forced level 0 tonight.
+amadmin: machine-b:/var is set to a forced level 0 tonight.
+amadmin: machine-b:/usr is set to a forced level 0 tonight.
+amadmin: machine-b:/home is set to a forced level 0 tonight.
+</programlisting>
+
+<para>Undo the previous
+<emphasis remap='B'>force</emphasis>
+request for
+<filename>/home</filename>
+on
+<emphasis remap='I'>machine-b</emphasis>.
+The other file systems will still get a full level 0 backup.</para>
+
+<programlisting>
+$ amadmin daily unforce machine-b /home
+amadmin: force command for machine-b:/home cleared.
+</programlisting>
+
+<para>Locate backup images of
+<filename>/var</filename>
+from
+<emphasis remap='I'>machine-c</emphasis>.
+The
+<emphasis remap='I'>tape or file</emphasis>
+column displays either a tape label or a filename depending on whether
+the image is on tape or is still in the holding disk.
+If the image is on tape, the
+<emphasis remap='I'>file</emphasis>
+column tells you which file on the tape has the image
+(file number zero is a tape label).
+This column shows zero and is not meaningful if the image
+is still in the holding disk.
+The
+<emphasis remap='I'>status</emphasis>
+column tells you whether the backup was successful or had
+some type of error.</para>
+
+<programlisting>
+$ amadmin daily find machine-c /var
+date        host      disk lv tape or file                 file part  status
+2000\-11\-09  machine\-c /var  0 000110                       9   --  OK
+2000\-11\-08  machine\-c /var  2 000109                       2   --  OK
+2000\-11\-07  machine\-c /var  2 /amanda/20001107/machine-c._var.2  0 OK
+2000\-11\-06  machine\-c /var  2 000107                       2   --  OK
+2000\-11\-05  machine\-c /var  2 000106                       3   --  OK
+2000\-11\-04  machine\-c /var  2 000105                       2   --  OK
+2000\-11\-03  machine\-c /var  2 000104                       2   --  OK
+2000\-11\-02  machine\-c /var  2 000103                       2   --  OK
+2000\-11\-01  machine\-c /var  1 000102                       5   --  OK
+2000\-10\-31  machine\-c /var  1 000101                       3   --  OK
+</programlisting>
+
+<para>Forget about the
+<filename>/workspace</filename>
+disk on
+<emphasis remap='I'>machine-d</emphasis>.
+If you do not also remove the disk from the
+<emphasis remap='I'>disklist</emphasis>
+file, &A; will treat it as a new disk during the next run.</para>
+
+<programlisting remap='.nf'>
+$ amadmin daily delete machine-d /workspace
+amadmin: machine-d:/workspace deleted from database.
+amadmin: NOTE: you'll have to remove these from the disklist yourself.
+</programlisting>
+
+<para>Find the next tape &A; will use (in this case, <literal>123456</literal>).</para>
+
+<programlisting>
+$ amadmin daily tape
+The next &A; run should go onto tape 123456 or a new tape.
+</programlisting>
+
+<para>Show how well full backups are balanced across the dump cycle.
+The
+<emphasis remap='I'>due-date</emphasis>
+column is the day the backups are due for a full backup.
+<emphasis remap='I'>#fs</emphasis>
+shows the number of filesystems doing full backups that night, and
+<emphasis remap='I'>orig KB</emphasis>
+and
+<emphasis remap='I'>out KB</emphasis>
+show the estimated total size of the backups
+before and after any compression, respectively.</para>
+
+<para>The
+<emphasis remap='I'>balance</emphasis>
+column shows how far off that night's backups are from the average size
+(shown at the bottom of the balance column).
+&A; tries to keep the backups within +/- 5%,
+but since the amount of data on each filesystem is always changing,
+and &A; will never delay backups just to rebalance the schedule,
+it is common for the schedule to fluctuate by larger percentages.
+In particular, in the case of a tape or backup failure, a bump will occur the following night,
+which will not be smoothed out until the next pass through the schedule.</para>
+
+<para>The last line also shows an estimate of how many &A; runs will be
+made between full backups for a file system.
+In the example, a file system will probably have a full backup done
+every eight times &A; is run (e.g. every eight days).</para>
+
+<programlisting>
+$ amadmin daily balance
+ due-date  #fs   orig KB    out KB  balance
+-------------------------------------------
+11/10 Mon   21    930389    768753    +5.1%
+11/11 Tue   29   1236272    733211    +0.2%
+11/12 Wed   31   1552381    735796    +0.6%
+11/13 Thu   23   1368447    684552    -6.4%
+11/14 Fri   32   1065603    758155    +3.6%
+11/15 Sat   14   1300535    738430    +0.9%
+11/16 Sun   31   1362696    740365    +1.2%
+11/17 Mon   30   1427936    773397    +5.7%
+11/18 Tue   11   1059191    721786    -1.3%
+11/19 Wed   19   1108737    661867    -9.5%
+-------------------------------------------
+TOTAL      241  12412187   7316312   731631  (estimated 8 runs per dumpcycle)
+</programlisting>
+</refsect1>
+
+<refsect1><title>FILES</title>
+<para>/usr/local/etc/amanda/<emphasis remap='I'>config</emphasis>/amanda.conf</para>
+</refsect1>
+
+<refsect1><title>AUTHOR</title>
+<para>James da Silva, &email.jds; : Original text</para>
+<para>&maintainer.sgw;: XML-conversion</para>
+</refsect1>
+
+<refsect1><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>amcheck</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>amdump</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>amrestore</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>amfetchdump</refentrytitle><manvolnum>8</manvolnum></citerefentry></para>
+</refsect1>
+</refentry>

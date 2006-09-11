@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"
+[
+  <!-- entities files to use -->
+  <!ENTITY % global_entities SYSTEM '../entities/global.entities'>
+  %global_entities;
+]>
+
+<!-- lifted from troff+man by doclifter -->
+<refentry id='ammt.8'>
+
+<refmeta>
+<refentrytitle>ammt</refentrytitle>
+<manvolnum>8</manvolnum>
+</refmeta>
+<refnamediv>
+<refname>ammt</refname>
+<refpurpose>&A; version of mt</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv>
+<cmdsynopsis>
+  <command>ammt</command>    
+    <arg choice='opt'>-d </arg>
+    <group choice='opt'><arg choice='plain'>-f </arg><arg choice='plain'>-t </arg><arg choice='plain'><replaceable>device</replaceable></arg></group>
+    <arg choice='plain'><replaceable>command</replaceable></arg>
+    <arg choice='opt'><replaceable>count</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1><title>DESCRIPTION</title>
+<para><emphasis remap='B'>Ammt</emphasis>
+provides just enough of the standard UNIX
+<emphasis remap='B'>mt</emphasis>
+command for the needs of &A;.
+This is handy when doing a full restore and the standard
+<emphasis remap='B'>mt</emphasis>
+program has not yet been found.</para>
+
+<para><emphasis remap='B'>Ammt</emphasis>
+also provides access to the &A; output drivers that support
+various tape simulations.</para>
+
+<para>See the
+<citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+man page for more details about &A;.
+See the
+<emphasis remap='B'>OUTPUT DRIVERS</emphasis>
+section of
+<emphasis remap='I'>amanda(8)</emphasis>
+for more information on the &A; output drivers.</para>
+</refsect1>
+
+<refsect1><title>OPTIONS</title>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><option>-d</option></term>
+  <listitem>
+<para>Turn on debugging output.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-f</option><replaceable> device</replaceable></term>
+  <listitem>
+<para>Access tape device
+<emphasis remap='I'>device</emphasis>.
+If not specified, the
+<emphasis remap='B'>TAPE</emphasis>
+environment variable is used.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-t</option><replaceable> device</replaceable></term>
+  <listitem>
+<para>Same as
+<option>-f</option>.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>command</emphasis><emphasis remap='I'> count</emphasis></term>
+  <listitem>
+<para>Which command to issue, and an optional count of operations.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1><title>COMMANDS</title>
+<para>Each command may be abbreviated to whatever length makes it unique.</para>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><emphasis remap='B'>eof|weof</emphasis><emphasis remap='I'> count</emphasis></term>
+  <listitem>
+<para>Write
+<emphasis remap='I'>count</emphasis>
+(default: 1) end of file marks (tapemarks).</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>fsf</emphasis><emphasis remap='I'> count</emphasis></term>
+  <listitem>
+<para>Skip forward
+<emphasis remap='I'>count</emphasis>
+(default: 1) files.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>bsf</emphasis><emphasis remap='I'> count</emphasis></term>
+  <listitem>
+<para>Skip backward
+<emphasis remap='I'>count</emphasis>
+(default: 1) files.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>asf</emphasis><emphasis remap='I'> count</emphasis></term>
+  <listitem>
+<para>Position to file number
+<emphasis remap='I'>count</emphasis>
+(default: 0)
+where zero is beginning of tape.
+This is the same as a
+<emphasis remap='B'>rewind</emphasis>
+followed by a
+<emphasis remap='B'>fsf</emphasis>
+<emphasis remap='I'>count</emphasis>.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>rewind</emphasis></term>
+  <listitem>
+<para>Rewind to beginning of tape.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>offline|rewoffl</emphasis></term>
+  <listitem>
+<para>Rewind to beginning of tape and unload the tape from the drive.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>status</emphasis></term>
+  <listitem>
+<para>Report status information about the drive.
+Which data reported, and what it means,
+depends on the underlying operating system,
+and may include:</para>
+    <variablelist remap='TP'>
+      <varlistentry>
+      <term>ONLINE</term>
+      <listitem>
+<para>Indicates the drive is online and ready.</para>
+      </listitem>
+      </varlistentry>
+      <varlistentry>
+      <term>OFFLINE</term>
+      <listitem>
+<para>Indicates the drive is offline or not ready.</para>
+      </listitem>
+      </varlistentry>
+      <varlistentry>
+      <term>BOT</term>
+      <listitem>
+<para>Indicates the drive is at beginning of tape.</para>
+      </listitem>
+      </varlistentry>
+      <varlistentry>
+      <term>EOT</term>
+      <listitem>
+<para>Indicates the drive is at end of tape.</para>
+      </listitem>
+      </varlistentry>
+      <varlistentry>
+      <term>PROTECTED</term>
+      <listitem>
+<para>Indicates the tape is write protected.</para>
+      </listitem>
+      </varlistentry>
+      <varlistentry>
+      <term>ds</term>
+      <listitem>
+<para>Device status.</para>
+      </listitem>
+      </varlistentry>
+      <varlistentry>
+      <term>er</term>
+      <listitem>
+<para>Error register.</para>
+      </listitem>
+      </varlistentry>
+      <varlistentry>
+      <term>fileno</term>
+      <listitem>
+<para>Current tape file number.</para>
+      </listitem>
+      </varlistentry>
+      <varlistentry>
+      <term>blkno</term>
+      <listitem>
+<para>Current tape block number file.</para>
+      </listitem>
+      </varlistentry>
+    </variablelist>
+  </listitem>
+  </varlistentry>
+</variablelist>
+
+<note>Many systems only report good data when a tape is in the drive and ready.
+</note>
+<para />
+</refsect1>
+
+<refsect1><title>AUTHOR</title>
+<para>Marc Mengel <email>mengel@fnal.gov</email>, John R. Jackson
+<email>jrj@purdue.edu</email>: Original text</para>
+<para>&maintainer.sgw;: XML-conversion</para>
+</refsect1>
+
+<refsect1><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry></para>
+</refsect1>
+</refentry>
+

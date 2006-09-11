@@ -1,0 +1,246 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"
+[
+  <!-- entities files to use -->
+  <!ENTITY % global_entities SYSTEM '../entities/global.entities'>
+  %global_entities;
+]>
+
+<refentry id='amfetchdump.8'>
+
+<refmeta>
+<refentrytitle>amfetchdump</refentrytitle>
+<manvolnum>8</manvolnum>
+</refmeta>
+<refnamediv>
+<refname>amfetchdump</refname>
+<refpurpose>extract backup images from multiple &A; tapes.</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv>
+<cmdsynopsis>
+  <command>amfetchdump</command>
+    <arg choice='opt'>-pcClawns</arg>
+    <arg choice='opt'>-d <replaceable>device</replaceable></arg>
+    <arg choice='opt'>-O <replaceable>directory</replaceable></arg>
+    <arg choice='opt'>-i <replaceable>logfile</replaceable></arg>
+    <arg choice='opt'>-b <replaceable>blocksize</replaceable></arg>
+    <arg choice='plain'><replaceable>config</replaceable></arg>
+    <arg choice='plain'><replaceable>hostname</replaceable></arg>
+    <arg choice='opt'>
+      <arg choice='plain'><replaceable>disk</replaceable></arg>
+      <arg choice='opt'>
+        <arg choice='plain'><replaceable>date</replaceable></arg>
+        <arg choice='opt'>
+          <arg choice='plain'><replaceable>level</replaceable></arg>
+          <arg choice='opt'>
+            <arg choice='plain'><replaceable>hostname</replaceable></arg>
+            <arg choice='opt'>...</arg>
+          </arg>
+        </arg>
+      </arg>
+    </arg>
+    <group><arg choice='plain'>-o</arg><arg choice='plain'><replaceable>configoption</replaceable></arg></group>*
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1><title>DESCRIPTION</title>
+<para><emphasis remap='B'>Amfetchdump</emphasis>
+pulls one or more matching dumps from tape or from the holding disk,
+handling the reassembly of multi-tape split dump files as well as any
+tape autochanger operations.</para>
+
+<para>It will automatically use the logs created by
+<citerefentry><refentrytitle>amdump</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+to locate available dumps on tape, in the same way that the <emphasis
+remap='B'>find</emphasis> feature of
+<citerefentry><refentrytitle>amadmin</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+lists available dumps. If these logs are unavailable, it can search
+tape-by-tape to find what it needs, and can generate new logs to serve
+as an emergency tape inventory.</para>
+
+<para>The 
+<emphasis remap='I'>hostname</emphasis>,
+<emphasis remap='I'>diskname</emphasis>,
+<emphasis remap='I'>datestamp</emphasis>,
+and
+<emphasis remap='I'>level</emphasis> dump pattern-matching works as in
+<citerefentry><refentrytitle>amrestore</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+with the added requirement that at minimum a <emphasis
+remap='I'>hostname</emphasis> must be specified when not in inventory mode.</para>
+
+<para>Unless
+<option>-p</option>
+is used, backup images are extracted to files in the current directory named:</para>
+
+<!-- .RS -->
+<para><emphasis remap='I'>hostname.diskname.datestamp.dumplevel</emphasis></para>
+<!-- .RE -->
+</refsect1>
+
+<refsect1><title>OPTIONS</title>
+<variablelist remap='TP'>
+  <varlistentry>
+    <term><option>-p</option></term>
+<listitem><para>Pipe exactly one complete dump file to <emphasis
+remap='I'>stdout</emphasis>, instead of writing the file to disk. This
+will restore only the first matching dumpfile (where
+&quot;first&quot; is determined by the dump log search
+facility).</para></listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><option>-d</option> <replaceable>device</replaceable></term>
+<listitem><para> Restore from this tape device instead of the default.</para></listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><option>-O</option>
+    <replaceable>directory</replaceable></term>
+<listitem><para>Output restored files to this directory, instead of to the
+    current working directory.</para></listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><option>-c</option></term>
+    <listitem><para>Compress output, fastest method
+    available.</para></listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><option>-C</option></term>
+    <listitem><para>Compress output, smallest file size method
+    available.</para></listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><option>-l</option></term>
+<listitem><para>Leave dumps in the compressed/uncompressed state in which they
+were found on tape. By default, <emphasis
+remap='B'>amfetchdump</emphasis> will automatically uncompress when
+restoring.</para></listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><option>-a</option></term>
+<listitem><para>Assume that all tapes are already available, via tape changer or
+otherwise, instead of prompting the operator to ensure that all tapes
+are loaded.</para></listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><option>-i</option> <replaceable>filename</replaceable></term>
+<listitem><para>Generate an inventory of all dumps &quot;seen&quot; on the
+tapes we search, for later use as a log.</para></listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><option>-w</option></term>
+<listitem><para>Wait to put split dumps together until all chunks have been
+restored. Normally, <emphasis remap='B'>amfetchdump</emphasis> will
+attempt to read pieces of a split file from tape in order, so that it
+can assemble them simply by appending each file to the first. This
+option disables the appending behavior, and instead restores each
+piece as an individual file and reassembles them only after all have
+been restored.</para>
+
+<note>This requires at least double the size of your dump in free
+disk space, in order to build the final assembled dumpfile.</note>
+
+<para>This behavior is implicitly invoked in circumstances where knowing the
+location of all dumps on tape in advance is not possible, such as when
+you are restoring without log files.</para></listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><option>-n</option></term>
+<listitem><para>Do not reassemble split dump files at all, just restore each
+piece as an individual file.</para></listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><option>-s</option></term>
+<listitem><para>Do not fast-forward straight to needed files on tape. This will
+slow down most restores substantially. Only use this option if your
+tape drive does not properly support the fast-forward
+operation.</para></listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><option>-b</option>
+    <replaceable>blocksize</replaceable></term>
+<listitem><para>Force a particular block size when reading from tapes. This
+    value will usually be autodetected, and should not normally need
+    to be set.</para></listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><emphasis remap='B'>-o</emphasis> <replaceable>configoption</replaceable></term>
+  <listitem>
+<para>See the "<emphasis remap='B'>CONFIGURATION OVERWRITE</emphasis>"
+ section in <citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>.</para>
+  </listitem>
+  </varlistentry>
+
+</variablelist>
+</refsect1>
+
+<refsect1><title>EXAMPLES</title>
+<para>All the examples here assume your configuration is called
+<replaceable>SetA</replaceable>.</para>
+
+<para>Here's a simple case, restoring all known dumps of the host
+vanya to the current working directory.</para>
+<!-- .RS -->
+<literallayout remap='.nf'>
+$ amfetchdump SetA vanya
+</literallayout> <!-- .fi -->
+
+<para>A more likely scenario involves restoring a particular dump from
+a particular date. We'll pipe this one to &gnutar; as well, to
+automatically extract the dump.</para>
+<!-- .RS -->
+<literallayout remap='.nf'>
+$ amfetchdump -p SetA vanya /home 20051020 | gtar -xvpf -
+</literallayout> <!-- .fi -->
+
+<para>In a situation where all of our dump logs have been wiped out,
+we could also use amfetchdump to inventory our tapes and recreate an
+imitation of those logs, which we'll send to <emphasis
+remap="I">stdout</emphasis> for casual perusal.
+<!-- .RS -->
+<literallayout remap='.nf'>
+$ amfetchdump -i - SetA
+</literallayout> <!-- .fi -->
+</para>
+
+<para>Note that you can specify a restore while in inventory mode, and
+<command>amfetchdump</command> will continue searching for more dumps
+from this host even after successfully restoring a dump, inventorying
+all the while. If your backup searcher has been trashed, this is a
+handy way to recover what you have.
+<!-- .RS -->
+<literallayout remap='.nf'>
+$ amfetchdump -i /var/amanda/log SetA backupserver
+</literallayout> <!-- .fi -->
+</para>
+</refsect1>
+
+<refsect1><title>CAVEATS</title>
+<command>Amfetchdump</command> is dependent on accessing your server's config,
+tape changer, and (normally) dump logs. As such, it's not necessarily
+the most useful tool when those have all been wiped out and you
+desperately need to pull things from your tape. Pains have been taken
+to make it as capable as possible, but for seriously minimialist
+restores, look to
+<citerefentry><refentrytitle>amrestore</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+or
+<citerefentry><refentrytitle>dd</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+instead.
+</refsect1>
+
+<refsect1><title>AUTHOR</title>
+<para>John Stange, &email.jstange;, National Academies Press</para>
+<para>Ian Turner, &email.itt;: XML-conversion</para>
+</refsect1>
+
+<refsect1><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>amadmin</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>amrestore</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>tar</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+<citerefentry><refentrytitle>restore</refentrytitle><manvolnum>8</manvolnum></citerefentry></para>
+</refsect1>
+</refentry>
+
