@@ -717,17 +717,19 @@ while(<AMDUMP>) {
 		%free = split (/ +/, $2);
 		%qlen = split (/ +/, $5);
 
-		if($status_driver ne "") {
-			$dumpers_active[$dumpers_active_prev]
-				+=$current_time-$state_time_prev;
-			$dumpers_held[$dumpers_active_prev]{$status_driver}
-				+=$current_time-$state_time_prev;
-		}
-		$state_time_prev=$current_time;
-		$dumpers_active_prev=$dumpers_active;
-		$status_driver=$6;
-		if(! defined($dumpers_held[$dumpers_active]{$status_driver})) {
-			$dumpers_held[$dumpers_active]{$status_driver}=0;
+		if(defined($dumpers_active)) {
+			if($status_driver ne "") {
+				$dumpers_active[$dumpers_active_prev]
+					+=$current_time-$state_time_prev;
+				$dumpers_held[$dumpers_active_prev]{$status_driver}
+					+=$current_time-$state_time_prev;
+			}
+			$state_time_prev=$current_time;
+			$dumpers_active_prev=$dumpers_active;
+			$status_driver=$6;
+			if(! defined($dumpers_held[$dumpers_active]{$status_driver})) {
+				$dumpers_held[$dumpers_active]{$status_driver}=0;
+			}
 		}
 	}
 	elsif(/taper: wrote label `(\S*)'/) {

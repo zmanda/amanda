@@ -1,4 +1,7 @@
 2006-09-12  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amstatus.pl.in: Check that $dumpers_active is defined.
+
+2006-09-12  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/util.c (conftoken_getc): Return an int.
 
 2006-09-11  Jean-Louis Martineau <martineau@zmanda.com>
