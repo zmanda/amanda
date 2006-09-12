@@ -227,7 +227,7 @@ runbsdtcp(
     uid_t		euid;
     struct tcp_conn *	rc = rh->rc;
 
-    if ((sp = getservbyname("amanda", "tcp")) == NULL) {
+    if ((sp = getservbyname(AMANDA_SERVICE_NAME, "tcp")) == NULL) {
 	error("%s/tcp unknown protocol", "amanda");
     }
 
