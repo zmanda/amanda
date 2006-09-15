@@ -53,13 +53,6 @@ EXTRA_DIST = $(SNAPSHOT_STAMP) \
 	contrib/dbbackup.tcl		\
 	contrib/mkamandisk		\
 	contrib/set_prod_link.pl	\
-	contrib/sst/Makefile		\
-	contrib/sst/README		\
-	contrib/sst/README.Amanda	\
-	contrib/sst/sst.c		\
-	contrib/sst/sst.conf		\
-	contrib/sst/sst_def.h		\
-	contrib/sst/sstest.c		\
 	contrib/gsc/README		\
 	contrib/gsc/cfggsc.c		\
 	contrib/gsc/defgsc.c		\
