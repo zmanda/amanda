@@ -1424,6 +1424,11 @@ service_new(
         aclose(data_write[0][0]);
         aclose(data_write[0][1]);
 
+	for (i = 0; i < DATA_FD_COUNT; i++) {
+	    aclose(data_read[i + 1][0]);
+	    aclose(data_write[i + 1][1]);
+	}
+
 	/*
 	 *  Make sure they are not open in the range DATA_FD_OFFSET to
 	 *      DATA_FD_OFFSET + DATA_FD_COUNT*2 - 1
@@ -1444,7 +1449,7 @@ service_new(
 		data_write[i + 1][0] = newfd;
 	    }
 	}
-	for (i = 0; i < DATA_FD_COUNT; i++)
+	for (i = 0; i < DATA_FD_COUNT*2; i++)
 	    close(DATA_FD_OFFSET + i);
 
 	/*
@@ -1456,7 +1461,6 @@ service_new(
 		error("dup %d to %d failed: %s\n", data_read[i + 1][1],
 		    i + DATA_FD_OFFSET, strerror(errno));
 	    }
-	    aclose(data_read[i + 1][0]);
 	    aclose(data_read[i + 1][1]);
 
 	    if (dup2(data_write[i + 1][0], i*2 + 1 + DATA_FD_OFFSET) < 0) {
@@ -1464,7 +1468,6 @@ service_new(
 		    i + DATA_FD_OFFSET, strerror(errno));
 	    }
 	    aclose(data_write[i + 1][0]);
-	    aclose(data_write[i + 1][1]);
 	}
 
 	/* close all unneeded fd */
