@@ -331,8 +331,7 @@ dgram_recv(
     to.tv_usec = 0;
 
     dbprintf(("%s: dgram_recv(dgram=%p, timeout=%u, fromaddr=%p)\n",
-		debug_prefix_time(NULL), timeout, fromaddr));
-    dump_sockaddr(fromaddr);
+		debug_prefix_time(NULL), dgram, timeout, fromaddr));
     
     nfound = (ssize_t)select(sock+1, &ready, NULL, NULL, &to);
     if(nfound <= 0 || !FD_ISSET(sock, &ready)) {
@@ -376,6 +375,7 @@ dgram_recv(
 	errno = save_errno;
 	return -1;
     }
+    dump_sockaddr(fromaddr);
     dgram->len = (size_t)size;
     dgram->data[size] = '\0';
     dgram->cur = dgram->data;

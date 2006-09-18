@@ -2505,8 +2505,9 @@ void
 dump_sockaddr(
 	struct sockaddr_in *	sa)
 {
-	dbprintf(("%s: (sockaddr_in *)%p = { %d, %hd, %s }\n",
-		debug_prefix(NULL), sa, sa->sin_family, sa->sin_port,
+	dbprintf(("%s: (sockaddr_in *)%p = { %d, %d, %s }\n",
+		debug_prefix_time(NULL), sa, sa->sin_family,
+		(int)ntohs(sa->sin_port),
 		inet_ntoa(sa->sin_addr)));
 }
 

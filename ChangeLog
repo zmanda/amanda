@@ -1,3 +1,8 @@
+2006-09-18  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/util.c(dump_sockaddr): Convert from network to machine
+	                                    bytes order before printing.
+	* common-src/dgram.c (dgram_recv): Print the fromaddr.
+
 2006-09-15  Jean-Louis Martineau <martineau@zmanda.com>
 	* amandad-src/amandad.c: Correct order of close/dup.
 
