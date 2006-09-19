@@ -119,7 +119,7 @@ make_socket(void)
     if ((s = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
         save_errno = errno;
         dbprintf(("%s: make_socket: socket() failed: %s\n",
-                  debug_prefix(NULL),
+                  debug_prefix_time(NULL),
                   strerror(save_errno)));
         errno = save_errno;
         return -1;
@@ -135,7 +135,7 @@ make_socket(void)
     if (r < 0) {
 	save_errno = errno;
 	dbprintf(("%s: stream_server: setsockopt(SO_REUSEADDR) failed: %s\n",
-		  debug_prefix(NULL),
+		  debug_prefix_time(NULL),
 		  strerror(errno)));
 	errno = save_errno;
     }
@@ -147,7 +147,7 @@ make_socket(void)
     if (r == -1) {
 	save_errno = errno;
 	dbprintf(("%s: make_socket: setsockopt() failed: %s\n",
-                  debug_prefix(NULL),
+                  debug_prefix_time(NULL),
                   strerror(save_errno)));
 	aclose(s);
 	errno = save_errno;
@@ -265,7 +265,7 @@ connect_port(
     if (getsockname(s, (struct sockaddr *)addrp, &len) == -1) {
 	save_errno = errno;
 	dbprintf(("%s: connect_port: getsockname() failed: %s\n",
-		  debug_prefix(NULL),
+		  debug_prefix_time(NULL),
 		  strerror(save_errno)));
 	aclose(s);
 	errno = save_errno;
@@ -303,7 +303,7 @@ connect_port(
               inet_ntoa(svaddr->sin_addr),
               ntohs(svaddr->sin_port)));
     dbprintf(("%s: our side is %s.%d\n",
-              debug_prefix(NULL),
+              debug_prefix_time(NULL),
               inet_ntoa(addrp->sin_addr),
               ntohs(addrp->sin_port)));
     return s;

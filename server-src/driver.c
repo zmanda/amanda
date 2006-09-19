@@ -34,8 +34,6 @@
  *     tape.  Probably not effective though, should do this in planner.
  */
 
-#define HOLD_DEBUG
-
 #include "amanda.h"
 #include "clock.h"
 #include "conffile.h"
@@ -48,6 +46,18 @@
 #include "version.h"
 #include "driverio.h"
 #include "server_util.h"
+
+#define driver_debug(i,x) do {		\
+	if ((i) <= debug_driver) {	\
+	    dbprintf(x);		\
+	}				\
+} while (0)
+
+#define hold_debug(i,x) do {		\
+	if ((i) <= debug_holding) {	\
+	    dbprintf(x);		\
+	}				\
+} while (0)
 
 static disklist_t waitq, runq, tapeq, roomq;
 static int pending_aborts;
@@ -2283,11 +2293,9 @@ find_diskspace(
 	size = 2*DISK_BLOCK_KB;
     size = am_round(size, (off_t)DISK_BLOCK_KB);
 
-#ifdef HOLD_DEBUG
-    printf("%s: want " OFF_T_FMT " K\n", debug_prefix_time(": find_diskspace"),
-	   (OFF_T_FMT_TYPE)size);
-    fflush(stdout);
-#endif
+    hold_debug(1, ("%s: want " OFF_T_FMT " K\n",
+		   debug_prefix_time(": find_diskspace"),
+		   (OFF_T_FMT_TYPE)size));
 
     for(hdp = getconf_holdingdisks(); hdp != NULL; hdp = hdp->next) {
 	num_holdingdisks++;
@@ -2337,17 +2345,14 @@ find_diskspace(
 	/* halloc = space to allocate, including 1 header for each chunksize */
 	halloc = dalloc + (((dalloc-(off_t)1)/holdingdisk_get_chunksize(minp))+(off_t)1) * (off_t)DISK_BLOCK_KB;
 
-#ifdef HOLD_DEBUG
-	printf("%s: find diskspace: size " OFF_T_FMT " hf " OFF_T_FMT
-	       " df " OFF_T_FMT " da " OFF_T_FMT " ha " OFF_T_FMT "\n",
-	       debug_prefix_time(": find_diskspace"),
-	       (OFF_T_FMT_TYPE)size,
-	       (OFF_T_FMT_TYPE)hfree,
-	       (OFF_T_FMT_TYPE)dfree,
-	       (OFF_T_FMT_TYPE)dalloc,
-	       (OFF_T_FMT_TYPE)halloc);
-	fflush(stdout);
-#endif
+	hold_debug(1, ("%s: find diskspace: size " OFF_T_FMT " hf " OFF_T_FMT
+		       " df " OFF_T_FMT " da " OFF_T_FMT " ha " OFF_T_FMT"\n",
+		       debug_prefix_time(": find_diskspace"),
+		       (OFF_T_FMT_TYPE)size,
+		       (OFF_T_FMT_TYPE)hfree,
+		       (OFF_T_FMT_TYPE)dfree,
+		       (OFF_T_FMT_TYPE)dalloc,
+		       (OFF_T_FMT_TYPE)halloc));
 	size -= dalloc;
 	result[i] = alloc(SIZEOF(assignedhd_t));
 	result[i]->disk = minp;
@@ -2367,18 +2372,18 @@ find_diskspace(
 	result = NULL;
     }
 
-#ifdef HOLD_DEBUG
-    for( i = 0; result && result[i]; i++ ) {
-	printf("%s: find diskspace: selected %s free " OFF_T_FMT " reserved " OFF_T_FMT " dumpers %d\n",
-		debug_prefix_time(": find_diskspace"),
-		holdingdisk_get_diskdir(result[i]->disk),
-		(OFF_T_FMT_TYPE)(result[i]->disk->disksize -
-		  holdalloc(result[i]->disk)->allocated_space),
-		(OFF_T_FMT_TYPE)result[i]->reserved,
-		holdalloc(result[i]->disk)->allocated_dumpers);
+    if (debug_holding > 1) {
+	for( i = 0; result && result[i]; i++ ) {
+	    hold_debug(1, ("%s: find diskspace: selected %s free " OFF_T_FMT
+			   " reserved " OFF_T_FMT " dumpers %d\n",
+			   debug_prefix_time(": find_diskspace"),
+			   holdingdisk_get_diskdir(result[i]->disk),
+			   (OFF_T_FMT_TYPE)(result[i]->disk->disksize -
+			     holdalloc(result[i]->disk)->allocated_space),
+			   (OFF_T_FMT_TYPE)result[i]->reserved,
+			   holdalloc(result[i]->disk)->allocated_dumpers));
+	}
     }
-    fflush(stdout);
-#endif
 
     return result;
 }
@@ -2423,16 +2428,16 @@ assign_holdingdisk(
 	    holdalloc(holdp[0]->disk)->allocated_space += holdp[0]->reserved;
 	    size = (holdp[0]->reserved>size) ? (off_t)0 : size-holdp[0]->reserved;
 	    qname = quote_string(diskp->name);
-#ifdef HOLD_DEBUG
-	    printf("%s: merging holding disk %s to disk %s:%s, add " OFF_T_FMT " for reserved " OFF_T_FMT ", left " OFF_T_FMT "\n",
-		   debug_prefix_time(": assign_holdingdisk"),
-		   holdingdisk_get_diskdir(sched(diskp)->holdp[j-1]->disk),
-		   diskp->host->hostname, qname,
-		   (OFF_T_FMT_TYPE)holdp[0]->reserved,
-		   (OFF_T_FMT_TYPE)sched(diskp)->holdp[j-1]->reserved,
-		   (OFF_T_FMT_TYPE)size);
-	    fflush(stdout);
-#endif
+	    hold_debug(1, ("%s: merging holding disk %s to disk %s:%s, add "
+			   OFF_T_FMT " for reserved " OFF_T_FMT ", left "
+			   OFF_T_FMT "\n",
+			   debug_prefix_time(": assign_holdingdisk"),
+			   holdingdisk_get_diskdir(
+					       sched(diskp)->holdp[j-1]->disk),
+			   diskp->host->hostname, qname,
+			   (OFF_T_FMT_TYPE)holdp[0]->reserved,
+			   (OFF_T_FMT_TYPE)sched(diskp)->holdp[j-1]->reserved,
+			   (OFF_T_FMT_TYPE)size));
 	    i++;
 	    amfree(qname);
 	    amfree(holdp[0]);
@@ -2453,14 +2458,14 @@ assign_holdingdisk(
 	size = (holdp[i]->reserved > size) ? (off_t)0 :
 		  (size - holdp[i]->reserved);
 	qname = quote_string(diskp->name);
-#ifdef HOLD_DEBUG
-	printf("%s: %d assigning holding disk %s to disk %s:%s, reserved " OFF_T_FMT ", left " OFF_T_FMT "\n",
-		debug_prefix_time(": assign_holdingdisk"),
-		i, holdingdisk_get_diskdir(holdp[i]->disk), diskp->host->hostname, qname,
-		(OFF_T_FMT_TYPE)holdp[i]->reserved,
-		(OFF_T_FMT_TYPE)size);
-	fflush(stdout);
-#endif
+	hold_debug(1,
+		   ("%s: %d assigning holding disk %s to disk %s:%s, reserved "
+                    OFF_T_FMT ", left " OFF_T_FMT "\n",
+		    debug_prefix_time(": assign_holdingdisk"),
+		    i, holdingdisk_get_diskdir(holdp[i]->disk),
+		    diskp->host->hostname, qname,
+		    (OFF_T_FMT_TYPE)holdp[i]->reserved,
+		    (OFF_T_FMT_TYPE)size));
 	amfree(qname);
 	holdp[i] = NULL; /* so it doesn't get free()d... */
     }
@@ -2485,12 +2490,9 @@ adjust_diskspace(
 
     qname = quote_string(diskp->name);
     qdest = quote_string(sched(diskp)->destname);
-#ifdef HOLD_DEBUG
-    printf("%s: %s:%s %s\n",
-	   debug_prefix_time(": adjust_diskspace"),
-	   diskp->host->hostname, qname, qdest);
-    fflush(stdout);
-#endif
+    hold_debug(1, ("%s: %s:%s %s\n",
+		   debug_prefix_time(": adjust_diskspace"),
+		   diskp->host->hostname, qname, qdest));
 
     holdp = sched(diskp)->holdp;
 
@@ -2501,30 +2503,27 @@ adjust_diskspace(
 	total += holdp[i]->used;
 	holdalloc(holdp[i]->disk)->allocated_space += diff;
 	hqname = quote_string(holdp[i]->disk->name);
-#ifdef HOLD_DEBUG
-	printf("%s: hdisk %s done, reserved " OFF_T_FMT " used " OFF_T_FMT " diff " OFF_T_FMT " alloc " OFF_T_FMT " dumpers %d\n",
-		debug_prefix_time(": adjust_diskspace"),
-		holdp[i]->disk->name,
-		(OFF_T_FMT_TYPE)holdp[i]->reserved,
-		(OFF_T_FMT_TYPE)holdp[i]->used,
-		(OFF_T_FMT_TYPE)diff,
-		(OFF_T_FMT_TYPE)holdalloc(holdp[i]->disk)->allocated_space,
-		holdalloc(holdp[i]->disk)->allocated_dumpers );
-	fflush(stdout);
-#endif
+	hold_debug(1, ("%s: hdisk %s done, reserved " OFF_T_FMT " used "
+		       OFF_T_FMT " diff " OFF_T_FMT " alloc " OFF_T_FMT
+		       " dumpers %d\n",
+		       debug_prefix_time(": adjust_diskspace"),
+		       holdp[i]->disk->name,
+		       (OFF_T_FMT_TYPE)holdp[i]->reserved,
+		       (OFF_T_FMT_TYPE)holdp[i]->used,
+		       (OFF_T_FMT_TYPE)diff,
+		       (OFF_T_FMT_TYPE)holdalloc(holdp[i]->disk)
+							     ->allocated_space,
+		       holdalloc(holdp[i]->disk)->allocated_dumpers ));
 	holdp[i]->reserved += diff;
 	amfree(hqname);
     }
 
     sched(diskp)->act_size = total;
 
-#ifdef HOLD_DEBUG
-    printf("%s: after: disk %s:%s used " OFF_T_FMT "\n",
-	   debug_prefix_time(": adjust_diskspace"),
-	   diskp->host->hostname, qname,
-	   (OFF_T_FMT_TYPE)sched(diskp)->act_size);
-    fflush(stdout);
-#endif
+    hold_debug(1, ("%s: after: disk %s:%s used " OFF_T_FMT "\n",
+		   debug_prefix_time(": adjust_diskspace"),
+		   diskp->host->hostname, qname,
+		   (OFF_T_FMT_TYPE)sched(diskp)->act_size));
     amfree(qdest);
     amfree(qname);
 }

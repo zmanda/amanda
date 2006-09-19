@@ -42,6 +42,12 @@
 #include "event.h"
 #include "security.h"
 
+#define amrecover_debug(i,x) do {	\
+	if ((i) <= debug_amrecover) {	\
+	    dbprintf(x);		\
+	}				\
+} while (0)
+
 extern int process_line(char *line);
 int get_line(void);
 int grab_reply(int show);

@@ -60,7 +60,7 @@ stream_server(
     if((server_socket = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
 	save_errno = errno;
 	dbprintf(("%s: stream_server: socket() failed: %s\n",
-		  debug_prefix(NULL),
+		  debug_prefix_time(NULL),
 		  strerror(save_errno)));
 	errno = save_errno;
 	return -1;
@@ -70,7 +70,7 @@ stream_server(
 	errno = EMFILE;				/* out of range */
 	save_errno = errno;
 	dbprintf(("%s: stream_server: socket out of range: %d\n",
-		  debug_prefix(NULL),
+		  debug_prefix_time(NULL),
 		  server_socket));
 	errno = save_errno;
 	return -1;
@@ -84,7 +84,7 @@ stream_server(
 	(void *)&on, (socklen_t)sizeof(on));
     if (r < 0) {
 	dbprintf(("%s: stream_server: setsockopt(SO_REUSEADDR) failed: %s\n",
-		  debug_prefix(NULL),
+		  debug_prefix_time(NULL),
 		  strerror(errno)));
     }
 #endif
@@ -108,7 +108,7 @@ stream_server(
 	if (bind_portrange(server_socket, &server, TCPPORTRANGE, "tcp") == 0)
 	    goto out;
 	dbprintf(("%s: stream_server: Could not bind to port in range: %d - %d.\n",
-		  debug_prefix(NULL), TCPPORTRANGE));
+		  debug_prefix_time(NULL), TCPPORTRANGE));
 #endif
 
 	if(priv) {
@@ -116,27 +116,27 @@ stream_server(
 			   (in_port_t)512, (in_port_t)(IPPORT_RESERVED - 1), "tcp") == 0)
 		goto out;
 	    dbprintf(("%s: stream_server: Could not bind to port in range 512 - %d.\n",
-		      debug_prefix(NULL), IPPORT_RESERVED - 1));
+		      debug_prefix_time(NULL), IPPORT_RESERVED - 1));
 	}
 
 	server.sin_port = INADDR_ANY;
 	if (bind(server_socket, (struct sockaddr *)&server, (socklen_t)sizeof(server)) == 0)
 	    goto out;
 	dbprintf(("%s: stream_server: Could not bind to any port: %s\n",
-		  debug_prefix(NULL), strerror(errno)));
+		  debug_prefix_time(NULL), strerror(errno)));
 
 	if (retries >= BIND_CYCLE_RETRIES)
 	    break;
 
 	dbprintf(("%s: stream_server: Retrying entire range after 10 second delay.\n",
-		  debug_prefix(NULL)));
+		  debug_prefix_time(NULL)));
 
 	sleep(15);
     }
 
     save_errno = errno;
     dbprintf(("%s: stream_server: bind(INADDR_ANY) failed: %s\n",
-		  debug_prefix(NULL),
+		  debug_prefix_time(NULL),
 		  strerror(save_errno)));
     aclose(server_socket);
     errno = save_errno;
@@ -151,7 +151,7 @@ out:
     if(getsockname(server_socket, (struct sockaddr *)&server, &len) == -1) {
 	save_errno = errno;
 	dbprintf(("%s: stream_server: getsockname() failed: %s\n",
-		  debug_prefix(NULL),
+		  debug_prefix_time(NULL),
 		  strerror(save_errno)));
 	aclose(server_socket);
 	errno = save_errno;
@@ -164,7 +164,7 @@ out:
     if(r == -1) {
 	save_errno = errno;
 	dbprintf(("%s: stream_server: setsockopt(SO_KEEPALIVE) failed: %s\n",
-		  debug_prefix(NULL),
+		  debug_prefix_time(NULL),
 		  strerror(save_errno)));
         aclose(server_socket);
 	errno = save_errno;
@@ -201,7 +201,7 @@ stream_client_internal(
     if((hostp = gethostbyname(hostname)) == NULL) {
 	save_errno = EHOSTUNREACH;
 	dbprintf(("%s: %s: gethostbyname(%s) failed\n",
-		  debug_prefix(NULL),
+		  debug_prefix_time(NULL),
 		  f,
 		  hostname));
 	errno = save_errno;
@@ -244,11 +244,11 @@ stream_client_internal(
 #ifdef LOW_TCPPORTRANGE
 	dbprintf((
 		"%s: stream_client: Could not bind to port in range %d-%d.\n",
-		debug_prefix(NULL), LOW_TCPPORTRANGE));
+		debug_prefix_time(NULL), LOW_TCPPORTRANGE));
 #else
 	dbprintf((
 		"%s: stream_client: Could not bind to port in range 512-%d.\n",
-		debug_prefix(NULL), IPPORT_RESERVED - 1));
+		debug_prefix_time(NULL), IPPORT_RESERVED - 1));
 #endif
     }
 
@@ -259,7 +259,7 @@ stream_client_internal(
 	goto out;
 
     dbprintf(("%s: stream_client: Could not bind to port in range %d - %d.\n",
-	      debug_prefix(NULL), TCPPORTRANGE));
+	      debug_prefix_time(NULL), TCPPORTRANGE));
 #endif
 
     client_socket = connect_portrange(&claddr, (socklen_t)(IPPORT_RESERVED+1),
@@ -271,7 +271,7 @@ stream_client_internal(
 
     save_errno = errno;
     dbprintf(("%s: stream_client: Could not bind to any port: %s\n",
-	      debug_prefix(NULL), strerror(save_errno)));
+	      debug_prefix_time(NULL), strerror(save_errno)));
     errno = save_errno;
     return -1;
 
@@ -443,12 +443,12 @@ try_socksize(
     }
     if(size > 1024) {
 	dbprintf(("%s: try_socksize: %s buffer size is %d\n",
-		  debug_prefix(NULL),
+		  debug_prefix_time(NULL),
 		  (which == SO_SNDBUF) ? "send" : "receive",
 		  size));
     } else {
 	dbprintf(("%s: try_socksize: could not allocate %s buffer of %d\n",
-		  debug_prefix(NULL),
+		  debug_prefix_time(NULL),
 		  (which == SO_SNDBUF) ? "send" : "receive",
 		  origsize));
     }

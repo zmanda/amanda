@@ -45,6 +45,12 @@
 #include "util.h"
 #include "holding.h"
 
+#define chunker_debug(i,x) do {		\
+	if ((i) <= debug_chunker) {	\
+	    dbprintf(x);		\
+	}				\
+} while (0)
+
 #ifndef SEEK_SET
 #define SEEK_SET 0
 #endif

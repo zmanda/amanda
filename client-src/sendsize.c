@@ -45,6 +45,12 @@
 #include "findpass.h"
 #endif
 
+#define sendsize_debug(i,x) do {	\
+	if ((i) <= debug_sebdsize) {	\
+	    dbprintf(x);		\
+	}				\
+} while (0)
+
 #ifdef HAVE_SETPGID
 #  define SETPGRP	setpgid(getpid(), getpid())
 #  define SETPGRP_FAILED() do {						\
@@ -844,7 +850,7 @@ generic_calc_estimates(
 	if(sscanf(line, match_expr, &level, &size) == 2) {
 	    printf("%s\n", line); /* write to amandad */
 	    dbprintf(("%s: estimate size for %s level %d: " OFF_T_FMT " KB\n",
-		      debug_prefix(NULL),
+		      debug_prefix_time(NULL),
 		      est->qamname,
 		      level,
 		      size));
@@ -861,7 +867,7 @@ generic_calc_estimates(
 
     dbprintf(("%s: .....\n", debug_prefix_time(NULL)));
     dbprintf(("%s: estimate time for %s: %s\n",
-	      debug_prefix(NULL),
+	      debug_prefix_time(NULL),
 	      est->qamname,
 	      walltime_str(timessub(curclock(), start_time))));
 
@@ -1204,7 +1210,7 @@ getsize_dump(
 
     if (pipe(killctl) < 0) {
 	dbprintf(("%s: Could not create pipe: %s\n",
-		debug_prefix(NULL), strerror(errno)));
+		debug_prefix_time(NULL), strerror(errno)));
 	/* Message will be printed later... */
 	killctl[0] = killctl[1] = -1;
     }
@@ -1213,7 +1219,7 @@ getsize_dump(
     switch(dumppid = fork()) {
     case -1:
 	dbprintf(("%s: cannot fork for killpgrp: %s\n",
-		  debug_prefix(NULL), strerror(errno)));
+		  debug_prefix_time(NULL), strerror(errno)));
 	amfree(dumpkeys);
 	amfree(cmd);
 	amfree(rundump_cmd);
@@ -1229,12 +1235,12 @@ getsize_dump(
 	if(SETPGRP == -1)
 	    SETPGRP_FAILED();
 	else if (killctl[0] == -1 || killctl[1] == -1)
-	    dbprintf(("%s: Trying without killpgrp\n", debug_prefix(NULL)));
+	    dbprintf(("%s: Trying without killpgrp\n", debug_prefix_time(NULL)));
 	else {
 	    switch(fork()) {
 	    case -1:
 		dbprintf(("%s: fork failed, trying without killpgrp\n",
-			  debug_prefix(NULL)));
+			  debug_prefix_time(NULL)));
 		break;
 
 	    default:
@@ -1258,7 +1264,7 @@ getsize_dump(
 		execle(killpgrp_cmd, killpgrp_cmd, config, (char *)0,
 		       safe_env());
 		dbprintf(("%s: cannot execute %s: %s\n",
-			  debug_prefix(NULL), killpgrp_cmd, strerror(errno)));
+			  debug_prefix_time(NULL), killpgrp_cmd, strerror(errno)));
 		exit(-1);
 	    }
 
@@ -1383,23 +1389,23 @@ getsize_dump(
 
     dbprintf(("%s: .....\n", debug_prefix_time(NULL)));
     dbprintf(("%s: estimate time for %s level %d: %s\n",
-	      debug_prefix(NULL),
+	      debug_prefix_time(NULL),
 	      qdisk,
 	      level,
 	      walltime_str(timessub(curclock(), start_time))));
     if(size == (off_t)-1) {
 	dbprintf(("%s: no size line match in %s%s output for \"%s\"\n",
-		  debug_prefix(NULL), cmd, name, disk));
-	dbprintf(("%s: .....\n", debug_prefix(NULL)));
+		  debug_prefix_time(NULL), cmd, name, disk));
+	dbprintf(("%s: .....\n", debug_prefix_time(NULL)));
 	dbprintf(("%s: Run %s%s manually to check for errors\n",
-		    debug_prefix(NULL), cmd, name));
+		    debug_prefix_time(NULL), cmd, name));
     } else if(size == (off_t)0 && level == 0) {
 	dbprintf(("%s: possible %s%s problem -- is \"%s\" really empty?\n",
-		  debug_prefix(NULL), cmd, name, disk));
-	dbprintf(("%s: .....\n", debug_prefix(NULL)));
+		  debug_prefix_time(NULL), cmd, name, disk));
+	dbprintf(("%s: .....\n", debug_prefix_time(NULL)));
     } else {
 	    dbprintf(("%s: estimate size for %s level %d: %ld KB\n",
-	      debug_prefix(NULL),
+	      debug_prefix_time(NULL),
 	      qdisk,
 	      level,
 	      size));
@@ -1424,7 +1430,7 @@ getsize_dump(
 	      debug_prefix_time(NULL), (long)dumppid));
     if (kill(-dumppid, SIGTERM) == -1) {
 	dbprintf(("%s: kill failed: %s\n",
-		  debug_prefix(NULL), strerror(errno)));
+		  debug_prefix_time(NULL), strerror(errno)));
     }
     /* Now check whether it dies */
     for(s = 5; s > 0; --s) {
@@ -1437,7 +1443,7 @@ getsize_dump(
 	      debug_prefix_time(NULL), (long)dumppid));
     if (kill(-dumppid, SIGKILL) == -1) {
 	dbprintf(("%s: kill failed: %s\n",
-		  debug_prefix(NULL), strerror(errno)));
+		  debug_prefix_time(NULL), strerror(errno)));
     }
     for(s = 5; s > 0; --s) {
 	sleep(1);
@@ -1651,21 +1657,21 @@ getsize_smbtar(
 
     dbprintf(("%s: .....\n", debug_prefix_time(NULL)));
     dbprintf(("%s: estimate time for %s level %d: %s\n",
-	      debug_prefix(NULL),
+	      debug_prefix_time(NULL),
 	      qdisk,
 	      level,
 	      walltime_str(timessub(curclock(), start_time))));
     if(size == (off_t)-1) {
 	dbprintf(("%s: no size line match in %s output for \"%s\"\n",
-		  debug_prefix(NULL), SAMBA_CLIENT, disk));
-	dbprintf(("%s: .....\n", debug_prefix(NULL)));
+		  debug_prefix_time(NULL), SAMBA_CLIENT, disk));
+	dbprintf(("%s: .....\n", debug_prefix_time(NULL)));
     } else if(size == (off_t)0 && level == 0) {
 	dbprintf(("%s: possible %s problem -- is \"%s\" really empty?\n",
-		  debug_prefix(NULL), SAMBA_CLIENT, disk));
-	dbprintf(("%s: .....\n", debug_prefix(NULL)));
+		  debug_prefix_time(NULL), SAMBA_CLIENT, disk));
+	dbprintf(("%s: .....\n", debug_prefix_time(NULL)));
     }
     dbprintf(("%s: estimate size for %s level %d: %ld KB\n",
-	      debug_prefix(NULL),
+	      debug_prefix_time(NULL),
 	      qdisk,
 	      level,
 	      size));
@@ -1781,7 +1787,7 @@ getsize_gnutar(
 		int save_errno = errno;
 
 		dbprintf(("%s: gnutar: error opening %s: %s\n",
-			  debug_prefix(NULL), inputname, strerror(save_errno)));
+			  debug_prefix_time(NULL), inputname, strerror(save_errno)));
 		if (baselevel < 0) {
 		    goto common_exit;
 		}
@@ -1793,32 +1799,32 @@ getsize_gnutar(
 	 */
 	if ((outfd = open(incrname, O_WRONLY|O_CREAT, 0600)) == -1) {
 	    dbprintf(("%s: opening %s: %s\n",
-		      debug_prefix(NULL), incrname, strerror(errno)));
+		      debug_prefix_time(NULL), incrname, strerror(errno)));
 	    goto common_exit;
 	}
 
 	while ((nb = read(infd, &buf, SIZEOF(buf))) > 0) {
 	    if (fullwrite(outfd, &buf, (size_t)nb) < nb) {
 		dbprintf(("%s: writing to %s: %s\n",
-			   debug_prefix(NULL), incrname, strerror(errno)));
+			   debug_prefix_time(NULL), incrname, strerror(errno)));
 		goto common_exit;
 	    }
 	}
 
 	if (nb < 0) {
 	    dbprintf(("%s: reading from %s: %s\n",
-		      debug_prefix(NULL), inputname, strerror(errno)));
+		      debug_prefix_time(NULL), inputname, strerror(errno)));
 	    goto common_exit;
 	}
 
 	if (close(infd) != 0) {
 	    dbprintf(("%s: closing %s: %s\n",
-		      debug_prefix(NULL), inputname, strerror(errno)));
+		      debug_prefix_time(NULL), inputname, strerror(errno)));
 	    goto common_exit;
 	}
 	if (close(outfd) != 0) {
 	    dbprintf(("%s: closing %s: %s\n",
-		      debug_prefix(NULL), incrname, strerror(errno)));
+		      debug_prefix_time(NULL), incrname, strerror(errno)));
 	    goto common_exit;
 	}
 
@@ -1925,21 +1931,21 @@ getsize_gnutar(
 
     dbprintf(("%s: .....\n", debug_prefix_time(NULL)));
     dbprintf(("%s: estimate time for %s level %d: %s\n",
-	      debug_prefix(NULL),
+	      debug_prefix_time(NULL),
 	      qdisk,
 	      level,
 	      walltime_str(timessub(curclock(), start_time))));
     if(size == (off_t)-1) {
 	dbprintf(("%s: no size line match in %s output for \"%s\"\n",
-		  debug_prefix(NULL), my_argv[0], disk));
-	dbprintf(("%s: .....\n", debug_prefix(NULL)));
+		  debug_prefix_time(NULL), my_argv[0], disk));
+	dbprintf(("%s: .....\n", debug_prefix_time(NULL)));
     } else if(size == (off_t)0 && level == 0) {
 	dbprintf(("%s: possible %s problem -- is \"%s\" really empty?\n",
-		  debug_prefix(NULL), my_argv[0], disk));
-	dbprintf(("%s: .....\n", debug_prefix(NULL)));
+		  debug_prefix_time(NULL), my_argv[0], disk));
+	dbprintf(("%s: .....\n", debug_prefix_time(NULL)));
     }
     dbprintf(("%s: estimate size for %s level %d: %ld KB\n",
-	      debug_prefix(NULL),
+	      debug_prefix_time(NULL),
 	      qdisk,
 	      level,
 	      size));
@@ -2096,21 +2102,21 @@ getsize_wrapper(
 
     dbprintf(("%s: .....\n", debug_prefix_time(NULL)));
     dbprintf(("%s: estimate time for %s level %d: %s\n",
-	      debug_prefix(NULL),
+	      debug_prefix_time(NULL),
 	      qamdevice,
 	      level,
 	      walltime_str(timessub(curclock(), start_time))));
     if(size == (off_t)-1) {
 	dbprintf(("%s: no size line match in %s output for \"%s\"\n",
-		  debug_prefix(NULL), cmd, qdisk));
-	dbprintf(("%s: .....\n", debug_prefix(NULL)));
+		  debug_prefix_time(NULL), cmd, qdisk));
+	dbprintf(("%s: .....\n", debug_prefix_time(NULL)));
     } else if(size == (off_t)0 && level == 0) {
 	dbprintf(("%s: possible %s problem -- is \"%s\" really empty?\n",
-		  debug_prefix(NULL), cmd, qdisk));
-	dbprintf(("%s: .....\n", debug_prefix(NULL)));
+		  debug_prefix_time(NULL), cmd, qdisk));
+	dbprintf(("%s: .....\n", debug_prefix_time(NULL)));
     }
     dbprintf(("%s: estimate size for %s level %d: " OFF_T_FMT " KB\n",
-	      debug_prefix(NULL),
+	      debug_prefix_time(NULL),
 	      qamdevice,
 	      level,
 	      size));

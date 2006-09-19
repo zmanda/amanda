@@ -1,4 +1,33 @@
 2006-09-19  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c, common-src/conffile.h: Add debug_amandad,
+	  debug_amidxtaped, debug_amindexd, debug_amrecover, debug_auth,
+	  debug_event, debug_holding, debug_protocol, debug_planner,
+	  debug_driver, debug_dumper, debug_chunker, debug_taper,
+	  debug_selfcheck, debug_sendsize, debug_sendbackup
+	  configurations options.
+	* common-sc/debug.c: Use it's own clock function.
+	* amandad-src/amandad.c, amandad-src/amandad_util.c,
+	  client-src/calcsize.c, client-src/client_util.c,
+	  client-src/killpgrp.c, client-src/rundump.c,
+	  client-src/runtar.c, client-src/selfcheck.c,
+	  client-src/sendbackup.c, client-src/sendsize.c,
+	  common-src/bsd-security.c, common-src/bsdtcp-security.c,
+	  common-src/bsdudp-security.c, common-src/debug.c,
+	  common-src/dgram.c, common-src/event.c,
+	  common-src/krb5-security.c, common-src/pipespawn.c,
+	  common-src/protocol.c, common-src/rsh-security.c,
+	  common-src/security.c, common-src/security-util.c,
+	  common-src/security-util.h, common-src/ssh-security.c,
+	  common-src/stream.c, common-src/util.c,
+	  recover-src/amrecover.c, restore-src/amidxtaped.c,
+	  server-src/amindexd.c, server-src/chunker.c,
+	  server-src/driver.c, server-src/dumper.c,
+	  server-src/planner.c,
+	  server-src/taper.c: Use the debug_* configuration options.
+			      Use debug_prefix_time to print the time on
+			      all debugging message.
+
+2006-09-19  Jean-Louis Martineau <martineau@zmanda.com>
 	* amandad-src/amandad.c: Use CNF_REP_TRIES.
 	* common-src/conffile.c: New CONNECT_TRIES, REQ_TRIES, REP_TRIES
 	                         configuration options.

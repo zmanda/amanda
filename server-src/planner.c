@@ -44,6 +44,12 @@
 #include "server_util.h"
 #include "holding.h"
 
+#define planner_debug(i,x) do {		\
+	if ((i) <= debug_planner) {	\
+	    dbprintf(x);		\
+	}				\
+} while (0)
+
 #define MAX_LEVELS		    3	/* max# of estimates per filesys */
 
 #define RUNS_REDZONE		    5	/* should be in conf file? */

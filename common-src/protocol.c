@@ -35,7 +35,11 @@
 #include "security.h"
 #include "protocol.h"
 
-/*#define	PROTO_DEBUG*/
+#define proto_debug(i,x) do {				\
+	if ((i) <= debug_protocol) {	\
+	    dbprintf(x);				\
+	}						\
+} while (0)
 
 /*
  * Valid actions that can be passed to the state machine
@@ -100,10 +104,8 @@ static time_t proto_init_time;
 
 /* local functions */
 
-#ifdef PROTO_DEBUG
 static const char *action2str(p_action_t);
 static const char *pstate2str(pstate_t);
-#endif
 
 static void connect_callback(void *, security_handle_t *, security_status_t);
 static void connect_wait_callback(void *);
@@ -168,10 +170,8 @@ protocol_sendreq(
     p->continuation = continuation;
     p->datap = datap;
 
-#ifdef PROTO_DEBUG
-    dbprintf(("%s: security_connect: host %s -> p %p\n", 
-	      debug_prefix_time(": protocol"), hostname, p));
-#endif
+    proto_debug(1, ("%s: security_connect: host %s -> p %p\n", 
+		    debug_prefix_time(": protocol"), hostname, p));
 
     security_connect(p->security_driver, p->hostname, conf_fn, connect_callback,
 			 p, p->datap);
@@ -196,10 +196,8 @@ connect_callback(
     assert(p != NULL);
     p->security_handle = security_handle;
 
-#ifdef PROTO_DEBUG
-    dbprintf(("%s: connect_callback: p %p\n",
-	      debug_prefix_time(": protocol"), p));
-#endif
+    proto_debug(1, ("%s: connect_callback: p %p\n",
+		    debug_prefix_time(": protocol"), p));
 
     switch (status) {
     case S_OK:
@@ -219,10 +217,8 @@ connect_callback(
 	if (--p->connecttries == 0) {
 	    state_machine(p, PA_ABORT, NULL);
 	} else {
-#ifdef PROTO_DEBUG
-    dbprintf(("%s: connect_callback: p %p: retrying %s\n",
-	      debug_prefix_time(": protocol"), p, p->hostname));
-#endif
+	    proto_debug(1, ("%s: connect_callback: p %p: retrying %s\n",
+			    debug_prefix_time(": protocol"), p, p->hostname));
 	    security_close(p->security_handle);
 	    /* XXX overload p->security handle to hold the event handle */
 	    p->security_handle =
@@ -305,30 +301,26 @@ state_machine(
     pstate_t curstate;
     p_action_t retaction;
 
-#ifdef PROTO_DEBUG
-	dbprintf(("%s: state_machine: initial: p %p action %s pkt %p\n",
-		debug_prefix_time(": protocol"),
-		p, action2str(action), NULL));
-#endif
+    proto_debug(1, ("%s: state_machine: initial: p %p action %s pkt %p\n",
+		    debug_prefix_time(": protocol"),
+		    p, action2str(action), NULL));
 
     assert(p != NULL);
     assert(action == PA_RCVDATA || pkt == NULL);
     assert(p->state != NULL);
 
     for (;;) {
-#ifdef PROTO_DEBUG
-	dbprintf(("%s: state_machine: p %p state %s action %s\n",
-		  debug_prefix_time(": protocol"),
-		  p, pstate2str(p->state), action2str(action)));
+	proto_debug(1, ("%s: state_machine: p %p state %s action %s\n",
+			debug_prefix_time(": protocol"),
+			p, pstate2str(p->state), action2str(action)));
 	if (pkt != NULL) {
-	    dbprintf(("%s: pkt: %s (t %d) orig REQ (t %d cur %d)\n",
-		      debug_prefix(": protocol"),
-		      pkt_type2str(pkt->type), (int)CURTIME,
-		      (int)p->origtime, (int)p->curtime));
-	    dbprintf(("%s: pkt contents:\n-----\n%s-----\n",
-		      debug_prefix(": protocol"), pkt->body));
+	    proto_debug(1, ("%s: pkt: %s (t %d) orig REQ (t %d cur %d)\n",
+			    debug_prefix_time(": protocol"),
+			    pkt_type2str(pkt->type), (int)CURTIME,
+			    (int)p->origtime, (int)p->curtime));
+	    proto_debug(1, ("%s: pkt contents:\n-----\n%s-----\n",
+			    debug_prefix_time(": protocol"), pkt->body));
 	}
-#endif
 
 	/*
 	 * p->state is a function pointer to the current state a request
@@ -353,11 +345,9 @@ state_machine(
 	     */
 	    retaction = (*curstate)(p, action, pkt);
 
-#ifdef PROTO_DEBUG
-	dbprintf(("%s: state_machine: p %p state %s returned %s\n",
-		  debug_prefix_time(": protocol"),
-		  p, pstate2str(p->state), action2str(retaction)));
-#endif
+	proto_debug(1, ("%s: state_machine: p %p state %s returned %s\n",
+			debug_prefix_time(": protocol"),
+			p, pstate2str(p->state), action2str(retaction)));
 
 	/*
 	 * The state function is expected to return one of the following
@@ -375,11 +365,9 @@ state_machine(
 	    /* FALLTHROUGH */
 
 	case PA_PENDING:
-#ifdef PROTO_DEBUG
-	    dbprintf(("%s: state_machine: p %p state %s: timeout %d\n",
-		      debug_prefix_time(": protocol"),
-		      p, pstate2str(p->state), (int)p->timeout));
-#endif
+	    proto_debug(1, ("%s: state_machine: p %p state %s: timeout %d\n",
+			    debug_prefix_time(": protocol"),
+			    p, pstate2str(p->state), (int)p->timeout));
 	    /*
 	     * Get the security layer to register a receive event for this
 	     * security handle on our behalf.  Have it timeout in p->timeout
@@ -395,12 +383,10 @@ state_machine(
 	 */
 	case PA_CONTINUE:
 	    assert(p->state != curstate);
-#ifdef PROTO_DEBUG
-	    dbprintf(("%s: state_machine: p %p: moved from %s to %s\n",
-		      debug_prefix_time(": protocol"),
-		      p, pstate2str(curstate),
-		      pstate2str(p->state)));
-#endif
+	    proto_debug(1, ("%s: state_machine: p %p: moved from %s to %s\n",
+			    debug_prefix_time(": protocol"),
+			    p, pstate2str(curstate),
+			    pstate2str(p->state)));
 	    continue;
 
 	/*
@@ -660,7 +646,6 @@ recvpkt_callback(
  * Misc functions
  */
 
-#ifdef PROTO_DEBUG
 /*
  * Convert a pstate_t into a printable form.
  */
@@ -716,4 +701,3 @@ action2str(
 	    return (actions[i].name);
     return ("BOGUS ACTION");
 }
-#endif	/* PROTO_DEBUG */

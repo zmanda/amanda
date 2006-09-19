@@ -47,6 +47,12 @@
 #include "findpass.h"
 #endif
 
+#define selfcheck_debug(i,x) do {	\
+	if ((i) <= debug_selfcheck) {	\
+	    dbprintf(x);		\
+	}				\
+} while (0)
+
 int need_samba=0;
 int need_rundump=0;
 int need_dump=0;

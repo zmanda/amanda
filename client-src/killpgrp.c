@@ -65,10 +65,10 @@ int main(
 
     dbopen(DBG_SUBDIR_CLIENT);
     if (argc < 2) {
-	error("%s: Need at least 2 arguments\n", debug_prefix(NULL));
+	error("%s: Need at least 2 arguments\n", debug_prefix_time(NULL));
 	/*NOTREACHED*/
     }
-    dbprintf(("%s: version %s\n", debug_prefix(NULL), version()));
+    dbprintf(("%s: version %s\n", debug_prefix_time(NULL), version()));
     dbprintf(("config: %s\n", argv[1]));
     if (strcmp(argv[1], "NOCONFIG") != 0)
 	dbrename(argv[1], DBG_SUBDIR_CLIENT);

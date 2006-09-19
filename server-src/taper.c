@@ -50,11 +50,16 @@
 #include <sys/mman.h>
 #endif
 
+#define taper_debug(i,x) do {		\
+	if ((i) <= debug_taper) {	\
+	    dbprintf(x);		\
+	}				\
+} while (0)
+
 #ifdef HAVE_LIBVTBLC
 #include <vtblc.h>
 #include <strings.h>
 #include <math.h>
-
 
 static int vtbl_no   = -1;
 static int len       =  0;
@@ -71,6 +76,7 @@ typedef struct vtbl_lbls {
 } vtbl_lbls;
 static vtbl_lbls vtbl_entry[MAX_VOLUMES];
 #endif /* HAVE_LIBVTBLC */
+
 /*
  * XXX update stat collection/printing
  * XXX advance to next tape first in next_tape
@@ -173,11 +179,6 @@ static void cleanup(void);
 int interactive;
 pid_t writerpid;
 times_t total_wait;
-#ifdef TAPER_DEBUG
-int bufdebug = 1;
-#else
-int bufdebug = 0;
-#endif
 
 char *buffers = NULL;
 buffer_t *buftable = NULL;
@@ -1312,17 +1313,14 @@ read_file(
 	memcpy(&cur_holdfile, save_holdfile, SIZEOF(dumpfile_t));
     }
 
-    if (bufdebug) {
-	fprintf(stderr, "taper: r: start file\n");
-	fflush(stderr);
-    }
+    taper_debug(1, ("taper: r: start file\n"));
 
     for (bp = buftable; bp < buftable + conf_tapebufs; bp++) {
 	bp->status = EMPTY;
     }
 
     bp = buftable;
-    if (interactive || bufdebug)
+    if (interactive || debug_taper >= 1)
 	dumpstatus(bp);
 
     if ((cur_span_chunkstart >= (off_t)0) && (splitsize > (off_t)0)) {
@@ -1427,10 +1425,7 @@ read_file(
 	    break;
 	    
 	case 'R':
-	    if (bufdebug) {
-		fprintf(stderr, "taper: r: got R%d\n", bufnum);
-		fflush(stderr);
-	    }
+	    taper_debug(1, ("taper: r: got R%d\n", bufnum));
 	    
 	    if (need_closing) {
 		if (syncpipe_put('C', 0) == -1) {
@@ -1494,7 +1489,7 @@ read_file(
 
 	    bp->status = FILLING;
 	    buflen = header_read ? (size_t)tt_blocksize : DISK_BLOCK_BYTES;
-	    if (interactive || bufdebug)
+	    if (interactive || debug_taper >= 1)
 		dumpstatus(bp);
  	    if (header_written == 0 &&
 	    		(header_read == 1 || cur_span_chunkstart > (off_t)0)) {
@@ -1516,7 +1511,7 @@ read_file(
   			}
  		memcpy(&cur_holdfile, &file, SIZEOF(dumpfile_t));
   
- 		if (interactive || bufdebug)
+ 		if (interactive || debug_taper >= 1)
 		    dumpstatus(bp);
  		bp->size = (ssize_t)tt_blocksize;
  		rc = (ssize_t)tt_blocksize;
@@ -1584,7 +1579,7 @@ read_file(
   			/* add CONT_FILENAME back to in-memory header */
   			strncpy(file.cont_filename, cont_filename, 
   				SIZEOF(file.cont_filename));
-  			if (interactive || bufdebug)
+  			if (interactive || debug_taper >= 1)
 			    dumpstatus(bp);
   			bp->size = (ssize_t)tt_blocksize; /* output a full tape block */
  			/* save the header, we'll need it if we jump tapes */
@@ -1596,10 +1591,8 @@ read_file(
  			filesize = kbytesread;
   		    }
 
-		    if (bufdebug) {
-			fprintf(stderr,"taper: r: put W%d\n",(int)(bp-buftable));
-			fflush(stderr);
-		    }
+		    taper_debug(1, ("taper: r: put W%d\n",
+				    (int)(bp-buftable)));
 		    if (syncpipe_put('W', (int)(bp-buftable)) == -1) {
 			put_syncpipe_fault_result(handle);
 			return (-1);
@@ -2268,10 +2261,7 @@ write_file(void)
     full_buffers = 0;
     tok = '?';
 
-    if (bufdebug) {
-	fprintf(stderr, "taper: w: start file\n");
-	fflush(stderr);
-    }
+    taper_debug(1, ("taper: w: start file\n"));
 
     /*
      * Tell the reader that the tape is open, and give it all the buffers.
@@ -2281,10 +2271,7 @@ write_file(void)
 	/*NOTREACHED*/
     }
     for (i = 0; i < conf_tapebufs; i++) {
-	if (bufdebug) {
-	    fprintf(stderr, "taper: w: put R%d\n", i);
-	    fflush(stderr);
-	}
+	taper_debug(1, ("taper: w: put R%d\n", i));
 	if (syncpipe_put('R', i) == -1) {
 	    error("writer: Syncpipe failure readying write buffers");
 	    /*NOTREACHED*/
@@ -2326,10 +2313,7 @@ write_file(void)
 	    }
 	    if (tok != 'W')
 		break;
-	    if (bufdebug) {
-		fprintf(stderr,"taper: w: got W%d\n",bufnum);
-		fflush(stderr);
-	    }
+	    taper_debug(1, ("taper: w: got W%d\n",bufnum));
 	    full_buffers++;
 	}
 	rdwait = timesadd(rdwait, stopclock());
@@ -2374,10 +2358,7 @@ write_file(void)
 	    }
 
 	    if (tok == 'W') {
-		if (bufdebug) {
-		    fprintf(stderr,"taper: w: got W%d\n",bufnum);
-		    fflush(stderr);
-		}
+		taper_debug(1, ("taper: w: got W%d\n",bufnum));
 		if(bufnum != (int)(bp - buftable)) {
 		    fprintf(stderr,
 			    "taper: tape-writer: my buf %d reader buf %d\n",
@@ -2528,15 +2509,12 @@ write_buffer(
 	total_writes += 1;
 	total_tape_used += (off_t)rc;
 	bp->status = EMPTY;
-	if (interactive || bufdebug)
+	if (interactive || debug_taper >= 1)
 	    dumpstatus(bp);
 	if (interactive)
 	    fputs("W", stderr);
 
-	if (bufdebug) {
-	    fprintf(stderr, "taper: w: put R%d\n", (int)(bp-buftable));
-	    fflush(stderr);
-	}
+	taper_debug(1, ("taper: w: put R%d\n", (int)(bp-buftable)));
 	if (syncpipe_put('R', (int)(bp-buftable)) == -1) {
 	    error("writer: Syncpipe failure during advancing write bufffer");
 	    /*NOTREACHED*/
@@ -2847,9 +2825,8 @@ syncpipe_get(
 	return (-1);
     }
 
-    if (bufdebug && *buf != 'R' && *buf != 'W') {
-	fprintf(stderr,"taper: %c: getc %c\n", *procname, *buf);
-	fflush(stderr);
+    if (debug_taper >= 1 && *buf != 'R' && *buf != 'W') {
+	taper_debug(1, ("taper: %c: getc %c\n", *procname, *buf));
     }
 
     memcpy(intp, &buf[1], SIZEOF(int));
@@ -2908,9 +2885,8 @@ syncpipe_put(
 
     buf[0] = (char)chi;
     memcpy(&buf[1], &intval, SIZEOF(int));
-    if (bufdebug && buf[0] != 'R' && buf[0] != 'W') {
-	fprintf(stderr,"taper: %c: putc %c\n",*procname,buf[0]);
-	fflush(stderr);
+    if (debug_taper >= 1 && buf[0] != 'R' && buf[0] != 'W') {
+	taper_debug(1, ("taper: %c: putc %c\n",*procname,buf[0]));
     }
 
     rc = fullwrite(putpipe, buf, SIZEOF(buf));

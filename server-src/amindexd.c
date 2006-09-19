@@ -58,6 +58,12 @@
 
 #include <grp.h>
 
+#define amindexd_debug(i,x) do {	\
+	if ((i) <= debug_amindexd) {	\
+	    dbprintf(x);		\
+	}				\
+} while (0)
+
 typedef struct REMOVE_ITEM
 {
     char *filename;

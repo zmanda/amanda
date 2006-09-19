@@ -60,15 +60,15 @@ main(
 
     dbopen(DBG_SUBDIR_CLIENT);
     if (argc < 3) {
-	error("%s: Need at least 3 arguments\n", debug_prefix(NULL));
+	error("%s: Need at least 3 arguments\n", debug_prefix_time(NULL));
 	/*NOTREACHED*/
     }
 
-    dbprintf(("%s: version %s\n", debug_prefix(NULL), version()));
+    dbprintf(("%s: version %s\n", debug_prefix_time(NULL), version()));
 
     if (strcmp(argv[3], "--create") != 0) {
 	error("%s: Can only be used to create tar archives\n",
-	      debug_prefix(NULL));
+	      debug_prefix_time(NULL));
 	/*NOTREACHED*/
     }
 

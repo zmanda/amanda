@@ -45,14 +45,6 @@
 
 #ifdef RSH_SECURITY
 
-/*#define	RSH_DEBUG*/
-
-#ifdef RSH_DEBUG
-#define	rshprintf(x)	dbprintf(x)
-#else
-#define	rshprintf(x)
-#endif
-
 /*
  * Path to the rsh binary.  This should be configurable.
  */
@@ -132,8 +124,8 @@ rsh_connect(
     assert(fn != NULL);
     assert(hostname != NULL);
 
-    rshprintf(("%s: rsh: rsh_connect: %s\n", debug_prefix_time(NULL),
-	       hostname));
+    auth_debug(1, ("%s: rsh: rsh_connect: %s\n", debug_prefix_time(NULL),
+		   hostname));
 
     rh = alloc(SIZEOF(*rh));
     security_handleinit(&rh->sech, &rsh_security_driver);

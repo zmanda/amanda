@@ -40,14 +40,6 @@
 #include "stream.h"
 #include "version.h"
 
-/*#define       BSD_DEBUG*/
-
-#ifdef BSD_DEBUG
-#define bsdprintf(x)    dbprintf(x)
-#else
-#define bsdprintf(x)
-#endif
-
 #ifndef SO_RCVBUF
 #undef DUMPER_SOCKET_BUFFERING
 #endif
@@ -59,12 +51,6 @@
  * of the security steps, e.g. into /tmp/amanda/amandad*debug.
  */
 #undef SHOW_SECURITY_DETAIL
-
-#if defined(TEST)						/* { */
-#define SHOW_SECURITY_DETAIL
-#undef bsdprintf
-#define bsdprintf(p)	printf p
-#endif								/* } */
 
 /*
  * Interface functions
@@ -190,7 +176,7 @@ bsd_connect(
 	(*fn)(arg, &bh->sech, S_ERROR);
 	return;
     }
-    bsdprintf(("Resolved hostname=%s\n", hostname));
+    auth_debug(1, ("Resolved hostname=%s\n", hostname));
     if ((se = getservbyname(AMANDA_SERVICE_NAME, "udp")) == NULL)
 	port = (in_port_t)htons(AMANDA_SERVICE_DEFAULT);
     else
@@ -258,8 +244,8 @@ bsd_close(
 	return;
     }
 
-    bsdprintf(("%s: bsd: close handle '%s'\n",
-	       debug_prefix_time(NULL), bh->proto_handle));
+    auth_debug(1, ("%s: bsd: close handle '%s'\n",
+		   debug_prefix_time(NULL), bh->proto_handle));
 
     udp_recvpkt_cancel(bh);
     if(bh->next) {
@@ -288,7 +274,6 @@ static void *
 bsd_stream_server(
     void *	h)
 {
-#ifndef TEST							/* { */
     struct sec_stream *bs = NULL;
     struct sec_handle *bh = h;
 
@@ -307,9 +292,6 @@ bsd_stream_server(
     bs->fd = -1;
     bs->ev_read = NULL;
     return (bs);
-#else
-    return (NULL);
-#endif /* !TEST */						/* } */
 }
 
 /*
@@ -320,7 +302,6 @@ static int
 bsd_stream_accept(
     void *	s)
 {
-#ifndef TEST							/* { */
     struct sec_stream *bs = s;
 
     assert(bs != NULL);
@@ -333,7 +314,6 @@ bsd_stream_accept(
 	    "can't accept new stream connection: %s", strerror(errno));
 	return (-1);
     }
-#endif /* !TEST */						/* } */
     return (0);
 }
 
@@ -346,7 +326,6 @@ bsd_stream_client(
     int		id)
 {
     struct sec_stream *bs = NULL;
-#ifndef TEST							/* { */
     struct sec_handle *bh = h;
 #ifdef DUMPER_SOCKET_BUFFERING
     size_t rcvbuf = SIZEOF(bs->databuf) * 2;
@@ -370,7 +349,6 @@ bsd_stream_client(
 #ifdef DUMPER_SOCKET_BUFFERING
     setsockopt(bs->fd, SOL_SOCKET, SO_RCVBUF, (void *)&rcvbuf, SIZEOF(rcvbuf));
 #endif
-#endif /* !TEST */						/* } */
     return (bs);
 }
 
@@ -480,8 +458,8 @@ stream_read_sync_callback(
 
     assert(bs != NULL);
 
-    bsdprintf(("%s: bsd: stream_read_callback_sync: fd %d\n",
-		 debug_prefix_time(NULL), bs->fd));
+    auth_debug(1, ("%s: bsd: stream_read_callback_sync: fd %d\n",
+		   debug_prefix_time(NULL), bs->fd));
 
     /*
      * Remove the event first, in case they reschedule it in the callback.
@@ -539,198 +517,3 @@ stream_read_callback(
 }
 
 #endif	/* BSD_SECURITY */					/* } */
-
-#if defined(TEST)						/* { */
-
-/*
- * The following dummy bind_portrange function is so we do not need to
- * drag in util.o just for the test program.
- */
-int
-bind_portrange(
-    int			s,
-    struct sockaddr_in *addrp,
-    in_port_t		first_port,
-    in_port_t		last_port,
-    char *		proto)
-{
-    (void)s;		/* Quiet unused parameter warning */
-    (void)addrp;	/* Quiet unused parameter warning */
-    (void)first_port;	/* Quiet unused parameter warning */
-    (void)last_port;	/* Quiet unused parameter warning */
-    (void)proto;	/* Quiet unused parameter warning */
-
-    return 0;
-}
-
-/*
- * Construct a datestamp (YYYYMMDD) from a time_t.
- */
-char *
-construct_datestamp(
-    time_t *	t)
-{
-    struct tm *tm;
-    char datestamp[3*NUM_STR_SIZE];
-    time_t when;
-
-    if(t == NULL) {
-	when = time((time_t *)NULL);
-    } else {
-	when = *t;
-    }
-    tm = localtime(&when);
-    snprintf(datestamp, SIZEOF(datestamp),
-             "%04d%02d%02d", tm->tm_year+1900, tm->tm_mon+1, tm->tm_mday);
-    return stralloc(datestamp);
-}
-
-/*
- * Construct a timestamp (YYYYMMDDHHMMSS) from a time_t.
- */
-char *
-construct_timestamp(
-    time_t *	t)
-{
-    struct tm *tm;
-    char timestamp[6*NUM_STR_SIZE];
-    time_t when;
-
-    if(t == NULL) {
-	when = time((time_t *)NULL);
-    } else {
-	when = *t;
-    }
-    tm = localtime(&when);
-    snprintf(timestamp, SIZEOF(timestamp),
-	     "%04d%02d%02d%02d%02d%02d",
-	     tm->tm_year+1900, tm->tm_mon+1, tm->tm_mday,
-	     tm->tm_hour, tm->tm_min, tm->tm_sec);
-    return stralloc(timestamp);
-}
-
-/*
- * The following are so we can include security.o but not all the rest
- * of the security modules.
- */
-const security_driver_t krb4_security_driver = {};
-const security_driver_t krb5_security_driver = {};
-const security_driver_t rsh_security_driver = {};
-const security_driver_t ssh_security_driver = {};
-const security_driver_t bsdtcp_security_driver = {};
-const security_driver_t bsdudp_security_driver = {};
-
-/*
- * This function will be called to accept the connection and is used
- * to report success or failure.
- */
-static void fake_accept_function(
-    security_handle_t *	handle,
-    pkt_t *		pkt)
-{
-    if (pkt == NULL) {
-	fputs(handle->error, stdout);
-	fputc('\n', stdout);
-    } else {
-	fputs("access is allowed\n", stdout);
-    }
-}
-
-int
-main (
-    int		argc,
-    char **	argv)
-{
-    char *remoteuser;
-    char *remotehost;
-    struct hostent *hp;
-    struct sec_handle *bh;
-    void *save_cur;
-    struct passwd *pwent;
-
-    /* Don't die when child closes pipe */
-    signal(SIGPIPE, SIG_IGN);
-
-    /*
-     * The following is stolen from amandad to emulate what it would
-     * do on startup.
-     */
-    if(client_uid == (uid_t) -1 && (pwent = getpwnam(CLIENT_LOGIN)) != NULL) {
-	client_uid = pwent->pw_uid;
-	client_gid = pwent->pw_gid;
-	endpwent();
-    }
-
-#ifdef FORCE_USERID
-    /* we'd rather not run as root */
-    if (geteuid() == 0) {
-	if(client_uid == (uid_t) -1) {
-	    error("error [cannot find user %s in passwd file]\n", CLIENT_LOGIN);
-	    /*NOTREACHED*/
-	}
-	initgroups(CLIENT_LOGIN, client_gid);
-	setgid(client_gid);
-	setegid(client_gid);
-	seteuid(client_uid);
-    }
-#endif	/* FORCE_USERID */
-
-    if (isatty(0)) {
-	fputs("Remote user: ", stdout);
-	fflush(stdout);
-    }
-    do {
-	amfree(remoteuser);
-	remoteuser = agets(stdin);
-	if (remoteuser == NULL)
-	    return 0;
-    } while (remoteuser[0] == '\0');
-
-    if (isatty(0)) {
-	fputs("Remote host: ", stdout);
-	fflush(stdout);
-    }
-
-    do {
-	amfree(remotehost);
-	remotehost = agets(stdin);
-	if (remotehost == NULL)
-	    return 0;
-    } while (remotehost[0] == '\0');
-
-    set_pname("security");
-    dbopen(NULL);
-
-    startclock();
-
-    if ((hp = gethostbyname(remotehost)) == NULL) {
-	fprintf(stderr, "cannot look up remote host %s\n", remotehost);
-	return 1;
-    }
-    memcpy((char *)&netfd.peer.sin_addr,
-	   (char *)hp->h_addr,
-	   SIZEOF(hp->h_addr));
-    /*
-     * Fake that it is coming from a reserved port.
-     */
-    netfd.peer.sin_port = htons(IPPORT_RESERVED - 1);
-
-    bh = alloc(SIZEOF(*bh));
-    bh->proto_handle=NULL;
-    bh->udp = &netfd;
-    netfd.pkt.type = P_REQ;
-    dgram_zero(&netfd.dgram);
-    save_cur = netfd.dgram.cur;				/* cheating */
-    dgram_cat(&netfd.dgram, "%s", pkthdr2str(bh, &netfd.pkt));
-    dgram_cat(&netfd.dgram, "SECURITY USER %s\n", remoteuser);
-    netfd.dgram.cur = save_cur;				/* cheating */
-
-    netfd.accept_fn = fake_accept_function;
-    netfd.recv_security_ok = &bsd_recv_security_ok;
-    netfd.prefix_packet = &bsd_prefix_packet;
-    udp_netfd_read_callback(&netfd);
-
-    return 0;
-}
-
-#endif								/* } */

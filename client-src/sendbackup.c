@@ -40,6 +40,12 @@
 #include "version.h"
 #include "conffile.h"
 
+#define sendbackup_debug(i,x) do {	\
+	if ((i) <= debug_sendbackup) {	\
+	    dbprintf(x);		\
+	}				\
+} while (0)
+
 #define TIMEOUT 30
 
 pid_t comppid = (pid_t)-1;

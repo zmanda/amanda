@@ -166,7 +166,7 @@ main(
     set_pname("calcsize");
 
     dbopen(DBG_SUBDIR_CLIENT);
-    dbprintf(("%s: version %s\n", debug_prefix(NULL), version()));
+    dbprintf(("%s: version %s\n", debug_prefix_time(NULL), version()));
 
     malloc_size_1 = malloc_inuse(&malloc_hist_1);
 

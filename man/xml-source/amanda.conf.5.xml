@@ -885,6 +885,88 @@ The name of an &A; configuration file to include within the current file.
 Useful for sharing dumptypes, tapetypes and interface definitions among several configurations.</para>
   </listitem>
   </varlistentry>
+
+  <varlistentry>
+  <term><emphasis remap='B'>debug_auth</emphasis> int</term>
+  <listitem>
+<para>Default:
+<emphasis remap='I'>0</emphasis>.
+Debug level of the auth module</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><emphasis remap='B'>debug_event</emphasis> int</term>
+  <listitem>
+<para>Default:
+<emphasis remap='I'>0</emphasis>.
+Debug level of the event module</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><emphasis remap='B'>debug_holding</emphasis> int</term>
+  <listitem>
+<para>Default:
+<emphasis remap='I'>0</emphasis>.
+Debug level of the holdingdisk module</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><emphasis remap='B'>debug_protocol</emphasis> int</term>
+  <listitem>
+<para>Default:
+<emphasis remap='I'>0</emphasis>.
+Debug level of the protocol module</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><emphasis remap='B'>debug_planner</emphasis> int</term>
+  <listitem>
+<para>Default:
+<emphasis remap='I'>0</emphasis>.
+Debug level of the planner process</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><emphasis remap='B'>debug_driver</emphasis> int</term>
+  <listitem>
+<para>Default:
+<emphasis remap='I'>0</emphasis>.
+Debug level of the driver process</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><emphasis remap='B'>debug_dumper</emphasis> int</term>
+  <listitem>
+<para>Default:
+<emphasis remap='I'>0</emphasis>.
+Debug level of the dumper process</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><emphasis remap='B'>debug_chunker</emphasis> int</term>
+  <listitem>
+<para>Default:
+<emphasis remap='I'>0</emphasis>.
+Debug level of the chunker process</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><emphasis remap='B'>debug_taper</emphasis> int</term>
+  <listitem>
+<para>Default:
+<emphasis remap='I'>0</emphasis>.
+Debug level of the taper process</para>
+  </listitem>
+  </varlistentry>
+
 </variablelist>
 </refsect2>
 </refsect1>

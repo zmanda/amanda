@@ -35,6 +35,14 @@
 #include "stream.h"
 #include "dgram.h"
 #include "queue.h"
+#include "conffile.h"
+
+#define auth_debug(i,x) do {		\
+	if ((i) <= debug_auth) {	\
+	    dbprintf(x);		\
+	}				\
+} while (0)
+
 
 struct sec_handle;
 

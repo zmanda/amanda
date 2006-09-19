@@ -45,15 +45,6 @@
 
 #ifdef BSDTCP_SECURITY
 
-/*#define	BSDTCP_DEBUG*/
-
-#ifdef BSDTCP_DEBUG
-#define	bsdtcpprintf(x)	dbprintf(x)
-#else
-#define	bsdtcpprintf(x)
-#endif
-
-
 /*
  * Number of seconds bsdtcp has to start up
  */
@@ -120,8 +111,8 @@ bsdtcp_connect(
     (void)conf_fn;	/* Quiet unused parameter warning */
     (void)datap;	/* Quiet unused parameter warning */
 
-    bsdtcpprintf(("%s: bsdtcp: bsdtcp_connect: %s\n", debug_prefix_time(NULL),
-	       hostname));
+    auth_debug(1, ("%s: bsdtcp: bsdtcp_connect: %s\n", debug_prefix_time(NULL),
+		   hostname));
 
     rh = alloc(sizeof(*rh));
     security_handleinit(&rh->sech, &bsdtcp_security_driver);

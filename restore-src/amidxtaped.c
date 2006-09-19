@@ -45,6 +45,12 @@
 #include "stream.h"
 #include "amandad.h"
 
+#define amidxtaped_debug(i,x) do {	\
+	if ((i) <= debug_amidxtaped) {	\
+	    dbprintf(x);		\
+	}				\
+} while (0)
+
 #define TIMEOUT 30
 
 static char *pgm = "amidxtaped";	/* in case argv[0] is not set */
@@ -187,7 +193,7 @@ check_security_buffer(
     char *errstr = NULL;
 
     dbprintf(("%s: check_security_buffer(buffer='%s')\n",
-		debug_prefix(NULL), buffer));
+		debug_prefix_time(NULL), buffer));
 
     i = SIZEOF(addr);
     if (getpeername(0, (struct sockaddr *)&addr, &i) == -1) {

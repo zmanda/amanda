@@ -66,14 +66,14 @@ dgram_bind(
     if((s = socket(AF_INET, SOCK_DGRAM, 0)) == -1) {
 	save_errno = errno;
 	dbprintf(("%s: dgram_bind: socket() failed: %s\n",
-		  debug_prefix(NULL),
+		  debug_prefix_time(NULL),
 		  strerror(save_errno)));
 	errno = save_errno;
 	return -1;
     }
     if(s < 0 || s >= (int)FD_SETSIZE) {
 	dbprintf(("%s: dgram_bind: socket out of range: %d\n",
-		  debug_prefix(NULL),
+		  debug_prefix_time(NULL),
 		  s));
 	aclose(s);
 	errno = EMFILE;				/* out of range */
@@ -100,34 +100,35 @@ dgram_bind(
 	if (bind_portrange(s, &name, UDPPORTRANGE, "udp") == 0)
 	    goto out;
 	dbprintf(("%s: dgram_bind: Could to bind to port in range: %d - %d.\n",
-		  debug_prefix(NULL), UDPPORTRANGE));
+		  debug_prefix_time(NULL), UDPPORTRANGE));
 #endif
 
 	if (bind_portrange(s, &name, (in_port_t)512,
 		(in_port_t)(IPPORT_RESERVED - 1), "udp") == 0)
 	    goto out;
 	dbprintf(("%s: dgram_bind: Could to bind to port in range: 512 - %d.\n",
-		  debug_prefix(NULL), IPPORT_RESERVED - 1));
+		  debug_prefix_time(NULL), IPPORT_RESERVED - 1));
 
 	name.sin_port = INADDR_ANY;
 	if (bind(s, (struct sockaddr *)&name, (socklen_t)sizeof(name)) == 0)
 	    goto out;
 	dbprintf(("%s: dgram_bind: Could to bind to any port: %s\n",
-		  debug_prefix(NULL), strerror(errno)));
+		  debug_prefix_time(NULL), strerror(errno)));
 
 	if (retries >= BIND_CYCLE_RETRIES) {
-	    dbprintf(("%s: dgram_bind: Giving up...\n", debug_prefix(NULL)));
+	    dbprintf(("%s: dgram_bind: Giving up...\n",
+		      debug_prefix_time(NULL)));
 	    break;
 	}
 
 	dbprintf(("%s: dgram_bind: Retrying entire range after 10 second delay.\n",
-		  debug_prefix(NULL)));
+		  debug_prefix_time(NULL)));
 	sleep(15);
     }
 
     save_errno = errno;
     dbprintf(("%s: dgram_bind: bind(INADDR_ANY) failed: %s\n",
-		  debug_prefix(NULL),
+		  debug_prefix_time(NULL),
 		  strerror(save_errno)));
     aclose(s);
     errno = save_errno;
@@ -140,7 +141,7 @@ out:
     if(getsockname(s, (struct sockaddr *)&name, &len) == -1) {
 	save_errno = errno;
 	dbprintf(("%s: dgram_bind: getsockname() failed: %s\n",
-		  debug_prefix(NULL),
+		  debug_prefix_time(NULL),
 		  strerror(save_errno)));
 	errno = save_errno;
 	aclose(s);
@@ -174,10 +175,10 @@ dgram_send_addr(
 #endif
 
     dbprintf(("%s: dgram_send_addr(addr=%p, dgram=%p)\n",
-			debug_prefix(NULL), &addr, dgram));
+	      debug_prefix_time(NULL), &addr, dgram));
     dump_sockaddr(&addr);
     dbprintf(("%s: dgram_send_addr: %p->socket = %d\n",
-			debug_prefix(NULL), dgram, dgram->socket));
+	      debug_prefix_time(NULL), dgram, dgram->socket));
     if(dgram->socket != -1) {
 	s = dgram->socket;
 	socket_opened = 0;
@@ -185,7 +186,7 @@ dgram_send_addr(
 	if((s = socket(AF_INET, SOCK_DGRAM, 0)) == -1) {
 	    save_errno = errno;
 	    dbprintf(("%s: dgram_send_addr: socket() failed: %s\n",
-		      debug_prefix(NULL),
+		      debug_prefix_time(NULL),
 		      strerror(save_errno)));
 	    errno = save_errno;
 	    return -1;
@@ -196,8 +197,8 @@ dgram_send_addr(
 		(void *)&on, (socklen_t)sizeof(on));
 	if (r < 0) {
 	    dbprintf(("%s: dgram_send_addr: setsockopt(SO_REUSEADDR) failed: %s\n",
-			  debug_prefix(NULL),
-			  strerror(errno)));
+		      debug_prefix_time(NULL),
+		      strerror(errno)));
 	}
 #endif
     }
@@ -205,7 +206,7 @@ dgram_send_addr(
     memcpy(&addr_save, &addr, SIZEOF(addr));
     if(s < 0 || s >= FD_SETSIZE) {
 	dbprintf(("%s: dgram_send_addr: socket out of range: %d\n",
-		  debug_prefix(NULL),
+		  debug_prefix_time(NULL),
 		  s));
 	errno = EMFILE;				/* out of range */
 	rc = -1;
@@ -257,7 +258,7 @@ dgram_send_addr(
 	save_errno = errno;
 	if(close(s) == -1) {
 	    dbprintf(("%s: dgram_send_addr: close(%s.%d): failed: %s\n",
-		      debug_prefix(NULL),
+		      debug_prefix_time(NULL),
 		      inet_ntoa(addr_save.sin_addr),
 		      (int) ntohs(addr.sin_port),
 		      strerror(errno)));
@@ -360,7 +361,7 @@ dgram_recv(
     if(size == -1) {
 	save_errno = errno;
 	dbprintf(("%s: dgram_recv: recvfrom() failed: %s\n",
-		  debug_prefix(NULL),
+		  debug_prefix_time(NULL),
 		  strerror(save_errno)));
 	errno = save_errno;
 	return -1;

@@ -45,6 +45,12 @@
 #include "server_util.h"
 #include "util.h"
 
+#define dumper_debug(i,x) do {		\
+	if ((i) <= debug_dumper) {	\
+	    dbprintf(x);		\
+	}				\
+} while (0)
+
 #ifndef SEEK_SET
 #define SEEK_SET 0
 #endif

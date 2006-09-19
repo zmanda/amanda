@@ -71,14 +71,6 @@
 #define	KRB5_ENV_CCNAME	"KRB5CCNAME"
 #endif
 
-/*#define	KRB5_DEBUG*/
-
-#ifdef KRB5_DEBUG
-#define	k5printf(x)	dbprintf(x)
-#else
-#define	k5printf(x)
-#endif
-
 /*
  * consider undefining when kdestroy() is fixed.  The current version does
  * not work under krb5-1.2.4 in rh7.3, perhaps others.
@@ -360,7 +352,7 @@ krb5_connect(
 
     assert(hostname != NULL);
 
-    k5printf(("krb5_connect: %s\n", hostname));
+    auth_debug(1, ("krb5_connect: %s\n", hostname));
 
     /*
      * Make sure we're initted
@@ -420,7 +412,7 @@ krb5_connect(
 	 * many connections open.
 	 */
 	if (krb5_connq.qlength > AMANDA_KRB5_MAXCONN) {
-	    k5printf(("krb5_connect: too many conections (%d), delaying %s\n",
+	    auth_debug(1, ("krb5_connect: too many conections (%d), delaying %s\n",
 		krb5_connq.qlength, kh->hostname));
 	    krb5_stream_close(kh->ks);
 	    kh->ev_wait = event_register((event_id_t)open_callback,
@@ -475,7 +467,7 @@ open_callback(
 
     event_release(kh->ev_wait);
 
-    k5printf(("krb5: open_callback: possible connections available, retry %s\n",
+    auth_debug(1, ("krb5: open_callback: possible connections available, retry %s\n",
 	kh->hostname));
     krb5_connect(kh->hostname, kh->conf_fn, kh->fn.connect, kh->arg,kh->datap);
     amfree(kh->hostname);
@@ -577,7 +569,7 @@ conn_get(
 {
     struct krb5_conn *kc;
 
-    k5printf(("krb5: conn_get: %s\n", hostname));
+    auth_debug(1, ("krb5: conn_get: %s\n", hostname));
 
     for (kc = krb5_connq_first(); kc != NULL; kc = krb5_connq_next(kc)) {
 	if (strcasecmp(hostname, kc->hostname) == 0)
@@ -586,12 +578,12 @@ conn_get(
 
     if (kc != NULL) {
 	kc->refcnt++;
-	k5printf(("krb5: conn_get: exists, refcnt to %s is now %d\n",
+	auth_debug(1, ("krb5: conn_get: exists, refcnt to %s is now %d\n",
 	    kc->hostname, kc->refcnt));
 	return (kc);
     }
 
-    k5printf(("krb5: conn_get: creating new handle\n"));
+    auth_debug(1, ("krb5: conn_get: creating new handle\n"));
     /*
      * We can't be creating a new handle if we are the client
      */
@@ -631,11 +623,11 @@ conn_put(
 
     assert(kc->refcnt > 0);
     if (--kc->refcnt > 0) {
-	k5printf(("krb5: conn_put: decrementing refcnt for %s to %d\n",
+	auth_debug(1, ("krb5: conn_put: decrementing refcnt for %s to %d\n",
 	    kc->hostname, kc->refcnt));
 	return;
     }
-    k5printf(("krb5: conn_put: closing connection to %s\n", kc->hostname));
+    auth_debug(1, ("krb5: conn_put: closing connection to %s\n", kc->hostname));
     if (kc->fd != -1)
 	aclose(kc->fd);
     if (kc->ev_read != NULL)
@@ -666,11 +658,11 @@ conn_read(
 
     if (kc->ev_read != NULL) {
 	kc->ev_read_refcnt++;
-	k5printf(("krb5: conn_read: incremented refcnt to %d for %s\n",
+	auth_debug(1, ("krb5: conn_read: incremented refcnt to %d for %s\n",
 	    kc->ev_read_refcnt, kc->hostname));
 	return;
     }
-    k5printf(("krb5: conn_read registering event handler for %s\n",
+    auth_debug(1, ("krb5: conn_read registering event handler for %s\n",
 	kc->hostname));
     kc->ev_read = event_register((event_id_t)kc->fd, EV_READFD, conn_read_callback, kc);
     kc->ev_read_refcnt = 1;
@@ -682,11 +674,11 @@ conn_read_cancel(
 {
 
     if (--kc->ev_read_refcnt > 0) {
-	k5printf(("krb5: conn_read_cancel: decremented refcnt to %d for %s\n",
+	auth_debug(1, ("krb5: conn_read_cancel: decremented refcnt to %d for %s\n",
 	    kc->ev_read_refcnt, kc->hostname));
 	return;
     }
-    k5printf(("krb5: conn_read_cancel: releasing event handler for %s\n",
+    auth_debug(1, ("krb5: conn_read_cancel: releasing event handler for %s\n",
 	kc->hostname));
     event_release(kc->ev_read);
     kc->ev_read = NULL;
@@ -703,7 +695,7 @@ krb5_close(
 
     assert(kh != NULL);
 
-    k5printf(("krb5: closing handle to %s\n", kh->hostname));
+    auth_debug(1, ("krb5: closing handle to %s\n", kh->hostname));
 
     if (kh->ks != NULL) {
 	/* This may be null if we get here on an error */
@@ -730,7 +722,7 @@ krb5_sendpkt(
     assert(kh != NULL);
     assert(pkt != NULL);
 
-    k5printf(("krb5: sendpkt: enter\n"));
+    auth_debug(1, ("krb5: sendpkt: enter\n"));
 
     if (pkt->body[0] == '\0') {
 	tok.length = 1;
@@ -745,7 +737,7 @@ krb5_sendpkt(
 	buf[tok.length - 2] = '\0';
     }
 
-    k5printf(("krb5: sendpkt: %s (%d) pkt_t (len %d) contains:\n\n\"%s\"\n\n",
+    auth_debug(1, ("krb5: sendpkt: %s (%d) pkt_t (len %d) contains:\n\n\"%s\"\n\n",
 	pkt_type2str(pkt->type), pkt->type, strlen(pkt->body), pkt->body));
 
     rval = krb5_stream_write(kh->ks, tok.value, tok.length);
@@ -772,7 +764,7 @@ krb5_recvpkt(
 
     assert(kh != NULL);
 
-    k5printf(("krb5: recvpkt registered for %s\n", kh->hostname));
+    auth_debug(1, ("krb5: recvpkt registered for %s\n", kh->hostname));
 
     /*
      * Reset any pending timeout on this handle
@@ -803,7 +795,7 @@ krb5_recvpkt_cancel(
 {
     struct krb5_handle *kh = cookie;
 
-    k5printf(("krb5: cancelling recvpkt for %s\n", kh->hostname));
+    auth_debug(1, ("krb5: cancelling recvpkt for %s\n", kh->hostname));
 
     assert(kh != NULL);
 
@@ -847,7 +839,7 @@ recvpkt_callback(
 	return;
     default:
 	parse_pkt(&pkt, buf, (size_t)bufsize);
-	k5printf(("krb5: received %s pkt (%d) from %s, contains:\n\n\"%s\"\n\n",
+	auth_debug(1, ("krb5: received %s pkt (%d) from %s, contains:\n\n\"%s\"\n\n",
 	    pkt_type2str(pkt.type), pkt.type, kh->hostname, pkt.body));
 	(*kh->fn.recvpkt)(kh->arg, &pkt, S_OK);
 	return;
@@ -865,7 +857,7 @@ recvpkt_timeout(
 
     assert(kh != NULL);
 
-    k5printf(("krb5: recvpkt timeout for %s\n", kh->hostname));
+    auth_debug(1, ("krb5: recvpkt timeout for %s\n", kh->hostname));
 
     krb5_recvpkt_cancel(kh);
     (*kh->fn.recvpkt)(kh->arg, NULL, S_TIMEOUT);
@@ -902,7 +894,7 @@ krb5_stream_server(
      */
     ks->handle = (int)(5000 - newhandle++);
     ks->ev_read = NULL;
-    k5printf(("krb5: stream_server: created stream %d\n", ks->handle));
+    auth_debug(1, ("krb5: stream_server: created stream %d\n", ks->handle));
     return (ks);
 }
 
@@ -947,7 +939,7 @@ krb5_stream_client(
     ks->ev_read = NULL;
     ks->kc = conn_get(kh->hostname);
 
-    k5printf(("krb5: stream_client: connected to stream %d\n", id));
+    auth_debug(1, ("krb5: stream_client: connected to stream %d\n", id));
 
     return (ks);
 }
@@ -963,7 +955,7 @@ krb5_stream_close(
 
     assert(ks != NULL);
 
-    k5printf(("krb5: stream_close: closing stream %d\n", ks->handle));
+    auth_debug(1, ("krb5: stream_close: closing stream %d\n", ks->handle));
 
     krb5_stream_read_cancel(ks);
     conn_put(ks->kc);
@@ -1019,7 +1011,7 @@ krb5_stream_write(
 
     assert(ks != NULL);
 
-    k5printf(("krb5: stream_write: writing %d bytes to %s:%d\n", size,
+    auth_debug(1, ("krb5: stream_write: writing %d bytes to %s:%d\n", size,
 	ks->kc->hostname, ks->handle));
 
     tok.length = size;
@@ -1124,7 +1116,7 @@ stream_read_sync_callback2(
 
     assert(ks != NULL);
 
-    k5printf(("krb5: stream_read_sync_callback2: handle %d\n", ks->handle));
+    auth_debug(1, ("krb5: stream_read_sync_callback2: handle %d\n", ks->handle));
 
     memcpy(ks->buf, buf, (size_t)size);
     ks->len = size;
@@ -1160,7 +1152,7 @@ stream_read_callback(
 
     assert(ks != NULL);
 
-    k5printf(("krb5: stream_read_callback: handle %d\n", ks->handle));
+    auth_debug(1, ("krb5: stream_read_callback: handle %d\n", ks->handle));
 
     conn_run_frameq(ks->kc, ks);
 }
@@ -1194,7 +1186,7 @@ conn_run_frameq(
 	nextkf = TAILQ_NEXT(kf, tq);
 
 	if (kf->handle != ks->handle && kf->handle != H_EOF) {
-	    k5printf(("krb5: conn_frameq_run: not for us (handle %d)\n",
+	    auth_debug(1, ("krb5: conn_frameq_run: not for us (handle %d)\n",
 		kf->handle));
 	    continue;
 	}
@@ -1217,7 +1209,7 @@ conn_run_frameq(
 
 	if (enctok->length == 0) {
 	    assert(kf->handle == H_EOF);
-	    k5printf(("krb5: stream_read_callback: EOF\n"));
+	    auth_debug(1, ("krb5: stream_read_callback: EOF\n"));
 	    (*ks->fn)(ks->arg, NULL, 0);
 	    return (1);	/* stop after EOF */
 	}
@@ -1225,14 +1217,14 @@ conn_run_frameq(
 #ifdef AMANDA_KRB5_ENCRYPT
 	dectok = &tok;
 	if (kdecrypt(ks, enctok, &tok) < 0) {
-	    k5printf(("krb5: stream_read_callback: kdecrypt error\n"));
+	    auth_debug(1, ("krb5: stream_read_callback: kdecrypt error\n"));
 	    (*ks->fn)(ks->arg, NULL, -1);
 	} else
 #else
 	dectok = enctok;
 #endif
 	{
-	    k5printf(("krb5: stream_read_callback: read %d bytes from %s:%d\n",
+	    auth_debug(1, ("krb5: stream_read_callback: read %d bytes from %s:%d\n",
 		dectok->length, ks->kc->hostname, ks->handle));
 	    (*ks->fn)(ks->arg, dectok->value, (ssize_t)dectok->length);
 #ifdef AMANDA_KRB5_ENCRYPT
@@ -1268,27 +1260,27 @@ conn_read_callback(
 
     assert(cookie != NULL);
 
-    k5printf(("krb5: conn_read_callback\n"));
+    auth_debug(1, ("krb5: conn_read_callback\n"));
 
     kf = alloc(SIZEOF(*kf));
     TAILQ_INSERT_TAIL(&kc->frameq, kf, tq);
 
     /* Read the data off the wire.  If we get errors, shut down. */
     rc = recv_token(kc, &kf->handle, &kf->tok, 5);
-    k5printf(("krb5: conn_read_callback: recv_token returned %d handle = %d\n",
+    auth_debug(1, ("krb5: conn_read_callback: recv_token returned %d handle = %d\n",
 	rc, kf->handle));
     if (rc <= 0) {
 	kf->tok.value = NULL;
 	kf->tok.length = 0;
 	kf->handle = H_EOF;
 	rc = event_wakeup((event_id_t)kc);
-	k5printf(("krb5: conn_read_callback: event_wakeup return %d\n", rc));
+	auth_debug(1, ("krb5: conn_read_callback: event_wakeup return %d\n", rc));
 	return;
     }
 
     /* If there are events waiting on this handle, we're done */
     rc = event_wakeup((event_id_t)kc);
-    k5printf(("krb5: conn_read_callback: event_wakeup return %d\n", rc));
+    auth_debug(1, ("krb5: conn_read_callback: event_wakeup return %d\n", rc));
     if (rc > 0)
 	return;
 
@@ -1297,7 +1289,7 @@ conn_read_callback(
      * packet queued.  The caller may register a function later.
      */
     if (accept_fn == NULL) {
-	k5printf(("krb5: no accept_fn so leaving packet queued.\n"));
+	auth_debug(1, ("krb5: no accept_fn so leaving packet queued.\n"));
 	return;
     }
 
@@ -1309,7 +1301,7 @@ conn_read_callback(
     kh->ev_timeout = NULL;
 
     TAILQ_REMOVE(&kc->frameq, kf, tq);
-    k5printf(("krb5: new connection\n"));
+    auth_debug(1, ("krb5: new connection\n"));
 #ifdef AMANDA_KRB5_ENCRYPT
     dectok = &tok;
     rc = kdecrypt(kh->ks, &kf->tok, dectok);
@@ -1365,7 +1357,7 @@ gss_client(
     int rc, rval = -1;
     gss_name_t gss_name;
 
-    k5printf(("gss_client\n"));
+    auth_debug(1, ("gss_client\n"));
 
     send_tok.value = vstralloc("host/", ks->kc->hostname, NULL);
     send_tok.length = strlen(send_tok.value) + 1;
@@ -1471,7 +1463,7 @@ gss_server(
     int rc, rval = -1;
     char errbuf[256];
 
-    k5printf(("gss_server\n"));
+    auth_debug(1, ("gss_server\n"));
 
     assert(kc != NULL);
 
@@ -1600,7 +1592,7 @@ out:
     seteuid(euid);
     if (rval != 0)
 	kc->errmsg = stralloc(errbuf);
-    k5printf(("gss_server returning %d\n", rval));
+    auth_debug(1, ("gss_server returning %d\n", rval));
     return (rval);
 }
 
@@ -1860,7 +1852,7 @@ send_token(
     OM_uint32 netlength, nethandle;
     struct iovec iov[3];
 
-    k5printf(("krb5: send_token: writing %d bytes to %s\n", tok->length,
+    auth_debug(1, ("krb5: send_token: writing %d bytes to %s\n", tok->length,
 	kc->hostname));
 
     if (tok->length > AMANDA_MAX_TOK_SIZE) {
@@ -1906,13 +1898,13 @@ recv_token(
     assert(kc->fd >= 0);
     assert(gtok != NULL);
 
-    k5printf(("krb5: recv_token: reading from %s\n", kc->hostname));
+    auth_debug(1, ("krb5: recv_token: reading from %s\n", kc->hostname));
 
     switch (net_read(kc->fd, &netint, SIZEOF(netint), timeout)) {
     case -1:
 	kc->errmsg = newvstralloc(kc->errmsg, "recv error: ", strerror(errno),
 	    NULL);
-	k5printf(("krb5 recv_token error return: %s\n", kc->errmsg));
+	auth_debug(1, ("krb5 recv_token error return: %s\n", kc->errmsg));
 	return (-1);
     case 0:
 	gtok->length = 0;
@@ -1924,7 +1916,7 @@ recv_token(
 
     if (gtok->length > AMANDA_MAX_TOK_SIZE) {
 	kc->errmsg = newstralloc(kc->errmsg, "recv error: buffer too large");
-	k5printf(("krb5 recv_token error return: %s\n", kc->errmsg));
+	auth_debug(1, ("krb5 recv_token error return: %s\n", kc->errmsg));
 	return (-1);
     }
 
@@ -1936,7 +1928,7 @@ recv_token(
     case -1:
 	kc->errmsg = newvstralloc(kc->errmsg, "recv error: ", strerror(errno),
 	    NULL);
-	k5printf(("krb5 recv_token error return: %s\n", kc->errmsg));
+	auth_debug(1, ("krb5 recv_token error return: %s\n", kc->errmsg));
 	amfree(gtok->value);
 	return (-1);
     case 0:
@@ -1947,7 +1939,7 @@ recv_token(
 	break;
     }
 
-    k5printf(("krb5: recv_token: read %d bytes from %s\n", gtok->length,
+    auth_debug(1, ("krb5: recv_token: read %d bytes from %s\n", gtok->length,
 	kc->hostname));
     return ((ssize_t)gtok->length);
 }
@@ -1983,7 +1975,7 @@ kdecrypt(
     OM_uint32 maj_stat, min_stat;
     int conf_state, qop_state;
 
-    k5printf(("krb5: kdecrypt: decrypting %d bytes\n", enctok->length));
+    auth_debug(1, ("krb5: kdecrypt: decrypting %d bytes\n", enctok->length));
 
     assert(ks->kc->gss_context != GSS_C_NO_CONTEXT);
     maj_stat = gss_unseal(&min_stat, ks->kc->gss_context, enctok, tok,
@@ -2069,12 +2061,12 @@ krb5_checkuser( char *	host,
 	goto common_exit;
     }
 
-    k5printf(("opening ptmp: %s\n", (ptmp)?ptmp: "NULL!"));
+    auth_debug(1, ("opening ptmp: %s\n", (ptmp)?ptmp: "NULL!"));
     if((fp = fopen(ptmp, "r")) == NULL) {
 	result = vstralloc("can not open ", ptmp, NULL);
 	return result;
     }
-    k5printf(("opened ptmp\n"));
+    auth_debug(1, ("opened ptmp\n"));
 
     if (fstat(fileno(fp), &sbuf) != 0) {
 	result = vstralloc("cannot fstat ", ptmp, ": ", strerror(errno), NULL);
@@ -2103,7 +2095,7 @@ krb5_checkuser( char *	host,
 	}
 
 #if defined(SHOW_SECURITY_DETAIL)                               /* { */
-	k5printf(("%s: processing line: <%s>\n", debug_prefix(NULL), line));
+	auth_debug(1, ("%s: processing line: <%s>\n", debug_prefix_time(NULL), line));
 #endif                                                          /* } */
 	/* if there's more than one column, then it's the host */
 	if( (filehost = strtok(line, " \t")) == NULL) {
@@ -2124,7 +2116,7 @@ krb5_checkuser( char *	host,
 	    amfree(line);
 	    continue;
 	} else {
-		k5printf(("found a host match\n"));
+		auth_debug(1, ("found a host match\n"));
 	}
 
 	if( (filerealm = strchr(fileuser, '@')) != NULL) {
@@ -2139,9 +2131,9 @@ krb5_checkuser( char *	host,
 	 * You likely only get this far if you've turned on cross-realm auth
 	 * anyway...
 	 */
-	k5printf(("comparing %s %s\n", fileuser, name));
+	auth_debug(1, ("comparing %s %s\n", fileuser, name));
 	if(strcmp(fileuser, name) == 0) {
-		k5printf(("found a match!\n"));
+		auth_debug(1, ("found a match!\n"));
 		if(realm && filerealm && (strcmp(realm, filerealm)!=0)) {
 			amfree(line);
 			continue;

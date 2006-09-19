@@ -66,14 +66,14 @@ parse_g_options(
 	if(strncmp(tok,"features=", 9) == 0) {
 	    if(g_options->features != NULL) {
 		dbprintf(("%s: multiple features option\n", 
-			  debug_prefix(NULL)));
+			  debug_prefix_time(NULL)));
 		if(verbose) {
 		    printf("ERROR [multiple features option]\n");
 		}
 	    }
 	    if((g_options->features = am_string_to_feature(tok+9)) == NULL) {
 		dbprintf(("%s: bad features value \"%s\n",
-			  debug_prefix(NULL), tok+10));
+			  debug_prefix_time(NULL), tok+10));
 		if(verbose) {
 		    printf("ERROR [bad features value \"%s\"]\n", tok+10);
 		}
@@ -82,7 +82,7 @@ parse_g_options(
 	else if(strncmp(tok,"hostname=", 9) == 0) {
 	    if(g_options->hostname != NULL) {
 		dbprintf(("%s: multiple hostname option\n", 
-			  debug_prefix(NULL)));
+			  debug_prefix_time(NULL)));
 		if(verbose) {
 		    printf("ERROR [multiple hostname option]\n");
 		}
@@ -92,7 +92,7 @@ parse_g_options(
 	else if(strncmp(tok,"auth=", 5) == 0) {
 	    if(g_options->auth != NULL) {
 		dbprintf(("%s: multiple auth option\n", 
-			  debug_prefix(NULL)));
+			  debug_prefix_time(NULL)));
 		if(verbose) {
 		    printf("ERROR [multiple auth option]\n");
 		}
@@ -102,7 +102,7 @@ parse_g_options(
 	else if(strncmp(tok,"maxdumps=", 9) == 0) {
 	    if(g_options->maxdumps != 0) {
 		dbprintf(("%s: multiple maxdumps option\n", 
-			  debug_prefix(NULL)));
+			  debug_prefix_time(NULL)));
 		if(verbose) {
 		    printf("ERROR [multiple maxdumps option]\n");
 		}
@@ -116,7 +116,7 @@ parse_g_options(
 		}
 		else {
 		    dbprintf(("%s: bad maxdumps value \"%s\"\n",
-			      debug_prefix(NULL), tok+9));
+			      debug_prefix_time(NULL), tok+9));
 		    if(verbose) {
 			printf("ERROR [bad maxdumps value \"%s\"]\n",
 			       tok+9);
@@ -125,7 +125,7 @@ parse_g_options(
 	    }
 	    else {
 		dbprintf(("%s: bad maxdumps value \"%s\"\n",
-			  debug_prefix(NULL), tok+9));
+			  debug_prefix_time(NULL), tok+9));
 		if(verbose) {
 		    printf("ERROR [bad maxdumps value \"%s\"]\n",
 			   tok+9);
@@ -135,7 +135,7 @@ parse_g_options(
 	else if(strncmp(tok,"config=", 7) == 0) {
 	    if(g_options->config != NULL) {
 		dbprintf(("%s: multiple config option\n",
-			  debug_prefix(NULL)));
+			  debug_prefix_time(NULL)));
 		if(verbose) {
 		    printf("ERROR [multiple config option]\n");
 		}
@@ -144,7 +144,7 @@ parse_g_options(
 	    if (strchr(g_options->config, '/')) {
 		amfree(g_options->config);
 		dbprintf(("%s: invalid character in config option\n",
-			  debug_prefix(NULL)));
+			  debug_prefix_time(NULL)));
 		if(verbose) {
 		    printf("ERROR [invalid character in config option]\n");
 		}
@@ -152,7 +152,7 @@ parse_g_options(
 	}
 	else {
 	    dbprintf(("%s: unknown option \"%s\"\n",
-                                  debug_prefix(NULL), tok));
+                                  debug_prefix_time(NULL), tok));
 	    if(verbose) {
 		printf("ERROR [unknown option \"%s\"]\n", tok);
 	    }

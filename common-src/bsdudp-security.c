@@ -42,14 +42,6 @@
 
 #ifdef BSDUDP_SECURITY
 
-/*#define       BSDUDP_DEBUG*/
-
-#ifdef BSDUDP_DEBUG
-#define bsdudpprintf(x)    dbprintf(x)
-#else
-#define bsdudpprintf(x)
-#endif
-
 #ifndef SO_RCVBUF
 #undef DUMPER_SOCKET_BUFFERING
 #endif
@@ -59,12 +51,6 @@
  * of the security steps, e.g. into /tmp/amanda/amandad*debug.
  */
 #undef SHOW_SECURITY_DETAIL
-
-#if defined(TEST)						/* { */
-#define SHOW_SECURITY_DETAIL
-#undef bsdudpprintf
-#define bsdudpprintf(p)	printf p
-#endif								/* } */
 
 /*
  * Interface functions
@@ -240,8 +226,8 @@ bsdudp_close(
 	return;
     }
 
-    bsdudpprintf(("%s: bsdudp: close handle '%s'\n",
-	       debug_prefix_time(NULL), bh->proto_handle));
+    auth_debug(1, ("%s: bsdudp: close handle '%s'\n",
+		   debug_prefix_time(NULL), bh->proto_handle));
 
     udp_recvpkt_cancel(bh);
     if(bh->next) {

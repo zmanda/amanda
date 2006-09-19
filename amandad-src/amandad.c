@@ -32,8 +32,6 @@
  * master side
  */
 
-/*#define	AMANDAD_DEBUG*/
-
 #include "amanda.h"
 #include "amandad.h"
 #include "clock.h"
@@ -49,6 +47,12 @@
 
 #define	REP_TIMEOUT	(6*60*60)	/* secs for service to reply */
 #define	ACK_TIMEOUT  	10		/* XXX should be configurable */
+
+#define amandad_debug(i,x) do {		\
+	if ((i) <= debug_amandad) {	\
+		dbprintf(x);		\
+	}				\
+} while (0)
 
 /*
  * These are the actions for entering the state machine
@@ -170,10 +174,8 @@ static ssize_t do_sendpkt(security_handle_t *handle, pkt_t *pkt);
 
 static void child_signal(int signal);
 
-#ifdef AMANDAD_DEBUG
 static const char *state2str(state_t);
 static const char *action2str(action_t);
-#endif
 
 /*
  * Harvests defunct processes...
@@ -206,7 +208,7 @@ main(
     int no_exit = 0;
     struct sigaction act, oact;
     char *pgm = "amandad";		/* in case argv[0] is not set */
-#if defined(AMANDAD_DEBUG) && defined(USE_REUSEADDR)
+#if defined(USE_REUSEADDR)
     const int on = 1;
     int r;
 #endif
@@ -278,10 +280,8 @@ main(
      *
      * We accept	-auth=[authentication type]
      *			-no-exit
-#ifdef AMANDAD_DEBUG
      *			-tcp=[port]
      *			-udp=[port]
-#endif
      * We also add a list of services that amandad can launch
      */
     secdrv = NULL;
@@ -320,7 +320,6 @@ main(
 	    continue;
 	}
 
-#ifdef AMANDAD_DEBUG
 	/*
 	 * Allow us to directly bind to a udp port for debugging.
 	 * This may only apply to some security types.
@@ -339,7 +338,7 @@ main(
 		(void *)&on, (socklen_t)sizeof(on));
 	    if (r < 0) {
 		dbprintf(("%s: amandad: setsockopt(SO_REUSEADDR) failed: %s\n",
-			  debug_prefix(NULL),
+			  debug_prefix_time(NULL),
 			  strerror(errno)));
 	    }
 #endif
@@ -373,7 +372,7 @@ main(
 		(void *)&on, (socklen_t)sizeof(on));
 	    if (r < 0) {
 		dbprintf(("%s: amandad: setsockopt(SO_REUSEADDR) failed: %s\n",
-			  debug_prefix(NULL),
+			  debug_prefix_time(NULL),
 			  strerror(errno)));
 	    }
 #endif
@@ -391,7 +390,6 @@ main(
 	    n = (socklen_t)sizeof(sin);
 	    in = out = accept(sock, (struct sockaddr *)&sin, &n);
 	}
-#endif
 	/*
 	 * It must be a service name
 	 */
@@ -448,12 +446,12 @@ main(
 
     dbprintf(("%s: version %s\n", get_pname(), version()));
     for (i = 0; version_info[i] != NULL; i++) {
-	dbprintf(("%s: %s", debug_prefix(NULL), version_info[i]));
+	dbprintf(("%s: %s", debug_prefix_time(NULL), version_info[i]));
     }
 
     if (! (argc >= 1 && argv != NULL && argv[0] != NULL)) {
 	dbprintf(("%s: WARNING: argv[0] not defined: check inetd.conf\n",
-		  debug_prefix(NULL)));
+		  debug_prefix_time(NULL)));
     }
 
     /*
@@ -690,34 +688,26 @@ state_machine(
     state_t curstate;
     pkt_t nak;
 
-#ifdef AMANDAD_DEBUG
-    dbprintf(("%s: state_machine: %p entering\n",
-	debug_prefix_time(NULL), as));
-#endif
+    amandad_debug(1, ("%s: state_machine: %p entering\n",
+		      debug_prefix_time(NULL), as));
     for (;;) {
 	curstate = as->state;
-#ifdef AMANDAD_DEBUG
-	dbprintf(("%s: state_machine: %p curstate=%s action=%s\n",
-	    debug_prefix_time(NULL), as,
-	    state2str(curstate), action2str(action)));
-#endif
+	amandad_debug(1, ("%s: state_machine: %p curstate=%s action=%s\n",
+			  debug_prefix_time(NULL), as,
+			  state2str(curstate), action2str(action)));
 	retaction = (*curstate)(as, action, pkt);
-#ifdef AMANDAD_DEBUG
-	dbprintf(("%s: state_machine: %p curstate=%s returned %s (nextstate=%s)\n",
-	    debug_prefix_time(NULL),
-	    as, state2str(curstate), action2str(retaction),
-	    state2str(as->state)));
-#endif
+	amandad_debug(1, ("%s: state_machine: %p curstate=%s returned %s (nextstate=%s)\n",
+			  debug_prefix_time(NULL),
+			  as, state2str(curstate), action2str(retaction),
+			  state2str(as->state)));
 
 	switch (retaction) {
 	/*
 	 * State has queued up and is now blocking on input.
 	 */
 	case A_PENDING:
-#ifdef AMANDAD_DEBUG
-	    dbprintf(("%s: state_machine: %p leaving (A_PENDING)\n",
-		debug_prefix_time(NULL), as));
-#endif
+	    amandad_debug(1, ("%s: state_machine: %p leaving (A_PENDING)\n",
+			      debug_prefix_time(NULL), as));
 	    return;
 
 	/*
@@ -738,10 +728,8 @@ state_machine(
 		pkt_type2str(pkt->type));
 	    do_sendpkt(as->security_handle, &nak);
 	    amfree(nak.body);
-#ifdef AMANDAD_DEBUG
-	    dbprintf(("%s: state_machine: %p leaving (A_SENDNAK)\n",
-		debug_prefix_time(NULL), as));
-#endif
+	    amandad_debug(1, ("%s: state_machine: %p leaving (A_SENDNAK)\n",
+			      debug_prefix_time(NULL), as));
 	    return;
 
 	/*
@@ -749,10 +737,8 @@ state_machine(
 	 */
 	case A_FINISH:
 	    service_delete(as);
-#ifdef AMANDAD_DEBUG
-	    dbprintf(("%s: state_machine: %p leaving (A_FINISH)\n",
-		debug_prefix_time(NULL), as));
-#endif
+	    amandad_debug(1, ("%s: state_machine: %p leaving (A_FINISH)\n",
+			      debug_prefix_time(NULL), as));
 	    return;
 
 	default:
@@ -1037,10 +1023,8 @@ s_ackwait(
 	    debug_prefix_time(NULL)));
 	return (A_FINISH);
     }
-#ifdef AMANDAD_DEBUG
-    dbprintf(("%s: received ACK, now opening streams\n",
-	debug_prefix_time(NULL)));
-#endif
+    amandad_debug(1, ("%s: received ACK, now opening streams\n",
+		      debug_prefix_time(NULL)));
 
     assert(action == A_RECVPKT);
 
@@ -1097,10 +1081,8 @@ s_ackwait(
      * If no pipes are open, then we're done.  Otherwise, just start running.
      * The event handlers on all of the pipes will take it from here.
      */
-#ifdef AMANDAD_DEBUG
-    dbprintf(("%s: at end of s_ackwait, npipes is %d\n",
-	debug_prefix_time(NULL), npipes));
-#endif
+    amandad_debug(1, ("%s: at end of s_ackwait, npipes is %d\n",
+		      debug_prefix_time(NULL), npipes));
     if (npipes == 0)
 	return (A_FINISH);
     else {
@@ -1499,10 +1481,9 @@ service_delete(
     int i;
     struct datafd_handle *dh;
 
-#ifdef AMANDAD_DEBUG
-	dbprintf(("%s: closing service: %s\n",
-	    debug_prefix_time(NULL), (as->cmd)?as->cmd:"??UNKONWN??"));
-#endif
+    amandad_debug(1, ("%s: closing service: %s\n",
+		      debug_prefix_time(NULL),
+		      (as->cmd)?as->cmd:"??UNKONWN??"));
 
     assert(as != NULL);
 
@@ -1600,7 +1581,6 @@ do_sendpkt(
     return security_sendpkt(handle, pkt);
 }
 
-#ifdef AMANDAD_DEBUG
 /*
  * Convert a state into a string
  */
@@ -1657,4 +1637,3 @@ action2str(
 	    return (actions[i].str);
     return ("UNKNOWN ACTION");
 }
-#endif	/* AMANDAD_DEBUG */

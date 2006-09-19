@@ -91,7 +91,7 @@ pipespawnv_passwd(
      * Log the command line and count the args.
      */
     dbprintf(("%s: spawning %s in pipeline\n", debug_prefix_time(NULL), prog));
-    dbprintf(("%s: argument list:", debug_prefix(NULL)));
+    dbprintf(("%s: argument list:", debug_prefix_time(NULL)));
     if ((pipedef & PASSWD_PIPE) != 0) {
 	passwdvar = *my_argv++;
 	passwdfd  = (int *)*my_argv++;
