@@ -49,7 +49,6 @@
 
 #define	REP_TIMEOUT	(6*60*60)	/* secs for service to reply */
 #define	ACK_TIMEOUT  	10		/* XXX should be configurable */
-#define	MAX_REP_RETRIES	5
 
 /*
  * These are the actions for entering the state machine
@@ -987,7 +986,7 @@ error:
      * state.
      */
     as->state = s_sendrep;
-    as->repretry = MAX_REP_RETRIES;
+    as->repretry = getconf_int(CNF_REP_TRIES);
     amfree(repbuf);
     return (A_CONTINUE);
 }

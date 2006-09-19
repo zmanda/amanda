@@ -1,4 +1,16 @@
 2006-09-19  Jean-Louis Martineau <martineau@zmanda.com>
+	* amandad-src/amandad.c: Use CNF_REP_TRIES.
+	* common-src/conffile.c: New CONNECT_TRIES, REQ_TRIES, REP_TRIES
+	                         configuration options.
+	* common-src/conffile.h: New CONNECT_TRIES, REQ_TRIES, REP_TRIES
+	                         configuration options.
+	* common-src/protocol.c: Use CNF_CONNECT_TRIES and CNF_REQ_TRIES.
+	* common-src/protocol.c: Rename reqtries to resettries.
+	                         Rename acktries to reqtries.
+	* man/xml-source/amanda-client.conf.5.xml: Document new options.
+	* man/xml-source/amanda.conf.5.xml: Document new options.
+
+2006-09-19  Jean-Louis Martineau <martineau@zmanda.com>
 	* amandad-src/amandad.c: Read client configuratrion file.
 	* client-src/client_util.c, client-src/selfcheck.c,
 	  client-src/sendbackup.c, client-src/sendbackup-dump.c,

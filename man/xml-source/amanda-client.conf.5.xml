@@ -231,6 +231,24 @@ The file where amanda keep the last date of each dumplevel.</para>
   </listitem>
   </varlistentry>
 
+  <varlistentry>
+  <term><emphasis remap='B'>connect_tries</emphasis> int</term>
+  <listitem>
+<para>Default:
+<emphasis remap='I'>3</emphasis>.
+How many times the server will try a connection.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><emphasis remap='B'>rep_tries</emphasis> int</term>
+  <listitem>
+<para>Default:
+<emphasis remap='I'>5</emphasis>.
+How many times amandad will resend a REP packet if it doesn't get the ACK packet.</para>
+  </listitem>
+  </varlistentry>
+
 </variablelist>
 </refsect2>
 </refsect1>

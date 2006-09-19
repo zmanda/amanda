@@ -500,6 +500,7 @@ running from within
 will wait before it fails with a data timeout error.</para>
   </listitem>
   </varlistentry>
+
   <varlistentry>
   <term><emphasis remap='B'>etimeout</emphasis> int</term>
   <listitem>
@@ -517,6 +518,25 @@ A negative value will be interpreted as a total amount of time to wait
 per client instead of per disk.</para>
   </listitem>
   </varlistentry>
+
+  <varlistentry>
+  <term><emphasis remap='B'>connect_tries</emphasis> int</term>
+  <listitem>
+<para>Default:
+<emphasis remap='I'>3</emphasis>.
+How many times the server will try a connection.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><emphasis remap='B'>req_tries</emphasis> int</term>
+  <listitem>
+<para>Default:
+<emphasis remap='I'>3</emphasis>.
+How many times the server will resend a REQ packet if it doesn't get the ACK packet.</para>
+  </listitem>
+  </varlistentry>
+
   <varlistentry>
   <term><emphasis remap='B'>netusage</emphasis> int</term>
   <listitem>

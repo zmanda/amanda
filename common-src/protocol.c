@@ -29,6 +29,7 @@
  * implements amanda protocol
  */
 #include "amanda.h"
+#include "conffile.h"
 #include "event.h"
 #include "packet.h"
 #include "security.h"
@@ -73,19 +74,17 @@ typedef struct proto {
     time_t origtime;			/* orig start time of this request */
     time_t curtime;			/* time when this attempt started */
     int connecttries;			/* times we'll retry a connect */
-    int reqtries;			/* times we'll resend a REQ */
-    int acktries;			/* times we'll wait for an a ACK */
+    int resettries;			/* times we'll resend a REQ */
+    int reqtries;			/* times we'll wait for an a ACK */
     pkt_t req;				/* the actual wire request */
     protocol_sendreq_callback continuation; /* call when req dies/finishes */
     void *datap;			/* opaque cookie passed to above */
     char *(*conf_fn)(char *, void *);	/* configuration function */
 } proto_t;
 
-#define	CONNECT_TRIES	3	/* num retries after connect errors */
 #define	CONNECT_WAIT	5	/* secs between connect attempts */
 #define ACK_WAIT	10	/* time (secs) to wait for ACK - keep short */
-#define ACK_TRIES	3	/* num retries after ACK_WAIT timeout */
-#define REQ_TRIES	2	/* num restarts (reboot/crash) */
+#define RESET_TRIES	2	/* num restarts (reboot/crash) */
 #define CURTIME	(time(0) - proto_init_time) /* time relative to start */
 
 /* if no reply in an hour, just forget it */
@@ -154,9 +153,9 @@ protocol_sendreq(
     p->repwait = repwait;
     p->origtime = CURTIME;
     /* p->curtime set in the sendreq state */
-    p->connecttries = CONNECT_TRIES;
-    p->reqtries = REQ_TRIES;
-    p->acktries = ACK_TRIES;
+    p->connecttries = getconf_int(CNF_CONNECT_TRIES);
+    p->resettries = RESET_TRIES;
+    p->reqtries = getconf_int(CNF_REQ_TRIES);
     p->conf_fn = conf_fn;
     pkt_init(&p->req, P_REQ, req);
 
@@ -506,7 +505,7 @@ s_ackwait(
     if (action == PA_TIMEOUT) {
 	assert(pkt == NULL);
 
-	if (--p->acktries == 0) {
+	if (--p->reqtries == 0) {
 	    security_seterror(p->security_handle, "timeout waiting for ACK");
 	    return (PA_ABORT);
 	}
@@ -582,7 +581,7 @@ s_repwait(
 	 * If we've blown our timeout limit, free up this packet and
 	 * return.
 	 */
-	if (p->reqtries == 0 || DROP_DEAD_TIME(p->origtime)) {
+	if (p->resettries == 0 || DROP_DEAD_TIME(p->origtime)) {
 	    security_seterror(p->security_handle, "timeout waiting for REP");
 	    return (PA_ABORT);
 	}
@@ -590,9 +589,9 @@ s_repwait(
 	/*
 	 * We still have some tries left.  Resend the request.
 	 */
-	p->reqtries--;
+	p->resettries--;
 	p->state = s_sendreq;
-	p->acktries = ACK_TRIES;
+	p->reqtries = getconf_int(CNF_REQ_TRIES);
 	return (PA_CONTINUE);
     }
 
