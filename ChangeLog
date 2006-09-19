@@ -1,4 +1,8 @@
 2006-09-19  Jean-Louis Martineau <martineau@zmanda.com>
+	Patch by Paul Bijens
+	* server-src/amcheck.c: Print "tapelist" instead of "tapefile".
+
+2006-09-19  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/dgram.c (dgram_bind): Remove unused variables.
 
 2006-09-19  Jean-Louis Martineau <martineau@zmanda.com>
