@@ -1456,4 +1456,6 @@ void	add_history(const char *line);
 #define DBG_SUBDIR_CLIENT  "client"
 #define DBG_SUBDIR_AMANDAD "amandad"
 
+#define MAX_DUMPERS 63
+
 #endif	/* !AMANDA_H */

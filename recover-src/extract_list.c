@@ -40,7 +40,7 @@
 #include "findpass.h"
 #endif
 #include "util.h"
-#include "clientconf.h"
+#include "conffile.h"
 #include "protocol.h"
 #include "event.h"
 #include "security.h"
@@ -2546,10 +2546,10 @@ amidxtaped_client_get_security_conf(
 	return(NULL);
 
     if(strcmp(string, "auth")==0) {
-	return(client_getconf_str(CLN_AUTH));
+	return(getconf_str(CNF_AUTH));
     }
     if(strcmp(string, "ssh_keys")==0) {
-	return(client_getconf_str(CLN_SSH_KEYS));
+	return(getconf_str(CNF_SSH_KEYS));
     }
     return(NULL);
 }

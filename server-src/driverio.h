@@ -34,10 +34,9 @@
 
 #include "event.h"
 
+#include "amanda.h"
 #include "holding.h"
 #include "server_util.h"
-
-#define MAX_DUMPERS 63
 
 #ifndef GLOBAL
 #define GLOBAL extern

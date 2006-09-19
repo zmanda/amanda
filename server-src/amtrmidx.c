@@ -84,7 +84,7 @@ int main(int argc, char **argv)
     dbopen(DBG_SUBDIR_SERVER);
     dbprintf(("%s: version %s\n", argv[0], version()));
 
-    parse_server_conf(argc, argv, &new_argc, &new_argv);
+    parse_conf(argc, argv, &new_argc, &new_argv);
     my_argc = new_argc;
     my_argv = new_argv;
 

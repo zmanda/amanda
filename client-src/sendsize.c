@@ -38,7 +38,7 @@
 #include "getfsent.h"
 #include "version.h"
 #include "client_util.h"
-#include "clientconf.h"
+#include "conffile.h"
 #include "amandad.h"
 
 #ifdef SAMBA_CLIENT
@@ -181,7 +181,7 @@ main(
 
     /* handle all service requests */
 
-    amandates_file = client_getconf_str(CLN_AMANDATES);
+    amandates_file = getconf_str(CNF_AMANDATES);
     if(!start_amandates(amandates_file, 0))
         error("error [opening %s: %s]", amandates_file, strerror(errno));
 
@@ -1735,7 +1735,7 @@ getsize_gnutar(
     my_argv = alloc(SIZEOF(char *) * 22);
     i = 0;
 
-    gnutar_list_dir = client_getconf_str(CLN_GNUTAR_LIST_DIR);
+    gnutar_list_dir = getconf_str(CNF_GNUTAR_LIST_DIR);
     if (strlen(gnutar_list_dir) == 0)
 	gnutar_list_dir = NULL;
     if (gnutar_list_dir) {

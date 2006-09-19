@@ -170,11 +170,11 @@ start_backup(
     /*  now do the client-side compression */
 
 
-    if(options->compress == COMPR_FAST || options->compress == COMPR_BEST) {
+    if(options->compress == COMP_FAST || options->compress == COMP_BEST) {
 	compopt = skip_argument;
 
 #if defined(COMPRESS_BEST_OPT) && defined(COMPRESS_FAST_OPT)
-	if(options->compress == COMPR_BEST) {
+	if(options->compress == COMP_BEST) {
 	    compopt = COMPRESS_BEST_OPT;
 	} else {
 	    compopt = COMPRESS_FAST_OPT;
@@ -189,7 +189,7 @@ start_backup(
 	    dbprintf((" %s", compopt));
 	}
 	dbprintf(("\n"));
-     } else if (options->compress == COMPR_CUST) {
+     } else if (options->compress == COMP_CUST) {
         compopt = skip_argument;
 	comppid = pipespawn(options->clntcompprog, STDIN_PIPE,
 			    &dumpout, &compout, &mesgf,

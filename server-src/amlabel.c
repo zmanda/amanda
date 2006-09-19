@@ -102,7 +102,7 @@ main(
 
     erroutput_type = ERR_INTERACTIVE;
 
-    parse_server_conf(argc, argv, &new_argc, &new_argv);
+    parse_conf(argc, argv, &new_argc, &new_argv);
 
     if(new_argc > 1 && strcmp(new_argv[1],"-f") == 0)
 	 force=1;

@@ -248,7 +248,7 @@ main(
 
     malloc_size_1 = malloc_inuse(&malloc_hist_1);
 
-    parse_server_conf(main_argc, main_argv, &new_argc, &new_argv);
+    parse_conf(main_argc, main_argv, &new_argc, &new_argv);
     my_argc = new_argc;
     my_argv = new_argv;
 

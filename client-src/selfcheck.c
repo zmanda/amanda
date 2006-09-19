@@ -40,7 +40,7 @@
 #include "pipespawn.h"
 #include "amfeatures.h"
 #include "client_util.h"
-#include "clientconf.h"
+#include "conffile.h"
 #include "amandad.h"
 
 #ifdef SAMBA_CLIENT
@@ -481,8 +481,8 @@ check_options(
 	    need_restore=1;
 #endif
     }
-    if ((options->compress == COMPR_BEST) || (options->compress == COMPR_FAST) 
-		|| (options->compress == COMPR_CUST)) {
+    if ((options->compress == COMP_BEST) || (options->compress == COMP_FAST) 
+		|| (options->compress == COMP_CUST)) {
 	need_compress_path=1;
     }
     if(options->auth && amandad_auth) {
@@ -898,7 +898,7 @@ check_overall(void)
 	printf("ERROR [GNUTAR program not available]\n");
 #endif
 	need_amandates = 1;
-	gnutar_list_dir = client_getconf_str(CLN_GNUTAR_LIST_DIR);
+	gnutar_list_dir = getconf_str(CNF_GNUTAR_LIST_DIR);
 	if (strlen(gnutar_list_dir) == 0)
 	    gnutar_list_dir = NULL;
 	if (gnutar_list_dir) 
@@ -907,7 +907,7 @@ check_overall(void)
 
     if (need_amandates) {
 	char *amandates_file;
-	amandates_file = client_getconf_str(CLN_AMANDATES);
+	amandates_file = getconf_str(CNF_AMANDATES);
 	check_file(amandates_file, R_OK|W_OK);
     }
     if( need_calcsize ) {

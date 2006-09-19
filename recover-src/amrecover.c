@@ -37,7 +37,7 @@
 #include "getfsent.h"
 #include "dgram.h"
 #include "util.h"
-#include "clientconf.h"
+#include "conffile.h"
 #include "protocol.h"
 #include "event.h"
 #include "security.h"
@@ -331,7 +331,7 @@ main(
     }
     localhost[MAX_HOSTNAME_LENGTH] = '\0';
 
-    parse_client_conf(argc, argv, &new_argc, &new_argv);
+    parse_conf(argc, argv, &new_argc, &new_argv);
 
     if (new_argc > 1 && new_argv[1][0] != '-') {
 	/*
@@ -355,22 +355,22 @@ main(
     while ((i = getopt(new_argc, new_argv, "C:s:t:d:U")) != EOF) {
 	switch (i) {
 	    case 'C':
-		add_client_conf(CLN_CONF, optarg);
+		add_client_conf(CNF_CONF, optarg);
 		//config = newstralloc(config, optarg);
 		break;
 
 	    case 's':
-		add_client_conf(CLN_INDEX_SERVER, optarg);
+		add_client_conf(CNF_INDEX_SERVER, optarg);
 		//server_name = newstralloc(server_name, optarg);
 		break;
 
 	    case 't':
-		add_client_conf(CLN_TAPE_SERVER, optarg);
+		add_client_conf(CNF_TAPE_SERVER, optarg);
 		//tape_server_name = newstralloc(tape_server_name, optarg);
 		break;
 
 	    case 'd':
-		add_client_conf(CLN_TAPEDEV, optarg);
+		add_client_conf(CNF_TAPEDEV, optarg);
 		//tape_device_name = newstralloc(tape_device_name, optarg);
 		break;
 
@@ -395,7 +395,7 @@ main(
     }
     amfree(conffile);
 
-    config = stralloc(client_getconf_str(CLN_CONF));
+    config = stralloc(getconf_str(CNF_CONF));
 
     conffile = vstralloc(CONFIG_DIR, "/", config, "/", "amanda-client.conf",
 			 NULL);
@@ -407,24 +407,24 @@ main(
 
     dbrename(config, DBG_SUBDIR_CLIENT);
 
-    report_bad_client_arg();
+    report_bad_conf_arg();
 
     amfree(server_name);
     server_name = getenv("AMANDA_SERVER");
-    if(!server_name) server_name = client_getconf_str(CLN_INDEX_SERVER);
+    if(!server_name) server_name = getconf_str(CNF_INDEX_SERVER);
     server_name = stralloc(server_name);
 
     amfree(tape_server_name);
     tape_server_name = getenv("AMANDA_TAPESERVER");
-    if(!tape_server_name) tape_server_name = client_getconf_str(CLN_TAPE_SERVER);
+    if(!tape_server_name) tape_server_name = getconf_str(CNF_TAPE_SERVER);
     tape_server_name = stralloc(tape_server_name);
 
     amfree(tape_device_name);
-    tape_device_name = client_getconf_str(CLN_TAPEDEV);
+    tape_device_name = getconf_str(CNF_TAPEDEV);
     if (tape_device_name)
 	tape_device_name = stralloc(tape_device_name);
 
-    authopt = stralloc(client_getconf_str(CLN_AUTH));
+    authopt = stralloc(getconf_str(CNF_AUTH));
 
 
     amfree(disk_name);
@@ -802,10 +802,10 @@ amindexd_client_get_security_conf(
 	return(NULL);
 
     if(strcmp(string, "auth")==0) {
-	return(client_getconf_str(CLN_AUTH));
+	return(getconf_str(CNF_AUTH));
     }
     else if(strcmp(string, "ssh_keys")==0) {
-	return(client_getconf_str(CLN_SSH_KEYS));
+	return(getconf_str(CNF_SSH_KEYS));
     }
     return(NULL);
 }

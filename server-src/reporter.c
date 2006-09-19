@@ -353,7 +353,7 @@ main(
 	/*NOTREACHED*/
     }
 
-    parse_server_conf(argc, argv, &new_argc, &new_argv);
+    parse_conf(argc, argv, &new_argc, &new_argv);
     my_argc = new_argc;
     my_argv = new_argv;
 

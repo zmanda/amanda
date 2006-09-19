@@ -169,7 +169,7 @@ check_options(
     else if ((compmode = strstr(options, "srvcomp-cust=")) != NULL) {
 	compend = strchr(compmode, ';');
 	if (compend ) {
-	    srvcompress = COMP_SERV_CUST;
+	    srvcompress = COMP_SERVER_CUST;
 	    *compend = '\0';
 	    srvcompprog = stralloc(compmode + strlen("srvcomp-cust="));
 	    *compend = ';';
@@ -261,7 +261,7 @@ main(
     erroutput_type = (ERR_AMANDALOG|ERR_INTERACTIVE);
     set_logerror(logerror);
 
-    parse_server_conf(main_argc, main_argv, &new_argc, &new_argv);
+    parse_conf(main_argc, main_argv, &new_argc, &new_argv);
     my_argc = new_argc;
     my_argv = new_argv;
 
@@ -947,7 +947,7 @@ finish_tapeheader(
 #ifndef UNCOMPRESS_OPT
 #define	UNCOMPRESS_OPT	""
 #endif
-	if (srvcompress == COMP_SERV_CUST) {
+	if (srvcompress == COMP_SERVER_CUST) {
 	    snprintf(file->uncompress_cmd, SIZEOF(file->uncompress_cmd),
 		     " %s %s |", srvcompprog, "-d");
 	    strncpy(file->comp_suffix, "cust", SIZEOF(file->comp_suffix) - 1);
@@ -1564,7 +1564,7 @@ runcompress(
 	    /*NOTREACHED*/
 	}
 	safe_fd(-1, 0);
-	if (comptype != COMP_SERV_CUST) {
+	if (comptype != COMP_SERVER_CUST) {
 	    execlp(COMPRESS_PATH, COMPRESS_PATH, (  comptype == COMP_BEST ?
 		COMPRESS_BEST_OPT : COMPRESS_FAST_OPT), (char *)NULL);
 	    error("error: couldn't exec %s: %s", COMPRESS_PATH, strerror(errno));

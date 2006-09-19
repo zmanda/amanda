@@ -38,7 +38,7 @@
 #include "arglist.h"
 #include "getfsent.h"
 #include "version.h"
-#include "clientconf.h"
+#include "conffile.h"
 
 #define TIMEOUT 30
 
@@ -96,17 +96,17 @@ optionstr(
     char *exc = NULL;
     sle_t *excl;
 
-    if(options->compress == COMPR_BEST)
+    if(options->compress == COMP_BEST)
 	compress_opt = stralloc("compress-best;");
-    else if(options->compress == COMPR_FAST)
+    else if(options->compress == COMP_FAST)
 	compress_opt = stralloc("compress-fast;");
-    else if(options->compress == COMPR_SERVER_BEST)
+    else if(options->compress == COMP_SERVER_BEST)
 	compress_opt = stralloc("srvcomp-best;");
-    else if(options->compress == COMPR_SERVER_FAST)
+    else if(options->compress == COMP_SERVER_FAST)
 	compress_opt = stralloc("srvcomp-fast;");
-    else if(options->compress == COMPR_SERVER_CUST)
+    else if(options->compress == COMP_SERVER_CUST)
 	compress_opt = vstralloc("srvcomp-cust=", options->srvcompprog, ";", NULL);
-    else if(options->compress == COMPR_CUST)
+    else if(options->compress == COMP_CUST)
 	compress_opt = vstralloc("comp-cust=", options->clntcompprog, ";", NULL);
     else
 	compress_opt = stralloc("");
@@ -641,7 +641,7 @@ info_tapeheader(void)
     fprintf(stderr, "%s: info BACKUP=%s\n", get_pname(), program->backup_name);
 
     fprintf(stderr, "%s: info RECOVER_CMD=", get_pname());
-    if (options->compress == COMPR_FAST || options->compress == COMPR_BEST)
+    if (options->compress == COMP_FAST || options->compress == COMP_BEST)
 	fprintf(stderr, "%s %s |", UNCOMPRESS_PATH,
 #ifdef UNCOMPRESS_OPT
 		UNCOMPRESS_OPT
@@ -652,7 +652,7 @@ info_tapeheader(void)
 
     fprintf(stderr, "%s -f - ...\n", program->restore_name);
 
-    if (options->compress == COMPR_FAST || options->compress == COMPR_BEST)
+    if (options->compress == COMP_FAST || options->compress == COMP_BEST)
 	fprintf(stderr, "%s: info COMPRESS_SUFFIX=%s\n",
 			get_pname(), COMPRESS_SUFFIX);
 

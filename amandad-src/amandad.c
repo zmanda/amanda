@@ -45,6 +45,7 @@
 #include "security.h"
 #include "stream.h"
 #include "util.h"
+#include "conffile.h"
 
 #define	REP_TIMEOUT	(6*60*60)	/* secs for service to reply */
 #define	ACK_TIMEOUT  	10		/* XXX should be configurable */
@@ -210,6 +211,7 @@ main(
     const int on = 1;
     int r;
 #endif
+    char *conffile;
 
     safe_fd(-1, 0);
     safe_cd();
@@ -244,6 +246,13 @@ main(
 	error("error setting SIGCHLD handler: %s", strerror(errno));
 	/*NOTREACHED*/
     }
+
+    conffile = vstralloc(CONFIG_DIR, "/", "amanda-client.conf", NULL);
+    if (read_clientconf(conffile) > 0) {
+	error("error reading conffile: %s", conffile);
+	/*NOTREACHED*/
+    }
+    amfree(conffile);
 
 #ifdef USE_DBMALLOC
     dbmalloc_info.start.size = malloc_inuse(&dbmalloc_info.start.hist);

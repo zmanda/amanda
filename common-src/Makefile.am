@@ -18,6 +18,7 @@ libamanda_la_SOURCES =		\
 	bsdtcp-security.c	\
 	bsdudp-security.c	\
 	clock.c			\
+	conffile.c		\
 	debug.c			\
 	dgram.c			\
 	error.c			\
@@ -56,6 +57,7 @@ noinst_HEADERS =		\
 	amregex.h		\
 	arglist.h		\
 	clock.h			\
+	conffile.h		\
 	dgram.h			\
 	event.h			\
 	fileheader.h		\

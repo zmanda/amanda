@@ -834,17 +834,17 @@ optionstr(
 		    dp->host->hostname, qdpname);
 	}
 	break;
-    case COMP_SERV_FAST:
+    case COMP_SERVER_FAST:
 	if(am_has_feature(their_features, fe_options_srvcomp_fast)) {
 	    compress_opt = "srvcomp-fast;";
 	}
 	break;
-    case COMP_SERV_BEST:
+    case COMP_SERVER_BEST:
 	if(am_has_feature(their_features, fe_options_srvcomp_best)) {
             compress_opt = "srvcomp-best;";
 	}
 	break;
-    case COMP_SERV_CUST:
+    case COMP_SERVER_CUST:
         if(am_has_feature(their_features, fe_options_srvcomp_cust)) {
 	  compress_opt = vstralloc("srvcomp-cust=", dp->srvcompprog, ";", NULL);
 	  if (BSTRNCMP(compress_opt, "srvcomp-cust=;") == 0){
@@ -877,9 +877,9 @@ optionstr(
 	    }
 	    err++;
 	  }
-	 if ( dp->compress == COMP_SERV_FAST || 
-	      dp->compress == COMP_SERV_BEST ||
-	      dp->compress == COMP_SERV_CUST ) {
+	 if ( dp->compress == COMP_SERVER_FAST || 
+	      dp->compress == COMP_SERVER_BEST ||
+	      dp->compress == COMP_SERVER_CUST ) {
 	   if(fdout) {
 	      fprintf(fdout,
 		      "ERROR: %s:Client encryption with server compression is not supported. See amanda.conf(5) for detail.\n", dp->host->hostname);

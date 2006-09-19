@@ -32,6 +32,7 @@
 #define CLIENT_UTIL_H
 
 #include "amanda.h"
+#include "conffile.h"
 #include "amfeatures.h"
 #include "sl.h"
 #include "util.h"		/* for bstrncmp() */
@@ -56,18 +57,6 @@ typedef struct option_s {
     int exclude_optional;
     int include_optional;
 } option_t;
-
-#define NO_COMPR   0
-#define COMPR_FAST 1
-#define COMPR_BEST 2
-#define COMPR_SERVER_FAST 3
-#define COMPR_SERVER_BEST 4
-#define COMPR_SERVER_CUST 5	/* server-side custom compression */
-#define COMPR_CUST 6            /* client-side custom compression */
-
-#define ENCRYPT_NONE         0	/* no encryption  */
-#define ENCRYPT_CUST         1	/* client-side custom encryption */
-#define ENCRYPT_SERV_CUST    2	/* server-side custom encryption */
 
 char *build_exclude(char *disk, char *device, option_t *options, int verbose);
 char *build_include(char *disk, char *device, option_t *options, int verbose);

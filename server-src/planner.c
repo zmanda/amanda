@@ -178,7 +178,7 @@ int main(int argc, char **argv)
 
     setvbuf(stderr, (char *)NULL, (int)_IOLBF, 0);
 
-    parse_server_conf(argc, argv, &new_argc, &new_argv);
+    parse_conf(argc, argv, &new_argc, &new_argv);
     my_argc = new_argc;
     my_argv = new_argv;
 

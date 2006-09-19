@@ -29,6 +29,7 @@
  */
 
 #include "amanda.h"
+#include "conffile.h"
 #include "client_util.h"
 #include "getfsent.h"
 #include "util.h"
@@ -454,7 +455,7 @@ init_options(
     option_t *options)
 {
     options->str = NULL;
-    options->compress = NO_COMPR;
+    options->compress = COMP_NONE;
     options->srvcompprog = NULL;
     options->clntcompprog = NULL;
     options->encrypt = ENCRYPT_NONE;
@@ -535,47 +536,47 @@ parse_options(
 	    options->auth = stralloc("krb4");
 	}
 	else if(BSTRNCMP(tok, "compress-fast") == 0) {
-	    if(options->compress != NO_COMPR) {
+	    if(options->compress != COMP_NONE) {
 		dbprintf(("%s: multiple compress option\n",
 			  debug_prefix(NULL)));
 		if(verbose) {
 		    printf("ERROR [multiple compress option]\n");
 		}
 	    }
-	    options->compress = COMPR_FAST;
+	    options->compress = COMP_FAST;
 	}
 	else if(BSTRNCMP(tok, "compress-best") == 0) {
-	    if(options->compress != NO_COMPR) {
+	    if(options->compress != COMP_NONE) {
 		dbprintf(("%s: multiple compress option\n",
 			  debug_prefix(NULL)));
 		if(verbose) {
 		    printf("ERROR [multiple compress option]\n");
 		}
 	    }
-	    options->compress = COMPR_BEST;
+	    options->compress = COMP_BEST;
 	}
 	else if(BSTRNCMP(tok, "srvcomp-fast") == 0) {
-	    if(options->compress != NO_COMPR) {
+	    if(options->compress != COMP_NONE) {
 		dbprintf(("%s: multiple compress option\n",
 			  debug_prefix(NULL)));
 		if(verbose) {
 		    printf("ERROR [multiple compress option]\n");
 		}
 	    }
-	    options->compress = COMPR_SERVER_FAST;
+	    options->compress = COMP_SERVER_FAST;
 	}
 	else if(BSTRNCMP(tok, "srvcomp-best") == 0) {
-	    if(options->compress != NO_COMPR) {
+	    if(options->compress != COMP_NONE) {
 		dbprintf(("%s: multiple compress option\n",
 			  debug_prefix(NULL)));
 		if(verbose) {
 		    printf("ERROR [multiple compress option]\n");
 		}
 	    }
-	    options->compress = COMPR_SERVER_BEST;
+	    options->compress = COMP_SERVER_BEST;
 	}
 	else if(BSTRNCMP(tok, "srvcomp-cust=") == 0) {
-	    if(options->compress != NO_COMPR) {
+	    if(options->compress != COMP_NONE) {
 		dbprintf(("%s: multiple compress option\n", 
 			  debug_prefix(NULL)));
 		if(verbose) {
@@ -583,10 +584,10 @@ parse_options(
 		}
 	    }
 	    options->srvcompprog = stralloc(tok + SIZEOF("srvcomp-cust=") -1);
-	    options->compress = COMPR_SERVER_CUST;
+	    options->compress = COMP_SERVER_CUST;
 	}
 	else if(BSTRNCMP(tok, "comp-cust=") == 0) {
-	    if(options->compress != NO_COMPR) {
+	    if(options->compress != COMP_NONE) {
 		dbprintf(("%s: multiple compress option\n", 
 			  debug_prefix(NULL)));
 		if(verbose) {
@@ -594,7 +595,7 @@ parse_options(
 		}
 	    }
 	    options->clntcompprog = stralloc(tok + SIZEOF("comp-cust=") -1);
-	    options->compress = COMPR_CUST;
+	    options->compress = COMP_CUST;
 	    /* parse encryption options */
 	} 
 	else if(BSTRNCMP(tok, "encrypt-serv-cust=") == 0) {

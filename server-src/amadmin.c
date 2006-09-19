@@ -156,7 +156,7 @@ main(
 
     erroutput_type = ERR_INTERACTIVE;
 
-    parse_server_conf(argc, argv, &new_argc, &new_argv);
+    parse_conf(argc, argv, &new_argc, &new_argv);
 
     if(new_argc < 3) usage();
 
@@ -1855,10 +1855,10 @@ disklist_one(
     case COMP_BEST:
 	printf("CLIENT BEST\n");
 	break;
-    case COMP_SERV_FAST:
+    case COMP_SERVER_FAST:
 	printf("SERVER FAST\n");
 	break;
-    case COMP_SERV_BEST:
+    case COMP_SERVER_BEST:
 	printf("SERVER BEST\n");
 	break;
     }
