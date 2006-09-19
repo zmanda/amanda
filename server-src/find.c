@@ -782,7 +782,7 @@ search_logfile(
     filenum = (off_t)0;
     passlabel = 1;
     while(get_logline(logf) && passlabel) {
-	if((curlog == L_SUCCESS || curlog == L_CHUNK) &&
+	if((curlog == L_SUCCESS || curlog == L_CHUNK || curlog == L_PARTIAL) &&
 				curprog == P_TAPER && passlabel){
 	    filenum++;
 	}
@@ -796,7 +796,7 @@ search_logfile(
 	    }
 	}
 	partnum = "--";
-	if(curlog == L_SUCCESS || curlog == L_FAIL || curlog == L_CHUNK) {
+	if(curlog == L_SUCCESS || curlog == L_PARTIAL || curlog == L_FAIL || curlog == L_CHUNK) {
 	    s = curstr;
 	    ch = *s++;
 
@@ -889,6 +889,8 @@ search_logfile(
 		    new_output_find->filenum=filenum;
 		    if(curlog == L_SUCCESS || curlog == L_CHUNK) 
 			new_output_find->status=stralloc("OK");
+		    else if(curlog == L_PARTIAL)
+			new_output_find->status=stralloc("PARTIAL");
 		    else
 			new_output_find->status=stralloc(rest);
 		    *output_find=new_output_find;

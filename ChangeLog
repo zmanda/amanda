@@ -1,4 +1,7 @@
 2006-09-19  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/find.c (search_logfile): Count 'PARTIAL taper line'.
+
+2006-09-19  Jean-Louis Martineau <martineau@zmanda.com>
 	Patch by Paul Bijens
 	* server-src/amcheck.c: Print "tapelist" instead of "tapefile".
 
