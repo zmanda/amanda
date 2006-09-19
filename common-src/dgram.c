@@ -57,10 +57,6 @@ dgram_bind(
     socklen_t len;
     struct sockaddr_in name;
     int save_errno;
-#if defined(USE_REUSEADDR)
-    const int on = 1;
-    int r;
-#endif
 
     *portp = (in_port_t)0;
     if((s = socket(AF_INET, SOCK_DGRAM, 0)) == -1) {

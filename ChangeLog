@@ -1,4 +1,7 @@
 2006-09-19  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/dgram.c (dgram_bind): Remove unused variables.
+
+2006-09-19  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.c, common-src/conffile.h: Add debug_amandad,
 	  debug_amidxtaped, debug_amindexd, debug_amrecover, debug_auth,
 	  debug_event, debug_holding, debug_protocol, debug_planner,
