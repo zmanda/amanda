@@ -1,4 +1,7 @@
 2006-09-19  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/dgram.c (dgram_bind): Don't set SO_REUSEADDR on socket.
+
+2006-09-19  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/util.c (connect_port): Make EHOSTUNREACH and ENETUNREACH
 					    fatal error.
 

@@ -84,16 +84,6 @@ dgram_bind(
     name.sin_family = (sa_family_t)AF_INET;
     name.sin_addr.s_addr = INADDR_ANY;
 
-#ifdef USE_REUSEADDR
-    r = setsockopt(s, SOL_SOCKET, SO_REUSEADDR,
-	(void *)&on, (socklen_t)sizeof(on));
-    if (r < 0) {
-	dbprintf(("%s: dgram_bind: setsockopt(SO_REUSEADDR) failed: %s\n",
-		  debug_prefix(NULL),
-		  strerror(errno)));
-    }
-#endif
-
     /*
      * If a port range was specified, we try to get a port in that
      * range first.  Next, we try to get a reserved port.  If that
