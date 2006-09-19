@@ -1,3 +1,7 @@
+2006-09-19  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/util.c (connect_port): Make EHOSTUNREACH and ENETUNREACH
+					    fatal error.
+
 2006-09-18  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/util.c(dump_sockaddr): Convert from network to machine
 	                                    bytes order before printing.

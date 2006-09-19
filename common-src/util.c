@@ -250,10 +250,10 @@ connect_port(
     }
 
     if(servPort == NULL)
-	dbprintf(("%s: connect_port: Try  port %d: Available   - ",
+	dbprintf(("%s: connect_port: Try  port %d: Available   - \n",
 		  debug_prefix_time(NULL), port));
     else {
-	dbprintf(("%s: connect_port: Try  port %d: Owned by %s - ",
+	dbprintf(("%s: connect_port: Try  port %d: Owned by %s - \n",
 		  debug_prefix_time(NULL), port, servPort->s_name));
     }
 
@@ -305,6 +305,8 @@ connect_port(
 	aclose(s);
 	errno = save_errno;
 	if (save_errno == ECONNREFUSED ||
+	    save_errno == EHOSTUNREACH ||
+	    save_errno == ENETUNREACH ||
 	    save_errno == ETIMEDOUT)  {
 	    return -2	;
 	}
