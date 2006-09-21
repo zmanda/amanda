@@ -840,6 +840,11 @@ start_server_check(
 			quoted, (OFF_T_FMT_TYPE)holdingdisk_get_disksize(hdp));
 		disklow = 1;
 	    }
+	    else if(holdingdisk_get_disksize(hdp) == (off_t)0) {
+		fprintf(outf, "WARNING: holding disk %s: "
+			"use nothing because 'use' is set to 0\n",
+			quoted);
+	    }
 	    else if(holdingdisk_get_disksize(hdp) > (off_t)0) {
 		if(fs.avail < holdingdisk_get_disksize(hdp)) {
 		    fprintf(outf,
@@ -855,14 +860,17 @@ start_server_check(
 		else {
 		    fprintf(outf,
 			    "Holding disk %s: " OFF_T_FMT
-			    " %sB disk space available, that's plenty\n",
-			    quoted, (OFF_T_FMT_TYPE)(fs.avail/(off_t)unitdivisor),
+			    " %sB disk space available,"
+			    " using " OFF_T_FMT " %sB as requested\n",
+			    quoted,
+			    (OFF_T_FMT_TYPE)(fs.avail/(off_t)unitdivisor),
+			    displayunit,
+			    (OFF_T_FMT_TYPE)(holdingdisk_get_disksize(hdp)/(off_t)unitdivisor),
 			    displayunit);
 		}
 	    }
 	    else {
-		assert(holdingdisk_get_disksize(hdp) < (off_t)0);
-		if((fs.avail + holdingdisk_get_disksize(hdp)) <= (off_t)0) {
+		if((fs.avail + holdingdisk_get_disksize(hdp)) < (off_t)0) {
 		    fprintf(outf,
 			    "WARNING: holding disk %s: "
 			    "only " OFF_T_FMT " %sB free, using nothing\n",

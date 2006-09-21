@@ -1,3 +1,6 @@
+2006-09-21  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amcheck.c: Don't assert if holding use is set to 0.
+
 2006-09-19  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/find.c (search_logfile): Count 'PARTIAL taper line'.
 
