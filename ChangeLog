@@ -1,3 +1,8 @@
+2006-09-22  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/packet.c: Fix use of arglist_start/arglist_end.
+	* server-src/amindexd.c: Fix use of vsnprintf (for IRIX).
+	* server-src/logfile.c: Fix use of arglist_start/arglist_end.
+
 2006-09-21  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amcheck.c: Don't assert if holding use is set to 0.
 

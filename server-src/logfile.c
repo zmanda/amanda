@@ -104,6 +104,7 @@ printf_arglist_function2(char *log_genstring, logtype_t, typ, char *, pname, cha
     arglist_start(argp, format);
     vsnprintf(linebuf, SIZEOF(linebuf)-1, format, argp);
 						/* -1 to allow for '\n' */
+    arglist_end(argp);
     return(vstralloc(leader, linebuf, "\n", NULL));
 }
 

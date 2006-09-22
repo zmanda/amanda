@@ -301,7 +301,7 @@ printf_arglist_function1(static void reply, int, n, char *, fmt)
 	len = vsnprintf(reply_buffer, reply_buffer_size, fmt, args);
 	arglist_end(args);
 
-	if (len > -1 && (size_t)len < reply_buffer_size)
+	if (len > -1 && (size_t)len < reply_buffer_size-1)
 	    break;
 
 	reply_buffer_size *= 2;
@@ -340,7 +340,7 @@ printf_arglist_function1(static void lreply, int, n, char *, fmt)
 	len = vsnprintf(reply_buffer, reply_buffer_size, fmt, args);
 	arglist_end(args);
 
-	if (len > -1 && (size_t)len < reply_buffer_size)
+	if (len > -1 && (size_t)len < reply_buffer_size-1)
 	    break;
 
 	reply_buffer_size *= 2;
@@ -381,7 +381,7 @@ printf_arglist_function1(static void fast_lreply, int, n, char *, fmt)
 	len = vsnprintf(reply_buffer, reply_buffer_size, fmt, args);
 	arglist_end(args);
 
-	if (len > -1 && (size_t)len < reply_buffer_size)
+	if (len > -1 && (size_t)len < reply_buffer_size-1)
 	    break;
 
 	reply_buffer_size *= 2;

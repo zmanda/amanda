@@ -54,6 +54,7 @@ printf_arglist_function2(void pkt_init, pkt_t *, pkt, pktype_t, type,
     const char *, fmt)
 {
     va_list	argp;
+    int         len;
 
     assert(pkt != NULL);
     assert(strcmp(pkt_type2str(type), "BOGUS") != 0);
@@ -62,14 +63,16 @@ printf_arglist_function2(void pkt_init, pkt_t *, pkt, pktype_t, type,
     pkt->type = type;
     pkt->packet_size = 1000;
     pkt->body = alloc(pkt->packet_size);
-    arglist_start(argp, fmt);
-    while (vsnprintf(pkt->body, pkt->packet_size, fmt, argp) >=
-		(int)(pkt->packet_size - 1)) {
+    while(1) {
+	arglist_start(argp, fmt);
+	len = vsnprintf(pkt->body, pkt->packet_size, fmt, argp);
+	arglist_end(argp);
+	if (len < (int)(pkt->packet_size - 1))
+	    break;
 	pkt->packet_size *= 2;
 	amfree(pkt->body);
 	pkt->body = alloc(pkt->packet_size);
     }
-    arglist_end(argp);
     pkt->size = strlen(pkt->body);
 }
 
@@ -79,6 +82,7 @@ printf_arglist_function2(void pkt_init, pkt_t *, pkt, pktype_t, type,
 printf_arglist_function1(void pkt_cat, pkt_t *, pkt, const char *, fmt)
 {
     size_t	len;
+    int         lenX;
     va_list	argp;
     char *	pktbody;
 
@@ -87,19 +91,19 @@ printf_arglist_function1(void pkt_cat, pkt_t *, pkt, const char *, fmt)
 
     len = strlen(pkt->body);
 
-    arglist_start(argp, fmt);
-    while (vsnprintf(pkt->body + len, pkt->packet_size - len, fmt,argp) >=
-		(int)(pkt->packet_size - len - 1)) {
+    while(1) {
+	arglist_start(argp, fmt);
+        lenX = vsnprintf(pkt->body + len, pkt->packet_size - len, fmt,argp);
+	arglist_end(argp);
+	if (lenX < (int)(pkt->packet_size - len - 1))
+	    break;
 	pkt->packet_size *= 2;
 	pktbody = alloc(pkt->packet_size);
 	strncpy(pktbody, pkt->body, len);
 	pktbody[len] = '\0';
 	amfree(pkt->body);
 	pkt->body = pktbody;
-	arglist_end(argp);
-	arglist_start(argp, fmt);
     }
-    arglist_end(argp);
     pkt->size = strlen(pkt->body);
 }
 
