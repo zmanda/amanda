@@ -33,6 +33,7 @@
 #include "arglist.h"
 #include "dgram.h"
 #include "util.h"
+#include "conffile.h"
 
 void
 dgram_socket(
@@ -57,7 +58,9 @@ dgram_bind(
     socklen_t len;
     struct sockaddr_in name;
     int save_errno;
+    int *portrange;
 
+    portrange = getconf_intrange(CNF_RESERVED_UDP_PORT);
     *portp = (in_port_t)0;
     if((s = socket(AF_INET, SOCK_DGRAM, 0)) == -1) {
 	save_errno = errno;
@@ -92,25 +95,10 @@ dgram_bind(
      * is within the range it requires.
      */
     for (retries = 0; ; retries++) {
-#ifdef UDPPORTRANGE
-	if (bind_portrange(s, &name, UDPPORTRANGE, "udp") == 0)
+	if (bind_portrange(s, &name, portrange[0], portrange[1], "udp") == 0)
 	    goto out;
-	dbprintf(("%s: dgram_bind: Could to bind to port in range: %d - %d.\n",
-		  debug_prefix_time(NULL), UDPPORTRANGE));
-#endif
-
-	if (bind_portrange(s, &name, (in_port_t)512,
-		(in_port_t)(IPPORT_RESERVED - 1), "udp") == 0)
-	    goto out;
-	dbprintf(("%s: dgram_bind: Could to bind to port in range: 512 - %d.\n",
-		  debug_prefix_time(NULL), IPPORT_RESERVED - 1));
-
-	name.sin_port = INADDR_ANY;
-	if (bind(s, (struct sockaddr *)&name, (socklen_t)sizeof(name)) == 0)
-	    goto out;
-	dbprintf(("%s: dgram_bind: Could to bind to any port: %s\n",
-		  debug_prefix_time(NULL), strerror(errno)));
-
+	dbprintf(("%s: dgram_bind: Could not bind to port in range: %d - %d.\n",
+		  debug_prefix_time(NULL), portrange[0], portrange[1]));
 	if (retries >= BIND_CYCLE_RETRIES) {
 	    dbprintf(("%s: dgram_bind: Giving up...\n",
 		      debug_prefix_time(NULL)));

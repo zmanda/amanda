@@ -33,6 +33,7 @@
 #include "dgram.h"
 #include "stream.h"
 #include "util.h"
+#include "conffile.h"
 
 /* local functions */
 static void try_socksize(int sock, int which, size_t size);
@@ -55,6 +56,7 @@ stream_server(
 #endif
     struct sockaddr_in server;
     int save_errno;
+    int *portrange;
 
     *portp = USHRT_MAX;				/* in case we error exit */
     if((server_socket = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
@@ -104,26 +106,24 @@ stream_server(
      * is within the range it requires.
      */
     for (retries = 0; ; retries++) {
-#ifdef TCPPORTRANGE
-	if (bind_portrange(server_socket, &server, TCPPORTRANGE, "tcp") == 0)
-	    goto out;
-	dbprintf(("%s: stream_server: Could not bind to port in range: %d - %d.\n",
-		  debug_prefix_time(NULL), TCPPORTRANGE));
-#endif
-
-	if(priv) {
-	    if (bind_portrange(server_socket, &server,
-			   (in_port_t)512, (in_port_t)(IPPORT_RESERVED - 1), "tcp") == 0)
-		goto out;
-	    dbprintf(("%s: stream_server: Could not bind to port in range 512 - %d.\n",
-		      debug_prefix_time(NULL), IPPORT_RESERVED - 1));
+	if (priv) {
+	    portrange = getconf_intrange(CNF_RESERVED_TCP_PORT);
+	} else {
+	    portrange = getconf_intrange(CNF_UNRESERVED_TCP_PORT);
 	}
 
-	server.sin_port = INADDR_ANY;
-	if (bind(server_socket, (struct sockaddr *)&server, (socklen_t)sizeof(server)) == 0)
-	    goto out;
-	dbprintf(("%s: stream_server: Could not bind to any port: %s\n",
-		  debug_prefix_time(NULL), strerror(errno)));
+	if (portrange[0] != 0 && portrange[1] != 0) {
+	    if (bind_portrange(server_socket, &server, portrange[0], portrange[1], "tcp") == 0)
+		goto out;
+	    dbprintf(("%s: stream_server: Could not bind to port in range: %d - %d.\n",
+		      debug_prefix_time(NULL), portrange[0], portrange[1]));
+	} else {
+	    server.sin_port = INADDR_ANY;
+	    if (bind(server_socket, (struct sockaddr *)&server, (socklen_t)sizeof(server)) == 0)
+		goto out;
+	    dbprintf(("%s: stream_server: Could not bind to any port: %s\n",
+		      debug_prefix_time(NULL), strerror(errno)));
+	}
 
 	if (retries >= BIND_CYCLE_RETRIES)
 	    break;
@@ -195,6 +195,7 @@ stream_client_internal(
     int save_errno;
     char *f;
     int client_socket;
+    int *portrange;
 
     f = priv ? "stream_client_privileged" : "stream_client";
 
@@ -229,49 +230,20 @@ stream_client_internal(
      * is within the range it requires.
      */
     if (priv) {
-#ifdef LOW_TCPPORTRANGE
-	client_socket = connect_portrange(&claddr, LOW_TCPPORTRANGE,
-                                          "tcp", &svaddr, nonblock);
-#else
-	client_socket = connect_portrange(&claddr, (socklen_t)512,
-					  (socklen_t)(IPPORT_RESERVED - 1),
-                                          "tcp", &svaddr, nonblock);
-#endif
-					  
-	if (client_socket > 0)
-	    goto out;
-
-#ifdef LOW_TCPPORTRANGE
-	dbprintf((
-		"%s: stream_client: Could not bind to port in range %d-%d.\n",
-		debug_prefix_time(NULL), LOW_TCPPORTRANGE));
-#else
-	dbprintf((
-		"%s: stream_client: Could not bind to port in range 512-%d.\n",
-		debug_prefix_time(NULL), IPPORT_RESERVED - 1));
-#endif
+	portrange = getconf_intrange(CNF_RESERVED_TCP_PORT);
+    } else {
+	portrange = getconf_intrange(CNF_UNRESERVED_TCP_PORT);
     }
-
-#ifdef TCPPORTRANGE
-    client_socket = connect_portrange(&claddr, TCPPORTRANGE,
+    client_socket = connect_portrange(&claddr, portrange[0], portrange[1],
                                       "tcp", &svaddr, nonblock);
-    if(client_socket > 0)
-	goto out;
-
-    dbprintf(("%s: stream_client: Could not bind to port in range %d - %d.\n",
-	      debug_prefix_time(NULL), TCPPORTRANGE));
-#endif
-
-    client_socket = connect_portrange(&claddr, (socklen_t)(IPPORT_RESERVED+1),
-				      (socklen_t)(65535),
-                                      "tcp", &svaddr, nonblock);
-
-    if(client_socket > 0)
-	goto out;
-
     save_errno = errno;
-    dbprintf(("%s: stream_client: Could not bind to any port: %s\n",
-	      debug_prefix_time(NULL), strerror(save_errno)));
+					  
+    if (client_socket > 0)
+	goto out;
+
+    dbprintf(("%s: stream_client: Could not bind to port in range %d-%d.\n",
+	      debug_prefix_time(NULL), portrange[0], portrange[1]));
+
     errno = save_errno;
     return -1;
 

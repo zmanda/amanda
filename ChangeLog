@@ -1,4 +1,14 @@
 2006-09-22  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.h: New CONFTYPE_INTRANGE conftype_t.
+	* common-src/conffile.c: New CNF_RESERVED_UDP_PORT,
+	                         CNF_RESERVED_TCP_PORT,
+	                         CNF_UNRESERVED_TCP_PORT config options.
+	* common-src/dgram.c: Use the new CNF_RESERVED_UDP_PORT option.
+	* common-src/stream.c: Use the new CNF_*RESERVED_PORT options.
+	* man/xml-source/amanda-client.conf.5.xml: Document it.
+	* man/xml-source/amanda.conf.5.xml: Document it.
+
+2006-09-22  Jean-Louis Martineau <martineau@zmanda.com>
 	Patch by William Jojo
 	* client-src/sendsize.c: Fix #endif for AIX.
 

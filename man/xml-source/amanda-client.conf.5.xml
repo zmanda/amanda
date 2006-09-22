@@ -348,6 +348,33 @@ Debug level of the sendbackup process</para>
   </listitem>
   </varlistentry>
 
+  <varlistentry>
+  <term><emphasis remap='B'>reserved-udp-port</emphasis> int,int</term>
+  <listitem>
+<para>Default: --with-udpportrange or 
+<emphasis remap='I'>512,1023</emphasis>.
+Reserved udp port that will be used (amrecover with bsd or bsdudp)</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><emphasis remap='B'>reserved-tcp-port</emphasis> int,int</term>
+  <listitem>
+<para>Default: --with-low-tcpportrange or 
+<emphasis remap='I'>512,1023</emphasis>.
+Reserved tcp port that will be used (amrecover with bsdtcp)</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><emphasis remap='B'>unreserved-tcp-port</emphasis> int,int</term>
+  <listitem>
+<para>Default: --with-tcpportrange or 
+<emphasis remap='I'>1025,65536</emphasis>.
+Unreserved tcp port that will be used (bsd, bsdudp)</para>
+  </listitem>
+  </varlistentry>
+
 </variablelist>
 </refsect2>
 </refsect1>
