@@ -1345,8 +1345,8 @@ getsize_dump(
 		       "0",
 #endif
 		       "1048576", "-", device, (char *)0, safe_env());
-# endif
 	    }
+# endif
 #endif
 	{
 	    error("exec %s failed or no dump program available: %s",
