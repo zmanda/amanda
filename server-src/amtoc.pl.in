@@ -166,7 +166,7 @@ while ( <$IF> ) {
   $level = $6;
   switch: {
     /START taper/ && do {
-      $tocfilename=&tfn($level) if ($#subs >= 0);
+      $tocfilename=&tfn($chunk) if ($#subs >= 0);
       if (!$tocfilename || ($tocfilename eq '-')) {$OF=STDOUT;}
       else {
           die ("Cannot open tocfile $tocfilename") unless open(OF,">$tocfilename");

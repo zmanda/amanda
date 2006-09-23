@@ -1,3 +1,7 @@
+2006-09-23  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amstatus.pl.in: Fix parsing of 'taper: wrote label' line.
+	* server-src/amtoc.pl.in: Fix parsing of 'START taper' line.
+
 2006-09-22  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.h: New CONFTYPE_INTRANGE conftype_t.
 	* common-src/conffile.c: New CNF_RESERVED_UDP_PORT,

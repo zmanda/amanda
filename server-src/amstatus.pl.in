@@ -732,7 +732,7 @@ while(<AMDUMP>) {
 			}
 		}
 	}
-	elsif(/taper: wrote label `(\S*)'/) {
+	elsif(/taper: .*wrote label `(\S*)'/) {
 		$nb_tape++;
 		$ntlabel{$nb_tape} = $1;
 		$ntpartition{$nb_tape} = 0;
