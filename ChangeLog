@@ -1,4 +1,15 @@
 2006-09-27  Jean-Louis Martineau <martineau@zmanda.com>
+	* restore-src/amfetchdump.c: Pass new prompt_in parameter to
+	                             search_tapes.
+	* restore-src/restore.c (search_tapes, load_manual_tape): New prompt_in
+	                                                          parameter.
+	* restore-src/restore.h (search_tapes): New prompt_in parameter.
+	* restore-src/amidxtaped.c: Set new 'FILE *' instead of reusing stdin
+	                            and stdout.
+	* server-src/amindexd.c: Set new 'FILE *' instead of reusing stdin
+	                         and stdout.
+
+2006-09-27  Jean-Louis Martineau <martineau@zmanda.com>
 	Patch by Orion Poplawski <orion@cora.nwra.com>
 	* server-src/planner.c: Add a skip_quoted_line() on error.
 

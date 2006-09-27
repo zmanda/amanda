@@ -98,6 +98,8 @@ static int process_ls_dump(char *, DUMP_ITEM *, int, char **);
 static size_t reply_buffer_size = 1;
 static char *reply_buffer = NULL;
 static char *amandad_auth = NULL;
+static FILE *cmdin;
+static FILE *cmdout;
 
 static void reply(int, char *, ...)
     __attribute__ ((format (printf, 2, 3)));
@@ -309,14 +311,14 @@ printf_arglist_function1(static void reply, int, n, char *, fmt)
 	reply_buffer = alloc(reply_buffer_size);
     }
 
-    if (printf("%03d %s\r\n", n, reply_buffer) < 0)
+    if (fprintf(cmdout,"%03d %s\r\n", n, reply_buffer) < 0)
     {
 	dbprintf(("%s: ! error %d (%s) in printf\n",
 		  debug_prefix_time(NULL), errno, strerror(errno)));
 	uncompress_remove = remove_files(uncompress_remove);
 	exit(1);
     }
-    if (fflush(stdout) != 0)
+    if (fflush(cmdout) != 0)
     {
 	dbprintf(("%s: ! error %d (%s) in fflush\n",
 		  debug_prefix_time(NULL), errno, strerror(errno)));
@@ -348,14 +350,14 @@ printf_arglist_function1(static void lreply, int, n, char *, fmt)
 	reply_buffer = alloc(reply_buffer_size);
     }
 
-    if (printf("%03d-%s\r\n", n, reply_buffer) < 0)
+    if (fprintf(cmdout,"%03d-%s\r\n", n, reply_buffer) < 0)
     {
 	dbprintf(("%s: ! error %d (%s) in printf\n",
 		  debug_prefix_time(NULL), errno, strerror(errno)));
 	uncompress_remove = remove_files(uncompress_remove);
 	exit(1);
     }
-    if (fflush(stdout) != 0)
+    if (fflush(cmdout) != 0)
     {
 	dbprintf(("%s: ! error %d (%s) in fflush\n",
 		  debug_prefix_time(NULL), errno, strerror(errno)));
@@ -389,7 +391,7 @@ printf_arglist_function1(static void fast_lreply, int, n, char *, fmt)
 	reply_buffer = alloc(reply_buffer_size);
     }
 
-    if (printf("%03d-%s\r\n", n, reply_buffer) < 0)
+    if (fprintf(cmdout,"%03d-%s\r\n", n, reply_buffer) < 0)
     {
 	dbprintf(("%s: ! error %d (%s) in printf\n",
 		  debug_prefix_time(NULL), errno, strerror(errno)));
@@ -1183,6 +1185,8 @@ main(
 	remote_hostname = newstralloc(remote_hostname, fp);
 	s[-1] = (char)ch;
 	amfree(fp);
+	cmdout = stdout;
+	cmdin = stdin;
     }
     else {
 	cmdfdout  = DATA_FD_OFFSET + 0;
@@ -1217,9 +1221,18 @@ main(
 	printf("\n");
 	fflush(stdin);
 	fflush(stdout);
-	if ((dup2(cmdfdout, fileno(stdout)) < 0)
-		 || (dup2(cmdfdin, fileno(stdin)) < 0)) {
-	    error("amandad: Failed to setup stdin or stdout");
+	fclose(stdin);
+	fclose(stdout);
+	
+	cmdout = fdopen(cmdfdout, "a");
+	if (!cmdout) {
+	    error("amindexd: Can't fdopen(cmdfdout): %s", strerror(errno));
+	    /*NOTREACHED*/
+	}
+
+	cmdin = fdopen(cmdfdin, "r");
+	if (!cmdin) {
+	    error("amindexd: Can't fdopen(cmdfdin): %s", strerror(errno));
 	    /*NOTREACHED*/
 	}
     }
@@ -1247,7 +1260,7 @@ main(
     {
 	/* get a line from the client */
 	while(1) {
-	    if((part = agets(stdin)) == NULL) {
+	    if((part = agets(cmdin)) == NULL) {
 		if(errno != 0) {
 		    dbprintf(("%s: ? read error: %s\n",
 			      debug_prefix_time(NULL), strerror(errno)));
