@@ -1742,6 +1742,7 @@ static void handle_result(
 	       && pkt->type == P_NAK
 	       && (strcmp(t - 1, "unknown service: noop") == 0
 		   || strcmp(t - 1, "noop: invalid service") == 0)) {
+		skip_quoted_line(s, ch);
 		continue;
 	    }
 	    errbuf = vstralloc(hostp->hostname,

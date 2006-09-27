@@ -1,3 +1,7 @@
+2006-09-27  Jean-Louis Martineau <martineau@zmanda.com>
+	Patch by Orion Poplawski <orion@cora.nwra.com>
+	* server-src/planner.c: Add a skip_quoted_line() on error.
+
 2006-09-23  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amstatus.pl.in: Fix parsing of 'taper: wrote label' line.
 	* server-src/amtoc.pl.in: Fix parsing of 'START taper' line.
