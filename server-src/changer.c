@@ -331,6 +331,7 @@ changer_command(
     char num2[NUM_STR_SIZE];
     char *cmdstr;
     pid_t pid, changer_pid = 0;
+    int fd_to_close[4], *pfd_to_close = fd_to_close;
 
     if (*tapechanger != '/') {
 	tapechanger = vstralloc(libexecdir, "/", tapechanger, versionsuffix(),
@@ -360,11 +361,20 @@ changer_command(
 	goto failed;
     }
 
-    /* make sure fd[0] != 1 */
-    if(fd[0] == 1) {
+    /* make sure fd[0] > 2  && fd[1] > 2 */
+    pfd_to_close = fd_to_close;
+    while(fd[0] <= 2) {
 	int a = dup(fd[0]);
-	close(fd[0]);
+	*pfd_to_close++ = fd[0];
 	fd[0] = a;
+    }
+    while(fd[1] <= 2) {
+	int a = dup(fd[1]);
+	*pfd_to_close++ = fd[1];
+	fd[1] = a;
+    }
+    while (pfd_to_close > fd_to_close) {
+	close(*--pfd_to_close);
     }
 
     if(fd[0] < 0 || fd[0] >= (int)FD_SETSIZE) {
