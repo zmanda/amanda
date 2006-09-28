@@ -339,7 +339,7 @@ bsd_stream_client(
 	STREAM_BUFSIZE, STREAM_BUFSIZE, &bs->port, 0);
     if (bs->fd < 0) {
 	security_seterror(&bh->sech,
-	    "can't connect stream to %s port %hd: %s", bh->hostname,
+	    "can't connect stream to %s port %d: %s", bh->hostname,
 	    id, strerror(errno));
 	amfree(bs);
 	return (NULL);

@@ -587,7 +587,7 @@ tcpma_stream_client(
 
     if (id <= 0) {
 	security_seterror(&rh->sech,
-	    "%hd: invalid security stream id", id);
+	    "%d: invalid security stream id", id);
 	return (NULL);
     }
 
@@ -607,7 +607,7 @@ tcpma_stream_client(
 	rh->rc = rs->rc;
     }
 
-    auth_debug(1, ("%s: sec: stream_client: connected to stream %hd\n",
+    auth_debug(1, ("%s: sec: stream_client: connected to stream %d\n",
 		   debug_prefix_time(NULL), id));
 
     return (rs);
@@ -1225,8 +1225,8 @@ udp_inithandle(
     /*
      * Save the hostname and port info
      */
-    auth_debug(1, ("%s: udp_inithandle port %hd handle %s sequence %d\n",
-		   debug_prefix_time(NULL), ntohs(port),
+    auth_debug(1, ("%s: udp_inithandle port %hu handle %s sequence %d\n",
+		   debug_prefix_time(NULL), (in_port_t)ntohs(port),
 		   handle, sequence));
     assert(he != NULL);
 
@@ -2370,7 +2370,8 @@ check_security(
     if (ntohs(addr->sin_port) >= IPPORT_RESERVED) {
 	char number[NUM_STR_SIZE];
 
-	snprintf(number, SIZEOF(number), "%hd", (short)ntohs(addr->sin_port));
+	snprintf(number, SIZEOF(number), "%hu",
+		 (in_port_t)ntohs(addr->sin_port));
 	*errstr = vstralloc("[",
 			    "host ", remotehost, ": ",
 			    "port ", number, " not secure",

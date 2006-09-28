@@ -1,4 +1,8 @@
 2006-09-28  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/bsd-security.c: Fix %hd printf argument format.
+	* common-src/security-util.c: Fix %hd printf argument format.
+
+2006-09-28  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.c (client_keytab): Add DEBUG_*.
 	* oldrecover-src/amrecover.c: Call read_clientconf.
 
