@@ -1225,8 +1225,8 @@ udp_inithandle(
     /*
      * Save the hostname and port info
      */
-    auth_debug(1, ("%s: udp_inithandle port %hu handle %s sequence %d\n",
-		   debug_prefix_time(NULL), (in_port_t)ntohs(port),
+    auth_debug(1, ("%s: udp_inithandle port %u handle %s sequence %d\n",
+		   debug_prefix_time(NULL), (unsigned int)ntohs(port),
 		   handle, sequence));
     assert(he != NULL);
 
@@ -2370,8 +2370,8 @@ check_security(
     if (ntohs(addr->sin_port) >= IPPORT_RESERVED) {
 	char number[NUM_STR_SIZE];
 
-	snprintf(number, SIZEOF(number), "%hu",
-		 (in_port_t)ntohs(addr->sin_port));
+	snprintf(number, SIZEOF(number), "%u",
+		 (unsigned int)ntohs(addr->sin_port));
 	*errstr = vstralloc("[",
 			    "host ", remotehost, ": ",
 			    "port ", number, " not secure",
