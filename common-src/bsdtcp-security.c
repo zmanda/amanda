@@ -186,11 +186,17 @@ bsdtcp_accept(
     struct hostent *he;
 
     len = sizeof(sin);
-    if (getpeername(in, (struct sockaddr *)&sin, &len) < 0)
+    if (getpeername(in, (struct sockaddr *)&sin, &len) < 0) {
+	dbprintf(("%s: getpeername returned: %s\n", debug_prefix_time(NULL),
+		  strerror(errno)));
 	return;
+    }
     he = gethostbyaddr((void *)&sin.sin_addr, sizeof(sin.sin_addr), AF_INET);
-    if (he == NULL)
+    if (he == NULL) {
+	dbprintf(("%s: he returned NULL: h_errno = %d\n",
+		  debug_prefix_time(NULL), h_errno));
 	return;
+    }
 
     rc = sec_tcp_conn_get(he->h_name, 0);
     rc->recv_security_ok = &bsd_recv_security_ok;

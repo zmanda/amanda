@@ -1,4 +1,7 @@
 2006-09-29  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/bsdtcp-security.c: Add logging on error.
+
+2006-09-29  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amoverview.pl.in: Use shellwords instead of quotewords,
 	  don't add date for disk not in the disklist.
 
