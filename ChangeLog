@@ -1,3 +1,7 @@
+2006-09-29  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amoverview.pl.in: Use shellwords instead of quotewords,
+	  don't add date for disk not in the disklist.
+
 2006-09-28  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/bsd-security.c: Fix %hd printf argument format.
 	* common-src/security-util.c: Fix %hd printf argument format.

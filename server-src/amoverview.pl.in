@@ -121,21 +121,22 @@ my $fh = new FileHandle "$amadmin $opt_config find|" or
     die "$0: error in opening `$amadmin $opt_config find' pipe: $!\n";
 <$fh>;
 while (<$fh>) {
-print "'$_'\n";
     chomp;
     next if /found Amanda directory/;
     next if /skipping cruft directory/;
     next if /skip-incr/;
-    ($date, $host, $disk, $level, $tape, $file, $part, $status) = quotewords(" ", 0, $_);
+    ($date, $host, $disk, $level, $tape, $file, $part, $status) = shellwords($_);
     next if $date eq 'date';
     next if $date eq 'Warning:';
     next if $date eq 'Scanning';
     next if $date eq "";
     if ($date =~ /^\d\d\d\d-\d\d-\d\d$/) {
-	defined($level{$host}{$disk}{$date}) or
-	    $level{$host}{$disk}{$date} = '';
-	$level{$host}{$disk}{$date} .= ($status eq 'OK') ? $level : 'E';
-	$dates{$date}++;
+	if(defined $disks{$host}{$disk}) {
+	    defined($level{$host}{$disk}{$date}) or
+		$level{$host}{$disk}{$date} = '';
+	    $level{$host}{$disk}{$date} .= ($status eq 'OK') ? $level : 'E';
+	    $dates{$date}++;
+	}
     }
     else {
 	print "bad date $date in $_\n";
