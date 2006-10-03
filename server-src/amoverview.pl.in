@@ -125,11 +125,24 @@ while (<$fh>) {
     next if /found Amanda directory/;
     next if /skipping cruft directory/;
     next if /skip-incr/;
-    ($date, $host, $disk, $level, $tape, $file, $part, $status) = shellwords($_);
+
+    ($date, $time, $host, $disk, $level, $tape, $file, $part, $status) = shellwords($_);
+
     next if $date eq 'date';
     next if $date eq 'Warning:';
     next if $date eq 'Scanning';
     next if $date eq "";
+
+    if($time !~/^\d\d:\d\d:\d\d$/) {
+	$status = $part;
+	$part = $file;
+	$file = $tape;
+	$tape = $level;
+	$level = $disk;
+	$disk = $host;
+	$host = $time;
+    }
+
     if ($date =~ /^\d\d\d\d-\d\d-\d\d$/) {
 	if(defined $disks{$host}{$disk}) {
 	    defined($level{$host}{$disk}{$date}) or

@@ -1,4 +1,7 @@
 2006-10-03  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amoverview.pl.in: Fix parsing of time field from amadmin.
+
+2006-10-03  Jean-Louis Martineau <martineau@zmanda.com>
 	* restore-src/amidxtaped.c, restore-src/restore.c,
 	  server-src/amcheck.c, server-src/amflush.c,
 	  server-src/amlabel.c, server-src/taper.c,
