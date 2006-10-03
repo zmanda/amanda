@@ -1731,8 +1731,14 @@ search_tapes(
 
     /* Suss what tape device we're using, whether there's a changer, etc. */
     if(!use_changer || (have_changer = changer_init()) == 0) {
-	if(flags->alt_tapedev) cur_tapedev = stralloc(flags->alt_tapedev);
-	else if(!cur_tapedev) cur_tapedev = getconf_str(CNF_TAPEDEV);
+	if (flags->alt_tapedev) {
+	    cur_tapedev = stralloc(flags->alt_tapedev);
+	} else if(!cur_tapedev) {
+	    cur_tapedev = getconf_str(CNF_TAPEDEV);
+	    if (cur_tapedev == NULL) {
+		error("No tapedev specified");
+	    }
+	}
 	/* XXX oughta complain if no config is loaded */
 	fprintf(stderr, "%s: Using tapedev %s\n", get_pname(), cur_tapedev);
  	have_changer = 0;

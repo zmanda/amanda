@@ -251,6 +251,7 @@ main(
     char *conf_tapetype;
     tapetype_t *tape;
     char *line;
+    char *tapedev;
 
     safe_fd(DATA_FD_OFFSET, 4);
     safe_cd();
@@ -511,11 +512,11 @@ main(
 	use_changer = 1;
     }
 
+    tapedev = getconf_str(CNF_TAPEDEV);
     /* If we'll be stepping on the tape server's devices, lock them. */
     if(re_config &&
-       (use_changer || (rst_flags->alt_tapedev &&
-                        strcmp(rst_flags->alt_tapedev,
-                               getconf_str(CNF_TAPEDEV)) == 0) ) ) {
+       (use_changer || (rst_flags->alt_tapedev && tapedev &&
+                        strcmp(rst_flags->alt_tapedev, tapedev) == 0) ) ) {
 	dbprintf(("%s: Locking devices\n", get_pname()));
 	parent_pid = getpid();
 	atexit(cleanup);
@@ -587,11 +588,11 @@ main(
 	      get_pname(), rst_flags->pipe_to_fd));
 
 
+    tapedev = getconf_str(CNF_TAPEDEV);
     if(get_lock == 0 &&
        re_config && 
-       (use_changer || (rst_flags->alt_tapedev &&
-                        strcmp(rst_flags->alt_tapedev,
-                               getconf_str(CNF_TAPEDEV)) == 0) ) ) {
+       (use_changer || (rst_flags->alt_tapedev && tapedev &&
+                        strcmp(rst_flags->alt_tapedev, tapedev) == 0) ) ) {
 	send_message(cmdout, rst_flags, their_features,
 		     "%s exists: amdump or amflush is already running, "
 		     "or you must run amcleanup", 

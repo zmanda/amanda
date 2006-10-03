@@ -314,10 +314,16 @@ int taper_scan(char* wantlabel,
     }
     else {
 	*tapedev = stralloc(getconf_str(CNF_TAPEDEV));
-	result =  scan_read_label(*tapedev, wantlabel,
-				  gotlabel, timestamp, &error_message);
-	taperscan_output_callback(data, error_message);
-	amfree(error_message);
+	if (*tapedev == NULL) {
+	    result = -1;
+	    taperscan_output_callback(data, "No tapedev spefified");
+	} else {
+	    *tapedev = stralloc(*tapedev);
+	    result =  scan_read_label(*tapedev, wantlabel,
+				      gotlabel, timestamp, &error_message);
+	    taperscan_output_callback(data, error_message);
+	    amfree(error_message);
+	}
     }
 
     return result;

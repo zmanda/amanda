@@ -188,7 +188,12 @@ main(
 		    new_argv[0], conffile);
 	    usage();
 	}
-	tapename = stralloc(getconf_str(CNF_TAPEDEV));
+	tapename = getconf_str(CNF_TAPEDEV);
+	if (tapename == NULL) {
+	    error("No tapedev specified");
+	} else {
+	    tapename = stralloc(tapename);
+	}
 #ifdef HAVE_LIBVTBLC
 	rawtapedev = stralloc(getconf_str(CNF_RAWTAPEDEV));
 #endif /* HAVE_LIBVTBLC */

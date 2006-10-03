@@ -803,7 +803,11 @@ start_server_check(
 	amfree(tape_dir);
 	amfree(holdfile);
 	tapename = getconf_str(CNF_TAPEDEV);
-	if (strncmp(tapename, "null:", 5) == 0) {
+	if (tapename == NULL) {
+	    fprintf(outf, "WARNING: No tapedev specified\n");
+	    testtape = 0;
+	    do_tapechk = 0;
+	} else if (strncmp(tapename, "null:", 5) == 0) {
 	    fprintf(outf,
 		    "WARNING: tapedev is %s, dumps will be thrown away\n",
 		    tapename);

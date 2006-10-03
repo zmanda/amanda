@@ -1,4 +1,10 @@
 2006-10-03  Jean-Louis Martineau <martineau@zmanda.com>
+	* restore-src/amidxtaped.c, restore-src/restore.c,
+	  server-src/amcheck.c, server-src/amflush.c,
+	  server-src/amlabel.c, server-src/taper.c,
+	  server-src/taperscan.c: Check for CNF_TAPEDEV == NULL.
+
+2006-10-03  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.c: Don't set CNF_TAPEDEV to DEFAULT_TAPE_DEVICE.
 	* configure.in: Don't set DEFAULT_TAPE_DEVICE.
 

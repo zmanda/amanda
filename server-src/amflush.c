@@ -92,6 +92,7 @@ main(
     char **new_argv, **my_argv;
     char *errstr;
     struct tm *tm;
+    char *tapedev;
 
     safe_fd(-1, 0);
     safe_cd();
@@ -227,6 +228,11 @@ main(
 				 NULL);
     logroll_program = vstralloc(libexecdir, "/", "amlogroll", versionsuffix(),
 				NULL);
+
+    tapedev = getconf_str(CNF_TAPEDEV);
+    if (tapedev == NULL) {
+	error("No tapedev specified");
+    }
 
     if(datearg) {
 	sle_t *dir, *next_dir;
