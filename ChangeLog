@@ -1,4 +1,9 @@
 2006-10-03  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amcleanupdisk.c: Accept -o arguments.
+	* server-src/amcleanup.sh.in: Add missing 'shift' for non-linux system.
+	                              Accept -o arguments.
+
+2006-10-03  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amoverview.pl.in: Fix parsing of time field from amadmin.
 
 2006-10-03  Jean-Louis Martineau <martineau@zmanda.com>

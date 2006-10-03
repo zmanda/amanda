@@ -66,8 +66,8 @@ main(
     /* Don't die when child closes pipe */
     signal(SIGPIPE, SIG_IGN);
 
-    if(main_argc != 2) {
-	error("Usage: amcleanupdisk%s <confdir>", versionsuffix());
+    if(main_argc < 2) {
+	error("Usage: amcleanupdisk%s <config>", versionsuffix());
 	/*NOTREACHED*/
     }
 
