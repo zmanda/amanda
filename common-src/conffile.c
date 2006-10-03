@@ -1075,12 +1075,6 @@ init_defaults(
 #endif
 #endif
     conf_init_string(&conf_data[CNF_TAPE_SERVER], s);
-#ifdef DEFAULT_TAPE_DEVICE
-    s = DEFAULT_TAPE_DEVICE;
-#else
-    s = NULL;
-#endif
-
     conf_init_string(&conf_data[CNF_AUTH], "bsd");
     conf_init_string(&conf_data[CNF_SSH_KEYS], "");
     conf_init_string(&conf_data[CNF_AMANDAD_PATH], "");
@@ -1100,7 +1094,7 @@ init_defaults(
 #ifdef DEFAULT_TAPE_DEVICE
     s = DEFAULT_TAPE_DEVICE;
 #else
-    s = "/dev/rmt8";
+    s = NULL;
 #endif
     conf_init_string(&conf_data[CNF_TAPEDEV], s);
 #ifdef DEFAULT_CHANGER_DEVICE

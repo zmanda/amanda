@@ -1,3 +1,7 @@
+2006-10-03  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c: Don't set CNF_TAPEDEV to DEFAULT_TAPE_DEVICE.
+	* configure.in: Don't set DEFAULT_TAPE_DEVICE.
+
 2006-09-29  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/bsdtcp-security.c: Add logging on error.
 

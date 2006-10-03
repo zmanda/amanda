@@ -556,49 +556,6 @@ AC_ARG_WITH(tape-device,
 	*) DEFAULT_TAPE_DEVICE="$withval"
 	  ;;
 	esac
-    ],
-    [
-	if test -z "$DEFAULT_TAPE_DEVICE"; then
-	    AC_MSG_CHECKING(for non-rewinding tape device)
-	    dnl Check for the /dev/rmt directory and use what's in there.
-	    dnl Otherwise look for tape devices in /dev.  For the devices
-	    dnl in /dev/rmt, we want to use the Berkeley behavior of
-	    dnl reading the first record of the next tape file after 0
-	    dnl bytes are returned upon reading to the next tape mark,
-	    dnl instead of returning an error.  Look for devices that have
-	    dnl a 'b' in their name.
-	    tape_dev=
-	    nr_tape_dev=
-	    if test -d /dev/rmt; then
-
-		dnl See if we can find two devices, one being the norewind
-		dnl version of the other.  Devices in this directory are
-		dnl normally a digit followed by some characters.  We also
-		dnl want the Berkely behavior, since Amanda needs it for
-		dnl amrestore.
-
-		for num in 9 8 7 6 5 4 3 2 1 0; do
-		    td=/dev/rmt/${num}b
-		    ntd=/dev/rmt/${num}bn
-		    if test -r $td -a -r $ntd; then
-			tape_dev=$td
-			nr_tape_dev=$ntd
-		    fi
-		done
-	    else
-		dnl Look for tape devices in /dev.
-		for num in 9 8 7 6 5 4 3 2 1 0; do
-		    td=/dev/rst${num}
-		    ntd=/dev/nrst${num}
-		    if test -r $td -a -r $ntd; then
-			tape_dev=$td
-			nr_tape_dev=$ntd
-		    fi
-		done
-	    fi
-	    DEFAULT_TAPE_DEVICE=$nr_tape_dev
-	    AC_MSG_RESULT($DEFAULT_TAPE_DEVICE)
-	fi
     ]
 )
 
@@ -621,7 +578,7 @@ AC_ARG_WITH(ftape-raw-device,
     [
 	if test -z "$DEFAULT_RAW_TAPE_DEVICE"; then
 	    AC_MSG_CHECKING(for raw ftape device)
-	    dnl Look for tape devices in /dev.  
+	    dnl Look for tape devices in /dev.
 	    raw_tape_dev=/dev/null
 		dnl Look for tape devices in /dev.
 		for num in 3 2 1 0 ; do
