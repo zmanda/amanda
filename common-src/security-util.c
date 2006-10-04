@@ -1728,7 +1728,8 @@ sec_tcp_conn_read_callback(
 	/* delete our 'accept' reference */
 	if (rc->accept_fn != NULL) {
 	    if(rc->refcnt != 1) {
-		dbprintf(("STRANGE, rc->refcnt should be 1"));
+		dbprintf(("STRANGE, rc->refcnt should be 1, it is %d\n",
+			  rc->refcnt));
 		rc->refcnt=1;
 	    }
 	    rc->accept_fn = NULL;

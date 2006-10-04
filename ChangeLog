@@ -1,3 +1,8 @@
+2006-10-04  Jean-Louis Martineau <martineau@zmanda.com>
+	* amandad-src/amandad.c: Call security_recvpkt() on A_SENDNACK
+				 and dup P_REQ.
+	* common-src/security-util.c: Improve message.
+
 2006-10-03  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amcleanupdisk.c: Accept -o arguments.
 	* server-src/amcleanup.sh.in: Add missing 'shift' for non-linux system.
