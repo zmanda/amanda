@@ -545,7 +545,7 @@ wait_children(int count)
 			dumper->pid = -1;
 			break;
 		    }
-		    if (pid == dumper->chunker->pid) {
+		    if (dumper->chunker && pid == dumper->chunker->pid) {
 			who = stralloc(dumper->chunker->name);
 			dumper->chunker->pid = -1;
 			break;

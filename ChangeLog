@@ -1,3 +1,7 @@
+2006-10-10  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/driver.c (wait_children): Don't crash if dumper->chunker
+					       is NULL
+
 2006-10-04  Jean-Louis Martineau <martineau@zmanda.com>
 	* amandad-src/amandad.c: Call security_recvpkt() on A_SENDNACK
 				 and dup P_REQ.
