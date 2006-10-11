@@ -1,3 +1,7 @@
+2006-10-11  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/planner.c: Improve message for dump larger than available
+				tape space if runtapes > 1 and splitsize == 0.
+
 2006-10-10  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/driver.c (wait_children): Don't crash if dumper->chunker
 					       is NULL

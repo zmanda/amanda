@@ -2280,10 +2280,18 @@ static void delay_dumps(void)
 	full_size = est_tape_size(dp, 0);
 	if (full_size > tapetype_get_length(tape) * (off_t)avail_tapes) {
 	    char *qname = quote_string(dp->name);
-	    log_add(L_WARNING, "disk %s:%s, full dump (" OFF_T_FMT 
-		    "KB) will be larger than available tape space",
-		    dp->host->hostname, qname,
-		    (OFF_T_FMT_TYPE)full_size);
+	    if (conf_runtapes > 1 && dp->tape_splitsize == (off_t)0) {
+		log_add(L_WARNING, "disk %s:%s, full dump (" OFF_T_FMT 
+			"KB) will be larger than available tape space"
+			", you could define a splitsize",
+			dp->host->hostname, qname,
+			(OFF_T_FMT_TYPE)full_size);
+	    } else {
+		log_add(L_WARNING, "disk %s:%s, full dump (" OFF_T_FMT 
+			"KB) will be larger than available tape space",
+			dp->host->hostname, qname,
+			(OFF_T_FMT_TYPE)full_size);
+	    }
 	    amfree(qname);
 	}
 
