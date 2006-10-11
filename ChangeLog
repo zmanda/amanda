@@ -1,4 +1,7 @@
 2006-10-11  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/Makefile.am (libamanda_la_LIBADD) Remove @LTLIBOBJS@.
+
+2006-10-11  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/taper.c: stralloc(tapedev).
 	* configure.in (EXAMPLE_TAPEDEV): Set to /dev/null if no tape-device.
 	* example/amanda-client.conf.in, example/amanda.conf.in
