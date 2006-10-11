@@ -18,7 +18,7 @@ conf "@DEFAULT_CONFIG@"		# your config name
 
 index_server "@DEFAULT_SERVER@"	# your amindexd server
 tape_server  "@DEFAULT_TAPE_SERVER@"	# your amidxtaped server
-tapedev      "@DEFAULT_TAPE_DEVICE@"		# your tape device
+tapedev      "@EXAMPLE_TAPEDEV@"	# your tape device
 
 #   auth	- authentication scheme to use between server and client.
 #		  Valid values are "bsd", "krb4", "krb5" and "ssh".  

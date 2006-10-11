@@ -26,7 +26,7 @@
 #
 
 mcutil @MCUTIL@		#location of the mcutil program
-tape @DEFAULT_TAPE_DEVICE@	# use ntape for norewind
+tape @EXAMPLE_TAPEDEV@	# use ntape for norewind
 			# {a|m|h|c} suffixes should NOT 
 			# be tape device since they all
 			# implement hardware compression

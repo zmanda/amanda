@@ -1,4 +1,10 @@
 2006-10-11  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/taper.c: stralloc(tapedev).
+	* configure.in (EXAMPLE_TAPEDEV): Set to /dev/null if no tape-device.
+	* example/amanda-client.conf.in, example/amanda.conf.in
+	  example/chg-mcutil.conf.in: Use EXAMPLE_TAPEDEV.
+
+2006-10-11  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/alloca.c, common-src/getcwd.c, common-src/mktime.c,
 	  common-src/memmove.c, common-src/snprintf.c,
 	  common-src/strcasecmp.c, common-src/strerror.c,

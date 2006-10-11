@@ -90,7 +90,7 @@ usetimestamps yes
 
 runtapes 1			# number of tapes to be used in a single run of amdump
 tpchanger "chg-manual"		# the tape-changer glue script
-tapedev "@DEFAULT_TAPE_DEVICE@"	# the no-rewind tape device to be used
+tapedev "@EXAMPLE_TAPEDEV@"	# the no-rewind tape device to be used
 rawtapedev "@DEFAULT_RAW_TAPE_DEVICE@"	# the raw device to be used (ftape only)
 #changerfile "@CONFIG_DIR@/@DEFAULT_CONFIG@/changer"
 #changerfile "@CONFIG_DIR@/@DEFAULT_CONFIG@/changer-status"
@@ -112,7 +112,7 @@ amrecover_do_fsf yes		# amrecover will call amrestore with the
 				# -f flag for faster positioning of the tape.
 amrecover_check_label yes	# amrecover will call amrestore with the
 				# -l flag to check the label.
-amrecover_changer "@DEFAULT_TAPE_DEVICE@"	# amrecover will use the changer if you restore
+amrecover_changer "@EXAMPLE_TAPEDEV@"	# amrecover will use the changer if you restore
 				# from this device.
 				# It could be a string like 'changer' and
 				# amrecover will use your changer if you

@@ -562,7 +562,11 @@ AC_ARG_WITH(tape-device,
 if test ! -z "$DEFAULT_TAPE_DEVICE"; then
     AC_DEFINE_UNQUOTED(DEFAULT_TAPE_DEVICE,"$DEFAULT_TAPE_DEVICE",[This is the default no-rewinding tape device. ])
     AC_SUBST(DEFAULT_TAPE_DEVICE)
+    EXAMPLE_TAPEDEV=$DEFAULT_TAPE_DEVICE
+else
+    EXAMPLE_TAPEDEV="/dev/null"
 fi
+AC_SUBST(EXAMPLE_TAPEDEV)
 
 AC_ARG_WITH(ftape-raw-device,
     [  --with-ftape-rawdevice=ARG raw device on tape server HOST's if using Linux ftape >=3.04d],
