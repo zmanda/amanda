@@ -48,7 +48,7 @@ size_t n;
 
 #else
 
-#include "../regex-src/fake/memmove.c"
+#error "memmove not available"
 
 #endif
 

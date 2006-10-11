@@ -1,4 +1,15 @@
 2006-10-11  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/Makefile.am: Remove all reference to our regex
+	* common-src/match.c: #include <regex.h>, the system regex
+	* common-src/memmove.c: No more memmove in regex-src
+	* Makefile.am (pkgdata_DATA): Remove COPYRIGHT-REGEX
+	* Makefile.am (EXTRA_DIST): Remove regex-src/*
+	* regex-src: Remove directory.
+	* common-src/regcomp.c, common-src/regerror.c,
+	  common-src/regexec.c, common-src/regfree.c,
+	  common-src/amregex.h: Remove files.
+
+2006-10-11  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/planner.c: Improve message for dump larger than available
 				tape space if runtapes > 1 and splitsize == 0.
 

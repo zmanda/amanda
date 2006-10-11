@@ -30,7 +30,7 @@
  */
 
 #include "amanda.h"
-#include "regex.h"
+#include <regex.h>
 
 static int match_word(const char *glob, const char *word, const char separator);
 

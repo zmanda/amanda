@@ -40,8 +40,7 @@ SUBDIRS = \
 pkgdata_DATA = \
 	ReleaseNotes			\
 	COPYRIGHT			\
-	COPYRIGHT-APACHE		\
-	COPYRIGHT-REGEX
+	COPYRIGHT-APACHE
 
 EXTRA_DIST = $(SNAPSHOT_STAMP) \
 	$(pkgdata_DATA)			\
@@ -64,30 +63,7 @@ EXTRA_DIST = $(SNAPSHOT_STAMP) \
 	contrib/gsc/ucfggsc.c		\
 	patches/regex-3.6alpha.patch	\
 	patches/samba-largefs.patch	\
-	patches/tar-1.12.patch		\
-	regex-src/COPYRIGHT		\
-	regex-src/Makefile 		\
-	regex-src/README		\
-	regex-src/WHATSNEW 		\
-	regex-src/cclass.h		\
-	regex-src/cname.h		\
-	regex-src/debug.c		\
-	regex-src/engine.c		\
-	regex-src/main.c		\
-	regex-src/mkh			\
-	regex-src/regcomp.c		\
-	regex-src/regerror.c		\
-	regex-src/regex.3		\
-	regex-src/regex.7		\
-	regex-src/regex2.h		\
-	regex-src/regexec.c		\
-	regex-src/regfree.c		\
-	regex-src/split.c		\
-	regex-src/tests			\
-	regex-src/utils.h		\
-	regex-src/fake/limits.h		\
-	regex-src/fake/memmove.c	\
-	regex-src/fake/stdlib.h
+	patches/tar-1.12.patch
 
 $(ACINCLUDE_M4): $(ACINCLUDE_M4_DEPS)
 	@-rm -f $@
@@ -109,7 +85,6 @@ lint:
 	(cd common-src; make lint)
 	(cd oldrecover-src; make lint)
 	(cd recover-src; make lint)
-	(cd regex-src; make lint)
 	(cd restore-src; make lint)
 	(cd server-src; make lint)
 	(cd tape-src; make lint)
