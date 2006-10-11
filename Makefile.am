@@ -39,8 +39,7 @@ SUBDIRS = \
 
 pkgdata_DATA = \
 	ReleaseNotes			\
-	COPYRIGHT			\
-	COPYRIGHT-APACHE
+	COPYRIGHT
 
 EXTRA_DIST = $(SNAPSHOT_STAMP) \
 	$(pkgdata_DATA)			\

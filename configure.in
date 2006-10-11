@@ -2703,7 +2703,6 @@ ICE_CHECK_DECL(fputs,stdio.h)
 ICE_CHECK_DECL(fread,stdio.h stdlib.h)
 ICE_CHECK_DECL(fseek,stdio.h)
 ICE_CHECK_DECL(fwrite,stdio.h stdlib.h)
-AC_REPLACE_FUNCS(getcwd)
 AC_CHECK_FUNCS(getfsent)
 ICE_CHECK_DECL(gethostname,unistd.h)
 AC_FUNC_GETMNTENT
@@ -2722,13 +2721,11 @@ ICE_CHECK_DECL(isnormal,math.h)
 ICE_CHECK_DECL(listen,sys/types.h sys/socket.h)
 ICE_CHECK_DECL(lstat,sys/types.h sys/stat.h)
 ICE_CHECK_DECL(malloc,stdlib.h)
-AC_REPLACE_FUNCS(memmove)
 ICE_CHECK_DECL(memmove,string.h strings.h)
 ICE_CHECK_DECL(memset,string.h strings.h)
 AC_CHECK_FUNCS(mkdir)
 ICE_CHECK_DECL(mkstemp,stdlib.h)
 ICE_CHECK_DECL(mktemp,stdlib.h)
-AC_REPLACE_FUNCS(mktime)
 ICE_CHECK_DECL(mktime,time.h sys/time.h)
 AC_FUNC_MMAP
 dnl atexit() is prefered, sunos (maybe others?) define on_exit
@@ -2799,32 +2796,15 @@ if test "x$ac_cv_func_mmap_fixed_mapped" != xyes; then
     esac
 fi
 
-dnl Some systems have snprintf but not vsnprintf.  If either snprintf or
-dnl vsnprintf are missing, then use the snprintf.c we provide.
-ICE_CHECK_DECL(snprintf,stdio.h)
-ICE_CHECK_DECL(vsnprintf,stdio.h)
-if test x"$ice_have_snprintf" != x"yes" ||
-   test x"$ice_have_vsnprintf" != x"yes"; then
-    AC_LIBOBJ([snprintf])
-    if false; then :
-	dnl so that automake includes snprintf.c in the distribution
-	AC_REPLACE_FUNCS(snprintf) 
-    fi
-fi
-
 AC_CHECK_FUNCS(sigaction sigemptyset sigvec)
 ICE_CHECK_DECL(socket,sys/types.h sys/socket.h)
 ICE_CHECK_DECL(socketpair,sys/types.h sys/socket.h)
 ICE_CHECK_DECL(sscanf,stdio.h)
 AC_CHECK_FUNCS(statfs statvfs)
-AC_REPLACE_FUNCS(strerror)
 ICE_CHECK_DECL(strerror,string.h strings.h)
 AC_FUNC_STRFTIME
-AC_REPLACE_FUNCS(strftime)
 ICE_CHECK_DECL(strftime,time.h sys/time.h)
-AC_REPLACE_FUNCS(strncasecmp)
 ICE_CHECK_DECL(strncasecmp,string.h strings.h)
-AC_REPLACE_FUNCS(strstr)
 ICE_CHECK_DECL(syslog,syslog.h)
 ICE_CHECK_DECL(system,stdlib.h)
 ICE_CHECK_DECL(time,time.h sys/time.h)
@@ -2836,10 +2816,8 @@ ICE_CHECK_DECL(vfprintf,stdio.h stdlib.h)
 ICE_CHECK_DECL(vprintf,stdio.h stdlib.h)
 ICE_CHECK_DECL(vsprintf,stdio.h stdlib.h)
 AC_CHECK_FUNC(wait4)
-AC_REPLACE_FUNCS(waitpid)
 AC_REPLACE_FUNCS(writev)
 ICE_CHECK_DECL(writev, unistd.h sys/uio.h)
-AC_REPLACE_FUNCS(strcasecmp)
 ICE_CHECK_DECL(strcasecmp,string.h strings.h)
 
 AC_CHECK_FUNCS(fnmatch)
