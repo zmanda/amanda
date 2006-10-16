@@ -67,7 +67,7 @@ printf_arglist_function2(void pkt_init, pkt_t *, pkt, pktype_t, type,
 	arglist_start(argp, fmt);
 	len = vsnprintf(pkt->body, pkt->packet_size, fmt, argp);
 	arglist_end(argp);
-	if (len < (int)(pkt->packet_size - 1))
+	if (len > -1 && len < (int)(pkt->packet_size - 1))
 	    break;
 	pkt->packet_size *= 2;
 	amfree(pkt->body);
@@ -95,7 +95,7 @@ printf_arglist_function1(void pkt_cat, pkt_t *, pkt, const char *, fmt)
 	arglist_start(argp, fmt);
         lenX = vsnprintf(pkt->body + len, pkt->packet_size - len, fmt,argp);
 	arglist_end(argp);
-	if (lenX < (int)(pkt->packet_size - len - 1))
+	if (lenX > -1 && lenX < (int)(pkt->packet_size - len - 1))
 	    break;
 	pkt->packet_size *= 2;
 	pktbody = alloc(pkt->packet_size);
