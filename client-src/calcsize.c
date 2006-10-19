@@ -156,7 +156,9 @@ main(
     return 0;
 #else
     int i;
-    char *dirname=NULL, *amname=NULL, *filename=NULL, *qfilename = NULL;
+    char *dirname=NULL;
+    char *amname=NULL, *qamname=NULL;
+    char *filename=NULL, *qfilename = NULL;
     unsigned long malloc_hist_1, malloc_size_1;
     unsigned long malloc_hist_2, malloc_size_2;
 
@@ -225,6 +227,7 @@ main(
 
     if (argc > 0) {
 	amname = *argv;
+	qamname = quote_string(amname);
 	argc--, argv++;
     } else {
 	error("missing <name>");
@@ -333,10 +336,10 @@ main(
 	}
 
 	dbprintf(("calcsize: %s %d SIZE " OFF_T_FMT "\n",
-	       amname, dumplevel[i],
+	       qamname, dumplevel[i],
 	       (OFF_T_FMT_TYPE)final_size(i, dirname)));
 	fprintf(stderr, "%s %d SIZE " OFF_T_FMT "\n",
-	       amname, dumplevel[i],
+	       qamname, dumplevel[i],
 	       (OFF_T_FMT_TYPE)final_size(i, dirname));
 	fflush(stderr);
 
