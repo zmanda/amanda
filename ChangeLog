@@ -1,4 +1,7 @@
 2006-10-19  Jean-Louis Martineau <martineau@zmanda.com>
+	* man/xml-source/amanda.conf.5.xml: Fix formating.
+
+2006-10-19  Jean-Louis Martineau <martineau@zmanda.com>
 	* client-src/calcsize.c, client-src/sendsize.c: Remove bogus fseek.
 
 2006-10-19  Jean-Louis Martineau <martineau@zmanda.com>

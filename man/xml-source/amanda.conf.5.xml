@@ -1025,6 +1025,7 @@ is a logical name for this holding disk.</para>
 A comment string describing this holding disk.</para>
   </listitem>
   </varlistentry>
+
   <varlistentry>
   <term><emphasis remap='B'>directory</emphasis> <emphasis remap='I'> disk</emphasis></term>
   <listitem>
@@ -1033,40 +1034,42 @@ A comment string describing this holding disk.</para>
 The path to this holding area.</para>
   </listitem>
   </varlistentry>
+
   <varlistentry>
   <term><emphasis remap='B'>use</emphasis> <emphasis remap='I'> int</emphasis></term>
   <listitem>
-Default:
+<para>Default:
 <emphasis remap='I'>0 Gb</emphasis>.
 Amount of space that can be used in this holding disk area.
 If the value is zero, all available space on the file system is used.
-If the value is negative, &A; will use all available space minus that value.
+If the value is negative, &A; will use all available space minus that value.</para>
   </listitem>
   </varlistentry>
+
   <varlistentry>
   <term><emphasis remap='B'>chunksize</emphasis> <emphasis remap='I'> int</emphasis></term>
   <listitem>
-Default:
+<para>Default:
 <emphasis remap='I'>1 Gb</emphasis>.
 Holding disk chunk size. Dumps larger than the specified size will be stored in multiple
 holding disk files. The size of each chunk will not exceed the specified value.
 However, even though dump images are split in the holding disk, they are concatenated as 
 they are written to tape, so each dump image still corresponds to a single continuous 
-tape section.
+tape section.</para>
 
-If 0 is specified, &A; will create holding disk chunks as large as
-((INT_MAX/1024)-64) Kbytes.
+<para>If 0 is specified, &A; will create holding disk chunks as large as
+((INT_MAX/1024)-64) Kbytes.</para>
 
-Each holding disk chunk includes a 32 Kbyte header, so the minimum
-chunk size is 64 Kbytes (but that would be really silly).
+<para>Each holding disk chunk includes a 32 Kbyte header, so the minimum
+chunk size is 64 Kbytes (but that would be really silly).</para>
 
-Operating systems that are limited to a maximum file size of 2 Gbytes
+<para>Operating systems that are limited to a maximum file size of 2 Gbytes
 actually cannot handle files that large.
 They must be at least one byte less than 2 Gbytes.
 Since &A; works with 32 Kbyte blocks, and
 to handle the final read at the end of the chunk, the chunk size
 should be at least 64 Kbytes (2 * 32 Kbytes) smaller than the maximum
-file size, e.g. 2047 Mbytes.
+file size, e.g. 2047 Mbytes.</para>
   </listitem>
   </varlistentry>
 </variablelist>
