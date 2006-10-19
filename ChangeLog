@@ -1,4 +1,7 @@
 2006-10-19  Jean-Louis Martineau <martineau@zmanda.com>
+	* client-src/calcsize.c, client-src/sendsize.c: Remove bogus fseek.
+
+2006-10-19  Jean-Louis Martineau <martineau@zmanda.com>
 	* client-src/calcsize.c: Quote amname.
 
 2006-10-19  Jean-Louis Martineau <martineau@zmanda.com>

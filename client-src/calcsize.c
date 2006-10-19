@@ -330,11 +330,6 @@ main(
 
 	amflock(1, "size");
 
-	if (fseek(stderr, 0L, SEEK_END) < 0) {
-	    dbprintf(("calcsize: warning - seek failed: %s\n",
-		      strerror(errno)));
-	}
-
 	dbprintf(("calcsize: %s %d SIZE " OFF_T_FMT "\n",
 	       qamname, dumplevel[i],
 	       (OFF_T_FMT_TYPE)final_size(i, dirname)));
