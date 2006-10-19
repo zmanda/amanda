@@ -120,6 +120,7 @@ static int degraded_mode = 0; /* defined in driverio too */
 static int normal_run = 0;
 static int amflush_run = 0;
 static int got_finish = 0;
+static char *ghostname = NULL;
 
 static char *tapestart_error = NULL;
 
@@ -695,6 +696,15 @@ main(
     if(mailf) {
 
     	if(!got_finish) fputs("*** THE DUMPS DID NOT FINISH PROPERLY!\n\n", mailf);
+
+	if (ghostname) {
+	    fprintf(mailf, "Hostname: %s\n", ghostname);
+	    fprintf(mailf, "Org     : %s\n", getconf_str(CNF_ORG));
+	    fprintf(mailf, "Config  : %s\n", config_name);
+	    fprintf(mailf, "Date    : %s\n",
+		    nicedate(run_datestamp ? run_datestamp : "0"));
+	    fprintf(mailf,"\n");
+	}
 
     	output_tapeinfo();
 
@@ -1756,6 +1766,19 @@ handle_stats(void)
 		return;
 	    }
 	    planner_time = startup_time;
+	}
+#define sc "hostname"
+	else if(ch != '\0' && strncmp(s - 1, sc, sizeof(sc)-1) == 0) {
+	    s += sizeof(sc)-1;
+	    ch = s[-1];
+#undef sc
+
+	    skip_whitespace(s, ch);
+	    if(ch == '\0') {
+		bogus_line(s - 1);
+		return;
+	    }
+	    ghostname = stralloc(s-1);
 	}
 #define sc "estimate"
 	else if(ch != '\0' && strncmp(s - 1, sc, sizeof(sc)-1) == 0) {

@@ -168,6 +168,7 @@ main(
     char *line;
     int    new_argc,   my_argc;
     char **new_argv, **my_argv;
+    char hostname[1025];
 
     safe_fd(-1, 0);
 
@@ -249,6 +250,9 @@ main(
     driver_timestamp[14] = '\0';
     amfree(line);
     log_add(L_START,"date %s", driver_timestamp);
+
+    gethostname(hostname, SIZEOF(hostname));
+    log_add(L_STATS,"hostname %s", hostname);
 
     /* check that we don't do many dump in a day and usetimestamps is off */
     if(strlen(driver_timestamp) == 8) {
