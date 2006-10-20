@@ -206,7 +206,7 @@ static void read_block(command_option_t *command_options, t_conf_var *read_var,
 
 static void copy_val_t(val_t *, val_t *);
 static void free_val_t(val_t *);
-static char *conf_print(val_t *);
+static char *conf_print(val_t *, int);
 
 static void get_holdingdisk(void);
 static void init_holdingdisk_defaults(void);
@@ -811,7 +811,6 @@ getconf_byname(
     char *str)
 {
     static char *tmpstr;
-    char number[NUM_STR_SIZE];
     t_conf_var *np;
     keytab_t *kt;
     char *s;
@@ -838,7 +837,7 @@ getconf_byname(
 
     if(np->token == CONF_UNKNOWN) return NULL;
 
-    tmpstr = stralloc(conf_print(&conf_data[np->parm]));
+    tmpstr = stralloc(conf_print(&conf_data[np->parm], 0));
     return tmpstr;
 }
 
@@ -935,6 +934,7 @@ getconf_str(
 	error("getconf_str: parm is not a CONFTYPE_STRING|CONFTYPE_IDENT: %d", parm);
 	/*NOTREACHED*/
     }
+dbprintf(("AA:%s:\n",conf_data[parm].v.s));
     return(conf_data[parm].v.s);
 }
 
@@ -2411,7 +2411,7 @@ dump_configuration(
 
 	if (kt->token != CONF_IDENT)
 	    printf("%-21s %s\n", kt->keyword,
-		   conf_print(&conf_data[np->parm]));
+		   conf_print(&conf_data[np->parm], 1));
     }
 
     for(hp = holdingdisks; hp != NULL; hp = hp->next) {
@@ -2431,7 +2431,7 @@ dump_configuration(
 	    if(kt->token == CONF_UNKNOWN)
 		error("holding bad token");
 
-	    printf("      %-9s %s\n", kt->keyword, conf_print(&hp->value[i]));
+	    printf("      %-9s %s\n", kt->keyword, conf_print(&hp->value[i], 1));
 	}
 	printf("}\n");
     }
@@ -2449,7 +2449,7 @@ dump_configuration(
 	    if(kt->token == CONF_UNKNOWN)
 		error("tapetype bad token");
 
-	    printf("      %-9s %s\n", kt->keyword, conf_print(&tp->value[i]));
+	    printf("      %-9s %s\n", kt->keyword, conf_print(&tp->value[i], 1));
 	}
 	printf("}\n");
     }
@@ -2471,7 +2471,7 @@ dump_configuration(
 	    if(kt->token == CONF_UNKNOWN)
 		error("dumptype bad token");
 
-	    printf("%s      %-19s %s\n", prefix, kt->keyword, conf_print(&dp->value[i]));
+	    printf("%s      %-19s %s\n", prefix, kt->keyword, conf_print(&dp->value[i], 1));
 	}
 	printf("%s}\n", prefix);
     }
@@ -2493,7 +2493,7 @@ dump_configuration(
 	    if(kt->token == CONF_UNKNOWN)
 		error("interface bad token");
 
-	    printf("%s      %-9s %s\n", prefix, kt->keyword, conf_print(&ip->value[i]));
+	    printf("%s      %-9s %s\n", prefix, kt->keyword, conf_print(&ip->value[i], 1));
 	}
 	printf("%s}\n",prefix);
     }
@@ -4066,9 +4066,9 @@ static char buffer_conf_print[1025];
 
 static char *
 conf_print(
-    val_t *val)
+    val_t *val,
+    int    str_need_quote)
 {
-    struct tm *stm;
     int pos;
 
     buffer_conf_print[0] = '\0';
@@ -4112,15 +4112,25 @@ conf_print(
 	break;
 
     case CONFTYPE_STRING:
-	buffer_conf_print[0] = '"';
-	if(val->v.s) {
-	    strncpy(&buffer_conf_print[1], val->v.s,
-	    		SIZEOF(buffer_conf_print) - 1);
-	    buffer_conf_print[SIZEOF(buffer_conf_print) - 2] = '\0';
-	    buffer_conf_print[strlen(buffer_conf_print)] = '"';
+	if(str_need_quote) {
+            buffer_conf_print[0] = '"';
+            if(val->v.s) {
+		strncpy(&buffer_conf_print[1], val->v.s,
+			SIZEOF(buffer_conf_print) - 1);
+		buffer_conf_print[SIZEOF(buffer_conf_print) - 2] = '\0';
+		buffer_conf_print[strlen(buffer_conf_print)] = '"';
+            } else {
+		buffer_conf_print[1] = '"';
+		buffer_conf_print[2] = '\0';
+            }
 	} else {
-	    buffer_conf_print[1] = '"';
-	    buffer_conf_print[2] = '\0';
+	    if(val->v.s) {
+		strncpy(&buffer_conf_print[0], val->v.s,
+			SIZEOF(buffer_conf_print));
+		buffer_conf_print[SIZEOF(buffer_conf_print) - 1] = '\0';
+	    } else {
+		buffer_conf_print[0] = '\0';
+	    }
 	}
 	break;
 

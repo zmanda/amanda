@@ -1,4 +1,9 @@
 2006-10-20  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c (conf_print): Add a parameter if we want
+					      CONFTYPE_STRING enclosed in ".
+	* server-src/planner.c: Use getconf_int to get etimeout value.
+
+2006-10-20  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/taper.c (free_split_buffer): Correct free.
 
 2006-10-20  Jean-Louis Martineau <martineau@zmanda.com>
