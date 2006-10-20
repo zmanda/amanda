@@ -1537,7 +1537,7 @@ start_host(
 		    l = vstralloc(calcsize,
 				  dp->program, " ",
 				  qname, " ",
-				  dp->device,
+				  qdevice,
 				  " 0 OPTIONS |",
 				  o,
 				  "\n",

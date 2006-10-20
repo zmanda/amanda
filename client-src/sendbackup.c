@@ -333,16 +333,18 @@ main(
 	if(!isdigit((int)s[-1])) {
 	    amfree(amdevice);
 	    amfree(qamdevice);
-	    amdevice = s - 1;
-	    skip_non_whitespace(s, ch);
+	    qamdevice = s - 1;
+	    ch = *qamdevice;
+	    skip_quoted_string(s, ch);
 	    s[-1] = '\0';
-	    amdevice = stralloc(amdevice);
+	    qamdevice = stralloc(qamdevice);
+	    amdevice = unquote_string(qamdevice);
 	    skip_whitespace(s, ch);		/* find level number */
 	}
 	else {
 	    amdevice = stralloc(disk);
+	    qamdevice = stralloc(qdisk);
 	}
-	qamdevice = quote_string(amdevice);
 						/* find the level number */
 	if(ch == '\0' || sscanf(s - 1, "%d", &level) != 1) {
 	    err_extra = "bad level";

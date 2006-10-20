@@ -1306,6 +1306,7 @@ static void getsize(
     char *	dumper;
     char *	calcsize;
     char *	qname;
+    char *	qdevice;
 
     assert(hostp->disks != NULL);
 
@@ -1368,6 +1369,7 @@ static void getsize(
 	    }
 
 	    qname = quote_string(dp->name);
+	    qdevice = quote_string(dp->device);
 	    if(dp->estimate == ES_CLIENT ||
 	       dp->estimate == ES_CALCSIZE) {
 		nb_client++;
@@ -1449,7 +1451,7 @@ static void getsize(
 				  dumper,
 				  dp->program,
 				  " ", qname,
-				  " ", dp->device ? dp->device : "",
+				  " ", dp->device ? qdevice : "",
 				  " ", level,
 				  " ", est(dp)->dumpdate[i],
 				  " ", spindle,
@@ -1578,6 +1580,7 @@ static void getsize(
 		enqueue_disk(&estq, dp);
 	    }
 	    amfree(qname);
+	    amfree(qdevice);
 	}
 
 	if(estimates == 0) {

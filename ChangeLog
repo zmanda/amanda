@@ -1,4 +1,9 @@
-2006-10-19  Jean-Louis Martineau <martineau@zmanda.com>
+2006-10-20  Jean-Louis Martineau <martineau@zmanda.com>
+	* client-src/sendbackup.c: Parse quote amdevice.
+	* server-src/amcheck.c: Send quoted amdevice.
+	* server-src/planner.c: Send quoted amdevice.
+
+2006-10-20  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.c (CNF_CTIMEOUT, CNF_DTIMEOUT, CNF_ETIMEOUT):
 	  They are of type CONFTYPE_INT
 	  (CONFTYPE_TIME are for value parsed as "hhmm"")
