@@ -1,4 +1,7 @@
 2006-10-20  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/taper.c (free_split_buffer): Correct free.
+
+2006-10-20  Jean-Louis Martineau <martineau@zmanda.com>
 	* client-src/sendbackup.c: Parse quote amdevice.
 	* server-src/amcheck.c: Send quoted amdevice.
 	* server-src/planner.c: Send quoted amdevice.
