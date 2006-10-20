@@ -1,4 +1,13 @@
 2006-10-19  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c (CNF_CTIMEOUT, CNF_DTIMEOUT, CNF_ETIMEOUT):
+	  They are of type CONFTYPE_INT
+	  (CONFTYPE_TIME are for value parsed as "hhmm"")
+	* common-src/conffile.c (getconf_byname): Use conf_print().
+	* common-src/conffile.h: Add comment.
+	* server-src/amcheck.c, server-src/dumper.c, server-src/planner.c:
+	  Use getconf_int to get timeout value.
+
+2006-10-19  Jean-Louis Martineau <martineau@zmanda.com>
 	* man/xml-source/amanda.conf.5.xml: Fix formating.
 
 2006-10-19  Jean-Louis Martineau <martineau@zmanda.com>

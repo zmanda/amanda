@@ -244,7 +244,7 @@ main(
       }
     }
 
-    conf_ctimeout = getconf_time(CNF_CTIMEOUT);
+    conf_ctimeout = getconf_int(CNF_CTIMEOUT);
 
     conf_diskfile = getconf_str(CNF_DISKFILE);
     if (*conf_diskfile == '/') {

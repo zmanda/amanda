@@ -1601,7 +1601,7 @@ static void getsize(
 	 * We use ctimeout for the "noop" request because it should be
 	 * very fast and etimeout has other side effects.
 	 */
-	timeout = getconf_time(CNF_CTIMEOUT);
+	timeout = getconf_int(CNF_CTIMEOUT);
     }
 
     secdrv = security_getdriver(hostp->disks->security_driver);

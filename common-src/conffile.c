@@ -487,9 +487,9 @@ t_conf_var server_var [] = {
    { CONF_INPARALLEL           , CONFTYPE_INT      , read_int     , CNF_INPARALLEL           , validate_inparallel },
    { CONF_DUMPORDER            , CONFTYPE_STRING   , read_string  , CNF_DUMPORDER            , NULL },
    { CONF_MAXDUMPS             , CONFTYPE_INT      , read_int     , CNF_MAXDUMPS             , validate_positive1 },
-   { CONF_ETIMEOUT             , CONFTYPE_TIME     , read_time    , CNF_ETIMEOUT             , NULL },
-   { CONF_DTIMEOUT             , CONFTYPE_TIME     , read_time    , CNF_DTIMEOUT             , validate_positive1 },
-   { CONF_CTIMEOUT             , CONFTYPE_TIME     , read_time    , CNF_CTIMEOUT             , validate_positive1 },
+   { CONF_ETIMEOUT             , CONFTYPE_INT      , read_int     , CNF_ETIMEOUT             , NULL },
+   { CONF_DTIMEOUT             , CONFTYPE_INT      , read_int     , CNF_DTIMEOUT             , validate_positive1 },
+   { CONF_CTIMEOUT             , CONFTYPE_INT      , read_int     , CNF_CTIMEOUT             , validate_positive1 },
    { CONF_TAPEBUFS             , CONFTYPE_INT      , read_int     , CNF_TAPEBUFS             , validate_positive1 },
    { CONF_RAWTAPEDEV           , CONFTYPE_STRING   , read_string  , CNF_RAWTAPEDEV           , NULL },
    { CONF_COLUMNSPEC           , CONFTYPE_STRING   , read_string  , CNF_COLUMNSPEC           , NULL },
@@ -838,26 +838,7 @@ getconf_byname(
 
     if(np->token == CONF_UNKNOWN) return NULL;
 
-    if(np->type == CONFTYPE_INT) {
-	snprintf(number, sizeof(number), "%d", conf_data[np->parm].v.i);
-	tmpstr = newstralloc(tmpstr, number);
-    } else if(np->type == CONFTYPE_BOOL) {
-	if(getconf_boolean(np->parm) == 0) {
-	    tmpstr = newstralloc(tmpstr, "off");
-	} else {
-	    tmpstr = newstralloc(tmpstr, "on");
-	}
-    } else if(np->type == CONFTYPE_REAL) {
-	snprintf(number, sizeof(number), "%lf", conf_data[np->parm].v.r);
-	tmpstr = newstralloc(tmpstr, number);
-    } else if(np->type == CONFTYPE_AM64){
-	snprintf(number, sizeof(number), OFF_T_FMT, 
-		 (OFF_T_FMT_TYPE)conf_data[np->parm].v.am64);
-	tmpstr = newstralloc(tmpstr, number);
-    } else {
-	tmpstr = newstralloc(tmpstr, getconf_str(np->parm));
-    }
-
+    tmpstr = stralloc(conf_print(&conf_data[np->parm]));
     return tmpstr;
 }
 
@@ -1129,9 +1110,9 @@ init_defaults(
     conf_init_string   (&conf_data[CNF_TPCHANGER]            , "");
     conf_init_int      (&conf_data[CNF_RUNTAPES]             , 1);
     conf_init_int      (&conf_data[CNF_MAXDUMPS]             , 1);
-    conf_init_time     (&conf_data[CNF_ETIMEOUT]             , (time_t)300);
-    conf_init_time     (&conf_data[CNF_DTIMEOUT]             , (time_t)1800);
-    conf_init_time     (&conf_data[CNF_CTIMEOUT]             , (time_t)30);
+    conf_init_int      (&conf_data[CNF_ETIMEOUT]             , 300);
+    conf_init_int      (&conf_data[CNF_DTIMEOUT]             , 1800);
+    conf_init_int      (&conf_data[CNF_CTIMEOUT]             , 30);
     conf_init_int      (&conf_data[CNF_TAPEBUFS]             , 20);
     conf_init_string   (&conf_data[CNF_RAWTAPEDEV]           , s);
     conf_init_string   (&conf_data[CNF_PRINTER]              , "");
@@ -4144,13 +4125,8 @@ conf_print(
 	break;
 
     case CONFTYPE_TIME:
-	stm = localtime(&val->v.t);
-	if (stm) {
-	    snprintf(buffer_conf_print, SIZEOF(buffer_conf_print),
-		     "%d%02d%02d", stm->tm_hour, stm->tm_min, stm->tm_sec);
-	} else {
-	    strcpy(buffer_conf_print, "00000");
-	}
+	snprintf(buffer_conf_print, SIZEOF(buffer_conf_print),
+		 "%2d%02d", (int)val->v.t/100, (int)val->v.t % 100);
 	break;
 
     case CONFTYPE_SL:
