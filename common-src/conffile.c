@@ -2588,6 +2588,26 @@ parse_conf(
     }
 }
 
+char **
+get_config_options(
+    int first)
+{
+    char             **config_options;
+    char	     **config_option;
+    command_option_t  *command_options;
+
+    config_options = alloc((first+program_options_size+1)*SIZEOF(char *));
+    for(command_options = program_options,
+        config_option = config_options + first;
+	command_options->name != NULL; command_options++) {
+	*config_option = vstralloc("-o", command_options->name, "=",
+				   command_options->value, NULL);
+	config_option++;
+    }
+    *config_option = NULL;
+    return(config_options);
+}
+
 void
 report_bad_conf_arg(void)
 {

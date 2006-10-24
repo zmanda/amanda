@@ -1,4 +1,13 @@
 2006-10-24  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c (get_config_options): Build and argv of the
+	                                              -o arguments.
+	* common-src/conffile.h (get_config_options): Prototype.
+	* server-src/driverio.c: exec dumper/chunker/driver with the argv from
+	                         get_config_options
+	* server-src/amtape.c: Accept -o argument.
+	* man/xml-source/amtape.8.xml: Document it.
+
+2006-10-24  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/taper.c: Fix allocation problem on tapedev.
 
 2006-10-20  Jean-Louis Martineau <martineau@zmanda.com>

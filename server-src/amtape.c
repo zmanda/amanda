@@ -102,7 +102,7 @@ usage(void)
 {
     int i;
 
-    fprintf(stderr, "Usage: amtape%s <conf> <command>\n", versionsuffix());
+    fprintf(stderr, "Usage: amtape%s <conf> <command> {<args>} [-o configoption]*\n", versionsuffix());
     fprintf(stderr, "\tValid commands are:\n");
     for (i = 0; i < NCMDS; i++)
 	fprintf(stderr, "\t\t%s\n", cmdtab[i].usage);
@@ -125,6 +125,8 @@ main(
     uid_t uid_dumpuser;
     char *dumpuser;
     struct passwd *pw;
+    int new_argc;
+    char **new_argv;
 
     safe_fd(-1, 0);
     safe_cd();
@@ -140,9 +142,10 @@ main(
 
     erroutput_type = ERR_INTERACTIVE;
 
-    if(argc < 3) usage();
+    parse_conf(argc, argv, &new_argc, &new_argv);
+    if(new_argc < 3) usage();
 
-    config_name = argv[1];
+    config_name = new_argv[1];
 
     config_dir = vstralloc(CONFIG_DIR, "/", config_name, "/", NULL);
     conffile = stralloc2(config_dir, CONFFILE_NAME);
@@ -194,14 +197,14 @@ main(
 
     /* switch on command name */
 
-    argc -= 2; argv += 2;
+    new_argc -= 2; new_argv += 2;
     for (i = 0; i < NCMDS; i++)
-	if (strcmp(argv[0], cmdtab[i].name) == 0) {
-	    (*cmdtab[i].fn)(argc, argv);
+	if (strcmp(new_argv[0], cmdtab[i].name) == 0) {
+	    (*cmdtab[i].fn)(new_argc, new_argv);
 	    break;
 	}
     if (i == NCMDS) {
-	fprintf(stderr, "%s: unknown command \"%s\"\n", argv0, argv[0]);
+	fprintf(stderr, "%s: unknown command \"%s\"\n", argv0, new_argv[0]);
 	usage();
     }
 

@@ -84,7 +84,8 @@ void
 startup_tape_process(
     char *taper_program)
 {
-    int fd[2];
+    int    fd[2];
+    char **config_options;
 
     if(socketpair(AF_UNIX, SOCK_STREAM, 0, fd) == -1) {
 	error("taper pipe: %s", strerror(errno));
@@ -110,7 +111,10 @@ startup_tape_process(
 	aclose(fd[0]);
 	if(dup2(fd[1], 0) == -1 || dup2(fd[1], 1) == -1)
 	    error("taper dup2: %s", strerror(errno));
-	execle(taper_program, "taper", config_name, (char *)0, safe_env());
+	config_options = get_config_options(2);
+	config_options[0] = "taper";
+	config_options[1] = config_name;
+	execve(taper_program, config_options, safe_env());
 	error("exec %s: %s", taper_program, strerror(errno));
 	/*NOTREACHED*/
 
@@ -126,7 +130,8 @@ startup_dump_process(
     dumper_t *dumper,
     char *dumper_program)
 {
-    int fd[2];
+    int    fd[2];
+    char **config_options;
 
     if(socketpair(AF_UNIX, SOCK_STREAM, 0, fd) == -1) {
 	error("%s pipe: %s", dumper->name, strerror(errno));
@@ -142,11 +147,10 @@ startup_dump_process(
 	aclose(fd[0]);
 	if(dup2(fd[1], 0) == -1 || dup2(fd[1], 1) == -1)
 	    error("%s dup2: %s", dumper->name, strerror(errno));
-	execle(dumper_program,
-	       dumper->name ? dumper->name : "dumper",
-	       config_name,
-	       (char *)0,
-	       safe_env());
+	config_options = get_config_options(2);
+	config_options[0] = dumper->name ? dumper->name : "dumper",
+	config_options[1] = config_name;
+	execve(dumper_program, config_options, safe_env());
 	error("exec %s (%s): %s", dumper_program,
 	      dumper->name, strerror(errno));
         /*NOTREACHED*/
@@ -191,7 +195,8 @@ startup_chunk_process(
     chunker_t *chunker,
     char *chunker_program)
 {
-    int fd[2];
+    int    fd[2];
+    char **config_options;
 
     if(socketpair(AF_UNIX, SOCK_STREAM, 0, fd) == -1) {
 	error("%s pipe: %s", chunker->name, strerror(errno));
@@ -209,11 +214,10 @@ startup_chunk_process(
 	    error("%s dup2: %s", chunker->name, strerror(errno));
 	    /*NOTREACHED*/
 	}
-	execle(chunker_program,
-	       chunker->name ? chunker->name : "chunker",
-	       config_name,
-	       (char *)0,
-	       safe_env());
+	config_options = get_config_options(2);
+	config_options[0] = chunker->name ? chunker->name : "chunker",
+	config_options[1] = config_name;
+	execve(chunker_program, config_options, safe_env());
 	error("exec %s (%s): %s", chunker_program,
 	      chunker->name, strerror(errno));
         /*NOTREACHED*/

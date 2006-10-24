@@ -591,6 +591,7 @@ extern int num_holdingdisks;
 
 void parse_conf(int parse_argc, char **parse_argv, int *new_argc,
 		       char ***new_argv);
+char **get_config_options(int);
 void report_bad_conf_arg(void);
 void free_server_config(void);
 
