@@ -2112,6 +2112,9 @@ tape_writer_side(
     syncpipe_init(getp, putp);
     tape_started = 0;
     idlewait = times_zero;
+    if (tapedev != NULL) {
+	tapedev = stralloc(tapedev);
+    }
 
     while (1) {
 	startclock();

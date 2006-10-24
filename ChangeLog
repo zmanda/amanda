@@ -1,3 +1,6 @@
+2006-10-24  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/taper.c: Fix allocation problem on tapedev.
+
 2006-10-20  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.c (conf_print): Add a parameter if we want
 					      CONFTYPE_STRING enclosed in ".
