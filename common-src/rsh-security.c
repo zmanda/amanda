@@ -132,6 +132,7 @@ rsh_connect(
     rh->hostname = NULL;
     rh->rs = NULL;
     rh->ev_timeout = NULL;
+    rh->rc = NULL;
 
     if ((he = gethostbyname(hostname)) == NULL) {
 	security_seterror(&rh->sech,
