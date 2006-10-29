@@ -35,6 +35,7 @@
 #include "util.h"
 #include "conffile.h"
 #include "clock.h"
+#include "amandates.h"
 
 #ifdef HAVE_LIMITS_H
 #include <limits.h>
@@ -1066,7 +1067,7 @@ init_defaults(
 #else
     conf_init_string(&conf_data[CNF_GNUTAR_LIST_DIR], NULL);
 #endif
-    conf_init_string(&conf_data[CNF_AMANDATES], "/etc/amandates");
+    conf_init_string(&conf_data[CNF_AMANDATES], AMANDATES_FILE);
 
 
     conf_init_string(&conf_data[CNF_ORG], s);
