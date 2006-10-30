@@ -1830,7 +1830,7 @@ disklist_one(
 	printf("INCRONLY\n");
 	break;
     }
-
+    printf("        ignore %s\n", (dp->ignore? "YES" : "NO"));
     printf("        estimate ");
     switch(dp->estimate) {
     case ES_CLIENT:

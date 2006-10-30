@@ -388,7 +388,7 @@ parse_diskline(
       hostname = stralloc(fp);
       malloc_mark(hostname);
     } else {
-      hostname = host->hostname;
+      hostname = stralloc(host->hostname);
     }
 
     skip_whitespace(s, ch);
@@ -570,6 +570,7 @@ parse_diskline(
     disk->bumpmult	     = dumptype_get_bumpmult(dtype);
     disk->start_t	     = dumptype_get_start_t(dtype);
     disk->strategy	     = dumptype_get_strategy(dtype);
+    disk->ignore	     = dumptype_get_ignore(dtype);
     disk->estimate	     = dumptype_get_estimate(dtype);
     disk->compress	     = dumptype_get_compress(dtype);
     disk->srvcompprog	     = dumptype_get_srvcompprog(dtype);
@@ -647,10 +648,7 @@ parse_diskline(
     }
 
     if(dumptype_get_ignore(dtype) || dumptype_get_strategy(dtype) == DS_SKIP) {
-	amfree(hostname);
-	amfree(disk->name);
-	amfree(disk);
-	return (0);
+	disk->todo = 0;
     }
 
     /* success, add disk to lists */
@@ -670,6 +668,8 @@ parse_diskline(
 	host->start_t = 0;
 	host->up = NULL;
 	host->features = NULL;
+    } else {
+	amfree(hostname);
     }
 
     host->netif = netif;

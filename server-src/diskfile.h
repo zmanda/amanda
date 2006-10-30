@@ -87,6 +87,7 @@ typedef struct disk_s {
     double	bumpmult;
     time_t	start_t;		/* start this dump after this time */
     int		strategy;		/* what dump strategy to use */
+    int		ignore;			/* ignore */
     int		estimate;		/* what estimate strategy to use */
     int		compress;		/* type of compression to use */
     int		encrypt;		/* type of encryption to use */

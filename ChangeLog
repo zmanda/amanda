@@ -1,3 +1,11 @@
+2006-10-30  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amadmin.c (disklist_one): Print ignore field.
+	* server-src/amoverview.pl.in: Ignore 'ignore yes' and 'strategy skip'.
+	* server-src/diskfile.c: Correct hostname allocation.
+	                         Keep 'ignore yes' and 'strategy skip' DLE in
+				 memory, set there todo to 0.
+	* server-src/diskfile.h: (struct disk_s): New ignore field.
+
 2006-10-29  Ian Turner <ian@zmanda.com>
 	This was reported as debian bug 394796. Thanks to Damyan Ivanov 
 	<dam@modsoftsys.com> for reporting and to Bdale Garbee 
