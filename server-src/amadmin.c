@@ -1750,8 +1750,6 @@ disklist_one(
     am_host_t *hp;
     interface_t *ip;
     sle_t *excl;
-    time_t st;
-    struct tm *stm;
 
     hp = dp->host;
     ip = hp->netif;
