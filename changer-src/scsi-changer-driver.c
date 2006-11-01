@@ -74,6 +74,7 @@ int GenericFree(void);
 int TapeStatus(void);                   /* Is the tape loaded ? */
 int DLT4000Eject(char *Device, int type);
 int GenericEject(char *Device, int type);
+int SCSI_LogSenseClean(char *Device);           /* Does the tape need a clean */
 int GenericClean(char *Device);                 /* Does the tape need a clean */
 int GenericBarCode(int DeviceFD);               /* Do we have Barcode reader support */
 int NoBarCode(int DeviceFD);
@@ -407,7 +408,19 @@ ChangerCMD_T ChangerIO[] = {
    NoBarCode,
    GenericSearch,
    GenericSenseHandler},
-  {NULL, NULL, NULL,NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL}
+  {"SLR100",
+   "Tandberg SLR100",
+   GenericMove,
+   GenericElementStatus,
+   GenericResetStatus,
+   GenericFree,
+   GenericEject,
+   SCSI_LogSenseClean,
+   GenericRewind,
+   NoBarCode,
+   GenericSearch,
+   GenericSenseHandler},
+   {NULL, NULL, NULL,NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL}
 };
 
 
@@ -800,7 +813,9 @@ eject_tape(
   extern OpenFiles_T *pDev;
   int ret;
 
-  DebugPrint(DEBUG_INFO,SECTION_TAPE,"##### START eject_tape\n");
+  DebugPrint(DEBUG_INFO,SECTION_TAPE,"##### START eject_tape %s\n",tapedev);
+  if (pDev[INDEX_TAPECTL].functions == NULL)
+    return(-1);
 
   /*
    * Try to read the label
@@ -809,21 +824,26 @@ eject_tape(
     {
 
       if (pDev[INDEX_TAPECTL].SCSI == 1 && pDev[INDEX_TAPECTL].avail) {
+        DebugPrint(DEBUG_INFO,SECTION_TAPE,"##### eject_tape rewind\n");
 	pDev[INDEX_TAPECTL].functions->function_rewind(INDEX_TAPECTL);
       } else {
+        DebugPrint(DEBUG_INFO,SECTION_TAPE,"##### eject_tape rewind2\n");
 	pDev[INDEX_TAPE].functions->function_rewind(INDEX_TAPE);
       }
 
       if (pDev[INDEX_TAPE].devopen == 1)
 	{
+          DebugPrint(DEBUG_INFO,SECTION_TAPE,"##### eject_tape close\n");
 	  SCSI_CloseDevice(INDEX_TAPE);
 	}
 
+      DebugPrint(DEBUG_INFO,SECTION_TAPE,"##### tape_eject tape_rdlabel\n");
       chgscsi_result = (char *)tape_rdlabel(pDev[INDEX_TAPE].dev, &chgscsi_datestamp, &chgscsi_label);
     }
 
   if (pDev[INDEX_TAPECTL].SCSI == 1 && pDev[INDEX_TAPECTL].avail == 1 && type == 1)
     {
+      DebugPrint(DEBUG_INFO,SECTION_TAPE,"##### tape_eject eject\n");
       ret=pDev[INDEX_TAPECTL].functions->function_eject(tapedev, type);
       DebugPrint(DEBUG_INFO,SECTION_TAPE,"##### STOP (SCSI)eject_tape [%d]\n", ret);
       return(ret);
@@ -1384,7 +1404,7 @@ OpenDevice(
     char *	ident)
 {
   extern OpenFiles_T *pDev;
-  char tmpstr[15];
+  char tmpstr[16];
   ChangerCMD_T *p = (ChangerCMD_T *)&ChangerIO;
 
   if (!ConfigName)
@@ -1436,6 +1456,7 @@ OpenDevice(
       /* num returned by the inquiry command */
       p = (ChangerCMD_T *)&ChangerIO;
       snprintf(&tmpstr[0], SIZEOF(tmpstr), "%s_%s","generic",pDev[0].type);
+      DebugPrint(DEBUG_INFO, SECTION_SCSI,"##### OpenDevice trying GENERIC Device %s\n",tmpstr);
       while(p->ident != NULL)
         {
           if (strcmp(tmpstr, p->ident) == 0)
@@ -1451,6 +1472,7 @@ OpenDevice(
     } else { /* Something failed, lets see what */
       DebugPrint(DEBUG_ERROR, SECTION_SCSI,"##### STOP OpenDevice failed\n");
     }
+  pDev[ip].functions = NULL;
   DebugPrint(DEBUG_INFO, SECTION_SCSI,"##### STOP OpenDevice (nothing found) !!\n");
   return(0);
 }
@@ -2496,6 +2518,7 @@ GenericEject(
 
       /* < 0 == fatal */
       if (ret < 0) {
+        DebugPrint(DEBUG_INFO, SECTION_SCSI,"GenericEject SCSI_LoadUnload failed\n");
 	free(pRequestSense);
 	return(-1);
 	/*NOTREACHED*/
@@ -2834,6 +2857,74 @@ GenericClean(
       DebugPrint(DEBUG_ERROR, SECTION_TAPE,"Got error from RequestSense\n");
     }
   DebugPrint(DEBUG_INFO, SECTION_TAPE,"##### STOP GenericClean (%d)\n",ret);
+  return(ret);
+}
+
+int
+SCSI_LogSenseClean(
+    char *	Device)
+{ 
+  extern OpenFiles_T *pDev;
+  CDB_T CDB;
+  RequestSense_T *pRequestSense;
+  int ret = 0;
+  u_char *buffer;
+  size_t size = 128;
+      
+  (void)Device;	/* Quiet unused parameter warning */
+  DebugPrint(DEBUG_INFO, SECTION_TAPE,"##### START SCSI_LogSenseClean\n");
+  if (pDev[INDEX_TAPECTL].SCSI == 0)
+      {
+          DebugPrint(DEBUG_ERROR, SECTION_TAPE,"SCSILogSenseClean : can't send SCSI commands\n");
+	  DebugPrint(DEBUG_ERROR, SECTION_TAPE,"##### STOP SCSI_LogSenseClean\n");
+          return(0);
+	  /*NOTREACHED*/
+      }
+
+   if (NULL ==  (buffer = alloc(size))){
+          DebugPrint(DEBUG_ERROR, SECTION_TAPE,"SCSI_LogSenseClean : can't alloc buffer\n");
+	  DebugPrint(DEBUG_ERROR, SECTION_TAPE,"##### STOP SCSI_LogSenseClean\n");
+          return(0);
+   }
+   if (NULL == (pRequestSense = alloc(SIZEOF(RequestSense_T)))){
+          DebugPrint(DEBUG_ERROR, SECTION_TAPE,"SCSI_LogSenseClean : can't alloc memory\n");
+	  DebugPrint(DEBUG_ERROR, SECTION_TAPE,"##### STOP SCSI_LogSenseClean\n");
+          return(0);
+   }
+   
+   memset(buffer, 0, size);
+   CDB[0] = SC_COM_LOG_SENSE;
+   CDB[1] = 0;
+   CDB[2] = (u_char)(0x40 | 0x33);/* 0x40 for current values 0x33 Head Cleaning Page*/
+   CDB[3] = 0;
+   CDB[4] = 0;
+   CDB[5] = 0;
+   CDB[6] = 00;
+   MSB2(&CDB[7], size);
+   CDB[9] = 0;
+
+   if (SCSI_Run(INDEX_TAPECTL, Input, CDB, 10,
+                           buffer,
+                           size,
+                           pRequestSense,
+                           SIZEOF(RequestSense_T)) != 0)
+     {
+       DecodeSense(pRequestSense, "SCSI_LogSenseClean : ",debug_file);
+       free(pRequestSense);
+       free(buffer);
+       DebugPrint(DEBUG_ERROR, SECTION_TAPE,"##### STOP SCSI_LogSenseClean (0) Page could not be read.\n");
+       return(0);
+       /*NOTREACHED*/
+     }
+  if (1==(0x1 & buffer[8])){ /* Bit 0 of the 4th byte in the Clean Head Log Parameter, which are the bytes */
+		            /* 4 to 8 on the Log Sense Page 0x33 					  */
+    ret = 1;
+  }else {
+    ret = 0; 
+  }  
+  DebugPrint(DEBUG_INFO, SECTION_TAPE,"##### STOP SCSI_LogSenseClean (%d)\n",ret);
+  free(pRequestSense);
+  free(buffer);
   return(ret);
 }
 
@@ -6021,6 +6112,7 @@ SCSI_LoadUnload(
       /*NOTREACHED*/
     }
 
+  dbprintf(("##### STOP SCSI_LoadUnload\n"));
   return(ret);
 }
 
@@ -6070,6 +6162,12 @@ SCSI_TestUnitReady(
   /*
    * Some sense is set
    */
+  if (pRequestSense->ErrorCode != 0){
+    DebugPrint(DEBUG_INFO, SECTION_SCSI,"###### STOP SCSI_TestUnitReady ErrorCode set\n");
+  }
+  if (pRequestSense->SenseKey != 0) {
+    DebugPrint(DEBUG_INFO, SECTION_SCSI,"###### STOP SCSI_TestUnitReady Sense Key set\n");
+  }
   DebugPrint(DEBUG_INFO, SECTION_SCSI,"###### STOP SCSI_TestUnitReady (0)\n");
   return(SCSI_SENSE);
 }

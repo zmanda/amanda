@@ -1,4 +1,9 @@
 2006-11-01  Jean-Louis Martineau <martineau@zmanda.com>
+	* changer-src/scsi-changer-driver.c: Add Tandberg SLR100,
+	                                     more debugging.
+	* changer-src/sense.c: Add Tandberg SLR100 Tape Drive "SLR100".
+
+2006-11-01  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/amanda.h: Define dbrename if !DEBUG_CODE.
 	* restore-src/amidxtaped.c: Declare i if !DEBUG_CODE.
 
