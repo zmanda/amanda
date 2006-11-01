@@ -35,10 +35,13 @@
 #include "util.h"
 #include "conffile.h"
 #include "clock.h"
-#include "amandates.h"
 
 #ifdef HAVE_LIMITS_H
 #include <limits.h>
+#endif
+
+#ifndef AMANDATES_FILE
+#define AMANDATES_FILE "/etc/amandates"
 #endif
 
 #ifndef INT_MAX

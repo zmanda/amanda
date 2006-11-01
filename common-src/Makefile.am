@@ -44,7 +44,6 @@ libamanda_la_LDFLAGS =  -release $(VERSION)
 
 noinst_HEADERS =		\
 	amanda.h		\
-	amandates.h		\
 	amfeatures.h		\
 	arglist.h		\
 	clock.h			\

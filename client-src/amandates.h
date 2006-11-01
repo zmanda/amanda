@@ -36,10 +36,6 @@
 #define DUMP_LEVELS	10	/* XXX should be in amanda.h */
 #define EPOCH		((time_t)0)
 
-#ifndef AMANDATES_FILE
-#define AMANDATES_FILE "/etc/amandates"
-#endif
-
 typedef struct amandates_s {
     struct amandates_s *next;
     char *name;				/* filesystem name */

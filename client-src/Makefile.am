@@ -69,7 +69,7 @@ EXTRA_DIST =		amhpfixdevs.sh		amsinixfixdevs.sh
 sendbackup_SOURCES = 	sendbackup.c		sendbackup.h	  \
 			sendbackup-dump.c	sendbackup-gnutar.c
 
-noinst_HEADERS	= 	getfsent.h	\
+noinst_HEADERS	= 	amandates.h	getfsent.h	\
 			findpass.h	client_util.h
 			
 
