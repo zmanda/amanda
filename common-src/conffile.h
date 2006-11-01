@@ -392,7 +392,7 @@ typedef enum dumptype_e  {
     DUMPTYPE_BUMPSIZE,
     DUMPTYPE_BUMPDAYS,
     DUMPTYPE_BUMPMULT,
-    DUMPTYPE_START_T,
+    DUMPTYPE_STARTTIME,
     DUMPTYPE_STRATEGY,
     DUMPTYPE_ESTIMATE,
     DUMPTYPE_COMPRESS,
@@ -445,7 +445,7 @@ typedef struct dumptype_s {
 #define dumptype_get_bumpsize(dumptype)           get_conftype_am64     (&dumptype->value[DUMPTYPE_BUMPSIZE])
 #define dumptype_get_bumpdays(dumptype)           get_conftype_int      (&dumptype->value[DUMPTYPE_BUMPDAYS])
 #define dumptype_get_bumpmult(dumptype)           get_conftype_real     (&dumptype->value[DUMPTYPE_BUMPMULT])
-#define dumptype_get_start_t(dumptype)            get_conftype_time     (&dumptype->value[DUMPTYPE_START_T])
+#define dumptype_get_starttime(dumptype)          get_conftype_time     (&dumptype->value[DUMPTYPE_STARTTIME])
 #define dumptype_get_strategy(dumptype)           get_conftype_strategy (&dumptype->value[DUMPTYPE_STRATEGY])
 #define dumptype_get_estimate(dumptype)           get_conftype_estimate (&dumptype->value[DUMPTYPE_ESTIMATE])
 #define dumptype_get_compress(dumptype)           get_conftype_compress (&dumptype->value[DUMPTYPE_COMPRESS])

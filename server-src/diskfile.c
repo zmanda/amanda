@@ -369,6 +369,8 @@ parse_diskline(
     int ch, dup = 0;
     char *line = *line_p;
     int line_num = *line_num_p;
+    struct tm *stm;
+    time_t st;
 
     assert(filename != NULL);
     assert(line_num > 0);
@@ -568,7 +570,18 @@ parse_diskline(
     disk->bumpsize	     = dumptype_get_bumpsize(dtype);
     disk->bumpdays	     = dumptype_get_bumpdays(dtype);
     disk->bumpmult	     = dumptype_get_bumpmult(dtype);
-    disk->start_t	     = dumptype_get_start_t(dtype);
+    disk->starttime          = dumptype_get_starttime(dtype);
+    disk->start_t = 0;
+    if (disk->starttime > 0) {
+	st = time(NULL);
+	disk->start_t = st;
+	stm = localtime(&st);
+	disk->start_t -= stm->tm_sec + 60 * stm->tm_min + 3600 * stm->tm_hour;
+	disk->start_t += disk->starttime / 100 * 3600 +
+			 disk->starttime % 100 * 60;
+	if ((disk->start_t - st) < -43200)
+	    disk->start_t += 86400;
+    }
     disk->strategy	     = dumptype_get_strategy(dtype);
     disk->ignore	     = dumptype_get_ignore(dtype);
     disk->estimate	     = dumptype_get_estimate(dtype);

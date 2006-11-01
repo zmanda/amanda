@@ -85,6 +85,7 @@ typedef struct disk_s {
     off_t	bumpsize;
     int		bumpdays;
     double	bumpmult;
+    time_t	starttime;		/* start this dump after this time */
     time_t	start_t;		/* start this dump after this time */
     int		strategy;		/* what dump strategy to use */
     int		ignore;			/* ignore */

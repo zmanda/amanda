@@ -935,7 +935,6 @@ getconf_str(
 	error("getconf_str: parm is not a CONFTYPE_STRING|CONFTYPE_IDENT: %d", parm);
 	/*NOTREACHED*/
     }
-dbprintf(("AA:%s:\n",conf_data[parm].v.s));
     return(conf_data[parm].v.s);
 }
 
@@ -1470,7 +1469,7 @@ t_conf_var dumptype_var [] = {
    { CONF_RECORD            , CONFTYPE_BOOL     , read_bool   , DUMPTYPE_RECORD            , NULL },
    { CONF_SKIP_FULL         , CONFTYPE_BOOL     , read_bool   , DUMPTYPE_SKIP_FULL         , NULL },
    { CONF_SKIP_INCR         , CONFTYPE_BOOL     , read_bool   , DUMPTYPE_SKIP_INCR         , NULL },
-   { CONF_STARTTIME         , CONFTYPE_TIME     , read_time   , DUMPTYPE_START_T           , NULL },
+   { CONF_STARTTIME         , CONFTYPE_TIME     , read_time   , DUMPTYPE_STARTTIME         , NULL },
    { CONF_STRATEGY          , CONFTYPE_INT      , get_strategy, DUMPTYPE_STRATEGY          , NULL },
    { CONF_TAPE_SPLITSIZE    , CONFTYPE_AM64     , read_am64   , DUMPTYPE_TAPE_SPLITSIZE    , validate_positive0 },
    { CONF_SPLIT_DISKBUFFER  , CONFTYPE_STRING   , read_string , DUMPTYPE_SPLIT_DISKBUFFER  , NULL },
@@ -1582,7 +1581,7 @@ init_dumptype_defaults(void)
     conf_init_am64     (&dpcur.value[DUMPTYPE_BUMPSIZE]          , conf_data[CNF_BUMPSIZE].v.am64);
     conf_init_int      (&dpcur.value[DUMPTYPE_BUMPDAYS]          , conf_data[CNF_BUMPDAYS].v.i);
     conf_init_real     (&dpcur.value[DUMPTYPE_BUMPMULT]          , conf_data[CNF_BUMPMULT].v.r);
-    conf_init_time     (&dpcur.value[DUMPTYPE_START_T]           , (time_t)0);
+    conf_init_time     (&dpcur.value[DUMPTYPE_STARTTIME]         , (time_t)0);
     conf_init_strategy (&dpcur.value[DUMPTYPE_STRATEGY]          , DS_STANDARD);
     conf_init_estimate (&dpcur.value[DUMPTYPE_ESTIMATE]          , ES_CLIENT);
     conf_init_compress (&dpcur.value[DUMPTYPE_COMPRESS]          , COMP_FAST);
@@ -2456,25 +2455,28 @@ dump_configuration(
     }
 
     for(dp = dumplist; dp != NULL; dp = dp->next) {
-	if(dp->seen == -1)
-	    prefix = "#";
-	else
-	    prefix = "";
-	printf("\n%sDEFINE DUMPTYPE %s {\n", prefix, dp->name);
-	for(i=0; i < DUMPTYPE_DUMPTYPE; i++) {
-	    for(np=dumptype_var; np->token != CONF_UNKNOWN; np++)
-		if(np->parm == i) break;
-	    if(np->token == CONF_UNKNOWN)
-		error("dumptype bad value");
+	if (strncmp(dp->name, "custom(", 7) != 0) {
+	    if(dp->seen == -1)
+		prefix = "#";
+	    else
+		prefix = "";
+	    printf("\n%sDEFINE DUMPTYPE %s {\n", prefix, dp->name);
+	    for(i=0; i < DUMPTYPE_DUMPTYPE; i++) {
+		for(np=dumptype_var; np->token != CONF_UNKNOWN; np++)
+		    if(np->parm == i) break;
+		if(np->token == CONF_UNKNOWN)
+		    error("dumptype bad value");
 
-	    for(kt = server_keytab; kt->token != CONF_UNKNOWN; kt++)
-		if(kt->token == np->token) break;
-	    if(kt->token == CONF_UNKNOWN)
-		error("dumptype bad token");
+		for(kt = server_keytab; kt->token != CONF_UNKNOWN; kt++)
+		    if(kt->token == np->token) break;
+		if(kt->token == CONF_UNKNOWN)
+		    error("dumptype bad token");
 
-	    printf("%s      %-19s %s\n", prefix, kt->keyword, conf_print(&dp->value[i], 1));
+		printf("%s      %-19s %s\n", prefix, kt->keyword,
+		       conf_print(&dp->value[i], 1));
+	    }
+	    printf("%s}\n", prefix);
 	}
-	printf("%s}\n", prefix);
     }
 
     for(ip = interface_list; ip != NULL; ip = ip->next) {

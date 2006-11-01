@@ -1901,16 +1901,7 @@ disklist_one(
 
     printf("        record %s\n", (dp->record? "YES" : "NO"));
     printf("        index %s\n", (dp->index? "YES" : "NO"));
-    st = dp->start_t;
-        if(st) {
-            stm = localtime(&st);
-	    if (stm) 
-		printf("        starttime %d:%02d:%02d\n",
-		       stm->tm_hour, stm->tm_min, stm->tm_sec);
-	    else
-		printf("        starttime BAD DATE\n");
-        }
-   
+    printf("        starttime %04d\n", (int)dp->starttime);
     if(dp->tape_splitsize > (off_t)0) {
 	printf("        tape_splitsize " OFF_T_FMT "\n",
 	       (OFF_T_FMT_TYPE)dp->tape_splitsize);

@@ -1,4 +1,11 @@
 2006-11-01  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c: Rename DUMPTYPE_START_T to DUMPTYPE_STARTTIME.
+	* common-src/conffile.h: Rename DUMPTYPE_START_T to DUMPTYPE_STARTTIME.
+	* server-src/amadmin.c (disklist_one): Print correct starttime.
+	* server-src/diskfile.c: Set start_t to starttime.
+	* server-src/diskfile.h (disk_t): Add starttime.
+
+2006-11-01  Jean-Louis Martineau <martineau@zmanda.com>
 	* changer-src/scsi-changer-driver.c: Add Tandberg SLR100,
 	                                     more debugging.
 	* changer-src/sense.c: Add Tandberg SLR100 Tape Drive "SLR100".
