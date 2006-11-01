@@ -428,6 +428,7 @@ extern char *debug_prefix_time(char *);
 #else									/* }{ */
 #   define dbopen(a)
 #   define dbreopen(a,b)
+#   define dbrename(a,b)
 #   define dbclose()
 #   define dbprintf(p)
 #   define dbfd()	(-1)

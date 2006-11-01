@@ -252,6 +252,9 @@ main(
     tapetype_t *tape;
     char *line;
     char *tapedev;
+#ifndef DEBUG_CODE
+    int i;
+#endif
 
     safe_fd(DATA_FD_OFFSET, 4);
     safe_cd();
