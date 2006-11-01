@@ -1,4 +1,7 @@
 2006-11-01  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/diskfile.c: Don't use 0 for NULL.
+
+2006-11-01  Jean-Louis Martineau <martineau@zmanda.com>
 	Revert Ian patch of 2006-10-29.
 	* common-src/conffile.c: Defile AMANDATES_FILE
 	* client-src/amandates.h: Don't define AMANDATES_FILE
