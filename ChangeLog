@@ -1,4 +1,7 @@
 2006-11-02  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/security-util.c: Better message on invalid size.
+
+2006-11-02  Jean-Louis Martineau <martineau@zmanda.com>
 	* configure.in: List bsdudp as a udp transport.
 
 2006-11-01  Jean-Louis Martineau <martineau@zmanda.com>

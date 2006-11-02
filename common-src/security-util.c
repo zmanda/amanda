@@ -499,17 +499,50 @@ tcpm_recv_token(
     }
 
     *size = (ssize_t)ntohl(netint[0]);
+    *handle = (int)ntohl(netint[1]);
     if (*size > NETWORK_BLOCK_BYTES) {
-	*errmsg = newvstralloc(*errmsg, "tcpm_recv_token: invalid size",
+	if (isprint((*size        ) & 0xFF) &&
+	    isprint((*size   >> 8 ) & 0xFF) &&
+	    isprint((*size   >> 16) & 0xFF) &&
+	    isprint((*size   >> 24) & 0xFF) &&
+	    isprint((*handle      ) & 0xFF) &&
+	    isprint((*handle >> 8 ) & 0xFF) &&
+	    isprint((*handle >> 16) & 0xFF) &&
+	    isprint((*handle >> 24) & 0xFF)) {
+	    char s[100];
+	    int i;
+	    s[0] = (*size   >> 24) & 0xFF;
+	    s[1] = (*size   >> 16) & 0xFF;
+	    s[2] = (*size   >>  8) & 0xFF;
+	    s[3] = (*size        ) & 0xFF;
+	    s[4] = (*handle >> 24) & 0xFF;
+	    s[5] = (*handle >> 16) & 0xFF;
+	    s[6] = (*handle >> 8 ) & 0xFF;
+	    s[7] = (*handle      ) & 0xFF;
+	    i = 8; s[i] = ' ';
+	    while(i<100 && isprint(s[i]) && s[i] != '\n') {
+		switch(net_read(fd, &s[i], 1, 0)) {
+		case -1: s[i] = '\0'; break;
+		case  0: s[i] = '\0'; break;
+		default: dbprintf(("read: %c\n", s[i])); i++; s[i]=' ';break;
+		}
+	    }
+	    s[i] = '\0';
+	    *errmsg = newvstralloc(*errmsg, "tcpm_recv_token: invalid size: ",
+				   s, NULL);
+	    dbprintf(("%s: tcpm_recv_token: invalid size: %s\n",
+		      debug_prefix_time(NULL), s));
+	} else {
+	    *errmsg = newvstralloc(*errmsg, "tcpm_recv_token: invalid size",
 				   NULL);
-	dbprintf(("%s: tcpm_recv_token: invalid size %d\n",
-		   debug_prefix_time(NULL), *size));
+	    dbprintf(("%s: tcpm_recv_token: invalid size %d\n",
+		      debug_prefix_time(NULL), *size));
+	}
 	*size = -1;
 	return -1;
     }
     amfree(*buf);
     *buf = alloc((size_t)*size);
-    *handle = (int)ntohl(netint[1]);
 
     if(*size == 0) {
 	auth_debug(1, ("%s: tcpm_recv_token: read EOF from %d\n",
