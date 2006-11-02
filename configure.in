@@ -924,7 +924,7 @@ y |  ye | yes) AC_DEFINE(BSDTCP_SECURITY,1,[Define if BSDTCP transport should be
 esac
 
 AC_ARG_WITH(bsdudp-security,
-    [  --with-bsdudp-security use tcp as a transport],
+    [  --with-bsdudp-security use udp as a transport],
     BSDUDP_SECURITY=$withval,
     : ${BSDUDP_SECURITY=yes}
 )
