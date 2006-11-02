@@ -1,3 +1,6 @@
+2006-11-02  Ian Turner <ian@zmanda.com>
+	* common-src/amanda.h: Use atol if atoll is missing.
+
 2006-11-02  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/security-util.c: Better message on invalid size.
 
