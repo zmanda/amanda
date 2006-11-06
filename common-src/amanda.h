@@ -1348,9 +1348,9 @@ extern ssize_t writev(int fd, const struct iovec *iov, int iovcnt);
 #    define      OFF_T_ATOI      (off_t)atol
 #  endif
 #  ifdef HAVE_STRTOLL
-#    define      OFF_T_ATOI	 (off_t)strtoll
+#    define      OFF_T_STRTOL	 (off_t)strtoll
 #  else
-#    define      OFF_T_ATOI      (off_t)strtol
+#    define      OFF_T_STRTOL      (off_t)strtol
 #  endif
 #else
 #  if SIZEOF_OFF_T == SIZEOF_LONG

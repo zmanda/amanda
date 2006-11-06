@@ -1,3 +1,7 @@
+2006-11-06  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/amanda.h: Define OFF_T_STRTOL.
+	* configure.in: Check for strtol and strtoll.
+
 2006-11-02  Ian Turner <ian@zmanda.com>
 	* common-src/amanda.h: Use atol if atoll is missing.
 
