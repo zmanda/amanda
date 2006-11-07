@@ -419,8 +419,8 @@ parse_diskline(
     /* diskdevice */
     dumptype = NULL;
     diskdevice = NULL;
-    dumptype = unquote_string(fp);
     if(fp[0] != '{') {
+	dumptype = unquote_string(fp);
 	if ((dtype = lookup_dumptype(dumptype)) == NULL) {
 	    diskdevice = dumptype;
 	    skip_whitespace(s, ch);
@@ -436,11 +436,11 @@ parse_diskline(
 	    fp = s - 1;
 	    skip_quoted_string(s, ch);
 	    s[-1] = '\0';
-	    dumptype = unquote_string(fp);
+	    if (fp[0] != '{') {
+		dumptype = unquote_string(fp);
+	    }
 	}
     }
-    else
-	amfree(dumptype);
 
     /* check for duplicate disk */
     if(host && (disk = lookup_disk(hostname, diskname)) != NULL) {

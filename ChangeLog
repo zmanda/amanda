@@ -1,4 +1,8 @@
 2006-11-07  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/security-util.c: Fix coverity bug 170.
+	* server-src/diskfile.c: Fix coverity bug 147.
+
+2006-11-07  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.c (validate_chunksize): Check chunksize is >=
 						      2*DISK_BLOCK_KB
 

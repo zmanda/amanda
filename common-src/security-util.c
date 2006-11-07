@@ -509,7 +509,7 @@ tcpm_recv_token(
 	    isprint((*handle >> 8 ) & 0xFF) &&
 	    isprint((*handle >> 16) & 0xFF) &&
 	    isprint((*handle >> 24) & 0xFF)) {
-	    char s[100];
+	    char s[101];
 	    int i;
 	    s[0] = (*size   >> 24) & 0xFF;
 	    s[1] = (*size   >> 16) & 0xFF;
