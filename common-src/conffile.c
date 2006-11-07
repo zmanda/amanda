@@ -752,9 +752,13 @@ validate_chunksize(
 	val->v.am64 = ((AM64_MAX / 1024) - (2 * DISK_BLOCK_KB));
     }
     else if(val->v.am64 < 0) {
-	conf_parserror("Negative chunksize (%lld) is no longer supported", val->v.am64);
+	conf_parserror("Negative chunksize (%lld) is no longer supported",
+		       val->v.am64);
     }
     val->v.am64 = am_floor(val->v.am64, (off_t)DISK_BLOCK_KB);
+    if (val->v.am64 < 2*DISK_BLOCK_KB) {
+	conf_parserror("chunksize must be at least %dkb", 2*DISK_BLOCK_KB);
+    }
 }
 
 static void

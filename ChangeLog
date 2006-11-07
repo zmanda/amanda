@@ -1,3 +1,7 @@
+2006-11-07  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c (validate_chunksize): Check chunksize is >=
+						      2*DISK_BLOCK_KB
+
 2006-11-06  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/amanda.h: Define OFF_T_STRTOL.
 	* configure.in: Check for strtol and strtoll.
