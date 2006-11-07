@@ -62,8 +62,13 @@ if ($conf =~ /^([\w.-]+)$/) {          # $1 is untainted
 }
 
 
+if ( ! -e "$confdir/$conf" ) {
+    print "Configuration directory '" . $confdir/$conf . "' doesn't exist\n";
+    exit 1;
+}
 if ( ! -d "$confdir/$conf" ) {
-    die "amstatus$suf: could not find directory $confdir/$conf";
+    print "Configuration directory '" . $confdir/$conf . "' is not a directory\n";
+    exit 1;
 }
 
 $oldPATH = $ENV{'PATH'};

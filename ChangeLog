@@ -1,4 +1,7 @@
 2006-11-07  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amstatus.pl.in: Improve error message.
+
+2006-11-07  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/security-util.c: Fix coverity bug 170.
 	* server-src/diskfile.c: Fix coverity bug 147.
 
