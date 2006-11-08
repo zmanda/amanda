@@ -1767,6 +1767,7 @@ static void handle_result(
 	s = t;
 	ch = tch;
 
+	size = (off_t)0;
 	if (sscanf(t - 1, "%d SIZE " OFF_T_FMT , &level,
 		   (OFF_T_FMT_TYPE *)&size) != 2) {
 	    goto bad_msg;

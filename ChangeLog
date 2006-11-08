@@ -1,3 +1,7 @@
+2006-11-08  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/driver.c: set off_t variable to 0 before sscanf.
+	* server-src/planner.c: set off_t variable to 0 before sscanf.
+
 2006-11-07  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amstatus.pl.in: Improve error message.
 
