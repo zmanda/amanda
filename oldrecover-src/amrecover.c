@@ -31,13 +31,6 @@
 
 #include "amanda.h"
 #include "version.h"
-//#ifdef HAVE_NETINET_IN_SYSTM_H
-//#include <netinet/in_systm.h>
-//#endif
-//#include <netinet/in.h>
-//#ifdef HAVE_NETINET_IP_H
-//#include <netinet/ip.h>
-//#endif
 #include "stream.h"
 #include "amfeatures.h"
 #include "amrecover.h"

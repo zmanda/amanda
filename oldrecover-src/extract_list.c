@@ -605,7 +605,6 @@ void add_file(
 	regex = "\\.[/]*$";
     }
     else if(strcmp(regex, "[^/]*[/]*$") == 0) {		/* "*" */
-	//regex = 
 	regex = "([^/.]|\\.[^/]+|[^/.][^/]*)[/]*$";
     } else {
 	/* remove "/" at end of path */

@@ -682,8 +682,6 @@ tcpma_stream_server(
 	return (NULL);
     }
     assert(strcmp(rh->hostname, rs->rc->hostname) == 0);
-    //amfree(rh->hostname);
-    //rh->hostname = stralloc(rs->rc->hostname);
     /*
      * so as not to conflict with the amanda server's handle numbers,
      * we start at 500000 and work down
@@ -1198,7 +1196,6 @@ udp_recvpkt_callback(
 	SIZEOF(rh->udp->peer.sin_addr)) != 0 ||
 	rh->peer.sin_port != rh->udp->peer.sin_port) {
 	amfree(rh->udp->handle);
-	//rh->udp->handle = NULL;
 	return;
     }
 

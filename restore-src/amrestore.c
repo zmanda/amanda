@@ -168,7 +168,7 @@ main(
 	case 'p': rst_flags->pipe_to_fd = fileno(stdout); break;
 	case 'h': rst_flags->headers = 1; break;
 	case 'f':
-	    filefsf = (off_t)strtoll(optarg, &e, 10);
+	    filefsf = (off_t)OFF_T_STRTOL(optarg, &e, 10);
 	    /*@ignore@*/
 	    if(*e != '\0') {
 		error("invalid fileno value \"%s\"", optarg);

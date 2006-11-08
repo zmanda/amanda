@@ -1339,8 +1339,8 @@ extern ssize_t writev(int fd, const struct iovec *iov, int iovcnt);
 #endif
 
 #if SIZEOF_OFF_T > SIZEOF_LONG
-#  define        OFF_T_FMT       "%lld"
-#  define        OFF_T_RFMT       "lld"
+#  define        OFF_T_FMT       LL_FMT
+#  define        OFF_T_RFMT      LL_RFMT
 #  define        OFF_T_FMT_TYPE  long long
 #  ifdef HAVE_ATOLL
 #    define      OFF_T_ATOI	 (off_t)atoll

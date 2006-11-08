@@ -362,22 +362,18 @@ main(
 	switch (i) {
 	    case 'C':
 		add_client_conf(CNF_CONF, optarg);
-		//config = newstralloc(config, optarg);
 		break;
 
 	    case 's':
 		add_client_conf(CNF_INDEX_SERVER, optarg);
-		//server_name = newstralloc(server_name, optarg);
 		break;
 
 	    case 't':
 		add_client_conf(CNF_TAPE_SERVER, optarg);
-		//tape_server_name = newstralloc(tape_server_name, optarg);
 		break;
 
 	    case 'd':
 		add_client_conf(CNF_TAPEDEV, optarg);
-		//tape_device_name = newstralloc(tape_device_name, optarg);
 		break;
 
 	    case 'U':

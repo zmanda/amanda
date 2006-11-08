@@ -1698,7 +1698,6 @@ bad_nak:
     }
 
 #if 1
-//#if defined(PACKET_DEBUG)
     fprintf(stderr, "got response:\n----\n%s\n----\n\n", pkt->body);
 #endif
 

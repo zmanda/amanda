@@ -1827,14 +1827,17 @@ main() {
 } 
 ],
 	[AC_MSG_RESULT(ll)
-	LL_FMT="%lld"],
+	LL_FMT="%lld"; LL_RFMT="lld"],
 	[AC_MSG_RESULT(l)
-	LL_FMT="%ld"],
+	LL_FMT="%ld"; LL_RFMT="ld"],
 	[AC_MSG_RESULT(assuming target platform uses ll)
-	LL_FMT="%lld"])
+	LL_FMT="%lld"; LL_RFMT="lld"])
 AC_DEFINE_UNQUOTED(LL_FMT,"$LL_FMT",
   [Format for a long long printf. ])
+AC_DEFINE_UNQUOTED(LL_RFMT,"$LL_RFMT",
+  [Format for a long long printf. ])
 AC_SUBST(LL_FMT)
+AC_SUBST(LL_RFMT)
 
 dnl Empty GZIP so that make dist works.
 GZIP=

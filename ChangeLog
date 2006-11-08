@@ -1,4 +1,12 @@
 2006-11-08  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/amanda.h, common-src/conffile.c,
+	  common-src/conffile.h, common-src/security-util.c,
+	  configure.in, oldrecover-src/amrecover.c,
+	  oldrecover-src/extract_list.c, recover-src/amrecover.c,
+	  recover-src/extract_list.c, restore-src/amrestore.c,
+	  server-src/dumper.c: Fix compiler error on Tru64.
+
+2006-11-08  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.c (getconf_byname):
 				Parse "DEFINE:identifer:parameter" format.
 	* common-src/conffile.c (getconf_list): New function to list a DEFINE.

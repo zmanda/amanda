@@ -145,9 +145,9 @@ static void validate_debug                (t_conf_var *, val_t *);
 static void validate_reserved_port_range  (t_conf_var *, val_t *);
 static void validate_unreserved_port_range(t_conf_var *, val_t *);
 
-//static t_conf_var  *get_np(t_conf_var *get_var, int parm);
+/*static t_conf_var  *get_np(t_conf_var *get_var, int parm);*/
 static int     get_int(void);
-//static long    get_long(void);
+/*static long    get_long(void);*/
 static time_t  get_time(void);
 static ssize_t get_size(void);
 static off_t   get_am64_t(void);
@@ -160,7 +160,7 @@ static tok_t   lookup_keyword(char *str);
 static void read_string(t_conf_var *, val_t *);
 static void read_ident(t_conf_var *, val_t *);
 static void read_int(t_conf_var *, val_t *);
-//static void read_long(t_conf_var *, val_t *);
+/*static void read_long(t_conf_var *, val_t *);*/
 static void read_size(t_conf_var *, val_t *);
 static void read_am64(t_conf_var *, val_t *);
 static void read_bool(t_conf_var *, val_t *);
@@ -179,20 +179,20 @@ static void conf_init_strategy(val_t *, int);
 static void conf_init_compress(val_t *, comp_t);
 static void conf_init_encrypt(val_t *, encrypt_t);
 static void conf_init_holding(val_t *, dump_holdingdisk_t);
-//static void conf_init_long(val_t *, long);
+/*static void conf_init_long(val_t *, long);*/
 static void conf_init_size(val_t *, ssize_t);
 static void conf_init_am64(val_t *, off_t);
 static void conf_init_real(val_t *, double);
 static void conf_init_rate(val_t *, double, double);
 static void conf_init_intrange(val_t *, int, int);
 static void conf_init_time(val_t *, time_t);
-//static void conf_init_sl(val_t *, sl_t *);
+/*static void conf_init_sl(val_t *, sl_t *);*/
 static void conf_init_exinclude(val_t *);
 static void conf_set_string(val_t *, char *);
-//static void conf_set_int(val_t *, int);
+/*static void conf_set_int(val_t *, int);*/
 static void conf_set_bool(val_t *, int);
 static void conf_set_compress(val_t *, comp_t);
-//static void conf_set_encrypt(val_t *, encrypt_t);
+/*static void conf_set_encrypt(val_t *, encrypt_t);*/
 static void conf_set_holding(val_t *, dump_holdingdisk_t);
 static void conf_set_strategy(val_t *, int);
 
@@ -814,7 +814,7 @@ validate_chunksize(
 	val->v.am64 = ((AM64_MAX / 1024) - (2 * DISK_BLOCK_KB));
     }
     else if(val->v.am64 < 0) {
-	conf_parserror("Negative chunksize (%lld) is no longer supported",
+	conf_parserror("Negative chunksize ("OFF_T_FMT") is no longer supported",
 		       val->v.am64);
     }
     val->v.am64 = am_floor(val->v.am64, (off_t)DISK_BLOCK_KB);
@@ -2024,9 +2024,6 @@ read_intrange(
     val->v.intrange[0] = tokenval.v.i;
     val->v.intrange[1] = tokenval.v.i;
     val->seen = tokenval.seen;
-//    if(tokenval.v.r < 0) {
-//	conf_parserror("full compression rate must be >= 0");
-//    }
 
     get_conftoken(CONF_ANY);
     switch(tok) {
@@ -2045,9 +2042,6 @@ read_intrange(
 
     get_conftoken(CONF_INT);
     val->v.intrange[1] = tokenval.v.i;
-//    if(tokenval.v.r < 0) {
-//	conf_parserror("incremental compression rate must be >= 0");
-//    }
 }
 
 static void

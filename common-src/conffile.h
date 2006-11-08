@@ -248,7 +248,7 @@ typedef enum {
     CONFTYPE_PRIORITY,
     CONFTYPE_RATE,
     CONFTYPE_INTRANGE,
-    CONFTYPE_EXINCLUDE,
+    CONFTYPE_EXINCLUDE
 } conftype_t;
 
 /* Compression types */
@@ -266,7 +266,7 @@ typedef enum {
 typedef enum {
     ENCRYPT_NONE,               /* No encryption */
     ENCRYPT_CUST,               /* Custom encryption on client */
-    ENCRYPT_SERV_CUST,          /* Custom encryption on server */
+    ENCRYPT_SERV_CUST           /* Custom encryption on server */
 } encrypt_t;
 
 /* holdingdisk types */
