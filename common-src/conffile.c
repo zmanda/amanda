@@ -533,6 +533,68 @@ t_conf_var server_var [] = {
    { CONF_UNRESERVED_TCP_PORT  , CONFTYPE_INTRANGE , read_intrange, CNF_UNRESERVED_TCP_PORT  , validate_unreserved_port_range },
    { CONF_UNKNOWN              , CONFTYPE_INT      , NULL         , CNF_CNF                  , NULL }
 };
+
+t_conf_var tapetype_var [] = {
+   { CONF_COMMENT  , CONFTYPE_STRING, read_string, TAPETYPE_COMMENT  , NULL },
+   { CONF_LBL_TEMPL, CONFTYPE_STRING, read_string, TAPETYPE_LBL_TEMPL, NULL },
+   { CONF_BLOCKSIZE, CONFTYPE_SIZE  , read_size  , TAPETYPE_BLOCKSIZE, validate_blocksize },
+   { CONF_LENGTH   , CONFTYPE_AM64  , read_am64  , TAPETYPE_LENGTH   , validate_positive0 },
+   { CONF_FILEMARK , CONFTYPE_AM64  , read_am64  , TAPETYPE_FILEMARK , NULL },
+   { CONF_SPEED    , CONFTYPE_INT   , read_int   , TAPETYPE_SPEED    , validate_positive0 },
+   { CONF_FILE_PAD , CONFTYPE_BOOL  , read_bool  , TAPETYPE_FILE_PAD , NULL },
+   { CONF_UNKNOWN  , CONFTYPE_INT   , NULL       , TAPETYPE_TAPETYPE , NULL }
+};
+
+t_conf_var dumptype_var [] = {
+   { CONF_COMMENT           , CONFTYPE_STRING   , read_string , DUMPTYPE_COMMENT           , NULL },
+   { CONF_AUTH              , CONFTYPE_STRING   , read_string , DUMPTYPE_SECURITY_DRIVER   , NULL },
+   { CONF_BUMPDAYS          , CONFTYPE_INT      , read_int    , DUMPTYPE_BUMPDAYS          , NULL },
+   { CONF_BUMPMULT          , CONFTYPE_REAL     , read_real   , DUMPTYPE_BUMPMULT          , NULL },
+   { CONF_BUMPSIZE          , CONFTYPE_AM64     , read_am64   , DUMPTYPE_BUMPSIZE          , NULL },
+   { CONF_BUMPPERCENT       , CONFTYPE_INT      , read_int    , DUMPTYPE_BUMPPERCENT       , NULL },
+   { CONF_COMPRATE          , CONFTYPE_REAL     , get_comprate, DUMPTYPE_COMPRATE          , NULL },
+   { CONF_COMPRESS          , CONFTYPE_INT      , get_compress, DUMPTYPE_COMPRESS          , NULL },
+   { CONF_ENCRYPT           , CONFTYPE_INT      , get_encrypt , DUMPTYPE_ENCRYPT           , NULL },
+   { CONF_DUMPCYCLE         , CONFTYPE_INT      , read_int    , DUMPTYPE_DUMPCYCLE         , validate_positive0 },
+   { CONF_EXCLUDE           , CONFTYPE_EXINCLUDE, get_exclude , DUMPTYPE_EXCLUDE           , NULL },
+   { CONF_INCLUDE           , CONFTYPE_EXINCLUDE, get_exclude , DUMPTYPE_INCLUDE           , NULL },
+   { CONF_IGNORE            , CONFTYPE_BOOL     , read_bool   , DUMPTYPE_IGNORE            , NULL },
+   { CONF_HOLDING           , CONFTYPE_HOLDING  , get_holding , DUMPTYPE_HOLDINGDISK       , NULL },
+   { CONF_INDEX             , CONFTYPE_BOOL     , read_bool   , DUMPTYPE_INDEX             , NULL },
+   { CONF_KENCRYPT          , CONFTYPE_BOOL     , read_bool   , DUMPTYPE_KENCRYPT          , NULL },
+   { CONF_MAXDUMPS          , CONFTYPE_INT      , read_int    , DUMPTYPE_MAXDUMPS          , validate_positive1 },
+   { CONF_MAXPROMOTEDAY     , CONFTYPE_INT      , read_int    , DUMPTYPE_MAXPROMOTEDAY     , validate_positive0 },
+   { CONF_PRIORITY          , CONFTYPE_PRIORITY , get_priority, DUMPTYPE_PRIORITY          , NULL },
+   { CONF_PROGRAM           , CONFTYPE_STRING   , read_string , DUMPTYPE_PROGRAM           , NULL },
+   { CONF_RECORD            , CONFTYPE_BOOL     , read_bool   , DUMPTYPE_RECORD            , NULL },
+   { CONF_SKIP_FULL         , CONFTYPE_BOOL     , read_bool   , DUMPTYPE_SKIP_FULL         , NULL },
+   { CONF_SKIP_INCR         , CONFTYPE_BOOL     , read_bool   , DUMPTYPE_SKIP_INCR         , NULL },
+   { CONF_STARTTIME         , CONFTYPE_TIME     , read_time   , DUMPTYPE_STARTTIME         , NULL },
+   { CONF_STRATEGY          , CONFTYPE_INT      , get_strategy, DUMPTYPE_STRATEGY          , NULL },
+   { CONF_TAPE_SPLITSIZE    , CONFTYPE_AM64     , read_am64   , DUMPTYPE_TAPE_SPLITSIZE    , validate_positive0 },
+   { CONF_SPLIT_DISKBUFFER  , CONFTYPE_STRING   , read_string , DUMPTYPE_SPLIT_DISKBUFFER  , NULL },
+   { CONF_ESTIMATE          , CONFTYPE_INT      , get_estimate, DUMPTYPE_ESTIMATE          , NULL },
+   { CONF_SRV_ENCRYPT       , CONFTYPE_STRING   , read_string , DUMPTYPE_SRV_ENCRYPT       , NULL },
+   { CONF_CLNT_ENCRYPT      , CONFTYPE_STRING   , read_string , DUMPTYPE_CLNT_ENCRYPT      , NULL },
+   { CONF_AMANDAD_PATH      , CONFTYPE_STRING   , read_string , DUMPTYPE_AMANDAD_PATH      , NULL },
+   { CONF_CLIENT_USERNAME   , CONFTYPE_STRING   , read_string , DUMPTYPE_CLIENT_USERNAME   , NULL },
+   { CONF_SSH_KEYS          , CONFTYPE_STRING   , read_string , DUMPTYPE_SSH_KEYS          , NULL },
+   { CONF_SRVCOMPPROG       , CONFTYPE_STRING   , read_string , DUMPTYPE_SRVCOMPPROG       , NULL },
+   { CONF_CLNTCOMPPROG      , CONFTYPE_STRING   , read_string , DUMPTYPE_CLNTCOMPPROG      , NULL },
+   { CONF_FALLBACK_SPLITSIZE, CONFTYPE_AM64     , read_am64   , DUMPTYPE_FALLBACK_SPLITSIZE, NULL },
+   { CONF_SRV_DECRYPT_OPT   , CONFTYPE_STRING   , read_string , DUMPTYPE_SRV_DECRYPT_OPT   , NULL },
+   { CONF_CLNT_DECRYPT_OPT  , CONFTYPE_STRING   , read_string , DUMPTYPE_CLNT_DECRYPT_OPT  , NULL },
+   { CONF_UNKNOWN           , CONFTYPE_INT      , NULL        , DUMPTYPE_DUMPTYPE          , NULL }
+};
+
+t_conf_var holding_var [] = {
+   { CONF_DIRECTORY, CONFTYPE_STRING, read_string, HOLDING_DISKDIR  , NULL },
+   { CONF_COMMENT  , CONFTYPE_STRING, read_string, HOLDING_COMMENT  , NULL },
+   { CONF_USE      , CONFTYPE_AM64  , read_am64  , HOLDING_DISKSIZE , validate_use },
+   { CONF_CHUNKSIZE, CONFTYPE_AM64  , read_am64  , HOLDING_CHUNKSIZE, validate_chunksize },
+   { CONF_UNKNOWN  , CONFTYPE_INT   , NULL       , HOLDING_HOLDING  , NULL }
+};
+
 /*
 ** ------------------------
 **  External entry points
@@ -823,6 +885,12 @@ getconf_byname(
     keytab_t *kt;
     char *s;
     char ch;
+    char *first_delim;
+    char *second_delim;
+    tapetype_t *tp;
+    dumptype_t *dp;
+    interface_t *ip;
+    holdingdisk_t *hp;
 
     tmpstr = stralloc(str);
     s = tmpstr;
@@ -830,24 +898,132 @@ getconf_byname(
 	if(islower((int)ch))
 	    s[-1] = (char)toupper(ch);
     }
-    for(kt = my_keytab; kt->token != CONF_UNKNOWN; kt++) {
-	if(kt->keyword && strcmp(kt->keyword, tmpstr) == 0)
-	    break;
+
+    first_delim = strchr(tmpstr, ':');
+    if (first_delim) {
+	*first_delim = '\0';
+	first_delim++;
+	second_delim = strchr(first_delim,':');
+	if(!second_delim) {
+	    amfree(tmpstr);
+	    return(NULL);
+	}
+	*second_delim = '\0';
+	second_delim++;
+
+	for(kt = my_keytab; kt->token != CONF_UNKNOWN; kt++) {
+	    if(kt->keyword && strcmp(kt->keyword, second_delim) == 0)
+		break;
+	}
+
+	if(kt->token == CONF_UNKNOWN)
+	    return NULL;
+
+	if (strcmp(tmpstr, "TAPETYPE") == 0) {
+	    tp = lookup_tapetype(first_delim);
+	    if (!tp) {
+		amfree(tmpstr);
+		return(NULL);
+	    }
+	    for(np = tapetype_var; np->token != CONF_UNKNOWN; np++) {
+		if(np->token == kt->token)
+		   break;
+	    }
+	    if (np->token == CONF_UNKNOWN) return NULL;
+	    tmpstr = stralloc(conf_print(&tp->value[np->parm], 0));
+	} else if (strcmp(tmpstr, "DUMPTYPE") == 0) {
+	    dp = lookup_dumptype(first_delim);
+	    if (!dp) {
+		amfree(tmpstr);
+		return(NULL);
+	    }
+	    for(np = dumptype_var; np->token != CONF_UNKNOWN; np++) {
+		if(np->token == kt->token)
+		   break;
+	    }
+	    if (np->token == CONF_UNKNOWN) return NULL;
+	    tmpstr = stralloc(conf_print(&dp->value[np->parm], 0));
+	} else if (strcmp(tmpstr, "HOLDINGDISK") == 0) {
+	    hp = lookup_holdingdisk(first_delim);
+	    if (!hp) {
+		amfree(tmpstr);
+		return(NULL);
+	    }
+	    for(np = holding_var; np->token != CONF_UNKNOWN; np++) {
+		if(np->token == kt->token)
+		   break;
+	    }
+	    if (np->token == CONF_UNKNOWN) return NULL;
+	    tmpstr = stralloc(conf_print(&hp->value[np->parm], 0));
+	} else if (strcmp(tmpstr, "INTERFACE") == 0) {
+	    ip = lookup_interface(first_delim);
+	    if (!ip) {
+		amfree(tmpstr);
+		return(NULL);
+	    }
+	    for(np = holding_var; np->token != CONF_UNKNOWN; np++) {
+		if(np->token == kt->token)
+		   break;
+	    }
+	    if (np->token == CONF_UNKNOWN) return NULL;
+	    tmpstr = stralloc(conf_print(&ip->value[np->parm], 0));
+	} else {
+	    amfree(tmpstr);
+	    return(NULL);
+	}
+    } else {
+	for(kt = my_keytab; kt->token != CONF_UNKNOWN; kt++) {
+	    if(kt->keyword && strcmp(kt->keyword, tmpstr) == 0)
+		break;
+	}
+
+	if(kt->token == CONF_UNKNOWN)
+	    return NULL;
+
+	for(np = my_var; np->token != CONF_UNKNOWN; np++) {
+	    if(np->token == kt->token)
+		break;
+	}
+
+	if(np->token == CONF_UNKNOWN) return NULL;
+
+	tmpstr = stralloc(conf_print(&conf_data[np->parm], 0));
     }
 
-    if(kt->token == CONF_UNKNOWN)
-	return NULL;
-
-    for(np = my_var; np->token != CONF_UNKNOWN; np++) {
-	if(np->token == kt->token)
-	    break;
-    }
-
-    if(np->token == CONF_UNKNOWN) return NULL;
-
-    tmpstr = stralloc(conf_print(&conf_data[np->parm], 0));
     return tmpstr;
 }
+
+
+char *
+getconf_list(
+    char *listname)
+{
+    char *result = NULL;
+    tapetype_t *tp;
+    dumptype_t *dp;
+    interface_t *ip;
+    holdingdisk_t *hp;
+
+    if (strcasecmp(listname,"tapetype") == 0) {
+	for(tp = tapelist; tp != NULL; tp=tp->next) {
+	    result = vstrextend(&result, tp->name, "\n", NULL);
+	}
+    } else if (strcasecmp(listname,"dumptype") == 0) {
+	for(dp = dumplist; dp != NULL; dp=dp->next) {
+	    result = vstrextend(&result, dp->name, "\n", NULL);
+	}
+    } else if (strcasecmp(listname,"holdingdisk") == 0) {
+	for(hp = holdingdisks; hp != NULL; hp=hp->next) {
+	    result = vstrextend(&result, hp->name, "\n", NULL);
+	}
+    } else if (strcasecmp(listname,"interface") == 0) {
+	for(ip = interface_list; ip != NULL; ip=ip->next) {
+	    result = vstrextend(&result, ip->name, "\n", NULL);
+	}
+    }
+    return result;
+}
+
 
 int
 getconf_seen(
@@ -993,6 +1169,18 @@ lookup_tapetype(
     tapetype_t *p;
 
     for(p = tapelist; p != NULL; p = p->next) {
+	if(strcasecmp(p->name, str) == 0) return p;
+    }
+    return NULL;
+}
+
+holdingdisk_t *
+lookup_holdingdisk(
+    char *str)
+{
+    holdingdisk_t *p;
+
+    for(p = holdingdisks; p != NULL; p = p->next) {
 	if(strcasecmp(p->name, str) == 0) return p;
     }
     return NULL;
@@ -1387,14 +1575,6 @@ read_confline(
     return 1;
 }
 
-t_conf_var holding_var [] = {
-   { CONF_DIRECTORY, CONFTYPE_STRING, read_string, HOLDING_DISKDIR  , NULL },
-   { CONF_COMMENT  , CONFTYPE_STRING, read_string, HOLDING_COMMENT  , NULL },
-   { CONF_USE      , CONFTYPE_AM64  , read_am64  , HOLDING_DISKSIZE , validate_use },
-   { CONF_CHUNKSIZE, CONFTYPE_AM64  , read_am64  , HOLDING_CHUNKSIZE, validate_chunksize },
-   { CONF_UNKNOWN  , CONFTYPE_INT   , NULL       , HOLDING_HOLDING  , NULL }
-};
-
 static void
 get_holdingdisk(
     void)
@@ -1451,48 +1631,6 @@ save_holdingdisk(
     num_holdingdisks++;
 }
 
-
-t_conf_var dumptype_var [] = {
-   { CONF_COMMENT           , CONFTYPE_STRING   , read_string , DUMPTYPE_COMMENT           , NULL },
-   { CONF_AUTH              , CONFTYPE_STRING   , read_string , DUMPTYPE_SECURITY_DRIVER   , NULL },
-   { CONF_BUMPDAYS          , CONFTYPE_INT      , read_int    , DUMPTYPE_BUMPDAYS          , NULL },
-   { CONF_BUMPMULT          , CONFTYPE_REAL     , read_real   , DUMPTYPE_BUMPMULT          , NULL },
-   { CONF_BUMPSIZE          , CONFTYPE_AM64     , read_am64   , DUMPTYPE_BUMPSIZE          , NULL },
-   { CONF_BUMPPERCENT       , CONFTYPE_INT      , read_int    , DUMPTYPE_BUMPPERCENT       , NULL },
-   { CONF_COMPRATE          , CONFTYPE_REAL     , get_comprate, DUMPTYPE_COMPRATE          , NULL },
-   { CONF_COMPRESS          , CONFTYPE_INT      , get_compress, DUMPTYPE_COMPRESS          , NULL },
-   { CONF_ENCRYPT           , CONFTYPE_INT      , get_encrypt , DUMPTYPE_ENCRYPT           , NULL },
-   { CONF_DUMPCYCLE         , CONFTYPE_INT      , read_int    , DUMPTYPE_DUMPCYCLE         , validate_positive0 },
-   { CONF_EXCLUDE           , CONFTYPE_EXINCLUDE, get_exclude , DUMPTYPE_EXCLUDE           , NULL },
-   { CONF_INCLUDE           , CONFTYPE_EXINCLUDE, get_exclude , DUMPTYPE_INCLUDE           , NULL },
-   { CONF_IGNORE            , CONFTYPE_BOOL     , read_bool   , DUMPTYPE_IGNORE            , NULL },
-   { CONF_HOLDING           , CONFTYPE_HOLDING  , get_holding , DUMPTYPE_HOLDINGDISK       , NULL },
-   { CONF_INDEX             , CONFTYPE_BOOL     , read_bool   , DUMPTYPE_INDEX             , NULL },
-   { CONF_KENCRYPT          , CONFTYPE_BOOL     , read_bool   , DUMPTYPE_KENCRYPT          , NULL },
-   { CONF_MAXDUMPS          , CONFTYPE_INT      , read_int    , DUMPTYPE_MAXDUMPS          , validate_positive1 },
-   { CONF_MAXPROMOTEDAY     , CONFTYPE_INT      , read_int    , DUMPTYPE_MAXPROMOTEDAY     , validate_positive0 },
-   { CONF_PRIORITY          , CONFTYPE_PRIORITY , get_priority, DUMPTYPE_PRIORITY          , NULL },
-   { CONF_PROGRAM           , CONFTYPE_STRING   , read_string , DUMPTYPE_PROGRAM           , NULL },
-   { CONF_RECORD            , CONFTYPE_BOOL     , read_bool   , DUMPTYPE_RECORD            , NULL },
-   { CONF_SKIP_FULL         , CONFTYPE_BOOL     , read_bool   , DUMPTYPE_SKIP_FULL         , NULL },
-   { CONF_SKIP_INCR         , CONFTYPE_BOOL     , read_bool   , DUMPTYPE_SKIP_INCR         , NULL },
-   { CONF_STARTTIME         , CONFTYPE_TIME     , read_time   , DUMPTYPE_STARTTIME         , NULL },
-   { CONF_STRATEGY          , CONFTYPE_INT      , get_strategy, DUMPTYPE_STRATEGY          , NULL },
-   { CONF_TAPE_SPLITSIZE    , CONFTYPE_AM64     , read_am64   , DUMPTYPE_TAPE_SPLITSIZE    , validate_positive0 },
-   { CONF_SPLIT_DISKBUFFER  , CONFTYPE_STRING   , read_string , DUMPTYPE_SPLIT_DISKBUFFER  , NULL },
-   { CONF_ESTIMATE          , CONFTYPE_INT      , get_estimate, DUMPTYPE_ESTIMATE          , NULL },
-   { CONF_SRV_ENCRYPT       , CONFTYPE_STRING   , read_string , DUMPTYPE_SRV_ENCRYPT       , NULL },
-   { CONF_CLNT_ENCRYPT      , CONFTYPE_STRING   , read_string , DUMPTYPE_CLNT_ENCRYPT      , NULL },
-   { CONF_AMANDAD_PATH      , CONFTYPE_STRING   , read_string , DUMPTYPE_AMANDAD_PATH      , NULL },
-   { CONF_CLIENT_USERNAME   , CONFTYPE_STRING   , read_string , DUMPTYPE_CLIENT_USERNAME   , NULL },
-   { CONF_SSH_KEYS          , CONFTYPE_STRING   , read_string , DUMPTYPE_SSH_KEYS          , NULL },
-   { CONF_SRVCOMPPROG       , CONFTYPE_STRING   , read_string , DUMPTYPE_SRVCOMPPROG       , NULL },
-   { CONF_CLNTCOMPPROG      , CONFTYPE_STRING   , read_string , DUMPTYPE_CLNTCOMPPROG      , NULL },
-   { CONF_FALLBACK_SPLITSIZE, CONFTYPE_AM64     , read_am64   , DUMPTYPE_FALLBACK_SPLITSIZE, NULL },
-   { CONF_SRV_DECRYPT_OPT   , CONFTYPE_STRING   , read_string , DUMPTYPE_SRV_DECRYPT_OPT   , NULL },
-   { CONF_CLNT_DECRYPT_OPT  , CONFTYPE_STRING   , read_string , DUMPTYPE_CLNT_DECRYPT_OPT  , NULL },
-   { CONF_UNKNOWN           , CONFTYPE_INT      , NULL        , DUMPTYPE_DUMPTYPE          , NULL }
-};
 
 dumptype_t *
 read_dumptype(
@@ -1655,17 +1793,6 @@ copy_dumptype(void)
 	}
     }
 }
-
-t_conf_var tapetype_var [] = {
-   { CONF_COMMENT  , CONFTYPE_STRING, read_string, TAPETYPE_COMMENT  , NULL },
-   { CONF_LBL_TEMPL, CONFTYPE_STRING, read_string, TAPETYPE_LBL_TEMPL, NULL },
-   { CONF_BLOCKSIZE, CONFTYPE_SIZE  , read_size  , TAPETYPE_BLOCKSIZE, validate_blocksize },
-   { CONF_LENGTH   , CONFTYPE_AM64  , read_am64  , TAPETYPE_LENGTH   , validate_positive0 },
-   { CONF_FILEMARK , CONFTYPE_AM64  , read_am64  , TAPETYPE_FILEMARK , NULL },
-   { CONF_SPEED    , CONFTYPE_INT   , read_int   , TAPETYPE_SPEED    , validate_positive0 },
-   { CONF_FILE_PAD , CONFTYPE_BOOL  , read_bool  , TAPETYPE_FILE_PAD , NULL },
-   { CONF_UNKNOWN  , CONFTYPE_INT   , NULL       , TAPETYPE_TAPETYPE , NULL }
-};
 
 static void
 get_tapetype(void)

@@ -1,4 +1,15 @@
 2006-11-08  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c (getconf_byname):
+				Parse "DEFINE:identifer:parameter" format.
+	* common-src/conffile.c (getconf_list): New function to list a DEFINE.
+	* common-src/conffile.c (lookup_holdingdisk): New function.
+	* common-src/conffile.h (getconf_list,
+				 lookup_holdingdisk): New prototype.
+	* server-src/getconf.c: accept --list argument and
+				"DEFINE:identifer:parameter" format.
+	* man/xml-source/amgetconf.8.xml: Document.
+
+2006-11-08  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/driver.c: set off_t variable to 0 before sscanf.
 	* server-src/planner.c: set off_t variable to 0 before sscanf.
 
