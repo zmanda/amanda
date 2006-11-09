@@ -90,6 +90,32 @@ man page for more details about &A;.</para>
   <term><emphasis remap='B'>--list</emphasis></term>
   <listitem>
 <para>The parameter must be 'tapetype', 'dumptype, 'holdingdisk' or 'interface'. It will output, one by line, the list of identifier for the parameter.</para>
+<variablelist remap='TP'>
+<varlistentry>
+  <listitem>
+<para><emphasis remap='B'>--list tapetype</emphasis></para>
+<para>Output the list of tapetype, one by line.</para>
+  </listitem>
+</varlistentry>
+<varlistentry>
+  <listitem>
+<para><emphasis remap='B'>--list dumptype</emphasis></para>
+<para>Output the list of dumptype, one by line.</para>
+  </listitem>
+</varlistentry>
+<varlistentry>
+  <listitem>
+<para><emphasis remap='B'>--list holdingdisk</emphasis></para>
+<para>Output the list of holdingdisk, one by line.</para>
+  </listitem>
+</varlistentry>
+<varlistentry>
+  <listitem>
+<para><emphasis remap='B'>--list interface</emphasis></para>
+<para>Output the list of interface, one by line.</para>
+  </listitem>
+</varlistentry>
+</variablelist>
   </listitem>
   </varlistentry>
 

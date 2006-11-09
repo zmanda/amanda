@@ -1,4 +1,7 @@
 2006-11-09  Jean-Louis Martineau <martineau@zmanda.com>
+	* man/xml-source/amgetconf.8.xml: Document --list.
+
+2006-11-09  Jean-Louis Martineau <martineau@zmanda.com>
 	* changer-src/chg-scsi.c: Don't remove '_' from "generic_changer".
 
 2006-11-08  Jean-Louis Martineau <martineau@zmanda.com>
