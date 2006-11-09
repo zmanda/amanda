@@ -399,15 +399,17 @@ read_config(
 	    fprintf(stderr,"drivenum %d is bad\n", drivenum);
 	    drivenum = 0;
 	  }
-          p = chg->conf[drivenum].changerident;
-          while (*p != '\0')
-          {
-            if (*p == '_')
+	  if (strcmp(chg->conf[drivenum].changerident,"generic_changer") != 0) {
+            p = chg->conf[drivenum].changerident;
+            while (*p != '\0')
             {
-              *p=' ';
+              if (*p == '_')
+              {
+                *p=' ';
+              }
+              p++;
             }
-            p++;
-          }
+	  }
           break;
         case TAPEIDENT:
           chg->conf[drivenum].tapeident = stralloc(value);

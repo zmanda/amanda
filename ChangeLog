@@ -1,3 +1,6 @@
+2006-11-09  Jean-Louis Martineau <martineau@zmanda.com>
+	* changer-src/chg-scsi.c: Don't remove '_' from "generic_changer".
+
 2006-11-08  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/amanda.h, common-src/conffile.c,
 	  common-src/conffile.h, common-src/security-util.c,
