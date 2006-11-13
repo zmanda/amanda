@@ -1,3 +1,7 @@
+2006-11-13  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amcheck.c: Don't ouput an warning if holdingdisk 'use'
+				is set to 0.
+
 2006-11-09  Jean-Louis Martineau <martineau@zmanda.com>
 	* man/xml-source/amgetconf.8.xml: Document --list.
 

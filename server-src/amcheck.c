@@ -844,11 +844,6 @@ start_server_check(
 			quoted, (OFF_T_FMT_TYPE)holdingdisk_get_disksize(hdp));
 		disklow = 1;
 	    }
-	    else if(holdingdisk_get_disksize(hdp) == (off_t)0) {
-		fprintf(outf, "WARNING: holding disk %s: "
-			"use nothing because 'use' is set to 0\n",
-			quoted);
-	    }
 	    else if(holdingdisk_get_disksize(hdp) > (off_t)0) {
 		if(fs.avail < holdingdisk_get_disksize(hdp)) {
 		    fprintf(outf,
