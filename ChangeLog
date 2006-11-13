@@ -1,4 +1,8 @@
 2006-11-13  Jean-Louis Martineau <martineau@zmanda.com>
+	* client-src/selfcheck.c: Work for estimate calcsize and
+				  program "DUMP".
+
+2006-11-13  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amcheck.c: Don't ouput an warning if holdingdisk 'use'
 				is set to 0.
 

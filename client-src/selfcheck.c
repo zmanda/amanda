@@ -687,7 +687,7 @@ check_disk(
 	amode = F_OK;
 	amfree(device);
 	device = amname_to_dirname(amdevice);
-    } else if (strcmp(program, "DUMP") == 0) {
+    } else if (strcmp(myprogram, "DUMP") == 0) {
 	if(amdevice[0] == '/' && amdevice[1] == '/') {
 	    err = vstralloc("The DUMP program cannot handle samba shares,",
 			    " use GNUTAR: ",
