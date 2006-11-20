@@ -1662,6 +1662,7 @@ static void handle_result(
     int tch;
     char *qname;
     char *disk;
+    OFF_T_FMT_TYPE size_;
 
     hostp = (am_host_t *)datap;
     hostp->up = HOST_READY;
@@ -1767,11 +1768,11 @@ static void handle_result(
 	s = t;
 	ch = tch;
 
-	size = (off_t)0;
-	if (sscanf(t - 1, "%d SIZE " OFF_T_FMT , &level,
-		   (OFF_T_FMT_TYPE *)&size) != 2) {
+	size_ = (OFF_T_FMT_TYPE)0;
+	if (sscanf(t - 1, "%d SIZE " OFF_T_FMT , &level, &size_) != 2) {
 	    goto bad_msg;
 	}
+	size = size_;
 	dp = lookup_hostdisk(hostp, disk);
 	amfree(disk);
 

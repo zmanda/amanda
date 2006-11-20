@@ -1963,6 +1963,10 @@ read_schedule(
     int ch;
     off_t flush_size = (off_t)0;
     char *qname = NULL;
+    OFF_T_FMT_TYPE nsize_;
+    OFF_T_FMT_TYPE csize_;
+    OFF_T_FMT_TYPE degr_nsize_;
+    OFF_T_FMT_TYPE degr_csize_;
 
     (void)cookie;	/* Quiet unused parameter warning */
 
@@ -2053,21 +2057,21 @@ read_schedule(
 	s[-1] = '\0';
 
 	skip_whitespace(s, ch);			/* find the native size */
-	nsize = (off_t)0;
-	if(ch == '\0' || sscanf(s - 1, OFF_T_FMT, 
-				(OFF_T_FMT_TYPE *)&nsize) != 1) {
+	nsize_ = (OFF_T_FMT_TYPE)0;
+	if(ch == '\0' || sscanf(s - 1, OFF_T_FMT, &nsize_) != 1) {
 	    error("schedule line %d: syntax error (bad nsize)", line);
 	    /*NOTREACHED*/
 	}
+	nsize = nsize_;
 	skip_integer(s, ch);
 
 	skip_whitespace(s, ch);			/* find the compressed size */
-	csize = (off_t)0;
-	if(ch == '\0' || sscanf(s - 1, OFF_T_FMT, 
-				(OFF_T_FMT_TYPE *)&csize) != 1) {
+	csize_ = (OFF_T_FMT_TYPE)0;
+	if(ch == '\0' || sscanf(s - 1, OFF_T_FMT, &csize_) != 1) {
 	    error("schedule line %d: syntax error (bad csize)", line);
 	    /*NOTREACHED*/
 	}
+	csize = csize_;
 	skip_integer(s, ch);
 
 	skip_whitespace(s, ch);			/* find the time number */
@@ -2104,21 +2108,21 @@ read_schedule(
 	    s[-1] = '\0';
 
 	    skip_whitespace(s, ch);		/* find the degr native size */
-	    degr_nsize = (off_t)0;
-	    if(ch == '\0'  || sscanf(s - 1, OFF_T_FMT, 
-			(OFF_T_FMT_TYPE *)&degr_nsize) != 1) {
+	    degr_nsize_ = (OFF_T_FMT_TYPE)0;
+	    if(ch == '\0'  || sscanf(s - 1, OFF_T_FMT, &degr_nsize_) != 1) {
 		error("schedule line %d: syntax error (bad degr nsize)", line);
 		/*NOTREACHED*/
 	    }
+	    degr_nsize = degr_nsize_;
 	    skip_integer(s, ch);
 
 	    skip_whitespace(s, ch);		/* find the degr compressed size */
-	    degr_csize = (off_t)0;
-	    if(ch == '\0'  || sscanf(s - 1, OFF_T_FMT, 
-			(OFF_T_FMT_TYPE *)&degr_csize) != 1) {
+	    degr_csize_ = (OFF_T_FMT_TYPE)0;
+	    if(ch == '\0'  || sscanf(s - 1, OFF_T_FMT, &degr_csize_) != 1) {
 		error("schedule line %d: syntax error (bad degr csize)", line);
 		/*NOTREACHED*/
 	    }
+	    degr_csize = degr_csize_;
 	    skip_integer(s, ch);
 
 	    skip_whitespace(s, ch);		/* find the degr time number */
