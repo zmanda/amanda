@@ -1,3 +1,8 @@
+2006-11-20  Ian Turner <ian@zmanda.com>
+	* tape-src/output-file.c: Fix a compilation error related to
+	  improper type casts. Thanks to Satya Ganga for noticing this
+	  problem.
+
 2006-11-20  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/driver.c: Use temporary variable to scanf an OFF_T_FMT.
 	* server-src/planner.c: Use temporary variable to scanf an OFF_T_FMT.

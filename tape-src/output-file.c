@@ -355,11 +355,16 @@ file_open(
 	if (volume_info[fd].fd >= 0 && fi->ri_count == 0 &&
 		(rfd = open(recordfilename, O_RDONLY)) >= 0) {
 	    for (; (line = areads(rfd)) != NULL; free(line)) {
-		n = sscanf(line,
-			   OFF_T_FMT " "  OFF_T_FMT " " SIZE_T_FMT,
-			   (OFF_T_FMT_TYPE *)&start_record,
-			   (OFF_T_FMT_TYPE *)&end_record,
-			   (SIZE_T_FMT_TYPE *)&record_size);
+                /* We play this game because OFF_T_FMT_TYPE is not
+                   necessarily the same as off_t, and we need to cast the
+                   actual value (not just the pointer. */
+                OFF_T_FMT_TYPE start_record_ = (OFF_T_FMT_TYPE)0;
+                OFF_T_FMT_TYPE end_record_ = (OFF_T_FMT_TYPE)0;
+		n = sscanf(line, OFF_T_FMT " " OFF_T_FMT " " SIZE_T_FMT,
+                           &start_record_, &end_record_, &record_size);
+                start_record = start_record_;
+                end_record = end_record_;
+
 		if (n == 3) {
                     ri_p = &fi->ri;
 		    amtable_alloc((void **)ri_p,
