@@ -501,20 +501,20 @@ tcpm_recv_token(
     *size = (ssize_t)ntohl(netint[0]);
     *handle = (int)ntohl(netint[1]);
     if (*size > NETWORK_BLOCK_BYTES) {
-	if (isprint((*size        ) & 0xFF) &&
-	    isprint((*size   >> 8 ) & 0xFF) &&
-	    isprint((*size   >> 16) & 0xFF) &&
-	    isprint((*size   >> 24) & 0xFF) &&
+	if (isprint((int)(*size        ) & 0xFF) &&
+	    isprint((int)(*size   >> 8 ) & 0xFF) &&
+	    isprint((int)(*size   >> 16) & 0xFF) &&
+	    isprint((int)(*size   >> 24) & 0xFF) &&
 	    isprint((*handle      ) & 0xFF) &&
 	    isprint((*handle >> 8 ) & 0xFF) &&
 	    isprint((*handle >> 16) & 0xFF) &&
 	    isprint((*handle >> 24) & 0xFF)) {
 	    char s[101];
 	    int i;
-	    s[0] = (*size   >> 24) & 0xFF;
-	    s[1] = (*size   >> 16) & 0xFF;
-	    s[2] = (*size   >>  8) & 0xFF;
-	    s[3] = (*size        ) & 0xFF;
+	    s[0] = ((int)(*size)  >> 24) & 0xFF;
+	    s[1] = ((int)(*size)  >> 16) & 0xFF;
+	    s[2] = ((int)(*size)  >>  8) & 0xFF;
+	    s[3] = ((int)(*size)       ) & 0xFF;
 	    s[4] = (*handle >> 24) & 0xFF;
 	    s[5] = (*handle >> 16) & 0xFF;
 	    s[6] = (*handle >> 8 ) & 0xFF;

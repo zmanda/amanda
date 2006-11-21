@@ -362,8 +362,8 @@ file_open(
                 OFF_T_FMT_TYPE end_record_ = (OFF_T_FMT_TYPE)0;
 		n = sscanf(line, OFF_T_FMT " " OFF_T_FMT " " SIZE_T_FMT,
                            &start_record_, &end_record_, &record_size);
-                start_record = start_record_;
-                end_record = end_record_;
+                start_record = (off_t)start_record_;
+                end_record = (off_t)end_record_;
 
 		if (n == 3) {
                     ri_p = &fi->ri;

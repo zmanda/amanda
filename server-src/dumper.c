@@ -333,7 +333,7 @@ main(
 
     signal(SIGPIPE, SIG_IGN);
 
-    conf_dtimeout = getconf_int(CNF_DTIMEOUT);
+    conf_dtimeout = (time_t)getconf_int(CNF_DTIMEOUT);
 
     protocol_init();
 

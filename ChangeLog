@@ -1,3 +1,8 @@
+2006-11-20  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/security-util.c, server-src/amcheck.c,
+	* server-src/driver.c, server-src/dumper.c,
+	* server-src/planner.c, tape-src/output-file.c: Lint cleanup.
+
 2006-11-20  Ian Turner <ian@zmanda.com>
 	* tape-src/output-file.c: Fix a compilation error related to
 	  improper type casts. Thanks to Satya Ganga for noticing this

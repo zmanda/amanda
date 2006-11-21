@@ -2062,7 +2062,7 @@ read_schedule(
 	    error("schedule line %d: syntax error (bad nsize)", line);
 	    /*NOTREACHED*/
 	}
-	nsize = nsize_;
+	nsize = (off_t)nsize_;
 	skip_integer(s, ch);
 
 	skip_whitespace(s, ch);			/* find the compressed size */
@@ -2071,7 +2071,7 @@ read_schedule(
 	    error("schedule line %d: syntax error (bad csize)", line);
 	    /*NOTREACHED*/
 	}
-	csize = csize_;
+	csize = (off_t)csize_;
 	skip_integer(s, ch);
 
 	skip_whitespace(s, ch);			/* find the time number */
@@ -2113,7 +2113,7 @@ read_schedule(
 		error("schedule line %d: syntax error (bad degr nsize)", line);
 		/*NOTREACHED*/
 	    }
-	    degr_nsize = degr_nsize_;
+	    degr_nsize = (off_t)degr_nsize_;
 	    skip_integer(s, ch);
 
 	    skip_whitespace(s, ch);		/* find the degr compressed size */
@@ -2122,7 +2122,7 @@ read_schedule(
 		error("schedule line %d: syntax error (bad degr csize)", line);
 		/*NOTREACHED*/
 	    }
-	    degr_csize = degr_csize_;
+	    degr_csize = (off_t)degr_csize_;
 	    skip_integer(s, ch);
 
 	    skip_whitespace(s, ch);		/* find the degr time number */

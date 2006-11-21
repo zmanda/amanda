@@ -340,7 +340,7 @@ int main(int argc, char **argv)
     conf_dumpcycle = getconf_int(CNF_DUMPCYCLE);
     conf_runspercycle = getconf_int(CNF_RUNSPERCYCLE);
     conf_tapecycle = getconf_int(CNF_TAPECYCLE);
-    conf_etimeout = getconf_int(CNF_ETIMEOUT);
+    conf_etimeout = (time_t)getconf_int(CNF_ETIMEOUT);
     conf_reserve  = getconf_int(CNF_RESERVE);
     conf_autoflush = getconf_boolean(CNF_AUTOFLUSH);
     conf_usetimestamps = getconf_boolean(CNF_USETIMESTAMPS);
@@ -1604,7 +1604,7 @@ static void getsize(
 	 * We use ctimeout for the "noop" request because it should be
 	 * very fast and etimeout has other side effects.
 	 */
-	timeout = getconf_int(CNF_CTIMEOUT);
+	timeout = (time_t)getconf_int(CNF_CTIMEOUT);
     }
 
     secdrv = security_getdriver(hostp->disks->security_driver);
@@ -1772,7 +1772,7 @@ static void handle_result(
 	if (sscanf(t - 1, "%d SIZE " OFF_T_FMT , &level, &size_) != 2) {
 	    goto bad_msg;
 	}
-	size = size_;
+	size = (off_t)size_;
 	dp = lookup_hostdisk(hostp, disk);
 	amfree(disk);
 
