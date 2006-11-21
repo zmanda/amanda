@@ -146,6 +146,7 @@ main(
     char *qamdevice = NULL;
     char *conffile;
     char *amandates_file;
+    int   amandates_read = 0;
 #if defined(USE_DBMALLOC)
     unsigned long malloc_hist_1, malloc_size_1;
     unsigned long malloc_hist_2, malloc_size_2;
@@ -187,10 +188,6 @@ main(
 
     /* handle all service requests */
 
-    amandates_file = getconf_str(CNF_AMANDATES);
-    if(!start_amandates(amandates_file, 0))
-        error("error [opening %s: %s]", amandates_file, strerror(errno));
-
     for(; (line = agets(stdin)) != NULL; free(line)) {
 	if (line[0] == '\0')
 	    continue;
@@ -230,6 +227,14 @@ main(
 	    }
 
 	    continue;
+	}
+
+	if (amandates_read == 0) {
+	    amandates_file = client_getconf_str(CLN_AMANDATES);
+	    if(!start_amandates(amandates_file, 0))
+	        error("error [opening %s: %s]", amandates_file,
+		      strerror(errno));
+	    amandates_read = 1;
 	}
 
 	s = line;

@@ -1,4 +1,8 @@
 2006-11-20  Jean-Louis Martineau <martineau@zmanda.com>
+	* client-src/sendsize.c: Open the amandates file after the
+				 <config>/amanda-client.conf file is loaded.
+
+2006-11-20  Jean-Louis Martineau <martineau@zmanda.com>
 	* client-src/sendsize.c: Fix compiler error on boris.
 	* server-src/driver.c: Fix compiler error on rocky.
 
