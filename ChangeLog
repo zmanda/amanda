@@ -1,4 +1,8 @@
 2006-11-20  Jean-Louis Martineau <martineau@zmanda.com>
+	* client-src/sendsize.c: Fix compiler error on boris.
+	* server-src/driver.c: Fix compiler error on rocky.
+
+2006-11-20  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/security-util.c, server-src/amcheck.c,
 	* server-src/driver.c, server-src/dumper.c,
 	* server-src/planner.c, tape-src/output-file.c: Lint cleanup.

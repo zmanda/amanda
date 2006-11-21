@@ -840,16 +840,18 @@ generic_calc_estimates(
     }
     match_expr = vstralloc(est->qamname," %d SIZE " OFF_T_FMT, NULL);
     for(size = (off_t)-1; (line = agets(dumpout)) != NULL; free(line)) {
+	OFF_T_FMT_TYPE size_ = (OFF_T_FMT_TYPE)0;
 	if (line[0] == '\0')
 	    continue;
-	if(sscanf(line, match_expr, &level, &size) == 2) {
+	if(sscanf(line, match_expr, &level, &size_) == 2) {
 	    printf("%s\n", line); /* write to amandad */
 	    dbprintf(("%s: estimate size for %s level %d: " OFF_T_FMT " KB\n",
 		      debug_prefix_time(NULL),
 		      est->qamname,
 		      level,
-		      size));
+		      size_));
 	}
+	size = (off_t)size_;
     }
     amfree(match_expr);
 
@@ -1384,11 +1386,11 @@ getsize_dump(
 		  debug_prefix_time(NULL), cmd, name, disk));
 	dbprintf(("%s: .....\n", debug_prefix_time(NULL)));
     } else {
-	    dbprintf(("%s: estimate size for %s level %d: %ld KB\n",
+	    dbprintf(("%s: estimate size for %s level %d: " OFF_T_FMT " KB\n",
 	      debug_prefix_time(NULL),
 	      qdisk,
 	      level,
-	      size));
+	      (OFF_T_FMT_TYPE)size));
     }
 
     if (killctl[1] != -1) {
@@ -1650,11 +1652,11 @@ getsize_smbtar(
 		  debug_prefix_time(NULL), SAMBA_CLIENT, disk));
 	dbprintf(("%s: .....\n", debug_prefix_time(NULL)));
     }
-    dbprintf(("%s: estimate size for %s level %d: %ld KB\n",
+    dbprintf(("%s: estimate size for %s level %d: " OFF_T_FMT " KB\n",
 	      debug_prefix_time(NULL),
 	      qdisk,
 	      level,
-	      size));
+	      (OFF_T_FMT_TYPE)size));
 
     kill(-dumppid, SIGTERM);
 
@@ -1924,11 +1926,11 @@ getsize_gnutar(
 		  debug_prefix_time(NULL), my_argv[0], disk));
 	dbprintf(("%s: .....\n", debug_prefix_time(NULL)));
     }
-    dbprintf(("%s: estimate size for %s level %d: %ld KB\n",
+    dbprintf(("%s: estimate size for %s level %d: " OFF_T_FMT " KB\n",
 	      debug_prefix_time(NULL),
 	      qdisk,
 	      level,
-	      size));
+	      (OFF_T_FMT_TYPE)size));
 
     kill(-dumppid, SIGTERM);
 
@@ -2056,12 +2058,14 @@ getsize_wrapper(
     }
 
     for(size = (off_t)-1; (line = agets(dumpout)) != NULL; free(line)) {
+	OFF_T_FMT_TYPE size1_ = (OFF_T_FMT_TYPE)0;
+	OFF_T_FMT_TYPE size2_ = (OFF_T_FMT_TYPE)0;
 	if (line[0] == '\0')
 	    continue;
 	dbprintf(("%s: %s\n", debug_prefix_time(NULL), line));
-	i = sscanf(line, OFF_T_FMT " " OFF_T_FMT,
-		(OFF_T_FMT_TYPE *)&size1, 
-		(OFF_T_FMT_TYPE *)&size2);
+	i = sscanf(line, OFF_T_FMT " " OFF_T_FMT, &size1_, &size2_);
+	size1 = (off_t)size1_;
+	size2 = (off_t)size2_;
 	if(i == 2) {
 	    size = size1 * size2;
 	}
@@ -2099,7 +2103,7 @@ getsize_wrapper(
 	      debug_prefix_time(NULL),
 	      qamdevice,
 	      level,
-	      size));
+	      (OFF_T_FMT_TYPE)size));
 
     kill(-dumppid, SIGTERM);
 

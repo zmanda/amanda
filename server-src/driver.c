@@ -2139,6 +2139,12 @@ read_schedule(
 		/*NOTREACHED*/
 	    }
 	    skip_integer(s, ch);
+	} else {
+	    degr_level = -1;
+	    degr_nsize = (off_t)0;
+	    degr_csize = (off_t)0;
+	    degr_time = (time_t)0;
+	    degr_kps = 0;
 	}
 
 	dp = lookup_disk(hostname, diskname);
