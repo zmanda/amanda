@@ -325,10 +325,10 @@ main(
 	 * This may only apply to some security types.
 	 */
 	else if (strncmp(argv[i], "-udp=", strlen("-udp=")) == 0) {
-	    struct sockaddr_in sin;
+	    struct sockaddr_in6 sin;
 
 	    argv[i] += strlen("-udp=");
-	    in = out = socket(AF_INET, SOCK_DGRAM, 0);
+	    in = out = socket(AF_INET6, SOCK_DGRAM, 0);
 	    if (in < 0) {
 		error("can't create dgram socket: %s\n", strerror(errno));
 		/*NOTREACHED*/
@@ -343,9 +343,9 @@ main(
 	    }
 #endif
 
-	    sin.sin_family = (sa_family_t)AF_INET;
-	    sin.sin_addr.s_addr = INADDR_ANY;
-	    sin.sin_port = (in_port_t)htons((in_port_t)atoi(argv[i]));
+	    sin.sin6_family = (sa_family_t)AF_INET6;
+	    sin.sin6_addr = in6addr_any;
+	    sin.sin6_port = (in_port_t)htons((in_port_t)atoi(argv[i]));
 	    if (bind(in, (struct sockaddr *)&sin, (socklen_t)sizeof(sin)) < 0) {
 		error("can't bind to port %d: %s\n", atoi(argv[i]),
 		    strerror(errno));
@@ -356,12 +356,12 @@ main(
 	 * Ditto for tcp ports.
 	 */
 	else if (strncmp(argv[i], "-tcp=", strlen("-tcp=")) == 0) {
-	    struct sockaddr_in sin;
+	    struct sockaddr_in6 sin;
 	    int sock;
 	    socklen_t n;
 
 	    argv[i] += strlen("-tcp=");
-	    sock = socket(AF_INET, SOCK_STREAM, 0);
+	    sock = socket(AF_INET6, SOCK_STREAM, 0);
 	    if (sock < 0) {
 		error("can't create tcp socket: %s\n", strerror(errno));
 		/*NOTREACHED*/
@@ -378,9 +378,9 @@ main(
 #endif
 	    setsockopt(sock, SOL_SOCKET, SO_REUSEADDR,
 		(void *)&n, (socklen_t)sizeof(n));
-	    sin.sin_family = (sa_family_t)AF_INET;
-	    sin.sin_addr.s_addr = INADDR_ANY;
-	    sin.sin_port = (in_port_t)htons((in_port_t)atoi(argv[i]));
+	    sin.sin6_family = (sa_family_t)AF_INET6;
+	    sin.sin6_addr = in6addr_any;
+	    sin.sin6_port = (in_port_t)htons((in_port_t)atoi(argv[i]));
 	    if (bind(sock, (struct sockaddr *)&sin, (socklen_t)sizeof(sin)) < 0) {
 		error("can't bind to port %d: %s\n", atoi(argv[i]),
 		    strerror(errno));

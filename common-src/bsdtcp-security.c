@@ -104,7 +104,11 @@ bsdtcp_connect(
     void *	datap)
 {
     struct sec_handle *rh;
-    struct hostent *he;
+    int result;
+    struct addrinfo hints;
+    struct addrinfo *res = NULL;
+    char *errmsg = NULL;
+
 
     assert(fn != NULL);
     assert(hostname != NULL);
@@ -121,13 +125,31 @@ bsdtcp_connect(
     rh->ev_timeout = NULL;
     rh->rc = NULL;
 
-    if ((he = gethostbyname(hostname)) == NULL) {
-	security_seterror(&rh->sech,
-	    "%s: could not resolve hostname", hostname);
+    hints.ai_flags = AI_CANONNAME | AI_V4MAPPED | AI_ALL;
+    hints.ai_family = AF_INET6;
+    hints.ai_socktype = SOCK_DGRAM;
+    hints.ai_protocol = IPPROTO_UDP;
+    hints.ai_addrlen = 0;
+    hints.ai_addr = NULL;
+    hints.ai_canonname = NULL;
+    hints.ai_next = NULL;
+    result = getaddrinfo(hostname, NULL, &hints, &res);
+    if(result != 0) {
+        dbprintf(("getaddrinfo(%s): %s\n", hostname, gai_strerror(result)));
+	security_seterror(&rh->sech, "getaddrinfo(%s): %s\n", hostname,
+			  gai_strerror(result));
 	(*fn)(arg, &rh->sech, S_ERROR);
 	return;
     }
-    rh->hostname = stralloc(he->h_name);	/* will be replaced */
+    if (check_addrinfo_give_name(res, hostname, &errmsg) < 0) {
+	security_seterror(&rh->sech, "%s", errmsg);
+	(*fn)(arg, &rh->sech, S_ERROR);
+	amfree(errmsg);
+	freeaddrinfo(res);
+	return;
+    }
+
+    rh->hostname = stralloc(res->ai_canonname);	/* will be replaced */
     rh->rs = tcpma_stream_client(rh, newhandle++);
     rh->rc->recv_security_ok = &bsd_recv_security_ok;
     rh->rc->prefix_packet = &bsd_prefix_packet;
@@ -164,10 +186,12 @@ bsdtcp_connect(
     rh->ev_timeout = event_register(CONNECT_TIMEOUT, EV_TIME,
 	sec_connect_timeout, rh);
 
+    freeaddrinfo(res);
     return;
 
 error:
     (*fn)(arg, &rh->sech, S_ERROR);
+    freeaddrinfo(res);
 }
 
 /*
@@ -180,10 +204,12 @@ bsdtcp_accept(
     int		out,
     void	(*fn)(security_handle_t *, pkt_t *))
 {
-    struct sockaddr_in sin;
+    struct sockaddr_storage sin;
     socklen_t len;
     struct tcp_conn *rc;
-    struct hostent *he;
+    char hostname[NI_MAXHOST];
+    int result;
+    char *errmsg = NULL;
 
     len = sizeof(sin);
     if (getpeername(in, (struct sockaddr *)&sin, &len) < 0) {
@@ -191,18 +217,22 @@ bsdtcp_accept(
 		  strerror(errno)));
 	return;
     }
-    he = gethostbyaddr((void *)&sin.sin_addr, sizeof(sin.sin_addr), AF_INET);
-    if (he == NULL) {
-	dbprintf(("%s: he returned NULL: h_errno = %d\n",
-		  debug_prefix_time(NULL), h_errno));
+    if ((result = getnameinfo((struct sockaddr *)&sin, len,
+			      hostname, NI_MAXHOST, NULL, 0, 0) == -1)) {
+	dbprintf(("%s: getnameinfo failed: %s\n",
+		  debug_prefix_time(NULL), gai_strerror(result)));
+	return;
+    }
+    if (check_name_give_sockaddr(hostname,
+				 (struct sockaddr *)&sin, &errmsg) < 0) {
+	amfree(errmsg);
 	return;
     }
 
-    rc = sec_tcp_conn_get(he->h_name, 0);
+    rc = sec_tcp_conn_get(hostname, 0);
     rc->recv_security_ok = &bsd_recv_security_ok;
     rc->prefix_packet = &bsd_prefix_packet;
-    memcpy(&rc->peer.sin_addr, he->h_addr, sizeof(rc->peer.sin_addr));
-    rc->peer.sin_port = sin.sin_port;
+    memcpy(&rc->peer, &sin, sizeof(rc->peer));
     rc->read = in;
     rc->write = out;
     rc->accept_fn = fn;

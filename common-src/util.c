@@ -41,8 +41,8 @@
 #endif
 
 static int make_socket(void);
-static int connect_port(struct sockaddr_in *addrp, in_port_t port, char *proto,
-			struct sockaddr_in *svaddr, int nonblock);
+static int connect_port(struct sockaddr_storage *addrp, in_port_t port, char *proto,
+			struct sockaddr_storage *svaddr, int nonblock);
 
 /*
  * Keep calling read() until we've read buflen's worth of data, or EOF,
@@ -116,7 +116,7 @@ make_socket(void)
     int r;
 #endif
 
-    if ((s = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
+    if ((s = socket(AF_INET6, SOCK_STREAM, 0)) == -1) {
         save_errno = errno;
         dbprintf(("%s: make_socket: socket() failed: %s\n",
                   debug_prefix_time(NULL),
@@ -164,11 +164,11 @@ make_socket(void)
 /* return -1     on failure */
 int
 connect_portrange(
-    struct sockaddr_in *addrp,
+    struct sockaddr_storage *addrp,
     in_port_t		first_port,
     in_port_t		last_port,
     char *		proto,
-    struct sockaddr_in *svaddr,
+    struct sockaddr_storage *svaddr,
     int			nonblock)
 {
     int			s;
@@ -178,7 +178,6 @@ connect_portrange(
     int			i;
 
     assert(first_port <= last_port);
-
     /* Try a port already used */
     for(i=0; i < nb_port_in_use; i++) {
 	port = port_in_use[i];
@@ -216,10 +215,10 @@ connect_portrange(
 /* return >0: this is the connected socket */
 int
 connect_port(
-    struct sockaddr_in *addrp,
+    struct sockaddr_storage *addrp,
     in_port_t  		port,
     char *		proto,
-    struct sockaddr_in *svaddr,
+    struct sockaddr_storage *svaddr,
     int			nonblock)
 {
     int			save_errno;
@@ -244,7 +243,10 @@ connect_port(
 
     if ((s = make_socket()) == -1) return -2;
 
-    addrp->sin_port = (in_port_t)htons(port);
+    if (addrp->ss_family == (sa_family_t)AF_INET)
+	((struct sockaddr_in *)addrp)->sin_port = (in_port_t)htons(port);
+    else
+	((struct sockaddr_in6 *)addrp)->sin6_port = (in_port_t)htons(port);
 
     if (bind(s, (struct sockaddr *)addrp, sizeof(*addrp)) != 0) {
 	save_errno = errno;
@@ -277,15 +279,13 @@ connect_port(
     if (connect(s, (struct sockaddr *)svaddr,
 		(socklen_t)sizeof(*svaddr)) == -1 && !nonblock) {
 	save_errno = errno;
-	dbprintf(("%s: connect_portrange: connect from %s.%d failed\n",
+	dbprintf(("%s: connect_portrange: connect from %s failed\n",
 		  debug_prefix_time(NULL),
-		  inet_ntoa(addrp->sin_addr),
-		  ntohs(addrp->sin_port),
+		  str_sockaddr(addrp),
 		  strerror(save_errno)));
-	dbprintf(("%s: connect_portrange: connect to %s.%d failed: %s\n",
+	dbprintf(("%s: connect_portrange: connect to %s failed: %s\n",
 		  debug_prefix_time(NULL),
-		  inet_ntoa(svaddr->sin_addr),
-		  ntohs(svaddr->sin_port),
+		  str_sockaddr(svaddr),
 		  strerror(save_errno)));
 	aclose(s);
 	errno = save_errno;
@@ -298,14 +298,12 @@ connect_port(
 	return -1;
     }
 
-    dbprintf(("%s: connected to %s.%d\n",
+    dbprintf(("%s: connected to %s\n",
               debug_prefix_time(NULL),
-              inet_ntoa(svaddr->sin_addr),
-              ntohs(svaddr->sin_port)));
+              str_sockaddr(svaddr)));
     dbprintf(("%s: our side is %s.%d\n",
               debug_prefix_time(NULL),
-              inet_ntoa(addrp->sin_addr),
-              ntohs(addrp->sin_port)));
+              str_sockaddr(addrp)));
     return s;
 }
 
@@ -319,7 +317,7 @@ connect_port(
 int
 bind_portrange(
     int			s,
-    struct sockaddr_in *addrp,
+    struct sockaddr_storage *addrp,
     in_port_t		first_port,
     in_port_t		last_port,
     char *		proto)
@@ -352,7 +350,12 @@ bind_portrange(
 		dbprintf(("%s: bind_portrange2: Try  port %d: Owned by %s - ",
 		      debug_prefix_time(NULL), port, servPort->s_name));
 	    }
-	    addrp->sin_port = (in_port_t)htons(port);
+	    if(addrp->ss_family == (sa_family_t)AF_INET)
+		((struct sockaddr_in *)addrp)->sin_port =
+						 (in_port_t)htons(port);
+	    else
+		((struct sockaddr_in6 *)addrp)->sin6_port =
+						 (in_port_t)htons(port);
 	    if (bind(s, (struct sockaddr *)addrp, (socklen_t)sizeof(*addrp)) >= 0) {
 	        dbprintf(("Success\n"));
 		return 0;
@@ -614,12 +617,63 @@ validate_mailto(
 
 void
 dump_sockaddr(
-	struct sockaddr_in *	sa)
+    struct sockaddr_storage *sa)
 {
+    char ipstr[INET6_ADDRSTRLEN];
+    if ( sa->ss_family == (sa_family_t)AF_INET6) {
+	inet_ntop(AF_INET6, &((struct sockaddr_in6 *)sa)->sin6_addr,
+		  ipstr, sizeof(ipstr));
+	dbprintf(("%s: (sockaddr_in6 *)%p = { %d, %d, %s }\n",
+		  debug_prefix_time(NULL), sa,
+		  ((struct sockaddr_in6 *)sa)->sin6_family,
+		  (int)ntohs(((struct sockaddr_in6 *)sa)->sin6_port),
+		  ipstr));
+    } else {
+	inet_ntop(AF_INET, &((struct sockaddr_in *)sa)->sin_addr, ipstr,
+		  sizeof(ipstr));
 	dbprintf(("%s: (sockaddr_in *)%p = { %d, %d, %s }\n",
-		debug_prefix_time(NULL), sa, sa->sin_family,
-		(int)ntohs(sa->sin_port),
-		inet_ntoa(sa->sin_addr)));
+		  debug_prefix_time(NULL), sa,
+		  ((struct sockaddr_in *)sa)->sin_family,
+		  (int)ntohs(((struct sockaddr_in *)sa)->sin_port),
+		  ipstr));
+    }
+}
+
+
+static char mystr_sockaddr[INET6_ADDRSTRLEN + 20];
+char *
+str_sockaddr(
+    struct sockaddr_storage *sa)
+{
+    char ipstr[INET6_ADDRSTRLEN];
+    int port;
+
+    if ( sa->ss_family == (sa_family_t)AF_INET6) {
+	inet_ntop(AF_INET6, &((struct sockaddr_in6 *)sa)->sin6_addr,
+		  ipstr, sizeof(ipstr));
+	port = ((struct sockaddr_in6 *)sa)->sin6_port;
+    } else {
+	inet_ntop(AF_INET, &((struct sockaddr_in *)sa)->sin_addr, ipstr,
+		  sizeof(ipstr));
+	port = ((struct sockaddr_in6 *)sa)->sin6_port;
+    }
+    snprintf(mystr_sockaddr,sizeof(mystr_sockaddr),"%s.%d", ipstr, port);
+    return mystr_sockaddr;
+}
+
+
+int
+cmp_sockaddr(
+    struct sockaddr_storage *ss1,
+    struct sockaddr_storage *ss2)
+{
+    size_t len;
+
+    if(ss1->ss_family == (sa_family_t)AF_INET)
+	len = sizeof(struct sockaddr_in);
+    else
+	len = sizeof(struct sockaddr_in6);
+    return(memcmp(ss1, ss2, len));
 }
 
 

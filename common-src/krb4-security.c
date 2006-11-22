@@ -69,7 +69,7 @@ int kuserok(AUTH_DAT *, char *);
  */
 struct krb4_handle {
     security_handle_t sech;	/* MUST be first */
-    struct sockaddr_in peer;	/* host on other side */
+    struct sockaddr_in6 peer;	/* host on other side */
     char hostname[MAX_HOSTNAME_LENGTH+1];	/* human form of above */
     char proto_handle[32];	/* protocol handle for this req */
     int sequence;		/* last sequence number we received */
@@ -451,9 +451,9 @@ inithandle(
      * Setup our peer info.  We don't do anything with the sequence yet,
      * so just leave it at 0.
      */
-    kh->peer.sin_family = (sa_family_t)AF_INET;
-    kh->peer.sin_port = (in_port_t)port;
-    kh->peer.sin_addr = *(struct in_addr *)he->h_addr;
+    kh->peer.sin6_family = (sa_family_t)AF_INET6;
+    kh->peer.sin6_port = (in_port_t)port;
+    kh->peer.sin6_addr = *(struct in6_addr *)he->h_addr;
     strncpy(kh->proto_handle, handle, SIZEOF(kh->proto_handle) - 1);
     kh->proto_handle[SIZEOF(kh->proto_handle) - 1] = '\0';
     kh->sequence = 0;
@@ -532,7 +532,7 @@ krb4_sendpkt(
      * Add the body, and send it
      */
     dgram_cat(&netfd, pkt->body);
-    if (dgram_send_addr(kh->peer, &netfd) != 0) {
+    if (dgram_send_addr(&kh->peer, &netfd) != 0) {
 	security_seterror(&kh->sech,
 	    "send %s to %s failed: %s", pkt_type2str(pkt->type),
 	    kh->hostname, strerror(errno));
@@ -972,7 +972,7 @@ recvpkt_callback(
     void *	cookie)
 {
     char handle[32];
-    struct sockaddr_in peer;
+    struct sockaddr_in6 peer;
     pkt_t pkt;
     int sequence;
     struct krb4_handle *kh;
@@ -995,9 +995,9 @@ recvpkt_callback(
 
     for (kh = handleq_first(); kh != NULL; kh = handleq_next(kh)) {
 	if (strcmp(kh->proto_handle, handle) == 0 &&
-	    memcmp(&kh->peer.sin_addr, &peer.sin_addr,
-	    SIZEOF(peer.sin_addr)) == 0 &&
-	    kh->peer.sin_port == peer.sin_port) {
+	    memcmp(&kh->peer.sin6_addr, &peer.sin6_addr,
+	    SIZEOF(peer.sin6_addr)) == 0 &&
+	    kh->peer.sin6_port == peer.sin6_port) {
 	    kh->sequence = sequence;
 
 	    /*
@@ -1021,12 +1021,12 @@ recvpkt_callback(
     if (accept_fn == NULL)
 	return;
 
-    he = gethostbyaddr((void *)&peer.sin_addr, SIZEOF(peer.sin_addr), AF_INET);
+    he = gethostbyaddr((void *)&peer.sin6_addr, SIZEOF(peer.sin6_addr), AF_INET6);
     if (he == NULL)
 	return;
     kh = alloc(SIZEOF(*kh));
     security_handleinit(&kh->sech, &krb4_security_driver);
-    inithandle(kh, he, (int)peer.sin_port, handle);
+    inithandle(kh, he, (int)peer.sin6_port, handle);
 
     /*
      * Check the security of the packet.  If it is bad, then pass NULL
@@ -1315,7 +1315,7 @@ check_ticket(
 
     /* get the checksum out of the ticket */
     rc = krb_rd_req(&ticket, CLIENT_HOST_PRINCIPLE, inst,
-	kh->peer.sin_addr.s_addr, &auth, CLIENT_HOST_KEY_FILE);
+	kh->peer.sin6_addr.s_addr, &auth, CLIENT_HOST_KEY_FILE);
     if (rc != 0) {
 	security_seterror(&kh->sech,
 	    "krb_rd_req failed for %s: %s (%d)", kh->hostname,

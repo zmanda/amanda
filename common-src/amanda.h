@@ -856,7 +856,7 @@ extern char  *sanitise_filename(char *inp);
 
 /* from old bsd-security.c */
 extern int debug;
-extern int check_security(struct sockaddr_in *, char *, unsigned long, char **);
+extern int check_security(struct sockaddr_storage *, char *, unsigned long, char **);
 
 /*
  * Handle functions which are not always declared on all systems.  This

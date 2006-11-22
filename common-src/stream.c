@@ -34,6 +34,7 @@
 #include "stream.h"
 #include "util.h"
 #include "conffile.h"
+#include "security-util.h"
 
 /* local functions */
 static void try_socksize(int sock, int which, size_t size);
@@ -54,12 +55,12 @@ stream_server(
     const int on = 1;
     int r;
 #endif
-    struct sockaddr_in server;
+    struct sockaddr_storage server;
     int save_errno;
     int *portrange;
 
     *portp = USHRT_MAX;				/* in case we error exit */
-    if((server_socket = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
+    if((server_socket = socket(AF_INET6, SOCK_STREAM, 0)) == -1) {
 	save_errno = errno;
 	dbprintf(("%s: stream_server: socket() failed: %s\n",
 		  debug_prefix_time(NULL),
@@ -78,8 +79,8 @@ stream_server(
 	return -1;
     }
     memset(&server, 0, SIZEOF(server));
-    server.sin_family = (sa_family_t)AF_INET;
-    server.sin_addr.s_addr = INADDR_ANY;
+    ((struct sockaddr_in6 *)&server)->sin6_family = (sa_family_t)AF_INET6;
+    ((struct sockaddr_in6 *)&server)->sin6_addr = in6addr_any;
 
 #ifdef USE_REUSEADDR
     r = setsockopt(server_socket, SOL_SOCKET, SO_REUSEADDR,
@@ -113,12 +114,13 @@ stream_server(
 	}
 
 	if (portrange[0] != 0 && portrange[1] != 0) {
-	    if (bind_portrange(server_socket, &server, portrange[0], portrange[1], "tcp") == 0)
+	    if (bind_portrange(server_socket, &server, (in_port_t)portrange[0],
+			       (in_port_t)portrange[1], "tcp") == 0)
 		goto out;
 	    dbprintf(("%s: stream_server: Could not bind to port in range: %d - %d.\n",
 		      debug_prefix_time(NULL), portrange[0], portrange[1]));
 	} else {
-	    server.sin_port = INADDR_ANY;
+	    ((struct sockaddr_in6 *)&server)->sin6_addr = in6addr_any;
 	    if (bind(server_socket, (struct sockaddr *)&server, (socklen_t)sizeof(server)) == 0)
 		goto out;
 	    dbprintf(("%s: stream_server: Could not bind to any port: %s\n",
@@ -135,7 +137,7 @@ stream_server(
     }
 
     save_errno = errno;
-    dbprintf(("%s: stream_server: bind(INADDR_ANY) failed: %s\n",
+    dbprintf(("%s: stream_server: bind(in6addr_any) failed: %s\n",
 		  debug_prefix_time(NULL),
 		  strerror(save_errno)));
     aclose(server_socket);
@@ -172,11 +174,13 @@ out:
     }
 #endif
 
-    *portp = (in_port_t)ntohs(server.sin_port);
-    dbprintf(("%s: stream_server: waiting for connection: %s.%d\n",
+    if (server.ss_family == (sa_family_t)AF_INET)
+	*portp = (in_port_t)ntohs(((struct sockaddr_in *)&server)->sin_port);
+    else
+	*portp = (in_port_t)ntohs(((struct sockaddr_in6 *)&server)->sin6_port);
+    dbprintf(("%s: stream_server: waiting for connection: %s\n",
 	      debug_prefix_time(NULL),
-	      inet_ntoa(server.sin_addr),
-	      *portp));
+	      str_sockaddr(&server)));
     return server_socket;
 }
 
@@ -190,34 +194,48 @@ stream_client_internal(
     int nonblock,
     int priv)
 {
-    struct sockaddr_in svaddr, claddr;
-    struct hostent *hostp;
+    struct sockaddr_storage svaddr, claddr;
     int save_errno;
     char *f;
     int client_socket;
     int *portrange;
+    int result;
+    struct addrinfo hints;
+    struct addrinfo *res = NULL;
+    char *errmsg = NULL;
 
     f = priv ? "stream_client_privileged" : "stream_client";
 
-    if((hostp = gethostbyname(hostname)) == NULL) {
-	save_errno = EHOSTUNREACH;
-	dbprintf(("%s: %s: gethostbyname(%s) failed\n",
-		  debug_prefix_time(NULL),
-		  f,
-		  hostname));
-	errno = save_errno;
+    hints.ai_flags = AI_CANONNAME | AI_V4MAPPED | AI_ALL;
+    hints.ai_family = (sa_family_t)AF_INET6;
+    hints.ai_socktype = SOCK_DGRAM;
+    hints.ai_protocol = IPPROTO_UDP;
+    hints.ai_addrlen = 0;
+    hints.ai_addr = NULL;
+    hints.ai_canonname = NULL;
+    hints.ai_next = NULL;
+    result = getaddrinfo(hostname, NULL, &hints, &res);
+    if(result != 0) {
+        dbprintf(("getaddrinfo: %s\n", gai_strerror(result)));
+	return -1;
+    }
+    if (check_addrinfo_give_name(res, hostname, &errmsg) < 0) {
+	amfree(errmsg);
+	freeaddrinfo(res);
 	return -1;
     }
 
-    memset(&svaddr, 0, SIZEOF(svaddr));
-    svaddr.sin_family = (sa_family_t)AF_INET;
-    svaddr.sin_port = (in_port_t)htons(port);
-    memcpy(&svaddr.sin_addr, hostp->h_addr, (size_t)hostp->h_length);
+    memcpy(&svaddr, res->ai_addr, (size_t)res->ai_addrlen);
+    freeaddrinfo(res);
+    if (svaddr.ss_family == (sa_family_t)AF_INET)
+	((struct sockaddr_in *)&svaddr)->sin_port = (in_port_t)htons(port);
+    else
+	((struct sockaddr_in6 *)&svaddr)->sin6_port = (in_port_t)htons(port);
 
 
     memset(&claddr, 0, SIZEOF(claddr));
-    claddr.sin_family = (sa_family_t)AF_INET;
-    claddr.sin_addr.s_addr = INADDR_ANY;
+    ((struct sockaddr_in6 *)&claddr)->sin6_family = (sa_family_t)AF_INET6;
+    ((struct sockaddr_in6 *)&claddr)->sin6_addr = in6addr_any;
 
     /*
      * If a privileged port range was requested, we try to get a port in
@@ -234,7 +252,8 @@ stream_client_internal(
     } else {
 	portrange = getconf_intrange(CNF_UNRESERVED_TCP_PORT);
     }
-    client_socket = connect_portrange(&claddr, portrange[0], portrange[1],
+    client_socket = connect_portrange(&claddr, (in_port_t)portrange[0],
+				      (in_port_t)portrange[1],
                                       "tcp", &svaddr, nonblock);
     save_errno = errno;
 					  
@@ -251,7 +270,8 @@ out:
     try_socksize(client_socket, SO_SNDBUF, sendsize);
     try_socksize(client_socket, SO_RCVBUF, recvsize);
     if (localport != NULL)
-	*localport = (in_port_t)ntohs(claddr.sin_port);
+	*localport = (in_port_t)ntohs(
+				((struct sockaddr_in6 *)&claddr)->sin6_port);
     return client_socket;
 }
 
@@ -292,7 +312,7 @@ stream_client(
 }
 
 /* don't care about these values */
-static struct sockaddr_in addr;
+static struct sockaddr_storage addr;
 static socklen_t addrlen;
 
 int
@@ -307,6 +327,7 @@ stream_accept(
     int nfound, connected_socket;
     int save_errno;
     int ntries = 0;
+    in_port_t port;
 
     assert(server_socket >= 0);
 
@@ -352,37 +373,38 @@ stream_accept(
     } while (nfound <= 0);
 
     while(1) {
-	addrlen = (socklen_t)sizeof(struct sockaddr);
+	addrlen = (socklen_t)sizeof(struct sockaddr_storage);
 	connected_socket = accept(server_socket,
 				  (struct sockaddr *)&addr,
 				  &addrlen);
 	if(connected_socket < 0) {
 	    break;
 	}
-	dbprintf(("%s: stream_accept: connection from %s.%d\n",
+	dbprintf(("%s: stream_accept: connection from %s\n",
 	          debug_prefix_time(NULL),
-	          inet_ntoa(addr.sin_addr),
-	          ntohs(addr.sin_port)));
+	          str_sockaddr(&addr)));
 	/*
 	 * Make certain we got an inet connection and that it is not
 	 * from port 20 (a favorite unauthorized entry tool).
 	 */
-	if((addr.sin_family == (sa_family_t)AF_INET)
-	  && (ntohs(addr.sin_port) != (in_port_t)20)) {
+	if (addr.ss_family == (sa_family_t)AF_INET)
+	    port = ntohs(((struct sockaddr_in *)&addr)->sin_port);
+	else if (addr.ss_family == (sa_family_t)AF_INET6)
+	    port = ntohs(((struct sockaddr_in6 *)&addr)->sin6_port);
+	else {
+	    dbprintf(("%s: family is %d instead of %d(AF_INET)"
+		      " or %d(AF_INET6): ignored\n",
+		      debug_prefix_time(NULL),
+		      addr.ss_family,
+		      AF_INET, AF_INET6));
+	}
+	if (port != (in_port_t)20) {
 	    try_socksize(connected_socket, SO_SNDBUF, sendsize);
 	    try_socksize(connected_socket, SO_RCVBUF, recvsize);
 	    return connected_socket;
-	}
-	if(addr.sin_family != (sa_family_t)AF_INET) {
-	    dbprintf(("%s: family is %d instead of %d(AF_INET): ignored\n",
-		      debug_prefix_time(NULL),
-		      addr.sin_family,
-		      AF_INET));
-	}
-	if(ntohs(addr.sin_port) == 20) {
+	} else {
 	    dbprintf(("%s: remote port is %d: ignored\n",
-		      debug_prefix_time(NULL),
-		      ntohs(addr.sin_port)));
+		      debug_prefix_time(NULL), port));
 	}
 	aclose(connected_socket);
     }

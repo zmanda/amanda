@@ -225,7 +225,7 @@ check_security_buffer(
 	/*NOTREACHED*/
     }
     skip_whitespace(s, ch);
-    if (!check_security(&addr, s-1, 0, &errstr)) {
+    if (!check_security((struct sockaddr_storage *)&addr, s-1, 0, &errstr)) {
 	error("security check failed: %s", errstr);
 	/*NOTREACHED*/
     }

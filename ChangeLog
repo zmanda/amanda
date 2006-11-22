@@ -1,3 +1,13 @@
+2006-11-21  Jean-Louis Martineau <martineau@zmanda.com>
+	* amandad-src/amandad.c, common-src/amanda.h,
+	  common-src/bsd-security.c, common-src/bsdtcp-security.c,
+	  common-src/bsdudp-security.c, common-src/dgram.c,
+	  common-src/dgram.h, common-src/krb4-security.c,
+	  common-src/krb5-security.c, common-src/security-util.c,
+	  common-src/security-util.h, common-src/stream.c,
+	  common-src/util.c, common-src/util.h,
+	  restore-src/amidxtaped.c, server-src/amindexd.c: IPV6.
+
 2006-11-20  Jean-Louis Martineau <martineau@zmanda.com>
 	* client-src/sendsize.c, oldrecover-src/display_commands.c,
 	  oldrecover-src/extract_list.c, recover-src/display_commands.c,

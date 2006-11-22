@@ -1329,7 +1329,9 @@ main(
 
 	amfree(errstr);
 	if (!user_validated && strcmp(cmd, "SECURITY") == 0 && arg) {
-	    user_validated = check_security(&his_addr, arg, 0, &errstr);
+	    user_validated = check_security(
+					(struct sockaddr_storage *)&his_addr,
+					arg, 0, &errstr);
 	    if(user_validated) {
 		reply(200, "Access OK");
 		amfree(line);

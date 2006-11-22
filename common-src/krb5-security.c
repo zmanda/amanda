@@ -528,7 +528,7 @@ krb5_accept(
     int		out,
     void	(*fn)(security_handle_t *, pkt_t *))
 {
-    struct sockaddr_in sin;
+    struct sockaddr_in6 sin;
     socklen_t len;
     struct krb5_conn *kc;
     struct hostent *he;
@@ -545,7 +545,7 @@ krb5_accept(
     len = SIZEOF(sin);
     if (getpeername(in, (struct sockaddr *)&sin, &len) < 0)
 	return;
-    he = gethostbyaddr((void *)&sin.sin_addr, SIZEOF(sin.sin_addr), AF_INET);
+    he = gethostbyaddr((void *)&sin.sin6_addr, SIZEOF(sin.sin6_addr), AF_INET6);
     if (he == NULL)
 	return;
 

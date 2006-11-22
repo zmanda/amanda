@@ -42,9 +42,9 @@
 ssize_t	fullread(int, void *, size_t);
 ssize_t	fullwrite(int, const void *, size_t);
 
-int	connect_portrange(struct sockaddr_in *, in_port_t, in_port_t, char *,
-			  struct sockaddr_in *, int);
-int	bind_portrange(int, struct sockaddr_in *, in_port_t, in_port_t,
+int	connect_portrange(struct sockaddr_storage *, in_port_t, in_port_t, char *,
+			  struct sockaddr_storage *, int);
+int	bind_portrange(int, struct sockaddr_storage *, in_port_t, in_port_t,
 		       char *);
 
 char *	construct_datestamp(time_t *t);
@@ -57,7 +57,10 @@ int	needs_quotes(const char * str);
 char *	sanitize_string(const char *str);
 char *	strquotedstr(void);
 ssize_t	hexdump(const char *buffer, size_t bytes);
-void	dump_sockaddr(struct sockaddr_in *	sa);
+void	dump_sockaddr(struct sockaddr_storage *	sa);
+char *  str_sockaddr(struct sockaddr_storage *sa);
+int     cmp_sockaddr(struct sockaddr_storage *ss1,
+		     struct sockaddr_storage *ss2);
 
 /*
  *   validate_email return 0 if the following characters are present

@@ -108,12 +108,15 @@ bsdudp_connect(
 {
     struct sec_handle *bh;
     struct servent *se;
-    struct hostent *he;
     in_port_t port;
     struct timeval sequence_time;
     amanda_timezone dontcare;
     int sequence;
     char *handle;
+    int result;
+    struct addrinfo hints;
+    struct addrinfo *res = NULL;
+    char *errmsg = NULL;
 
     (void)conf_fn;	/* Quiet unused parameter warning */
     (void)datap;	/* Quiet unused parameter warning */
@@ -153,12 +156,30 @@ bsdudp_connect(
 	not_init = 0;
     }
 
-    if ((he = gethostbyname(hostname)) == NULL) {
-	security_seterror(&bh->sech,
-	    "%s: could not resolve hostname", hostname);
+    hints.ai_flags = AI_CANONNAME | AI_V4MAPPED | AI_ALL;
+    hints.ai_family = AF_INET6;
+    hints.ai_socktype = SOCK_DGRAM;
+    hints.ai_protocol = IPPROTO_UDP;
+    hints.ai_addrlen = 0;
+    hints.ai_addr = NULL;
+    hints.ai_canonname = NULL;
+    hints.ai_next = NULL;
+    result = getaddrinfo(hostname, NULL, &hints, &res);
+    if(result != 0) {
+        dbprintf(("getaddrinfo: %s\n", gai_strerror(result)));
+	security_seterror(&bh->sech, "getaddrinfo(%s): %s\n", hostname,
+			  gai_strerror(result));
 	(*fn)(arg, &bh->sech, S_ERROR);
+    }
+    if (check_addrinfo_give_name(res, hostname, &errmsg) < 0) {
+	security_seterror(&bh->sech, "%s", errmsg);
+	(*fn)(arg, &bh->sech, S_ERROR);
+	amfree(errmsg);
+	freeaddrinfo(res);
 	return;
     }
+
+    auth_debug(1, ("Resolved hostname=%s\n", res->ai_canonname));
     if ((se = getservbyname(AMANDA_SERVICE_NAME, "udp")) == NULL)
 	port = (in_port_t)htons(AMANDA_SERVICE_DEFAULT);
     else
@@ -167,7 +188,9 @@ bsdudp_connect(
     sequence = (int)sequence_time.tv_sec ^ (int)sequence_time.tv_usec;
     handle=alloc(15);
     snprintf(handle,14,"000-%08x", newhandle++);
-    if (udp_inithandle(&netfd, bh, he, port, handle, sequence) < 0) {
+    if (udp_inithandle(&netfd, bh, res->ai_canonname,
+		       (struct sockaddr_storage *)res->ai_addr, port,
+		       handle, sequence) < 0) {
 	(*fn)(arg, &bh->sech, S_ERROR);
 	amfree(bh->hostname);
 	amfree(bh);
@@ -175,6 +198,8 @@ bsdudp_connect(
 	(*fn)(arg, &bh->sech, S_OK);
     }
     amfree(handle);
+
+    freeaddrinfo(res);
 }
 
 /*

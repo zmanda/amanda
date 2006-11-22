@@ -889,6 +889,7 @@ bsd_recv_security_ok(
     char *service = NULL, *serviceX, *serviceY;
     char *security_line;
     size_t len;
+    in_port_t port;
 
     /*
      * Now, find the SECURITY line in the body, and parse it out
@@ -938,10 +939,14 @@ bsd_recv_security_ok(
 	/*
 	 * Request packets must come from a reserved port
 	 */
-	if (ntohs(rh->peer.sin_port) >= IPPORT_RESERVED) {
+	if (rh->peer.ss_family == (sa_family_t)AF_INET)
+	    port = ntohs(((struct sockaddr_in *)&rh->peer)->sin_port);
+	else
+	    port = ntohs(((struct sockaddr_in6 *)&rh->peer)->sin6_port);
+	if (port >= IPPORT_RESERVED) {
 	    security_seterror(&rh->sech,
-		"host %s: port %d not secure", rh->hostname,
-		ntohs(rh->peer.sin_port));
+		"host %s: port %u not secure", rh->hostname,
+		(unsigned int)port);
 	    amfree(service);
 	    amfree(security_line);
 	    return (-1);
@@ -1070,7 +1075,7 @@ udpbsd_sendpkt(
       debug_prefix_time(NULL), pkt_type2str(pkt->type), pkt->type,
       strlen(pkt->body), pkt->body));
 
-    if (dgram_send_addr(rh->peer, &rh->udp->dgram) != 0) {
+    if (dgram_send_addr(&rh->peer, &rh->udp->dgram) != 0) {
 	security_seterror(&rh->sech,
 	    "send %s to %s failed: %s", pkt_type2str(pkt->type),
 	    rh->hostname, strerror(errno));
@@ -1185,6 +1190,7 @@ udp_recvpkt_callback(
     struct sec_handle *rh = cookie;
     void (*fn)(void *, pkt_t *, security_status_t);
     void *arg;
+    size_t len;
 
     auth_debug(1, ("%s: udp: receive handle '%s' netfd '%s'\n",
 		   debug_prefix_time(NULL), rh->proto_handle, rh->udp->handle));
@@ -1192,10 +1198,15 @@ udp_recvpkt_callback(
 
     if (strcmp(rh->proto_handle, rh->udp->handle) != 0) assert(1);
     /* if it didn't come from the same host/port, forget it */
-    if (memcmp(&rh->peer.sin_addr, &rh->udp->peer.sin_addr,
-	SIZEOF(rh->udp->peer.sin_addr)) != 0 ||
-	rh->peer.sin_port != rh->udp->peer.sin_port) {
+    if (rh->peer.ss_family == (sa_family_t)AF_INET)
+	len = sizeof(struct sockaddr_in);
+    else
+	len = sizeof(struct sockaddr_in6);
+    if (memcmp(&rh->peer, &rh->udp->peer, len) != 0) {
 	amfree(rh->udp->handle);
+	dbprintf(("not form same host\n"));
+	dump_sockaddr(&rh->peer);
+	dump_sockaddr(&rh->udp->peer);
 	return;
     }
 
@@ -1212,10 +1223,11 @@ udp_recvpkt_callback(
      * to the packet handling function instead of a packet.
      */
     if (rh->udp->recv_security_ok &&
-	rh->udp->recv_security_ok(rh, &rh->udp->pkt) < 0)
+	rh->udp->recv_security_ok(rh, &rh->udp->pkt) < 0) {
 	(*fn)(arg, NULL, S_ERROR);
-    else
+    } else {
 	(*fn)(arg, &rh->udp->pkt, S_OK);
+    }
 }
 
 /*
@@ -1245,82 +1257,26 @@ int
 udp_inithandle(
     udp_handle_t *	udp,
     struct sec_handle *	rh,
-    struct hostent *	he,
+    char *              hostname,
+    struct sockaddr_storage *addr,
     in_port_t		port,
     char *		handle,
     int			sequence)
 {
-    int i;
-
     /*
      * Save the hostname and port info
      */
     auth_debug(1, ("%s: udp_inithandle port %u handle %s sequence %d\n",
 		   debug_prefix_time(NULL), (unsigned int)ntohs(port),
 		   handle, sequence));
-    assert(he != NULL);
+    assert(addr != NULL);
 
-    rh->hostname = stralloc(he->h_name);
-    memcpy(&rh->peer.sin_addr, he->h_addr, SIZEOF(rh->peer.sin_addr));
-    rh->peer.sin_port = port;
-    rh->peer.sin_family = (sa_family_t)AF_INET;
-
-    /*
-     * Do a forward lookup of the hostname.  This is unnecessary if we
-     * are initiating the connection, but is very serious if we are
-     * receiving.  We want to make sure the hostname
-     * resolves back to the remote ip for security reasons.
-     */
-    if ((he = gethostbyname(rh->hostname)) == NULL) {
-	auth_debug(1, ("%s: udp: bb\n", debug_prefix_time(NULL)));
-	security_seterror(&rh->sech,
-			  "%s: could not resolve hostname",
-			  rh->hostname);
-	return (-1);
-    }
-
-    /*
-     * Make sure the hostname matches.  This should always work.
-     */
-    if (strncasecmp(rh->hostname, he->h_name, strlen(rh->hostname)) != 0) {
-	auth_debug(1, ("%s: udp: cc\n", debug_prefix_time(NULL)));
-	security_seterror(&rh->sech,
-			  "%s: did not resolve to itself, it resolv to",
-			  rh->hostname, he->h_name);
-	return (-1);
-    }
-
-    /*
-     * Now look for a matching ip address.
-     */
-    for (i = 0; he->h_addr_list[i] != NULL; i++) {
-	if (memcmp(&rh->peer.sin_addr, he->h_addr_list[i],
-	    SIZEOF(struct in_addr)) == 0) {
-	    break;
-	}
-    }
-
-    /*
-     * If we didn't find it, try the aliases.  This is a workaround for
-     * Solaris if DNS goes over NIS.
-     */
-    if (he->h_addr_list[i] == NULL) {
-	const char *ipstr = inet_ntoa(rh->peer.sin_addr);
-	for (i = 0; he->h_aliases[i] != NULL; i++) {
-	    if (strcmp(he->h_aliases[i], ipstr) == 0)
-		break;
-	}
-	/*
-	 * No aliases either.  Failure.  Someone is fooling with us or
-	 * DNS is messed up.
-	 */
-	if (he->h_aliases[i] == NULL) {
-	    security_seterror(&rh->sech,
-		"DNS check failed: no matching ip address for %s",
-		rh->hostname);
-	    return (-1);
-	}
-    }
+    rh->hostname = stralloc(hostname);
+    memcpy(&rh->peer, addr, SIZEOF(rh->peer));
+    if(rh->peer.ss_family == (sa_family_t)AF_INET)
+	((struct sockaddr_in *)&rh->peer)->sin_port = port;
+    else
+	((struct sockaddr_in6 *)&rh->peer)->sin6_port = port;
 
     rh->prev = udp->bh_last;
     if (udp->bh_last) {
@@ -1359,8 +1315,11 @@ udp_netfd_read_callback(
 {
     struct udp_handle *udp = cookie;
     struct sec_handle *rh;
-    struct hostent *he;
     int a;
+    char hostname[NI_MAXHOST];
+    in_port_t port;
+    char *errmsg = NULL;
+    int result;
 
     auth_debug(1, ("%s: udp_netfd_read_callback(cookie=%p)\n",
 		   debug_prefix_time(NULL), cookie));
@@ -1387,8 +1346,7 @@ udp_netfd_read_callback(
     rh = udp->bh_first;
     while(rh != NULL && (strcmp(rh->proto_handle, udp->handle) != 0 ||
 			 rh->sequence != udp->sequence ||
-			 rh->peer.sin_addr.s_addr != udp->peer.sin_addr.s_addr ||
-			 rh->peer.sin_port != udp->peer.sin_port)) {
+			 cmp_sockaddr(&rh->peer, &udp->peer) != 0)) {
 	rh = rh->next;
     }
     if (rh && event_wakeup(rh->event_id) > 0)
@@ -1401,18 +1359,37 @@ udp_netfd_read_callback(
     if (udp->accept_fn == NULL)
 	return;
 
-    he = gethostbyaddr((void *)&udp->peer.sin_addr,
-	(socklen_t)sizeof(udp->peer.sin_addr), AF_INET);
-    if (he == NULL)
-	return;
     rh = alloc(SIZEOF(*rh));
     rh->proto_handle=NULL;
     rh->udp = udp;
     rh->rc = NULL;
     security_handleinit(&rh->sech, udp->driver);
+
+    result = getnameinfo((struct sockaddr *)&udp->peer, sizeof(udp->peer),
+			 hostname, sizeof(hostname), NULL, 0, 0);
+    if (result < 0) {
+	dbprintf(("%s: getnameinfo failed: %s\n",
+		  debug_prefix_time(NULL), gai_strerror(result)));
+	security_seterror(&rh->sech, "getnameinfo failed: %s",
+			  gai_strerror(result));
+	return;
+    }
+    if (check_name_give_sockaddr(hostname,
+				 (struct sockaddr *)&udp->peer, &errmsg) < 0) {
+	security_seterror(&rh->sech, "%s",errmsg);
+	amfree(errmsg);
+	amfree(rh);
+	return;
+    }
+
+    if (udp->peer.ss_family == (sa_family_t)AF_INET)
+	port = ((struct sockaddr_in *)&udp->peer)->sin_port;
+    else
+	port = ((struct sockaddr_in6 *)&udp->peer)->sin6_port;
     a = udp_inithandle(udp, rh,
-		   he,
-		   udp->peer.sin_port,
+		   hostname,
+		   &udp->peer,
+		   port,
 		   udp->handle,
 		   udp->sequence);
     if (a < 0) {
@@ -1963,7 +1940,7 @@ check_user(
 #ifndef USE_AMANDAHOSTS
     r = check_user_ruserok(rh->hostname, pwd, remoteuser);
 #else
-    r = check_user_amandahosts(rh->hostname, rh->peer.sin_addr, pwd, remoteuser, service);
+    r = check_user_amandahosts(rh->hostname, &rh->peer, pwd, remoteuser, service);
 #endif
     if (r != NULL) {
 	result = vstralloc("user ", remoteuser, " from ", rh->hostname,
@@ -2119,7 +2096,7 @@ check_user_ruserok(
 char *
 check_user_amandahosts(
     const char *	host,
-    struct in_addr      addr,
+    struct sockaddr_storage *addr,
     struct passwd *	pwd,
     const char *	remoteuser,
     const char *	service)
@@ -2137,6 +2114,7 @@ check_user_amandahosts(
     int hostmatch;
     int usermatch;
     char *aservice = NULL;
+    char ipstr[INET6_ADDRSTRLEN];
 
     auth_debug(1, ("check_user_amandahosts(host=%s, pwd=%p, "
 		   "remoteuser=%s, service=%s)\n",
@@ -2200,15 +2178,20 @@ check_user_amandahosts(
 
 	hostmatch = (strcasecmp(filehost, host) == 0);
 	/*  ok if addr=127.0.0.1 and
-        *  either localhost or localhost.domain is in .amandahost */
-       if ( !hostmatch ) {
-         if (strcmp(inet_ntoa(addr), "127.0.0.1")== 0  &&
-             (strcasecmp(filehost, "localhost")== 0 ||
-	      strcasecmp(filehost, "localhost.localdomain")== 0))
-           {
-             hostmatch = 1;
-           }
-       }
+	 *  either localhost or localhost.domain is in .amandahost */
+	if (!hostmatch  &&
+	    (strcasecmp(filehost, "localhost")== 0 ||
+	     strcasecmp(filehost, "localhost.localdomain")== 0)) {
+	    if (addr->ss_family == (sa_family_t)AF_INET)
+		inet_ntop(AF_INET, &((struct sockaddr_in *)addr)->sin_addr,
+			  ipstr, sizeof(ipstr));
+	    else
+		inet_ntop(AF_INET6, &((struct sockaddr_in6 *)addr)->sin6_addr,
+			  ipstr, sizeof(ipstr));
+	    if (strcmp(ipstr, "127.0.0.1") == 0 ||
+		strcmp(ipstr, "::1") == 0)
+		hostmatch = 1;
+	}
 	usermatch = (strcasecmp(fileuser, remoteuser) == 0);
 	auth_debug(9, ("%s: bsd: comparing \"%s\" with\n",
 		       debug_prefix_time(NULL), filehost));
@@ -2303,21 +2286,21 @@ common_exit:
 /* return 1 on success, 0 on failure */
 int
 check_security(
-    struct sockaddr_in *addr,
+    struct sockaddr_storage *addr,
     char *		str,
     unsigned long	cksum,
     char **		errstr)
 {
     char *		remotehost = NULL, *remoteuser = NULL;
     char *		bad_bsd = NULL;
-    struct hostent *	hp;
     struct passwd *	pwptr;
     uid_t		myuid;
-    int			i;
-    int			j;
     char *		s;
     char *		fp;
     int			ch;
+    char		hostname[NI_MAXHOST];
+    in_port_t		port;
+    int			result;
 
     (void)cksum;	/* Quiet unused parameter warning */
 
@@ -2329,80 +2312,32 @@ check_security(
     *errstr = NULL;
 
     /* what host is making the request? */
-
-    hp = gethostbyaddr((char *)&addr->sin_addr, SIZEOF(addr->sin_addr),
-		       AF_INET);
-    if (hp == NULL) {
-	/* XXX include remote address in message */
-	*errstr = vstralloc("[",
-			    "addr ", inet_ntoa(addr->sin_addr), ": ",
-			    "hostname lookup failed",
+    if ((result = getnameinfo((struct sockaddr *)addr,
+			      sizeof(struct sockaddr_storage),
+                              hostname, NI_MAXHOST, NULL, 0, 0) == -1)) {
+	dbprintf(("%s: getnameinfo failed: %s\n",
+		  debug_prefix_time(NULL), gai_strerror(result)));
+	*errstr = vstralloc("[", "addr ", str_sockaddr(addr), ": ",
+			    "getnameinfo failed: ", gai_strerror(result),
 			    "]", NULL);
 	return 0;
     }
-    remotehost = stralloc(hp->h_name);
-
-    /* Now let's get the hostent for that hostname */
-    hp = gethostbyname( remotehost );
-    if (hp == NULL) {
-	/* XXX include remote hostname in message */
-	*errstr = vstralloc("[",
-			    "host ", remotehost, ": ",
-			    "hostname lookup failed",
-			    "]", NULL);
+    remotehost = stralloc(hostname);
+    if( check_name_give_sockaddr(hostname,
+				 (struct sockaddr *)addr, errstr) < 0) {
 	amfree(remotehost);
 	return 0;
-    }
-
-    /* Verify that the hostnames match -- they should theoretically */
-    if (strncasecmp( remotehost, hp->h_name, strlen(remotehost)+1 ) != 0 ) {
-	*errstr = vstralloc("[",
-			    "hostnames do not match: ",
-			    remotehost, " ", hp->h_name,
-			    "]", NULL);
-	amfree(remotehost);
-	return 0;
-    }
-
-    /* Now let's verify that the ip which gave us this hostname
-     * is really an ip for this hostname; or is someone trying to
-     * break in? (THIS IS THE CRUCIAL STEP)
-     */
-    for (i = 0; hp->h_addr_list[i]; i++) {
-	if (memcmp(hp->h_addr_list[i],
-		   (char *) &addr->sin_addr, SIZEOF(addr->sin_addr)) == 0)
-	    break;                     /* name is good, keep it */
-    }
-
-    /* If we did not find it, your DNS is messed up or someone is trying
-     * to pull a fast one on you. :(
-     */
-
-   /*   Check even the aliases list. Work around for Solaris if dns goes over NIS */
-
-    if (!hp->h_addr_list[i] ) {
-        for (j = 0; hp->h_aliases[j] !=0 ; j++) {
-	     if (strcmp(hp->h_aliases[j],inet_ntoa(addr->sin_addr)) == 0)
-	         break;                          /* name is good, keep it */
-        }
-	if (!hp->h_aliases[j] ) {
-	    *errstr = vstralloc("[",
-			        "ip address ", inet_ntoa(addr->sin_addr),
-			        " is not in the ip list for ", remotehost,
-			        "]",
-			        NULL);
-	    amfree(remotehost);
-	    return 0;
-	}
     }
 
     /* next, make sure the remote port is a "reserved" one */
-
-    if (ntohs(addr->sin_port) >= IPPORT_RESERVED) {
+    if (addr->ss_family == (sa_family_t)AF_INET)
+	port = ntohs(((struct sockaddr_in *)addr)->sin_port);
+    else
+	port = ntohs(((struct sockaddr_in6 *)addr)->sin6_port);
+    if (port >= IPPORT_RESERVED) {
 	char number[NUM_STR_SIZE];
 
-	snprintf(number, SIZEOF(number), "%u",
-		 (unsigned int)ntohs(addr->sin_port));
+	snprintf(number, SIZEOF(number), "%u", (unsigned int)port);
 	*errstr = vstralloc("[",
 			    "host ", remotehost, ": ",
 			    "port ", number, " not secure",
@@ -2458,7 +2393,7 @@ check_security(
 #ifndef USE_AMANDAHOSTS
     s = check_user_ruserok(remotehost, pwptr, remoteuser);
 #else
-    s = check_user_amandahosts(remotehost, addr->sin_addr, pwptr, remoteuser, NULL);
+    s = check_user_amandahosts(remotehost, addr, pwptr, remoteuser, NULL);
 #endif
 
     if (s != NULL) {
@@ -2653,3 +2588,89 @@ show_stat_info(
     amfree(owner);
     amfree(group);
 }
+
+int
+check_name_give_sockaddr(
+    const char *hostname,
+    struct sockaddr *addr,
+    char **errstr)
+{
+    struct addrinfo *res = NULL, *res1;
+    struct addrinfo hints;
+    int result;
+
+    hints.ai_flags = AI_CANONNAME | AI_V4MAPPED | AI_ALL;
+    hints.ai_family = addr->sa_family;
+    hints.ai_socktype = 0;
+    hints.ai_protocol = 0;
+    hints.ai_addrlen = 0;
+    hints.ai_addr = NULL;
+    hints.ai_canonname = NULL;
+    hints.ai_next = NULL;
+    result = getaddrinfo(hostname, NULL, &hints, &res);
+    if (result != 0) {
+	dbprintf(("getaddrinfo(%s): %s\n", hostname, gai_strerror(result)));
+	*errstr = newvstralloc(*errstr,
+			       " getaddrinfo(", hostname, "): ",
+			       gai_strerror(result), NULL);
+	return -1;
+    }
+
+    if (strncasecmp(hostname, res->ai_canonname, strlen(hostname)) != 0) {
+	auth_debug(1, ("%s: %s doesn't resolve to itself, it resolv to %s\n",
+		       debug_prefix_time(NULL),
+		       hostname, res->ai_canonname));
+	*errstr = newvstralloc(*errstr, hostname,
+			       " doesn't resolve to itself, it resolv to ",
+			       res->ai_canonname, NULL);
+	return -1;
+    }
+
+    for(res1=res; res1 != NULL; res = res->ai_next) {
+	if (res->ai_addr->sa_family == addr->sa_family) {
+	    if (addr->sa_family == (sa_family_t)AF_INET) {
+		result = memcmp(
+			&((struct sockaddr_in *)res->ai_addr)->sin_addr,
+			&((struct sockaddr_in *)addr)->sin_addr,
+			sizeof(struct in_addr));
+	    } else {
+		result = memcmp(
+			&((struct sockaddr_in6 *)res->ai_addr)->sin6_addr,
+			&((struct sockaddr_in6 *)addr)->sin6_addr,
+			sizeof(struct in6_addr));
+	    }
+	    if (result == 0) {
+		freeaddrinfo(res);
+		return 0;
+	    }
+	}
+    }
+
+    *errstr = newvstralloc(*errstr,
+			   str_sockaddr((struct sockaddr_storage *)addr),
+			   " doesn't resolve to ",
+			   hostname, NULL);
+    freeaddrinfo(res);
+    return -1;
+}
+
+
+int
+check_addrinfo_give_name(
+    struct addrinfo *res,
+    const char *hostname,
+    char **errstr)
+{
+    if (strncasecmp(hostname, res->ai_canonname, strlen(hostname)) != 0) {
+	auth_debug(1, ("%s: %s doesn't resolve to itself, it resolv to %s\n",
+		       debug_prefix_time(NULL),
+		       hostname, res->ai_canonname));
+	*errstr = newvstralloc(*errstr, hostname,
+			       " doesn't resolve to itself, it resolv to ",
+			       res->ai_canonname, NULL);
+	return -1;
+    }
+
+    return 0;
+}
+
