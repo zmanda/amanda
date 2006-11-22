@@ -387,24 +387,26 @@ stream_accept(
 	 * Make certain we got an inet connection and that it is not
 	 * from port 20 (a favorite unauthorized entry tool).
 	 */
-	if (addr.ss_family == (sa_family_t)AF_INET)
-	    port = ntohs(((struct sockaddr_in *)&addr)->sin_port);
-	else if (addr.ss_family == (sa_family_t)AF_INET6)
-	    port = ntohs(((struct sockaddr_in6 *)&addr)->sin6_port);
-	else {
+	if (addr.ss_family == (sa_family_t)AF_INET ||
+	    addr.ss_family == (sa_family_t)AF_INET6) {
+	    if (addr.ss_family == (sa_family_t)AF_INET)
+		port = ntohs(((struct sockaddr_in *)&addr)->sin_port);
+	    else if (addr.ss_family == (sa_family_t)AF_INET6)
+		port = ntohs(((struct sockaddr_in6 *)&addr)->sin6_port);
+	    if (port != (in_port_t)20) {
+		try_socksize(connected_socket, SO_SNDBUF, sendsize);
+		try_socksize(connected_socket, SO_RCVBUF, recvsize);
+		return connected_socket;
+	    } else {
+		dbprintf(("%s: remote port is %u: ignored\n",
+			  debug_prefix_time(NULL), (unsigned int)port));
+	    }
+	} else {
 	    dbprintf(("%s: family is %d instead of %d(AF_INET)"
 		      " or %d(AF_INET6): ignored\n",
 		      debug_prefix_time(NULL),
 		      addr.ss_family,
 		      AF_INET, AF_INET6));
-	}
-	if (port != (in_port_t)20) {
-	    try_socksize(connected_socket, SO_SNDBUF, sendsize);
-	    try_socksize(connected_socket, SO_RCVBUF, recvsize);
-	    return connected_socket;
-	} else {
-	    dbprintf(("%s: remote port is %d: ignored\n",
-		      debug_prefix_time(NULL), port));
 	}
 	aclose(connected_socket);
     }

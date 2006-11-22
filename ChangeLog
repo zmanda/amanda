@@ -1,4 +1,7 @@
 2006-11-21  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/stream.c: Fix compiler error.
+
+2006-11-21  Jean-Louis Martineau <martineau@zmanda.com>
 	* amandad-src/amandad.c, common-src/amanda.h,
 	  common-src/bsd-security.c, common-src/bsdtcp-security.c,
 	  common-src/bsdudp-security.c, common-src/dgram.c,
