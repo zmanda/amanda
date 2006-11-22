@@ -236,12 +236,13 @@ suck_dir_list_from_server(void)
 	*tape_undo = '\0';
 
 	if(am_has_feature(indexsrv_features, fe_amindexd_fileno_in_OLSD)) {
+	    OFF_T_FMT_TYPE fileno_ = (OFF_T_FMT_TYPE)0;
 	    skip_whitespace(s, ch);
-	    if(ch == '\0' || sscanf(s - 1, OFF_T_FMT,
-				    (OFF_T_FMT_TYPE *)&fileno) != 1) {
+	    if(ch == '\0' || sscanf(s - 1, OFF_T_FMT, &fileno_) != 1) {
 		err = "bad reply: cannot parse fileno field";
 		continue;
 	    }
+	    fileno = (off_t)fileno_;
 	    skip_integer(s, ch);
 	}
 	else {

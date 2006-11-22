@@ -1,4 +1,10 @@
 2006-11-20  Jean-Louis Martineau <martineau@zmanda.com>
+	* client-src/sendsize.c, oldrecover-src/display_commands.c,
+	  oldrecover-src/extract_list.c, recover-src/display_commands.c,
+	  recover-src/extract_list.c,
+	  server-src/driver.c: Fix compiler error.
+
+2006-11-20  Jean-Louis Martineau <martineau@zmanda.com>
 	* client-src/sendsize.c: Open the amandates file after the
 				 <config>/amanda-client.conf file is loaded.
 

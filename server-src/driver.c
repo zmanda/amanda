@@ -2819,12 +2819,16 @@ dump_to_tape(
 	dumpsize = (off_t)0;
 	if (*result_argv[5] == '"') {
 	    /* String was quoted */
+	    OFF_T_FMT_TYPE dumpsize_ = (OFF_T_FMT_TYPE)0;
 	    rc = sscanf(result_argv[5],"\"[sec %lf kb " OFF_T_FMT " ",
-			&tapetime, (OFF_T_FMT_TYPE *)&dumpsize);
+			&tapetime, &dumpsize_);
+	    dumpsize = (off_t)dumpsize_;
 	} else {
 	    /* String was not quoted */
+	    OFF_T_FMT_TYPE dumpsize_ = (OFF_T_FMT_TYPE)0;
 	    rc = sscanf(result_argv[5],"[sec %lf kb " OFF_T_FMT " ",
-			&tapetime, (OFF_T_FMT_TYPE *)&dumpsize);
+			&tapetime, &dumpsize_);
+	    dumpsize = (off_t)dumpsize_;
 	}
 	if (rc < 2) {
 	    error("error [malformed result: %d items matched in '%s']",

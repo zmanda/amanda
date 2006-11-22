@@ -230,7 +230,7 @@ main(
 	}
 
 	if (amandates_read == 0) {
-	    amandates_file = client_getconf_str(CLN_AMANDATES);
+	    amandates_file = getconf_str(CNF_AMANDATES);
 	    if(!start_amandates(amandates_file, 0))
 	        error("error [opening %s: %s]", amandates_file,
 		      strerror(errno));
