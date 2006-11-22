@@ -391,7 +391,7 @@ stream_accept(
 	    addr.ss_family == (sa_family_t)AF_INET6) {
 	    if (addr.ss_family == (sa_family_t)AF_INET)
 		port = ntohs(((struct sockaddr_in *)&addr)->sin_port);
-	    else if (addr.ss_family == (sa_family_t)AF_INET6)
+	    else
 		port = ntohs(((struct sockaddr_in6 *)&addr)->sin6_port);
 	    if (port != (in_port_t)20) {
 		try_socksize(connected_socket, SO_SNDBUF, sendsize);
