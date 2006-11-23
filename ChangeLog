@@ -1,3 +1,7 @@
+2006-11-23  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/security-util.c (tcpm_recv_token): amanda protocol
+	  packet can be larger than NETWORK_BLOCK_BYTES
+
 2006-11-21  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/stream.c: Fix compiler error.
 

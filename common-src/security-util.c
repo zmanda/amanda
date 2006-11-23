@@ -500,7 +500,8 @@ tcpm_recv_token(
 
     *size = (ssize_t)ntohl(netint[0]);
     *handle = (int)ntohl(netint[1]);
-    if (*size > NETWORK_BLOCK_BYTES) {
+    /* amanda protocol packet can be above NETWORK_BLOCK_BYTES */
+    if (*size > 128*NETWORK_BLOCK_BYTES) {
 	if (isprint((int)(*size        ) & 0xFF) &&
 	    isprint((int)(*size   >> 8 ) & 0xFF) &&
 	    isprint((int)(*size   >> 16) & 0xFF) &&
