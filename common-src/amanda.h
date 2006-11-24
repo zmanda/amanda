@@ -853,6 +853,7 @@ extern int    amfunlock(int fd, char *resource);
 extern int    mkpdir(char *file, mode_t mode, uid_t uid, gid_t gid);
 extern int    rmpdir(char *file, char *topdir);
 extern char  *sanitise_filename(char *inp);
+extern char  *old_sanitise_filename(char *inp);
 
 /* from old bsd-security.c */
 extern int debug;

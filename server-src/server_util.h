@@ -31,6 +31,7 @@
 #define	SERVER_UTIL_H
 
 #include "util.h"
+#include "diskfile.h"
 
 #define MAX_ARGS 32
 
@@ -70,5 +71,6 @@ struct dumper_s;
 int dumper_cmd(struct dumper_s *dumper, cmd_t cmd, struct disk_s *dp);
 
 char *amhost_get_security_conf(char *string, void *arg);
+int check_infofile(char *infodir, disklist_t *dl, char **errmsg);
 
 #endif	/* SERVER_UTIL_H */

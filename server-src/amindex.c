@@ -95,3 +95,65 @@ getindexfname(
 
   return buf;
 }
+
+char *
+getoldindexfname(
+    char *	host,
+    char *	disk,
+    char *	date,
+    int		level)
+{
+  char *conf_indexdir;
+  char *buf;
+  char level_str[NUM_STR_SIZE];
+  char datebuf[14 + 1];
+  char *dc = NULL;
+  char *pc;
+  int ch;
+
+  if (date != NULL) {
+    dc = date;
+    pc = datebuf;
+    while (pc < datebuf + SIZEOF(datebuf)) {
+      ch = *dc++;
+      *pc++ = (char)ch;
+      if (ch == '\0') {
+        break;
+      } else if (! isdigit (ch)) {
+        pc--;
+      }
+    }
+    datebuf[SIZEOF(datebuf)-1] = '\0';
+    dc = datebuf;
+
+    snprintf(level_str, SIZEOF(level_str), "%d", level);
+  }
+
+  host = old_sanitise_filename(host);
+  if (disk != NULL) {
+    disk = old_sanitise_filename(disk);
+  }
+
+  conf_indexdir = getconf_str(CNF_INDEXDIR);
+  if (*conf_indexdir == '/') {
+    conf_indexdir = stralloc(conf_indexdir);
+  } else {
+    conf_indexdir = stralloc2(config_dir, conf_indexdir);
+  }
+  /*
+   * Note: vstralloc() will stop at the first NULL, which might be
+   * "disk" or "dc" (datebuf) rather than the full file name.
+   */
+  buf = vstralloc(conf_indexdir, "/",
+		  host, "/",
+		  disk, "/",
+		  dc, "_",
+		  level_str, COMPRESS_SUFFIX,
+		  NULL);
+
+  amfree(conf_indexdir);
+  amfree(host);
+  amfree(disk);
+
+  return buf;
+}

@@ -371,6 +371,9 @@ parse_diskline(
     int line_num = *line_num_p;
     struct tm *stm;
     time_t st;
+    char *shost, *sdisk;
+    am_host_t *p;
+    disk_t *dp;
 
     assert(filename != NULL);
     assert(line_num > 0);
@@ -392,6 +395,18 @@ parse_diskline(
     } else {
       hostname = stralloc(host->hostname);
     }
+
+    shost = sanitise_filename(hostname);
+    for (p = hostlist; p != NULL; p = p->next) {
+	char *shostp = sanitise_filename(p->hostname);
+	if (!strcmp(hostname, p->hostname) &&
+	     strcmp(shost, shostp)) {
+	    disk_parserror(filename, line_num, "Two host are mapping to the same name: \"%s\" and \"%s\"", p->hostname, hostname);
+	    return(-1);
+	}
+	amfree(shostp);
+    }
+    amfree(shost);
 
     skip_whitespace(s, ch);
     if(ch == '\0' || ch == '#') {
@@ -457,6 +472,23 @@ parse_diskline(
 	disk->spindle = -1;
 	disk->up = NULL;
 	disk->inprogress = 0;
+    }
+
+    if (host) {
+	sdisk = sanitise_filename(diskname);
+	for (dp = host->disks; dp != NULL; dp = dp->next) {
+	    char *sdiskp = sanitise_filename(dp->name);
+	    if (strcmp(diskname, dp->name) != 0 &&
+		 strcmp(sdisk, sdiskp) == 0) {
+		disk_parserror(filename, line_num,
+		 "Two disk are mapping to the same name: \"%s\" and \"%s\""
+		 ", you must use different diskname",
+		 dp->name, diskname);
+	    return(-1);
+	    }
+	    amfree(sdiskp);
+	}
+	amfree(sdisk);
     }
 
     if (fp[0] == '{') {

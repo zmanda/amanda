@@ -178,7 +178,7 @@ int main(int argc, char **argv)
     int    new_argc,   my_argc;
     char **new_argv, **my_argv;
     int    nb_disk;
-    char  *errstr;
+    char  *errstr = NULL;
 
     safe_fd(-1, 0);
 
@@ -331,6 +331,10 @@ int main(int argc, char **argv)
     if(open_infofile(conf_infofile)) {
 	error("could not open info db \"%s\"", conf_infofile);
 	/*NOTREACHED*/
+    }
+    if (check_infofile(conf_infofile, &origq, &errstr) == -1) {
+	log_add(L_WARNING, "problem copying infofile: %s", errstr);
+	amfree(errstr);
     }
     amfree(conf_infofile);
 

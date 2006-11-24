@@ -677,6 +677,63 @@ cmp_sockaddr(
 }
 
 
+int copy_file(
+    char  *dst,
+    char  *src,
+    char **errmsg)
+{
+    int     infd, outfd;
+    int     save_errno;
+    ssize_t nb;
+    char    buf[32768];
+    char   *quoted;
+
+    if ((infd = open(src, O_RDONLY)) == -1) {
+	quoted = quote_string(src);
+	*errmsg = vstralloc("Can't open file ", quoted, " for reading: %s",
+			    strerror(save_errno));
+	amfree(quoted);
+	return -1;
+    }
+
+    if ((outfd = open(dst, O_WRONLY|O_CREAT, 0600)) == -1) {
+	save_errno = errno;
+	quoted = quote_string(dst);
+	*errmsg = vstralloc("Can't open file ", quoted, " for writting: %s",
+			    strerror(save_errno));
+	amfree(quoted);
+	close(infd);
+	return -1;
+    }
+
+    while((nb=read(infd, &buf, SIZEOF(buf))) > 0) {
+	if(fullwrite(outfd,&buf,(size_t)nb) < nb) {
+	    save_errno = errno;
+	    quoted = quote_string(dst);
+	    *errmsg = vstralloc("Error writing to \"", quoted, "\":",
+				strerror(save_errno));
+	    amfree(quoted);
+	    close(infd);
+	    close(outfd);
+	    return -1;
+	}
+    }
+
+    if (nb < 0) {
+	save_errno = errno;
+	quoted = quote_string(src);
+	*errmsg = vstralloc("Error reading from \"", quoted, "\":",
+			    strerror(save_errno));
+	amfree(quoted);
+	close(infd);
+	close(outfd);
+	return -1;
+    }
+
+    close(infd);
+    close(outfd);
+    return 0;
+}
 #ifndef HAVE_LIBREADLINE
 /*
  * simple readline() replacements

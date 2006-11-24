@@ -400,6 +400,35 @@ sanitise_filename(
     return buf;
 }
 
+/* duplicate '_' */
+char *
+old_sanitise_filename(
+    char *	inp)
+{
+    char *buf;
+    size_t buf_size;
+    char *s, *d;
+    int ch;
+
+    buf_size = 2*strlen(inp) + 1;		/* worst case */
+    buf = alloc(buf_size);
+    d = buf;
+    s = inp;
+    while((ch = *s++) != '\0') {
+	if(ch == '_') {
+	    *d++ = (char)ch;
+	}
+	if(ch == '/') {
+	    ch = '_';	/* convert "bad" to "_" */
+	}
+	*d++ = (char)ch;
+    }
+    assert(d < buf + buf_size);
+    *d = '\0';
+
+    return buf;
+}
+
 /*
  *=====================================================================
  * Get the next line of input from a stdio file.

@@ -127,3 +127,60 @@ amhost_get_security_conf(
 
     return(NULL);
 }
+
+int check_infofile(
+    char        *infodir,
+    disklist_t  *dl,
+    char       **errmsg)
+{
+    disk_t      *dp, *diskp;
+    char        *hostinfodir, *old_hostinfodir, *Xhostinfodir;
+    char        *diskdir,     *old_diskdir,     *Xdiskdir;
+    char        *infofile,    *old_infofile,    *Xinfofile;
+    struct stat  statbuf;
+    int other_dle_match;
+
+    if (stat(infodir, &statbuf) != 0) {
+	return 0;
+    }
+
+    for (dp = dl->head; dp != NULL; dp = dp->next) {
+	hostinfodir = sanitise_filename(dp->host->hostname);
+	diskdir     = sanitise_filename(dp->name);
+	infofile = vstralloc(infodir, "/", hostinfodir, "/", diskdir,
+			     "/info", NULL);
+	if (stat(infofile, &statbuf) == -1 && errno == ENOENT) {
+	    old_hostinfodir = old_sanitise_filename(dp->host->hostname);
+	    old_diskdir     = old_sanitise_filename(dp->name);
+	    old_infofile    = vstralloc(infodir, old_hostinfodir, "/",
+					old_diskdir, "/info", NULL);
+	    if (stat(old_infofile, &statbuf) == 0) {
+		other_dle_match = 0;
+		diskp = dl->head;
+		while (diskp != NULL) {
+		    Xhostinfodir = sanitise_filename(diskp->host->hostname);
+		    Xdiskdir     = sanitise_filename(diskp->name);
+		    Xinfofile = vstralloc(infodir, "/", Xhostinfodir, "/",
+					  Xdiskdir, "/info", NULL);
+		    if (strcmp(old_infofile, Xinfofile) == 0) {
+			other_dle_match = 1;
+			diskp = NULL;
+		    }
+		    else {
+			diskp = diskp->next;
+		    }
+		}
+		if (other_dle_match == 0) {
+		    if(mkpdir(infofile, (mode_t)02755, (uid_t)-1,
+			      (gid_t)-1) == -1) 
+			*errmsg = vstralloc("Can't create directory for ",
+					    infofile, NULL);
+			return -1;
+		    if(copy_file(infofile, old_infofile, errmsg) == -1) 
+			return -1;
+		}
+	    }
+	}
+    }
+    return 0;
+}

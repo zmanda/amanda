@@ -1,3 +1,20 @@
+2006-11-24  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/file.c (old_sanitise_filename): New function.
+	* common-src/amanda.h (old_sanitise_filename): Prototype.
+	* common-src/util.c (copy_file): New function.
+	* common-src/util.h (copy_file): Prototype.
+	* server-src/diskfile.c: Check that two DLE doesn't get the same
+				 sanitized filename.
+	* server-src/amindex.c (getoldindexfname): New function.
+	* server-src/amindex.h (getoldindexfname): prototype.
+	* server-src/amindexd.c: Use the old sanitized filename if the new
+				 file doesn't exist.
+	* server-src/amcheck.c: Call check_infofile.
+	* server-src/planner.c: Call check_infofile.
+	* server-src/server_util.c (check_infofile): New function, will copy
+			 the old sanitizes info file if the new doesn't exist.
+	* server-src/server_util.h (check_infofile): Prototype.
+
 2006-11-23  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/security-util.c (tcpm_recv_token): amanda protocol
 	  packet can be larger than NETWORK_BLOCK_BYTES

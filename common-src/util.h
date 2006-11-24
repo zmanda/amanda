@@ -61,6 +61,7 @@ void	dump_sockaddr(struct sockaddr_storage *	sa);
 char *  str_sockaddr(struct sockaddr_storage *sa);
 int     cmp_sockaddr(struct sockaddr_storage *ss1,
 		     struct sockaddr_storage *ss2);
+int     copy_file(char *dst, char *src, char **errmsg);
 
 /*
  *   validate_email return 0 if the following characters are present
