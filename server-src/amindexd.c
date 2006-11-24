@@ -179,10 +179,13 @@ uncompress_file(
 	    return NULL;
  	}
 
-	cmd = vstralloc(UNCOMPRESS_PATH,
 #ifdef UNCOMPRESS_OPT
-			" ", UNCOMPRESS_OPT,
+#  define PARAM_UNCOMPRESS_OPT " ", UNCOMPRESS_OPT
+#else
+#  define PARAM_UNCOMPRESS_OPT ""
 #endif
+	cmd = vstralloc(UNCOMPRESS_PATH,
+			PARAM_UNCOMPRESS_OPT,
 			" \'", filename_gz, "\'",
 			" 2>/dev/null",
 			" | (LC_ALL=C; export LC_ALL ; sort) ",

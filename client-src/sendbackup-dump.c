@@ -375,12 +375,15 @@ start_backup(
 #define RESTORE "restore"
 #endif
 
+#ifdef HAVE_HONOR_NODUMP
+#  define PARAM_HONOR_NODUMP "h"
+#else
+#  define PARAM_HONOR_NODUMP ""
+#endif
 	dumpkeys = vstralloc(level_str,
 			     options->no_record ? "" : "u",
 			     "s",
-#ifdef HAVE_HONOR_NODUMP
-			     "h",
-#endif
+			     PARAM_HONOR_NODUMP,
 			     "f",
 			     NULL);
 

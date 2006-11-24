@@ -1,4 +1,10 @@
 2006-11-24  Jean-Louis Martineau <martineau@zmanda.com>
+	* client-src/sendbackup-dump.c, client-src/sendbackup-gnutar.c,
+	  client-src/sendsize.c,
+	  server-src/amindexd.c: Patch for gcc-3.2.3 to compile the new
+				 vstralloc macro.
+
+2006-11-24  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/file.c (old_sanitise_filename): New function.
 	* common-src/amanda.h (old_sanitise_filename): Prototype.
 	* common-src/util.c (copy_file): New function.

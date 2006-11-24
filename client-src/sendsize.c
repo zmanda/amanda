@@ -1166,13 +1166,19 @@ getsize_dump(
 	dbprintf(("%s: running \"%s%s %s - %s\"\n",
 		  debug_prefix_time(NULL), cmd, name, dumpkeys, qdevice));
 # else							/* } { */
+#  ifdef HAVE_DUMP_ESTIMATE
+#    define PARAM_DUMP_ESTIMATE HAVE_DUMP_ESTIMATE
+#  else
+#    define PARAM_DUMP_ESTIMATE ""
+#  endif
+#  ifdef HAVE_HONOR_NODUMP
+#    define PARAM_HONOR_NODUMP "h"
+#  else
+#    define PARAM_HONOR_NODUMP ""
+#  endif
 	dumpkeys = vstralloc(level_str,
-#  ifdef HAVE_DUMP_ESTIMATE				/* { */
-			     HAVE_DUMP_ESTIMATE,
-#  endif						/* } */
-#  ifdef HAVE_HONOR_NODUMP				/* { */
-			     "h",
-#  endif						/* } */
+			     PARAM_DUMP_ESTIMATE,
+			     PARAM_DUMP_ESTIMATE,
 			     "s", "f", NULL);
 
 #  ifdef HAVE_DUMP_ESTIMATE

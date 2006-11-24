@@ -360,12 +360,13 @@ start_backup(
     cur_dumptime = time(0);
     cur_level = level;
     cur_disk = stralloc(disk);
-    indexcmd = vstralloc(
 #ifdef GNUTAR
-			 GNUTAR,
+#  define PROGRAM_GNUTAR GNUTAR
 #else
-			 "tar",
+#  define PROGRAM_GNUTAR "tar"
 #endif
+    indexcmd = vstralloc(
+			 PROGRAM_GNUTAR,
 			 " -tf", " -",
 			 " 2>/dev/null",
 			 " | sed", " -e",
