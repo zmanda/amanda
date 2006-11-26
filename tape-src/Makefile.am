@@ -1,7 +1,8 @@
 # Makefile for Amanda tape library.
 
 INCLUDES =	-I$(top_builddir)/common-src \
-		-I$(top_srcdir)/common-src
+		-I$(top_srcdir)/common-src   \
+		-I$(top_srcdir)/gnulib
 
 LINT=@AMLINT@
 LINTFLAGS=@AMLINTFLAGS@

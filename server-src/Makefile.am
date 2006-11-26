@@ -4,7 +4,8 @@ INCLUDES =	-I$(top_builddir)/common-src \
 		-I$(top_srcdir)/common-src   \
 		-I$(top_srcdir)/restore-src  \
 		-I$(top_srcdir)/tape-src     \
-		-I$(top_srcdir)/amandad-src
+		-I$(top_srcdir)/amandad-src  \
+		-I$(top_srcdir)/gnulib
 
 LINT=@AMLINT@
 LINTFLAGS=@AMLINTFLAGS@
@@ -44,6 +45,7 @@ libamserver_la_LDFLAGS= -release $(VERSION)
 
 LDADD = ../common-src/libamanda.$(LIB_EXTENSION)   \
 	libamserver.$(LIB_EXTENSION)               \
+	../gnulib/libgnu.$(LIB_EXTENSION)          \
 	../tape-src/libamtape.$(LIB_EXTENSION)     \
 	../common-src/libamanda.$(LIB_EXTENSION)   \
 	../tape-src/libamtape.$(LIB_EXTENSION)     \
@@ -53,6 +55,7 @@ LDADD = ../common-src/libamanda.$(LIB_EXTENSION)   \
 amindexd_LDADD = ../common-src/libamanda.$(LIB_EXTENSION) \
 	libamserver.$(LIB_EXTENSION) \
 	../amandad-src/libamandad.$(LIB_EXTENSION) \
+	../gnulib/libgnu.$(LIB_EXTENSION) \
 	../tape-src/libamtape.$(LIB_EXTENSION) \
 	../common-src/libamanda.$(LIB_EXTENSION) \
 	../tape-src/libamtape.$(LIB_EXTENSION) \

@@ -4,7 +4,8 @@ INCLUDES =	-I$(top_builddir)/common-src \
 		-I$(top_srcdir)/common-src   \
 		-I$(top_srcdir)/tape-src     \
 		-I$(top_srcdir)/server-src   \
-		-I$(top_srcdir)/amandad-src
+		-I$(top_srcdir)/amandad-src  \
+		-I$(top_srcdir)/gnulib
 
 LINT=@AMLINT@
 LINTFLAGS=@AMLINTFLAGS@
@@ -27,7 +28,10 @@ LDADD = librestore.$(LIB_EXTENSION)              \
       ../common-src/libamanda.$(LIB_EXTENSION) \
       $(READLINE_LIBS)
 
-amidxtaped_LDADD = $(LDADD) ../amandad-src/libamandad.$(LIB_EXTENSION)
+amidxtaped_LDADD = $(LDADD) \
+		   ../gnulib/libgnu.$(LIB_EXTENSION) \
+		   ../amandad-src/libamandad.$(LIB_EXTENSION)
+
 amidxtaped_SOURCES = 	amidxtaped.c
 
 amfetchdump_SOURCES = 	amfetchdump.c

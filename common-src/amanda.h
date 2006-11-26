@@ -1244,6 +1244,10 @@ extern int vfprintf(FILE *stream, const char *format, va_list ap);
 extern int vprintf(const char *format, va_list ap);
 #endif
 
+/* GNULIB include */
+#include "getaddrinfo.h"
+#include "inet_ntop.h"
+
 #if !defined(S_ISCHR) && defined(_S_IFCHR) && defined(_S_IFMT)
 #define S_ISCHR(mode) (((mode) & _S_IFMT) == _S_IFCHR)
 #endif

@@ -4,7 +4,8 @@ AUTOMAKE_OPTIONS = 1.4 foreign
 ACINCLUDE_M4 = $(srcdir)/acinclude.m4
 ACINCLUDE_M4I = $(srcdir)/config/acinclude.m4i
 LIBTOOL_M4I = $(srcdir)/config/libtool.m4i
-ACINCLUDE_M4_DEPS = $(ACINCLUDE_M4I) $(LIBTOOL_M4I)
+GNULIB_M4I  = $(srcdir)/config/gnulib.m4i
+ACINCLUDE_M4_DEPS = $(GNULIB_M4I) $(ACINCLUDE_M4I) $(LIBTOOL_M4I)
 
 if WANT_CLIENT
 CLIENT_SUBDIRS = client-src dumper-src
@@ -26,6 +27,7 @@ PLOT_SUBDIRS = amplot
 endif
 # order is significant, don't change it arbitrarily
 SUBDIRS = \
+	gnulib \
 	config \
 	common-src \
 	amandad-src \

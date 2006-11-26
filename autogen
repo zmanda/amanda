@@ -8,10 +8,10 @@ cd `dirname $0`
 touch config/config.h.in
 
 if test x`ls -1t acinclude.m4 2>/dev/null \
-	    config/acinclude.m4i config/libtool.m4i |
+	    config/gnulib.m4i config/acinclude.m4i config/libtool.m4i |
 	  sed 1q` != x"acinclude.m4"; then
     rm -f acinclude.m4
-    cat config/acinclude.m4i config/libtool.m4i > acinclude.m4
+    cat config/gnulib.m4i config/acinclude.m4i config/libtool.m4i > acinclude.m4
 fi
 
 autoreconf --warning=syntax --force ${1+"$@"}

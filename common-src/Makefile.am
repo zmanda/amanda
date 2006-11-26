@@ -1,5 +1,7 @@
 # Makefile for Amanda library.
 
+INCLUDES =      -I$(top_srcdir)/gnulib   
+
 lib_LTLIBRARIES =	libamanda.la
 
 LINT=@AMLINT@
@@ -39,7 +41,8 @@ libamanda_la_SOURCES =		\
 	version.c		\
 	versuff.c
 
-libamanda_la_LIBADD =	@LTLIBOBJS@
+#libamanda_la_LIBADD =	@LTLIBOBJS@
+
 libamanda_la_LDFLAGS =  -release $(VERSION)
 
 noinst_HEADERS =		\

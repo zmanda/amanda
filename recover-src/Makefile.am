@@ -2,7 +2,8 @@
 
 INCLUDES =	-I$(top_builddir)/common-src \
 		-I$(top_srcdir)/common-src   \
-		-I$(top_srcdir)/client-src
+		-I$(top_srcdir)/client-src   \
+		-I$(top_srcdir)/gnulib
 
 LINT=@AMLINT@
 LINTFLAGS=@AMLINTFLAGS@
@@ -25,6 +26,7 @@ endif
 LDADD = ../common-src/libamanda.$(LIB_EXTENSION) \
 	@LEXLIB@ \
 	../client-src/libamclient.$(LIB_EXTENSION) \
+	../gnulib/libgnu.$(LIB_EXTENSION) \
 	../common-src/libamanda.$(LIB_EXTENSION) \
 	$(READLINE_LIBS)
 

@@ -1,8 +1,9 @@
 # Makefile for Amanda client programs.
 
 INCLUDES =	-I$(top_builddir)/common-src \
-		-I$(top_srcdir)/common-src \
-		-I$(top_srcdir)/amandad-src
+		-I$(top_srcdir)/common-src   \
+		-I$(top_srcdir)/amandad-src  \
+		-I$(top_srcdir)/gnulib
 
 LINT=@AMLINT@
 LINTFLAGS=@AMLINTFLAGS@
@@ -40,6 +41,7 @@ libamclient_la_LDFLAGS = -release $(VERSION)
 LDADD = ../common-src/libamanda.$(LIB_EXTENSION) \
 	libamclient.$(LIB_EXTENSION) \
 	../amandad-src/libamandad.$(LIB_EXTENSION) \
+	../gnulib/libgnu.$(LIB_EXTENSION) \
 	../common-src/libamanda.$(LIB_EXTENSION)
 
 SUFFIXES =		.sh .pl

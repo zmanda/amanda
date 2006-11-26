@@ -1,7 +1,8 @@
 # Makefile for Amanda client programs.
 
 INCLUDES =	-I$(top_builddir)/common-src \
-		-I$(top_srcdir)/common-src
+		-I$(top_srcdir)/common-src \
+		-I$(top_srcdir)/gnulib
 
 LINT=@AMLINT@
 LINTFLAGS=@AMLINTFLAGS@
@@ -29,6 +30,7 @@ noinst_HEADERS  = amandad.h
 
 LDADD = ../common-src/libamanda.$(LIB_EXTENSION) \
 	libamandad.$(LIB_EXTENSION) \
+	../gnulib/libgnu.$(LIB_EXTENSION) \
 	../common-src/libamanda.$(LIB_EXTENSION)
 
 install-exec-hook:

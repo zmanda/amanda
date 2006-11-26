@@ -16,7 +16,7 @@ AC_SUBST(CONFIGURE_COMMAND)
 AM_INIT_AUTOMAKE(amanda, 2.5.2alpha)
 AM_CONFIG_HEADER(config/config.h)
 
-AC_PREREQ(2.57)		dnl Minimum Autoconf version required.
+AC_PREREQ(2.59)		dnl Minimum Autoconf version required.
 
 if test -f "$srcdir/SNAPSHOT"; then
   cat < "$srcdir/SNAPSHOT"
@@ -85,6 +85,8 @@ AC_ARG_WITH(cflags,
 CFLAGS="-D_GNU_SOURCE $CFLAGS"
 
 AC_PROG_CC
+gl_EARLY
+gl_INIT
 AC_OBJEXT
 AC_EXEEXT
 AC_SYS_LARGEFILE
@@ -2825,7 +2827,7 @@ ICE_CHECK_DECL(vfprintf,stdio.h stdlib.h)
 ICE_CHECK_DECL(vprintf,stdio.h stdlib.h)
 ICE_CHECK_DECL(vsprintf,stdio.h stdlib.h)
 AC_CHECK_FUNC(wait4)
-AC_REPLACE_FUNCS(writev)
+#AC_REPLACE_FUNCS(writev)
 ICE_CHECK_DECL(writev, unistd.h sys/uio.h)
 ICE_CHECK_DECL(strcasecmp,string.h strings.h)
 
@@ -3142,6 +3144,8 @@ fi
 AC_SUBST(AM_CFLAGS)
 
 AC_CONFIG_FILES([\
+	gnulib/Makefile							\
+									\
 	amplot/amcat.awk		amplot/amplot.sh		\
 	amplot/Makefile							\
 									\
