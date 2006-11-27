@@ -426,7 +426,7 @@ stream_accept(
 #ifdef HAVE_IPV6
 	    if (addr.ss_family == (sa_family_t)AF_INET6)
 		port = ntohs(((struct sockaddr_in6 *)&addr)->sin6_port);
-	    else if (addr.ss_family == (sa_family_t)AF_INET)
+	    else
 #endif
 		port = ntohs(((struct sockaddr_in *)&addr)->sin_port);
 	    if (port != (in_port_t)20) {

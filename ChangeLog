@@ -1,4 +1,7 @@
 2006-11-27  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/stream.c: Fix compilation error.
+
+2006-11-27  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/amanda.h (NI_MAXHOST): Define if not defined.
 	* common-src/bsd-security.c, common-src/bsdtcp-security.c,
 	  common-src/bsdudp-security.c, common-src/dgram.c,
