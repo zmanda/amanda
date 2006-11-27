@@ -1,3 +1,10 @@
+2006-11-27  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/amanda.h (NI_MAXHOST): Define if not defined.
+	* common-src/bsd-security.c, common-src/bsdtcp-security.c,
+	  common-src/bsdudp-security.c, common-src/dgram.c,
+	  common-src/security-util.c, common-src/stream.c,
+	  common-src/util.c: HAVE_IPV6 conditional code
+
 2006-11-26  Jean-Louis Martineau <martineau@zmanda.com>
 	* config/gnulib/*: m4 files for gnulib.
 	* config/gnulib.m4i: File to load all m4 files for gnulib.

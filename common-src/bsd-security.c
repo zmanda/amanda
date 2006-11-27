@@ -173,8 +173,13 @@ bsd_connect(
 	not_init = 0;
     }
 
+#ifdef HAVE_IPV6
     hints.ai_flags = AI_CANONNAME | AI_V4MAPPED | AI_ALL;
     hints.ai_family = AF_INET6;
+#else
+    hints.ai_flags = AI_CANONNAME;
+    hints.ai_family = AF_INET;
+#endif
     hints.ai_socktype = SOCK_DGRAM;
     hints.ai_protocol = IPPROTO_UDP;
     hints.ai_addrlen = 0;

@@ -116,7 +116,11 @@ make_socket(void)
     int r;
 #endif
 
+#ifdef HAVE_IPV6
     if ((s = socket(AF_INET6, SOCK_STREAM, 0)) == -1) {
+#else
+    if ((s = socket(AF_INET6, SOCK_STREAM, 0)) == -1) {
+#endif
         save_errno = errno;
         dbprintf(("%s: make_socket: socket() failed: %s\n",
                   debug_prefix_time(NULL),
@@ -243,10 +247,12 @@ connect_port(
 
     if ((s = make_socket()) == -1) return -2;
 
-    if (addrp->ss_family == (sa_family_t)AF_INET)
-	((struct sockaddr_in *)addrp)->sin_port = (in_port_t)htons(port);
-    else
+#ifdef HAVE_IPV6
+    if (addrp->ss_family == (sa_family_t)AF_INET6)
 	((struct sockaddr_in6 *)addrp)->sin6_port = (in_port_t)htons(port);
+    else
+#endif
+	((struct sockaddr_in *)addrp)->sin_port = (in_port_t)htons(port);
 
     if (bind(s, (struct sockaddr *)addrp, sizeof(*addrp)) != 0) {
 	save_errno = errno;
@@ -350,11 +356,13 @@ bind_portrange(
 		dbprintf(("%s: bind_portrange2: Try  port %d: Owned by %s - ",
 		      debug_prefix_time(NULL), port, servPort->s_name));
 	    }
-	    if(addrp->ss_family == (sa_family_t)AF_INET)
-		((struct sockaddr_in *)addrp)->sin_port =
+#ifdef HAVE_IPV6
+	    if(addrp->ss_family == (sa_family_t)AF_INET6)
+		((struct sockaddr_in6 *)addrp)->sin6_port =
 						 (in_port_t)htons(port);
 	    else
-		((struct sockaddr_in6 *)addrp)->sin6_port =
+#endif
+		((struct sockaddr_in *)addrp)->sin_port =
 						 (in_port_t)htons(port);
 	    if (bind(s, (struct sockaddr *)addrp, (socklen_t)sizeof(*addrp)) >= 0) {
 	        dbprintf(("Success\n"));
@@ -619,7 +627,13 @@ void
 dump_sockaddr(
     struct sockaddr_storage *sa)
 {
+#ifdef HAVE_IPV6
     char ipstr[INET6_ADDRSTRLEN];
+#else
+    char ipstr[INET_ADDRSTRLEN];
+#endif
+
+#ifdef HAVE_IPV6
     if ( sa->ss_family == (sa_family_t)AF_INET6) {
 	inet_ntop(AF_INET6, &((struct sockaddr_in6 *)sa)->sin6_addr,
 		  ipstr, sizeof(ipstr));
@@ -628,7 +642,9 @@ dump_sockaddr(
 		  ((struct sockaddr_in6 *)sa)->sin6_family,
 		  (int)ntohs(((struct sockaddr_in6 *)sa)->sin6_port),
 		  ipstr));
-    } else {
+    } else
+#endif
+    {
 	inet_ntop(AF_INET, &((struct sockaddr_in *)sa)->sin_addr, ipstr,
 		  sizeof(ipstr));
 	dbprintf(("%s: (sockaddr_in *)%p = { %d, %d, %s }\n",
@@ -640,22 +656,34 @@ dump_sockaddr(
 }
 
 
+#ifdef HAVE_IPV6
 static char mystr_sockaddr[INET6_ADDRSTRLEN + 20];
+#else
+static char mystr_sockaddr[INET_ADDRSTRLEN + 20];
+#endif
+
 char *
 str_sockaddr(
     struct sockaddr_storage *sa)
 {
+#ifdef HAVE_IPV6
     char ipstr[INET6_ADDRSTRLEN];
+#else
+    char ipstr[INET_ADDRSTRLEN];
+#endif
     int port;
 
+#ifdef HAVE_IPV6
     if ( sa->ss_family == (sa_family_t)AF_INET6) {
 	inet_ntop(AF_INET6, &((struct sockaddr_in6 *)sa)->sin6_addr,
 		  ipstr, sizeof(ipstr));
 	port = ((struct sockaddr_in6 *)sa)->sin6_port;
-    } else {
+    } else
+#endif
+    {
 	inet_ntop(AF_INET, &((struct sockaddr_in *)sa)->sin_addr, ipstr,
 		  sizeof(ipstr));
-	port = ((struct sockaddr_in6 *)sa)->sin6_port;
+	port = ((struct sockaddr_in *)sa)->sin_port;
     }
     snprintf(mystr_sockaddr,sizeof(mystr_sockaddr),"%s.%d", ipstr, port);
     return mystr_sockaddr;
@@ -669,10 +697,12 @@ cmp_sockaddr(
 {
     size_t len;
 
-    if(ss1->ss_family == (sa_family_t)AF_INET)
-	len = sizeof(struct sockaddr_in);
-    else
+#ifdef HAVE_IPV6
+    if(ss1->ss_family == (sa_family_t)AF_INET6)
 	len = sizeof(struct sockaddr_in6);
+    else
+#endif
+	len = sizeof(struct sockaddr_in);
     return(memcmp(ss1, ss2, len));
 }
 

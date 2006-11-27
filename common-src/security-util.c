@@ -940,10 +940,12 @@ bsd_recv_security_ok(
 	/*
 	 * Request packets must come from a reserved port
 	 */
-	if (rh->peer.ss_family == (sa_family_t)AF_INET)
-	    port = ntohs(((struct sockaddr_in *)&rh->peer)->sin_port);
-	else
+#ifdef HAVE_IPV6
+	if (rh->peer.ss_family == (sa_family_t)AF_INET6)
 	    port = ntohs(((struct sockaddr_in6 *)&rh->peer)->sin6_port);
+	else
+#endif
+	    port = ntohs(((struct sockaddr_in *)&rh->peer)->sin_port);
 	if (port >= IPPORT_RESERVED) {
 	    security_seterror(&rh->sech,
 		"host %s: port %u not secure", rh->hostname,
@@ -1199,10 +1201,12 @@ udp_recvpkt_callback(
 
     if (strcmp(rh->proto_handle, rh->udp->handle) != 0) assert(1);
     /* if it didn't come from the same host/port, forget it */
-    if (rh->peer.ss_family == (sa_family_t)AF_INET)
-	len = sizeof(struct sockaddr_in);
-    else
+#ifdef HAVE_IPV6
+    if (rh->peer.ss_family == (sa_family_t)AF_INET6)
 	len = sizeof(struct sockaddr_in6);
+    else
+#endif
+	len = sizeof(struct sockaddr_in);
     if (memcmp(&rh->peer, &rh->udp->peer, len) != 0) {
 	amfree(rh->udp->handle);
 	dbprintf(("not form same host\n"));
@@ -1274,10 +1278,12 @@ udp_inithandle(
 
     rh->hostname = stralloc(hostname);
     memcpy(&rh->peer, addr, SIZEOF(rh->peer));
-    if(rh->peer.ss_family == (sa_family_t)AF_INET)
-	((struct sockaddr_in *)&rh->peer)->sin_port = port;
-    else
+#ifdef HAVE_IPV6
+    if(rh->peer.ss_family == (sa_family_t)AF_INET6)
 	((struct sockaddr_in6 *)&rh->peer)->sin6_port = port;
+    else
+#endif
+	((struct sockaddr_in *)&rh->peer)->sin_port = port;
 
     rh->prev = udp->bh_last;
     if (udp->bh_last) {
@@ -2115,7 +2121,11 @@ check_user_amandahosts(
     int hostmatch;
     int usermatch;
     char *aservice = NULL;
+#ifdef HAVE_IPV6
     char ipstr[INET6_ADDRSTRLEN];
+#else
+    char ipstr[INET_ADDRSTRLEN];
+#endif
 
     auth_debug(1, ("check_user_amandahosts(host=%s, pwd=%p, "
 		   "remoteuser=%s, service=%s)\n",
@@ -2183,11 +2193,13 @@ check_user_amandahosts(
 	if (!hostmatch  &&
 	    (strcasecmp(filehost, "localhost")== 0 ||
 	     strcasecmp(filehost, "localhost.localdomain")== 0)) {
-	    if (addr->ss_family == (sa_family_t)AF_INET)
-		inet_ntop(AF_INET, &((struct sockaddr_in *)addr)->sin_addr,
+#ifdef HAVE_IPV6
+	    if (addr->ss_family == (sa_family_t)AF_INET6)
+		inet_ntop(AF_INET6, &((struct sockaddr_in6 *)addr)->sin6_addr,
 			  ipstr, sizeof(ipstr));
 	    else
-		inet_ntop(AF_INET6, &((struct sockaddr_in6 *)addr)->sin6_addr,
+#endif
+		inet_ntop(AF_INET, &((struct sockaddr_in *)addr)->sin_addr,
 			  ipstr, sizeof(ipstr));
 	    if (strcmp(ipstr, "127.0.0.1") == 0 ||
 		strcmp(ipstr, "::1") == 0)
@@ -2600,7 +2612,11 @@ check_name_give_sockaddr(
     struct addrinfo hints;
     int result;
 
+#ifdef HAVE_IPV6
     hints.ai_flags = AI_CANONNAME | AI_V4MAPPED | AI_ALL;
+#else
+    hints.ai_flags = AI_CANONNAME;
+#endif
     hints.ai_family = addr->sa_family;
     hints.ai_socktype = 0;
     hints.ai_protocol = 0;
@@ -2629,16 +2645,19 @@ check_name_give_sockaddr(
 
     for(res1=res; res1 != NULL; res = res->ai_next) {
 	if (res->ai_addr->sa_family == addr->sa_family) {
-	    if (addr->sa_family == (sa_family_t)AF_INET) {
-		result = memcmp(
-			&((struct sockaddr_in *)res->ai_addr)->sin_addr,
-			&((struct sockaddr_in *)addr)->sin_addr,
-			sizeof(struct in_addr));
-	    } else {
+#ifdef HAVE_IPV6
+	    if (addr->sa_family == (sa_family_t)AF_INET6) {
 		result = memcmp(
 			&((struct sockaddr_in6 *)res->ai_addr)->sin6_addr,
 			&((struct sockaddr_in6 *)addr)->sin6_addr,
 			sizeof(struct in6_addr));
+	    } else
+#endif
+	    {
+		result = memcmp(
+			&((struct sockaddr_in *)res->ai_addr)->sin_addr,
+			&((struct sockaddr_in *)addr)->sin_addr,
+			sizeof(struct in_addr));
 	    }
 	    if (result == 0) {
 		freeaddrinfo(res);

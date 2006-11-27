@@ -62,7 +62,11 @@ dgram_bind(
 
     portrange = getconf_intrange(CNF_RESERVED_UDP_PORT);
     *portp = (in_port_t)0;
+#ifdef HAVE_IPV6
     if((s = socket(AF_INET6, SOCK_DGRAM, 0)) == -1) {
+#else
+    if((s = socket(AF_INET, SOCK_DGRAM, 0)) == -1) {
+#endif
 	save_errno = errno;
 	dbprintf(("%s: dgram_bind: socket() failed: %s\n",
 		  debug_prefix_time(NULL),
@@ -80,8 +84,13 @@ dgram_bind(
     }
 
     memset(&name, 0, SIZEOF(name));
+#ifdef HAVE_IPV6
     ((struct sockaddr_in6 *)&name)->sin6_family = (sa_family_t)AF_INET6;
     ((struct sockaddr_in6 *)&name)->sin6_addr = in6addr_any;
+#else
+    ((struct sockaddr_in *)&name)->sin_family = (sa_family_t)AF_INET;
+    ((struct sockaddr_in *)&name)->sin_addr.s_addr = INADDR_ANY;
+#endif
 
     /*
      * If a port range was specified, we try to get a port in that
@@ -164,7 +173,11 @@ dgram_send_addr(
 	s = dgram->socket;
 	socket_opened = 0;
     } else {
+#ifdef HAVE_IPV6
 	if((s = socket(AF_INET6, SOCK_DGRAM, 0)) == -1) {
+#else
+	if((s = socket(AF_INET, SOCK_DGRAM, 0)) == -1) {
+#endif
 	    save_errno = errno;
 	    dbprintf(("%s: dgram_send_addr: socket() failed: %s\n",
 		      debug_prefix_time(NULL),

@@ -60,7 +60,11 @@ stream_server(
     int *portrange;
 
     *portp = USHRT_MAX;				/* in case we error exit */
+#ifdef HAVE_IPV6
     if((server_socket = socket(AF_INET6, SOCK_STREAM, 0)) == -1) {
+#else
+    if((server_socket = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
+#endif
 	save_errno = errno;
 	dbprintf(("%s: stream_server: socket() failed: %s\n",
 		  debug_prefix_time(NULL),
@@ -79,8 +83,13 @@ stream_server(
 	return -1;
     }
     memset(&server, 0, SIZEOF(server));
+#ifdef HAVE_IPV6
     ((struct sockaddr_in6 *)&server)->sin6_family = (sa_family_t)AF_INET6;
     ((struct sockaddr_in6 *)&server)->sin6_addr = in6addr_any;
+#else
+    ((struct sockaddr_in *)&server)->sin_family = (sa_family_t)AF_INET;
+    ((struct sockaddr_in *)&server)->sin_addr.s_addr = INADDR_ANY;
+#endif
 
 #ifdef USE_REUSEADDR
     r = setsockopt(server_socket, SOL_SOCKET, SO_REUSEADDR,
@@ -120,7 +129,11 @@ stream_server(
 	    dbprintf(("%s: stream_server: Could not bind to port in range: %d - %d.\n",
 		      debug_prefix_time(NULL), portrange[0], portrange[1]));
 	} else {
+#ifdef HAVE_IPV6
 	    ((struct sockaddr_in6 *)&server)->sin6_addr = in6addr_any;
+#else
+	    ((struct sockaddr_in *)&server)->sin_addr.s_addr = INADDR_ANY;
+#endif
 	    if (bind(server_socket, (struct sockaddr *)&server, (socklen_t)sizeof(server)) == 0)
 		goto out;
 	    dbprintf(("%s: stream_server: Could not bind to any port: %s\n",
@@ -174,10 +187,12 @@ out:
     }
 #endif
 
-    if (server.ss_family == (sa_family_t)AF_INET)
-	*portp = (in_port_t)ntohs(((struct sockaddr_in *)&server)->sin_port);
-    else
+#ifdef HAVE_IPV6
+    if (server.ss_family == (sa_family_t)AF_INET6)
 	*portp = (in_port_t)ntohs(((struct sockaddr_in6 *)&server)->sin6_port);
+    else
+#endif
+	*portp = (in_port_t)ntohs(((struct sockaddr_in *)&server)->sin_port);
     dbprintf(("%s: stream_server: waiting for connection: %s\n",
 	      debug_prefix_time(NULL),
 	      str_sockaddr(&server)));
@@ -206,8 +221,13 @@ stream_client_internal(
 
     f = priv ? "stream_client_privileged" : "stream_client";
 
+#ifdef HAVE_IPV6
     hints.ai_flags = AI_CANONNAME | AI_V4MAPPED | AI_ALL;
     hints.ai_family = (sa_family_t)AF_INET6;
+#else
+    hints.ai_flags = AI_CANONNAME;
+    hints.ai_family = (sa_family_t)AF_INET;
+#endif
     hints.ai_socktype = SOCK_DGRAM;
     hints.ai_protocol = IPPROTO_UDP;
     hints.ai_addrlen = 0;
@@ -227,15 +247,21 @@ stream_client_internal(
 
     memcpy(&svaddr, res->ai_addr, (size_t)res->ai_addrlen);
     freeaddrinfo(res);
-    if (svaddr.ss_family == (sa_family_t)AF_INET)
-	((struct sockaddr_in *)&svaddr)->sin_port = (in_port_t)htons(port);
-    else
+#ifdef HAVE_IPV6
+    if (svaddr.ss_family == (sa_family_t)AF_INET6)
 	((struct sockaddr_in6 *)&svaddr)->sin6_port = (in_port_t)htons(port);
-
+    else
+#endif
+	((struct sockaddr_in *)&svaddr)->sin_port = (in_port_t)htons(port);
 
     memset(&claddr, 0, SIZEOF(claddr));
+#ifdef HAVE_IPV6
     ((struct sockaddr_in6 *)&claddr)->sin6_family = (sa_family_t)AF_INET6;
     ((struct sockaddr_in6 *)&claddr)->sin6_addr = in6addr_any;
+#else
+    ((struct sockaddr_in *)&claddr)->sin_family = (sa_family_t)AF_INET;
+    ((struct sockaddr_in *)&claddr)->sin_addr.s_addr = INADDR_ANY;
+#endif
 
     /*
      * If a privileged port range was requested, we try to get a port in
@@ -270,8 +296,13 @@ out:
     try_socksize(client_socket, SO_SNDBUF, sendsize);
     try_socksize(client_socket, SO_RCVBUF, recvsize);
     if (localport != NULL)
+#ifdef HAVE_IPV6
 	*localport = (in_port_t)ntohs(
 				((struct sockaddr_in6 *)&claddr)->sin6_port);
+#else
+	*localport = (in_port_t)ntohs(
+				((struct sockaddr_in *)&claddr)->sin_port);
+#endif
     return client_socket;
 }
 
@@ -387,12 +418,17 @@ stream_accept(
 	 * Make certain we got an inet connection and that it is not
 	 * from port 20 (a favorite unauthorized entry tool).
 	 */
-	if (addr.ss_family == (sa_family_t)AF_INET ||
-	    addr.ss_family == (sa_family_t)AF_INET6) {
-	    if (addr.ss_family == (sa_family_t)AF_INET)
-		port = ntohs(((struct sockaddr_in *)&addr)->sin_port);
-	    else
+	if (addr.ss_family == (sa_family_t)AF_INET
+#ifdef HAVE_IPV6
+	    || addr.ss_family == (sa_family_t)AF_INET6
+#endif
+	    ){
+#ifdef HAVE_IPV6
+	    if (addr.ss_family == (sa_family_t)AF_INET6)
 		port = ntohs(((struct sockaddr_in6 *)&addr)->sin6_port);
+	    else if (addr.ss_family == (sa_family_t)AF_INET)
+#endif
+		port = ntohs(((struct sockaddr_in *)&addr)->sin_port);
 	    if (port != (in_port_t)20) {
 		try_socksize(connected_socket, SO_SNDBUF, sendsize);
 		try_socksize(connected_socket, SO_RCVBUF, recvsize);
@@ -402,11 +438,19 @@ stream_accept(
 			  debug_prefix_time(NULL), (unsigned int)port));
 	    }
 	} else {
+#ifdef HAVE_IPV6
 	    dbprintf(("%s: family is %d instead of %d(AF_INET)"
 		      " or %d(AF_INET6): ignored\n",
 		      debug_prefix_time(NULL),
 		      addr.ss_family,
 		      AF_INET, AF_INET6));
+#else
+	    dbprintf(("%s: family is %d instead of %d(AF_INET)"
+		      ": ignored\n",
+		      debug_prefix_time(NULL),
+		      addr.ss_family,
+		      AF_INET));
+#endif
 	}
 	aclose(connected_socket);
     }

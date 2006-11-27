@@ -1472,4 +1472,8 @@ void	add_history(const char *line);
 
 #define MAX_DUMPERS 63
 
+#ifndef NI_MAXHOST
+#define NI_MAXHOST 1025
+#endif
+
 #endif	/* !AMANDA_H */
