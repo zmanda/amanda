@@ -719,6 +719,7 @@ int copy_file(
     char   *quoted;
 
     if ((infd = open(src, O_RDONLY)) == -1) {
+	save_errno = errno;
 	quoted = quote_string(src);
 	*errmsg = vstralloc("Can't open file ", quoted, " for reading: %s",
 			    strerror(save_errno));

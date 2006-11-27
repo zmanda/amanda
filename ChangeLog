@@ -1,4 +1,7 @@
 2006-11-27  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/util.c (copy_file): Fix compilation error.
+
+2006-11-27  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/stream.c: Fix compilation error.
 
 2006-11-27  Jean-Louis Martineau <martineau@zmanda.com>
