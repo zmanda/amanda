@@ -1,4 +1,9 @@
 2006-11-28  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/amanda.h: Don't include gnulib header if CONFIGURE_TEST
+			       is defined.
+	* common-src/amflock.c (main): Remove unused fd variable.
+
+2006-11-28  Jean-Louis Martineau <martineau@zmanda.com>
 	* config/Makefile.am (EXTRA_DIST): Add gnulib.m4i.
 
 2006-11-27  Jean-Louis Martineau <martineau@zmanda.com>

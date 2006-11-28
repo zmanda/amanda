@@ -440,7 +440,6 @@ main(
     int lockfd;
     char *filen = "/tmp/conftest.lock";
     char *resn = "test";
-    int fd;
 
     (void)argc;		/* Quiet compiler warning */
     (void)argv;		/* Quiet compiler warning */
