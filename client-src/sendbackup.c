@@ -605,6 +605,11 @@ check_status(
     }
 #endif
 
+    if(pid == tarpid) {
+	if(ret == 1) {
+	    rc = 0;
+	}
+    }
 #ifdef IGNORE_TAR_ERRORS
     if(pid == tarpid) {
 	/*

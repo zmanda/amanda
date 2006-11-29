@@ -1,4 +1,7 @@
 2006-11-29  Jean-Louis Martineau <martineau@zmanda.com>
+	* client-src/sendbackup.c: Ignore tar exit with status 1.
+
+2006-11-29  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amindexd.c (clean_backslash): New function use to unescape
 						 '\' characters in index files.
 
