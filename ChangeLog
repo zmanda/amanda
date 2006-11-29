@@ -1,3 +1,6 @@
+2006-11-29  Jean-Louis Martineau <martineau@zmanda.com>
+	* restore-src/restore.c (search_tapes): Fix prompt_out setting.
+
 2006-11-28  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/amanda.h: Don't include gnulib header if CONFIGURE_TEST
 			       is defined.
