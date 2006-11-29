@@ -1,4 +1,7 @@
 2006-11-29  Jean-Louis Martineau <martineau@zmanda.com>
+	* client-src/sendbackup.c: Kill dump process on error.
+
+2006-11-29  Jean-Louis Martineau <martineau@zmanda.com>
 	* changer-src/chg-chio.pl.in: Check tapedev is set.
 	* changer-src/chg-disk.sh.in: Check tapedev is set.
 	* changer-src/chg-iomega.pl.in: Check tapedev is set.
