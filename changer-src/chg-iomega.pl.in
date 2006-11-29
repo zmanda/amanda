@@ -81,11 +81,13 @@ if ( "@USE_VERSION_SUFFIXES@" eq "yes" ) {
 
 chomp ($tapeDevice = `$sbindir/amgetconf$SUF tapedev 2>&1`);
 die "tapedev not found in amanda.conf"
-	if !$tapeDevice or $tapeDevice =~ m/no such parameter/;
+	if !$tapeDevice or $tapeDevice eq "" or
+	    $tapeDevice =~ m/no such parameter/;
 chomp ($changerDevice = `$sbindir/amgetconf$SUF changerdev 2>&1`);
 chomp $changerDevice;
 die "changerdev not found in amanda.conf"
-	if !$changerDevice or $changerDevice =~ m/no such parameter/;
+	if !$changerDevice or $changerDevice eq "" or
+	    $changerDevice =~ m/no such parameter/;
 
 #
 # Initialise a few global variables

@@ -75,6 +75,10 @@ fi
 MYNAME=$0
 
 TAPE=`amgetconf$SUF tapedev`
+if test X"$TAPE" == X""; then
+    echo "<none> tapedev not specified in amanda.conf." 1>&2
+    exit 2
+fi
 SLOTDIR=`echo $TAPE | sed 's/^file://'`
 
 isinteger() {

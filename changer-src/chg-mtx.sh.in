@@ -31,9 +31,19 @@ fi
 myname=$0
 
 tape=`amgetconf$SUF tapedev`
+if [ -z "$tape" ]; then
+  echo "<none> tapedev not specified in amanda.conf";
+  exit 2;
+fi
+
 TAPE=`amgetconf$SUF changerdev`; export TAPE # for mtx command
+if [ -z "$TAPE" ]; then
+  echo "<none> changerdev not specified in amanda.conf";
+  exit 2;
+fi
+
 if [ "$tape" = "/dev/null" -o "$TAPE" = "/dev/null" ]; then
-  echo "Both tapedev and changerdev must be specified in config file";
+  echo "<none> Both tapedev and changerdev must be specified in config file";
   exit 2;
 fi
 

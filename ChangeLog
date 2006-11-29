@@ -1,4 +1,16 @@
 2006-11-29  Jean-Louis Martineau <martineau@zmanda.com>
+	* changer-src/chg-chio.pl.in: Check tapedev is set.
+	* changer-src/chg-disk.sh.in: Check tapedev is set.
+	* changer-src/chg-iomega.pl.in: Check tapedev is set.
+	* changer-src/chg-manual.sh.in: Check tapedev is set.
+	* changer-src/chg-mtx.sh.in: Check tapedev is set.
+	* changer-src/chg-rth.pl.in: Check tapedev is set.
+	* server-src/amcheck.c: Tapedev is needed only if tpchanger is not set.
+	* server-src/amflush.c: Tapedev is needed only if tpchanger is not set.
+	* server-src/amindexd.c: Tapedev is needed only if tpchanger is not set
+	* server-src/taper.c: Tapedev is needed only if tpchanger is not set.
+
+2006-11-29  Jean-Louis Martineau <martineau@zmanda.com>
 	* client-src/sendbackup.c: Ignore tar exit with status 1.
 
 2006-11-29  Jean-Louis Martineau <martineau@zmanda.com>

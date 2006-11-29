@@ -51,6 +51,9 @@ if (-x "$sbindir/ammt$SUF") {
 }
 
 $tapeDevice=`$sbindir/amgetconf$SUF tapedev`;
+die "tapedev not found in amanda.conf"
+	if !$tapeDevice or $tapeDevice eq "" or
+	    $tapeDevice =~ m/no such parameter/;
 
 sub getCurrentTape {
 

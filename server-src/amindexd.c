@@ -981,9 +981,9 @@ tapedev_is(void)
 	return 0;
     }
 
-    dbprintf(("%s: No tapedev or changer in config site.\n",
+    dbprintf(("%s: No tapedev or tpchanger in config site.\n",
               debug_prefix_time(NULL)));
-    reply(501, "Tapedev or changer not set in config file.");
+    reply(501, "Tapedev or tpchanger not set in config file.");
     return -1;
 }
 

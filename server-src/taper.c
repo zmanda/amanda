@@ -712,10 +712,14 @@ file_reader_side(
     taper_timestamp = newstralloc(taper_timestamp, cmdargs.argv[2]);
 
     if (tapedev == NULL) {
-	putresult(TAPE_ERROR, "[No tapedev defined]\n");
-	log_add(L_ERROR, "No tapedev defined");
-	dbprintf(("taper: No tapedev defined\n"));
-	exit(1);
+       if (getconf_str(CNF_TPCHANGER) == NULL) {
+	    putresult(TAPE_ERROR, "[No tapedev or tpchanger defined]\n");
+	    log_add(L_ERROR, "No tapedev or tpchanger defined");
+	    dbprintf(("taper: No tapedev or tpchanger defined\n"));
+	    exit(1);
+	}
+    } else {
+	tapedev = stralloc(tapedev);
     }
 
     tape_started = 0;

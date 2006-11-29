@@ -93,6 +93,7 @@ main(
     char *errstr;
     struct tm *tm;
     char *tapedev;
+    char *tpchanger;
 
     safe_fd(-1, 0);
     safe_cd();
@@ -230,8 +231,9 @@ main(
 				NULL);
 
     tapedev = getconf_str(CNF_TAPEDEV);
-    if (tapedev == NULL) {
-	error("No tapedev specified");
+    tpchanger = getconf_str(CNF_TPCHANGER);
+    if (tapedev == NULL && tpchanger == NULL) {
+	error("No tapedev or tpchanger specified");
     }
 
     if(datearg) {
