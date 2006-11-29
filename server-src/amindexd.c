@@ -120,6 +120,7 @@ static int tapedev_is(void);
 static int are_dumps_compressed(void);
 static char *amindexd_nicedate (char *datestamp);
 static int cmp_date (const char *date1, const char *date2);
+static char *clean_backslash(char *line);
 int main(int, char **);
 
 static REMOVE_ITEM *
@@ -270,6 +271,8 @@ process_ls_dump(
 
     while ((line = agets(fp)) != NULL) {
 	if (line[0] != '\0') {
+	    if (index(line,'/'))
+		line = clean_backslash(line);
 	    if(strncmp(dir_slash, line, len_dir_slash) == 0) {
 		if(!recursive) {
 		    s = line + len_dir_slash;
@@ -771,6 +774,8 @@ is_dir_valid_opaque(
 	for(; (line = agets(fp)) != NULL; free(line)) {
 	    if (line[0] == '\0')
 		continue;
+	    if (index(line,'/'))
+		line = clean_backslash(line);
 	    if (strncmp(line, ldir, ldir_len) != 0) {
 		continue;			/* not found yet */
 	    }
@@ -1569,4 +1574,39 @@ cmp_date(
     const char *	date2)
 {
     return strncmp(date1, date2, strlen(date2));
+}
+
+static char *
+clean_backslash(
+    char *line)
+{
+    char *s = line, *s1, *s2;
+    char *p = line;
+    int i;
+
+    while(*s != '\0') {
+	if (*s == '\\') {
+	    s++;
+	    s1 = s+1;
+	    s2 = s+2;
+	    if (*s != '\0' && isdigit(*s) &&
+		*s1 != '\0' && isdigit(*s1) &&
+		*s2 != '\0' &&  isdigit(*s2)) {
+		/* this is \000, an octal value */
+		i = ((*s)-'0')*64 + ((*s1)-'0')*8 + ((*s2)-'0');
+		*p++ = i;
+		s += 3;
+	    } else if (*s == '\\') { /* we remove one / */
+		*p++ = *s++;
+	    } else { /* we keep the / */
+		*p++ = '\\';
+		*p++ = *s++;
+	    }
+	} else {
+	    *p++ = *s++;
+	}
+    }
+    *p = '\0';
+
+    return line;
 }

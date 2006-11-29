@@ -1,4 +1,8 @@
 2006-11-29  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amindexd.c (clean_backslash): New function use to unescape
+						 '\' characters in index files.
+
+2006-11-29  Jean-Louis Martineau <martineau@zmanda.com>
 	* restore-src/restore.c (search_tapes): Fix prompt_out setting.
 
 2006-11-28  Jean-Louis Martineau <martineau@zmanda.com>
