@@ -1,4 +1,7 @@
 2006-12-04  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amtape.h: Remove file.
+
+2006-12-04  Jean-Louis Martineau <martineau@zmanda.com>
 	Application API phase 1.
 	* client-src/client_util.c, client-src/client_util.h,
 	  client-src/selfcheck.c, client-src/sendbackup.c,
