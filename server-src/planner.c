@@ -1307,7 +1307,7 @@ static void getsize(
     time_t	estimates, timeout;
     size_t	req_len;
     const	security_driver_t *secdrv;
-    char *	dumper;
+    char *	backup_api;
     char *	calcsize;
     char *	qname;
     char *	qdevice;
@@ -1447,12 +1447,12 @@ static void getsize(
 
 		    if(strncmp(dp->program,"DUMP",4) == 0 || 
 		       strncmp(dp->program,"GNUTAR",6) == 0) {
-			dumper = "";
+			backup_api = "";
 		    } else {
-			dumper = "DUMPER ";
+			backup_api = "BACKUP ";
 		    }
 		    l = vstralloc(calcsize,
-				  dumper,
+				  backup_api,
 				  dp->program,
 				  " ", qname,
 				  " ", dp->device ? qdevice : "",

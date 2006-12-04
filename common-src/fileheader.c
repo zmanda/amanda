@@ -383,7 +383,7 @@ parse_file_header(
 	    line += SIZEOF(SC) - 1;
 	    strncpy(file->cont_filename, line,
 		    SIZEOF(file->cont_filename) - 1);
-		    continue;
+	    continue;
 	}
 #undef SC
 
@@ -391,6 +391,14 @@ parse_file_header(
 	if (strncmp(line, SC, SIZEOF(SC) - 1) == 0) {
 	    line += SIZEOF(SC) - 1;
 	    file->is_partial = !strcasecmp(line, "yes");
+	    continue;
+	}
+#undef SC
+#define SC "DUMPER="
+	if (strncmp(line, SC, SIZEOF(SC) - 1) == 0) {
+	    line += SIZEOF(SC) - 1;
+	    strncpy(file->dumper, line,
+		    SIZEOF(file->dumper) - 1);
 	    continue;
 	}
 #undef SC
@@ -479,6 +487,7 @@ dump_dumpfile_t(
 	dbprintf(("%s:     name             = '%s'\n", pname, file->name));
 	dbprintf(("%s:     disk             = '%s'\n", pname, file->disk));
 	dbprintf(("%s:     program          = '%s'\n", pname, file->program));
+	dbprintf(("%s:     dumper           = '%s'\n", pname, file->dumper));
 	dbprintf(("%s:     srvcompprog      = '%s'\n", pname,
 			file->srvcompprog));
 	dbprintf(("%s:     clntcompprog     = '%s'\n", pname,
@@ -602,7 +611,7 @@ build_header(
 	  buflen -= n;
 	  n = 0;
 	}
-     
+
 	if (strcmp(file->encrypt_suffix, "enc") == 0) {  /* only output crypt if it's enabled */
 	  n = snprintf(buffer, buflen, " crypt %s", file->encrypt_suffix);
 	}
@@ -655,6 +664,11 @@ build_header(
 	if (file->cont_filename[0] != '\0') {
 	    n = snprintf(buffer, buflen, "CONT_FILENAME=%s\n",
 		file->cont_filename);
+	    buffer += n;
+	    buflen -= n;
+	}
+	if (file->dumper[0] != '\0') {
+	    n = snprintf(buffer, buflen, "DUMPER=%s\n", file->dumper);
 	    buffer += n;
 	    buflen -= n;
 	}

@@ -1555,20 +1555,31 @@ start_host(
 				  NULL);
 		}
 	    } else {
-		if(!am_has_feature(hostp->features, fe_program_dumper_api)) {
-		    fprintf(outf, "ERROR: %s:%s does not support DUMPER-API.\n",
+		if(!am_has_feature(hostp->features, fe_program_backup_api)) {
+		    fprintf(outf, "ERROR: %s:%s does not support BACKUP-API.\n",
 			    hostp->hostname, qname);
 		}
-		l = vstralloc("DUMPER ",
-			      dp->program, 
-			      " ",
-			      qname,
-			      " ",
-			      dp->device,
-			      " 0 OPTIONS |",
-			      o,
-			      "\n",
-			      NULL);
+		if(dp->device) {
+		    l = vstralloc("BACKUP ",
+			          dp->program, 
+			          " ",
+			          qname,
+			          " ",
+			          qdevice,
+			          " 0 OPTIONS |",
+			          o,
+			          "\n",
+			          NULL);
+		} else {
+		    l = vstralloc("BACKUP ",
+			          dp->program, 
+			          " ",
+			          qname,
+			          " 0 OPTIONS |",
+			          o,
+			          "\n",
+			          NULL);
+		}
 	    }
 	    amfree(qname);
 	    amfree(qdevice);

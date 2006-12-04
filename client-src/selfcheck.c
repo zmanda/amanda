@@ -67,7 +67,7 @@ int need_runtar=0;
 int need_gnutar=0;
 int need_compress_path=0;
 int need_calcsize=0;
-int program_is_wrapper=0;
+int program_is_backup_api=0;
 
 static char *amandad_auth = NULL;
 static am_feature_t *our_features = NULL;
@@ -78,7 +78,7 @@ static g_option_t *g_options = NULL;
 int main(int argc, char **argv);
 
 static void check_options(char *program, char *calcprog, char *disk, char *amdevice, option_t *options);
-static void check_disk(char *program, char *calcprog, char *disk, char *amdevice, int level, char *optstr);
+static void check_disk(char *program, char *calcprog, char *disk, char *amdevice, int level, option_t *options);
 static void check_overall(void);
 static void check_access(char *filename, int mode);
 static void check_file(char *filename, int mode);
@@ -199,9 +199,9 @@ main(
 	skip_non_whitespace(s, ch);
 	s[-1] = '\0';				/* terminate the program name */
 
-	program_is_wrapper = 0;
-	if(strcmp(program,"DUMPER")==0) {
-	    program_is_wrapper = 1;
+	program_is_backup_api = 0;
+	if(strcmp(program,"BACKUP")==0) {
+	    program_is_backup_api = 1;
 	    skip_whitespace(s, ch);		/* find dumper name */
 	    if (ch == '\0') {
 		goto err;			/* no program */
@@ -271,7 +271,7 @@ main(
 	    options = parse_options(optstr, disk, amdevice, g_options->features, 1);
 	    /*@ignore@*/
 	    check_options(program, calcprog, disk, amdevice, options);
-	    check_disk(program, calcprog, disk, amdevice, level, &optstr[2]);
+	    check_disk(program, calcprog, disk, amdevice, level, options);
 	    /*@end@*/
 	    free_sl(options->exclude_file);
 	    free_sl(options->exclude_list);
@@ -297,7 +297,7 @@ main(
 	    need_compress_path=1;
 	    need_calcsize=1;
 	    /*@ignore@*/
-	    check_disk(program, calcprog, disk, amdevice, level, "");
+	    check_disk(program, calcprog, disk, amdevice, level, NULL);
 	    /*@end@*/
 	} else {
 	    goto err;				/* bad syntax */
@@ -506,7 +506,7 @@ check_disk(
     char *	disk,
     char *	amdevice,
     int		level,
-    char *	optstr)
+    option_t    *options)
 {
     char *device = stralloc("nodevice");
     char *err = NULL;
@@ -522,6 +522,8 @@ check_disk(
     char *qdisk = quote_string(disk);
     char *qamdevice = quote_string(amdevice);
     char *qdevice = NULL;
+    FILE *toolin;
+    char number[NUM_STR_SIZE];
 
     (void)level;	/* Quiet unused parameter warning */
 
@@ -717,35 +719,95 @@ check_disk(
 #endif
 	}
     }
-    else { /* program_is_wrapper==1 */
-	pid_t pid_wrapper;
-	fflush(stdout);fflush(stdin);
-	switch (pid_wrapper = fork()) {
+    else { /* program_is_backup_api==1 */
+	pid_t  backup_api_pid;
+	int    property_pipe[2];
+	backup_support_option_t *bsu;
+
+	bsu = backup_support_option(program, g_options, disk, amdevice);
+
+	if (pipe(property_pipe) < 0) {
+	    err = vstralloc("pipe failed: ", strerror(errno), NULL);
+	    goto common_exit;
+	}
+	fflush(stdout);fflush(stderr);
+	
+	switch (backup_api_pid = fork()) {
 	case -1:
-	    printf("ERROR [fork: %s]\n", strerror(errno));
-	    error("fork: %s", strerror(errno));
-	    /*NOTREACHED*/
+	    err = vstralloc("fork failed: ", strerror(errno), NULL);
+	    goto common_exit;
 
 	case 0: /* child */
 	    {
-		char *argvchild[6];
+		char *argvchild[14];
 		char *cmd = vstralloc(DUMPER_DIR, "/", program, NULL);
-		argvchild[0] = program;
-		argvchild[1] = "selfcheck";
-		argvchild[2] = disk;
-		argvchild[3] = amdevice;
-		argvchild[4] = optstr;
-		argvchild[5] = NULL;
+		int j=0;
+		argvchild[j++] = program;
+		argvchild[j++] = "selfcheck";
+		if (bsu->message_line == 1) {
+		    argvchild[j++] = "--message";
+		    argvchild[j++] = "line";
+		}
+		if (g_options->config != NULL && bsu->config == 1) {
+		    argvchild[j++] = "--config";
+		    argvchild[j++] = g_options->config;
+		}
+		if (g_options->hostname != NULL && bsu->host == 1) {
+		    argvchild[j++] = "--host";
+		    argvchild[j++] = g_options->hostname;
+		}
+		if (disk != NULL && bsu->disk == 1) {
+		    argvchild[j++] = "--disk";
+		    argvchild[j++] = disk;
+		}
+		argvchild[j++] = "--device";
+		argvchild[j++] = amdevice;
+		if(options && options->createindex && bsu->index_line == 1) {
+		    argvchild[j++] = "--index";
+		    argvchild[j++] = "line";
+		}
+		if (!options->no_record && bsu->record == 1) {
+		    argvchild[j++] = "--record";
+		}
+		argvchild[j++] = NULL;
+		dup2(property_pipe[0], 0);
+		aclose(property_pipe[1]);
 		execve(cmd,argvchild,safe_env());
+		printf("ERROR [Can't execute %s: %s]\n", cmd, strerror(errno));
 		exit(127);
 	    }
 	default: /* parent */
 	    {
 		int status;
-		waitpid(pid_wrapper, &status, 0);
+		aclose(property_pipe[0]);
+		toolin = fdopen(property_pipe[1],"w");
+		if (!toolin) {
+		    err = vstralloc("Can't fdopen: ", strerror(errno), NULL);
+		    goto common_exit;
+		}
+		output_tool_property(toolin, options);
+		fflush(toolin);
+		fclose(toolin);
+		if (waitpid(backup_api_pid, &status, 0) < 0) {
+		    if (!WIFEXITED(status)) {
+			snprintf(number, SIZEOF(number), "%d",
+				 (int)WTERMSIG(status));
+			err = vstralloc("Tool exited with signal ", number,
+					NULL);
+		    } else if (WEXITSTATUS(status) != 0) {
+			snprintf(number, SIZEOF(number), "%d",
+				 (int)WEXITSTATUS(status));
+			err = vstralloc("Tool exited with status ", number,
+					NULL);
+		    } else {
+			err = stralloc("waitpid returned negative value");
+		    }
+		    goto common_exit;
+		}
 	    }
 	}
-	fflush(stdout);fflush(stdin);
+	amfree(bsu);
+	fflush(stdout);fflush(stderr);
 	amfree(device);
 	amfree(qamdevice);
 	amfree(qdisk);

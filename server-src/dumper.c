@@ -694,6 +694,7 @@ parse_info_line(
 	size_t len;
     } fields[] = {
 	{ "BACKUP", file.program, SIZEOF(file.program) },
+	{ "DUMPER", file.dumper, SIZEOF(file.dumper) },
 	{ "RECOVER_CMD", file.recover_cmd, SIZEOF(file.recover_cmd) },
 	{ "COMPRESS_SUFFIX", file.comp_suffix, SIZEOF(file.comp_suffix) },
 	{ "SERVER_CUSTOM_COMPRESS", file.srvcompprog, SIZEOF(file.srvcompprog) },
@@ -1905,7 +1906,7 @@ startup_dump(
     char *authopt, *endauthopt, authoptbuf[80];
     int response_error;
     const security_driver_t *secdrv;
-    char *dumper_api;
+    char *backup_api;
     int has_features;
     int has_hostname;
     int has_device;
@@ -1946,9 +1947,9 @@ startup_dump(
     snprintf(level_string, SIZEOF(level_string), "%d", level);
     if(strncmp(progname, "DUMP", 4) == 0
        || strncmp(progname, "GNUTAR", 6) == 0) {
-	dumper_api = "";
+	backup_api = "";
     } else {
-	dumper_api = "DUMPER ";
+	backup_api = "BACKUP ";
     }
     req = vstralloc("SERVICE sendbackup\n",
 		    "OPTIONS ",
@@ -1962,7 +1963,7 @@ startup_dump(
 		    has_config   ? config_name : "",
 		    has_config   ? ";" : "",
 		    "\n",
-		    dumper_api, progname,
+		    backup_api, progname,
 		    " ", qdiskname,
 		    " ", device && has_device ? device : "",
 		    " ", level_string,

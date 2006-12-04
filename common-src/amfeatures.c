@@ -72,6 +72,7 @@ am_init_feature_set(void)
 
 	am_add_feature(f, fe_program_dump);
 	am_add_feature(f, fe_program_gnutar);
+	am_add_feature(f, fe_program_backup_api);
 
 	am_add_feature(f, fe_options_compress_fast);
 	am_add_feature(f, fe_options_compress_best);

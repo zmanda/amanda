@@ -1706,7 +1706,8 @@ enum dumptypes {
 	IS_GNUTAR,
 	IS_TAR,
 	IS_SAMBA,
-	IS_SAMBA_TAR
+	IS_SAMBA_TAR,
+	IS_BACKUP_API
 };
 
 static void
@@ -1751,6 +1752,8 @@ extract_files_child(
     }
 
     if (file.program != NULL) {
+	if (strcmp(file.program, "BACKUP") == 0)
+	    dumptype = IS_BACKUP_API;
 #ifdef GNUTAR
 	if (strcmp(file.program, GNUTAR) == 0)
 	    dumptype = IS_GNUTAR;
@@ -1803,8 +1806,10 @@ extract_files_child(
 	}
 #endif
     	break;
+    case IS_BACKUP_API:
+	extra_params = 5;
+	break;
     }
-
     restore_args = (char **)alloc((size_t)((extra_params + files_off_tape + 1)
 				  * sizeof(char *)));
     switch(dumptype) {
@@ -1865,11 +1870,21 @@ extract_files_child(
         restore_args[j++] = stralloc("-");	/* data on stdin */
 	}
 #endif
+	break;
+    case IS_BACKUP_API:
+	restore_args[j++] = stralloc(file.dumper);
+	restore_args[j++] = stralloc("restore");
+	restore_args[j++] = stralloc("--config");
+	restore_args[j++] = stralloc(config);
+	restore_args[j++] = stralloc("--disk");
+	restore_args[j++] = stralloc(file.disk);
+	break;
     }
   
     for (i = 0, fn = elist->files; i < files_off_tape; i++, fn = fn->next)
     {
 	switch (dumptype) {
+    	case IS_BACKUP_API:
     	case IS_TAR:
     	case IS_GNUTAR:
     	case IS_SAMBA_TAR:
@@ -1894,6 +1909,7 @@ extract_files_child(
 	    {
 	    restore_args[j++] = stralloc(fn->path);
 	    }
+	    break;
   	}
     }
 #if defined(XFSDUMP)
@@ -1950,6 +1966,10 @@ extract_files_child(
 		    file.program);
 	    cmd = stralloc("restore");
 	}
+	break;
+    case IS_BACKUP_API:
+	cmd = vstralloc(DUMPER_DIR, "/", file.dumper, NULL);
+	break;
     }
     if (cmd) {
         dbprintf(("Exec'ing %s with arguments:\n", cmd));

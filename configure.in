@@ -3161,7 +3161,7 @@ AC_CONFIG_FILES([\
 									\
 	client-src/patch-system.sh	client-src/Makefile		\
 									\
-        dumper-src/gnutar.pl		dumper-src/generic-dumper.pl	\
+        dumper-src/amgtar.pl		dumper-src/generic-dumper.pl	\
 	dumper-src/Makefile						\
 									\
 	common-src/versuff.c		common-src/Makefile		\

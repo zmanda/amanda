@@ -3,7 +3,7 @@
 INCLUDES =	-I$(top_builddir)/common-src \
 		-I$(top_srcdir)/common-src
 
-dumper_SCRIPTS =	gnutar generic-dumper
+dumper_SCRIPTS =	amgtar generic-dumper
 dumperdir =		@DUMPER_DIR@
 
 SUFFIXES =		.sh .pl
@@ -11,7 +11,7 @@ SUFFIXES =		.sh .pl
 .pl:
 			cat $< > $@
 			chmod a+x $@
-			-test -z "$(PERL)" || $(PERL) -c $@
+			-test -z "$(PERL)" || $(PERL) -c -w -W -t -T $@ || rm $@
 
 .sh:
 			cat $< > $@

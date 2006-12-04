@@ -1,10 +1,89 @@
+require "newgetopt.pl";
+use Text::ParseWords;
 
+print DEBUG "FHOUT 6: ARGV[0]=" . $ARGV[0] . "\n" if ($debug == 1);
+print DEBUG "FHOUT 6: ARGV[1]=" . $ARGV[1] . "\n" if ($debug == 1);
+print DEBUG "FHOUT 6: ARGV[2]=" . $ARGV[2] . "\n" if ($debug == 1);
+print DEBUG "FHOUT 6: ARGV[3]=" . $ARGV[3] . "\n" if ($debug == 1);
+print DEBUG "FHOUT 6: ARGV[4]=" . $ARGV[4] . "\n" if ($debug == 1);
+print DEBUG "FHOUT 6: ARGV[5]=" . $ARGV[5] . "\n" if ($debug == 1);
+print DEBUG "FHOUT 6: ARGV[6]=" . $ARGV[6] . "\n" if ($debug == 1);
+print DEBUG "FHOUT 6: ARGV[7]=" . $ARGV[7] . "\n" if ($debug == 1);
+print DEBUG "FHOUT 6: ARGV[8]=" . $ARGV[8] . "\n" if ($debug == 1);
+print DEBUG "FHOUT 6: ARGV[9]=" . $ARGV[9] . "\n" if ($debug == 1);
+
+$result = &NGetOpt ("config=s", "host=s", "disk=s", "device=s", "level=s", "index=s", "message=s", "collection", "record");
+$result = $result;
+
+print DEBUG "FHOUT 6: config    =" . $opt_config . "\n" if ($debug == 1);
+print DEBUG "FHOUT 6: disk      =" . $opt_disk   . "\n" if ($debug == 1);
+print DEBUG "FHOUT 6: host      =" . $opt_host   . "\n" if ($debug == 1);
+print DEBUG "FHOUT 6: device    =" . $opt_device . "\n" if ($debug == 1);
+print DEBUG "FHOUT 6: level     =" . $opt_level  . "\n" if ($debug == 1);
+print DEBUG "FHOUT 6: index     =" . $opt_index  . "\n" if ($debug == 1);
+print DEBUG "FHOUT 6: message   =" . $opt_message. "\n" if ($debug == 1);
+print DEBUG "FHOUT 6: collection=" . $opt_collection. "\n" if ($debug == 1);
+print DEBUG "FHOUT 6: record    =" . $opt_record . "\n" if ($debug == 1);
+
+print DEBUG "FHOUT 6: A-ARGV[0]=" . $ARGV[0] . "\n" if ($debug == 1);
+print DEBUG "FHOUT 6: A-ARGV[1]=" . $ARGV[1] . "\n" if ($debug == 1);
+print DEBUG "FHOUT 6: A-ARGV[2]=" . $ARGV[2] . "\n" if ($debug == 1);
+print DEBUG "FHOUT 6: A-ARGV[3]=" . $ARGV[3] . "\n" if ($debug == 1);
+print DEBUG "FHOUT 6: A-ARGV[4]=" . $ARGV[4] . "\n" if ($debug == 1);
+print DEBUG "FHOUT 6: A-ARGV[5]=" . $ARGV[5] . "\n" if ($debug == 1);
+print DEBUG "FHOUT 6: A-ARGV[6]=" . $ARGV[6] . "\n" if ($debug == 1);
+
+if (defined $opt_config) {
+  $opt_config =~ /^([\_\.A-Za-z0-9]*)$/;
+  $opt_config = $1;
+}
+
+if (defined $opt_host) {
+  $opt_host =~ /^([\_\.A-Za-z0-9]*)$/;
+  $opt_host = $1;
+}
+
+if (defined $opt_disk) {
+  $opt_disk =~ /^([\/\_\:\.A-Za-z0-9]*)$/;
+  $opt_disk = $1;
+}
+
+if (defined $opt_device) {
+  $opt_device =~ /^([\/\_\:\.A-Za-z0-9]*)$/;
+  $opt_device = $1;
+}
+
+if (defined $opt_level) {
+  $opt_level =~ /^(\d)$/;
+  $opt_level = $1;
+}
+
+# Read tool property
 
 $command = $ARGV[0];
-if ($command eq "privilege") {
-   wrapper_privilege();
+
+%property = ();
+while($property_line = <STDIN>) {
+  chomp $property_line;
+  ($prop_name, $prop_value) = shellwords($property_line);
+  push @{$property{$prop_name}}, $prop_value;
+  print DEBUG "$prop_name = $prop_value\n" if ($debug == 1);
 }
-elsif ($command eq "support") {
+
+if ($debug == 1) {
+  foreach $prop_name (keys(%property)) {
+    print DEBUG "PROPERTY: $prop_name\n";
+    print DEBUG "    VALUE: ", join(',',@{$property{$prop_name}}) , "\n";
+  }
+}
+
+sub wrapper_support();
+sub wrapper_selfcheck();
+sub wrapper_estimate();
+sub wrapper_backup();
+sub wrapper_restore();
+
+if ($command eq "support") {
    wrapper_support();
 }
 elsif ($command eq "selfcheck") {
@@ -13,26 +92,11 @@ elsif ($command eq "selfcheck") {
 elsif ($command eq "estimate") {
    wrapper_estimate();
 }
-elsif ($command eq "estimate-parse") {
-   wrapper_estimate_parse();
-}
 elsif ($command eq "backup") {
    wrapper_backup();
 }
-elsif ($command eq "backup-parse") {
-   wrapper_backup_parse();
-}
-elsif ($command eq "index-from-output") {
-   wrapper_index_from_output();
-}
-elsif ($command eq "index-from-image") {
-   wrapper_index_from_image();
-}
 elsif ($command eq "restore") {
    wrapper_restore();
-}
-elsif ($command eq "print-command") {
-   wrapper_print_command();
 }
 else {
    printf STDERR "Unknown command `$command'.\n";
@@ -40,141 +104,28 @@ else {
 }
 
 
-sub wrapper_privilege() {
-   if(defined(&command_support)) {
-      command_privilege();
-      exit 0;
-   }
-   my($subcommand) = $ARGV[1];
-   if ($subcommand eq "support") {
-      wrapper_print_privilege($subcommand);
-   }
-   elsif ($subcommand eq "selfcheck") {
-      wrapper_print_privilege($subcommand);
-   }
-   elsif ($subcommand eq "estimate") {
-      wrapper_print_privilege($subcommand);
-   }
-   elsif ($subcommand eq "estimate-parse") {
-      wrapper_print_privilege($subcommand);
-   }
-   elsif ($subcommand eq "backup") {
-      wrapper_print_privilege($subcommand);
-   }
-   elsif ($subcommand eq "backup-parse") {
-      wrapper_print_privilege($subcommand);
-   }
-   elsif ($subcommand eq "index-from-output") {
-      wrapper_print_privilege($subcommand);
-   }
-   elsif ($subcommand eq "index-from-image") {
-      wrapper_print_privilege($subcommand);
-   }
-   elsif ($subcommand eq "restore") {
-      wrapper_print_privilege($subcommand);
-   }
-   elsif ($subcommand eq "print-command") {
-      wrapper_print_privilege($subcommand);
-   }
-   else {
-      printf STDERR "Unknown command `$subcommand'.\n";
-      exit 1;
-   }
-   if(defined($user_default) && defined($group_default)) {
-      print "USER $user_default\n";
-      print "GROUP $group_default\n";
-      exit 0;
-   }
-   exit 0;
-}
-
-
-sub wrapper_print_privilege {
-   my($command) = @_;
-   $command =~ s/-/_/g;
-   my($var_user) = "user_$command";
-   my($var_group) = "group_$command";
-   if(defined($$var_user) && defined($$var_group)) {
-      print "USER $$var_user\n";
-      print "GROUP $$var_group\n";
-      exit 0;
-   }
-   elsif(defined($$var_user) && !defined($$var_group)) {
-      print STDERR "\$$var_user defined but \$$var_group not defined\n";
-      exit 1;
-   }
-   elsif(!defined($$var_user) && defined($$var_group)) {
-      print STDERR "\$$var_group defined but \$$var_user not defined\n";
-      exit 1;
-   }
-}
-
 sub wrapper_support() {
    if(defined(&command_support)) {
-      command_support();
+      command_support($opt_config, $opt_host, $opt_disk, $opt_device, $opt_level);
       exit 0;
    }
-   my($subcommand) = $ARGV[1];
-   if ($subcommand eq "level-incrementals") {
-      if (defined($level_incrementals)) {
-         print "$level_incrementals\n";
-      }
-      else {
-         print "1\n";
-      }
-      exit 0;
-   }
-   elsif ($subcommand eq "index") {
-      my($index_generation);
-      foreach $index_generation (@index_generation) {
-         if( $index_generation eq "direct" ||
-             $index_generation eq "parse"  ||
-             $index_generation eq "output" ||
-             $index_generation eq "image") {
-                print "$index_generation\n";
-         }
-         else {
-            print "unknow indexing method '$index_generation'\n";
-         }
-      }
-   exit 0;
-   }
-   elsif ($subcommand eq "parse-estimate") {
-      my($parse_estimate);
-      foreach $parse_estimate (@parse_estimate) {
-         if( $parse_estimate eq "direct" ||
-             $parse_estimate eq "parse" ) {
-            print "$parse_estimate\n";
-         }
-         else {
-            print "unknow parse-estimate method '$parse_estimate'\n";
-         }
-      }
-   exit 0;
-   }
-   elsif ($subcommand eq "parse-backup") {
-      print "direct\n" if (defined($parse_backup_direct));
-      print "parse\n"  if (defined($parse_backup_parse));
-      my($parse_backup);
-      foreach $parse_backup (@parse_backup) {
-         if( $parse_backup eq "direct" ||
-             $parse_backup eq "parse" ) {
-            print "$parse_backup\n";
-         }
-         else {
-            print "unknow parse-backup method '$parse_backup'\n";
-         }
-      }
-      exit 0;
-   }
-   else {
-      exit 1;
-   }
+   print "LEVEL 0-", $max_level , "\n" if defined($max_level);
+   print "INDEX-LINE YES\n"   if defined($index_line)   && $index_line   == 1;
+   print "INDEX-XML NO\n"     if defined($index_xml)    && $index_xml    == 1;
+   print "MESSAGE-LINE YES\n" if defined($message_line) && $message_line == 1;
+   print "MESSAGE-XML NO\n"   if defined($message_xml)  && $message_xml  == 1;
+   print "RECORD YES\n"       if defined($record)       && $record       == 1;
+   print "INCLUDE-FILE NO\n"  if defined($include_file) && $include_file == 1;
+   print "INCLUDE-LIST NO\n"  if defined($include_list) && $include_list == 1;
+   print "EXCLUDE-FILE NO\n"  if defined($exclude_file) && $exclude_file == 1;
+   print "EXCLUDE-LIST NO\n"  if defined($exclude_list) && $exclude_list == 1;
+   print "COLLECTION NO\n"    if defined($collection)   && $collection   == 1;
+   exit 1;
 }
 
 sub wrapper_selfcheck() {
    if(defined(&command_selfcheck)) {
-      command_selfcheck();
+      command_selfcheck($opt_config, $opt_host, $opt_disk, $opt_device, $opt_level);
    }
    else {
       exit 1;
@@ -182,43 +133,16 @@ sub wrapper_selfcheck() {
 }
 
 sub wrapper_estimate() {
-   my($estimate_type) = $ARGV[1];
-   my($option);
-   my($estimate_type_is_ok) = 0;
-   my($backups_type);
-   foreach $backups_type (@backup_type) {
-      $estimate_type_is_ok = 1 if($estimate_type eq $backups_type);
-   }
-   if($estimate_type_is_ok == 0) {
-      print "estimate type `$estimate_type' not supported.\n";
-      exit 3;
-   }
-   $option = 3 if ($estimate_type eq "full");
-   $option = 4 if ($estimate_type eq "level");
-   $option = 4 if ($estimate_type eq "diff");
-   parse_options($option);
-   if($option_estimate_direct + $option_estimate_parse > 1) {
-      print "Can't define both `estimate-direct' and `estimate-parse'.\n";
-      exit 5;
-   }
-   elsif($option_estimate_direct + $option_estimate_parse == 0) {
-      print "You must have the option `estimate-direct' or `estimate-parse'.\n";
-      exit 5;
-   }
-   if($estimate_type eq "full") {
-      command_estimate_full($ARGV[2]);
-   }
-    elsif($estimate_type eq "level") {
-      command_estimate_level($ARGV[2], $ARGV[3]);
-   }
-   elsif($estimate_type eq "diff") {
-      command_estimate_diff($ARGV[2], $ARGV[3]);
+   if(defined(&command_estimate)) {
+      command_estimate($opt_config, $opt_host, $opt_disk, $opt_device, $opt_level);
+   } else {
+      exit 1;
    }
 }
 
 sub wrapper_estimate_parse() {
    if(defined(&command_estimate_parse)) {
-      command_estimate_parse();
+      command_estimate_parse($opt_config, $opt_host, $opt_disk, $opt_device, $opt_level);
    }
    else {
       printf STDERR "`estimate-parse' is not supported.\n";
@@ -227,43 +151,17 @@ sub wrapper_estimate_parse() {
 }
 
 sub wrapper_backup() {
-   my($backup_type) = $ARGV[1];
-   my($option);
-   my($backup_type_is_ok) = 0;
-   my($backups_type);
-   foreach $backups_type (@backup_type) {
-      $backup_type_is_ok = 1 if($backup_type eq $backups_type);
-   }
-   if($backup_type_is_ok == 0) {
-      print "backup type `$backup_type' not supported.\n";
-      exit 3;
-   }
-   $option = 3 if ($backup_type eq "full");
-   $option = 4 if ($backup_type eq "level");
-   $option = 4 if ($backup_type eq "diff");
-   parse_options($option);
-   if($option_backup_direct + $option_backup_parse > 1) {
-      print "Can't define both `backup-direct' and `backup-parse'.\n";
-      exit 5;
-   }
-   elsif($option_backup_direct + $option_backup_parse == 0) {
-      print "You must have the option `backup-direct' or `backup-parse'.\n";
-      exit 5;
-   }
-   if($backup_type eq "full") {
-      command_backup_full($ARGV[2]);
-   }
-   elsif($backup_type eq "level") {
-      command_backup_level($ARGV[2], $ARGV[3]);
-   }
-   elsif($backup_type eq "diff") {
-      command_backup_diff($ARGV[2], $ARGV[3]);
+   if(defined(&command_backup)) {
+      command_backup($opt_config, $opt_host, $opt_disk, $opt_device, $opt_level);
+   } else {
+print DEBUG "wrapper_backup: !defined(command_backup)\n" if ($debug == 1);
+      exit 1;
    }
 }
 
 sub wrapper_backup_parse() {
    if(defined(&command_backup_parse)) {
-      command_backup_parse();
+      command_backup_parse($opt_config, $opt_host, $opt_disk, $opt_device, $opt_level);
    }
    else {
       printf STDERR "`backup-parse' is not supported.\n";
@@ -273,7 +171,7 @@ sub wrapper_backup_parse() {
 
 sub wrapper_index_from_output() {
    if(defined(&command_index_from_output)) {
-      command_index_from_output();
+      command_index_from_output($opt_config, $opt_host, $opt_disk, $opt_device, $opt_level);
    }
    else {
       printf STDERR "`index-from-output' is not supported.\n";
@@ -283,7 +181,7 @@ sub wrapper_index_from_output() {
 
 sub wrapper_index_from_image() {
    if(defined(&command_index_from_image)) {
-      command_index_from_image();
+      command_index_from_image($opt_config, $opt_host, $opt_disk, $opt_device, $opt_level);
    }
    else {
       printf STDERR "command `index-from-image' is not supported.\n";
@@ -293,24 +191,13 @@ sub wrapper_index_from_image() {
 
 sub wrapper_restore() {
    if(defined(&command_restore)) {
-      command_restore();
+      command_restore($opt_config, $opt_host, $opt_disk, $opt_device, $opt_level);
    }
    else {
      printf STDERR "`restore' is not supported.\n";
      exit 1;
    }
 }
-
-sub wrapper_print_command() {
-   if(defined(&command_print_command)) {
-      command_print_command();
-   }
-   else {
-      printf STDERR "`print-command' is not supported.\n";
-      exit 1;
-   }
-}
-
 
 sub parse_options() {
    my($no_option) = @_;

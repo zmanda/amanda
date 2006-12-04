@@ -93,7 +93,7 @@ typedef enum {
 
     fe_program_dump,
     fe_program_gnutar,
-    fe_program_dumper_api,		/* require fe_sendsize_req_options */
+    fe_program_backup_api,		/* require fe_sendsize_req_options */
 
     fe_options_compress_fast,
     fe_options_compress_best,

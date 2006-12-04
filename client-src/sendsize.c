@@ -91,7 +91,7 @@ typedef struct disk_estimates_s {
     char *qdirname;
     char *program;
     char *calcprog;
-    int program_is_wrapper;
+    int program_is_backup_api;
     int spindle;
     pid_t child;
     int done;
@@ -108,7 +108,7 @@ static g_option_t *g_options = NULL;
 /* local functions */
 int main(int argc, char **argv);
 void add_diskest(char *disk, char *amdevice, int level, int spindle, 
-		    int program_is_wrapper, char *prog, char *calcprog,
+		    int program_is_backup_api, char *prog, char *calcprog,
 		    option_t *options);
 void calc_estimates(disk_estimates_t *est);
 void free_estimates(disk_estimates_t *est);
@@ -116,7 +116,7 @@ void dump_calc_estimates(disk_estimates_t *);
 void star_calc_estimates(disk_estimates_t *);
 void smbtar_calc_estimates(disk_estimates_t *);
 void gnutar_calc_estimates(disk_estimates_t *);
-void wrapper_calc_estimates(disk_estimates_t *);
+void backup_api_calc_estimate(disk_estimates_t *);
 void generic_calc_estimates(disk_estimates_t *);
 
 
@@ -128,7 +128,7 @@ main(
     int level, spindle;
     char *prog, *calcprog, *dumpdate;
     option_t *options = NULL;
-    int program_is_wrapper;
+    int program_is_backup_api;
     disk_estimates_t *est;
     disk_estimates_t *est1;
     disk_estimates_t *est_prev;
@@ -249,18 +249,7 @@ main(
 	skip_non_whitespace(s, ch);
 	s[-1] = '\0';
 
-	program_is_wrapper=0;
-	if(strcmp(prog,"DUMPER")==0) {
-	    program_is_wrapper=1;
-	    skip_whitespace(s, ch);		/* find dumper name */
-	    if (ch == '\0') {
-		goto err;			/* no program */
-	    }
-	    prog = s - 1;
-	    skip_non_whitespace(s, ch);
-	    s[-1] = '\0';
-	}
-
+	program_is_backup_api=0;
 	if(strncmp(prog, "CALCSIZE", 8) == 0) {
 	    skip_whitespace(s, ch);		/* find the program name */
 	    if(ch == '\0') {
@@ -270,9 +259,29 @@ main(
 	    calcprog = s - 1;
 	    skip_non_whitespace(s, ch);
 	    s[-1] = '\0';
+	    if (strcmp(calcprog,"BACKUP") == 0) {
+		program_is_backup_api=1;
+		skip_whitespace(s, ch);		/* find dumper name */
+		if (ch == '\0') {
+		    goto err;			/* no program */
+		}
+		calcprog = s - 1;
+		skip_non_whitespace(s, ch);
+		s[-1] = '\0';
+	    }
 	}
 	else {
 	    calcprog = NULL;
+	    if (strcmp(prog,"BACKUP") == 0) {
+		program_is_backup_api=1;
+		skip_whitespace(s, ch);		/* find dumper name */
+		if (ch == '\0') {
+		    goto err;			/* no program */
+		}
+		prog = s - 1;
+		skip_non_whitespace(s, ch);
+		s[-1] = '\0';
+	    }
 	}
 
 	skip_whitespace(s, ch);			/* find the disk name */
@@ -396,7 +405,7 @@ main(
 	}
 
 	/*@ignore@*/
-	add_diskest(disk, amdevice, level, spindle, program_is_wrapper, prog, calcprog, options);
+	add_diskest(disk, amdevice, level, spindle, program_is_backup_api, prog, calcprog, options);
 	/*@end@*/
 	amfree(disk);
 	amfree(qdisk);
@@ -569,7 +578,7 @@ add_diskest(
     char *	amdevice,
     int		level,
     int		spindle,
-    int		program_is_wrapper,
+    int		program_is_backup_api,
     char *	prog,
     char *	calcprog,
     option_t *	options)
@@ -616,7 +625,7 @@ add_diskest(
 	newp->calcprog = stralloc(calcprog);
     else
 	newp->calcprog = NULL;
-    newp->program_is_wrapper = program_is_wrapper;
+    newp->program_is_backup_api = program_is_backup_api;
     newp->spindle = spindle;
     newp->est[level].needestimate = 1;
     newp->options = options;
@@ -671,8 +680,8 @@ calc_estimates(
 	      debug_prefix_time(NULL),
 	      est->qamname, est->qdirname, est->spindle));
 	
-    if(est->program_is_wrapper ==  1)
-	wrapper_calc_estimates(est);
+    if(est->program_is_backup_api ==  1)
+	backup_api_calc_estimate(est);
     else
 #ifndef USE_GENERIC_CALCSIZE
     if(strcmp(est->program, "DUMP") == 0)
@@ -716,13 +725,13 @@ off_t getsize_star(char *disk, char *amdevice, int level,
 off_t getsize_smbtar(char *disk, char *amdevice, int level, option_t *options);
 off_t getsize_gnutar(char *disk, char *amdevice, int level,
 		       option_t *options, time_t dumpsince);
-off_t getsize_wrapper(char *program, char *disk, char *amdevice, int level,
+off_t getsize_backup_api(char *program, char *disk, char *amdevice, int level,
 			option_t *options, time_t dumpsince);
 off_t handle_dumpline(char *str);
 double first_num(char *str);
 
 void
-wrapper_calc_estimates(
+backup_api_calc_estimate(
     disk_estimates_t *	est)
 {
   int level;
@@ -730,9 +739,9 @@ wrapper_calc_estimates(
 
   for(level = 0; level < DUMP_LEVELS; level++) {
       if (est->est[level].needestimate) {
-	  dbprintf(("%s: getting size via wrapper for %s level %d\n",
-		    debug_prefix_time(NULL), est->qamname, level));
-	  size = getsize_wrapper(est->program, est->amname, est->amdevice,
+	  dbprintf(("%s: getting size via backup-api for %s %s level %d\n",
+		    debug_prefix_time(NULL), est->qamname, est->qamdevice, level));
+	  size = getsize_backup_api(est->program, est->amname, est->amdevice,
 			level, est->options, est->est[level].dumpsince);
 
 	  amflock(1, "size");
@@ -1976,18 +1985,18 @@ common_exit:
 #endif
 
 off_t
-getsize_wrapper(
+getsize_backup_api(
     char	*program,
     char	*disk,
     char	*amdevice,
-    int		level,
-    option_t *	options,
-    time_t	dumpsince)
+    int		 level,
+    option_t	*options,
+    time_t	 dumpsince)
 {
-    int pipefd[2], nullfd;
+    int pipeinfd[2], pipeoutfd[2], nullfd;
     pid_t dumppid;
     off_t size = (off_t)-1;
-    FILE *dumpout;
+    FILE *dumpout, *toolin;
     char *line = NULL;
     char *cmd = NULL;
     char dumptimestr[80];
@@ -1999,7 +2008,10 @@ getsize_wrapper(
     times_t start_time;
     char *qdisk = quote_string(disk);
     char *qamdevice = quote_string(amdevice);
+    char levelstr[NUM_STR_SIZE];
+    backup_support_option_t *bsu;
 
+    (void)options;
     gmtm = gmtime(&dumpsince);
     snprintf(dumptimestr, SIZEOF(dumptimestr),
 		"%04d-%02d-%02d %2d:%02d:%02d GMT",
@@ -2008,20 +2020,35 @@ getsize_wrapper(
 
     cmd = vstralloc(DUMPER_DIR, "/", program, NULL);
 
+    bsu = backup_support_option(program, g_options, disk, amdevice);
+
     i=0;
     argvchild[i++] = program;
     argvchild[i++] = "estimate";
-    if(level == 0)
-	argvchild[i++] = "full";
-    else {
-	char levelstr[NUM_STR_SIZE];
+    if (bsu->message_line == 1) {
+	argvchild[i++] = "--message";
+	argvchild[i++] = "line";
+    }
+    if (g_options->config && bsu->config == 1) {
+	argvchild[i++] = "--config";
+	argvchild[i++] = g_options->config;
+    }
+    if (g_options->hostname && bsu->host == 1) {
+	argvchild[i++] = "--host";
+	argvchild[i++] = g_options->hostname;
+    }
+    argvchild[i++] = "--device";
+    argvchild[i++] = amdevice;
+    if (disk && bsu->disk == 1) {
+	argvchild[i++] = "--disk";
+	argvchild[i++] = disk;
+    }
+    if (level <= bsu->max_level) {
+	argvchild[i++] = "--level";
 	snprintf(levelstr,SIZEOF(levelstr),"%d",level);
-	argvchild[i++] = "level";
 	argvchild[i++] = levelstr;
     }
-    argvchild[i++] = amdevice;
-    newoptstr = vstralloc(options->str,"estimate-direct;", NULL);
-    argvchild[i++] = newoptstr;
+
     argvchild[i] = NULL;
 
     dbprintf(("%s: running %s", debug_prefix_time(NULL), cmd));
@@ -2035,8 +2062,14 @@ getsize_wrapper(
 	goto common_exit;
     }
 
-    if (pipe(pipefd) < 0) {
-	dbprintf(("getsize_wrapper could create data pipes: %s\n",
+    if (pipe(pipeinfd) < 0) {
+	dbprintf(("getsize_backup_api could create data pipes: %s\n",
+		  strerror(errno)));
+	goto common_exit;
+    }
+
+    if (pipe(pipeoutfd) < 0) {
+	dbprintf(("getsize_backup_api could create data pipes: %s\n",
 		  strerror(errno)));
 	goto common_exit;
     }
@@ -2050,10 +2083,11 @@ getsize_wrapper(
     default:
       break; /* parent */
     case 0:
-      dup2(nullfd, 0);
+      dup2(pipeinfd[0], 0);
+      dup2(pipeoutfd[1], 1);
       dup2(nullfd, 2);
-      dup2(pipefd[1], 1);
-      aclose(pipefd[0]);
+      aclose(pipeinfd[1]);
+      aclose(pipeoutfd[0]);
 
       execve(cmd, argvchild, safe_env());
       error("exec %s failed: %s", cmd, strerror(errno));
@@ -2061,8 +2095,20 @@ getsize_wrapper(
     }
     amfree(newoptstr);
 
-    aclose(pipefd[1]);
-    dumpout = fdopen(pipefd[0],"r");
+    aclose(pipeinfd[0]);
+    aclose(pipeoutfd[1]);
+
+    toolin = fdopen(pipeinfd[1],"w");
+    if (!toolin) {
+	error("Can't fdopen: %s", strerror(errno));
+	/*NOTREACHED*/
+    }
+
+    output_tool_property(toolin, options);
+    fflush(toolin);
+    fclose(toolin);
+
+    dumpout = fdopen(pipeoutfd[0],"r");
     if (!dumpout) {
 	error("Can't fdopen: %s", strerror(errno));
 	/*NOTREACHED*/

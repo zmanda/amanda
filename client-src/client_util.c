@@ -33,6 +33,7 @@
 #include "client_util.h"
 #include "getfsent.h"
 #include "util.h"
+#include "pipespawn.h"
 
 #define MAXMAXDUMPS 16
 
@@ -700,3 +701,162 @@ parse_options(
     amfree(p);
     return options;
 }
+
+void
+output_tool_property(
+    FILE     *tool,
+    option_t *options)
+{
+    sle_t *sle;
+    char *q;
+
+    if (!is_empty_sl(options->exclude_file)) {
+	for(sle = options->exclude_file->first ; sle != NULL; sle=sle->next) {
+	    q = quote_string(sle->name);
+	    fprintf(tool, "EXCLUDE-FILE %s\n", q);
+	    amfree(q);
+	}
+    }
+
+    if (!is_empty_sl(options->exclude_list)) {
+	for(sle = options->exclude_list->first ; sle != NULL; sle=sle->next) {
+	    q = quote_string(sle->name);
+	    fprintf(tool, "EXCLUDE-LIST %s\n", q);
+	    amfree(q);
+	}
+    }
+
+    if (!is_empty_sl(options->include_file)) {
+	for(sle = options->include_file->first ; sle != NULL; sle=sle->next) {
+	    q = quote_string(sle->name);
+	    fprintf(tool, "INCLUDE-FILE %s\n", q);
+	    amfree(q);
+	}
+    }
+
+    if (!is_empty_sl(options->include_list)) {
+	for(sle = options->include_list->first ; sle != NULL; sle=sle->next) {
+	    q = quote_string(sle->name);
+	    fprintf(tool, "INCLUDE-LIST %s\n", q);
+	    amfree(q);
+	}
+    }
+
+    if (!is_empty_sl(options->exclude_file) ||
+	!is_empty_sl(options->exclude_list)) {
+	if (options->exclude_optional)
+	    fprintf(tool, "EXCLUDE-OPTIONAL YES\n");
+	else
+	    fprintf(tool, "EXCLUDE-OPTIONAL NO\n");
+    }
+
+    if (!is_empty_sl(options->include_file) ||
+	!is_empty_sl(options->include_list)) {
+	if (options->include_optional)
+	    fprintf(tool, "INCLUDE-OPTIONAL YES\n");
+	else
+	    fprintf(tool, "INCLUDE-OPTIONAL NO\n");
+    }
+}
+
+backup_support_option_t *
+backup_support_option(
+    char       *program,
+    g_option_t *g_options,
+    char       *disk,
+    char       *amdevice)
+{
+    pid_t   supportpid;
+    int     supportin, supportout, supporterr;
+    char   *cmd;
+    char  **argvchild;
+    int     i;
+    FILE   *streamout;
+    char   *line;
+    backup_support_option_t *bsu;
+
+    cmd = vstralloc(DUMPER_DIR, "/", program, NULL);
+    argvchild = malloc(5 * SIZEOF(char *));
+    i = 0;
+    argvchild[i++] = program;
+    argvchild[i++] = "support";
+    if (g_options->config) {
+	argvchild[i++] = "--config";
+	argvchild[i++] = g_options->config;
+    }
+    if (g_options->hostname) {
+	argvchild[i++] = "--host";
+	argvchild[i++] = g_options->hostname;
+    }
+    if (disk) {
+	argvchild[i++] = "--disk";
+	argvchild[i++] = disk;
+    }
+    if (amdevice) {
+	argvchild[i++] = "--device";
+	argvchild[i++] = amdevice;
+    }
+    argvchild[i++] = NULL;
+
+    supporterr = fileno(stderr);
+    supportpid = pipespawnv(cmd, STDIN_PIPE|STDOUT_PIPE, &supportin,
+			    &supportout, &supporterr, argvchild);
+
+    aclose(supportin);
+
+    bsu = malloc(SIZEOF(*bsu));
+    memset(bsu, '\0', SIZEOF(*bsu));
+    streamout = fdopen(supportout, "r");
+    while((line = agets(streamout)) != NULL) {
+	dbprintf(("support line: %s\n", line));
+	if (strncmp(line,"CONFIG ", 7) == 0) {
+	    if (strcmp(line+7, "YES") == 0)
+		bsu->config = 1;
+	} else if (strncmp(line,"HOST ", 5) == 0) {
+	    if (strcmp(line+5, "YES") == 0)
+	    bsu->host = 1;
+	} else if (strncmp(line,"DISK ", 5) == 0) {
+	    if (strcmp(line+5, "YES") == 0)
+		bsu->host = 1;
+	} else if (strncmp(line,"INDEX-LINE ", 11) == 0) {
+	    if (strcmp(line+11, "YES") == 0)
+		bsu->index_line = 1;
+	} else if (strncmp(line,"INDEX-XML ", 10) == 0) {
+	    if (strcmp(line+10, "YES") == 0)
+		bsu->index_xml = 1;
+	} else if (strncmp(line,"MESSAGE-LINE ", 13) == 0) {
+	    if (strcmp(line+13, "YES") == 0)
+		bsu->message_line = 1;
+	} else if (strncmp(line,"MESSAGE-XML ", 12) == 0) {
+	    if (strcmp(line+12, "YES") == 0)
+		bsu->message_xml = 1;
+	} else if (strncmp(line,"RECORD ", 7) == 0) {
+	    if (strcmp(line+7, "YES") == 0)
+		bsu->record = 1;
+	} else if (strncmp(line,"INCLUDE-FILE ", 13) == 0) {
+	    if (strcmp(line+13, "YES") == 0)
+		bsu->include_file = 1;
+	} else if (strncmp(line,"INCLUDE-LIST ", 13) == 0) {
+	    if (strcmp(line+13, "YES") == 0)
+		bsu->include_list = 1;
+	} else if (strncmp(line,"EXCLUDE-FILE ", 13) == 0) {
+	    if (strcmp(line+13, "YES") == 0)
+		bsu->exclude_file = 1;
+	} else if (strncmp(line,"EXCLUDE-LIST ", 13) == 0) {
+	    if (strcmp(line+13, "YES") == 0)
+		bsu->exclude_list = 1;
+	} else if (strncmp(line,"COLLECTION ", 11) == 0) {
+	    if (strcmp(line+11, "YES") == 0)
+		bsu->collection = 1;
+	} else if (strncmp(line,"MAX-LEVEL ", 10) == 0) {
+	    bsu->max_level  = atoi(line+10);
+	} else {
+	    dbprintf(("Invalid support line: %s\n", line));
+	}
+	amfree(line);
+    }
+    aclose(supportout);
+
+    return NULL;
+}
+
