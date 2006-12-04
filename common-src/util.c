@@ -677,13 +677,13 @@ str_sockaddr(
     if ( sa->ss_family == (sa_family_t)AF_INET6) {
 	inet_ntop(AF_INET6, &((struct sockaddr_in6 *)sa)->sin6_addr,
 		  ipstr, sizeof(ipstr));
-	port = ((struct sockaddr_in6 *)sa)->sin6_port;
+	port = ntohs(((struct sockaddr_in6 *)sa)->sin6_port);
     } else
 #endif
     {
 	inet_ntop(AF_INET, &((struct sockaddr_in *)sa)->sin_addr, ipstr,
 		  sizeof(ipstr));
-	port = ((struct sockaddr_in *)sa)->sin_port;
+	port = ntohs(((struct sockaddr_in *)sa)->sin_port);
     }
     snprintf(mystr_sockaddr,sizeof(mystr_sockaddr),"%s.%d", ipstr, port);
     return mystr_sockaddr;
