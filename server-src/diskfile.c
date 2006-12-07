@@ -190,6 +190,7 @@ add_disk(
     disk->tape_splitsize = (off_t)0;
     disk->split_diskbuffer = NULL;
     disk->fallback_splitsize = (off_t)0;
+    disk->hostname = stralloc(hostname);
     disk->name = stralloc(diskname);
     disk->device = stralloc(diskname);
     disk->spindle = -1;
@@ -466,6 +467,7 @@ parse_diskline(
 	disk = alloc(SIZEOF(disk_t));
 	malloc_mark(disk);
 	disk->line = line_num;
+	disk->hostname = stralloc(hostname);
 	disk->name = diskname;
 	disk->device = diskdevice;
 	malloc_mark(disk->name);

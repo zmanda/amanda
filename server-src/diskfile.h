@@ -55,6 +55,7 @@ typedef struct disk_s {
     am_host_t	*host;			/* host list */
     struct disk_s *hostnext;
 
+    char        *hostname;		/* hostname */
     char	*name;			/* label name for disk */
     char	*device;		/* device name for disk, eg "sd0g" */
     char	*dtype_name;		/* name of dump type   XXX shouldn't need this */

@@ -107,7 +107,7 @@ static void lreply(int, char *, ...)
     __attribute__ ((format (printf, 2, 3)));
 static void fast_lreply(int, char *, ...)
     __attribute__ ((format (printf, 2, 3)));
-static int is_dump_host_valid(char *);
+static am_host_t *is_dump_host_valid(char *);
 static int is_disk_valid(char *);
 static int is_config_valid(char *);
 static int build_disk_table(void);
@@ -121,6 +121,10 @@ static int are_dumps_compressed(void);
 static char *amindexd_nicedate (char *datestamp);
 static int cmp_date (const char *date1, const char *date2);
 static char *clean_backslash(char *line);
+static char *get_index_name(char *dump_hostname, char *hostname,
+			    char *diskname, char *timestamps, int level);
+static int get_index_dir(char *dump_hostname, char *hostname, char *diskname);
+
 int main(int, char **);
 
 static REMOVE_ITEM *
@@ -238,7 +242,6 @@ process_ls_dump(
     char *s;
     int ch;
     size_t len_dir_slash;
-    struct stat statbuf;
 
     if (strcmp(dir, "/") == 0) {
 	dir_slash = stralloc(dir);
@@ -246,12 +249,12 @@ process_ls_dump(
 	dir_slash = stralloc2(dir, "/");
     }
 
-    filename_gz = getindexfname(dump_hostname, disk_name, dump_item->date,
-			        dump_item->level);
-    if (stat(filename_gz, &statbuf) < 0 && errno == ENOENT) {
+    filename_gz = get_index_name(dump_hostname, dump_item->hostname, disk_name,
+				 dump_item->date, dump_item->level);
+    if (filename_gz == NULL) {
+	*emsg = stralloc("index file not found");
 	amfree(filename_gz);
-	filename_gz = getoldindexfname(dump_hostname, disk_name,
-				       dump_item->date, dump_item->level);
+	return -1;
     }
     if((filename = uncompress_file(filename_gz, emsg)) == NULL) {
 	amfree(filename_gz);
@@ -419,17 +422,16 @@ printf_arglist_function1(static void fast_lreply, int, n, char *, fmt)
 /* also do a security check on the requested dump hostname */
 /* to restrict access to index records if required */
 /* return -1 if not okay */
-static int
+static am_host_t *
 is_dump_host_valid(
     char *	host)
 {
-    struct stat dir_stat;
-    char *fn;
-    am_host_t *ihost;
+    am_host_t   *ihost;
+    disk_t      *diskp;
 
     if (config_name == NULL) {
 	reply(501, "Must set config before setting host.");
-	return -1;
+	return NULL;
     }
 
 #if 0
@@ -441,7 +443,7 @@ is_dump_host_valid(
 	reply(501,
 	      "You don't have the necessary permissions to set dump host to %s.",
 	      buf1);
-	return -1;
+	return NULL;
     }
 #endif
 
@@ -449,19 +451,23 @@ is_dump_host_valid(
     ihost = lookup_host(host);
     if(ihost == NULL) {
 	reply(501, "Host %s is not in your disklist.", host);
-	return -1;
+	return NULL;
     }
 
-    /* assume an index dir already */
-    fn = getindexfname(host, NULL, NULL, 0);
-    if (stat (fn, &dir_stat) != 0 || !S_ISDIR(dir_stat.st_mode)) {
-	reply(501, "No index records for host: %s. Have you enabled indexing?", host);
-	amfree(fn);
-	return -1;
+    /* check if an index dir exist */
+    if(get_index_dir(host, ihost->hostname, NULL)) {
+	return ihost;
     }
 
-    amfree(fn);
-    return 0;
+    /* check if an index dir exist for at least one DLE */
+    for(diskp = ihost->disks; diskp != NULL; diskp = diskp->hostnext) {
+	if (get_index_dir(diskp->hostname, NULL, NULL)) {
+	    return ihost;
+	}
+    }
+
+    reply(501, "No index records for host: %s. Have you enabled indexing?", host);
+    return NULL;
 }
 
 
@@ -469,8 +475,6 @@ static int
 is_disk_valid(
     char *disk)
 {
-    char *fn;
-    struct stat dir_stat;
     disk_t *idisk;
     char *qdisk;
 
@@ -493,16 +497,13 @@ is_disk_valid(
     }
 
     /* assume an index dir already */
-    fn = getindexfname(dump_hostname, disk, NULL, 0);
-    if (stat (fn, &dir_stat) != 0 || !S_ISDIR(dir_stat.st_mode)) {
+    if (get_index_dir(dump_hostname, idisk->hostname, disk) == 0) {
 	qdisk = quote_string(disk);
 	reply(501, "No index records for disk: %s. Invalid?", qdisk);
-	amfree(fn);
 	amfree(qdisk);
 	return -1;
     }
 
-    amfree(fn);
     return 0;
 }
 
@@ -635,8 +636,8 @@ build_disk_table(void)
 	    last_level = find_output->level;
 	    last_partnum = partnum;
 	    date = amindexd_nicedate(find_output->timestamp);
-	    add_dump(date, find_output->level, find_output->label, 
-		     find_output->filenum, partnum);
+	    add_dump(find_output->hostname, date, find_output->level,
+		     find_output->label, find_output->filenum, partnum);
 	    dbprintf(("%s: - %s %d %s " OFF_T_FMT " %d\n",
 		     debug_prefix_time(NULL), date, find_output->level, 
 		     find_output->label,
@@ -730,7 +731,6 @@ is_dir_valid_opaque(
 	reply(502, "Must set date before asking about directories");
 	return -1;
     }
-
     /* scan through till we find first dump on or before date */
     for (item=first_dump(); item!=NULL; item=next_dump(item))
 	if (cmp_date(item->date, target_date) <= 0)
@@ -754,8 +754,13 @@ is_dir_valid_opaque(
     do
     {
 	amfree(filename);
-	filename_gz = getindexfname(dump_hostname, disk_name,
-				    item->date, item->level);
+	filename_gz = get_index_name(dump_hostname, item->hostname, disk_name,
+				     item->date, item->level);
+	if (filename_gz == NULL) {
+	    reply(599, "index not found");
+	    amfree(ldir);
+	    return -1;
+	}
 	if((filename = uncompress_file(filename_gz, &emsg)) == NULL) {
 	    reply(599, "System error %s", emsg);
 	    amfree(filename_gz);
@@ -1364,11 +1369,12 @@ main(
 	    amfree(line);
 	    break;
 	} else if (strcmp(cmd, "HOST") == 0 && arg) {
+	    am_host_t *lhost;
 	    /* set host we are restoring */
 	    s[-1] = '\0';
-	    if (is_dump_host_valid(arg) != -1)
+	    if ((lhost = is_dump_host_valid(arg)) != NULL)
 	    {
-		dump_hostname = newstralloc(dump_hostname, arg);
+		dump_hostname = newstralloc(dump_hostname, lhost->hostname);
 		reply(200, "Dump host set to %s.", dump_hostname);
 		amfree(qdisk_name);		/* invalidate any value */
 		amfree(disk_name);		/* invalidate any value */
@@ -1432,7 +1438,7 @@ main(
 		       dump_hostname);
 		for (disk = disk_list.head; disk!=NULL; disk = disk->next) {
 
-		    if (strcmp(disk->host->hostname, dump_hostname) == 0 &&
+		    if (strcasecmp(disk->host->hostname, dump_hostname) == 0 &&
 		      ((disk->device && strcmp(disk->device, arg) == 0) ||
 		      (!disk->device && strcmp(disk->name, arg) == 0))) {
 			qname = quote_string(disk->name);
@@ -1453,7 +1459,7 @@ main(
 	    else {
 		lreply(200, " List of disk for host %s", dump_hostname);
 		for (disk = disk_list.head; disk!=NULL; disk = disk->next) {
-		    if(strcmp(disk->host->hostname, dump_hostname) == 0) {
+		    if(strcasecmp(disk->host->hostname, dump_hostname) == 0) {
 			qname = quote_string(disk->name);
 			fast_lreply(201, " %s", qname);
 			amfree(qname);
@@ -1609,4 +1615,134 @@ clean_backslash(
     *p = '\0';
 
     return line;
+}
+
+
+static int
+get_index_dir(
+    char *dump_hostname,
+    char *hostname,
+    char *diskname)
+{
+    struct stat  dir_stat;
+    char        *fn;
+    char        *s;
+    char        *lower_hostname;
+
+    lower_hostname = stralloc(dump_hostname);
+    for(s=lower_hostname; *s != '\0'; s++)
+	*s = tolower(*s);
+
+    fn = getindexfname(dump_hostname, diskname, NULL, 0);
+    if (stat(fn, &dir_stat) == 0 && S_ISDIR(dir_stat.st_mode)) {
+	amfree(lower_hostname);
+	amfree(fn);
+	return 1;
+    }
+    amfree(fn);
+    if (hostname != NULL) {
+	fn = getindexfname(hostname, diskname, NULL, 0);
+	if (stat(fn, &dir_stat) == 0 && S_ISDIR(dir_stat.st_mode)) {
+	    amfree(lower_hostname);
+	    amfree(fn);
+	    return 1;
+	}
+    }
+    amfree(fn);
+    fn = getindexfname(lower_hostname, diskname, NULL, 0);
+    if (stat(fn, &dir_stat) == 0 && S_ISDIR(dir_stat.st_mode)) {
+	amfree(lower_hostname);
+	amfree(fn);
+	return 1;
+    }
+    amfree(fn);
+    if(diskname != NULL) {
+	fn = getoldindexfname(dump_hostname, diskname, NULL, 0);
+	if (stat(fn, &dir_stat) == 0 && S_ISDIR(dir_stat.st_mode)) {
+	    amfree(lower_hostname);
+	    amfree(fn);
+	    return 1;
+	}
+	amfree(fn);
+	if (hostname != NULL) {
+	    fn = getoldindexfname(hostname, diskname, NULL, 0);
+	    if (stat(fn, &dir_stat) == 0 && S_ISDIR(dir_stat.st_mode)) {
+		amfree(lower_hostname);
+		amfree(fn);
+		return 1;
+	    }
+	}
+	amfree(fn);
+	fn = getoldindexfname(lower_hostname, diskname, NULL, 0);
+	if (stat(fn, &dir_stat) == 0 && S_ISDIR(dir_stat.st_mode)) {
+	    amfree(lower_hostname);
+	    amfree(fn);
+	    return 1;
+	}
+	amfree(fn);
+    }
+    amfree(lower_hostname);
+    return -1;
+}
+
+static char *
+get_index_name(
+    char *dump_hostname,
+    char *hostname,
+    char *diskname,
+    char *timestamps,
+    int   level)
+{
+    struct stat  dir_stat;
+    char        *fn;
+    char        *s;
+    char        *lower_hostname;
+
+    lower_hostname = stralloc(dump_hostname);
+    for(s=lower_hostname; *s != '\0'; s++)
+	*s = tolower(*s);
+
+    fn = getindexfname(dump_hostname, diskname, timestamps, level);
+    if (stat(fn, &dir_stat) == 0 && S_ISREG(dir_stat.st_mode)) {
+	amfree(lower_hostname);
+	return fn;
+    }
+    amfree(fn);
+    if(hostname != NULL) {
+	fn = getindexfname(hostname, diskname, timestamps, level);
+	if (stat(fn, &dir_stat) == 0 && S_ISREG(dir_stat.st_mode)) {
+	    amfree(lower_hostname);
+	    return fn;
+	}
+    }
+    amfree(fn);
+    fn = getindexfname(lower_hostname, diskname, timestamps, level);
+    if (stat(fn, &dir_stat) == 0 && S_ISREG(dir_stat.st_mode)) {
+	amfree(lower_hostname);
+	return fn;
+    }
+    amfree(fn);
+    if(diskname != NULL) {
+	fn = getoldindexfname(dump_hostname, diskname, timestamps, level);
+	if (stat(fn, &dir_stat) == 0 && S_ISREG(dir_stat.st_mode)) {
+	    amfree(lower_hostname);
+	    return fn;
+	}
+	amfree(fn);
+	if(hostname != NULL) {
+	    fn = getoldindexfname(hostname, diskname, timestamps, level);
+	    if (stat(fn, &dir_stat) == 0 && S_ISREG(dir_stat.st_mode)) {
+		amfree(lower_hostname);
+		return fn;
+	    }
+	}
+	amfree(fn);
+	fn = getoldindexfname(lower_hostname, diskname, timestamps, level);
+	if (stat(fn, &dir_stat) == 0 && S_ISREG(dir_stat.st_mode)) {
+	    amfree(lower_hostname);
+	    return fn;
+	}
+    }
+    amfree(lower_hostname);
+    return NULL;
 }

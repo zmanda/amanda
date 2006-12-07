@@ -43,6 +43,7 @@ clear_list(void)
     {
 	this = item;
 	item = item->next;
+	amfree(this->hostname);
 	while(this->tapes != NULL) {
 	    tapelist_t *tapes = this->tapes;
 	    this->tapes = tapes->next;
@@ -59,6 +60,7 @@ clear_list(void)
 
 void
 add_dump(
+    char *      hostname,
     char *	date,
     int		level,
     char *	tape,
@@ -78,6 +80,7 @@ add_dump(
     if(partnum == -1) new->is_split = 0;
     else new->is_split = 1;
     new->tapes = NULL;
+    new->hostname = stralloc(hostname);
 
     if(new->tape[0] == '/')
 	isafile = 1; /* XXX kludgey, like this whole thing */

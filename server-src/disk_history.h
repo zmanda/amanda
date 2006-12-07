@@ -40,6 +40,7 @@ typedef struct DUMP_ITEM
     char tape[256];
     tapelist_t *tapes;
     off_t  file;
+    char *hostname;
 
     struct DUMP_ITEM *next;
 }
@@ -48,6 +49,6 @@ DUMP_ITEM;
 #define next_dump(item)	((item)->next)
 
 extern void clear_list(void);
-extern void add_dump(char *date, int level, char *tape, off_t file, int partnum);
+extern void add_dump(char *hostname, char *date, int level, char *tape, off_t file, int partnum);
 extern DUMP_ITEM *first_dump(void);
 #endif	/* !DISK_HISTORY_H */
