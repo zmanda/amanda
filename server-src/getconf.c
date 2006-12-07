@@ -598,7 +598,10 @@ main(
 		get_pname(), parmname);
 	fflush(stderr);
     } else {
-	puts(result);
+	if (asklist)
+	    fputs(result, stdout); /* don't add a '\n' */
+	else
+	    puts(result); /* add a '\n' */
     }
 
     free_new_argv(new_argc, new_argv);
