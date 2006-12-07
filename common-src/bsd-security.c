@@ -148,13 +148,54 @@ bsd_connect(
     /*
      * Only init the socket once
      */
+#ifdef HAVE_IPV6
+    hints.ai_flags = AI_CANONNAME | AI_V4MAPPED | AI_ALL;
+    hints.ai_family = AF_INET6;
+#else
+    hints.ai_flags = AI_CANONNAME;
+    hints.ai_family = AF_INET;
+#endif
+    hints.ai_socktype = SOCK_DGRAM;
+    hints.ai_protocol = IPPROTO_UDP;
+    hints.ai_addrlen = 0;
+    hints.ai_addr = NULL;
+    hints.ai_canonname = NULL;
+    hints.ai_next = NULL;
+    result = getaddrinfo(hostname, NULL, &hints, &res);
+#ifdef HAVE_IPV6
+    if(result != 0  && result != EAI_NONAME) {
+	dbprintf(("getaddrinfo(%s): %s\n", hostname, gai_strerror(result)));
+	security_seterror(&bh->sech, "getaddrinfo(%s): %s\n", hostname,
+			  gai_strerror(result));
+	(*fn)(arg, &bh->sech, S_ERROR);
+	return;
+    } else if (result != 0) {
+	hints.ai_family = AF_UNSPEC;
+	result = getaddrinfo(hostname, NULL, &hints, &res);
+    }
+#endif
+    if(result != 0) {
+	dbprintf(("getaddrinfo(%s): %s\n", hostname, gai_strerror(result)));
+	security_seterror(&bh->sech, "getaddrinfo(%s): %s\n", hostname,
+			  gai_strerror(result));
+	(*fn)(arg, &bh->sech, S_ERROR);
+	return;
+    }
+    if (check_addrinfo_give_name(res, hostname, &errmsg) < 0) {
+	security_seterror(&bh->sech, "%s", errmsg);
+	(*fn)(arg, &bh->sech, S_ERROR);
+	amfree(errmsg);
+	freeaddrinfo(res);
+	return;
+    }
+
     if (not_init == 1) {
 	uid_t euid;
 	dgram_zero(&netfd.dgram);
 
 	euid = geteuid();
 	seteuid((uid_t)0);
-	dgram_bind(&netfd.dgram, &port);
+	dgram_bind(&netfd.dgram, res->ai_addr->sa_family, &port);
 	seteuid(euid);
 	netfd.handle = NULL;
 	netfd.pkt.body = NULL;
@@ -171,35 +212,6 @@ bsd_connect(
 	    return;
 	}
 	not_init = 0;
-    }
-
-#ifdef HAVE_IPV6
-    hints.ai_flags = AI_CANONNAME | AI_V4MAPPED | AI_ALL;
-    hints.ai_family = AF_INET6;
-#else
-    hints.ai_flags = AI_CANONNAME;
-    hints.ai_family = AF_INET;
-#endif
-    hints.ai_socktype = SOCK_DGRAM;
-    hints.ai_protocol = IPPROTO_UDP;
-    hints.ai_addrlen = 0;
-    hints.ai_addr = NULL;
-    hints.ai_canonname = NULL;
-    hints.ai_next = NULL;
-    result = getaddrinfo(hostname, NULL, &hints, &res);
-    if(result != 0) {
-	dbprintf(("getaddrinfo(%s): %s\n", hostname, gai_strerror(result)));
-	security_seterror(&bh->sech, "getaddrinfo(%s): %s\n", hostname,
-			  gai_strerror(result));
-	(*fn)(arg, &bh->sech, S_ERROR);
-	return;
-    }
-    if (check_addrinfo_give_name(res, hostname, &errmsg) < 0) {
-	security_seterror(&bh->sech, "%s", errmsg);
-	(*fn)(arg, &bh->sech, S_ERROR);
-	amfree(errmsg);
-	freeaddrinfo(res);
-	return;
     }
 
     auth_debug(1, ("Resolved hostname=%s\n", res->ai_canonname));

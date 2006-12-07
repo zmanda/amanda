@@ -127,7 +127,7 @@ bsdtcp_connect(
 
 #ifdef HAVE_IPV6
     hints.ai_flags = AI_CANONNAME | AI_V4MAPPED | AI_ALL;
-    hints.ai_family = AF_INET6;
+    hints.ai_family = AF_UNSPEC;
 #else
     hints.ai_flags = AI_CANONNAME;
     hints.ai_family = AF_INET;

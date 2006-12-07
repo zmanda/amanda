@@ -1389,10 +1389,12 @@ udp_netfd_read_callback(
 	return;
     }
 
-    if (udp->peer.ss_family == (sa_family_t)AF_INET)
-	port = ((struct sockaddr_in *)&udp->peer)->sin_port;
-    else
+#ifdef HAVE_IPV6
+    if (udp->peer.ss_family == (sa_family_t)AF_INET6)
 	port = ((struct sockaddr_in6 *)&udp->peer)->sin6_port;
+    else
+#endif
+	port = ((struct sockaddr_in *)&udp->peer)->sin_port;
     a = udp_inithandle(udp, rh,
 		   hostname,
 		   &udp->peer,
@@ -2343,10 +2345,12 @@ check_security(
     }
 
     /* next, make sure the remote port is a "reserved" one */
-    if (addr->ss_family == (sa_family_t)AF_INET)
-	port = ntohs(((struct sockaddr_in *)addr)->sin_port);
-    else
+#ifdef HAVE_IPV6
+    if (addr->ss_family == (sa_family_t)AF_INET6)
 	port = ntohs(((struct sockaddr_in6 *)addr)->sin6_port);
+    else
+#endif
+	port = ntohs(((struct sockaddr_in *)addr)->sin_port);
     if (port >= IPPORT_RESERVED) {
 	char number[NUM_STR_SIZE];
 

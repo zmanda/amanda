@@ -40,7 +40,7 @@
 #define netprintf(x)
 #endif
 
-static int make_socket(void);
+static int make_socket(sa_family_t family);
 static int connect_port(struct sockaddr_storage *addrp, in_port_t port, char *proto,
 			struct sockaddr_storage *svaddr, int nonblock);
 
@@ -107,7 +107,8 @@ fullwrite(
 }
 
 static int
-make_socket(void)
+make_socket(
+    sa_family_t family)
 {
     int s;
     int save_errno;
@@ -116,11 +117,8 @@ make_socket(void)
     int r;
 #endif
 
-#ifdef HAVE_IPV6
-    if ((s = socket(AF_INET6, SOCK_STREAM, 0)) == -1) {
-#else
-    if ((s = socket(AF_INET6, SOCK_STREAM, 0)) == -1) {
-#endif
+    s = socket(family, SOCK_STREAM, 0);
+    if (s == -1) {
         save_errno = errno;
         dbprintf(("%s: make_socket: socket() failed: %s\n",
                   debug_prefix_time(NULL),
@@ -245,7 +243,7 @@ connect_port(
 		  debug_prefix_time(NULL), port, servPort->s_name));
     }
 
-    if ((s = make_socket()) == -1) return -2;
+    if ((s = make_socket(addrp->ss_family)) == -1) return -2;
 
 #ifdef HAVE_IPV6
     if (addrp->ss_family == (sa_family_t)AF_INET6)

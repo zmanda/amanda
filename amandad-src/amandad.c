@@ -325,10 +325,18 @@ main(
 	 * This may only apply to some security types.
 	 */
 	else if (strncmp(argv[i], "-udp=", strlen("-udp=")) == 0) {
+#ifdef HAVE_IPV6
 	    struct sockaddr_in6 sin;
+#else
+	    struct sockaddr_in sin;
+#endif
 
 	    argv[i] += strlen("-udp=");
+#ifdef HAVE_IPV6
 	    in = out = socket(AF_INET6, SOCK_DGRAM, 0);
+#else
+	    in = out = socket(AF_INET, SOCK_DGRAM, 0);
+#endif
 	    if (in < 0) {
 		error("can't create dgram socket: %s\n", strerror(errno));
 		/*NOTREACHED*/
@@ -343,9 +351,15 @@ main(
 	    }
 #endif
 
+#ifdef HAVE_IPV6
 	    sin.sin6_family = (sa_family_t)AF_INET6;
 	    sin.sin6_addr = in6addr_any;
 	    sin.sin6_port = (in_port_t)htons((in_port_t)atoi(argv[i]));
+#else
+	    sin.sin_family = (sa_family_t)AF_INET;
+	    sin.sin_addr = INADDR_ANY;
+	    sin.sin_port = (in_port_t)htons((in_port_t)atoi(argv[i]));
+#endif
 	    if (bind(in, (struct sockaddr *)&sin, (socklen_t)sizeof(sin)) < 0) {
 		error("can't bind to port %d: %s\n", atoi(argv[i]),
 		    strerror(errno));
@@ -356,12 +370,20 @@ main(
 	 * Ditto for tcp ports.
 	 */
 	else if (strncmp(argv[i], "-tcp=", strlen("-tcp=")) == 0) {
+#ifdef HAVE_IPV6
 	    struct sockaddr_in6 sin;
+#else
+	    struct sockaddr_in sin;
+#endif
 	    int sock;
 	    socklen_t n;
 
 	    argv[i] += strlen("-tcp=");
+#ifdef HAVE_IPV6
 	    sock = socket(AF_INET6, SOCK_STREAM, 0);
+#else
+	    sock = socket(AF_INET, SOCK_STREAM, 0);
+#endif
 	    if (sock < 0) {
 		error("can't create tcp socket: %s\n", strerror(errno));
 		/*NOTREACHED*/
@@ -378,9 +400,15 @@ main(
 #endif
 	    setsockopt(sock, SOL_SOCKET, SO_REUSEADDR,
 		(void *)&n, (socklen_t)sizeof(n));
+#ifdef HAVE_IPV6
 	    sin.sin6_family = (sa_family_t)AF_INET6;
 	    sin.sin6_addr = in6addr_any;
 	    sin.sin6_port = (in_port_t)htons((in_port_t)atoi(argv[i]));
+#else
+	    sin.sin_family = (sa_family_t)AF_INET;
+	    sin.sin_addr = INADDR_ANY;
+	    sin.sin_port = (in_port_t)htons((in_port_t)atoi(argv[i]));
+#endif
 	    if (bind(sock, (struct sockaddr *)&sin, (socklen_t)sizeof(sin)) < 0) {
 		error("can't bind to port %d: %s\n", atoi(argv[i]),
 		    strerror(errno));

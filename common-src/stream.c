@@ -223,7 +223,7 @@ stream_client_internal(
 
 #ifdef HAVE_IPV6
     hints.ai_flags = AI_CANONNAME | AI_V4MAPPED | AI_ALL;
-    hints.ai_family = (sa_family_t)AF_INET6;
+    hints.ai_family = (sa_family_t)AF_UNSPEC;
 #else
     hints.ai_flags = AI_CANONNAME;
     hints.ai_family = (sa_family_t)AF_INET;
@@ -256,13 +256,15 @@ stream_client_internal(
 
     memset(&claddr, 0, SIZEOF(claddr));
 #ifdef HAVE_IPV6
-    ((struct sockaddr_in6 *)&claddr)->sin6_family = (sa_family_t)AF_INET6;
-    ((struct sockaddr_in6 *)&claddr)->sin6_addr = in6addr_any;
-#else
-    ((struct sockaddr_in *)&claddr)->sin_family = (sa_family_t)AF_INET;
-    ((struct sockaddr_in *)&claddr)->sin_addr.s_addr = INADDR_ANY;
+    if(svaddr.ss_family == (sa_family_t)AF_INET6) {
+	((struct sockaddr_in6 *)&claddr)->sin6_family = (sa_family_t)AF_INET6;
+	((struct sockaddr_in6 *)&claddr)->sin6_addr = in6addr_any;
+    } else
 #endif
-
+    {
+	((struct sockaddr_in *)&claddr)->sin_family = (sa_family_t)AF_INET;
+	((struct sockaddr_in *)&claddr)->sin_addr.s_addr = INADDR_ANY;
+    }
     /*
      * If a privileged port range was requested, we try to get a port in
      * that range first and fail if it is not available.  Next, we try
