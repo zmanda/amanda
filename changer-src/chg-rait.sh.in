@@ -126,7 +126,7 @@ mydev=""
 mysep="{"
 
 case x$1 in
-x-slot|x-reseti|x-eject|x-search|x-label)
+x-slot|x-reset|x-eject|x-search|x-label)
 
     #
     # read slot number and device from each
