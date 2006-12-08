@@ -816,13 +816,22 @@ backup_api_info_tapeheader(
     char line[1024];
 
     snprintf(line, 1024, "%s: info BACKUP=DUMPER\n", get_pname());
-    write(mesgfd, line, strlen(line));
+    if (fullwrite(mesgfd, line, strlen(line)) != (ssize_t)strlen(line)) {
+	dbprintf(("error writing to mesgfd socket: %s", strerror(errno)));
+	return;
+    }
 
     snprintf(line, 1024, "%s: info DUMPER=%s\n", get_pname(), prog);
-    write(mesgfd, line, strlen(line));
+    if (fullwrite(mesgfd, line, strlen(line)) != (ssize_t)strlen(line)) {
+	dbprintf(("error writing to mesgfd socket: %s", strerror(errno)));
+	return;
+    }
 
     snprintf(line, 1024, "%s: info RECOVER_CMD=", get_pname());
-    write(mesgfd, line, strlen(line));
+    if (fullwrite(mesgfd, line, strlen(line)) != (ssize_t)strlen(line)) {
+	dbprintf(("error writing to mesgfd socket: %s", strerror(errno)));
+	return;
+    }
 
     if (options->compress) {
 	snprintf(line, 1024, "%s %s |", UNCOMPRESS_PATH,
@@ -832,19 +841,31 @@ backup_api_info_tapeheader(
 		 ""
 #endif
 		 );
-       write(mesgfd, line, strlen(line));
+	if (fullwrite(mesgfd, line, strlen(line)) != (ssize_t)strlen(line)) {
+	    dbprintf(("error writing to mesgfd socket: %s", strerror(errno)));
+	    return;
+	}
     }
     snprintf(line, 1024, "%s -f... -\n", prog);
-    write(mesgfd, line, strlen(line));
+    if (fullwrite(mesgfd, line, strlen(line)) != (ssize_t)strlen(line)) {
+	dbprintf(("error writing to mesgfd socket: %s", strerror(errno)));
+	return;
+    }
 
     if (options->compress) {
 	snprintf(line, 1024, "%s: info COMPRESS_SUFFIX=%s\n",
 		 get_pname(), COMPRESS_SUFFIX);
-	write(mesgfd, line, strlen(line));
+	if (fullwrite(mesgfd, line, strlen(line)) != (ssize_t)strlen(line)) {
+	    dbprintf(("error writing to mesgfd socket: %s", strerror(errno)));
+	    return;
+	}
     }
 
     snprintf(line, 1024, "%s: info end\n", get_pname());
-    write(mesgfd, line, strlen(line));
+    if (fullwrite(mesgfd, line, strlen(line)) != (ssize_t)strlen(line)) {
+	dbprintf(("error writing to mesgfd socket: %s", strerror(errno)));
+	return;
+    }
 }
 
 pid_t
