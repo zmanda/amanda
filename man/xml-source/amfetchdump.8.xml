@@ -139,7 +139,8 @@ piece as an individual file and reassembles them only after all have
 been restored.</para>
 
 <note>This requires at least double the size of your dump in free
-disk space, in order to build the final assembled dumpfile.</note>
+disk space, in order to build the final assembled dumpfile.
+</note>
 
 <para>This behavior is implicitly invoked in circumstances where knowing the
 location of all dumps on tape in advance is not possible, such as when

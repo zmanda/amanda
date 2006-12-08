@@ -180,10 +180,11 @@ so must appear in
 <emphasis remap='B'>amanda.conf</emphasis>
 before any
 <emphasis remap='B'>dumptype</emphasis>s
-are defined.</note>
+are defined.
+</note>
   </listitem>
   </varlistentry>
-  
+
   <varlistentry>
   <term><emphasis remap='B'>runspercycle</emphasis> <emphasis remap='I'> int</emphasis></term>
   <listitem>
@@ -869,10 +870,11 @@ this column.</para>
 <programlisting>
 <para>columnspec &quot;Disk=1:18,HostName=0:10,OutKB=1:7&quot;</para>
 </programlisting>
+<para>
 The above will display the disk information in 18 characters
 and put one space before it. The hostname column will be 10 characters wide with
 no space to the left. The output KBytes column is seven characters wide
-with one space before it.
+with one space before it.</para>
   </listitem>
   </varlistentry>
 
@@ -1506,7 +1508,8 @@ is a file name on the client containing glob expressions.</para>
 head directory of the DLE.</para>
 
 <note>For globbing to work at all, even the limited single level, 
-the top level directory of the DLE must be readable by the &A; user.</note>
+the top level directory of the DLE must be readable by the &A; user.
+</note>
 
 <para>With the <emphasis remap='B'>append</emphasis> keyword, the
 <emphasis remap='I'>string</emphasis> is appended to the current list, without it, the

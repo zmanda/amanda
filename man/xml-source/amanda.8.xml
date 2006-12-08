@@ -732,7 +732,8 @@ is used to limit the amount of data written. When the limit is reached, the driv
 and probably only with the
 <emphasis remap='B'>record</emphasis>
 option set to
-<emphasis remap='I'>no</emphasis>.</note>
+<emphasis remap='I'>no</emphasis>.
+</note>
   </listitem>
   </varlistentry>
 

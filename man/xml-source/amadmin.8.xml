@@ -179,7 +179,8 @@ on
 from the &A; database.</para>
 <note>If you do not also remove the disk from the
 <emphasis remap='I'>disklist</emphasis>
-file, &A; will treat it as a new disk during the next run.</note>
+file, &A; will treat it as a new disk during the next run.
+</note>
   </listitem>
   </varlistentry>
 

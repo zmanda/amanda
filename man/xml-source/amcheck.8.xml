@@ -603,7 +603,8 @@ KBytes were available.
 <emphasis remap='I'>amanda.conf</emphasis>
 option)
 to allow for unexpected overruns.</para>
-<note>Even though this message is listed as a warning, it causes &amcheck; to exit with a non-zero status.</note>
+<note>Even though this message is listed as a warning, it causes &amcheck; to exit with a non-zero status.
+</note>
   </listitem>
   </varlistentry>
 </variablelist>
