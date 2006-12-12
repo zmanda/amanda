@@ -1,3 +1,8 @@
+2006-12-12  Jean-Louis Martineau <martineau@zmanda.com>
+	* configure.in: Find patch for sort program.
+	* server-src/amindexd.c: Clean the indexd file between the uncompress
+				 and sort process.
+
 2006-12-08  Jean-Louis Martineau <martineau@zmanda.com>
 	* configure.in: Add ICE_CHECK_DECL(snprintf,stdio.h)
 	* configure.in: Add ICE_CHECK_DECL(vsnprintf,stdio.h)

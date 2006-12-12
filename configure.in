@@ -1624,6 +1624,16 @@ AC_DEFINE_UNQUOTED(COMPRESS_BEST_OPT,"$COMPRESS_BEST_OPT",[Define as the command
 AC_DEFINE_UNQUOTED(UNCOMPRESS_PATH,"$UNCOMPRESS_PATH",[Define as the exact path to the gzip or compress command. ])
 AC_DEFINE_UNQUOTED(UNCOMPRESS_OPT,"$UNCOMPRESS_OPT",[Define as any optional arguments to get UNCOMPRESS_PATH to uncompress. ])
 
+AC_PATH_PROGS(SORT,sort,,$LOCSYSPATH)
+if test -z "$SORT"; then
+    if $NO_SERVER_MODE; then
+	SORT="NONE"
+    else
+	AC_MSG_ERROR([Set SORT to the path of the sort program.])
+    fi
+fi
+AC_DEFINE_UNQUOTED(SORT_PATH,"$SORT",[Define to the exact path to the sort program. ])
+
 AC_PATH_PROGS(MAILER,Mail mailx mail)
 if test -z "$MAILER"; then
     if $NO_SERVER_MODE; then

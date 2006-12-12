@@ -55,6 +55,7 @@
 #include "tapefile.h"
 #include "util.h"
 #include "amandad.h"
+#include "pipespawn.h"
 
 #include <grp.h>
 
@@ -155,6 +156,17 @@ uncompress_file(
     struct stat stat_filename;
     int result;
     size_t len;
+    int pipe_from_gzip;
+    int pipe_to_sort;
+    int indexfd;
+    int nullfd;
+    int debugfd;
+    char line[STR_SIZE];
+    FILE *pipe_stream;
+    pid_t pid_gzip;
+    pid_t pid_sort;
+    amwait_t  wait_status;
+
 
     filename = stralloc(filename_gz);
     len = strlen(filename);
@@ -185,26 +197,84 @@ uncompress_file(
  	}
 
 #ifdef UNCOMPRESS_OPT
-#  define PARAM_UNCOMPRESS_OPT " ", UNCOMPRESS_OPT
+#  define PARAM_UNCOMPRESS_OPT UNCOMPRESS_OPT
 #else
-#  define PARAM_UNCOMPRESS_OPT ""
+#  define PARAM_UNCOMPRESS_OPT skip_argument
 #endif
-	cmd = vstralloc(UNCOMPRESS_PATH,
-			PARAM_UNCOMPRESS_OPT,
-			" \'", filename_gz, "\'",
-			" 2>/dev/null",
-			" | (LC_ALL=C; export LC_ALL ; sort) ",
-			" > ", "\'", filename, "\'",
-			NULL);
-	dbprintf(("%s: uncompress command: %s\n",
-		  debug_prefix_time(NULL), cmd));
-	if (system(cmd) != 0) {
-	    *emsg = newvstralloc(*emsg, "\"", cmd, "\" failed", NULL);
-	    unlink(filename);
-	    errno = -1;
+
+	debugfd = debug_fd();
+	nullfd = open("/dev/null", O_RDONLY);
+	indexfd = open(filename,O_WRONLY|O_CREAT, 0600);
+	if (indexfd == -1) {
+	    *emsg = newvstralloc(*emsg, "Can't open '",
+				 filename, "' for writting: ",
+				 strerror(errno),
+				 NULL);
+	    dbprintf(("%s\n",*emsg));
 	    amfree(filename);
-	    amfree(cmd);
 	    return NULL;
+	}
+
+	/* start the uncompress process */
+	putenv(stralloc("LC_ALL=C"));
+	pid_gzip = pipespawn(UNCOMPRESS_PATH, STDOUT_PIPE,
+			     &nullfd, &pipe_from_gzip, &debugfd,
+			     UNCOMPRESS_PATH, PARAM_UNCOMPRESS_OPT,
+			     filename_gz, NULL);
+	aclose(nullfd);
+
+	pipe_stream = fdopen(pipe_from_gzip,"r");
+	if(pipe_stream == NULL) {
+	    *emsg = newvstralloc(*emsg, "Can't fdopen pipe from gzip: ",
+				 strerror(errno),
+				 NULL);
+	    dbprintf(("%s\n",*emsg));
+	    amfree(filename);
+	    return NULL;
+	}
+
+	/* start the sort process */
+	pid_sort = pipespawn(SORT_PATH, STDIN_PIPE,
+			     &pipe_to_sort, &indexfd, &debugfd,
+			     SORT_PATH, NULL);
+	aclose(indexfd);
+
+	/* send all ouput from uncompress process to sort process */
+	/* clean the data with clean_backslash */
+	while (fgets(line, STR_SIZE, pipe_stream) != NULL) {
+	    if (line[0] != '\0') {
+		if (index(line,'/')) {
+		    clean_backslash(line);
+		    fullwrite(pipe_to_sort,line,strlen(line));
+		}
+	    }
+	}
+
+	fclose(pipe_stream);
+	aclose(pipe_to_sort);
+	if (waitpid(pid_gzip, &wait_status, 0) < 0) {
+	    if (!WIFEXITED(wait_status)) {
+		dbprintf(("Uncompress exited with signal %d",
+			  WTERMSIG(wait_status)));
+	    } else if (WEXITSTATUS(wait_status) != 0) {
+		dbprintf(("Uncompress exited with status %d",
+			  WEXITSTATUS(wait_status)));
+	    } else {
+		dbprintf(("Uncompres returned negative value: %s",
+			  strerror(errno)));
+	    }
+	}
+	if (waitpid(pid_sort, &wait_status, 0)) {
+	    if (!WIFEXITED(wait_status)) {
+		dbprintf(("Sort exited with signal %d",
+			  WTERMSIG(wait_status)));
+	    } else if (WEXITSTATUS(wait_status) != 0) {
+		dbprintf(("Sort exited with status %d",
+			  WEXITSTATUS(wait_status)));
+	    } else {
+		dbprintf(("Sort returned negative value: %s",
+			  strerror(errno)));
+	    }
 	}
 
 	/* add at beginning */
