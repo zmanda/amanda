@@ -1,4 +1,8 @@
 2006-12-12  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amindexd.c: Use fgets to read index file because they
+	                         are not quoted.
+
+2006-12-12  Jean-Louis Martineau <martineau@zmanda.com>
 	* configure.in: Find patch for sort program.
 	* server-src/amindexd.c: Clean the indexd file between the uncompress
 				 and sort process.

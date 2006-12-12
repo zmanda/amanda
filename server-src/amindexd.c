@@ -303,7 +303,7 @@ process_ls_dump(
     int		recursive,
     char **	emsg)
 {
-    char *line = NULL;
+    char line[STR_SIZE];
     char *old_line = NULL;
     char *filename = NULL;
     char *filename_gz;
@@ -342,10 +342,10 @@ process_ls_dump(
 
     len_dir_slash=strlen(dir_slash);
 
-    while ((line = agets(fp)) != NULL) {
+    while (fgets(line, STR_SIZE, fp) != NULL) {
 	if (line[0] != '\0') {
-	    if (index(line,'/'))
-		line = clean_backslash(line);
+	    if(line[strlen(line)-1] == '\n')
+		line[strlen(line)-1] = '\0';
 	    if(strncmp(dir_slash, line, len_dir_slash) == 0) {
 		if(!recursive) {
 		    s = line + len_dir_slash;
@@ -360,12 +360,10 @@ process_ls_dump(
 		if(old_line == NULL || strcmp(line, old_line) != 0) {
 		    add_dir_list_item(dump_item, line);
 		    amfree(old_line);
-		    old_line = line;
-		    line = NULL;
+		    old_line = stralloc(line);
 		}
 	    }
 	}
-	/*@i@*/ amfree(line);
     }
     afclose(fp);
     /*@i@*/ amfree(old_line);
@@ -776,7 +774,7 @@ is_dir_valid_opaque(
     char *dir)
 {
     DUMP_ITEM *item;
-    char *line = NULL;
+    char line[STR_SIZE];
     FILE *fp;
     int last_level;
     char *ldir = NULL;
@@ -846,17 +844,16 @@ is_dir_valid_opaque(
 	    amfree(ldir);
 	    return -1;
 	}
-	for(; (line = agets(fp)) != NULL; free(line)) {
+	while (fgets(line, STR_SIZE, fp) != NULL) {
 	    if (line[0] == '\0')
 		continue;
-	    if (index(line,'/'))
-		line = clean_backslash(line);
+	    if(line[strlen(line)-1] == '\n')
+		line[strlen(line)-1] = '\0';
 	    if (strncmp(line, ldir, ldir_len) != 0) {
 		continue;			/* not found yet */
 	    }
 	    amfree(filename);
 	    amfree(ldir);
-	    amfree(line);
 	    afclose(fp);
 	    return 0;
 	}
