@@ -550,7 +550,7 @@ chunker_cmd(
 	    amfree(qdest);
 	    amfree(qname);
 	} else {
-		error("Write command without disk and holding disk.\n",
+		error("%s command without disk and holding disk.\n",
 		      cmdstr[cmd]);
 		/*NOTREACHED*/
 	}

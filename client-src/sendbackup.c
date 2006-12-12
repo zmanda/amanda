@@ -470,7 +470,7 @@ main(
     fflush(stdout);
     if (freopen("/dev/null", "w", stdout) == NULL) {
 	dbprintf(("%s: error redirecting stdout to /dev/null: %s\n",
-	    debug_prefix_time(NULL), mesgfd, strerror(errno)));
+	    debug_prefix_time(NULL), strerror(errno)));
         exit(1);
     }
 

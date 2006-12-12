@@ -58,7 +58,8 @@ printf_arglist_function2(void pkt_init, pkt_t *, pkt, pktype_t, type,
 
     assert(pkt != NULL);
     assert(strcmp(pkt_type2str(type), "BOGUS") != 0);
-    assert(fmt != NULL);
+    if(fmt == NULL)
+	fmt = "";
 
     pkt->type = type;
     pkt->packet_size = 1000;

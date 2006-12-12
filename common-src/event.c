@@ -111,18 +111,18 @@ event_register(
     if ((type == EV_READFD) || (type == EV_WRITEFD)) {
 	/* make sure we aren't given a high fd that will overflow a fd_set */
 	if (data >= FD_SETSIZE) {
-	    error("event_register: Invalid file descriptor %d", data);
+	    error("event_register: Invalid file descriptor %lu", data);
 	    /*NOTREACHED*/
 	}
 #if !defined(__lint) /* Global checking knows that these are never called */
     } else if (type == EV_SIG) {
 	/* make sure signals are within range */
 	if (data >= NSIG) {
-	    error("event_register: Invalid signal %d", data);
+	    error("event_register: Invalid signal %lu", data);
 	    /*NOTREACHED*/
 	}
 	if (sigtable[data].handle != NULL) { 
-	    error("event_register: signal %d already registered", data);
+	    error("event_register: signal %lu already registered", data);
 	    /*NOTREACHED*/
 	}
     } else if (type >= EV_DEAD) {

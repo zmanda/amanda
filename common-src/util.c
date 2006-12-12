@@ -283,7 +283,7 @@ connect_port(
     if (connect(s, (struct sockaddr *)svaddr,
 		(socklen_t)sizeof(*svaddr)) == -1 && !nonblock) {
 	save_errno = errno;
-	dbprintf(("%s: connect_portrange: connect from %s failed\n",
+	dbprintf(("%s: connect_portrange: connect from %s failed: %s\n",
 		  debug_prefix_time(NULL),
 		  str_sockaddr(addrp),
 		  strerror(save_errno)));
@@ -305,7 +305,7 @@ connect_port(
     dbprintf(("%s: connected to %s\n",
               debug_prefix_time(NULL),
               str_sockaddr(svaddr)));
-    dbprintf(("%s: our side is %s.%d\n",
+    dbprintf(("%s: our side is %s\n",
               debug_prefix_time(NULL),
               str_sockaddr(addrp)));
     return s;

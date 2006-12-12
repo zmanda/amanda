@@ -374,7 +374,7 @@ extern int errno;
  * for printf-like functions).  Only do this in gcc 2.7 or later ...
  * it may work on earlier stuff, but why chance it.
  */
-#if !defined(__GNUC__) || __GNUC__ < 2 || __GNUC_MINOR__ < 7 || defined(S_SPLINT_S) || defined(LINT) || defined(__lint)
+#if !defined(__GNUC__) || __GNUC__ < 2 || (__GNUC__ == 2 && __GNUC_MINOR__ < 7) || defined(S_SPLINT_S) || defined(LINT) || defined(__lint)
 #undef __attribute__
 #define __attribute__(__x)
 #endif

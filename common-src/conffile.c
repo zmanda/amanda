@@ -845,8 +845,7 @@ validate_debug(
 {
     np = np;
     if(val->v.i < 0 || val->v.i > 9) {
-	conf_parserror("Debug must be between 0 and 9",
-		       DISK_BLOCK_KB);
+	conf_parserror("Debug must be between 0 and 9");
     }
 }
 

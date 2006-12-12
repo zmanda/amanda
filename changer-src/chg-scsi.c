@@ -200,7 +200,7 @@ dump_changer_struct(
   dbprintf (("\traw: %d\n",chg->emubarcode));
   if (chg->debuglevel != NULL)
      dbprintf(("debug level     : %s\n", chg->debuglevel));
-  dbprintf(("Tapes need sleep: %d seconds\n",chg->sleep));
+  dbprintf(("Tapes need sleep: %d seconds\n", (int)chg->sleep));
   dbprintf(("Cleancycles     : %d\n",chg->cleanmax));
   dbprintf(("Changerdevice   : %s\n",chg->device));
   if (chg->labelfile != NULL)

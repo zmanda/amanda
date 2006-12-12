@@ -1392,7 +1392,7 @@ dumper_result(
 	update_info_dumper(dp, sched(dp)->origsize,
 			   sched(dp)->dumpsize, sched(dp)->dumptime);
 	log_add(L_STATS, "estimate %s %s %s %d [sec %ld nkb " OFF_T_FMT
-		" ckb " OFF_T_FMT " kps %d]",
+		" ckb " OFF_T_FMT " kps %lu]",
 		dp->host->hostname, dp->name, sched(dp)->datestamp,
 		sched(dp)->level,
 		sched(dp)->est_time, (OFF_T_FMT_TYPE)sched(dp)->est_nsize, 
@@ -1478,7 +1478,7 @@ handle_dumper_result(
 	    /* result_argv[2] always contains the serial number */
 	    sdp = serial2disk(result_argv[2]);
 	    if (sdp != dp) {
-		error("%s: Invalid serial number", get_pname(), result_argv[2]);
+		error("%s: Invalid serial number: %s", get_pname(), result_argv[2]);
 		/*NOTREACHED*/
 	    }
 	}
@@ -1627,7 +1627,7 @@ handle_chunker_result(
 	    /* result_argv[2] always contains the serial number */
 	    sdp = serial2disk(result_argv[2]);
 	    if (sdp != dp) {
-		error("%s: Invalid serial number", get_pname(), result_argv[2]);
+		error("%s: Invalid serial number: %s", get_pname(), result_argv[2]);
 		/*NOTREACHED*/
 	    }
 	}

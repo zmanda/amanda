@@ -481,7 +481,7 @@ main(
 		    error("mailfd write: %s", strerror(errno));
 		    /*NOTREACHED*/
 		} else {
-		    error("mailfd write: wrote %d instead of %d", w, r);
+		    error("mailfd write: wrote %zd instead of %zd", w, r);
 		    /*NOTREACHED*/
 		}
 	    }

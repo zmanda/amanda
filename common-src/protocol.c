@@ -592,7 +592,7 @@ s_repwait(
 	return (PA_PENDING);
 
     if(pkt->type == P_REP) {
-	pkt_init(&ack, P_ACK, "");
+	pkt_init(&ack, P_ACK, NULL);
 	if (security_sendpkt(p->security_handle, &ack) < 0) {
 	    /* XXX should retry */
 	    amfree(ack.body);
