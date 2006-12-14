@@ -819,8 +819,8 @@ restore(
 	      amfree(tmp_filename);
 	      tmp_filename = tmpstr;
 	  } 
-	  final_filename = stralloc(tmp_filename); 
-	  tmp_filename = newvstralloc(tmp_filename, ".tmp", NULL);
+	  final_filename = tmp_filename; 
+	  tmp_filename = vstralloc(final_filename, ".tmp", NULL);
   	  if((dest = open(tmp_filename, (O_CREAT | O_RDWR | O_TRUNC),
 			  CREAT_MODE)) < 0) {
   	      error("could not create output file %s: %s",
