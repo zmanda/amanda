@@ -1004,18 +1004,22 @@ getconf_list(
     holdingdisk_t *hp;
 
     if (strcasecmp(listname,"tapetype") == 0) {
+	result = stralloc("");
 	for(tp = tapelist; tp != NULL; tp=tp->next) {
 	    result = vstrextend(&result, tp->name, "\n", NULL);
 	}
     } else if (strcasecmp(listname,"dumptype") == 0) {
+	result = stralloc("");
 	for(dp = dumplist; dp != NULL; dp=dp->next) {
 	    result = vstrextend(&result, dp->name, "\n", NULL);
 	}
     } else if (strcasecmp(listname,"holdingdisk") == 0) {
+	result = stralloc("");
 	for(hp = holdingdisks; hp != NULL; hp=hp->next) {
 	    result = vstrextend(&result, hp->name, "\n", NULL);
 	}
     } else if (strcasecmp(listname,"interface") == 0) {
+	result = stralloc("");
 	for(ip = interface_list; ip != NULL; ip=ip->next) {
 	    result = vstrextend(&result, ip->name, "\n", NULL);
 	}
