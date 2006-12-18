@@ -649,7 +649,7 @@ protocol_accept(
 		strcmp(as->arguments, arguments) == 0) {
 		    dbprintf(("%s: %s %s: already running, acking req\n",
 			debug_prefix_time(NULL), service, arguments));
-		    pkt_init(&pkt_out, P_ACK, NULL);
+		    pkt_init_empty(&pkt_out, P_ACK);
 		    goto send_pkt_out_no_delete;
 	    }
     }
@@ -793,7 +793,7 @@ s_sendack(
     (void)action;	/* Quiet unused parameter warning */
     (void)pkt;		/* Quiet unused parameter warning */
 
-    pkt_init(&ack, P_ACK, NULL);
+    pkt_init_empty(&ack, P_ACK);
     if (do_sendpkt(as->security_handle, &ack) < 0) {
 	dbprintf(("%s: error sending ACK: %s\n",
 	    debug_prefix_time(NULL), security_geterror(as->security_handle)));
@@ -846,7 +846,7 @@ s_repwait(
 	    dbprintf(("%s: received dup P_REQ packet, ACKing it\n",
 		debug_prefix_time(NULL)));
 	    amfree(as->rep_pkt.body);
-	    pkt_init(&as->rep_pkt, P_ACK, NULL);
+	    pkt_init_empty(&as->rep_pkt, P_ACK);
 	    do_sendpkt(as->security_handle, &as->rep_pkt);
 	    security_recvpkt(as->security_handle, protocol_recv, as, -1);
 	    return (A_PENDING);
@@ -903,7 +903,7 @@ s_repwait(
 	    pkt_init(&as->rep_pkt, P_PREP, "%s", as->repbuf);
 	    do_sendpkt(as->security_handle, &as->rep_pkt);
 	    amfree(as->rep_pkt.body);
-	    pkt_init(&as->rep_pkt, P_REP, NULL);
+	    pkt_init_empty(&as->rep_pkt, P_REP);
 	}
  
 	return (A_PENDING);
@@ -958,7 +958,7 @@ s_processrep(
      */
     repbuf = stralloc(as->repbuf);
     amfree(as->rep_pkt.body);
-    pkt_init(&as->rep_pkt, P_REP, NULL);
+    pkt_init_empty(&as->rep_pkt, P_REP);
     tok = strtok(repbuf, " ");
     if (tok == NULL)
 	goto error;

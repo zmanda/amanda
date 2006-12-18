@@ -42,6 +42,7 @@ typedef struct {
 /*
  * Initialize a packet
  */
+void pkt_init_empty(pkt_t *pkt, pktype_t type);
 void pkt_init(pkt_t *, pktype_t, const char *, ...)
     __attribute__ ((format (printf, 3, 4)));
 

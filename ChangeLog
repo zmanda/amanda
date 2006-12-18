@@ -1,4 +1,10 @@
 2006-12-18  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/packet.c (pkt_init_empty): New function.
+	* common-src/packet.h (pkt_init_empty): New prototype.
+	* amandad-src/amandad.c, common-src/protocol.c,
+	  common-src/security-util.c: Use pkt_init_empty.
+
+2006-12-18  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.c: Print nothing if the list is emtpy.
 
 2006-12-14  Jean-Louis Martineau <martineau@zmanda.com>

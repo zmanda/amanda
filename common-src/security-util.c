@@ -1885,7 +1885,7 @@ str2pkthdr(
     if ((tok = strtok(NULL, " ")) == NULL)
 	goto parse_error;
     amfree(pkt->body);
-    pkt_init(pkt, pkt_str2type(tok), NULL);
+    pkt_init_empty(pkt, pkt_str2type(tok));
     if (pkt->type == (pktype_t)-1)    
 	goto parse_error;
 
