@@ -1056,7 +1056,7 @@ getsize_dump(
     char *qdisk = quote_string(disk);
     char *qdevice;
     char *config;
-#ifdef DUMP
+#if defined(DUMP) || defined(VDUMP) || defined(VXDUMP) || defined(XFSDUMP)
     int is_rundump = 1;
 #endif
 
