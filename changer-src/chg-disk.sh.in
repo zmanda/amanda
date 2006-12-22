@@ -34,16 +34,18 @@
 #	               |- ...
 #	               |- slotn
 #	where 'slot_root_dir' is the tapedev 'file:xxx' parameter and 'n'
-#	is the tapecycle parameter.
-#	
+#	is the LASTSLOT value of your changerfile config file. If LASTSLOT is
+#	not defined, the value of the tapecycle parameter is used.
+#
 #	To use this driver, just put the line 'tpchanger "chg-disk"' in your
 #	amanda.conf.
 #
-#	Example of use:
+#	Example of use (amanda.conf):
 #	--- cut here ---
 #	tapedev  "file:/BACKUP2/slots/"
 #	rawtapedev "file:/BACKUP2/slots/"
 #	changerdev "/dev/null"
+#	changerfile "chg-disk"
 #	tpchanger "chg-disk"
 #	changerfile "/usr/local/amanda/etc/changer"
 #	tapetype HARD-DISK
@@ -52,7 +54,12 @@
 #	}
 #	--- cut here ---
 #
-#	The number of slot is equal to your tapecyle.
+#	Example changerfile (chg-disk.conf):
+#	--- cut here ---
+#	LASTSLOT=12
+#	--- cut here ---
+#
+#	The number of slot is equal to your LASTSLOT or tapecycle.
 #	You must create the slots and data directory.
 #
 
@@ -103,6 +110,14 @@ fi
 
 # need rwx access to directory of changer file
 CHANGERFILE=`amgetconf$SUF changerfile`
+conf_match=`expr "$CHANGERFILE" : .\*\.conf\$`
+if [ $conf_match -ge 6 ]; then
+        CONFIGFILE=$CHANGERFILE
+        CHANGERFILE=`echo $CHANGERFILE | sed 's/.conf$//g'`
+else
+        CONFIGFILE=$CHANGERFILE.conf
+fi
+
 CFDir=`dirname ${CHANGERFILE}`
 [ -d ${CFDir} -a -r ${CFDir} -a -w ${CFDir} -a -x ${CFDir} ] ||
 	{ echo "$MYNAME: need 'rwx' access to '$CFDir'" 1>&2 ; exit 2 ; }
@@ -129,6 +144,9 @@ isinteger $CLEANCOUNT || { CLEANCOUNT=0 ; echo 0 > $CLEANFILE ; }
 
 FIRSTSLOT=1
 LASTSLOT=`amgetconf$SUF tapecycle`
+if test -r $CONFIGFILE; then
+    . $CONFIGFILE
+fi
 CURSLOT=0
 CLEANSLOT=$LASTSLOT
 NSLOT=`expr $LASTSLOT - $FIRSTSLOT + 1`

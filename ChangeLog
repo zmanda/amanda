@@ -1,4 +1,7 @@
 2006-12-22  Jean-Louis Martineau <martineau@zmanda.com>
+	* changer-src/chg-disk.sh.in: LASTSLOT in a changerfile for chg-disk.
+
+2006-12-22  Jean-Louis Martineau <martineau@zmanda.com>
 	* client-src/sendsize.c: Compilation fix.
 
 2006-12-18  Jean-Louis Martineau <martineau@zmanda.com>
