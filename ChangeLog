@@ -1,4 +1,9 @@
 2006-12-22  Jean-Louis Martineau <martineau@zmanda.com>
+	* recover-src/display_commands.c: Send quoted text to amindexd.
+	* recover-src/extract_list.c: Send quoted text to amindexd.
+	* recover-src/set_commands.c: Send quoted text to amindexd.
+
+2006-12-22  Jean-Louis Martineau <martineau@zmanda.com>
 	* changer-src/chg-disk.sh.in: LASTSLOT in a changerfile for chg-disk.
 
 2006-12-22  Jean-Louis Martineau <martineau@zmanda.com>

@@ -143,6 +143,7 @@ suck_dir_list_from_server(void)
     char *disk_path_slash_dot = NULL;
     char *s;
     int ch;
+    char *qdisk_path;
 
     if (disk_path == NULL) {
 	printf("Directory must be set before getting listing\n");
@@ -155,7 +156,9 @@ suck_dir_list_from_server(void)
 
     clear_dir_list();
 
-    cmd = stralloc2("OLSD ", disk_path);
+    qdisk_path = quote_string(disk_path);
+    cmd = stralloc2("OLSD ", qdisk_path);
+    amfree(qdisk_path);
     if (send_command(cmd) == -1) {
 	amfree(cmd);
 	amfree(disk_path_slash);

@@ -30,6 +30,7 @@
  */
 
 #include "amanda.h"
+#include "util.h"
 #include "amrecover.h"
 
 #ifdef SAMBA_CLIENT
@@ -42,6 +43,7 @@ set_date(
     char *	date)
 {
     char *cmd = NULL;
+    char *qdisk_path;
 
     clear_dir_list();
 
@@ -53,7 +55,9 @@ set_date(
        is still valid at the new date, and if not set directory to
        mount_point */
     if (disk_path != NULL) {
-	cmd = newstralloc2(cmd, "OISD ", disk_path);
+	qdisk_path = quote_string(disk_path);
+	cmd = newstralloc2(cmd, "OISD ", qdisk_path);
+	amfree(qdisk_path);
 	if (exchange(cmd) == -1)
 	    exit(1);
 	if (server_happy())
@@ -156,6 +160,7 @@ set_disk(
     char *	mtpt)
 {
     char *cmd = NULL;
+    char *qdsk;
 
     if (is_extract_list_nonempty())
     {
@@ -171,7 +176,9 @@ set_disk(
     }
 
     clear_dir_list();
-    cmd = stralloc2("DISK ", dsk);
+    qdsk = quote_string(dsk);
+    cmd = stralloc2("DISK ", qdsk);
+    amfree(qdsk);
     if (converse(cmd) == -1)
 	exit(1);
     amfree(cmd);
@@ -226,9 +233,12 @@ list_disk(
     char *	amdevice)
 {
     char *cmd = NULL;
+    char *qamdevice;
 
     if(amdevice) {
-	cmd = stralloc2("LISTDISK ", amdevice);
+	qamdevice = quote_string(amdevice);
+	cmd = stralloc2("LISTDISK ", qamdevice);
+	amfree(qamdevice);
 	if (converse(cmd) == -1)
 	    exit(1);
 	amfree(cmd);
@@ -388,6 +398,7 @@ set_directory(
 {
     char *cmd = NULL;
     char *new_dir = NULL;
+    char *qnew_dir;
     char *dp, *de;
     char *ldir = NULL;
 
@@ -484,7 +495,9 @@ set_directory(
 	}
     }
 
-    cmd = stralloc2("OISD ", new_dir);
+    qnew_dir = quote_string(new_dir);
+    cmd = stralloc2("OISD ", qnew_dir);
+    amfree(qnew_dir);
     if (exchange(cmd) == -1) {
 	exit(1);
 	/*NOTREACHED*/

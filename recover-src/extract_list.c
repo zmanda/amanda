@@ -743,6 +743,7 @@ add_file(
     ssize_t j;
     char *dir, *dir_undo, dir_undo_ch = '\0';
     char *ditem_path = NULL;
+    char *qditem_path = NULL;
     char *l = NULL;
     int  added;
     char *s, *fp, *quoted;
@@ -809,7 +810,9 @@ add_file(
 		ditem_path = newstralloc(ditem_path, ditem->path);
 		clean_pathname(ditem_path);
 
-		cmd = stralloc2("ORLD ", ditem_path);
+		qditem_path = quote_string(ditem_path);
+		cmd = stralloc2("ORLD ", qditem_path);
+		amfree(qditem_path);
 		if(send_command(cmd) == -1) {
 		    amfree(cmd);
 		    amfree(ditem_path);
@@ -1064,6 +1067,7 @@ delete_file(
     int  level = 0;
     off_t fileno;
     char *ditem_path = NULL;
+    char *qditem_path;
     char *l = NULL;
     int  deleted;
     char *s;
@@ -1129,7 +1133,9 @@ delete_file(
 		ditem_path = newstralloc(ditem_path, ditem->path);
 		clean_pathname(ditem_path);
 
-		cmd = stralloc2("ORLD ", ditem_path);
+		qditem_path = quote_string(ditem_path);
+		cmd = stralloc2("ORLD ", qditem_path);
+		amfree(qditem_path);
 		if(send_command(cmd) == -1) {
 		    amfree(cmd);
 		    amfree(ditem_path);
