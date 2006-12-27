@@ -491,6 +491,11 @@ quote_string(
                 *(s++) = 'f';
 		str++;
 		continue;
+	    } else if (*str == '\\') {
+                *(s++) = '\\';
+                *(s++) = '\\';
+		str++;
+		continue;
 	    }
             if (*str == '"')
                 *(s++) = '\\';

@@ -1,3 +1,6 @@
+2006-12-27  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/util.c (quote_string): Escape '\' character.
+
 2006-12-22  Jean-Louis Martineau <martineau@zmanda.com>
 	* recover-src/display_commands.c: Send quoted text to amindexd.
 	* recover-src/extract_list.c: Send quoted text to amindexd.
