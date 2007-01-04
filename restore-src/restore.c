@@ -1400,7 +1400,7 @@ load_manual_tape(
 		    "enter, ^D to finish reading tapes\n");
 	}
 	fflush(prompt_out);
-	if((input = agets(stdin)) == NULL)
+	if((input = agets(prompt_in)) == NULL)
 	    ret = -1;
     }
 

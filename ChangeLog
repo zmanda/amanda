@@ -1,4 +1,7 @@
 2007-01-04  Jean-Louis Martineau <martineau@zmanda.com>
+	* restore-src/restore.c: Use prompt_in.
+
+2007-01-04  Jean-Louis Martineau <martineau@zmanda.com>
 	* amandad-src/amandad.c, common-src/bsd-security.c,
 	  common-src/bsdtcp-security.c, common-src/bsdudp-security.c,
 	  common-src/dgram.c, common-src/security-util.c,
