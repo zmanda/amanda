@@ -41,6 +41,9 @@ require 5.001;
 use English;
 use Getopt::Long;
 
+delete @ENV{'IFS', 'CDPATH', 'ENV', 'BASH_ENV', 'PATH'};
+$ENV{'PATH'} = "/usr/bin:/usr/sbin:/sbin:/bin";
+
 $| = 1;
 
 if (-d "@AMANDA_DBGDIR@") {

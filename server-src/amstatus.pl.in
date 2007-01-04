@@ -9,6 +9,9 @@ eval '(exit $?0)' && eval 'exec @PERL@ -S $0 ${1+"$@"}'
 require "newgetopt.pl";
 use Time::Local;
 
+delete @ENV{'IFS', 'CDPATH', 'ENV', 'BASH_ENV', 'PATH'};
+$ENV{'PATH'} = "/usr/bin:/usr/sbin:/sbin:/bin";
+
 $confdir="@CONFIG_DIR@";
 $prefix='@prefix@';
 $prefix=$prefix;		# avoid warnings about possible typo
@@ -71,9 +74,6 @@ if ( ! -d "$confdir/$conf" ) {
     exit 1;
 }
 
-$oldPATH = $ENV{'PATH'};
-$ENV{'PATH'} = "/bin:/usr/bin:/usr/sbin:/sbin";       # force known path
-
 $pwd = `pwd`;
 chomp $pwd;
 chdir "$confdir/$conf";
@@ -110,7 +110,6 @@ if($nb_options == 0 ) {
 }
 
 $unit=`$sbindir/amgetconf$suf displayunit`;
-$ENV{'PATH'} = $oldPATH;
 chomp($unit);
 $unitdivisor=1;
 if($unit eq 'K') {

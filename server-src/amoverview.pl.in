@@ -13,6 +13,9 @@ use Text::ParseWords;
 use Carp;
 use POSIX;
 
+delete @ENV{'IFS', 'CDPATH', 'ENV', 'BASH_ENV', 'PATH'};
+$ENV{'PATH'} = "/usr/bin:/usr/sbin:/sbin:/bin";
+
 sub Usage {
     print STDERR <<END;
 Usage: $0 [[-config] CONFIG] [-hostwidth width] [-diskwidth width] [-skipmissed] [-last] [-num0] [-togo0] [-verbose]

@@ -1,3 +1,9 @@
+2007-01-04  Jean-Louis Martineau <martineau@zmanda.com>
+	* changer-src/chg-chio.pl.in, changer-src/chg-iomega.pl.in,
+	  changer-src/chg-rth.pl.in, dumper-src/amgtar.pl.in,
+	  server-src/amoverview.pl.in, server-src/amstatus.pl.in,
+	  server-src/amtoc.pl.in: Clean ENV and set PATH.
+
 2006-12-27  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/driver.c: Don't repport error for many run in a day if
 			       it's amflush.
