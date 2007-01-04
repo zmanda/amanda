@@ -3092,6 +3092,38 @@ else
 fi
 AM_CONDITIONAL(HAVE_XSLTPROC, test "x$USE_XSLTPROC" = "xyes")
 
+AC_CACHE_CHECK([for working IPv6],
+	       amanda_working_ipv6,
+  [AC_TRY_RUN([#include <sys/types.h>
+#ifdef HAVE_SYS_SOCKET_H
+#include <sys/socket.h>
+#endif
+#ifdef HAVE_NETINET_IN_H
+#include <netinet/in.h>
+#endif
+#ifdef HAVE_WINSOCK2_H
+#include <winsock2.h>
+#endif
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <errno.h>
+
+main()
+{
+   int aa;
+   aa = socket(AF_INET6, SOCK_STREAM, 0);
+   if (aa > 0) return 0;
+   return aa;
+}],amanda_working_ipv6=yes,
+   amanda_working_ipv6=no,
+   amanda_working_ipv6=yes
+  )
+  ]
+)
+if test "$amanda_working_ipv6" = yes; then
+	AC_DEFINE(WORKING_IPV6,1,[Define if IPv6 is working. ])
+fi
+
 #### Enforce amanda code cleanliness rules.
 #### Done here to allow configuration code to remain intact.
 if test "x$CC" = "xgcc"; then

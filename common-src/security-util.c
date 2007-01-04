@@ -940,7 +940,7 @@ bsd_recv_security_ok(
 	/*
 	 * Request packets must come from a reserved port
 	 */
-#ifdef HAVE_IPV6
+#ifdef WORKING_IPV6
 	if (rh->peer.ss_family == (sa_family_t)AF_INET6)
 	    port = ntohs(((struct sockaddr_in6 *)&rh->peer)->sin6_port);
 	else
@@ -1201,7 +1201,7 @@ udp_recvpkt_callback(
 
     if (strcmp(rh->proto_handle, rh->udp->handle) != 0) assert(1);
     /* if it didn't come from the same host/port, forget it */
-#ifdef HAVE_IPV6
+#ifdef WORKING_IPV6
     if (rh->peer.ss_family == (sa_family_t)AF_INET6)
 	len = sizeof(struct sockaddr_in6);
     else
@@ -1278,7 +1278,7 @@ udp_inithandle(
 
     rh->hostname = stralloc(hostname);
     memcpy(&rh->peer, addr, SIZEOF(rh->peer));
-#ifdef HAVE_IPV6
+#ifdef WORKING_IPV6
     if(rh->peer.ss_family == (sa_family_t)AF_INET6)
 	((struct sockaddr_in6 *)&rh->peer)->sin6_port = port;
     else
@@ -1389,7 +1389,7 @@ udp_netfd_read_callback(
 	return;
     }
 
-#ifdef HAVE_IPV6
+#ifdef WORKING_IPV6
     if (udp->peer.ss_family == (sa_family_t)AF_INET6)
 	port = ((struct sockaddr_in6 *)&udp->peer)->sin6_port;
     else
@@ -2123,7 +2123,7 @@ check_user_amandahosts(
     int hostmatch;
     int usermatch;
     char *aservice = NULL;
-#ifdef HAVE_IPV6
+#ifdef WORKING_IPV6
     char ipstr[INET6_ADDRSTRLEN];
 #else
     char ipstr[INET_ADDRSTRLEN];
@@ -2195,7 +2195,7 @@ check_user_amandahosts(
 	if (!hostmatch  &&
 	    (strcasecmp(filehost, "localhost")== 0 ||
 	     strcasecmp(filehost, "localhost.localdomain")== 0)) {
-#ifdef HAVE_IPV6
+#ifdef WORKING_IPV6
 	    if (addr->ss_family == (sa_family_t)AF_INET6)
 		inet_ntop(AF_INET6, &((struct sockaddr_in6 *)addr)->sin6_addr,
 			  ipstr, sizeof(ipstr));
@@ -2345,7 +2345,7 @@ check_security(
     }
 
     /* next, make sure the remote port is a "reserved" one */
-#ifdef HAVE_IPV6
+#ifdef WORKING_IPV6
     if (addr->ss_family == (sa_family_t)AF_INET6)
 	port = ntohs(((struct sockaddr_in6 *)addr)->sin6_port);
     else
@@ -2616,7 +2616,7 @@ check_name_give_sockaddr(
     struct addrinfo hints;
     int result;
 
-#ifdef HAVE_IPV6
+#ifdef WORKING_IPV6
     hints.ai_flags = AI_CANONNAME | AI_V4MAPPED | AI_ALL;
 #else
     hints.ai_flags = AI_CANONNAME;
@@ -2649,7 +2649,7 @@ check_name_give_sockaddr(
 
     for(res1=res; res1 != NULL; res = res->ai_next) {
 	if (res->ai_addr->sa_family == addr->sa_family) {
-#ifdef HAVE_IPV6
+#ifdef WORKING_IPV6
 	    if (addr->sa_family == (sa_family_t)AF_INET6) {
 		result = memcmp(
 			&((struct sockaddr_in6 *)res->ai_addr)->sin6_addr,

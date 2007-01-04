@@ -325,14 +325,14 @@ main(
 	 * This may only apply to some security types.
 	 */
 	else if (strncmp(argv[i], "-udp=", strlen("-udp=")) == 0) {
-#ifdef HAVE_IPV6
+#ifdef WORKING_IPV6
 	    struct sockaddr_in6 sin;
 #else
 	    struct sockaddr_in sin;
 #endif
 
 	    argv[i] += strlen("-udp=");
-#ifdef HAVE_IPV6
+#ifdef WORKING_IPV6
 	    in = out = socket(AF_INET6, SOCK_DGRAM, 0);
 #else
 	    in = out = socket(AF_INET, SOCK_DGRAM, 0);
@@ -351,7 +351,7 @@ main(
 	    }
 #endif
 
-#ifdef HAVE_IPV6
+#ifdef WORKING_IPV6
 	    sin.sin6_family = (sa_family_t)AF_INET6;
 	    sin.sin6_addr = in6addr_any;
 	    sin.sin6_port = (in_port_t)htons((in_port_t)atoi(argv[i]));
@@ -370,7 +370,7 @@ main(
 	 * Ditto for tcp ports.
 	 */
 	else if (strncmp(argv[i], "-tcp=", strlen("-tcp=")) == 0) {
-#ifdef HAVE_IPV6
+#ifdef WORKING_IPV6
 	    struct sockaddr_in6 sin;
 #else
 	    struct sockaddr_in sin;
@@ -379,7 +379,7 @@ main(
 	    socklen_t n;
 
 	    argv[i] += strlen("-tcp=");
-#ifdef HAVE_IPV6
+#ifdef WORKING_IPV6
 	    sock = socket(AF_INET6, SOCK_STREAM, 0);
 #else
 	    sock = socket(AF_INET, SOCK_STREAM, 0);
@@ -400,7 +400,7 @@ main(
 #endif
 	    setsockopt(sock, SOL_SOCKET, SO_REUSEADDR,
 		(void *)&n, (socklen_t)sizeof(n));
-#ifdef HAVE_IPV6
+#ifdef WORKING_IPV6
 	    sin.sin6_family = (sa_family_t)AF_INET6;
 	    sin.sin6_addr = in6addr_any;
 	    sin.sin6_port = (in_port_t)htons((in_port_t)atoi(argv[i]));

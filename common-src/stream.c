@@ -60,7 +60,7 @@ stream_server(
     int *portrange;
 
     *portp = USHRT_MAX;				/* in case we error exit */
-#ifdef HAVE_IPV6
+#ifdef WORKING_IPV6
     if((server_socket = socket(AF_INET6, SOCK_STREAM, 0)) == -1) {
 #else
     if((server_socket = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
@@ -83,7 +83,7 @@ stream_server(
 	return -1;
     }
     memset(&server, 0, SIZEOF(server));
-#ifdef HAVE_IPV6
+#ifdef WORKING_IPV6
     ((struct sockaddr_in6 *)&server)->sin6_family = (sa_family_t)AF_INET6;
     ((struct sockaddr_in6 *)&server)->sin6_addr = in6addr_any;
 #else
@@ -129,7 +129,7 @@ stream_server(
 	    dbprintf(("%s: stream_server: Could not bind to port in range: %d - %d.\n",
 		      debug_prefix_time(NULL), portrange[0], portrange[1]));
 	} else {
-#ifdef HAVE_IPV6
+#ifdef WORKING_IPV6
 	    ((struct sockaddr_in6 *)&server)->sin6_addr = in6addr_any;
 #else
 	    ((struct sockaddr_in *)&server)->sin_addr.s_addr = INADDR_ANY;
@@ -187,7 +187,7 @@ out:
     }
 #endif
 
-#ifdef HAVE_IPV6
+#ifdef WORKING_IPV6
     if (server.ss_family == (sa_family_t)AF_INET6)
 	*portp = (in_port_t)ntohs(((struct sockaddr_in6 *)&server)->sin6_port);
     else
@@ -221,7 +221,7 @@ stream_client_internal(
 
     f = priv ? "stream_client_privileged" : "stream_client";
 
-#ifdef HAVE_IPV6
+#ifdef WORKING_IPV6
     hints.ai_flags = AI_CANONNAME | AI_V4MAPPED | AI_ALL;
     hints.ai_family = (sa_family_t)AF_UNSPEC;
 #else
@@ -247,7 +247,7 @@ stream_client_internal(
 
     memcpy(&svaddr, res->ai_addr, (size_t)res->ai_addrlen);
     freeaddrinfo(res);
-#ifdef HAVE_IPV6
+#ifdef WORKING_IPV6
     if (svaddr.ss_family == (sa_family_t)AF_INET6)
 	((struct sockaddr_in6 *)&svaddr)->sin6_port = (in_port_t)htons(port);
     else
@@ -255,7 +255,7 @@ stream_client_internal(
 	((struct sockaddr_in *)&svaddr)->sin_port = (in_port_t)htons(port);
 
     memset(&claddr, 0, SIZEOF(claddr));
-#ifdef HAVE_IPV6
+#ifdef WORKING_IPV6
     if(svaddr.ss_family == (sa_family_t)AF_INET6) {
 	((struct sockaddr_in6 *)&claddr)->sin6_family = (sa_family_t)AF_INET6;
 	((struct sockaddr_in6 *)&claddr)->sin6_addr = in6addr_any;
@@ -298,7 +298,7 @@ out:
     try_socksize(client_socket, SO_SNDBUF, sendsize);
     try_socksize(client_socket, SO_RCVBUF, recvsize);
     if (localport != NULL)
-#ifdef HAVE_IPV6
+#ifdef WORKING_IPV6
 	*localport = (in_port_t)ntohs(
 				((struct sockaddr_in6 *)&claddr)->sin6_port);
 #else
@@ -421,11 +421,11 @@ stream_accept(
 	 * from port 20 (a favorite unauthorized entry tool).
 	 */
 	if (addr.ss_family == (sa_family_t)AF_INET
-#ifdef HAVE_IPV6
+#ifdef WORKING_IPV6
 	    || addr.ss_family == (sa_family_t)AF_INET6
 #endif
 	    ){
-#ifdef HAVE_IPV6
+#ifdef WORKING_IPV6
 	    if (addr.ss_family == (sa_family_t)AF_INET6)
 		port = ntohs(((struct sockaddr_in6 *)&addr)->sin6_port);
 	    else
@@ -440,7 +440,7 @@ stream_accept(
 			  debug_prefix_time(NULL), (unsigned int)port));
 	    }
 	} else {
-#ifdef HAVE_IPV6
+#ifdef WORKING_IPV6
 	    dbprintf(("%s: family is %d instead of %d(AF_INET)"
 		      " or %d(AF_INET6): ignored\n",
 		      debug_prefix_time(NULL),

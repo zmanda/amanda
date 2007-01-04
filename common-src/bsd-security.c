@@ -148,7 +148,7 @@ bsd_connect(
     /*
      * Only init the socket once
      */
-#ifdef HAVE_IPV6
+#ifdef WORKING_IPV6
     hints.ai_flags = AI_CANONNAME | AI_V4MAPPED | AI_ALL;
     hints.ai_family = AF_INET6;
 #else
@@ -162,7 +162,7 @@ bsd_connect(
     hints.ai_canonname = NULL;
     hints.ai_next = NULL;
     result = getaddrinfo(hostname, NULL, &hints, &res);
-#ifdef HAVE_IPV6
+#ifdef WORKING_IPV6
     if(result != 0  && result != EAI_NONAME) {
 	dbprintf(("getaddrinfo(%s): %s\n", hostname, gai_strerror(result)));
 	security_seterror(&bh->sech, "getaddrinfo(%s): %s\n", hostname,

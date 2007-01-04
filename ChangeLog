@@ -1,4 +1,12 @@
 2007-01-04  Jean-Louis Martineau <martineau@zmanda.com>
+	* amandad-src/amandad.c, common-src/bsd-security.c,
+	  common-src/bsdtcp-security.c, common-src/bsdudp-security.c,
+	  common-src/dgram.c, common-src/security-util.c,
+	  common-src/stream.c,
+	  common-src/util.c: Replace HAVE_IPV6 by WORKING_IPV6.
+	* configure.in: Define HAVE_IPV6 if IPv6 is working.
+
+2007-01-04  Jean-Louis Martineau <martineau@zmanda.com>
 	* changer-src/chg-chio.pl.in, changer-src/chg-iomega.pl.in,
 	  changer-src/chg-rth.pl.in, dumper-src/amgtar.pl.in,
 	  server-src/amoverview.pl.in, server-src/amstatus.pl.in,

@@ -125,7 +125,7 @@ bsdtcp_connect(
     rh->ev_timeout = NULL;
     rh->rc = NULL;
 
-#ifdef HAVE_IPV6
+#ifdef WORKING_IPV6
     hints.ai_flags = AI_CANONNAME | AI_V4MAPPED | AI_ALL;
     hints.ai_family = AF_UNSPEC;
 #else

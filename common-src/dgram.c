@@ -81,7 +81,7 @@ dgram_bind(
     }
 
     memset(&name, 0, SIZEOF(name));
-#ifdef HAVE_IPV6
+#ifdef WORKING_IPV6
     if (family == AF_INET6) {
 	((struct sockaddr_in6 *)&name)->sin6_family = (sa_family_t)AF_INET6;
 	((struct sockaddr_in6 *)&name)->sin6_addr = in6addr_any;
@@ -140,7 +140,7 @@ out:
 	aclose(s);
 	return -1;
     }
-#ifdef HAVE_IPV6
+#ifdef WORKING_IPV6
     if (family == AF_INET6)
 	*portp = (in_port_t)ntohs(((struct sockaddr_in6 *)&name)->sin6_port);
     else
