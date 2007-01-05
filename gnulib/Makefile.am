@@ -1,6 +1,6 @@
 ## DO NOT EDIT! GENERATED AUTOMATICALLY!
 ## Process this file with automake to produce Makefile.in.
-# Copyright (C) 2004-2006 Free Software Foundation, Inc.
+# Copyright (C) 2004-2007 Free Software Foundation, Inc.
 #
 # This file is free software, distributed under the terms of the GNU
 # General Public License.  As a special exception to the GNU General
@@ -13,14 +13,9 @@
 
 AUTOMAKE_OPTIONS = 1.5 gnits
 
-noinst_LTLIBRARIES = libgnu.la
-
-libgnu_la_SOURCES =
-libgnu_la_LIBADD = $(gl_LTLIBOBJS)
-libgnu_la_DEPENDENCIES = $(gl_LTLIBOBJS)
-EXTRA_libgnu_la_SOURCES =
-libgnu_la_LDFLAGS = $(AM_LDFLAGS)
 noinst_HEADERS =
+noinst_LIBRARIES =
+noinst_LTLIBRARIES =
 EXTRA_DIST =
 BUILT_SOURCES =
 SUFFIXES =
@@ -32,6 +27,15 @@ MAINTAINERCLEANFILES =
 
 AM_CPPFLAGS =
 AM_CFLAGS =  -Wall -g
+
+noinst_LTLIBRARIES += libgnu.la
+
+libgnu_la_SOURCES =
+libgnu_la_LIBADD = $(gl_LTLIBOBJS)
+libgnu_la_DEPENDENCIES = $(gl_LTLIBOBJS)
+EXTRA_libgnu_la_SOURCES =
+libgnu_la_LDFLAGS = $(AM_LDFLAGS)
+
 ## begin gnulib module alloca-opt
 
 BUILT_SOURCES += $(ALLOCA_H)
