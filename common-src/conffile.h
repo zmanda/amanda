@@ -288,8 +288,8 @@ typedef struct {
 } command_option_t;
 
 typedef struct exinclude_s {
-    int  type;  /* 0=list   1=file */
-    sl_t *sl;
+    sl_t *sl_list;
+    sl_t *sl_file;
     int  optional;
 } exinclude_t;
 

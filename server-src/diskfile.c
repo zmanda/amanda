@@ -573,23 +573,11 @@ parse_diskline(
 
     disk->dtype_name	     = dtype->name;
     disk->program	     = dumptype_get_program(dtype);
-    if(dumptype_get_exclude(dtype).type == 0) {
-	disk->exclude_list   = duplicate_sl(dumptype_get_exclude(dtype).sl);
-	disk->exclude_file   = NULL;
-    }
-    else {
-	disk->exclude_file   = duplicate_sl(dumptype_get_exclude(dtype).sl);
-	disk->exclude_list   = NULL;
-    }
+    disk->exclude_list     = duplicate_sl(dumptype_get_exclude(dtype).sl_list);
+    disk->exclude_file     = duplicate_sl(dumptype_get_exclude(dtype).sl_file);
     disk->exclude_optional   = dumptype_get_exclude(dtype).optional;
-    if(dumptype_get_include(dtype).type == 0) {
-	disk->include_list   = duplicate_sl(dumptype_get_include(dtype).sl);
-	disk->include_file   = NULL;
-    }
-    else {
-	disk->include_file   = duplicate_sl(dumptype_get_include(dtype).sl);
-	disk->include_list   = NULL;
-    }
+    disk->include_list     = duplicate_sl(dumptype_get_include(dtype).sl_list);
+    disk->include_file     = duplicate_sl(dumptype_get_include(dtype).sl_file);
     disk->include_optional   = dumptype_get_include(dtype).optional;
     disk->priority	     = dumptype_get_priority(dtype);
     disk->dumpcycle	     = dumptype_get_dumpcycle(dtype);

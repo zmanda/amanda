@@ -1,4 +1,8 @@
 2007-01-10  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c, common-src/conffile.h,
+	  server-src/diskfile.c: Keep different list for exclude file and list.
+
+2007-01-10  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/taper.c (read_file): Don't count first header twice.
 
 2007-01-05  Jean-Louis Martineau <martineau@zmanda.com>
