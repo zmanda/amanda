@@ -39,48 +39,18 @@ AC_DEFUN([gl_INIT],
   gl_cond_libtool=true
   gl_source_base='gnulib'
   gl_FUNC_ALLOCA
-    AC_DEFINE([GNULIB_ALLOCA_OPT], [1],
-      [Define to 1 when using the gnulib module alloca-opt.])
   gl_HEADER_ARPA_INET
-    AC_DEFINE([GNULIB_ARPA_INET], [1],
-      [Define to 1 when using the gnulib module arpa_inet.])
   gl_GETADDRINFO
-    AC_DEFINE([GNULIB_GETADDRINFO], [1],
-      [Define to 1 when using the gnulib module getaddrinfo.])
-    AC_DEFINE([GNULIB_GETTEXT_H], [1],
-      [Define to 1 when using the gnulib module gettext-h.])
   gl_INET_NTOP
-    AC_DEFINE([GNULIB_INET_NTOP], [1],
-      [Define to 1 when using the gnulib module inet_ntop.])
   gl_HEADER_NETINET_IN
-    AC_DEFINE([GNULIB_NETINET_IN], [1],
-      [Define to 1 when using the gnulib module netinet_in.])
   gl_SIZE_MAX
-    AC_DEFINE([GNULIB_SIZE_MAX], [1],
-      [Define to 1 when using the gnulib module size_max.])
   gl_FUNC_SNPRINTF
-    AC_DEFINE([GNULIB_SNPRINTF], [1],
-      [Define to 1 when using the gnulib module snprintf.])
   gl_TYPE_SOCKLEN_T
-    AC_DEFINE([GNULIB_SOCKLEN], [1],
-      [Define to 1 when using the gnulib module socklen.])
   AM_STDBOOL_H
-    AC_DEFINE([GNULIB_STDBOOL], [1],
-      [Define to 1 when using the gnulib module stdbool.])
   gl_FUNC_STRDUP
-    AC_DEFINE([GNULIB_STRDUP], [1],
-      [Define to 1 when using the gnulib module strdup.])
   gl_HEADER_SYS_SOCKET
-    AC_DEFINE([GNULIB_SYS_SOCKET], [1],
-      [Define to 1 when using the gnulib module sys_socket.])
   gl_FUNC_VASNPRINTF
-    AC_DEFINE([GNULIB_VASNPRINTF], [1],
-      [Define to 1 when using the gnulib module vasnprintf.])
   gl_XSIZE
-    AC_DEFINE([GNULIB_XSIZE], [1],
-      [Define to 1 when using the gnulib module xsize.])
-    AC_DEFINE([GNULIB_DUMMY], [1],
-      [Define to 1 when using the gnulib module dummy.])
   m4_popdef([AC_LIBSOURCES])
   m4_popdef([AC_REPLACE_FUNCS])
   m4_popdef([AC_LIBOBJ])
@@ -145,6 +115,7 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/arpa_inet_h.m4
   m4/eoverflow.m4
   m4/getaddrinfo.m4
+  m4/gnulib-common.m4
   m4/inet_ntop.m4
   m4/intmax_t.m4
   m4/inttypes_h.m4
