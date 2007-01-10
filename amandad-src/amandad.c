@@ -1608,7 +1608,10 @@ do_sendpkt(
 {
     dbprintf(("%s: sending %s pkt:\n<<<<<\n%s>>>>>\n",
 	debug_prefix_time(NULL), pkt_type2str(pkt->type), pkt->body));
-    return security_sendpkt(handle, pkt);
+    if (handle)
+	return security_sendpkt(handle, pkt);
+    else
+	return 1;
 }
 
 /*
