@@ -1,4 +1,8 @@
 2007-01-10  Jean-Louis Martineau <martineau@zmanda.com>
+	* config/gnulib/gnulib-common.m4: New file.
+	* config/gnulib.m4i: Load config/gnulib/gnulib-common.m4.
+
+2007-01-10  Jean-Louis Martineau <martineau@zmanda.com>
 	* amandad-src/amandad.c (do_sendpkt): Send packet if handle != NULL.
 
 2007-01-10  Jean-Louis Martineau <martineau@zmanda.com>
