@@ -1587,7 +1587,6 @@ read_file(
  			}
   			file.blocksize = tt_blocksize;
   			build_header(bp->buffer, &file, tt_blocksize);
- 			kbytesread += (off_t)(tt_blocksize/1024); /* XXX shady */
  
  			file.type = F_CONT_DUMPFILE;
  
