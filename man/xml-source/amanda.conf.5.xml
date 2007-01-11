@@ -1814,10 +1814,10 @@ A comment string describing this set of tape information.</para>
   <term><emphasis remap='B'>filemark</emphasis> <emphasis remap='I'> int</emphasis></term>
   <listitem>
 <para>Default:
-<emphasis remap='I'>1000 bytes</emphasis>.
-How large a file mark (tape mark) is, measured in bytes.
+<emphasis remap='I'>1 kbytes</emphasis>.
+How large a file mark (tape mark) is, measured in kbytes.
 If the size is only known in some linear measurement (e.g. inches),
-convert it to bytes using the device density.</para>
+convert it to kbytes using the device density.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
@@ -1839,7 +1839,7 @@ manpage for exceptions).
 <term><emphasis remap='B'>blocksize</emphasis> <emphasis remap='I'> int</emphasis></term>
 <listitem>
 <para>Default:
-<emphasis remap='I'>32</emphasis>.
+<emphasis remap='I'>32 kbytes</emphasis>.
 How much data will be written in each tape record expressed in KiloBytes.
 The tape record size (= blocksize) can not be reduced below the default 32 KBytes.
 The parameter blocksize can only be raised if &A; was compiled with the configure option
