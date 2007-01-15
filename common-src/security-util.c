@@ -2686,9 +2686,9 @@ check_addrinfo_give_name(
     char **errstr)
 {
     if (strncasecmp(hostname, res->ai_canonname, strlen(hostname)) != 0) {
-	auth_debug(1, ("%s: %s doesn't resolve to itself, it resolv to %s\n",
-		       debug_prefix_time(NULL),
-		       hostname, res->ai_canonname));
+	dbprintf(("%s: %s doesn't resolve to itself, it resolv to %s\n",
+		  debug_prefix_time(NULL),
+		  hostname, res->ai_canonname));
 	*errstr = newvstralloc(*errstr, hostname,
 			       " doesn't resolve to itself, it resolv to ",
 			       res->ai_canonname, NULL);

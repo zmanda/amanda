@@ -1,3 +1,10 @@
+2007-01-15  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/bsd-security.c, common-src/bsdtcp-security.c,
+	  common-src/bsdudp-security.c,
+	  common-src/stream.c: Don't call check_addrinfo_give_name.
+	* common-src/security-util.c (check_addrinfo_give_name): Always log
+	                                                         error message.
+
 2007-01-11  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.c Set default length/filemark correctly.
 	* man/xml-source/amanda.conf.5.xml: Document they are in kbytes.

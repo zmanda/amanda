@@ -116,7 +116,6 @@ bsdudp_connect(
     int result;
     struct addrinfo hints;
     struct addrinfo *res = NULL;
-    char *errmsg = NULL;
 
     (void)conf_fn;	/* Quiet unused parameter warning */
     (void)datap;	/* Quiet unused parameter warning */
@@ -158,13 +157,6 @@ bsdudp_connect(
 	security_seterror(&bh->sech, "getaddrinfo(%s): %s\n", hostname,
 			  gai_strerror(result));
 	(*fn)(arg, &bh->sech, S_ERROR);
-    }
-    if (check_addrinfo_give_name(res, hostname, &errmsg) < 0) {
-	security_seterror(&bh->sech, "%s", errmsg);
-	(*fn)(arg, &bh->sech, S_ERROR);
-	amfree(errmsg);
-	freeaddrinfo(res);
-	return;
     }
 
     /*

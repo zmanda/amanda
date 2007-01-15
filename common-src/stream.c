@@ -217,7 +217,6 @@ stream_client_internal(
     int result;
     struct addrinfo hints;
     struct addrinfo *res = NULL;
-    char *errmsg = NULL;
 
     f = priv ? "stream_client_privileged" : "stream_client";
 
@@ -237,11 +236,6 @@ stream_client_internal(
     result = getaddrinfo(hostname, NULL, &hints, &res);
     if(result != 0) {
         dbprintf(("getaddrinfo: %s\n", gai_strerror(result)));
-	return -1;
-    }
-    if (check_addrinfo_give_name(res, hostname, &errmsg) < 0) {
-	amfree(errmsg);
-	freeaddrinfo(res);
 	return -1;
     }
 

@@ -107,8 +107,6 @@ bsdtcp_connect(
     int result;
     struct addrinfo hints;
     struct addrinfo *res = NULL;
-    char *errmsg = NULL;
-
 
     assert(fn != NULL);
     assert(hostname != NULL);
@@ -144,13 +142,6 @@ bsdtcp_connect(
 	security_seterror(&rh->sech, "getaddrinfo(%s): %s\n", hostname,
 			  gai_strerror(result));
 	(*fn)(arg, &rh->sech, S_ERROR);
-	return;
-    }
-    if (check_addrinfo_give_name(res, hostname, &errmsg) < 0) {
-	security_seterror(&rh->sech, "%s", errmsg);
-	(*fn)(arg, &rh->sech, S_ERROR);
-	amfree(errmsg);
-	freeaddrinfo(res);
 	return;
     }
 
