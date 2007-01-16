@@ -1,4 +1,8 @@
 2007-01-16  Jean-Louis Martineau <martineau@zmanda.com>
+	* configure.in: Define GCC_COMPILER.
+	* gnulib/Makefile.am: Add -Wno-error to AM_CFLAGS if GCC_COMPILER.
+
+2007-01-16  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/getconf.c: Fix segfault in parameter parsing.
 
 2007-01-15  Jean-Louis Martineau <martineau@zmanda.com>

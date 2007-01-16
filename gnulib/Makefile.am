@@ -26,7 +26,9 @@ DISTCLEANFILES =
 MAINTAINERCLEANFILES =
 
 AM_CPPFLAGS =
-AM_CFLAGS =  -Wall -g
+if GCC_COMPILER
+  AM_CFLAGS += -Wno-error
+endif
 
 noinst_LTLIBRARIES += libgnu.la
 

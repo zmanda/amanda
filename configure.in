@@ -3124,6 +3124,8 @@ if test "$amanda_working_ipv6" = yes; then
 	AC_DEFINE(WORKING_IPV6,1,[Define if IPv6 is working. ])
 fi
 
+AM_CONDITIONAL([GCC_COMPILER], [test "x$CC" = "xgcc"])
+
 #### Enforce amanda code cleanliness rules.
 #### Done here to allow configuration code to remain intact.
 if test "x$CC" = "xgcc"; then
