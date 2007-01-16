@@ -1,3 +1,6 @@
+2007-01-16  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/getconf.c: Fix segfault in parameter parsing.
+
 2007-01-15  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/bsd-security.c, common-src/bsdtcp-security.c,
 	  common-src/bsdudp-security.c,

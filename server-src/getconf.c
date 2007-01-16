@@ -428,6 +428,7 @@ main(
     char number[NUM_STR_SIZE];
     int    new_argc,   my_argc;
     char **new_argv, **my_argv;
+    int myarg;
 
     safe_fd(-1, 0);
 
@@ -453,25 +454,20 @@ main(
     }
 
     asklist = 0;
+    myarg = 1;
     if (strcmp(my_argv[1],"--list") == 0) {
 	asklist = 1;
-	amfree(my_argv[1]);
-	my_argv[1] = my_argv[2];
-	my_argv[2] = NULL;
-	my_argc--;
-    }
-    if (my_argc > 2 && strcmp(my_argv[2],"--list") == 0) {
+	myarg = 2;
+    } else if (my_argc > 2 && strcmp(my_argv[2],"--list") == 0) {
 	asklist = 1;
-	amfree(my_argv[2]);
-	my_argv[2] = my_argv[3];
-	my_argv[3] = NULL;
-	my_argc--;
+	myarg = 3;
+    } else if (my_argc > 2) {
+	myarg = 2;
     }
 
-    if (my_argc > 2 && strcmp(my_argv[1],"--list") != 0) {
+    if (myarg > asklist+1) {
 	config_name = stralloc(my_argv[1]);
 	config_dir = vstralloc(CONFIG_DIR, "/", config_name, "/", NULL);
-	parmname = my_argv[2];
     } else {
 	char my_cwd[STR_SIZE];
 
@@ -483,8 +479,11 @@ main(
 	if ((config_name = strrchr(my_cwd, '/')) != NULL) {
 	    config_name = stralloc(config_name + 1);
 	}
-	parmname = my_argv[1];
     }
+    if (myarg >= my_argc) {
+	error("Must specify a parameter");
+    }
+    parmname = my_argv[myarg];
 
     safe_cd();
 
