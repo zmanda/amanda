@@ -2991,8 +2991,8 @@ label_tape(void)
     }
     if ((tape_fd = tape_open(tapedev, O_WRONLY)) == -1) {
 	if (errno == EACCES) {
-	    errstr = newstralloc(errstr,
-				 "writing label: tape is write protected");
+	    errstr = newstralloc2(errstr,
+				 "writing label: tape is write protected or I don't have write permission on ", tapedev);
 	} else {
 	    errstr = newstralloc2(errstr,
 				  "writing label: ", strerror(errno));
