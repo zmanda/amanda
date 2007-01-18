@@ -472,6 +472,8 @@ main(
                 usage();
 		/*NOTREACHED*/
             }
+	    arg_state = ARG_GET_HOST;
+	    break;
         }
     }
 

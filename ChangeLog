@@ -1,4 +1,7 @@
 2007-01-18  Jean-Louis Martineau <martineau@zmanda.com>
+	* restore-src/amfetchdump.c: Set arg_state to ARG_GET_HOST.
+
+2007-01-18  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amcheck.c: Check tape_access.
 	* server-src/taper.c: Improve message.
 
