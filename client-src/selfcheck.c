@@ -81,6 +81,7 @@ static void check_options(char *program, char *calcprog, char *disk, char *amdev
 static void check_disk(char *program, char *calcprog, char *disk, char *amdevice, int level, option_t *options);
 static void check_overall(void);
 static void check_access(char *filename, int mode);
+static int check_file_exist(char *filename);
 static void check_file(char *filename, int mode);
 static void check_dir(char *dirname, int mode);
 static void check_suid(char *filename);
@@ -1013,20 +1014,32 @@ check_overall(void)
 	}
     }
 
-    if( need_compress_path )
+    if (need_compress_path )
 	check_file(COMPRESS_PATH, X_OK);
 
-    if( need_dump || need_xfsdump )
-	check_file("/etc/dumpdates",
+    if (need_dump || need_xfsdump ) {
+	if (check_file_exist("/etc/dumpdates")) {
+	    check_file("/etc/dumpdates",
 #ifdef USE_RUNDUMP
-		   F_OK
+		       F_OK
 #else
-		   R_OK|W_OK
+		       R_OK|W_OK
 #endif
-		   );
+		      );
+	} else {
+#ifndef USE_RUNDUMP
+	    if (access("/etc", R_OK|W_OK) == -1) {
+		printf("ERROR [dump will not be able to create the /etc/dumpdates file: %s]\n", strerror(errno));
+	    }
+#endif
+	}
+    }
 
-    if (need_vdump)
-        check_file("/etc/vdumpdates", F_OK);
+    if (need_vdump) {
+	if (check_file_exist("/etc/vdumpdates")) {
+            check_file("/etc/vdumpdates", F_OK);
+	}
+    }
 
     check_access("/dev/null", R_OK|W_OK);
     check_space(AMANDA_TMPDIR, (off_t)64);	/* for amandad i/o */
@@ -1082,6 +1095,20 @@ check_access(
     else
 	printf("OK %s %s\n", quoted, adjective);
     amfree(quoted);
+}
+
+static int
+check_file_exist(
+    char *filename)
+{
+    struct stat stat_buf;
+
+    if (stat(filename, &stat_buf) != 0) {
+	if(errno == ENOENT) {
+	    return 0;
+	}
+    }
+    return 1;
 }
 
 static void

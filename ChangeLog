@@ -1,4 +1,7 @@
 2007-01-18  Jean-Louis Martineau <martineau@zmanda.com>
+	* client-src/selfcheck.c: Improve check if /etc/dumpdates in not there.
+
+2007-01-18  Jean-Louis Martineau <martineau@zmanda.com>
 	* restore-src/amfetchdump.c: Set arg_state to ARG_GET_HOST.
 
 2007-01-18  Jean-Louis Martineau <martineau@zmanda.com>
