@@ -405,6 +405,12 @@ parse_diskline(
 	    disk_parserror(filename, line_num, "Two host are mapping to the same name: \"%s\" and \"%s\"", p->hostname, hostname);
 	    return(-1);
 	}
+	else if (strcasecmp(hostname, p->hostname) &&
+		 match_host(hostname, p->hostname) &&
+		 match_host(p->hostname, hostname)) {
+	    disk_parserror(filename, line_num, "Duplicate host name: \"%s\" and \"%s\"", p->hostname, hostname);
+	    return(-1);
+	}
 	amfree(shostp);
     }
     amfree(shost);
@@ -459,10 +465,25 @@ parse_diskline(
     }
 
     /* check for duplicate disk */
-    if(host && (disk = lookup_disk(hostname, diskname)) != NULL) {
+    if (host) {
+	if ((disk = lookup_disk(hostname, diskname)) != NULL) {
+	    dup = 1;
+	} else {
+	    disk = host->disks;
+	    do {
+		if (match_disk(diskname, disk->name) &&
+		    match_disk(disk->name, diskname)) {
+		    dup = 1;
+		} else {
+		    disk = disk->next;
+		}
+	    }
+	    while (dup == 0 && disk != NULL);
+	}
+    }
+    if (dup == 1) {
 	disk_parserror(filename, line_num,
 	    "duplicate disk record, previous on line %d", disk->line);
-	dup = 1;
     } else {
 	disk = alloc(SIZEOF(disk_t));
 	malloc_mark(disk);
