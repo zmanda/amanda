@@ -481,7 +481,7 @@ parse_diskline(
 	    while (dup == 0 && disk != NULL);
 	}
     }
-    if (dup == 1) {
+    if (dup == 1 && disk) {
 	disk_parserror(filename, line_num,
 	    "duplicate disk record, previous on line %d", disk->line);
     } else {
