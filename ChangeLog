@@ -1,4 +1,7 @@
 2007-01-24  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c: Cleanup conf_print function.
+
+2007-01-24  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.c: Check for duplicate -o options.
 	* recover-src/amrecover.c: Change precedence of option.
 

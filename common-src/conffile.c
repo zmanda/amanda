@@ -210,8 +210,8 @@ static void read_block(command_option_t *command_options, t_conf_var *read_var,
 
 static void copy_val_t(val_t *, val_t *);
 static void free_val_t(val_t *);
-static char *conf_print(val_t *, int);
-static char *conf_print_exinclude(val_t *, int, int);
+static char *conf_print(val_t *, int, char *);
+static void conf_print_exinclude(val_t *, int, int, char *prefix, char **buf, int *free_space);
 
 static void get_holdingdisk(void);
 static void init_holdingdisk_defaults(void);
@@ -930,7 +930,7 @@ getconf_byname(
 		   break;
 	    }
 	    if (np->token == CONF_UNKNOWN) return NULL;
-	    tmpstr = stralloc(conf_print(&tp->value[np->parm], 0));
+	    tmpstr = stralloc(conf_print(&tp->value[np->parm], 0, ""));
 	} else if (strcmp(tmpstr, "DUMPTYPE") == 0) {
 	    dp = lookup_dumptype(first_delim);
 	    if (!dp) {
@@ -942,7 +942,7 @@ getconf_byname(
 		   break;
 	    }
 	    if (np->token == CONF_UNKNOWN) return NULL;
-	    tmpstr = stralloc(conf_print(&dp->value[np->parm], 0));
+	    tmpstr = stralloc(conf_print(&dp->value[np->parm], 0, ""));
 	} else if (strcmp(tmpstr, "HOLDINGDISK") == 0) {
 	    hp = lookup_holdingdisk(first_delim);
 	    if (!hp) {
@@ -954,7 +954,7 @@ getconf_byname(
 		   break;
 	    }
 	    if (np->token == CONF_UNKNOWN) return NULL;
-	    tmpstr = stralloc(conf_print(&hp->value[np->parm], 0));
+	    tmpstr = stralloc(conf_print(&hp->value[np->parm], 0, ""));
 	} else if (strcmp(tmpstr, "INTERFACE") == 0) {
 	    ip = lookup_interface(first_delim);
 	    if (!ip) {
@@ -966,7 +966,7 @@ getconf_byname(
 		   break;
 	    }
 	    if (np->token == CONF_UNKNOWN) return NULL;
-	    tmpstr = stralloc(conf_print(&ip->value[np->parm], 0));
+	    tmpstr = stralloc(conf_print(&ip->value[np->parm], 0, ""));
 	} else {
 	    amfree(tmpstr);
 	    return(NULL);
@@ -987,7 +987,7 @@ getconf_byname(
 
 	if(np->token == CONF_UNKNOWN) return NULL;
 
-	tmpstr = stralloc(conf_print(&conf_data[np->parm], 0));
+	tmpstr = stralloc(conf_print(&conf_data[np->parm], 0, ""));
     }
 
     return tmpstr;
@@ -2534,6 +2534,7 @@ dump_configuration(
     t_conf_var *np;
     keytab_t *kt;
     char *prefix;
+    char kt_prefix[100];
 
     printf("AMANDA CONFIGURATION FROM FILE \"%s\":\n\n", filename);
 
@@ -2545,8 +2546,9 @@ dump_configuration(
 	    error("server bad token");
 
 	if (kt->token != CONF_IDENT)
-	    printf("%-21s %s\n", kt->keyword,
-		   conf_print(&conf_data[np->parm], 1));
+	    snprintf(kt_prefix, 100, "%-21s ", kt->keyword);
+	    printf("%s\n",
+		   conf_print(&conf_data[np->parm], 1, kt_prefix));
     }
 
     for(hp = holdingdisks; hp != NULL; hp = hp->next) {
@@ -2566,7 +2568,8 @@ dump_configuration(
 	    if(kt->token == CONF_UNKNOWN)
 		error("holding bad token");
 
-	    printf("      %-9s %s\n", kt->keyword, conf_print(&hp->value[i], 1));
+	    snprintf(kt_prefix, 100, "      %-9s ", kt->keyword);
+	    printf("%s\n", conf_print(&hp->value[i], 1, kt_prefix));
 	}
 	printf("}\n");
     }
@@ -2584,7 +2587,8 @@ dump_configuration(
 	    if(kt->token == CONF_UNKNOWN)
 		error("tapetype bad token");
 
-	    printf("      %-9s %s\n", kt->keyword, conf_print(&tp->value[i], 1));
+	    snprintf(kt_prefix, 100, "      %-9s ", kt->keyword);
+	    printf("%s\n", conf_print(&tp->value[i], 1, kt_prefix));
 	}
 	printf("}\n");
     }
@@ -2607,15 +2611,8 @@ dump_configuration(
 		if(kt->token == CONF_UNKNOWN)
 		    error("dumptype bad token");
 
-		if (dp->value[i].type == CONFTYPE_EXINCLUDE) {
-		    printf("%s      %-19s %s\n", prefix, kt->keyword,
-			   conf_print_exinclude(&dp->value[i], 1, 0));
-		    printf("%s      %-19s %s\n", prefix, kt->keyword,
-			   conf_print_exinclude(&dp->value[i], 1, 1));
-		} else {
-		    printf("%s      %-19s %s\n", prefix, kt->keyword,
-			   conf_print(&dp->value[i], 1));
-		}
+		snprintf(kt_prefix, 100, "%s      %-19s ", prefix,kt->keyword);
+		printf("%s\n", conf_print(&dp->value[i], 1, kt_prefix));
 	    }
 	    printf("%s}\n", prefix);
 	}
@@ -2638,7 +2635,8 @@ dump_configuration(
 	    if(kt->token == CONF_UNKNOWN)
 		error("interface bad token");
 
-	    printf("%s      %-9s %s\n", prefix, kt->keyword, conf_print(&ip->value[i], 1));
+	    snprintf(kt_prefix, 100, "%s      %-19s ", prefix, kt->keyword);
+	    printf("%s\n", conf_print(&ip->value[i], 1, kt_prefix));
 	}
 	printf("%s}\n",prefix);
     }
@@ -4224,120 +4222,129 @@ taperalgo2str(
     return "UNKNOWN";
 }
 
-static char buffer_conf_print[1025];
+static char buffer_conf_print[2049];
 
 static char *
 conf_print(
     val_t *val,
-    int    str_need_quote)
+    int    str_need_quote,
+    char  *prefix)
 {
+    char *buf;
+    int   free_space;
+
     buffer_conf_print[0] = '\0';
+    snprintf(buffer_conf_print, SIZEOF(buffer_conf_print), prefix);
+    free_space = SIZEOF(buffer_conf_print) - strlen(buffer_conf_print);
+    buf = buffer_conf_print + strlen(buffer_conf_print);
     switch(val->type) {
     case CONFTYPE_INT:
-	snprintf(buffer_conf_print, SIZEOF(buffer_conf_print), "%d", val->v.i);
+	snprintf(buf, free_space, "%d", val->v.i);
 	break;
 
     case CONFTYPE_LONG:
-	snprintf(buffer_conf_print, SIZEOF(buffer_conf_print), "%ld", val->v.l);
+	snprintf(buf, free_space, "%ld", val->v.l);
 	break;
 
     case CONFTYPE_SIZE:
-	snprintf(buffer_conf_print, SIZEOF(buffer_conf_print), SSIZE_T_FMT,
-		(SSIZE_T_FMT_TYPE)val->v.size);
+	snprintf(buf, free_space, SSIZE_T_FMT, (SSIZE_T_FMT_TYPE)val->v.size);
 	break;
 
     case CONFTYPE_AM64:
-	snprintf(buffer_conf_print, SIZEOF(buffer_conf_print), OFF_T_FMT ,
-		 (OFF_T_FMT_TYPE)val->v.am64);
+	snprintf(buf, free_space, OFF_T_FMT, (OFF_T_FMT_TYPE)val->v.am64);
 	break;
 
     case CONFTYPE_REAL:
-	snprintf(buffer_conf_print, SIZEOF(buffer_conf_print), "%0.5f" , val->v.r);
+	snprintf(buf, free_space, "%0.5f" , val->v.r);
 	break;
 
     case CONFTYPE_RATE:
-	snprintf(buffer_conf_print, SIZEOF(buffer_conf_print), "%0.5f %0.5f" , val->v.rate[0], val->v.rate[1]);
+	snprintf(buf, free_space, "%0.5f %0.5f",
+		 val->v.rate[0], val->v.rate[1]);
 	break;
 
     case CONFTYPE_INTRANGE:
-	snprintf(buffer_conf_print, SIZEOF(buffer_conf_print), "%d,%d" , val->v.intrange[0], val->v.intrange[1]);
+	snprintf(buf, free_space, "%d,%d",
+		 val->v.intrange[0], val->v.intrange[1]);
 	break;
 
     case CONFTYPE_IDENT:
 	if(val->v.s) {
-	    strncpy(buffer_conf_print, val->v.s, SIZEOF(buffer_conf_print));
-	    buffer_conf_print[SIZEOF(buffer_conf_print) - 1] = '\0';
-	} else
-	    buffer_conf_print[0] = '\0';
+	    strncpy(buf, val->v.s, free_space);
+	}
 	break;
 
     case CONFTYPE_STRING:
 	if(str_need_quote) {
-            buffer_conf_print[0] = '"';
+	    *buf++ = '"';
+	    free_space++;
             if(val->v.s) {
-		strncpy(&buffer_conf_print[1], val->v.s,
-			SIZEOF(buffer_conf_print) - 1);
+		strncpy(buf, val->v.s, free_space);
 		buffer_conf_print[SIZEOF(buffer_conf_print) - 2] = '\0';
 		buffer_conf_print[strlen(buffer_conf_print)] = '"';
+		buffer_conf_print[strlen(buffer_conf_print) + 1] = '\0';
             } else {
-		buffer_conf_print[1] = '"';
-		buffer_conf_print[2] = '\0';
+		*buf++ = '"';
+		*buf++ = '\0';
+		free_space -= 2;
             }
 	} else {
 	    if(val->v.s) {
-		strncpy(&buffer_conf_print[0], val->v.s,
-			SIZEOF(buffer_conf_print));
-		buffer_conf_print[SIZEOF(buffer_conf_print) - 1] = '\0';
-	    } else {
-		buffer_conf_print[0] = '\0';
+		strncpy(buf, val->v.s, free_space);
 	    }
 	}
 	break;
 
     case CONFTYPE_TIME:
-	snprintf(buffer_conf_print, SIZEOF(buffer_conf_print),
-		 "%2d%02d", (int)val->v.t/100, (int)val->v.t % 100);
+	snprintf(buf, free_space, "%2d%02d",
+		 (int)val->v.t/100, (int)val->v.t % 100);
 	break;
 
     case CONFTYPE_SL:
-	buffer_conf_print[0] = '\0';
 	break;
 
     case CONFTYPE_EXINCLUDE:
-	strcpy(buffer_conf_print, "ERROR: use print_conf_exinclude");
+	buf = buffer_conf_print;
+	free_space = SIZEOF(buffer_conf_print);
+
+	conf_print_exinclude(val, 1, 0, prefix, &buf ,&free_space);
+	*buf++ = '\n';
+	free_space -= 1;
+
+	conf_print_exinclude(val, 1, 1, prefix, &buf, &free_space);
 	break;
 
     case CONFTYPE_BOOL:
 	if(val->v.i)
-	    strncpy(buffer_conf_print, "yes", SIZEOF(buffer_conf_print));
+	    strncpy(buf, "yes", free_space);
 	else
-	    strncpy(buffer_conf_print, "no", SIZEOF(buffer_conf_print));
+	    strncpy(buf, "no", free_space);
 	break;
 
     case CONFTYPE_STRATEGY:
 	switch(val->v.i) {
 	case DS_SKIP:
-	    strncpy(buffer_conf_print, "SKIP", SIZEOF(buffer_conf_print));
+	    strncpy(buf, "SKIP", free_space);
 	    break;
 
 	case DS_STANDARD:
-	    strncpy(buffer_conf_print, "STANDARD", SIZEOF(buffer_conf_print));
+	    strncpy(buf, "STANDARD", free_space);
 	    break;
 
 	case DS_NOFULL:
-	    strncpy(buffer_conf_print, "NOFULL", SIZEOF(buffer_conf_print));
+	    strncpy(buf, "NOFULL", free_space);
 	    break;
 
 	case DS_NOINC:
-	    strncpy(buffer_conf_print, "NOINC", SIZEOF(buffer_conf_print));
+	    strncpy(buf, "NOINC", free_space);
 	    break;
 
 	case DS_HANOI:
-	    strncpy(buffer_conf_print, "HANOI", SIZEOF(buffer_conf_print));
+	    strncpy(buf, "HANOI", free_space);
 	    break;
 
 	case DS_INCRONLY:
-	    strncpy(buffer_conf_print, "INCRONLY", SIZEOF(buffer_conf_print));
+	    strncpy(buf, "INCRONLY", free_space);
 	    break;
 	}
 	break;
@@ -4345,31 +4352,31 @@ conf_print(
     case CONFTYPE_COMPRESS:
 	switch(val->v.i) {
 	case COMP_NONE:
-	    strncpy(buffer_conf_print, "NONE", SIZEOF(buffer_conf_print));
+	    strncpy(buf, "NONE", free_space);
 	    break;
 
 	case COMP_FAST:
-	    strncpy(buffer_conf_print, "CLIENT FAST", SIZEOF(buffer_conf_print));
+	    strncpy(buf, "CLIENT FAST", free_space);
 	    break;
 
 	case COMP_BEST:
-	    strncpy(buffer_conf_print, "CLIENT BEST", SIZEOF(buffer_conf_print));
+	    strncpy(buf, "CLIENT BEST", free_space);
 	    break;
 
 	case COMP_CUST:
-	    strncpy(buffer_conf_print, "CLIENT CUSTOM", SIZEOF(buffer_conf_print));
+	    strncpy(buf, "CLIENT CUSTOM", free_space);
 	    break;
 
 	case COMP_SERVER_FAST:
-	    strncpy(buffer_conf_print, "SERVER FAST", SIZEOF(buffer_conf_print));
+	    strncpy(buf, "SERVER FAST", free_space);
 	    break;
 
 	case COMP_SERVER_BEST:
-	    strncpy(buffer_conf_print, "SERVER FAST", SIZEOF(buffer_conf_print));
+	    strncpy(buf, "SERVER FAST", free_space);
 	    break;
 
 	case COMP_SERVER_CUST:
-	    strncpy(buffer_conf_print, "SERVER CUSTOM", SIZEOF(buffer_conf_print));
+	    strncpy(buf, "SERVER CUSTOM", free_space);
 	    break;
 	}
 	break;
@@ -4377,15 +4384,15 @@ conf_print(
     case CONFTYPE_ESTIMATE:
 	switch(val->v.i) {
 	case ES_CLIENT:
-	    strncpy(buffer_conf_print, "CLIENT", SIZEOF(buffer_conf_print));
+	    strncpy(buf, "CLIENT", free_space);
 	    break;
 
 	case ES_SERVER:
-	    strncpy(buffer_conf_print, "SERVER", SIZEOF(buffer_conf_print));
+	    strncpy(buf, "SERVER", free_space);
 	    break;
 
 	case ES_CALCSIZE:
-	    strncpy(buffer_conf_print, "CALCSIZE", SIZEOF(buffer_conf_print));
+	    strncpy(buf, "CALCSIZE", free_space);
 	    break;
 	}
 	break;
@@ -4393,15 +4400,15 @@ conf_print(
      case CONFTYPE_ENCRYPT:
 	switch(val->v.i) {
 	case ENCRYPT_NONE:
-	    strncpy(buffer_conf_print, "NONE", SIZEOF(buffer_conf_print));
+	    strncpy(buf, "NONE", free_space);
 	    break;
 
 	case ENCRYPT_CUST:
-	    strncpy(buffer_conf_print, "CLIENT", SIZEOF(buffer_conf_print));
+	    strncpy(buf, "CLIENT", free_space);
 	    break;
 
 	case ENCRYPT_SERV_CUST:
-	    strncpy(buffer_conf_print, "SERVER", SIZEOF(buffer_conf_print));
+	    strncpy(buf, "SERVER", free_space);
 	    break;
 	}
 	break;
@@ -4409,35 +4416,35 @@ conf_print(
      case CONFTYPE_HOLDING:
 	switch(val->v.i) {
 	case HOLD_NEVER:
-	    strncpy(buffer_conf_print, "NEVER", SIZEOF(buffer_conf_print));
+	    strncpy(buf, "NEVER", free_space);
 	    break;
 
 	case HOLD_AUTO:
-	    strncpy(buffer_conf_print, "AUTO", SIZEOF(buffer_conf_print));
+	    strncpy(buf, "AUTO", free_space);
 	    break;
 
 	case HOLD_REQUIRED:
-	    strncpy(buffer_conf_print, "REQUIRED", SIZEOF(buffer_conf_print));
+	    strncpy(buf, "REQUIRED", free_space);
 	    break;
 	}
 	break;
 
      case CONFTYPE_TAPERALGO:
-	strncpy(buffer_conf_print, taperalgo2str(val->v.i), SIZEOF(buffer_conf_print));
+	strncpy(buf, taperalgo2str(val->v.i), free_space);
 	break;
 
      case CONFTYPE_PRIORITY:
 	switch(val->v.i) {
 	case 0:
-	    strncpy(buffer_conf_print, "LOW", SIZEOF(buffer_conf_print));
+	    strncpy(buf, "LOW", free_space);
 	    break;
 
 	case 1:
-	    strncpy(buffer_conf_print, "MEDIUM", SIZEOF(buffer_conf_print));
+	    strncpy(buf, "MEDIUM", free_space);
 	    break;
 
 	case 2:
-	    strncpy(buffer_conf_print, "HIGH", SIZEOF(buffer_conf_print));
+	    strncpy(buf, "HIGH", free_space);
 	    break;
 	}
 	break;
@@ -4446,53 +4453,61 @@ conf_print(
     return buffer_conf_print;
 }
 
-char *conf_print_exinclude(
+void  conf_print_exinclude(
     val_t *val,
     int    str_need_quote,
-    int    file)
+    int    file,
+    char  *prefix,
+    char **buf,
+    int   *free_space)
 {
-    int    pos;
     sl_t  *sl;
     sle_t *excl;
 
     (void)str_need_quote;
-    buffer_conf_print[0] = '\0';
+
+    snprintf(*buf, *free_space, prefix);
+    *free_space -= strlen(prefix);
+    *buf += strlen(prefix);
+
     if (val->type != CONFTYPE_EXINCLUDE) {
-	strcpy(buffer_conf_print,
+	strcpy(*buf,
 	  "ERROR: conf_print_exinclude called for type != CONFTYPE_EXINCLUDE");
-	return buffer_conf_print;
+	return;
     }
 
     if (file == 0) {
 	sl = val->v.exinclude.sl_list;
-	strncpy(buffer_conf_print, "LIST ", SIZEOF(buffer_conf_print));
-	pos = 5;
+	strncpy(*buf, "LIST ", *free_space);
+	*buf += 5;
+	*free_space -= 5;
     } else {
 	sl = val->v.exinclude.sl_file;
-	strncpy(buffer_conf_print, "FILE ", SIZEOF(buffer_conf_print));
-	pos = 5;
+	strncpy(*buf, "FILE ", *free_space);
+	*buf += 5;
+	*free_space -= 5;
     }
 
     if (val->v.exinclude.optional == 1) {
-	strncpy(&buffer_conf_print[pos], "OPTIONAL ",
-		SIZEOF(buffer_conf_print)-pos);
-	pos += 9;
+	strncpy(*buf, "OPTIONAL ", *free_space);
+	*buf += 9;
+	*free_space -= 9;
     }
 
     if (sl != NULL) {
 	for(excl = sl->first; excl != NULL; excl = excl->next) {
-	    if (pos + 3 + strlen(excl->name) < SIZEOF(buffer_conf_print)) {
-		buffer_conf_print[pos++] = ' ';
-		buffer_conf_print[pos++] = '"';
-		strcpy(&buffer_conf_print[pos], excl->name);
-		pos += strlen(excl->name);
-		buffer_conf_print[pos++] = '"';
+	    if (3 + (int)strlen(excl->name) < *free_space) {
+		*(*buf)++ = ' ';
+		*(*buf)++ = '"';
+		strcpy(*buf, excl->name);
+		*buf += strlen(excl->name);
+		*(*buf)++ = '"';
+		*free_space -= 3 + strlen(excl->name);
 	    }
 	}
     }
 
-    buffer_conf_print[SIZEOF(buffer_conf_print) - 1] = '\0';
-    return buffer_conf_print;
+    return;
 }
 
 static void
