@@ -411,14 +411,47 @@ main(
 
     report_bad_conf_arg();
 
-    amfree(server_name);
-    server_name = getenv("AMANDA_SERVER");
-    if(!server_name) server_name = getconf_str(CNF_INDEX_SERVER);
+    server_name = NULL;
+    if (getconf_seen(CNF_INDEX_SERVER) == -2) { /* command line argument */
+	server_name = getconf_str(CNF_INDEX_SERVER);
+    }
+    if (!server_name) {
+	server_name = getenv("AMANDA_SERVER");
+	if (server_name) {
+	    printf("Using index server from environment AMANDA_SERVER (%s)\n", server_name);
+	}
+    }
+    if (!server_name) {
+	server_name = getconf_str(CNF_INDEX_SERVER);
+    }
+    if (!server_name) {
+	error("No index server set");
+	/*NOTREACHED*/
+    }
     server_name = stralloc(server_name);
 
-    amfree(tape_server_name);
-    tape_server_name = getenv("AMANDA_TAPESERVER");
-    if(!tape_server_name) tape_server_name = getconf_str(CNF_TAPE_SERVER);
+    tape_server_name = NULL;
+    if (getconf_seen(CNF_TAPE_SERVER) == -2) { /* command line argument */
+	tape_server_name = getconf_str(CNF_TAPE_SERVER);
+    }
+    if (!tape_server_name) {
+	tape_server_name = getenv("AMANDA_TAPE_SERVER");
+	if (!tape_server_name) {
+	    tape_server_name = getenv("AMANDA_TAPESERVER");
+	    if (tape_server_name) {
+		printf("Using tape server from environment AMANDA_TAPESERVER (%s)\n", tape_server_name);
+	    }
+	} else {
+	    printf("Using tape server from environment AMANDA_TAPE_SERVER (%s)\n", tape_server_name);
+	}
+    }
+    if (!tape_server_name) {
+	tape_server_name = getconf_str(CNF_TAPE_SERVER);
+    }
+    if (!tape_server_name) {
+	error("No tape server set");
+	/*NOTREACHED*/
+    }
     tape_server_name = stralloc(tape_server_name);
 
     amfree(tape_device_name);
