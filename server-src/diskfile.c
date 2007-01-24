@@ -480,11 +480,13 @@ parse_diskline(
 	    }
 	    while (dup == 0 && disk != NULL);
 	}
+	if (dup == 1) {
+	    disk_parserror(filename, line_num,
+			   "duplicate disk record, previous on line %d",
+			   disk->line);
+	}
     }
-    if (dup == 1 && disk) {
-	disk_parserror(filename, line_num,
-	    "duplicate disk record, previous on line %d", disk->line);
-    } else {
+    if (!disk) {
 	disk = alloc(SIZEOF(disk_t));
 	malloc_mark(disk);
 	disk->line = line_num;

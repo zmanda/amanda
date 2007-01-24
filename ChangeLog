@@ -1,3 +1,6 @@
+2007-01-24  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/diskfile.c: Fix compiler warning.
+
 2007-01-23  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/security-util.c (tcpm_recv_token): Check size < 0.
 
