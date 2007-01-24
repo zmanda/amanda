@@ -465,6 +465,7 @@ parse_diskline(
     }
 
     /* check for duplicate disk */
+    disk = NULL;
     if (host) {
 	if ((disk = lookup_disk(hostname, diskname)) != NULL) {
 	    dup = 1;
