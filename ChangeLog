@@ -1,4 +1,7 @@
 2007-01-25  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/changer.c (changer_command): Send stderr to dbfd().
+
+2007-01-25  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/diskfile.c: Check hostname have same case.
 
 2007-01-25  Jean-Louis Martineau <martineau@zmanda.com>

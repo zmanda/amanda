@@ -421,7 +421,7 @@ changer_command(
 	exitcode = 2;
 	goto done;
     case 0:
-	if(dup2(fd[1], 1) == -1 || dup2(fd[1], 2) == -1) {
+	if(dup2(fd[1], 1) == -1 || dup2(dbfd(), 2) == -1) {
 	    changer_resultstr = vstralloc ("<error> ",
 				           "could not open pipe to \"",
 				           cmdstr,
