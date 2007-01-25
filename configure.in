@@ -812,6 +812,22 @@ n | no)
     ;;
 esac
 
+AC_ARG_WITH(ipv6,
+    AS_HELP_STRING([--with-ipv6],
+		   [If IPv6 must be enabled (Default)])
+AS_HELP_STRING([--without-ipv6],
+	       [If IPv6 must be disable]),
+    [
+	case "$withval" in
+	y | ye | yes) amanda_ipv6=true;;
+	n | no) amanda_ipv6=false;;
+	*)
+	    AC_MSG_ERROR([*** You must not supply an argument to --with-ipv6 option.])
+	  ;;
+	esac
+    ]
+)
+
 dnl Specify --with-krb4-security if Kerberos software is in somewhere
 dnl other than the listed KRB4_SPOTS.  We only compile kerberos support in
 dnl if the right files are there.
@@ -1484,6 +1500,7 @@ case "$target" in
 			AC_DEFINE(DONT_SUID_ROOT,1,[Define on Cygwin. ])
 			NEED_SETUID_CLIENT=false
 			NEED_RUNTIME_PSEUDO_RELOC=true
+			BROKEN_IPV6=true
 			;;
   *)
 			cat <<END
@@ -3120,8 +3137,17 @@ main()
   )
   ]
 )
+
+if test "$BROKEN_IPV6" = true; then
+    amanda_working_ipv6=no;
+fi
+
 if test "$amanda_working_ipv6" = yes; then
+    if test "$amanda_ipv6" != false; then
 	AC_DEFINE(WORKING_IPV6,1,[Define if IPv6 is working. ])
+    fi
+else
+    AC_MSG_ERROR([Asked for IPv6 but it is not working.])
 fi
 
 AM_CONDITIONAL([GCC_COMPILER], [test "x$CC" = "xgcc"])
