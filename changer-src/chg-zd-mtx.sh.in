@@ -691,6 +691,11 @@ labelfile=$changerfile-barcodes
 cleancount=`cat $cleanfile`
 accesscount=`cat $accessfile`
 
+test -z "$MT" && Exit 2 "<none>" "No mt command defined"
+test ! -f "$MT" && Exit 2 "<none>" "mt command ($MT) doesn't exist"
+test -z "$MTX" && Exit 2 "<none>" "No mtx command defined"
+test ! -f "$MTX" && Exit 2 "<none>" "mtx command ($MTX) doesn't exist"
+
 #### Dig out of the config file what is needed
 
 varlist=
