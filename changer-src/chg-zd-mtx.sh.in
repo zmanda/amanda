@@ -667,6 +667,9 @@ elif [ $TAPE = "/dev/null" ]; then
 fi
 export TAPE					# for mtx command
 
+CHANGER=$TAPE
+export CHANGER					# for mtx command
+
 #### Set up the various config files.
 
 conf_match=`expr "$changerfile" : .\*\.conf\$`

@@ -1,3 +1,6 @@
+2007-01-25  Jean-Louis Martineau <martineau@zmanda.com>
+	* changer-src/chg-zd-mtx.sh.in: Set CHANGER environment variable.
+
 2007-01-24  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.c: Cleanup conf_print function.
 
