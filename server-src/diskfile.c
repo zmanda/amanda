@@ -391,10 +391,14 @@ parse_diskline(
     s[-1] = '\0';
     host = lookup_host(fp);
     if (host == NULL) {
-      hostname = stralloc(fp);
-      malloc_mark(hostname);
+	hostname = stralloc(fp);
+	malloc_mark(hostname);
     } else {
-      hostname = stralloc(host->hostname);
+	hostname = stralloc(host->hostname);
+	if (strcmp(host->hostname, fp) != 0) {
+	    disk_parserror(filename, line_num, "Same host with different case: \"%s\" and \"%s\".", host->hostname, fp);
+	    return -1;
+	}
     }
 
     shost = sanitise_filename(hostname);
