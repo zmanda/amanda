@@ -51,6 +51,12 @@
 /* don't have (or need) a skipped type except internally to reporter */
 #define L_SKIPPED	L_MARKER
 
+
+#define STATUS_STRANGE   2
+#define STATUS_FAILED    4
+#define STATUS_MISSING   8
+#define STATUS_TAPE     16
+
 typedef struct line_s {
     struct line_s *next;
     char *str;
@@ -113,6 +119,7 @@ static double total_time, startup_time, planner_time;
 /* count files to tape */
 static int tapefcount = 0;
 
+static int exit_status = 0;
 static char *run_datestamp;
 static char *tape_labels = NULL;
 static int last_run_tapes = 0;
@@ -783,7 +790,7 @@ main(
     }
 
     dbclose();
-    return 0;
+    return exit_status;
 }
 
 /* ----- */
@@ -1403,6 +1410,7 @@ output_summary(void)
 		fprintf(mailf, "%s\n",
 			tmp=TextRule(OrigKB, TapeRate, "FAILED"));
 		amfree(tmp);
+		exit_status |= STATUS_FAILED;
 		continue;
 	    }
 
@@ -1853,6 +1861,7 @@ handle_stats(void)
 	    if(dp == NULL) {
 		addtostrange(hostname, diskname, level,
 			     "ERROR [not in disklist]");
+		exit_status |= STATUS_FAILED;
 		amfree(hostname);
 		amfree(diskname);
 		amfree(datestamp);
@@ -1916,6 +1925,7 @@ handle_error(void)
 		tapestart_error = newstralloc(tapestart_error, s - 1);
 		if(nl) *nl = '\n';
 		degraded_mode = 1;
+		exit_status |= STATUS_TAPE;;
 		return;
 	    }
 	    /* else some other tape error, handle like other errors */
@@ -2251,6 +2261,7 @@ handle_success(
     dp = lookup_disk(hostname, diskname);
     if(dp == NULL) {
 	addtostrange(hostname, qdiskname, level, "ERROR [not in disklist]");
+	exit_status |= STATUS_FAILED;
 	amfree(hostname);
 	amfree(diskname);
 	amfree(datestamp);
@@ -2415,6 +2426,7 @@ handle_strange(void)
 
     str = vstralloc("STRANGE", " ", strangestr, NULL);
     addtostrange(repdata->disk->host->hostname, qdisk, repdata->level, str);
+    exit_status |= STATUS_STRANGE;
     amfree(qdisk);
     amfree(str);
     amfree(strangestr);
@@ -2531,6 +2543,7 @@ handle_failed(void)
 	    addline(&errdet, curstr);
 	}
 	addline(&errdet,"\\--------");
+	exit_status |= STATUS_FAILED;
     }
     return;
 }
@@ -2546,6 +2559,7 @@ generate_missing(void)
 	if(dp->todo && data(dp) == NULL) {
 	    qdisk = quote_string(dp->name);
 	    addtostrange(dp->host->hostname, qdisk, -987, "RESULTS MISSING");
+	    exit_status |= STATUS_MISSING;
 	    amfree(qdisk);
 	}
     }
