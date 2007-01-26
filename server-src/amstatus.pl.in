@@ -895,7 +895,18 @@ foreach $host (sort @hosts) {
 						$desize += $esize{$hostpart};
 					}
 					if(defined $dump_started{$hostpart} &&
-					   	$dump_started{$hostpart} == 1 &&
+							$dump_started{$hostpart} == 1 &&
+							$dump_finished{$hostpart} == -1) {
+						if(defined $opt_failed) {
+							printf "%8s ", $datestamp if defined $opt_date;
+							printf "%-${maxnamelength}s%2d", "$host:$partition", $level{$hostpart};
+							printf "%9d$unit", $esize{$hostpart};
+							print " dump to tape failed: " . $error{$hostpart};
+							print "\n";
+						}
+					}
+					elsif(defined $dump_started{$hostpart} &&
+							$dump_started{$hostpart} == 1 &&
 							$dump_finished{$hostpart} == 0 &&
 							$taper_started{$hostpart} == 1) {
 						if( defined $opt_dumpingtape ) {

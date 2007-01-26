@@ -1,3 +1,6 @@
+2007-01-26  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amstatus.pl.in: Detect failed dump to tape.
+
 2007-01-25  Jean-Louis Martineau <martineau@zmanda.com>
 	* configure.in: Add --with-ipv6 option.
 
