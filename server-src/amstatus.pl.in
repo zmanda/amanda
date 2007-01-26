@@ -19,6 +19,12 @@ $exec_prefix="@exec_prefix@";
 $exec_prefix=$exec_prefix;	# ditto
 $sbindir="@sbindir@";
 
+#$STATUS_STRANGE =  2;
+$STATUS_FAILED  =  4;
+$STATUS_MISSING =  8;
+$STATUS_TAPE    = 16;
+$exit_status    =  0;
+
 $USE_VERSION_SUFFIXES='@USE_VERSION_SUFFIXES@';
 $suf = '';
 if ( $USE_VERSION_SUFFIXES =~ /^yes$/i ) {
@@ -169,6 +175,7 @@ $ntpartition{$nb_tape} = 0;
 $ntsize{$nb_tape} = 0;
 $ntesize{$nb_tape} = 0;
 $tape_size = 0;
+$driver_finished = 0;
 
 while(<AMDUMP>) {
 	chomp;
@@ -757,6 +764,9 @@ while(<AMDUMP>) {
 		$ntesize{$nb_tape} += $1;
 		$ntchunk_size += $1;
 	}
+	elsif(/driver: FINISHED/) {
+		$driver_finished = 1;
+	}
 	else {
 		#print "Ignoring: $_\n";
 	}
@@ -874,7 +884,9 @@ foreach $host (sort @hosts) {
 							printf "%-${maxnamelength}s%2d", "$host:$partition", $level{$hostpart};
 							printf "           no estimate\n";
 						}
+						$exit_status |= $STATUS_FAILED;
 						$fpartition++;
+						$fsize+=$esize{$hostpart};
 					}
 				}
 				else {
@@ -904,6 +916,9 @@ foreach $host (sort @hosts) {
 							print " dump to tape failed: " . $error{$hostpart};
 							print "\n";
 						}
+						$exit_status |= $STATUS_FAILED;
+						$fpartition++;
+						$fsize+=$esize{$hostpart};
 					}
 					elsif(defined $dump_started{$hostpart} &&
 							$dump_started{$hostpart} == 1 &&
@@ -983,6 +998,7 @@ foreach $host (sort @hosts) {
 							}
 							print "\n";
 						}
+						$exit_status |= $STATUS_TAPE;
 
 						$tfpartition++;
 						$tfsize += $xsize;
@@ -1012,8 +1028,10 @@ foreach $host (sort @hosts) {
 							if( defined $starttime ) {
 								print " (", &showtime($taper_time{$hostpart}), ")";
 							}
-							print ", PARTIAL" if defined $partial{$hostpart} &&
-													   $partial{$hostpart} == 1;
+							if(defined $partial{$hostpart} && $partial{$hostpart} == 1) {
+								print ", PARTIAL";
+								$exit_status |= $STATUS_FAILED;
+							}
 							print "\n";
 						}
 						$tpartition++;
@@ -1038,6 +1056,8 @@ foreach $host (sort @hosts) {
 							printf "%-${maxnamelength}s%2d", "$host:$partition", $level{$hostpart};
 							printf " " . $error{$hostpart} . "\n";
 						}
+						$exit_status |= $STATUS_FAILED;
+						
 						$fpartition++;
 						$fsize+=$esize{$hostpart};
 					}
@@ -1048,6 +1068,9 @@ foreach $host (sort @hosts) {
 								printf "%-${maxnamelength}s%2d", "$host:$partition", $level{$hostpart};
 								printf "%9d$unit", $esize{$hostpart};
 								print " wait for dumping $error{$hostpart}\n";
+							}
+							if($driver_finished == 1) {
+								$exit_status |= $STATUS_MISSING;
 							}
 							$wpartition++;
 							$wsize += $esize{$hostpart};
@@ -1064,6 +1087,7 @@ foreach $host (sort @hosts) {
 							}
 							print "\n";
 						}
+						$exit_status |= $STATUS_FAILED;
 						$fpartition++;
 						$fsize+=$esize{$hostpart};
 					}
@@ -1100,8 +1124,10 @@ foreach $host (sort @hosts) {
 								print " (", &showtime($dump_time{$hostpart}), ")";
 							}
 							print ", wait for writing to tape";
-						   print ", PARTIAL" if defined $partial{$hostpart} &&
-														$partial{$hostpart} == 1;;
+							if(defined $partial{$hostpart} && $partial{$hostpart} == 1) {
+								print ", PARTIAL";
+								$exit_status |= $STATUS_FAILED;
+							}
 							print "\n";
 						}
 						$dpartition++;
@@ -1123,8 +1149,10 @@ foreach $host (sort @hosts) {
 						printf "%-${maxnamelength}s%2d", "$host:$partition", $level{$hostpart};
 						printf "%9d$unit", $size{$hostpart};
 						print " waiting to flush";
-						print ", PARTIAL" if defined $partial{$hostpart} &&
-												   $partial{$hostpart} == 1;
+						if(defined $partial{$hostpart} && $partial{$hostpart} == 1) {
+							print ", PARTIAL";
+							$exit_status |= $STATUS_FAILED;
+						}
 						print "\n";
 					}
 					$wfpartition++;
@@ -1259,6 +1287,8 @@ if(defined $opt_stats) {
 		}
 	}
 }
+
+exit $exit_status;
 
 sub make_hostpart() {
 	local($host,$partition,$datestamp) = @_;
