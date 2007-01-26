@@ -1,4 +1,7 @@
 2007-01-26  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/diskfile.c: Use hostnext pointer.
+
+2007-01-26  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/reporter.c: Exit with a status.
 
 2007-01-26  Jean-Louis Martineau <martineau@zmanda.com>

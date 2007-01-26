@@ -480,7 +480,7 @@ parse_diskline(
 		    match_disk(disk->name, diskname)) {
 		    dup = 1;
 		} else {
-		    disk = disk->next;
+		    disk = disk->hostnext;
 		}
 	    }
 	    while (dup == 0 && disk != NULL);
