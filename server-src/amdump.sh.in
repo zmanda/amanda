@@ -53,6 +53,7 @@ then
         exit 1
 fi
 
+exit_status=0;
 
 conf=$1
 if [ ! -d $confdir/$conf ]; then
@@ -100,26 +101,41 @@ fi
 
 umask 077
 
+exit_code=0
 # Plan and drive the dumps.
 #exec </dev/null >$errfile 2>&1
 touch $errfile
+exit_code=$?
+[ $exit_code -ne 0 ] && exit_status=$exit_code
 exec </dev/null 2>>$errfile 1>&2
+exit_code=$?
+[ $exit_code -ne 0 ] && exit_status=$exit_code
 echo "amdump: start at `date`"
 echo "amdump: datestamp `date +%Y%m%d`"
 $libexecdir/planner$SUF $conf "$@" | $libexecdir/driver$SUF $conf "$@"
+exit_code=$?
+[ $exit_code -ne 0 ] && exit_status=$exit_code
 echo "amdump: end at `date`"
 
 # Send out a report on the dumps.
 $sbindir/amreport$SUF $conf "$@"
+exit_code=$?
+[ $exit_code -ne 0 ] && exit_status=$exit_code
 
 # Roll the log file to its datestamped name.
 $libexecdir/amlogroll$SUF $conf "$@"
+exit_code=$?
+[ $exit_code -ne 0 ] && exit_status=$exit_code
 
 # Trim the log file to those for dumps that still exist.
 $libexecdir/amtrmlog$SUF $conf "$@"
+exit_code=$?
+[ $exit_code -ne 0 ] && exit_status=$exit_code
 
 # Trim the index file to those for dumps that still exist.
 $libexecdir/amtrmidx$SUF $conf "$@"
+exit_code=$?
+[ $exit_code -ne 0 ] && exit_status=$exit_code
 
 # Keep a debug log through the tapecycle plus a couple of days.
 maxdays=`expr $tapecycle + 2`
@@ -133,8 +149,13 @@ done
 while [ $days -ge 2 ]; do
 	ndays=`expr $days - 1`
 	mv $errfile.$ndays $errfile.$days
+	exit_code=$?
+	echo $exit_code
+	[ $exit_code -ne 0 ] && exit_status=$exit_code
 	days=$ndays
 done
 mv $errfile $errfile.1
+exit_code=$?
+[ $exit_code -ne 0 ] && exit_status=$exit_code
 
-exit 0
+exit $exit_status
