@@ -3147,7 +3147,9 @@ if test "$amanda_working_ipv6" = yes; then
 	AC_DEFINE(WORKING_IPV6,1,[Define if IPv6 is working. ])
     fi
 else
-    AC_MSG_ERROR([Asked for IPv6 but it is not working.])
+    if test "$amanda_ipv6" != false; then
+        AC_MSG_ERROR([Asked for IPv6 but it is not working.])
+    fi
 fi
 
 AM_CONDITIONAL([GCC_COMPILER], [test "x$CC" = "xgcc"])
