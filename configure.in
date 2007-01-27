@@ -3147,7 +3147,7 @@ if test "$amanda_working_ipv6" = yes; then
 	AC_DEFINE(WORKING_IPV6,1,[Define if IPv6 is working. ])
     fi
 else
-    if test "$amanda_ipv6" != false; then
+    if test "$amanda_ipv6" = true; then
         AC_MSG_ERROR([Asked for IPv6 but it is not working.])
     fi
 fi
