@@ -26,6 +26,7 @@ AC_DEFUN([gl_EARLY],
   m4_pattern_allow([^gl_LTLIBOBJS$])dnl a variable
   AC_REQUIRE([AC_PROG_RANLIB])
   AC_REQUIRE([AC_GNU_SOURCE])
+  AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])
 ])
 
 # This macro should be invoked from ./configure.in, in the section
@@ -40,6 +41,7 @@ AC_DEFUN([gl_INIT],
   gl_source_base='gnulib'
   gl_FUNC_ALLOCA
   gl_HEADER_ARPA_INET
+  dnl gl_USE_SYSTEM_EXTENSIONS must be added quite early to configure.ac.
   gl_GETADDRINFO
   gl_INET_NTOP
   gl_HEADER_NETINET_IN
@@ -48,7 +50,9 @@ AC_DEFUN([gl_INIT],
   gl_TYPE_SOCKLEN_T
   AM_STDBOOL_H
   gl_FUNC_STRDUP
+  gl_HEADER_STRING_H
   gl_HEADER_SYS_SOCKET
+  AC_PROG_MKDIR_P
   gl_FUNC_VASNPRINTF
   gl_XSIZE
   m4_popdef([AC_LIBSOURCES])
@@ -107,13 +111,15 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/socket_.h
   lib/stdbool_.h
   lib/strdup.c
-  lib/strdup.h
+  lib/string_.h
   lib/vasnprintf.c
   lib/vasnprintf.h
   lib/xsize.h
+  m4/absolute-header.m4
   m4/alloca.m4
   m4/arpa_inet_h.m4
   m4/eoverflow.m4
+  m4/extensions.m4
   m4/getaddrinfo.m4
   m4/gnulib-common.m4
   m4/inet_ntop.m4
@@ -130,6 +136,7 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/stdbool.m4
   m4/stdint_h.m4
   m4/strdup.m4
+  m4/string_h.m4
   m4/sys_socket_h.m4
   m4/vasnprintf.m4
   m4/wchar_t.m4

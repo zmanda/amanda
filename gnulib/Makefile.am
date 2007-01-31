@@ -151,11 +151,47 @@ EXTRA_DIST += stdbool_.h
 ## begin gnulib module strdup
 
 
-EXTRA_DIST += strdup.c strdup.h
+EXTRA_DIST += strdup.c
 
 EXTRA_libgnu_la_SOURCES += strdup.c
 
 ## end   gnulib module strdup
+
+## begin gnulib module string
+
+BUILT_SOURCES += string.h
+
+# We need the following in order to create <string.h> when the system
+# doesn't have one that works with the given compiler.
+string.h: string_.h
+	rm -f $@-t $@
+	{ echo '/* DO NOT EDIT! GENERATED AUTOMATICALLY! */' && \
+	  sed -e 's|@''ABSOLUTE_STRING_H''@|$(ABSOLUTE_STRING_H)|g' \
+	      -e 's|@''HAVE_DECL_MEMMEM''@|$(HAVE_DECL_MEMMEM)|g' \
+	      -e 's|@''HAVE_MEMPCPY''@|$(HAVE_MEMPCPY)|g' \
+	      -e 's|@''HAVE_DECL_MEMRCHR''@|$(HAVE_DECL_MEMRCHR)|g' \
+	      -e 's|@''HAVE_STPCPY''@|$(HAVE_STPCPY)|g' \
+	      -e 's|@''HAVE_STPNCPY''@|$(HAVE_STPNCPY)|g' \
+	      -e 's|@''HAVE_DECL_STRNCASECMP''@|$(HAVE_DECL_STRNCASECMP)|g' \
+	      -e 's|@''HAVE_STRCHRNUL''@|$(HAVE_STRCHRNUL)|g' \
+	      -e 's|@''HAVE_DECL_STRDUP''@|$(HAVE_DECL_STRDUP)|g' \
+	      -e 's|@''HAVE_STRNDUP''@|$(HAVE_STRNDUP)|g' \
+	      -e 's|@''HAVE_DECL_STRNDUP''@|$(HAVE_DECL_STRNDUP)|g' \
+	      -e 's|@''HAVE_DECL_STRNLEN''@|$(HAVE_DECL_STRNLEN)|g' \
+	      -e 's|@''HAVE_STRPBRK''@|$(HAVE_STRPBRK)|g' \
+	      -e 's|@''HAVE_STRSEP''@|$(HAVE_STRSEP)|g' \
+	      -e 's|@''HAVE_DECL_STRTOK_R''@|$(HAVE_DECL_STRTOK_R)|g' \
+	      -e 's|@''REPLACE_STRCASECMP''@|$(REPLACE_STRCASECMP)|g' \
+	      -e 's|@''REPLACE_STRSTR''@|$(REPLACE_STRSTR)|g' \
+	      -e 's|@''REPLACE_STRCASESTR''@|$(REPLACE_STRCASESTR)|g' \
+	      < $(srcdir)/string_.h; \
+	} > $@-t
+	mv $@-t $@
+MOSTLYCLEANFILES += string.h string.h-t
+
+EXTRA_DIST += string_.h
+
+## end   gnulib module string
 
 ## begin gnulib module sys_socket
 
@@ -164,7 +200,7 @@ BUILT_SOURCES += $(SYS_SOCKET_H)
 # We need the following in order to create <sys/socket.h> when the system
 # doesn't have one that works with the given compiler.
 sys/socket.h: socket_.h
-	test -d sys || mkdir sys
+	@MKDIR_P@ sys
 	{ echo '/* DO NOT EDIT! GENERATED AUTOMATICALLY! */'; \
 	  cat $(srcdir)/socket_.h; \
 	} > $@-t
