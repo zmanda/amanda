@@ -1,3 +1,8 @@
+2007-02-01  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amdump.sh.in: Output a starttime line.
+	* server-src/amflush.c: Output a starttime line.
+	* server-src/amstatus.pl.in: parse the starttime line.
+
 2007-01-26  Jean-Louis Martineau <martineau@zmanda.com>
 	* configure.in: Fix --with-ipv6 option.
 

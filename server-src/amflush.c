@@ -299,6 +299,7 @@ main(
 	error("BAD DATE"); /* should never happen */
     fprintf(stderr, "amflush: start at %s\n", date_string);
     fprintf(stderr, "amflush: datestamp %s\n", amflush_timestamp);
+    fprintf(stderr, "amflush: starttime %s\n", construct_timestamp(NULL));
     log_add(L_START, "date %s", amflush_timestamp);
 
     /* START DRIVER */

@@ -181,14 +181,17 @@ while(<AMDUMP>) {
 	chomp;
 	if(/(amdump|amflush): start at (.*)/) {
 		print " from $2\n";
-		$starttime=&unctime(split(/[ 	]+/,$2));
 	}
-	elsif(/amdump: datestamp (\S+)/) {
-		$gdatestamp = $1;
+	elsif(/(amdump|amflush): datestamp (\S+)/) {
+		$gdatestamp = $2;
 		if(!defined $datestamp{$gdatestamp}) {
 			$datestamp{$gdatestamp} = 1;
 			push @datestamp, $gdatestamp;
 		}
+		$starttime=&set_starttime($2);
+	}
+	elsif(/(amdump|amflush): starttime (\S+)/) {
+		$starttime=&set_starttime($2);
 	}
 	elsif(/planner: timestamp (\S+)/) {
 		$gdatestamp = $1;
@@ -1404,6 +1407,30 @@ sub unctime() {
 			next;
 		}
 	}
+
+	$time = &timelocal (@tl);
+
+	return $time;
+}
+
+sub set_starttime() {
+	my (@tl);
+	my ($time);
+	my ($date);
+
+	# Preset an array of values in case some parts are not passed as
+	# arguments.  This lets the date, etc, be omitted and default to
+	# today.
+
+	($date)=@_;
+	@tl = localtime;
+
+	$tl[5] = substr($date,  0, 4)   if(length($date) >= 4);
+	$tl[4] = substr($date,  4, 2)-1 if(length($date) >= 6);
+	$tl[3] = substr($date,  6, 2)   if(length($date) >= 8);
+	$tl[2] = substr($date,  8, 2)   if(length($date) >= 10);
+	$tl[1] = substr($date, 10, 2)   if(length($date) >= 12);
+	$tl[0] = substr($date, 12, 2)   if(length($date) >= 14);
 
 	$time = &timelocal (@tl);
 

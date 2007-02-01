@@ -112,6 +112,7 @@ exit_code=$?
 [ $exit_code -ne 0 ] && exit_status=$exit_code
 echo "amdump: start at `date`"
 echo "amdump: datestamp `date +%Y%m%d`"
+echo "amdump: starttime `date +%Y%m%d%H%M%S`"
 $libexecdir/planner$SUF $conf "$@" | $libexecdir/driver$SUF $conf "$@"
 exit_code=$?
 [ $exit_code -ne 0 ] && exit_status=$exit_code
