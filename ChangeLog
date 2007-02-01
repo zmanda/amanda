@@ -1,4 +1,7 @@
 2007-02-01  Jean-Louis Martineau <martineau@zmanda.com>
+	* changer-src/chg-zd-mtx.sh.in: Support IMPORT/EXPORT slot.
+
+2007-02-01  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amdump.sh.in: Output a starttime line.
 	* server-src/amflush.c: Output a starttime line.
 	* server-src/amstatus.pl.in: parse the starttime line.

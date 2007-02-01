@@ -68,6 +68,7 @@
 #	      Storage Element 7:Full :VolumeTag=SR0007
 #	      Storage Element 8:Full :VolumeTag=SR0008
 #	      Storage Element 9:Full :VolumeTag=SR0009
+#	      Storage Element 10 IMPORT/EXPORT:Full :VolumeTag=SR0009
 #
 #     This says the first storage slot (element) is "1" and the last
 #     is "9".  If you allocate the entire robot to Amanda, you do not need
@@ -494,12 +495,12 @@ get_loaded_info() {
 	if [ $loadedslot -eq -2 ]; then
 		set x `sed -n '
 {
-    /^.*Storage Element '$currentslot':Empty/ {
-	s/.*Storage Element \([0-9][0-9]*\):Empty/\1/p
+    /^.*Storage Element '$currentslot'\( IMPORT\/EXPORT\)\?:Empty/ {
+	s/.*Storage Element \([0-9][0-9]*\)\( IMPORT\/EXPORT\)\?:Empty/\1/p
         q
     }
-    /^.*Storage Element '$currentslot':Full/ {
-	s/.*Storage Element \([0-9][0-9]*\):Full/-2/p
+    /^.*Storage Element '$currentslot'\( IMPORT\/EXPORT\)\?:Full/ {
+	s/.*Storage Element \([0-9][0-9]*\)\( IMPORT\/EXPORT\)\?:Full/-2/p
         q
     }
 }
@@ -515,8 +516,8 @@ get_loaded_info() {
 	if [ $loadedslot -eq -2 ]; then
 		set x `sed -n '
 {
-    /^.*Storage Element \([0-9][0-9]*\):Empty/ {
-	s/.*Storage Element \([0-9][0-9]*\):Empty/\1/p
+    /^.*Storage Element \([0-9][0-9]*\)\( IMPORT\/EXPORT\)\?:Empty/ {
+	s/.*Storage Element \([0-9][0-9]*\)\( IMPORT\/EXPORT\)\?:Empty/\1/p
         q
     }
 }
@@ -568,8 +569,8 @@ get_slot_list() {
 	s/.*Storage Element \([0-9][0-9]*\):Empty/\1/p
     }
 }
-/^.*Storage Element \([0-9][0-9]*\):Full/ {
-    s/.*Storage Element \([0-9][0-9]*\):Full.*/\1/p
+/^.*Storage Element \([0-9][0-9]*\)\( IMPORT\/EXPORT\)\?:Full/ {
+    s/.*Storage Element \([0-9][0-9]*\)\( IMPORT\/EXPORT\)\?:Full.*/\1/p
 }
 ' < $mtx_status 2>&1 | grep -v "^${cleanslot}\$" | sort -n`
 	slot_list=`echo $slot_list`		# remove the newlines
