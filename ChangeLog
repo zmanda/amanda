@@ -1,4 +1,8 @@
 2007-02-02  Jean-Louis Martineau <martineau@zmanda.com>
+	* contrib/gnulib-update-current: New file.
+	* Makefile.am (EXTRA_DIST): Add contrib/gnulib-update-current.
+
+2007-02-02  Jean-Louis Martineau <martineau@zmanda.com>
 	* man/Makefile.am: Use http://docbook.sourceforge.net
 	* man/xml-source/amadmin.8.xml, man/xml-source/amaespipe.8.xml,
 	  man/xml-source/amanda.8.xml, man/xml-source/amanda-client.conf.5.xml,

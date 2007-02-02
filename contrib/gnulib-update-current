@@ -1,0 +1,110 @@
+#!/usr/bin/perl
+
+use Getopt::Long;
+
+$opt_help   = 0;
+@opt_import = ();
+$opt_runsvn = 0;
+$opt_svn    = 1;
+
+GetOptions ('help'     => \$opt_help,
+	    'import=s' => \@opt_import,
+	    'runsvn!'  => \$opt_runsvn,
+	    'svn!'     => \$opt_svn);
+@opt_import = split(/,/,join(',',@opt_import));
+
+$cmd = "gnulib-tool --m4-base=config/gnulib --source-base=gnulib --import " . join(" ", @opt_import);
+
+if ($opt_help) {
+    print "--help\n";
+    print "          Print this help message\n";
+    print "--import [module]\n";
+    print "          Add a new module, this option could be repeated many times\n";
+    print "--runsvn\n";
+    print "          Run the svn command to add the change to amanda svn\n";
+    print "--nosvn\n";
+    print "          Don't print the svn command to add the change to amanda svn\n";
+    print "By default, it print the command to add the change to amanda svn\n";
+    exit;
+}
+
+print "running $cmd\n";
+open GNULIB, $cmd . "|";
+while (<GNULIB>) {
+    chomp;
+    if (/^Removing file (.*) \(backup in (.*)\)$/) {
+	push @svn_del, $1;
+    }
+    if (/^Copying file (.*)$/) {
+	push @svn_add, $1;
+    }
+    if (/^Updating (.*) \(backup in (.*)\)$/) {
+	push @svn_modif, $1;
+    }
+    print $_, "\n";
+}
+
+#patch the gnulib/Makefile.am
+open MAKE, "gnulib/Makefile.am";
+open NEWMAKE, ">gnulib/Makefile.am.new";
+while (<MAKE>) {
+    print NEWMAKE;
+    if (/^AM_CPPFLAGS =/) {
+	print NEWMAKE "if GCC_COMPILER\n";
+	print NEWMAKE "  AM_CFLAGS += -Wno-error\n";
+	print NEWMAKE "endif\n";
+    }
+}
+rename "gnulib/Makefile.am.new", "gnulib/Makefile.am";
+
+if (!$opt_svn) {
+    exit;
+}
+
+print "\n";
+print "=================================================\n";
+if ($#svn_modif == -1 && $#svn_del == -1 && $#svn_add == -1) {
+    print "gnulib is already up to date\n";
+    print "=================================================\n";
+    exit;
+}
+if ($#svn_modif == 0 && $#svn_del == -1 && $#svn_add == -1 && $svn_modif[0] == "gnulib/Makefile.am") {
+    print "gnulib is already up to date\n";
+    print "=================================================\n";
+    exit;
+}
+if ($#svn_modif >= 0 || $#svn_del >= 0 || $#svn_add >= 0) {
+    if (!$opt_runsvn) {
+	print "Not updating svn repository\n";
+	print "You will have to run the following command later:\n";
+    }
+}
+
+if ($#svn_del >= 0) {
+    $cmd = "svn delete " . join(" ",@svn_del);
+    if ($opt_runsvn) {
+        print "running $cmd\n";
+	system $cmd;
+    } else {
+	print "   $cmd\n";
+    }
+}
+
+if ($#svn_add >= 0) {
+    $cmd = "svn add " . join(" ",@svn_add);
+    if ($opt_runsvn) {
+        print "running $cmd\n";
+	system $cmd;
+    } else {
+	print "   $cmd\n";
+    }
+}
+
+$cmd = "svn commit -m 'BugId:0\nUpdate gnulib'";
+if ($opt_runsvn) {
+    print "running $cmd\n";
+    system $cmd;
+} else {
+    print "   $cmd\n";
+}
+print "=================================================\n";
