@@ -25,8 +25,8 @@
     <arg choice='opt'>-f </arg>
     <arg choice='plain'><replaceable>config</replaceable></arg>
     <arg choice='plain'><replaceable>label</replaceable></arg>
-    <group><arg choice='plain'>slot</arg><arg choice='plain'><replaceable>slot</replaceable></arg></group>
-    <group><arg choice='plain'>-o</arg><arg choice='plain'><replaceable>configoption</replaceable></arg></group>*
+    <arg choice='opt'>slot <replaceable>slot</replaceable></arg>
+    <arg choice='plain' rep='repeat'><group><arg choice='plain'>-o </arg><replaceable>configoption</replaceable></group></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 

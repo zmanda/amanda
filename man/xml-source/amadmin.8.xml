@@ -24,8 +24,8 @@
   <command>amadmin</command>    
     <arg choice='plain'><replaceable>config</replaceable></arg>
     <arg choice='plain'><replaceable>command</replaceable></arg>
-    <group><replaceable><arg choice='plain'>command</arg><arg choice='plain'>options</arg></replaceable></group>
-    <group><arg choice='plain'>-o</arg><arg choice='plain'><replaceable>configoption</replaceable></arg></group>*
+    <arg choice='opt' rep='repeat'><replaceable>command_options</replaceable></arg>
+    <arg choice='plain' rep='repeat'><group><option>-o </option><replaceable>configoption</replaceable></group></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 
@@ -155,14 +155,15 @@ value, &A; will request new tapes until the count is satisfied again.</para>
 The tape label or holding disk filename,
 file number,
 and status are displayed.</para>
-<para>The <option>--sort</option> option changes the sort order using the following flags:</para>
-
-<para><emphasis remap='B'>h</emphasis>	host name
-<emphasis remap='B'>k</emphasis>	disk name
-<emphasis remap='B'>d</emphasis>	dump date
-<emphasis remap='B'>l</emphasis>	backup level
-<emphasis remap='B'>p</emphasis>        dump part
-<emphasis remap='B'>b</emphasis>	tape label</para>
+<para>The <option>--sort</option> option changes the sort order using the following flags:
+<programlisting>
+<emphasis>h</emphasis>: host name
+<emphasis>k</emphasis>: disk name
+<emphasis>d</emphasis>: dump date
+<emphasis>l</emphasis>: backup level
+<emphasis>p</emphasis>: dump part
+<emphasis>b</emphasis>: tape label
+</programlisting></para>
 
 <para>An uppercase letter reverses the sort order for that key.
 The default sort order is <emphasis remap='B'>hkdlpb</emphasis>.</para>
@@ -177,9 +178,9 @@ The default sort order is <emphasis remap='B'>hkdlpb</emphasis>.</para>
 on
 <emphasis remap='I'>hostname</emphasis>
 from the &A; database.</para>
-<note>If you do not also remove the disk from the
+<note><para>If you do not also remove the disk from the
 <emphasis remap='I'>disklist</emphasis>
-file, &A; will treat it as a new disk during the next run.
+file, &A; will treat it as a new disk during the next run.</para>
 </note>
   </listitem>
   </varlistentry>
@@ -318,16 +319,16 @@ some type of error.</para>
 <programlisting>
 $ amadmin daily find machine-c /var
 date        host      disk lv tape or file                 file part  status
-2000\-11\-09  machine\-c /var  0 000110                       9   --  OK
-2000\-11\-08  machine\-c /var  2 000109                       2   --  OK
-2000\-11\-07  machine\-c /var  2 /amanda/20001107/machine-c._var.2  0 OK
-2000\-11\-06  machine\-c /var  2 000107                       2   --  OK
-2000\-11\-05  machine\-c /var  2 000106                       3   --  OK
-2000\-11\-04  machine\-c /var  2 000105                       2   --  OK
-2000\-11\-03  machine\-c /var  2 000104                       2   --  OK
-2000\-11\-02  machine\-c /var  2 000103                       2   --  OK
-2000\-11\-01  machine\-c /var  1 000102                       5   --  OK
-2000\-10\-31  machine\-c /var  1 000101                       3   --  OK
+2000-11-09  machine-c /var  0 000110                       9   --  OK
+2000-11-08  machine-c /var  2 000109                       2   --  OK
+2000-11-07  machine-c /var  2 /amanda/20001107/machine-c._var.2  0 OK
+2000-11-06  machine-c /var  2 000107                       2   --  OK
+2000-11-05  machine-c /var  2 000106                       3   --  OK
+2000-11-04  machine-c /var  2 000105                       2   --  OK
+2000-11-03  machine-c /var  2 000104                       2   --  OK
+2000-11-02  machine-c /var  2 000103                       2   --  OK
+2000-11-01  machine-c /var  1 000102                       5   --  OK
+2000-10-31  machine-c /var  1 000101                       3   --  OK
 </programlisting>
 
 <para>Forget about the

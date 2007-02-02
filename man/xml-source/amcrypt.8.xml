@@ -32,16 +32,16 @@ remap='B'>gpg</emphasis>  to work. Aespipe is available from <ulink
 url="http://loop-aes.sourceforge.net"/></para>
 <para>&amcrypt; will search for the aespipe program in the following directories:
 /usr/bin:/usr/local/bin:/sbin:/usr/sbin.</para>
-&amcrypt; calls &amaespipe; and pass the
+<para>&amcrypt; calls &amaespipe; and pass the
 <emphasis remap='B'>passphrase</emphasis> through file descriptor 3.
-The passphrase should be stored in ~amanda/.am_passphrase.
+The passphrase should be stored in ~amanda/.am_passphrase.</para>
 </refsect1>
 
 <refsect1><title>How to create encryption keys for amcrypt</title>
-1. Create 65 random encryption keys and encrypt those keys using gpg. Reading
+<para>1. Create 65 random encryption keys and encrypt those keys using gpg. Reading
 from /dev/random may take indefinitely long if kernel's random entropy pool
 is empty. If that happens, do some other work on some other console (use
-keyboard, mouse and disks). 
+keyboard, mouse and disks).</para>
 <para> head -c 2925 /dev/random | uuencode -m - | head -n 66 | tail -n 65 \
         | gpg --symmetric -a > ~amanda/.gnupg/am_key.gpg
 </para>
@@ -60,9 +60,9 @@ chmod 700 ~amanda/.am_passphrase
 
 <refsect1><title>Key and Passphrase</title>
 <para>&amcrypt; uses the same key to encrypt and decrypt data.</para>
-It is very important to store and protect the key and the passphrase
+<para>It is very important to store and protect the key and the passphrase
 properly. Encrypted backup data can <emphasis remap='B'>only</emphasis> be recovered with the correct key and
-passphrase.
+passphrase.</para>
 </refsect1>
 
 <refsect1><title>SEE ALSO</title>

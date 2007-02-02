@@ -41,7 +41,7 @@
         </arg>
       </arg>
     </arg>
-    <group><arg choice='plain'>-o</arg><arg choice='plain'><replaceable>configoption</replaceable></arg></group>*
+    <arg choice='plain' rep='repeat'><group><arg choice='plain'>-o </arg><replaceable>configoption</replaceable></group></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 
@@ -138,8 +138,8 @@ option disables the appending behavior, and instead restores each
 piece as an individual file and reassembles them only after all have
 been restored.</para>
 
-<note>This requires at least double the size of your dump in free
-disk space, in order to build the final assembled dumpfile.
+<note><para>This requires at least double the size of your dump in free
+disk space, in order to build the final assembled dumpfile.</para>
 </note>
 
 <para>This behavior is implicitly invoked in circumstances where knowing the
@@ -219,7 +219,7 @@ $ amfetchdump -i /var/amanda/log SetA backupserver
 </refsect1>
 
 <refsect1><title>CAVEATS</title>
-<command>Amfetchdump</command> is dependent on accessing your server's config,
+<para><command>Amfetchdump</command> is dependent on accessing your server's config,
 tape changer, and (normally) dump logs. As such, it's not necessarily
 the most useful tool when those have all been wiped out and you
 desperately need to pull things from your tape. Pains have been taken
@@ -228,7 +228,7 @@ restores, look to
 <citerefentry><refentrytitle>amrestore</refentrytitle><manvolnum>8</manvolnum></citerefentry>
 or
 <citerefentry><refentrytitle>dd</refentrytitle><manvolnum>8</manvolnum></citerefentry>
-instead.
+instead.</para>
 </refsect1>
 
 <refsect1><title>AUTHOR</title>

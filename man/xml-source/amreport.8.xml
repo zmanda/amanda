@@ -24,11 +24,11 @@
   <command>amreport</command>    
     <arg choice='opt'><replaceable>config</replaceable></arg>
     <arg choice='opt'>-i</arg>
-    <group><arg choice='plain'>-M</arg><arg choice='plain'><replaceable>address</replaceable></arg></group>
-    <group><arg choice='plain'>-l</arg><arg choice='plain'><replaceable>logfile</replaceable></arg></group>
-    <group><arg choice='plain'>-f</arg><arg choice='plain'><replaceable>outputfile</replaceable></arg></group>
-    <group><arg choice='plain'>-p</arg><arg choice='plain'><replaceable>postscriptfile</replaceable></arg></group>
-    <group><arg choice='plain'>-o</arg><arg choice='plain'><replaceable>configoption</replaceable></arg></group>*
+    <arg choice='opt'>-M <replaceable>address</replaceable></arg>
+    <arg choice='opt'>-l <replaceable>logfile</replaceable></arg>
+    <arg choice='opt'>-f <replaceable>outputfile</replaceable></arg>
+    <arg choice='opt'>-p <replaceable>postscriptfile</replaceable></arg>
+    <arg choice='plain' rep='repeat'><group><arg choice='plain'>-o </arg><replaceable>configoption</replaceable></group></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 

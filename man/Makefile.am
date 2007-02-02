@@ -86,7 +86,7 @@ xml-source/%.proc.xml: $(SRCMANPAGEDIR)/%.xml $(srcdir)/xslt/expand-sambadoc.xsl
 	$(XSLTPROC) --path $(srcdir)/xslt/ --xinclude --stringparam latex.imagebasedir "$*/" --stringparam noreference 1 --output $@ $(srcdir)/xslt/expand-sambadoc.xsl $<
 
 %: xml-source/%.proc.xml $(srcdir)/xslt/man.xsl
-	$(XSLTPROC) --path $(srcdir)/xslt/ --output $@ man.xsl $<
+	$(XSLTPROC) --path $(srcdir)/xslt/ --output $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $<
 
 else    # !HAVE_XSLTPROC
 

@@ -1,3 +1,16 @@
+2007-02-02  Jean-Louis Martineau <martineau@zmanda.com>
+	* man/Makefile.am: Use http://docbook.sourceforge.net
+	* man/xml-source/amadmin.8.xml, man/xml-source/amaespipe.8.xml,
+	  man/xml-source/amanda.8.xml, man/xml-source/amanda-client.conf.5.xml,
+	  man/xml-source/amanda.conf.5.xml, man/xml-source/amcheck.8.xml,
+	  man/xml-source/amcrypt.8.xml, man/xml-source/amdump.8.xml,
+	  man/xml-source/amfetchdump.8.xml, man/xml-source/amflush.8.xml,
+	  man/xml-source/amgetconf.8.xml, man/xml-source/amlabel.8.xml,
+	  man/xml-source/ammt.8.xml, man/xml-source/amrecover.8.xml,
+	  man/xml-source/amreport.8.xml,
+	  man/xml-source/amtape.8.xml: Fix for xmllint.
+	* man/xslt/man.xsl: Remove bogus code.
+
 2007-02-01  Jean-Louis Martineau <martineau@zmanda.com>
 	* changer-src/chg-zd-mtx.sh.in: Support IMPORT/EXPORT slot.
 

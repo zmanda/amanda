@@ -25,7 +25,7 @@
     <arg choice='opt'><replaceable>config</replaceable></arg>
     <arg choice='opt'><replaceable>--list</replaceable></arg>
     <arg choice='plain'><replaceable>parameter</replaceable></arg>
-    <group><arg choice='plain'>-o</arg><arg choice='plain'><replaceable>configoption</replaceable></arg></group>*
+    <arg choice='plain' rep='repeat'><group><arg choice='plain'>-o </arg><replaceable>configoption</replaceable></group></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 
@@ -92,27 +92,27 @@ man page for more details about &A;.</para>
 <para>The parameter must be 'tapetype', 'dumptype, 'holdingdisk' or 'interface'. It will output, one by line, the list of identifier for the parameter.</para>
 <variablelist remap='TP'>
 <varlistentry>
+  <term>--list tapetype</term>
   <listitem>
-<para><emphasis remap='B'>--list tapetype</emphasis></para>
-<para>Output the list of tapetype, one by line.</para>
+    <para>Output the list of tapetype, one by line.</para>
   </listitem>
 </varlistentry>
 <varlistentry>
+  <term>--list dumptype</term>
   <listitem>
-<para><emphasis remap='B'>--list dumptype</emphasis></para>
-<para>Output the list of dumptype, one by line.</para>
+    <para>Output the list of dumptype, one by line.</para>
   </listitem>
 </varlistentry>
 <varlistentry>
+  <term>--list holdingdisk</term>
   <listitem>
-<para><emphasis remap='B'>--list holdingdisk</emphasis></para>
-<para>Output the list of holdingdisk, one by line.</para>
+    <para>Output the list of holdingdisk, one by line.</para>
   </listitem>
 </varlistentry>
 <varlistentry>
+  <term>--list interface</term>
   <listitem>
-<para><emphasis remap='B'>--list interface</emphasis></para>
-<para>Output the list of interface, one by line.</para>
+    <para>Output the list of interface, one by line.</para>
   </listitem>
 </varlistentry>
 </variablelist>
@@ -122,24 +122,26 @@ man page for more details about &A;.</para>
   <varlistentry>
   <term><emphasis remap='B'>parameter</emphasis></term>
   <listitem>
-<para>It could be one of the below format</para>
-  </listitem>
-  <listitem>
-  runtapes
-  </listitem>
-  <listitem>
-  DUMPTYPE:no-compress:compress
-  </listitem>
-  <listitem>
-  TAPETYPE:HP-DAT:length
-  </listitem>
-  <listitem>
-  INTERFACE:local:use
-  </listitem>
-  <listitem>
-  HOLDINGDISK:hd1:use
-</listitem>
+    <para>It could be one of the below format:</para>
+<variablelist remap='TP'>
+<varlistentry>
+    <term>runtapes</term><listitem><para></para></listitem>
 </varlistentry>
+<varlistentry>
+    <term>DUMPTYPE:no-compress:compress</term><listitem><para></para></listitem>
+</varlistentry>
+<varlistentry>
+    <term>TAPETYPE:HP-DAT:length</term><listitem><para></para></listitem>
+</varlistentry>
+<varlistentry>
+    <term>INTERFACE:local:use</term><listitem><para></para></listitem>
+</varlistentry>
+<varlistentry>
+    <term>HOLDINGDISK:hd1:use</term><listitem><para></para></listitem>
+</varlistentry>
+</variablelist>
+  </listitem>
+  </varlistentry>
 
 <varlistentry>
 <term><emphasis remap='B'>-o</emphasis> <replaceable>configoption</replaceable></term>

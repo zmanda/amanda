@@ -24,8 +24,8 @@
   <command>amtape</command>    
     <arg choice='plain'><replaceable>config</replaceable></arg>
     <arg choice='plain'><replaceable>command</replaceable></arg>
-    <arg choice='opt'><arg choice='plain'><replaceable>command</replaceable></arg><arg choice='plain'><replaceable>options</replaceable></arg></arg>
-    <group><arg choice='plain'>-o</arg><arg choice='plain'><replaceable>configoption</replaceable></arg></group>*
+    <arg choice='opt' rep='repeat'><replaceable>command_options</replaceable></arg>
+    <arg choice='plain' rep='repeat'><group><option>-o </option><replaceable>configoption</replaceable></group></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 

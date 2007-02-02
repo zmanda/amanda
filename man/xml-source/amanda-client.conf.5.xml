@@ -110,10 +110,10 @@ some of which have a multiplier effect:</para>
   <listitem>
 <para>Some number of weeks (days*7).</para>
 
-<note>The value
+<note><para>The value
 <emphasis remap='B'>inf</emphasis>
 may be used in most places where an integer is expected
-to mean an infinite amount.
+to mean an infinite amount.</para>
 
 <para>Boolean arguments may have any of the values
 <emphasis remap='B'>y</emphasis>,

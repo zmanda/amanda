@@ -110,10 +110,10 @@ some of which have a multiplier effect:</para>
   <listitem>
 <para>Some number of weeks (days*7).</para>
 
-<note>The value
+<note><para>The value
 <emphasis remap='B'>inf</emphasis>
 may be used in most places where an integer is expected
-to mean an infinite amount.
+to mean an infinite amount.</para>
 
 <para>Boolean arguments may have any of the values
 <emphasis remap='B'>y</emphasis>,
@@ -171,7 +171,7 @@ A space separated list of recipients for mail reports.</para>
 The number of days in the backup cycle.
 Each disk will get a full backup at least this often.
 Setting this to zero tries to do a full backup each run.</para>
-<note>This parameter may also be set in a specific
+<note><para>This parameter may also be set in a specific
 <emphasis remap='B'>dumptype</emphasis>
 (see below).
 This value sets the default for all
@@ -180,7 +180,7 @@ so must appear in
 <emphasis remap='B'>amanda.conf</emphasis>
 before any
 <emphasis remap='B'>dumptype</emphasis>s
-are defined.
+are defined.</para>
 </note>
   </listitem>
   </varlistentry>
@@ -577,16 +577,16 @@ The unit used to print many numbers, k=kilo, m=mega, g=giga, t=tera.
   <listitem>
 <para>Default:
 <emphasis remap='I'>tttTTTTTTT</emphasis>.
-The priority order of each dumper:</para>
+The priority order of each dumper:
 
-<itemizedlist>
-<listitem><para>s: smallest size</para></listitem>
-<listitem><para>S: largest size</para></listitem>
-<listitem><para>t: smallest time</para></listitem>
-<listitem><para>T: largest time</para></listitem>
-<listitem><para>b: smallest bandwidth</para></listitem>
-<listitem><para>B: largest bandwidth</para></listitem>
-</itemizedlist>
+<programlisting>
+s: smallest size
+S: largest size
+t: smallest time
+T: largest time
+b: smallest bandwidth
+B: largest bandwidth
+</programlisting></para>
 
   </listitem>
   </varlistentry>
@@ -836,40 +836,39 @@ is a comma (',') separated list of triples. Each triple consists
 of three parts which are separated by a equal sign ('=') and a colon (':') (see the example).
 These three parts specify:</para>
   
-  <itemizedlist>
+  <orderedlist>
   <listitem>
       <para>the name of the column, which may be:</para>
 
-	<itemizedlist>
-	<listitem><para>Compress (compression ratio)</para></listitem>
-	<listitem><para>Disk (client disk name)</para></listitem>
-	<listitem><para>DumpRate (dump rate in KBytes/sec)</para></listitem>
-	<listitem><para>DumpTime (total dump time in hours:minutes)</para></listitem>
-	<listitem><para>HostName (client host name)</para></listitem>
-	<listitem><para>Level (dump level)</para></listitem>
-	<listitem><para>OrigKB (original image size in KBytes)</para></listitem>
-	<listitem><para>OutKB (output image size in KBytes)</para></listitem>
-	<listitem><para>TapeRate (tape writing rate in KBytes/sec)</para></listitem>
-	<listitem><para>TapeTime (total tape time in hours:minutes)</para></listitem>
-	</itemizedlist>
+	<programlisting>
+	Compress (compression ratio)
+	Disk (client disk name)
+	DumpRate (dump rate in KBytes/sec)
+	DumpTime (total dump time in hours:minutes)
+	HostName (client host name)
+	Level (dump level)
+	OrigKB (original image size in KBytes)
+	OutKB (output image size in KBytes)
+	TapeRate (tape writing rate in KBytes/sec)
+	TapeTime (total tape time in hours:minutes)
+	</programlisting>
 
   </listitem>
 
   <listitem>
-<para>the amount of space to display before the column (used to get whitespace between columns).</para>
+<para>the amount of space to display before the column (used to get whitespace between columns).</para><para/>
   </listitem>
   <listitem>
 <para>the width of the column itself.
 If set to a negative value, the width will be calculated on demand to fit the largest entry in
 this column.</para>
   </listitem>
-  </itemizedlist>
+  </orderedlist>
 
-<para>Here is an example:</para>
-
+<para>Here is an example:
 <programlisting>
-<para>columnspec &quot;Disk=1:18,HostName=0:10,OutKB=1:7&quot;</para>
-</programlisting>
+columnspec &quot;Disk=1:18,HostName=0:10,OutKB=1:7&quot;
+</programlisting></para>
 <para>
 The above will display the disk information in 18 characters
 and put one space before it. The hostname column will be 10 characters wide with
@@ -1282,24 +1281,39 @@ is often not as good a compression as
 but usually less CPU overhead. Or to specify <emphasis remap='B'>Custom</emphasis>
 to use your own compression method. (See dumptype custom-compress in example/amanda.conf for reference)</para>
 
-
-
 <para>So the <emphasis remap='B'>compress</emphasis> options line may be one of:</para>
 
-<itemizedlist>
-<listitem><para>compress none</para></listitem>
-<listitem><para>compress [client] fast</para></listitem>
-<listitem><para>compress [client] best</para></listitem>
-<listitem><para>compress client custom</para>
-<para>Specify client_custom_compress &quot;PROG&quot;</para>
-<para>PROG must not contain white space and it must accept -d for uncompress.</para></listitem>
-<listitem><para>compress server fast</para></listitem>
-<listitem><para>compress server best</para></listitem>
-<listitem><para>compress server custom</para>
-<para>Specify server_custom_compress &quot;PROG&quot;</para>
-<para>PROG must not contain white space and it must accept -d for uncompress.</para></listitem>
-</itemizedlist>
-
+<variablelist remap='TP'>
+  <varlistentry>
+    <term>compress none</term><listitem><para/></listitem>
+  </varlistentry>
+  <varlistentry>
+    <term>compress client fast</term><listitem><para/></listitem>
+  </varlistentry>
+  <varlistentry>
+    <term>compress client best</term><listitem><para/></listitem>
+  </varlistentry>
+  <varlistentry>
+    <term>compress client custom</term>
+    <listitem>
+      <para>Specify <emphasis>client_custom_compress</emphasis> &quot;PROG&quot;</para>
+      <para>PROG must not contain white space and it must accept -d for uncompress.</para>
+    </listitem>
+  </varlistentry>
+  <varlistentry>
+    <term>compress server fast</term><listitem><para/></listitem>
+  </varlistentry>
+  <varlistentry>
+    <term>compress server best</term><listitem><para/></listitem>
+  </varlistentry>
+  <varlistentry>
+    <term>compress server custom</term>
+    <listitem>
+      <para>Specify <emphasis>server_custom_compress</emphasis> &quot;PROG&quot;</para>
+      <para>PROG must not contain white space and it must accept -d for uncompress.</para>
+    </listitem>
+  </varlistentry>
+</variablelist>
 <para>Note that some tape devices do compression and this option has nothing
 to do with whether that is used. If hardware compression is used (usually via a particular tape device name
 or <emphasis remap='B'>mt</emphasis> option), &A; (software) compression should be disabled.</para>
@@ -1325,30 +1339,38 @@ server host as it goes from the network into the holding disk or to tape.</para>
 <para>So the <emphasis remap='B'>encrypt</emphasis> options line may be one
 	    of:</para>
 
-<itemizedlist>
-<listitem><para>encrypt none</para></listitem>
-<listitem><para>encrypt client</para>
-<para>Specify client_encrypt &quot;PROG&quot;</para>
-<para>PROG must not contain white space.</para>
-<para>Specify client_decrypt_option &quot;decryption-parameter&quot; Default: &quot;-d&quot;</para>
-<para>decryption-parameter must not contain white space.</para>
-<para>(See dumptype server-encrypt-fast in example/amanda.conf for reference)</para>
-</listitem>
-<listitem><para>encrypt server</para>
-<para>Specify server_encrypt &quot;PROG&quot;</para>
-<para>PROG must not contain white space.</para>
-<para>Specify server_decrypt_option &quot;decryption-parameter&quot; Default: &quot;-d&quot;</para>
-<para>decryption-parameter must not contain white space.</para>
-<para>(See dumptype client-encrypt-nocomp in example/amanda.conf for reference)</para>
-</listitem>
-</itemizedlist>
-</listitem>
+<variablelist remap='TP'>
+  <varlistentry>
+    <term>encrypt none</term><listitem><para/></listitem>
+  </varlistentry>
+  <varlistentry>
+    <term>encrypt client</term>
+    <listitem>
+      <para>Specify client_encrypt &quot;PROG&quot;</para>
+      <para>PROG must not contain white space.</para>
+      <para>Specify client_decrypt_option &quot;decryption-parameter&quot; Default: &quot;-d&quot;</para>
+      <para>decryption-parameter must not contain white space.</para>
+      <para>(See dumptype server-encrypt-fast in example/amanda.conf for reference)</para>
+    </listitem>
+  </varlistentry>
+  <varlistentry>
+    <term>encrypt server</term>
+    <listitem>
+      <para>Specify server_encrypt &quot;PROG&quot;</para>
+      <para>PROG must not contain white space.</para>
+      <para>Specify server_decrypt_option &quot;decryption-parameter&quot; Default: &quot;-d&quot;</para>
+      <para>decryption-parameter must not contain white space.</para>
+      <para>(See dumptype client-encrypt-nocomp in example/amanda.conf for reference)</para>
+    </listitem>
+  </varlistentry>
+</variablelist>
 <para>Note that current logic assumes compression then encryption during
 backup(thus decrypt then uncompress during restore). So specifying
 client-encryption AND server-compression is not supported.
 <emphasis remap='I'>amcrypt</emphasis> which is a wrapper of
 	    <emphasis remap='I'>aespipe</emphasis> is provided as a reference
 		symmetric encryption program.</para>
+</listitem>
 </varlistentry>
 
 
@@ -1357,31 +1379,35 @@ client-encryption AND server-compression is not supported.
   <listitem>
 <para>Default: <emphasis remap='I'>client</emphasis>.
 Determine the way &A; does it's estimate.</para>
-<itemizedlist>
-<listitem>
-<para>client:</para>
-<para>
-Use the same program as the dumping program, this is the most accurate way to do estimates, but it can take a long time.
-</para>
-</listitem>
-<listitem>
-<para>calcsize:</para>
-<para>Use a faster program to do estimates, but the result is less accurate.</para>
-</listitem>
-<listitem>
-<para>server:</para>
-<para>Use only statistics from the previous run to give an estimate, 
-it takes only a few seconds but the result is not accurate if your disk 
-usage changes from day to day.
-</para>
-  </listitem>
-  </itemizedlist>
-  </listitem>
+<variablelist remap='TP'>
+  <varlistentry>
+    <term>client</term>
+    <listitem>
+      <para>Use the same program as the dumping program, this is the most
+	    accurate way to do estimates, but it can take a long time.</para>
+    </listitem>
   </varlistentry>
+  <varlistentry>
+    <term>calcsize</term>
+    <listitem>
+      <para>Use a faster program to do estimates, but the result is less accurate.</para>
+    </listitem>
+  </varlistentry>
+  <varlistentry>
+    <term>server</term>
+    <listitem>
+      <para>Use only statistics from the previous run to give an estimate, 
+            it takes only a few seconds but the result is not accurate if your disk 
+            usage changes from day to day.</para>
+    </listitem>
+  </varlistentry>
+</variablelist>
+</listitem>
+</varlistentry>
 
   
   <varlistentry>
-  <term><emphasis remap='B'>exclude</emphasis> [ <emphasis remap='I'>list|file</emphasis> ][[optional][ <emphasis remap='I'>append</emphasis> ][ <emphasis remap='I'> string</emphasis> ]+]</term>
+  <term><emphasis remap='B'>exclude</emphasis> [ list|file ][[optional][ append ][ <emphasis remap='I'>string</emphasis> ]+]</term>
   <listitem>
 <para>Default:
 <emphasis remap='I'>file</emphasis>.
@@ -1433,7 +1459,7 @@ for a backup of <filename>/var</filename>,
 </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>holdingdisk</emphasis> [ <emphasis remap='I'>never|auto|required]</emphasis> ]</term>
+  <term><emphasis remap='B'>holdingdisk</emphasis> [ never|auto|required ]</term>
   <listitem>
 <para>Default:
 <emphasis remap='I'>auto</emphasis>.
@@ -1482,7 +1508,7 @@ some of which should not back up all the listed file systems.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>include</emphasis> [ <emphasis remap='I'>list|file</emphasis> ][[optional][ <emphasis remap='I'>append</emphasis> ][ <emphasis remap='I'> string</emphasis> ]+]</term>
+  <term><emphasis remap='B'>include</emphasis> [ list|file ][[optional][ append ][ <emphasis remap='I'>string</emphasis> ]+]</term>
   <listitem>
 <para>Default:
 <emphasis remap='I'>file</emphasis>
@@ -1507,8 +1533,8 @@ is a file name on the client containing glob expressions.</para>
 <para>Include expressions must always be specified as relative to the
 head directory of the DLE.</para>
 
-<note>For globbing to work at all, even the limited single level, 
-the top level directory of the DLE must be readable by the &A; user.
+<note><para>For globbing to work at all, even the limited single level, 
+the top level directory of the DLE must be readable by the &A; user.</para>
 </note>
 
 <para>With the <emphasis remap='B'>append</emphasis> keyword, the

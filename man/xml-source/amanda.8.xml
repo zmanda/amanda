@@ -705,7 +705,7 @@ Entering
 </programlisting>
 is really a short hand for
 <programlisting>tapedev tape:/dev/rmt/0mn
-</programlisting>.</para>
+</programlisting></para>
   </listitem>
   </varlistentry>
   <varlistentry>
@@ -728,11 +728,12 @@ value from the associated
 <emphasis remap='B'>tapetype</emphasis>
 is used to limit the amount of data written. When the limit is reached, the driver will simulate end of tape.</para>
 
-<note>This driver should only be used for debugging and testing,
+<note><para>This driver should only be used for debugging and testing,
 and probably only with the
 <emphasis remap='B'>record</emphasis>
 option set to
 <emphasis remap='I'>no</emphasis>.
+</para>
 </note>
   </listitem>
   </varlistentry>
@@ -917,15 +918,12 @@ It may be changed on a host by host basis
 by listing it first in the password field followed
 by a percent sign and then the password.
 For instance:</para>
-
 <programlisting>
   //some-pc/home normalpw
   //another-pc/disk otheruser%otherpw
 </programlisting>
-
-With clear text passwords, this file should obviously be tightly protected.
-It only needs to be readable by the &A;-user on the Samba server.
-
+<para>With clear text passwords, this file should obviously be tightly protected.
+It only needs to be readable by the &A;-user on the Samba server.  </para>
 <para>You can find further information in the
 <emphasis remap='B'>docs/SAMBA</emphasis>
 <!-- TODO: edit link -->
@@ -950,40 +948,172 @@ succeeds if all words in your expression match contiguous words in
 the host or disk.</para>
 
 
-<literallayout remap='.nf'>
-. 	word separator for a host
-/ 	word separator for a disk
-^ 	anchor at left
-$ 	anchor at right
-? 	match exactly one character except the separator
-* 	match zero or more characters except the separator
-**	match zero or more characters including the separator
-</literallayout>
+<informaltable frame="none">
+<tgroup cols="2" align="left">
+<tbody>
 
+<row>
+<entry>.  </entry>
+<entry>word separator for a host</entry>
+</row>
+
+<row>
+<entry>/</entry>
+<entry>word separator for a disk</entry>
+</row>
+
+<row>
+<entry>^</entry>
+<entry>anchor at left</entry>
+</row>
+
+<row>
+<entry>$</entry>
+<entry>anchor at right</entry>
+</row>
+
+<row>
+<entry>?</entry>
+<entry>match exactly one character except the separator</entry>
+</row>
+
+<row>
+<entry>*</entry>
+<entry>match zero or more characters except the separator</entry>
+</row>
+
+<row>
+<entry>**</entry>
+<entry>match zero or more characters including the separator</entry>
+</row>
+
+</tbody>
+</tgroup>
+</informaltable>
 
 <para>Some examples:</para>
 
-<literallayout remap='.nf'>
-EXPRESSION     WILL MATCH           WILL NOT MATCH
-hosta          hosta                hostb
-               hoSTA.dOMAIna.ORG 
-               foo.hosta.org 
-host           host                 hosta
-host?          hosta                host
-               hostb 
-ho*na          hoina                ho.aina.org
-ho**na         hoina 
-               ho.aina.org 
-^hosta         hosta                foo.hosta.org
-sda*           /dev/sda1 
-               /dev/sda12 
-/opt/          opt (disk)           opt (host)
-.opt.          opt (host)           opt (disk)
-/              /                    any other disk
-/usr           /usr 
-               /usr/opt 
-/usr$          /usr                 /usr/opt
-</literallayout>
+<informaltable frame="none">
+<tgroup cols="3" align="left">
+<tbody>
+
+<row>
+<entry>EXPRESSION  </entry>
+<entry>WILL MATCH</entry>
+<entry>WILL NOT MATCH</entry>
+</row>
+
+<row>
+<entry>hosta</entry>
+<entry>hosta</entry>
+<entry>hostb</entry>
+</row>
+
+<row>
+<entry></entry>
+<entry>hoSTA.dOMAIna.ORG</entry>
+<entry></entry>
+</row>
+
+<row>
+<entry></entry>
+<entry>foo.hosta.org</entry>
+<entry></entry>
+</row>
+
+<row>
+<entry>host</entry>
+<entry>host</entry>
+<entry>hosta</entry>
+</row>
+
+<row>
+<entry>host?</entry>
+<entry>hosta</entry>
+<entry>host</entry>
+</row>
+
+<row>
+<entry></entry>
+<entry>hostb</entry>
+<entry></entry>
+</row>
+
+<row>
+<entry>ho*na</entry>
+<entry>hoina</entry>
+<entry>ho.aina.org</entry>
+</row>
+
+<row>
+<entry>ho**na</entry>
+<entry>hoina</entry>
+<entry></entry>
+</row>
+
+<row>
+<entry></entry>
+<entry>ho.aina.org</entry>
+<entry></entry>
+</row>
+
+<row>
+<entry>^hosta</entry>
+<entry>hosta</entry>
+<entry>foo.hosta.org</entry>
+</row>
+
+<row>
+<entry>sda*</entry>
+<entry>/dev/sda1</entry>
+<entry></entry>
+</row>
+
+<row>
+<entry></entry>
+<entry>/dev/sda12</entry>
+<entry></entry>
+</row>
+
+<row>
+<entry>/opt</entry>
+<entry>opt (disk)</entry>
+<entry>opt (host)</entry>
+</row>
+
+<row>
+<entry>.opt.</entry>
+<entry>opt (host)</entry>
+<entry>opt (disk)</entry>
+</row>
+
+<row>
+<entry>/</entry>
+<entry>/</entry>
+<entry>any other disk</entry>
+</row>
+
+<row>
+<entry>/usr</entry>
+<entry>/usr</entry>
+<entry></entry>
+</row>
+
+<row>
+<entry></entry>
+<entry>/usr/opt</entry>
+<entry></entry>
+</row>
+
+<row>
+<entry>/usr$</entry>
+<entry>/usr</entry>
+<entry>/usr/opt</entry>
+</row>
+
+</tbody>
+</tgroup>
+</informaltable>
 
 
 </refsect1>
@@ -995,7 +1125,7 @@ expression is a range expression where we only match the prefix.
 Leading ^ is removed. Trailing $ forces an exact match.</para>
 
 <informaltable frame="all">
-<tgroup cols="2" alignment="left">
+<tgroup cols="2" align="left">
 <tbody>
 
 <row>

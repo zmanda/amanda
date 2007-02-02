@@ -23,8 +23,11 @@
 <cmdsynopsis>
   <command>amdump</command>    
     <arg choice='plain'><replaceable>config</replaceable></arg>
-    <group><arg choice='plain'><replaceable>host</replaceable></arg><arg choice='opt'><replaceable>disk</replaceable></arg>*</group>*
-    <group><arg choice='plain'>-o</arg><arg choice='plain'><replaceable>configoption</replaceable></arg></group>*
+    <arg choice='opt' rep='repeat'>
+       <arg choice='plain'><replaceable>host</replaceable></arg>
+       <arg choice='opt' rep='repeat'><replaceable>disk</replaceable></arg>
+    </arg>
+    <arg choice='plain' rep='repeat'><group><arg choice='plain'>-o </arg><replaceable>configoption</replaceable></group></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 

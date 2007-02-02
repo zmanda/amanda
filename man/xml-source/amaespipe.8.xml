@@ -29,7 +29,7 @@ requires <emphasis remap='B'>aespipe</emphasis>, <emphasis remap='B'>uuencode</e
 Aespipe is available from <ulink url="http://loop-aes.sourceforge.net"/></para>
 <para>&amaespipe; will search for the aespipe program in the following directories:
 /usr/bin:/usr/local/bin:/sbin:/usr/sbin. </para>
-&amaespipe; is called by &amcrypt; for &A; data encryption.
+<para>&amaespipe; is called by &amcrypt; for &A; data encryption.</para>
 <para>&amaespipe; is based on aespipe's bzaespipe program.
 It calls aespipe to encrypt data using AES256 as the encryption and SHA256 as the
 hash function. GPG key should be stored in $AMANDA_HOME/.gnupg/am_key.gpg.

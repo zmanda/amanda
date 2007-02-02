@@ -207,7 +207,7 @@ and may include:</para>
   </varlistentry>
 </variablelist>
 
-<note>Many systems only report good data when a tape is in the drive and ready.
+<note><para>Many systems only report good data when a tape is in the drive and ready.</para>
 </note>
 </refsect1>
 

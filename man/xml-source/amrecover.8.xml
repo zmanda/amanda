@@ -23,11 +23,11 @@
 <refsynopsisdiv>
 <cmdsynopsis>
   <command>amrecover</command>    
-    <group><arg choice='opt'>-C </arg><arg choice='plain'><replaceable>config</replaceable></arg></group>
-    <group><arg choice='plain'>-s </arg><arg choice='plain'><replaceable>index-server</replaceable></arg></group>
-    <group><arg choice='plain'>-t </arg><arg choice='plain'><replaceable>tape-server</replaceable></arg></group>
-    <group><arg choice='plain'>-d </arg><arg choice='plain'><replaceable>tape-device</replaceable></arg></group>
-    <group><arg choice='plain'>-o </arg><arg choice='plain'><replaceable>clientconfigoption</replaceable></arg></group>*
+    <arg choice='opt'>-C <replaceable>config</replaceable></arg>
+    <arg choice='opt'>-s <replaceable>index-server</replaceable></arg>
+    <arg choice='opt'>-t <replaceable>tape-server</replaceable></arg>
+    <arg choice='opt'>-d <replaceable>tape-device</replaceable></arg>
+    <arg choice='plain' rep='repeat'><group><arg choice='plain'>-o </arg><replaceable>configoption</replaceable></group></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 
@@ -53,9 +53,9 @@ man page for more details about &A;.</para>
 </refsect1>
 
 <refsect1><title>OPTIONS</title>
-<note>The Default values are those set at compile-time.
+<note><para>The Default values are those set at compile-time.
 Use <command>amrestore</command> to recover client-encrypted or
-client-custom-compressed tapes.
+client-custom-compressed tapes.</para>
 </note>
 <variablelist remap='TP'>
   <varlistentry>
@@ -167,9 +167,7 @@ would yield files from the following days:</para>
 <!-- .RE -->
 <variablelist remap='TP'>
   <varlistentry>
-  <term><emphasis remap='B'>setdisk <arg
-  choice='plain'><replaceable>diskname</replaceable></arg> <arg
-  choice='opt'><replaceable>mountpoint</replaceable></arg></emphasis></term>
+  <term><emphasis remap='B'>setdisk </emphasis><emphasis remap='I'>diskname</emphasis> [<emphasis remap='I'>mountpoint</emphasis>]</term>
   <listitem>
 <para>Specifies which disk to consider
 (default: the disk holding the working directory where
@@ -191,21 +189,21 @@ mount point instead of full pathnames.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>listhost [diskdevice]</emphasis></term>
+  <term><emphasis remap='B'>listhost </emphasis>[<emphasis remap='I'>diskdevice</emphasis>]</term>
   <listitem>
 <para>List all
 <emphasis remap='B'>host</emphasis></para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>listdisk [diskdevice]</emphasis></term>
+  <term><emphasis remap='B'>listdisk </emphasis>[<emphasis remap='I'>diskdevice</emphasis>]</term>
   <listitem>
 <para>List all
 <emphasis remap='B'>diskname</emphasis></para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>settape [[server]:][tapedev|default]</emphasis></term>
+  <term><emphasis remap='B'>settape </emphasis>[[<emphasis remap='I'>server</emphasis>]:][<emphasis remap='I'>tapedev</emphasis>|<emphasis remap='I'>default</emphasis>]</term>
   <listitem>
 <para>Specifies the host to use as the tape server, and which of its tape
 devices to use.
@@ -230,7 +228,6 @@ must specify the hostname.</para>
 <programlisting>
 settape 192.168.0.10:file:/file1
 </programlisting>
-
 <para>You can change the tape device when amrecover ask you to load the tape:</para>
 
 <programlisting>
@@ -247,7 +244,7 @@ Using tape /dev/nst2 from server server2.
 
 <variablelist remap='TP'>
   <varlistentry>
-  <term><emphasis remap='B'>setmode mode</emphasis></term>
+  <term><emphasis remap='B'>setmode </emphasis><emphasis remap='I'>mode</emphasis></term>
   <listitem>
 <para>Set the extraction mode for Samba shares.
 If
@@ -300,7 +297,7 @@ can be a shell style wildcards.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>cdx dir</emphasis></term>
+  <term><emphasis remap='B'>cdx </emphasis><emphasis remap='I'>dir</emphasis></term>
   <listitem>
 <para>Like the
 <emphasis remap='B'>cd</emphasis>
@@ -318,7 +315,7 @@ relative to the backed up filesystem.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>lcd path</emphasis></term>
+  <term><emphasis remap='B'>lcd </emphasis><emphasis remap='I'>path</emphasis></term>
   <listitem>
 <para>Change the
 <command>amrecover</command>
@@ -338,35 +335,35 @@ The backup date is shown for each file.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>add item1 item2 ...</emphasis></term>
+  <term><emphasis remap='B'>add </emphasis><emphasis remap='I'>item1 item2 ...</emphasis></term>
   <listitem>
 <para>Add the specified files or directories to the restore list.
 Each item may have shell style wildcards.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>addx item1 item2 ...</emphasis></term>
+  <term><emphasis remap='B'>addx </emphasis><emphasis remap='I'>item1 item2 ...</emphasis></term>
   <listitem>
 <para>Add the specified files or directories to the restore list.
 Each item may be a regular expression.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>delete item1 item2 ...</emphasis></term>
+  <term><emphasis remap='B'>delete </emphasis><emphasis remap='I'>item1 item2 ...</emphasis></term>
   <listitem>
 <para>Delete the specified files or directories from the restore list.
 Each item may have shell style wildcards.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>deletex item1 item2 ...</emphasis></term>
+  <term><emphasis remap='B'>deletex </emphasis><emphasis remap='I'>item1 item2 ...</emphasis></term>
   <listitem>
 <para>Delete the specified files or directories from the restore list.
 Each item may be a regular expression.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>list file</emphasis></term>
+  <term><emphasis remap='B'>list </emphasis><emphasis remap='I'>file</emphasis></term>
   <listitem>
 <para>Display the contents of the restore list.
 If a file name is specified,

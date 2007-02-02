@@ -25,10 +25,13 @@
     <arg choice='opt'>-am</arg>
     <arg choice='opt'>-w</arg>
     <arg choice='opt'>-sclt</arg>
-    <group><arg choice='plain'>-M</arg><arg choice='plain'><replaceable>address</replaceable></arg></group>*
+    <arg choice='opt'>-M <replaceable>address</replaceable></arg>
     <arg choice='plain'><replaceable>config</replaceable></arg>
-    <group><arg choice='plain'><replaceable>host</replaceable></arg><arg choice='opt'><replaceable>disk</replaceable></arg>*</group>*
-    <group><arg choice='plain'>-o</arg><arg choice='plain'><replaceable>configoption</replaceable></arg></group>*
+    <arg choice='opt' rep='repeat'>
+       <arg choice='plain'><replaceable>host</replaceable></arg>
+       <arg choice='opt' rep='repeat'><replaceable>disk</replaceable></arg>
+    </arg>
+    <arg choice='plain' rep='repeat'><group><arg choice='plain'>-o </arg><replaceable>configoption</replaceable></group></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 
@@ -603,7 +606,7 @@ KBytes were available.
 <emphasis remap='I'>amanda.conf</emphasis>
 option)
 to allow for unexpected overruns.</para>
-<note>Even though this message is listed as a warning, it causes &amcheck; to exit with a non-zero status.
+<note><para>Even though this message is listed as a warning, it causes &amcheck; to exit with a non-zero status.</para>
 </note>
   </listitem>
   </varlistentry>
