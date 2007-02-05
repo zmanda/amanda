@@ -1,4 +1,7 @@
 2007-02-05  Jean-Louis Martineau <martineau@zmanda.com>
+	* changer-src/chg-zd-mtx.sh.in: Fix for sed and IMPORT/EXPORT.
+
+2007-02-05  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amcheck.c: Add parentheses.
 
 2007-02-02  Jean-Louis Martineau <martineau@zmanda.com>

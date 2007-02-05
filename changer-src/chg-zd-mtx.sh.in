@@ -495,12 +495,20 @@ get_loaded_info() {
 	if [ $loadedslot -eq -2 ]; then
 		set x `sed -n '
 {
-    /^.*Storage Element '$currentslot'\( IMPORT\/EXPORT\)\?:Empty/ {
-	s/.*Storage Element \([0-9][0-9]*\)\( IMPORT\/EXPORT\)\?:Empty/\1/p
+    /^.*Storage Element '$currentslot':Empty/ {
+	s/.*Storage Element \([0-9][0-9]*\):Empty/\1/p
         q
     }
-    /^.*Storage Element '$currentslot'\( IMPORT\/EXPORT\)\?:Full/ {
-	s/.*Storage Element \([0-9][0-9]*\)\( IMPORT\/EXPORT\)\?:Full/-2/p
+    /^.*Storage Element '$currentslot':Full/ {
+	s/.*Storage Element \([0-9][0-9]*\):Full/-2/p
+        q
+    }
+    /^.*Storage Element '$currentslot' IMPORT\/EXPORT:Empty/ {
+	s/.*Storage Element \([0-9][0-9]*\) IMPORT\/EXPORT:Empty/\1/p
+        q
+    }
+    /^.*Storage Element '$currentslot' IMPORT\/EXPORT:Full/ {
+	s/.*Storage Element \([0-9][0-9]*\) IMPORT\/EXPORT:Full/-2/p
         q
     }
 }
@@ -516,8 +524,12 @@ get_loaded_info() {
 	if [ $loadedslot -eq -2 ]; then
 		set x `sed -n '
 {
-    /^.*Storage Element \([0-9][0-9]*\)\( IMPORT\/EXPORT\)\?:Empty/ {
-	s/.*Storage Element \([0-9][0-9]*\)\( IMPORT\/EXPORT\)\?:Empty/\1/p
+    /^.*Storage Element \([0-9][0-9]*\):Empty/ {
+	s/.*Storage Element \([0-9][0-9]*\):Empty/\1/p
+        q
+    }
+    /^.*Storage Element \([0-9][0-9]*\) IMPORT\/EXPORT:Empty/ {
+	s/.*Storage Element \([0-9][0-9]*\) IMPORT\/EXPORT:Empty/\1/p
         q
     }
 }
@@ -569,8 +581,11 @@ get_slot_list() {
 	s/.*Storage Element \([0-9][0-9]*\):Empty/\1/p
     }
 }
-/^.*Storage Element \([0-9][0-9]*\)\( IMPORT\/EXPORT\)\?:Full/ {
-    s/.*Storage Element \([0-9][0-9]*\)\( IMPORT\/EXPORT\)\?:Full.*/\1/p
+/^.*Storage Element \([0-9][0-9]*\):Full/ {
+    s/.*Storage Element \([0-9][0-9]*\):Full.*/\1/p
+}
+/^.*Storage Element \([0-9][0-9]*\) IMPORT\/EXPORT:Full/ {
+    s/.*Storage Element \([0-9][0-9]*\) IMPORT\/EXPORT:Full.*/\1/p
 }
 ' < $mtx_status 2>&1 | grep -v "^${cleanslot}\$" | sort -n`
 	slot_list=`echo $slot_list`		# remove the newlines
