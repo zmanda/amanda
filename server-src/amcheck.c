@@ -887,7 +887,7 @@ start_server_check(
 			    quoted,
 			    (OFF_T_FMT_TYPE)(fs.avail/(off_t)unitdivisor),
 			    displayunit,
-			    (OFF_T_FMT_TYPE)(fs.avail + holdingdisk_get_disksize(hdp) / (off_t)unitdivisor),
+			    (OFF_T_FMT_TYPE)((fs.avail + holdingdisk_get_disksize(hdp)) / (off_t)unitdivisor),
 			    displayunit);
 		}
 	    }
