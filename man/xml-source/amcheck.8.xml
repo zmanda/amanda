@@ -73,7 +73,7 @@ man page for more details about &A;.</para>
   <varlistentry>
   <term><option>-c</option></term>
   <listitem>
-<para>Run the client host checks.Multiple specific clients can be 
+<para>Run the client host checks. Multiple specific clients can be
 checked by specifying the client name.</para>
   </listitem>
   </varlistentry>

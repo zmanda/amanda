@@ -377,7 +377,7 @@ int SCSI_ExecuteCommand(int DeviceFD,
        (psg_header->result != 0)) 
     { 
       dbprintf(("SCSI_ExecuteCommand error read \n"));
-      dbprintf(("Status %zd (%lu) %2X\n", status, SCSI_OFF + DataBufferLength,psg_header->result ));
+      dbprintf(("Status %zd (%zd) %2X\n", status, SCSI_OFF + DataBufferLength,psg_header->result ));
       SCSI_CloseDevice(DeviceFD);
       amfree(buffer);
       return(SCSI_ERROR);

@@ -46,13 +46,13 @@ if WANT_RESTORE
 RESTORE_MAN8_PAGES = amrestore.8
 endif
 
-man8_MANS = $(COMMON_MAN8_PAGES) \
+man8_pages = $(COMMON_MAN8_PAGES) \
 	    $(AMPLOT_MAN8_PAGES) \
 	    $(SERVER_MAN8_PAGES) \
 	    $(RECOVER_MAN8_PAGES) \
 	    $(RESTORE_MAN8_PAGES)
 
-man5_MANS = $(COMMON_MAN5_PAGES)
+man5_pages = $(COMMON_MAN5_PAGES)
 
 ALL_MAN_PAGES = $(AMPLOT_MAN8_PAGES) \
 	   $(COMMON_MAN5_PAGES) \
@@ -61,7 +61,9 @@ ALL_MAN_PAGES = $(AMPLOT_MAN8_PAGES) \
 	   $(RECOVER_MAN8_PAGES) \
 	   $(RESTORE_MAN8_PAGES)
 
-man_MANS = $(man5_MANS) $(man8_MANS)
+# These lines are needed to force automake to set the $man<n>dir variables.
+man5_MANS =
+man8_MANS =
 
 SRCMANPAGEDIR  = $(srcdir)/xml-source
 
@@ -80,7 +82,6 @@ GEN_XML = $(ALL_MAN_PAGES:%=xml-source/%.proc.xml)
 MOSTLYCLEANFILES = $(GEN_XML)
 MAINTAINERCLEANFILES = $(ALL_MAN_PAGES)
 
-if BUILD_MAN_PAGES
 if   HAVE_XSLTPROC
 xml-source/%.proc.xml: $(SRCMANPAGEDIR)/%.xml $(srcdir)/xslt/expand-sambadoc.xsl
 	$(XSLTPROC) --path $(srcdir)/xslt/ --xinclude --stringparam latex.imagebasedir "$*/" --stringparam noreference 1 --output $@ $(srcdir)/xslt/expand-sambadoc.xsl $<
@@ -88,49 +89,59 @@ xml-source/%.proc.xml: $(SRCMANPAGEDIR)/%.xml $(srcdir)/xslt/expand-sambadoc.xsl
 %: xml-source/%.proc.xml $(srcdir)/xslt/man.xsl
 	$(XSLTPROC) --path $(srcdir)/xslt/ --output $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $<
 
-else    # !HAVE_XSLTPROC
+else    !HAVE_XSLTPROC
 
-xml-source/%.proc.xml: $(SRCMANPAGEDIR)/%.xml $(srcdir)/xslt/expand-sambadoc.xsl
-	@echo WARNING: $@ can not be generated: xsltproc is not available.
-
-%: xml-source/%.proc.xml $(srcdir)/xslt/man.xsl
-	@echo WARNING: $@ can not be generated: xsltproc is not available.
-
-endif  # HAVE_XSLTPROC
-
-else  # !BUILD_MAN_PAGES
-
-xml-source/%.proc.xml: $(SRCMANPAGEDIR)/%.xml $(srcdir)/xslt/expand-sambadoc.xsl
-	@echo  Build of $@ skipped.
-
-%: xml-source/%.proc.xml $(srcdir)/xslt/man.xsl
-	@echo  Build of $@ skipped.
-
-endif # BUILD_MAN_PAGES
-
-if BUILD_MAN_PAGES
-install-data-hook:
-	@list="$(man8_MANS)"; \
-	for p in $$list; do \
-		pa=$(DESTDIR)$(man8dir)/`echo $$p|sed '$(transform)'`; \
-		echo chown $(BINARY_OWNER) $$pa; \
-		chown $(BINARY_OWNER) $$pa; \
-		echo chgrp $(SETUID_GROUP) $$pa; \
-		chgrp $(SETUID_GROUP) $$pa; \
-	done
-	@list="$(man5_MANS)"; \
-	for p in $$list; do \
-		pa=$(DESTDIR)$(man5dir)/`echo $$p|sed '$(transform)'`; \
-		echo chown $(BINARY_OWNER) $$pa; \
-		chown $(BINARY_OWNER) $$pa; \
-		echo chgrp $(SETUID_GROUP) $$pa; \
-		chgrp $(SETUID_GROUP) $$pa; \
-	done
-
-else  # !BUILD_MAN_PAGES
-
-install:
-	@echo Skipping man page installation.
-
+%: $(SRCMANPAGEDIR)/%.xml
+	@echo WARNING: Not building needed $@ because xsltproc is disabled.
 endif
 
+all: $(ALL_MAN_PAGES)
+
+install-data-hook: $(ALL_MAN_PAGES)
+if	HAVE_XSLTPROC
+	@list="$(man8_pages)"; \
+	for p in $$list; do \
+		pa=$(DESTDIR)$(man8dir)/`echo $$p|sed '$(transform)'`; \
+		echo $(INSTALL) -c -m 644 $$p $(DESTDIR)$(man8dir); \
+		$(INSTALL) -c -m 644 $$p $(DESTDIR)$(man8dir); \
+		echo chown \"$(BINARY_OWNER)\" $$pa;	\
+		chown "$(BINARY_OWNER)" $$pa;		\
+		echo chgrp \"$(SETUID_GROUP)\" $$pa;	\
+		chgrp "$(SETUID_GROUP)" $$pa;		\
+	done
+	@list="$(man5_pages)"; \
+	for p in $$list; do \
+		pa=$(DESTDIR)$(man5dir)/`echo $$p|sed '$(transform)'`; \
+		echo $(INSTALL) -c -m 644 $$p $(DESTDIR)$(man5dir); \
+		$(INSTALL) -c -m 644 $$p $(DESTDIR)$(man5dir); \
+		echo chown \"$(BINARY_OWNER)\" $$pa;	\
+		chown "$(BINARY_OWNER)" $$pa;		\
+		echo chgrp \"$(SETUID_GROUP)\" $$pa;	\
+		chgrp "$(SETUID_GROUP)" $$pa;		\
+	done
+else	!HAVE_XSLTPROC
+	@list="$(man8_pages)"; \
+	for p in $$list; do \
+	    if test -e $$p; then \
+		pa=$(DESTDIR)$(man8dir)/`echo $$p|sed '$(transform)'`; \
+		echo $(INSTALL) -c -m 644 $$p $(DESTDIR)$(man8dir); \
+		$(INSTALL) -c -m 644 $$p $(DESTDIR)$(man8dir); \
+		echo chown \"$(BINARY_OWNER)\" $$pa;	\
+		chown "$(BINARY_OWNER)" $$pa;		\
+		echo chgrp \"$(SETUID_GROUP)\" $$pa;	\
+		chgrp "$(SETUID_GROUP)" $$pa;		\
+	    fi \
+	done
+	@list="$(man5_pages)"; \
+	for p in $$list; do \
+	    if test -e $$p; then \
+		pa=$(DESTDIR)$(man5dir)/`echo $$p|sed '$(transform)'`; \
+		echo $(INSTALL) -c -m 644 $$p $(DESTDIR)$(man5dir); \
+		$(INSTALL) -c -m 644 $$p $(DESTDIR)$(man5dir); \
+		echo chown \"$(BINARY_OWNER)\" $$pa;	\
+		chown "$(BINARY_OWNER)" $$pa;		\
+		echo chgrp \"$(SETUID_GROUP)\" $$pa;	\
+		chgrp "$(SETUID_GROUP)" $$pa;		\
+	    fi \
+	done
+endif

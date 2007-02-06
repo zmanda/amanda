@@ -1075,7 +1075,7 @@ s_ackwait(
 	if (dh->netfd == NULL)
 	    continue;
 	if (security_stream_accept(dh->netfd) < 0) {
-	    dbprintf(("%s: stream %ld accept failed: %s\n",
+	    dbprintf(("%s: stream %td accept failed: %s\n",
 		debug_prefix_time(NULL),
 		dh - &as->data[0], security_geterror(as->security_handle)));
 	    security_stream_close(dh->netfd);
