@@ -1656,7 +1656,7 @@ static void handle_result(
     off_t size;
     disk_t *dp;
     am_host_t *hostp;
-    char *msgdisk=NULL, *msgdisk_undo=NULL, msgdisk_undo_ch = '\0';
+    char *msg, msg_undo;
     char *remoterr, *errbuf = NULL;
     char *s;
     char *t;
@@ -1700,7 +1700,6 @@ static void handle_result(
 	}
     }
 
-    msgdisk_undo = NULL;
     s = pkt->body;
     ch = *s++;
     while(ch) {
@@ -1761,32 +1760,54 @@ static void handle_result(
 	    goto error_return;
 	}
 
-	msgdisk = t = line;
+	msg = t = line;
 	tch = *(t++);
 	skip_quoted_string(t, tch);
-	msgdisk_undo = t - 1;
-	msgdisk_undo_ch = *msgdisk_undo;
-	*msgdisk_undo = '\0';
-	disk = unquote_string(msgdisk);
-	skip_whitespace(t, tch);
-	s = t;
-	ch = tch;
+	t[-1] = '\0';
+	disk = unquote_string(msg);
 
-	size_ = (OFF_T_FMT_TYPE)0;
-	if (sscanf(t - 1, "%d SIZE " OFF_T_FMT , &level, &size_) != 2) {
+	skip_whitespace(t, tch);
+
+	if (sscanf(t - 1, "%d", &level) != 1) {
 	    goto bad_msg;
 	}
-	size = (off_t)size_;
+
+	skip_integer(t, tch);
+	skip_whitespace(t, tch);
+
 	dp = lookup_hostdisk(hostp, disk);
-	amfree(disk);
-
-	*msgdisk_undo = msgdisk_undo_ch;	/* for error message */
-	msgdisk_undo = NULL;
-
+	dp = lookup_hostdisk(hostp, disk);
 	if(dp == NULL) {
 	    log_add(L_ERROR, "%s: invalid reply from sendsize: `%s'\n",
 		    hostp->hostname, line);
+	    goto bad_msg;
+	}
+
+	size = (off_t)-1;
+	if (strncmp(t-1,"SIZE ", 5) == 0) {
+	    if (sscanf(t - 1, "SIZE " OFF_T_FMT ,
+		       (OFF_T_FMT_TYPE *)&size_) != 1) {
+		goto bad_msg;
+	    }
+	    size = size_;
+	} else if (strncmp(t-1,"ERROR ", 6) == 0) {
+	    skip_non_whitespace(t, tch);
+	    skip_whitespace(t, tch);
+	    msg = t-1;
+	    skip_quoted_string(t,tch);
+	    msg_undo = t[-1];
+	    t[-1] = '\0';
+	    if (pkt->type == P_REP) {
+		est(dp)->errstr = unquote_string(msg);
+	    }
+	    t[-1] = msg_undo;
 	} else {
+	    goto bad_msg;
+	}
+
+	amfree(disk);
+
+	if (size > (off_t)-1) {
 	    for(i = 0; i < MAX_LEVELS; i++) {
 		if(est(dp)->level[i] == level) {
 		    est(dp)->est_size[i] = size;
@@ -1798,6 +1819,8 @@ static void handle_result(
 	    }
 	    est(dp)->got_estimate++;
 	}
+	s = t;
+	ch = tch;
 	skip_quoted_line(s, ch);
     }
 
@@ -1889,12 +1912,15 @@ static void handle_result(
 						", all estimate failed", NULL);
 		}
 		else {
-		    fprintf(stderr, "error result for host %s disk %s: missing estimate\n",
-		   	    dp->host->hostname, qname);
-		    est(dp)->errstr = vstralloc("missing result for ", qname,
-						" in ", dp->host->hostname,
-						" response",
-						NULL);
+		    fprintf(stderr,
+			 "error result for host %s disk %s: missing estimate\n",
+		   	 dp->host->hostname, qname);
+		    if (est(dp)->errstr == NULL) {
+			est(dp)->errstr = vstralloc("missing result for ",
+						    qname, " in ",
+						    dp->host->hostname,
+						    " response", NULL);
+		    }
 		}
 	    }
 	}
@@ -1905,21 +1931,12 @@ static void handle_result(
 
  NAK_parse_failed:
 
-    /* msgdisk_undo is always NULL */
-    /* if(msgdisk_undo) { */
-    /* 	*msgdisk_undo = msgdisk_undo_ch; */
-    /*	msgdisk_undo = NULL; */
-    /* } */
     errbuf = stralloc2(hostp->hostname, " NAK: [NAK parse failed]");
     fprintf(stderr, "got strange nak from %s:\n----\n%s----\n\n",
 	    hostp->hostname, pkt->body);
     goto error_return;
 
  bad_msg:
-    if(msgdisk_undo) {
-	*msgdisk_undo = msgdisk_undo_ch;
-	msgdisk_undo = NULL;
-    }
     fprintf(stderr,"got a bad message, stopped at:\n");
     /*@ignore@*/
     fprintf(stderr,"----\n%s----\n\n", line);
@@ -2119,6 +2136,7 @@ static void handle_failed(
 
     errstr = est(dp)->errstr? est(dp)->errstr : "hmm, no error indicator!";
 
+fprintf(stderr,"errstr:%s:\n", errstr);
     fprintf(stderr, "%s: FAILED %s %s %s 0 [%s]\n",
 	get_pname(), dp->host->hostname, qname, planner_timestamp, errstr);
 

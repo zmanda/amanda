@@ -719,14 +719,14 @@ calc_estimates(
  */
 
 /* local functions */
-off_t getsize_dump(char *disk, char *amdevice, int level, option_t *options);
-off_t getsize_star(char *disk, char *amdevice, int level,
-		       option_t *options, time_t dumpsince);
-off_t getsize_smbtar(char *disk, char *amdevice, int level, option_t *options);
+off_t getsize_dump(char *disk, char *amdevice, int level, option_t *options,
+		   char **errmsg);
+off_t getsize_smbtar(char *disk, char *amdevice, int level, option_t *options,
+		     char **errmsg);
 off_t getsize_gnutar(char *disk, char *amdevice, int level,
-		       option_t *options, time_t dumpsince);
+		       option_t *options, time_t dumpsince, char **errmsg);
 off_t getsize_backup_api(char *program, char *disk, char *amdevice, int level,
-			option_t *options, time_t dumpsince);
+			option_t *options, time_t dumpsince, char **errmsg);
 off_t handle_dumpline(char *str);
 double first_num(char *str);
 
@@ -734,25 +734,39 @@ void
 backup_api_calc_estimate(
     disk_estimates_t *	est)
 {
-  int level;
-  off_t size;
+    int    level;
+    off_t  size;
+    char  *errmsg = NULL, *qerrmsg;
 
-  for(level = 0; level < DUMP_LEVELS; level++) {
-      if (est->est[level].needestimate) {
-	  dbprintf(("%s: getting size via backup-api for %s %s level %d\n",
-		    debug_prefix_time(NULL), est->qamname, est->qamdevice, level));
-	  size = getsize_backup_api(est->program, est->amname, est->amdevice,
-			level, est->options, est->est[level].dumpsince);
+    for(level = 0; level < DUMP_LEVELS; level++) {
+	if (est->est[level].needestimate) {
+	    dbprintf(("%s: getting size via backup-api for %s %s level %d\n",
+		      debug_prefix_time(NULL), est->qamname, est->qamdevice,
+		      level));
+	    size = getsize_backup_api(est->program, est->amname, est->amdevice,
+				      level, est->options,
+				      est->est[level].dumpsince, &errmsg);
 
-	  amflock(1, "size");
+	    amflock(1, "size");
 
-	  printf("%s %d SIZE " OFF_T_FMT "\n", est->qamname, level,
-		 (OFF_T_FMT_TYPE)size);
-	  fflush(stdout);
+	    printf("%s %d SIZE " OFF_T_FMT "\n", est->qamname, level,
+		   (OFF_T_FMT_TYPE)size);
+	    if (errmsg && errmsg[0] != '\0') {
+		if(am_has_feature(g_options->features,
+				  fe_rep_sendsize_quoted_error)) {
+		    qerrmsg = quote_string(errmsg);
+		    dbprintf(("errmsg is %s\n", errmsg));
+		    printf("%s %d ERROR %s\n",
+			   est->qamname, level, qerrmsg);
+		    amfree(qerrmsg);
+		}
+	    }
+	    amfree(errmsg);
+	    fflush(stdout);
 
-	  amfunlock(1, "size");
-      }
-  }
+	    amfunlock(1, "size");
+	}
+    }
 }
 
 
@@ -764,7 +778,7 @@ generic_calc_estimates(
     char *cmd;
     char *my_argv[DUMP_LEVELS*2+22];
     char number[NUM_STR_SIZE];
-    int i, level, my_argc, status;
+    int i, level, my_argc;
     pid_t calcpid;
     int nb_exclude = 0;
     int nb_include = 0;
@@ -775,6 +789,8 @@ generic_calc_estimates(
     off_t size = (off_t)1;
     char *line = NULL;
     char *match_expr;
+    amwait_t wait_status;
+    char *errmsg = NULL, *qerrmsg;
 
     cmd = vstralloc(libexecdir, "/", "calcsize", versionsuffix(), NULL);
 
@@ -840,7 +856,9 @@ generic_calc_estimates(
     fflush(stderr); fflush(stdout);
 
     if ((nullfd = open("/dev/null", O_RDWR)) == -1) {
-	dbprintf(("Cannot access /dev/null : %s\n", strerror(errno)));
+	errmsg = vstrallocf("Cannot access /dev/null : %s",
+			    strerror(errno));
+	dbprintf(("%s\n", errmsg));
 	goto common_exit;
     }
 
@@ -871,10 +889,26 @@ generic_calc_estimates(
 
     dbprintf(("%s: waiting for %s %s child (pid=%d)\n",
 	      debug_prefix_time(NULL), my_argv[0], est->qamdevice, calcpid));
-    wait(&status);
+    waitpid(calcpid, &wait_status, 0);
+    if (WIFSIGNALED(wait_status)) {
+	errmsg = vstrallocf("%s terminated with signal %d: see %s",
+			    "calcsize", WTERMSIG(wait_status),
+			    debug_fn());
+    } else if (WIFEXITED(wait_status)) {
+	if (WEXITSTATUS(wait_status) != 0) {
+	    errmsg = vstrallocf("%s exited with status %d: see %s",
+			        "calcsize", WEXITSTATUS(wait_status),
+				debug_fn());
+	} else {
+	    /* Normal exit */
+	}
+    } else {
+	errmsg = vstrallocf("%s got bad exit: see %s",
+			     "calcsize", debug_fn());
+    }
     dbprintf(("%s: after %s %s wait: child pid=%d status=%d\n",
 	      debug_prefix_time(NULL), my_argv[0], est->qamdevice,
-	      calcpid, WEXITSTATUS(status)));
+	      calcpid, WEXITSTATUS(wait_status)));
 
     dbprintf(("%s: .....\n", debug_prefix_time(NULL)));
     dbprintf(("%s: estimate time for %s: %s\n",
@@ -883,6 +917,16 @@ generic_calc_estimates(
 	      walltime_str(timessub(curclock(), start_time))));
 
 common_exit:
+    if (errmsg && errmsg[0] != '\0') {
+	if(am_has_feature(g_options->features, fe_rep_sendsize_quoted_error)) {
+	    qerrmsg = quote_string(errmsg);
+	    dbprintf(("errmsg is %s\n", errmsg));
+	    printf("%s %d ERROR %s\n",
+		    est->qamname, 0, qerrmsg);
+	    amfree(qerrmsg);
+	}
+    }
+    amfree(errmsg);
     for(i = 0; i < my_argc; i++) {
 	amfree(my_argv[i]);
     }
@@ -896,18 +940,30 @@ dump_calc_estimates(
 {
     int level;
     off_t size;
+    char *errmsg=NULL, *qerrmsg;
 
     for(level = 0; level < DUMP_LEVELS; level++) {
 	if(est->est[level].needestimate) {
 	    dbprintf(("%s: getting size via dump for %s level %d\n",
 		      debug_prefix_time(NULL), est->qamname, level));
 	    size = getsize_dump(est->amname, est->amdevice,
-			level, est->options);
+				level, est->options, &errmsg);
 
 	    amflock(1, "size");
 
 	    printf("%s %d SIZE " OFF_T_FMT "\n",
 		   est->qamname, level, (OFF_T_FMT_TYPE)size);
+	    if (errmsg && errmsg[0] != '\0') {
+		if(am_has_feature(g_options->features,
+				  fe_rep_sendsize_quoted_error)) {
+		    qerrmsg = quote_string(errmsg);
+		    dbprintf(("errmsg is %s\n", errmsg));
+		    printf("%s %d ERROR %s\n",
+			   est->qamname, level, qerrmsg);
+		    amfree(qerrmsg);
+		}
+	    }
+	    amfree(errmsg);
 	    fflush(stdout);
 
 	    amfunlock(1, "size");
@@ -922,17 +978,30 @@ smbtar_calc_estimates(
 {
     int level;
     off_t size;
+    char  *errmsg = NULL, *qerrmsg;
 
     for(level = 0; level < DUMP_LEVELS; level++) {
 	if(est->est[level].needestimate) {
 	    dbprintf(("%s: getting size via smbclient for %s level %d\n",
 		      debug_prefix_time(NULL), est->qamname, level));
-	    size = getsize_smbtar(est->amname, est->amdevice, level, est->options);
+	    size = getsize_smbtar(est->amname, est->amdevice, level,
+				  est->options, &errmsg);
 
 	    amflock(1, "size");
 
 	    printf("%s %d SIZE " OFF_T_FMT "\n",
 		   est->qamname, level, (OFF_T_FMT_TYPE)size);
+	    if (errmsg && errmsg[0] != '\0') {
+		if(am_has_feature(g_options->features,
+				  fe_rep_sendsize_quoted_error)) {
+		    qerrmsg = quote_string(errmsg);
+		    dbprintf(("errmsg is %s\n", errmsg));
+		    printf("%s %d ERROR %s\n",
+			   est->qamname, level, qerrmsg);
+		    amfree(qerrmsg);
+		}
+	    }
+	    amfree(errmsg);
 	    fflush(stdout);
 
 	    amfunlock(1, "size");
@@ -946,25 +1015,38 @@ void
 gnutar_calc_estimates(
     disk_estimates_t *	est)
 {
-  int level;
-  off_t size;
+    int level;
+    off_t size;
+    char *errmsg = NULL, *qerrmsg;
 
-  for(level = 0; level < DUMP_LEVELS; level++) {
-      if (est->est[level].needestimate) {
-	  dbprintf(("%s: getting size via gnutar for %s level %d\n",
-		    debug_prefix_time(NULL), est->qamname, level));
-	  size = getsize_gnutar(est->amname, est->amdevice, level,
-				est->options, est->est[level].dumpsince);
+    for(level = 0; level < DUMP_LEVELS; level++) {
+	if (est->est[level].needestimate) {
+	    dbprintf(("%s: getting size via gnutar for %s level %d\n",
+		      debug_prefix_time(NULL), est->qamname, level));
+	    size = getsize_gnutar(est->amname, est->amdevice, level,
+				  est->options, est->est[level].dumpsince,
+				  &errmsg);
 
-	  amflock(1, "size");
+	    amflock(1, "size");
 
-	  printf("%s %d SIZE " OFF_T_FMT "\n",
-		 est->qamname, level, (OFF_T_FMT_TYPE)size);
-	  fflush(stdout);
+	    printf("%s %d SIZE " OFF_T_FMT "\n",
+		   est->qamname, level, (OFF_T_FMT_TYPE)size);
+	    if (errmsg && errmsg[0] != '\0') {
+		if(am_has_feature(g_options->features,
+				  fe_rep_sendsize_quoted_error)) {
+		    qerrmsg = quote_string(errmsg);
+		    dbprintf(("errmsg is %s\n", errmsg));
+		    printf("%s %d ERROR %s\n",
+			   est->qamname, level, qerrmsg);
+		    amfree(qerrmsg);
+		}
+	    }
+	    amfree(errmsg);
+	    fflush(stdout);
 
-	  amfunlock(1, "size");
-      }
-  }
+	    amfunlock(1, "size");
+	}
+    }
 }
 #endif
 
@@ -1034,10 +1116,11 @@ regex_t re_size[] = {
 
 off_t
 getsize_dump(
-    char	*disk,
-    char	*amdevice,
+    char       *disk,
+    char       *amdevice,
     int		level,
-    option_t *	options)
+    option_t   *options,
+    char      **errmsg)
 {
     int pipefd[2], nullfd, stdoutfd, killctl[2];
     pid_t dumppid;
@@ -1056,6 +1139,7 @@ getsize_dump(
     char *qdisk = quote_string(disk);
     char *qdevice;
     char *config;
+    amwait_t wait_status;
 #if defined(DUMP) || defined(VDUMP) || defined(VXDUMP) || defined(XFSDUMP)
     int is_rundump = 1;
 #endif
@@ -1080,8 +1164,9 @@ getsize_dump(
     else
         config = "NOCONFIG";
     if ((stdoutfd = nullfd = open("/dev/null", O_RDWR)) == -1) {
-	dbprintf(("getsize_dump could not open /dev/null: %s\n",
-		  strerror(errno)));
+	*errmsg = vstrallocf("getsize_dump could not open /dev/null: %s",
+			     strerror(errno));
+	dbprintf(("%s\n", *errmsg));
 	amfree(cmd);
 	amfree(rundump_cmd);
 	amfree(fstype);
@@ -1092,8 +1177,9 @@ getsize_dump(
     }
     pipefd[0] = pipefd[1] = killctl[0] = killctl[1] = -1;
     if (pipe(pipefd) < 0) {
-	dbprintf(("getsize_dump could create data pipes: %s\n",
-		  strerror(errno)));
+	*errmsg = vstrallocf("getsize_dump could create data pipes: %s",
+			     strerror(errno));
+	dbprintf(("%s\n", *errmsg));
 	amfree(cmd);
 	amfree(rundump_cmd);
 	amfree(fstype);
@@ -1220,8 +1306,9 @@ getsize_dump(
     start_time = curclock();
     switch(dumppid = fork()) {
     case -1:
-	dbprintf(("%s: cannot fork for killpgrp: %s\n",
-		  debug_prefix_time(NULL), strerror(errno)));
+	*errmsg = vstrallocf("cannot fork for killpgrp: %s",
+			     strerror(errno));
+	dbprintf(("%s\n", *errmsg));
 	amfree(dumpkeys);
 	amfree(cmd);
 	amfree(rundump_cmd);
@@ -1396,8 +1483,11 @@ getsize_dump(
 	      level,
 	      walltime_str(timessub(curclock(), start_time))));
     if(size == (off_t)-1) {
-	dbprintf(("%s: no size line match in %s%s output for \"%s\"\n",
-		  debug_prefix_time(NULL), cmd, name, disk));
+	*errmsg = vstrallocf("no size line match in %s%s output",
+			     cmd, name);
+	dbprintf(("%s: %s for %s\n", debug_prefix_time(NULL),
+		  *errmsg, qdisk));
+
 	dbprintf(("%s: .....\n", debug_prefix_time(NULL)));
 	dbprintf(("%s: Run %s%s manually to check for errors\n",
 		    debug_prefix_time(NULL), cmd, name));
@@ -1455,7 +1545,21 @@ getsize_dump(
 
     dbprintf(("%s: waiting for %s%s \"%s\" child\n",
 	      debug_prefix_time(NULL), cmd, name, qdisk));
-    wait(NULL);
+    waitpid(dumppid, &wait_status, 0);
+    if (WIFSIGNALED(wait_status)) {
+	*errmsg = vstrallocf("%s terminated with signal %d: see %s",
+			     cmd, WTERMSIG(wait_status), debug_fn());
+    } else if (WIFEXITED(wait_status)) {
+	if (WEXITSTATUS(wait_status) != 0) {
+	    *errmsg = vstrallocf("%s exited with status %d: see %s",
+			         cmd, WEXITSTATUS(wait_status), debug_fn());
+	} else {
+	    /* Normal exit */
+	}
+    } else {
+	*errmsg = vstrallocf("%s got bad exit: see %s",
+			     cmd, debug_fn());
+    }
     dbprintf(("%s: after %s%s %s wait\n",
 	      debug_prefix_time(NULL), cmd, name, qdisk));
 
@@ -1478,10 +1582,11 @@ getsize_dump(
 #ifdef SAMBA_CLIENT
 off_t
 getsize_smbtar(
-    char	*disk,
-    char	*amdevice,
+    char       *disk,
+    char       *amdevice,
     int		level,
-    option_t *	options)
+    option_t   *options,
+    char      **errmsg)
 {
     int pipefd = -1, nullfd = -1, passwdfd = -1;
     pid_t dumppid;
@@ -1497,6 +1602,7 @@ getsize_smbtar(
     times_t start_time;
     char *error_pn = NULL;
     char *qdisk = quote_string(disk);
+    amwait_t wait_status;
 
     (void)options;	/* Quiet unused parameter warning */
 
@@ -1664,8 +1770,10 @@ getsize_smbtar(
 	      level,
 	      walltime_str(timessub(curclock(), start_time))));
     if(size == (off_t)-1) {
-	dbprintf(("%s: no size line match in %s output for \"%s\"\n",
-		  debug_prefix_time(NULL), SAMBA_CLIENT, disk));
+	*errmsg = vstrallocf("no size line match in %s output",
+			     SAMBA_CLIENT);
+	dbprintf(("%s: %s for %s\n", debug_prefix_time(NULL),
+		  *errmsg, qdisk));
 	dbprintf(("%s: .....\n", debug_prefix_time(NULL)));
     } else if(size == (off_t)0 && level == 0) {
 	dbprintf(("%s: possible %s problem -- is \"%s\" really empty?\n",
@@ -1682,7 +1790,22 @@ getsize_smbtar(
 
     dbprintf(("%s: waiting for %s \"%s\" child\n",
 	      debug_prefix_time(NULL), SAMBA_CLIENT, qdisk));
-    wait(NULL);
+    waitpid(dumppid, &wait_status, 0);
+    if (WIFSIGNALED(wait_status)) {
+	*errmsg = vstrallocf("%s terminated with signal %d: see %s",
+			     "smbclient", WTERMSIG(wait_status), debug_fn());
+    } else if (WIFEXITED(wait_status)) {
+	if (WEXITSTATUS(wait_status) != 0) {
+	    *errmsg = vstrallocf("%s exited with status %d: see %s",
+			         "smbclient", WEXITSTATUS(wait_status),
+				 debug_fn());
+	} else {
+	    /* Normal exit */
+	}
+    } else {
+	*errmsg = vstrallocf("%s got bad exit: see %s",
+			     "smbclient", debug_fn());
+    }
     dbprintf(("%s: after %s %s wait\n",
 	      debug_prefix_time(NULL), SAMBA_CLIENT, qdisk));
 
@@ -1699,11 +1822,12 @@ getsize_smbtar(
 #ifdef GNUTAR
 off_t
 getsize_gnutar(
-    char	*disk,
-    char	*amdevice,
+    char       *disk,
+    char       *amdevice,
     int		level,
-    option_t *	options,
-    time_t	dumpsince)
+    option_t   *options,
+    time_t	dumpsince,
+    char      **errmsg)
 {
     int pipefd = -1, nullfd = -1;
     pid_t dumppid;
@@ -1731,6 +1855,7 @@ getsize_gnutar(
     char buf[32768];
     char *qdisk = quote_string(disk);
     char *gnutar_list_dir;
+    amwait_t wait_status;
 
     if(options->exclude_file) nb_exclude += options->exclude_file->nb_element;
     if(options->exclude_list) nb_exclude += options->exclude_list->nb_element;
@@ -1786,13 +1911,14 @@ getsize_gnutar(
 		inputname = newstralloc(inputname, "/dev/null");
 	    }
 	    if ((infd = open(inputname, O_RDONLY)) == -1) {
-		int save_errno = errno;
 
-		dbprintf(("%s: gnutar: error opening %s: %s\n",
-			  debug_prefix_time(NULL), inputname, strerror(save_errno)));
+		*errmsg = vstrallocf("gnutar: error opening %s: %s",
+				     inputname, strerror(errno));
+		dbprintf(("%s: %s\n", debug_prefix_time(NULL), *errmsg));
 		if (baselevel < 0) {
 		    goto common_exit;
 		}
+		amfree(*errmsg);
 	    }
 	}
 
@@ -1800,33 +1926,38 @@ getsize_gnutar(
 	 * Copy the previous listed incremental file to the new one.
 	 */
 	if ((outfd = open(incrname, O_WRONLY|O_CREAT, 0600)) == -1) {
-	    dbprintf(("%s: opening %s: %s\n",
-		      debug_prefix_time(NULL), incrname, strerror(errno)));
+	    *errmsg = vstrallocf("opening %s: %s",
+			         incrname, strerror(errno));
+	    dbprintf(("%s: %s\n", debug_prefix_time(NULL), *errmsg));
 	    goto common_exit;
 	}
 
 	while ((nb = read(infd, &buf, SIZEOF(buf))) > 0) {
 	    if (fullwrite(outfd, &buf, (size_t)nb) < nb) {
-		dbprintf(("%s: writing to %s: %s\n",
-			   debug_prefix_time(NULL), incrname, strerror(errno)));
+		*errmsg = vstrallocf("writing to %s: %s",
+				     incrname, strerror(errno));
+		dbprintf(("%s: %s\n", debug_prefix_time(NULL), *errmsg));
 		goto common_exit;
 	    }
 	}
 
 	if (nb < 0) {
-	    dbprintf(("%s: reading from %s: %s\n",
-		      debug_prefix_time(NULL), inputname, strerror(errno)));
+	    *errmsg = vstrallocf("reading from %s: %s",
+			         inputname, strerror(errno));
+	    dbprintf(("%s: %s\n", debug_prefix_time(NULL), *errmsg));
 	    goto common_exit;
 	}
 
 	if (close(infd) != 0) {
-	    dbprintf(("%s: closing %s: %s\n",
-		      debug_prefix_time(NULL), inputname, strerror(errno)));
+	    *errmsg = vstrallocf("closing %s: %s",
+			         inputname, strerror(errno));
+	    dbprintf(("%s: %s\n", debug_prefix_time(NULL), *errmsg));
 	    goto common_exit;
 	}
 	if (close(outfd) != 0) {
-	    dbprintf(("%s: closing %s: %s\n",
-		      debug_prefix_time(NULL), incrname, strerror(errno)));
+	    *errmsg = vstrallocf("closing %s: %s",
+			         incrname, strerror(errno));
+	    dbprintf(("%s: %s\n", debug_prefix_time(NULL), *errmsg));
 	    goto common_exit;
 	}
 
@@ -1897,7 +2028,9 @@ getsize_gnutar(
     start_time = curclock();
 
     if ((nullfd = open("/dev/null", O_RDWR)) == -1) {
-	dbprintf(("Cannot access /dev/null : %s\n", strerror(errno)));
+	*errmsg = vstrallocf("Cannot access /dev/null : %s",
+			     strerror(errno));
+	dbprintf(("%s: %s\n", debug_prefix_time(NULL), *errmsg));
 	goto common_exit;
     }
 
@@ -1938,8 +2071,9 @@ getsize_gnutar(
 	      level,
 	      walltime_str(timessub(curclock(), start_time))));
     if(size == (off_t)-1) {
-	dbprintf(("%s: no size line match in %s output for \"%s\"\n",
-		  debug_prefix_time(NULL), my_argv[0], disk));
+	*errmsg = vstrallocf("no size line match in %s output", my_argv[0]);
+	dbprintf(("%s: %s for %s\n", debug_prefix_time(NULL),
+		  *errmsg, qdisk));
 	dbprintf(("%s: .....\n", debug_prefix_time(NULL)));
     } else if(size == (off_t)0 && level == 0) {
 	dbprintf(("%s: possible %s problem -- is \"%s\" really empty?\n",
@@ -1956,7 +2090,21 @@ getsize_gnutar(
 
     dbprintf(("%s: waiting for %s \"%s\" child\n",
 	      debug_prefix_time(NULL), my_argv[0], qdisk));
-    wait(NULL);
+    waitpid(dumppid, &wait_status, 0);
+    if (WIFSIGNALED(wait_status)) {
+	*errmsg = vstrallocf("%s terminated with signal %d: see %s",
+			     cmd, WTERMSIG(wait_status), debug_fn());
+    } else if (WIFEXITED(wait_status)) {
+	if (WEXITSTATUS(wait_status) != 0) {
+	    *errmsg = vstrallocf("%s exited with status %d: see %s",
+			         cmd, WEXITSTATUS(wait_status), debug_fn());
+	} else {
+	    /* Normal exit */
+	}
+    } else {
+	*errmsg = vstrallocf("%s got bad exit: see %s",
+			     cmd, debug_fn());
+    }
     dbprintf(("%s: after %s %s wait\n",
 	      debug_prefix_time(NULL), my_argv[0], qdisk));
 
@@ -1991,7 +2139,8 @@ getsize_backup_api(
     char	*amdevice,
     int		 level,
     option_t	*options,
-    time_t	 dumpsince)
+    time_t	 dumpsince,
+    char        **errmsg)
 {
     int pipeinfd[2], pipeoutfd[2], nullfd;
     pid_t dumppid;
@@ -2008,6 +2157,7 @@ getsize_backup_api(
     times_t start_time;
     char *qdisk = quote_string(disk);
     char *qamdevice = quote_string(amdevice);
+    amwait_t wait_status;
     char levelstr[NUM_STR_SIZE];
     backup_support_option_t *bsu;
 
@@ -2058,19 +2208,23 @@ getsize_backup_api(
     dbprintf(("\n"));
 
     if ((nullfd = open("/dev/null", O_RDWR)) == -1) {
-	dbprintf(("Cannot access /dev/null : %s\n", strerror(errno)));
+	*errmsg = vstrallocf("Cannot access /dev/null : %s",
+			     strerror(errno));
+	dbprintf(("%s: %s\n", debug_prefix_time(NULL), *errmsg));
 	goto common_exit;
     }
 
     if (pipe(pipeinfd) < 0) {
-	dbprintf(("getsize_backup_api could create data pipes: %s\n",
-		  strerror(errno)));
+	*errmsg = vstrallocf("getsize_backup_api could create data pipes: %s",
+			     strerror(errno));
+	dbprintf(("%s: %s\n", debug_prefix_time(NULL), *errmsg));
 	goto common_exit;
     }
 
     if (pipe(pipeoutfd) < 0) {
-	dbprintf(("getsize_backup_api could create data pipes: %s\n",
-		  strerror(errno)));
+	*errmsg = vstrallocf("getsize_backup_api could create data pipes: %s",
+			     strerror(errno));
+	dbprintf(("%s: %s\n", debug_prefix_time(NULL), *errmsg));
 	goto common_exit;
     }
 
@@ -2148,8 +2302,8 @@ getsize_backup_api(
 	      level,
 	      walltime_str(timessub(curclock(), start_time))));
     if(size == (off_t)-1) {
-	dbprintf(("%s: no size line match in %s output for \"%s\"\n",
-		  debug_prefix_time(NULL), cmd, qdisk));
+	*errmsg = vstrallocf("no size line match in %s output", cmd);
+	dbprintf(("%s: %s for %s\n", debug_prefix_time(NULL), cmd, qdisk));
 	dbprintf(("%s: .....\n", debug_prefix_time(NULL)));
     } else if(size == (off_t)0 && level == 0) {
 	dbprintf(("%s: possible %s problem -- is \"%s\" really empty?\n",
@@ -2166,7 +2320,21 @@ getsize_backup_api(
 
     dbprintf(("%s: waiting for %s \"%s\" child\n",
 	      debug_prefix_time(NULL), cmd, qdisk));
-    wait(NULL);
+    waitpid(dumppid, &wait_status, 0);
+    if (WIFSIGNALED(wait_status)) {
+	*errmsg = vstrallocf("%s terminated with signal %d: see %s",
+			     cmd, WTERMSIG(wait_status), debug_fn());
+    } else if (WIFEXITED(wait_status)) {
+	if (WEXITSTATUS(wait_status) != 0) {
+	    *errmsg = vstrallocf("%s exited with status %d: see %s", cmd,
+				 WEXITSTATUS(wait_status), debug_fn());
+	} else {
+	    /* Normal exit */
+	}
+    } else {
+	*errmsg = vstrallocf("%s got bad exit: see %s",
+			     cmd, debug_fn());
+    }
     dbprintf(("%s: after %s %s wait\n",
 	      debug_prefix_time(NULL), cmd, qdisk));
 

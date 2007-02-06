@@ -171,6 +171,8 @@ typedef enum {
 
     fe_req_options_config,
 
+    fe_rep_sendsize_quoted_error,
+
     /*
      * All new features must be inserted immediately *before* this entry.
      */

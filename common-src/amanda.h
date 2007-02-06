@@ -498,6 +498,8 @@ extern void *debug_newalloc   (const char *c, int l, void *old, size_t size);
 extern char *debug_stralloc   (const char *c, int l, const char *str);
 extern char *debug_newstralloc(const char *c, int l, char *oldstr,
 			       const char *newstr);
+extern char *debug_vstrallocf(const char *file, int line, const char *fmt,
+			      ...) __attribute__ ((format (printf, 3, 4)));
 extern const char *debug_caller_loc (const char *file, int line);
 extern int debug_alloc_push (char *file, int line);
 extern void debug_alloc_pop (void);
@@ -539,6 +541,7 @@ extern void debug_alloc_pop (void);
 
 #define vstralloc debug_alloc_push(__FILE__,__LINE__)?0:debug_vstralloc
 #define newvstralloc debug_alloc_push(__FILE__,__LINE__)?0:debug_newvstralloc
+#define vstrallocf(...)         debug_vstrallocf(__FILE__,__LINE__,__VA_ARGS__)
 
 extern char  *debug_vstralloc(const char *str, ...);
 extern char  *debug_newvstralloc(char *oldstr, const char *newstr, ...);

@@ -34,6 +34,7 @@
 #include "arglist.h"
 #include "queue.h"
 
+#define MIN_ALLOC 64
 static char *internal_vstralloc(const char *, va_list);
 
 /*
@@ -382,6 +383,43 @@ arglist_function1(
     return result;
 }
 
+
+/*
+ * vstrallocf - copies printf formatted string into newly allocated memory.
+ */
+char *
+debug_vstrallocf(
+    const char *file,
+    int         line,
+    const char *fmt,
+    ...)
+{
+    char *      result;
+    size_t      size;
+    va_list     argp;
+
+    malloc_enter(debug_caller_loc(file, line));
+
+    result = debug_alloc(file, line, MIN_ALLOC);
+    if (result != NULL) {
+
+	arglist_start(argp, fmt);
+	size = vsnprintf(result, MIN_ALLOC, fmt, argp);
+	arglist_end(argp);
+
+	if (size >= (size_t)MIN_ALLOC) {
+	    amfree(result);
+	    result = debug_alloc(file, line, size + 1);
+
+	    arglist_start(argp, fmt);
+	    (void)vsnprintf(result, size + 1, fmt, argp);
+	    arglist_end(argp);
+	}
+    }
+
+    malloc_leave(debug_caller_loc(file, line));
+    return result;
+}
 
 /*
  * safe_env - build a "safe" environment list.

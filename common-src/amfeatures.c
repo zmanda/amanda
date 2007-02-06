@@ -146,6 +146,7 @@ am_init_feature_set(void)
 
 	am_add_feature(f, fe_req_options_config);
 
+	am_add_feature(f, fe_rep_sendsize_quoted_error);
     }
     return f;
 }
