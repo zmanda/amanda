@@ -2833,6 +2833,9 @@ do_postscript_output(void)
 
 	copy_template_file(tapetype_get_lbl_templ(tp));
 
+	if (postscript == NULL)
+	    return;
+
 	/* generate a few elements */
 	fprintf(postscript,"(%s) DrawDate\n\n",
 		    nicedate(run_datestamp ? run_datestamp : "0"));
