@@ -15,6 +15,19 @@ libexecdir=@libexecdir@
 PATH=$sbindir:$libexecdir:/usr/bin:/bin:/usr/sbin:/sbin:/usr/ucb
 export PATH
 
+#
+#      Changer config file (changerfile)
+#
+#      resend_mail=900         # 15 minutes
+#      timeout_mail=604800     # 7 days
+#      request="tty"           # Use the tty to ask the user to change tape.
+#                              # Can't be use by cron
+#      request="email"         # Send an email to ask the user to change tape.
+#      request="tty_email"     # Use the tty if it exist or send an email.
+#                      #Default is "tty_email"
+#
+#
+
 if [ -d "@AMANDA_DBGDIR@" ]; then
 	logfile=@AMANDA_DBGDIR@/changer.debug
 else
@@ -74,8 +87,18 @@ ORG=`amgetconf$SUF ORG`
 
 firstslot=1
 lastslot=99
+resend_mail=900		# 15 minutes
+timeout_mail=604800 	# 7 days
 
 changerfile=`amgetconf$SUF changerfile`
+
+conf_match=`expr "$changerfile" : .\*\.conf\$`
+if [ $conf_match -ge 6 ]; then
+        configfile=$changerfile
+        changerfile=`echo $changerfile | sed 's/.conf$//g'`
+else
+        configfile=$changerfile.conf
+fi
 
 cleanfile=$changerfile-clean
 accessfile=$changerfile-access
@@ -87,10 +110,16 @@ cleancount=`cat $cleanfile`
 accesscount=`cat $accessfile`
 slot=`cat $slotfile`
 
-request() {
-	echo "insert tape into slot $1 and press return" >/dev/tty
-	read ANSWER </dev/tty
+request_tty() {
+	if > /dev/tty; then
+		echo -n "Insert tape into slot $1 and press return" > /dev/tty
+		read ANSWER < /dev/tty
+	else
+		echo "no /dev/tty to ask to change tape"
+		exit 1
+	fi
 }
+
 
 ###
 # If $changerfile exists, source it into this script.  One reason is to
@@ -98,37 +127,58 @@ request() {
 # that a tape be mounted.  Here is an alternate versions of request()
 # that does things more asynchronous:
 #
-#  request() {
-#	# Send E-mail about the mount request and wait for the drive
-#	# to go ready by checking the status once a minute.  Repeat
-#       # the E-mail once an hour in case it gets lost.
-#	timeout=0
-#	while true;do
-#	    if [ $timeout -le 0 ]; then
-#		echo "insert Amanda tape into slot $1 ($tape)" \
-#		  | $MAILER -s "$ORG AMANDA TAPE MOUNT REQUEST FOR SLOT $1" \
-#		          $REPORTTO
-#		timeout=`expr 60 \* 60`
-#	    fi
-#	    echo "     -> rewind $tape" >> $logfile
-#	    $MT $MTF $tape rewind >> $logfile 2>&1
-#	    echo "     -> status $tape" >> $logfile
-#	    used=`$MT $MTF $tape status 2>&1 | tee -a $logfile | $EGREP "$ONLINEREGEX"`
-#	    echo "     -> loaded <$used>" >> $logfile
-#	    if [ ! -z "$used" ];then
-#		break
-#	    fi
-#	    sleep 60
-#	    timeout=`expr $timeout - 60`
-#	done
-#  }
-#
-# Instead of sending mail, you might write the message to /dev/console
-# or use "logger" to send it via syslog, etc.
-###
+request_email() {
+	# Send E-mail about the mount request and wait for the drive
+	# to go ready by checking the status once a minute.  Repeat
+	# the E-mail once an hour in case it gets lost.
+	timeout=0
+	gtimeout=$timeout_mail
+	while true;do
+		if [ $gtimeout -le 0 ]; then
+			echo "timeout waiting for tape online"
+			exit 1;
+		fi
+		if [ $timeout -le 0 ]; then
+			msg="insert Amanda tape into slot $1 ($tape)"
+			subject="$ORG AMANDA TAPE MOUNT REQUEST FOR SLOT $1"
+			echo "$msg" | $MAILER -s "$subject" $REPORTTO
+			timeout=$resend_mail
+		fi
+		echo "     -> rewind $tape" >> $logfile
+		$MT $MTF $tape rewind >> $logfile 2>&1
+		echo "     -> status $tape" >> $logfile
+		used=`$MT $MTF $tape status 2>&1 | tee -a $logfile | $EGREP "$ONLINEREGEX"`
+		echo "     -> loaded <$used>" >> $logfile
+		if [ ! -z "$used" ];then
+		break
+		fi
+		sleep 60
+		timeout=`expr $timeout - 60`
+		gtimeout=`expr $gtimeout - 60`
+	done
+}
+request_tty_email() {
+	if > /dev/tty; then
+		echo -n "Insert tape into slot $1 and press return" > /dev/tty
+		read ANSWER < /dev/tty
+	else
+		request_email "$1"
+	fi
+}
 
-if [ -f $changerfile ]; then
-	. $changerfile
+request() {
+	if [ X"$request" = X"tty" ]; then
+		request_tty "$1"
+	else if [ X"$request" = X"email" ]; then
+		request_email "$1"
+	else
+		request_tty_email "$1"
+	fi
+	fi
+}
+
+if [ -f $configfile ]; then
+	. $configfile
 fi
 
 #

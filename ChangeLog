@@ -1,3 +1,6 @@
+2007-02-09  Jean-Louis Martineau <martineau@zmanda.com>
+	* changer-src/chg-manual.sh.in: Add tty, email, tty_email request mode.
+
 2007-02-07  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amindexd.c: Use dbfd.
 
