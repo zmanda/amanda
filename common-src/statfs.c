@@ -137,7 +137,9 @@ scale(
 {
     if (r == (off_t)-1)
 	return (off_t)-1;
-    return r*(s/(off_t)1024);
+    if (s % 1024 == 0)
+	return r*(s/(off_t)1024);
+    return (off_t)(r*((double)s/1024.0));
 }
 
 int
@@ -191,10 +193,10 @@ main(
 
     printf("statfs (%s)\n",STATFS_TYP);
     printf(
-"name                             total    free   avail  files  ffree favail\n"
+"name                            total     free    avail   files   ffree  favail\n"
 	   );
     printf(
-"------------------------------ ------- ------- ------- ------ ------ ------\n"
+"---------------------------- -------- -------- -------- ------- ------- -------\n"
 	   );
 
     do {
@@ -203,7 +205,7 @@ main(
 	    perror(*argv);
 	    continue;
 	}
-	printf("%-30.30s %7ld %7ld %7ld %6ld %6ld %6ld\n", *argv,
+	printf("%-28.28s %8ld %8ld %8ld %7ld %7ld %7ld\n", *argv,
 	       statbuf.total, statbuf.free, statbuf.avail,
 	       statbuf.files, statbuf.ffree, statbuf.favail);
     } while(argc > 1);

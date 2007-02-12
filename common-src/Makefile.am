@@ -104,7 +104,8 @@ STANDARD_COMMON_STUFF_NOT_FILE = \
 	debug.$(OBJEXT) \
 	error.$(OBJEXT) \
 	util.$(OBJEXT) \
-	match.$(OBJEXT)
+	match.$(OBJEXT) \
+	sl.$(OBJEXT)
 
 STANDARD_COMMON_STUFF = \
 	$(STANDARD_COMMON_STUFF_NOT_FILE) \
