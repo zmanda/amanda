@@ -1,3 +1,6 @@
+2007-02-12  Jean-Louis Martineau <martineau@zmanda.com>
+	* client-src/sendsize.c: Fix PARAM_HONOR_NODUMP.
+
 2007-02-09  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/reporter.c: Fix postscript crash.
 

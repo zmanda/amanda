@@ -1273,7 +1273,7 @@ getsize_dump(
 #  endif
 	dumpkeys = vstralloc(level_str,
 			     PARAM_DUMP_ESTIMATE,
-			     PARAM_DUMP_ESTIMATE,
+			     PARAM_HONOR_NODUMP,
 			     "s", "f", NULL);
 
 #  ifdef HAVE_DUMP_ESTIMATE
