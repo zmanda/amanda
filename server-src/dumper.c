@@ -1822,7 +1822,7 @@ bad_nak:
 	 * with old clients.
 	 * It is wrong to delve into sech, but we have no choice here.
 	 */
-	if (strcasecmp(sech->driver->name, "krb4") != 0 && i == INDEXFD)
+	if (strcasecmp(sech->driver->name, "krb4") == 0 && i == INDEXFD)
 	    continue;
 #endif
 	if (security_stream_auth(streams[i].fd) < 0) {
