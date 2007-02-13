@@ -11,7 +11,7 @@ SUFFIXES =		.sh .pl
 .pl:
 			cat $< > $@
 			chmod a+x $@
-			-test -z "$(PERL)" || $(PERL) -c -w -W -t -T $@ || rm $@
+			-test -z "$(PERL)" || $(PERL) -c -w -W -T $@ || rm $@
 
 .sh:
 			cat $< > $@
