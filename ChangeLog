@@ -1,4 +1,7 @@
 2007-02-13  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amstatus.pl.in: fix for chunk and displayunit.
+
+2007-02-13  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/dumper.c: Fix if krb4 is compiled but another auth is
 			       used.
 

@@ -763,9 +763,9 @@ while(<AMDUMP>) {
 	}
 	elsif(/splitting chunk that started at \d*kb after (\d*)kb/) {
 		$ntchunk{$nb_tape}++;
-		$ntsize{$nb_tape} += $1;
-		$ntesize{$nb_tape} += $1;
-		$ntchunk_size += $1;
+		$ntsize{$nb_tape} += $1 / $unitdivisor;
+		$ntesize{$nb_tape} += $1 / $unitdivisor;
+		$ntchunk_size += $1 / $unitdivisor;
 	}
 	elsif(/driver: FINISHED/) {
 		$driver_finished = 1;
