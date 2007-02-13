@@ -1,4 +1,8 @@
 2007-02-13  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/alloc.c (safe_env): Remove LANG and LC_* only if we are
+					 priviledged process.
+
+2007-02-13  Jean-Louis Martineau <martineau@zmanda.com>
 	* dumper-src/amgtar.pl.in: Replace -t options by -T.
 	* dumper-src/Makefile.am: Remove perl -t options.
 

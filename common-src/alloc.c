@@ -421,6 +421,7 @@ debug_vstrallocf(
     return result;
 }
 
+extern char **environ;
 /*
  * safe_env - build a "safe" environment list.
  */
@@ -453,6 +454,27 @@ safe_env(void)
     char *s;
     char *v;
     size_t l1, l2;
+    char **env;
+    int    env_cnt;
+
+    if (getuid() == geteuid() && getgid() == getegid()) {
+	env_cnt = 1;
+	for (env = environ; *env != NULL; env++)
+	    env_cnt++;
+	if ((q = (char **)malloc(env_cnt*SIZEOF(char *))) != NULL) {
+	    envp = q;
+	    p = envp;
+	    for (env = environ; *env != NULL; env++) {
+		if (strncmp("LANG=", *env, 5) != 0 &&
+		    strncmp("LC_", *env, 3) != 0) {
+		    *p = stralloc(*env);
+		    p++;
+		}
+	    }
+	    *p = NULL;
+	}
+	return envp;
+    }
 
     if ((q = (char **)malloc(SIZEOF(safe_env_list))) != NULL) {
 	envp = q;
