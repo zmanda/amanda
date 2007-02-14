@@ -2276,14 +2276,14 @@ check_user_amandahosts(
 	if (strcmp(service, "amindexd") == 0 ||
 	    strcmp(service, "amidxtaped") == 0) {
 	    result = vstralloc("Please add \"amindexd amidxtaped\" to "
-			       "the line in ", ptmp, NULL);
+			       "the line in ", ptmp, " on the client", NULL);
 	} else if (strcmp(service, "amdump") == 0 ||
 		   strcmp(service, "noop") == 0 ||
 		   strcmp(service, "selfcheck") == 0 ||
 		   strcmp(service, "sendsize") == 0 ||
 		   strcmp(service, "sendbackup") == 0) {
 	    result = vstralloc("Please add \"amdump\" to the line in ",
-			       ptmp, NULL);
+			       ptmp, " on the client", NULL);
 	} else {
 	    result = vstralloc(ptmp, ": ",
 			       "invalid service ", service, NULL);
