@@ -1,3 +1,11 @@
+2007-02-15  Jean-Louis Martineau <martineau@zmanda.com>
+	* patching file oldrecover-src/amrecover.h (local_cd): Prototype.
+	* oldrecover-src/set_commands.c: Works with quoted arguments.
+	* oldrecover-src/uparse.y (LCD): Call local_cd.
+	* recover-src/amrecover.h (local_cd): Prototype.
+	* recover-src/set_commands.c: Works with quoted arguments.
+	* recover-src/uparse.y (LCD): Call local_cd.
+
 2007-02-14  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/security-util.c: Add "on the client" message.
 

@@ -157,9 +157,7 @@ deletex_path:
 local_command:
 	LPWD { char buf[STR_SIZE]; puts(getcwd(buf, sizeof(buf))); }
   |     LCD PATH {
-		if (chdir($2) == -1) {
-			perror($2);
-		}
+		local_cd($2);
 		amfree($2);
 	}
   ;
