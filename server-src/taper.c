@@ -1060,7 +1060,6 @@ file_reader_side(
 	    free_split_buffer();
 	    amfree(datestamp);
 	    clear_tapelist();
-	    free_server_config();
 	    amfree(taper_timestamp);
 	    amfree(label);
 	    amfree(errstr);
@@ -2237,7 +2236,6 @@ tape_writer_side(
 	case 'Q':
 	    end_tape(0);	/* XXX check results of end tape ?? */
 	    clear_tapelist();
-	    free_server_config();
 	    amfree(taper_timestamp);
 	    amfree(label);
 	    amfree(errstr);

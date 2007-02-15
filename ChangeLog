@@ -1,4 +1,7 @@
 2007-02-15  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/taper.c: Don't call free_server_config.
+
+2007-02-15  Jean-Louis Martineau <martineau@zmanda.com>
 	* patching file oldrecover-src/amrecover.h (local_cd): Prototype.
 	* oldrecover-src/set_commands.c: Works with quoted arguments.
 	* oldrecover-src/uparse.y (LCD): Call local_cd.
