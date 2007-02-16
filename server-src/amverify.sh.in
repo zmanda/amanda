@@ -373,8 +373,16 @@ while [ $SLOT -lt $SLOTS ]; do
 	fi
 	report "Using device $DEVICE"
 	$Echon "Waiting for device to go ready..."
-	until eval $DEVICE_READY >/dev/null 2>&1; do
+	count=1800
+	until eval $DEVICE_READY > $TEMP/ammt.out 2>&1; do
+		[ count -lt 0 ] \
+			&& report "Device not ready" \
+			&& report "`cat $TEMP/ammt.out`" \
+			&& report cat $TEMP/ammt.out >> $DEFECTS \
+			&& break;
+		fi
 		sleep 3
+		count=`expr $count - 3`
 	done
 	$Echon "Rewinding..."
 	ERRORS=0
@@ -424,8 +432,16 @@ while [ $SLOT -lt $SLOTS ]; do
 		if [ $Echon = echon ]; then
 			$Echon "Waiting for device to go ready..."
 		fi
-		until eval $DEVICE_READY >/dev/null 2>&1; do
+		count=1800
+		until eval $DEVICE_READY > $TEMP/ammt.out 2>&1; do
+			[ count -lt 0 ] \
+				&& report "Device not ready" \
+				&& report "`cat $TEMP/ammt.out`" \
+				&& report cat $TEMP/ammt.out >> $DEFECTS \
+				&& break;
+			fi
 			sleep 3
+			count=`expr $count - 3`
 		done
 		if [ $Echon = echon ]; then
 			$Echon "Reading..."
