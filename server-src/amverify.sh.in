@@ -380,7 +380,6 @@ while [ $SLOT -lt $SLOTS ]; do
 			&& report "`cat $TEMP/ammt.out`" \
 			&& report cat $TEMP/ammt.out >> $DEFECTS \
 			&& break;
-		fi
 		sleep 3
 		count=`expr $count - 3`
 	done
@@ -439,7 +438,6 @@ while [ $SLOT -lt $SLOTS ]; do
 				&& report "`cat $TEMP/ammt.out`" \
 				&& report cat $TEMP/ammt.out >> $DEFECTS \
 				&& break;
-			fi
 			sleep 3
 			count=`expr $count - 3`
 		done

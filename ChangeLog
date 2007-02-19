@@ -1,3 +1,6 @@
+2007-02-19  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amverify.sh.in: Remove bogus fi.
+
 2007-02-16  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amverify.sh.in: Add timeout on wait for device ready.
 	* changer-src/chg-chio.pl.in: Wait (with timeout) for drive ready.
