@@ -357,7 +357,7 @@ main(
 	    sin.sin6_port = (in_port_t)htons((in_port_t)atoi(argv[i]));
 #else
 	    sin.sin_family = (sa_family_t)AF_INET;
-	    sin.sin_addr = INADDR_ANY;
+	    sin.sin_addr.s_addr = INADDR_ANY;
 	    sin.sin_port = (in_port_t)htons((in_port_t)atoi(argv[i]));
 #endif
 	    if (bind(in, (struct sockaddr *)&sin, (socklen_t)sizeof(sin)) < 0) {
@@ -406,7 +406,7 @@ main(
 	    sin.sin6_port = (in_port_t)htons((in_port_t)atoi(argv[i]));
 #else
 	    sin.sin_family = (sa_family_t)AF_INET;
-	    sin.sin_addr = INADDR_ANY;
+	    sin.sin_addr.s_addr = INADDR_ANY;
 	    sin.sin_port = (in_port_t)htons((in_port_t)atoi(argv[i]));
 #endif
 	    if (bind(sock, (struct sockaddr *)&sin, (socklen_t)sizeof(sin)) < 0) {
