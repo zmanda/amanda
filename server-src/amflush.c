@@ -333,6 +333,13 @@ main(
 				   holding_file = holding_file->next) {
 	get_dumpfile(holding_file->name, &file);
 
+	if (size_holding_files(holding_file->name, 1) <= 0) {
+	    log_add(L_INFO, "%s: removing file with no data.",
+		    holding_file->name);
+	    unlink_holding_files(holding_file->name);
+	    continue;
+	}
+
 	dp = lookup_disk(file.name, file.disk);
 	if (!dp) {
 	    error("dp == NULL");

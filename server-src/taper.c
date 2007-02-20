@@ -2042,8 +2042,8 @@ predict_splits(
 	return(0);
 
     if (adj_splitsize <= (off_t)0) {
-      error("Split size must be > " OFF_T_FMT "k",
-      	(OFF_T_FMT_TYPE)(DISK_BLOCK_BYTES/1024));
+	error("Split size must be > " OFF_T_FMT "k",
+	      (OFF_T_FMT_TYPE)(DISK_BLOCK_BYTES/1024));
       /*NOTREACHED*/
     }
 
@@ -2054,11 +2054,12 @@ predict_splits(
     total_kb = size_holding_files(filename, 1);
     
     if (total_kb <= (off_t)0) {
-      fprintf(stderr, "taper: r: " OFF_T_FMT
-      		" kb holding file makes no sense, not precalculating splits\n",
+	fprintf(stderr, "taper: r: " OFF_T_FMT
+      		" kb holding file makes no sense, setting splitsize to 0\n",
 		(OFF_T_FMT_TYPE)total_kb);
-      fflush(stderr);
-      return(0);
+	fflush(stderr);
+	splitsize = 0;	/* disabling split */
+	return(0);
     }
 
     fprintf(stderr, "taper: r: Total dump size should be " OFF_T_FMT

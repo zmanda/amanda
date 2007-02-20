@@ -1,3 +1,9 @@
+2007-02-20  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/taper.c: Set splitsize to 0 if no data in file.
+	* server-src/amflush.c: Don't send FLUSH request if no data in file.
+	* server-src/planner.c: Don't send FLUSH request if no data in file.
+	* server-src/driver.c: Don't send request to taper if no data in file.
+
 2007-02-19  Jean-Louis Martineau <martineau@zmanda.com>
 	* amandad-src/amandad.c: Fix compilation with --without-ipv6.
 

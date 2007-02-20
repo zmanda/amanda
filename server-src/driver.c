@@ -1902,6 +1902,12 @@ read_flush(void)
 	    continue;
 	}
 
+	if (size_holding_files(destname,1) <= 0) {
+	    log_add(L_INFO, "%s: removing file with no data.", destname);
+	    unlink_holding_files(destname);
+	    continue;
+	}
+
 	dp1 = (disk_t *)alloc(SIZEOF(disk_t));
 	*dp1 = *dp;
 	dp1->next = dp1->prev = NULL;
