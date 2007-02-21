@@ -226,6 +226,7 @@ connect_port(
     int			save_errno;
     struct servent *	servPort;
     socklen_t		len;
+    socklen_t		socklen;
     int			s;
 
     servPort = getservbyport((int)htons(port), proto);
@@ -246,13 +247,17 @@ connect_port(
     if ((s = make_socket(addrp->ss_family)) == -1) return -2;
 
 #ifdef WORKING_IPV6
-    if (addrp->ss_family == (sa_family_t)AF_INET6)
+    if (addrp->ss_family == (sa_family_t)AF_INET6) {
+	socklen = sizeof(struct sockaddr_in6);
 	((struct sockaddr_in6 *)addrp)->sin6_port = (in_port_t)htons(port);
-    else
+    } else
 #endif
+    {
+	socklen = sizeof(struct sockaddr_in);
 	((struct sockaddr_in *)addrp)->sin_port = (in_port_t)htons(port);
+    }
 
-    if (bind(s, (struct sockaddr *)addrp, sizeof(*addrp)) != 0) {
+    if (bind(s, (struct sockaddr *)addrp, socklen) != 0) {
 	save_errno = errno;
 	aclose(s);
 	if (save_errno != EADDRINUSE) {
@@ -280,8 +285,7 @@ connect_port(
 
     if (nonblock)
 	fcntl(s, F_SETFL, fcntl(s, F_GETFL, 0)|O_NONBLOCK);
-    if (connect(s, (struct sockaddr *)svaddr,
-		(socklen_t)sizeof(*svaddr)) == -1 && !nonblock) {
+    if (connect(s, (struct sockaddr *)svaddr, len) == -1 && !nonblock) {
 	save_errno = errno;
 	dbprintf(("%s: connect_portrange: connect from %s failed: %s\n",
 		  debug_prefix_time(NULL),
@@ -328,6 +332,7 @@ bind_portrange(
 {
     in_port_t port;
     in_port_t cnt;
+    socklen_t socklen;
     struct servent *servPort;
     const in_port_t num_ports = (in_port_t)(last_port - first_port + 1);
 
@@ -355,14 +360,18 @@ bind_portrange(
 		      debug_prefix_time(NULL), port, servPort->s_name));
 	    }
 #ifdef WORKING_IPV6
-	    if(addrp->ss_family == (sa_family_t)AF_INET6)
+	    if(addrp->ss_family == (sa_family_t)AF_INET6) {
+		socklen = sizeof(struct sockaddr_in6);
 		((struct sockaddr_in6 *)addrp)->sin6_port =
 						 (in_port_t)htons(port);
-	    else
+	    } else
 #endif
+	    {
+		socklen = sizeof(struct sockaddr_in);
 		((struct sockaddr_in *)addrp)->sin_port =
 						 (in_port_t)htons(port);
-	    if (bind(s, (struct sockaddr *)addrp, (socklen_t)sizeof(*addrp)) >= 0) {
+	    }
+	    if (bind(s, (struct sockaddr *)addrp, socklen) >= 0) {
 	        dbprintf(("Success\n"));
 		return 0;
 	    }

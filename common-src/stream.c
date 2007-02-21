@@ -58,6 +58,7 @@ stream_server(
     struct sockaddr_storage server;
     int save_errno;
     int *portrange;
+    socklen_t socklen;
 
     *portp = USHRT_MAX;				/* in case we error exit */
 #ifdef WORKING_IPV6
@@ -130,11 +131,13 @@ stream_server(
 		      debug_prefix_time(NULL), portrange[0], portrange[1]));
 	} else {
 #ifdef WORKING_IPV6
+	    socklen = sizeof(struct sockaddr_in6);
 	    ((struct sockaddr_in6 *)&server)->sin6_addr = in6addr_any;
 #else
+	    socklen = sizeof(struct sockaddr_in);
 	    ((struct sockaddr_in *)&server)->sin_addr.s_addr = INADDR_ANY;
 #endif
-	    if (bind(server_socket, (struct sockaddr *)&server, (socklen_t)sizeof(server)) == 0)
+	    if (bind(server_socket, (struct sockaddr *)&server, socklen) == 0)
 		goto out;
 	    dbprintf(("%s: stream_server: Could not bind to any port: %s\n",
 		      debug_prefix_time(NULL), strerror(errno)));
