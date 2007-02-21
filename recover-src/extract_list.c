@@ -736,7 +736,6 @@ add_file(
 {
     DIR_ITEM *ditem, lditem;
     char *path_on_disk = NULL;
-    char *path_on_disk_slash = NULL;
     char *cmd = NULL;
     char *err = NULL;
     int i;
@@ -786,8 +785,6 @@ add_file(
 	amfree(clean_disk_path);
     }
 
-    path_on_disk_slash = stralloc2(path_on_disk, "/");
-
     dbprintf(("add_file: Converted path=\"%s\" to path_on_disk=\"%s\"\n",
 	      regex, path_on_disk));
 
@@ -799,8 +796,7 @@ add_file(
 	quoted = quote_string(ditem->path);
 	dbprintf(("add_file: Pondering ditem->path=%s\n", quoted));
 	amfree(quoted);
-	if (match(path_on_disk, ditem->path)
-	    || match(path_on_disk_slash, ditem->path))
+	if (match(path_on_disk, ditem->path))
 	{
 	    found_one = 1;
 	    j = (ssize_t)strlen(ditem->path);
@@ -817,7 +813,6 @@ add_file(
 		    amfree(cmd);
 		    amfree(ditem_path);
 		    amfree(path_on_disk);
-		    amfree(path_on_disk_slash);
 		    exit(1);
 		}
 		amfree(cmd);
@@ -826,13 +821,11 @@ add_file(
 		if ((i = get_reply_line()) == -1) {
 		    amfree(ditem_path);
 		    amfree(path_on_disk);
-		    amfree(path_on_disk_slash);
 		    exit(1);
 		}
 		if(i==0) {		/* assume something wrong */
 		    amfree(ditem_path);
 		    amfree(path_on_disk);
-		    amfree(path_on_disk_slash);
 		    l = reply_line();
 		    printf("%s\n", l);
 		    return;
@@ -846,7 +839,6 @@ add_file(
 		    if (i == -1) {
 			amfree(ditem_path);
 		        amfree(path_on_disk);
-		        amfree(path_on_disk_slash);
 			exit(1);
 		    }
 		    if(err) {
@@ -985,7 +977,6 @@ add_file(
     amfree(cmd);
     amfree(ditem_path);
     amfree(path_on_disk);
-    amfree(path_on_disk_slash);
 
     amfree(lditem.path);
     amfree(lditem.date);
@@ -1056,7 +1047,6 @@ delete_file(
 {
     DIR_ITEM *ditem, lditem;
     char *path_on_disk = NULL;
-    char *path_on_disk_slash = NULL;
     char *cmd = NULL;
     char *err = NULL;
     int i;
@@ -1112,8 +1102,6 @@ delete_file(
 	amfree(clean_disk_path);
     }
 
-    path_on_disk_slash = stralloc2(path_on_disk, "/");
-
     dbprintf(("delete_file: Converted path=\"%s\" to path_on_disk=\"%s\"\n",
 	      regex, path_on_disk));
     found_one = 0;
@@ -1122,8 +1110,7 @@ delete_file(
 	quoted = quote_string(ditem->path);
 	dbprintf(("delete_file: Pondering ditem->path=%s\n", quoted));
 	amfree(quoted);
-	if (match(path_on_disk, ditem->path)
-	    || match(path_on_disk_slash, ditem->path))
+	if (match(path_on_disk, ditem->path))
 	{
 	    found_one = 1;
 	    j = (ssize_t)strlen(ditem->path);
@@ -1140,7 +1127,6 @@ delete_file(
 		    amfree(cmd);
 		    amfree(ditem_path);
 		    amfree(path_on_disk);
-		    amfree(path_on_disk_slash);
 		    exit(1);
 		}
 		amfree(cmd);
@@ -1148,14 +1134,12 @@ delete_file(
 		if ((i = get_reply_line()) == -1) {
 		    amfree(ditem_path);
 		    amfree(path_on_disk);
-		    amfree(path_on_disk_slash);
 		    exit(1);
 		}
 		if(i==0)		/* assume something wrong */
 		{
 		    amfree(ditem_path);
 		    amfree(path_on_disk);
-		    amfree(path_on_disk_slash);
 		    l = reply_line();
 		    printf("%s\n", l);
 		    return;
@@ -1170,7 +1154,6 @@ delete_file(
 		    if (i == -1) {
 			amfree(ditem_path);
 			amfree(path_on_disk);
-			amfree(path_on_disk_slash);
 			exit(1);
 		    }
 		    if(err) {
@@ -1301,7 +1284,6 @@ delete_file(
     amfree(cmd);
     amfree(ditem_path);
     amfree(path_on_disk);
-    amfree(path_on_disk_slash);
 
     if(! found_one) {
 	printf("File %s doesn't exist in directory\n", path);
