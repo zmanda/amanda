@@ -380,7 +380,7 @@ main(
 	if ((buffers = attach_buffers(size)) != NULL) {
 	    break;
 	}
-	log_add(L_INFO, "attach_buffers: (%d tapebuf%s: %zu bytes) %s",
+	log_add(L_INFO, "attach_buffers: (%d tapebuf%s: " SIZE_T_FMT " bytes) %s",
 			conf_tapebufs,
 			(conf_tapebufs == 1) ? "" : "s",
 			size,

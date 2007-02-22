@@ -1,4 +1,10 @@
 2007-02-22  Jean-Louis Martineau <martineau@zmanda.com>
+	* changer-src/scsi-linux.c, common-src/security-util.c,
+	  common-src/stream.c, oldrecover-src/amrecover.c,
+	  restore-src/restore.c, server-src/amcheck.c,
+	  server-src/taper.c: Use SIZE_T_FMT and SSIZE_T_FMT instead of %z.
+
+2007-02-22  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/bsd-security.c: Always retry getaddrinfo if INET6 failed.
 	* common-src/bsdudp-security.c: Ditto.
 

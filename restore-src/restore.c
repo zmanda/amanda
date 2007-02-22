@@ -231,7 +231,7 @@ append_file_to_fd(
 		error("restore: write error = %s", strerror(errno));
 		/*NOTREACHED*/
 	    }
-	    error("Short write: wrote %zd bytes expected %zd.", s, bytes_read);
+	    error("Short write: wrote " SSIZE_T_FMT " bytes expected " SSIZE_T_FMT ".", s, bytes_read);
 	    /*NOTREACHCED*/
 	}
 	wc += (off_t)bytes_read;
@@ -882,7 +882,7 @@ restore(
 		error("write error: %s", strerror(errno));
 		/*NOTREACHED*/
 	    } else {
-		error("write error: %zd instead of %d", w, DISK_BLOCK_BYTES);
+		error("write error: " SSIZE_T_FMT " instead of %d", w, DISK_BLOCK_BYTES);
 		/*NOTREACHED*/
 	    }
 	}
@@ -1093,7 +1093,7 @@ restore(
 		error("restore: write error: %s", strerror(errno));
 		/* NOTREACHED */
 	    } else if (s < bytes_read) {
-		error("restore: wrote %zd of %zd bytes: %s",
+		error("restore: wrote " SSIZE_T_FMT " of " SSIZE_T_FMT " bytes: %s",
 		    s, bytes_read, strerror(errno));
 		/* NOTREACHED */
 	    }

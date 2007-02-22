@@ -222,7 +222,7 @@ stream_sendpkt(
 	amfree(s);
 
     auth_debug(1,
-     ("%s: sec: stream_sendpkt: %s (%d) pkt_t (len %zu) contains:\n\n\"%s\"\n\n",
+     ("%s: sec: stream_sendpkt: %s (%d) pkt_t (len " SIZE_T_FMT ") contains:\n\n\"%s\"\n\n",
       debug_prefix_time(NULL), pkt_type2str(pkt->type), pkt->type,
       strlen(pkt->body), pkt->body));
 
@@ -325,7 +325,7 @@ tcpm_stream_write(
     assert(rs != NULL);
     assert(rs->rc != NULL);
 
-    auth_debug(1, ("%s: sec: stream_write: writing %zu bytes to %s:%d %d\n",
+    auth_debug(1, ("%s: sec: stream_write: writing " SIZE_T_FMT " bytes to %s:%d %d\n",
 		   debug_prefix_time(NULL), size, rs->rc->hostname, rs->handle,
 		   rs->rc->write));
 
@@ -536,7 +536,7 @@ tcpm_recv_token(
 	} else {
 	    *errmsg = newvstralloc(*errmsg, "tcpm_recv_token: invalid size",
 				   NULL);
-	    dbprintf(("%s: tcpm_recv_token: invalid size %zd\n",
+	    dbprintf(("%s: tcpm_recv_token: invalid size " SSIZE_T_FMT "\n",
 		      debug_prefix_time(NULL), *size));
 	}
 	*size = -1;
@@ -570,7 +570,7 @@ tcpm_recv_token(
 	break;
     }
 
-    auth_debug(1, ("%s: tcpm_recv_token: read %zd bytes from %d\n",
+    auth_debug(1, ("%s: tcpm_recv_token: read " SSIZE_T_FMT " bytes from %d\n",
 		   debug_prefix_time(NULL), *size, *handle));
     return((*size));
 }
@@ -1074,7 +1074,7 @@ udpbsd_sendpkt(
     dgram_cat(&rh->udp->dgram, pkt->body);
 
     auth_debug(1,
-     ("%s: sec: udpbsd_sendpkt: %s (%d) pkt_t (len %zu) contains:\n\n\"%s\"\n\n",
+     ("%s: sec: udpbsd_sendpkt: %s (%d) pkt_t (len " SIZE_T_FMT ") contains:\n\n\"%s\"\n\n",
       debug_prefix_time(NULL), pkt_type2str(pkt->type), pkt->type,
       strlen(pkt->body), pkt->body));
 
@@ -1572,7 +1572,7 @@ recvpkt_callback(
 
     assert(rh != NULL);
 
-    auth_debug(1, ("%s: sec: recvpkt_callback: %zd\n",
+    auth_debug(1, ("%s: sec: recvpkt_callback: " SSIZE_T_FMT "\n",
 		   debug_prefix_time(NULL), bufsize));
     /*
      * We need to cancel the recvpkt request before calling
@@ -1652,7 +1652,7 @@ stream_read_sync_callback(
 	return;
     }
     auth_debug(1,
-	    ("%s: sec: stream_read_callback_sync: read %zd bytes from %s:%d\n",
+	    ("%s: sec: stream_read_callback_sync: read " SSIZE_T_FMT " bytes from %s:%d\n",
 	     debug_prefix_time(NULL),
         rs->rc->pktlen, rs->rc->hostname, rs->handle));
 }
@@ -1703,7 +1703,7 @@ stream_read_callback(
 	(*rs->fn)(rs->arg, NULL, rs->rc->pktlen);
 	return;
     }
-    auth_debug(1, ("%s: sec: stream_read_callback: read %zd bytes from %s:%d\n",
+    auth_debug(1, ("%s: sec: stream_read_callback: read " SSIZE_T_FMT " bytes from %s:%d\n",
 		   debug_prefix_time(NULL),
 	rs->rc->pktlen, rs->rc->hostname, rs->handle));
     (*rs->fn)(rs->arg, rs->rc->pkt, rs->rc->pktlen);
@@ -1733,7 +1733,7 @@ sec_tcp_conn_read_callback(
     /* Read the data off the wire.  If we get errors, shut down. */
     rval = tcpm_recv_token(rc->read, &rc->handle, &rc->errmsg, &rc->pkt,
 				&rc->pktlen, 60);
-    auth_debug(1, ("%s: sec: conn_read_callback: tcpm_recv_token returned %zd\n",
+    auth_debug(1, ("%s: sec: conn_read_callback: tcpm_recv_token returned " SSIZE_T_FMT "\n",
 		   debug_prefix_time(NULL), rval));
     if (rval < 0 || rc->handle == H_EOF) {
 	rc->pktlen = rval;
@@ -1766,7 +1766,7 @@ sec_tcp_conn_read_callback(
     /* If there are events waiting on this handle, we're done */
     rc->donotclose = 1;
     revent = event_wakeup((event_id_t)rc);
-    auth_debug(1, ("%s: sec: conn_read_callback: event_wakeup return %zd\n",
+    auth_debug(1, ("%s: sec: conn_read_callback: event_wakeup return " SSIZE_T_FMT "\n",
 		   debug_prefix_time(NULL), rval));
     rc->donotclose = 0;
     if (rc->handle == H_TAKEN || rc->pktlen == 0) {
@@ -1807,7 +1807,7 @@ parse_pkt(
 {
     const unsigned char *bufp = buf;
 
-    auth_debug(1, ("%s: sec: parse_pkt: parsing buffer of %zd bytes\n",
+    auth_debug(1, ("%s: sec: parse_pkt: parsing buffer of " SSIZE_T_FMT " bytes\n",
 		   debug_prefix_time(NULL), bufsize));
 
     pkt->type = (pktype_t)*bufp++;
@@ -2491,11 +2491,11 @@ net_read(
     ssize_t nread;
     size_t size = origsize;
 
-    auth_debug(1, ("%s: net_read: begin %zu\n",
+    auth_debug(1, ("%s: net_read: begin " SIZE_T_FMT "\n",
 		   debug_prefix_time(NULL), origsize));
 
     while (size > 0) {
-	auth_debug(1, ("%s: net_read: while %zud\n",
+	auth_debug(1, ("%s: net_read: while " SIZE_T_FMT "\n",
 		       debug_prefix_time(NULL), size));
 	nread = net_read_fillbuf(fd, timeout, buf, size);
 	if (nread < 0) {
@@ -2511,7 +2511,7 @@ net_read(
 	buf += nread;
 	size -= nread;
     }
-    auth_debug(1, ("%s: net_read: end %zu\n",
+    auth_debug(1, ("%s: net_read: end " SIZE_T_FMT "\n",
 		   debug_prefix_time(NULL), origsize));
     return ((ssize_t)origsize);
 }
@@ -2557,7 +2557,7 @@ net_read_fillbuf(
     nread = read(fd, buf, size);
     if (nread < 0)
 	return (-1);
-    auth_debug(1, ("%s: net_read_fillbuf: end %zd\n",
+    auth_debug(1, ("%s: net_read_fillbuf: end " SSIZE_T_FMT "\n",
 		   debug_prefix_time(NULL), nread));
     return (nread);
 }

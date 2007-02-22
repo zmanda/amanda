@@ -481,7 +481,7 @@ main(
 		    error("mailfd write: %s", strerror(errno));
 		    /*NOTREACHED*/
 		} else {
-		    error("mailfd write: wrote %zd instead of %zd", w, r);
+		    error("mailfd write: wrote " SSIZE_T_FMT " instead of " SIZE_T_FMT, w, r);
 		    /*NOTREACHED*/
 		}
 	    }
