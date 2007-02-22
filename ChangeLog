@@ -1,4 +1,8 @@
 2007-02-22  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/bsd-security.c: Always retry getaddrinfo if INET6 failed.
+	* common-src/bsdudp-security.c: Ditto.
+
+2007-02-22  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/debug.c: Remove old file in current directory.
 
 2007-02-22  Jean-Louis Martineau <martineau@zmanda.com>
