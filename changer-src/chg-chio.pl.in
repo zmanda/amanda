@@ -288,7 +288,7 @@ sub Load {
 	}
 
 	# wait for tape to load
-	$count = 1800
+	$count = 1800;
 	while ( $count > 0 &&
 		system("$MT $MTF $tapeDevice status > /dev/null 2>&1" ) ) {
 		print LOG &do_time(), ": waiting for tape to load\n";
