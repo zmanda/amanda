@@ -615,7 +615,6 @@ set_tape(
     else
 	printf (".\nTape server unspecified, assumed to be %s.\n",
 		server_name);
-    amfree(tape);
 }
 
 void

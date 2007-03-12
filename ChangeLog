@@ -1,3 +1,7 @@
+2007-03-12  Jean-Louis Martineau <martineau@zmanda.com>
+	* recover-src/set_commands.c (set_tape): Don't amfree(tape).
+	* oldrecover-src/set_commands.c (set_tape): Don't amfree(tape).
+
 2007-03-27  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/reporter.c: Ouput quoted diskname in "DUMP SUMMARY"
 	  section.
