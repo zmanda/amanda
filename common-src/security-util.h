@@ -46,6 +46,16 @@
 } while (0)
 
 
+#ifdef KRB5_SECURITY
+#  define KRB5_DEPRECATED 1
+#  ifndef KRB5_HEIMDAL_INCLUDES
+#    include <gssapi/gssapi_generic.h>
+#  else
+#    include <gssapi/gssapi.h>
+#  endif
+#  include <krb5.h>
+#endif
+
 struct sec_handle;
 
 /*
@@ -72,6 +82,10 @@ struct tcp_conn {
     char *		(*prefix_packet)(void *, pkt_t *);
     int			toclose;
     int			donotclose;
+    int			auth;
+#ifdef KRB5_SECURITY
+    gss_ctx_id_t	gss_context;
+#endif
 };
 
 
@@ -210,8 +224,8 @@ int	tcpm_stream_write(void *, const void *, size_t);
 void	tcpm_stream_read(void *, void (*)(void *, void *, ssize_t), void *);
 ssize_t	tcpm_stream_read_sync(void *, void **);
 void	tcpm_stream_read_cancel(void *);
-ssize_t	tcpm_send_token(int, int, char **, const void *, size_t);
-ssize_t	tcpm_recv_token(int, int *, char **, char **, ssize_t *, int);
+ssize_t	tcpm_send_token(struct tcp_conn *, int, int, char **, const void *, size_t);
+ssize_t	tcpm_recv_token(struct tcp_conn *, int, int *, char **, char **, ssize_t *, int);
 void	tcpm_close_connection(void *, char *);
 
 int	tcpma_stream_accept(void *);

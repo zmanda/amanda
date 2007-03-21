@@ -154,6 +154,8 @@ typedef struct security_driver {
 
     void (*close_connection)(void *, char *);
 
+    int (*data_encrypt)(void *, void *, ssize_t, void **, ssize_t *);
+    int (*data_decrypt)(void *, void *, ssize_t, void **, ssize_t *);
 } security_driver_t;
 
 /*

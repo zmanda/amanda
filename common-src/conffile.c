@@ -258,6 +258,8 @@ keytab_t client_keytab[] = {
     { "CLIENT_USERNAME", CONF_CLIENT_USERNAME },
     { "GNUTAR_LIST_DIR", CONF_GNUTAR_LIST_DIR },
     { "AMANDATES", CONF_AMANDATES },
+    { "KRB5KEYTAB", CONF_KRB5KEYTAB },
+    { "KRB5PRINCIPAL", CONF_KRB5PRINCIPAL },
     { "INCLUDEFILE", CONF_INCLUDEFILE },
     { "CONNECT_TRIES", CONF_CONNECT_TRIES },
     { "REP_TRIES", CONF_REP_TRIES },
@@ -293,6 +295,8 @@ t_conf_var client_var [] = {
    { CONF_CLIENT_USERNAME    , CONFTYPE_STRING  , read_string  , CNF_CLIENT_USERNAME    , NULL },
    { CONF_GNUTAR_LIST_DIR    , CONFTYPE_STRING  , read_string  , CNF_GNUTAR_LIST_DIR    , NULL },
    { CONF_AMANDATES          , CONFTYPE_STRING  , read_string  , CNF_AMANDATES          , NULL },
+   { CONF_KRB5KEYTAB         , CONFTYPE_STRING  , read_string  , CNF_KRB5KEYTAB         , NULL },
+   { CONF_KRB5PRINCIPAL      , CONFTYPE_STRING  , read_string  , CNF_KRB5PRINCIPAL      , NULL },
    { CONF_CONNECT_TRIES      , CONFTYPE_INT     , read_int     , CNF_CONNECT_TRIES      , validate_positive1 },
    { CONF_REP_TRIES          , CONFTYPE_INT     , read_int     , CNF_REP_TRIES          , validate_positive1 },
    { CONF_REQ_TRIES          , CONFTYPE_INT     , read_int     , CNF_REQ_TRIES          , validate_positive1 },
@@ -1266,7 +1270,8 @@ init_defaults(
     conf_init_string(&conf_data[CNF_GNUTAR_LIST_DIR], NULL);
 #endif
     conf_init_string(&conf_data[CNF_AMANDATES], AMANDATES_FILE);
-
+    conf_init_string(&conf_data[CNF_KRB5KEYTAB], "/.amanda-v5-keytab");
+    conf_init_string(&conf_data[CNF_KRB5PRINCIPAL], "service/amanda");
 
     conf_init_string(&conf_data[CNF_ORG], s);
     conf_init_string(&conf_data[CNF_MAILTO], "operators");
@@ -3014,12 +3019,10 @@ generic_client_get_security_conf(
 		return(getconf_str(CNF_GNUTAR_LIST_DIR));
 	} else if(strcmp(string, "amandates")==0) {
 		return(getconf_str(CNF_AMANDATES));
-/*
 	} else if(strcmp(string, "krb5principal")==0) {
 		return(getconf_str(CNF_KRB5PRINCIPAL));
 	} else if(strcmp(string, "krb5keytab")==0) {
 		return(getconf_str(CNF_KRB5KEYTAB));
-*/
 	}
 	return(NULL);
 }

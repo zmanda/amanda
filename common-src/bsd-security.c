@@ -93,6 +93,8 @@ const security_driver_t bsd_security_driver = {
     bsd_stream_read_sync,
     bsd_stream_read_cancel,
     sec_close_connection_none,
+    NULL,
+    NULL
 };
 
 /*

@@ -83,6 +83,8 @@ const security_driver_t bsdudp_security_driver = {
     tcpm_stream_read_sync,
     tcpm_stream_read_cancel,
     sec_close_connection_none,
+    NULL,
+    NULL
 };
 
 /*

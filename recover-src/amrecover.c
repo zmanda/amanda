@@ -107,13 +107,21 @@ get_line(void)
 	mesg_buffer = stralloc("");
  
     while (!strstr(mesg_buffer,"\r\n")) {
+	buf = NULL;
 	size = security_stream_read_sync(streams[MESGFD].fd, &buf);
 	if(size < 0) {
+	    amrecover_debug(1, ("%s: amrecover: get_line size < 0 (%zd)\n", debug_prefix_time(NULL), size));
 	    return -1;
 	}
 	else if(size == 0) {
+	    amrecover_debug(1, ("%s: amrecover: get_line size == 0 (%zd)\n", debug_prefix_time(NULL), size));
 	    return -1;
 	}
+	else if (buf == NULL) {
+	    amrecover_debug(1, ("%s: amrecover: get_line buf == NULL\n", debug_prefix_time(NULL)));
+	    return -1;
+	}
+        amrecover_debug(1, ("%s: amrecover: get_line size = %zd\n", debug_prefix_time(NULL), size));
 	newbuf = alloc(strlen(mesg_buffer)+size+1);
 	strncpy(newbuf, mesg_buffer, (size_t)(strlen(mesg_buffer) + size));
 	memcpy(newbuf+strlen(mesg_buffer), buf, (size_t)size);
@@ -496,7 +504,7 @@ main(
 	/*NOTREACHED*/
     }
 
-    protocol_sendreq(server_name, secdrv, amindexd_client_get_security_conf,
+    protocol_sendreq(server_name, secdrv, generic_client_get_security_conf,
 		     req, STARTUP_TIMEOUT, amindexd_response, &response_error);
 
     amfree(req);

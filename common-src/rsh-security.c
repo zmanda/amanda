@@ -95,6 +95,8 @@ const security_driver_t rsh_security_driver = {
     tcpm_stream_read_sync,
     tcpm_stream_read_cancel,
     tcpm_close_connection,
+    NULL,
+    NULL
 };
 
 static int newhandle = 1;

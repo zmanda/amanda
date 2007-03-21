@@ -329,7 +329,7 @@ tcpm_stream_write(
 		   debug_prefix_time(NULL), size, rs->rc->hostname, rs->handle,
 		   rs->rc->write));
 
-    if (tcpm_send_token(rs->rc->write, rs->handle, &rs->rc->errmsg,
+    if (tcpm_send_token(rs->rc, rs->rc->write, rs->handle, &rs->rc->errmsg,
 			     buf, size)) {
 	security_stream_seterror(&rs->secstr, rs->rc->errmsg);
 	return (-1);
@@ -414,6 +414,7 @@ tcpm_stream_read_cancel(
  */
 ssize_t
 tcpm_send_token(
+    struct tcp_conn *rc,
     int		fd,
     int		handle,
     char **	errmsg,
@@ -424,9 +425,14 @@ tcpm_send_token(
     uint32_t		netlength;
     struct iovec	iov[3];
     int			nb_iov = 3;
+    int			rval;
+    char		*encbuf;
+    ssize_t		encsize;
 
     assert(SIZEOF(netlength) == 4);
 
+    auth_debug(1, ("%s: tcpm_send_token: write %zd bytes to handle %d\n",
+	  debug_prefix_time(NULL), len, handle));
     /*
      * Format is:
      *   32 bit length (network byte order)
@@ -441,16 +447,31 @@ tcpm_send_token(
     iov[1].iov_base = (void *)&nethandle;
     iov[1].iov_len = SIZEOF(nethandle);
 
+    encbuf = (char *)buf;
+    encsize = len;
+
     if(len == 0) {
 	nb_iov = 2;
     }
     else {
-	iov[2].iov_base = (void *)buf;
-	iov[2].iov_len = len;
+	if (rc->driver->data_encrypt == NULL) {
+	    iov[2].iov_base = (void *)buf;
+	    iov[2].iov_len = len;
+	} else {
+	    rc->driver->data_encrypt(rc, (void *)buf, len, (void **)&encbuf, &encsize);
+	    iov[2].iov_base = (void *)encbuf;
+	    iov[2].iov_len = encsize;
+	    netlength = htonl(encsize);
+	}
         nb_iov = 3;
     }
 
-    if (net_writev(fd, iov, nb_iov) < 0) {
+    rval = net_writev(fd, iov, nb_iov);
+    if (len != 0 && rc->driver->data_encrypt != NULL && buf != encbuf) {
+	amfree(encbuf);
+    }
+
+    if (rval < 0) {
 	if (errmsg)
             *errmsg = newvstralloc(*errmsg, "write error to ",
 				   ": ", strerror(errno), NULL);
@@ -468,6 +489,7 @@ tcpm_send_token(
 
 ssize_t
 tcpm_recv_token(
+    struct tcp_conn    *rc,
     int		fd,
     int *	handle,
     char **	errmsg,
@@ -572,6 +594,18 @@ tcpm_recv_token(
 
     auth_debug(1, ("%s: tcpm_recv_token: read " SSIZE_T_FMT " bytes from %d\n",
 		   debug_prefix_time(NULL), *size, *handle));
+
+    if (*size > 0 && rc->driver->data_decrypt != NULL) {
+	char *decbuf;
+	ssize_t decsize;
+	rc->driver->data_decrypt(rc, *buf, *size, (void **)&decbuf, &decsize);
+	if (*buf != decbuf) {
+	    amfree(*buf);
+	    *buf = decbuf;
+	}
+	*size = decsize;
+    }
+
     return((*size));
 }
 
@@ -1455,6 +1489,7 @@ sec_tcp_conn_get(
     rc->accept_fn = NULL;
     rc->recv_security_ok = NULL;
     rc->prefix_packet = NULL;
+    rc->auth = 0;
     connq_append(rc);
     return (rc);
 }
@@ -1716,7 +1751,7 @@ sec_tcp_conn_read_callback(
     auth_debug(1, ("%s: sec: conn_read_callback\n", debug_prefix_time(NULL)));
 
     /* Read the data off the wire.  If we get errors, shut down. */
-    rval = tcpm_recv_token(rc->read, &rc->handle, &rc->errmsg, &rc->pkt,
+    rval = tcpm_recv_token(rc, rc->read, &rc->handle, &rc->errmsg, &rc->pkt,
 				&rc->pktlen, 60);
     auth_debug(1, ("%s: sec: conn_read_callback: tcpm_recv_token returned " SSIZE_T_FMT "\n",
 		   debug_prefix_time(NULL), rval));

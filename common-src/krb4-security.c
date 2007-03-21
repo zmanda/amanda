@@ -156,6 +156,8 @@ const security_driver_t krb4_security_driver = {
     krb4_stream_read_sync,
     krb4_stream_read_cancel,
     sec_close_connection_none,
+    NULL,
+    NULL
 };
 
 /*

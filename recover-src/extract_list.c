@@ -1509,7 +1509,7 @@ extract_files_setup(
 				"auth=", authopt, ";",
 		    "\n", NULL);
     protocol_sendreq(tape_server_name, amidxtaped_secdrv,
-		     amidxtaped_client_get_security_conf, req, STARTUP_TIMEOUT,
+		     generic_client_get_security_conf, req, STARTUP_TIMEOUT,
 		     amidxtaped_response, &response_error);
     amfree(req);
     protocol_run();

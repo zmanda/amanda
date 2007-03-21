@@ -1,4 +1,19 @@
 2007-03-21  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/security.h (security_driver): Add data_encrypt and
+						   data_decrypt function.
+	* common-src/bsd-security.c, common-src/bsdtcp-security.c,
+	  common-src/bsdudp-security.c, common-src/krb4-security.c,
+	  common-src/rsh-security.c,
+	  common-src/ssh-security.c: Set data_encrypt and data_decrypt to NULL.
+
+	* common-src/conffile.c: Parse KRB5KEYTAB and KRB5PRINCIPAL on client.
+	* common-src/krb5-security.c: Complete rewrite.
+	* common-src/security-util.h: Change many prototype.
+	* common-src/security-util.c: Change argument to function.
+	* recover-src/amrecover.c: Use generic_client_get_security_conf.
+	* recover-src/extract_list.c: Use generic_client_get_security_conf.
+
+2007-03-21  Jean-Louis Martineau <martineau@zmanda.com>
 	Merge from zmanda EXT.
 	- Add SS_INIT, SS_SET_INADDR_ANY, SS_GET_PORT and SS_SET_PORT
 	  macros for IPv6 portability
