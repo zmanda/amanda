@@ -940,12 +940,7 @@ bsd_recv_security_ok(
 	/*
 	 * Request packets must come from a reserved port
 	 */
-#ifdef WORKING_IPV6
-	if (rh->peer.ss_family == (sa_family_t)AF_INET6)
-	    port = ntohs(((struct sockaddr_in6 *)&rh->peer)->sin6_port);
-	else
-#endif
-	    port = ntohs(((struct sockaddr_in *)&rh->peer)->sin_port);
+    port = SS_GET_PORT(&rh->peer);
 	if (port >= IPPORT_RESERVED) {
 	    security_seterror(&rh->sech,
 		"host %s: port %u not secure", rh->hostname,
@@ -1278,12 +1273,7 @@ udp_inithandle(
 
     rh->hostname = stralloc(hostname);
     memcpy(&rh->peer, addr, SIZEOF(rh->peer));
-#ifdef WORKING_IPV6
-    if(rh->peer.ss_family == (sa_family_t)AF_INET6)
-	((struct sockaddr_in6 *)&rh->peer)->sin6_port = port;
-    else
-#endif
-	((struct sockaddr_in *)&rh->peer)->sin_port = port;
+    SS_SET_PORT(&rh->peer, port);
 
     rh->prev = udp->bh_last;
     if (udp->bh_last) {
@@ -1372,7 +1362,7 @@ udp_netfd_read_callback(
     rh->rc = NULL;
     security_handleinit(&rh->sech, udp->driver);
 
-    result = getnameinfo((struct sockaddr *)&udp->peer, sizeof(udp->peer),
+    result = getnameinfo((struct sockaddr *)&udp->peer, SS_LEN(&udp->peer),
 			 hostname, sizeof(hostname), NULL, 0, 0);
     if (result < 0) {
 	dbprintf(("%s: getnameinfo failed: %s\n",
@@ -1389,12 +1379,7 @@ udp_netfd_read_callback(
 	return;
     }
 
-#ifdef WORKING_IPV6
-    if (udp->peer.ss_family == (sa_family_t)AF_INET6)
-	port = ((struct sockaddr_in6 *)&udp->peer)->sin6_port;
-    else
-#endif
-	port = ((struct sockaddr_in *)&udp->peer)->sin_port;
+    port = SS_GET_PORT(&udp->peer);
     a = udp_inithandle(udp, rh,
 		   hostname,
 		   &udp->peer,
@@ -2327,8 +2312,7 @@ check_security(
     *errstr = NULL;
 
     /* what host is making the request? */
-    if ((result = getnameinfo((struct sockaddr *)addr,
-			      sizeof(struct sockaddr_storage),
+    if ((result = getnameinfo((struct sockaddr *)addr, SS_LEN(addr),
                               hostname, NI_MAXHOST, NULL, 0, 0) == -1)) {
 	dbprintf(("%s: getnameinfo failed: %s\n",
 		  debug_prefix_time(NULL), gai_strerror(result)));
@@ -2345,12 +2329,7 @@ check_security(
     }
 
     /* next, make sure the remote port is a "reserved" one */
-#ifdef WORKING_IPV6
-    if (addr->ss_family == (sa_family_t)AF_INET6)
-	port = ntohs(((struct sockaddr_in6 *)addr)->sin6_port);
-    else
-#endif
-	port = ntohs(((struct sockaddr_in *)addr)->sin_port);
+    port = SS_GET_PORT(addr);
     if (port >= IPPORT_RESERVED) {
 	char number[NUM_STR_SIZE];
 

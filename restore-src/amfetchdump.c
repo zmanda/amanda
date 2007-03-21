@@ -273,7 +273,9 @@ main(
     char *e;
     int arg_state;
     rst_flags_t *rst_flags;
+#ifdef FORCE_USERID
     struct passwd *pwent;
+#endif
     int    new_argc,   my_argc;
     char **new_argv, **my_argv;
 

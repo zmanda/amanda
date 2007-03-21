@@ -268,6 +268,85 @@ struct iovec {
 #include <arpa/inet.h>
 #endif
 
+/* Calculate the length of the data in a struct sockaddr_storage.
+ * THIS IS A HACK.
+ *
+ * To be truly portable, the length of an address should be passed
+ * in a companion variable.  When such lengths are available
+ * everywhere they are needed, this macro should be removed.
+ */
+#ifdef WORKING_IPV6
+# define SS_LEN(ss) (((struct sockaddr *)(ss))->sa_family==AF_INET6?sizeof(struct sockaddr_in6):sizeof(struct sockaddr_in))
+#else
+# define SS_LEN(ss) (sizeof(struct sockaddr_in))
+#endif
+
+
+/* AF_NATIVE is the "best" address family we support, backward compatible
+ * through to AF_INET.
+ */
+#ifdef WORKING_IPV6
+#define AF_NATIVE AF_INET6
+#else
+#define AF_NATIVE AF_INET
+#endif
+
+/* SS_INIT(ss, family) initializes ss to all zeroes (as directed by RFC),
+ * and sets its ss_family as specified
+ */
+#define SS_INIT(ss, family) do { \
+    memset((ss), 0, sizeof(*(ss))); \
+    (ss)->ss_family = (family); \
+} while (0);
+
+/* SS_SET_INADDR_ANY(ss) sets ss to the family-appropriate equivalent of
+ * INADDR_ANY, a wildcard address and port.
+ */
+#ifdef WORKING_IPV6
+#define SS_SET_INADDR_ANY(ss) do { \
+    switch ((ss)->ss_family) { \
+        case AF_INET6: \
+            ((struct sockaddr_in6 *)(ss))->sin6_flowinfo = 0; \
+            ((struct sockaddr_in6 *)(ss))->sin6_addr = in6addr_any; \
+            break; \
+        case AF_INET: \
+            ((struct sockaddr_in *)(ss))->sin_addr.s_addr = INADDR_ANY; \
+            break; \
+    } \
+} while (0);
+#else
+#define SS_SET_INADDR_ANY(ss, family) do { \
+    ((struct sockaddr_in *)(ss))->sin_addr.s_addr = INADDR_ANY; \
+} while (0);
+#endif
+
+/* Set/get the port in a sockaddr_storage that already has an family */
+#ifdef WORKING_IPV6
+#define SS_SET_PORT(ss, port) \
+switch ((ss)->ss_family) { \
+    case AF_INET: \
+        ((struct sockaddr_in *)(ss))->sin_port = (in_port_t)htons((port)); \
+        break; \
+    case AF_INET6: \
+        ((struct sockaddr_in6 *)(ss))->sin6_port = (in_port_t)htons((port)); \
+        break; \
+    default: assert(0); \
+}
+#else
+#define SS_SET_PORT(ss, port) \
+        ((struct sockaddr_in *)(ss))->sin_port = (in_port_t)htons((port));
+#endif
+
+#ifdef WORKING_IPV6
+#define SS_GET_PORT(ss) (ntohs( \
+       (ss)->ss_family == AF_INET6? \
+        ((struct sockaddr_in6 *)(ss))->sin6_port \
+       :((struct sockaddr_in *)(ss))->sin_port))
+#else
+#define SS_GET_PORT(ss) (ntohs( \
+        ((struct sockaddr_in *)(ss))->sin_port))
+#endif
+
 /*
  * The dbmalloc package comes from:
  *

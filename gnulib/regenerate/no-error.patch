@@ -1,0 +1,14 @@
+Index: gnulib/Makefile.am
+===================================================================
+--- gnulib/Makefile.am	(revision 5691)
++++ gnulib/Makefile.am	(working copy)
+@@ -26,6 +26,9 @@
+ MAINTAINERCLEANFILES =
+ 
+ AM_CPPFLAGS =
++if GCC_COMPILER
++  AM_CFLAGS += -Wno-error
++endif
+ 
+ noinst_LTLIBRARIES += libgnu.la
+ 

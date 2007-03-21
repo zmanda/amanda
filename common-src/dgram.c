@@ -80,17 +80,8 @@ dgram_bind(
 	return -1;
     }
 
-    memset(&name, 0, SIZEOF(name));
-#ifdef WORKING_IPV6
-    if (family == AF_INET6) {
-	((struct sockaddr_in6 *)&name)->sin6_family = (sa_family_t)AF_INET6;
-	((struct sockaddr_in6 *)&name)->sin6_addr = in6addr_any;
-    } else
-#endif
-    {
-	((struct sockaddr_in *)&name)->sin_family = (sa_family_t)AF_INET;
-	((struct sockaddr_in *)&name)->sin_addr.s_addr = INADDR_ANY;
-    }
+    SS_INIT(&name, family);
+    SS_SET_INADDR_ANY(&name);
 
     /*
      * If a port range was specified, we try to get a port in that
@@ -140,12 +131,7 @@ out:
 	aclose(s);
 	return -1;
     }
-#ifdef WORKING_IPV6
-    if (family == AF_INET6)
-	*portp = (in_port_t)ntohs(((struct sockaddr_in6 *)&name)->sin6_port);
-    else
-#endif
-	*portp = (in_port_t)ntohs(((struct sockaddr_in *)&name)->sin_port);
+    *portp = SS_GET_PORT(&name);
     dgram->socket = s;
 
     dbprintf(("%s: dgram_bind: socket bound to %s\n",
@@ -213,7 +199,7 @@ dgram_send_addr(
 		 dgram->len,
 		 0, 
 		 (struct sockaddr *)addr,
-		 (int)sizeof(struct sockaddr_storage)) == -1) {
+		 SS_LEN(addr)) == -1) {
 #ifdef ECONNREFUSED
 	    if(errno == ECONNREFUSED && wait_count++ < max_wait) {
 		sleep(5);

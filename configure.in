@@ -1448,6 +1448,8 @@ case "$target" in
 			;;
   *-redhat-linux-*)
 			;;
+  *-suse-linux-*)
+			;;
   x86_64-*-linux-*)
 			;;
   alpha*-*-linux-*)

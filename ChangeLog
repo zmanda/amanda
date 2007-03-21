@@ -1,3 +1,13 @@
+2007-03-21  Jean-Louis Martineau <martineau@zmanda.com>
+	Merge from zmanda EXT.
+	- Add SS_INIT, SS_SET_INADDR_ANY, SS_GET_PORT and SS_SET_PORT
+	  macros for IPv6 portability
+	- add SS_LEN() macro for calculating length of a
+	  struct sockaddr, use it in a few locations where incorrect
+	  lengths were being passed.
+	- New script for rebuilding gnulib from scratch; current
+	  gnulib is from 2007-01-05.
+
 2007-03-12  Jean-Louis Martineau <martineau@zmanda.com>
 	* recover-src/set_commands.c (set_tape): Don't amfree(tape).
 	* oldrecover-src/set_commands.c (set_tape): Don't amfree(tape).

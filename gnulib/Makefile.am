@@ -240,3 +240,6 @@ mostlyclean-local: mostlyclean-generic
 	    echo "rmdir $$dir"; rmdir $$dir; \
 	  fi; \
 	done
+
+# Make sure regenerate/* are in the distribution tarball
+EXTRA_DIST += regenerate/getaddrinfo-cygwin.patch regenerate/no-error.patch regenerate/regenerate

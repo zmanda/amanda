@@ -61,11 +61,7 @@ stream_server(
     socklen_t socklen;
 
     *portp = USHRT_MAX;				/* in case we error exit */
-#ifdef WORKING_IPV6
-    if((server_socket = socket(AF_INET6, SOCK_STREAM, 0)) == -1) {
-#else
-    if((server_socket = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
-#endif
+    if((server_socket = socket(AF_NATIVE, SOCK_STREAM, 0)) == -1) {
 	save_errno = errno;
 	dbprintf(("%s: stream_server: socket() failed: %s\n",
 		  debug_prefix_time(NULL),
@@ -83,14 +79,9 @@ stream_server(
 	errno = save_errno;
 	return -1;
     }
-    memset(&server, 0, SIZEOF(server));
-#ifdef WORKING_IPV6
-    ((struct sockaddr_in6 *)&server)->sin6_family = (sa_family_t)AF_INET6;
-    ((struct sockaddr_in6 *)&server)->sin6_addr = in6addr_any;
-#else
-    ((struct sockaddr_in *)&server)->sin_family = (sa_family_t)AF_INET;
-    ((struct sockaddr_in *)&server)->sin_addr.s_addr = INADDR_ANY;
-#endif
+
+    SS_INIT(&server, AF_NATIVE);
+    SS_SET_INADDR_ANY(&server);
 
 #ifdef USE_REUSEADDR
     r = setsockopt(server_socket, SOL_SOCKET, SO_REUSEADDR,
@@ -130,13 +121,7 @@ stream_server(
 	    dbprintf(("%s: stream_server: Could not bind to port in range: %d - %d.\n",
 		      debug_prefix_time(NULL), portrange[0], portrange[1]));
 	} else {
-#ifdef WORKING_IPV6
-	    socklen = sizeof(struct sockaddr_in6);
-	    ((struct sockaddr_in6 *)&server)->sin6_addr = in6addr_any;
-#else
-	    socklen = sizeof(struct sockaddr_in);
-	    ((struct sockaddr_in *)&server)->sin_addr.s_addr = INADDR_ANY;
-#endif
+	    socklen = sizeof(server);
 	    if (bind(server_socket, (struct sockaddr *)&server, socklen) == 0)
 		goto out;
 	    dbprintf(("%s: stream_server: Could not bind to any port: %s\n",
@@ -190,12 +175,7 @@ out:
     }
 #endif
 
-#ifdef WORKING_IPV6
-    if (server.ss_family == (sa_family_t)AF_INET6)
-	*portp = (in_port_t)ntohs(((struct sockaddr_in6 *)&server)->sin6_port);
-    else
-#endif
-	*portp = (in_port_t)ntohs(((struct sockaddr_in *)&server)->sin_port);
+    *portp = SS_GET_PORT(&server);
     dbprintf(("%s: stream_server: waiting for connection: %s\n",
 	      debug_prefix_time(NULL),
 	      str_sockaddr(&server)));
@@ -244,24 +224,11 @@ stream_client_internal(
 
     memcpy(&svaddr, res->ai_addr, (size_t)res->ai_addrlen);
     freeaddrinfo(res);
-#ifdef WORKING_IPV6
-    if (svaddr.ss_family == (sa_family_t)AF_INET6)
-	((struct sockaddr_in6 *)&svaddr)->sin6_port = (in_port_t)htons(port);
-    else
-#endif
-	((struct sockaddr_in *)&svaddr)->sin_port = (in_port_t)htons(port);
+    SS_SET_PORT(&svaddr, port);
 
-    memset(&claddr, 0, SIZEOF(claddr));
-#ifdef WORKING_IPV6
-    if(svaddr.ss_family == (sa_family_t)AF_INET6) {
-	((struct sockaddr_in6 *)&claddr)->sin6_family = (sa_family_t)AF_INET6;
-	((struct sockaddr_in6 *)&claddr)->sin6_addr = in6addr_any;
-    } else
-#endif
-    {
-	((struct sockaddr_in *)&claddr)->sin_family = (sa_family_t)AF_INET;
-	((struct sockaddr_in *)&claddr)->sin_addr.s_addr = INADDR_ANY;
-    }
+    SS_INIT(&claddr, svaddr.ss_family);
+    SS_SET_INADDR_ANY(&claddr);
+
     /*
      * If a privileged port range was requested, we try to get a port in
      * that range first and fail if it is not available.  Next, we try
@@ -295,13 +262,7 @@ out:
     try_socksize(client_socket, SO_SNDBUF, sendsize);
     try_socksize(client_socket, SO_RCVBUF, recvsize);
     if (localport != NULL)
-#ifdef WORKING_IPV6
-	*localport = (in_port_t)ntohs(
-				((struct sockaddr_in6 *)&claddr)->sin6_port);
-#else
-	*localport = (in_port_t)ntohs(
-				((struct sockaddr_in *)&claddr)->sin_port);
-#endif
+	*localport = SS_GET_PORT(&claddr);
     return client_socket;
 }
 
@@ -422,12 +383,7 @@ stream_accept(
 	    || addr.ss_family == (sa_family_t)AF_INET6
 #endif
 	    ){
-#ifdef WORKING_IPV6
-	    if (addr.ss_family == (sa_family_t)AF_INET6)
-		port = ntohs(((struct sockaddr_in6 *)&addr)->sin6_port);
-	    else
-#endif
-		port = ntohs(((struct sockaddr_in *)&addr)->sin_port);
+	    port = SS_GET_PORT(&addr);
 	    if (port != (in_port_t)20) {
 		try_socksize(connected_socket, SO_SNDBUF, sendsize);
 		try_socksize(connected_socket, SO_RCVBUF, recvsize);
