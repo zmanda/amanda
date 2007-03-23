@@ -1230,12 +1230,7 @@ udp_recvpkt_callback(
 
     if (strcmp(rh->proto_handle, rh->udp->handle) != 0) assert(1);
     /* if it didn't come from the same host/port, forget it */
-#ifdef WORKING_IPV6
-    if (rh->peer.ss_family == (sa_family_t)AF_INET6)
-	len = sizeof(struct sockaddr_in6);
-    else
-#endif
-	len = sizeof(struct sockaddr_in);
+    len = SS_LEN(&(rh->peer));
     if (memcmp(&rh->peer, &rh->udp->peer, len) != 0) {
 	amfree(rh->udp->handle);
 	dbprintf(("not form same host\n"));

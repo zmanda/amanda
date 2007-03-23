@@ -1,3 +1,7 @@
+2007-03-23  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/security-util.c: Use SS_LEN.
+	* common-src/util.c: Use SS_LEN.
+
 2007-03-21  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/security.h (security_driver): Add data_encrypt and
 						   data_decrypt function.

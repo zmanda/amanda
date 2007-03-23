@@ -247,7 +247,7 @@ connect_port(
     if ((s = make_socket(addrp->ss_family)) == -1) return -2;
 
     SS_SET_PORT(addrp, port);
-	socklen = sizeof(*addrp);
+    socklen = SS_LEN(addrp);
     if (bind(s, (struct sockaddr *)addrp, socklen) != 0) {
 	save_errno = errno;
 	aclose(s);
@@ -351,14 +351,7 @@ bind_portrange(
 		      debug_prefix_time(NULL), port, servPort->s_name));
 	    }
 	    SS_SET_PORT(addrp, port);
-#ifdef WORKING_IPV6
-	    if(addrp->ss_family == (sa_family_t)AF_INET6) {
-		socklen = sizeof(struct sockaddr_in6);
-	    } else
-#endif
-	    {
-		socklen = sizeof(struct sockaddr_in);
-	    }
+	    socklen = SS_LEN(addrp);
 	    if (bind(s, (struct sockaddr *)addrp, socklen) >= 0) {
 	        dbprintf(("Success\n"));
 		return 0;
@@ -698,12 +691,7 @@ cmp_sockaddr(
 {
     size_t len;
 
-#ifdef WORKING_IPV6
-    if(ss1->ss_family == (sa_family_t)AF_INET6)
-	len = sizeof(struct sockaddr_in6);
-    else
-#endif
-	len = sizeof(struct sockaddr_in);
+    len = SS_LEN(ss1);
     return(memcmp(ss1, ss2, len));
 }
 
