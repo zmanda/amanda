@@ -696,6 +696,17 @@ else
 	configfile=$changerfile.conf
 fi
 
+if [ ! -e $configfile ]; then
+	Exit 2 \
+	     "<none>" \
+	     "configuration file \"$configfile\" doesn't exist"
+fi
+if [ ! -f $configfile ]; then
+	Exit 2 \
+	     "<none>" \
+	     "configuration file \"$configfile\" is not a file"
+fi
+
 cleanfile=$changerfile-clean
 accessfile=$changerfile-access
 slotfile=$changerfile-slot
