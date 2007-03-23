@@ -3243,7 +3243,7 @@ get_int(void)
 	break;
 
     default:
-	conf_parserror("an int is expected");
+	conf_parserror("an integer is expected");
 	val = 0;
 	break;
     }
@@ -3342,7 +3342,7 @@ get_long(void)
 	break;
 
     default:
-	conf_parserror("a long is expected");
+	conf_parserror("an integer is expected");
 	val = 0;
 	break;
     }
@@ -3520,7 +3520,7 @@ get_am64_t(void)
 	break;
 
     default:
-	conf_parserror("an am64 is expected %d", tok);
+	conf_parserror("an integer is expected");
 	val = 0;
 	break;
     }

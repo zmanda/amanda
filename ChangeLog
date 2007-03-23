@@ -1,4 +1,7 @@
 2007-03-23  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c: Fix error message.
+
+2007-03-23  Jean-Louis Martineau <martineau@zmanda.com>
 	* amandad-src/amandad.c: Fix segfault.
 
 2007-03-23  Jean-Louis Martineau <martineau@zmanda.com>
