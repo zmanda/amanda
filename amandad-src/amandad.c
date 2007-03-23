@@ -1080,6 +1080,7 @@ s_ackwait(
 		dh - &as->data[0], security_geterror(as->security_handle)));
 	    security_stream_close(dh->netfd);
 	    dh->netfd = NULL;
+	    continue;
 	}
 	/* setup an event for reads from it */
 	dh->ev_read = event_register((event_id_t)dh->fd_read, EV_READFD,
