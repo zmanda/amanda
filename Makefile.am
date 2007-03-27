@@ -51,7 +51,6 @@ EXTRA_DIST = $(SNAPSHOT_STAMP) \
 	contrib/dbbackup.ksh		\
 	contrib/dbbackup.sql		\
 	contrib/dbbackup.tcl		\
-	contrib/gnulib-update-current	\
 	contrib/mkamandisk		\
 	contrib/set_prod_link.pl	\
 	contrib/gsc/README		\

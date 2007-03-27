@@ -1,3 +1,6 @@
+2007-03-27  Jean-Louis Martineau <martineau@zmanda.com>
+	* Makefile.am (EXTRA_DIST): Remove contrib/gnulib-update-current.
+
 2007-03-23  Jean-Louis Martineau <martineau@zmanda.com>
 	* changer-src/chg-zd-mtx.sh.in: Exit with a message if the
 					configuration file doesn't exist.
