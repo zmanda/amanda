@@ -1,4 +1,16 @@
 2007-03-27  Jean-Louis Martineau <martineau@zmanda.com>
+	Merge from zmanda EXT.
+
+2007-03-28  Dustin J. Mitchell <dustin@zmanda.com>
+	* common/amanda.h: fix typo in SS_SET_INADDR_ANY for non-IPv6 
+	  machines
+	* gnulib/regenerate/regenerate: update to include visibility
+	  and lock modules (See 2007-03-14)
+	* recover-src/extract_list.c common-src/krb4-security.c
+	  common-src/event.c common-src/security-util.c: use
+	  SELECT_ARG_TYPE instead of fd_set
+
+2007-03-27  Jean-Louis Martineau <martineau@zmanda.com>
 	* Makefile.am (EXTRA_DIST): Remove contrib/gnulib-update-current.
 
 2007-03-23  Jean-Louis Martineau <martineau@zmanda.com>

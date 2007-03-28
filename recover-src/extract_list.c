@@ -166,7 +166,7 @@ read_buffer(
     long	timeout_s)
 {
     ssize_t size = 0;
-    fd_set readset;
+    SELECT_ARG_TYPE readset;
     struct timeval timeout;
     char *dataptr;
     ssize_t spaceleft;

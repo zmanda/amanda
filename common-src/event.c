@@ -248,7 +248,7 @@ event_loop_wait(
 #ifdef ASSERTIONS
     static int entry = 0;
 #endif
-    fd_set readfds, writefds, errfds, werrfds;
+    SELECT_ARG_TYPE readfds, writefds, errfds, werrfds;
     struct timeval timeout, *tvptr;
     int ntries, maxfd, rc;
     long interval;

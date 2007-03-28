@@ -2535,7 +2535,7 @@ net_read_fillbuf(
     void *	buf,
     size_t	size)
 {
-    fd_set readfds;
+    SELECT_ARG_TYPE readfds;
     struct timeval tv;
     ssize_t nread;
 

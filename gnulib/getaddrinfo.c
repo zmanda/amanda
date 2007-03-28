@@ -40,6 +40,8 @@
 #include "inet_ntop.h"
 #include "snprintf.h"
 
+extern int h_errno;
+
 /* BeOS has AF_INET, but not PF_INET.  */
 #ifndef PF_INET
 # define PF_INET AF_INET
@@ -147,25 +149,29 @@ getaddrinfo (const char *restrict nodename,
     return getaddrinfo_ptr (nodename, servname, hints, res);
 #endif
 
-  if (hints && (hints->ai_flags & ~(AI_CANONNAME|AI_PASSIVE)))
+  if (hints && (hints->ai_flags & ~(AI_CANONNAME | AI_PASSIVE)))
     /* FIXME: Support more flags. */
     return EAI_BADFLAGS;
 
   if (hints && !validate_family (hints->ai_family))
     return EAI_FAMILY;
 
-  if (hints &&
-      hints->ai_socktype != SOCK_STREAM && hints->ai_socktype != SOCK_DGRAM)
-    /* FIXME: Support other socktype. */
-    return EAI_SOCKTYPE; /* FIXME: Better return code? */
+  if ((hints != NULL) &&
+      (hints->ai_socktype != 0) &&
+      (hints->ai_socktype != SOCK_STREAM) &&
+      (hints->ai_socktype != SOCK_DGRAM))
+    {
+      /* FIXME: Support other socktype. */
+      return EAI_SOCKTYPE; /* FIXME: Better return code? */
+    }
 
   if (!nodename)
     {
-      if (!(hints->ai_flags & AI_PASSIVE))
+      if (hints && !(hints->ai_flags & AI_PASSIVE))
 	return EAI_NONAME;
 
 #ifdef HAVE_IPV6
-      nodename = (hints->ai_family == AF_INET6) ? "::" : "0.0.0.0";
+      nodename = (hints && (hints->ai_family == AF_INET6)) ? "::" : "0.0.0.0";
 #else
       nodename = "0.0.0.0";
 #endif
@@ -175,11 +181,13 @@ getaddrinfo (const char *restrict nodename,
     {
       struct servent *se = NULL;
       const char *proto =
-	(hints && hints->ai_socktype == SOCK_DGRAM) ? "udp" : "tcp";
+	(hints && (hints->ai_socktype == SOCK_DGRAM)) ? "udp" : "tcp";
 
-      if (!(hints->ai_flags & AI_NUMERICSERV))
-	/* FIXME: Use getservbyname_r if available. */
-	se = getservbyname (servname, proto);
+      if ((hints == NULL) || !(hints->ai_flags & AI_NUMERICSERV))
+        {
+	  /* FIXME: Use getservbyname_r if available. */
+	  se = getservbyname (servname, proto);
+        }
 
       if (!se)
 	{
@@ -196,7 +204,7 @@ getaddrinfo (const char *restrict nodename,
     }
 
   /* FIXME: Use gethostbyname_r if available. */
-  he = gethostbyname (nodename);
+  he = gethostbyname(nodename);
   if (!he || he->h_addr_list[0] == NULL)
     return EAI_NONAME;
 
@@ -277,7 +285,7 @@ getaddrinfo (const char *restrict nodename,
       return EAI_NODATA;
     }
 
-  if (hints && hints->ai_flags & AI_CANONNAME)
+  if (hints && (hints->ai_flags & AI_CANONNAME))
     {
       const char *cn;
       if (he->h_name)
@@ -341,9 +349,7 @@ int getnameinfo(const struct sockaddr *restrict sa, socklen_t salen,
 #endif
 
   /* FIXME: Support other flags. */
-  if ((node && nodelen > 0 && !(flags & NI_NUMERICHOST)) ||
-      (service && servicelen > 0 && !(flags & NI_NUMERICHOST)) ||
-      (flags & ~(NI_NUMERICHOST|NI_NUMERICSERV)))
+  if (flags & ~(NI_NUMERICHOST | NI_NUMERICSERV))
     return EAI_BADFLAGS;
 
   if (sa == NULL || salen < sizeof (sa->sa_family))
@@ -367,34 +373,89 @@ int getnameinfo(const struct sockaddr *restrict sa, socklen_t salen,
       return EAI_FAMILY;
     }
 
-  if (node && nodelen > 0 && flags & NI_NUMERICHOST)
+  if (node && (nodelen > 0))
     {
+      char	addrbuf[256];
+
       switch (sa->sa_family)
 	{
 #if HAVE_IPV4
 	case AF_INET:
-	  if (!inet_ntop (AF_INET,
+	  if (flags & NI_NUMERICHOST)
+	    {
+	      if (!inet_ntop (AF_INET,
 			  &(((const struct sockaddr_in *) sa)->sin_addr),
-			  node, nodelen))
-	    return EAI_SYSTEM;
+			  addrbuf, sizeof(addrbuf)))
+	      return EAI_SYSTEM;
+	    }
+	  else
+	    {
+	      struct hostent *host_ent = gethostbyaddr(
+	      		  (char *)&(((struct sockaddr_in *)sa)->sin_addr),
+	      		  sizeof(struct sockaddr_in),
+	      		  sa->sa_family);
+	      if (host_ent != NULL)
+	        {
+	          if (nodelen <= snprintf(node, nodelen, "%s",
+		  			host_ent->h_name))
+		     return EAI_OVERFLOW;
+	        }
+	      else
+		{
+	          if (!inet_ntop (AF_INET,
+			  &(((const struct sockaddr_in *) sa)->sin_addr),
+			  addrbuf, sizeof(addrbuf)))
+		    { 
+		      return EAI_SYSTEM;
+		    }
+		    if (nodelen <= snprintf(node, nodelen, "%s", addrbuf))
+		      return EAI_OVERFLOW;
+		}
+	    }
 	  break;
 #endif
 
 #if HAVE_IPV6
 	case AF_INET6:
-	  if (!inet_ntop (AF_INET6,
+	  if (flags & NI_NUMERICHOST)
+	    {
+	      if (!inet_ntop (AF_INET6,
 			  &(((const struct sockaddr_in6 *) sa)->sin6_addr),
-			  node, nodelen))
-	    return EAI_SYSTEM;
+			  addrbuf, sizeof(addrbuf)))
+	      return EAI_SYSTEM;
+	    }
+	  else
+	    {
+	      struct hostent *host_ent = gethostbyaddr(
+	      		  (char *)&(((struct sockaddr_in6 *)sa)->sin6_addr),
+	      		  sizeof(struct sockaddr_in6),
+	      		  sa->sa_family);
+	      if (host_ent != NULL)
+	        {
+	          if (nodelen <= snprintf(node, nodelen, "%s",
+		  			host_ent->h_name))
+		     return EAI_OVERFLOW;
+	        }
+	      else
+		{
+		  if (!inet_ntop (AF_INET6,
+			  &(((const struct sockaddr_in6 *) sa)->sin6_addr),
+			  addrbuf, sizeof(addrbuf)))
+		    { 
+		      return EAI_SYSTEM;
+		    }
+		    if (nodelen <= snprintf(node, nodelen, "%s", addrbuf))
+		      return EAI_OVERFLOW;
+		}
+	    }
 	  break;
 #endif
-
 	default:
 	  return EAI_FAMILY;
 	}
     }
 
-  if (service && servicelen > 0 && flags & NI_NUMERICSERV)
+  if (service && (servicelen > 0))
     switch (sa->sa_family)
       {
 #if HAVE_IPV4

@@ -315,7 +315,7 @@ struct iovec {
     } \
 } while (0);
 #else
-#define SS_SET_INADDR_ANY(ss, family) do { \
+#define SS_SET_INADDR_ANY(ss) do { \
     ((struct sockaddr_in *)(ss))->sin_addr.s_addr = INADDR_ANY; \
 } while (0);
 #endif

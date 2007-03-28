@@ -36,7 +36,7 @@ shopt -u nullglob
 ## Add your modules here, then see below if you need to patch them. ##
 ######################################################################
 
-GNULIB_MODULES="getaddrinfo"
+GNULIB_MODULES="getaddrinfo lock visibility"
 
 ######################################################################
 ## End modules                                                      ##

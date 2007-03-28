@@ -1697,7 +1697,7 @@ net_read(
     char *buf = vbuf;	/* ptr arith */
     ssize_t n;
     int neof = 0;
-    fd_set readfds;
+    SELECT_ARG_TYPE readfds;
     struct timeval tv;
 
     while (size > 0) {

@@ -27,6 +27,7 @@ AC_DEFUN([gl_EARLY],
   AC_REQUIRE([AC_PROG_RANLIB])
   AC_REQUIRE([AC_GNU_SOURCE])
   AC_REQUIRE([gl_USE_SYSTEM_EXTENSIONS])
+  AC_REQUIRE([gl_LOCK_EARLY])
 ])
 
 # This macro should be invoked from ./configure.in, in the section
@@ -44,6 +45,7 @@ AC_DEFUN([gl_INIT],
   dnl gl_USE_SYSTEM_EXTENSIONS must be added quite early to configure.ac.
   gl_GETADDRINFO
   gl_INET_NTOP
+  gl_LOCK
   gl_HEADER_NETINET_IN
   gl_SIZE_MAX
   gl_FUNC_SNPRINTF
@@ -54,6 +56,7 @@ AC_DEFUN([gl_INIT],
   gl_HEADER_SYS_SOCKET
   AC_PROG_MKDIR_P
   gl_FUNC_VASNPRINTF
+  gl_VISIBILITY
   gl_XSIZE
   m4_popdef([AC_LIBSOURCES])
   m4_popdef([AC_REPLACE_FUNCS])
@@ -92,15 +95,17 @@ AC_DEFUN([gl_LIBSOURCES],
 # This macro records the list of files which have been installed by
 # gnulib-tool and may be removed by future gnulib-tool invocations.
 AC_DEFUN([gl_FILE_LIST], [
+  build-aux/config.rpath
   lib/alloca_.h
   lib/asnprintf.c
-  lib/dummy.c
   lib/gai_strerror.c
   lib/getaddrinfo.c
   lib/getaddrinfo.h
   lib/gettext.h
   lib/inet_ntop.c
   lib/inet_ntop.h
+  lib/lock.c
+  lib/lock.h
   lib/printf-args.c
   lib/printf-args.h
   lib/printf-parse.c
@@ -125,6 +130,10 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/inet_ntop.m4
   m4/intmax_t.m4
   m4/inttypes_h.m4
+  m4/lib-ld.m4
+  m4/lib-link.m4
+  m4/lib-prefix.m4
+  m4/lock.m4
   m4/longdouble.m4
   m4/longlong.m4
   m4/netinet_in_h.m4
@@ -139,6 +148,7 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/string_h.m4
   m4/sys_socket_h.m4
   m4/vasnprintf.m4
+  m4/visibility.m4
   m4/wchar_t.m4
   m4/wint_t.m4
   m4/xsize.m4
