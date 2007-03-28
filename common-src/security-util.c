@@ -2629,9 +2629,8 @@ check_name_give_sockaddr(
     if ((addr)->sa_family == AF_INET6)
 	hints.ai_flags = AI_CANONNAME | AI_V4MAPPED | AI_ALL;
     else
-#else
-	hints.ai_flags = AI_CANONNAME;
 #endif
+	hints.ai_flags = AI_CANONNAME;
     hints.ai_family = addr->sa_family;
     hints.ai_socktype = 0;
     hints.ai_protocol = 0;
@@ -2641,7 +2640,7 @@ check_name_give_sockaddr(
     hints.ai_next = NULL;
     result = getaddrinfo(hostname, NULL, &hints, &res);
     if (result != 0) {
-	dbprintf(("getaddrinfo(%s): %s\n", hostname, gai_strerror(result)));
+	dbprintf(("check_name_give_sockaddr: getaddrinfo(%s): %s\n", hostname, gai_strerror(result)));
 	*errstr = newvstralloc(*errstr,
 			       " getaddrinfo(", hostname, "): ",
 			       gai_strerror(result), NULL);

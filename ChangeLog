@@ -1,4 +1,8 @@
 2007-03-27  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/krb5-security.c: Fix for krb5 and IPv6.
+	* common-src/security-util.c: Fix for krb5 and IPv6.
+
+2007-03-27  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/krb5-security.c: Compile with heimdal kerberos.
 
 2007-03-27  Jean-Louis Martineau <martineau@zmanda.com>

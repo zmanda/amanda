@@ -238,7 +238,9 @@ krb5_connect(
     void *	datap)
 {
     struct sec_handle *rh;
-    struct hostent *he;
+    int result;
+    struct addrinfo hints;
+    struct addrinfo *res = NULL;
 
     assert(fn != NULL);
     assert(hostname != NULL);
@@ -257,13 +259,29 @@ krb5_connect(
     rh->ev_timeout = NULL;
     rh->rc = NULL;
 
-    if ((he = gethostbyname(hostname)) == NULL) {
-	security_seterror(&rh->sech,
-	    "%s: could not resolve hostname", hostname);
+#ifdef WORKING_IPV6
+    hints.ai_flags = AI_CANONNAME | AI_V4MAPPED | AI_ALL;
+    hints.ai_family = AF_UNSPEC;
+#else
+    hints.ai_flags = AI_CANONNAME;
+    hints.ai_family = AF_INET;
+#endif
+    hints.ai_socktype = SOCK_DGRAM;
+    hints.ai_protocol = IPPROTO_UDP;
+    hints.ai_addrlen = 0;
+    hints.ai_addr = NULL;
+    hints.ai_canonname = NULL;
+    hints.ai_next = NULL;
+    result = getaddrinfo(hostname, NULL, &hints, &res);
+    if(result != 0) {
+	dbprintf(("krb5_connect: getaddrinfo(%s): %s\n", hostname, gai_strerror(result)));
+	security_seterror(&rh->sech, "getaddrinfo(%s): %s\n", hostname,
+			  gai_strerror(result));
 	(*fn)(arg, &rh->sech, S_ERROR);
 	return;
     }
-    rh->hostname = stralloc(he->h_name);	/* will be replaced */
+
+    rh->hostname = stralloc(res->ai_canonname);        /* will be replaced */
     rh->rs = tcpma_stream_client(rh, newhandle++);
     rh->rc->recv_security_ok = NULL;
     rh->rc->prefix_packet = NULL;
