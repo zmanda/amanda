@@ -1,4 +1,7 @@
 2007-03-27  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/krb5-security.c: Compile with heimdal kerberos.
+
+2007-03-27  Jean-Louis Martineau <martineau@zmanda.com>
 	Fix solaris 9 problem:
 	* common-src/krb5-security.c: Use putenv instead of setenv.
 	* common-src/security-util.c: Set flags according to family.

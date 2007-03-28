@@ -43,6 +43,10 @@
 #include "stream.h"
 #include "version.h"
 
+#ifdef KRB5_HEIMDAL_INCLUDES
+#include "com_err.h"
+#endif
+
 #ifdef KRB5_SECURITY
 
 #define BROKEN_MEMORY_CCACHE
@@ -777,7 +781,11 @@ get_tgt(
     krb5_keytab keytab;
     krb5_ccache ccache;
     krb5_timestamp now;
+#ifdef KRB5_HEIMDAL_INCLUDES
+    krb5_data tgtname = { KRB5_TGS_NAME_SIZE, KRB5_TGS_NAME };
+#else
     krb5_data tgtname = { 0, KRB5_TGS_NAME_SIZE, KRB5_TGS_NAME };
+#endif
     static char *error = NULL;
 
     if (error != NULL) {
@@ -822,6 +830,15 @@ get_tgt(
 	return (error);
     }
 
+#ifdef KRB5_HEIMDAL_INCLUDES
+    ret = krb5_build_principal_ext(context, &server,
+        krb5_realm_length(*krb5_princ_realm(context, client)),
+        krb5_realm_data(*krb5_princ_realm(context, client)),
+        tgtname.length, tgtname.data,
+        krb5_realm_length(*krb5_princ_realm(context, client)),
+        krb5_realm_data(*krb5_princ_realm(context, client)),
+        0);
+#else
     ret = krb5_build_principal_ext(context, &server,
 	krb5_princ_realm(context, client)->length,
 	krb5_princ_realm(context, client)->data,
@@ -829,6 +846,7 @@ get_tgt(
 	krb5_princ_realm(context, client)->length,
 	krb5_princ_realm(context, client)->data,
 	0);
+#endif
     if (ret != 0) {
 	error = vstralloc("error while building server name: ",
 	    error_message(ret), NULL);
