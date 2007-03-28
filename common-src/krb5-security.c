@@ -708,7 +708,7 @@ krb5_init(void)
     beenhere = 1;
 
 #ifndef BROKEN_MEMORY_CCACHE
-    setenv(KRB5_ENV_CCNAME, "MEMORY:amanda_ccache", 1);
+    putenv(stralloc("KRB5_ENV_CCNAME=MEMORY:amanda_ccache"));
 #else
     /*
      * MEMORY ccaches seem buggy and cause a lot of internal heap
@@ -720,10 +720,12 @@ krb5_init(void)
      */
     atexit(cleanup);
     {
-	char ccache[64];
-	snprintf(ccache, SIZEOF(ccache), "FILE:/tmp/amanda_ccache.%ld.%ld",
-	    (long)geteuid(), (long)getpid());
-	setenv(KRB5_ENV_CCNAME, ccache, 1);
+	char *ccache;
+	ccache = malloc(128);
+	snprintf(ccache, SIZEOF(ccache),
+		 "KRB5_ENV_CCNAME=FILE:/tmp/amanda_ccache.%ld.%ld",
+		 (long)geteuid(), (long)getpid());
+	putenv(ccache);
     }
 #endif
 

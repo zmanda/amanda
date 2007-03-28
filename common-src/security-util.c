@@ -2626,9 +2626,11 @@ check_name_give_sockaddr(
     int result;
 
 #ifdef WORKING_IPV6
-    hints.ai_flags = AI_CANONNAME | AI_V4MAPPED | AI_ALL;
+    if ((addr)->sa_family == AF_INET6)
+	hints.ai_flags = AI_CANONNAME | AI_V4MAPPED | AI_ALL;
+    else
 #else
-    hints.ai_flags = AI_CANONNAME;
+	hints.ai_flags = AI_CANONNAME;
 #endif
     hints.ai_family = addr->sa_family;
     hints.ai_socktype = 0;
