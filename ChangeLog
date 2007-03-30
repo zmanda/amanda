@@ -1,3 +1,6 @@
+2007-03-30  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/amanda.h: Define a _() macro.
+
 2007-03-27  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/krb5-security.c: Fix for krb5 and IPv6.
 	* common-src/security-util.c: Fix for krb5 and IPv6.

@@ -1560,4 +1560,6 @@ void	add_history(const char *line);
 #define NI_MAXHOST 1025
 #endif
 
+#define _(x) x
+
 #endif	/* !AMANDA_H */
