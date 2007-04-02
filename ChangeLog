@@ -6,6 +6,8 @@
 	  common-src/security-util.c: bugfix for hosts with multiple addresses,
 	  improved cmp_sockaddr, remove redundant checks
 	* server-src/taper.c: add log message when new tapes are auto-labeled
+	* common-src/security-util.c: patch to avoid spurious compiler warnings 
+	  noticed on FC3
 
 2007-03-30  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/file.c: remove unused amanda_setup()

@@ -458,7 +458,8 @@ tcpm_send_token(
 	    iov[2].iov_base = (void *)buf;
 	    iov[2].iov_len = len;
 	} else {
-	    rc->driver->data_encrypt(rc, (void *)buf, len, (void **)&encbuf, &encsize);
+	    /* (the extra (void *) cast is to quiet type-punning warnings) */
+	    rc->driver->data_encrypt(rc, (void *)buf, len, (void **)(void *)&encbuf, &encsize);
 	    iov[2].iov_base = (void *)encbuf;
 	    iov[2].iov_len = encsize;
 	    netlength = htonl(encsize);
@@ -598,7 +599,8 @@ tcpm_recv_token(
     if (*size > 0 && rc->driver->data_decrypt != NULL) {
 	char *decbuf;
 	ssize_t decsize;
-	rc->driver->data_decrypt(rc, *buf, *size, (void **)&decbuf, &decsize);
+	/* (the extra (void *) cast is to quiet type-punning warnings) */
+	rc->driver->data_decrypt(rc, *buf, *size, (void **)(void *)&decbuf, &decsize);
 	if (*buf != decbuf) {
 	    amfree(*buf);
 	    *buf = decbuf;
