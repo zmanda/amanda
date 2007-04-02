@@ -31,7 +31,6 @@
 #include "amanda.h"
 #include "util.h"
 
-void amanda_setup(int argc, char **argv, int setup_flags);
 static int mk1dir(const char *, mode_t, uid_t, gid_t);
 static void areads_getbuf(const char *s, int l, int fd);
 
@@ -155,28 +154,6 @@ rmpdir(
     return rc;
 }
 
-
-/*
- *=====================================================================
- * Do Amanda setup for all programs.
- *
- * void amanda_setup (int argc, char **argv, int setup_flags)
- *
- * entry:	setup_flags (see AMANDA_SETUP_FLAG_xxx)
- * exit:	none
- *=====================================================================
- */
-
-void
-amanda_setup (
-    int		argc,
-    char **	argv,
-    int		setup_flags)
-{
-    (void)argc;		/* Quiet unused parameter warning */
-    (void)argv;		/* Quiet unused parameter warning */
-    (void)setup_flags;	/* Quiet unused parameter warning */
-}
 
 /*
  *=====================================================================
