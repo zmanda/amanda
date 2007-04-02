@@ -2969,10 +2969,11 @@ label_tape(void)
     char *error_msg = NULL;
     char *s, *r;
     int slot = -1;
+    int scan_result;
 
     amfree(label);
     amfree(tapedev);
-    if (taper_scan(NULL, &label, &timestamp, &tapedev, CHAR_taperscan_output_callback, &error_msg) < 0) {
+    if ((scan_result = taper_scan(NULL, &label, &timestamp, &tapedev, CHAR_taperscan_output_callback, &error_msg)) < 0) {
 	fprintf(stderr, "%s\n", error_msg);
 	errstr = error_msg;
 	error_msg = NULL;
@@ -2980,6 +2981,7 @@ label_tape(void)
 	return 0;
     }
     amfree(timestamp);
+
     if(error_msg) {
 	s = error_msg; r = NULL;
 	while((s=strstr(s,"slot "))) { s += 5; r=s; };
@@ -3009,13 +3011,16 @@ label_tape(void)
 	return 0;
     }
 
-    if(slot > -1) {
-	fprintf(stderr, "taper: slot: %d wrote label `%s' date `%s'\n", slot,
-		label, taper_timestamp);
-    }
-    else {
-	fprintf(stderr, "taper: wrote label `%s' date `%s'\n", label,
-		taper_timestamp);
+    /* Output a description of what we just did. A result of '3' from taper_scan
+     * means that a new tape was found and will be labeled. */
+    if (slot > -1) {
+	fprintf(stderr, _("taper: slot: %d wrote label `%s' date `%s'\n"), slot, label, taper_timestamp);
+	if (scan_result == 3)
+	    log_add(L_INFO, _("Wrote new label `%s' to new (non-amanda) tape in slot %d"), label, slot);
+    } else {
+	fprintf(stderr, _("taper: wrote label `%s' date `%s'\n"), label, taper_timestamp);
+	if (scan_result == 3)
+	    log_add(L_INFO, _("Wrote new label `%s' to new (non-amanda) tape"), label);
     }
     fflush(stderr);
 
