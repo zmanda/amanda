@@ -687,12 +687,33 @@ str_sockaddr(
 int
 cmp_sockaddr(
     struct sockaddr_storage *ss1,
-    struct sockaddr_storage *ss2)
+    struct sockaddr_storage *ss2,
+    int addr_only)
 {
-    size_t len;
-
-    len = SS_LEN(ss1);
-    return(memcmp(ss1, ss2, len));
+    if (ss1->ss_family == ss2->ss_family) {
+        if (addr_only) {
+#ifdef WORKING_IPV6
+            if(ss1->ss_family == (sa_family_t)AF_INET6)
+                return memcmp(
+                    &((struct sockaddr_in6 *)ss1)->sin6_addr,
+                    &((struct sockaddr_in6 *)ss2)->sin6_addr,
+                    sizeof(((struct sockaddr_in6 *)ss1)->sin6_addr));
+            else
+#endif
+                return memcmp(
+                    &((struct sockaddr_in *)ss1)->sin_addr,
+                    &((struct sockaddr_in *)ss2)->sin_addr,
+                    sizeof(((struct sockaddr_in *)ss1)->sin_addr));
+        } else {
+            return memcmp(ss1, ss2, SS_LEN(ss1));
+        }
+    } else {
+        /* compare families to give a total order */
+        if (ss1->ss_family < ss2->ss_family)
+            return -1;
+        else
+            return 1;
+    }
 }
 
 

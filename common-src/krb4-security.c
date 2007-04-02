@@ -997,9 +997,7 @@ recvpkt_callback(
 
     for (kh = handleq_first(); kh != NULL; kh = handleq_next(kh)) {
 	if (strcmp(kh->proto_handle, handle) == 0 &&
-	    memcmp(&kh->peer.sin6_addr, &peer.sin6_addr,
-	    SIZEOF(peer.sin6_addr)) == 0 &&
-	    kh->peer.sin6_port == peer.sin6_port) {
+	    cmp_sockaddr(&kh->peer, &peer, 0) == 0) {
 	    kh->sequence = sequence;
 
 	    /*

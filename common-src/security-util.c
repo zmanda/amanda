@@ -1222,16 +1222,16 @@ udp_recvpkt_callback(
     struct sec_handle *rh = cookie;
     void (*fn)(void *, pkt_t *, security_status_t);
     void *arg;
-    size_t len;
 
     auth_debug(1, ("%s: udp: receive handle '%s' netfd '%s'\n",
 		   debug_prefix_time(NULL), rh->proto_handle, rh->udp->handle));
     assert(rh != NULL);
 
-    if (strcmp(rh->proto_handle, rh->udp->handle) != 0) assert(1);
+    /* if it doesn't correspond to this handle, something is wrong */
+    assert(strcmp(rh->proto_handle, rh->udp->handle) == 0);
+
     /* if it didn't come from the same host/port, forget it */
-    len = SS_LEN(&(rh->peer));
-    if (memcmp(&rh->peer, &rh->udp->peer, len) != 0) {
+    if (cmp_sockaddr(&rh->peer, &rh->udp->peer, 0) != 0) {
 	amfree(rh->udp->handle);
 	dbprintf(("not form same host\n"));
 	dump_sockaddr(&rh->peer);
@@ -1372,7 +1372,7 @@ udp_netfd_read_callback(
     rh = udp->bh_first;
     while(rh != NULL && (strcmp(rh->proto_handle, udp->handle) != 0 ||
 			 rh->sequence != udp->sequence ||
-			 cmp_sockaddr(&rh->peer, &udp->peer) != 0)) {
+			 cmp_sockaddr(&rh->peer, &udp->peer, 0) != 0)) {
 	rh = rh->next;
     }
     if (rh && event_wakeup(rh->event_id) > 0)
@@ -2657,23 +2657,9 @@ check_name_give_sockaddr(
 	return -1;
     }
 
-    for(res1=res; res1 != NULL; res = res->ai_next) {
-	if (res->ai_addr->sa_family == addr->sa_family) {
-#ifdef WORKING_IPV6
-	    if (addr->sa_family == (sa_family_t)AF_INET6) {
-		result = memcmp(
-			&((struct sockaddr_in6 *)res->ai_addr)->sin6_addr,
-			&((struct sockaddr_in6 *)addr)->sin6_addr,
-			sizeof(struct in6_addr));
-	    } else
-#endif
-	    {
-		result = memcmp(
-			&((struct sockaddr_in *)res->ai_addr)->sin_addr,
-			&((struct sockaddr_in *)addr)->sin_addr,
-			sizeof(struct in_addr));
-	    }
-	    if (result == 0) {
+    for(res1=res; res1 != NULL; res1 = res1->ai_next) {
+	if (res1->ai_addr->sa_family == addr->sa_family) {
+	    if (cmp_sockaddr((struct sockaddr_storage *)&res1->ai_addr, (struct sockaddr_storage *)&addr, 1) == 0) {
 		freeaddrinfo(res);
 		return 0;
 	    }

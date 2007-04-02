@@ -59,8 +59,13 @@ char *	strquotedstr(void);
 ssize_t	hexdump(const char *buffer, size_t bytes);
 void	dump_sockaddr(struct sockaddr_storage *	sa);
 char *  str_sockaddr(struct sockaddr_storage *sa);
+/* Compare two sockaddr_storage objects, optionally comparing
+ * only the address (and thus ignoring port, flow info, etc.).
+ * @returns: -1, 0, or 1 for <, ==, >, respectively
+ */
 int     cmp_sockaddr(struct sockaddr_storage *ss1,
-		     struct sockaddr_storage *ss2);
+		     struct sockaddr_storage *ss2,
+             int addr_only);
 int     copy_file(char *dst, char *src, char **errmsg);
 
 /*
