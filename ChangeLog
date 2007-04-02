@@ -1,4 +1,7 @@
 2007-04-02  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/bsdtcp-security.c common-src/bsd-security.c 
+	  common-src/security-util.c common-src/bsdudp-security.c:
+	  bugfixes, always check for NULL ai_canonname
 	* common-src/util.c common-src/util.h common-src/krb4-security.c 
 	  common-src/security-util.c: bugfix for hosts with multiple addresses,
 	  improved cmp_sockaddr, remove redundant checks

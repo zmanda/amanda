@@ -176,6 +176,13 @@ bsd_connect(
 	(*fn)(arg, &bh->sech, S_ERROR);
 	return;
     }
+    if (res->ai_canonname == NULL) {
+	dbprintf(_("getaddrinfo(%s) did not return a canonical name\n"), hostname);
+	security_seterror(&bh->sech,
+ 	        _("getaddrinfo(%s) did not return a canonical name\n"), hostname);
+	(*fn)(arg, &bh->sech, S_ERROR);
+       return;
+    }
 
     if (not_init == 1) {
 	uid_t euid;

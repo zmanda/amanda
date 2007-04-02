@@ -2646,13 +2646,19 @@ check_name_give_sockaddr(
 			       gai_strerror(result), NULL);
 	return -1;
     }
+    if (res->ai_canonname == NULL) {
+	dbprintf(_("getaddrinfo(%s) did not return a canonical name\n"), hostname);
+	*errstr = newvstralloc(*errstr, 
+ 		" getaddrinfo(", hostname, ") did not return a canonical name", NULL);
+	return -1;
+    }
 
     if (strncasecmp(hostname, res->ai_canonname, strlen(hostname)) != 0) {
-	auth_debug(1, ("%s: %s doesn't resolve to itself, it resolv to %s\n",
+	auth_debug(1, _("%s: %s doesn't resolve to itself, it resolves to %s\n"),
 		       debug_prefix_time(NULL),
-		       hostname, res->ai_canonname));
+		       hostname, res->ai_canonname);
 	*errstr = newvstralloc(*errstr, hostname,
-			       " doesn't resolve to itself, it resolv to ",
+			       _(" doesn't resolve to itself, it resolves to "),
 			       res->ai_canonname, NULL);
 	return -1;
     }

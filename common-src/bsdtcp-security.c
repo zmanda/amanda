@@ -146,6 +146,13 @@ bsdtcp_connect(
 	(*fn)(arg, &rh->sech, S_ERROR);
 	return;
     }
+    if (res->ai_canonname == NULL) {
+	dbprintf(_("getaddrinfo(%s) did not return a canonical name\n"), hostname);
+	security_seterror(&rh->sech,
+ 	        _("getaddrinfo(%s) did not return a canonical name\n"), hostname);
+	(*fn)(arg, &rh->sech, S_ERROR);
+       return;
+    }
 
     rh->hostname = stralloc(res->ai_canonname);	/* will be replaced */
     rh->rs = tcpma_stream_client(rh, newhandle++);

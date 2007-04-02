@@ -154,6 +154,14 @@ bsdudp_connect(
 	security_seterror(&bh->sech, "getaddrinfo(%s): %s\n", hostname,
 			  gai_strerror(result));
 	(*fn)(arg, &bh->sech, S_ERROR);
+        return;
+    }
+    if (res->ai_canonname == NULL) {
+	dbprintf(_("getaddrinfo(%s) did not return a canonical name\n"), hostname);
+	security_seterror(&bh->sech,
+ 	        _("getaddrinfo(%s) did not return a canonical name\n"), hostname);
+	(*fn)(arg, &bh->sech, S_ERROR);
+       return;
     }
 
     /*
