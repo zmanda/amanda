@@ -42,27 +42,19 @@ man page for more details about &A;.</para>
 </refsect1>
 
 <refsect1><title>COMMANDS</title>
-<para>Commands that take a
-<emphasis remap='I'>hostname</emphasis>
-[
-<emphasis remap='I'>disks</emphasis>
-]
-parameter pair operate on all disks in the
-<emphasis remap='I'>disklist</emphasis>
-for that
-<emphasis remap='I'>hostname</emphasis>
-if no disks are specified.
-Where
-<emphasis remap='I'>hostname</emphasis>
-is also marked as being optional,
-the command operates on all hosts and disks in the
-<emphasis remap='I'>disklist</emphasis>.
-Both
-<emphasis remap='I'>hostname</emphasis>
-and
-<emphasis remap='I'>disks</emphasis>
-are special expressions, see the &quot;HOST &amp; DISK EXPRESSION&quot; section
-of 
+<para>Commands that take a <emphasis remap='I'>hostname</emphasis> [ <emphasis remap='I'>disks</emphasis> ]
+parameter pair operate on all disks in the <emphasis remap='I'>disklist</emphasis> for that
+<emphasis remap='I'>hostname</emphasis> if no disks are specified.  Where
+<emphasis remap='I'>hostname</emphasis> is also marked as being optional,
+the command operates on all hosts and disks in the <emphasis remap='I'>disklist</emphasis>.
+Both <emphasis remap='I'>hostname</emphasis> and <emphasis remap='I'>disks</emphasis>
+are special expressions; see the &quot;HOST &amp; DISK EXPRESSION&quot; section
+of <citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+for a description.</para>
+
+<para>Commands that take one or more <emphasis remap='I'>dumpspec</emphasis> parameters operate
+on the set of dumps specified by all of the expressions.  See the &quot;DUMP SPECIFICATIONS&quot;
+section of
 <citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>
 for a description.</para>
 
@@ -169,6 +161,27 @@ and status are displayed.</para>
 The default sort order is <emphasis remap='B'>hkdlpb</emphasis>.</para>
 </listitem>
 </varlistentry>
+
+  <varlistentry>
+  <term><emphasis remap='B'>holding delete</emphasis> <emphasis remap="I">hostname</emphasis> [ <emphasis remap="I">disk</emphasis> [ <emphasis remap="I">datestamp</emphasis> [ .. ] ] ]</term>
+  <listitem>
+
+    <para>Delete holding files matching the given specification.  At least
+    a hostname must be provided.</para>
+
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><emphasis remap='B'>holding list</emphasis> [-l] [ <emphasis remap="I">hostname</emphasis> [ <emphasis remap="I">disk</emphasis> [ <emphasis remap="I">datestamp</emphasis> [ .. ] ] ] ]</term>
+  <listitem>
+
+    <para>List holding files matching the given specification, or all holding
+    files if no specification is provided.  With '-l', additional information
+    (size and level) is provided.</para>
+
+  </listitem>
+  </varlistentry>
 
   <varlistentry>
   <term><emphasis remap='B'>delete</emphasis> [ <emphasis remap='I'>hostname</emphasis> [ <emphasis remap='I'>disks</emphasis> ]* ]+</term>

@@ -1170,6 +1170,56 @@ Leading ^ is removed. Trailing $ forces an exact match.</para>
 
 </refsect1>
 
+<refsect1><title>DUMP SPECIFICATIONS</title> <para>A dump
+specification selects one or more dumps.  It has the form <emphasis
+remap="I">[host][:disk][@datestamp]</emphasis>, where each component
+is a pattern as described above.  If a component is missing, it
+is treated as a wildcard.  The characters ':', '@', and '\' may be
+escaped within any component by preceding them with a '\'.</para>
+
+<para>Some examples:</para>
+
+<informaltable frame="none">
+<tgroup cols="2" align="left">
+<tbody>
+
+<row>
+<entry>DUMPSPEC</entry>
+<entry>DESCRIPTION</entry>
+</row>
+
+<row>
+<entry>client17</entry>
+<entry>all dumps of client17</entry>
+</row>
+
+<row>
+<entry>@20080615</entry>
+<entry>All dumps on with datestamps matching 20080615</entry>
+</row>
+
+<row>
+<entry>webserver:/var/www</entry>
+<entry>All dumps of /var/www on host webserver</entry>
+</row>
+
+<row>
+<entry>webserver:/var/www@200806150317</entry>
+<entry>The dump of webserver with datestamp 200806150317</entry>
+</row>
+
+<row>
+<entry>:/var/www</entry>
+<entry>All dumps of /var/www on any host</entry>
+</row>
+
+</tbody>
+</tgroup>
+</informaltable>
+
+
+</refsect1>
+
 <refsect1><title>CONFIGURATION OVERWRITE</title>
 <para>Most command allow to overwrite any configuration parameter on
 the command line with the -o option.</para>

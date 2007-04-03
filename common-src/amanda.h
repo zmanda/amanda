@@ -1561,5 +1561,4 @@ void	add_history(const char *line);
 #endif
 
 #define _(x) x
-
 #endif	/* !AMANDA_H */

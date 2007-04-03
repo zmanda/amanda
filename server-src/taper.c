@@ -2051,7 +2051,7 @@ predict_splits(
     if (expected_splits != 0)
 	return(expected_splits);
 
-    total_kb = size_holding_files(filename, 1);
+    total_kb = holding_file_size(filename, 1);
     
     if (total_kb <= (off_t)0) {
 	fprintf(stderr, "taper: r: " OFF_T_FMT

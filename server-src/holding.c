@@ -35,10 +35,32 @@
 #include "fileheader.h"
 #include "logfile.h"
 
-static sl_t *scan_holdingdisk(sl_t *holding_list, char *diskdir, int verbose);
-static sl_t *scan_holdingdir(sl_t *holding_list, holdingdisk_t *holdp, char *datestamp);
+/*
+ * utilities */
 
-int
+/* Is fname a directory?
+ *
+ * @param fname: filename (fully qualified)
+ * @returns: boolean
+ */
+static int is_dir(char *fname);
+
+/* sanity check that datestamp is of the form YYYYMMDD or 
+ * YYYYMMDDhhmmss
+ *
+ * @param fname: a filename (without directory)
+ * @returns: boolean
+ */
+static int is_datestr(char *fname);
+
+/*
+ * Static variables */
+static int verbose = 0;
+
+/*
+ * Static functions */
+
+static int
 is_dir(
     char *fname)
 {
@@ -49,7 +71,7 @@ is_dir(
     return (statbuf.st_mode & S_IFDIR) == S_IFDIR;
 }
 
-int
+int /* (not static: currently used by find.c) */
 is_emptyfile(
     char *fname)
 {
@@ -61,12 +83,7 @@ is_emptyfile(
 		(statbuf.st_size == (off_t)0);
 }
 
-
-/*
- * sanity check on datestamp of the form YYYYMMDD or YYYYMMDDhhmmss
- */
-
-int
+static int
 is_datestr(
     char *fname)
 {
@@ -113,227 +130,463 @@ is_datestr(
     return 1;
 }
 
-
+/*
+ * Verbosity
+ */
 int
-non_empty(
-    char *	fname)
+holding_set_verbosity(int v)
+{
+    int old = verbose;
+    verbose = v;
+    return old;
+}
+
+/*
+ * Holding directories
+ */
+
+static void
+holding_get_directories_per_disk(
+    char *hdisk,
+    int fullpaths,
+    sl_t *rv)
 {
     DIR *dir;
-    struct dirent *entry;
-    int gotentry;
-
-    if((dir = opendir(fname)) == NULL)
-	return 0;
-
-    gotentry = 0;
-    while(!gotentry && (entry = readdir(dir)) != NULL) {
-	gotentry = !is_dot_or_dotdot(entry->d_name);
-    }
-
-    closedir(dir);
-    return gotentry;
-}
-
-
-static sl_t *
-scan_holdingdisk(
-    sl_t *	holding_list,
-    char *	diskdir,
-    int		verbose)
-{
-    DIR *topdir;
     struct dirent *workdir;
-    char *entryname = NULL;
+    char *hdir = NULL;
 
-    if((topdir = opendir(diskdir)) == NULL) {
-	if(verbose && errno != ENOENT)
-	   printf("Warning: could not open holding dir %s: %s\n",
-		  diskdir, strerror(errno));
-	return holding_list;
+    if ((dir = opendir(hdisk)) == NULL) {
+        if (verbose && errno != ENOENT)
+           printf(_("Warning: could not open holding disk %s: %s\n"),
+                  hdisk, strerror(errno));
+        return;
     }
 
-    /* find all directories of the right format  */
+    if (verbose)
+        printf(_("Scanning %s...\n"), hdisk);
 
-    if(verbose)
-	printf("Scanning %s...\n", diskdir);
-    while((workdir = readdir(topdir)) != NULL) {
-	if(is_dot_or_dotdot(workdir->d_name)) {
-	    continue;
-	}
-	entryname = newvstralloc(entryname,
-				 diskdir, "/", workdir->d_name, NULL);
-	if(verbose) {
-	    printf("  %s: ", workdir->d_name);
-	}
-	if(!is_dir(entryname)) {
-	    if(verbose) {
-	        puts("skipping cruft file, perhaps you should delete it.");
-	    }
-	} else if(!is_datestr(workdir->d_name)) {
-	    if(verbose && (strcmp(workdir->d_name, "lost+found")!=0) ) {
-	        puts("skipping cruft directory, perhaps you should delete it.");
-	    }
-	} else {
-	    holding_list = insert_sort_sl(holding_list, workdir->d_name);
-	    if(verbose) {
-		puts("found Amanda directory.");
-	    }
-	}
+    while ((workdir = readdir(dir)) != NULL) {
+        if (is_dot_or_dotdot(workdir->d_name))
+            continue;
+
+        if(verbose) 
+            printf("  %s: ", workdir->d_name);
+            
+        hdir = newvstralloc(hdir,
+                     hdisk, "/", workdir->d_name,
+                     NULL);
+
+        /* filter out various undesirables */
+        if (!is_dir(hdir)) {
+            if (verbose)
+                puts(_("skipping cruft file, perhaps you should delete it."));
+        } else if (!is_datestr(workdir->d_name)) {
+            /* EXT2/3 leave these in the root of each volume */
+            if (strcmp(workdir->d_name, "lost+found")==0)
+                puts(_("skipping system directory"));
+            if (verbose)
+                puts(_("skipping cruft directory, perhaps you should delete it."));
+        } else {
+            /* found a holding directory -- keep it */
+            if (fullpaths)
+                rv = insert_sort_sl(rv, hdir);
+            else
+                rv = insert_sort_sl(rv, workdir->d_name);
+            if (verbose) {
+                puts(_("found Amanda directory."));
+            }
+        }
     }
-    closedir(topdir);
-    amfree(entryname);
-    return holding_list;
+
+    if (hdir) amfree(hdir);
 }
-
-
-static sl_t *
-scan_holdingdir(
-    sl_t *		holding_list,
-    holdingdisk_t *	holdp,
-    char *		datestamp)
-{
-    DIR *workdir;
-    struct dirent *entry;
-    char *dirname = NULL;
-    char *destname = NULL;
-    disk_t *dp;
-    dumpfile_t file;
-
-    dirname = vstralloc(holdingdisk_get_diskdir(holdp), "/", datestamp, NULL);
-    if((workdir = opendir(dirname)) == NULL) {
-	if(errno != ENOENT)
-	    log_add(L_INFO, "%s: could not open dir: %s",
-		    dirname, strerror(errno));
-	amfree(dirname);
-	return holding_list;
-    }
-    if ((chdir(dirname)) == -1) {
-	log_add(L_INFO, "%s: could not chdir: %s",
-		    dirname, strerror(errno));
-	amfree(dirname);
-	return holding_list;
-    }
-
-    while((entry = readdir(workdir)) != NULL) {
-	if(strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
-	    continue;
-
-	if(is_emptyfile(entry->d_name))
-	    continue;
-
-	destname = newvstralloc(destname,
-				dirname, "/", entry->d_name,
-				NULL);
-	get_dumpfile(destname, &file);
-	if( file.type != F_DUMPFILE) {
-	    if( file.type != F_CONT_DUMPFILE )
-		log_add(L_INFO, "%s: ignoring cruft file.", entry->d_name);
-	    continue;
-	}
-
-	dp = lookup_disk(file.name, file.disk);
-
-	if (dp == NULL) {
-	    log_add(L_INFO, "%s: disk %s:%s not in database, skipping it.",
-		    entry->d_name, file.name, file.disk);
-	    continue;
-	}
-
-	if(file.dumplevel < 0 || file.dumplevel > 9) {
-	    log_add(L_INFO, "%s: ignoring file with bogus dump level %d.",
-		    entry->d_name, file.dumplevel);
-	    continue;
-	}
-
-	holding_list = append_sl(holding_list, destname);
-    }
-    closedir(workdir);
-    amfree(dirname);
-    amfree(destname);
-    return holding_list;
-}
-
 
 
 sl_t *
-get_flush(
-    sl_t *dateargs,
-    char *datestamp,  /* don't do this date */
-    int amflush,
-    int verbose)
+holding_get_directories(
+    char *hdisk,
+    int fullpaths)
 {
-    sl_t *holding_list;
-    sl_t *date_list;
-    sle_t *datearg;
-    sle_t *date, *next_date;
-    holdingdisk_t *hdisk;
-    char current_dir[PATH_MAX];
+    holdingdisk_t *hdisk_conf;
+    sl_t *rv;
 
-    holding_list = new_sl();
-
-    if (getcwd(current_dir, SIZEOF(current_dir)-1) == NULL) {
-	log_add(L_INFO, "get_flush: could get current working directory: %s",
-		    strerror(errno));
-	return holding_list;
+    rv = new_sl();
+    if (!rv) {
+        return NULL;
     }
 
-    if(dateargs) {
-	int ok;
-
-	date_list = pick_all_datestamp(verbose);
-	for(date = date_list->first; date != NULL;) {
-	    next_date = date->next;
-	    ok = 0;
-	    for(datearg=dateargs->first; datearg != NULL && ok==0;
-		datearg = datearg->next) {
-		ok = match_datestamp(datearg->name, date->name);
-	    }
-	    if(ok == 0) { /* remove dir */
-		remove_sl(date_list, date);
-	    }
-	    date = next_date;
-	}
-    }
-    else if (amflush) {
-	date_list = pick_datestamp(verbose);
-    }
-    else {
-	date_list = pick_all_datestamp(verbose);
+    /* call _per_disk for the hdisk we were given, or for all
+     * hdisks if we were given NULL */
+    if (hdisk) {
+        holding_get_directories_per_disk(hdisk, fullpaths, rv);
+    } else {
+        for (hdisk_conf = getconf_holdingdisks(); 
+                    hdisk_conf != NULL;
+                    hdisk_conf = hdisk_conf->next) {
+            hdisk = holdingdisk_get_diskdir(hdisk_conf);
+            holding_get_directories_per_disk(hdisk, fullpaths, rv);
+        }
     }
 
-    for(date = date_list->first; date !=NULL; date = date->next) {
-	if(!datestamp || strcmp(datestamp,date->name) != 0) {
-	    for(hdisk = getconf_holdingdisks(); hdisk != NULL;
-						hdisk = hdisk->next) {
-		holding_list = scan_holdingdir(holding_list, hdisk, date->name);
-	    }
-	}
-    }
-
-    free_sl(date_list);
-    date_list = NULL;
-    if (chdir(current_dir) == -1) {
-	log_add(L_INFO, "%s: could not chdir: %s",
-		    current_dir, strerror(errno));
-    }
-    return(holding_list);
+    return rv;
 }
 
+/*
+ * Holding files
+ */
+static void
+holding_get_files_per_dir(
+    char *hdir,
+    int fullpaths,
+    sl_t *rv)
+{
+    DIR *dir;
+    struct dirent *workdir;
+    char *hfile = NULL;
+    dumpfile_t dumpf;
+    int dumpf_ok;
+
+    if ((dir = opendir(hdir)) == NULL) {
+        if (verbose && errno != ENOENT)
+           printf(_("Warning: could not open holding dir %s: %s\n"),
+                  hdir, strerror(errno));
+        return;
+    }
+
+    if (verbose)
+        printf(_("Scanning %s...\n"), hdir);
+
+    while ((workdir = readdir(dir)) != NULL) {
+        if (is_dot_or_dotdot(workdir->d_name))
+            continue;
+
+        hfile = newvstralloc(hfile,
+                     hdir, "/", workdir->d_name,
+                     NULL);
+
+        /* filter out various undesirables */
+        if (is_emptyfile(hfile))
+            continue;
+
+        if (is_dir(hfile)) {
+            if (verbose)
+                printf(_("%s: ignoring directory\n"), hfile);
+            continue;
+        }
+
+        if (!(dumpf_ok=holding_file_get_dumpfile(hfile, &dumpf)) ||
+            dumpf.type != F_DUMPFILE) {
+            if (dumpf_ok && dumpf.type == F_CONT_DUMPFILE)
+                continue; /* silently skip expected file */
+            if (verbose)
+                printf(_("%s: not a dumpfile\n"), hfile);
+            continue;
+        }
+
+	if (dumpf.dumplevel < 0 || dumpf.dumplevel > 9) {
+            if (verbose)
+                printf(_("%s: ignoring file with bogus dump level %d.\n"),
+                       hfile, dumpf.dumplevel);
+	    continue;
+	}
+
+        /* found a holding file -- keep it */
+        if (fullpaths)
+            rv = insert_sort_sl(rv, hfile);
+        else
+            rv = insert_sort_sl(rv, workdir->d_name);
+    }
+
+    if (hfile) amfree(hfile);
+}
+
+sl_t *
+holding_get_files(
+    char *hdir,
+    int fullpaths)
+{
+    sl_t *hdirs;
+    sle_t *e;
+    sl_t *rv;
+
+    rv = new_sl();
+    if (!rv) {
+        return NULL;
+    }
+
+    /* call _per_dir for the hdir we were given, or for all
+     * hdir if we were given NULL */
+    if (hdir) {
+        holding_get_files_per_dir(hdir, fullpaths, rv);
+    } else {
+        hdirs = holding_get_directories(NULL, 1);
+        for (e = hdirs->first; e != NULL; e = e->next) {
+            holding_get_files_per_dir(e->name, fullpaths, rv);
+        }
+    }
+
+    return rv;
+}
+
+sl_t *
+holding_get_files_for_flush(
+    sl_t *dateargs,
+    int interactive)
+{
+    sl_t *date_list;
+    sl_t *file_list;
+    sl_t *result_list;
+    sle_t *datearg;
+    sle_t *date, *next_date;
+    sle_t *file_elt;
+    int date_matches;
+    disk_t *dp;
+    char *host;
+    char *disk;
+    char *datestamp;
+    filetype_t filetype;
+
+    /* make date_list the intersection of available holding directories and
+     * the dateargs parameter.  */
+    if (dateargs) {
+        int ok;
+
+        date_list = pick_all_datestamp(verbose);
+        for (date = date_list->first; date != NULL;) {
+            next_date = date->next;
+            ok = 0;
+            for(datearg=dateargs->first; datearg != NULL && ok==0;
+                datearg = datearg->next) {
+                ok = match_datestamp(datearg->name, date->name);
+            }
+            if(ok == 0) { /* remove dir */
+                remove_sl(date_list, date);
+            }
+            date = next_date;
+        }
+    }
+    else {
+        /* no date args were provided, so use everything */
+        if (interactive)
+            date_list = pick_datestamp(verbose);
+        else
+            date_list = pick_all_datestamp(verbose);
+    }
+
+    result_list = new_sl();
+    if (!result_list) {
+        return NULL;
+    }
+
+    /* loop over *all* files, checking each one */
+    file_list = holding_get_files(NULL, 1);
+    for (file_elt = file_list->first; file_elt != NULL; file_elt = file_elt->next) {
+        /* get info on that file */
+        filetype = holding_file_read_header(file_elt->name, &host, &disk, NULL, &datestamp);
+        if (filetype != F_DUMPFILE)
+            continue;
+
+        /* loop over dates, until we find a match */
+        date_matches = 0;
+        for (date = date_list->first; date !=NULL; date = date->next) {
+            if (strcmp(datestamp, date->name) == 0) {
+                date_matches = 1;
+                break;
+            }
+        }
+        if (!date_matches)
+            continue;
+
+        /* check that the hostname and disk are in the disklist */
+        dp = lookup_disk(host, disk);
+        if (dp == NULL) {
+            if (verbose)
+	        printf(_("%s: disk %s:%s not in database, skipping it."),
+                        file_elt->name, host, disk);
+            continue;
+        }
+
+        /* passed all tests -- we'll flush this file */
+        result_list = insert_sort_sl(result_list, file_elt->name);
+    }
+
+    if (date_list) free_sl(date_list);
+    if (file_list) free_sl(file_list);
+
+    return result_list;
+}
+
+sl_t *
+holding_get_file_chunks(char *hfile)
+{
+    dumpfile_t file;
+    char *filename;
+    sl_t *rv = new_sl();
+
+    if (!rv) {
+        return NULL;
+    }
+
+    /* Loop through all cont_filenames (subsequent chunks) */
+    filename = stralloc(hfile);
+    while (filename != NULL && filename[0] != '\0') {
+        /* get the header to look for cont_filename */
+        if (!holding_file_get_dumpfile(filename, &file)) {
+            if (verbose)
+                printf(_("holding_get_file_chunks: open of %s failed.\n"), filename);
+            amfree(filename);
+            return rv;
+        }
+
+        /* add the file to the results */
+        insert_sort_sl(rv, filename);
+
+        /* and go on to the next chunk */
+        filename = newstralloc(filename, file.cont_filename);
+    }
+    amfree(filename);
+    return rv;
+}
+
+off_t
+holding_file_size(
+    char *hfile,
+    int strip_headers)
+{
+    dumpfile_t file;
+    char *filename;
+    off_t size = (off_t)0;
+    struct stat finfo;
+
+    /* (note: we don't use holding_get_file_chunks here because that would
+     * entail opening each file twice) */
+
+    /* Loop through all cont_filenames (subsequent chunks) */
+    filename = stralloc(hfile);
+    while (filename != NULL && filename[0] != '\0') {
+        /* stat the file for its size */
+        if (stat(filename, &finfo) == -1) {
+            if (verbose)
+                printf(_("stat %s: %s\n"), filename, strerror(errno));
+            return (off_t)-1;
+        }
+        size += (finfo.st_size+(off_t)1023)/(off_t)1024;
+        if (strip_headers)
+            size -= (off_t)(DISK_BLOCK_BYTES / 1024);
+
+        /* get the header to look for cont_filename */
+        if (!holding_file_get_dumpfile(filename, &file)) {
+            if (verbose)
+                printf(_("holding_file_size: open of %s failed.\n"), filename);
+            amfree(filename);
+            return (off_t)-1;
+        }
+
+        /* on to the next chunk */
+        filename = newstralloc(filename, file.cont_filename);
+    }
+    amfree(filename);
+    return size;
+}
+
+
+int
+holding_file_unlink(
+    char *hfile)
+{
+    sl_t *chunklist;
+    sle_t *chunk;
+
+    chunklist = holding_get_file_chunks(hfile);
+    if (!chunklist)
+        return 0;
+
+    for (chunk = chunklist->first; chunk != NULL; chunk = chunk->next) {
+        if (unlink(chunk->name)<0) {
+            if (verbose)
+                printf(_("holding_file_unlink: could not unlink %s: %s\n"),
+                    chunk->name, strerror(errno));
+            return 0;
+        }
+    }
+
+    return 1;
+}
+
+filetype_t
+holding_file_read_header( 
+    char *	fname,
+    char **	hostname,
+    char **	diskname,
+    int *	level,
+    char ** datestamp)
+{
+    dumpfile_t file;
+
+    if (hostname) *hostname = NULL;
+    if (diskname) *diskname = NULL;
+    if (datestamp) *datestamp = NULL;
+
+    if (!holding_file_get_dumpfile(fname, &file)) {
+        return F_UNKNOWN;
+    }
+
+    if(file.type != F_DUMPFILE && file.type != F_CONT_DUMPFILE) {
+        return file.type;
+    }
+
+    if (hostname) *hostname = stralloc(file.name);
+    if (diskname) *diskname = stralloc(file.disk);
+    if (level) *level = file.dumplevel;
+    if (datestamp) *datestamp = stralloc(file.datestamp);
+
+    return file.type;
+}
+
+
+int
+holding_file_get_dumpfile(
+    char *	fname,
+    dumpfile_t *file)
+{
+    char buffer[DISK_BLOCK_BYTES];
+    int fd;
+
+    memset(buffer, 0, sizeof(buffer));
+
+    fh_init(file);
+    file->type = F_UNKNOWN;
+    if((fd = open(fname, O_RDONLY)) == -1)
+        return 0;
+
+    if(fullread(fd, buffer, SIZEOF(buffer)) != (ssize_t)sizeof(buffer)) {
+        aclose(fd);
+        return 0;
+    }
+    aclose(fd);
+
+    parse_file_header(buffer, file, SIZEOF(buffer));
+    return 1;
+}
+
+/*
+ * Interactive functions 
+ */
 
 sl_t *
 pick_all_datestamp(
-    int		verbose)
+    int	v)
 {
-    sl_t *holding_list = NULL;
-    holdingdisk_t *hdisk;
+    int old_verbose = holding_set_verbosity(v);
+    sl_t *rv;
 
-    holding_list = new_sl();
-    for(hdisk = getconf_holdingdisks(); hdisk != NULL; hdisk = hdisk->next)
-	holding_list = scan_holdingdisk(holding_list, holdingdisk_get_diskdir(hdisk), verbose);
+    /* get all holding directories, without full paths -- this
+     * will be datestamps only */
+    rv = holding_get_directories(NULL, 0);
 
-    return holding_list;
+    holding_set_verbosity(old_verbose);
+    return rv;
 }
-
 
 sl_t *
 pick_datestamp(
@@ -364,14 +617,14 @@ pick_datestamp(
 	}
 
 	while(1) {
-	    puts("\nMultiple Amanda directories, please pick one by letter:");
+	    puts(_("\nMultiple Amanda directories, please pick one by letter:"));
 	    for(dir = holding_list->first, max_char = 'A';
 		dir != NULL && max_char <= 'Z';
 		dir = dir->next, max_char++) {
 		printf("  %c. %s\n", max_char, dir->name);
 	    }
 	    max_char--;
-	    printf("Select directories to flush [A..%c]: [ALL] ", max_char);
+	    printf(_("Select directories to flush [A..%c]: [ALL] "), max_char);
 	    fflush(stdout); fflush(stderr);
 	    amfree(answer);
 	    if ((answer = agets(stdin)) == NULL) {
@@ -414,144 +667,9 @@ pick_datestamp(
     return holding_list;
 }
 
-
-filetype_t
-get_amanda_names( char *	fname,
-    char **	hostname,
-    char **	diskname,
-    int *	level)
-{
-    dumpfile_t file;
-    char buffer[DISK_BLOCK_BYTES];
-    int fd;
-    *hostname = *diskname = NULL;
-
-    memset(buffer, 0, sizeof(buffer));
-    if((fd = open(fname, O_RDONLY)) == -1)
-	return F_UNKNOWN;
-
-    if(fullread(fd, buffer, SIZEOF(buffer)) != (ssize_t)sizeof(buffer)) {
-	aclose(fd);
-	return F_UNKNOWN;
-    }
-    aclose(fd);
-
-    parse_file_header(buffer, &file, SIZEOF(buffer));
-    if(file.type != F_DUMPFILE && file.type != F_CONT_DUMPFILE) {
-	return file.type;
-    }
-    *hostname = stralloc(file.name);
-    *diskname = stralloc(file.disk);
-    *level = file.dumplevel;
-
-    return file.type;
-}
-
-
-void
-get_dumpfile(
-    char *	fname,
-    dumpfile_t *file)
-{
-    char buffer[DISK_BLOCK_BYTES];
-    int fd;
-
-    memset(buffer, 0, sizeof(buffer));
-
-    fh_init(file);
-    file->type = F_UNKNOWN;
-    if((fd = open(fname, O_RDONLY)) == -1)
-	return;
-
-    if(fullread(fd, buffer, SIZEOF(buffer)) != (ssize_t)sizeof(buffer)) {
-	aclose(fd);
-	return;
-    }
-    aclose(fd);
-
-    parse_file_header(buffer, file, SIZEOF(buffer));
-    return;
-}
-
-
-off_t
-size_holding_files(
-    char *	holding_file,
-    int		strip_headers)
-{
-    int fd;
-    ssize_t buflen;
-    char buffer[DISK_BLOCK_BYTES];
-    dumpfile_t file;
-    char *filename;
-    off_t size = (off_t)0;
-    struct stat finfo;
-
-    memset(buffer, 0, sizeof(buffer));
-    filename = stralloc(holding_file);
-    while(filename != NULL && filename[0] != '\0') {
-	if((fd = open(filename,O_RDONLY)) == -1) {
-	    fprintf(stderr,"size_holding_files: open of %s failed: %s\n",filename,strerror(errno));
-	    amfree(filename);
-	    return (off_t)-1;
-	}
-	if ((buflen = fullread(fd, buffer, SIZEOF(buffer))) > 0) {
-		parse_file_header(buffer, &file, (size_t)buflen);
-	}
-	close(fd);
-	if(stat(filename, &finfo) == -1) {
-	    printf("stat %s: %s\n", filename, strerror(errno));
-	    finfo.st_size = (off_t)0;
-	}
-	size += (finfo.st_size+(off_t)1023)/(off_t)1024;
-	if(strip_headers)
-	    size -= (off_t)(DISK_BLOCK_BYTES / 1024);
-	if(buflen > 0) {
-	    filename = newstralloc(filename, file.cont_filename);
-	}
-	else {
-	    amfree(filename);
-	}
-    }
-    amfree(filename);
-    return size;
-}
-
-
-int
-unlink_holding_files(
-    char *	holding_file)
-{
-    int fd;
-    ssize_t buflen;
-    char buffer[DISK_BLOCK_BYTES];
-    dumpfile_t file;
-    char *filename;
-
-    memset(buffer, 0, sizeof(buffer));
-    filename = stralloc(holding_file);
-    while(filename != NULL && filename[0] != '\0') {
-	if((fd = open(filename,O_RDONLY)) == -1) {
-	    fprintf(stderr,"unlink_holding_files: open of %s failed: %s\n",filename,strerror(errno));
-	    amfree(filename);
-	    return 0;
-	}
-	if ((buflen = fullread(fd, buffer, SIZEOF(buffer))) > 0) {
-	    parse_file_header(buffer, &file, (size_t)buflen);
-	}
-	close(fd);
-	unlink(filename);
-	if(buflen > 0) {
-	    filename = newstralloc(filename, file.cont_filename);
-	}
-	else {
-	    amfree(filename);
-	}
-    }
-    amfree(filename);
-    return 1;
-}
-
+/*
+ * Application support
+ */
 
 int
 rename_tmp_holding(
@@ -570,7 +688,7 @@ rename_tmp_holding(
     while(filename != NULL && filename[0] != '\0') {
 	filename_tmp = newvstralloc(filename_tmp, filename, ".tmp", NULL);
 	if((fd = open(filename_tmp,O_RDONLY)) == -1) {
-	    fprintf(stderr,"rename_tmp_holding: open of %s failed: %s\n",filename_tmp,strerror(errno));
+	    fprintf(stderr,_("rename_tmp_holding: open of %s failed: %s\n"),filename_tmp,strerror(errno));
 	    amfree(filename);
 	    amfree(filename_tmp);
 	    return 0;
@@ -580,12 +698,12 @@ rename_tmp_holding(
 
 	if(rename(filename_tmp, filename) != 0) {
 	    fprintf(stderr,
-		    "rename_tmp_holding: could not rename \"%s\" to \"%s\": %s",
+		    _("rename_tmp_holding: could not rename \"%s\" to \"%s\": %s"),
 		    filename_tmp, filename, strerror(errno));
 	}
 
 	if (buflen <= 0) {
-	    fprintf(stderr,"rename_tmp_holding: %s: empty file?\n", filename);
+	    fprintf(stderr,_("rename_tmp_holding: %s: empty file?\n"), filename);
 	    amfree(filename);
 	    amfree(filename_tmp);
 	    return 0;
@@ -593,7 +711,7 @@ rename_tmp_holding(
 	parse_file_header(buffer, &file, (size_t)buflen);
 	if(complete == 0 ) {
 	    if((fd = open(filename, O_RDWR)) == -1) {
-		fprintf(stderr, "rename_tmp_holdingX: open of %s failed: %s\n",
+		fprintf(stderr, _("rename_tmp_holdingX: open of %s failed: %s\n"),
 			filename, strerror(errno));
 		amfree(filename);
 		amfree(filename_tmp);
@@ -612,7 +730,6 @@ rename_tmp_holding(
     return 1;
 }
 
-
 void
 cleanup_holdingdisk(
     char *	diskdir,
@@ -623,7 +740,7 @@ cleanup_holdingdisk(
 
     if((topdir = opendir(diskdir)) == NULL) {
 	if(verbose && errno != ENOENT)
-	    printf("Warning: could not open holding dir %s: %s\n",
+	    printf(_("Warning: could not open holding dir %s: %s\n"),
 		   diskdir, strerror(errno));
 	return;
    }
@@ -631,9 +748,9 @@ cleanup_holdingdisk(
     /* find all directories of the right format  */
 
     if(verbose)
-	printf("Scanning %s...\n", diskdir);
+	printf(_("Scanning %s...\n"), diskdir);
     if ((chdir(diskdir)) == -1) {
-	log_add(L_INFO, "%s: could not chdir: %s",
+	log_add(L_INFO, _("%s: could not chdir: %s"),
 		    diskdir, strerror(errno));
     }
     while((workdir = readdir(topdir)) != NULL) {
@@ -646,15 +763,15 @@ cleanup_holdingdisk(
 	    printf("  %s: ", workdir->d_name);
 	if(!is_dir(workdir->d_name)) {
 	    if(verbose)
-	        puts("skipping cruft file, perhaps you should delete it.");
+	        puts(_("skipping cruft file, perhaps you should delete it."));
 	}
 	else if(!is_datestr(workdir->d_name)) {
 	    if(verbose && (strcmp(workdir->d_name, "lost+found")!=0) )
-	        puts("skipping cruft directory, perhaps you should delete it.");
+	        puts(_("skipping cruft directory, perhaps you should delete it."));
 	}
 	else if(rmdir(workdir->d_name) == 0) {
 	    if(verbose)
-	        puts("deleted empty Amanda directory.");
+	        puts(_("deleted empty Amanda directory."));
  	}
      }
      closedir(topdir);
@@ -669,28 +786,28 @@ mkholdingdir(
     int success = 1;
 
     if (mkpdir(diskdir, 0770, (uid_t)-1, (gid_t)-1) != 0 && errno != EEXIST) {
-	log_add(L_WARNING, "WARNING: could not create parents of %s: %s",
+	log_add(L_WARNING, _("WARNING: could not create parents of %s: %s"),
 		diskdir, strerror(errno));
 	success = 0;
     }
     else if (mkdir(diskdir, 0770) != 0 && errno != EEXIST) {
-	log_add(L_WARNING, "WARNING: could not create %s: %s",
+	log_add(L_WARNING, _("WARNING: could not create %s: %s"),
 		diskdir, strerror(errno));
 	success = 0;
     }
     else if (stat(diskdir, &stat_hdp) == -1) {
-	log_add(L_WARNING, "WARNING: could not stat %s: %s",
+	log_add(L_WARNING, _("WARNING: could not stat %s: %s"),
 		diskdir, strerror(errno));
 	success = 0;
     }
     else {
 	if (!S_ISDIR((stat_hdp.st_mode))) {
-	    log_add(L_WARNING, "WARNING: %s is not a directory",
+	    log_add(L_WARNING, _("WARNING: %s is not a directory"),
 		    diskdir);
 	    success = 0;
 	}
 	else if (access(diskdir,W_OK) != 0) {
-	    log_add(L_WARNING, "WARNING: directory %s is not writable",
+	    log_add(L_WARNING, _("WARNING: directory %s is not writable"),
 		    diskdir);
 	    success = 0;
 	}

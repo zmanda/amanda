@@ -30,6 +30,7 @@
  * controlling process for the Amanda backup system
  */
 #include "amanda.h"
+#include "cmdline.h"
 #include "conffile.h"
 #include "diskfile.h"
 #include "tapefile.h"
@@ -38,6 +39,7 @@
 #include "version.h"
 #include "holding.h"
 #include "find.h"
+#include "util.h"
 
 disklist_t diskq;
 
@@ -60,6 +62,7 @@ void info_one(disk_t *dp);
 void due(int argc, char **argv);
 void due_one(disk_t *dp);
 void find(int argc, char **argv);
+void holding(int argc, char **argv);
 void delete(int argc, char **argv);
 void delete_one(disk_t *dp);
 void balance(int argc, char **argv);
@@ -108,6 +111,8 @@ static const struct {
 	" <tapelabel> ...\t # never re-use this tape." },
     { "find", find,
 	" [<hostname> [<disks>]* ]*\t # Show which tapes these dumps are on." },
+    { "holding", holding,
+	" {list [ -l ] |delete} [ <hostname> [ <disk> [ <datestamp> [ .. ] ] ] ]+\t # Show or delete holding disk contents." },
     { "delete", delete,
 	" [<hostname> [<disks>]* ]+ # Delete from database." },
     { "info", info,
@@ -1167,6 +1172,256 @@ find(
     free_find_result(&output_find);
 
     amfree(sort_order);
+}
+
+
+/* ------------------------ */
+
+static sl_t *
+get_file_list(
+    int argc,
+    char **argv,
+    int allow_empty)
+{
+    sl_t * file_list = NULL;
+    dumpspec_list_t * dumplist;
+
+    if (argc > 0) {
+        dumplist = cmdline_parse_dumpspecs(argc, argv);
+        if (!dumplist) {
+            fprintf(stderr, _("Could not get dump list\n"));
+            return NULL;
+        }
+
+        file_list = cmdline_match_holding(dumplist);
+        dumpspec_free_list(dumplist);
+    } else if (allow_empty) {
+        /* just list all of them */
+        file_list = holding_get_files(NULL, 1);
+    }
+
+    return file_list;
+}
+
+static int
+remove_holding_file_from_catalog(
+    char *filename)
+{
+    static int warnings_printed; /* only print once per invocation */
+    char *host;
+    char *disk;
+    int level;
+    char *datestamp;
+    info_t info;
+    int matching_hist_idx = -1;
+    history_t matching_hist; /* will be a copy */
+    int nhist;
+    int i;
+
+    if (!holding_file_read_header(filename, &host, &disk, &level, &datestamp)) {
+        printf(_("Could not read holding file %s\n"), filename);
+        return 0;
+    }
+
+    if (get_info(host, disk, &info) == -1) {
+	    printf(_("WARNING: No curinfo record for %s:%s\n"), host, disk);
+	    return 1; /* not an error */
+    }
+
+    /* Begin by trying to find the history element matching this dump.
+     * The datestamp on the dump is for the entire run of amdump, while the
+     * 'date' in the history element of 'info' is the time the dump itself
+     * began.  A matching history element, then, is the earliest element
+     * with a 'date' equal to or later than the date of the dumpfile. 
+     *
+     * We compare using formatted datestamps; even using seconds since epoch,
+     * we would still face timezone issues, and have to do a reverse (timezone
+     * to gmt) translation.
+     */
+
+    /* get to the end of the history list and search backward */
+    for (nhist = 0; info.history[nhist].level > -1; nhist++) /* empty loop */;
+    for (i = nhist-1; i > -1; i--) {
+        char *info_datestamp = construct_timestamp(&info.history[i].date);
+        int order = strcmp(datestamp, info_datestamp);
+        amfree(info_datestamp);
+
+        if (order <= 0) {
+            /* only a match if the levels are equal */
+            if (info.history[i].level == level) {
+                matching_hist_idx = i;
+                matching_hist = info.history[matching_hist_idx];
+            }
+            break;
+        }
+    }
+
+    if (matching_hist_idx == -1) {
+        printf(_("WARNING: No dump matching %s found in curinfo.\n"), filename);
+        return 1; /* not an error */
+    }
+
+    /* Remove the history element itself before doing the stats */
+    for (i = matching_hist_idx; i <= NB_HISTORY; i++) {
+        info.history[i] = info.history[i+1];
+    }
+    info.history[NB_HISTORY].level = -1;
+
+    /* Remove stats for that history element, if necessary.  Doing so
+     * will result in an inconsistent set of backups, so we warn the
+     * user and adjust last_level to make the next dump get us a 
+     * consistent picture. */
+    if (matching_hist.date == info.inf[matching_hist.level].date) {
+        /* search for an earlier dump at this level */
+        for (i = matching_hist_idx; info.history[i].level > -1; i++) {
+            if (info.history[i].level == matching_hist.level)
+                break;
+        }
+
+        if (info.history[i].level < 0) {
+            /* not found => zero it out */
+            info.inf[matching_hist.level].date = (time_t)-1; /* flag as not set */
+            info.inf[matching_hist.level].label[0] = '\0';
+        } else {
+            /* found => reconstruct stats as best we can */
+            info.inf[matching_hist.level].size = info.history[i].size;
+            info.inf[matching_hist.level].csize = info.history[i].csize;
+            info.inf[matching_hist.level].secs = info.history[i].secs;
+            info.inf[matching_hist.level].date = info.history[i].date;
+            info.inf[matching_hist.level].filenum = 0; /* we don't know */
+            info.inf[matching_hist.level].label[0] = '\0'; /* we don't know */
+        }
+
+        /* set last_level to the level we just deleted, and set command
+         * appropriately to make sure planner does a new dump at this level
+         * or lower */
+        info.last_level = matching_hist.level;
+        if (info.last_level == 0) {
+            printf(_("WARNING: Deleting the most recent full dump; forcing a full dump at next run.\n"));
+            SET(info.command, FORCE_FULL);
+        } else {
+            printf(_("WARNING: Deleting the most recent level %d dump; forcing a level %d dump or \nWARNING: lower at next run.\n"),
+                info.last_level, info.last_level);
+            SET(info.command, FORCE_NO_BUMP);
+        }
+
+        /* Search for and display any subsequent runs that depended on this one */
+        warnings_printed = 0;
+        for (i = matching_hist_idx-1; i >= 0; i--) {
+            char *datestamp;
+            if (info.history[i].level <= matching_hist.level) break;
+
+            datestamp = construct_timestamp(&info.history[i].date);
+            printf(_("WARNING: Level %d dump made %s can no longer be accurately restored.\n"), 
+                info.history[i].level, datestamp);
+            amfree(datestamp);
+
+            warnings_printed = 1;
+        }
+        if (warnings_printed)
+            printf(_("WARNING: (note, dates shown above are for dumps, and may be later than the\nWARNING: corresponding run date)\n"));
+    }
+
+    /* recalculate consecutive_runs based on the history: find the first run
+     * at this level, and then count the consecutive runs at that level. This
+     * number may be zero (if we just deleted the last run at this level) */
+    info.consecutive_runs = 0;
+    for (i = 0; info.history[i].level >= 0; i++) {
+        if (info.history[i].level == info.last_level) break;
+    }
+    while (info.history[i+info.consecutive_runs].level == info.last_level)
+        info.consecutive_runs++;
+
+    /* this function doesn't touch the performance stats */
+
+    /* write out the changes */
+    if (put_info(host, disk, &info) == -1) {
+	    printf(_("Could not write curinfo record for %s:%s\n"), host, disk);
+	    return 0;
+    }
+
+    return 1;
+}
+void
+holding(
+    int		argc,
+    char **	argv)
+{
+    sl_t *file_list;
+    sle_t *h;
+    enum { HOLDING_USAGE, HOLDING_LIST, HOLDING_DELETE } action = HOLDING_USAGE;
+    char *host;
+    char *disk;
+    char *datestamp;
+    int level;
+    int long_list = 0;
+
+    if (argc < 4)
+        action = HOLDING_USAGE;
+    else if (strcmp(argv[3], "list") == 0 && argc >= 4)
+        action = HOLDING_LIST;
+    else if (strcmp(argv[3], "delete") == 0 && argc > 4)
+        action = HOLDING_DELETE;
+
+    holding_set_verbosity(1);
+
+    switch (action) {
+        case HOLDING_USAGE:
+            fprintf(stderr,
+                    _("%s: expecting \"holding list [-l]\" or \"holding delete <host> [ .. ]\"\n"),
+                    get_pname());
+            usage();
+            return;
+
+        case HOLDING_LIST:
+            argc -= 4; argv += 4;
+            if (argc && strcmp(argv[0], "-l") == 0) {
+                argc--; argv++;
+                long_list = 1;
+            }
+
+            file_list = get_file_list(argc, argv, 1);
+            if (long_list) {
+                printf("%-10s %-2s %s\n", "size (kB)", "lv", "dump specification");
+            }
+            for (h = file_list->first; h != NULL; h = h->next) {
+                char *dumpstr;
+                if (!holding_file_read_header(h->name, &host, &disk, &level, &datestamp)) {
+                    fprintf(stderr, _("Error reading %s\n"), h->name);
+                    continue;
+                }
+
+                dumpstr = cmdline_format_dumpspec_components(host, disk, datestamp);
+                if (long_list) {
+                    printf("%-10"OFF_T_RFMT" %-2d %s\n", 
+                        (OFF_T_FMT_TYPE)holding_file_size(h->name, 0), level, dumpstr);
+                } else {
+                    printf("%s\n", dumpstr);
+                }
+                amfree(dumpstr);
+            }
+            free_sl(file_list);
+            break;
+            
+        case HOLDING_DELETE:
+            argc -= 4; argv += 4;
+
+            file_list = get_file_list(argc, argv, 0);
+            for (h = file_list->first; h != NULL; h = h->next) {
+                fprintf(stderr, _("Deleting '%s'\n"), h->name);
+                /* remove it from the catalog */
+                if (!remove_holding_file_from_catalog(h->name))
+                    exit(1);
+
+                /* unlink it */
+                if (!holding_file_unlink(h->name)) {
+                    /* holding_file_unlink printed an error message */
+                    exit(1);
+                }
+            }
+            free_sl(file_list);
+            break;
+    }
 }
 
 

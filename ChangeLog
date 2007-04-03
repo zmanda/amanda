@@ -1,3 +1,15 @@
+2007-04-03  Jean-Louis Martineau <martineau@zmanda.com>
+	Merge from zmanda ext.
+        * man/xml-source/amadmin.8.xml man/xml-source/amanda.8.xml
+	  server-src/amflush.c server-src/cmdline.c server-src/cmdline.h
+	  server-src/holding.c server-src/holding.h server-src/driver.c
+	  server-src/planner.c server-src/amadmin.c server-src/taper.c
+	  server-src/amcleanupdisk.c server-src/find.c
+	  server-src/Makefile.am: revise holding-disk management, add new
+	  'amadmin' subcommand to list and delete dumps from the holding
+	  disk.
+	* server-src/amadmin.c: Add 'amadmin XX holding list -l'
+
 2007-04-02  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/bsdtcp-security.c common-src/bsd-security.c 
 	  common-src/security-util.c common-src/bsdudp-security.c:
@@ -6,7 +18,7 @@
 	  common-src/security-util.c: bugfix for hosts with multiple addresses,
 	  improved cmp_sockaddr, remove redundant checks
 	* server-src/taper.c: add log message when new tapes are auto-labeled
-	* common-src/security-util.c: patch to avoid spurious compiler warnings 
+	* common-src/security-util.c: patch to avoid spurious compiler warnings
 	  noticed on FC3
 
 2007-03-30  Dustin J. Mitchell <dustin@zmanda.com>

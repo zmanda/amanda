@@ -29,7 +29,7 @@ sbin_SCRIPTS =		amcheckdb	amcleanup	amdump		\
 			amcrypt-ossl-asym
 
 libamserver_la_SOURCES=	amindex.c	changer.c			\
-			diskfile.c	driverio.c	\
+			diskfile.c	driverio.c	cmdline.c  \
 			holding.c	infofile.c	logfile.c	\
 			tapefile.c	find.c		server_util.c   \
                         taperscan.c
@@ -90,7 +90,7 @@ noinst_HEADERS = 	amindex.h	changer.h			\
 			diskfile.h	driverio.h	\
 			holding.h	infofile.h	logfile.h	\
 			tapefile.h	find.h		server_util.h	\
-			taperscan.h
+			taperscan.h cmdline.h
 
 install-exec-hook:
 	@list="$(sbin_PROGRAMS) $(sbin_SCRIPTS)"; \

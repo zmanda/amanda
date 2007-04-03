@@ -182,7 +182,7 @@ check_holdingdisk(
 
 	amfree(hostname);
 	amfree(diskname);
-	filetype = get_amanda_names(tmpname, &hostname, &diskname, &level);
+	filetype = holding_file_read_header(tmpname, &hostname, &diskname, &level, NULL);
 	amfree(tmpname);
 	if(filetype != F_DUMPFILE) {
 	    continue;

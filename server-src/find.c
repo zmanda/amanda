@@ -288,6 +288,7 @@ search_holding_disk(
     char buf[DISK_BLOCK_BYTES];
     dumpfile_t file;
 
+    /* TODO: move this to holding.c */
     holding_list = pick_all_datestamp(1);
 
     for(hdisk = getconf_holdingdisks(); hdisk != NULL; hdisk = hdisk->next) {
@@ -311,7 +312,7 @@ search_holding_disk(
 		}
 		amfree(hostname);
 		amfree(diskname);
-		if(get_amanda_names(destname, &hostname, &diskname, &level) != F_DUMPFILE) {
+		if(holding_file_read_header(destname, &hostname, &diskname, &level, NULL) != F_DUMPFILE) {
 		    continue;
 		}
 		if(level < 0 || level > 9)

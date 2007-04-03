@@ -267,7 +267,7 @@ main(
 	exit(1);
     }
 
-    holding_list = get_flush(datestamp_list, NULL, 1, 0);
+    holding_list = holding_get_files_for_flush(datestamp_list, 1);
     if(holding_list->first == NULL) {
 	printf("Could not find any valid dump image, check directory.\n");
 	exit(1);
@@ -331,12 +331,12 @@ main(
     fprintf(driver_stream, "DATE %s\n", amflush_timestamp);
     for(holding_file=holding_list->first; holding_file != NULL;
 				   holding_file = holding_file->next) {
-	get_dumpfile(holding_file->name, &file);
+	holding_file_get_dumpfile(holding_file->name, &file);
 
-	if (size_holding_files(holding_file->name, 1) <= 0) {
+	if (holding_file_size(holding_file->name, 1) <= 0) {
 	    log_add(L_INFO, "%s: removing file with no data.",
 		    holding_file->name);
-	    unlink_holding_files(holding_file->name);
+	    holding_file_unlink(holding_file->name);
 	    continue;
 	}
 

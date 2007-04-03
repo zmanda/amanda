@@ -413,15 +413,15 @@ int main(int argc, char **argv)
 	dumpfile_t file;
 	sl_t *holding_list;
 	sle_t *holding_file;
-	holding_list = get_flush(NULL, NULL, 0, 0);
+	holding_list = holding_get_files_for_flush(NULL, 0);
 	for(holding_file=holding_list->first; holding_file != NULL;
 				       holding_file = holding_file->next) {
-	    get_dumpfile(holding_file->name, &file);
+	    holding_file_get_dumpfile(holding_file->name, &file);
 
-	    if (size_holding_files(holding_file->name, 1) <= 0) {
+	    if (holding_file_size(holding_file->name, 1) <= 0) {
 		log_add(L_INFO, "%s: removing file with no data.",
 			holding_file->name);
-		unlink_holding_files(holding_file->name);
+		holding_file_unlink(holding_file->name);
 		continue;
 	    }
 	    

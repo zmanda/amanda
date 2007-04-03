@@ -1412,7 +1412,7 @@ dumper_result(
 	dummy += h[i]->used;
     }
 
-    size = size_holding_files(sched(dp)->destname, 0);
+    size = holding_file_size(sched(dp)->destname, 0);
     h[activehd]->used = size - dummy;
     holdalloc(h[activehd]->disk)->allocated_dumpers--;
     adjust_diskspace(dp, DONE);
@@ -1870,7 +1870,7 @@ read_flush(void)
 	skip_non_whitespace(s, ch);
 	s[-1] = '\0';
 
-	get_dumpfile(destname, &file);
+	holding_file_get_dumpfile(destname, &file);
 	if( file.type != F_DUMPFILE) {
 	    if( file.type != F_CONT_DUMPFILE )
 		log_add(L_INFO, "%s: ignoring cruft file.", destname);
@@ -1902,9 +1902,9 @@ read_flush(void)
 	    continue;
 	}
 
-	if (size_holding_files(destname,1) <= 0) {
+	if (holding_file_size(destname,1) <= 0) {
 	    log_add(L_INFO, "%s: removing file with no data.", destname);
-	    unlink_holding_files(destname);
+	    holding_file_unlink(destname);
 	    continue;
 	}
 
@@ -1936,7 +1936,7 @@ read_flush(void)
 	sp->priority = 0;
 	sp->degr_level = -1;
 	sp->attempted = 0;
-	sp->act_size = size_holding_files(destname, 0);
+	sp->act_size = holding_file_size(destname, 0);
 	sp->holdp = build_diskspace(destname);
 	if(sp->holdp == NULL) continue;
 	sp->dumper = NULL;
@@ -2572,8 +2572,8 @@ delete_diskspace(
 	holdalloc(holdp[i]->disk)->allocated_space -= holdp[i]->used;
     }
 
-    unlink_holding_files(holdp[0]->destname);	/* no need for the entire list,
-						 * because unlink_holding_files
+    holding_file_unlink(holdp[0]->destname);	/* no need for the entire list,
+						 * because holding_file_unlink
 						 * will walk through all files
 						 * using cont_filename */
     free_assignedhd(sched(diskp)->holdp);
