@@ -1,4 +1,9 @@
 2007-04-03  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/bsd-security.c, common-src/bsdtcp-security.c,
+	  common-src/bsdudp-security.c,
+	  common-src/security-util.c: Fix auth_debug and dbprintf usage.
+
+2007-04-03  Jean-Louis Martineau <martineau@zmanda.com>
 	Merge from zmanda ext.
         * man/xml-source/amadmin.8.xml man/xml-source/amanda.8.xml
 	  server-src/amflush.c server-src/cmdline.c server-src/cmdline.h

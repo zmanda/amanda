@@ -157,7 +157,7 @@ bsdudp_connect(
         return;
     }
     if (res->ai_canonname == NULL) {
-	dbprintf(_("getaddrinfo(%s) did not return a canonical name\n"), hostname);
+	dbprintf(("getaddrinfo(%s) did not return a canonical name\n", hostname));
 	security_seterror(&bh->sech,
  	        _("getaddrinfo(%s) did not return a canonical name\n"), hostname);
 	(*fn)(arg, &bh->sech, S_ERROR);
