@@ -1,4 +1,13 @@
 2007-04-03  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c: Add READBLOCKSIZE tapetype config option.
+	* common-src/conffile.c(getconf_readblocksize): Function to retrieve
+	  the tapetype readblocksize or the configured maxtapeblocksize.
+	* common-src/conffile.h: Add READBLOCKSIZE tapetype config option.
+	* man/xml-source/amanda.conf.5.xml: Document it.
+	* tape-src/output-tape.c: Use getconf_readblocksize.
+	* tape-src/tapeio.c: Use getconf_readblocksize.
+
+2007-04-03  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/bsd-security.c, common-src/bsdtcp-security.c,
 	  common-src/bsdudp-security.c,
 	  common-src/security-util.c: Fix auth_debug and dbprintf usage.

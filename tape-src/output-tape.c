@@ -80,7 +80,7 @@ tape_tapefd_fsf(
     char *buffer = NULL;
     int len = 0;
 
-    buflen = MAX_TAPE_BLOCK_BYTES;
+    buflen = getconf_readblocksize() * 1024;
     buffer = alloc(buflen);
 
     while(--count >= 0) {

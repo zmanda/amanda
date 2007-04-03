@@ -173,7 +173,7 @@ typedef enum {
     /* tape type */
     /*COMMENT,*/		CONF_BLOCKSIZE,		CONF_FILE_PAD,
     CONF_LBL_TEMPL,		CONF_FILEMARK,		CONF_LENGTH,
-    CONF_SPEED,
+    CONF_SPEED,			CONF_READBLOCKSIZE,
 
     /* client conf */
     CONF_CONF,			CONF_INDEX_SERVER,	CONF_TAPE_SERVER,
@@ -323,6 +323,7 @@ typedef enum tapetype_e  {
     TAPETYPE_COMMENT,
     TAPETYPE_LBL_TEMPL,
     TAPETYPE_BLOCKSIZE,
+    TAPETYPE_READBLOCKSIZE,
     TAPETYPE_LENGTH,
     TAPETYPE_FILEMARK,
     TAPETYPE_SPEED,
@@ -341,13 +342,14 @@ typedef struct tapetype_s {
 #define tapetype_get(tapetype, field) (tapetype->field)
 #define tapetype_get_name(tapetype) tapetype->name
 #define tapetype_get_seen(tapetype) tapetype->seen
-#define tapetype_get_comment(tapetype)   get_conftype_string(&tapetype->value[TAPETYPE_COMMENT])
-#define tapetype_get_lbl_templ(tapetype) get_conftype_string(&tapetype->value[TAPETYPE_LBL_TEMPL])
-#define tapetype_get_blocksize(tapetype) get_conftype_size  (&tapetype->value[TAPETYPE_BLOCKSIZE])
-#define tapetype_get_length(tapetype)    get_conftype_am64  (&tapetype->value[TAPETYPE_LENGTH])
-#define tapetype_get_filemark(tapetype)  get_conftype_am64  (&tapetype->value[TAPETYPE_FILEMARK])
-#define tapetype_get_speed(tapetype)     get_conftype_int   (&tapetype->value[TAPETYPE_SPEED])
-#define tapetype_get_file_pad(tapetype)  get_conftype_bool  (&tapetype->value[TAPETYPE_FILE_PAD])
+#define tapetype_get_comment(tapetype)       get_conftype_string(&tapetype->value[TAPETYPE_COMMENT])
+#define tapetype_get_lbl_templ(tapetype)     get_conftype_string(&tapetype->value[TAPETYPE_LBL_TEMPL])
+#define tapetype_get_blocksize(tapetype)     get_conftype_size  (&tapetype->value[TAPETYPE_BLOCKSIZE])
+#define tapetype_get_readblocksize(tapetype) get_conftype_size  (&tapetype->value[TAPETYPE_READBLOCKSIZE])
+#define tapetype_get_length(tapetype)        get_conftype_am64  (&tapetype->value[TAPETYPE_LENGTH])
+#define tapetype_get_filemark(tapetype)      get_conftype_am64  (&tapetype->value[TAPETYPE_FILEMARK])
+#define tapetype_get_speed(tapetype)         get_conftype_int   (&tapetype->value[TAPETYPE_SPEED])
+#define tapetype_get_file_pad(tapetype)      get_conftype_bool  (&tapetype->value[TAPETYPE_FILE_PAD])
 
 /* Dump strategies */
 #define DS_SKIP		0	/* Don't do any dumps at all */
@@ -628,6 +630,7 @@ int ColumnDataCount(void);
 int StringToColumn(char *s);
 char LastChar(char *s);
 int SetColumDataFromString(ColumnInfo* ci, char *s, char **errstr);
+ssize_t getconf_readblocksize(void);
 
 /* this is in securityconf.h */
 char *generic_get_security_conf(char *, void *);

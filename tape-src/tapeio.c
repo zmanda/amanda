@@ -32,6 +32,7 @@
  */
 
 #include "amanda.h"
+#include "conffile.h"
 #include "tapeio.h"
 #include "fileheader.h"
 
@@ -863,7 +864,7 @@ tapefd_rdlabel(
 
     amfree(*datestamp);
     amfree(*label);
-    buflen = MAX_TAPE_BLOCK_BYTES;
+    buflen = getconf_readblocksize() * 1024;
     buffer = alloc(buflen + 1);
 
     if(tapefd_getinfo_fake_label(fd)) {

@@ -95,6 +95,7 @@ long int unit_divisor = 1;
 /* configuration parameters */
 
 val_t conf_data[CNF_CNF];
+int conffile_init = 0;
 
 command_option_t *program_options      = NULL;
 int               program_options_size = 0;
@@ -415,6 +416,7 @@ keytab_t server_keytab[] = {
     { "LOGDIR", CONF_LOGDIR },
     { "LOW", CONF_LOW },
     { "MAILTO", CONF_MAILTO },
+    { "READBLOCKSIZE", CONF_READBLOCKSIZE },
     { "MAXDUMPS", CONF_MAXDUMPS },
     { "MAXDUMPSIZE", CONF_MAXDUMPSIZE },
     { "MAXPROMOTEDAY", CONF_MAXPROMOTEDAY },
@@ -540,14 +542,15 @@ t_conf_var server_var [] = {
 };
 
 t_conf_var tapetype_var [] = {
-   { CONF_COMMENT  , CONFTYPE_STRING, read_string, TAPETYPE_COMMENT  , NULL },
-   { CONF_LBL_TEMPL, CONFTYPE_STRING, read_string, TAPETYPE_LBL_TEMPL, NULL },
-   { CONF_BLOCKSIZE, CONFTYPE_SIZE  , read_size  , TAPETYPE_BLOCKSIZE, validate_blocksize },
-   { CONF_LENGTH   , CONFTYPE_AM64  , read_am64  , TAPETYPE_LENGTH   , validate_positive0 },
-   { CONF_FILEMARK , CONFTYPE_AM64  , read_am64  , TAPETYPE_FILEMARK , NULL },
-   { CONF_SPEED    , CONFTYPE_INT   , read_int   , TAPETYPE_SPEED    , validate_positive0 },
-   { CONF_FILE_PAD , CONFTYPE_BOOL  , read_bool  , TAPETYPE_FILE_PAD , NULL },
-   { CONF_UNKNOWN  , CONFTYPE_INT   , NULL       , TAPETYPE_TAPETYPE , NULL }
+   { CONF_COMMENT     , CONFTYPE_STRING, read_string, TAPETYPE_COMMENT      , NULL },
+   { CONF_LBL_TEMPL   , CONFTYPE_STRING, read_string, TAPETYPE_LBL_TEMPL    , NULL },
+   { CONF_BLOCKSIZE   , CONFTYPE_SIZE  , read_size  , TAPETYPE_BLOCKSIZE    , validate_blocksize },
+   { CONF_READBLOCKSIZE, CONFTYPE_SIZE  , read_size , TAPETYPE_READBLOCKSIZE, validate_blocksize },
+   { CONF_LENGTH      , CONFTYPE_AM64  , read_am64  , TAPETYPE_LENGTH       , validate_positive0 },
+   { CONF_FILEMARK    , CONFTYPE_AM64  , read_am64  , TAPETYPE_FILEMARK     , NULL },
+   { CONF_SPEED       , CONFTYPE_INT   , read_int   , TAPETYPE_SPEED        , validate_positive0 },
+   { CONF_FILE_PAD    , CONFTYPE_BOOL  , read_bool  , TAPETYPE_FILE_PAD     , NULL },
+   { CONF_UNKNOWN     , CONFTYPE_INT   , NULL       , TAPETYPE_TAPETYPE     , NULL }
 };
 
 t_conf_var dumptype_var [] = {
@@ -1467,6 +1470,7 @@ init_defaults(
     dpcur.seen = -1;
     conf_set_strategy(&dpcur.value[DUMPTYPE_STRATEGY], DS_NOFULL);
     save_dumptype();
+    conffile_init = 1;
 }
 
 static void
@@ -1832,13 +1836,14 @@ get_tapetype(void)
 static void
 init_tapetype_defaults(void)
 {
-    conf_init_string(&tpcur.value[TAPETYPE_COMMENT]  , "");
-    conf_init_string(&tpcur.value[TAPETYPE_LBL_TEMPL], "");
-    conf_init_size  (&tpcur.value[TAPETYPE_BLOCKSIZE], DISK_BLOCK_KB);
-    conf_init_am64  (&tpcur.value[TAPETYPE_LENGTH]   , (off_t)2000);
-    conf_init_am64  (&tpcur.value[TAPETYPE_FILEMARK] , (off_t)1);
-    conf_init_int   (&tpcur.value[TAPETYPE_SPEED]    , 200);
-    conf_init_bool  (&tpcur.value[TAPETYPE_FILE_PAD] , 1);
+    conf_init_string(&tpcur.value[TAPETYPE_COMMENT]      , "");
+    conf_init_string(&tpcur.value[TAPETYPE_LBL_TEMPL]    , "");
+    conf_init_size  (&tpcur.value[TAPETYPE_BLOCKSIZE]    , DISK_BLOCK_KB);
+    conf_init_size  (&tpcur.value[TAPETYPE_READBLOCKSIZE], MAX_TAPE_BLOCK_KB);
+    conf_init_am64  (&tpcur.value[TAPETYPE_LENGTH]       , (off_t)2000);
+    conf_init_am64  (&tpcur.value[TAPETYPE_FILEMARK]     , (off_t)1);
+    conf_init_int   (&tpcur.value[TAPETYPE_SPEED]        , 200);
+    conf_init_bool  (&tpcur.value[TAPETYPE_FILE_PAD]     , 1);
 }
 
 static void
@@ -5139,4 +5144,25 @@ free_new_argv(
     for(i=0; i<new_argc; i++)
 	amfree(new_argv[i]);
     amfree(new_argv);
+}
+
+ssize_t
+getconf_readblocksize(void)
+{
+    tapetype_t *tape;
+    char       *conf_tapetype;
+
+    if (conffile_init == 1) {
+	conf_tapetype = getconf_str(CNF_TAPETYPE);
+
+	if (!conf_tapetype || strlen(conf_tapetype) == 0)
+	    return MAX_TAPE_BLOCK_KB;
+
+	tape = lookup_tapetype(conf_tapetype);
+	if (!tape)
+	    return MAX_TAPE_BLOCK_KB;
+	return tapetype_get_readblocksize(tape);
+    }
+
+    return MAX_TAPE_BLOCK_KB;
 }

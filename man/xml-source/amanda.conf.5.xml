@@ -1874,6 +1874,18 @@ The parameter blocksize can only be raised if &A; was compiled with the configur
 </para>
   </listitem>
   </varlistentry>
+<varlistentry>
+<term><emphasis remap='B'>readblocksize</emphasis> <emphasis remap='I'> int</emphasis></term>
+<listitem>
+<para>Default:
+(<emphasis remap='I'>from configure --with-maxtapeblocksize</emphasis>).
+How much data will be read in each tape record expressed in KiloBytes.
+Some hardware require a value not too large, and some require it to be equal to the blocksize.
+It is useful if you configured amanda with a big --with-maxtapeblocksize and your 
+hardware don't work with a value that big.
+</para>
+  </listitem>
+  </varlistentry>
   <varlistentry>
   <term><emphasis remap='B'>file-pad</emphasis> <emphasis remap='I'> boolean</emphasis></term>
   <listitem>
