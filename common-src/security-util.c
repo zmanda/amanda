@@ -2667,7 +2667,7 @@ check_name_give_sockaddr(
 
     for(res1=res; res1 != NULL; res1 = res1->ai_next) {
 	if (res1->ai_addr->sa_family == addr->sa_family) {
-	    if (cmp_sockaddr((struct sockaddr_storage *)&res1->ai_addr, (struct sockaddr_storage *)&addr, 1) == 0) {
+	    if (cmp_sockaddr((struct sockaddr_storage *)res1->ai_addr, (struct sockaddr_storage *)addr, 1) == 0) {
 		freeaddrinfo(res);
 		return 0;
 	    }

@@ -1,4 +1,7 @@
 2007-04-03  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/security-util.c: Remove buggy &.
+
+2007-04-03  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.c: Add READBLOCKSIZE tapetype config option.
 	* common-src/conffile.c(getconf_readblocksize): Function to retrieve
 	  the tapetype readblocksize or the configured maxtapeblocksize.
