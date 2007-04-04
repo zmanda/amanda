@@ -1,3 +1,7 @@
+2007-04-04  Dustin J. Mitchell <dustin@zmanda.com>
+	* server-src/dumper.c server-src/chunker.c: remove assumed ENOSPC
+	  error in static write_tapeheader functions
+
 2007-04-03  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/security-util.c: Remove buggy &.
 
@@ -17,7 +21,7 @@
 
 2007-04-03  Jean-Louis Martineau <martineau@zmanda.com>
 	Merge from zmanda ext.
-        * man/xml-source/amadmin.8.xml man/xml-source/amanda.8.xml
+	* man/xml-source/amadmin.8.xml man/xml-source/amanda.8.xml
 	  server-src/amflush.c server-src/cmdline.c server-src/cmdline.h
 	  server-src/holding.c server-src/holding.h server-src/driver.c
 	  server-src/planner.c server-src/amadmin.c server-src/taper.c

@@ -883,7 +883,7 @@ common_exit:
 
 
 /*
- * Send an Amanda dump header to the output file.
+ * Send an Amanda dump header to the output file and set file->blocksize
  */
 static ssize_t
 write_tapeheader(
@@ -903,6 +903,5 @@ write_tapeheader(
     if(written < 0)
 	return written;
 
-    errno = ENOSPC;
     return (ssize_t)-1;
 }
