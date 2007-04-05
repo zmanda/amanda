@@ -3260,6 +3260,7 @@ AC_CONFIG_FILES([\
 	changer-src/chg-juke.sh		changer-src/chg-rait.sh		\
 	changer-src/chg-null.sh		changer-src/chg-mcutil.sh	\
 	changer-src/chg-disk.sh		changer-src/chg-iomega.pl	\
+    changer-src/chg-lib.sh                                  \
 									\
 	client-src/patch-system.sh	client-src/Makefile		\
 									\

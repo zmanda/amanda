@@ -46,7 +46,14 @@ else
 	logfile=/dev/null
 fi
 
-echo Args "->" "$@" >> $logfile
+# support simultaneous development with and without gettext
+function _() {
+        fmt="$1"
+        shift
+        printf "$fmt" $*
+}
+
+echo `_ "arguments ->"` "$@" >> $logfile
 
 USE_VERSION_SUFFIXES="@USE_VERSION_SUFFIXES@"
 if test "$USE_VERSION_SUFFIXES" = "yes"; then
@@ -64,13 +71,12 @@ elif [ -x "@MT@" ]; then
 	MT=@MT@
 	MTF=@MT_FILE_FLAG@
 else
-	answer="<none> $myname: mt program not found"
-	code=1
-	echo "Exit -> $answer" >> $logfile
-	echo "$answer"
-	exit $code
+	answer=`_ '<none> %s: mt program not found' "$myname"`
+	echo `_ 'Exit ->'` $answer >> $logfile
+	echo $answer
+	exit 1
 fi
-echo MT "->" $MT $MTF >> $logfile
+echo "MT ->" $MT $MTF >> $logfile
 
 EXPR=expr
 # EXPR=/usr/local/bin/expr # in case you need a more powerful expr...
@@ -78,85 +84,78 @@ EXPR=expr
 # read in some config parameters
 
 if [ ! -f "$ourconf" ]; then
-	answer="<none> $pname: $ourconf does not exist"
-	code=2
-	echo "Exit -> $answer" >> $logfile
-	echo "$answer"
-	exit $code
+	answer=`_ '<none> %s: %s does not exist' "$pname" "$ourconf"`
+	echo `_ 'Exit ->'` $answer >> $logfile
+	echo $answer
+	exit 2
 fi
 
 firstslot=`awk '$1 == "firstslot" {print $2}' $ourconf 2>/dev/null`
 if [ -z "$firstslot" ]; then
-	answer="<none> $pname: firstslot not specified in $ourconf"
-	code=2
-	echo "Exit -> $answer" >> $logfile
-	echo "$answer"
-	exit $code
+	answer=`_ '<none> %s: firstslot not specified in %s' "$pname" "$ourconf"`
+	echo `_ 'Exit ->'` $answer >> $logfile
+	echo $answer
+	exit 2
 fi
 
 lastslot=`awk '$1 == "lastslot" {print $2}' $ourconf 2>/dev/null`
 if [ -z "$lastslot" ]; then
-	answer="<none> $pname: lastslot not specified in $ourconf"
-	code=2
-	echo "Exit -> $answer" >> $logfile
-	echo "$answer"
-	exit $code
+	answer=`_ '<none> %s: lastslot not specified in %s' "$pname" "$ourconf"`
+	echo `_ 'Exit ->'` $answer >> $logfile
+	echo $answer
+	exit 2
 fi
 
 nslots=`$EXPR $lastslot - $firstslot + 1`
 
 gravity=`awk '$1 == "gravity" {print $2}' $ourconf 2>/dev/null`
 if [ -z "$gravity" ]; then
-	answer="<none> $pname: gravity not specified in $ourconf"
-	code=2
-	echo "Exit -> $answer" >> $logfile
-	echo "$answer"
-	exit $code
+	answer=`_ '<none> %s: gravity not specified in %s' "$pname" "$ourconf"`
+	echo `_ 'Exit ->'` $answer >> $logfile
+	echo $answer
+	exit 2
 fi
 
 needeject=`awk '$1 == "needeject" {print $2}' $ourconf 2>/dev/null`
 if [ -z "$needeject" ]; then
-	answer="<none> $pname: needeject not specified in $ourconf"
-	code=2
-	echo "Exit -> $answer" >> $logfile
-	echo "$answer"
-	exit $code
+	answer=`_ '<none> %s: needeject not specified in %s' "$pname" "$ourconf"`
+	echo `_ 'Exit ->'` $answer >> $logfile
+	echo $answer
+	exit 2
 fi
 
 multieject=`awk '$1 == "multieject" {print $2}' $ourconf 2>/dev/null`
 if [ -z "$multieject" ]; then
-	echo "Note: setting multieject to a default of zero" >> $logfile
+	echo `_ 'Note: setting multieject to a default of zero'` >> $logfile
 	multieject=0
 fi
 
 ejectdelay=`awk '$1 == "ejectdelay" {print $2}' $ourconf 2>/dev/null`
 if [ -z "$ejectdelay" ]; then
-	echo "Note: setting ejectdelay to a default of zero" >> $logfile
+	echo `_ 'Note: setting ejectdelay to a default of zero'` >> $logfile
 	ejectdelay=0
 fi
 
 posteject=`awk '$1 == "posteject" {print $2}' $ourconf 2>/dev/null`
 if [ -z "$posteject" ]; then
-	echo "Note: setting posteject to a default of \"true\"" >> $logfile
+	echo `_ 'Note: setting posteject to a default of "true"'` >> $logfile
 	posteject=true
 fi
 
 ourstate=`awk '$1 == "statefile" {print $2}' $ourconf 2>/dev/null`
 if [ -z "$ourstate" ]; then
-	answer="<none> $pname: statefile not specified in $ourconf"
-	code=2
-	echo "Exit -> $answer" >> $logfile
-	echo "$answer"
-	exit $code
+	answer=`_ '<none> %s: statefile not specified in %s' "$pname" "$ourconf"`
+	echo `_ 'Exit ->'` $answer >> $logfile
+	echo $answer
+	exit 2
 fi
 
 # needeject and multieject are incompatible
 if [ $needeject -eq 1 ] && [ $multieject -eq 1 ] ; then
-	answer="<none> $pname: needeject and multieject cannot be both enabled in $ourconf"
-	code=2
-	echo "Exit -> $answer" >> $logfile
-	echo "$answer"
-	exit $code
+	answer=`_ '<none> %s: needeject and multieject cannot be both enabled in %s' "$pname" "$ourconf"`
+	echo `_ 'Exit ->'` $answer >> $logfile
+	echo $answer
+	exit 2
 fi
 
 # read in state: only curslot and curloaded at the present time
@@ -190,10 +189,9 @@ case "$command" in
 
 	backwards=`$EXPR 1 - $gravity`
 	answer="$curslot $nslots $backwards"
-	code=0
-	echo "Exit -> $answer" >> $logfile
-	echo "$answer"
-	exit $code
+	echo `_ 'Exit ->'` $answer >> $logfile
+	echo $answer
+	exit 0
 	;;
 
 -reset) # reset changer. Actually, we only reset changer state. We
@@ -224,18 +222,16 @@ case "$command" in
 	    ([ $gravity -eq 0 ] || [ $curslot -ne $lastslot ]) ; then 
 		# Can't do this: if we eject, the stacker is going to
 		# load the next tape, and our state will be botched
-		answer="$curslot $pname: Cannot use -eject with multieject/nogravity/notlastslot"
-		code=1
-		echo "Exit -> $answer" >> $logfile
-		echo "$answer"
-		exit $code
+		answer=`_ '%s %s: Cannot use -eject with multieject/nogravity/notlastslot' "$curslot" "$pname"`
+		echo `_ 'Exit ->'` $answer >> $logfile
+		echo $answer
+		exit 1
 	fi    
 	if [ $curloaded -eq 0 ]; then
-		answer="$curslot $pname: slot already empty"
-		code=1
-		echo "Exit -> $answer" >> $logfile
-		echo "$answer"
-		exit $code
+		answer=`_ '%s %s: slot already empty' "$curslot" "$pname"`
+		echo `_ 'Exit ->'` $answer >> $logfile
+		echo $answer
+		exit 1
 	fi
 	;;
 
@@ -250,11 +246,10 @@ case "$command" in
 		newslot=$slotparm
 		if [ $newslot -gt $lastslot ] || \
 		     [ $newslot -lt $firstslot ] ; then
-			answer="$newslot $pname: no slot $newslot: legal range is $firstslot ... $lastslot"
-			code=1
-			echo "Exit -> $answer" >> $logfile
-			echo "$answer"
-			exit $code
+			answer=`_ '%s %s: no slot %s: legal range is %s ... %s' "$newslot" "$pname" "$newslot" "$firstslot" "$lastslot"`
+			echo `_ 'Exit ->'` $answer >> $logfile
+			echo $answer
+			exit 1
 		fi
 		;;
 	current)
@@ -282,11 +277,10 @@ case "$command" in
 		fi
 		;;
 	*)
-		answer="<none> $pname: bad slot name \"$slotparm\""
-		code=1
-		echo "Exit -> $answer" >> $logfile
-		echo "$answer"
-		exit $code
+		answer=`_ '<none> %s: bad slot name "%s"' "$pname" "$slotparm"`
+		echo `_ 'Exit ->'` $answer >> $logfile
+		echo $answer
+		exit 1
 		;;
 	esac
 	;;
@@ -297,11 +291,10 @@ esac
 
 
 if [ $usage -eq 1 ]; then
-	answer="<none> usage: $pname {-reset | -slot [<slot-number>|current|next|prev|advance] | -info | -eject}"
-	code=2
-	echo "Exit -> $answer" >> $logfile
-	echo "$answer"
-	exit $code
+	answer=`_ '<none> usage: %s {-reset | -slot [<slot-number>|current|next|prev|advance] | -info | -eject}' "$pname"`
+	echo `_ 'Exit ->'` $answer >> $logfile
+	echo $answer
+	exit 2
 fi
 
 
@@ -309,11 +302,10 @@ fi
 
 if [ $checkgravity -eq 1 ] && [ $gravity -ne 0 ] ; then
 	if [ $newslot -lt $curslot ] || [ "$slotparm" = "prev" ] ; then
-		answer="$newslot $pname: cannot go backwards in gravity stacker"
-		code=1
-		echo "Exit -> $answer" >> $logfile
-		echo "$answer"
-		exit $code
+		answer=`_ '%s %s: cannot go backwards in gravity stacker' "$newslot" "$pname"`
+		echo `_ 'Exit ->'` $answer >> $logfile
+		echo $answer
+		exit 1
 	fi
 fi
 
@@ -328,31 +320,28 @@ then
 	while [ $curslot -ne $newslot ]; do
 	    device=`awk '$1 == "slot" && $2 == '$curslot' {print $3}' $ourconf 2>/dev/null`
 	    if [ "$device" = "" ]; then
-		answer="$curslot $pname: slot $curslot device not specified in $ourconf"
-		code=2
-		echo "Exit -> $answer" >> $logfile
-		echo "$answer"
-		exit $code
+		answer=`_ '%s %s: slot %s device not specified in %s' "$curslot" "$pname" "$curslot" "$ourconf"`
+		echo `_ 'Exit ->'` $answer >> $logfile
+		echo $answer
+		exit 2
 	    fi
-	    echo "     -> offline $device" >> $logfile
+	    echo `_ '     -> offline'` "$device"` >> $logfile
 	    $MT $MTF $device offline >> $logfile 2>&1
 	    if [ $? -ne 0 ]; then
-		answer="$newslot $pname: $device: unable to change to slot $curslot"
-		code=2
-		echo "Exit -> $answer" >> $logfile
-		echo "$answer"
-		exit $code
+		answer=`_ '%s %s: %s: unable to change to slot %s' "$newslot" "$pname" "$device" "$curslot"`
+		echo `_ 'Exit ->'` $answer >> $logfile
+		echo $answer
+		exit 2
 	    fi
 	    [ $ejectdelay -gt 0 ] && sleep $ejectdelay
-	    echo "     -> running $posteject $device" >> $logfile
+	    echo `_ '     -> running'` $posteject $device >> $logfile
 	    $posteject $device >> $logfile 2>&1
 	    status=$?
 	    if [ $status -ne 0 ]; then
-		answer="$newslot $pname: $posteject $device failed: $status"
-		code=2
-		echo "Exit -> $answer" >> $logfile
-		echo "$answer"
-		exit $code
+		answer=`_ '%s %s: %s %s failed: %s' "$newslot" "$pname" "$posteject" "$device" "$status"`
+		echo `_ 'Exit ->'` $answer >> $logfile
+		echo $answer
+		exit 2
 	    fi
 	    curslot=`$EXPR $curslot + 1`
 	    if [ $curslot -gt $lastslot ] ; then
@@ -375,13 +364,12 @@ then
 	# try to unload the current device
 	device=`awk '$1 == "slot" && $2 == '$curslot' {print $3}' $ourconf 2>/dev/null`
 	if [ "$device" = "" ]; then
-		answer="$curslot $pname: slot $curslot device not specified in $ourconf"
-		code=2
-		echo "Exit -> $answer" >> $logfile
-		echo "$answer"
-		exit $code
+		answer=`_ '%s %s: slot %s device not specified in %s' "$curslot" "$pname" "$curslot" "$ourconf"`
+		echo `_ 'Exit ->'` $answer >> $logfile
+		echo $answer
+		exit 2
 	fi
-	echo "     -> offline $device" >> $logfile
+	echo `_ '     -> offline'` $device >> $logfile
 	$MT $MTF $device offline >> $logfile 2>&1
 	if [ $? -ne 0 ]; then
 		#
@@ -393,15 +381,14 @@ then
 		slotempty=1
 	else
 		[ $ejectonly -eq 0 ] && [ $ejectdelay -gt 0 ] && sleep $ejectdelay
-		echo "     -> running $posteject $device" >> $logfile
+		echo `_ '     -> running '` $posteject $device >> $logfile
 		$posteject $device >> $logfile 2>&1
 		status=$?
 		if [ $status -ne 0 ]; then
-			answer="$newslot $pname: $posteject $device failed: $status"
-			code=2
-			echo "Exit -> $answer" >> $logfile
-			echo "$answer"
-			exit $code
+			answer=`_ '%s %s: %s %s failed: %s' "$newslot" "$pname" "$posteject" "$device" "$status"`
+			echo `_ 'Exit ->'` $answer >> $logfile
+			echo $answer
+			exit 2
 		fi
 	fi
 fi
@@ -417,13 +404,12 @@ if [ $loadslot -eq 1 ]; then	# load the tape from the slot
 	# try to rewind the device
 	device=`awk '$1 == "slot" && $2 == '$curslot' {print $3}' $ourconf 2>/dev/null`
 	if [ "$device" = "" ]; then
-		answer="$curslot $pname: slot $curslot device not specified in $ourconf"
-		code=2
-		echo "Exit -> $answer" >> $logfile
-		echo "$answer"
-		exit $code
+		answer=`_ "%s %s: slot %s device not specified in %s' "$curslot" "$pname" "$curslot" "$ourconf"`
+		echo `_ 'Exit ->'` $answer >> $logfile
+		echo $answer
+		exit 2
 	fi
-	echo "     -> rewind $device" >> $logfile
+	echo `_ '     -> rewind'` $device >> $logfile
 	$MT $MTF $device rewind >> $logfile 2>&1
 	if [ $? -ne 0 ]; then
 		#
@@ -439,18 +425,17 @@ fi
 
 # update state
 
-echo "# multi-changer state cache: DO NOT EDIT!" >  $ourstate
+echo `_ '# multi-changer state cache: DO NOT EDIT!'` >  $ourstate
 echo curslot $newslot 				 >> $ourstate
 echo curloaded $curloaded			 >> $ourstate
 
 # return slot info
 
 if [ $slotempty -eq 1 ]; then
-	answer="$newslot $pname: slot is empty"
-	code=1
-	echo "Exit -> $answer" >> $logfile
-	echo "$answer"
-	exit $code
+	answer=`_ '%s %s: slot is empty' "$newslot" "$pname"`
+	echo `_ 'Exit ->'` $answer >> $logfile
+	echo $answer
+	exit 1
 fi
 
 if [ "$command" = -slot -a "$slotparm" = advance ]; then
@@ -458,7 +443,6 @@ if [ "$command" = -slot -a "$slotparm" = advance ]; then
 fi
 
 answer="$newslot $device"
-code=0
-echo "Exit -> $answer" >> $logfile
-echo "$answer"
-exit $code
+echo `_ 'Exit ->'` $answer >> $logfile
+echo $answer
+exit 0

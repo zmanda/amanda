@@ -26,7 +26,7 @@ libexec_SCRIPTS =	chg-manual	chg-multi	chg-mtx		\
 			chg-rth		chg-chs		chg-chio	\
 			chg-zd-mtx	chg-juke	chg-rait	\
 			chg-null	chg-mcutil	chg-disk	\
-			chg-iomega
+			chg-iomega  chg-lib.sh
 
 CLEANFILES = $(libexec_SCRIPTS)
 

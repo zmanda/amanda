@@ -1,3 +1,12 @@
+2007-04-05  Dustin J. Mitchell <dustin@zmanda.com>
+	* changer-src/chg-lib.sh.in changer-src/chg-mtx.sh.in
+	  changer-src/chg-manual.sh.in changer-src/chg-zd-mtx.sh.in
+	  changer-src/chg-multi.sh.in changer-src/Makefile.am
+	  configure.in: make the path to MTX and other executables configurable
+	  in changer scripts; introduce new changer shell library to reduce
+	  code duplication; add fake gettext functions to ease the transition to
+	  full gettext support
+
 2007-04-04  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/dumper.c server-src/chunker.c: remove assumed ENOSPC
 	  error in static write_tapeheader functions

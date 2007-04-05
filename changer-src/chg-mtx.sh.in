@@ -21,6 +21,14 @@ else
 	logfile=/dev/null
 fi
 
+# support simultaneous development with and without gettext
+function _() {
+	fmt="$1"
+	shift
+	printf "$fmt" $*
+}
+
+
 USE_VERSION_SUFFIXES="@USE_VERSION_SUFFIXES@"
 if test "$USE_VERSION_SUFFIXES" = "yes"; then
 	SUF="-@VERSION@"
@@ -56,11 +64,10 @@ elif [ -x "@MT@" ]; then
 	MT=@MT@
 	MTF=@MT_FILE_FLAG@
 else
-	answer="<none> $myname: mt program not found"
-	code=1
-	echo "Exit -> $answer" >> $logfile
-	echo "$answer"
-	exit $code
+	answer=`_ '<none> %s: mt program not found' "$myname"`	
+	echo `_ 'Exit ->'` $answer >> $logfile
+	echo $answer
+	exit 1
 fi
 echo MT "->" $MT $MTF >> $logfile
 
@@ -69,11 +76,10 @@ if [ -x $sbindir/amdd$SUF ]; then
 elif [ -x "@DD@" ]; then
 	DD=@DD@
 else
-	answer="<none> $myname: dd program not found"
-	code=1
-	echo "Exit -> $answer" >> $logfile
-	echo "$answer"
-	exit $code
+	answer=`_ '<none> %s: dd program not found' "$myname"`	
+	echo `_ 'Exit ->'` $answer >> $logfile
+	echo $answer
+	exit 1
 fi
 echo DD "->" $DD >> $logfile
 
@@ -107,16 +113,14 @@ eject() {
   if [ $used -gt 0 ];then
     $MTX -u $used
     answer="0 $tape"
-    code=0
-    echo "Exit -> $answer" >> $logfile
-    echo "$answer"
-    exit $code
+    echo `_ 'Exit ->'` $answer >> $logfile
+    echo $answer
+    exit 0
   else
-    answer="<none> $myname: Drive was not loaded"
-    code=1
-    echo "Exit -> $answer" >> $logfile
-    echo "$answer"
-    exit $code
+    answer=`_ '<none> %s: Drive was not loaded' "$myname"`	
+    echo `_ 'Exit ->'` $answer >> $logfile
+    echo $answer
+    exit 1
   fi
 }
 
@@ -128,16 +132,14 @@ reset() {
   res=`$MTX -l 1`
   if [ $? -eq 0 ];then
     answer="1 $tape"
-    code=0
-    echo "Exit -> $answer" >> $logfile
-    echo "$answer"
-    exit $code
+    echo `_ 'Exit ->'` $answer >> $logfile
+    echo $answer
+    exit 0
   else
     answer="1 $res"
-    code=1
-    echo "Exit -> $answer" >> $logfile
-    echo "$answer"
-    exit $code
+    echo `_ 'Exit ->'` $answer >> $logfile
+    echo $answer
+    exit 1
   fi
 }
 #
@@ -153,10 +155,9 @@ loadslot() {
 	       used=1
 	     fi
 	     answer="$used $tape"
-	     code=0
-	     echo "Exit -> $answer" >> $logfile
-	     echo "$answer"
-	     exit $code
+	     echo `_ 'Exit ->'` $answer >> $logfile
+	     echo $answer
+	     exit 0
 	     ;;
     next|advance)
 	  load=`expr $used + 1`
@@ -179,20 +180,18 @@ loadslot() {
 	  load=$cleanslot
 	  ;;
     *)
-       answer="<none> $myname: illegal request: \"$whichslot\""
-       code=1
-       echo "Exit -> $answer" >> $logfile
-       echo "$answer"
-       exit $code
+       answer=`_ '<none> %s: illegal request: "%s"' "$myname" "$whichslot"`
+       echo `_ 'Exit ->'` $answer >> $logfile
+       echo $answer
+       exit 1
        ;;
     esac
 
     if [ $load = $used ]; then
         answer="$used $tape"
-        code=0
-        echo "Exit -> $answer" >> $logfile
-        echo "$answer"
-        exit $code
+	echo `_ 'Exit ->'` $answer >> $logfile
+	echo $answer
+	exit 0
     fi
 
     if [ $load = $cleanslot ]; then
@@ -219,27 +218,25 @@ loadslot() {
       echo "     -> status $status" >> $logfile
       echo "     -> res    $res" >> $logfile
       if [ $status -ne 0 ];then
-        answer="<none> $myname: $res"
-        code=2
-        echo "Exit -> $answer" >> $logfile
-        echo "$answer"
-        exit $code
+        answer=`_ '<none> %s: %s' "$myname" "$res"`
+	echo `_ 'Exit ->'` $answer >> $logfile
+	echo $answer
+	exit 2
       fi
     fi
     if [ $whichslot = advance ];then
       answer="$load /dev/null"
-      code=0
-      echo "Exit -> $answer" >> $logfile
-      echo "$answer"
-      exit $code
+      echo `_ 'Exit ->'` $answer >> $logfile
+      echo $answer
+      exit 0
     fi
-    echo "     -> load   $load" >> $logfile
+    echo `_ '     -> load   %s' "$load"` >> $logfile
     res=`$MTX -l $load`
     status=$?
-    echo "     -> status $status" >> $logfile
-    echo "     -> res    $res" >> $logfile
+    echo `_ '     -> status %s' "$status"` >> $logfile
+    echo `_ '     -> result %s' "$res"` >> $logfile
     if [ $status -eq 0 ];then
-      echo "     -> rew $load" >> $logfile
+      echo `_ '     -> rewind %s' "$load"` >> $logfile
       $MT $MTF $tape rewind
       $DD if=$tape bs=32k count=1 >> $logfile 2>&1
       answer="$load $tape"
@@ -248,8 +245,8 @@ loadslot() {
       answer="$load $res"
       code=2
     fi
-    echo "Exit -> $answer" >> $logfile
-    echo "$answer"
+    echo `_ 'Exit ->'` $answer >> $logfile
+    echo $answer
     exit $code
 }
 #
@@ -260,10 +257,9 @@ info() {
     used=0
   fi
   answer="$used $lastslot 1"
-  code=0
-  echo "Exit -> $answer" >> $logfile
-  echo "$answer"
-  exit $code
+  echo `_ 'Exit ->'` $answer >> $logfile
+  echo $answer
+  exit 0
 }
 #
 echo Args "->" "$@" >> $logfile
@@ -286,11 +282,10 @@ while [ $# -ge 1 ];do
 	    eject
 	    ;;
     *)
-       answer="<none> $myname: Unknown option $1"
-       code=2
-       echo "Exit -> $answer" >> $logfile
-       echo "$answer"
-       exit $code
+       answer=`_ '<none> %s: Unknown option %s' "$myname" "$1"`
+       echo `_ 'Exit ->'` $answer >> $logfile
+       echo $answer
+       exit 2
        ;;
   esac
 done

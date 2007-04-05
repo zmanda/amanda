@@ -321,6 +321,13 @@ test -n "$DEBUG" && set -x
 TMPDIR="@AMANDA_TMPDIR@"
 DBGDIR="@AMANDA_DBGDIR@"
 
+# support simultaneous development with and without gettext
+function _() {
+	fmt="$1"
+	shift
+	printf "$fmt" $*
+}
+
 argv0=$0
 myname=`expr "$argv0" : '.*/\(.*\)'`
 
@@ -376,7 +383,7 @@ Exit() {
 	exit_slot=$1
 	shift
 	exit_answer="$@"
-	Log $call_type "($code)" "->" "$exit_slot" "$@"
+	Log $call_type "($code) -> $exit_slot $@"
 	echo "$exit_slot" "$@"
 	if [ $call_type = Return ]; then
 		return $code
@@ -390,11 +397,11 @@ Exit() {
 ###
 
 Run() {
-	Log Running: "$@"
+	Log `_ 'Running: %s' "$@"`
 	rm -f $stdout $stderr
 	"$@" > $stdout 2> $stderr
 	exitcode=$?
-	Log Exit code: $exitcode
+	Log `_ 'Exit code: %s' "$exitcode"`
 	if [ -s $stdout ]
 	then
 		LogAppend Stdout:
@@ -487,7 +494,9 @@ get_loaded_info() {
 	loadedslot=$1
 	loadedbarcode=$2
 	if [ -z "$loadedslot" ]; then
-		Exit 2 "<none>" "could not determine current slot, are you sure your drive slot is $driveslot"
+		Exit 2 \
+		    `_ '<none>'` \
+		    "could not determine current slot, are you sure your drive slot is $driveslot"
 		return $?			# in case we are internal
 	fi
 
@@ -542,12 +551,12 @@ get_loaded_info() {
 		:
 	else
 		Exit 2 \
-		     "<none>" \
+		     `_ '<none>'` \
 		     "currently loaded slot ($loadedslot) not numeric"
 		return $?			# in case we are internal
 	fi
-	Log       "STATUS   -> currently loaded slot = $loadedslot"
-	LogAppend "         -> currently loaded barcode = \"$loadedbarcode\""
+	Log       `_ 'STATUS   -> currently loaded slot = %s' "$loadedslot"`
+	LogAppend `_ '         -> currently loaded barcode = "%s"' "$loadedbarcode"`
 }
 
 ###
@@ -593,7 +602,7 @@ get_slot_list() {
 		last=$lastslot
 		for slot in $slot_list; do
 			if [ $firstslot -lt 0 ]; then
-				Log "SLOTLIST -> firstslot set to $slot"
+				Log `_ 'SLOTLIST -> firstslot set to %s' "$slot"`
 				firstslot=$slot
 			fi
 			if [ $lastslot -lt 0 ]; then
@@ -601,18 +610,18 @@ get_slot_list() {
 			fi
 		done
 		if [ $lastslot -lt 0 -a $last -ge 0 ]; then
-			Log "SLOTLIST -> lastslot set to $last"
+			Log `_ 'SLOTLIST -> lastslot set to %s' "$last"`
 			lastslot=$last
 		fi
 		if [ $firstslot -lt 0 ]; then
 			Exit 2 \
-			     "<none>" \
-			     "cannot determine first slot"
+			     `_ '<none>'` \
+			     `_ 'cannot determine first slot'`
 			return $?		# in case we are internal
 		elif [ $lastslot -lt 0 ]; then
 			Exit 2 \
-			     "<none>" \
-			     "cannot determine last slot"
+			     `_ '<none>'` \
+			     `_ 'cannot determine last slot'`
 			return $?		# in case we are internal
 		fi
 	fi
@@ -624,7 +633,7 @@ get_slot_list() {
 	done
 	if [ -z "$amanda_slot_list" ]; then
 		Exit 2 \
-		     "<none>" \
+		     `_ '<none>'` \
 		     "no slots available"
 		return $?			# in case we are internal
 	fi
@@ -657,28 +666,28 @@ fi
 changerfile=`amgetconf$SUF changerfile 2>/dev/null`
 if [ -z "$changerfile" ]; then
 	Exit 2 \
-	     "<none>" \
+	     `_ '<none>'` \
 	     "changerfile must be specified in amanda.conf"
 fi
 
 tape=`amgetconf$SUF tapedev 2>/dev/null`
 if [ -z "$tape" ]; then
 	Exit 2 \
-	     "<none>" \
+	     `_ '<none>'` \
 	     "tapedev may not be empty"
 elif [ $tape = "/dev/null" -o `expr "$tape" : 'null:'` -eq 5 ]; then
 	Exit 2 \
-	     "<none>" \
+	     `_ '<none>'` \
 	     "tapedev ($tape) may not be the null device"
 fi
 TAPE=`amgetconf$SUF changerdev 2>/dev/null`
 if [ -z "$TAPE" ]; then
 	Exit 2 \
-	     "<none>" \
+	     `_ '<none>'` \
 	     "changerdev may not be empty"
 elif [ $TAPE = "/dev/null" ]; then
 	Exit 2 \
-	     "<none>" \
+	     `_ '<none>'` \
 	     "changerdev ($TAPE) may not be the null device"
 fi
 export TAPE					# for mtx command
@@ -698,12 +707,12 @@ fi
 
 if [ ! -e $configfile ]; then
 	Exit 2 \
-	     "<none>" \
+	     `_ '<none>'` \
 	     "configuration file \"$configfile\" doesn't exist"
 fi
 if [ ! -f $configfile ]; then
 	Exit 2 \
-	     "<none>" \
+	     `_ '<none>'` \
 	     "configuration file \"$configfile\" is not a file"
 fi
 
@@ -771,12 +780,12 @@ if [ $DBGFILE = /dev/null ]; then
 	else
 		DBGFILE=/dev/null
 	fi
-	Log === Start "`date`" ===
+	Log `_ '=== Start %s ===' "\`date\`"`
 fi
 if [ -z "$driveslot" ]; then
 	Exit 2 \
-	     "<none>" \
-	     "cannot determine drive slot from $tape"
+	     `_ '<none>'` \
+	     `_ 'cannot determine drive slot from %s' "$tape"`
 fi
 
 stdout=$TMPDIR/$myname.1.$$
@@ -784,11 +793,11 @@ stderr=$TMPDIR/$myname.2.$$
 mtx_status=$TMPDIR/$myname.status.$$
 trap "rm -f $stdout $stderr $mtx_status" 0	# exit cleanup
 
-Log "Using config file $configfile"
+Log `_ 'Using config file %s' "$configfile"`
 
 # Log the argument list.
 
-Log "Arg info:"
+Log `_ "Arg info:"`
 LogAppend "\$# = $#"
 i=0
 LogAppend "\$$i = \"$argv0\""
@@ -821,7 +830,7 @@ max_drive_wait=${max_drive_wait:-'120'}			# default: two minutes
 
 get_slot_list
 
-Log "Config info:"
+Log `_ "Config info:"`
 for var in $varlist; do
 	if [ $var = "OFFLINE_BEFORE_UNLOAD" ]; then
 		continue			# old name
@@ -831,15 +840,15 @@ for var in $varlist; do
 	eval val=\"'$'$var\"
 	if [ -z "$val" ]; then
 		Exit 2 \
-		     "<none>" \
-		     "$var missing in $configfile"
+		     `_ '<none>'` \
+		     `_ '%s missing in %s' "$var" "$configfile"`
 	fi
 	if IsNumeric "$val" ; then
 		:
 	else
 		Exit 2 \
-		     "<none>" \
-		     "$var ($val) not numeric in $configfile"
+		     `_ '<none>'` \
+		     `_ '%s (%s) not numeric in %s' "$var" "$val" "$configfile"`
 	fi
 	LogAppend $var = \"$val\"
 done
@@ -848,14 +857,13 @@ done
 
 if [ $firstslot -gt $lastslot ]; then
 	Exit 2 \
-	     "<none>" \
-	     "firstslot ($firstslot) greater than" \
-	     "lastslot ($lastslot) in $configfile"
+	     `_ '<none>'` \
+	     `_ 'firstslot (%s) greater than lastslot (%s) in %s' "$firstslot" "$lastslot" "$configfile"`
 fi
 if [ $autoclean -ne 0 -a $cleanslot -lt 0 ]; then
 	Exit 2 \
-	     "<none>" \
-	     "autoclean set but cleanslot not valid ($cleanslot)"
+	     `_ '<none>'` \
+	     `_ 'autoclean set but cleanslot not valid (%s)' "$cleanslot"`
 fi
 
 # Set up the current slot
@@ -863,19 +871,14 @@ fi
 currentslot=`cat $slotfile`
 if IsNumeric "$currentslot" ; then
 	if [ $currentslot -lt $firstslot ]; then
-		Log "SETUP    -> current slot $currentslot" \
-				 "less than $firstslot ..." \
-				 "resetting to $firstslot"
+		Log `_ 'SETUP    -> current slot %s less than %s ... resetting to %s' "$currentslot" "$firstslot" "$firstslot"`
 		currentslot=$firstslot
 	elif [ $currentslot -gt $lastslot ]; then
-		Log "SETUP    -> current slot $currentslot" \
-				 "greater than $lastslot ..." \
-				 "resetting to $lastslot"
+		Log `_ 'SETUP    -> current slot %s greater than %s ... resetting to %s' "$currentslot" "$lastslot" "$lastslot"`
 		currentslot=$lastslot
 	fi
 else
-	Log "SETUP    -> contents of $slotfile ($currentslot) invalid," \
-			 "setting current slot to first slot ($firstslot)"
+	Log `_ 'SETUP    -> contents of %s (%s) invalid, setting current slot to first slot (%s)' "$slotfile" "$currentslot" "$firstslot"`
 	currentslot=$firstslot
 fi
 
@@ -900,8 +903,7 @@ if [ $found_current -eq 0 ]; then
 	else
 		new_currentslot=$next_slot_after_current
 	fi
-	Log "WARNING  -> current slot $currentslot not available," \
-			 "setting current slot to next slot ($new_currentslot)"
+	Log `_ 'WARNING  -> current slot %s not available, setting current slot to next slot (%s)' "$currentslot" "$new_currentslot"`
 	currentslot=$new_currentslot
 fi
 
@@ -913,18 +915,17 @@ fi
 
 eject() {
 	test -n "$DEBUG" && set -x
-	Log "EJECT    -> ejecting tape from $tape"
+	Log `_ 'EJECT    -> ejecting tape from %s' "$tape"`
 	get_loaded_info 
 	if [ $loadedslot -gt 0 ]; then
-		Log "EJECT    -> moving tape from drive $driveslot" \
-				 "to storage slot $loadedslot"
+		Log `_ 'EJECT    -> moving tape from drive %s to storage slot %s' "$driveslot" "$loadedslot"`
 		if [ $offline_before_unload -ne 0 ]; then
 			Run $MT $MTF $tape offline > /dev/null 2>&1
 		fi
 		sleep $unloadpause
 		result=`Run $MTX unload $loadedslot $driveslot 2>&1`
 		status=$?
-		Log "         -> status $status, result \"$result\""
+		Log `_ '         -> status %s, result "%s"' "$status" "$result"`
 		mtx_status_valid=0
 		if [ $status -ne 0 ]; then
 			answer="$result"
@@ -934,7 +935,7 @@ eject() {
 			code=0
 		fi
 	else
-		answer="Drive was not loaded"
+		answer=`_ 'Drive was not loaded'`
 		code=1
 	fi
 	Exit $code "$loadedslot" "$answer"
@@ -947,13 +948,12 @@ eject() {
 
 reset() {
 	test -n "$DEBUG" && set -x
-	Log "RESET    -> loading tape from slot $firstslot" \
-			 "to drive $driveslot ($tape)"
+	Log `_ 'RESET    -> loading tape from slot %s to drive %s (%s)' "$firstslot" "$driveslot" "$tape"`
 	# Call loadslot without doing it as an internal and let it finish
 	# things up.
 	loadslot $firstslot
 	# NOTREACHED
-	Exit 2 "<none>" "reset: should not get here"
+	Exit 2 `_ '<none>'` `_ 'reset: should not get here'`
 	return $?				# in case we are internal
 }
 
@@ -966,11 +966,11 @@ reset() {
 loadslot() {
 	test -n "$DEBUG" && set -x
 	if [ $# -lt 1 ]; then
-		Exit 2 "<none>" "Missing -slot argument"
+		Exit 2 `_ '<none>'` `_ 'Missing -slot argument'`
 		return $?			# in case we are internal
 	fi
 	whichslot=$1
-	Log "LOADSLOT -> load drive $driveslot ($tape) from slot $whichslot"
+	Log `_ 'LOADSLOT -> load drive %s (%s) from slot %s' "$driveslot" "$tape" "$whichslot"`
 
 	numeric=`echo $whichslot | sed 's/[^0-9]//g'`
 	case $whichslot in
@@ -990,7 +990,7 @@ loadslot() {
 		find_slot=$cleanslot
 		;;
 	*)
-		Exit 2 "<none>" "Illegal slot: \"$whichslot\""
+		Exit 2 `_ '<none>'` `_ 'Illegal slot: "%s"' "$whichslot"`
 		return $?			# in case we are internal
 		;;
 	esac
@@ -1014,9 +1014,8 @@ loadslot() {
 	done
 	if [ $# -le 0 ]; then
 		Exit 2 \
-		     "<none>" \
-		     "Cannot find slot $find_slot" \
-		     "in slot list ($slot_list)"
+		     `_ '<none>'` \
+		     `_ 'Cannot find slot %s in slot list (%s)' "$find_slot " "$slot_list"`
 		return $?			# in case we are internal
 	fi
 
@@ -1101,11 +1100,10 @@ loadslot() {
 	fi
 
 	# Load the tape, finally!
-	Log "LOADSLOT -> loading tape from slot $loadslot" \
-			 "to drive $driveslot ($tape)"
+	Log `_ "LOADSLOT -> loading tape from slot %s to drive %s (%s)" "$loadslot" "$driveslot" "$tape"`
 	result=`Run $MTX load $loadslot $driveslot 2>&1`
 	status=$?
-	Log "         -> status $status, result \"$result\""
+	Log `_ '         -> status %s, result "%s"' "$status" "$result"`
 	mtx_status_valid=0
 	if [ $status -ne 0 ]; then
 		Exit 2 "$loadslot" "$result"
@@ -1139,9 +1137,7 @@ loadslot() {
 		waittime=`expr $waittime + $poll_drive_ready`
 	done
 	if [ $ready -eq 0 ]; then
-		Exit 2 "$loadslot" "Drive not ready after" \
-				   "$max_drive_wait seconds," \
-				   "rewind said \"$result\""
+		Exit 2 "$loadslot" `_ 'Drive not ready after %s seconds, rewind said "%s"' "$max_drive_wait" "$result"`
 		return $?			# in case we are internal
 	fi
 
@@ -1162,13 +1158,13 @@ info() {
 	test -n "$DEBUG" && set -x
 	get_loaded_info
 	get_slot_list
-	Log       "INFO     -> first slot: $firstslot"
-	LogAppend "         -> current slot: $currentslot"
-	LogAppend "         -> loaded slot: $loadedslot"
-	LogAppend "         -> last slot: $lastslot"
-	LogAppend "         -> slot list: $slot_list"
-	LogAppend "         -> can go backwards: 1"
-	LogAppend "         -> havereader: $havereader"
+	Log       `_ 'INFO     -> first slot: %s' "$firstslot"`
+	LogAppend `_ '         -> current slot: %s' "$currentslot"`
+	LogAppend `_ '         -> loaded slot: %s' "$loadedslot"`
+	LogAppend `_ '         -> last slot: %s' "$lastslot"`
+	LogAppend `_ '         -> slot list: %s' "$slot_list"`
+	LogAppend `_ '         -> can go backwards: 1'`
+	LogAppend `_ '         -> havereader: %s' "$havereader"`
 
         ###
 	# Check if a barcode reader is configured or not.  If so, it
@@ -1204,24 +1200,20 @@ read_labelfile() {
 	while read lbl bc junk; do
 		line=`expr $line + 1`
 		if [ -z "$lbl" -o -z "$bc" -o -n "$junk" ]; then
-			Log       "ERROR    -> Line $line malformed: $lbl $bc $junk"
-			LogAppend "         -> Remove $labelfile" \
-					       "and run" \
-					       "\"$sbindir/amtape $config update\""
+			Log       `_ 'ERROR    -> Line %s malformed: %s %s %s' "$line" "$lbl" "$bc" "$junk"`
+			LogAppend `_ '         -> Remove %s and run "%s %s update"' "$labelfile" "$sbindir/amtape" "$config"`
 			Exit 2 \
-			     "<none>" \
-			     "Line $line malformed in $labelfile: $lbl $bc $junk"
+			     `_ '<none>'` \
+			     `_ 'Line %s malformed in %s: %s %s %s' "$line" "$labelfile" "$lbl" "$bc" "$junk"`
 			return $?		# in case we are internal
 		fi
 		if [ $lbl = "$lbl_search" -o $bc = "$bc_search" ]; then
 			if [ $labelfile_entry_found -ne 0 ]; then
-				Log       "ERROR    -> Duplicate entries: $labelfile line $line"
-				LogAppend "         -> Remove $labelfile" \
-						       "and run" \
-						       "\"$sbindir/amtape $config update\""
+				Log       `_ 'ERROR    -> Duplicate entries: %s line %s' "$labelfile" "$line"`
+				LogAppend `_ '         -> Remove $labelfile and run "$sbindir/amtape $config update"' "$labelfile" "$sbindir/amtape" "$config"`
 				Exit 2 \
-				     "<none>" \
-				     "Duplicate entries: $labelfile line $line"
+				     `_ '<none>'` \
+				     `_ 'Duplicate entries: %s line %s' "$labelfile" "$line"`
 				return $?	# in case we are internal
 			fi
 			labelfile_entry_found=1
@@ -1239,23 +1231,20 @@ read_labelfile() {
 addlabel() {
 	test -n "$DEBUG" && set -x
 	if [ $# -lt 1 ]; then
-		Exit 2 "<none>" "Missing -label argument"
+		Exit 2 `_ '<none>'` `_ 'Missing -label argument'`
 		return $?			# in case we are internal
 	fi
         tapelabel=$1
 	if [ $havereader -eq 0 ]; then
-		Exit 2 "<none>" "Not configured with barcode reader"
+		Exit 2 `_ '<none>'` `_ 'Not configured with barcode reader'`
 		return $?			# in case we are internal
 	fi
         get_loaded_info
 	if [ $loadedslot -lt 0 ]; then
-		Exit 1 "<none>" "No tape currently loaded"
+		Exit 1 `_ '<none>'` `_ 'No tape currently loaded'`
 		return $?			# in case we are internal
 	fi
-	Log       "LABEL    -> Adding label \"$tapelabel\"" \
-			       "with barcode \"$loadedbarcode\"" \
-			       "for slot $loadedslot" \
-			       "into $labelfile"
+	Log       `_ 'LABEL    -> Adding label "%s" with barcode "%s" for slot %s into %s' "$tapelabel" $loadedbarcode" "$loadedslot" "$labelfile"`
 	read_labelfile "$tapelabel" "$loadedbarcode" < $labelfile
 	if [ $labelfile_entry_found -ne 0 ]; then
 		lf_val=
@@ -1273,25 +1262,17 @@ addlabel() {
 			new_val=$tapelabel
 		fi
 		if [ -n "$lf_val" ]; then
-			LogAppend "ERROR    -> !!! Label database corrupted !!!"
-			LogAppend "         -> \"$old_val\" conflicts with" \
-					       "new $val_type \"$new_val\"" \
-					       "for $lf_type \"$lf_val\""
-			LogAppend "         -> Remove $labelfile" \
-					       "and run" \
-					       "\"$sbindir/amtape $config update\""
+			LogAppend `_ 'ERROR    -> !!! Label database corrupted !!!'`
+			LogAppend `_ '         -> "%s" conflicts with new %s "%s" for %s "%s"" "$old_val" "$val_type" "$new_val" "$lf_type" "$lf_val"`
 			Exit 2 \
-			     "<none>" \
-			     "$tapelabel: \"$old_val\" conflicts with" \
-			     "new $val_type \"$new_val\"" \
-			     "for $lf_type \"$lf_val\""
+			     `_ '<none>'` \
+			     `'%s: "%s" conflicts with new %s "%s" for %s "%s"' "$tapelabel" "$old_val" "$val_type" "$new_val" "$lf_type" "$lf_val"`
 			return $?		# in case we are internal
 		fi
-		LogAppend "         -> already synced"
+		LogAppend `_ "         -> already synced"`
 	else
 		echo "$tapelabel $loadedbarcode" >> $labelfile
-		LogAppend "         -> appended $labelfile entry:" \
-				       "$tapelabel $loadedbarcode"
+		LogAppend `_ '         -> appended %s entry: %s %s" "$labelfile" "$tapelabel" "$loadedbarcode"`
 	fi
 	Exit 0 "$loadedslot" "$tape"
 	return $?				# in case we are internal
@@ -1305,28 +1286,25 @@ addlabel() {
 searchtape() {
 	test -n "$DEBUG" && set -x
 	if [ $# -lt 1 ]; then
-		Exit 2 "<none>" "Missing -search argument"
+		Exit 2 `_ '<none>'` `_ 'Missing -search argument'`
 		return $?			# in case we are internal
 	fi
         tapelabel=$1
 	if [ $havereader -eq 0 ]; then
-		Exit 2 "<none>" "Not configured with barcode reader"
+		Exit 2 `_ '<none>'` `_ 'Not configured with barcode reader'`
 		return $?			# in case we are internal
 	fi
-	Log "SEARCH   -> Hunting for label \"$tapelabel\""
+	Log `_ 'SEARCH   -> Hunting for label "%s"' "$tapelabel"`
 	read_labelfile "$tapelabel" "" < $labelfile
 	if [ $labelfile_entry_found -eq 0 ]; then
-		LogAppend "         -> !!! label \"$tapelabel\" not found" \
-				       "in $labelfile !!!"
-		LogAppend "         -> Remove $labelfile" \
-				       "and run" \
-				       "\"$sbindir/amtape $config update\""
+		LogAppend `_ '         -> !!! label "%s" not found in %s !!!' "$tapelabel" "$labelfile"`
+		LogAppend `_ '         -> Remove $labelfile and run "%s %s update"' "$labelfile" "$sbindir/amtape" "$config"`
 		Exit 2 \
-		     "<none>" \
-		     "$tapelabel: label \"$tapelabel\" not found in $labelfile"
+		     `_ '<none>'` \
+		     `_ '%s: label "%s" not found in %s' "$tapelabel" "$tapelabel" "$labelfile"`
 		return $?			# in case we are internal
 	fi
-	LogAppend "         -> barcode is \"$labelfile_barcode\""
+	LogAppend `_ '         -> barcode is "%s"' "$labelfile_barcode"`
 	get_mtx_status
 	foundslot=`sed -n '
 /VolumeTag *= *'$labelfile_barcode' *$/			{
@@ -1334,24 +1312,20 @@ searchtape() {
 	q
 }
 ' < $mtx_status`
-	LogAppend "         -> foundslot is $foundslot"
+	LogAppend `_ '         -> foundslot is %s' "$foundslot"`
 	if [ -z "$foundslot" ]; then
-		LogAppend "ERROR    -> !!! Could not find slot" \
-				       "for barcode \"$labelfile_barcode\"!!!"
-		LogAppend "         -> Remove $labelfile" \
-				       "and run" \
-				       "\"$sbindir/amtape $config update\""
+		LogAppend `_ 'ERROR    -> !!! Could not find slot for barcode "%s"!!!' "$labelfile_barcode"`
+		LogAppend `_ '         -> Remove %s and run "%s %s update"' "$labelfile" "$sbindir/amtape" "$config"`
 		Exit 2 \
-		     "<none>" \
-		     "barcode \"$labelfile_barcode\"" \
-		     "not found in mtx status output"
+		     `_ '<none>'` \
+		     `_ 'barcode "%s" not found in mtx status output' "$labelfile_barcode"`
 		return $?			# in case we are internal
 	fi
 	# Call loadslot without doing it as an internal and let it finish
 	# things up.
 	loadslot $foundslot
 	# NOTREACHED
-	Exit 2 "<none>" "searchtape: should not get here"
+	Exit 2 `_ '<none>'` `_ 'searchtape: should not get here'`
 	return $?				# in case we are internal
 }
 
@@ -1360,7 +1334,7 @@ searchtape() {
 ###
 
 if [ $# -lt 1 ]; then
-	Exit 2 "<none>" "Usage: $myname -command args"
+	Exit 2 `_ '<none>'` `_ 'Usage: %s -command args' "$myname"`
 fi
 cmd=$1
 shift
@@ -1387,8 +1361,8 @@ case "$cmd" in
 	loadslot clean
 	;;
 *)
-	Exit 2 "<none>" "unknown option: $cmd"
+	Exit 2 `_ '<none>'` `_ 'unknown option: %s' "$cmd"`
 	;;
 esac
 
-Exit 2 "<none>" "$myname: should not get here"
+Exit 2 `_ '<none>'` `_ '%s: should not get here' "$myname"`
