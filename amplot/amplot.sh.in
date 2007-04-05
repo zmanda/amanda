@@ -51,16 +51,23 @@ AVARFLAG=@AWK_VAR_ASSIGNMENT_OPT@
 GNUPLOT=@GNUPLOT@
 COMPRESS=@AMPLOT_COMPRESS@
 
+# support simultaneous development with and without gettext
+function _() {
+        fmt="$1"
+        shift
+        printf "$fmt" $*
+}
+
 if [ $# -eq 0 ] ; then
-	echo "Usage: $0 [-c] [-e] [-g] [-l] [-p] [-t hours] <amdump_files.[gz,z,Z]>"
-	echo "amplot generates plot for screen with fixed dimensions"
-	echo "	-c	Compress the input amdump files after plotting"
-	echo "	-e	Extends x (time) axes if needed"
-	echo "	-g	Run gnuplot directly no postscript file generated DEFAULT"
-	echo "	-l	Landscape mode suitable for printing"
-	echo "	-p	Postscript output (color)"
-	echo "	-b	The postscipt will be b/w"
-	echo "	-t T	Set the right edge of the plot to be T hours"
+	_ 'Usage: %s [-c] [-e] [-g] [-l] [-p] [-t hours] <amdump_files.[gz,z,Z]>\n' $0
+	_ '%s generates plot for screen with fixed dimensions\n' $0
+	_ '	-c	Compress the input amdump files after plotting\n'
+	_ '	-e	Extends x (time) axes if needed\n'
+	_ '	-g	Run gnuplot directly no postscript file generated DEFAULT\n'
+	_ '	-l	Landscape mode suitable for printing\n'
+	_ '	-p	Postscript output (color)\n'
+	_ '	-b	The postscipt will be b/w\n'
+	_ '	-t T	Set the right edge of the plot to be T hours\n'
 	exit 1 
 fi
 
@@ -85,7 +92,7 @@ while :; do
    -b)	bw=1; shift;;
    -t)  shift
 	if test "$#" -eq 0; then
-	    echo "amplot: no argument for -t option" 1>&2
+	    _ '%s: no argument for -t option\n' $0 1>&2
 	    exit 5
 	fi
 	maxtime="$1"; shift;;
@@ -93,7 +100,7 @@ while :; do
    esac
 done
 if [ $# -eq 0 ] ; then 
-	echo "amplot: no input files" 1>&2
+	_ '%s: no input files\n' $0 1>&2
 	exit 5
 fi
 para=$para"$AVARFLAG maxtime=$maxtime"
@@ -102,14 +109,14 @@ if [ $gnuplot  -eq 1 ] ; then
 	my_plot=$my_plot"p"		# use the plot prog that pauses
 	plot=" -geometry 800x700+40+0" 
 	para=$para"$AVARFLAG gnuplot=1 "
-	echo "Displaying graph on the screen, <CR> for next graph"
+	_ "Displaying graph on the screen, <CR> for next graph"
 
 	if [ "$paper" -eq 1 ] ; then
-		echo "amplot: -l requires -p flag at the same time" 1>&2
+		_ '%s: -l requires -p flag at the same time\n' $0 1>&2
 		exit 6 
 	fi
 	if [ "$bw" -eq 1 ] ; then
-		echo "amplot: -b requires -p flag at the same time" 1>&2
+		_ '%s: -b requires -p flag at the same time\n' $0 1>&2
 		exit 6 
 	fi
 fi
@@ -129,7 +136,7 @@ do
 	if [ -f "$f" ] ; then 		# found file 
                 disp=`$AWK -f $libexecdir/amcat.awk $AVARFLAG f="$f"`
 		if [ -z "$disp" ] ; then 
-			echo "Do not know how to [gz|z]cat this file"
+			_ 'Do not know how to [gz|z]cat this file\n'
 		else
 			/bin/rm -f $tmp_files 
 			$disp "$f" | $AWK -f $libexecdir/amplot.awk $para
@@ -139,7 +146,7 @@ do
 			fi
 		fi
 	else 				# check if file has been compressed
-		echo "No such file $i or $i.*[zZ]"
+		_ 'No such file %s or %s\n' "$i" "$i.*[zZ]"
 	fi
 done
 
@@ -147,7 +154,7 @@ done
 
 if [ "$list" != "" ] ; then		# now compress the files we worked on
 # comment out next line if you do not want compression at the end
-	echo "Compressing $list"
+	_ 'Compressing %s\n' "$list"
 	$COMPRESS $list
 fi
 exit 0

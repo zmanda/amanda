@@ -191,47 +191,6 @@ main() {
     ]
 )
 
-dnl Find out how {awk,gawk,nawk,mawk} likes to assign variables, if it
-dnl can do so at all.
-AC_DEFUN([AMANDA_PROG_AWK_VAR],
-    [
-	AC_REQUIRE([AC_PROG_AWK])
-	AC_CACHE_CHECK(
-	    [for $AWK command line variable assignment],
-	    amanda_cv_awk_var_assignment,
-	    [
-		echo 'BEGIN{print i; exit}' > conftest.awk
-		result=`$AWK -f conftest.awk i=xx | wc -c`
-		if test "$result" -le 1; then
-		    result=`$AWK -f conftest.awk -v i=xx | wc -c`
-		    if test "$result" -le 1; then
-			amanda_cv_awk_var_assignment=no
-		    else
-			amanda_cv_awk_var_assignment="yes with -v"
-		    fi
-		else
-		    amanda_cv_awk_var_assignment="yes"
-		fi
-		rm -fr conftest.awk
-	    ]
-	)
-	AWK_VAR_ASSIGNMENT_OPT=
-	case "$amanda_cv_awk_var_assignment" in
-	    no)
-		HAVE_AWK_WITH_VAR=no
-		;;
-	    yes)
-		HAVE_AWK_WITH_VAR=yes
-		;;
-	    "yes with -v")
-		HAVE_AWK_WITH_VAR=yes
-		AWK_VAR_ASSIGNMENT_OPT=-v
-		;;
-	esac
-	AC_SUBST(AWK_VAR_ASSIGNMENT_OPT)
-    ]
-)	
-
 dnl Check for the one or two argument version of gettimeofday.
 AC_DEFUN([AMANDA_FUNC_GETTIMEOFDAY_ARGS],
     [

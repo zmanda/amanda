@@ -1551,12 +1551,6 @@ dnl Check for programs.
 AC_PATH_PROGS(AR,ar,,$LOCSYSPATH)
 
 AC_PROG_AWK
-AMANDA_PROG_AWK_VAR
-if test "x$amanda_cv_awk_var_assignment" = xno; then
-    NO_AMPLOT_MODE=true
-    AC_MSG_WARN([*** Your $awk cannot do command line variable assignment.  Amplot will not be installed.])
-fi
-
 AC_PROG_YACC
 AC_PATH_PROGS(CAT,cat,,$LOCSYSPATH)
 if test -z "$CAT"; then
@@ -1566,11 +1560,26 @@ AC_PATH_PROGS(COMPRESS,compress,,$LOCSYSPATH)
 AC_PATH_PROGS(DD,dd,,$LOCSYSPATH)
 AC_PATH_PROGS(GETCONF,getconf,,$SYSPATH)
 
-AC_PATH_PROGS(GNUPLOT,gnuplot,,$LOCSYSPATH)
-if test -z "$GNUPLOT"; then
-    NO_AMPLOT_MODE=true
-    AC_MSG_WARN([*** You do not have gnuplot.  Amplot will not be installed.])
+AC_ARG_WITH(gnuplot,
+AS_HELP_STRING([--with-gnuplot=PATH],
+               [use gnuplot executable at PATH in amplot]),
+    [ ac_with_gnuplot=$withval; ],
+    [ ac_with_gnuplot=maybe; ])
+
+if test "$ac_with_gnuplot" = "yes" -o "$ac_with_gnuplot" = "maybe"; then
+    AC_PATH_PROGS(GNUPLOT,gnuplot,,$LOCSYSPATH)
+else
+    if test "$ac_with_gnuplot" != "no"; then
+        if test -x "$ac_with_gnuplot"; then
+            GNUPLOT="$ac_with_gnuplot";
+        else
+            AC_MSG_WARN([Specified gnuplot of $ac_with_gnuplot isn't])
+            AC_MSG_WARN([executable, searching for an alternative.])
+	    AC_PATH_PROGS(GNUPLOT,gnuplot,,$LOCSYSPATH)
+        fi
+    fi
 fi
+AC_SUBST(GNUPLOT)
 
 AC_PATH_PROGS(GNUTAR,gtar gnutar tar,,$LOCSYSPATH)
 if test ! -z "$GNUTAR"; then
