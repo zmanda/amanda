@@ -1,4 +1,8 @@
 2007-04-05  Dustin J. Mitchell <dustin@zmanda.com>
+	* contrib/macosx/org.amanda.amandad.bsd*.plist: updated to use username
+	  'amandabackup'
+
+2007-04-05  Dustin J. Mitchell <dustin@zmanda.com>
 	* amplot/amplot.sh.in configure.in config/acinclude.m4i:
 	  move checks for gnuplot, awk to runtime for easier packaging;
 	  add fake gettext functions to ease the transition to
