@@ -74,7 +74,6 @@ typedef struct REMOVE_ITEM
 /* state */
 static int from_amandad;
 static char local_hostname[MAX_HOSTNAME_LENGTH+1];	/* me! */
-static char *remote_hostname = NULL;			/* the client */
 static char *dump_hostname = NULL;		/* machine we are restoring */
 static char *disk_name;				/* disk we are restoring */
 char *qdisk_name = NULL;			/* disk we are restoring */
@@ -82,7 +81,6 @@ static char *target_date = NULL;
 static disklist_t disk_list;			/* all disks in cur config */
 static find_result_t *output_find = NULL;
 static g_option_t *g_options = NULL;
-static int cmdfdin, cmdfdout;
 
 static int amindexd_debug = 0;
 
@@ -510,19 +508,6 @@ is_dump_host_valid(
 	reply(501, "Must set config before setting host.");
 	return NULL;
     }
-
-#if 0
-    /* only let a client restore itself for now unless it is the server */
-    if (strcasecmp(remote_hostname, local_hostname) == 0)
-	return 0;
-    if (strcasecmp(remote_hostname, host) != 0)
-    {
-	reply(501,
-	      "You don't have the necessary permissions to set dump host to %s.",
-	      buf1);
-	return NULL;
-    }
-#endif
 
     /* check that the config actually handles that host */
     ihost = lookup_host(host);
@@ -1117,18 +1102,18 @@ main(
     char **	argv)
 {
     char *line = NULL, *part = NULL;
-    char *s, *fp;
+    char *s;
     int ch;
     char *cmd_undo, cmd_undo_ch;
     socklen_t socklen;
-    struct sockaddr_in his_addr;
-    struct hostent *his_name;
+    struct sockaddr_storage his_addr;
     char *arg = NULL;
     char *cmd;
     size_t len;
     int user_validated = 0;
     char *errstr = NULL;
     char *pgm = "amindexd";		/* in case argv[0] is not set */
+    char his_hostname[MAX_HOSTNAME_LENGTH];
 
     safe_fd(DATA_FD_OFFSET, 2);
     safe_cd();
@@ -1213,7 +1198,7 @@ main(
     }
     else {
 	from_amandad = 0;
-	safe_fd(-1, 0);
+	safe_fd(dbfd(), 1);
     }
 
     if (argc > 0) {
@@ -1237,56 +1222,29 @@ main(
 
 
     if(from_amandad == 0) {
-	if(amindexd_debug) {
-	    /*
-	     * Fake the remote address as the local address enough to get
-	     * through the security check.
-	     */
-	    his_name = gethostbyname(local_hostname);
-	    if(his_name == NULL) {
-		error("gethostbyname(%s) failed\n", local_hostname);
-                /*NOTREACHED*/
-	    }
-	    assert((sa_family_t)his_name->h_addrtype == (sa_family_t)AF_INET);
-	    his_addr.sin_family = (sa_family_t)his_name->h_addrtype;
-	    his_addr.sin_port = (in_port_t)htons(0);
-	    memcpy((void *)&his_addr.sin_addr.s_addr,
-		   (void *)his_name->h_addr_list[0], 
-                   (size_t)his_name->h_length);
-	} else {
+	if(!amindexd_debug) {
 	    /* who are we talking to? */
 	    socklen = sizeof (his_addr);
 	    if (getpeername(0, (struct sockaddr *)&his_addr, &socklen) == -1)
 		error("getpeername: %s", strerror(errno));
+
+	    /* Try a reverse (IP->hostname) resolution, and fail if it does
+	     * not work -- this is a basic security check */
+	    if (getnameinfo((struct sockaddr *)&his_addr, SS_LEN(&his_addr),
+			    his_hostname, sizeof(his_hostname),
+			    NULL, 0,
+			    0)) {
+		error(_("getnameinfo(%s): hostname lookup failed"),
+		      str_sockaddr(&his_addr));
+		/*NOTREACHED*/
+	    }
 	}
-	if ((his_addr.sin_family != (sa_family_t)AF_INET)
-		|| (ntohs(his_addr.sin_port) == 20)) {
-	    error("connection rejected from %s family %d port %d",
-		  inet_ntoa(his_addr.sin_addr), his_addr.sin_family,
-		  htons(his_addr.sin_port));
-	    /*NOTREACHED*/
-	}
-	if ((his_name = gethostbyaddr((char *)&(his_addr.sin_addr),
-				      sizeof(his_addr.sin_addr),
-				      AF_INET)) == NULL) {
-	    error("gethostbyaddr(%s): hostname lookup failed",
-		  inet_ntoa(his_addr.sin_addr));
-	    /*NOTREACHED*/
-	}
-	fp = s = stralloc(his_name->h_name);
-	ch = *s++;
-	while(ch && ch != '.') ch = *s++;
-	s[-1] = '\0';
-	remote_hostname = newstralloc(remote_hostname, fp);
-	s[-1] = (char)ch;
-	amfree(fp);
+
+	/* Set up the input and output FILEs */
 	cmdout = stdout;
 	cmdin = stdin;
     }
     else {
-	cmdfdout  = DATA_FD_OFFSET + 0;
-	cmdfdin   = DATA_FD_OFFSET + 1;
-
 	/* read the REQ packet */
 	for(; (line = agets(stdin)) != NULL; free(line)) {
 #define sc "OPTIONS "
@@ -1319,15 +1277,15 @@ main(
 	fclose(stdin);
 	fclose(stdout);
 	
-	cmdout = fdopen(cmdfdout, "a");
+	cmdout = fdopen(DATA_FD_OFFSET + 0, "a");
 	if (!cmdout) {
-	    error("amindexd: Can't fdopen(cmdfdout): %s", strerror(errno));
+	    error(_("amindexd: Can't fdopen(%d): %s"), DATA_FD_OFFSET + 0, strerror(errno));
 	    /*NOTREACHED*/
 	}
 
-	cmdin = fdopen(cmdfdin, "r");
+	cmdin = fdopen(DATA_FD_OFFSET + 1, "r");
 	if (!cmdin) {
-	    error("amindexd: Can't fdopen(cmdfdin): %s", strerror(errno));
+	    error(_("amindexd: Can't fdopen(%d): %s"), DATA_FD_OFFSET + 1, strerror(errno));
 	    /*NOTREACHED*/
 	}
     }
@@ -1424,7 +1382,8 @@ main(
 
 	amfree(errstr);
 	if (!user_validated && strcmp(cmd, "SECURITY") == 0 && arg) {
-	    user_validated = check_security(
+	    user_validated = amindexd_debug ||
+				check_security(
 					(struct sockaddr_storage *)&his_addr,
 					arg, 0, &errstr);
 	    if(user_validated) {

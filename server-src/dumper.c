@@ -252,6 +252,9 @@ main(
     uid_t ruid;
     int    new_argc,   my_argc;
     char **new_argv, **my_argv;
+    struct addrinfo hints;
+    int res;
+    struct addrinfo *gaires = NULL;
 
     safe_fd(-1, 0);
 
@@ -460,9 +463,24 @@ main(
 	        /*NOTREACHED*/
 	    }
 
-	    if ((gethostbyname("localhost")) == NULL) {
-		errstr = newstralloc(errstr,
-				     "could not resolve localhost");
+	    /* Double-check that 'localhost' resolves properly */
+#ifdef WORKING_IPV6
+	    hints.ai_flags = AI_CANONNAME | AI_V4MAPPED | AI_ALL;
+	    hints.ai_family = AF_UNSPEC;
+#else
+	    hints.ai_flags = AI_CANONNAME;
+	    hints.ai_family = AF_INET;
+#endif
+	    hints.ai_socktype = 0;
+	    hints.ai_protocol = 0;
+	    hints.ai_addrlen = 0;
+	    hints.ai_addr = NULL;
+	    hints.ai_canonname = NULL;
+	    hints.ai_next = NULL;
+	    if ((res = getaddrinfo("localhost", NULL, &hints, &gaires)) != 0) {
+		errstr = newvstrallocf(errstr,
+				     _("could not resolve localhost: %s"),
+				     gai_strerror(res));
 		q = squotef(errstr);
 		putresult(FAILED, "%s %s\n", handle, q);
 		log_add(L_FAIL, "%s %s %s %d [%s]", hostname, qdiskname,
@@ -470,6 +488,8 @@ main(
 		amfree(q);
 		break;
 	    }
+	    if (gaires) freeaddrinfo(gaires);
+
 	    /* connect outf to chunker/taper port */
 
 	    outfd = stream_client("localhost", taper_port,

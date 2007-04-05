@@ -722,8 +722,8 @@ static void
 krb5_init(void)
 {
     static int beenhere = 0;
-    struct hostent *he;
     char *p;
+    char *myfqhostname=NULL;
 
     if (beenhere)
 	return;
@@ -753,11 +753,17 @@ krb5_init(void)
 
     gethostname(myhostname, SIZEOF(myhostname) - 1);
     myhostname[SIZEOF(myhostname) - 1] = '\0';
+
     /*
-     * In case it isn't fully qualified, do a DNS lookup.
+     * In case it isn't fully qualified, do a DNS lookup.  Ignore
+     * any errors (this is best-effort).
      */
-    if ((he = gethostbyname(myhostname)) != NULL)
-	strncpy(myhostname, he->h_name, SIZEOF(myhostname) - 1);
+    if (try_resolving_hostname(myhostname, &myfqhostname) == 0
+	&& myfqhostname != NULL) {
+	strncpy(myhostname, myfqhostname, SIZEOF(myhostname)-1);
+	myhostname[SIZEOF(myhostname)-1] = '\0';
+	amfree(myfqhostname);
+    }
 
     /*
      * Lowercase the results.  We assume all host/ principals will be

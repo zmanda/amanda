@@ -68,3 +68,73 @@ else
         "${sbindir}/amdd" "${@}"
     }
 fi
+################################################################################
+# You may want to customize these values
+################################################################################
+
+# These are the defaults discovered by configure when Amanda was installed.
+# They can be overridden here, or by by 'mt_binary' and 'mtx_binary', 
+# respectively, in the changerfile (currently only for chg-zd-mtx.sh and
+# chg-manual.sh).
+
+MT=@MT@
+MTX=@MTX@
+
+# This is the flag used to specify a device filename to 'mt', usually '-f'
+MTF=@MT_FILE_FLAG@
+
+################################################################################
+# No user-level customization should be required beyond this point.
+################################################################################
+
+####
+# Set up paths, including PATH for finding amanda executables
+
+PATH="$PATH:@sbindir@:@libexecdir@"
+prefix="@prefix@"
+exec_prefix="@exec_prefix@"
+sbindir="@sbindir@"
+libexecdir="@libexecdir@"
+
+####
+# Gettext
+
+#+
+# Function to:
+#    Simplify gettext usage by allowing printf format
+#    strings for translators, use _() identifier for
+#    xgettext extraction similar to "C" usage and
+#    collapsing "printf `gettext fmt` ...", which is
+#    used everywhere, into one function.
+#-
+function _() {
+	fmt=`gettext -d amanda "$1"`
+	shift
+	printf "$fmt" $*
+}
+
+####
+# Eponymous functions to access various amanda apps
+
+# (see bug #1005 for the eventual demise of ammt/amdd)
+if test "@USE_VERSION_SUFFIXES@" = "yes"; then
+    function amgetconf() {
+        "${sbindir}/amgetconf-@VERSION@" "${@}"
+    }
+    function ammt() {
+        "${sbindir}/ammt-@VERSION@" "${@}"
+    }
+    function amdd() {
+        "${sbindir}/amdd-@VERSION@" "${@}"
+    }
+else
+    function amgetconf() {
+        "${sbindir}/amgetconf" "${@}"
+    }
+    function amdd() {
+        "${sbindir}/amdd" "${@}"
+    }
+    function amdd() {
+        "${sbindir}/amdd" "${@}"
+    }
+fi

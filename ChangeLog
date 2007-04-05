@@ -1,3 +1,13 @@
+2007-04-05  Dustin J. Mitchell <dustin@zmanda.com> 
+	* server-src/amindex.c: fix bug where debug fd was closed by safe_fd,
+	  remove remote_hostname, rewrite to use getaddrinfo/getnameinfo
+	* server-src/dumper.c server-src/amcheck.c recover-src/set_commands.c:
+	  use getaddrinfo/getnameinfo
+	* common-src/security-util.[ch]: add try_resolving_hostname()
+	* common-src/ssh-security.c common-src/rsh-security.c:
+	  use try_resolving_hostname, rewrite to avoid gethostbyname
+	* common-src/krb5-security.c: use getaddrinfo instead of gethostbyname
+
 2007-04-05  Dustin J. Mitchell <dustin@zmanda.com>
 	* changer-src/chg-lib.sh.in changer-src/chg-mtx.sh.in
 	  changer-src/chg-manual.sh.in changer-src/chg-zd-mtx.sh.in

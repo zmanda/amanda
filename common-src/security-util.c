@@ -2702,3 +2702,39 @@ check_addrinfo_give_name(
     return 0;
 }
 
+/* Try resolving the hostname, just to catch any potential
+ * problems down the road.  This is used from most security_connect
+ * methods, many of which also want the canonical name.  Returns 
+ * 0 on success.
+ */
+int
+try_resolving_hostname(
+	const char *hostname,
+	char **canonname)
+{
+    struct addrinfo hints;
+    struct addrinfo *gaires;
+    int res;
+
+#ifdef WORKING_IPV6
+    hints.ai_flags = AI_CANONNAME | AI_V4MAPPED | AI_ALL;
+    hints.ai_family = AF_UNSPEC;
+#else
+    hints.ai_flags = AI_CANONNAME;
+    hints.ai_family = AF_INET;
+#endif
+    hints.ai_socktype = 0;
+    hints.ai_protocol = 0;
+    hints.ai_addrlen = 0;
+    hints.ai_addr = NULL;
+    hints.ai_canonname = NULL;
+    hints.ai_next = NULL;
+    if ((res = getaddrinfo(hostname, NULL, &hints, &gaires)) != 0) {
+	return -1;
+    }
+    if (canonname && gaires && gaires->ai_canonname)
+	*canonname = stralloc(gaires->ai_canonname);
+    if (gaires) freeaddrinfo(gaires);
+
+    return 0;
+}

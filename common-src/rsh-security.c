@@ -120,7 +120,6 @@ rsh_connect(
     void *		datap)
 {
     struct sec_handle *rh;
-    struct hostent *he;
     char *amandad_path=NULL, *client_username=NULL;
 
     assert(fn != NULL);
@@ -136,13 +135,13 @@ rsh_connect(
     rh->ev_timeout = NULL;
     rh->rc = NULL;
 
-    if ((he = gethostbyname(hostname)) == NULL) {
+    rh->hostname = NULL;
+    if (try_resolving_hostname(hostname, &rh->hostname)) {
 	security_seterror(&rh->sech,
 	    "%s: could not resolve hostname", hostname);
 	(*fn)(arg, &rh->sech, S_ERROR);
 	return;
     }
-    rh->hostname = stralloc(he->h_name);	/* will be replaced */
     rh->rs = tcpma_stream_client(rh, newhandle++);
 
     if (rh->rs == NULL)

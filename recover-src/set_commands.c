@@ -82,7 +82,7 @@ set_host(
     const char *host)
 {
     char *cmd = NULL;
-    struct hostent *hp;
+    struct hostent *hp = NULL;
     char **hostp;
     int found_host = 0;
     char *uqhost = unquote_string(host);
@@ -93,19 +93,23 @@ set_host(
 	return;
     }
 
+    /*
+     * The idea here is to try as many permutations of the hostname
+     * as we can imagine.  The server will reject anything it doesn't
+     * recognize.
+     */
+
     cmd = stralloc2("HOST ", uqhost);
     if (converse(cmd) == -1)
 	exit(1);
     if (server_happy())
-    {
 	found_host = 1;
-    }
-    else
-    {
-	/*
-	 * Try converting the given host to a fully qualified name
-	 * and then try each of the aliases.
-	 */
+
+    /*
+     * Try converting the given host to a fully qualified, canonical
+     * name.
+     */
+    if (!found_host) {
 	if ((hp = gethostbyname(uqhost)) != NULL) {
 	    host = hp->h_name;
 	    printf("Trying host %s ...\n", host);
@@ -113,28 +117,65 @@ set_host(
 	    if (converse(cmd) == -1)
 		exit(1);
 	    if(server_happy())
-	    {
 		found_host = 1;
-	    }
-	    else
+	}
+    }
+
+    /*
+     * Since we have them, try any CNAMEs that were traversed from uqhost
+     * to the canonical name (this assumes gethostbyname was called above)
+     */
+    if (!found_host) {
+	if (hp) {
+	    for (hostp = hp->h_aliases; (host = *hostp) != NULL; hostp++)
 	    {
-	        for (hostp = hp->h_aliases; (host = *hostp) != NULL; hostp++)
-	        {
-		    printf("Trying host %s ...\n", host);
-		    cmd = newstralloc2(cmd, "HOST ", host);
-		    if (converse(cmd) == -1)
-		        exit(1);
-		    if(server_happy())
-		    {
-		        found_host = 1;
-		        break;
-		    }
+		printf(_("Trying host %s ...\n"), host);
+		cmd = newstralloc2(cmd, "HOST ", host);
+		if (converse(cmd) == -1)
+		    exit(1);
+		if(server_happy())
+		{
+		    found_host = 1;
+		    break;
 		}
 	    }
 	}
     }
-    if(found_host)
-    {
+
+    /*
+     * gethostbyname() will not return a canonical name for a host with no
+     * IPv4 addresses, so use getaddrinfo() (if supported)
+     */
+#ifdef WORKING_IPV6
+    if (!found_host) {
+	struct addrinfo hints;
+	struct addrinfo *gaires = NULL;
+	int res;
+
+	hints.ai_flags = AI_CANONNAME;
+	hints.ai_family = AF_UNSPEC;
+	hints.ai_socktype = 0;
+	hints.ai_protocol = 0;
+	hints.ai_addrlen = 0;
+	hints.ai_addr = NULL;
+	hints.ai_canonname = NULL;
+	hints.ai_next = NULL;
+	if ((res = getaddrinfo(uqhost, NULL, &hints, &gaires)) == 0) {
+	    if (gaires && (host = gaires->ai_canonname)) {
+		printf(_("Trying host %s ...\n"), host);
+		cmd = newstralloc2(cmd, "HOST ", host);
+		if (converse(cmd) == -1)
+		    exit(1);
+		if(server_happy())
+		    found_host = 1;
+	    }
+	}
+
+	if (gaires) freeaddrinfo(gaires);
+    }
+#endif
+
+    if(found_host) {
 	dump_hostname = newstralloc(dump_hostname, host);
 	amfree(disk_name);
 	amfree(mount_point);
