@@ -73,6 +73,15 @@
 2007-03-30  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/amanda.h: Define a _() macro.
 
+2007-03-28  Dustin J. Mitchell <dustin@zmanda.com>
+	* common/amanda.h: fix typo in SS_SET_INADDR_ANY for non-IPv6 
+	  machines
+	* gnulib/regenerate/regenerate: update to include visibility
+	  and lock modules (See 2007-03-14)
+	* recover-src/extract_list.c common-src/krb4-security.c
+	  common-src/event.c common-src/security-util.c: use
+	  SELECT_ARG_TYPE instead of fd_set
+
 2007-03-27  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/krb5-security.c: Fix for krb5 and IPv6.
 	* common-src/security-util.c: Fix for krb5 and IPv6.
@@ -88,17 +97,12 @@
 2007-03-27  Jean-Louis Martineau <martineau@zmanda.com>
 	Merge from zmanda EXT.
 
-2007-03-28  Dustin J. Mitchell <dustin@zmanda.com>
-	* common/amanda.h: fix typo in SS_SET_INADDR_ANY for non-IPv6 
-	  machines
-	* gnulib/regenerate/regenerate: update to include visibility
-	  and lock modules (See 2007-03-14)
-	* recover-src/extract_list.c common-src/krb4-security.c
-	  common-src/event.c common-src/security-util.c: use
-	  SELECT_ARG_TYPE instead of fd_set
-
 2007-03-27  Jean-Louis Martineau <martineau@zmanda.com>
 	* Makefile.am (EXTRA_DIST): Remove contrib/gnulib-update-current.
+
+2007-03-27  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/reporter.c: Ouput quoted diskname in "DUMP SUMMARY"
+	  section.
 
 2007-03-23  Jean-Louis Martineau <martineau@zmanda.com>
 	* changer-src/chg-zd-mtx.sh.in: Exit with a message if the
@@ -137,15 +141,11 @@
 	  struct sockaddr, use it in a few locations where incorrect
 	  lengths were being passed.
 	- New script for rebuilding gnulib from scratch; current
-	  gnulib is from 2007-01-05.
+	  gnulib is from "cvs update -D '2007-01-31 13:12:51 -0600'"
 
 2007-03-12  Jean-Louis Martineau <martineau@zmanda.com>
 	* recover-src/set_commands.c (set_tape): Don't amfree(tape).
 	* oldrecover-src/set_commands.c (set_tape): Don't amfree(tape).
-
-2007-03-27  Jean-Louis Martineau <martineau@zmanda.com>
-	* server-src/reporter.c: Ouput quoted diskname in "DUMP SUMMARY"
-	  section.
 
 2007-02-22  Jean-Louis Martineau <martineau@zmanda.com>
 	* changer-src/scsi-linux.c, common-src/security-util.c,
