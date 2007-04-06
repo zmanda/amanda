@@ -1,3 +1,6 @@
+2007-04-06  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/tapelist.c (append_to_tape): Don't call dump_tapelist.
+
 2007-04-05  Dustin J. Mitchell <dustin@zmanda.com>
 	* contrib/macosx/org.amanda.amandad.bsd*.plist: updated to use username
 	  'amandabackup'

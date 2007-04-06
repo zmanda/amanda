@@ -113,7 +113,6 @@ append_to_tapelist(
 		amfree(cur_tape->files);
 		cur_tape->files = newfiles;
 	    }
-	    dump_tapelist(tapelist);
 	    return(tapelist);
 	}
     }
@@ -139,7 +138,6 @@ append_to_tapelist(
 	cur_tape->next = new_tape;
     }
 
-    dump_tapelist(tapelist);
     return(tapelist);
 }
 
