@@ -826,7 +826,7 @@ start_server_check(
 		testtape = 0;
 		do_tapechk = 0;
 	    }
-	} else if (strncmp(tapename, "null:", 5) == 0) {
+	} else if (strncmp_const(tapename, "null:") == 0) {
 	    fprintf(outf,
 		    "WARNING: tapedev is %s, dumps will be thrown away\n",
 		    tapename);
@@ -1398,7 +1398,7 @@ start_host(
 	return;
     }
 
-    if (strncmp (hostp->hostname,"localhost",9) == 0) {
+    if (strcmp(hostp->hostname,"localhost") == 0) {
 	fprintf(outf,
                     "WARNING: Usage of fully qualified hostname recommended for Client %s.\n",
                     hostp->hostname);
@@ -1524,6 +1524,8 @@ start_host(
 	    }
 	    if(strncmp(dp->program,"DUMP",4) == 0 || 
 	       strncmp(dp->program,"GNUTAR",6) == 0) {
+	    if(strcmp(dp->program,"DUMP") == 0 || 
+	       strcmp(dp->program,"GNUTAR") == 0) {
 		if(strcmp(dp->program, "DUMP") == 0 &&
 		   !am_has_feature(hostp->features, fe_program_dump)) {
 		    fprintf(outf, "ERROR: %s:%s does not support DUMP.\n",
@@ -1772,15 +1774,11 @@ handle_result(
 	    s[-2] = '\0';
 	}
 
-#define sc "OPTIONS "
-	if(strncmp(line, sc, SIZEOF(sc)-1) == 0) {
-#undef sc
+	if(strncmp_const(line, "OPTIONS ") == 0) {
 
-#define sc "features="
-	    t = strstr(line, sc);
+	    t = strstr(line, "features=");
 	    if(t != NULL && (isspace((int)t[-1]) || t[-1] == ';')) {
-		t += SIZEOF(sc)-1;
-#undef sc
+		t += SIZEOF("features=")-1;
 		am_release_feature_set(hostp->features);
 		if((hostp->features = am_string_to_feature(t)) == NULL) {
 		    fprintf(outf, "ERROR: %s: bad features value: %s\n",
@@ -1791,18 +1789,12 @@ handle_result(
 	    continue;
 	}
 
-#define sc "OK "
-	if(strncmp(line, sc, SIZEOF(sc)-1) == 0) {
+	if(strncmp_const(line, "OK ") == 0) {
 	    continue;
-#undef sc
 	}
 
-#define sc "ERROR "
-	if(strncmp(line, sc, SIZEOF(sc)-1) == 0) {
-	    t = line + SIZEOF(sc) - 1;
-	    tch = t[-1];
-#undef sc
-
+	t = line;
+	if(strncmp_const_skip(line, "ERROR ", t, tch) == 0) {
 	    skip_whitespace(t, tch);
 	    /*
 	     * If the "error" is that the "noop" service is unknown, it

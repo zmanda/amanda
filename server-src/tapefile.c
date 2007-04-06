@@ -362,14 +362,10 @@ parse_tapeline(
 
     skip_whitespace(s, ch);
     tp->reuse = 1;
-#define sc "reuse"
-    if(strncmp(s - 1, sc, SIZEOF(sc)-1) == 0)
+    if(strncmp_const(s - 1, "reuse") == 0)
 	tp->reuse = 1;
-#undef sc
-#define sc "no-reuse"
-    if(strncmp(s - 1, sc, SIZEOF(sc)-1) == 0)
+    if(strncmp_const(s - 1, "no-reuse") == 0)
 	tp->reuse = 0;
-#undef sc
 
     return tp;
 }

@@ -1606,13 +1606,10 @@ import_db(
     ch = *s++;
 
     hdr = "version";
-#define sc "CURINFO Version"
-    if(strncmp(s - 1, sc, SIZEOF(sc)-1) != 0) {
+    if(strncmp_const_skip(s - 1, "CURINFO Version", s, ch) != 0) {
 	goto bad_header;
     }
-    s += SIZEOF(sc)-1;
     ch = *s++;
-#undef sc
     skip_whitespace(s, ch);
     if(ch == '\0'
        || sscanf(s - 1, "%d.%d.%d", &vers_maj, &vers_min, &vers_patch) != 3) {
@@ -1640,13 +1637,10 @@ import_db(
 
     hdr = "CONF";
     skip_whitespace(s, ch);			/* find the org keyword */
-#define sc "CONF"
-    if(ch == '\0' || strncmp(s - 1, sc, SIZEOF(sc)-1) != 0) {
+    if(ch == '\0' || strncmp_const_skip(s - 1, "CONF", s, ch) != 0) {
 	goto bad_header;
     }
-    s += SIZEOF(sc)-1;
     ch = *s++;
-#undef sc
 
     hdr = "org";
     skip_whitespace(s, ch);			/* find the org string */
@@ -1722,11 +1716,7 @@ import_one(void)
     ch = *s++;
 
     skip_whitespace(s, ch);
-#define sc "host:"
-    if(ch == '\0' || strncmp(s - 1, sc, SIZEOF(sc)-1) != 0) goto parse_err;
-    s += SIZEOF(sc)-1;
-    ch = s[-1];
-#undef sc
+    if(ch == '\0' || strncmp_const_skip(s - 1, "host:", s, ch) != 0) goto parse_err;
     skip_whitespace(s, ch);
     if(ch == '\0') goto parse_err;
     fp = s-1;
@@ -1743,11 +1733,7 @@ import_one(void)
       ch = *s++;
       skip_whitespace(s, ch);
     }
-#define sc "disk:"
-    if(strncmp(s - 1, sc, SIZEOF(sc)-1) != 0) goto parse_err;
-    s += SIZEOF(sc)-1;
-    ch = s[-1];
-#undef sc
+    if(strncmp_const_skip(s - 1, "disk:", s, ch) != 0) goto parse_err;
     skip_whitespace(s, ch);
     if(ch == '\0') goto parse_err;
     fp = s-1;
@@ -1804,11 +1790,11 @@ import_one(void)
     while(1) {
 	amfree(line);
 	if((line = impget_line()) == NULL) goto shortfile_err;
-	if(strncmp(line, "//", 2) == 0) {
+	if(strncmp_const(line, "//") == 0) {
 	    /* end of record */
 	    break;
 	}
-	if(strncmp(line, "history:", 8) == 0) {
+	if(strncmp_const(line, "history:") == 0) {
 	    /* end of record */
 	    break;
 	}
@@ -1818,13 +1804,9 @@ import_one(void)
 	ch = *s++;
 
 	skip_whitespace(s, ch);
-#define sc "stats:"
-	if(ch == '\0' || strncmp(s - 1, sc, SIZEOF(sc)-1) != 0) {
+	if(ch == '\0' || strncmp_const_skip(s - 1, "stats:", s, ch) != 0) {
 	    goto parse_err;
 	}
-	s += SIZEOF(sc)-1;
-	ch = s[-1];
-#undef sc
 
 	skip_whitespace(s, ch);
 	if(ch == '\0' || sscanf(s - 1, "%d", &level) != 1) {
@@ -1902,13 +1884,10 @@ import_one(void)
 	memset(&onehistory, 0, SIZEOF(onehistory));
 	s = line;
 	ch = *s++;
-#define sc "history:"
-	if(strncmp(line, sc, SIZEOF(sc)-1) != 0) {
+	if(strncmp_const_skip(line, "history:", s, ch) != 0) {
 	    break;
 	}
-	s += SIZEOF(sc)-1;
-	ch = s[-1];
-#undef sc
+
 	skip_whitespace(s, ch);
 	if(ch == '\0' || sscanf((s - 1), "%d", &onehistory.level) != 1) {
 	    break;

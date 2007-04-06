@@ -153,9 +153,7 @@ main(
 	if (line[0] == '\0')
 	    continue;
 
-#define sc "OPTIONS "
-	if(strncmp(line, sc, SIZEOF(sc)-1) == 0) {
-#undef sc
+	if(strncmp_const(line, "OPTIONS ") == 0) {
 	    g_options = parse_g_options(line+8, 1);
 	    if(!g_options->hostname) {
 		g_options->hostname = alloc(MAX_HOSTNAME_LENGTH+1);
@@ -212,7 +210,7 @@ main(
 	    s[-1] = '\0';			/* terminate the program name */
 	}
 
-	if(strncmp(program, "CALCSIZE", 8) == 0) {
+	if(strncmp_const(program, "CALCSIZE") == 0) {
 	    skip_whitespace(s, ch);		/* find program name */
 	    if (ch == '\0') {
 		goto err;			/* no program */
@@ -257,11 +255,7 @@ main(
 	skip_integer(s, ch);
 
 	skip_whitespace(s, ch);
-#define sc "OPTIONS "
-	if (ch && strncmp (s - 1, sc, SIZEOF(sc)-1) == 0) {
-	    s += SIZEOF(sc)-1;
-	    ch = s[-1];
-#undef sc
+	if (ch && strncmp_const_skip(s - 1, "OPTIONS ", s, ch) == 0) {
 	    skip_whitespace(s, ch);		/* find the option string */
 	    if(ch == '\0') {
 		goto err;			/* bad options string */
@@ -819,7 +813,7 @@ check_disk(
     dbprintf(("%s: device %s\n", debug_prefix_time(NULL), qdevice));
 
     /* skip accessability test if this is an AFS entry */
-    if(strncmp(device, "afs:", 4) != 0) {
+    if(strncmp_const(device, "afs:") != 0) {
 #ifdef CHECK_FOR_ACCESS_WITH_OPEN
 	access_result = open(device, O_RDONLY);
 	access_type = "open";

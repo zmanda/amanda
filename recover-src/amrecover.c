@@ -732,10 +732,8 @@ bad_nak:
 	    tok_end = tok + strlen(tok);
 	    while((p = strchr(tok, ';')) != NULL) {
 		*p++ = '\0';
-#define sc "features="
-		if(strncmp(tok, sc, sizeof(sc)-1) == 0) {
-		    tok += sizeof(sc) - 1;
-#undef sc
+		if(strncmp_const(tok, "features=") == 0) {
+		    tok += SIZEOF("features=") - 1;
 		    am_release_feature_set(their_features);
 		    if((their_features = am_string_to_feature(tok)) == NULL) {
 			errstr = newvstralloc(errstr,

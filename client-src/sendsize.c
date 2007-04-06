@@ -191,9 +191,7 @@ main(
     for(; (line = agets(stdin)) != NULL; free(line)) {
 	if (line[0] == '\0')
 	    continue;
-#define sc "OPTIONS "
-	if(strncmp(line, sc, SIZEOF(sc)-1) == 0) {
-#undef sc
+	if(strncmp_const(line, "OPTIONS ") == 0) {
 	    g_options = parse_g_options(line+8, 1);
 	    if(!g_options->hostname) {
 		g_options->hostname = alloc(MAX_HOSTNAME_LENGTH+1);
@@ -250,7 +248,7 @@ main(
 	s[-1] = '\0';
 
 	program_is_backup_api=0;
-	if(strncmp(prog, "CALCSIZE", 8) == 0) {
+	if(strncmp_const(prog, "CALCSIZE") == 0) {
 	    skip_whitespace(s, ch);		/* find the program name */
 	    if(ch == '\0') {
 		err_extra = stralloc("no program name");
@@ -352,7 +350,7 @@ main(
 
 	    skip_whitespace(s, ch);		/* find the parameters */
 	    if(ch != '\0') {
-		if(strncmp(s-1, "OPTIONS |;",10) == 0) {
+		if(strncmp_const(s-1, "OPTIONS |;") == 0) {
 		    options = parse_options(s + 8,
 					    disk,
 					    amdevice,
@@ -363,22 +361,22 @@ main(
 		    options = alloc(SIZEOF(option_t));
 		    init_options(options);
 		    while (ch != '\0') {
-			if(strncmp(s-1, "exclude-file=", 13) == 0) {
+			if(strncmp_const(s-1, "exclude-file=") == 0) {
 			    qlist = unquote_string(s+12);
 			    options->exclude_file =
 				append_sl(options->exclude_file, qlist);
 			    amfree(qlist);
-			} else if(strncmp(s-1, "exclude-list=", 13) == 0) {
+			} else if(strncmp_const(s-1, "exclude-list=") == 0) {
 			    options->exclude_list =
 				append_sl(options->exclude_list, qlist);
 			    qlist = unquote_string(s+12);
 			    amfree(qlist);
-			} else if(strncmp(s-1, "include-file=", 13) == 0) {
+			} else if(strncmp_const(s-1, "include-file=") == 0) {
 			    options->include_file =
 				append_sl(options->include_file, qlist);
 			    qlist = unquote_string(s+12);
 			    amfree(qlist);
-			} else if(strncmp(s-1, "include-list=", 13) == 0) {
+			} else if(strncmp_const(s-1, "include-list=") == 0) {
 			    options->include_list =
 				append_sl(options->include_list, qlist);
 			    qlist = unquote_string(s+12);

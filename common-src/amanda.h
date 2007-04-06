@@ -812,6 +812,12 @@ void	areads_relbuf(int fd);
  *    -- skip an integer field
  *  skip_line (ptr, var)
  *    -- skip just past the next newline
+ *  strncmp_const (str, const_str)
+ *    -- compare str to const_str, a string constant
+ *  strncmp_const_skip (str, const_var, ptr, var)
+ *    -- like strncmp_const, but skip the string if a match is
+ *       found; this macro only tests for equality, discarding
+ *       ordering information.
  *
  * where:
  *
@@ -925,6 +931,15 @@ void	areads_relbuf(int fd);
     ((s)[0] == '.'							\
      && ((s)[1] == '\0'							\
 	 || ((s)[1] == '.' && (s)[2] == '\0')))
+
+#define strncmp_const(str, cnst)					\
+	strncmp((str), (cnst), sizeof((cnst))-1)
+
+/* (have to roll this up in an expression, so it can be used in if()) */
+#define strncmp_const_skip(str, cnst, ptr, var)				\
+	((strncmp((str), (cnst), sizeof((cnst))-1) == 0)?		\
+		 ((ptr)+=sizeof((cnst))-1, (var)=(ptr)[-1], 0)		\
+		:1)
 
 /* from amflock.c */
 extern int    amflock(int fd, char *resource);

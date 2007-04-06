@@ -377,9 +377,7 @@ main(
 
 	/* read the REQ packet */
 	for(; (line = agets(stdin)) != NULL; free(line)) {
-#define sc "OPTIONS "
-	    if(strncmp(line, sc, sizeof(sc)-1) == 0) {
-#undef sc
+	    if(strncmp_const(line, "OPTIONS ") == 0) {
 		g_options = parse_g_options(line+8, 1);
 		if(!g_options->hostname) {
 		    g_options->hostname = alloc(MAX_HOSTNAME_LENGTH+1);
@@ -426,20 +424,22 @@ main(
     match_list->diskname = "";
 
     for (re_end = 0; re_end == 0; ) {
+	char *s, ch;
 	amfree(buf);
 	buf = stralloc(get_client_line(cmdin));
-	if(strncmp(buf, "LABEL=", 6) == 0) {
-	    tapes = unmarshal_tapelist_str(buf+6);
+	s = buf;
+	if(strncmp_const_skip(buf, "LABEL=", s, ch) == 0) {
+	    tapes = unmarshal_tapelist_str(s);
 	}
-	else if(strncmp(buf, "FSF=", 4) == 0) {
-	    rst_flags->fsf = OFF_T_ATOI(buf + 4);
+	else if(strncmp_const_skip(buf, "FSF=", s, ch) == 0) {
+	    rst_flags->fsf = OFF_T_ATOI(s);
 	}
-	else if(strncmp(buf, "HEADER", 6) == 0) {
+	else if(strncmp_const_skip(buf, "HEADER", s, ch) == 0) {
 	    rst_flags->headers = 1;
 	}
-	else if(strncmp(buf, "FEATURES=", 9) == 0) {
+	else if(strncmp_const_skip(buf, "FEATURES=", s, ch) == 0) {
 	    char *our_feature_string = NULL;
-	    their_feature_string = stralloc(buf+9);
+	    their_feature_string = stralloc(s);
 	    am_release_feature_set(their_features);
 	    their_features = am_string_to_feature(their_feature_string);
 	    amfree(their_feature_string);
@@ -451,23 +451,23 @@ main(
 	    fflush(cmdout);
 	    amfree(our_feature_string);
 	}
-	else if(strncmp(buf, "DEVICE=", 7) == 0) {
-	    rst_flags->alt_tapedev= stralloc(buf+7);
+	else if(strncmp_const_skip(buf, "DEVICE=", s, ch) == 0) {
+	    rst_flags->alt_tapedev= stralloc(s);
 	}
-	else if(strncmp(buf, "HOST=", 5) == 0) {
-	    match_list->hostname = stralloc(buf+5);
+	else if(strncmp_const_skip(buf, "HOST=", s, ch) == 0) {
+	    match_list->hostname = stralloc(s);
 	}
-	else if(strncmp(buf, "DISK=", 5) == 0) {
-	    match_list->diskname = stralloc(buf+5);
+	else if(strncmp_const_skip(buf, "DISK=", s, ch) == 0) {
+	    match_list->diskname = stralloc(s);
 	}
-	else if(strncmp(buf, "DATESTAMP=", 10) == 0) {
-	    match_list->datestamp = stralloc(buf+10);
+	else if(strncmp_const_skip(buf, "DATESTAMP=", s, ch) == 0) {
+	    match_list->datestamp = stralloc(s);
 	}
-	else if(strncmp(buf, "END", 3) == 0) {
+	else if(strncmp_const(buf, "END") == 0) {
 	    re_end = 1;
 	}
-	else if(strncmp(buf, "CONFIG=", 7) == 0) {
-	    re_config = stralloc(buf+7);
+	else if(strncmp_const_skip(buf, "CONFIG=", s, ch) == 0) {
+	    re_config = stralloc(s);
 	}
 	else if(buf[0] != '\0' && buf[0] >= '0' && buf[0] <= '9') {
 /* XXX does nothing?     amrestore_nargs = atoi(buf); */

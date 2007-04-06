@@ -314,10 +314,8 @@ get_fstab_nextentry(
     }
     fsent->fstype = lfsnam;
 
-#define sc "hs"
-    if (strncmp(fsent->fstype, sc, SIZEOF(sc)-1) == 0)
+    if (strncmp_const(fsent->fstype, "hs") == 0)
 	fsent->fstype = "iso9660";
-#undef sc
 
     fsent->freq = 0;
     fsent->passno = 0;

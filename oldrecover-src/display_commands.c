@@ -198,14 +198,13 @@ suck_dir_list_from_server(void)
 	    printf("%s\n", l);
 	    continue;
 	}
-#define sc "201-"
-	if (strncmp(l, sc, sizeof(sc)-1) != 0) {
+	s = l;
+	if (strncmp_const_skip(s, "201-", s, ch) != 0) {
 	    err = "bad reply: not 201-";
 	    continue;
 	}
-	s = l + sizeof(sc)-1;
 	ch = *s++;
-#undef sc
+
 	skip_whitespace(s, ch);
 	if(ch == '\0') {
 	    err = "bad reply: missing date field";

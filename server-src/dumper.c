@@ -1787,11 +1787,9 @@ bad_nak:
 	    }
 
 	    while((p = strchr(tok, ';')) != NULL) {
+		char ch;
 		*p++ = '\0';
-#define sc "features="
-		if(strncmp(tok, sc, SIZEOF(sc) - 1) == 0) {
-		    tok += SIZEOF(sc) - 1;
-#undef sc
+		if(strncmp_const_skip(tok, "features=", tok, ch) == 0) {
 		    am_release_feature_set(their_features);
 		    if((their_features = am_string_to_feature(tok)) == NULL) {
 			errstr = newvstralloc(errstr,
@@ -1964,8 +1962,8 @@ startup_dump(
     }
 
     snprintf(level_string, SIZEOF(level_string), "%d", level);
-    if(strncmp(progname, "DUMP", 4) == 0
-       || strncmp(progname, "GNUTAR", 6) == 0) {
+    if(strcmp(progname, "DUMP") == 0
+       || strcmp(progname, "GNUTAR") == 0) {
 	backup_api = "";
     } else {
 	backup_api = "BACKUP ";

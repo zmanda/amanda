@@ -1578,14 +1578,11 @@ handle_start(void)
 	ch = *s++;
 
 	skip_whitespace(s, ch);
-#define sc "datestamp"
-	if(ch == '\0' || strncmp(s - 1, sc, SIZEOF(sc)-1) != 0) {
+	if(ch == '\0' || strncmp_const_skip(s - 1, "datestamp", s, ch) != 0) {
 	    bogus_line(s - 1);
 	    return;
 	}
-	s += SIZEOF(sc)-1;
-	ch = s[-1];
-#undef sc
+
 	skip_whitespace(s, ch);
 	if(ch == '\0') {
 	    bogus_line(s - 1);
@@ -1598,14 +1595,11 @@ handle_start(void)
 	s[-1] = (char)ch;
 
 	skip_whitespace(s, ch);
-#define sc "label"
-	if(ch == '\0' || strncmp(s - 1, sc, SIZEOF(sc)-1) != 0) {
+	if(ch == '\0' || strncmp_const_skip(s - 1, "label", s, ch) != 0) {
 	    bogus_line(s - 1);
 	    return;
 	}
-	s += SIZEOF(sc)-1;
-	ch = s[-1];
-#undef sc
+
 	skip_whitespace(s, ch);
 	if(ch == '\0') {
 	    bogus_line(s - 1);
@@ -1662,13 +1656,10 @@ handle_start(void)
 	ch = *s++;
 
 	skip_whitespace(s, ch);
-#define sc "date"
-	if(ch == '\0' || strncmp(s - 1, sc, SIZEOF(sc)-1) != 0) {
+	if(ch == '\0' || strncmp_const_skip(s - 1, "date", s, ch) != 0) {
 	    return;				/* ignore bogus line */
 	}
-	s += SIZEOF(sc)-1;
-	ch = s[-1];
-#undef sc
+
 	skip_whitespace(s, ch);
 	if(ch == '\0') {
 	    bogus_line(s - 1);
@@ -1702,14 +1693,10 @@ handle_finish(void)
 	ch = *s++;
 
 	skip_whitespace(s, ch);
-#define sc "date"
-	if(ch == '\0' || strncmp(s - 1, sc, SIZEOF(sc)-1) != 0) {
+	if(ch == '\0' || strncmp_const_skip(s - 1, "date", s, ch) != 0) {
 	    bogus_line(s - 1);
 	    return;
 	}
-	s += SIZEOF(sc)-1;
-	ch = s[-1];
-#undef sc
 
 	skip_whitespace(s, ch);
 	if(ch == '\0') {
@@ -1719,16 +1706,12 @@ handle_finish(void)
 	skip_non_whitespace(s, ch);	/* ignore the date string */
 
 	skip_whitespace(s, ch);
-#define sc "time"
-	if(ch == '\0' || strncmp(s - 1, sc, SIZEOF(sc)-1) != 0) {
+	if(ch == '\0' || strncmp_const_skip(s - 1, "time", s, ch) != 0) {
 	    /* older planner doesn't write time */
 	    if(curprog == P_PLANNER) return;
 	    bogus_line(s - 1);
 	    return;
 	}
-	s += SIZEOF(sc)-1;
-	ch = s[-1];
-#undef sc
 
 	skip_whitespace(s, ch);
 	if(ch == '\0') {
@@ -1765,12 +1748,7 @@ handle_stats(void)
 	ch = *s++;
 
 	skip_whitespace(s, ch);
-#define sc "startup time"
-	if(ch != '\0' && strncmp(s - 1, sc, sizeof(sc)-1) == 0) {
-	    s += sizeof(sc)-1;
-	    ch = s[-1];
-#undef sc
-
+	if(ch != '\0' && strncmp_const_skip(s - 1, "startup time", s, ch) == 0) {
 	    skip_whitespace(s, ch);
 	    if(ch == '\0') {
 		bogus_line(s - 1);
@@ -1782,12 +1760,7 @@ handle_stats(void)
 	    }
 	    planner_time = startup_time;
 	}
-#define sc "hostname"
-	else if(ch != '\0' && strncmp(s - 1, sc, sizeof(sc)-1) == 0) {
-	    s += sizeof(sc)-1;
-	    ch = s[-1];
-#undef sc
-
+	else if(ch != '\0' && strncmp_const_skip(s - 1, "hostname", s, ch) == 0) {
 	    skip_whitespace(s, ch);
 	    if(ch == '\0') {
 		bogus_line(s - 1);
@@ -1795,12 +1768,7 @@ handle_stats(void)
 	    }
 	    ghostname = stralloc(s-1);
 	}
-#define sc "estimate"
-	else if(ch != '\0' && strncmp(s - 1, sc, sizeof(sc)-1) == 0) {
-	    s += sizeof(sc)-1;
-	    ch = s[-1];
-#undef sc
-
+	else if(ch != '\0' && strncmp_const_skip(s - 1, "estimate", s, ch) == 0) {
 	    skip_whitespace(s, ch);
 	    if(ch == '\0') {
 		bogus_line(s - 1);
@@ -1918,12 +1886,7 @@ handle_error(void)
 	ch = *s++;
 
 	skip_whitespace(s, ch);
-#define sc "no-tape"
-	if(ch != '\0' && strncmp(s - 1, sc, SIZEOF(sc)-1) == 0) {
-	    s += SIZEOF(sc)-1;
-	    ch = s[-1];
-#undef sc
-
+	if(ch != '\0' && strncmp_const_skip(s - 1, "no-tape", s, ch) == 0) {
 	    skip_whitespace(s, ch);
 	    if(ch != '\0') {
 		if((nl = strchr(s - 1, '\n')) != NULL) {
@@ -2422,10 +2385,11 @@ handle_strange(void)
     amfree(str);
 
     while(contline_next()) {
+	char *s, ch;
 	get_logline(logfile);
-#define sc "sendbackup: warning "
-	if(strncmp(curstr, sc, SIZEOF(sc)-1) == 0) {
-	    strangestr = newstralloc(strangestr, curstr+SIZEOF(sc)-1);
+	s = curstr;
+	if(strncmp_const_skip(curstr, "sendbackup: warning ", s, ch) == 0) {
+	    strangestr = newstralloc(strangestr, s);
 	}
 	addline(&errdet, curstr);
     }

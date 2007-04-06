@@ -854,15 +854,14 @@ add_file(
 			puts(l);
 			continue;
 		    }
-#define sc "201-"
-		    if(strncmp(l, sc, sizeof(sc)-1) != 0) {
+
+		    s = l;
+		    if(strncmp_const_skip(l, "201-", s, ch) != 0) {
 			err = "bad reply: not 201-";
 			continue;
 		    }
-
-		    s = l + sizeof(sc)-1;
 		    ch = *s++;
-#undef sc
+
 		    skip_whitespace(s, ch);
 		    if(ch == '\0') {
 			err = "bad reply: missing date field";
@@ -1170,14 +1169,14 @@ delete_file(
 			puts(l);
 			continue;
 		    }
-#define sc "201-"
-		    if(strncmp(l, sc, sizeof(sc)-1) != 0) {
+
+		    s = l;
+		    if(strncmp_const_skip(l, "201-", s, ch) != 0) {
 			err = "bad reply: not 201-";
 			continue;
 		    }
-		    s = l + sizeof(sc)-1;
 		    ch = *s++;
-#undef sc
+
 		    skip_whitespace(s, ch);
 		    if(ch == '\0') {
 			err = "bad reply: missing date field";
@@ -1580,7 +1579,7 @@ extract_files_setup(
 	tt = newstralloc2(tt, "FEATURES=", our_features_string);
 	send_to_tape_server(amidxtaped_streams[CTLFD].fd, tt);
 	get_amidxtaped_line();
-	if(strncmp(amidxtaped_line,"FEATURES=",9) == 0) {
+	if(strncmp_const(amidxtaped_line,"FEATURES=") == 0) {
 	    tapesrv_features = am_string_to_feature(amidxtaped_line+9);
 	} else {
 	    fprintf(stderr, "amrecover - expecting FEATURES line from amidxtaped\n");
@@ -2045,7 +2044,7 @@ writer_intermediary(
 		send_to_tape_server(amidxtaped_streams[CTLFD].fd, "ERROR");
 		break;
 	    }
-	} else if(strncmp(amidxtaped_line, "MESSAGE ", 8) == 0) {
+	} else if(strncmp_const(amidxtaped_line, "MESSAGE ") == 0) {
 	    printf("%s\n",&amidxtaped_line[8]);
 	} else {
 	    fprintf(stderr, "Strange message from tape server: %s",
@@ -2361,10 +2360,8 @@ bad_nak:
 /*
 	    while((p = strchr(tok, ';')) != NULL) {
 		*p++ = '\0';
-#define sc "features="
-		if(strncmp(tok, sc, sizeof(sc)-1) == 0) {
-		    tok += sizeof(sc) - 1;
-#undef sc
+		if(strncmp_const(tok, "features=") == 0) {
+		    tok += sizeof("features=") - 1;
 		    am_release_feature_set(their_features);
 		    if((their_features = am_string_to_feature(tok)) == NULL) {
 			errstr = newvstralloc(errstr,

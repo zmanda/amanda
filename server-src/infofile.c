@@ -241,10 +241,10 @@ read_txinfofile(
 	    amfree(line);
 	    return 0;				/* normal end of record */
 	}
-	else if (strncmp(line,"last_level:",11) == 0) {
+	else if (strncmp_const(line,"last_level:") == 0) {
 	    break;				/* normal */
 	}
-	else if (strncmp(line,"history:",8) == 0) {
+	else if (strncmp_const(line,"history:") == 0) {
 	    break;				/* normal */
 	}
 	memset(&onestat, 0, SIZEOF(onestat));
@@ -252,13 +252,9 @@ read_txinfofile(
 	s = line;
 	ch = *s++;
 
-#define sc "stats:"
-	if(strncmp(line, sc, SIZEOF(sc)-1) != 0) {
+	if(strncmp_const_skip(line, "stats:", s, ch) != 0) {
 	    break;
 	}
-	s += SIZEOF(sc)-1;
-	ch = s[-1];
-#undef sc
 
 	skip_whitespace(s, ch);
 	if(ch == '\0' || sscanf((s - 1), "%d", &level) != 1) {
@@ -354,14 +350,10 @@ read_txinfofile(
 	s = line;
 	ch = *s++;
 
-#define sc "history:"
-	if(strncmp(line, sc, SIZEOF(sc)-1) != 0) {
+	if(strncmp_const_skip(line, "history:", s, ch) != 0) {
 	    amfree(line);
 	    break;
 	}
-	s += SIZEOF(sc)-1;
-	ch = s[-1];
-#undef sc
 
 	skip_whitespace(s, ch);
 	if(ch == '\0' || sscanf((s - 1), "%d", &onehistory.level) != 1) {

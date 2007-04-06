@@ -1452,8 +1452,8 @@ static void getsize(
 		    else
 			calcsize = "CALCSIZE ";
 
-		    if(strncmp(dp->program,"DUMP",4) == 0 || 
-		       strncmp(dp->program,"GNUTAR",6) == 0) {
+		    if(strcmp(dp->program,"DUMP") == 0 || 
+		       strcmp(dp->program,"GNUTAR") == 0) {
 			backup_api = "";
 		    } else {
 			backup_api = "BACKUP ";
@@ -1684,11 +1684,9 @@ static void handle_result(
 	goto error_return;
     }
     if (pkt->type == P_NAK) {
-#define sc "ERROR "
-	if(strncmp(pkt->body, sc, SIZEOF(sc)-1) == 0) {
-	    s = pkt->body + SIZEOF(sc)-1;
+	s = pkt->body;
+	if(strncmp_const_skip(s, "ERROR ", s, ch) == 0) {
 	    ch = *s++;
-#undef sc
 	} else {
 	    goto NAK_parse_failed;
 	}
@@ -1712,15 +1710,10 @@ static void handle_result(
     while(ch) {
 	line = s - 1;
 
-#define sc "OPTIONS "
-	if(strncmp(line, sc, SIZEOF(sc)-1) == 0) {
-#undef sc
-
-#define sc "features="
-	    t = strstr(line, sc);
+	if(strncmp_const(line, "OPTIONS ") == 0) {
+	    t = strstr(line, "features=");
 	    if(t != NULL && (isspace((int)t[-1]) || t[-1] == ';')) {
-		t += SIZEOF(sc)-1;
-#undef sc
+		t += SIZEOF("features=")-1;
 		am_release_feature_set(hostp->features);
 		if((hostp->features = am_string_to_feature(t)) == NULL) {
 		    errbuf = vstralloc(hostp->hostname,
@@ -1735,12 +1728,8 @@ static void handle_result(
 	    continue;
 	}
 
-#define sc "ERROR "
-	if(strncmp(line, sc, SIZEOF(sc) - 1) == 0) {
-	    t = line + SIZEOF(sc) - 1;
-	    tch = t[-1];
-#undef sc
-
+	t = line;
+	if(strncmp_const_skip(t, "ERROR ", t, ch) == 0) {
 	    fp = t - 1;
 	    skip_whitespace(t, tch);
 	    if (tch == '\n') {
@@ -1791,13 +1780,13 @@ static void handle_result(
 	}
 
 	size = (off_t)-1;
-	if (strncmp(t-1,"SIZE ", 5) == 0) {
+	if (strncmp_const(t-1,"SIZE ") == 0) {
 	    if (sscanf(t - 1, "SIZE " OFF_T_FMT ,
 		       (OFF_T_FMT_TYPE *)&size_) != 1) {
 		goto bad_msg;
 	    }
 	    size = size_;
-	} else if (strncmp(t-1,"ERROR ", 6) == 0) {
+	} else if (strncmp_const(t-1,"ERROR ") == 0) {
 	    skip_non_whitespace(t, tch);
 	    skip_whitespace(t, tch);
 	    msg = t-1;

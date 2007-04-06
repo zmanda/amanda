@@ -1,3 +1,14 @@
+2007-04-06  Dustin J. Mitchell <dustin@zmanda.com>
+	* oldrecover-src/extract_list.c oldrecover-src/display_commands.c
+	  client-src/sendbackup.c client-src/getfsent.c client-src/sendsize.c
+	  client-src/selfcheck.c recover-src/amrecover.c recover-src/extract_list.c
+	  recover-src/display_commands.c server-src/amlogroll.c
+	  server-src/amindexd.c server-src/tapefile.c server-src/amcheck.c
+	  server-src/dumper.c server-src/planner.c server-src/reporter.c
+	  server-src/amadmin.c server-src/find.c server-src/infofile.c
+	  restore-src/amidxtaped.c common-src/security-util.c common-src/amanda.h:
+	  improve parsing with strcmp_const and strcmp_const_skip
+
 2007-04-06  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/taper.c: Limit splitsize to 1G in PORT-WRITE.
 

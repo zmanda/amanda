@@ -1247,9 +1247,7 @@ main(
     else {
 	/* read the REQ packet */
 	for(; (line = agets(stdin)) != NULL; free(line)) {
-#define sc "OPTIONS "
-	    if(strncmp(line, sc, sizeof(sc)-1) == 0) {
-#undef sc
+	    if(strncmp_const(line, "OPTIONS ") == 0) {
 		g_options = parse_g_options(line+8, 1);
 		if(!g_options->hostname) {
 		    g_options->hostname = alloc(MAX_HOSTNAME_LENGTH+1);

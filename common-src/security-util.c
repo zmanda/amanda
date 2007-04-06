@@ -925,6 +925,7 @@ bsd_recv_security_ok(
     char *tok, *security, *body, *result;
     char *service = NULL, *serviceX, *serviceY;
     char *security_line;
+    char *s, ch;
     size_t len;
     in_port_t port;
 
@@ -932,7 +933,7 @@ bsd_recv_security_ok(
      * Now, find the SECURITY line in the body, and parse it out
      * into an argv.
      */
-    if (strncmp(pkt->body, "SECURITY ", SIZEOF("SECURITY ") - 1) == 0) {
+    if (strncmp_const(pkt->body, "SECURITY ") == 0) {
 	security = pkt->body;
 	len = 0;
 	while(*security != '\n' && len < pkt->size) {
@@ -959,8 +960,9 @@ bsd_recv_security_ok(
      * Now, find the SERVICE line in the body, and parse it out
      * into an argv.
      */
-    if (strncmp(body, "SERVICE", SIZEOF("SERVICE") - 1) == 0) {
-	serviceX = stralloc(body + strlen("SERVICE "));
+    s = body;
+    if (strncmp_const_skip(s, "SERVICE ", s, ch) == 0) {
+	serviceX = stralloc(s);
 	serviceY = strtok(serviceX, "\n");
 	if (serviceY)
 	    service  = stralloc(serviceY);
@@ -2384,16 +2386,12 @@ check_security(
 			"bad bsd security line",
 			"]", NULL);
 
-#define sc "USER "
-    if (strncmp(s - 1, sc, SIZEOF(sc)-1) != 0) {
+    if (strncmp_const_skip(s - 1, "USER ", s, ch) != 0) {
 	*errstr = bad_bsd;
 	bad_bsd = NULL;
 	amfree(remotehost);
 	return 0;
     }
-    s += SIZEOF(sc)-1;
-    ch = s[-1];
-#undef sc
 
     skip_whitespace(s, ch);
     if (ch == '\0') {

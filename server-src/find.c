@@ -651,13 +651,9 @@ parse_taper_datestamp_log(
     if(ch == '\0') {
 	return 0;
     }
-#define sc "datestamp"
-    if(strncmp(s - 1, sc, SIZEOF(sc)-1) != 0) {
+    if(strncmp_const_skip(s - 1, "datestamp", s, ch) != 0) {
 	return 0;
     }
-    s += SIZEOF(sc)-1;
-    ch = s[-1];
-#undef sc
 
     skip_whitespace(s, ch);
     if(ch == '\0') {
@@ -671,13 +667,9 @@ parse_taper_datestamp_log(
     if(ch == '\0') {
 	return 0;
     }
-#define sc "label"
-    if(strncmp(s - 1, sc, SIZEOF(sc)-1) != 0) {
+    if(strncmp_const_skip(s - 1, "label", s, ch) != 0) {
 	return 0;
     }
-    s += SIZEOF(sc)-1;
-    ch = s[-1];
-#undef sc
 
     skip_whitespace(s, ch);
     if(ch == '\0') {
