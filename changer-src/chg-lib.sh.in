@@ -46,7 +46,6 @@ function _() {
 ####
 # Eponymous functions to access various amanda apps
 
-# (see bug #1005 for the eventual demise of ammt/amdd)
 if test "@USE_VERSION_SUFFIXES@" = "yes"; then
     function amgetconf() {
         "${sbindir}/amgetconf-@VERSION@" "${@}"
