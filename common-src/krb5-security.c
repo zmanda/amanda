@@ -619,7 +619,7 @@ gss_server(
 	GSS_C_NULL_OID_SET, GSS_C_ACCEPT, &gss_creds, NULL, NULL);
     if (maj_stat != (OM_uint32)GSS_S_COMPLETE) {
 	snprintf(errbuf, SIZEOF(errbuf),
-	    "can't acquire creds for host key host/%s: %s", rc->hostname,
+	    "can't acquire creds for host key host/%s: %s", myhostname,
 	    gss_error(maj_stat, min_stat));
 	gss_release_name(&min_stat, &gss_name);
 	seteuid(euid);
