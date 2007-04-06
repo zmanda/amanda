@@ -1,4 +1,7 @@
 2007-04-06  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/taper.c: Limit splitsize to 1G in PORT-WRITE.
+
+2007-04-06  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/krb5-security.c: Report client hostname.
 
 2007-04-06  Jean-Louis Martineau <martineau@zmanda.com>

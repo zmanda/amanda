@@ -864,6 +864,9 @@ file_reader_side(
 		/*NOTREACHED*/
 	    }
 	    splitsize = OFF_T_ATOI(cmdargs.argv[a++]);
+	    if (SIZEOF_OFF_T == 4 && splitsize > 1048576) { /* 1G in 32 bits */
+		splitsize = 1048576;
+	    }
 
 	    if (a >= cmdargs.argc) {
 		error("error [taper PORT-WRITE: not enough args: split_diskbuffer]");
@@ -877,6 +880,9 @@ file_reader_side(
 	    }
 	    /* Must fit in memory... */
 	    fallback_splitsize = (size_t)atoi(cmdargs.argv[a++]);
+	    if (SIZEOF_OFF_T == 4 && fallback_splitsize > 1048576) { /* 1G */
+		fallback_splitsize = 1048576;
+	    }
 
 	    if (a != cmdargs.argc) {
 		error("error [taper file_reader_side PORT-WRITE: too many args: %d != %d]",
@@ -2456,6 +2462,8 @@ write_file(void)
     return;
 
  tape_error:
+    if (errstr) 
+	dbprintf("tape_error: %s\n", errstr);
     /* got tape error */
     if (next_tape(1)) {
 	if (syncpipe_put('T', 0) == -1) {   /* next tape in place, try again */
