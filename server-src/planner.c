@@ -1729,7 +1729,7 @@ static void handle_result(
 	}
 
 	t = line;
-	if(strncmp_const_skip(t, "ERROR ", t, ch) == 0) {
+	if(strncmp_const_skip(t, "ERROR ", t, tch) == 0) {
 	    fp = t - 1;
 	    skip_whitespace(t, tch);
 	    if (tch == '\n') {
