@@ -205,6 +205,7 @@
 #
 # initial_poll_delay=NN	    #### initial delay after load before polling for
 #			    #### readiness
+#
 ####
 
 ####
@@ -305,17 +306,10 @@
 #	env DEBUG=yes .../chg-zd-mtx ...
 ################################################################################
 
-################################################################################
-# You may need to customize these things
-################################################################################
-
-MT=@MT@
-MTF=@MT_FILE_FLAG@
-MTX=@MTX@
-
-################################################################################
-# No user-level customization should be required beyond this point.
-################################################################################
+# source utility functions and values from configure
+exec_prefix=@exec_prefix@
+libexecdir=@libexecdir@
+. ${libexecdir}/chg-lib.sh
 
 test -n "$DEBUG" && set -x
 TMPDIR="@AMANDA_TMPDIR@"

@@ -1,8 +1,14 @@
 2007-04-10  Jean-Louis Martineau <martineau@zmanda.com>
 	* configure.in: Use krb5 shared library.
 
+2007-04-10  Dustin J. Mitchell <dustin@zmanda.com>
+	* changer-src/chg-zd-mtx.sh.in: remove configurability of mt, mtx paths
+
 2007-04-10  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/krb5-security.c: Initialize rc->gss_context.
+
+2007-04-09  Dustin J. Mitchell <dustin@zmanda.com>
+	* changer-src/chg-zd-mtx.sh.in: fix bugs in configuration for mt, mtx paths
 
 2007-04-06  Dustin J. Mitchell <dustin@zmanda.com>
 	* oldrecover-src/extract_list.c oldrecover-src/display_commands.c
