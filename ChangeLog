@@ -1,3 +1,6 @@
+2007-04-10  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/krb5-security.c: Initialize rc->gss_context.
+
 2007-04-06  Dustin J. Mitchell <dustin@zmanda.com>
 	* oldrecover-src/extract_list.c oldrecover-src/display_commands.c
 	  client-src/sendbackup.c client-src/getfsent.c client-src/sendsize.c

@@ -595,6 +595,7 @@ gss_server(
 	goto out;
     }
 
+    rc->gss_context = GSS_C_NO_CONTEXT;
     send_tok.value = vstralloc("host/", myhostname, NULL);
     send_tok.length = strlen(send_tok.value) + 1;
     for (p = send_tok.value; *p != '\0'; p++) {
