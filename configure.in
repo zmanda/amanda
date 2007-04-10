@@ -1100,24 +1100,24 @@ for dir in $KRB5_SPOTS; do
     k5libdir=${dir}/${lib}
     if test -f ${k5libdir}/libkrb5.a -a -f ${k5libdir}/libgssapi_krb5.a -a -f ${k5libdir}/libcom_err.a; then
 	if test -f ${k5libdir}/libk5crypto.a; then
-	    K5CRYPTO=${k5libdir}/libk5crypto.a
+	    K5CRYPTO=-lk5crypto
 	elif test -f ${k5libdir}/libcrypto.a; then
-	    K5CRYPTO=${k5libdir}/libcrypto.a
+	    K5CRYPTO=-lcrypto
 	else
 	    K5CRYPTO=""
 	fi
 	if test -f ${k5libdir}/libkrb5support.a; then
-	    K5SUPPORT=${k5libdir}/libkrb5support.a
+	    K5SUPPORT=-lkrb5support
 	else
 	    K5SUPPORT=""
 	fi
 	KRB5_DIR_FOUND=$dir
-	KRB5LIBS="${k5libdir}/libgssapi_krb5.a ${k5libdir}/libkrb5.a $K5CRYPTO $K5SUPPORT ${k5libdir}/libcom_err.a"
+	KRB5LIBS="-lgssapi_krb5 -lkrb5 $K5CRYPTO $K5SUPPORT -lcom_err"
 	KRB5CFLAGS=""
 	break
     elif test -f ${k5libdir}/libkrb5.a -a -f ${k5libdir}/libasn1.a -a -f ${k5libdir}/libgssapi.a; then
 	KRB5_DIR_FOUND=$dir
-	KRB5LIBS="${k5libdir}/libgssapi.a ${k5libdir}/libkrb5.a ${k5libdir}/libasn1.a"
+	KRB5LIBS="-lgssapi.a -lkrb5.a -lasn1.a"
 	KRB5_CFLAGS="-DKRB5_HEIMDAL_INCLUDES"
 	break
     fi

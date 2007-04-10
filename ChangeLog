@@ -1,4 +1,7 @@
 2007-04-10  Jean-Louis Martineau <martineau@zmanda.com>
+	* configure.in: Use krb5 shared library.
+
+2007-04-10  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/krb5-security.c: Initialize rc->gss_context.
 
 2007-04-06  Dustin J. Mitchell <dustin@zmanda.com>
