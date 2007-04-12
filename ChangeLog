@@ -1,4 +1,9 @@
 2007-04-12  Jean-Louis Martineau <martineau@zmanda.com>
+	* amandad-src/amandad.c: Remove duplicate setsockopt(,,SO_REUSEADDR).
+	* common-src/bsd-security.c: Use int for setsockopt.
+	* common-src/stream.c (try_socksize): Use int for setsockopt.
+
+2007-04-12  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amcheck.c: Remove duplicate test.
 	* server-src/dumper.c: Use newvstralloc.
 

@@ -365,7 +365,7 @@ bsd_stream_client(
     struct sec_stream *bs = NULL;
     struct sec_handle *bh = h;
 #ifdef DUMPER_SOCKET_BUFFERING
-    size_t rcvbuf = SIZEOF(bs->databuf) * 2;
+    int rcvbuf = SIZEOF(bs->databuf) * 2;
 #endif
 
     assert(bh != NULL);

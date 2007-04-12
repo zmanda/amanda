@@ -388,7 +388,6 @@ main(
 		error("can't create tcp socket: %s\n", strerror(errno));
 		/*NOTREACHED*/
 	    }
-	    n = 1;
 #ifdef USE_REUSEADDR
 	    r = setsockopt(sock, SOL_SOCKET, SO_REUSEADDR,
 		(void *)&on, (socklen_t)sizeof(on));
@@ -398,8 +397,6 @@ main(
 			  strerror(errno)));
 	    }
 #endif
-	    setsockopt(sock, SOL_SOCKET, SO_REUSEADDR,
-		(void *)&n, (socklen_t)sizeof(n));
 #ifdef WORKING_IPV6
 	    sin.sin6_family = (sa_family_t)AF_INET6;
 	    sin.sin6_addr = in6addr_any;
