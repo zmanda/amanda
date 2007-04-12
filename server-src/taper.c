@@ -2463,7 +2463,7 @@ write_file(void)
 
  tape_error:
     if (errstr) 
-	dbprintf("tape_error: %s\n", errstr);
+	dbprintf(("tape_error: %s\n", errstr));
     /* got tape error */
     if (next_tape(1)) {
 	if (syncpipe_put('T', 0) == -1) {   /* next tape in place, try again */
