@@ -1522,8 +1522,6 @@ start_host(
 		     hostp->hostname, qname, dp->device);
 		}
 	    }
-	    if(strncmp(dp->program,"DUMP",4) == 0 || 
-	       strncmp(dp->program,"GNUTAR",6) == 0) {
 	    if(strcmp(dp->program,"DUMP") == 0 || 
 	       strcmp(dp->program,"GNUTAR") == 0) {
 		if(strcmp(dp->program, "DUMP") == 0 &&

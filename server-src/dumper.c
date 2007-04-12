@@ -478,9 +478,9 @@ main(
 	    hints.ai_canonname = NULL;
 	    hints.ai_next = NULL;
 	    if ((res = getaddrinfo("localhost", NULL, &hints, &gaires)) != 0) {
-		errstr = newvstrallocf(errstr,
-				     _("could not resolve localhost: %s"),
-				     gai_strerror(res));
+		errstr = newvstralloc(errstr,
+				     _("could not resolve localhost: "),
+				     gai_strerror(res), NULL);
 		q = squotef(errstr);
 		putresult(FAILED, "%s %s\n", handle, q);
 		log_add(L_FAIL, "%s %s %s %d [%s]", hostname, qdiskname,

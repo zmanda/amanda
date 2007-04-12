@@ -1,4 +1,8 @@
 2007-04-12  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amcheck.c: Remove duplicate test.
+	* server-src/dumper.c: Use newvstralloc.
+
+2007-04-12  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/reporter.c: Take value from chunker if it succeed and
 				 taper fail.
 
