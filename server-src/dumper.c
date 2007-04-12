@@ -1051,7 +1051,7 @@ write_tapeheader(
 
     build_header(buffer, file, SIZEOF(buffer));
 
-    written = write(outfd, buffer, SIZEOF(buffer));
+    written = fullwrite(outfd, buffer, SIZEOF(buffer));
     if(written == (ssize_t)sizeof(buffer))
 	return 0;
     if(written < 0)

@@ -1,3 +1,6 @@
+2007-04-12  Dustin J. Mitchell <dustin@zmanda.com>
+	* server-src/dumper.c: use fullwrite() instead of write()
+
 2007-04-12  Jean-Louis Martineau <martineau@zmanda.com>
 	* amandad-src/amandad.c: Remove duplicate setsockopt(,,SO_REUSEADDR).
 	* common-src/bsd-security.c: Use int for setsockopt.
