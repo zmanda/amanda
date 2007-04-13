@@ -1260,7 +1260,7 @@ addlabel() {
 			LogAppend `_ '         -> "%s" conflicts with new %s "%s" for %s "%s"" "$old_val" "$val_type" "$new_val" "$lf_type" "$lf_val"`
 			Exit 2 \
 			     `_ '<none>'` \
-			     `'%s: "%s" conflicts with new %s "%s" for %s "%s"' "$tapelabel" "$old_val" "$val_type" "$new_val" "$lf_type" "$lf_val"`
+			     `_ '%s: "%s" conflicts with new %s "%s" for %s "%s"' "$tapelabel" "$old_val" "$val_type" "$new_val" "$lf_type" "$lf_val"`
 			return $?		# in case we are internal
 		fi
 		LogAppend `_ "         -> already synced"`

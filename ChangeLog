@@ -1,3 +1,6 @@
+2007-04-13  Dustin J. Mitchell <dustin@zmanda.com>
+	* changer-src/chg-zd-mtx.sh.in: fix typo in error message
+
 2007-04-13  Jean-Louis Martineau <martineau@zmanda.com>
 	* Amanda 2.5.2b1 released.
 	* configure.in: AM_INIT_AUTOMAKE(amanda, 2.5.2b1).
