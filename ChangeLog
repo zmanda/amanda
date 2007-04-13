@@ -1,4 +1,8 @@
 2007-04-13  Jean-Louis Martineau <martineau@zmanda.com>
+	* Amanda 2.5.2b1 released.
+	* configure.in: AM_INIT_AUTOMAKE(amanda, 2.5.2b1).
+
+2007-04-13  Jean-Louis Martineau <martineau@zmanda.com>
 	* client-src/sendbackup.c (first_num): Removed function.
 	* client-src/sendbackup.c (the_num): return the nth number in a string.
 	* client-src/sendbackup.h (AM_SIZE_RE): Need a field.
