@@ -1,3 +1,49 @@
+Changes in release 2.5.2
+
+   * Many bugs fixed and code cleanup
+   * krb5 auth is working
+   * Works with IPv6 address
+   * Amanda configuration file changes
+         o amanda.conf changes
+               + debugging is enabled in the config file
+                 see all debug_* config option
+               + tapetype 'readblocksize', if maxtapeblocksize is set too
+                 larger for your hardware
+
+Changes in release 2.5.1p3
+
+   * Many bugs fixed
+   * amrecover improve handling of not ascii filename in index.
+   * Works with tar-1.16 and exit status of 1.
+   * Can define a LASTSLOT in a chg-disk config file.
+
+
+Changes in release 2.5.1p2
+
+   * Many bugs fixed
+   * amoverview is working
+   * dumptype starttime is working
+
+   * Amanda command changes
+         o amtape accept the -o arguments
+         o amgetconf --list to list all tapetype, dumptype, holdingdisk
+           or interface
+         o amgetconf can return a value of a specific tapetype, dumptype,
+           holdingdisk or interface
+
+
+Changes in release 2.5.1p1
+
+   * Many bugs fixed:
+         o Timeout waiting for ACK
+         o "illegal density" with dump
+         o IRIX: Parse config file, amrecover
+         o MacOs: compilation
+         o amrecover with FreeBSD/OpenBSD
+   * Some other small cleanup.
+   * Remove contrib/sst.
+
+
 Changes in release 2.5.1
 
    * Defects found by Coverity scan and Klocwork K7 analysis tools fixed.

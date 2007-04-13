@@ -903,5 +903,6 @@ write_tapeheader(
     if(written < 0)
 	return written;
 
+    errno = ENOSPC
     return (ssize_t)-1;
 }

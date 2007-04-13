@@ -1,3 +1,18 @@
+		Release Notes for amanda-2.5.2
+
+IPv6
+
+  IPv6 support is enabled by default if your OS support it, if your OS is
+  not working correctly with IPV6, you can disable it at configure time
+  with '--without-ipv6'.
+
+readblocksize
+
+  This option is useful only if you configured amanda with a big
+  '--with-maxtapeblocksize' and your hardware can't works with big block
+  size.
+  
+
 		Release Notes for amanda-2.5.1
 
 

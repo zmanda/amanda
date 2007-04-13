@@ -1,3 +1,8 @@
+2007-04-13  Jean-Louis Martineau <martineau@zmanda.com>
+	* NEWS: Change in amanda-2.5.2
+	* ReleaseNotes: Releases Notes for 2.5.2
+	* server-src/chunker.c (write_tapeheader): Set errno to ENOSPC.
+
 2007-04-12  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/dumper.c: use fullwrite() instead of write()
 
