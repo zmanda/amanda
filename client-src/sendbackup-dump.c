@@ -41,40 +41,44 @@ static amregex_t re_table[] = {
   /* the various encodings of dump size */
   /* this should also match BSDI pre-3.0's buggy dump program, that
      produced doubled DUMP: DUMP: messages */
-  AM_SIZE_RE("DUMP: [0-9][0-9]* tape blocks", 1024),
-  AM_SIZE_RE("dump: Actual: [0-9][0-9]* tape blocks", 1024),
+  AM_SIZE_RE("DUMP: [0-9][0-9]* tape blocks", 1024, 1),
+  AM_SIZE_RE("dump: Actual: [0-9][0-9]* tape blocks", 1024, 1),
   AM_SIZE_RE("backup: There are [0-9][0-9]* tape blocks on [0-9][0-9]* tapes",
-	     1024),
+	     1024, 1),
   AM_SIZE_RE("backup: [0-9][0-9]* tape blocks on [0-9][0-9]* tape\\(s\\)",
-	     1024),
+	     1024, 1),
   AM_SIZE_RE("backup: [0-9][0-9]* 1k blocks on [0-9][0-9]* volume\\(s\\)",
-	     1024),
+	     1024, 1),
   AM_SIZE_RE("DUMP: [0-9][0-9]* blocks \\([0-9][0-9]*KB\\) on [0-9][0-9]* volume",
-	     512),
+	     512, 1),
   AM_SIZE_RE("DUMP: [0-9][0-9]* blocks \\([0-9][0-9]*\\.[0-9][0-9]*MB\\) on [0-9][0-9]* volume",
-	     512),
-  AM_SIZE_RE("DUMP: [0-9][0-9]* blocks", 512),
-  AM_SIZE_RE("DUMP: [0-9][0-9]* bytes were dumped", 1),
+	     512, 1),
+  AM_SIZE_RE("DUMP: [0-9][0-9]* blocks \\([0-9][0-9]*KB\\)",
+	     1024, 2),
+  AM_SIZE_RE("DUMP: [0-9][0-9]* blocks \\([0-9][0-9]*\\.[0-9][0-9]*MB\\)",
+	     1048576, 2),
+  AM_SIZE_RE("DUMP: [0-9][0-9]* blocks", 512, 1),
+  AM_SIZE_RE("DUMP: [0-9][0-9]* bytes were dumped", 1, 1),
   /* OSF's vdump */
-  AM_SIZE_RE("vdump: Dumped  [0-9][0-9]* of [0-9][0-9]* bytes", 1),
+  AM_SIZE_RE("vdump: Dumped  [0-9][0-9]* of [0-9][0-9]* bytes", 1, 1),
   /* DU 4.0a dump */
-  AM_SIZE_RE("dump: Actual: [0-9][0-9]* blocks output to pipe", 1024),
+  AM_SIZE_RE("dump: Actual: [0-9][0-9]* blocks output to pipe", 1024, 1),
   /* DU 4.0 vdump */
-  AM_SIZE_RE("dump: Dumped  [0-9][0-9]* of [0-9][0-9]* bytes", 1),
+  AM_SIZE_RE("dump: Dumped  [0-9][0-9]* of [0-9][0-9]* bytes", 1, 1),
   /* HPUX dump */
-  AM_SIZE_RE("DUMP: [0-9][0-9]* KB actual output", 1024),
+  AM_SIZE_RE("DUMP: [0-9][0-9]* KB actual output", 1024, 1),
   /* HPUX 10.20 and above vxdump */
-  AM_SIZE_RE("vxdump: [0-9][0-9]* tape blocks", 1024),
+  AM_SIZE_RE("vxdump: [0-9][0-9]* tape blocks", 1024, 1),
   /* UnixWare vxdump */
-  AM_SIZE_RE("vxdump: [0-9][0-9]* blocks", 1024),
+  AM_SIZE_RE("vxdump: [0-9][0-9]* blocks", 1024, 1),
   /* SINIX vxdump */
-  AM_SIZE_RE("   VXDUMP: [0-9][0-9]* blocks", 512),
+  AM_SIZE_RE("   VXDUMP: [0-9][0-9]* blocks", 512, 1),
   /* SINIX ufsdump */
-  AM_SIZE_RE("   UFSDUMP: [0-9][0-9]* blocks", 512),
+  AM_SIZE_RE("   UFSDUMP: [0-9][0-9]* blocks", 512, 1),
   /* Irix 6.2 xfs dump */
-  AM_SIZE_RE("xfsdump: media file size [0-9][0-9]* bytes", 1),
+  AM_SIZE_RE("xfsdump: media file size [0-9][0-9]* bytes", 1, 1),
   /* NetApp dump */
-  AM_SIZE_RE("DUMP: [0-9][0-9]* KB", 1024),
+  AM_SIZE_RE("DUMP: [0-9][0-9]* KB", 1024, 1),
 
   /* strange dump lines */
   AM_STRANGE_RE("should not happen"),

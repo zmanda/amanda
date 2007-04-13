@@ -1,4 +1,11 @@
 2007-04-13  Jean-Louis Martineau <martineau@zmanda.com>
+	* client-src/sendbackup.c (first_num): Removed function.
+	* client-src/sendbackup.c (the_num): return the nth number in a string.
+	* client-src/sendbackup.h (AM_SIZE_RE): Need a field.
+	* client-src/sendbackup-dump.c: Use new AM_SIZE_RE.
+	* client-src/sendbackup-gnutar.c: Use new AM_SIZE_RE.
+
+2007-04-13  Jean-Louis Martineau <martineau@zmanda.com>
 	* NEWS: Change in amanda-2.5.2
 	* ReleaseNotes: Releases Notes for 2.5.2
 	* server-src/chunker.c (write_tapeheader): Set errno to ENOSPC.

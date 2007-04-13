@@ -83,8 +83,7 @@ static void process_dumpline(char *str);
 static void save_fd(int *, int);
 void backup_api_info_tapeheader(int mesgfd, char *prog, option_t *options);
 
-double first_num(char *str);
-
+double the_num(char *str, int pos);
 
 
 char *
@@ -997,15 +996,21 @@ parse_backup_messages(
  */
 
 double
-first_num(
-    char *	str)
+the_num(
+    char *	str,
+    int         pos)
 {
     char *num;
     int ch;
     double d;
 
-    ch = *str++;
-    while(ch && !isdigit(ch)) ch = *str++;
+    do {
+	ch = *str++;
+	while(ch && !isdigit(ch)) ch = *str++;
+	if (pos == 1) break;
+	pos--;
+	while(ch && (isdigit(ch) || ch == '.')) ch = *str++;
+    } while (ch);
     num = str - 1;
     while(isdigit(ch) || ch == '.') ch = *str++;
     str[-1] = '\0';
@@ -1029,7 +1034,7 @@ process_dumpline(
 	}
     }
     if(rp->typ == DMP_SIZE) {
-	dump_size = (long)((first_num(str) * rp->scale + 1023.0)/1024.0);
+	dump_size = (long)((the_num(str, rp->field)* rp->scale+1023.0)/1024.0);
     }
     switch(rp->typ) {
     case DMP_NORMAL:

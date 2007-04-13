@@ -44,7 +44,7 @@
 
 static amregex_t re_table[] = {
   /* tar prints the size in bytes */
-  AM_SIZE_RE("^ *Total bytes written: [0-9][0-9]*", 1),
+  AM_SIZE_RE("^ *Total bytes written: [0-9][0-9]*", 1, 1),
   AM_NORMAL_RE("^Elapsed time:"),
   AM_NORMAL_RE("^Throughput"),
 
