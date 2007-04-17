@@ -1238,7 +1238,7 @@ addlabel() {
 		Exit 1 `_ '<none>'` `_ 'No tape currently loaded'`
 		return $?			# in case we are internal
 	fi
-	Log       `_ 'LABEL    -> Adding label "%s" with barcode "%s" for slot %s into %s' "$tapelabel" $loadedbarcode" "$loadedslot" "$labelfile"`
+	Log       `_ 'LABEL    -> Adding label "%s" with barcode "%s" for slot %s into %s' "$tapelabel" "$loadedbarcode" "$loadedslot" "$labelfile"`
 	read_labelfile "$tapelabel" "$loadedbarcode" < $labelfile
 	if [ $labelfile_entry_found -ne 0 ]; then
 		lf_val=
@@ -1257,7 +1257,7 @@ addlabel() {
 		fi
 		if [ -n "$lf_val" ]; then
 			LogAppend `_ 'ERROR    -> !!! Label database corrupted !!!'`
-			LogAppend `_ '         -> "%s" conflicts with new %s "%s" for %s "%s"" "$old_val" "$val_type" "$new_val" "$lf_type" "$lf_val"`
+			LogAppend `_ '         -> "%s" conflicts with new %s "%s" for %s "%s"' "$old_val" "$val_type" "$new_val" "$lf_type" "$lf_val"`
 			Exit 2 \
 			     `_ '<none>'` \
 			     `_ '%s: "%s" conflicts with new %s "%s" for %s "%s"' "$tapelabel" "$old_val" "$val_type" "$new_val" "$lf_type" "$lf_val"`
@@ -1266,7 +1266,7 @@ addlabel() {
 		LogAppend `_ "         -> already synced"`
 	else
 		echo "$tapelabel $loadedbarcode" >> $labelfile
-		LogAppend `_ '         -> appended %s entry: %s %s" "$labelfile" "$tapelabel" "$loadedbarcode"`
+		LogAppend `_ '         -> appended %s entry: %s %s' "$labelfile" "$tapelabel" "$loadedbarcode"`
 	fi
 	Exit 0 "$loadedslot" "$tape"
 	return $?				# in case we are internal
