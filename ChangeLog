@@ -1,3 +1,6 @@
+2007-04-17  Jean-Louis Martineau <martineau@zmanda.com>
+	* changer-src/chg-disk.sh.in: Send error message to stdout.
+
 2007-04-17  Dustin J. Mitchell <dustin@zmanda.com>
 	* changer-src/chg-zd-mtx.sh.in: fix more typos (thanks to
 	  "Stefan G. Weichinger" <sgw@amanda.org>)
