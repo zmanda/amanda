@@ -1,3 +1,6 @@
+2007-04-17  Jean-Louis Martineau <martineau@zmanda.com>
+	* restore-src/restore.c: Fix restoration of split and encrypted backup.
+
 2007-04-13  Dustin J. Mitchell <dustin@zmanda.com>
 	* changer-src/chg-zd-mtx.sh.in: fix typo in error message
 

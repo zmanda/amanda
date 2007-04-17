@@ -902,7 +902,8 @@ restore(
 	  || file->type != F_SPLIT_DUMPFILE))
        need_uncompress=1;   
 
-    if(!flags->raw && file->encrypted)
+    if(!flags->raw && file->encrypted && !is_continuation
+	  && (flags->inline_assemble || file->type != F_SPLIT_DUMPFILE))
        need_decrypt=1;
    
     /* Setup pipes for decryption / compression / uncompression  */
