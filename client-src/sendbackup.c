@@ -791,7 +791,7 @@ info_tapeheader(void)
 #endif
 		);
 
-    fprintf(stderr, "%s -f - ...\n", program->restore_name);
+    fprintf(stderr, "%s -xpGf - ...\n", program->restore_name);
 
     if (options->compress == COMP_FAST || options->compress == COMP_BEST)
 	fprintf(stderr, "%s: info COMPRESS_SUFFIX=%s\n",
