@@ -1104,3 +1104,150 @@ ac_cv_type_int_fast32_t="$ac_cv_type_int_fast32_t"
 ac_cv_type_intmax_t="$ac_cv_type_intmax_t"
 ])
 ])
+
+# AC_PROG_XSLTPROC
+# -----------------------------------------------------------------
+# Find an xsltproc executable.
+#
+# Input:
+#  $1 is the default $XSLTPROC_FLAGS, which will be overridden if the
+#  user specifies --with-xsltproc-flags.
+# Output:
+#  $XSLTPROC contains the path to xsltproc, or is empty if none was
+#  found or the user specified --without-xsltproc. $XSLTPROC_FLAGS 
+#  contains the flags to use with xsltproc.
+
+AC_DEFUN([AC_PROG_XSLTPROC],
+[
+XSLTPROC_FLAGS="$1"
+AC_SUBST(XSLTPROC_FLAGS)
+
+# The (lack of) whitespace and overquoting here are all necessary for
+# proper formatting.
+AC_ARG_WITH(xsltproc,
+AS_HELP_STRING([--with-xsltproc[[[[[=PATH]]]]]],
+               [Use the xsltproc binary in in PATH.]),
+    [ ac_with_xsltproc=$withval; ],
+    [ ac_with_xsltproc=maybe; ])
+
+AC_ARG_WITH(xsltproc-flags,
+AS_HELP_STRING([  --with-xsltproc-flags=FLAGS],
+               [Flags to pass to xsltproc (default $1)]),
+    [ if test "x$withval" == "xno"; then
+	XSLTPROC_FLAGS=''
+    else
+	if test "x$withval" != "xyes"; then
+	    XSLTPROC_FLAGS="$withval"
+	fi
+    fi
+	])
+
+# search for xsltproc if it wasn't specified
+if test "$ac_with_xsltproc" = "yes" -o "$ac_with_xsltproc" = "maybe"; then
+    AC_PATH_PROGS(XSLTPROC,xsltproc,,$LOCSYSPATH)
+else
+    if test "$ac_with_xsltproc" != "no"; then
+        if test -x "$ac_with_xsltproc"; then
+            XSLTPROC="$ac_with_xsltproc";
+        else
+            AC_MSG_WARN([Specified xsltproc of $ac_with_xsltproc isn't])
+            AC_MSG_WARN([executable; searching for an alternative.])
+            AC_PATH_PROGS(XSLTPROC,xsltproc,,$LOCSYSPATH)
+        fi
+    fi
+fi
+])
+
+# AC_CHECK_DOCBOOK_XSLT
+# -----------------------------------------------------------------
+# Check for access to docbook stylesheets of a particular revision.
+# This macro can be used for multiple versions within the same script.
+#
+# Input:
+#  $1 is the version of docbook to search for; default 'current'
+# Output:
+#  $HAVE_DOCBOOK_XSLT_VERS will be set to 'yes' or 'no' depending
+#  on the results of the test, where VERS is $1, with '_' substituted
+#  for '.'  $HAVE_DOCBOOK_XSLT will also be set to the same value.
+AC_DEFUN([AC_CHECK_DOCBOOK_XSLT],
+[
+    AC_REQUIRE([AC_PROG_XSLTPROC])
+
+    dnl define a temporary variable for the version, so this macro can be
+    dnl used with multiple versions
+    define([_VERS], $1)
+    ifelse(_VERS, [], [define([_VERS], [current])])
+    define([ac_cv_docbook_xslt_VERS], patsubst([ac_cv_docbook_xslt_]_VERS, [\.], [_]))
+    define([HAVE_DOCBOOK_XSLT_VERS], patsubst([HAVE_DOCBOOK_XSLT_]_VERS, [\.], [_]))
+
+    AC_CACHE_CHECK([for Docbook XSLT version ]_VERS, [ac_cv_docbook_xslt_VERS],
+    [
+	ac_cv_docbook_xslt_VERS=no
+	if test -n "$XSLTPROC"; then
+	    echo "Trying '$XSLTPROC $XSLTPROC_FLAGS http://docbook.sourceforge.net/release/xsl/_VERS/xhtml/docbook.xsl'" >&AS_MESSAGE_LOG_FD
+	    $XSLTPROC $XSLTPROC_FLAGS http://docbook.sourceforge.net/release/xsl/_VERS/xhtml/docbook.xsl >&AS_MESSAGE_LOG_FD 2>&1
+
+	    if test "$?" = 0; then
+		ac_cv_docbook_xslt_VERS=yes
+	    fi
+	fi
+    ])
+
+    HAVE_DOCBOOK_XSLT_VERS="$ac_cv_docbook_xslt_VERS"
+    HAVE_DOCBOOK_XSLT=HAVE_DOCBOOK_XSLT_VERS
+    undefine([_VERS])
+])
+
+# AC_CHECK_DOCBOOK_DTD
+# -----------------------------------------------------------------
+# Check for access to docbook DTD of a particular revision.
+# This macro can be used for multiple versions within the same script.
+#
+# Input:
+#  $1 is the version of docbook to search for; default 'current'
+# Output:
+#  $HAVE_DOCBOOK_DTD_VERS will be set to 'yes' or 'no' depending
+#  on the results of the test, where VERS is $1, with '_' substituted
+#  for '.'  $HAVE_DOCBOOK_DTD will also be set to the same value.
+AC_DEFUN([AC_CHECK_DOCBOOK_DTD],
+[
+    AC_REQUIRE([AC_PROG_XSLTPROC])
+
+    dnl define a temporary variable for the version, so this macro can be
+    dnl used with multiple versions
+    define([_VERS], $1)
+    ifelse(_VERS, [], [define([_VERS], [current])])
+    define([ac_cv_docbook_dtd_VERS], patsubst([ac_cv_docbook_dtd_]_VERS, [\.], [_]))
+    define([HAVE_DOCBOOK_DTD_VERS], patsubst([HAVE_DOCBOOK_DTD_]_VERS, [\.], [_]))
+
+    AC_CACHE_CHECK([for Docbook DTD version ]_VERS, [ac_cv_docbook_dtd_VERS],
+    [
+	ac_cv_docbook_dtd_VERS=no
+	if test -n "$XSLTPROC"; then
+	    MY_XSLTPROC_FLAGS=`echo "" $XSLTPROC_FLAGS|sed -e s/--novalid//g`
+	    cat <<EOF >conftest.xml
+<?xml version="1.0" encoding='ISO-8859-1'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V[]_VERS//EN" "http://www.oasis-open.org/docbook/xml/_VERS/docbookx.dtd">
+<book id="empty">
+</book>
+EOF
+	    echo "Trying '$XSLTPROC $MY_XSLTPROC_FLAGS conftest.xml'" >&AS_MESSAGE_LOG_FD
+	    $XSLTPROC $MY_XSLTPROC_FLAGS conftest.xml >conftest.out 2>&1
+	    if test "$?" = 0; then
+		# failing to load the DTD is just a warning, so check for it in the output.
+		if grep 'warning: failed to load external entity' conftest_out >/dev/null 2>&1; then
+		    : # no good..
+		else
+		    ac_cv_docbook_dtd_VERS=yes
+		fi
+	    fi
+	    cat conftest.out >&AS_MESSAGE_LOG_FD
+
+	    rm -f conftest.xml conftest.out
+	fi
+    ])
+
+    HAVE_DOCBOOK_DTD_VERS="$ac_cv_docbook_dtd_VERS"
+    HAVE_DOCBOOK_DTD=HAVE_DOCBOOK_DTD_VERS
+    undefine([_VERS])
+])

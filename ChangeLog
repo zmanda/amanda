@@ -1,3 +1,8 @@
+2007-04-18  Dustin J. Mitchell <dustin@zmanda.com>
+	* man/Makefile.am configure.in config/acinclude.m4i: add xsltproc- and docbook-
+	  related autoconf macros, use them to ensure the environment is appropriate for
+	  building manpages; manpage build is off by default.
+
 2007-04-17  Jean-Louis Martineau <martineau@zmanda.com>
 	* changer-src/chg-disk.sh.in: Send error message to stdout.
 

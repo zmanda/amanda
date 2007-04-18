@@ -3104,47 +3104,33 @@ AC_SUBST(LTALLOCA)
 DOC_BUILD_DATE=`date '+%d-%m-%Y'`
 AC_SUBST(DOC_BUILD_DATE)
 
-# The (lack of) whitespace and overquoting here are all necessary for
-# proper formatting.
-AC_ARG_WITH(xsltproc,
-AS_HELP_STRING([--with-xsltproc[[[[[=PATH]]]]]],
-               [Build manpages from XML source (with xsltproc in PATH).])
-AS_HELP_STRING([--without-xsltproc],
-               [Do not build manpages from XML source.]),
-    [ ac_with_xsltproc=$withval; ],
-    [ ac_with_xsltproc=maybe; ])
+AC_ARG_ENABLE(manpage-build,
+AS_HELP_STRING([--enable-manpage-build],
+	       [Build the manpages from their XML source (shipped manpages are usually sufficient)]),
+    [ ENABLE_MANPAGE_BUILD=$enableval ],
+    [ ENABLE_MANPAGE_BUILD=no ])
 
-if test "$ac_with_xsltproc" = "yes" -o "$ac_with_xsltproc" = "maybe"; then
-    AC_PATH_PROGS(XSLTPROC,xsltproc,,$LOCSYSPATH)
-else
-    if test "$ac_with_xsltproc" != "no"; then
-        if test -x "$ac_with_xsltproc"; then
-            XSLTPROC="$ac_with_xsltproc";
-        else
-            AC_MSG_WARN([Specified xsltproc of $ac_with_xsltproc isn't])
-            AC_MSG_WARN([executable, searching for an alternative.])
-            AC_PATH_PROGS(XSLTPROC,xsltproc,,$LOCSYSPATH)
-        fi
-    fi
-fi
+AC_PROG_XSLTPROC([--nonet])
+AC_CHECK_DOCBOOK_XSLT([1.72.0])
+AC_CHECK_DOCBOOK_DTD([4.1.2])
+AC_CHECK_DOCBOOK_DTD([4.2])
 
-if test "$ac_with_xsltproc" == "no"; then
-    USE_XSLTPROC=no
-else
+# and ensure that everything docbook-related is OK if we'll be using it
+if test "x$ENABLE_MANPAGE_BUILD" = "xyes"; then
     if test -z "$XSLTPROC"; then
-       # XSLTPROC could not be detected. Did the user request it?
-       USE_XSLTPROC=no
-       if test "$ac_with_xsltproc" = "yes"; then
-           AC_MSG_ERROR([Compiled manpages requested but xsltproc could not be found.])
-       else
-           AC_MSG_WARN([can't find xsltproc, built manpages are unavailable])
-       fi
-    else
-       USE_XSLTPROC=yes
-       AC_DEFINE(HAVE_XSLTPROC,1,[xslt is available to generate man pages])
+	AC_MSG_ERROR([Cannot build manpages: 'xsltproc' was not found.])
+    fi
+
+    if test "x$HAVE_DOCBOOK_XSLT_1_72_0" = "xno"; then
+	AC_MSG_ERROR([Cannot build manpages: docbook version 1.72.0 was not found.])
+    fi
+
+    if test "x$HAVE_DOCBOOK_DTD_4_1_2" = "xno" || test "x$HAVE_DOCBOOK_DTD_4_2" = "xno"; then
+	AC_MSG_WARN([Docbook DTD versions 4.1.2 and 4.2 are required for manpage validation; disabling validation])
+	XSLTPROC_FLAGS="$XSLTPROC_FLAGS --novalid"
     fi
 fi
-AM_CONDITIONAL(HAVE_XSLTPROC, test "x$USE_XSLTPROC" = "xyes")
+AM_CONDITIONAL(ENABLE_MANPAGE_BUILD, test "x$ENABLE_MANPAGE_BUILD" = "xyes")
 
 AC_CACHE_CHECK([for working IPv6],
 	       amanda_working_ipv6,
