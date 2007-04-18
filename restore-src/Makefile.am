@@ -26,6 +26,7 @@ libexec_PROGRAMS = 	amidxtaped
 
 LDADD = librestore.$(LIB_EXTENSION)              \
       ../common-src/libamanda.$(LIB_EXTENSION) \
+      ../gnulib/libgnu.$(LIB_EXTENSION) \
       $(READLINE_LIBS)
 
 amidxtaped_LDADD = $(LDADD) \

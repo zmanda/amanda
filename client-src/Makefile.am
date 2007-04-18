@@ -41,8 +41,8 @@ libamclient_la_LDFLAGS = -release $(VERSION)
 LDADD = ../common-src/libamanda.$(LIB_EXTENSION) \
 	libamclient.$(LIB_EXTENSION) \
 	../amandad-src/libamandad.$(LIB_EXTENSION) \
-	../gnulib/libgnu.$(LIB_EXTENSION) \
-	../common-src/libamanda.$(LIB_EXTENSION)
+	../common-src/libamanda.$(LIB_EXTENSION) \
+	../gnulib/libgnu.$(LIB_EXTENSION)
 
 SUFFIXES =		.sh .pl
 

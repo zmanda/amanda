@@ -1,4 +1,10 @@
 2007-04-18  Jean-Louis Martineau <martineau@zmanda.com>
+	* oldrecover-src/Makefile.am, changer-src/Makefile.am,
+	  client-src/Makefile.am, amandad-src/Makefile.am,
+	  recover-src/Makefile.am, server-src/Makefile.am,
+	  restore-src/Makefile.am: Link libgnu after libamanda.
+
+2007-04-18  Jean-Louis Martineau <martineau@zmanda.com>
 	* client-src/sendbackup.c: Improve tar argument in amanda header for
 				   extraction.
 

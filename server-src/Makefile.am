@@ -45,21 +45,21 @@ libamserver_la_LDFLAGS= -release $(VERSION)
 
 LDADD = ../common-src/libamanda.$(LIB_EXTENSION)   \
 	libamserver.$(LIB_EXTENSION)               \
+	../tape-src/libamtape.$(LIB_EXTENSION)     \
+	../common-src/libamanda.$(LIB_EXTENSION)   \
+	../tape-src/libamtape.$(LIB_EXTENSION)     \
+	../common-src/libamanda.$(LIB_EXTENSION)   \
 	../gnulib/libgnu.$(LIB_EXTENSION)          \
-	../tape-src/libamtape.$(LIB_EXTENSION)     \
-	../common-src/libamanda.$(LIB_EXTENSION)   \
-	../tape-src/libamtape.$(LIB_EXTENSION)     \
-	../common-src/libamanda.$(LIB_EXTENSION)   \
         $(READLINE_LIBS)
 
 amindexd_LDADD = ../common-src/libamanda.$(LIB_EXTENSION) \
 	libamserver.$(LIB_EXTENSION) \
 	../amandad-src/libamandad.$(LIB_EXTENSION) \
-	../gnulib/libgnu.$(LIB_EXTENSION) \
 	../tape-src/libamtape.$(LIB_EXTENSION) \
 	../common-src/libamanda.$(LIB_EXTENSION) \
 	../tape-src/libamtape.$(LIB_EXTENSION) \
-	../common-src/libamanda.$(LIB_EXTENSION)
+	../common-src/libamanda.$(LIB_EXTENSION) \
+	../gnulib/libgnu.$(LIB_EXTENSION)
 
 SUFFIXES =		.sh .pl
 

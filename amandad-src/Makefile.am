@@ -30,8 +30,8 @@ noinst_HEADERS  = amandad.h
 
 LDADD = ../common-src/libamanda.$(LIB_EXTENSION) \
 	libamandad.$(LIB_EXTENSION) \
-	../gnulib/libgnu.$(LIB_EXTENSION) \
-	../common-src/libamanda.$(LIB_EXTENSION)
+	../common-src/libamanda.$(LIB_EXTENSION) \
+	../gnulib/libgnu.$(LIB_EXTENSION)
 
 install-exec-hook:
 	@list="$(libexec_PROGRAMS) $(libexec_SCRIPTS)"; \

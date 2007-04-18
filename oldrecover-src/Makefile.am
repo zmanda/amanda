@@ -27,8 +27,8 @@ LDADD = ../common-src/libamanda.$(LIB_EXTENSION) \
 	@LEXLIB@ \
 	../client-src/libamclient.$(LIB_EXTENSION) \
 	$(READLINE_LIBS) \
-	../gnulib/libgnu.$(LIB_EXTENSION) \
-	../common-src/libamanda.$(LIB_EXTENSION)
+	../common-src/libamanda.$(LIB_EXTENSION) \
+	../gnulib/libgnu.$(LIB_EXTENSION)
 
 amoldrecover_CSRC =	amrecover.c					\
 			display_commands.c		extract_list.c	\
