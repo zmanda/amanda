@@ -1,3 +1,8 @@
+2007-04-20  Jean-Louis Martineau <martineau@zmanda.com>
+	* amplot/amplot.sh.in (test_awk,find_gnuplot): Imported from zmanda.
+	* amplot/amplot.awk: Fix some parsing.
+	* server-src/driver.c (free_kps): Return 0 instead of big value.
+
 2007-04-18  Jean-Louis Martineau <martineau@zmanda.com>
 	* oldrecover-src/Makefile.am, changer-src/Makefile.am,
 	  client-src/Makefile.am, amandad-src/Makefile.am,

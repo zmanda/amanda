@@ -47,16 +47,71 @@ PATH=$sbindir:$libexecdir:/usr/bin:/bin:/usr/sbin:/sbin:/usr/ucb:$PATH
 export PATH
 
 AWK=@AWK@
-AVARFLAG=@AWK_VAR_ASSIGNMENT_OPT@
 GNUPLOT=@GNUPLOT@
 COMPRESS=@AMPLOT_COMPRESS@
 
-# support simultaneous development with and without gettext
+#+
+# Function to:
+#    Simplify gettext usage by allowing printf format
+#    strings for translators, use _() identifier for
+#    xgettext extraction similar to "C" usage and
+#    collapsing "printf `gettext fmt` ...", which is
+#    used everywhere, into one function.
+#-
 function _() {
-        fmt="$1"
-        shift
-        printf "$fmt" $*
+	fmt="$1"
+	shift
+	printf "$fmt" $*
 }
+
+# Function to check that awk can do command-line variable
+# substitution.  If no, then exit; if yes, set $AVARFLAG
+# to the commandline switch used to introduce a variable. This
+# check used to be performed at build time in configure; it's
+# now performed at runtime.
+function test_awk() {
+	local tmpfile result
+	tmpfile=`mktemp /tmp/amplot.XXXXXX`
+	echo 'BEGIN{print i; exit}' > ${tmpfile}
+	result=`$AWK -f ${tmpfile} i=xx | wc -c`
+	if test "$result" -le 1; then
+		result=`$AWK -f ${tmpfile} -v i=xx | wc -c`
+		if test "$result" -le 1; then
+			echo "$AWK does not support command-line variable assignment; amplot cannot run" >&2
+			rm -fr $tmpfile
+			exit 1
+		else
+			AVARFLAG=-v
+		fi
+	else
+		AVARFLAG=''
+	fi
+
+	rm -fr $tmpfile
+}
+
+# Function to search for gnuplot and ensure it's working.  This
+# first tries the location detected/configured when amanda was built,
+# then tries 'gnuplot', assuming it's in the user's path.  If no
+# working gnuplot executable is found, it exits with an error.  The
+# variable $GNUPLOT is set to the resulting executable.
+function find_gnuplot() {
+	if test "x$GNUPLOT" = "x"; then
+		# look for it in the user's PATH
+		GNUPLOT=gnuplot
+	fi
+
+	if ${GNUPLOT} --version 2>/dev/null | grep '^gnuplot' >/dev/null; then
+		: # looks OK
+	else
+		echo "${GNUPLOT} was not found; amplot cannot run"
+		exit 1
+	fi
+}
+
+# check our environment, using functions from above
+test_awk
+find_gnuplot
 
 if [ $# -eq 0 ] ; then
 	_ 'Usage: %s [-c] [-e] [-g] [-l] [-p] [-t hours] <amdump_files.[gz,z,Z]>\n' $0

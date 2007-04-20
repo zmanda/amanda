@@ -92,7 +92,7 @@ BEGIN{
 		else if( $2=="flush" && $3=="size" ) {
 			flush_size = $4;
 		}
-		else if( $2=="start")       do_start();
+		else if( $2=="start" && $3=="time")       do_start();
 		else if( $2=="send-cmd") { 
 			if( $7=="FILE-DUMP"){
 			  file_dump++;
@@ -107,6 +107,9 @@ BEGIN{
 		else if( $2=="finished-cmd") cmd_fin++;
 		else if( $2=="started")      forked++;
 		else if( $2=="QUITTING")     do_quit();
+		else if( $2=="find_diskspace:") ; #eat this line
+		else if( $2=="assign_holdingdisk:") ; #eat this line
+		else if( $2=="adjust_diskspace:") ; #eat this line
 		else if( $2=="tape" && $3=="size") ; #eat this line
 		else if( $2=="dump" && $3=="failed") ; #eat this line
 		else if( $2=="taper" && $3=="failed") ; #eat this line
@@ -129,7 +132,7 @@ BEGIN{
 	            print fil, "INFO#", $0;
 	}
 	else if( $1 == "taper:") {
-		if($3 != "label" && $3 != "end" && $2 != "DONE" && $2 != "pid" && $2 != "slot" && $2 != "reader-side:" && $2 != "page" && $2 != "buffer" && $3 != "at")
+		if($3 != "label" && $3 != "end" && $2 != "DONE" && $2 != "pid" && $2 != "slot" && $2 != "reader-side:" && $2 != "page" && $2 != "buffer" && $3 != "at" && $3 != "switching" && $2 != "slot:")
 		    print fil, "INFO#", $0;
 	}
 	else if( $1 == "FLUSH") {
@@ -151,11 +154,16 @@ function do_state(){		# state line is printed out after driver
 # $11 = "writing"/"idle"# $12 = "idle-dumpers:"
 # $13 = #idle 		# $14 = "qlen"		# $15 = "tapeq:"
 # $16 = #waiting	# $17 = "runq:"		# $18 = #not started 
-# $19 = "stoppedq:"	# $20 = #stopped
+# $19 = "roomq"		# $20 = #roomq		# $21 = "wakeup:"
+# $22 = #wakeup		# $23 = "driver-idle:"	# $23 = status
 
 	cnt++;					# number of event
 	time = $4/time_scale;
-	unused = (bandw - $7)*bandw_scale+bandw_raise;
+	#Check overflow in driver ouput (big value instead of negative)
+	if($7>0 && $7 < 0x7fffffff)
+		unused = (bandw - $7)*bandw_scale+bandw_raise;
+	else
+		unused = bandw_raise;
 	if( unused != unused_old) 
 		printf plot_fmt, time, unused_old, time,unused >>"bandw_free";
 	unused_old = unused;
@@ -360,6 +368,7 @@ function do_result(){		# process lines driver: result
 	else { 					# something bad from dumper 
 		if ($7=="FAILED") { failed++;}
 		else if ($7=="TRY-AGAIN"){ try++;}
+		else if ($7=="PORT") ;  # ignore from chunker
 		else if ($7=="RQ-MORE-DISK") ;  # FIXME: ignore for now
 		else if ($7=="NO-ROOM")  
 		  print fil, pr_time($4),"#"  ++no_room, $0;

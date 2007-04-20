@@ -2233,10 +2233,16 @@ free_kps(
 	    maxusage += interface_get_maxusage(p);
 	    curusage += p->curusage;
 	}
-	res = maxusage - curusage;
+	if (maxusage >= curusage)
+	    res = maxusage - curusage;
+	else
+	    res = 0;
 #ifndef __lint
     } else {
-	res = interface_get_maxusage(ip) - ip->curusage;
+	if ((unsigned long)interface_get_maxusage(ip) >= ip->curusage)
+	    res = interface_get_maxusage(ip) - ip->curusage;
+	else
+	    res = 0;
 #endif
     }
 
