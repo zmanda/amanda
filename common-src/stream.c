@@ -59,9 +59,19 @@ stream_server(
     int save_errno;
     int *portrange;
     socklen_t socklen;
+    int socket_family;
 
     *portp = USHRT_MAX;				/* in case we error exit */
-    if((server_socket = socket(AF_NATIVE, SOCK_STREAM, 0)) == -1) {
+    socket_family = AF_NATIVE;
+    server_socket = socket(AF_NATIVE, SOCK_STREAM, 0);
+#ifdef WORKING_IPV6
+    /* if that address family actually isn't supported, just try AF_INET */
+    if (server_socket == -1 && errno == EAFNOSUPPORT) {
+	socket_family = AF_INET;
+	server_socket = socket(AF_INET, SOCK_STREAM, 0);
+    }
+#endif
+    if (server_socket == -1) {
 	save_errno = errno;
 	dbprintf(("%s: stream_server: socket() failed: %s\n",
 		  debug_prefix_time(NULL),
@@ -80,7 +90,7 @@ stream_server(
 	return -1;
     }
 
-    SS_INIT(&server, AF_NATIVE);
+    SS_INIT(&server, socket_family);
     SS_SET_INADDR_ANY(&server);
 
 #ifdef USE_REUSEADDR
