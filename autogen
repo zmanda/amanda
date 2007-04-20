@@ -11,9 +11,9 @@ if test x`ls -1t acinclude.m4 2>/dev/null \
 	    config/gnulib.m4i config/acinclude.m4i config/libtool.m4i |
 	  sed 1q` != x"acinclude.m4"; then
     rm -f acinclude.m4
-    cat config/gnulib.m4i config/acinclude.m4i config/libtool.m4i > acinclude.m4
+    # keep libtool.m4i first here, as it has a "serial number" comment that it wants
+    # first in the file
+    cat config/libtool.m4i config/gnulib.m4i config/acinclude.m4i > acinclude.m4
 fi
 
-autoreconf --warning=syntax --force ${1+"$@"}
-
-exit 0
+autoreconf --install --warning=syntax --warning=no-portability --force ${1+"$@"} || exit 1

@@ -1,4 +1,7 @@
 2007-04-20  Dustin J. Mitchell <dustin@zmanda.com>
+	* autogen: silence unnecessary warnings about GNU make, return exit status
+
+2007-04-20  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/stream.c: retry socket creation if OS does not support IPv6
 	  at runtime
 
