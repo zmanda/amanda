@@ -230,29 +230,6 @@ AC_DEFUN([AMANDA_FUNC_GETTIMEOFDAY_ARGS],
 
 
 
-dnl Check if the compiler understands volatile.
-AC_DEFUN([AMANDA_C_VOLATILE],
-    [
-	AC_CACHE_CHECK(
-	    [for working volatile],
-	    amanda_cv_c_volatile,
-	    [
-		AC_TRY_COMPILE(,
-		    [
-			volatile int aaa = 0;
-		    ],
-		    amanda_cv_c_volatile=yes,
-		    amanda_cv_c_volatile=no
-		)
-	    ]
-	)
-	if test $amanda_cv_c_volatile = no; then
-	    AC_DEFINE(volatile, [],[Define to empty if the compiler does not support volatile. ])
-	fi
-    ]
-)
-
-
 dnl Check for if pid_t is a long, int, or short.
 AC_DEFUN([AMANDA_TYPE_PID_T],
     [
