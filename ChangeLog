@@ -1,4 +1,7 @@
 2007-04-20  Dustin J. Mitchell <dustin@zmanda.com>
+	* configure.in: remove unused AMANDA_C_VOLATILE
+
+2007-04-20  Dustin J. Mitchell <dustin@zmanda.com>
 	* autogen: silence unnecessary warnings about GNU make, return exit status
 
 2007-04-20  Dustin J. Mitchell <dustin@zmanda.com>
