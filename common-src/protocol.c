@@ -301,8 +301,8 @@ state_machine(
     pstate_t curstate;
     p_action_t retaction;
 
-    proto_debug(1, _("protocol: state_machine: initial: p %p action %s pkt %p\n"),
-		    p, action2str(action), (void *)NULL);
+    proto_debug(1, ("protocol: state_machine: initial: p %p action %s pkt %p\n",
+		    p, action2str(action), (void *)NULL));
 
     assert(p != NULL);
     assert(action == PA_RCVDATA || pkt == NULL);
