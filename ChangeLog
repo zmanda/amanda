@@ -1,4 +1,7 @@
 2007-04-26  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amcheck.c: Set *bad on error.
+
+2007-04-26  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amflush.c: Quote L_DISK and FLUSH line.
 	* server-src/driver.c: Parse quoted FLUSH line.
 	* server-src/planner.c:  Quote L_DISK and FLUSH line.

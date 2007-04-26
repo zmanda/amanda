@@ -943,7 +943,7 @@ start_server_check(
 
 	if(access(logfile, F_OK) == 0) {
 	    testtape = 0;
-	    logbad = 1;
+	    logbad = 2;
 	    if(access(logfile, W_OK) != 0) {
 		quoted = quote_string(logfile);
 		fprintf(outf, "ERROR: log file %s: not writable\n", quoted);
@@ -957,14 +957,17 @@ start_server_check(
 	    if(!(S_ISDIR(stat_old.st_mode))) {
 		fprintf(outf, "ERROR: oldlog directory %s is not a directory\n",
 			quoted);
+		logbad = 1;
 	    }
 	    if(access(olddir, W_OK) == -1) {
 		fprintf(outf, "ERROR: oldlog dir %s: not writable\n", quoted);
+		logbad = 1;
 	    }
 	}
 	else if(lstat(olddir,&stat_old) == 0) {
 	    fprintf(outf, "ERROR: oldlog directory %s is not a directory\n",
 		    quoted);
+	    logbad = 1;
 	}
 	amfree(quoted);
 
@@ -972,7 +975,7 @@ start_server_check(
 	    logfile = newvstralloc(logfile, conf_logdir, "/amdump", NULL);
 	    if (access(logfile, F_OK) == 0) {
 		testtape = 0;
-		logbad = 1;
+		logbad = 2;
 	    }
 	}
 
@@ -1000,14 +1003,17 @@ start_server_check(
 	    if (tape_access(tapename,F_OK) == -1) {
 		fprintf(outf, "ERROR: Can't access device %s: %s\n", tapename,
 			strerror(errno));
+		tapebad = 1;
 	    }
 	    if (tape_access(tapename,R_OK) == -1) {
 		fprintf(outf, "ERROR: Can't read device %s: %s\n", tapename,
 			strerror(errno));
+		tapebad = 1;
 	    }
 	    if (tape_access(tapename,W_OK) == -1) {
 		fprintf(outf, "ERROR: Can't write to device %s: %s\n", tapename,
 			strerror(errno));
+		tapebad = 1;
 	    }
 	}
         if (tape_status < 0) {
@@ -1053,6 +1059,9 @@ start_server_check(
 	amfree(tapename);
     } else if (do_tapechk) {
 	fprintf(outf, "WARNING: skipping tape test because amdump or amflush seem to be running\n");
+	fprintf(outf, "WARNING: if they are not, you must run amcleanup\n");
+    } else if (logbad == 2) {
+	fprintf(outf, "WARNING: amdump or amflush seem to be running\n");
 	fprintf(outf, "WARNING: if they are not, you must run amcleanup\n");
     } else {
 	fprintf(outf, "NOTE: skipping tape checks\n");
@@ -1111,6 +1120,7 @@ start_server_check(
 	    } else {
 		fprintf(outf, "ERROR: conf info dir %s (%s)\n",
 			quoted, strerror(errno));
+		infobad = 1;
 	    }	
 	    amfree(conf_infofile);
 	} else if (!S_ISDIR(statbuf.st_mode)) {
@@ -1127,6 +1137,7 @@ start_server_check(
 		fprintf(outf, "ERROR: Can't copy infofile: %s\n", errmsg);
 		amfree(errmsg);
 	    }
+	    infobad = 1;
 	    strappend(conf_infofile, "/");
 	}
 	amfree(quoted);
@@ -1148,6 +1159,7 @@ start_server_check(
 		    } else {
 			fprintf(outf, "ERROR: host info dir %s (%s)\n",
 				quoted, strerror(errno));
+			infobad = 1;
 		    }	
 		    amfree(hostinfodir);
 		} else if (!S_ISDIR(statbuf.st_mode)) {
@@ -1184,6 +1196,7 @@ start_server_check(
 			} else {
 			    fprintf(outf, "ERROR: info dir %s (%s)\n",
 				    quoted, strerror(errno));
+			    infobad = 1;
 			}	
 		    } else if (!S_ISDIR(statbuf.st_mode)) {
 			fprintf(outf, "ERROR: info dir %s: not a directory\n",
@@ -1200,7 +1213,8 @@ start_server_check(
 			    fprintf(outf, "NOTE: it will be created on the next run.\n");
 			} else {
 			    fprintf(outf, "ERROR: info dir %s (%s)\n",
-				quoted, strerror(errno));
+				    quoted, strerror(errno));
+			    infobad = 1;
 			}	
 		    } else if (!S_ISREG(statbuf.st_mode)) {
 			fprintf(outf, "ERROR: info file %s: not a file\n",
@@ -1222,11 +1236,12 @@ start_server_check(
 			if(stat(conf_indexdir, &statbuf) == -1) {
 			    if (errno == ENOENT) {
 				fprintf(outf, "NOTE: index dir %s does not exist\n",
-				    quoted);
+				        quoted);
 				fprintf(outf, "NOTE: it will be created on the next run.\n");
 			    } else {
 				fprintf(outf, "ERROR: index dir %s (%s)\n",
 					quoted, strerror(errno));
+				indexbad = 1;
 			    }	
 			    amfree(conf_indexdir);
 			} else if (!S_ISDIR(statbuf.st_mode)) {
@@ -1252,11 +1267,12 @@ start_server_check(
 			    if(stat(hostindexdir, &statbuf) == -1) {
 				if (errno == ENOENT) {
 				    fprintf(outf, "NOTE: index dir %s does not exist\n",
-				        quoted);
+				            quoted);
 				    fprintf(outf, "NOTE: it will be created on the next run.\n");
 			        } else {
 				    fprintf(outf, "ERROR: index dir %s (%s)\n",
 					    quoted, strerror(errno));
+				    indexbad = 1;
 				}
 			        amfree(hostindexdir);
 			    } else if (!S_ISDIR(statbuf.st_mode)) {
@@ -1281,11 +1297,12 @@ start_server_check(
 			    if(stat(diskdir, &statbuf) == -1) {
 				if (errno == ENOENT) {
 				    fprintf(outf, "NOTE: index dir %s does not exist\n",
-					quoted);
+					    quoted);
 				    fprintf(outf, "NOTE: it will be created on the next run.\n");
 				} else {
 				    fprintf(outf, "ERROR: index dir %s (%s)\n",
 					quoted, strerror(errno));
+				    indexbad = 1;
 				}	
 			    } else if (!S_ISDIR(statbuf.st_mode)) {
 				fprintf(outf, "ERROR: index dir %s: not a directory\n",
