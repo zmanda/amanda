@@ -923,9 +923,46 @@ n | no) : ;;
 y |  ye | yes) AC_DEFINE(SSH_SECURITY,1,[Define if SSH transport should be enabled. ])
 	       SSH_SECURITY_SET=true
   ;;
-*) AC_MSG_ERROR([*** You must not supply an argument the to --with-ssh-security option.])
+*) AC_MSG_ERROR([*** You must not supply an argument to --with-ssh-security.])
   ;;
 esac
+
+# find SSH and check for SSH options if we're using SSH security
+if test x"$SSH_SECURITY" = "xyes"; then
+    AC_PATH_PROGS(SSH, ssh, , $LOCSYSPATH)
+    AC_DEFINE_UNQUOTED(SSH, "$SSH", [Path to the SSH binary])
+
+    AC_ARG_WITH(ssh-options,
+    AS_HELP_STRING([--with-ssh-options=@<:@OPTIONS@:>@],
+		   [Use these ssh options for ssh security; the default should work]),
+	[ SSH_OPTIONS="$withval" ],
+	[ SSH_OPTIONS='' ]
+    )
+
+    case "$SSH_OPTIONS" in
+	y | ye | yes | n | no)
+	    AC_MSG_ERROR([*** You must supply an argument to --with-ssh-options.]);;
+	*) : ;;
+    esac
+
+    AC_MSG_CHECKING([SSH options])
+    # if we didn't get SSH options from the user, figure them out for ourselves
+    if test -z "$SSH_OPTIONS"; then
+	# TODO - quote these (or break them up in ssh-security??)
+	case `$SSH -V 2>&1` in
+	    OpenSSH*) SSH_OPTIONS='-x -o BatchMode=yes -o PreferredAuthentications=publickey';;
+	    *) SSH_OPTIONS='-x -o BatchMode=yes'
+	esac
+    fi
+
+    # now convert that to a comma-separated list of C strings
+    eval "set dummy ${SSH_OPTIONS}"; shift
+    SSH_OPTIONS=''
+    for i in "${@}"; do SSH_OPTIONS="${SSH_OPTIONS}${SSH_OPTIONS:+, }\"${i/\"/\\\"}\""; done
+    AC_MSG_RESULT($SSH_OPTIONS)
+
+    AC_DEFINE_UNQUOTED(SSH_OPTIONS, $SSH_OPTIONS, [Arguments to ssh])
+fi
 
 AC_ARG_WITH(bsdtcp-security,
     [  --with-bsdtcp-security use tcp as a transport],

@@ -46,16 +46,6 @@
 #ifdef SSH_SECURITY
 
 /*
- * Path to the ssh binary.  This should be configurable.
- */
-#define	SSH_PATH	"/usr/bin/ssh"
-
-/*
- * Arguments to ssh.  This should also be configurable
- */
-#define	SSH_ARGS	"-x", "-o", "BatchMode=yes", "-o", "PreferredAuthentications=publickey"
-
-/*
  * Number of seconds ssh has to start up
  */
 #define	CONNECT_TIMEOUT	20
@@ -242,16 +232,16 @@ runssh(
     if(!xclient_username || strlen(xclient_username) <= 1)
 	xclient_username = CLIENT_LOGIN;
     if(!ssh_keys || strlen(ssh_keys) <= 1) {
-	execlp(SSH_PATH, SSH_PATH, SSH_ARGS, "-l", xclient_username,
+	execlp(SSH, SSH, SSH_OPTIONS, "-l", xclient_username,
 	       rc->hostname, xamandad_path, "-auth=ssh", "amdump", "amindexd",
 	       "amidxtaped", (char *)NULL);
     }
     else {
-	execlp(SSH_PATH, SSH_PATH, SSH_ARGS, "-l", xclient_username,
+	execlp(SSH, SSH, SSH_OPTIONS, "-l", xclient_username,
 	       "-i", xssh_keys, rc->hostname, xamandad_path, "-auth=ssh",
 	       "amdump", "amindexd", "amidxtaped", (char *)NULL);
     }
-    error("error: couldn't exec %s: %s", SSH_PATH, strerror(errno));
+    error("error: couldn't exec %s: %s", SSH, strerror(errno));
 
     /* should never go here, shut up compiler warning */
     return(-1);

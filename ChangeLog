@@ -1,3 +1,6 @@
+2007-04-25  Dustin J. Mitchell <dustin@zmanda.com>
+	* configure.in common-src/ssh-security.c: allow build-time configuration of SSH options
+
 2007-04-23  Paddy Sreenivasan <paddy@zmanda.com>
 	* changer-src/scsi-solaris.c common-src/protocol.c: changes to build on Solaris
 
