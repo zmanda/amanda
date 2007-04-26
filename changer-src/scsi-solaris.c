@@ -57,7 +57,7 @@
 #include <scsi-defs.h>
 #include <sys/mtio.h>
 
-void SCSI_OS_Version()
+void SCSI_OS_Version(void)
 {
 #ifndef lint
    static char rcsid[] = "$Id: scsi-solaris.c,v 1.26 2006/05/25 01:47:10 johnfranks Exp $";
