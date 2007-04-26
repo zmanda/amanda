@@ -413,6 +413,7 @@ int main(int argc, char **argv)
 	dumpfile_t file;
 	sl_t *holding_list;
 	sle_t *holding_file;
+	char *qdisk, *qhname;
 	holding_list = holding_get_files_for_flush(NULL, 0);
 	for(holding_file=holding_list->first; holding_file != NULL;
 				       holding_file = holding_file->next) {
@@ -425,21 +426,25 @@ int main(int argc, char **argv)
 		continue;
 	    }
 	    
-	    log_add(L_DISK, "%s %s", file.name, file.disk);
+	    qdisk = quote_string(file.disk);
+	    qhname = quote_string(holding_file->name);
+	    log_add(L_DISK, "%s %s", file.name, qdisk);
 	    fprintf(stderr,
 		    "FLUSH %s %s %s %d %s\n",
 		    file.name,
-		    file.disk,
+		    qdisk,
 		    file.datestamp,
 		    file.dumplevel,
-		    holding_file->name);
+		    qhname);
 	    fprintf(stdout,
 		    "FLUSH %s %s %s %d %s\n",
 		    file.name,
-		    file.disk,
+		    qdisk,
 		    file.datestamp,
 		    file.dumplevel,
-		    holding_file->name);
+		    qhname);
+	    amfree(qdisk);
+	    amfree(qhname);
 	}
 	free_sl(holding_list);
 	holding_list = NULL;

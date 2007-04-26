@@ -1797,6 +1797,7 @@ read_flush(void)
     int ch;
     disklist_t tq;
     char *qname = NULL;
+    char *qdestname = NULL;
 
     tq.head = tq.tail = NULL;
 
@@ -1866,9 +1867,10 @@ read_flush(void)
 	    error("flush line %d: syntax error (no filename)", line);
 	    /*NOTREACHED*/
 	}
-	destname = s - 1;
-	skip_non_whitespace(s, ch);
+	qdestname = s - 1;
+	skip_quoted_string(s, ch);
 	s[-1] = '\0';
+	destname = unquote_string(qdestname);
 
 	holding_file_get_dumpfile(destname, &file);
 	if( file.type != F_DUMPFILE) {
