@@ -1135,9 +1135,9 @@ start_server_check(
 	    char *errmsg = NULL;
 	    if (check_infofile(conf_infofile, &origq, &errmsg) == -1) {
 		fprintf(outf, "ERROR: Can't copy infofile: %s\n", errmsg);
+		infobad = 1;
 		amfree(errmsg);
 	    }
-	    infobad = 1;
 	    strappend(conf_infofile, "/");
 	}
 	amfree(quoted);
