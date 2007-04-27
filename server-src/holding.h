@@ -53,9 +53,6 @@
 #include "fileheader.h"
 #include "sl.h"
 
-/* utility (used by find.c) */
-int is_emptyfile(char *fname);
-
 /*
  * Verbosity
  */

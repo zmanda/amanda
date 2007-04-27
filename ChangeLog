@@ -1,3 +1,7 @@
+2007-04-27  Dustin J. Mitchell <dustin@zmanda.com>
+	* server-src/holding.c server-src/holding.h server-src/find.c:
+	  use holding module in find.c:search_holding_disk()
+
 2007-04-27  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amcheck.c: Fix infobad setting.
 

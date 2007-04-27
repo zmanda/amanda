@@ -71,7 +71,7 @@ is_dir(
     return (statbuf.st_mode & S_IFDIR) == S_IFDIR;
 }
 
-int /* (not static: currently used by find.c) */
+static int
 is_emptyfile(
     char *fname)
 {
