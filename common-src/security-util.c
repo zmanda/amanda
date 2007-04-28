@@ -850,6 +850,7 @@ tcp1_stream_client(
     }
     else {
 	rh->rc = sec_tcp_conn_get(rh->hostname, 1);
+	rh->rc->driver = rh->sech.driver;
 	rs->rc = rh->rc;
 	rh->rc->read = stream_client(rh->hostname, (in_port_t)id,
 			STREAM_BUFSIZE, STREAM_BUFSIZE, &rs->port, 0);

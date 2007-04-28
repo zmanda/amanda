@@ -1,4 +1,7 @@
 2007-04-27  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/security-util.c (tcp1_stream_client): Set rh->rc->driver.
+
+2007-04-27  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/bsd-security.c, common-src/bsdudp-security.c,
 	  common-src/krb4-security.c: Fix ntohs for port number.
 	* common-src/dgram.c: Add socket number in comment.
