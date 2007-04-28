@@ -1,3 +1,8 @@
+2007-04-27  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/bsd-security.c, common-src/bsdudp-security.c,
+	  common-src/krb4-security.c: Fix ntohs for port number.
+	* common-src/dgram.c: Add socket number in comment.
+
 2007-04-27  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/holding.c server-src/holding.h server-src/find.c:
 	  use holding module in find.c:search_holding_disk()

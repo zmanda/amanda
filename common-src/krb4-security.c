@@ -377,9 +377,9 @@ krb4_connect(
 	return;
     }
     if ((se = getservbyname(KAMANDA_SERVICE_NAME, "udp")) == NULL)
-	port = (int)htons(KAMANDA_SERVICE_DEFAULT);
+	port = (int)KAMANDA_SERVICE_DEFAULT;
     else
-	port = se->s_port;
+	port = ntohs(se->s_port);
     snprintf(handle, SIZEOF(handle), "%ld", (long)time(NULL));
     inithandle(kh, he, (int)port, handle);
     (*fn)(arg, &kh->sech, S_OK);

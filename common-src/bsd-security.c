@@ -211,9 +211,9 @@ bsd_connect(
 
     auth_debug(1, ("Resolved hostname=%s\n", res->ai_canonname));
     if ((se = getservbyname(AMANDA_SERVICE_NAME, "udp")) == NULL)
-	port = (in_port_t)htons(AMANDA_SERVICE_DEFAULT);
+	port = AMANDA_SERVICE_DEFAULT;
     else
-	port = (in_port_t)se->s_port;
+	port = (in_port_t)ntohs(se->s_port);
     amanda_gettimeofday(&sequence_time, &dontcare);
     sequence = (int)sequence_time.tv_sec ^ (int)sequence_time.tv_usec;
     handle=alloc(15);

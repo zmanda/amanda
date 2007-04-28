@@ -134,8 +134,8 @@ out:
     *portp = SS_GET_PORT(&name);
     dgram->socket = s;
 
-    dbprintf(("%s: dgram_bind: socket bound to %s\n",
-	      debug_prefix_time(NULL), str_sockaddr(&name)));
+    dbprintf(("%s: dgram_bind: socket %d bound to %s\n",
+	      debug_prefix_time(NULL), dgram->socket, str_sockaddr(&name)));
     return 0;
 }
 
