@@ -1,3 +1,8 @@
+2007-05-01  Jean-Louis Martineau <martineau@zmanda.com>
+	* recover-src/extract_list.c: Report the error message.
+	* recover-src/extract_list.c: Don't call close_connection.
+	* common-src/security-util.c: (tcpm_close_connection): Check for rh->rc
+
 2007-04-27  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/security-util.c (tcp1_stream_client): Set rh->rc->driver.
 

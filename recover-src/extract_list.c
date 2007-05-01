@@ -2221,7 +2221,7 @@ extract_files(void)
 	/* connect to the tape handler daemon on the tape drive server */
 	if ((extract_files_setup(elist->tape, elist->fileno)) == -1)
 	{
-	    fprintf(stderr, "amrecover - can't talk to tape server\n");
+	    fprintf(stderr, "amrecover - can't talk to tape server: %s\n",errstr);
 	    return;
 	}
 
@@ -2252,13 +2252,13 @@ amidxtaped_response(
     assert(sech != NULL);
     memset(ports, -1, SIZEOF(ports));
 
-    security_close_connection(sech, dump_hostname);
     if (pkt == NULL) {
 	errstr = newvstralloc(errstr, "[request failed: ",
 			     security_geterror(sech), "]", NULL);
 	*response_error = 1;
 	return;
     }
+    security_close_connection(sech, dump_hostname);
 
     if (pkt->type == P_NAK) {
 #if defined(PACKET_DEBUG)
