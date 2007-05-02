@@ -625,7 +625,7 @@ protocol_accept(
     if (i == (int)NSERVICES) {
 	dbprintf(("%s: %s: invalid service\n",
 	    debug_prefix_time(NULL), service));
-	pkt_init(&pkt_out, P_NAK, "ERROR %s: invalid service\n", service);
+	pkt_init(&pkt_out, P_NAK, "ERROR %s: invalid service, add '%s' as argument to amandad\n", service, service);
 	goto send_pkt_out;
     }
 
