@@ -132,6 +132,9 @@ Note that if this causes the number of reusable tapes to drop below the
 <emphasis remap='B'>amanda.conf</emphasis>
 <emphasis remap='I'>tapecycle</emphasis>
 value, &A; will request new tapes until the count is satisfied again.</para>
+<para>Tape marked <emphasis remap='I'>no-reuse</emphasis> are available
+for recovery, marking them <emphasis remap='I'>no-reuse</emphasis> is a
+security to be sure amanda will not overwrite them.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
@@ -265,7 +268,7 @@ Mostly used for debugging.</para>
   <varlistentry>
   <term><emphasis remap='B'>-o</emphasis> <replaceable>configoption</replaceable></term>
   <listitem>
-<para>See the "<emphasis remap='B'>CONFIGURATION OVERWRITE</emphasis>"
+<para>See the "<emphasis remap='B'>CONFIGURATION OVERRIDE</emphasis>"
  section in <citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>.</para>
   </listitem>
   </varlistentry>

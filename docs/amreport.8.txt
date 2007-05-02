@@ -52,7 +52,7 @@ where logdir is the log directory defined in amanda.conf.
       is specified in amanda.conf.
 
   -o configoption
-      See the "CONFIGURATION OVERWRITE" section in amanda(8).
+      See the "CONFIGURATION OVERRIDE" section in amanda(8).
 
 
 LABEL PRINTING

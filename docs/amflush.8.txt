@@ -47,7 +47,7 @@ OPTIONS
       Specify the host and disk on which the command will work.
 
   -o configoption
-      See the "CONFIGURATION OVERWRITE" section in amanda(8).
+      See the "CONFIGURATION OVERRIDE" section in amanda(8).
 
 You can specify many host/disk expressions, only disks that match an expression
 will be flushed. All disks are flushed if no expressions are given. see the

@@ -192,7 +192,7 @@ to the next tape, but do not load it.</para>
   <varlistentry>
   <term><emphasis remap='B'>-o</emphasis> <replaceable>configoption</replaceable></term>
   <listitem>
-<para>See the "<emphasis remap='B'>CONFIGURATION OVERWRITE</emphasis>"
+<para>See the "<emphasis remap='B'>CONFIGURATION OVERRIDE</emphasis>"
  section in <citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>.</para>
   </listitem>
   </varlistentry>

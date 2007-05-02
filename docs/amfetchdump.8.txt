@@ -97,7 +97,7 @@ OPTIONS
       usually be autodetected, and should not normally need to be set.
 
   -o configoption
-      See the "CONFIGURATION OVERWRITE" section in amanda(8).
+      See the "CONFIGURATION OVERRIDE" section in amanda(8).
 
 
 EXAMPLES

@@ -47,7 +47,7 @@ client-encrypted or client-custom-compressed tapes.
       Tape device to use on the tape server host.
 
   -o clientconfigoption
-      See the "CONFIGURATION OVERWRITE" section in amanda(8).
+      See the "CONFIGURATION OVERRIDE" section in amanda(8).
 
 
 COMMANDS

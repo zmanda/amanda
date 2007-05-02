@@ -438,7 +438,7 @@ Leading ^ is removed. Trailing $ forces an exact match.
 |200010$____|match_only_200010____________________________________________|
 
 
-CONFIGURATION OVERWRITE
+CONFIGURATION OVERRIDE
 
 Most command allow to overwrite any configuration parameter on the command line
 with the -o option.

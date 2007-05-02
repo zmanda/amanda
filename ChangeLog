@@ -1,4 +1,8 @@
 2007-05-02  Jean-Louis Martineau <martineau@zmanda.com>
+	* docs/*.txt, man/xml-source/*.xml: Change OVERWRITE bu OVERRIDE.
+	* man/xml-source/amadmin.8.xml: Add notees on no-reuse command.
+
+2007-05-02  Jean-Louis Martineau <martineau@zmanda.com>
 	* amandad-src/amandad.c: Improve 'invalid service' message.
 
 2007-05-01  Jean-Louis Martineau <martineau@zmanda.com>

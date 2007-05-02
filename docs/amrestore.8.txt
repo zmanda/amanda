@@ -96,7 +96,7 @@ tape blocksize. This makes the resulting image usable as a holding file.
 
 
   -o configoption
-      See the "CONFIGURATION OVERWRITE" section in amanda(8).
+      See the "CONFIGURATION OVERRIDE" section in amanda(8).
 
 
 EXAMPLES

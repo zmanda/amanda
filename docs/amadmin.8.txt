@@ -106,7 +106,7 @@ DISK EXPRESSION" section of amanda(8) for a description.
       hosts). Mostly used for debugging.
 
   -o configoption
-      See the "CONFIGURATION OVERWRITE" section in amanda(8).
+      See the "CONFIGURATION OVERRIDE" section in amanda(8).
 
 
 EXAMPLES
