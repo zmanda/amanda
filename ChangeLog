@@ -1,3 +1,7 @@
+2007-05-03  Jean-Louis Martineau <martineau@zmanda.com>
+	* Amanda 2.5.2 released.
+	* configure.in: AM_INIT_AUTOMAKE(amanda, 2.5.2).
+
 2007-05-02  Jean-Louis Martineau <martineau@zmanda.com>
 	* docs/*.txt, man/xml-source/*.xml: Change OVERWRITE bu OVERRIDE.
 	* man/xml-source/amadmin.8.xml: Add notees on no-reuse command.
