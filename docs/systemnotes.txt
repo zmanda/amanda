@@ -58,11 +58,6 @@ Table of Contents
 
   Mac_OS_X
 
-
-Note
-
-Refer to http://www.amanda.org/docs/systemnotes.html for the current version of
-this document.
 Please read the notes that correspond to the architectures you are installing
 for. If you find additional gotchas, or anything incorrect in these notes,
 please send your updates to mailto://amanda-hackers@amanda.org after checking
@@ -172,7 +167,7 @@ GNU-tar 1.11.8, distributed with some Linux versions, will cause index failures
 (Index returned -1). Upgrading to GNU-tar 1.12 fixes this problem. This is not
 a Linux-specific problem, but it is quite common in this platform.
 Amanda now supports the ftape driver version 3.04d. It adjusts the blocksize
-automatically to 32k and supports QIC volume tables. More details con be found
+automatically to 32k and supports QIC volume tables. More details can be found
 in the file ZFTAPE in this directory.
 Some releases of dump for Linux, such as the one distributed with Debian 2.0,
 have modified dump so that it stores dumpdates in /var/lib. If this is your
@@ -321,6 +316,11 @@ For notes on how to setup Amanda under Apple's OS X, please refer to http://
 web.brandeis.edu/pages/view/Bio/AmandaMacOSXCompileNotes, written by Steven
 Karel<karel@brandeis.edu>. Thanks to Jose L.Hales-Garcia <jose@stat.ucla.edu>
 for the tip.
+
+Note
+
+Refer to http://www.amanda.org/docs/systemnotes.html for the current version of
+this document.
 -------------------------------------------------------------------------------
 
 Prev                   Up                                   Next

@@ -29,11 +29,6 @@ Table of Contents
 
   taper(read)_and_taper(write)
 
-
-Note
-
-Refer to http://www.amanda.org/docs/internals.html for the current version of
-this document.
 This is an attempt to document Amanda's internals. Please feel free to make
 comments and suggest changes. Text for new sections gratefully accepted!
 
@@ -174,6 +169,11 @@ Write buffer W<bufnum> ---> <--- R<bufnum> Buffer empty <--- E<message> Error
 ack
 Close tape C ---> <--- C<label><filenum><stats> Closing
 Quit Q --->
+
+Note
+
+Refer to http://www.amanda.org/docs/internals.html for the current version of
+this document.
 -------------------------------------------------------------------------------
 
 Prev                            Up                           Next

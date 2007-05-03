@@ -1,4 +1,7 @@
 2007-05-03  Jean-Louis Martineau <martineau@zmanda.com>
+	* docs/*.txt: Update from xml-docs.
+
+2007-05-03  Jean-Louis Martineau <martineau@zmanda.com>
 	* man/xml-source/amrecover.8.xml: Fix space.
 
 2007-05-03  Jean-Louis Martineau <martineau@zmanda.com>

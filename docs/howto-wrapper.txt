@@ -30,11 +30,6 @@ Table of Contents
 
 Note
 
-Refer to http://www.amanda.org/docs/howto-wrapper.html for the current version
-of this document.
-
-Note
-
 The script used in this document is not part of the official Amanda release.
 The Amanda core team does not take any responsibility for this script.
 
@@ -83,7 +78,7 @@ course is just an example, anything you can do in a shell script can be done.
        no extra
        #   processing is necessary.
 
-       # What you see here is just a log of the backup start time, and – more
+       # What you see here is just a log of the backup start time, and more
        important
        #   the stopping of the domino server
 
@@ -261,6 +256,7 @@ Example 15.1.
       /usr/local/bin/gtar "$@"
   fi
 
+
 Here is an example script in perl:
 Example 15.2. 
 
@@ -293,6 +289,12 @@ Example 15.2.
 
   exit $rc;
 
+
+
+Note
+
+Refer to http://www.amanda.org/docs/howto-wrapper.html for the current version
+of this document.
 -------------------------------------------------------------------------------
 
 Prev                    Up                                            Next

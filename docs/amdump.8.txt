@@ -10,7 +10,7 @@ amdump  back up all disks in an Amanda configuration
 
 Synopsis
 
-amdump config [ host | [disk]*]* [ -o | configoption ]*
+amdump config [ host [disk...] ...] [ -o configoption]...
 
 DESCRIPTION
 

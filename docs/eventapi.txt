@@ -64,11 +64,6 @@ Table of Contents
 
 
 
-Note
-
-Refer to http://www.amanda.org/docs/eventapi.html for the current version of
-this document.
-
  Introduction
 
 This is a document of the API for the event handler. The purpose of the event
@@ -168,6 +163,11 @@ passed to event_register between each interval.
 
 This type of event will fire when someone calls event_wakeup() with the numeric
 argument equal to the argument this event was registered with.
+
+Note
+
+Refer to http://www.amanda.org/docs/eventapi.html for the current version of
+this document.
 -------------------------------------------------------------------------------
 
 Prev                           Up                              Next

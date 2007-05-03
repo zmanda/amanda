@@ -12,11 +12,6 @@ Stefan G. Weichinger
 XML-conversion
 AMANDA Core Team
 <sgw@amanda.org>
-
-Note
-
-Refer to http://www.amanda.org/docs/upgrade.html for the current version of
-this document.
 Amanda 2.4.0 has introduced a major incompatibility in the Amanda protocol.
 This means that pre-2.4.0 clients won't interoperate with a 2.4.0 server, nor
 will 2.4.0 clients interoperate with pre-2.4.0 servers. You have to upgrade
@@ -60,6 +55,11 @@ convention matches the one used for the text formatted database.
 A script is available to convert the flat directory structure to the new
 layout:
 http://www.amanda.org/2.4-conv/msg00428.html
+
+Note
+
+Refer to http://www.amanda.org/docs/upgrade.html for the current version of
+this document.
 -------------------------------------------------------------------------------
 
 Prev                                   Up                            Next

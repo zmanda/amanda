@@ -29,11 +29,6 @@ Table of Contents
 
   Hacking_notes
 
-
-Note
-
-Refer to http://www.amanda.org/docs/chgscsi.html for the current version of
-this document.
 Jason's new and improved chg-scsi documentation.
 This documentation will also include an occasional reference to the mtx suite
 as I have attempted to use chg-zd-mtx. I use mtx often as a fast query tool.
@@ -258,6 +253,11 @@ My desires are:
   I had to create a type called "L500" or else the spaces would throw off the
   comparisons.
 
+
+Note
+
+Refer to http://www.amanda.org/docs/chgscsi.html for the current version of
+this document.
 -------------------------------------------------------------------------------
 
 Prev                            Up                                   Next

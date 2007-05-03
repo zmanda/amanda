@@ -106,11 +106,6 @@ Table of Contents
 
 
 
-Note
-
-Refer to http://www.amanda.org/docs/using.html for the current version of this
-document.
-
 An Introduction
 
 
@@ -987,6 +982,7 @@ Example 18.1. A C Program to Check the Amanda Service Numbers
   	    }
   	
   	
+
 
 Run it on both the tape server and client and make sure the port numbers match:
 
@@ -1981,6 +1977,11 @@ To restore, position the tape at start of file and run:
 
 As with any backup system, test these procedures while in normal production so
 the principles and techniques are familiar when disaster strikes.
+
+Note
+
+Refer to http://www.amanda.org/docs/using.html for the current version of this
+document.
 -------------------------------------------------------------------------------
 
 Prev                           Up                     Next

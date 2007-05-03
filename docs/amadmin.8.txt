@@ -10,7 +10,7 @@ amadmin  administrative interface to control Amanda backups
 
 Synopsis
 
-amadmin config command [command options] [ -o | configoption ]*
+amadmin config command [command_options...] [-oconfigoption]...
 
 DESCRIPTION
 
@@ -23,8 +23,11 @@ COMMANDS
 Commands that take a hostname [ disks ] parameter pair operate on all disks in
 the disklist for that hostname if no disks are specified. Where hostname is
 also marked as being optional, the command operates on all hosts and disks in
-the disklist. Both hostname and disks are special expressions, see the "HOST &
+the disklist. Both hostname and disks are special expressions; see the "HOST &
 DISK EXPRESSION" section of amanda(8) for a description.
+Commands that take one or more dumpspec parameters operate on the set of dumps
+specified by all of the expressions. See the "DUMP SPECIFICATIONS" section of
+amanda(8) for a description.
 
 
   version
@@ -66,9 +69,25 @@ DISK EXPRESSION" section of amanda(8) for a description.
       Display all backups currently on tape or in the holding disk. The tape
       label or holding disk filename, file number, and status are displayed.
       The --sort option changes the sort order using the following flags:
-      hhost name kdisk name ddump date lbackup level p dump part btape label
+
+        h: host name
+        k: disk name
+        d: dump date
+        l: backup level
+        p: dump part
+        b: tape label
+
       An uppercase letter reverses the sort order for that key. The default
       sort order is hkdlpb.
+
+  holding delete hostname [ disk [ datestamp [ .. ] ] ]
+      Delete holding files matching the given specification. At least a
+      hostname must be provided.
+
+  holding list [-l] [ hostname [ disk [ datestamp [ .. ] ] ] ]
+      List holding files matching the given specification, or all holding files
+      if no specification is provided. With '-l', additional information (size
+      and level) is provided.
 
   delete [ hostname [ disks ]* ]+
       Delete the specified disks on hostname from the Amanda database.
@@ -144,16 +163,16 @@ had some type of error.
 
   $ amadmin daily find machine-c /var
   date        host      disk lv tape or file                 file part  status
-  2000\-11\-09  machine\-c /var  0 000110                       9   --  OK
-  2000\-11\-08  machine\-c /var  2 000109                       2   --  OK
-  2000\-11\-07  machine\-c /var  2 /amanda/20001107/machine-c._var.2  0 OK
-  2000\-11\-06  machine\-c /var  2 000107                       2   --  OK
-  2000\-11\-05  machine\-c /var  2 000106                       3   --  OK
-  2000\-11\-04  machine\-c /var  2 000105                       2   --  OK
-  2000\-11\-03  machine\-c /var  2 000104                       2   --  OK
-  2000\-11\-02  machine\-c /var  2 000103                       2   --  OK
-  2000\-11\-01  machine\-c /var  1 000102                       5   --  OK
-  2000\-10\-31  machine\-c /var  1 000101                       3   --  OK
+  2000-11-09  machine-c /var  0 000110                       9   --  OK
+  2000-11-08  machine-c /var  2 000109                       2   --  OK
+  2000-11-07  machine-c /var  2 /amanda/20001107/machine-c._var.2  0 OK
+  2000-11-06  machine-c /var  2 000107                       2   --  OK
+  2000-11-05  machine-c /var  2 000106                       3   --  OK
+  2000-11-04  machine-c /var  2 000105                       2   --  OK
+  2000-11-03  machine-c /var  2 000104                       2   --  OK
+  2000-11-02  machine-c /var  2 000103                       2   --  OK
+  2000-11-01  machine-c /var  1 000102                       5   --  OK
+  2000-10-31  machine-c /var  1 000101                       3   --  OK
 
 Forget about the /workspace disk on machine-d. If you do not also remove the
 disk from the disklist file, Amanda will treat it as a new disk during the next

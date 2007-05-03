@@ -27,14 +27,14 @@ GENERATING PUBLIC AND PRIVATE KEYS
 RSA keys can be generated with the standard OpenSSL commands, e.g.:
 
   $ cd /var/lib/amanda
-  $ openssl genrsa -aes128 -out backup-key.pem 1024
+  $ openssl genrsa -aes128 -out backup-privkey.pem 1024
   Generating RSA private key, 1024 bit long modulus
   [...]
-  Enter pass phrase for backup-key.pem: ENTER YOUR PASS PHRASE
+  Enter pass phrase for backup-privkey.pem: ENTER YOUR PASS PHRASE
   Verifying - Enter pass phrase for backup-key.pem: ENTER YOUR PASS PHRASE
 
-  $ openssl rsa -in backup-key.pem -pubout -out backup-pubkey.pem
-  Enter pass phrase for backup-key.pem: ENTER YOUR PASS PHRASE
+  $ openssl rsa -in backup-privkey.pem -pubout -out backup-pubkey.pem
+  Enter pass phrase for backup-privkey.pem: ENTER YOUR PASS PHRASE
   Writing RSA key
 
 To generate a private key without a passphrase, omit the -aes128 option. See
@@ -71,8 +71,8 @@ FILES
   /var/lib/amanda/backup-pubkey.pem
       File containing the RSA public key.
 
-  /var/lib/amanda/.pass
-      File containing the pass phrase. It should not be readable by any user
+  /var/lib/amanda/.am_passphrase
+      File containing the passphrase. It should not be readable by any user
       other than the Amanda user.
 
 

@@ -10,8 +10,8 @@ amrecover  Amanda index database browser
 
 Synopsis
 
-amrecover [[-C ] | config ] [ -s | index-server ] [ -t | tape-server ] [ -d |
-tape-device ] [ -o | clientconfigoption ]*
+amrecover [-C config] [-s index-server] [-t tape-server] [-d tape-device] [ -
+o configoption]...
 
 DESCRIPTION
 

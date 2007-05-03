@@ -12,11 +12,6 @@ Stefan G. Weichinger
 Original text
 AMANDA Core Team
 <sgw@amanda.org>
-
-Note
-
-Refer to http://www.amanda.org/docs/links.html for the current version of this
-document.
 See some original Amanda-papers by James da Silva and Olafur Gundmundsson here:
 
 * The presentation of Amanda:
@@ -26,6 +21,11 @@ See some original Amanda-papers by James da Silva and Olafur Gundmundsson here:
   Postscript: http://www.amanda.org/docs/usenix92.ps
   PDF: http://www.amanda.org/docs/usenix92.pdf
 
+
+Note
+
+Refer to http://www.amanda.org/docs/links.html for the current version of this
+document.
 -------------------------------------------------------------------------------
 
 Prev          Up    Next

@@ -25,11 +25,6 @@ Table of Contents
 
   Disaster_Recovery
 
-
-Note
-
-Refer to http://www.amanda.org/docs/rait.html for the current version of this
-document.
 Currently it is only integrated with the chg-manual changer script;
 collaboration on integrating it with the other tape changers is needed.
 
@@ -97,6 +92,11 @@ now also includes amdd, which is a simple dd(1) replacement which supports
 options, but which can read and write RAIT tapesets.
 Using amdd and your usual Amanda unpack instructions will suffice for disaster
 recovery from RAIT tape-sets.
+
+Note
+
+Refer to http://www.amanda.org/docs/rait.html for the current version of this
+document.
 -------------------------------------------------------------------------------
 
 Prev                  Up                             Next

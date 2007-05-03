@@ -45,11 +45,6 @@ Table of Contents
         Debugging_Files
 
 
-
-Note
-
-Refer to http://www.amanda.org/docs/howto-cygwin.html for the current version
-of this document.
 by Doug Kingston, 30 January 2003. Based on Cygwin 1.3.18, and Amanda 2.4.3-
 20021027 and some fixes which will be in the official release by the time you
 see this.
@@ -254,6 +249,11 @@ something similar if you want to get the Windows files and the Cygwin files. '/
 
 Amanda will leave debugging files in /tmp/amanda if it exists. I have
 recommended to create this directory above.
+
+Note
+
+Refer to http://www.amanda.org/docs/howto-cygwin.html for the current version
+of this document.
 -------------------------------------------------------------------------------
 
 Prev               Up                                            Next

@@ -10,7 +10,7 @@ amgetconf  look up amanda.conf variables
 
 Synopsis
 
-amgetconf [config] parameter [ -o | configoption ]*
+amgetconf [config] [--list] parameter [ -o configoption]...
 
 DESCRIPTION
 
@@ -34,6 +34,40 @@ See the amanda(8) man page for more details about Amanda.
 
 OPTIONS
 
+
+
+  --list
+      The parameter must be 'tapetype', 'dumptype, 'holdingdisk' or
+      'interface'. It will output, one by line, the list of identifier for the
+      parameter.
+
+
+        --list tapetype
+            Output the list of tapetype, one by line.
+
+        --list dumptype
+            Output the list of dumptype, one by line.
+
+        --list holdingdisk
+            Output the list of holdingdisk, one by line.
+
+        --list interface
+            Output the list of interface, one by line.
+
+
+  parameter
+      It could be one of the below format:
+
+
+        runtapes
+
+        DUMPTYPE:no-compress:compress
+
+        TAPETYPE:HP-DAT:length
+
+        INTERFACE:local:use
+
+        HOLDINGDISK:hd1:use
 
 
   -o configoption
@@ -66,8 +100,7 @@ MESSAGES
 
   amgetconf: no such parameter param
       Parameter param is not a known keyword (e.g. not a valid amanda.conf
-      keyword). In this case, amgetconf will write "BUGGY" to stdout as the
-      value.
+      keyword).
 
 
 SEE ALSO

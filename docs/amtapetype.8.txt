@@ -10,7 +10,7 @@ amtapetype  generate a tapetype definition.
 
 Synopsis
 
-amtapetype [-h ] [-c ] [-o ] [-b blocksize] [-e estsize] [-f tapedev] [-
+amtapetype [-h ] [-c ] [-o ] [-b blocksize] -e estsize [-f tapedev] [-
 t typename]
 
 DESCRIPTION
@@ -35,7 +35,7 @@ OPTIONS
       record block size (default: 32k)
 
   -eestsize
-      estimated tape size (default: 1g == 1024m)
+      estimated tape size (No default!)
 
   -ftapedev
       tape device name (default: $TAPE) The device to perform the test.
@@ -48,7 +48,7 @@ EXAMPLE
 
 Generate a tapetype definition for your tape device:
 
-% amtapetype -f /dev/nst0
+% amtapetype -f /dev/nst0 -e 150G
 
 NOTES
 

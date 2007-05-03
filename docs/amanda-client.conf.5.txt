@@ -13,6 +13,8 @@ DESCRIPTION
 
 amanda-client.conf is the client configuration file for Amanda. This manpage
 lists the relevant sections and parameters of this file for quick reference.
+The files <CONFIG_DIR>/amanda-client.conf and <CONFIG_DIR>/<config>/amanda-
+client.conf are loaded.
 
 PARAMETERS
 
@@ -103,6 +105,66 @@ PARAMETERS
       Default: No default. The key file the ssh auth will use, it must be the
       private key. If this parameter is not specified, then the deafult ssh key
       will be used.
+
+  gnutar_list_dir string
+      Default from configure --with-gnutar-listdir=DIR. The directory where
+      gnutar keep its state file.
+
+  amandates string
+      Default: /etc/amandates. The file where amanda keep the last date of each
+      dumplevel.
+
+  connect_tries int
+      Default: 3. How many times the server will try a connection.
+
+  rep_tries int
+      Default: 5. How many times amandad will resend a REP packet if it doesn't
+      get the ACK packet.
+
+  debug_amandad int
+      Default: 0. Debug level of the amandad process
+
+  debug_amidxtaped int
+      Default: 0. Debug level of the amidxtaped process
+
+  debug_amindexd int
+      Default: 0. Debug level of the amindexd process
+
+  debug_amrecover int
+      Default: 0. Debug level of the amrecover process
+
+  debug_auth int
+      Default: 0. Debug level of the auth module
+
+  debug_event int
+      Default: 0. Debug level of the event module
+
+  debug_holding int
+      Default: 0. Debug level of the holdingdisk module
+
+  debug_protocol int
+      Default: 0. Debug level of the protocol module
+
+  debug_selfcheck int
+      Default: 0. Debug level of the selfcheck process
+
+  debug_sendsize int
+      Default: 0. Debug level of the sendsize process
+
+  debug_sendbackup int
+      Default: 0. Debug level of the sendbackup process
+
+  reserved-udp-port int,int
+      Default: --with-udpportrange or 512,1023. Reserved udp port that will be
+      used (amrecover with bsd or bsdudp)
+
+  reserved-tcp-port int,int
+      Default: --with-low-tcpportrange or 512,1023. Reserved tcp port that will
+      be used (amrecover with bsdtcp)
+
+  unreserved-tcp-port int,int
+      Default: --with-tcpportrange or 1025,65536. Unreserved tcp port that will
+      be used (bsd, bsdudp)
 
 
 AUTHOR

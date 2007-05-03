@@ -31,11 +31,6 @@ Table of Contents
 
   Firewalls_and_NAT
 
-
-Note
-
-Refer to http://www.amanda.org/docs/portusage.html for the current version of
-this document.
 Amanda uses both UDP and TCP ports during its operation. The amandad service is
 listening (via inetd/xinetd) at a well known (fixed) port on each client for
 UDP connections. The amindexd and amidxtaped services are listening (also via
@@ -202,6 +197,11 @@ involved.
 The details of how you configure a specific firewall or NAT are beyond the
 scope of this document (although examples would be welcome). You need to read
 up on the documentation that comes with them.
+
+Note
+
+Refer to http://www.amanda.org/docs/portusage.html for the current version of
+this document.
 -------------------------------------------------------------------------------
 
 Prev                           Up                            Next

@@ -12,11 +12,6 @@ Stefan G. Weichinger
 XML-conversion
 AMANDA Core Team
 <sgw@amanda.org>
-
-Note
-
-Refer to http://www.amanda.org/docs/vtape-api.html for the current version of
-this document.
 The upper level Amanda code (including some of the other tape_xxx routines)
 calls the following routines which implement a virtual tape table:
 
@@ -58,6 +53,11 @@ into the table "vtable" in tape-src/tapeio.c:
 Along with a prefix string which will identify the type. The initial vtape
 layer has two types "plain" and "rait" (Redundant Array of Inexpensive Tapes)
 but we hope to add a "rmt" (remote tape client), and possibly "dvd" types soon.
+
+Note
+
+Refer to http://www.amanda.org/docs/vtape-api.html for the current version of
+this document.
 -------------------------------------------------------------------------------
 
 Prev                              Up                                     Next

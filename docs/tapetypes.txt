@@ -6,11 +6,6 @@ Prev  Part II. About Tapes and Changers  Next
 
 Chapter 7. Tapetypes
 
-
-Note
-
-Refer to http://www.amanda.org/docs/tapetypes.html for the current version of
-this document.
 You may find tapetype-definitions in the example amanda.conf, in the
 mailinglist-archives of the amanda-users-mailinglist at http://
 marc.theaimsgroup.com/?l=amanda-users or in the Amanda-FAQ-O-Matic at http://
@@ -44,6 +39,11 @@ It does NOT warn you if the tape contains a label or data. amtapetype will
 OVERWRITE the tape so be cautious. You have been warned.
 Snapshot 20040915 introduces a warning and the flag -o to overwrite a labelled
 tape.
+
+Note
+
+Refer to http://www.amanda.org/docs/tapetypes.html for the current version of
+this document.
 -------------------------------------------------------------------------------
 
 Prev                                Up                                     Next

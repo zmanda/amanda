@@ -16,17 +16,17 @@ Stefan G. Weichinger
 XML-conversion;Updates
 AMANDA Core Team
 <sgw@amanda.org>
-
-Note
-
-Refer to http://www.amanda.org/docs/howto-afs.html for the current version of
-this document.
 You need to download the following package if you want to backup AFS volume
 with amanda:
 ftp://ftp.ccmr.cornell.edu/pub/amanda-afs/amanda-afs.tar.gz
 or anonymous cvs from :pserver:anonymous@cvs.ccmr.cornell.edu:/usr/common/cvs
 and checkout project 'amanda-afs'
 The patch to Amanda is already included in this distribution.
+
+Note
+
+Refer to http://www.amanda.org/docs/howto-afs.html for the current version of
+this document.
 -------------------------------------------------------------------------------
 
 Prev                                     Up                               Next

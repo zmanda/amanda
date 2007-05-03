@@ -13,9 +13,15 @@ Edited by
 
 Stefan G. Weichinger
 
+AMANDA Core Team
+<sgw@amanda.org>
+
+Edited by
+
 
 Amanda Core Team
 
+AMANDA Core Team
 -------------------------------------------------------------------------------
 Table of Contents
 
@@ -781,71 +787,71 @@ Table of Contents
         36._The_Amanda_Manual_Pages.
 
 
-              amadmin - administrative interface to control Amanda backups
+              amadmin  administrative interface to control Amanda backups
 
-              amaespipe - wrapper program for aespipe
+              amaespipe  wrapper program for aespipe
 
-              amanda - Advanced Maryland Automatic Network Disk Archiver
+              amanda  Advanced Maryland Automatic Network Disk Archiver
 
-              amanda.conf - Main configuration file for Amanda, the Advanced
+              amanda.conf  Main configuration file for Amanda, the Advanced
               Maryland Automatic Network Disk Archiver
 
-              amanda-client.conf - Client configuration file for Amanda, the
+              amanda-client.conf  Client configuration file for Amanda, the
               Advanced Maryland Automatic Network Disk Archiver
 
-              amcheck - run Amanda self-checks
+              amcheck  run Amanda self-checks
 
-              amcheckdb - check Amanda database for tape consistency
+              amcheckdb  check Amanda database for tape consistency
 
-              amcleanup - run the Amanda cleanup process after a failure
+              amcleanup  run the Amanda cleanup process after a failure
 
-              amcrypt - reference crypt program for Amanda symmetric data
+              amcrypt  reference crypt program for Amanda symmetric data
               encryption
 
-              amcrypt-ossl - crypt program for Amanda symmetric data encryption
+              amcrypt-ossl  crypt program for Amanda symmetric data encryption
               using OpenSSL
 
-              amcrypt-ossl-asym - crypt program for Amanda asymmetric data
+              amcrypt-ossl-asym  crypt program for Amanda asymmetric data
               encryption using OpenSSL
 
-              amdd - Amanda version of dd
+              amdd  Amanda version of dd
 
-              amdump - back up all disks in an Amanda configuration
+              amdump  back up all disks in an Amanda configuration
 
-              amfetchdump - extract backup images from multiple Amanda tapes.
+              amfetchdump  extract backup images from multiple Amanda tapes.
 
-              amflush - flush Amanda backup files from holding disk to tape
+              amflush  flush Amanda backup files from holding disk to tape
 
-              amgetconf - look up amanda.conf variables
+              amgetconf  look up amanda.conf variables
 
-              amlabel - label an Amanda tape
+              amlabel  label an Amanda tape
 
-              ammt - Amanda version of mt
+              ammt  Amanda version of mt
 
-              amoverview - display file systems processed by Amanda over time
+              amoverview  display file systems processed by Amanda over time
 
-              amplot - visualize the behavior of Amanda
+              amplot  visualize the behavior of Amanda
 
-              amrecover - Amanda index database browser
+              amrecover  Amanda index database browser
 
-              amreport - generate a formatted output of statistics for an
+              amreport  generate a formatted output of statistics for an
               Amanda run
 
-              amrestore - extract backup images from an Amanda tape
+              amrestore  extract backup images from an Amanda tape
 
-              amrmtape - remove a tape from the Amanda database
+              amrmtape  remove a tape from the Amanda database
 
-              amstatus - display the state of an Amanda run
+              amstatus  display the state of an Amanda run
 
-              amtape - user interface to Amanda tape changer controls
+              amtape  user interface to Amanda tape changer controls
 
-              amtapetype - generate a tapetype definition.
+              amtapetype  generate a tapetype definition.
 
-              amtoc - generate TOC (Table Of Contents) for an Amanda run
+              amtoc  generate TOC (Table Of Contents) for an Amanda run
 
-              amverify - check an Amanda tape for errors
+              amverify  check an Amanda tape for errors
 
-              amverifyrun - check the tapes written by the last Amanda run
+              amverifyrun  check the tapes written by the last Amanda run
 
 
         37._Web_Ressources

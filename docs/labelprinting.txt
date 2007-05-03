@@ -24,11 +24,6 @@ Table of Contents
   How_it_works
 
 
-Note
-
-Refer to http://www.amanda.org/docs/labelprinting.html for the current version
-of this document.
-
  The New Feature
 
 Amanda now has the ability to print postscript paper tape labels. The labels
@@ -73,6 +68,11 @@ is copied, and the successful machines, partitions, and dump levels are
 appended to this. The output either goes to /tmp/reporter.out.ps (when running
 in testing mode) or through a pipe to the printer (default printer, if an
 alternate "printer" is not specified).
+
+Note
+
+Refer to http://www.amanda.org/docs/labelprinting.html for the current version
+of this document.
 -------------------------------------------------------------------------------
 
 Prev                                                    Up               Next

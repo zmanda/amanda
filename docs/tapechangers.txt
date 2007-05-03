@@ -67,11 +67,6 @@ Table of Contents
 
 
 
-Note
-
-Refer to http://www.amanda.org/docs/tapechangers.html for the current version
-of this document.
-
  Introduction
 
 This document outlines the tape changer support design of Amanda 2.2 and
@@ -669,6 +664,11 @@ chg-null
 
 A trivial changer which loads/unloads on a null: device. Useful with chg-rait
 to throw away a parity stripe by puttin on a null jukebox, or for testing.
+
+Note
+
+Refer to http://www.amanda.org/docs/tapechangers.html for the current version
+of this document.
 -------------------------------------------------------------------------------
 
 Prev                   Up                  Next

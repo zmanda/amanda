@@ -19,11 +19,6 @@ XML-conversion
 AMANDA Core Team
 <sgw@amanda.org>
 
-Note
-
-Refer to http://www.amanda.org/docs/strategy-api.html for the current version
-of this document.
-
   Subject: STRATEGY API (was: Re: spelunking)
   From: Alexandre Oliva <oliva@dcc.unicamp.br>
   Date: 03 Oct 1998 02:44:47 -300
@@ -58,6 +53,11 @@ of this document.
   --
   Alexandre Oliva
 
+
+Note
+
+Refer to http://www.amanda.org/docs/strategy-api.html for the current version
+of this document.
 -------------------------------------------------------------------------------
 
 Prev                                          Up                         Next

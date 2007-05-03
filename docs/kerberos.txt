@@ -43,11 +43,6 @@ Table of Contents
 
 
 
-Note
-
-Refer to http://www.amanda.org/docs/kerberos.html for the current version of
-this document.
-
  Amanda 2.5.0 - KERBEROS v4 SUPPORT NOTES
 
 
@@ -246,6 +241,11 @@ Note
 
 There is no attempt to verify the realm in this case (only a concern if you
 have cross-realm authentication setup).
+
+Note
+
+Refer to http://www.amanda.org/docs/kerberos.html for the current version of
+this document.
 -------------------------------------------------------------------------------
 
 Prev                           Up                        Next

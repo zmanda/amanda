@@ -49,11 +49,6 @@ Table of Contents
 
 
 
-Note
-
-Refer to http://www.amanda.org/docs/multitape.html for the current version of
-this document.
-
  Introduction
 
 The goal of this enhancement is to make Amanda independent of the number of
@@ -175,6 +170,11 @@ or not.
 The lines in the tapelist file should contain the sequence number of the tape
 in its run, as well as the amount of data written on the tape, and perhaps
 whether or not the end of tape was reached.
+
+Note
+
+Refer to http://www.amanda.org/docs/multitape.html for the current version of
+this document.
 -------------------------------------------------------------------------------
 
 Prev                            Up                                        Next

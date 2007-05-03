@@ -82,11 +82,6 @@ Table of Contents
 
 
 
-Note
-
-Refer to http://www.amanda.org/docs/security-api.html for the current version
-of this document.
-
  Introduction
 
 This is a document of the API for defining and utilizing multiple security and
@@ -440,6 +435,11 @@ Implementation of security_stream_read.
 
 void (*stream_read_cancel)(void *stream);
 Implementation of security_stream_read_cancel.
+
+Note
+
+Refer to http://www.amanda.org/docs/security-api.html for the current version
+of this document.
 -------------------------------------------------------------------------------
 
 Prev                           Up                           Next

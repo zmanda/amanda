@@ -10,8 +10,8 @@ amcheck  run Amanda self-checks
 
 Synopsis
 
-amcheck [-am] [-w] [-sclt] [ -M | address ]* config [ host | [disk]*]* [ -o |
-configoption ]*
+amcheck [-am] [-w] [-sclt] [-M address] config [ host [disk...] ...] [ -
+o configoption]...
 
 DESCRIPTION
 
@@ -34,7 +34,8 @@ OPTIONS
       Run the tape server local and tape checks (same as -lt).
 
   -c
-      Run the client host checks.
+      Run the client host checks. Multiple specific clients can be checked by
+      specifying the client name.
 
   -l
       Run the local tests (e.g. permissions) on the server host.

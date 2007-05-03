@@ -43,11 +43,6 @@ Table of Contents
 
   Known_Bugs
 
-
-Note
-
-Refer to http://www.amanda.org/docs/indexing.html for the current version of
-this document.
 This file describes how the index files are generated and how amrecover is
 used.
 
@@ -133,6 +128,7 @@ Table 4.1. Protocol between amindexd and amrecover
 |TAPE_______________|return_value_of_tapedev_from_amanda.conf_if_set.________|
 |DCMP               |returns "YES" if dumps for disk are compressed, "NO" if |
 |___________________|dumps_aren't.___________________________________________|
+
 
 
  Installation Notes
@@ -363,6 +359,11 @@ config/config-common.h
   specified by logical names, nor when an automounter is being used, or a link
   is in the path.
 
+
+Note
+
+Refer to http://www.amanda.org/docs/indexing.html for the current version of
+this document.
 -------------------------------------------------------------------------------
 
 Prev                   Up                                     Next

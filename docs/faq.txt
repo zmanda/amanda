@@ -16,11 +16,6 @@ Stefan G. Weichinger
 XML-conversion;Updates
 AMANDA Core Team
 <sgw@amanda.org>
-
-Note
-
-Refer to http://www.amanda.org/docs/faq.html for the current version of this
-document.
 This file contains answers to some questions that are frequently asked in the
 Amanda mailing lists, specially by new users. Please take a look at this file
 before posting, this can save us time that could be spent improving Amanda and
@@ -575,6 +570,11 @@ www.amanda.org/fom-serve/cache/1.html.
  always correct. You can fix it quickly by setting an environment variable to
  e.g. LINES=24 (and export it).
 
+
+Note
+
+Refer to http://www.amanda.org/docs/faq.html for the current version of this
+document.
 -------------------------------------------------------------------------------
 
 Prev                       Up                                           Next

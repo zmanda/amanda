@@ -77,11 +77,6 @@ Table of Contents
 
 
 
-Note
-
-Refer to http://www.amanda.org/docs/whatwasnew.html for the current version of
-this document.
-
  What's new in Amanda 2.3
 
 This document contains notes on new features in Amanda 2.3 that may not yet be
@@ -461,6 +456,11 @@ Note
 This percentage applies from run to run, so, as in the previous example, when
 Amanda runs the next day, if there is 3.8GB left on the holding disk, 1.9GB
 will be reserved for degraded mode dumps (e.g. the percentage keeps sliding).
+
+Note
+
+Refer to http://www.amanda.org/docs/whatwasnew.html for the current version of
+this document.
 -------------------------------------------------------------------------------
 
 Prev                         Up                                          Next

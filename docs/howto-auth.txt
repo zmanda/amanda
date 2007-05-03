@@ -37,11 +37,6 @@ Table of Contents
         For_amrecover:
 
 
-
-Note
-
-Refer to http://www.amanda.org/docs/howto-auth.html for the current version of
-this document.
 This document covers the use of the auth in Amanda 2.5.1 and higher.
 
 Introduction
@@ -155,8 +150,7 @@ For security reason, you must prepend the line with the following:
 That will limit that key to connect only from your server and only be able to
 execute amandad.
 Like rsh if your server username and client username are different, you must
-add the client_username option in all DLE for that
-host:
+add the client_username option in all DLE for that host:
 
   client_username "client_username"
 
@@ -189,6 +183,11 @@ For security reason, you must prefix all lines with the following:
 
 That will limit every client key to connect from the client and only be able to
 execute amandad.
+
+Note
+
+Refer to http://www.amanda.org/docs/howto-auth.html for the current version of
+this document.
 -------------------------------------------------------------------------------
 
 Prev                                      Up                           Next

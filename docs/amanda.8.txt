@@ -234,7 +234,7 @@ work instead of defining a new dumptype:
 
   hostname diskname [ diskdevice ] {
     normal
-    holdingdisk no
+    holdingdisk never
   } [ spindle [ interface ] ]
 
 
@@ -278,7 +278,6 @@ The supported drivers are:
 
         tapedev tape:/dev/rmt/0mn
 
-      .
 
   null
       This driver throws away anything written to it and returns EOF for any
@@ -402,27 +401,29 @@ $  anchor at right
 ?  match exactly one character except the separator
 *  match zero or more characters except the separator
 ** match zero or more characters including the separator
+
 Some examples:
 
-EXPRESSION     WILL MATCH           WILL NOT MATCH
-hosta          hosta                hostb
-               hoSTA.dOMAIna.ORG 
-               foo.hosta.org 
-host           host                 hosta
-host?          hosta                host
-               hostb 
-ho*na          hoina                ho.aina.org
-ho**na         hoina 
-               ho.aina.org 
-^hosta         hosta                foo.hosta.org
-sda*           /dev/sda1 
-               /dev/sda12 
-/opt/          opt (disk)           opt (host)
-.opt.          opt (host)           opt (disk)
-/              /                    any other disk
-/usr           /usr 
-               /usr/opt 
-/usr$          /usr                 /usr/opt
+EXPRESSION WILL MATCH        WILL NOT MATCH
+hosta      hosta             hostb
+           hoSTA.dOMAIna.ORG  
+           foo.hosta.org      
+host       host              hosta
+host?      hosta             host
+           hostb              
+ho*na      hoina             ho.aina.org
+ho**na     hoina              
+           ho.aina.org        
+^hosta     hosta             foo.hosta.org
+sda*       /dev/sda1          
+           /dev/sda12         
+/opt       opt (disk)        opt (host)
+.opt.      opt (host)        opt (disk)
+/          /                 any other disk
+/usr       /usr               
+           /usr/opt           
+/usr$      /usr              /usr/opt
+
 
 DATESTAMP EXPRESSION
 
@@ -436,6 +437,23 @@ Leading ^ is removed. Trailing $ forces an exact match.
 |2__________|match_all_dates_that_start_with_2_(20000101-29991231)________|
 |2000-10____|match_all_dates_between_20000101-20101231____________________|
 |200010$____|match_only_200010____________________________________________|
+
+
+DUMP SPECIFICATIONS
+
+A dump specification selects one or more dumps. It has the form [host][:disk]
+[@datestamp], where each component is a pattern as described above. If a
+component is missing, it is treated as a wildcard. The characters ':', '@', and
+'\' may be escaped within any component by preceding them with a '\'.
+Some examples:
+
+DUMPSPEC                        DESCRIPTION
+client17                        all dumps of client17
+@20080615                       All dumps on with datestamps matching 20080615
+webserver:/var/www              All dumps of /var/www on host webserver
+webserver:/var/www@200806150317 The dump of webserver with datestamp
+                                200806150317
+:/var/www                       All dumps of /var/www on any host
 
 
 CONFIGURATION OVERRIDE

@@ -10,7 +10,7 @@ amtape  user interface to Amanda tape changer controls
 
 Synopsis
 
-amtape config command [ command options ]
+amtape config command [command_options...] [-oconfigoption]...
 
 DESCRIPTION
 
@@ -89,6 +89,9 @@ COMMANDS
   slot advance
       Eject any tape in the drive and put it away. Advance current to the next
       tape, but do not load it.
+
+  -o configoption
+      See the "CONFIGURATION OVERRIDE" section in amanda(8).
 
 This is useful with non-gravity stackers to unload the last tape used and set
 up Amanda for the next run. If you just use eject, the current tape will be

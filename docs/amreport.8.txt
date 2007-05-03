@@ -10,8 +10,8 @@ amreport  generate a formatted output of statistics for an Amanda run
 
 Synopsis
 
-amreport [config] [-i] [ -M | address ] [ -l | logfile ] [ -f | outputfile ]
-[ -p | postscriptfile ] [ -o | configoption ]*
+amreport [config] [-i] [-M address] [-l logfile] [-f outputfile] [-
+p postscriptfile] [ -o configoption]...
 
 DESCRIPTION
 

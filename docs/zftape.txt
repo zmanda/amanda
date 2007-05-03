@@ -16,11 +16,6 @@ Stefan G. Weichinger
 XML-conversion,Updates
 AMANDA Core Team
 <sgw@amanda.org>
-
-Note
-
-Refer to http://www.amanda.org/docs/zftape.html for the current version of this
-document.
 Amanda now supports the ftape driver version 3.04d (see http://www-
 math.math.rwth-aachen.de/~LBFM/claus/ftape ). It adjusts the blocksize
 automatically to 32k and supports QIC volume tables.
@@ -102,6 +97,11 @@ Filemarks are not written to the tape (they are written to the header segment
 and use there 128 byte), so their size could even be 0. But a tape segment
 takes at least 29 kb (+3 kb ecc-code = 32 kb), so in the worst case an eof will
 waste 29 kb.
+
+Note
+
+Refer to http://www.amanda.org/docs/zftape.html for the current version of this
+document.
 -------------------------------------------------------------------------------
 
 Prev                         Up                   Next

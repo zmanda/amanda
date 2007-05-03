@@ -13,6 +13,7 @@ DESCRIPTION
 
 amanda.conf is the main configuration file for Amanda. This manpage lists the
 relevant sections and parameters of this file for quick reference.
+The file <CONFIG_DIR>/<config>/amanda.conf is loaded.
 
 PARAMETERS
 
@@ -73,10 +74,396 @@ PARAMETERS
 
 
 
+  org string
+      Default: daily. A descriptive name for the configuration. This string
+      appears in the Subject line of mail reports. Each Amanda configuration
+      should have a different string to keep mail reports distinct.
+
+  mailto string
+      Default: operators. A space separated list of recipients for mail
+      reports.
+
+  dumpcycle int
+      Default: 10 days. The number of days in the backup cycle. Each disk will
+      get a full backup at least this often. Setting this to zero tries to do a
+      full backup each run.
+
+      Note
+
+      This parameter may also be set in a specific dumptype (see below). This
+      value sets the default for all dumptypes so must appear in amanda.conf
+      before any dumptypes are defined.
+
+  runspercycle int
+      Default: same as dumpcycle. The number of amdump runs in dumpcycle days.
+      A value of 0 means the same value as dumpcycle. A value of -1 means guess
+      the number of runs from the tapelist file, which is the number of tapes
+      used in the last dumpcycle days / runtapes.
+
+  tapecycle int
+      Default: 15 tapes. Typically tapes are used by Amanda in an ordered
+      rotation. The tapecycle parameter defines the size of that rotation. The
+      number of tapes in rotation must be larger than the number of tapes
+      required for a complete dump cycle (see the dumpcycle parameter).
+      This is calculated by multiplying the number of amdump runs per dump
+      cycle (runspercycle parameter) times the number of tapes used per run
+      (runtapes parameter). Typically two to four times this calculated number
+      of tapes are in rotation. While Amanda is always willing to use a new
+      tape in its rotation, it refuses to reuse a tape until at least
+      'tapecycle -1' number of other tapes have been used.
+      It is considered good administrative practice to set the tapecycle
+      parameter slightly lower than the actual number of tapes in rotation.
+      This allows the administrator to more easily cope with damaged or
+      misplaced tapes or schedule adjustments that call for slight adjustments
+      in the rotation order.
+
+  usetimestamps bool
+      Default: No. By default, Amanda can only track at most one run per
+      calendar day. When this option is enabled, however, Amanda can track as
+      many runs as you care to make.
+      WARNING: This option is not backward-compatible. Do not enable it if you
+      intend to downgrade your server installation to Amanda community edition
+      2.5.0
+
+  label_new_tapes string
+      Default: not set. When set, this directive will cause Amanda to
+      automatically write an Amanda tape label to any blank tape she
+      encounters. This option is DANGEROUS because when set, Amanda will ERASE
+      any non-Amanda tapes you may have, and may also ERASE any near-failing
+      tapes. Use with caution.
+      When using this directive, specify the template for new tape labels. The
+      template should contain some number of contiguous '%' characters, which
+      will be replaced with a generated number. Be sure to specify enough '%'
+      characters that you do not run out of tape labels. Example:
+      label_new_tapes "DailySet1-%%%"
+
+  dumpuser string
+      Default: amanda. The login name Amanda uses to run the backups. The
+      backup client hosts must allow access from the tape server host as this
+      user via .rhosts or .amandahosts, depending on how the Amanda software
+      was built.
+
+  printer string
+      Printer to use when doing tape labels. See the lbl-templ tapetype option.
+
+  tapedev string
+      Default: null:. The path name of the non-rewinding tape device. Non-
+      rewinding tape device names often have an 'n' in the name, e.g. /dev/rmt/
+      0mn, however this is operating system specific and you should consult
+      that documentation for detailed naming information.
+      If a tape changer is configured (see the tpchanger option), this option
+      might not be used.
+      If the null output driver is selected (see the section OUTPUT DRIVERS in
+      the amanda(8) manpage for more information), programs such as amdump will
+      run normally but all images will be thrown away. This should only be used
+      for debugging and testing, and probably only with the record option set
+      to no.
+
+  rawtapedev string
+      Default: null:. The path name of the raw tape device. This is only used
+      if Amanda is compiled for Linux machines with floppy tapes and is needed
+      for QIC volume table operations.
+
+  tpchanger string
+      Default: none. The name of the tape changer. If a tape changer is not
+      configured, this option is not used and should be commented out of the
+      configuration file.
+      If a tape changer is configured, choose one of the changer scripts (e.g.
+      chg-scsi) and enter that here.
+
+  changerdev string
+      Default: /dev/null. A tape changer configuration parameter. Usage depends
+      on the particular changer defined with the tpchanger option.
+
+  changerfile string
+      Default: /usr/adm/amanda/log/changer-status. A tape changer configuration
+      parameter. Usage depends on the particular changer defined with the
+      tpchanger option.
+
+  runtapes int
+      Default: 1. The maximum number of tapes used in a single run. If a tape
+      changer is not configured, this option is not used and should be
+      commented out of the configuration file.
+      If a tape changer is configured, this may be set larger than one to let
+      Amanda write to more than one tape.
+      Note that this is an upper bound on the number of tapes, and Amanda may
+      use less.
+      Also note that as of this release, Amanda does not support true tape
+      overflow. When it reaches the end of one tape, the backup image Amanda
+      was processing starts over again on the next tape.
+
+  maxdumpsize int
+      Default: runtapes*tape_length. Maximum number of bytes the planner will
+      schedule for a run.
+
+  taperalgo [first|firstfit|largest|largestfit|smallest|last]
+      Default: first. The algorithm used to choose which dump image to send to
+      the taper.
+
+
+        first
+            First in, first out.
+
+        firstfit
+            The first dump image that will fit on the current tape.
+
+        largest
+            The largest dump image.
+
+        largestfit
+            The largest dump image that will fit on the current tape.
+
+        smallest
+            The smallest dump image.
+
+        last
+            Last in, first out.
+
+
+  labelstr string
+      Default: .*. The tape label constraint regular expression. All tape
+      labels generated (see amlabel(8)) and used by this configuration must
+      match the regular expression. If multiple configurations are run from the
+      same tape server host, it is helpful to set their labels to different
+      strings (for example, "DAILY[0-9][0-9]*" vs. "ARCHIVE[0-9][0-9]*") to
+      avoid overwriting each other's tapes.
+
+  tapetype string
+      Default: EXABYTE. The type of tape drive associated with tapedev or
+      tpchanger. This refers to one of the defined tapetypes in the config file
+      (see below), which specify various tape parameters, like the length,
+      filemark size, and speed of the tape media and device.
+      First character of a tapetype string must be an alphabetic character
+
+  ctimeout int
+      Default: 30 seconds. Maximum amount of time that amcheck will wait for
+      each client host.
+
+  dtimeout int
+      Default: 1800 seconds. Amount of idle time per disk on a given client
+      that a dumper running from within amdump will wait before it fails with a
+      data timeout error.
+
+  etimeout int
+      Default: 300 seconds. Amount of time per disk on a given client that the
+      planner step of amdump will wait to get the dump size estimates. For
+      instance, with the default of 300 seconds and four disks on client A,
+      planner will wait up to 20 minutes for that machine. A negative value
+      will be interpreted as a total amount of time to wait per client instead
+      of per disk.
+
+  connect_tries int
+      Default: 3. How many times the server will try a connection.
+
+  req_tries int
+      Default: 3. How many times the server will resend a REQ packet if it
+      doesn't get the ACK packet.
+
+  netusage int
+      Default: 300 Kbps. The maximum network bandwidth allocated to Amanda, in
+      Kbytes per second. See also the interface section.
+
+  inparallel int
+      Default: 10. The maximum number of backups that Amanda will attempt to
+      run in parallel. Amanda will stay within the constraints of network
+      bandwidth and holding disk space available, so it doesn't hurt to set
+      this number a bit high. Some contention can occur with larger numbers of
+      backups, but this effect is relatively small on most systems.
+
+  displayunit "k|m|g|t"
+      Default: "k". The unit used to print many numbers, k=kilo, m=mega,
+      g=giga, t=tera.
+
+  dumporder string
+      Default: tttTTTTTTT. The priority order of each dumper:
+
+        s: smallest size
+        S: largest size
+        t: smallest time
+        T: largest time
+        b: smallest bandwidth
+        B: largest bandwidth
+
+
+  maxdumps int
+      Default: 1. The maximum number of backups from a single host that Amanda
+      will attempt to run in parallel. See also the inparallel option.
+      Note that this parameter may also be set in a specific dumptype (see
+      below). This value sets the default for all dumptypes so must appear in
+      amanda.conf before any dumptypes are defined.
+
+  bumpsize int
+      Default: 10 Mbytes. The minimum savings required to trigger an automatic
+      bump from one incremental level to the next, expressed as size. If Amanda
+      determines that the next higher backup level will be this much smaller
+      than the current level, it will do the next level. The value of this
+      parameter is used only if the parameter bumppercent is set to 0.
+      The global setting of this parameter can be overwritten inside of a
+      dumptype-definition.
+      See also the options bumppercent, bumpmult and bumpdays.
+
+  bumppercent int
+      Default: 0 percent. The minimum savings required to trigger an automatic
+      bump from one incremental level to the next, expressed as percentage of
+      the current size of the DLE (size of current level 0). If Amanda
+      determines that the next higher backup level will be this much smaller
+      than the current level, it will do the next level.
+      If this parameter is set to 0, the value of the parameter bumpsize is
+      used to trigger bumping.
+      The global setting of this parameter can be overwritten inside of a
+      dumptype-definition.
+      See also the options bumpsize, bumpmult and bumpdays.
+
+  bumpmult float
+      Default: 1.5. The bump size multiplier. Amanda multiplies bumpsize by
+      this factor for each level. This prevents active filesystems from bumping
+      too much by making it harder to bump to the next level. For example, with
+      the default bumpsize and bumpmult set to 2.0, the bump threshold will be
+      10 Mbytes for level one, 20 Mbytes for level two, 40 Mbytes for level
+      three, and so on.
+      The global setting of this parameter can be overwritten inside of a
+      dumptype-definition.
+
+  bumpdays int
+      Default: 2 days. To insure redundancy in the dumps, Amanda keeps
+      filesystems at the same incremental level for at least bumpdays days,
+      even if the other bump threshold criteria are met.
+      The global setting of this parameter can be overwritten inside of a
+      dumptype-definition.
+
+  diskfile string
+      Default: disklist. The file name for the disklist file holding client
+      hosts, disks and other client dumping information.
+
+  infofile string
+      Default: /usr/adm/amanda/curinfo. The file or directory name for the
+      historical information database. If Amanda was configured to use DBM
+      databases, this is the base file name for them. If it was configured to
+      use text formated databases (the default), this is the base directory and
+      within here will be a directory per client, then a directory per disk,
+      then a text file of data.
+
+  logdir string
+      Default: /usr/adm/amanda. The directory for the amdump and log files.
+
+  indexdir string
+      Default /usr/adm/amanda/index. The directory where index files (backup
+      image catalogues) are stored. Index files are only generated for
+      filesystems whose dumptype has the index option enabled.
+
+  tapelist string
+      Default: tapelist. The file name for the active tapelist file. Amanda
+      maintains this file with information about the active set of tapes.
+
+  tapebufs int
+      Default: 20. The number of buffers used by the taper process run by
+      amdump and amflush to hold data as it is read from the network or disk
+      before it is written to tape. Each buffer is a little larger than 32
+      KBytes and is held in a shared memory region.
+
+  reserve number
+      Default: 100. The part of holding-disk space that should be reserved for
+      incremental backups if no tape is available, expressed as a percentage of
+      the available holding-disk space (0-100). By default, when there is no
+      tape to write to, degraded mode (incremental) backups will be performed
+      to the holding disk. If full backups should also be allowed in this case,
+      the amount of holding disk space reserved for incrementals should be
+      lowered.
+
+  autoflush bool
+      Default: off. Whether an amdump run will flush the dumps from holding
+      disk to tape.
+
+  amrecover_do_fsf bool
+      Default: on. Amrecover will call amrestore with the -f flag for faster
+      positioning of the tape.
+
+  amrecover_check_label bool
+      Default: on. Amrecover will call amrestore with the -l flag to check the
+      label.
+
+  amrecover_changer string
+      Default: ''. Amrecover will use the changer if you use 'settape <string>'
+      and that string is the same as the amrecover_changer setting.
+
+  columnspec string
+      Defines the width of columns amreport should use. String is a comma (',')
+      separated list of triples. Each triple consists of three parts which are
+      separated by a equal sign ('=') and a colon (':') (see the example).
+      These three parts specify:
+
+        1. the name of the column, which may be:
+
+             	Compress (compression ratio)
+             	Disk (client disk name)
+             	DumpRate (dump rate in KBytes/sec)
+             	DumpTime (total dump time in hours:minutes)
+             	HostName (client host name)
+             	Level (dump level)
+             	OrigKB (original image size in KBytes)
+             	OutKB (output image size in KBytes)
+             	TapeRate (tape writing rate in KBytes/sec)
+             	TapeTime (total tape time in hours:minutes)
+             	
+
+        2. the amount of space to display before the column (used to get
+           whitespace between columns).
+        3. the width of the column itself. If set to a negative value, the
+           width will be calculated on demand to fit the largest entry in this
+           column.
+
+      Here is an example:
+
+        columnspec "Disk=1:18,HostName=0:10,OutKB=1:7"
+
+      The above will display the disk information in 18 characters and put one
+      space before it. The hostname column will be 10 characters wide with no
+      space to the left. The output KBytes column is seven characters wide with
+      one space before it.
+
   includefile string
       Default: none. The name of an Amanda configuration file to include within
       the current file. Useful for sharing dumptypes, tapetypes and interface
       definitions among several configurations.
+
+  debug_auth int
+      Default: 0. Debug level of the auth module
+
+  debug_event int
+      Default: 0. Debug level of the event module
+
+  debug_holding int
+      Default: 0. Debug level of the holdingdisk module
+
+  debug_protocol int
+      Default: 0. Debug level of the protocol module
+
+  debug_planner int
+      Default: 0. Debug level of the planner process
+
+  debug_driver int
+      Default: 0. Debug level of the driver process
+
+  debug_dumper int
+      Default: 0. Debug level of the dumper process
+
+  debug_chunker int
+      Default: 0. Debug level of the chunker process
+
+  debug_taper int
+      Default: 0. Debug level of the taper process
+
+  reserved-udp-port int,int
+      Default: --with-udpportrange or 512,1023. Reserved udp port that will be
+      used (bsd, bsdudp)
+
+  reserved-tcp-port int,int
+      Default: --with-low-tcpportrange or 512,1023. Reserved tcp port that will
+      be used (bsdtcp)
+
+  unreserved-tcp-port int,int
+      Default: --with-tcpportrange or 1025,65536. Unreserved tcp port that will
+      be used (bsd, bsdudp)
 
 
 HOLDINGDISK SECTION
@@ -111,15 +498,17 @@ The options and values are:
       chunk will not exceed the specified value. However, even though dump
       images are split in the holding disk, they are concatenated as they are
       written to tape, so each dump image still corresponds to a single
-      continuous tape section. If 0 is specified, Amanda will create holding
-      disk chunks as large as ((INT_MAX/1024)-64) Kbytes. Each holding disk
-      chunk includes a 32 Kbyte header, so the minimum chunk size is 64 Kbytes
-      (but that would be really silly). Operating systems that are limited to a
-      maximum file size of 2 Gbytes actually cannot handle files that large.
-      They must be at least one byte less than 2 Gbytes. Since Amanda works
-      with 32 Kbyte blocks, and to handle the final read at the end of the
-      chunk, the chunk size should be at least 64 Kbytes (2 * 32 Kbytes)
-      smaller than the maximum file size, e.g. 2047 Mbytes.
+      continuous tape section.
+      If 0 is specified, Amanda will create holding disk chunks as large as (
+      (INT_MAX/1024)-64) Kbytes.
+      Each holding disk chunk includes a 32 Kbyte header, so the minimum chunk
+      size is 64 Kbytes (but that would be really silly).
+      Operating systems that are limited to a maximum file size of 2 Gbytes
+      actually cannot handle files that large. They must be at least one byte
+      less than 2 Gbytes. Since Amanda works with 32 Kbyte blocks, and to
+      handle the final read at the end of the chunk, the chunk size should be
+      at least 64 Kbytes (2 * 32 Kbytes) smaller than the maximum file size,
+      e.g. 2047 Mbytes.
 
 
 DUMPTYPE SECTION
@@ -227,17 +616,26 @@ The dumptype options and values are:
       for reference)
       So the compress options line may be one of:
 
-      * compress none
-      * compress [client] fast
-      * compress [client] best
-      * compress client custom
-        Specify client_custom_compress "PROG"
-        PROG must not contain white space and it must accept -d for uncompress.
-      * compress server fast
-      * compress server best
-      * compress server custom
-        Specify server_custom_compress "PROG"
-        PROG must not contain white space and it must accept -d for uncompress.
+
+        compress none
+
+        compress client fast
+
+        compress client best
+
+        compress client custom
+            Specify client_custom_compress "PROG"
+            PROG must not contain white space and it must accept -d for
+            uncompress.
+
+        compress server fast
+
+        compress server best
+
+        compress server custom
+            Specify server_custom_compress "PROG"
+            PROG must not contain white space and it must accept -d for
+            uncompress.
 
       Note that some tape devices do compression and this option has nothing to
       do with whether that is used. If hardware compression is used (usually
@@ -255,34 +653,47 @@ The dumptype options and values are:
       host as it goes from the network into the holding disk or to tape.
       So the encrypt options line may be one of:
 
-      * encrypt none
-      * encrypt client
-        Specify client_encrypt "PROG"
-        PROG must not contain white space.
-        Specify client_decrypt_option "decryption-parameter" Default: "-d"
-        decryption-parameter must not contain white space.
-        (See dumptype server-encrypt-fast in example/amanda.conf for reference)
-      * encrypt server
-        Specify server_encrypt "PROG"
-        PROG must not contain white space.
-        Specify server_decrypt_option "decryption-parameter" Default: "-d"
-        decryption-parameter must not contain white space.
-        (See dumptype client-encrypt-nocomp in example/amanda.conf for
-        reference)
 
+        encrypt none
+
+        encrypt client
+            Specify client_encrypt "PROG"
+            PROG must not contain white space.
+            Specify client_decrypt_option "decryption-parameter" Default: "-d"
+            decryption-parameter must not contain white space.
+            (See dumptype server-encrypt-fast in example/amanda.conf for
+            reference)
+
+        encrypt server
+            Specify server_encrypt "PROG"
+            PROG must not contain white space.
+            Specify server_decrypt_option "decryption-parameter" Default: "-d"
+            decryption-parameter must not contain white space.
+            (See dumptype client-encrypt-nocomp in example/amanda.conf for
+            reference)
+
+      Note that current logic assumes compression then encryption during backup
+      (thus decrypt then uncompress during restore). So specifying client-
+      encryption AND server-compression is not supported. amcrypt which is a
+      wrapper of aespipe is provided as a reference symmetric encryption
+      program.
 
   estimate client|calcsize|server
       Default: client. Determine the way Amanda does it's estimate.
 
-      * client:
-        Use the same program as the dumping program, this is the most accurate
-        way to do estimates, but it can take a long time.
-      * calcsize:
-        Use a faster program to do estimates, but the result is less accurate.
-      * server:
-        Use only statistics from the previous run to give an estimate, it takes
-        only a few seconds but the result is not accurate if your disk usage
-        changes from day to day.
+
+        client
+            Use the same program as the dumping program, this is the most
+            accurate way to do estimates, but it can take a long time.
+
+        calcsize
+            Use a faster program to do estimates, but the result is less
+            accurate.
+
+        server
+            Use only statistics from the previous run to give an estimate, it
+            takes only a few seconds but the result is not accurate if your
+            disk usage changes from day to day.
 
 
   exclude [ list|file ][[optional][ append ][ string ]+]
@@ -308,12 +719,27 @@ The dumptype options and values are:
       the actual file used would be /var/.amanda.excludes for a backup of /var,
       /usr/local/.amanda.excludes for a backup of /usr/local, and so on.
 
-  holdingdisk boolean
-      Default: yes. Whether a holding disk should be used for these backups or
+  holdingdisk [ never|auto|required ]
+      Default: auto. Whether a holding disk should be used for these backups or
       whether they should go directly to tape. If the holding disk is a portion
       of another file system that Amanda is backing up, that file system should
-      refer to a dumptype with holdingdisk set to no to avoid backing up the
+      refer to a dumptype with holdingdisk set to never to avoid backing up the
       holding disk into itself.
+
+
+        never|no|false|off
+            Never use a holdingdisk, the dump will always go directly to tape.
+            There will be no dump if you have a tape error.
+
+        auto|yes|true|on
+            Use the holding disk, unless there is a problem with the holding
+            disk, the dump won't fit there or the medium doesn't require
+            spooling (e.g., VFS device)
+
+        required
+            Always dump to holdingdisk, never directly to tape. There will be
+            no dump if it doesn't fit on holdingdisk
+
 
   ignore boolean
       Default: no. Whether disks associated with this backup type should be
@@ -514,9 +940,9 @@ The tapetype options and values are:
       Default: none. A comment string describing this set of tape information.
 
   filemark int
-      Default: 1000 bytes. How large a file mark (tape mark) is, measured in
-      bytes. If the size is only known in some linear measurement (e.g.
-      inches), convert it to bytes using the device density.
+      Default: 1 kbytes. How large a file mark (tape mark) is, measured in
+      kbytes. If the size is only known in some linear measurement (e.g.
+      inches), convert it to kbytes using the device density.
 
   length int
       Default: 2000 kbytes. How much data will fit on a tape.
@@ -527,11 +953,18 @@ The tapetype options and values are:
       exceptions).
 
   blocksize int
-      Default: 32. How much data will be written in each tape record expressed
-      in KiloBytes. The tape record size (= blocksize) can not be reduced below
-      the default 32 KBytes. The parameter blocksize can only be raised if
-      Amanda was compiled with the configure option --with-maxtapeblocksize=N
-      set with "N" greater than 32 during configure.
+      Default: 32 kbytes. How much data will be written in each tape record
+      expressed in KiloBytes. The tape record size (= blocksize) can not be
+      reduced below the default 32 KBytes. The parameter blocksize can only be
+      raised if Amanda was compiled with the configure option --with-
+      maxtapeblocksize=N set with "N" greater than 32 during configure.
+
+  readblocksize int
+      Default: (from configure --with-maxtapeblocksize). How much data will be
+      read in each tape record expressed in KiloBytes. Some hardware require a
+      value not too large, and some require it to be equal to the blocksize. It
+      is useful if you configured amanda with a big --with-maxtapeblocksize and
+      your hardware don't work with a value that big.
 
   file-pad boolean
       Default: true. If true, every record, including the last one in the file,

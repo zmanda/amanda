@@ -23,11 +23,6 @@ Stefan G. Weichinger
 XML-conversion; Additions and Updates
 AMANDA Core Team
 <sgw@amanda.org>
-
-Note
-
-Refer to http://www.amanda.org/docs/wishlist.html for the current version of
-this document.
 This is a major update.
 These are items that we are planning to address, OR which we would like to see
 happen sometime in the future.
@@ -248,6 +243,11 @@ Oct. 2004.
   The docs would benefit from adding some illustrations.
 
 The WISHLIST should get shortened.
+
+Note
+
+Refer to http://www.amanda.org/docs/wishlist.html for the current version of
+this document.
 -------------------------------------------------------------------------------
 
 Prev                                          Up                           Next

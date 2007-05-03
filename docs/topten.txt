@@ -42,11 +42,6 @@ Table of Contents
   ...
 
 
-Note
-
-Refer to http://www.amanda.org/docs/topten.html for the current version of this
-document.
-
  Reason for starting this list.
 
 Jon LaBadie once wrote to me:
@@ -424,6 +419,11 @@ The third word in the message. Some dumps MAY have been left.
 
 Please feel free to suggest additions and corrections. Write to the amanda-
 users-mailinglist at mailto://amanda-users@amanda.org.
+
+Note
+
+Refer to http://www.amanda.org/docs/topten.html for the current version of this
+document.
 -------------------------------------------------------------------------------
 
 Prev                     Up                          Next

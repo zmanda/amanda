@@ -30,11 +30,6 @@ Stefan G. Weichinger
 XML-conversion;Updates
 AMANDA Core Team
 <sgw@amanda.org>
-
-Note
-
-Refer to http://www.amanda.org/docs/restore.html for the current version of
-this document.
 This document describes how to restore files backed up with Amanda either with
 or without Amanda tools.
 All these cases assume you're trying to restore a complete disk, that is,
@@ -194,6 +189,11 @@ Barney) runs sunos.
 
 
 
+
+Note
+
+Refer to http://www.amanda.org/docs/restore.html for the current version of
+this document.
 -------------------------------------------------------------------------------
 
 Prev                                     Up                                Next

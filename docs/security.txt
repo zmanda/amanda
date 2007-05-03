@@ -26,11 +26,6 @@ Table of Contents
 
   Acknowledgements
 
-
-Note
-
-Refer to http://www.amanda.org/docs/security.html for the current version of
-this document.
 The Amanda development team confirms the existence of the amrecover security
 hole in recent versions of Amanda. We have made a new release, Amanda 2.4.0b5,
 that fixes the amrecover problem and other potential security holes, and is the
@@ -72,6 +67,11 @@ The Amanda Team would also like to thank the many other people who have
 contributed suggestions, patches, and new subsystems for Amanda. We're grateful
 for any contribution that helps us achieve and sustain critical mass for
 improving Amanda.
+
+Note
+
+Refer to http://www.amanda.org/docs/security.html for the current version of
+this document.
 -------------------------------------------------------------------------------
 
 Prev                        Up                         Next

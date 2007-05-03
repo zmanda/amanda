@@ -10,7 +10,7 @@ amlabel  label an Amanda tape
 
 Synopsis
 
-amlabel [-f ] config label [ slot | slot ] [ -o | configoption ]*
+amlabel [-f ] config label [slot slot] [ -o configoption]...
 
 DESCRIPTION
 

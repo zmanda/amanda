@@ -11,8 +11,8 @@ amfetchdump  extract backup images from multiple Amanda tapes.
 Synopsis
 
 amfetchdump [-pcClawns] [-d device] [-O directory] [-i logfile] [-b blocksize]
-config hostname [ disk [ date [ level [ hostname [...] ] ] ] ] [ -o |
-configoption ]*
+config hostname [ disk [ date [ level [ hostname [...] ] ] ] ] [ -
+o configoption]...
 
 DESCRIPTION
 

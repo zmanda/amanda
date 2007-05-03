@@ -46,11 +46,6 @@ Table of Contents
   Conclusion
 
 
-Note
-
-Refer to http://www.amanda.org/docs/dumperapi.html for the current version of
-this document.
-
  Introduction
 
 This is a proposal of a mechanism for Amanda to support arbitrary backup
@@ -317,6 +312,11 @@ the header of backup images, to ease crash-recovery.
 Well, that's all. Drop us a note at the amanda-hackers mailing list (mailto://
 amanda-hackers@amanda.org) if you have suggestions to improve this document
 and/or the API. Some help on its implementation would be welcome, too.
+
+Note
+
+Refer to http://www.amanda.org/docs/dumperapi.html for the current version of
+this document.
 -------------------------------------------------------------------------------
 
 Prev                                     Up                           Next

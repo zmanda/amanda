@@ -27,11 +27,6 @@ Table of Contents
 
   Recovery
 
-
-Note
-
-Refer to http://www.amanda.org/docs/howto-filedriver.html for the current
-version of this document.
 This document covers the use of the file-driver in Amanda 2.4.3 and higher.
 Examples given here have been taken from a SuSE-Linux-8.2-Pro-environment,
 using Amanda 2.4.4p1 and the snapshot 2.4.4p1-20031202. Please adjust paths,
@@ -427,6 +422,11 @@ Please be aware of the fact reported by JC Simonetti: " I have never never used
 the "settape" command of amrecover [with chg-disk] since there's some problems
 with it (tape not loaded correctly, or impossible to change from tape to tape
 when restoring data shared accross multiple tapes...) "
+
+Note
+
+Refer to http://www.amanda.org/docs/howto-filedriver.html for the current
+version of this document.
 -------------------------------------------------------------------------------
 
 Prev                                 Up                    Next

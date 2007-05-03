@@ -21,6 +21,14 @@ for some reason (usually because of a tape server host crash), amcleanup must
 be run some time later (usually during system boot).
 See the amanda(8) man page for more details about Amanda.
 
+OPTIONS
+
+
+
+  -k
+      Kill all Amanda processes.
+
+
 EXAMPLES
 
 This example runs the Amanda cleanup process by hand after a failure.

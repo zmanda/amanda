@@ -10,8 +10,8 @@ amflush  flush Amanda backup files from holding disk to tape
 
 Synopsis
 
-amflush [-b] [-f] [-s] [ -D | datestamp ]* config [ host | [disk]*]* [ -o |
-configoption ]*
+amflush [-b] [-f] [-s] [-D datestamp] config [ host [disk...] ...] [ -
+o configoption]...
 
 DESCRIPTION
 

@@ -36,11 +36,6 @@ Table of Contents
   Bugs_and_notes
 
 
-Note
-
-Refer to http://www.amanda.org/docs/samba.html for the current version of this
-document.
-
  Installation
 
 Amanda is able to back up Microsoft Windows shared disks by using Samba, a
@@ -181,6 +176,11 @@ enabled. If you aren't using the GNU-tar part, you may get warnings about the
 availability of /usr/local/bin/gtar (or whatever it was compiled with). These
 may safely be ignored, unless you enable index generation for those
 filesystems.
+
+Note
+
+Refer to http://www.amanda.org/docs/samba.html for the current version of this
+document.
 -------------------------------------------------------------------------------
 
 Prev                              Up                 Next

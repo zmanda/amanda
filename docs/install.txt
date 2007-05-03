@@ -33,11 +33,6 @@ Table of Contents
         Set_up_the_Backup_Client_Hosts
 
 
-
-Note
-
-Refer to http://www.amanda.org/docs/install.html for the current version of
-this document.
 This document covers the compilation, installation, and runtime setup of Amanda
 2.4.2 and higher.
 
@@ -233,6 +228,7 @@ Amanda programs (see section Set_up_the_Backup_Client_Hosts below).
     0 16 * * 1-5 /usr/local/sbin/amcheck -m confname
     45 0 * * 2-6 /usr/local/sbin/amdump confname
 
+
   This is for SunOS 4.x, which has a per-user crontab; most other systems also
   require a userid on each cron line. See your cron(8) for details. With these
   cron lines, Amanda will check that the correct tape is in the drive every
@@ -244,6 +240,7 @@ Amanda programs (see section Set_up_the_Backup_Client_Hosts below).
     amanda		10080/udp
     amandaidx	10082/tcp
     amidxtape	10083/tcp
+
 
   You may choose a different port number if you like, but it must match that in
   the services file on the client hosts too.
@@ -260,6 +257,7 @@ Amanda programs (see section Set_up_the_Backup_Client_Hosts below).
 
       	amandaidx stream tcp nowait $USER $AMINDEXD_PATH amindexd
       	amidxtape stream tcp nowait $USER $AMIDXTAPED_PATH amidxtaped
+
 
     where $AMINDEXD_PATH and $AMIDXTAPED_PATH are the complete paths to where
     the amindexd and amidxtaped executables (usually libexec_dir/amindexd and
@@ -281,6 +279,7 @@ Amanda programs (see section Set_up_the_Backup_Client_Hosts below).
       		groups 			= yes
       		server			= $AMINDEXD_PATH/amindexd }
 
+
     Example 2.5. /etc/xinetd.d/amidxtape
 
       service amidxtape
@@ -292,6 +291,7 @@ Amanda programs (see section Set_up_the_Backup_Client_Hosts below).
       		group			= $GROUP
       		groups 			= yes
       		server			= $AMIDXTAPED_PATH/amidxtaped }
+
 
   o If your tape server uses Dan Bernstein's daemontools http://cr.yp.to/
     daemontools.html) instead of (x)inetd, you have to create amandaidx and
@@ -310,12 +310,14 @@ Amanda programs (see section Set_up_the_Backup_Client_Hosts below).
         /usr/local/bin/tcpserver -DHRl0 0 10082 \
         /usr/local/libexec/amindexd >/dev/null 2>/dev/null
 
+
       Example 2.7. /etc/amanda/supervise/amidxtape/run
 
         #!/bin/sh
         exec /usr/local/bin/setuidgid amanda \
         /usr/local/bin/tcpserver -DHRl0 0 10083 \
         /usr/local/libexec/amidxtaped >/dev/null 2>/dev/null
+
 
     # Link service directories into your svscan directory:
 
@@ -351,6 +353,7 @@ Amanda programs (see section Set_up_the_Backup_Client_Hosts below).
     amandaidx	10082/tcp
     amidxtape	10083/tcp
 
+
   You may choose a different port number if you like, but it must match that in
   the services file on the tape server host too.
   If you are running NIS (aka YP), you have to enter the Amanda service into
@@ -367,6 +370,7 @@ Amanda programs (see section Set_up_the_Backup_Client_Hosts below).
     Example 2.9. /etc/inetd.conf
 
       amanda dgram udp wait USER AMANDAD_PATH amandad
+
 
     You may use the `patch-system' script, from client-src, in order to modify
     this file. Run it with a `-h' argument for usage.
@@ -386,6 +390,7 @@ Amanda programs (see section Set_up_the_Backup_Client_Hosts below).
       server			= $AMANDAD_PATH/amandad
       }
 
+
   o If your Amanda client uses Dan Bernstein's daemontools (http://cr.yp.to/
     daemontools.html) instead of (x)inetd, you have to create the amanda
     service by hand. You will need also an UDP super-server (netcat in this
@@ -402,6 +407,7 @@ Amanda programs (see section Set_up_the_Backup_Client_Hosts below).
         exec /usr/local/bin/setuidgid amanda \
           /usr/bin/netcat -l -u -p 10080 -q 0 \
           -e /usr/local/libexec/amandad >/dev/null 2>/dev/null
+
 
 
       Note
@@ -434,6 +440,11 @@ Before writing questions, you may prefer to take a look at the Amanda_FAQ and
 at the Amanda home page, at http://www.amanda.org. Browsable archives of Amanda
 mailing-lists are available at http://marc.theaimsgroup.com/?l=amanda-users and
 http://marc.theaimsgroup.com/?l=amanda-hackers.
+
+Note
+
+Refer to http://www.amanda.org/docs/install.html for the current version of
+this document.
 -------------------------------------------------------------------------------
 
 Prev                                       Up                   Next

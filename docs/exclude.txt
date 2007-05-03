@@ -44,11 +44,6 @@ Table of Contents
 
 
 
-Note
-
-Refer to http://www.amanda.org/docs/exclude.html for the current version of
-this document.
-
  Introduction
 
 There are times when data needs to be excluded from a backup. When these times
@@ -332,6 +327,11 @@ then the string following the "=" is the file or directory that is currently
 set to be excluded.
 Contact the amanda-users mailing list: mailto://amanda-users@amanda.org.
 Subscription information is available at http://www.amanda.org.
+
+Note
+
+Refer to http://www.amanda.org/docs/exclude.html for the current version of
+this document.
 -------------------------------------------------------------------------------
 
 Prev                                   Up                              Next

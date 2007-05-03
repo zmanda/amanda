@@ -17,15 +17,15 @@ Stefan G. Weichinger
 XML-conversion
 AMANDA Core Team
 <sgw@amanda.org>
+The Amanda developers believe Amanda is Y2K-compliant, as long as the
+underlying operating system and C library are. The only date manipulations
+performed by Amanda use C-language time manipulation functions and/or strings
+where years are represented with the century-included notation.
 
 Note
 
 Refer to http://www.amanda.org/docs/y2k.html for the current version of this
 document.
-The Amanda developers believe Amanda is Y2K-compliant, as long as the
-underlying operating system and C library are. The only date manipulations
-performed by Amanda use C-language time manipulation functions and/or strings
-where years are represented with the century-included notation.
 -------------------------------------------------------------------------------
 
 Prev                                   Up                               Next
