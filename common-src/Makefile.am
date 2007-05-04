@@ -32,6 +32,7 @@ libamanda_la_SOURCES =		\
 	security.c		\
 	security-util.c		\
 	sl.c			\
+	sockaddr-util.c		\
 	ssh-security.c		\
 	statfs.c		\
 	stream.c		\
@@ -62,6 +63,7 @@ noinst_HEADERS =		\
 	security-util.h		\
 	sl.h			\
 	statfs.h		\
+	sockaddr-util.h		\
 	stream.h		\
 	tapelist.h		\
 	token.h			\

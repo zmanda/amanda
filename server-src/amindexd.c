@@ -56,6 +56,7 @@
 #include "util.h"
 #include "amandad.h"
 #include "pipespawn.h"
+#include "sockaddr-util.h"
 
 #include <grp.h>
 

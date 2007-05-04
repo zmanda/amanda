@@ -34,6 +34,7 @@
 #include "dgram.h"
 #include "util.h"
 #include "conffile.h"
+#include "sockaddr-util.h"
 
 void
 dgram_socket(

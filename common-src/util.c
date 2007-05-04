@@ -31,6 +31,7 @@
 #include "util.h"
 #include "arglist.h"
 #include "clock.h"
+#include "sockaddr-util.h"
 
 /*#define NET_READ_DEBUG*/
 
@@ -614,108 +615,6 @@ validate_mailto(
 {
     return !match("\\*|<|>|\\(|\\)|\\[|\\]|,|;|:|\\\\|/|\"|\\!|\\$|\\|", mailto);
 }
-
-
-void
-dump_sockaddr(
-    struct sockaddr_storage *sa)
-{
-#ifdef WORKING_IPV6
-    char ipstr[INET6_ADDRSTRLEN];
-#else
-    char ipstr[INET_ADDRSTRLEN];
-#endif
-    int port;
-
-    port = SS_GET_PORT(sa);
-#ifdef WORKING_IPV6
-    if ( sa->ss_family == (sa_family_t)AF_INET6) {
-	inet_ntop(AF_INET6, &((struct sockaddr_in6 *)sa)->sin6_addr,
-		  ipstr, sizeof(ipstr));
-	dbprintf(("%s: (sockaddr_in6 *)%p = { %d, %d, %s }\n",
-		  debug_prefix_time(NULL), sa,
-		  ((struct sockaddr_in6 *)sa)->sin6_family,
-		  port,
-		  ipstr));
-    } else
-#endif
-    {
-	inet_ntop(AF_INET, &((struct sockaddr_in *)sa)->sin_addr, ipstr,
-		  sizeof(ipstr));
-	dbprintf(("%s: (sockaddr_in *)%p = { %d, %d, %s }\n",
-		  debug_prefix_time(NULL), sa,
-		  ((struct sockaddr_in *)sa)->sin_family,
-		  port,
-		  ipstr));
-    }
-}
-
-
-#ifdef WORKING_IPV6
-static char mystr_sockaddr[INET6_ADDRSTRLEN + 20];
-#else
-static char mystr_sockaddr[INET_ADDRSTRLEN + 20];
-#endif
-
-char *
-str_sockaddr(
-    struct sockaddr_storage *sa)
-{
-#ifdef WORKING_IPV6
-    char ipstr[INET6_ADDRSTRLEN];
-#else
-    char ipstr[INET_ADDRSTRLEN];
-#endif
-    int port;
-
-    port = SS_GET_PORT(sa);
-#ifdef WORKING_IPV6
-    if ( sa->ss_family == (sa_family_t)AF_INET6) {
-	inet_ntop(AF_INET6, &((struct sockaddr_in6 *)sa)->sin6_addr,
-		  ipstr, sizeof(ipstr));
-    } else
-#endif
-    {
-	inet_ntop(AF_INET, &((struct sockaddr_in *)sa)->sin_addr, ipstr,
-		  sizeof(ipstr));
-    }
-    snprintf(mystr_sockaddr,sizeof(mystr_sockaddr),"%s.%d", ipstr, port);
-    return mystr_sockaddr;
-}
-
-
-int
-cmp_sockaddr(
-    struct sockaddr_storage *ss1,
-    struct sockaddr_storage *ss2,
-    int addr_only)
-{
-    if (ss1->ss_family == ss2->ss_family) {
-        if (addr_only) {
-#ifdef WORKING_IPV6
-            if(ss1->ss_family == (sa_family_t)AF_INET6)
-                return memcmp(
-                    &((struct sockaddr_in6 *)ss1)->sin6_addr,
-                    &((struct sockaddr_in6 *)ss2)->sin6_addr,
-                    sizeof(((struct sockaddr_in6 *)ss1)->sin6_addr));
-            else
-#endif
-                return memcmp(
-                    &((struct sockaddr_in *)ss1)->sin_addr,
-                    &((struct sockaddr_in *)ss2)->sin_addr,
-                    sizeof(((struct sockaddr_in *)ss1)->sin_addr));
-        } else {
-            return memcmp(ss1, ss2, SS_LEN(ss1));
-        }
-    } else {
-        /* compare families to give a total order */
-        if (ss1->ss_family < ss2->ss_family)
-            return -1;
-        else
-            return 1;
-    }
-}
-
 
 int copy_file(
     char  *dst,

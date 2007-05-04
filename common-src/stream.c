@@ -35,6 +35,7 @@
 #include "util.h"
 #include "conffile.h"
 #include "security-util.h"
+#include "sockaddr-util.h"
 
 /* local functions */
 static void try_socksize(int sock, int which, size_t size);

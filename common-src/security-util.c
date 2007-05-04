@@ -42,6 +42,7 @@
 #include "security-util.h"
 #include "stream.h"
 #include "version.h"
+#include "sockaddr-util.h"
 
 /*
  * Magic values for sec_conn->handle

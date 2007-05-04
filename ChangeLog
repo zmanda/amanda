@@ -1,3 +1,9 @@
+2007-05-04  Dustin J. Mitchell <dustin@zmanda.com>
+	* server-src/amindexd.c common-src/sockaddr-util.c common-src/sockaddr-util.h
+	  common-src/util.c common-src/security-util.c common-src/amanda.h
+	  common-src/dgram.c common-src/stream.c common-src/Makefile.am: add new
+	  sockaddr-util.[ch] containing sockaddr-related functions.
+
 2007-05-04  Jean-Louis Martineau <martineau@zmanda.com>
 	* configure.in: AM_INIT_AUTOMAKE(amanda, 2.5.3alpha)
 
