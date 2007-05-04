@@ -56,6 +56,13 @@ int     cmp_sockaddr(struct sockaddr_storage *ss1,
 		     struct sockaddr_storage *ss2,
 		     int addr_only);
 
+/* Copy a sockaddr object.
+ *
+ * @param dest: destination
+ * @param src: source
+ */
+#define copy_sockaddr(dest, src) memcpy((dest), (src), SS_LEN((src)))
+
 /* Calculate the length of the data in a struct sockaddr_storage.
  *
  * @param ss: the sockaddr_storage to examine

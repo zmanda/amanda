@@ -1,3 +1,7 @@
+2007-04-25  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/sockaddr-util.h common-src/bsdtcp-security.c common-src/security-util.c
+	  common-src/krb5-security.c common-src/stream.c: add and use a copy_sockaddr() macro
+
 2007-05-04  Dustin J. Mitchell <dustin@zmanda.com>
 	* configure.in common-src/rsh-security.c common-src/bsdtcp-security.c
 	  common-src/ssh-security.c common-src/bsdudp-security.c

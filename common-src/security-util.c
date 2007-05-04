@@ -1307,7 +1307,7 @@ udp_inithandle(
     assert(addr != NULL);
 
     rh->hostname = stralloc(hostname);
-    memcpy(&rh->peer, addr, SIZEOF(rh->peer));
+    copy_sockaddr(&rh->peer, addr);
     SS_SET_PORT(&rh->peer, port);
 
     rh->prev = udp->bh_last;

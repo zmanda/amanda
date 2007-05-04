@@ -233,7 +233,7 @@ stream_client_internal(
 	return -1;
     }
 
-    memcpy(&svaddr, res->ai_addr, (size_t)res->ai_addrlen);
+    copy_sockaddr(&svaddr, res->ai_addr);
     freeaddrinfo(res);
     SS_SET_PORT(&svaddr, port);
 

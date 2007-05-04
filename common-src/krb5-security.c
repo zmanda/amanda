@@ -379,7 +379,7 @@ krb5_accept(
     rc = sec_tcp_conn_get(hostname, 0);
     rc->recv_security_ok = NULL;
     rc->prefix_packet = NULL;
-    memcpy(&rc->peer, &sin, sizeof(rc->peer));
+    copy_sockaddr(&rc->peer, &sin);
     rc->read = in;
     rc->write = out;
     rc->driver = driver;
