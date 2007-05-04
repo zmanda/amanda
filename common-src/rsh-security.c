@@ -43,8 +43,6 @@
 #include "stream.h"
 #include "version.h"
 
-#ifdef RSH_SECURITY
-
 /*
  * Path to the rsh binary.  This should be configurable.
  */
@@ -246,5 +244,3 @@ runrsh(
     /* should never go here, shut up compiler warning */
     return(-1);
 }
-
-#endif	/* RSH_SECURITY */

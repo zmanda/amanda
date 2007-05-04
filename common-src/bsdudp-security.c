@@ -40,8 +40,6 @@
 #include "stream.h"
 #include "version.h"
 
-#ifdef BSDUDP_SECURITY
-
 #ifndef SO_RCVBUF
 #undef DUMPER_SOCKET_BUFFERING
 #endif
@@ -285,6 +283,4 @@ bsdudp_close(
     amfree(bh->hostname);
     amfree(bh);
 }
-
-#endif	/* BSDUDP_SECURITY */					/* } */
 

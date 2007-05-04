@@ -43,8 +43,6 @@
 #include "stream.h"
 #include "version.h"
 
-#ifdef BSDTCP_SECURITY
-
 /*
  * Number of seconds bsdtcp has to start up
  */
@@ -289,5 +287,3 @@ runbsdtcp(
     rc->read = rc->write = server_socket;
     return 0;
 }
-
-#endif /* BSDTCP_SECURITY */

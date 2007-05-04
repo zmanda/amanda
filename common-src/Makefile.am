@@ -11,9 +11,6 @@ libamanda_la_SOURCES =		\
 	alloc.c			\
 	amfeatures.c		\
 	amflock.c		\
-	bsd-security.c		\
-	bsdtcp-security.c	\
-	bsdudp-security.c	\
 	clock.c			\
 	conffile.c		\
 	debug.c			\
@@ -22,18 +19,14 @@ libamanda_la_SOURCES =		\
 	event.c			\
 	file.c			\
 	fileheader.c		\
-	krb4-security.c		\
-	krb5-security.c		\
 	match.c			\
 	packet.c		\
 	pipespawn.c		\
 	protocol.c		\
-	rsh-security.c		\
 	security.c		\
 	security-util.c		\
 	sl.c			\
 	sockaddr-util.c		\
-	ssh-security.c		\
 	statfs.c		\
 	stream.c		\
 	tapelist.c		\
@@ -41,6 +34,28 @@ libamanda_la_SOURCES =		\
 	util.c			\
 	version.c		\
 	versuff.c
+
+if WANT_RSH_SECURITY
+libamanda_la_SOURCES += rsh-security.c
+endif
+if WANT_SSH_SECURITY
+libamanda_la_SOURCES += ssh-security.c
+endif
+if WANT_BSD_SECURITY
+libamanda_la_SOURCES += bsd-security.c
+endif
+if WANT_BSDTCP_SECURITY
+libamanda_la_SOURCES += bsdtcp-security.c
+endif
+if WANT_BSDUDP_SECURITY
+libamanda_la_SOURCES += bsdudp-security.c
+endif
+if WANT_KRB4_SECURITY
+libamanda_la_SOURCES += krb4-security.c	
+endif
+if WANT_KRB5_SECURITY
+libamanda_la_SOURCES += krb5-security.c
+endif
 
 #libamanda_la_LIBADD =	@LTLIBOBJS@
 

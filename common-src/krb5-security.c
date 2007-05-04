@@ -1216,14 +1216,3 @@ common_exit:
     return(result);
 #endif /* AMANDA_PRINCIPAL */
 }
-
-#else
-
-void krb5_security_dummy(void);
-
-void
-krb5_security_dummy(void)
-{
-}
-
-#endif	/* KRB5_SECURITY */

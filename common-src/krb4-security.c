@@ -31,7 +31,6 @@
  */
 
 #include "config.h"
-#ifdef KRB4_SECURITY
 
 #include <des.h>
 #include <krb.h>
@@ -1786,14 +1785,3 @@ print_credentials(
     fflush(stdout);
 }
 #endif
-
-#else
-
-void krb4_security_dummy(void);
-
-void
-krb4_security_dummy(void)
-{
-}
-
-#endif /* KRB4_SECURITY */

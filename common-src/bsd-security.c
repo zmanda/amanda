@@ -44,8 +44,6 @@
 #undef DUMPER_SOCKET_BUFFERING
 #endif
 
-#ifdef BSD_SECURITY						/* { */
-
 /*
  * Change the following from #undef to #define to cause detailed logging
  * of the security steps, e.g. into /tmp/amanda/amandad*debug.
@@ -552,5 +550,3 @@ stream_read_callback(
 
     (*bs->fn)(bs->arg, bs->databuf, n);
 }
-
-#endif	/* BSD_SECURITY */					/* } */

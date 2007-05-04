@@ -43,8 +43,6 @@
 #include "stream.h"
 #include "version.h"
 
-#ifdef SSH_SECURITY
-
 /*
  * Number of seconds ssh has to start up
  */
@@ -246,5 +244,3 @@ runssh(
     /* should never go here, shut up compiler warning */
     return(-1);
 }
-
-#endif	/* SSH_SECURITY */

@@ -1,4 +1,10 @@
 2007-05-04  Dustin J. Mitchell <dustin@zmanda.com>
+	* configure.in common-src/rsh-security.c common-src/bsdtcp-security.c
+	  common-src/ssh-security.c common-src/bsdudp-security.c
+	  common-src/krb5-security.c common-src/krb4-security.c common-src/bsd-security.c
+	  common-src/Makefile.am: use AM_CONDITIONAL to select security modules to compile
+
+2007-05-04  Dustin J. Mitchell <dustin@zmanda.com>
 	* autogen man/Makefile.am configure.in config/acinclude.m4i
 	  config/docbook-xslt-min.m4i config/docbook-dtd.m4i config/docbook-xslt.m4i
 	  config/xsltproc.m4i Makefile.am: detect xsltproc, docbook xslt, and docbook

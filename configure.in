@@ -763,6 +763,7 @@ AC_ARG_WITH(bsd-security,
 case "$BSD_SECURITY" in
 n | no) : ;;
 y |  ye | yes) AC_DEFINE(BSD_SECURITY,1,[Define to use BSD .rhosts/.amandahosts security. ])
+    BSD_SECURITY=yes
   ;;
 *) AC_MSG_ERROR([*** You must not supply an argument to --with-bsd-security option.])
   ;;
@@ -841,7 +842,7 @@ AC_ARG_WITH(krb4-security,
 
 case "$KRB4_SECURITY" in
 n | no) KRB4_SECURITY=no ;;
-y | ye | yes) : ;;
+y | ye | yes) KRB4_SECURITY=yes ;;
 *) KRB4_SPOTS="$KRB4_SECURITY"
    KRB4_SECURITY=yes
    ;;
@@ -907,6 +908,7 @@ AC_ARG_WITH(rsh-security,
 case "$RSH_SECURITY" in
 n | no) : ;;
 y |  ye | yes) AC_DEFINE(RSH_SECURITY,1,[Define if RSH transport should be enabled. ])
+    RSH_SECURITY=yes
   ;;
 *) AC_MSG_ERROR([*** You must not supply an argument the to --with-rsh-security option.])
   ;;
@@ -920,8 +922,8 @@ AC_ARG_WITH(ssh-security,
 case "$SSH_SECURITY" in
 n | no) : ;;
 y |  ye | yes) AC_DEFINE(SSH_SECURITY,1,[Define if SSH transport should be enabled. ])
-	       SSH_SECURITY_SET=true
-  ;;
+    SSH_SECURITY=yes
+    ;;
 *) AC_MSG_ERROR([*** You must not supply an argument to --with-ssh-security.])
   ;;
 esac
@@ -971,8 +973,7 @@ AC_ARG_WITH(bsdtcp-security,
 case "$BSDTCP_SECURITY" in
 n | no) : ;;
 y |  ye | yes) AC_DEFINE(BSDTCP_SECURITY,1,[Define if BSDTCP transport should be enabled. ])
-	       BSDTCP_SECURITY_SET=true
-  ;;
+    BSDTCP_SECURITY=yes ;;
 *) AC_MSG_ERROR([*** You must not supply an argument the to --with-bsdtcp-security option.])
   ;;
 esac
@@ -985,8 +986,7 @@ AC_ARG_WITH(bsdudp-security,
 case "$BSDUDP_SECURITY" in
 n | no) : ;;
 y |  ye | yes) AC_DEFINE(BSDUDP_SECURITY,1,[Define if BSDUDP transport should be enabled. ])
-	       BSDUDP_SECURITY_SET=true
-  ;;
+    BSDUDP_SECURITY=yes ;;
 *) AC_MSG_ERROR([*** You must not supply an argument the to --with-bsdudp-security option.])
   ;;
 esac
@@ -1119,7 +1119,7 @@ case "$KRB5_SECURITY" in
 n | no) KRB5_SECURITY=no
         KRB5_SPOTS=""
 	;;
-y | ye | yes) : ;;
+y | ye | yes) KRB5_SECURITY=yes ;;
 *) KRB5_SPOTS="$KRB5_SECURITY"
    KRB5_SECURITY=yes
    ;;
@@ -3118,7 +3118,14 @@ AM_CONDITIONAL(WANT_CHG_SCSI, test x"$NO_SCSI_CHANGER_MODE" != x"true")
 AM_CONDITIONAL(WANT_CHIO_SCSI, test x"$NO_CHIO_CHANGER_MODE" != x"true")
 AM_CONDITIONAL(WANT_RUNTIME_PSEUDO_RELOC, test x"$NEED_RUNTIME_PSEUDO_RELOC" = x"true")
 AM_CONDITIONAL(WANT_SETUID_CLIENT, test x"$NEED_SETUID_CLIENT" != x"false")
-AM_CONDITIONAL(WANT_SSH_SECURITY, test x"$SSH_SECURITY_SET" = x"true")
+
+AM_CONDITIONAL(WANT_SSH_SECURITY, test x"$SSH_SECURITY" = x"yes")
+AM_CONDITIONAL(WANT_RSH_SECURITY, test x"$RSH_SECURITY" = x"yes")
+AM_CONDITIONAL(WANT_BSD_SECURITY, test x"$BSD_SECURITY" = x"yes")
+AM_CONDITIONAL(WANT_BSDTCP_SECURITY, test x"$BSDTCP_SECURITY" = x"yes")
+AM_CONDITIONAL(WANT_BSDUDP_SECURITY, test x"$BSDUDP_SECURITY" = x"yes")
+AM_CONDITIONAL(WANT_KRB4_SECURITY, test x"$KRB4_SECURITY" = x"yes")
+AM_CONDITIONAL(WANT_KRB5_SECURITY, test x"$KRB5_SECURITY" = x"yes")
 
 case "${FORCE_USE_RUNDUMP-${USE_RUNDUMP}}" in
 y |  ye | yes) AC_DEFINE(USE_RUNDUMP,1,[Define to invoke rundump (setuid-root) instead of DUMP program directly. ]);;
