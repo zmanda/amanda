@@ -1208,23 +1208,20 @@ remove_holding_file_from_catalog(
     char *filename)
 {
     static int warnings_printed; /* only print once per invocation */
-    char *host;
-    char *disk;
-    int level;
-    char *datestamp;
+    dumpfile_t file;
     info_t info;
     int matching_hist_idx = -1;
     history_t matching_hist; /* will be a copy */
     int nhist;
     int i;
 
-    if (!holding_file_read_header(filename, &host, &disk, &level, &datestamp)) {
+    if (!holding_file_get_dumpfile(filename, &file)) {
         printf(_("Could not read holding file %s\n"), filename);
         return 0;
     }
 
-    if (get_info(host, disk, &info) == -1) {
-	    printf(_("WARNING: No curinfo record for %s:%s\n"), host, disk);
+    if (get_info(file.name, file.disk, &info) == -1) {
+	    printf(_("WARNING: No curinfo record for %s:%s\n"), file.name, file.disk);
 	    return 1; /* not an error */
     }
 
@@ -1243,12 +1240,12 @@ remove_holding_file_from_catalog(
     for (nhist = 0; info.history[nhist].level > -1; nhist++) /* empty loop */;
     for (i = nhist-1; i > -1; i--) {
         char *info_datestamp = construct_timestamp(&info.history[i].date);
-        int order = strcmp(datestamp, info_datestamp);
+        int order = strcmp(file.datestamp, info_datestamp);
         amfree(info_datestamp);
 
         if (order <= 0) {
             /* only a match if the levels are equal */
-            if (info.history[i].level == level) {
+            if (info.history[i].level == file.dumplevel) {
                 matching_hist_idx = i;
                 matching_hist = info.history[matching_hist_idx];
             }
@@ -1335,8 +1332,8 @@ remove_holding_file_from_catalog(
     /* this function doesn't touch the performance stats */
 
     /* write out the changes */
-    if (put_info(host, disk, &info) == -1) {
-	    printf(_("Could not write curinfo record for %s:%s\n"), host, disk);
+    if (put_info(file.name, file.disk, &info) == -1) {
+	    printf(_("Could not write curinfo record for %s:%s\n"), file.name, file.disk);
 	    return 0;
     }
 
@@ -1350,11 +1347,8 @@ holding(
     sl_t *file_list;
     sle_t *h;
     enum { HOLDING_USAGE, HOLDING_LIST, HOLDING_DELETE } action = HOLDING_USAGE;
-    char *host;
-    char *disk;
-    char *datestamp;
-    int level;
     int long_list = 0;
+    dumpfile_t file;
 
     if (argc < 4)
         action = HOLDING_USAGE;
@@ -1386,15 +1380,15 @@ holding(
             }
             for (h = file_list->first; h != NULL; h = h->next) {
                 char *dumpstr;
-                if (!holding_file_read_header(h->name, &host, &disk, &level, &datestamp)) {
+                if (!holding_file_get_dumpfile(h->name, &file)) {
                     fprintf(stderr, _("Error reading %s\n"), h->name);
                     continue;
                 }
 
-                dumpstr = cmdline_format_dumpspec_components(host, disk, datestamp);
+                dumpstr = cmdline_format_dumpspec_components(file.name, file.disk, file.datestamp);
                 if (long_list) {
                     printf("%-10"OFF_T_RFMT" %-2d %s\n", 
-                        (OFF_T_FMT_TYPE)holding_file_size(h->name, 0), level, dumpstr);
+                        (OFF_T_FMT_TYPE)holding_file_size(h->name, 0), file.dumplevel, dumpstr);
                 } else {
                     printf("%s\n", dumpstr);
                 }

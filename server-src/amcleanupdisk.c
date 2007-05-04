@@ -144,13 +144,11 @@ check_holdingdisk(
     char *dirname = NULL;
     char *tmpname = NULL;
     char *destname = NULL;
-    char *hostname = NULL;
-    char *diskname = NULL;
     disk_t *dp;
-    filetype_t filetype;
     info_t info;
-    int level;
     size_t dl, l;
+    dumpfile_t file;
+    int stat;
 
     dirname = vstralloc(diskdir, "/", datestamp, NULL);
     dl = strlen(dirname);
@@ -180,21 +178,22 @@ check_holdingdisk(
 	destname = newstralloc(destname, tmpname);
 	destname[dl + 1 + l - 4] = '\0';
 
-	amfree(hostname);
-	amfree(diskname);
-	filetype = holding_file_read_header(tmpname, &hostname, &diskname, &level, NULL);
+	stat = holding_file_get_dumpfile(tmpname, &file);
 	amfree(tmpname);
-	if(filetype != F_DUMPFILE) {
-	    continue;
-	}
 
-	dp = lookup_disk(hostname, diskname);
+	if (!stat)
+	    continue;
+
+	if(file.type != F_DUMPFILE)
+	    continue;
+
+	dp = lookup_disk(file.name, file.disk);
 
 	if (dp == NULL) {
 	    continue;
 	}
 
-	if(level < 0 || level > 9) {
+	if(file.dumplevel < 0 || file.dumplevel > 9) {
 	    continue;
 	}
 
@@ -217,8 +216,6 @@ check_holdingdisk(
     /* ignore any errors -- it either works or it doesn't */
     (void) rmdir(dirname);
 
-    amfree(diskname);
-    amfree(hostname);
     amfree(destname);
     amfree(dirname);
 }

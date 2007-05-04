@@ -341,10 +341,7 @@ holding_get_files_for_flush(
     sle_t *file_elt;
     int date_matches;
     disk_t *dp;
-    char *host;
-    char *disk;
-    char *datestamp;
-    filetype_t filetype;
+    dumpfile_t file;
 
     /* make date_list the intersection of available holding directories and
      * the dateargs parameter.  */
@@ -382,14 +379,16 @@ holding_get_files_for_flush(
     file_list = holding_get_files(NULL, 1);
     for (file_elt = file_list->first; file_elt != NULL; file_elt = file_elt->next) {
         /* get info on that file */
-        filetype = holding_file_read_header(file_elt->name, &host, &disk, NULL, &datestamp);
-        if (filetype != F_DUMPFILE)
+        if (!holding_file_get_dumpfile(file_elt->name, &file))
+	    continue;
+
+        if (file.type != F_DUMPFILE)
             continue;
 
         /* loop over dates, until we find a match */
         date_matches = 0;
         for (date = date_list->first; date !=NULL; date = date->next) {
-            if (strcmp(datestamp, date->name) == 0) {
+            if (strcmp(file.datestamp, date->name) == 0) {
                 date_matches = 1;
                 break;
             }
@@ -398,11 +397,11 @@ holding_get_files_for_flush(
             continue;
 
         /* check that the hostname and disk are in the disklist */
-        dp = lookup_disk(host, disk);
+        dp = lookup_disk(file.name, file.disk);
         if (dp == NULL) {
             if (verbose)
 	        printf(_("%s: disk %s:%s not in database, skipping it."),
-                        file_elt->name, host, disk);
+                        file_elt->name, file.name, file.disk);
             continue;
         }
 
@@ -512,37 +511,6 @@ holding_file_unlink(
 
     return 1;
 }
-
-filetype_t
-holding_file_read_header( 
-    char *	fname,
-    char **	hostname,
-    char **	diskname,
-    int *	level,
-    char ** datestamp)
-{
-    dumpfile_t file;
-
-    if (hostname) *hostname = NULL;
-    if (diskname) *diskname = NULL;
-    if (datestamp) *datestamp = NULL;
-
-    if (!holding_file_get_dumpfile(fname, &file)) {
-        return F_UNKNOWN;
-    }
-
-    if(file.type != F_DUMPFILE && file.type != F_CONT_DUMPFILE) {
-        return file.type;
-    }
-
-    if (hostname) *hostname = stralloc(file.name);
-    if (diskname) *diskname = stralloc(file.disk);
-    if (level) *level = file.dumplevel;
-    if (datestamp) *datestamp = stralloc(file.datestamp);
-
-    return file.type;
-}
-
 
 int
 holding_file_get_dumpfile(

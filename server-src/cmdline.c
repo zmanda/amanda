@@ -209,25 +209,22 @@ sl_t *
 cmdline_match_holding(
     dumpspec_list_t *dumpspec_list)
 {
-    char *host;
-    char *disk;
-    char *datestamp;
-    filetype_t filetype;
     dumpspec_t *de;
     sl_t *holding_files;
     sle_t *he;
     sl_t *matching_files = new_sl();
+    dumpfile_t file;
 
     holding_set_verbosity(0);
     holding_files = holding_get_files(NULL, 1);
 
     for (he = holding_files->first; he != NULL; he = he->next) {
-        filetype = holding_file_read_header(he->name, &host, &disk, NULL, &datestamp);
-        if (filetype != F_DUMPFILE) continue;
+	if (!holding_file_get_dumpfile(he->name, &file)) continue;
+        if (file.type != F_DUMPFILE) continue;
         for (de = (dumpspec_t *)dumpspec_list; de != NULL; de = de->next) {
-            if (de->host && !match_host(de->host, host)) continue;
-            if (de->disk && !match_disk(de->disk, disk)) continue;
-            if (de->datestamp && !match_datestamp(de->datestamp, datestamp)) continue;
+            if (de->host && !match_host(de->host, file.name)) continue;
+            if (de->disk && !match_disk(de->disk, file.disk)) continue;
+            if (de->datestamp && !match_datestamp(de->datestamp, file.datestamp)) continue;
             matching_files = insert_sort_sl(matching_files, he->name);
             break;
         }

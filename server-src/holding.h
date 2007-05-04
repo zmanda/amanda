@@ -136,26 +136,6 @@ holding_file_size(char *holding_file,
 int 
 holding_file_unlink(char *holding_file);
 
-/* Given a pathname of a holding file, extract the hostname, diskname,
- * level, and filetype from the header.
- *
- * Caller is responsible for freeing memory for hostname and diskname.
- * None of the result parameters can be NULL.
- *
- * @param fname: full pathname of holding file
- * @param hostname: (result) hostname
- * @param diskname: (result) diskname
- * @param level: (result) level
- * @param datestamp: (result) datestamp of the dump
- * @returns: filetype (see common-src/fileheader.h)
- */
-filetype_t 
-holding_file_read_header(char *fname,
-                         char **hostname,
-                         char **diskname,
-                         int *level,
-                         char **datestamp);
-
 /* Given a pathname of a holding file, read the file header.
  * the result parameter may be altered even if an error is
  * returned.
