@@ -53,7 +53,6 @@ AC_SUBST(VERSION_PATCH)
 AC_SUBST(VERSION_COMMENT)
 AC_SUBST(VERSION_SUFFIX)
 
-dnl
 dnl runtime and compile time paths
 dnl
 SYSPATH="/bin:/usr/bin:/sbin:/usr/sbin:/opt/SUNWspro/bin:/usr/ucb:/usr/bsd:/etc:/usr/etc"
@@ -3148,8 +3147,10 @@ AS_HELP_STRING([--enable-manpage-build],
 
 AC_PROG_XSLTPROC([--nonet])
 AC_CHECK_DOCBOOK_XSLT([1.72.0])
+AC_CHECK_DOCBOOK_XSLT_MIN([1.72.0])
 AC_CHECK_DOCBOOK_DTD([4.1.2])
 AC_CHECK_DOCBOOK_DTD([4.2])
+XSLREL=current
 
 # and ensure that everything docbook-related is OK if we'll be using it
 if test "x$ENABLE_MANPAGE_BUILD" = "xyes"; then
@@ -3157,8 +3158,12 @@ if test "x$ENABLE_MANPAGE_BUILD" = "xyes"; then
 	AC_MSG_ERROR([Cannot build manpages: 'xsltproc' was not found.])
     fi
 
-    if test "x$HAVE_DOCBOOK_XSLT_1_72_0" = "xno"; then
-	AC_MSG_ERROR([Cannot build manpages: docbook version 1.72.0 was not found.])
+    if test "x$DOCBOOK_XSLT_CURRENT_VERSION" = "xno"; then
+	if test "x$HAVE_DOCBOOK_XSLT_1_72_0" = "xno"; then
+	    AC_MSG_ERROR([Cannot build manpages: docbook version 1.72.0 or higher required.])
+	else
+	    XSLREL=1.72.0
+	fi
     fi
 
     if test "x$HAVE_DOCBOOK_DTD_4_1_2" = "xno" || test "x$HAVE_DOCBOOK_DTD_4_2" = "xno"; then
@@ -3167,6 +3172,7 @@ if test "x$ENABLE_MANPAGE_BUILD" = "xyes"; then
     fi
 fi
 AM_CONDITIONAL(ENABLE_MANPAGE_BUILD, test "x$ENABLE_MANPAGE_BUILD" = "xyes")
+AC_SUBST(XSLREL)
 
 AC_CACHE_CHECK([for working IPv6],
 	       amanda_working_ipv6,

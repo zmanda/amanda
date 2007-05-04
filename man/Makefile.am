@@ -87,7 +87,7 @@ xml-source/%.proc.xml: $(SRCMANPAGEDIR)/%.xml $(srcdir)/xslt/expand-sambadoc.xsl
 	$(XSLTPROC) $(XSLTPROC_FLAGS) --path $(srcdir)/xslt/ --xinclude --stringparam latex.imagebasedir "$*/" --stringparam noreference 1 --output $@ $(srcdir)/xslt/expand-sambadoc.xsl $<
 
 %: xml-source/%.proc.xml $(srcdir)/xslt/man.xsl
-	$(XSLTPROC) $(XSLTPROC_FLAGS) --path $(srcdir)/xslt/ --output $@ http://docbook.sourceforge.net/release/xsl/1.72.0/manpages/docbook.xsl $<
+	$(XSLTPROC) $(XSLTPROC_FLAGS) --path $(srcdir)/xslt/ --output $@ http://docbook.sourceforge.net/release/xsl/$(XSLREL)/manpages/docbook.xsl $<
 
 else	!ENABLE_MANPAGE_BUILD
 

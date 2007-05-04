@@ -1,4 +1,10 @@
 2007-05-04  Dustin J. Mitchell <dustin@zmanda.com>
+	* autogen man/Makefile.am configure.in config/acinclude.m4i
+	  config/docbook-xslt-min.m4i config/docbook-dtd.m4i config/docbook-xslt.m4i
+	  config/xsltproc.m4i Makefile.am: detect xsltproc, docbook xslt, and docbook
+	  dtd versions better, to ensure proper creation of manpages.
+
+2007-05-04  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/amindexd.c common-src/sockaddr-util.c common-src/sockaddr-util.h
 	  common-src/util.c common-src/security-util.c common-src/amanda.h
 	  common-src/dgram.c common-src/stream.c common-src/Makefile.am: add new
