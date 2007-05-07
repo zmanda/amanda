@@ -1,4 +1,8 @@
 2007-05-07  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/alloc.c (debug_vstrallocf): Remove file and line.
+	* common-src/amanda.h (vstrallocf): Change define.
+
+2007-05-07  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/amanda.h: define sockaddr_storage and ss_family.
 	* common-src/amanda.h: define INET_ADDRSTRLEN.
 	* config/acinclude.m4i (AC_SOCKADDR_STORAGE): New macro.

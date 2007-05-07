@@ -389,8 +389,6 @@ arglist_function1(
  */
 char *
 debug_vstrallocf(
-    const char *file,
-    int         line,
     const char *fmt,
     ...)
 {
@@ -398,9 +396,10 @@ debug_vstrallocf(
     size_t      size;
     va_list     argp;
 
-    malloc_enter(debug_caller_loc(file, line));
+    debug_alloc_pop();
+    malloc_enter(debug_caller_loc(saved_file, saved_line));
 
-    result = debug_alloc(file, line, MIN_ALLOC);
+    result = debug_alloc(saved_file, saved_line, MIN_ALLOC);
     if (result != NULL) {
 
 	arglist_start(argp, fmt);
@@ -409,7 +408,7 @@ debug_vstrallocf(
 
 	if (size >= (size_t)MIN_ALLOC) {
 	    amfree(result);
-	    result = debug_alloc(file, line, size + 1);
+	    result = debug_alloc(saved_file, saved_line, size + 1);
 
 	    arglist_start(argp, fmt);
 	    (void)vsnprintf(result, size + 1, fmt, argp);
@@ -417,7 +416,7 @@ debug_vstrallocf(
 	}
     }
 
-    malloc_leave(debug_caller_loc(file, line));
+    malloc_leave(debug_caller_loc(saved_file, saved_line));
     return result;
 }
 
