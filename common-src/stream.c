@@ -132,7 +132,7 @@ stream_server(
 	    dbprintf(("%s: stream_server: Could not bind to port in range: %d - %d.\n",
 		      debug_prefix_time(NULL), portrange[0], portrange[1]));
 	} else {
-	    socklen = sizeof(server);
+	    socklen = SS_LEN(&server);
 	    if (bind(server_socket, (struct sockaddr *)&server, socklen) == 0)
 		goto out;
 	    dbprintf(("%s: stream_server: Could not bind to any port: %s\n",
