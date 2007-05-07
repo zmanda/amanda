@@ -1,3 +1,7 @@
+2007-05-07  Pieter Bowman <bowman@math.utah.edu>
+	* common-src/file.c: reverse the order of chown/chmod to correctly
+	  create temporary files.
+
 2007-05-07  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/krb5-security.c: Fix compilation.
 
