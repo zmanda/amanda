@@ -273,6 +273,13 @@ krb5_connect(
     hints.ai_canonname = NULL;
     hints.ai_next = NULL;
     result = getaddrinfo(hostname, NULL, &hints, &res);
+#ifdef WORKING_IPV6
+    if (result != 0) {
+	hints.ai_flags = AI_CANONNAME;
+	hints.ai_family = AF_UNSPEC;
+	result = getaddrinfo(hostname, NULL, &hints, &res);
+    }
+#endif
     if(result != 0) {
 	dbprintf(("krb5_connect: getaddrinfo(%s): %s\n", hostname, gai_strerror(result)));
 	security_seterror(&rh->sech, "getaddrinfo(%s): %s\n", hostname,

@@ -165,6 +165,7 @@ bsd_connect(
     result = getaddrinfo(hostname, NULL, &hints, &res);
 #ifdef WORKING_IPV6
     if (result != 0) {
+	hints.ai_flags = AI_CANONNAME;
 	hints.ai_family = AF_UNSPEC;
 	result = getaddrinfo(hostname, NULL, &hints, &res);
     }

@@ -1,4 +1,10 @@
 2007-05-07  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/bsd-security.c, common-src/bsdtcp-security.c,
+	  common-src/bsdudp-security.c, common-src/krb5-security.c,
+	  common-src/stream.c, server-src/amcheck.c,
+	  server-src/dumper.c: Retry getaddrinfo with ai_flags = AI_CANONNAME
+
+2007-05-07  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/stream.c: pass correct sockaddr size to bind()
 
 2007-05-07  Pieter Bowman <bowman@math.utah.edu>

@@ -685,7 +685,15 @@ start_server_check(
 	hints.ai_addr = NULL;
 	hints.ai_canonname = NULL;
 	hints.ai_next = NULL;
-	if ((res = getaddrinfo("localhost", NULL, &hints, &gaires)) != 0) {
+	res = getaddrinfo("localhost", NULL, &hints, &gaires);
+#ifdef WORKING_IPV6
+	if (res != 0) {
+	    hints.ai_flags = AI_CANONNAME;
+	    hints.ai_family = AF_UNSPEC;
+	    res = getaddrinfo("localhost", NULL, &hints, &gaires);
+	}
+#endif
+	if (res != 0) {
 	    fprintf(outf, _("ERROR: Cannot resolve `localhost': %s\n"), gai_strerror(res));
 	}
 	if (gaires) freeaddrinfo(gaires);
