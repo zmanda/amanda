@@ -1576,4 +1576,13 @@ void	add_history(const char *line);
 #endif
 
 #define _(x) x
+
+#ifndef AI_V4MAPPED
+#define AI_V4MAPPED 0
+#endif
+
+#ifndef AI_ALL
+#define AI_ALL 0
+#endif
+
 #endif	/* !AMANDA_H */

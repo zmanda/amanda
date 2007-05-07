@@ -1,4 +1,7 @@
 2007-05-07  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/amanda.h: Define AI_V4MAPPED and AI_ALL.
+
+2007-05-07  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/bsd-security.c, common-src/bsdtcp-security.c,
 	  common-src/bsdudp-security.c, common-src/krb5-security.c,
 	  common-src/stream.c, server-src/amcheck.c,
