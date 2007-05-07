@@ -268,6 +268,15 @@ struct iovec {
 #include <arpa/inet.h>
 #endif
 
+#ifndef HAVE_SOCKADDR_STORAGE
+#  define sockaddr_storage sockaddr_in
+#  define ss_family sin_family
+#endif
+
+#ifndef INET_ADDRSTRLEN
+#define INET_ADDRSTRLEN 16
+#endif
+
 /* Calculate the length of the data in a struct sockaddr_storage.
  * THIS IS A HACK.
  *
