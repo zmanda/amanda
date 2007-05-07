@@ -42,12 +42,11 @@
 #include "security-util.h"
 #include "stream.h"
 #include "version.h"
+#include "sockaddr-util.h"
 
 #ifdef KRB5_HEIMDAL_INCLUDES
 #include "com_err.h"
 #endif
-
-#ifdef KRB5_SECURITY
 
 #define BROKEN_MEMORY_CCACHE
 
