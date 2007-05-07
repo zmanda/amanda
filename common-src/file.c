@@ -53,8 +53,8 @@ mk1dir(
     int rc;	/* return code */
 
     if((rc = mkdir(dir, mode)) == 0) {
-	if ((rc = chmod(dir, mode)) == 0) { /* mkdir() affected by the umask */
-	    rc = chown(dir, uid, gid);
+	if ((rc = chown(dir, uid, gid)) == 0) { /* mkdir() affected by the umask */
+	    rc = chmod(dir, mode);
 	}
     } else {			/* maybe someone beat us to it */
 	int serrno;
