@@ -1,4 +1,5 @@
-2007-05-07  Jean-Louis Martineau <martineau@zmanda.com>
+2007-05-08  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/diskfile.c: Fix double free.
 	* common-src/alloc.c (debug_vstrallocf): Remove file and line.
 	* common-src/amanda.h (vstrallocf): Change define.
 
