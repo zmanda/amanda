@@ -3,9 +3,13 @@
 EXTRA_DIST =	acinclude.m4i	\
 		config.guess	\
 		config.sub	\
+		docbook-dtd.m4i	\
+		docbook-xslt.m4i	\
+		docbook-xslt-min.m4i	\
 		gnulib.m4i	\
 		install-sh	\
 		libtool.m4i	\
 		ltmain.sh	\
 		missing		\
-		mkinstalldirs
+		mkinstalldirs	\
+		xsltproc.m4i
