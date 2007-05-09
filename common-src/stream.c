@@ -216,10 +216,12 @@ stream_client_internal(
     result = resolve_hostname(hostname, &res, NULL);
     if(result != 0) {
 	dbprintf(("resolve_hostname(%s): %s\n", hostname, gai_strerror(result)));
+	errno = EHOSTUNREACH;
 	return -1;
     }
     if(!res) {
 	dbprintf(("resolve_hostname(%s): no results\n", hostname));
+	errno = EHOSTUNREACH;
 	return -1;
     }
 
