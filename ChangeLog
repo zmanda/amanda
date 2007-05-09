@@ -1,4 +1,9 @@
 2007-05-09	Dustin J. Mitchell <dustin@zmanda.com>
+	* server-src/amadmin.c server-src/infofile.c
+	  common-src/security-util.c common-src/krb5-security.c:
+	  fix type-punning warnings
+
+2007-05-09	Dustin J. Mitchell <dustin@zmanda.com>
 	* recover-src/set_commands.c server-src/amcheck.c
 	  server-src/dumper.c common-src/rsh-security.c
 	  common-src/krb5-security.c common-src/util.c common-src/util.h

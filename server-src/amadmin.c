@@ -1681,15 +1681,14 @@ import_one(void)
     info_t info;
     stats_t onestat;
     int rc, level;
-    time_t onedate;
-    time_t *onedate_p = &onedate;
     char *line = NULL;
     char *s, *fp;
     int ch;
     int nb_history, i;
     char *hostname = NULL;
     char *diskname = NULL;
-    time_t *secs_p;
+    OFF_T_FMT_TYPE off_t_tmp;
+    TIME_T_FMT_TYPE time_t_tmp;
 
 #if TEXTDB
     check_dumpuser();
@@ -1809,39 +1808,40 @@ import_one(void)
 	skip_integer(s, ch);
 
 	skip_whitespace(s, ch);
-	if(ch == '\0' || sscanf(s - 1, OFF_T_FMT,
-				(OFF_T_FMT_TYPE *)&onestat.size) != 1) {
+	if(ch == '\0' || sscanf(s - 1, OFF_T_FMT, &off_t_tmp) != 1) {
 	    goto parse_err;
 	}
+	onestat.size = off_t_tmp;
 	skip_integer(s, ch);
 
 	skip_whitespace(s, ch);
-	if(ch == '\0' || sscanf(s - 1, OFF_T_FMT,
-				(OFF_T_FMT_TYPE *)&onestat.csize) != 1) {
+	if(ch == '\0' || sscanf(s - 1, OFF_T_FMT, &off_t_tmp) != 1) {
 	    goto parse_err;
 	}
+	onestat.csize = off_t_tmp;
 	skip_integer(s, ch);
 
 	skip_whitespace(s, ch);
-        secs_p = &onestat.secs;
-	if(ch == '\0' || sscanf(s - 1, TIME_T_FMT,
-				(TIME_T_FMT_TYPE *)secs_p) != 1) {
+	if(ch == '\0' || sscanf(s - 1, TIME_T_FMT, &time_t_tmp) != 1) {
 	    goto parse_err;
 	}
+        onestat.secs = time_t_tmp;
 	skip_integer(s, ch);
 
 	skip_whitespace(s, ch);
-	if(ch == '\0' || sscanf(s - 1, TIME_T_FMT,
-				(TIME_T_FMT_TYPE *)onedate_p) != 1) {
+	if(ch == '\0' || sscanf(s - 1, TIME_T_FMT, &time_t_tmp) != 1) {
 	    goto parse_err;
 	}
+	/* time_t not guarranteed to be long */
+	/*@i1@*/ onestat.date = time_t_tmp;
 	skip_integer(s, ch);
 
 	skip_whitespace(s, ch);
 	if(ch != '\0') {
-	    if(sscanf(s - 1, OFF_T_FMT, (OFF_T_FMT_TYPE *)&onestat.filenum) != 1) {
+	    if(sscanf(s - 1, OFF_T_FMT, &off_t_tmp) != 1) {
 		goto parse_err;
 	    }
+	    onestat.filenum = off_t_tmp;
 	    skip_integer(s, ch);
 
 	    skip_whitespace(s, ch);
@@ -1855,8 +1855,6 @@ import_one(void)
 	    }
 	}
 
-	/* time_t not guarranteed to be long */
-	/*@i1@*/ onestat.date = onedate;
 	if(level < 0 || level > 9) goto parse_err;
 
 	info.inf[level] = onestat;
@@ -1867,8 +1865,6 @@ import_one(void)
     }
     while(1) {
 	history_t onehistory;
-	time_t date;
-        time_t *date_p = &date;
 
 	if(line[0] == '/' && line[1] == '/') {
 	    info.history[nb_history].level = -2;
@@ -1889,26 +1885,26 @@ import_one(void)
 	skip_integer(s, ch);
 
 	skip_whitespace(s, ch);
-	if(ch == '\0' || sscanf((s - 1), OFF_T_FMT,
-				(OFF_T_FMT_TYPE *)&onehistory.size) != 1) {
+	if(ch == '\0' || sscanf((s - 1), OFF_T_FMT, &off_t_tmp) != 1) {
 	    break;
 	}
+	onehistory.size = off_t_tmp;
 	skip_integer(s, ch);
 
 	skip_whitespace(s, ch);
-	if(ch == '\0' || sscanf((s - 1), OFF_T_FMT,
-				(OFF_T_FMT_TYPE *)&onehistory.csize) != 1) {
+	if(ch == '\0' || sscanf((s - 1), OFF_T_FMT, &off_t_tmp) != 1) {
 	    break;
 	}
+	onehistory.csize = off_t_tmp;
 	skip_integer(s, ch);
 
 	skip_whitespace(s, ch);
-	if((ch == '\0') || (sscanf((s - 1), TIME_T_FMT,
-				(TIME_T_FMT_TYPE *)date_p) != 1)) {
+	if((ch == '\0') || sscanf((s - 1), TIME_T_FMT, &time_t_tmp) != 1) {
 	    break;
 	}
+	/* time_t not guarranteed to be long */
+	/*@i1@*/ onehistory.date = time_t_tmp;
 	skip_integer(s, ch);
-	/*@i1@*/onehistory.date = date; /* time_t not guarranteed to be long */
 
 	info.history[nb_history++] = onehistory;
 	amfree(line);

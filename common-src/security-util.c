@@ -598,13 +598,12 @@ tcpm_recv_token(
 		   debug_prefix_time(NULL), *size, *handle));
 
     if (*size > 0 && rc->driver->data_decrypt != NULL) {
-	char *decbuf;
+	void *decbuf;
 	ssize_t decsize;
-	/* (the extra (void *) cast is to quiet type-punning warnings) */
-	rc->driver->data_decrypt(rc, *buf, *size, (void **)(void *)&decbuf, &decsize);
-	if (*buf != decbuf) {
+	rc->driver->data_decrypt(rc, *buf, *size, &decbuf, &decsize);
+	if (*buf != (char *)decbuf) {
 	    amfree(*buf);
-	    *buf = decbuf;
+	    *buf = (char *)decbuf;
 	}
 	*size = decsize;
     }

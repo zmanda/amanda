@@ -634,7 +634,8 @@ gss_server(
     for (recv_tok.length = 0;;) {
 	recv_tok.value = NULL;
         rvalue = tcpm_recv_token(rc, rc->read, &rc->handle, &rc->errmsg,
-				 (char **)&recv_tok.value,
+				 /* (void *) is to avoid type-punning warning */
+				 (char **)(void *)&recv_tok.value,
 				 (ssize_t *)&recv_tok.length, 60);
 	if (rvalue <= 0) {
 	    if (rvalue < 0) {

@@ -229,10 +229,9 @@ read_txinfofile(
 
     for(rc = -2; (line = agets(infof)) != NULL; free(line)) {
 	stats_t onestat;	/* one stat record */
-	time_t date = 0;
-        time_t *date_p = &date;
-        time_t *secs_p;
 	int level = 0;
+	OFF_T_FMT_TYPE off_t_tmp;
+	TIME_T_FMT_TYPE time_t_tmp;
 
 	if (line[0] == '\0')
 	    continue;
@@ -263,40 +262,40 @@ read_txinfofile(
 	skip_integer(s, ch);
 
 	skip_whitespace(s, ch);
-	if(ch == '\0' || sscanf((s - 1), OFF_T_FMT,
-				(OFF_T_FMT_TYPE *)&onestat.size) != 1) {
+	if(ch == '\0' || sscanf((s - 1), OFF_T_FMT, &off_t_tmp) != 1) {
 	    break;
 	}
+	onestat.size = off_t_tmp;
 	skip_integer(s, ch);
 
 	skip_whitespace(s, ch);
-	if(ch == '\0' || sscanf((s - 1), OFF_T_FMT,
-				(OFF_T_FMT_TYPE *)&onestat.csize) != 1) {
+	if(ch == '\0' || sscanf((s - 1), OFF_T_FMT, &off_t_tmp) != 1) {
 	    break;
 	}
+	onestat.csize = off_t_tmp;
 	skip_integer(s, ch);
 
 	skip_whitespace(s, ch);
-        secs_p = &onestat.secs;
-	if(ch == '\0' || sscanf((s - 1), TIME_T_FMT,
-				(TIME_T_FMT_TYPE *)secs_p) != 1) {
+	if(ch == '\0' || sscanf((s - 1), TIME_T_FMT, &time_t_tmp) != 1) {
 	    break;
 	}
+        onestat.secs = time_t_tmp;
 	skip_integer(s, ch);
 
 	skip_whitespace(s, ch);
-	if(ch == '\0' || sscanf((s - 1), TIME_T_FMT,
-				(TIME_T_FMT_TYPE *)date_p) != 1) {
+	if(ch == '\0' || sscanf((s - 1), TIME_T_FMT, &time_t_tmp) != 1) {
 	    break;
 	}
+	/* time_t not guarranteed to be long */
+	/*@i1@*/ onestat.date = time_t_tmp;
 	skip_integer(s, ch);
 
 	skip_whitespace(s, ch);
 	if(ch != '\0') {
-	    if(sscanf((s - 1), OFF_T_FMT,
-			(OFF_T_FMT_TYPE *)&onestat.filenum) != 1) {
+	    if(sscanf((s - 1), OFF_T_FMT, &off_t_tmp) != 1) {
 		break;
 	    }
+	    onestat.filenum = off_t_tmp;
 	    skip_integer(s, ch);
 
 	    skip_whitespace(s, ch);
@@ -306,8 +305,6 @@ read_txinfofile(
 	    strncpy(onestat.label, s-1, SIZEOF(onestat.label)-1);
 	    onestat.label[SIZEOF(onestat.label)-1] = '\0';
 	}
-
-	onestat.date = date;	/* time_t not guarranteed to be long */
 
 	if(level < 0 || level > DUMP_LEVELS-1)
 	    break;
@@ -331,13 +328,11 @@ read_txinfofile(
 
     for(rc = -2; (line = agets(infof)) != NULL; free(line)) {
 	history_t onehistory;	/* one history record */
-	time_t date;
-	time_t *date_p = &date;
-        time_t *secs_p;
+	OFF_T_FMT_TYPE off_t_tmp;
+	TIME_T_FMT_TYPE time_t_tmp;
 
 	if (line[0] == '\0')
 	    continue;
-	date = 0L;
 	if(line[0] == '/' && line[1] == '/') {
 	    info->history[nb_history].level = -2;
 	    rc = 0;
@@ -363,40 +358,38 @@ read_txinfofile(
 	skip_integer(s, ch);
 
 	skip_whitespace(s, ch);
-	if(ch == '\0' || sscanf((s - 1), OFF_T_FMT,
-				(OFF_T_FMT_TYPE *)&onehistory.size) != 1) {
+	if(ch == '\0' || sscanf((s - 1), OFF_T_FMT, &off_t_tmp) != 1) {
 	    amfree(line);
 	    break;
 	}
+	onehistory.size = off_t_tmp;
 	skip_integer(s, ch);
 
 	skip_whitespace(s, ch);
-	if(ch == '\0' || sscanf((s - 1), OFF_T_FMT,
-				(OFF_T_FMT_TYPE *)&onehistory.csize) != 1) {
+	if(ch == '\0' || sscanf((s - 1), OFF_T_FMT, &off_t_tmp) != 1) {
 	    amfree(line);
 	    break;
 	}
+	onehistory.csize = off_t_tmp;
 	skip_integer(s, ch);
 
 	skip_whitespace(s, ch);
-	if(ch == '\0' || sscanf((s - 1), TIME_T_FMT,
-				(TIME_T_FMT_TYPE *)date_p) != 1) {
+	if(ch == '\0' || sscanf((s - 1), TIME_T_FMT, &time_t_tmp) != 1) {
 	    amfree(line);
 	    break;
 	}
+	/* time_t not guaranteed to be long */
+	/*@i1@*/ onehistory.date = time_t_tmp;
 	skip_integer(s, ch);
-
-	onehistory.date = date;	/* time_t not guaranteed to be long */
 
 	onehistory.secs = (unsigned long)-1;
 	skip_whitespace(s, ch);
-        secs_p = &onehistory.secs;
 	if(ch != '\0') {
-	    if(sscanf((s - 1), TIME_T_FMT,
-	    			(TIME_T_FMT_TYPE *)secs_p) != 1) {
+	    if(sscanf((s - 1), TIME_T_FMT, &time_t_tmp) != 1) {
 		amfree(line);
 		break;
 	    }
+	    onehistory.secs = time_t_tmp;
 	    skip_integer(s, ch);
 	}
 
