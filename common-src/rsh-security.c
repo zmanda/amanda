@@ -134,7 +134,7 @@ rsh_connect(
     rh->rc = NULL;
 
     rh->hostname = NULL;
-    if (try_resolving_hostname(hostname, &rh->hostname)) {
+    if (resolve_hostname(hostname, NULL, &rh->hostname) || rh->hostname == NULL) {
 	security_seterror(&rh->sech,
 	    "%s: could not resolve hostname", hostname);
 	(*fn)(arg, &rh->sech, S_ERROR);

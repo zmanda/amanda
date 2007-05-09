@@ -106,8 +106,7 @@ bsdtcp_connect(
 {
     struct sec_handle *rh;
     int result;
-    struct addrinfo hints;
-    struct addrinfo *res = NULL;
+    char *canonname;
 
     assert(fn != NULL);
     assert(hostname != NULL);
@@ -124,36 +123,24 @@ bsdtcp_connect(
     rh->ev_timeout = NULL;
     rh->rc = NULL;
 
-#ifdef WORKING_IPV6
-    hints.ai_flags = AI_CANONNAME | AI_V4MAPPED | AI_ALL;
-    hints.ai_family = AF_UNSPEC;
-#else
-    hints.ai_flags = AI_CANONNAME;
-    hints.ai_family = AF_INET;
-#endif
-    hints.ai_socktype = SOCK_DGRAM;
-    hints.ai_protocol = IPPROTO_UDP;
-    hints.ai_addrlen = 0;
-    hints.ai_addr = NULL;
-    hints.ai_canonname = NULL;
-    hints.ai_next = NULL;
-    result = getaddrinfo(hostname, NULL, &hints, &res);
+    result = resolve_hostname(hostname, NULL, &canonname);
     if(result != 0) {
-        dbprintf(("getaddrinfo(%s): %s\n", hostname, gai_strerror(result)));
-	security_seterror(&rh->sech, "getaddrinfo(%s): %s\n", hostname,
+	dbprintf(("resolve_hostname(%s): %s\n", hostname, gai_strerror(result)));
+	security_seterror(&rh->sech, "resolve_hostname(%s): %s\n", hostname,
 			  gai_strerror(result));
 	(*fn)(arg, &rh->sech, S_ERROR);
 	return;
     }
-    if (res->ai_canonname == NULL) {
-	dbprintf(("getaddrinfo(%s) did not return a canonical name\n", hostname));
+    if (canonname == NULL) {
+	dbprintf(("resolve_hostname(%s) did not return a canonical name\n", hostname));
 	security_seterror(&rh->sech,
- 	        _("getaddrinfo(%s) did not return a canonical name\n"), hostname);
+	        _("resolve_hostname(%s) did not return a canonical name\n"), hostname);
 	(*fn)(arg, &rh->sech, S_ERROR);
        return;
     }
 
-    rh->hostname = stralloc(res->ai_canonname);	/* will be replaced */
+    rh->hostname = canonname;	/* will be replaced */
+    canonname = NULL; /* steal reference */
     rh->rs = tcpma_stream_client(rh, newhandle++);
     rh->rc->recv_security_ok = &bsd_recv_security_ok;
     rh->rc->prefix_packet = &bsd_prefix_packet;
@@ -190,12 +177,10 @@ bsdtcp_connect(
     rh->ev_timeout = event_register(CONNECT_TIMEOUT, EV_TIME,
 	sec_connect_timeout, rh);
 
-    freeaddrinfo(res);
     return;
 
 error:
     (*fn)(arg, &rh->sech, S_ERROR);
-    freeaddrinfo(res);
 }
 
 /*

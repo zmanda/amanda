@@ -2623,118 +2623,49 @@ check_name_give_sockaddr(
     struct sockaddr *addr,
     char **errstr)
 {
-    struct addrinfo *res = NULL, *res1;
-    struct addrinfo hints;
     int result;
+    struct addrinfo *res = NULL, *res1;
+    char *canonname;
 
-#ifdef WORKING_IPV6
-    if ((addr)->sa_family == AF_INET6)
-	hints.ai_flags = AI_CANONNAME | AI_V4MAPPED | AI_ALL;
-    else
-#endif
-	hints.ai_flags = AI_CANONNAME;
-    hints.ai_family = addr->sa_family;
-    hints.ai_socktype = 0;
-    hints.ai_protocol = 0;
-    hints.ai_addrlen = 0;
-    hints.ai_addr = NULL;
-    hints.ai_canonname = NULL;
-    hints.ai_next = NULL;
-    result = getaddrinfo(hostname, NULL, &hints, &res);
+    result = resolve_hostname(hostname, &res, &canonname);
     if (result != 0) {
-	dbprintf(("check_name_give_sockaddr: getaddrinfo(%s): %s\n", hostname, gai_strerror(result)));
+	dbprintf(("check_name_give_sockaddr: resolve_hostname(%s): %s\n", hostname, gai_strerror(result)));
 	*errstr = newvstralloc(*errstr,
-			       " getaddrinfo(", hostname, "): ",
+			       " resolve_hostname(", hostname, "): ",
 			       gai_strerror(result), NULL);
-	return -1;
+	goto error;
     }
-    if (res->ai_canonname == NULL) {
-	dbprintf(("getaddrinfo(%s) did not return a canonical name\n", hostname));
+    if (canonname == NULL) {
+	dbprintf(("resolve_hostname(%s) did not return a canonical name\n", hostname));
 	*errstr = newvstralloc(*errstr, 
- 		" getaddrinfo(", hostname, ") did not return a canonical name", NULL);
-	return -1;
+ 		" resolve_hostname(", hostname, ") did not return a canonical name", NULL);
+	goto error;
     }
 
-    if (strncasecmp(hostname, res->ai_canonname, strlen(hostname)) != 0) {
+    if (strncasecmp(hostname, canonname, strlen(hostname)) != 0) {
 	auth_debug(1, ("%s: %s doesn't resolve to itself, it resolves to %s\n",
 		       debug_prefix_time(NULL),
-		       hostname, res->ai_canonname));
+		       hostname, canonname));
 	*errstr = newvstralloc(*errstr, hostname,
 			       _(" doesn't resolve to itself, it resolves to "),
-			       res->ai_canonname, NULL);
-	return -1;
+			       canonname, NULL);
+	goto error;
     }
 
     for(res1=res; res1 != NULL; res1 = res1->ai_next) {
-	if (res1->ai_addr->sa_family == addr->sa_family) {
-	    if (cmp_sockaddr((struct sockaddr_storage *)res1->ai_addr, (struct sockaddr_storage *)addr, 1) == 0) {
-		freeaddrinfo(res);
-		return 0;
-	    }
+	if (cmp_sockaddr((struct sockaddr_storage *)res1->ai_addr, (struct sockaddr_storage *)addr, 1) == 0) {
+	    freeaddrinfo(res);
+	    amfree(canonname);
+	    return 0;
 	}
     }
 
     *errstr = newvstralloc(*errstr,
+			   hostname, " doesn't resolve to ",
 			   str_sockaddr((struct sockaddr_storage *)addr),
-			   " doesn't resolve to ",
-			   hostname, NULL);
-    freeaddrinfo(res);
+			   NULL);
+error:
+    if (res) freeaddrinfo(res);
+    amfree(canonname);
     return -1;
-}
-
-
-int
-check_addrinfo_give_name(
-    struct addrinfo *res,
-    const char *hostname,
-    char **errstr)
-{
-    if (strncasecmp(hostname, res->ai_canonname, strlen(hostname)) != 0) {
-	dbprintf(("%s: %s doesn't resolve to itself, it resolv to %s\n",
-		  debug_prefix_time(NULL),
-		  hostname, res->ai_canonname));
-	*errstr = newvstralloc(*errstr, hostname,
-			       " doesn't resolve to itself, it resolv to ",
-			       res->ai_canonname, NULL);
-	return -1;
-    }
-
-    return 0;
-}
-
-/* Try resolving the hostname, just to catch any potential
- * problems down the road.  This is used from most security_connect
- * methods, many of which also want the canonical name.  Returns 
- * 0 on success.
- */
-int
-try_resolving_hostname(
-	const char *hostname,
-	char **canonname)
-{
-    struct addrinfo hints;
-    struct addrinfo *gaires;
-    int res;
-
-#ifdef WORKING_IPV6
-    hints.ai_flags = AI_CANONNAME | AI_V4MAPPED | AI_ALL;
-    hints.ai_family = AF_UNSPEC;
-#else
-    hints.ai_flags = AI_CANONNAME;
-    hints.ai_family = AF_INET;
-#endif
-    hints.ai_socktype = 0;
-    hints.ai_protocol = 0;
-    hints.ai_addrlen = 0;
-    hints.ai_addr = NULL;
-    hints.ai_canonname = NULL;
-    hints.ai_next = NULL;
-    if ((res = getaddrinfo(hostname, NULL, &hints, &gaires)) != 0) {
-	return -1;
-    }
-    if (canonname && gaires && gaires->ai_canonname)
-	*canonname = stralloc(gaires->ai_canonname);
-    if (gaires) freeaddrinfo(gaires);
-
-    return 0;
 }

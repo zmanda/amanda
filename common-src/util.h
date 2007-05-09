@@ -68,4 +68,21 @@ int validate_mailto(const char *mailto);
 
 char *taperalgo2str(int taperalgo);
 
+/* Given a hostname, call getaddrinfo to resolve it.  Optionally get the
+ * entire set of results (if res is not NULL) and the canonical name of
+ * the host (if canonname is not NULL).  The canonical name might
+ * expand e.g., www.domain.com to server3.webfarm.hosting.com.
+ *
+ * If not NULL, the caller is responsible for freeing res with freeaddrinfo().
+ * Similarly, the caller is responsible for freeing canonname if it is
+ * not NULL.
+ *
+ * @param hostname: the hostname to start with
+ * @param res: (result) if not NULL, the results from getaddrinfo()
+ * @param canonname: (result) if not NULL, the canonical name of the host
+ * @returns: newly allocated canonical hostname, or NULL if no
+ * canonical hostname was available.
+ */
+int resolve_hostname(const char *hostname, struct addrinfo **res, char **canonname);
+
 #endif	/* UTIL_H */

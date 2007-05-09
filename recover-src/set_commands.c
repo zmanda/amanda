@@ -142,38 +142,22 @@ set_host(
 	}
     }
 
-    /*
-     * gethostbyname() will not return a canonical name for a host with no
-     * IPv4 addresses, so use getaddrinfo() (if supported)
-     */
-#ifdef WORKING_IPV6
+    /* Try looking up the canonical name of the host */
     if (!found_host) {
-	struct addrinfo hints;
-	struct addrinfo *gaires = NULL;
-	int res;
+	char *canonname;
+	int result;
 
-	hints.ai_flags = AI_CANONNAME;
-	hints.ai_family = AF_UNSPEC;
-	hints.ai_socktype = 0;
-	hints.ai_protocol = 0;
-	hints.ai_addrlen = 0;
-	hints.ai_addr = NULL;
-	hints.ai_canonname = NULL;
-	hints.ai_next = NULL;
-	if ((res = getaddrinfo(uqhost, NULL, &hints, &gaires)) == 0) {
-	    if (gaires && (host = gaires->ai_canonname)) {
-		printf(_("Trying host %s ...\n"), host);
-		cmd = newstralloc2(cmd, "HOST ", host);
-		if (converse(cmd) == -1)
-		    exit(1);
-		if(server_happy())
-		    found_host = 1;
-	    }
+	result = resolve_hostname(uqhost, NULL, &canonname);
+	if (result == 0 && canonname) {
+	    host = canonname;
+	    printf(_("Trying host %s ...\n"), host);
+	    cmd = newstralloc2(cmd, "HOST ", host);
+	    if (converse(cmd) == -1)
+		exit(1);
+	    if(server_happy())
+		found_host = 1;
 	}
-
-	if (gaires) freeaddrinfo(gaires);
     }
-#endif
 
     if(found_host) {
 	dump_hostname = newstralloc(dump_hostname, host);

@@ -602,8 +602,6 @@ start_server_check(
     tapetype_t *tp = NULL;
     char *quoted;
     int res;
-    struct addrinfo *gaires;
-    struct addrinfo hints;
 
     switch(pid = fork()) {
     case -1:
@@ -672,23 +670,9 @@ start_server_check(
 	}
 
 	/* Double-check that 'localhost' resolves properly */
-#ifdef WORKING_IPV6
-	hints.ai_flags = AI_CANONNAME | AI_V4MAPPED | AI_ALL;
-	hints.ai_family = AF_UNSPEC;
-#else
-	hints.ai_flags = AI_CANONNAME;
-	hints.ai_family = AF_INET;
-#endif
-	hints.ai_socktype = 0;
-	hints.ai_protocol = 0;
-	hints.ai_addrlen = 0;
-	hints.ai_addr = NULL;
-	hints.ai_canonname = NULL;
-	hints.ai_next = NULL;
-	if ((res = getaddrinfo("localhost", NULL, &hints, &gaires)) != 0) {
+	if ((res = resolve_hostname("localhost", NULL, NULL) != 0)) {
 	    fprintf(outf, _("ERROR: Cannot resolve `localhost': %s\n"), gai_strerror(res));
 	}
-	if (gaires) freeaddrinfo(gaires);
     }
 
     /*

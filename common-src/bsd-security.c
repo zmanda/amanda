@@ -131,8 +131,8 @@ bsd_connect(
     int sequence;
     char *handle;
     int result;
-    struct addrinfo hints;
-    struct addrinfo *res = NULL;
+    struct addrinfo *res;
+    char *canonname;
 
     assert(hostname != NULL);
 
@@ -144,44 +144,33 @@ bsd_connect(
     bh->udp = &netfd;
     security_handleinit(&bh->sech, &bsd_security_driver);
 
-    /*
-     * Only init the socket once
-     */
-#ifdef WORKING_IPV6
-    hints.ai_flags = AI_CANONNAME | AI_V4MAPPED | AI_ALL;
-    hints.ai_family = AF_INET6;
-#else
-    hints.ai_flags = AI_CANONNAME;
-    hints.ai_family = AF_INET;
-#endif
-    hints.ai_socktype = SOCK_DGRAM;
-    hints.ai_protocol = IPPROTO_UDP;
-    hints.ai_addrlen = 0;
-    hints.ai_addr = NULL;
-    hints.ai_canonname = NULL;
-    hints.ai_next = NULL;
-    result = getaddrinfo(hostname, NULL, &hints, &res);
-#ifdef WORKING_IPV6
-    if (result != 0) {
-	hints.ai_family = AF_UNSPEC;
-	result = getaddrinfo(hostname, NULL, &hints, &res);
-    }
-#endif
+    result = resolve_hostname(hostname, &res, &canonname);
     if(result != 0) {
-	dbprintf(("getaddrinfo(%s): %s\n", hostname, gai_strerror(result)));
-	security_seterror(&bh->sech, "getaddrinfo(%s): %s\n", hostname,
+	dbprintf(("resolve_hostname(%s): %s\n", hostname, gai_strerror(result)));
+	security_seterror(&bh->sech, "resolve_hostname(%s): %s\n", hostname,
 			  gai_strerror(result));
 	(*fn)(arg, &bh->sech, S_ERROR);
 	return;
     }
-    if (res->ai_canonname == NULL) {
-	dbprintf(("getaddrinfo(%s) did not return a canonical name\n", hostname));
+    if (canonname == NULL) {
+	dbprintf(("resolve_hostname(%s) did not return a canonical name\n", hostname));
 	security_seterror(&bh->sech,
- 	        _("getaddrinfo(%s) did not return a canonical name\n"), hostname);
+	        _("resolve_hostname(%s) did not return a canonical name\n"), hostname);
 	(*fn)(arg, &bh->sech, S_ERROR);
        return;
     }
+    if (res == NULL) {
+	dbprintf(("resolve_hostname(%s): no results\n", hostname));
+	security_seterror(&bh->sech,
+	        _("resolve_hostname(%s): no results\n"), hostname);
+	(*fn)(arg, &bh->sech, S_ERROR);
+       amfree(canonname);
+       return;
+    }
 
+    /*
+     * Only init the socket once
+     */
     if (not_init == 1) {
 	uid_t euid;
 	dgram_zero(&netfd.dgram);
@@ -202,12 +191,14 @@ bsd_connect(
 		"unable to bind to a reserved port (got port %u)",
 		(unsigned int)port);
 	    (*fn)(arg, &bh->sech, S_ERROR);
+	    freeaddrinfo(res);
+	    amfree(canonname);
 	    return;
 	}
 	not_init = 0;
     }
 
-    auth_debug(1, ("Resolved hostname=%s\n", res->ai_canonname));
+    auth_debug(1, ("Resolved hostname=%s\n", canonname));
     if ((se = getservbyname(AMANDA_SERVICE_NAME, "udp")) == NULL)
 	port = AMANDA_SERVICE_DEFAULT;
     else
@@ -216,7 +207,7 @@ bsd_connect(
     sequence = (int)sequence_time.tv_sec ^ (int)sequence_time.tv_usec;
     handle=alloc(15);
     snprintf(handle, 14, "000-%08x",  (unsigned)newhandle++);
-    if (udp_inithandle(&netfd, bh, res->ai_canonname,
+    if (udp_inithandle(&netfd, bh, canonname,
 	(struct sockaddr_storage *)res->ai_addr, port, handle, sequence) < 0) {
 	(*fn)(arg, &bh->sech, S_ERROR);
 	amfree(bh->hostname);
@@ -226,6 +217,7 @@ bsd_connect(
 	(*fn)(arg, &bh->sech, S_OK);
     }
     amfree(handle);
+    amfree(canonname);
 
     freeaddrinfo(res);
 }

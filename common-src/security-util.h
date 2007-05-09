@@ -276,9 +276,5 @@ ssize_t net_read_fillbuf(int, int, void *, size_t);
 void	show_stat_info(char *a, char *b);
 int     check_name_give_sockaddr(const char *hostname, struct sockaddr *addr,
 				 char **errstr);
-int     check_addrinfo_give_name(struct addrinfo *res, const char *hostname,
-				 char **errstr);
-int	try_resolving_hostname(const char *hostname,
-			       char **cannonname);
 
 #endif /* _SECURITY_INFO_H */

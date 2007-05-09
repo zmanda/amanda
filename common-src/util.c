@@ -695,4 +695,54 @@ add_history(
 {
     (void)line; 	/* Quite unused parameter warning */
 }
+
 #endif
+
+int
+resolve_hostname(const char *hostname,
+	struct addrinfo **res,
+	char **canonname)
+{
+    struct addrinfo hints;
+    struct addrinfo *myres;
+    int flags = 0;
+    int result;
+
+    if (res) *res = NULL;
+    if (canonname) {
+	*canonname = NULL;
+	flags = AI_CANONNAME;
+    }
+
+    memset(&hints, 0, sizeof(hints));
+#ifdef WORKING_IPV6
+    hints.ai_family = AF_INET6; hints.ai_flags = flags | AI_V4MAPPED | AI_ALL;
+#else
+    hints.ai_family = AF_INET; hints.ai_flags = flags;
+#endif
+    result = getaddrinfo(hostname, NULL, &hints, &myres);
+#ifdef WORKING_IPV6
+    /* if the call fails with AF_INET6, try again with AF_UNSPEC */
+    if (result != 0) {
+	hints.ai_family = AF_UNSPEC;
+	hints.ai_flags = flags; /* remove AI_V4MAPPED and AI_ALL */
+	result = getaddrinfo(hostname, NULL, &hints, &myres);
+    }
+#endif
+    if (result != 0) {
+	return result;
+    }
+
+    if (canonname && myres && myres->ai_canonname) {
+	*canonname = stralloc(myres->ai_canonname);
+    }
+
+    if (res) {
+	*res = myres;
+    } else {
+	freeaddrinfo(myres);
+    }
+
+    return result;
+}
+

@@ -1,3 +1,13 @@
+2007-05-09	Dustin J. Mitchell <dustin@zmanda.com>
+	* recover-src/set_commands.c server-src/amcheck.c
+	  server-src/dumper.c common-src/rsh-security.c
+	  common-src/krb5-security.c common-src/util.c common-src/util.h
+	  common-src/bsdtcp-security.c common-src/stream.c
+	  common-src/ssh-security.c common-src/bsd-security.c
+	  common-src/security-util.c common-src/bsdudp-security.c
+	  common-src/security-util.h: Add IPv6-savvy resolve_hostname() and use it
+	  everywhere
+
 2007-05-08  Jean-Louis Martineau <martineau@zmanda.com>
 	* config/Makefile.am (EXTRA_DIST): Add docbook-dtd.m4i,
 	  docbook-xslt.m4i, docbook-xslt-min.m4i and xsltproc.m4i.

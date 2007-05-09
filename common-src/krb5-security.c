@@ -238,8 +238,7 @@ krb5_connect(
 {
     struct sec_handle *rh;
     int result;
-    struct addrinfo hints;
-    struct addrinfo *res = NULL;
+    char *canonname;
 
     assert(fn != NULL);
     assert(hostname != NULL);
@@ -258,29 +257,32 @@ krb5_connect(
     rh->ev_timeout = NULL;
     rh->rc = NULL;
 
-#ifdef WORKING_IPV6
-    hints.ai_flags = AI_CANONNAME | AI_V4MAPPED | AI_ALL;
-    hints.ai_family = AF_UNSPEC;
-#else
-    hints.ai_flags = AI_CANONNAME;
-    hints.ai_family = AF_INET;
-#endif
-    hints.ai_socktype = SOCK_DGRAM;
-    hints.ai_protocol = IPPROTO_UDP;
-    hints.ai_addrlen = 0;
-    hints.ai_addr = NULL;
-    hints.ai_canonname = NULL;
-    hints.ai_next = NULL;
-    result = getaddrinfo(hostname, NULL, &hints, &res);
+    result = resolve_hostname(hostname, NULL, &canonname);
     if(result != 0) {
-	dbprintf(("krb5_connect: getaddrinfo(%s): %s\n", hostname, gai_strerror(result)));
-	security_seterror(&rh->sech, "getaddrinfo(%s): %s\n", hostname,
+	dbprintf(("resolve_hostname(%s): %s\n", hostname, gai_strerror(result)));
+	security_seterror(&bh->sech, "resolve_hostname(%s): %s\n", hostname,
 			  gai_strerror(result));
-	(*fn)(arg, &rh->sech, S_ERROR);
+	(*fn)(arg, &bh->sech, S_ERROR);
 	return;
     }
+    if (canonname == NULL) {
+	dbprintf(("resolve_hostname(%s) did not return a canonical name\n", hostname));
+	security_seterror(&bh->sech,
+	        _("resolve_hostname(%s) did not return a canonical name\n"), hostname);
+	(*fn)(arg, &bh->sech, S_ERROR);
+       return;
+    }
+    if (res == NULL) {
+	dbprintf(("resolve_hostname(%s): no results\n", hostname));
+	security_seterror(&bh->sech,
+	        _("resolve_hostname(%s): no results\n"), hostname);
+	(*fn)(arg, &bh->sech, S_ERROR);
+       amfree(canonname);
+       return;
+    }
 
-    rh->hostname = stralloc(res->ai_canonname);        /* will be replaced */
+    rh->hostname = canonname;        /* will be replaced */
+    canonname = NULL; /* steal reference */
     rh->rs = tcpma_stream_client(rh, newhandle++);
     rh->rc->recv_security_ok = NULL;
     rh->rc->prefix_packet = NULL;
@@ -332,9 +334,11 @@ krb5_connect(
     rh->ev_timeout = event_register(CONNECT_TIMEOUT, EV_TIME,
 	sec_connect_timeout, rh);
 
+    amfree(canonname);
     return;
 
 error:
+    amfree(canonname);
     (*fn)(arg, &rh->sech, S_ERROR);
 }
 
@@ -758,7 +762,7 @@ krb5_init(void)
      * In case it isn't fully qualified, do a DNS lookup.  Ignore
      * any errors (this is best-effort).
      */
-    if (try_resolving_hostname(myhostname, &myfqhostname) == 0
+    if (resolve_hostname(hostname, NULL, &myfqhostname) == 0
 	&& myfqhostname != NULL) {
 	strncpy(myhostname, myfqhostname, SIZEOF(myhostname)-1);
 	myhostname[SIZEOF(myhostname)-1] = '\0';

@@ -209,30 +209,21 @@ stream_client_internal(
     int client_socket;
     int *portrange;
     int result;
-    struct addrinfo hints;
-    struct addrinfo *res = NULL;
+    struct addrinfo *res;
 
     f = priv ? "stream_client_privileged" : "stream_client";
 
-#ifdef WORKING_IPV6
-    hints.ai_flags = AI_CANONNAME | AI_V4MAPPED | AI_ALL;
-    hints.ai_family = (sa_family_t)AF_UNSPEC;
-#else
-    hints.ai_flags = AI_CANONNAME;
-    hints.ai_family = (sa_family_t)AF_INET;
-#endif
-    hints.ai_socktype = SOCK_DGRAM;
-    hints.ai_protocol = IPPROTO_UDP;
-    hints.ai_addrlen = 0;
-    hints.ai_addr = NULL;
-    hints.ai_canonname = NULL;
-    hints.ai_next = NULL;
-    result = getaddrinfo(hostname, NULL, &hints, &res);
+    result = resolve_hostname(hostname, &res, NULL);
     if(result != 0) {
-        dbprintf(("getaddrinfo: %s\n", gai_strerror(result)));
+	dbprintf(("resolve_hostname(%s): %s\n", hostname, gai_strerror(result)));
+	return -1;
+    }
+    if(!res) {
+	dbprintf(("resolve_hostname(%s): no results\n", hostname));
 	return -1;
     }
 
+    /* copy the first (preferred) address we found */
     copy_sockaddr(&svaddr, res->ai_addr);
     freeaddrinfo(res);
     SS_SET_PORT(&svaddr, port);
