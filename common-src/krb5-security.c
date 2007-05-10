@@ -260,24 +260,16 @@ krb5_connect(
     result = resolve_hostname(hostname, NULL, &canonname);
     if(result != 0) {
 	dbprintf(("resolve_hostname(%s): %s\n", hostname, gai_strerror(result)));
-	security_seterror(&bh->sech, "resolve_hostname(%s): %s\n", hostname,
+	security_seterror(&rh->sech, "resolve_hostname(%s): %s\n", hostname,
 			  gai_strerror(result));
-	(*fn)(arg, &bh->sech, S_ERROR);
+	(*fn)(arg, &rh->sech, S_ERROR);
 	return;
     }
     if (canonname == NULL) {
 	dbprintf(("resolve_hostname(%s) did not return a canonical name\n", hostname));
-	security_seterror(&bh->sech,
+	security_seterror(&rh->sech,
 	        _("resolve_hostname(%s) did not return a canonical name\n"), hostname);
-	(*fn)(arg, &bh->sech, S_ERROR);
-       return;
-    }
-    if (res == NULL) {
-	dbprintf(("resolve_hostname(%s): no results\n", hostname));
-	security_seterror(&bh->sech,
-	        _("resolve_hostname(%s): no results\n"), hostname);
-	(*fn)(arg, &bh->sech, S_ERROR);
-       amfree(canonname);
+	(*fn)(arg, &rh->sech, S_ERROR);
        return;
     }
 
@@ -375,6 +367,8 @@ krb5_accept(
     }
     if (check_name_give_sockaddr(hostname,
 				 (struct sockaddr *)&sin, &errmsg) < 0) {
+	dbprintf(("%s: check_name_give_sockaddr(%s): %s\n",
+		  debug_prefix_time(NULL), hostname, errmsg));
 	amfree(errmsg);
 	return;
     }
@@ -763,7 +757,7 @@ krb5_init(void)
      * In case it isn't fully qualified, do a DNS lookup.  Ignore
      * any errors (this is best-effort).
      */
-    if (resolve_hostname(hostname, NULL, &myfqhostname) == 0
+    if (resolve_hostname(myhostname, NULL, &myfqhostname) == 0
 	&& myfqhostname != NULL) {
 	strncpy(myhostname, myfqhostname, SIZEOF(myhostname)-1);
 	myhostname[SIZEOF(myhostname)-1] = '\0';

@@ -1,3 +1,6 @@
+2007-05-08  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/krb5-security.c: Fix compilation.
+
 2007-05-09	Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/stream.c: add errno's to stream_client_internal
 
