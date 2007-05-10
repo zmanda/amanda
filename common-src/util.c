@@ -690,6 +690,36 @@ cmp_sockaddr(
     struct sockaddr_storage *ss2,
     int addr_only)
 {
+    /* if addresses are v4mapped, "unmap" them */
+#ifdef WORKING_IPV6
+#ifdef IN6_IS_ADDR_V4MAPPED
+    struct sockaddr_in ss1_v4;
+    struct sockaddr_in ss2_v4;
+
+    if (ss1->ss_family == AF_INET6 &&
+        IN6_IS_ADDR_V4MAPPED(&((struct sockaddr_in6 *)ss1)->sin6_addr)) {
+	memset(&ss_in, 0, sizeof(struct sockaddr_in));
+	memcpy(&ss1_v4.sin_addr.s_addr,
+	       &(((struct sockaddr_in6 *)ss1)->sin6_addr.s6_addr[12]),
+	       sizeof(struct in_addr));
+	ss1_v4.sin_family = AF_INET;
+	SS_SET_PORT(&ss1_v4, SS_GET_PORT(ss1));
+	ss1 = &ss1_v4;
+    }
+
+    if (ss2->ss_family == AF_INET6 &&
+        IN6_IS_ADDR_V4MAPPED(&((struct sockaddr_in6 *)ss2)->sin6_addr)) {
+	memset(&ss_in, 0, sizeof(struct sockaddr_in));
+	memcpy(&ss2_v4.sin_addr.s_addr,
+	       &(((struct sockaddr_in6 *)ss2)->sin6_addr.s6_addr[12]),
+	       sizeof(struct in_addr));
+	ss2_v4.sin_family = AF_INET;
+	SS_SET_PORT(&ss2_v4, SS_GET_PORT(ss2));
+	ss2 = &ss2_v4;
+    }
+#endif
+#endif
+
     if (ss1->ss_family == ss2->ss_family) {
         if (addr_only) {
 #ifdef WORKING_IPV6
