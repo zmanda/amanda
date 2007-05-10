@@ -698,24 +698,24 @@ cmp_sockaddr(
 
     if (ss1->ss_family == AF_INET6 &&
         IN6_IS_ADDR_V4MAPPED(&((struct sockaddr_in6 *)ss1)->sin6_addr)) {
-	memset(&ss_in, 0, sizeof(struct sockaddr_in));
+	memset(&ss1_v4, 0, sizeof(struct sockaddr_in));
 	memcpy(&ss1_v4.sin_addr.s_addr,
 	       &(((struct sockaddr_in6 *)ss1)->sin6_addr.s6_addr[12]),
 	       sizeof(struct in_addr));
 	ss1_v4.sin_family = AF_INET;
-	SS_SET_PORT(&ss1_v4, SS_GET_PORT(ss1));
-	ss1 = &ss1_v4;
+	SS_SET_PORT((struct sockaddr_storage *)&ss1_v4, SS_GET_PORT(ss1));
+	ss1 = (struct sockaddr_storage *)&ss1_v4;
     }
 
     if (ss2->ss_family == AF_INET6 &&
         IN6_IS_ADDR_V4MAPPED(&((struct sockaddr_in6 *)ss2)->sin6_addr)) {
-	memset(&ss_in, 0, sizeof(struct sockaddr_in));
+	memset(&ss2_v4, 0, sizeof(struct sockaddr_in));
 	memcpy(&ss2_v4.sin_addr.s_addr,
 	       &(((struct sockaddr_in6 *)ss2)->sin6_addr.s6_addr[12]),
 	       sizeof(struct in_addr));
 	ss2_v4.sin_family = AF_INET;
-	SS_SET_PORT(&ss2_v4, SS_GET_PORT(ss2));
-	ss2 = &ss2_v4;
+	SS_SET_PORT((struct sockaddr_storage *)&ss2_v4, SS_GET_PORT(ss2));
+	ss2 = (struct sockaddr_storage *)&ss2_v4;
     }
 #endif
 #endif

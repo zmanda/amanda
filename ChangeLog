@@ -1,4 +1,7 @@
 2007-05-10  Jean-Louis Martineau <martineau@zmanda.com>
+	* util.c (cmp_sockaddr): Fix compilation.
+
+2007-05-10  Jean-Louis Martineau <martineau@zmanda.com>
 	* util.c (cmp_sockaddr): un-map V4mapped address before comparison.
 	* common-src/security-util.c: add debugging.
 
