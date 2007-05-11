@@ -1,3 +1,7 @@
+2007-05-11  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amcrypt-ossl-asym.sh.in: Use CLIENT_LOGIN.
+	* server-src/amcrypt-ossl.sh.in: Use CLIENT_LOGIN.
+
 2007-05-10  Jean-Louis Martineau <martineau@zmanda.com>
 	* util.c (cmp_sockaddr): Fix compilation.
 

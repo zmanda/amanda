@@ -7,7 +7,7 @@
 # change these as needed
 OPENSSL=			# whatever's in $PATH
 CIPHER=aes-256-cbc		# see `openssl help` for more ciphers
-AMANDA_HOME=~amandabackup
+AMANDA_HOME=~@CLIENT_LOGIN@
 RANDFILE=$AMANDA_HOME/.rnd
 export RANDFILE
 PASSPHRASE=$AMANDA_HOME/.am_passphrase	# required
