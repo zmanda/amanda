@@ -1,3 +1,7 @@
+2007-05-14  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/bsd-security.c: Open an IPv4 and an IPv6 socket.
+	* common-src/bsdudp-security.c: Open an IPv4 and an IPv6 socket.
+
 2007-05-11  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amcrypt-ossl-asym.sh.in: Use CLIENT_LOGIN.
 	* server-src/amcrypt-ossl.sh.in: Use CLIENT_LOGIN.
