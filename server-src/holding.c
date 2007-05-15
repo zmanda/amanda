@@ -148,12 +148,15 @@ holding_set_verbosity(int v)
 static void
 holding_get_directories_per_disk(
     char *hdisk,
+    sl_t *date_list,
     int fullpaths,
     sl_t *rv)
 {
     DIR *dir;
     struct dirent *workdir;
     char *hdir = NULL;
+    sle_t *dl;
+    int date_found;
 
     if ((dir = opendir(hdisk)) == NULL) {
         if (verbose && errno != ENOENT)
@@ -188,13 +191,26 @@ holding_get_directories_per_disk(
                 puts(_("skipping cruft directory, perhaps you should delete it."));
         } else {
             /* found a holding directory -- keep it */
-            if (fullpaths)
-                rv = insert_sort_sl(rv, hdir);
-            else
-                rv = insert_sort_sl(rv, workdir->d_name);
-            if (verbose) {
-                puts(_("found Amanda directory."));
-            }
+	    if (date_list) {
+		date_found = 0;
+		for (dl= date_list->first; dl != NULL; dl = dl->next) {
+		    if (strcmp(dl->name, workdir->d_name)) {
+			date_found = 1;
+			break;
+		    }
+		}
+	    } else {
+		date_found = 1;
+	    }
+	    if (date_found == 1) {
+		if (fullpaths)
+                    rv = insert_sort_sl(rv, hdir);
+		else
+                    rv = insert_sort_sl(rv, workdir->d_name);
+		if (verbose) {
+                    puts(_("found Amanda directory."));
+		}
+	    }
         }
     }
 
@@ -205,6 +221,7 @@ holding_get_directories_per_disk(
 sl_t *
 holding_get_directories(
     char *hdisk,
+    sl_t *date_list,
     int fullpaths)
 {
     holdingdisk_t *hdisk_conf;
@@ -218,13 +235,13 @@ holding_get_directories(
     /* call _per_disk for the hdisk we were given, or for all
      * hdisks if we were given NULL */
     if (hdisk) {
-        holding_get_directories_per_disk(hdisk, fullpaths, rv);
+        holding_get_directories_per_disk(hdisk, date_list, fullpaths, rv);
     } else {
         for (hdisk_conf = getconf_holdingdisks(); 
                     hdisk_conf != NULL;
                     hdisk_conf = hdisk_conf->next) {
             hdisk = holdingdisk_get_diskdir(hdisk_conf);
-            holding_get_directories_per_disk(hdisk, fullpaths, rv);
+            holding_get_directories_per_disk(hdisk, date_list, fullpaths, rv);
         }
     }
 
@@ -303,6 +320,7 @@ holding_get_files_per_dir(
 sl_t *
 holding_get_files(
     char *hdir,
+    sl_t *date_list,
     int fullpaths)
 {
     sl_t *hdirs;
@@ -319,7 +337,7 @@ holding_get_files(
     if (hdir) {
         holding_get_files_per_dir(hdir, fullpaths, rv);
     } else {
-        hdirs = holding_get_directories(NULL, 1);
+        hdirs = holding_get_directories(NULL, date_list, 1);
         for (e = hdirs->first; e != NULL; e = e->next) {
             holding_get_files_per_dir(e->name, fullpaths, rv);
         }
@@ -379,22 +397,11 @@ holding_get_files_for_flush(
     }
 
     /* loop over *all* files, checking each one */
-    file_list = holding_get_files(NULL, 1);
+    file_list = holding_get_files(NULL, date_list, 1);
     for (file_elt = file_list->first; file_elt != NULL; file_elt = file_elt->next) {
         /* get info on that file */
         filetype = holding_file_read_header(file_elt->name, &host, &disk, NULL, &datestamp);
         if (filetype != F_DUMPFILE)
-            continue;
-
-        /* loop over dates, until we find a match */
-        date_matches = 0;
-        for (date = date_list->first; date !=NULL; date = date->next) {
-            if (strcmp(datestamp, date->name) == 0) {
-                date_matches = 1;
-                break;
-            }
-        }
-        if (!date_matches)
             continue;
 
         /* check that the hostname and disk are in the disklist */
@@ -582,7 +589,7 @@ pick_all_datestamp(
 
     /* get all holding directories, without full paths -- this
      * will be datestamps only */
-    rv = holding_get_directories(NULL, 0);
+    rv = holding_get_directories(NULL, NULL, 0);
 
     holding_set_verbosity(old_verbose);
     return rv;

@@ -219,7 +219,7 @@ cmdline_match_holding(
     sl_t *matching_files = new_sl();
 
     holding_set_verbosity(0);
-    holding_files = holding_get_files(NULL, 1);
+    holding_files = holding_get_files(NULL, NULL, 1);
 
     for (he = holding_files->first; he != NULL; he = he->next) {
         filetype = holding_file_read_header(he->name, &host, &disk, NULL, &datestamp);

@@ -1197,7 +1197,7 @@ get_file_list(
         dumpspec_free_list(dumplist);
     } else if (allow_empty) {
         /* just list all of them */
-        file_list = holding_get_files(NULL, 1);
+        file_list = holding_get_files(NULL, NULL, 1);
     }
 
     return file_list;

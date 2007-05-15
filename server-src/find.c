@@ -278,7 +278,7 @@ search_holding_disk(
     disk_t *dp;
     dumpfile_t file;
 
-    holding_file_list = holding_get_files(NULL, 1);
+    holding_file_list = holding_get_files(NULL, NULL, 1);
 
     for(e = holding_file_list->first; e != NULL; e = e->next) {
 	holding_file = e->name;

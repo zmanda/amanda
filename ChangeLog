@@ -1,3 +1,17 @@
+2007-05-15  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amadmin.c, server-src/cmdline.c,
+	  server-src/find.c: Call holding_get_files will NULL date_list.
+	* server-src/holding.c (holding_get_directories_per_disk): New
+	  date_list param, scan only the date_list directories.
+	* server-src/holding.c (holding_get_directories): New
+	  date_list param.
+	* server-src/holding.c (holding_get_files): New
+	  date_list param.
+	* server-src/holding.c (holding_get_files_for_flush): Don't loop over
+	  date.
+	* server-src/holding.h (holding_get_directories,
+	  holding_get_files): New prototype.
+
 2007-05-14  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/bsd-security.c: Open an IPv4 and an IPv6 socket.
 	* common-src/bsdudp-security.c: Open an IPv4 and an IPv6 socket.

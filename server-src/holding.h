@@ -80,11 +80,13 @@ holding_set_verbosity(int verbose);
  * bare directory names (datestamps).
  *
  * @param hdisk: holding disk to enumerate, or NULL for all
+ * @param date_list: Limit to thes timestamps.
  * @param fullpaths: if true, return full pathnames
  * @returns: newly allocated sl_t of matching directories
  */
 sl_t *
 holding_get_directories(char *hdisk,
+			sl_t *date_list,
                         int fullpaths);
 
 /*
@@ -96,11 +98,13 @@ holding_get_directories(char *hdisk,
  * bare file names.
  *
  * @param hdir: holding directory to enumerate, or NULL for all
+ * @param date_list: Limit to thes timestamps.
  * @param fullpaths: if true, return full pathnames
  * @returns: newly allocated sl_t of matching files
  */
 sl_t *
 holding_get_files(char *hdir,
+		  sl_t *date_list,
                   int fullpaths);
 
 /* Get a list of holding files that should be flushed, optionally
