@@ -110,7 +110,7 @@ event_register(
 
     if ((type == EV_READFD) || (type == EV_WRITEFD)) {
 	/* make sure we aren't given a high fd that will overflow a fd_set */
-	if (data >= FD_SETSIZE) {
+	if (data >= (int)FD_SETSIZE) {
 	    error("event_register: Invalid file descriptor %lu", data);
 	    /*NOTREACHED*/
 	}

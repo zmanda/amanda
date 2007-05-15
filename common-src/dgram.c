@@ -43,7 +43,7 @@ dgram_socket(
 {
     if(socket < 0 || socket >= FD_SETSIZE) {
 	error("dgram_socket: socket %d out of range (0 .. %d)\n",
-	      socket, FD_SETSIZE-1);
+	      socket, (int)FD_SETSIZE-1);
         /*NOTREACHED*/
     }
     dgram->socket = socket;

@@ -379,7 +379,7 @@ changer_command(
 
     if(fd[0] < 0 || fd[0] >= (int)FD_SETSIZE) {
 	snprintf(num1, SIZEOF(num1), "%d", fd[0]);
-	snprintf(num2, SIZEOF(num2), "%d", FD_SETSIZE-1);
+	snprintf(num2, SIZEOF(num2), "%d", (int)FD_SETSIZE-1);
 	changer_resultstr = vstralloc ("<error> ",
 				       "could not create pipe for \"",
 				       cmdstr,
@@ -395,7 +395,7 @@ changer_command(
     }
     if(fd[1] < 0 || fd[1] >= (int)FD_SETSIZE) {
 	snprintf(num1, SIZEOF(num1), "%d", fd[1]);
-	snprintf(num2, SIZEOF(num2), "%d", FD_SETSIZE-1);
+	snprintf(num2, SIZEOF(num2), "%d", (int)FD_SETSIZE-1);
 	changer_resultstr = vstralloc ("<error> ",
 				       "could not create pipe for \"",
 				       cmdstr,

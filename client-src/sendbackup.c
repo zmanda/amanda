@@ -1157,7 +1157,7 @@ start_index(
   dup2(index, 1);
   dup2(mesg, 2);
   dup2(input, 3);
-  for(index = 4; index < FD_SETSIZE; index++) {
+  for(index = 4; index < (int)FD_SETSIZE; index++) {
     if (index != dbfd()) {
       close(index);
     }

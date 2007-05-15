@@ -93,12 +93,12 @@ startup_tape_process(
     }
     if(fd[0] < 0 || fd[0] >= (int)FD_SETSIZE) {
 	error("taper socketpair 0: descriptor %d out of range (0 .. %d)\n",
-	      fd[0], FD_SETSIZE-1);
+	      fd[0], (int)FD_SETSIZE-1);
         /*NOTREACHED*/
     }
     if(fd[1] < 0 || fd[1] >= (int)FD_SETSIZE) {
 	error("taper socketpair 1: descriptor %d out of range (0 .. %d)\n",
-	      fd[1], FD_SETSIZE-1);
+	      fd[1], (int)FD_SETSIZE-1);
         /*NOTREACHED*/
     }
 

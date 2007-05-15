@@ -1,3 +1,8 @@
+2006-09-27   John Franks <jrfranks@zmanda.com> (merged by dustin@zmanda.com)
+	* client-src/sendbackup.c common-src/dgram.c common-src/event.c
+	  server-src/changer.c server-src/driverio.c:
+		Cast FD_SETSIZE to int to avoid compilation problems.
+
 2007-05-15   Kevin Till <ktill@zmanda.com> (merge by dustin@zmanda.com)
 	* common-src/debug.c: dbrename patch by Jean-Louis Martineau to
 	  unlink the target of the rename operation before renaming.
