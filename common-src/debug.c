@@ -422,10 +422,16 @@ debug_rename(
     }
 
     if (fd >= 0) {
-	rename(db_filename, s);
+        close(fd);
+	if (unlink(s) == -1) {
+	    dbprintf(("Can't unlink(\"%s\"): %s\n", s, strerror(errno)));
+	}
+	if (rename(db_filename, s) == -1) {
+	    dbprintf(("Can't rename(\"%s\",\"%s\"): %s\n", db_filename, s,
+		      strerror(errno)));
+	}
     }
     (void)umask(mask); /* Restore mask */
-    close(fd);
     /*
      * Finish setup.
      *

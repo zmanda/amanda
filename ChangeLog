@@ -1,3 +1,7 @@
+2007-05-15   Kevin Till <ktill@zmanda.com> (merge by dustin@zmanda.com)
+	* common-src/debug.c: dbrename patch by Jean-Louis Martineau to
+	  unlink the target of the rename operation before renaming.
+
 2007-05-15  Dustin J. Mitchell <dustin@zmanda.com>
 	* client-src/sendsize.c: fix parsing of include/excludes for 
 	  old clients
