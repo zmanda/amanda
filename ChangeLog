@@ -1,4 +1,7 @@
 2007-05-15  Jean-Louis Martineau <martineau@zmanda.com>
+	* client-src/sendsize.c: Set qlist before using it.
+
+2007-05-15  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amadmin.c, server-src/cmdline.c,
 	  server-src/find.c: Call holding_get_files will NULL date_list.
 	* server-src/holding.c (holding_get_directories_per_disk): New

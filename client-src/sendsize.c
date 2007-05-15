@@ -367,19 +367,19 @@ main(
 				append_sl(options->exclude_file, qlist);
 			    amfree(qlist);
 			} else if(strncmp_const(s-1, "exclude-list=") == 0) {
+			    qlist = unquote_string(s+12);
 			    options->exclude_list =
 				append_sl(options->exclude_list, qlist);
-			    qlist = unquote_string(s+12);
 			    amfree(qlist);
 			} else if(strncmp_const(s-1, "include-file=") == 0) {
+			    qlist = unquote_string(s+12);
 			    options->include_file =
 				append_sl(options->include_file, qlist);
-			    qlist = unquote_string(s+12);
 			    amfree(qlist);
 			} else if(strncmp_const(s-1, "include-list=") == 0) {
+			    qlist = unquote_string(s+12);
 			    options->include_list =
 				append_sl(options->include_list, qlist);
-			    qlist = unquote_string(s+12);
 			    amfree(qlist);
 			} else {
 			    err_extra = vstralloc("Invalid parameter (",
