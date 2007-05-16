@@ -401,19 +401,42 @@ debug_rename(
     }
 
     mask = (mode_t)umask((mode_t)0037);
+
+/* On cygwin, rename will not overwrite an existing file */
+#if defined(__CYGWIN__)
+    /* check if a file with the same name already exist */
+    if (rename(db_filename, s) < 0) {
+	for(i = 0; fd < 0; i++) {
+	    amfree(db_name);
+	    if ((db_name = get_debug_name(curtime, i)) == NULL) {
+		dbprintf(("%s: Cannot create debug file", get_pname()));
+		break;
+	    }
+
+	    s = newvstralloc(s, dbgdir, db_name, NULL);
+	    if (rename(db_filename, s) < 0) {
+		if (errno != EEXIST) {
+		    dbprintf(("%s: Cannot rename debug file: %s", get_pname(),
+			      strerror(errno)));
+		    break;
+		}
+	    }
+	}
+    }
+#else
     /* check if a file with the same name already exist */
     if ((fd = open(s, O_WRONLY|O_CREAT|O_EXCL|O_APPEND, 0640)) < 0) {
 	for(i = 0; fd < 0; i++) {
 	    amfree(db_name);
 	    if ((db_name = get_debug_name(curtime, i)) == NULL) {
-		dbprintf(("Cannot create %s debug file", get_pname()));
+		dbprintf(("%s: Cannot create debug file", get_pname()));
 		break;
 	    }
 
 	    s = newvstralloc(s, dbgdir, db_name, NULL);
 	    if ((fd = open(s, O_WRONLY|O_CREAT|O_EXCL|O_APPEND, 0640)) < 0) {
 		if (errno != EEXIST) {
-		    dbprintf(("Cannot create %s debug file: %s", get_pname(),
+		    dbprintf(("%s Cannot create debug file: %s", get_pname(),
 			      strerror(errno)));
 		    break;
 		}
@@ -422,15 +445,14 @@ debug_rename(
     }
 
     if (fd >= 0) {
-        close(fd);
-	if (unlink(s) == -1) {
-	    dbprintf(("Can't unlink(\"%s\"): %s\n", s, strerror(errno)));
-	}
+	close(fd);
 	if (rename(db_filename, s) == -1) {
 	    dbprintf(("Can't rename(\"%s\",\"%s\"): %s\n", db_filename, s,
 		      strerror(errno)));
 	}
     }
+#endif
+
     (void)umask(mask); /* Restore mask */
     /*
      * Finish setup.
