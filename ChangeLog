@@ -1,3 +1,7 @@
+2007-05-17  Jean-Louis Martineau <martineau@zmanda.com>
+        * util.c (cmp_sockaddr): un-map V4mapped address before comparison.
+	* common-src/security-util.c: add debugging.
+
 2007-05-17  Dustin J. Mitchell <dustun@zmanda.com> (merged by dustin@zmanda.com)
 	* common-src/amanda.h: fix typo (missing 'extern') in erroutput_type
 

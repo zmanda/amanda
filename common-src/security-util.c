@@ -1360,8 +1360,10 @@ udp_netfd_read_callback(
      * If we didn't find a handle, then check for a new incoming packet.
      * If no accept handler was setup, then just return.
      */
-    if (udp->accept_fn == NULL)
+    if (udp->accept_fn == NULL) {
+	dbprintf(_("Receive packet from unknown source"));
 	return;
+    }
 
     rh = alloc(SIZEOF(*rh));
     rh->proto_handle=NULL;
