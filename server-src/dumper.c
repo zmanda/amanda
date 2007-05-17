@@ -1308,11 +1308,6 @@ read_mesgfd(
 	break;
     }
 
-    /*
-     * Reset the timeout for future reads
-     */
-    timeout(conf_dtimeout);
-
     if (ISSET(status, GOT_INFO_ENDLINE) && !ISSET(status, HEADER_DONE)) {
 	SET(status, HEADER_DONE);
 	/* time to do the header */
@@ -1348,6 +1343,11 @@ read_mesgfd(
 	security_stream_read(streams[DATAFD].fd, read_datafd, db);
 	set_datafd = 1;
     }
+
+    /*
+     * Reset the timeout for future reads
+     */
+    timeout(conf_dtimeout);
 }
 
 /*
@@ -1373,11 +1373,6 @@ read_datafd(
 	stop_dump();
 	return;
     }
-
-    /*
-     * Reset the timeout for future reads
-     */
-    timeout(conf_dtimeout);
 
     /* The header had better be written at this point */
     assert(ISSET(status, HEADER_DONE));
@@ -1411,6 +1406,12 @@ read_datafd(
 	stop_dump();
 	return;
     }
+
+    /*
+     * Reset the timeout for future reads
+     */
+    timeout(conf_dtimeout);
+
     security_stream_read(streams[DATAFD].fd, read_datafd, cookie);
 }
 
