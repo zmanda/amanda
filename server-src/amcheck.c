@@ -63,6 +63,7 @@ void usage(void);
 pid_t start_client_checks(int fd);
 pid_t start_server_check(int fd, int do_localchk, int do_tapechk);
 int main(int argc, char **argv);
+int check_tapefile(FILE *outf, char *tapefile);
 int test_server_pgm(FILE *outf, char *dir, char *pgm, int suid, uid_t dumpuid);
 
 void
@@ -543,6 +544,36 @@ char *searchlabel, *labelstr;
 tape_t *tp;
 FILE *errf = NULL;
 
+int check_tapefile(
+    FILE *outf,
+    char *tapefile)
+{
+    struct stat statbuf;
+    char *quoted;
+    int tapebad = 0;
+
+    if (stat(tapefile, &statbuf) == 0) {
+	if (!S_ISREG(statbuf.st_mode)) {
+	    quoted = quote_string(tapefile);
+	    fprintf(outf, _("ERROR: tapelist %s: should be a regular file.\n"),
+		    quoted);
+	    tapebad = 1;
+	    amfree(quoted);
+	} else if (access(tapefile, F_OK) != 0) {
+	    quoted = quote_string(tapefile);
+	    fprintf(outf, _("ERROR: can't access tapelist %s\n"), quoted);
+	    tapebad = 1;
+	    amfree(quoted);
+	} else if (access(tapefile, W_OK) != 0) {
+	    quoted = quote_string(tapefile);
+	    fprintf(outf, _("ERROR: tapelist %s: not writable\n"), quoted);
+	    tapebad = 1;
+	    amfree(quoted);
+	}
+    }
+    return tapebad;
+}
+
 int
 test_server_pgm(
     FILE *	outf,
@@ -732,6 +763,7 @@ start_server_check(
     if(do_localchk || do_tapechk) {
 	char *conf_tapelist;
 	char *tapefile;
+	char *newtapefile;
 	char *tape_dir;
 	char *lastslash;
 	char *holdfile;
@@ -767,28 +799,29 @@ start_server_check(
 	    tapebad = 1;
 	    amfree(quoted);
 	}
-	else if(!S_ISREG(statbuf.st_mode)) {
-	    quoted = quote_string(tapefile);
-	    fprintf(outf, "ERROR: tapelist %s: should be a regular file.\n",
-		    quoted);
-	    tapebad = 1;
-	    amfree(quoted);
-	}
-	else if(access(tapefile, F_OK) != 0) {
-	    quoted = quote_string(tapefile);
-	    fprintf(outf, "ERROR: can't access tapelist %s\n", quoted);
-	    tapebad = 1;
-	    amfree(quoted);
-	} else if(access(tapefile, F_OK) == 0 && access(tapefile, W_OK) != 0) {
-	    quoted = quote_string(tapefile);
-	    fprintf(outf, "ERROR: tapelist %s: not writable\n", quoted);
-	    tapebad = 1;
-	    amfree(quoted);
-	} else if(read_tapelist(tapefile)) {
-	    quoted = quote_string(tapefile);
-	    fprintf(outf, "ERROR: tapelist %s: parse error\n", quoted);
-	    tapebad = 1;
-	    amfree(quoted);
+	else {
+	    tapebad |= check_tapefile(outf, tapefile);
+	    if (tapebad == 0 && read_tapelist(tapefile)) {
+		quoted = quote_string(tapefile);
+		fprintf(outf, _("ERROR: tapelist %s: parse error\n"), quoted);
+		tapebad = 1;
+		amfree(quoted);
+	    }
+	    newtapefile = stralloc2(tapefile, ".new");
+	    tapebad |= check_tapefile(outf, newtapefile);
+	    amfree(newtapefile);
+	    newtapefile = stralloc2(tapefile, ".amlabel");
+	    tapebad |= check_tapefile(outf, newtapefile);
+	    amfree(newtapefile);
+	    newtapefile = stralloc2(tapefile, ".amlabel.new");
+	    tapebad |= check_tapefile(outf, newtapefile);
+	    amfree(newtapefile);
+	    newtapefile = stralloc2(tapefile, ".yesterday");
+	    tapebad |= check_tapefile(outf, newtapefile);
+	    amfree(newtapefile);
+	    newtapefile = stralloc2(tapefile, ".yesterday.new");
+	    tapebad |= check_tapefile(outf, newtapefile);
+	    amfree(newtapefile);
 	}
 	holdfile = vstralloc(config_dir, "/", "hold", NULL);
 	if(access(holdfile, F_OK) != -1) {
@@ -796,6 +829,7 @@ start_server_check(
 	    fprintf(outf, "WARNING: hold file %s exists\n", holdfile);
 	    amfree(quoted);
 	}
+	amfree(newtapefile);
 	amfree(tapefile);
 	amfree(tape_dir);
 	amfree(holdfile);

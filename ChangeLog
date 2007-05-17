@@ -1,4 +1,7 @@
 2007-05-17  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amcheck.c: Check all tapelist filename.
+
+2007-05-17  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/dumper.c (read_datafd): Reset timeout after the write.
 
 2007-05-17  Jean-Louis Martineau <martineau@zmanda.com>
