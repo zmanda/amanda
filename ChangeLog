@@ -1,4 +1,7 @@
 2007-05-17  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/diskfile.c: Fix double free.
+
+2007-05-17  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/amanda.h: define sockaddr_storage and ss_family.
 	* common-src/amanda.h: define INET_ADDRSTRLEN.
 	* config/acinclude.m4i (AC_SOCKADDR_STORAGE): New macro.

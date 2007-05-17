@@ -545,8 +545,6 @@ parse_diskline(
 	    }
 	    return (-1);
 	}
-	amfree(line);
-
 	dtype = read_dumptype(vstralloc("custom(", hostname,
 					":", disk->name, ")", NULL),
 			      diskf, (char*)filename, line_num_p);
@@ -564,6 +562,7 @@ parse_diskline(
 	    }
 	    return (-1);
 	}
+	amfree(line);
 
 	*line_p = line = agets(diskf);
 	line_num = *line_num_p; /* no incr, read_dumptype did it already */
