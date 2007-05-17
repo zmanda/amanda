@@ -1880,6 +1880,8 @@ AC_SUBST(AMPLOT_CAT_GZIP)
 AC_SUBST(AMPLOT_CAT_COMPRESS)
 AC_SUBST(AMPLOT_CAT_PACK)
 
+AC_SOCKADDR_STORAGE
+
 # Determine the printf format characters to use when printing
 # values of type long long. This will normally be "ll", but where
 # the compiler treats "long long" as a alias for "long" and printf
