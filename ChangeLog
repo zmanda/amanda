@@ -1,4 +1,7 @@
 2007-05-17  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/amanda.h: Define AI_V4MAPPED and AI_ALL.
+
+2007-05-17  Jean-Louis Martineau <martineau@zmanda.com>
         * util.c (cmp_sockaddr): un-map V4mapped address before comparison.
 	* common-src/security-util.c: add debugging.
 
