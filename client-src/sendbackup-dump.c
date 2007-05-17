@@ -153,8 +153,7 @@ start_backup(
     snprintf(level_str, SIZEOF(level_str), "%d", level);
 
     qdisk = quote_string(disk);
-    dbprintf(("%s: start: %s:%s lev %d\n",
-	      get_pname(), host, qdisk, level));
+    dbprintf("start: %s:%s lev %d\n", host, qdisk, level);
 
     fprintf(stderr, "%s: start [%s:%s level %d]\n",
 	    get_pname(), host, qdisk, level);
@@ -165,8 +164,7 @@ start_backup(
         encpid = pipespawn(options->clnt_encrypt, STDIN_PIPE,
                        &compout, &dataf, &mesgf,
                        options->clnt_encrypt, encryptopt, NULL);
-        dbprintf(("%s: pid %ld: %s\n",
-                 debug_prefix_time("-gnutar"), (long)encpid, options->clnt_encrypt));
+        dbprintf("gnutar: pid %ld: %s\n", (long)encpid, options->clnt_encrypt);
     } else {
         compout = dataf;
         encpid = -1;
@@ -187,23 +185,22 @@ start_backup(
 	comppid = pipespawn(COMPRESS_PATH, STDIN_PIPE,
 			    &dumpout, &compout, &mesgf,
 			    COMPRESS_PATH, compopt, NULL);
-	dbprintf(("%s: pid %ld: %s",
-		  debug_prefix_time("-dump"), (long)comppid, COMPRESS_PATH));
+	dbprintf("dump: pid %ld: %s", (long)comppid, COMPRESS_PATH);
 	if(compopt != skip_argument) {
-	    dbprintf((" %s", compopt));
+	    dbprintf(" %s", compopt);
 	}
-	dbprintf(("\n"));
+	dbprintf("\n");
      } else if (options->compress == COMP_CUST) {
         compopt = skip_argument;
 	comppid = pipespawn(options->clntcompprog, STDIN_PIPE,
 			    &dumpout, &compout, &mesgf,
 			    options->clntcompprog, compopt, NULL);
-	dbprintf(("%s: pid %ld: %s",
-		  debug_prefix_time("-gnutar-cust"), (long)comppid, options->clntcompprog));
+	dbprintf("gnutar-cust: pid %ld: %s",
+		(long)comppid, options->clntcompprog);
 	if(compopt != skip_argument) {
-	    dbprintf((" %s", compopt));
+	    dbprintf(" %s", compopt);
 	}
-	dbprintf(("\n"));
+	dbprintf("\n");
     } else {
 	dumpout = compout;
 	comppid = -1;
@@ -213,8 +210,7 @@ start_backup(
     device = amname_to_devname(amdevice);
     fstype = amname_to_fstype(amdevice);
 
-    dbprintf(("%s: dumping device '%s' with '%s'\n",
-	      debug_prefix_time(NULL), device, fstype));
+    dbprintf("dumping device '%s' with '%s'\n", device, fstype);
 
 #if defined(USE_RUNDUMP) || !defined(DUMP)
     cmd = vstralloc(libexecdir, "/", "rundump", versionsuffix(), NULL);

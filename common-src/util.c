@@ -33,14 +33,6 @@
 #include "clock.h"
 #include "sockaddr-util.h"
 
-/*#define NET_READ_DEBUG*/
-
-#ifdef NET_READ_DEBUG
-#define netprintf(x)    dbprintf(x)
-#else
-#define netprintf(x)
-#endif
-
 static int make_socket(sa_family_t family);
 static int connect_port(struct sockaddr_storage *addrp, in_port_t port, char *proto,
 			struct sockaddr_storage *svaddr, int nonblock);
@@ -121,9 +113,7 @@ make_socket(
     s = socket(family, SOCK_STREAM, 0);
     if (s == -1) {
         save_errno = errno;
-        dbprintf(("%s: make_socket: socket() failed: %s\n",
-                  debug_prefix_time(NULL),
-                  strerror(save_errno)));
+        dbprintf("make_socket: socket() failed: %s\n", strerror(save_errno));
         errno = save_errno;
         return -1;
     }
@@ -137,9 +127,8 @@ make_socket(
     r = setsockopt(s, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
     if (r < 0) {
 	save_errno = errno;
-	dbprintf(("%s: stream_server: setsockopt(SO_REUSEADDR) failed: %s\n",
-		  debug_prefix_time(NULL),
-		  strerror(errno)));
+	dbprintf("make_socket: setsockopt(SO_REUSEADDR) failed: %s\n",
+		  strerror(errno));
 	errno = save_errno;
     }
 #endif
@@ -149,9 +138,8 @@ make_socket(
 		   (void *)&on, SIZEOF(on));
     if (r == -1) {
 	save_errno = errno;
-	dbprintf(("%s: make_socket: setsockopt() failed: %s\n",
-                  debug_prefix_time(NULL),
-                  strerror(save_errno)));
+	dbprintf("make_socket: setsockopt() failed: %s\n",
+                  strerror(save_errno));
 	aclose(s);
 	errno = save_errno;
 	return -1;
@@ -203,10 +191,9 @@ connect_portrange(
 	}
     }
 
-    dbprintf(("%s: connect_portrange: all ports between %d and %d busy\n",
-	      debug_prefix_time(NULL),
+    dbprintf("connect_portrange: All ports between %d and %d are busy.\n",
 	      first_port,
-	      last_port));
+	      last_port);
     errno = EAGAIN;
     return -1;
 }
@@ -232,17 +219,9 @@ connect_port(
 
     servPort = getservbyport((int)htons(port), proto);
     if (servPort != NULL && !strstr(servPort->s_name, "amanda")) {
-	dbprintf(("%s: connect_port: Skip port %d: Owned by %s.\n",
-		  debug_prefix_time(NULL), port, servPort->s_name));
+	dbprintf("connect_port: Skip port %d: owned by %s.\n",
+		  port, servPort->s_name);
 	return -1;
-    }
-
-    if(servPort == NULL)
-	dbprintf(("%s: connect_port: Try  port %d: Available   - \n",
-		  debug_prefix_time(NULL), port));
-    else {
-	dbprintf(("%s: connect_port: Try  port %d: Owned by %s - \n",
-		  debug_prefix_time(NULL), port, servPort->s_name));
     }
 
     if ((s = make_socket(addrp->ss_family)) == -1) return -2;
@@ -252,14 +231,26 @@ connect_port(
     if (bind(s, (struct sockaddr *)addrp, socklen) != 0) {
 	save_errno = errno;
 	aclose(s);
+	if(servPort == NULL) {
+	    dbprintf("connect_port: Try  port %d: available - %s\n",
+		     port, strerror(errno));
+	} else {
+	    dbprintf("connect_port: Try  port %d: owned by %s - %s\n",
+		     port, servPort->s_name, strerror(errno));
+	}
 	if (save_errno != EADDRINUSE) {
-	    dbprintf(("errno %d strerror %s\n",
-		      errno, strerror(errno)));
 	    errno = save_errno;
 	    return -2;
 	}
+
 	errno = save_errno;
 	return -1;
+    }
+    if(servPort == NULL) {
+	dbprintf("connect_port: Try  port %d: available - Success\n", port);
+    } else {
+	dbprintf("connect_port: Try  port %d: owned by %s - Success\n",
+		  port, servPort->s_name);
     }
 
     /* find out what port was actually used */
@@ -267,9 +258,8 @@ connect_port(
     len = sizeof(*addrp);
     if (getsockname(s, (struct sockaddr *)addrp, &len) == -1) {
 	save_errno = errno;
-	dbprintf(("%s: connect_port: getsockname() failed: %s\n",
-		  debug_prefix_time(NULL),
-		  strerror(save_errno)));
+	dbprintf("connect_port: getsockname() failed: %s\n",
+		  strerror(save_errno));
 	aclose(s);
 	errno = save_errno;
 	return -1;
@@ -279,14 +269,12 @@ connect_port(
 	fcntl(s, F_SETFL, fcntl(s, F_GETFL, 0)|O_NONBLOCK);
     if (connect(s, (struct sockaddr *)svaddr, SS_LEN(svaddr)) == -1 && !nonblock) {
 	save_errno = errno;
-	dbprintf(("%s: connect_portrange: connect from %s failed: %s\n",
-		  debug_prefix_time(NULL),
+	dbprintf("connect_portrange: connect from %s failed: %s\n",
 		  str_sockaddr(addrp),
-		  strerror(save_errno)));
-	dbprintf(("%s: connect_portrange: connect to %s failed: %s\n",
-		  debug_prefix_time(NULL),
+		  strerror(save_errno));
+	dbprintf("connect_portrange: connect to %s failed: %s\n",
 		  str_sockaddr(svaddr),
-		  strerror(save_errno)));
+		  strerror(save_errno));
 	aclose(s);
 	errno = save_errno;
 	if (save_errno == ECONNREFUSED ||
@@ -298,12 +286,10 @@ connect_port(
 	return -1;
     }
 
-    dbprintf(("%s: connected to %s\n",
-              debug_prefix_time(NULL),
-              str_sockaddr(svaddr)));
-    dbprintf(("%s: our side is %s\n",
-              debug_prefix_time(NULL),
-              str_sockaddr(addrp)));
+    dbprintf("connected to %s\n",
+              str_sockaddr(svaddr));
+    dbprintf("our side is %s\n",
+              str_sockaddr(addrp));
     return s;
 }
 
@@ -344,31 +330,34 @@ bind_portrange(
     for (cnt = 0; cnt < num_ports; cnt++) {
 	servPort = getservbyport((int)htons(port), proto);
 	if ((servPort == NULL) || strstr(servPort->s_name, "amanda")) {
-	    if (servPort == NULL) {
-		dbprintf(("%s: bind_portrange2: Try  port %d: Available   - ",
-		      debug_prefix_time(NULL), port));
-	    } else {
-		dbprintf(("%s: bind_portrange2: Try  port %d: Owned by %s - ",
-		      debug_prefix_time(NULL), port, servPort->s_name));
-	    }
 	    SS_SET_PORT(addrp, port);
 	    socklen = SS_LEN(addrp);
 	    if (bind(s, (struct sockaddr *)addrp, socklen) >= 0) {
-	        dbprintf(("Success\n"));
+		if (servPort == NULL) {
+		    dbprintf("bind_portrange2: Try  port %d: Available - Success\n", port);
+		} else {
+		    dbprintf("bind_portrange2: Try  port %d: Owned by %s - Success.\n", port, servPort->s_name);
+		}
 		return 0;
 	    }
-	    dbprintf(("%s\n", strerror(errno)));
+	    if (servPort == NULL) {
+		dbprintf("bind_portrange2: Try  port %d: Available - %s\n",
+			port, strerror(errno));
+	    } else {
+		dbprintf("bind_portrange2: Try  port %d: Owned by %s - %s\n",
+			port, servPort->s_name, strerror(errno));
+	    }
+	    dbprintf("%s\n", strerror(errno));
 	} else {
-	        dbprintf(("%s: bind_portrange2: Skip port %d: Owned by %s.\n",
-		      debug_prefix_time(NULL), port, servPort->s_name));
+	        dbprintf("bind_portrange2: Skip port %d: Owned by %s.\n",
+		      port, servPort->s_name);
 	}
 	if (++port > last_port)
 	    port = first_port;
     }
-    dbprintf(("%s: bind_portrange: all ports between %d and %d busy\n",
-		  debug_prefix_time(NULL),
+    dbprintf("bind_portrange: all ports between %d and %d busy\n",
 		  first_port,
-		  last_port));
+		  last_port);
     errno = EAGAIN;
     return -1;
 }
@@ -423,6 +412,24 @@ construct_timestamp(
 	     tm->tm_year+1900, tm->tm_mon+1, tm->tm_mday,
 	     tm->tm_hour, tm->tm_min, tm->tm_sec);
     return stralloc(timestamp);
+}
+
+
+/*
+ * Get current GMT time and return a message timestamp.
+ * Used for printf calls to logs and such.
+ */
+char *
+msg_timestamp(void)
+{
+    static char timestamp[128];
+    struct timeval tv;
+
+    gettimeofday(&tv, NULL);
+    snprintf(timestamp, SIZEOF(timestamp), "%lld.%06ld",
+		(long long)tv.tv_sec, (long)tv.tv_usec);
+
+    return timestamp;
 }
 
 

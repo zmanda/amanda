@@ -128,7 +128,7 @@ main(
     erroutput_type = (ERR_INTERACTIVE|ERR_SYSLOG);
     dbopen(DBG_SUBDIR_CLIENT);
     startclock();
-    dbprintf(("%s: version %s\n", get_pname(), version()));
+    dbprintf("version %s\n", version());
 
     if(argc > 2 && strcmp(argv[1], "amandad") == 0) {
 	amandad_auth = stralloc(argv[2]);
@@ -317,8 +317,6 @@ main(
     malloc_size_2 = malloc_inuse(&malloc_hist_2);
 
     if(malloc_size_1 != malloc_size_2) {
-	extern int dbfd;
-
 	malloc_list(dbfd(), malloc_hist_1, malloc_hist_2);
     }
 #endif
@@ -328,10 +326,9 @@ main(
 
  err:
     printf("ERROR [BOGUS REQUEST PACKET]\n");
-    dbprintf(("%s: REQ packet is bogus%s%s\n",
-	      debug_prefix_time(NULL),
+    dbprintf("REQ packet is bogus%s%s\n",
 	      err_extra ? ": " : "",
-	      err_extra ? err_extra : ""));
+	      err_extra ? err_extra : "");
     dbclose();
     return 1;
 }
@@ -522,14 +519,12 @@ check_disk(
 
     (void)level;	/* Quiet unused parameter warning */
 
-    dbprintf(("%s: checking disk %s\n", debug_prefix_time(NULL), qdisk));
+    dbprintf("checking disk %s\n", qdisk);
 
     if(strcmp(myprogram,"CALCSIZE") == 0) {
 	if(amdevice[0] == '/' && amdevice[1] == '/') {
-	    err = vstralloc("Can't use CALCSIZE for samba estimate,",
-			    " use CLIENT: ",
-			    amdevice,
-			    NULL);
+	    err = vstrallocf("Can't use CALCSIZE for samba estimate, use CLIENT: %s",
+			    amdevice);
 	    goto common_exit;
 	}
 	myprogram = calcprog;
@@ -544,7 +539,6 @@ check_disk(
 	    size_t pwtext_len;
 	    pid_t checkpid;
 	    amwait_t retstat;
-	    char number[NUM_STR_SIZE];
 	    pid_t wpid;
 	    int ret, sig, rc;
 	    char *line;
@@ -555,35 +549,33 @@ check_disk(
 
 	    parsesharename(amdevice, &share, &subdir);
 	    if (!share) {
-		err = stralloc2("cannot parse for share/subdir disk entry ", amdevice);
+		err = vstrallocf("cannot parse for share/subdir disk entry %s", amdevice);
 		goto common_exit;
 	    }
 	    if ((subdir) && (SAMBA_VERSION < 2)) {
-		err = vstralloc("subdirectory specified for share '",
-				amdevice,
-				"' but samba not v2 or better",
-				NULL);
+		err = vstrallocf("subdirectory specified for share '%s' but, samba is not v2 or better",
+				amdevice);
 		goto common_exit;
 	    }
 	    if ((user_and_password = findpass(share, &domain)) == NULL) {
-		err = stralloc2("cannot find password for ", amdevice);
+		err = vstrallocf("cannot find password for %s", amdevice);
 		goto common_exit;
 	    }
 	    lpass = strlen(user_and_password);
 	    if ((pwtext = strchr(user_and_password, '%')) == NULL) {
-		err = stralloc2("password field not \'user%pass\' for ", amdevice);
+		err = vstrallocf("password field not \'user%%pass\' for %s", amdevice);
 		goto common_exit;
 	    }
 	    *pwtext++ = '\0';
 	    pwtext_len = (size_t)strlen(pwtext);
 	    amfree(device);
 	    if ((device = makesharename(share, 0)) == NULL) {
-		err = stralloc2("cannot make share name of ", share);
+		err = vstrallocf("cannot make share name of %s", share);
 		goto common_exit;
 	    }
 
 	    if ((nullfd = open("/dev/null", O_RDWR)) == -1) {
-	        err = stralloc2("Cannot access /dev/null : ", strerror(errno));
+	        err = vstrallocf("Cannot access /dev/null : %s", strerror(errno));
 		goto common_exit;
 	    }
 
@@ -613,11 +605,8 @@ check_disk(
 	    /*@ignore@*/
 	    if ((pwtext_len > 0)
 	      && fullwrite(passwdfd, pwtext, (size_t)pwtext_len) < 0) {
-		err = vstralloc("password write failed: ",
-				amdevice,
-				": ",
-				strerror(errno),
-				NULL);
+		err = vstrallocf("password write failed: %s: %s",
+				amdevice, strerror(errno));
 		aclose(passwdfd);
 		goto common_exit;
 	    }
@@ -655,29 +644,30 @@ check_disk(
 		    rc = ret = WEXITSTATUS(retstat);
 		}
 		if (rc != 0) {
-		    strappend(err, sep);
 		    if (ret == 0) {
-			strappend(err, "got signal ");
+			err = newvstrallocf(err, "%s%s got signal %d",
+				sep, err, sig);
 			ret = sig;
 		    } else {
-			strappend(err, "returned ");
+			err = newvstrallocf(err, "%s%s returned %d",
+				sep, err, ret);
 		    }
-		    snprintf(number, (size_t)sizeof(number), "%d", ret);
-		    strappend(err, number);
 		}
 	    }
 	    if (errdos != 0 || rc != 0) {
-		err = newvstralloc(err,
-				   "samba access error: ",
-				   amdevice,
-				   ": ",
-				   extra_info ? extra_info : "",
-				   err,
-				   NULL);
-		amfree(extra_info);
+		if (extra_info) {
+		    err = newvstrallocf(err,
+				   "samba access error: %s: %s %s",
+				   amdevice, extra_info, err);
+		    amfree(extra_info);
+		} else {
+		    err = newvstrallocf(err, "samba access error: %s: %s",
+				   amdevice, err);
+		}
 	    }
 #else
-	    err = stralloc2("This client is not configured for samba: ", qdisk);
+	    err = vstrallocf("This client is not configured for samba: %s",
+			qdisk);
 #endif
 	    goto common_exit;
 	}
@@ -686,10 +676,9 @@ check_disk(
 	device = amname_to_dirname(amdevice);
     } else if (strcmp(myprogram, "DUMP") == 0) {
 	if(amdevice[0] == '/' && amdevice[1] == '/') {
-	    err = vstralloc("The DUMP program cannot handle samba shares,",
-			    " use GNUTAR: ",
-			    qdisk,
-			    NULL);
+	    err = vstrallocf(
+		  "The DUMP program cannot handle samba shares, use GNUTAR: %s",
+		  qdisk);
 	    goto common_exit;
 	}
 #ifdef VDUMP								/* { */
@@ -810,7 +799,7 @@ check_disk(
     }
 
     qdevice = quote_string(device);
-    dbprintf(("%s: device %s\n", debug_prefix_time(NULL), qdevice));
+    dbprintf("device %s\n", qdevice);
 
     /* skip accessability test if this is an AFS entry */
     if(strncmp_const(device, "afs:") != 0) {
@@ -822,8 +811,8 @@ check_disk(
 	access_type = "access";
 #endif
 	if(access_result == -1) {
-	    err = vstralloc("could not ", access_type, " ", qdevice,
-			" (", qdisk, "): ", strerror(errno), NULL);
+	    err = vstrallocf("Could not access %s (%s): %s",
+			qdevice, qdisk, strerror(errno));
 	}
 #ifdef CHECK_FOR_ACCESS_WITH_OPEN
 	aclose(access_result);
@@ -842,19 +831,18 @@ common_exit:
 
     if(err) {
 	printf("ERROR [%s]\n", err);
-	dbprintf(("%s: %s\n", debug_prefix_time(NULL), err));
+	dbprintf("%s\n", err);
 	amfree(err);
     } else {
 	printf("OK %s\n", qdisk);
-	dbprintf(("%s: disk %s OK\n", debug_prefix_time(NULL), qdisk));
+	dbprintf("disk %s OK\n", qdisk);
 	printf("OK %s\n", qamdevice);
-	dbprintf(("%s: amdevice %s OK\n",
-		  debug_prefix_time(NULL), qamdevice));
+	dbprintf("amdevice %s OK\n", qamdevice);
 	printf("OK %s\n", qdevice);
-	dbprintf(("%s: device %s OK\n", debug_prefix_time(NULL), qdevice));
+	dbprintf("device %s OK\n", qdevice);
     }
     if(extra_info) {
-	dbprintf(("%s: extra info: %s\n", debug_prefix_time(NULL), extra_info));
+	dbprintf("extra info: %s\n", extra_info);
 	amfree(extra_info);
     }
     amfree(qdisk);

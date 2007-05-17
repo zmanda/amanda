@@ -90,16 +90,15 @@ get_client_line(FILE *in)
     while(1) {
 	if((part = agets(in)) == NULL) {
 	    if(errno != 0) {
-		dbprintf(("%s: read error: %s\n",
-			  debug_prefix_time(NULL), strerror(errno)));
+		dbprintf("read error: %s\n", strerror(errno));
 	    } else {
-		dbprintf(("%s: EOF reached\n", debug_prefix_time(NULL)));
+		dbprintf("EOF reached\n");
 	    }
 	    if(line) {
-		dbprintf(("%s: unprocessed input:\n", debug_prefix_time(NULL)));
-		dbprintf(("-----\n"));
-		dbprintf(("%s\n", line));
-		dbprintf(("-----\n"));
+		dbprintf("s: unprocessed input:\n");
+		dbprintf("-----\n");
+		dbprintf("%s\n", line);
+		dbprintf("-----\n");
 	    }
 	    amfree(line);
 	    amfree(part);
@@ -125,7 +124,7 @@ get_client_line(FILE *in)
 	 */
 	strappend(line, "\n");
     }
-    dbprintf(("%s: > %s\n", debug_prefix_time(NULL), line));
+    dbprintf("> %s\n", line);
     return line;
 }
 
@@ -153,8 +152,8 @@ get_client_line_fd(
 		/* Keep looping if failure is temporary */
 		continue;
 	    }
-	    dbprintf(("%s: Control pipe read error - %s\n",
-		      pgm, strerror(errno)));
+	    dbprintf("%s: Control pipe read error - %s\n",
+		      pgm, strerror(errno));
 	    break;
 	}
 
@@ -193,8 +192,7 @@ check_security_buffer(
     char *s, *fp, ch;
     char *errstr = NULL;
 
-    dbprintf(("%s: check_security_buffer(buffer='%s')\n",
-		debug_prefix_time(NULL), buffer));
+    dbprintf("check_security_buffer(buffer='%s')\n", buffer);
 
     i = SIZEOF(addr);
     if (getpeername(0, (struct sockaddr *)&addr, &i) == -1) {
@@ -320,15 +318,14 @@ main(
     (void)close(STDERR_FILENO);
     dbopen(DBG_SUBDIR_SERVER);
     startclock();
-    dbprintf(("%s: version %s\n", pgm, version()));
+    dbprintf("%s: version %s\n", pgm, version());
 #ifdef DEBUG_CODE
     if(dbfd() != -1 && dbfd() != STDERR_FILENO)
     {
 	if(dup2(dbfd(),STDERR_FILENO) != STDERR_FILENO)
 	{
 	    perror("amidxtaped can't redirect stderr to the debug file");
-	    dbprintf(("%s: can't redirect stderr to the debug file\n",
-		      debug_prefix_time(NULL)));
+	    dbprintf("can't redirect stderr to the debug file\n");
 	    return 1;
 	}
     }
@@ -343,8 +340,7 @@ main(
 #endif
 
     if (! (argc >= 1 && argv != NULL && argv[0] != NULL)) {
-	dbprintf(("%s: WARNING: argv[0] not defined: check inetd.conf\n",
-		  debug_prefix_time(NULL)));
+	dbprintf("WARNING: argv[0] not defined: check inetd.conf\n");
     }
 
     if(from_amandad == 0) {
@@ -477,7 +473,7 @@ main(
     amfree(buf);
 
     if(!tapes && rst_flags->alt_tapedev){
-	dbprintf(("%s: Looks like we're restoring from a holding file...\n", debug_prefix_time(NULL)));
+	dbprintf("Looks like we're restoring from a holding file...\n");
         tapes = unmarshal_tapelist_str(rst_flags->alt_tapedev);
 	tapes->isafile = 1;
 	amfree(rst_flags->alt_tapedev);
@@ -489,8 +485,7 @@ main(
 	config_dir = vstralloc(CONFIG_DIR, "/", re_config, "/", NULL);
 	conffile = stralloc2(config_dir, CONFFILE_NAME);
 	if (read_conffile(conffile)) {
-	    dbprintf(("%s: config '%s' not found\n",
-		      debug_prefix_time(NULL), re_config));
+	    dbprintf("config '%s' not found\n", re_config);
 	    amfree(re_config);
 	    re_config = NULL;
 	}
@@ -507,10 +502,10 @@ main(
                                getconf_str(CNF_TPCHANGER)) == 0 ) ) ) ) {
 	/* We need certain options, if restoring from more than one tape */
         if(tapes->next && !am_has_feature(their_features, fe_recover_splits)) {
-            error("%s: Client must support split dumps to restore requested data.",  get_pname());
+            error("Client must support split dumps to restore requested data.");
             /*NOTREACHED*/
         }
-	dbprintf(("%s: Restoring from changer, checking labels\n", get_pname()));
+	dbprintf("Restoring from changer, checking labels\n");
 	rst_flags->check_labels = 1;
 	use_changer = 1;
     }
@@ -520,7 +515,7 @@ main(
     if(re_config &&
        (use_changer || (rst_flags->alt_tapedev && tapedev &&
                         strcmp(rst_flags->alt_tapedev, tapedev) == 0) ) ) {
-	dbprintf(("%s: Locking devices\n", get_pname()));
+	dbprintf("Locking devices\n");
 	parent_pid = getpid();
 	atexit(cleanup);
 	get_lock = lock_logfile();
@@ -528,7 +523,7 @@ main(
 
     /* Init the tape changer */
     if(tapes && use_changer && changer_init() == 0) {
-	dbprintf(("%s: No changer available\n", debug_prefix_time(NULL)));
+	dbprintf("No changer available\n");
     }
 
     /* Read the default block size from the tape type */
@@ -556,15 +551,14 @@ main(
 	    int data_fd;
 	    char *buf;
 
-	    dbprintf(("%s: Client understands split dumpfiles\n",get_pname()));
+	    dbprintf("Client understands split dumpfiles\n");
 
 	    if((data_sock = stream_server(&data_port, STREAM_BUFSIZE, 
 		 STREAM_BUFSIZE, 0)) < 0){
-		error("%s: could not create data socket: %s", get_pname(),
-		      strerror(errno));
+		error("could not create data socket: %s", strerror(errno));
 		/*NOTREACHED*/
 	    }
-	    dbprintf(("%s: Local port %d set aside for data\n", get_pname(),			     data_port));
+	    dbprintf("Local port %d set aside for data\n", data_port);
 
 	    /* tell client where to connect */
 	    printf("CONNECT %hu\n", (unsigned short)data_port);
@@ -587,8 +581,7 @@ main(
 	rst_flags->pipe_to_fd = fileno(stdout);
         cmdout = stderr;
     }
-    dbprintf(("%s: Sending output to file descriptor %d\n",
-	      get_pname(), rst_flags->pipe_to_fd));
+    dbprintf("Sending output to file descriptor %d\n", rst_flags->pipe_to_fd);
 
 
     tapedev = getconf_str(CNF_TAPEDEV);
@@ -617,7 +610,7 @@ main(
     /* actual restoration */
     search_tapes(cmdout, cmdin, use_changer, tapes, match_list, rst_flags,
 		 their_features);
-    dbprintf(("%s: Restoration finished\n", debug_prefix_time(NULL)));
+    dbprintf("Restoration finished\n");
 
     /* cleanup */
     if(rst_flags->pipe_to_fd != -1) aclose(rst_flags->pipe_to_fd);

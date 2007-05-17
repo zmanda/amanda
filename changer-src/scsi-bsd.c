@@ -231,10 +231,10 @@ int SCSI_ExecuteCommand(int DeviceFD,
     memcpy(pRequestSense, ds.sense, RequestSenseLength);
     if (Result < 0)
       {
-        dbprintf(("errno : %s\n",strerror(errno)));
+        dbprintf("errno : %s\n",strerror(errno));
         return (SCSI_ERROR);
       }
-    dbprintf(("SCSI_ExecuteCommand(BSD) %02X STATUS(%02X) \n", CDB[0], ds.retsts));
+    dbprintf("SCSI_ExecuteCommand(BSD) %02X STATUS(%02X) \n", CDB[0], ds.retsts);
     switch (ds.retsts)
       {
       case SCCMD_BUSY:                /*  BUSY */
@@ -279,7 +279,7 @@ int Tape_Ioctl( int DeviceFD, int command)
 
   if (ioctl(pDev[DeviceFD].fd , MTIOCTOP, &mtop) != 0)
     {
-      dbprintf(("Tape_Ioctl error ioctl %s\n",strerror(errno)));
+      dbprintf("Tape_Ioctl error ioctl %s\n",strerror(errno));
       SCSI_CloseDevice(DeviceFD);
       return(-1);
     }

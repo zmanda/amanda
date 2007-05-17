@@ -190,9 +190,9 @@ int SCSI_ExecuteCommand(int DeviceFD,
       {
         if (SCSI_OpenDevice(DeviceFD) == 0)
           {
-            dbprintf(("SCSI_ExecuteCommand could not open %s: %s\n",
+            dbprintf("SCSI_ExecuteCommand could not open %s: %s\n",
                       pDev[DeviceFD].dev,
-	              strerror(errno)));
+	              strerror(errno));
             sleep(1); /* Give device a little time befor retry */
             continue;
           }
@@ -251,7 +251,7 @@ int Tape_Ioctl( int DeviceFD, int command)
 
   if (ioctl(pDev[DeviceFD].fd , MTIOCTOP, &mtop) != 0)
     {
-      dbprintf(("Tape_Ioctl error ioctl %s\n", strerror(errno)));
+      dbprintf("Tape_Ioctl error ioctl %s\n", strerror(errno));
       SCSI_CloseDevice(DeviceFD);
       return(-1);
     }
@@ -274,12 +274,12 @@ int Tape_Status( int DeviceFD)
 
   if (ioctl(pDev[DeviceFD].fd, MTIOCGET, &mtget) != 0)
   {
-     dbprintf(("Tape_Status error ioctl %s\n", strerror(errno)));
+     dbprintf("Tape_Status error ioctl %s\n", strerror(errno));
      SCSI_CloseDevice(DeviceFD);
      return(-1);
   }
 
-  dbprintf(("ioctl -> mtget.mt_gstat %X\n",mtget.mt_gstat));
+  dbprintf("ioctl -> mtget.mt_gstat %X\n",mtget.mt_gstat);
   if (GMT_ONLINE(mtget.mt_gstat))
   {
     ret = TAPE_ONLINE;

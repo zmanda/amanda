@@ -739,8 +739,8 @@ file_tapefd_read(
 	volume_info[fd].at_bof = 0;
 	if ((size_t)result < record_size) {
 	    if (lseek(file_fd, (off_t)(record_size-result), SEEK_CUR) == (off_t)-1) {
-		dbprintf(("file_tapefd_read: lseek failed: <%s>\n",
-			  strerror(errno)));
+		dbprintf("file_tapefd_read: lseek failed: <%s>\n",
+			  strerror(errno));
 	    }
 	}
 	volume_info[fd].record_current += (off_t)1;
@@ -850,13 +850,13 @@ file_tapefd_write(
 	off_t curpos;
 
 	if ((curpos = lseek(file_fd, (off_t)0, SEEK_CUR)) < 0) {
-	    dbprintf((": Can not determine current file position <%s>",
-		strerror(errno)));
+	    dbprintf(": Can not determine current file position <%s>",
+		strerror(errno));
 	    return -1;
 	}
 	if (ftruncate(file_fd, curpos) != 0) {
-	    dbprintf(("ftruncate failed; Can not trim output file <%s>",
-		strerror(errno)));
+	    dbprintf("ftruncate failed; Can not trim output file <%s>",
+		strerror(errno));
 	    return -1;
 	}
 	volume_info[fd].at_bof = 0;
@@ -883,7 +883,6 @@ file_tapefd_close(
     int save_errno;
     char *line;
     size_t len;
-    char number[NUM_STR_SIZE];
     ssize_t result;
     struct file_info **fi_p;
     struct record_info **ri_p;
@@ -943,9 +942,8 @@ file_tapefd_close(
 	    errno = save_errno;
 	    return -1;
 	}
-	snprintf(number, SIZEOF(number), "%05" OFF_T_RFMT,
+	line = vstrallocf("position %05" OFF_T_RFMT "\n",
 		 (OFF_T_FMT_TYPE)volume_info[fd].file_current);
-	line = vstralloc("position ", number, "\n", NULL);
 	len = strlen(line);
 	result = write(fd, line, len);
 	amfree(line);
@@ -1209,16 +1207,16 @@ file_tapefd_weof(
 
 	if ((curpos = lseek(file_fd, (off_t)0, SEEK_CUR)) < 0) {
 	    save_errno = errno;
-	    dbprintf((": Can not determine current file position <%s>",
-		strerror(errno)));
+	    dbprintf(": Can not determine current file position <%s>",
+		strerror(errno));
 	    file_close(fd);
 	    errno = save_errno;
 	    return -1;
 	}
 	if (ftruncate(file_fd, curpos) != 0) {
 	    save_errno = errno;
-	    dbprintf(("ftruncate failed; Can not trim output file <%s>",
-		strerror(errno)));
+	    dbprintf("ftruncate failed; Can not trim output file <%s>",
+		strerror(errno));
 	    file_close(fd);
 	    errno = save_errno;
 	    return -1;

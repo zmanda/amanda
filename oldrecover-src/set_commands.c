@@ -285,7 +285,7 @@ cd_glob(
 
     uqglob = unquote_string(glob);
     regex = glob_to_regex(uqglob);
-    dbprintf(("cd_glob (%s) -> %s\n", uqglob, regex));
+    dbprintf("cd_glob (%s) -> %s\n", uqglob, regex);
     if ((s = validate_regexp(regex)) != NULL) {
         printf("\"%s\" is not a valid shell wildcard pattern: ", glob);
         puts(s);

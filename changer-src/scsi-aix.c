@@ -133,7 +133,7 @@ int SCSI_OpenDevice(int ip)
            pDev[ip].inquiry = NULL;
            return(1);
        } else {
-	 dbprintf(("SCSI_OpenDevice %s failed\n", pDev[ip].dev));
+	 dbprintf("SCSI_OpenDevice %s failed\n", pDev[ip].dev);
          return(0);
        }
     } else {
@@ -313,17 +313,17 @@ int SCSI_ExecuteCommand(int DeviceFD,
                DecodeExtSense(&ExtendedRequestSense, "SCSI_ExecuteCommand:", debug_file);
                bcopy(&ExtendedRequestSense, RequestSenseBuf, RequestSenseLength);
               */
-              dbprintf(("ioctl on %d return %d\n", pDev[DeviceFD].fd, Result));
-              dbprintf(("ret: %d errno: %d (%s)\n", Result, errno, ""));
-              dbprintf(("data_length:     %d\n", ds.data_length));
-              dbprintf(("buffer:          0x%X\n", ds.buffer));
-              dbprintf(("timeout_value:   %d\n", ds.timeout_value));
-              dbprintf(("status_validity: %d\n", ds.status_validity));
-              dbprintf(("scsi_bus_status: 0x%X\n", ds.scsi_bus_status));
-              dbprintf(("adapter_status:  0x%X\n", ds.adapter_status));
-              dbprintf(("adap_q_status:   0x%X\n", ds.adap_q_status));
-              dbprintf(("q_tag_msg:       0x%X\n", ds.q_tag_msg));
-              dbprintf(("flags:           0X%X\n", ds.flags));
+              dbprintf("ioctl on %d return %d\n", pDev[DeviceFD].fd, Result);
+              dbprintf("ret: %d errno: %d (%s)\n", Result, errno, "");
+              dbprintf("data_length:     %d\n", ds.data_length);
+              dbprintf("buffer:          0x%X\n", ds.buffer);
+              dbprintf("timeout_value:   %d\n", ds.timeout_value);
+              dbprintf("status_validity: %d\n", ds.status_validity);
+              dbprintf("scsi_bus_status: 0x%X\n", ds.scsi_bus_status);
+              dbprintf("adapter_status:  0x%X\n", ds.adapter_status);
+              dbprintf("adap_q_status:   0x%X\n", ds.adap_q_status);
+              dbprintf("q_tag_msg:       0x%X\n", ds.q_tag_msg);
+              dbprintf("flags:           0X%X\n", ds.flags);
               return(SCSI_ERROR);
             }
         }

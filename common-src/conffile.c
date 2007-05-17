@@ -2920,13 +2920,13 @@ read_client_conffile_recursively(
     }
 
     if((conf_conf = fopen(conf_confname, "r")) == NULL) {
-	dbprintf(("Could not open conf file \"%s\": %s\n", conf_confname,
-		  strerror(errno)));
+	dbprintf("Could not open conf file \"%s\": %s\n", conf_confname,
+		  strerror(errno));
 	amfree(conf_confname);
 	got_parserror = -1;
 	return;
     }
-    dbprintf(("Reading conf file \"%s\".\n", conf_confname));
+    dbprintf("Reading conf file \"%s\".\n", conf_confname);
 
     conf_line_num = 0;
 

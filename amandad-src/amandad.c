@@ -48,9 +48,9 @@
 #define	REP_TIMEOUT	(6*60*60)	/* secs for service to reply */
 #define	ACK_TIMEOUT  	10		/* XXX should be configurable */
 
-#define amandad_debug(i,x) do {		\
+#define amandad_debug(i, ...) do {	\
 	if ((i) <= debug_amandad) {	\
-		dbprintf(x);		\
+		dbprintf(__VA_ARGS__);	\
 	}				\
 } while (0)
 
@@ -345,9 +345,8 @@ main(
 	    r = setsockopt(in, SOL_SOCKET, SO_REUSEADDR,
 		(void *)&on, (socklen_t)sizeof(on));
 	    if (r < 0) {
-		dbprintf(("%s: amandad: setsockopt(SO_REUSEADDR) failed: %s\n",
-			  debug_prefix_time(NULL),
-			  strerror(errno)));
+		dbprintf("amandad: setsockopt(SO_REUSEADDR) failed: %s\n",
+			  strerror(errno));
 	    }
 #endif
 
@@ -392,9 +391,8 @@ main(
 	    r = setsockopt(sock, SOL_SOCKET, SO_REUSEADDR,
 		(void *)&on, (socklen_t)sizeof(on));
 	    if (r < 0) {
-		dbprintf(("%s: amandad: setsockopt(SO_REUSEADDR) failed: %s\n",
-			  debug_prefix_time(NULL),
-			  strerror(errno)));
+		dbprintf("amandad: setsockopt(SO_REUSEADDR) failed: %s\n",
+			  strerror(errno));
 	    }
 #endif
 #ifdef WORKING_IPV6
@@ -437,8 +435,7 @@ main(
 		    if (strcmp(services[j].name, argv[i]) == 0)
 			break;
 		if (j == (int)NSERVICES) {
-		    dbprintf(("%s: %s: invalid service\n",
-			      debug_prefix_time(NULL), argv[i]));
+		    dbprintf("%s: invalid service\n", argv[i]);
 		    exit(1);
 		}
 		services[j].active = 1;
@@ -469,14 +466,13 @@ main(
 
     startclock();
 
-    dbprintf(("%s: version %s\n", get_pname(), version()));
+    dbprintf("version %s\n", version());
     for (i = 0; version_info[i] != NULL; i++) {
-	dbprintf(("%s: %s", debug_prefix_time(NULL), version_info[i]));
+	dbprintf("    %s", version_info[i]);
     }
 
     if (! (argc >= 1 && argv != NULL && argv[0] != NULL)) {
-	dbprintf(("%s: WARNING: argv[0] not defined: check inetd.conf\n",
-		  debug_prefix_time(NULL)));
+	dbprintf("WARNING: argv[0] not defined: check inetd.conf\n");
     }
 
     /*
@@ -570,8 +566,7 @@ protocol_accept(
      * If pkt is NULL, then there was a problem with the new connection.
      */
     if (pkt == NULL) {
-	dbprintf(("%s: accept error: %s\n",
-	    debug_prefix_time(NULL), security_geterror(handle)));
+	dbprintf("accept error: %s\n", security_geterror(handle));
 	pkt_init(&pkt_out, P_NAK, "ERROR %s\n", security_geterror(handle));
 	do_sendpkt(handle, &pkt_out);
 	amfree(pkt_out.body);
@@ -579,15 +574,15 @@ protocol_accept(
 	return;
     }
 
-    dbprintf(("%s: accept recv %s pkt:\n<<<<<\n%s>>>>>\n",
-	debug_prefix_time(NULL), pkt_type2str(pkt->type), pkt->body));
+    dbprintf("accept recv %s pkt:\n<<<<<\n%s>>>>>\n",
+	pkt_type2str(pkt->type), pkt->body);
 
     /*
      * If this is not a REQ packet, just forget about it.
      */
     if (pkt->type != P_REQ) {
-	dbprintf(("%s: received unexpected %s packet:\n<<<<<\n%s>>>>>\n\n",
-	    debug_prefix_time(NULL), pkt_type2str(pkt->type), pkt->body));
+	dbprintf("received unexpected %s packet:\n<<<<<\n%s>>>>>\n\n",
+	    pkt_type2str(pkt->type), pkt->body);
 	security_close(handle);
 	return;
     }
@@ -623,16 +618,14 @@ protocol_accept(
 	if (services[i].active == 1 && strcmp(services[i].name, service) == 0)
 	    break;
     if (i == (int)NSERVICES) {
-	dbprintf(("%s: %s: invalid service\n",
-	    debug_prefix_time(NULL), service));
+	dbprintf("%s: invalid service\n", service);
 	pkt_init(&pkt_out, P_NAK, "ERROR %s: invalid service, add '%s' as argument to amandad\n", service, service);
 	goto send_pkt_out;
     }
 
     service_path = vstralloc(libexecdir, "/", service, versionsuffix(), NULL);
     if (access(service_path, X_OK) < 0) {
-	dbprintf(("%s: can't execute %s: %s\n",
-	    debug_prefix_time(NULL), service_path, strerror(errno)));
+	dbprintf("can't execute %s: %s\n", service_path, strerror(errno));
 	    pkt_init(&pkt_out, P_NAK,
 		     "ERROR execute access to \"%s\" denied\n",
 		     service_path);
@@ -644,8 +637,8 @@ protocol_accept(
 	as = TAILQ_NEXT(as, tq)) {
 	    if (strcmp(as->cmd, service_path) == 0 &&
 		strcmp(as->arguments, arguments) == 0) {
-		    dbprintf(("%s: %s %s: already running, acking req\n",
-			debug_prefix_time(NULL), service, arguments));
+		    dbprintf("%s %s: already running, acking req\n",
+			service, arguments);
 		    pkt_init_empty(&pkt_out, P_ACK);
 		    goto send_pkt_out_no_delete;
 	    }
@@ -655,13 +648,11 @@ protocol_accept(
      * create a new service instance, and send the arguments down
      * the request pipe.
      */
-    dbprintf(("%s: creating new service: %s\n%s\n",
-	debug_prefix_time(NULL), service, arguments));
+    dbprintf("creating new service: %s\n%s\n", service, arguments);
     as = service_new(handle, service_path, arguments);
     if (writebuf(as, arguments, strlen(arguments)) < 0) {
 	const char *errmsg = strerror(errno);
-	dbprintf(("%s: error sending arguments to %s: %s\n",
-	    debug_prefix_time(NULL), service, errmsg));
+	dbprintf("error sending arguments to %s: %s\n", service, errmsg);
 	pkt_init(&pkt_out, P_NAK, "ERROR error writing arguments to %s: %s\n",
 	    service, errmsg);
 	goto send_pkt_out;
@@ -683,8 +674,8 @@ protocol_accept(
 
 badreq:
     pkt_init(&pkt_out, P_NAK, "ERROR invalid REQ\n");
-    dbprintf(("%s: received invalid %s packet:\n<<<<<\n%s>>>>>\n\n",
-	debug_prefix_time(NULL), pkt_type2str(pkt->type), pkt->body));
+    dbprintf("received invalid %s packet:\n<<<<<\n%s>>>>>\n\n",
+	pkt_type2str(pkt->type), pkt->body);
 
 send_pkt_out:
     if(as)
@@ -713,26 +704,22 @@ state_machine(
     state_t curstate;
     pkt_t nak;
 
-    amandad_debug(1, ("%s: state_machine: %p entering\n",
-		      debug_prefix_time(NULL), as));
+    amandad_debug(1, "state_machine: %p entering\n", as);
     for (;;) {
 	curstate = as->state;
-	amandad_debug(1, ("%s: state_machine: %p curstate=%s action=%s\n",
-			  debug_prefix_time(NULL), as,
-			  state2str(curstate), action2str(action)));
+	amandad_debug(1, "state_machine: %p curstate=%s action=%s\n", as,
+			  state2str(curstate), action2str(action));
 	retaction = (*curstate)(as, action, pkt);
-	amandad_debug(1, ("%s: state_machine: %p curstate=%s returned %s (nextstate=%s)\n",
-			  debug_prefix_time(NULL),
+	amandad_debug(1, "state_machine: %p curstate=%s returned %s (nextstate=%s)\n",
 			  as, state2str(curstate), action2str(retaction),
-			  state2str(as->state)));
+			  state2str(as->state));
 
 	switch (retaction) {
 	/*
 	 * State has queued up and is now blocking on input.
 	 */
 	case A_PENDING:
-	    amandad_debug(1, ("%s: state_machine: %p leaving (A_PENDING)\n",
-			      debug_prefix_time(NULL), as));
+	    amandad_debug(1, "state_machine: %p leaving (A_PENDING)\n", as);
 	    return;
 
 	/*
@@ -746,16 +733,15 @@ state_machine(
 	 * Send a nak, and return.
 	 */
 	case A_SENDNAK:
-	    dbprintf(("%s: received unexpected %s packet\n",
-		debug_prefix_time(NULL), pkt_type2str(pkt->type)));
-	    dbprintf(("<<<<<\n%s----\n\n", pkt->body));
+	    dbprintf("received unexpected %s packet\n",
+		pkt_type2str(pkt->type));
+	    dbprintf("<<<<<\n%s----\n\n", pkt->body);
 	    pkt_init(&nak, P_NAK, "ERROR unexpected packet type %s\n",
 		pkt_type2str(pkt->type));
 	    do_sendpkt(as->security_handle, &nak);
 	    amfree(nak.body);
 	    security_recvpkt(as->security_handle, protocol_recv, as, -1);
-	    amandad_debug(1, ("%s: state_machine: %p leaving (A_SENDNAK)\n",
-			      debug_prefix_time(NULL), as));
+	    amandad_debug(1, "state_machine: %p leaving (A_SENDNAK)\n", as);
 	    return;
 
 	/*
@@ -763,8 +749,7 @@ state_machine(
 	 */
 	case A_FINISH:
 	    service_delete(as);
-	    amandad_debug(1, ("%s: state_machine: %p leaving (A_FINISH)\n",
-			      debug_prefix_time(NULL), as));
+	    amandad_debug(1, "state_machine: %p leaving (A_FINISH)\n", as);
 	    return;
 
 	default:
@@ -792,8 +777,8 @@ s_sendack(
 
     pkt_init_empty(&ack, P_ACK);
     if (do_sendpkt(as->security_handle, &ack) < 0) {
-	dbprintf(("%s: error sending ACK: %s\n",
-	    debug_prefix_time(NULL), security_geterror(as->security_handle)));
+	dbprintf("error sending ACK: %s\n",
+	    security_geterror(as->security_handle));
 	amfree(ack.body);
 	return (A_FINISH);
     }
@@ -840,8 +825,7 @@ s_repwait(
 	 * and go back and wait for more data.
 	 */
 	if (pkt->type == P_REQ) {
-	    dbprintf(("%s: received dup P_REQ packet, ACKing it\n",
-		debug_prefix_time(NULL)));
+	    dbprintf("received dup P_REQ packet, ACKing it\n");
 	    amfree(as->rep_pkt.body);
 	    pkt_init_empty(&as->rep_pkt, P_ACK);
 	    do_sendpkt(as->security_handle, &as->rep_pkt);
@@ -855,8 +839,7 @@ s_repwait(
     if (action == A_TIMEOUT) {
 	amfree(as->rep_pkt.body);
 	pkt_init(&as->rep_pkt, P_NAK, "ERROR timeout on reply pipe\n");
-	dbprintf(("%s: %s timed out waiting for REP data\n",
-	    debug_prefix_time(NULL), as->cmd));
+	dbprintf("%s timed out waiting for REP data\n", as->cmd);
 	do_sendpkt(as->security_handle, &as->rep_pkt);
 	return (A_FINISH);
     }
@@ -873,8 +856,7 @@ s_repwait(
     } while ((n < 0) && ((errno == EINTR) || (errno == EAGAIN)));
     if (n < 0) {
 	const char *errstr = strerror(errno);
-	dbprintf(("%s: read error on reply pipe: %s\n",
-		  debug_prefix_time(NULL), errstr));
+	dbprintf("read error on reply pipe: %s\n", errstr);
 	amfree(as->rep_pkt.body);
 	pkt_init(&as->rep_pkt, P_NAK, "ERROR read error on reply pipe: %s\n",
 		 errstr);
@@ -1046,18 +1028,15 @@ s_ackwait(
 	    as->state = s_sendrep;
 	    return (A_CONTINUE);
 	}
-	dbprintf(("%s: timeout waiting for ACK for our REP\n",
-	    debug_prefix_time(NULL)));
+	dbprintf("timeout waiting for ACK for our REP\n");
 	return (A_FINISH);
     }
-    amandad_debug(1, ("%s: received ACK, now opening streams\n",
-		      debug_prefix_time(NULL)));
+    amandad_debug(1, "received ACK, now opening streams\n");
 
     assert(action == A_RECVPKT);
 
     if (pkt->type == P_REQ) {
-	dbprintf(("%s: received dup P_REQ packet, resending REP\n",
-		  debug_prefix_time(NULL)));
+	dbprintf("received dup P_REQ packet, resending REP\n");
 	as->state = s_sendrep;
 	return (A_CONTINUE);
     }
@@ -1072,9 +1051,8 @@ s_ackwait(
 	if (dh->netfd == NULL)
 	    continue;
 	if (security_stream_accept(dh->netfd) < 0) {
-	    dbprintf(("%s: stream %td accept failed: %s\n",
-		debug_prefix_time(NULL),
-		dh - &as->data[0], security_geterror(as->security_handle)));
+	    dbprintf("stream %td accept failed: %s\n",
+		dh - &as->data[0], security_geterror(as->security_handle));
 	    security_stream_close(dh->netfd);
 	    dh->netfd = NULL;
 	    continue;
@@ -1109,8 +1087,7 @@ s_ackwait(
      * If no pipes are open, then we're done.  Otherwise, just start running.
      * The event handlers on all of the pipes will take it from here.
      */
-    amandad_debug(1, ("%s: at end of s_ackwait, npipes is %d\n",
-		      debug_prefix_time(NULL), npipes));
+    amandad_debug(1, "at end of s_ackwait, npipes is %d\n", npipes);
     if (npipes == 0)
 	return (A_FINISH);
     else {
@@ -1165,17 +1142,17 @@ protocol_recv(
 
     switch (status) {
     case S_OK:
-	dbprintf(("%s: received %s pkt:\n<<<<<\n%s>>>>>\n",
-	    debug_prefix_time(NULL), pkt_type2str(pkt->type), pkt->body));
+	dbprintf("received %s pkt:\n<<<<<\n%s>>>>>\n",
+	    pkt_type2str(pkt->type), pkt->body);
 	state_machine(as, A_RECVPKT, pkt);
 	break;
     case S_TIMEOUT:
-	dbprintf(("%s: timeout\n", debug_prefix_time(NULL)));
+	dbprintf("timeout\n");
 	state_machine(as, A_TIMEOUT, NULL);
 	break;
     case S_ERROR:
-	dbprintf(("%s: receive error: %s\n",
-	    debug_prefix_time(NULL), security_geterror(as->security_handle)));
+	dbprintf("receive error: %s\n",
+	    security_geterror(as->security_handle));
 	break;
     }
 }
@@ -1256,8 +1233,7 @@ process_writenetfd(
     dh = cookie;
 
     if (dh->fd_write <= 0) {
-	dbprintf(("%s: process_writenetfd: dh->fd_write <= 0\n",
-	    debug_prefix_time(NULL)));
+	dbprintf("process_writenetfd: dh->fd_write <= 0\n");
     } else if (size > 0) {
 	fullwrite(dh->fd_write, buf, (size_t)size);
 	security_stream_read(dh->netfd, process_writenetfd, dh);
@@ -1299,8 +1275,8 @@ allocstream(
     /* allocate a stream from the security layer and return */
     dh->netfd = security_stream_server(as->security_handle);
     if (dh->netfd == NULL) {
-	dbprintf(("%s: couldn't open stream to server: %s\n",
-	    debug_prefix_time(NULL), security_geterror(as->security_handle)));
+	dbprintf("couldn't open stream to server: %s\n",
+	    security_geterror(as->security_handle));
 	return (-1);
     }
 
@@ -1509,9 +1485,8 @@ service_delete(
     int i;
     struct datafd_handle *dh;
 
-    amandad_debug(1, ("%s: closing service: %s\n",
-		      debug_prefix_time(NULL),
-		      (as->cmd)?as->cmd:"??UNKONWN??"));
+    amandad_debug(1, "closing service: %s\n",
+		      (as->cmd)?as->cmd:"??UNKONWN??");
 
     assert(as != NULL);
 
@@ -1604,8 +1579,8 @@ do_sendpkt(
     security_handle_t *	handle,
     pkt_t *		pkt)
 {
-    dbprintf(("%s: sending %s pkt:\n<<<<<\n%s>>>>>\n",
-	debug_prefix_time(NULL), pkt_type2str(pkt->type), pkt->body));
+    dbprintf("sending %s pkt:\n<<<<<\n%s>>>>>\n",
+	pkt_type2str(pkt->type), pkt->body);
     if (handle)
 	return security_sendpkt(handle, pkt);
     else

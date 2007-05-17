@@ -111,6 +111,8 @@ main(
     char **new_argv, **my_argv;
     char *errstr;
 
+    malloc_size_1 = malloc_inuse(&malloc_hist_1);
+
     safe_fd(-1, 0);
     safe_cd();
 
@@ -122,7 +124,6 @@ main(
     dbopen(DBG_SUBDIR_SERVER);
 
     memset(buffer, 0, sizeof(buffer));
-    malloc_size_1 = malloc_inuse(&malloc_hist_1);
 
     snprintf(pid_str, SIZEOF(pid_str), "%ld", (long)getpid());
 
@@ -346,12 +347,9 @@ main(
 	    server_probs = WIFSIGNALED(retstat) || WEXITSTATUS(retstat);
 	    serverchk_pid = 0;
 	} else {
-	    char number[NUM_STR_SIZE];
 	    char *wait_msg = NULL;
 
-	    snprintf(number, SIZEOF(number), "%ld", (long)pid);
-	    wait_msg = vstralloc("parent: reaped bogus pid ", number, "\n",
-				 NULL);
+	    wait_msg = vstrallocf("parent: reaped bogus pid %ld\n", (long)pid);
 	    if (fullwrite(mainfd, wait_msg, strlen(wait_msg)) < 0) {
 		error("write main file: %s", strerror(errno));
 		/*NOTREACHED*/
@@ -381,9 +379,7 @@ main(
 	aclose(tempfd);
     }
 
-    version_string = vstralloc("\n",
-			       "(brought to you by Amanda ", version(), ")\n",
-			       NULL);
+    version_string = vstrallocf("\n(brought to you by Amanda %s)\n", version());
     if (fullwrite(mainfd, version_string, strlen(version_string)) < 0) {
 	error("write main file: %s", strerror(errno));
 	/*NOTREACHED*/
@@ -396,7 +392,6 @@ main(
     our_features = NULL;
 
     malloc_size_2 = malloc_inuse(&malloc_hist_2);
-
     if(malloc_size_1 != malloc_size_2) {
 	malloc_list(fileno(stderr), malloc_hist_1, malloc_hist_2);
     }
@@ -430,11 +425,12 @@ main(
 	    /*NOTREACHED*/
 	}
 	if(alwaysmail && !(server_probs || client_probs)) {
-	    subject = stralloc2(getconf_str(CNF_ORG),
-			    " AMCHECK REPORT: NO PROBLEMS FOUND");
+	    subject = vstrallocf("%s AMCHECK REPORT: NO PROBLEMS FOUND",
+			getconf_str(CNF_ORG));
 	} else {
-	    subject = stralloc2(getconf_str(CNF_ORG),
-			    " AMANDA PROBLEM: FIX BEFORE RUN, IF POSSIBLE");
+	    subject = vstrallocf(
+			"%s AMANDA PROBLEM: FIX BEFORE RUN, IF POSSIBLE",
+			getconf_str(CNF_ORG));
 	}
 	/*
 	 * Variable arg lists are hard to deal with when we do not know
@@ -1351,7 +1347,6 @@ start_server_check(
     fflush(outf);
 
     malloc_size_2 = malloc_inuse(&malloc_hist_2);
-
     if(malloc_size_1 != malloc_size_2) {
 	malloc_list(fd, malloc_hist_1, malloc_hist_2);
     }
@@ -1723,7 +1718,6 @@ start_client_checks(
     amfree(config_name);
 
     malloc_size_2 = malloc_inuse(&malloc_hist_2);
-
     if(malloc_size_1 != malloc_size_2) {
 	malloc_list(fd, malloc_hist_1, malloc_hist_2);
     }
@@ -1823,8 +1817,7 @@ handle_result(
 	 * The client does not support the features list, so give it an
 	 * empty one.
 	 */
-	dbprintf(("%s: no feature set from host %s\n",
-		  debug_prefix_time(NULL), hostp->hostname));
+	dbprintf("no feature set from host %s\n", hostp->hostname);
 	hostp->features = am_set_default_feature_set();
     }
     for(dp = hostp->disks; dp != NULL; dp = dp->hostnext) {

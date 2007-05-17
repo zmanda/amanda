@@ -134,8 +134,8 @@ lock_logfile(void)
     }
     rst_conf_logfile = vstralloc(rst_conf_logdir, "/log", NULL);
     if (access(rst_conf_logfile, F_OK) == 0) {
-	dbprintf(("%s exists: amdump or amflush is already running, "
-		  "or you must run amcleanup\n", rst_conf_logfile));
+	dbprintf("%s exists: amdump or amflush is already running, "
+		  "or you must run amcleanup\n", rst_conf_logfile);
 	return 0;
     }
     log_add(L_INFO, get_pname());
@@ -224,8 +224,7 @@ append_file_to_fd(
 		    (OFF_T_FMT_TYPE)bytes_read, (OFF_T_FMT_TYPE)s);
 	    if (s < 0) {
 		if((errno == EPIPE) || (errno == ECONNRESET)) {
-		    error("%s: pipe reader has quit in middle of file.",
-			get_pname());
+		    error("pipe reader has quit in middle of file.");
 		    /*NOTREACHED*/
 		}
 		error("restore: write error = %s", strerror(errno));
@@ -1439,17 +1438,17 @@ search_a_tape(
 	tapefile_idx = 0;
 
     if (desired_tape) {
-	dbprintf(("search_a_tape: desired_tape=%p label=%s\n",
-		  desired_tape, desired_tape->label));
-	dbprintf(("tape:   numfiles = %d\n", desired_tape->numfiles));
+	dbprintf("search_a_tape: desired_tape=%p label=%s\n",
+		  desired_tape, desired_tape->label);
+	dbprintf("tape:   numfiles = %d\n", desired_tape->numfiles);
 	for (i=0; i < desired_tape->numfiles; i++) {
-	    dbprintf(("tape:   files[%d] = " OFF_T_FMT "\n",
-		      i, (OFF_T_FMT_TYPE)desired_tape->files[i]));
+	    dbprintf("tape:   files[%d] = " OFF_T_FMT "\n",
+		      i, (OFF_T_FMT_TYPE)desired_tape->files[i]);
 	}
     } else {
-	dbprintf(("search_a_tape: no desired_tape\n"));
+	dbprintf("search_a_tape: no desired_tape\n");
     }
-    dbprintf(("current tapefile_idx = %d\n", tapefile_idx));
+    dbprintf("current tapefile_idx = %d\n", tapefile_idx);
 	
     /* if we know where we're going, fastforward there */
     if(flags->fsf && !isafile){
@@ -1695,11 +1694,11 @@ search_tapes(
 
     if(!prompt_out) prompt_out = stderr;
 
-    dbprintf(("search_tapes(prompt_out=%d, prompt_in=%d,  use_changer=%d, "
+    dbprintf("search_tapes(prompt_out=%d, prompt_in=%d,  use_changer=%d, "
 	      "tapelist=%p, "
 	      "match_list=%p, flags=%p, features=%p)\n",
 	      fileno(prompt_out), fileno(prompt_in), use_changer, tapelist,
-	      match_list, flags, their_features));
+	      match_list, flags, their_features);
 
     if(flags->blocksize)
 	blocksize = (size_t)flags->blocksize;

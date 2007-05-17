@@ -82,7 +82,7 @@ int main(int argc, char **argv)
     signal(SIGPIPE, SIG_IGN);
 
     dbopen(DBG_SUBDIR_SERVER);
-    dbprintf(("%s: version %s\n", argv[0], version()));
+    dbprintf("%s: version %s\n", argv[0], version());
 
     parse_conf(argc, argv, &new_argc, &new_argv);
     my_argc = new_argc;
@@ -174,13 +174,13 @@ int main(int argc, char **argv)
 				 NULL);
 	    qindexdir = quote_string(indexdir);
 
-	    dbprintf(("%s %s -> %s\n", diskp->host->hostname,
-			qdisk, qindexdir));
+	    dbprintf("%s %s -> %s\n", diskp->host->hostname,
+			qdisk, qindexdir);
 	    amfree(host);
 	    amfree(qdisk);
 	    amfree(disk);
 	    if ((d = opendir(indexdir)) == NULL) {
-		dbprintf(("could not open index directory %s\n", qindexdir));
+		dbprintf("could not open index directory %s\n", qindexdir);
 		amfree(indexdir);
 	        amfree(qindexdir);
 		continue;
@@ -221,10 +221,10 @@ int main(int argc, char **argv)
 		    if(lstat(path, &sbuf) != -1
 			&& ((sbuf.st_mode & S_IFMT) == S_IFREG)
 			&& ((time_t)sbuf.st_mtime < tmp_time)) {
-			dbprintf(("rm %s\n", qpath));
+			dbprintf("rm %s\n", qpath);
 		        if(amtrmidx_debug == 0 && unlink(path) == -1) {
-			    dbprintf(("Error removing %s: %s\n",
-				      qpath, strerror(errno)));
+			    dbprintf("Error removing %s: %s\n",
+				      qpath, strerror(errno));
 		        }
 		    }
 		    amfree(qpath);
@@ -268,10 +268,10 @@ int main(int argc, char **argv)
 		    char *path, *qpath;
 		    path = stralloc2(indexdir, names[i]);
 		    qpath = quote_string(path);
-		    dbprintf(("rm %s\n", qpath));
+		    dbprintf("rm %s\n", qpath);
 		    if(amtrmidx_debug == 0 && unlink(path) == -1) {
-			dbprintf(("Error removing %s: %s\n",
-				  qpath, strerror(errno)));
+			dbprintf("Error removing %s: %s\n",
+				  qpath, strerror(errno));
 		    }
 		    amfree(qpath);
 		    amfree(path);

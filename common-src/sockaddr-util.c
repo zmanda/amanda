@@ -42,21 +42,21 @@ dump_sockaddr(
     if (sa->ss_family == (sa_family_t)AF_INET6) {
 	inet_ntop(AF_INET6, &((struct sockaddr_in6 *)sa)->sin6_addr,
 		  ipstr, sizeof(ipstr));
-	dbprintf(("(sockaddr_in6 *)%p = { %d, %d, %s }\n",
+	dbprintf("(sockaddr_in6 *)%p = { %d, %d, %s }\n",
 		 sa,
 		 ((struct sockaddr_in6 *)sa)->sin6_family,
 		 port,
-		 ipstr));
+		 ipstr);
     } else
 #endif
     {
 	inet_ntop(AF_INET, &((struct sockaddr_in *)sa)->sin_addr, ipstr,
 		  sizeof(ipstr));
-	dbprintf(("(sockaddr_in *)%p = { %d, %d, %s }\n",
+	dbprintf("(sockaddr_in *)%p = { %d, %d, %s }\n",
 		 sa,
 		 ((struct sockaddr_in *)sa)->sin_family,
 		 port,
-		 ipstr));
+		 ipstr);
     }
 }
 

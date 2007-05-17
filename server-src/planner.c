@@ -1830,8 +1830,7 @@ static void handle_result(
 	 * The client does not support the features list, so give it an
 	 * empty one.
 	 */
-	dbprintf(("%s: no feature set from host %s\n",
-		  debug_prefix_time(NULL), hostp->hostname));
+	dbprintf("no feature set from host %s\n", hostp->hostname);
 	hostp->features = am_set_default_feature_set();
     }
 

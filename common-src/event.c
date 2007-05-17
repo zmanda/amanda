@@ -36,10 +36,10 @@
 #include "queue.h"
 #include "conffile.h"
 
-#define event_debug(i,x) do {				\
-	if ((i) <= debug_event) {	\
-	    dbprintf(x);				\
-	}						\
+#define event_debug(i, ...) do {	\
+       if ((i) <= debug_event) {	\
+           dbprintf(__VA_ARGS__);	\
+       }				\
 } while (0)
 
 /*
@@ -140,9 +140,8 @@ event_register(
     eventq_add(eventq, handle);
     eventq.qlength++;
 
-    event_debug(1, ("%s: event: register: %p->data=%lu, type=%s\n",
-		    debug_prefix_time(NULL), handle, handle->data,
-		    event_type2str(handle->type)));
+    event_debug(1, "event: register: %p->data=%lu, type=%s\n",
+		    handle, handle->data, event_type2str(handle->type));
     return (handle);
 }
 
@@ -158,9 +157,9 @@ event_release(
 
     assert(handle != NULL);
 
-    event_debug(1, ("%s: event: release (mark): %p data=%lu, type=%s\n",
-		    debug_prefix_time(NULL), handle, handle->data,
-		    event_type2str(handle->type)));
+    event_debug(1, "event: release (mark): %p data=%lu, type=%s\n",
+		    handle, handle->data,
+		    event_type2str(handle->type));
     assert(handle->type != EV_DEAD);
 
     /*
@@ -198,14 +197,12 @@ event_wakeup(
     event_handle_t *eh;
     int nwaken = 0;
 
-    event_debug(1, ("%s: event: wakeup: enter (%lu)\n",
-		    debug_prefix_time(NULL), id));
+    event_debug(1, "event: wakeup: enter (%lu)\n", id);
 
     for (eh = eventq_first(eventq); eh != NULL; eh = eventq_next(eh)) {
 
 	if (eh->type == EV_WAIT && eh->data == id) {
-	    event_debug(1, ("%s: event: wakeup: %p id=%lu\n",
-			    debug_prefix_time(NULL), eh, id));
+	    event_debug(1, "event: wakeup: %p id=%lu\n", eh, id);
 	    fire(eh);
 	    nwaken++;
 	}
@@ -258,9 +255,8 @@ event_loop_wait(
     int event_wait_fired = 0;
     int see_event;
 
-    event_debug(1, ("%s: event: loop: enter: dontblock=%d, qlength=%d, eh=%p\n",
-		    debug_prefix_time(NULL),
-		    dontblock, eventq.qlength, wait_eh));
+    event_debug(1, "event: loop: enter: dontblock=%d, qlength=%d, eh=%p\n",
+		    dontblock, eventq.qlength, wait_eh);
 
     /*
      * If we have no events, we have nothing to do
@@ -283,14 +279,12 @@ event_loop_wait(
 
     do {
 	if (debug_event >= 1) {
-	    event_debug(1, ("%s: event: loop: dontblock=%d, qlength=%d eh=%p\n",
-			    debug_prefix_time(NULL), dontblock, eventq.qlength,
-			    wait_eh));
+	    event_debug(1, "event: loop: dontblock=%d, qlength=%d eh=%p\n",
+			    dontblock, eventq.qlength, wait_eh);
 	    for (eh = eventq_first(eventq); eh != NULL; eh = eventq_next(eh)) {
-		event_debug(1, ("%s: %p): %s data=%lu fn=%p arg=%p\n",
-				debug_prefix_time(NULL), eh,
-				event_type2str(eh->type), eh->data, eh->fn,
-				eh->arg));
+		event_debug(1, "%p): %s data=%lu fn=%p arg=%p\n",
+				eh, event_type2str(eh->type), eh->data, eh->fn,
+				eh->arg);
 	    }
 	}
 	/*
@@ -427,12 +421,11 @@ event_loop_wait(
 	 * Let 'er rip
 	 */
 	event_debug(1,
-		    ("%s: event: select: dontblock=%d, maxfd=%d, timeout=%ld\n",
-		     debug_prefix_time(NULL), dontblock, maxfd,
-		     tvptr != NULL ? timeout.tv_sec : -1));
+		    "event: select: dontblock=%d, maxfd=%d, timeout=%ld\n",
+		     dontblock, maxfd,
+		     tvptr != NULL ? timeout.tv_sec : -1);
 	rc = select(maxfd + 1, &readfds, &writefds, &errfds, tvptr);
-	event_debug(1, ("%s: event: select returns %d\n",
-		        debug_prefix_time(NULL), rc));
+	event_debug(1, "event: select returns %d\n", rc);
 
 	/*
 	 * Select errors can mean many things.  Interrupted events should

@@ -50,9 +50,9 @@
 #include <sys/mman.h>
 #endif
 
-#define taper_debug(i,x) do {		\
+#define taper_debug(i, ...) do {	\
 	if ((i) <= debug_taper) {	\
-	    dbprintf(x);		\
+	    dbprintf(__VA_ARGS__);	\
 	}				\
 } while (0)
 
@@ -255,8 +255,8 @@ main(
 
     fprintf(stderr, "%s: pid %ld executable %s version %s\n",
 	    get_pname(), (long) getpid(), my_argv[0], version());
-    dbprintf(("%s: pid %ld executable %s version %s\n",
-	    get_pname(), (long) getpid(), my_argv[0], version()));
+    dbprintf("pid %ld executable %s version %s\n",
+	    (long)getpid(), my_argv[0], version());
     fflush(stderr);
 
     if (my_argc > 1 && my_argv[1][0] != '-') {
@@ -338,7 +338,7 @@ main(
 
     if (interactive) {
 	fprintf(stderr,"taper: running in interactive test mode\n");
-	dbprintf(("taper: running in interactive test mode\n"));
+	dbprintf("taper: running in interactive test mode\n");
 	fflush(stderr);
     }
 
@@ -359,20 +359,17 @@ main(
     page_size = (size_t)getpagesize();
     fprintf(stderr, "%s: page size = " SIZE_T_FMT "\n",
 		get_pname(), (SIZE_T_FMT_TYPE)page_size);
-    dbprintf(("%s: page size = " SIZE_T_FMT "\n", get_pname(),
-		(SIZE_T_FMT_TYPE)page_size));
+    dbprintf("page size = " SIZE_T_FMT "\n", (SIZE_T_FMT_TYPE)page_size);
 #else
     page_size = 1024;
     fprintf(stderr, "%s: getpagesize() not available, using " SIZE_T_FMT "\n",
 	    get_pname(), page_size);
-    dbprintf((stderr, "%s: getpagesize() not available, using " SIZE_T_FMT "\n",
-	    get_pname(), page_size));
+    dbprintf("getpagesize() not available, using " SIZE_T_FMT "\n", page_size);
 #endif
     buffer_size = am_round(tt_blocksize, page_size);
     fprintf(stderr, "%s: buffer size is " SIZE_T_FMT "\n",
 	    get_pname(), (SIZE_T_FMT_TYPE)buffer_size);
-    dbprintf(("%s: buffer size is " SIZE_T_FMT "\n",
-	    get_pname(), (SIZE_T_FMT_TYPE)buffer_size));
+    dbprintf("buffer size is " SIZE_T_FMT "\n", (SIZE_T_FMT_TYPE)buffer_size);
     while (conf_tapebufs > 0) {
 	size  = page_size;
 	size += conf_tapebufs * buffer_size;
@@ -396,10 +393,9 @@ main(
     i = (int)((buffers - (char *)0) & (page_size - 1));
     if (i != 0) {
 	first_buffer = buffers + page_size - i;
-	dbprintf(("%s: shared memory at %p, first buffer at %p\n",
-		get_pname(),
+	dbprintf("shared memory at %p, first buffer at %p\n", 
 		(void *)buffers,
-		(void *)first_buffer));
+		(void *)first_buffer);
     } else {
 	first_buffer = buffers;
     }
@@ -416,15 +412,13 @@ main(
     }
     for (i = 0; i < conf_tapebufs; i++) {
 	buftable[i].buffer = first_buffer + i * buffer_size;
-	dbprintf(("%s: buffer[%0*d] at %p\n",
-		get_pname(),
+	dbprintf("buffer[%0*d] at %p\n",
 		(int)j, i,
-		(void *)buftable[i].buffer));
+		(void *)buftable[i].buffer);
     }
-    dbprintf(("%s: buffer structures at %p for %d bytes\n",
-	    get_pname(),
+    dbprintf("buffer structures at %p for %d bytes\n",
 	    (void *)buftable,
-	    (int)(conf_tapebufs * SIZEOF(buffer_t))));
+	    (int)(conf_tapebufs * SIZEOF(buffer_t)));
 
     /* fork off child writer process, parent becomes reader process */
     switch(writerpid = fork()) {
@@ -504,7 +498,7 @@ create_split_buffer(
 				     NULL);
 	/* different file, munmap the previous */
 	if (mmap_filename && strcmp(mmap_filename, splitbuffer_path) != 0) {
-	    dbprintf(("create_split_buffer: new file %s\n", splitbuffer_path));
+	    dbprintf("create_split_buffer: new file %s\n", splitbuffer_path);
 	    munmap(splitbuf, (size_t)mmap_splitsize);
 	    aclose(mmap_splitbuffer_fd);
 	    mmap_splitbuf = NULL;
@@ -512,24 +506,23 @@ create_split_buffer(
 	    mmap_splitsize = 0;
 	}
 	if (!mmap_filename) {
-	    dbprintf(("create_split_buffer: open file %s\n",
-		      splitbuffer_path));
+	    dbprintf("create_split_buffer: open file %s\n",
+		      splitbuffer_path);
 	    mmap_splitbuffer_fd = open(splitbuffer_path, O_RDWR|O_CREAT, 0600);
 	    if (mmap_splitbuffer_fd == -1) {
-		buff_err = newvstralloc(buff_err, "open of ", 
-					splitbuffer_path, "failed (",
-					strerror(errno), ")", NULL);
+		buff_err = newvstrallocf(buff_err, "open of %s failed (%s)", 
+					splitbuffer_path, strerror(errno));
 		goto fallback;
 	    }
 	}
 	offset = lseek(mmap_splitbuffer_fd, (off_t)0, SEEK_END) / 1024;
 	if (offset < splitsize) { /* Increase file size */
-	    dbprintf(("create_split_buffer: increase file size of %s to "
+	    dbprintf("create_split_buffer: increase file size of %s to "
 		      OFF_T_FMT "kb\n",
-		      splitbuffer_path, (OFF_T_FMT_TYPE)splitsize));
+		      splitbuffer_path, (OFF_T_FMT_TYPE)splitsize);
 	    if (mmap_filename) {
-		dbprintf(("create_split_buffer: munmap old file %s\n",
-			  mmap_filename));
+		dbprintf("create_split_buffer: munmap old file %s\n",
+			  mmap_filename);
 		munmap(splitbuf, (size_t)mmap_splitsize);
 		mmap_splitsize = 0;
 		mmap_splitbuf = NULL;
@@ -538,10 +531,10 @@ create_split_buffer(
 	    memset(nulls, 0, 1024);
 	    for (c = offset; c < splitsize ; c += (off_t)1) {
 		if (fullwrite(mmap_splitbuffer_fd, nulls, 1024) < 1024) {
-		    buff_err = newvstralloc(buff_err, "write to ",
+		    buff_err = newvstrallocf(buff_err,
+					    "write to %s failed (%s)",
 					    splitbuffer_path,
-					    "failed (", strerror(errno),
-					    ")", NULL);
+					    strerror(errno));
 		    c -= 1;
 		    if (c <= (off_t)fallback_splitsize) {
 			goto fallback;
@@ -556,14 +549,14 @@ create_split_buffer(
 	if (mmap_splitsize < splitsize*1024) {
 	    mmap_splitsize = splitsize*1024;
 	    mmap_filename = stralloc(splitbuffer_path);
-	    dbprintf(("create_split_buffer: mmap file %s for " OFF_T_FMT "kb\n",
-			  mmap_filename,(OFF_T_FMT_TYPE)splitsize));
+	    dbprintf("create_split_buffer: mmap file %s for " OFF_T_FMT "kb\n",
+			  mmap_filename,(OFF_T_FMT_TYPE)splitsize);
             mmap_splitbuf = mmap(NULL, (size_t)mmap_splitsize,
 				 PROT_READ|PROT_WRITE,
 				 MAP_SHARED, mmap_splitbuffer_fd, (off_t)0);
 	    if (mmap_splitbuf == (char*)-1) {
-		buff_err = newvstralloc(buff_err, "mmap failed (",
-					strerror(errno), ")", NULL);
+		buff_err = newvstrallocf(buff_err, "mmap failed (%s)",
+					strerror(errno));
 		aclose(mmap_splitbuffer_fd);
 		amfree(mmap_filename);
 		mmap_splitsize = 0;
@@ -576,9 +569,9 @@ create_split_buffer(
 		"taper: r: buffering " OFF_T_FMT
 		"kb split chunks in mmapped file %s\n",
 		(OFF_T_FMT_TYPE)splitsize, quoted);
-	dbprintf(("taper: r: buffering " OFF_T_FMT
+	dbprintf("taper: r: buffering " OFF_T_FMT
 		"kb split chunks in mmapped file %s\n",
-		(OFF_T_FMT_TYPE)splitsize, quoted));
+		(OFF_T_FMT_TYPE)splitsize, quoted);
 	amfree(splitbuffer_path);
 	amfree(quoted);
 	amfree(buff_err);
@@ -586,16 +579,16 @@ create_split_buffer(
 	splitbuf_wr_ptr = splitbuf;
 	return;
     } else {
-	buff_err = stralloc("no split_diskbuffer specified");
+	buff_err = vstrallocf("No split_diskbuffer specified");
     }
 #else
     (void)split_diskbuffer;	/* Quite unused parameter warning */
-    buff_err = stralloc("mman.h not available");
+    buff_err = vstrallocf("The file named mman.h is not available");
     goto fallback;
 #endif
 #else
     (void)split_diskbuffer;	/* Quite unused parameter warning */
-    buff_err = stralloc("mmap not available");
+    buff_err = vstrallocf("The mmap function is not available");
     goto fallback;
 #endif
 
@@ -605,8 +598,8 @@ create_split_buffer(
     fallback:
 	amfree(splitbuffer_path);
         splitsize = (off_t)fallback_splitsize;
-	dbprintf(("create_split_buffer: fallback size " OFF_T_FMT "\n",
-		  (OFF_T_FMT_TYPE)splitsize));
+	dbprintf("create_split_buffer: fallback size " OFF_T_FMT "\n",
+		  (OFF_T_FMT_TYPE)splitsize);
 	log_add(L_INFO,
 	        "%s: using fallback split size of " OFF_T_FMT "kb to buffer %s in-memory",
 		buff_err, (OFF_T_FMT_TYPE)splitsize, id_string);
@@ -615,8 +608,8 @@ create_split_buffer(
 	    amfree(mem_splitbuf);
 	    mem_splitbuf = alloc(fallback_splitsize * 1024);
 	    mem_splitsize = fallback_splitsize;
-	    dbprintf(("create_split_buffer: alloc buffer size " OFF_T_FMT "\n",
-			  (OFF_T_FMT_TYPE)splitsize *1024));
+	    dbprintf("create_split_buffer: alloc buffer size " OFF_T_FMT "\n",
+			  (OFF_T_FMT_TYPE)splitsize *1024);
 	}
 	splitbuf = mem_splitbuf;
 	splitbuf_wr_ptr = splitbuf;
@@ -715,7 +708,7 @@ file_reader_side(
 	if (getconf_str(CNF_TPCHANGER) == NULL) {
 	    putresult(TAPE_ERROR, "[No tapedev or tpchanger defined]\n");
 	    log_add(L_ERROR, "No tapedev or tpchanger defined");
-	    dbprintf(("taper: No tapedev or tpchanger defined\n"));
+	    dbprintf("taper: No tapedev or tpchanger defined\n");
 	    exit(1);
 	}
     } else {
@@ -1055,8 +1048,8 @@ file_reader_side(
 	    aclose(wrpipe);
 
 	    if ((wpid = wait(NULL)) != writerpid) {
-		dbprintf(("taper: writer wait returned %u instead of %u: %s\n",
-			(unsigned)wpid, (unsigned)writerpid, strerror(errno)));
+		dbprintf("taper: writer wait returned %u instead of %u: %s\n",
+			(unsigned)wpid, (unsigned)writerpid, strerror(errno));
 		fprintf(stderr,
 			"taper: writer wait returned %u instead of %u: %s\n",
 			(unsigned)wpid, (unsigned)writerpid, strerror(errno));
@@ -1173,7 +1166,7 @@ dumpstatus(
 	break;
     }
 
-    str = vstralloc("taper: ", pn, ": [buf ", bt, ":=", status, "]", NULL);
+    str = vstrallocf("taper: %s: [buf %s:=%s]", pn, bt, status);
     dumpbufs(str);
     amfree(str);
 }
@@ -1207,18 +1200,18 @@ get_next_holding_file(
     } else if (stat(file.cont_filename, &stat_file) != 0) {
  	err = errno;
  	ret = -1;
- 	*strclosing = newvstralloc(*strclosing, "can't stat: ",
-				   file.cont_filename, NULL);
+ 	*strclosing = newvstrallocf(*strclosing, "can't stat: %s",
+				   file.cont_filename);
     } else if ((fd = open(file.cont_filename,O_RDONLY)) == -1) {
  	err = errno;
  	ret = -1;
- 	*strclosing = newvstralloc(*strclosing, "can't open: ",
-				   file.cont_filename, NULL);
+ 	*strclosing = newvstrallocf(*strclosing, "can't open: %s",
+				   file.cont_filename);
     } else if ((fd != save_fd) && dup2(fd, save_fd) == -1) {
  	err = errno;
  	ret = -1;
- 	*strclosing = newvstralloc(*strclosing, "can't dup2: ",
-				   file.cont_filename, NULL);
+ 	*strclosing = newvstrallocf(*strclosing, "can't dup2: %s",
+				   file.cont_filename);
     } else {
  	buffer_t bp1;
 	char *quoted;
@@ -1244,10 +1237,9 @@ get_next_holding_file(
  	    amfree(bp1.buffer);
  	    err = (rc1 < 0) ? errno : 0;
  	    ret = -1;
- 	    *strclosing = newvstralloc(*strclosing,
- 				       "Can't read header: ",
- 				       file.cont_filename,
- 				       NULL);
+ 	    *strclosing = newvstrallocf(*strclosing,
+ 				       "Can't read header: %s",
+ 				       file.cont_filename);
  	} else {
  	    parse_file_header(bp1.buffer, &file, (size_t)rc1);
 	    
@@ -1259,10 +1251,9 @@ get_next_holding_file(
  		err = (rc1 < 0) ? errno : 0;
  		ret = -1;
  		if (rc1 < 0) {
- 	    	    *strclosing = newvstralloc(*strclosing,
- 					       "Can't read data: ",
-					       file.cont_filename,
- 					       NULL);
+ 	    	    *strclosing = newvstrallocf(*strclosing,
+ 					       "Can't read data: %s",
+					       file.cont_filename);
  		}
  	    } else {
  		ret = rc1;
@@ -1333,7 +1324,7 @@ read_file(
 	memcpy(&cur_holdfile, save_holdfile, SIZEOF(dumpfile_t));
     }
 
-    taper_debug(1, ("taper: r: start file\n"));
+    taper_debug(1, "taper: r: start file\n");
 
     for (bp = buftable; bp < buftable + conf_tapebufs; bp++) {
 	bp->status = EMPTY;
@@ -1445,7 +1436,7 @@ read_file(
 	    break;
 	    
 	case 'R':
-	    taper_debug(1, ("taper: r: got R%d\n", bufnum));
+	    taper_debug(1, "taper: r: got R%d\n", bufnum);
 	    
 	    if (need_closing) {
 		if (syncpipe_put('C', 0) == -1) {
@@ -1484,7 +1475,7 @@ read_file(
 		    fprintf(stderr, "taper: result now correct!\n");
 		fflush(stderr);
 		
-		errstr = newstralloc(errstr,
+		errstr = newvstrallocf(errstr,
 				     "[fatal buffer mismanagement bug]");
 		q = squote(errstr);
 		putresult(TRYAGAIN, "%s %s\n", handle, q);
@@ -1550,8 +1541,8 @@ read_file(
  	    } else if ((rc = taper_fill_buffer(fd, bp, buflen)) < 0) {
  		err = errno;
  		closing = 1;
- 		strclosing = newvstralloc(strclosing,"Can't read data: ",
-					  NULL);
+ 		strclosing = newvstrallocf(strclosing, "Can't read data: %s",
+					  strerror(errno));
  		if (syncpipe_put('C', 0) == -1) {
 		    put_syncpipe_fault_result(handle);
 		    return (-1);
@@ -1610,8 +1601,8 @@ read_file(
  			filesize = kbytesread;
   		    }
 
-		    taper_debug(1, ("taper: r: put W%d\n",
-				    (int)(bp-buftable)));
+		    taper_debug(1, "taper: r: put W%d\n",
+				    (int)(bp-buftable));
 		    if (syncpipe_put('W', (int)(bp-buftable)) == -1) {
 			put_syncpipe_fault_result(handle);
 			return (-1);
@@ -1669,7 +1660,7 @@ read_file(
 		return (-1);
 	    }
 	    
-	    errstr = newvstralloc(errstr, "[", str, "]", NULL);
+	    errstr = newvstrallocf(errstr, "[%s]", str);
 	    amfree(str);
 
 	    q = squote(errstr);
@@ -1751,14 +1742,11 @@ read_file(
 		startclock();
 	    if (err) {
 		if (strclosing) {
-		    errstr = newvstralloc(errstr,
-				          "[input: ", strclosing, ": ",
-					  strerror(err), "]", NULL);
+		    errstr = newvstrallocf(errstr, "[input: %s: %s]",
+					strclosing, strerror(err));
 		    amfree(strclosing);
 		} else
-		    errstr = newvstralloc(errstr,
-				          "[input: ", strerror(err), "]",
-				          NULL);
+		    errstr = newvstrallocf(errstr, "[input: %s]", strerror(err));
 		q = squote(errstr);
 		putresult(TAPE_ERROR, "%s %s\n", handle, q);
 
@@ -1792,13 +1780,9 @@ read_file(
 		    put_syncpipe_fault_result(handle);
 		    return (-1);
 		}
-		errstr = newvstralloc(errstr,
-				      "[sec ", walltime_str(runtime),
-				      " kb ", kb_str,
-				      " kps ", kps_str,
-				      " ", str,
-				      "]",
-				      NULL);
+		errstr = newvstrallocf(errstr,
+			      "[sec %s kb %s kps %s %s]",
+			      walltime_str(runtime), kb_str, kps_str, str);
 		if (splitsize == (off_t)0) { /* Ordinary dump */
 		    q = squote(errstr);
 /*@i@*/		    if (first_file.is_partial) {
@@ -1835,13 +1819,12 @@ read_file(
 			    ((double)(filesize+cur_span_chunkstart)) / rt :
 			    0.0);
                         amfree(errstr);
-			errstr = newvstralloc(errstr,
-					      "[sec ", walltime_str(curdump_rt),
-					      " kb ", kb_str,
-					      " kps ", kps_str,
-					      " ", str,
-					      "]",
-					      NULL);
+			errstr = newvstrallocf(errstr,
+					      "[sec %s kb %s kps %s %s]",
+					      walltime_str(curdump_rt),
+					      kb_str,
+					      kps_str,
+					      str);
                         q = squote(errstr);
 			putresult(DONE, "%s %s %d %s\n", handle, label,
 				  filenum, q);
@@ -2140,7 +2123,7 @@ tape_writer_side(
 
 	switch(tok) {
 	case 'H':		/* Reader read pipe side is down */
-	    dbprintf(("writer: Communications with reader is down"));
+	    dbprintf("writer: Communications with reader is down");
 	    error("writer: Communications with reader is down");
 	    /*NOTREACHED*/
 	    
@@ -2283,7 +2266,7 @@ write_file(void)
     full_buffers = 0;
     tok = '?';
 
-    taper_debug(1, ("taper: w: start file\n"));
+    taper_debug(1, "taper: w: start file\n");
 
     /*
      * Tell the reader that the tape is open, and give it all the buffers.
@@ -2293,7 +2276,7 @@ write_file(void)
 	/*NOTREACHED*/
     }
     for (i = 0; i < conf_tapebufs; i++) {
-	taper_debug(1, ("taper: w: put R%d\n", i));
+	taper_debug(1, "taper: w: put R%d\n", i);
 	if (syncpipe_put('R', i) == -1) {
 	    error("writer: Syncpipe failure readying write buffers");
 	    /*NOTREACHED*/
@@ -2335,7 +2318,7 @@ write_file(void)
 	    }
 	    if (tok != 'W')
 		break;
-	    taper_debug(1, ("taper: w: got W%d\n",bufnum));
+	    taper_debug(1, "taper: w: got W%d\n", bufnum);
 	    full_buffers++;
 	}
 	rdwait = timesadd(rdwait, stopclock());
@@ -2380,7 +2363,7 @@ write_file(void)
 	    }
 
 	    if (tok == 'W') {
-		taper_debug(1, ("taper: w: got W%d\n",bufnum));
+		taper_debug(1, "taper: w: got W%d\n", bufnum);
 		if(bufnum != (int)(bp - buftable)) {
 		    fprintf(stderr,
 			    "taper: tape-writer: my buf %d reader buf %d\n",
@@ -2437,18 +2420,12 @@ write_file(void)
 	/*NOTREACHED*/
     }
 
-    snprintf(number, SIZEOF(number), "%lu", total_writes);
     rdwait_str = stralloc(walltime_str(rdwait));
     wrwait_str = stralloc(walltime_str(wrwait));
     fmwait_str = stralloc(walltime_str(fmwait));
-    errstr = newvstralloc(errstr,
-			  "{wr:",
-			  " writers ", number,
-			  " rdwait ", rdwait_str,
-			  " wrwait ", wrwait_str,
-			  " filemark ", fmwait_str,
-			  "}",
-			  NULL);
+    errstr = newvstrallocf(errstr, 
+			  "{wr: writers %lu rdwait %s wrwait %s filemark %s}",
+			  total_writes, rdwait_str, wrwait_str, fmwait_str);
     amfree(rdwait_str);
     amfree(wrwait_str);
     amfree(fmwait_str);
@@ -2463,7 +2440,7 @@ write_file(void)
 
  tape_error:
     if (errstr) 
-	dbprintf(("tape_error: %s\n", errstr));
+	dbprintf("tape_error: %s\n", errstr);
     /* got tape error */
     if (next_tape(1)) {
 	if (syncpipe_put('T', 0) == -1) {   /* next tape in place, try again */
@@ -2538,17 +2515,18 @@ write_buffer(
 	if (interactive)
 	    fputs("W", stderr);
 
-	taper_debug(1, ("taper: w: put R%d\n", (int)(bp-buftable)));
+	taper_debug(1, "taper: w: put R%d\n", (int)(bp-buftable));
 	if (syncpipe_put('R', (int)(bp-buftable)) == -1) {
 	    error("writer: Syncpipe failure during advancing write bufffer");
 	    /*NOTREACHED*/
 	}
 	return 1;
     } else {
-	errstr = newvstralloc(errstr,
-			      "writing file: ",
-			      (rc != -1) ? "short write" : strerror(errno),
-			      NULL);
+	if (rc != -1) {
+	    errstr = newvstrallocf(errstr, "writing file: short write");
+	} else {
+	    errstr = newvstrallocf(errstr, "writing file: %s", strerror(errno));
+	}
 	wrwait = timesadd(wrwait, stopclock());
 	if (interactive)
 	    fputs("[WE]", stderr);
@@ -2779,18 +2757,18 @@ syncpipe_read_error(
     char buf[sizeof(char) + sizeof(int)];
 
     if (rc == 0) {
-	dbprintf(("syncpipe_get %s halting: Unexpected read EOF\n", procname));
+	dbprintf("syncpipe_get %s halting: Unexpected read EOF\n", procname);
 	fprintf(stderr, "syncpipe_get %s halting: Unexpected read EOF\n", procname);
     } else if (rc < 0) {
-	dbprintf(("syncpipe_get %s halting: Read error - %s\n",
-			procname, strerror(errno)));
+	dbprintf("syncpipe_get %s halting: Read error - %s\n",
+			procname, strerror(errno));
 	fprintf(stderr, "syncpipe_get %s halting: Read error - %s\n",
 			procname, strerror(errno));
     } else {
-	dbprintf(("syncpipe_get %s halting: Read "
+	dbprintf("syncpipe_get %s halting: Read "
 		SSIZE_T_FMT " bytes short of " SSIZE_T_FMT "\n",
 		procname, (SSIZE_T_FMT_TYPE)(rc - expected),
-		(SSIZE_T_FMT_TYPE)expected));
+		(SSIZE_T_FMT_TYPE)expected);
 	fprintf(stderr, "syncpipe_get %s halting: Read "
 		SSIZE_T_FMT " bytes short of " SSIZE_T_FMT "\n",
 		procname, (SSIZE_T_FMT_TYPE)(rc - expected),
@@ -2811,18 +2789,18 @@ syncpipe_write_error(
     char buf[sizeof(char) + sizeof(int)];
 
     if (rc == 0) {		/* EOF */
-	dbprintf(("syncpipe %s halting: Write EOF\n", procname));
+	dbprintf("syncpipe %s halting: Write EOF\n", procname);
 	fprintf(stderr, "syncpipe %s halting: Write EOF\n", procname);
     } else if (rc < 0) {
-	dbprintf(("syncpipe %s halting: Write error - %s\n",
-			procname, strerror(errno)));
+	dbprintf("syncpipe %s halting: Write error - %s\n",
+			procname, strerror(errno));
 	fprintf(stderr, "syncpipe %s halting: Write error - %s\n",
 			procname, strerror(errno));
     } else {
-	dbprintf(("syncpipe %s halting: Write "
+	dbprintf("syncpipe %s halting: Write "
 			SSIZE_T_FMT " bytes short of " SSIZE_T_FMT "\n",
 			procname, (SSIZE_T_FMT_TYPE)(rc - expected),
-			(SSIZE_T_FMT_TYPE)expected));
+			(SSIZE_T_FMT_TYPE)expected);
 	fprintf(stderr, "syncpipe %s halting: Write "
 			SSIZE_T_FMT " bytes short of " SSIZE_T_FMT "\n",
 			procname, (SSIZE_T_FMT_TYPE)(rc - expected),
@@ -2850,7 +2828,7 @@ syncpipe_get(
     }
 
     if (debug_taper >= 1 && *buf != 'R' && *buf != 'W') {
-	taper_debug(1, ("taper: %c: getc %c\n", *procname, *buf));
+	taper_debug(1, "taper: %c: getc %c\n", *procname, *buf);
     }
 
     memcpy(intp, &buf[1], SIZEOF(int));
@@ -2910,7 +2888,7 @@ syncpipe_put(
     buf[0] = (char)chi;
     memcpy(&buf[1], &intval, SIZEOF(int));
     if (debug_taper >= 1 && buf[0] != 'R' && buf[0] != 'W') {
-	taper_debug(1, ("taper: %c: putc %c\n",*procname,buf[0]));
+	taper_debug(1, "taper: %c: putc %c\n", *procname, buf[0]);
     }
 
     rc = fullwrite(putpipe, buf, SIZEOF(buf));
@@ -3000,11 +2978,11 @@ label_tape(void)
     }
     if ((tape_fd = tape_open(tapedev, O_WRONLY)) == -1) {
 	if (errno == EACCES) {
-	    errstr = newstralloc2(errstr,
-				 "writing label: tape is write protected or I don't have write permission on ", tapedev);
+	    errstr = newvstrallocf(errstr,
+				 "writing label: tape is write protected or I don't have write permission on %s", tapedev);
 	} else {
-	    errstr = newstralloc2(errstr,
-				  "writing label: ", strerror(errno));
+	    errstr = newvstrallocf(errstr,
+				  "writing label: %s", strerror(errno));
 	}
 	return 0;
     }
@@ -3158,14 +3136,14 @@ end_tape(
 	/* rewind the tape */
 
 	if (tapefd_rewind(tape_fd) == -1 ) {
-	    errstr = newstralloc2(errstr, "rewinding tape: ", strerror(errno));
+	    errstr = newvstrallocf(errstr, "rewinding tape: %s", strerror(errno));
 	    rc = 1;
 	    goto common_exit;
 	}
 	/* close the tape */
 
 	if (tapefd_close(tape_fd) == -1) {
-	    errstr = newstralloc2(errstr, "closing tape: ", strerror(errno));
+	    errstr = newvstrallocf(errstr, "closing tape: %s", strerror(errno));
 	    rc = 1;
 	    goto common_exit;
 	}
@@ -3178,12 +3156,12 @@ end_tape(
     
 	if ((tape_fd = raw_tape_open(rawtapedev, O_RDWR)) == -1) {
 	    if (errno == EACCES) {
-		errstr = newstralloc(errstr,
-				     "updating volume table: tape is write protected");
+		errstr = newvstrallocf(errstr,
+			     "updating volume table: tape is write protected");
 	    } else {
-		errstr = newstralloc2(errstr,
-				      "updating volume table: ", 
-				      strerror(errno));
+		errstr = newvstrallocf(errstr,
+			      "updating volume table: %s", 
+			      strerror(errno));
 	    }
 	    rc = 1;
 	    goto common_exit;
@@ -3191,8 +3169,8 @@ end_tape(
 	/* read volume table */
 	if ((num_volumes = read_vtbl(tape_fd, volumes, vtbl_buffer,
 				     &first_seg, &last_seg)) == -1 ) {
-	    errstr = newstralloc2(errstr,
-				  "reading volume table: ", 
+	    errstr = newvstrallocf(errstr,
+				  "reading volume table: %s",
 				  strerror(errno));
 	    rc = 1;
 	    goto common_exit;
@@ -3200,16 +3178,16 @@ end_tape(
 	/* set volume label and date for first entry */
 	vtbl_no = 0;
 	if (set_label(label, volumes, num_volumes, vtbl_no)) {
-	    errstr = newstralloc2(errstr,
-				  "setting label for entry 1: ",
+	    errstr = newvstrallocf(errstr,
+				  "setting label for entry 1: %s",
 				  strerror(errno));
 	    rc = 1;
 	    goto common_exit;
 	}
 	/* date of start writing this tape */
 	if (set_date(start_datestr, volumes, num_volumes, vtbl_no)) {
-	    errstr = newstralloc2(errstr,
-				  "setting date for entry 1: ", 
+	    errstr = newvstrallocf(errstr,
+				  "setting date for entry 1: %s", 
 				  strerror(errno));
 	    rc = 1;
 	    goto common_exit;
@@ -3223,16 +3201,16 @@ end_tape(
 	    fflush(stderr);
 	    if (set_label(vtbl_entry[vtbl_no].label, 
 			 volumes, num_volumes, vtbl_no)) {
-		errstr = newstralloc2(errstr,
-				      "setting label for entry i: ", 
+		errstr = newvstrallocf(errstr,
+				      "setting label for entry i: %s", 
 				      strerror(errno));
 		rc = 1;
 		goto common_exit;
 	    }
 	    if (set_date(vtbl_entry[vtbl_no].date, 
 			volumes, num_volumes, vtbl_no)) {
-		errstr = newstralloc2(errstr,
-				      "setting date for entry i: ",
+		errstr = newvstrallocf(errstr,
+				      "setting date for entry i: %s",
 				      strerror(errno));
 		rc = 1;
 		goto common_exit;
@@ -3241,16 +3219,16 @@ end_tape(
 	/* set volume label and date for last entry */
 	vtbl_no = num_volumes - 1;
 	if (set_label("AMANDA Tape End", volumes, num_volumes, vtbl_no)) {
-	    errstr = newstralloc2(errstr,
-				  "setting label for last entry: ", 
+	    errstr = newvstrallocf(errstr,
+				  "setting label for last entry: %s", 
 				  strerror(errno));
 	    rc = 1;
 	    goto common_exit;
 	}
 	datestr = NULL; /* take current time */ 
 	if (set_date(datestr, volumes, num_volumes, vtbl_no)) {
-	    errstr = newstralloc2(errstr,
-				  "setting date for last entry 1: ", 
+	    errstr = newvstrallocf(errstr,
+				  "setting date for last entry 1: %s", 
 				  strerror(errno));
 	    rc = 1;
 	    goto common_exit;
@@ -3258,8 +3236,8 @@ end_tape(
 	/* write volume table back */
 	if (write_vtbl(tape_fd, volumes, vtbl_buffer, num_volumes, first_seg,
 		       op_mode == trunc)) {
-	    errstr = newstralloc2(errstr,
-				  "writing volume table: ", 
+	    errstr = newvstrallocf(errstr,
+				  "writing volume table: %s", 
 				  strerror(errno));
 	    rc = 1;
 	    goto common_exit;
@@ -3276,7 +3254,7 @@ end_tape(
 common_exit:
 
     if (tape_fd >= 0 && tapefd_close(tape_fd) == -1 && ! writerror) {
-	errstr = newstralloc2(errstr, "closing tape: ", strerror(errno));
+	errstr = newvstrallocf(errstr, "closing tape: %s", strerror(errno));
 	rc = 1;
     }
     tape_fd = -1;
@@ -3290,7 +3268,7 @@ int
 write_filemark(void)
 {
     if (tapefd_weof(tape_fd, (off_t)1) == -1) {
-	errstr = newstralloc2(errstr, "writing filemark: ", strerror(errno));
+	errstr = newvstrallocf(errstr, "writing filemark: %s", strerror(errno));
 	return 0;
     }
     total_tape_fm++;

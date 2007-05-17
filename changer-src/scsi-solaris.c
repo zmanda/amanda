@@ -116,7 +116,7 @@ int SCSI_OpenDevice(int ip)
             pDev[ip].inquiry = NULL;
             return(1);
         } else {
-          dbprintf(("SCSI_OpenDevice %s failed\n", pDev[ip].dev));
+          dbprintf("SCSI_OpenDevice %s failed\n", pDev[ip].dev);
           return(0);
         }
     } else {
@@ -230,8 +230,8 @@ int SCSI_ExecuteCommand(int DeviceFD,
       ret = Command.uscsi_status;
       break;
     }
-    dbprintf(("ioctl on %d failed, errno %s, ret %d\n",
-	      pDev[DeviceFD].fd, strerror(errno), ret));
+    dbprintf("ioctl on %d failed, errno %s, ret %d\n",
+	      pDev[DeviceFD].fd, strerror(errno), ret);
 #if 0
     RequestSense(DeviceFD, &pExtendedRequestSense, 0);
 #endif
@@ -271,7 +271,7 @@ int Tape_Ioctl( int DeviceFD, int command)
 
   if (ioctl(pDev[DeviceFD].fd , MTIOCTOP, &mtop) != 0)
     {
-      dbprintf(("Tape_Ioctl error ioctl %s\n", strerror(errno)));
+      dbprintf("Tape_Ioctl error ioctl %s\n", strerror(errno));
       SCSI_CloseDevice(DeviceFD);
       return(-1);
     }
@@ -293,7 +293,7 @@ int Tape_Status( int DeviceFD)
   
   if (ioctl(pDev[DeviceFD].fd , MTIOCGET, &mtget) != 0)
     {
-      dbprintf(("Tape_Status error ioctl %s\n", strerror(errno)));
+      dbprintf("Tape_Status error ioctl %s\n", strerror(errno));
       SCSI_CloseDevice(DeviceFD);
       return(-1);
     }

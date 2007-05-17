@@ -189,68 +189,68 @@ dump_changer_struct(
 {
   int i;
 
-  dbprintf(("Number of configurations: %d\n",chg->number_of_configs));
-  dbprintf(("Tapes need eject: %s\n",(chg->eject>0?"Yes":"No")));
-  	dbprintf (("\traw: %d\n",chg->eject));
-  dbprintf(("Inv. auto update: %s\n",(chg->autoinv>0?"Yes":"No")));
-  dbprintf (("\traw: %d\n",chg->autoinv));
-  dbprintf(("barcode reader  : %s\n",(chg->havebarcode>0?"Yes":"No")));
-  dbprintf (("\traw: %d\n",chg->havebarcode));
-  dbprintf(("Emulate Barcode : %s\n",(chg->emubarcode>0?"Yes":"No")));
-  dbprintf (("\traw: %d\n",chg->emubarcode));
+  dbprintf("Number of configurations: %d\n",chg->number_of_configs);
+  dbprintf("Tapes need eject: %s\n",(chg->eject>0?"Yes":"No"));
+  	dbprintf ("\traw: %d\n",chg->eject);
+  dbprintf("Inv. auto update: %s\n",(chg->autoinv>0?"Yes":"No"));
+  dbprintf ("\traw: %d\n",chg->autoinv);
+  dbprintf("barcode reader  : %s\n",(chg->havebarcode>0?"Yes":"No"));
+  dbprintf ("\traw: %d\n",chg->havebarcode);
+  dbprintf("Emulate Barcode : %s\n",(chg->emubarcode>0?"Yes":"No"));
+  dbprintf ("\traw: %d\n",chg->emubarcode);
   if (chg->debuglevel != NULL)
-     dbprintf(("debug level     : %s\n", chg->debuglevel));
-  dbprintf(("Tapes need sleep: %d seconds\n", (int)chg->sleep));
-  dbprintf(("Cleancycles     : %d\n",chg->cleanmax));
-  dbprintf(("Changerdevice   : %s\n",chg->device));
+     dbprintf("debug level     : %s\n", chg->debuglevel);
+  dbprintf("Tapes need sleep: %d seconds\n", (int)chg->sleep);
+  dbprintf("Cleancycles     : %d\n",chg->cleanmax);
+  dbprintf("Changerdevice   : %s\n",chg->device);
   if (chg->labelfile != NULL)
-    dbprintf(("Labelfile       : %s\n", chg->labelfile));
+    dbprintf("Labelfile       : %s\n", chg->labelfile);
   for (i=0; i<chg->number_of_configs; i++){
-    dbprintf(("Tapeconfig Nr: %d\n",i));
-    dbprintf(("  Drivenumber   : %d\n",chg->conf[i].drivenum));
-    dbprintf(("  Startslot     : %d\n",chg->conf[i].start));
-    dbprintf(("  Endslot       : %d\n",chg->conf[i].end));
-    dbprintf(("  Cleanslot     : %d\n",chg->conf[i].cleanslot));
+    dbprintf("Tapeconfig Nr: %d\n",i);
+    dbprintf("  Drivenumber   : %d\n",chg->conf[i].drivenum);
+    dbprintf("  Startslot     : %d\n",chg->conf[i].start);
+    dbprintf("  Endslot       : %d\n",chg->conf[i].end);
+    dbprintf("  Cleanslot     : %d\n",chg->conf[i].cleanslot);
 
     if (chg->conf[i].device != NULL)
-      dbprintf(("  Devicename    : %s\n",chg->conf[i].device));
+      dbprintf("  Devicename    : %s\n",chg->conf[i].device);
     else
-      dbprintf(("  Devicename    : none\n"));
+      dbprintf("  Devicename    : none\n");
 
     if (chg->conf[i].changerident != NULL)
-      dbprintf(("  changerident  : %s\n",chg->conf[i].changerident));
+      dbprintf("  changerident  : %s\n",chg->conf[i].changerident);
     else
-      dbprintf(("  changerident  : none\n"));
+      dbprintf("  changerident  : none\n");
 
     if (chg->conf[i].scsitapedev != NULL)
-      dbprintf(("  SCSITapedev   : %s\n",chg->conf[i].scsitapedev));
+      dbprintf("  SCSITapedev   : %s\n",chg->conf[i].scsitapedev);
     else
-      dbprintf(("  SCSITapedev   : none\n"));
+      dbprintf("  SCSITapedev   : none\n");
 
     if (chg->conf[i].tapeident != NULL)
-      dbprintf(("  tapeident     : %s\n",chg->conf[i].tapeident));
+      dbprintf("  tapeident     : %s\n",chg->conf[i].tapeident);
     else
-      dbprintf(("  tapeident     : none\n"));
+      dbprintf("  tapeident     : none\n");
 
     if (chg->conf[i].tapestatfile != NULL)
-      dbprintf(("  statfile      : %s\n", chg->conf[i].tapestatfile));
+      dbprintf("  statfile      : %s\n", chg->conf[i].tapestatfile);
     else
-      dbprintf(("  statfile      : none\n"));
+      dbprintf("  statfile      : none\n");
 
     if (chg->conf[i].slotfile != NULL)
-      dbprintf(("  Slotfile      : %s\n",chg->conf[i].slotfile));
+      dbprintf("  Slotfile      : %s\n",chg->conf[i].slotfile);
     else
-      dbprintf(("  Slotfile      : none\n"));
+      dbprintf("  Slotfile      : none\n");
 
     if (chg->conf[i].cleanfile != NULL)
-      dbprintf(("  Cleanfile     : %s\n",chg->conf[i].cleanfile));
+      dbprintf("  Cleanfile     : %s\n",chg->conf[i].cleanfile);
     else
-      dbprintf(("  Cleanfile     : none\n"));
+      dbprintf("  Cleanfile     : none\n");
 
     if (chg->conf[i].timefile != NULL)
-      dbprintf(("  Usagecount    : %s\n",chg->conf[i].timefile));
+      dbprintf("  Usagecount    : %s\n",chg->conf[i].timefile);
     else
-      dbprintf(("  Usagecount    : none\n"));
+      dbprintf("  Usagecount    : none\n");
   }
 }
 
@@ -978,7 +978,7 @@ parse_args(
   int i;
 
   for (i=0; i < argc; i++)
-    dbprintf(("ARG [%d] : %s\n", i, argv[i]));
+    dbprintf("ARG [%d] : %s\n", i, argv[i]);
   i = 0;
   if ((argc<2)||(argc>3))
     usage(argv);
@@ -1211,7 +1211,7 @@ main(
 
   dbopen(DBG_SUBDIR_SERVER);
 
-  dbprintf(("chg-scsi: %s\n", rcsid));
+  dbprintf("chg-scsi: %s\n", rcsid);
   ChangerDriverVersion();
 
   if (debug_file == NULL)
@@ -1331,8 +1331,7 @@ main(
         fprintf(stderr, "%s: open: %s: %s\n", get_pname(), 
                 changer_dev, strerror(localerr));
         printf("%s open: %s: %s\n", "<none>", changer_dev, strerror(localerr));
-        dbprintf(("%s: open: %s: %s\n", get_pname(),
-                  changer_dev, strerror(localerr)));
+        dbprintf("open: %s: %s\n", changer_dev, strerror(localerr));
         return 2;
       }
 
@@ -1348,7 +1347,7 @@ main(
       {
         if (OpenDevice(INDEX_TAPE, tape_device, "tape_device", changer->conf[confnum].tapeident) == 0)
           {
-            dbprintf(("warning open of %s: failed\n",  tape_device));
+            dbprintf("warning open of %s: failed\n",  tape_device);
           }
       }
 
@@ -1359,7 +1358,7 @@ main(
       {
         if (OpenDevice(INDEX_TAPECTL, scsitapedevice, "scsitapedevice", changer->conf[confnum].tapeident) == 0)
           {
-            dbprintf(("warning open of %s: failed\n", scsitapedevice));
+            dbprintf("warning open of %s: failed\n", scsitapedevice);
           }
       }
     
@@ -1425,9 +1424,8 @@ main(
     fprintf(stderr, "%s: requested drive number (%d) greater than "
             "number of supported drives (%d)\n", get_pname(), 
             drive_num, drivecnt);
-    dbprintf(("%s: requested drive number (%d) greater than "
-              "number of supported drives (%d)\n", get_pname(), 
-              drive_num, drivecnt));
+    dbprintf("requested drive number (%d) is greater than "
+              "number of supported drives (%d)\n", drive_num, drivecnt);
     return 2;
   }
 
@@ -1469,9 +1467,9 @@ main(
         oldtarget = get_current_slot(slot_file);
         if (oldtarget < 0)
           {
-            dbprintf(("COM_INVENTORY: get_current_slot %d\n", oldtarget));
+            dbprintf("COM_INVENTORY: get_current_slot %d\n", oldtarget);
             oldtarget = find_empty(fd, slot_offset, use_slots);
-            dbprintf(("COM_INVENTORY: find_empty %d\n", oldtarget));
+            dbprintf("COM_INVENTORY: find_empty %d\n", oldtarget);
           }
 
         if (need_eject)
@@ -1504,7 +1502,7 @@ main(
      */
     if (BarCode(fd) == 1 && emubarcode != 1)
       {
-        dbprintf(("search : look for %s\n", com.parameter));
+        dbprintf("search : look for %s\n", com.parameter);
         pbarcoderes->action = BARCODE_VOL;
         pbarcoderes->data.slot = -1;
         strncpy(pbarcoderes->data.voltag, com.parameter,
@@ -1535,7 +1533,7 @@ main(
                   {
                     if (strcmp(pSTE[x].VolTag, pbarcoderes->data.barcode) == 0)
                       {
-                        dbprintf(("search : found slot %d\n", x));
+                        dbprintf("search : found slot %d\n", x);
                         target = x;
                       }
                   }
@@ -1549,7 +1547,7 @@ main(
                   {
                     if (strcmp(pDTE[x].VolTag, pbarcoderes->data.barcode) == 0)
                       {
-                        dbprintf(("search : found in tape %d\n", x));
+                        dbprintf("search : found in tape %d\n", x);
                         /*
                          */
                         if (x == drive_num) {
@@ -1604,7 +1602,7 @@ main(
      */
     if (emubarcode == 1 && BarCode(fd) != 1)
       {
-        dbprintf(("search : look for %s\n", com.parameter));
+        dbprintf("search : look for %s\n", com.parameter);
         pbarcoderes->action = FIND_SLOT;
         pbarcoderes->data.slot = -1;
         strncpy(pbarcoderes->data.voltag, com.parameter,
@@ -1663,9 +1661,9 @@ main(
       oldtarget = get_current_slot(slot_file);
       if (oldtarget < 0)
         {
-          dbprintf(("COM_SLOT: get_current_slot %d\n", oldtarget));
+          dbprintf("COM_SLOT: get_current_slot %d\n", oldtarget);
           oldtarget = find_empty(fd, slot_offset, use_slots);
-          dbprintf(("COM_SLOT: find_empty %d\n", oldtarget));
+          dbprintf("COM_SLOT: find_empty %d\n", oldtarget);
         }
       
       /*
@@ -1767,9 +1765,9 @@ main(
 
     if (target < 0)
     {
-      dbprintf(("COM_RESET: get_current_slot %d\n", target));
+      dbprintf("COM_RESET: get_current_slot %d\n", target);
       target = find_empty(fd, slot_offset, use_slots);
-      dbprintf(("COM_RESET: find_empty %d\n", target));
+      dbprintf("COM_RESET: find_empty %d\n", target);
     }
 
     if (loaded) {
@@ -1843,9 +1841,9 @@ main(
       target = get_current_slot(slot_file);
       if (target < 0)
         {
-          dbprintf(("COM_EJECT: get_current_slot %d\n", target));
+          dbprintf("COM_EJECT: get_current_slot %d\n", target);
           target = find_empty(fd, slot_offset, use_slots);
-          dbprintf(("COM_EJECT: find_empty %d\n", target));
+          dbprintf("COM_EJECT: find_empty %d\n", target);
         }
       
       if (need_eject)
@@ -1874,9 +1872,9 @@ main(
       target = get_current_slot(slot_file);
       if (target < 0)
         {
-          dbprintf(("COM_CLEAN: get_current_slot %d\n", target));
+          dbprintf("COM_CLEAN: get_current_slot %d\n", target);
           target = find_empty(fd, slot_offset, use_slots);
-          dbprintf(("COM_CLEAN: find_empty %d\n",target));
+          dbprintf("COM_CLEAN: find_empty %d\n",target);
         }
 
       if (need_eject)

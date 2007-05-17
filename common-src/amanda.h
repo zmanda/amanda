@@ -292,7 +292,9 @@ struct iovec {
  */
 
 #ifdef USE_DBMALLOC
+#include "malloc.h"
 #include "dbmalloc.h"
+#define	dbmalloc_caller_loc(x,y)	x
 #else
 #define	malloc_enter(func)		((void)0)
 #define	malloc_leave(func)		((void)0)
@@ -301,7 +303,7 @@ struct iovec {
 #define	malloc_dump(fd)			((void)0)
 #define	malloc_list(a,b,c)		((void)0)
 #define	malloc_inuse(hist)		(*(hist) = 0, 0)
-#define	dbmalloc_caller_loc(x,y)	(x)
+#define	dbmalloc_caller_loc(x,y)	x
 #endif
 
 #if !defined(HAVE_SIGACTION) && defined(HAVE_SIGVEC)
@@ -403,41 +405,45 @@ extern int errno;
  * print debug output, else compile to nothing.
  */
 
-#ifdef DEBUG_CODE							/* { */
-#   define dbopen(a)	debug_open(a)
-#   define dbreopen(a,b) debug_reopen(a,b)
-#   define dbrename(a,b) debug_rename(a,b)
-#   define dbclose()	debug_close()
-#   define dbprintf(p)	(debug_printf p)
-#   define dbfd()	debug_fd()
-#   define dbfp()	debug_fp()
-#   define dbfn()	debug_fn()
+#ifdef DEBUG_CODE
 
-extern void debug_open(char *subdir);
-extern void debug_reopen(char *file, char *notation);
-extern void debug_rename(char *config, char *subdir);
-extern void debug_close(void);
-extern void debug_printf(const char *format, ...)
-    __attribute__ ((format (printf, 1, 2)));
-extern int  debug_fd(void);
-extern FILE *  debug_fp(void);
-extern char *  debug_fn(void);
-extern void set_debug_prefix_pid(pid_t);
-extern char *debug_prefix(char *);
-extern char *debug_prefix_time(char *);
-#else									/* }{ */
+#   define dbopen(a)		debug_open(a)
+#   define dbreopen(a,b)	debug_reopen(a,b)
+#   define dbrename(a,b)	debug_rename(a,b)
+#   define dbclose()		debug_close()
+#   define dbprintf		debug_printf
+#   define dbfd()		debug_fd()
+#   define dbfp()		debug_fp()
+#   define dbfn()		debug_fn()
+
+void	debug_open(char *subdir);
+void	debug_reopen(char *file, char *notation);
+void	debug_rename(char *config, char *subdir);
+void	debug_close(void);
+void	debug_printf(const char *format, ...)
+	    __attribute__ ((format (printf, 1, 2)));
+int	debug_fd(void);
+FILE *	debug_fp(void);
+char *	debug_fn(void);
+void	set_debug_prefix_pid(pid_t);
+char *	debug_prefix(char *);
+char *	debug_prefix_time(char *);
+
+#else  /* !DEBUG_CODE */
+
 #   define dbopen(a)
-#   define dbreopen(a,b)
+#   define dbreopen(a, b)
 #   define dbrename(a,b)
 #   define dbclose()
-#   define dbprintf(p)
-#   define dbfd()	(-1)
-#   define dbfp()	NULL
-#   define dbfn()	NULL
+#   define dbprintf(...)
+#   define dbfd()		(-1)
+#   define dbfp()		NULL
+#   define dbfn()		NULL
 #   define set_debug_prefix_pid(x)
-#   define debug_prefix(x) get_pname()
-#   define debug_prefix_time(x) get_pname()
-#endif									/* } */
+#   define debug_prefix(x)	get_pname()
+#   define debug_prefix_time(x)	get_pname()
+
+#endif /* DEBUG_CODE */
 
 /* amanda #days calculation, with roundoff */
 
@@ -483,80 +489,54 @@ extern char *debug_prefix_time(char *);
 #define ERR_SYSLOG	2
 #define ERR_AMANDALOG	4
 
-extern void   set_logerror(void (*f)(char *));
-extern void   set_pname(char *pname);
-extern char  *get_pname(void);
-extern int    erroutput_type;
-extern void   error(const char *format, ...)
+void   set_logerror(void (*f)(char *));
+void   set_pname(char *pname);
+char  *get_pname(void);
+int    erroutput_type;
+void   error(const char *format, ...)
     __attribute__ ((format (printf, 1, 2), noreturn));
-extern void   errordump(const char *format, ...)
+void   errordump(const char *format, ...)
     __attribute__ ((format (printf, 1, 2), noreturn));
-extern int    onerror(void (*errf)(void));
+int    onerror(void (*errf)(void));
 
-extern void *debug_alloc      (const char *c, int l, size_t size);
-extern void *debug_newalloc   (const char *c, int l, void *old, size_t size);
-extern char *debug_stralloc   (const char *c, int l, const char *str);
-extern char *debug_newstralloc(const char *c, int l, char *oldstr,
-			       const char *newstr);
-extern char *debug_vstrallocf(const char *file, int line, const char *fmt,
-			      ...) __attribute__ ((format (printf, 3, 4)));
-extern const char *debug_caller_loc (const char *file, int line);
-extern int debug_alloc_push (char *file, int line);
-extern void debug_alloc_pop (void);
+void *debug_alloc(const char *file, int line, size_t size);
+void *debug_newalloc(const char *file, int line, void *old, size_t size);
+char *debug_stralloc(const char *file, int line, const char *str);
+char *debug_newstralloc(const char *file, int line,
+		char *oldstr, const char *newstr);
+char *debug_vstralloc(const char *file, int line, const char *str, ...);
+char *debug_newvstralloc(const char *file, int line,
+		char *oldstr, const char *str, ...);
+char *debug_vstrallocf(const char *file, int line, const char *fmt,
+		...) __attribute__ ((format (printf, 3, 4)));
+char *debug_newvstrallocf(const char *file, int line, char *oldstr,
+		const char *fmt, ...) __attribute__ ((format (printf, 4, 5)));
+
+/* Usage: vstrextend(foo, "bar, "baz", NULL). Extends the existing 
+ * string, or allocates a brand new one. */
+char *debug_vstrextend(const char *file, int line, char **oldstr, ...);
 
 #define	alloc(s)		debug_alloc(__FILE__, __LINE__, (s))
 #define	newalloc(p,s)		debug_newalloc(__FILE__, __LINE__, (p), (s))
 #define	stralloc(s)		debug_stralloc(__FILE__, __LINE__, (s))
 #define	newstralloc(p,s)	debug_newstralloc(__FILE__, __LINE__, (p), (s))
+#define vstralloc(...)		debug_vstralloc(__FILE__,__LINE__,__VA_ARGS__)
+#define newvstralloc(...)	debug_newvstralloc(__FILE__,__LINE__,__VA_ARGS__)
+#define vstrallocf(...)		debug_vstrallocf(__FILE__,__LINE__,__VA_ARGS__)
+#define newvstrallocf(...)	debug_newvstrallocf(__FILE__,__LINE__,__VA_ARGS__)
+#define vstrextend(...)		debug_vstrextend(__FILE__,__LINE__,__VA_ARGS__)
 
-/*
- * Voodoo time.  We want to be able to mark these calls with the source
- * line, but CPP does not handle variable argument lists so we cannot
- * do what we did above (e.g. for alloc()).
- *
- * What we do is call a function to save the file and line number
- * and have it return "false".  That triggers the "?" operator to
- * the right side of the ":" which is a call to the debug version of
- * vstralloc/newvstralloc but without parameters.  The compiler gets
- * those from the next input tokens:
- *
- *  xx = vstralloc(a,b,NULL);
- *
- * becomes:
- *
- *  xx = debug_alloc_push(__FILE__,__LINE__)?0:debug_vstralloc(a,b,NULL);
- *
- * This works as long as vstralloc/newvstralloc are not part of anything
- * very complicated.  Assignment is fine, as is an argument to another
- * function (but you should not do that because it creates a memory leak).
- * This will not work in arithmetic or comparison, but it is unlikely
- * they are used like that.
- *
- *  xx = vstralloc(a,b,NULL);			OK
- *  return vstralloc(j,k,NULL);			OK
- *  sub(a, vstralloc(g,h,NULL), z);		OK, but a leak
- *  if(vstralloc(s,t,NULL) == NULL) { ...	NO, but unneeded
- *  xx = vstralloc(x,y,NULL) + 13;		NO, but why do it?
- */
+#define	stralloc2(s1,s2)	vstralloc((s1),(s2),NULL)
+#define	newstralloc2(p,s1,s2)	newvstralloc((p),(s1),(s2),NULL)
 
-#define vstralloc debug_alloc_push(__FILE__,__LINE__)?0:debug_vstralloc
-#define newvstralloc debug_alloc_push(__FILE__,__LINE__)?0:debug_newvstralloc
 #define vstrallocf(...)         debug_vstrallocf(__FILE__,__LINE__,__VA_ARGS__)
 
-extern char  *debug_vstralloc(const char *str, ...);
-extern char  *debug_newvstralloc(char *oldstr, const char *newstr, ...);
-
-#define	stralloc2(s1,s2)      vstralloc((s1),(s2),NULL)
-#define	newstralloc2(p,s1,s2) newvstralloc((p),(s1),(s2),NULL)
-
-/* Usage: vstrextend(foo, "bar, "baz", NULL). Extends the existing 
- * string, or allocates a brand new one. */
-extern char *vstrextend(char **oldstr, ...);
-
-extern /*@only@*/ /*@null@*/ char *debug_agets(const char *c, int l, FILE *file);
-extern /*@only@*/ /*@null@*/ char *debug_areads(const char *c, int l, int fd);
+/*@only@*/ /*@null@*/ char *debug_agets(const char *file, int line, FILE *f);
+/*@only@*/ /*@null@*/ char *debug_areads(const char *file, int line, int fd);
 #define agets(f)	      debug_agets(__FILE__,__LINE__,(f))
 #define areads(f)	      debug_areads(__FILE__,__LINE__,(f))
+
+const char *debug_caller_loc (const char *file, int line);
 
 extern int debug_amtable_alloc(const char *file,
 				  int line,
@@ -576,7 +556,9 @@ extern int debug_amtable_alloc(const char *file,
 						     (b),             \
 						     (f))
 
-extern void amtable_free(void **table, size_t *current);
+extern void debug_amtable_free(const char *, int, void **, size_t *);
+#define amtable_free(t, c)    debug_amtable_free(__FILE__, __LINE__, (t), (c))
+
 
 extern uid_t  client_uid;
 extern gid_t  client_gid;
@@ -616,6 +598,12 @@ void	areads_relbuf(int fd);
 	errno = e__errno;						\
 	(void)(ptr);  /* Fix value never used warning at end of routines */ \
     }									\
+} while (0)
+
+#define	debug_amfree(f, l, p) do {					\
+    if ((void *)(p) > (void *)sbrk(0))					\
+	    dbprintf("amfree: %s:%d bogus free (%p > %p)\n", (f), (l), (p), sbrk(0));\
+    amfree(p);								\
 } while (0)
 
 #define strappend(s1,s2) do {						\

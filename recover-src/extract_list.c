@@ -364,8 +364,8 @@ clean_tape_list(
 	    }
 
 	    if (remove_fn2) {
-		dbprintf(("removing path %s, it is included in %s\n",
-			  fn2->path, fn1->path));
+		dbprintf("removing path %s, it is included in %s\n",
+			  fn2->path, fn1->path);
 		ofn2 = fn2;
 		fn2 = fn2->next;
 		amfree(ofn2->path);
@@ -379,8 +379,8 @@ clean_tape_list(
 
 	if(remove_fn1 != 0) {
 	    /* fn2->path is always valid */
-	    /*@i@*/ dbprintf(("removing path %s, it is included in %s\n",
-	    /*@i@*/	      fn1->path, fn2->path));
+	    /*@i@*/ dbprintf("removing path %s, it is included in %s\n",
+	    /*@i@*/	      fn1->path, fn2->path);
 	    ofn1 = fn1;
 	    fn1 = fn1->next;
 	    amfree(ofn1->path);
@@ -691,7 +691,7 @@ add_glob(
     char *uqglob = unquote_string(glob);
  
     regex = glob_to_regex(uqglob);
-    dbprintf(("add_glob (%s) -> %s\n", uqglob, regex));
+    dbprintf("add_glob (%s) -> %s\n", uqglob, regex);
     if ((s = validate_regexp(regex)) != NULL) {
 	printf("%s is not a valid shell wildcard pattern: ", glob);
 	puts(s);
@@ -756,7 +756,7 @@ add_file(
     }
     memset(&lditem, 0, sizeof(lditem)); /* Prevent use of bogus data... */
 
-    dbprintf(("add_file: Looking for \"%s\"\n", regex));
+    dbprintf("add_file: Looking for \"%s\"\n", regex);
 
     if(strcmp(regex, "/[/]*$") == 0) {	/* "/" behave like "." */
 	regex = "\\.[/]*$";
@@ -785,8 +785,8 @@ add_file(
 	amfree(clean_disk_path);
     }
 
-    dbprintf(("add_file: Converted path=\"%s\" to path_on_disk=\"%s\"\n",
-	      regex, path_on_disk));
+    dbprintf("add_file: Converted path=\"%s\" to path_on_disk=\"%s\"\n",
+	      regex, path_on_disk);
 
     found_one = 0;
     dir_entries = 0;
@@ -794,7 +794,7 @@ add_file(
     {
 	dir_entries++;
 	quoted = quote_string(ditem->path);
-	dbprintf(("add_file: Pondering ditem->path=%s\n", quoted));
+	dbprintf("add_file: Pondering ditem->path=%s\n", quoted);
 	amfree(quoted);
 	if (match(path_on_disk, ditem->path))
 	{
@@ -917,15 +917,15 @@ add_file(
 		    switch(add_extract_item(&lditem)) {
 		    case -1:
 			printf("System error\n");
-			dbprintf(("add_file: (Failed) System error\n"));
+			dbprintf("add_file: (Failed) System error\n");
 			break;
 
 		    case  0:
 			quoted = quote_string(lditem.path);
 			printf("Added dir %s at date %s\n",
 			       quoted, lditem.date);
-			dbprintf(("add_file: (Successful) Added dir %s at date %s\n",
-				  quoted, lditem.date));
+			dbprintf("add_file: (Successful) Added dir %s at date %s\n",
+				  quoted, lditem.date);
 			amfree(quoted);
 			added=1;
 			break;
@@ -944,7 +944,7 @@ add_file(
 		} else if(added == 0) {
 		    quoted = quote_string(ditem_path);
 		    printf("dir %s already added\n", quoted);
-		    dbprintf(("add_file: dir %s already added\n", quoted));
+		    dbprintf("add_file: dir %s already added\n", quoted);
 		    amfree(quoted);
 		}
 	    }
@@ -953,20 +953,20 @@ add_file(
 		switch(add_extract_item(ditem)) {
 		case -1:
 		    printf("System error\n");
-		    dbprintf(("add_file: (Failed) System error\n"));
+		    dbprintf("add_file: (Failed) System error\n");
 		    break;
 
 		case  0:
 		    quoted = quote_string(ditem->path);
 		    printf("Added file %s\n", quoted);
-		    dbprintf(("add_file: (Successful) Added %s\n", quoted));
+		    dbprintf("add_file: (Successful) Added %s\n", quoted);
 		    amfree(quoted);
 		    break;
 
 		case  1:
 		    quoted = quote_string(ditem->path);
 		    printf("File %s already added\n", quoted);
-		    dbprintf(("add_file: file %s already added\n", quoted));
+		    dbprintf("add_file: file %s already added\n", quoted);
 		    amfree(quoted);
 		}
 	    }
@@ -984,8 +984,8 @@ add_file(
     if(! found_one) {
 	quoted = quote_string(path);
 	printf("File %s doesn't exist in directory\n", quoted);
-	dbprintf(("add_file: (Failed) File %s doesn't exist in directory\n",
-	          quoted));
+	dbprintf("add_file: (Failed) File %s doesn't exist in directory\n",
+	          quoted);
 	amfree(quoted);
     }
 }
@@ -1001,7 +1001,7 @@ delete_glob(
     char *uqglob = unquote_string(glob);
  
     regex = glob_to_regex(uqglob);
-    dbprintf(("delete_glob (%s) -> %s\n", uqglob, regex));
+    dbprintf("delete_glob (%s) -> %s\n", uqglob, regex);
     if ((s = validate_regexp(regex)) != NULL) {
 	printf("\"%s\" is not a valid shell wildcard pattern: ", glob);
 	puts(s);
@@ -1070,7 +1070,7 @@ delete_file(
     }
     memset(&lditem, 0, sizeof(lditem)); /* Prevent use of bogus data... */
 
-    dbprintf(("delete_file: Looking for \"%s\"\n", path));
+    dbprintf("delete_file: Looking for \"%s\"\n", path);
 
     if (strcmp(regex, "[^/]*[/]*$") == 0) {
 	/* Looking for * find everything but single . */
@@ -1101,13 +1101,13 @@ delete_file(
 	amfree(clean_disk_path);
     }
 
-    dbprintf(("delete_file: Converted path=\"%s\" to path_on_disk=\"%s\"\n",
-	      regex, path_on_disk));
+    dbprintf("delete_file: Converted path=\"%s\" to path_on_disk=\"%s\"\n",
+	      regex, path_on_disk);
     found_one = 0;
     for (ditem=get_dir_list(); ditem!=NULL; ditem=get_next_dir_item(ditem))
     {
 	quoted = quote_string(ditem->path);
-	dbprintf(("delete_file: Pondering ditem->path=%s\n", quoted));
+	dbprintf("delete_file: Pondering ditem->path=%s\n", quoted);
 	amfree(quoted);
 	if (match(path_on_disk, ditem->path))
 	{
@@ -1232,12 +1232,12 @@ delete_file(
 		    switch(delete_extract_item(&lditem)) {
 		    case -1:
 			printf("System error\n");
-			dbprintf(("delete_file: (Failed) System error\n"));
+			dbprintf("delete_file: (Failed) System error\n");
 			break;
 		    case  0:
 			printf("Deleted dir %s at date %s\n", ditem_path, date);
-			dbprintf(("delete_file: (Successful) Deleted dir %s at date %s\n",
-				  ditem_path, date));
+			dbprintf("delete_file: (Successful) Deleted dir %s at date %s\n",
+				  ditem_path, date);
 			deleted=1;
 			break;
 		    case  1:
@@ -1254,8 +1254,8 @@ delete_file(
 		} else if(deleted == 0) {
 		    printf("Warning - dir '%s' not on tape list\n",
 			   ditem_path);
-		    dbprintf(("delete_file: dir '%s' not on tape list\n",
-			      ditem_path));
+		    dbprintf("delete_file: dir '%s' not on tape list\n",
+			      ditem_path);
 		}
 	    }
 	    else
@@ -1263,18 +1263,18 @@ delete_file(
 		switch(delete_extract_item(ditem)) {
 		case -1:
 		    printf("System error\n");
-		    dbprintf(("delete_file: (Failed) System error\n"));
+		    dbprintf("delete_file: (Failed) System error\n");
 		    break;
 		case  0:
 		    printf("Deleted %s\n", ditem->path);
-		    dbprintf(("delete_file: (Successful) Deleted %s\n",
-			      ditem->path));
+		    dbprintf("delete_file: (Successful) Deleted %s\n",
+			      ditem->path);
 		    break;
 		case  1:
 		    printf("Warning - file '%s' not on tape list\n",
 			   ditem->path);
-		    dbprintf(("delete_file: file '%s' not on tape list\n",
-			      ditem->path));
+		    dbprintf("delete_file: file '%s' not on tape list\n",
+			      ditem->path);
 		    break;
 		}
 	    }
@@ -1286,8 +1286,8 @@ delete_file(
 
     if(! found_one) {
 	printf("File %s doesn't exist in directory\n", path);
-	dbprintf(("delete_file: (Failed) File %s doesn't exist in directory\n",
-	          path));
+	dbprintf("delete_file: (Failed) File %s doesn't exist in directory\n",
+	          path);
     }
 }
 
@@ -1644,8 +1644,8 @@ extract_files_setup(
 	send_to_tape_server(amidxtaped_streams[CTLFD].fd, disk_regex);
 	send_to_tape_server(amidxtaped_streams[CTLFD].fd, clean_datestamp);
 
-	dbprintf(("Started amidxtaped with arguments \"6 -h -p %s %s %s %s\"\n",
-		  dump_device_name, host_regex, disk_regex, clean_datestamp));
+	dbprintf("Started amidxtaped with arguments \"6 -h -p %s %s %s %s\"\n",
+		  dump_device_name, host_regex, disk_regex, clean_datestamp);
     }
 
     amfree(disk_regex);
@@ -1959,12 +1959,12 @@ extract_files_child(
 	break;
     }
     if (cmd) {
-        dbprintf(("Exec'ing %s with arguments:\n", cmd));
+        dbprintf("Exec'ing %s with arguments:\n", cmd);
 	for (i = 0; i < j; i++) {
 	    if( i == passwd_field)
-		dbprintf(("\tXXXXX\n"));
+		dbprintf("\tXXXXX\n");
 	    else
-  	        dbprintf(("\t%s\n", restore_args[i]));
+  	        dbprintf("\t%s\n", restore_args[i]);
 	}
         (void)execv(cmd, restore_args);
 	/* only get here if exec failed */
@@ -2392,7 +2392,7 @@ bad_nak:
 	if (ports[i] == -1)
 	    continue;
 	amidxtaped_streams[i].fd = security_stream_client(sech, ports[i]);
-	dbprintf(("amidxtaped_streams[%d].fd = %p\n",i, amidxtaped_streams[i].fd));
+	dbprintf("amidxtaped_streams[%d].fd = %p\n",i, amidxtaped_streams[i].fd);
 	if (amidxtaped_streams[i].fd == NULL) {
 	    errstr = newvstralloc(errstr,
 			"[could not connect ", amidxtaped_streams[i].name, " stream: ",

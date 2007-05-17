@@ -598,8 +598,8 @@ tape_tapefd_resetofs(
      * filesize limit (eg OSes with 2 GB filesize limits) on a long tape.
      */
     if (lseek(fd, (off_t)0, SEEK_SET) < 0) {
-	dbprintf(("tape_tapefd_resetofs: lseek failed: <%s>\n",
-		  strerror(errno)));
+	dbprintf("tape_tapefd_resetofs: lseek failed: <%s>\n",
+		  strerror(errno));
     }
 }
 

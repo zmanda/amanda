@@ -2029,7 +2029,7 @@ PrintInquiry(
 int
 DoNothing0(void)
 {
-  dbprintf(("##### START DoNothing\n"));
+  dbprintf("##### START DoNothing\n");
   return(0);
 }
 
@@ -2039,7 +2039,7 @@ DoNothing1(
 {
   (void)unused1;	/* Quiet unused parameter warning */
 
-  dbprintf(("##### START DoNothing\n"));
+  dbprintf("##### START DoNothing\n");
   return(0);
 }
 
@@ -2051,7 +2051,7 @@ DoNothing2(
   (void)unused1;	/* Quiet unused parameter warning */
   (void)unused2;	/* Quiet unused parameter warning */
 
-  dbprintf(("##### START DoNothing\n"));
+  dbprintf("##### START DoNothing\n");
   return(0);
 }
 
@@ -2065,21 +2065,21 @@ DoNothing3(
   (void)unused2;	/* Quiet unused parameter warning */
   (void)unused3;	/* Quiet unused parameter warning */
 
-  dbprintf(("##### START DoNothing\n"));
+  dbprintf("##### START DoNothing\n");
   return(0);
 }
 
 int
 GenericFree(void)
 {
-  dbprintf(("##### START GenericFree\n"));
+  dbprintf("##### START GenericFree\n");
   return(0);
 }
 
 int
 GenericSearch(void)
 {
-  dbprintf(("##### START GenericSearch\n"));
+  dbprintf("##### START GenericSearch\n");
   return(0);
 }
 
@@ -2091,7 +2091,7 @@ TreeFrogBarCode(
 
   ModePageTreeFrogVendorUnique_T *pVendor;
 
-  dbprintf(("##### START TreeFrogBarCode\n"));
+  dbprintf("##### START TreeFrogBarCode\n");
   if (pModePage == NULL)
     {
       pModePage = alloc(0xff);
@@ -2103,14 +2103,14 @@ TreeFrogBarCode(
 
       if (pVendorUnique == NULL)
       {
-         dbprintf(("TreeFrogBarCode : no pVendorUnique\n"));
+         dbprintf("TreeFrogBarCode : no pVendorUnique\n");
          return(0);
 	 /*NOTREACHED*/
       }
       pVendor = ( ModePageTreeFrogVendorUnique_T *)pVendorUnique;
 
-      dbprintf(("TreeFrogBarCode : EBARCO %d\n", pVendor->EBARCO));
-      dbprintf(("TreeFrogCheckSum : CHKSUM  %d\n", pVendor->CHKSUM));
+      dbprintf("TreeFrogBarCode : EBARCO %d\n", pVendor->EBARCO);
+      dbprintf("TreeFrogCheckSum : CHKSUM  %d\n", pVendor->CHKSUM);
 
       dump_hex((u_char *)pDev[INDEX_CHANGER].inquiry, INQUIRY_SIZE, DEBUG_INFO, SECTION_ELEMENT);
       return(pVendor->EBARCO);
@@ -2223,16 +2223,16 @@ SenseHandler(
 {
   extern OpenFiles_T *pDev;
   int ret = 0;
-  dbprintf(("##### START SenseHandler\n"));
+  dbprintf("##### START SenseHandler\n");
   if (pDev[DeviceFD].inqdone == 1)
     {
-      dbprintf(("Ident = [%s], function = [%s]\n", pDev[DeviceFD].ident,
-		pDev[DeviceFD].functions->ident));
+      dbprintf("Ident = [%s], function = [%s]\n", pDev[DeviceFD].ident,
+		pDev[DeviceFD].functions->ident);
       ret = pDev[DeviceFD].functions->function_error(DeviceFD, flag, SenseKey, AdditionalSenseCode, AdditionalSenseCodeQualifier, buffer);
     } else {
-      dbprintf(("    Ups no sense\n"));
+      dbprintf("    Ups no sense\n");
     }
-  dbprintf(("#### STOP SenseHandler\n"));
+  dbprintf("#### STOP SenseHandler\n");
   return(ret);
 }
 
@@ -2360,14 +2360,14 @@ DLT4000Eject(
 
   (void)Device;	/* Quiet unused parameter warning */
 
-  dbprintf(("##### START DLT4000Eject\n"));
+  dbprintf("##### START DLT4000Eject\n");
 
   pRequestSense = alloc(SIZEOF(RequestSense_T));
   pExtendedRequestSense = alloc(SIZEOF(ExtendedRequestSense_T));
 
   if ( type > 1)
     {
-      dbprintf(("DLT4000Eject : use mtio ioctl for eject on %s\n", pDev[INDEX_TAPE].dev));
+      dbprintf("DLT4000Eject : use mtio ioctl for eject on %s\n", pDev[INDEX_TAPE].dev);
       free(pExtendedRequestSense);
       free(pRequestSense);
       return(Tape_Ioctl(INDEX_TAPE, IOCTL_EJECT));
@@ -2378,7 +2378,7 @@ DLT4000Eject(
 
   if (pDev[INDEX_TAPECTL].SCSI == 0)
     {
-      dbprintf(("DLT4000Eject : Device %s not able to receive SCSI commands\n", pDev[INDEX_TAPE].dev));
+      dbprintf("DLT4000Eject : Device %s not able to receive SCSI commands\n", pDev[INDEX_TAPE].dev);
       free(pExtendedRequestSense);
       free(pRequestSense);
       return(Tape_Ioctl(INDEX_TAPE, IOCTL_EJECT));
@@ -2386,7 +2386,7 @@ DLT4000Eject(
     }
 
 
-  dbprintf(("DLT4000Eject : SCSI eject on %s = %s\n", pDev[INDEX_TAPECTL].dev, pDev[INDEX_TAPECTL].ConfigName));
+  dbprintf("DLT4000Eject : SCSI eject on %s = %s\n", pDev[INDEX_TAPECTL].dev, pDev[INDEX_TAPECTL].ConfigName);
 
   RequestSense(INDEX_TAPECTL, pExtendedRequestSense, 0);
   DecodeExtSense(pExtendedRequestSense, "DLT4000Eject : ", debug_file);
@@ -2467,7 +2467,7 @@ DLT4000Eject(
       sleep(2);
     }
 
-  dbprintf(("DLT4000Eject : Ready after %d sec, done = %d\n", cnt * 2, done));
+  dbprintf("DLT4000Eject : Ready after %d sec, done = %d\n", cnt * 2, done);
 
   free(pExtendedRequestSense);
   free(pRequestSense);
@@ -3034,7 +3034,7 @@ GenericSenseHandler(
   int ret;
   char *info = NULL;
 
-  dbprintf(("##### START GenericSenseHandler\n"));
+  dbprintf("##### START GenericSenseHandler\n");
 
   DecodeSense(pRequestSense, "GenericSenseHandler : ", debug_file);
 
@@ -3045,7 +3045,7 @@ GenericSenseHandler(
 		     AdditionalSenseCodeQualifier,
 		     &info);
 
-  dbprintf(("##### STOP GenericSenseHandler\n"));
+  dbprintf("##### STOP GenericSenseHandler\n");
   return(ret);
 }
 
@@ -3483,13 +3483,13 @@ GetCurrentSlot(
 {
   extern OpenFiles_T *pDev;
   size_t x;
-  dbprintf(("##### START GetCurrentSlot\n"));
+  dbprintf("##### START GetCurrentSlot\n");
 
   (void)fd;	/* Quiet unused parameter warning */
 
   if (pDev[0].SCSI == 0)
       {
-          dbprintf(("GetCurrentSlot : can't send SCSI commands\n"));
+          dbprintf("GetCurrentSlot : can't send SCSI commands\n");
           return(-1);
 	  /*NOTREACHED*/
       }
@@ -4762,7 +4762,7 @@ LookupElement(
 {
   size_t x;
 
-  dbprintf(("##### START LookupElement\n"));
+  dbprintf("##### START LookupElement\n");
 
   if (DTE > 0)
     {
@@ -4770,7 +4770,7 @@ LookupElement(
         {
           if (pDTE[x].address == address)
 	  {
-            dbprintf(("##### STOP LookupElement (DTE)\n"));
+            dbprintf("##### STOP LookupElement (DTE)\n");
             return(&pDTE[x]);
 	    /*NOTREACHED*/
 	  }
@@ -4783,7 +4783,7 @@ LookupElement(
         {
           if (pMTE[x].address == address)
 	  {
-            dbprintf(("##### STOP LookupElement (MTE)\n"));
+            dbprintf("##### STOP LookupElement (MTE)\n");
             return(&pMTE[x]);
 	    /*NOTREACHED*/
 	  }
@@ -4796,7 +4796,7 @@ LookupElement(
         {
           if (pSTE[x].address == address)
 	  {
-            dbprintf(("##### STOP LookupElement (STE)\n"));
+            dbprintf("##### STOP LookupElement (STE)\n");
             return(&pSTE[x]);
 	    /*NOTREACHED*/
 	  }
@@ -4809,7 +4809,7 @@ LookupElement(
         {
           if (pIEE[x].address == address)
 	  {
-            dbprintf(("##### STOP LookupElement (IEE)\n"));
+            dbprintf("##### STOP LookupElement (IEE)\n");
             return(&pIEE[x]);
 	    /*NOTREACHED*/
 	  }
@@ -5704,7 +5704,7 @@ dump_hex(
         DebugPrint(level, section,"%02X ", (u_char)p[row_count]);
         if (((row_count + 1) % 16) == 0)
           {
-            dbprintf(("   "));
+            dbprintf("   ");
             for (x = 16; x > 0; x--)
               {
 		if (isalnum((u_char)p[row_count - x + 1 ]))
@@ -5738,7 +5738,7 @@ ChgExit(
 {
     (void)level;	/* Quiet unused parameter warning */
 
-   dbprintf(("ChgExit in %s, reason %s\n", where, reason));
+   dbprintf("ChgExit in %s, reason %s\n", where, reason);
    fprintf(stderr,"%s\n",reason);
    exit(2);
 }
@@ -6055,28 +6055,28 @@ SCSI_Move(
           switch(SenseHandler(DeviceFD,  0 , pRequestSense->SenseKey, pRequestSense->AdditionalSenseCode, pRequestSense->AdditionalSenseCodeQualifier, pRequestSense))
             {
             case SENSE_IGNORE:
-              dbprintf(("SCSI_Move : SENSE_IGNORE\n"));
+              dbprintf("SCSI_Move : SENSE_IGNORE\n");
               return(0);
               /*NOTREACHED*/
             case SENSE_RETRY:
-              dbprintf(("SCSI_Move : SENSE_RETRY no %d\n", retry));
+              dbprintf("SCSI_Move : SENSE_RETRY no %d\n", retry);
               break;
             case SENSE_ABORT:
-              dbprintf(("SCSI_Move : SENSE_ABORT\n"));
+              dbprintf("SCSI_Move : SENSE_ABORT\n");
               return(-1);
               /*NOTREACHED*/
             case SENSE_TAPE_NOT_UNLOADED:
-              dbprintf(("SCSI_Move : Tape still loaded, eject failed\n"));
+              dbprintf("SCSI_Move : Tape still loaded, eject failed\n");
               return(-1);
               /*NOTREACHED*/
             default:
-              dbprintf(("SCSI_Move : end %d\n", pRequestSense->SenseKey));
+              dbprintf("SCSI_Move : end %d\n", pRequestSense->SenseKey);
               return(pRequestSense->SenseKey);
               /*NOTREACHED*/
             }
         }
     }
-  dbprintf(("SCSI_Move : end %d\n", ret));
+  dbprintf("SCSI_Move : end %d\n", ret);
   return(ret);
 }
 
@@ -6090,7 +6090,7 @@ SCSI_LoadUnload(
   CDB_T CDB;
   int ret;
 
-  dbprintf(("##### START SCSI_LoadUnload\n"));
+  dbprintf("##### START SCSI_LoadUnload\n");
 
   CDB[0] = SC_COM_UNLOAD;
   CDB[1] = byte1;
@@ -6107,12 +6107,12 @@ SCSI_LoadUnload(
 
   if (ret < 0)
     {
-      dbprintf(("SCSI_Unload : failed %d\n", ret));
+      dbprintf("SCSI_Unload : failed %d\n", ret);
       return(-1);
       /*NOTREACHED*/
     }
 
-  dbprintf(("##### STOP SCSI_LoadUnload\n"));
+  dbprintf("##### STOP SCSI_LoadUnload\n");
   return(ret);
 }
 
@@ -6188,9 +6188,9 @@ SCSI_ModeSelect(
   int retry;
   u_char *sendbuf;
 
-  dbprintf(("##### START SCSI_ModeSelect\n"));
+  dbprintf("##### START SCSI_ModeSelect\n");
 
-  dbprintf(("SCSI_ModeSelect start length = %u:\n", (unsigned)length));
+  dbprintf("SCSI_ModeSelect start length = %u:\n", (unsigned)length);
   pRequestSense = alloc(SIZEOF(RequestSense_T));
   sendbuf = alloc((size_t)length + 4);
   memset(sendbuf, 0 , (size_t)length + 4);
@@ -6215,7 +6215,7 @@ SCSI_ModeSelect(
                                 SIZEOF(RequestSense_T));
       if (ret < 0)
         {
-          dbprintf(("SCSI_ModeSelect : ret %d\n", ret));
+          dbprintf("SCSI_ModeSelect : ret %d\n", ret);
 	  goto done;
           /*NOTREACHED*/
         }
@@ -6228,12 +6228,12 @@ SCSI_ModeSelect(
 			      pRequestSense))
             {
             case SENSE_IGNORE:
-              dbprintf(("SCSI_ModeSelect : SENSE_IGNORE\n"));
+              dbprintf("SCSI_ModeSelect : SENSE_IGNORE\n");
 	      goto done;
               /*NOTREACHED*/
 
             case SENSE_RETRY:
-              dbprintf(("SCSI_ModeSelect : SENSE_RETRY no %d\n", retry));
+              dbprintf("SCSI_ModeSelect : SENSE_RETRY no %d\n", retry);
               break;
 
             default:
@@ -6243,7 +6243,7 @@ SCSI_ModeSelect(
         }
     }
 end:
-  dbprintf(("SCSI_ModeSelect end: %d\n", ret));
+  dbprintf("SCSI_ModeSelect end: %d\n", ret);
 
 done:
   free(pRequestSense);
@@ -6593,8 +6593,8 @@ printf_arglist_function2(void DebugPrint, int, level, int, section, char *, fmt)
   if (changer->debuglevel)
     {
       if (sscanf(changer->debuglevel,"%d:%d", &dlevel, &dsection) != 2) {
-      	dbprintf(("Parse error: line is '%s' expected [0-9]*:[0-9]*\n",
-		  changer->debuglevel));
+      	dbprintf("Parse error: line is '%s' expected [0-9]*:[0-9]*\n",
+		  changer->debuglevel);
         dlevel=1;
         dsection=1;
       }
@@ -6611,9 +6611,9 @@ printf_arglist_function2(void DebugPrint, int, level, int, section, char *, fmt)
 	{
 	  if (index(buf, '\n') != NULL && strlen(buf) > 1)
           {
-	     dbprintf(("%ld:%s", (long)ti, buf));
+	     dbprintf("%ld:%s", (long)ti, buf);
 	  } else {
-	     dbprintf(("%s", buf));
+	     dbprintf("%s", buf);
 	  }
 	}
     }

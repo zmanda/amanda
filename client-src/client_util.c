@@ -154,8 +154,7 @@ build_name(
 	filename = get_name(diskname, exin, curtime, 0);
 	afilename = newvstralloc(afilename, dbgdir, filename, NULL);
 	quoted = quote_string(afilename);
-	dbprintf(("%s: Cannot create %s (%s)\n",
-			debug_prefix_time(NULL), quoted, strerror(errno)));
+	dbprintf("Cannot create %s (%s)\n", quoted, strerror(errno));
 	if(verbose) {
 	    printf("ERROR [cannot create %s (%s)]\n",
 			quoted, strerror(errno));
@@ -219,8 +218,7 @@ add_include(
     }
     if (strncmp(ainc, "./", 2) != 0) {
         quoted = quote_string(ainc);
-        dbprintf(("%s: include must start with './' (%s)\n",
-		  debug_prefix_time(NULL), quoted));
+        dbprintf("include must start with './' (%s)\n", quoted);
 	if(verbose) {
 	    printf("ERROR [include must start with './' (%s)]\n", quoted);
 	}
@@ -247,8 +245,7 @@ add_include(
 	    regex = glob_to_regex(incname);
 	    if((d = opendir(device)) == NULL) {
 		quoted = quote_string(device);
-		dbprintf(("%s: Can't open disk %s\n",
-		      debug_prefix_time(NULL), quoted));
+		dbprintf("Can't open disk %s\n", quoted);
 		if(verbose) {
 		    printf("ERROR [Can't open disk %s]\n", quoted);
 		}
@@ -329,9 +326,8 @@ build_exclude(
 		    }
 		    else {
 			quoted = quote_string(exclname);
-			dbprintf(("%s: Can't open exclude file %s (%s)\n",
-				  debug_prefix_time(NULL),
-				  quoted, strerror(errno)));
+			dbprintf("Can't open exclude file %s (%s)\n",
+				  quoted, strerror(errno));
 			if(verbose && (options->exclude_optional == 0 ||
 				       errno != ENOENT)) {
 			    printf("ERROR [Can't open exclude file %s (%s)]\n",
@@ -346,9 +342,8 @@ build_exclude(
 	}
 	else {
 	    quoted = quote_string(filename);
-	    dbprintf(("%s: Can't create exclude file %s (%s)\n",
-		      debug_prefix_time(NULL),
-		      quoted, strerror(errno)));
+	    dbprintf("Can't create exclude file %s (%s)\n",
+		      quoted, strerror(errno));
 	    if(verbose) {
 		printf("ERROR [Can't create exclude file %s (%s)]\n",
 			quoted, strerror(errno));
@@ -412,8 +407,8 @@ build_include(
 		    }
 		    else {
 			quoted = quote_string(inclname);
-			dbprintf(("%s: Can't open include file %s (%s)\n",
-				  debug_prefix_time(NULL), quoted, strerror(errno)));
+			dbprintf("Can't open include file %s (%s)\n",
+				  quoted, strerror(errno));
 			if(verbose && (options->include_optional == 0 ||
 				       errno != ENOENT)) {
 			    printf("ERROR [Can't open include file %s (%s)]\n",
@@ -428,8 +423,8 @@ build_include(
 	}
 	else {
 	    quoted = quote_string(filename);
-	    dbprintf(("%s: Can't create include file %s (%s)\n",
-		      debug_prefix_time(NULL), quoted, strerror(errno)));
+	    dbprintf("Can't create include file %s (%s)\n",
+		      quoted, strerror(errno));
 	    if(verbose) {
 		printf("ERROR [Can't create include file %s (%s)]\n",
 			quoted, strerror(errno));
@@ -440,7 +435,7 @@ build_include(
 	
     if(nb_exp == 0) {
 	quoted = quote_string(disk);
-	dbprintf(("%s: No include for %s\n", debug_prefix_time(NULL), quoted));
+	dbprintf("No include for %s\n", quoted);
 	if(verbose && options->include_optional == 0) {
 	    printf("ERROR [No include for %s]\n", quoted);
 	}
@@ -505,8 +500,7 @@ parse_options(
 	   && BSTRNCMP(tok,"auth=") == 0) {
 	    if(options->auth != NULL) {
 		quoted = quote_string(tok + 5);
-		dbprintf(("%s: multiple auth option %s\n",
-			  debug_prefix_time(NULL), quoted));
+		dbprintf("multiple auth option %s\n", quoted);
 		if(verbose) {
 		    printf("ERROR [multiple auth option %s]\n", quoted);
 		}
@@ -517,8 +511,7 @@ parse_options(
 	else if(am_has_feature(fs, fe_options_bsd_auth)
 	   && BSTRNCMP(tok, "bsd-auth") == 0) {
 	    if(options->auth != NULL) {
-		dbprintf(("%s: multiple auth option\n",
-			  debug_prefix_time(NULL)));
+		dbprintf("multiple auth option\n");
 		if(verbose) {
 		    printf("ERROR [multiple auth option]\n");
 		}
@@ -528,8 +521,7 @@ parse_options(
 	else if(am_has_feature(fs, fe_options_krb4_auth)
 	   && BSTRNCMP(tok, "krb4-auth") == 0) {
 	    if(options->auth != NULL) {
-		dbprintf(("%s: multiple auth option\n",
-			  debug_prefix_time(NULL)));
+		dbprintf("multiple auth option\n");
 		if(verbose) {
 		    printf("ERROR [multiple auth option]\n");
 		}
@@ -538,8 +530,7 @@ parse_options(
 	}
 	else if(BSTRNCMP(tok, "compress-fast") == 0) {
 	    if(options->compress != COMP_NONE) {
-		dbprintf(("%s: multiple compress option\n",
-			  debug_prefix_time(NULL)));
+		dbprintf("multiple compress option\n");
 		if(verbose) {
 		    printf("ERROR [multiple compress option]\n");
 		}
@@ -548,8 +539,7 @@ parse_options(
 	}
 	else if(BSTRNCMP(tok, "compress-best") == 0) {
 	    if(options->compress != COMP_NONE) {
-		dbprintf(("%s: multiple compress option\n",
-			  debug_prefix_time(NULL)));
+		dbprintf("multiple compress option\n");
 		if(verbose) {
 		    printf("ERROR [multiple compress option]\n");
 		}
@@ -558,8 +548,7 @@ parse_options(
 	}
 	else if(BSTRNCMP(tok, "srvcomp-fast") == 0) {
 	    if(options->compress != COMP_NONE) {
-		dbprintf(("%s: multiple compress option\n",
-			  debug_prefix_time(NULL)));
+		dbprintf("multiple compress option\n");
 		if(verbose) {
 		    printf("ERROR [multiple compress option]\n");
 		}
@@ -568,8 +557,7 @@ parse_options(
 	}
 	else if(BSTRNCMP(tok, "srvcomp-best") == 0) {
 	    if(options->compress != COMP_NONE) {
-		dbprintf(("%s: multiple compress option\n",
-			  debug_prefix_time(NULL)));
+		dbprintf("multiple compress option\n");
 		if(verbose) {
 		    printf("ERROR [multiple compress option]\n");
 		}
@@ -578,8 +566,7 @@ parse_options(
 	}
 	else if(BSTRNCMP(tok, "srvcomp-cust=") == 0) {
 	    if(options->compress != COMP_NONE) {
-		dbprintf(("%s: multiple compress option\n", 
-			  debug_prefix_time(NULL)));
+		dbprintf("multiple compress option\n");
 		if(verbose) {
 		    printf("ERROR [multiple compress option]\n");
 		}
@@ -589,8 +576,7 @@ parse_options(
 	}
 	else if(BSTRNCMP(tok, "comp-cust=") == 0) {
 	    if(options->compress != COMP_NONE) {
-		dbprintf(("%s: multiple compress option\n", 
-			  debug_prefix_time(NULL)));
+		dbprintf("multiple compress option\n");
 		if(verbose) {
 		    printf("ERROR [multiple compress option]\n");
 		}
@@ -601,8 +587,7 @@ parse_options(
 	} 
 	else if(BSTRNCMP(tok, "encrypt-serv-cust=") == 0) {
 	    if(options->encrypt != ENCRYPT_NONE) {
-		dbprintf(("%s: multiple encrypt option\n", 
-			  debug_prefix_time(NULL)));
+		dbprintf("multiple encrypt option\n");
 		if(verbose) {
 		    printf("ERROR [multiple encrypt option]\n");
 		}
@@ -612,8 +597,7 @@ parse_options(
 	} 
 	else if(BSTRNCMP(tok, "encrypt-cust=") == 0) {
 	    if(options->encrypt != ENCRYPT_NONE) {
-		dbprintf(("%s: multiple encrypt option\n", 
-			  debug_prefix_time(NULL)));
+		dbprintf("multiple encrypt option\n");
 		if(verbose) {
 		    printf("ERROR [multiple encrypt option]\n");
 		}
@@ -629,8 +613,7 @@ parse_options(
 	}
 	else if(BSTRNCMP(tok, "no-record") == 0) {
 	    if(options->no_record != 0) {
-		dbprintf(("%s: multiple no-record option\n",
-			  debug_prefix_time(NULL)));
+		dbprintf("multiple no-record option\n");
 		if(verbose) {
 		    printf("ERROR [multiple no-record option]\n");
 		}
@@ -639,8 +622,7 @@ parse_options(
 	}
 	else if(BSTRNCMP(tok, "index") == 0) {
 	    if(options->createindex != 0) {
-		dbprintf(("%s: multiple index option\n",
-			  debug_prefix_time(NULL)));
+		dbprintf("multiple index option\n");
 		if(verbose) {
 		    printf("ERROR [multiple index option]\n");
 		}
@@ -649,8 +631,7 @@ parse_options(
 	}
 	else if(BSTRNCMP(tok, "exclude-optional") == 0) {
 	    if(options->exclude_optional != 0) {
-		dbprintf(("%s: multiple exclude-optional option\n",
-			  debug_prefix_time(NULL)));
+		dbprintf("multiple exclude-optional option\n");
 		if(verbose) {
 		    printf("ERROR [multiple exclude-optional option]\n");
 		}
@@ -659,8 +640,7 @@ parse_options(
 	}
 	else if(strcmp(tok, "include-optional") == 0) {
 	    if(options->include_optional != 0) {
-		dbprintf(("%s: multiple include-optional option\n",
-			  debug_prefix_time(NULL)));
+		dbprintf("multiple include-optional option\n");
 		if(verbose) {
 		    printf("ERROR [multiple include-optional option]\n");
 		}
@@ -689,8 +669,7 @@ parse_options(
 	}
 	else if(strcmp(tok,"|") != 0) {
 	    quoted = quote_string(tok);
-	    dbprintf(("%s: unknown option %s\n",
-			debug_prefix_time(NULL), quoted));
+	    dbprintf("unknown option %s\n", quoted);
 	    if(verbose) {
 		printf("ERROR [unknown option: %s]\n", quoted);
 	    }
@@ -808,7 +787,7 @@ backup_support_option(
     memset(bsu, '\0', SIZEOF(*bsu));
     streamout = fdopen(supportout, "r");
     while((line = agets(streamout)) != NULL) {
-	dbprintf(("support line: %s\n", line));
+	dbprintf("support line: %s\n", line);
 	if (strncmp(line,"CONFIG ", 7) == 0) {
 	    if (strcmp(line+7, "YES") == 0)
 		bsu->config = 1;
@@ -851,7 +830,7 @@ backup_support_option(
 	} else if (strncmp(line,"MAX-LEVEL ", 10) == 0) {
 	    bsu->max_level  = atoi(line+10);
 	} else {
-	    dbprintf(("Invalid support line: %s\n", line));
+	    dbprintf("Invalid support line: %s\n", line);
 	}
 	amfree(line);
     }

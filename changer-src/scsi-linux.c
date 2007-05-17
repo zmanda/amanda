@@ -327,7 +327,7 @@ int SCSI_ExecuteCommand(int DeviceFD,
   buffer = (char *)malloc(SCSI_OFF + CDB_Length + DataBufferLength);
   if (buffer == NULL)
     {
-      dbprintf(("SCSI_ExecuteCommand memory allocation failure.\n"));
+      dbprintf("SCSI_ExecuteCommand memory allocation failure.\n");
       SCSI_CloseDevice(DeviceFD);
       return(-1);
     }
@@ -361,7 +361,7 @@ int SCSI_ExecuteCommand(int DeviceFD,
        (status != (ssize_t)(SCSI_OFF + CDB_Length + osize)) ||
        (psg_header->result != 0)) 
     {
-      dbprintf(("SCSI_ExecuteCommand error send \n"));
+      dbprintf("SCSI_ExecuteCommand error send \n");
       SCSI_CloseDevice(DeviceFD);
       amfree(buffer);
       return(SCSI_ERROR);
@@ -376,8 +376,8 @@ int SCSI_ExecuteCommand(int DeviceFD,
        (status != (ssize_t)(SCSI_OFF + DataBufferLength)) || 
        (psg_header->result != 0)) 
     { 
-      dbprintf(("SCSI_ExecuteCommand error read \n"));
-      dbprintf(("Status " SSIZE_T_FMT " (" SSIZE_T_FMT ") %2X\n", status, SCSI_OFF + DataBufferLength,psg_header->result ));
+      dbprintf("SCSI_ExecuteCommand error read \n");
+      dbprintf("Status " SSIZE_T_FMT " (" SSIZE_T_FMT ") %2X\n", status, SCSI_OFF + DataBufferLength,psg_header->result );
       SCSI_CloseDevice(DeviceFD);
       amfree(buffer);
       return(SCSI_ERROR);
@@ -420,7 +420,7 @@ int SCSI_OpenDevice(int ip)
           pDev[ip].fd = DeviceFD;
           pDev[ip].SCSI = 0;
           pDev[ip].inquiry = (SCSIInquiry_T *)malloc(INQUIRY_SIZE);
-          dbprintf(("SCSI_OpenDevice : use ioctl interface\n"));
+          dbprintf("SCSI_OpenDevice : use ioctl interface\n");
           if (SCSI_Inquiry(ip, pDev[ip].inquiry, (u_char)INQUIRY_SIZE) == 0)
             {
               if (pDev[ip].inquiry->type == TYPE_TAPE || pDev[ip].inquiry->type == TYPE_CHANGER)
@@ -549,7 +549,7 @@ int Tape_Ioctl( int DeviceFD, int command)
 
   if (ioctl(pDev[DeviceFD].fd , MTIOCTOP, &mtop) != 0)
     {
-      dbprintf(("Tape_Ioctl error ioctl %s\n",strerror(errno)));
+      dbprintf("Tape_Ioctl error ioctl %s\n",strerror(errno));
       SCSI_CloseDevice(DeviceFD);
       return(-1);
     }
@@ -621,7 +621,7 @@ int ScanBus(int print)
 
   if ((dir = opendir("/dev/")) == NULL)
     {
-      dbprintf(("/dev/ error: %s", strerror(errno)));
+      dbprintf("/dev/ error: %s", strerror(errno));
       return 0;
     }
 

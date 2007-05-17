@@ -129,21 +129,21 @@ bsdudp_connect(
 
     result = resolve_hostname(hostname, &res, &canonname);
     if(result != 0) {
-	dbprintf(("resolve_hostname(%s): %s\n", hostname, gai_strerror(result)));
+	dbprintf("resolve_hostname(%s): %s\n", hostname, gai_strerror(result));
 	security_seterror(&bh->sech, "resolve_hostname(%s): %s\n", hostname,
 			  gai_strerror(result));
 	(*fn)(arg, &bh->sech, S_ERROR);
 	return;
     }
     if (canonname == NULL) {
-	dbprintf(("resolve_hostname(%s) did not return a canonical name\n", hostname));
+	dbprintf("resolve_hostname(%s) did not return a canonical name\n", hostname);
 	security_seterror(&bh->sech,
 	        _("resolve_hostname(%s) did not return a canonical name\n"), hostname);
 	(*fn)(arg, &bh->sech, S_ERROR);
        return;
     }
     if (res == NULL) {
-	dbprintf(("resolve_hostname(%s): no results\n", hostname));
+	dbprintf("resolve_hostname(%s): no results\n", hostname);
 	security_seterror(&bh->sech,
 	        _("resolve_hostname(%s): no results\n"), hostname);
 	(*fn)(arg, &bh->sech, S_ERROR);
@@ -180,7 +180,7 @@ bsdudp_connect(
 	not_init = 0;
     }
 
-    auth_debug(1, ("Resolved hostname=%s\n", canonname));
+    auth_debug(1, "Resolved hostname=%s\n", canonname);
     if ((se = getservbyname(AMANDA_SERVICE_NAME, "udp")) == NULL)
 	port = AMANDA_SERVICE_DEFAULT;
     else
@@ -253,8 +253,7 @@ bsdudp_close(
 	return;
     }
 
-    auth_debug(1, ("%s: bsdudp: close handle '%s'\n",
-		   debug_prefix_time(NULL), bh->proto_handle));
+    auth_debug(1, "bsdudp: close handle '%s'\n", bh->proto_handle);
 
     udp_recvpkt_cancel(bh);
     if(bh->next) {

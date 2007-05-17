@@ -295,7 +295,7 @@ guess_disk (
 	/*NOTREACHED*/
     }
     cwd_length = strlen(cwd);
-    dbprintf(("guess_disk: " SSIZE_T_FMT ": \"%s\"\n", cwd_length, cwd));
+    dbprintf("guess_disk: " SSIZE_T_FMT ": \"%s\"\n", cwd_length, cwd);
 
     if (open_fstab() == 0) {
 	return -1;
@@ -305,11 +305,11 @@ guess_disk (
     while (get_fstab_nextentry(&fsent))
     {
 	current_length = fsent.mntdir ? strlen(fsent.mntdir) : (size_t)0;
-	dbprintf(("guess_disk: " SSIZE_T_FMT ": " SSIZE_T_FMT": \"%s\": \"%s\"\n",
+	dbprintf("guess_disk: " SSIZE_T_FMT ": " SSIZE_T_FMT": \"%s\": \"%s\"\n",
 		  longest_match,
 		  current_length,
 		  fsent.mntdir ? fsent.mntdir : "(mntdir null)",
-		  fsent.fsname ? fsent.fsname : "(fsname null)"));
+		  fsent.fsname ? fsent.fsname : "(fsname null)");
 	if ((current_length > longest_match)
 	    && (current_length <= cwd_length)
 	    && (strncmp(fsent.mntdir, cwd, current_length) == 0))
@@ -325,9 +325,9 @@ guess_disk (
 	        fsname = newstralloc(fsname,fsent.fsname+strlen(DEV_PREFIX));
 	    }
 	    local_disk = is_local_fstype(&fsent);
-	    dbprintf(("guess_disk: local_disk = %d, fsname = \"%s\"\n",
+	    dbprintf("guess_disk: local_disk = %d, fsname = \"%s\"\n",
 		      local_disk,
-		      fsname));
+		      fsname);
 	}
     }
     close_fstab();

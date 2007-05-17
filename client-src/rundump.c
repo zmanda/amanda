@@ -62,6 +62,7 @@ main(
     char *dump_program;
     int i;
     char *e;
+    char *cmdline;
 #endif /* ERRMSG */
 
     safe_fd(-1, 0);
@@ -74,16 +75,16 @@ main(
 
     dbopen(DBG_SUBDIR_CLIENT);
     if (argc < 3) {
-	error("%s: Need at least 3 arguments\n", debug_prefix_time(NULL));
+	error("Need at least 3 arguments\n");
 	/*NOTREACHED*/
     }
 
-    dbprintf(("%s: version %s\n", debug_prefix_time(NULL), version()));
+    dbprintf("version %s\n", version());
 
 #ifdef ERRMSG							/* { */
 
     fprintf(stderr, ERRMSG);
-    dbprintf(("%s: %s", argv[0], ERRMSG));
+    dbprintf("%s: %s", argv[0], ERRMSG);
     dbclose();
     return 1;
 
@@ -114,7 +115,7 @@ main(
     argc--;
     argv++;
 
-    dbprintf(("config: %s\n", argv[0]));
+    dbprintf("config: %s\n", argv[0]);
     if (strcmp(argv[0], "NOCONFIG") != 0)
 	dbrename(argv[0], DBG_SUBDIR_CLIENT);
     argc--;
@@ -158,15 +159,21 @@ main(
 # endif
 #endif
 
-    dbprintf(("running: %s: ",dump_program));
-    for (i=0; argv[i]; i++)
-	dbprintf(("%s ", argv[i]));
-    dbprintf(("\n"));
+    cmdline = stralloc(dump_program);
+    for (i = 1; argv[i]; i++) {
+	char *quoted;
+
+	quoted = quote_string(argv[i]);
+	cmdline = vstrextend(&cmdline, " ", quoted, NULL);
+	amfree(quoted);
+    }
+    dbprintf("running: %s\n", cmdline);
+    amfree(cmdline);
 
     execve(dump_program, argv, safe_env());
 
     e = strerror(errno);
-    dbprintf(("failed (%s)\n", e));
+    dbprintf("failed (%s)\n", e);
     dbclose();
 
     fprintf(stderr, "rundump: could not exec %s: %s\n", dump_program, e);

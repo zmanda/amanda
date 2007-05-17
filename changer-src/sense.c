@@ -783,12 +783,12 @@ Sense2Action(
 	SenseType_T *generic = NULL;
         int in = 0;
 
-	dbprintf(("Sense2Action START : type(%d), ignsense(%d), sense(%02X), asc(%02X), ascq(%02X)\n",
+	dbprintf("Sense2Action START : type(%d), ignsense(%d), sense(%02X), asc(%02X), ascq(%02X)\n",
 		type,
 		ignsense,
 		sense,
 		asc,
-		ascq));
+		ascq);
 
 	while (pwork->ident != NULL)
 	{
@@ -803,7 +803,7 @@ Sense2Action(
                 } else {
 			if (in == 1)
 			{
-				dbprintf(("Sense2Action       : no match\n"));
+				dbprintf("Sense2Action       : no match\n");
 				break;
 			}
 			pwork++;
@@ -816,9 +816,9 @@ Sense2Action(
 			if (pwork->sense == UCHAR_MAX)
 			{
 				*text = stralloc(pwork->text);
-				dbprintf(("Sense2Action   END : no match for %s %s\n",
+				dbprintf("Sense2Action   END : no match for %s %s\n",
 					pwork->ident,
-					pwork->vendor));
+					pwork->vendor);
 				return(pwork->ret);
 			}
 
@@ -827,11 +827,11 @@ Sense2Action(
 				if (pwork->asc ==  asc && pwork->ascq == ascq)
 				{
 					*text = stralloc(pwork->text);
-					dbprintf(("Sense2Action END(IGN) : match for %s %s  return -> %d/%s\n",
+					dbprintf("Sense2Action END(IGN) : match for %s %s  return -> %d/%s\n",
 						pwork->ident,
 						pwork->vendor,
 						pwork->ret,
-						*text));
+						*text);
 					return(pwork->ret);
 				}
 				pwork++;
@@ -844,11 +844,11 @@ Sense2Action(
 				if (pwork->asc ==  asc && pwork->ascq == ascq)
 				{
 					*text = (char *)stralloc(pwork->text);
-					dbprintf(("Sense2Action   END : match for %s %s  return -> %d/%s\n",
+					dbprintf("Sense2Action   END : match for %s %s  return -> %d/%s\n",
 						pwork->ident,
 						pwork->vendor,
 						pwork->ret,
-						*text));
+						*text);
 					return(pwork->ret);
 				}
 
@@ -858,11 +858,11 @@ Sense2Action(
 				if ( 	pwork->asc == UCHAR_MAX && pwork->ascq == UCHAR_MAX)
 				{
 					*text = (char *)stralloc(pwork->text);
-					dbprintf(("Sense2Action   END : no match for %s %s  return -> %d/%s\n",
+					dbprintf("Sense2Action   END : no match for %s %s  return -> %d/%s\n",
 						pwork->ident,
 						pwork->vendor,
 						pwork->ret,
-						*text));
+						*text);
 					return(pwork->ret);
 				}
 			}
@@ -873,7 +873,7 @@ Sense2Action(
 	/*
 	 * Ok no match found, so lets return the values from the generic table
 	 */
-	dbprintf(("Sense2Action generic start :\n"));
+	dbprintf("Sense2Action generic start :\n");
 	while (generic != NULL) {
 		if (generic->ident == NULL)
 		   break;
@@ -881,11 +881,11 @@ Sense2Action(
 		if (generic->sense == UCHAR_MAX)
 		{
 			*text = (char *)stralloc(generic->text);
-			dbprintf(("Sense2Action generic END : match for %s %s  return -> %d/%s\n",
+			dbprintf("Sense2Action generic END : match for %s %s  return -> %d/%s\n",
 				generic->ident,
 				generic->vendor,
 				generic->ret,
-				*text));
+				*text);
 			return(generic->ret);
 		}
 
@@ -894,11 +894,11 @@ Sense2Action(
 			if (generic->asc ==  asc && generic->ascq == ascq)
 			{
 				*text = (char *)stralloc(generic->text);
-				dbprintf(("Sense2Action generic END(IGN) : match for %s %s  return -> %d/%s\n",
+				dbprintf("Sense2Action generic END(IGN) : match for %s %s  return -> %d/%s\n",
 					generic->ident,
 					generic->vendor,
 					generic->ret,
-					*text));
+					*text);
 				return(generic->ret);
 			}
 			generic++;
@@ -911,11 +911,11 @@ Sense2Action(
 			if (generic->asc ==  asc && generic->ascq == ascq)
 			{
 				*text = (char *)stralloc(generic->text);
-				dbprintf(("Sense2Action generic END : match for %s %s  return -> %d/%s\n",
+				dbprintf("Sense2Action generic END : match for %s %s  return -> %d/%s\n",
 					generic->ident,
 					generic->vendor,
 					generic->ret,
-					*text));
+					*text);
 				return(generic->ret);
 			}
 
@@ -925,11 +925,11 @@ Sense2Action(
 			if ( 	generic->asc == UCHAR_MAX && generic->ascq == UCHAR_MAX)
 			{
 				*text = (char *)stralloc(generic->text);
-				dbprintf(("Sense2Action generic END : no match for %s %s  return -> %d/%s\n",
+				dbprintf("Sense2Action generic END : no match for %s %s  return -> %d/%s\n",
 					generic->ident,
 					generic->vendor,
 					generic->ret,
-					*text));
+					*text);
 				return(generic->ret);
 			}
 			generic++;
@@ -938,7 +938,7 @@ Sense2Action(
 		generic++;
 	}
 
-	dbprintf(("Sense2Action END:\n"));
+	dbprintf("Sense2Action END:\n");
 	*text = (char *)stralloc("No match found");
 	return(SENSE_ABORT);
 }

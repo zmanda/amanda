@@ -168,7 +168,7 @@ main(
     set_pname("calcsize");
 
     dbopen(DBG_SUBDIR_CLIENT);
-    dbprintf(("%s: version %s\n", debug_prefix_time(NULL), version()));
+    dbprintf("version %s\n", version());
 
     malloc_size_1 = malloc_inuse(&malloc_hist_1);
 
@@ -186,7 +186,7 @@ main(
         /*NOTREACHED*/
     }
 
-    dbprintf(("config: %s\n", *argv));
+    dbprintf("config: %s\n", *argv);
     if (strcmp(*argv, "NOCONFIG") != 0) {
 	dbrename(*argv, DBG_SUBDIR_CLIENT);
     }
@@ -330,9 +330,9 @@ main(
 
 	amflock(1, "size");
 
-	dbprintf(("calcsize: %s %d SIZE " OFF_T_FMT "\n",
+	dbprintf("calcsize: %s %d SIZE " OFF_T_FMT "\n",
 	       qamname, dumplevel[i],
-	       (OFF_T_FMT_TYPE)final_size(i, dirname)));
+	       (OFF_T_FMT_TYPE)final_size(i, dirname));
 	fprintf(stderr, "%s %d SIZE " OFF_T_FMT "\n",
 	       qamname, dumplevel[i],
 	       (OFF_T_FMT_TYPE)final_size(i, dirname));

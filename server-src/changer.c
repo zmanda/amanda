@@ -73,9 +73,8 @@ report_bad_resultstr(void)
 {
     char *s;
 
-    s = vstralloc("badly formed result from changer: ",
-		  "\"", changer_resultstr, "\"",
-		  NULL);
+    s = vstrallocf("badly formed result from changer: \"%s\"",
+		  changer_resultstr);
     amfree(changer_resultstr);
     changer_resultstr = s;
     return 2;
@@ -198,7 +197,7 @@ changer_query(
     rc = run_changer_command("-info", (char *) NULL, curslotstr, &rest);
     if(rc) return rc;
 
-    dbprintf(("changer_query: changer return was %s\n",rest));
+    dbprintf("changer_query: changer return was %s\n",rest);
     if (sscanf(rest, "%d %d %d", nslotsp, backwardsp, searchable) != 3) {
       if (sscanf(rest, "%d %d", nslotsp, backwardsp) != 2) {
         return report_bad_resultstr();
@@ -206,7 +205,7 @@ changer_query(
         *searchable = 0;
       }
     }
-    dbprintf(("changer_query: searchable = %d\n",*searchable));
+    dbprintf("changer_query: searchable = %d\n",*searchable);
     return 0;
 }
 
@@ -262,11 +261,11 @@ changer_find(
    
     if (searchlabel != NULL)
     {
-      dbprintf(("changer_find: looking for %s changer is searchable = %d\n",
-		searchlabel, searchable));
+      dbprintf("changer_find: looking for %s changer is searchable = %d\n",
+		searchlabel, searchable);
     } else {
-      dbprintf(("changer_find: looking for NULL changer is searchable = %d\n",
-		searchable));
+      dbprintf("changer_find: looking for NULL changer is searchable = %d\n",
+		searchable);
     }
 
     if ((searchlabel!=NULL) && searchable && !done){
@@ -327,8 +326,6 @@ changer_command(
     int fd[2];
     amwait_t wait_exitcode = 1;
     int exitcode;
-    char num1[NUM_STR_SIZE];
-    char num2[NUM_STR_SIZE];
     char *cmdstr;
     pid_t pid, changer_pid = 0;
     int fd_to_close[4], *pfd_to_close = fd_to_close;
@@ -351,12 +348,9 @@ changer_command(
     amfree(changer_resultstr);
 
     if(socketpair(AF_UNIX, SOCK_STREAM, 0, fd) == -1) {
-	changer_resultstr = vstralloc ("<error> ",
-				       "could not create pipe for \"",
-				       cmdstr,
-				       "\": ",
-				       strerror(errno),
-				       NULL);
+	changer_resultstr = vstrallocf(
+				"<error> could not create pipe for \"%s\": %s",
+				cmdstr, strerror(errno));
 	exitcode = 2;
 	goto failed;
     }
@@ -378,68 +372,43 @@ changer_command(
     }
 
     if(fd[0] < 0 || fd[0] >= (int)FD_SETSIZE) {
-	snprintf(num1, SIZEOF(num1), "%d", fd[0]);
-	snprintf(num2, SIZEOF(num2), "%d", (int)FD_SETSIZE-1);
-	changer_resultstr = vstralloc ("<error> ",
-				       "could not create pipe for \"",
-				       cmdstr,
-				       "\": ",
-				       "socketpair 0: descriptor ",
-				       num1,
-				       " out of range ( .. ",
-				       num2,
-				       ")",
-				       NULL);
+	changer_resultstr = vstrallocf(
+			"<error> could not create pipe for \"%s\":"
+			"socketpair 0: descriptor %d out of range ( 0 .. %d)",
+			cmdstr, fd[0], (int)FD_SETSIZE-1);
 	exitcode = 2;
 	goto done;
     }
     if(fd[1] < 0 || fd[1] >= (int)FD_SETSIZE) {
-	snprintf(num1, SIZEOF(num1), "%d", fd[1]);
-	snprintf(num2, SIZEOF(num2), "%d", (int)FD_SETSIZE-1);
-	changer_resultstr = vstralloc ("<error> ",
-				       "could not create pipe for \"",
-				       cmdstr,
-				       "\": ",
-				       "socketpair 1: descriptor ",
-				       num1,
-				       " out of range ( .. ",
-				       num2,
-				       ")",
-				       NULL);
+	changer_resultstr = vstrallocf(
+			"<error> could not create pipe for \"%s\":"
+			"socketpair 1: descriptor %d out of range ( 0 .. %d)",
+			cmdstr, fd[1], (int)FD_SETSIZE-1);
 	exitcode = 2;
 	goto done;
     }
 
     switch(changer_pid = fork()) {
     case -1:
-	changer_resultstr = vstralloc ("<error> ",
-				       "could not fork for \"",
-				       cmdstr,
-				       "\": ",
-				       strerror(errno),
-				       NULL);
+	changer_resultstr = vstrallocf(
+			"<error> could not fork for \"%s\": %s",
+			cmdstr, strerror(errno));
 	exitcode = 2;
 	goto done;
     case 0:
 	if(dup2(fd[1], 1) == -1 || dup2(dbfd(), 2) == -1) {
-	    changer_resultstr = vstralloc ("<error> ",
-				           "could not open pipe to \"",
-				           cmdstr,
-				           "\": ",
-				           strerror(errno),
-				           NULL);
+	    changer_resultstr = vstrallocf(
+			"<error> could not open pipe to \"%s\": %s",
+			cmdstr, strerror(errno));
 	    (void)fullwrite(fd[1], changer_resultstr, strlen(changer_resultstr));
 	    exit(1);
 	}
 	aclose(fd[0]);
 	aclose(fd[1]);
 	if(config_dir && chdir(config_dir) == -1) {
-	    changer_resultstr = vstralloc ("<error> ",
-				           "could not cd to \"",
-				           config_dir,
-				           "\": ",
-				           strerror(errno),
-				           NULL);
+	    changer_resultstr = vstrallocf(
+			"<error> could not cd to \"%s\": %s",
+			config_dir, strerror(errno));
 	    (void)fullwrite(2, changer_resultstr, strlen(changer_resultstr));
 	    exit(1);
 	}
@@ -449,12 +418,9 @@ changer_command(
 	} else {
 	    execle(tapechanger, tapechanger, cmd, (char *)NULL, safe_env());
 	}
-	changer_resultstr = vstralloc ("<error> ",
-				       "could not exec \"",
-				       tapechanger,
-				       "\": ",
-				       strerror(errno),
-				       NULL);
+	changer_resultstr = vstrallocf(
+			"<error> could not exec \"%s\": %s",
+			tapechanger, strerror(errno));
 	(void)fullwrite(2, changer_resultstr, strlen(changer_resultstr));
 	exit(1);
     default:
@@ -462,12 +428,9 @@ changer_command(
     }
 
     if((changer_resultstr = areads(fd[0])) == NULL) {
-	changer_resultstr = vstralloc ("<error> ",
-				       "could not read result from \"",
-				       tapechanger,
-				       errno ? "\": " : "\"",
-				       errno ? strerror(errno) : "",
-				       NULL);
+	changer_resultstr = vstrallocf(
+			"<error> could not read result from \"%s\": %s",
+			tapechanger, strerror(errno));
     }
 
     while(1) {
@@ -475,23 +438,16 @@ changer_command(
 	    if(errno == EINTR) {
 		continue;
 	    } else {
-		changer_resultstr = vstralloc ("<error> ",
-					       "wait for \"",
-					       tapechanger,
-					       "\" failed: ",
-					       strerror(errno),
-					       NULL);
+		changer_resultstr = vstrallocf(
+			"<error> wait for \"%s\" failed: %s",
+			tapechanger, strerror(errno));
 		exitcode = 2;
 		goto done;
 	    }
 	} else if (pid != changer_pid) {
-	    snprintf(num1, SIZEOF(num1), "%ld", (long)pid);
-	    changer_resultstr = vstralloc ("<error> ",
-					   "wait for \"",
-					   tapechanger,
-					   "\" returned unexpected pid ",
-					   num1,
-					   NULL);
+	    changer_resultstr = vstrallocf(
+			"<error> wait for \"%s\" returned unexpected pid %ld",
+			tapechanger, (long)pid);
 	    exitcode = 2;
 	    goto done;
 	} else {
@@ -501,12 +457,9 @@ changer_command(
 
     /* mark out-of-control changers as fatal error */
     if(WIFSIGNALED(wait_exitcode)) {
-	snprintf(num1, SIZEOF(num1), "%d", WTERMSIG(wait_exitcode));
-	changer_resultstr = newvstralloc (changer_resultstr,
-					  "<error> ",
-					  changer_resultstr,
-					  " (got signal ", num1, ")",
-					  NULL);
+	changer_resultstr = newvstrallocf(changer_resultstr,
+			"<error> %s (got signal %d)",
+			changer_resultstr, WTERMSIG(wait_exitcode));
 	exitcode = 2;
     } else {
 	exitcode = WEXITSTATUS(wait_exitcode);
@@ -518,7 +471,7 @@ done:
 
 failed:
     if (exitcode != 0) {
-        dbprintf(("changer: got exit: %d str: %s\n", exitcode, changer_resultstr)); 
+        dbprintf("changer: got exit: %d str: %s\n", exitcode, changer_resultstr); 
     }
 
     amfree(cmdstr);
@@ -542,7 +495,7 @@ changer_search(
     char *rest;
     int rc;
 
-    dbprintf(("changer_search: %s\n",searchlabel));
+    dbprintf("changer_search: %s\n",searchlabel);
     rc = run_changer_command("-search", searchlabel, outslotstr, &rest);
     if(rc) return rc;
 
@@ -572,12 +525,12 @@ changer_label(
     char *curslotstr = NULL;
     int nslots, backwards, searchable;
 
-    dbprintf(("changer_label: %s for slot %s\n",labelstr,slotsp));
+    dbprintf("changer_label: %s for slot %s\n",labelstr,slotsp);
     rc = changer_query(&nslots, &curslotstr, &backwards,&searchable);
     amfree(curslotstr);
 
     if ((rc == 0) && (searchable == 1)){
-	dbprintf(("changer_label: calling changer -label %s\n",labelstr));
+	dbprintf("changer_label: calling changer -label %s\n",labelstr);
 	rc = run_changer_command("-label", labelstr, &slotstr, &rest);
 	amfree(slotstr);
     }

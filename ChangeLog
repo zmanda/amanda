@@ -1,3 +1,57 @@
+2006-05-16	John Franks <jrfranks@zmanda.com> (merged by dustin@zmanda.com)
+	* oldrecover-src/amrecover.c oldrecover-src/extract_list.c
+	  oldrecover-src/display_commands.c oldrecover-src/set_commands.c
+	  recover-src/amrecover.c recover-src/extract_list.c
+	  recover-src/display_commands.c recover-src/set_commands.c
+	  server-src/changer.c server-src/taperscan.c
+	  server-src/amtrmlog.c server-src/amindexd.c server-src/driver.c
+	  server-src/amcheck.c server-src/dumper.c server-src/chunker.c
+	  server-src/planner.c server-src/reporter.c server-src/taper.c
+	  server-src/amtrmidx.c changer-src/scsi-linux.c
+	  changer-src/chg-scsi-chio.c changer-src/scsi-chio.c
+	  changer-src/scsi-hpux.c changer-src/scsi-cam.c
+	  changer-src/scsi-changer-driver.c changer-src/chg-scsi.c
+	  changer-src/scsi-bsd.c changer-src/scsi-irix.c
+	  changer-src/scsi-solaris.c changer-src/sense.c
+	  changer-src/scsi-aix.c changer-src/scsi-hpux_new.c
+	  client-src/client_util.c client-src/runtar.c
+	  client-src/sendbackup-gnutar.c client-src/sendbackup.c
+	  client-src/sendbackup-dump.c client-src/killpgrp.c
+	  client-src/sendsize.c client-src/selfcheck.c
+	  client-src/rundump.c client-src/calcsize.c
+	  client-src/amandates.c restore-src/amidxtaped.c
+	  restore-src/restore.c amandad-src/amandad_util.c
+	  amandad-src/amandad.c common-src/rsh-security.c
+	  common-src/sockaddr-util.c common-src/pipespawn.c
+	  common-src/security.c common-src/krb5-security.c
+	  common-src/util.c common-src/util.h common-src/bsdtcp-security.c
+	  common-src/tapelist.c common-src/debug.c common-src/fileheader.c
+	  common-src/error.c common-src/dgram.c common-src/stream.c
+	  common-src/protocol.c common-src/ssh-security.c
+	  common-src/krb4-security.c common-src/bsd-security.c
+	  common-src/event.c common-src/security-util.c
+	  common-src/conffile.c common-src/amanda.h
+	  common-src/bsdudp-security.c common-src/security-util.h
+	  common-src/alloc.c tape-src/output-file.c tape-src/tapeio.c
+	  tape-src/output-tape.c:
+		- Change dbprintf() to use __VA_ARGS__. (Remove extra parens)
+		- Prepend program name and nano second accuracy time stamp
+		  to each line in debug file.
+		- Emove any resulting duplicate timestamps from functions that
+		  inserted them in each dbprintf() line.
+		- Fix dballoc compilation.
+		- Fix dbmalloc compilation.
+		- Fix amfree() to report file and line # of amfree line during
+		  errors.
+		- Add vstrallocf() and newvstrallocf() functions. These are
+		  the same as vstralloc() and newvstralloc() except they use
+		  printf style format strings.  (Required to eliminate
+		  untranslateable string concatenations in messages.)
+		- Change files to use *allocf() functions where it seemed
+		  appropriate..
+		- Fix kerberos 4 compilation.
+		- Fix kerberos 5 compilation.
+
 2006-05-16  Jean-Louis Martineau <martineau@zmanda.com> (merged by dustin@zmanda.com)
 	* common-src/debug.c (debug_rename): Fix for cygwin: rename
 	  will not overwrite an existing file

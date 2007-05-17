@@ -156,41 +156,41 @@ dump_changer_struct(
 {
   int i;
 
-  dbprintf(("Number of configurations: %d\n", chg->number_of_configs));
-  dbprintf(("Tapes need eject: %s\n", (chg->eject>0 ? "Yes" : "No")));
-  dbprintf(("Tapes need sleep: %d seconds\n", chg->sleep));
-  dbprintf(("Cleancycles     : %d\n", chg->cleanmax));
-  dbprintf(("Changerdevice   : %s\n", chg->device));
+  dbprintf("Number of configurations: %d\n", chg->number_of_configs);
+  dbprintf("Tapes need eject: %s\n", (chg->eject>0 ? "Yes" : "No"));
+  dbprintf("Tapes need sleep: %d seconds\n", chg->sleep);
+  dbprintf("Cleancycles     : %d\n", chg->cleanmax);
+  dbprintf("Changerdevice   : %s\n", chg->device);
   for (i = 0; i < chg->number_of_configs; i++){
-    dbprintf(("Tapeconfig Nr: %d\n", i));
-    dbprintf(("  Drivenumber   : %d\n", chg->conf[i].drivenum));
-    dbprintf(("  Startslot     : %d\n", chg->conf[i].start));
-    dbprintf(("  Endslot       : %d\n", chg->conf[i].end));
-    dbprintf(("  Cleanslot     : %d\n", chg->conf[i].cleanslot));
+    dbprintf("Tapeconfig Nr: %d\n", i);
+    dbprintf("  Drivenumber   : %d\n", chg->conf[i].drivenum);
+    dbprintf("  Startslot     : %d\n", chg->conf[i].start);
+    dbprintf("  Endslot       : %d\n", chg->conf[i].end);
+    dbprintf("  Cleanslot     : %d\n", chg->conf[i].cleanslot);
     if (chg->conf[i].device != NULL)
-      dbprintf(("  Devicename    : %s\n", chg->conf[i].device));
+      dbprintf("  Devicename    : %s\n", chg->conf[i].device);
     else
-      dbprintf(("  Devicename    : none\n"));
+      dbprintf("  Devicename    : none\n");
     if (chg->conf[i].scsitapedev != NULL)
-      dbprintf(("  SCSITapedev   : %s\n", chg->conf[i].scsitapedev));
+      dbprintf("  SCSITapedev   : %s\n", chg->conf[i].scsitapedev);
     else
-      dbprintf(("  SCSITapedev   : none\n"));
+      dbprintf("  SCSITapedev   : none\n");
     if (chg->conf[i].tapestatfile != NULL)
-      dbprintf(("  statfile      : %s\n", chg->conf[i].tapestatfile));
+      dbprintf("  statfile      : %s\n", chg->conf[i].tapestatfile);
     else
-      dbprintf(("  statfile      : none\n"));
+      dbprintf("  statfile      : none\n");
     if (chg->conf[i].slotfile != NULL)
-      dbprintf(("  Slotfile      : %s\n", chg->conf[i].slotfile));
+      dbprintf("  Slotfile      : %s\n", chg->conf[i].slotfile);
     else
-      dbprintf(("  Slotfile      : none\n"));
+      dbprintf("  Slotfile      : none\n");
     if (chg->conf[i].cleanfile != NULL)
-      dbprintf(("  Cleanfile     : %s\n", chg->conf[i].cleanfile));
+      dbprintf("  Cleanfile     : %s\n", chg->conf[i].cleanfile);
     else
-      dbprintf(("  Cleanfile     : none\n"));
+      dbprintf("  Cleanfile     : none\n");
     if (chg->conf[i].timefile != NULL)
-      dbprintf(("  Usagecount    : %s\n", chg->conf[i].timefile));
+      dbprintf("  Usagecount    : %s\n", chg->conf[i].timefile);
     else
-      dbprintf(("  Usagecount    : none\n"));
+      dbprintf("  Usagecount    : none\n");
   }
 }
 
@@ -780,8 +780,7 @@ main(
       fprintf(stderr, "%s: open: %s: %s\n", get_pname(), 
               changer_dev, strerror(localerr));
       printf("%s open: %s: %s\n", "<none>", changer_dev, strerror(localerr));
-      dbprintf(("%s: open: %s: %s\n", get_pname(),
-                changer_dev, strerror(localerr)));
+      dbprintf("open: %s: %s\n", changer_dev, strerror(localerr));
       return 2;
     }
 
@@ -811,8 +810,7 @@ main(
       fprintf(stderr, "%s: open: %s: %s\n", get_pname(), 
               changer_dev, strerror(localerr));
       printf("%s open: %s: %s\n", "<none>", changer_dev, strerror(localerr));
-      dbprintf(("%s: open: %s: %s\n", get_pname(),
-                changer_dev, strerror(localerr)));
+      dbprintf("open: %s: %s\n", changer_dev, strerror(localerr));
       return 2;
     }
     slotcnt = get_slot_count(fd);
@@ -831,9 +829,8 @@ main(
     fprintf(stderr, "%s: requested drive number (%d) greater than "
             "number of supported drives (%d)\n", get_pname(), 
             drive_num, drivecnt);
-    dbprintf(("%s: requested drive number (%d) greater than "
-              "number of supported drives (%d)\n", get_pname(), 
-              drive_num, drivecnt));
+    dbprintf("requested drive number (%d) greater than "
+              "number of supported drives (%d)\n", drive_num, drivecnt);
     CloseDevice("", fd);
     return 2;
   }

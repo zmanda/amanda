@@ -75,9 +75,6 @@
 #define KRB5_ENV_CCNAME "KRB5CCNAME"
 #endif
 
-#define k5printf(x)     auth_debug(1,x)
-
-
 /*
  * consider undefining when kdestroy() is fixed.  The current version does
  * not work under krb5-1.2.4 in rh7.3, perhaps others.
@@ -245,8 +242,7 @@ krb5_connect(
     (void)conf_fn;	/* Quiet unused parameter warning */
     (void)datap;	/* Quiet unused parameter warning */
 
-    k5printf(("%s: krb5: krb5_connect: %s\n", debug_prefix_time(NULL),
-	       hostname));
+    auth_debug(1, "krb5: krb5_connect: %s\n", hostname);
 
     krb5_init();
 
@@ -259,14 +255,14 @@ krb5_connect(
 
     result = resolve_hostname(hostname, NULL, &canonname);
     if(result != 0) {
-	dbprintf(("resolve_hostname(%s): %s\n", hostname, gai_strerror(result)));
+	dbprintf("resolve_hostname(%s): %s\n", hostname, gai_strerror(result));
 	security_seterror(&rh->sech, "resolve_hostname(%s): %s\n", hostname,
 			  gai_strerror(result));
 	(*fn)(arg, &rh->sech, S_ERROR);
 	return;
     }
     if (canonname == NULL) {
-	dbprintf(("resolve_hostname(%s) did not return a canonical name\n", hostname));
+	dbprintf("resolve_hostname(%s) did not return a canonical name\n", hostname);
 	security_seterror(&rh->sech,
 	        _("resolve_hostname(%s) did not return a canonical name\n"), hostname);
 	(*fn)(arg, &rh->sech, S_ERROR);
@@ -355,20 +351,20 @@ krb5_accept(
 
     len = sizeof(sin);
     if (getpeername(in, (struct sockaddr *)&sin, &len) < 0) {
-	dbprintf(("%s: getpeername returned: %s\n", debug_prefix_time(NULL),
-		  strerror(errno)));
+	dbprintf("getpeername returned: %s\n",
+		  strerror(errno));
 	return;
     }
     if ((result = getnameinfo((struct sockaddr *)&sin, len,
 			      hostname, NI_MAXHOST, NULL, 0, 0) == -1)) {
-	dbprintf(("%s: getnameinfo failed: %s\n",
-		  debug_prefix_time(NULL), gai_strerror(result)));
+	dbprintf("getnameinfo failed: %s\n",
+		  gai_strerror(result));
 	return;
     }
     if (check_name_give_sockaddr(hostname,
 				 (struct sockaddr *)&sin, &errmsg) < 0) {
-	dbprintf(("%s: check_name_give_sockaddr(%s): %s\n",
-		  debug_prefix_time(NULL), hostname, errmsg));
+	dbprintf("check_name_give_sockaddr(%s): %s\n",
+		  hostname, errmsg);
 	amfree(errmsg);
 	return;
     }
@@ -457,7 +453,7 @@ gss_client(
     gss_name_t gss_name;
     char *errmsg = NULL;
 
-    k5printf(("gss_client\n"));
+    auth_debug(1, "gss_client\n");
 
     send_tok.value = vstralloc("host/", rs->rc->hostname, NULL);
     send_tok.length = strlen(send_tok.value) + 1;
@@ -472,7 +468,7 @@ gss_client(
     amfree(send_tok.value);
     rc->gss_context = GSS_C_NO_CONTEXT;
     maj_stat = gss_display_name(&min_stat, gss_name, &AA, &doid);
-    dbprintf(("gss_name %s\n", (char *)AA.value));
+    dbprintf("gss_name %s\n", (char *)AA.value);
 
     /*
      * Perform the context-establishement loop.
@@ -570,7 +566,7 @@ gss_server(
     char errbuf[256];
     char *errmsg = NULL;
 
-    k5printf(("gss_server\n"));
+    auth_debug(1, "gss_server\n");
 
     assert(rc != NULL);
 
@@ -612,7 +608,7 @@ gss_server(
     amfree(send_tok.value);
 
     maj_stat = gss_display_name(&min_stat, gss_name, &AA, &doid);
-    dbprintf(("gss_name %s\n", (char *)AA.value));
+    dbprintf("gss_name %s\n", (char *)AA.value);
     maj_stat = gss_acquire_cred(&min_stat, gss_name, 0,
 	GSS_C_NULL_OID_SET, GSS_C_ACCEPT, &gss_creds, NULL, NULL);
     if (maj_stat != (OM_uint32)GSS_S_COMPLETE) {
@@ -710,7 +706,7 @@ out:
     } else {
 	rc->auth = 1;
     }
-    k5printf(("gss_server returning %d\n", rval));
+    auth_debug(1, "gss_server returning %d\n", rval);
     return (rval);
 }
 
@@ -816,20 +812,20 @@ get_tgt(
 	error = NULL;
     }
     if ((ret = krb5_init_context(&context)) != 0) {
-	error = vstralloc("error initializing krb5 context: ",
-	    error_message(ret), NULL);
+	error = vstrallocf("error initializing krb5 context: %s",
+	    error_message(ret));
 	return (error);
     }
 
     /*krb5_init_ets(context);*/
 
     if(!keytab_name) {
-        error = vstralloc("error  -- no krb5 keytab defined", NULL);
+        error = vstrallocf("error  -- no krb5 keytab defined");
         return(error);
     }
 
     if(!principal_name) {
-        error = vstralloc("error  -- no krb5 principal defined", NULL);
+        error = vstrallocf("error  -- no krb5 principal defined");
         return(error);
     }
 
@@ -837,8 +833,8 @@ get_tgt(
      * Resolve keytab file into a keytab object
      */
     if ((ret = krb5_kt_resolve(context, keytab_name, &keytab)) != 0) {
-	error = vstralloc("error resolving keytab ", keytab, ": ",
-	    error_message(ret), NULL);
+	error = vstrallocf("error resolving keytab %s: %s", keytab, 
+	    error_message(ret));
 	return (error);
     }
 
@@ -848,8 +844,8 @@ get_tgt(
      */
     ret = krb5_parse_name(context, principal_name, &client);
     if (ret != 0) {
-	error = vstralloc("error parsing ", principal_name, ": ",
-	    error_message(ret), NULL);
+	error = vstrallocf("error parsing %s: %s", principal_name,
+	    error_message(ret));
 	return (error);
     }
 
@@ -871,15 +867,14 @@ get_tgt(
 	0);
 #endif
     if (ret != 0) {
-	error = vstralloc("error while building server name: ",
-	    error_message(ret), NULL);
+	error = vstrallocf("error while building server name: %s",
+	    error_message(ret));
 	return (error);
     }
 
     ret = krb5_timeofday(context, &now);
     if (ret != 0) {
-	error = vstralloc("error getting time of day: ", error_message(ret),
-	    NULL);
+	error = vstrallocf("error getting time of day: %s", error_message(ret));
 	return (error);
     }
 
@@ -897,24 +892,22 @@ get_tgt(
 	keytab, 0, &creds, 0);
 
     if (ret != 0) {
-	error = vstralloc("error getting ticket for ", principal_name,
-	    ": ", error_message(ret), NULL);
+	error = vstrallocf("error getting ticket for %s: %s",
+	    principal_name, error_message(ret));
 	goto cleanup2;
     }
 
     if ((ret = krb5_cc_default(context, &ccache)) != 0) {
-	error = vstralloc("error initializing ccache: ", error_message(ret),
-	    NULL);
+	error = vstrallocf("error initializing ccache: %s", error_message(ret));
 	goto cleanup;
     }
     if ((ret = krb5_cc_initialize(context, ccache, client)) != 0) {
-	error = vstralloc("error initializing ccache: ", error_message(ret),
-	    NULL);
+	error = vstrallocf("error initializing ccache: %s", error_message(ret));
 	goto cleanup;
     }
     if ((ret = krb5_cc_store_cred(context, ccache, &creds)) != 0) {
-	error = vstralloc("error storing creds in ccache: ",
-	    error_message(ret), NULL);
+	error = vstrallocf("error storing creds in ccache: %s", 
+	    error_message(ret));
 	/* FALLTHROUGH */
     }
     krb5_cc_close(context, ccache);
@@ -994,7 +987,7 @@ k5_encrypt(
     OM_uint32 maj_stat, min_stat;
     int conf_state;
 
-    k5printf(("krb5: k5_encrypt: enter %p\n", rc));
+    auth_debug(1, "krb5: k5_encrypt: enter %p\n", rc);
 
     dectok.length = buflen;
     dectok.value  = buf;    
@@ -1004,18 +997,18 @@ k5_encrypt(
 	maj_stat = gss_seal(&min_stat, rc->gss_context, 1,
 			    GSS_C_QOP_DEFAULT, &dectok, &conf_state, &enctok);
 	if (maj_stat != (OM_uint32)GSS_S_COMPLETE || conf_state == 0) {
-	    k5printf(("krb5 encrypt error to %s: %s\n",
-		      rc->hostname, gss_error(maj_stat, min_stat)));
+	    auth_debug(1, "krb5 encrypt error to %s: %s\n",
+		      rc->hostname, gss_error(maj_stat, min_stat));
 	    return (-1);
 	}
-	k5printf(("krb5: k5_encrypt: give %zu bytes\n", enctok.length));
+	auth_debug(1, "krb5: k5_encrypt: give %zu bytes\n", enctok.length);
 	*encbuf = enctok.value;
 	*encbuflen = enctok.length;
     } else {
 	*encbuf = buf;
 	*encbuflen = buflen;
     }
-	k5printf(("krb5: k5_encrypt: exit\n"));
+	auth_debug(1, "krb5: k5_encrypt: exit\n");
     return (0);
 }
 
@@ -1033,30 +1026,30 @@ k5_decrypt(
     OM_uint32 maj_stat, min_stat;
     int conf_state, qop_state;
 
-    k5printf(("krb5: k5_decrypt: enter\n"));
+    auth_debug(1, "krb5: k5_decrypt: enter\n");
 
     if (rc->auth == 1) {
 	enctok.length = buflen;
 	enctok.value  = buf;    
 
-	k5printf(("krb5: k5_decrypt: decrypting %zu bytes\n", enctok.length));
+	auth_debug(1, "krb5: k5_decrypt: decrypting %zu bytes\n", enctok.length);
 
 	assert(rc->gss_context != GSS_C_NO_CONTEXT);
 	maj_stat = gss_unseal(&min_stat, rc->gss_context, &enctok, &dectok,
 			      &conf_state, &qop_state);
 	if (maj_stat != (OM_uint32)GSS_S_COMPLETE) {
-	    k5printf(("krb5 decrypt error from %s: %s\n",
-		      rc->hostname, gss_error(maj_stat, min_stat)));
+	    auth_debug(1, "krb5 decrypt error from %s: %s\n",
+		      rc->hostname, gss_error(maj_stat, min_stat));
 	    return (-1);
 	}
-	k5printf(("krb5: k5_decrypt: give %zu bytes\n", dectok.length));
+	auth_debug(1, "krb5: k5_decrypt: give %zu bytes\n", dectok.length);
 	*decbuf = dectok.value;
 	*decbuflen = dectok.length;
     } else {
 	*decbuf = buf;
 	*decbuflen = buflen;
     }
-    k5printf(("krb5: k5_decrypt: exit\n"));
+    auth_debug(1, "krb5: k5_decrypt: exit\n");
     return (0);
 }
 #endif
@@ -1074,7 +1067,7 @@ krb5_checkuser( char *	host,
     if(strcmp(name, AMANDA_PRINCIPAL) == 0) {
 	return(NULL);
     } else {
-	return(vstralloc("does not match compiled in default"));
+	return(vstrallocf("does not match compiled in default"));
     }
 #else
     struct passwd *pwd;
@@ -1085,14 +1078,12 @@ krb5_checkuser( char *	host,
     uid_t localuid;
     char *line = NULL;
     char *filehost = NULL, *fileuser = NULL, *filerealm = NULL;
-    char n1[NUM_STR_SIZE];
-    char n2[NUM_STR_SIZE];
 
     assert( host != NULL);
     assert( name != NULL);
 
     if((pwd = getpwnam(CLIENT_LOGIN)) == NULL) {
-	result = vstralloc("can not find user ", CLIENT_LOGIN, NULL);
+	result = vstrallocf("can not find user %s", CLIENT_LOGIN);
     }
     localuid = pwd->pw_uid;
 
@@ -1103,7 +1094,7 @@ krb5_checkuser( char *	host,
 #endif
 
     if(!ptmp) {
-	result = vstralloc("could not find home directory for ", CLIENT_LOGIN, NULL);
+	result = vstrallocf("could not find home directory for %s", CLIENT_LOGIN);
 	goto common_exit;
    }
 
@@ -1116,40 +1107,36 @@ krb5_checkuser( char *	host,
 	 * the destination user mimicing the .k5login functionality.
 	 */
 	 if(strcmp(name, CLIENT_LOGIN) != 0) {
-		result = vstralloc(name, " does not match ",
-			CLIENT_LOGIN, NULL);
+		result = vstrallocf("%s does not match %s",
+			name, CLIENT_LOGIN);
 		return result;
 	}
 	result = NULL;
 	goto common_exit;
     }
 
-    k5printf(("opening ptmp: %s\n", (ptmp)?ptmp: "NULL!"));
+    auth_debug(1, "opening ptmp: %s\n", (ptmp)?ptmp: "NULL!");
     if((fp = fopen(ptmp, "r")) == NULL) {
-	result = vstralloc("can not open ", ptmp, NULL);
+	result = vstrallocf("can not open %s", ptmp);
 	return result;
     }
-    k5printf(("opened ptmp\n"));
+    auth_debug(1, "opened ptmp\n");
 
     if (fstat(fileno(fp), &sbuf) != 0) {
-	result = vstralloc("cannot fstat ", ptmp, ": ", strerror(errno), NULL);
+	result = vstrallocf("cannot fstat %s: %s", ptmp, strerror(errno));
 	goto common_exit;
     }
 
     if (sbuf.st_uid != localuid) {
-	snprintf(n1, SIZEOF(n1), "%ld", (long) sbuf.st_uid);
-	snprintf(n2, SIZEOF(n2), "%ld", (long) localuid);
-	result = vstralloc(ptmp, ": ",
-	    "owned by id ", n1,
-	    ", should be ", n2,
-	    NULL);
+	result = vstrallocf("%s is owned by %ld, should be %ld",
+		ptmp, (long)sbuf.st_uid, (long)localuid);
 	goto common_exit;
     }
     if ((sbuf.st_mode & 077) != 0) {
-	result = stralloc2(ptmp,
-	    ": incorrect permissions; file must be accessible only by its owner");
+	result = vstrallocf(
+	    "%s: incorrect permissions; file must be accessible only by its owner", ptmp);
 	goto common_exit;
-    }       
+    }
 
     while ((line = agets(fp)) != NULL) {
 	if (line[0] == '\0') {
@@ -1158,7 +1145,7 @@ krb5_checkuser( char *	host,
 	}
 
 #if defined(SHOW_SECURITY_DETAIL)                               /* { */
-	k5printf(("%s: processing line: <%s>\n", debug_prefix(NULL), line));
+	auth_debug(1, "processing line: <%s>\n", line);
 #endif                                                          /* } */
 	/* if there's more than one column, then it's the host */
 	if( (filehost = strtok(line, " \t")) == NULL) {
@@ -1179,7 +1166,7 @@ krb5_checkuser( char *	host,
 	    amfree(line);
 	    continue;
 	} else {
-		k5printf(("found a host match\n"));
+		auth_debug(1, "found a host match\n");
 	}
 
 	if( (filerealm = strchr(fileuser, '@')) != NULL) {
@@ -1194,9 +1181,9 @@ krb5_checkuser( char *	host,
 	 * You likely only get this far if you've turned on cross-realm auth
 	 * anyway...
 	 */
-	k5printf(("comparing %s %s\n", fileuser, name));
+	auth_debug(1, "comparing %s %s\n", fileuser, name);
 	if(strcmp(fileuser, name) == 0) {
-		k5printf(("found a match!\n"));
+		auth_debug(1, "found a match!\n");
 		if(realm && filerealm && (strcmp(realm, filerealm)!=0)) {
 			amfree(line);
 			continue;
@@ -1207,7 +1194,7 @@ krb5_checkuser( char *	host,
 	}
 	amfree(line);
     }
-    result = vstralloc("no match in ", ptmp, NULL);
+    result = vstrallocf("no match in %s", ptmp);
 
 common_exit:
     afclose(fp);

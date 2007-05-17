@@ -96,7 +96,7 @@ main(
     }
 
     dbopen(DBG_SUBDIR_SERVER);
-    dbprintf(("%s: version %s\n", my_argv[0], version()));
+    dbprintf("%s: version %s\n", my_argv[0], version());
 
     config_name = my_argv[1];
 
@@ -146,7 +146,7 @@ main(
 
     /* determine how many log to keep */
     no_keep = getconf_int(CNF_TAPECYCLE) * 2;
-    dbprintf(("Keeping %d log file%s\n", no_keep, (no_keep == 1) ? "" : "s"));
+    dbprintf("Keeping %d log file%s\n", no_keep, (no_keep == 1) ? "" : "s");
 
     conf_logdir = getconf_str(CNF_LOGDIR);
     if (*conf_logdir == '/') {

@@ -326,7 +326,7 @@ int OpenDevice(char * tapedev)
   int DeviceFD;
 
   DeviceFD = open(tapedev, O_RDWR);
-  dbprintf(("%s: OpenDevice(%s) returns %d\n", get_pname(), tapedev, DeviceFD));
+  dbprintf("OpenDevice(%s) returns %d\n", tapedev, DeviceFD);
   return(DeviceFD);
 }
 
@@ -335,7 +335,7 @@ int CloseDevice(char *device, int DeviceFD)
   int ret;
 
   ret = close(DeviceFD);
-  dbprintf(("%s: CloseDevice(%s) returns %d\n", get_pname(), device, ret));
+  dbprintf("CloseDevice(%s) returns %d\n", device, ret);
   return(ret);
 }
 

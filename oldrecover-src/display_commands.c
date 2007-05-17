@@ -97,9 +97,9 @@ add_dir_list_item(
 {
     DIR_ITEM *next;
 
-    dbprintf(("add_dir_list_item: Adding \"%s\" \"%d\" \"%s\" \""
+    dbprintf("add_dir_list_item: Adding \"%s\" \"%d\" \"%s\" \""
 	      OFF_T_FMT "\" \"%s\"\n",
-	      date, level, tape, (OFF_T_FMT_TYPE)fileno, path));
+	      date, level, tape, (OFF_T_FMT_TYPE)fileno, path);
 
     next = (DIR_ITEM *)alloc(sizeof(DIR_ITEM));
     memset(next, 0, sizeof(DIR_ITEM));

@@ -464,7 +464,7 @@ main(
 	    /* Double-check that 'localhost' resolves properly */
 	    if ((res = resolve_hostname("localhost", NULL, NULL) != 0)) {
 		errstr = newvstralloc(errstr,
-				     _("could not resolve localhost: "),
+				     "could not resolve localhost: ",
 				     gai_strerror(res), NULL);
 		q = squotef(errstr);
 		putresult(FAILED, "%s %s\n", handle, q);
@@ -480,8 +480,8 @@ main(
 				  STREAM_BUFSIZE, 0, NULL, 0);
 	    if (outfd == -1) {
 		
-		errstr = newvstralloc(errstr, "port open: ",
-				      strerror(errno), NULL);
+		errstr = newvstrallocf(errstr, "port open: %s",
+				      strerror(errno));
 		q = squotef(errstr);
 		putresult(FAILED, "%s %s\n", handle, q);
 		log_add(L_FAIL, "%s %s %s %d [%s]", hostname, qdiskname,
@@ -787,7 +787,7 @@ process_dumpline(
 
 	    tok = strtok(NULL, "");
 	    if (tok == NULL || *tok != '[') {
-		errstr = newvstralloc(errstr, "bad remote error: ", str, NULL);
+		errstr = newvstrallocf(errstr, "bad remote error: %s", str);
 	    } else {
 		char *enderr;
 
@@ -919,7 +919,7 @@ log_msgout(
 
     fflush(errf);
     if (fseek(errf, 0L, SEEK_SET) < 0) {
-	dbprintf(("log_msgout: warning - seek failed: %s\n", strerror(errno)));
+	dbprintf("log_msgout: warning - seek failed: %s\n", strerror(errno));
     }
     while ((line = agets(errf)) != NULL) {
 	if (line[0] != '\0') {
@@ -1077,10 +1077,8 @@ do_dump(
 			    NULL);
     amfree(fn);
     if((errf = fopen(errfname, "w+")) == NULL) {
-	errstr = newvstralloc(errstr,
-			      "errfile open \"", errfname, "\": ",
-			      strerror(errno),
-			      NULL);
+	errstr = newvstrallocf(errstr, "errfile open \"%s\": %s",
+			      errfname, strerror(errno));
 	amfree(errfname);
 	goto failed;
     }
@@ -1104,8 +1102,8 @@ do_dump(
 	}
 	indexout = open(indexfile_tmp, O_WRONLY | O_CREAT | O_TRUNC, 0600);
 	if (indexout == -1) {
-	    errstr = newvstralloc(errstr, "err open ", indexfile_tmp, ": ",
-		strerror(errno), NULL);
+	    errstr = newvstrallocf(errstr, "err open %s: %s",
+			indexfile_tmp, strerror(errno));
 	    goto failed;
 	} else {
 	    if (runcompress(indexout, &indexpid, COMP_BEST) < 0) {
@@ -1282,7 +1280,7 @@ read_mesgfd(
 
     switch (size) {
     case -1:
-	errstr = newstralloc2(errstr, "mesg read: ",
+	errstr = newvstrallocf(errstr, "mesg read: %s",
 	    security_stream_geterror(streams[MESGFD].fd));
 	dump_result = 2;
 	stop_dump();
@@ -1320,7 +1318,7 @@ read_mesgfd(
 	/* time to do the header */
 	finish_tapeheader(&file);
 	if (write_tapeheader(db->fd, &file)) {
-	    errstr = newstralloc2(errstr, "write_tapeheader: ", 
+	    errstr = newvstrallocf(errstr, "write_tapeheader: %s", 
 				  strerror(errno));
 	    dump_result = 2;
 	    stop_dump();
@@ -1369,7 +1367,7 @@ read_datafd(
      * The read failed.  Error out
      */
     if (size < 0) {
-	errstr = newstralloc2(errstr, "data read: ",
+	errstr = newvstrallocf(errstr, "data read: %s",
 	    security_stream_geterror(streams[DATAFD].fd));
 	dump_result = 2;
 	stop_dump();
@@ -1408,7 +1406,7 @@ read_datafd(
      */
     assert(buf != NULL);
     if (databuf_write(db, buf, (size_t)size) < 0) {
-	errstr = newstralloc2(errstr, "data write: ", strerror(errno));
+	errstr = newvstrallocf(errstr, "data write: %s", strerror(errno));
 	dump_result = 2;
 	stop_dump();
 	return;
@@ -1431,7 +1429,7 @@ read_indexfd(
     fd = *(int *)cookie;
 
     if (size < 0) {
-	errstr = newstralloc2(errstr, "index read: ",
+	errstr = newvstrallocf(errstr, "index read: %s",
 	    security_stream_geterror(streams[INDEXFD].fd));
 	dump_result = 2;
 	stop_dump();
@@ -1547,20 +1545,20 @@ runcompress(
 
     /* outpipe[0] is pipe's stdin, outpipe[1] is stdout. */
     if (pipe(outpipe) < 0) {
-	errstr = newstralloc2(errstr, "pipe: ", strerror(errno));
+	errstr = newvstrallocf(errstr, "pipe: %s", strerror(errno));
 	return (-1);
     }
 
     switch (*pid = fork()) {
     case -1:
-	errstr = newstralloc2(errstr, "couldn't fork: ", strerror(errno));
+	errstr = newvstrallocf(errstr, "couldn't fork: %s", strerror(errno));
 	aclose(outpipe[0]);
 	aclose(outpipe[1]);
 	return (-1);
     default:
 	rval = dup2(outpipe[1], outfd);
 	if (rval < 0)
-	    errstr = newstralloc2(errstr, "couldn't dup2: ", strerror(errno));
+	    errstr = newvstrallocf(errstr, "couldn't dup2: %s", strerror(errno));
 	aclose(outpipe[1]);
 	aclose(outpipe[0]);
 	return (rval);
@@ -1608,20 +1606,20 @@ runencrypt(
 
     /* outpipe[0] is pipe's stdin, outpipe[1] is stdout. */
     if (pipe(outpipe) < 0) {
-	errstr = newstralloc2(errstr, "pipe: ", strerror(errno));
+	errstr = newvstrallocf(errstr, "pipe: %s", strerror(errno));
 	return (-1);
     }
 
     switch (*pid = fork()) {
     case -1:
-	errstr = newstralloc2(errstr, "couldn't fork: ", strerror(errno));
+	errstr = newvstrallocf(errstr, "couldn't fork: %s", strerror(errno));
 	aclose(outpipe[0]);
 	aclose(outpipe[1]);
 	return (-1);
     default:
 	rval = dup2(outpipe[1], outfd);
 	if (rval < 0)
-	    errstr = newstralloc2(errstr, "couldn't dup2: ", strerror(errno));
+	    errstr = newvstrallocf(errstr, "couldn't dup2: %s", strerror(errno));
 	aclose(outpipe[1]);
 	aclose(outpipe[0]);
 	return (rval);
@@ -1665,8 +1663,8 @@ sendbackup_response(
     security_close_connection(sech, hostname);
 
     if (pkt == NULL) {
-	errstr = newvstralloc(errstr, "[request failed: ",
-	    security_geterror(sech), "]", NULL);
+	errstr = newvstrallocf(errstr, "[request failed: %s]",
+	    security_geterror(sech));
 	*response_error = 1;
 	return;
     }
@@ -1684,19 +1682,19 @@ sendbackup_response(
 
 	tok = strtok(NULL, "\n");
 	if (tok != NULL) {
-	    errstr = newvstralloc(errstr, "NAK: ", tok, NULL);
+	    errstr = newvstrallocf(errstr, "NAK: %s", tok);
 	    *response_error = 1;
 	} else {
 bad_nak:
-	    errstr = newstralloc(errstr, "request NAK");
+	    errstr = newvstrallocf(errstr, "request NAK");
 	    *response_error = 2;
 	}
 	return;
     }
 
     if (pkt->type != P_REP) {
-	errstr = newvstralloc(errstr, "received strange packet type ",
-	    pkt_type2str(pkt->type), ": ", pkt->body, NULL);
+	errstr = newvstrallocf(errstr, "received strange packet type %s: %s",
+	    pkt_type2str(pkt->type), pkt->body);
 	*response_error = 1;
 	return;
     }
@@ -1722,7 +1720,7 @@ bad_nak:
 	    tok = strtok(NULL, "\n");
 	    if (tok == NULL)
 		tok = "[bogus error packet]";
-	    errstr = newstralloc(errstr, tok);
+	    errstr = newvstrallocf(errstr, "%s", tok);
 	    *response_error = 2;
 	    return;
 	}
@@ -1738,22 +1736,17 @@ bad_nak:
 	    for (i = 0; i < NSTREAMS; i++) {
 		tok = strtok(NULL, " ");
 		if (tok == NULL || strcmp(tok, streams[i].name) != 0) {
-		    extra = vstralloc("CONNECT token is \"",
-				      tok ? tok : "(null)",
-				      "\": expected \"",
-				      streams[i].name,
-				      "\"",
-				      NULL);
+		    extra = vstrallocf(
+				"CONNECT token is \"%s\": expected \"%s\"",
+				tok ? tok : "(null)",
+				streams[i].name);
 		    goto parse_error;
 		}
 		tok = strtok(NULL, " \n");
 		if (tok == NULL || sscanf(tok, "%d", &ports[i]) != 1) {
-		    extra = vstralloc("CONNECT ",
-				      streams[i].name,
-				      " token is \"",
-				      tok ? tok : "(null)",
-				      "\": expected a port number",
-				      NULL);
+		    extra = vstrallocf(
+			"CONNECT %s token is \"%s\": expected a port number",
+			streams[i].name, tok ? tok : "(null)");
 		    goto parse_error;
 		}
 	    }
@@ -1766,7 +1759,7 @@ bad_nak:
 	if (strcmp(tok, "OPTIONS") == 0) {
 	    tok = strtok(NULL, "\n");
 	    if (tok == NULL) {
-		extra = stralloc("OPTIONS token is missing");
+		extra = vstrallocf("OPTIONS token is missing");
 		goto parse_error;
 	    }
 
@@ -1776,10 +1769,9 @@ bad_nak:
 		if(strncmp_const_skip(tok, "features=", tok, ch) == 0) {
 		    am_release_feature_set(their_features);
 		    if((their_features = am_string_to_feature(tok)) == NULL) {
-			errstr = newvstralloc(errstr,
-					      "OPTIONS: bad features value: ",
-					      tok,
-					      NULL);
+			errstr = newvstrallocf(errstr,
+					      "OPTIONS: bad features value: %s",
+					      tok);
 			goto parse_error;
 		    }
 		}
@@ -1788,10 +1780,8 @@ bad_nak:
 	    continue;
 	}
 
-	extra = vstralloc("next token is \"",
-			  tok ? tok : "(null)",
-			  "\": expected \"CONNECT\", \"ERROR\" or \"OPTIONS\"",
-			  NULL);
+	extra = vstrallocf("next token is \"%s\": expected \"CONNECT\", \"ERROR\" or \"OPTIONS\"",
+			  tok ? tok : "(null)");
 	goto parse_error;
     }
 
@@ -1803,9 +1793,10 @@ bad_nak:
 	    continue;
 	streams[i].fd = security_stream_client(sech, ports[i]);
 	if (streams[i].fd == NULL) {
-	    errstr = newvstralloc(errstr,
-		"[could not connect ", streams[i].name, " stream: ",
-		security_geterror(sech), "]", NULL);
+	    errstr = newvstrallocf(errstr,
+		"[could not connect %s stream: %s]",
+		streams[i].name,
+		security_geterror(sech));
 	    goto connect_error;
 	}
     }
@@ -1827,9 +1818,10 @@ bad_nak:
 	    continue;
 #endif
 	if (security_stream_auth(streams[i].fd) < 0) {
-	    errstr = newvstralloc(errstr,
-		"[could not authenticate ", streams[i].name, " stream: ",
-		security_stream_geterror(streams[i].fd), "]", NULL);
+	    errstr = newvstrallocf(errstr,
+		"[could not authenticate %s stream: %s]",
+		streams[i].name, 
+		security_stream_geterror(streams[i].fd));
 	    goto connect_error;
 	}
     }
@@ -1839,7 +1831,7 @@ bad_nak:
      * them, complain.
      */
     if (streams[MESGFD].fd == NULL || streams[DATAFD].fd == NULL) {
-	errstr = newstralloc(errstr, "[couldn't open MESG or INDEX streams]");
+	errstr = newvstrallocf(errstr, "[couldn't open MESG or INDEX streams]");
 	goto connect_error;
     }
 
@@ -1849,11 +1841,9 @@ bad_nak:
     return;
 
 parse_error:
-    errstr = newvstralloc(errstr,
-			  "[parse of reply message failed: ",
-			  extra ? extra : "(no additional information)",
-			  "]",
-			  NULL);
+    errstr = newvstrallocf(errstr,
+			  "[parse of reply message failed: %s]",
+			  extra ? extra : "(no additional information)");
     amfree(extra);
     *response_error = 2;
     security_close_connection(sech, hostname);

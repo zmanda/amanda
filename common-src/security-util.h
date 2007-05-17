@@ -39,9 +39,9 @@
 #include "security.h"
 #include "event.h"
 
-#define auth_debug(i,x) do {		\
+#define auth_debug(i, ...) do {		\
 	if ((i) <= debug_auth) {	\
-	    dbprintf(x);		\
+	    dbprintf(__VA_ARGS__);	\
 	}				\
 } while (0)
 

@@ -35,6 +35,9 @@
 #include "arglist.h"
 #include "clock.h"
 
+#ifdef USE_DBMALLOC
+#endif
+
 #ifndef AMANDA_DBGDIR
 #  define AMANDA_DBGDIR		AMANDA_TMPDIR
 #endif
@@ -78,10 +81,11 @@ printf_arglist_function(void debug_printf, const char *, format)
 	    db_file = stderr;
 	}
 	if(db_file != NULL) {
+	    fprintf(db_file, "%s: %s: ", msg_timestamp(), get_pname());
 	    arglist_start(argp, format);
 	    vfprintf(db_file, format, argp);
-	    fflush(db_file);
 	    arglist_end(argp);
+	    fflush(db_file);
 	}
 	errno = save_errno;
     }
@@ -250,8 +254,8 @@ debug_setup_2(
     db_filename = s;
     s = NULL;
     if ((rc = chown(db_filename, client_uid, client_gid)) < 0) {
-	dbprintf(("chown(%s, %d, %d) failed. <%s>",
-		  db_filename, client_uid, client_gid, strerror(errno)));
+	dbprintf("chown(%s, %d, %d) failed. <%s>",
+		  db_filename, client_uid, client_gid, strerror(errno));
 	(void)rc;
     }
     amfree(dbgdir);
@@ -276,8 +280,8 @@ debug_setup_2(
 	 * Make the first debug log file entry.
 	 */
 	saved_debug = debug; debug = 1;
-	debug_printf("%s: debug %d pid %ld ruid %ld euid %ld: %s at %s",
-		     get_pname(), saved_debug, (long)getpid(),
+	debug_printf("debug %d pid %ld ruid %ld euid %ld: %s at %s",
+		     saved_debug, (long)getpid(),
 		     (long)getuid(), (long)geteuid(),
 		     notation,
 		     ctime(&curtime));
@@ -309,25 +313,39 @@ debug_open(char *subdir)
     for(i = 0; fd < 0; i++) {
 	amfree(db_name);
 	if ((db_name = get_debug_name(curtime, i)) == NULL) {
-	    error("Cannot create %s debug file", get_pname());
+	    error("Cannot create debug file");
 	    /*NOTREACHED*/
         }
 
 	if ((s = newvstralloc(s, dbgdir, db_name, NULL)) == NULL) {
-	    error("Cannot allocate %s debug file name memory", get_pname());
+	    error("Cannot allocate debug file name memory");
 	    /*NOTREACHED*/
 	}
 
         if ((fd = open(s, O_WRONLY|O_CREAT|O_EXCL|O_APPEND, 0640)) < 0) {
             if (errno != EEXIST) {
-                error("Cannot create %s debug file: %s",
-                       get_pname(), strerror(errno));
+                error("Cannot create debug file: %s", strerror(errno));
                 /*NOTREACHED*/
             }
             amfree(s);
         }
     }
     (void)umask(mask); /* Restore mask */
+
+#ifdef USE_DBMALLOC
+    {
+	union dbmalloptarg	m;
+
+	m.i = M_HANDLE_CORE | M_HANDLE_DUMP;
+	dbmallopt(MALLOC_WARN, m);
+
+	m.i = M_HANDLE_ABORT;
+	dbmallopt(MALLOC_FATAL, m);
+
+	m.str = s;
+	dbmallopt(MALLOC_ERRFILE, m);
+    }
+#endif
 
     /*
      * Finish setup.
@@ -363,7 +381,7 @@ debug_reopen(
 	s = newvstralloc(s, dbgdir, dbfilename, NULL);
     }
     if ((fd = open(s, O_RDWR|O_APPEND)) < 0) {
-	error("cannot reopen %s debug file %s", get_pname(), dbfilename);
+	error("cannot reopen debug file %s", dbfilename);
 	/*NOTREACHED*/
     }
 
@@ -409,15 +427,14 @@ debug_rename(
 	for(i = 0; fd < 0; i++) {
 	    amfree(db_name);
 	    if ((db_name = get_debug_name(curtime, i)) == NULL) {
-		dbprintf(("%s: Cannot create debug file", get_pname()));
+		dbprintf("Cannot create debug file");
 		break;
 	    }
 
 	    s = newvstralloc(s, dbgdir, db_name, NULL);
 	    if (rename(db_filename, s) < 0) {
 		if (errno != EEXIST) {
-		    dbprintf(("%s: Cannot rename debug file: %s", get_pname(),
-			      strerror(errno)));
+		    dbprintf("Cannot rename debug file: %s", strerror(errno));
 		    break;
 		}
 	    }
@@ -429,15 +446,15 @@ debug_rename(
 	for(i = 0; fd < 0; i++) {
 	    amfree(db_name);
 	    if ((db_name = get_debug_name(curtime, i)) == NULL) {
-		dbprintf(("%s: Cannot create debug file", get_pname()));
+		dbprintf("Cannot create debug file");
 		break;
 	    }
 
 	    s = newvstralloc(s, dbgdir, db_name, NULL);
 	    if ((fd = open(s, O_WRONLY|O_CREAT|O_EXCL|O_APPEND, 0640)) < 0) {
 		if (errno != EEXIST) {
-		    dbprintf(("%s Cannot create debug file: %s", get_pname(),
-			      strerror(errno)));
+		    dbprintf("Cannot create debug file: %s",
+			      strerror(errno));
 		    break;
 		}
 	    }
@@ -447,8 +464,8 @@ debug_rename(
     if (fd >= 0) {
 	close(fd);
 	if (rename(db_filename, s) == -1) {
-	    dbprintf(("Can't rename(\"%s\",\"%s\"): %s\n", db_filename, s,
-		      strerror(errno)));
+	    dbprintf("Can't rename(\"%s\",\"%s\"): %s\n", db_filename, s,
+		      strerror(errno));
 	}
     }
 #endif
@@ -474,10 +491,7 @@ debug_close(void)
     debug = 1;
     save_pid = debug_prefix_pid;
     debug_prefix_pid = 0;
-    debug_printf("%s: pid %ld finish time %s",
-		 debug_prefix_time(NULL),
-		 (long)getpid(),
-		 ctime(&curtime));
+    debug_printf("pid %ld finish time %s", (long)getpid(), ctime(&curtime));
     debug_prefix_pid = save_pid;
     debug = save_debug;
 

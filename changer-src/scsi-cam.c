@@ -327,7 +327,7 @@ int SCSI_ExecuteCommand(int DeviceFD,
   /* ToDo add error handling */
   if ((ccb->ccb_h.status & CAM_STATUS_MASK) != CAM_REQ_CMP)
     {
-      dbprintf(("SCSI_ExecuteCommand return %d\n", (ccb->ccb_h.status & CAM_STATUS_MASK)));
+      dbprintf("SCSI_ExecuteCommand return %d\n", (ccb->ccb_h.status & CAM_STATUS_MASK));
       return(SCSI_ERROR);
     }
 
@@ -361,7 +361,7 @@ int Tape_Ioctl( int DeviceFD, int command)
 
   if (ioctl(pDev[DeviceFD].fd , MTIOCTOP, &mtop) != 0)
     {
-      dbprintf(("Tape_Ioctl error ioctl %s\n", strerror(errno)));
+      dbprintf("Tape_Ioctl error ioctl %s\n", strerror(errno));
       SCSI_CloseDevice(DeviceFD);
       return(-1);
     }
@@ -382,13 +382,13 @@ int Tape_Status( int DeviceFD)
 
   if (ioctl(pDev[DeviceFD].fd , MTIOCGET, &mtget) != 0)
   {
-     dbprintf(("Tape_Status error ioctl %s\n", strerror(errno)));
+     dbprintf("Tape_Status error ioctl %s\n", strerror(errno));
      SCSI_CloseDevice(DeviceFD);
      return(-1);
   }
 
-  dbprintf(("ioctl -> mtget.mt_dsreg %lX\n",mtget.mt_dsreg));
-  dbprintf(("ioctl -> mtget.mt_erreg %lX\n",mtget.mt_erreg));
+  dbprintf("ioctl -> mtget.mt_dsreg %lX\n",mtget.mt_dsreg);
+  dbprintf("ioctl -> mtget.mt_erreg %lX\n",mtget.mt_erreg);
 
   /*
    * I have no idea what is the meaning of the bits in mt_erreg

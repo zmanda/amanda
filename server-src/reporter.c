@@ -680,18 +680,15 @@ main(
 	    if ((postscript = popen(printer_cmd, "w")) == NULL) {
 		curlog = L_ERROR;
 		curprog = P_REPORTER;
-		curstr = vstralloc("could not open pipe to ",
-				   printer_cmd,
-				   ": ",
-				   strerror(errno),
-				   NULL);
+		curstr = vstrallocf("could not open pipe to %s: %s",
+				   printer_cmd, strerror(errno));
 		handle_error();
 		amfree(curstr);
 	    }
 #else
 	    curlog = L_ERROR;
 	    curprog = P_REPORTER;
-	    curstr = stralloc("no printer command defined");
+	    curstr = vstrallocf("no printer command defined");
 	    handle_error();
 	    amfree(curstr);
 #endif
@@ -1869,7 +1866,7 @@ handle_note(void)
 {
     char *str = NULL;
 
-    str = vstralloc("  ", program_str[curprog], ": ", curstr, NULL);
+    str = vstrallocf("  %s: %s", program_str[curprog], curstr);
     addline(&notes, str);
     amfree(str);
 }
@@ -1904,8 +1901,8 @@ handle_error(void)
 	}
 	/* else some other tape error, handle like other errors */
     }
-    s = vstralloc("  ", program_str[curprog], ": ",
-		  logtype_str[curlog], " ", curstr, NULL);
+    s = vstrallocf("  %s: %s %s", program_str[curprog],
+		  logtype_str[curlog], curstr);
     addline(&errsum, s);
     amfree(s);
 }
@@ -2082,9 +2079,8 @@ handle_chunk(void)
     if(dp == NULL) {
  	char *str = NULL;
 	
- 	str = vstralloc("  ", prefix(hostname, diskname, level),
- 			" ", "ERROR [not in disklist]",
- 			NULL);
+ 	str = vstrallocf("  %s ERROR [not in disklist]",
+			prefix(hostname, diskname, level));
  	addline(&errsum, str);
  	amfree(str);
  	amfree(hostname);
@@ -2379,10 +2375,8 @@ handle_strange(void)
     qdisk = quote_string(repdata->disk->name);
 
     addline(&errdet,"");
-    str = vstralloc("/-- ", prefix(repdata->disk->host->hostname, 
-				   qdisk, repdata->level),
-		    " ", "STRANGE",
-		    NULL);
+    str = vstrallocf("/-- %s STRANGE",
+		prefix(repdata->disk->host->hostname, qdisk, repdata->level));
     addline(&errdet, str);
     amfree(str);
 
@@ -2397,7 +2391,7 @@ handle_strange(void)
     }
     addline(&errdet,"\\--------");
 
-    str = vstralloc("STRANGE", " ", strangestr, NULL);
+    str = vstrallocf("STRANGE %s", strangestr);
     addtostrange(repdata->disk->host->hostname, qdisk, repdata->level, str);
     exit_status |= STATUS_STRANGE;
     amfree(qdisk);
@@ -2499,16 +2493,15 @@ handle_failed(void)
     }
     amfree(datestamp);
 
-    str = vstralloc("FAILED", " ", errstr, NULL);
+    str = vstrallocf("FAILED %s", errstr);
     addtostrange(hostname, qdiskname, level, str);
     amfree(str);
 
     if(curprog == P_DUMPER) {
 	addline(&errdet,"");
-	str = vstralloc("/-- ", prefix(hostname, qdiskname, level),
-			" ", "FAILED",
-			" ", errstr,
-			NULL);
+	str = vstrallocf("/-- %s FAILED %s",
+			prefix(hostname, qdiskname, level), 
+			errstr);
 	addline(&errdet, str);
 	amfree(str);
 	while(contline_next()) {
@@ -2604,16 +2597,18 @@ prefix (
     char *	disk,
     int		level)
 {
-    char number[NUM_STR_SIZE];
     static char *str = NULL;
 
-    snprintf(number, SIZEOF(number), "%d", level);
-    str = newvstralloc(str,
-		       " ", host ? host : "(host?)",
-		       " ", disk ? disk : "(disk?)",
-		       level != -987 ? " lev " : "",
-		       level != -987 ? number : "",
-		       NULL);
+    if (level == -987) {
+	str = newvstrallocf(str, " %s %s",
+			host ? host : "(host?)",
+			disk ? disk : "(disk?)");
+    } else {
+	str = newvstrallocf(str, " %s %s lev %d",
+			host ? host : "(host?)",
+			disk ? disk : "(disk?)",
+			level);
+    }
     return str;
 }
 
@@ -2628,10 +2623,8 @@ prefixstrange (
 {
     char *h, *d;
     size_t l;
-    char number[NUM_STR_SIZE];
     static char *str = NULL;
 
-    snprintf(number, SIZEOF(number), "%d", level);
     h=alloc(len_host+1);
     if(host) {
 	strncpy(h, host, len_host);
@@ -2652,12 +2645,11 @@ prefixstrange (
     for(l = strlen(d); l < len_disk; l++) {
 	d[l] = ' ';
     }
-    str = newvstralloc(str,
-		       h,
-		       "  ", d,
-		       level != -987 ? "  lev " : "",
-		       level != -987 ? number : "",
-		       NULL);
+    if (level == -987) {
+	str = newvstrallocf(str, " %s %s", h, d);
+    } else {
+	str = newvstrallocf(str, " %s %s lev %d", h, d, level);
+    }
     amfree(h);
     amfree(d);
     return str;
@@ -2705,11 +2697,8 @@ copy_template_file(
   if ((fd = open(lbl_templ, 0)) < 0) {
     curlog = L_ERROR;
     curprog = P_REPORTER;
-    curstr = vstralloc("could not open PostScript template file ",
-		       lbl_templ,
-		       ": ",
-		       strerror(errno),
-		       NULL);
+    curstr = vstrallocf("could not open PostScript template file %s: %s",
+		       lbl_templ, strerror(errno));
     handle_error();
     amfree(curstr);
     amfree(lbl_templ);
@@ -2720,11 +2709,8 @@ copy_template_file(
     if (fwrite(buf, (size_t)numread, 1, postscript) != 1) {
       curlog = L_ERROR;
       curprog = P_REPORTER;
-      curstr = vstralloc("error copying PostScript template file ",
-		         lbl_templ,
-		         ": ",
-		         strerror(errno),
-		         NULL);
+      curstr = vstrallocf("error copying PostScript template file %s: %s",
+		         lbl_templ, strerror(errno));
       handle_error();
       amfree(curstr);
       amfree(lbl_templ);
@@ -2735,11 +2721,8 @@ copy_template_file(
   if (numread < 0) {
     curlog = L_ERROR;
     curprog = P_REPORTER;
-    curstr = vstralloc("error reading PostScript template file ",
-		       lbl_templ,
-		       ": ",
-		       strerror(errno),
-		       NULL);
+    curstr = vstrallocf("error reading PostScript template file %s: %s",
+		       lbl_templ, strerror(errno));
     handle_error();
     amfree(curstr);
     amfree(lbl_templ);

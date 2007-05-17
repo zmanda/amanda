@@ -42,9 +42,9 @@
 #include "event.h"
 #include "security.h"
 
-#define amrecover_debug(i,x) do {	\
+#define amrecover_debug(i, ...) do {	\
 	if ((i) <= debug_amrecover) {	\
-	    dbprintf(x);		\
+	    dbprintf(__VA_ARGS__);	\
 	}				\
 } while (0)
 
@@ -110,18 +110,18 @@ get_line(void)
 	buf = NULL;
 	size = security_stream_read_sync(streams[MESGFD].fd, &buf);
 	if(size < 0) {
-	    amrecover_debug(1, ("%s: amrecover: get_line size < 0 (%zd)\n", debug_prefix_time(NULL), size));
+	    amrecover_debug(1, "amrecover: get_line size < 0 (%zd)\n", size);
 	    return -1;
 	}
 	else if(size == 0) {
-	    amrecover_debug(1, ("%s: amrecover: get_line size == 0 (%zd)\n", debug_prefix_time(NULL), size));
+	    amrecover_debug(1, "amrecover: get_line size == 0 (%zd)\n", size);
 	    return -1;
 	}
 	else if (buf == NULL) {
-	    amrecover_debug(1, ("%s: amrecover: get_line buf == NULL\n", debug_prefix_time(NULL)));
+	    amrecover_debug(1, "amrecover: get_line buf == NULL\n");
 	    return -1;
 	}
-        amrecover_debug(1, ("%s: amrecover: get_line size = %zd\n", debug_prefix_time(NULL), size));
+        amrecover_debug(1, "amrecover: get_line size = %zd\n", size);
 	newbuf = alloc(strlen(mesg_buffer)+size+1);
 	strncpy(newbuf, mesg_buffer, (size_t)(strlen(mesg_buffer) + size));
 	memcpy(newbuf+strlen(mesg_buffer), buf, (size_t)size);
@@ -492,10 +492,9 @@ main(
     /* We assume that amindexd support fe_amindexd_options_features */
     /*                             and fe_amindexd_options_auth     */
     /* We should send a noop to really know                         */
-    req = vstralloc("SERVICE amindexd\n",
-		    "OPTIONS ", "features=", our_features_string, ";",
-				"auth=", authopt, ";",
-		    "\n", NULL);
+    req = vstrallocf("SERVICE amindexd\n"
+		    "OPTIONS features=%s;auth=%s;\n",
+		    our_features_string, authopt);
 
     secdrv = security_getdriver(authopt);
     if (secdrv == NULL) {
@@ -543,7 +542,7 @@ main(
     {
 	char *their_feature_string = NULL;
 
-	line = stralloc2("FEATURES ", our_features_string);
+	line = vstrallocf("FEATURES %s", our_features_string);
 	if(exchange(line) == 0) {
 	    their_feature_string = stralloc(server_line+13);
 	    indexsrv_features = am_string_to_feature(their_feature_string);
@@ -564,14 +563,14 @@ main(
 	error("BAD DATE");
 
     printf("Setting restore date to today (%s)\n", dump_date);
-    line = stralloc2("DATE ", dump_date);
+    line = vstrallocf("DATE %s", dump_date);
     if (converse(line) == -1) {
         aclose(server_socket);
 	exit(1);
     }
     amfree(line);
 
-    line = stralloc2("SCNF ", config);
+    line = vstrallocf("SCNF %s", config);
     if (converse(line) == -1) {
         aclose(server_socket);
 	exit(1);
@@ -625,15 +624,15 @@ amindexd_response(
     assert(sech != NULL);
 
     if (pkt == NULL) {
-	errstr = newvstralloc(errstr, "[request failed: ",
-			     security_geterror(sech), "]", NULL);
+	errstr = newvstrallocf(errstr, "[request failed: %s]",
+			     security_geterror(sech));
 	*response_error = 1;
 	return;
     }
 
     if (pkt->type == P_NAK) {
 #if defined(PACKET_DEBUG)
-	fprintf(stderr, "got nak response:\n----\n%s\n----\n\n", pkt->body);
+	dbprintf(stderr, "got nak response:\n----\n%s\n----\n\n", pkt->body);
 #endif
 
 	tok = strtok(pkt->body, " ");
@@ -642,19 +641,19 @@ amindexd_response(
 
 	tok = strtok(NULL, "\n");
 	if (tok != NULL) {
-	    errstr = newvstralloc(errstr, "NAK: ", tok, NULL);
+	    errstr = newvstrallocf(errstr, "NAK: %s", tok);
 	    *response_error = 1;
 	} else {
 bad_nak:
-	    errstr = newstralloc(errstr, "request NAK");
+	    errstr = newvstrallocf(errstr, "request NAK");
 	    *response_error = 2;
 	}
 	return;
     }
 
     if (pkt->type != P_REP) {
-	errstr = newvstralloc(errstr, "received strange packet type ",
-			      pkt_type2str(pkt->type), ": ", pkt->body, NULL);
+	errstr = newvstrallocf(errstr, "received strange packet type %s: %s",
+			      pkt_type2str(pkt->type), pkt->body);
 	*response_error = 1;
 	return;
     }
@@ -678,9 +677,11 @@ bad_nak:
 	 */
 	if (strcmp(tok, "ERROR") == 0) {
 	    tok = strtok(NULL, "\n");
-	    if (tok == NULL)
-		tok = "[bogus error packet]";
-	    errstr = newstralloc(errstr, tok);
+	    if (tok == NULL) {
+	        errstr = newvstrallocf(errstr, "[bogus error packet]");
+	    } else {
+		errstr = newvstrallocf(errstr, "%s", tok);
+	    }
 	    *response_error = 2;
 	    return;
 	}
@@ -697,22 +698,16 @@ bad_nak:
 	    for (i = 0; i < NSTREAMS; i++) {
 		tok = strtok(NULL, " ");
 		if (tok == NULL || strcmp(tok, streams[i].name) != 0) {
-		    extra = vstralloc("CONNECT token is \"",
-				      tok ? tok : "(null)",
-				      "\": expected \"",
-				      streams[i].name,
-				      "\"",
-				      NULL);
+		    extra = vstrallocf(
+			   "CONNECT token is \"%s\": expected \"%s\"",
+			   tok ? tok : "(null)", streams[i].name);
 		    goto parse_error;
 		}
 		tok = strtok(NULL, " \n");
 		if (tok == NULL || sscanf(tok, "%d", &ports[i]) != 1) {
-		    extra = vstralloc("CONNECT ",
-				      streams[i].name,
-				      " token is \"",
-				      tok ? tok : "(null)",
-				      "\": expected a port number",
-				      NULL);
+		    extra = vstrallocf(
+			   "CONNECT %s token is \"%s\" expected a port number",
+			   streams[i].name, tok ? tok : "(null)");
 		    goto parse_error;
 		}
 	    }
@@ -725,10 +720,10 @@ bad_nak:
 	if (strcmp(tok, "OPTIONS") == 0) {
 	    tok = strtok(NULL, "\n");
 	    if (tok == NULL) {
-		extra = stralloc("OPTIONS token is missing");
+		extra = vstrallocf("OPTIONS token is missing");
 		goto parse_error;
 	    }
-/*
+#if 0
 	    tok_end = tok + strlen(tok);
 	    while((p = strchr(tok, ';')) != NULL) {
 		*p++ = '\0';
@@ -736,25 +731,21 @@ bad_nak:
 		    tok += SIZEOF("features=") - 1;
 		    am_release_feature_set(their_features);
 		    if((their_features = am_string_to_feature(tok)) == NULL) {
-			errstr = newvstralloc(errstr,
-					      "OPTIONS: bad features value: ",
-					      tok,
-					      NULL);
+			errstr = newvstrallocf(errstr,
+				      "OPTIONS: bad features value: %s",
+				      tok);
 			goto parse_error;
 		    }
 		}
 		tok = p;
 	    }
-*/
+#endif
 	    continue;
 	}
-/*
-	extra = vstralloc("next token is \"",
-			  tok ? tok : "(null)",
-			  "\": expected \"CONNECT\", \"ERROR\" or \"OPTIONS\"",
-			  NULL);
+#if 0
+	extra = vstrallocf("next token is \"%s\": expected \"CONNECT\", \"ERROR\" or \"OPTIONS\"", tok ? tok : "(null)");
 	goto parse_error;
-*/
+#endif
     }
 
     /*
@@ -765,9 +756,9 @@ bad_nak:
 	    continue;
 	streams[i].fd = security_stream_client(sech, ports[i]);
 	if (streams[i].fd == NULL) {
-	    errstr = newvstralloc(errstr,
-			"[could not connect ", streams[i].name, " stream: ",
-			security_geterror(sech), "]", NULL);
+	    errstr = newvstrallocf(errstr,
+			"[could not connect %s stream: %s]",
+			streams[i].name, security_geterror(sech));
 	    goto connect_error;
 	}
     }
@@ -778,9 +769,9 @@ bad_nak:
 	if (streams[i].fd == NULL)
 	    continue;
 	if (security_stream_auth(streams[i].fd) < 0) {
-	    errstr = newvstralloc(errstr,
-		"[could not authenticate ", streams[i].name, " stream: ",
-		security_stream_geterror(streams[i].fd), "]", NULL);
+	    errstr = newvstrallocf(errstr,
+		"[could not authenticate %s stream: %s]",
+		streams[i].name, security_stream_geterror(streams[i].fd));
 	    goto connect_error;
 	}
     }
@@ -790,7 +781,7 @@ bad_nak:
      * them, complain.
      */
     if (streams[MESGFD].fd == NULL) {
-        errstr = newstralloc(errstr, "[couldn't open MESG streams]");
+        errstr = newvstrallocf(errstr, "[couldn't open MESG streams]");
         goto connect_error;
     }
 
@@ -800,11 +791,9 @@ bad_nak:
     return;
 
 parse_error:
-    errstr = newvstralloc(errstr,
-			  "[parse of reply message failed: ",
-			  extra ? extra : "(no additional information)",
-			  "]",
-			  NULL);
+    errstr = newvstrallocf(errstr,
+			  "[parse of reply message failed: %s]",
+			  extra ? extra : "(no additional information)");
     amfree(extra);
     *response_error = 2;
     return;

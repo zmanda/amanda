@@ -74,6 +74,9 @@ int scan_read_label(
 {
     char *result = NULL;
 
+    if (*error_message == NULL)
+	*error_message = stralloc("");
+
     *label = *timestamp = NULL;
     result = tape_rdlabel(dev, timestamp, label);
     if (result != NULL) {
@@ -84,19 +87,20 @@ int scan_read_label(
             *label = find_brand_new_tape_label();
             if (*label != NULL) {
                 *timestamp = stralloc("X");
-                vstrextend(error_message,
-                           "Found a non-amanda tape, will label it `",
-                           *label, "'.\n", NULL);
+                *error_message = newvstrallocf(*error_message,
+                           "%sFound a non-amanda tape, will label it `%s'.\n",
+                           *error_message, *label);
                 return 3;
             }
-            vstrextend(error_message,
-                       "Found a non-amanda tape, but have no labels left.\n",
-			NULL);
+	    *error_message = newvstrallocf(*error_message,
+                       "%sFound a non-amanda tape, but have no labels left.\n",
+			*error_message);
             return -1;
         }
         amfree(*timestamp);
         amfree(*label);
-        vstrextend(error_message, result, "\n", NULL);
+	*error_message = newvstrallocf(*error_message, "%s%s\n",
+				       *error_message, result);
         amfree(result);
         return -1;
     }
@@ -105,8 +109,9 @@ int scan_read_label(
 	error("Invalid return from tape_rdlabel");
     }
 
-    vstrextend(error_message, "read label `", *label, "', date `",
-               *timestamp, "'\n", NULL);
+    *error_message = newvstrallocf(*error_message,
+	    "%sread label `%s', date `%s'\n",
+	    *error_message, *label, *timestamp);
 
     if (desired_label != NULL && strcmp(*label, desired_label) == 0) {
         /* Got desired label. */
@@ -118,9 +123,9 @@ int scan_read_label(
         char *labelstr;
         labelstr = getconf_str(CNF_LABELSTR);
 	if(!match(labelstr, *label)) {
-            vstrextend(error_message, "label ", *label,
-                       " doesn\'t match labelstr \"",
-                       labelstr, "\"\n", NULL);
+            *error_message = newvstrallocf(*error_message,
+			"%slabel \"%s\" doesn't match \"%s\"\n",
+			*error_message, *label, labelstr);
             return -1;
 	} else {
             tape_t *tp;
@@ -132,13 +137,14 @@ int scan_read_label(
             tp = lookup_tapelabel(*label);
          
             if(tp == NULL) {
-                vstrextend(error_message, "label ", *label,
-                     " match labelstr but it not listed in the tapelist file.\n",
-                           NULL);
+                *error_message = newvstrallocf(*error_message,
+			"%slabel \"%s\" matches labelstr but it is not listed in the tapelist file.\n",
+			*error_message, *label);
                 return -1;
             } else if(tp != NULL && !reusable_tape(tp)) {
-                vstrextend(error_message, "cannot overwrite active tape ", *label,
-                           "\n", NULL);
+                *error_message = newvstrallocf(*error_message,
+			"%scannot overwrite active tape %s\n",
+			*error_message, *label);
                 return -1;
             }
         }
@@ -174,24 +180,27 @@ scan_slot(
     changertrack_t *ct = ((changertrack_t*)data);
     int result;
 
+    if (*(ct->error_message) == NULL)
+	*(ct->error_message) = stralloc("");
+
     switch (rc) {
     default:
-	vstrextend(ct->error_message,
-		   "fatal changer error: slot ", slotstr, ": ",
-		   changer_resultstr, "\n", NULL);
+	*(ct->error_message) = newvstrallocf(*(ct->error_message),
+		   "%sfatal changer error: slot %s: %s\n",
+		   *(ct->error_message), slotstr, changer_resultstr);
         result = 1;
 	break;
 
     case 1:
-	vstrextend(ct->error_message,
-		   "changer error: slot ", slotstr, ": ", changer_resultstr,
-		   "\n", NULL);
+	*(ct->error_message) = newvstrallocf(*(ct->error_message),
+		   "%schanger error: slot %s: %s\n",
+		   *(ct->error_message), slotstr, changer_resultstr);
         result = 0;
 	break;
 
     case 0:
-	*(ct->error_message) = newvstralloc(*(ct->error_message), "slot ",
-					    slotstr, ": ", NULL);
+	*(ct->error_message) = newvstrallocf(*(ct->error_message),
+					"slot %s:", slotstr);
 	amfree(*ct->gotlabel);
 	amfree(*ct->timestamp);
         label_result = scan_read_label(device, ct->wantlabel, ct->gotlabel,
@@ -227,9 +236,9 @@ scan_init(
     (void)searchable;	/* Quiet unused parameter warning */
 
     if (rc) {
-	vstrextend(ct->error_message,
-		   "could not get changer info: ", changer_resultstr, "\n",
-		   NULL);
+	*(ct->error_message) = newvstrallocf(*(ct->error_message),
+		"%scould not get changer info: %s\n",
+		*(ct->error_message), changer_resultstr);
 	ct->taperscan_output_callback(ct->data, *(ct->error_message));
 	amfree(*(ct->error_message));
     }

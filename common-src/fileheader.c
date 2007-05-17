@@ -470,51 +470,35 @@ void
 dump_dumpfile_t(
     const dumpfile_t *file)
 {
-	const char *pname = get_pname();
-
-	dbprintf(("%s: Contents of *(dumpfile_t *)%p:\n", pname, file));
-	dbprintf(("%s:     type             = %d (%s)\n", pname,
-			file->type, filetype2str(file->type)));
-	dbprintf(("%s:     datestamp        = '%s'\n", pname,
-			file->datestamp));
-	dbprintf(("%s:     dumplevel        = %d\n", pname, file->dumplevel));
-	dbprintf(("%s:     compressed       = %d\n", pname, file->compressed));
-	dbprintf(("%s:     encrypted        = %d\n", pname, file->encrypted));
-	dbprintf(("%s:     comp_suffix      = '%s'\n", pname,
-			file->comp_suffix));
-	dbprintf(("%s:     encrypt_suffix   = '%s'\n", pname,
-			file->encrypt_suffix));
-	dbprintf(("%s:     name             = '%s'\n", pname, file->name));
-	dbprintf(("%s:     disk             = '%s'\n", pname, file->disk));
-	dbprintf(("%s:     program          = '%s'\n", pname, file->program));
-	dbprintf(("%s:     dumper           = '%s'\n", pname, file->dumper));
-	dbprintf(("%s:     srvcompprog      = '%s'\n", pname,
-			file->srvcompprog));
-	dbprintf(("%s:     clntcompprog     = '%s'\n", pname,
-			file->clntcompprog));
-	dbprintf(("%s:     srv_encrypt      = '%s'\n", pname,
-			file->srv_encrypt));
-	dbprintf(("%s:     clnt_encrypt     = '%s'\n", pname,
-			file->clnt_encrypt));
-	dbprintf(("%s:     recover_cmd      = '%s'\n", pname,
-			file->recover_cmd));
-	dbprintf(("%s:     uncompress_cmd   = '%s'\n", pname,
-			file->uncompress_cmd));
-	dbprintf(("%s:     encrypt_cmd      = '%s'\n", pname,
-			file->encrypt_cmd));
-	dbprintf(("%s:     decrypt_cmd      = '%s'\n", pname,
-			file->decrypt_cmd));
-	dbprintf(("%s:     srv_decrypt_opt  = '%s'\n", pname,
-			file->srv_decrypt_opt));
-	dbprintf(("%s:     clnt_decrypt_opt = '%s'\n", pname,
-			file->clnt_decrypt_opt));
-	dbprintf(("%s:     cont_filename    = '%s'\n", pname,
-			file->cont_filename));
-	dbprintf(("%s:     is_partial       = %d\n", pname, file->is_partial));
-	dbprintf(("%s:     partnum          = %d\n", pname, file->partnum));
-	dbprintf(("%s:     totalparts       = %d\n", pname, file->totalparts));
-	dbprintf(("%s:     blocksize        = " SIZE_T_FMT "\n", pname,
-			(SIZE_T_FMT_TYPE)file->blocksize));
+	dbprintf("Contents of *(dumpfile_t *)%p:\n", file);
+	dbprintf("    type             = %d (%s)\n",
+			file->type, filetype2str(file->type));
+	dbprintf("    datestamp        = '%s'\n", file->datestamp);
+	dbprintf("    dumplevel        = %d\n", file->dumplevel);
+	dbprintf("    compressed       = %d\n", file->compressed);
+	dbprintf("    encrypted        = %d\n", file->encrypted);
+	dbprintf("    comp_suffix      = '%s'\n", file->comp_suffix);
+	dbprintf("    encrypt_suffix   = '%s'\n", file->encrypt_suffix);
+	dbprintf("    name             = '%s'\n", file->name);
+	dbprintf("    disk             = '%s'\n", file->disk);
+	dbprintf("    program          = '%s'\n", file->program);
+	dbprintf("    dumper           = '%s'\n", file->dumper);
+	dbprintf("    srvcompprog      = '%s'\n", file->srvcompprog);
+	dbprintf("    clntcompprog     = '%s'\n", file->clntcompprog);
+	dbprintf("    srv_encrypt      = '%s'\n", file->srv_encrypt);
+	dbprintf("    clnt_encrypt     = '%s'\n", file->clnt_encrypt);
+	dbprintf("    recover_cmd      = '%s'\n", file->recover_cmd);
+	dbprintf("    uncompress_cmd   = '%s'\n", file->uncompress_cmd);
+	dbprintf("    encrypt_cmd      = '%s'\n", file->encrypt_cmd);
+	dbprintf("    decrypt_cmd      = '%s'\n", file->decrypt_cmd);
+	dbprintf("    srv_decrypt_opt  = '%s'\n", file->srv_decrypt_opt);
+	dbprintf("    clnt_decrypt_opt = '%s'\n", file->clnt_decrypt_opt);
+	dbprintf("    cont_filename    = '%s'\n", file->cont_filename);
+	dbprintf("    is_partial       = %d\n", file->is_partial);
+	dbprintf("    partnum          = %d\n", file->partnum);
+	dbprintf("    totalparts       = %d\n", file->totalparts);
+	dbprintf("    blocksize        = " SIZE_T_FMT "\n",
+			(SIZE_T_FMT_TYPE)file->blocksize);
 }
 
 static void
@@ -572,9 +556,9 @@ build_header(
     char *qname;
     char split_data[128] = "";
 
-    dbprintf(("%s: Building type %d (%s) header of size " SIZE_T_FMT " using:\n",
-		get_pname(), file->type, filetype2str(file->type),
-		(SIZE_T_FMT_TYPE)buflen));
+    dbprintf("Building type %d (%s) header of size " SIZE_T_FMT " using:\n",
+		file->type, filetype2str(file->type),
+		(SIZE_T_FMT_TYPE)buflen);
     dump_dumpfile_t(file);
 
     memset(buffer,'\0',buflen);

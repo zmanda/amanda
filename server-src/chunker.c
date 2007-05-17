@@ -45,9 +45,9 @@
 #include "util.h"
 #include "holding.h"
 
-#define chunker_debug(i,x) do {		\
+#define chunker_debug(i, ...) do {	\
 	if ((i) <= debug_chunker) {	\
-	    dbprintf(x);		\
+	    dbprintf(__VA_ARGS__);	\
 	}				\
 } while (0)
 
@@ -326,11 +326,8 @@ main(
 			 (OFF_T_FMT_TYPE)(dumpsize - (off_t)headersize));
 		snprintf(kps_str, SIZEOF(kps_str), "%3.1lf",
 				isnormal(rt) ? (double)dumpsize / rt : 0.0);
-		errstr = newvstralloc(errstr,
-				      "sec ", walltime_str(runtime),
-				      " kb ", kb_str,
-				      " kps ", kps_str,
-				      NULL);
+		errstr = newvstrallocf(errstr, "sec %s kb %s kps %s",
+				walltime_str(runtime), kb_str, kps_str);
 		q = squotef("[%s]", errstr);
 		if(command_in_transit != -1)
 		    cmd = command_in_transit;
@@ -355,10 +352,8 @@ main(
 				hostname, qdiskname, chunker_timestamp, level, errstr);
 		    }
 		    else {
-			errstr = newvstralloc(errstr,
-					      "dumper returned ",
-					      cmdstr[cmd],
-					      NULL);
+			errstr = newvstrallocf(errstr,
+					"dumper returned %s", cmdstr[cmd]);
 			amfree(q);
 			q = squotef("[%s]",errstr);
 			putresult(FAILED, "%s %s\n", handle, q);
@@ -444,7 +439,7 @@ startup_chunker(
     data_socket = stream_server(&data_port, 0, STREAM_BUFSIZE, 0);
 
     if(data_socket < 0) {
-	errstr = stralloc2("error creating stream server: ", strerror(errno));
+	errstr = vstrallocf("error creating stream server: %s", strerror(errno));
 	return -1;
     }
 
@@ -452,7 +447,7 @@ startup_chunker(
 
     infd = stream_accept(data_socket, CONNECT_TIMEOUT, 0, STREAM_BUFSIZE);
     if(infd == -1) {
-	errstr = stralloc2("error accepting stream: ", strerror(errno));
+	errstr = vstrallocf("error accepting stream: %s", strerror(errno));
 	return -1;
     }
 
@@ -504,20 +499,13 @@ do_chunk(
      */
     nread = fullread(infd, header_buf, SIZEOF(header_buf));
     if (nread != DISK_BLOCK_BYTES) {
-	char number1[NUM_STR_SIZE];
-	char number2[NUM_STR_SIZE];
-
 	if(nread < 0) {
-	    errstr = stralloc2("cannot read header: ", strerror(errno));
+	    errstr = vstrallocf("cannot read header: %s", strerror(errno));
 	} else {
-	    snprintf(number1, SIZEOF(number1), SSIZE_T_FMT,
-			(SSIZE_T_FMT_TYPE)nread);
-	    snprintf(number2, SIZEOF(number2), "%d", DISK_BLOCK_BYTES);
-	    errstr = vstralloc("cannot read header: got ",
-			       number1,
-			       " instead of ",
-			       number2,
-			       NULL);
+	    errstr = vstrallocf("cannot read header: got " SSIZE_T_FMT
+				" bytes instead of %d",
+				(SSIZE_T_FMT_TYPE)nread,
+				DISK_BLOCK_BYTES);
 	}
 	return 0;
     }

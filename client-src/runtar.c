@@ -48,6 +48,7 @@ main(
     int i;
     char *e;
     char *dbf;
+    char *cmdline;
 #endif
 
     safe_fd(-1, 0);
@@ -60,22 +61,21 @@ main(
 
     dbopen(DBG_SUBDIR_CLIENT);
     if (argc < 3) {
-	error("%s: Need at least 3 arguments\n", debug_prefix_time(NULL));
+	error("Need at least 3 arguments\n");
 	/*NOTREACHED*/
     }
 
-    dbprintf(("%s: version %s\n", debug_prefix_time(NULL), version()));
+    dbprintf("version %s\n", version());
 
     if (strcmp(argv[3], "--create") != 0) {
-	error("%s: Can only be used to create tar archives\n",
-	      debug_prefix_time(NULL));
+	error("Can only be used to create tar archives\n");
 	/*NOTREACHED*/
     }
 
 #ifndef GNUTAR
 
     fprintf(stderr,"gnutar not available on this system.\n");
-    dbprintf(("%s: gnutar not available on this system.\n", argv[0]));
+    dbprintf("%s: gnutar not available on this system.\n", argv[0]);
     dbclose();
     return 1;
 
@@ -90,16 +90,16 @@ main(
 
 	if ((version_file = popen(GNUTAR " --version 2>&1", "r")) != NULL) {
 	    if (fgets(version_buf, (int)sizeof(version_buf), version_file) != NULL) {
-		dbprintf((GNUTAR " version: %s\n", version_buf));
+		dbprintf(GNUTAR " version: %s\n", version_buf);
 	    } else {
 		if (ferror(version_file)) {
-		    dbprintf((GNUTAR " version: Read failure: %s\n", strerror(errno)));
+		    dbprintf(GNUTAR " version: Read failure: %s\n", strerror(errno));
 		} else {
-		    dbprintf((GNUTAR " version: Read failure; EOF\n"));
+		    dbprintf(GNUTAR " version: Read failure; EOF\n");
 		}
 	    }
 	} else {
-	    dbprintf((GNUTAR " version: unavailable: %s\n", strerror(errno)));
+	    dbprintf(GNUTAR " version: unavailable: %s\n", strerror(errno));
 	}
     } while(0);
 
@@ -128,22 +128,23 @@ main(
     argc--;
     argv++;
 
-    dbprintf(("config: %s\n", argv[0]));
+    dbprintf("config: %s\n", argv[0]);
     if (strcmp(argv[0], "NOCONFIG") != 0)
 	dbrename(argv[0], DBG_SUBDIR_CLIENT);
     argc--;
     argv++;
 
-
-    dbprintf(("running: %s: ",GNUTAR));
-    for (i=0; argv[i]; i++) {
+    cmdline = stralloc(GNUTAR);
+    for (i = 1; argv[i]; i++) {
 	char *quoted;
 
 	quoted = quote_string(argv[i]);
-	dbprintf(("'%s' ", quoted));
+	cmdline = vstrextend(&cmdline, " ", quoted, NULL);
 	amfree(quoted);
     }
-    dbprintf(("\n"));
+    dbprintf("running: %s\n", cmdline);
+    amfree(cmdline);
+
     dbf = dbfn();
     if (dbf) {
 	dbf = stralloc(dbf);
@@ -155,7 +156,7 @@ main(
     e = strerror(errno);
     dbreopen(dbf, "more");
     amfree(dbf);
-    dbprintf(("execve of %s failed (%s)\n", GNUTAR, e));
+    dbprintf("execve of %s failed (%s)\n", GNUTAR, e);
     dbclose();
 
     fprintf(stderr, "runtar: could not exec %s: %s\n", GNUTAR, e);

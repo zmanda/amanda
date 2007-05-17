@@ -30,6 +30,7 @@
  * error handling common to Amanda programs
  */
 #include "amanda.h"
+#include "util.h"
 #include "arglist.h"
 
 #define MAXFUNCS 8
@@ -88,12 +89,12 @@ output_error_message(
     }
 
     if(erroutput_type & ERR_INTERACTIVE) {
-	fprintf(stderr, "%s: %s\n", get_pname(), msg);
+	fprintf(stderr, "%s: %s: %s\n", get_pname(), msg_timestamp(), msg);
 	fflush(stderr);
     }
 
     if(dbfp() != NULL) {
-	dbprintf(("%s: %s\n", debug_prefix_time(NULL), msg));
+	dbprintf("%s\n", msg);
 	dbclose();
     }
 }

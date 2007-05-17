@@ -95,7 +95,7 @@ struct krb4_stream {
     security_stream_t secstr;		/* MUST be first */
     struct krb4_handle *krb4_handle;	/* pointer into above */
     int fd;				/* io file descriptor */
-    int port;				/* local port this is bound to */
+    in_port_t port;			/* local port this is bound to */
     int socket;				/* fd for server-side accepts */
     event_handle_t *ev_read;		/* read event handle */
     char databuf[MAX_TAPE_BLOCK_BYTES];	/* read buffer */
@@ -107,7 +107,9 @@ struct krb4_stream {
 /*
  * This is the tcp stream buffer size
  */
+#ifndef STREAM_BUFSIZE
 #define	STREAM_BUFSIZE	(MAX_TAPE_BLOCK_BYTES * 2)
+#endif
 
 /*
  * Interface functions
@@ -223,7 +225,7 @@ static void (*accept_fn)(security_handle_t *, pkt_t *);
  */
 union mutual {
     char pad[8];
-    long cksum;
+    unsigned long cksum;
 };
 
 /*
@@ -242,8 +244,8 @@ static void recvpkt_timeout(void *);
 static int recv_security_ok(struct krb4_handle *, pkt_t *);
 static void stream_read_callback(void *);
 static void stream_read_sync_callback(void *);
-static int net_write(int, const void *, size_t);
-static int net_read(int, void *, size_t, int);
+static int knet_write(int, const void *, size_t);
+static int knet_read(int, void *, size_t, int);
 
 static int add_ticket(struct krb4_handle *, const pkt_t *, dgram_t *);
 static void add_mutual_auth(struct krb4_handle *, dgram_t *);
@@ -251,8 +253,8 @@ static int check_ticket(struct krb4_handle *, const pkt_t *,
     const char *, unsigned long);
 static int check_mutual_auth(struct krb4_handle *, const char *);
 
-static const char *pkthdr2str(const struct krb4_handle *, const pkt_t *);
-static int str2pkthdr(const char *, pkt_t *, char *, size_t, int *);
+static const char *kpkthdr2str(const struct krb4_handle *, const pkt_t *);
+static int str2kpkthdr(const char *, pkt_t *, char *, size_t, int *);
 
 static const char *bin2astr(const unsigned char *, int);
 static void astr2bin(const unsigned char *, unsigned char *, int *);
@@ -279,7 +281,7 @@ static void
 init(void)
 {
     char tktfile[256];
-    int port;
+    in_port_t port;
     static int beenhere = 0;
 
     if (beenhere)
@@ -357,7 +359,10 @@ krb4_connect(
     char handle[32];
     struct servent *se;
     struct hostent *he;
-    int port;
+    in_port_t port;
+
+    (void)conf_fn;	/* Quiet unused parameter warning */
+    (void)datap;	/* Quiet unused parameter warning */
 
     assert(hostname != NULL);
 
@@ -394,6 +399,8 @@ krb4_accept(
     int		out,
     void	(*fn)(security_handle_t *, pkt_t *))
 {
+    (void)driver;	/* Quiet unused parameter warning */
+    (void)out;		/* Quiet unused parameter warning */
 
     /*
      * Make sure we're initted
@@ -496,7 +503,7 @@ krb4_sendpkt(
     /*
      * Add the header to the packet
      */
-    dgram_cat(&netfd, pkthdr2str(kh, pkt));
+    dgram_cat(&netfd, kpkthdr2str(kh, pkt));
 
     /*
      * Add the security info.  This depends on which kind of packet we're
@@ -756,7 +763,7 @@ krb4_stream_auth(
     enc.tv_sec = (long)htonl((uint32_t)local.tv_sec);
     enc.tv_usec = (long)htonl((uint32_t)local.tv_usec);
     encrypt_data(&enc, SIZEOF(enc), &kh->session_key);
-    if (net_write(fd, &enc, SIZEOF(enc)) < 0) {
+    if (knet_write(fd, &enc, SIZEOF(enc)) < 0) {
 	security_stream_seterror(&ks->secstr,
 	    "krb4 stream handshake write error: %s", strerror(errno));
 	return (-1);
@@ -767,7 +774,7 @@ krb4_stream_auth(
      * and useconds by one.  Reencrypt, and present to the other side.
      * Timeout in 10 seconds.
      */
-    if (net_read(fd, &enc, SIZEOF(enc), 60) < 0) {
+    if (knet_read(fd, &enc, SIZEOF(enc), 60) < 0) {
 	security_stream_seterror(&ks->secstr,
 	    "krb4 stream handshake read error: %s", strerror(errno));
 	return (-1);
@@ -778,7 +785,7 @@ krb4_stream_auth(
     enc.tv_usec =(long)htonl(ntohl((uint32_t)enc.tv_usec) + 1);
     encrypt_data(&enc, SIZEOF(enc), &kh->session_key);
 
-    if (net_write(fd, &enc, SIZEOF(enc)) < 0) {
+    if (knet_write(fd, &enc, SIZEOF(enc)) < 0) {
 	security_stream_seterror(&ks->secstr,
 	    "krb4 stream handshake write error: %s", strerror(errno));
 	return (-1);
@@ -789,7 +796,7 @@ krb4_stream_auth(
      * If they incremented it properly, then succeed.
      * Timeout in 10 seconds.
      */
-    if (net_read(fd, &enc, SIZEOF(enc), 60) < 0) {
+    if (knet_read(fd, &enc, SIZEOF(enc), 60) < 0) {
 	security_stream_seterror(&ks->secstr,
 	    "krb4 stream handshake read error: %s", strerror(errno));
 	return (-1);
@@ -832,12 +839,10 @@ krb4_stream_write(
     size_t	size)
 {
     struct krb4_stream *ks = s;
-    struct krb4_handle *kh = ks->krb4_handle;
 
     assert(ks != NULL);
-    assert(kh != NULL);
 
-    if (net_write(ks->fd, buf, size) < 0) {
+    if (knet_write(ks->fd, buf, size) < 0) {
 	security_stream_seterror(&ks->secstr,
 	    "write error on stream %d: %s", ks->fd, strerror(errno));
 	return (-1);
@@ -981,6 +986,7 @@ recvpkt_callback(
     void (*fn)(void *, pkt_t *, security_status_t);
     void *arg;
 
+    (void)cookie;		/* Quiet unused parameter warning */
     assert(cookie == NULL);
 
     /*
@@ -991,7 +997,7 @@ recvpkt_callback(
     dgram_zero(&netfd);
     if (dgram_recv(&netfd, 0, &peer) < 0)
 	return;
-    if (str2pkthdr(netfd.cur, &pkt, handle, SIZEOF(handle), &sequence) < 0)
+    if (str2kpkthdr(netfd.cur, &pkt, handle, SIZEOF(handle), &sequence) < 0)
 	return;
 
     for (kh = handleq_first(); kh != NULL; kh = handleq_next(kh)) {
@@ -1296,6 +1302,8 @@ check_ticket(
     char *user;
     int rc;
 
+    (void)pkt;		/* Quiet unused parameter warning */
+
     assert(kh != NULL);
     assert(pkt != NULL);
     assert(ticket_str != NULL);
@@ -1404,7 +1412,7 @@ check_mutual_auth(
  * Convert a pkt_t into a header string for our packet
  */
 static const char *
-pkthdr2str(
+kpkthdr2str(
     const struct krb4_handle *	kh,
     const pkt_t *		pkt)
 {
@@ -1428,7 +1436,7 @@ pkthdr2str(
  * Returns negative on parse error.
  */
 static int
-str2pkthdr(
+str2kpkthdr(
     const char *origstr,
     pkt_t *	pkt,
     char *	handle,
@@ -1663,7 +1671,7 @@ decrypt_data(
  * like write(), but always writes out the entire buffer.
  */
 static int
-net_write(
+knet_write(
     int		fd,
     const void *vbuf,
     size_t	size)
@@ -1685,7 +1693,7 @@ net_write(
  * Like read(), but waits until the entire buffer has been filled.
  */
 static int
-net_read(
+knet_read(
     int		fd,
     void *	vbuf,
     size_t	size,
@@ -1741,12 +1749,12 @@ print_hex(
 {
     int i;
 
-    dbprintf(("%s:", str));
+    dbprintf("%s:", str);
     for(i=0;i<len;i++) {
-	if(i%25 == 0) dbprintf(("\n"));
-	dbprintf((" %02X", buf[i]));
+	if(i%25 == 0) dbprintf("\n");
+	dbprintf(" %02X", buf[i]);
     }
-    dbprintf(("\n"));
+    dbprintf("\n");
 }
 
 static void
@@ -1754,7 +1762,7 @@ print_ticket(
     const char *str,
     KTEXT	tktp)
 {
-    dbprintf(("%s: length %d chk %lX\n", str, tktp->length, tktp->mbz));
+    dbprintf("%s: length %d chk %lX\n", str, tktp->length, tktp->mbz);
     print_hex("ticket data", tktp->dat, tktp->length);
     fflush(stdout);
 }

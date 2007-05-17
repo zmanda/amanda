@@ -71,14 +71,13 @@ int GetCurrentSlot(int fd, int drive)
 
     rc = ioctl(fd, CHIOGSTATUS, &ces);
     if (rc) {
-	dbprintf(("%s: changer status query failed: 0x%x %s\n",
-			get_pname(), rc,strerror(errno)));
+	dbprintf("changer status query failed: 0x%x %s\n", rc, strerror(errno));
 	return -1;
     }
     for (slot = 0; slot < changer_info.cp_nslots; slot++)
     {
     	i = ces.ces_data[slot] & CESTATUS_FULL;
-    	dbprintf(("\tGetCurrentSlot slot %d = %d\n", slot, i));
+    	dbprintf("\tGetCurrentSlot slot %d = %d\n", slot, i);
     	if (!i)
             return(slot);
     }
@@ -98,7 +97,7 @@ int mtfd;
 struct mtop mt_com;
 
     if ((mtfd = open(tape, O_RDWR)) < 0) {
-        dbprintf(("eject_tape : failed\n"));
+        dbprintf("eject_tape : failed\n");
         perror(tape);
         exit(2);
     }
@@ -133,8 +132,7 @@ int type=CHET_ST;
 
     rc = ioctl(fd, CHIOGSTATUS, &ces);
     if (rc) {
-	dbprintf(("%s: changer status query failed: 0x%x %s\n",
-			get_pname(), rc,strerror(errno)));
+	dbprintf("changer status query failed: 0x%x %s\n", rc,strerror(errno));
 	return -1;
     }
 
@@ -160,8 +158,7 @@ int type=CHET_ST;
 
     rc = ioctl(fd,CHIOGSTATUS,&ces);
     if (rc) {
-	dbprintf(("%s: changer status query failed: 0x%x %s\n",
-			get_pname(), rc, strerror(errno)));
+	dbprintf("changer status query failed: 0x%x %s\n", rc, strerror(errno));
 	return -1;
     }
 
@@ -188,8 +185,7 @@ int type=CHET_DT;
 
     rc = ioctl(fd, CHIOGSTATUS, &ces);
     if (rc) {
-	dbprintf(("%s: drive status query failed: 0x%x %s\n",
-			get_pname(), rc, strerror(errno)));
+	dbprintf("drive status query failed: 0x%x %s\n", rc, strerror(errno));
 	return -1;
     }
 
@@ -208,7 +204,7 @@ int unload(int fd, int drive, int slot)
 struct changer_move  move;
 int rc;
 
-    dbprintf(("unload : fd = %d, drive = %d, slot =%d\n",fd, drive, slot));
+    dbprintf("unload : fd = %d, drive = %d, slot =%d\n",fd, drive, slot);
 
     move.cm_fromtype = CHET_DT;
     move.cm_fromunit = drive;
@@ -218,8 +214,7 @@ int rc;
 
     rc = ioctl(fd, CHIOMOVE, &move);
     if (rc){
-	dbprintf(("%s: drive unload failed (MOVE): 0x%x %s\n",
-		get_pname(), rc, strerror(errno)));
+	dbprintf("drive unload failed (MOVE): 0x%x %s\n", rc, strerror(errno));
 	return(-2);
     }
     return 0;
@@ -234,7 +229,7 @@ int load(int fd, int drive, int slot)
 struct changer_move  move;
 int rc;
 
-    dbprintf(("load : fd = %d, drive = %d, slot =%d\n",fd, drive, slot));
+    dbprintf("load : fd = %d, drive = %d, slot =%d\n",fd, drive, slot);
 
     move.cm_fromtype = CHET_ST;
     move.cm_fromunit = slot;
@@ -244,8 +239,7 @@ int rc;
 
     rc = ioctl(fd,CHIOMOVE,&move);
     if (rc){
-	dbprintf(("%s: drive load failed (MOVE): 0x%x %s\n",
-		get_pname(), rc, strerror(errno)));
+	dbprintf("drive load failed (MOVE): 0x%x %s\n", rc, strerror(errno));
 	return(-2);
     }
     return(0);
@@ -257,8 +251,7 @@ int rc;
 
     rc = get_changer_info(fd);
     if (rc) {
-        dbprintf(("%s: slot count query failed: 0x%x %s\n", 
-			get_pname(), rc, strerror(errno)));
+        dbprintf("slot count query failed: 0x%x %s\n", rc, strerror(errno));
         return -1;
     }
 
@@ -271,8 +264,7 @@ int rc;
 
     rc = get_changer_info(fd);
     if (rc) {
-        dbprintf(("%s: drive count query failed: 0x%x %s\n",
-			get_pname(), rc, strerror(errno)));
+        dbprintf("drive count query failed: 0x%x %s\n", rc, strerror(errno));
         return -1;
     }
 
@@ -306,7 +298,7 @@ int CloseDevice (char *device, int DeviceFD)
 {
    int ret;
 
-   dbprintf(("%s: CloseDevice(%s)\n", device, get_pname()));
+   dbprintf("CloseDevice(%s)\n", device);
    ret = close(DeviceFD);
 
    return ret;

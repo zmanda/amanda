@@ -765,19 +765,14 @@ tape_rewind(
     char *r = NULL;
 
     if((fd = tape_open(devname, O_RDONLY)) < 0) {
-	r = errstr = newvstralloc(errstr,
-				  "tape_rewind: tape open: ",
-				  devname,
-				  ": ",
-				  strerror(errno),
-				  NULL);
+	r = errstr = newvstrallocf(errstr,
+				  "tape_rewind: tape open: %s: %s",
+				  devname, strerror(errno));
     } else if(tapefd_rewind(fd) == -1) {
-	r = errstr = newvstralloc(errstr,
-				  "tape_rewind: rewinding tape: ",
+	r = errstr = newvstrallocf(errstr,
+				  "tape_rewind: rewinding tape: %s: %s",
 				  devname,
-				  ": ",
-				  strerror(errno),
-				  NULL);
+				  strerror(errno));
     }
     if(fd >= 0) {
 	tapefd_close(fd);
@@ -793,19 +788,15 @@ tape_unload(
     char *r = NULL;
 
     if((fd = tape_open(devname, O_RDONLY)) < 0) {
-	r = errstr = newvstralloc(errstr,
-				  "tape_unload: tape open: ",
+	r = errstr = newvstrallocf(errstr,
+				  "tape_unload: tape open: %s: %s",
 				  devname,
-				  ": ",
-				  strerror(errno),
-				  NULL);
+				  strerror(errno));
     } else if(tapefd_unload(fd) == -1) {
-	r = errstr = newvstralloc(errstr,
-				  "tape_unload: unloading tape: ",
+	r = errstr = newvstrallocf(errstr,
+				  "tape_unload: unloading tape: %s: %s",
 				  devname,
-				  ": ",
-				  strerror(errno),
-				  NULL);
+				  strerror(errno));
     }
     if(fd >= 0) {
 	tapefd_close(fd);
@@ -819,26 +810,19 @@ tape_fsf(
     off_t count)
 {
     int fd;
-    char count_str[NUM_STR_SIZE];
     char *r = NULL;
 
     if((fd = tape_open(devname, O_RDONLY)) < 0) {
-	r = errstr = newvstralloc(errstr,
-				  "tape_fsf: tape open: ",
+	r = errstr = newvstrallocf(errstr,
+				  "tape_fsf: tape open: %s: %s",
 				  devname,
-				  ": ",
-				  strerror(errno),
-				  NULL);
+				  strerror(errno));
     } else if(tapefd_fsf(fd, count) == -1) {
-	snprintf(count_str, SIZEOF(count_str), OFF_T_FMT,
-				 (OFF_T_FMT_TYPE)count);
-	r = errstr = newvstralloc(errstr,
-			          "tape_fsf: fsf ",
-				  count_str,
-				  "file", (count == 1) ? "" : "s",
-			          ": ",
-			          strerror(errno),
-			          NULL);
+	r = errstr = newvstrallocf(errstr,
+			          "tape_fsf: fsf " OFF_T_FMT " file%s: %s",
+				  (OFF_T_FMT_TYPE)count,
+				  (count == 1) ? "" : "s",
+			          strerror(errno));
     }
     if(fd >= 0) {
 	tapefd_close(fd);
@@ -871,19 +855,18 @@ tapefd_rdlabel(
 	*datestamp = stralloc("X");
 	*label = stralloc(FAKE_LABEL);
     } else if(tapefd_rewind(fd) == -1) {
-	r = stralloc2("rewinding tape: ", strerror(errno));
+	r = vstrallocf("rewinding tape: %s", strerror(errno));
     } else if((rc = tapefd_read(fd, buffer, buflen)) == -1) {
-	r = vstralloc(NOT_AMANDA_TAPE_MSG, " (",
-                      strerror(errno), ")", NULL);
+	r = vstrallocf(NOT_AMANDA_TAPE_MSG "(%s)", strerror(errno));
     } else if (rc == 0) {
-        r = stralloc2(NOT_AMANDA_TAPE_MSG, " (Read 0 bytes)");
+        r = vstrallocf(NOT_AMANDA_TAPE_MSG " (Read 0 bytes)");
     } else {
 	/* make sure buffer is null-terminated */
 	buffer[rc] = '\0';
 
 	parse_file_header(buffer, &file, (size_t)rc);
 	if(file.type != F_TAPESTART) {
-	    r = stralloc(NOT_AMANDA_TAPE_MSG);
+	    r = vstrallocf(NOT_AMANDA_TAPE_MSG);
 	} else {
 	    *datestamp = stralloc(file.datestamp);
 	    *label = stralloc(file.name);
@@ -891,7 +874,7 @@ tapefd_rdlabel(
     }
     amfree(buffer);
     if (r)
-	errstr = newvstralloc(errstr, r, NULL);
+	errstr = newvstrallocf(errstr, "%s", r);
     return r;
 }
 
@@ -905,11 +888,9 @@ tape_rdlabel(
     char *r = NULL;
 
     if((fd = tape_open(devname, O_RDONLY)) < 0) {
-	r = vstralloc("tape_rdlabel: tape open: ",
+	r = vstrallocf("tape_rdlabel: tape open: %s: %s",
                       devname,
-                      ": ",
-                      strerror(errno),
-                      NULL);
+                      strerror(errno));
     } else
         r = tapefd_rdlabel(fd, datestamp, label);
 
@@ -917,7 +898,7 @@ tape_rdlabel(
         tapefd_close(fd);
     }
     if (r)
-	errstr = newvstralloc(errstr, r, NULL);
+	errstr = newvstrallocf(errstr, "%s", r);
     return r;
 }
 
@@ -934,7 +915,8 @@ tapefd_wrlabel(
     char *r = NULL;
 
     if(tapefd_rewind(fd) == -1) {
-	r = errstr = newstralloc2(errstr, "rewinding tape: ", strerror(errno));
+	r = errstr = newvstrallocf(errstr, "rewinding tape: %s",
+			strerror(errno));
     } else {
 	fh_init(&file);
 	file.type = F_TAPESTART;
@@ -949,10 +931,13 @@ tapefd_wrlabel(
 	tapefd_setinfo_disk(fd, label);
 	tapefd_setinfo_level(fd, -1);
 	if((rc = tapefd_write(fd, buffer, size)) != (ssize_t)size) {
-	    r = errstr = newstralloc2(errstr,
-				      "writing label: ",
-			              (rc != -1) ? "short write"
-						 : strerror(errno));
+	    if (rc != 1) {
+		r = errstr = newvstrallocf(errstr,
+				"writing label: short write");
+	    } else {
+		r = errstr = newvstrallocf(errstr,
+				"writing label: %s", strerror(errno));
+	    }
 	}
 	amfree(buffer);
     }
@@ -970,10 +955,13 @@ tape_wrlabel(
     char *r = NULL;
 
     if((fd = tape_open(devname, O_WRONLY)) < 0) {
-	r = errstr = newstralloc2(errstr,
-				  "writing label: ",
-				  (errno == EACCES) ? "tape is write-protected"
-						    : strerror(errno));
+	if (errno == EACCES) {
+	    r = errstr = newvstrallocf(errstr,
+				  "writing label: tape is write-protected");
+	} else {
+	    r = errstr = newvstrallocf(errstr,
+				  "writing label: %s", strerror(errno));
+	}
     } else if(tapefd_wrlabel(fd, datestamp, label, size) != NULL) {
 	r = errstr;
     }
@@ -1006,8 +994,13 @@ tapefd_wrendmark(
     tapefd_setinfo_level(fd, -1);
 
     if((rc = tapefd_write(fd, buffer, size)) != (ssize_t)size) {
-	r = errstr = newstralloc2(errstr, "writing endmark: ",
-			          (rc != -1) ? "short write" : strerror(errno));
+	if (rc != 1) {
+	    r = errstr = newvstrallocf(errstr,
+				"writing endmark: short write");
+	} else {
+	    r = errstr = newvstrallocf(errstr,
+				"writing endmark: %s", strerror(errno));
+	}
     }
     amfree(buffer);
 
@@ -1024,10 +1017,13 @@ tape_wrendmark(
     char *r = NULL;
 
     if((fd = tape_open(devname, O_WRONLY)) < 0) {
-	r = errstr = newstralloc2(errstr,
-				  "writing endmark: ",
-				  (errno == EACCES) ? "tape is write-protected"
-						    : strerror(errno));
+	if (errno == EACCES) {
+	    r = errstr = newvstrallocf(errstr,
+				  "writing endmark: tape is write-protected");
+	} else {
+	    r = errstr = newvstrallocf(errstr,
+				  "writing endmark: %s", strerror(errno));
+	}
     } else if(tapefd_wrendmark(fd, datestamp, size) != NULL) {
 	r = errstr;
     }
@@ -1047,11 +1043,13 @@ tape_writable(
     /* first, make sure the file exists and the permissions are right */
 
     if(tape_access(devname, R_OK|W_OK) == -1) {
-	r = errstr = newstralloc(errstr, strerror(errno));
+	r = errstr = newvstrallocf(errstr, "%s", strerror(errno));
     } else if((fd = tape_open(devname, O_WRONLY)) < 0) {
-	r = errstr = newstralloc(errstr,
-			         (errno == EACCES) ? "tape write-protected"
-					           : strerror(errno));
+	if (errno == EACCES) {
+	    r = errstr = newvstrallocf(errstr, "tape is write-protected");
+	} else {
+	    r = errstr = newvstrallocf(errstr, "%s", strerror(errno));
+	}
     }
     if(fd >= 0) {
 	tapefd_close(fd);

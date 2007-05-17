@@ -153,7 +153,8 @@ start_backup(
     char *error_pn = NULL;
     char *compopt  = NULL;
     char *encryptopt = skip_argument;
-    char *quoted;
+    char *tquoted;
+    char *fquoted;
     char *qdisk;
     int infd, outfd;
     ssize_t nb;
@@ -164,8 +165,7 @@ start_backup(
     error_pn = stralloc2(get_pname(), "-smbclient");
 
     qdisk = quote_string(disk);
-    dbprintf(("%s: start: %s:%s lev %d\n",
-	      get_pname(), host, qdisk, level));
+    dbprintf("start: %s:%s lev %d\n", host, qdisk, level);
 
     fprintf(stderr, "%s: start [%s:%s level %d]\n",
 	    get_pname(), host, qdisk, level);
@@ -175,8 +175,7 @@ start_backup(
          encpid = pipespawn(options->clnt_encrypt, STDIN_PIPE,
 			&compout, &dataf, &mesgf, 
 			options->clnt_encrypt, encryptopt, NULL);
-         dbprintf(("%s: pid %ld: %s\n",
-		  debug_prefix_time("-gnutar"), (long)encpid, options->clnt_encrypt));
+         dbprintf("gnutar: pid %ld: %s\n", (long)encpid, options->clnt_encrypt);
     } else {
        compout = dataf;
        encpid = -1;
@@ -194,23 +193,24 @@ start_backup(
 	comppid = pipespawn(COMPRESS_PATH, STDIN_PIPE,
 			    &dumpout, &compout, &mesgf,
 			    COMPRESS_PATH, compopt, NULL);
-	dbprintf(("%s: pid %ld: %s",
-		  debug_prefix_time("-gnutar"), (long)comppid, COMPRESS_PATH));
+	dbprintf("gnutar: pid %ld: %s", (long)comppid, COMPRESS_PATH);
 	if(compopt != skip_argument) {
-	    dbprintf((" %s", compopt));
+	    dbprintf("pid %ld: %s %s\n",
+			(long)comppid, COMPRESS_PATH, compopt);
+	} else {
+	    dbprintf("pid %ld: %s\n", (long)comppid, COMPRESS_PATH);
 	}
-	dbprintf(("\n"));
      } else if (options->compress == COMP_CUST) {
         compopt = skip_argument;
 	comppid = pipespawn(options->clntcompprog, STDIN_PIPE,
 			    &dumpout, &compout, &mesgf,
 			    options->clntcompprog, compopt, NULL);
-	dbprintf(("%s: pid %ld: %s",
-		  debug_prefix_time("-gnutar-cust"), (long)comppid, options->clntcompprog));
 	if(compopt != skip_argument) {
-	    dbprintf((" %s", compopt));
+	    dbprintf("pid %ld: %s %s\n",
+		     (long)comppid, options->clntcompprog, compopt);
+	} else {
+	    dbprintf("pid %ld: %s\n", (long)comppid, options->clntcompprog);
 	}
-	dbprintf(("\n"));
     } else {
 	dumpout = compout;
 	comppid = -1;
@@ -271,10 +271,9 @@ start_backup(
 		int save_errno = errno;
 		char *qname = quote_string(inputname);
 
-		dbprintf(("%s: error opening '%s': %s\n",
-			  debug_prefix_time("-gnutar"),
+		dbprintf("gnutar:: error opening '%s': %s\n",
 			  qname,
-			  strerror(save_errno)));
+			  strerror(save_errno));
 		if (baselevel < 0) {
 		    error("error [opening '%s': %s]", qname, strerror(save_errno));
 		    /*NOTREACHED*/
@@ -313,16 +312,17 @@ start_backup(
 	    /*NOTREACHED*/
 	}
 
-	dbprintf(("%s: doing level %d dump as listed-incremental",
-		  debug_prefix_time("-gnutar"), level));
+	tquoted = quote_string(incrname);
 	if(baselevel >= 0) {
-	    quoted = quote_string(inputname);
-	    dbprintf((" from '%s'", quoted));
-	    amfree(quoted);
+	    fquoted = quote_string(inputname);
+	    dbprintf("doing level %d dump as listed-incremental from '%s' to '%s'\n",
+		     level, fquoted, tquoted);
+	    amfree(fquoted);
+	} else {
+	    dbprintf("doing level %d dump as listed-incremental to '%s'\n",
+		     level, tquoted);
 	}
-	quoted = quote_string(incrname);
-	dbprintf((" to '%s'\n", quoted));
-	amfree(quoted);
+	amfree(tquoted);
 	amfree(inputname);
 	amfree(basename);
     }
@@ -352,8 +352,8 @@ start_backup(
 		gmtm->tm_year + 1900, gmtm->tm_mon+1, gmtm->tm_mday,
 		gmtm->tm_hour, gmtm->tm_min, gmtm->tm_sec);
 
-    dbprintf(("%s: doing level %d dump from date: %s\n",
-	      debug_prefix_time("-gnutar"), level, dumptimestr));
+    dbprintf("gnutar: doing level %d dump from date: %s\n",
+	      level, dumptimestr);
 
     dirname = amname_to_dirname(amdevice);
 
@@ -454,11 +454,12 @@ start_backup(
 	    strappend(taropt, "a");
 	}
 
-	dbprintf(("%s: backup of %s", debug_prefix_time("-gnutar"), sharename));
+	dbprintf("gnutar: backup of %s", sharename);
 	if (subdir) {
-	    dbprintf(("/%s",subdir));
+	    dbprintf("Backup of %s/%s\n", sharename, subdir);
+	} else {
+	    dbprintf("Backup of %s\n", sharename);
 	}
-	dbprintf(("\n"));
 
 	program->backup_name = program->restore_name = SAMBA_CLIENT;
 	cmd = stralloc(program->backup_name);
@@ -591,10 +592,7 @@ start_backup(
 	amfree(file_include);
 	amfree(my_argv);
     }
-    dbprintf(("%s: %s: pid %ld\n",
-	      debug_prefix_time("-gnutar"),
-	      cmd,
-	      (long)dumppid));
+    dbprintf("gnutar: %s: pid %ld\n", cmd, (long)dumppid);
 
     amfree(qdisk);
     amfree(dirname);

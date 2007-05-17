@@ -123,8 +123,7 @@ rsh_connect(
     assert(fn != NULL);
     assert(hostname != NULL);
 
-    auth_debug(1, ("%s: rsh: rsh_connect: %s\n", debug_prefix_time(NULL),
-		   hostname));
+    auth_debug(1, "rsh: rsh_connect: %s\n", hostname);
 
     rh = alloc(SIZEOF(*rh));
     security_handleinit(&rh->sech, &rsh_security_driver);
@@ -204,13 +203,13 @@ runrsh(
     memset(rpipe, -1, SIZEOF(rpipe));
     memset(wpipe, -1, SIZEOF(wpipe));
     if (pipe(rpipe) < 0 || pipe(wpipe) < 0) {
-	rc->errmsg = newvstralloc(rc->errmsg, "pipe: ", strerror(errno), NULL);
+	rc->errmsg = newvstrallocf(rc->errmsg, "pipe: %s", strerror(errno));
 	return (-1);
     }
 
     switch (rc->pid = fork()) {
     case -1:
-	rc->errmsg = newvstralloc(rc->errmsg, "fork: ", strerror(errno), NULL);
+	rc->errmsg = newvstrallocf(rc->errmsg, "fork: %s", strerror(errno));
 	aclose(rpipe[0]);
 	aclose(rpipe[1]);
 	aclose(wpipe[0]);

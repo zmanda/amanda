@@ -211,9 +211,9 @@ int SCSI_ExecuteCommand(int DeviceFD,
       {
         if (SCSI_OpenDevice(DeviceFD) == 0)
           {
-            dbprintf(("SCSI_ExecuteCommand could not open %s: %s\n",
+            dbprintf("SCSI_ExecuteCommand could not open %s: %s\n",
                       pDev[DeviceFD].dev,
-	              strerror(errno)));
+	              strerror(errno));
             sleep(1); /* Give device a little time befor retry */
             continue;
           }
@@ -228,7 +228,7 @@ int SCSI_ExecuteCommand(int DeviceFD,
         return (SCSI_ERROR);
       }
     DecodeSCSI(CDB, "SCSI_ExecuteCommand : ");
-    dbprintf(("\t\t\tSTATUS(%02X) RET(%02X)\n", STATUS(&ds), RET(&ds)));
+    dbprintf("\t\t\tSTATUS(%02X) RET(%02X)\n", STATUS(&ds), RET(&ds));
     switch (STATUS(&ds))
       {
       case ST_BUSY:                /*  BUSY */
@@ -303,7 +303,7 @@ int Tape_Status( int DeviceFD)
 
   if (ioctl(pDev[DeviceFD].fd , MTIOCGET, &mtget) != 0)
     {
-      dbprintf(("Tape_Status error ioctl %s\n",strerror(errno)));
+      dbprintf("Tape_Status error ioctl %s\n",strerror(errno));
       SCSI_CloseDevice(DeviceFD);
       return(-1);
     }
@@ -344,7 +344,7 @@ int ScanBus(int print)
 
   if ((dir = opendir("/dev/scsi")) == NULL)
     {
-      dbprintf(("Can not read /dev/scsi: %s", strerror(errno)));
+      dbprintf("Can not read /dev/scsi: %s", strerror(errno));
       return 0;
     }
 

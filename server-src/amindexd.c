@@ -134,8 +134,7 @@ remove_files(
     REMOVE_ITEM *prev;
 
     while(remove) {
-	dbprintf(("%s: removing index file: %s\n",
-		  debug_prefix_time(NULL), remove->filename));
+	dbprintf("removing index file: %s\n", remove->filename);
 	unlink(remove->filename);
 	amfree(remove->filename);
 	prev = remove;
@@ -186,12 +185,10 @@ uncompress_file(
 	 * Check that compressed file exists manually.
 	 */
 	if (stat(filename_gz, &statbuf) < 0) {
-	    *emsg = newvstralloc(*emsg, "Compressed file '",
-				filename_gz,
-				"' is inaccessable: ",
-				strerror(errno),
-				NULL);
-	    dbprintf(("%s\n",*emsg));
+	    *emsg = newvstrallocf(*emsg,
+				"Compressed file '%s' is inaccessable: %s",
+				filename_gz, strerror(errno));
+	    dbprintf("%s\n",*emsg);
 	    amfree(filename);
 	    return NULL;
  	}
@@ -216,7 +213,7 @@ uncompress_file(
 				 filename, "' for writting: ",
 				 strerror(errno),
 				 NULL);
-	    dbprintf(("%s\n",*emsg));
+	    dbprintf("%s\n",*emsg);
 	    amfree(filename);
 	    return NULL;
 	}
@@ -234,7 +231,7 @@ uncompress_file(
 	    *emsg = newvstralloc(*emsg, "Can't fdopen pipe from gzip: ",
 				 strerror(errno),
 				 NULL);
-	    dbprintf(("%s\n",*emsg));
+	    dbprintf("%s\n",*emsg);
 	    amfree(filename);
 	    return NULL;
 	}
@@ -262,26 +259,26 @@ uncompress_file(
 	aclose(pipe_to_sort);
 	if (waitpid(pid_gzip, &wait_status, 0) < 0) {
 	    if (!WIFEXITED(wait_status)) {
-		dbprintf(("Uncompress exited with signal %d",
-			  WTERMSIG(wait_status)));
+		dbprintf("Uncompress exited with signal %d",
+			  WTERMSIG(wait_status));
 	    } else if (WEXITSTATUS(wait_status) != 0) {
-		dbprintf(("Uncompress exited with status %d",
-			  WEXITSTATUS(wait_status)));
+		dbprintf("Uncompress exited with status %d",
+			  WEXITSTATUS(wait_status));
 	    } else {
-		dbprintf(("Uncompres returned negative value: %s",
-			  strerror(errno)));
+		dbprintf("Uncompres returned negative value: %s",
+			  strerror(errno));
 	    }
 	}
 	if (waitpid(pid_sort, &wait_status, 0)) {
 	    if (!WIFEXITED(wait_status)) {
-		dbprintf(("Sort exited with signal %d",
-			  WTERMSIG(wait_status)));
+		dbprintf("Sort exited with signal %d",
+			  WTERMSIG(wait_status));
 	    } else if (WEXITSTATUS(wait_status) != 0) {
-		dbprintf(("Sort exited with status %d",
-			  WEXITSTATUS(wait_status)));
+		dbprintf("Sort exited with status %d",
+			  WEXITSTATUS(wait_status));
 	    } else {
-		dbprintf(("Sort returned negative value: %s",
-			  strerror(errno)));
+		dbprintf("Sort returned negative value: %s",
+			  strerror(errno));
 	    }
 	}
 
@@ -292,7 +289,7 @@ uncompress_file(
 	uncompress_remove = remove_file;
     } else if(!S_ISREG((stat_filename.st_mode))) {
 	    amfree(*emsg);
-	    *emsg = vstralloc("\"", filename, "\" is not a regular file", NULL);
+	    *emsg = vstrallocf("\"%s\" is not a regular file", filename);
 	    errno = -1;
 	    amfree(filename);
 	    amfree(cmd);
@@ -343,7 +340,7 @@ process_ls_dump(
 
     if((fp = fopen(filename,"r"))==0) {
 	amfree(*emsg);
-	*emsg = stralloc(strerror(errno));
+	*emsg = vstrallocf("%s", strerror(errno));
 	amfree(dir_slash);
 	return -1;
     }
@@ -404,19 +401,17 @@ printf_arglist_function1(static void reply, int, n, char *, fmt)
 
     if (fprintf(cmdout,"%03d %s\r\n", n, reply_buffer) < 0)
     {
-	dbprintf(("%s: ! error %d (%s) in printf\n",
-		  debug_prefix_time(NULL), errno, strerror(errno)));
+	dbprintf("! error %d (%s) in printf\n", errno, strerror(errno));
 	uncompress_remove = remove_files(uncompress_remove);
 	exit(1);
     }
     if (fflush(cmdout) != 0)
     {
-	dbprintf(("%s: ! error %d (%s) in fflush\n",
-		  debug_prefix_time(NULL), errno, strerror(errno)));
+	dbprintf("! error %d (%s) in fflush\n", errno, strerror(errno));
 	uncompress_remove = remove_files(uncompress_remove);
 	exit(1);
     }
-    dbprintf(("%s: < %03d %s\n", debug_prefix_time(NULL), n, reply_buffer));
+    dbprintf("< %03d %s\n", n, reply_buffer);
 }
 
 /* send one line of a multi-line response */
@@ -443,20 +438,20 @@ printf_arglist_function1(static void lreply, int, n, char *, fmt)
 
     if (fprintf(cmdout,"%03d-%s\r\n", n, reply_buffer) < 0)
     {
-	dbprintf(("%s: ! error %d (%s) in printf\n",
-		  debug_prefix_time(NULL), errno, strerror(errno)));
+	dbprintf("! error %d (%s) in printf\n",
+		  errno, strerror(errno));
 	uncompress_remove = remove_files(uncompress_remove);
 	exit(1);
     }
     if (fflush(cmdout) != 0)
     {
-	dbprintf(("%s: ! error %d (%s) in fflush\n",
-		  debug_prefix_time(NULL), errno, strerror(errno)));
+	dbprintf("! error %d (%s) in fflush\n",
+		  errno, strerror(errno));
 	uncompress_remove = remove_files(uncompress_remove);
 	exit(1);
     }
 
-    dbprintf(("%s: < %03d-%s\n", debug_prefix_time(NULL), n, reply_buffer));
+    dbprintf("< %03d-%s\n", n, reply_buffer);
 
 }
 
@@ -484,13 +479,13 @@ printf_arglist_function1(static void fast_lreply, int, n, char *, fmt)
 
     if (fprintf(cmdout,"%03d-%s\r\n", n, reply_buffer) < 0)
     {
-	dbprintf(("%s: ! error %d (%s) in printf\n",
-		  debug_prefix_time(NULL), errno, strerror(errno)));
+	dbprintf("! error %d (%s) in printf\n",
+		  errno, strerror(errno));
 	uncompress_remove = remove_files(uncompress_remove);
 	exit(1);
     }
 
-    dbprintf(("%s: < %03d-%s\n", debug_prefix_time(NULL), n, reply_buffer));
+    dbprintf("< %03d-%s\n", n, reply_buffer);
 }
 
 /* see if hostname is valid */
@@ -701,11 +696,11 @@ build_disk_table(void)
 	    date = amindexd_nicedate(find_output->timestamp);
 	    add_dump(find_output->hostname, date, find_output->level,
 		     find_output->label, find_output->filenum, partnum);
-	    dbprintf(("%s: - %s %d %s " OFF_T_FMT " %d\n",
-		     debug_prefix_time(NULL), date, find_output->level, 
+	    dbprintf("- %s %d %s " OFF_T_FMT " %d\n",
+		     date, find_output->level, 
 		     find_output->label,
 		     (OFF_T_FMT_TYPE)find_output->filenum,
-		     partnum));
+		     partnum);
 	}
     }
     return 0;
@@ -832,7 +827,7 @@ is_dir_valid_opaque(
 	    return -1;
 	}
 	amfree(filename_gz);
-	dbprintf(("%s: f %s\n", debug_prefix_time(NULL), filename));
+	dbprintf("f %s\n", filename);
 	if ((fp = fopen(filename, "r")) == NULL) {
 	    reply(599, "System error %s", strerror(errno));
 	    amfree(filename);
@@ -1026,30 +1021,27 @@ tapedev_is(void)
     /* use amrecover_changer if possible */
     if ((result = getconf_str(CNF_AMRECOVER_CHANGER)) != NULL  &&
         *result != '\0') {
-	dbprintf(("%s: tapedev_is amrecover_changer: %s\n",
-                  debug_prefix_time(NULL), result));
+	dbprintf("tapedev_is amrecover_changer: %s\n", result);
 	reply(200, result);
 	return 0;
     }
 
     /* use changer if possible */
     if ((result = getconf_str(CNF_TPCHANGER)) != NULL  &&  *result != '\0') {
-	dbprintf(("%s: tapedev_is tpchanger: %s\n",
-                  debug_prefix_time(NULL), result));
+	dbprintf("tapedev_is tpchanger: %s\n", result);
 	reply(200, result);
 	return 0;
     }
 
     /* get tapedev value */
     if ((result = getconf_str(CNF_TAPEDEV)) != NULL  &&  *result != '\0') {
-	dbprintf(("%s: tapedev_is tapedev: %s\n",
-                  debug_prefix_time(NULL), result));
+	dbprintf("tapedev_is tapedev: %s\n", result);
 	reply(200, result);
 	return 0;
     }
 
-    dbprintf(("%s: No tapedev or tpchanger in config site.\n",
-              debug_prefix_time(NULL)));
+    dbprintf("No tapedev or tpchanger in config site.\n");
+
     reply(501, "Tapedev or tpchanger not set in config file.");
     return -1;
 }
@@ -1158,15 +1150,14 @@ main(
 #endif	/* FORCE_USERID */
 
     dbopen(DBG_SUBDIR_SERVER);
-    dbprintf(("%s: version %s\n", get_pname(), version()));
+    dbprintf("version %s\n", version());
 
     if(argv == NULL) {
 	error("argv == NULL\n");
     }
 
     if (! (argc >= 1 && argv[0] != NULL)) {
-	dbprintf(("%s: WARNING: argv[0] not defined: check inetd.conf\n",
-		  debug_prefix_time(NULL)));
+	dbprintf("WARNING: argv[0] not defined: check inetd.conf\n");
     }
 
     {
@@ -1314,18 +1305,15 @@ main(
 	while(1) {
 	    if((part = agets(cmdin)) == NULL) {
 		if(errno != 0) {
-		    dbprintf(("%s: ? read error: %s\n",
-			      debug_prefix_time(NULL), strerror(errno)));
+		    dbprintf("? read error: %s\n", strerror(errno));
 		} else {
-		    dbprintf(("%s: ? unexpected EOF\n",
-			      debug_prefix_time(NULL)));
+		    dbprintf("? unexpected EOF\n");
 		}
 		if(line) {
-		    dbprintf(("%s: ? unprocessed input:\n",
-			      debug_prefix_time(NULL)));
-		    dbprintf(("-----\n"));
-		    dbprintf(("? %s\n", line));
-		    dbprintf(("-----\n"));
+		    dbprintf("? unprocessed input:\n");
+		    dbprintf("-----\n");
+		    dbprintf("? %s\n", line);
+		    dbprintf("-----\n");
 		}
 		amfree(line);
 		amfree(part);
@@ -1351,7 +1339,7 @@ main(
 	    strappend(line, "\n");
 	}
 
-	dbprintf(("%s: > %s\n", debug_prefix_time(NULL), line));
+	dbprintf("> %s\n", line);
 
 	if (arg != NULL)
 	    amfree(arg);
@@ -1394,7 +1382,7 @@ main(
 	if (!user_validated) {  /* don't tell client the reason, just log it to debug log */
 	    reply(500, "Access not allowed");
 	    if (errstr) {   
-		dbprintf(("%s: %s\n", debug_prefix_time(NULL), errstr));
+		dbprintf("%s\n", errstr);
 	    }
 	    break;
 	}

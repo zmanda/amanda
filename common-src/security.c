@@ -94,13 +94,12 @@ security_getdriver(
 
     for (i = 0; i < NDRIVERS; i++) {
 	if (strcasecmp(name, drivers[i]->name) == 0) {
-	    dbprintf(("%s: security_getdriver(name=%s) returns %p\n",
-		      debug_prefix_time(NULL), name, drivers[i]));
+	    dbprintf("security_getdriver(name=%s) returns %p\n",
+		      name, drivers[i]);
 	    return (drivers[i]);
 	}
     }
-    dbprintf(("%s: security_getdriver(name=%s) returns NULL\n",
-	      debug_prefix_time(NULL), name));
+    dbprintf("security_getdriver(name=%s) returns NULL\n", name);
     return (NULL);
 }
 
@@ -112,8 +111,8 @@ security_handleinit(
     security_handle_t *		handle,
     const security_driver_t *	driver)
 {
-    dbprintf(("%s: security_handleinit(handle=%p, driver=%p (%s))\n",
-	      debug_prefix_time(NULL), handle, driver, driver->name));
+    dbprintf("security_handleinit(handle=%p, driver=%p (%s))\n",
+	      handle, driver, driver->name);
     handle->driver = driver;
     handle->error = stralloc("unknown protocol error");
 }
@@ -129,18 +128,18 @@ printf_arglist_function1(void security_seterror, security_handle_t *, handle,
     vsnprintf(buf, SIZEOF(buf), fmt, argp);
     arglist_end(argp);
     handle->error = newstralloc(handle->error, buf);
-    dbprintf(("%s: security_seterror(handle=%p, driver=%p (%s) error=%s)\n",
-	      debug_prefix_time(NULL), handle, handle->driver,
-	      handle->driver->name, handle->error));
+    dbprintf("security_seterror(handle=%p, driver=%p (%s) error=%s)\n",
+	      handle, handle->driver,
+	      handle->driver->name, handle->error);
 }
 
 void
 security_close(
     security_handle_t *	handle)
 {
-    dbprintf(("%s: security_close(handle=%p, driver=%p (%s))\n",
-	      debug_prefix_time(NULL), handle, handle->driver,
-	      handle->driver->name));
+    dbprintf("security_close(handle=%p, driver=%p (%s))\n",
+	      handle, handle->driver,
+	      handle->driver->name);
     amfree(handle->error);
     (*handle->driver->close)(handle);
 }
@@ -153,8 +152,8 @@ security_streaminit(
     security_stream_t *		stream,
     const security_driver_t *	driver)
 {
-    dbprintf(("%s: security_streaminit(stream=%p, driver=%p (%s))\n",
-	      debug_prefix_time(NULL), stream, driver, driver->name));
+    dbprintf("security_streaminit(stream=%p, driver=%p (%s))\n",
+	      stream, driver, driver->name);
     stream->driver = driver;
     stream->error = stralloc("unknown stream error");
 }
@@ -170,16 +169,14 @@ printf_arglist_function1(void security_stream_seterror,
     vsnprintf(buf, SIZEOF(buf), fmt, argp);
     arglist_end(argp);
     stream->error = newstralloc(stream->error, buf);
-    dbprintf(("%s: security_stream_seterr(%p, %s)\n",
-	      debug_prefix_time(NULL), stream, stream->error));
+    dbprintf("security_stream_seterr(%p, %s)\n", stream, stream->error);
 }
 
 void
 security_stream_close(
     security_stream_t *	stream)
 {
-    dbprintf(("%s: security_stream_close(%p)\n",
-	      debug_prefix_time(NULL), stream));
+    dbprintf("security_stream_close(%p)\n", stream);
     amfree(stream->error);
     (*stream->driver->stream_close)(stream);
 }

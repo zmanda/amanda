@@ -65,11 +65,11 @@ int main(
 
     dbopen(DBG_SUBDIR_CLIENT);
     if (argc < 2) {
-	error("%s: Need at least 2 arguments\n", debug_prefix_time(NULL));
+	error("Need at least 2 arguments\n");
 	/*NOTREACHED*/
     }
-    dbprintf(("%s: version %s\n", debug_prefix_time(NULL), version()));
-    dbprintf(("config: %s\n", argv[1]));
+    dbprintf("version %s\n", version());
+    dbprintf("config: %s\n", argv[1]);
     if (strcmp(argv[1], "NOCONFIG") != 0)
 	dbrename(argv[1], DBG_SUBDIR_CLIENT);
 
@@ -118,7 +118,7 @@ int main(
     }
 
     /*@ignore@*/
-    dbprintf(("child process exited with status %d\n", WEXITSTATUS(status)));
+    dbprintf("child process exited with status %d\n", WEXITSTATUS(status));
 
     return WEXITSTATUS(status);
     /*@end@*/
@@ -139,10 +139,10 @@ static void term_kill_soft(
      * First, try to kill the dump process nicely.  If it ignores us
      * for three seconds, hit it harder.
      */
-    dbprintf(("sending SIGTERM to process group %ld\n", (long) dumppid));
+    dbprintf("sending SIGTERM to process group %ld\n", (long) dumppid);
     killerr = kill(-dumppid, SIGTERM);
     if (killerr == -1) {
-	dbprintf(("kill failed: %s\n", strerror(errno)));
+	dbprintf("kill failed: %s\n", strerror(errno));
     }
 }
 
@@ -154,12 +154,12 @@ static void term_kill_hard(
 
     (void)sig;	/* Quiet unused parameter warning */
 
-    dbprintf(("it won\'t die with SIGTERM, but SIGKILL should do\n"));
-    dbprintf(("do\'t expect any further output, this will be suicide\n"));
+    dbprintf("it won\'t die with SIGTERM, but SIGKILL should do\n");
+    dbprintf("do\'t expect any further output, this will be suicide\n");
     killerr = kill(-dumppid, SIGKILL);
     /* should never reach this point, but so what? */
     if (killerr == -1) {
-	dbprintf(("kill failed: %s\n", strerror(errno)));
-	dbprintf(("waiting until child terminates\n"));
+	dbprintf("kill failed: %s\n", strerror(errno));
+	dbprintf("waiting until child terminates\n");
     }
 }

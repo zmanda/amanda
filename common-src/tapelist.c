@@ -45,7 +45,7 @@ num_entries(
     for(cur_tape = tapelist ; cur_tape ; cur_tape = cur_tape->next)
 	count++;
 
-    dbprintf(("num_entries(tapelist=%p)=%d\n", tapelist, count));
+    dbprintf("num_entries(tapelist=%p)=%d\n", tapelist, count);
     return(count);
 }
 
@@ -57,19 +57,19 @@ dump_tapelist(
     int count = 0;
     int file;
 
-    dbprintf(("dump_tapelist(%p):\n", tapelist));
+    dbprintf("dump_tapelist(%p):\n", tapelist);
     for(cur_tape = tapelist ; cur_tape != NULL ; cur_tape = cur_tape->next) {
-	dbprintf(("  %p->next     = %p\n", cur_tape, cur_tape->next));
-	dbprintf(("  %p->label    = %s\n", cur_tape, cur_tape->label));
-	dbprintf(("  %p->isafile  = %d\n", cur_tape, cur_tape->isafile));
-	dbprintf(("  %p->numfiles = %d\n", cur_tape, cur_tape->numfiles));
+	dbprintf("  %p->next     = %p\n", cur_tape, cur_tape->next);
+	dbprintf("  %p->label    = %s\n", cur_tape, cur_tape->label);
+	dbprintf("  %p->isafile  = %d\n", cur_tape, cur_tape->isafile);
+	dbprintf("  %p->numfiles = %d\n", cur_tape, cur_tape->numfiles);
 	for (file=0; file < cur_tape->numfiles; file++) {
-	    dbprintf(("  %p->files[%d] = " OFF_T_FMT "\n",
-		     cur_tape, file, (OFF_T_FMT_TYPE)cur_tape->files[file]));
+	    dbprintf("  %p->files[%d] = " OFF_T_FMT "\n",
+		     cur_tape, file, (OFF_T_FMT_TYPE)cur_tape->files[file]);
 	}
 	count++;
     }
-    dbprintf(("  %p count     = %d\n", tapelist, count));
+    dbprintf("  %p count     = %d\n", tapelist, count);
 }
 
 /*
@@ -86,9 +86,9 @@ append_to_tapelist(
     tapelist_t *new_tape, *cur_tape;
     int c;
 
-    dbprintf(("append_to_tapelist(tapelist=%p, label='%s', , file="
+    dbprintf("append_to_tapelist(tapelist=%p, label='%s', , file="
 		OFF_T_FMT ", isafile=%d)\n",
-		tapelist, label, (OFF_T_FMT_TYPE)file, isafile));
+		tapelist, label, (OFF_T_FMT_TYPE)file, isafile);
 
     /* see if we have this tape already, and if so just add to its file list */
     for(cur_tape = tapelist; cur_tape; cur_tape = cur_tape->next) {

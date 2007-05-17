@@ -113,8 +113,7 @@ bsdtcp_connect(
     (void)conf_fn;	/* Quiet unused parameter warning */
     (void)datap;	/* Quiet unused parameter warning */
 
-    auth_debug(1, ("%s: bsdtcp: bsdtcp_connect: %s\n", debug_prefix_time(NULL),
-		   hostname));
+    auth_debug(1, "bsdtcp: bsdtcp_connect: %s\n", hostname);
 
     rh = alloc(sizeof(*rh));
     security_handleinit(&rh->sech, &bsdtcp_security_driver);
@@ -125,14 +124,14 @@ bsdtcp_connect(
 
     result = resolve_hostname(hostname, NULL, &canonname);
     if(result != 0) {
-	dbprintf(("resolve_hostname(%s): %s\n", hostname, gai_strerror(result)));
+	dbprintf("resolve_hostname(%s): %s\n", hostname, gai_strerror(result));
 	security_seterror(&rh->sech, "resolve_hostname(%s): %s\n", hostname,
 			  gai_strerror(result));
 	(*fn)(arg, &rh->sech, S_ERROR);
 	return;
     }
     if (canonname == NULL) {
-	dbprintf(("resolve_hostname(%s) did not return a canonical name\n", hostname));
+	dbprintf("resolve_hostname(%s) did not return a canonical name\n", hostname);
 	security_seterror(&rh->sech,
 	        _("resolve_hostname(%s) did not return a canonical name\n"), hostname);
 	(*fn)(arg, &rh->sech, S_ERROR);
@@ -202,14 +201,13 @@ bsdtcp_accept(
 
     len = sizeof(sin);
     if (getpeername(in, (struct sockaddr *)&sin, &len) < 0) {
-	dbprintf(("%s: getpeername returned: %s\n", debug_prefix_time(NULL),
-		  strerror(errno)));
+	dbprintf("getpeername returned: %s\n", strerror(errno));
 	return;
     }
     if ((result = getnameinfo((struct sockaddr *)&sin, len,
 			      hostname, NI_MAXHOST, NULL, 0, 0) == -1)) {
-	dbprintf(("%s: getnameinfo failed: %s\n",
-		  debug_prefix_time(NULL), gai_strerror(result)));
+	dbprintf("getnameinfo failed: %s\n",
+		  gai_strerror(result));
 	return;
     }
     if (check_name_give_sockaddr(hostname,

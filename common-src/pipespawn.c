@@ -83,6 +83,8 @@ pipespawnv_passwd(
     char **arg;
     char *e;
     char **env;
+    char *cmdline;
+    char *quoted;
     char **newenv;
     char *passwdvar = NULL;
     int  *passwdfd = NULL;
@@ -90,8 +92,6 @@ pipespawnv_passwd(
     /*
      * Log the command line and count the args.
      */
-    dbprintf(("%s: spawning %s in pipeline\n", debug_prefix_time(NULL), prog));
-    dbprintf(("%s: argument list:", debug_prefix_time(NULL)));
     if ((pipedef & PASSWD_PIPE) != 0) {
 	passwdvar = *my_argv++;
 	passwdfd  = (int *)*my_argv++;
@@ -101,17 +101,17 @@ pipespawnv_passwd(
     memset(errpipe, -1, SIZEOF(errpipe));
     memset(passwdpipe, -1, SIZEOF(passwdpipe));
     argc = 0;
-    for(arg = my_argv; *arg != NULL; arg++) {
-	char *quoted;
 
+    cmdline = stralloc(prog);
+    for(arg = my_argv; *arg != NULL; arg++) {
 	if (*arg != skip_argument) {
 	    argc++;
 	    quoted = quote_string(*arg);
-	    dbprintf((" %s", quoted));
+	    cmdline = vstrextend(&cmdline, " ", quoted, NULL);
 	    amfree(quoted);
 	}
     }
-    dbprintf(("\n"));
+    dbprintf("Spawning \"%s\" in pipeline\n", cmdline);
 
     /*
      * Create the pipes
