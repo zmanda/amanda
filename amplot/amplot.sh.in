@@ -58,7 +58,7 @@ COMPRESS=@AMPLOT_COMPRESS@
 #    collapsing "printf `gettext fmt` ...", which is
 #    used everywhere, into one function.
 #-
-function _() {
+_() {
 	fmt="$1"
 	shift
 	printf "$fmt" $*
@@ -69,7 +69,7 @@ function _() {
 # to the commandline switch used to introduce a variable. This
 # check used to be performed at build time in configure; it's
 # now performed at runtime.
-function test_awk() {
+test_awk() {
 	local tmpfile result
 	tmpfile=`mktemp /tmp/amplot.XXXXXX`
 	echo 'BEGIN{print i; exit}' > ${tmpfile}
@@ -95,7 +95,7 @@ function test_awk() {
 # then tries 'gnuplot', assuming it's in the user's path.  If no
 # working gnuplot executable is found, it exits with an error.  The
 # variable $GNUPLOT is set to the resulting executable.
-function find_gnuplot() {
+find_gnuplot() {
 	if test "x$GNUPLOT" = "x"; then
 		# look for it in the user's PATH
 		GNUPLOT=gnuplot

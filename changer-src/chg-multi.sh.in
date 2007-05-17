@@ -47,7 +47,7 @@ else
 fi
 
 # support simultaneous development with and without gettext
-function _() {
+_() {
         fmt="$1"
         shift
         printf "$fmt" $*

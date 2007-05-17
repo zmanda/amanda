@@ -315,13 +315,6 @@ test -n "$DEBUG" && set -x
 TMPDIR="@AMANDA_TMPDIR@"
 DBGDIR="@AMANDA_DBGDIR@"
 
-# support simultaneous development with and without gettext
-function _() {
-	fmt="$1"
-	shift
-	printf "$fmt" $*
-}
-
 argv0=$0
 myname=`expr "$argv0" : '.*/\(.*\)'`
 
