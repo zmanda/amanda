@@ -1,3 +1,9 @@
+2007-05-17  Jean-Louis Martineau <martineau@zmanda.com>
+	* amplot/amplot.sh.in: Remove function keyword.
+	* changer-src/chg-lib.sh.in: Remove function keyword.
+	* changer-src/chg-multi.sh.in: Remove function keyword.
+	* changer-src/chg-zd-mtx.sh.in: Remove function keyword.
+
 2007-05-16  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/dumper.c (read_datafd): Reset timeout after the write.
 
