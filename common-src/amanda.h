@@ -492,7 +492,7 @@ char *	debug_prefix_time(char *);
 void   set_logerror(void (*f)(char *));
 void   set_pname(char *pname);
 char  *get_pname(void);
-int    erroutput_type;
+extern int    erroutput_type;
 void   error(const char *format, ...)
     __attribute__ ((format (printf, 1, 2), noreturn));
 void   errordump(const char *format, ...)
