@@ -829,7 +829,6 @@ start_server_check(
 	    fprintf(outf, "WARNING: hold file %s exists\n", holdfile);
 	    amfree(quoted);
 	}
-	amfree(newtapefile);
 	amfree(tapefile);
 	amfree(tape_dir);
 	amfree(holdfile);
