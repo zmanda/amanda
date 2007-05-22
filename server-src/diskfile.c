@@ -944,7 +944,9 @@ optionstr(
 	      dp->compress == COMP_SERVER_CUST ) {
 	   if(fdout) {
 	      fprintf(fdout,
-		      _("ERROR: %s:Client encryption with server compression is not supported. See amanda.conf(5) for detail.\n"), dp->host->hostname);
+		      _("ERROR: %s:Client encryption with server compression is "
+			"not supported. See amanda.conf(5) for detail.\n"), 
+			dp->host->hostname);
 	    }
 	    err++;
 	  }
@@ -973,8 +975,11 @@ optionstr(
 	 if (BSTRNCMP(encrypt_opt, "encrypt-serv-cust=;") == 0){
 	    if(fdout) {
 	      fprintf(fdout,
-		      _("ERROR: %s:%s encrypt server with no encryption program specified\n"),
+		      _("ERROR: %s:%s No encryption program specified in dumptypes\n"),
 		      dp->host->hostname, qdpname);
+	      fprintf(fdout, _("Change the dumptype in the disklist or mention "
+			       "the ecnryption program to use in the dumptypes file"));
+
 	    }
 	    err++;
 	  }
@@ -1231,7 +1236,7 @@ match_disklist(
 	       (match_disk(sargv[i], dp->name) ||
 		(dp->device && match_disk(sargv[i], dp->device)))) {
 		if(match_a_host) {
-		    error(_("Argument %s match a host and a disk"),sargv[i]);
+		    error(_("Argument %s cannot be both a host and a disk"),sargv[i]);
 		    /*NOTREACHED*/
 		}
 		else {

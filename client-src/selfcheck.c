@@ -483,6 +483,15 @@ check_options(
 	if(strcasecmp(options->auth, amandad_auth) != 0) {
 	    fprintf(stdout,_("ERROR [client configured for auth=%s while server requested '%s']\n"),
 		    amandad_auth, options->auth);
+	    if(strcmp(options->auth, "ssh") == 0)  {	
+		fprintf(stderr, _("ERROR [The auth in ~/.ssh/authorized_keys "
+				  "should be \"--auth=ssh\", or use another auth "
+				  " for the DLE]\n"));
+	    }
+	    else {
+		fprintf(stderr, _("ERROR [The auth in the inetd/xinetd configuration "
+				  " must be the same as the DLE]\n"));
+	    }		
 	}
     }
 }

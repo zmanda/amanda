@@ -57,7 +57,7 @@ static char *tapechanger = NULL;
 
 /* local functions */
 static int changer_command(char *cmd, char *arg);
-static int report_bad_resultstr(void);
+static int report_bad_resultstr(char *cmd);
 static int run_changer_command(char *cmd, char *arg, char **slotstr, char **rest);
 
 int
@@ -69,12 +69,12 @@ changer_init(void)
 
 
 static int
-report_bad_resultstr(void)
+report_bad_resultstr(char *cmd)
 {
     char *s;
 
-    s = vstrallocf(_("badly formed result from changer: \"%s\""),
-		  changer_resultstr);
+    s = vstrallocf(_("badly formed result from changer command %s: \"%s\""),
+		  cmd, changer_resultstr);
     amfree(changer_resultstr);
     changer_resultstr = s;
     return 2;
@@ -104,7 +104,7 @@ run_changer_command(
     ch = *s++;
 
     skip_whitespace(s, ch);
-    if(ch == '\0') return report_bad_resultstr();
+    if(ch == '\0') return report_bad_resultstr(cmd);
     slot = s - 1;
     skip_non_whitespace(s, ch);
     s[-1] = '\0';
@@ -119,7 +119,7 @@ run_changer_command(
     }
 
     if(exitcode) {
-	if(ch == '\0') return report_bad_resultstr();
+	if(ch == '\0') return report_bad_resultstr(cmd);
 	result_copy = stralloc(s - 1);
 	amfree(changer_resultstr);
 	changer_resultstr = result_copy;
@@ -167,7 +167,7 @@ changer_loadslot(
     rc = run_changer_command("-slot", inslotstr, outslotstr, &rest);
 
     if(rc) return rc;
-    if(*rest == '\0') return report_bad_resultstr();
+    if(*rest == '\0') return report_bad_resultstr("-slot");
 
     *devicename = newstralloc(*devicename, rest);
     return 0;
@@ -200,7 +200,7 @@ changer_query(
     dbprintf(_("changer_query: changer return was %s\n"),rest);
     if (sscanf(rest, "%d %d %d", nslotsp, backwardsp, searchable) != 3) {
       if (sscanf(rest, "%d %d", nslotsp, backwardsp) != 2) {
-        return report_bad_resultstr();
+        return report_bad_resultstr("-info");
       } else {
         *searchable = 0;
       }
@@ -222,7 +222,7 @@ changer_info(
     if(rc) return rc;
 
     if (sscanf(rest, "%d %d", nslotsp, backwardsp) != 2) {
-	return report_bad_resultstr();
+	return report_bad_resultstr("-info");
     }
     return 0;
 }
@@ -499,7 +499,7 @@ changer_search(
     rc = run_changer_command("-search", searchlabel, outslotstr, &rest);
     if(rc) return rc;
 
-    if(*rest == '\0') return report_bad_resultstr();
+    if(*rest == '\0') return report_bad_resultstr("-search");
 
     *devicename = newstralloc(*devicename, rest);
     return 0;

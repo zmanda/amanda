@@ -106,7 +106,7 @@ int scan_read_label(
     }
     
     if ((*label == NULL) || (*timestamp == NULL)) {
-	error(_("Invalid return from tape_rdlabel"));
+	error(_("Could not get a valid tape label"));
     }
 
     *error_message = newvstrallocf(*error_message,
@@ -143,7 +143,7 @@ int scan_read_label(
                 return -1;
             } else if(tp != NULL && !reusable_tape(tp)) {
                 *error_message = newvstrallocf(*error_message,
-			_("%scannot overwrite active tape %s\n"),
+			_("%s. Tape with label %s is still active and cannot be overwriten\n"),
 			*error_message, *label);
                 return -1;
             }
@@ -410,7 +410,7 @@ find_brand_new_tape_label(void)
         if (tp == NULL) {
             /* Got it. Double-check that this is a labelstr match. */
             if (!match(getconf_str(CNF_LABELSTR), newlabel)) {
-                fprintf(stderr, _("New label %s does not match labelstr %s!\n"),
+                fprintf(stderr, _("New label %s does not match labelstr %s from amanda.conf\n"),
                         newlabel, getconf_str(CNF_LABELSTR));
                 return 0;
             }
