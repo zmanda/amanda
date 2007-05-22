@@ -30,15 +30,15 @@ static void usage(void);
 static void
 usage(void)
 {
-    fprintf(stderr, "usage: %s ", pgm);
-    fprintf(stderr, " [-d]");
-    fprintf(stderr, " [-l length]");
-    fprintf(stderr, " [if=input]");
-    fprintf(stderr, " [of=output]");
-    fprintf(stderr, " [bs=blocksize]");
-    fprintf(stderr, " [count=count]");
-    fprintf(stderr, " [skip=count]");
-    fprintf(stderr, "\n");
+    fprintf(stderr, _("usage: %s "), pgm);
+    fprintf(stderr, _(" [-d]"));
+    fprintf(stderr, _(" [-l length]"));
+    fprintf(stderr, _(" [if=input]"));
+    fprintf(stderr, _(" [of=output]"));
+    fprintf(stderr, _(" [bs=blocksize]"));
+    fprintf(stderr, _(" [count=count]"));
+    fprintf(stderr, _(" [skip=count]"));
+    fprintf(stderr, _("\n"));
     exit(1);
 }
 
@@ -66,6 +66,8 @@ main(
     off_t length = (off_t)0;
     int have_length = 0;
 
+    setlocale(LC_ALL, "C");
+
     if((pgm = strrchr(argv[0], '/')) != NULL) {
 	pgm++;
     } else {
@@ -75,7 +77,7 @@ main(
 	switch(ch) {
 	case 'd':
 	    debug_amdd = 1;
-	    fprintf(stderr, "debug mode!\n");
+	    fprintf(stderr, _("debug mode!\n"));
 	    break;
 
 #ifndef __lint
@@ -122,7 +124,7 @@ main(
 	    }
 	    read_func = tapefd_read;
             if(debug_amdd) {
-		fprintf(stderr, "input opened \"%s\", got fd %d\n",
+		fprintf(stderr, _("input opened \"%s\", got fd %d\n"),
 				eq + 1, infd);
 	    }
 	} else if(0 == strncmp("of", argv[optind], (size_t)len)) {
@@ -135,12 +137,12 @@ main(
 	    }
 	    write_func = tapefd_write;
             if(debug_amdd) {
-		fprintf(stderr, "output opened \"%s\", got fd %d\n",
+		fprintf(stderr, _("output opened \"%s\", got fd %d\n"),
 				eq + 1, outfd);
 	    }
 	    if(have_length) {
 		if(debug_amdd) {
-		    fprintf(stderr, "length set to " OFF_T_FMT "\n",
+		    fprintf(stderr, _("length set to " OFF_T_FMT "\n"),
 			(OFF_T_FMT_TYPE)length);
 		}
 		tapefd_setinfo_length(outfd, length);
@@ -156,24 +158,24 @@ main(
 		}
 	    }
 	    if(debug_amdd) {
-		fprintf(stderr, "blocksize set to " SIZE_T_FMT "\n",
+		fprintf(stderr, _("blocksize set to " SIZE_T_FMT "\n"),
 			(SIZE_T_FMT_TYPE)blocksize);
 	    }
 	} else if(0 == strncmp("count", argv[optind], (size_t)len)) {
 	    count = OFF_T_ATOI(eq + 1);
 	    have_count = 1;
 	    if(debug_amdd) {
-		fprintf(stderr, "count set to " OFF_T_FMT "\n",
+		fprintf(stderr, _("count set to " OFF_T_FMT "\n"),
 			(OFF_T_FMT_TYPE)count);
 	    }
 	} else if(0 == strncmp("skip", argv[optind], (size_t)len)) {
 	    skip = OFF_T_ATOI(eq + 1);
 	    if(debug_amdd) {
-		fprintf(stderr, "skip set to " OFF_T_FMT "\n",
+		fprintf(stderr, _("skip set to " OFF_T_FMT "\n"),
 			(OFF_T_FMT_TYPE)skip);
 	    }
 	} else {
-	    fprintf(stderr, "%s: bad argument: \"%s\"\n", pgm, argv[optind]);
+	    fprintf(stderr, _("%s: bad argument: \"%s\"\n"), pgm, argv[optind]);
 	    return 1;
 	}
     }
@@ -182,11 +184,11 @@ main(
 	save_errno = errno;
 	fprintf(stderr, "%s: ", pgm);
 	errno = save_errno;
-	perror("malloc error");
+	perror(_("malloc error"));
 	return 1;
     }
 
-    eq = "read error";
+    eq = _("read error");
     pread = fread = pwrite = fwrite = 0;
     while(0 < (len = (*read_func)(infd, buf, blocksize))) {
 	if((skip -= (off_t)1) > (off_t)0) {
@@ -199,7 +201,7 @@ main(
 	}
 	len = (*write_func)(outfd, buf, (size_t)len);
 	if(len < 0) {
-	    eq = "write error";
+	    eq = _("write error");
 	    break;
 	} else if((size_t)len == blocksize) {
 	    fwrite++;
@@ -220,13 +222,13 @@ main(
 	perror(eq);
 	res = 1;
     }
-    fprintf(stderr, "%d+%d in\n%d+%d out\n", fread, pread, fwrite, pwrite);
+    fprintf(stderr, _("%d+%d in\n%d+%d out\n"), fread, pread, fwrite, pwrite);
     if(read_func == tapefd_read) {
 	if(0 != tapefd_close(infd)) {
 	    save_errno = errno;
 	    fprintf(stderr, "%s: ", pgm);
 	    errno = save_errno;
-	    perror("input close");
+	    perror(_("input close"));
 	    res = 1;
 	}
     }
@@ -235,7 +237,7 @@ main(
 	    save_errno = errno;
 	    fprintf(stderr, "%s: ", pgm);
 	    errno = save_errno;
-	    perror("output close");
+	    perror(_("output close"));
 	    res = 1;
 	}
     }

@@ -205,6 +205,8 @@ main(
 
     safe_fd(DATA_FD_OFFSET, DATA_FD_COUNT*2);
 
+    setlocale(LC_ALL, "C");
+
     safe_cd();
 
     set_pname("sendbackup");
@@ -228,7 +230,7 @@ main(
     erroutput_type = (ERR_INTERACTIVE|ERR_SYSLOG);
     dbopen(DBG_SUBDIR_CLIENT);
     startclock();
-    dbprintf("Version %s\n", version());
+    dbprintf(_("Version %s\n"), version());
 
     if(argc > 2 && strcmp(argv[1], "amandad") == 0) {
 	amandad_auth = stralloc(argv[2]);
@@ -239,7 +241,7 @@ main(
 
     conffile = vstralloc(CONFIG_DIR, "/", "amanda-client.conf", NULL);
     if (read_clientconf(conffile) > 0) {
-	error("error reading conffile: %s", conffile);
+	error(_("error reading conffile: %s"), conffile);
 	/*NOTREACHED*/
     }
     amfree(conffile);
@@ -251,7 +253,7 @@ main(
 	 * programs on the tape host are set up.  The index service is
 	 * run and goes to stdout.
 	 */
-	fprintf(stderr, "%s: running in interactive test mode\n", get_pname());
+	fprintf(stderr, _("%s: running in interactive test mode\n"), get_pname());
 	fflush(stderr);
     }
 
@@ -282,7 +284,7 @@ main(
 		conffile = vstralloc(CONFIG_DIR, "/", g_options->config, "/",
 				     "amanda-client.conf", NULL);
 		if (read_clientconf(conffile) > 0) {
-		    error("error reading conffile: %s", conffile);
+		    error(_("error reading conffile: %s"), conffile);
 		    /*NOTREACHED*/
 		}
 		amfree(conffile);
@@ -293,17 +295,17 @@ main(
 	}
 
 	if (prog != NULL) {
-	    err_extra = "multiple requests";
+	    err_extra = _("multiple requests");
 	    goto err;
 	}
 
-	dbprintf("  sendbackup req: <%s>\n", line);
+	dbprintf(_("  sendbackup req: <%s>\n"), line);
 	s = line;
 	ch = *s++;
 
 	skip_whitespace(s, ch);			/* find the program name */
 	if(ch == '\0') {
-	    err_extra = "no program name";
+	    err_extra = _("no program name");
 	    goto err;				/* no program name */
 	}
 	prog = s - 1;
@@ -324,7 +326,7 @@ main(
 
 	skip_whitespace(s, ch);			/* find the disk name */
 	if(ch == '\0') {
-	    err_extra = "no disk name";
+	    err_extra = _("no disk name");
 	    goto err;				/* no disk name */
 	}
 
@@ -339,7 +341,7 @@ main(
 
 	skip_whitespace(s, ch);			/* find the device or level */
 	if (ch == '\0') {
-	    err_extra = "bad level";
+	    err_extra = _("bad level");
 	    goto err;
 	}
 
@@ -360,14 +362,14 @@ main(
 	}
 						/* find the level number */
 	if(ch == '\0' || sscanf(s - 1, "%d", &level) != 1) {
-	    err_extra = "bad level";
+	    err_extra = _("bad level");
 	    goto err;				/* bad level */
 	}
 	skip_integer(s, ch);
 
 	skip_whitespace(s, ch);			/* find the dump date */
 	if(ch == '\0') {
-	    err_extra = "no dumpdate";
+	    err_extra = _("no dumpdate");
 	    goto err;				/* no dumpdate */
 	}
 	amfree(dumpdate);
@@ -378,16 +380,16 @@ main(
 
 	skip_whitespace(s, ch);			/* find the options keyword */
 	if(ch == '\0') {
-	    err_extra = "no options";
+	    err_extra = _("no options");
 	    goto err;				/* no options */
 	}
 	if(strncmp_const_skip(s - 1, "OPTIONS ", s, ch) != 0) {
-	    err_extra = "no OPTIONS keyword";
+	    err_extra = _("no OPTIONS keyword");
 	    goto err;				/* no options */
 	}
 	skip_whitespace(s, ch);			/* find the options string */
 	if(ch == '\0') {
-	    err_extra = "bad options string";
+	    err_extra = _("bad options string");
 	    goto err;				/* no options */
 	}
 	amfree(stroptions);
@@ -400,16 +402,16 @@ main(
 	amdevice   == NULL ||
 	dumpdate   == NULL ||
 	stroptions == NULL) {
-	err_extra = "no valid sendbackup request";
+	err_extra = _("no valid sendbackup request");
 	goto err;
     }
 	
-    dbprintf("  Parsed request as: program `%s'\n", prog);
-    dbprintf("                     disk `%s'\n", qdisk);
-    dbprintf("                     device `%s'\n", qamdevice);
-    dbprintf("                     level %d\n", level);
-    dbprintf("                     since %s\n", dumpdate);
-    dbprintf("                     options `%s'\n", stroptions);
+    dbprintf(_("  Parsed request as: program `%s'\n"), prog);
+    dbprintf(_("                     disk `%s'\n"), qdisk);
+    dbprintf(_("                     device `%s'\n"), qamdevice);
+    dbprintf(_("                     level %d\n"), level);
+    dbprintf(_("                     since %s\n"), dumpdate);
+    dbprintf(_("                     options `%s'\n"), stroptions);
 
     if(program_is_backup_api==1) {
 	/* check that the backup_api exist */
@@ -421,14 +423,14 @@ main(
 	    }
 	}
 	if (programs[i] == NULL) {
-	    dbprintf("ERROR [%s: unknown program %s]\n", get_pname(), prog);
-	    error("ERROR [%s: unknown program %s]", get_pname(), prog);
+	    dbprintf(_("ERROR [%s: unknown program %s]\n"), get_pname(), prog);
+	    error(_("ERROR [%s: unknown program %s]"), get_pname(), prog);
 	    /*NOTREACHED*/
 	}
 	program = programs[i];
     }
     if (programs[i] == NULL) {
-	error("ERROR [unknown program %s]", prog);
+	error(_("ERROR [unknown program %s]"), prog);
 	/*NOTREACHED*/
     }
     program = programs[i];
@@ -445,16 +447,16 @@ main(
 
     if(options->auth && amandad_auth) {
 	if(strcasecmp(options->auth, amandad_auth) != 0) {
-	    printf("ERROR [client configured for auth=%s while server requested '%s']\n",
+	    printf(_("ERROR [client configured for auth=%s while server requested '%s']\n"),
 		   amandad_auth, options->auth);
 	    exit(-1);
 	}
     }
 
-    printf("CONNECT DATA %d MESG %d INDEX %d\n",
+    printf(_("CONNECT DATA %d MESG %d INDEX %d\n"),
 	   DATA_FD_OFFSET, DATA_FD_OFFSET+1,
 	   indexfd == -1 ? -1 : DATA_FD_OFFSET+2);
-    printf("OPTIONS ");
+    printf(_("OPTIONS "));
     if(am_has_feature(g_options->features, fe_rep_options_features)) {
 	printf("features=%s;", our_feature_string);
     }
@@ -467,14 +469,14 @@ main(
     printf("\n");
     fflush(stdout);
     if (freopen("/dev/null", "w", stdout) == NULL) {
-	dbprintf("error redirecting stdout to /dev/null: %s\n",
+	dbprintf(_("error redirecting stdout to /dev/null: %s\n"),
 	    strerror(errno));
         exit(1);
     }
 
     if(interactive) {
       if((datafd = open("/dev/null", O_RDWR)) < 0) {
-	error("ERROR [open of /dev/null for debug data stream: %s]\n",
+	error(_("ERROR [open of /dev/null for debug data stream: %s]\n"),
 		strerror(errno));
 	/*NOTREACHED*/
       }
@@ -499,7 +501,7 @@ main(
 	backup_support_option_t *bsu;
 
 	if (pipe(property_pipe) < 0) {
-	    error("Can't create pipe: %s",strerror(errno));
+	    error(_("Can't create pipe: %s"),strerror(errno));
 	    /*NOTREACHED*/
 	}
 	bsu = backup_support_option(prog, g_options, disk, amdevice);
@@ -508,20 +510,20 @@ main(
 	case 0:
 	    aclose(property_pipe[1]);
 	    if(dup2(property_pipe[0], 0) == -1) {
-		error("Can't dup2: %s",strerror(errno));
+		error(_("Can't dup2: %s"),strerror(errno));
 		/*NOTREACHED*/
 	    }
 	    if(dup2(datafd, 1) == -1) {
-		error("Can't dup2: %s",strerror(errno));
+		error(_("Can't dup2: %s"),strerror(errno));
 		/*NOTREACHED*/
 	    }
 	    if(dup2(mesgfd, 2) == -1) {
-		error("Can't dup2: %s",strerror(errno));
+		error(_("Can't dup2: %s"),strerror(errno));
 		/*NOTREACHED*/
 	    }
 	    if(indexfd != 0) {
 		if(dup2(indexfd, 3) == -1) {
-		    error("Can't dup2: %s",strerror(errno));
+		    error(_("Can't dup2: %s"),strerror(errno));
 		    /*NOTREACHED*/
 		}
 		fcntl(indexfd, F_SETFD, 0);
@@ -562,7 +564,7 @@ main(
 		argvchild[i++] = "--record";
 	    }
 	    argvchild[i] = NULL;
-	    dbprintf("%s: running \"%s", get_pname(), cmd);
+	    dbprintf(_("%s: running \"%s"), get_pname(), cmd);
 	    for(j=1;j<i;j++) dbprintf(" %s",argvchild[j]);
 	    dbprintf("\"\n");
 	    backup_api_info_tapeheader(mesgfd, prog, options);
@@ -574,7 +576,7 @@ main(
 	    aclose(property_pipe[0]);
 	    toolin = fdopen(property_pipe[1],"w");
 	    if (!toolin) {
-		error("Can't fdopen: %s", strerror(errno));
+		error(_("Can't fdopen: %s"), strerror(errno));
 		/*NOTREACHED*/
 	    }
 	    output_tool_property(toolin, options);
@@ -582,16 +584,16 @@ main(
 	    fclose(toolin);
 	    break;
 	case -1:
-	    error("%s: fork returned: %s", get_pname(), strerror(errno));
+	    error(_("%s: fork returned: %s"), get_pname(), strerror(errno));
 	}
 	amfree(bsu);
 	if (waitpid(backup_api_pid, &status, 0) < 0) {
 	    if (!WIFEXITED(status)) {
-		dbprintf("Tool exited with signal %d", WTERMSIG(status));
+		dbprintf(_("Tool exited with signal %d"), WTERMSIG(status));
 	    } else if (WEXITSTATUS(status) != 0) {
-		dbprintf("Tool exited with status %d", WEXITSTATUS(status));
+		dbprintf(_("Tool exited with status %d"), WEXITSTATUS(status));
 	    } else {
-		dbprintf("waitpid returned negative value");
+		dbprintf(_("waitpid returned negative value"));
 	    }
 	}
      }
@@ -599,7 +601,7 @@ main(
 	if(!interactive) {
 	    /* redirect stderr */
 	    if(dup2(mesgfd, 2) == -1) {
-		dbprintf("error redirecting stderr to fd %d: %s\n",
+		dbprintf(_("error redirecting stderr to fd %d: %s\n"),
 			  mesgfd, strerror(errno));
 		dbclose();
 		exit(1);
@@ -608,15 +610,15 @@ main(
  
 	if(pipe(mesgpipe) == -1) {
 	    s = strerror(errno);
-	    dbprintf("error [opening mesg pipe: %s]\n", s);
-	    error("error [opening mesg pipe: %s]", s);
+	    dbprintf(_("error [opening mesg pipe: %s]\n"), s);
+	    error(_("error [opening mesg pipe: %s]"), s);
 	}
 
 	program->start_backup(g_options->hostname, disk, amdevice, level,
 			      dumpdate, datafd, mesgpipe[1], indexfd);
-	dbprintf("Started backup\n");
+	dbprintf(_("Started backup\n"));
 	parse_backup_messages(mesgpipe[0]);
-	dbprintf("Parsed backup messages\n");
+	dbprintf(_("Parsed backup messages\n"));
     }
 
     amfree(prog);
@@ -646,8 +648,8 @@ main(
     return 0;
 
  err:
-    printf("FORMAT ERROR IN REQUEST PACKET\n");
-    dbprintf("REQ packet is bogus%s%s\n",
+    printf(_("FORMAT ERROR IN REQUEST PACKET\n"));
+    dbprintf(_("REQ packet is bogus%s%s\n"),
 	      err_extra ? ": " : "",
 	      err_extra ? err_extra : "");
     dbclose();
@@ -704,7 +706,7 @@ check_status(
 	 * but the failure is noted.
 	 */
 	if(ret != 0) {
-	    fprintf(stderr, "? index %s returned %d\n", str, ret);
+	    fprintf(stderr, _("? index %s returned %d\n"), str, ret);
 	    rc = 0;
 	}
 	indexpid = -1;
@@ -754,9 +756,10 @@ check_status(
     }
 
     if(ret == 0) {
-	thiserr = vstrallocf("%s (%d) %s got signal %d", strX, (int)pid, str, sig);
+	thiserr = vstrallocf(_("%s (%d) %s got signal %d"), strX, (int)pid, str,
+			     sig);
     } else {
-	thiserr = vstrallocf("%s (%d) %s returned %d", strX, (int)pid, str, ret);
+	thiserr = vstrallocf(_("%s (%d) %s returned %d"), strX, (int)pid, str, ret);
     }
 
     if(errorstr) {
@@ -807,19 +810,19 @@ backup_api_info_tapeheader(
 
     snprintf(line, 1024, "%s: info BACKUP=DUMPER\n", get_pname());
     if (fullwrite(mesgfd, line, strlen(line)) != (ssize_t)strlen(line)) {
-	dbprintf("error writing to mesgfd socket: %s", strerror(errno));
+	dbprintf(_("error writing to mesgfd socket: %s"), strerror(errno));
 	return;
     }
 
     snprintf(line, 1024, "%s: info DUMPER=%s\n", get_pname(), prog);
     if (fullwrite(mesgfd, line, strlen(line)) != (ssize_t)strlen(line)) {
-	dbprintf("error writing to mesgfd socket: %s", strerror(errno));
+	dbprintf(_("error writing to mesgfd socket: %s"), strerror(errno));
 	return;
     }
 
     snprintf(line, 1024, "%s: info RECOVER_CMD=", get_pname());
     if (fullwrite(mesgfd, line, strlen(line)) != (ssize_t)strlen(line)) {
-	dbprintf("error writing to mesgfd socket: %s", strerror(errno));
+	dbprintf(_("error writing to mesgfd socket: %s"), strerror(errno));
 	return;
     }
 
@@ -832,13 +835,13 @@ backup_api_info_tapeheader(
 #endif
 		 );
 	if (fullwrite(mesgfd, line, strlen(line)) != (ssize_t)strlen(line)) {
-	    dbprintf("error writing to mesgfd socket: %s", strerror(errno));
+	    dbprintf(_("error writing to mesgfd socket: %s"), strerror(errno));
 	    return;
 	}
     }
     snprintf(line, 1024, "%s -f... -\n", prog);
     if (fullwrite(mesgfd, line, strlen(line)) != (ssize_t)strlen(line)) {
-	dbprintf("error writing to mesgfd socket: %s", strerror(errno));
+	dbprintf(_("error writing to mesgfd socket: %s"), strerror(errno));
 	return;
     }
 
@@ -846,14 +849,14 @@ backup_api_info_tapeheader(
 	snprintf(line, 1024, "%s: info COMPRESS_SUFFIX=%s\n",
 		 get_pname(), COMPRESS_SUFFIX);
 	if (fullwrite(mesgfd, line, strlen(line)) != (ssize_t)strlen(line)) {
-	    dbprintf("error writing to mesgfd socket: %s", strerror(errno));
+	    dbprintf(_("error writing to mesgfd socket: %s"), strerror(errno));
 	    return;
 	}
     }
 
     snprintf(line, 1024, "%s: info end\n", get_pname());
     if (fullwrite(mesgfd, line, strlen(line)) != (ssize_t)strlen(line)) {
-	dbprintf("error writing to mesgfd socket: %s", strerror(errno));
+	dbprintf(_("error writing to mesgfd socket: %s"), strerror(errno));
 	return;
     }
 }
@@ -869,16 +872,16 @@ pipefork(
     int inpipe[2];
     pid_t pid;
 
-    dbprintf("Forking function %s in pipeline\n", fname);
+    dbprintf(_("Forking function %s in pipeline\n"), fname);
 
     if(pipe(inpipe) == -1) {
-	error("error [open pipe to %s: %s]", fname, strerror(errno));
+	error(_("error [open pipe to %s: %s]"), fname, strerror(errno));
 	/*NOTREACHED*/
     }
 
     switch(pid = fork()) {
     case -1:
-	error("error [fork %s: %s]", fname, strerror(errno));
+	error(_("error [fork %s: %s]"), fname, strerror(errno));
 	/*NOTREACHED*/
     default:	/* parent process */
 	aclose(inpipe[0]);	/* close input side of pipe */
@@ -888,17 +891,17 @@ pipefork(
 	aclose(inpipe[1]);	/* close output side of pipe */
 
 	if(dup2(inpipe[0], 0) == -1) {
-	    error("error [fork %s: dup2(%d, in): %s]",
+	    error(_("error [fork %s: dup2(%d, in): %s]"),
 		  fname, inpipe[0], strerror(errno));
 	    /*NOTRACHED*/
 	}
 	if(dup2(stdoutfd, 1) == -1) {
-	    error("error [fork %s: dup2(%d, out): %s]",
+	    error(_("error [fork %s: dup2(%d, out): %s]"),
 		  fname, stdoutfd, strerror(errno));
 	    /*NOTRACHED*/
 	}
 	if(dup2(stderrfd, 2) == -1) {
-	    error("error [fork %s: dup2(%d, err): %s]",
+	    error(_("error [fork %s: dup2(%d, err): %s]"),
 		  fname, stderrfd, strerror(errno));
 	    /*NOTRACHED*/
 	}
@@ -927,7 +930,7 @@ parse_backup_messages(
     }
 
     if(errno) {
-	error("error [read mesg pipe: %s]", strerror(errno));
+	error(_("error [read mesg pipe: %s]"), strerror(errno));
 	/*NOTREACHED*/
     }
 
@@ -942,11 +945,11 @@ parse_backup_messages(
 	}
     }
     if (dumppid != -1) {
-	dbprintf("Sending SIGHUP to dump process %d\n",
+	dbprintf(_("Sending SIGHUP to dump process %d\n"),
 		  (int)dumppid);
 	if(dumppid != -1) {
 	    if(kill(dumppid, SIGHUP) == -1) {
-		dbprintf("Can't send SIGHUP to %d: %s\n",
+		dbprintf(_("Can't send SIGHUP to %d: %s\n"),
 			  (int)dumppid,
 			  strerror(errno));
 	    }
@@ -957,11 +960,11 @@ parse_backup_messages(
 	}
     }
     if (dumppid != -1) {
-	dbprintf("Sending SIGKILL to dump process %d\n",
+	dbprintf(_("Sending SIGKILL to dump process %d\n"),
 		  (int)dumppid);
 	if(dumppid != -1) {
 	    if(kill(dumppid, SIGKILL) == -1) {
-		dbprintf("Can't send SIGKILL to %d: %s\n",
+		dbprintf(_("Can't send SIGKILL to %d: %s\n"),
 			  (int)dumppid,
 			  strerror(errno));
 	    }
@@ -973,17 +976,17 @@ parse_backup_messages(
     }
 
     if(errorstr) {
-	error("error [%s]", errorstr);
+	error(_("error [%s]"), errorstr);
 	/*NOTREACHED*/
     } else if(dump_size == -1) {
-	error("error [no backup size line]");
+	error(_("error [no backup size line]"));
 	/*NOTREACHED*/
     }
 
     program->end_backup(goterror);
 
-    fprintf(stderr, "%s: size %ld\n", get_pname(), dump_size);
-    fprintf(stderr, "%s: end\n", get_pname());
+    fprintf(stderr, _("%s: size %ld\n"), get_pname(), dump_size);
+    fprintf(stderr, _("%s: end\n"), get_pname());
 }
 
 
@@ -1096,11 +1099,11 @@ save_fd(
   while (*fd >= 0 && *fd < min) {
     int newfd = dup(*fd);
     if (newfd == -1)
-      dbprintf("Unable to save file descriptor [%s]\n", strerror(errno));
+      dbprintf(_("Unable to save file descriptor [%s]\n"), strerror(errno));
     *fd = newfd;
   }
   if (origfd != *fd)
-    dbprintf("Dupped file descriptor %i to %i\n", origfd, *fd);
+    dbprintf(_("Dupped file descriptor %i to %i\n"), origfd, *fd);
 }
 
 void
@@ -1119,19 +1122,19 @@ start_index(
     return;
 
   if (pipe(pipefd) != 0) {
-    error("creating index pipe: %s", strerror(errno));
+    error(_("creating index pipe: %s"), strerror(errno));
     /*NOTREACHED*/
   }
 
   switch(indexpid = fork()) {
   case -1:
-    error("forking index tee process: %s", strerror(errno));
+    error(_("forking index tee process: %s"), strerror(errno));
     /*NOTREACHED*/
 
   default:
     aclose(pipefd[0]);
     if (dup2(pipefd[1], input) == -1) {
-      error("dup'ping index tee output: %s", strerror(errno));
+      error(_("dup'ping index tee output: %s"), strerror(errno));
       /*NOTREACHED*/
     }
     aclose(pipefd[1]);
@@ -1157,11 +1160,11 @@ start_index(
   }
 
   if ((pipe_fp = popen(cmd, "w")) == NULL) {
-    error("couldn't start index creator [%s]", strerror(errno));
+    error(_("couldn't start index creator [%s]"), strerror(errno));
     /*NOTREACHED*/
   }
 
-  dbprintf("Started index creator: \"%s\"\n", cmd);
+  dbprintf(_("Started index creator: \"%s\"\n"), cmd);
   while(1) {
     char buffer[BUFSIZ], *ptr;
     ssize_t bytes_read;
@@ -1173,7 +1176,7 @@ start_index(
     } while ((bytes_read < 0) && ((errno == EINTR) || (errno == EAGAIN)));
 
     if (bytes_read < 0) {
-      error("index tee cannot read [%s]", strerror(errno));
+      error(_("index tee cannot read [%s]"), strerror(errno));
       /*NOTREACHED*/
     }
 
@@ -1189,7 +1192,7 @@ start_index(
 	 * just as we waited for write() to complete.
 	 */
 	if (errno != EPIPE) {
-	    dbprintf("Index tee cannot write to index creator [%s]\n",
+	    dbprintf(_("Index tee cannot write to index creator [%s]\n"),
 			    strerror(errno));
 	}
     } else {
@@ -1203,7 +1206,7 @@ start_index(
     bytes_written = 0;
     just_written = fullwrite(3, ptr, (size_t)bytes_read);
     if (just_written < 0) {
-	error("index tee cannot write [%s]", strerror(errno));
+	error(_("index tee cannot write [%s]"), strerror(errno));
 	/*NOTREACHED*/
     } else {
 	bytes_written += just_written;
@@ -1216,9 +1219,9 @@ start_index(
   /* finished */
   /* check the exit code of the pipe and moan if not 0 */
   if ((exitcode = pclose(pipe_fp)) != 0) {
-    dbprintf("Index pipe returned %d\n", exitcode);
+    dbprintf(_("Index pipe returned %d\n"), exitcode);
   } else {
-    dbprintf("Index created successfully\n");
+    dbprintf(_("Index created successfully\n"));
   }
   pipe_fp = NULL;
 

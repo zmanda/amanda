@@ -54,6 +54,8 @@ main(
     safe_fd(-1, 0);
     safe_cd();
 
+    setlocale(LC_ALL, "C");
+
     set_pname("runtar");
 
     /* Don't die when child closes pipe */
@@ -61,21 +63,21 @@ main(
 
     dbopen(DBG_SUBDIR_CLIENT);
     if (argc < 3) {
-	error("Need at least 3 arguments\n");
+	error(_("Need at least 3 arguments\n"));
 	/*NOTREACHED*/
     }
 
-    dbprintf("version %s\n", version());
+    dbprintf(_("version %s\n"), version());
 
     if (strcmp(argv[3], "--create") != 0) {
-	error("Can only be used to create tar archives\n");
+	error(_("Can only be used to create tar archives\n"));
 	/*NOTREACHED*/
     }
 
 #ifndef GNUTAR
 
-    fprintf(stderr,"gnutar not available on this system.\n");
-    dbprintf("%s: gnutar not available on this system.\n", argv[0]);
+    fprintf(stderr,_("gnutar not available on this system.\n"));
+    dbprintf(_("%s: gnutar not available on this system.\n"), argv[0]);
     dbclose();
     return 1;
 
@@ -90,32 +92,32 @@ main(
 
 	if ((version_file = popen(GNUTAR " --version 2>&1", "r")) != NULL) {
 	    if (fgets(version_buf, (int)sizeof(version_buf), version_file) != NULL) {
-		dbprintf(GNUTAR " version: %s\n", version_buf);
+		dbprintf(_(GNUTAR " version: %s\n"), version_buf);
 	    } else {
 		if (ferror(version_file)) {
-		    dbprintf(GNUTAR " version: Read failure: %s\n", strerror(errno));
+		    dbprintf(_(GNUTAR " version: Read failure: %s\n"), strerror(errno));
 		} else {
-		    dbprintf(GNUTAR " version: Read failure; EOF\n");
+		    dbprintf(_(GNUTAR " version: Read failure; EOF\n"));
 		}
 	    }
 	} else {
-	    dbprintf(GNUTAR " version: unavailable: %s\n", strerror(errno));
+	    dbprintf(_(GNUTAR " version: unavailable: %s\n"), strerror(errno));
 	}
     } while(0);
 
     if(client_uid == (uid_t) -1) {
-	error("error [cannot find user %s in passwd file]\n", CLIENT_LOGIN);
+	error(_("error [cannot find user %s in passwd file]\n"), CLIENT_LOGIN);
 	/*NOTREACHED*/
     }
 
 #ifdef FORCE_USERID
     if (getuid() != client_uid) {
-	error("error [must be invoked by %s]\n", CLIENT_LOGIN);
+	error(_("error [must be invoked by %s]\n"), CLIENT_LOGIN);
 	/*NOTREACHED*/
     }
 
     if (geteuid() != 0) {
-	error("error [must be setuid root]\n");
+	error(_("error [must be setuid root]\n"));
 	/*NOTREACHED*/
     }
 #endif
@@ -128,7 +130,7 @@ main(
     argc--;
     argv++;
 
-    dbprintf("config: %s\n", argv[0]);
+    dbprintf(_("config: %s\n"), argv[0]);
     if (strcmp(argv[0], "NOCONFIG") != 0)
 	dbrename(argv[0], DBG_SUBDIR_CLIENT);
     argc--;
@@ -142,7 +144,7 @@ main(
 	cmdline = vstrextend(&cmdline, " ", quoted, NULL);
 	amfree(quoted);
     }
-    dbprintf("running: %s\n", cmdline);
+    dbprintf(_("running: %s\n"), cmdline);
     amfree(cmdline);
 
     dbf = dbfn();
@@ -156,10 +158,10 @@ main(
     e = strerror(errno);
     dbreopen(dbf, "more");
     amfree(dbf);
-    dbprintf("execve of %s failed (%s)\n", GNUTAR, e);
+    dbprintf(_("execve of %s failed (%s)\n"), GNUTAR, e);
     dbclose();
 
-    fprintf(stderr, "runtar: could not exec %s: %s\n", GNUTAR, e);
+    fprintf(stderr, _("runtar: could not exec %s: %s\n"), GNUTAR, e);
     return 1;
 #endif
 }

@@ -99,6 +99,8 @@ main(
     safe_fd(-1, 0);
     safe_cd();
 
+    setlocale(LC_ALL, "C");
+
     set_pname("amflush");
 
     dbopen(DBG_SUBDIR_SERVER);
@@ -128,7 +130,7 @@ main(
 	case 'D': if (datearg == NULL)
 		      datearg = alloc(21*SIZEOF(char *));
 		  if(nb_datearg == 20) {
-		      fprintf(stderr,"maximum of 20 -D arguments.\n");
+		      fprintf(stderr,_("maximum of 20 -D arguments.\n"));
 		      exit(1);
 		  }
 		  datearg[nb_datearg++] = stralloc(optarg);
@@ -137,14 +139,14 @@ main(
 	}
     }
     if(!foreground && !redirect) {
-	fprintf(stderr,"Can't redirect to stdout/stderr if not in forground.\n");
+	fprintf(stderr,_("Can't redirect to stdout/stderr if not in forground.\n"));
 	exit(1);
     }
 
     my_argc -= optind, my_argv += optind;
 
     if(my_argc < 1) {
-	error("Usage: amflush%s [-b] [-f] [-s] [-D date]* <confdir> [host [disk]* ]* [-o configoption]*", versionsuffix());
+	error(_("Usage: amflush%s [-b] [-f] [-s] [-D date]* <confdir> [host [disk]* ]* [-o configoption]*"), versionsuffix());
 	/*NOTREACHED*/
     }
 
@@ -153,7 +155,7 @@ main(
 
     conffile = stralloc2(config_dir, CONFFILE_NAME);
     if(read_conffile(conffile)) {
-	error("errors processing config file \"%s\"", conffile);
+	error(_("errors processing config file \"%s\""), conffile);
 	/*NOTREACHED*/
     }
     amfree(conffile);
@@ -169,12 +171,12 @@ main(
 	conf_diskfile = stralloc2(config_dir, conf_diskfile);
     }
     if (read_diskfile(conf_diskfile, &diskq) < 0) {
-	error("could not read disklist file \"%s\"", conf_diskfile);
+	error(_("could not read disklist file \"%s\""), conf_diskfile);
 	/*NOTREACHED*/
     }
     errstr = match_disklist(&diskq, my_argc-1, my_argv+1);
     if (errstr) {
-	printf("%s",errstr);
+	printf(_("%s"),errstr);
 	amfree(errstr);
     }
     amfree(conf_diskfile);
@@ -186,7 +188,7 @@ main(
 	conf_tapelist = stralloc2(config_dir, conf_tapelist);
     }
     if(read_tapelist(conf_tapelist)) {
-	error("could not load tapelist \"%s\"", conf_tapelist);
+	error(_("could not load tapelist \"%s\""), conf_tapelist);
 	/*NOTREACHED*/
     }
     amfree(conf_tapelist);
@@ -203,11 +205,11 @@ main(
 
     dumpuser = getconf_str(CNF_DUMPUSER);
     if((pw = getpwnam(dumpuser)) == NULL) {
-	error("dumpuser %s not found in password file", dumpuser);
+	error(_("dumpuser %s not found in password file"), dumpuser);
 	/*NOTREACHED*/
     }
     if(pw->pw_uid != getuid()) {
-	error("must run amflush as user %s", dumpuser);
+	error(_("must run amflush as user %s"), dumpuser);
 	/*NOTREACHED*/
     }
 
@@ -219,7 +221,7 @@ main(
     }
     conf_logfile = vstralloc(conf_logdir, "/log", NULL);
     if (access(conf_logfile, F_OK) == 0) {
-	error("%s exists: amdump or amflush is already running, or you must run amcleanup", conf_logfile);
+	error(_("%s exists: amdump or amflush is already running, or you must run amcleanup"), conf_logfile);
 	/*NOTREACHED*/
     }
     amfree(conf_logfile);
@@ -234,7 +236,7 @@ main(
     tapedev = getconf_str(CNF_TAPEDEV);
     tpchanger = getconf_str(CNF_TPCHANGER);
     if (tapedev == NULL && tpchanger == NULL) {
-	error("No tapedev or tpchanger specified");
+	error(_("No tapedev or tpchanger specified"));
     }
 
     if(datearg) {
@@ -264,13 +266,13 @@ main(
     }
 
     if(is_empty_sl(datestamp_list)) {
-	printf("Could not find any Amanda directories to flush.\n");
+	printf(_("Could not find any Amanda directories to flush.\n"));
 	exit(1);
     }
 
     holding_list = holding_get_files_for_flush(datestamp_list, 1);
     if(holding_list->first == NULL) {
-	printf("Could not find any valid dump image, check directory.\n");
+	printf(_("Could not find any valid dump image, check directory.\n"));
 	exit(1);
     }
 
@@ -286,8 +288,8 @@ main(
     }
 
     if(!foreground) { /* write it before redirecting stdout */
-	puts("Running in background, you can log off now.");
-	puts("You'll get mail when amflush is finished.");
+	puts(_("Running in background, you can log off now."));
+	puts(_("You'll get mail when amflush is finished."));
     }
 
     if(redirect) redirect_stderr();
@@ -301,15 +303,15 @@ main(
     if (tm)
 	strftime(date_string, 100, "%a %b %e %H:%M:%S %Z %Y", tm);
     else
-	error("BAD DATE"); /* should never happen */
-    fprintf(stderr, "amflush: start at %s\n", date_string);
-    fprintf(stderr, "amflush: datestamp %s\n", amflush_timestamp);
-    fprintf(stderr, "amflush: starttime %s\n", construct_timestamp(NULL));
-    log_add(L_START, "date %s", amflush_timestamp);
+	error(_("BAD DATE")); /* should never happen */
+    fprintf(stderr, _("amflush: start at %s\n"), date_string);
+    fprintf(stderr, _("amflush: datestamp %s\n"), amflush_timestamp);
+    fprintf(stderr, _("amflush: starttime %s\n"), construct_timestamp(NULL));
+    log_add(L_START, _("date %s"), amflush_timestamp);
 
     /* START DRIVER */
     if(pipe(driver_pipe) == -1) {
-	error("error [opening pipe to driver: %s]", strerror(errno));
+	error(_("error [opening pipe to driver: %s]"), strerror(errno));
 	/*NOTREACHED*/
     }
     if((driver_pid = fork()) == 0) {
@@ -321,15 +323,15 @@ main(
 	execle(driver_program,
 	       "driver", config_name, "nodump", (char *)0,
 	       safe_env());
-	error("cannot exec %s: %s", driver_program, strerror(errno));
+	error(_("cannot exec %s: %s"), driver_program, strerror(errno));
 	/*NOTREACHED*/
     } else if(driver_pid == -1) {
-	error("cannot fork for %s: %s", driver_program, strerror(errno));
+	error(_("cannot fork for %s: %s"), driver_program, strerror(errno));
 	/*NOTREACHED*/
     }
     driver_stream = fdopen(driver_pipe[1], "w");
     if (!driver_stream) {
-	error("Can't fdopen: %s", strerror(errno));
+	error(_("Can't fdopen: %s"), strerror(errno));
 	/*NOTREACHED*/
     }
 
@@ -381,7 +383,7 @@ main(
 	    if(errno == EINTR) {
 		continue;
 	    } else {
-		error("wait for %s: %s", driver_program, strerror(errno));
+		error(_("wait for %s: %s"), driver_program, strerror(errno));
 		/*NOTREACHED*/
 	    }
 	} else if (pid == driver_pid) {
@@ -427,14 +429,14 @@ main(
 	    snprintf(number,100,"%d",days);
 	    errfilex = vstralloc(errfile, ".", number, NULL);
 	    if (rename(errfilex, nerrfilex) != 0) {
-		error("cannot rename \"%s\" to \"%s\": %s",
+		error(_("cannot rename \"%s\" to \"%s\": %s"),
 		      errfilex, nerrfilex, strerror(errno));
 	        /*NOTREACHED*/
 	    }
 	}
 	errfilex = newvstralloc(errfilex, errfile, ".1", NULL);
 	if (rename(errfile,errfilex) != 0) {
-	    error("cannot rename \"%s\" to \"%s\": %s",
+	    error(_("cannot rename \"%s\" to \"%s\": %s"),
 		  errfilex, nerrfilex, strerror(errno));
 	    /*NOTREACHED*/
 	}
@@ -456,10 +458,10 @@ main(
 	execle(reporter_program,
 	       "amreport", config_name, (char *)0,
 	       safe_env());
-	error("cannot exec %s: %s", reporter_program, strerror(errno));
+	error(_("cannot exec %s: %s"), reporter_program, strerror(errno));
 	/*NOTREACHED*/
     } else if(reporter_pid == -1) {
-	error("cannot fork for %s: %s", reporter_program, strerror(errno));
+	error(_("cannot fork for %s: %s"), reporter_program, strerror(errno));
 	/*NOTREACHED*/
     }
     while(1) {
@@ -467,7 +469,7 @@ main(
 	    if(errno == EINTR) {
 		continue;
 	    } else {
-		error("wait for %s: %s", reporter_program, strerror(errno));
+		error(_("wait for %s: %s"), reporter_program, strerror(errno));
 		/*NOTREACHED*/
 	    }
 	} else if (pid == reporter_pid) {
@@ -482,7 +484,7 @@ main(
     execle(logroll_program,
 	   "amlogroll", config_name, (char *)0,
 	   safe_env());
-    error("cannot exec %s: %s", logroll_program, strerror(errno));
+    error(_("cannot exec %s: %s"), logroll_program, strerror(errno));
     /*NOTREACHED*/
     return 0;				/* keep the compiler happy */
 }
@@ -526,8 +528,8 @@ confirm(void)
     int ch;
     char *extra;
 
-    printf("\nToday is: %s\n",amflush_datestamp);
-    printf("Flushing dumps in");
+    printf(_("\nToday is: %s\n"),amflush_datestamp);
+    printf(_("Flushing dumps in"));
     extra = "";
     for(dir = datestamp_list->first; dir != NULL; dir = dir->next) {
 	printf("%s %s", extra, dir->name);
@@ -535,20 +537,20 @@ confirm(void)
     }
     tpchanger = getconf_str(CNF_TPCHANGER);
     if(*tpchanger != '\0') {
-	printf(" using tape changer \"%s\".\n", tpchanger);
+	printf(_(" using tape changer \"%s\".\n"), tpchanger);
     } else {
-	printf(" to tape drive \"%s\".\n", getconf_str(CNF_TAPEDEV));
+	printf(_(" to tape drive \"%s\".\n"), getconf_str(CNF_TAPEDEV));
     }
 
-    printf("Expecting ");
+    printf(_("Expecting "));
     tp = lookup_last_reusable_tape(0);
-    if(tp != NULL) printf("tape %s or ", tp->label);
-    printf("a new tape.");
+    if(tp != NULL) printf(_("tape %s or "), tp->label);
+    printf(_("a new tape."));
     tp = lookup_tapepos(1);
-    if(tp != NULL) printf("  (The last dumps were to tape %s)", tp->label);
+    if(tp != NULL) printf(_("  (The last dumps were to tape %s)"), tp->label);
 
     while (1) {
-	printf("\nAre you sure you want to do this [yN]? ");
+	printf(_("\nAre you sure you want to do this [yN]? "));
 	if((ch = get_letter_from_user()) == 'Y') {
 	    return;
 	} else if (ch == 'N' || ch == '\0' || ch == EOF) {
@@ -559,7 +561,7 @@ confirm(void)
 	}
     }
 
-    printf("Ok, quitting.  Run amflush again when you are ready.\n");
+    printf(_("Ok, quitting.  Run amflush again when you are ready.\n"));
     exit(1);
 }
 
@@ -572,7 +574,7 @@ redirect_stderr(void)
     fflush(stdout); fflush(stderr);
     errfile = vstralloc(conf_logdir, "/amflush", NULL);
     if((fderr = open(errfile, O_WRONLY| O_CREAT | O_TRUNC, 0600)) == -1) {
-	error("could not open %s: %s", errfile, strerror(errno));
+	error(_("could not open %s: %s"), errfile, strerror(errno));
 	/*NOTREACHED*/
     }
     dup2(fderr,1);
@@ -588,7 +590,7 @@ detach(void)
 
     fflush(stdout); fflush(stderr);
     if((fd = open("/dev/null", O_RDWR, 0666)) == -1) {
-	error("could not open /dev/null: %s", strerror(errno));
+	error(_("could not open /dev/null: %s"), strerror(errno));
 	/*NOTREACHED*/
     }
 
@@ -597,7 +599,7 @@ detach(void)
 
     switch(fork()) {
     case -1:
-    	error("could not fork: %s", strerror(errno));
+    	error(_("could not fork: %s"), strerror(errno));
 	/*NOTREACHED*/
 
     case 0:

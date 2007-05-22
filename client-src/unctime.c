@@ -78,7 +78,7 @@ unctime(
 }
 
 static char months[] =
-	"JanFebMarAprMayJunJulAugSepOctNovDec";
+	_("JanFebMarAprMayJunJulAugSepOctNovDec");
 
 static int
 lookup(

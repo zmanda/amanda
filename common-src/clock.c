@@ -64,7 +64,7 @@ stopclock(void)
     amanda_timezone dontcare;
 
     if(!clock_running) {
-	fprintf(stderr,"stopclock botch\n");
+	fprintf(stderr,_("stopclock botch\n"));
 	exit(1);
     }
     amanda_gettimeofday(&end_time, &dontcare);
@@ -81,7 +81,7 @@ curclock(void)
     amanda_timezone dontcare;
 
     if(!clock_running) {
-	fprintf(stderr,"curclock botch\n");
+	fprintf(stderr,_("curclock botch\n"));
 	exit(1);
     }
     amanda_gettimeofday(&end_time, &dontcare);

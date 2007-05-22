@@ -157,7 +157,7 @@ int rc;
 
     rc = ioctl(fd, SIOC_ELEMENT_STATUS, &es);
     if (rc) {
-	fprintf(stderr, "%s: element status query failed: 0x%x %s\n",
+	fprintf(stderr, _("%s: element status query failed: 0x%x %s\n"),
 				get_pname(), rc, strerror(errno));
 	return(-1);
     }
@@ -183,7 +183,7 @@ int i, rc;
 		&& !rc && es.full);
 
     if (rc) {
-	fprintf(stderr,"%s: element status query failed: 0x%x %s\n",
+	fprintf(stderr,_("%s: element status query failed: 0x%x %s\n"),
 				get_pname(), rc, strerror(errno));
 	return -1;
     }
@@ -204,7 +204,7 @@ int                            i,rc;
 
     rc = ioctl(fd, SIOC_ELEMENT_STATUS, &es);
     if (rc) {
-	fprintf(stderr,"%s: drive status quer failed: 0x%x %s\n",
+	fprintf(stderr,_("%s: drive status quer failed: 0x%x %s\n"),
 				get_pname(), rc, strerror(errno));
 	return(-1);
     }
@@ -234,7 +234,7 @@ int rc;
 
     rc = ioctl(fd, SIOC_MOVE_MEDIUM, &move);
     if (rc){
-	fprintf(stderr,"%s: move medium command failed: 0x%x %s\n",
+	fprintf(stderr,_("%s: move medium command failed: 0x%x %s\n"),
 		get_pname(), rc, strerror(errno));
 	return(-2);
     }
@@ -264,7 +264,7 @@ int rc;
 
     rc = ioctl(fd, SIOC_MOVE_MEDIUM,&move);
     if (rc){
-	fprintf(stderr,"%s: drive load failed (MOVE): 0x%x %s\n",
+	fprintf(stderr,_("%s: drive load failed (MOVE): 0x%x %s\n"),
 		get_pname(), rc, strerror(errno));
 	return(-2);
     }
@@ -277,7 +277,7 @@ int rc;
 
     rc = get_changer_info(fd);
     if (rc) {
-        fprintf(stderr, "%s: storage size query failed: 0x%x %s\n", get_pname(),
+        fprintf(stderr, _("%s: storage size query failed: 0x%x %s\n"), get_pname(),
 						rc, strerror(errno));
         return -1;
     }
@@ -292,7 +292,7 @@ int get_drive_count(int fd)
 
     rc = get_changer_info(fd);
     if (rc) {
-        fprintf(stderr, "%s: drive count query failed: 0x%x %s\n", get_pname(),
+        fprintf(stderr, _("%s: drive count query failed: 0x%x %s\n"), get_pname(),
 						rc, strerror(errno));
         return -1;
     }
@@ -326,7 +326,7 @@ int OpenDevice(char * tapedev)
   int DeviceFD;
 
   DeviceFD = open(tapedev, O_RDWR);
-  dbprintf("OpenDevice(%s) returns %d\n", tapedev, DeviceFD);
+  dbprintf(_("OpenDevice(%s) returns %d\n"), tapedev, DeviceFD);
   return(DeviceFD);
 }
 
@@ -335,7 +335,7 @@ int CloseDevice(char *device, int DeviceFD)
   int ret;
 
   ret = close(DeviceFD);
-  dbprintf("CloseDevice(%s) returns %d\n", device, ret);
+  dbprintf(_("CloseDevice(%s) returns %d\n"), device, ret);
   return(ret);
 }
 

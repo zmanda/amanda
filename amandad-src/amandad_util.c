@@ -65,41 +65,41 @@ parse_g_options(
     while (tok != NULL) {
 	if(strncmp(tok,"features=", 9) == 0) {
 	    if(g_options->features != NULL) {
-		dbprintf("multiple features option\n");
+		dbprintf(_("multiple features option\n"));
 		if(verbose) {
-		    printf("ERROR [multiple features option]\n");
+		    printf(_("ERROR [multiple features option]\n"));
 		}
 	    }
 	    if((g_options->features = am_string_to_feature(tok+9)) == NULL) {
-		dbprintf("bad features value \"%s\"\n", tok+10);
+		dbprintf(_("bad features value \"%s\"\n"), tok+10);
 		if(verbose) {
-		    printf("ERROR [bad features value \"%s\"]\n", tok+10);
+		    printf(_("ERROR [bad features value \"%s\"]\n"), tok+10);
 		}
 	    }
 	}
 	else if(strncmp(tok,"hostname=", 9) == 0) {
 	    if(g_options->hostname != NULL) {
-		dbprintf("multiple hostname option\n");
+		dbprintf(_("multiple hostname option\n"));
 		if(verbose) {
-		    printf("ERROR [multiple hostname option]\n");
+		    printf(_("ERROR [multiple hostname option]\n"));
 		}
 	    }
 	    g_options->hostname = stralloc(tok+9);
 	}
 	else if(strncmp(tok,"auth=", 5) == 0) {
 	    if(g_options->auth != NULL) {
-		dbprintf("multiple auth option\n");
+		dbprintf(_("multiple auth option\n"));
 		if(verbose) {
-		    printf("ERROR [multiple auth option]\n");
+		    printf(_("ERROR [multiple auth option]\n"));
 		}
 	    }
 	    g_options->auth = stralloc(tok+5);
 	}
 	else if(strncmp(tok,"maxdumps=", 9) == 0) {
 	    if(g_options->maxdumps != 0) {
-		dbprintf("multiple maxdumps option\n");
+		dbprintf(_("multiple maxdumps option\n"));
 		if(verbose) {
-		    printf("ERROR [multiple maxdumps option]\n");
+		    printf(_("ERROR [multiple maxdumps option]\n"));
 		}
 	    }
 	    if(sscanf(tok+9, "%d;", &new_maxdumps) == 1) {
@@ -110,41 +110,41 @@ parse_g_options(
 		    g_options->maxdumps = new_maxdumps;
 		}
 		else {
-		    dbprintf("bad maxdumps value \"%s\"\n", tok+9);
+		    dbprintf(_("bad maxdumps value \"%s\"\n"), tok+9);
 		    if(verbose) {
-			printf("ERROR [bad maxdumps value \"%s\"]\n",
+			printf(_("ERROR [bad maxdumps value \"%s\"]\n"),
 			       tok+9);
 		    }
 		}
 	    }
 	    else {
-		dbprintf("bad maxdumps value \"%s\"\n", tok+9);
+		dbprintf(_("bad maxdumps value \"%s\"\n"), tok+9);
 		if(verbose) {
-		    printf("ERROR [bad maxdumps value \"%s\"]\n",
+		    printf(_("ERROR [bad maxdumps value \"%s\"]\n"),
 			   tok+9);
 		}
 	    }
 	}
 	else if(strncmp(tok,"config=", 7) == 0) {
 	    if(g_options->config != NULL) {
-		dbprintf("multiple config option\n");
+		dbprintf(_("multiple config option\n"));
 		if(verbose) {
-		    printf("ERROR [multiple config option]\n");
+		    printf(_("ERROR [multiple config option]\n"));
 		}
 	    }
 	    g_options->config = stralloc(tok+7);
 	    if (strchr(g_options->config, '/')) {
 		amfree(g_options->config);
-		dbprintf("invalid character in config option\n");
+		dbprintf(_("invalid character in config option\n"));
 		if(verbose) {
-		    printf("ERROR [invalid character in config option]\n");
+		    printf(_("ERROR [invalid character in config option]\n"));
 		}
 	    }
 	}
 	else {
-	    dbprintf("unknown option \"%s\"\n", tok);
+	    dbprintf(_("unknown option \"%s\"\n"), tok);
 	    if(verbose) {
-		printf("ERROR [unknown option \"%s\"]\n", tok);
+		printf(_("ERROR [unknown option \"%s\"]\n"), tok);
 	    }
 	}
 	tok = strtok(NULL, ";");

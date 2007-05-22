@@ -113,7 +113,7 @@ make_socket(
     s = socket(family, SOCK_STREAM, 0);
     if (s == -1) {
         save_errno = errno;
-        dbprintf("make_socket: socket() failed: %s\n", strerror(save_errno));
+        dbprintf(_("make_socket: socket() failed: %s\n"), strerror(save_errno));
         errno = save_errno;
         return -1;
     }
@@ -127,7 +127,7 @@ make_socket(
     r = setsockopt(s, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
     if (r < 0) {
 	save_errno = errno;
-	dbprintf("make_socket: setsockopt(SO_REUSEADDR) failed: %s\n",
+	dbprintf(_("make_socket: setsockopt(SO_REUSEADDR) failed: %s\n"),
 		  strerror(errno));
 	errno = save_errno;
     }
@@ -138,7 +138,7 @@ make_socket(
 		   (void *)&on, SIZEOF(on));
     if (r == -1) {
 	save_errno = errno;
-	dbprintf("make_socket: setsockopt() failed: %s\n",
+	dbprintf(_("make_socket: setsockopt() failed: %s\n"),
                   strerror(save_errno));
 	aclose(s);
 	errno = save_errno;
@@ -191,7 +191,7 @@ connect_portrange(
 	}
     }
 
-    dbprintf("connect_portrange: All ports between %d and %d are busy.\n",
+    dbprintf(_("connect_portrange: All ports between %d and %d are busy.\n"),
 	      first_port,
 	      last_port);
     errno = EAGAIN;
@@ -219,7 +219,7 @@ connect_port(
 
     servPort = getservbyport((int)htons(port), proto);
     if (servPort != NULL && !strstr(servPort->s_name, "amanda")) {
-	dbprintf("connect_port: Skip port %d: owned by %s.\n",
+	dbprintf(_("connect_port: Skip port %d: owned by %s.\n"),
 		  port, servPort->s_name);
 	return -1;
     }
@@ -232,10 +232,10 @@ connect_port(
 	save_errno = errno;
 	aclose(s);
 	if(servPort == NULL) {
-	    dbprintf("connect_port: Try  port %d: available - %s\n",
+	    dbprintf(_("connect_port: Try  port %d: available - %s\n"),
 		     port, strerror(errno));
 	} else {
-	    dbprintf("connect_port: Try  port %d: owned by %s - %s\n",
+	    dbprintf(_("connect_port: Try  port %d: owned by %s - %s\n"),
 		     port, servPort->s_name, strerror(errno));
 	}
 	if (save_errno != EADDRINUSE) {
@@ -247,9 +247,9 @@ connect_port(
 	return -1;
     }
     if(servPort == NULL) {
-	dbprintf("connect_port: Try  port %d: available - Success\n", port);
+	dbprintf(_("connect_port: Try  port %d: available - Success\n"), port);
     } else {
-	dbprintf("connect_port: Try  port %d: owned by %s - Success\n",
+	dbprintf(_("connect_port: Try  port %d: owned by %s - Success\n"),
 		  port, servPort->s_name);
     }
 
@@ -258,7 +258,7 @@ connect_port(
     len = sizeof(*addrp);
     if (getsockname(s, (struct sockaddr *)addrp, &len) == -1) {
 	save_errno = errno;
-	dbprintf("connect_port: getsockname() failed: %s\n",
+	dbprintf(_("connect_port: getsockname() failed: %s\n"),
 		  strerror(save_errno));
 	aclose(s);
 	errno = save_errno;
@@ -269,10 +269,10 @@ connect_port(
 	fcntl(s, F_SETFL, fcntl(s, F_GETFL, 0)|O_NONBLOCK);
     if (connect(s, (struct sockaddr *)svaddr, SS_LEN(svaddr)) == -1 && !nonblock) {
 	save_errno = errno;
-	dbprintf("connect_portrange: connect from %s failed: %s\n",
+	dbprintf(_("connect_portrange: connect from %s failed: %s\n"),
 		  str_sockaddr(addrp),
 		  strerror(save_errno));
-	dbprintf("connect_portrange: connect to %s failed: %s\n",
+	dbprintf(_("connect_portrange: connect to %s failed: %s\n"),
 		  str_sockaddr(svaddr),
 		  strerror(save_errno));
 	aclose(s);
@@ -286,9 +286,9 @@ connect_port(
 	return -1;
     }
 
-    dbprintf("connected to %s\n",
+    dbprintf(_("connected to %s\n"),
               str_sockaddr(svaddr));
-    dbprintf("our side is %s\n",
+    dbprintf(_("our side is %s\n"),
               str_sockaddr(addrp));
     return s;
 }
@@ -334,28 +334,28 @@ bind_portrange(
 	    socklen = SS_LEN(addrp);
 	    if (bind(s, (struct sockaddr *)addrp, socklen) >= 0) {
 		if (servPort == NULL) {
-		    dbprintf("bind_portrange2: Try  port %d: Available - Success\n", port);
+		    dbprintf(_("bind_portrange2: Try  port %d: Available - Success\n"), port);
 		} else {
-		    dbprintf("bind_portrange2: Try  port %d: Owned by %s - Success.\n", port, servPort->s_name);
+		    dbprintf(_("bind_portrange2: Try  port %d: Owned by %s - Success.\n"), port, servPort->s_name);
 		}
 		return 0;
 	    }
 	    if (servPort == NULL) {
-		dbprintf("bind_portrange2: Try  port %d: Available - %s\n",
+		dbprintf(_("bind_portrange2: Try  port %d: Available - %s\n"),
 			port, strerror(errno));
 	    } else {
-		dbprintf("bind_portrange2: Try  port %d: Owned by %s - %s\n",
+		dbprintf(_("bind_portrange2: Try  port %d: Owned by %s - %s\n"),
 			port, servPort->s_name, strerror(errno));
 	    }
-	    dbprintf("%s\n", strerror(errno));
+	    dbprintf(_("%s\n"), strerror(errno));
 	} else {
-	        dbprintf("bind_portrange2: Skip port %d: Owned by %s.\n",
+	        dbprintf(_("bind_portrange2: Skip port %d: Owned by %s.\n"),
 		      port, servPort->s_name);
 	}
 	if (++port > last_port)
 	    port = first_port;
     }
-    dbprintf("bind_portrange: all ports between %d and %d busy\n",
+    dbprintf(_("bind_portrange: all ports between %d and %d busy\n"),
 		  first_port,
 		  last_port);
     errno = EAGAIN;

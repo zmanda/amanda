@@ -33,12 +33,17 @@
 
 int main(int argc, char **argv);
 
-int main(int argc, char **argv)
+int
+main(
+    int		argc,
+    char **	argv)
 {
 	safe_fd(-1, 0);
 
 	(void)argc;	/* Quiet unused parameter warning */
 	(void)argv;	/* Quiet unused parameter warning */
+
+	setlocale(LC_ALL, "C");
 
 	set_pname("versionsuffix");
 

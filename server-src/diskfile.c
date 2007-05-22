@@ -421,7 +421,7 @@ parse_diskline(
 
     skip_whitespace(s, ch);
     if(ch == '\0' || ch == '#') {
-	disk_parserror(filename, line_num, "disk device name expected");
+	disk_parserror(filename, line_num, _("disk device name expected"));
 	amfree(hostname);
 	return (-1);
     }
@@ -433,7 +433,7 @@ parse_diskline(
 
     skip_whitespace(s, ch);
     if(ch == '\0' || ch == '#') {
-	disk_parserror(filename, line_num, "disk dumptype expected");
+	disk_parserror(filename, line_num, _("disk dumptype expected"));
 	amfree(hostname);
 	amfree(diskname);
 	return (-1);
@@ -452,7 +452,7 @@ parse_diskline(
 	    skip_whitespace(s, ch);
 	    if(ch == '\0' || ch == '#') {
 		disk_parserror(filename, line_num,
-			"disk dumptype '%s' not found", dumptype);
+			_("disk dumptype '%s' not found"), dumptype);
 		amfree(hostname);
 		amfree(diskdevice);
 		amfree(diskname);
@@ -487,7 +487,7 @@ parse_diskline(
 	}
 	if (dup == 1) {
 	    disk_parserror(filename, line_num,
-			   "duplicate disk record, previous on line %d",
+			   _("duplicate disk record, previous on line %d"),
 			   disk->line);
 	}
     }
@@ -527,13 +527,13 @@ parse_diskline(
 	skip_whitespace(s, ch);
 	if (ch != '\0' && ch != '#') {
 	    disk_parserror(filename, line_num,
-		      "expected line break after `{\', ignoring rest of line");
+		      _("expected line break after `{\', ignoring rest of line"));
 	}
 
 	if (strchr(s-1, '}') &&
 	    (strchr(s-1, '#') == NULL ||
 	     strchr(s-1, '}') < strchr(s-1, '#'))) {
-	    disk_parserror(filename, line_num,"'}' on same line than '{'");
+	    disk_parserror(filename, line_num,_("'}' on same line than '{'"));
 	    amfree(hostname);
 	    if(!dup) {
 		amfree(disk->device);
@@ -550,7 +550,7 @@ parse_diskline(
 			      diskf, (char*)filename, line_num_p);
 	if (dtype == NULL || dup) {
 	    disk_parserror(filename, line_num,
-			   "read of custom dumptype failed");
+			   _("read of custom dumptype failed"));
 	    amfree(hostname);
 	    if(!dup) {
 		amfree(disk->device);
@@ -575,7 +575,7 @@ parse_diskline(
 	if((dtype = lookup_dumptype(dumptype)) == NULL) {
 	    char *qdt = quote_string(dumptype);
 
-	    disk_parserror(filename, line_num, "undefined dumptype `%s'", qdt);
+	    disk_parserror(filename, line_num, _("undefined dumptype `%s'"), qdt);
 	    amfree(qdt);
 	    amfree(dumptype);
 	    amfree(hostname);
@@ -677,7 +677,7 @@ parse_diskline(
 	    }
 	}
 	if(is_digit == 0) {
-	    disk_parserror(filename, line_num, "non-integer spindle `%s'", fp);
+	    disk_parserror(filename, line_num, _("non-integer spindle `%s'"), fp);
 	    amfree(hostname);
 	    amfree(disk->name);
 	    amfree(disk);
@@ -694,7 +694,7 @@ parse_diskline(
 	s[-1] = '\0';
 	if((netif = lookup_interface(upcase(fp))) == NULL) {
 	    disk_parserror(filename, line_num,
-		"undefined network interface `%s'", fp);
+		_("undefined network interface `%s'"), fp);
 	    amfree(hostname);
 	    amfree(disk->name);
 	    amfree(disk);
@@ -706,7 +706,7 @@ parse_diskline(
 
     skip_whitespace(s, ch);
     if(ch && ch != '#') {		/* now we have garbage, ignore it */
-	disk_parserror(filename, line_num, "end of line expected");
+	disk_parserror(filename, line_num, _("end of line expected"));
     }
 
     if(dumptype_get_ignore(dtype) || dumptype_get_strategy(dtype) == DS_SKIP) {
@@ -774,10 +774,10 @@ dump_queue(
     char *qname;
 
     if(empty(q)) {
-	fprintf(f, "%s QUEUE: empty\n", st);
+	fprintf(f, _("%s QUEUE: empty\n"), st);
 	return;
     }
-    fprintf(f, "%s QUEUE:\n", st);
+    fprintf(f, _("%s QUEUE:\n"), st);
     for(pos = 0, d = q.head, p = NULL; d != NULL; p = d, d = d->next, pos++) {
 	qname = quote_string(d->name);
 	if(pos < npr) fprintf(f, "%3d: %-10s %-4s\n",
@@ -834,7 +834,7 @@ optionstr(
 	    auth_opt = stralloc("bsd-auth;");
 	else if(fdout) {
 	    fprintf(fdout,
-		    "WARNING: %s:%s does not support auth or bsd-auth\n",
+		    _("WARNING: %s:%s does not support auth or bsd-auth\n"),
 		    dp->host->hostname, qdpname);
 	}
     } else if(strcasecmp(dp->security_driver, "krb4") == 0) {
@@ -842,7 +842,7 @@ optionstr(
 	    auth_opt = stralloc("krb4-auth;");
 	else if(fdout) {
 	    fprintf(fdout,
-		    "WARNING: %s:%s does not support auth or krb4-auth\n",
+		    _("WARNING: %s:%s does not support auth or krb4-auth\n"),
 		    dp->host->hostname, qdpname);
 	}
 	if(dp->kencrypt) {
@@ -851,7 +851,7 @@ optionstr(
 	    }
 	    else if(fdout) {
 	    fprintf(fdout,
-		    "WARNING: %s:%s does not support kencrypt\n",
+		    _("WARNING: %s:%s does not support kencrypt\n"),
 		    dp->host->hostname, qdpname);
 	    }
 	}
@@ -864,7 +864,7 @@ optionstr(
 	}
 	else if(fdout) {
 	    fprintf(fdout,
-		    "WARNING: %s:%s does not support fast compression\n",
+		    _("WARNING: %s:%s does not support fast compression\n"),
 		    dp->host->hostname, qdpname);
 	}
 	break;
@@ -874,7 +874,7 @@ optionstr(
 	}
 	else if(fdout) {
 	    fprintf(fdout,
-		    "WARNING: %s:%s does not support best compression\n",
+		    _("WARNING: %s:%s does not support best compression\n"),
 		    dp->host->hostname, qdpname);
 	}
 	break;
@@ -884,7 +884,7 @@ optionstr(
 	  if (BSTRNCMP(compress_opt, "comp-cust=;") == 0){
 	    if(fdout) {
 	      fprintf(fdout,
-		      "ERROR: %s:%s client custom compression with no compression program specified\n",
+		      _("ERROR: %s:%s client custom compression with no compression program specified\n"),
 		      dp->host->hostname, qdpname);
 	    }
 	    err++;
@@ -892,7 +892,7 @@ optionstr(
 	}
 	else if(fdout) {
 	    fprintf(fdout,
-		    "WARNING: %s:%s does not support client custom compression\n",
+		    _("WARNING: %s:%s does not support client custom compression\n"),
 		    dp->host->hostname, qdpname);
 	}
 	break;
@@ -912,7 +912,7 @@ optionstr(
 	  if (BSTRNCMP(compress_opt, "srvcomp-cust=;") == 0){
 	    if(fdout) {
 	      fprintf(fdout,
-		      "ERROR: %s:%s server custom compression with no compression program specified\n",
+		      _("ERROR: %s:%s server custom compression with no compression program specified\n"),
 		      dp->host->hostname, qdpname);
 	    }
 	    err++;
@@ -920,7 +920,7 @@ optionstr(
 	}
 	else if(fdout) {
 	  fprintf(fdout,
-		  "WARNING: %s:%s does not support server custom compression\n",
+		  _("WARNING: %s:%s does not support server custom compression\n"),
 		  dp->host->hostname, qdpname);
 	}
 	break;
@@ -934,7 +934,7 @@ optionstr(
 	 if (BSTRNCMP(encrypt_opt, "encrypt-cust=;") == 0) {
 	    if(fdout) {
 	      fprintf(fdout,
-		      "ERROR: %s:%s encrypt client with no encryption program specified\n",
+		      _("ERROR: %s:%s encrypt client with no encryption program specified\n"),
 		      dp->host->hostname, qdpname);
 	    }
 	    err++;
@@ -944,7 +944,7 @@ optionstr(
 	      dp->compress == COMP_SERVER_CUST ) {
 	   if(fdout) {
 	      fprintf(fdout,
-		      "ERROR: %s:Client encryption with server compression is not supported. See amanda.conf(5) for detail.\n", dp->host->hostname);
+		      _("ERROR: %s:Client encryption with server compression is not supported. See amanda.conf(5) for detail.\n"), dp->host->hostname);
 	    }
 	    err++;
 	  }
@@ -955,14 +955,14 @@ optionstr(
 	   }
 	   else if(fdout) {
 	    fprintf(fdout,
-		    "WARNING: %s:%s does not support client decrypt option\n",
+		    _("WARNING: %s:%s does not support client decrypt option\n"),
 		    dp->host->hostname, qdpname);
 	   }
 	 }
       }
       else if(fdout) {
 	    fprintf(fdout,
-		    "WARNING: %s:%s does not support client data encryption\n",
+		    _("WARNING: %s:%s does not support client data encryption\n"),
 		    dp->host->hostname, qdpname);
      }
 	 break;
@@ -973,7 +973,7 @@ optionstr(
 	 if (BSTRNCMP(encrypt_opt, "encrypt-serv-cust=;") == 0){
 	    if(fdout) {
 	      fprintf(fdout,
-		      "ERROR: %s:%s encrypt server with no encryption program specified\n",
+		      _("ERROR: %s:%s encrypt server with no encryption program specified\n"),
 		      dp->host->hostname, qdpname);
 	    }
 	    err++;
@@ -985,14 +985,14 @@ optionstr(
 	   }
 	   else if(fdout) {
 	    fprintf(fdout,
-		    "WARNING: %s:%s does not support server decrypt option\n",
+		    _("WARNING: %s:%s does not support server decrypt option\n"),
 		    dp->host->hostname, qdpname);
 	   }
 	 }
       }
       else if(fdout) {
 	    fprintf(fdout,
-		    "WARNING: %s:%s does not support server data encryption\n",
+		    _("WARNING: %s:%s does not support server data encryption\n"),
 		    dp->host->hostname, qdpname);
       }
 	 break;
@@ -1003,7 +1003,7 @@ optionstr(
 	    record_opt = "no-record;";
 	}
 	else if(fdout) {
-	    fprintf(fdout, "WARNING: %s:%s does not support no record\n",
+	    fprintf(fdout, _("WARNING: %s:%s does not support no record\n"),
 		    dp->host->hostname, qdpname);
 	}
     }
@@ -1013,7 +1013,7 @@ optionstr(
 	    index_opt = "index;";
 	}
 	else if(fdout) {
-	    fprintf(fdout, "WARNING: %s:%s does not support index\n",
+	    fprintf(fdout, _("WARNING: %s:%s does not support index\n"),
 		    dp->host->hostname, qdpname);
 	}
     }
@@ -1041,13 +1041,13 @@ optionstr(
 		strappend(exclude_file, exc);
 		if(fdout) {
 		    fprintf(fdout,
-		       "WARNING: %s:%s does not support multiple exclude\n",
+		       _("WARNING: %s:%s does not support multiple exclude\n"),
 		       dp->host->hostname, qdpname);
 		}
 		amfree(qname);
 	    }
 	} else if(fdout) {
-	    fprintf(fdout, "WARNING: %s:%s does not support exclude file\n",
+	    fprintf(fdout, _("WARNING: %s:%s does not support exclude file\n"),
 		    dp->host->hostname, qdpname);
 	}
     }
@@ -1069,13 +1069,13 @@ optionstr(
 		strappend(exclude_list, exc);
 		if(fdout) {
 			fprintf(fdout,
-			 "WARNING: %s:%s does not support multiple exclude\n",
+			 _("WARNING: %s:%s does not support multiple exclude\n"),
 			 dp->host->hostname, qdpname);
 		}
 		amfree(qname);
 	    }
 	} else if(fdout) {
-	    fprintf(fdout, "WARNING: %s:%s does not support exclude list\n",
+	    fprintf(fdout, _("WARNING: %s:%s does not support exclude list\n"),
 		    dp->host->hostname, qdpname);
 	}
     }
@@ -1100,13 +1100,13 @@ optionstr(
 		strappend(include_file, exc);
 		if(fdout) {
 		    fprintf(fdout,
-			 "WARNING: %s:%s does not support multiple include\n",
+			 _("WARNING: %s:%s does not support multiple include\n"),
 			 dp->host->hostname, qdpname);
 		}
 		amfree(qname);
 	    }
 	} else if(fdout) {
-	    fprintf(fdout, "WARNING: %s:%s does not support include file\n",
+	    fprintf(fdout, _("WARNING: %s:%s does not support include file\n"),
 		    dp->host->hostname, qdpname);
 	}
     }
@@ -1128,13 +1128,13 @@ optionstr(
 		strappend(include_list, exc);
 		if(fdout) {
 			fprintf(fdout,
-			 "WARNING: %s:%s does not support multiple include\n",
+			 _("WARNING: %s:%s does not support multiple include\n"),
 			 dp->host->hostname, qdpname);
 		}
 		amfree(qname);
 	    }
 	} else if(fdout) {
-	    fprintf(fdout, "WARNING: %s:%s does not support include list\n",
+	    fprintf(fdout, _("WARNING: %s:%s does not support include list\n"),
 		    dp->host->hostname, qdpname);
 	}
     }
@@ -1145,7 +1145,7 @@ optionstr(
 	}
 	else if(fdout) {
 	    fprintf(fdout,
-		    "WARNING: %s:%s does not support optional exclude\n",
+		    _("WARNING: %s:%s does not support optional exclude\n"),
 		    dp->host->hostname, qdpname);
 	}
     }
@@ -1155,7 +1155,7 @@ optionstr(
 	}
 	else if(fdout) {
 	    fprintf(fdout,
-		    "WARNING: %s:%s does not support optional include\n",
+		    _("WARNING: %s:%s does not support optional include\n"),
 		    dp->host->hostname, qdpname);
 	}
     }
@@ -1231,7 +1231,7 @@ match_disklist(
 	       (match_disk(sargv[i], dp->name) ||
 		(dp->device && match_disk(sargv[i], dp->device)))) {
 		if(match_a_host) {
-		    error("Argument %s match a host and a disk",sargv[i]);
+		    error(_("Argument %s match a host and a disk"),sargv[i]);
 		    /*NOTREACHED*/
 		}
 		else {
@@ -1256,7 +1256,7 @@ match_disklist(
 		prev_match = 1;
 	    }
 	    else {
-		vstrextend(&errstr, "Argument '", sargv[i], "' match neither a host nor a disk.\n", NULL);
+		errstr = newvstrallocf(errstr, _("Argument '%s' matches neither a host nor a disk.\n"), sargv[i]);
 	    }
 	}
     }
@@ -1288,7 +1288,7 @@ static void
 dump_disk(
     const disk_t *	dp)
 {
-    printf("  DISK %s (HOST %s, LINE %d) TYPE %s NAME %s SPINDLE %d\n",
+    printf(_("  DISK %s (HOST %s, LINE %d) TYPE %s NAME %s SPINDLE %d\n"),
 	   dp->name, dp->host->hostname, dp->line, dp->dtype_name,
 	   dp->name == NULL? "(null)": dp->name,
 	   dp->spindle);
@@ -1302,16 +1302,16 @@ dump_disklist(
     const am_host_t *hp;
 
     if(hostlist == NULL) {
-	printf("DISKLIST not read in\n");
+	printf(_("DISKLIST not read in\n"));
 	return;
     }
 
-    printf("DISKLIST BY HOSTNAME:\n");
+    printf(_("DISKLIST BY HOSTNAME:\n"));
 
     for(hp = hostlist; hp != NULL; hp = hp->next) {
-	printf("HOST %s INTERFACE %s\n",
+	printf(_("HOST %s INTERFACE %s\n"),
 	       hp->hostname,
-	       (hp->netif == NULL||hp->netif->name == NULL) ? "(null)"
+	       (hp->netif == NULL||hp->netif->name == NULL) ? _("(null)")
 							    : hp->netif->name);
 	for(dp = hp->disks; dp != NULL; dp = dp->hostnext)
 	    dump_disk(dp);
@@ -1319,14 +1319,14 @@ dump_disklist(
     }
 
 
-    printf("DISKLIST IN FILE ORDER:\n");
+    printf(_("DISKLIST IN FILE ORDER:\n"));
 
     prev = NULL;
     for(dp = lst->head; dp != NULL; prev = dp, dp = dp->next) {
 	dump_disk(dp);
 	/* check pointers */
-	if(dp->prev != prev) printf("*** prev pointer mismatch!\n");
-	if(dp->next == NULL && lst->tail != dp) printf("tail mismatch!\n");
+	if(dp->prev != prev) printf(_("*** prev pointer mismatch!\n"));
+	if(dp->next == NULL && lst->tail != dp) printf(_("tail mismatch!\n"));
     }
 }
 
@@ -1343,6 +1343,8 @@ main(
   unsigned long malloc_hist_2, malloc_size_2;
 
   safe_fd(-1, 0);
+
+  setlocale(LC_ALL, "C");
 
   set_pname("diskfile");
 

@@ -159,7 +159,7 @@ read_txinfofile(
 	amfree(line);
     }
     if (line == NULL) return -1;
-    rc = sscanf(line, "version: %d", &version);
+    rc = sscanf(line, _("version: %d"), &version);
     amfree(line);
     if(rc != 1) return -2;
 
@@ -169,7 +169,7 @@ read_txinfofile(
 	amfree(line);
     }
     if (line == NULL) return -1;
-    rc = sscanf(line, "command: %u", &info->command);
+    rc = sscanf(line, _("command: %u"), &info->command);
     amfree(line);
     if(rc != 1) return -2;
 
@@ -418,9 +418,9 @@ write_txinfofile(
     perf_t *pp;
     int level;
 
-    fprintf(infof, "version: %d\n", 0);
+    fprintf(infof, _("version: %d\n"), 0);
 
-    fprintf(infof, "command: %u\n", info->command);
+    fprintf(infof, _("command: %u\n"), info->command);
 
     pp = &info->full;
 
@@ -465,11 +465,11 @@ write_txinfofile(
 	fprintf(infof, "\n");
     }
 
-    fprintf(infof, "last_level: %d %d\n", info->last_level, info->consecutive_runs);
+    fprintf(infof, _("last_level: %d %d\n"), info->last_level, info->consecutive_runs);
 
     for(i=0;info->history[i].level > -1;i++) {
-	fprintf(infof, "history: %d " OFF_T_FMT " " OFF_T_FMT
-		" " TIME_T_FMT " " TIME_T_FMT "\n",
+	fprintf(infof, _("history: %d " OFF_T_FMT " " OFF_T_FMT
+		" " TIME_T_FMT " " TIME_T_FMT "\n"),
 		info->history[i].level,
 		(OFF_T_FMT_TYPE)info->history[i].size,
 		(OFF_T_FMT_TYPE)info->history[i].csize,
@@ -562,7 +562,7 @@ close_infofile(void)
     dbm_close(infodb);
 
     if(amfunlock(lockfd, "info") == -1) {
-	error("could not unlock infofile: %s", strerror(errno));
+	error(_("could not unlock infofile: %s"), strerror(errno));
 	/*NOTREACHED*/
     }
 
@@ -891,26 +891,26 @@ dump_rec(
     int i;
     stats_t *sp;
 
-    printf("command word: %d\n", info->command);
-    printf("full dump rate (K/s) %5.1lf, %5.1lf, %5.1lf\n",
+    printf(_("command word: %d\n"), info->command);
+    printf(_("full dump rate (K/s) %5.1lf, %5.1lf, %5.1lf\n"),
 	   info->full.rate[0],info->full.rate[1],info->full.rate[2]);
-    printf("full comp rate %5.1lf, %5.1lf, %5.1lf\n",
+    printf(_("full comp rate %5.1lf, %5.1lf, %5.1lf\n"),
 	   info->full.comp[0]*100,info->full.comp[1]*100,info->full.comp[2]*100);
-    printf("incr dump rate (K/s) %5.1lf, %5.1lf, %5.1lf\n",
+    printf(_("incr dump rate (K/s) %5.1lf, %5.1lf, %5.1lf\n"),
 	   info->incr.rate[0],info->incr.rate[1],info->incr.rate[2]);
-    printf("incr comp rate %5.1lf, %5.1lf, %5.1lf\n",
+    printf(_("incr comp rate %5.1lf, %5.1lf, %5.1lf\n"),
 	   info->incr.comp[0]*100,info->incr.comp[1]*100,info->incr.comp[2]*100);
     for(i = 0; i < DUMP_LEVELS; i++) {
 	sp = &info->inf[i];
 	if( sp->size != -1) {
 
-	    printf("lev %d date %ld tape %s filenum " OFF_T_FMT " size %ld csize %ld secs %ld\n",
+	    printf(_("lev %d date %ld tape %s filenum " OFF_T_FMT " size %ld csize %ld secs %ld\n"),
 	           i, (long)sp->date, sp->label, sp->filenum,
 	           sp->size, sp->csize, sp->secs);
 	}
     }
     putchar('\n');
-   printf("last_level: %d %d\n", info->last_level, info->consecutive_runs);
+   printf(_("last_level: %d %d\n"), info->last_level, info->consecutive_runs);
 }
 
 #ifdef TEXTDB
@@ -927,7 +927,7 @@ dump_db(
     if((rc = get_info(host, disk, &info)) == 0) {
 	dump_rec(&info);
     } else {
-	printf("cannot fetch information for %s:%s rc=%d\n", host, disk, rc);
+	printf(_("cannot fetch information for %s:%s rc=%d\n"), host, disk, rc);
     }
 }
 #else
@@ -940,12 +940,12 @@ dump_db(
     info_t info;
 
 
-    printf("info database %s:\n--------\n", str);
+    printf(_("info database %s:\n--------\n"), str);
     rec = 0;
     k = dbm_firstkey(infodb);
     while(k.dptr != NULL) {
 
-	printf("%3d: KEY %s =\n", rec, k.dptr);
+	printf(_("%3d: KEY %s =\n"), rec, k.dptr);
 
 	d = dbm_fetch(infodb, k);
 	memset(&info, '\0', SIZEOF(info));
@@ -972,6 +972,8 @@ main(
 
   safe_fd(-1, 0);
 
+  setlocale(LC_ALL, "C");
+
   set_pname("infofile");
 
   dbopen(DBG_SUBDIR_SERVER);
@@ -981,7 +983,7 @@ main(
   for(i = 1; i < argc; ++i) {
 #ifdef TEXTDB
     if(i+1 >= argc) {
-      fprintf(stderr,"usage: %s host disk [host disk ...]\n",argv[0]);
+      fprintf(stderr,_("usage: %s host disk [host disk ...]\n"),argv[0]);
       return 1;
     }
     open_infofile("curinfo");

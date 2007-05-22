@@ -75,9 +75,9 @@ errexit(void)
 static void
 usage(void)
 {
-    error("Usage: amrestore [-b blocksize] [-r|-c] [-p] [-h] [-f fileno] "
+    error(_("Usage: amrestore [-b blocksize] [-r|-c] [-p] [-h] [-f fileno] "
     	  "[-l label] tape-device|holdingfile [hostname [diskname [datestamp "
-	  "[hostname [diskname [datestamp ... ]]]]]]");
+	  "[hostname [diskname [datestamp ... ]]]]]]"));
     /*NOTREACHED*/
 }
 
@@ -120,6 +120,8 @@ main(
 
     safe_fd(-1, 0);
 
+    setlocale(LC_ALL, "C");
+
     set_pname("amrestore");
 
     dbopen(DBG_SUBDIR_SERVER);
@@ -145,15 +147,15 @@ main(
 	    } else if(*e == 'm' || *e == 'M') {
 		rst_flags->blocksize *= 1024 * 1024;
 	    } else if(*e != '\0') {
-		error("invalid rst_flags->blocksize value \"%s\"", optarg);
+		error(_("invalid rst_flags->blocksize value \"%s\""), optarg);
 		/*NOTREACHED*/
 	    }
 	    if(rst_flags->blocksize < DISK_BLOCK_BYTES) {
-		error("minimum block size is %dk", DISK_BLOCK_BYTES / 1024);
+		error(_("minimum block size is %dk"), DISK_BLOCK_BYTES / 1024);
 		/*NOTREACHED*/
 	    }
 	    if(rst_flags->blocksize > MAX_TAPE_BLOCK_KB * 1024) {
-		fprintf(stderr,"maximum block size is %dk, using it\n",
+		fprintf(stderr,_("maximum block size is %dk, using it\n"),
 			MAX_TAPE_BLOCK_KB);
 		rst_flags->blocksize = MAX_TAPE_BLOCK_KB * 1024;
 		/*NOTREACHED*/
@@ -171,7 +173,7 @@ main(
 	    filefsf = (off_t)OFF_T_STRTOL(optarg, &e, 10);
 	    /*@ignore@*/
 	    if(*e != '\0') {
-		error("invalid fileno value \"%s\"", optarg);
+		error(_("invalid fileno value \"%s\""), optarg);
 		/*NOTREACHED*/
 	    }
 	    /*@end@*/
@@ -186,12 +188,12 @@ main(
 
     if(rst_flags->compress && rst_flags->raw) {
 	fprintf(stderr,
-		"Cannot specify both -r (raw) and -c (compressed) output.\n");
+		_("Cannot specify both -r (raw) and -c (compressed) output.\n"));
 	usage();
     }
 
     if(optind >= argc) {
-	fprintf(stderr, "%s: Must specify tape-device or holdingfile\n",
+	fprintf(stderr, _("%s: Must specify tape-device or holdingfile\n"),
 			get_pname());
 	usage();
     }
@@ -217,7 +219,7 @@ main(
 	    match_list = me;
 	    if(me->hostname[0] != '\0'
 	       && (errstr=validate_regexp(me->hostname)) != NULL) {
-	        fprintf(stderr, "%s: bad hostname regex \"%s\": %s\n",
+	        fprintf(stderr, _("%s: bad hostname regex \"%s\": %s\n"),
 		        get_pname(), me->hostname, errstr);
 	        usage();
 	    }
@@ -227,7 +229,7 @@ main(
 	    me->diskname = argv[optind++];
 	    if(me->diskname[0] != '\0'
 	       && (errstr=validate_regexp(me->diskname)) != NULL) {
-	        fprintf(stderr, "%s: bad diskname regex \"%s\": %s\n",
+	        fprintf(stderr, _("%s: bad diskname regex \"%s\": %s\n"),
 		        get_pname(), me->diskname, errstr);
 	        usage();
 	    }
@@ -237,7 +239,7 @@ main(
 	    me->datestamp = argv[optind++];
 	    if(me->datestamp[0] != '\0'
 	       && (errstr=validate_regexp(me->datestamp)) != NULL) {
-	        fprintf(stderr, "%s: bad datestamp regex \"%s\": %s\n",
+	        fprintf(stderr, _("%s: bad datestamp regex \"%s\": %s\n"),
 		        get_pname(), me->datestamp, errstr);
 	        usage();
 	    }
@@ -254,37 +256,37 @@ main(
     }
 
     if(tape_stat(tapename,&stat_tape)!=0) {
-	error("could not stat %s: %s", tapename, strerror(errno));
+	error(_("could not stat %s: %s"), tapename, strerror(errno));
 	/*NOTREACHED*/
     }
     isafile=S_ISREG((stat_tape.st_mode));
 
     if(label) {
 	if(isafile) {
-	    fprintf(stderr,"%s: ignoring -l flag when restoring from a file.\n",
+	    fprintf(stderr,_("%s: ignoring -l flag when restoring from a file.\n"),
 		    get_pname());
 	}
 	else {
 	    if((err = tape_rewind(tapename)) != NULL) {
-		error("Could not rewind device '%s': %s", tapename, err);
+		error(_("Could not rewind device '%s': %s"), tapename, err);
 		/*NOTREACHED*/
 	    }
 	    if ((tapedev = tape_open(tapename, 0)) == -1) {;
-		error("Could not open device '%s': %s", tapename, err);
+		error(_("Could not open device '%s': %s"), tapename, err);
 		/*NOTREACHED*/
 	    }
 	    read_file_header(&file, tapedev, isafile, rst_flags);
 	    if(file.type != F_TAPESTART) {
-		fprintf(stderr,"Not an amanda tape\n");
+		fprintf(stderr,_("Not an amanda tape\n"));
 		exit (1);
 	    }
 	    if(strcmp(label, file.name) != 0) {
-		fprintf(stderr,"Wrong label: '%s'\n", file.name);
+		fprintf(stderr,_("Wrong label: '%s'\n"), file.name);
 		exit (1);
 	    }
 	    tapefd_close(tapedev);
 	    if((err = tape_rewind(tapename)) != NULL) {
-		error("Could not rewind device '%s': %s", tapename, err);
+		error(_("Could not rewind device '%s': %s"), tapename, err);
 		/*NOTREACHED*/
 	    }
 	}
@@ -292,16 +294,16 @@ main(
     file_number = (off_t)0;
     if(filefsf != (off_t)-1) {
 	if(isafile) {
-	    fprintf(stderr,"%s: ignoring -f flag when restoring from a file.\n",
+	    fprintf(stderr,_("%s: ignoring -f flag when restoring from a file.\n"),
 		    get_pname());
 	}
 	else {
 	    if((err = tape_rewind(tapename)) != NULL) {
-		error("Could not rewind device '%s': %s", tapename, err);
+		error(_("Could not rewind device '%s': %s"), tapename, err);
 		/*NOTREACHED*/
 	    }
 	    if((err = tape_fsf(tapename, filefsf)) != NULL) {
-		error("Could not fsf device '%s': %s", tapename, err);
+		error(_("Could not fsf device '%s': %s"), tapename, err);
 		/*NOTREACHED*/
 	    }
 	    file_number = filefsf;
@@ -314,13 +316,13 @@ main(
 	tapedev = tape_open(tapename, 0);
     }
     if(tapedev < 0) {
-	error("could not open %s: %s", tapename, strerror(errno));
+	error(_("could not open %s: %s"), tapename, strerror(errno));
 	/*NOTREACHED*/
     }
 
     read_result = read_file_header(&file, tapedev, isafile, rst_flags);
     if(file.type != F_TAPESTART && !isafile && filefsf == (off_t)-1) {
-	fprintf(stderr, "%s: WARNING: not at start of tape, file numbers will be offset\n",
+	fprintf(stderr, _("%s: WARNING: not at start of tape, file numbers will be offset\n"),
 			get_pname());
     }
 
@@ -340,7 +342,7 @@ main(
 	    fprintf(stderr, "%s: " OFF_T_FMT ": %s ",
 			    get_pname(),
 			    (OFF_T_FMT_TYPE)file_number,
-			    found_match ? "restoring" : "skipping");
+			    found_match ? _("restoring") : _("skipping"));
 	    if(file.type != F_DUMPFILE  && file.type != F_SPLIT_DUMPFILE) {
 		print_header(stderr, &file);
 	    } else {
@@ -379,7 +381,7 @@ main(
 	     */
 	    tapefd_close(tapedev);
 	    if((tapedev = tape_open(tapename, 0)) < 0) {
-		error("could not open %s: %s", tapename, strerror(errno));
+		error(_("could not open %s: %s"), tapename, strerror(errno));
 		/*NOTREACHED*/
 	    }
 	    count_error++;
@@ -389,7 +391,7 @@ main(
 	     * do an fsf to get to the next file.
 	     */
 	    if(tapefd_fsf(tapedev, (off_t)1) < 0) {
-		error("could not fsf %s: %s", tapename, strerror(errno));
+		error(_("could not fsf %s: %s"), tapename, strerror(errno));
 		/*NOTREACHED*/
 	    }
 	    count_error=0;
@@ -406,12 +408,12 @@ main(
 	if(read_result == 0) {
 	    tapefd_close(tapedev);
 	    if((tapedev = tape_open(tapename, 0)) < 0) {
-		error("could not open %s: %s", tapename, strerror(errno));
+		error(_("could not open %s: %s"), tapename, strerror(errno));
 		/*NOTREACHED*/
 	    }
 	} else {
 	    if(tapefd_fsf(tapedev, (off_t)1) < 0) {
-		error("could not fsf %s: %s", tapename, strerror(errno));
+		error(_("could not fsf %s: %s"), tapename, strerror(errno));
 		/*NOTREACHED*/
 	    }
 	}
@@ -419,10 +421,10 @@ main(
     }
 
     if((read_result <= 0 || file.type == F_TAPEEND) && !isafile) {
-	fprintf(stderr, "%s: " OFF_T_FMT ": reached ",
+	fprintf(stderr, _("%s: " OFF_T_FMT ": reached "),
 		get_pname(), (OFF_T_FMT_TYPE)file_number);
 	if(read_result <= 0) {
-	    fprintf(stderr, "end of information\n");
+	    fprintf(stderr, _("end of information\n"));
 	} else {
 	    print_header(stderr,&file);
 	}

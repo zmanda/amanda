@@ -36,33 +36,33 @@
 void
 help_list(void)
 {
-    printf("valid commands are:\n\n");
+    printf(_("valid commands are:\n\n"));
 
-    printf("add path1 ...     - add to extraction list (shell wildcards)\n");
-    printf("addx path1 ...    - add to extraction list (regular expressions)\n");
-    printf("cd directory      - change cwd on virtual file system (shell wildcards)\n");
-    printf("cdx directory     - change cwd on virtual file system (regular expressions)\n");
-    printf("clear             - clear extraction list\n");
-    printf("delete path1 ...  - delete from extraction list (shell wildcards)\n");
-    printf("deletex path1 ... - delete from extraction list (regular expressions)\n");
-    printf("extract           - extract selected files from tapes\n");
-    printf("exit\n");
-    printf("help\n");
-    printf("history           - show dump history of disk\n");
-    printf("list [filename]   - show extraction list, optionally writing to file\n");
-    printf("lcd directory     - change cwd on local file system\n");
-    printf("ls                - list directory on virtual file system\n");
-    printf("lpwd              - show cwd on local file system\n");
-    printf("mode              - show the method used to extract SMB shares\n");
-    printf("pwd               - show cwd on virtual file system\n");
-    printf("quit\n");
-    printf("listhost          - list hosts\n");
-    printf("listdisk [diskdevice]              - list disks\n");
-    printf("setdate {YYYY-MM-DD|--MM-DD|---DD} - set date of look\n");
-    printf("        {YYYY-MM-DD-HH-MM-SS}      - set date of look\n");
-    printf("setdisk diskname [mountpoint]      - select disk on dump host\n");
-    printf("sethost host                       - select dump host\n");
-    printf("settape [host:][device|default]    - select tape server and/or device\n");
-    printf("setmode smb|tar                 - select the method used to extract SMB shares\n");
+    printf(_("add path1 ...     - add to extraction list (shell wildcards)\n"));
+    printf(_("addx path1 ...    - add to extraction list (regular expressions)\n"));
+    printf(_("cd directory      - change cwd on virtual file system (shell wildcards)\n"));
+    printf(_("cdx directory     - change cwd on virtual file system (regular expressions)\n"));
+    printf(_("clear             - clear extraction list\n"));
+    printf(_("delete path1 ...  - delete from extraction list (shell wildcards)\n"));
+    printf(_("deletex path1 ... - delete from extraction list (regular expressions)\n"));
+    printf(_("extract           - extract selected files from tapes\n"));
+    printf(_("exit\n"));
+    printf(_("help\n"));
+    printf(_("history           - show dump history of disk\n"));
+    printf(_("list [filename]   - show extraction list, optionally writing to file\n"));
+    printf(_("lcd directory     - change cwd on local file system\n"));
+    printf(_("ls                - list directory on virtual file system\n"));
+    printf(_("lpwd              - show cwd on local file system\n"));
+    printf(_("mode              - show the method used to extract SMB shares\n"));
+    printf(_("pwd               - show cwd on virtual file system\n"));
+    printf(_("quit\n"));
+    printf(_("listhost          - list hosts\n"));
+    printf(_("listdisk [diskdevice]              - list disks\n"));
+    printf(_("setdate {YYYY-MM-DD|--MM-DD|---DD} - set date of look\n"));
+    printf(_("        {YYYY-MM-DD-HH-MM-SS}      - set date of look\n"));
+    printf(_("setdisk diskname [mountpoint]      - select disk on dump host\n"));
+    printf(_("sethost host                       - select dump host\n"));
+    printf(_("settape [host:][device|default]    - select tape server and/or device\n"));
+    printf(_("setmode smb|tar                 - select the method used to extract SMB shares\n"));
     printf("\n");
 }

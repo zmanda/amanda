@@ -90,12 +90,12 @@ get_client_line(FILE *in)
     while(1) {
 	if((part = agets(in)) == NULL) {
 	    if(errno != 0) {
-		dbprintf("read error: %s\n", strerror(errno));
+		dbprintf(_("read error: %s\n"), strerror(errno));
 	    } else {
-		dbprintf("EOF reached\n");
+		dbprintf(_("EOF reached\n"));
 	    }
 	    if(line) {
-		dbprintf("s: unprocessed input:\n");
+		dbprintf(_("s: unprocessed input:\n"));
 		dbprintf("-----\n");
 		dbprintf("%s\n", line);
 		dbprintf("-----\n");
@@ -152,7 +152,7 @@ get_client_line_fd(
 		/* Keep looping if failure is temporary */
 		continue;
 	    }
-	    dbprintf("%s: Control pipe read error - %s\n",
+	    dbprintf(_("%s: Control pipe read error - %s\n"),
 		      pgm, strerror(errno));
 	    break;
 	}
@@ -161,7 +161,7 @@ get_client_line_fd(
 	    line_size *= 2;
 	    line = realloc(line, line_size);
 	    if (line == NULL) {
-		error("Memory reallocation failure");
+		error(_("Memory reallocation failure"));
 		/*NOTREACHED*/
 	    }
 	    s = &line[len];
@@ -192,16 +192,16 @@ check_security_buffer(
     char *s, *fp, ch;
     char *errstr = NULL;
 
-    dbprintf("check_security_buffer(buffer='%s')\n", buffer);
+    dbprintf(_("check_security_buffer(buffer='%s')\n"), buffer);
 
     i = SIZEOF(addr);
     if (getpeername(0, (struct sockaddr *)&addr, &i) == -1) {
-	error("getpeername: %s", strerror(errno));
+	error(_("getpeername: %s"), strerror(errno));
 	/*NOTREACHED*/
     }
     if ((addr.sin_family != (sa_family_t)AF_INET)
 		|| (ntohs(addr.sin_port) == 20)) {
-	error("connection rejected from %s family %d port %d",
+	error(_("connection rejected from %s family %d port %d"),
              inet_ntoa(addr.sin_addr), addr.sin_family, htons(addr.sin_port));
 	/*NOTREACHED*/
     }
@@ -212,19 +212,19 @@ check_security_buffer(
 
     skip_whitespace(s, ch);
     if (ch == '\0') {
-	error("cannot parse SECURITY line");
+	error(_("cannot parse SECURITY line"));
 	/*NOTREACHED*/
     }
     fp = s-1;
     skip_non_whitespace(s, ch);
     s[-1] = '\0';
     if (strcmp(fp, "SECURITY") != 0) {
-	error("cannot parse SECURITY line");
+	error(_("cannot parse SECURITY line"));
 	/*NOTREACHED*/
     }
     skip_whitespace(s, ch);
     if (!check_security((struct sockaddr_storage *)&addr, s-1, 0, &errstr)) {
-	error("security check failed: %s", errstr);
+	error(_("security check failed: %s"), errstr);
 	/*NOTREACHED*/
     }
 }
@@ -256,6 +256,8 @@ main(
 
     safe_fd(DATA_FD_OFFSET, 4);
     safe_cd();
+
+    setlocale(LC_ALL, "C");
 
     /* Don't die when child closes pipe */
     signal(SIGPIPE, SIG_IGN);
@@ -298,7 +300,7 @@ main(
 
     if(geteuid() == 0) {
 	if(client_uid == (uid_t) -1) {
-	    error("error [cannot find user %s in passwd file]\n", CLIENT_LOGIN);
+	    error(_("error [cannot find user %s in passwd file]\n"), CLIENT_LOGIN);
 	    /*NOTREACHED*/
 	}
 
@@ -318,14 +320,14 @@ main(
     (void)close(STDERR_FILENO);
     dbopen(DBG_SUBDIR_SERVER);
     startclock();
-    dbprintf("%s: version %s\n", pgm, version());
+    dbprintf(_("%s: version %s\n"), pgm, version());
 #ifdef DEBUG_CODE
     if(dbfd() != -1 && dbfd() != STDERR_FILENO)
     {
 	if(dup2(dbfd(),STDERR_FILENO) != STDERR_FILENO)
 	{
-	    perror("amidxtaped can't redirect stderr to the debug file");
-	    dbprintf("can't redirect stderr to the debug file\n");
+	    perror(_("amidxtaped can't redirect stderr to the debug file"));
+	    dbprintf(_("can't redirect stderr to the debug file\n"));
 	    return 1;
 	}
     }
@@ -334,24 +336,24 @@ main(
 	(i != STDERR_FILENO &&
 	 (dup2(i, STDERR_FILENO) != STDERR_FILENO ||
 	  close(i) != 0))) {
-	perror("amidxtaped can't redirect stderr");
+	perror(_("amidxtaped can't redirect stderr"));
 	return 1;
     }
 #endif
 
     if (! (argc >= 1 && argv != NULL && argv[0] != NULL)) {
-	dbprintf("WARNING: argv[0] not defined: check inetd.conf\n");
+	dbprintf(_("WARNING: argv[0] not defined: check inetd.conf\n"));
     }
 
     if(from_amandad == 0) {
 	socklen = SIZEOF(addr);
 	if (getpeername(0, (struct sockaddr *)&addr, &socklen) == -1) {
-	    error("getpeername: %s", strerror(errno));
+	    error(_("getpeername: %s"), strerror(errno));
 	    /*NOTREACHED*/
 	}
 	if ((addr.sin_family != (sa_family_t)AF_INET)
 		|| (ntohs(addr.sin_port) == 20)) {
-	    error("connection rejected from %s family %d port %d",
+	    error(_("connection rejected from %s family %d port %d"),
 		  inet_ntoa(addr.sin_addr), addr.sin_family,
 		  htons(addr.sin_port));
 	    /*NOTREACHED*/
@@ -386,9 +388,9 @@ main(
 
 	if(amandad_auth && g_options->auth) {
 	    if(strcasecmp(amandad_auth, g_options->auth) != 0) {
-		printf("ERROR recover program ask for auth=%s while amidxtaped is configured for '%s'\n",
+		printf(_("ERROR recover program ask for auth=%s while amidxtaped is configured for '%s'\n"),
 		       g_options->auth, amandad_auth);
-		error("ERROR recover program ask for auth=%s while amidxtaped is configured for '%s'",
+		error(_("ERROR recover program ask for auth=%s while amidxtaped is configured for '%s'"),
 		      g_options->auth, amandad_auth);
 		/*NOTREACHED*/
 	    }
@@ -401,12 +403,12 @@ main(
 	fclose(stdout);
 	cmdout = fdopen(ctlfdout, "a");
 	if (!cmdout) {
-	    error("amidxtaped: Can't fdopen(ctlfdout): %s", strerror(errno));
+	    error(_("amidxtaped: Can't fdopen(ctlfdout): %s"), strerror(errno));
 	    /*NOTREACHED*/
 	}
 	cmdin = fdopen(ctlfdin, "r");
 	if (!cmdin) {
-	    error("amidxtaped: Can't fdopen(ctlfdin): %s", strerror(errno));
+	    error(_("amidxtaped: Can't fdopen(ctlfdin): %s"), strerror(errno));
 	    /*NOTREACHED*/
 	}
     }
@@ -473,7 +475,7 @@ main(
     amfree(buf);
 
     if(!tapes && rst_flags->alt_tapedev){
-	dbprintf("Looks like we're restoring from a holding file...\n");
+	dbprintf(_("Looks like we're restoring from a holding file...\n"));
         tapes = unmarshal_tapelist_str(rst_flags->alt_tapedev);
 	tapes->isafile = 1;
 	amfree(rst_flags->alt_tapedev);
@@ -485,7 +487,7 @@ main(
 	config_dir = vstralloc(CONFIG_DIR, "/", re_config, "/", NULL);
 	conffile = stralloc2(config_dir, CONFFILE_NAME);
 	if (read_conffile(conffile)) {
-	    dbprintf("config '%s' not found\n", re_config);
+	    dbprintf(_("config '%s' not found\n"), re_config);
 	    amfree(re_config);
 	    re_config = NULL;
 	}
@@ -502,10 +504,10 @@ main(
                                getconf_str(CNF_TPCHANGER)) == 0 ) ) ) ) {
 	/* We need certain options, if restoring from more than one tape */
         if(tapes->next && !am_has_feature(their_features, fe_recover_splits)) {
-            error("Client must support split dumps to restore requested data.");
+            error(_("Client must support split dumps to restore requested data."));
             /*NOTREACHED*/
         }
-	dbprintf("Restoring from changer, checking labels\n");
+	dbprintf(_("Restoring from changer, checking labels\n"));
 	rst_flags->check_labels = 1;
 	use_changer = 1;
     }
@@ -515,7 +517,7 @@ main(
     if(re_config &&
        (use_changer || (rst_flags->alt_tapedev && tapedev &&
                         strcmp(rst_flags->alt_tapedev, tapedev) == 0) ) ) {
-	dbprintf("Locking devices\n");
+	dbprintf(_("Locking devices\n"));
 	parent_pid = getpid();
 	atexit(cleanup);
 	get_lock = lock_logfile();
@@ -523,7 +525,7 @@ main(
 
     /* Init the tape changer */
     if(tapes && use_changer && changer_init() == 0) {
-	dbprintf("No changer available\n");
+	dbprintf(_("No changer available\n"));
     }
 
     /* Read the default block size from the tape type */
@@ -551,22 +553,22 @@ main(
 	    int data_fd;
 	    char *buf;
 
-	    dbprintf("Client understands split dumpfiles\n");
+	    dbprintf(_("Client understands split dumpfiles\n"));
 
 	    if((data_sock = stream_server(&data_port, STREAM_BUFSIZE, 
 		 STREAM_BUFSIZE, 0)) < 0){
-		error("could not create data socket: %s", strerror(errno));
+		error(_("could not create data socket: %s"), strerror(errno));
 		/*NOTREACHED*/
 	    }
-	    dbprintf("Local port %d set aside for data\n", data_port);
+	    dbprintf(_("Local port %d set aside for data\n"), data_port);
 
 	    /* tell client where to connect */
-	    printf("CONNECT %hu\n", (unsigned short)data_port);
+	    printf(_("CONNECT %hu\n"), (unsigned short)data_port);
 	    fflush(stdout);
 
 	    if((data_fd = stream_accept(data_sock, TIMEOUT, STREAM_BUFSIZE, 
                  STREAM_BUFSIZE)) < 0){
-		error("stream_accept failed for client data connection: %s\n",
+		error(_("stream_accept failed for client data connection: %s\n"),
 		      strerror(errno));
 		/*NOTREACHED*/
 	    }
@@ -581,7 +583,7 @@ main(
 	rst_flags->pipe_to_fd = fileno(stdout);
         cmdout = stderr;
     }
-    dbprintf("Sending output to file descriptor %d\n", rst_flags->pipe_to_fd);
+    dbprintf(_("Sending output to file descriptor %d\n"), rst_flags->pipe_to_fd);
 
 
     tapedev = getconf_str(CNF_TAPEDEV);
@@ -590,11 +592,11 @@ main(
        (use_changer || (rst_flags->alt_tapedev && tapedev &&
                         strcmp(rst_flags->alt_tapedev, tapedev) == 0) ) ) {
 	send_message(cmdout, rst_flags, their_features,
-		     "%s exists: amdump or amflush is already running, "
-		     "or you must run amcleanup", 
+		     _("%s exists: amdump or amflush is already running, "
+		     "or you must run amcleanup"), 
 		     rst_conf_logfile);
-	error("%s exists: amdump or amflush is already running, "
-	      "or you must run amcleanup",
+	error(_("%s exists: amdump or amflush is already running, "
+	      "or you must run amcleanup"),
 	      rst_conf_logfile);
     }
 
@@ -603,14 +605,14 @@ main(
 	if (rst_flags->pipe_to_fd != -1)
 	    aclose(rst_flags->pipe_to_fd);
 	send_message(cmdout, rst_flags, their_features,
-		     "restore flags are crazy");
+		     _("restore flags are crazy"));
 	exit(1);
     }
 
     /* actual restoration */
     search_tapes(cmdout, cmdin, use_changer, tapes, match_list, rst_flags,
 		 their_features);
-    dbprintf("Restoration finished\n");
+    dbprintf(_("Restoration finished\n"));
 
     /* cleanup */
     if(rst_flags->pipe_to_fd != -1) aclose(rst_flags->pipe_to_fd);

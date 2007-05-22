@@ -56,6 +56,9 @@ main(
     signal(SIGPIPE, SIG_IGN);
 
     safe_fd(-1, 0);
+
+    setlocale(LC_ALL, "C");
+
     do {
  	/* soak up any stdin */
 	n = read(0, &ch, 1);
@@ -70,7 +73,7 @@ main(
     am_release_feature_set(our_features);
     our_features = NULL;
     if (fullwrite(1, options, strlen(options)) < 0) {
-	error("error sending noop response: %s", strerror(errno));
+	error(_("error sending noop response: %s"), strerror(errno));
 	/*NOTREACHED*/
     }
     amfree(options);

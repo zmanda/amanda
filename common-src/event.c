@@ -111,22 +111,22 @@ event_register(
     if ((type == EV_READFD) || (type == EV_WRITEFD)) {
 	/* make sure we aren't given a high fd that will overflow a fd_set */
 	if (data >= (int)FD_SETSIZE) {
-	    error("event_register: Invalid file descriptor %lu", data);
+	    error(_("event_register: Invalid file descriptor %lu"), data);
 	    /*NOTREACHED*/
 	}
 #if !defined(__lint) /* Global checking knows that these are never called */
     } else if (type == EV_SIG) {
 	/* make sure signals are within range */
 	if (data >= NSIG) {
-	    error("event_register: Invalid signal %lu", data);
+	    error(_("event_register: Invalid signal %lu"), data);
 	    /*NOTREACHED*/
 	}
 	if (sigtable[data].handle != NULL) { 
-	    error("event_register: signal %lu already registered", data);
+	    error(_("event_register: signal %lu already registered"), data);
 	    /*NOTREACHED*/
 	}
     } else if (type >= EV_DEAD) {
-	error("event_register: Invalid event type %d", type);
+	error(_("event_register: Invalid event type %d"), type);
 	/*NOTREACHED*/
 #endif
     }
@@ -140,7 +140,7 @@ event_register(
     eventq_add(eventq, handle);
     eventq.qlength++;
 
-    event_debug(1, "event: register: %p->data=%lu, type=%s\n",
+    event_debug(1, _("event: register: %p->data=%lu, type=%s\n"),
 		    handle, handle->data, event_type2str(handle->type));
     return (handle);
 }
@@ -157,7 +157,7 @@ event_release(
 
     assert(handle != NULL);
 
-    event_debug(1, "event: release (mark): %p data=%lu, type=%s\n",
+    event_debug(1, _("event: release (mark): %p data=%lu, type=%s\n"),
 		    handle, handle->data,
 		    event_type2str(handle->type));
     assert(handle->type != EV_DEAD);
@@ -197,12 +197,12 @@ event_wakeup(
     event_handle_t *eh;
     int nwaken = 0;
 
-    event_debug(1, "event: wakeup: enter (%lu)\n", id);
+    event_debug(1, _("event: wakeup: enter (%lu)\n"), id);
 
     for (eh = eventq_first(eventq); eh != NULL; eh = eventq_next(eh)) {
 
 	if (eh->type == EV_WAIT && eh->data == id) {
-	    event_debug(1, "event: wakeup: %p id=%lu\n", eh, id);
+	    event_debug(1, _("event: wakeup: %p id=%lu\n"), eh, id);
 	    fire(eh);
 	    nwaken++;
 	}
@@ -255,7 +255,7 @@ event_loop_wait(
     int event_wait_fired = 0;
     int see_event;
 
-    event_debug(1, "event: loop: enter: dontblock=%d, qlength=%d, eh=%p\n",
+    event_debug(1, _("event: loop: enter: dontblock=%d, qlength=%d, eh=%p\n"),
 		    dontblock, eventq.qlength, wait_eh);
 
     /*
@@ -279,10 +279,10 @@ event_loop_wait(
 
     do {
 	if (debug_event >= 1) {
-	    event_debug(1, "event: loop: dontblock=%d, qlength=%d eh=%p\n",
+	    event_debug(1, _("event: loop: dontblock=%d, qlength=%d eh=%p\n"),
 			    dontblock, eventq.qlength, wait_eh);
 	    for (eh = eventq_first(eventq); eh != NULL; eh = eventq_next(eh)) {
-		event_debug(1, "%p): %s data=%lu fn=%p arg=%p\n",
+		event_debug(1, _("%p): %s data=%lu fn=%p arg=%p\n"),
 				eh, event_type2str(eh->type), eh->data, eh->fn,
 				eh->arg);
 	    }
@@ -421,11 +421,11 @@ event_loop_wait(
 	 * Let 'er rip
 	 */
 	event_debug(1,
-		    "event: select: dontblock=%d, maxfd=%d, timeout=%ld\n",
+		    _("event: select: dontblock=%d, maxfd=%d, timeout=%ld\n"),
 		     dontblock, maxfd,
 		     tvptr != NULL ? timeout.tv_sec : -1);
 	rc = select(maxfd + 1, &readfds, &writefds, &errfds, tvptr);
-	event_debug(1, "event: select returns %d\n", rc);
+	event_debug(1, _("event: select returns %d\n"), rc);
 
 	/*
 	 * Select errors can mean many things.  Interrupted events should
@@ -435,7 +435,7 @@ event_loop_wait(
 	if (rc < 0) {
 	    if (errno != EINTR) {
 		if (++ntries > 5) {
-		    error("select failed: %s", strerror(errno));
+		    error(_("select failed: %s"), strerror(errno));
 		    /*NOTREACHED*/
 		}
 		continue;
@@ -616,5 +616,5 @@ event_type2str(
     for (i = 0; i < (size_t)(sizeof(event_types) / sizeof(event_types[0])); i++)
 	if (type == event_types[i].type)
 	    return (event_types[i].name);
-    return ("BOGUS EVENT TYPE");
+    return (_("BOGUS EVENT TYPE"));
 }

@@ -121,21 +121,21 @@ int SCSI_OpenDevice(int ip)
   char *buffer = NULL ;           /* Will contain the device name after checking */
   int openmode = O_RDONLY;
 
-  DebugPrint(DEBUG_INFO, SECTION_SCSI,"##### START SCSI_OpenDevice\n");
+  DebugPrint(DEBUG_INFO, SECTION_SCSI,_("##### START SCSI_OpenDevice\n"));
   if (pDev[ip].inqdone == 0)
     {
       pDev[ip].inqdone = 1;
       if (strncmp("/dev/sg", pDev[ip].dev, 7) != 0) /* Check if no sg device for an link .... */
         {
-          DebugPrint(DEBUG_INFO, SECTION_SCSI,"SCSI_OpenDevice : checking if %s is a sg device\n", pDev[ip].dev);
+          DebugPrint(DEBUG_INFO, SECTION_SCSI,_("SCSI_OpenDevice : checking if %s is a sg device\n"), pDev[ip].dev);
           if (lstat(pDev[ip].dev, &pstat) != -1)
             {
               if (S_ISLNK(pstat.st_mode) == 1)
                 {
-                  DebugPrint(DEBUG_INFO, SECTION_SCSI,"SCSI_OpenDevice : is a link, checking destination\n");
+                  DebugPrint(DEBUG_INFO, SECTION_SCSI,_("SCSI_OpenDevice : is a link, checking destination\n"));
                   if ((buffer = (char *)malloc(513)) == NULL)
                     {
-                      DebugPrint(DEBUG_ERROR, SECTION_SCSI,"SCSI_OpenDevice : malloc failed\n");
+                      DebugPrint(DEBUG_ERROR, SECTION_SCSI,_("SCSI_OpenDevice : malloc failed\n"));
                       return(0);
                     }
                   memset(buffer, 0, 513);
@@ -151,16 +151,16 @@ int SCSI_OpenDevice(int ip)
                     {
                       if (strncmp("/dev/sg", buffer, 7) == 0)
                         {
-                          DebugPrint(DEBUG_INFO, SECTION_SCSI,"SCSI_OpenDevice : link points to %s\n", buffer) ;
+                          DebugPrint(DEBUG_INFO, SECTION_SCSI,_("SCSI_OpenDevice : link points to %s\n"), buffer) ;
                           pDev[ip].flags = 1;
                         }
                     }
                 } else {/* S_ISLNK(pstat.st_mode) == 1 */
-                  DebugPrint(DEBUG_INFO, SECTION_SCSI,"No link %s\n", pDev[ip].dev) ;
+                  DebugPrint(DEBUG_INFO, SECTION_SCSI,_("No link %s\n"), pDev[ip].dev) ;
                   buffer = stralloc(pDev[ip].dev);
                 }
             } else {/* lstat(DeviceName, &pstat) != -1 */ 
-              DebugPrint(DEBUG_ERROR, SECTION_SCSI,"can't stat device %s\n", pDev[ip].dev);
+              DebugPrint(DEBUG_ERROR, SECTION_SCSI,_("can't stat device %s\n"), pDev[ip].dev);
               return(0);
             }
         } else {
@@ -173,19 +173,19 @@ int SCSI_OpenDevice(int ip)
           openmode = O_RDWR;
         }
       
-      DebugPrint(DEBUG_INFO, SECTION_SCSI,"Try to open %s\n", buffer);
+      DebugPrint(DEBUG_INFO, SECTION_SCSI,_("Try to open %s\n"), buffer);
       if ((DeviceFD = open(buffer, openmode)) >= 0)
         {
           pDev[ip].avail = 1;
           pDev[ip].devopen = 1;
           pDev[ip].fd = DeviceFD;
         } else {
-          DebugPrint(DEBUG_INFO, SECTION_SCSI,"##### STOP SCSI_OpenDevice open failed\n");
+          DebugPrint(DEBUG_INFO, SECTION_SCSI,_("##### STOP SCSI_OpenDevice open failed\n"));
 	  amfree(buffer);
           return(0);
         }
       
-      DebugPrint(DEBUG_INFO, SECTION_SCSI,"done\n");
+      DebugPrint(DEBUG_INFO, SECTION_SCSI,_("done\n"));
       if ( pDev[ip].flags == 1)
         {
           pDev[ip].SCSI = 1;
@@ -194,14 +194,14 @@ int SCSI_OpenDevice(int ip)
       pDev[ip].dev = buffer;
       if (pDev[ip].SCSI == 1)
         {
-          DebugPrint(DEBUG_INFO, SECTION_SCSI,"SCSI_OpenDevice : use SG interface\n");
+          DebugPrint(DEBUG_INFO, SECTION_SCSI,_("SCSI_OpenDevice : use SG interface\n"));
           if ((timeout = ioctl(pDev[ip].fd, SG_GET_TIMEOUT)) > 0) 
             {
-              DebugPrint(DEBUG_INFO, SECTION_SCSI,"SCSI_OpenDevice : current timeout %d\n", timeout);
+              DebugPrint(DEBUG_INFO, SECTION_SCSI,_("SCSI_OpenDevice : current timeout %d\n"), timeout);
               timeout = 60000;
               if (ioctl(pDev[ip].fd, SG_SET_TIMEOUT, &timeout) == 0)
                 {
-                  DebugPrint(DEBUG_INFO, SECTION_SCSI,"SCSI_OpenDevice : timeout set to %d\n", timeout);
+                  DebugPrint(DEBUG_INFO, SECTION_SCSI,_("SCSI_OpenDevice : timeout set to %d\n"), timeout);
                 }
             }
           pDev[ip].inquiry = (SCSIInquiry_T *)malloc(INQUIRY_SIZE);
@@ -228,12 +228,12 @@ int SCSI_OpenDevice(int ip)
 		  }
 
                   PrintInquiry(pDev[ip].inquiry);
-                  DebugPrint(DEBUG_INFO, SECTION_SCSI,"##### STOP SCSI_OpenDevice (1)\n");
+                  DebugPrint(DEBUG_INFO, SECTION_SCSI,_("##### STOP SCSI_OpenDevice (1)\n"));
                   return(1);
                 } else {
                   close(DeviceFD);
                   amfree(pDev[ip].inquiry);
-                  DebugPrint(DEBUG_INFO, SECTION_SCSI,"##### STOP SCSI_OpenDevice (0)\n");
+                  DebugPrint(DEBUG_INFO, SECTION_SCSI,_("##### STOP SCSI_OpenDevice (0)\n"));
                   return(0);
                 }
             } else {
@@ -242,15 +242,15 @@ int SCSI_OpenDevice(int ip)
               close(DeviceFD);
               amfree(pDev[ip].inquiry);
               pDev[ip].inquiry = NULL;
-              DebugPrint(DEBUG_INFO, SECTION_SCSI,"##### STOP SCSI_OpenDevice (1)\n");
+              DebugPrint(DEBUG_INFO, SECTION_SCSI,_("##### STOP SCSI_OpenDevice (1)\n"));
               return(1);
             }
         } else /* if (pDev[ip].SCSI == 1) */ {  
-          DebugPrint(DEBUG_INFO, SECTION_SCSI,"Device not capable for SCSI commands\n");
+          DebugPrint(DEBUG_INFO, SECTION_SCSI,_("Device not capable for SCSI commands\n"));
           pDev[ip].SCSI = 0;
           pDev[ip].devopen = 0;
           close(DeviceFD);
-          DebugPrint(DEBUG_INFO, SECTION_SCSI,"##### STOP SCSI_OpenDevice (1)\n");
+          DebugPrint(DEBUG_INFO, SECTION_SCSI,_("##### STOP SCSI_OpenDevice (1)\n"));
           return(1);
         }
     } else { /* if (pDev[ip].inqdone == 0) */
@@ -268,22 +268,22 @@ int SCSI_OpenDevice(int ip)
             {
               if ((timeout = ioctl(pDev[ip].fd, SG_GET_TIMEOUT)) > 0) 
                 {
-                  DebugPrint(DEBUG_INFO, SECTION_SCSI,"SCSI_OpenDevice : current timeout %d\n", timeout);
+                  DebugPrint(DEBUG_INFO, SECTION_SCSI,_("SCSI_OpenDevice : current timeout %d\n"), timeout);
                   timeout = 60000;
                   if (ioctl(pDev[ip].fd, SG_SET_TIMEOUT, &timeout) == 0)
                     {
-                      DebugPrint(DEBUG_INFO, SECTION_SCSI,"SCSI_OpenDevice : timeout set to %d\n", timeout);
+                      DebugPrint(DEBUG_INFO, SECTION_SCSI,_("SCSI_OpenDevice : timeout set to %d\n"), timeout);
                     }
                 }
             }
-          DebugPrint(DEBUG_INFO, SECTION_SCSI,"##### STOP SCSI_OpenDevice (1)\n");
+          DebugPrint(DEBUG_INFO, SECTION_SCSI,_("##### STOP SCSI_OpenDevice (1)\n"));
           return(1);
         } else {
-          DebugPrint(DEBUG_INFO, SECTION_SCSI,"##### STOP SCSI_OpenDevice open failed\n");
+          DebugPrint(DEBUG_INFO, SECTION_SCSI,_("##### STOP SCSI_OpenDevice open failed\n"));
           return(0);
         }
     }
-  DebugPrint(DEBUG_INFO, SECTION_SCSI,"##### STOP SCSI_OpenDevice should not happen !!\n");
+  DebugPrint(DEBUG_INFO, SECTION_SCSI,_("##### STOP SCSI_OpenDevice should not happen !!\n"));
   return(0);
 }
 
@@ -327,7 +327,7 @@ int SCSI_ExecuteCommand(int DeviceFD,
   buffer = (char *)malloc(SCSI_OFF + CDB_Length + DataBufferLength);
   if (buffer == NULL)
     {
-      dbprintf("SCSI_ExecuteCommand memory allocation failure.\n");
+      dbprintf(_("SCSI_ExecuteCommand memory allocation failure.\n"));
       SCSI_CloseDevice(DeviceFD);
       return(-1);
     }
@@ -361,7 +361,7 @@ int SCSI_ExecuteCommand(int DeviceFD,
        (status != (ssize_t)(SCSI_OFF + CDB_Length + osize)) ||
        (psg_header->result != 0)) 
     {
-      dbprintf("SCSI_ExecuteCommand error send \n");
+      dbprintf(_("SCSI_ExecuteCommand error send \n"));
       SCSI_CloseDevice(DeviceFD);
       amfree(buffer);
       return(SCSI_ERROR);
@@ -376,8 +376,9 @@ int SCSI_ExecuteCommand(int DeviceFD,
        (status != (ssize_t)(SCSI_OFF + DataBufferLength)) || 
        (psg_header->result != 0)) 
     { 
-      dbprintf("SCSI_ExecuteCommand error read \n");
-      dbprintf("Status " SSIZE_T_FMT " (" SSIZE_T_FMT ") %2X\n", status, SCSI_OFF + DataBufferLength,psg_header->result );
+      dbprintf(_("SCSI_ExecuteCommand error read \n"));
+      dbprintf(_("Status " SSIZE_T_FMT " (" SSIZE_T_FMT ") %2X\n"), status, SCSI_OFF + DataBufferLength,psg_header->result );
+      dbprintf(_("SCSI_ExecuteCommand error read \n"));
       SCSI_CloseDevice(DeviceFD);
       amfree(buffer);
       return(SCSI_ERROR);
@@ -420,7 +421,7 @@ int SCSI_OpenDevice(int ip)
           pDev[ip].fd = DeviceFD;
           pDev[ip].SCSI = 0;
           pDev[ip].inquiry = (SCSIInquiry_T *)malloc(INQUIRY_SIZE);
-          dbprintf("SCSI_OpenDevice : use ioctl interface\n");
+          dbprintf(_("SCSI_OpenDevice : use ioctl interface\n"));
           if (SCSI_Inquiry(ip, pDev[ip].inquiry, (u_char)INQUIRY_SIZE) == 0)
             {
               if (pDev[ip].inquiry->type == TYPE_TAPE || pDev[ip].inquiry->type == TYPE_CHANGER)
@@ -549,7 +550,7 @@ int Tape_Ioctl( int DeviceFD, int command)
 
   if (ioctl(pDev[DeviceFD].fd , MTIOCTOP, &mtop) != 0)
     {
-      dbprintf("Tape_Ioctl error ioctl %s\n",strerror(errno));
+      dbprintf(_("Tape_Ioctl error ioctl %s\n"),strerror(errno));
       SCSI_CloseDevice(DeviceFD);
       return(-1);
     }
@@ -572,13 +573,13 @@ int Tape_Status( int DeviceFD)
 
   if (ioctl(pDev[DeviceFD].fd , MTIOCGET, &mtget) != 0)
   {
-     DebugPrint(DEBUG_ERROR, SECTION_TAPE,"Tape_Status error ioctl %s\n",
+     DebugPrint(DEBUG_ERROR, SECTION_TAPE,_("Tape_Status error ioctl %s\n"),
 		strerror(errno));
      SCSI_CloseDevice(DeviceFD);
      return(-1);
   }
 
-  DebugPrint(DEBUG_INFO, SECTION_TAPE,"ioctl -> mtget.mt_gstat %lX\n",mtget.mt_gstat);
+  DebugPrint(DEBUG_INFO, SECTION_TAPE,_("ioctl -> mtget.mt_gstat %lX\n"),mtget.mt_gstat);
   if (GMT_ONLINE(mtget.mt_gstat))
     {
       ret = TAPE_ONLINE;
@@ -621,7 +622,7 @@ int ScanBus(int print)
 
   if ((dir = opendir("/dev/")) == NULL)
     {
-      dbprintf("/dev/ error: %s", strerror(errno));
+      dbprintf(_("/dev/ error: %s"), strerror(errno));
       return 0;
     }
 
@@ -640,48 +641,48 @@ int ScanBus(int print)
             
             if (print)
               {
-                printf("name /dev/%s ", dirent->d_name);
+                printf(_("name /dev/%s "), dirent->d_name);
                 
                 switch (pDev[count].inquiry->type)
                   {
                   case TYPE_DISK:
-                    printf("Disk");
+                    printf(_("Disk"));
                     break;
                   case TYPE_TAPE:
-                    printf("Tape");
+                    printf(_("Tape"));
                     break;
                   case TYPE_PRINTER:
-                    printf("Printer");
+                    printf(_("Printer"));
                     break;
                   case TYPE_PROCESSOR:
-                    printf("Processor");
+                    printf(_("Processor"));
                     break;
                   case TYPE_WORM:
-                    printf("Worm");
+                    printf(_("Worm"));
                     break;
                   case TYPE_CDROM:
-                    printf("Cdrom");
+                    printf(_("Cdrom"));
                     break;
                   case TYPE_SCANNER:
-                    printf("Scanner");
+                    printf(_("Scanner"));
                     break;
                   case TYPE_OPTICAL:
-                    printf("Optical");
+                    printf(_("Optical"));
                     break;
                   case TYPE_CHANGER:
-                    printf("Changer");
+                    printf(_("Changer"));
                     break;
                   case TYPE_COMM:
-                    printf("Comm");
+                    printf(_("Comm"));
                     break;
                   default:
-                    printf("unknown %d",pDev[count].inquiry->type);
+                    printf(_("unknown %d"),pDev[count].inquiry->type);
                     break;
                   }
                 printf("\n");
               }
             count++;
-	    printf("Count %d\n",count);
+	    printf(_("Count %d\n"),count);
           } else {
             amfree(pDev[count].dev);
             pDev[count].dev=NULL;

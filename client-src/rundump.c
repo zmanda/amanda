@@ -44,10 +44,10 @@ int main(int argc, char **argv);
 #endif
 
 #if !defined(USE_RUNDUMP)
-#  define ERRMSG "rundump not enabled on this system.\n"
+#  define ERRMSG _("rundump not enabled on this system.\n")
 #else
 #  if !defined(DUMP) && !defined(VXDUMP) && !defined(VDUMP) && !defined(XFSDUMP)
-#    define ERRMSG "DUMP not available on this system.\n"
+#    define ERRMSG _("DUMP not available on this system.\n")
 #  else
 #    undef ERRMSG
 #  endif
@@ -68,6 +68,8 @@ main(
     safe_fd(-1, 0);
     safe_cd();
 
+    setlocale(LC_ALL, "C");
+
     set_pname("rundump");
 
     /* Don't die when child closes pipe */
@@ -75,11 +77,11 @@ main(
 
     dbopen(DBG_SUBDIR_CLIENT);
     if (argc < 3) {
-	error("Need at least 3 arguments\n");
+	error(_("Need at least 3 arguments\n"));
 	/*NOTREACHED*/
     }
 
-    dbprintf("version %s\n", version());
+    dbprintf(_("version %s\n"), version());
 
 #ifdef ERRMSG							/* { */
 
@@ -91,18 +93,18 @@ main(
 #else								/* } { */
 
     if(client_uid == (uid_t) -1) {
-	error("error [cannot find user %s in passwd file]\n", CLIENT_LOGIN);
+	error(_("error [cannot find user %s in passwd file]\n"), CLIENT_LOGIN);
 	/*NOTREACHED*/
     }
 
 #ifdef FORCE_USERID
     if (getuid() != client_uid) {
-	error("error [must be invoked by %s]\n", CLIENT_LOGIN);
+	error(_("error [must be invoked by %s]\n"), CLIENT_LOGIN);
 	/*NOTREACHED*/
     }
 
     if (geteuid() != 0) {
-	error("error [must be setuid root]\n");
+	error(_("error [must be setuid root]\n"));
 	/*NOTREACHED*/
     }
 #endif	/* FORCE_USERID */
@@ -115,7 +117,7 @@ main(
     argc--;
     argv++;
 
-    dbprintf("config: %s\n", argv[0]);
+    dbprintf(_("config: %s\n"), argv[0]);
     if (strcmp(argv[0], "NOCONFIG") != 0)
 	dbrename(argv[0], DBG_SUBDIR_CLIENT);
     argc--;
@@ -167,16 +169,16 @@ main(
 	cmdline = vstrextend(&cmdline, " ", quoted, NULL);
 	amfree(quoted);
     }
-    dbprintf("running: %s\n", cmdline);
+    dbprintf(_("running: %s\n"), cmdline);
     amfree(cmdline);
 
     execve(dump_program, argv, safe_env());
 
     e = strerror(errno);
-    dbprintf("failed (%s)\n", e);
+    dbprintf(_("failed (%s)\n"), e);
     dbclose();
 
-    fprintf(stderr, "rundump: could not exec %s: %s\n", dump_program, e);
+    fprintf(stderr, _("rundump: could not exec %s: %s\n"), dump_program, e);
     return 1;
 #endif								/* } */
 }

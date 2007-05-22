@@ -106,7 +106,7 @@ find_dump(
 	    logs += search_logfile(&output_find, tp->label, tp->datestamp, logfile);
 	}
 	if(logs == 0 && strcmp(tp->datestamp,"0") != 0)
-	    printf("Warning: no log files found for tape %s written %s\n",
+	    printf(_("Warning: no log files found for tape %s written %s\n"),
 		   tp->label, find_nicedate(tp->datestamp));
     }
     amfree(logfile);
@@ -189,7 +189,7 @@ find_log(void)
 	    }
 	}
 	if(logs == 0 && strcmp(tp->datestamp,"0") != 0)
-	    printf("Warning: no log files found for tape %s written %s\n",
+	    printf(_("Warning: no log files found for tape %s written %s\n"),
 		   tp->label, find_nicedate(tp->datestamp));
     }
     amfree(logfile);
@@ -481,7 +481,7 @@ print_find_result(
 	printf("\nNo dump to list\n");
     }
     else {
-	printf("\ndate%*s host%*s disk%*s lv%*s tape or file%*s file%*s part%*s status\n",
+	printf(_("\ndate%*s host%*s disk%*s lv%*s tape or file%*s file%*s part%*s status\n"),
 	       max_len_datestamp-4,"",
 	       max_len_hostname-4 ,"",
 	       max_len_diskname-4 ,"",
@@ -687,7 +687,7 @@ search_logfile(
     disk_t *dp;
 
     if((logf = fopen(logfile, "r")) == NULL) {
-	error("could not open logfile %s: %s", logfile, strerror(errno));
+	error(_("could not open logfile %s: %s"), logfile, strerror(errno));
 	/*NOTREACHED*/
     }
 
@@ -697,7 +697,7 @@ search_logfile(
 	if(curlog == L_START && curprog == P_TAPER) {
 	    if(parse_taper_datestamp_log(curstr,
 					 &ck_datestamp, &ck_label) == 0) {
-		printf("strange log line \"start taper %s\" curstr='%s'\n",
+		printf(_("strange log line \"start taper %s\" curstr='%s'\n"),
 		    logfile, curstr);
 	    } else if(strcmp(ck_datestamp, datestamp) == 0
 		      && strcmp(ck_label, label) == 0) {
@@ -729,7 +729,7 @@ search_logfile(
 	if(curlog == L_START && curprog == P_TAPER) {
 	    if(parse_taper_datestamp_log(curstr,
 					 &ck_datestamp2, &ck_label) == 0) {
-		printf("strange log line in %s \"start taper %s\"\n",
+		printf(_("strange log line in %s \"start taper %s\"\n"),
 		    logfile, curstr);
 	    } else if (strcmp(ck_label, label)) {
 		passlabel = !passlabel;
@@ -742,7 +742,7 @@ search_logfile(
 
 	    skip_whitespace(s, ch);
 	    if(ch == '\0') {
-		printf("strange log line in %s \"%s\"\n",
+		printf(_("strange log line in %s \"%s\"\n"),
 		    logfile, curstr);
 		continue;
 	    }
@@ -753,7 +753,7 @@ search_logfile(
 
 	    skip_whitespace(s, ch);
 	    if(ch == '\0') {
-		printf("strange log line in %s \"%s\"\n",
+		printf(_("strange log line in %s \"%s\"\n"),
 		    logfile, curstr);
 		continue;
 	    }
@@ -765,7 +765,7 @@ search_logfile(
 
 	    skip_whitespace(s, ch);
 	    if(ch == '\0') {
-		printf("strange log line in %s \"%s\"\n",
+		printf(_("strange log line in %s \"%s\"\n"),
 		    logfile, curstr);
 		continue;
 	    }
@@ -788,7 +788,7 @@ search_logfile(
 		}
 		skip_whitespace(s, ch);
 		if(ch == '\0' || sscanf(s - 1, "%d", &level) != 1) {
-		    printf("strange log line in %s \"%s\"\n",
+		    printf(_("strange log line in %s \"%s\"\n"),
 		    logfile, curstr);
 		    continue;
 		}
@@ -797,7 +797,7 @@ search_logfile(
 
 	    skip_whitespace(s, ch);
 	    if(ch == '\0') {
-		printf("strange log line in %s \"%s\"\n",
+		printf(_("strange log line in %s \"%s\"\n"),
 		    logfile, curstr);
 		continue;
 	    }

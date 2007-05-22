@@ -42,7 +42,7 @@ dgram_socket(
     int		socket)
 {
     if(socket < 0 || socket >= FD_SETSIZE) {
-	error("dgram_socket: socket %d out of range (0 .. %d)\n",
+	error(_("dgram_socket: socket %d out of range (0 .. %d)\n"),
 	      socket, (int)FD_SETSIZE-1);
         /*NOTREACHED*/
     }
@@ -66,13 +66,13 @@ dgram_bind(
     *portp = (in_port_t)0;
     if((s = socket(family, SOCK_DGRAM, 0)) == -1) {
 	save_errno = errno;
-	dbprintf("dgram_bind: socket() failed: %s\n",
+	dbprintf(_("dgram_bind: socket() failed: %s\n"),
 		  strerror(save_errno));
 	errno = save_errno;
 	return -1;
     }
     if(s < 0 || s >= (int)FD_SETSIZE) {
-	dbprintf("dgram_bind: socket out of range: %d\n",
+	dbprintf(_("dgram_bind: socket out of range: %d\n"),
 		  s);
 	aclose(s);
 	errno = EMFILE;				/* out of range */
@@ -96,19 +96,19 @@ dgram_bind(
     for (retries = 0; ; retries++) {
 	if (bind_portrange(s, &name, portrange[0], portrange[1], "udp") == 0)
 	    goto out;
-	dbprintf("dgram_bind: Could not bind to port in range: %d - %d.\n",
+	dbprintf(_("dgram_bind: Could not bind to port in range: %d - %d.\n"),
 		  portrange[0], portrange[1]);
 	if (retries >= BIND_CYCLE_RETRIES) {
-	    dbprintf("dgram_bind: Giving up...\n");
+	    dbprintf(_("dgram_bind: Giving up...\n"));
 	    break;
 	}
 
-	dbprintf("dgram_bind: Retrying entire range after 10 second delay.\n");
+	dbprintf(_("dgram_bind: Retrying entire range after 10 second delay.\n"));
 	sleep(15);
     }
 
     save_errno = errno;
-    dbprintf("dgram_bind: bind(in6addr_any) failed: %s\n",
+    dbprintf(_("dgram_bind: bind(in6addr_any) failed: %s\n"),
 		  strerror(save_errno));
     aclose(s);
     errno = save_errno;
@@ -120,7 +120,7 @@ out:
     len = (socklen_t)sizeof(name);
     if(getsockname(s, (struct sockaddr *)&name, &len) == -1) {
 	save_errno = errno;
-	dbprintf("dgram_bind: getsockname() failed: %s\n", strerror(save_errno));
+	dbprintf(_("dgram_bind: getsockname() failed: %s\n"), strerror(save_errno));
 	errno = save_errno;
 	aclose(s);
 	return -1;
@@ -128,7 +128,7 @@ out:
     *portp = SS_GET_PORT(&name);
     dgram->socket = s;
 
-    dbprintf("dgram_bind: socket %d bound to %s\n",
+    dbprintf(_("dgram_bind: socket %d bound to %s\n"),
 	      dgram->socket, str_sockaddr(&name));
     return 0;
 }
@@ -149,10 +149,10 @@ dgram_send_addr(
     int r;
 #endif
 
-    dbprintf("dgram_send_addr(addr=%p, dgram=%p)\n",
+    dbprintf(_("dgram_send_addr(addr=%p, dgram=%p)\n"),
 	      addr, dgram);
     dump_sockaddr(addr);
-    dbprintf("dgram_send_addr: %p->socket = %d\n",
+    dbprintf(_("dgram_send_addr: %p->socket = %d\n"),
 	      dgram, dgram->socket);
     if(dgram->socket != -1) {
 	s = dgram->socket;
@@ -160,7 +160,7 @@ dgram_send_addr(
     } else {
 	if((s = socket(addr->ss_family, SOCK_DGRAM, 0)) == -1) {
 	    save_errno = errno;
-	    dbprintf("dgram_send_addr: socket() failed: %s\n",
+	    dbprintf(_("dgram_send_addr: socket() failed: %s\n"),
 		      strerror(save_errno));
 	    errno = save_errno;
 	    return -1;
@@ -170,14 +170,14 @@ dgram_send_addr(
 	r = setsockopt(s, SOL_SOCKET, SO_REUSEADDR,
 		(void *)&on, (socklen_t)sizeof(on));
 	if (r < 0) {
-	    dbprintf("dgram_send_addr: setsockopt(SO_REUSEADDR) failed: %s\n",
+	    dbprintf(_("dgram_send_addr: setsockopt(SO_REUSEADDR) failed: %s\n"),
 		      strerror(errno));
 	}
 #endif
     }
 
     if(s < 0 || s >= FD_SETSIZE) {
-	dbprintf("dgram_send_addr: socket out of range: %d\n", s);
+	dbprintf(_("dgram_send_addr: socket out of range: %d\n"), s);
 	errno = EMFILE;				/* out of range */
 	rc = -1;
     } else {
@@ -193,7 +193,7 @@ dgram_send_addr(
 #ifdef ECONNREFUSED
 	    if(errno == ECONNREFUSED && wait_count++ < max_wait) {
 		sleep(5);
-		dbprintf("dgram_send_addr: sendto(%s): retry %d after ECONNREFUSED\n",
+		dbprintf(_("dgram_send_addr: sendto(%s): retry %d after ECONNREFUSED\n"),
 		      str_sockaddr(addr),
 		      wait_count);
 		continue;
@@ -202,14 +202,14 @@ dgram_send_addr(
 #ifdef EAGAIN
 	    if(errno == EAGAIN && wait_count++ < max_wait) {
 		sleep(5);
-		dbprintf("dgram_send_addr: sendto(%s): retry %d after EAGAIN\n",
+		dbprintf(_("dgram_send_addr: sendto(%s): retry %d after EAGAIN\n"),
 		      str_sockaddr(addr),
 		      wait_count);
 		continue;
 	    }
 #endif
 	    save_errno = errno;
-	    dbprintf("dgram_send_addr: sendto(%s) failed: %s \n",
+	    dbprintf(_("dgram_send_addr: sendto(%s) failed: %s \n"),
 		  str_sockaddr(addr),
 		  strerror(save_errno));
 	    errno = save_errno;
@@ -221,7 +221,7 @@ dgram_send_addr(
     if(socket_opened) {
 	save_errno = errno;
 	if(close(s) == -1) {
-	    dbprintf("dgram_send_addr: close(%s): failed: %s\n",
+	    dbprintf(_("dgram_send_addr: close(%s): failed: %s\n"),
 		      str_sockaddr(addr),
 		      strerror(errno));
 	    /*
@@ -234,6 +234,7 @@ dgram_send_addr(
 
     return rc;
 }
+
 
 
 ssize_t
@@ -257,24 +258,26 @@ dgram_recv(
     to.tv_sec = timeout;
     to.tv_usec = 0;
 
-    dbprintf("dgram_recv(dgram=%p, timeout=%u, fromaddr=%p)\n",
+    dbprintf(_("dgram_recv(dgram=%p, timeout=%u, fromaddr=%p)\n"),
 		dgram, timeout, fromaddr);
     
     nfound = (ssize_t)select(sock+1, &ready, NULL, NULL, &to);
     if(nfound <= 0 || !FD_ISSET(sock, &ready)) {
 	save_errno = errno;
 	if(nfound < 0) {
-	    dbprintf("dgram_recv: select() failed: %s\n", strerror(save_errno));
+	    dbprintf(_("dgram_recv: select() failed: %s\n"), strerror(save_errno));
 	} else if(nfound == 0) {
-	    dbprintf("dgram_recv: timeout after %d second%s\n",
-		      timeout, (timeout == 1) ? "" : "s");
+	    dbprintf(plural(_("dgram_recv: timeout after %d second\n"),
+			    _("dgram_recv: timeout after %d seconds\n"),
+			    timeout),
+		     timeout);
 	    nfound = 0;
 	} else if (!FD_ISSET(sock, &ready)) {
 	    int i;
 
 	    for(i = 0; i < sock + 1; i++) {
 		if(FD_ISSET(i, &ready)) {
-		    dbprintf("dgram_recv: got fd %d instead of %d\n", i, sock);
+		    dbprintf(_("dgram_recv: got fd %d instead of %d\n"), i, sock);
 		}
 	    }
 	    save_errno = EBADF;
@@ -289,7 +292,7 @@ dgram_recv(
 		    (struct sockaddr *)fromaddr, &addrlen);
     if(size == -1) {
 	save_errno = errno;
-	dbprintf("dgram_recv: recvfrom() failed: %s\n", strerror(save_errno));
+	dbprintf(_("dgram_recv: recvfrom() failed: %s\n"), strerror(save_errno));
 	errno = save_errno;
 	return -1;
     }

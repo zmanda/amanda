@@ -134,8 +134,8 @@ lock_logfile(void)
     }
     rst_conf_logfile = vstralloc(rst_conf_logdir, "/log", NULL);
     if (access(rst_conf_logfile, F_OK) == 0) {
-	dbprintf("%s exists: amdump or amflush is already running, "
-		  "or you must run amcleanup\n", rst_conf_logfile);
+	dbprintf(_("%s exists: amdump or amflush is already running, "
+		  "or you must run amcleanup\n"), rst_conf_logfile);
 	return 0;
     }
     log_add(L_INFO, get_pname());
@@ -203,14 +203,14 @@ append_file_to_fd(
     buffer = alloc(blocksize);
 
     if((tapefd = open(filename, O_RDONLY)) == -1) {
-	error("can't open %s: %s", filename, strerror(errno));
+	error(_("can't open %s: %s"), filename, strerror(errno));
 	/*NOTREACHED*/
     }
 
     for (;;) {
 	bytes_read = get_block(tapefd, buffer, 1); /* same as isafile = 1 */
 	if(bytes_read < 0) {
-	    error("read error: %s", strerror(errno));
+	    error(_("read error: %s"), strerror(errno));
 	    /*NOTREACHED*/
 	}
 
@@ -219,18 +219,18 @@ append_file_to_fd(
 
 	s = fullwrite(fd, buffer, (size_t)bytes_read);
 	if (s < bytes_read) {
-	    fprintf(stderr,"Error (%s) offset " OFF_T_FMT "+" OFF_T_FMT ", wrote " OFF_T_FMT "\n",
+	    fprintf(stderr,_("Error (%s) offset " OFF_T_FMT "+" OFF_T_FMT ", wrote " OFF_T_FMT "\n"),
 		    strerror(errno), (OFF_T_FMT_TYPE)wc,
 		    (OFF_T_FMT_TYPE)bytes_read, (OFF_T_FMT_TYPE)s);
 	    if (s < 0) {
 		if((errno == EPIPE) || (errno == ECONNRESET)) {
-		    error("pipe reader has quit in middle of file.");
+		    error(_("pipe reader has quit in middle of file."));
 		    /*NOTREACHED*/
 		}
-		error("restore: write error = %s", strerror(errno));
+		error(_("restore: write error = %s"), strerror(errno));
 		/*NOTREACHED*/
 	    }
-	    error("Short write: wrote " SSIZE_T_FMT " bytes expected " SSIZE_T_FMT ".", s, bytes_read);
+	    error(_("Short write: wrote " SSIZE_T_FMT " bytes expected " SSIZE_T_FMT "."), s, bytes_read);
 	    /*NOTREACHCED*/
 	}
 	wc += (off_t)bytes_read;
@@ -256,7 +256,7 @@ scan_init(
     (void)s;	/* Quiet unused parameter warning */
 
     if(rc) {
-        error("could not get changer info: %s", changer_resultstr);
+        error(_("could not get changer info: %s"), changer_resultstr);
 	/*NOTREACHED*/
     }
     backwards = bk;
@@ -278,28 +278,28 @@ loadlabel_slot(
     (void)ud;	/* Quiet unused parameter warning */
 
     if(rc > 1) {
-        error("could not load slot %s: %s", slotstr, changer_resultstr);
+        error(_("could not load slot %s: %s"), slotstr, changer_resultstr);
 	/*NOTREACHED*/
     } else if(rc == 1) {
-        fprintf(stderr, "%s: slot %s: %s\n",
+        fprintf(stderr, _("%s: slot %s: %s\n"),
                 get_pname(), slotstr, changer_resultstr);
     } else if((errstr = tape_rdlabel(device, &datestamp, &label)) != NULL) {
-        fprintf(stderr, "%s: slot %s: %s\n", get_pname(), slotstr, errstr);
+        fprintf(stderr, _("%s: slot %s: %s\n"), get_pname(), slotstr, errstr);
     } else {
 	if(strlen(datestamp)>8)
-            fprintf(stderr, "%s: slot %s: date %-14s label %s",
+            fprintf(stderr, _("%s: slot %s: date %-14s label %s"),
 		    get_pname(), slotstr, datestamp, label);
 	else
-            fprintf(stderr, "%s: slot %s: date %-8s label %s",
+            fprintf(stderr, _("%s: slot %s: date %-8s label %s"),
 		    get_pname(), slotstr, datestamp, label);
         if(strcmp(label, FAKE_LABEL) != 0
            && strcmp(label, searchlabel) != 0)
-            fprintf(stderr, " (wrong tape)\n");
+            fprintf(stderr, _(" (wrong tape)\n"));
         else {
-            fprintf(stderr, " (exact label match)\n");
+            fprintf(stderr, _(" (exact label match)\n"));
             if((errstr = tape_rewind(device)) != NULL) {
                 fprintf(stderr,
-                        "%s: could not rewind %s: %s",
+                        _("%s: could not rewind %s: %s"),
                         get_pname(), device, errstr);
                 amfree(errstr);
             }
@@ -457,11 +457,11 @@ flush_open_outputs(
 
 		    cur_filename  = make_filename(cur_file);
 		    main_filename = make_filename(main_file);
-		    fprintf(stderr, "Merging %s with %s\n",
+		    fprintf(stderr, _("Merging %s with %s\n"),
 		            cur_filename, main_filename);
 		    append_file_to_fd(cur_filename, outfd);
 		    if(unlink(cur_filename) < 0){
-			fprintf(stderr, "Failed to unlink %s: %s\n",
+			fprintf(stderr, _("Failed to unlink %s: %s\n"),
 			             cur_filename, strerror(errno));
 		    }
 		    amfree(cur_filename);
@@ -478,7 +478,7 @@ flush_open_outputs(
 			char *cur_filename = make_filename(cur_file);
 			open(cur_filename, O_RDWR|O_APPEND);
 			if (outfd < 0) {
-			  error("Couldn't open %s for appending: %s",
+			  error(_("Couldn't open %s for appending: %s"),
 			        cur_filename, strerror(errno));
 			  /*NOTREACHED*/
 			}
@@ -643,15 +643,18 @@ read_file_header(
 
     bytes_read = get_block(tapefd, buffer, isafile);
     if(bytes_read < 0) {
-	fprintf(stderr, "%s: error reading file header: %s\n",
+	fprintf(stderr, _("%s: error reading file header: %s\n"),
 		get_pname(), strerror(errno));
 	file->type = F_UNKNOWN;
     } else if((size_t)bytes_read < blocksize) {
 	if(bytes_read == 0) {
-	    fprintf(stderr, "%s: missing file header block\n", get_pname());
+	    fprintf(stderr, _("%s: missing file header block\n"), get_pname());
 	} else {
-	    fprintf(stderr, "%s: short file header block: " OFF_T_FMT " byte%s\n",
-		    get_pname(), (OFF_T_FMT_TYPE)bytes_read, (bytes_read == 1) ? "" : "s");
+	    fprintf(stderr,
+		    plural(_("%s: short file header block: " OFF_T_FMT " byte"),
+	    		   _("%s: short file header block: " OFF_T_FMT " bytes\n"),
+			   bytes_read),
+		    get_pname(), (OFF_T_FMT_TYPE)bytes_read);
 	}
 	file->type = F_UNKNOWN;
     } else {
@@ -679,7 +682,7 @@ drain_file(
     do {
        bytes_read = get_block(tapefd, buffer, 0);
        if(bytes_read < 0) {
-           error("drain read error: %s", strerror(errno));
+           error(_("drain read error: %s"), strerror(errno));
 	   /*NOTREACHED*/
        }
     } while (bytes_read > 0);
@@ -729,7 +732,7 @@ restore(
 
     if(already_have_dump(file)){
 	char *filename = make_filename(file);
-	fprintf(stderr, " *** Duplicate file %s, one is probably an aborted write\n", filename);
+	fprintf(stderr, _(" *** Duplicate file %s, one is probably an aborted write\n"), filename);
 	amfree(filename);
 	check_for_aborted = 1;
     }
@@ -759,7 +762,7 @@ restore(
 	}
 	if(myout != NULL) myout->lastpartnum = file->partnum;
 	else if(file->partnum != 1){
-	    fprintf(stderr, "%s:      Chunk out of order, will save to disk and append to output.\n", get_pname());
+	    fprintf(stderr, _("%s:      Chunk out of order, will save to disk and append to output.\n"), get_pname());
 	    flags->pipe_to_fd = -1;
 	    flags->compress = 0;
 	    flags->leave_comp = 1;
@@ -778,7 +781,7 @@ restore(
     if(is_continuation && flags->pipe_to_fd == -1){
 	char *filename;
 	filename = make_filename(myout->file);
-	fprintf(stderr, "%s:      appending to %s\n", get_pname(),
+	fprintf(stderr, _("%s:      appending to %s\n"), get_pname(),
 		filename);
 	amfree(filename);
     }
@@ -787,7 +790,7 @@ restore(
     file_is_compressed = file->compressed;
     if(!flags->compress && file_is_compressed && !known_compress_type(file)) {
 	fprintf(stderr, 
-		"%s: unknown compression suffix %s, can't uncompress\n",
+		_("%s: unknown compression suffix %s, can't uncompress\n"),
 		get_pname(), file->comp_suffix);
 	flags->compress = 1;
     }
@@ -822,7 +825,7 @@ restore(
 	  tmp_filename = vstralloc(final_filename, ".tmp", NULL);
   	  if((dest = open(tmp_filename, (O_CREAT | O_RDWR | O_TRUNC),
 			  CREAT_MODE)) < 0) {
-  	      error("could not create output file %s: %s",
+  	      error(_("could not create output file %s: %s"),
 	      	    tmp_filename, strerror(errno));
               /*NOTREACHED*/
 	  }
@@ -878,10 +881,10 @@ restore(
 
 	if((w = fullwrite(out, buffer, DISK_BLOCK_BYTES)) != DISK_BLOCK_BYTES) {
 	    if(w < 0) {
-		error("write error: %s", strerror(errno));
+		error(_("write error: %s"), strerror(errno));
 		/*NOTREACHED*/
 	    } else {
-		error("write error: " SSIZE_T_FMT " instead of %d", w, DISK_BLOCK_BYTES);
+		error(_("write error: " SSIZE_T_FMT " instead of %d"), w, DISK_BLOCK_BYTES);
 		/*NOTREACHED*/
 	    }
 	}
@@ -909,7 +912,7 @@ restore(
     stage = 0;
     if (need_decrypt) {
       if (pipe(&pipes[stage].pipe[0]) < 0) {
-        error("error [pipe[%d]: %s]", stage, strerror(errno));
+        error(_("error [pipe[%d]: %s]"), stage, strerror(errno));
 	/*NOTREACHED*/
       }
       stage++;
@@ -917,7 +920,7 @@ restore(
 
     if (need_compress || need_uncompress) {
       if (pipe(&pipes[stage].pipe[0]) < 0) {
-        error("error [pipe[%d]: %s]", stage, strerror(errno));
+        error(_("error [pipe[%d]: %s]"), stage, strerror(errno));
 	/*NOTREACHED*/
       }
       stage++;
@@ -931,7 +934,7 @@ restore(
     if(need_decrypt) {
       switch(myout->comp_enc_pid = fork()) {
       case -1:
-	error("could not fork for decrypt: %s", strerror(errno));
+	error(_("could not fork for decrypt: %s"), strerror(errno));
 	/*NOTREACHED*/
 
       default:
@@ -942,13 +945,13 @@ restore(
 
       case 0:
 	if(dup2(pipes[stage].pipe[0], 0) == -1) {
-	    error("error decrypt stdin [dup2 %d %d: %s]", stage,
+	    error(_("error decrypt stdin [dup2 %d %d: %s]"), stage,
 	        pipes[stage].pipe[0], strerror(errno));
 		/*NOTREACHED*/
 	}
 
 	if(dup2(pipes[stage+1].pipe[1], 1) == -1) {
-	    error("error decrypt stdout [dup2 %d %d: %s]", stage + 1,
+	    error(_("error decrypt stdout [dup2 %d %d: %s]"), stage + 1,
 	        pipes[stage+1].pipe[1], strerror(errno));
 		/*NOTREACHED*/
 	}
@@ -957,12 +960,12 @@ restore(
 	if (*file->srv_encrypt) {
 	  (void) execlp(file->srv_encrypt, file->srv_encrypt,
 			file->srv_decrypt_opt, (char *)NULL);
-	  error("could not exec %s: %s", file->srv_encrypt, strerror(errno));
+	  error(_("could not exec %s: %s"), file->srv_encrypt, strerror(errno));
 	  /*NOTREACHED*/
 	}  else if (*file->clnt_encrypt) {
 	  (void) execlp(file->clnt_encrypt, file->clnt_encrypt,
 			file->clnt_decrypt_opt, (char *)NULL);
-	  error("could not exec %s: %s", file->clnt_encrypt, strerror(errno));
+	  error(_("could not exec %s: %s"), file->clnt_encrypt, strerror(errno));
 	  /*NOTREACHED*/
 	}
       }
@@ -974,7 +977,7 @@ restore(
          */
 	switch(myout->comp_enc_pid = fork()) {
 	case -1:
-	    error("could not fork for %s: %s", COMPRESS_PATH, strerror(errno));
+	    error(_("could not fork for %s: %s"), COMPRESS_PATH, strerror(errno));
 	    /*NOTREACHED*/
 
 	default:
@@ -985,13 +988,13 @@ restore(
 
 	case 0:
 	    if(dup2(pipes[stage].pipe[0], 0) == -1) {
-		error("error compress stdin [dup2 %d %d: %s]", stage,
+		error(_("error compress stdin [dup2 %d %d: %s]"), stage,
 		  pipes[stage].pipe[0], strerror(errno));
 	        /*NOTREACHED*/
 	    }
 
 	    if(dup2(pipes[stage+1].pipe[1], 1) == -1) {
-		error("error compress stdout [dup2 %d %d: %s]", stage + 1,
+		error(_("error compress stdout [dup2 %d %d: %s]"), stage + 1,
 		  pipes[stage+1].pipe[1], strerror(errno));
 		  /*NOTREACHED*/
 	    }
@@ -1001,7 +1004,7 @@ restore(
 
 	    safe_fd(-1, 0);
 	    (void) execlp(COMPRESS_PATH, COMPRESS_PATH, flags->comp_type, (char *)0);
-	    error("could not exec %s: %s", COMPRESS_PATH, strerror(errno));
+	    error(_("could not exec %s: %s"), COMPRESS_PATH, strerror(errno));
 	    /*NOTREACHED*/
 	}
     } else if(need_uncompress) {
@@ -1018,7 +1021,7 @@ restore(
 	 */ 
 	switch(myout->comp_enc_pid = fork()) {
 	case -1: 
-	    error("could not fork for %s: %s",
+	    error(_("could not fork for %s: %s"),
 		  UNCOMPRESS_PATH, strerror(errno));
 	    /*NOTREACHED*/
 
@@ -1030,13 +1033,13 @@ restore(
 
 	case 0:
 	    if(dup2(pipes[stage].pipe[0], 0) == -1) {
-		error("error uncompress stdin [dup2 %d %d: %s]", stage,
+		error(_("error uncompress stdin [dup2 %d %d: %s]"), stage,
 		  pipes[stage].pipe[0], strerror(errno));
 	        /*NOTREACHED*/
 	    }
 
 	    if(dup2(pipes[stage+1].pipe[1], 1) == -1) {
-		error("error uncompress stdout [dup2 %d %d: %s]", stage + 1,
+		error(_("error uncompress stdout [dup2 %d %d: %s]"), stage + 1,
 		  pipes[stage+1].pipe[1], strerror(errno));
 	        /*NOTREACHED*/
 	    }
@@ -1045,13 +1048,13 @@ restore(
 	    if (*file->srvcompprog) {
 	      (void) execlp(file->srvcompprog, file->srvcompprog, "-d",
 			    (char *)NULL);
-	      error("could not exec %s: %s", file->srvcompprog,
+	      error(_("could not exec %s: %s"), file->srvcompprog,
 		    strerror(errno));
 	      /*NOTREACHED*/
 	    } else if (*file->clntcompprog) {
 	      (void) execlp(file->clntcompprog, file->clntcompprog, "-d",
 			    (char *)NULL);
-	      error("could not exec %s: %s", file->clntcompprog,
+	      error(_("could not exec %s: %s"), file->clntcompprog,
 		    strerror(errno));
 	      /*NOTREACHED*/
 	    } else {
@@ -1060,7 +1063,7 @@ restore(
 			  UNCOMPRESS_OPT,
 #endif
 			  (char *)NULL);
-	      error("could not exec %s: %s", UNCOMPRESS_PATH, strerror(errno));
+	      error(_("could not exec %s: %s"), UNCOMPRESS_PATH, strerror(errno));
 	      /*NOTREACHED*/
 	    }
 	}
@@ -1076,7 +1079,7 @@ restore(
     do {
 	bytes_read = get_block(tapefd, buffer, isafile);
 	if(bytes_read < 0) {
-	    error("restore read error: %s", strerror(errno));
+	    error(_("restore read error: %s"), strerror(errno));
 	    /*NOTREACHED*/
 	}
 
@@ -1090,10 +1093,10 @@ restore(
 		     */
 		    break;
 		}
-		error("restore: write error: %s", strerror(errno));
+		error(_("restore: write error: %s"), strerror(errno));
 		/* NOTREACHED */
 	    } else if (s < bytes_read) {
-		error("restore: wrote " SSIZE_T_FMT " of " SSIZE_T_FMT " bytes: %s",
+		error(_("restore: wrote " SSIZE_T_FMT " of " SSIZE_T_FMT " bytes: %s"),
 		    s, bytes_read, strerror(errno));
 		/* NOTREACHED */
 	    }
@@ -1111,19 +1114,19 @@ restore(
 		if(cont_filename) {
 		    cont_filename++;
 		    if((tapefd = open(cont_filename,O_RDONLY)) == -1) {
-			error("can't open %s: %s", file->cont_filename,
+			error(_("can't open %s: %s"), file->cont_filename,
 			      strerror(errno));
 		        /*NOTREACHED*/
 		    }
 		    else {
-			fprintf(stderr, "cannot open %s: %s\n",
+			fprintf(stderr, _("cannot open %s: %s\n"),
 				file->cont_filename, strerror(errno));
-			fprintf(stderr, "using %s\n",
+			fprintf(stderr, _("using %s\n"),
 				cont_filename);
 		    }
 		}
 		else {
-		    error("can't open %s: %s", file->cont_filename,
+		    error(_("can't open %s: %s"), file->cont_filename,
 			  strerror(errno));
 		    /*NOTREACHED*/
 		}
@@ -1131,7 +1134,7 @@ restore(
 	    bytes_read = read_file_header(file, tapefd, isafile, flags);
 	    if(file->type != F_DUMPFILE && file->type != F_CONT_DUMPFILE
 		    && file->type != F_SPLIT_DUMPFILE) {
-		fprintf(stderr, "unexpected header type: ");
+		fprintf(stderr, _("unexpected header type: "));
 		print_header(stderr, file);
 		exit(2);
 	    }
@@ -1146,7 +1149,7 @@ restore(
     }
     if(!is_continuation){
 	if(tmp_filename && stat(tmp_filename, &statinfo) < 0){
-	    error("Can't stat the file I just created (%s)!", tmp_filename);
+	    error(_("Can't stat the file I just created (%s)!"), tmp_filename);
 	    /*NOTREACHED*/
 	} else {
 	    statinfo.st_size = (off_t)0;
@@ -1158,7 +1161,7 @@ restore(
 		if(oldstat.st_size <= statinfo.st_size){
 		    dumplist_t *prev_fileentry = NULL;
 		    open_output_t *prev_out = NULL;
-		    fprintf(stderr, "Newer restore is larger, using that\n");
+		    fprintf(stderr, _("Newer restore is larger, using that\n"));
 		    /* nuke the old dump's entry in alldump_list */
 		    for(fileentry=alldumps_list;
 			    fileentry->next;
@@ -1192,7 +1195,7 @@ restore(
 		    }
 		}
 		else{
-		    fprintf(stderr, "Older restore is larger, using that\n");
+		    fprintf(stderr, _("Older restore is larger, using that\n"));
 		    if (tmp_filename)
 			unlink(tmp_filename);
 		    amfree(tempdump->file);
@@ -1205,7 +1208,7 @@ restore(
 	}
 	if(tmp_filename && final_filename &&
 		rename(tmp_filename, final_filename) < 0) {
-	    error("Can't rename %s to %s: %s",
+	    error(_("Can't rename %s to %s: %s"),
 	    	   tmp_filename, final_filename, strerror(errno));
 	    /*NOTREACHED*/
 	}
@@ -1263,21 +1266,21 @@ label_of_current_slot(
 
     if (!cur_tapedev) {
 	send_message(prompt_out, flags, their_features,
-		     "no tapedev specified");
+		     _("no tapedev specified"));
     } else if (tape_stat(cur_tapedev, &stat_tape) !=0 ) {
 	send_message(prompt_out, flags, their_features, 
-		     "could not stat '%s': %s",
+		     _("could not stat '%s': %s"),
 		     cur_tapedev, strerror(errno));
 	wrongtape = 1;
     } else if((err = tape_rewind(cur_tapedev)) != NULL) {
 	send_message(prompt_out, flags, their_features, 
-			 "Could not rewind device '%s': %s",
+			 _("Could not rewind device '%s': %s"),
 			 cur_tapedev, err);
 	wrongtape = 1;
 	/* err should not be freed */
     } else if((*tapefd = tape_open(cur_tapedev, 0)) < 0){
 	send_message(prompt_out, flags, their_features,
-			 "could not open tape device %s: %s",
+			 _("could not open tape device %s: %s"),
 			 cur_tapedev, strerror(errno));
 	wrongtape = 1;
     }
@@ -1286,13 +1289,13 @@ label_of_current_slot(
  	*read_result = read_file_header(file, *tapefd, 0, flags);
  	if (file->type != F_TAPESTART) {
 	    send_message(prompt_out, flags, their_features,
-			     "Not an amanda tape");
+			     _("Not an amanda tape"));
  	    tapefd_close(*tapefd);
 	} else {
 	    if (flags->check_labels && desired_tape &&
 			 strcmp(file->name, desired_tape->label) != 0) {
 		send_message(prompt_out, flags, their_features,
-				 "Label mismatch, got %s and expected %s",
+				 _("Label mismatch, got %s and expected %s"),
 				 file->name, desired_tape->label);
 		tapefd_close(*tapefd);
 	    }
@@ -1320,7 +1323,7 @@ load_next_tape(
 
     if (desired_tape) {
 	send_message(prompt_out, flags, their_features,
-		     "Looking for tape %s...",
+		     _("Looking for tape %s..."),
 		     desired_tape->label);
 	if (backwards) {
 	    searchlabel = desired_tape->label; 
@@ -1366,38 +1369,38 @@ load_manual_tape(
 	    fflush(prompt_out);
 	    input = agets(prompt_in);/* Strips \n but not \r */
 	    if(!input) {
-		error("Connection lost with amrecover");
+		error(_("Connection lost with amrecover"));
 		/*NOTREACHED*/
 	    } else if (strcmp("OK\r", input) == 0) {
 	    } else if (strncmp("TAPE ", input, 5) == 0) {
 		amfree(*cur_tapedev);
 		*cur_tapedev = alloc(1025);
 		if (sscanf(input, "TAPE %1024s\r", *cur_tapedev) != 1) {
-		    error("Got bad response from amrecover: %s", input);
+		    error(_("Got bad response from amrecover: %s"), input);
 		    /*NOTREACHED*/
 		}
 	    } else {
 		send_message(prompt_out, flags, their_features,
-			     "Got bad response from amrecover: %s", input);
-		error("Got bad response from amrecover: %s", input);
+			     _("Got bad response from amrecover: %s"), input);
+		error(_("Got bad response from amrecover: %s"), input);
 		/*NOTREACHED*/
 	    }
 	} else {
 	    send_message(prompt_out, flags, their_features,
-			 "Client doesn't support fe_amrecover_FEEDME");
-	    error("Client doesn't support fe_amrecover_FEEDME");
+			 _("Client doesn't support fe_amrecover_FEEDME"));
+	    error(_("Client doesn't support fe_amrecover_FEEDME"));
 	    /*NOTREACHED*/
 	}
     }
     else {
 	if (desired_tape) {
 	    fprintf(prompt_out,
-		    "Insert tape labeled %s in device %s \n"
-		    "and press enter, ^D to finish reading tapes\n",
+		    _("Insert tape labeled %s in device %s \n"
+		    "and press enter, ^D to finish reading tapes\n"),
 		    desired_tape->label, *cur_tapedev);
 	} else {
-	    fprintf(prompt_out,"Insert a tape to search and press "
-		    "enter, ^D to finish reading tapes\n");
+	    fprintf(prompt_out,_("Insert a tape to search and press "
+		    "enter, ^D to finish reading tapes\n"));
 	}
 	fflush(prompt_out);
 	if((input = agets(prompt_in)) == NULL)
@@ -1438,17 +1441,17 @@ search_a_tape(
 	tapefile_idx = 0;
 
     if (desired_tape) {
-	dbprintf("search_a_tape: desired_tape=%p label=%s\n",
+	dbprintf(_("search_a_tape: desired_tape=%p label=%s\n"),
 		  desired_tape, desired_tape->label);
-	dbprintf("tape:   numfiles = %d\n", desired_tape->numfiles);
+	dbprintf(_("tape:   numfiles = %d\n"), desired_tape->numfiles);
 	for (i=0; i < desired_tape->numfiles; i++) {
-	    dbprintf("tape:   files[%d] = " OFF_T_FMT "\n",
+	    dbprintf(_("tape:   files[%d] = " OFF_T_FMT "\n"),
 		      i, (OFF_T_FMT_TYPE)desired_tape->files[i]);
 	}
     } else {
-	dbprintf("search_a_tape: no desired_tape\n");
+	dbprintf(_("search_a_tape: no desired_tape\n"));
     }
-    dbprintf("current tapefile_idx = %d\n", tapefile_idx);
+    dbprintf(_("current tapefile_idx = %d\n"), tapefile_idx);
 	
     /* if we know where we're going, fastforward there */
     if(flags->fsf && !isafile){
@@ -1465,19 +1468,19 @@ search_a_tape(
 	if(fsf_by > (off_t)0){
 	    if(tapefd_rewind(tapefd) < 0) {
 		send_message(prompt_out, flags, their_features,
-			     "Could not rewind device %s: %s",
+			     _("Could not rewind device %s: %s"),
 			     cur_tapedev, strerror(errno));
-		error("Could not rewind device %s: %s",
+		error(_("Could not rewind device %s: %s"),
 		      cur_tapedev, strerror(errno));
 		/*NOTREACHED*/
 	    }
 
 	    if(tapefd_fsf(tapefd, fsf_by) < 0) {
 		send_message(prompt_out, flags, their_features,
-			     "Could not fsf device %s by " OFF_T_FMT ": %s",
+			     _("Could not fsf device %s by " OFF_T_FMT ": %s"),
 			     cur_tapedev, (OFF_T_FMT_TYPE)fsf_by,
 			     strerror(errno));
-		error("Could not fsf device %s by " OFF_T_FMT ": %s",
+		error(_("Could not fsf device %s by " OFF_T_FMT ": %s"),
 		      cur_tapedev, (OFF_T_FMT_TYPE)fsf_by,
 		      strerror(errno));
 		/*NOTREACHED*/
@@ -1533,7 +1536,7 @@ search_a_tape(
 	if(found_match){
 	    char *filename = make_filename(file);
 
-	    fprintf(stderr, "%s: " OFF_T_FMT ": restoring ",
+	    fprintf(stderr, _("%s: " OFF_T_FMT ": restoring "),
 		    get_pname(), (OFF_T_FMT_TYPE)filenum);
 	    print_header(stderr, file);
 	    *read_result = restore(file, filename, tapefd, isafile, flags);
@@ -1547,9 +1550,9 @@ search_a_tape(
 		tapefd_close(tapefd);
 		if((tapefd = tape_open(cur_tapedev, 0)) < 0) {
 		    send_message(prompt_out, flags, their_features,
-				 "could not open %s: %s",
+				 _("could not open %s: %s"),
 				 cur_tapedev, strerror(errno));
-		    error("could not open %s: %s",
+		    error(_("could not open %s: %s"),
 			  cur_tapedev, strerror(errno));
 		    /*NOTREACHED*/
 		}
@@ -1558,9 +1561,9 @@ search_a_tape(
 	    else if (!found_match) {
 		if (tapefd_fsf(tapefd, (off_t)1) < 0) {
 		    send_message(prompt_out, flags, their_features,
-				 "Could not fsf device %s: %s",
+				 _("Could not fsf device %s: %s"),
 				 cur_tapedev, strerror(errno));
-		    error("Could not fsf device %s: %s",
+		    error(_("Could not fsf device %s: %s"),
 			  cur_tapedev, strerror(errno));
 		    /*NOTREACHED*/
 		}
@@ -1572,11 +1575,11 @@ search_a_tape(
 		if (fsf_by > (off_t)0) {
 		    if(tapefd_fsf(tapefd, fsf_by) < 0) {
 			send_message(prompt_out, flags, their_features,
-				     "Could not fsf device %s by "
-				     OFF_T_FMT ": %s",
+				     _("Could not fsf device %s by "
+				     OFF_T_FMT ": %s"),
 				     cur_tapedev, (OFF_T_FMT_TYPE)fsf_by,
 				     strerror(errno));
-			error("Could not fsf device %s by " OFF_T_FMT ": %s",
+			error(_("Could not fsf device %s by " OFF_T_FMT ": %s"),
 			      cur_tapedev, (OFF_T_FMT_TYPE)fsf_by,
 			      strerror(errno));
 			/*NOTREACHED*/
@@ -1604,18 +1607,18 @@ search_a_tape(
 	    aclose(tapefd);
 	    if((tapefd = tape_open(cur_tapedev, 0)) < 0) {
 		send_message(prompt_out, flags, their_features,
-			     "could not open %s: %s",
+			     _("could not open %s: %s"),
 			     cur_tapedev, strerror(errno));
-		error("could not open %s: %s",
+		error(_("could not open %s: %s"),
 		      cur_tapedev, strerror(errno));
 		/*NOTREACHED*/
 	    }
 	} else {
 	    if (tapefd_fsf(tapefd, (off_t)1) < 0) {
 		send_message(prompt_out, flags, their_features,
-			     "could not fsf %s: %s",
+			     _("could not fsf %s: %s"),
 			     cur_tapedev, strerror(errno));;
-		error("could not fsf %s: %s",
+		error(_("could not fsf %s: %s"),
 		      cur_tapedev, strerror(errno));
 		/*NOTREACHED*/
 	    }
@@ -1626,7 +1629,7 @@ search_a_tape(
     /* spit out our accumulated list of dumps, if we're inventorying */
     if (logstream) {
 	logline = log_genstring(L_START, "taper",
-				    "datestamp %s label %s tape %d",
+				    _("datestamp %s label %s tape %d"),
 				    tapestart->datestamp, tapestart->name,
 				    slot_num);
 	fprintf(logstream, "%s", logline);
@@ -1635,7 +1638,7 @@ search_a_tape(
 	    switch (fileentry->file->type) {
 		case F_DUMPFILE:
 		    logline = log_genstring(L_SUCCESS, "taper",
-            			       "%s %s %s %d [faked log entry]",
+            			       _("%s %s %s %d [faked log entry]"),
             	                       fileentry->file->name,
             	                       fileentry->file->disk,
             	                       fileentry->file->datestamp,
@@ -1643,7 +1646,7 @@ search_a_tape(
             	    break;
             	case F_SPLIT_DUMPFILE:
             	    logline = log_genstring(L_CHUNK, "taper", 
-            			       "%s %s %s %d %d [faked log entry]",
+            			       _("%s %s %s %d %d [faked log entry]"),
             	                       fileentry->file->name,
             	                       fileentry->file->disk,
             	                       fileentry->file->datestamp,
@@ -1694,9 +1697,9 @@ search_tapes(
 
     if(!prompt_out) prompt_out = stderr;
 
-    dbprintf("search_tapes(prompt_out=%d, prompt_in=%d,  use_changer=%d, "
+    dbprintf(_("search_tapes(prompt_out=%d, prompt_in=%d,  use_changer=%d, "
 	      "tapelist=%p, "
-	      "match_list=%p, flags=%p, features=%p)\n",
+	      "match_list=%p, flags=%p, features=%p)\n"),
 	      fileno(prompt_out), fileno(prompt_in), use_changer, tapelist,
 	      match_list, flags, their_features);
 
@@ -1713,7 +1716,7 @@ search_tapes(
     sigemptyset(&act.sa_mask);
     act.sa_flags = 0;
     if(sigaction(SIGINT, &act, &oact) != 0){
-	error("error setting SIGINT handler: %s", strerror(errno));
+	error(_("error setting SIGINT handler: %s"), strerror(errno));
 	/*NOTREACHED*/
     }
     if(flags->delay_assemble || flags->inline_assemble) exitassemble = 1;
@@ -1723,7 +1726,7 @@ search_tapes(
     if(flags->inventory_log) {
 	if(!strcmp(flags->inventory_log, "-")) logstream = stdout;
 	else if((logstream = fopen(flags->inventory_log, "w+")) == NULL) {
-	    error("Couldn't open log file %s for writing: %s",
+	    error(_("Couldn't open log file %s for writing: %s"),
 		  flags->inventory_log, strerror(errno));
 	    /*NOTREACHED*/
 	}
@@ -1736,14 +1739,14 @@ search_tapes(
 	} else if(!cur_tapedev) {
 	    cur_tapedev = getconf_str(CNF_TAPEDEV);
 	    if (cur_tapedev == NULL) {
-		error("No tapedev specified");
+		error(_("No tapedev specified"));
 	    }
 	}
 	/* XXX oughta complain if no config is loaded */
-	fprintf(stderr, "%s: Using tapedev %s\n", get_pname(), cur_tapedev);
+	fprintf(stderr, _("%s: Using tapedev %s\n"), get_pname(), cur_tapedev);
  	have_changer = 0;
     } else if (have_changer != 1) {
-	error("changer initialization failed: %s", strerror(errno));
+	error(_("changer initialization failed: %s"), strerror(errno));
 	/*NOTREACHED*/
     }
     else{ /* good, the changer works, see what it can do */
@@ -1757,7 +1760,7 @@ search_tapes(
 	Spit out a list of expected tapes, so people with manual changers know
 	what to load
       */
-      fprintf(prompt_out, "The following tapes are needed:");
+      fprintf(prompt_out, _("The following tapes are needed:"));
       for(desired_tape = tapelist; desired_tape != NULL;
 	  desired_tape = desired_tape->next){
 	fprintf(prompt_out, " %s", desired_tape->label);
@@ -1766,7 +1769,7 @@ search_tapes(
       fflush(prompt_out);
       if(flags->wait_tape_prompt){
 	char *input = NULL;
-        fprintf(prompt_out,"Press enter when ready\n");
+        fprintf(prompt_out,_("Press enter when ready\n"));
 	fflush(prompt_out);
         input = agets(prompt_in);
  	amfree(input);
@@ -1807,11 +1810,11 @@ search_tapes(
 	    isafile = 1;
 	    if ((tapefd = open(desired_tape->label, 0)) == -1) {
 		send_message(prompt_out, flags, their_features, 
-			     "could not open %s: %s",
+			     _("could not open %s: %s"),
 			     desired_tape->label, strerror(errno));
 		continue;
 	    }
-	    fprintf(stderr, "Reading %s to fd %d\n",
+	    fprintf(stderr, _("Reading %s to fd %d\n"),
 			    desired_tape->label, tapefd);
 
 	    read_result = read_file_header(&file, tapefd, 1, flags);
@@ -1879,7 +1882,7 @@ search_tapes(
 		if (!strcmp(tape_seen->label, label) &&
 		    !strcmp(tape_seen->slotstr, curslot)){
 		    send_message(prompt_out, flags, their_features,
-				 "Saw repeat tape %s in slot %s",
+				 _("Saw repeat tape %s in slot %s"),
 				 label, curslot);
 		    amfree(label);
 		    break;
@@ -1894,7 +1897,7 @@ search_tapes(
 	    curslot = stralloc("<none>");
 
 	if(!isafile){
-	    fprintf(stderr, "Scanning %s (slot %s)\n", label, curslot);
+	    fprintf(stderr, _("Scanning %s (slot %s)\n"), label, curslot);
 	    fflush(stderr);
 	}
 
@@ -1918,7 +1921,7 @@ search_tapes(
 		      &file, &prev_rst_file, &tapestart, slot_num,
 		      &read_result);
 
-	fprintf(stderr, "%s: Search of %s complete\n",
+	fprintf(stderr, _("%s: Search of %s complete\n"),
 			get_pname(), tape_seen->label);
 	if (desired_tape) desired_tape = desired_tape->next;
 
@@ -1985,7 +1988,7 @@ check_rst_flags(
     if(!flags) return(-1);
 
     if(flags->compress && flags->leave_comp){
-	fprintf(stderr, "Cannot specify 'compress output' and 'leave compression alone' together\n");
+	fprintf(stderr, _("Cannot specify 'compress output' and 'leave compression alone' together\n"));
 	ret = -1;
     }
 
@@ -1993,28 +1996,28 @@ check_rst_flags(
 	struct stat statinfo;
 
 	if(flags->pipe_to_fd != -1){
-	    fprintf(stderr, "Specifying output directory and piping output are mutually exclusive\n");
+	    fprintf(stderr, _("Specifying output directory and piping output are mutually exclusive\n"));
 	    ret = -1;
 	}
 	if(stat(flags->restore_dir, &statinfo) < 0){
-	    fprintf(stderr, "Cannot stat restore target dir '%s': %s\n",
+	    fprintf(stderr, _("Cannot stat restore target dir '%s': %s\n"),
 		      flags->restore_dir, strerror(errno));
 	    ret = -1;
 	}
 	if((statinfo.st_mode & S_IFMT) != S_IFDIR){
-	    fprintf(stderr, "'%s' is not a directory\n", flags->restore_dir);
+	    fprintf(stderr, _("'%s' is not a directory\n"), flags->restore_dir);
 	    ret = -1;
 	}
     }
 
     if((flags->pipe_to_fd != -1 || flags->compress) &&
 	    (flags->delay_assemble || !flags->inline_assemble)){
-	fprintf(stderr, "Split dumps *must* be automatically reassembled when piping output or compressing/uncompressing\n");
+	fprintf(stderr, _("Split dumps *must* be automatically reassembled when piping output or compressing/uncompressing\n"));
 	ret = -1;
     }
 
     if(flags->delay_assemble && flags->inline_assemble){
-	fprintf(stderr, "Inline split assembling and delayed assembling are mutually exclusive\n");
+	fprintf(stderr, _("Inline split assembling and delayed assembling are mutually exclusive\n"));
 	ret = -1;
     }
 

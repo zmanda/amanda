@@ -269,7 +269,7 @@ safe_fd(
 	     */
 	    if (fcntl(fd, F_GETFD) == -1) {
 		if (open("/dev/null", O_RDWR) == -1) {
-		   fprintf(stderr, "/dev/null is inaccessable: %s\n",
+		   fprintf(stderr, _("/dev/null is inaccessable: %s\n"),
 		           strerror(errno));
 		   exit(1);
 		}
@@ -690,6 +690,8 @@ main(
 
 	safe_fd(-1, 0);
 
+	setlocale(LC_ALL, "C");
+
 	set_pname("file test");
 
 	dbopen(NULL);
@@ -710,25 +712,25 @@ main(
 		name = argv[3];
 	}
 
-	fprintf(stderr, "Create parent directories of %s ...", name);
+	fprintf(stderr, _("Create parent directories of %s ..."), name);
 	rc = mkpdir(name, (mode_t)02777, (uid_t)-1, (gid_t)-1);
 	if (rc == 0)
 		fprintf(stderr, " done\n");
 	else {
-		perror("failed");
+		perror(_("failed"));
 		return rc;
 	}
 
-	fprintf(stderr, "Delete %s back to %s ...", name, top);
+	fprintf(stderr, _("Delete %s back to %s ..."), name, top);
 	rc = rmpdir(name, top);
 	if (rc == 0)
-		fprintf(stderr, " done\n");
+		fprintf(stderr, _(" done\n"));
 	else {
-		perror("failed");
+		perror(_("failed"));
 		return rc;
 	}
 
-	fprintf(stderr, "areads dump of %s ...", file);
+	fprintf(stderr, _("areads dump of %s ..."), file);
 	if ((fd = open (file, 0)) < 0) {
 		perror(file);
 		return 1;
@@ -739,9 +741,9 @@ main(
 		amfree(line);
 	}
 	aclose(fd);
-	fprintf(stderr, " done.\n");
+	fprintf(stderr, _(" done.\n"));
 
-	fprintf(stderr, "Finished.\n");
+	fprintf(stderr, _("Finished.\n"));
 	return 0;
 }
 

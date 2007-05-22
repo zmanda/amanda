@@ -51,15 +51,18 @@ int main(int argc, char **argv);
 static void term_kill_soft(int sig);
 static void term_kill_hard(int sig);
 
-int main(
-    int argc,
-    char **argv)
+int
+main(
+    int		argc,
+    char **	argv)
 {
     int ch;
     amwait_t status;
 
     safe_fd(-1, 0);
     safe_cd();
+
+    setlocale(LC_ALL, "C");
 
     set_pname("killpgrp");
 
@@ -68,23 +71,23 @@ int main(
 	error("Need at least 2 arguments\n");
 	/*NOTREACHED*/
     }
-    dbprintf("version %s\n", version());
-    dbprintf("config: %s\n", argv[1]);
+    dbprintf(_("version %s\n"), version());
+    dbprintf(_("config: %s\n"), argv[1]);
     if (strcmp(argv[1], "NOCONFIG") != 0)
 	dbrename(argv[1], DBG_SUBDIR_CLIENT);
 
     if(client_uid == (uid_t) -1) {
-	error("error [cannot find user %s in passwd file]", CLIENT_LOGIN);
+	error(_("error [cannot find user %s in passwd file]"), CLIENT_LOGIN);
 	/*NOTREACHED*/
     }
 
 #ifdef FORCE_USERID
     if (getuid() != client_uid) {
-	error("error [must be invoked by %s]", CLIENT_LOGIN);
+	error(_("error [must be invoked by %s]"), CLIENT_LOGIN);
 	/*NOTREACHED*/
     }
     if (geteuid() != 0) {
-	error("error [must be setuid root]");
+	error(_("error [must be setuid root]"));
 	/*NOTREACHED*/
     }
 #endif	/* FORCE_USERID */
@@ -94,7 +97,7 @@ int main(
 #endif
 
     if (AM_GETPGRP() != getpid()) {
-	error("error [must be the process group leader]");
+	error(_("error [must be the process group leader]"));
 	/*NOTREACHED*/
     }
 
@@ -112,13 +115,13 @@ int main(
 	if (wait(&status) != -1)
 	    break;
 	if (errno != EINTR) {
-	    error("error [wait() failed: %s]", strerror(errno));
+	    error(_("error [wait() failed: %s]"), strerror(errno));
 	    /*NOTREACHED*/
 	}
     }
 
     /*@ignore@*/
-    dbprintf("child process exited with status %d\n", WEXITSTATUS(status));
+    dbprintf(_("child process exited with status %d\n"), WEXITSTATUS(status));
 
     return WEXITSTATUS(status);
     /*@end@*/
@@ -139,10 +142,10 @@ static void term_kill_soft(
      * First, try to kill the dump process nicely.  If it ignores us
      * for three seconds, hit it harder.
      */
-    dbprintf("sending SIGTERM to process group %ld\n", (long) dumppid);
+    dbprintf(_("sending SIGTERM to process group %ld\n"), (long) dumppid);
     killerr = kill(-dumppid, SIGTERM);
     if (killerr == -1) {
-	dbprintf("kill failed: %s\n", strerror(errno));
+	dbprintf(_("kill failed: %s\n"), strerror(errno));
     }
 }
 
@@ -154,12 +157,12 @@ static void term_kill_hard(
 
     (void)sig;	/* Quiet unused parameter warning */
 
-    dbprintf("it won\'t die with SIGTERM, but SIGKILL should do\n");
-    dbprintf("do\'t expect any further output, this will be suicide\n");
+    dbprintf(_("It won\'t die with SIGTERM, but SIGKILL should do.\n"));
+    dbprintf(_("Don't expect any further output, this will be suicide.\n"));
     killerr = kill(-dumppid, SIGKILL);
     /* should never reach this point, but so what? */
     if (killerr == -1) {
-	dbprintf("kill failed: %s\n", strerror(errno));
-	dbprintf("waiting until child terminates\n");
+	dbprintf(_("kill failed: %s\n"), strerror(errno));
+	dbprintf(_("waiting until child terminates\n"));
     }
 }

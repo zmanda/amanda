@@ -4,9 +4,10 @@ AUTOMAKE_OPTIONS = 1.4 foreign
 ACINCLUDE_M4 = $(srcdir)/acinclude.m4
 ACINCLUDE_M4I = $(srcdir)/config/acinclude.m4i
 LIBTOOL_M4I = $(srcdir)/config/libtool.m4i
+GETTEXT_M4I = $(srcdir)/config/gettext.m4i
 GNULIB_M4I  = $(srcdir)/config/gnulib.m4i
 XSLTPROC_M4I = $(srcdir)/config/docbook-dtd.m4i  $(srcdir)/config/docbook-xslt-min.m4i  $(srcdir)/config/xsltproc.m4i
-ACINCLUDE_M4_DEPS = $(GNULIB_M4I) $(ACINCLUDE_M4I) $(LIBTOOL_M4I) $(XSLTPROC_M4I)
+ACINCLUDE_M4_DEPS = $(GNULIB_M4I) $(GETTEXT_M4I) $(ACINCLUDE_M4I) $(LIBTOOL_M4I) $(XSLTPROC_M4I)
 ACLOCAL_AMFLAGS = --force
 
 if WANT_CLIENT
@@ -81,6 +82,10 @@ $(CONFIG_STATUS): $(SNAPSHOT_STAMP)
 SNAPSHOT:
 	: SNAPSHOT file was removed, will reconfigure...
 
+amanda.po:
+	@rm -f  amanda.po
+	xgettext --keyword="_:1" -d amanda -L C */*.c */*.h
+	
 lint:
 	(cd amandad-src; make lint)
 	(cd changer-src; make lint)

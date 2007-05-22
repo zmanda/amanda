@@ -123,7 +123,7 @@ rsh_connect(
     assert(fn != NULL);
     assert(hostname != NULL);
 
-    auth_debug(1, "rsh: rsh_connect: %s\n", hostname);
+    auth_debug(1, _("rsh: rsh_connect: %s\n"), hostname);
 
     rh = alloc(SIZEOF(*rh));
     security_handleinit(&rh->sech, &rsh_security_driver);
@@ -135,7 +135,7 @@ rsh_connect(
     rh->hostname = NULL;
     if (resolve_hostname(hostname, NULL, &rh->hostname) || rh->hostname == NULL) {
 	security_seterror(&rh->sech,
-	    "%s: could not resolve hostname", hostname);
+	    _("%s: could not resolve hostname"), hostname);
 	(*fn)(arg, &rh->sech, S_ERROR);
 	return;
     }
@@ -158,7 +158,7 @@ rsh_connect(
     }
     if(rh->rc->read == -1) {
 	if (runrsh(rh->rs->rc, amandad_path, client_username) < 0) {
-	    security_seterror(&rh->sech, "can't connect to %s: %s",
+	    security_seterror(&rh->sech, _("can't connect to %s: %s"),
 			      hostname, rh->rs->rc->errmsg);
 	    goto error;
 	}
@@ -203,13 +203,13 @@ runrsh(
     memset(rpipe, -1, SIZEOF(rpipe));
     memset(wpipe, -1, SIZEOF(wpipe));
     if (pipe(rpipe) < 0 || pipe(wpipe) < 0) {
-	rc->errmsg = newvstrallocf(rc->errmsg, "pipe: %s", strerror(errno));
+	rc->errmsg = newvstrallocf(rc->errmsg, _("pipe: %s"), strerror(errno));
 	return (-1);
     }
 
     switch (rc->pid = fork()) {
     case -1:
-	rc->errmsg = newvstrallocf(rc->errmsg, "fork: %s", strerror(errno));
+	rc->errmsg = newvstrallocf(rc->errmsg, _("fork: %s"), strerror(errno));
 	aclose(rpipe[0]);
 	aclose(rpipe[1]);
 	aclose(wpipe[0]);
@@ -238,7 +238,7 @@ runrsh(
     execlp(RSH_PATH, RSH_PATH, "-l", xclient_username,
 	   rc->hostname, xamandad_path, "-auth=rsh", "amdump", "amindexd",
 	   "amidxtaped", (char *)NULL);
-    error("error: couldn't exec %s: %s", RSH_PATH, strerror(errno));
+    error(_("error: couldn't exec %s: %s"), RSH_PATH, strerror(errno));
 
     /* should never go here, shut up compiler warning */
     return(-1);

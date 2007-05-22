@@ -59,6 +59,8 @@ main(
     safe_fd(-1, 0);
     safe_cd();
 
+    setlocale(LC_ALL, "C");
+
     set_pname("amcleanupdisk");
 
     dbopen(DBG_SUBDIR_SERVER);
@@ -67,7 +69,7 @@ main(
     signal(SIGPIPE, SIG_IGN);
 
     if(main_argc < 2) {
-	error("Usage: amcleanupdisk%s <config>", versionsuffix());
+	error(_("Usage: amcleanupdisk%s <config>"), versionsuffix());
 	/*NOTREACHED*/
     }
 
@@ -77,7 +79,7 @@ main(
 
     conffile = stralloc2(config_dir, CONFFILE_NAME);
     if(read_conffile(conffile)) {
-	error("errors processing config file \"%s\"", conffile);
+	error(_("errors processing config file \"%s\""), conffile);
 	/*NOTREACHED*/
     }
     amfree(conffile);
@@ -91,7 +93,7 @@ main(
 	conf_diskfile = stralloc2(config_dir, conf_diskfile);
     }
     if (read_diskfile(conf_diskfile, &diskq) < 0) {
-	error("could not load disklist %s", conf_diskfile);
+	error(_("could not load disklist %s"), conf_diskfile);
 	/*NOTREACHED*/
     }
     amfree(conf_diskfile);
@@ -103,7 +105,7 @@ main(
 	conf_infofile = stralloc2(config_dir, conf_infofile);
     }
     if (open_infofile(conf_infofile) < 0) {
-	error("could not open info db \"%s\"", conf_infofile);
+	error(_("could not open info db \"%s\""), conf_infofile);
 	/*NOTREACHED*/
     }
     amfree(conf_infofile);
@@ -112,12 +114,12 @@ main(
 
     dumpuser = getconf_str(CNF_DUMPUSER);
     if((pw = getpwnam(dumpuser)) == NULL) {
-	error("dumpuser %s not found in password file", dumpuser);
+	error(_("dumpuser %s not found in password file"), dumpuser);
 	/*NOTREACHED*/
     }
 
     if(pw->pw_uid != getuid()) {
-	error("must run amcleanupdisk as user %s", dumpuser);
+	error(_("must run amcleanupdisk as user %s"), dumpuser);
 	/*NOTREACHED*/
     }
 
@@ -202,12 +204,12 @@ check_holdingdisk(
 	    info.command &= ~FORCE_BUMP;
 	    info.command |= FORCE_NO_BUMP;
 	    if(put_info(dp->host->hostname, dp->name, &info)) {
-		error("could not put info record for %s:%s: %s",
+		error(_("could not put info record for %s:%s: %s"),
 		      dp->host->hostname, dp->name, strerror(errno));
 	        /*NOTREACHED*/
 	    }
 	} else {
-	    fprintf(stderr,"rename_tmp_holding(%s) failed\n", destname);
+	    fprintf(stderr,_("rename_tmp_holding(%s) failed\n"), destname);
 	}
     }
     closedir(workdir);

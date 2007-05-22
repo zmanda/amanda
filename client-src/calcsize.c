@@ -130,6 +130,8 @@ main(
 
     safe_fd(-1, 0);
 
+    setlocale(LC_ALL, "C");
+
     set_pname("calcsize");
 
     dbopen(NULL);
@@ -138,7 +140,7 @@ main(
     signal(SIGPIPE, SIG_IGN);
 
     if (argc < 2) {
-	fprintf(stderr,"Usage: %s file[s]\n",argv[0]);
+	fprintf(stderr,_("Usage: %s file[s]\n"),argv[0]);
 	return 1;
     }
     for(i=1; i<argc; i++) {

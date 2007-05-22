@@ -279,7 +279,7 @@ int Tape_Ioctl( int DeviceFD, int command)
 
   if (ioctl(pDev[DeviceFD].fd , MTIOCTOP, &mtop) != 0)
     {
-      dbprintf("Tape_Ioctl error ioctl %s\n",strerror(errno));
+      dbprintf(_("Tape_Ioctl error ioctl %s\n"),strerror(errno));
       SCSI_CloseDevice(DeviceFD);
       return(-1);
     }

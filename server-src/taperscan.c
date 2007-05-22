@@ -88,12 +88,12 @@ int scan_read_label(
             if (*label != NULL) {
                 *timestamp = stralloc("X");
                 *error_message = newvstrallocf(*error_message,
-                           "%sFound a non-amanda tape, will label it `%s'.\n",
+                           _("%sFound a non-amanda tape, will label it `%s'.\n"),
                            *error_message, *label);
                 return 3;
             }
 	    *error_message = newvstrallocf(*error_message,
-                       "%sFound a non-amanda tape, but have no labels left.\n",
+                       _("%sFound a non-amanda tape, but have no labels left.\n"),
 			*error_message);
             return -1;
         }
@@ -106,11 +106,11 @@ int scan_read_label(
     }
     
     if ((*label == NULL) || (*timestamp == NULL)) {
-	error("Invalid return from tape_rdlabel");
+	error(_("Invalid return from tape_rdlabel"));
     }
 
     *error_message = newvstrallocf(*error_message,
-	    "%sread label `%s', date `%s'\n",
+	    _("%sread label `%s', date `%s'\n"),
 	    *error_message, *label, *timestamp);
 
     if (desired_label != NULL && strcmp(*label, desired_label) == 0) {
@@ -124,7 +124,7 @@ int scan_read_label(
         labelstr = getconf_str(CNF_LABELSTR);
 	if(!match(labelstr, *label)) {
             *error_message = newvstrallocf(*error_message,
-			"%slabel \"%s\" doesn't match \"%s\"\n",
+			_("%slabel \"%s\" doesn't match \"%s\"\n"),
 			*error_message, *label, labelstr);
             return -1;
 	} else {
@@ -138,12 +138,12 @@ int scan_read_label(
          
             if(tp == NULL) {
                 *error_message = newvstrallocf(*error_message,
-			"%slabel \"%s\" matches labelstr but it is not listed in the tapelist file.\n",
+			_("%slabel \"%s\" matches labelstr but it is not listed in the tapelist file.\n"),
 			*error_message, *label);
                 return -1;
             } else if(tp != NULL && !reusable_tape(tp)) {
                 *error_message = newvstrallocf(*error_message,
-			"%scannot overwrite active tape %s\n",
+			_("%scannot overwrite active tape %s\n"),
 			*error_message, *label);
                 return -1;
             }
@@ -186,21 +186,21 @@ scan_slot(
     switch (rc) {
     default:
 	*(ct->error_message) = newvstrallocf(*(ct->error_message),
-		   "%sfatal changer error: slot %s: %s\n",
+		   _("%sfatal changer error: slot %s: %s\n"),
 		   *(ct->error_message), slotstr, changer_resultstr);
         result = 1;
 	break;
 
     case 1:
 	*(ct->error_message) = newvstrallocf(*(ct->error_message),
-		   "%schanger error: slot %s: %s\n",
+		   _("%schanger error: slot %s: %s\n"),
 		   *(ct->error_message), slotstr, changer_resultstr);
         result = 0;
 	break;
 
     case 0:
 	*(ct->error_message) = newvstrallocf(*(ct->error_message),
-					"slot %s:", slotstr);
+					_("slot %s:"), slotstr);
 	amfree(*ct->gotlabel);
 	amfree(*ct->timestamp);
         label_result = scan_read_label(device, ct->wantlabel, ct->gotlabel,
@@ -237,7 +237,7 @@ scan_init(
 
     if (rc) {
 	*(ct->error_message) = newvstrallocf(*(ct->error_message),
-		"%scould not get changer info: %s\n",
+		_("%scould not get changer info: %s\n"),
 		*(ct->error_message), changer_resultstr);
 	ct->taperscan_output_callback(ct->data, *(ct->error_message));
 	amfree(*(ct->error_message));
@@ -294,7 +294,7 @@ changer_taper_scan(
 
     /* Didn't find a tape. :-( */
     assert(local_data.tape_status <= 0);
-    taperscan_output_callback(data, "changer problem: ");
+    taperscan_output_callback(data, _("changer problem: "));
     taperscan_output_callback(data, changer_resultstr);
     return -1;
 }
@@ -325,7 +325,7 @@ int taper_scan(char* wantlabel,
 	*tapedev = stralloc(getconf_str(CNF_TAPEDEV));
 	if (*tapedev == NULL) {
 	    result = -1;
-	    taperscan_output_callback(data, "No tapedev spefified");
+	    taperscan_output_callback(data, _("No tapedev spefified"));
 	} else {
 	    *tapedev = stralloc(*tapedev);
 	    result =  scan_read_label(*tapedev, wantlabel,
@@ -361,7 +361,7 @@ find_brand_new_tape_label(void)
     auto_len = -1; /* Only find the first '%' */
     while (*format != '\0') {
         if (label_len + 4 > AUTO_LABEL_MAX_LEN) {
-            fprintf(stderr, "Auto label format is too long!\n");
+            fprintf(stderr, _("Auto label format is too long!\n"));
             return NULL;
         }
 
@@ -390,7 +390,7 @@ find_brand_new_tape_label(void)
     }
 
     if (auto_pos == NULL) {
-        fprintf(stderr, "Auto label template contains no '%%'!\n");
+        fprintf(stderr, _("Auto label template contains no '%%'!\n"));
         return NULL;
     }
 
@@ -400,7 +400,7 @@ find_brand_new_tape_label(void)
     for (i = 1; i < INT_MAX; i ++) {
         snprintf(tmpnum, SIZEOF(tmpnum), tmpfmt, i);
         if (strlen(tmpnum) != (size_t)auto_len) {
-            fprintf(stderr, "All possible auto-labels used.\n");
+            fprintf(stderr, _("All possible auto-labels used.\n"));
             return NULL;
         }
 
@@ -410,7 +410,7 @@ find_brand_new_tape_label(void)
         if (tp == NULL) {
             /* Got it. Double-check that this is a labelstr match. */
             if (!match(getconf_str(CNF_LABELSTR), newlabel)) {
-                fprintf(stderr, "New label %s does not match labelstr %s!\n",
+                fprintf(stderr, _("New label %s does not match labelstr %s!\n"),
                         newlabel, getconf_str(CNF_LABELSTR));
                 return 0;
             }
@@ -419,7 +419,7 @@ find_brand_new_tape_label(void)
     }
 
     /* Should not get here unless you have over two billion tapes. */
-    fprintf(stderr, "Taper internal error in find_brand_new_tape_label.");
+    fprintf(stderr, _("Taper internal error in find_brand_new_tape_label."));
     return 0;
 }
 

@@ -47,12 +47,6 @@
 #include "findpass.h"
 #endif
 
-#define selfcheck_debug(i,x) do {	\
-	if ((i) <= debug_selfcheck) {	\
-	    dbprintf(x);		\
-	}				\
-} while (0)
-
 int need_samba=0;
 int need_rundump=0;
 int need_dump=0;
@@ -116,6 +110,8 @@ main(
     safe_fd(-1, 0);
     safe_cd();
 
+    setlocale(LC_ALL, "C");
+
     set_pname("selfcheck");
 
     /* Don't die when child closes pipe */
@@ -128,7 +124,7 @@ main(
     erroutput_type = (ERR_INTERACTIVE|ERR_SYSLOG);
     dbopen(DBG_SUBDIR_CLIENT);
     startclock();
-    dbprintf("version %s\n", version());
+    dbprintf(_("version %s\n"), version());
 
     if(argc > 2 && strcmp(argv[1], "amandad") == 0) {
 	amandad_auth = stralloc(argv[2]);
@@ -136,8 +132,8 @@ main(
 
     conffile = vstralloc(CONFIG_DIR, "/", "amanda-client.conf", NULL);
     if (read_clientconf(conffile) > 0) {
-	printf("ERROR [reading conffile: %s]\n", conffile);
-	error("error reading conffile: %s", conffile);
+	printf(_("ERROR [reading conffile: %s]\n"), conffile);
+	error(_("error reading conffile: %s"), conffile);
 	/*NOTREACHED*/
     }
     amfree(conffile);
@@ -175,8 +171,8 @@ main(
 		conffile = vstralloc(CONFIG_DIR, "/", g_options->config, "/",
 				     "amanda-client.conf", NULL);
 		if (read_clientconf(conffile) > 0) {
-		    printf("ERROR [reading conffile: %s]\n", conffile);
-		    error("error reading conffile: %s", conffile);
+		    printf(_("ERROR [reading conffile: %s]\n"), conffile);
+		    error(_("error reading conffile: %s"), conffile);
 		    /*NOTREACHED*/
 		}
 		amfree(conffile);
@@ -325,8 +321,8 @@ main(
     return 0;
 
  err:
-    printf("ERROR [BOGUS REQUEST PACKET]\n");
-    dbprintf("REQ packet is bogus%s%s\n",
+    printf(_("ERROR [BOGUS REQUEST PACKET]\n"));
+    dbprintf(_("REQ packet is bogus%s%s\n"),
 	      err_extra ? ": " : "",
 	      err_extra ? err_extra : "");
     dbclose();
@@ -363,7 +359,7 @@ check_options(
 
 	need_calcsize=1;
 	if (calcprog == NULL) {
-	    printf("ERROR [no program name for calcsize]\n");
+	    printf(_("ERROR [no program name for calcsize]\n"));
 	} else {
 	    myprogram = calcprog;
 	}
@@ -373,18 +369,18 @@ check_options(
 	need_gnutar=1;
         if(amdevice[0] == '/' && amdevice[1] == '/') {
 	    if(options->exclude_file && options->exclude_file->nb_element > 1) {
-		printf("ERROR [samba support only one exclude file]\n");
+		printf(_("ERROR [samba support only one exclude file]\n"));
 	    }
 	    if(options->exclude_list && options->exclude_list->nb_element > 0 &&
 	       options->exclude_optional==0) {
-		printf("ERROR [samba does not support exclude list]\n");
+		printf(_("ERROR [samba does not support exclude list]\n"));
 	    }
 	    if(options->include_file && options->include_file->nb_element > 0) {
-		printf("ERROR [samba does not support include file]\n");
+		printf(_("ERROR [samba does not support include file]\n"));
 	    }
 	    if(options->include_list && options->include_list->nb_element > 0 &&
 	       options->include_optional==0) {
-		printf("ERROR [samba does not support include list]\n");
+		printf(_("ERROR [samba does not support include list]\n"));
 	    }
 	    need_samba=1;
 	}
@@ -411,16 +407,16 @@ check_options(
 
     if(strcmp(myprogram,"DUMP") == 0) {
 	if(options->exclude_file && options->exclude_file->nb_element > 0) {
-	    printf("ERROR [DUMP does not support exclude file]\n");
+	    printf(_("ERROR [DUMP does not support exclude file]\n"));
 	}
 	if(options->exclude_list && options->exclude_list->nb_element > 0) {
-	    printf("ERROR [DUMP does not support exclude list]\n");
+	    printf(_("ERROR [DUMP does not support exclude list]\n"));
 	}
 	if(options->include_file && options->include_file->nb_element > 0) {
-	    printf("ERROR [DUMP does not support include file]\n");
+	    printf(_("ERROR [DUMP does not support include file]\n"));
 	}
 	if(options->include_list && options->include_list->nb_element > 0) {
-	    printf("ERROR [DUMP does not support include list]\n");
+	    printf(_("ERROR [DUMP does not support include list]\n"));
 	}
 #ifdef USE_RUNDUMP
 	need_rundump=1;
@@ -485,7 +481,7 @@ check_options(
     }
     if(options->auth && amandad_auth) {
 	if(strcasecmp(options->auth, amandad_auth) != 0) {
-	    fprintf(stdout,"ERROR [client configured for auth=%s while server requested '%s']\n",
+	    fprintf(stdout,_("ERROR [client configured for auth=%s while server requested '%s']\n"),
 		    amandad_auth, options->auth);
 	}
     }
@@ -519,11 +515,11 @@ check_disk(
 
     (void)level;	/* Quiet unused parameter warning */
 
-    dbprintf("checking disk %s\n", qdisk);
+    dbprintf(_("checking disk %s\n"), qdisk);
 
     if(strcmp(myprogram,"CALCSIZE") == 0) {
 	if(amdevice[0] == '/' && amdevice[1] == '/') {
-	    err = vstrallocf("Can't use CALCSIZE for samba estimate, use CLIENT: %s",
+	    err = vstrallocf(_("Can't use CALCSIZE for samba estimate, use CLIENT: %s"),
 			    amdevice);
 	    goto common_exit;
 	}
@@ -549,33 +545,33 @@ check_disk(
 
 	    parsesharename(amdevice, &share, &subdir);
 	    if (!share) {
-		err = vstrallocf("cannot parse for share/subdir disk entry %s", amdevice);
+		err = vstrallocf(_("cannot parse for share/subdir disk entry %s"), amdevice);
 		goto common_exit;
 	    }
 	    if ((subdir) && (SAMBA_VERSION < 2)) {
-		err = vstrallocf("subdirectory specified for share '%s' but, samba is not v2 or better",
+		err = vstrallocf(_("subdirectory specified for share '%s' but, samba is not v2 or better"),
 				amdevice);
 		goto common_exit;
 	    }
 	    if ((user_and_password = findpass(share, &domain)) == NULL) {
-		err = vstrallocf("cannot find password for %s", amdevice);
+		err = vstrallocf(_("cannot find password for %s"), amdevice);
 		goto common_exit;
 	    }
 	    lpass = strlen(user_and_password);
 	    if ((pwtext = strchr(user_and_password, '%')) == NULL) {
-		err = vstrallocf("password field not \'user%%pass\' for %s", amdevice);
+		err = vstrallocf(_("password field not \'user%%pass\' for %s"), amdevice);
 		goto common_exit;
 	    }
 	    *pwtext++ = '\0';
 	    pwtext_len = (size_t)strlen(pwtext);
 	    amfree(device);
 	    if ((device = makesharename(share, 0)) == NULL) {
-		err = vstrallocf("cannot make share name of %s", share);
+		err = vstrallocf(_("cannot make share name of %s"), share);
 		goto common_exit;
 	    }
 
 	    if ((nullfd = open("/dev/null", O_RDWR)) == -1) {
-	        err = vstrallocf("Cannot access /dev/null : %s", strerror(errno));
+	        err = vstrallocf(_("Cannot access /dev/null : %s"), strerror(errno));
 		goto common_exit;
 	    }
 
@@ -605,7 +601,7 @@ check_disk(
 	    /*@ignore@*/
 	    if ((pwtext_len > 0)
 	      && fullwrite(passwdfd, pwtext, (size_t)pwtext_len) < 0) {
-		err = vstrallocf("password write failed: %s: %s",
+		err = vstrallocf(_("password write failed: %s: %s"),
 				amdevice, strerror(errno));
 		aclose(passwdfd);
 		goto common_exit;
@@ -616,8 +612,8 @@ check_disk(
 	    aclose(passwdfd);
 	    ferr = fdopen(checkerr, "r");
 	    if (!ferr) {
-		printf("ERROR [Can't fdopen: %s]\n", strerror(errno));
-		error("Can't fdopen: %s", strerror(errno));
+		printf(_("ERROR [Can't fdopen: %s]\n"), strerror(errno));
+		error(_("Can't fdopen: %s"), strerror(errno));
 		/*NOTREACHED*/
 	    }
 	    sep = "";
@@ -645,11 +641,11 @@ check_disk(
 		}
 		if (rc != 0) {
 		    if (ret == 0) {
-			err = newvstrallocf(err, "%s%s got signal %d",
+			err = newvstrallocf(err, _("%s%s got signal %d"),
 				sep, err, sig);
 			ret = sig;
 		    } else {
-			err = newvstrallocf(err, "%s%s returned %d",
+			err = newvstrallocf(err, _("%s%s returned %d"),
 				sep, err, ret);
 		    }
 		}
@@ -657,16 +653,16 @@ check_disk(
 	    if (errdos != 0 || rc != 0) {
 		if (extra_info) {
 		    err = newvstrallocf(err,
-				   "samba access error: %s: %s %s",
+				   _("samba access error: %s: %s %s"),
 				   amdevice, extra_info, err);
 		    amfree(extra_info);
 		} else {
-		    err = newvstrallocf(err, "samba access error: %s: %s",
+		    err = newvstrallocf(err, _("samba access error: %s: %s"),
 				   amdevice, err);
 		}
 	    }
 #else
-	    err = vstrallocf("This client is not configured for samba: %s",
+	    err = vstrallocf(_("This client is not configured for samba: %s"),
 			qdisk);
 #endif
 	    goto common_exit;
@@ -677,7 +673,7 @@ check_disk(
     } else if (strcmp(myprogram, "DUMP") == 0) {
 	if(amdevice[0] == '/' && amdevice[1] == '/') {
 	    err = vstrallocf(
-		  "The DUMP program cannot handle samba shares, use GNUTAR: %s",
+		  _("The DUMP program cannot handle samba shares, use GNUTAR: %s"),
 		  qdisk);
 	    goto common_exit;
 	}
@@ -711,14 +707,14 @@ check_disk(
 	bsu = backup_support_option(program, g_options, disk, amdevice);
 
 	if (pipe(property_pipe) < 0) {
-	    err = vstralloc("pipe failed: ", strerror(errno), NULL);
+	    err = vstrallocf(_("pipe failed: %s"), strerror(errno));
 	    goto common_exit;
 	}
 	fflush(stdout);fflush(stderr);
 	
 	switch (backup_api_pid = fork()) {
 	case -1:
-	    err = vstralloc("fork failed: ", strerror(errno), NULL);
+	    err = vstrallocf(_("fork failed: %s"), strerror(errno));
 	    goto common_exit;
 
 	case 0: /* child */
@@ -757,7 +753,7 @@ check_disk(
 		dup2(property_pipe[0], 0);
 		aclose(property_pipe[1]);
 		execve(cmd,argvchild,safe_env());
-		printf("ERROR [Can't execute %s: %s]\n", cmd, strerror(errno));
+		printf(_("ERROR [Can't execute %s: %s]\n"), cmd, strerror(errno));
 		exit(127);
 	    }
 	default: /* parent */
@@ -776,15 +772,15 @@ check_disk(
 		    if (!WIFEXITED(status)) {
 			snprintf(number, SIZEOF(number), "%d",
 				 (int)WTERMSIG(status));
-			err = vstralloc("Tool exited with signal ", number,
+			err = vstralloc(_("Tool exited with signal "), number,
 					NULL);
 		    } else if (WEXITSTATUS(status) != 0) {
 			snprintf(number, SIZEOF(number), "%d",
 				 (int)WEXITSTATUS(status));
-			err = vstralloc("Tool exited with status ", number,
+			err = vstralloc(_("Tool exited with status "), number,
 					NULL);
 		    } else {
-			err = stralloc("waitpid returned negative value");
+			err = stralloc(_("waitpid returned negative value"));
 		    }
 		    goto common_exit;
 		}
@@ -799,7 +795,7 @@ check_disk(
     }
 
     qdevice = quote_string(device);
-    dbprintf("device %s\n", qdevice);
+    dbprintf(_("device %s\n"), qdevice);
 
     /* skip accessability test if this is an AFS entry */
     if(strncmp_const(device, "afs:") != 0) {
@@ -811,7 +807,7 @@ check_disk(
 	access_type = "access";
 #endif
 	if(access_result == -1) {
-	    err = vstrallocf("Could not access %s (%s): %s",
+	    err = vstrallocf(_("Could not access %s (%s): %s"),
 			qdevice, qdisk, strerror(errno));
 	}
 #ifdef CHECK_FOR_ACCESS_WITH_OPEN
@@ -830,19 +826,19 @@ common_exit:
     amfree(domain);
 
     if(err) {
-	printf("ERROR [%s]\n", err);
-	dbprintf("%s\n", err);
+	printf(_("ERROR [%s]\n"), err);
+	dbprintf(_("%s\n"), err);
 	amfree(err);
     } else {
 	printf("OK %s\n", qdisk);
-	dbprintf("disk %s OK\n", qdisk);
+	dbprintf(_("disk %s OK\n"), qdisk);
 	printf("OK %s\n", qamdevice);
-	dbprintf("amdevice %s OK\n", qamdevice);
+	dbprintf(_("amdevice %s OK\n"), qamdevice);
 	printf("OK %s\n", qdevice);
-	dbprintf("device %s OK\n", qdevice);
+	dbprintf(_("device %s OK\n"), qdevice);
     }
     if(extra_info) {
-	dbprintf("extra info: %s\n", extra_info);
+	dbprintf(_("extra info: %s\n"), extra_info);
 	amfree(extra_info);
     }
     amfree(qdisk);
@@ -882,7 +878,7 @@ check_overall(void)
 #ifdef DUMP
 	check_file(DUMP, X_OK);
 #else
-	printf("ERROR [DUMP program not available]\n");
+	printf(_("ERROR [DUMP program not available]\n"));
 #endif
     }
 
@@ -890,7 +886,7 @@ check_overall(void)
 #ifdef RESTORE
 	check_file(RESTORE, X_OK);
 #else
-	printf("ERROR [RESTORE program not available]\n");
+	printf(_("ERROR [RESTORE program not available]\n"));
 #endif
     }
 
@@ -898,7 +894,7 @@ check_overall(void)
 #ifdef VDUMP
 	check_file(VDUMP, X_OK);
 #else
-	printf("ERROR [VDUMP program not available]\n");
+	printf(_("ERROR [VDUMP program not available]\n"));
 #endif
     }
 
@@ -906,7 +902,7 @@ check_overall(void)
 #ifdef VRESTORE
 	check_file(VRESTORE, X_OK);
 #else
-	printf("ERROR [VRESTORE program not available]\n");
+	printf(_("ERROR [VRESTORE program not available]\n"));
 #endif
     }
 
@@ -914,7 +910,7 @@ check_overall(void)
 #ifdef XFSDUMP
 	check_file(XFSDUMP, F_OK);
 #else
-	printf("ERROR [XFSDUMP program not available]\n");
+	printf(_("ERROR [XFSDUMP program not available]\n"));
 #endif
     }
 
@@ -922,7 +918,7 @@ check_overall(void)
 #ifdef XFSRESTORE
 	check_file(XFSRESTORE, X_OK);
 #else
-	printf("ERROR [XFSRESTORE program not available]\n");
+	printf(_("ERROR [XFSRESTORE program not available]\n"));
 #endif
     }
 
@@ -930,7 +926,7 @@ check_overall(void)
 #ifdef VXDUMP
 	check_file(VXDUMP, X_OK);
 #else
-	printf("ERROR [VXDUMP program not available]\n");
+	printf(_("ERROR [VXDUMP program not available]\n"));
 #endif
     }
 
@@ -938,7 +934,7 @@ check_overall(void)
 #ifdef VXRESTORE
 	check_file(VXRESTORE, X_OK);
 #else
-	printf("ERROR [VXRESTORE program not available]\n");
+	printf(_("ERROR [VXRESTORE program not available]\n"));
 #endif
     }
 
@@ -946,7 +942,7 @@ check_overall(void)
 #ifdef GNUTAR
 	check_file(GNUTAR, X_OK);
 #else
-	printf("ERROR [GNUTAR program not available]\n");
+	printf(_("ERROR [GNUTAR program not available]\n"));
 #endif
 	need_amandates = 1;
 	gnutar_list_dir = getconf_str(CNF_GNUTAR_LIST_DIR);
@@ -975,23 +971,23 @@ check_overall(void)
 #ifdef SAMBA_CLIENT
 	check_file(SAMBA_CLIENT, X_OK);
 #else
-	printf("ERROR [SMBCLIENT program not available]\n");
+	printf(_("ERROR [SMBCLIENT program not available]\n"));
 #endif
 	testfd = open("/etc/amandapass", R_OK);
 	if (testfd >= 0) {
 	    if(fstat(testfd, &buf) == 0) {
 		if ((buf.st_mode & 0x7) != 0) {
-		    printf("ERROR [/etc/amandapass is world readable!]\n");
+		    printf(_("ERROR [/etc/amandapass is world readable!]\n"));
 		} else {
-		    printf("OK [/etc/amandapass is readable, but not by all]\n");
+		    printf(_("OK [/etc/amandapass is readable, but not by all]\n"));
 		}
 	    } else {
-		printf("OK [unable to stat /etc/amandapass: %s]\n",
+		printf(_("OK [unable to stat /etc/amandapass: %s]\n"),
 		       strerror(errno));
 	    }
 	    aclose(testfd);
 	} else {
-	    printf("ERROR [unable to open /etc/amandapass: %s]\n",
+	    printf(_("ERROR [unable to open /etc/amandapass: %s]\n"),
 		   strerror(errno));
 	}
     }
@@ -1011,7 +1007,7 @@ check_overall(void)
 	} else {
 #ifndef USE_RUNDUMP
 	    if (access("/etc", R_OK|W_OK) == -1) {
-		printf("ERROR [dump will not be able to create the /etc/dumpdates file: %s]\n", strerror(errno));
+		printf(_("ERROR [dump will not be able to create the /etc/dumpdates file: %s]\n"), strerror(errno));
 	    }
 #endif
 	}
@@ -1042,14 +1038,14 @@ check_space(
     char *quoted = quote_string(dir);
 
     if(get_fs_stats(dir, &statp) == -1) {
-	printf("ERROR [cannot statfs %s: %s]\n", quoted, strerror(errno));
+	printf(_("ERROR [cannot statfs %s: %s]\n"), quoted, strerror(errno));
     } else if(statp.avail < kbytes) {
-	printf("ERROR [dir %s needs " OFF_T_FMT "KB, only has "
-		OFF_T_FMT "KB available.]\n", quoted,
+	printf(_("ERROR [dir %s needs " OFF_T_FMT "KB, only has "
+		OFF_T_FMT "KB available.]\n"), quoted,
 		(OFF_T_FMT_TYPE)kbytes,
 		(OFF_T_FMT_TYPE)statp.avail);
     } else {
-	printf("OK %s has more than " OFF_T_FMT " KB available.\n",
+	printf(_("OK %s has more than " OFF_T_FMT " KB available.\n"),
 		quoted, (OFF_T_FMT_TYPE)kbytes);
     }
     amfree(quoted);
@@ -1073,9 +1069,9 @@ check_access(
 	noun = "access", adjective = "accessible";
 
     if(access(filename, mode) == -1)
-	printf("ERROR [can not %s %s: %s]\n", noun, quoted, strerror(errno));
+	printf(_("ERROR [can not %s %s: %s]\n"), noun, quoted, strerror(errno));
     else
-	printf("OK %s %s\n", quoted, adjective);
+	printf(_("OK %s %s\n"), quoted, adjective);
     amfree(quoted);
 }
 
@@ -1104,7 +1100,7 @@ check_file(
     if(!stat(filename, &stat_buf)) {
 	if(!S_ISREG(stat_buf.st_mode)) {
 	    quoted = quote_string(filename);
-	    printf("ERROR [%s is not a file]\n", quoted);
+	    printf(_("ERROR [%s is not a file]\n"), quoted);
 	    amfree(quoted);
 	}
     }
@@ -1123,7 +1119,7 @@ check_dir(
     if(!stat(dirname, &stat_buf)) {
 	if(!S_ISDIR(stat_buf.st_mode)) {
 	    quoted = quote_string(dirname);
-	    printf("ERROR [%s is not a directory]\n", quoted);
+	    printf(_("ERROR [%s is not a directory]\n"), quoted);
 	    amfree(quoted);
 	}
     }
@@ -1143,14 +1139,14 @@ check_suid(
 
     if(!stat(filename, &stat_buf)) {
 	if(stat_buf.st_uid != 0 ) {
-	    printf("ERROR [%s is not owned by root]\n", quoted);
+	    printf(_("ERROR [%s is not owned by root]\n"), quoted);
 	}
 	if((stat_buf.st_mode & S_ISUID) != S_ISUID) {
-	    printf("ERROR [%s is not SUID root]\n", quoted);
+	    printf(_("ERROR [%s is not SUID root]\n"), quoted);
 	}
     }
     else {
-	printf("ERROR [can not stat %s]\n", quoted);
+	printf(_("ERROR [can not stat %s]\n"), quoted);
     }
     amfree(quoted);
 #else

@@ -1,3 +1,63 @@
+2006-05-17   John Franks <jrfranks@zmanda.com> (merged by dustin@zmanda.com)
+	* configure.in oldrecover-src/amrecover.c
+	  oldrecover-src/extract_list.c oldrecover-src/display_commands.c
+	  oldrecover-src/help.c oldrecover-src/set_commands.c
+	  recover-src/amrecover.c recover-src/extract_list.c
+	  recover-src/display_commands.c recover-src/help.c
+	  recover-src/set_commands.c server-src/amflush.c
+	  server-src/changer.c server-src/taperscan.c server-src/logfile.c
+	  server-src/amtrmlog.c server-src/driverio.c
+	  server-src/amlogroll.c server-src/tapefile.c
+	  server-src/amindexd.c server-src/driver.c server-src/amcheck.c
+	  server-src/dumper.c server-src/chunker.c server-src/planner.c
+	  server-src/reporter.c server-src/server_util.c
+	  server-src/amadmin.c server-src/amtape.c server-src/taper.c
+	  server-src/amcleanupdisk.c server-src/find.c
+	  server-src/amtrmidx.c server-src/getconf.c
+	  server-src/diskfile.c server-src/infofile.c
+	  server-src/amlabel.c changer-src/scsi-linux.c
+	  changer-src/chg-scsi-chio.c changer-src/scsi-chio.c
+	  changer-src/scsi-hpux.c changer-src/scsi-changer-driver.c
+	  changer-src/scsi-cam.c changer-src/chg-scsi.c
+	  changer-src/scsi-bsd.c changer-src/scsi-irix.c
+	  changer-src/scsi-solaris.c changer-src/sense.c
+	  changer-src/scsi-aix.c changer-src/scsi-hpux_new.c
+	  autogen client-src/unctime.c client-src/versionsuffix.c
+	  client-src/noop.c client-src/client_util.c client-src/runtar.c
+	  client-src/sendbackup-gnutar.c client-src/getfsent.c
+	  client-src/sendbackup.c client-src/sendbackup-dump.c
+	  client-src/killpgrp.c client-src/sendsize.c
+	  client-src/selfcheck.c client-src/rundump.c
+	  client-src/calcsize.c client-src/amandates.c
+	  restore-src/amidxtaped.c restore-src/amrestore.c
+	  restore-src/restore.c restore-src/amfetchdump.c Makefile.am
+	  amandad-src/amandad_util.c amandad-src/amandad.c
+	  common-src/rsh-security.c common-src/pipespawn.c
+	  common-src/security.c common-src/krb5-security.c
+	  common-src/util.c common-src/genversion.c
+	  common-src/bsdtcp-security.c common-src/debug.c
+	  common-src/fileheader.c common-src/dgram.c
+	  common-src/stream.c common-src/match.c
+	  common-src/protocol.c common-src/ssh-security.c
+	  common-src/statfs.c common-src/krb4-security.c
+	  common-src/amflock.c common-src/bsd-security.c
+	  common-src/file.c common-src/token.c common-src/event.c
+	  common-src/security-util.c common-src/conffile.c
+	  common-src/amanda.h common-src/bsdudp-security.c
+	  common-src/alloc.c common-src/clock.c common-src/amfeatures.c
+	  tape-src/ammt.c tape-src/amdd.c tape-src/output-file.c
+	  tape-src/tapeio.c tape-src/tapeio.h tape-src/output-tape.c
+	  tape-src/tapetype.c tape-src/output-rait.c:
+	  o First stage of internationalization.
+	    - Add GNU gettext to configuration.
+	    - Add _() macro to flag translatable strings and modify
+	      code to use it.  Macros like SSIZE_T_FMT are included in
+	      this call, even though xgettext will not parse them; this
+	      will be fixed later.
+	    - Add plural() function for selecting singular or plural form
+	      of string and modify code to use it.
+	    - Add amanda.po target to Makefile.
+
 2007-05-17  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amcheck.c: Remove bogus amfree(newtapefile).
 
@@ -26,10 +86,10 @@
 	* common-src/amanda.h: Define AI_V4MAPPED and AI_ALL.
 
 2007-05-17  Jean-Louis Martineau <martineau@zmanda.com>
-        * util.c (cmp_sockaddr): un-map V4mapped address before comparison.
+	* util.c (cmp_sockaddr): un-map V4mapped address before comparison.
 	* common-src/security-util.c: add debugging.
 
-2007-05-17  Dustin J. Mitchell <dustun@zmanda.com> (merged by dustin@zmanda.com)
+2007-05-17  Dustin J. Mitchell <dustin@zmanda.com> (merged by dustin@zmanda.com)
 	* common-src/amanda.h: fix typo (missing 'extern') in erroutput_type
 
 2006-05-16	John Franks <jrfranks@zmanda.com> (merged by dustin@zmanda.com)

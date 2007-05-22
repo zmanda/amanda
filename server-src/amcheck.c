@@ -69,7 +69,7 @@ int test_server_pgm(FILE *outf, char *dir, char *pgm, int suid, uid_t dumpuid);
 void
 usage(void)
 {
-    error("Usage: amcheck%s [-am] [-w] [-sclt] [-M <address>] <conf> [host [disk]* ]* [-o configoption]*", versionsuffix());
+    error(_("Usage: amcheck%s [-am] [-w] [-sclt] [-M <address>] <conf> [host [disk]* ]* [-o configoption]*"), versionsuffix());
     /*NOTREACHED*/
 }
 
@@ -117,6 +117,8 @@ main(
     safe_fd(-1, 0);
     safe_cd();
 
+    setlocale(LC_ALL, "C");
+
     set_pname("amcheck");
 
     /* Don't die when child closes pipe */
@@ -153,7 +155,7 @@ main(
 	switch(opt) {
 	case 'M':	mailto=stralloc(optarg);
 			if(!validate_mailto(mailto)){
-			   printf("Invalid characters in mail address\n");
+			   printf(_("Invalid characters in mail address\n"));
 			   exit(1);
 			}
 			/*FALLTHROUGH*/
@@ -161,7 +163,7 @@ main(
 #ifdef MAILER
 			mailout = 1;
 #else
-			printf("You can't use -%c because configure didn't find a mailer.\n",
+			printf(_("You can't use -%c because configure didn't find a mailer.\n"),
 				opt);
 			exit(1);
 #endif
@@ -171,7 +173,7 @@ main(
 			mailout = 1;
 			alwaysmail = 1;
 #else
-			printf("You can't use -%c because configure didn't find a mailer.\n",
+			printf(_("You can't use -%c because configure didn't find a mailer.\n"),
 				opt);
 			exit(1);
 #endif
@@ -208,7 +210,7 @@ main(
     config_dir = vstralloc(CONFIG_DIR, "/", config_name, "/", NULL);
     conffile = stralloc2(config_dir, CONFFILE_NAME);
     if(read_conffile(conffile)) {
-	error("errors processing config file \"%s\"", conffile);
+	error(_("errors processing config file \"%s\""), conffile);
 	/*NOTREACHED*/
     }
 
@@ -219,11 +221,11 @@ main(
     amfree(conffile);
     if(mailout && !mailto && 
        (getconf_seen(CNF_MAILTO)==0 || strlen(getconf_str(CNF_MAILTO)) == 0)) {
-	printf("\nNo mail address configured in  amanda.conf\n");
+	printf(_("\nNo mail address configured in  amanda.conf\n"));
         if(alwaysmail)        
- 		printf("When using -a option please specify -Maddress also\n\n"); 
+ 		printf(_("When using -a option please specify -Maddress also\n\n")); 
 	else
- 		printf("Use -Maddress instead of -m\n\n"); 
+ 		printf(_("Use -Maddress instead of -m\n\n")); 
 	exit(1);
     }
     if(mailout && !mailto)
@@ -231,17 +233,17 @@ main(
        if(getconf_seen(CNF_MAILTO) && 
           strlen(getconf_str(CNF_MAILTO)) > 0) {
           if(!validate_mailto(getconf_str(CNF_MAILTO))){
-		printf("\nMail address in amanda.conf has invalid characters"); 
-		printf("\nNo email will be sent\n"); 
+		printf(_("\nMail address in amanda.conf has invalid characters")); 
+		printf(_("\nNo email will be sent\n")); 
                 mailout = 0;
           }
        }
        else {
-	  printf("\nNo mail address configured in  amanda.conf\n");
+	  printf(_("\nNo mail address configured in  amanda.conf\n"));
           if(alwaysmail)        
- 		printf("When using -a option please specify -Maddress also\n\n"); 
+ 		printf(_("When using -a option please specify -Maddress also\n\n")); 
 	  else
- 		printf("Use -Maddress instead of -m\n\n"); 
+ 		printf(_("Use -Maddress instead of -m\n\n")); 
 	  exit(1);
       }
     }
@@ -255,12 +257,12 @@ main(
 	conf_diskfile = stralloc2(config_dir, conf_diskfile);
     }
     if(read_diskfile(conf_diskfile, &origq) < 0) {
-	error("could not load disklist %s", conf_diskfile);
+	error(_("could not load disklist %s"), conf_diskfile);
 	/*NOTREACHED*/
     }
     errstr = match_disklist(&origq, my_argc-1, my_argv+1);
     if (errstr) {
-	printf("%s",errstr);
+	printf(_("%s"),errstr);
 	amfree(errstr);
     }
     amfree(conf_diskfile);
@@ -270,16 +272,16 @@ main(
      */
     dumpuser = getconf_str(CNF_DUMPUSER);
     if ((pw = getpwnam(dumpuser)) == NULL) {
-	error("cannot look up dump user \"%s\"", dumpuser);
+	error(_("cannot look up dump user \"%s\""), dumpuser);
 	/*NOTREACHED*/
     }
     uid_dumpuser = pw->pw_uid;
     if ((pw = getpwuid(uid_me)) == NULL) {
-	error("cannot look up my own uid (%ld)", (long)uid_me);
+	error(_("cannot look up my own uid (%ld)"), (long)uid_me);
 	/*NOTREACHED*/
     }
     if (uid_me != uid_dumpuser) {
-	error("running as user \"%s\" instead of \"%s\"",
+	error(_("running as user \"%s\" instead of \"%s\""),
 	      pw->pw_name, dumpuser);
         /*NOTREACHED*/
     }
@@ -299,7 +301,7 @@ main(
 	/* we need the temp file */
 	tempfname = vstralloc(AMANDA_TMPDIR, "/amcheck.temp.", pid_str, NULL);
 	if((tempfd = open(tempfname, O_RDWR|O_CREAT|O_TRUNC, 0600)) == -1) {
-	    error("could not open %s: %s", tempfname, strerror(errno));
+	    error(_("could not open %s: %s"), tempfname, strerror(errno));
 	    /*NOTREACHED*/
 	}
 	unlink(tempfname);			/* so it goes away on close */
@@ -310,7 +312,7 @@ main(
 	/* the main fd is a file too */
 	mainfname = vstralloc(AMANDA_TMPDIR, "/amcheck.main.", pid_str, NULL);
 	if((mainfd = open(mainfname, O_RDWR|O_CREAT|O_TRUNC, 0600)) == -1) {
-	    error("could not open %s: %s", mainfname, strerror(errno));
+	    error(_("could not open %s: %s"), mainfname, strerror(errno));
 	    /*NOTREACHED*/
 	}
 	unlink(mainfname);			/* so it goes away on close */
@@ -350,9 +352,9 @@ main(
 	} else {
 	    char *wait_msg = NULL;
 
-	    wait_msg = vstrallocf("parent: reaped bogus pid %ld\n", (long)pid);
+	    wait_msg = vstrallocf(_("parent: reaped bogus pid %ld\n"), (long)pid);
 	    if (fullwrite(mainfd, wait_msg, strlen(wait_msg)) < 0) {
-		error("write main file: %s", strerror(errno));
+		error(_("write main file: %s"), strerror(errno));
 		/*NOTREACHED*/
 	    }
 	    amfree(wait_msg);
@@ -363,26 +365,26 @@ main(
 
     if(do_clientchk && (do_localchk || do_tapechk)) {
 	if(lseek(tempfd, (off_t)0, 0) == (off_t)-1) {
-	    error("seek temp file: %s", strerror(errno));
+	    error(_("seek temp file: %s"), strerror(errno));
 	    /*NOTREACHED*/
 	}
 
 	while((size = fullread(tempfd, buffer, SIZEOF(buffer))) > 0) {
 	    if (fullwrite(mainfd, buffer, (size_t)size) < 0) {
-		error("write main file: %s", strerror(errno));
+		error(_("write main file: %s"), strerror(errno));
 		/*NOTREACHED*/
 	    }
 	}
 	if(size < 0) {
-	    error("read temp file: %s", strerror(errno));
+	    error(_("read temp file: %s"), strerror(errno));
 	    /*NOTREACHED*/
 	}
 	aclose(tempfd);
     }
 
-    version_string = vstrallocf("\n(brought to you by Amanda %s)\n", version());
+    version_string = vstrallocf(_("\n(brought to you by Amanda %s)\n"), version());
     if (fullwrite(mainfd, version_string, strlen(version_string)) < 0) {
-	error("write main file: %s", strerror(errno));
+	error(_("write main file: %s"), strerror(errno));
 	/*NOTREACHED*/
     }
     amfree(version_string);
@@ -422,15 +424,15 @@ main(
 
 	fflush(stdout);
 	if(lseek(mainfd, (off_t)0, SEEK_SET) == (off_t)-1) {
-	    error("lseek main file: %s", strerror(errno));
+	    error(_("lseek main file: %s"), strerror(errno));
 	    /*NOTREACHED*/
 	}
 	if(alwaysmail && !(server_probs || client_probs)) {
-	    subject = vstrallocf("%s AMCHECK REPORT: NO PROBLEMS FOUND",
+	    subject = vstrallocf(_("%s AMCHECK REPORT: NO PROBLEMS FOUND"),
 			getconf_str(CNF_ORG));
 	} else {
 	    subject = vstrallocf(
-			"%s AMANDA PROBLEM: FIX BEFORE RUN, IF POSSIBLE",
+			_("%s AMANDA PROBLEM: FIX BEFORE RUN, IF POSSIBLE"),
 			getconf_str(CNF_ORG));
 	}
 	/*
@@ -472,13 +474,13 @@ main(
 	while((r = fullread(mainfd, buffer, SIZEOF(buffer))) > 0) {
 	    if((w = fullwrite(mailfd, buffer, (size_t)r)) != (ssize_t)r) {
 		if(w < 0 && errno == EPIPE) {
-		    strappend(extra_info, "EPIPE writing to mail process\n");
+		    strappend(extra_info, _("EPIPE writing to mail process\n"));
 		    break;
 		} else if(w < 0) {
-		    error("mailfd write: %s", strerror(errno));
+		    error(_("mailfd write: %s"), strerror(errno));
 		    /*NOTREACHED*/
 		} else {
-		    error("mailfd write: wrote " SSIZE_T_FMT " instead of " SIZE_T_FMT, w, r);
+		    error(_("mailfd write: wrote " SSIZE_T_FMT " instead of " SIZE_T_FMT), w, r);
 		    /*NOTREACHED*/
 		}
 	    }
@@ -486,7 +488,7 @@ main(
 	aclose(mailfd);
 	ferr = fdopen(errfd, "r");
 	if (!ferr) {
-	    error("Can't fdopen: %s", strerror(errno));
+	    error(_("Can't fdopen: %s"), strerror(errno));
 	    /*NOTREACHED*/
 	}
 	for(; (line = agets(ferr)) != NULL; free(line)) {
@@ -508,10 +510,10 @@ main(
 	    }
 	    if (rc != 0) {
 		    if (ret == 0) {
-			strappend(err, "got signal ");
+			strappend(err, _("got signal "));
 			ret = sig;
 		    } else {
-			strappend(err, "returned ");
+			strappend(err, _("returned "));
 		    }
 		    snprintf(number, SIZEOF(number), "%d", ret);
 		    strappend(err, number);
@@ -522,7 +524,7 @@ main(
 		fputs(extra_info, stderr);
 		amfree(extra_info);
 	    }
-	    error("error running mailer %s: %s", MAILER, err);
+	    error(_("error running mailer %s: %s"), MAILER, err);
 	    /*NOTREACHED*/
 	}
     }
@@ -589,21 +591,21 @@ test_server_pgm(
     pgm = vstralloc(dir, "/", pgm, versionsuffix(), NULL);
     quoted = quote_string(pgm);
     if(stat(pgm, &statbuf) == -1) {
-	fprintf(outf, "ERROR: program %s: does not exist\n",
+	fprintf(outf, _("ERROR: program %s: does not exist\n"),
 		quoted);
 	pgmbad = 1;
     } else if (!S_ISREG(statbuf.st_mode)) {
-	fprintf(outf, "ERROR: program %s: not a file\n",
+	fprintf(outf, _("ERROR: program %s: not a file\n"),
 		quoted);
 	pgmbad = 1;
     } else if (access(pgm, X_OK) == -1) {
-	fprintf(outf, "ERROR: program %s: not executable\n",
+	fprintf(outf, _("ERROR: program %s: not executable\n"),
 		quoted);
 	pgmbad = 1;
     } else if (suid \
 	       && dumpuid != 0
 	       && (statbuf.st_uid != 0 || (statbuf.st_mode & 04000) == 0)) {
-	fprintf(outf, "ERROR: program %s: not setuid-root\n",
+	fprintf(outf, _("ERROR: program %s: not setuid-root\n"),
 		quoted);
 	pgmbad = 1;
     }
@@ -632,7 +634,7 @@ start_server_check(
 
     switch(pid = fork()) {
     case -1:
-    	error("could not fork server check: %s", strerror(errno));
+    	error(_("could not fork server check: %s"), strerror(errno));
 	/*NOTREACHED*/
 
     case 0:
@@ -650,12 +652,12 @@ start_server_check(
     startclock();
 
     if((outf = fdopen(fd, "w")) == NULL) {
-	error("fdopen %d: %s", fd, strerror(errno));
+	error(_("fdopen %d: %s"), fd, strerror(errno));
 	/*NOTREACHED*/
     }
     errf = outf;
 
-    fprintf(outf, "Amanda Tape Server Host Check\n");
+    fprintf(outf, _("Amanda Tape Server Host Check\n"));
     fprintf(outf, "-----------------------------\n");
 
     if (do_localchk || testtape) {
@@ -672,7 +674,7 @@ start_server_check(
 
 	ColumnSpec = getconf_str(CNF_COLUMNSPEC);
 	if(SetColumDataFromString(ColumnData, ColumnSpec, &errstr) < 0) {
-	    fprintf(outf, "ERROR: %s\n", errstr);
+	    fprintf(outf, _("ERROR: %s\n"), errstr);
 	    amfree(errstr);
 	    confbad = 1;
 	}
@@ -685,13 +687,13 @@ start_server_check(
 	    }
 	    if(access(lbl_templ, R_OK) == -1) {
 		fprintf(outf,
-			"ERROR: cannot access lbl_templ file %s: %s\n",
+			_("ERROR: cannot access lbl_templ file %s: %s\n"),
 			lbl_templ,
 			strerror(errno));
 		confbad = 1;
 	    }
 #if !defined(LPRCMD)
-	    fprintf(outf, "ERROR: lbl_templ set but no LPRCMD defined, you should reconfigure amanda\n       and make sure it find a lpr or lp command.\n");
+	    fprintf(outf, _("ERROR: lbl_templ set but no LPRCMD defined, you should reconfigure amanda\n       and make sure it find a lpr or lp command.\n"));
 	    confbad = 1;
 #endif
 	}
@@ -711,7 +713,7 @@ start_server_check(
 	 */
 	if(access(libexecdir, X_OK) == -1) {
 	    quoted = quote_string(libexecdir);
-	    fprintf(outf, "ERROR: program dir %s: not accessible\n",
+	    fprintf(outf, _("ERROR: program dir %s: not accessible\n"),
 		    quoted);
 	    pgmbad = 1;
 	    amfree(quoted);
@@ -731,7 +733,7 @@ start_server_check(
 	}
 	if(access(sbindir, X_OK) == -1) {
 	    quoted = quote_string(sbindir);
-	    fprintf(outf, "ERROR: program dir %s: not accessible\n",
+	    fprintf(outf, _("ERROR: program dir %s: not accessible\n"),
 		    sbindir);
 	    pgmbad = 1;
 	    amfree(quoted);
@@ -747,7 +749,7 @@ start_server_check(
 	}
 	if(access(COMPRESS_PATH, X_OK) == -1) {
 	    quoted = quote_string(COMPRESS_PATH);
-	    fprintf(outf, "WARNING: %s is not executable, server-compression and indexing will not work\n",
+	    fprintf(outf, _("WARNING: %s is not executable, server-compression and indexing will not work\n"),
 	            quoted);
 	    amfree(quoted);
 	}
@@ -787,14 +789,14 @@ start_server_check(
 	}
 	if(access(tape_dir, W_OK) == -1) {
 	    quoted = quote_string(tape_dir);
-	    fprintf(outf, "ERROR: tapelist dir %s: not writable.\n", quoted);
+	    fprintf(outf, _("ERROR: tapelist dir %s: not writable.\n"), quoted);
 	    tapebad = 1;
 	    amfree(quoted);
 	}
 	else if(stat(tapefile, &statbuf) == -1) {
 	    quoted = quote_string(tape_dir);
-	    fprintf(outf, "ERROR: tapelist %s (%s), "
-		    "you must create an empty file.\n",
+	    fprintf(outf, _("ERROR: tapelist %s (%s), "
+		    "you must create an empty file.\n"),
 		    quoted, strerror(errno));
 	    tapebad = 1;
 	    amfree(quoted);
@@ -826,7 +828,7 @@ start_server_check(
 	holdfile = vstralloc(config_dir, "/", "hold", NULL);
 	if(access(holdfile, F_OK) != -1) {
 	    quoted = quote_string(holdfile);
-	    fprintf(outf, "WARNING: hold file %s exists\n", holdfile);
+	    fprintf(outf, _("WARNING: hold file %s exists\n"), holdfile);
 	    amfree(quoted);
 	}
 	amfree(tapefile);
@@ -835,13 +837,13 @@ start_server_check(
 	tapename = getconf_str(CNF_TAPEDEV);
 	if (tapename == NULL) {
 	    if (getconf_str(CNF_TPCHANGER) == NULL) {
-		fprintf(outf, "WARNING: No tapedev or tpchanger specified\n");
+		fprintf(outf, _("WARNING: No tapedev or tpchanger specified\n"));
 		testtape = 0;
 		do_tapechk = 0;
 	    }
 	} else if (strncmp_const(tapename, "null:") == 0) {
 	    fprintf(outf,
-		    "WARNING: tapedev is %s, dumps will be thrown away\n",
+		    _("WARNING: tapedev is %s, dumps will be thrown away\n"),
 		    tapename);
 	    testtape = 0;
 	    do_tapechk = 0;
@@ -854,34 +856,34 @@ start_server_check(
 	for(hdp = holdingdisks; hdp != NULL; hdp = hdp->next) {
     	    quoted = quote_string(holdingdisk_get_diskdir(hdp));
 	    if(get_fs_stats(holdingdisk_get_diskdir(hdp), &fs) == -1) {
-		fprintf(outf, "ERROR: holding dir %s (%s), "
-			"you must create a directory.\n",
+		fprintf(outf, _("ERROR: holding dir %s (%s), "
+			"you must create a directory.\n"),
 			quoted, strerror(errno));
 		disklow = 1;
 	    }
 	    else if(access(holdingdisk_get_diskdir(hdp), W_OK) == -1) {
-		fprintf(outf, "ERROR: holding disk %s: not writable: %s.\n",
+		fprintf(outf, _("ERROR: holding disk %s: not writable: %s.\n"),
 			quoted, strerror(errno));
 		disklow = 1;
 	    }
 	    else if(access(holdingdisk_get_diskdir(hdp), X_OK) == -1) {
-		fprintf(outf, "ERROR: holding disk %s: not searcheable: %s.\n",
+		fprintf(outf, _("ERROR: holding disk %s: not searcheable: %s.\n"),
 			quoted, strerror(errno));
 		disklow = 1;
 	    }
 	    else if(fs.avail == (off_t)-1) {
 		fprintf(outf,
-			"WARNING: holding disk %s: "
-			"available space unknown (" OFF_T_FMT" KB requested)\n",
+			_("WARNING: holding disk %s: "
+			"available space unknown (" OFF_T_FMT" KB requested)\n"),
 			quoted, (OFF_T_FMT_TYPE)holdingdisk_get_disksize(hdp));
 		disklow = 1;
 	    }
 	    else if(holdingdisk_get_disksize(hdp) > (off_t)0) {
 		if(fs.avail < holdingdisk_get_disksize(hdp)) {
 		    fprintf(outf,
-			    "WARNING: holding disk %s: "
+			    _("WARNING: holding disk %s: "
 			    "only " OFF_T_FMT " %sB free ("
-			    OFF_T_FMT " %sB requested)\n", quoted,
+			    OFF_T_FMT " %sB requested)\n"), quoted,
 			    (OFF_T_FMT_TYPE)(fs.avail / (off_t)unitdivisor),
 			    displayunit,
 			    (OFF_T_FMT_TYPE)(holdingdisk_get_disksize(hdp)/(off_t)unitdivisor),
@@ -890,9 +892,9 @@ start_server_check(
 		}
 		else {
 		    fprintf(outf,
-			    "Holding disk %s: " OFF_T_FMT
+			    _("Holding disk %s: " OFF_T_FMT
 			    " %sB disk space available,"
-			    " using " OFF_T_FMT " %sB as requested\n",
+			    " using " OFF_T_FMT " %sB as requested\n"),
 			    quoted,
 			    (OFF_T_FMT_TYPE)(fs.avail/(off_t)unitdivisor),
 			    displayunit,
@@ -903,17 +905,17 @@ start_server_check(
 	    else {
 		if((fs.avail + holdingdisk_get_disksize(hdp)) < (off_t)0) {
 		    fprintf(outf,
-			    "WARNING: holding disk %s: "
-			    "only " OFF_T_FMT " %sB free, using nothing\n",
+			    _("WARNING: holding disk %s: "
+			    "only " OFF_T_FMT " %sB free, using nothing\n"),
 			    quoted, (OFF_T_FMT_TYPE)(fs.avail/(off_t)unitdivisor),
 			    displayunit);
 		    disklow = 1;
 		}
 		else {
 		    fprintf(outf,
-			    "Holding disk %s: "
+			    _("Holding disk %s: "
 			    OFF_T_FMT " %sB disk space available, using "
-			    OFF_T_FMT " %sB\n",
+			    OFF_T_FMT " %sB\n"),
 			    quoted,
 			    (OFF_T_FMT_TYPE)(fs.avail/(off_t)unitdivisor),
 			    displayunit,
@@ -944,12 +946,12 @@ start_server_check(
 
 	quoted = quote_string(conf_logdir);
 	if(stat(conf_logdir, &statbuf) == -1) {
-	    fprintf(outf, "ERROR: logdir %s (%s), you must create directory.\n",
+	    fprintf(outf, _("ERROR: logdir %s (%s), you must create directory.\n"),
 		    quoted, strerror(errno));
 	    disklow = 1;
 	}
 	else if(access(conf_logdir, W_OK) == -1) {
-	    fprintf(outf, "ERROR: log dir %s: not writable\n", quoted);
+	    fprintf(outf, _("ERROR: log dir %s: not writable\n"), quoted);
 	    logbad = 1;
 	}
 	amfree(quoted);
@@ -959,7 +961,7 @@ start_server_check(
 	    logbad = 2;
 	    if(access(logfile, W_OK) != 0) {
 		quoted = quote_string(logfile);
-		fprintf(outf, "ERROR: log file %s: not writable\n", quoted);
+		fprintf(outf, _("ERROR: log file %s: not writable\n"), quoted);
 		amfree(quoted);
 	    }
 	}
@@ -968,17 +970,17 @@ start_server_check(
 	quoted = quote_string(olddir);
 	if (stat(olddir,&stat_old) == 0) { /* oldlog exist */
 	    if(!(S_ISDIR(stat_old.st_mode))) {
-		fprintf(outf, "ERROR: oldlog directory %s is not a directory\n",
+		fprintf(outf, _("ERROR: oldlog directory %s is not a directory\n"),
 			quoted);
 		logbad = 1;
 	    }
 	    if(access(olddir, W_OK) == -1) {
-		fprintf(outf, "ERROR: oldlog dir %s: not writable\n", quoted);
+		fprintf(outf, _("ERROR: oldlog dir %s: not writable\n"), quoted);
 		logbad = 1;
 	    }
 	}
 	else if(lstat(olddir,&stat_old) == 0) {
-	    fprintf(outf, "ERROR: oldlog directory %s is not a directory\n",
+	    fprintf(outf, _("ERROR: oldlog directory %s is not a directory\n"),
 		    quoted);
 	    logbad = 1;
 	}
@@ -1007,7 +1009,7 @@ start_server_check(
 
 	if (!getconf_seen(CNF_TPCHANGER) && getconf_int(CNF_RUNTAPES) != 1) {
 	    fprintf(outf,
-		    "WARNING: if a tape changer is not available, runtapes must be set to 1\n");
+		    _("WARNING: if a tape changer is not available, runtapes must be set to 1\n"));
 	}
 
         tape_status = taper_scan(NULL, &label, &datestamp, &tapename,
@@ -1031,9 +1033,9 @@ start_server_check(
 	}
         if (tape_status < 0) {
 	    tape_t *exptape = lookup_last_reusable_tape(0);
-	    fprintf(outf, "       (expecting ");
-	    if(exptape != NULL) fprintf(outf, "tape %s or ", exptape->label);
-	    fprintf(outf, "a new tape)\n");
+	    fprintf(outf, _("       (expecting "));
+	    if(exptape != NULL) fprintf(outf, _("tape %s or "), exptape->label);
+	    fprintf(outf, _("a new tape)\n"));
             tapebad = 1;
 	} else {
             if (overwrite) {
@@ -1043,41 +1045,41 @@ start_server_check(
                 if (wrlabel_status != NULL) {
                     if (tape_status == 3) {
                         fprintf(outf,
-                                "ERROR: Could not label brand new tape: %s\n",
+                                _("ERROR: Could not label brand new tape: %s\n"),
                                 wrlabel_status);
                     } else {
                         fprintf(outf,
-                                "ERROR: tape %s label ok, but is not writable (%s)\n",
+                                _("ERROR: tape %s label ok, but is not writable (%s)\n"),
                                 label, wrlabel_status);
                     }
                     tapebad = 1;
                 } else {
                     if (tape_status != 3) {
-                        fprintf(outf, "Tape %s is writable; rewrote label.\n", label);
+                        fprintf(outf, _("Tape %s is writable; rewrote label.\n"), label);
                     } else {
-                        fprintf(outf, "Wrote label %s to brand new tape.\n", label);
+                        fprintf(outf, _("Wrote label %s to brand new tape.\n"), label);
                     }
                 }
             } else {
-                fprintf(outf, "NOTE: skipping tape-writable test\n");
+                fprintf(outf, _("NOTE: skipping tape-writable test\n"));
                 if (tape_status == 3) {
                     fprintf(outf,
-                            "Found a brand new tape, will label it %s.\n", 
+                            _("Found a brand new tape, will label it %s.\n"), 
                             label);
                 } else {
-                    fprintf(outf, "Tape %s label ok\n", label);
+                    fprintf(outf, _("Tape %s label ok\n"), label);
                 }                    
             }
         }
 	amfree(tapename);
     } else if (do_tapechk) {
-	fprintf(outf, "WARNING: skipping tape test because amdump or amflush seem to be running\n");
-	fprintf(outf, "WARNING: if they are not, you must run amcleanup\n");
+	fprintf(outf, _("WARNING: skipping tape test because amdump or amflush seem to be running\n"));
+	fprintf(outf, _("WARNING: if they are not, you must run amcleanup\n"));
     } else if (logbad == 2) {
 	fprintf(outf, "WARNING: amdump or amflush seem to be running\n");
 	fprintf(outf, "WARNING: if they are not, you must run amcleanup\n");
     } else {
-	fprintf(outf, "NOTE: skipping tape checks\n");
+	fprintf(outf, _("NOTE: skipping tape checks\n"));
     }
 
     /*
@@ -1105,7 +1107,7 @@ start_server_check(
 	conf_runspercycle = getconf_int(CNF_RUNSPERCYCLE);
 
 	if(conf_tapecycle <= conf_runspercycle) {
-		fprintf(outf, "WARNING: tapecycle (%d) <= runspercycle (%d).\n",
+		fprintf(outf, _("WARNING: tapecycle (%d) <= runspercycle (%d).\n"),
 			conf_tapecycle, conf_runspercycle);
 	}
 
@@ -1127,21 +1129,21 @@ start_server_check(
 	quoted = quote_string(conf_infofile);
 	if(stat(conf_infofile, &statbuf) == -1) {
 	    if (errno == ENOENT) {
-		fprintf(outf, "NOTE: conf info dir %s does not exist\n",
+		fprintf(outf, _("NOTE: conf info dir %s does not exist\n"),
 			quoted);
-		fprintf(outf, "NOTE: it will be created on the next run.\n");
+		fprintf(outf, _("NOTE: it will be created on the next run.\n"));
 	    } else {
-		fprintf(outf, "ERROR: conf info dir %s (%s)\n",
+		fprintf(outf, _("ERROR: conf info dir %s (%s)\n"),
 			quoted, strerror(errno));
 		infobad = 1;
 	    }	
 	    amfree(conf_infofile);
 	} else if (!S_ISDIR(statbuf.st_mode)) {
-	    fprintf(outf, "ERROR: info dir %s: not a directory\n", quoted);
+	    fprintf(outf, _("ERROR: info dir %s: not a directory\n"), quoted);
 	    amfree(conf_infofile);
 	    infobad = 1;
 	} else if (access(conf_infofile, W_OK) == -1) {
-	    fprintf(outf, "ERROR: info dir %s: not writable\n", quoted);
+	    fprintf(outf, _("ERROR: info dir %s: not writable\n"), quoted);
 	    amfree(conf_infofile);
 	    infobad = 1;
 	} else {
@@ -1165,23 +1167,23 @@ start_server_check(
 		quoted = quote_string(hostinfodir);
 		if(stat(hostinfodir, &statbuf) == -1) {
 		    if (errno == ENOENT) {
-			fprintf(outf, "NOTE: host info dir %s does not exist\n",
+			fprintf(outf, _("NOTE: host info dir %s does not exist\n"),
 				quoted);
 			fprintf(outf,
-				"NOTE: it will be created on the next run.\n");
+				_("NOTE: it will be created on the next run.\n"));
 		    } else {
-			fprintf(outf, "ERROR: host info dir %s (%s)\n",
+			fprintf(outf, _("ERROR: host info dir %s (%s)\n"),
 				quoted, strerror(errno));
 			infobad = 1;
 		    }	
 		    amfree(hostinfodir);
 		} else if (!S_ISDIR(statbuf.st_mode)) {
-		    fprintf(outf, "ERROR: info dir %s: not a directory\n",
+		    fprintf(outf, _("ERROR: info dir %s: not a directory\n"),
 			    quoted);
 		    amfree(hostinfodir);
 		    infobad = 1;
 		} else if (access(hostinfodir, W_OK) == -1) {
-		    fprintf(outf, "ERROR: info dir %s: not writable\n", quoted);
+		    fprintf(outf, _("ERROR: info dir %s: not writable\n"), quoted);
 		    amfree(hostinfodir);
 		    infobad = 1;
 		} else {
@@ -1202,39 +1204,39 @@ start_server_check(
 		    quotedif = quote_string(infofile);
 		    if(stat(diskdir, &statbuf) == -1) {
 			if (errno == ENOENT) {
-			    fprintf(outf, "NOTE: info dir %s does not exist\n",
+			    fprintf(outf, _("NOTE: info dir %s does not exist\n"),
 				quoted);
 			    fprintf(outf,
-				"NOTE: it will be created on the next run.\n");
+				_("NOTE: it will be created on the next run.\n"));
 			} else {
-			    fprintf(outf, "ERROR: info dir %s (%s)\n",
+			    fprintf(outf, _("ERROR: info dir %s (%s)\n"),
 				    quoted, strerror(errno));
 			    infobad = 1;
 			}	
 		    } else if (!S_ISDIR(statbuf.st_mode)) {
-			fprintf(outf, "ERROR: info dir %s: not a directory\n",
+			fprintf(outf, _("ERROR: info dir %s: not a directory\n"),
 				quoted);
 			infobad = 1;
 		    } else if (access(diskdir, W_OK) == -1) {
-			fprintf(outf, "ERROR: info dir %s: not writable\n",
+			fprintf(outf, _("ERROR: info dir %s: not writable\n"),
 				quoted);
 			infobad = 1;
 		    } else if(stat(infofile, &statbuf) == -1) {
 			if (errno == ENOENT) {
-			    fprintf(outf, "NOTE: info file %s does not exist\n",
+			    fprintf(outf, _("NOTE: info file %s does not exist\n"),
 				    quotedif);
-			    fprintf(outf, "NOTE: it will be created on the next run.\n");
+			    fprintf(outf, _("NOTE: it will be created on the next run.\n"));
 			} else {
-			    fprintf(outf, "ERROR: info dir %s (%s)\n",
+			    fprintf(outf, _("ERROR: info dir %s (%s)\n"),
 				    quoted, strerror(errno));
 			    infobad = 1;
 			}	
 		    } else if (!S_ISREG(statbuf.st_mode)) {
-			fprintf(outf, "ERROR: info file %s: not a file\n",
+			fprintf(outf, _("ERROR: info file %s: not a file\n"),
 				quotedif);
 			infobad = 1;
 		    } else if (access(infofile, R_OK) == -1) {
-			fprintf(outf, "ERROR: info file %s: not readable\n",
+			fprintf(outf, _("ERROR: info file %s: not readable\n"),
 				quotedif);
 			infobad = 1;
 		    }
@@ -1248,22 +1250,22 @@ start_server_check(
 			quoted = quote_string(conf_indexdir);
 			if(stat(conf_indexdir, &statbuf) == -1) {
 			    if (errno == ENOENT) {
-				fprintf(outf, "NOTE: index dir %s does not exist\n",
+				fprintf(outf, _("NOTE: index dir %s does not exist\n"),
 				        quoted);
-				fprintf(outf, "NOTE: it will be created on the next run.\n");
+				fprintf(outf, _("NOTE: it will be created on the next run.\n"));
 			    } else {
-				fprintf(outf, "ERROR: index dir %s (%s)\n",
+				fprintf(outf, _("ERROR: index dir %s (%s)\n"),
 					quoted, strerror(errno));
 				indexbad = 1;
 			    }	
 			    amfree(conf_indexdir);
 			} else if (!S_ISDIR(statbuf.st_mode)) {
-			    fprintf(outf, "ERROR: index dir %s: not a directory\n",
+			    fprintf(outf, _("ERROR: index dir %s: not a directory\n"),
 				    quoted);
 			    amfree(conf_indexdir);
 			    indexbad = 1;
 			} else if (access(conf_indexdir, W_OK) == -1) {
-			    fprintf(outf, "ERROR: index dir %s: not writable\n",
+			    fprintf(outf, _("ERROR: index dir %s: not writable\n"),
 				    quoted);
 			    amfree(conf_indexdir);
 			    indexbad = 1;
@@ -1279,22 +1281,22 @@ start_server_check(
 			    quoted = quote_string(hostindexdir);
 			    if(stat(hostindexdir, &statbuf) == -1) {
 				if (errno == ENOENT) {
-				    fprintf(outf, "NOTE: index dir %s does not exist\n",
+				    fprintf(outf, _("NOTE: index dir %s does not exist\n"),
 				            quoted);
-				    fprintf(outf, "NOTE: it will be created on the next run.\n");
+				    fprintf(outf, _("NOTE: it will be created on the next run.\n"));
 			        } else {
-				    fprintf(outf, "ERROR: index dir %s (%s)\n",
+				    fprintf(outf, _("ERROR: index dir %s (%s)\n"),
 					    quoted, strerror(errno));
 				    indexbad = 1;
 				}
 			        amfree(hostindexdir);
 			    } else if (!S_ISDIR(statbuf.st_mode)) {
-			        fprintf(outf, "ERROR: index dir %s: not a directory\n",
+			        fprintf(outf, _("ERROR: index dir %s: not a directory\n"),
 				        quoted);
 			        amfree(hostindexdir);
 			        indexbad = 1;
 			    } else if (access(hostindexdir, W_OK) == -1) {
-			        fprintf(outf, "ERROR: index dir %s: not writable\n",
+			        fprintf(outf, _("ERROR: index dir %s: not writable\n"),
 				        quoted);
 			        amfree(hostindexdir);
 			        indexbad = 1;
@@ -1309,20 +1311,20 @@ start_server_check(
 			    quoted = quote_string(diskdir);
 			    if(stat(diskdir, &statbuf) == -1) {
 				if (errno == ENOENT) {
-				    fprintf(outf, "NOTE: index dir %s does not exist\n",
+				    fprintf(outf, _("NOTE: index dir %s does not exist\n"),
 					    quoted);
-				    fprintf(outf, "NOTE: it will be created on the next run.\n");
+				    fprintf(outf, _("NOTE: it will be created on the next run.\n"));
 				} else {
-				    fprintf(outf, "ERROR: index dir %s (%s)\n",
+				    fprintf(outf, _("ERROR: index dir %s (%s)\n"),
 					quoted, strerror(errno));
 				    indexbad = 1;
 				}	
 			    } else if (!S_ISDIR(statbuf.st_mode)) {
-				fprintf(outf, "ERROR: index dir %s: not a directory\n",
+				fprintf(outf, _("ERROR: index dir %s: not a directory\n"),
 					quoted);
 				indexbad = 1;
 			    } else if (access(diskdir, W_OK) == -1) {
-				fprintf(outf, "ERROR: index dir %s: is not writable\n",
+				fprintf(outf, _("ERROR: index dir %s: is not writable\n"),
 					quoted);
 				indexbad = 1;
 			    }
@@ -1333,24 +1335,24 @@ start_server_check(
 
 		if ( dp->encrypt == ENCRYPT_SERV_CUST ) {
 		  if ( dp->srv_encrypt[0] == '\0' ) {
-		    fprintf(outf, "ERROR: server encryption program not specified\n");
+		    fprintf(outf, _("ERROR: server encryption program not specified\n"));
 		    pgmbad = 1;
 		  }
 		  else if(access(dp->srv_encrypt, X_OK) == -1) {
-		    fprintf(outf, "ERROR: %s is not executable, server encryption will not work\n",
+		    fprintf(outf, _("ERROR: %s is not executable, server encryption will not work\n"),
 			    dp->srv_encrypt );
 		    pgmbad = 1;
 		  }
 		}
 		if ( dp->compress == COMP_SERVER_CUST ) {
 		  if ( dp->srvcompprog[0] == '\0' ) {
-		    fprintf(outf, "ERROR: server custom compression program not specified\n");
+		    fprintf(outf, _("ERROR: server custom compression program not specified\n"));
 		    pgmbad = 1;
 		  }
 		  else if(access(dp->srvcompprog, X_OK) == -1) {
 		    quoted = quote_string(dp->srvcompprog);
 
-		    fprintf(outf, "ERROR: %s is not executable, server custom compression will not work\n",
+		    fprintf(outf, _("ERROR: %s is not executable, server custom compression will not work\n"),
 			    quoted);
 		    amfree(quoted);
 		    pgmbad = 1;
@@ -1375,7 +1377,7 @@ start_server_check(
     amfree(config_dir);
     amfree(config_name);
 
-    fprintf(outf, "Server check took %s seconds\n", walltime_str(curclock()));
+    fprintf(outf, _("Server check took %s seconds\n"), walltime_str(curclock()));
 
     fflush(outf);
 
@@ -1429,7 +1431,7 @@ start_host(
 
     if (strcmp(hostp->hostname,"localhost") == 0) {
 	fprintf(outf,
-                    "WARNING: Usage of fully qualified hostname recommended for Client %s.\n",
+                    _("WARNING: Usage of fully qualified hostname recommended for Client %s.\n"),
                     hostp->hostname);
     }
 
@@ -1454,35 +1456,35 @@ start_host(
 	if(!am_has_feature(hostp->features, fe_selfcheck_req) &&
 	   !am_has_feature(hostp->features, fe_selfcheck_req_device)) {
 	    fprintf(outf,
-		    "ERROR: Client %s does not support selfcheck REQ packet.\n",
+		    _("ERROR: Client %s does not support selfcheck REQ packet.\n"),
 		    hostp->hostname);
 	}
 	if(!am_has_feature(hostp->features, fe_selfcheck_rep)) {
 	    fprintf(outf,
-		    "ERROR: Client %s does not support selfcheck REP packet.\n",
+		    _("ERROR: Client %s does not support selfcheck REP packet.\n"),
 		    hostp->hostname);
 	}
 	if(!am_has_feature(hostp->features, fe_sendsize_req_options) &&
 	   !am_has_feature(hostp->features, fe_sendsize_req_no_options) &&
 	   !am_has_feature(hostp->features, fe_sendsize_req_device)) {
 	    fprintf(outf,
-		    "ERROR: Client %s does not support sendsize REQ packet.\n",
+		    _("ERROR: Client %s does not support sendsize REQ packet.\n"),
 		    hostp->hostname);
 	}
 	if(!am_has_feature(hostp->features, fe_sendsize_rep)) {
 	    fprintf(outf,
-		    "ERROR: Client %s does not support sendsize REP packet.\n",
+		    _("ERROR: Client %s does not support sendsize REP packet.\n"),
 		    hostp->hostname);
 	}
 	if(!am_has_feature(hostp->features, fe_sendbackup_req) &&
 	   !am_has_feature(hostp->features, fe_sendbackup_req_device)) {
 	    fprintf(outf,
-		   "ERROR: Client %s does not support sendbackup REQ packet.\n",
+		   _("ERROR: Client %s does not support sendbackup REQ packet.\n"),
 		   hostp->hostname);
 	}
 	if(!am_has_feature(hostp->features, fe_sendbackup_rep)) {
 	    fprintf(outf,
-		   "ERROR: Client %s does not support sendbackup REP packet.\n",
+		   _("ERROR: Client %s does not support sendbackup REP packet.\n"),
 		   hostp->hostname);
 	}
 
@@ -1529,7 +1531,7 @@ start_host(
 		(dp->device && qdevice[0] == '"')) {
 		if(!am_has_feature(hostp->features, fe_interface_quoted_text)) {
 		    fprintf(outf,
-			    "WARNING: %s:%s:%s host does not support quoted text\n",
+			    _("WARNING: %s:%s:%s host does not support quoted text\n"),
 			    hostp->hostname, qname, qdevice);
 		}
 	    }
@@ -1537,17 +1539,17 @@ start_host(
 	    if(dp->device) {
 		if(!am_has_feature(hostp->features, fe_selfcheck_req_device)) {
 		    fprintf(outf,
-		     "ERROR: %s:%s (%s): selfcheck does not support device.\n",
+		     _("ERROR: %s:%s (%s): selfcheck does not support device.\n"),
 		     hostp->hostname, qname, dp->device);
 		}
 		if(!am_has_feature(hostp->features, fe_sendsize_req_device)) {
 		    fprintf(outf,
-		     "ERROR: %s:%s (%s): sendsize does not support device.\n",
+		     _("ERROR: %s:%s (%s): sendsize does not support device.\n"),
 		     hostp->hostname, qname, dp->device);
 		}
 		if(!am_has_feature(hostp->features, fe_sendbackup_req_device)) {
 		    fprintf(outf,
-		     "ERROR: %s:%s (%s): sendbackup does not support device.\n",
+		     _("ERROR: %s:%s (%s): sendbackup does not support device.\n"),
 		     hostp->hostname, qname, dp->device);
 		}
 	    }
@@ -1555,17 +1557,17 @@ start_host(
 	       strcmp(dp->program,"GNUTAR") == 0) {
 		if(strcmp(dp->program, "DUMP") == 0 &&
 		   !am_has_feature(hostp->features, fe_program_dump)) {
-		    fprintf(outf, "ERROR: %s:%s does not support DUMP.\n",
+		    fprintf(outf, _("ERROR: %s:%s does not support DUMP.\n"),
 			    hostp->hostname, qname);
 		}
 		if(strcmp(dp->program, "GNUTAR") == 0 &&
 		   !am_has_feature(hostp->features, fe_program_gnutar)) {
-		    fprintf(outf, "ERROR: %s:%s does not support GNUTAR.\n",
+		    fprintf(outf, _("ERROR: %s:%s does not support GNUTAR.\n"),
 			    hostp->hostname, qname);
 		}
 		if(dp->estimate == ES_CALCSIZE &&
 		   !am_has_feature(hostp->features, fe_calcsize_estimate)) {
-		    fprintf(outf, "ERROR: %s:%s does not support CALCSIZE for estimate, using CLIENT.\n",
+		    fprintf(outf, _("ERROR: %s:%s does not support CALCSIZE for estimate, using CLIENT.\n"),
 			    hostp->hostname, qname);
 		    dp->estimate = ES_CLIENT;
 		}
@@ -1578,20 +1580,20 @@ start_host(
 		if(dp->compress == COMP_CUST &&
 		   !am_has_feature(hostp->features, fe_options_compress_cust)) {
 		  fprintf(outf,
-			  "ERROR: Client %s does not support custom compression.\n",
+			  _("ERROR: Client %s does not support custom compression.\n"),
 			  hostp->hostname);
 		}
 		if(dp->encrypt == ENCRYPT_CUST ) {
 		  if ( !am_has_feature(hostp->features, fe_options_encrypt_cust)) {
 		    fprintf(outf,
-			    "ERROR: Client %s does not support data encryption.\n",
+			    _("ERROR: Client %s does not support data encryption.\n"),
 			    hostp->hostname);
 		    remote_errors++;
 		  } else if ( dp->compress == COMP_SERVER_FAST || 
 			      dp->compress == COMP_SERVER_BEST ||
 			      dp->compress == COMP_SERVER_CUST ) {
 		    fprintf(outf,
-			    "ERROR: %s: Client encryption with server compression is not supported. See amanda.conf(5) for detail.\n", hostp->hostname);
+			    _("ERROR: %s: Client encryption with server compression is not supported. See amanda.conf(5) for detail.\n"), hostp->hostname);
 		    remote_errors++;
 		  } 
 		}
@@ -1616,7 +1618,7 @@ start_host(
 		}
 	    } else {
 		if(!am_has_feature(hostp->features, fe_program_backup_api)) {
-		    fprintf(outf, "ERROR: %s:%s does not support BACKUP-API.\n",
+		    fprintf(outf, _("ERROR: %s:%s does not support BACKUP-API.\n"),
 			    hostp->hostname, qname);
 		}
 		if(dp->device) {
@@ -1675,7 +1677,7 @@ start_host(
 
     secdrv = security_getdriver(hostp->disks->security_driver);
     if (secdrv == NULL) {
-	error("could not find security driver '%s' for host '%s'",
+	error(_("could not find security driver '%s' for host '%s'"),
 	      hostp->disks->security_driver, hostp->hostname);
         /*NOTREACHED*/
     }
@@ -1699,7 +1701,7 @@ start_client_checks(
 
     switch(pid = fork()) {
     case -1:
-    	error("could not fork client check: %s", strerror(errno));
+    	error(_("could not fork client check: %s"), strerror(errno));
 	/*NOTREACHED*/
 
     case 0:
@@ -1717,12 +1719,12 @@ start_client_checks(
     startclock();
 
     if((outf = fdopen(fd, "w")) == NULL) {
-	error("fdopen %d: %s", fd, strerror(errno));
+	error(_("fdopen %d: %s"), fd, strerror(errno));
 	/*NOTREACHED*/
     }
     errf = outf;
 
-    fprintf(outf, "\nAmanda Backup Client Hosts Check\n");
+    fprintf(outf, _("\nAmanda Backup Client Hosts Check\n"));
     fprintf(outf,   "--------------------------------\n");
 
     protocol_init();
@@ -1740,11 +1742,13 @@ start_client_checks(
 
     protocol_run();
 
-    fprintf(outf,
-     "Client check: %d host%s checked in %s seconds, %d problem%s found\n",
-	    hostcount, (hostcount == 1) ? "" : "s",
-	    walltime_str(curclock()),
-	    remote_errors, (remote_errors == 1) ? "" : "s");
+    fprintf(outf, plural(_("Client check: %d host checked in %s seconds."), 
+			 _("Client check: %d hosts checked in %s seconds."),
+			 hostcount),
+	    hostcount, walltime_str(curclock()));
+    fprintf(outf, plural(_("  %d problem found.\n"),
+			 _("  %d problems found.\n"), remote_errors),
+	    remote_errors);
     fflush(outf);
 
     amfree(config_dir);
@@ -1779,7 +1783,7 @@ handle_result(
 
     if (pkt == NULL) {
 	fprintf(outf,
-	    "WARNING: %s: selfcheck request failed: %s\n", hostp->hostname,
+	    _("WARNING: %s: selfcheck request failed: %s\n"), hostp->hostname,
 	    security_geterror(sech));
 	remote_errors++;
 	hostp->up = HOST_DONE;
@@ -1787,7 +1791,7 @@ handle_result(
     }
 
 #if 0
-    fprintf(errf, "got response from %s:\n----\n%s----\n\n",
+    fprintf(errf, _("got response from %s:\n----\n%s----\n\n"),
 	    hostp->hostname, pkt->body);
 #endif
 
@@ -1807,7 +1811,7 @@ handle_result(
 		t += SIZEOF("features=")-1;
 		am_release_feature_set(hostp->features);
 		if((hostp->features = am_string_to_feature(t)) == NULL) {
-		    fprintf(outf, "ERROR: %s: bad features value: %s\n",
+		    fprintf(outf, _("ERROR: %s: bad features value: %s\n"),
 			    hostp->hostname, line);
 		}
 	    }
@@ -1830,7 +1834,7 @@ handle_result(
 	    if(!((hostp->features == NULL) && (pkt->type == P_NAK)
 	       && ((strcmp(t - 1, "unknown service: noop") == 0)
 		   || (strcmp(t - 1, "noop: invalid service") == 0)))) {
-		fprintf(outf, "ERROR: %s%s: %s\n",
+		fprintf(outf, _("ERROR: %s%s: %s\n"),
 			(pkt->type == P_NAK) ? "NAK " : "",
 			hostp->hostname,
 			t - 1);
@@ -1840,7 +1844,7 @@ handle_result(
 	    continue;
 	}
 
-	fprintf(outf, "ERROR: %s: unknown response: %s\n",
+	fprintf(outf, _("ERROR: %s: unknown response: %s\n"),
 		hostp->hostname, line);
 	remote_errors++;
 	hostp->up = HOST_DONE;
@@ -1850,7 +1854,7 @@ handle_result(
 	 * The client does not support the features list, so give it an
 	 * empty one.
 	 */
-	dbprintf("no feature set from host %s\n", hostp->hostname);
+	dbprintf(_("no feature set from host %s\n"), hostp->hostname);
 	hostp->features = am_set_default_feature_set();
     }
     for(dp = hostp->disks; dp != NULL; dp = dp->hostnext) {

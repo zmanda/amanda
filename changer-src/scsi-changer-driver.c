@@ -507,28 +507,34 @@ PrintConf(void)
   int count;
   char *cwd;
 
-  printf("# Please replace every ??? with the correct parameter. It is not possible\n");
-  printf("# to guess everything :-)\n");
-  printf("# If the option is not needed, cleanmax for example if you have no cleaning\n");
-  printf("# tape remove the line.\n");
-  printf("#\n");
-  printf("number_configs   1   # Number of configs, you can have more than 1 config\n");
-  printf("                     # if you have for example more than one drive, or you\n");
-  printf("                     # to split your lib to use different dump levels\n");
-  printf("                     #\n");
-  printf("emubarcode       1   # If you drive has no barcode reader this will try\n");
-  printf("                     # keep an inventory of your tapes to find them faster\n");
-  printf("                     #\n");
-  printf("havebarcode      0   # Set this to 1 if you have an library with an installed\n");
-  printf("                     # barcode reader\n");
-  printf("                     #\n");
-  printf("debuglevel       0:0 # For debuging, see the docs /docs/TAPE-CHANGER\n");
-  printf("                     #\n");
-  printf("eject            ??? # set this to 1 if your drive needs an eject before move\n");
-  printf("                     #\n");
-  printf("sleep            ??? # How long to wait after an eject command before moving\n");
-  printf("                     # the tape\n");
-  printf("                     #\n");
+  printf(_("# Please replace every ??? with the correct parameter.\n"));
+  printf(_("# It is not possible to guess everything :-)\n"));
+  printf(_("# Remove the line if the option is not needed."));
+  printf(_("#   Example: cleanmax if you have no cleaning tape"));
+  printf(_("#\n"));
+  printf(_(
+   "number_configs  1 # Number of configs, you can have more than 1 config\n"
+   "                  # if you have for example more than one drive, or you\n"
+   "                  # to split your lib to use different dump levels\n"
+   "                  #\n"));
+  printf(_(
+   "emubarcode      1 # If you drive has no barcode reader this will try\n"
+   "                  # keep an inventory of your tapes to find them faster\n"
+   "                  #\n"));
+  printf(_(
+   "havebarcode     0 # Set this to 1 if you have a library with a\n"
+   "                  # barcode reader\n"
+   "                  #\n"));
+  printf(_(
+   "debuglevel    0:0 # For debuging, see the docs /docs/TAPE-CHANGER\n"
+   "                  #\n"));
+  printf(_(
+   "eject         ??? # set this to 1 if your drive needs an eject before move\n"
+   "                  #\n"));
+  printf(_(
+   "sleep         ??? # How long to wait after an eject command before moving\n"
+   "                  # the tape\n"
+   "                  #\n"));
 
   for (count = 0; count < CHG_MAXDEV ; count++)
     {
@@ -536,7 +542,7 @@ PrintConf(void)
 	{
 	  if (pDev[count].inquiry != NULL && pDev[count].inquiry->type == TYPE_CHANGER)
 	    {
-	      printf("changerdev   %s # This is the device to communicate with the robot\n", pDev[count].dev);
+	      printf(_("changerdev   %s # This is the device to communicate with the robot\n"), pDev[count].dev);
 	      break;
 	    }
 	}
@@ -551,24 +557,30 @@ PrintConf(void)
     {
       pDev[count].functions->function_status(count, 1);
     } else {
-      printf("changerdev   ??? # Ups nothing found. Please check the docs\n");
+      printf(_("changerdev ???       # Ups nothing found. Please check the docs\n"));
     }
 
-  printf("                     #\n");
-  printf("                     # Here now comes the config for the first tape\n");
-  printf("config             0 # This value is the one which is used in the amanda\n");
-  printf("                     # config file to tell the chg-scsi programm which tape\n");
-  printf("                     # and which slots to use\n");
-  printf("                     #\n");
-  printf("cleancart        ??? # The slot where the cleaning tape is located\n");
-  printf("                     # remove it if you have no cleaning tape\n");
-  printf("                     #\n");
-  printf("drivenum           0 # Which tape drive to use if there are more than one drive\n");
-  printf("                     #\n");
-  printf("dev              ??? # Which is the raw device to read/write data from the tape\n");
-  printf("                     # It is important to use the non rewinding tape, like\n");
-  printf("                     # /dev/nrst0 on linux, /dev/nrsa0 on BSD ....\n");
-  printf("                     #\n");
+  printf(_(
+   "                     #\n"));
+  printf(_(
+   "                     # Here now comes the config for the first tape\n"));
+  printf(_(
+   "config             0 # This value is the one which is used in the amanda\n"
+   "                     # config file to tell the chg-scsi programm which tape\n"
+   "                     # and which slots to use\n"
+   "                     #\n"));
+  printf(_(
+   "cleancart        ??? # The slot where the cleaning tape is located\n"
+   "                     # remove it if you have no cleaning tape\n"
+   "                     #\n"));
+  printf(_(
+   "drivenum           0 # Which tape drive to use if there are more than one drive\n"
+   "                     #\n"));
+  printf(_(
+   "dev              ??? # Which is the raw device to read/write data from the tape\n"
+   "                     # It is important to use the non rewinding tape, like\n"
+   "                     # /dev/nrst0 on linux, /dev/nrsa0 on BSD ....\n"
+   "                     #\n"));
 
   /*
    * OK now lets see if we have an direct SCSI channel
@@ -581,10 +593,11 @@ PrintConf(void)
 	{
 	  if (pDev[count].inquiry != NULL && pDev[count].inquiry->type == TYPE_TAPE)
 	    {
-	      printf("scsitapedev   %s # This is the device to communicate with the tape\n", pDev[count].dev);
-	      printf("                     # to get some device stats, not so importatn, and\n");
-	      printf("                     # if you run in problems delete it complete\n");
-	      printf("                     #\n");
+	      printf(_(
+		"scsitapedev   %s # This is the device to communicate with the tape\n"
+	        "                 # to get some device stats, not so important, and\n"
+	        "                 # if you run into problems delete it completely\n"
+	        "                 #\n"), pDev[count].dev);
 	      break;
 	    }
 	}
@@ -597,23 +610,26 @@ PrintConf(void)
       printf("                     #\n");
       printf("enduse            " SIZE_T_FMT "  # Which is the last slot to use\n", STE);
     } else {
-      printf("startuse         ??? # Which is the first slot to use\n");
-      printf("                     #\n");
-      printf("enduse           ??? # Which is the last slot to use\n");
+      printf(_(
+	"startuse         ??? # Which is the first slot to use\n"
+	"                     #\n"));
+      printf(_(
+	"enduse           ??? # Which is the last slot to use.\n"));
     }
-      printf("                     # decrement this value by 1 if you have an\n");
-      printf("                     # cleaning tape in the last slot\n");
-      printf("                     #\n");
+    printf(_(
+	"                     # Decrement this value by 1 if you have a\n"
+	"                     # cleaning tape in the last slot\n"
+	"                     #\n"));
 
   if ((cwd = getcwd(NULL, 0)) == NULL) {
-      cwd = "<unknown>";
+      cwd = _("<unknown>");
   }
 
-  printf("statfile %s/tape0-slot #\n",cwd);
-  printf("cleanfile %s/tape0-clean #\n", cwd);
-  printf("usagecount %s/tape0-totaltime #\n", cwd);
-  printf("tapestatus %s/tape0-tapestatus #\n", cwd);
-  printf("labelfile %s/labelfile #\n", cwd);
+  printf(_("statfile %s/tape0-slot #\n"),cwd);
+  printf(_("cleanfile %s/tape0-clean #\n"), cwd);
+  printf(_("usagecount %s/tape0-totaltime #\n"), cwd);
+  printf(_("tapestatus %s/tape0-tapestatus #\n"), cwd);
+  printf(_("labelfile %s/labelfile #\n"), cwd);
 }
 
 
@@ -655,13 +671,13 @@ Inventory(
   (void)start;	/* Quiet unused parameter warning */
   (void)stop;	/* Quiet unused parameter warning */
 
-  DebugPrint(DEBUG_INFO,SECTION_MAP_BARCODE, "##### START Inventory\n");
+  DebugPrint(DEBUG_INFO,SECTION_MAP_BARCODE, _("##### START Inventory\n"));
   pbarcoderes = alloc(SIZEOF(MBC_T));
   memset(pbarcoderes, 0 , SIZEOF(MBC_T));
 
   if (inv_done != 0)
     {
-      DebugPrint(DEBUG_INFO,SECTION_MAP_BARCODE, "##### STOP inv_done -> %d Inventory\n",inv_done);
+      DebugPrint(DEBUG_INFO,SECTION_MAP_BARCODE, _("##### STOP inv_done -> %d Inventory\n"),inv_done);
       free(pbarcoderes);
       return;
       /*NOTREACHED*/
@@ -702,7 +718,7 @@ Inventory(
        */
       if (load(INDEX_CHANGER, drive, x ) != 0)
 	{
-	  DebugPrint(DEBUG_ERROR,SECTION_MAP_BARCODE, "Load drive(%d) from(%d) failed\n", drive, x);
+	  DebugPrint(DEBUG_ERROR,SECTION_MAP_BARCODE, _("Load drive(%d) from(%d) failed\n"), drive, x);
 	  continue;
 	}
 
@@ -730,7 +746,7 @@ Inventory(
 	    MapBarCode(labelfile, pbarcoderes);
 	  }
       } else {
-	DebugPrint(DEBUG_ERROR,SECTION_MAP_BARCODE, "Read label failed\n");
+	DebugPrint(DEBUG_ERROR,SECTION_MAP_BARCODE, _("Read label failed\n"));
       }
 
       if (eject)
@@ -740,7 +756,7 @@ Inventory(
 
       (void)unload(INDEX_TAPE, drive, x);
     }
-  DebugPrint(DEBUG_INFO,SECTION_MAP_BARCODE, "##### STOP Inventory\n");
+  DebugPrint(DEBUG_INFO,SECTION_MAP_BARCODE, _("##### STOP Inventory\n"));
   free(pbarcoderes);
 }
 
@@ -754,13 +770,13 @@ isempty(
     int		slot)
 {
   extern OpenFiles_T *pDev;
-  DebugPrint(DEBUG_INFO,SECTION_TAPE,"##### START isempty\n");
+  DebugPrint(DEBUG_INFO,SECTION_TAPE,_("##### START isempty\n"));
 
   if (ElementStatusValid == 0)
     {
       if ( pDev[fd].functions->function_status(fd, 1) != 0)
         {
-          DebugPrint(DEBUG_ERROR,SECTION_TAPE,"##### STOP isempty [-1]\n");
+          DebugPrint(DEBUG_ERROR,SECTION_TAPE,_("##### STOP isempty [-1]\n"));
           return(-1);
 	  /*NOTREACHED*/
         }
@@ -768,11 +784,11 @@ isempty(
 
   if (pSTE[slot].status == 'E')
     {
-      DebugPrint(DEBUG_INFO,SECTION_TAPE,"##### STOP isempty [1]\n");
+      DebugPrint(DEBUG_INFO,SECTION_TAPE,_("##### STOP isempty [1]\n"));
       return(1);
       /*NOTREACHED*/
     }
-  DebugPrint(DEBUG_INFO,SECTION_TAPE,"##### STOP isempty [0]\n");
+  DebugPrint(DEBUG_INFO,SECTION_TAPE,_("##### STOP isempty [0]\n"));
   return(0);
 }
 
@@ -784,16 +800,16 @@ get_clean_state(
   /* Return 1 if cleaning is needed */
   int ret;
 
-  DebugPrint(DEBUG_INFO,SECTION_TAPE,"##### START get_clean_state\n");
+  DebugPrint(DEBUG_INFO,SECTION_TAPE,_("##### START get_clean_state\n"));
 
   if (pDev[INDEX_TAPECTL].SCSI == 0)
     {
-      DebugPrint(DEBUG_ERROR,SECTION_TAPE,"##### STOP get_clean_state [-1]\n");
+      DebugPrint(DEBUG_ERROR,SECTION_TAPE,_("##### STOP get_clean_state [-1]\n"));
       return(-1);
       /*NOTREACHED*/
     }
   ret=pDev[INDEX_TAPECTL].functions->function_clean(tapedev);
-  DebugPrint(DEBUG_INFO,SECTION_TAPE,"##### STOP get_clean_state [%d]\n", ret);
+  DebugPrint(DEBUG_INFO,SECTION_TAPE,_("##### STOP get_clean_state [%d]\n"), ret);
   return(ret);
 }
 
@@ -813,7 +829,7 @@ eject_tape(
   extern OpenFiles_T *pDev;
   int ret;
 
-  DebugPrint(DEBUG_INFO,SECTION_TAPE,"##### START eject_tape %s\n",tapedev);
+  DebugPrint(DEBUG_INFO,SECTION_TAPE,_("##### START eject_tape %s\n"),tapedev);
   if (pDev[INDEX_TAPECTL].functions == NULL)
     return(-1);
 
@@ -845,7 +861,7 @@ eject_tape(
     {
       DebugPrint(DEBUG_INFO,SECTION_TAPE,"##### tape_eject eject\n");
       ret=pDev[INDEX_TAPECTL].functions->function_eject(tapedev, type);
-      DebugPrint(DEBUG_INFO,SECTION_TAPE,"##### STOP (SCSI)eject_tape [%d]\n", ret);
+      DebugPrint(DEBUG_INFO,SECTION_TAPE,_("##### STOP (SCSI)eject_tape [%d]\n"), ret);
       return(ret);
       /*NOTREACHED*/
     }
@@ -853,12 +869,12 @@ eject_tape(
   if (pDev[INDEX_TAPE].avail == 1)
     {
       ret=Tape_Ioctl(INDEX_TAPE, IOCTL_EJECT);
-      DebugPrint(DEBUG_INFO,SECTION_TAPE,"##### STOP (ioctl)eject_tape [%d]\n", ret);
+      DebugPrint(DEBUG_INFO,SECTION_TAPE,_("##### STOP (ioctl)eject_tape [%d]\n"), ret);
       return(ret);
       /*NOTREACHED*/
     }
 
-  DebugPrint(DEBUG_INFO,SECTION_TAPE,"##### STOP eject_tape [-1]\n");
+  DebugPrint(DEBUG_INFO,SECTION_TAPE,_("##### STOP eject_tape [-1]\n"));
   return(-1);
 }
 
@@ -874,14 +890,14 @@ find_empty(
   size_t x;
   size_t end;
 
-  DebugPrint(DEBUG_INFO,SECTION_ELEMENT,"###### START find_empty\n");
+  DebugPrint(DEBUG_INFO,SECTION_ELEMENT,_("###### START find_empty\n"));
 
   if (ElementStatusValid == 0)
     {
       if ( pDev[fd].functions->function_status(fd , 1) != 0)
         {
           DebugPrint(DEBUG_ERROR,SECTION_ELEMENT,
-		     "###### END find_empty [-1]\n");
+		     _("###### END find_empty [-1]\n"));
           return((ssize_t)-1);
 	  /*NOTREACHED*/
         }
@@ -900,7 +916,7 @@ find_empty(
     }
 
   DebugPrint(DEBUG_INFO, SECTION_ELEMENT,
-	     "start at " SIZE_T_FMT ", end at " SIZE_T_FMT "\n",
+	     _("start at " SIZE_T_FMT ", end at " SIZE_T_FMT "\n"),
 	     (SIZE_T_FMT_TYPE)start,
 	     (SIZE_T_FMT_TYPE)end);
 
@@ -909,12 +925,12 @@ find_empty(
       if (pSTE[x].status == 'E')
         {
           DebugPrint(DEBUG_INFO,SECTION_ELEMENT,
-		     "###### END find_empty [" SIZE_T_FMT "]\n", x);
+		     _("###### END find_empty [" SIZE_T_FMT "]\n"), x);
           return((ssize_t)x);
 	  /*NOTREACHED*/
         }
     }
-  DebugPrint(DEBUG_ERROR,SECTION_ELEMENT,"###### END find_empty [-1]\n");
+  DebugPrint(DEBUG_ERROR,SECTION_ELEMENT,_("###### END find_empty [-1]\n"));
   return((ssize_t)-1);
 }
 
@@ -933,26 +949,27 @@ drive_loaded(
 {
   extern OpenFiles_T *pDev;
 
-  DebugPrint(DEBUG_INFO,SECTION_TAPE,"###### START drive_loaded\n");
-  DebugPrint(DEBUG_INFO,SECTION_TAPE,"%-20s : fd %d drivenum %d \n", "drive_loaded", fd, drivenum);
+  DebugPrint(DEBUG_INFO,SECTION_TAPE,_("###### START drive_loaded\n"));
+  DebugPrint(DEBUG_INFO,SECTION_TAPE,
+		_("        drive_loaded : fd %d drivenum %d \n"), fd, drivenum);
 
 
   if (ElementStatusValid == 0)
     {
       if (pDev[INDEX_CHANGER].functions->function_status(INDEX_CHANGER, 1) != 0)
 	{
-	  DebugPrint(DEBUG_ERROR,SECTION_TAPE,"Fatal error\n");
+	  DebugPrint(DEBUG_ERROR,SECTION_TAPE,_("Fatal error\n"));
 	  return(-1);
 	  /*NOTREACHED*/
 	}
     }
 
   if (pDTE[drivenum].status == 'E') {
-    DebugPrint(DEBUG_INFO,SECTION_TAPE,"###### STOP drive_loaded (empty)\n");
+    DebugPrint(DEBUG_INFO,SECTION_TAPE,_("###### STOP drive_loaded (empty)\n"));
     return(0);
     /*NOTREACHED*/
   }
-  DebugPrint(DEBUG_INFO,SECTION_TAPE,"###### STOP drive_loaded (not empty)\n");
+  DebugPrint(DEBUG_INFO,SECTION_TAPE,_("###### STOP drive_loaded (not empty)\n"));
   return(1);
 }
 
@@ -974,8 +991,10 @@ unload(
   extern int do_inventory;
   MBC_T *pbarcoderes;
 
-  DebugPrint(DEBUG_INFO, SECTION_TAPE,"###### START unload\n");
-  DebugPrint(DEBUG_INFO, SECTION_TAPE,"%-20s : fd %d, slot %d, drive %d \n", "unload", fd, slot, drive);
+  DebugPrint(DEBUG_INFO, SECTION_TAPE,_("###### START unload\n"));
+  DebugPrint(DEBUG_INFO, SECTION_TAPE,
+			_("              unload : fd %d, slot %d, drive %d \n"),
+			fd, slot, drive);
   pbarcoderes = alloc(SIZEOF(MBC_T));
   memset(pbarcoderes, 0, SIZEOF(MBC_T));
 
@@ -987,19 +1006,17 @@ unload(
     {
       if (pDev[INDEX_CHANGER].functions->function_status(INDEX_CHANGER , 1) != 0)
 	{
-	  DebugPrint(DEBUG_ERROR, SECTION_TAPE,"Element Status not valid, reset failed\n");
-	  DebugPrint(DEBUG_ERROR, SECTION_TAPE,"##### STOP unload (-1)\n");
+	  DebugPrint(DEBUG_ERROR, SECTION_TAPE,_("Element Status not valid, reset failed\n"));
+	  DebugPrint(DEBUG_ERROR, SECTION_TAPE,_("##### STOP unload (-1)\n"));
 	  free(pbarcoderes);
 	  return(-1);
 	  /*NOTREACHED*/
 	}
     }
 
-  DebugPrint(DEBUG_INFO, SECTION_TAPE,"%-20s : unload drive %d[%d] slot %d[%d]\n", "unload",
-	     drive,
-	     pDTE[drive].address,
-	     slot,
-	     pSTE[slot].address);
+  DebugPrint(DEBUG_INFO, SECTION_TAPE,
+		_("              unload : unload drive %d[%d] slot %d[%d]\n"),
+		drive, pDTE[drive].address, slot, pSTE[slot].address);
 
   /*
    * Unloading an empty tape unit makes no sense
@@ -1007,8 +1024,8 @@ unload(
    */
   if (pDTE[drive].status == 'E')
     {
-      DebugPrint(DEBUG_ERROR, SECTION_TAPE,"unload : Drive %d address %d is empty\n", drive, pDTE[drive].address);
-      DebugPrint(DEBUG_ERROR, SECTION_TAPE,"##### STOP unload (-1)\n");
+      DebugPrint(DEBUG_ERROR, SECTION_TAPE,_("unload : Drive %d address %d is empty\n"), drive, pDTE[drive].address);
+      DebugPrint(DEBUG_ERROR, SECTION_TAPE,_("##### STOP unload (-1)\n"));
       free(pbarcoderes);
       return(-1);
       /*NOTREACHED*/
@@ -1020,10 +1037,10 @@ unload(
    */
   if (pSTE[slot].status == 'F')
     {
-      DebugPrint(DEBUG_INFO, SECTION_TAPE,"unload : Slot %d address %d is full\n", drive, pSTE[slot].address);
+      DebugPrint(DEBUG_INFO, SECTION_TAPE,_("unload : Slot %d address %d is full\n"), drive, pSTE[slot].address);
       if ( ElementStatusValid == 0)
 	{
-	  DebugPrint(DEBUG_ERROR, SECTION_ELEMENT, "unload: Element Status not valid, can't find an empty slot\n");
+	  DebugPrint(DEBUG_ERROR, SECTION_ELEMENT, _("unload: Element Status not valid, can't find an empty slot\n"));
 	  free(pbarcoderes);
 	  return(-1);
 	  /*NOTREACHED*/
@@ -1032,12 +1049,12 @@ unload(
       slot = find_empty(fd, 0, 0);
       if (slot == -1 )
       {
-	      DebugPrint(DEBUG_ERROR, SECTION_ELEMENT, "unload: No Empty slot found\n");
+	      DebugPrint(DEBUG_ERROR, SECTION_ELEMENT, _("unload: No Empty slot found\n"));
 	      free(pbarcoderes);
 	      return(-1);
 	      /*NOTREACHED*/
       }
-      DebugPrint(DEBUG_INFO, SECTION_TAPE,"unload : found empty one, try to unload to slot %d\n", slot);
+      DebugPrint(DEBUG_INFO, SECTION_TAPE,_("unload : found empty one, try to unload to slot %d\n"), slot);
     }
 
 
@@ -1071,7 +1088,7 @@ unload(
    */
   if (pDev[INDEX_CHANGER].functions->function_move(INDEX_CHANGER,
            pDTE[drive].address, pSTE[slot].address) != 0) {
-      DebugPrint(DEBUG_ERROR, SECTION_TAPE,"##### STOP unload (-1 move failed)\n");
+      DebugPrint(DEBUG_ERROR, SECTION_TAPE,_("##### STOP unload (-1 move failed)\n"));
       free(pbarcoderes);
       return(-1);
       /*NOTREACHED*/
@@ -1083,7 +1100,7 @@ unload(
    */
   if (pDev[INDEX_CHANGER].functions->function_status(INDEX_CHANGER , 1) != 0)
     {
-      DebugPrint(DEBUG_ERROR, SECTION_TAPE,"##### STOP unload (-1 update status failed)\n");
+      DebugPrint(DEBUG_ERROR, SECTION_TAPE,_("##### STOP unload (-1 update status failed)\n"));
       free(pbarcoderes);
       return(-1);
       /*NOTREACHED*/
@@ -1124,14 +1141,14 @@ unload(
 	  } else {
 	    if (slot != pbarcoderes->data.slot)
 	      {
-		DebugPrint(DEBUG_ERROR, SECTION_TAPE,"Slot DB out of sync, slot %d != map %d",slot, pbarcoderes->data.slot);
+		DebugPrint(DEBUG_ERROR, SECTION_TAPE,_("Slot DB out of sync, slot %d != map %d"),slot, pbarcoderes->data.slot);
 		do_inventory = 1;
 	      }
 	  }
       }
   }
 
-  DebugPrint(DEBUG_INFO, SECTION_TAPE,"##### STOP unload(0)\n");
+  DebugPrint(DEBUG_INFO, SECTION_TAPE,_("##### STOP unload(0)\n"));
   free(pbarcoderes);
   return(0);
 }
@@ -1159,8 +1176,8 @@ load(
   extern int do_inventory;
   MBC_T *pbarcoderes;
 
-  DebugPrint(DEBUG_INFO, SECTION_ELEMENT,"###### START load\n");
-  DebugPrint(DEBUG_INFO, SECTION_ELEMENT,"%-20s : fd %d, drive %d, slot %d \n", "load", fd, drive, slot);
+  DebugPrint(DEBUG_INFO, SECTION_ELEMENT,_("###### START load\n"));
+  DebugPrint(DEBUG_INFO, SECTION_ELEMENT,_("%-20s : fd %d, drive %d, slot %d \n"), "load", fd, drive, slot);
   pbarcoderes = alloc(SIZEOF(MBC_T));
   memset(pbarcoderes, 0 , SIZEOF(MBC_T));
 
@@ -1168,8 +1185,8 @@ load(
       {
           if (pDev[fd].functions->function_status(fd, 1) != 0)
               {
-		DebugPrint(DEBUG_ERROR, SECTION_ELEMENT,"##### STOP load (-1)\n");
-		DebugPrint(DEBUG_ERROR, SECTION_ELEMENT,"##### STOP load (-1 update status failed)\n");
+		DebugPrint(DEBUG_ERROR, SECTION_ELEMENT,_("##### STOP load (-1)\n"));
+		DebugPrint(DEBUG_ERROR, SECTION_ELEMENT,_("##### STOP load (-1 update status failed)\n"));
 		free(pbarcoderes);
 		return(-1);
 		/*NOTREACHED*/
@@ -1184,8 +1201,8 @@ load(
    */
   if ((size_t)slot >= STE)
     {
-      DebugPrint(DEBUG_ERROR, SECTION_ELEMENT,"load : slot %d ge STE %d\n",slot, STE);
-      ChgExit("load", "slot >= STE", FATAL);
+      DebugPrint(DEBUG_ERROR, SECTION_ELEMENT,_("load : slot %d ge STE %d\n"),slot, STE);
+      ChgExit("load", _("slot >= STE"), FATAL);
       /*NOTREACHED*/
     }
 
@@ -1194,20 +1211,20 @@ load(
    */
   if (drive >= (int)DTE)
     {
-      DebugPrint(DEBUG_ERROR, SECTION_ELEMENT,"load : drive %d ge DTE %d\n",drive, DTE);
-      ChgExit("load", "drive >= DTE", FATAL);
+      DebugPrint(DEBUG_ERROR, SECTION_ELEMENT,_("load : drive %d ge DTE %d\n"),drive, DTE);
+      ChgExit("load", _("drive >= DTE"), FATAL);
       /*NOTREACHED*/
     }
 
-  DebugPrint(DEBUG_INFO, SECTION_ELEMENT,"load : load drive %d[%d] slot %d[%d]\n",drive,
+  DebugPrint(DEBUG_INFO, SECTION_ELEMENT,_("load : load drive %d[%d] slot %d[%d]\n"),drive,
 	     pDTE[drive].address,
 	     slot,
 	     pSTE[slot].address);
 
   if (pDTE[drive].status == 'F')
     {
-      DebugPrint(DEBUG_ERROR, SECTION_ELEMENT,"load : Drive %d address %d is full\n", drive, pDTE[drive].address);
-      DebugPrint(DEBUG_ERROR, SECTION_ELEMENT,"##### STOP load (-1 update status failed)\n");
+      DebugPrint(DEBUG_ERROR, SECTION_ELEMENT,_("load : Drive %d address %d is full\n"), drive, pDTE[drive].address);
+      DebugPrint(DEBUG_ERROR, SECTION_ELEMENT,_("##### STOP load (-1 update status failed)\n"));
       free(pbarcoderes);
       return(-1);
       /*NOTREACHED*/
@@ -1215,8 +1232,8 @@ load(
 
   if (pSTE[slot].status == 'E')
     {
-      DebugPrint(DEBUG_ERROR, SECTION_ELEMENT,"load : Slot %d address %d is empty\n", drive, pSTE[slot].address);
-      DebugPrint(DEBUG_ERROR, SECTION_ELEMENT,"##### STOP load (-1 update status failed)\n");
+      DebugPrint(DEBUG_ERROR, SECTION_ELEMENT,_("load : Slot %d address %d is empty\n"), drive, pSTE[slot].address);
+      DebugPrint(DEBUG_ERROR, SECTION_ELEMENT,_("##### STOP load (-1 update status failed)\n"));
       free(pbarcoderes);
       return(-1);
       /*NOTREACHED*/
@@ -1229,7 +1246,7 @@ load(
    */
   if (pDev[fd].functions->function_status(fd, 1) != 0)
       {
-	DebugPrint(DEBUG_ERROR, SECTION_ELEMENT,"##### STOP load (-1 update status failed)\n");
+	DebugPrint(DEBUG_ERROR, SECTION_ELEMENT,_("##### STOP load (-1 update status failed)\n"));
 	free(pbarcoderes);
 	return(-1);
 	/*NOTREACHED*/
@@ -1299,8 +1316,8 @@ load(
 	    } else { /* We got something, is it correct ? */
 	      if (slot != pbarcoderes->data.slot && do_inventory == 0)
 		{
-		  DebugPrint(DEBUG_ERROR, SECTION_TAPE,"Slot DB out of sync, slot %d != map %d",slot, pbarcoderes->data.slot);
-		  ChgExit("Load", "Label DB out of sync", FATAL);
+		  DebugPrint(DEBUG_ERROR, SECTION_TAPE,_("Slot DB out of sync, slot %d != map %d"),slot, pbarcoderes->data.slot);
+		  ChgExit("Load", _("Label DB out of sync"), FATAL);
 		  /*NOTREACHED*/
 		} else { /* OK, so increment the load count */
 		  pbarcoderes->action = UPDATE_SLOT;
@@ -1313,16 +1330,16 @@ load(
 
       if (BarCode(INDEX_CHANGER) == 1 && changer->emubarcode == 1)
 	{
-	  ChgExit("Load", "BarCode == 1 and emubarcode == 1", FATAL);
+	  ChgExit("Load", _("BarCode == 1 and emubarcode == 1"), FATAL);
 	  /*NOTREACHED*/
 	}
 
-      DebugPrint(DEBUG_INFO, SECTION_ELEMENT,"##### STOP load (%d)\n",ret);
+      DebugPrint(DEBUG_INFO, SECTION_ELEMENT,_("##### STOP load (%d)\n"),ret);
       free(pbarcoderes);
       return(ret);
       /*NOTREACHED*/
     }
-    DebugPrint(DEBUG_INFO, SECTION_ELEMENT,"##### STOP load (%d)\n",ret);
+    DebugPrint(DEBUG_INFO, SECTION_ELEMENT,_("##### STOP load (%d)\n"),ret);
     free(pbarcoderes);
     return(ret);
 }
@@ -1338,15 +1355,15 @@ get_slot_count(
 {
   extern OpenFiles_T *pDev;
 
-  DebugPrint(DEBUG_INFO, SECTION_ELEMENT,"###### START get_slot_count\n");
-  DebugPrint(DEBUG_INFO, SECTION_ELEMENT,"%-20s : fd %d\n", "get_slot_count", fd);
+  DebugPrint(DEBUG_INFO, SECTION_ELEMENT,_("###### START get_slot_count\n"));
+  DebugPrint(DEBUG_INFO, SECTION_ELEMENT,_("%-20s : fd %d\n"), "get_slot_count", fd);
 
   if (ElementStatusValid == 0)
     {
       pDev[fd].functions->function_status(fd, 1);
     }
   DebugPrint(DEBUG_INFO, SECTION_ELEMENT,
-	     "##### STOP get_slot_count (" SIZE_T_FMT ")\n",
+	     _("##### STOP get_slot_count (" SIZE_T_FMT ")\n"),
 	     (SIZE_T_FMT_TYPE)STE);
   return((ssize_t)STE);
   /*
@@ -1368,21 +1385,21 @@ get_drive_count(
 
   extern OpenFiles_T *pDev;
 
-  DebugPrint(DEBUG_INFO, SECTION_SCSI,"###### START get_drive_count\n");
-  DebugPrint(DEBUG_INFO, SECTION_SCSI,"%-20s : fd %d\n", "get_drive_count", fd);
+  DebugPrint(DEBUG_INFO, SECTION_SCSI,_("###### START get_drive_count\n"));
+  DebugPrint(DEBUG_INFO, SECTION_SCSI,_("%-20s : fd %d\n"), "get_drive_count", fd);
 
   if (ElementStatusValid == 0)
       {
           if ( pDev[fd].functions->function_status(fd, 1) != 0)
 	    {
-		DebugPrint(DEBUG_ERROR, SECTION_SCSI, "Error getting drive count\n");
-		DebugPrint(DEBUG_ERROR, SECTION_SCSI, "##### STOP get_drive_count (-1)\n");
+		DebugPrint(DEBUG_ERROR, SECTION_SCSI, _("Error getting drive count\n"));
+		DebugPrint(DEBUG_ERROR, SECTION_SCSI, _("##### STOP get_drive_count (-1)\n"));
 		return(-1);
 		/*NOTREACHED*/
 	    }
       }
   DebugPrint(DEBUG_INFO, SECTION_SCSI,
-	     "###### STOP get_drive_count (" SIZE_T_FMT " drives)\n",
+	     _("###### STOP get_drive_count (" SIZE_T_FMT " drives)\n"),
 	     (SIZE_T_FMT_TYPE)DTE);
   return((ssize_t)DTE);
 }
@@ -1412,8 +1429,8 @@ OpenDevice(
   if (!DeviceName)
 	return 1;
 
-  DebugPrint(DEBUG_INFO, SECTION_SCSI,"##### START OpenDevice\n");
-  DebugPrint(DEBUG_INFO, SECTION_SCSI,"OpenDevice : %s\n", DeviceName);
+  DebugPrint(DEBUG_INFO, SECTION_SCSI,_("##### START OpenDevice\n"));
+  DebugPrint(DEBUG_INFO, SECTION_SCSI,_("OpenDevice : %s\n"), DeviceName);
 
   pDev[ip].ConfigName = strdup(ConfigName);
   pDev[ip].dev = strdup(DeviceName);
@@ -1428,14 +1445,14 @@ OpenDevice(
               {
                 pDev[ip].functions = p;
 		strncpy(pDev[ip].ident, ident, 17);
-                DebugPrint(DEBUG_INFO, SECTION_SCSI,"override using ident = %s, type = %s\n",p->ident, p->type);
-		DebugPrint(DEBUG_INFO, SECTION_SCSI,"##### STOP OpenDevice\n");
+                DebugPrint(DEBUG_INFO, SECTION_SCSI,_("override using ident = %s, type = %s\n"),p->ident, p->type);
+		DebugPrint(DEBUG_INFO, SECTION_SCSI,_("##### STOP OpenDevice\n"));
                 return(1);
 		/*NOTREACHED*/
               }
             p++;
           }
-	  ChgExit("OpenDevice", "ident not found", FATAL);
+	  ChgExit("OpenDevice", _("ident not found"), FATAL);
 	  /*NOTREACHED*/
       } else {
         while(p->ident != NULL)
@@ -1443,8 +1460,8 @@ OpenDevice(
             if (strcmp(pDev[ip].ident, p->ident) == 0)
               {
                 pDev[ip].functions = p;
-                DebugPrint(DEBUG_INFO, SECTION_SCSI,"using ident = %s, type = %s\n",p->ident, p->type);
-		DebugPrint(DEBUG_INFO, SECTION_SCSI,"##### STOP OpenDevice\n");
+                DebugPrint(DEBUG_INFO, SECTION_SCSI,_("using ident = %s, type = %s\n"),p->ident, p->type);
+		DebugPrint(DEBUG_INFO, SECTION_SCSI,_("##### STOP OpenDevice\n"));
                 return(1);
 		/*NOTREACHED*/
               }
@@ -1462,18 +1479,18 @@ OpenDevice(
           if (strcmp(tmpstr, p->ident) == 0)
             {
               pDev[ip].functions = p;
-              DebugPrint(DEBUG_INFO, SECTION_SCSI,"using ident = %s, type = %s\n",p->ident, p->type);
-	      DebugPrint(DEBUG_INFO, SECTION_SCSI,"##### STOP OpenDevice\n");
+              DebugPrint(DEBUG_INFO, SECTION_SCSI,_("using ident = %s, type = %s\n"),p->ident, p->type);
+	      DebugPrint(DEBUG_INFO, SECTION_SCSI,_("##### STOP OpenDevice\n"));
               return(1);
 	      /*NOTREACHED*/
             }
           p++;
         }
     } else { /* Something failed, lets see what */
-      DebugPrint(DEBUG_ERROR, SECTION_SCSI,"##### STOP OpenDevice failed\n");
+      DebugPrint(DEBUG_ERROR, SECTION_SCSI,_("##### STOP OpenDevice failed\n"));
     }
   pDev[ip].functions = NULL;
-  DebugPrint(DEBUG_INFO, SECTION_SCSI,"##### STOP OpenDevice (nothing found) !!\n");
+  DebugPrint(DEBUG_INFO, SECTION_SCSI,_("##### STOP OpenDevice (nothing found) !!\n"));
   return(0);
 }
 
@@ -1489,13 +1506,13 @@ BarCode(
   int ret;
   extern OpenFiles_T *pDev;
 
-  DebugPrint(DEBUG_INFO, SECTION_BARCODE,"##### START BarCode\n");
-  DebugPrint(DEBUG_INFO, SECTION_BARCODE,"%-20s : fd %d\n", "BarCode", fd);
+  DebugPrint(DEBUG_INFO, SECTION_BARCODE,_("##### START BarCode\n"));
+  DebugPrint(DEBUG_INFO, SECTION_BARCODE,_("%-20s : fd %d\n"), "BarCode", fd);
 
-  DebugPrint(DEBUG_INFO, SECTION_BARCODE,"Ident = [%s], function = [%s]\n", pDev[fd].ident,
+  DebugPrint(DEBUG_INFO, SECTION_BARCODE,_("Ident = [%s], function = [%s]\n"), pDev[fd].ident,
 	     pDev[fd].functions->ident);
   ret = pDev[fd].functions->function_barcode(fd);
-  DebugPrint(DEBUG_INFO, SECTION_BARCODE,"##### STOP BarCode (%d)\n",ret);
+  DebugPrint(DEBUG_INFO, SECTION_BARCODE,_("##### STOP BarCode (%d)\n"),ret);
   return(ret);
 }
 
@@ -1518,7 +1535,7 @@ Tape_Ready(
   time_t cnt = 0;
 
   RequestSense_T *pRequestSense;
-  DebugPrint(DEBUG_INFO, SECTION_TAPE,"##### START Tape_Ready\n");
+  DebugPrint(DEBUG_INFO, SECTION_TAPE,_("##### START Tape_Ready\n"));
 
   /*
    * Which device should we use to get the
@@ -1544,7 +1561,7 @@ Tape_Ready(
 
   if (pDev[fd].avail == 1 && pDev[fd].SCSI == 0)
     {
-      DebugPrint(DEBUG_INFO, SECTION_TAPE,"Tape_Ready : Can't send SCSI commands, try ioctl\n");
+      DebugPrint(DEBUG_INFO, SECTION_TAPE,_("Tape_Ready : Can't send SCSI commands, try ioctl\n"));
       /*
        * Do we get an non negative result.
        * If yes this function is available
@@ -1558,8 +1575,8 @@ Tape_Ready(
 	    {
 	      if ( ret & TAPE_ONLINE)
 		{
-		  DebugPrint(DEBUG_INFO, SECTION_TAPE,"Tape_Ready : Ready after %d seconds\n",cnt);
-		  DebugPrint(DEBUG_INFO, SECTION_TAPE,"##### STOP Tape_Ready\n");
+		  DebugPrint(DEBUG_INFO, SECTION_TAPE,_("Tape_Ready : Ready after %d seconds\n"),cnt);
+		  DebugPrint(DEBUG_INFO, SECTION_TAPE,_("##### STOP Tape_Ready\n"));
 		  return(0);
 		  /*NOTREACHED*/
 		}
@@ -1568,15 +1585,15 @@ Tape_Ready(
 	      ret = Tape_Status(fd);
 	    }
 
-	  DebugPrint(DEBUG_INFO, SECTION_TAPE,"Tape_Ready : not ready, stop after %d seconds\n",cnt);
-	  DebugPrint(DEBUG_INFO, SECTION_TAPE,"##### STOP Tape_Ready\n");
+	  DebugPrint(DEBUG_INFO, SECTION_TAPE,_("Tape_Ready : not ready, stop after %d seconds\n"),cnt);
+	  DebugPrint(DEBUG_INFO, SECTION_TAPE,_("##### STOP Tape_Ready\n"));
 	  return(0);
 	  /*NOTREACHED*/
 
 	}
-	DebugPrint(DEBUG_INFO, SECTION_TAPE,"Tape_Ready : no ioctl interface, will sleep for %d seconds\n", wait_time);
+	DebugPrint(DEBUG_INFO, SECTION_TAPE,_("Tape_Ready : no ioctl interface, will sleep for %d seconds\n"), wait_time);
 	sleep(wait_time);
-	DebugPrint(DEBUG_INFO, SECTION_TAPE,"##### STOP Tape_Ready\n");
+	DebugPrint(DEBUG_INFO, SECTION_TAPE,_("##### STOP Tape_Ready\n"));
 	return(0);
 	/*NOTREACHED*/
     }
@@ -1605,43 +1622,43 @@ Tape_Ready(
 	  switch (SenseHandler(fd, 0, pRequestSense->SenseKey, pRequestSense->AdditionalSenseCode, pRequestSense->AdditionalSenseCodeQualifier, pRequestSense))
 	    {
 	    case SENSE_NO:
-	      DebugPrint(DEBUG_INFO, SECTION_SCSI,"TapeReady (TestUnitReady) SENSE_NO\n");
+	      DebugPrint(DEBUG_INFO, SECTION_SCSI,_("TapeReady (TestUnitReady) SENSE_NO\n"));
 	      done = 1;
 	      break;
 	    case SENSE_TAPE_NOT_ONLINE:
-	      DebugPrint(DEBUG_INFO, SECTION_SCSI,"TapeReady (TestUnitReady) SENSE_TAPE_NOT_ONLINE\n");
+	      DebugPrint(DEBUG_INFO, SECTION_SCSI,_("TapeReady (TestUnitReady) SENSE_TAPE_NOT_ONLINE\n"));
 	      break;
 	    case SENSE_IGNORE:
-	      DebugPrint(DEBUG_INFO, SECTION_SCSI,"TapeReady (TestUnitReady) SENSE_IGNORE\n");
+	      DebugPrint(DEBUG_INFO, SECTION_SCSI,_("TapeReady (TestUnitReady) SENSE_IGNORE\n"));
 	      done = 1;
 	      break;
 	    case SENSE_ABORT:
-	      DebugPrint(DEBUG_ERROR, SECTION_SCSI,"TapeReady (TestUnitReady) SENSE_ABORT\n");
+	      DebugPrint(DEBUG_ERROR, SECTION_SCSI,_("TapeReady (TestUnitReady) SENSE_ABORT\n"));
 	      amfree(pRequestSense);
 	      return(-1);
 	      /*NOTREACHED*/
 	    case SENSE_RETRY:
-	      DebugPrint(DEBUG_INFO, SECTION_SCSI,"TapeReady (TestUnitReady) SENSE_RETRY\n");
+	      DebugPrint(DEBUG_INFO, SECTION_SCSI,_("TapeReady (TestUnitReady) SENSE_RETRY\n"));
 	      break;
 	    default:
-	      DebugPrint(DEBUG_INFO, SECTION_SCSI,"TapeReady (TestUnitReady) default (SENSE)\n");
+	      DebugPrint(DEBUG_INFO, SECTION_SCSI,_("TapeReady (TestUnitReady) default (SENSE)\n"));
 	      done = 1;
 	      break;
 	    }
 	  break;
 	case SCSI_ERROR:
-	  DebugPrint(DEBUG_ERROR, SECTION_SCSI,"TapeReady (TestUnitReady) SCSI_ERROR\n");
+	  DebugPrint(DEBUG_ERROR, SECTION_SCSI,_("TapeReady (TestUnitReady) SCSI_ERROR\n"));
 	  free(pRequestSense);
 	  return(-1);
 	  /*NOTREACHED*/
 	case SCSI_BUSY:
-	  DebugPrint(DEBUG_INFO, SECTION_SCSI,"TapeReady (TestUnitReady) SCSI_BUSY\n");
+	  DebugPrint(DEBUG_INFO, SECTION_SCSI,_("TapeReady (TestUnitReady) SCSI_BUSY\n"));
 	  break;
 	case SCSI_CHECK:
-	  DebugPrint(DEBUG_INFO, SECTION_SCSI,"TapeReady (TestUnitReady) SCSI_CHECK\n");
+	  DebugPrint(DEBUG_INFO, SECTION_SCSI,_("TapeReady (TestUnitReady) SCSI_CHECK\n"));
 	  break;
 	default:
-	  DebugPrint(DEBUG_ERROR, SECTION_SCSI,"TapeReady (TestUnitReady) unknown (%d)\n",ret);
+	  DebugPrint(DEBUG_ERROR, SECTION_SCSI,_("TapeReady (TestUnitReady) unknown (%d)\n"),ret);
 	  break;
 	}
       sleep(1);
@@ -1649,8 +1666,8 @@ Tape_Ready(
     }
 
   amfree(pRequestSense);
-  DebugPrint(DEBUG_INFO, SECTION_TAPE,"Tape_Ready after %d sec\n", cnt);
-  DebugPrint(DEBUG_INFO, SECTION_TAPE,"##### STOP Tape_Ready\n");
+  DebugPrint(DEBUG_INFO, SECTION_TAPE,_("Tape_Ready after %d sec\n"), cnt);
+  DebugPrint(DEBUG_INFO, SECTION_TAPE,_("##### STOP Tape_Ready\n"));
   return(0);
 }
 
@@ -1663,27 +1680,27 @@ DecodeSCSI(
   SC_COM_T *pSCSICommand;
   int x;
 
-  DebugPrint(DEBUG_INFO, SECTION_SCSI, "##### START DecodeSCSI\n");
+  DebugPrint(DEBUG_INFO, SECTION_SCSI, _("##### START DecodeSCSI\n"));
   pSCSICommand = (SC_COM_T *)&SCSICommand;
 
   while (pSCSICommand->name != NULL)
     {
       if (CDB[0] == pSCSICommand->command)
         {
-          DebugPrint(DEBUG_INFO, SECTION_SCSI,"%s %s", string, pSCSICommand->name);
+          DebugPrint(DEBUG_INFO, SECTION_SCSI,_("%s %s"), string, pSCSICommand->name);
           for (x=0; x < pSCSICommand->length; x++)
             {
               DebugPrint(DEBUG_INFO, SECTION_SCSI," %02X", CDB[x]);
             }
           DebugPrint(DEBUG_INFO, SECTION_SCSI,"\n");
-          DebugPrint(DEBUG_INFO, SECTION_SCSI,"##### STOP DecodeSCSI\n");
+          DebugPrint(DEBUG_INFO, SECTION_SCSI,_("##### STOP DecodeSCSI\n"));
           return(0);
 	  /*NOTREACHED*/
 	}
       pSCSICommand++;
     }
-  DebugPrint(DEBUG_INFO, SECTION_SCSI,"Not found %X\n", CDB[0]);
-  DebugPrint(DEBUG_INFO, SECTION_SCSI,"##### STOP DecodeSCSI\n");
+  DebugPrint(DEBUG_INFO, SECTION_SCSI,_("Not found %X\n"), CDB[0]);
+  DebugPrint(DEBUG_INFO, SECTION_SCSI,_("##### STOP DecodeSCSI\n"));
   return(0);
 }
 
@@ -1701,7 +1718,7 @@ DecodeModeSense(
 
   (void)pstring;	/* Quiet unused parameter warning */
 
-  DebugPrint(DEBUG_INFO, SECTION_SCSI,"##### START DecodeModeSense\n");
+  DebugPrint(DEBUG_INFO, SECTION_SCSI,_("##### START DecodeModeSense\n"));
 
   dump_hex(buffer, 255, DEBUG_INFO, SECTION_SCSI);
 
@@ -1711,20 +1728,20 @@ DecodeModeSense(
    */
   buffer = buffer + 4 + offset;
 
-  DebugPrint(DEBUG_INFO, SECTION_SCSI,"buffer length = %d\n", length);
+  DebugPrint(DEBUG_INFO, SECTION_SCSI,_("buffer length = %d\n"), length);
 
   if (block) /* Do we have an block descriptor page ?*/
     {
       if (out != NULL)
-     	 fprintf(out, "DecodeModeSense : Density Code %x\n", (unsigned)buffer[0]);
+     	 fprintf(out, _("DecodeModeSense : Density Code %x\n"), (unsigned)buffer[0]);
       buffer++;
 
       if (out != NULL)
-      	fprintf(out, "DecodeModeSense : Number of Blocks %d\n", V3(buffer));
+      	fprintf(out, _("DecodeModeSense : Number of Blocks %d\n"), V3(buffer));
       buffer = buffer + 4;
 
       if (out != NULL)
-      	fprintf(out, "DecodeModeSense : Block Length %d\n", V3(buffer));
+      	fprintf(out, _("DecodeModeSense : Block Length %d\n"), V3(buffer));
       buffer = buffer + 3;
     }
 
@@ -1740,14 +1757,14 @@ DecodeModeSense(
           prp = (ReadWriteErrorRecoveryPage_T *)buffer;
 	  if (out != NULL)
           {
-          	fprintf(out, "DecodeModeSense : Read/Write Error Recovery Page\n");
-          	fprintf(out,"\tTransfer Block            %d\n", prp->tb);
-          	fprintf(out,"\tEnable Early Recovery     %d\n", prp->eer);
-          	fprintf(out,"\tPost Error                %d\n", prp->per);
-          	fprintf(out,"\tDisable Transfer on Error %d\n", prp->dte);
-          	fprintf(out,"\tDisable ECC Correction    %d\n", prp->dcr);
-          	fprintf(out,"\tRead Retry Count          %d\n", prp->ReadRetryCount);
-          	fprintf(out,"\tWrite Retry Count         %d\n", prp->WriteRetryCount);
+          	fprintf(out, _("DecodeModeSense : Read/Write Error Recovery Page\n"));
+          	fprintf(out,_("\tTransfer Block            %d\n"), prp->tb);
+          	fprintf(out,_("\tEnable Early Recovery     %d\n"), prp->eer);
+          	fprintf(out,_("\tPost Error                %d\n"), prp->per);
+          	fprintf(out,_("\tDisable Transfer on Error %d\n"), prp->dte);
+          	fprintf(out,_("\tDisable ECC Correction    %d\n"), prp->dcr);
+          	fprintf(out,_("\tRead Retry Count          %d\n"), prp->ReadRetryCount);
+          	fprintf(out,_("\tWrite Retry Count         %d\n"), prp->WriteRetryCount);
 	  }
           buffer++;
           break;
@@ -1755,18 +1772,18 @@ DecodeModeSense(
           pdrp = (DisconnectReconnectPage_T *)buffer;
 	  if (out != NULL)
           {
-          	fprintf(out, "DecodeModeSense : Disconnect/Reconnect Page\n");
-          	fprintf(out,"\tBuffer Full Ratio     %d\n", pdrp->BufferFullRatio);
-          	fprintf(out,"\tBuffer Empty Ratio    %d\n", pdrp->BufferEmptyRatio);
-          	fprintf(out,"\tBus Inactivity Limit  %d\n",
+          	fprintf(out, _("DecodeModeSense : Disconnect/Reconnect Page\n"));
+          	fprintf(out,_("\tBuffer Full Ratio     %d\n"), pdrp->BufferFullRatio);
+          	fprintf(out,_("\tBuffer Empty Ratio    %d\n"), pdrp->BufferEmptyRatio);
+          	fprintf(out,_("\tBus Inactivity Limit  %d\n"),
                   V2(pdrp->BusInactivityLimit));
-          	fprintf(out,"\tDisconnect Time Limit %d\n",
+          	fprintf(out,_("\tDisconnect Time Limit %d\n"),
                   V2(pdrp->DisconnectTimeLimit));
-          	fprintf(out,"\tConnect Time Limit    %d\n",
+          	fprintf(out,_("\tConnect Time Limit    %d\n"),
                   V2(pdrp->ConnectTimeLimit));
-          	fprintf(out,"\tMaximum Burst Size    %d\n",
+          	fprintf(out,_("\tMaximum Burst Size    %d\n"),
                   V2(pdrp->MaximumBurstSize));
-          	fprintf(out,"\tDTDC                  %d\n", pdrp->DTDC);
+          	fprintf(out,_("\tDTDC                  %d\n"), pdrp->DTDC);
 	  }
           buffer++;
           break;
@@ -1774,22 +1791,22 @@ DecodeModeSense(
           pEAAPage = (EAAPage_T *)buffer;
 	  if (out != NULL)
 	  {
-          	fprintf(out,"DecodeModeSense : Element Address Assignment Page\n");
-          	fprintf(out,"\tMedium Transport Element Address     %d\n",
+          	fprintf(out,_("DecodeModeSense : Element Address Assignment Page\n"));
+          	fprintf(out,_("\tMedium Transport Element Address     %d\n"),
                     V2(pEAAPage->MediumTransportElementAddress));
-          	fprintf(out,"\tNumber of Medium Transport Elements  %d\n",
+          	fprintf(out,_("\tNumber of Medium Transport Elements  %d\n"),
                     V2(pEAAPage->NoMediumTransportElements));
-          	fprintf(out, "\tFirst Storage Element Address       %d\n",
+          	fprintf(out, _("\tFirst Storage Element Address       %d\n"),
                     V2(pEAAPage->FirstStorageElementAddress));
-          	fprintf(out, "\tNumber of  Storage Elements         %d\n",
+          	fprintf(out, _("\tNumber of  Storage Elements         %d\n"),
                     V2(pEAAPage->NoStorageElements));
-          	fprintf(out, "\tFirst Import/Export Element Address %d\n",
+          	fprintf(out, _("\tFirst Import/Export Element Address %d\n"),
                     V2(pEAAPage->FirstImportExportElementAddress));
-          	fprintf(out, "\tNumber of  ImportExport Elements    %d\n",
+          	fprintf(out, _("\tNumber of  ImportExport Elements    %d\n"),
                     V2(pEAAPage->NoImportExportElements));
-          	fprintf(out, "\tFirst Data Transfer Element Address %d\n",
+          	fprintf(out, _("\tFirst Data Transfer Element Address %d\n"),
                     V2(pEAAPage->FirstDataTransferElementAddress));
-          	fprintf(out, "\tNumber of  Data Transfer Elements   %d\n",
+          	fprintf(out, _("\tNumber of  Data Transfer Elements   %d\n"),
                     V2(pEAAPage->NoDataTransferElements));
 	  }
           buffer++;
@@ -1798,43 +1815,43 @@ DecodeModeSense(
           pDeviceCapabilitiesPage = (DeviceCapabilitiesPage_T *)buffer;
 	  if (out != NULL)
 	  {
-          	fprintf(out, "DecodeModeSense : MT can store data cartridges %d\n",
+          	fprintf(out, _("DecodeModeSense : MT can store data cartridges %d\n"),
                     pDeviceCapabilitiesPage->MT);
-          	fprintf(out, "DecodeModeSense : ST can store data cartridges %d\n",
+          	fprintf(out, _("DecodeModeSense : ST can store data cartridges %d\n"),
                     pDeviceCapabilitiesPage->ST);
-          	fprintf(out, "DecodeModeSense : IE can store data cartridges %d\n",
+          	fprintf(out, _("DecodeModeSense : IE can store data cartridges %d\n"),
                     pDeviceCapabilitiesPage->IE);
-          	fprintf(out, "DecodeModeSense : DT can store data cartridges %d\n",
+          	fprintf(out, _("DecodeModeSense : DT can store data cartridges %d\n"),
                     pDeviceCapabilitiesPage->DT);
-          	fprintf(out, "DecodeModeSense : MT to MT %d\n",
+          	fprintf(out, _("DecodeModeSense : MT to MT %d\n"),
                     pDeviceCapabilitiesPage->MT2MT);
-          	fprintf(out, "DecodeModeSense : MT to ST %d\n",
+          	fprintf(out, _("DecodeModeSense : MT to ST %d\n"),
                     pDeviceCapabilitiesPage->MT2ST);
-          	fprintf(out, "DecodeModeSense : MT to IE %d\n",
+          	fprintf(out, _("DecodeModeSense : MT to IE %d\n"),
                     pDeviceCapabilitiesPage->MT2IE);
-          	fprintf(out, "DecodeModeSense : MT to DT %d\n",
+          	fprintf(out, _("DecodeModeSense : MT to DT %d\n"),
                     pDeviceCapabilitiesPage->MT2DT);
-          	fprintf(out, "DecodeModeSense : ST to MT %d\n",
+          	fprintf(out, _("DecodeModeSense : ST to MT %d\n"),
                     pDeviceCapabilitiesPage->ST2ST);
-          	fprintf(out, "DecodeModeSense : ST to MT %d\n",
+          	fprintf(out, _("DecodeModeSense : ST to MT %d\n"),
                     pDeviceCapabilitiesPage->ST2ST);
-          	fprintf(out, "DecodeModeSense : ST to DT %d\n",
+          	fprintf(out, _("DecodeModeSense : ST to DT %d\n"),
                     pDeviceCapabilitiesPage->ST2DT);
-          	fprintf(out, "DecodeModeSense : IE to MT %d\n",
+          	fprintf(out, _("DecodeModeSense : IE to MT %d\n"),
                     pDeviceCapabilitiesPage->IE2MT);
-          	fprintf(out, "DecodeModeSense : IE to ST %d\n",
+          	fprintf(out, _("DecodeModeSense : IE to ST %d\n"),
                     pDeviceCapabilitiesPage->IE2IE);
-          	fprintf(out, "DecodeModeSense : IE to ST %d\n",
+          	fprintf(out, _("DecodeModeSense : IE to ST %d\n"),
                     pDeviceCapabilitiesPage->IE2DT);
-          	fprintf(out, "DecodeModeSense : IE to ST %d\n",
+          	fprintf(out, _("DecodeModeSense : IE to ST %d\n"),
                     pDeviceCapabilitiesPage->IE2DT);
-          	fprintf(out, "DecodeModeSense : DT to MT %d\n",
+          	fprintf(out, _("DecodeModeSense : DT to MT %d\n"),
                     pDeviceCapabilitiesPage->DT2MT);
-          	fprintf(out, "DecodeModeSense : DT to ST %d\n",
+          	fprintf(out, _("DecodeModeSense : DT to ST %d\n"),
                     pDeviceCapabilitiesPage->DT2ST);
-          	fprintf(out, "DecodeModeSense : DT to IE %d\n",
+          	fprintf(out, _("DecodeModeSense : DT to IE %d\n"),
                     pDeviceCapabilitiesPage->DT2IE);
-          	fprintf(out, "DecodeModeSense : DT to DT %d\n",
+          	fprintf(out, _("DecodeModeSense : DT to DT %d\n"),
                     pDeviceCapabilitiesPage->DT2DT);
 	  }
           buffer++;
@@ -1868,67 +1885,67 @@ DecodeSense(
       return(0);
       /*NOTREACHED*/
     }
-  fprintf(out,"##### START DecodeSense\n");
-  fprintf(out,"%sSense Keys\n", pstring);
+  fprintf(out,_("##### START DecodeSense\n"));
+  fprintf(out,_("%sSense Keys\n"), pstring);
   if (sense->ErrorCode == 0x70)
     {
-    fprintf(out,"\tExtended Sense                     \n");
+    fprintf(out,_("\tExtended Sense                     \n"));
     } else {
-      fprintf(out,"\tErrorCode                     %02x\n", sense->ErrorCode);
-      fprintf(out,"\tValid                         %d\n", sense->Valid);
+      fprintf(out,_("\tErrorCode                     %02x\n"), sense->ErrorCode);
+      fprintf(out,_("\tValid                         %d\n"), sense->Valid);
     }
-  fprintf(out,"\tASC                           %02X\n", sense->AdditionalSenseCode);
-  fprintf(out,"\tASCQ                          %02X\n", sense->AdditionalSenseCodeQualifier);
-  fprintf(out,"\tSense key                     %02X\n", sense->SenseKey);
+  fprintf(out,_("\tASC                           %02X\n"), sense->AdditionalSenseCode);
+  fprintf(out,_("\tASCQ                          %02X\n"), sense->AdditionalSenseCodeQualifier);
+  fprintf(out,_("\tSense key                     %02X\n"), sense->SenseKey);
   switch (sense->SenseKey)
     {
     case 0:
-      fprintf(out,"\t\tNo Sense\n");
+      fprintf(out,_("\t\tNo Sense\n"));
       break;
     case 1:
-      fprintf(out,"\t\tRecoverd Error\n");
+      fprintf(out,_("\t\tRecoverd Error\n"));
       break;
     case 2:
-      fprintf(out,"\t\tNot Ready\n");
+      fprintf(out,_("\t\tNot Ready\n"));
       break;
     case 3:
-      fprintf(out,"\t\tMedium Error\n");
+      fprintf(out,_("\t\tMedium Error\n"));
       break;
     case 4:
-      fprintf(out,"\t\tHardware Error\n");
+      fprintf(out,_("\t\tHardware Error\n"));
       break;
     case 5:
-      fprintf(out,"\t\tIllegal Request\n");
+      fprintf(out,_("\t\tIllegal Request\n"));
       break;
     case 6:
-      fprintf(out,"\t\tUnit Attention\n");
+      fprintf(out,_("\t\tUnit Attention\n"));
       break;
     case 7:
-      fprintf(out,"\t\tData Protect\n");
+      fprintf(out,_("\t\tData Protect\n"));
       break;
     case 8:
-      fprintf(out,"\t\tBlank Check\n");
+      fprintf(out,_("\t\tBlank Check\n"));
       break;
     case 9:
-      fprintf(out,"\t\tVendor uniq\n");
+      fprintf(out,_("\t\tVendor uniq\n"));
       break;
     case 0xa:
-      fprintf(out,"\t\tCopy Aborted\n");
+      fprintf(out,_("\t\tCopy Aborted\n"));
       break;
     case 0xb:
-      fprintf(out,"\t\tAborted Command\n");
+      fprintf(out,_("\t\tAborted Command\n"));
       break;
     case 0xc:
-      fprintf(out,"\t\tEqual\n");
+      fprintf(out,_("\t\tEqual\n"));
       break;
     case 0xd:
-      fprintf(out,"\t\tVolume Overflow\n");
+      fprintf(out,_("\t\tVolume Overflow\n"));
       break;
     case 0xe:
-      fprintf(out,"\t\tMiscompare\n");
+      fprintf(out,_("\t\tMiscompare\n"));
       break;
     case 0xf:
-      fprintf(out,"\t\tReserved\n");
+      fprintf(out,_("\t\tReserved\n"));
       break;
     }
   return(0);
@@ -1942,65 +1959,65 @@ DecodeExtSense(
 {
   ExtendedRequestSense_T *p;
 
-  fprintf(out,"##### START DecodeExtSense\n");
+  fprintf(out,_("##### START DecodeExtSense\n"));
   p = sense;
 
-  fprintf(out,"%sExtended Sense\n", pstring);
+  fprintf(out,_("%sExtended Sense\n"), pstring);
   DecodeSense((RequestSense_T *)p, pstring, out);
-  fprintf(out,"\tLog Parameter Page Code         %02X\n", sense->LogParameterPageCode);
-  fprintf(out,"\tLog Parameter Code              %02X\n", sense->LogParameterCode);
-  fprintf(out,"\tUnderrun/Overrun Counter        %02X\n", sense->UnderrunOverrunCounter);
-  fprintf(out,"\tRead/Write Error Counter        %d\n", V3((char *)sense->ReadWriteDataErrorCounter));
+  fprintf(out,_("\tLog Parameter Page Code         %02X\n"), sense->LogParameterPageCode);
+  fprintf(out,_("\tLog Parameter Code              %02X\n"), sense->LogParameterCode);
+  fprintf(out,_("\tUnderrun/Overrun Counter        %02X\n"), sense->UnderrunOverrunCounter);
+  fprintf(out,_("\tRead/Write Error Counter        %d\n"), V3((char *)sense->ReadWriteDataErrorCounter));
   if (sense->AdditionalSenseLength > (u_char)sizeof(RequestSense_T))
     {
       if (sense->PF)
-        fprintf(out,"\tPower Fail\n");
+        fprintf(out,_("\tPower Fail\n"));
       if (sense->BPE)
-        fprintf(out,"\tSCSI Bus Parity Error\n");
+        fprintf(out,_("\tSCSI Bus Parity Error\n"));
       if (sense->FPE)
-        fprintf(out,"\tFormatted Buffer parity Error\n");
+        fprintf(out,_("\tFormatted Buffer parity Error\n"));
       if (sense->ME)
-        fprintf(out,"\tMedia Error\n");
+        fprintf(out,_("\tMedia Error\n"));
       if (sense->ECO)
-        fprintf(out,"\tError Counter Overflow\n");
+        fprintf(out,_("\tError Counter Overflow\n"));
       if (sense->TME)
-        fprintf(out,"\tTapeMotion Error\n");
+        fprintf(out,_("\tTapeMotion Error\n"));
       if (sense->TNP)
-        fprintf(out,"\tTape Not Present\n");
+        fprintf(out,_("\tTape Not Present\n"));
       if (sense->LBOT)
-        fprintf(out,"\tLogical Beginning of tape\n");
+        fprintf(out,_("\tLogical Beginning of tape\n"));
       if (sense->TMD)
-        fprintf(out,"\tTape Mark Detect Error\n");
+        fprintf(out,_("\tTape Mark Detect Error\n"));
       if (sense->WP)
-        fprintf(out,"\tWrite Protect\n");
+        fprintf(out,_("\tWrite Protect\n"));
       if (sense->FMKE)
-        fprintf(out,"\tFilemark Error\n");
+        fprintf(out,_("\tFilemark Error\n"));
       if (sense->URE)
-        fprintf(out,"\tUnder Run Error\n");
+        fprintf(out,_("\tUnder Run Error\n"));
       if (sense->WEI)
-        fprintf(out,"\tWrite Error 1\n");
+        fprintf(out,_("\tWrite Error 1\n"));
       if (sense->SSE)
-        fprintf(out,"\tServo System Error\n");
+        fprintf(out,_("\tServo System Error\n"));
       if (sense->FE)
-        fprintf(out,"\tFormatter Error\n");
+        fprintf(out,_("\tFormatter Error\n"));
       if (sense->UCLN)
-        fprintf(out,"\tCleaning Cartridge is empty\n");
+        fprintf(out,_("\tCleaning Cartridge is empty\n"));
       if (sense->RRR)
-        fprintf(out,"\tReverse Retries Required\n");
+        fprintf(out,_("\tReverse Retries Required\n"));
       if (sense->CLND)
-        fprintf(out,"\tTape Drive has been cleaned\n");
+        fprintf(out,_("\tTape Drive has been cleaned\n"));
       if (sense->CLN)
-        fprintf(out,"\tTape Drive needs to be cleaned\n");
+        fprintf(out,_("\tTape Drive needs to be cleaned\n"));
       if (sense->PEOT)
-        fprintf(out,"\tPhysical End of Tape\n");
+        fprintf(out,_("\tPhysical End of Tape\n"));
       if (sense->WSEB)
-        fprintf(out,"\tWrite Splice Error\n");
+        fprintf(out,_("\tWrite Splice Error\n"));
       if (sense->WSEO)
-        fprintf(out,"\tWrite Splice Error\n");
-      fprintf(out,"\tRemaing 1024 byte tape blocks   %d\n", V3((char *)sense->RemainingTape));
-      fprintf(out,"\tTracking Retry Counter          %02X\n", sense->TrackingRetryCounter);
-      fprintf(out,"\tRead/Write Retry Counter        %02X\n", sense->ReadWriteRetryCounter);
-      fprintf(out,"\tFault Sympton Code              %02X\n", sense->FaultSymptomCode);
+        fprintf(out,_("\tWrite Splice Error\n"));
+      fprintf(out,_("\tRemaing 1024 byte tape blocks   %d\n"), V3((char *)sense->RemainingTape));
+      fprintf(out,_("\tTracking Retry Counter          %02X\n"), sense->TrackingRetryCounter);
+      fprintf(out,_("\tRead/Write Retry Counter        %02X\n"), sense->ReadWriteRetryCounter);
+      fprintf(out,_("\tFault Sympton Code              %02X\n"), sense->FaultSymptomCode);
     }
   return(0);
 }
@@ -2009,19 +2026,19 @@ int
 PrintInquiry(
     SCSIInquiry_T *	SCSIInquiry)
 {
-  DebugPrint(DEBUG_INFO, SECTION_SCSI,"##### START PrintInquiry\n");
-  DebugPrint(DEBUG_INFO, SECTION_SCSI,"%-15s %x\n", "qualifier", SCSIInquiry->qualifier);
-  DebugPrint(DEBUG_INFO, SECTION_SCSI,"%-15s %x\n", "type", SCSIInquiry->type);
-  DebugPrint(DEBUG_INFO, SECTION_SCSI,"%-15s %x\n", "data_format", SCSIInquiry->data_format);
-  DebugPrint(DEBUG_INFO, SECTION_SCSI,"%-15s %X\n", "ansi_version", SCSIInquiry->ansi_version);
-  DebugPrint(DEBUG_INFO, SECTION_SCSI,"%-15s %X\n", "ecma_version", SCSIInquiry->ecma_version);
-  DebugPrint(DEBUG_INFO, SECTION_SCSI,"%-15s %X\n", "iso_version", SCSIInquiry->iso_version);
-  DebugPrint(DEBUG_INFO, SECTION_SCSI,"%-15s %X\n", "type_modifier", SCSIInquiry->type_modifier);
-  DebugPrint(DEBUG_INFO, SECTION_SCSI,"%-15s %x\n", "removable", SCSIInquiry->removable);
-  DebugPrint(DEBUG_INFO, SECTION_SCSI,"%-15s %.8s\n", "vendor_info", SCSIInquiry->vendor_info);
-  DebugPrint(DEBUG_INFO, SECTION_SCSI,"%-15s %.16s\n", "prod_ident", SCSIInquiry->prod_ident);
-  DebugPrint(DEBUG_INFO, SECTION_SCSI,"%-15s %.4s\n", "prod_version", SCSIInquiry->prod_version);
-  DebugPrint(DEBUG_INFO, SECTION_SCSI,"%-15s %.19s\n", "vendor_specific", SCSIInquiry->vendor_specific);
+  DebugPrint(DEBUG_INFO, SECTION_SCSI,_("##### START PrintInquiry\n"));
+  DebugPrint(DEBUG_INFO, SECTION_SCSI,_("%-15s %x\n"), "qualifier", SCSIInquiry->qualifier);
+  DebugPrint(DEBUG_INFO, SECTION_SCSI,_("%-15s %x\n"), "type", SCSIInquiry->type);
+  DebugPrint(DEBUG_INFO, SECTION_SCSI,_("%-15s %x\n"), "data_format", SCSIInquiry->data_format);
+  DebugPrint(DEBUG_INFO, SECTION_SCSI,_("%-15s %X\n"), "ansi_version", SCSIInquiry->ansi_version);
+  DebugPrint(DEBUG_INFO, SECTION_SCSI,_("%-15s %X\n"), "ecma_version", SCSIInquiry->ecma_version);
+  DebugPrint(DEBUG_INFO, SECTION_SCSI,_("%-15s %X\n"), "iso_version", SCSIInquiry->iso_version);
+  DebugPrint(DEBUG_INFO, SECTION_SCSI,_("%-15s %X\n"), "type_modifier", SCSIInquiry->type_modifier);
+  DebugPrint(DEBUG_INFO, SECTION_SCSI,_("%-15s %x\n"), "removable", SCSIInquiry->removable);
+  DebugPrint(DEBUG_INFO, SECTION_SCSI,_("%-15s %.8s\n"), "vendor_info", SCSIInquiry->vendor_info);
+  DebugPrint(DEBUG_INFO, SECTION_SCSI,_("%-15s %.16s\n"), "prod_ident", SCSIInquiry->prod_ident);
+  DebugPrint(DEBUG_INFO, SECTION_SCSI,_("%-15s %.4s\n"), "prod_version", SCSIInquiry->prod_version);
+  DebugPrint(DEBUG_INFO, SECTION_SCSI,_("%-15s %.19s\n"), "vendor_specific", SCSIInquiry->vendor_specific);
   return(0);
 }
 
@@ -2029,7 +2046,7 @@ PrintInquiry(
 int
 DoNothing0(void)
 {
-  dbprintf("##### START DoNothing\n");
+  dbprintf(_("##### START DoNothing\n"));
   return(0);
 }
 
@@ -2039,7 +2056,7 @@ DoNothing1(
 {
   (void)unused1;	/* Quiet unused parameter warning */
 
-  dbprintf("##### START DoNothing\n");
+  dbprintf(_("##### START DoNothing\n"));
   return(0);
 }
 
@@ -2051,7 +2068,7 @@ DoNothing2(
   (void)unused1;	/* Quiet unused parameter warning */
   (void)unused2;	/* Quiet unused parameter warning */
 
-  dbprintf("##### START DoNothing\n");
+  dbprintf(_("##### START DoNothing\n"));
   return(0);
 }
 
@@ -2065,21 +2082,21 @@ DoNothing3(
   (void)unused2;	/* Quiet unused parameter warning */
   (void)unused3;	/* Quiet unused parameter warning */
 
-  dbprintf("##### START DoNothing\n");
+  dbprintf(_("##### START DoNothing\n"));
   return(0);
 }
 
 int
 GenericFree(void)
 {
-  dbprintf("##### START GenericFree\n");
+  dbprintf(_("##### START GenericFree\n"));
   return(0);
 }
 
 int
 GenericSearch(void)
 {
-  dbprintf("##### START GenericSearch\n");
+  dbprintf(_("##### START GenericSearch\n"));
   return(0);
 }
 
@@ -2091,7 +2108,7 @@ TreeFrogBarCode(
 
   ModePageTreeFrogVendorUnique_T *pVendor;
 
-  dbprintf("##### START TreeFrogBarCode\n");
+  dbprintf(_("##### START TreeFrogBarCode\n"));
   if (pModePage == NULL)
     {
       pModePage = alloc(0xff);
@@ -2099,18 +2116,18 @@ TreeFrogBarCode(
 
   if (SCSI_ModeSense(DeviceFD, pModePage, 0xff, 0x0, 0x3f) == 0)
     {
-      DecodeModeSense(pModePage, 0, "TreeFrogBarCode :", 0, debug_file);
+      DecodeModeSense(pModePage, 0, _("TreeFrogBarCode :"), 0, debug_file);
 
       if (pVendorUnique == NULL)
       {
-         dbprintf("TreeFrogBarCode : no pVendorUnique\n");
+         dbprintf(_("TreeFrogBarCode : no pVendorUnique\n"));
          return(0);
 	 /*NOTREACHED*/
       }
       pVendor = ( ModePageTreeFrogVendorUnique_T *)pVendorUnique;
 
-      dbprintf("TreeFrogBarCode : EBARCO %d\n", pVendor->EBARCO);
-      dbprintf("TreeFrogCheckSum : CHKSUM  %d\n", pVendor->CHKSUM);
+      dbprintf(_("TreeFrogBarCode : EBARCO %d\n"), pVendor->EBARCO);
+      dbprintf(_("TreeFrogCheckSum : CHKSUM  %d\n"), pVendor->CHKSUM);
 
       dump_hex((u_char *)pDev[INDEX_CHANGER].inquiry, INQUIRY_SIZE, DEBUG_INFO, SECTION_ELEMENT);
       return(pVendor->EBARCO);
@@ -2128,14 +2145,14 @@ EXB_BarCode(
   ModePageEXB120VendorUnique_T *pVendor;
   ModePageEXB120VendorUnique_T *pVendorWork;
 
-  DebugPrint(DEBUG_INFO, SECTION_BARCODE,"##### START EXB_BarCode\n");
+  DebugPrint(DEBUG_INFO, SECTION_BARCODE,_("##### START EXB_BarCode\n"));
   if (pModePage == NULL && LibModeSenseValid == 0)
     {
       pModePage = alloc(0xff);
 
       if (SCSI_ModeSense(DeviceFD, pModePage, 0xff, 0x8, 0x3f) == 0)
 	{
-	  DecodeModeSense(pModePage, 0, "EXB_BarCode :", 0, debug_file);
+	  DecodeModeSense(pModePage, 0, _("EXB_BarCode :"), 0, debug_file);
 	  LibModeSenseValid = 1;
 	} else {
 	  LibModeSenseValid = -1;
@@ -2146,25 +2163,25 @@ EXB_BarCode(
     {
       if (pVendorUnique == NULL)
 	{
-         DebugPrint(DEBUG_INFO, SECTION_BARCODE,"EXB_BarCode : no pVendorUnique\n");
+         DebugPrint(DEBUG_INFO, SECTION_BARCODE,_("EXB_BarCode : no pVendorUnique\n"));
          return(0);
 	 /*NOTREACHED*/
       }
       pVendor = ( ModePageEXB120VendorUnique_T *)pVendorUnique;
 
-      DebugPrint(DEBUG_INFO, SECTION_BARCODE,"EXB_BarCode : NBL %d\n", pVendor->NBL);
-      DebugPrint(DEBUG_INFO, SECTION_BARCODE,"EXB_BarCode : PS  %d\n", pVendor->PS);
+      DebugPrint(DEBUG_INFO, SECTION_BARCODE,_("EXB_BarCode : NBL %d\n"), pVendor->NBL);
+      DebugPrint(DEBUG_INFO, SECTION_BARCODE,_("EXB_BarCode : PS  %d\n"), pVendor->PS);
       if (pVendor->NBL == 1 && pVendor->PS == 1 )
         {
           pVendorWork = alloc((size_t)pVendor->ParameterListLength + 2);
-          DebugPrint(DEBUG_INFO, SECTION_BARCODE,"EXB_BarCode : setting NBL to 1\n");
+          DebugPrint(DEBUG_INFO, SECTION_BARCODE,_("EXB_BarCode : setting NBL to 1\n"));
           memcpy(pVendorWork, pVendor, (size_t)pVendor->ParameterListLength + 2);
           pVendorWork->NBL = 0;
           pVendorWork->PS = 0;
           pVendorWork->RSVD0 = 0;
           if (SCSI_ModeSelect(DeviceFD, (u_char *)pVendorWork, (u_char)(pVendorWork->ParameterListLength + 2), 0, 1, 0) == 0)
             {
-              DebugPrint(DEBUG_INFO, SECTION_BARCODE,"EXB_BarCode : SCSI_ModeSelect OK\n");
+              DebugPrint(DEBUG_INFO, SECTION_BARCODE,_("EXB_BarCode : SCSI_ModeSelect OK\n"));
               /* Hack !!!!!!
                */
               pVendor->NBL = 0;
@@ -2173,12 +2190,12 @@ EXB_BarCode(
                */
               GenericResetStatus(DeviceFD);
             } else {
-              DebugPrint(DEBUG_INFO, SECTION_BARCODE,"EXB_BarCode : SCSI_ModeSelect failed\n");
+              DebugPrint(DEBUG_INFO, SECTION_BARCODE,_("EXB_BarCode : SCSI_ModeSelect failed\n"));
             }
             amfree(pVendorWork);
         }
       dump_hex((u_char *)pDev[INDEX_CHANGER].inquiry, INQUIRY_SIZE, DEBUG_INFO, SECTION_BARCODE);
-      DebugPrint(DEBUG_INFO, SECTION_BARCODE,"EXB_BarCode : vendor_specific[19] %x\n",
+      DebugPrint(DEBUG_INFO, SECTION_BARCODE,_("EXB_BarCode : vendor_specific[19] %x\n"),
 		 pDev[INDEX_CHANGER].inquiry->vendor_specific[19]);
     }
   return(1);
@@ -2190,8 +2207,8 @@ NoBarCode(
 {
   (void)DeviceFD;	/* Quiet unused parameter warning */
 
-  DebugPrint(DEBUG_INFO, SECTION_BARCODE,"##### START NoBarCode\n");
-  DebugPrint(DEBUG_INFO, SECTION_BARCODE,"##### STOP  NoBarCode\n");
+  DebugPrint(DEBUG_INFO, SECTION_BARCODE,_("##### START NoBarCode\n"));
+  DebugPrint(DEBUG_INFO, SECTION_BARCODE,_("##### STOP  NoBarCode\n"));
   return(0);
 }
 
@@ -2201,14 +2218,14 @@ GenericBarCode(
 {
   (void)DeviceFD;	/* Quiet unused parameter warning */
 
-  DebugPrint(DEBUG_INFO, SECTION_BARCODE,"##### START GenericBarCode\n");
+  DebugPrint(DEBUG_INFO, SECTION_BARCODE,_("##### START GenericBarCode\n"));
   if ( changer->havebarcode  >= 1)
     {
-      DebugPrint(DEBUG_INFO, SECTION_BARCODE,"##### STOP GenericBarCode (havebarcode) => %d\n",changer->havebarcode);
+      DebugPrint(DEBUG_INFO, SECTION_BARCODE,_("##### STOP GenericBarCode (havebarcode) => %d\n"),changer->havebarcode);
       return(1);
       /*NOTREACHED*/
     }
-  DebugPrint(DEBUG_INFO, SECTION_BARCODE,"##### STOP GenericBarCode => 0\n");
+  DebugPrint(DEBUG_INFO, SECTION_BARCODE,_("##### STOP GenericBarCode => 0\n"));
   return(0);
 }
 
@@ -2223,16 +2240,16 @@ SenseHandler(
 {
   extern OpenFiles_T *pDev;
   int ret = 0;
-  dbprintf("##### START SenseHandler\n");
+  dbprintf(_("##### START SenseHandler\n"));
   if (pDev[DeviceFD].inqdone == 1)
     {
-      dbprintf("Ident = [%s], function = [%s]\n", pDev[DeviceFD].ident,
+      dbprintf(_("Ident = [%s], function = [%s]\n"), pDev[DeviceFD].ident,
 		pDev[DeviceFD].functions->ident);
       ret = pDev[DeviceFD].functions->function_error(DeviceFD, flag, SenseKey, AdditionalSenseCode, AdditionalSenseCodeQualifier, buffer);
     } else {
-      dbprintf("    Ups no sense\n");
+      dbprintf(_("    Ups no sense\n"));
     }
-  dbprintf("#### STOP SenseHandler\n");
+  dbprintf(_("#### STOP SenseHandler\n"));
   return(ret);
 }
 
@@ -2256,7 +2273,7 @@ TapeStatus(void)
   int cnt;
   RequestSense_T *pRequestSense;
 
-  DebugPrint(DEBUG_INFO, SECTION_TAPE,"##### START TapeStatus\n");
+  DebugPrint(DEBUG_INFO, SECTION_TAPE,_("##### START TapeStatus\n"));
 
   /*
    * If it is an device which understand SCSI commands the
@@ -2271,7 +2288,7 @@ TapeStatus(void)
       for (done = 0, cnt = 0; !done && (cnt < 60); cnt++)
 	{
 	  ret = SCSI_TestUnitReady(INDEX_TAPECTL, pRequestSense);
-	  DebugPrint(DEBUG_INFO, SECTION_SCSI, "TapeStatus TestUnitReady ret %d\n",ret);
+	  DebugPrint(DEBUG_INFO, SECTION_SCSI, _("TapeStatus TestUnitReady ret %d\n"),ret);
 	  switch (ret)
 	    {
 	    case SCSI_OK:
@@ -2280,49 +2297,49 @@ TapeStatus(void)
 		{
 		case SENSE_IGNORE:
 		case SENSE_NO:
-		  DebugPrint(DEBUG_INFO, SECTION_SCSI,"TapeStatus (TestUnitReady) SENSE_NO\n");
+		  DebugPrint(DEBUG_INFO, SECTION_SCSI,_("TapeStatus (TestUnitReady) SENSE_NO\n"));
 		  pDTE[0].status = 'F';
-		  DebugPrint(DEBUG_INFO, SECTION_TAPE,"##### FULL\n");
+		  DebugPrint(DEBUG_INFO, SECTION_TAPE,_("##### FULL\n"));
 		  done = 1;
 		  break;
 
 		case SENSE_TAPE_NOT_ONLINE:
-		  DebugPrint(DEBUG_INFO, SECTION_SCSI,"TapeStatus (TestUnitReady) SENSE_TAPE_NOT_ONLINE\n");
+		  DebugPrint(DEBUG_INFO, SECTION_SCSI,_("TapeStatus (TestUnitReady) SENSE_TAPE_NOT_ONLINE\n"));
 		  pDTE[0].status = 'E';
-		  DebugPrint(DEBUG_INFO, SECTION_TAPE,"##### EMPTY\n");
+		  DebugPrint(DEBUG_INFO, SECTION_TAPE,_("##### EMPTY\n"));
 		  done = 1;
 		  break;
 
 		case SENSE_ABORT:
-		  DebugPrint(DEBUG_ERROR, SECTION_SCSI,"TapeStatus (TestUnitReady) SENSE_ABORT\n");
+		  DebugPrint(DEBUG_ERROR, SECTION_SCSI,_("TapeStatus (TestUnitReady) SENSE_ABORT\n"));
 		  done = 1;
 		  break;
 
 		case SENSE_RETRY:
-		  DebugPrint(DEBUG_INFO, SECTION_SCSI,"TapeStatus (TestUnitReady) SENSE_RETRY\n");
+		  DebugPrint(DEBUG_INFO, SECTION_SCSI,_("TapeStatus (TestUnitReady) SENSE_RETRY\n"));
 		  break;
 
 		default:
-		  DebugPrint(DEBUG_INFO, SECTION_SCSI,"TapeStatus (TestUnitReady) default (SENSE)\n");
+		  DebugPrint(DEBUG_INFO, SECTION_SCSI,_("TapeStatus (TestUnitReady) default (SENSE)\n"));
 		  break;
 		}
 	      break;
 
 	    case SCSI_ERROR:
-	      DebugPrint(DEBUG_ERROR, SECTION_SCSI,"TapeStatus (TestUnitReady) SCSI_ERROR\n");
+	      DebugPrint(DEBUG_ERROR, SECTION_SCSI,_("TapeStatus (TestUnitReady) SCSI_ERROR\n"));
 	      done = 1;
 	      break;
 
 	    case SCSI_BUSY:
-	      DebugPrint(DEBUG_INFO, SECTION_SCSI,"TapeStatus (TestUnitReady) SCSI_BUSY\n");
+	      DebugPrint(DEBUG_INFO, SECTION_SCSI,_("TapeStatus (TestUnitReady) SCSI_BUSY\n"));
 	      break;
 
 	    case SCSI_CHECK:
-	      DebugPrint(DEBUG_INFO, SECTION_SCSI,"TapeStatus (TestUnitReady) SCSI_CHECK\n");
+	      DebugPrint(DEBUG_INFO, SECTION_SCSI,_("TapeStatus (TestUnitReady) SCSI_CHECK\n"));
 	      break;
 
 	    default:
-	      DebugPrint(DEBUG_ERROR, SECTION_SCSI,"TapeStatus (TestUnitReady) unknown (%d)\n",ret);
+	      DebugPrint(DEBUG_ERROR, SECTION_SCSI,_("TapeStatus (TestUnitReady) unknown (%d)\n"),ret);
 	      break;
 
 	    }
@@ -2335,12 +2352,12 @@ TapeStatus(void)
       if ( ret & TAPE_ONLINE)
 	{
 	  pDTE[0].status ='F';
-	  DebugPrint(DEBUG_INFO, SECTION_TAPE,"##### FULL\n");
+	  DebugPrint(DEBUG_INFO, SECTION_TAPE,_("##### FULL\n"));
 	} else {
 	  pDTE[0].status = 'E';
-	  DebugPrint(DEBUG_INFO, SECTION_TAPE,"##### EMPTY\n");
+	  DebugPrint(DEBUG_INFO, SECTION_TAPE,_("##### EMPTY\n"));
 	}
-      DebugPrint(DEBUG_INFO, SECTION_TAPE,"##### STOP TapeStatus\n");
+      DebugPrint(DEBUG_INFO, SECTION_TAPE,_("##### STOP TapeStatus\n"));
     }
     return(0);
 }
@@ -2360,14 +2377,14 @@ DLT4000Eject(
 
   (void)Device;	/* Quiet unused parameter warning */
 
-  dbprintf("##### START DLT4000Eject\n");
+  dbprintf(_("##### START DLT4000Eject\n"));
 
   pRequestSense = alloc(SIZEOF(RequestSense_T));
   pExtendedRequestSense = alloc(SIZEOF(ExtendedRequestSense_T));
 
   if ( type > 1)
     {
-      dbprintf("DLT4000Eject : use mtio ioctl for eject on %s\n", pDev[INDEX_TAPE].dev);
+      dbprintf(_("DLT4000Eject : use mtio ioctl for eject on %s\n"), pDev[INDEX_TAPE].dev);
       free(pExtendedRequestSense);
       free(pRequestSense);
       return(Tape_Ioctl(INDEX_TAPE, IOCTL_EJECT));
@@ -2378,7 +2395,7 @@ DLT4000Eject(
 
   if (pDev[INDEX_TAPECTL].SCSI == 0)
     {
-      dbprintf("DLT4000Eject : Device %s not able to receive SCSI commands\n", pDev[INDEX_TAPE].dev);
+      dbprintf(_("DLT4000Eject : Device %s not able to receive SCSI commands\n"), pDev[INDEX_TAPE].dev);
       free(pExtendedRequestSense);
       free(pRequestSense);
       return(Tape_Ioctl(INDEX_TAPE, IOCTL_EJECT));
@@ -2386,17 +2403,17 @@ DLT4000Eject(
     }
 
 
-  dbprintf("DLT4000Eject : SCSI eject on %s = %s\n", pDev[INDEX_TAPECTL].dev, pDev[INDEX_TAPECTL].ConfigName);
+  dbprintf(_("DLT4000Eject : SCSI eject on %s = %s\n"), pDev[INDEX_TAPECTL].dev, pDev[INDEX_TAPECTL].ConfigName);
 
   RequestSense(INDEX_TAPECTL, pExtendedRequestSense, 0);
-  DecodeExtSense(pExtendedRequestSense, "DLT4000Eject : ", debug_file);
+  DecodeExtSense(pExtendedRequestSense, _("DLT4000Eject : "), debug_file);
   /* Unload the tape, 0 ==  wait for success
    * 0 == unload
    */
   ret = SCSI_LoadUnload(INDEX_TAPECTL, pRequestSense, 0, 0);
 
   RequestSense(INDEX_TAPECTL, pExtendedRequestSense, 0);
-  DecodeExtSense(pExtendedRequestSense, "DLT4000Eject : ", debug_file);
+  DecodeExtSense(pExtendedRequestSense, _("DLT4000Eject : "), debug_file);
 
   /* < 0 == fatal */
   if (ret >= 0) {
@@ -2410,7 +2427,7 @@ DLT4000Eject(
   while (!done && cnt < 300)
     {
       ret = SCSI_TestUnitReady(INDEX_TAPECTL, pRequestSense);
-      DebugPrint(DEBUG_INFO, SECTION_SCSI, "DLT4000Eject TestUnitReady ret %d\n",ret);
+      DebugPrint(DEBUG_INFO, SECTION_SCSI, _("DLT4000Eject TestUnitReady ret %d\n"),ret);
       switch (ret)
 	{
 	case SCSI_OK:
@@ -2420,46 +2437,46 @@ DLT4000Eject(
 	  switch (SenseHandler(INDEX_TAPECTL, 0, pRequestSense->SenseKey, pRequestSense->AdditionalSenseCode, pRequestSense->AdditionalSenseCodeQualifier, pRequestSense))
 	    {
 	    case SENSE_NO:
-	      DebugPrint(DEBUG_INFO, SECTION_SCSI,"DLT4000Eject (TestUnitReady) SENSE_NO\n");
+	      DebugPrint(DEBUG_INFO, SECTION_SCSI,_("DLT4000Eject (TestUnitReady) SENSE_NO\n"));
 	      done = 1;
 	      break;
 	    case SENSE_TAPE_NOT_ONLINE:
-	      DebugPrint(DEBUG_INFO, SECTION_SCSI,"DLT4000Eject (TestUnitReady) SENSE_TAPE_NOT_ONLINE\n");
+	      DebugPrint(DEBUG_INFO, SECTION_SCSI,_("DLT4000Eject (TestUnitReady) SENSE_TAPE_NOT_ONLINE\n"));
 	      done = 1;
 	      break;
 	    case SENSE_IGNORE:
-	      DebugPrint(DEBUG_INFO, SECTION_SCSI,"DLT4000Eject (TestUnitReady) SENSE_IGNORE\n");
+	      DebugPrint(DEBUG_INFO, SECTION_SCSI,_("DLT4000Eject (TestUnitReady) SENSE_IGNORE\n"));
 	      done = 1;
 	      break;
 	    case SENSE_ABORT:
-	      DebugPrint(DEBUG_ERROR, SECTION_SCSI,"DLT4000Eject (TestUnitReady) SENSE_ABORT\n");
+	      DebugPrint(DEBUG_ERROR, SECTION_SCSI,_("DLT4000Eject (TestUnitReady) SENSE_ABORT\n"));
 	      free(pExtendedRequestSense);
 	      free(pRequestSense);
 	      return(-1);
 	      /*NOTREACHED*/
 	    case SENSE_RETRY:
-	      DebugPrint(DEBUG_INFO, SECTION_SCSI,"DLT4000Eject (TestUnitReady) SENSE_RETRY\n");
+	      DebugPrint(DEBUG_INFO, SECTION_SCSI,_("DLT4000Eject (TestUnitReady) SENSE_RETRY\n"));
 	      break;
 	    default:
-	      DebugPrint(DEBUG_INFO, SECTION_SCSI,"DLT4000Eject (TestUnitReady) default (SENSE)\n");
+	      DebugPrint(DEBUG_INFO, SECTION_SCSI,_("DLT4000Eject (TestUnitReady) default (SENSE)\n"));
 	      done = 1;
 	      break;
 	    }
 	  break;
 	case SCSI_ERROR:
-	  DebugPrint(DEBUG_ERROR, SECTION_SCSI,"DLT4000Eject (TestUnitReady) SCSI_ERROR\n");
+	  DebugPrint(DEBUG_ERROR, SECTION_SCSI,_("DLT4000Eject (TestUnitReady) SCSI_ERROR\n"));
 	  free(pExtendedRequestSense);
 	  free(pRequestSense);
 	  return(-1);
 	  /*NOTREACHED*/
 	case SCSI_BUSY:
-	  DebugPrint(DEBUG_INFO, SECTION_SCSI,"DLT4000Eject (TestUnitReady) SCSI_BUSY\n");
+	  DebugPrint(DEBUG_INFO, SECTION_SCSI,_("DLT4000Eject (TestUnitReady) SCSI_BUSY\n"));
 	  break;
 	case SCSI_CHECK:
-	  DebugPrint(DEBUG_INFO, SECTION_SCSI,"DLT4000Eject (TestUnitReady) SCSI_CHECK\n");
+	  DebugPrint(DEBUG_INFO, SECTION_SCSI,_("DLT4000Eject (TestUnitReady) SCSI_CHECK\n"));
 	  break;
 	default:
-	  DebugPrint(DEBUG_ERROR, SECTION_SCSI,"DLT4000Eject (TestUnitReady) unknown (%d)\n",ret);
+	  DebugPrint(DEBUG_ERROR, SECTION_SCSI,_("DLT4000Eject (TestUnitReady) unknown (%d)\n"),ret);
 	  break;
 	}
 
@@ -2467,7 +2484,7 @@ DLT4000Eject(
       sleep(2);
     }
 
-  dbprintf("DLT4000Eject : Ready after %d sec, done = %d\n", cnt * 2, done);
+  dbprintf(_("DLT4000Eject : Ready after %d sec, done = %d\n"), cnt * 2, done);
 
   free(pExtendedRequestSense);
   free(pRequestSense);
@@ -2497,11 +2514,11 @@ GenericEject(
   (void)Device;	/* Quiet unused parameter warning */
   (void)type;	/* Quiet unused parameter warning */
 
-  DebugPrint(DEBUG_INFO, SECTION_TAPE, "##### START GenericEject\n");
+  DebugPrint(DEBUG_INFO, SECTION_TAPE, _("##### START GenericEject\n"));
 
   pRequestSense = alloc(SIZEOF(RequestSense_T));
 
-  DebugPrint(DEBUG_INFO, SECTION_TAPE,"GenericEject : SCSI eject on %s = %s\n",
+  DebugPrint(DEBUG_INFO, SECTION_TAPE,_("GenericEject : SCSI eject on %s = %s\n"),
              pDev[INDEX_TAPECTL].dev, pDev[INDEX_TAPECTL].ConfigName);
 
   /*
@@ -2528,7 +2545,7 @@ GenericEject(
       while (!done && cnt < 300)
 	{
 	  ret = SCSI_TestUnitReady(INDEX_TAPECTL, pRequestSense);
-	  DebugPrint(DEBUG_INFO, SECTION_SCSI, "GenericEject TestUnitReady ret %d\n",ret);
+	  DebugPrint(DEBUG_INFO, SECTION_SCSI, _("GenericEject TestUnitReady ret %d\n"),ret);
 	  switch (ret)
 	    {
 	    case SCSI_OK:
@@ -2536,52 +2553,52 @@ GenericEject(
 	      switch (SenseHandler(INDEX_TAPECTL, 0, pRequestSense->SenseKey, pRequestSense->AdditionalSenseCode, pRequestSense->AdditionalSenseCodeQualifier, pRequestSense))
 		{
 		case SENSE_NO:
-		  DebugPrint(DEBUG_INFO, SECTION_SCSI,"GenericEject (TestUnitReady) SENSE_NO\n");
+		  DebugPrint(DEBUG_INFO, SECTION_SCSI,_("GenericEject (TestUnitReady) SENSE_NO\n"));
 		  break;
 		case SENSE_TAPE_NOT_ONLINE:
-		  DebugPrint(DEBUG_INFO, SECTION_SCSI,"GenericEject (TestUnitReady) SENSE_TAPE_NOT_ONLINE\n");
+		  DebugPrint(DEBUG_INFO, SECTION_SCSI,_("GenericEject (TestUnitReady) SENSE_TAPE_NOT_ONLINE\n"));
 		  done = 1;
 		  break;
 		case SENSE_IGNORE:
-		  DebugPrint(DEBUG_INFO, SECTION_SCSI,"GenericEject (TestUnitReady) SENSE_IGNORE\n");
+		  DebugPrint(DEBUG_INFO, SECTION_SCSI,_("GenericEject (TestUnitReady) SENSE_IGNORE\n"));
 		  break;
 		case SENSE_ABORT:
-		  DebugPrint(DEBUG_ERROR, SECTION_SCSI,"GenericEject (TestUnitReady) SENSE_ABORT\n");
+		  DebugPrint(DEBUG_ERROR, SECTION_SCSI,_("GenericEject (TestUnitReady) SENSE_ABORT\n"));
 		  free(pRequestSense);
 		  return(-1);
 		  /*NOTREACHED*/
 		case SENSE_RETRY:
-		  DebugPrint(DEBUG_INFO, SECTION_SCSI,"GenericEject (TestUnitReady) SENSE_RETRY\n");
+		  DebugPrint(DEBUG_INFO, SECTION_SCSI,_("GenericEject (TestUnitReady) SENSE_RETRY\n"));
 		  break;
 		default:
-		  DebugPrint(DEBUG_INFO, SECTION_SCSI,"GenericEject (TestUnitReady) default (SENSE)\n");
+		  DebugPrint(DEBUG_INFO, SECTION_SCSI,_("GenericEject (TestUnitReady) default (SENSE)\n"));
 		  break;
 		}
 	      break;
 	    case SCSI_ERROR:
-	      DebugPrint(DEBUG_ERROR, SECTION_SCSI,"GenericEject (TestUnitReady) SCSI_ERROR\n");
+	      DebugPrint(DEBUG_ERROR, SECTION_SCSI,_("GenericEject (TestUnitReady) SCSI_ERROR\n"));
 	      free(pRequestSense);
 	      return(-1);
 	      /*NOTREACHED*/
 	    case SCSI_BUSY:
-	      DebugPrint(DEBUG_INFO, SECTION_SCSI,"GenericEject (TestUnitReady) SCSI_BUSY\n");
+	      DebugPrint(DEBUG_INFO, SECTION_SCSI,_("GenericEject (TestUnitReady) SCSI_BUSY\n"));
 	      break;
 	    case SCSI_CHECK:
-	      DebugPrint(DEBUG_INFO, SECTION_SCSI,"GenericEject (TestUnitReady) SCSI_CHECK\n");
+	      DebugPrint(DEBUG_INFO, SECTION_SCSI,_("GenericEject (TestUnitReady) SCSI_CHECK\n"));
 	      break;
 	    default:
-	      DebugPrint(DEBUG_ERROR, SECTION_SCSI,"GenericEject (TestUnitReady) unknown (%d)\n",ret);
+	      DebugPrint(DEBUG_ERROR, SECTION_SCSI,_("GenericEject (TestUnitReady) unknown (%d)\n"),ret);
 	      break;
 	    }
 	  cnt++;
 	  sleep(2);
 	}
     } else {
-      DebugPrint(DEBUG_INFO, SECTION_TAPE,"GenericEject : Device can't understand SCSI try ioctl\n");
+      DebugPrint(DEBUG_INFO, SECTION_TAPE,_("GenericEject : Device can't understand SCSI try ioctl\n"));
       Tape_Ioctl(INDEX_TAPECTL, IOCTL_EJECT);
     }
   DebugPrint(DEBUG_INFO, SECTION_TAPE,
-  	     "GenericEject : Ready after %d sec\n", cnt * 2);
+  	     _("GenericEject : Ready after %d sec\n"), cnt * 2);
   free(pRequestSense);
   return(0);
 }
@@ -2608,7 +2625,7 @@ GenericRewind(
   int cnt = 0;
   int done;
 
-  DebugPrint(DEBUG_INFO, SECTION_TAPE,"##### START GenericRewind pDEV -> %d\n",DeviceFD);
+  DebugPrint(DEBUG_INFO, SECTION_TAPE,_("##### START GenericRewind pDEV -> %d\n"),DeviceFD);
 
 
   /*
@@ -2627,7 +2644,7 @@ GenericRewind(
       while (!done)
 	{
 	  ret = SCSI_TestUnitReady(DeviceFD, (RequestSense_T *)pRequestSense );
-	  DebugPrint(DEBUG_INFO, SECTION_TAPE, "GenericRewind (TestUnitReady) ret %d\n",ret);
+	  DebugPrint(DEBUG_INFO, SECTION_TAPE, _("GenericRewind (TestUnitReady) ret %d\n"),ret);
 	  switch (ret)
 	    {
 	    case SCSI_OK:
@@ -2637,55 +2654,55 @@ GenericRewind(
 	      switch (SenseHandler(DeviceFD, 0, pRequestSense->SenseKey, pRequestSense->AdditionalSenseCode, pRequestSense->AdditionalSenseCodeQualifier, pRequestSense))
 		{
 		case SENSE_NO:
-		  DebugPrint(DEBUG_INFO, SECTION_SCSI,"GenericRewind (TestUnitReady) SENSE_NO\n");
+		  DebugPrint(DEBUG_INFO, SECTION_SCSI,_("GenericRewind (TestUnitReady) SENSE_NO\n"));
 		  done = 1;
 		  break;
 		case SENSE_TAPE_NOT_ONLINE:
-		  DebugPrint(DEBUG_INFO, SECTION_SCSI,"GenericRewind (TestUnitReady) SENSE_TAPE_NOT_ONLINE\n");
+		  DebugPrint(DEBUG_INFO, SECTION_SCSI,_("GenericRewind (TestUnitReady) SENSE_TAPE_NOT_ONLINE\n"));
 		  free(pRequestSense);
 		  return(-1);
 		  /*NOTREACHED*/
 		case SENSE_IGNORE:
-		  DebugPrint(DEBUG_INFO, SECTION_SCSI,"GenericRewind (TestUnitReady) SENSE_IGNORE\n");
+		  DebugPrint(DEBUG_INFO, SECTION_SCSI,_("GenericRewind (TestUnitReady) SENSE_IGNORE\n"));
 		  done = 1;
 		  break;
 		case SENSE_ABORT:
-		  DebugPrint(DEBUG_ERROR, SECTION_SCSI,"GenericRewind (TestUnitReady) SENSE_ABORT\n");
+		  DebugPrint(DEBUG_ERROR, SECTION_SCSI,_("GenericRewind (TestUnitReady) SENSE_ABORT\n"));
 		  free(pRequestSense);
 		  return(-1);
 		  /*NOTREACHED*/
 		case SENSE_RETRY:
-		  DebugPrint(DEBUG_INFO, SECTION_SCSI,"GenericRewind (TestUnitReady) SENSE_RETRY\n");
+		  DebugPrint(DEBUG_INFO, SECTION_SCSI,_("GenericRewind (TestUnitReady) SENSE_RETRY\n"));
 		  break;
 		default:
-		  DebugPrint(DEBUG_INFO, SECTION_SCSI,"GenericRewind (TestUnitReady) default (SENSE)\n");
+		  DebugPrint(DEBUG_INFO, SECTION_SCSI,_("GenericRewind (TestUnitReady) default (SENSE)\n"));
 		  done = 1;
 		  break;
 		}  /* switch (SenseHandler(DeviceFD, 0, pRequestSense->SenseKey.... */
 	      break;
 
 	    case SCSI_ERROR:
-	      DebugPrint(DEBUG_ERROR, SECTION_SCSI,"GenericRewind (TestUnitReady) SCSI_ERROR\n");
+	      DebugPrint(DEBUG_ERROR, SECTION_SCSI,_("GenericRewind (TestUnitReady) SCSI_ERROR\n"));
 	      free(pRequestSense);
 	      return(-1);
 	      /*NOTREACHED*/
 
 	    case SCSI_BUSY:
-	      DebugPrint(DEBUG_INFO, SECTION_SCSI,"GenericRewind (TestUnitReady) SCSI_BUSY\n");
+	      DebugPrint(DEBUG_INFO, SECTION_SCSI,_("GenericRewind (TestUnitReady) SCSI_BUSY\n"));
 	      break;
 	    case SCSI_CHECK:
-	      DebugPrint(DEBUG_INFO, SECTION_SCSI,"GenericRewind (TestUnitReady) SCSI_CHECK\n");
+	      DebugPrint(DEBUG_INFO, SECTION_SCSI,_("GenericRewind (TestUnitReady) SCSI_CHECK\n"));
 	      break;
 	    default:
-	      DebugPrint(DEBUG_ERROR, SECTION_SCSI,"GenericRewind (TestUnitReady) unknown (%d)\n",ret);
+	      DebugPrint(DEBUG_ERROR, SECTION_SCSI,_("GenericRewind (TestUnitReady) unknown (%d)\n"),ret);
 	      break;
 	    }
 
 	  sleep(1);
-	  DebugPrint(DEBUG_INFO, SECTION_TAPE," Wait .... (%d)\n",cnt);
+	  DebugPrint(DEBUG_INFO, SECTION_TAPE,_(" Wait .... (%d)\n"),cnt);
 	  if (cnt > 180)
 	    {
-	      DebugPrint(DEBUG_ERROR, SECTION_TAPE,"##### STOP GenericRewind (-1)\n");
+	      DebugPrint(DEBUG_ERROR, SECTION_TAPE,_("##### STOP GenericRewind (-1)\n"));
 	      free(pRequestSense);
 	      return(-1);
 	      /*NOTREACHED*/
@@ -2709,7 +2726,7 @@ GenericRewind(
 			 pRequestSense,
 			 SIZEOF(RequestSense_T));
 
-	  DecodeSense(pRequestSense, "GenericRewind : ", debug_file);
+	  DecodeSense(pRequestSense, _("GenericRewind : "), debug_file);
 
 	  if (ret > 0)
 	    {
@@ -2724,7 +2741,7 @@ GenericRewind(
 	    }
 	  if (ret < 0)
 	    {
-	      DebugPrint(DEBUG_INFO, SECTION_TAPE,"GenericRewind : failed %d\n", ret);
+	      DebugPrint(DEBUG_INFO, SECTION_TAPE,_("GenericRewind : failed %d\n"), ret);
 	      done = 1;
 	    }
 	}
@@ -2733,7 +2750,7 @@ GenericRewind(
       while (!done && (cnt < 300))
 	{
 	  ret = SCSI_TestUnitReady(DeviceFD, pRequestSense);
-	  DebugPrint(DEBUG_INFO, SECTION_SCSI, "GenericRewind TestUnitReady ret %d\n",ret);
+	  DebugPrint(DEBUG_INFO, SECTION_SCSI, _("GenericRewind TestUnitReady ret %d\n"),ret);
 	  switch (ret)
 	    {
 	    case SCSI_OK:
@@ -2743,45 +2760,45 @@ GenericRewind(
 	      switch (SenseHandler(DeviceFD, 0, pRequestSense->SenseKey, pRequestSense->AdditionalSenseCode, pRequestSense->AdditionalSenseCodeQualifier, pRequestSense))
 		{
 		case SENSE_NO:
-		  DebugPrint(DEBUG_INFO, SECTION_SCSI,"GenericRewind (TestUnitReady) SENSE_NO\n");
+		  DebugPrint(DEBUG_INFO, SECTION_SCSI,_("GenericRewind (TestUnitReady) SENSE_NO\n"));
 		  done = 1;
 		  break;
 		case SENSE_TAPE_NOT_ONLINE:
-		  DebugPrint(DEBUG_INFO, SECTION_SCSI,"GenericRewind (TestUnitReady) SENSE_TAPE_NOT_ONLINE\n");
+		  DebugPrint(DEBUG_INFO, SECTION_SCSI,_("GenericRewind (TestUnitReady) SENSE_TAPE_NOT_ONLINE\n"));
 		  free(pRequestSense);
 		  return(-1);
 		  /*NOTREACHED*/
 		case SENSE_IGNORE:
-		  DebugPrint(DEBUG_INFO, SECTION_SCSI,"GenericRewind (TestUnitReady) SENSE_IGNORE\n");
+		  DebugPrint(DEBUG_INFO, SECTION_SCSI,_("GenericRewind (TestUnitReady) SENSE_IGNORE\n"));
 		  done = 1;
 		  break;
 		case SENSE_ABORT:
-		  DebugPrint(DEBUG_ERROR, SECTION_SCSI,"GenericRewind (TestUnitReady) SENSE_ABORT\n");
+		  DebugPrint(DEBUG_ERROR, SECTION_SCSI,_("GenericRewind (TestUnitReady) SENSE_ABORT\n"));
 		  free(pRequestSense);
 		  return(-1);
 		  /*NOTREACHED*/
 		case SENSE_RETRY:
-		  DebugPrint(DEBUG_INFO, SECTION_SCSI,"GenericRewind (TestUnitReady) SENSE_RETRY\n");
+		  DebugPrint(DEBUG_INFO, SECTION_SCSI,_("GenericRewind (TestUnitReady) SENSE_RETRY\n"));
 		  break;
 		default:
-		  DebugPrint(DEBUG_INFO, SECTION_SCSI,"GenericRewind (TestUnitReady) default (SENSE)\n");
+		  DebugPrint(DEBUG_INFO, SECTION_SCSI,_("GenericRewind (TestUnitReady) default (SENSE)\n"));
 		  done = 1;
 		  break;
 		}
 	      break;
 	    case SCSI_ERROR:
-	      DebugPrint(DEBUG_ERROR, SECTION_SCSI,"GenericRewind (TestUnitReady) SCSI_ERROR\n");
+	      DebugPrint(DEBUG_ERROR, SECTION_SCSI,_("GenericRewind (TestUnitReady) SCSI_ERROR\n"));
 	      return(-1);
 	      /*NOTREACHED*/
 
 	    case SCSI_BUSY:
-	      DebugPrint(DEBUG_INFO, SECTION_SCSI,"GenericRewind (TestUnitReady) SCSI_BUSY\n");
+	      DebugPrint(DEBUG_INFO, SECTION_SCSI,_("GenericRewind (TestUnitReady) SCSI_BUSY\n"));
 	      break;
 	    case SCSI_CHECK:
-	      DebugPrint(DEBUG_INFO, SECTION_SCSI,"GenericRewind (TestUnitReady) SCSI_CHECK\n");
+	      DebugPrint(DEBUG_INFO, SECTION_SCSI,_("GenericRewind (TestUnitReady) SCSI_CHECK\n"));
 	      break;
 	    default:
-	      DebugPrint(DEBUG_ERROR, SECTION_SCSI,"GenericRewind (TestUnitReady) unknown (%d)\n",ret);
+	      DebugPrint(DEBUG_ERROR, SECTION_SCSI,_("GenericRewind (TestUnitReady) unknown (%d)\n"),ret);
 	      break;
 	    }
 
@@ -2791,26 +2808,26 @@ GenericRewind(
 
       amfree(pRequestSense);
 
-      DebugPrint(DEBUG_INFO, SECTION_TAPE,"GenericRewind : Ready after %d sec, "
-      			"done = %d\n", cnt * 2, done);
-      DebugPrint(DEBUG_INFO, SECTION_TAPE,"##### STOP GenericRewind (0)\n");
+      DebugPrint(DEBUG_INFO, SECTION_TAPE,_("GenericRewind : Ready after %d sec, "
+      			"done = %d\n"), cnt * 2, done);
+      DebugPrint(DEBUG_INFO, SECTION_TAPE,_("##### STOP GenericRewind (0)\n"));
     } else {
-      DebugPrint(DEBUG_INFO, SECTION_TAPE,"GenericRewind : use ioctl rewind\n");
+      DebugPrint(DEBUG_INFO, SECTION_TAPE,_("GenericRewind : use ioctl rewind\n"));
       if (pDev[DeviceFD].devopen == 1)
 	{
-	  DebugPrint(DEBUG_INFO, SECTION_TAPE,"Close Device\n");
+	  DebugPrint(DEBUG_INFO, SECTION_TAPE,_("Close Device\n"));
 	  SCSI_CloseDevice(DeviceFD);
 	}
       /* We don't retry if it fails; that is left to the vtape driver. */
       if ((errstr = tape_rewind(pDev[DeviceFD].dev)) == NULL) {
-          DebugPrint(DEBUG_INFO, SECTION_TAPE,"Rewind OK,\n", cnt);
+          DebugPrint(DEBUG_INFO, SECTION_TAPE,_("Rewind OK,\n"), cnt);
       } else {
-          DebugPrint(DEBUG_ERROR, SECTION_TAPE,"Rewind failed %s\n",errstr);
-          DebugPrint(DEBUG_INFO, SECTION_TAPE,"##### STOP GenericRewind (-1)\n");
+          DebugPrint(DEBUG_ERROR, SECTION_TAPE,_("Rewind failed %s\n"),errstr);
+          DebugPrint(DEBUG_INFO, SECTION_TAPE,_("##### STOP GenericRewind (-1)\n"));
           return(-1);
 	  /*NOTREACHED*/
       }
-      DebugPrint(DEBUG_INFO, SECTION_TAPE,"##### STOP GenericRewind (0)\n");
+      DebugPrint(DEBUG_INFO, SECTION_TAPE,_("##### STOP GenericRewind (0)\n"));
     }
 
   return(0);
@@ -2832,11 +2849,11 @@ GenericClean(
 
   (void)Device;	/* Quiet unused parameter warning */
 
-  DebugPrint(DEBUG_INFO, SECTION_TAPE,"##### START GenericClean\n");
+  DebugPrint(DEBUG_INFO, SECTION_TAPE,_("##### START GenericClean\n"));
   if (pDev[INDEX_TAPECTL].SCSI == 0)
       {
-          DebugPrint(DEBUG_ERROR, SECTION_TAPE,"GenericClean : can't send SCSI commands\n");
-	  DebugPrint(DEBUG_ERROR, SECTION_TAPE,"##### STOP GenericClean\n");
+          DebugPrint(DEBUG_ERROR, SECTION_TAPE,_("GenericClean : can't send SCSI commands\n"));
+	  DebugPrint(DEBUG_ERROR, SECTION_TAPE,_("##### STOP GenericClean\n"));
           return(0);
 	  /*NOTREACHED*/
       }
@@ -2847,16 +2864,16 @@ GenericClean(
   if ( RequestSense(INDEX_TAPECTL, &ExtRequestSense, 1) == 0)
     {
 
-      DecodeExtSense(&ExtRequestSense, "GenericClean : ", debug_file);
+      DecodeExtSense(&ExtRequestSense, _("GenericClean : "), debug_file);
       if(ExtRequestSense.CLN) {
 	ret = 1;
       } else {
 	ret = 0;
       }
     } else {
-      DebugPrint(DEBUG_ERROR, SECTION_TAPE,"Got error from RequestSense\n");
+      DebugPrint(DEBUG_ERROR, SECTION_TAPE,_("Got error from RequestSense\n"));
     }
-  DebugPrint(DEBUG_INFO, SECTION_TAPE,"##### STOP GenericClean (%d)\n",ret);
+  DebugPrint(DEBUG_INFO, SECTION_TAPE,_("##### STOP GenericClean (%d)\n"),ret);
   return(ret);
 }
 
@@ -2937,7 +2954,7 @@ GenericResetStatus(
   int ret = 0;
   int retry = 1;
 
-  DebugPrint(DEBUG_INFO, SECTION_ELEMENT, "##### START GenericResetStatus\n");
+  DebugPrint(DEBUG_INFO, SECTION_ELEMENT, _("##### START GenericResetStatus\n"));
 
   pRequestSense = alloc(SIZEOF(RequestSense_T));
 
@@ -2958,7 +2975,7 @@ GenericResetStatus(
 
       if (ret < 0)
         {
-          /*        fprintf(stderr, "%s: Request Sense[Inquiry]: %02X", */
+          /*        fprintf(stderr, _("%s: Request Sense[Inquiry]: %02X"), */
           /*                "chs", ((u_char *) &pRequestSense)[0]); */
           /*        for (i = 1; i < SIZEOF(RequestSense_T); i++)                */
           /*          fprintf(stderr, " %02X", ((u_char *) &pRequestSense)[i]); */
@@ -2983,17 +3000,17 @@ GenericResetStatus(
               retry++;
               if (retry < MAX_RETRIES )
                 {
-                  DebugPrint(DEBUG_INFO, SECTION_ELEMENT, "GenericResetStatus : retry %d\n", retry);
+                  DebugPrint(DEBUG_INFO, SECTION_ELEMENT, _("GenericResetStatus : retry %d\n"), retry);
                   sleep(2);
                 } else {
-		  DebugPrint(DEBUG_ERROR, SECTION_ELEMENT, "GenericResetStatus : return (-1)\n");
+		  DebugPrint(DEBUG_ERROR, SECTION_ELEMENT, _("GenericResetStatus : return (-1)\n"));
 		  free(pRequestSense);
                   return(-1);
 		  /*NOTREACHED*/
                 }
               break;
             default:
-	      DebugPrint(DEBUG_ERROR, SECTION_ELEMENT, "GenericResetStatus :  (default) return (-1)\n");
+	      DebugPrint(DEBUG_ERROR, SECTION_ELEMENT, _("GenericResetStatus :  (default) return (-1)\n"));
 	      free(pRequestSense);
               return(-1);
               /*NOTREACHED*/
@@ -3002,7 +3019,7 @@ GenericResetStatus(
       if (ret == 0)
         retry = 0;
     }
-  DebugPrint(DEBUG_ERROR, SECTION_ELEMENT, "##### STOP GenericResetStatus (%d)\n",ret);
+  DebugPrint(DEBUG_ERROR, SECTION_ELEMENT, _("##### STOP GenericResetStatus (%d)\n"),ret);
   free(pRequestSense);
   return(ret);
 }
@@ -3034,9 +3051,9 @@ GenericSenseHandler(
   int ret;
   char *info = NULL;
 
-  dbprintf("##### START GenericSenseHandler\n");
+  dbprintf(_("##### START GenericSenseHandler\n"));
 
-  DecodeSense(pRequestSense, "GenericSenseHandler : ", debug_file);
+  DecodeSense(pRequestSense, _("GenericSenseHandler : "), debug_file);
 
   ret = Sense2Action(pDev[ip].ident,
 		     pDev[ip].inquiry->type,
@@ -3045,7 +3062,7 @@ GenericSenseHandler(
 		     AdditionalSenseCodeQualifier,
 		     &info);
 
-  dbprintf("##### STOP GenericSenseHandler\n");
+  dbprintf(_("##### STOP GenericSenseHandler\n"));
   return(ret);
 }
 
@@ -3077,31 +3094,31 @@ SDXMove(
   int SDX_STE = -1;     /* to                          */
   int SDX_DTE = -1;     /* AlignElements               */
 
-  DebugPrint(DEBUG_INFO, SECTION_MOVE,"##### START SDXMove\n");
+  DebugPrint(DEBUG_INFO, SECTION_MOVE,_("##### START SDXMove\n"));
 
-  DebugPrint(DEBUG_INFO, SECTION_MOVE,"%-20s : from = %d, to = %d\n", "SDXMove", from, to);
+  DebugPrint(DEBUG_INFO, SECTION_MOVE,_("%-20s : from = %d, to = %d\n"), "SDXMove", from, to);
 
 
   if ((pfrom = LookupElement(from)) == NULL)
     {
-      DebugPrint(DEBUG_INFO, SECTION_MOVE,"SDXMove : ElementInfo for %d not found\n", from);
-      DebugPrint(DEBUG_INFO, SECTION_MOVE,"##### STOP SDXMove\n");
+      DebugPrint(DEBUG_INFO, SECTION_MOVE,_("SDXMove : ElementInfo for %d not found\n"), from);
+      DebugPrint(DEBUG_INFO, SECTION_MOVE,_("##### STOP SDXMove\n"));
       return(-1);
       /*NOTREACHED*/
     }
 
   if ((pto = LookupElement(to)) == NULL)
     {
-      DebugPrint(DEBUG_INFO, SECTION_MOVE,"SDXMove : ElementInfo for %d not found\n", to);
-      DebugPrint(DEBUG_INFO, SECTION_MOVE,"##### STOP SDXMove\n");
+      DebugPrint(DEBUG_INFO, SECTION_MOVE,_("SDXMove : ElementInfo for %d not found\n"), to);
+      DebugPrint(DEBUG_INFO, SECTION_MOVE,_("##### STOP SDXMove\n"));
       return(-1);
       /*NOTREACHED*/
     }
 
   if (pfrom->status == 'E')
     {
-      DebugPrint(DEBUG_INFO, SECTION_MOVE,"SDXMove : from %d is empty\n", from);
-      DebugPrint(DEBUG_INFO, SECTION_MOVE,"##### STOP SDXMove\n");
+      DebugPrint(DEBUG_INFO, SECTION_MOVE,_("SDXMove : from %d is empty\n"), from);
+      DebugPrint(DEBUG_INFO, SECTION_MOVE,_("##### STOP SDXMove\n"));
       return(-1);
       /*NOTREACHED*/
     }
@@ -3113,20 +3130,20 @@ SDXMove(
          case CHANGER:
            break;
          case STORAGE:
-           DebugPrint(DEBUG_INFO, SECTION_MOVE,"SDXMove : Destination Element %d Type %d is full\n",
+           DebugPrint(DEBUG_INFO, SECTION_MOVE,_("SDXMove : Destination Element %d Type %d is full\n"),
                 pto->address, pto->type);
             to = find_empty(DeviceFD, 0, 0);
 	    if (to == -1 )
 	    {
-		    DebugPrint(DEBUG_ERROR, SECTION_MOVE,"SDXMove : no empty slot found for unload\n");
+		    DebugPrint(DEBUG_ERROR, SECTION_MOVE,_("SDXMove : no empty slot found for unload\n"));
 		    return(-1);
 		    /*NOTREACHED*/
 	    }
-            DebugPrint(DEBUG_INFO, SECTION_MOVE,"SDXMove : Unload to %d\n", to);
+            DebugPrint(DEBUG_INFO, SECTION_MOVE,_("SDXMove : Unload to %d\n"), to);
             if ((pto = LookupElement(to)) == NULL)
             {
-	      DebugPrint(DEBUG_INFO, SECTION_MOVE, "SDXMove : ElementInfo for %d not found\n", to);
-	      DebugPrint(DEBUG_INFO, SECTION_MOVE,"##### STOP SDXMove\n");
+	      DebugPrint(DEBUG_INFO, SECTION_MOVE, _("SDXMove : ElementInfo for %d not found\n"), to);
+	      DebugPrint(DEBUG_INFO, SECTION_MOVE,_("##### STOP SDXMove\n"));
 	      return(-1);
 	      /*NOTREACHED*/
             }
@@ -3169,16 +3186,16 @@ SDXMove(
   if (SDX_DTE >= 0 && SDX_STE >= 0)
   {
     ret = SCSI_AlignElements(DeviceFD, SDX_MTE, SDX_DTE, SDX_STE);
-    DebugPrint(DEBUG_INFO, SECTION_MOVE,"##### SCSI_AlignElemnts ret = %d\n",ret);
+    DebugPrint(DEBUG_INFO, SECTION_MOVE,_("##### SCSI_AlignElemnts ret = %d\n"),ret);
     if (ret != 0 )
     {
-      DebugPrint(DEBUG_INFO, SECTION_MOVE,"##### STOP SDXMove\n");
+      DebugPrint(DEBUG_INFO, SECTION_MOVE,_("##### STOP SDXMove\n"));
       return(-1);
       /*NOTREACHED*/
     }
   } else {
-    DebugPrint(DEBUG_INFO, SECTION_MOVE,"##### Error setting STE/DTE %d/%d\n", SDX_STE, SDX_DTE);
-    DebugPrint(DEBUG_INFO, SECTION_MOVE,"##### STOP SDXMove\n");
+    DebugPrint(DEBUG_INFO, SECTION_MOVE,_("##### Error setting STE/DTE %d/%d\n"), SDX_STE, SDX_DTE);
+    DebugPrint(DEBUG_INFO, SECTION_MOVE,_("##### STOP SDXMove\n"));
     return(-1);
     /*NOTREACHED*/
   }
@@ -3205,11 +3222,11 @@ SDXMove(
   {
     ret = SCSI_Move(DeviceFD, 0, from, to);
   } else {
-    DebugPrint(DEBUG_INFO, SECTION_MOVE,"##### STOP SDXMove\n");
+    DebugPrint(DEBUG_INFO, SECTION_MOVE,_("##### STOP SDXMove\n"));
     return(ret);
     /*NOTREACHED*/
   }
-  DebugPrint(DEBUG_INFO, SECTION_MOVE,"##### STOP SDXMove\n");
+  DebugPrint(DEBUG_INFO, SECTION_MOVE,_("##### STOP SDXMove\n"));
   return(ret);
 }
 
@@ -3233,51 +3250,51 @@ GenericMove(
   ElementInfo_T *pto;
   int ret = 0;
 
-  DebugPrint(DEBUG_INFO, SECTION_MOVE, "##### START GenericMove\n");
+  DebugPrint(DEBUG_INFO, SECTION_MOVE, _("##### START GenericMove\n"));
 
-  DebugPrint(DEBUG_INFO, SECTION_MOVE, "%-20s : from = %d, to = %d\n", "GenericMove", from, to);
+  DebugPrint(DEBUG_INFO, SECTION_MOVE, _("%-20s : from = %d, to = %d\n"), "GenericMove", from, to);
 
 
   if ((pfrom = LookupElement(from)) == NULL)
     {
-      DebugPrint(DEBUG_INFO, SECTION_MOVE, "GenericMove : ElementInfo for %d not found\n", from);
-      DebugPrint(DEBUG_INFO, SECTION_MOVE,"##### STOP GenericMove\n");
+      DebugPrint(DEBUG_INFO, SECTION_MOVE, _("GenericMove : ElementInfo for %d not found\n"), from);
+      DebugPrint(DEBUG_INFO, SECTION_MOVE,_("##### STOP GenericMove\n"));
       return(-1);
       /*NOTREACHED*/
     }
 
   if ((pto = LookupElement(to)) == NULL)
     {
-      DebugPrint(DEBUG_INFO, SECTION_MOVE, "GenericMove : ElementInfo for %d not found\n", to);
-      DebugPrint(DEBUG_INFO, SECTION_MOVE,"##### STOP GenericMove\n");
+      DebugPrint(DEBUG_INFO, SECTION_MOVE, _("GenericMove : ElementInfo for %d not found\n"), to);
+      DebugPrint(DEBUG_INFO, SECTION_MOVE,_("##### STOP GenericMove\n"));
       return(-1);
       /*NOTREACHED*/
     }
 
   if (pfrom->status == 'E')
     {
-      DebugPrint(DEBUG_INFO, SECTION_MOVE, "GenericMove : from %d is empty\n", from);
-      DebugPrint(DEBUG_INFO, SECTION_MOVE,"##### STOP GenericMove\n");
+      DebugPrint(DEBUG_INFO, SECTION_MOVE, _("GenericMove : from %d is empty\n"), from);
+      DebugPrint(DEBUG_INFO, SECTION_MOVE,_("##### STOP GenericMove\n"));
       return(-1);
       /*NOTREACHED*/
     }
 
   if (pto->status == 'F')
     {
-      DebugPrint(DEBUG_INFO, SECTION_MOVE, "GenericMove : Destination Element %d Type %d is full\n",
+      DebugPrint(DEBUG_INFO, SECTION_MOVE, _("GenericMove : Destination Element %d Type %d is full\n"),
 		 pto->address, pto->type);
       to = find_empty(DeviceFD, 0, 0);
       if ( to == -1)
       {
-	      DebugPrint(DEBUG_ERROR, SECTION_MOVE, "GenericMove : no empty slot found\n");
+	      DebugPrint(DEBUG_ERROR, SECTION_MOVE, _("GenericMove : no empty slot found\n"));
 	      return(-1);
 	      /*NOTREACHED*/
       }
-      DebugPrint(DEBUG_INFO, SECTION_MOVE, "GenericMove : Unload to %d\n", to);
+      DebugPrint(DEBUG_INFO, SECTION_MOVE, _("GenericMove : Unload to %d\n"), to);
       if ((pto = LookupElement(to)) == NULL)
         {
-          DebugPrint(DEBUG_ERROR, SECTION_MOVE, " Ups should not happen\n");
-	  DebugPrint(DEBUG_INFO, SECTION_MOVE,"##### STOP GenericMove\n");
+          DebugPrint(DEBUG_ERROR, SECTION_MOVE, _(" Ups should not happen\n"));
+	  DebugPrint(DEBUG_INFO, SECTION_MOVE,_("##### STOP GenericMove\n"));
 	  return(-1);
 	  /*NOTREACHED*/
         }
@@ -3288,8 +3305,8 @@ GenericMove(
       ret = SCSI_Move(DeviceFD, 0, from, to);
     }
 
-  DebugPrint(DEBUG_INFO, SECTION_MOVE, "GenericMove : SCSI_Move return (%d)\n", ret);
-  DebugPrint(DEBUG_INFO, SECTION_MOVE,"##### STOP GenericMove\n");
+  DebugPrint(DEBUG_INFO, SECTION_MOVE, _("GenericMove : SCSI_Move return (%d)\n"), ret);
+  DebugPrint(DEBUG_INFO, SECTION_MOVE,_("##### STOP GenericMove\n"));
   return(ret);
 }
 
@@ -3308,41 +3325,41 @@ CheckMove(
 {
 	int moveok = 0;
 
-	DebugPrint(DEBUG_INFO, SECTION_MOVE, "##### START CheckMove\n");
+	DebugPrint(DEBUG_INFO, SECTION_MOVE, _("##### START CheckMove\n"));
 	if (pDeviceCapabilitiesPage != NULL )
 	  {
-	    DebugPrint(DEBUG_INFO, SECTION_MOVE, "CheckMove : checking if move from %d to %d is legal\n", from->address, to->address);
+	    DebugPrint(DEBUG_INFO, SECTION_MOVE, _("CheckMove : checking if move from %d to %d is legal\n"), from->address, to->address);
 	    switch (from->type)
 	      {
 	      case CHANGER:
-		DebugPrint(DEBUG_INFO, SECTION_MOVE, "CheckMove : MT2");
+		DebugPrint(DEBUG_INFO, SECTION_MOVE, _("CheckMove : MT2"));
 		switch (to->type)
 		  {
 		  case CHANGER:
 		    if (pDeviceCapabilitiesPage->MT2MT == 1)
 		      {
-			DebugPrint(DEBUG_INFO, SECTION_MOVE, "MT\n");
+			DebugPrint(DEBUG_INFO, SECTION_MOVE, _("MT\n"));
 			moveok = 1;
 		      }
 		    break;
 		  case STORAGE:
 		    if (pDeviceCapabilitiesPage->MT2ST == 1)
 		      {
-			DebugPrint(DEBUG_INFO, SECTION_MOVE, "ST\n");
+			DebugPrint(DEBUG_INFO, SECTION_MOVE, _("ST\n"));
 			moveok = 1;
 		      }
 		    break;
 		  case IMPORT:
 		    if (pDeviceCapabilitiesPage->MT2IE == 1)
 		      {
-			DebugPrint(DEBUG_INFO, SECTION_MOVE, "IE\n");
+			DebugPrint(DEBUG_INFO, SECTION_MOVE, _("IE\n"));
 			moveok = 1;
 		      }
 		    break;
 		  case TAPETYPE:
 		    if (pDeviceCapabilitiesPage->MT2DT == 1)
 		      {
-			DebugPrint(DEBUG_INFO, SECTION_MOVE, "DT\n");
+			DebugPrint(DEBUG_INFO, SECTION_MOVE, _("DT\n"));
 			moveok = 1;
 		      }
 		    break;
@@ -3351,34 +3368,34 @@ CheckMove(
 		  }
 		break;
 	      case STORAGE:
-		DebugPrint(DEBUG_INFO, SECTION_MOVE, "CheckMove : ST2");
+		DebugPrint(DEBUG_INFO, SECTION_MOVE, _("CheckMove : ST2"));
 		switch (to->type)
 		  {
 		  case CHANGER:
 		    if (pDeviceCapabilitiesPage->ST2MT == 1)
 		      {
-			DebugPrint(DEBUG_INFO, SECTION_MOVE, "MT\n");
+			DebugPrint(DEBUG_INFO, SECTION_MOVE, _("MT\n"));
 			moveok = 1;
 		      }
 		    break;
 		  case STORAGE:
 		    if (pDeviceCapabilitiesPage->ST2ST == 1)
 		      {
-			DebugPrint(DEBUG_INFO, SECTION_MOVE, "ST\n");
+			DebugPrint(DEBUG_INFO, SECTION_MOVE, _("ST\n"));
 			moveok = 1;
 		      }
 		    break;
 		  case IMPORT:
 		    if (pDeviceCapabilitiesPage->ST2IE == 1)
 		      {
-			DebugPrint(DEBUG_INFO, SECTION_MOVE, "IE\n");
+			DebugPrint(DEBUG_INFO, SECTION_MOVE, _("IE\n"));
 			moveok = 1;
 		      }
 		    break;
 		  case TAPETYPE:
 		    if (pDeviceCapabilitiesPage->ST2DT == 1)
 		      {
-			DebugPrint(DEBUG_INFO, SECTION_MOVE, "DT\n");
+			DebugPrint(DEBUG_INFO, SECTION_MOVE, _("DT\n"));
 			moveok = 1;
 		      }
 		    break;
@@ -3387,34 +3404,34 @@ CheckMove(
 		  }
 		break;
 	      case IMPORT:
-		DebugPrint(DEBUG_INFO, SECTION_MOVE, "CheckMove : IE2");
+		DebugPrint(DEBUG_INFO, SECTION_MOVE, _("CheckMove : IE2"));
 		switch (to->type)
 		  {
 		  case CHANGER:
 		    if (pDeviceCapabilitiesPage->IE2MT == 1)
 		      {
-			DebugPrint(DEBUG_INFO, SECTION_MOVE, "MT\n");
+			DebugPrint(DEBUG_INFO, SECTION_MOVE, _("MT\n"));
 			moveok = 1;
 		      }
 		    break;
 		  case STORAGE:
 		    if (pDeviceCapabilitiesPage->IE2ST == 1)
 		      {
-			DebugPrint(DEBUG_INFO, SECTION_MOVE, "ST\n");
+			DebugPrint(DEBUG_INFO, SECTION_MOVE, _("ST\n"));
 			moveok = 1;
 		      }
 		    break;
 		  case IMPORT:
 		    if (pDeviceCapabilitiesPage->IE2IE == 1)
 		      {
-			DebugPrint(DEBUG_INFO, SECTION_MOVE, "IE\n");
+			DebugPrint(DEBUG_INFO, SECTION_MOVE, _("IE\n"));
 			moveok = 1;
 		      }
 		    break;
 		  case TAPETYPE:
 		    if (pDeviceCapabilitiesPage->IE2DT == 1)
 		      {
-			DebugPrint(DEBUG_INFO, SECTION_MOVE, "DT\n");
+			DebugPrint(DEBUG_INFO, SECTION_MOVE, _("DT\n"));
 			moveok = 1;
 		      }
 		    break;
@@ -3423,34 +3440,34 @@ CheckMove(
 		  }
 		break;
 	      case TAPETYPE:
-		DebugPrint(DEBUG_INFO, SECTION_MOVE, "CheckMove : DT2");
+		DebugPrint(DEBUG_INFO, SECTION_MOVE, _("CheckMove : DT2"));
 		switch (to->type)
 		  {
 		  case CHANGER:
 		    if (pDeviceCapabilitiesPage->DT2MT == 1)
 		      {
-			DebugPrint(DEBUG_INFO, SECTION_MOVE, "MT\n");
+			DebugPrint(DEBUG_INFO, SECTION_MOVE, _("MT\n"));
 			moveok = 1;
 		      }
 		    break;
 		  case STORAGE:
 		    if (pDeviceCapabilitiesPage->DT2ST == 1)
 		      {
-			DebugPrint(DEBUG_INFO, SECTION_MOVE, "ST\n");
+			DebugPrint(DEBUG_INFO, SECTION_MOVE, _("ST\n"));
 			moveok = 1;
 		      }
 		    break;
 		  case IMPORT:
 		    if (pDeviceCapabilitiesPage->DT2IE == 1)
 		      {
-			DebugPrint(DEBUG_INFO, SECTION_MOVE, "IE\n");
+			DebugPrint(DEBUG_INFO, SECTION_MOVE, _("IE\n"));
 			moveok = 1;
 		      }
 		    break;
 		  case TAPETYPE:
 		    if (pDeviceCapabilitiesPage->DT2DT == 1)
 		      {
-			DebugPrint(DEBUG_INFO, SECTION_MOVE, "DT\n");
+			DebugPrint(DEBUG_INFO, SECTION_MOVE, _("DT\n"));
 			moveok = 1;
 		      }
 		    break;
@@ -3462,14 +3479,14 @@ CheckMove(
 		break;
 	      }
 	  } else {
-	    DebugPrint(DEBUG_INFO, SECTION_MOVE, "CheckMove : pDeviceCapabilitiesPage == NULL");
+	    DebugPrint(DEBUG_INFO, SECTION_MOVE, _("CheckMove : pDeviceCapabilitiesPage == NULL"));
 	    /*
-	      ChgExit("CheckMove", "DeviceCapabilitiesPage == NULL", FATAL);
+	      ChgExit("CheckMove", _("DeviceCapabilitiesPage == NULL"), FATAL);
 	    */
 	    moveok=1;
 	  }
 
-	DebugPrint(DEBUG_INFO, SECTION_MOVE, "###### STOP CheckMove\n");
+	DebugPrint(DEBUG_INFO, SECTION_MOVE, _("###### STOP CheckMove\n"));
 	return(moveok);
 }
 
@@ -3483,13 +3500,13 @@ GetCurrentSlot(
 {
   extern OpenFiles_T *pDev;
   size_t x;
-  dbprintf("##### START GetCurrentSlot\n");
+  dbprintf(_("##### START GetCurrentSlot\n"));
 
   (void)fd;	/* Quiet unused parameter warning */
 
   if (pDev[0].SCSI == 0)
       {
-          dbprintf("GetCurrentSlot : can't send SCSI commands\n");
+          dbprintf(_("GetCurrentSlot : can't send SCSI commands\n"));
           return(-1);
 	  /*NOTREACHED*/
       }
@@ -3557,7 +3574,7 @@ GenericElementStatus(
 
   (void)InitStatus;	/* Quiet unused parameter warning */
 
-  DebugPrint(DEBUG_INFO, SECTION_ELEMENT, "##### START GenericElementStatus\n");
+  DebugPrint(DEBUG_INFO, SECTION_ELEMENT, _("##### START GenericElementStatus\n"));
 
   if (pEAAPage == NULL)
     {
@@ -3573,9 +3590,9 @@ GenericElementStatus(
 	  if (SCSI_ModeSense(DeviceFD, pModePage, 0xff, 0x8, 0x3f) == 0)
 	    {
 	      LibModeSenseValid = 1;
-	      DecodeModeSense(pModePage, 0, "GenericElementStatus :", 0, debug_file);
+	      DecodeModeSense(pModePage, 0, _("GenericElementStatus :"), 0, debug_file);
 	    } else {
-	      DebugPrint(DEBUG_ERROR, SECTION_ELEMENT,"GetElementStatus : failed SCSI_ModeSense\n");
+	      DebugPrint(DEBUG_ERROR, SECTION_ELEMENT,_("GetElementStatus : failed SCSI_ModeSense\n"));
 	      LibModeSenseValid = -1;
 	    }
         }
@@ -3594,7 +3611,7 @@ GenericElementStatus(
 		  error = 1;
 		  break;
 		case SENSE_ABORT:
-		  DebugPrint(DEBUG_ERROR, SECTION_ELEMENT, "GenericElementStatus : Abort on MTE\n");
+		  DebugPrint(DEBUG_ERROR, SECTION_ELEMENT, _("GenericElementStatus : Abort on MTE\n"));
 		  return(-1);
 		  /*NOTREACHED*/
 		}
@@ -3612,7 +3629,7 @@ GenericElementStatus(
 		  error = 1;
 		  break;
 		case SENSE_ABORT:
-		  DebugPrint(DEBUG_ERROR, SECTION_ELEMENT, "GenericElementStatus : Abort on IEE\n");
+		  DebugPrint(DEBUG_ERROR, SECTION_ELEMENT, _("GenericElementStatus : Abort on IEE\n"));
 		  return(-1);
 		  /*NOTREACHED*/
 		}
@@ -3631,7 +3648,7 @@ GenericElementStatus(
 		  error = 1;
 		  break;
 		case SENSE_ABORT:
-		  DebugPrint(DEBUG_ERROR, SECTION_ELEMENT, "GenericElementStatus : Abort on IES\n");
+		  DebugPrint(DEBUG_ERROR, SECTION_ELEMENT, _("GenericElementStatus : Abort on IES\n"));
 		  return(-1);
 		  /*NOTREACHED*/
 		}
@@ -3649,7 +3666,7 @@ GenericElementStatus(
 		  error = 1;
 		  break;
 		case SENSE_ABORT:
-		  DebugPrint(DEBUG_ERROR, SECTION_ELEMENT, "GenericElementStatus : Abort on DTE\n");
+		  DebugPrint(DEBUG_ERROR, SECTION_ELEMENT, _("GenericElementStatus : Abort on DTE\n"));
 		  return(-1);
 		  /*NOTREACHED*/
 		}
@@ -3666,7 +3683,7 @@ GenericElementStatus(
 	  if (GenericResetStatus(DeviceFD) != 0)
 	    {
 	      ElementStatusValid = 0;
-	      DebugPrint(DEBUG_ERROR, SECTION_ELEMENT, "GenericElementStatus : Can't init status STEError(%d) MTEError(%d) DTEError(%d) IEEError(%d)\n", STEError, MTEError, DTEError, IEEError);
+	      DebugPrint(DEBUG_ERROR, SECTION_ELEMENT, _("GenericElementStatus : Can't init status STEError(%d) MTEError(%d) DTEError(%d) IEEError(%d)\n"), STEError, MTEError, DTEError, IEEError);
 	      return(-1);
 	      /*NOTREACHED*/
 	    }
@@ -3682,7 +3699,7 @@ GenericElementStatus(
 	   */
 	  if (pDTE[0].status == 'E')
 	    {
-	      DebugPrint(DEBUG_INFO, SECTION_ELEMENT, "GenericElementStatus : try to move tape to tape drive\n");
+	      DebugPrint(DEBUG_INFO, SECTION_ELEMENT, _("GenericElementStatus : try to move tape to tape drive\n"));
 	      pDev[DeviceFD].functions->function_move(DeviceFD, pDTE[0].address, pDTE[0].address);
 	    }
 	}
@@ -3691,13 +3708,13 @@ GenericElementStatus(
 
   if (error != 0)
     {
-      DebugPrint(DEBUG_ERROR, SECTION_ELEMENT, "GenericElementStatus : Can't init status (after loop)\n");
+      DebugPrint(DEBUG_ERROR, SECTION_ELEMENT, _("GenericElementStatus : Can't init status (after loop)\n"));
       return(-1);
       /*NOTREACHED*/
     }
 
   ElementStatusValid = 1;
-  DebugPrint(DEBUG_ERROR, SECTION_ELEMENT, "#### STOP GenericElementStatus\n");
+  DebugPrint(DEBUG_ERROR, SECTION_ELEMENT, _("#### STOP GenericElementStatus\n"));
   return(0);
 }
 
@@ -3721,7 +3738,7 @@ DLT448ElementStatus(
 
   (void)InitStatus;	/* Quiet unused parameter warning */
 
-  DebugPrint(DEBUG_INFO, SECTION_ELEMENT, "##### START DLT448ElementStatus\n");
+  DebugPrint(DEBUG_INFO, SECTION_ELEMENT, _("##### START DLT448ElementStatus\n"));
 
   if (pEAAPage == NULL)
     {
@@ -3737,9 +3754,9 @@ DLT448ElementStatus(
 	  if (SCSI_ModeSense(DeviceFD, pModePage, 0xff, 0x8, 0x3f) == 0)
 	    {
 	      LibModeSenseValid = 1;
-	      DecodeModeSense(pModePage, 12, "DLT448ElementStatus :", 0, debug_file);
+	      DecodeModeSense(pModePage, 12, _("DLT448ElementStatus :"), 0, debug_file);
 	    } else {
-	      DebugPrint(DEBUG_ERROR, SECTION_ELEMENT,"DLT448ElementStatus : failed SCSI_ModeSense\n");
+	      DebugPrint(DEBUG_ERROR, SECTION_ELEMENT,_("DLT448ElementStatus : failed SCSI_ModeSense\n"));
 	      LibModeSenseValid = -1;
 	    }
         }
@@ -3757,7 +3774,7 @@ DLT448ElementStatus(
 		  error = 1;
 		  break;
 		case SENSE_ABORT:
-		  DebugPrint(DEBUG_ERROR, SECTION_ELEMENT, "DLT448ElementStatus : Abort on MTE\n");
+		  DebugPrint(DEBUG_ERROR, SECTION_ELEMENT, _("DLT448ElementStatus : Abort on MTE\n"));
 		  return(-1);
 		  /*NOTREACHED*/
 		}
@@ -3774,7 +3791,7 @@ DLT448ElementStatus(
 		  error = 1;
 		  break;
 		case SENSE_ABORT:
-		  DebugPrint(DEBUG_ERROR, SECTION_ELEMENT, "DLT448ElementStatus : Abort on IEE\n");
+		  DebugPrint(DEBUG_ERROR, SECTION_ELEMENT, _("DLT448ElementStatus : Abort on IEE\n"));
 		  return(-1);
 		  /*NOTREACHED*/
 		}
@@ -3796,7 +3813,7 @@ DLT448ElementStatus(
 		  error = 1;
 		  break;
 		case SENSE_ABORT:
-		  DebugPrint(DEBUG_ERROR, SECTION_ELEMENT, "DLT448ElementStatus : Abort on IES\n");
+		  DebugPrint(DEBUG_ERROR, SECTION_ELEMENT, _("DLT448ElementStatus : Abort on IES\n"));
 		  return(-1);
 		  /*NOTREACHED*/
 		}
@@ -3814,7 +3831,7 @@ DLT448ElementStatus(
 		  error = 1;
 		  break;
 		case SENSE_ABORT:
-		  DebugPrint(DEBUG_ERROR, SECTION_ELEMENT, "DLT448ElementStatus : Abort on DTE\n");
+		  DebugPrint(DEBUG_ERROR, SECTION_ELEMENT, _("DLT448ElementStatus : Abort on DTE\n"));
 		  return(-1);
 		  /*NOTREACHED*/
 		}
@@ -3831,7 +3848,7 @@ DLT448ElementStatus(
 	  if (GenericResetStatus(DeviceFD) != 0)
 	    {
 	      ElementStatusValid = 0;
-	      DebugPrint(DEBUG_ERROR, SECTION_ELEMENT, "DLT448ElementStatus : Can't init status\n");
+	      DebugPrint(DEBUG_ERROR, SECTION_ELEMENT, _("DLT448ElementStatus : Can't init status\n"));
 	      return(-1);
 	      /*NOTREACHED*/
 	    }
@@ -3847,7 +3864,7 @@ DLT448ElementStatus(
 	   */
 	  if (pDTE[0].status == 'E')
 	    {
-	      DebugPrint(DEBUG_INFO, SECTION_ELEMENT, "DLT448ElementStatus : try to move tape to tape drive\n");
+	      DebugPrint(DEBUG_INFO, SECTION_ELEMENT, _("DLT448ElementStatus : try to move tape to tape drive\n"));
 	      pDev[DeviceFD].functions->function_move(DeviceFD, pDTE[0].address, pDTE[0].address);
 	    }
 	}
@@ -3856,13 +3873,13 @@ DLT448ElementStatus(
 
   if (error != 0)
     {
-      DebugPrint(DEBUG_ERROR, SECTION_ELEMENT, "DLT448ElementStatus : Can't init status (after loop)\n");
+      DebugPrint(DEBUG_ERROR, SECTION_ELEMENT, _("DLT448ElementStatus : Can't init status (after loop)\n"));
       return(-1);
       /*NOTREACHED*/
     }
 
   ElementStatusValid = 1;
-  DebugPrint(DEBUG_ERROR, SECTION_ELEMENT, "#### STOP DLT448ElementStatus\n");
+  DebugPrint(DEBUG_ERROR, SECTION_ELEMENT, _("#### STOP DLT448ElementStatus\n"));
   return(0);
 }
 
@@ -3883,7 +3900,7 @@ SDXElementStatus(
 
   (void)InitStatus;	/* Quiet unused parameter warning */
 
-  DebugPrint(DEBUG_INFO, SECTION_ELEMENT, "##### START SDXElementStatus\n");
+  DebugPrint(DEBUG_INFO, SECTION_ELEMENT, _("##### START SDXElementStatus\n"));
 
   if (pEAAPage == NULL)
     {
@@ -3899,9 +3916,9 @@ SDXElementStatus(
 	  if (SCSI_ModeSense(DeviceFD, pModePage, 0xff, 0x8, 0x3f) == 0)
 	    {
 	      LibModeSenseValid = 1;
-	      DecodeModeSense(pModePage, 0, "SDXElementStatus :", 0, debug_file);
+	      DecodeModeSense(pModePage, 0, _("SDXElementStatus :"), 0, debug_file);
 	    } else {
-	      DebugPrint(DEBUG_ERROR, SECTION_ELEMENT,"SDXElementStatus : failed SCSI_ModeSense\n");
+	      DebugPrint(DEBUG_ERROR, SECTION_ELEMENT,_("SDXElementStatus : failed SCSI_ModeSense\n"));
 	      LibModeSenseValid = -1;
 	    }
         }
@@ -3920,7 +3937,7 @@ SDXElementStatus(
 		  error = 1;
 		  break;
 		case SENSE_ABORT:
-		  DebugPrint(DEBUG_ERROR, SECTION_ELEMENT, "SDXElementStatus : Abort on MTE\n");
+		  DebugPrint(DEBUG_ERROR, SECTION_ELEMENT, _("SDXElementStatus : Abort on MTE\n"));
 		  return(-1);
 		  /*NOTREACHED*/
 		}
@@ -3937,7 +3954,7 @@ SDXElementStatus(
 		  error = 1;
 		  break;
 		case SENSE_ABORT:
-		  DebugPrint(DEBUG_ERROR, SECTION_ELEMENT, "SDXElementStatus : Abort on IEE\n");
+		  DebugPrint(DEBUG_ERROR, SECTION_ELEMENT, _("SDXElementStatus : Abort on IEE\n"));
 		  return(-1);
 		  /*NOTREACHED*/
 		}
@@ -3955,7 +3972,7 @@ SDXElementStatus(
 		  error = 1;
 		  break;
 		case SENSE_ABORT:
-		  DebugPrint(DEBUG_ERROR, SECTION_ELEMENT, "SDXElementStatus : Abort on IES\n");
+		  DebugPrint(DEBUG_ERROR, SECTION_ELEMENT, _("SDXElementStatus : Abort on IES\n"));
 		  return(-1);
 		  /*NOTREACHED*/
 		}
@@ -3974,7 +3991,7 @@ SDXElementStatus(
 		  */
 		  break;
 		case SENSE_ABORT:
-		  DebugPrint(DEBUG_ERROR, SECTION_ELEMENT, "SDXElementStatus : Abort on DTE\n");
+		  DebugPrint(DEBUG_ERROR, SECTION_ELEMENT, _("SDXElementStatus : Abort on DTE\n"));
 		  return(-1);
 		  /*NOTREACHED*/
 		}
@@ -3991,7 +4008,7 @@ SDXElementStatus(
 	  if (GenericResetStatus(DeviceFD) != 0)
 	    {
 	      ElementStatusValid = 0;
-	      DebugPrint(DEBUG_ERROR, SECTION_ELEMENT, "SDXElementStatus : Can't init status\n");
+	      DebugPrint(DEBUG_ERROR, SECTION_ELEMENT, _("SDXElementStatus : Can't init status\n"));
 	      return(-1);
 	      /*NOTREACHED*/
 	    }
@@ -4002,14 +4019,14 @@ SDXElementStatus(
 
   if (error != 0)
     {
-      DebugPrint(DEBUG_ERROR, SECTION_ELEMENT, "SDXElementStatus : Can't init status\n");
+      DebugPrint(DEBUG_ERROR, SECTION_ELEMENT, _("SDXElementStatus : Can't init status\n"));
       return(-1);
       /*NOTREACHED*/
     }
 
   ElementStatusValid = 1;
   TapeStatus();
-  DebugPrint(DEBUG_ERROR, SECTION_ELEMENT, "#### STOP SDXElementStatus\n");
+  DebugPrint(DEBUG_ERROR, SECTION_ELEMENT, _("#### STOP SDXElementStatus\n"));
   return(0);
 }
 
@@ -4045,7 +4062,7 @@ GetElementStatus(
   size_t length;	/* Length of an Element */
   size_t NoOfElements;
 
-  DebugPrint(DEBUG_INFO, SECTION_ELEMENT,"##### START GetElementStatus\n");
+  DebugPrint(DEBUG_INFO, SECTION_ELEMENT,_("##### START GetElementStatus\n"));
 
   barcode = BarCode(DeviceFD);
 
@@ -4054,7 +4071,7 @@ GetElementStatus(
    */
   if (pEAAPage != NULL)
     {
-      DebugPrint(DEBUG_INFO, SECTION_ELEMENT,"Reading Element Status with the info from mode sense\n");
+      DebugPrint(DEBUG_INFO, SECTION_ELEMENT,_("Reading Element Status with the info from mode sense\n"));
       /* First the Medim Transport*/
       if (V2(pEAAPage->NoMediumTransportElements)  > 0)
         {
@@ -4071,7 +4088,7 @@ GetElementStatus(
 				     SIZEOF(MediumTransportElementDescriptor_T),
                                      &DataBuffer) != 0)
             {
-              ChgExit("genericElementStatus","Can't read MTE status", FATAL);
+              ChgExit("genericElementStatus",_("Can't read MTE status"), FATAL);
 	      /*NOTREACHED*/
             }
           // ElementStatusData = (ElementStatusData_T *)DataBuffer;
@@ -4081,7 +4098,7 @@ GetElementStatus(
           offset = offset + SIZEOF(ElementStatusPage_T);
 	  length = V2(ElementStatusPage->length);
 
-          DebugPrint(DEBUG_INFO, SECTION_ELEMENT,"MTE Length %d(%d)\n", length,
+          DebugPrint(DEBUG_INFO, SECTION_ELEMENT,_("MTE Length %d(%d)\n"), length,
 			SIZEOF(MediumTransportElementDescriptor_T));
 
           for (x = 0; x < MTE; x++)
@@ -4111,14 +4128,14 @@ GetElementStatus(
 		{
 		  pMTE[x].ASC = MediumTransportElementDescriptor->asc;
 		} else {
-		  DebugPrint(DEBUG_INFO, SECTION_ELEMENT,"Skip ASC MTE\n");
+		  DebugPrint(DEBUG_INFO, SECTION_ELEMENT,_("Skip ASC MTE\n"));
 		}
 
 	      if (length >= 6)
 		{
 		  pMTE[x].ASCQ = MediumTransportElementDescriptor->ascq;
 		} else {
-		  DebugPrint(DEBUG_INFO, SECTION_ELEMENT,"Skip ASCQ MTE\n");
+		  DebugPrint(DEBUG_INFO, SECTION_ELEMENT,_("Skip ASCQ MTE\n"));
 		}
 
 	      if (length >= 0xa)
@@ -4130,7 +4147,7 @@ GetElementStatus(
 		      pMTE[x].from = -1;
 		    }
 		} else {
-		  DebugPrint(DEBUG_INFO, SECTION_ELEMENT,"Skip source MTE\n");
+		  DebugPrint(DEBUG_INFO, SECTION_ELEMENT,_("Skip source MTE\n"));
 		}
 	      offset = offset + length;
             }
@@ -4156,7 +4173,7 @@ GetElementStatus(
 				     SIZEOF(StorageElementDescriptor_T),
                                      &DataBuffer) != 0)
             {
-              ChgExit("GetElementStatus", "Can't read STE status", FATAL);
+              ChgExit("GetElementStatus", _("Can't read STE status"), FATAL);
 	      /*NOTREACHED*/
             }
 	  assert(DataBuffer != NULL);
@@ -4167,7 +4184,7 @@ GetElementStatus(
           ElementStatusPage = (ElementStatusPage_T *)&DataBuffer[offset];
           offset = offset + SIZEOF(ElementStatusPage_T);
 	  length = V2(ElementStatusPage->length);
-          DebugPrint(DEBUG_INFO, SECTION_ELEMENT,"STE Length %d\n",length);
+          DebugPrint(DEBUG_INFO, SECTION_ELEMENT,_("STE Length %d\n"),length);
 
           for (x = 0; x < STE; x++)
             {
@@ -4196,14 +4213,14 @@ GetElementStatus(
 		{
 		  pSTE[x].ASC = StorageElementDescriptor->asc;
 		} else {
-		  DebugPrint(DEBUG_INFO, SECTION_ELEMENT,"Skip ASC STE\n");
+		  DebugPrint(DEBUG_INFO, SECTION_ELEMENT,_("Skip ASC STE\n"));
 		}
 
 	      if (length >= 6)
 		{
 		  pSTE[x].ASCQ = StorageElementDescriptor->ascq;
 		} else {
-		  DebugPrint(DEBUG_INFO, SECTION_ELEMENT,"Skip ASCQ STE\n");
+		  DebugPrint(DEBUG_INFO, SECTION_ELEMENT,_("Skip ASCQ STE\n"));
 		}
 
 	      if (length >= 0xa)
@@ -4215,7 +4232,7 @@ GetElementStatus(
 		      pSTE[x].from = -1;
 		    }
 		} else {
-		  DebugPrint(DEBUG_INFO, SECTION_ELEMENT,"Skip source STE\n");
+		  DebugPrint(DEBUG_INFO, SECTION_ELEMENT,_("Skip source STE\n"));
 		}
 
               offset = offset + length;
@@ -4242,7 +4259,7 @@ GetElementStatus(
 				     SIZEOF(ImportExportElementDescriptor_T),
                                      &DataBuffer) != 0)
             {
-              ChgExit("GetElementStatus", "Can't read IEE status", FATAL);
+              ChgExit("GetElementStatus", _("Can't read IEE status"), FATAL);
 	      /*NOTREACHED*/
             }
 	  assert(DataBuffer != NULL);
@@ -4253,7 +4270,7 @@ GetElementStatus(
           ElementStatusPage = (ElementStatusPage_T *)&DataBuffer[offset];
           offset = offset + SIZEOF(ElementStatusPage_T);
 	  length = V2(ElementStatusPage->length);
-          DebugPrint(DEBUG_INFO, SECTION_ELEMENT,"IEE Length %d\n",length);
+          DebugPrint(DEBUG_INFO, SECTION_ELEMENT,_("IEE Length %d\n"),length);
 
           for (x = 0; x < IEE; x++)
             {
@@ -4280,14 +4297,14 @@ GetElementStatus(
 		{
 		  pIEE[x].ASC = ImportExportElementDescriptor->asc;
 		} else {
-		  DebugPrint(DEBUG_INFO, SECTION_ELEMENT,"Skip ASC IEE\n");
+		  DebugPrint(DEBUG_INFO, SECTION_ELEMENT,_("Skip ASC IEE\n"));
 		}
 
 	      if (length >= 6)
 		{
 		  pIEE[x].ASCQ = ImportExportElementDescriptor->ascq;
 		} else {
-		  DebugPrint(DEBUG_INFO, SECTION_ELEMENT,"Skip ASCQ IEE\n");
+		  DebugPrint(DEBUG_INFO, SECTION_ELEMENT,_("Skip ASCQ IEE\n"));
 		}
 
 	      if (length >= 0xa)
@@ -4299,7 +4316,7 @@ GetElementStatus(
 		      pIEE[x].from = -1;
 		    }
 		} else {
-		  DebugPrint(DEBUG_INFO, SECTION_ELEMENT,"Skip source IEE\n");
+		  DebugPrint(DEBUG_INFO, SECTION_ELEMENT,_("Skip source IEE\n"));
 		}
 
               offset = offset + length;
@@ -4326,7 +4343,7 @@ GetElementStatus(
 				     SIZEOF(DataTransferElementDescriptor_T),
                                      &DataBuffer) != 0)
             {
-              ChgExit("GenericElementStatus", "Can't read DTE status", FATAL);
+              ChgExit("GenericElementStatus", _("Can't read DTE status"), FATAL);
 	      /*NOTREACHED*/
             }
 	  assert(DataBuffer != NULL);
@@ -4337,7 +4354,7 @@ GetElementStatus(
           ElementStatusPage = (ElementStatusPage_T *)&DataBuffer[offset];
           offset = offset + SIZEOF(ElementStatusPage_T);
 	  length = V2(ElementStatusPage->length);
-          DebugPrint(DEBUG_INFO, SECTION_ELEMENT,"DTE Length %d\n",length);
+          DebugPrint(DEBUG_INFO, SECTION_ELEMENT,_("DTE Length %d\n"),length);
 
           for (x = 0; x < DTE; x++)
             {
@@ -4365,14 +4382,14 @@ GetElementStatus(
 	      {
               	pDTE[x].ASC = DataTransferElementDescriptor->asc;
 	      } else {
-		DebugPrint(DEBUG_INFO, SECTION_ELEMENT,"Skip ASC DTE\n");
+		DebugPrint(DEBUG_INFO, SECTION_ELEMENT,_("Skip ASC DTE\n"));
 	      }
 
 	      if (length >= 6)
 		{
 		  pDTE[x].ASCQ = DataTransferElementDescriptor->ascq;
 	      } else {
-		DebugPrint(DEBUG_INFO, SECTION_ELEMENT,"Skip ASCQ DTE\n");
+		DebugPrint(DEBUG_INFO, SECTION_ELEMENT,_("Skip ASCQ DTE\n"));
 	      }
 
 	      if (length >= 0xa)
@@ -4384,7 +4401,7 @@ GetElementStatus(
 		      pDTE[x].from = -1;
 		    }
 		} else {
-		  DebugPrint(DEBUG_INFO, SECTION_ELEMENT,"Skip source STE\n");
+		  DebugPrint(DEBUG_INFO, SECTION_ELEMENT,_("Skip source STE\n"));
 		}
 
               offset = offset + length;
@@ -4396,7 +4413,7 @@ GetElementStatus(
       /*
        * And now the old way, when we get here the read mode sense page has failed ...
        */
-      DebugPrint(DEBUG_INFO, SECTION_ELEMENT,"Reading Element Status the old way .... (max 255 elements)\n");
+      DebugPrint(DEBUG_INFO, SECTION_ELEMENT,_("Reading Element Status the old way .... (max 255 elements)\n"));
       if (SCSI_ReadElementStatus(DeviceFD,
                                  0,
                                  0,
@@ -4406,7 +4423,7 @@ GetElementStatus(
 				 (size_t)0x7f,
                                  &DataBuffer) != 0)
         {
-          ChgExit("GenericElementStatus","Can't get ElementStatus", FATAL);
+          ChgExit("GenericElementStatus",_("Can't get ElementStatus"), FATAL);
 	  /*NOTREACHED*/
         }
       assert(DataBuffer != NULL);
@@ -4456,14 +4473,14 @@ GetElementStatus(
 		    {
 		      pMTE[x].ASC = MediumTransportElementDescriptor->asc;
 		    } else {
-		      DebugPrint(DEBUG_INFO, SECTION_ELEMENT,"Skip ASC MTE\n");
+		      DebugPrint(DEBUG_INFO, SECTION_ELEMENT,_("Skip ASC MTE\n"));
 		    }
 
 	          if (length >= 6)
 		    {
 		      pMTE[x].ASCQ = MediumTransportElementDescriptor->ascq;
 		    } else {
-		      DebugPrint(DEBUG_INFO, SECTION_ELEMENT,"Skip ASCQ MTE\n");
+		      DebugPrint(DEBUG_INFO, SECTION_ELEMENT,_("Skip ASCQ MTE\n"));
 		    }
 
 	          if (length >= 0xa)
@@ -4475,7 +4492,7 @@ GetElementStatus(
 			  pMTE[x].from = -1;
 			}
 		    } else {
-		      DebugPrint(DEBUG_INFO, SECTION_ELEMENT,"Skip source MTE\n");
+		      DebugPrint(DEBUG_INFO, SECTION_ELEMENT,_("Skip source MTE\n"));
 		    }
 
 		  offset = offset + length;
@@ -4513,14 +4530,14 @@ GetElementStatus(
 		    {
 		      pSTE[x].ASC = StorageElementDescriptor->asc;
 		    } else {
-		      DebugPrint(DEBUG_INFO, SECTION_ELEMENT,"Skip ASC STE\n");
+		      DebugPrint(DEBUG_INFO, SECTION_ELEMENT,_("Skip ASC STE\n"));
 		    }
 
 		  if (length >= 6)
 		    {
 		      pSTE[x].ASCQ = StorageElementDescriptor->ascq;
 		    } else {
-		      DebugPrint(DEBUG_INFO, SECTION_ELEMENT,"Skip ASCQ STE\n");
+		      DebugPrint(DEBUG_INFO, SECTION_ELEMENT,_("Skip ASCQ STE\n"));
 		    }
 
 		  if (length >= 0xa)
@@ -4532,7 +4549,7 @@ GetElementStatus(
 			  pSTE[x].from = -1;
 			}
 		    } else {
-		      DebugPrint(DEBUG_INFO, SECTION_ELEMENT,"Skip source STE\n");
+		      DebugPrint(DEBUG_INFO, SECTION_ELEMENT,_("Skip source STE\n"));
 		    }
 
                   offset = offset + length;
@@ -4570,14 +4587,14 @@ GetElementStatus(
 		    {
 		      pIEE[x].ASC = ImportExportElementDescriptor->asc;
 		    } else {
-		      DebugPrint(DEBUG_INFO, SECTION_ELEMENT,"Skip ASC IEE\n");
+		      DebugPrint(DEBUG_INFO, SECTION_ELEMENT,_("Skip ASC IEE\n"));
 		    }
 
 		  if (length >= 6)
 		    {
 		      pIEE[x].ASCQ = ImportExportElementDescriptor->ascq;
 		    } else {
-		      DebugPrint(DEBUG_INFO, SECTION_ELEMENT,"Skip ASCQ IEE\n");
+		      DebugPrint(DEBUG_INFO, SECTION_ELEMENT,_("Skip ASCQ IEE\n"));
 		    }
 
 		  if (length >= 0xa)
@@ -4589,7 +4606,7 @@ GetElementStatus(
 			  pIEE[x].from = -1;
 			}
 		    } else {
-		      DebugPrint(DEBUG_INFO, SECTION_ELEMENT,"Skip source IEE\n");
+		      DebugPrint(DEBUG_INFO, SECTION_ELEMENT,_("Skip source IEE\n"));
 		    }
 
 		  offset = offset + length;
@@ -4627,14 +4644,14 @@ GetElementStatus(
 		    {
 		      pDTE[x].ASC = DataTransferElementDescriptor->asc;
 		    } else {
-		      DebugPrint(DEBUG_INFO, SECTION_ELEMENT,"Skip ASC DTE\n");
+		      DebugPrint(DEBUG_INFO, SECTION_ELEMENT,_("Skip ASC DTE\n"));
 		    }
 
 		  if (length >= 6)
 		    {
 		      pDTE[x].ASCQ = DataTransferElementDescriptor->ascq;
 		    } else {
-		      DebugPrint(DEBUG_INFO, SECTION_ELEMENT,"Skip ASCQ DTE\n");
+		      DebugPrint(DEBUG_INFO, SECTION_ELEMENT,_("Skip ASCQ DTE\n"));
 		    }
 
 		  if (length >= 0xa)
@@ -4646,7 +4663,7 @@ GetElementStatus(
 			  pDTE[x].from = -1;
 			}
 		    } else {
-		      DebugPrint(DEBUG_INFO, SECTION_ELEMENT,"Skip source STE\n");
+		      DebugPrint(DEBUG_INFO, SECTION_ELEMENT,_("Skip source STE\n"));
 		    }
 
 		  offset = offset + length;
@@ -4654,38 +4671,38 @@ GetElementStatus(
               break;
             default:
               offset = offset + length;
-              DebugPrint(DEBUG_ERROR, SECTION_ELEMENT,"GetElementStatus : UnGknown Type %d\n",ElementStatusPage->type);
+              DebugPrint(DEBUG_ERROR, SECTION_ELEMENT,_("GetElementStatus : UnGknown Type %d\n"),ElementStatusPage->type);
               break;
             }
         }
 	free(DataBuffer);
     }
 
-  DebugPrint(DEBUG_INFO, SECTION_ELEMENT,"\n\n\tMedia Transport Elements (robot arms) :\n");
+  DebugPrint(DEBUG_INFO, SECTION_ELEMENT,_("\n\n\tMedia Transport Elements (robot arms) :\n"));
 
   for ( x = 0; x < MTE; x++)
-    DebugPrint(DEBUG_INFO, SECTION_ELEMENT,"\t\tElement #%04d %c\n\t\t\tEXCEPT = %02x\n\t\t\tASC = %02X ASCQ = %02X\n\t\t\tType %d From = %04d\n\t\t\tTAG = %s\n",
+    DebugPrint(DEBUG_INFO, SECTION_ELEMENT,_("\t\tElement #%04d %c\n\t\t\tEXCEPT = %02x\n\t\t\tASC = %02X ASCQ = %02X\n\t\t\tType %d From = %04d\n\t\t\tTAG = %s\n"),
               pMTE[x].address, pMTE[x].status, pMTE[x].except, pMTE[x].ASC,
               pMTE[x].ASCQ, pMTE[x].type, pMTE[x].from, pMTE[x].VolTag);
 
-  DebugPrint(DEBUG_INFO, SECTION_ELEMENT,"\n\n\tStorage Elements (Media slots) :\n");
+  DebugPrint(DEBUG_INFO, SECTION_ELEMENT,_("\n\n\tStorage Elements (Media slots) :\n"));
 
   for ( x = 0; x < STE; x++)
-    DebugPrint(DEBUG_INFO, SECTION_ELEMENT,"\t\tElement #%04d %c\n\t\t\tEXCEPT = %02X\n\t\t\tASC = %02X ASCQ = %02X\n\t\t\tType %d From = %04d\n\t\t\tTAG = %s\n",
+    DebugPrint(DEBUG_INFO, SECTION_ELEMENT,_("\t\tElement #%04d %c\n\t\t\tEXCEPT = %02X\n\t\t\tASC = %02X ASCQ = %02X\n\t\t\tType %d From = %04d\n\t\t\tTAG = %s\n"),
               pSTE[x].address, pSTE[x].status, pSTE[x].except, pSTE[x].ASC,
               pSTE[x].ASCQ, pSTE[x].type, pSTE[x].from, pSTE[x].VolTag);
 
-  DebugPrint(DEBUG_INFO, SECTION_ELEMENT,"\n\n\tData Transfer Elements (tape drives) :\n");
+  DebugPrint(DEBUG_INFO, SECTION_ELEMENT,_("\n\n\tData Transfer Elements (tape drives) :\n"));
 
   for ( x = 0; x < DTE; x++)
-    DebugPrint(DEBUG_INFO, SECTION_ELEMENT,"\t\tElement #%04d %c\n\t\t\tEXCEPT = %02X\n\t\t\tASC = %02X ASCQ = %02X\n\t\t\tType %d From = %04d\n\t\t\tTAG = %s\n\t\t\tSCSI ADDRESS = %d\n",
+    DebugPrint(DEBUG_INFO, SECTION_ELEMENT,_("\t\tElement #%04d %c\n\t\t\tEXCEPT = %02X\n\t\t\tASC = %02X ASCQ = %02X\n\t\t\tType %d From = %04d\n\t\t\tTAG = %s\n\t\t\tSCSI ADDRESS = %d\n"),
               pDTE[x].address, pDTE[x].status, pDTE[x].except, pDTE[x].ASC,
               pDTE[x].ASCQ, pDTE[x].type, pDTE[x].from, pDTE[x].VolTag,pDTE[x].scsi);
 
-  DebugPrint(DEBUG_INFO, SECTION_ELEMENT,"\n\n\tImport/Export Elements  :\n");
+  DebugPrint(DEBUG_INFO, SECTION_ELEMENT,_("\n\n\tImport/Export Elements  :\n"));
 
   for ( x = 0; x < IEE; x++)
-    DebugPrint(DEBUG_INFO, SECTION_ELEMENT,"\t\tElement #%04d %c\n\t\t\tEXCEPT = %02X\n\t\t\t\tASC = %02X ASCQ = %02X\n\t\t\tType %d From = %04d\n\t\t\tTAG = %s\n",
+    DebugPrint(DEBUG_INFO, SECTION_ELEMENT,_("\t\tElement #%04d %c\n\t\t\tEXCEPT = %02X\n\t\t\t\tASC = %02X ASCQ = %02X\n\t\t\tType %d From = %04d\n\t\t\tTAG = %s\n"),
 	       pIEE[x].address, pIEE[x].status, pIEE[x].except, pIEE[x].ASC,
 	       pIEE[x].ASCQ, pIEE[x].type, pIEE[x].from, pIEE[x].VolTag);
 
@@ -4710,7 +4727,7 @@ RequestSense(
   CDB_T CDB;
   int ret;
 
-  DebugPrint(DEBUG_INFO, SECTION_SCSI,"##### START RequestSense\n");
+  DebugPrint(DEBUG_INFO, SECTION_SCSI,_("##### START RequestSense\n"));
 
   CDB[0] = SC_COM_REQUEST_SENSE;               /* REQUEST SENSE */
   CDB[1] = 0;                                  /* Logical Unit Number = 0, Reserved */
@@ -4730,7 +4747,7 @@ RequestSense(
 
   if (ret < 0)
     {
-      DebugPrint(DEBUG_INFO, SECTION_SCSI,"##### STOP RequestSense (%d)\n",ret);
+      DebugPrint(DEBUG_INFO, SECTION_SCSI,_("##### STOP RequestSense (%d)\n"),ret);
       return(ret);
       /*NOTREACHED*/
     }
@@ -4738,7 +4755,7 @@ RequestSense(
   if ( ret > 0)
     {
       DecodeExtSense(ExtendedRequestSense, "RequestSense : ",debug_file);
-      DebugPrint(DEBUG_INFO, SECTION_SCSI,"##### STOP RequestSense (%d)\n", ExtendedRequestSense->SenseKey);
+      DebugPrint(DEBUG_INFO, SECTION_SCSI,_("##### STOP RequestSense (%d)\n"), ExtendedRequestSense->SenseKey);
       return(ExtendedRequestSense->SenseKey);
       /*NOTREACHED*/
     }
@@ -4746,7 +4763,7 @@ RequestSense(
   dump_hex((u_char *)ExtendedRequestSense ,
 	   SIZEOF(ExtendedRequestSense_T),
 	   DEBUG_INFO, SECTION_SCSI);
-  DebugPrint(DEBUG_INFO, SECTION_SCSI,"##### STOP RequestSense (0)\n");
+  DebugPrint(DEBUG_INFO, SECTION_SCSI,_("##### STOP RequestSense (0)\n"));
   return(0);
 }
 
@@ -4762,7 +4779,7 @@ LookupElement(
 {
   size_t x;
 
-  dbprintf("##### START LookupElement\n");
+  dbprintf(_("##### START LookupElement\n"));
 
   if (DTE > 0)
     {
@@ -4770,7 +4787,7 @@ LookupElement(
         {
           if (pDTE[x].address == address)
 	  {
-            dbprintf("##### STOP LookupElement (DTE)\n");
+            dbprintf(_("##### STOP LookupElement (DTE)\n"));
             return(&pDTE[x]);
 	    /*NOTREACHED*/
 	  }
@@ -4783,7 +4800,7 @@ LookupElement(
         {
           if (pMTE[x].address == address)
 	  {
-            dbprintf("##### STOP LookupElement (MTE)\n");
+            dbprintf(_("##### STOP LookupElement (MTE)\n"));
             return(&pMTE[x]);
 	    /*NOTREACHED*/
 	  }
@@ -4796,7 +4813,7 @@ LookupElement(
         {
           if (pSTE[x].address == address)
 	  {
-            dbprintf("##### STOP LookupElement (STE)\n");
+            dbprintf(_("##### STOP LookupElement (STE)\n"));
             return(&pSTE[x]);
 	    /*NOTREACHED*/
 	  }
@@ -4809,7 +4826,7 @@ LookupElement(
         {
           if (pIEE[x].address == address)
 	  {
-            dbprintf("##### STOP LookupElement (IEE)\n");
+            dbprintf(_("##### STOP LookupElement (IEE)\n"));
             return(&pIEE[x]);
 	    /*NOTREACHED*/
 	  }
@@ -4849,7 +4866,7 @@ LogSense(
 
   (void)DeviceFD;	/* Quiet unused parameter warning */
 
-  DebugPrint(DEBUG_INFO, SECTION_TAPE,"##### START LogSense\n");
+  DebugPrint(DEBUG_INFO, SECTION_TAPE,_("##### START LogSense\n"));
 
   if ((tapestatfile != NULL) && (pDev[INDEX_TAPECTL].SCSI == 1) &&
       ((StatFile = fopen(tapestatfile,"a")) != NULL))
@@ -4858,7 +4875,7 @@ LogSense(
 
       if (GenericRewind(INDEX_TAPECTL) < 0)
         {
-          DebugPrint(DEBUG_INFO, SECTION_TAPE,"LogSense : Rewind failed\n");
+          DebugPrint(DEBUG_INFO, SECTION_TAPE,_("LogSense : Rewind failed\n"));
           free(pRequestSense);
 	  fclose(StatFile);
           return(0);
@@ -4876,7 +4893,7 @@ LogSense(
 
 	  if ((chgscsi_result = (char *)tape_rdlabel(pDev[INDEX_TAPE].dev, &chgscsi_datestamp, &chgscsi_label)) == NULL)
 	    {
-	      fprintf(StatFile, "==== %s ==== %s ====\n", chgscsi_datestamp, chgscsi_label);
+	      fprintf(StatFile, _("==== %s ==== %s ====\n"), chgscsi_datestamp, chgscsi_label);
 	    } else {
 	      fprintf(StatFile, "%s\n", chgscsi_result);
 	    }
@@ -4967,7 +4984,7 @@ LogSense(
           }
 
           if (!found) {
-            fprintf(StatFile, "Logpage No %d = %x\n", count ,logpages[count]);
+            fprintf(StatFile, _("Logpage No %d = %x\n"), count ,logpages[count]);
 
             while ((u_char *)LogParameter < (buffer + length)) {
               i = LogParameter->ParameterLength;
@@ -4975,26 +4992,26 @@ LogSense(
               switch (i) {
               case 1:
                 value = V1((u_char *)LogParameter + SIZEOF(LogParameter_T));
-                fprintf(StatFile, "ParameterCode %02X = %u(%d)\n", ParameterCode, value, i);
+                fprintf(StatFile, _("ParameterCode %02X = %u(%d)\n"), ParameterCode, value, i);
                 break;
               case 2:
                 value = V2((u_char *)LogParameter + SIZEOF(LogParameter_T));
-                fprintf(StatFile, "ParameterCode %02X = %u(%d)\n", ParameterCode, value, i);
+                fprintf(StatFile, _("ParameterCode %02X = %u(%d)\n"), ParameterCode, value, i);
                 break;
               case 3:
                 value = V3((u_char *)LogParameter + SIZEOF(LogParameter_T));
-                fprintf(StatFile, "ParameterCode %02X = %u(%d)\n", ParameterCode, value, i);
+                fprintf(StatFile, _("ParameterCode %02X = %u(%d)\n"), ParameterCode, value, i);
                 break;
               case 4:
                 value = V4((u_char *)LogParameter + SIZEOF(LogParameter_T));
-                fprintf(StatFile, "ParameterCode %02X = %u(%d)\n", ParameterCode, value, i);
+                fprintf(StatFile, _("ParameterCode %02X = %u(%d)\n"), ParameterCode, value, i);
                 break;
               case 5:
                 value = V5((u_char *)LogParameter + SIZEOF(LogParameter_T));
-                fprintf(StatFile, "ParameterCode %02X = %u(%d)\n", ParameterCode, value, i);
+                fprintf(StatFile, _("ParameterCode %02X = %u(%d)\n"), ParameterCode, value, i);
                 break;
               default:
-                fprintf(StatFile, "ParameterCode %02X size %d\n", ParameterCode, i);
+                fprintf(StatFile, _("ParameterCode %02X size %d\n"), ParameterCode, i);
               }
               LogParameter = (LogParameter_T *)((u_char *)LogParameter +  SIZEOF(LogParameter_T) + i);
             }
@@ -5042,7 +5059,7 @@ LogSense(
       /*@end@*/
       fclose(StatFile);
     }
-  DebugPrint(DEBUG_INFO, SECTION_TAPE,"##### STOP LogSense\n");
+  DebugPrint(DEBUG_INFO, SECTION_TAPE,_("##### STOP LogSense\n"));
   return(0);
 }
 
@@ -5057,7 +5074,7 @@ WriteErrorCountersPage(
   unsigned ParameterCode;
   LogParameter = buffer;
 
-  fprintf(StatFile, "\tWrite Error Counters Page\n");
+  fprintf(StatFile, _("\tWrite Error Counters Page\n"));
 
   while ((u_char *)LogParameter < ((u_char *)buffer + length)) {
     i = LogParameter->ParameterLength;
@@ -5067,38 +5084,38 @@ WriteErrorCountersPage(
     if (Decode(LogParameter, &value) == 0) {
       switch (ParameterCode) {
       case 2:
-        fprintf(StatFile, "%-30s = %u\n",
-                "Total Rewrites",
+        fprintf(StatFile, _("%-30s = %u\n"),
+                _("Total Rewrites"),
                 value);
         break;
       case 3:
-        fprintf(StatFile, "%-30s = %u\n",
-                "Total Errors Corrected",
+        fprintf(StatFile, _("%-30s = %u\n"),
+                _("Total Errors Corrected"),
                 value);
         break;
       case 4:
-        fprintf(StatFile, "%-30s = %u\n",
-                "Total Times E. Processed",
+        fprintf(StatFile, _("%-30s = %u\n"),
+                _("Total Times E. Processed"),
                 value);
         break;
       case 5:
-        fprintf(StatFile, "%-30s = %u\n",
-                "Total Bytes Processed",
+        fprintf(StatFile, _("%-30s = %u\n"),
+                _("Total Bytes Processed"),
                 value);
         break;
       case 6:
-        fprintf(StatFile, "%-30s = %u\n",
-                "Total Unrecoverable Errors",
+        fprintf(StatFile, _("%-30s = %u\n"),
+                _("Total Unrecoverable Errors"),
                 value);
         break;
       default:
-        fprintf(StatFile, "Unknown ParameterCode %02X = %u(%d)\n",
+        fprintf(StatFile, _("Unknown ParameterCode %02X = %u(%d)\n"),
                 ParameterCode,
                 value, i);
         break;
       }
     } else {
-      fprintf(StatFile, "Error decoding Result\n");
+      fprintf(StatFile, _("Error decoding Result\n"));
     }
     LogParameter = (LogParameter_T *)((u_char *)LogParameter +  SIZEOF(LogParameter_T) + i);
   }
@@ -5115,7 +5132,7 @@ ReadErrorCountersPage(
   unsigned ParameterCode;
   LogParameter = buffer;
 
-  fprintf(StatFile, "\tRead Error Counters Page\n");
+  fprintf(StatFile, _("\tRead Error Counters Page\n"));
 
   while ((u_char *)LogParameter < ((u_char *)buffer + length)) {
     i = LogParameter->ParameterLength;
@@ -5125,38 +5142,38 @@ ReadErrorCountersPage(
     if (Decode(LogParameter, &value) == 0) {
       switch (ParameterCode) {
       case 2:
-        fprintf(StatFile, "%-30s = %u\n",
-                "Total Rereads",
+        fprintf(StatFile, _("%-30s = %u\n"),
+                _("Total Rereads"),
                 value);
         break;
       case 3:
-        fprintf(StatFile, "%-30s = %u\n",
-                "Total Errors Corrected",
+        fprintf(StatFile, _("%-30s = %u\n"),
+                _("Total Errors Corrected"),
                 value);
         break;
       case 4:
-        fprintf(StatFile, "%-30s = %u\n",
-                "Total Times E. Processed",
+        fprintf(StatFile, _("%-30s = %u\n"),
+                _("Total Times E. Processed"),
                 value);
         break;
       case 5:
-        fprintf(StatFile, "%-30s = %u\n",
-                "Total Bytes Processed",
+        fprintf(StatFile, _("%-30s = %u\n"),
+                _("Total Bytes Processed"),
                 value);
         break;
       case 6:
-        fprintf(StatFile, "%-30s = %u\n",
-                "Total Unrecoverable Errors",
+        fprintf(StatFile, _("%-30s = %u\n"),
+                _("Total Unrecoverable Errors"),
                 value);
         break;
       default:
-        fprintf(StatFile, "Unknown ParameterCode %02X = %u(%d)\n",
+        fprintf(StatFile, _("Unknown ParameterCode %02X = %u(%d)\n"),
                 ParameterCode,
                 value, i);
         break;
       }
     } else {
-      fprintf(StatFile, "Error decoding Result\n");
+      fprintf(StatFile, _("Error decoding Result\n"));
     }
     LogParameter = (LogParameter_T *)((u_char *)LogParameter +  SIZEOF(LogParameter_T) + i);
   }
@@ -5173,7 +5190,7 @@ C1553APage30(
   unsigned ParameterCode;
   LogParameter = buffer;
 
-  fprintf(StatFile, "\tData compression transfer Page\n");
+  fprintf(StatFile, _("\tData compression transfer Page\n"));
 
   while ((u_char *)LogParameter < ((u_char *)buffer + length)) {
     i = LogParameter->ParameterLength;
@@ -5183,7 +5200,7 @@ C1553APage30(
     if (Decode(LogParameter, &value) == 0) {
       switch (ParameterCode) {
       default:
-        fprintf(StatFile, "Unknown ParameterCode %02X = %u(%d)\n",
+        fprintf(StatFile, _("Unknown ParameterCode %02X = %u(%d)\n"),
                 ParameterCode,
                 value, i);
         break;
@@ -5204,7 +5221,7 @@ C1553APage37(
   unsigned ParameterCode;
   LogParameter = buffer;
 
-  fprintf(StatFile, "\tDrive Counters Page\n");
+  fprintf(StatFile, _("\tDrive Counters Page\n"));
 
   while ((u_char *)LogParameter < ((unsigned char *)buffer + length)) {
     i = LogParameter->ParameterLength;
@@ -5214,22 +5231,22 @@ C1553APage37(
     if (Decode(LogParameter, &value) == 0) {
       switch (ParameterCode) {
       case 1:
-        fprintf(StatFile, "%-30s = %u\n",
-                "Total loads",
+        fprintf(StatFile, _("%-30s = %u\n"),
+                _("Total loads"),
                 value);
         break;
       case 2:
-        fprintf(StatFile, "%-30s = %u\n",
-                "Total write drive errors",
+        fprintf(StatFile, _("%-30s = %u\n"),
+                _("Total write drive errors"),
                 value);
         break;
       case 3:
-        fprintf(StatFile, "%-30s = %u\n",
-                "Total read drive errors",
+        fprintf(StatFile, _("%-30s = %u\n"),
+                _("Total read drive errors"),
                 value);
         break;
       default:
-        fprintf(StatFile, "Unknown ParameterCode %02X = %u(%d)\n",
+        fprintf(StatFile, _("Unknown ParameterCode %02X = %u(%d)\n"),
                 ParameterCode,
                 value, i);
         break;
@@ -5250,7 +5267,7 @@ EXB85058HEPage39(
   unsigned ParameterCode;
   LogParameter = buffer;
 
-  fprintf(StatFile, "\tData Compression Page\n");
+  fprintf(StatFile, _("\tData Compression Page\n"));
 
   while ((u_char *)LogParameter < ((unsigned char *)buffer + length)) {
     i = LogParameter->ParameterLength;
@@ -5260,17 +5277,17 @@ EXB85058HEPage39(
     if (Decode(LogParameter, &value) == 0) {
       switch (ParameterCode) {
       case 5:
-        fprintf(StatFile, "%-30s = %u\n",
-                "KB to Compressor",
+        fprintf(StatFile, _("%-30s = %u\n"),
+                _("KB to Compressor"),
                 value);
         break;
       case 7:
-        fprintf(StatFile, "%-30s = %u\n",
-                "KB to tape",
+        fprintf(StatFile, _("%-30s = %u\n"),
+                _("KB to tape"),
                 value);
         break;
       default:
-        fprintf(StatFile, "Unknown ParameterCode %02X = %u(%d)\n",
+        fprintf(StatFile, _("Unknown ParameterCode %02X = %u(%d)\n"),
                 ParameterCode,
                 value, i);
         break;
@@ -5291,7 +5308,7 @@ EXB85058HEPage3c(
   unsigned ParameterCode;
   LogParameter = buffer;
 
-  fprintf(StatFile, "\tDrive Usage Information Page\n");
+  fprintf(StatFile, _("\tDrive Usage Information Page\n"));
 
   while ((u_char *)LogParameter < ((unsigned char *)buffer + length)) {
     i = LogParameter->ParameterLength;
@@ -5307,21 +5324,21 @@ EXB85058HEPage3c(
       case 5:
         break;
       case 6:
-        fprintf(StatFile, "%-30s = %u\n",
-                "Total Load Count",
+        fprintf(StatFile, _("%-30s = %u\n"),
+                _("Total Load Count"),
                 value);
         break;
       case 7:
-        fprintf(StatFile, "%-30s = %u\n",
-                "MinutesSince Last Clean",
+        fprintf(StatFile, _("%-30s = %u\n"),
+                _("MinutesSince Last Clean"),
                 value);
         break;
       case 8:
       case 9:
         break;
       case 0xa:
-        fprintf(StatFile, "%-30s = %u\n",
-                "Cleaning Count",
+        fprintf(StatFile, _("%-30s = %u\n"),
+                _("Cleaning Count"),
                 value);
         break;
       case 0xb:
@@ -5332,8 +5349,8 @@ EXB85058HEPage3c(
       case 0x10:
         break;
       case 0x11:
-        fprintf(StatFile, "%-30s = %u\n",
-                "Time to clean",
+        fprintf(StatFile, _("%-30s = %u\n"),
+                _("Time to clean"),
                 value);
         break;
       case 0x12:
@@ -5341,7 +5358,7 @@ EXB85058HEPage3c(
       case 0x14:
         break;
       default:
-        fprintf(StatFile, "Unknown ParameterCode %02X = %u(%d)\n",
+        fprintf(StatFile, _("Unknown ParameterCode %02X = %u(%d)\n"),
                 ParameterCode,
                 value, i);
         break;
@@ -5357,8 +5374,8 @@ Decode(
     unsigned *		value)
 {
 
-  DebugPrint(DEBUG_INFO, SECTION_SCSI,"##### START Decode\n");
-  DebugPrint(DEBUG_INFO, SECTION_SCSI,"Decode Parameter with length %d\n", LogParameter->ParameterLength);
+  DebugPrint(DEBUG_INFO, SECTION_SCSI,_("##### START Decode\n"));
+  DebugPrint(DEBUG_INFO, SECTION_SCSI,_("Decode Parameter with length %d\n"), LogParameter->ParameterLength);
 
   *value = 0;
   switch (LogParameter->ParameterLength) {
@@ -5381,14 +5398,14 @@ Decode(
     *value = V6((u_char *)LogParameter + SIZEOF(LogParameter_T));
     break;
   default:
-    fprintf(StatFile, "Can't decode ParameterCode %02X size %d\n",
+    fprintf(StatFile, _("Can't decode ParameterCode %02X size %d\n"),
             V2(LogParameter->ParameterCode), LogParameter->ParameterLength);
-    DebugPrint(DEBUG_INFO, SECTION_SCSI,"##### STOP Decode (1)\n");
+    DebugPrint(DEBUG_INFO, SECTION_SCSI,_("##### STOP Decode (1)\n"));
     return(1);
     /*NOTREACHED*/
   }
-  DebugPrint(DEBUG_INFO, SECTION_SCSI,"Result = %d\n", *value);
-  DebugPrint(DEBUG_INFO, SECTION_SCSI,"##### STOP Decode(0)\n");
+  DebugPrint(DEBUG_INFO, SECTION_SCSI,_("Result = %d\n"), *value);
+  DebugPrint(DEBUG_INFO, SECTION_SCSI,_("##### STOP Decode(0)\n"));
   return(0);
 }
 
@@ -5399,14 +5416,14 @@ DumpDev(
 {
 	if (p != NULL)
 	{
-		printf("%s Devicefd   %d\n", device, p->fd);
-		printf("%s Can SCSI   %d\n", device, p->SCSI);
-		printf("%s Device     %s\n", device, (p->dev != NULL)? p->dev:"No set");
-		printf("%s ConfigName %s\n", device, (p->ConfigName != NULL) ? p->ConfigName:"Not ser");
+		printf(_("%s Devicefd   %d\n"), device, p->fd);
+		printf(_("%s Can SCSI   %d\n"), device, p->SCSI);
+		printf(_("%s Device     %s\n"), device, (p->dev != NULL)? p->dev:_("No set"));
+		printf(_("%s ConfigName %s\n"), device, (p->ConfigName != NULL) ? p->ConfigName:_("Not ser"));
 	} else {
-		printf("%s Null Pointer ....\n", device);
+		printf(_("%s Null Pointer ....\n"), device);
 	}
-	printf("\n");
+	printf(_("\n"));
 }
 
 void
@@ -5468,7 +5485,7 @@ ChangerStatus(
 
   if ((out = fdopen(1 , "w")) == NULL)
     {
-      printf("Error fdopen stdout\n");
+      printf(_("Error fdopen stdout\n"));
       free(pbarcoderes);
       return;
       /*NOTREACHED*/
@@ -5478,7 +5495,7 @@ ChangerStatus(
   {
     while(p->ident != NULL)
       {
-         printf ("Ident = %s, type = %s\n",p->ident, p->type);
+         printf (_("Ident = %s, type = %s\n"),p->ident, p->type);
          p++;
       }
     DumpSense();
@@ -5490,7 +5507,7 @@ ChangerStatus(
           {
             if (pDev[INDEX_CHANGER].functions->function_status(pDev[INDEX_CHANGER].fd, 1) != 0)
               {
-                printf("Can not initialize changer status\n");
+                printf(_("Can not initialize changer status\n"));
 		free(pbarcoderes);
 	        fclose(out);
                 return;
@@ -5500,18 +5517,18 @@ ChangerStatus(
         /*      0123456789012345678901234567890123456789012 */
 	if (HasBarCode)
 	{
-        	printf("Address Type Status From Barcode Label\n");
+        	printf(_("Address Type Status From Barcode Label\n"));
 	} else {
-        	printf("Address Type Status From\n");
+        	printf(_("Address Type Status From\n"));
 	}
-        printf("-------------------------------------------\n");
+        printf(_("-------------------------------------------\n"));
 
 
         for ( x = 0; x < MTE; x++)
 	if (HasBarCode)
 	{
-          printf("%07d MTE  %s  %04d %s ",pMTE[x].address,
-                 (pMTE[x].full ? "Full " :"Empty"),
+          printf(_("%07d MTE  %s  %04d %s "),pMTE[x].address,
+                 (pMTE[x].full ? _("Full ") :_("Empty")),
                  pMTE[x].from, pMTE[x].VolTag);
 
 	  if (pMTE[x].full == 1)
@@ -5522,16 +5539,16 @@ ChangerStatus(
 
 	      if (MapBarCode(labelfile, pbarcoderes) == 0 )
 		{
-		  printf("No mapping\n");
+		  printf(_("No mapping\n"));
 		} else {
-		  printf("%s \n",pbarcoderes->data.voltag);
+		  printf(_("%s \n"),pbarcoderes->data.voltag);
 		}
 	    } else {
 	      printf("\n");
 	    }
 	} else {
-          printf("%07d MTE  %s  %04d \n",pMTE[x].address,
-                 (pMTE[x].full ? "Full " :"Empty"),
+          printf(_("%07d MTE  %s  %04d \n"),pMTE[x].address,
+                 (pMTE[x].full ? _("Full ") :_("Empty")),
                  pMTE[x].from);
 	}
 
@@ -5539,8 +5556,8 @@ ChangerStatus(
         for ( x = 0; x < STE; x++)
 	if (HasBarCode)
 	{
-          printf("%07d STE  %s  %04d %s ",pSTE[x].address,
-                 (pSTE[x].full ? "Full ":"Empty"),
+          printf(_("%07d STE  %s  %04d %s "),pSTE[x].address,
+                 (pSTE[x].full ? _("Full "):_("Empty")),
                  pSTE[x].from, pSTE[x].VolTag);
 
 	  if (pSTE[x].full == 1)
@@ -5551,16 +5568,16 @@ ChangerStatus(
 
 	      if (MapBarCode(labelfile, pbarcoderes) == 0 )
 		{
-		  printf("No mapping\n");
+		  printf(_("No mapping\n"));
 		} else {
-		  printf("%s \n",pbarcoderes->data.voltag);
+		  printf(_("%s \n"),pbarcoderes->data.voltag);
 		}
 	    } else {
 	      printf("\n");
 	    }
 	} else {
-          printf("%07d STE  %s  %04d %s\n",pSTE[x].address,
-                 (pSTE[x].full ? "Full ":"Empty"),
+          printf(_("%07d STE  %s  %04d %s\n"),pSTE[x].address,
+                 (pSTE[x].full ? _("Full"):_("Empty")),
                  pSTE[x].from, pSTE[x].VolTag);
 	}
 
@@ -5568,8 +5585,8 @@ ChangerStatus(
         for ( x = 0; x < DTE; x++)
 	if (HasBarCode)
 	{
-          printf("%07d DTE  %s  %04d %s ",pDTE[x].address,
-                 (pDTE[x].full ? "Full " : "Empty"),
+          printf(_("%07d DTE  %s  %04d %s "),pDTE[x].address,
+                 (pDTE[x].full ? _("Full") : _("Empty")),
                  pDTE[x].from, pDTE[x].VolTag);
 
 	  if (pDTE[x].full == 1)
@@ -5580,7 +5597,7 @@ ChangerStatus(
 
 	      if (MapBarCode(labelfile, pbarcoderes) == 0 )
 		{
-		  printf("No mapping\n");
+		  printf(_("No mapping\n"));
 		} else {
 		  printf("%s \n",pbarcoderes->data.voltag);
 		}
@@ -5589,16 +5606,16 @@ ChangerStatus(
 	    }
 
 	} else {
-          printf("%07d DTE  %s  %04d %s\n",pDTE[x].address,
-                 (pDTE[x].full ? "Full " : "Empty"),
+          printf(_("%07d DTE  %s  %04d %s\n"),pDTE[x].address,
+                 (pDTE[x].full ?_( "Full ") : _("Empty")),
                  pDTE[x].from, pDTE[x].VolTag);
 	}
 
         for ( x = 0; x < IEE; x++)
 	if (HasBarCode)
 	{
-          printf("%07d IEE  %s  %04d %s ",pIEE[x].address,
-                 (pIEE[x].full ? "Full " : "Empty"),
+          printf(_("%07d IEE  %s  %04d %s "),pIEE[x].address,
+                 (pIEE[x].full ? _("Full ") : _("Empty")),
                  pIEE[x].from, pIEE[x].VolTag);
 
 	  if (pIEE[x].full == 1)
@@ -5609,17 +5626,17 @@ ChangerStatus(
 
 	      if (MapBarCode(labelfile, pbarcoderes) == 0 )
 		{
-		  printf("No mapping\n");
+		  printf(_("No mapping\n"));
 		} else {
-		  printf("%s \n",pbarcoderes->data.voltag);
+		  printf(_("%s \n"),pbarcoderes->data.voltag);
 		}
 	    } else {
 	      printf("\n");
 	    }
 
 	} else {
-          printf("%07d IEE  %s  %04d %s\n",pIEE[x].address,
-                 (pIEE[x].full ? "Full " : "Empty"),
+          printf(_("%07d IEE  %s  %04d %s\n"),pIEE[x].address,
+                 (pIEE[x].full ? _("Full ") : _("Empty")),
                  pIEE[x].from, pIEE[x].VolTag);
 	}
 
@@ -5629,7 +5646,7 @@ ChangerStatus(
     {
       if (pDev[INDEX_CHANGER].SCSI == 1)
 	{
-           printf("\nSense Status from robot:\n");
+           printf(_("\nSense Status from robot:\n"));
            RequestSense(INDEX_CHANGER , &ExtRequestSense, 0);
            DecodeExtSense(&ExtRequestSense, "", out);
 	}
@@ -5637,7 +5654,7 @@ ChangerStatus(
       if (pDev[INDEX_TAPE].SCSI == 1)
         {
           printf("\n");
-          printf("Sense Status from tape (tapectl):\n");
+          printf(_("Sense Status from tape (tapectl):\n"));
           RequestSense(INDEX_TAPE, &ExtRequestSense, 0);
           DecodeExtSense(&ExtRequestSense, "", out);
         }
@@ -5645,7 +5662,7 @@ ChangerStatus(
       if (pDev[INDEX_TAPECTL].SCSI == 1)
         {
           printf("\n");
-          printf("Sense Status from tape (tapectl):\n");
+          printf(_("Sense Status from tape (tapectl):\n"));
           RequestSense(INDEX_TAPECTL, &ExtRequestSense, 0);
           DecodeExtSense(&ExtRequestSense, "", out);
         }
@@ -5683,7 +5700,7 @@ ChangerStatus(
     }
 
   if (GenericClean("") == 1)
-    printf("Tape needs cleaning\n");
+    printf(_("Tape needs cleaning\n"));
 
   free(pbarcoderes);
   fclose(out);
@@ -5738,7 +5755,7 @@ ChgExit(
 {
     (void)level;	/* Quiet unused parameter warning */
 
-   dbprintf("ChgExit in %s, reason %s\n", where, reason);
+   dbprintf(_("ChgExit in %s, reason %s\n"), where, reason);
    fprintf(stderr,"%s\n",reason);
    exit(2);
 }
@@ -5776,11 +5793,11 @@ SCSI_Run(
 
   pRqS = (RequestSense_T *)pRequestSense;
 
-  DebugPrint(DEBUG_INFO, SECTION_SCSI, "SCSI_Run TestUnitReady\n");
+  DebugPrint(DEBUG_INFO, SECTION_SCSI, _("SCSI_Run TestUnitReady\n"));
   while (!ok && maxtries < MAXTRIES)
     {
       ret = SCSI_TestUnitReady(DeviceFD, (RequestSense_T *)pRequestSense );
-      DebugPrint(DEBUG_INFO, SECTION_SCSI, "SCSI_Run TestUnitReady ret %d\n",ret);
+      DebugPrint(DEBUG_INFO, SECTION_SCSI, _("SCSI_Run TestUnitReady ret %d\n"),ret);
       switch (ret)
 	{
 	case SCSI_OK:
@@ -5790,42 +5807,42 @@ SCSI_Run(
 	  switch (SenseHandler(DeviceFD, 0, pRqS->SenseKey, pRqS->AdditionalSenseCode, pRqS->AdditionalSenseCodeQualifier, pRqS))
 	    {
 	    case SENSE_NO:
-	      DebugPrint(DEBUG_INFO, SECTION_SCSI,"SCSI_Run (TestUnitReady) SENSE_NO\n");
+	      DebugPrint(DEBUG_INFO, SECTION_SCSI,_("SCSI_Run (TestUnitReady) SENSE_NO\n"));
 	      ok=1;
 	      break;
 	    case SENSE_TAPE_NOT_ONLINE:
-	      DebugPrint(DEBUG_INFO, SECTION_SCSI,"SCSI_Run (TestUnitReady) SENSE_TAPE_NOT_ONLINE\n");
+	      DebugPrint(DEBUG_INFO, SECTION_SCSI,_("SCSI_Run (TestUnitReady) SENSE_TAPE_NOT_ONLINE\n"));
 	      ok=1;
 	      break;
 	    case SENSE_IGNORE:
-	      DebugPrint(DEBUG_INFO, SECTION_SCSI,"SCSI_Run (TestUnitReady) SENSE_IGNORE\n");
+	      DebugPrint(DEBUG_INFO, SECTION_SCSI,_("SCSI_Run (TestUnitReady) SENSE_IGNORE\n"));
 	      ok=1;
 	      break;
 	    case SENSE_ABORT:
-	      DebugPrint(DEBUG_ERROR, SECTION_SCSI,"SCSI_Run (TestUnitReady) SENSE_ABORT\n");
+	      DebugPrint(DEBUG_ERROR, SECTION_SCSI,_("SCSI_Run (TestUnitReady) SENSE_ABORT\n"));
 	      return(-1);
 	      /*NOTREACHED*/
 	    case SENSE_RETRY:
-	      DebugPrint(DEBUG_INFO, SECTION_SCSI,"SCSI_Run (TestUnitReady) SENSE_RETRY\n");
+	      DebugPrint(DEBUG_INFO, SECTION_SCSI,_("SCSI_Run (TestUnitReady) SENSE_RETRY\n"));
 	      break;
 	    default:
-	      DebugPrint(DEBUG_INFO, SECTION_SCSI,"SCSI_Run (TestUnitReady) default (SENSE)\n");
+	      DebugPrint(DEBUG_INFO, SECTION_SCSI,_("SCSI_Run (TestUnitReady) default (SENSE)\n"));
 	      ok=1;
 	      break;
 	    }
 	  break;
 	case SCSI_ERROR:
-	  DebugPrint(DEBUG_ERROR, SECTION_SCSI,"SCSI_Run (TestUnitReady) SCSI_ERROR\n");
+	  DebugPrint(DEBUG_ERROR, SECTION_SCSI,_("SCSI_Run (TestUnitReady) SCSI_ERROR\n"));
 	  return(-1);
 	  /*NOTREACHED*/
 	case SCSI_BUSY:
-	  DebugPrint(DEBUG_INFO, SECTION_SCSI,"SCSI_Run (TestUnitReady) SCSI_BUSY\n");
+	  DebugPrint(DEBUG_INFO, SECTION_SCSI,_("SCSI_Run (TestUnitReady) SCSI_BUSY\n"));
 	  break;
 	case SCSI_CHECK:
-	  DebugPrint(DEBUG_INFO, SECTION_SCSI,"SCSI_Run (TestUnitReady) SCSI_CHECK\n");
+	  DebugPrint(DEBUG_INFO, SECTION_SCSI,_("SCSI_Run (TestUnitReady) SCSI_CHECK\n"));
 	  break;
 	default:
-	  DebugPrint(DEBUG_ERROR, SECTION_SCSI,"SCSI_Run (TestUnitReady) unknown (%d)\n",ret);
+	  DebugPrint(DEBUG_ERROR, SECTION_SCSI,_("SCSI_Run (TestUnitReady) unknown (%d)\n"),ret);
 	  break;
 	}
       if (!ok)
@@ -5835,11 +5852,11 @@ SCSI_Run(
       }
     }
 
-  DebugPrint(DEBUG_INFO, SECTION_SCSI,"SCSI_Run TestUnitReady after %d sec:\n",maxtries);
+  DebugPrint(DEBUG_INFO, SECTION_SCSI,_("SCSI_Run TestUnitReady after %d sec:\n"),maxtries);
 
   if (ok != 1)
     {
-      DebugPrint(DEBUG_ERROR, SECTION_SCSI,"SCSI_Run Exit %d\n",ret);
+      DebugPrint(DEBUG_ERROR, SECTION_SCSI,_("SCSI_Run Exit %d\n"),ret);
       return(-1);
       /*NOTREACHED*/
     }
@@ -5857,7 +5874,7 @@ SCSI_Run(
 				pRequestSense,
 				RequestSenseLength);
 
-      DebugPrint(DEBUG_INFO, SECTION_SCSI,"SCSI_Run Exit %d\n",ret);
+      DebugPrint(DEBUG_INFO, SECTION_SCSI,_("SCSI_Run Exit %d\n"),ret);
       switch (ret)
 	{
 	case SCSI_OK:
@@ -5867,42 +5884,42 @@ SCSI_Run(
 	  switch (SenseHandler(DeviceFD, 0, pRqS->SenseKey, pRqS->AdditionalSenseCode, pRqS->AdditionalSenseCodeQualifier, pRqS))
 	    {
 	    case SENSE_NO:
-	      DebugPrint(DEBUG_INFO, SECTION_SCSI,"SCSI_Run SENSE_NO\n");
+	      DebugPrint(DEBUG_INFO, SECTION_SCSI,_("SCSI_Run SENSE_NO\n"));
 	      ok=1;
 	      break;
 	    case SENSE_TAPE_NOT_ONLINE:
-	      DebugPrint(DEBUG_INFO, SECTION_SCSI,"SCSI_Run SENSE_TAPE_NOT_ONLINE\n");
+	      DebugPrint(DEBUG_INFO, SECTION_SCSI,_("SCSI_Run SENSE_TAPE_NOT_ONLINE\n"));
 	      ok=1;
 	      break;
 	    case SENSE_IGNORE:
-	      DebugPrint(DEBUG_INFO, SECTION_SCSI,"SCSI_Run SENSE_IGNORE\n");
+	      DebugPrint(DEBUG_INFO, SECTION_SCSI,_("SCSI_Run SENSE_IGNORE\n"));
 	      ok=1;
 	      break;
 	    case SENSE_ABORT:
-	      DebugPrint(DEBUG_ERROR, SECTION_SCSI,"SCSI_Run SENSE_ABORT\n");
+	      DebugPrint(DEBUG_ERROR, SECTION_SCSI,_("SCSI_Run SENSE_ABORT\n"));
 	      return(-1);
 	      /*NOTREACHED*/
 	    case SENSE_RETRY:
-	      DebugPrint(DEBUG_INFO, SECTION_SCSI,"SCSI_Run SENSE_RETRY\n");
+	      DebugPrint(DEBUG_INFO, SECTION_SCSI,_("SCSI_Run SENSE_RETRY\n"));
 	      break;
 	    default:
-	      DebugPrint(DEBUG_INFO, SECTION_SCSI,"SCSI_Run default (SENSE)\n");
+	      DebugPrint(DEBUG_INFO, SECTION_SCSI,_("SCSI_Run default (SENSE)\n"));
 	      ok=1;
 	      break;
 	    }
 	  break;
 	case SCSI_ERROR:
-	  DebugPrint(DEBUG_ERROR, SECTION_SCSI,"SCSI_Run SCSI_ERROR\n");
+	  DebugPrint(DEBUG_ERROR, SECTION_SCSI,_("SCSI_Run SCSI_ERROR\n"));
 	  return(-1);
 	  /*NOTREACHED*/
 	case SCSI_BUSY:
-	  DebugPrint(DEBUG_INFO, SECTION_SCSI,"SCSI_Run SCSI_BUSY\n");
+	  DebugPrint(DEBUG_INFO, SECTION_SCSI,_("SCSI_Run SCSI_BUSY\n"));
 	  break;
 	case SCSI_CHECK:
-	  DebugPrint(DEBUG_INFO, SECTION_SCSI,"SCSI_Run (TestUnitReady) SCSI_CHECK\n");
+	  DebugPrint(DEBUG_INFO, SECTION_SCSI,_("SCSI_Run (TestUnitReady) SCSI_CHECK\n"));
 	  break;
 	default:
-	  DebugPrint(DEBUG_ERROR, SECTION_SCSI,"SCSI_Run (TestUnitReady) unknown (%d)\n",ret);
+	  DebugPrint(DEBUG_ERROR, SECTION_SCSI,_("SCSI_Run (TestUnitReady) unknown (%d)\n"),ret);
 	  break;
 	}
       maxtries++;
@@ -5934,7 +5951,7 @@ SCSI_AlignElements(
   int ret;
   int i;
 
-  DebugPrint(DEBUG_INFO, SECTION_SCSI,"##### START SCSI_AlignElements\n");
+  DebugPrint(DEBUG_INFO, SECTION_SCSI,_("##### START SCSI_AlignElements\n"));
 
   pRequestSense = alloc(SIZEOF(RequestSense_T));
 
@@ -5953,12 +5970,12 @@ SCSI_AlignElements(
       ret = SCSI_Run(DeviceFD, Input, CDB, 12,
                                 NULL, 0, pRequestSense, SIZEOF(RequestSense_T));
 
-      DebugPrint(DEBUG_INFO, SECTION_SCSI,"SCSI_AlignElements : SCSI_Run = %d\n", ret);
-      DecodeSense(pRequestSense, "SCSI_AlignElements :",debug_file);
+      DebugPrint(DEBUG_INFO, SECTION_SCSI,_("SCSI_AlignElements : SCSI_Run = %d\n"), ret);
+      DecodeSense(pRequestSense, _("SCSI_AlignElements :"),debug_file);
 
       if (ret < 0)
         {
-          DebugPrint(DEBUG_ERROR, SECTION_SCSI,"%s: Request Sense[Inquiry]: %02X",
+          DebugPrint(DEBUG_ERROR, SECTION_SCSI,_("%s: Request Sense[Inquiry]: %02X"),
                     "chs", ((u_char *) &pRequestSense)[0]);
           for (i = 1; i < (int)sizeof(RequestSense_T); i++)
             DebugPrint(DEBUG_ERROR, SECTION_SCSI," %02X", ((u_char *) &pRequestSense)[i]);
@@ -5971,35 +5988,35 @@ SCSI_AlignElements(
           switch(SenseHandler(DeviceFD, 0 , pRequestSense->SenseKey, pRequestSense->AdditionalSenseCode, pRequestSense->AdditionalSenseCodeQualifier, pRequestSense))
             {
             case SENSE_IGNORE:
-              DebugPrint(DEBUG_INFO, SECTION_SCSI,"SCSI_AlignElements : SENSE_IGNORE\n");
+              DebugPrint(DEBUG_INFO, SECTION_SCSI,_("SCSI_AlignElements : SENSE_IGNORE\n"));
               return(0);
               /*NOTREACHED*/
             case SENSE_RETRY:
-              DebugPrint(DEBUG_INFO, SECTION_SCSI,"SCSI_AlignElements : SENSE_RETRY no %d\n", retry);
+              DebugPrint(DEBUG_INFO, SECTION_SCSI,_("SCSI_AlignElements : SENSE_RETRY no %d\n"), retry);
               break;
             case SENSE_ABORT:
-              DebugPrint(DEBUG_ERROR, SECTION_SCSI,"SCSI_AlignElements : SENSE_ABORT\n");
+              DebugPrint(DEBUG_ERROR, SECTION_SCSI,_("SCSI_AlignElements : SENSE_ABORT\n"));
               return(-1);
               /*NOTREACHED*/
             case SENSE_TAPE_NOT_UNLOADED:
-              DebugPrint(DEBUG_ERROR, SECTION_SCSI,"SCSI_AlignElements : Tape still loaded, eject failed\n");
+              DebugPrint(DEBUG_ERROR, SECTION_SCSI,_("SCSI_AlignElements : Tape still loaded, eject failed\n"));
               return(-1);
               /*NOTREACHED*/
             default:
-              DebugPrint(DEBUG_INFO, SECTION_SCSI,"SCSI_AlignElements : end %d\n", pRequestSense->SenseKey);
+              DebugPrint(DEBUG_INFO, SECTION_SCSI,_("SCSI_AlignElements : end %d\n"), pRequestSense->SenseKey);
               return(pRequestSense->SenseKey);
               /*NOTREACHED*/
             }
         }
       if (ret == 0)
         {
-          DebugPrint(DEBUG_INFO, SECTION_SCSI,"SCSI_AlignElements : end %d\n", ret);
+          DebugPrint(DEBUG_INFO, SECTION_SCSI,_("SCSI_AlignElements : end %d\n"), ret);
           return(ret);
 	  /*NOTREACHED*/
         }
     }
   DebugPrint(DEBUG_ERROR, SECTION_SCSI,"SCSI_AlignElements :"
-	     "Retries exceeded = %d\n", retry);
+	     _("Retries exceeded = %d\n"), retry);
   return(-1);
 }
 
@@ -6017,7 +6034,7 @@ SCSI_Move(
   int ret = -1;
   int i;
 
-  DebugPrint(DEBUG_INFO, SECTION_SCSI,"##### START SCSI_Move\n");
+  DebugPrint(DEBUG_INFO, SECTION_SCSI,_("##### START SCSI_Move\n"));
 
   pRequestSense = alloc(SIZEOF(RequestSense_T));
 
@@ -6037,12 +6054,12 @@ SCSI_Move(
       ret = SCSI_Run(DeviceFD, Input, CDB, 12,
                                 NULL, 0, pRequestSense, SIZEOF(RequestSense_T));
 
-      DebugPrint(DEBUG_INFO, SECTION_SCSI,"SCSI_Move : SCSI_Run = %d\n", ret);
-      DecodeSense(pRequestSense, "SCSI_Move :",debug_file);
+      DebugPrint(DEBUG_INFO, SECTION_SCSI,_("SCSI_Move : SCSI_Run = %d\n"), ret);
+      DecodeSense(pRequestSense, _("SCSI_Move :"),debug_file);
 
       if (ret < 0)
         {
-          DebugPrint(DEBUG_ERROR, SECTION_SCSI,"%s: Request Sense[Inquiry]: %02X",
+          DebugPrint(DEBUG_ERROR, SECTION_SCSI,_("%s: Request Sense[Inquiry]: %02X"),
                     "chs", ((u_char *) &pRequestSense)[0]);
           for (i = 1; i < (int)sizeof(RequestSense_T); i++)
             DebugPrint(DEBUG_ERROR, SECTION_SCSI," %02X", ((u_char *) &pRequestSense)[i]);
@@ -6055,28 +6072,28 @@ SCSI_Move(
           switch(SenseHandler(DeviceFD,  0 , pRequestSense->SenseKey, pRequestSense->AdditionalSenseCode, pRequestSense->AdditionalSenseCodeQualifier, pRequestSense))
             {
             case SENSE_IGNORE:
-              dbprintf("SCSI_Move : SENSE_IGNORE\n");
+              dbprintf(_("SCSI_Move : SENSE_IGNORE\n"));
               return(0);
               /*NOTREACHED*/
             case SENSE_RETRY:
-              dbprintf("SCSI_Move : SENSE_RETRY no %d\n", retry);
+              dbprintf(_("SCSI_Move : SENSE_RETRY no %d\n"), retry);
               break;
             case SENSE_ABORT:
-              dbprintf("SCSI_Move : SENSE_ABORT\n");
+              dbprintf(_("SCSI_Move : SENSE_ABORT\n"));
               return(-1);
               /*NOTREACHED*/
             case SENSE_TAPE_NOT_UNLOADED:
-              dbprintf("SCSI_Move : Tape still loaded, eject failed\n");
+              dbprintf(_("SCSI_Move : Tape still loaded, eject failed\n"));
               return(-1);
               /*NOTREACHED*/
             default:
-              dbprintf("SCSI_Move : end %d\n", pRequestSense->SenseKey);
+              dbprintf(_("SCSI_Move : end %d\n"), pRequestSense->SenseKey);
               return(pRequestSense->SenseKey);
               /*NOTREACHED*/
             }
         }
     }
-  dbprintf("SCSI_Move : end %d\n", ret);
+  dbprintf(_("SCSI_Move : end %d\n"), ret);
   return(ret);
 }
 
@@ -6090,7 +6107,7 @@ SCSI_LoadUnload(
   CDB_T CDB;
   int ret;
 
-  dbprintf("##### START SCSI_LoadUnload\n");
+  dbprintf(_("##### START SCSI_LoadUnload\n"));
 
   CDB[0] = SC_COM_UNLOAD;
   CDB[1] = byte1;
@@ -6107,7 +6124,7 @@ SCSI_LoadUnload(
 
   if (ret < 0)
     {
-      dbprintf("SCSI_Unload : failed %d\n", ret);
+      dbprintf(_("SCSI_Unload : failed %d\n"), ret);
       return(-1);
       /*NOTREACHED*/
     }
@@ -6124,7 +6141,7 @@ SCSI_TestUnitReady(
   CDB_T CDB;
   int ret;
 
-  DebugPrint(DEBUG_INFO, SECTION_SCSI,"##### START SCSI_TestUnitReady\n");
+  DebugPrint(DEBUG_INFO, SECTION_SCSI,_("##### START SCSI_TestUnitReady\n"));
 
   CDB[0] = SC_COM_TEST_UNIT_READY;
   CDB[1] = 0;
@@ -6143,7 +6160,7 @@ SCSI_TestUnitReady(
    */
   if (ret > 0)
     {
-      DebugPrint(DEBUG_INFO, SECTION_SCSI,"###### STOP SCSI_TestUnitReady (1)\n");
+      DebugPrint(DEBUG_INFO, SECTION_SCSI,_("###### STOP SCSI_TestUnitReady (1)\n"));
       return(ret);
       /*NOTREACHED*/
     }
@@ -6154,7 +6171,7 @@ SCSI_TestUnitReady(
    */
   if (pRequestSense->ErrorCode == 0 && pRequestSense->SenseKey == 0)
     {
-      DebugPrint(DEBUG_INFO, SECTION_SCSI,"###### STOP SCSI_TestUnitReady (1)\n");
+      DebugPrint(DEBUG_INFO, SECTION_SCSI,_("###### STOP SCSI_TestUnitReady (1)\n"));
       return(0);
       /*NOTREACHED*/
     }
@@ -6163,12 +6180,12 @@ SCSI_TestUnitReady(
    * Some sense is set
    */
   if (pRequestSense->ErrorCode != 0){
-    DebugPrint(DEBUG_INFO, SECTION_SCSI,"###### STOP SCSI_TestUnitReady ErrorCode set\n");
+    DebugPrint(DEBUG_INFO, SECTION_SCSI,_("###### STOP SCSI_TestUnitReady ErrorCode set\n"));
   }
   if (pRequestSense->SenseKey != 0) {
-    DebugPrint(DEBUG_INFO, SECTION_SCSI,"###### STOP SCSI_TestUnitReady Sense Key set\n");
+    DebugPrint(DEBUG_INFO, SECTION_SCSI,_("###### STOP SCSI_TestUnitReady Sense Key set\n"));
   }
-  DebugPrint(DEBUG_INFO, SECTION_SCSI,"###### STOP SCSI_TestUnitReady (0)\n");
+  DebugPrint(DEBUG_INFO, SECTION_SCSI,_("###### STOP SCSI_TestUnitReady (0)\n"));
   return(SCSI_SENSE);
 }
 
@@ -6188,9 +6205,9 @@ SCSI_ModeSelect(
   int retry;
   u_char *sendbuf;
 
-  dbprintf("##### START SCSI_ModeSelect\n");
+  dbprintf(_("##### START SCSI_ModeSelect\n"));
 
-  dbprintf("SCSI_ModeSelect start length = %u:\n", (unsigned)length);
+  dbprintf(_("SCSI_ModeSelect start length = %u:\n"), (unsigned)length);
   pRequestSense = alloc(SIZEOF(RequestSense_T));
   sendbuf = alloc((size_t)length + 4);
   memset(sendbuf, 0 , (size_t)length + 4);
@@ -6215,7 +6232,7 @@ SCSI_ModeSelect(
                                 SIZEOF(RequestSense_T));
       if (ret < 0)
         {
-          dbprintf("SCSI_ModeSelect : ret %d\n", ret);
+          dbprintf(_("SCSI_ModeSelect : ret %d\n"), ret);
 	  goto done;
           /*NOTREACHED*/
         }
@@ -6228,12 +6245,12 @@ SCSI_ModeSelect(
 			      pRequestSense))
             {
             case SENSE_IGNORE:
-              dbprintf("SCSI_ModeSelect : SENSE_IGNORE\n");
+              dbprintf(_("SCSI_ModeSelect : SENSE_IGNORE\n"));
 	      goto done;
               /*NOTREACHED*/
 
             case SENSE_RETRY:
-              dbprintf("SCSI_ModeSelect : SENSE_RETRY no %d\n", retry);
+              dbprintf(_("SCSI_ModeSelect : SENSE_RETRY no %d\n"), retry);
               break;
 
             default:
@@ -6243,7 +6260,7 @@ SCSI_ModeSelect(
         }
     }
 end:
-  dbprintf("SCSI_ModeSelect end: %d\n", ret);
+  dbprintf(_("SCSI_ModeSelect end: %d\n"), ret);
 
 done:
   free(pRequestSense);
@@ -6266,9 +6283,9 @@ SCSI_ModeSense(
   int ret = 1;
   int retry = 1;
 
-  DebugPrint(DEBUG_INFO, SECTION_SCSI,"##### START SCSI_ModeSense\n");
+  DebugPrint(DEBUG_INFO, SECTION_SCSI,_("##### START SCSI_ModeSense\n"));
 
-  DebugPrint(DEBUG_INFO, SECTION_SCSI,"SCSI_ModeSense start length = %d:\n", size);
+  DebugPrint(DEBUG_INFO, SECTION_SCSI,_("SCSI_ModeSense start length = %d:\n"), size);
   pRequestSense = alloc(SIZEOF(RequestSense_T));
 
   while (ret && retry < MAX_RETRIES)
@@ -6298,14 +6315,14 @@ SCSI_ModeSense(
           switch(SenseHandler(DeviceFD, 0, pRequestSense->SenseKey, pRequestSense->AdditionalSenseCode, pRequestSense->AdditionalSenseCodeQualifier, pRequestSense))
             {
             case SENSE_IGNORE:
-              DebugPrint(DEBUG_INFO, SECTION_SCSI,"SCSI_ModeSense : SENSE_IGNORE\n");
+              DebugPrint(DEBUG_INFO, SECTION_SCSI,_("SCSI_ModeSense : SENSE_IGNORE\n"));
               return(0);
               /*NOTREACHED*/
             case SENSE_RETRY:
-              DebugPrint(DEBUG_INFO, SECTION_SCSI,"SCSI_ModeSense : SENSE_RETRY no %d\n", retry);
+              DebugPrint(DEBUG_INFO, SECTION_SCSI,_("SCSI_ModeSense : SENSE_RETRY no %d\n"), retry);
               break;
             default:
-              DebugPrint(DEBUG_INFO, SECTION_SCSI,"SCSI_ModeSense : end %d\n", pRequestSense->SenseKey);
+              DebugPrint(DEBUG_INFO, SECTION_SCSI,_("SCSI_ModeSense : end %d\n"), pRequestSense->SenseKey);
               return(pRequestSense->SenseKey);
               /*NOTREACHED*/
             }
@@ -6313,7 +6330,7 @@ SCSI_ModeSense(
       retry++;
     }
 
-  DebugPrint(DEBUG_INFO, SECTION_SCSI,"SCSI_ModeSense end: %d\n", ret);
+  DebugPrint(DEBUG_INFO, SECTION_SCSI,_("SCSI_ModeSense end: %d\n"), ret);
   return(ret);
 }
 
@@ -6331,9 +6348,9 @@ SCSI_Inquiry(
 
   assert(size <= UCHAR_MAX);
 
-  DebugPrint(DEBUG_INFO, SECTION_SCSI, "##### START SCSI_Inquiry\n");
+  DebugPrint(DEBUG_INFO, SECTION_SCSI, _("##### START SCSI_Inquiry\n"));
 
-  DebugPrint(DEBUG_INFO, SECTION_SCSI, "SCSI_Inquiry start length = %d:\n", size);
+  DebugPrint(DEBUG_INFO, SECTION_SCSI, _("SCSI_Inquiry start length = %d:\n"), size);
 
   pRequestSense = alloc((size_t)size);
 
@@ -6354,12 +6371,12 @@ SCSI_Inquiry(
                                 SIZEOF(RequestSense_T));
       if (ret < 0)
         {
-          DebugPrint(DEBUG_ERROR, SECTION_SCSI,"%s: Request Sense[Inquiry]: %02X",
+          DebugPrint(DEBUG_ERROR, SECTION_SCSI,_("%s: Request Sense[Inquiry]: %02X"),
                     "chs", ((u_char *) pRequestSense)[0]);
           for (i = 1; i < (int)sizeof(RequestSense_T); i++)
             DebugPrint(DEBUG_ERROR, SECTION_SCSI," %02X", ((u_char *) pRequestSense)[i]);
           DebugPrint(DEBUG_ERROR, SECTION_SCSI, "\n");
-	  DebugPrint(DEBUG_ERROR, SECTION_SCSI, "Inquiry end: %d\n", ret);
+	  DebugPrint(DEBUG_ERROR, SECTION_SCSI, _("Inquiry end: %d\n"), ret);
 	  return(ret);
 	  /*NOTRACHED*/
         }
@@ -6368,14 +6385,14 @@ SCSI_Inquiry(
           switch(SenseHandler(DeviceFD, 0, pRequestSense->SenseKey, pRequestSense->AdditionalSenseCode, pRequestSense->AdditionalSenseCodeQualifier, pRequestSense))
             {
             case SENSE_IGNORE:
-              DebugPrint(DEBUG_INFO, SECTION_SCSI,"SCSI_Inquiry : SENSE_IGNORE\n");
+              DebugPrint(DEBUG_INFO, SECTION_SCSI,_("SCSI_Inquiry : SENSE_IGNORE\n"));
               return(0);
               /*NOTREACHED*/
             case SENSE_RETRY:
-              DebugPrint(DEBUG_INFO, SECTION_SCSI, "SCSI_Inquiry : SENSE_RETRY no %d\n", retry);
+              DebugPrint(DEBUG_INFO, SECTION_SCSI, _("SCSI_Inquiry : SENSE_RETRY no %d\n"), retry);
               break;
             default:
-              DebugPrint(DEBUG_ERROR, SECTION_SCSI, "SCSI_Inquiry : end %d\n", pRequestSense->SenseKey);
+              DebugPrint(DEBUG_ERROR, SECTION_SCSI, _("SCSI_Inquiry : end %d\n"), pRequestSense->SenseKey);
               return(pRequestSense->SenseKey);
               /*NOTREACHED*/
             }
@@ -6384,13 +6401,13 @@ SCSI_Inquiry(
       if (ret == 0)
         {
           dump_hex((u_char *)buffer, size, DEBUG_INFO, SECTION_SCSI);
-          DebugPrint(DEBUG_INFO, SECTION_SCSI, "SCSI_Inquiry : end %d\n", ret);
+          DebugPrint(DEBUG_INFO, SECTION_SCSI, _("SCSI_Inquiry : end %d\n"), ret);
           return(ret);
 	  /*NOTRACHED*/
         }
     }
 
-  DebugPrint(DEBUG_INFO, SECTION_SCSI,"SCSI_Inquiry end: %d\n", ret);
+  DebugPrint(DEBUG_INFO, SECTION_SCSI,_("SCSI_Inquiry end: %d\n"), ret);
   return(ret);
 }
 
@@ -6423,7 +6440,7 @@ SCSI_ReadElementStatus(
   int retry = 1;
   int ret = -1;
 
-  DebugPrint(DEBUG_INFO, SECTION_SCSI,"##### START SCSI_ReadElementStatus\n");
+  DebugPrint(DEBUG_INFO, SECTION_SCSI,_("##### START SCSI_ReadElementStatus\n"));
 
   pRequestSense = alloc(SIZEOF(RequestSense_T));
 
@@ -6432,7 +6449,7 @@ SCSI_ReadElementStatus(
    */
   if (NoOfElements == 0)
     {
-      ChgExit("SCSI_ReadElementStatus","No of Elements passed are le 0",FATAL);
+      ChgExit("SCSI_ReadElementStatus",_("No of Elements passed are le 0"),FATAL);
       /*NOTREACHED*/
     }
 
@@ -6465,11 +6482,11 @@ SCSI_ReadElementStatus(
 			 *data, 8,
 			 pRequestSense, SIZEOF(RequestSense_T));
 
-	  DebugPrint(DEBUG_INFO, SECTION_SCSI,"SCSI_ReadElementStatus : (1) SCSI_Run %d\n", ret);
+	  DebugPrint(DEBUG_INFO, SECTION_SCSI,_("SCSI_ReadElementStatus : (1) SCSI_Run %d\n"), ret);
 	  if (ret < 0)
 	    {
 	      DecodeSense(pRequestSense, "SCSI_ReadElementStatus :",debug_file);
-	      DebugPrint(DEBUG_INFO, SECTION_SCSI,"##### STOP SCSI_ReadElementStatus (%d)\n",ret);
+	      DebugPrint(DEBUG_INFO, SECTION_SCSI,_("##### STOP SCSI_ReadElementStatus (%d)\n"),ret);
 	      return(ret);
 	      /*NOTRACHED*/
 	    }
@@ -6478,15 +6495,15 @@ SCSI_ReadElementStatus(
 	      switch(SenseHandler(DeviceFD, 0, pRequestSense->SenseKey, pRequestSense->AdditionalSenseCode, pRequestSense->AdditionalSenseCodeQualifier, pRequestSense))
 		{
 		case SENSE_IGNORE:
-		  DebugPrint(DEBUG_INFO, SECTION_SCSI,"SCSI_ModeSense : SENSE_IGNORE\n");
+		  DebugPrint(DEBUG_INFO, SECTION_SCSI,_("SCSI_ModeSense : SENSE_IGNORE\n"));
 		  retry = 0;
 		  break;
 		case SENSE_RETRY:
-		  DebugPrint(DEBUG_INFO, SECTION_SCSI,"SCSI_ModeSense : SENSE_RETRY no %d\n", retry);
+		  DebugPrint(DEBUG_INFO, SECTION_SCSI,_("SCSI_ModeSense : SENSE_RETRY no %d\n"), retry);
 		  sleep(2);
 		  break;
 		default:
-		  DebugPrint(DEBUG_INFO, SECTION_SCSI,"SCSI_ModeSense : end %d\n", pRequestSense->SenseKey);
+		  DebugPrint(DEBUG_INFO, SECTION_SCSI,_("SCSI_ModeSense : end %d\n"), pRequestSense->SenseKey);
 		  return(pRequestSense->SenseKey);
 		  /*NOTREACHED*/
 		}
@@ -6499,7 +6516,7 @@ SCSI_ReadElementStatus(
 	}
       if (retry > 0)
 	{
-	  DebugPrint(DEBUG_INFO, SECTION_SCSI,"##### STOP SCSI_ReadElementStatus (%d)\n",ret);
+	  DebugPrint(DEBUG_INFO, SECTION_SCSI,_("##### STOP SCSI_ReadElementStatus (%d)\n"),ret);
 	  return(ret);
 	  /*NOTRACHED*/
 	}
@@ -6507,7 +6524,7 @@ SCSI_ReadElementStatus(
       ElementStatusData = (ElementStatusData_T *)*data;
       DataBufferLength = V3(ElementStatusData->count);
 
-      DebugPrint(DEBUG_INFO, SECTION_SCSI,"SCSI_ReadElementStatus: DataBufferLength %X, ret %d\n",DataBufferLength, ret);
+      DebugPrint(DEBUG_INFO, SECTION_SCSI,_("SCSI_ReadElementStatus: DataBufferLength %X, ret %d\n"),DataBufferLength, ret);
 
       dump_hex(*data, 8, DEBUG_INFO, SECTION_ELEMENT);
     } else { /* DescriptorSize != 0 */
@@ -6537,11 +6554,11 @@ SCSI_ReadElementStatus(
                                 pRequestSense, SIZEOF(RequestSense_T));
 
 
-      DebugPrint(DEBUG_INFO, SECTION_SCSI,"SCSI_ReadElementStatus : (2) SCSI_Run %d\n", ret);
+      DebugPrint(DEBUG_INFO, SECTION_SCSI,_("SCSI_ReadElementStatus : (2) SCSI_Run %d\n"), ret);
       if (ret < 0)
         {
-          DecodeSense(pRequestSense, "SCSI_ReadElementStatus :",debug_file);
-	  DebugPrint(DEBUG_INFO, SECTION_SCSI,"##### STOP SCSI_ReadElementStatus (%d)\n",ret);
+          DecodeSense(pRequestSense, _("SCSI_ReadElementStatus :"),debug_file);
+	  DebugPrint(DEBUG_INFO, SECTION_SCSI,_("##### STOP SCSI_ReadElementStatus (%d)\n"),ret);
           return(ret);
 	  /*NOTRACHED*/
         }
@@ -6550,15 +6567,15 @@ SCSI_ReadElementStatus(
           switch(SenseHandler(DeviceFD, 0, pRequestSense->SenseKey, pRequestSense->AdditionalSenseCode, pRequestSense->AdditionalSenseCodeQualifier, pRequestSense))
             {
             case SENSE_IGNORE:
-              DebugPrint(DEBUG_INFO, SECTION_SCSI,"SCSI_ModeSense : SENSE_IGNORE\n");
+              DebugPrint(DEBUG_INFO, SECTION_SCSI,_("SCSI_ModeSense : SENSE_IGNORE\n"));
               retry = 0;
               break;
             case SENSE_RETRY:
-              DebugPrint(DEBUG_INFO, SECTION_SCSI,"SCSI_ModeSense : SENSE_RETRY no %d\n", retry);
+              DebugPrint(DEBUG_INFO, SECTION_SCSI,_("SCSI_ModeSense : SENSE_RETRY no %d\n"), retry);
               sleep(2);
               break;
             default:
-              DebugPrint(DEBUG_INFO, SECTION_SCSI,"SCSI_ModeSense : end %d\n", pRequestSense->SenseKey);
+              DebugPrint(DEBUG_INFO, SECTION_SCSI,_("SCSI_ModeSense : end %d\n"), pRequestSense->SenseKey);
               return(pRequestSense->SenseKey);
               /*NOTREACHED*/
             }
@@ -6572,13 +6589,13 @@ SCSI_ReadElementStatus(
 
   if (retry > 0)
     {
-      DebugPrint(DEBUG_INFO, SECTION_SCSI,"##### STOP SCSI_ReadElementStatus (%d)\n",ret);
+      DebugPrint(DEBUG_INFO, SECTION_SCSI,_("##### STOP SCSI_ReadElementStatus (%d)\n"),ret);
       return(ret);
       /*NOTRACHED*/
     }
 
   dump_hex(*data, DataBufferLength, DEBUG_INFO, SECTION_SCSI);
-  DebugPrint(DEBUG_INFO, SECTION_SCSI,"##### STOP SCSI_ReadElementStatus (%d)\n",ret);
+  DebugPrint(DEBUG_INFO, SECTION_SCSI,_("##### STOP SCSI_ReadElementStatus (%d)\n"),ret);
   return(ret);
 }
 
@@ -6593,7 +6610,7 @@ printf_arglist_function2(void DebugPrint, int, level, int, section, char *, fmt)
   if (changer->debuglevel)
     {
       if (sscanf(changer->debuglevel,"%d:%d", &dlevel, &dsection) != 2) {
-      	dbprintf("Parse error: line is '%s' expected [0-9]*:[0-9]*\n",
+      	dbprintf(_("Parse error: line is '%s' expected [0-9]*:[0-9]*\n"),
 		  changer->debuglevel);
         dlevel=1;
         dsection=1;
@@ -6611,7 +6628,7 @@ printf_arglist_function2(void DebugPrint, int, level, int, section, char *, fmt)
 	{
 	  if (index(buf, '\n') != NULL && strlen(buf) > 1)
           {
-	     dbprintf("%ld:%s", (long)ti, buf);
+	     dbprintf(_("%ld:%s"), (long)ti, buf);
 	  } else {
 	     dbprintf("%s", buf);
 	  }

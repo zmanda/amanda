@@ -90,45 +90,45 @@ static const struct {
     const char *usage;
 } cmdtab[] = {
     { "version", show_version,
-	"\t\t\t\t\t# Show version info." },
+	_("\t\t\t\t\t# Show version info.") },
     { "config", show_config,
-	"\t\t\t\t\t# Show configuration." },
+	_("\t\t\t\t\t# Show configuration.") },
     { "force", force,
-	" [<hostname> [<disks>]* ]+\t\t# Force level 0 at next run." },
+	_(" [<hostname> [<disks>]* ]+\t\t# Force level 0 at next run.") },
     { "unforce", unforce,
-	" [<hostname> [<disks>]* ]+\t# Clear force command." },
+	_(" [<hostname> [<disks>]* ]+\t# Clear force command.") },
     { "force-bump", force_bump,
-	" [<hostname> [<disks>]* ]+\t# Force bump at next run." },
+	_(" [<hostname> [<disks>]* ]+\t# Force bump at next run.") },
     { "force-no-bump", force_no_bump,
-	" [<hostname> [<disks>]* ]+\t# Force no-bump at next run." },
+	_(" [<hostname> [<disks>]* ]+\t# Force no-bump at next run.") },
     { "unforce-bump", unforce_bump,
-	" [<hostname> [<disks>]* ]+\t# Clear bump command." },
+	_(" [<hostname> [<disks>]* ]+\t# Clear bump command.") },
     { "disklist", disklist,
-	" [<hostname> [<disks>]* ]*\t# Debug disklist entries." },
+	_(" [<hostname> [<disks>]* ]*\t# Debug disklist entries.") },
     { "reuse", reuse,
-	" <tapelabel> ...\t\t # re-use this tape." },
+	_(" <tapelabel> ...\t\t # re-use this tape.") },
     { "no-reuse", noreuse,
-	" <tapelabel> ...\t # never re-use this tape." },
+	_(" <tapelabel> ...\t # never re-use this tape.") },
     { "find", find,
-	" [<hostname> [<disks>]* ]*\t # Show which tapes these dumps are on." },
+	_(" [<hostname> [<disks>]* ]*\t # Show which tapes these dumps are on.") },
     { "holding", holding,
 	" {list [ -l ] |delete} [ <hostname> [ <disk> [ <datestamp> [ .. ] ] ] ]+\t # Show or delete holding disk contents." },
     { "delete", delete,
-	" [<hostname> [<disks>]* ]+ # Delete from database." },
+	_(" [<hostname> [<disks>]* ]+ # Delete from database.") },
     { "info", info,
-	" [<hostname> [<disks>]* ]*\t # Show current info records." },
+	_(" [<hostname> [<disks>]* ]*\t # Show current info records.") },
     { "due", due,
-	" [<hostname> [<disks>]* ]*\t # Show due date." },
+	_(" [<hostname> [<disks>]* ]*\t # Show due date.") },
     { "balance", balance,
-	" [-days <num>]\t\t # Show nightly dump size balance." },
+	_(" [-days <num>]\t\t # Show nightly dump size balance.") },
     { "tape", tape,
-	" [-days <num>]\t\t # Show which tape is due next." },
+	_(" [-days <num>]\t\t # Show which tape is due next.") },
     { "bumpsize", bumpsize,
-	"\t\t\t # Show current bump thresholds." },
+	_("\t\t\t # Show current bump thresholds.") },
     { "export", export_db,
-	" [<hostname> [<disks>]* ]* # Export curinfo database to stdout." },
+	_(" [<hostname> [<disks>]* ]* # Export curinfo database to stdout.") },
     { "import", import_db,
-	"\t\t\t\t # Import curinfo database from stdin." },
+	_("\t\t\t\t # Import curinfo database from stdin.") },
 };
 #define	NCMDS	(int)(sizeof(cmdtab) / sizeof(cmdtab[0]))
 
@@ -149,6 +149,8 @@ main(
 
     safe_fd(-1, 0);
     safe_cd();
+
+    setlocale(LC_ALL, "C");
 
     set_pname("amadmin");
 
@@ -176,7 +178,7 @@ main(
     conffile = stralloc2(config_dir, CONFFILE_NAME);
 
     if(read_conffile(conffile)) {
-	error("errors processing config file \"%s\"", conffile);
+	error(_("errors processing config file \"%s\""), conffile);
 	/*NOTREACHED*/
     }
 
@@ -193,7 +195,7 @@ main(
 	conf_diskfile = stralloc2(config_dir, conf_diskfile);
     }
     if (read_diskfile(conf_diskfile, &diskq) < 0) {
-	error("could not load disklist \"%s\"", conf_diskfile);
+	error(_("could not load disklist \"%s\""), conf_diskfile);
 	/*NOTREACHED*/
     }
     amfree(conf_diskfile);
@@ -205,7 +207,7 @@ main(
 	conf_tapelist = stralloc2(config_dir, conf_tapelist);
     }
     if(read_tapelist(conf_tapelist)) {
-	error("could not load tapelist \"%s\"", conf_tapelist);
+	error(_("could not load tapelist \"%s\""), conf_tapelist);
 	/*NOTREACHED*/
     }
     conf_infofile = getconf_str(CNF_INFOFILE);
@@ -215,7 +217,7 @@ main(
 	conf_infofile = stralloc2(config_dir, conf_infofile);
     }
     if(open_infofile(conf_infofile)) {
-	error("could not open info db \"%s\"", conf_infofile);
+	error(_("could not open info db \"%s\""), conf_infofile);
 	/*NOTREACHED*/
     }
     amfree(conf_infofile);
@@ -229,7 +231,7 @@ main(
 	    break;
 	}
     if (i == NCMDS) {
-	fprintf(stderr, "%s: unknown command \"%s\"\n", new_argv[0], new_argv[2]);
+	fprintf(stderr, _("%s: unknown command \"%s\"\n"), new_argv[0], new_argv[2]);
 	usage();
     }
 
@@ -261,9 +263,9 @@ usage(void)
 {
     int i;
 
-    fprintf(stderr, "\nUsage: %s%s <conf> <command> {<args>} [-o configoption]* ...\n",
+    fprintf(stderr, _("\nUsage: %s%s <conf> <command> {<args>} [-o configoption]* ...\n"),
 	    get_pname(), versionsuffix());
-    fprintf(stderr, "    Valid <command>s are:\n");
+    fprintf(stderr, _("    Valid <command>s are:\n"));
     for (i = 0; i < NCMDS; i++)
 	fprintf(stderr, "\t%s%s\n", cmdtab[i].name, cmdtab[i].usage);
     exit(1);
@@ -280,7 +282,7 @@ seqdatestr(
     int		seq)
 {
     static char str[16];
-    static char *dow[7] = {"Sun","Mon","Tue","Wed","Thu","Fri","Sat"};
+    static char *dow[7] = {_("Sun"),_("Mon"),_("Tue"),_("Wed"),_("Thu"),_("Fri"),_("Sat")};
     time_t t = today + seq*SECS_PER_DAY;
     struct tm *tm;
 
@@ -329,16 +331,16 @@ check_dumpuser(void)
     dumpuser = getconf_str(CNF_DUMPUSER);
 
     if ((pw = getpwnam(dumpuser)) == NULL) {
-	error("cannot look up dump user \"%s\"", dumpuser);
+	error(_("cannot look up dump user \"%s\""), dumpuser);
 	/*NOTREACHED*/
     }
     uid_dumpuser = pw->pw_uid;
     if ((pw = getpwuid(uid_me)) == NULL) {
-	error("cannot look up my own uid %ld", (long)uid_me);
+	error(_("cannot look up my own uid %ld"), (long)uid_me);
 	/*NOTREACHED*/
     }
     if (uid_me != uid_dumpuser) {
-	error("ERROR: running as user \"%s\" instead of \"%s\"",
+	error(_("ERROR: running as user \"%s\" instead of \"%s\""),
 	      pw->pw_name, dumpuser);
         /*NOTREACHED*/
     }
@@ -360,7 +362,7 @@ diskloop(
     char *errstr;
 
     if(argc < 4) {
-	fprintf(stderr,"%s: expecting \"%s [<hostname> [<disks>]* ]+\"\n",
+	fprintf(stderr,_("%s: expecting \"%s [<hostname> [<disks>]* ]+\"\n"),
 		get_pname(), cmdname);
 	usage();
     }
@@ -378,7 +380,7 @@ diskloop(
 	}
     }
     if(count==0) {
-	fprintf(stderr,"%s: no disk matched\n",get_pname());
+	fprintf(stderr,_("%s: no disk matched\n"),get_pname());
     }
 }
 
@@ -400,14 +402,14 @@ force_one(
     SET(info.command, FORCE_FULL);
     if (ISSET(info.command, FORCE_BUMP)) {
 	CLR(info.command, FORCE_BUMP);
-	printf("%s: WARNING: %s:%s FORCE_BUMP command was cleared.\n",
+	printf(_("%s: WARNING: %s:%s FORCE_BUMP command was cleared.\n"),
 	       get_pname(), hostname, diskname);
     }
     if(put_info(hostname, diskname, &info) == 0) {
-	printf("%s: %s:%s is set to a forced level 0 at next run.\n",
+	printf(_("%s: %s:%s is set to a forced level 0 at next run.\n"),
 	       get_pname(), hostname, diskname);
     } else {
-	fprintf(stderr, "%s: %s:%s could not be forced.\n",
+	fprintf(stderr, _("%s: %s:%s could not be forced.\n"),
 		get_pname(), hostname, diskname);
     }
 }
@@ -440,16 +442,16 @@ unforce_one(
 #endif
 	CLR(info.command, FORCE_FULL);
 	if(put_info(hostname, diskname, &info) == 0){
-	    printf("%s: force command for %s:%s cleared.\n",
+	    printf(_("%s: force command for %s:%s cleared.\n"),
 		   get_pname(), hostname, diskname);
 	} else {
 	    fprintf(stderr,
-		    "%s: force command for %s:%s could not be cleared.\n",
+		    _("%s: force command for %s:%s could not be cleared.\n"),
 		    get_pname(), hostname, diskname);
 	}
     }
     else {
-	printf("%s: no force command outstanding for %s:%s, unchanged.\n",
+	printf(_("%s: no force command outstanding for %s:%s, unchanged.\n"),
 	       get_pname(), hostname, diskname);
     }
 }
@@ -481,19 +483,19 @@ force_bump_one(
     SET(info.command, FORCE_BUMP);
     if (ISSET(info.command, FORCE_NO_BUMP)) {
 	CLR(info.command, FORCE_NO_BUMP);
-	printf("%s: WARNING: %s:%s FORCE_NO_BUMP command was cleared.\n",
+	printf(_("%s: WARNING: %s:%s FORCE_NO_BUMP command was cleared.\n"),
 	       get_pname(), hostname, diskname);
     }
     if (ISSET(info.command, FORCE_FULL)) {
 	CLR(info.command, FORCE_FULL);
-	printf("%s: WARNING: %s:%s FORCE_FULL command was cleared.\n",
+	printf(_("%s: WARNING: %s:%s FORCE_FULL command was cleared.\n"),
 	       get_pname(), hostname, diskname);
     }
     if(put_info(hostname, diskname, &info) == 0) {
-	printf("%s: %s:%s is set to bump at next run.\n",
+	printf(_("%s: %s:%s is set to bump at next run.\n"),
 	       get_pname(), hostname, diskname);
     } else {
-	fprintf(stderr, "%s: %s:%s could not be forced to bump.\n",
+	fprintf(stderr, _("%s: %s:%s could not be forced to bump.\n"),
 		get_pname(), hostname, diskname);
     }
 }
@@ -526,14 +528,14 @@ force_no_bump_one(
     SET(info.command, FORCE_NO_BUMP);
     if (ISSET(info.command, FORCE_BUMP)) {
 	CLR(info.command, FORCE_BUMP);
-	printf("%s: WARNING: %s:%s FORCE_BUMP command was cleared.\n",
+	printf(_("%s: WARNING: %s:%s FORCE_BUMP command was cleared.\n"),
 	       get_pname(), hostname, diskname);
     }
     if(put_info(hostname, diskname, &info) == 0) {
-	printf("%s: %s:%s is set to not bump at next run.\n",
+	printf(_("%s: %s:%s is set to not bump at next run.\n"),
 	       get_pname(), hostname, diskname);
     } else {
-	fprintf(stderr, "%s: %s:%s could not be force to not bump.\n",
+	fprintf(stderr, _("%s: %s:%s could not be force to not bump.\n"),
 		get_pname(), hostname, diskname);
     }
 }
@@ -566,15 +568,15 @@ unforce_bump_one(
 #endif
 	CLR(info.command, FORCE_BUMP|FORCE_NO_BUMP);
 	if(put_info(hostname, diskname, &info) == 0) {
-	    printf("%s: bump command for %s:%s cleared.\n",
+	    printf(_("%s: bump command for %s:%s cleared.\n"),
 		   get_pname(), hostname, diskname);
 	} else {
-	    fprintf(stderr, "%s: %s:%s bump command could not be cleared.\n",
+	    fprintf(stderr, _("%s: %s:%s bump command could not be cleared.\n"),
 		    get_pname(), hostname, diskname);
 	}
     }
     else {
-	printf("%s: no bump command outstanding for %s:%s, unchanged.\n",
+	printf(_("%s: no bump command outstanding for %s:%s, unchanged.\n"),
 	       get_pname(), hostname, diskname);
     }
 }
@@ -600,7 +602,7 @@ reuse(
     int count;
 
     if(argc < 4) {
-	fprintf(stderr,"%s: expecting \"reuse <tapelabel> ...\"\n",
+	fprintf(stderr,_("%s: expecting \"reuse <tapelabel> ...\"\n"),
 		get_pname());
 	usage();
     }
@@ -609,22 +611,22 @@ reuse(
     for(count=3; count< argc; count++) {
 	tp = lookup_tapelabel(argv[count]);
 	if ( tp == NULL) {
-	    fprintf(stderr, "reuse: tape label %s not found in tapelist.\n",
+	    fprintf(stderr, _("reuse: tape label %s not found in tapelist.\n"),
 		argv[count]);
 	    continue;
 	}
 	if( tp->reuse == 0 ) {
 	    tp->reuse = 1;
-	    printf("%s: marking tape %s as reusable.\n",
+	    printf(_("%s: marking tape %s as reusable.\n"),
 		   get_pname(), argv[count]);
 	} else {
-	    fprintf(stderr, "%s: tape %s already reusable.\n",
+	    fprintf(stderr, _("%s: tape %s already reusable.\n"),
 		    get_pname(), argv[count]);
 	}
     }
 
     if(write_tapelist(conf_tapelist)) {
-	error("could not write tapelist \"%s\"", conf_tapelist);
+	error(_("could not write tapelist \"%s\""), conf_tapelist);
 	/*NOTREACHED*/
     }
 }
@@ -638,7 +640,7 @@ noreuse(
     int count;
 
     if(argc < 4) {
-	fprintf(stderr,"%s: expecting \"no-reuse <tapelabel> ...\"\n",
+	fprintf(stderr,_("%s: expecting \"no-reuse <tapelabel> ...\"\n"),
 		get_pname());
 	usage();
     }
@@ -647,22 +649,22 @@ noreuse(
     for(count=3; count< argc; count++) {
 	tp = lookup_tapelabel(argv[count]);
 	if ( tp == NULL) {
-	    fprintf(stderr, "no-reuse: tape label %s not found in tapelist.\n",
+	    fprintf(stderr, _("no-reuse: tape label %s not found in tapelist.\n"),
 		argv[count]);
 	    continue;
 	}
 	if( tp->reuse == 1 ) {
 	    tp->reuse = 0;
-	    printf("%s: marking tape %s as not reusable.\n",
+	    printf(_("%s: marking tape %s as not reusable.\n"),
 		   get_pname(), argv[count]);
 	} else {
-	    fprintf(stderr, "%s: tape %s already not reusable.\n",
+	    fprintf(stderr, _("%s: tape %s already not reusable.\n"),
 		    get_pname(), argv[count]);
 	}
     }
 
     if(write_tapelist(conf_tapelist)) {
-	error("could not write tapelist \"%s\"", conf_tapelist);
+	error(_("could not write tapelist \"%s\""), conf_tapelist);
 	/*NOTREACHED*/
     }
 }
@@ -681,18 +683,18 @@ delete_one(
     info_t info;
 
     if(get_info(hostname, diskname, &info)) {
-	printf("%s: %s:%s NOT currently in database.\n",
+	printf(_("%s: %s:%s NOT currently in database.\n"),
 	       get_pname(), hostname, diskname);
 	return;
     }
 
     deleted++;
     if(del_info(hostname, diskname)) {
-	error("couldn't delete %s:%s from database: %s",
+	error(_("couldn't delete %s:%s from database: %s"),
 	      hostname, diskname, strerror(errno));
         /*NOTREACHED*/
     } else {
-	printf("%s: %s:%s deleted from curinfo database.\n",
+	printf(_("%s: %s:%s deleted from curinfo database.\n"),
 	       get_pname(), hostname, diskname);
     }
 }
@@ -707,7 +709,7 @@ delete(
 
    if(deleted)
 	printf(
-	 "%s: NOTE: you'll have to remove these from the disklist yourself.\n",
+	 _("%s: NOTE: you'll have to remove these from the disklist yourself.\n"),
 	 get_pname());
 }
 
@@ -724,29 +726,29 @@ info_one(
 
     get_info(dp->host->hostname, dp->name, &info);
 
-    printf("\nCurrent info for %s %s:\n", dp->host->hostname, dp->name);
+    printf(_("\nCurrent info for %s %s:\n"), dp->host->hostname, dp->name);
     if (ISSET(info.command, FORCE_FULL))
-	printf("  (Forcing to level 0 dump at next run)\n");
+	printf(_("  (Forcing to level 0 dump at next run)\n"));
     if (ISSET(info.command, FORCE_BUMP))
-	printf("  (Forcing bump at next run)\n");
+	printf(_("  (Forcing bump at next run)\n"));
     if (ISSET(info.command, FORCE_NO_BUMP))
-	printf("  (Forcing no-bump at next run)\n");
-    printf("  Stats: dump rates (kps), Full:  %5.1lf, %5.1lf, %5.1lf\n",
+	printf(_("  (Forcing no-bump at next run)\n"));
+    printf(_("  Stats: dump rates (kps), Full:  %5.1lf, %5.1lf, %5.1lf\n"),
 	   info.full.rate[0], info.full.rate[1], info.full.rate[2]);
-    printf("                    Incremental:  %5.1lf, %5.1lf, %5.1lf\n",
+    printf(_("                    Incremental:  %5.1lf, %5.1lf, %5.1lf\n"),
 	   info.incr.rate[0], info.incr.rate[1], info.incr.rate[2]);
-    printf("          compressed size, Full: %5.1lf%%,%5.1lf%%,%5.1lf%%\n",
+    printf(_("          compressed size, Full: %5.1lf%%,%5.1lf%%,%5.1lf%%\n"),
 	   info.full.comp[0]*100, info.full.comp[1]*100, info.full.comp[2]*100);
-    printf("                    Incremental: %5.1lf%%,%5.1lf%%,%5.1lf%%\n",
+    printf(_("                    Incremental: %5.1lf%%,%5.1lf%%,%5.1lf%%\n"),
 	   info.incr.comp[0]*100, info.incr.comp[1]*100, info.incr.comp[2]*100);
 
-    printf("  Dumps: lev datestmp  tape             file   origK   compK secs\n");
+    printf(_("  Dumps: lev datestmp  tape             file   origK   compK secs\n"));
     for(lev = 0, sp = &info.inf[0]; lev < 9; lev++, sp++) {
 	if(sp->date < (time_t)0 && sp->label[0] == '\0') continue;
 	tm = localtime(&sp->date);
 	if (tm) {
-	    printf("          %d  %04d%02d%02d  %-15s  "
-		   OFF_T_FMT " " OFF_T_FMT " " OFF_T_FMT " " TIME_T_FMT "\n",
+	    printf(_("          %d  %04d%02d%02d  %-15s  "
+		   OFF_T_FMT " " OFF_T_FMT " " OFF_T_FMT " " TIME_T_FMT "\n"),
 		   lev, tm->tm_year+1900, tm->tm_mon+1, tm->tm_mday,
 		   sp->label,
 		   (OFF_T_FMT_TYPE)sp->filenum,
@@ -754,8 +756,8 @@ info_one(
 		   (OFF_T_FMT_TYPE)sp->csize,
 		   (TIME_T_FMT_TYPE)sp->secs);
 	} else {
-	    printf("          %d  BAD-DATE  %-15s  "
-		   OFF_T_FMT " " OFF_T_FMT " " OFF_T_FMT " " TIME_T_FMT "\n",
+	    printf(_("          %d  BAD-DATE  %-15s  "
+		   OFF_T_FMT " " OFF_T_FMT " " OFF_T_FMT " " TIME_T_FMT "\n"),
 		   lev,
 		   sp->label,
 		   (OFF_T_FMT_TYPE)sp->filenum,
@@ -793,20 +795,20 @@ due_one(
 
     hp = dp->host;
     if(get_info(hp->hostname, dp->name, &info)) {
-	printf("new disk %s:%s ignored.\n", hp->hostname, dp->name);
+	printf(_("new disk %s:%s ignored.\n"), hp->hostname, dp->name);
     }
     else {
 	days = next_level0(dp, &info);
 	if(days < 0) {
-	    printf("Overdue %2d day%s %s:%s\n",
+	    printf(_("Overdue %2d day%s %s:%s\n"),
 		   -days, (-days == 1) ? ": " : "s:",
 		   hp->hostname, dp->name);
 	}
 	else if(days == 0) {
-	    printf("Due today: %s:%s\n", hp->hostname, dp->name);
+	    printf(_("Due today: %s:%s\n"), hp->hostname, dp->name);
 	}
 	else {
-	    printf("Due in %2d day%s %s:%s\n", days,
+	    printf(_("Due in %2d day%s %s:%s\n"), days,
 		   (days == 1) ? ": " : "s:",
 		   hp->hostname, dp->name);
 	}
@@ -842,7 +844,7 @@ tape(
     if(argc > 4 && strcmp(argv[3],"--days") == 0) {
 	nb_days = atoi(argv[4]);
 	if(nb_days < 1) {
-	    printf("days must be an integer bigger than 0\n");
+	    printf(_("days must be an integer bigger than 0\n"));
 	    return;
 	}
 	if (nb_days > 10000)
@@ -855,16 +857,16 @@ tape(
     for ( j=0 ; j < nb_days ; j++ ) {
 	for ( i=0 ; i < runtapes ; i++ ) {
 	    if(i==0)
-		printf("The next Amanda run should go onto ");
+		printf(_("The next Amanda run should go onto "));
 	    else
 		printf("                                   ");
 	    if(tp != NULL) {
-		printf("tape %s or a new tape.\n", tp->label);
+		printf(_("tape %s or a new tape.\n"), tp->label);
 	    } else {
 		if (runtapes - i == 1)
-		    printf("1 new tape.\n");
+		    printf(_("1 new tape.\n"));
 		else
-		    printf("%d new tapes.\n", runtapes - i);
+		    printf(_("%d new tapes.\n"), runtapes - i);
 		i = runtapes;
 	    }
 	
@@ -883,11 +885,11 @@ tape(
 	lasttp = lookup_tapepos(lookup_nb_tape());
 	i = runtapes;
 	if(c == 1) {
-	    printf("The next new tape already labelled is: %s.\n",
+	    printf(_("The next new tape already labelled is: %s.\n"),
 		   lasttp->label);
 	}
 	else {
-	    printf("The next %d new tapes already labelled are: %s", c,
+	    printf(_("The next %d new tapes already labelled are: %s"), c,
 		   lasttp->label);
 	    lasttp = lasttp->prev;
 	    c--;
@@ -959,7 +961,7 @@ balance(
 
     for(dp = diskq.head; dp != NULL; dp = dp->next) {
 	if(get_info(dp->host->hostname, dp->name, &info)) {
-	    printf("new disk %s:%s ignored.\n", dp->host->hostname, dp->name);
+	    printf(_("new disk %s:%s ignored.\n"), dp->host->hostname, dp->name);
 	    continue;
 	}
 	if (dp->strategy == DS_NOFULL) {
@@ -1016,7 +1018,7 @@ balance(
     }
 
     if(sp[total].outsize == (off_t)0 && sp[later].outsize == (off_t)0) {
-	printf("\nNo data to report on yet.\n");
+	printf(_("\nNo data to report on yet.\n"));
 	amfree(sp);
 	return;
     }
@@ -1031,7 +1033,7 @@ balance(
     }
 
     empty_day = 0;
-    printf("\n due-date  #fs    orig %cB     out %cB   balance\n",
+    printf(_("\n due-date  #fs    orig %cB     out %cB   balance\n"),
 	   displayunit[0], displayunit[0]);
     printf("----------------------------------------------\n");
     for(seq = 0; seq < later; seq++) {
@@ -1045,29 +1047,29 @@ balance(
 		printf("\n");
 		empty_day = 0;
 	    }
-	    printf("%-9.9s  %3d " OFF_T_FMT " " OFF_T_FMT " ",
+	    printf(_("%-9.9s  %3d " OFF_T_FMT " " OFF_T_FMT " "),
 		   seqdatestr(seq), sp[seq].disks,
 		   (OFF_T_FMT_TYPE)sp[seq].origsize,
 		   (OFF_T_FMT_TYPE)sp[seq].outsize);
 	    if(!sp[seq].outsize) printf("     --- \n");
-	    else printf("%+8.1lf%%\n",
+	    else printf(_("%+8.1lf%%\n"),
 			(((double)sp[seq].outsize - (double)balanced) * 100.0 /
 			(double)balanced));
 	}
     }
 
     if(sp[later].disks != 0) {
-	printf("later      %3d " OFF_T_FMT " " OFF_T_FMT " ",
+	printf(_("later      %3d " OFF_T_FMT " " OFF_T_FMT " "),
 	       sp[later].disks,
 	       (OFF_T_FMT_TYPE)sp[later].origsize,
 	       (OFF_T_FMT_TYPE)sp[later].outsize);
 	if(!sp[later].outsize) printf("     --- \n");
-	else printf("%+8.1lf%%\n",
+	else printf(_("%+8.1lf%%\n"),
 		    (((double)sp[later].outsize - (double)balanced) * 100.0 /
 		    (double)balanced));
     }
     printf("----------------------------------------------\n");
-    printf("TOTAL      %3d " OFF_T_FMT " " OFF_T_FMT " " OFF_T_FMT "\n",
+    printf(_("TOTAL      %3d " OFF_T_FMT " " OFF_T_FMT " " OFF_T_FMT "\n"),
 	   sp[total].disks,
 	   (OFF_T_FMT_TYPE)sp[total].origsize,
 	   (OFF_T_FMT_TYPE)sp[total].outsize,
@@ -1075,23 +1077,28 @@ balance(
     if (sp[balance].origsize != sp[total].origsize ||
         sp[balance].outsize != sp[total].outsize ||
 	balanced != total_balanced) {
-	printf("BALANCED       " OFF_T_FMT " " OFF_T_FMT " " OFF_T_FMT "\n",
+	printf(_("BALANCED       " OFF_T_FMT " " OFF_T_FMT " " OFF_T_FMT "\n"),
 	       (OFF_T_FMT_TYPE)sp[balance].origsize,
 	       (OFF_T_FMT_TYPE)sp[balance].outsize,
 	       (OFF_T_FMT_TYPE)balanced);
     }
     if (sp[distinct].disks != sp[total].disks) {
-	printf("DISTINCT   %3d " OFF_T_FMT " " OFF_T_FMT "\n",
+	printf(_("DISTINCT   %3d " OFF_T_FMT " " OFF_T_FMT "\n"),
 	       sp[distinct].disks,
 	       (OFF_T_FMT_TYPE)sp[distinct].origsize,
 	       (OFF_T_FMT_TYPE)sp[distinct].outsize);
     }
-    printf("  (estimated %d run%s per dumpcycle)\n",
-	   runs_per_cycle, (runs_per_cycle == 1) ? "" : "s");
+    printf(plural(_("  (estimated %d run per dumpcycle)\n"),
+		  _("  (estimated %d runs per dumpcycle)\n"),
+		  runs_per_cycle),
+	   runs_per_cycle);
     if (overdue) {
-	printf(" (%d filesystem%s overdue, the most being overdue %d day%s)\n",
-	       overdue, (overdue == 1) ? "" : "s",
-	       max_overdue, (max_overdue == 1) ? "" : "s");
+	printf(plural(_(" (%d filesystem overdue."),
+		      _(" (%d filesystems overdue."), overdue),
+	       overdue);
+	printf(plural(_(" The most being overdue %d day.)\n"),
+	              _(" The most being overdue %d days.)\n"), max_overdue),
+	       max_overdue);
     }
     amfree(sp);
 }
@@ -1111,7 +1118,7 @@ find(
 
     if(argc < 3) {
 	fprintf(stderr,
-		"%s: expecting \"find [--sort <hkdlpb>] [hostname [<disk>]]*\"\n",
+		_("%s: expecting \"find [--sort <hkdlpb>] [hostname [<disk>]]*\"\n"),
 		get_pname());
 	usage();
     }
@@ -1142,8 +1149,8 @@ find(
 	if(valid_sort) {
 	    sort_order = newstralloc(sort_order, argv[4]);
 	} else {
-	    printf("Invalid sort order: %s\n", argv[4]);
-	    printf("Use default sort order: %s\n", sort_order);
+	    printf(_("Invalid sort order: %s\n"), argv[4]);
+	    printf(_("Use default sort order: %s\n"), sort_order);
 	}
 	start_argc=6;
     } else {
@@ -1448,32 +1455,32 @@ bumpsize(
     (void)argc;	/* Quiet unused parameter warning */
     (void)argv;	/* Quiet unused parameter warning */
 
-    printf("Current bump parameters:\n");
+    printf(_("Current bump parameters:\n"));
     if(conf_bumppercent == 0) {
-	printf("  bumpsize %5d KB\t- minimum savings (threshold) to bump level 1 -> 2\n",
+	printf(_("  bumpsize %5d KB\t- minimum savings (threshold) to bump level 1 -> 2\n"),
 	       getconf_int(CNF_BUMPSIZE));
-	printf("  bumpdays %5d\t- minimum days at each level\n",
+	printf(_("  bumpdays %5d\t- minimum days at each level\n"),
 	       getconf_int(CNF_BUMPDAYS));
-	printf("  bumpmult %5.5lg\t- threshold = bumpsize * bumpmult**(level-1)\n\n",
+	printf(_("  bumpmult %5.5lg\t- threshold = bumpsize * bumpmult**(level-1)\n\n"),
 	       conf_bumpmult);
 
-	printf("      Bump -> To  Threshold\n");
+	printf(_("      Bump -> To  Threshold\n"));
 	for(l = 1; l < 9; l++)
-	    printf("\t%d  ->  %d  %9d KB\n", l, l+1, bump_thresh(l));
+	    printf(_("\t%d  ->  %d  %9d KB\n"), l, l+1, bump_thresh(l));
 	putchar('\n');
     }
     else {
 	double bumppercent = (double)conf_bumppercent;
 
-	printf("  bumppercent %3d %%\t- minimum savings (threshold) to bump level 1 -> 2\n",
+	printf(_("  bumppercent %3d %%\t- minimum savings (threshold) to bump level 1 -> 2\n"),
 	       conf_bumppercent);
-	printf("  bumpdays %5d\t- minimum days at each level\n",
+	printf(_("  bumpdays %5d\t- minimum days at each level\n"),
 	       getconf_int(CNF_BUMPDAYS));
-	printf("  bumpmult %5.5lg\t- threshold = disk_size * bumppercent * bumpmult**(level-1)\n\n",
+	printf(_("  bumpmult %5.5lg\t- threshold = disk_size * bumppercent * bumpmult**(level-1)\n\n"),
 	       conf_bumpmult);
-	printf("      Bump -> To  Threshold\n");
+	printf(_("      Bump -> To  Threshold\n"));
 	for(l = 1; l < 9; l++) {
-	    printf("\t%d  ->  %d  %7.2lf %%\n", l, l+1, bumppercent);
+	    printf(_("\t%d  ->  %d  %7.2lf %%\n"), l, l+1, bumppercent);
 	    bumppercent *= conf_bumpmult;
 	    if(bumppercent >= 100.000) { bumppercent = 100.0;}
 	}
@@ -1495,23 +1502,23 @@ export_db(
     char hostname[MAX_HOSTNAME_LENGTH+1];
     int i;
 
-    printf("CURINFO Version %s CONF %s\n", version(), getconf_str(CNF_ORG));
+    printf(_("CURINFO Version %s CONF %s\n"), version(), getconf_str(CNF_ORG));
 
     curtime = time(0);
     if(gethostname(hostname, SIZEOF(hostname)-1) == -1) {
-	error("could not determine host name: %s\n", strerror(errno));
+	error(_("could not determine host name: %s\n"), strerror(errno));
 	/*NOTREACHED*/
     }
     hostname[SIZEOF(hostname)-1] = '\0';
-    printf("# Generated by:\n#    host: %s\n#    date: %s",
+    printf(_("# Generated by:\n#    host: %s\n#    date: %s"),
 	   hostname, ctime(&curtime));
 
-    printf("#    command:");
+    printf(_("#    command:"));
     for(i = 0; i < argc; i++)
-	printf(" %s", argv[i]);
+	printf(_(" %s"), argv[i]);
 
-    printf("\n# This file can be merged back in with \"amadmin import\".\n");
-    printf("# Edit only with care.\n");
+    printf(_("\n# This file can be merged back in with \"amadmin import\".\n"));
+    printf(_("# Edit only with care.\n"));
 
     if(argc >= 4)
 	diskloop(argc, argv, "export", export_one);
@@ -1527,27 +1534,27 @@ export_one(
     int i,l;
 
     if(get_info(dp->host->hostname, dp->name, &info)) {
-	fprintf(stderr, "Warning: no curinfo record for %s:%s\n",
+	fprintf(stderr, _("Warning: no curinfo record for %s:%s\n"),
 		dp->host->hostname, dp->name);
 	return;
     }
-    printf("host: %s\ndisk: %s\n", dp->host->hostname, dp->name);
-    printf("command: %u\n", info.command);
-    printf("last_level: %d\n",info.last_level);
-    printf("consecutive_runs: %d\n",info.consecutive_runs);
-    printf("full-rate:");
-    for(i=0;i<AVG_COUNT;i++) printf(" %lf", info.full.rate[i]);
-    printf("\nfull-comp:");
-    for(i=0;i<AVG_COUNT;i++) printf(" %lf", info.full.comp[i]);
+    printf(_("host: %s\ndisk: %s\n"), dp->host->hostname, dp->name);
+    printf(_("command: %u\n"), info.command);
+    printf(_("last_level: %d\n"),info.last_level);
+    printf(_("consecutive_runs: %d\n"),info.consecutive_runs);
+    printf(_("full-rate:"));
+    for(i=0;i<AVG_COUNT;i++) printf(_(" %lf"), info.full.rate[i]);
+    printf(_("\nfull-comp:"));
+    for(i=0;i<AVG_COUNT;i++) printf(_(" %lf"), info.full.comp[i]);
 
-    printf("\nincr-rate:");
-    for(i=0;i<AVG_COUNT;i++) printf(" %lf", info.incr.rate[i]);
-    printf("\nincr-comp:");
-    for(i=0;i<AVG_COUNT;i++) printf(" %lf", info.incr.comp[i]);
+    printf(_("\nincr-rate:"));
+    for(i=0;i<AVG_COUNT;i++) printf(_(" %lf"), info.incr.rate[i]);
+    printf(_("\nincr-comp:"));
+    for(i=0;i<AVG_COUNT;i++) printf(_(" %lf"), info.incr.comp[i]);
     printf("\n");
     for(l=0;l<DUMP_LEVELS;l++) {
 	if(info.inf[l].date < (time_t)0 && info.inf[l].label[0] == '\0') continue;
-	printf("stats: %d " OFF_T_FMT " " OFF_T_FMT " " TIME_T_FMT " " TIME_T_FMT " " OFF_T_FMT " %s\n", l,
+	printf(_("stats: %d " OFF_T_FMT " " OFF_T_FMT " " TIME_T_FMT " " TIME_T_FMT " " OFF_T_FMT " %s\n"), l,
 	       (OFF_T_FMT_TYPE)info.inf[l].size,
 	       (OFF_T_FMT_TYPE)info.inf[l].csize,
 	       (TIME_T_FMT_TYPE)info.inf[l].secs,
@@ -1556,7 +1563,7 @@ export_one(
 	       info.inf[l].label);
     }
     for(l=0;info.history[l].level > -1;l++) {
-	printf("history: %d " OFF_T_FMT " " OFF_T_FMT " " TIME_T_FMT "\n",
+	printf(_("history: %d " OFF_T_FMT " " OFF_T_FMT " " TIME_T_FMT "\n"),
 	       info.history[l].level,
 	       (OFF_T_FMT_TYPE)info.history[l].size,
 	       (OFF_T_FMT_TYPE)info.history[l].csize,
@@ -1592,7 +1599,7 @@ import_db(
     /* process header line */
 
     if((line = agets(stdin)) == NULL) {
-	fprintf(stderr, "%s: empty input.\n", get_pname());
+	fprintf(stderr, _("%s: empty input.\n"), get_pname());
 	return;
     }
 
@@ -1649,12 +1656,12 @@ import_db(
 					 vers_patch > VERSION_PATCH;
     if(newer)
 	fprintf(stderr,
-	     "%s: WARNING: input is from newer Amanda version: %d.%d.%d.\n",
+	     _("%s: WARNING: input is from newer Amanda version: %d.%d.%d.\n"),
 		get_pname(), vers_maj, vers_min, vers_patch);
     /*@end@*/
 
     if(strcmp(org, getconf_str(CNF_ORG)) != 0) {
-	fprintf(stderr, "%s: WARNING: input is from different org: %s\n",
+	fprintf(stderr, _("%s: WARNING: input is from different org: %s\n"),
 		get_pname(), org);
     }
 
@@ -1668,9 +1675,9 @@ import_db(
  bad_header:
 
     /*@i@*/ amfree(line);
-    fprintf(stderr, "%s: bad CURINFO header line in input: %s.\n",
+    fprintf(stderr, _("%s: bad CURINFO header line in input: %s.\n"),
 	    get_pname(), hdr);
-    fprintf(stderr, "    Was the input in \"amadmin export\" format?\n");
+    fprintf(stderr, _("    Was the input in \"amadmin export\" format?\n"));
     return;
 }
 
@@ -1915,7 +1922,7 @@ import_one(void)
     /* got a full record, now write it out to the database */
 
     if(put_info(hostname, diskname, &info)) {
-	fprintf(stderr, "%s: error writing record for %s:%s\n",
+	fprintf(stderr, _("%s: error writing record for %s:%s\n"),
 		get_pname(), hostname, diskname);
     }
     amfree(hostname);
@@ -1926,14 +1933,14 @@ import_one(void)
     /*@i@*/ amfree(line);
     amfree(hostname);
     amfree(diskname);
-    fprintf(stderr, "%s: parse error reading import record.\n", get_pname());
+    fprintf(stderr, _("%s: parse error reading import record.\n"), get_pname());
     return 0;
 
  shortfile_err:
     /*@i@*/ amfree(line);
     amfree(hostname);
     amfree(diskname);
-    fprintf(stderr, "%s: short file reading import record.\n", get_pname());
+    fprintf(stderr, _("%s: short file reading import record.\n"), get_pname());
     return 0;
 }
 
@@ -1959,7 +1966,7 @@ impget_line(void)
 	/* otherwise, a blank line, so keep going */
     }
     if(ferror(stdin)) {
-	fprintf(stderr, "%s: reading stdin: %s\n",
+	fprintf(stderr, _("%s: reading stdin: %s\n"),
 		get_pname(), strerror(errno));
     }
     return NULL;

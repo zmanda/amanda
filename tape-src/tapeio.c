@@ -766,11 +766,11 @@ tape_rewind(
 
     if((fd = tape_open(devname, O_RDONLY)) < 0) {
 	r = errstr = newvstrallocf(errstr,
-				  "tape_rewind: tape open: %s: %s",
+				  _("tape_rewind: tape open: %s: %s"),
 				  devname, strerror(errno));
     } else if(tapefd_rewind(fd) == -1) {
 	r = errstr = newvstrallocf(errstr,
-				  "tape_rewind: rewinding tape: %s: %s",
+				  _("tape_rewind: rewinding tape: %s: %s"),
 				  devname,
 				  strerror(errno));
     }
@@ -789,12 +789,12 @@ tape_unload(
 
     if((fd = tape_open(devname, O_RDONLY)) < 0) {
 	r = errstr = newvstrallocf(errstr,
-				  "tape_unload: tape open: %s: %s",
+				  _("tape_unload: tape open: %s: %s"),
 				  devname,
 				  strerror(errno));
     } else if(tapefd_unload(fd) == -1) {
 	r = errstr = newvstrallocf(errstr,
-				  "tape_unload: unloading tape: %s: %s",
+				  _("tape_unload: unloading tape: %s: %s"),
 				  devname,
 				  strerror(errno));
     }
@@ -814,15 +814,15 @@ tape_fsf(
 
     if((fd = tape_open(devname, O_RDONLY)) < 0) {
 	r = errstr = newvstrallocf(errstr,
-				  "tape_fsf: tape open: %s: %s",
+				  _("tape_fsf: tape open: %s: %s"),
 				  devname,
 				  strerror(errno));
     } else if(tapefd_fsf(fd, count) == -1) {
 	r = errstr = newvstrallocf(errstr,
-			          "tape_fsf: fsf " OFF_T_FMT " file%s: %s",
-				  (OFF_T_FMT_TYPE)count,
-				  (count == 1) ? "" : "s",
-			          strerror(errno));
+			          plural(_("tape_fsf: fsf " OFF_T_FMT " file: %s"),
+			                 _("tape_fsf: fsf " OFF_T_FMT " files: %s"),
+				         count),
+				  (OFF_T_FMT_TYPE)count, strerror(errno));
     }
     if(fd >= 0) {
 	tapefd_close(fd);
@@ -855,11 +855,11 @@ tapefd_rdlabel(
 	*datestamp = stralloc("X");
 	*label = stralloc(FAKE_LABEL);
     } else if(tapefd_rewind(fd) == -1) {
-	r = vstrallocf("rewinding tape: %s", strerror(errno));
+	r = vstrallocf(_("rewinding tape: %s"), strerror(errno));
     } else if((rc = tapefd_read(fd, buffer, buflen)) == -1) {
-	r = vstrallocf(NOT_AMANDA_TAPE_MSG "(%s)", strerror(errno));
+	r = vstrallocf(_(NOT_AMANDA_TAPE_MSG "(%s)"), strerror(errno));
     } else if (rc == 0) {
-        r = vstrallocf(NOT_AMANDA_TAPE_MSG " (Read 0 bytes)");
+        r = vstrallocf(_(NOT_AMANDA_TAPE_MSG " (Read 0 bytes)"));
     } else {
 	/* make sure buffer is null-terminated */
 	buffer[rc] = '\0';
@@ -888,7 +888,7 @@ tape_rdlabel(
     char *r = NULL;
 
     if((fd = tape_open(devname, O_RDONLY)) < 0) {
-	r = vstrallocf("tape_rdlabel: tape open: %s: %s",
+	r = vstrallocf(_("tape_rdlabel: tape open: %s: %s"),
                       devname,
                       strerror(errno));
     } else
@@ -915,7 +915,7 @@ tapefd_wrlabel(
     char *r = NULL;
 
     if(tapefd_rewind(fd) == -1) {
-	r = errstr = newvstrallocf(errstr, "rewinding tape: %s",
+	r = errstr = newvstrallocf(errstr, _("rewinding tape: %s"),
 			strerror(errno));
     } else {
 	fh_init(&file);
@@ -933,10 +933,10 @@ tapefd_wrlabel(
 	if((rc = tapefd_write(fd, buffer, size)) != (ssize_t)size) {
 	    if (rc != 1) {
 		r = errstr = newvstrallocf(errstr,
-				"writing label: short write");
+				_("writing label: short write"));
 	    } else {
 		r = errstr = newvstrallocf(errstr,
-				"writing label: %s", strerror(errno));
+				_("writing label: %s"), strerror(errno));
 	    }
 	}
 	amfree(buffer);
@@ -957,10 +957,10 @@ tape_wrlabel(
     if((fd = tape_open(devname, O_WRONLY)) < 0) {
 	if (errno == EACCES) {
 	    r = errstr = newvstrallocf(errstr,
-				  "writing label: tape is write-protected");
+				  _("writing label: tape is write-protected"));
 	} else {
 	    r = errstr = newvstrallocf(errstr,
-				  "writing label: %s", strerror(errno));
+				  _("writing label: %s"), strerror(errno));
 	}
     } else if(tapefd_wrlabel(fd, datestamp, label, size) != NULL) {
 	r = errstr;
@@ -996,10 +996,10 @@ tapefd_wrendmark(
     if((rc = tapefd_write(fd, buffer, size)) != (ssize_t)size) {
 	if (rc != 1) {
 	    r = errstr = newvstrallocf(errstr,
-				"writing endmark: short write");
+				_("writing endmark: short write"));
 	} else {
 	    r = errstr = newvstrallocf(errstr,
-				"writing endmark: %s", strerror(errno));
+				_("writing endmark: %s"), strerror(errno));
 	}
     }
     amfree(buffer);
@@ -1019,10 +1019,10 @@ tape_wrendmark(
     if((fd = tape_open(devname, O_WRONLY)) < 0) {
 	if (errno == EACCES) {
 	    r = errstr = newvstrallocf(errstr,
-				  "writing endmark: tape is write-protected");
+				  _("writing endmark: tape is write-protected"));
 	} else {
 	    r = errstr = newvstrallocf(errstr,
-				  "writing endmark: %s", strerror(errno));
+				  _("writing endmark: %s"), strerror(errno));
 	}
     } else if(tapefd_wrendmark(fd, datestamp, size) != NULL) {
 	r = errstr;
@@ -1046,7 +1046,7 @@ tape_writable(
 	r = errstr = newvstrallocf(errstr, "%s", strerror(errno));
     } else if((fd = tape_open(devname, O_WRONLY)) < 0) {
 	if (errno == EACCES) {
-	    r = errstr = newvstrallocf(errstr, "tape is write-protected");
+	    r = errstr = newvstrallocf(errstr, _("tape is write-protected"));
 	} else {
 	    r = errstr = newvstrallocf(errstr, "%s", strerror(errno));
 	}
@@ -1081,20 +1081,20 @@ static char *pgm;
 static void
 do_help(void)
 {
-    fprintf(stderr, "  ?|help\n");
-    fprintf(stderr, "  open [\"file\"|$TAPE [\"mode\":O_RDONLY]]\n");
-    fprintf(stderr, "  read [\"records\":\"all\"]\n");
-    fprintf(stderr, "  write [\"records\":1] [\"file#\":\"+\"] [\"record#\":\"+\"] [\"host\"] [\"disk\"] [\"level\"]\n");
-    fprintf(stderr, "  eof|weof [\"count\":1]\n");
-    fprintf(stderr, "  fsf [\"count\":1]\n");
-    fprintf(stderr, "  rewind\n");
-    fprintf(stderr, "  unload\n");
+    fprintf(stderr, _("  ?|help\n"));
+    fprintf(stderr, _("  open [\"file\"|$TAPE [\"mode\":O_RDONLY]]\n"));
+    fprintf(stderr, _("  read [\"records\":\"all\"]\n"));
+    fprintf(stderr, _("  write [\"records\":1] [\"file#\":\"+\"] [\"record#\":\"+\"] [\"host\"] [\"disk\"] [\"level\"]\n"));
+    fprintf(stderr, _("  eof|weof [\"count\":1]\n"));
+    fprintf(stderr, _("  fsf [\"count\":1]\n"));
+    fprintf(stderr, _("  rewind\n"));
+    fprintf(stderr, _("  unload\n"));
 }
 
 static void
 usage(void)
 {
-    fprintf(stderr, "usage: %s [-c cmd [args] [%% cmd [args] ...]]\n", pgm);
+    fprintf(stderr, _("usage: %s [-c cmd [args] [%% cmd [args] ...]]\n"), pgm);
     do_help();
 }
 
@@ -1128,7 +1128,7 @@ do_open(void)
     if(token_count < 2
        || (token_count >= 2 && strcmp(token[1], "$TAPE") == 0)) {
 	if((file = getenv("TAPE")) == NULL) {
-	    fprintf(stderr, "tape_open: no file name and $TAPE not set\n");
+	    fprintf(stderr, _("tape_open: no file name and $TAPE not set\n"));
 	    return;
 	}
     } else {
@@ -1140,11 +1140,11 @@ do_open(void)
 	mode = O_RDONLY;
     }
 
-    fprintf(stderr, "tapefd_open(\"%s\", %d): ", file, mode);
+    fprintf(stderr, _("tapefd_open(\"%s\", %d): "), file, mode);
     if((fd = tape_open(file, mode, 0644)) < 0) {
 	perror("");
     } else {
-	fprintf(stderr, "%d (OK)\n", fd);
+	fprintf(stderr, _("%d (OK)\n"), fd);
 	if(have_length) {
 	    tapefd_setinfo_length(fd, length);
 	}
@@ -1156,11 +1156,11 @@ do_close(void)
 {
     int	result;
 
-    fprintf(stderr, "tapefd_close(): ");
+    fprintf(stderr, _("tapefd_close(): "));
     if((result = tapefd_close(fd)) < 0) {
 	perror("");
     } else {
-	fprintf(stderr, "%d (OK)\n", result);
+	fprintf(stderr, _("%d (OK)\n"), result);
     }
 }
 
@@ -1184,12 +1184,12 @@ do_read(void)
 
     p = (int *)buf;
     for(i = 0; (! have_count) || (i < count); i++) {
-	fprintf(stderr, "tapefd_read(" OFF_T_FMT "): ", (OFF_T_FMT_TYPE)i);
+	fprintf(stderr, _("tapefd_read(" OFF_T_FMT "): "), (OFF_T_FMT_TYPE)i);
 	if((result = tapefd_read(fd, buf, SIZEOF(buf))) < 0) {
 	    perror("");
 	    break;
 	} else if(result == 0) {
-	    fprintf(stderr,  SSIZE_T_FMT" (EOF)\n", result);
+	    fprintf(stderr,  _(SSIZE_T_FMT" (EOF)\n"), result);
 	    /*
 	     * If we were not given a count, EOF breaks the loop, otherwise
 	     * we keep trying (to test read after EOF handling).
@@ -1199,9 +1199,9 @@ do_read(void)
 	    }
 	} else {
 	    if(result == (ssize_t)sizeof(buf)) {
-		s = "OK";
+		s = _("OK");
 	    } else {
-		s = "short read";
+		s = _("short read");
 	    }
 
 	    /*
@@ -1211,7 +1211,7 @@ do_read(void)
 	     * the effort to deal with.
 	     */
 	    fprintf(stderr,
-		    SSIZE_T_FMT " (%s): file %d: record %d",
+		    _(SSIZE_T_FMT " (%s): file %d: record %d"),
 		    result,
 		    s,
 		    p[0],
@@ -1277,18 +1277,18 @@ do_write(void)
     for(i = 0; i < count; i++, (current_record += (off_t)1)) {
 	p[0] = current_file;
 	p[1] = current_record;
-	fprintf(stderr, "tapefd_write(" OFF_T_FMT "): ", i);
+	fprintf(stderr, _("tapefd_write(" OFF_T_FMT "): "), i);
 	if((result = tapefd_write(fd, write_buf, SIZEOF(write_buf))) < 0) {
 	    perror("");
 	    break;
 	} else {
 	    if(result == (ssize_t)sizeof(write_buf)) {
-		s = "OK";
+		s = _("OK");
 	    } else {
-		s = "short write";
+		s = _("short write");
 	    }
 	    fprintf(stderr,
-		    "%d (%s): file " OFF_T_FMT ": record " OFF_T_FMT,
+		    _("%d (%s): file " OFF_T_FMT ": record " OFF_T_FMT),
 		    result,
 		    s,
 		    p[0],
@@ -1320,11 +1320,11 @@ do_fsf(void)
 	count = (off_t)1;
     }
 
-    fprintf(stderr, "tapefd_fsf(" OFF_T_FMT "): ", (OFF_T_FMT_TYPE)count);
+    fprintf(stderr, _("tapefd_fsf(" OFF_T_FMT "): "), (OFF_T_FMT_TYPE)count);
     if((result = tapefd_fsf(fd, count)) < 0) {
 	perror("");
     } else {
-	fprintf(stderr, "%d (OK)\n", result);
+	fprintf(stderr, _("%d (OK)\n"), result);
 	current_file += count;
 	current_record = (off_t)0;
     }
@@ -1342,11 +1342,11 @@ do_weof(void)
 	count = (off_t)1;
     }
 
-    fprintf(stderr, "tapefd_weof(" OFF_T_FMT "): ", count);
+    fprintf(stderr, _("tapefd_weof(" OFF_T_FMT "): "), count);
     if((result = tapefd_weof(fd, count)) < 0) {
 	perror("");
     } else {
-	fprintf(stderr, "%d (OK)\n", result);
+	fprintf(stderr, _("%d (OK)\n"), result);
 	current_file += count;
 	current_record = (off_t)0;
     }
@@ -1357,11 +1357,11 @@ do_rewind(void)
 {
     int	result;
 
-    fprintf(stderr, "tapefd_rewind(): ");
+    fprintf(stderr, _("tapefd_rewind(): "));
     if((result = tapefd_rewind(fd)) < 0) {
 	perror("");
     } else {
-	fprintf(stderr, "%d (OK)\n", result);
+	fprintf(stderr, _("%d (OK)\n"), result);
 	current_file = (off_t)0;
 	current_record = (off_t)0;
     }
@@ -1372,11 +1372,11 @@ do_unload(void)
 {
     int	result;
 
-    fprintf(stderr, "tapefd_unload(): ");
+    fprintf(stderr, _("tapefd_unload(): "));
     if((result = tapefd_unload(fd)) < 0) {
 	perror("");
     } else {
-	fprintf(stderr, "%d (OK)\n", result);
+	fprintf(stderr, _("%d (OK)\n"), result);
 	current_file = (off_t)-1;
 	current_record = (off_t)-1;
     }
@@ -1403,8 +1403,8 @@ struct cmd {
 
 int
 main(
-    int argc,
-    char **argv)
+    int		argc,
+    char **	argv)
 {
     int ch;
     int cmdline = 0;
@@ -1413,6 +1413,8 @@ main(
     int i;
     int j;
     time_t now;
+
+    setlocale(LC_ALL, "C");
 
     /* Don't die when child closes pipe */
     signal(SIGPIPE, SIG_IGN);
@@ -1550,7 +1552,7 @@ main(
 	    }
 	}
 	if(cmd[i].name == NULL) {
-	    fprintf(stderr, "%s: unknown command: %s\n", pgm, token[0]);
+	    fprintf(stderr, _("%s: unknown command: %s\n"), pgm, token[0]);
 	    exit(1);
 	}
 	(*cmd[i].func)();

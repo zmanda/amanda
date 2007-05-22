@@ -182,12 +182,14 @@ main(
 
     safe_fd(-1, 0);
 
+    setlocale(LC_ALL, "C");
+
     set_pname(argv[0]);
 
     dbopen(NULL);
 
     if(argc < 2) {
-	fprintf(stderr, "Usage: %s files ...\n", get_pname());
+	fprintf(stderr, _("Usage: %s files ...\n"), get_pname());
 	return 1;
     }
 

@@ -156,41 +156,41 @@ dump_changer_struct(
 {
   int i;
 
-  dbprintf("Number of configurations: %d\n", chg->number_of_configs);
-  dbprintf("Tapes need eject: %s\n", (chg->eject>0 ? "Yes" : "No"));
-  dbprintf("Tapes need sleep: %d seconds\n", chg->sleep);
-  dbprintf("Cleancycles     : %d\n", chg->cleanmax);
-  dbprintf("Changerdevice   : %s\n", chg->device);
+  dbprintf(_("Number of configurations: %d\n"), chg->number_of_configs);
+  dbprintf(_("Tapes need eject: %s\n"), (chg->eject>0 ? _("Yes") : _("No")));
+  dbprintf(_("Tapes need sleep: %d seconds\n"), chg->sleep);
+  dbprintf(_("Clean cycles    : %d\n"), chg->cleanmax);
+  dbprintf(_("Changer device  : %s\n"), chg->device);
   for (i = 0; i < chg->number_of_configs; i++){
-    dbprintf("Tapeconfig Nr: %d\n", i);
-    dbprintf("  Drivenumber   : %d\n", chg->conf[i].drivenum);
-    dbprintf("  Startslot     : %d\n", chg->conf[i].start);
-    dbprintf("  Endslot       : %d\n", chg->conf[i].end);
-    dbprintf("  Cleanslot     : %d\n", chg->conf[i].cleanslot);
+    dbprintf(_("Tape config Nr: %d\n"), i);
+    dbprintf(_("  Drive number  : %d\n"), chg->conf[i].drivenum);
+    dbprintf(_("  Start slot    : %d\n"), chg->conf[i].start);
+    dbprintf(_("  End slot      : %d\n"), chg->conf[i].end);
+    dbprintf(_("  Clean slot    : %d\n"), chg->conf[i].cleanslot);
     if (chg->conf[i].device != NULL)
-      dbprintf("  Devicename    : %s\n", chg->conf[i].device);
+      dbprintf(_("  Device name   : %s\n"), chg->conf[i].device);
     else
-      dbprintf("  Devicename    : none\n");
+      dbprintf(_("  Device name   : none\n"));
     if (chg->conf[i].scsitapedev != NULL)
-      dbprintf("  SCSITapedev   : %s\n", chg->conf[i].scsitapedev);
+      dbprintf(_("  SCSI Tape dev : %s\n"), chg->conf[i].scsitapedev);
     else
-      dbprintf("  SCSITapedev   : none\n");
+      dbprintf(_("  SCSI Tape dev : none\n"));
     if (chg->conf[i].tapestatfile != NULL)
-      dbprintf("  statfile      : %s\n", chg->conf[i].tapestatfile);
+      dbprintf(_("  stat file     : %s\n"), chg->conf[i].tapestatfile);
     else
-      dbprintf("  statfile      : none\n");
+      dbprintf(_("  stat file     : none\n"));
     if (chg->conf[i].slotfile != NULL)
-      dbprintf("  Slotfile      : %s\n", chg->conf[i].slotfile);
+      dbprintf(_("  Slot file     : %s\n"), chg->conf[i].slotfile);
     else
-      dbprintf("  Slotfile      : none\n");
+      dbprintf(_("  Slot file     : none\n"));
     if (chg->conf[i].cleanfile != NULL)
-      dbprintf("  Cleanfile     : %s\n", chg->conf[i].cleanfile);
+      dbprintf(_("  Clean file    : %s\n"), chg->conf[i].cleanfile);
     else
-      dbprintf("  Cleanfile     : none\n");
+      dbprintf(_("  Clean file    : none\n"));
     if (chg->conf[i].timefile != NULL)
-      dbprintf("  Usagecount    : %s\n", chg->conf[i].timefile);
+      dbprintf(_("  Usage count   : %s\n"), chg->conf[i].timefile);
     else
-      dbprintf("  Usagecount    : none\n");
+      dbprintf(_("  Usage count   : none\n"));
   }
 }
 
@@ -301,8 +301,8 @@ read_config(
         }
         switch (token){
         case NUMDRIVE: if (atoi(value) != numconf)
-          fprintf(stderr,"Error: number_drives at wrong place, should be "\
-                  "first in file\n");
+          fprintf(stderr,_("Error: number_drives at wrong place, should be "
+                  "first in file\n"));
         break;
         case EJECT:
           chg->eject = atoi(value);
@@ -325,75 +325,75 @@ read_config(
         case DRIVE:
           drivenum = atoi(value);
           if(drivenum >= numconf){
-            fprintf(stderr,"Error: drive must be less than number_drives\n");
+            fprintf(stderr,_("Error: drive must be less than number_drives\n"));
           }
           break;
         case DRIVENUM:
           if (drivenum < numconf){
             chg->conf[drivenum].drivenum = atoi(value);
           } else {
-            fprintf(stderr,"Error: drive is not less than number_drives"\
-                    " drivenum ignored\n");
+            fprintf(stderr,_("Error: drive is not less than number_drives"
+                    " drivenum ignored\n"));
           }
           break;
         case START:
           if (drivenum < numconf){
             chg->conf[drivenum].start = atoi(value);
           } else {
-            fprintf(stderr,"Error: drive is not less than number_drives"\
-                    " startuse ignored\n");
+            fprintf(stderr,_("Error: drive is not less than number_drives"
+                    " startuse ignored\n")(;
           }
           break;
         case END:
           if (drivenum < numconf){
             chg->conf[drivenum].end = atoi(value);
           } else {
-            fprintf(stderr,"Error: drive is not less than number_drives"\
-                    " enduse ignored\n");
+            fprintf(stderr,_("Error: drive is not less than number_drives"
+                    " enduse ignored\n"));
           }
           break;
         case CLEAN:
           if (drivenum < numconf){
             chg->conf[drivenum].cleanslot = atoi(value);
           } else {
-            fprintf(stderr,"Error: drive is not less than number_drives"\
-                    " cleanslot ignored\n");
+            fprintf(stderr,_("Error: drive is not less than number_drives"
+                    " cleanslot ignored\n"));
           }
           break;
         case DEVICE:
           if (drivenum < numconf){
             chg->conf[drivenum].device = stralloc(value);
           } else {
-            fprintf(stderr,"Error: drive is not less than number_drives"\
-                    " device ignored\n");
+            fprintf(stderr,_("Error: drive is not less than number_drives"
+                    " device ignored\n"));
           }
           break;
         case STATFILE:
           if (drivenum < numconf){
             chg->conf[drivenum].slotfile = stralloc(value);
           } else {
-            fprintf(stderr,"Error: drive is not less than number_drives"\
-                    " slotfile ignored\n");
+            fprintf(stderr,_("Error: drive is not less than number_drives"
+                    " slotfile ignored\n"));
           }
           break;
         case CLEANFILE:
           if (drivenum < numconf){
             chg->conf[drivenum].cleanfile = stralloc(value);
           } else {
-            fprintf(stderr,"Error: drive is not less than number_drives"\
-                    " cleanfile ignored\n");
+            fprintf(stderr,_("Error: drive is not less than number_drives"
+                    " cleanfile ignored\n"));
           }
           break;
         case USAGECOUNT:
           if (drivenum < numconf){
             chg->conf[drivenum].timefile = stralloc(value);
           } else {
-            fprintf(stderr,"Error: drive is not less than number_drives"\
-                    " usagecount ignored\n");
+            fprintf(stderr,_("Error: drive is not less than number_drives"
+                    " usagecount ignored\n"));
           }
           break;
         default:
-          fprintf(stderr,"Error: Unknown token\n");
+          fprintf(stderr,_("Error: Unknown token\n"));
           break;
         }
       }
@@ -416,13 +416,13 @@ int get_current_slot(char *count_file)
   FILE *inf;
   int retval;
   if ((inf=fopen(count_file,"r")) == NULL) {
-    fprintf(stderr, "%s: unable to open current slot file (%s)\n",
+    fprintf(stderr, _("%s: unable to open current slot file (%s)\n"),
             get_pname(), count_file);
     return 0;
   }
 
   if (fscanf(inf, "%d", &retval) != 1) {
-    fprintf(stderr, "%s: unable to read current slot file (%s)\n",
+    fprintf(stderr, _("%s: unable to read current slot file (%s)\n"),
             get_pname(), count_file);
     retval = 0;
   }
@@ -436,7 +436,7 @@ void put_current_slot(char *count_file,int slot)
   FILE *inf;
 
   if ((inf=fopen(count_file,"w")) == NULL) {
-    fprintf(stderr, "%s: unable to open current slot file (%s)\n",
+    fprintf(stderr, _("%s: unable to open current slot file (%s)\n"),
             get_pname(), count_file);
     exit(2);
   }
@@ -505,7 +505,7 @@ int is_positive_number(char *tmp) /* is the string a valid positive int? */
 void usage(char *argv[])
 {
   int cnt;
-  printf("%s: Usage error.\n", argv[0]);
+  printf(_("%s: Usage error.\n"), argv[0]);
   for (cnt=0; cnt < COMCOUNT; cnt++){
     printf("      %s    %s",argv[0],argdefs[cnt].str);
     if (argdefs[cnt].takesparam)
@@ -600,7 +600,7 @@ get_relative_target(
     return maxslot;
 
   default: 
-    printf("<none> no slot `%s'\n",parameter);
+    printf(_("<none> no slot `%s'\n"),parameter);
     close(fd);
     exit(2);
     /*NOTREACHED*/
@@ -649,12 +649,12 @@ clean_tape(
       if(getconf_seen(CNF_MAILTO) && strlen(getconf_str(CNF_MAILTO)) > 0 && 
          validate_mailto(getconf_str(CNF_MAILTO))) {
       	 mail_cmd = vstralloc(MAILER,
-                           " -s", " \"", "AMANDA PROBLEM: PLEASE FIX", "\"",
+                           " -s", " \"", _("AMANDA PROBLEM: PLEASE FIX"), "\"",
                            " ", getconf_str(CNF_MAILTO),
                            NULL);
       	 if((mailf = popen(mail_cmd, "w")) == NULL){
         	printf("Mail failed\n");
-        	error("could not open pipe to \"%s\": %s",
+        	error(_("could not open pipe to \"%s\": %s"),
               	mail_cmd, strerror(errno));
         	/*NOTREACHED*/
       	}
@@ -662,18 +662,18 @@ clean_tape(
       else{
 	 mail_pipe_opened = 0;
 	 mailf = stderr;
-         fprintf(mailf, "\nNo mail recipient specified, output redirected to stderr");
+         fprintf(mailf, _("\nNo mail recipient specified, output redirected to stderr"));
 	}
 	
-      fprintf(mailf,"\nThe usage count of your cleaning tape in slot %d",
+      fprintf(mailf, _("\nThe usage count of your cleaning tape in slot %d"),
              cleancart);
-      fprintf(mailf,"\nis more than %d. (cleanmax)",maxclean);
-      fprintf(mailf,"\nTapedrive %s needs to be cleaned",tapedev);
-      fprintf(mailf,"\nPlease insert a new cleaning tape and reset");
-      fprintf(mailf,"\nthe countingfile %s",cnt_file);
+      fprintf(mailf,_("\nis more than %d. (cleanmax)"),maxclean);
+      fprintf(mailf,_("\nTapedrive %s needs to be cleaned"),tapedev);
+      fprintf(mailf,_("\nPlease insert a new cleaning tape and reset"));
+      fprintf(mailf,_("\nthe countingfile %s"),cnt_file);
 
       if(mail_pipe_opened == 1 && pclose(mailf) != 0) {
-      	 error("mail command failed: %s", mail_cmd);
+      	 error(_("mail command failed: %s"), mail_cmd);
 		/*NOTREACHED*/
       }
       
@@ -693,7 +693,7 @@ clean_tape(
 int
 main(
     int		argc,
-    char *	argv[])
+    char **	argv)
 {
   int loaded;
   int target = -1;
@@ -725,6 +725,8 @@ main(
   char *changer_file = NULL;
   char *scsitapedevice = NULL;
 
+  setlocale(LC_ALL, "C");
+
   set_pname("chg-scsi");
 
   /* Don't die when child closes pipe */
@@ -735,7 +737,7 @@ main(
 
   changer = alloc(SIZEOF(changer_t));
   if(read_conffile(CONFFILE_NAME)) {
-    fprintf(stderr, "%s: could not find config file \"%s\"",
+    fprintf(stderr, _("%s: could not find config file \"%s\""),
 		    changer_dev, conffile);
     exit(1);
   }
@@ -777,10 +779,10 @@ main(
 			"changer_dev", changer->conf[confnum].changerident);
     if (fd == -1) {
       int localerr = errno;
-      fprintf(stderr, "%s: open: %s: %s\n", get_pname(), 
+      fprintf(stderr, _("%s: open: %s: %s\n"), get_pname(), 
               changer_dev, strerror(localerr));
-      printf("%s open: %s: %s\n", "<none>", changer_dev, strerror(localerr));
-      dbprintf("open: %s: %s\n", changer_dev, strerror(localerr));
+      printf(_("%s open: %s: %s\n"), "<none>", changer_dev, strerror(localerr));
+      dbprintf(_("open: %s: %s\n"), changer_dev, strerror(localerr));
       return 2;
     }
 
@@ -807,10 +809,10 @@ main(
 			"changer_dev", changer->conf[confnum].changerident);
     if (fd == -1) {
       int localerr = errno;
-      fprintf(stderr, "%s: open: %s: %s\n", get_pname(), 
+      fprintf(stderr, _("%s: open: %s: %s\n"), get_pname(), 
               changer_dev, strerror(localerr));
-      printf("%s open: %s: %s\n", "<none>", changer_dev, strerror(localerr));
-      dbprintf("open: %s: %s\n", changer_dev, strerror(localerr));
+      printf(_("%s open: %s: %s\n"), _("<none>"), changer_dev, strerror(localerr));
+      dbprintf(_("open: %s: %s\n"), changer_dev, strerror(localerr));
       return 2;
     }
     slotcnt = get_slot_count(fd);
@@ -824,13 +826,13 @@ main(
   drivecnt = get_drive_count(fd);
 
   if (drive_num > drivecnt) {
-    printf("%s drive number error (%d > %d)\n", "<none>", 
+    printf(_("%s drive number error (%d > %d)\n"), _("<none>"), 
            drive_num, drivecnt);
-    fprintf(stderr, "%s: requested drive number (%d) greater than "
-            "number of supported drives (%d)\n", get_pname(), 
+    fprintf(stderr, _("%s: requested drive number (%d) greater than "
+            "number of supported drives (%d)\n"), get_pname(), 
             drive_num, drivecnt);
-    dbprintf("requested drive number (%d) greater than "
-              "number of supported drives (%d)\n", drive_num, drivecnt);
+    dbprintf(_("requested drive number (%d) greater than "
+              "number of supported drives (%d)\n"), drive_num, drivecnt);
     CloseDevice("", fd);
     return 2;
   }
@@ -841,7 +843,7 @@ main(
   case COM_SLOT:  /* slot changing command */
     if (is_positive_number(com.parameter)) {
       if ((target = atoi(com.parameter))>=use_slots) {
-        printf("<none> no slot `%d'\n",target);
+        printf(_("<none> no slot `%d'\n"),target);
         close(fd);
         endstatus = 2;
         break;
@@ -875,7 +877,7 @@ main(
       put_current_slot(changer_file, target);
     }
     if (!loaded && isempty(fd, target)) {
-      printf("%d slot %d is empty\n",target-slot_offset,
+      printf(_("%d slot %d is empty\n"),target-slot_offset,
              target-slot_offset);
       close(fd);
       endstatus = 1;
@@ -883,7 +885,7 @@ main(
     }
     if (!loaded)
       if (load(fd, drive_num, target) != 0) {
-        printf("%d slot %d move failed\n",target-slot_offset,
+        printf(_("%d slot %d move failed\n"),target-slot_offset,
                target-slot_offset);  
         close(fd);
         endstatus = 2;
@@ -891,7 +893,7 @@ main(
       }
     if (need_sleep)
       Tape_Ready(scsitapedevice, need_sleep);
-    printf("%d %s\n", target-slot_offset, tape_device);
+    printf(_("%d %s\n"), target-slot_offset, tape_device);
     break;
 
   case COM_INFO:
@@ -923,14 +925,14 @@ main(
     }
 
     if (isempty(fd, slot_offset)) {
-      printf("0 slot 0 is empty\n");
+      printf(_("0 slot 0 is empty\n"));
       close(fd);
       endstatus = 1;
       break;
     }
 
     if (load(fd, drive_num, slot_offset) != 0) {
-      printf("%d slot %d move failed\n",slot_offset,
+      printf(_("%d slot %d move failed\n"),slot_offset,
              slot_offset);  
       close(fd);
       endstatus = 2;
@@ -966,7 +968,7 @@ main(
                    maxclean,time_file);
       printf("%d %s\n", target, tape_device);
     } else {
-      printf("%d %s\n", target, "drive was not loaded");
+      printf(_("%d drive was not loaded\n"), target);
       endstatus = 1;
     }
     break;
@@ -984,7 +986,7 @@ main(
     } 
     clean_tape(fd,tape_device,clean_file,drive_num,clean_slot,
                maxclean,time_file);
-    printf("%s cleaned\n", tape_device);
+    printf(_("%s cleaned\n"), tape_device);
     break;
   };
 

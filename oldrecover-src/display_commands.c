@@ -97,8 +97,8 @@ add_dir_list_item(
 {
     DIR_ITEM *next;
 
-    dbprintf("add_dir_list_item: Adding \"%s\" \"%d\" \"%s\" \""
-	      OFF_T_FMT "\" \"%s\"\n",
+    dbprintf(_("add_dir_list_item: Adding \"%s\" \"%d\" \"%s\" \""
+	      OFF_T_FMT "\" \"%s\"\n"),
 	      date, level, tape, (OFF_T_FMT_TYPE)fileno, path);
 
     next = (DIR_ITEM *)alloc(sizeof(DIR_ITEM));
@@ -143,7 +143,7 @@ suck_dir_list_from_server(void)
     int ch;
 
     if (disk_path == NULL) {
-	printf("Directory must be set before getting listing\n");
+	printf(_("Directory must be set before getting listing\n"));
 	return;
     } else if(strcmp(disk_path, "/") == 0) {
 	disk_path_slash = stralloc(disk_path);
@@ -207,7 +207,7 @@ suck_dir_list_from_server(void)
 
 	skip_whitespace(s, ch);
 	if(ch == '\0') {
-	    err = "bad reply: missing date field";
+	    err = _("bad reply: missing date field");
 	    continue;
 	}
 	date = s - 1;
@@ -216,14 +216,14 @@ suck_dir_list_from_server(void)
 
 	skip_whitespace(s, ch);
 	if(ch == '\0' || sscanf(s - 1, "%d", &level) != 1) {
-	    err = "bad reply: cannot parse level field";
+	    err = _("bad reply: cannot parse level field");
 	    continue;
 	}
 	skip_integer(s, ch);
 
 	skip_whitespace(s, ch);
 	if(ch == '\0') {
-	    err = "bad reply: missing tape field";
+	    err = _("bad reply: missing tape field");
 	    continue;
 	}
 	tape = s - 1;
@@ -236,7 +236,7 @@ suck_dir_list_from_server(void)
 	    OFF_T_FMT_TYPE fileno_ = (OFF_T_FMT_TYPE)0;
 	    skip_whitespace(s, ch);
 	    if(ch == '\0' || sscanf(s - 1, OFF_T_FMT, &fileno_) != 1) {
-		err = "bad reply: cannot parse fileno field";
+		err = _("bad reply: cannot parse fileno field");
 		continue;
 	    }
 	    fileno = (off_t)fileno_;
@@ -248,7 +248,7 @@ suck_dir_list_from_server(void)
 
 	skip_whitespace(s, ch);
 	if(ch == '\0') {
-	    err = "bad reply: missing directory field";
+	    err = _("bad reply: missing directory field");
 	    continue;
 	}
 	qdir = s - 1;
@@ -289,7 +289,7 @@ list_directory(void)
     char *quoted;
 
     if (disk_path == NULL) {
-	printf("Must select a disk before listing files; use the setdisk command.\n");
+	printf(_("Must select a disk before listing files; use the setdisk command.\n"));
 	return;
     }
 
@@ -304,7 +304,7 @@ list_directory(void)
     pager_command = stralloc2(pager, " ; /bin/cat > /dev/null");
     if ((fp = popen(pager_command, "w")) == NULL)
     {
-	printf("Warning - can't pipe through %s\n", pager);
+	printf(_("Warning - can't pipe through %s\n"), pager);
 	fp = stdout;
     }
     amfree(pager_command);

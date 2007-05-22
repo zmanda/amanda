@@ -272,10 +272,10 @@ contline_next(void)
     if ((ch = getc(logfile)) != EOF) {
 	    if (ungetc(ch, logfile) == EOF) {
 		if (ferror(logfile)) {
-		    error("ungetc failed: %s\n", strerror(errno));
+		    error(_("ungetc failed: %s\n"), strerror(errno));
 		    /*NOTREACHED*/
 		}
-		error("ungetc failed: EOF\n");
+		error(_("ungetc failed: EOF\n"));
 		/*NOTREACHED*/
 	    }
     }
@@ -308,7 +308,7 @@ addline(
 static void
 usage(void)
 {
-    error("Usage: amreport conf [-i] [-M address] [-f output-file] [-l logfile] [-p postscript-file] [-o configoption]*");
+    error(_("Usage: amreport conf [-i] [-M address] [-f output-file] [-l logfile] [-p postscript-file] [-o configoption]*"));
     /*NOTREACHED*/
 }
 
@@ -340,6 +340,8 @@ main(
 
     safe_fd(-1, 0);
 
+    setlocale(LC_ALL, "C");
+
     set_pname("amreport");
 
     dbopen(DBG_SUBDIR_SERVER);
@@ -357,7 +359,7 @@ main(
     logfname = NULL;
 
     if (getcwd(my_cwd, SIZEOF(my_cwd)) == NULL) {
-	error("cannot determine current working directory");
+	error(_("cannot determine current working directory"));
 	/*NOTREACHED*/
     }
 
@@ -385,18 +387,18 @@ main(
 		break;
             case 'M':
 		if (mailto != NULL) {
-		    error("you may specify at most one -M");
+		    error(_("you may specify at most one -M"));
 		    /*NOTREACHED*/
 		}
                 mailto = stralloc(optarg);
 		if(!validate_mailto(mailto)) {
-		    error("mail address has invalid characters");
+		    error(_("mail address has invalid characters"));
 		    /*NOTREACHED*/
 		}
                 break;
             case 'f':
 		if (outfname != NULL) {
-		    error("you may specify at most one -f");
+		    error(_("you may specify at most one -f"));
 		    /*NOTREACHED*/
 		}
 		if (*optarg == '/') {
@@ -407,7 +409,7 @@ main(
                 break;
             case 'l':
 		if (logfname != NULL) {
-		    error("you may specify at most one -l");
+		    error(_("you may specify at most one -l"));
 		    /*NOTREACHED*/
 		}
 		if (*optarg == '/') {
@@ -418,7 +420,7 @@ main(
                 break;
             case 'p':
 		if (psfname != NULL) {
-		    error("you may specify at most one -p");
+		    error(_("you may specify at most one -p"));
 		    /*NOTREACHED*/
 		}
 		if (*optarg == '/') {
@@ -439,15 +441,15 @@ main(
 	my_argv += optind;
     }
     if( !mailout && mailto ){
-	printf("You cannot specify both -i & -M at the same time\n");
+	printf(_("You cannot specify both -i & -M at the same time\n"));
 	exit(1);
     }
 
 
 #if !defined MAILER
     if(!outfname) {
-	printf("You must run amreport with '-f <output file>' because configure\n");
-	printf("didn't find a mailer.\n");
+	printf(_("You must run amreport with '-f <output file>' because configure\n"));
+	printf(_("didn't find a mailer.\n"));
 	exit (1);
     }
 #endif
@@ -497,7 +499,7 @@ main(
 	conf_infofile = stralloc2(config_dir, conf_infofile);
     }
     if(open_infofile(conf_infofile)) {
-	error("could not open info db \"%s\"", conf_infofile);
+	error(_("could not open info db \"%s\""), conf_infofile);
 	/*NOTREACHED*/
     }
     amfree(conf_infofile);
@@ -546,7 +548,7 @@ main(
     if((logfile = fopen(logfname, "r")) == NULL) {
 	curlog = L_ERROR;
 	curprog = P_REPORTER;
-	curstr = vstralloc("could not open log ",
+	curstr = vstralloc(_("could not open log "),
 			   logfname,
 			   ": ",
 			   strerror(errno),
@@ -581,7 +583,7 @@ main(
 	default:
 	    curlog = L_ERROR;
 	    curprog = P_REPORTER;
-	    curstr = stralloc2("unexpected log line: ", curstr);
+	    curstr = vstrallocf(_("unexpected log line: %s"), curstr);
 	    handle_error();
 	    amfree(curstr);
 	}
@@ -611,7 +613,7 @@ main(
     if(outfname) {
 	/* output to a file */
 	if((mailf = fopen(outfname,"w")) == NULL) {
-	    error("could not open output file: %s %s", outfname, strerror(errno));
+	    error(_("could not open output file: %s %s"), outfname, strerror(errno));
 	    /*NOTREACHED*/
 	}
 	fprintf(mailf, "To: %s\n", mailto);
@@ -624,15 +626,15 @@ main(
 			     " -s", " \"", subj_str, "\"",
 			     " ", mailto, NULL);
 		if((mailf = popen(mail_cmd, "w")) == NULL) {
-	    	error("could not open pipe to \"%s\": %s",
+	    	error(_("could not open pipe to \"%s\": %s"),
 		  	mail_cmd, strerror(errno));
 	    	/*NOTREACHED*/
 		}
 	}
 	else {
 		if(mailout) {
-                   printf("No mail sent! ");
-		   printf("No valid mail address has been specified in amanda.conf or on the commmand line\n");
+                   printf(_("No mail sent! "));
+		   printf(_("No valid mail address has been specified in amanda.conf or on the commmand line\n"));
 		}
 		mailf = NULL;
 	}
@@ -651,11 +653,9 @@ main(
 	    if ((postscript = fopen(psfname, "w")) == NULL) {
 		curlog = L_ERROR;
 		curprog = P_REPORTER;
-		curstr = vstralloc("could not open ",
+		curstr = vstrallocf(_("could not open %s: %s"),
 				   psfname,
-				   ": ",
-				   strerror(errno),
-				   NULL);
+				   strerror(errno));
 		handle_error();
 		amfree(curstr);
 	    }
@@ -680,7 +680,7 @@ main(
 	    if ((postscript = popen(printer_cmd, "w")) == NULL) {
 		curlog = L_ERROR;
 		curprog = P_REPORTER;
-		curstr = vstrallocf("could not open pipe to %s: %s",
+		curstr = vstrallocf(_("could not open pipe to %s: %s"),
 				   printer_cmd, strerror(errno));
 		handle_error();
 		amfree(curstr);
@@ -688,7 +688,7 @@ main(
 #else
 	    curlog = L_ERROR;
 	    curprog = P_REPORTER;
-	    curstr = vstrallocf("no printer command defined");
+	    curstr = vstrallocf(_("no printer command defined"));
 	    handle_error();
 	    amfree(curstr);
 #endif
@@ -699,13 +699,13 @@ main(
 
     if(mailf) {
 
-    	if(!got_finish) fputs("*** THE DUMPS DID NOT FINISH PROPERLY!\n\n", mailf);
+    	if(!got_finish) fputs(_("*** THE DUMPS DID NOT FINISH PROPERLY!\n\n"), mailf);
 
 	if (ghostname) {
-	    fprintf(mailf, "Hostname: %s\n", ghostname);
-	    fprintf(mailf, "Org     : %s\n", getconf_str(CNF_ORG));
-	    fprintf(mailf, "Config  : %s\n", config_name);
-	    fprintf(mailf, "Date    : %s\n",
+	    fprintf(mailf, _("Hostname: %s\n"), ghostname);
+	    fprintf(mailf, _("Org     : %s\n"), getconf_str(CNF_ORG));
+	    fprintf(mailf, _("Config  : %s\n"), config_name);
+	    fprintf(mailf, _("Date    : %s\n"),
 		    nicedate(run_datestamp ? run_datestamp : "0"));
 	    fprintf(mailf,"\n");
 	}
@@ -713,7 +713,7 @@ main(
     	output_tapeinfo();
 
     	if(first_strange || errsum) {
-		fprintf(mailf,"\nFAILURE AND STRANGE DUMP SUMMARY:\n");
+		fprintf(mailf,_("\nFAILURE AND STRANGE DUMP SUMMARY:\n"));
 		if(first_strange) output_strange();
 		if(errsum) output_lines(errsum, mailf);
     	}
@@ -722,19 +722,22 @@ main(
     	output_stats();
 	
     	if(errdet) {
-		fprintf(mailf,"\n\014\nFAILED AND STRANGE DUMP DETAILS:\n");
+		fprintf(mailf,"\n\f\n");
+		fprintf(mailf,_("FAILED AND STRANGE DUMP DETAILS:\n"));
 		output_lines(errdet, mailf);
     	}
     	if(notes) {
-		fprintf(mailf,"\n\014\nNOTES:\n");
+		fprintf(mailf,"\n\f\n");
+		fprintf(mailf,_("NOTES:\n"));
 		output_lines(notes, mailf);
     	}
     	sort_disks();
     	if(sortq.head != NULL) {
-		fprintf(mailf,"\n\014\nDUMP SUMMARY:\n");
+		fprintf(mailf,"\n\f\n");
+		fprintf(mailf,_("DUMP SUMMARY:\n"));
 		output_summary();
     	}
-    	fprintf(mailf,"\n(brought to you by Amanda version %s)\n",
+    	fprintf(mailf,_("\n(brought to you by Amanda version %s)\n"),
 	    	version());
     }
 
@@ -750,7 +753,7 @@ main(
     }
     else {
 	if (postscript != NULL && pclose(postscript) != 0) {
-	    error("printer command failed: %s", printer_cmd);
+	    error(_("printer command failed: %s"), printer_cmd);
 	    /*NOTREACHED*/
 	}
 	postscript = NULL;
@@ -762,7 +765,7 @@ main(
     }
     else if(mailf) {
         if(pclose(mailf) != 0) {
-            error("mail command failed: %s", mail_cmd);
+            error(_("mail command failed: %s"), mail_cmd);
 	    /*NOTREACHED*/
 	}
         mailf = NULL;
@@ -853,142 +856,142 @@ output_stats(void)
     idle_time = (total_time - startup_time) - stats[2].taper_time;
     if(idle_time < 0) idle_time = 0.0;
 
-    fprintf(mailf,"STATISTICS:\n");
+    fprintf(mailf,_("STATISTICS:\n"));
     fprintf(mailf,
-	    "                          Total       Full      Incr.\n");
+	    _("                          Total       Full      Incr.\n"));
     fprintf(mailf,
-	    "                        --------   --------   --------\n");
+	    _("                        --------   --------   --------\n"));
 
     fprintf(mailf,
-	    "Estimate Time (hrs:min)   %2d:%02d\n", hrmn(planner_time));
+	    _("Estimate Time (hrs:min)   %2d:%02d\n"), hrmn(planner_time));
 
     fprintf(mailf,
-	    "Run Time (hrs:min)        %2d:%02d\n", hrmn(total_time));
+	    _("Run Time (hrs:min)        %2d:%02d\n"), hrmn(total_time));
 
     fprintf(mailf,
-	    "Dump Time (hrs:min)       %2d:%02d      %2d:%02d      %2d:%02d\n",
+	    _("Dump Time (hrs:min)       %2d:%02d      %2d:%02d      %2d:%02d\n"),
 	    hrmn(stats[2].dumper_time), hrmn(stats[0].dumper_time),
 	    hrmn(stats[1].dumper_time));
 
     fprintf(mailf,
-	    "Output Size (meg)      %8.1lf   %8.1lf   %8.1lf\n",
+	    _("Output Size (meg)      %8.1lf   %8.1lf   %8.1lf\n"),
 	    mb(stats[2].outsize), mb(stats[0].outsize), mb(stats[1].outsize));
 
     fprintf(mailf,
-	    "Original Size (meg)    %8.1lf   %8.1lf   %8.1lf\n",
+	    _("Original Size (meg)    %8.1lf   %8.1lf   %8.1lf\n"),
 	    mb(stats[2].origsize), mb(stats[0].origsize),
 	    mb(stats[1].origsize));
 
-    fprintf(mailf, "Avg Compressed Size (%%)   ");
+    fprintf(mailf, _("Avg Compressed Size (%%)   "));
     divzero(mailf, pct(stats[2].coutsize),stats[2].corigsize);
-    fputs("      ", mailf);
+    fputs(_("      "), mailf);
     divzero(mailf, pct(stats[0].coutsize),stats[0].corigsize);
-    fputs("      ", mailf);
+    fputs(_("      "), mailf);
     divzero(mailf, pct(stats[1].coutsize),stats[1].corigsize);
 
-    if(stats[1].dumpdisks > 0) fputs("   (level:#disks ...)", mailf);
+    if(stats[1].dumpdisks > 0) fputs(_("   (level:#disks ...)"), mailf);
     putc('\n', mailf);
 
     fprintf(mailf,
-	    "Filesystems Dumped         %4d       %4d       %4d",
+	    _("Filesystems Dumped         %4d       %4d       %4d"),
 	    stats[2].dumpdisks, stats[0].dumpdisks, stats[1].dumpdisks);
 
     if(stats[1].dumpdisks > 0) {
 	first = 1;
 	for(lv = 1; lv < 10; lv++) if(dumpdisks[lv]) {
-	    fputs(first?"   (":" ", mailf);
+	    fputs(first?_("   ("):_(" "), mailf);
 	    first = 0;
-	    fprintf(mailf, "%d:%d", lv, dumpdisks[lv]);
+	    fprintf(mailf, _("%d:%d"), lv, dumpdisks[lv]);
 	}
 	putc(')', mailf);
     }
     putc('\n', mailf);
 
-    fprintf(mailf, "Avg Dump Rate (k/s)     ");
+    fprintf(mailf, _("Avg Dump Rate (k/s)     "));
     divzero_wide(mailf, stats[2].outsize,stats[2].dumper_time);
-    fputs("    ", mailf);
+    fputs(_("    "), mailf);
     divzero_wide(mailf, stats[0].outsize,stats[0].dumper_time);
-    fputs("    ", mailf);
+    fputs(_("    "), mailf);
     divzero_wide(mailf, stats[1].outsize,stats[1].dumper_time);
     putc('\n', mailf);
 
     putc('\n', mailf);
     fprintf(mailf,
-	    "Tape Time (hrs:min)       %2d:%02d      %2d:%02d      %2d:%02d\n",
+	    _("Tape Time (hrs:min)       %2d:%02d      %2d:%02d      %2d:%02d\n"),
 	    hrmn(stats[2].taper_time), hrmn(stats[0].taper_time),
 	    hrmn(stats[1].taper_time));
 
     fprintf(mailf,
-	    "Tape Size (meg)        %8.1lf   %8.1lf   %8.1lf\n",
+	    _("Tape Size (meg)        %8.1lf   %8.1lf   %8.1lf\n"),
 	    mb(stats[2].tapesize), mb(stats[0].tapesize),
 	    mb(stats[1].tapesize));
 
-    fprintf(mailf, "Tape Used (%%)             ");
+    fprintf(mailf, _("Tape Used (%%)             "));
     divzero(mailf, pct(stats[2].tapesize+marksize*(stats[2].tapedisks+stats[2].tapechunks)),(double)tapesize);
-    fputs("      ", mailf);
+    fputs(_("      "), mailf);
     divzero(mailf, pct(stats[0].tapesize+marksize*(stats[0].tapedisks+stats[0].tapechunks)),(double)tapesize);
-    fputs("      ", mailf);
+    fputs(_("      "), mailf);
     divzero(mailf, pct(stats[1].tapesize+marksize*(stats[1].tapedisks+stats[1].tapechunks)),(double)tapesize);
 
-    if(stats[1].tapedisks > 0) fputs("   (level:#disks ...)", mailf);
+    if(stats[1].tapedisks > 0) fputs(_("   (level:#disks ...)"), mailf);
     putc('\n', mailf);
 
     fprintf(mailf,
-	    "Filesystems Taped          %4d       %4d       %4d",
+	    _("Filesystems Taped          %4d       %4d       %4d"),
 	    stats[2].tapedisks, stats[0].tapedisks, stats[1].tapedisks);
 
     if(stats[1].tapedisks > 0) {
 	first = 1;
 	for(lv = 1; lv < 10; lv++) if(tapedisks[lv]) {
-	    fputs(first?"   (":" ", mailf);
+	    fputs(first?_("   ("):_(" "), mailf);
 	    first = 0;
-	    fprintf(mailf, "%d:%d", lv, tapedisks[lv]);
+	    fprintf(mailf, _("%d:%d"), lv, tapedisks[lv]);
 	}
 	putc(')', mailf);
     }
     putc('\n', mailf);
 
-    if(stats[1].tapechunks > 0) fputs("   (level:#chunks ...)", mailf);
+    if(stats[1].tapechunks > 0) fputs(_("   (level:#chunks ...)"), mailf);
     putc('\n', mailf);
 
     fprintf(mailf,
-	    "Chunks Taped               %4d       %4d       %4d",
+	    _("Chunks Taped               %4d       %4d       %4d"),
 	    stats[2].tapechunks, stats[0].tapechunks, stats[1].tapechunks);
 
     if(stats[1].tapechunks > 0) {
 	first = 1;
 	for(lv = 1; lv < 10; lv++) if(tapechunks[lv]) {
-	    fputs(first?"   (":" ", mailf);
+	    fputs(first?_("   ("):_(" "), mailf);
 	    first = 0;
-	    fprintf(mailf, "%d:%d", lv, tapechunks[lv]);
+	    fprintf(mailf, _("%d:%d"), lv, tapechunks[lv]);
 	}
 	putc(')', mailf);
     }
     putc('\n', mailf);
 
-    fprintf(mailf, "Avg Tp Write Rate (k/s) ");
+    fprintf(mailf, _("Avg Tp Write Rate (k/s) "));
     divzero_wide(mailf, stats[2].tapesize,stats[2].taper_time);
-    fputs("    ", mailf);
+    fputs(_("    "), mailf);
     divzero_wide(mailf, stats[0].tapesize,stats[0].taper_time);
-    fputs("    ", mailf);
+    fputs(_("    "), mailf);
     divzero_wide(mailf, stats[1].tapesize,stats[1].taper_time);
     putc('\n', mailf);
 
     if(stats_by_tape) {
 	int label_length = (int)strlen(stats_by_tape->label) + 5;
-	fprintf(mailf,"\nUSAGE BY TAPE:\n");
-	fprintf(mailf,"  %-*s  Time      Size      %%    Nb    Nc\n",
-		label_length, "Label");
+	fprintf(mailf,_("\nUSAGE BY TAPE:\n"));
+	fprintf(mailf,_("  %-*s  Time      Size      %%    Nb    Nc\n"),
+		label_length, _("Label"));
 	for(current_tape = stats_by_tape; current_tape != NULL;
 	    current_tape = current_tape->next) {
-	    fprintf(mailf, "  %-*s", label_length, current_tape->label);
-	    fprintf(mailf, " %2d:%02d", hrmn(current_tape->taper_time));
-	    fprintf(mailf, " %8.0lf%s  ", du(current_tape->coutsize), displayunit);
+	    fprintf(mailf, _("  %-*s"), label_length, current_tape->label);
+	    fprintf(mailf, _(" %2d:%02d"), hrmn(current_tape->taper_time));
+	    fprintf(mailf, _(" %8.0lf%s  "), du(current_tape->coutsize), displayunit);
 	    divzero(mailf, pct(current_tape->coutsize + marksize *
 		   (current_tape->tapedisks+current_tape->tapechunks)),
 		   (double)tapesize);
-	    fprintf(mailf, "  %4d", current_tape->tapedisks);
-	    fprintf(mailf, "  %4d\n", current_tape->tapechunks);
+	    fprintf(mailf, _("  %4d"), current_tape->tapedisks);
+	    fprintf(mailf, _("  %4d\n"), current_tape->tapechunks);
 	}
     }
 }
@@ -1004,22 +1007,24 @@ output_tapeinfo(void)
 
     if (last_run_tapes > 0) {
 	if(amflush_run)
-	    fprintf(mailf, "The dumps were flushed to tape%s %s.\n",
-		    last_run_tapes == 1 ? "" : "s",
+	    fprintf(mailf,
+		    plural(_("The dumps were flushed to tape %s.\n"),
+			   _("The dumps were flushed to tapes %s.\n"),
+			   last_run_tapes),
 		    tape_labels ? tape_labels : "");
 	else
-	    fprintf(mailf, "These dumps were to tape%s %s.\n",
-		    last_run_tapes == 1 ? "" : "s",
+	    fprintf(mailf,
+		    plural(_("These dumps were to tape %s.\n"),
+			   _("These dumps were to tapes %s.\n"),
+			   last_run_tapes),
 		    tape_labels ? tape_labels : "");
     }
 
     if(degraded_mode) {
 	fprintf(mailf,
-		"*** A TAPE ERROR OCCURRED: %s.\n", tapestart_error);
-	fputs("Some dumps may have been left in the holding disk.\n", mailf);
-	fprintf(mailf,
-		"Run amflush%s to flush them to tape.\n",
-		amflush_run ? " again" : "");
+		_("*** A TAPE ERROR OCCURRED: %s.\n"), tapestart_error);
+	fputs(_("Some dumps may have been left in the holding disk.\n"), mailf);
+	fprintf(mailf, _("Run amflush to flush them to tape.\n"));
     }
 
     tp = lookup_last_reusable_tape(skip);
@@ -1027,9 +1032,9 @@ output_tapeinfo(void)
     run_tapes = getconf_int(CNF_RUNTAPES);
 
     if (run_tapes == 1)
-	fputs("The next tape Amanda expects to use is: ", mailf);
+	fputs(_("The next tape Amanda expects to use is: "), mailf);
     else if(run_tapes > 1)
-	fprintf(mailf, "The next %d tapes Amanda expects to use are: ",
+	fprintf(mailf, _("The next %d tapes Amanda expects to use are: "),
 		run_tapes);
     
     while(run_tapes > 0) {
@@ -1037,9 +1042,9 @@ output_tapeinfo(void)
 	    fprintf(mailf, "%s", tp->label);
 	} else {
 	    if (run_tapes == 1)
-		fprintf(mailf, "a new tape");
+		fprintf(mailf, _("a new tape"));
 	    else
-		fprintf(mailf, "%d new tapes", run_tapes);
+		fprintf(mailf, _("%d new tapes"), run_tapes);
 	    run_tapes = 1;
 	}
 
@@ -1062,11 +1067,11 @@ output_tapeinfo(void)
 	}
 	lasttp = lookup_tapepos(lookup_nb_tape());
 	if(c == 1) {
-	    fprintf(mailf, "The next new tape already labelled is: %s.\n",
+	    fprintf(mailf, _("The next new tape already labelled is: %s.\n"),
 		    lasttp->label);
 	}
 	else {
-	    fprintf(mailf, "The next %d new tapes already labelled are: %s", c,
+	    fprintf(mailf, _("The next %d new tapes already labelled are: %s"), c,
 		    lasttp->label);
 	    lasttp = lasttp->prev;
 	    c--;
@@ -1525,8 +1530,8 @@ static void
 bogus_line(
     const char *err_text)
 {
-    printf("line %d of log is bogus: <%s>\n", curlinenum, curstr);
-    printf("  Scan failed at: <%s>\n", err_text);
+    printf(_("line %d of log is bogus: <%s>\n"), curlinenum, curstr);
+    printf(_("  Scan failed at: <%s>\n"), err_text);
 }
 
 
@@ -1544,8 +1549,8 @@ nicedate(
     char date[9];
     int  numdate;
     static char *months[13] = { "BogusMonth",
-	"January", "February", "March", "April", "May", "June",
-	"July", "August", "September", "October", "November", "December"
+	_("January"), _("February"), _("March"), _("April"), _("May"), _("June"),
+	_("July"), _("August"), _("September"), _("October"), _("November"), _("December")
     };
     int year, month, day;
 
@@ -1675,7 +1680,7 @@ handle_start(void)
     if(amflush_run && normal_run) {
 	amflush_run = 0;
 	addline(&notes,
-     "  reporter: both amflush and planner output in log, ignoring amflush.");
+     _("  reporter: both amflush and planner output in log, ignoring amflush."));
     }
 }
 
@@ -1834,7 +1839,7 @@ handle_stats(void)
 	    dp = lookup_disk(hostname, diskname);
 	    if(dp == NULL) {
 		addtostrange(hostname, diskname, level,
-			     "ERROR [not in disklist]");
+			     _("ERROR [not in disklist]"));
 		exit_status |= STATUS_FAILED;
 		amfree(hostname);
 		amfree(diskname);
@@ -2079,7 +2084,7 @@ handle_chunk(void)
     if(dp == NULL) {
  	char *str = NULL;
 	
- 	str = vstrallocf("  %s ERROR [not in disklist]",
+ 	str = vstrallocf(_("  %s ERROR [not in disklist]"),
 			prefix(hostname, diskname, level));
  	addline(&errsum, str);
  	amfree(str);
@@ -2228,7 +2233,7 @@ handle_success(
 
     dp = lookup_disk(hostname, diskname);
     if(dp == NULL) {
-	addtostrange(hostname, qdiskname, level, "ERROR [not in disklist]");
+	addtostrange(hostname, qdiskname, level, _("ERROR [not in disklist]"));
 	exit_status |= STATUS_FAILED;
 	amfree(hostname);
 	amfree(diskname);
@@ -2278,7 +2283,7 @@ handle_success(
 
     if (curprog == P_DUMPER &&
 	(sp->result == L_FAIL || sp->result == L_PARTIAL)) {
-	addtostrange(hostname, qdiskname, level, "was successfully retried");
+	addtostrange(hostname, qdiskname, level, _("was successfully retried"));
     }
 
     amfree(hostname);
@@ -2294,7 +2299,7 @@ handle_success(
 
     if(curprog == P_TAPER) {
 	if(current_tape == NULL) {
-	    error("current_tape == NULL");
+	    error(_("current_tape == NULL"));
 	    /*NOTREACHED*/
 	}
 	stats[i].taper_time += sec;
@@ -2480,7 +2485,7 @@ handle_failed(void)
     dp = lookup_disk(hostname, diskname);
     amfree(diskname);
     if(dp == NULL) {
-	addtostrange(hostname, qdiskname, level, "ERROR [not in disklist]");
+	addtostrange(hostname, qdiskname, level, _("ERROR [not in disklist]"));
     } else {
 	repdata = find_repdata(dp, datestamp, level);
 
@@ -2493,7 +2498,7 @@ handle_failed(void)
     }
     amfree(datestamp);
 
-    str = vstrallocf("FAILED %s", errstr);
+    str = vstrallocf(_("FAILED %s"), errstr);
     addtostrange(hostname, qdiskname, level, str);
     amfree(str);
 
@@ -2524,7 +2529,7 @@ generate_missing(void)
     for(dp = diskq.head; dp != NULL; dp = dp->next) {
 	if(dp->todo && data(dp) == NULL) {
 	    qdisk = quote_string(dp->name);
-	    addtostrange(dp->host->hostname, qdisk, -987, "RESULTS MISSING");
+	    addtostrange(dp->host->hostname, qdisk, -987, _("RESULTS MISSING"));
 	    exit_status |= STATUS_MISSING;
 	    amfree(qdisk);
 	}
@@ -2557,14 +2562,14 @@ generate_bad_estimate(void)
 
 		    if(repdata->est_csize * 0.9 > outsize) {
 			snprintf(s, 1000,
-				"  big estimate: %s %s %d",
+				_("  big estimate: %s %s %d"),
 				 repdata->disk->host->hostname,
 				 repdata->disk->name,
 				 repdata->level);
 			s[999] = '\0';
 			addline(&notes, s);
 			snprintf(s, 1000,
-				 "                est: %.0lf%s    out %.0lf%s",
+				 _("                est: %.0lf%s    out %.0lf%s"),
 				 du(repdata->est_csize), displayunit,
 				 du(outsize), displayunit);
 			s[999] = '\0';
@@ -2572,14 +2577,14 @@ generate_bad_estimate(void)
 		    }
 		    else if(repdata->est_csize * 1.1 < outsize) {
 			snprintf(s, 1000,
-				"  small estimate: %s %s %d",
+				_("  small estimate: %s %s %d"),
 				 repdata->disk->host->hostname,
 				 repdata->disk->name,
 				 repdata->level);
 			s[999] = '\0';
 			addline(&notes, s);
 			snprintf(s, 1000,
-				 "                  est: %.0lf%s    out %.0lf%s",
+				 _("                  est: %.0lf%s    out %.0lf%s"),
 				 du(repdata->est_csize), displayunit,
 				 du(outsize), displayunit);
 			s[999] = '\0';
@@ -2601,12 +2606,12 @@ prefix (
 
     if (level == -987) {
 	str = newvstrallocf(str, " %s %s",
-			host ? host : "(host?)",
-			disk ? disk : "(disk?)");
+			host ? host : _("(host?)"),
+			disk ? disk : _("(disk?)"));
     } else {
 	str = newvstrallocf(str, " %s %s lev %d",
-			host ? host : "(host?)",
-			disk ? disk : "(disk?)",
+			host ? host : _("(host?)"),
+			disk ? disk : _("(disk?)"),
 			level);
     }
     return str;
@@ -2629,7 +2634,7 @@ prefixstrange (
     if(host) {
 	strncpy(h, host, len_host);
     } else {
-	strncpy(h, "(host?)", len_host);
+	strncpy(h, _("(host?)"), len_host);
     }
     h[len_host] = '\0';
     for(l = strlen(h); l < len_host; l++) {
@@ -2639,7 +2644,7 @@ prefixstrange (
     if(disk) {
 	strncpy(d, disk, len_disk);
     } else {
-	strncpy(d, "(disk?)", len_disk);
+	strncpy(d, _("(disk?)"), len_disk);
     }
     d[len_disk] = '\0';
     for(l = strlen(d); l < len_disk; l++) {
@@ -2697,7 +2702,7 @@ copy_template_file(
   if ((fd = open(lbl_templ, 0)) < 0) {
     curlog = L_ERROR;
     curprog = P_REPORTER;
-    curstr = vstrallocf("could not open PostScript template file %s: %s",
+    curstr = vstrallocf(_("could not open PostScript template file %s: %s"),
 		       lbl_templ, strerror(errno));
     handle_error();
     amfree(curstr);
@@ -2709,7 +2714,7 @@ copy_template_file(
     if (fwrite(buf, (size_t)numread, 1, postscript) != 1) {
       curlog = L_ERROR;
       curprog = P_REPORTER;
-      curstr = vstrallocf("error copying PostScript template file %s: %s",
+      curstr = vstrallocf(_("error copying PostScript template file %s: %s"),
 		         lbl_templ, strerror(errno));
       handle_error();
       amfree(curstr);
@@ -2721,7 +2726,7 @@ copy_template_file(
   if (numread < 0) {
     curlog = L_ERROR;
     curprog = P_REPORTER;
-    curstr = vstrallocf("error reading PostScript template file %s: %s",
+    curstr = vstrallocf(_("error reading PostScript template file %s: %s"),
 		       lbl_templ, strerror(errno));
     handle_error();
     amfree(curstr);
@@ -2796,21 +2801,21 @@ do_postscript_output(void)
 	/* generate a few elements */
 	fprintf(postscript,"(%s) DrawDate\n\n",
 		    nicedate(run_datestamp ? run_datestamp : "0"));
-	fprintf(postscript,"(Amanda Version %s) DrawVers\n",version());
+	fprintf(postscript,_("(Amanda Version %s) DrawVers\n"),version());
 	fprintf(postscript,"(%s) DrawTitle\n", current_tape->label);
 
 	/* Stats */
 	fprintf(postscript, "(Total Size:        %6.1lf MB) DrawStat\n",
 	      mb(current_tape->coutsize));
-	fprintf(postscript, "(Tape Used (%%)       ");
+	fprintf(postscript, _("(Tape Used (%%)       "));
 	divzero(postscript, pct(current_tape->coutsize + 
 				marksize * (current_tape->tapedisks + current_tape->tapechunks)),
 				(double)tapesize);
 	fprintf(postscript," %%) DrawStat\n");
-	fprintf(postscript, "(Compression Ratio:  ");
+	fprintf(postscript, _("(Compression Ratio:  "));
 	divzero(postscript, pct(current_tape->coutsize),current_tape->corigsize);
 	fprintf(postscript," %%) DrawStat\n");
-	fprintf(postscript,"(Filesystems Taped: %4d) DrawStat\n",
+	fprintf(postscript,_("(Filesystems Taped: %4d) DrawStat\n"),
 		  current_tape->tapedisks);
 
 	/* Summary */

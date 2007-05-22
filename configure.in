@@ -1984,6 +1984,26 @@ AC_CHECK_SIZEOF(time_t)
 AM_PROG_LIBTOOL
 AC_SUBST(LIBTOOL_DEPS)
 
+dnl# FreeBSD needs to link libxpg4
+AC_CHECK_LIB(xpg4, setlocale)
+
+# ------------------------------------------------------------------
+# All list of languages for which a translation exist. Each
+#  language is separated by a space.
+# ------------------------------------------------------------------
+ALL_LINGUAS=""
+
+AC_PATH_PROGS(MSGFMT, msgfmt, no)
+if test "$MSGFMT" = "no"; then
+   echo 'msgfmt program not found, disabling NLS !'
+   USE_NLS=no
+   USE_INCLUDED_LIBINTL=no
+else
+dnl Indenting the next line causes autopoint for emit a warning...
+AM_GNU_GETTEXT_VERSION([0.11.5])
+   AM_GNU_GETTEXT([external])
+fi
+
 AC_PROG_GCC_TRADITIONAL
 AC_C_CONST
 AMANDA_C_UNSIGNED_LONG_CONSTANTS

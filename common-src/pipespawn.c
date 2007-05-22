@@ -111,32 +111,32 @@ pipespawnv_passwd(
 	    amfree(quoted);
 	}
     }
-    dbprintf("Spawning \"%s\" in pipeline\n", cmdline);
+    dbprintf(_("Spawning \"%s\" in pipeline\n"), cmdline);
 
     /*
      * Create the pipes
      */
     if ((pipedef & STDIN_PIPE) != 0) {
 	if(pipe(inpipe) == -1) {
-	    error("error [open pipe to %s: %s]", prog, strerror(errno));
+	    error(_("error [open pipe to %s: %s]"), prog, strerror(errno));
 	    /*NOTREACHED*/
 	}
     }
     if ((pipedef & STDOUT_PIPE) != 0) {
 	if(pipe(outpipe) == -1) {
-	    error("error [open pipe to %s: %s]", prog, strerror(errno));
+	    error(_("error [open pipe to %s: %s]"), prog, strerror(errno));
 	    /*NOTREACHED*/
 	}
     }
     if ((pipedef & STDERR_PIPE) != 0) {
 	if(pipe(errpipe) == -1) {
-	    error("error [open pipe to %s: %s]", prog, strerror(errno));
+	    error(_("error [open pipe to %s: %s]"), prog, strerror(errno));
 	    /*NOTREACHED*/
 	}
     }
     if ((pipedef & PASSWD_PIPE) != 0) {
 	if(pipe(passwdpipe) == -1) {
-	    error("error [open pipe to %s: %s]", prog, strerror(errno));
+	    error(_("error [open pipe to %s: %s]"), prog, strerror(errno));
 	    /*NOTREACHED*/
 	}
     }
@@ -147,7 +147,7 @@ pipespawnv_passwd(
     switch(pid = fork()) {
     case -1:
 	e = strerror(errno);
-	error("error [fork %s: %s]", prog, e);
+	error(_("error [fork %s: %s]"), prog, e);
 	/*NOTREACHED*/
 
     default:	/* parent process */
@@ -192,15 +192,15 @@ pipespawnv_passwd(
 	 * Shift the pipes to the standard file descriptors as requested.
 	 */
 	if(dup2(inpipe[0], 0) == -1) {
-	    error("error [spawn %s: dup2 in: %s]", prog, strerror(errno));
+	    error(_("error [spawn %s: dup2 in: %s]"), prog, strerror(errno));
 	    /*NOTREACHED*/
 	}
 	if(dup2(outpipe[1], 1) == -1) {
-	    error("error [spawn %s: dup2 out: %s]", prog, strerror(errno));
+	    error(_("error [spawn %s: dup2 out: %s]"), prog, strerror(errno));
 	    /*NOTREACHED*/
 	}
 	if(dup2(errpipe[1], 2) == -1) {
-	    error("error [spawn %s: dup2 err: %s]", prog, strerror(errno));
+	    error(_("error [spawn %s: dup2 err: %s]"), prog, strerror(errno));
 	    /*NOTREACHED*/
 	}
 
@@ -224,7 +224,7 @@ pipespawnv_passwd(
 
 	execve(prog, my_argv, env);
 	e = strerror(errno);
-	error("error [exec %s: %s]", prog, e);
+	error(_("error [exec %s: %s]"), prog, e);
 	/*NOTREACHED*/
     }
     return pid;

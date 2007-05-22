@@ -363,7 +363,7 @@ am_feature_to_string(
     size_t			i;
 
     if (f == NULL) {
-	result = stralloc("UNKNOWNFEATURE");
+	result = stralloc(_("UNKNOWNFEATURE"));
     } else {
 	result = alloc((f->size * 2) + 1);
 	for (i = 0; i < f->size; i++) {
@@ -439,7 +439,7 @@ am_string_to_feature(
 int
 main(
     int		argc,
-    char	**argv)
+    char **	argv)
 {
     am_feature_t		*f;
     am_feature_t		*f1;
@@ -448,20 +448,22 @@ main(
     int				i;
     int				n;
 
+    setlocale(LC_ALL, "C");
+
     f = am_init_feature_set();
     if (f == NULL) {
-	fprintf(stderr, "cannot initialize feature set\n");
+	fprintf(stderr, _("cannot initialize feature set\n"));
 	return 1;
     }
 
     s = am_feature_to_string(f);
-    printf("base features=%s\n", s);
+    printf(_("base features=%s\n"), s);
 
     f1 = am_string_to_feature(s);
     s1 = am_feature_to_string(f1);
     if (strcmp(s, s1) != 0) {
-	fprintf(stderr, "base feature -> string -> feature set mismatch\n");
-	fprintf(stderr, "conv features=%s\n", s);
+	fprintf(stderr, _("base feature -> string -> feature set mismatch\n"));
+	fprintf(stderr, _("conv features=%s\n"), s);
     }
 
     amfree(s1);
@@ -471,29 +473,29 @@ main(
 	if (argv[i][0] == '+') {
 	    n = atoi(&argv[i][1]);
 	    if (am_add_feature(f, (am_feature_e)n)) {
-		printf("added feature number %d\n", n);
+		printf(_("added feature number %d\n"), n);
 	    } else {
-		printf("could not add feature number %d\n", n);
+		printf(_("could not add feature number %d\n"), n);
 	    }
 	} else if (argv[i][0] == '-') {
 	    n = atoi(&argv[i][1]);
 	    if (am_remove_feature(f, (am_feature_e)n)) {
-		printf("removed feature number %d\n", n);
+		printf(_("removed feature number %d\n"), n);
 	    } else {
-		printf("could not remove feature number %d\n", n);
+		printf(_("could not remove feature number %d\n"), n);
 	    }
 	} else {
 	    n = atoi(argv[i]);
 	    if (am_has_feature(f, (am_feature_e)n)) {
-		printf("feature %d is set\n", n);
+		printf(_("feature %d is set\n"), n);
 	    } else {
-		printf("feature %d is not set\n", n);
+		printf(_("feature %d is not set\n"), n);
 	    }
 	}
     }
 
     s = am_feature_to_string(f);
-    printf(" new features=%s\n", s);
+    printf(_(" new features=%s\n"), s);
     amfree(s);
 
     return 0;

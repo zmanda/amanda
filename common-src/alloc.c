@@ -129,8 +129,8 @@ debug_alloc(
     malloc_enter(debug_caller_loc(file, line));
     addr = (void *)malloc(max(size, 1));
     if (addr == NULL) {
-	errordump("%s@%d: memory allocation failed (" SIZE_T_FMT " bytes requested)",
-		  file ? file : "(unknown)",
+	errordump(_("%s@%d: memory allocation failed (" SIZE_T_FMT " bytes requested)"),
+		  file ? file : _("(unknown)"),
 		  file ? line : -1,
 		  (SIZE_T_FMT_TYPE)size);
 	/*NOTREACHED*/
@@ -205,7 +205,7 @@ internal_vstralloc(
     size_t l;
 
     if (str == NULL) {
-	errordump("internal_vstralloc: str is NULL");
+	errordump(_("internal_vstralloc: str is NULL"));
 	/*NOTREACHED*/
     }
 
@@ -220,8 +220,8 @@ internal_vstralloc(
 	    continue;				/* minor optimisation */
 	}
 	if (a >= MAX_VSTRALLOC_ARGS) {
-	    errordump("%s@%d: more than %d args to vstralloc",
-		      file ? file : "(unknown)",
+	    errordump(_("%s@%d: more than %d args to vstralloc"),
+		      file ? file : _("(unknown)"),
 		      file ? line : -1,
 		      MAX_VSTRALLOC_ARGS);
 	    /*NOTREACHED*/

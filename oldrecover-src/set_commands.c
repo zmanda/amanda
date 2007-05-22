@@ -63,8 +63,8 @@ set_date(
 	}
 	else
 	{
-	    printf("No index records for cwd on new date\n");
-	    printf("Setting cwd to mount point\n");
+	    printf(_("No index records for cwd on new date\n"));
+	    printf(_("Setting cwd to mount point\n"));
 	    disk_path = newstralloc(disk_path, "/");	/* fake it */
 	    clear_dir_list();
 	}
@@ -86,7 +86,7 @@ set_host(
 
     if (is_extract_list_nonempty())
     {
-	printf("Must clear extract list before changing host\n");
+	printf(_("Must clear extract list before changing host\n"));
 	return;
     }
 
@@ -105,7 +105,7 @@ set_host(
 	 */
 	if ((hp = gethostbyname(uqhost)) != NULL) {
 	    host = hp->h_name;
-	    printf("Trying host %s ...\n", host);
+	    printf(_("Trying host %s ...\n"), host);
 	    cmd = newstralloc2(cmd, "HOST ", host);
 	    if (converse(cmd) == -1)
 		exit(1);
@@ -117,7 +117,7 @@ set_host(
 	    {
 	        for (hostp = hp->h_aliases; (host = *hostp) != NULL; hostp++)
 	        {
-		    printf("Trying host %s ...\n", host);
+		    printf(_("Trying host %s ...\n"), host);
 		    cmd = newstralloc2(cmd, "HOST ", host);
 		    if (converse(cmd) == -1)
 		        exit(1);
@@ -165,7 +165,7 @@ set_disk(
 
     if (is_extract_list_nonempty())
     {
-	printf("Must clear extract list before changing disk\n");
+	printf(_("Must clear extract list before changing disk\n"));
 	return;
     }
 
@@ -173,7 +173,7 @@ set_disk(
     if (mtpt != NULL) {
 	uqmtpt = unquote_string(mtpt);
 	if (*mtpt != '/') {
-	    printf("Mount point \"%s\" invalid - must start with /\n", uqmtpt);
+	    printf(_("Mount point \"%s\" invalid - must start with /\n"), uqmtpt);
 	    amfree(uqmtpt);
 	    return;
 	}
@@ -224,8 +224,8 @@ set_disk(
     }
     else
     {
-	printf("No index records for disk for specified date\n");
-	printf("If date correct, notify system administrator\n");
+	printf(_("No index records for disk for specified date\n"));
+	printf(_("If date correct, notify system administrator\n"));
 	disk_path = newstralloc(disk_path, "/");	/* fake it */
 	clear_dir_list();
     }
@@ -279,15 +279,15 @@ cd_glob(
     char *path_on_disk = NULL;
 
     if (disk_name == NULL) {
-	printf("Must select disk before changing directory\n");
+	printf(_("Must select disk before changing directory\n"));
 	return;
     }
 
     uqglob = unquote_string(glob);
     regex = glob_to_regex(uqglob);
-    dbprintf("cd_glob (%s) -> %s\n", uqglob, regex);
+    dbprintf(_("cd_glob (%s) -> %s\n"), uqglob, regex);
     if ((s = validate_regexp(regex)) != NULL) {
-        printf("\"%s\" is not a valid shell wildcard pattern: ", glob);
+        printf(_("\"%s\" is not a valid shell wildcard pattern: "), glob);
         puts(s);
 	amfree(regex);
         return;
@@ -331,13 +331,13 @@ cd_regex(
     char *path_on_disk = NULL;
 
     if (disk_name == NULL) {
-	printf("Must select disk before changing directory\n");
+	printf(_("Must select disk before changing directory\n"));
 	return;
     }
 
     uqregex = unquote_string(regex);
     if ((s = validate_regexp(uqregex)) != NULL) {
-	printf("\"%s\" is not a valid regular expression: ", uqregex);
+	printf(_("\"%s\" is not a valid regular expression: "), uqregex);
 	amfree(uqregex);
 	puts(s);
 	return;
@@ -410,7 +410,7 @@ cd_dir(
 	set_directory(dir);
     }
     else {
-	printf("Too many directory\n");
+	printf(_("Too many directory\n"));
     }
     amfree(dir);
 }
@@ -432,7 +432,7 @@ set_directory(
     }
 
     if (disk_name == NULL) {
-	printf("Must select disk before setting directory\n");
+	printf(_("Must select disk before setting directory\n"));
 	return;
 	/*NOTREACHED*/
     }
@@ -452,7 +452,7 @@ set_directory(
 	{
 	    if (strncmp(mount_point, ldir, strlen(mount_point)) != 0)
 	    {
-		printf("Invalid directory - Can't cd outside mount point \"%s\"\n",
+		printf(_("Invalid directory - Can't cd outside mount point \"%s\"\n"),
 		       mount_point);
 		amfree(ldir);
 		return;
@@ -488,7 +488,7 @@ set_directory(
 	if (strcmp(dp, "..") == 0) {
 	    if (strcmp(new_dir, "/") == 0) {
 		/* at top of disk */
-		printf("Invalid directory - Can't cd outside mount point \"%s\"\n",
+		printf(_("Invalid directory - Can't cd outside mount point \"%s\"\n"),
 		       mount_point);
 		/*@ignore@*/
 		amfree(new_dir);
@@ -532,7 +532,7 @@ set_directory(
     }
     else
     {
-	printf("Invalid directory - %s\n", dir);
+	printf(_("Invalid directory - %s\n"), dir);
     }
 
     /*@ignore@*/
@@ -547,7 +547,7 @@ void
 show_directory(void)
 {
     if (mount_point == NULL || disk_path == NULL)
-        printf("Must select disk first\n");
+        printf(_("Must select disk first\n"));
     else if (strcmp(mount_point, "/") == 0)
 	printf("%s\n", disk_path);
     else if (strcmp(disk_path, "/") == 0)
@@ -596,14 +596,14 @@ set_tape(
     }
 
     if (tape_device_name)
-	printf ("Using tape \"%s\"", tape_device_name);
+	printf (_("Using tape \"%s\""), tape_device_name);
     else
-	printf ("Using default tape");
+	printf (_("Using default tape"));
 
     if (tape_server_name)
-	printf (" from server %s.\n", tape_server_name);
+	printf (_(" from server %s.\n"), tape_server_name);
     else
-	printf (".\nTape server unspecified, assumed to be %s.\n",
+	printf (_(".\nTape server unspecified, assumed to be %s.\n"),
 		server_name);
 }
 
@@ -613,11 +613,11 @@ set_mode(
 {
 #ifdef SAMBA_CLIENT
   if (mode == SAMBA_SMBCLIENT) {
-    printf ("SAMBA dumps will be extracted using smbclient\n");
+    printf (_("SAMBA dumps will be extracted using smbclient\n"));
     samba_extract_method = SAMBA_SMBCLIENT;
   } else {
     if (mode == SAMBA_TAR) {
-      printf ("SAMBA dumps will be extracted as TAR dumps\n");
+      printf (_("SAMBA dumps will be extracted as TAR dumps\n"));
       samba_extract_method = SAMBA_TAR;
     }
   }
@@ -630,12 +630,12 @@ void
 show_mode(void) 
 {
 #ifdef SAMBA_CLIENT
-  printf ("SAMBA dumps are extracted ");
+  printf (_("SAMBA dumps are extracted "));
 
   if (samba_extract_method == SAMBA_TAR) {
-    printf (" as TAR dumps\n");
+    printf (_(" as TAR dumps\n"));
   } else {
-    printf ("using smbclient\n");
+    printf (_("using smbclient\n"));
   }
 #endif /* SAMBA_CLIENT */
 }

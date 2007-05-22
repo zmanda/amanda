@@ -434,8 +434,8 @@ amfunlock(
 #ifdef CONFIGURE_TEST
 int
 main(
-    int argc,
-    char **argv)
+    int		argc,
+    char **	argv)
 {
     int lockfd;
     char *filen = "/tmp/conftest.lock";
@@ -443,6 +443,8 @@ main(
 
     (void)argc;		/* Quiet compiler warning */
     (void)argv;		/* Quiet compiler warning */
+
+    setlocale(LC_ALL, "C");
 
     unlink(filen);
     if ((lockfd = open(filen, O_RDONLY | O_CREAT | O_EXCL, 0600)) == -1) {

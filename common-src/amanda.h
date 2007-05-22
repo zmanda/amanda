@@ -84,6 +84,29 @@
 #  endif
 #endif
 
+#ifdef USE_NLS
+#  include <libintl.h>
+#  include <locale.h>
+#  define  plural(String1, String2, Count)				\
+		(((Count) == 1) ? (String1) : (String2))
+#else
+#  define plural(String1, String2, Count)				\
+		(((Count) == 1) ? (String1) : (String2))
+#  define setlocale(Which, Locale)
+#  define testdomain(Domain)
+#  define bindtextdomain(Package, Directory)
+#  define gettext(String)			String
+#  define dgettext(Domain, String)		String
+#  define dcgettext(Domain, String, Catagory)	String
+#  define ngettext(String1, String2, Count)				\
+		plural((String1), (String2), (Count))
+#  define dngettext(Domain, String1, String2, Count)			\
+		plural((String1), (String2), (Count))
+#  define dcngettext(Domain, String1, String2, Count, Catagory)		\
+		plural((String1), (String2), (Count))
+#endif
+#define _(String)			String
+
 #ifdef HAVE_FCNTL_H
 #  include <fcntl.h>
 #endif
@@ -402,7 +425,7 @@ extern int errno;
 #define assert(exp)	do {						\
     if (!(exp)) {							\
 	onerror(abort);							\
-	error("assert: %s false, file %s, line %d",			\
+	error(_("assert: %s is false: file %s, line %d"),		\
 	   stringize(exp), __FILE__, __LINE__);				\
         /*NOTREACHED*/							\
     }									\
@@ -611,7 +634,7 @@ void	areads_relbuf(int fd);
 
 #define	debug_amfree(f, l, p) do {					\
     if ((void *)(p) > (void *)sbrk(0))					\
-	    dbprintf("amfree: %s:%d bogus free (%p > %p)\n", (f), (l), (p), sbrk(0));\
+	    dbprintf(_("amfree: %s:%d bogus free (%p > %p)\n"), (f), (l), (p), sbrk(0));\
     amfree(p);								\
 } while (0)
 
@@ -1500,7 +1523,5 @@ void	add_history(const char *line);
 #ifndef AI_ALL
 #define AI_ALL 0
 #endif
-
-#define _(x) x
 
 #endif	/* !AMANDA_H */

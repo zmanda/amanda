@@ -256,6 +256,8 @@ main(
 
     safe_fd(-1, 0);
 
+    setlocale(LC_ALL, "C");
+
     set_pname("dumper");
 
     dbopen(DBG_SUBDIR_SERVER);
@@ -279,7 +281,7 @@ main(
 	char my_cwd[STR_SIZE];
 
 	if (getcwd(my_cwd, SIZEOF(my_cwd)) == NULL) {
-	    error("cannot determine current working directory");
+	    error(_("cannot determine current working directory"));
 	    /*NOTREACHED*/
 	}
 	config_dir = stralloc2(my_cwd, "/");
@@ -295,7 +297,7 @@ main(
 
     conffile = stralloc2(config_dir, CONFFILE_NAME);
     if(read_conffile(conffile)) {
-	error("errors processing config file \"%s\"", conffile);
+	error(_("errors processing config file \"%s\""), conffile);
 	/*NOTREACHED*/
     }
     amfree(conffile);
@@ -314,13 +316,13 @@ main(
     }
 #if defined BSD_SECURITY && !defined SSH_SECURITY
     else {
-    	error("must be run setuid root to communicate correctly");
+    	error(_("must be run setuid root to communicate correctly"));
 	/*NOTREACHED*/
     }
 #endif
 
     fprintf(stderr,
-	    "%s: pid %ld executable %s version %s\n",
+	    _("%s: pid %ld executable %s version %s\n"),
 	    get_pname(), (long) getpid(),
 	    my_argv[0], version());
     fflush(stderr);
@@ -328,7 +330,7 @@ main(
     /* now, make sure we are a valid user */
 
     if (getpwuid(getuid()) == NULL) {
-	error("can't get login name for my uid %ld", (long)getuid());
+	error(_("can't get login name for my uid %ld"), (long)getuid());
 	/*NOTREACHED*/
     }
 
@@ -344,7 +346,7 @@ main(
 	switch(cmd) {
 	case START:
 	    if(cmdargs.argc <  2)
-		error("error [dumper START: not enough args: timestamp]");
+		error(_("error [dumper START: not enough args: timestamp]"));
 	    dumper_timestamp = newstralloc(dumper_timestamp, cmdargs.argv[2]);
 	    break;
 
@@ -375,32 +377,32 @@ main(
 	    a = 2;
 
 	    if(a >= cmdargs.argc) {
-		error("error [dumper PORT-DUMP: not enough args: handle]");
+		error(_("error [dumper PORT-DUMP: not enough args: handle]"));
 		/*NOTREACHED*/
 	    }
 	    handle = newstralloc(handle, cmdargs.argv[a++]);
 
 	    if(a >= cmdargs.argc) {
-		error("error [dumper PORT-DUMP: not enough args: port]");
+		error(_("error [dumper PORT-DUMP: not enough args: port]"));
 		/*NOTREACHED*/
 	    }
 	    taper_port = (in_port_t)atoi(cmdargs.argv[a++]);
 
 	    if(a >= cmdargs.argc) {
-		error("error [dumper PORT-DUMP: not enough args: hostname]");
+		error(_("error [dumper PORT-DUMP: not enough args: hostname]"));
 		/*NOTREACHED*/
 	    }
 	    hostname = newstralloc(hostname, cmdargs.argv[a++]);
 
 	    if(a >= cmdargs.argc) {
-		error("error [dumper PORT-DUMP: not enough args: features]");
+		error(_("error [dumper PORT-DUMP: not enough args: features]"));
 		/*NOTREACHED*/
 	    }
 	    am_release_feature_set(their_features);
 	    their_features = am_string_to_feature(cmdargs.argv[a++]);
 
 	    if(a >= cmdargs.argc) {
-		error("error [dumper PORT-DUMP: not enough args: diskname]");
+		error(_("error [dumper PORT-DUMP: not enough args: diskname]"));
 		/*NOTREACHED*/
 	    }
 	    qdiskname = newstralloc(qdiskname, cmdargs.argv[a++]);
@@ -409,7 +411,7 @@ main(
 	    diskname = unquote_string(qdiskname);
 
 	    if(a >= cmdargs.argc) {
-		error("error [dumper PORT-DUMP: not enough args: device]");
+		error(_("error [dumper PORT-DUMP: not enough args: device]"));
 		/*NOTREACHED*/
 	    }
 	    device = newstralloc(device, cmdargs.argv[a++]);
@@ -417,46 +419,46 @@ main(
 		amfree(device);
 
 	    if(a >= cmdargs.argc) {
-		error("error [dumper PORT-DUMP: not enough args: level]");
+		error(_("error [dumper PORT-DUMP: not enough args: level]"));
 		/*NOTREACHED*/
 	    }
 	    level = atoi(cmdargs.argv[a++]);
 
 	    if(a >= cmdargs.argc) {
-		error("error [dumper PORT-DUMP: not enough args: dumpdate]");
+		error(_("error [dumper PORT-DUMP: not enough args: dumpdate]"));
 		/*NOTREACHED*/
 	    }
 	    dumpdate = newstralloc(dumpdate, cmdargs.argv[a++]);
 
 	    if(a >= cmdargs.argc) {
-		error("error [dumper PORT-DUMP: not enough args: program]");
+		error(_("error [dumper PORT-DUMP: not enough args: program]"));
 		/*NOTREACHED*/
 	    }
 	    progname = newstralloc(progname, cmdargs.argv[a++]);
 
 	    if(a >= cmdargs.argc) {
-		error("error [dumper PORT-DUMP: not enough args: amandad_path]");
+		error(_("error [dumper PORT-DUMP: not enough args: amandad_path]"));
 		/*NOTREACHED*/
 	    }
 	    amandad_path = newstralloc(amandad_path, cmdargs.argv[a++]);
 
 	    if(a >= cmdargs.argc) {
-		error("error [dumper PORT-DUMP: not enough args: client_username]");
+		error(_("error [dumper PORT-DUMP: not enough args: client_username]"));
 	    }
 	    client_username = newstralloc(client_username, cmdargs.argv[a++]);
 
 	    if(a >= cmdargs.argc) {
-		error("error [dumper PORT-DUMP: not enough args: ssh_keys]");
+		error(_("error [dumper PORT-DUMP: not enough args: ssh_keys]"));
 	    }
 	    ssh_keys = newstralloc(ssh_keys, cmdargs.argv[a++]);
 
 	    if(a >= cmdargs.argc) {
-		error("error [dumper PORT-DUMP: not enough args: options]");
+		error(_("error [dumper PORT-DUMP: not enough args: options]"));
 	    }
 	    options = newstralloc(options, cmdargs.argv[a++]);
 
 	    if(a != cmdargs.argc) {
-		error("error [dumper PORT-DUMP: too many args: %d != %d]",
+		error(_("error [dumper PORT-DUMP: too many args: %d != %d]"),
 		      cmdargs.argc, a);
 	        /*NOTREACHED*/
 	    }
@@ -464,7 +466,7 @@ main(
 	    /* Double-check that 'localhost' resolves properly */
 	    if ((res = resolve_hostname("localhost", NULL, NULL) != 0)) {
 		errstr = newvstralloc(errstr,
-				     "could not resolve localhost: ",
+				     _("could not resolve localhost: "),
 				     gai_strerror(res), NULL);
 		q = squotef(errstr);
 		putresult(FAILED, "%s %s\n", handle, q);
@@ -480,7 +482,7 @@ main(
 				  STREAM_BUFSIZE, 0, NULL, 0);
 	    if (outfd == -1) {
 		
-		errstr = newvstrallocf(errstr, "port open: %s",
+		errstr = newvstrallocf(errstr, _("port open: %s"),
 				      strerror(errno));
 		q = squotef(errstr);
 		putresult(FAILED, "%s %s\n", handle, q);
@@ -526,7 +528,7 @@ main(
 	    } else if(cmdargs.argc >= 0) {
 		q = squote(cmdargs.argv[0]);
 	    } else {
-		q = stralloc("(no input?)");
+		q = stralloc(_("(no input?)"));
 	    }
 	    putresult(BAD_COMMAND, "%s\n", q);
 	    amfree(q);
@@ -641,7 +643,7 @@ databuf_flush(
 	dumpbytes %= (off_t)1024;
     }
     if (written < 0) {
-	errstr = squotef("data write: %s", strerror(errno));
+	errstr = squotef(_("data write: %s"), strerror(errno));
 	return -1;
     }
     db->datain = db->dataout = db->buf;
@@ -664,20 +666,20 @@ process_dumpeof(void)
     if(!ISSET(status, GOT_SIZELINE) && dump_result < 2) {
 	/* make a note if there isn't already a failure */
 	fprintf(errf,
-		"? %s: strange [missing size line from sendbackup]\n",
+		_("? %s: strange [missing size line from sendbackup]\n"),
 		get_pname());
 	if(errstr == NULL) {
-	    errstr = stralloc("missing size line from sendbackup");
+	    errstr = stralloc(_("missing size line from sendbackup"));
 	}
 	dump_result = max(dump_result, 2);
     }
 
     if(!ISSET(status, GOT_ENDLINE) && dump_result < 2) {
 	fprintf(errf,
-		"? %s: strange [missing end line from sendbackup]\n",
+		_("? %s: strange [missing end line from sendbackup]\n"),
 		get_pname());
 	if(errstr == NULL) {
-	    errstr = stralloc("missing end line from sendbackup");
+	    errstr = stralloc(_("missing end line from sendbackup"));
 	}
 	dump_result = max(dump_result, 2);
     }
@@ -787,7 +789,7 @@ process_dumpline(
 
 	    tok = strtok(NULL, "");
 	    if (tok == NULL || *tok != '[') {
-		errstr = newvstrallocf(errstr, "bad remote error: %s", str);
+		errstr = newvstrallocf(errstr, _("bad remote error: %s"), str);
 	    } else {
 		char *enderr;
 
@@ -842,10 +844,10 @@ add_msg_data(
     if (str == NULL) {
 	if (buflen == 0)
 	    return;
-	fprintf(errf,"? %s: error [partial line in msgbuf: "
-				SIZE_T_FMT " bytes]\n", get_pname(),
+	fprintf(errf,_("? %s: error [partial line in msgbuf: "
+				SIZE_T_FMT " bytes]\n"), get_pname(),
 				(SIZE_T_FMT_TYPE)buflen);
-	fprintf(errf,"? %s: error [partial line in msgbuf: \"%s\"]\n",
+	fprintf(errf,_("? %s: error [partial line in msgbuf: \"%s\"]\n"),
 	    get_pname(), msg.buf);
 	msg.buf[0] = '\0';
 	return;
@@ -919,7 +921,7 @@ log_msgout(
 
     fflush(errf);
     if (fseek(errf, 0L, SEEK_SET) < 0) {
-	dbprintf("log_msgout: warning - seek failed: %s\n", strerror(errno));
+	dbprintf(_("log_msgout: warning - seek failed: %s\n"), strerror(errno));
     }
     while ((line = agets(errf)) != NULL) {
 	if (line[0] != '\0') {
@@ -1090,19 +1092,17 @@ do_dump(
 	indexfile_tmp = stralloc2(indexfile_real, ".tmp");
 
 	if (mkpdir(indexfile_tmp, 02755, (uid_t)-1, (gid_t)-1) == -1) {
-	   errstr = newvstralloc(errstr,
-				 "err create ",
+	   errstr = newvstrallocf(errstr,
+				 _("err create %s: %s"),
 				 indexfile_tmp,
-				 ": ",
-				 strerror(errno),
-				 NULL);
+				 strerror(errno));
 	   amfree(indexfile_real);
 	   amfree(indexfile_tmp);
 	   goto failed;
 	}
 	indexout = open(indexfile_tmp, O_WRONLY | O_CREAT | O_TRUNC, 0600);
 	if (indexout == -1) {
-	    errstr = newvstrallocf(errstr, "err open %s: %s",
+	    errstr = newvstrallocf(errstr, _("err open %s: %s"),
 			indexfile_tmp, strerror(errno));
 	    goto failed;
 	} else {
@@ -1149,13 +1149,13 @@ do_dump(
 
     amfree(errstr);
     errstr = alloc(128);
-    snprintf(errstr, 128, "sec %s kb " OFF_T_FMT " kps %3.1lf orig-kb " OFF_T_FMT "",
+    snprintf(errstr, 128, _("sec %s kb " OFF_T_FMT " kps %3.1lf orig-kb " OFF_T_FMT ""),
 	walltime_str(runtime),
 	(OFF_T_FMT_TYPE)dumpsize,
 	(isnormal(dumptime) ? ((double)dumpsize / (double)dumptime) : 0.0),
 	(OFF_T_FMT_TYPE)origsize);
     q = squotef("[%s]", errstr);
-    putresult(DONE, "%s " OFF_T_FMT " " OFF_T_FMT " %lu %s\n", handle,
+    putresult(DONE, _("%s " OFF_T_FMT " " OFF_T_FMT " %lu %s\n"), handle,
     		(OFF_T_FMT_TYPE)origsize,
 		(OFF_T_FMT_TYPE)dumpsize,
 	        (unsigned long)((double)dumptime+0.5), q);
@@ -1185,7 +1185,7 @@ do_dump(
 	/*@i@*/ aclose(indexout);
 	waitpid(indexpid,&index_status,0);
 	if (rename(indexfile_tmp, indexfile_real) != 0) {
-	    log_add(L_WARNING, "could not rename \"%s\" to \"%s\": %s",
+	    log_add(L_WARNING, _("could not rename \"%s\" to \"%s\": %s"),
 		    indexfile_tmp, indexfile_real, strerror(errno));
 	}
 	amfree(indexfile_tmp);
@@ -1211,10 +1211,10 @@ failed:
     aclose(db->fd);
     /* kill all child process */
     if (db->compresspid != -1) {
-	fprintf(stderr,"%s: kill compress command\n",get_pname());
+	fprintf(stderr,_("%s: kill compress command\n"),get_pname());
 	if (kill(db->compresspid, SIGTERM) < 0) {
 	    if (errno != ESRCH)
-		fprintf(stderr,"%s: can't kill compress command: %s\n", 
+		fprintf(stderr,_("%s: can't kill compress command: %s\n"), 
 		    get_pname(), strerror(errno));
 	}
 	else {
@@ -1223,10 +1223,10 @@ failed:
     }
 
     if (db->encryptpid != -1) {
-	fprintf(stderr,"%s: kill encrypt command\n",get_pname());
+	fprintf(stderr,_("%s: kill encrypt command\n"),get_pname());
 	if (kill(db->encryptpid, SIGTERM) < 0) {
 	    if (errno != ESRCH)
-		fprintf(stderr,"%s: can't kill encrypt command: %s\n", 
+		fprintf(stderr,_("%s: can't kill encrypt command: %s\n"), 
 		    get_pname(), strerror(errno));
 	}
 	else {
@@ -1235,10 +1235,10 @@ failed:
     }
 
     if (indexpid != -1) {
-	fprintf(stderr,"%s: kill index command\n",get_pname());
+	fprintf(stderr,_("%s: kill index command\n"),get_pname());
 	if (kill(indexpid, SIGTERM) < 0) {
 	    if (errno != ESRCH)
-		fprintf(stderr,"%s: can't kill index command: %s\n", 
+		fprintf(stderr,_("%s: can't kill index command: %s\n"), 
 		    get_pname(),strerror(errno));
 	}
 	else {
@@ -1247,7 +1247,7 @@ failed:
     }
 
     log_start_multiline();
-    log_add(L_FAIL, "%s %s %s %d [%s]", hostname, qdiskname, dumper_timestamp,
+    log_add(L_FAIL, _("%s %s %s %d [%s]"), hostname, qdiskname, dumper_timestamp,
 	    level, errstr);
     if (errf) {
 	log_msgout(L_FAIL);
@@ -1280,7 +1280,7 @@ read_mesgfd(
 
     switch (size) {
     case -1:
-	errstr = newvstrallocf(errstr, "mesg read: %s",
+	errstr = newvstrallocf(errstr, _("mesg read: %s"),
 	    security_stream_geterror(streams[MESGFD].fd));
 	dump_result = 2;
 	stop_dump();
@@ -1313,7 +1313,7 @@ read_mesgfd(
 	/* time to do the header */
 	finish_tapeheader(&file);
 	if (write_tapeheader(db->fd, &file)) {
-	    errstr = newvstrallocf(errstr, "write_tapeheader: %s", 
+	    errstr = newvstrallocf(errstr, _("write_tapeheader: %s"), 
 				  strerror(errno));
 	    dump_result = 2;
 	    stop_dump();
@@ -1367,7 +1367,7 @@ read_datafd(
      * The read failed.  Error out
      */
     if (size < 0) {
-	errstr = newvstrallocf(errstr, "data read: %s",
+	errstr = newvstrallocf(errstr, _("data read: %s"),
 	    security_stream_geterror(streams[DATAFD].fd));
 	dump_result = 2;
 	stop_dump();
@@ -1401,7 +1401,7 @@ read_datafd(
      */
     assert(buf != NULL);
     if (databuf_write(db, buf, (size_t)size) < 0) {
-	errstr = newvstrallocf(errstr, "data write: %s", strerror(errno));
+	errstr = newvstrallocf(errstr, _("data write: %s"), strerror(errno));
 	dump_result = 2;
 	stop_dump();
 	return;
@@ -1430,7 +1430,7 @@ read_indexfd(
     fd = *(int *)cookie;
 
     if (size < 0) {
-	errstr = newvstrallocf(errstr, "index read: %s",
+	errstr = newvstrallocf(errstr, _("index read: %s"),
 	    security_stream_geterror(streams[INDEXFD].fd));
 	dump_result = 2;
 	stop_dump();
@@ -1461,7 +1461,7 @@ read_indexfd(
 	/* Ignore error, but schedule another read. */
 	if(indexfderror == 0) {
 	    indexfderror = 1;
-	    log_add(L_INFO, "Index corrupted for %s:%s", hostname, qdiskname);
+	    log_add(L_INFO, _("Index corrupted for %s:%s"), hostname, qdiskname);
 	}
     }
     security_stream_read(streams[INDEXFD].fd, read_indexfd, cookie);
@@ -1503,7 +1503,7 @@ timeout_callback(
     (void)unused;	/* Quiet unused parameter warning */
 
     assert(unused == NULL);
-    errstr = newstralloc(errstr, "data timeout");
+    errstr = newstralloc(errstr, _("data timeout"));
     dump_result = 2;
     stop_dump();
 }
@@ -1546,41 +1546,41 @@ runcompress(
 
     /* outpipe[0] is pipe's stdin, outpipe[1] is stdout. */
     if (pipe(outpipe) < 0) {
-	errstr = newvstrallocf(errstr, "pipe: %s", strerror(errno));
+	errstr = newvstrallocf(errstr, _("pipe: %s"), strerror(errno));
 	return (-1);
     }
 
     switch (*pid = fork()) {
     case -1:
-	errstr = newvstrallocf(errstr, "couldn't fork: %s", strerror(errno));
+	errstr = newvstrallocf(errstr, _("couldn't fork: %s"), strerror(errno));
 	aclose(outpipe[0]);
 	aclose(outpipe[1]);
 	return (-1);
     default:
 	rval = dup2(outpipe[1], outfd);
 	if (rval < 0)
-	    errstr = newvstrallocf(errstr, "couldn't dup2: %s", strerror(errno));
+	    errstr = newvstrallocf(errstr, _("couldn't dup2: %s"), strerror(errno));
 	aclose(outpipe[1]);
 	aclose(outpipe[0]);
 	return (rval);
     case 0:
 	if (dup2(outpipe[0], 0) < 0) {
-	    error("err dup2 in: %s", strerror(errno));
+	    error(_("err dup2 in: %s"), strerror(errno));
 	    /*NOTREACHED*/
 	}
 	if (dup2(outfd, 1) == -1) {
-	    error("err dup2 out: %s", strerror(errno));
+	    error(_("err dup2 out: %s"), strerror(errno));
 	    /*NOTREACHED*/
 	}
 	safe_fd(-1, 0);
 	if (comptype != COMP_SERVER_CUST) {
 	    execlp(COMPRESS_PATH, COMPRESS_PATH, (  comptype == COMP_BEST ?
 		COMPRESS_BEST_OPT : COMPRESS_FAST_OPT), (char *)NULL);
-	    error("error: couldn't exec %s: %s", COMPRESS_PATH, strerror(errno));
+	    error(_("error: couldn't exec %s: %s"), COMPRESS_PATH, strerror(errno));
 	    /*NOTREACHED*/
 	} else if (*srvcompprog) {
 	    execlp(srvcompprog, srvcompprog, (char *)0);
-	    error("error: couldn't exec server custom filter%s.\n", srvcompprog);
+	    error(_("error: couldn't exec server custom filter%s.\n"), srvcompprog);
 	    /*NOTREACHED*/
 	}
     }
@@ -1607,36 +1607,36 @@ runencrypt(
 
     /* outpipe[0] is pipe's stdin, outpipe[1] is stdout. */
     if (pipe(outpipe) < 0) {
-	errstr = newvstrallocf(errstr, "pipe: %s", strerror(errno));
+	errstr = newvstrallocf(errstr, _("pipe: %s"), strerror(errno));
 	return (-1);
     }
 
     switch (*pid = fork()) {
     case -1:
-	errstr = newvstrallocf(errstr, "couldn't fork: %s", strerror(errno));
+	errstr = newvstrallocf(errstr, _("couldn't fork: %s"), strerror(errno));
 	aclose(outpipe[0]);
 	aclose(outpipe[1]);
 	return (-1);
     default:
 	rval = dup2(outpipe[1], outfd);
 	if (rval < 0)
-	    errstr = newvstrallocf(errstr, "couldn't dup2: %s", strerror(errno));
+	    errstr = newvstrallocf(errstr, _("couldn't dup2: %s"), strerror(errno));
 	aclose(outpipe[1]);
 	aclose(outpipe[0]);
 	return (rval);
     case 0:
 	if (dup2(outpipe[0], 0) < 0) {
-	    error("err dup2 in: %s", strerror(errno));
+	    error(_("err dup2 in: %s"), strerror(errno));
 	    /*NOTREACHED*/
 	}
 	if (dup2(outfd, 1) < 0 ) {
-	    error("err dup2 out: %s", strerror(errno));
+	    error(_("err dup2 out: %s"), strerror(errno));
 	    /*NOTREACHED*/
 	}
 	safe_fd(-1, 0);
 	if ((encrypttype == ENCRYPT_SERV_CUST) && *srv_encrypt) {
 	    execlp(srv_encrypt, srv_encrypt, (char *)0);
-	    error("error: couldn't exec server encryption%s.\n", srv_encrypt);
+	    error(_("error: couldn't exec server encryption%s.\n"), srv_encrypt);
 	    /*NOTREACHED*/
 	}
     }
@@ -1664,7 +1664,7 @@ sendbackup_response(
     security_close_connection(sech, hostname);
 
     if (pkt == NULL) {
-	errstr = newvstrallocf(errstr, "[request failed: %s]",
+	errstr = newvstrallocf(errstr, _("[request failed: %s]"),
 	    security_geterror(sech));
 	*response_error = 1;
 	return;
@@ -1674,7 +1674,7 @@ sendbackup_response(
     memset(ports, 0, SIZEOF(ports));
     if (pkt->type == P_NAK) {
 #if defined(PACKET_DEBUG)
-	fprintf(stderr, "got nak response:\n----\n%s\n----\n\n", pkt->body);
+	fprintf(stderr, _("got nak response:\n----\n%s\n----\n\n"), pkt->body);
 #endif
 
 	tok = strtok(pkt->body, " ");
@@ -1694,14 +1694,14 @@ bad_nak:
     }
 
     if (pkt->type != P_REP) {
-	errstr = newvstrallocf(errstr, "received strange packet type %s: %s",
+	errstr = newvstrallocf(errstr, _("received strange packet type %s: %s"),
 	    pkt_type2str(pkt->type), pkt->body);
 	*response_error = 1;
 	return;
     }
 
 #if 1
-    fprintf(stderr, "got response:\n----\n%s\n----\n\n", pkt->body);
+    fprintf(stderr, _("got response:\n----\n%s\n----\n\n"), pkt->body);
 #endif
 
     for(i = 0; i < NSTREAMS; i++) {
@@ -1720,7 +1720,7 @@ bad_nak:
 	if (strcmp(tok, "ERROR") == 0) {
 	    tok = strtok(NULL, "\n");
 	    if (tok == NULL)
-		tok = "[bogus error packet]";
+		tok = _("[bogus error packet]");
 	    errstr = newvstrallocf(errstr, "%s", tok);
 	    *response_error = 2;
 	    return;
@@ -1738,7 +1738,7 @@ bad_nak:
 		tok = strtok(NULL, " ");
 		if (tok == NULL || strcmp(tok, streams[i].name) != 0) {
 		    extra = vstrallocf(
-				"CONNECT token is \"%s\": expected \"%s\"",
+				_("CONNECT token is \"%s\": expected \"%s\""),
 				tok ? tok : "(null)",
 				streams[i].name);
 		    goto parse_error;
@@ -1746,7 +1746,7 @@ bad_nak:
 		tok = strtok(NULL, " \n");
 		if (tok == NULL || sscanf(tok, "%d", &ports[i]) != 1) {
 		    extra = vstrallocf(
-			"CONNECT %s token is \"%s\": expected a port number",
+			_("CONNECT %s token is \"%s\": expected a port number"),
 			streams[i].name, tok ? tok : "(null)");
 		    goto parse_error;
 		}
@@ -1760,7 +1760,7 @@ bad_nak:
 	if (strcmp(tok, "OPTIONS") == 0) {
 	    tok = strtok(NULL, "\n");
 	    if (tok == NULL) {
-		extra = vstrallocf("OPTIONS token is missing");
+		extra = vstrallocf(_("OPTIONS token is missing"));
 		goto parse_error;
 	    }
 
@@ -1771,7 +1771,7 @@ bad_nak:
 		    am_release_feature_set(their_features);
 		    if((their_features = am_string_to_feature(tok)) == NULL) {
 			errstr = newvstrallocf(errstr,
-					      "OPTIONS: bad features value: %s",
+					      _("OPTIONS: bad features value: %s"),
 					      tok);
 			goto parse_error;
 		    }
@@ -1781,7 +1781,7 @@ bad_nak:
 	    continue;
 	}
 
-	extra = vstrallocf("next token is \"%s\": expected \"CONNECT\", \"ERROR\" or \"OPTIONS\"",
+	extra = vstrallocf(_("next token is \"%s\": expected \"CONNECT\", \"ERROR\" or \"OPTIONS\""),
 			  tok ? tok : "(null)");
 	goto parse_error;
     }
@@ -1795,7 +1795,7 @@ bad_nak:
 	streams[i].fd = security_stream_client(sech, ports[i]);
 	if (streams[i].fd == NULL) {
 	    errstr = newvstrallocf(errstr,
-		"[could not connect %s stream: %s]",
+		_("[could not connect %s stream: %s]"),
 		streams[i].name,
 		security_geterror(sech));
 	    goto connect_error;
@@ -1820,7 +1820,7 @@ bad_nak:
 #endif
 	if (security_stream_auth(streams[i].fd) < 0) {
 	    errstr = newvstrallocf(errstr,
-		"[could not authenticate %s stream: %s]",
+		_("[could not authenticate %s stream: %s]"),
 		streams[i].name, 
 		security_stream_geterror(streams[i].fd));
 	    goto connect_error;
@@ -1832,7 +1832,7 @@ bad_nak:
      * them, complain.
      */
     if (streams[MESGFD].fd == NULL || streams[DATAFD].fd == NULL) {
-	errstr = newvstrallocf(errstr, "[couldn't open MESG or INDEX streams]");
+	errstr = newvstrallocf(errstr, _("[couldn't open MESG or INDEX streams]"));
 	goto connect_error;
     }
 
@@ -1843,8 +1843,8 @@ bad_nak:
 
 parse_error:
     errstr = newvstrallocf(errstr,
-			  "[parse of reply message failed: %s]",
-			  extra ? extra : "(no additional information)");
+			  _("[parse of reply message failed: %s]"),
+			  extra ? extra : _("(no additional information)"));
     amfree(extra);
     *response_error = 2;
     security_close_connection(sech, hostname);
@@ -1966,10 +1966,10 @@ startup_dump(
 		    "\n",
 		    NULL);
 
-fprintf(stderr, "send request:\n----\n%s\n----\n\n", req);
+fprintf(stderr, _("send request:\n----\n%s\n----\n\n"), req);
     secdrv = security_getdriver(authopt);
     if (secdrv == NULL) {
-	error("no '%s' security driver available for host '%s'",
+	error(_("no '%s' security driver available for host '%s'"),
 	    authopt, hostname);
 	/*NOTREACHED*/
     }

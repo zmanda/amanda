@@ -58,7 +58,10 @@ static int sort_by_name_reversed(
 }
 
 
-int main(int argc, char **argv)
+int
+main(
+    int		argc,
+    char **	argv)
 {
     disk_t *diskp;
     disklist_t diskl;
@@ -76,13 +79,15 @@ int main(int argc, char **argv)
     safe_fd(-1, 0);
     safe_cd();
 
+    setlocale(LC_ALL, "C");
+
     set_pname("amtrmidx");
 
     /* Don't die when child closes pipe */
     signal(SIGPIPE, SIG_IGN);
 
     dbopen(DBG_SUBDIR_SERVER);
-    dbprintf("%s: version %s\n", argv[0], version());
+    dbprintf(_("%s: version %s\n"), argv[0], version());
 
     parse_conf(argc, argv, &new_argc, &new_argv);
     my_argc = new_argc;
@@ -95,7 +100,7 @@ int main(int argc, char **argv)
     }
 
     if (my_argc < 2) {
-	fprintf(stderr, "Usage: %s [-t] <config> [-o configoption]*\n", my_argv[0]);
+	fprintf(stderr, _("Usage: %s [-t] <config> [-o configoption]*\n"), my_argv[0]);
 	return 1;
     }
 
@@ -104,7 +109,7 @@ int main(int argc, char **argv)
     config_dir = vstralloc(CONFIG_DIR, "/", config_name, "/", NULL);
     conffile = stralloc2(config_dir, CONFFILE_NAME);
     if (read_conffile(conffile)) {
-	error("errors processing config file \"%s\"", conffile);
+	error(_("errors processing config file \"%s\""), conffile);
 	/*NOTREACHED*/
     }
     amfree(conffile);
@@ -120,7 +125,7 @@ int main(int argc, char **argv)
 	conf_diskfile = stralloc2(config_dir, conf_diskfile);
     }
     if (read_diskfile(conf_diskfile, &diskl) < 0) {
-	error("could not load disklist \"%s\"", conf_diskfile);
+	error(_("could not load disklist \"%s\""), conf_diskfile);
 	/*NOTREACHED*/
     }
     amfree(conf_diskfile);
@@ -132,7 +137,7 @@ int main(int argc, char **argv)
 	conf_tapelist = stralloc2(config_dir, conf_tapelist);
     }
     if(read_tapelist(conf_tapelist)) {
-	error("could not load tapelist \"%s\"", conf_tapelist);
+	error(_("could not load tapelist \"%s\""), conf_tapelist);
 	/*NOTREACHED*/
     }
     amfree(conf_tapelist);
@@ -180,7 +185,7 @@ int main(int argc, char **argv)
 	    amfree(qdisk);
 	    amfree(disk);
 	    if ((d = opendir(indexdir)) == NULL) {
-		dbprintf("could not open index directory %s\n", qindexdir);
+		dbprintf(_("could not open index directory %s\n"), qindexdir);
 		amfree(indexdir);
 	        amfree(qindexdir);
 		continue;
@@ -223,7 +228,7 @@ int main(int argc, char **argv)
 			&& ((time_t)sbuf.st_mtime < tmp_time)) {
 			dbprintf("rm %s\n", qpath);
 		        if(amtrmidx_debug == 0 && unlink(path) == -1) {
-			    dbprintf("Error removing %s: %s\n",
+			    dbprintf(_("Error removing %s: %s\n"),
 				      qpath, strerror(errno));
 		        }
 		    }
@@ -270,7 +275,7 @@ int main(int argc, char **argv)
 		    qpath = quote_string(path);
 		    dbprintf("rm %s\n", qpath);
 		    if(amtrmidx_debug == 0 && unlink(path) == -1) {
-			dbprintf("Error removing %s: %s\n",
+			dbprintf(_("Error removing %s: %s\n"),
 				  qpath, strerror(errno));
 		    }
 		    amfree(qpath);

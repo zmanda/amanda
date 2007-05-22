@@ -142,7 +142,7 @@ printf_arglist_function1(void log_add, logtype_t, typ, char *, format)
     if(multiline == -1) open_log();
 
     if (fullwrite(logfd, leader, strlen(leader)) < 0) {
-	error("log file write error: %s", strerror(errno));
+	error(_("log file write error: %s"), strerror(errno));
 	/*NOTREACHED*/
     }
 
@@ -153,7 +153,7 @@ printf_arglist_function1(void log_add, logtype_t, typ, char *, format)
     linebuf[n] = '\0';
 
     if (fullwrite(logfd, linebuf, n) < 0) {
-	error("log file write error: %s", strerror(errno));
+	error(_("log file write error: %s"), strerror(errno));
 	/*NOTREACHED*/
     }
 
@@ -214,7 +214,7 @@ log_rename(
     }
 
     if(rename(logfile, fname) == -1) {
-	error("could not rename \"%s\" to \"%s\": %s",
+	error(_("could not rename \"%s\" to \"%s\": %s"),
 	      logfile, fname, strerror(errno));
 	/*NOTREACHED*/
     }
@@ -242,12 +242,12 @@ open_log(void)
     logfd = open(logfile, O_WRONLY|O_CREAT|O_APPEND, 0600);
 
     if(logfd == -1) {
-	error("could not open log file %s: %s", logfile, strerror(errno));
+	error(_("could not open log file %s: %s"), logfile, strerror(errno));
 	/*NOTREACHED*/
     }
 
     if(amflock(logfd, "log") == -1) {
-	error("could not lock log file %s: %s", logfile, strerror(errno));
+	error(_("could not lock log file %s: %s"), logfile, strerror(errno));
 	/*NOTREACHED*/
     }
 }
@@ -257,12 +257,12 @@ static void
 close_log(void)
 {
     if(amfunlock(logfd, "log") == -1) {
-	error("could not unlock log file %s: %s", logfile, strerror(errno));
+	error(_("could not unlock log file %s: %s"), logfile, strerror(errno));
 	/*NOTREACHED*/
     }
 
     if(close(logfd) == -1) {
-	error("close log file: %s", strerror(errno));
+	error(_("close log file: %s"), strerror(errno));
 	/*NOTREACHED*/
     }
 

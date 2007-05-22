@@ -211,7 +211,7 @@ int SCSI_ExecuteCommand(int DeviceFD,
       {
         if (SCSI_OpenDevice(DeviceFD) == 0)
           {
-            dbprintf("SCSI_ExecuteCommand could not open %s: %s\n",
+            dbprintf(_("SCSI_ExecuteCommand could not open %s: %s\n"),
                       pDev[DeviceFD].dev,
 	              strerror(errno));
             sleep(1); /* Give device a little time befor retry */
@@ -228,7 +228,7 @@ int SCSI_ExecuteCommand(int DeviceFD,
         return (SCSI_ERROR);
       }
     DecodeSCSI(CDB, "SCSI_ExecuteCommand : ");
-    dbprintf("\t\t\tSTATUS(%02X) RET(%02X)\n", STATUS(&ds), RET(&ds));
+    dbprintf(_("\t\t\tSTATUS(%02X) RET(%02X)\n"), STATUS(&ds), RET(&ds));
     switch (STATUS(&ds))
       {
       case ST_BUSY:                /*  BUSY */
@@ -303,7 +303,7 @@ int Tape_Status( int DeviceFD)
 
   if (ioctl(pDev[DeviceFD].fd , MTIOCGET, &mtget) != 0)
     {
-      dbprintf("Tape_Status error ioctl %s\n",strerror(errno));
+      dbprintf(_("Tape_Status error ioctl %s\n"),strerror(errno));
       SCSI_CloseDevice(DeviceFD);
       return(-1);
     }
@@ -344,7 +344,7 @@ int ScanBus(int print)
 
   if ((dir = opendir("/dev/scsi")) == NULL)
     {
-      dbprintf("Can not read /dev/scsi: %s", strerror(errno));
+      dbprintf(_("Can not read /dev/scsi: %s"), strerror(errno));
       return 0;
     }
 
@@ -362,48 +362,48 @@ int ScanBus(int print)
             
             if (print)
               {
-                printf("name /dev/scsi/%s ", dirent->d_name);
+                printf(_("name /dev/scsi/%s "), dirent->d_name);
                 
                 switch (pDev[count].inquiry->type)
                   {
                   case TYPE_DISK:
-                    printf("Disk");
+                    printf(_("Disk"));
                     break;
                   case TYPE_TAPE:
-                    printf("Tape");
+                    printf(_("Tape"));
                     break;
                   case TYPE_PRINTER:
-                    printf("Printer");
+                    printf(_("Printer"));
                     break;
                   case TYPE_PROCESSOR:
-                    printf("Processor");
+                    printf(_("Processor"));
                     break;
                   case TYPE_WORM:
-                    printf("Worm");
+                    printf(_("Worm"));
                     break;
                   case TYPE_CDROM:
-                    printf("Cdrom");
+                    printf(_("Cdrom"));
                     break;
                   case TYPE_SCANNER:
-                    printf("Scanner");
+                    printf(_("Scanner"));
                     break;
                   case TYPE_OPTICAL:
-                    printf("Optical");
+                    printf(_("Optical"));
                     break;
                   case TYPE_CHANGER:
-                    printf("Changer");
+                    printf(_("Changer"));
                     break;
                   case TYPE_COMM:
-                    printf("Comm");
+                    printf(_("Comm"));
                     break;
                   default:
-                    printf("unknown %d",pDev[count].inquiry->type);
+                    printf(_("unknown %d"),pDev[count].inquiry->type);
                     break;
                   }
                 printf("\n");
               }
             count++;
-	    printf("Count %d\n",count);
+	    printf(_("Count %d\n"),count);
           } else {
             free(pDev[count].dev);
             pDev[count].dev=NULL;

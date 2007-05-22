@@ -84,22 +84,22 @@ errexit(void)
 void
 usage(void)
 {
-    fprintf(stderr, "Usage: amfetchdump [options] config hostname [diskname [datestamp [level [hostname [diskname [datestamp [level ... ]]]]]]] [-o configoption]*\n\n");
-    fprintf(stderr, "Goes and grabs a dump from tape, moving tapes around and assembling parts as\n");
-    fprintf(stderr, "necessary.  Files are restored to the current directory, unless otherwise\nspecified.\n\n");
-    fprintf(stderr, "  -p Pipe exactly *one* complete dumpfile to stdout, instead of to disk.\n");
-    fprintf(stderr, "  -O <output dir> Restore files to this directory.\n");
-    fprintf(stderr, "  -d <device> Force restoration from a particular tape device.\n");
-    fprintf(stderr, "  -c Compress output, fastest method available.\n");
-    fprintf(stderr, "  -C Compress output, best filesize method available.\n");
-    fprintf(stderr, "  -l Leave dumps (un)compressed, whichever way they were originally on tape.\n");
-    fprintf(stderr, "  -a Assume all tapes are available via changer, do not prompt for initial load.\n");
-    fprintf(stderr, "  -i <dst_file> Search through tapes and write out an inventory while we\n     restore.  Useful only if normal logs are unavailable.\n");
-    fprintf(stderr, "  -w Wait to put split dumps together until all chunks have been restored.\n");
-    fprintf(stderr, "  -n Do not reassemble split dumpfiles.\n");
-    fprintf(stderr, "  -k Skip the rewind/label read when reading a new tape.\n");
-    fprintf(stderr, "  -s Do not use fast forward to skip files we won't restore.  Use only if fsf\n     causes your tapes to skip too far.\n");
-    fprintf(stderr, "  -b <blocksize> Force a particular block size (default is 32kb).\n");
+    fprintf(stderr, _("Usage: amfetchdump [options] config hostname [diskname [datestamp [level [hostname [diskname [datestamp [level ... ]]]]]]] [-o configoption]*\n\n"));
+    fprintf(stderr, _("Goes and grabs a dump from tape, moving tapes around and assembling parts as\n"));
+    fprintf(stderr, _("necessary.  Files are restored to the current directory, unless otherwise\nspecified.\n\n"));
+    fprintf(stderr, _("  -p Pipe exactly *one* complete dumpfile to stdout, instead of to disk.\n"));
+    fprintf(stderr, _("  -O <output dir> Restore files to this directory.\n"));
+    fprintf(stderr, _("  -d <device> Force restoration from a particular tape device.\n"));
+    fprintf(stderr, _("  -c Compress output, fastest method available.\n"));
+    fprintf(stderr, _("  -C Compress output, best filesize method available.\n"));
+    fprintf(stderr, _("  -l Leave dumps (un)compressed, whichever way they were originally on tape.\n"));
+    fprintf(stderr, _("  -a Assume all tapes are available via changer, do not prompt for initial load.\n"));
+    fprintf(stderr, _("  -i <dst_file> Search through tapes and write out an inventory while we\n     restore.  Useful only if normal logs are unavailable.\n"));
+    fprintf(stderr, _("  -w Wait to put split dumps together until all chunks have been restored.\n"));
+    fprintf(stderr, _("  -n Do not reassemble split dumpfiles.\n"));
+    fprintf(stderr, _("  -k Skip the rewind/label read when reading a new tape.\n"));
+    fprintf(stderr, _("  -s Do not use fast forward to skip files we won't restore.  Use only if fsf\n     causes your tapes to skip too far.\n"));
+    fprintf(stderr, _("  -b <blocksize> Force a particular block size (default is 32kb).\n"));
     exit(1);
 }
 
@@ -129,7 +129,7 @@ list_needed_tapes(
         conf_diskfile = stralloc2(config_dir, conf_diskfile);
     }
     if(read_diskfile(conf_diskfile, &diskqp) != 0) {
-        error("could not load disklist \"%s\"", conf_diskfile);
+        error(_("could not load disklist \"%s\""), conf_diskfile);
 	/*NOTREACHED*/
     }
     if (*conf_tapelist == '/') {
@@ -138,7 +138,7 @@ list_needed_tapes(
         conf_tapelist = stralloc2(config_dir, conf_tapelist);
     }
     if(read_tapelist(conf_tapelist)) {
-        error("could not load tapelist \"%s\"", conf_tapelist);
+        error(_("could not load tapelist \"%s\""), conf_tapelist);
 	/*NOTREACHED*/
     }
     amfree(conf_diskfile);
@@ -148,7 +148,7 @@ list_needed_tapes(
     alldumps = find_dump(1, &diskqp);
     free_disklist(&diskqp);
     if(alldumps == NULL){
-        fprintf(stderr, "No dump records found\n");
+        fprintf(stderr, _("No dump records found\n"));
         exit(1);
     }
 
@@ -163,7 +163,7 @@ list_needed_tapes(
 	for(curmatch = matches; curmatch; curmatch = curmatch->next){
 	    int havetape = 0;
 	    if(strcmp("OK", curmatch->status)){
-		fprintf(stderr,"Dump %s %s %s %d had status '%s', skipping\n",
+		fprintf(stderr,_("Dump %s %s %s %d had status '%s', skipping\n"),
 		                 curmatch->timestamp, curmatch->hostname,
 				 curmatch->diskname, curmatch->level,
 				 curmatch->status);
@@ -183,8 +183,8 @@ list_needed_tapes(
 			    rsttemp;
 			    rsttemp=rsttemp->next){
 			if(rstfile->filenum == rsttemp->filenum){
-			    fprintf(stderr, "Seeing multiple entries for tape "
-				   "%s file " OFF_T_FMT ", using most recent\n",
+			    fprintf(stderr, _("Seeing multiple entries for tape "
+				   "%s file " OFF_T_FMT ", using most recent\n"),
 				    curtape->label,
 				    (OFF_T_FMT_TYPE)rstfile->filenum);
 			    keep = 0;
@@ -232,7 +232,7 @@ list_needed_tapes(
     } /* for(me = match_list ... */
 
     if(numtapes == 0){
-      fprintf(stderr, "No matching dumps found\n");
+      fprintf(stderr, _("No matching dumps found\n"));
       exit(1);
       /* NOTREACHED */
     }
@@ -246,7 +246,7 @@ list_needed_tapes(
 	}
     }
 
-    fprintf(stderr, "%d tape(s) needed for restoration\n", numtapes);
+    fprintf(stderr, _("%d tape(s) needed for restoration\n"), numtapes);
     return(tapes);
 }
 
@@ -289,6 +289,8 @@ main(
 	close(fd);
     }
 
+    setlocale(LC_ALL, "C");
+
     set_pname("amfetchdump");
 
     dbopen(DBG_SUBDIR_SERVER);
@@ -304,7 +306,7 @@ main(
     }
     if(geteuid() == 0) {
 	if(client_uid == (uid_t) -1) {
-	    error("error [cannot find user %s in passwd file]\n", CLIENT_LOGIN);
+	    error(_("error [cannot find user %s in passwd file]\n"), CLIENT_LOGIN);
 	    /*NOTREACHED*/
 	}
 
@@ -346,11 +348,11 @@ main(
 	    } else if(*e == 'm' || *e == 'M') {
 	        rst_flags->blocksize *= 1024 * 1024;
 	    } else if(*e != '\0') {
-	        error("invalid blocksize value \"%s\"", optarg);
+	        error(_("invalid blocksize value \"%s\""), optarg);
 		/*NOTREACHED*/
 	    }
 	    if(rst_flags->blocksize < DISK_BLOCK_BYTES) {
-	        error("minimum block size is %dk", DISK_BLOCK_BYTES / 1024);
+	        error(_("minimum block size is %dk"), DISK_BLOCK_BYTES / 1024);
 		/*NOTREACHED*/
 	    }
 	    break;
@@ -381,14 +383,14 @@ main(
 	rst_flags->inline_assemble = 0;
 	rst_flags->leave_comp = 1;
 	if(rst_flags->compress){
-	    error("Cannot force compression when doing inventory/search");
+	    error(_("Cannot force compression when doing inventory/search"));
 	    /*NOTREACHED*/
 	}
-	fprintf(stderr, "Doing inventory/search, dumps will not be uncompressed or assembled on-the-fly.\n");
+	fprintf(stderr, _("Doing inventory/search, dumps will not be uncompressed or assembled on-the-fly.\n"));
     }
     else{
 	if(rst_flags->delay_assemble){
-	    fprintf(stderr, "Using -w, split dumpfiles will *not* be automatically uncompressed.\n");
+	    fprintf(stderr, _("Using -w, split dumpfiles will *not* be automatically uncompressed.\n"));
 	}
     }
 
@@ -402,7 +404,7 @@ main(
     config_dir = vstralloc(CONFIG_DIR, "/", config_name, "/", NULL);
     conffile = stralloc2(config_dir, CONFFILE_NAME);
     if (read_conffile(conffile)) {
-	error("errors processing config file \"%s\"", conffile);
+	error(_("errors processing config file \"%s\""), conffile);
 	/*NOTREACHED*/
     }
     amfree(conffile);
@@ -410,7 +412,7 @@ main(
     dbrename(config_name, DBG_SUBDIR_SERVER);
 
     if((my_argc - optind) < 1 && !rst_flags->inventory_log){
-	fprintf(stderr, "Not enough arguments\n\n");
+	fprintf(stderr, _("Not enough arguments\n\n"));
 	usage();
 	/*NOTREACHED*/
     }
@@ -436,7 +438,7 @@ main(
             match_list = me;
             if(me->hostname[0] != '\0'
                && (errstr=validate_regexp(me->hostname)) != NULL) {
-                fprintf(stderr, "%s: bad hostname regex \"%s\": %s\n",
+                fprintf(stderr, _("%s: bad hostname regex \"%s\": %s\n"),
                         get_pname(), me->hostname, errstr);
                 usage();
 		/*NOTREACHED*/
@@ -447,7 +449,7 @@ main(
             me->diskname = my_argv[optind++];
             if(me->diskname[0] != '\0'
                && (errstr=validate_regexp(me->diskname)) != NULL) {
-                fprintf(stderr, "%s: bad diskname regex \"%s\": %s\n",
+                fprintf(stderr, _("%s: bad diskname regex \"%s\": %s\n"),
                         get_pname(), me->diskname, errstr);
                 usage();
 		/*NOTREACHED*/
@@ -458,7 +460,7 @@ main(
             me->datestamp = my_argv[optind++];
             if(me->datestamp[0] != '\0'
                && (errstr=validate_regexp(me->datestamp)) != NULL) {
-                fprintf(stderr, "%s: bad datestamp regex \"%s\": %s\n",
+                fprintf(stderr, _("%s: bad datestamp regex \"%s\": %s\n"),
                         get_pname(), me->datestamp, errstr);
                 usage();
 		/*NOTREACHED*/
@@ -469,7 +471,7 @@ main(
             me->level = my_argv[optind++];
             if(me->level[0] != '\0'
                && (errstr=validate_regexp(me->level)) != NULL) {
-                fprintf(stderr, "%s: bad level regex \"%s\": %s\n",
+                fprintf(stderr, _("%s: bad level regex \"%s\": %s\n"),
                         get_pname(), me->level, errstr);
                 usage();
 		/*NOTREACHED*/
@@ -494,7 +496,7 @@ main(
      * way.
      */
     if(rst_flags->inventory_log){
-	fprintf(stderr, "Beginning tape-by-tape search.\n");
+	fprintf(stderr, _("Beginning tape-by-tape search.\n"));
 	search_tapes(stderr, stdin, 1, NULL, match_list, rst_flags, NULL);
 	exit(0);
     }
@@ -507,7 +509,7 @@ main(
     atexit(cleanup);
     get_lock = lock_logfile(); /* config is loaded, should be ok here */
     if(get_lock == 0) {
-	error("%s exists: amdump or amflush is already running, or you must run amcleanup", rst_conf_logfile);
+	error(_("%s exists: amdump or amflush is already running, or you must run amcleanup"), rst_conf_logfile);
     }
     search_tapes(NULL, stdin, 1, needed_tapes, match_list, rst_flags, NULL);
     cleanup();

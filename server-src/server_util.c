@@ -76,9 +76,9 @@ getcmd(
 #if DEBUG
     {
 	int i;
-	fprintf(stderr,"argc = %d\n", cmdargs->argc);
+	fprintf(stderr,_("argc = %d\n"), cmdargs->argc);
 	for (i = 0; i < cmdargs->argc+1; i++)
-	    fprintf(stderr,"argv[%d] = \"%s\"\n", i, cmdargs->argv[i]);
+	    fprintf(stderr,_("argv[%d] = \"%s\"\n"), i, cmdargs->argv[i]);
     }
 #endif
 

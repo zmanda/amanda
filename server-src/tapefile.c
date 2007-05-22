@@ -99,7 +99,7 @@ write_tapelist(
     }
 
     if (fclose(tapef) == EOF) {
-	fprintf(stderr,"error [closing %s: %s]", newtapefile, strerror(errno));
+	fprintf(stderr,_("error [closing %s: %s]"), newtapefile, strerror(errno));
 	amfree(newtapefile);
 	return 1;
     }

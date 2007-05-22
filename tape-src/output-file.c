@@ -151,7 +151,7 @@ check_online(
 	 */
 
 	rc = (errno != ENOENT);
-	fprintf(stderr,"ERROR: %s (%s)\n", qname, strerror(errno));
+	fprintf(stderr,_("ERROR: %s (%s)\n"), qname, strerror(errno));
 	goto common_exit;
     }
     while ((entry = readdir(tapedir)) != NULL) {
@@ -739,7 +739,7 @@ file_tapefd_read(
 	volume_info[fd].at_bof = 0;
 	if ((size_t)result < record_size) {
 	    if (lseek(file_fd, (off_t)(record_size-result), SEEK_CUR) == (off_t)-1) {
-		dbprintf("file_tapefd_read: lseek failed: <%s>\n",
+		dbprintf(_("file_tapefd_read: lseek failed: <%s>\n"),
 			  strerror(errno));
 	    }
 	}
@@ -850,12 +850,12 @@ file_tapefd_write(
 	off_t curpos;
 
 	if ((curpos = lseek(file_fd, (off_t)0, SEEK_CUR)) < 0) {
-	    dbprintf(": Can not determine current file position <%s>",
+	    dbprintf(_(": Can not determine current file position <%s>"),
 		strerror(errno));
 	    return -1;
 	}
 	if (ftruncate(file_fd, curpos) != 0) {
-	    dbprintf("ftruncate failed; Can not trim output file <%s>",
+	    dbprintf(_("ftruncate failed; Can not trim output file <%s>"),
 		strerror(errno));
 	    return -1;
 	}
@@ -1207,7 +1207,7 @@ file_tapefd_weof(
 
 	if ((curpos = lseek(file_fd, (off_t)0, SEEK_CUR)) < 0) {
 	    save_errno = errno;
-	    dbprintf(": Can not determine current file position <%s>",
+	    dbprintf(_(": Can not determine current file position <%s>"),
 		strerror(errno));
 	    file_close(fd);
 	    errno = save_errno;
@@ -1215,7 +1215,7 @@ file_tapefd_weof(
 	}
 	if (ftruncate(file_fd, curpos) != 0) {
 	    save_errno = errno;
-	    dbprintf("ftruncate failed; Can not trim output file <%s>",
+	    dbprintf(_("ftruncate failed; Can not trim output file <%s>"),
 		strerror(errno));
 	    file_close(fd);
 	    errno = save_errno;

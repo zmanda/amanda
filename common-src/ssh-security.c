@@ -126,7 +126,7 @@ ssh_connect(
     rh->hostname = NULL;
     if (resolve_hostname(hostname, NULL, &rh->hostname) || rh->hostname == NULL) {
 	security_seterror(&rh->sech,
-	    "%s: ssh could not resolve hostname", hostname);
+	    _("%s: ssh could not resolve hostname"), hostname);
 	(*fn)(arg, &rh->sech, S_ERROR);
 	return;
     }
@@ -150,7 +150,7 @@ ssh_connect(
     }
     if(rh->rc->read == -1) {
 	if (runssh(rh->rs->rc, amandad_path, client_username, ssh_keys) < 0) {
-	    security_seterror(&rh->sech, "can't connect to %s: %s",
+	    security_seterror(&rh->sech, _("can't connect to %s: %s"),
 			      hostname, rh->rs->rc->errmsg);
 	    goto error;
 	}
@@ -197,13 +197,13 @@ runssh(
     memset(rpipe, -1, SIZEOF(rpipe));
     memset(wpipe, -1, SIZEOF(wpipe));
     if (pipe(rpipe) < 0 || pipe(wpipe) < 0) {
-	rc->errmsg = newvstrallocf(rc->errmsg, "pipe: %s", strerror(errno));
+	rc->errmsg = newvstrallocf(rc->errmsg, _("pipe: %s"), strerror(errno));
 	return (-1);
     }
 
     switch (rc->pid = fork()) {
     case -1:
-	rc->errmsg = newvstrallocf(rc->errmsg, "fork: %s", strerror(errno));
+	rc->errmsg = newvstrallocf(rc->errmsg, _("fork: %s"), strerror(errno));
 	aclose(rpipe[0]);
 	aclose(rpipe[1]);
 	aclose(wpipe[0]);

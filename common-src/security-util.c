@@ -129,7 +129,7 @@ sec_close(
 
     assert(rh != NULL);
 
-    auth_debug(1, "sec: closing handle to %s\n", rh->hostname);
+    auth_debug(1, _("sec: closing handle to %s\n"), rh->hostname);
 
     if (rh->rs != NULL) {
 	/* This may be null if we get here on an error */
@@ -206,7 +206,7 @@ stream_sendpkt(
     assert(rh != NULL);
     assert(pkt != NULL);
 
-    auth_debug(1, "sec: stream_sendpkt: enter\n");
+    auth_debug(1, _("sec: stream_sendpkt: enter\n"));
 
     if (rh->rc->prefix_packet)
 	s = rh->rc->prefix_packet(rh, pkt);
@@ -221,7 +221,7 @@ stream_sendpkt(
 	amfree(s);
 
     auth_debug(1,
-     "sec: stream_sendpkt: %s (%d) pkt_t (len " SIZE_T_FMT ") contains:\n\n\"%s\"\n\n",
+     _("sec: stream_sendpkt: %s (%d) pkt_t (len " SIZE_T_FMT ") contains:\n\n\"%s\"\n\n"),
       pkt_type2str(pkt->type), pkt->type, strlen(pkt->body), pkt->body);
 
     if (security_stream_write(&rh->rs->secstr, buf, len) < 0) {
@@ -247,7 +247,7 @@ stream_recvpkt(
 
     assert(rh != NULL);
 
-    auth_debug(1, "sec: recvpkt registered for %s\n", rh->hostname);
+    auth_debug(1, _("sec: recvpkt registered for %s\n"), rh->hostname);
 
     /*
      * Reset any pending timeout on this handle
@@ -280,7 +280,7 @@ stream_recvpkt_timeout(
 
     assert(rh != NULL);
 
-    auth_debug(1, "sec: recvpkt timeout for %s\n", rh->hostname);
+    auth_debug(1, _("sec: recvpkt timeout for %s\n"), rh->hostname);
 
     stream_recvpkt_cancel(rh);
     (*rh->fn.recvpkt)(rh->arg, NULL, S_TIMEOUT);
@@ -295,7 +295,7 @@ stream_recvpkt_cancel(
 {
     struct sec_handle *rh = cookie;
 
-    auth_debug(1, "sec: cancelling recvpkt for %s\n", rh->hostname);
+    auth_debug(1, _("sec: cancelling recvpkt for %s\n"), rh->hostname);
 
     assert(rh != NULL);
 
@@ -320,7 +320,7 @@ tcpm_stream_write(
     assert(rs != NULL);
     assert(rs->rc != NULL);
 
-    auth_debug(1, "sec: stream_write: writing " SIZE_T_FMT " bytes to %s:%d %d\n",
+    auth_debug(1, _("sec: stream_write: writing " SIZE_T_FMT " bytes to %s:%d %d\n"),
 		   size, rs->rc->hostname, rs->handle,
 		   rs->rc->write);
 
@@ -469,7 +469,7 @@ tcpm_send_token(
 
     if (rval < 0) {
 	if (errmsg)
-            *errmsg = newvstrallocf(*errmsg, "write error to: %s",
+            *errmsg = newvstrallocf(*errmsg, _("write error to: %s"),
 				   strerror(errno));
         return (-1);
     }
@@ -500,14 +500,14 @@ tcpm_recv_token(
     switch (net_read(fd, &netint, SIZEOF(netint), timeout)) {
     case -1:
 	if (errmsg)
-	    *errmsg = newvstrallocf(*errmsg, "recv error: %s", strerror(errno));
-	auth_debug(1, "tcpm_recv_token: A return(-1)\n");
+	    *errmsg = newvstrallocf(*errmsg, _("recv error: %s"), strerror(errno));
+	auth_debug(1, _("tcpm_recv_token: A return(-1)\n"));
 	return (-1);
     case 0:
 	*size = 0;
 	*handle = H_EOF;
-	*errmsg = newvstrallocf(*errmsg, "SOCKET_EOF");
-	auth_debug(1, "tcpm_recv_token: A return(0)\n");
+	*errmsg = newvstrallocf(*errmsg, _("SOCKET_EOF"));
+	auth_debug(1, _("tcpm_recv_token: A return(0)\n"));
 	return (0);
     default:
 	break;
@@ -540,15 +540,15 @@ tcpm_recv_token(
 		switch(net_read(fd, &s[i], 1, 0)) {
 		case -1: s[i] = '\0'; break;
 		case  0: s[i] = '\0'; break;
-		default: dbprintf("read: %c\n", s[i]); i++; s[i]=' ';break;
+		default: dbprintf(_("read: %c\n"), s[i]); i++; s[i]=' ';break;
 		}
 	    }
 	    s[i] = '\0';
-	    *errmsg = newvstrallocf(*errmsg, "tcpm_recv_token: invalid size: %s", s);
-	    dbprintf("tcpm_recv_token: invalid size %s\n", s);
+	    *errmsg = newvstrallocf(*errmsg, _("tcpm_recv_token: invalid size: %s"), s);
+	    dbprintf(_("tcpm_recv_token: invalid size %s\n"), s);
 	} else {
-	    *errmsg = newvstrallocf(*errmsg, "tcpm_recv_token: invalid size");
-	    dbprintf("tcpm_recv_token: invalid size " SSIZE_T_FMT "\n", *size);
+	    *errmsg = newvstrallocf(*errmsg, _("tcpm_recv_token: invalid size"));
+	    dbprintf(_("tcpm_recv_token: invalid size ") SSIZE_T_FMT "\n", *size);
 	}
 	*size = -1;
 	return -1;
@@ -557,26 +557,26 @@ tcpm_recv_token(
     *buf = alloc((size_t)*size);
 
     if(*size == 0) {
-	auth_debug(1, "tcpm_recv_token: read EOF from %d\n", *handle);
-	*errmsg = newvstrallocf(*errmsg, "EOF");
+	auth_debug(1, _("tcpm_recv_token: read EOF from %d\n"), *handle);
+	*errmsg = newvstrallocf(*errmsg, _("EOF"));
 	return 0;
     }
     switch (net_read(fd, *buf, (size_t)*size, timeout)) {
     case -1:
 	if (errmsg)
-	    *errmsg = newvstrallocf(*errmsg, "recv error: %s", strerror(errno));
-	auth_debug(1, "tcpm_recv_token: B return(-1)\n");
+	    *errmsg = newvstrallocf(*errmsg, _("recv error: %s"), strerror(errno));
+	auth_debug(1, _("tcpm_recv_token: B return(-1)\n"));
 	return (-1);
     case 0:
 	*size = 0;
-	*errmsg = newvstrallocf(*errmsg, "SOCKET_EOF");
-	auth_debug(1, "tcpm_recv_token: B return(0)\n");
+	*errmsg = newvstrallocf(*errmsg, _("SOCKET_EOF"));
+	auth_debug(1, _("tcpm_recv_token: B return(0)\n"));
 	return (0);
     default:
 	break;
     }
 
-    auth_debug(1, "tcpm_recv_token: read " SSIZE_T_FMT " bytes from %d\n", *size, *handle);
+    auth_debug(1, _("tcpm_recv_token: read " SSIZE_T_FMT " bytes from %d\n"), *size, *handle);
 
     if (*size > 0 && rc->driver->data_decrypt != NULL) {
 	void *decbuf;
@@ -638,7 +638,7 @@ tcpma_stream_client(
 
     if (id <= 0) {
 	security_seterror(&rh->sech,
-	    "%d: invalid security stream id", id);
+	    _("%d: invalid security stream id"), id);
 	return (NULL);
     }
 
@@ -658,7 +658,7 @@ tcpma_stream_client(
 	rh->rc = rs->rc;
     }
 
-    auth_debug(1, "sec: stream_client: connected to stream %d\n", id);
+    auth_debug(1, _("sec: stream_client: connected to stream %d\n"), id);
 
     return (rs);
 }
@@ -695,7 +695,7 @@ tcpma_stream_server(
     if (rs->rc->read < 0) {
 	sec_tcp_conn_put(rs->rc);
 	amfree(rs);
-	security_seterror(&rh->sech, "lost connection to %s", rh->hostname);
+	security_seterror(&rh->sech, _("lost connection to %s"), rh->hostname);
 	return (NULL);
     }
     assert(strcmp(rh->hostname, rs->rc->hostname) == 0);
@@ -705,7 +705,7 @@ tcpma_stream_server(
      */
     rs->handle = 500000 - newhandle++;
     rs->ev_read = NULL;
-    auth_debug(1, "sec: stream_server: created stream %d\n", rs->handle);
+    auth_debug(1, _("sec: stream_server: created stream %d\n"), rs->handle);
     return (rs);
 }
 
@@ -721,7 +721,7 @@ tcpma_stream_close(
 
     assert(rs != NULL);
 
-    auth_debug(1, "sec: tcpma_stream_close: closing stream %d\n", rs->handle);
+    auth_debug(1, _("sec: tcpma_stream_close: closing stream %d\n"), rs->handle);
 
     if(rs->closed_by_network == 0 && rs->rc->write != -1)
 	tcpm_stream_write(rs, &buf, 0);
@@ -762,7 +762,7 @@ tcp1_stream_server(
 		STREAM_BUFSIZE, 0);
 	if (rs->socket < 0) {
 	    security_seterror(&rh->sech,
-			    "can't create server stream: %s", strerror(errno));
+			    _("can't create server stream: %s"), strerror(errno));
 	    amfree(rs);
 	    return (NULL);
 	}
@@ -793,7 +793,7 @@ tcp1_stream_accept(
 	bs->fd = stream_accept(bs->socket, 30, STREAM_BUFSIZE, STREAM_BUFSIZE);
 	if (bs->fd < 0) {
 	    security_stream_seterror(&bs->secstr,
-				     "can't accept new stream connection: %s",
+				     _("can't accept new stream connection: %s"),
 				     strerror(errno));
 	    return (-1);
 	}
@@ -834,7 +834,7 @@ tcp1_stream_client(
 			STREAM_BUFSIZE, STREAM_BUFSIZE, &rs->port, 0);
 	if (rh->rc->read < 0) {
 	    security_seterror(&rh->sech,
-			      "can't connect stream to %s port %d: %s",
+			      _("can't connect stream to %s port %d: %s"),
 			       rh->hostname, id, strerror(errno));
 	    amfree(rs);
 	    return (NULL);
@@ -858,7 +858,7 @@ tcp_stream_write(
 
     if (fullwrite(rs->fd, buf, size) < 0) {
         security_stream_seterror(&rs->secstr,
-            "write error on stream %d: %s", rs->port, strerror(errno));
+            _("write error on stream %d: %s"), rs->port, strerror(errno));
         return (-1);
     }
     return (0);
@@ -878,7 +878,7 @@ bsd_prefix_packet(
 
     if ((pwd = getpwuid(getuid())) == NULL) {
 	security_seterror(&rh->sech,
-			  "can't get login name for my uid %ld",
+			  _("can't get login name for my uid %ld"),
 			  (long)getuid());
 	return(NULL);
     }
@@ -960,7 +960,7 @@ bsd_recv_security_ok(
     port = SS_GET_PORT(&rh->peer);
 	if (port >= IPPORT_RESERVED) {
 	    security_seterror(&rh->sech,
-		"host %s: port %u not secure", rh->hostname,
+		_("host %s: port %u not secure"), rh->hostname,
 		(unsigned int)port);
 	    amfree(service);
 	    amfree(security_line);
@@ -969,7 +969,7 @@ bsd_recv_security_ok(
 
 	if (!service) {
 	    security_seterror(&rh->sech,
-			      "packet as no SERVICE line");
+			      _("packet as no SERVICE line"));
 	    amfree(security_line);
 	    return (-1);
 	}
@@ -985,7 +985,7 @@ bsd_recv_security_ok(
 	/* there must be some security info */
 	if (security == NULL) {
 	    security_seterror(&rh->sech,
-		"no bsd SECURITY for P_REQ");
+		_("no bsd SECURITY for P_REQ"));
 	    amfree(service);
 	    return (-1);
 	}
@@ -993,14 +993,14 @@ bsd_recv_security_ok(
 	/* second word must be USER */
 	if ((tok = strtok(security, " ")) == NULL) {
 	    security_seterror(&rh->sech,
-		"SECURITY line: %s", security_line);
+		_("SECURITY line: %s"), security_line);
 	    amfree(service);
 	    amfree(security_line);
 	    return (-1);	/* default errmsg */
 	}
 	if (strcmp(tok, "USER") != 0) {
 	    security_seterror(&rh->sech,
-		"REQ SECURITY line parse error, expecting USER, got %s", tok);
+		_("REQ SECURITY line parse error, expecting USER, got %s"), tok);
 	    amfree(service);
 	    amfree(security_line);
 	    return (-1);
@@ -1009,7 +1009,7 @@ bsd_recv_security_ok(
 	/* the third word is the username */
 	if ((tok = strtok(NULL, "")) == NULL) {
 	    security_seterror(&rh->sech,
-		"SECURITY line: %s", security_line);
+		_("SECURITY line: %s"), security_line);
 	    amfree(security_line);
 	    return (-1);	/* default errmsg */
 	}
@@ -1052,7 +1052,7 @@ udpbsd_sendpkt(
     assert(rh != NULL);
     assert(pkt != NULL);
 
-    auth_debug(1, "udpbsd_sendpkt: enter\n");
+    auth_debug(1, _("udpbsd_sendpkt: enter\n"));
     /*
      * Initialize this datagram, and add the header
      */
@@ -1070,10 +1070,10 @@ udpbsd_sendpkt(
 	 */
 	if ((pwd = getpwuid(geteuid())) == NULL) {
 	    security_seterror(&rh->sech,
-		"can't get login name for my uid %ld", (long)getuid());
+		_("can't get login name for my uid %ld"), (long)getuid());
 	    return (-1);
 	}
-	dgram_cat(&rh->udp->dgram, "SECURITY USER %s\n", pwd->pw_name);
+	dgram_cat(&rh->udp->dgram, _("SECURITY USER %s\n"), pwd->pw_name);
 	break;
 
     default:
@@ -1086,12 +1086,12 @@ udpbsd_sendpkt(
     dgram_cat(&rh->udp->dgram, pkt->body);
 
     auth_debug(1,
-     "sec: udpbsd_sendpkt: %s (%d) pkt_t (len " SIZE_T_FMT ") contains:\n\n\"%s\"\n\n",
+     _("sec: udpbsd_sendpkt: %s (%d) pkt_t (len " SIZE_T_FMT ") contains:\n\n\"%s\"\n\n"),
       pkt_type2str(pkt->type), pkt->type, strlen(pkt->body), pkt->body);
 
     if (dgram_send_addr(&rh->peer, &rh->udp->dgram) != 0) {
 	security_seterror(&rh->sech,
-	    "send %s to %s failed: %s", pkt_type2str(pkt->type),
+	    _("send %s to %s failed: %s"), pkt_type2str(pkt->type),
 	    rh->hostname, strerror(errno));
 	return (-1);
     }
@@ -1108,7 +1108,7 @@ udp_close(
 	return;
     }
 
-    auth_debug(1, "udp: close handle '%s'\n", rh->proto_handle);
+    auth_debug(1, _("udp: close handle '%s'\n"), rh->proto_handle);
 
     udp_recvpkt_cancel(rh);
     if (rh->next) {
@@ -1142,7 +1142,7 @@ udp_recvpkt(
 {
     struct sec_handle *rh = cookie;
 
-    auth_debug(1, "udp_recvpkt(cookie=%p, fn=%p, arg=%p, timeout=%u)\n",
+    auth_debug(1, _("udp_recvpkt(cookie=%p, fn=%p, arg=%p, timeout=%u)\n"),
 		   cookie, fn, arg, timeout);
     assert(rh != NULL);
     assert(fn != NULL);
@@ -1204,7 +1204,7 @@ udp_recvpkt_callback(
     void (*fn)(void *, pkt_t *, security_status_t);
     void *arg;
 
-    auth_debug(1, "udp: receive handle '%s' netfd '%s'\n",
+    auth_debug(1, _("udp: receive handle '%s' netfd '%s'\n"),
 		   rh->proto_handle, rh->udp->handle);
     assert(rh != NULL);
 
@@ -1276,13 +1276,14 @@ udp_inithandle(
     /*
      * Save the hostname and port info
      */
-    auth_debug(1, "udp_inithandle port %u handle %s sequence %d\n",
+    auth_debug(1, _("udp_inithandle port %u handle %s sequence %d\n"),
 		   (unsigned int)ntohs(port), handle, sequence);
     assert(addr != NULL);
 
     rh->hostname = stralloc(hostname);
     copy_sockaddr(&rh->peer, addr);
     SS_SET_PORT(&rh->peer, port);
+
 
     rh->prev = udp->bh_last;
     if (udp->bh_last) {
@@ -1303,7 +1304,7 @@ udp_inithandle(
     rh->ev_read = NULL;
     rh->ev_timeout = NULL;
 
-    auth_debug(1, "udp: adding handle '%s'\n", rh->proto_handle);
+    auth_debug(1, _("udp: adding handle '%s'\n"), rh->proto_handle);
 
     return(0);
 }
@@ -1326,7 +1327,7 @@ udp_netfd_read_callback(
     char *errmsg = NULL;
     int result;
 
-    auth_debug(1, "udp_netfd_read_callback(cookie=%p)\n", cookie);
+    auth_debug(1, _("udp_netfd_read_callback(cookie=%p)\n"), cookie);
     assert(udp != NULL);
     
 #ifndef TEST							/* { */
@@ -1396,7 +1397,7 @@ udp_netfd_read_callback(
 		   udp->handle,
 		   udp->sequence);
     if (a < 0) {
-	auth_debug(1, "bsd: closeX handle '%s'\n", rh->proto_handle);
+	auth_debug(1, _("bsd: closeX handle '%s'\n"), rh->proto_handle);
 
 	amfree(rh);
 	return;
@@ -1423,7 +1424,7 @@ sec_tcp_conn_get(
 {
     struct tcp_conn *rc;
 
-    auth_debug(1, "sec_tcp_conn_get: %s\n", hostname);
+    auth_debug(1, _("sec_tcp_conn_get: %s\n"), hostname);
 
     if (want_new == 0) {
 	for (rc = connq_first(); rc != NULL; rc = connq_next(rc)) {
@@ -1434,13 +1435,13 @@ sec_tcp_conn_get(
 	if (rc != NULL) {
 	    rc->refcnt++;
 	    auth_debug(1,
-		      "sec_tcp_conn_get: exists, refcnt to %s is now %d\n",
+		      _("sec_tcp_conn_get: exists, refcnt to %s is now %d\n"),
 		       rc->hostname, rc->refcnt);
 	    return (rc);
 	}
     }
 
-    auth_debug(1, "sec_tcp_conn_get: creating new handle\n");
+    auth_debug(1, _("sec_tcp_conn_get: creating new handle\n"));
     /*
      * We can't be creating a new handle if we are the client
      */
@@ -1477,12 +1478,12 @@ sec_tcp_conn_put(
 
     assert(rc->refcnt > 0);
     --rc->refcnt;
-    auth_debug(1, "sec_tcp_conn_put: decrementing refcnt for %s to %d\n",
+    auth_debug(1, _("sec_tcp_conn_put: decrementing refcnt for %s to %d\n"),
 		   rc->hostname, rc->refcnt);
     if (rc->refcnt > 0) {
 	return;
     }
-    auth_debug(1, "sec_tcp_conn_put: closing connection to %s\n", rc->hostname);
+    auth_debug(1, _("sec_tcp_conn_put: closing connection to %s\n"), rc->hostname);
     if (rc->read != -1)
 	aclose(rc->read);
     if (rc->write != -1)
@@ -1515,11 +1516,11 @@ sec_tcp_conn_read(
     if (rc->ev_read != NULL) {
 	rc->ev_read_refcnt++;
 	auth_debug(1,
-	      "sec: conn_read: incremented ev_read_refcnt to %d for %s\n",
+	      _("sec: conn_read: incremented ev_read_refcnt to %d for %s\n"),
 	       rc->ev_read_refcnt, rc->hostname);
 	return;
     }
-    auth_debug(1, "sec: conn_read registering event handler for %s\n",
+    auth_debug(1, _("sec: conn_read registering event handler for %s\n"),
 		   rc->hostname);
     rc->ev_read = event_register((event_id_t)rc->read, EV_READFD,
 		sec_tcp_conn_read_callback, rc);
@@ -1533,13 +1534,13 @@ sec_tcp_conn_read_cancel(
 
     --rc->ev_read_refcnt;
     auth_debug(1,
-       "sec: conn_read_cancel: decremented ev_read_refcnt to %d for %s\n",
+       _("sec: conn_read_cancel: decremented ev_read_refcnt to %d for %s\n"),
 	rc->ev_read_refcnt, rc->hostname);
     if (rc->ev_read_refcnt > 0) {
 	return;
     }
     auth_debug(1,
-                "sec: conn_read_cancel: releasing event handler for %s\n",
+                _("sec: conn_read_cancel: releasing event handler for %s\n"),
 	         rc->hostname);
     event_release(rc->ev_read);
     rc->ev_read = NULL;
@@ -1560,7 +1561,7 @@ recvpkt_callback(
 
     assert(rh != NULL);
 
-    auth_debug(1, "sec: recvpkt_callback: " SSIZE_T_FMT "\n", bufsize);
+    auth_debug(1, _("sec: recvpkt_callback: " SSIZE_T_FMT "\n"), bufsize);
     /*
      * We need to cancel the recvpkt request before calling
      * the callback because the callback may reschedule us.
@@ -1570,7 +1571,7 @@ recvpkt_callback(
     switch (bufsize) {
     case 0:
 	security_seterror(&rh->sech,
-	    "EOF on read from %s", rh->hostname);
+	    _("EOF on read from %s"), rh->hostname);
 	(*rh->fn.recvpkt)(rh->arg, NULL, S_ERROR);
 	return;
     case -1:
@@ -1583,7 +1584,7 @@ recvpkt_callback(
 
     parse_pkt(&pkt, buf, (size_t)bufsize);
     auth_debug(1,
-	  "sec: received %s packet (%d) from %s, contains:\n\n\"%s\"\n\n",
+	  _("sec: received %s packet (%d) from %s, contains:\n\n\"%s\"\n\n"),
 	   pkt_type2str(pkt.type), pkt.type,
 	   rh->hostname, pkt.body);
     if (rh->rc->recv_security_ok && (rh->rc->recv_security_ok)(rh, &pkt) < 0)
@@ -1603,7 +1604,7 @@ stream_read_sync_callback(
     struct sec_stream *rs = s;
     assert(rs != NULL);
 
-    auth_debug(1, "sec: stream_read_callback_sync: handle %d\n", rs->handle);
+    auth_debug(1, _("sec: stream_read_callback_sync: handle %d\n"), rs->handle);
 
     /*
      * Make sure this was for us.  If it was, then blow away the handle
@@ -1612,10 +1613,10 @@ stream_read_sync_callback(
      * If the handle is EOF, pass that up to our callback.
      */
     if (rs->rc->handle == rs->handle) {
-        auth_debug(1, "sec: stream_read_callback_sync: it was for us\n");
+        auth_debug(1, _("sec: stream_read_callback_sync: it was for us\n"));
         rs->rc->handle = H_TAKEN;
     } else if (rs->rc->handle != H_EOF) {
-        auth_debug(1, "sec: stream_read_callback_sync: not for us\n");
+        auth_debug(1, _("sec: stream_read_callback_sync: not for us\n"));
         return;
     }
 
@@ -1627,7 +1628,7 @@ stream_read_sync_callback(
     tcpm_stream_read_cancel(rs);
 
     if (rs->rc->pktlen <= 0) {
-	auth_debug(1, "sec: stream_read_sync_callback: %s\n", rs->rc->errmsg);
+	auth_debug(1, _("sec: stream_read_sync_callback: %s\n"), rs->rc->errmsg);
 	security_stream_seterror(&rs->secstr, rs->rc->errmsg);
 	if(rs->closed_by_me == 0 && rs->closed_by_network == 0)
 	    sec_tcp_conn_put(rs->rc);
@@ -1635,7 +1636,7 @@ stream_read_sync_callback(
 	return;
     }
     auth_debug(1,
-	    "sec: stream_read_callback_sync: read " SSIZE_T_FMT " bytes from %s:%d\n",
+	    _("sec: stream_read_callback_sync: read " SSIZE_T_FMT " bytes from %s:%d\n"),
 	    rs->rc->pktlen, rs->rc->hostname, rs->handle);
 }
 
@@ -1649,7 +1650,7 @@ stream_read_callback(
     struct sec_stream *rs = arg;
     assert(rs != NULL);
 
-    auth_debug(1, "sec: stream_read_callback: handle %d\n", rs->handle);
+    auth_debug(1, _("sec: stream_read_callback: handle %d\n"), rs->handle);
 
     /*
      * Make sure this was for us.  If it was, then blow away the handle
@@ -1658,10 +1659,10 @@ stream_read_callback(
      * If the handle is EOF, pass that up to our callback.
      */
     if (rs->rc->handle == rs->handle) {
-	auth_debug(1, "sec: stream_read_callback: it was for us\n");
+	auth_debug(1, _("sec: stream_read_callback: it was for us\n"));
 	rs->rc->handle = H_TAKEN;
     } else if (rs->rc->handle != H_EOF) {
-	auth_debug(1, "sec: stream_read_callback: not for us\n");
+	auth_debug(1, _("sec: stream_read_callback: not for us\n"));
 	return;
     }
 
@@ -1673,7 +1674,7 @@ stream_read_callback(
     tcpm_stream_read_cancel(rs);
 
     if (rs->rc->pktlen <= 0) {
-	auth_debug(1, "sec: stream_read_callback: %s\n", rs->rc->errmsg);
+	auth_debug(1, _("sec: stream_read_callback: %s\n"), rs->rc->errmsg);
 	security_stream_seterror(&rs->secstr, rs->rc->errmsg);
 	if(rs->closed_by_me == 0 && rs->closed_by_network == 0)
 	    sec_tcp_conn_put(rs->rc);
@@ -1681,10 +1682,10 @@ stream_read_callback(
 	(*rs->fn)(rs->arg, NULL, rs->rc->pktlen);
 	return;
     }
-    auth_debug(1, "sec: stream_read_callback: read " SSIZE_T_FMT " bytes from %s:%d\n",
+    auth_debug(1, _("sec: stream_read_callback: read " SSIZE_T_FMT " bytes from %s:%d\n"),
 		   rs->rc->pktlen, rs->rc->hostname, rs->handle);
     (*rs->fn)(rs->arg, rs->rc->pkt, rs->rc->pktlen);
-    auth_debug(1, "sec: after callback stream_read_callback\n");
+    auth_debug(1, _("sec: after callback stream_read_callback\n"));
 }
 
 /*
@@ -1704,23 +1705,23 @@ sec_tcp_conn_read_callback(
 
     assert(cookie != NULL);
 
-    auth_debug(1, "sec: conn_read_callback\n");
+    auth_debug(1, _("sec: conn_read_callback\n"));
 
     /* Read the data off the wire.  If we get errors, shut down. */
     rval = tcpm_recv_token(rc, rc->read, &rc->handle, &rc->errmsg, &rc->pkt,
 				&rc->pktlen, 60);
-    auth_debug(1, "sec: conn_read_callback: tcpm_recv_token returned " SSIZE_T_FMT "\n",
+    auth_debug(1, _("sec: conn_read_callback: tcpm_recv_token returned " SSIZE_T_FMT "\n"),
 		   rval);
     if (rval < 0 || rc->handle == H_EOF) {
 	rc->pktlen = rval;
 	rc->handle = H_EOF;
 	revent = event_wakeup((event_id_t)rc);
-	auth_debug(1, "sec: conn_read_callback: event_wakeup return %d\n",
+	auth_debug(1, _("sec: conn_read_callback: event_wakeup return %d\n"),
 		       revent);
 	/* delete our 'accept' reference */
 	if (rc->accept_fn != NULL) {
 	    if(rc->refcnt != 1) {
-		dbprintf("STRANGE, rc->refcnt should be 1, it is %d\n",
+		dbprintf(_("STRANGE, rc->refcnt should be 1, it is %d\n"),
 			  rc->refcnt);
 		rc->refcnt=1;
 	    }
@@ -1734,14 +1735,14 @@ sec_tcp_conn_read_callback(
 	rc->pktlen = 0;
 	revent = event_wakeup((event_id_t)rc);
 	auth_debug(1,
-		   "sec: conn_read_callback: event_wakeup return %d\n", revent);
+		   _("sec: conn_read_callback: event_wakeup return %d\n"), revent);
 	return;
     }
 
     /* If there are events waiting on this handle, we're done */
     rc->donotclose = 1;
     revent = event_wakeup((event_id_t)rc);
-    auth_debug(1, "sec: conn_read_callback: event_wakeup return " SSIZE_T_FMT "\n", rval);
+    auth_debug(1, _("sec: conn_read_callback: event_wakeup return " SSIZE_T_FMT "\n"), rval);
     rc->donotclose = 0;
     if (rc->handle == H_TAKEN || rc->pktlen == 0) {
 	if(rc->refcnt == 0) amfree(rc);
@@ -1762,10 +1763,10 @@ sec_tcp_conn_read_callback(
     rh->peer = rc->peer;
     rh->rs = tcpma_stream_client(rh, rc->handle);
 
-    auth_debug(1, "sec: new connection\n");
+    auth_debug(1, _("sec: new connection\n"));
     pkt.body = NULL;
     parse_pkt(&pkt, rc->pkt, (size_t)rc->pktlen);
-    auth_debug(1, "sec: calling accept_fn\n");
+    auth_debug(1, _("sec: calling accept_fn\n"));
     if (rh->rc->recv_security_ok && (rh->rc->recv_security_ok)(rh, &pkt) < 0)
 	(*rc->accept_fn)(&rh->sech, NULL);
     else
@@ -1781,7 +1782,7 @@ parse_pkt(
 {
     const unsigned char *bufp = buf;
 
-    auth_debug(1, "sec: parse_pkt: parsing buffer of " SSIZE_T_FMT " bytes\n", bufsize);
+    auth_debug(1, _("sec: parse_pkt: parsing buffer of " SSIZE_T_FMT " bytes\n"), bufsize);
 
     pkt->type = (pktype_t)*bufp++;
     bufsize--;
@@ -1796,7 +1797,7 @@ parse_pkt(
     }
     pkt->size = strlen(pkt->body);
 
-    auth_debug(1, "sec: parse_pkt: %s (%d): \"%s\"\n", pkt_type2str(pkt->type),
+    auth_debug(1, _("sec: parse_pkt: %s (%d): \"%s\"\n"), pkt_type2str(pkt->type),
 		   pkt->type, pkt->body);
 }
 
@@ -1813,11 +1814,11 @@ pkthdr2str(
     assert(rh != NULL);
     assert(pkt != NULL);
 
-    snprintf(retbuf, SIZEOF(retbuf), "Amanda %d.%d %s HANDLE %s SEQ %d\n",
+    snprintf(retbuf, SIZEOF(retbuf), _("Amanda %d.%d %s HANDLE %s SEQ %d\n"),
 	VERSION_MAJOR, VERSION_MINOR, pkt_type2str(pkt->type),
 	rh->proto_handle, rh->sequence);
 
-    auth_debug(1, "bsd: pkthdr2str handle '%s'\n", rh->proto_handle);
+    auth_debug(1, _("bsd: pkthdr2str handle '%s'\n"), rh->proto_handle);
 
     /* check for truncation.  If only we had asprintf()... */
     assert(retbuf[strlen(retbuf) - 1] == '\n');
@@ -1908,7 +1909,7 @@ check_user(
 
     /* lookup our local user name */
     if ((pwd = getpwnam(CLIENT_LOGIN)) == NULL) {
-	return vstrallocf("getpwnam(%s) failed.", CLIENT_LOGIN);
+	return vstrallocf(_("getpwnam(%s) failed."), CLIENT_LOGIN);
     }
 
     /*
@@ -1924,7 +1925,7 @@ check_user(
 #endif
     if (r != NULL) {
 	result = vstrallocf(
-		"user %s from %s is not allowed to execute the service %s: %s",
+		_("user %s from %s is not allowed to execute the service %s: %s"),
 		remoteuser, rh->hostname, service, r);
 	amfree(r);
     }
@@ -1968,22 +1969,22 @@ check_user_ruserok(
      * problem and is expected.  Thanks a lot.  Not.
      */
     if (pipe(fd) != 0) {
-	return stralloc2("pipe() fails: ", strerror(errno));
+	return stralloc2(_("pipe() fails: "), strerror(errno));
     }
     if ((ruserok_pid = fork()) < 0) {
-	return stralloc2("fork() fails: ", strerror(errno));
+	return stralloc2(_("fork() fails: "), strerror(errno));
     } else if (ruserok_pid == 0) {
 	int ec;
 
 	close(fd[0]);
 	fError = fdopen(fd[1], "w");
 	if (!fError) {
-	    error("Can't fdopen: %s", strerror(errno));
+	    error(_("Can't fdopen: %s"), strerror(errno));
 	    /*NOTREACHED*/
 	}
 	/* pamper braindead ruserok's */
 	if (chdir(pwd->pw_dir) != 0) {
-	    fprintf(fError, "chdir(%s) failed: %s",
+	    fprintf(fError, _("chdir(%s) failed: %s"),
 		    pwd->pw_dir, strerror(errno));
 	    fclose(fError);
 	    exit(1);
@@ -1992,11 +1993,11 @@ check_user_ruserok(
 	if (debug_auth >= 9) {
 	    char *dir = stralloc(pwd->pw_dir);
 
-	    auth_debug(9, "bsd: calling ruserok(%s, %d, %s, %s)\n", host,
+	    auth_debug(9, _("bsd: calling ruserok(%s, %d, %s, %s)\n"), host,
 			   ((myuid == 0) ? 1 : 0), remoteuser, pwd->pw_name);
 	    if (myuid == 0) {
-		auth_debug(9, "bsd: because you are running as root, ");
-		auth_debug(9, "/etc/hosts.equiv will not be used\n");
+		auth_debug(9, _("bsd: because you are running as root, "));
+		auth_debug(9, _("/etc/hosts.equiv will not be used\n"));
 	    } else {
 		show_stat_info("/etc/hosts.equiv", NULL);
 	    }
@@ -2007,7 +2008,7 @@ check_user_ruserok(
 	saved_stderr = dup(2);
 	close(2);
 	if (open("/dev/null", O_RDWR) == -1) {
-            auth_debug(1, "Could not open /dev/null: %s\n", strerror(errno));
+            auth_debug(1, _("Could not open /dev/null: %s\n"), strerror(errno));
 	    ec = 1;
 	} else {
 	    ok = ruserok(host, myuid == 0, remoteuser, CLIENT_LOGIN);
@@ -2024,7 +2025,7 @@ check_user_ruserok(
     close(fd[1]);
     fError = fdopen(fd[0], "r");
     if (!fError) {
-	error("Can't fdopen: %s", strerror(errno));
+	error(_("Can't fdopen: %s"), strerror(errno));
 	/*NOTREACHED*/
     }
 
@@ -2048,19 +2049,19 @@ check_user_ruserok(
     while (pid != ruserok_pid) {
 	if ((pid == (pid_t) -1) && (errno != EINTR)) {
 	    amfree(result);
-	    return stralloc2("ruserok wait failed: %s", strerror(errno));
+	    return stralloc2(_("ruserok wait failed: %s"), strerror(errno));
 	}
 	pid = wait(&exitcode);
     }
     if (WIFSIGNALED(exitcode)) {
 	amfree(result);
 	snprintf(number, SIZEOF(number), "%d", WTERMSIG(exitcode));
-	return stralloc2("ruserok child got signal ", number);
+	return stralloc2(_("ruserok child got signal "), number);
     }
     if (WEXITSTATUS(exitcode) == 0) {
 	amfree(result);
     } else if (result == NULL) {
-	result = stralloc("ruserok failed");
+	result = stralloc(_("ruserok failed"));
     }
 
     return result;
@@ -2095,8 +2096,8 @@ check_user_amandahosts(
     char ipstr[INET_ADDRSTRLEN];
 #endif
 
-    auth_debug(1, "check_user_amandahosts(host=%s, pwd=%p, "
-		   "remoteuser=%s, service=%s)\n",
+    auth_debug(1, _("check_user_amandahosts(host=%s, pwd=%p, "
+		   "remoteuser=%s, service=%s)\n"),
 		   host, pwd, remoteuser, service);
 
     ptmp = stralloc2(pwd->pw_dir, "/.amandahosts");
@@ -2104,7 +2105,7 @@ check_user_amandahosts(
 	show_stat_info(ptmp, "");;
     }
     if ((fp = fopen(ptmp, "r")) == NULL) {
-	result = vstrallocf("cannot open %s: %s", ptmp, strerror(errno));
+	result = vstrallocf(_("cannot open %s: %s"), ptmp, strerror(errno));
 	amfree(ptmp);
 	return result;
     }
@@ -2114,16 +2115,16 @@ check_user_amandahosts(
      * have any group/other access allowed.
      */
     if (fstat(fileno(fp), &sbuf) != 0) {
-	result = vstrallocf("cannot fstat %s: %s", ptmp, strerror(errno));
+	result = vstrallocf(_("cannot fstat %s: %s"), ptmp, strerror(errno));
 	goto common_exit;
     }
     if (sbuf.st_uid != pwd->pw_uid) {
-	result = vstrallocf("%s: owned by id %ld, should be %ld",
+	result = vstrallocf(_("%s: owned by id %ld, should be %ld"),
 			ptmp, (long)sbuf.st_uid, (long)pwd->pw_uid);
 	goto common_exit;
     }
     if ((sbuf.st_mode & 077) != 0) {
-	result = vstrallocf("%s: incorrect permissions; file must be accessible only by its owner", ptmp);
+	result = vstrallocf(_("%s: incorrect permissions; file must be accessible only by its owner"), ptmp);
 	goto common_exit;
     }
 
@@ -2137,7 +2138,7 @@ check_user_amandahosts(
 	    continue;
 	}
 
-	auth_debug(9, "bsd: processing line: <%s>\n", line);
+	auth_debug(9, _("bsd: processing line: <%s>\n"), line);
 	/* get the host out of the file */
 	if ((filehost = strtok(line, " \t")) == NULL) {
 	    amfree(line);
@@ -2168,12 +2169,12 @@ check_user_amandahosts(
 		hostmatch = 1;
 	}
 	usermatch = (strcasecmp(fileuser, remoteuser) == 0);
-	auth_debug(9, "bsd: comparing \"%s\" with\n", filehost);
-	auth_debug(9, "bsd:           \"%s\" (%s)\n", host,
-		       hostmatch ? "match" : "no match");
-	auth_debug(9, "bsd:       and \"%s\" with\n", fileuser);
-	auth_debug(9, "bsd:           \"%s\" (%s)\n", remoteuser,
-		       usermatch ? "match" : "no match");
+	auth_debug(9, _("bsd: comparing \"%s\" with\n"), filehost);
+	auth_debug(9, _("bsd:           \"%s\" (%s)\n"), host,
+		       hostmatch ? _("match") : _("no match"));
+	auth_debug(9, _("bsd:       and \"%s\" with\n"), fileuser);
+	auth_debug(9, _("bsd:           \"%s\" (%s)\n"), remoteuser,
+		       usermatch ? _("match") : _("no match"));
 	/* compare */
 	if (!hostmatch || !usermatch) {
 	    amfree(line);
@@ -2233,15 +2234,15 @@ check_user_amandahosts(
     if (! found) {
 	if (strcmp(service, "amindexd") == 0 ||
 	    strcmp(service, "amidxtaped") == 0) {
-	    result = vstrallocf("Please add \"amindexd amidxtaped\" to the line in %s on the client", ptmp);
+	    result = vstrallocf(_("Please add \"amindexd amidxtaped\" to the line in %s on the client"), ptmp);
 	} else if (strcmp(service, "amdump") == 0 ||
 		   strcmp(service, "noop") == 0 ||
 		   strcmp(service, "selfcheck") == 0 ||
 		   strcmp(service, "sendsize") == 0 ||
 		   strcmp(service, "sendbackup") == 0) {
-	    result = vstrallocf("Please add \"amdump\" to the line in %s on the client", ptmp);
+	    result = vstrallocf(_("Please add \"amdump\" to the line in %s on the client"), ptmp);
 	} else {
-	    result = vstrallocf("%s: invalid service %s", ptmp, service);
+	    result = vstrallocf(_("%s: invalid service %s"), ptmp, service);
 	}
     }
 
@@ -2275,7 +2276,7 @@ check_security(
     (void)cksum;	/* Quiet unused parameter warning */
 
     auth_debug(1,
-	       "check_security(addr=%p, str='%s', cksum=%lu, errstr=%p\n",
+	       _("check_security(addr=%p, str='%s', cksum=%lu, errstr=%p\n"),
 		addr, str, cksum, errstr);
     dump_sockaddr(addr);
 
@@ -2284,7 +2285,7 @@ check_security(
     /* what host is making the request? */
     if ((result = getnameinfo((struct sockaddr *)addr, SS_LEN(addr),
                               hostname, NI_MAXHOST, NULL, 0, 0) == -1)) {
-	dbprintf("getnameinfo failed: %s\n",
+	dbprintf(_("getnameinfo failed: %s\n"),
 		  gai_strerror(result));
 	*errstr = vstralloc("[", "addr ", str_sockaddr(addr), ": ",
 			    "getnameinfo failed: ", gai_strerror(result),
@@ -2298,10 +2299,11 @@ check_security(
 	return 0;
     }
 
+
     /* next, make sure the remote port is a "reserved" one */
     port = SS_GET_PORT(addr);
     if (port >= IPPORT_RESERVED) {
-	*errstr = vstrallocf("[host %s: port %u not secure]",
+	*errstr = vstrallocf(_("[host %s: port %u not secure]"),
 			remotehost, (unsigned int)port);
 	amfree(remotehost);
 	return 0;
@@ -2312,7 +2314,7 @@ check_security(
     s = str;
     ch = *s++;
 
-    bad_bsd = vstrallocf("[host %s: bad bsd security line]", remotehost);
+    bad_bsd = vstrallocf(_("[host %s: bad bsd security line]"), remotehost);
 
     if (strncmp_const_skip(s - 1, "USER ", s, ch) != 0) {
 	*errstr = bad_bsd;
@@ -2339,9 +2341,9 @@ check_security(
 
     myuid = getuid();
     if ((pwptr = getpwuid(myuid)) == NULL)
-        error("error [getpwuid(%d) fails]", myuid);
+        error(_("error [getpwuid(%d) fails]"), myuid);
 
-    auth_debug(1, "bsd security: remote host %s user %s local user %s\n",
+    auth_debug(1, _("bsd security: remote host %s user %s local user %s\n"),
 		   remotehost, remoteuser, pwptr->pw_name);
 
 #ifndef USE_AMANDAHOSTS
@@ -2351,7 +2353,7 @@ check_security(
 #endif
 
     if (s != NULL) {
-	*errstr = vstrallocf("[access as %s not allowed from %s@%s: %s]",
+	*errstr = vstrallocf(_("[access as %s not allowed from %s@%s: %s]"),
 			    pwptr->pw_name, remoteuser, remotehost, s);
     }
     amfree(s);
@@ -2382,7 +2384,7 @@ net_writev(
 	if (n < 0) {
 	    if (errno != EINTR)
 		return (-1);
-	    auth_debug(1, "net_writev got EINTR\n");
+	    auth_debug(1, _("net_writev got EINTR\n"));
 	}
 	else if (n == 0) {
 	    errno = EIO;
@@ -2425,23 +2427,23 @@ net_read(
     ssize_t nread;
     size_t size = origsize;
 
-    auth_debug(1, "net_read: begin " SIZE_T_FMT "\n", origsize);
+    auth_debug(1, _("net_read: begin " SIZE_T_FMT "\n"), origsize);
 
     while (size > 0) {
-	auth_debug(1, "net_read: while " SIZE_T_FMT "\n", size);
+	auth_debug(1, _("net_read: while " SIZE_T_FMT "\n"), size);
 	nread = net_read_fillbuf(fd, timeout, buf, size);
 	if (nread < 0) {
-    	    auth_debug(1, "db: net_read: end return(-1)\n");
+    	    auth_debug(1, _("db: net_read: end return(-1)\n"));
 	    return (-1);
 	}
 	if (nread == 0) {
-    	    auth_debug(1, "net_read: end return(0)\n");
+    	    auth_debug(1, _("net_read: end return(0)\n"));
 	    return (0);
 	}
 	buf += nread;
 	size -= nread;
     }
-    auth_debug(1, "net_read: end " SIZE_T_FMT "\n", origsize);
+    auth_debug(1, _("net_read: end " SIZE_T_FMT "\n"), origsize);
     return ((ssize_t)origsize);
 }
 
@@ -2459,7 +2461,7 @@ net_read_fillbuf(
     struct timeval tv;
     ssize_t nread;
 
-    auth_debug(1, "net_read_fillbuf: begin\n");
+    auth_debug(1, _("net_read_fillbuf: begin\n"));
     FD_ZERO(&readfds);
     FD_SET(fd, &readfds);
     tv.tv_sec = timeout;
@@ -2469,21 +2471,21 @@ net_read_fillbuf(
 	errno = ETIMEDOUT;
 	/* FALLTHROUGH */
     case -1:
-	auth_debug(1, "net_read_fillbuf: case -1\n");
+	auth_debug(1, _("net_read_fillbuf: case -1\n"));
 	return (-1);
     case 1:
-	auth_debug(1, "net_read_fillbuf: case 1\n");
+	auth_debug(1, _("net_read_fillbuf: case 1\n"));
 	assert(FD_ISSET(fd, &readfds));
 	break;
     default:
-	auth_debug(1, "net_read_fillbuf: case default\n");
+	auth_debug(1, _("net_read_fillbuf: case default\n"));
 	assert(0);
 	break;
     }
     nread = read(fd, buf, size);
     if (nread < 0)
 	return (-1);
-    auth_debug(1, "net_read_fillbuf: end " SSIZE_T_FMT "\n", nread);
+    auth_debug(1, _("net_read_fillbuf: end " SSIZE_T_FMT "\n"), nread);
     return (nread);
 }
 
@@ -2505,7 +2507,7 @@ show_stat_info(
     char *group;
 
     if (stat(name, &sbuf) != 0) {
-	auth_debug(1, "bsd: cannot stat %s: %s\n", name, strerror(errno));
+	auth_debug(1, _("bsd: cannot stat %s: %s\n"), name, strerror(errno));
 	amfree(name);
 	return;
     }
@@ -2521,8 +2523,8 @@ show_stat_info(
     } else {
 	group = stralloc(grptr->gr_name);
     }
-    auth_debug(1, "bsd: processing file: %s\n", name);
-    auth_debug(1, "bsd:                  owner=%s group=%s mode=%03o\n",
+    auth_debug(1, _("bsd: processing file: %s\n"), name);
+    auth_debug(1, _("bsd:                  owner=%s group=%s mode=%03o\n"),
 		   owner, group,
 		   (int) (sbuf.st_mode & 0777));
     amfree(name);
@@ -2542,14 +2544,14 @@ check_name_give_sockaddr(
 
     result = resolve_hostname(hostname, &res, &canonname);
     if (result != 0) {
-	dbprintf("check_name_give_sockaddr: resolve_hostname(%s): %s\n", hostname, gai_strerror(result));
+	dbprintf(_("check_name_give_sockaddr: resolve_hostname(%s): %s\n"), hostname, gai_strerror(result));
 	*errstr = newvstralloc(*errstr,
 			       " resolve_hostname(", hostname, "): ",
 			       gai_strerror(result), NULL);
 	goto error;
     }
     if (canonname == NULL) {
-	dbprintf("resolve_hostname(%s) did not return a canonical name\n", hostname);
+	dbprintf(_("resolve_hostname(%s) did not return a canonical name\n"), hostname);
 	*errstr = newvstralloc(*errstr, 
  		" resolve_hostname(", hostname, ") did not return a canonical name", NULL);
 	goto error;

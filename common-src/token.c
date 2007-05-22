@@ -417,6 +417,8 @@ main(
 
 	safe_fd(-1, 0);
 
+	setlocale(LC_ALL, "C");
+
 	/* shut up compiler */
 	argc = argc;
 	argv = argv;
@@ -430,36 +432,37 @@ main(
 
 	erroutput_type = ERR_INTERACTIVE;
 
-	printf("Testing split() with \" \" token separator\n");
+	printf(_("Testing split() with \" \" token separator\n"));
 	while(1) {
-		printf("Input string: ");
+		printf(_("Input string: "));
 		amfree(str);
 		if ((str = agets(stdin)) == NULL) {
 			printf("\n");
 			break;
 		}
 		r = split(str, t, 20, " ");
-		printf("%d token%s:\n", r, (r == 1) ? "" : "s");
-		for (i=0; i <= r; i++) printf("tok[%d] = \"%s\"\n", i, t[i]);
+		printf(plural(_("%d token:\n"), _("%d token:\n"), r), r);
+		for (i=0; i <= r; i++)
+			printf("tok[%d] = \"%s\"\n", i, t[i]);
 	}
 	amfree(str);
 	printf("\n");
 
-	printf("Testing quote()\n");
+	printf(_("Testing quote()\n"));
 	while(1) {
-		printf("Input string: ");
+		printf(_("Input string: "));
 		amfree(str);
 		if ((str = agets(stdin)) == NULL) {
 			printf("\n");
 			break;
 		}
 		sr = squote(str);
-		printf("Quoted   = \"%s\"\n", sr);
+		printf(_("Quoted   = \"%s\"\n"), sr);
 		strncpy(str,sr,SIZEOF(str)-1);
 		str[SIZEOF(str)-1] = '\0';
 		r = split(str, t, 20, " ");
 		if (r != 1) printf("split()=%d!\n", r);
-		printf("Unquoted = \"%s\"\n", t[1]);
+		printf(_("Unquoted = \"%s\"\n"), t[1]);
 		amfree(sr);
 	}
 	amfree(str);

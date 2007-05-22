@@ -434,6 +434,8 @@ main(
 
     malloc_size_1 = malloc_inuse(&malloc_hist_1);
 
+    setlocale(LC_ALL, "C");
+
     parse_conf(argc, argv, &new_argc, &new_argv);
     my_argc = new_argc;
     my_argv = new_argv;
@@ -449,7 +451,7 @@ main(
     signal(SIGPIPE, SIG_IGN);
 
     if(my_argc < 2) {
-	fprintf(stderr, "Usage: %s [config] [--list] <parmname> [-o configoption]*\n", pgm);
+	fprintf(stderr, _("Usage: %s [config] [--list] <parmname> [-o configoption]*\n"), pgm);
 	exit(1);
     }
 
@@ -472,7 +474,7 @@ main(
 	char my_cwd[STR_SIZE];
 
 	if (getcwd(my_cwd, SIZEOF(my_cwd)) == NULL) {
-	    error("cannot determine current working directory");
+	    error(_("cannot determine current working directory"));
 	    /*NOTREACHED*/
 	}
 	config_dir = stralloc2(my_cwd, "/");
@@ -481,7 +483,7 @@ main(
 	}
     }
     if (myarg >= my_argc) {
-	error("Must specify a parameter");
+	error(_("Must specify a parameter"));
     }
     parmname = my_argv[myarg];
 
@@ -560,7 +562,7 @@ main(
 
 	t = stralloc(parmname + SIZEOF(p) - 1);
 	if((dbname = strchr(t, ':')) == NULL) {
-	    error("cannot parse %s", parmname);
+	    error(_("cannot parse %s"), parmname);
 	    /*NOTREACHED*/
 	}
 	*dbname++ = '\0';
@@ -579,7 +581,7 @@ main(
     } else {
 	conffile = stralloc2(config_dir, CONFFILE_NAME);
 	if(read_conffile(conffile)) {
-	    error("errors processing config file \"%s\"", conffile);
+	    error(_("errors processing config file \"%s\""), conffile);
 	    /*NOTREACHED*/
 	}
 	amfree(conffile);
@@ -593,7 +595,7 @@ main(
     }
 
     if (result == NULL) {
-	fprintf(stderr, "%s: no such parameter \"%s\"\n",
+	fprintf(stderr, _("%s: no such parameter \"%s\"\n"),
 		get_pname(), parmname);
 	fflush(stderr);
     } else {

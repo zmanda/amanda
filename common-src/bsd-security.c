@@ -146,21 +146,21 @@ bsd_connect(
 
     result = resolve_hostname(hostname, &res, &canonname);
     if(result != 0) {
-	dbprintf("resolve_hostname(%s): %s\n", hostname, gai_strerror(result));
+	dbprintf(_("resolve_hostname(%s): %s\n"), hostname, gai_strerror(result));
 	security_seterror(&bh->sech, "resolve_hostname(%s): %s\n", hostname,
 			  gai_strerror(result));
 	(*fn)(arg, &bh->sech, S_ERROR);
 	return;
     }
     if (canonname == NULL) {
-	dbprintf("resolve_hostname(%s) did not return a canonical name\n", hostname);
+	dbprintf(_("resolve_hostname(%s) did not return a canonical name\n"), hostname);
 	security_seterror(&bh->sech,
 	        _("resolve_hostname(%s) did not return a canonical name\n"), hostname);
 	(*fn)(arg, &bh->sech, S_ERROR);
        return;
     }
     if (res == NULL) {
-	dbprintf("resolve_hostname(%s): no results\n", hostname);
+	dbprintf(_("resolve_hostname(%s): no results\n"), hostname);
 	security_seterror(&bh->sech,
 	        _("resolve_hostname(%s): no results\n"), hostname);
 	(*fn)(arg, &bh->sech, S_ERROR);
@@ -188,7 +188,7 @@ bsd_connect(
 	 */
 	if (port >= IPPORT_RESERVED) {
 	    security_seterror(&bh->sech,
-		"unable to bind to a reserved port (got port %u)",
+		_("unable to bind to a reserved port (got port %u)"),
 		(unsigned int)port);
 	    (*fn)(arg, &bh->sech, S_ERROR);
 	    freeaddrinfo(res);
@@ -198,7 +198,7 @@ bsd_connect(
 	not_init = 0;
     }
 
-    auth_debug(1, "Resolved hostname=%s\n", canonname);
+    auth_debug(1, _("Resolved hostname=%s\n"), canonname);
     if ((se = getservbyname(AMANDA_SERVICE_NAME, "udp")) == NULL)
 	port = AMANDA_SERVICE_DEFAULT;
     else
@@ -271,7 +271,7 @@ bsd_close(
 	return;
     }
 
-    auth_debug(1, "bsd: close handle '%s'\n", bh->proto_handle);
+    auth_debug(1, _("bsd: close handle '%s'\n"), bh->proto_handle);
 
     udp_recvpkt_cancel(bh);
     if(bh->next) {
@@ -311,7 +311,7 @@ bsd_stream_server(
 			(size_t)STREAM_BUFSIZE, 0);
     if (bs->socket < 0) {
 	security_seterror(&bh->sech,
-	    "can't create server stream: %s", strerror(errno));
+	    _("can't create server stream: %s"), strerror(errno));
 	amfree(bs);
 	return (NULL);
     }
@@ -337,7 +337,7 @@ bsd_stream_accept(
     bs->fd = stream_accept(bs->socket, 30, STREAM_BUFSIZE, STREAM_BUFSIZE);
     if (bs->fd < 0) {
 	security_stream_seterror(&bs->secstr,
-	    "can't accept new stream connection: %s", strerror(errno));
+	    _("can't accept new stream connection: %s"), strerror(errno));
 	return (-1);
     }
     return (0);
@@ -365,7 +365,7 @@ bsd_stream_client(
 	STREAM_BUFSIZE, STREAM_BUFSIZE, &bs->port, 0);
     if (bs->fd < 0) {
 	security_seterror(&bh->sech,
-	    "can't connect stream to %s port %d: %s", bh->hostname,
+	    _("can't connect stream to %s port %d: %s"), bh->hostname,
 	    id, strerror(errno));
 	amfree(bs);
 	return (NULL);
@@ -484,7 +484,7 @@ stream_read_sync_callback(
 
     assert(bs != NULL);
 
-    auth_debug(1, "bsd: stream_read_callback_sync: fd %d\n", bs->fd);
+    auth_debug(1, _("bsd: stream_read_callback_sync: fd %d\n"), bs->fd);
 
     /*
      * Remove the event first, in case they reschedule it in the callback.

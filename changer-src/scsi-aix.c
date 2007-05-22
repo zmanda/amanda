@@ -133,7 +133,7 @@ int SCSI_OpenDevice(int ip)
            pDev[ip].inquiry = NULL;
            return(1);
        } else {
-	 dbprintf("SCSI_OpenDevice %s failed\n", pDev[ip].dev);
+	 dbprintf(_("SCSI_OpenDevice %s failed\n"), pDev[ip].dev);
          return(0);
        }
     } else {
@@ -313,17 +313,17 @@ int SCSI_ExecuteCommand(int DeviceFD,
                DecodeExtSense(&ExtendedRequestSense, "SCSI_ExecuteCommand:", debug_file);
                bcopy(&ExtendedRequestSense, RequestSenseBuf, RequestSenseLength);
               */
-              dbprintf("ioctl on %d return %d\n", pDev[DeviceFD].fd, Result);
-              dbprintf("ret: %d errno: %d (%s)\n", Result, errno, "");
-              dbprintf("data_length:     %d\n", ds.data_length);
-              dbprintf("buffer:          0x%X\n", ds.buffer);
-              dbprintf("timeout_value:   %d\n", ds.timeout_value);
-              dbprintf("status_validity: %d\n", ds.status_validity);
-              dbprintf("scsi_bus_status: 0x%X\n", ds.scsi_bus_status);
-              dbprintf("adapter_status:  0x%X\n", ds.adapter_status);
-              dbprintf("adap_q_status:   0x%X\n", ds.adap_q_status);
-              dbprintf("q_tag_msg:       0x%X\n", ds.q_tag_msg);
-              dbprintf("flags:           0X%X\n", ds.flags);
+              dbprintf(_("ioctl on %d return %d\n"), pDev[DeviceFD].fd, Result);
+              dbprintf(_("ret: %d errno: %d (%s)\n"), Result, errno, "");
+              dbprintf(_("data_length:     %d\n"), ds.data_length);
+              dbprintf(_("buffer:          0x%X\n"), ds.buffer);
+              dbprintf(_("timeout_value:   %d\n"), ds.timeout_value);
+              dbprintf(_("status_validity: %d\n"), ds.status_validity);
+              dbprintf(_("scsi_bus_status: 0x%X\n"), ds.scsi_bus_status);
+              dbprintf(_("adapter_status:  0x%X\n"), ds.adapter_status);
+              dbprintf(_("adap_q_status:   0x%X\n"), ds.adap_q_status);
+              dbprintf(_("q_tag_msg:       0x%X\n"), ds.q_tag_msg);
+              dbprintf(_("flags:           0X%X\n"), ds.flags);
               return(SCSI_ERROR);
             }
         }
@@ -349,10 +349,10 @@ int SCSI_Scan(void)
     {
       for (lun = 0; lun < 7; lun++)
         {
-          printf("Target:Lun %d:%d\n", target,lun);
+          printf(_("Target:Lun %d:%d\n"), target,lun);
           if (ioctl(fd, SCIOSTART, IDLUN(target, lun)) == -1) {
             if (errno == EINVAL) {
-              printf("is in use\n");
+              printf(_("is in use\n"));
               isbusy = 1;
             } else {
               return(1);
@@ -373,7 +373,7 @@ int SCSI_Scan(void)
               dump_hex(&buf, 255, DEBUG_INFO, SECTION_SCSI);
               type = buf[0] & 0x1lf;
               buf[8+28] = 0;
-              printf("%-28s|Device Type %d\n",buf[8], type);
+              printf(_("%-28s|Device Type %d\n"),buf[8], type);
             }
           if (!isbusy && ioctl(fd, SCIOSTOP, IDLUN(target, lun)) == -1)
             return(1);

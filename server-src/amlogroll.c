@@ -40,7 +40,10 @@ char *datestamp;
 void handle_start(void);
 int main(int argc, char **argv);
 
-int main(int argc, char **argv)
+int
+main(
+    int		argc,
+    char **	argv)
 {
     char *conffile;
     char *logfname;
@@ -54,6 +57,8 @@ int main(int argc, char **argv)
 
     safe_fd(-1, 0);
 
+    setlocale(LC_ALL, "C");
+
     set_pname("amlogroll");
 
     dbopen(DBG_SUBDIR_SERVER);
@@ -65,7 +70,7 @@ int main(int argc, char **argv)
     erroutput_type = ERR_INTERACTIVE;
 
     if (getcwd(my_cwd, SIZEOF(my_cwd)) == NULL) {
-	error("cannot determine current working directory");
+	error(_("cannot determine current working directory"));
 	/*NOTREACHED*/
     }
 
@@ -89,7 +94,7 @@ int main(int argc, char **argv)
 
     conffile = stralloc2(config_dir, CONFFILE_NAME);
     if(read_conffile(conffile)) {
-        error("errors processing config file \"%s\"", conffile);
+        error(_("errors processing config file \"%s\""), conffile);
 	/*NOTREACHED*/
     }
     amfree(conffile);
@@ -108,7 +113,7 @@ int main(int argc, char **argv)
     amfree(conf_logdir);
 
     if((logfile = fopen(logfname, "r")) == NULL) {
-	error("could not open log %s: %s", logfname, strerror(errno));
+	error(_("could not open log %s: %s"), logfname, strerror(errno));
 	/*NOTREACHED*/
     }
     amfree(logfname);

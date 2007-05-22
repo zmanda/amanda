@@ -83,14 +83,14 @@ match(
     if((result = regcomp(&regc, regex,
 			 REG_EXTENDED|REG_NOSUB|REG_NEWLINE)) != 0) {
         regerror(result, &regc, errmsg, SIZEOF(errmsg));
-	error("regex \"%s\": %s", regex, errmsg);
+	error(_("regex \"%s\": %s"), regex, errmsg);
 	/*NOTREACHED*/
     }
 
     if((result = regexec(&regc, str, 0, 0, 0)) != 0
        && result != REG_NOMATCH) {
         regerror(result, &regc, errmsg, SIZEOF(errmsg));
-	error("regex \"%s\": %s", regex, errmsg);
+	error(_("regex \"%s\": %s"), regex, errmsg);
 	/*NOTREACHED*/
     }
 
@@ -136,14 +136,14 @@ match_glob(
     if((result = regcomp(&regc, regex,
 			 REG_EXTENDED|REG_NOSUB|REG_NEWLINE)) != 0) {
         regerror(result, &regc, errmsg, SIZEOF(errmsg));
-	error("glob \"%s\" -> regex \"%s\": %s", glob, regex, errmsg);
+	error(_("glob \"%s\" -> regex \"%s\": %s"), glob, regex, errmsg);
 	/*NOTREACHED*/
     }
 
     if((result = regexec(&regc, str, 0, 0, 0)) != 0
        && result != REG_NOMATCH) {
         regerror(result, &regc, errmsg, SIZEOF(errmsg));
-	error("glob \"%s\" -> regex \"%s\": %s", glob, regex, errmsg);
+	error(_("glob \"%s\" -> regex \"%s\": %s"), glob, regex, errmsg);
 	/*NOTREACHED*/
     }
 
@@ -244,14 +244,14 @@ match_tar(
     if((result = regcomp(&regc, regex,
 			 REG_EXTENDED|REG_NOSUB|REG_NEWLINE)) != 0) {
         regerror(result, &regc, errmsg, SIZEOF(errmsg));
-	error("glob \"%s\" -> regex \"%s\": %s", glob, regex, errmsg);
+	error(_("glob \"%s\" -> regex \"%s\": %s"), glob, regex, errmsg);
 	/*NOTREACHED*/
     }
 
     if((result = regexec(&regc, str, 0, 0, 0)) != 0
        && result != REG_NOMATCH) {
         regerror(result, &regc, errmsg, SIZEOF(errmsg));
-	error("glob \"%s\" -> regex \"%s\": %s", glob, regex, errmsg);
+	error(_("glob \"%s\" -> regex \"%s\": %s"), glob, regex, errmsg);
 	/*NOTREACHED*/
     }
 
@@ -543,7 +543,7 @@ match_datestamp(
     int match_exact;
 
     if(strlen(dateexp) >= 100 || strlen(dateexp) < 1) {
-	error("Illegal datestamp expression %s",dateexp);
+	error(_("Illegal datestamp expression %s"),dateexp);
 	/*NOTREACHED*/
     }
    
@@ -565,7 +565,7 @@ match_datestamp(
 
     if((dash = strchr(mydateexp,'-'))) {
 	if(match_exact == 1) {
-	    error("Illegal datestamp expression %s",dateexp);
+	    error(_("Illegal datestamp expression %s"),dateexp);
 	    /*NOTREACHED*/
 	}
 	len = (size_t)(dash - mydateexp);
@@ -605,7 +605,7 @@ match_level(
     int match_exact;
 
     if(strlen(levelexp) >= 100 || strlen(levelexp) < 1) {
-	error("Illegal level expression %s",levelexp);
+	error(_("Illegal level expression %s"),levelexp);
 	/*NOTREACHED*/
     }
    
@@ -627,7 +627,7 @@ match_level(
 
     if((dash = strchr(mylevelexp,'-'))) {
 	if(match_exact == 1) {
-	    error("Illegal level expression %s",levelexp);
+	    error(_("Illegal level expression %s"),levelexp);
 	    /*NOTREACHED*/
 	}
 	len = (size_t)(dash - mylevelexp);
