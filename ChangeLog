@@ -1,4 +1,8 @@
 2007-05-22  Maitreyee Karmarkar <maitreyee@zmanda.com> (merged by dustin@zmanda.com)
+	* server-src/amcheck.c : Changed some amcheck messages
+	* common-src/conffile.c : Changed some amcheck messages
+	
+2007-05-22  Maitreyee Karmarkar <maitreyee@zmanda.com> (merged by dustin@zmanda.com)
 	* client-src/selfcheck.c, server-src/changer.c, server-src/amcheck.c,
 	  server-src/taperscan.c, server-src/diskfile.c,
 	  common-src/conffile.c:

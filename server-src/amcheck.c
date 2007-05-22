@@ -212,7 +212,7 @@ main(
     config_dir = vstralloc(CONFIG_DIR, "/", config_name, "/", NULL);
     conffile = stralloc2(config_dir, CONFFILE_NAME);
     if(read_conffile(conffile)) {
-	error(_("errors processing config file \"%s\". See the tutorial for the correct syntax"), conffile);
+	error(_("errors processing config file \"%s\"."), conffile);
 	/*NOTREACHED*/
     }
 

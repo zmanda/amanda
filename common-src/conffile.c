@@ -632,10 +632,10 @@ read_conffile(
 
 	    conf_confname = filename;
 	    if(!conf_data[CNF_TAPETYPE].seen) 
-		conf_parserror(_("default tapetype %s not defined in amanda.conf. See online tutorial for the correct syntax."), conf_data[CNF_TAPETYPE].v.s);
+		conf_parserror(_("default tapetype %s not defined in amanda.conf."), conf_data[CNF_TAPETYPE].v.s);
 	    else {
 		conf_line_num = conf_data[CNF_TAPETYPE].seen;
-		conf_parserror(_("tapetype %s not defined. See online tutorial for the correct syntax."), conf_data[CNF_TAPETYPE].v.s);
+		conf_parserror(_("tapetype %s not defined."), conf_data[CNF_TAPETYPE].v.s);
 	    }
 	    conf_confname = save_confname;
 	}
