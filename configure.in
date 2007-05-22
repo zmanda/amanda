@@ -3353,9 +3353,9 @@ AC_CONFIG_FILES([\
 	server-src/amoverview.pl	server-src/amrmtape.sh		\
 	server-src/amtoc.pl		server-src/amverify.sh		\
 	server-src/Makefile		server-src/amstatus.pl		\
-	server-src/amverifyrun.sh	server-src/amcrypt.sh		\
-	server-src/amaespipe.sh         server-src/amcrypt-ossl.sh	\
-	server-src/amcrypt-ossl-asym.sh					\
+	server-src/amverifyrun.sh	common-src/amcrypt.sh		\
+	common-src/amaespipe.sh         common-src/amcrypt-ossl.sh	\
+	common-src/amcrypt-ossl-asym.sh					\
 	tape-src/Makefile						\
 									\
 	config/Makefile			Makefile])

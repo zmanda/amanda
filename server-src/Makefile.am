@@ -24,9 +24,7 @@ libexec_PROGRAMS =	amindexd	amlogroll	amtrmidx	\
 
 sbin_SCRIPTS =		amcheckdb	amcleanup	amdump		\
 			amoverview	amrmtape	amtoc		\
-			amverify	amverifyrun	amstatus	\
-			amcrypt		amaespipe       amcrypt-ossl    \
-			amcrypt-ossl-asym
+			amverify	amverifyrun	amstatus
 
 libamserver_la_SOURCES=	amindex.c	changer.c			\
 			diskfile.c	driverio.c	cmdline.c  \

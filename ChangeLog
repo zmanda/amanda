@@ -1,3 +1,9 @@
+2007-05-22  Kevin Till <ktill@zmanda.com> (merged by dustin@zmanda.com)
+	* configure.in:	move crypt scripts to common-src since they are needed
+	  by both server and client
+	* common-src/Makefile.am: ditto
+	* server-src/Makefile.am: ditto
+
 2006-05-17   John Franks <jrfranks@zmanda.com> (merged by dustin@zmanda.com)
 	* configure.in oldrecover-src/amrecover.c
 	  oldrecover-src/extract_list.c oldrecover-src/display_commands.c

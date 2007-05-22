@@ -7,6 +7,10 @@ lib_LTLIBRARIES =	libamanda.la
 LINT=@AMLINT@
 LINTFLAGS=@AMLINTFLAGS@
 
+sbin_SCRIPTS =	amcrypt amaespipe	\
+	amcrypt-ossl	amcrypt-ossl-asym
+
+
 libamanda_la_SOURCES =		\
 	alloc.c			\
 	amfeatures.c		\
@@ -85,6 +89,13 @@ noinst_HEADERS =		\
 	util.h			\
 	version.h
 
+SUFFIXES =		.sh .pl
+
+.pl:
+	cat $< > $@
+	chmod a+x $@
+	-test -z "$(PERL)" || $(PERL) -c $@
+
 .sh:
 	cat $< > $@
 	chmod a+x $@
@@ -153,6 +164,17 @@ bsdsecurity_LDADD = $(libamanda_a_LIBADD) \
 
 amfeatures_SOURCES = amfeatures.test.c
 amfeatures_LDADD = $(libamanda_la_LIBADD) $(STANDARD_COMMON_STUFF)
+
+install-exec-hook:
+	@list="$(sbin_SCRIPTS)"; \
+	for p in $$list; do \
+	pa=$(DESTDIR)$(sbindir)/`echo $$p|sed '$(transform)'`; \
+	echo chown \"$(BINARY_OWNER)\" $$pa;    \
+	chown "$(BINARY_OWNER)" $$pa;           \
+	echo chgrp \"$(SETUID_GROUP)\" $$pa;    \
+	chgrp "$(SETUID_GROUP)" $$pa;           \
+	done
+
 
 lint:
 	@echo $(LINT) $(libamanda_la_SOURCES)
