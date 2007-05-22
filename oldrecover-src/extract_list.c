@@ -2143,7 +2143,7 @@ extract_files(void)
     printf("\n");
 
     if (getcwd(buf, sizeof(buf)) == NULL) {
-	perror(_("extract_list: Current working directory unavailable"));
+	perror(_("extract_list: Cannot determine current working directory"));
 	exit(1);
     }
 

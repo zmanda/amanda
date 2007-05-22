@@ -270,7 +270,8 @@ main(
 	char my_cwd[STR_SIZE];
 
 	if (getcwd(my_cwd, SIZEOF(my_cwd)) == NULL) {
-	    error(_("cannot determine current working directory"));
+	    error(_("Cannot determine current working directory: %s"),
+		  strerror(errno));
 	    /*NOTREACHED*/
 	}
 	config_dir = stralloc2(my_cwd, "/");
@@ -902,7 +903,7 @@ file_reader_side(
 	    if (data_socket < 0) {
 		char *m;
 
-		m = vstralloc(_("[port create failure: %s]"), strerror(errno));
+		m = vstrallocf(_("[port create failure: %s]"), strerror(errno));
 		q = squote(m);
 		putresult(TAPE_ERROR, _("%s %s\n"), handle, q);
 		amfree(m);

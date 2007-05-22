@@ -214,7 +214,8 @@ main(
 	char my_cwd[STR_SIZE];
 
 	if (getcwd(my_cwd, SIZEOF(my_cwd)) == NULL) {
-	    error(_("cannot determine current working directory"));
+	    error(_("Cannot determine current working directory: %s"),
+		  strerror(errno));
 	    /*NOTREACHED*/
 	}
 	config_dir = stralloc2(my_cwd, "/");

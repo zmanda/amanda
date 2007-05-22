@@ -70,7 +70,8 @@ main(
     erroutput_type = ERR_INTERACTIVE;
 
     if (getcwd(my_cwd, SIZEOF(my_cwd)) == NULL) {
-	error(_("cannot determine current working directory"));
+	error(_("Cannot determine current working directory: %s"),
+	        strerror(errno));
 	/*NOTREACHED*/
     }
 

@@ -1,3 +1,13 @@
+2006-05-22   John Franks <jrfranks@zmanda.com> (merged by dustin@zmanda.com)
+	* common-src/krb5-security.c common-src/security-util.c
+	  server-src/taper.c server-src/taperscan.c:
+		Fix botched *vstrallocf conversions.
+	* oldrecover-src/extract_list.c server-src/amlogroll.c
+	  server-src/chunker.c server-src/driver.c server-src/dumper.c
+	  server-src/getconf.c server-src/holding.c server-src/planner.c
+	  server-src/reporter.c server-src/taper.c:
+		Add errno text when printing getcwd() error message.
+
 2007-05-22  Kevin Till <ktill@zmanda.com> (merged by dustin@zmanda.com)
 	* configure.in:	move crypt scripts to common-src since they are needed
 	  by both server and client
