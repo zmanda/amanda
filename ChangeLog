@@ -1,4 +1,9 @@
 2007-05-23  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/driver.c: Check dumper->down.
+	* server-src/dumper.c (sendbackup_response): Only call
+	  security_close_connection if pkt != NULL.
+
+2007-05-23  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/find.c: Send ouput to stderr.
 
 2007-05-17  Jean-Louis Martineau <martineau@zmanda.com>
