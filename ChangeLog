@@ -1,4 +1,8 @@
 2006-12-21  John Franks <jrfranks@zmanda.com> (merged by dustin@zmanda.com)
+	* configure.in: Prevent annoying lint usage message from
+	  being displayed in configure console output.
+
+2006-12-21  John Franks <jrfranks@zmanda.com> (merged by dustin@zmanda.com)
 	* autogen:
 		Fix problem of not generating po/Makefile.in on fresh checkout.
 	* server-src/logfile.c:

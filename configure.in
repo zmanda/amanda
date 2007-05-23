@@ -104,7 +104,7 @@ AC_PATH_PROGS(EGREP,egrep,,$LOCSYSPATH)
 
 AC_PATH_PROGS(AMLINT,lint,,/opt/SUNWspro/bin:$SYSLOCPATH)
 if test ! -z "$AMLINT"; then
-  $AMLINT -flags | $GREP -- '-errfmt=' 2>&1 > /dev/null
+  $AMLINT -flags 2>&1 | $GREP -- '-errfmt=' > /dev/null
   if test $? -eq 0; then
     AMLINTFLAGS="-n -s -u -m -x"
     AMLINTFLAGS="$AMLINTFLAGS -errchk=%all"
