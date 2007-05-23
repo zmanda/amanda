@@ -1030,7 +1030,7 @@ gnutar_calc_estimates(
 
 	    amflock(1, "size");
 
-	    printf(_("%s %d SIZE ") OFF_T_FMT "\n",
+	    printf(_("%s %d SIZE " OFF_T_FMT "\n"),
 		   est->qamname, level, (OFF_T_FMT_TYPE)size);
 	    if (errmsg && errmsg[0] != '\0') {
 		if(am_has_feature(g_options->features,

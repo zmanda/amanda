@@ -190,15 +190,15 @@ static void
 help(void)
 {
   usage();
-  fputs(_("-h			display this message\n")
-  	_("-c			run hardware compression detection test only\n")
-  	_("-o			overwrite amanda tape\n")
-  	_("-b blocksize		record block size (default: 32k)\n")
-  	_("-e estsize		estimated tape size (No default!)\n")
-  	_("-f tapedev		tape device name (default: $TAPE)\n")
-  	_("-t typename		tapetype name (default: unknown-tapetype)\n")
-  	_("\n")
-	_("Note: disable hardware compression when running this program.\n"),
+  fputs(_("-h			display this message\n"
+  	  "-c			run hardware compression detection test only\n"
+  	  "-o			overwrite amanda tape\n"
+  	  "-b blocksize		record block size (default: 32k)\n"
+  	  "-e estsize		estimated tape size (No default!)\n"
+  	  "-f tapedev		tape device name (default: $TAPE)\n"
+  	  "-t typename		tapetype name (default: unknown-tapetype)\n"
+  	  "\n"
+	  "Note: disable hardware compression when running this program.\n"),
 	stderr);
 }
 

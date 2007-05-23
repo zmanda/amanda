@@ -145,7 +145,7 @@ char *tapeio_next_devname(char * dev_left,
 			     char * dev_right,
 			     char **dev_next);
 
-#define NOT_AMANDA_TAPE_MSG _("not an amanda tape")
+#define NOT_AMANDA_TAPE_MSG "not an amanda tape"
 #define CHECK_NOT_AMANDA_TAPE_MSG(x) (!BSTRNCMP(x, NOT_AMANDA_TAPE_MSG))
 
 #endif /* ! TAPEIO_H */

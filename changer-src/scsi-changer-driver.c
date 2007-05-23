@@ -3062,7 +3062,7 @@ GenericSenseHandler(
 		     AdditionalSenseCodeQualifier,
 		     &info);
 
-  dbprintf(_("##### STOP GenericSenseHandler\n"));
+  dbprintf(_("##### STOP GenericSenseHandler: %s\n"), _(info));
   return(ret);
 }
 
@@ -6015,8 +6015,8 @@ SCSI_AlignElements(
 	  /*NOTREACHED*/
         }
     }
-  DebugPrint(DEBUG_ERROR, SECTION_SCSI,"SCSI_AlignElements :"
-	     _("Retries exceeded = %d\n"), retry);
+  DebugPrint(DEBUG_ERROR, SECTION_SCSI,
+	    _("SCSI_AlignElements: Retries exceeded = %d\n"), retry);
   return(-1);
 }
 

@@ -548,7 +548,7 @@ tcpm_recv_token(
 	    dbprintf(_("tcpm_recv_token: invalid size %s\n"), s);
 	} else {
 	    *errmsg = newvstrallocf(*errmsg, _("tcpm_recv_token: invalid size"));
-	    dbprintf(_("tcpm_recv_token: invalid size ") SSIZE_T_FMT "\n", *size);
+	    dbprintf(_("tcpm_recv_token: invalid size " SSIZE_T_FMT "\n"), *size);
 	}
 	*size = -1;
 	return -1;

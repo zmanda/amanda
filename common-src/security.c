@@ -120,7 +120,7 @@ security_handleinit(
 printf_arglist_function1(void security_seterror, security_handle_t *, handle,
     const char *, fmt)
 {
-    static char buf[256];
+    static char buf[1024];
     va_list argp;
 
     assert(handle->error != NULL);
@@ -162,7 +162,7 @@ printf_arglist_function1(void security_stream_seterror,
     security_stream_t *, stream,
     const char *, fmt)
 {
-    static char buf[256];
+    static char buf[1024];
     va_list argp;
 
     arglist_start(argp, fmt);

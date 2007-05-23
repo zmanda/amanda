@@ -63,37 +63,37 @@ static const struct {
     const char *usage;
 } cmdtab[] = {
     { "reset", reset_changer,
-	_("reset                Reset changer to known state") },
+	_T("reset                Reset changer to known state") },
     { "eject", eject_tape,
-	_("eject                Eject current tape from drive") },
+	_T("eject                Eject current tape from drive") },
     { "clean", clean_tape,
-	_("clean                Clean the drive") },
+	_T("clean                Clean the drive") },
     { "show", show_slots,
-	_("show                 Show contents of all slots") },
+	_T("show                 Show contents of all slots") },
     { "current", show_current,
-	_("current              Show contents of current slot") },
+	_T("current              Show contents of current slot") },
     { "slot" , load_slot,
-	_("slot <slot #>        load tape from slot <slot #>") },
+	_T("slot <slot #>        load tape from slot <slot #>") },
     { "slot" , load_slot,
-	_("slot current         load tape from current slot") },
+	_T("slot current         load tape from current slot") },
     { "slot" , load_slot,
-	_("slot prev            load tape from previous slot") },
+	_T("slot prev            load tape from previous slot") },
     { "slot" , load_slot,
-	_("slot next            load tape from next slot") },
+	_T("slot next            load tape from next slot") },
     { "slot" , load_slot,
-	_("slot advance         advance to next slot but do not load") },
+	_T("slot advance         advance to next slot but do not load") },
     { "slot" , load_slot,
-	_("slot first           load tape from first slot") },
+	_T("slot first           load tape from first slot") },
     { "slot" , load_slot,
-	_("slot last            load tape from last slot") },
+	_T("slot last            load tape from last slot") },
     { "label", load_label,
-	_("label <label>        find and load labeled tape") },
+	_T("label <label>        find and load labeled tape") },
     { "taper", amtape_taper_scan,
-	_("taper                perform taper's scan alg.") },
+	_T("taper                perform taper's scan alg.") },
     { "device", show_device,
-	_("device               show current tape device") },
+	_T("device               show current tape device") },
     { "update", update_labeldb,
-	_("update               update the label matchingdatabase")},
+	_T("update               update the label matchingdatabase")},
 };
 #define	NCMDS	(int)(sizeof(cmdtab) / sizeof(cmdtab[0]))
 
@@ -105,7 +105,7 @@ usage(void)
     fprintf(stderr, _("Usage: amtape%s <conf> <command> {<args>} [-o configoption]*\n"), versionsuffix());
     fprintf(stderr, _("\tValid commands are:\n"));
     for (i = 0; i < NCMDS; i++)
-	fprintf(stderr, "\t\t%s\n", cmdtab[i].usage);
+	fprintf(stderr, "\t\t%s\n", _(cmdtab[i].usage));
     exit(1);
 }
 

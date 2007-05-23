@@ -1556,9 +1556,20 @@ nicedate(
     static char nice[64];
     char date[9];
     int  numdate;
-    static char *months[13] = { "BogusMonth",
-	_("January"), _("February"), _("March"), _("April"), _("May"), _("June"),
-	_("July"), _("August"), _("September"), _("October"), _("November"), _("December")
+    static char *months[13] = {
+		_T("BogusMonth"),
+		_T("January"),
+		_T("February"),
+		_T("March"),
+		_T("April"),
+		_T("May"),
+		_T("June"),
+		_T("July"),
+		_T("August"),
+		_T("September"),
+		_T("October"),
+		_T("November"),
+		_T("December")
     };
     int year, month, day;
 
@@ -1571,7 +1582,7 @@ nicedate(
     if (month > 12 )
 	month = 0;
 
-    snprintf(nice, SIZEOF(nice), "%s %d, %d", months[month], day, year);
+    snprintf(nice, SIZEOF(nice), "%s %d, %d", _(months[month]), day, year);
 
     return nice;
 }

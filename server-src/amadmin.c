@@ -90,45 +90,45 @@ static const struct {
     const char *usage;
 } cmdtab[] = {
     { "version", show_version,
-	_("\t\t\t\t\t# Show version info.") },
+	_T("\t\t\t\t\t# Show version info.") },
     { "config", show_config,
-	_("\t\t\t\t\t# Show configuration.") },
+	_T("\t\t\t\t\t# Show configuration.") },
     { "force", force,
-	_(" [<hostname> [<disks>]* ]+\t\t# Force level 0 at next run.") },
+	_T(" [<hostname> [<disks>]* ]+\t\t# Force level 0 at next run.") },
     { "unforce", unforce,
-	_(" [<hostname> [<disks>]* ]+\t# Clear force command.") },
+	_T(" [<hostname> [<disks>]* ]+\t# Clear force command.") },
     { "force-bump", force_bump,
-	_(" [<hostname> [<disks>]* ]+\t# Force bump at next run.") },
+	_T(" [<hostname> [<disks>]* ]+\t# Force bump at next run.") },
     { "force-no-bump", force_no_bump,
-	_(" [<hostname> [<disks>]* ]+\t# Force no-bump at next run.") },
+	_T(" [<hostname> [<disks>]* ]+\t# Force no-bump at next run.") },
     { "unforce-bump", unforce_bump,
-	_(" [<hostname> [<disks>]* ]+\t# Clear bump command.") },
+	_T(" [<hostname> [<disks>]* ]+\t# Clear bump command.") },
     { "disklist", disklist,
-	_(" [<hostname> [<disks>]* ]*\t# Debug disklist entries.") },
+	_T(" [<hostname> [<disks>]* ]*\t# Debug disklist entries.") },
     { "reuse", reuse,
-	_(" <tapelabel> ...\t\t # re-use this tape.") },
+	_T(" <tapelabel> ...\t\t # re-use this tape.") },
     { "no-reuse", noreuse,
-	_(" <tapelabel> ...\t # never re-use this tape.") },
+	_T(" <tapelabel> ...\t # never re-use this tape.") },
     { "find", find,
-	_(" [<hostname> [<disks>]* ]*\t # Show which tapes these dumps are on.") },
+	_T(" [<hostname> [<disks>]* ]*\t # Show which tapes these dumps are on.") },
     { "holding", holding,
 	" {list [ -l ] |delete} [ <hostname> [ <disk> [ <datestamp> [ .. ] ] ] ]+\t # Show or delete holding disk contents." },
     { "delete", delete,
-	_(" [<hostname> [<disks>]* ]+ # Delete from database.") },
+	_T(" [<hostname> [<disks>]* ]+ # Delete from database.") },
     { "info", info,
-	_(" [<hostname> [<disks>]* ]*\t # Show current info records.") },
+	_T(" [<hostname> [<disks>]* ]*\t # Show current info records.") },
     { "due", due,
-	_(" [<hostname> [<disks>]* ]*\t # Show due date.") },
+	_T(" [<hostname> [<disks>]* ]*\t # Show due date.") },
     { "balance", balance,
-	_(" [-days <num>]\t\t # Show nightly dump size balance.") },
+	_T(" [-days <num>]\t\t # Show nightly dump size balance.") },
     { "tape", tape,
-	_(" [-days <num>]\t\t # Show which tape is due next.") },
+	_T(" [-days <num>]\t\t # Show which tape is due next.") },
     { "bumpsize", bumpsize,
-	_("\t\t\t # Show current bump thresholds.") },
+	_T("\t\t\t # Show current bump thresholds.") },
     { "export", export_db,
-	_(" [<hostname> [<disks>]* ]* # Export curinfo database to stdout.") },
+	_T(" [<hostname> [<disks>]* ]* # Export curinfo database to stdout.") },
     { "import", import_db,
-	_("\t\t\t\t # Import curinfo database from stdin.") },
+	_T("\t\t\t\t # Import curinfo database from stdin.") },
 };
 #define	NCMDS	(int)(sizeof(cmdtab) / sizeof(cmdtab[0]))
 
@@ -274,7 +274,7 @@ usage(void)
 	    get_pname(), versionsuffix());
     fprintf(stderr, _("    Valid <command>s are:\n"));
     for (i = 0; i < NCMDS; i++)
-	fprintf(stderr, "\t%s%s\n", cmdtab[i].name, cmdtab[i].usage);
+	fprintf(stderr, "\t%s%s\n", cmdtab[i].name, _(cmdtab[i].usage));
     exit(1);
 }
 
@@ -289,7 +289,15 @@ seqdatestr(
     int		seq)
 {
     static char str[16];
-    static char *dow[7] = {_("Sun"),_("Mon"),_("Tue"),_("Wed"),_("Thu"),_("Fri"),_("Sat")};
+    static char *dow[7] = {
+			_T("Sun"),
+			_T("Mon"),
+			_T("Tue"),
+			_T("Wed"),
+			_T("Thu"),
+			_T("Fri"),
+			_T("Sat")
+		};
     time_t t = today + seq*SECS_PER_DAY;
     struct tm *tm;
 
@@ -297,9 +305,9 @@ seqdatestr(
 
     if (tm)
 	snprintf(str, SIZEOF(str),
-		 "%2d/%02d %3s", tm->tm_mon+1, tm->tm_mday, dow[tm->tm_wday]);
+		 "%2d/%02d %3s", tm->tm_mon+1, tm->tm_mday, _(dow[tm->tm_wday]));
     else
-	strcpy(str, "BAD DATE");
+	strcpy(str, _("BAD DATE"));
 
     return str;
 }

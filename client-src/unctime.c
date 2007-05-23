@@ -77,14 +77,12 @@ unctime(
 	return mktime(&then);
 }
 
-static char months[] =
-	_("JanFebMarAprMayJunJulAugSepOctNovDec");
-
 static int
 lookup(
     char *	str)
 {
 	register char *cp, *cp2;
+	char *months = _("JanFebMarAprMayJunJulAugSepOctNovDec");
 
 	for (cp = months, cp2 = str; *cp != '\0'; cp += 3)
 		if (strncmp(cp, cp2, 3) == 0)

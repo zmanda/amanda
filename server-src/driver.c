@@ -123,23 +123,23 @@ int main(int main_argc, char **main_argv);
 
 static const char *idle_strings[] = {
 #define NOT_IDLE		0
-    _("not-idle"),
+    _T("not-idle"),
 #define IDLE_NO_DUMPERS		1
-    _("no-dumpers"),
+    _T("no-dumpers"),
 #define IDLE_START_WAIT		2
-    _("start-wait"),
+    _T("start-wait"),
 #define IDLE_NO_HOLD		3
-    _("no-hold"),
+    _T("no-hold"),
 #define IDLE_CLIENT_CONSTRAINED	4
-    _("client-constrained"),
+    _T("client-constrained"),
 #define IDLE_NO_DISKSPACE	5
-    _("no-diskspace"),
+    _T("no-diskspace"),
 #define IDLE_TOO_LARGE		6
-    _("file-too-large"),
+    _T("file-too-large"),
 #define IDLE_NO_BANDWIDTH	7
-    _("no-bandwidth"),
+    _T("no-bandwidth"),
 #define IDLE_TAPER_WAIT		8
-    _("taper-wait"),
+    _T("taper-wait"),
 };
 
 int
@@ -2951,7 +2951,7 @@ short_dump_state(void)
     printf(_(" runq: %d"), queue_length(runq));
     printf(_(" roomq: %d"), queue_length(roomq));
     printf(_(" wakeup: %d"), (int)sleep_time);
-    printf(_(" driver-idle: %s\n"), idle_strings[idle_reason]);
+    printf(_(" driver-idle: %s\n"), _(idle_strings[idle_reason]));
     interface_state(wall_time);
     holdingdisk_state(wall_time);
     fflush(stdout);

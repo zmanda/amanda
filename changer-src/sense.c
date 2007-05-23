@@ -27,301 +27,301 @@
 /*
  * Generic one, this is used if not information is found based on the ident of the device
  */
-	{ "generic", "", TYPE_TAPE,  SENSE_NULL, 0x0, 0x0, SENSE_NO, _("No Sense")},
-	{ "generic", "", TYPE_TAPE,  SENSE_NULL , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _("Default for SENSE_NULL")},
+	{ "generic", "", TYPE_TAPE,  SENSE_NULL, 0x0, 0x0, SENSE_NO, _T("No Sense")},
+	{ "generic", "", TYPE_TAPE,  SENSE_NULL , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _T("Default for SENSE_NULL")},
 
-	{ "generic", "", TYPE_TAPE , SENSE_RECOVERED_ERROR, 0x0, 0x0, SENSE_IGNORE, _("Recovered Error")},
-	{ "generic", "", TYPE_TAPE,  SENSE_RECOVERED_ERROR , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _("Default for SENSE_RECOVERED_ERROR")},
+	{ "generic", "", TYPE_TAPE , SENSE_RECOVERED_ERROR, 0x0, 0x0, SENSE_IGNORE, _T("Recovered Error")},
+	{ "generic", "", TYPE_TAPE,  SENSE_RECOVERED_ERROR , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _T("Default for SENSE_RECOVERED_ERROR")},
 
-	{ "generic", "", TYPE_TAPE , SENSE_NOT_READY, 0x0, 0x0, SENSE_IGNORE, _("Not Ready")},
-	{ "generic", "", TYPE_TAPE , SENSE_NOT_READY, 0x4, 0x1, SENSE_RETRY, _("The drive is not ready, but it is in the process of becoming ready")},
-	{ "generic", "", TYPE_TAPE , SENSE_NOT_READY, 0x3A, 0x0, SENSE_TAPE_NOT_ONLINE, _("No Tape online")},
-	{ "generic", "", TYPE_TAPE,  SENSE_NOT_READY , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _("Default for SENSE_NOT_READY")},
+	{ "generic", "", TYPE_TAPE , SENSE_NOT_READY, 0x0, 0x0, SENSE_IGNORE, _T("Not Ready")},
+	{ "generic", "", TYPE_TAPE , SENSE_NOT_READY, 0x4, 0x1, SENSE_RETRY, _T("The drive is not ready, but it is in the process of becoming ready")},
+	{ "generic", "", TYPE_TAPE , SENSE_NOT_READY, 0x3A, 0x0, SENSE_TAPE_NOT_ONLINE, _T("No Tape online")},
+	{ "generic", "", TYPE_TAPE,  SENSE_NOT_READY , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _T("Default for SENSE_NOT_READY")},
 
-	{ "generic", "", TYPE_TAPE , SENSE_MEDIUM_ERROR, 0x0, 0x0, SENSE_ABORT, _("Medium Error")},
-	{ "generic", "", TYPE_TAPE,  SENSE_MEDIUM_ERROR , UCHAR_MAX, UCHAR_MAX, SENSE_ABORT, _("Default for SENSE_MEDIUM_ERROR")},
+	{ "generic", "", TYPE_TAPE , SENSE_MEDIUM_ERROR, 0x0, 0x0, SENSE_ABORT, _T("Medium Error")},
+	{ "generic", "", TYPE_TAPE,  SENSE_MEDIUM_ERROR , UCHAR_MAX, UCHAR_MAX, SENSE_ABORT, _T("Default for SENSE_MEDIUM_ERROR")},
 
-	{ "generic", "", TYPE_TAPE , SENSE_HARDWARE_ERROR, 0x0, 0x0, SENSE_ABORT, _("Hardware Error")},
-	{ "generic", "", TYPE_TAPE,  SENSE_HARDWARE_ERROR , UCHAR_MAX, UCHAR_MAX, SENSE_ABORT, _("Default for SENSE_HARDWARE_ERROR")},
+	{ "generic", "", TYPE_TAPE , SENSE_HARDWARE_ERROR, 0x0, 0x0, SENSE_ABORT, _T("Hardware Error")},
+	{ "generic", "", TYPE_TAPE,  SENSE_HARDWARE_ERROR , UCHAR_MAX, UCHAR_MAX, SENSE_ABORT, _T("Default for SENSE_HARDWARE_ERROR")},
 
-	{ "generic", "", TYPE_TAPE , SENSE_ILLEGAL_REQUEST, 0x0, 0x0, SENSE_ABORT, _("Illegal Request")},
-	{ "generic", "", TYPE_TAPE,  SENSE_ILLEGAL_REQUEST , UCHAR_MAX, UCHAR_MAX, SENSE_ABORT, _("Default for SENSE_ILLEGAL_REQUEST")},
+	{ "generic", "", TYPE_TAPE , SENSE_ILLEGAL_REQUEST, 0x0, 0x0, SENSE_ABORT, _T("Illegal Request")},
+	{ "generic", "", TYPE_TAPE,  SENSE_ILLEGAL_REQUEST , UCHAR_MAX, UCHAR_MAX, SENSE_ABORT, _T("Default for SENSE_ILLEGAL_REQUEST")},
 
-	{ "generic", "", TYPE_TAPE , SENSE_UNIT_ATTENTION, 0x0, 0x0, SENSE_RETRY, _("Unit Attention")},
-	{ "generic", "", TYPE_TAPE,  SENSE_UNIT_ATTENTION, UCHAR_MAX, UCHAR_MAX, SENSE_ABORT, _("Default for SENSE_UNIT_ATTENTION")},
+	{ "generic", "", TYPE_TAPE , SENSE_UNIT_ATTENTION, 0x0, 0x0, SENSE_RETRY, _T("Unit Attention")},
+	{ "generic", "", TYPE_TAPE,  SENSE_UNIT_ATTENTION, UCHAR_MAX, UCHAR_MAX, SENSE_ABORT, _T("Default for SENSE_UNIT_ATTENTION")},
 
-	{ "generic", "", TYPE_TAPE , UCHAR_MAX, 0x0, 0x0, SENSE_ABORT, _("Nothing Found")},
+	{ "generic", "", TYPE_TAPE , UCHAR_MAX, 0x0, 0x0, SENSE_ABORT, _T("Nothing Found")},
 
-	{ "generic", "", TYPE_CHANGER,  SENSE_NULL, 0x0, 0x0, SENSE_NO, _("No Sense")},
-	{ "generic", "", TYPE_CHANGER,  SENSE_NULL , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _("Default for SENSE_NULL")},
+	{ "generic", "", TYPE_CHANGER,  SENSE_NULL, 0x0, 0x0, SENSE_NO, _T("No Sense")},
+	{ "generic", "", TYPE_CHANGER,  SENSE_NULL , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _T("Default for SENSE_NULL")},
 
-	{ "generic", "", TYPE_CHANGER , SENSE_RECOVERED_ERROR, 0x0, 0x0, SENSE_IGNORE, _("Recovered Error")},
-	{ "generic", "", TYPE_CHANGER,  SENSE_RECOVERED_ERROR , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _("Default for SENSE_RECOVERED_ERROR")},
+	{ "generic", "", TYPE_CHANGER , SENSE_RECOVERED_ERROR, 0x0, 0x0, SENSE_IGNORE, _T("Recovered Error")},
+	{ "generic", "", TYPE_CHANGER,  SENSE_RECOVERED_ERROR , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _T("Default for SENSE_RECOVERED_ERROR")},
 
-	{ "generic", "", TYPE_CHANGER , SENSE_NOT_READY, 0x0, 0x0, SENSE_IGNORE, _("Not Ready")},
-	{ "generic", "", TYPE_CHANGER , SENSE_NOT_READY, 0x3A, 0x0, SENSE_TAPE_NOT_ONLINE, _("No Tape online")},
-	{ "generic", "", TYPE_CHANGER,  SENSE_NOT_READY , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _("Default for SENSE_NOT_READY")},
+	{ "generic", "", TYPE_CHANGER , SENSE_NOT_READY, 0x0, 0x0, SENSE_IGNORE, _T("Not Ready")},
+	{ "generic", "", TYPE_CHANGER , SENSE_NOT_READY, 0x3A, 0x0, SENSE_TAPE_NOT_ONLINE, _T("No Tape online")},
+	{ "generic", "", TYPE_CHANGER,  SENSE_NOT_READY , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _T("Default for SENSE_NOT_READY")},
 
-	{ "generic", "", TYPE_CHANGER , SENSE_MEDIUM_ERROR, 0x0, 0x0, SENSE_ABORT, _("Medium Error")},
-	{ "generic", "", TYPE_CHANGER,  SENSE_MEDIUM_ERROR , UCHAR_MAX, UCHAR_MAX, SENSE_ABORT, _("Default for SENSE_MEDIUM_ERROR")},
+	{ "generic", "", TYPE_CHANGER , SENSE_MEDIUM_ERROR, 0x0, 0x0, SENSE_ABORT, _T("Medium Error")},
+	{ "generic", "", TYPE_CHANGER,  SENSE_MEDIUM_ERROR , UCHAR_MAX, UCHAR_MAX, SENSE_ABORT, _T("Default for SENSE_MEDIUM_ERROR")},
 
-	{ "generic", "", TYPE_CHANGER , SENSE_HARDWARE_ERROR, 0x0, 0x0, SENSE_ABORT, _("Hardware Error")},
-	{ "generic", "", TYPE_CHANGER,  SENSE_HARDWARE_ERROR , UCHAR_MAX, UCHAR_MAX, SENSE_ABORT, _("Default for SENSE_HARDWARE_ERROR")},
+	{ "generic", "", TYPE_CHANGER , SENSE_HARDWARE_ERROR, 0x0, 0x0, SENSE_ABORT, _T("Hardware Error")},
+	{ "generic", "", TYPE_CHANGER,  SENSE_HARDWARE_ERROR , UCHAR_MAX, UCHAR_MAX, SENSE_ABORT, _T("Default for SENSE_HARDWARE_ERROR")},
 
-	{ "generic", "", TYPE_CHANGER , SENSE_ILLEGAL_REQUEST, 0x0, 0x0, SENSE_ABORT, _("Illegal Request")},
-	{ "generic", "", TYPE_CHANGER,  SENSE_ILLEGAL_REQUEST , UCHAR_MAX, UCHAR_MAX, SENSE_ABORT, _("Default for SENSE_ILLEGAL_REQUEST")},
+	{ "generic", "", TYPE_CHANGER , SENSE_ILLEGAL_REQUEST, 0x0, 0x0, SENSE_ABORT, _T("Illegal Request")},
+	{ "generic", "", TYPE_CHANGER,  SENSE_ILLEGAL_REQUEST , UCHAR_MAX, UCHAR_MAX, SENSE_ABORT, _T("Default for SENSE_ILLEGAL_REQUEST")},
 
-	{ "generic", "", TYPE_CHANGER , SENSE_UNIT_ATTENTION, 0x0, 0x0, SENSE_RETRY, _("Unit Attention")},
-	{ "generic", "", TYPE_CHANGER,  SENSE_UNIT_ATTENTION, UCHAR_MAX, UCHAR_MAX, SENSE_ABORT, _("Default for SENSE_UNIT_ATTENTION")},
+	{ "generic", "", TYPE_CHANGER , SENSE_UNIT_ATTENTION, 0x0, 0x0, SENSE_RETRY, _T("Unit Attention")},
+	{ "generic", "", TYPE_CHANGER,  SENSE_UNIT_ATTENTION, UCHAR_MAX, UCHAR_MAX, SENSE_ABORT, _T("Default for SENSE_UNIT_ATTENTION")},
 
-	{ "generic", "", TYPE_CHANGER,  SENSE_CHG_ELEMENT_STATUS, UCHAR_MAX, UCHAR_MAX, SENSE_IGNORE, _("Default for SENSE_CHG_ELEMENT_STATUS")},
+	{ "generic", "", TYPE_CHANGER,  SENSE_CHG_ELEMENT_STATUS, UCHAR_MAX, UCHAR_MAX, SENSE_IGNORE, _T("Default for SENSE_CHG_ELEMENT_STATUS")},
 
-	{ "generic", "", TYPE_CHANGER , UCHAR_MAX, 0x0, 0x0, SENSE_ABORT, _("Nothing Found")},
+	{ "generic", "", TYPE_CHANGER , UCHAR_MAX, 0x0, 0x0, SENSE_ABORT, _T("Nothing Found")},
 /*
  *
  * ADIC DAT Autochanger
  *
  */
-	{ "DAT AutoChanger", "", TYPE_CHANGER,  SENSE_NULL, 0x0, 0x0, SENSE_NO, _("No Sense")},
-	{ "DAT AutoChanger", "", TYPE_CHANGER,  SENSE_NULL , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _("Default for SENSE_NULL")},
+	{ "DAT AutoChanger", "", TYPE_CHANGER,  SENSE_NULL, 0x0, 0x0, SENSE_NO, _T("No Sense")},
+	{ "DAT AutoChanger", "", TYPE_CHANGER,  SENSE_NULL , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _T("Default for SENSE_NULL")},
 
-	{ "DAT AutoChanger", "", TYPE_CHANGER , SENSE_RECOVERED_ERROR, 0x0, 0x0, SENSE_IGNORE, _("Recovered Error")},
-	{ "DAT AutoChanger", "", TYPE_CHANGER,  SENSE_RECOVERED_ERROR , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _("Default for SENSE_RECOVERED_ERROR")},
+	{ "DAT AutoChanger", "", TYPE_CHANGER , SENSE_RECOVERED_ERROR, 0x0, 0x0, SENSE_IGNORE, _T("Recovered Error")},
+	{ "DAT AutoChanger", "", TYPE_CHANGER,  SENSE_RECOVERED_ERROR , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _T("Default for SENSE_RECOVERED_ERROR")},
 
-	{ "DAT AutoChanger", "", TYPE_CHANGER , SENSE_NOT_READY, 0x0, 0x0, SENSE_IGNORE, _("Not Ready")},
-	{ "DAT AutoChanger", "", TYPE_CHANGER,  SENSE_NOT_READY , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _("Default for SENSE_NOT_READY")},
+	{ "DAT AutoChanger", "", TYPE_CHANGER , SENSE_NOT_READY, 0x0, 0x0, SENSE_IGNORE, _T("Not Ready")},
+	{ "DAT AutoChanger", "", TYPE_CHANGER,  SENSE_NOT_READY , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _T("Default for SENSE_NOT_READY")},
 
-	{ "DAT AutoChanger", "", TYPE_CHANGER , SENSE_MEDIUM_ERROR, 0x0, 0x0, SENSE_ABORT, _("Medium Error")},
-	{ "DAT AutoChanger", "", TYPE_CHANGER,  SENSE_MEDIUM_ERROR , UCHAR_MAX, UCHAR_MAX, SENSE_ABORT, _("Default for SENSE_MEDIUM_ERROR")},
+	{ "DAT AutoChanger", "", TYPE_CHANGER , SENSE_MEDIUM_ERROR, 0x0, 0x0, SENSE_ABORT, _T("Medium Error")},
+	{ "DAT AutoChanger", "", TYPE_CHANGER,  SENSE_MEDIUM_ERROR , UCHAR_MAX, UCHAR_MAX, SENSE_ABORT, _T("Default for SENSE_MEDIUM_ERROR")},
 
-	{ "DAT AutoChanger", "", TYPE_CHANGER , SENSE_HARDWARE_ERROR, 0x0, 0x0, SENSE_ABORT, _("Hardware Error")},
-	{ "DAT AutoChanger", "", TYPE_CHANGER,  SENSE_HARDWARE_ERROR , UCHAR_MAX, UCHAR_MAX, SENSE_ABORT, _("Default for SENSE_HARDWARE_ERROR")},
+	{ "DAT AutoChanger", "", TYPE_CHANGER , SENSE_HARDWARE_ERROR, 0x0, 0x0, SENSE_ABORT, _T("Hardware Error")},
+	{ "DAT AutoChanger", "", TYPE_CHANGER,  SENSE_HARDWARE_ERROR , UCHAR_MAX, UCHAR_MAX, SENSE_ABORT, _T("Default for SENSE_HARDWARE_ERROR")},
 
-	{ "DAT AutoChanger", "", TYPE_CHANGER , SENSE_ILLEGAL_REQUEST, 0x0, 0x0, SENSE_ABORT, _("Illegal Request")},
-	{ "DAT AutoChanger", "", TYPE_CHANGER,  SENSE_ILLEGAL_REQUEST , UCHAR_MAX, UCHAR_MAX, SENSE_ABORT, _("Default for SENSE_ILLEGAL_REQUEST")},
+	{ "DAT AutoChanger", "", TYPE_CHANGER , SENSE_ILLEGAL_REQUEST, 0x0, 0x0, SENSE_ABORT, _T("Illegal Request")},
+	{ "DAT AutoChanger", "", TYPE_CHANGER,  SENSE_ILLEGAL_REQUEST , UCHAR_MAX, UCHAR_MAX, SENSE_ABORT, _T("Default for SENSE_ILLEGAL_REQUEST")},
 
-	{ "DAT AutoChanger", "", TYPE_CHANGER , SENSE_UNIT_ATTENTION, 0x0, 0x0, SENSE_RETRY, _("Unit Attention")},
-	{ "DAT AutoChanger", "", TYPE_CHANGER , SENSE_UNIT_ATTENTION, 0x28, 0x01, SENSE_IES, _("Door opend")},
-	{ "DAT AutoChanger", "", TYPE_CHANGER,  SENSE_UNIT_ATTENTION, UCHAR_MAX, UCHAR_MAX, SENSE_ABORT, _("Default for SENSE_UNIT_ATTENTION")},
+	{ "DAT AutoChanger", "", TYPE_CHANGER , SENSE_UNIT_ATTENTION, 0x0, 0x0, SENSE_RETRY, _T("Unit Attention")},
+	{ "DAT AutoChanger", "", TYPE_CHANGER , SENSE_UNIT_ATTENTION, 0x28, 0x01, SENSE_IES, _T("Door opend")},
+	{ "DAT AutoChanger", "", TYPE_CHANGER,  SENSE_UNIT_ATTENTION, UCHAR_MAX, UCHAR_MAX, SENSE_ABORT, _T("Default for SENSE_UNIT_ATTENTION")},
 
-	{ "DAT AutoChanger", "", TYPE_CHANGER,  SENSE_CHG_ELEMENT_STATUS, UCHAR_MAX, UCHAR_MAX, SENSE_IGNORE, _("Default for SENSE_CHG_ELEMENT_STATUS")},
+	{ "DAT AutoChanger", "", TYPE_CHANGER,  SENSE_CHG_ELEMENT_STATUS, UCHAR_MAX, UCHAR_MAX, SENSE_IGNORE, _T("Default for SENSE_CHG_ELEMENT_STATUS")},
 
-	{ "DAT AutoChanger", "", TYPE_CHANGER , UCHAR_MAX, 0x0, 0x0, SENSE_ABORT, _("Nothing Found")},
+	{ "DAT AutoChanger", "", TYPE_CHANGER , UCHAR_MAX, 0x0, 0x0, SENSE_ABORT, _T("Nothing Found")},
 
 /*
  *
  *	L500 (for the L500 ATL library)
  * */
 
-	{ "L500", "", TYPE_CHANGER,  SENSE_NULL, 0x0, 0x0, SENSE_NO, _("No Sense")},
-	{ "L500", "", TYPE_CHANGER,  SENSE_NULL , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _("Default for SENSE_NULL")},
+	{ "L500", "", TYPE_CHANGER,  SENSE_NULL, 0x0, 0x0, SENSE_NO, _T("No Sense")},
+	{ "L500", "", TYPE_CHANGER,  SENSE_NULL , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _T("Default for SENSE_NULL")},
 
-	{ "L500", "", TYPE_CHANGER , SENSE_RECOVERED_ERROR, 0x0, 0x0, SENSE_IGNORE, _("Recovered Error")},
-	{ "L500", "", TYPE_CHANGER , SENSE_RECOVERED_ERROR, 0x0a, 0x0, SENSE_IGNORE, _("Error Log overflow")},
-	{ "L500", "", TYPE_CHANGER , SENSE_RECOVERED_ERROR, 0x44, 0xc1, SENSE_IGNORE, _("EEPROM Copy 1 bad")},
-	{ "L500", "", TYPE_CHANGER , SENSE_RECOVERED_ERROR, 0x44, 0xc2, SENSE_IGNORE, _("EEPROM Copy 2 bad")},
-	{ "L500", "", TYPE_CHANGER , SENSE_RECOVERED_ERROR, 0x47, 0x0, SENSE_IGNORE, _("SCSI parity error")},
-	{ "L500", "", TYPE_CHANGER , SENSE_RECOVERED_ERROR, 0x48, 0x0, SENSE_IGNORE, _("SCSI IDE message received")},
-	{ "L500", "", TYPE_CHANGER,  SENSE_RECOVERED_ERROR , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _("Default for SENSE_RECOVERED_ERROR")},
+	{ "L500", "", TYPE_CHANGER , SENSE_RECOVERED_ERROR, 0x0, 0x0, SENSE_IGNORE, _T("Recovered Error")},
+	{ "L500", "", TYPE_CHANGER , SENSE_RECOVERED_ERROR, 0x0a, 0x0, SENSE_IGNORE, _T("Error Log overflow")},
+	{ "L500", "", TYPE_CHANGER , SENSE_RECOVERED_ERROR, 0x44, 0xc1, SENSE_IGNORE, _T("EEPROM Copy 1 bad")},
+	{ "L500", "", TYPE_CHANGER , SENSE_RECOVERED_ERROR, 0x44, 0xc2, SENSE_IGNORE, _T("EEPROM Copy 2 bad")},
+	{ "L500", "", TYPE_CHANGER , SENSE_RECOVERED_ERROR, 0x47, 0x0, SENSE_IGNORE, _T("SCSI parity error")},
+	{ "L500", "", TYPE_CHANGER , SENSE_RECOVERED_ERROR, 0x48, 0x0, SENSE_IGNORE, _T("SCSI IDE message received")},
+	{ "L500", "", TYPE_CHANGER,  SENSE_RECOVERED_ERROR , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _T("Default for SENSE_RECOVERED_ERROR")},
 
-	{ "L500", "", TYPE_CHANGER , SENSE_NOT_READY, 0x0, 0x0, SENSE_ABORT, _("Scsi port not initialized")},
-	{ "L500", "", TYPE_CHANGER , SENSE_NOT_READY, 0x04, 0x01, SENSE_RETRY, _("Becoming ready, scanning magazines, etc")},
-	{ "L500", "", TYPE_CHANGER , SENSE_NOT_READY, 0x04, 0x03, SENSE_ABORT, _("Unit not ready: manual intervention required: Door Open")},
+	{ "L500", "", TYPE_CHANGER , SENSE_NOT_READY, 0x0, 0x0, SENSE_ABORT, _T("Scsi port not initialized")},
+	{ "L500", "", TYPE_CHANGER , SENSE_NOT_READY, 0x04, 0x01, SENSE_RETRY, _T("Becoming ready, scanning magazines, etc")},
+	{ "L500", "", TYPE_CHANGER , SENSE_NOT_READY, 0x04, 0x03, SENSE_ABORT, _T("Unit not ready: manual intervention required: Door Open")},
 /* needed? */
-	{ "L500", "", TYPE_CHANGER , SENSE_NOT_READY, 0x3A, 0x0, SENSE_TAPE_NOT_ONLINE, _("No Tape online")},
-  	{ "L500", "", TYPE_CHANGER,  SENSE_NOT_READY , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _("Default for SENSE_NOT_READY")},
+	{ "L500", "", TYPE_CHANGER , SENSE_NOT_READY, 0x3A, 0x0, SENSE_TAPE_NOT_ONLINE, _T("No Tape online")},
+  	{ "L500", "", TYPE_CHANGER,  SENSE_NOT_READY , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _T("Default for SENSE_NOT_READY")},
 
 /*	Not used by L500
-	{ "L500", "", TYPE_CHANGER , SENSE_MEDIUM_ERROR, 0x0, 0x0, SENSE_ABORT, _("Medium Error")},
-	{ "L500", "", TYPE_CHANGER,  SENSE_MEDIUM_ERROR , UCHAR_MAX, UCHAR_MAX, SENSE_ABORT, _("Default for SENSE_MEDIUM_ERROR")},
+	{ "L500", "", TYPE_CHANGER , SENSE_MEDIUM_ERROR, 0x0, 0x0, SENSE_ABORT, _T("Medium Error")},
+	{ "L500", "", TYPE_CHANGER,  SENSE_MEDIUM_ERROR , UCHAR_MAX, UCHAR_MAX, SENSE_ABORT, _T("Default for SENSE_MEDIUM_ERROR")},
 */
-	{ "L500", "", TYPE_CHANGER , SENSE_HARDWARE_ERROR, 0x0,  0x0,  SENSE_ABORT, _("Hardware Error")},
-	{ "L500", "", TYPE_CHANGER , SENSE_HARDWARE_ERROR, 0x3a, 0x80, SENSE_ABORT, _("Media not present")},
-	{ "L500", "", TYPE_CHANGER , SENSE_HARDWARE_ERROR, 0x40, 0x84, SENSE_ABORT, _("POST soft failure")},
-	{ "L500", "", TYPE_CHANGER , SENSE_HARDWARE_ERROR, 0x44, 0x80, SENSE_ABORT, _("Loader Communications timeout")},
-	{ "L500", "", TYPE_CHANGER , SENSE_HARDWARE_ERROR, 0x44, 0x81, SENSE_ABORT, _("Loader communications UART error or buffer overflow")},
-	{ "L500", "", TYPE_CHANGER , SENSE_HARDWARE_ERROR, 0x44, 0x86, SENSE_ABORT, _("bad status returned from loader")},
-	{ "L500", "", TYPE_CHANGER , SENSE_HARDWARE_ERROR, 0x44, 0xc3, SENSE_ABORT, _("EEPROM both copies bad")},
-	{ "L500", "", TYPE_CHANGER , SENSE_HARDWARE_ERROR, 0x44, 0xff, SENSE_ABORT, _("Unexpected status from test")},
-	{ "L500", "", TYPE_CHANGER , SENSE_HARDWARE_ERROR, 0x80, 0x70, SENSE_ABORT, _("Cartridge has no home")},
-	{ "L500", "", TYPE_CHANGER , SENSE_HARDWARE_ERROR, 0x80, 0x71, SENSE_ABORT, _("Loader mechanism problem")},
-	{ "L500", "", TYPE_CHANGER , SENSE_HARDWARE_ERROR, 0x80, 0x72, SENSE_ABORT, _("Tape drive handle problem")},
-	{ "L500", "", TYPE_CHANGER , SENSE_HARDWARE_ERROR, 0x80, 0x73, SENSE_IGNORE, _("No cartridge in drive during unload")},
-	{ "L500", "", TYPE_CHANGER , SENSE_HARDWARE_ERROR, 0x80, 0x74, SENSE_ABORT, _("Loader mechanism problem, after retries")},
-	{ "L500", "", TYPE_CHANGER , SENSE_HARDWARE_ERROR, 0x80, 0x75, SENSE_ABORT, _("Timeout moving cartridge from drive")},
-	{ "L500", "", TYPE_CHANGER , SENSE_HARDWARE_ERROR, 0x80, 0x76, SENSE_ABORT, _("Timeout unloading cartridge into slot")},
-	{ "L500", "", TYPE_CHANGER , SENSE_HARDWARE_ERROR, 0x80, 0x77, SENSE_ABORT, _("Couldn't unlock door after retries")},
-	{ "L500", "", TYPE_CHANGER , SENSE_HARDWARE_ERROR, 0x80, 0x78, SENSE_ABORT, _("Error during SCAN MAGAZINE")},
-	{ "L500", "", TYPE_CHANGER , SENSE_HARDWARE_ERROR, 0x80, 0x79, SENSE_ABORT, _("Couldn't lock door after retries")},
-	{ "L500", "", TYPE_CHANGER , SENSE_HARDWARE_ERROR, 0x80, 0x80, SENSE_ABORT, _("Unexpected door open")},
-	{ "L500", "", TYPE_CHANGER , SENSE_HARDWARE_ERROR, 0x80, 0x81, SENSE_ABORT, _("Didn't find all expected slots during elevator movement")},
-	{ "L500", "", TYPE_CHANGER , SENSE_HARDWARE_ERROR, 0x80, 0x82, SENSE_ABORT, _("Cartridge alreay in drive during LOAD CARTRIDGE")},
-	{ "L500", "", TYPE_CHANGER , SENSE_HARDWARE_ERROR, 0x80, 0x83, SENSE_ABORT, _("Slot empty during LOAD CARTRIDGE")},
-	{ "L500", "", TYPE_CHANGER , SENSE_HARDWARE_ERROR, 0x80, 0x84, SENSE_ABORT, _("Cleaning Tape expired")},
-	{ "L500", "", TYPE_CHANGER , SENSE_HARDWARE_ERROR, 0x80, 0x85, SENSE_ABORT, _("Cleaning Failed")},
-	{ "L500", "", TYPE_CHANGER,  SENSE_HARDWARE_ERROR,   UCHAR_MAX,   UCHAR_MAX, SENSE_ABORT, _("Default for SENSE_HARDWARE_ERROR")},
+	{ "L500", "", TYPE_CHANGER , SENSE_HARDWARE_ERROR, 0x0,  0x0,  SENSE_ABORT, _T("Hardware Error")},
+	{ "L500", "", TYPE_CHANGER , SENSE_HARDWARE_ERROR, 0x3a, 0x80, SENSE_ABORT, _T("Media not present")},
+	{ "L500", "", TYPE_CHANGER , SENSE_HARDWARE_ERROR, 0x40, 0x84, SENSE_ABORT, _T("POST soft failure")},
+	{ "L500", "", TYPE_CHANGER , SENSE_HARDWARE_ERROR, 0x44, 0x80, SENSE_ABORT, _T("Loader Communications timeout")},
+	{ "L500", "", TYPE_CHANGER , SENSE_HARDWARE_ERROR, 0x44, 0x81, SENSE_ABORT, _T("Loader communications UART error or buffer overflow")},
+	{ "L500", "", TYPE_CHANGER , SENSE_HARDWARE_ERROR, 0x44, 0x86, SENSE_ABORT, _T("bad status returned from loader")},
+	{ "L500", "", TYPE_CHANGER , SENSE_HARDWARE_ERROR, 0x44, 0xc3, SENSE_ABORT, _T("EEPROM both copies bad")},
+	{ "L500", "", TYPE_CHANGER , SENSE_HARDWARE_ERROR, 0x44, 0xff, SENSE_ABORT, _T("Unexpected status from test")},
+	{ "L500", "", TYPE_CHANGER , SENSE_HARDWARE_ERROR, 0x80, 0x70, SENSE_ABORT, _T("Cartridge has no home")},
+	{ "L500", "", TYPE_CHANGER , SENSE_HARDWARE_ERROR, 0x80, 0x71, SENSE_ABORT, _T("Loader mechanism problem")},
+	{ "L500", "", TYPE_CHANGER , SENSE_HARDWARE_ERROR, 0x80, 0x72, SENSE_ABORT, _T("Tape drive handle problem")},
+	{ "L500", "", TYPE_CHANGER , SENSE_HARDWARE_ERROR, 0x80, 0x73, SENSE_IGNORE, _T("No cartridge in drive during unload")},
+	{ "L500", "", TYPE_CHANGER , SENSE_HARDWARE_ERROR, 0x80, 0x74, SENSE_ABORT, _T("Loader mechanism problem, after retries")},
+	{ "L500", "", TYPE_CHANGER , SENSE_HARDWARE_ERROR, 0x80, 0x75, SENSE_ABORT, _T("Timeout moving cartridge from drive")},
+	{ "L500", "", TYPE_CHANGER , SENSE_HARDWARE_ERROR, 0x80, 0x76, SENSE_ABORT, _T("Timeout unloading cartridge into slot")},
+	{ "L500", "", TYPE_CHANGER , SENSE_HARDWARE_ERROR, 0x80, 0x77, SENSE_ABORT, _T("Couldn't unlock door after retries")},
+	{ "L500", "", TYPE_CHANGER , SENSE_HARDWARE_ERROR, 0x80, 0x78, SENSE_ABORT, _T("Error during SCAN MAGAZINE")},
+	{ "L500", "", TYPE_CHANGER , SENSE_HARDWARE_ERROR, 0x80, 0x79, SENSE_ABORT, _T("Couldn't lock door after retries")},
+	{ "L500", "", TYPE_CHANGER , SENSE_HARDWARE_ERROR, 0x80, 0x80, SENSE_ABORT, _T("Unexpected door open")},
+	{ "L500", "", TYPE_CHANGER , SENSE_HARDWARE_ERROR, 0x80, 0x81, SENSE_ABORT, _T("Didn't find all expected slots during elevator movement")},
+	{ "L500", "", TYPE_CHANGER , SENSE_HARDWARE_ERROR, 0x80, 0x82, SENSE_ABORT, _T("Cartridge alreay in drive during LOAD CARTRIDGE")},
+	{ "L500", "", TYPE_CHANGER , SENSE_HARDWARE_ERROR, 0x80, 0x83, SENSE_ABORT, _T("Slot empty during LOAD CARTRIDGE")},
+	{ "L500", "", TYPE_CHANGER , SENSE_HARDWARE_ERROR, 0x80, 0x84, SENSE_ABORT, _T("Cleaning Tape expired")},
+	{ "L500", "", TYPE_CHANGER , SENSE_HARDWARE_ERROR, 0x80, 0x85, SENSE_ABORT, _T("Cleaning Failed")},
+	{ "L500", "", TYPE_CHANGER,  SENSE_HARDWARE_ERROR,   UCHAR_MAX,   UCHAR_MAX, SENSE_ABORT, _T("Default for SENSE_HARDWARE_ERROR")},
 
-	{ "L500", "", TYPE_CHANGER , SENSE_ILLEGAL_REQUEST, 0x0, 0x0,   SENSE_ABORT, _("Illegal Request")},
-	{ "L500", "", TYPE_CHANGER , SENSE_ILLEGAL_REQUEST, 0x1a, 0x0,  SENSE_ABORT, _("Parameter length error")},
-	{ "L500", "", TYPE_CHANGER , SENSE_ILLEGAL_REQUEST, 0x20, 0x0,  SENSE_ABORT, _("SCSI invalid opcode")},
-	{ "L500", "", TYPE_CHANGER , SENSE_ILLEGAL_REQUEST, 0x21, 0x01, SENSE_ABORT, _("Invalid element address")},
-	{ "L500", "", TYPE_CHANGER , SENSE_ILLEGAL_REQUEST, 0x24, 0x00, SENSE_ABORT, _("Invalid CDB")},
-	{ "L500", "", TYPE_CHANGER , SENSE_ILLEGAL_REQUEST, 0x24, 0x81, SENSE_ABORT, _("Invalid mode on WRITE BUFFER")},
-	{ "L500", "", TYPE_CHANGER , SENSE_ILLEGAL_REQUEST, 0x24, 0x82, SENSE_ABORT, _("Invalid drive specified")},
-	{ "L500", "", TYPE_CHANGER , SENSE_ILLEGAL_REQUEST, 0x24, 0x83, SENSE_ABORT, _("SEND DIAG Invalid test number")},
-	{ "L500", "", TYPE_CHANGER , SENSE_ILLEGAL_REQUEST, 0x24, 0x86, SENSE_ABORT, _("Invalid offset on WRITE BUFFER")},
-	{ "L500", "", TYPE_CHANGER , SENSE_ILLEGAL_REQUEST, 0x24, 0x87, SENSE_ABORT, _("Invalid size on WRITE BUFFER")},
-	{ "L500", "", TYPE_CHANGER , SENSE_ILLEGAL_REQUEST, 0x24, 0x89, SENSE_ABORT, _("Image data too large on WRITE BUFFER")},
-	{ "L500", "", TYPE_CHANGER , SENSE_ILLEGAL_REQUEST, 0x24, 0x8b, SENSE_ABORT, _("Invalid image for CUP")},
-	{ "L500", "", TYPE_CHANGER , SENSE_ILLEGAL_REQUEST, 0x24, 0x8c, SENSE_ABORT, _("Non-immediate command during CUP")},
-	{ "L500", "", TYPE_CHANGER , SENSE_ILLEGAL_REQUEST, 0x24, 0x8e, SENSE_ABORT, _("Invalid personality for CUP")},
-	{ "L500", "", TYPE_CHANGER , SENSE_ILLEGAL_REQUEST, 0x24, 0x8f, SENSE_ABORT, _("Bad controller image EDC")},
-	{ "L500", "", TYPE_CHANGER , SENSE_ILLEGAL_REQUEST, 0x25, 0x0,  SENSE_ABORT, _("Invalid LUN")},
-	{ "L500", "", TYPE_CHANGER , SENSE_ILLEGAL_REQUEST, 0x26, 0x0,  SENSE_ABORT, _("Parameter list error: invalid field")},
-	{ "L500", "", TYPE_CHANGER , SENSE_ILLEGAL_REQUEST, 0x26, 0x01, SENSE_ABORT, _("Parameter list error: parameter not supported")},
-	{ "L500", "", TYPE_CHANGER , SENSE_ILLEGAL_REQUEST, 0x39, 0x0,  SENSE_ABORT, _("Saving parameters not supported")},
-	{ "L500", "", TYPE_CHANGER , SENSE_ILLEGAL_REQUEST, 0x3a, 0x81, SENSE_ABORT, _("Cleaning Slot empty")},
-	{ "L500", "", TYPE_CHANGER , SENSE_ILLEGAL_REQUEST, 0x3a, 0x82, SENSE_ABORT, _("Cleaning slot doesn't have a cleaning slot")},
-	{ "L500", "", TYPE_CHANGER , SENSE_ILLEGAL_REQUEST, 0x3b, 0x0d, SENSE_ABORT, _("Destination element full")},
-	{ "L500", "", TYPE_CHANGER , SENSE_ILLEGAL_REQUEST, 0x3b, 0x0e, SENSE_ABORT, _("Source slot or drive empty")},
-	{ "L500", "", TYPE_CHANGER , SENSE_ILLEGAL_REQUEST, 0x3d, 0x0,  SENSE_ABORT, _("SCSI invalid ID message")},
-	{ "L500", "", TYPE_CHANGER , SENSE_ILLEGAL_REQUEST, 0x53, 0x0,  SENSE_ABORT, _("Media Load/Eject failure")},
-	{ "L500", "", TYPE_CHANGER , SENSE_ILLEGAL_REQUEST, 0x53, 0x01, SENSE_ABORT, _("Cartridge failed to unload")},
-	{ "L500", "", TYPE_CHANGER , SENSE_ILLEGAL_REQUEST, 0xf1, 0x0,  SENSE_ABORT, _("Command unspecified")},
-	{ "L500", "", TYPE_CHANGER , SENSE_ILLEGAL_REQUEST, 0xf1, 0x02, SENSE_ABORT, _("Unrecognized loader command")},
-	{ "L500", "", TYPE_CHANGER,  SENSE_ILLEGAL_REQUEST , UCHAR_MAX, UCHAR_MAX,    SENSE_ABORT, _("Default for SENSE_ILLEGAL_REQUEST")},
+	{ "L500", "", TYPE_CHANGER , SENSE_ILLEGAL_REQUEST, 0x0, 0x0,   SENSE_ABORT, _T("Illegal Request")},
+	{ "L500", "", TYPE_CHANGER , SENSE_ILLEGAL_REQUEST, 0x1a, 0x0,  SENSE_ABORT, _T("Parameter length error")},
+	{ "L500", "", TYPE_CHANGER , SENSE_ILLEGAL_REQUEST, 0x20, 0x0,  SENSE_ABORT, _T("SCSI invalid opcode")},
+	{ "L500", "", TYPE_CHANGER , SENSE_ILLEGAL_REQUEST, 0x21, 0x01, SENSE_ABORT, _T("Invalid element address")},
+	{ "L500", "", TYPE_CHANGER , SENSE_ILLEGAL_REQUEST, 0x24, 0x00, SENSE_ABORT, _T("Invalid CDB")},
+	{ "L500", "", TYPE_CHANGER , SENSE_ILLEGAL_REQUEST, 0x24, 0x81, SENSE_ABORT, _T("Invalid mode on WRITE BUFFER")},
+	{ "L500", "", TYPE_CHANGER , SENSE_ILLEGAL_REQUEST, 0x24, 0x82, SENSE_ABORT, _T("Invalid drive specified")},
+	{ "L500", "", TYPE_CHANGER , SENSE_ILLEGAL_REQUEST, 0x24, 0x83, SENSE_ABORT, _T("SEND DIAG Invalid test number")},
+	{ "L500", "", TYPE_CHANGER , SENSE_ILLEGAL_REQUEST, 0x24, 0x86, SENSE_ABORT, _T("Invalid offset on WRITE BUFFER")},
+	{ "L500", "", TYPE_CHANGER , SENSE_ILLEGAL_REQUEST, 0x24, 0x87, SENSE_ABORT, _T("Invalid size on WRITE BUFFER")},
+	{ "L500", "", TYPE_CHANGER , SENSE_ILLEGAL_REQUEST, 0x24, 0x89, SENSE_ABORT, _T("Image data too large on WRITE BUFFER")},
+	{ "L500", "", TYPE_CHANGER , SENSE_ILLEGAL_REQUEST, 0x24, 0x8b, SENSE_ABORT, _T("Invalid image for CUP")},
+	{ "L500", "", TYPE_CHANGER , SENSE_ILLEGAL_REQUEST, 0x24, 0x8c, SENSE_ABORT, _T("Non-immediate command during CUP")},
+	{ "L500", "", TYPE_CHANGER , SENSE_ILLEGAL_REQUEST, 0x24, 0x8e, SENSE_ABORT, _T("Invalid personality for CUP")},
+	{ "L500", "", TYPE_CHANGER , SENSE_ILLEGAL_REQUEST, 0x24, 0x8f, SENSE_ABORT, _T("Bad controller image EDC")},
+	{ "L500", "", TYPE_CHANGER , SENSE_ILLEGAL_REQUEST, 0x25, 0x0,  SENSE_ABORT, _T("Invalid LUN")},
+	{ "L500", "", TYPE_CHANGER , SENSE_ILLEGAL_REQUEST, 0x26, 0x0,  SENSE_ABORT, _T("Parameter list error: invalid field")},
+	{ "L500", "", TYPE_CHANGER , SENSE_ILLEGAL_REQUEST, 0x26, 0x01, SENSE_ABORT, _T("Parameter list error: parameter not supported")},
+	{ "L500", "", TYPE_CHANGER , SENSE_ILLEGAL_REQUEST, 0x39, 0x0,  SENSE_ABORT, _T("Saving parameters not supported")},
+	{ "L500", "", TYPE_CHANGER , SENSE_ILLEGAL_REQUEST, 0x3a, 0x81, SENSE_ABORT, _T("Cleaning Slot empty")},
+	{ "L500", "", TYPE_CHANGER , SENSE_ILLEGAL_REQUEST, 0x3a, 0x82, SENSE_ABORT, _T("Cleaning slot doesn't have a cleaning slot")},
+	{ "L500", "", TYPE_CHANGER , SENSE_ILLEGAL_REQUEST, 0x3b, 0x0d, SENSE_ABORT, _T("Destination element full")},
+	{ "L500", "", TYPE_CHANGER , SENSE_ILLEGAL_REQUEST, 0x3b, 0x0e, SENSE_ABORT, _T("Source slot or drive empty")},
+	{ "L500", "", TYPE_CHANGER , SENSE_ILLEGAL_REQUEST, 0x3d, 0x0,  SENSE_ABORT, _T("SCSI invalid ID message")},
+	{ "L500", "", TYPE_CHANGER , SENSE_ILLEGAL_REQUEST, 0x53, 0x0,  SENSE_ABORT, _T("Media Load/Eject failure")},
+	{ "L500", "", TYPE_CHANGER , SENSE_ILLEGAL_REQUEST, 0x53, 0x01, SENSE_ABORT, _T("Cartridge failed to unload")},
+	{ "L500", "", TYPE_CHANGER , SENSE_ILLEGAL_REQUEST, 0xf1, 0x0,  SENSE_ABORT, _T("Command unspecified")},
+	{ "L500", "", TYPE_CHANGER , SENSE_ILLEGAL_REQUEST, 0xf1, 0x02, SENSE_ABORT, _T("Unrecognized loader command")},
+	{ "L500", "", TYPE_CHANGER,  SENSE_ILLEGAL_REQUEST , UCHAR_MAX, UCHAR_MAX,    SENSE_ABORT, _T("Default for SENSE_ILLEGAL_REQUEST")},
 
-	{ "L500", "", TYPE_CHANGER , SENSE_UNIT_ATTENTION, 0x0,  0x0,  SENSE_RETRY, _("Unit Attention")},
-	{ "L500", "", TYPE_CHANGER , SENSE_UNIT_ATTENTION, 0x28, 0x0,  SENSE_RETRY, _("Not ready to Ready transition")},
-	{ "L500", "", TYPE_CHANGER , SENSE_UNIT_ATTENTION, 0x29, 0x0,  SENSE_RETRY, _("Reset occured")},
-	{ "L500", "", TYPE_CHANGER , SENSE_UNIT_ATTENTION, 0x2a, 0x01, SENSE_ABORT, _("Mode parameters changed")},
-	{ "L500", "", TYPE_CHANGER , SENSE_UNIT_ATTENTION, 0x3f, 0x01, SENSE_ABORT, _("Microcode has changed")},
-	{ "L500", "", TYPE_CHANGER,  SENSE_UNIT_ATTENTION, UCHAR_MAX, UCHAR_MAX,     SENSE_ABORT, _("Default for SENSE_UNIT_ATTENTION")},
+	{ "L500", "", TYPE_CHANGER , SENSE_UNIT_ATTENTION, 0x0,  0x0,  SENSE_RETRY, _T("Unit Attention")},
+	{ "L500", "", TYPE_CHANGER , SENSE_UNIT_ATTENTION, 0x28, 0x0,  SENSE_RETRY, _T("Not ready to Ready transition")},
+	{ "L500", "", TYPE_CHANGER , SENSE_UNIT_ATTENTION, 0x29, 0x0,  SENSE_RETRY, _T("Reset occured")},
+	{ "L500", "", TYPE_CHANGER , SENSE_UNIT_ATTENTION, 0x2a, 0x01, SENSE_ABORT, _T("Mode parameters changed")},
+	{ "L500", "", TYPE_CHANGER , SENSE_UNIT_ATTENTION, 0x3f, 0x01, SENSE_ABORT, _T("Microcode has changed")},
+	{ "L500", "", TYPE_CHANGER,  SENSE_UNIT_ATTENTION, UCHAR_MAX, UCHAR_MAX,     SENSE_ABORT, _T("Default for SENSE_UNIT_ATTENTION")},
 
 /*	Not used by L500
-	{ "L500", "", TYPE_CHANGER,  SENSE_CHG_ELEMENT_STATUS, UCHAR_MAX, UCHAR_MAX, SENSE_IGNORE, _("Default for SENSE_CHG_ELEMENT_STATUS")},
+	{ "L500", "", TYPE_CHANGER,  SENSE_CHG_ELEMENT_STATUS, UCHAR_MAX, UCHAR_MAX, SENSE_IGNORE, _T("Default for SENSE_CHG_ELEMENT_STATUS")},
 */
-	{ "L500", "", TYPE_CHANGER,  SENSE_ABORTED_COMMAND, 0x43, 0x0, SENSE_ABORT, _("SCSI message error")},
-	{ "L500", "", TYPE_CHANGER,  SENSE_ABORTED_COMMAND, 0x47, 0x0, SENSE_ABORT, _("SCSI parity error")},
-	{ "L500", "", TYPE_CHANGER,  SENSE_ABORTED_COMMAND, 0x48, 0x0, SENSE_ABORT, _("SCSI IDE message received")},
-	{ "L500", "", TYPE_CHANGER,  SENSE_ABORTED_COMMAND, 0x49, 0x0, SENSE_ABORT, _("SCSI invalid message")},
-	{ "L500", "", TYPE_CHANGER,  SENSE_ABORTED_COMMAND, 0x4e, 0x0, SENSE_ABORT, _("SCSI overlapped commands")},
+	{ "L500", "", TYPE_CHANGER,  SENSE_ABORTED_COMMAND, 0x43, 0x0, SENSE_ABORT, _T("SCSI message error")},
+	{ "L500", "", TYPE_CHANGER,  SENSE_ABORTED_COMMAND, 0x47, 0x0, SENSE_ABORT, _T("SCSI parity error")},
+	{ "L500", "", TYPE_CHANGER,  SENSE_ABORTED_COMMAND, 0x48, 0x0, SENSE_ABORT, _T("SCSI IDE message received")},
+	{ "L500", "", TYPE_CHANGER,  SENSE_ABORTED_COMMAND, 0x49, 0x0, SENSE_ABORT, _T("SCSI invalid message")},
+	{ "L500", "", TYPE_CHANGER,  SENSE_ABORTED_COMMAND, 0x4e, 0x0, SENSE_ABORT, _T("SCSI overlapped commands")},
 
-	{ "L500", "", TYPE_CHANGER,  SENSE_ABORTED_COMMAND, UCHAR_MAX, UCHAR_MAX, SENSE_ABORT, _("Default for SENSE_ABORTED_COMMAND")},
-	{ "L500", "", TYPE_CHANGER , UCHAR_MAX, 0x0, 0x0, SENSE_ABORT, _("Nothing Found")},
+	{ "L500", "", TYPE_CHANGER,  SENSE_ABORTED_COMMAND, UCHAR_MAX, UCHAR_MAX, SENSE_ABORT, _T("Default for SENSE_ABORTED_COMMAND")},
+	{ "L500", "", TYPE_CHANGER , UCHAR_MAX, 0x0, 0x0, SENSE_ABORT, _T("Nothing Found")},
 
 /*
  * HP C1553A Tape
  */
-	{ "C1553A", "", TYPE_TAPE,  SENSE_NULL, 0x0, 0x0, SENSE_NO, _("No Sense")},
-	{ "C1553A", "", TYPE_TAPE,  SENSE_NULL , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _("Default for SENSE_NULL")},
+	{ "C1553A", "", TYPE_TAPE,  SENSE_NULL, 0x0, 0x0, SENSE_NO, _T("No Sense")},
+	{ "C1553A", "", TYPE_TAPE,  SENSE_NULL , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _T("Default for SENSE_NULL")},
 
-	{ "C1553A", "", TYPE_TAPE , SENSE_RECOVERED_ERROR, 0x0, 0x0, SENSE_IGNORE, _("Recovered Error")},
-	{ "C1553A", "", TYPE_TAPE,  SENSE_RECOVERED_ERROR , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _("Default for SENSE_RECOVERED_ERROR")},
+	{ "C1553A", "", TYPE_TAPE , SENSE_RECOVERED_ERROR, 0x0, 0x0, SENSE_IGNORE, _T("Recovered Error")},
+	{ "C1553A", "", TYPE_TAPE,  SENSE_RECOVERED_ERROR , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _T("Default for SENSE_RECOVERED_ERROR")},
 
-	{ "C1553A", "", TYPE_TAPE , SENSE_NOT_READY, 0x0, 0x0, SENSE_IGNORE, _("Not Ready")},
-	{ "C1553A", "", TYPE_TAPE , SENSE_NOT_READY, 0x3A, 0x0, SENSE_TAPE_NOT_ONLINE, _("No Tape online")},
-	{ "C1553A", "", TYPE_TAPE,  SENSE_NOT_READY , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _("Default for SENSE_NOT_READY")},
+	{ "C1553A", "", TYPE_TAPE , SENSE_NOT_READY, 0x0, 0x0, SENSE_IGNORE, _T("Not Ready")},
+	{ "C1553A", "", TYPE_TAPE , SENSE_NOT_READY, 0x3A, 0x0, SENSE_TAPE_NOT_ONLINE, _T("No Tape online")},
+	{ "C1553A", "", TYPE_TAPE,  SENSE_NOT_READY , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _T("Default for SENSE_NOT_READY")},
 
-	{ "C1553A", "", TYPE_TAPE , SENSE_MEDIUM_ERROR, 0x0, 0x0, SENSE_ABORT, _("Medium Error")},
-	{ "C1553A", "", TYPE_TAPE,  SENSE_MEDIUM_ERROR , UCHAR_MAX, UCHAR_MAX, SENSE_ABORT, _("Default for SENSE_MEDIUM_ERROR")},
+	{ "C1553A", "", TYPE_TAPE , SENSE_MEDIUM_ERROR, 0x0, 0x0, SENSE_ABORT, _T("Medium Error")},
+	{ "C1553A", "", TYPE_TAPE,  SENSE_MEDIUM_ERROR , UCHAR_MAX, UCHAR_MAX, SENSE_ABORT, _T("Default for SENSE_MEDIUM_ERROR")},
 
-	{ "C1553A", "", TYPE_TAPE , SENSE_HARDWARE_ERROR, 0x0, 0x0, SENSE_ABORT, _("Hardware Error")},
-	{ "C1553A", "", TYPE_TAPE,  SENSE_HARDWARE_ERROR , UCHAR_MAX, UCHAR_MAX, SENSE_ABORT, _("Default for SENSE_HARDWARE_ERROR")},
+	{ "C1553A", "", TYPE_TAPE , SENSE_HARDWARE_ERROR, 0x0, 0x0, SENSE_ABORT, _T("Hardware Error")},
+	{ "C1553A", "", TYPE_TAPE,  SENSE_HARDWARE_ERROR , UCHAR_MAX, UCHAR_MAX, SENSE_ABORT, _T("Default for SENSE_HARDWARE_ERROR")},
 
-	{ "C1553A", "", TYPE_TAPE , SENSE_ILLEGAL_REQUEST, 0x0, 0x0, SENSE_ABORT, _("Illegal Request")},
-	{ "C1553A", "", TYPE_TAPE,  SENSE_ILLEGAL_REQUEST , UCHAR_MAX, UCHAR_MAX, SENSE_ABORT, _("Default for SENSE_ILLEGAL_REQUEST")},
+	{ "C1553A", "", TYPE_TAPE , SENSE_ILLEGAL_REQUEST, 0x0, 0x0, SENSE_ABORT, _T("Illegal Request")},
+	{ "C1553A", "", TYPE_TAPE,  SENSE_ILLEGAL_REQUEST , UCHAR_MAX, UCHAR_MAX, SENSE_ABORT, _T("Default for SENSE_ILLEGAL_REQUEST")},
 
-	{ "C1553A", "", TYPE_TAPE , SENSE_UNIT_ATTENTION, 0x0, 0x0, SENSE_RETRY, _("Unit Attention")},
-	{ "C1553A", "", TYPE_TAPE,  SENSE_UNIT_ATTENTION , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _("Default for SENSE_UNIT_ATTENTION")},
+	{ "C1553A", "", TYPE_TAPE , SENSE_UNIT_ATTENTION, 0x0, 0x0, SENSE_RETRY, _T("Unit Attention")},
+	{ "C1553A", "", TYPE_TAPE,  SENSE_UNIT_ATTENTION , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _T("Default for SENSE_UNIT_ATTENTION")},
 
-	{ "C1553A", "", TYPE_TAPE , UCHAR_MAX, 0x0, 0x0, SENSE_ABORT, _("Nothing Found")},
+	{ "C1553A", "", TYPE_TAPE , UCHAR_MAX, 0x0, 0x0, SENSE_ABORT, _T("Nothing Found")},
 
-	{ "C1553A", "", TYPE_CHANGER,  SENSE_NULL, 0x0, 0x0, SENSE_NO, _("No Sense")},
-	{ "C1553A", "", TYPE_CHANGER,  SENSE_NULL , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _("Default for SENSE_NULL")},
+	{ "C1553A", "", TYPE_CHANGER,  SENSE_NULL, 0x0, 0x0, SENSE_NO, _T("No Sense")},
+	{ "C1553A", "", TYPE_CHANGER,  SENSE_NULL , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _T("Default for SENSE_NULL")},
 
-	{ "C1553A", "", TYPE_CHANGER , SENSE_RECOVERED_ERROR, 0x0, 0x0, SENSE_IGNORE, _("Recovered Error")},
-	{ "C1553A", "", TYPE_CHANGER,  SENSE_RECOVERED_ERROR , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _("Default for SENSE_RECOVERED_ERROR")},
+	{ "C1553A", "", TYPE_CHANGER , SENSE_RECOVERED_ERROR, 0x0, 0x0, SENSE_IGNORE, _T("Recovered Error")},
+	{ "C1553A", "", TYPE_CHANGER,  SENSE_RECOVERED_ERROR , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _T("Default for SENSE_RECOVERED_ERROR")},
 
-	{ "C1553A", "", TYPE_CHANGER , SENSE_NOT_READY, 0x0, 0x0, SENSE_IGNORE, _("Not Ready")},
-	{ "C1553A", "", TYPE_CHANGER , SENSE_NOT_READY, 0x3A, 0x0, SENSE_TAPE_NOT_ONLINE, _("No Tape online")},
-	{ "C1553A", "", TYPE_CHANGER,  SENSE_NOT_READY , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _("Default for SENSE_NOT_READY")},
+	{ "C1553A", "", TYPE_CHANGER , SENSE_NOT_READY, 0x0, 0x0, SENSE_IGNORE, _T("Not Ready")},
+	{ "C1553A", "", TYPE_CHANGER , SENSE_NOT_READY, 0x3A, 0x0, SENSE_TAPE_NOT_ONLINE, _T("No Tape online")},
+	{ "C1553A", "", TYPE_CHANGER,  SENSE_NOT_READY , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _T("Default for SENSE_NOT_READY")},
 
-	{ "C1553A", "", TYPE_CHANGER , SENSE_MEDIUM_ERROR, 0x0, 0x0, SENSE_ABORT, _("Medium Error")},
-	{ "C1553A", "", TYPE_CHANGER,  SENSE_MEDIUM_ERROR , UCHAR_MAX, UCHAR_MAX, SENSE_ABORT, _("Default for SENSE_MEDIUM_ERROR")},
+	{ "C1553A", "", TYPE_CHANGER , SENSE_MEDIUM_ERROR, 0x0, 0x0, SENSE_ABORT, _T("Medium Error")},
+	{ "C1553A", "", TYPE_CHANGER,  SENSE_MEDIUM_ERROR , UCHAR_MAX, UCHAR_MAX, SENSE_ABORT, _T("Default for SENSE_MEDIUM_ERROR")},
 
-	{ "C1553A", "", TYPE_CHANGER , SENSE_HARDWARE_ERROR, 0x0, 0x0, SENSE_ABORT, _("Hardware Error")},
-	{ "C1553A", "", TYPE_CHANGER,  SENSE_HARDWARE_ERROR , UCHAR_MAX, UCHAR_MAX, SENSE_ABORT, _("Default for SENSE_HARDWARE_ERROR")},
+	{ "C1553A", "", TYPE_CHANGER , SENSE_HARDWARE_ERROR, 0x0, 0x0, SENSE_ABORT, _T("Hardware Error")},
+	{ "C1553A", "", TYPE_CHANGER,  SENSE_HARDWARE_ERROR , UCHAR_MAX, UCHAR_MAX, SENSE_ABORT, _T("Default for SENSE_HARDWARE_ERROR")},
 
-	{ "C1553A", "", TYPE_CHANGER , SENSE_ILLEGAL_REQUEST, 0x0, 0x0, SENSE_ABORT, _("Illegal Request")},
-	{ "C1553A", "", TYPE_CHANGER,  SENSE_ILLEGAL_REQUEST , UCHAR_MAX, UCHAR_MAX, SENSE_ABORT, _("Default for SENSE_ILLEGAL_REQUEST")},
+	{ "C1553A", "", TYPE_CHANGER , SENSE_ILLEGAL_REQUEST, 0x0, 0x0, SENSE_ABORT, _T("Illegal Request")},
+	{ "C1553A", "", TYPE_CHANGER,  SENSE_ILLEGAL_REQUEST , UCHAR_MAX, UCHAR_MAX, SENSE_ABORT, _T("Default for SENSE_ILLEGAL_REQUEST")},
 
-	{ "C1553A", "", TYPE_CHANGER , SENSE_UNIT_ATTENTION, 0x0, 0x0, SENSE_RETRY, _("Unit Attention")},
-	{ "C1553A", "", TYPE_CHANGER,  SENSE_UNIT_ATTENTION , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _("Default for SENSE_UNIT_ATTENTION")},
+	{ "C1553A", "", TYPE_CHANGER , SENSE_UNIT_ATTENTION, 0x0, 0x0, SENSE_RETRY, _T("Unit Attention")},
+	{ "C1553A", "", TYPE_CHANGER,  SENSE_UNIT_ATTENTION , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _T("Default for SENSE_UNIT_ATTENTION")},
 
-	{ "C1553A", "", TYPE_CHANGER,  SENSE_CHG_ELEMENT_STATUS, UCHAR_MAX, UCHAR_MAX, SENSE_IGNORE, _("Default for SENSE_CHG_ELEMENT_STATUS")},
+	{ "C1553A", "", TYPE_CHANGER,  SENSE_CHG_ELEMENT_STATUS, UCHAR_MAX, UCHAR_MAX, SENSE_IGNORE, _T("Default for SENSE_CHG_ELEMENT_STATUS")},
 
-	{ "C1553A", "", TYPE_CHANGER , UCHAR_MAX, 0x0, 0x0, SENSE_ABORT, _("Nothing Found")},
+	{ "C1553A", "", TYPE_CHANGER , UCHAR_MAX, 0x0, 0x0, SENSE_ABORT, _T("Nothing Found")},
 /*
  * HP C1537A Tape
  */
-	{ "C1537A", "", TYPE_TAPE,  SENSE_NULL, 0x0, 0x0, SENSE_NO, _("No Sense")},
-	{ "C1537A", "", TYPE_TAPE,  SENSE_NULL , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _("Default for SENSE_NULL")},
+	{ "C1537A", "", TYPE_TAPE,  SENSE_NULL, 0x0, 0x0, SENSE_NO, _T("No Sense")},
+	{ "C1537A", "", TYPE_TAPE,  SENSE_NULL , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _T("Default for SENSE_NULL")},
 
-	{ "C1537A", "", TYPE_TAPE , SENSE_RECOVERED_ERROR, 0x0, 0x0, SENSE_IGNORE, _("Recovered Error")},
-	{ "C1537A", "", TYPE_TAPE,  SENSE_RECOVERED_ERROR , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _("Default for SENSE_RECOVERED_ERROR")},
+	{ "C1537A", "", TYPE_TAPE , SENSE_RECOVERED_ERROR, 0x0, 0x0, SENSE_IGNORE, _T("Recovered Error")},
+	{ "C1537A", "", TYPE_TAPE,  SENSE_RECOVERED_ERROR , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _T("Default for SENSE_RECOVERED_ERROR")},
 
-	{ "C1537A", "", TYPE_TAPE , SENSE_NOT_READY, 0x0, 0x0, SENSE_IGNORE, _("Not Ready")},
-	{ "C1537A", "", TYPE_TAPE , SENSE_NOT_READY, 0x3A, 0x0, SENSE_TAPE_NOT_ONLINE, _("No Tape online")},
-	{ "C1537A", "", TYPE_TAPE , SENSE_NOT_READY, 0x04, 0x0, SENSE_RETRY, _("tape is being ejected")},
-	{ "C1537A", "", TYPE_TAPE , SENSE_NOT_READY, 0x04, 0x01, SENSE_RETRY, _("tape is being loaded")},
-	{ "C1537A", "", TYPE_TAPE,  SENSE_NOT_READY , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _("Default for SENSE_NOT_READY")},
+	{ "C1537A", "", TYPE_TAPE , SENSE_NOT_READY, 0x0, 0x0, SENSE_IGNORE, _T("Not Ready")},
+	{ "C1537A", "", TYPE_TAPE , SENSE_NOT_READY, 0x3A, 0x0, SENSE_TAPE_NOT_ONLINE, _T("No Tape online")},
+	{ "C1537A", "", TYPE_TAPE , SENSE_NOT_READY, 0x04, 0x0, SENSE_RETRY, _T("tape is being ejected")},
+	{ "C1537A", "", TYPE_TAPE , SENSE_NOT_READY, 0x04, 0x01, SENSE_RETRY, _T("tape is being loaded")},
+	{ "C1537A", "", TYPE_TAPE,  SENSE_NOT_READY , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _T("Default for SENSE_NOT_READY")},
 
-	{ "C1537A", "", TYPE_TAPE , SENSE_MEDIUM_ERROR, 0x0, 0x0, SENSE_ABORT, _("Medium Error")},
-	{ "C1537A", "", TYPE_TAPE,  SENSE_MEDIUM_ERROR , UCHAR_MAX, UCHAR_MAX, SENSE_ABORT, _("Default for SENSE_MEDIUM_ERROR")},
+	{ "C1537A", "", TYPE_TAPE , SENSE_MEDIUM_ERROR, 0x0, 0x0, SENSE_ABORT, _T("Medium Error")},
+	{ "C1537A", "", TYPE_TAPE,  SENSE_MEDIUM_ERROR , UCHAR_MAX, UCHAR_MAX, SENSE_ABORT, _T("Default for SENSE_MEDIUM_ERROR")},
 
-	{ "C1537A", "", TYPE_TAPE , SENSE_HARDWARE_ERROR, 0x0, 0x0, SENSE_ABORT, _("Hardware Error")},
-	{ "C1537A", "", TYPE_TAPE,  SENSE_HARDWARE_ERROR , UCHAR_MAX, UCHAR_MAX, SENSE_ABORT, _("Default for SENSE_HARDWARE_ERROR")},
+	{ "C1537A", "", TYPE_TAPE , SENSE_HARDWARE_ERROR, 0x0, 0x0, SENSE_ABORT, _T("Hardware Error")},
+	{ "C1537A", "", TYPE_TAPE,  SENSE_HARDWARE_ERROR , UCHAR_MAX, UCHAR_MAX, SENSE_ABORT, _T("Default for SENSE_HARDWARE_ERROR")},
 
-	{ "C1537A", "", TYPE_TAPE , SENSE_ILLEGAL_REQUEST, 0x0, 0x0, SENSE_ABORT, _("Illegal Request")},
-	{ "C1537A", "", TYPE_TAPE,  SENSE_ILLEGAL_REQUEST , UCHAR_MAX, UCHAR_MAX, SENSE_ABORT, _("Default for SENSE_ILLEGAL_REQUEST")},
+	{ "C1537A", "", TYPE_TAPE , SENSE_ILLEGAL_REQUEST, 0x0, 0x0, SENSE_ABORT, _T("Illegal Request")},
+	{ "C1537A", "", TYPE_TAPE,  SENSE_ILLEGAL_REQUEST , UCHAR_MAX, UCHAR_MAX, SENSE_ABORT, _T("Default for SENSE_ILLEGAL_REQUEST")},
 
-	{ "C1537A", "", TYPE_TAPE , SENSE_UNIT_ATTENTION, 0x0, 0x0, SENSE_RETRY, _("Unit Attention")},
-	{ "C1537A", "", TYPE_TAPE , SENSE_UNIT_ATTENTION, 0x28, 0x0, SENSE_RETRY, _("Not Ready to Ready Transition")},
-	{ "C1537A", "", TYPE_TAPE,  SENSE_UNIT_ATTENTION , UCHAR_MAX, UCHAR_MAX, SENSE_ABORT, _("Default for SENSE_UNIT_ATTENTION")},
+	{ "C1537A", "", TYPE_TAPE , SENSE_UNIT_ATTENTION, 0x0, 0x0, SENSE_RETRY, _T("Unit Attention")},
+	{ "C1537A", "", TYPE_TAPE , SENSE_UNIT_ATTENTION, 0x28, 0x0, SENSE_RETRY, _T("Not Ready to Ready Transition")},
+	{ "C1537A", "", TYPE_TAPE,  SENSE_UNIT_ATTENTION , UCHAR_MAX, UCHAR_MAX, SENSE_ABORT, _T("Default for SENSE_UNIT_ATTENTION")},
 
-	{ "C1537A", "", TYPE_TAPE,  SENSE_CHG_ELEMENT_STATUS, UCHAR_MAX, UCHAR_MAX, SENSE_IGNORE, _("Default for SENSE_CHG_ELEMENT_STATUS")},
+	{ "C1537A", "", TYPE_TAPE,  SENSE_CHG_ELEMENT_STATUS, UCHAR_MAX, UCHAR_MAX, SENSE_IGNORE, _T("Default for SENSE_CHG_ELEMENT_STATUS")},
 
-	{ "C1537A", "", TYPE_TAPE , UCHAR_MAX, 0x0, 0x0, SENSE_ABORT, _("Nothing Found")},
+	{ "C1537A", "", TYPE_TAPE , UCHAR_MAX, 0x0, 0x0, SENSE_ABORT, _T("Nothing Found")},
 /*
  * Tandberg TapeLibrary 1420
  */
-	{ "TDS 1420", "", TYPE_TAPE, SENSE_NULL, 0x0, 0x0, SENSE_NO, _("No Sense")},
-	{ "TDS 1420", "", TYPE_TAPE, SENSE_NULL , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _("Default for SENSE_NULL")},
+	{ "TDS 1420", "", TYPE_TAPE, SENSE_NULL, 0x0, 0x0, SENSE_NO, _T("No Sense")},
+	{ "TDS 1420", "", TYPE_TAPE, SENSE_NULL , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _T("Default for SENSE_NULL")},
 
-	{ "TDS 1420", "", TYPE_TAPE, SENSE_IES, 0x83, 0x0, SENSE_IES, _("IES")},
-	{ "TDS 1420", "", TYPE_TAPE, SENSE_IES, 0x83, 0x1, SENSE_IES, _("IES")},
-	{ "TDS 1420", "", TYPE_TAPE, SENSE_IES, 0x83, 0x4, SENSE_IGNORE, _("IES")},
-	{ "TDS 1420", "", TYPE_TAPE, SENSE_RECOVERED_ERROR, 0x0, 0x0, SENSE_IGNORE, _("Recovered Error")},
-	{ "TDS 1420", "", TYPE_TAPE, SENSE_RECOVERED_ERROR , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _("Default for SENSE_RECOVERED_ERROR")},
+	{ "TDS 1420", "", TYPE_TAPE, SENSE_IES, 0x83, 0x0, SENSE_IES, _T("IES")},
+	{ "TDS 1420", "", TYPE_TAPE, SENSE_IES, 0x83, 0x1, SENSE_IES, _T("IES")},
+	{ "TDS 1420", "", TYPE_TAPE, SENSE_IES, 0x83, 0x4, SENSE_IGNORE, _T("IES")},
+	{ "TDS 1420", "", TYPE_TAPE, SENSE_RECOVERED_ERROR, 0x0, 0x0, SENSE_IGNORE, _T("Recovered Error")},
+	{ "TDS 1420", "", TYPE_TAPE, SENSE_RECOVERED_ERROR , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _T("Default for SENSE_RECOVERED_ERROR")},
 
-	{ "TDS 1420", "", TYPE_TAPE, SENSE_NOT_READY, 0x0, 0x0, SENSE_IGNORE, _("Not Ready")},
-	{ "TDS 1420", "", TYPE_TAPE, SENSE_NOT_READY, 0x3A, 0x0, SENSE_TAPE_NOT_ONLINE, _("No Tape online")},
-	{ "TDS 1420", "", TYPE_TAPE, SENSE_NOT_READY , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _("Default for SENSE_NOT_READY")},
+	{ "TDS 1420", "", TYPE_TAPE, SENSE_NOT_READY, 0x0, 0x0, SENSE_IGNORE, _T("Not Ready")},
+	{ "TDS 1420", "", TYPE_TAPE, SENSE_NOT_READY, 0x3A, 0x0, SENSE_TAPE_NOT_ONLINE, _T("No Tape online")},
+	{ "TDS 1420", "", TYPE_TAPE, SENSE_NOT_READY , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _T("Default for SENSE_NOT_READY")},
 
-	{ "TDS 1420", "", TYPE_TAPE, SENSE_MEDIUM_ERROR, 0x0, 0x0, SENSE_ABORT, _("Medium Error")},
-	{ "TDS 1420", "", TYPE_TAPE, SENSE_MEDIUM_ERROR , UCHAR_MAX, UCHAR_MAX, SENSE_ABORT, _("Default for SENSE_MEDIUM_ERROR")},
+	{ "TDS 1420", "", TYPE_TAPE, SENSE_MEDIUM_ERROR, 0x0, 0x0, SENSE_ABORT, _T("Medium Error")},
+	{ "TDS 1420", "", TYPE_TAPE, SENSE_MEDIUM_ERROR , UCHAR_MAX, UCHAR_MAX, SENSE_ABORT, _T("Default for SENSE_MEDIUM_ERROR")},
 
-	{ "TDS 1420", "", TYPE_TAPE, SENSE_HARDWARE_ERROR, 0x0, 0x0, SENSE_ABORT, _("Hardware Error")},
-	{ "TDS 1420", "", TYPE_TAPE, SENSE_HARDWARE_ERROR , UCHAR_MAX, UCHAR_MAX, SENSE_ABORT, _("Default for SENSE_HARDWARE_ERROR")},
+	{ "TDS 1420", "", TYPE_TAPE, SENSE_HARDWARE_ERROR, 0x0, 0x0, SENSE_ABORT, _T("Hardware Error")},
+	{ "TDS 1420", "", TYPE_TAPE, SENSE_HARDWARE_ERROR , UCHAR_MAX, UCHAR_MAX, SENSE_ABORT, _T("Default for SENSE_HARDWARE_ERROR")},
 
-	{ "TDS 1420", "", TYPE_TAPE, SENSE_ILLEGAL_REQUEST, 0x0, 0x0, SENSE_ABORT, _("Illegal Request")},
-	{ "TDS 1420", "", TYPE_TAPE, SENSE_ILLEGAL_REQUEST , UCHAR_MAX, UCHAR_MAX, SENSE_ABORT, _("Default for SENSE_ILLEGAL_REQUEST")},
+	{ "TDS 1420", "", TYPE_TAPE, SENSE_ILLEGAL_REQUEST, 0x0, 0x0, SENSE_ABORT, _T("Illegal Request")},
+	{ "TDS 1420", "", TYPE_TAPE, SENSE_ILLEGAL_REQUEST , UCHAR_MAX, UCHAR_MAX, SENSE_ABORT, _T("Default for SENSE_ILLEGAL_REQUEST")},
 
-	{ "TDS 1420", "", TYPE_TAPE, SENSE_UNIT_ATTENTION, 0x0, 0x0, SENSE_RETRY, _("Unit Attention")},
+	{ "TDS 1420", "", TYPE_TAPE, SENSE_UNIT_ATTENTION, 0x0, 0x0, SENSE_RETRY, _T("Unit Attention")},
 	{ "TDS 1420", "", TYPE_TAPE, SENSE_UNIT_ATTENTION , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, "Default for SENSE_UNIT_ATTENTION"},
 
-	{ "TDS 1420", "", TYPE_TAPE, UCHAR_MAX, 0x0, 0x0, SENSE_ABORT, _("Nothing Found")},
+	{ "TDS 1420", "", TYPE_TAPE, UCHAR_MAX, 0x0, 0x0, SENSE_ABORT, _T("Nothing Found")},
 
 /*
  * Tandberg SLR100 Tape Drive
@@ -420,307 +420,307 @@
 /*
  * DLT 8000 Tape
  */
-	{ "DLT8000", "QUANTUM", TYPE_TAPE,  SENSE_NULL, 0x0, 0x0,   SENSE_NO, _("No Sense")},
-	{ "DLT8000", "QUANTUM", TYPE_TAPE,  SENSE_NULL, 0x0, 0x01,  SENSE_NO, _("Unexpected FM encountered")},
-	{ "DLT8000", "QUANTUM", TYPE_TAPE,  SENSE_NULL, 0x0, 0x02,  SENSE_NO, _("EOM encountered")},
-	{ "DLT8000", "QUANTUM", TYPE_TAPE,  SENSE_NULL, 0x0, 0x04,  SENSE_NO, _("BOM encountered")},
-	{ "DLT8000", "QUANTUM", TYPE_TAPE,  SENSE_NULL, 0x5d, 0x00, SENSE_NO, _("Failure prediction threshold exceeded")},
-	{ "DLT8000", "QUANTUM", TYPE_TAPE,  SENSE_NULL, 0x27, 0x82, SENSE_NO, _("Data safety write protect")},
-	{ "DLT8000", "QUANTUM", TYPE_TAPE,  SENSE_NULL , UCHAR_MAX, UCHAR_MAX,    SENSE_RETRY, _("Default for SENSE_NULL")},
+	{ "DLT8000", "QUANTUM", TYPE_TAPE,  SENSE_NULL, 0x0, 0x0,   SENSE_NO, _T("No Sense")},
+	{ "DLT8000", "QUANTUM", TYPE_TAPE,  SENSE_NULL, 0x0, 0x01,  SENSE_NO, _T("Unexpected FM encountered")},
+	{ "DLT8000", "QUANTUM", TYPE_TAPE,  SENSE_NULL, 0x0, 0x02,  SENSE_NO, _T("EOM encountered")},
+	{ "DLT8000", "QUANTUM", TYPE_TAPE,  SENSE_NULL, 0x0, 0x04,  SENSE_NO, _T("BOM encountered")},
+	{ "DLT8000", "QUANTUM", TYPE_TAPE,  SENSE_NULL, 0x5d, 0x00, SENSE_NO, _T("Failure prediction threshold exceeded")},
+	{ "DLT8000", "QUANTUM", TYPE_TAPE,  SENSE_NULL, 0x27, 0x82, SENSE_NO, _T("Data safety write protect")},
+	{ "DLT8000", "QUANTUM", TYPE_TAPE,  SENSE_NULL , UCHAR_MAX, UCHAR_MAX,    SENSE_RETRY, _T("Default for SENSE_NULL")},
 
-	{ "DLT8000", "QUANTUM", TYPE_TAPE , SENSE_RECOVERED_ERROR, 0x0, 0x0, SENSE_IGNORE, _("Recovered Error")},
-	{ "DLT8000", "QUANTUM", TYPE_TAPE , SENSE_RECOVERED_ERROR, 0x0, 0x17, SENSE_IGNORE, _("Cleaning requested")},
-	{ "DLT8000", "QUANTUM", TYPE_TAPE , SENSE_RECOVERED_ERROR, 0x0a, 0x00, SENSE_IGNORE, _("Error log overflow")},
-	{ "DLT8000", "QUANTUM", TYPE_TAPE , SENSE_RECOVERED_ERROR, 0x0a, 0x80, SENSE_IGNORE, _("Error log generated")},
-	{ "DLT8000", "QUANTUM", TYPE_TAPE , SENSE_RECOVERED_ERROR, 0x37, 0x0,  SENSE_IGNORE, _("Rounded parameter")},
-	{ "DLT8000", "QUANTUM", TYPE_TAPE , SENSE_RECOVERED_ERROR, 0x38, 0x08, SENSE_IGNORE, _("repositioning error")},
-	{ "DLT8000", "QUANTUM", TYPE_TAPE , SENSE_RECOVERED_ERROR, 0x44, 0xc1, SENSE_IGNORE, _("EEPROM copy1 area bad")},
-	{ "DLT8000", "QUANTUM", TYPE_TAPE , SENSE_RECOVERED_ERROR, 0x44, 0xc2, SENSE_IGNORE, _("EEPROM copy2 area bad")},
-	{ "DLT8000", "QUANTUM", TYPE_TAPE , SENSE_RECOVERED_ERROR, 0x47, 0x00, SENSE_IGNORE, _("SCSI parity error")},
-	{ "DLT8000", "QUANTUM", TYPE_TAPE , SENSE_RECOVERED_ERROR, 0x48, 0x00, SENSE_IGNORE, _("IDE Message received")},
-	{ "DLT8000", "QUANTUM", TYPE_TAPE , SENSE_RECOVERED_ERROR, 0x51, 0x00, SENSE_IGNORE, _("Erase Failure")},
-	{ "DLT8000", "QUANTUM", TYPE_TAPE , SENSE_RECOVERED_ERROR, 0x53, 0x01, SENSE_IGNORE, _("Unload Tape failure")},
-	{ "DLT8000", "QUANTUM", TYPE_TAPE , SENSE_RECOVERED_ERROR, 0x5b, 0x01, SENSE_IGNORE, _("Threshold met")},
-	{ "DLT8000", "QUANTUM", TYPE_TAPE , SENSE_RECOVERED_ERROR, 0x5b, 0x02, SENSE_IGNORE, _("Log counter at maximum")},
-	{ "DLT8000", "QUANTUM", TYPE_TAPE , SENSE_RECOVERED_ERROR, 0x80, 0x02, SENSE_IGNORE, _("Cleaning requested")},
-	{ "DLT8000", "QUANTUM", TYPE_TAPE , SENSE_RECOVERED_ERROR, 0x80, 0x03, SENSE_IGNORE, _("Soft error exceeds threshold")},
-/*	{ "DLT8000", "QUANTUM", TYPE_TAPE , SENSE_RECOVERED_ERROR, 0x47, 0x0, SENSE_IGNORE, _("Scsi Parity Error")}, */
-	{ "DLT8000", "QUANTUM", TYPE_TAPE,  SENSE_RECOVERED_ERROR , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _("Default for SENSE_RECOVERED_ERROR")},
-	{ "DLT8000", "QUANTUM", TYPE_TAPE , SENSE_NOT_READY, 0x0, 0x0, SENSE_IGNORE, _("Not Ready (this shouldn't happen should it?)")},
-	{ "DLT8000", "QUANTUM", TYPE_TAPE , SENSE_NOT_READY, 0x4, 0x1, SENSE_RETRY, _("The drive is not ready, but it is in the process of becoming ready")},
-	{ "DLT8000", "QUANTUM", TYPE_TAPE , SENSE_NOT_READY, 0x30,0x02, SENSE_ABORT, _("Incompatible tape format")},
-	{ "DLT8000", "QUANTUM", TYPE_TAPE , SENSE_NOT_READY, 0x30,0x03, SENSE_ABORT, _("Cleaning Cartridge in drive")},
-	{ "DLT8000", "QUANTUM", TYPE_TAPE , SENSE_NOT_READY, 0x3A, 0x0, SENSE_TAPE_NOT_ONLINE, _("No Tape online")},
-	{ "DLT8000", "QUANTUM", TYPE_TAPE , SENSE_NOT_READY, 0x5a,0x01, SENSE_ABORT, _("Asynchronous eject occurred")},
-	{ "DLT8000", "QUANTUM", TYPE_TAPE,  SENSE_NOT_READY , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _("Default for SENSE_NOT_READY")},
+	{ "DLT8000", "QUANTUM", TYPE_TAPE , SENSE_RECOVERED_ERROR, 0x0, 0x0, SENSE_IGNORE, _T("Recovered Error")},
+	{ "DLT8000", "QUANTUM", TYPE_TAPE , SENSE_RECOVERED_ERROR, 0x0, 0x17, SENSE_IGNORE, _T("Cleaning requested")},
+	{ "DLT8000", "QUANTUM", TYPE_TAPE , SENSE_RECOVERED_ERROR, 0x0a, 0x00, SENSE_IGNORE, _T("Error log overflow")},
+	{ "DLT8000", "QUANTUM", TYPE_TAPE , SENSE_RECOVERED_ERROR, 0x0a, 0x80, SENSE_IGNORE, _T("Error log generated")},
+	{ "DLT8000", "QUANTUM", TYPE_TAPE , SENSE_RECOVERED_ERROR, 0x37, 0x0,  SENSE_IGNORE, _T("Rounded parameter")},
+	{ "DLT8000", "QUANTUM", TYPE_TAPE , SENSE_RECOVERED_ERROR, 0x38, 0x08, SENSE_IGNORE, _T("repositioning error")},
+	{ "DLT8000", "QUANTUM", TYPE_TAPE , SENSE_RECOVERED_ERROR, 0x44, 0xc1, SENSE_IGNORE, _T("EEPROM copy1 area bad")},
+	{ "DLT8000", "QUANTUM", TYPE_TAPE , SENSE_RECOVERED_ERROR, 0x44, 0xc2, SENSE_IGNORE, _T("EEPROM copy2 area bad")},
+	{ "DLT8000", "QUANTUM", TYPE_TAPE , SENSE_RECOVERED_ERROR, 0x47, 0x00, SENSE_IGNORE, _T("SCSI parity error")},
+	{ "DLT8000", "QUANTUM", TYPE_TAPE , SENSE_RECOVERED_ERROR, 0x48, 0x00, SENSE_IGNORE, _T("IDE Message received")},
+	{ "DLT8000", "QUANTUM", TYPE_TAPE , SENSE_RECOVERED_ERROR, 0x51, 0x00, SENSE_IGNORE, _T("Erase Failure")},
+	{ "DLT8000", "QUANTUM", TYPE_TAPE , SENSE_RECOVERED_ERROR, 0x53, 0x01, SENSE_IGNORE, _T("Unload Tape failure")},
+	{ "DLT8000", "QUANTUM", TYPE_TAPE , SENSE_RECOVERED_ERROR, 0x5b, 0x01, SENSE_IGNORE, _T("Threshold met")},
+	{ "DLT8000", "QUANTUM", TYPE_TAPE , SENSE_RECOVERED_ERROR, 0x5b, 0x02, SENSE_IGNORE, _T("Log counter at maximum")},
+	{ "DLT8000", "QUANTUM", TYPE_TAPE , SENSE_RECOVERED_ERROR, 0x80, 0x02, SENSE_IGNORE, _T("Cleaning requested")},
+	{ "DLT8000", "QUANTUM", TYPE_TAPE , SENSE_RECOVERED_ERROR, 0x80, 0x03, SENSE_IGNORE, _T("Soft error exceeds threshold")},
+/*	{ "DLT8000", "QUANTUM", TYPE_TAPE , SENSE_RECOVERED_ERROR, 0x47, 0x0, SENSE_IGNORE, _T("Scsi Parity Error")}, */
+	{ "DLT8000", "QUANTUM", TYPE_TAPE,  SENSE_RECOVERED_ERROR , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _T("Default for SENSE_RECOVERED_ERROR")},
+	{ "DLT8000", "QUANTUM", TYPE_TAPE , SENSE_NOT_READY, 0x0, 0x0, SENSE_IGNORE, _T("Not Ready (this shouldn't happen should it?)")},
+	{ "DLT8000", "QUANTUM", TYPE_TAPE , SENSE_NOT_READY, 0x4, 0x1, SENSE_RETRY, _T("The drive is not ready, but it is in the process of becoming ready")},
+	{ "DLT8000", "QUANTUM", TYPE_TAPE , SENSE_NOT_READY, 0x30,0x02, SENSE_ABORT, _T("Incompatible tape format")},
+	{ "DLT8000", "QUANTUM", TYPE_TAPE , SENSE_NOT_READY, 0x30,0x03, SENSE_ABORT, _T("Cleaning Cartridge in drive")},
+	{ "DLT8000", "QUANTUM", TYPE_TAPE , SENSE_NOT_READY, 0x3A, 0x0, SENSE_TAPE_NOT_ONLINE, _T("No Tape online")},
+	{ "DLT8000", "QUANTUM", TYPE_TAPE , SENSE_NOT_READY, 0x5a,0x01, SENSE_ABORT, _T("Asynchronous eject occurred")},
+	{ "DLT8000", "QUANTUM", TYPE_TAPE,  SENSE_NOT_READY , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _T("Default for SENSE_NOT_READY")},
 
-	{ "DLT8000", "QUANTUM", TYPE_TAPE , SENSE_MEDIUM_ERROR, 0x0, 0x0, SENSE_ABORT, _("Medium Error")},
-	{ "DLT8000", "QUANTUM", TYPE_TAPE,  SENSE_MEDIUM_ERROR , UCHAR_MAX, UCHAR_MAX, SENSE_ABORT, _("Default for SENSE_MEDIUM_ERROR")},
+	{ "DLT8000", "QUANTUM", TYPE_TAPE , SENSE_MEDIUM_ERROR, 0x0, 0x0, SENSE_ABORT, _T("Medium Error")},
+	{ "DLT8000", "QUANTUM", TYPE_TAPE,  SENSE_MEDIUM_ERROR , UCHAR_MAX, UCHAR_MAX, SENSE_ABORT, _T("Default for SENSE_MEDIUM_ERROR")},
 
-	{ "DLT8000", "QUANTUM", TYPE_TAPE , SENSE_HARDWARE_ERROR, 0x0, 0x0, SENSE_ABORT, _("Hardware Error")},
-	{ "DLT8000", "QUANTUM", TYPE_TAPE,  SENSE_HARDWARE_ERROR , UCHAR_MAX, UCHAR_MAX, SENSE_ABORT, _("Default for SENSE_HARDWARE_ERROR")},
+	{ "DLT8000", "QUANTUM", TYPE_TAPE , SENSE_HARDWARE_ERROR, 0x0, 0x0, SENSE_ABORT, _T("Hardware Error")},
+	{ "DLT8000", "QUANTUM", TYPE_TAPE,  SENSE_HARDWARE_ERROR , UCHAR_MAX, UCHAR_MAX, SENSE_ABORT, _T("Default for SENSE_HARDWARE_ERROR")},
 
-	{ "DLT8000", "QUANTUM", TYPE_TAPE , SENSE_ILLEGAL_REQUEST, 0x0, 0x0, SENSE_ABORT, _("Illegal Request")},
-	{ "DLT8000", "QUANTUM", TYPE_TAPE,  SENSE_ILLEGAL_REQUEST , UCHAR_MAX, UCHAR_MAX, SENSE_ABORT, _("Default for SENSE_ILLEGAL_REQUEST")},
+	{ "DLT8000", "QUANTUM", TYPE_TAPE , SENSE_ILLEGAL_REQUEST, 0x0, 0x0, SENSE_ABORT, _T("Illegal Request")},
+	{ "DLT8000", "QUANTUM", TYPE_TAPE,  SENSE_ILLEGAL_REQUEST , UCHAR_MAX, UCHAR_MAX, SENSE_ABORT, _T("Default for SENSE_ILLEGAL_REQUEST")},
 
-	{ "DLT8000", "QUANTUM", TYPE_TAPE , SENSE_UNIT_ATTENTION, 0x0, 0x0, SENSE_RETRY, _("Unit Attention")},
-	{ "DLT8000", "QUANTUM", TYPE_TAPE , SENSE_UNIT_ATTENTION, 0x28, 0x0, SENSE_RETRY, _("Not ready to ready transition")},
-	{ "DLT8000", "QUANTUM", TYPE_TAPE,  SENSE_UNIT_ATTENTION, UCHAR_MAX, UCHAR_MAX, SENSE_ABORT, _("Default for SENSE_UNIT_ATTENTION")},
+	{ "DLT8000", "QUANTUM", TYPE_TAPE , SENSE_UNIT_ATTENTION, 0x0, 0x0, SENSE_RETRY, _T("Unit Attention")},
+	{ "DLT8000", "QUANTUM", TYPE_TAPE , SENSE_UNIT_ATTENTION, 0x28, 0x0, SENSE_RETRY, _T("Not ready to ready transition")},
+	{ "DLT8000", "QUANTUM", TYPE_TAPE,  SENSE_UNIT_ATTENTION, UCHAR_MAX, UCHAR_MAX, SENSE_ABORT, _T("Default for SENSE_UNIT_ATTENTION")},
 
-	{ "DLT8000", "QUANTUM", TYPE_TAPE , UCHAR_MAX, 0x0, 0x0, SENSE_ABORT, _("Nothing Found")},
+	{ "DLT8000", "QUANTUM", TYPE_TAPE , UCHAR_MAX, 0x0, 0x0, SENSE_ABORT, _T("Nothing Found")},
 
 /*
  * DLT 7000 Tape
  */
-	{ "DLT7000", "", TYPE_TAPE, SENSE_NOT_READY, 0x4, 0x0, SENSE_RETRY, _("Logical Unit not ready, no additional sense")},
-	{ "DLT7000", "", TYPE_TAPE, SENSE_NOT_READY, 0x4, 0x2, SENSE_TAPE_NOT_ONLINE, _("Logical Unit not ready, in progress becoming ready")},
-	{ "DLT7000", "", TYPE_TAPE, SENSE_NOT_READY, 0x30, 0x3, SENSE_RETRY, _("The tape drive is being cleaned")},
-	{ "DLT7000", "", TYPE_TAPE, SENSE_NOT_READY , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _("Default for SENSE_NOT_READY")},
+	{ "DLT7000", "", TYPE_TAPE, SENSE_NOT_READY, 0x4, 0x0, SENSE_RETRY, _T("Logical Unit not ready, no additional sense")},
+	{ "DLT7000", "", TYPE_TAPE, SENSE_NOT_READY, 0x4, 0x2, SENSE_TAPE_NOT_ONLINE, _T("Logical Unit not ready, in progress becoming ready")},
+	{ "DLT7000", "", TYPE_TAPE, SENSE_NOT_READY, 0x30, 0x3, SENSE_RETRY, _T("The tape drive is being cleaned")},
+	{ "DLT7000", "", TYPE_TAPE, SENSE_NOT_READY , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _T("Default for SENSE_NOT_READY")},
 
-	{ "DLT7000", "", TYPE_TAPE, SENSE_UNIT_ATTENTION, 0x0, 0x0, SENSE_RETRY, _("Unit Attention")},
-	{ "DLT7000", "", TYPE_TAPE, SENSE_UNIT_ATTENTION , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _("Default for SENSE_UNIT_ATTENTION")},
+	{ "DLT7000", "", TYPE_TAPE, SENSE_UNIT_ATTENTION, 0x0, 0x0, SENSE_RETRY, _T("Unit Attention")},
+	{ "DLT7000", "", TYPE_TAPE, SENSE_UNIT_ATTENTION , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _T("Default for SENSE_UNIT_ATTENTION")},
 
-	{ "DLT7000", "", TYPE_TAPE, SENSE_ILLEGAL_REQUEST, 0x0, 0x0, SENSE_ABORT, _("Illegal Request")},
-	{ "DLT7000", "", TYPE_TAPE, SENSE_ILLEGAL_REQUEST , UCHAR_MAX, UCHAR_MAX, SENSE_ABORT, _("Default for SENSE_ILLEGAL_REQUEST")},
+	{ "DLT7000", "", TYPE_TAPE, SENSE_ILLEGAL_REQUEST, 0x0, 0x0, SENSE_ABORT, _T("Illegal Request")},
+	{ "DLT7000", "", TYPE_TAPE, SENSE_ILLEGAL_REQUEST , UCHAR_MAX, UCHAR_MAX, SENSE_ABORT, _T("Default for SENSE_ILLEGAL_REQUEST")},
 
-	{ "DLT7000", "", TYPE_TAPE, UCHAR_MAX, 0x0, 0x0, SENSE_ABORT, _("Nothing Found")},
+	{ "DLT7000", "", TYPE_TAPE, UCHAR_MAX, 0x0, 0x0, SENSE_ABORT, _T("Nothing Found")},
 /*
  * DLT 4000 Tape
  */
-	{ "DLT4000", "", TYPE_TAPE, SENSE_NOT_READY, 0x4, 0x0, SENSE_RETRY, _("Logical Unit not ready, no additional sense")},
-	{ "DLT4000", "", TYPE_TAPE, SENSE_NOT_READY, 0x4, 0x2, SENSE_TAPE_NOT_ONLINE, _("Logical Unit not ready, in progress becoming ready")},
-	{ "DLT4000", "", TYPE_TAPE, SENSE_NOT_READY, 0x30, 0x3, SENSE_RETRY, _("The tape drive is being cleaned")},
-	{ "DLT4000", "", TYPE_TAPE,  SENSE_NOT_READY , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _("Default for SENSE_NOT_READY")},
+	{ "DLT4000", "", TYPE_TAPE, SENSE_NOT_READY, 0x4, 0x0, SENSE_RETRY, _T("Logical Unit not ready, no additional sense")},
+	{ "DLT4000", "", TYPE_TAPE, SENSE_NOT_READY, 0x4, 0x2, SENSE_TAPE_NOT_ONLINE, _T("Logical Unit not ready, in progress becoming ready")},
+	{ "DLT4000", "", TYPE_TAPE, SENSE_NOT_READY, 0x30, 0x3, SENSE_RETRY, _T("The tape drive is being cleaned")},
+	{ "DLT4000", "", TYPE_TAPE,  SENSE_NOT_READY , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _T("Default for SENSE_NOT_READY")},
 
-	{ "DLT4000", "", TYPE_TAPE, SENSE_UNIT_ATTENTION, 0x0, 0x0, SENSE_RETRY, _("Unit Attention")},
-	{ "DLT4000", "", TYPE_TAPE, SENSE_UNIT_ATTENTION , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _("Default for SENSE_UNIT_ATTENTION")},
+	{ "DLT4000", "", TYPE_TAPE, SENSE_UNIT_ATTENTION, 0x0, 0x0, SENSE_RETRY, _T("Unit Attention")},
+	{ "DLT4000", "", TYPE_TAPE, SENSE_UNIT_ATTENTION , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _T("Default for SENSE_UNIT_ATTENTION")},
 
-	{ "DLT4000", "", TYPE_TAPE, SENSE_ILLEGAL_REQUEST, 0x0, 0x0, SENSE_ABORT, _("Illegal Request")},
-	{ "DLT4000", "", TYPE_TAPE, SENSE_ILLEGAL_REQUEST , UCHAR_MAX, UCHAR_MAX, SENSE_ABORT, _("Default for SENSE_ILLEGAL_REQUEST")},
+	{ "DLT4000", "", TYPE_TAPE, SENSE_ILLEGAL_REQUEST, 0x0, 0x0, SENSE_ABORT, _T("Illegal Request")},
+	{ "DLT4000", "", TYPE_TAPE, SENSE_ILLEGAL_REQUEST , UCHAR_MAX, UCHAR_MAX, SENSE_ABORT, _T("Default for SENSE_ILLEGAL_REQUEST")},
 
-	{ "DLT4000", "", TYPE_TAPE, UCHAR_MAX, 0x0, 0x0, SENSE_ABORT, _("Nothing Found")},
+	{ "DLT4000", "", TYPE_TAPE, UCHAR_MAX, 0x0, 0x0, SENSE_ABORT, _T("Nothing Found")},
 /*
  * AIT VLS DLT Library
  */
-	{ "VLS_DLT", "", TYPE_CHANGER, SENSE_NOT_READY, 0x4, 0x0, SENSE_RETRY, _("Logical Unit not ready, no additional sense")},
-	{ "VLS_DLT", "", TYPE_CHANGER, SENSE_NOT_READY, 0x4, 0x2, SENSE_TAPE_NOT_ONLINE, _("Logical Unit not ready, in progress becoming ready")},
-	{ "VLS_DLT", "", TYPE_CHANGER, SENSE_NOT_READY, 0x30, 0x3, SENSE_RETRY, _("The tape drive is being cleaned")},
-	{ "VLS_DLT", "", TYPE_CHANGER, SENSE_NOT_READY , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _("Default for SENSE_NOT_READY")},
+	{ "VLS_DLT", "", TYPE_CHANGER, SENSE_NOT_READY, 0x4, 0x0, SENSE_RETRY, _T("Logical Unit not ready, no additional sense")},
+	{ "VLS_DLT", "", TYPE_CHANGER, SENSE_NOT_READY, 0x4, 0x2, SENSE_TAPE_NOT_ONLINE, _T("Logical Unit not ready, in progress becoming ready")},
+	{ "VLS_DLT", "", TYPE_CHANGER, SENSE_NOT_READY, 0x30, 0x3, SENSE_RETRY, _T("The tape drive is being cleaned")},
+	{ "VLS_DLT", "", TYPE_CHANGER, SENSE_NOT_READY , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _T("Default for SENSE_NOT_READY")},
 
-	{ "VLS_DLT", "", TYPE_CHANGER, SENSE_UNIT_ATTENTION, 0x0, 0x0, SENSE_RETRY, _("Unit Attention")},
-	{ "VLS_DLT", "", TYPE_CHANGER, SENSE_UNIT_ATTENTION , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _("Default for SENSE_UNIT_ATTENTION")},
+	{ "VLS_DLT", "", TYPE_CHANGER, SENSE_UNIT_ATTENTION, 0x0, 0x0, SENSE_RETRY, _T("Unit Attention")},
+	{ "VLS_DLT", "", TYPE_CHANGER, SENSE_UNIT_ATTENTION , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _T("Default for SENSE_UNIT_ATTENTION")},
 
-	{ "VLS_DLT", "", TYPE_CHANGER, SENSE_ILLEGAL_REQUEST, 0x0, 0x0, SENSE_ABORT, _("Illegal Request")},
-	{ "VLS_DLT", "", TYPE_CHANGER, SENSE_ILLEGAL_REQUEST , UCHAR_MAX, UCHAR_MAX, SENSE_ABORT, _("Default for SENSE_ILLEGAL_REQUEST")},
+	{ "VLS_DLT", "", TYPE_CHANGER, SENSE_ILLEGAL_REQUEST, 0x0, 0x0, SENSE_ABORT, _T("Illegal Request")},
+	{ "VLS_DLT", "", TYPE_CHANGER, SENSE_ILLEGAL_REQUEST , UCHAR_MAX, UCHAR_MAX, SENSE_ABORT, _T("Default for SENSE_ILLEGAL_REQUEST")},
 
-	{ "VLS_DLT", "", TYPE_CHANGER,  SENSE_CHG_ELEMENT_STATUS, UCHAR_MAX, UCHAR_MAX, SENSE_IGNORE, _("Default for SENSE_CHG_ELEMENT_STATUS")},
+	{ "VLS_DLT", "", TYPE_CHANGER,  SENSE_CHG_ELEMENT_STATUS, UCHAR_MAX, UCHAR_MAX, SENSE_IGNORE, _T("Default for SENSE_CHG_ELEMENT_STATUS")},
 
-	{ "VLS_DLT", "", TYPE_CHANGER, UCHAR_MAX, 0x0, 0x0, SENSE_ABORT, _("Nothing Found")},
+	{ "VLS_DLT", "", TYPE_CHANGER, UCHAR_MAX, 0x0, 0x0, SENSE_ABORT, _T("Nothing Found")},
 /*
  * AIT VLS SDX Library
  */
-	{ "VLS_SDX", "", TYPE_CHANGER, SENSE_NOT_READY, 0x4, 0x0, SENSE_RETRY, _("Logical Unit not ready, no additional sense")},
-	{ "VLS_SDX", "", TYPE_CHANGER, SENSE_NOT_READY, 0x4, 0x2, SENSE_TAPE_NOT_ONLINE, _("Logical Unit not ready, in progress becoming ready")},
-	{ "VLS_SDX", "", TYPE_CHANGER, SENSE_NOT_READY, 0x30, 0x3, SENSE_RETRY, _("The tape drive is being cleaned")},
-	{ "VLS_SDX", "", TYPE_CHANGER, SENSE_NOT_READY , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _("Default for SENSE_NOT_READY")},
+	{ "VLS_SDX", "", TYPE_CHANGER, SENSE_NOT_READY, 0x4, 0x0, SENSE_RETRY, _T("Logical Unit not ready, no additional sense")},
+	{ "VLS_SDX", "", TYPE_CHANGER, SENSE_NOT_READY, 0x4, 0x2, SENSE_TAPE_NOT_ONLINE, _T("Logical Unit not ready, in progress becoming ready")},
+	{ "VLS_SDX", "", TYPE_CHANGER, SENSE_NOT_READY, 0x30, 0x3, SENSE_RETRY, _T("The tape drive is being cleaned")},
+	{ "VLS_SDX", "", TYPE_CHANGER, SENSE_NOT_READY , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _T("Default for SENSE_NOT_READY")},
 
-	{ "VLS_SDX", "", TYPE_CHANGER, SENSE_UNIT_ATTENTION, 0x0, 0x0, SENSE_RETRY, _("Unit Attention")},
-	{ "VLS_SDX", "", TYPE_CHANGER, SENSE_UNIT_ATTENTION , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _("Default for SENSE_UNIT_ATTENTION")},
+	{ "VLS_SDX", "", TYPE_CHANGER, SENSE_UNIT_ATTENTION, 0x0, 0x0, SENSE_RETRY, _T("Unit Attention")},
+	{ "VLS_SDX", "", TYPE_CHANGER, SENSE_UNIT_ATTENTION , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _T("Default for SENSE_UNIT_ATTENTION")},
 
-	{ "VLS_SDX", "", TYPE_CHANGER, SENSE_ILLEGAL_REQUEST, 0x0, 0x0, SENSE_ABORT, _("Illegal Request")},
-	{ "VLS_SDX", "", TYPE_CHANGER, SENSE_ILLEGAL_REQUEST , UCHAR_MAX, UCHAR_MAX, SENSE_ABORT, _("Default for SENSE_ILLEGAL_REQUEST")},
+	{ "VLS_SDX", "", TYPE_CHANGER, SENSE_ILLEGAL_REQUEST, 0x0, 0x0, SENSE_ABORT, _T("Illegal Request")},
+	{ "VLS_SDX", "", TYPE_CHANGER, SENSE_ILLEGAL_REQUEST , UCHAR_MAX, UCHAR_MAX, SENSE_ABORT, _T("Default for SENSE_ILLEGAL_REQUEST")},
 
-	{ "VLS_SDX", "", TYPE_CHANGER,  SENSE_CHG_ELEMENT_STATUS, UCHAR_MAX, UCHAR_MAX, SENSE_IGNORE, _("Default for SENSE_CHG_ELEMENT_STATUS")},
+	{ "VLS_SDX", "", TYPE_CHANGER,  SENSE_CHG_ELEMENT_STATUS, UCHAR_MAX, UCHAR_MAX, SENSE_IGNORE, _T("Default for SENSE_CHG_ELEMENT_STATUS")},
 
-	{ "VLS_SDX", "", TYPE_CHANGER, UCHAR_MAX, 0x0, 0x0, SENSE_ABORT, _("Nothing Found")},
+	{ "VLS_SDX", "", TYPE_CHANGER, UCHAR_MAX, 0x0, 0x0, SENSE_ABORT, _T("Nothing Found")},
 /*
  * Exabyte 85058 Tape
  */
-	{ "EXB-85058HE-0000", "", TYPE_TAPE, SENSE_NOT_READY, 0x4, 0x0, SENSE_RETRY, _("Logical Unit not ready, no additional sense")},
-	{ "EXB-85058HE-0000", "", TYPE_TAPE, SENSE_NOT_READY, 0x4, 0x1, SENSE_RETRY, _("Logical Unit not ready, in progress becoming ready")},
-	{ "EXB-85058HE-0000", "", TYPE_TAPE, SENSE_NOT_READY, 0x30, 0x3, SENSE_RETRY, _("The tape drive is being cleaned")},
-	{ "EXB-85058HE-0000", "", TYPE_TAPE, SENSE_NOT_READY, 0x3A, 0x0, SENSE_TAPE_NOT_ONLINE, _("No Tape online")},
-	{ "EXB-85058HE-0000", "", TYPE_TAPE,  SENSE_NOT_READY , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _("Default for SENSE_NOT_READY")},
+	{ "EXB-85058HE-0000", "", TYPE_TAPE, SENSE_NOT_READY, 0x4, 0x0, SENSE_RETRY, _T("Logical Unit not ready, no additional sense")},
+	{ "EXB-85058HE-0000", "", TYPE_TAPE, SENSE_NOT_READY, 0x4, 0x1, SENSE_RETRY, _T("Logical Unit not ready, in progress becoming ready")},
+	{ "EXB-85058HE-0000", "", TYPE_TAPE, SENSE_NOT_READY, 0x30, 0x3, SENSE_RETRY, _T("The tape drive is being cleaned")},
+	{ "EXB-85058HE-0000", "", TYPE_TAPE, SENSE_NOT_READY, 0x3A, 0x0, SENSE_TAPE_NOT_ONLINE, _T("No Tape online")},
+	{ "EXB-85058HE-0000", "", TYPE_TAPE,  SENSE_NOT_READY , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _T("Default for SENSE_NOT_READY")},
 
-	{ "EXB-85058HE-0000", "", TYPE_TAPE, SENSE_UNIT_ATTENTION, 0x0, 0x0, SENSE_RETRY, _("Unit Attention")},
-	{ "EXB-85058HE-0000", "", TYPE_TAPE, SENSE_UNIT_ATTENTION , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _("Default for SENSE_UNIT_ATTENTION")},
+	{ "EXB-85058HE-0000", "", TYPE_TAPE, SENSE_UNIT_ATTENTION, 0x0, 0x0, SENSE_RETRY, _T("Unit Attention")},
+	{ "EXB-85058HE-0000", "", TYPE_TAPE, SENSE_UNIT_ATTENTION , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _T("Default for SENSE_UNIT_ATTENTION")},
 
-	{ "EXB-85058HE-0000", "", TYPE_TAPE, SENSE_ILLEGAL_REQUEST, 0x0, 0x0, SENSE_ABORT, _("Illegal Request")},
-	{ "EXB-85058HE-0000", "", TYPE_TAPE, SENSE_ILLEGAL_REQUEST , UCHAR_MAX, UCHAR_MAX, SENSE_ABORT, _("Default for SENSE_ILLEGAL_REQUEST")},
-	{ "EXB-85058HE-0000", "", TYPE_TAPE, UCHAR_MAX, 0x0, 0x0, SENSE_ABORT, _("Nothing Found")},
+	{ "EXB-85058HE-0000", "", TYPE_TAPE, SENSE_ILLEGAL_REQUEST, 0x0, 0x0, SENSE_ABORT, _T("Illegal Request")},
+	{ "EXB-85058HE-0000", "", TYPE_TAPE, SENSE_ILLEGAL_REQUEST , UCHAR_MAX, UCHAR_MAX, SENSE_ABORT, _T("Default for SENSE_ILLEGAL_REQUEST")},
+	{ "EXB-85058HE-0000", "", TYPE_TAPE, UCHAR_MAX, 0x0, 0x0, SENSE_ABORT, _T("Nothing Found")},
 /*
  * Exabyte 10e Library (Robot)
  */
-	{ "EXB-10e", "", TYPE_CHANGER, SENSE_NULL, 0x0, 0x0, SENSE_RETRY, _("Retry, no sense")},
-	{ "EXB-10e", "", TYPE_CHANGER, SENSE_NULL, 0x90, 0x2, SENSE_ABORT, _("Illegal Request")},
-	{ "EXB-10e", "", TYPE_CHANGER, SENSE_NULL , 0x90, 0x3, SENSE_IES, _("IES")},
-	{ "EXB-10e", "", TYPE_CHANGER, SENSE_NULL , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _("Default for SENSE_NULL")},
+	{ "EXB-10e", "", TYPE_CHANGER, SENSE_NULL, 0x0, 0x0, SENSE_RETRY, _T("Retry, no sense")},
+	{ "EXB-10e", "", TYPE_CHANGER, SENSE_NULL, 0x90, 0x2, SENSE_ABORT, _T("Illegal Request")},
+	{ "EXB-10e", "", TYPE_CHANGER, SENSE_NULL , 0x90, 0x3, SENSE_IES, _T("IES")},
+	{ "EXB-10e", "", TYPE_CHANGER, SENSE_NULL , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _T("Default for SENSE_NULL")},
 
-	{ "EXB-10e", "", TYPE_CHANGER, SENSE_NOT_READY, 0x4, 0x0, SENSE_RETRY, _("Logical Unit not ready, no additional sense")},
-	{ "EXB-10e", "", TYPE_CHANGER, SENSE_NOT_READY, 0x4, 0x1, SENSE_RETRY, _("Logical Unit not ready, in progress becoming ready")},
-	{ "EXB-10e", "", TYPE_CHANGER, SENSE_NOT_READY, 0x4, 0x85, SENSE_ABORT, _("Library door is open")},
-	{ "EXB-10e", "", TYPE_CHANGER, SENSE_NOT_READY, 0x4, 0x85, SENSE_ABORT, _("The data cartridge magazine is missing")},
-	{ "EXB-10e", "", TYPE_CHANGER, SENSE_NOT_READY, 0x4, 0x89, SENSE_ABORT, _("The library is in CHS Monitor mode")},
-	{ "EXB-10e", "", TYPE_CHANGER, SENSE_NOT_READY, 0x4, 0x8C, SENSE_RETRY, _("The library is performing a power-on self test")},
-	{ "EXB-10e", "", TYPE_CHANGER, SENSE_NOT_READY, 0x4, 0x8D, SENSE_ABORT, _("The library is in LCD mode")},
-	{ "EXB-10e", "", TYPE_CHANGER, SENSE_NOT_READY, 0x4, 0x8E, SENSE_ABORT, _("The library is in Sequential mode")},
-	{ "EXB-10e", "", TYPE_CHANGER, SENSE_NOT_READY, 0x30, 0x3, SENSE_RETRY, _("The tape drive is being cleaned")},
-	{ "EXB-10e", "", TYPE_CHANGER, SENSE_NOT_READY, 0x3A, 0x0, SENSE_TAPE_NOT_ONLINE, _("No Tape online")},
-	{ "EXB-10e", "", TYPE_CHANGER, SENSE_NOT_READY , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _("Default for SENSE_NOT_READY")},
-	{ "EXB-10e", "", TYPE_CHANGER, SENSE_NOT_READY , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _("Default for SENSE_NOT_READY")},
+	{ "EXB-10e", "", TYPE_CHANGER, SENSE_NOT_READY, 0x4, 0x0, SENSE_RETRY, _T("Logical Unit not ready, no additional sense")},
+	{ "EXB-10e", "", TYPE_CHANGER, SENSE_NOT_READY, 0x4, 0x1, SENSE_RETRY, _T("Logical Unit not ready, in progress becoming ready")},
+	{ "EXB-10e", "", TYPE_CHANGER, SENSE_NOT_READY, 0x4, 0x85, SENSE_ABORT, _T("Library door is open")},
+	{ "EXB-10e", "", TYPE_CHANGER, SENSE_NOT_READY, 0x4, 0x85, SENSE_ABORT, _T("The data cartridge magazine is missing")},
+	{ "EXB-10e", "", TYPE_CHANGER, SENSE_NOT_READY, 0x4, 0x89, SENSE_ABORT, _T("The library is in CHS Monitor mode")},
+	{ "EXB-10e", "", TYPE_CHANGER, SENSE_NOT_READY, 0x4, 0x8C, SENSE_RETRY, _T("The library is performing a power-on self test")},
+	{ "EXB-10e", "", TYPE_CHANGER, SENSE_NOT_READY, 0x4, 0x8D, SENSE_ABORT, _T("The library is in LCD mode")},
+	{ "EXB-10e", "", TYPE_CHANGER, SENSE_NOT_READY, 0x4, 0x8E, SENSE_ABORT, _T("The library is in Sequential mode")},
+	{ "EXB-10e", "", TYPE_CHANGER, SENSE_NOT_READY, 0x30, 0x3, SENSE_RETRY, _T("The tape drive is being cleaned")},
+	{ "EXB-10e", "", TYPE_CHANGER, SENSE_NOT_READY, 0x3A, 0x0, SENSE_TAPE_NOT_ONLINE, _T("No Tape online")},
+	{ "EXB-10e", "", TYPE_CHANGER, SENSE_NOT_READY , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _T("Default for SENSE_NOT_READY")},
+	{ "EXB-10e", "", TYPE_CHANGER, SENSE_NOT_READY , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _T("Default for SENSE_NOT_READY")},
 
-	{ "EXB-10e", "", TYPE_CHANGER, SENSE_UNIT_ATTENTION, 0x0, 0x0, SENSE_RETRY, _("Unit Attention")},
-	{ "EXB-10e", "", TYPE_CHANGER, SENSE_UNIT_ATTENTION , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _("Default for SENSE_UNIT_ATTENTION")},
+	{ "EXB-10e", "", TYPE_CHANGER, SENSE_UNIT_ATTENTION, 0x0, 0x0, SENSE_RETRY, _T("Unit Attention")},
+	{ "EXB-10e", "", TYPE_CHANGER, SENSE_UNIT_ATTENTION , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _T("Default for SENSE_UNIT_ATTENTION")},
 
-	{ "EXB-10e", "", TYPE_CHANGER, SENSE_ILLEGAL_REQUEST, 0x0, 0x0, SENSE_ABORT, _("Illegal Request")},
-	{ "EXB-10e", "", TYPE_CHANGER, SENSE_ILLEGAL_REQUEST, 0x91, 0x0, SENSE_CHM_FULL, _("CHM full during reset")},
-	{ "EXB-10e", "", TYPE_CHANGER, SENSE_ILLEGAL_REQUEST , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _("Default for SENSE_ILLEGAL_REQUEST")},
+	{ "EXB-10e", "", TYPE_CHANGER, SENSE_ILLEGAL_REQUEST, 0x0, 0x0, SENSE_ABORT, _T("Illegal Request")},
+	{ "EXB-10e", "", TYPE_CHANGER, SENSE_ILLEGAL_REQUEST, 0x91, 0x0, SENSE_CHM_FULL, _T("CHM full during reset")},
+	{ "EXB-10e", "", TYPE_CHANGER, SENSE_ILLEGAL_REQUEST , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _T("Default for SENSE_ILLEGAL_REQUEST")},
 
-	{ "EXB-10e", "", TYPE_CHANGER,  SENSE_CHG_ELEMENT_STATUS, UCHAR_MAX, UCHAR_MAX, SENSE_IGNORE, _("Default for SENSE_CHG_ELEMENT_STATUS")},
+	{ "EXB-10e", "", TYPE_CHANGER,  SENSE_CHG_ELEMENT_STATUS, UCHAR_MAX, UCHAR_MAX, SENSE_IGNORE, _T("Default for SENSE_CHG_ELEMENT_STATUS")},
 
-	{ "EXB-10e", "", TYPE_CHANGER, UCHAR_MAX, 0x0, 0x0, SENSE_ABORT, _("Nothing Found for EXB-10e")},
+	{ "EXB-10e", "", TYPE_CHANGER, UCHAR_MAX, 0x0, 0x0, SENSE_ABORT, _T("Nothing Found for EXB-10e")},
 
 /*
  * Exabyte 210 Library (Robot)
  */
-	{ "EXB-210", "", TYPE_CHANGER, SENSE_NULL, 0x0, 0x0, SENSE_RETRY, _("Retry, no sense")},
-	{ "EXB-210", "", TYPE_CHANGER, SENSE_NULL, 0x90, 0x2, SENSE_ABORT, _("Illegal Request")},
-	{ "EXB-210", "", TYPE_CHANGER, SENSE_NULL , 0x90, 0x3, SENSE_IES, _("IES")},
-	{ "EXB-210", "", TYPE_CHANGER, SENSE_NULL , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _("Default for SENSE_NULL")},
+	{ "EXB-210", "", TYPE_CHANGER, SENSE_NULL, 0x0, 0x0, SENSE_RETRY, _T("Retry, no sense")},
+	{ "EXB-210", "", TYPE_CHANGER, SENSE_NULL, 0x90, 0x2, SENSE_ABORT, _T("Illegal Request")},
+	{ "EXB-210", "", TYPE_CHANGER, SENSE_NULL , 0x90, 0x3, SENSE_IES, _T("IES")},
+	{ "EXB-210", "", TYPE_CHANGER, SENSE_NULL , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _T("Default for SENSE_NULL")},
 
-	{ "EXB-210", "", TYPE_CHANGER, SENSE_NOT_READY, 0x4, 0x0, SENSE_RETRY, _("Logical Unit not ready, no additional sense")},
-	{ "EXB-210", "", TYPE_CHANGER, SENSE_NOT_READY, 0x4, 0x1, SENSE_RETRY, _("Logical Unit not ready, in progress becoming ready")},
-	{ "EXB-210", "", TYPE_CHANGER, SENSE_NOT_READY, 0x4, 0x85, SENSE_ABORT, _("Library door is open")},
-	{ "EXB-210", "", TYPE_CHANGER, SENSE_NOT_READY, 0x4, 0x85, SENSE_ABORT, _("The data cartridge magazine is missing")},
-	{ "EXB-210", "", TYPE_CHANGER, SENSE_NOT_READY, 0x4, 0x89, SENSE_ABORT, _("The library is in CHS Monitor mode")},
-	{ "EXB-210", "", TYPE_CHANGER, SENSE_NOT_READY, 0x4, 0x8C, SENSE_RETRY, _("The library is performing a power-on self test")},
-	{ "EXB-210", "", TYPE_CHANGER, SENSE_NOT_READY, 0x4, 0x8D, SENSE_ABORT, _("The library is in LCD mode")},
-	{ "EXB-210", "", TYPE_CHANGER, SENSE_NOT_READY, 0x4, 0x8E, SENSE_ABORT, _("The library is in Sequential mode")},
-	{ "EXB-210", "", TYPE_CHANGER, SENSE_NOT_READY, 0x30, 0x3, SENSE_RETRY, _("The tape drive is being cleaned")},
-	{ "EXB-210", "", TYPE_CHANGER, SENSE_NOT_READY, 0x3A, 0x0, SENSE_TAPE_NOT_ONLINE, _("No Tape online")},
-	{ "EXB-210", "", TYPE_CHANGER, SENSE_NOT_READY , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _("Default for SENSE_NOT_READY")},
-	{ "EXB-210", "", TYPE_CHANGER, SENSE_NOT_READY , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _("Default for SENSE_NOT_READY")},
+	{ "EXB-210", "", TYPE_CHANGER, SENSE_NOT_READY, 0x4, 0x0, SENSE_RETRY, _T("Logical Unit not ready, no additional sense")},
+	{ "EXB-210", "", TYPE_CHANGER, SENSE_NOT_READY, 0x4, 0x1, SENSE_RETRY, _T("Logical Unit not ready, in progress becoming ready")},
+	{ "EXB-210", "", TYPE_CHANGER, SENSE_NOT_READY, 0x4, 0x85, SENSE_ABORT, _T("Library door is open")},
+	{ "EXB-210", "", TYPE_CHANGER, SENSE_NOT_READY, 0x4, 0x85, SENSE_ABORT, _T("The data cartridge magazine is missing")},
+	{ "EXB-210", "", TYPE_CHANGER, SENSE_NOT_READY, 0x4, 0x89, SENSE_ABORT, _T("The library is in CHS Monitor mode")},
+	{ "EXB-210", "", TYPE_CHANGER, SENSE_NOT_READY, 0x4, 0x8C, SENSE_RETRY, _T("The library is performing a power-on self test")},
+	{ "EXB-210", "", TYPE_CHANGER, SENSE_NOT_READY, 0x4, 0x8D, SENSE_ABORT, _T("The library is in LCD mode")},
+	{ "EXB-210", "", TYPE_CHANGER, SENSE_NOT_READY, 0x4, 0x8E, SENSE_ABORT, _T("The library is in Sequential mode")},
+	{ "EXB-210", "", TYPE_CHANGER, SENSE_NOT_READY, 0x30, 0x3, SENSE_RETRY, _T("The tape drive is being cleaned")},
+	{ "EXB-210", "", TYPE_CHANGER, SENSE_NOT_READY, 0x3A, 0x0, SENSE_TAPE_NOT_ONLINE, _T("No Tape online")},
+	{ "EXB-210", "", TYPE_CHANGER, SENSE_NOT_READY , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _T("Default for SENSE_NOT_READY")},
+	{ "EXB-210", "", TYPE_CHANGER, SENSE_NOT_READY , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _T("Default for SENSE_NOT_READY")},
 
-	{ "EXB-210", "", TYPE_CHANGER, SENSE_UNIT_ATTENTION, 0x0, 0x0, SENSE_RETRY, _("Unit Attention")},
-	{ "EXB-210", "", TYPE_CHANGER, SENSE_UNIT_ATTENTION , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _("Default for SENSE_UNIT_ATTENTION")},
+	{ "EXB-210", "", TYPE_CHANGER, SENSE_UNIT_ATTENTION, 0x0, 0x0, SENSE_RETRY, _T("Unit Attention")},
+	{ "EXB-210", "", TYPE_CHANGER, SENSE_UNIT_ATTENTION , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _T("Default for SENSE_UNIT_ATTENTION")},
 
-	{ "EXB-210", "", TYPE_CHANGER, SENSE_ILLEGAL_REQUEST, 0x0, 0x0, SENSE_ABORT, _("Illegal Request")},
-	{ "EXB-210", "", TYPE_CHANGER, SENSE_ILLEGAL_REQUEST, 0x91, 0x0, SENSE_CHM_FULL, _("CHM full during reset")},
-	{ "EXB-210", "", TYPE_CHANGER, SENSE_ILLEGAL_REQUEST, 0x21, 0x01, SENSE_ABORT, _("Invalid element address")},
-	{ "EXB-210", "", TYPE_CHANGER, SENSE_ILLEGAL_REQUEST, 0x24, 0x00, SENSE_ABORT, _("Invalid Invert Field")},
-	{ "EXB-210", "", TYPE_CHANGER, SENSE_ILLEGAL_REQUEST, 0x3b, 0x0d, SENSE_ABORT, _("Destination element occupied")},
-	{ "EXB-210", "", TYPE_CHANGER, SENSE_ILLEGAL_REQUEST, 0x3b, 0x0e, SENSE_ABORT, _("Source Element empty")},
-	{ "EXB-210", "", TYPE_CHANGER, SENSE_ILLEGAL_REQUEST, 0x3b, 0x87, SENSE_ABORT, _("Cartridge stuck in tape")},
-	{ "EXB-210", "", TYPE_CHANGER, SENSE_ILLEGAL_REQUEST, 0x3b, 0x90, SENSE_ABORT, _("Source cart is loaded inside the tape drive and not accessible")},
-	{ "EXB-210", "", TYPE_CHANGER, SENSE_ILLEGAL_REQUEST, 0x80, 0x03, SENSE_ABORT, _("Source magazine not installed")},
-	{ "EXB-210", "", TYPE_CHANGER, SENSE_ILLEGAL_REQUEST, 0x80, 0x04, SENSE_ABORT, _("Destination magazine no installed")},
-	{ "EXB-210", "", TYPE_CHANGER, SENSE_ILLEGAL_REQUEST, 0x80, 0x05, SENSE_ABORT, _("Source tape drive not installed")},
-	{ "EXB-210", "", TYPE_CHANGER, SENSE_ILLEGAL_REQUEST, 0x80, 0x06, SENSE_ABORT, _("Destination tape drive not installed")},
+	{ "EXB-210", "", TYPE_CHANGER, SENSE_ILLEGAL_REQUEST, 0x0, 0x0, SENSE_ABORT, _T("Illegal Request")},
+	{ "EXB-210", "", TYPE_CHANGER, SENSE_ILLEGAL_REQUEST, 0x91, 0x0, SENSE_CHM_FULL, _T("CHM full during reset")},
+	{ "EXB-210", "", TYPE_CHANGER, SENSE_ILLEGAL_REQUEST, 0x21, 0x01, SENSE_ABORT, _T("Invalid element address")},
+	{ "EXB-210", "", TYPE_CHANGER, SENSE_ILLEGAL_REQUEST, 0x24, 0x00, SENSE_ABORT, _T("Invalid Invert Field")},
+	{ "EXB-210", "", TYPE_CHANGER, SENSE_ILLEGAL_REQUEST, 0x3b, 0x0d, SENSE_ABORT, _T("Destination element occupied")},
+	{ "EXB-210", "", TYPE_CHANGER, SENSE_ILLEGAL_REQUEST, 0x3b, 0x0e, SENSE_ABORT, _T("Source Element empty")},
+	{ "EXB-210", "", TYPE_CHANGER, SENSE_ILLEGAL_REQUEST, 0x3b, 0x87, SENSE_ABORT, _T("Cartridge stuck in tape")},
+	{ "EXB-210", "", TYPE_CHANGER, SENSE_ILLEGAL_REQUEST, 0x3b, 0x90, SENSE_ABORT, _T("Source cart is loaded inside the tape drive and not accessible")},
+	{ "EXB-210", "", TYPE_CHANGER, SENSE_ILLEGAL_REQUEST, 0x80, 0x03, SENSE_ABORT, _T("Source magazine not installed")},
+	{ "EXB-210", "", TYPE_CHANGER, SENSE_ILLEGAL_REQUEST, 0x80, 0x04, SENSE_ABORT, _T("Destination magazine no installed")},
+	{ "EXB-210", "", TYPE_CHANGER, SENSE_ILLEGAL_REQUEST, 0x80, 0x05, SENSE_ABORT, _T("Source tape drive not installed")},
+	{ "EXB-210", "", TYPE_CHANGER, SENSE_ILLEGAL_REQUEST, 0x80, 0x06, SENSE_ABORT, _T("Destination tape drive not installed")},
 
-	{ "EXB-210", "", TYPE_CHANGER, SENSE_ILLEGAL_REQUEST , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _("Default for SENSE_ILLEGAL_REQUEST")},
+	{ "EXB-210", "", TYPE_CHANGER, SENSE_ILLEGAL_REQUEST , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _T("Default for SENSE_ILLEGAL_REQUEST")},
 
-	{ "EXB-210", "", TYPE_CHANGER,  SENSE_CHG_ELEMENT_STATUS, 0x83, 0x0, SENSE_IES, _("Label questionable")},
-	{ "EXB-210", "", TYPE_CHANGER,  SENSE_CHG_ELEMENT_STATUS, 0x83, 0x1, SENSE_IGNORE, _("Cannot read bar code label")},
-	{ "EXB-210", "", TYPE_CHANGER,  SENSE_CHG_ELEMENT_STATUS, 0x83, 0x2, SENSE_ABORT, _("Cartzridge magazine not present")},
-	{ "EXB-210", "", TYPE_CHANGER,  SENSE_CHG_ELEMENT_STATUS, 0x83, 0x3, SENSE_IES, _("Label and full status questionable")},
-       	{ "EXB-210", "", TYPE_CHANGER,  SENSE_CHG_ELEMENT_STATUS, 0x83, 0x4, SENSE_ABORT, _("Tape drive not installed")},
-	{ "EXB-210", "", TYPE_CHANGER,  SENSE_CHG_ELEMENT_STATUS, 0x83, 0x7, SENSE_IES, _("Full status questionable")},
-	{ "EXB-210", "", TYPE_CHANGER,  SENSE_CHG_ELEMENT_STATUS, 0x83, 0x8, SENSE_IGNORE, _("Bar code label upside down")},
-	{ "EXB-210", "", TYPE_CHANGER,  SENSE_CHG_ELEMENT_STATUS, 0x83, 0x9, SENSE_IGNORE, _("No bar code label")},
-	{ "EXB-210", "", TYPE_CHANGER,  SENSE_CHG_ELEMENT_STATUS, 0x83, 0xa, SENSE_IGNORE, _("Ignore")},
-	{ "EXB-210", "", TYPE_CHANGER,  SENSE_CHG_ELEMENT_STATUS, UCHAR_MAX, UCHAR_MAX, SENSE_IGNORE, _("Default for SENSE_CHG_ELEMENT_STATUS")},
+	{ "EXB-210", "", TYPE_CHANGER,  SENSE_CHG_ELEMENT_STATUS, 0x83, 0x0, SENSE_IES, _T("Label questionable")},
+	{ "EXB-210", "", TYPE_CHANGER,  SENSE_CHG_ELEMENT_STATUS, 0x83, 0x1, SENSE_IGNORE, _T("Cannot read bar code label")},
+	{ "EXB-210", "", TYPE_CHANGER,  SENSE_CHG_ELEMENT_STATUS, 0x83, 0x2, SENSE_ABORT, _T("Cartzridge magazine not present")},
+	{ "EXB-210", "", TYPE_CHANGER,  SENSE_CHG_ELEMENT_STATUS, 0x83, 0x3, SENSE_IES, _T("Label and full status questionable")},
+       	{ "EXB-210", "", TYPE_CHANGER,  SENSE_CHG_ELEMENT_STATUS, 0x83, 0x4, SENSE_ABORT, _T("Tape drive not installed")},
+	{ "EXB-210", "", TYPE_CHANGER,  SENSE_CHG_ELEMENT_STATUS, 0x83, 0x7, SENSE_IES, _T("Full status questionable")},
+	{ "EXB-210", "", TYPE_CHANGER,  SENSE_CHG_ELEMENT_STATUS, 0x83, 0x8, SENSE_IGNORE, _T("Bar code label upside down")},
+	{ "EXB-210", "", TYPE_CHANGER,  SENSE_CHG_ELEMENT_STATUS, 0x83, 0x9, SENSE_IGNORE, _T("No bar code label")},
+	{ "EXB-210", "", TYPE_CHANGER,  SENSE_CHG_ELEMENT_STATUS, 0x83, 0xa, SENSE_IGNORE, _T("Ignore")},
+	{ "EXB-210", "", TYPE_CHANGER,  SENSE_CHG_ELEMENT_STATUS, UCHAR_MAX, UCHAR_MAX, SENSE_IGNORE, _T("Default for SENSE_CHG_ELEMENT_STATUS")},
 
-	{ "EXB-210", "", TYPE_CHANGER, UCHAR_MAX, 0x0, 0x0, SENSE_ABORT, _("Nothing Found for EXB-10e")},
+	{ "EXB-210", "", TYPE_CHANGER, UCHAR_MAX, 0x0, 0x0, SENSE_ABORT, _T("Nothing Found for EXB-10e")},
 
 /*
  * Exabyte 230D Library (Robot)
  */
-	{ "EXB-230D", "", TYPE_CHANGER, SENSE_NULL, 0x0, 0x0, SENSE_RETRY, _("Retry, no sense")},
-	{ "EXB-230D", "", TYPE_CHANGER, SENSE_NULL, 0x90, 0x2, SENSE_ABORT, _("Illegal Request")},
-	{ "EXB-230D", "", TYPE_CHANGER, SENSE_NULL , 0x90, 0x3, SENSE_IES, _("IES")},
-	{ "EXB-230D", "", TYPE_CHANGER, SENSE_NULL , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _("Default for SENSE_NULL")},
+	{ "EXB-230D", "", TYPE_CHANGER, SENSE_NULL, 0x0, 0x0, SENSE_RETRY, _T("Retry, no sense")},
+	{ "EXB-230D", "", TYPE_CHANGER, SENSE_NULL, 0x90, 0x2, SENSE_ABORT, _T("Illegal Request")},
+	{ "EXB-230D", "", TYPE_CHANGER, SENSE_NULL , 0x90, 0x3, SENSE_IES, _T("IES")},
+	{ "EXB-230D", "", TYPE_CHANGER, SENSE_NULL , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _T("Default for SENSE_NULL")},
 
-	{ "EXB-230D", "", TYPE_CHANGER, SENSE_NOT_READY, 0x4, 0x0, SENSE_RETRY, _("Logical Unit not ready, no additional sense")},
-	{ "EXB-230D", "", TYPE_CHANGER, SENSE_NOT_READY, 0x4, 0x1, SENSE_RETRY, _("Logical Unit not ready, in progress becoming ready")},
-	{ "EXB-230D", "", TYPE_CHANGER, SENSE_NOT_READY, 0x4, 0x85, SENSE_ABORT, _("Library door is open")},
-	{ "EXB-230D", "", TYPE_CHANGER, SENSE_NOT_READY, 0x4, 0x85, SENSE_ABORT, _("The data cartridge magazine is missing")},
-	{ "EXB-230D", "", TYPE_CHANGER, SENSE_NOT_READY, 0x4, 0x89, SENSE_ABORT, _("The library is in CHS Monitor mode")},
-	{ "EXB-230D", "", TYPE_CHANGER, SENSE_NOT_READY, 0x4, 0x8C, SENSE_RETRY, _("The library is performing a power-on self test")},
-	{ "EXB-230D", "", TYPE_CHANGER, SENSE_NOT_READY, 0x4, 0x8D, SENSE_ABORT, _("The library is in LCD mode")},
-	{ "EXB-230D", "", TYPE_CHANGER, SENSE_NOT_READY, 0x4, 0x8E, SENSE_ABORT, _("The library is in Sequential mode")},
-	{ "EXB-230D", "", TYPE_CHANGER, SENSE_NOT_READY, 0x30, 0x3, SENSE_RETRY, _("The tape drive is being cleaned")},
-	{ "EXB-230D", "", TYPE_CHANGER, SENSE_NOT_READY, 0x3A, 0x0, SENSE_TAPE_NOT_ONLINE, _("No Tape online")},
-	{ "EXB-230D", "", TYPE_CHANGER, SENSE_NOT_READY , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _("Default for SENSE_NOT_READY")},
-	{ "EXB-230D", "", TYPE_CHANGER, SENSE_NOT_READY , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _("Default for SENSE_NOT_READY")},
+	{ "EXB-230D", "", TYPE_CHANGER, SENSE_NOT_READY, 0x4, 0x0, SENSE_RETRY, _T("Logical Unit not ready, no additional sense")},
+	{ "EXB-230D", "", TYPE_CHANGER, SENSE_NOT_READY, 0x4, 0x1, SENSE_RETRY, _T("Logical Unit not ready, in progress becoming ready")},
+	{ "EXB-230D", "", TYPE_CHANGER, SENSE_NOT_READY, 0x4, 0x85, SENSE_ABORT, _T("Library door is open")},
+	{ "EXB-230D", "", TYPE_CHANGER, SENSE_NOT_READY, 0x4, 0x85, SENSE_ABORT, _T("The data cartridge magazine is missing")},
+	{ "EXB-230D", "", TYPE_CHANGER, SENSE_NOT_READY, 0x4, 0x89, SENSE_ABORT, _T("The library is in CHS Monitor mode")},
+	{ "EXB-230D", "", TYPE_CHANGER, SENSE_NOT_READY, 0x4, 0x8C, SENSE_RETRY, _T("The library is performing a power-on self test")},
+	{ "EXB-230D", "", TYPE_CHANGER, SENSE_NOT_READY, 0x4, 0x8D, SENSE_ABORT, _T("The library is in LCD mode")},
+	{ "EXB-230D", "", TYPE_CHANGER, SENSE_NOT_READY, 0x4, 0x8E, SENSE_ABORT, _T("The library is in Sequential mode")},
+	{ "EXB-230D", "", TYPE_CHANGER, SENSE_NOT_READY, 0x30, 0x3, SENSE_RETRY, _T("The tape drive is being cleaned")},
+	{ "EXB-230D", "", TYPE_CHANGER, SENSE_NOT_READY, 0x3A, 0x0, SENSE_TAPE_NOT_ONLINE, _T("No Tape online")},
+	{ "EXB-230D", "", TYPE_CHANGER, SENSE_NOT_READY , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _T("Default for SENSE_NOT_READY")},
+	{ "EXB-230D", "", TYPE_CHANGER, SENSE_NOT_READY , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _T("Default for SENSE_NOT_READY")},
 
-	{ "EXB-230D", "", TYPE_CHANGER, SENSE_UNIT_ATTENTION, 0x0, 0x0, SENSE_RETRY, _("Unit Attention")},
-	{ "EXB-230D", "", TYPE_CHANGER, SENSE_UNIT_ATTENTION , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _("Default for SENSE_UNIT_ATTENTION")},
+	{ "EXB-230D", "", TYPE_CHANGER, SENSE_UNIT_ATTENTION, 0x0, 0x0, SENSE_RETRY, _T("Unit Attention")},
+	{ "EXB-230D", "", TYPE_CHANGER, SENSE_UNIT_ATTENTION , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _T("Default for SENSE_UNIT_ATTENTION")},
 
-	{ "EXB-230D", "", TYPE_CHANGER, SENSE_ILLEGAL_REQUEST, 0x0, 0x0, SENSE_ABORT, _("Illegal Request")},
-	{ "EXB-230D", "", TYPE_CHANGER, SENSE_ILLEGAL_REQUEST, 0x91, 0x0, SENSE_CHM_FULL, _("CHM full during reset")},
-	{ "EXB-230D", "", TYPE_CHANGER, SENSE_ILLEGAL_REQUEST , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _("Default for SENSE_ILLEGAL_REQUEST")},
+	{ "EXB-230D", "", TYPE_CHANGER, SENSE_ILLEGAL_REQUEST, 0x0, 0x0, SENSE_ABORT, _T("Illegal Request")},
+	{ "EXB-230D", "", TYPE_CHANGER, SENSE_ILLEGAL_REQUEST, 0x91, 0x0, SENSE_CHM_FULL, _T("CHM full during reset")},
+	{ "EXB-230D", "", TYPE_CHANGER, SENSE_ILLEGAL_REQUEST , UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _T("Default for SENSE_ILLEGAL_REQUEST")},
 
-	{ "EXB-230D", "", TYPE_CHANGER,  SENSE_CHG_ELEMENT_STATUS, UCHAR_MAX, UCHAR_MAX, SENSE_IGNORE, _("Default for SENSE_CHG_ELEMENT_STATUS")},
+	{ "EXB-230D", "", TYPE_CHANGER,  SENSE_CHG_ELEMENT_STATUS, UCHAR_MAX, UCHAR_MAX, SENSE_IGNORE, _T("Default for SENSE_CHG_ELEMENT_STATUS")},
 
-	{ "EXB-230D", "", TYPE_CHANGER, UCHAR_MAX, 0x0, 0x0, SENSE_ABORT, _("Nothing Found for EXB-10e")},
+	{ "EXB-230D", "", TYPE_CHANGER, UCHAR_MAX, 0x0, 0x0, SENSE_ABORT, _T("Nothing Found for EXB-10e")},
 /*
  * Spectra TreeFrog  library
  */
- 	{ "215", "SPECTRA", TYPE_CHANGER, SENSE_NULL, 0x0, 0x0, SENSE_NO, _("No Sense, Unit Ready")},
-	{ "215", "SPECTRA", TYPE_CHANGER, SENSE_NULL, UCHAR_MAX, UCHAR_MAX, SENSE_NO, _("No Sense, Unit Ready")},
+ 	{ "215", "SPECTRA", TYPE_CHANGER, SENSE_NULL, 0x0, 0x0, SENSE_NO, _T("No Sense, Unit Ready")},
+	{ "215", "SPECTRA", TYPE_CHANGER, SENSE_NULL, UCHAR_MAX, UCHAR_MAX, SENSE_NO, _T("No Sense, Unit Ready")},
 
-	{ "215", "SPECTRA", TYPE_CHANGER, SENSE_NOT_READY, 0x4, 0x0, SENSE_RETRY, _("Unit Not Ready")},
-	{ "215", "SPECTRA", TYPE_CHANGER, SENSE_NOT_READY, 0x4, 0x1, SENSE_RETRY, _("Unit is Becoming Ready")},
-	{ "215", "SPECTRA", TYPE_CHANGER, SENSE_NOT_READY, 0x4, 0x83, SENSE_ABORT, _("Door is open, Robot is Disabled")},
-	{ "215", "SPECTRA", TYPE_CHANGER, SENSE_NOT_READY, UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _("Default for SENSE_NOT_READY")},
+	{ "215", "SPECTRA", TYPE_CHANGER, SENSE_NOT_READY, 0x4, 0x0, SENSE_RETRY, _T("Unit Not Ready")},
+	{ "215", "SPECTRA", TYPE_CHANGER, SENSE_NOT_READY, 0x4, 0x1, SENSE_RETRY, _T("Unit is Becoming Ready")},
+	{ "215", "SPECTRA", TYPE_CHANGER, SENSE_NOT_READY, 0x4, 0x83, SENSE_ABORT, _T("Door is open, Robot is Disabled")},
+	{ "215", "SPECTRA", TYPE_CHANGER, SENSE_NOT_READY, UCHAR_MAX, UCHAR_MAX, SENSE_RETRY, _T("Default for SENSE_NOT_READY")},
 
-	{ "215", "SPECTRA", TYPE_CHANGER, SENSE_HARDWARE_ERROR, 0x4C, 0x0, SENSE_ABORT, _("Unit Failed Initialization")},
-	{ "215", "SPECTRA", TYPE_CHANGER, SENSE_HARDWARE_ERROR, 0x84, 0x4, SENSE_ABORT, _("DRAM Memory Failure")},
-	{ "215", "SPECTRA", TYPE_CHANGER, SENSE_HARDWARE_ERROR, 0x84, 0x4, SENSE_ABORT, _("Two ore More SCSI ID's in the library are tehe same")},
-	{ "215", "SPECTRA", TYPE_CHANGER, SENSE_HARDWARE_ERROR, 0x81, 0x4, SENSE_ABORT, _("Tape may be broken;of tape is a cleaning tape;or Drive B is broken")},
-	{ "215", "SPECTRA", TYPE_CHANGER, SENSE_HARDWARE_ERROR, 0x87, 0x0, SENSE_ABORT, _("Bad FPROM or invalid device in socket")},
-	{ "215", "SPECTRA", TYPE_CHANGER, SENSE_HARDWARE_ERROR, 0x87, 0x1, SENSE_ABORT, _("FPROM Erase Operation Failed")},
-	{ "215", "SPECTRA", TYPE_CHANGER, SENSE_HARDWARE_ERROR, 0x87, 0x2, SENSE_ABORT, _("FFPROM Write Operation Failed")},
-	{ "215", "SPECTRA", TYPE_CHANGER, SENSE_HARDWARE_ERROR, 0x85, 0x1, SENSE_ABORT, _("Robot not Initialized")},
-	{ "215", "SPECTRA", TYPE_CHANGER, SENSE_HARDWARE_ERROR, 0x85, 0x99, SENSE_ABORT, _("Generic Robotics  Error")},
-	{ "215", "SPECTRA", TYPE_CHANGER, SENSE_HARDWARE_ERROR, 0x85, 0x2, SENSE_ABORT, _("Long Axis Robotics Error")},
-	{ "215", "SPECTRA", TYPE_CHANGER, SENSE_HARDWARE_ERROR, 0x85, 0x3, SENSE_ABORT, _("Short Axis Robotics Error")},
-	{ "215", "SPECTRA", TYPE_CHANGER, SENSE_HARDWARE_ERROR, 0x85, 0x4, SENSE_ABORT, _("Ambient Light Detected")},
-	{ "215", "SPECTRA", TYPE_CHANGER, SENSE_HARDWARE_ERROR, UCHAR_MAX, UCHAR_MAX, SENSE_ABORT, _("Default for SENSE_HARDWARE_ERROR")},
+	{ "215", "SPECTRA", TYPE_CHANGER, SENSE_HARDWARE_ERROR, 0x4C, 0x0, SENSE_ABORT, _T("Unit Failed Initialization")},
+	{ "215", "SPECTRA", TYPE_CHANGER, SENSE_HARDWARE_ERROR, 0x84, 0x4, SENSE_ABORT, _T("DRAM Memory Failure")},
+	{ "215", "SPECTRA", TYPE_CHANGER, SENSE_HARDWARE_ERROR, 0x84, 0x4, SENSE_ABORT, _T("Two ore More SCSI ID's in the library are tehe same")},
+	{ "215", "SPECTRA", TYPE_CHANGER, SENSE_HARDWARE_ERROR, 0x81, 0x4, SENSE_ABORT, _T("Tape may be broken;of tape is a cleaning tape;or Drive B is broken")},
+	{ "215", "SPECTRA", TYPE_CHANGER, SENSE_HARDWARE_ERROR, 0x87, 0x0, SENSE_ABORT, _T("Bad FPROM or invalid device in socket")},
+	{ "215", "SPECTRA", TYPE_CHANGER, SENSE_HARDWARE_ERROR, 0x87, 0x1, SENSE_ABORT, _T("FPROM Erase Operation Failed")},
+	{ "215", "SPECTRA", TYPE_CHANGER, SENSE_HARDWARE_ERROR, 0x87, 0x2, SENSE_ABORT, _T("FFPROM Write Operation Failed")},
+	{ "215", "SPECTRA", TYPE_CHANGER, SENSE_HARDWARE_ERROR, 0x85, 0x1, SENSE_ABORT, _T("Robot not Initialized")},
+	{ "215", "SPECTRA", TYPE_CHANGER, SENSE_HARDWARE_ERROR, 0x85, 0x99, SENSE_ABORT, _T("Generic Robotics  Error")},
+	{ "215", "SPECTRA", TYPE_CHANGER, SENSE_HARDWARE_ERROR, 0x85, 0x2, SENSE_ABORT, _T("Long Axis Robotics Error")},
+	{ "215", "SPECTRA", TYPE_CHANGER, SENSE_HARDWARE_ERROR, 0x85, 0x3, SENSE_ABORT, _T("Short Axis Robotics Error")},
+	{ "215", "SPECTRA", TYPE_CHANGER, SENSE_HARDWARE_ERROR, 0x85, 0x4, SENSE_ABORT, _T("Ambient Light Detected")},
+	{ "215", "SPECTRA", TYPE_CHANGER, SENSE_HARDWARE_ERROR, UCHAR_MAX, UCHAR_MAX, SENSE_ABORT, _T("Default for SENSE_HARDWARE_ERROR")},
 
-	{"215", "SPECTRA", TYPE_CHANGER, SENSE_ILLEGAL_REQUEST, 0x1A, 0x0, SENSE_ABORT, _("Parameter List Length Error")},
-	{"215", "SPECTRA", TYPE_CHANGER, SENSE_ILLEGAL_REQUEST, 0x20, 0x0, SENSE_ABORT, _("Invalid Command Code")},
-	{"215", "SPECTRA", TYPE_CHANGER, SENSE_ILLEGAL_REQUEST, 0x21, 0x01, SENSE_ABORT, _("Invalid Element Address")},
-	{"215", "SPECTRA", TYPE_CHANGER, SENSE_ILLEGAL_REQUEST, 0x24, 0x0, SENSE_ABORT, _("Invalid Field in CDB")},
-	{"215", "SPECTRA", TYPE_CHANGER, SENSE_ILLEGAL_REQUEST, 0x25, 0x0, SENSE_ABORT, _("LUN Not Supported")},
-	{"215", "SPECTRA", TYPE_CHANGER, SENSE_ILLEGAL_REQUEST, 0x26, 0x0, SENSE_ABORT, _("Invalid Parameter Field")},
-	{"215", "SPECTRA", TYPE_CHANGER, SENSE_ILLEGAL_REQUEST, 0x3b, 0xd, SENSE_ABORT, _("Medium Destination is full")},
-	{"215", "SPECTRA", TYPE_CHANGER, SENSE_ILLEGAL_REQUEST, 0x3b, 0xe, SENSE_ABORT, _("Medium Source Element is Full")},
-	{"215", "SPECTRA", TYPE_CHANGER, SENSE_ILLEGAL_REQUEST, 0x3d, 0x80, SENSE_ABORT, _("Disconnects Must be Allowed")},
-	{"215", "SPECTRA", TYPE_CHANGER, SENSE_ILLEGAL_REQUEST, 0x80, 0x18, SENSE_ABORT, _("Conflict, Element is Reserved")},
-	{"215", "SPECTRA", TYPE_CHANGER, SENSE_ILLEGAL_REQUEST, 0x81, 0x2, SENSE_ABORT, _("Library is Full of Tapes")},
-	{"215", "SPECTRA", TYPE_CHANGER, SENSE_ILLEGAL_REQUEST, 0x81, 0x3, SENSE_ABORT, _("Grip Arm not Empty")},
-	{"215", "SPECTRA", TYPE_CHANGER, SENSE_ILLEGAL_REQUEST, UCHAR_MAX , UCHAR_MAX, SENSE_ABORT, _("Default for SENSE_ILLEGAL_REQUEST")},
+	{"215", "SPECTRA", TYPE_CHANGER, SENSE_ILLEGAL_REQUEST, 0x1A, 0x0, SENSE_ABORT, _T("Parameter List Length Error")},
+	{"215", "SPECTRA", TYPE_CHANGER, SENSE_ILLEGAL_REQUEST, 0x20, 0x0, SENSE_ABORT, _T("Invalid Command Code")},
+	{"215", "SPECTRA", TYPE_CHANGER, SENSE_ILLEGAL_REQUEST, 0x21, 0x01, SENSE_ABORT, _T("Invalid Element Address")},
+	{"215", "SPECTRA", TYPE_CHANGER, SENSE_ILLEGAL_REQUEST, 0x24, 0x0, SENSE_ABORT, _T("Invalid Field in CDB")},
+	{"215", "SPECTRA", TYPE_CHANGER, SENSE_ILLEGAL_REQUEST, 0x25, 0x0, SENSE_ABORT, _T("LUN Not Supported")},
+	{"215", "SPECTRA", TYPE_CHANGER, SENSE_ILLEGAL_REQUEST, 0x26, 0x0, SENSE_ABORT, _T("Invalid Parameter Field")},
+	{"215", "SPECTRA", TYPE_CHANGER, SENSE_ILLEGAL_REQUEST, 0x3b, 0xd, SENSE_ABORT, _T("Medium Destination is full")},
+	{"215", "SPECTRA", TYPE_CHANGER, SENSE_ILLEGAL_REQUEST, 0x3b, 0xe, SENSE_ABORT, _T("Medium Source Element is Full")},
+	{"215", "SPECTRA", TYPE_CHANGER, SENSE_ILLEGAL_REQUEST, 0x3d, 0x80, SENSE_ABORT, _T("Disconnects Must be Allowed")},
+	{"215", "SPECTRA", TYPE_CHANGER, SENSE_ILLEGAL_REQUEST, 0x80, 0x18, SENSE_ABORT, _T("Conflict, Element is Reserved")},
+	{"215", "SPECTRA", TYPE_CHANGER, SENSE_ILLEGAL_REQUEST, 0x81, 0x2, SENSE_ABORT, _T("Library is Full of Tapes")},
+	{"215", "SPECTRA", TYPE_CHANGER, SENSE_ILLEGAL_REQUEST, 0x81, 0x3, SENSE_ABORT, _T("Grip Arm not Empty")},
+	{"215", "SPECTRA", TYPE_CHANGER, SENSE_ILLEGAL_REQUEST, UCHAR_MAX , UCHAR_MAX, SENSE_ABORT, _T("Default for SENSE_ILLEGAL_REQUEST")},
 
-	{"215", "SPECTRA", TYPE_CHANGER, SENSE_UNIT_ATTENTION, 0x28, 0x0, SENSE_IES, _("Inventory possible Altered")},
-	{"215", "SPECTRA", TYPE_CHANGER, SENSE_UNIT_ATTENTION, 0x29, 0x0, SENSE_RETRY, _("A Reset Has Occured")},
-	{"215", "SPECTRA", TYPE_CHANGER, SENSE_UNIT_ATTENTION, 0x24, 0x1, SENSE_IGNORE, _("Mode Parameter Have CHanged")},
-	{"215", "SPECTRA", TYPE_CHANGER, SENSE_UNIT_ATTENTION, UCHAR_MAX, UCHAR_MAX, SENSE_IGNORE, _("Default for SENSE_UNIT_ATTENTION")},
+	{"215", "SPECTRA", TYPE_CHANGER, SENSE_UNIT_ATTENTION, 0x28, 0x0, SENSE_IES, _T("Inventory possible Altered")},
+	{"215", "SPECTRA", TYPE_CHANGER, SENSE_UNIT_ATTENTION, 0x29, 0x0, SENSE_RETRY, _T("A Reset Has Occured")},
+	{"215", "SPECTRA", TYPE_CHANGER, SENSE_UNIT_ATTENTION, 0x24, 0x1, SENSE_IGNORE, _T("Mode Parameter Have CHanged")},
+	{"215", "SPECTRA", TYPE_CHANGER, SENSE_UNIT_ATTENTION, UCHAR_MAX, UCHAR_MAX, SENSE_IGNORE, _T("Default for SENSE_UNIT_ATTENTION")},
 
-	{"215", "SPECTRA", TYPE_CHANGER, SENSE_VENDOR_SPECIFIC, 0x83, 0x00, SENSE_ABORT, _("Barcode Label is Unread")},
-	{"215", "SPECTRA", TYPE_CHANGER, SENSE_VENDOR_SPECIFIC, 0x83, 0x01, SENSE_ABORT, _("Problem Reading Barcode")},
-	{"215", "SPECTRA", TYPE_CHANGER, SENSE_VENDOR_SPECIFIC, 0x83, 0x11, SENSE_ABORT, _("Tape in Drive & Unmounted")},
-	{"215", "SPECTRA", TYPE_CHANGER, SENSE_VENDOR_SPECIFIC, 0x84, 0x00, SENSE_ABORT, _("Unsupported SCSI Command")},
-	{"215", "SPECTRA", TYPE_CHANGER, SENSE_VENDOR_SPECIFIC, 0x84, 0x01, SENSE_ABORT, _("No Response from SCSI Target")},
-	{"215", "SPECTRA", TYPE_CHANGER, SENSE_VENDOR_SPECIFIC, 0x84, 0x02, SENSE_ABORT, _("Check Condition form Target")},
-	{"215", "SPECTRA", TYPE_CHANGER, SENSE_VENDOR_SPECIFIC, 0x84, 0x03, SENSE_ABORT, _("SCSI ID Same as Library's ID")},
-	{"215", "SPECTRA", TYPE_CHANGER, SENSE_VENDOR_SPECIFIC, 0x84, 0x08,  SENSE_ABORT, _("Busy Condition from Target")},
-	{"215", "SPECTRA", TYPE_CHANGER, SENSE_VENDOR_SPECIFIC, 0x84, 0x18, SENSE_ABORT, _("SCSI Reservation Conflict")},
-	{"215", "SPECTRA", TYPE_CHANGER, SENSE_VENDOR_SPECIFIC,  UCHAR_MAX, UCHAR_MAX, SENSE_ABORT, _("Default for SENSE_VENDOR_SPECIFIC")},
+	{"215", "SPECTRA", TYPE_CHANGER, SENSE_VENDOR_SPECIFIC, 0x83, 0x00, SENSE_ABORT, _T("Barcode Label is Unread")},
+	{"215", "SPECTRA", TYPE_CHANGER, SENSE_VENDOR_SPECIFIC, 0x83, 0x01, SENSE_ABORT, _T("Problem Reading Barcode")},
+	{"215", "SPECTRA", TYPE_CHANGER, SENSE_VENDOR_SPECIFIC, 0x83, 0x11, SENSE_ABORT, _T("Tape in Drive & Unmounted")},
+	{"215", "SPECTRA", TYPE_CHANGER, SENSE_VENDOR_SPECIFIC, 0x84, 0x00, SENSE_ABORT, _T("Unsupported SCSI Command")},
+	{"215", "SPECTRA", TYPE_CHANGER, SENSE_VENDOR_SPECIFIC, 0x84, 0x01, SENSE_ABORT, _T("No Response from SCSI Target")},
+	{"215", "SPECTRA", TYPE_CHANGER, SENSE_VENDOR_SPECIFIC, 0x84, 0x02, SENSE_ABORT, _T("Check Condition form Target")},
+	{"215", "SPECTRA", TYPE_CHANGER, SENSE_VENDOR_SPECIFIC, 0x84, 0x03, SENSE_ABORT, _T("SCSI ID Same as Library's ID")},
+	{"215", "SPECTRA", TYPE_CHANGER, SENSE_VENDOR_SPECIFIC, 0x84, 0x08,  SENSE_ABORT, _T("Busy Condition from Target")},
+	{"215", "SPECTRA", TYPE_CHANGER, SENSE_VENDOR_SPECIFIC, 0x84, 0x18, SENSE_ABORT, _T("SCSI Reservation Conflict")},
+	{"215", "SPECTRA", TYPE_CHANGER, SENSE_VENDOR_SPECIFIC,  UCHAR_MAX, UCHAR_MAX, SENSE_ABORT, _T("Default for SENSE_VENDOR_SPECIFIC")},
 
-	{ "215", "SPECTRA", TYPE_CHANGER,  SENSE_CHG_ELEMENT_STATUS, UCHAR_MAX, UCHAR_MAX, SENSE_IGNORE, _("Default for SENSE_CHG_ELEMENT_STATUS")},
+	{ "215", "SPECTRA", TYPE_CHANGER,  SENSE_CHG_ELEMENT_STATUS, UCHAR_MAX, UCHAR_MAX, SENSE_IGNORE, _T("Default for SENSE_CHG_ELEMENT_STATUS")},
 
-	{ "215", "SPECTRA", TYPE_CHANGER, UCHAR_MAX, 0x0, 0x0, SENSE_ABORT, _("Nothing found for Spectra/215")},
+	{ "215", "SPECTRA", TYPE_CHANGER, UCHAR_MAX, 0x0, 0x0, SENSE_ABORT, _T("Nothing found for Spectra/215")},
 
 	{ NULL, "", 0x0, UCHAR_MAX, 0x0, 0x0, 0x0, ""},
 
@@ -743,7 +743,7 @@ DumpSense(void)
 				pwork->asc,
 				pwork->ascq,
 				pwork->ret,
-				pwork->text);
+				_(pwork->text));
 		}
 		pwork++;
 	}
@@ -831,7 +831,7 @@ Sense2Action(
 						pwork->ident,
 						pwork->vendor,
 						pwork->ret,
-						*text);
+						_(*text));
 					return(pwork->ret);
 				}
 				pwork++;
@@ -848,7 +848,7 @@ Sense2Action(
 						pwork->ident,
 						pwork->vendor,
 						pwork->ret,
-						*text);
+						_(*text));
 					return(pwork->ret);
 				}
 
@@ -862,7 +862,7 @@ Sense2Action(
 						pwork->ident,
 						pwork->vendor,
 						pwork->ret,
-						*text);
+						_(*text));
 					return(pwork->ret);
 				}
 			}
@@ -885,7 +885,7 @@ Sense2Action(
 				generic->ident,
 				generic->vendor,
 				generic->ret,
-				*text);
+				_(*text));
 			return(generic->ret);
 		}
 
@@ -898,7 +898,7 @@ Sense2Action(
 					generic->ident,
 					generic->vendor,
 					generic->ret,
-					*text);
+					_(*text));
 				return(generic->ret);
 			}
 			generic++;
@@ -915,7 +915,7 @@ Sense2Action(
 					generic->ident,
 					generic->vendor,
 					generic->ret,
-					*text);
+					_(*text));
 				return(generic->ret);
 			}
 
@@ -929,7 +929,7 @@ Sense2Action(
 					generic->ident,
 					generic->vendor,
 					generic->ret,
-					*text);
+					_(*text));
 				return(generic->ret);
 			}
 			generic++;
