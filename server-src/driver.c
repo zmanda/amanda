@@ -170,12 +170,18 @@ main(
     char **new_argv, **my_argv;
     char hostname[1025];
 
+    /*
+     * Configure program for internationalization:
+     *   1) Only set the message locale for now.
+     *   2) Set textdomain for all amanda related programs to "amanda"
+     *      We don't want to be forced to support dozens of message catalogs.
+     */  
+    setlocale(LC_MESSAGES, "");
+
     safe_fd(-1, 0);
 
     setvbuf(stdout, (char *)NULL, (int)_IOLBF, 0);
     setvbuf(stderr, (char *)NULL, (int)_IOLBF, 0);
-
-    setlocale(LC_ALL, "C");
 
     set_pname("driver");
 

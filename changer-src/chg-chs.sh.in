@@ -40,6 +40,21 @@ pname="chg-chs"
 PATH=$sbindir:$libexecdir:/usr/bin:/bin:/usr/sbin:/sbin:/usr/ucb
 export PATH
 
+#+
+# Function to:
+#    Simplify gettext usage by allowing printf format
+#    strings for translators, use _() identifier for
+#    xgettext extraction similar to "C" usage and
+#    collapsing "printf `gettext fmt` ...", which is
+#    used everywhere, into one function.
+#-
+_() {
+	fmt=`gettext -d amanda "$1"`
+	shift
+	printf "$fmt" $*
+}
+
+
 if [ -d "@AMANDA_DBGDIR@" ]; then
 	logfile=@AMANDA_DBGDIR@/changer.debug
 else
@@ -55,13 +70,12 @@ elif [ -x "@MT@" ]; then
 	MT=@MT@
 	MTF=@MT_FILE_FLAG@
 else
-	answer="<none> $myname: mt program not found"
-	code=1
-	echo "Exit -> $answer" >> $logfile
-	echo "$answer"
-	exit $code
+	answer=`_ '<none> %s: mt program not found' "$pname"`
+	echo `_ 'Exit ->'` $answer >> $logfile
+	echo $answer
+	exit 1
 fi
-echo MT "->" $MT $MTF >> $logfile
+echo "MT ->" $MT $MTF >> $logfile
 
 USE_VERSION_SUFFIXES="@USE_VERSION_SUFFIXES@"
 if test "$USE_VERSION_SUFFIXES" = "yes"; then
@@ -79,70 +93,64 @@ fi
 # read in some config parameters
 
 if [ \! -f $ourconf ]; then
-	answer="<none> $pname: $ourconf does not exist"
-	code=2
-	echo "Exit -> $answer" >> $logfile
-	echo "$answer"
-	exit $code
+	answer=`_ '<none> %s: %s does not exist' "$pname" "$ourconf"`
+	echo `_ 'Exit ->'` $answer >> $logfile
+	echo $answer
+	exit 2
 fi
 
 firstslot=`awk '$1 == "firstslot" {print $2}' $ourconf 2>/dev/null`
 if [ "$firstslot" = "" ]; then
-	answer="<none> $pname: firstslot not specified in $ourconf"
-	code=2
-	echo "Exit -> $answer" >> $logfile
-	echo "$answer"
-	exit $code
+	answer=`_ '<none> %s: firstslot not specified in %s' "$pname" "$ourconf"`
+	echo `_ 'Exit ->'` $answer >> $logfile
+	echo $answer
+	exit 2
 fi
 
 lastslot=`awk '$1 == "lastslot" {print $2}' $ourconf 2>/dev/null`
 if [ "$lastslot" = "" ]; then
-	answer="<none> $pname: lastslot not specified in $ourconf"
-	code=2
-	echo "Exit -> $answer" >> $logfile
-	echo "$answer"
-	exit $code
+	answer=`_ '<none> %s: lastslot not specified in %s' "$pname" "$ourconf"`
+	echo `_ 'Exit ->'` $answer >> $logfile
+	echo $answer
+	exit 2
 fi
 
 nslots=`expr $lastslot - $firstslot + 1`
 
 gravity=`awk '$1 == "gravity" {print $2}' $ourconf 2>/dev/null`
 if [ "$gravity" = "" ]; then
-	answer="<none> $pname: gravity not specified in $ourconf"
-	code=2
-	echo "Exit -> $answer" >> $logfile
-	echo "$answer"
-	exit $code
+	answer=`_ '<none> %s: gravity not specified in %s' "$pname" "$ourconf"`
+	echo `_ 'Exit ->'` $answer >> $logfile
+	echo $answer
+	exit 2
 fi
 
 needeject=`awk '$1 == "needeject" {print $2}' $ourconf 2>/dev/null`
 if [ "$needeject" = "" ]; then
-	answer="<none> $pname: needeject not specified in $ourconf"
-	code=2
-	echo "Exit -> $answer" >> $logfile
-	echo "$answer"
-	exit $code
+	answer=`_ '<none> %s: needeject not specified in %s' "$pname" "$ourconf"`
+	echo `_ 'Exit ->'` $answer >> $logfile
+	echo $answer
+	exit 2
 fi
 
 multieject=`awk '$1 == "multieject" {print $2}' $ourconf 2>/dev/null`
 if [ "$multieject" = "" ]; then
-	echo "Note -> multieject not specified in $ourconf" >> $logfile
+	echo `_ 'Note -> multieject not specified in %s' "$ourconf"` >> $logfile
 	multieject=0
 fi
 
 ejectdelay=`awk '$1 == "ejectdelay" {print $2}' $ourconf 2>/dev/null`
 if [ "$ejectdelay" = "" ]; then
-	echo "Note -> ejectdelay not specified in $ourconf" >> $logfile
+	echo `_ 'Note -> ejectdelay not specified in %s' "$ourconf"` >> $logfile
 	ejectdelay=0
 fi
 
 ourstate=`awk '$1 == "statefile" {print $2}' $ourconf 2>/dev/null`
 if [ "$ourstate" = "" ]; then
-	answer="<none> $pname: statefile not specified in $ourconf"
-	code=2
-	echo "Exit -> $answer" >> $logfile
-	echo "$answer"
-	exit $code
+	answer=`_ '<none> %s: statefile not specified in %s' "$pname" "$ourconf"`
+	echo `_ 'Exit ->'` $answer >> $logfile
+	echo $answer
+	exit 2
 fi
 
 # read in state: only curslot and curloaded at the present time
@@ -175,10 +183,9 @@ case "$command" in
 
 	backwards=`expr 1 - $gravity`
 	answer="$curslot $nslots $backwards"
-	code=0
-	echo "Exit -> $answer" >> $logfile
-	echo "$answer"
-	exit $code
+	echo `_ 'Exit ->'` $answer >> $logfile
+	echo $answer
+	exit 0
 	;;
 
 -reset) # reset changer
@@ -198,11 +205,10 @@ case "$command" in
 	ejectslot=1
 
 	if [ $curloaded -eq 0 ]; then
-		answer="$curslot $pname: slot already empty"
-		code=1
-		echo "Exit -> $answer" >> $logfile
-		echo "$answer"
-		exit $code
+		answer=`_ '%s %s: slot already empty' "$curslot" "$pname"`
+		echo `_ 'Exit ->'` $answer >> $logfile
+		echo $answer
+		exit 1
 	fi
 	;;
 
@@ -217,11 +223,10 @@ case "$command" in
 		newslot=$slotparm
 		if [ \( $newslot -gt $lastslot \) -o \
 		     \( $newslot -lt $firstslot \) ]; then
-			answer="$newslot $pname: no slot $newslot: legal range is $firstslot ... $lastslot"
-			code=1
-			echo "Exit -> $answer" >> $logfile
-			echo "$answer"
-			exit $code
+			answer =`_ '%s %s: no slot %s: legal range is %s ... %s' "$newslot" "$pname" "$newslot" "$firstslot" "$lastslot"`
+			echo `_ 'Exit ->'` $answer >> $logfile
+			echo $answer
+			exit 1
 		fi
 		;;
 	current)
@@ -249,11 +254,10 @@ case "$command" in
 		fi
 		;;
 	*)
-		answer="<none> $pname: bad slot name \"$slotparm\""
-		code=1
-		echo "Exit -> $answer" >> $logfile
-		echo "$answer"
-		exit $code
+		answer=`_ '<none> %s: bad slot name "%s"'` "$pname" "$slotparm"`
+		echo `_ 'Exit ->'` "$answer >> $logfile
+		echo $answer
+		exit 1
 		;;
 	esac
 	;;
@@ -264,11 +268,10 @@ esac
 
 
 if [ $usage -eq 1 ]; then
-	answer="<none> usage: $pname {-reset | -slot [<slot-number>|current|next|prev|advance]}"
-	code=2
-	echo "Exit -> $answer" >> $logfile
-	echo "$answer"
-	exit $code
+	answer=`_ '<none> usage: %s {-reset | -slot [<slot-number>|current|next|prev|advance]}' "$pname"`
+	echo `_ 'Exit ->'` $answer >> $logfile
+	echo $answer
+	exit 2
 fi
 
 
@@ -277,11 +280,10 @@ fi
 if [ \( $checkgravity -eq 1 \) -a \( $gravity -ne 0 \) ]; then
 	if [ \( $newslot -lt $curslot \) -o \( "$slotparm" = "prev" \) ]
 	then
-		answer="$newslot $pname: cannot go backwards in gravity stacker"
-		code=1
-		echo "Exit -> $answer" >> $logfile
-		echo "$answer"
-		exit $code
+		answer=`_ '%s %s: cannot go backwards in gravity stacker' "$newslot" "$pname"`
+		echo `_ 'Exit ->'` $answer >> $logfile
+		echo $answer
+		exit 1
 	fi
 fi
 
@@ -289,11 +291,10 @@ fi
 
 device=`awk '$1 == "slot" && $2 == '$newslot' {print $3}' $ourconf 2>/dev/null`
 if [ "$device" = "" ]; then
-	answer="$newslot $pname: slot $newslot device not specified in $ourconf"
-	code=2
-	echo "Exit -> $answer" >> $logfile
-	echo "$answer"
-	exit $code
+	answer=`_ '%s %s: slot %s device not specified in %s' "$newslot" "$pname" "$newslot" "$ourconf"`
+	echo `_ 'Exit ->'` $answer >> $logfile
+	echo $answer
+	exit 2
 fi
 
 # check if load needs an eject first
@@ -314,11 +315,10 @@ if [ $ejectslot -eq 1 ]; then	# eject the tape from the drive
 	# generically, first check that the device is there
 
 	if [ ! -c $device ]; then
-		answer="$newslot $pname: $device: not a device file"
-		code=2
-		echo "Exit -> $answer" >> $logfile
-		echo "$answer"
-		exit $code
+		answer=`_ '%s %s: %s: not a device file' "$newslot" "$pname" "$device"`
+		echo `_ 'Exit ->'` $answer >> $logfile
+		echo $answer
+		exit 2
 	fi
 
 	# if multiple eject is required, do it now
@@ -327,11 +327,10 @@ if [ $ejectslot -eq 1 ]; then	# eject the tape from the drive
 		while [ $loopslot -lt $newslot ]; do
 			$MT $MTF $device offline >/dev/null 2>&1
 			if [ $? -ne 0 ]; then
-				answer="$newslot $pname: $device: unable to change slot $loopslot"
-				code=2
-				echo "Exit -> $answer" >> $logfile
-				echo "$answer"
-				exit $code
+				answer=`_ '%s %s: %s: unable to change slot %s' "$newslot" "$pname" "$device" "$loopslot"`
+				echo `_ 'Exit ->'` $answer >> $logfile
+				echo $answer
+				exit 2
 			fi
 			loopslot=`/usr/bin/expr $loopslot + 1`
 		done
@@ -348,11 +347,10 @@ if [ $ejectslot -eq 1 ]; then	# eject the tape from the drive
 		# we just presume an error signifies an empty slot.
 		#
 		#slotempty=1
-		answer="<none> $pname: tape unload to slot $curslot failed"
-		code=2
-		echo "Exit -> $answer" >> $logfile
-		echo "$answer"
-		exit $code
+		answer=`_ '<none> %s: tape unload to slot %s failed' "$pname" "$curslot"`
+		echo `_ 'Exit ->'` $answer >> $logfile
+		echo $answer
+		exit 2
 	else
 		sleep $ejectdelay
 	fi
@@ -368,20 +366,18 @@ if [ \( $loadslot -eq 1 \) -a \( \( $curloaded -ne 1 \) -o \( \( $curloaded -eq 
 	# generically, first check that the device is there
 
 	if [ ! -c $device ]; then
-		answer="$newslot $pname: $device: not a device file"
-		code=2
-		echo "Exit -> $answer" >> $logfile
-		echo "$answer"
-		exit $code
+		answer=`_ '%s %s: %s: not a device file' "$newslot" "$pname" "$device"`
+		echo `_ 'Exit ->'` $answer >> $logfile
+		echo $answer
+		exit 2
 	fi
 
 	$CHS select -s$newslot -d1 >/dev/null 2>&1
 	if [ $? -ne 0 ]; then
-		answer="<none> $pname: tape load from slot $newslot failed"
-		code=2
-		echo "Exit -> $answer" >> $logfile
-		echo "$answer"
-		exit $code
+		answer=`_ '<none> %s: tape load from slot %s failed' "$pname" "$newslot"`
+		echo `_ 'Exit ->'` $answer >> $logfile
+		echo $answer
+		exit 2
 	fi
 	sleep 60
 
@@ -408,11 +404,10 @@ echo curloaded $curloaded			>> $ourstate
 # return slot info
 
 if [ $slotempty -eq 1 ]; then
-	answer="<nonw> $pname: $newslot slot is empty"
-	code=1
-	echo "Exit -> $answer" >> $logfile
-	echo "$answer"
-	exit $code
+	answer=`_ '<none> %s: %s slot is empty' "$pname" "$newslot"`
+	echo `_ 'Exit ->'` $answer >> $logfile
+	echo $answer
+	exit 1
 fi
 
 if [ "$command" = -slot -a "$slotparm" = advance ]; then
@@ -420,7 +415,6 @@ if [ "$command" = -slot -a "$slotparm" = advance ]; then
 fi
 
 answer="$newslot $device"
-code=0
-echo "Exit -> $answer" >> $logfile
-echo "$answer"
-exit $code
+echo `_ 'Exit ->'` $answer >> $logfile
+echo $answer
+exit 0

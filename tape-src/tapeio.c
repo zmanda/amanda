@@ -1414,7 +1414,14 @@ main(
     int j;
     time_t now;
 
-    setlocale(LC_ALL, "C");
+    /*
+     * Configure program for internationalization:
+     *   1) Only set the message locale for now.
+     *   2) Set textdomain for all amanda related programs to "amanda"
+     *      We don't want to be forced to support dozens of message catalogs.
+     */  
+    setlocale(LC_MESSAGES, "");
+    textdomain("amanda"); 
 
     /* Don't die when child closes pipe */
     signal(SIGPIPE, SIG_IGN);

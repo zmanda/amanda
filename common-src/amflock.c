@@ -444,7 +444,14 @@ main(
     (void)argc;		/* Quiet compiler warning */
     (void)argv;		/* Quiet compiler warning */
 
-    setlocale(LC_ALL, "C");
+    /*
+     * Configure program for internationalization:
+     *   1) Only set the message locale for now.
+     *   2) Set textdomain for all amanda related programs to "amanda"
+     *      We don't want to be forced to support dozens of message catalogs.
+     */  
+    setlocale(LC_MESSAGES, "");
+    textdomain("amanda"); 
 
     unlink(filen);
     if ((lockfd = open(filen, O_RDONLY | O_CREAT | O_EXCL, 0600)) == -1) {

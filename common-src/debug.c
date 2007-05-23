@@ -81,9 +81,11 @@ printf_arglist_function(void debug_printf, const char *, format)
 	    db_file = stderr;
 	}
 	if(db_file != NULL) {
+	    char *xlated_fmt = gettext(format);
+
 	    fprintf(db_file, "%s: %s: ", msg_timestamp(), get_pname());
 	    arglist_start(argp, format);
-	    vfprintf(db_file, format, argp);
+	    vfprintf(db_file, xlated_fmt, argp);
 	    arglist_end(argp);
 	    fflush(db_file);
 	}
@@ -255,7 +257,7 @@ debug_setup_2(
     s = NULL;
     if ((rc = chown(db_filename, client_uid, client_gid)) < 0) {
 	dbprintf(_("chown(%s, %d, %d) failed. <%s>"),
-		  db_filename, client_uid, client_gid, strerror(errno));
+		  db_filename, (int)client_uid, (int)client_gid, strerror(errno));
 	(void)rc;
     }
     amfree(dbgdir);
@@ -499,7 +501,7 @@ debug_close(void)
 	int save_errno = errno;
 
 	db_file = NULL;				/* prevent recursion */
-	fprintf(stderr, _("close debug file: %s"), strerror(save_errno));
+	fprintf(stderr, gettext("close debug file: %s"), strerror(save_errno));
 	/*NOTREACHED*/
     }
     db_fd = -1;

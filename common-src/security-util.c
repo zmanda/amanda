@@ -2341,7 +2341,7 @@ check_security(
 
     myuid = getuid();
     if ((pwptr = getpwuid(myuid)) == NULL)
-        error(_("error [getpwuid(%d) fails]"), myuid);
+        error(_("error [getpwuid(%d) fails]"), (int)myuid);
 
     auth_debug(1, _("bsd security: remote host %s user %s local user %s\n"),
 		   remotehost, remoteuser, pwptr->pw_name);

@@ -16,6 +16,21 @@ else
         SUF=
 fi
 
+#+
+# Function to:
+#    Simplify gettext usage by allowing printf format
+#    strings for translators, use _() identifier for
+#    xgettext extraction similar to "C" usage and
+#    collapsing "printf `gettext fmt` ...", which is
+#    used everywhere, into one function.
+#-
+function _() {
+	fmt=`gettext -d amanda "$1"`
+	shift
+	printf "$fmt" $*
+}
+
+
 getparm() {
         $AMGETCONF $CONFIG $1 2>/dev/null
 }
@@ -42,7 +57,7 @@ else
   if [ -f $AMFLUSHLOG ]; then
     AMLOG=$AMFLUSHLOG
   else
-    echo "Nothing to verify"
+    echo `_ 'Nothing to verify'`
     exit 1;
   fi
 fi
@@ -63,5 +78,5 @@ NBTAPES=`grep -c "taper: .*wrote label " $AMLOG`
 if [ X"$NBTAPES" != X"0" ]; then
   $AMVERIFY $CONFIG $FIRST_SLOT $NBTAPES
 else
-  echo "Nothing to verify"
+  echo `_ 'Nothing to verify'`
 fi

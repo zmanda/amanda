@@ -38,8 +38,22 @@ else
 	WORK=/tmp/chgwork$$
 fi
 
+#+
+# Function to:
+#    Simplify gettext usage by allowing printf format
+#    strings for translators, use _() identifier for
+#    xgettext extraction similar to "C" usage and
+#    collapsing "printf `gettext fmt` ...", which is
+#    used everywhere, into one function.
+#-
+_() {
+	fmt=`gettext -d amanda "$1"`
+	shift
+	printf "$fmt" $*
+}
+
 exec 2>$DBGFILE
-echo "args: $0 $*" >&2
+echo `_ "arguments: "` $0 $* >&2
 set -x 
 
 #
@@ -155,7 +169,7 @@ x-slot|x-reset|x-eject|x-search|x-label)
 	then
 	     # synch error!
 	    myexit=1
-	    echo "stackers are out of synch, issue a reset" >&2
+	    echo `_ 'stackers are out of synch, issue a reset'` >&2
 	fi
 	mydev="$mydev$mysep$dev"
 	mysep=","
@@ -194,7 +208,7 @@ x-info)
 	then
 	     # synch error!
 	    myexit=1
-	    echo "stackers are out of synch, issue a -reset" >&2
+	    echo `_ 'stackers are out of synch, issue a -reset'` >&2
 	fi
 	if [ $max -lt $mymax ]
 	then

@@ -751,12 +751,13 @@ printf_arglist_function2(void disk_parserror, const char *, filename,
     int, line_num, const char *, format)
 {
     va_list argp;
+    char *xlated_fmt = gettext(format);
 
     /* print error message */
 
     fprintf(stderr, "\"%s\", line %d: ", filename, line_num);
     arglist_start(argp, format);
-    vfprintf(stderr, format, argp);
+    vfprintf(stderr, xlated_fmt, argp);
     arglist_end(argp);
     fputc('\n', stderr);
 }
@@ -1347,9 +1348,16 @@ main(
   unsigned long malloc_hist_1, malloc_size_1;
   unsigned long malloc_hist_2, malloc_size_2;
 
-  safe_fd(-1, 0);
+  /*
+   * Configure program for internationalization:
+   *   1) Only set the message locale for now.
+   *   2) Set textdomain for all amanda related programs to "amanda"
+   *      We don't want to be forced to support dozens of message catalogs.
+   */  
+  setlocale(LC_MESSAGES, "");
+  textdomain("amanda"); 
 
-  setlocale(LC_ALL, "C");
+  safe_fd(-1, 0);
 
   set_pname("diskfile");
 

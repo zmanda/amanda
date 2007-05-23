@@ -47,6 +47,20 @@ else
 	SUF=
 fi
 
+#+
+# Function to:
+#    Simplify gettext usage by allowing printf format
+#    strings for translators, use _() identifier for
+#    xgettext extraction similar to "C" usage and
+#    collapsing "printf `gettext fmt` ...", which is
+#    used everywhere, into one function.
+#-
+function _() {
+	fmt=`gettext -d amanda "$1"`
+	shift
+	printf "$fmt" $*
+}
+
 if test -h /proc/1/exe ; then
 	if test $# -ge 2 && test "$1" == "-k" ; then
 		KILL_ENABLE=1
@@ -58,12 +72,12 @@ if test -h /proc/1/exe ; then
 		conf=$1
 		shift;
 	else
-		echo "Usage: amcleanup [-k] conf"
+		echo `_ 'Usage: amcleanup [-k] conf'`
 		exit 1
 	fi
 else
 	if test $# -lt 1 ; then
-		echo "Usage: amcleanup conf"
+		echo `_ 'Usage: amcleanup conf'`
 		exit 1
 	else
 		conf=$1
@@ -73,7 +87,7 @@ else
 fi
 
 if test ! -d $confdir/$conf ; then
-	echo "amcleanup: could not cd into $confdir/$conf"
+	echo `_ '%s: could not cd into %s' "amcleanup" "$confdir/$conf"`
 	exit 1
 fi
 
@@ -82,7 +96,7 @@ cd $confdir/$conf
 logdir=`amgetconf$SUF $conf logdir "$@"`
 rc=$?
 if test $rc -ne 0 ; then
-	echo "amcleanup: 'amgetconf$SUF logdir' exited with status: $rc" 1>&2
+	echo `_ '%s: "%s" exited with status: %s' "amcleanup" "amgetconf$SUF logdir" "$rc"` 1>&2
 	exit 1
 fi
 logfile=$logdir/log
@@ -91,13 +105,13 @@ erramflush=$logdir/amflush
 tapecycle=`amgetconf$SUF $conf tapecycle "$@"`
 rc=$?
 if test $rc -ne 0 ; then
-	echo "amcleanup: 'amgetconf$SUF tapecycle' exited with status: $rc " 1>&2
+	echo `_ '%s: "%s" exited with status: %s' "amcleanup" "amgetconf$SUF tapecycle" "$rc"` 1>&2
 	exit 1
 fi
 dumpuser=`amgetconf$SUF $conf dumpuser "$@"`
 rc=$?
 if test $rc -ne 0 ; then
-	echo "amcleanup: 'amgetconf$SUF $conf dumpuser' exited with status: $rc" 1>&2
+	echo `_ '%s: "%s" exited with status: %s' "amcleanup" "amgetconf$SUF $conf dumpuser" "$rc"` 1>&2
 	exit 1
 fi
 
@@ -194,7 +208,7 @@ if test ${KILL_ENABLE} -eq 1 ; then
 						match_name=$?
 						pid_uid="`cat /proc/${search_pid}/status 2>/dev/null | grep Uid | awk '//{split($_,i); print i[2]}'`"
 						if test ${match_name} -eq 0  && test "${pid_uid}" == "${search_user}" ; then
-							echo "amcleanup: Process ${search_name} found running at pid #${search_pid}."
+							echo `_ '%s: Process %s found running at pid #%s.' "amcleanup" "${search_name}" "${search_pid}"`
 							kill_pid=${search_pid}
 							kill_name=${search_name}
 							PIDS_FOUND=`expr ${PIDS} + 1`
@@ -207,20 +221,20 @@ if test ${KILL_ENABLE} -eq 1 ; then
 					done
 					if test ! -z "${kill_pid}" ; then
 						if test -d /proc/${kill_pid} ; then
-							echo "amcleanup: Sending process ${kill_pid} the TERM signal."
+							echo `_ '%s: Sending process %s the %s signal.' "$0" "${kill_pid}" "TERM"`
 							kill -15 -- ${kill_pid}
 							sleep 5
 							if test -d /proc/${kill_pid} ; then
-								echo "amcleanup: Sending process  ${kill_pid} the KILL signal."
+								echo `_ '%s: Sending process %s the %s signal.' "$0" "${kill_pid}" "KILL"`
 								kill -9 -- ${kill_pid}
 							fi
 							sleep 5
 							if test -d /proc/${kill_pid} ; then
-								echo "amcleanup: Process ${kill_pid} did not respond to the KILL signal (and may be hung)!" 1>&2
+								echo `_ '%s: Process %s did not respond to the %s signal (and may be hung)!' "$0" "${kill_pid}" "KILL"` 1>&2
 								KILL_FAILURES=`expr ${KILL_FAILURES} + 1`
 							fi
 						else
-							echo "amcleanup: Process ${kill_pid} no longer running.  Skipping..."
+							echo `_ '%s: Process %s no longer running.  Skipping...' "$0" "${kill_pid}"`
 						fi
 					fi
 				done
@@ -232,10 +246,10 @@ if test ${KILL_ENABLE} -eq 1 ; then
 			fi
 		done
 		if test ${PIDS_FOUND} -gt 0 ; then
-			echo "amcleanup: ${PIDS_FOUND} Amanda processes were found running."
-			echo "amcleanup: ${KILL_FAILURES} processes failed to terminate."
+			echo `_ '%s: %s Amanda processes were found running.' "$0" "${PIDS_FOUND}"`
+			echo `_ '%s: %s processes failed to terminate.' "$0" "${KILL_FAILURES}"`
 		else
-			echo "amcleanup: No Amanda processes were found running."
+			echo `_ '%s: No Amanda processes were found running.' "$0"`
 		fi
 		cd "${PREVIOUS_DIR}"
 	fi
@@ -243,12 +257,12 @@ fi
 
 retstatus=0
 if test -f $logfile ; then
-	echo "amcleanup: processing outstanding log file."
+	echo `_ '%s: processing outstanding log file.' "$0"`
 	exec </dev/null >/dev/null 2>&1
 	amreport$SUF $conf "$@"
 	rc=$?
 	if test $rc -ne 0 ; then
-		echo "amcleanup: amreport exited with status: $rc" 1>&2
+		echo `_ '%s: "%s" exited with status: %s' "$0" "amreport" "$rc"` 1>&2
 		retstatus=`expr $retstatus + 1`
 	fi
 
@@ -256,7 +270,7 @@ if test -f $logfile ; then
 	amlogroll$SUF $conf "$@"
 	rc=$?
 	if test $rc -ne 0 ; then
-		echo "acmleanup: amlogroll exited with status: $rc" 1>&2
+		echo `_ '%s: "%s" exited with status: %s' "$0" "amlogroll" "$rc"` 1>&2
 		retstatus=`expr $retstatus + 2`
 	fi
 
@@ -264,18 +278,18 @@ if test -f $logfile ; then
 	amtrmidx$SUF $conf "$@"
 	rc=$?
 	if test $rc -ne 0 ; then
-		echo "amcleanup: amtrmidx exited with status: $rc" 1>&2
+		echo `_ '%s: "%s" exited with status: %s' "$0" "amtrmidx" "$rc"` 1>&2
 		retstatus=`expr $retstatus + 4`
 	fi
 
 else
-	echo "amcleanup: no unprocessed logfile to clean up."
+	echo `_ '%s: no unprocessed logfile to clean up.' "$0"`
 fi
 
 if test -f $errfile ; then
     # if log was found, this will have been directed to /dev/null,
     # which is fine.
-    echo "amcleanup: $errfile exists, renaming it."
+    echo `_ '%s: %s exists, renaming it.' "$0" "$errfile"`
 
     # Keep debug log through the tapecycle plus a couple days
     maxdays=`expr $tapecycle + 2`
@@ -298,7 +312,7 @@ fi
 if test -f $erramflush ; then
     # if log was found, this will have been directed to /dev/null,
     # which is fine.
-    echo "amcleanup: $erramflush exists, renaming it."
+    echo `_ '%s: %s exists, renaming it.' "$0" "$erramflush"`
 
     # Keep debug log through the tapecycle plus a couple days
     maxdays=`expr $tapecycle + 2`
@@ -321,7 +335,7 @@ fi
 $libexecdir/amcleanupdisk $conf "$@"
 rc=$?
 if test $rc -ne 0 ; then
-	echo "amcleanup: amcleanupdisk exited with status: $rc" 1>&2
+	echo `_ '%s: "%s" exited with status: %s' "$0" "amcleanupdisk" "$rc"` 1>&2
 	retstatus=`expr $retstatus + 8`
 fi
 

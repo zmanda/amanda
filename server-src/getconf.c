@@ -430,11 +430,19 @@ main(
     char **new_argv, **my_argv;
     int myarg;
 
-    safe_fd(-1, 0);
+
+    /*
+     * Configure program for internationalization:
+     *   1) Only set the message locale for now.
+     *   2) Set textdomain for all amanda related programs to "amanda"
+     *      We don't want to be forced to support dozens of message catalogs.
+     */  
+    setlocale(LC_MESSAGES, "");
+    textdomain("amanda"); 
 
     malloc_size_1 = malloc_inuse(&malloc_hist_1);
 
-    setlocale(LC_ALL, "C");
+    safe_fd(-1, 0);
 
     parse_conf(argc, argv, &new_argc, &new_argv);
     my_argc = new_argc;

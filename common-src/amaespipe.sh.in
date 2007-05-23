@@ -45,11 +45,26 @@ FDNUMBER=3
 PATH=/usr/bin:/usr/local/bin:/sbin:/usr/sbin
 export PATH
 
+#+
+# Function to:
+#    Simplify gettext usage by allowing printf format
+#    strings for translators, use _() identifier for
+#    xgettext extraction similar to "C" usage and
+#    collapsing "printf `gettext fmt` ...", which is
+#    used everywhere, into one function.
+#-
+_() {
+	fmt=`gettext -d amanda "$1"`
+	shift
+	printf "$fmt" $*
+}
+
+
 if test x$1 = x-d ; then
     # decrypt
     n=`head -c 10 - | tr -d -c 0-9a-zA-Z`
     if test x${n} != xbz2aespipe ; then
-        echo "bz2aespipe: wrong magic - aborted" >/dev/tty
+        echo `_ 'bz2aespipe: wrong magic - aborted'` >/dev/tty
         exit 1
     fi
     itercountk=`head -c 10 - | tr -d -c 0-9`

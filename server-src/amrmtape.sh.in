@@ -48,6 +48,21 @@ else
 	SUF=
 fi
 
+#+
+# Function to:
+#    Simplify gettext usage by allowing printf format
+#    strings for translators, use _() identifier for
+#    xgettext extraction similar to "C" usage and
+#    collapsing "printf `gettext fmt` ...", which is
+#    used everywhere, into one function.
+#-
+function _() {
+	fmt=`gettext -d amanda "$1"`
+	shift
+	printf "$fmt" $*
+}
+
+
 Program=`basename $0`
 
 CleanTapelist () {
@@ -58,20 +73,20 @@ CleanTapelist () {
   # necessary files can be found, such as amanda.conf and tapelist.
   #
   if [ ! -d ${ConfigDir}/${Config} ]; then
-    log "${Program}: configuration directory ${ConfigDir}/${Config} does not exist."
+    log `_ '%s: configuration directory %s does not exist.' "$0" "${ConfigDir}/${Config}"`
     return 1
   fi
   (cd ${ConfigDir}/${Config} >/dev/null 2>&1) || return $?
   cd ${ConfigDir}/${Config}
   if [ ! -r amanda.conf ]; then
-    log "${Program}: amanda.conf not found or is not readable in ${ConfigDir}."
+    log `_ '%s: amanda.conf not found or is not readable in %s.' "$0" "${ConfigDir}"`
     return 1
   fi
 
   dumpuser=`amgetconf$SUF dumpuser`
   runuser=`whoami`
   if [ $runuser != $dumpuser ]; then
-    log "${Program}: must be run as user $dumpuser"
+    log `_ '%s: must be run as user %s' "$0" "$dumpuser"`
     return 1
   fi
 
@@ -83,32 +98,32 @@ CleanTapelist () {
     TapeList="$ConfigDir/$Config/tapelist"
   fi
   if [ ! -r $TapeList ]; then
-    log "${Program}: $TapeList not found or is not readable."
+    log `_ '%s: %s not found or is not readable.' "$0" "$TapeList"`
     return 1
   fi
 
   # Get the location and name of the database filename.
   InfoFile=`amgetconf${SUF} infofile`
   if [ ! "$InfoFile" ]; then
-    log "${Program}: unable to find name of infofile from ${ConfigDir}/${Config}/amanda.conf."
+    log `_ '%s: unable to find name of infofile from %s.' "$0" "${ConfigDir}/${Config}/amanda.conf"`
     return 1
   fi
   VarDir=`echo "$InfoFile" | sed -e 's%^[^/]*$%.%' -e 's%/[^/]*$%%'`
 
   # Check that the database directory and files really exist.
   if [ ! -d "${VarDir}" ]; then
-    log "${Program}: ${VarDir} does not exist or is not a directory."
+    log `_ '%s: %s does not exist or is not a directory.' "$0" "${VarDir}"`
     return 1
   fi
   for dbext in @DB_EXT@; do
     if [ ! -r ${InfoFile}${dbext} ] && [ ! -d ${InfoFile}${dbext} ]; then
-      log "${Program}: ${InfoFile}${dbext} does not exist or is not readable."
+      log `_ '%s: %s does not exist or is not readable.' "${Program}" "${InfoFile}${dbext}"`
       return 1
     fi
   done
 
   if [ ! -d @AMANDA_TMPDIR@ ]; then
-    log "${Program}: directory @AMANDA_TMPDIR@ does not exist."
+    log `_ '%s: directory %s does not exist.' "$0" "@AMANDA_TMPDIR@"`
     exit 1
   fi
 
@@ -132,9 +147,9 @@ CleanTapelist () {
             rm -f ${NewTapelist}
         fi
       )
-      log "${Program}: remove label ${Tape}."
+      log `_ '%s: remove label %s.' "$0" "${Tape}"`
     else
-      log "${Program}: no such tape: ${Tape}."
+      log `_ '%s: no such tape: %s.' "$0" "${Tape}"`
       return 1
     fi
   fi
@@ -153,7 +168,7 @@ CleanCurinfo () {
   TmpDest=$InfoFileBase.new.$$
   rm -f ${TmpSrc} ${TmpDest}
   amadmin${SUF} ${Config} export > ${TmpSrc} || return $?
-  log "${Program}: preserving original database in ${TmpSrc} (exported)."
+  log `_ '%s: preserving original database in %s (exported).' "$0" "${TmpSrc}"`
   exec < ${TmpSrc} > ${TmpDest} || return $?
   DeadLevel=10
   while read Line; do
@@ -174,7 +189,7 @@ CleanCurinfo () {
       stats*)
 	set ${Line}
 	if [ $# -lt 6 ] || [ $# -gt 8 ]; then
-	  log "${Program}: unexpected number of fields in 'stats' entry for ${Host}:${Disk}."
+	  log `_ '%s: unexpected number of fields in "stats" entry for %s.' "${Program}" "${Host}:${Disk}"`
 	  log "${Line}"
 	  return 1
 	fi
@@ -198,7 +213,7 @@ CleanCurinfo () {
 	DeadLevel=10
 	;;
       *)
-	log "Error: unrecognized line of input: \"${Line}\""
+	log `_ 'Error: unrecognized line of input: "%s"' "${Line}"`
 	return 1
     esac
   done
@@ -221,16 +236,16 @@ log () {
 
 
 usage () {
-  echo "${Program} [-n] [-v] [-q] [-d] <configuration> <label>"
-  echo "  -n Do nothing to original files, leave new ones in database directory."
-  echo "  -v Verbose, list backups of hosts and disks that are being discarded."
-  echo "  -q Quiet, opposite of -v."
-  echo "  -d Enable debug tracing."  
-  echo "This program allows you to invalidate the contents of an existing"
-  echo "backup tape within the Amanda current tape database.  This is meant as"
-  echo "a recovery mecanism for when a good backup is damaged either by faulty"
-  echo "hardware or user error, i.e. the tape is eaten by the tape drive, or"
-  echo "the tape has been overwritten."
+  echo `_ '%s [-n] [-v] [-q] [-d] <configuration> <label>' "${Program}"`
+  echo `_ '  -n Do nothing to original files, leave new ones in database directory.'`
+  echo `_ '  -v Verbose, list backups of hosts and disks that are being discarded.'`
+  echo `_ '  -q Quiet, opposite of -v.'`
+  echo `_ '  -d Enable debug tracing.'`
+  echo `_ 'This program allows you to invalidate the contents of an existing
+backup tape within the Amanda current tape database.  This is meant
+as a recovery mecanism for when a good backup is damaged either by
+faulty hardware or user error, i.e. the tape is eaten by the tape drive,
+or the tape has been overwritten.'`
   return 0
 }
 

@@ -1106,10 +1106,17 @@ main(
     char *pgm = "amindexd";		/* in case argv[0] is not set */
     char his_hostname[MAX_HOSTNAME_LENGTH];
 
+    /*
+     * Configure program for internationalization:
+     *   1) Only set the message locale for now.
+     *   2) Set textdomain for all amanda related programs to "amanda"
+     *      We don't want to be forced to support dozens of message catalogs.
+     */  
+    setlocale(LC_MESSAGES, "");
+    textdomain("amanda"); 
+
     safe_fd(DATA_FD_OFFSET, 2);
     safe_cd();
-
-    setlocale(LC_ALL, "C");
 
     /*
      * When called via inetd, it is not uncommon to forget to put the

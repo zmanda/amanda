@@ -9,24 +9,26 @@
 # try to hit all the possibilities here
 prefix=@prefix@
 exec_prefix=@exec_prefix@
-sbindir=@sbindir@
 libexecdir=@libexecdir@
-
-PATH=$sbindir:$libexecdir:/usr/bin:/bin:/usr/sbin:/sbin:/usr/ucb
-export PATH
+. ${libexecdir}/chg-lib.sh
 
 #
-#      Changer config file (changerfile)
+#	Changer config file (changerfile)
 #
-#      resend_mail=900         # 15 minutes
-#      timeout_mail=604800     # 7 days
-#      request="tty"           # Use the tty to ask the user to change tape.
-#                              # Can't be use by cron
-#      request="email"         # Send an email to ask the user to change tape.
-#      request="tty_email"     # Use the tty if it exist or send an email.
-#                      #Default is "tty_email"
+#	resend_mail=900		# 15 minutes
+#	timeout_mail=604800	# 7 days
+#	request="tty"		# Use the tty to ask the user to change tape.
+#				# Can't be use by cron
+#	request="email"		# Send an email to ask the user to change tape.
+#	request="tty_email"	# Use the tty if it exist or send an email.
+#			#Default is "tty_email"
+#       mt_binary="/path/to/mt" # path of 'mt'; default is value discovered by
+#                               # configure
+#       mtx_binary="/path/to/mtx" # path of 'mtx'; default is value discovered by
+#                               # configure
 #
 #
+
 
 if [ -d "@AMANDA_DBGDIR@" ]; then
 	logfile=@AMANDA_DBGDIR@/changer.debug
@@ -34,63 +36,38 @@ else
 	logfile=/dev/null
 fi
 
-USE_VERSION_SUFFIXES="@USE_VERSION_SUFFIXES@"
-if test "$USE_VERSION_SUFFIXES" = "yes"; then
-	SUF="-@VERSION@"
-else
-	SUF=
-fi
-
 myname=$0
 
 EGREP='@EGREP@'
 
-if [ -x $sbindir/ammt$SUF ]; then
-	MT=$sbindir/ammt$SUF
-	MTF=-f
-elif [ -x "@MT@" ]; then
-	MT=@MT@
-	MTF=@MT_FILE_FLAG@
-else
-	answer="<none> $myname: mt program not found"
-	code=1
-	echo "Exit -> $answer" >> $logfile
-	echo "$answer"
-	exit $code
-fi
-echo MT "->" $MT $MTF >> $logfile
+# for now, continue to prefer ammt and amdd, and in fact
+# assume they exist (since we install them..).  These are shell functions
+# (see chg-lib.sh), so there's no path qualification needed
 
-if [ -x $sbindir/amdd$SUF ]; then
-	DD=$sbindir/amdd$SUF
-elif [ -x "@DD@" ]; then
-	DD=@DD@
-else
-	answer="<none> $myname: dd program not found"
-	code=1
-	echo "Exit -> $answer" >> $logfile
-	echo "$answer"
-	exit $code
-fi
+MT=ammt
+MTF=-f
+echo MT "->" $MT $MTF >> $logfile
+DD=amdd
 echo DD "->" $DD >> $logfile
 
 MAILER=@MAILER@
 ONLINEREGEX="ONLINE|READY|sense[_ ]key[(]0x0[)]|sense key error = 0|^er=0$|, mt_erreg: 0x0|^Current Driver State: at rest$"
-REPORTTO=`amgetconf$SUF mailto`
-tape=`amgetconf$SUF tapedev`
+REPORTTO=`amgetconf mailto`
+tape=`amgetconf tapedev`
 
 if [ -z "$tape" ]; then
-  echo "<none> tapedev not specified in amanda.conf."
+  echo `_ '<none> tapedev not specified in amanda.conf.'`
   exit 2
 fi
 
-ORG=`amgetconf$SUF ORG`
+ORG=`amgetconf ORG`
 
 firstslot=1
 lastslot=99
 resend_mail=900		# 15 minutes
 timeout_mail=604800 	# 7 days
 
-changerfile=`amgetconf$SUF changerfile`
+changerfile=`amgetconf changerfile`
 
 conf_match=`expr "$changerfile" : .\*\.conf\$`
 if [ $conf_match -ge 6 ]; then
@@ -112,14 +89,13 @@ slot=`cat $slotfile`
 
 request_tty() {
 	if > /dev/tty; then
-		echo -n "Insert tape into slot $1 and press return" > /dev/tty
+		echo -n `_ 'Insert tape into slot %s and press return' "$1"` > /dev/tty
 		read ANSWER < /dev/tty
 	else
-		echo "no /dev/tty to ask to change tape"
+		echo -n `_ 'no /dev/tty to ask to change tape'`
 		exit 1
 	fi
 }
-
 
 ###
 # If $changerfile exists, source it into this script.  One reason is to
@@ -134,32 +110,33 @@ request_email() {
 	timeout=0
 	gtimeout=$timeout_mail
 	while true;do
-		if [ $gtimeout -le 0 ]; then
-			echo "timeout waiting for tape online"
-			exit 1;
-		fi
-		if [ $timeout -le 0 ]; then
-			msg="insert Amanda tape into slot $1 ($tape)"
-			subject="$ORG AMANDA TAPE MOUNT REQUEST FOR SLOT $1"
-			echo "$msg" | $MAILER -s "$subject" $REPORTTO
-			timeout=$resend_mail
-		fi
-		echo "     -> rewind $tape" >> $logfile
-		$MT $MTF $tape rewind >> $logfile 2>&1
-		echo "     -> status $tape" >> $logfile
-		used=`$MT $MTF $tape status 2>&1 | tee -a $logfile | $EGREP "$ONLINEREGEX"`
-		echo "     -> loaded <$used>" >> $logfile
-		if [ ! -z "$used" ];then
+	    if [ $gtimeout -le 0 ]; then
+		echo -n `_ 'timeout waiting for tape online'`
+		exit 1;
+	    fi
+	    if [ $timeout -le 0 ]; then
+		msg=`_ 'insert Amanda tape into slot %s (%s)' "$1" "$tape"`
+		subject=`_ '%s AMANDA TAPE MOUNT REQUEST FOR SLOT %s' "$ORG" "$1"`
+		echo "$msg" | $MAILER -s "$subject" $REPORTTO
+		timeout=$resend_mail
+	    fi
+	    echo "     -> rewind $tape" >> $logfile
+	    $MT $MTF $tape rewind >> $logfile 2>&1
+	    echo "     -> status $tape" >> $logfile
+	    used=`$MT $MTF $tape status 2>&1 | tee -a $logfile | $EGREP "$ONLINEREGEX"`
+	    echo "     -> loaded <$used>" >> $logfile
+	    if [ ! -z "$used" ];then
 		break
-		fi
-		sleep 60
-		timeout=`expr $timeout - 60`
-		gtimeout=`expr $gtimeout - 60`
+	    fi
+	    sleep 60
+	    timeout=`expr $timeout - 60`
+	    gtimeout=`expr $gtimeout - 60`
 	done
 }
+
 request_tty_email() {
 	if > /dev/tty; then
-		echo -n "Insert tape into slot $1 and press return" > /dev/tty
+		echo -n `_ 'Insert tape into slot %s and press return' "$1"` > /dev/tty
 		read ANSWER < /dev/tty
 	else
 		request_email "$1"
@@ -177,59 +154,68 @@ request() {
 	fi
 }
 
+# source the changer configuration file (see description, top of file)
 if [ -f $configfile ]; then
 	. $configfile
 fi
 
+# adjust MT and MTX, if necessary
+test -n "${mt_binary}" && MT="${mt_binary}"
+test -n "${mtx_binary}" && MTX="${mtx_binary}"
+
 #
 
 eject() { 
-	echo "     -> rewind $tape" >> $logfile
+	echo `_ '     -> rewind %s' "$tape"` >> $logfile
 	$MT $MTF $tape rewind >> $logfile 2>&1
-	echo "     -> status $tape" >> $logfile
+
+	echo `_ '     -> status %s' "$tape"` >> $logfile
 	used=`$MT $MTF $tape status 2>&1 | tee -a $logfile | $EGREP "$ONLINEREGEX"`
-	echo "     -> loaded <$used>" >> $logfile
+	echo `_ '     -> loaded <%s>' "$used"` >> $logfile
 	if [ ! -z "$used" ];then
-		echo "     -> offline $tape" >> $logfile
+		echo `_ '     -> offline %s' "$tape"` >> $logfile
 		$MT $MTF $tape offline >> $logfile 2>&1
 		echo 0 > $slotfile
 		answer="$slot $tape"
 		code=0
 	else
-		answer="<none> $myname: Drive was not loaded"
+		answer=`_ '<none> %s: Drive was not loaded' "$myname"`
 		code=1
 	fi
-	echo "Exit -> $answer" >> $logfile
-	echo "$answer"
+	echo `_ 'Exit ->'` $answer >> $logfile
+	echo $answer
 	exit $code
 }
 
 #
 
 reset() {
-	echo "     -> rewind $tape" >> $logfile
+	echo `_ '     -> rewind %s' "$tape"` >> $logfile
 	$MT $MTF $tape rewind >> $logfile 2>&1
-	echo "     -> status $tape" >> $logfile
+
+	echo `_ '     -> status %s' "$tape"` >> $logfile
 	used=`$MT $MTF $tape status 2>&1 | tee -a $logfile | $EGREP "$ONLINEREGEX"`
-	echo "     -> loaded <$used>" >> $logfile
+	echo `_ '     -> loaded <%s>' "$used"` >> $logfile
 	if [ ! -z "$used" ];then
 		answer="$slot $tape"
 	else
 		answer="0 $tape"
 	fi
-	echo "Exit -> $answer" >> $logfile
-	echo "$answer"
+	echo `_ 'Exit ->'` $answer >> $logfile
+	echo $answer
 	exit 0
 }
 
 # load #
 
 loadslot() {
-	echo "     -> rewind $tape" >> $logfile
+	echo `_ '     -> rewind %s' "$tape"` >> $logfile
 	$MT $MTF $tape rewind >> $logfile 2>&1
-	echo "     -> status $tape" >> $logfile
+
+	echo `_ '     -> status %s' "$tape"` >> $logfile
 	used=`$MT $MTF $tape status 2>&1 | tee -a $logfile | $EGREP "$ONLINEREGEX"`
-	echo "     -> loaded <$used>" >> $logfile
+
+	echo `_ '     -> loaded <%s>' "$used"` >> $logfile
 	whichslot=$1
 	case $whichslot in
 	current)
@@ -254,17 +240,17 @@ loadslot() {
 		;;
 	[0-9]|[0-9][0-9])
 		if [ $1 -lt $firstslot -o $1 -gt $lastslot ]; then
-			answer="<none> $myname: slot must be $firstslot .. $lastslot"
-			echo "Exit -> $answer" >> $logfile
-			echo "$answer"
+			answer=`_ '<none> %s: slot must be %s .. %s' "$myname" "firstslot" "$lastslot"`
+			echo `_ 'Exit ->'` $answer >> $logfile
+			echo $answer
 			exit 1
 		fi
 		load=$1
 		;;
 	*)
-		answer="<none> $myname: illegal slot: $1"
-		echo "Exit -> $answer" >> $logfile
-		echo "$answer"
+		answer=`_ '<none> %s: illegal slot: %s' "$myname" "$1"`
+		echo `_ 'Exit ->'` $answer >> $logfile
+		echo $answer
 		exit 1
 		;;
 	esac
@@ -272,8 +258,8 @@ loadslot() {
 	if [ ! -z "$used" -a $load = $slot ];then
 		# already loaded
 		answer="$slot $tape"
-		echo "Exit -> $answer" >> $logfile
-		echo "$answer"
+		echo `_ 'Exit ->'` $answer >> $logfile
+		echo $answer
 		exit 0
 	fi
 
@@ -290,46 +276,49 @@ loadslot() {
 
 	#
 	if [ ! -z "$used" ]; then
-		echo "     -> offline $tape" >> $logfile
+		echo `_ "     -> offline %s" "$tape"` >> $logfile
 		$MT $MTF $tape offline >> $logfile 2>&1
 		used=""
 	fi
 	if [ $whichslot = advance ]; then
 		tape=/dev/null
 	else
-		echo "     -> load   $load" >> $logfile
+		echo `_ '     -> load   %s' "$load"` >> $logfile
 		while [ -z "$used" ]; do
 			request $load
-			echo "     -> rewind $tape" >> $logfile
+			echo `_ '     -> rewind %s' "$tape"` >> $logfile
 			$MT $MTF $tape rewind >> $logfile 2>&1
-			echo "     -> status $tape" >> $logfile
+
+			echo `_ '     -> status %s' "$tape"` >> $logfile
 			used=`$MT $MTF $tape status 2>&1 | tee -a $logfile | $EGREP "$ONLINEREGEX"`
-			echo "     -> loaded <$used>" >> $logfile
+			echo `_ '     -> loaded <%s>' "$used"` >> $logfile
 		done
 		$DD if=$tape bs=32k count=1 >> $logfile 2>&1
 	fi
 	echo $load > $slotfile
 	answer="$load $tape"
-	echo "Exit -> $answer" >> $logfile
-	echo "$answer"
+	echo `_ 'Exit ->'` $answer >> $logfile
+	echo $answer
 	exit 0
 }
 
 #
 
 info() {
-	echo "     -> rewind $tape" >> $logfile
+	echo `_ '     -> rewind %s' "$tape"` >> $logfile
 	$MT $MTF $tape rewind >> $logfile 2>&1
-	echo "     -> status $tape" >> $logfile
+
+	echo `_ '     -> status %s' "$tape"` >> $logfile
 	used=`$MT $MTF $tape status 2>&1 | tee -a $logfile | $EGREP "$ONLINEREGEX"`
-	echo "     -> loaded <$used>" >> $logfile
+
+	echo `_ '     -> loaded <%s>' "$used"` >> $logfile
 	if [ -z "$used" ];then
 		answer="0 $lastslot 1"
 	else
 		answer="$slot $lastslot 1"
 	fi
-	echo "Exit -> $answer" >> $logfile
-	echo "$answer"
+	echo `_ 'Exit ->'` $answer >> $logfile
+	echo $answer
 	exit 0
 }
 
@@ -337,7 +326,7 @@ info() {
 # main part
 #
 
-echo Args "->" "$@" >> $logfile
+echo `gettext "args ->"` "$@" >> $logfile
 while [ $# -ge 1 ];do
 	case $1 in
 	-slot)
@@ -357,7 +346,8 @@ while [ $# -ge 1 ];do
 		eject
 		;;
 	*)
-		echo "<none> $myname: Unknown option $1"
+		fmt`gettext "<none> %s: Unknown option %s\n"`
+		printf $fmt $myname $1
 		exit 2
 		;;
 	esac

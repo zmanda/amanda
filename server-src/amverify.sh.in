@@ -23,6 +23,21 @@ else
 	SUF=
 fi
 
+#+
+# Function to:
+#    Simplify gettext usage by allowing printf format
+#    strings for translators, use _() identifier for
+#    xgettext extraction similar to "C" usage and
+#    collapsing "printf `gettext fmt` ...", which is
+#    used everywhere, into one function.
+#-
+function _() {
+	fmt=`gettext -d amanda "$1"`
+	shift
+	printf "$fmt" $*
+}
+
+
 # If the shell/system echo support \r and \c, use them to write some
 # status messages over the top of each other as things progress, otherwise
 # use a normal echo and let them go on new lines.  Define $Echoe to be
@@ -70,12 +85,12 @@ getparm() {
 sendreport() {
 	if [ -f $REPORT -a X"$REPORTTO" != X"" ]; then
 		(
-		echo "Tapes: $TAPELIST"
+		echo `_ 'Tapes: %s' "$TAPELIST"`
 		if [ -s $DEFECTS ]; then
-			echo "Errors found: "
+			echo `_ 'Errors found:'`
 			cat $DEFECTS
 		else
-			echo "No errors found!"
+			echo `_ 'No errors found!'`
 		fi
 		echo
 
@@ -116,7 +131,7 @@ doonefile() {
 	CMD=
 	result=1
 	if [ X"$HEADER" = X"" ]; then
-		echo "** No header" > $TEMP/errors
+		echo `_ '** No header'` > $TEMP/errors
 	else
 		set X $HEADER
 		# XXX meh, while[] is dangerous, what about a bad header?
@@ -151,11 +166,11 @@ doonefile() {
 				CMD=$XFSRESTORE
 				ARGS="-t -v silent -"
 			else
-				echo "** Cannot do $2 dumps" > $TEMP/errors
+				echo `_ '** Cannot do %s dumps' "$2"` > $TEMP/errors
 				result=999	# flag as not really an error
 			fi
 		else
-			echo "** Cannot find dump type" > $TEMP/errors
+			echo `_ '** Cannot find dump type'` > $TEMP/errors
 		fi
 	fi
 	echo $CMD > $TEMP/onefile.cmd
@@ -169,7 +184,7 @@ doonefile() {
 			$CMD $ARGS > /dev/null 2> $TEMP/errors
 			result=$?
 		else
-			echo "** Cannot execute $CMD" > $TEMP/errors
+			echo `_ '** Cannot execute %s' "$CMD"` > $TEMP/errors
 		fi
 	fi
 	cat >/dev/null				# soak up the rest of the image
@@ -343,7 +358,7 @@ REPORT=$TEMP/report; rm -f $REPORT
 TAPELIST=
 EXITSTAT=$TEMP/amrecover.exit; rm -rf $EXITSTAT
 
-trap 'report "aborted!"; echo "aborted!" >> $DEFECTS; sendreport; rm -fr $TEMP; exit 1' 1 2 3 4 5 6 7 8 10 12 13 14 15
+trap 'report "aborted!"; echo `_ 'aborted!'` >> $DEFECTS; sendreport; rm -fr $TEMP; exit 1' 1 2 3 4 5 6 7 8 10 12 13 14 15
 
 $Echoe "Defects file is $DEFECTS"
 report "amverify $CONFIG"
@@ -429,7 +444,7 @@ while [ $SLOT -lt $SLOTS ]; do
 	ERRORS=0
 	while [ $ERG = 0 ]; do
 		if [ $Echon = echon ]; then
-			$Echon "Waiting for device to go ready..."
+			$Echon `_ 'Waiting for device to go ready...'`
 		fi
 		count=1800
 		until eval $DEVICE_READY > $TEMP/ammt.out 2>&1; do
@@ -442,7 +457,7 @@ while [ $SLOT -lt $SLOTS ]; do
 			count=`expr $count - 3`
 		done
 		if [ $Echon = echon ]; then
-			$Echon "Reading..."
+			$Echon `_ 'Reading...'`
 		fi
 		RESULT=`$AMRESTORE -h -p $DEVICE 2> $TEMP/amrestore.out \
 			| doonefile 2> $TEMP/onefile.errors`

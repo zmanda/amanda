@@ -46,11 +46,18 @@ else
 	logfile=/dev/null
 fi
 
-# support simultaneous development with and without gettext
+#+
+# Function to:
+#    Simplify gettext usage by allowing printf format
+#    strings for translators, use _() identifier for
+#    xgettext extraction similar to "C" usage and
+#    collapsing "printf `gettext fmt` ...", which is
+#    used everywhere, into one function.
+#-
 _() {
-        fmt="$1"
-        shift
-        printf "$fmt" $*
+	fmt=`gettext -d amanda "$1"`
+	shift
+	printf "$fmt" $*
 }
 
 echo `_ "arguments ->"` "$@" >> $logfile

@@ -97,7 +97,7 @@ printf_arglist_function1(void putresult, cmd_t, result, const char *, format)
     va_list argp;
 
     arglist_start(argp, format);
-    printf("%s ",cmdstr[result]);
+    printf("%s ", cmdstr[result]);
     vprintf(format, argp);
     fflush(stdout);
     arglist_end(argp);

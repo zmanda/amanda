@@ -109,12 +109,12 @@ printf_arglist_function(void error, const char *, format)
     va_list argp;
     int i;
     char linebuf[STR_SIZE];
-
+    char *xlated_fmt = gettext(format);
 
     /* format and output the error message */
 
     arglist_start(argp, format);
-    vsnprintf(linebuf, SIZEOF(linebuf), format, argp);
+    vsnprintf(linebuf, SIZEOF(linebuf), xlated_fmt, argp);
     arglist_end(argp);
     output_error_message(linebuf);
 
@@ -138,11 +138,12 @@ printf_arglist_function(void errordump, const char *, format)
     va_list argp;
     int i;
     char linebuf[STR_SIZE];
+    char *xlated_fmt = gettext(format);
 
     /* format error message */
 
     arglist_start(argp, format);
-    vsnprintf(linebuf, SIZEOF(linebuf), format, argp);
+    vsnprintf(linebuf, SIZEOF(linebuf), xlated_fmt, argp);
     arglist_end(argp);
     output_error_message(linebuf);
 

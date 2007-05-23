@@ -52,12 +52,19 @@ main(
     (void)argc;	/* Quiet unused parameter warning */
     (void)argv;	/* Quiet unused parameter warning */
 
+    /*
+     * Configure program for internationalization:
+     *   1) Only set the message locale for now.
+     *   2) Set textdomain for all amanda related programs to "amanda"
+     *      We don't want to be forced to support dozens of message catalogs.
+     */  
+    setlocale(LC_MESSAGES, "");
+    textdomain("amanda"); 
+
     /* Don't die when child closes pipe */
     signal(SIGPIPE, SIG_IGN);
 
     safe_fd(-1, 0);
-
-    setlocale(LC_ALL, "C");
 
     do {
  	/* soak up any stdin */

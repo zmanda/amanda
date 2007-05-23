@@ -59,10 +59,11 @@ COMPRESS=@AMPLOT_COMPRESS@
 #    used everywhere, into one function.
 #-
 _() {
-	fmt="$1"
+	fmt=`gettext -d amanda "$1"`
 	shift
 	printf "$fmt" $*
 }
+
 
 # Function to check that awk can do command-line variable
 # substitution.  If no, then exit; if yes, set $AVARFLAG

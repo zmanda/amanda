@@ -4,6 +4,8 @@ AC_CONFIG_SRCDIR([common-src/amanda.h])
 AC_CONFIG_AUX_DIR(config)
 AC_CANONICAL_TARGET([])
 
+PACKAGE=amanda
+AC_SUBST(PACKAGE)
 
 CONFIGURE_COMMAND="'$0'"
 for arg in "$@"; do
@@ -2000,7 +2002,7 @@ if test "$MSGFMT" = "no"; then
    USE_INCLUDED_LIBINTL=no
 else
 dnl Indenting the next line causes autopoint for emit a warning...
-AM_GNU_GETTEXT_VERSION([0.11.5])
+AM_GNU_GETTEXT_VERSION([0.15])
    AM_GNU_GETTEXT([external])
 fi
 
@@ -3311,8 +3313,10 @@ if test "x$CC" = "xgcc"; then
 fi
 AC_SUBST(AM_CFLAGS)
 
-AC_CONFIG_FILES([\
+AC_CONFIG_FILES([							\
 	gnulib/Makefile							\
+									\
+	po/Makefile							\
 									\
 	amplot/amcat.awk		amplot/amplot.sh		\
 	amplot/Makefile							\

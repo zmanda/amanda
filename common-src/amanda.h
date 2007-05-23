@@ -84,7 +84,7 @@
 #  endif
 #endif
 
-#ifdef USE_NLS
+#ifdef ENABLE_NLS
 #  include <libintl.h>
 #  include <locale.h>
 #  define  plural(String1, String2, Count)				\
@@ -93,7 +93,7 @@
 #  define plural(String1, String2, Count)				\
 		(((Count) == 1) ? (String1) : (String2))
 #  define setlocale(Which, Locale)
-#  define testdomain(Domain)
+#  define textdomain(Domain)
 #  define bindtextdomain(Package, Directory)
 #  define gettext(String)			String
 #  define dgettext(Domain, String)		String

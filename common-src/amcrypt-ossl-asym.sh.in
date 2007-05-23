@@ -50,12 +50,27 @@ MAGIC='AmAnDa+OpEnSsL'
 ME=`basename "$0"`
 WORKDIR="/tmp/.${ME}.$$"
 
+#+
+# Function to:
+#    Simplify gettext usage by allowing printf format
+#    strings for translators, use _() identifier for
+#    xgettext extraction similar to "C" usage and
+#    collapsing "printf `gettext fmt` ...", which is
+#    used everywhere, into one function.
+#-
+_() {
+	fmt=`gettext -d amanda "$1"`
+	shift
+	printf "$fmt" $*
+}
+
+
 # first things first
 if [ -z "${OPENSSL:=`which openssl`}" ]; then
-	echo "${ME}: openssl not found" >&2
+	echo `_ '%s: %s not found' "${ME}" "openssl"` >&2
 	exit 1
 elif [ ! -x "${OPENSSL}" ]; then
-	echo "${ME}: can't execute openssl (${OPENSSL})" >&2
+	echo `_ "%s: can't execute openssl (%s)" "${ME}" "${OPENSSL}"` >&2
 	exit 1
 fi
 
@@ -65,8 +80,8 @@ if [ -n "${PASSPHRASE}" ]; then
 	OSSL_VERSION=`eval \"${OPENSSL}\" version |cut -d\  -f2`
 	case "${OSSL_VERSION}" in
 	 ''|0.[0-8].*|0.9.[0-6]*|0.9.7|0.9.7[a-c]*)
-		echo "${ME}: ${OPENSSL} is version ${OSSL_VERSION}" >&2
-		echo "${ME}: Using pass phrase kluge for OpenSSL version >=0.9.7d" >&2
+		echo `_ '%s: %s is version %s' "${ME}" "${OPENSSL}" "${OSSL_VERSION}"` >&2
+		echo `_ '%s: Using pass phrase kluge for OpenSSL version >=0.9.7d' "${ME}"` >&2
 		PASS_FROM_STDIN=yes
 		;;
 	esac
@@ -74,7 +89,7 @@ fi
 
 mkdir -m 700 "${WORKDIR}"
 if [ $? -ne 0 ]; then
-	echo "${ME}: failed to create temp directory" >&2
+	echo `_ '%s: failed to create temp directory' "${ME}"` >&2
 	exit 1
 fi
 # ignore SIGINT
@@ -97,7 +112,7 @@ encrypt() {
 	[ $? -eq 0 ] || return 1
 
 	# print magic
-	printf %s "${MAGIC}"
+	printf "%s" "${MAGIC}"
 
 	# print the encrypted cipher key, preceded by size
 	ls -l "${WORKDIR}/pass.ciphertext" | awk '{ printf("%-10d", $5) }'
@@ -110,10 +125,10 @@ encrypt() {
 
 decrypt() {
 	# read magic
-	magicsize=`printf %s "${MAGIC}" | wc -c | sed 's/^ *//'`
+	magicsize=`printf "%s" "${MAGIC}" | wc -c | sed 's/^ *//'`
 	magic=`dd bs=$magicsize count=1 2>/dev/null`
 	if [ "$magic" != "${MAGIC}" ]; then
-		echo "${ME}: bad magic" >&2
+		echo `_ '%s: bad magic' "${ME}"` >&2
 		return 1
 	fi
 
@@ -121,7 +136,7 @@ decrypt() {
 	n=`dd bs=10 count=1 2>/dev/null`
 	[ $n -gt 0 ] 2>/dev/null
 	if [ $? -ne 0 ]; then
-		echo "${ME}: bad header" >&2
+		echo `_ '%s: bad header' "${ME}"` >&2
 		return 1
 	fi
 
@@ -146,10 +161,10 @@ decrypt() {
 
 if [ "$1" = -d ]; then
 	if [ -z "${PRIVKEY}" ]; then
-		echo "${ME}: must specify private key for decryption" >&2
+		echo `_ '%s: must specify private key for decryption' "${ME}"` >&2
 		exit 1
 	elif [ ! -r "${PRIVKEY}" ]; then
-		echo "${ME}: can't read private key from ${PRIVKEY}" >&2
+		echo `_ "%s: can't read private key from %s" "${ME}" "${PRIVKEY}"` >&2
 		exit 1
 	fi
 
@@ -161,21 +176,21 @@ if [ "$1" = -d ]; then
 
 	decrypt
 	if [ $? -ne 0 ]; then
-		echo "${ME}: decryption failed" >&2
+		echo `_ '%s: decryption failed' "${ME}"` >&2
 		exit 1
 	fi
 else
 	if [ -z "${PUBKEY}" ]; then
-		echo "${ME}: must specify public key for encryption" >&2
+		echo `_ '%s: must specify public key for encryption' "${ME}"` >&2
 		exit 1
 	elif [ ! -r "${PUBKEY}" ]; then
-		echo "${ME}: can't read public key from ${PUBKEY}" >&2
+		echo `_ "%s: can't read public key from %s" "${ME}" "${PUBKEY}"` >&2
 		exit 1
 	fi
 
 	encrypt
 	if [ $? -ne 0 ]; then
-		echo "${ME}: encryption failed" >&2
+		echo `_ '%s: encryption failed' "${ME}"` >&2
 		exit 1
 	fi
 fi

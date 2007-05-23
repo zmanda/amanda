@@ -20,6 +20,20 @@ else
 	SUF=
 fi
 
+#+
+# Function to:
+#    Simplify gettext usage by allowing printf format
+#    strings for translators, use _() identifier for
+#    xgettext extraction similar to "C" usage and
+#    collapsing "printf `gettext fmt` ...", which is
+#    used everywhere, into one function.
+#-
+function _() {
+	fmt=`gettext -d amanda "$1"`
+	shift
+	printf "$fmt" $*
+}
+
 Program=`basename $0`
 
 log () {
@@ -63,8 +77,11 @@ fi
 
 Amadmin=$sbindir/amadmin$SUF
 
+[ ! -f $Amadmin ] \
+	&& echo `_ '%s was not found' $Amadmin` >&2 \
+	&& exit 1
 [ ! -x $Amadmin ] \
-	&& echo "$Amadmin not found or not executable" >&2 \
+	&& echo `_ '%s is not executable' $Amadmin` >&2 \
 	&& exit 1
 
 $Amadmin $Config export "$@"\
@@ -79,9 +96,9 @@ $Amadmin $Config export "$@"\
 		[ "$TAPE" = "" ] && continue
 		grep " $TAPE " $TapeList 2>/dev/null >/dev/null
 		[ $? != 0 ] \
-			&& echo "Tape $TAPE missing in $TapeList"
+			&& echo `_ 'Tape %s missing in %s' "$TAPE" "$TapeList"`
 	done
 
-echo "Ready."
+echo `_ 'Ready.'`
 
 exit 0

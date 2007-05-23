@@ -81,9 +81,24 @@ fi
 
 MYNAME=$0
 
+#+
+# Function to:
+#    Simplify gettext usage by allowing printf format
+#    strings for translators, use _() identifier for
+#    xgettext extraction similar to "C" usage and
+#    collapsing "printf `gettext fmt` ...", which is
+#    used everywhere, into one function.
+#-
+_() {
+	fmt=`gettext -d amanda "$1"`
+	shift
+	printf "$fmt" $*
+}
+
+
 TAPE=`amgetconf$SUF tapedev`
 if test X"$TAPE" == X""; then
-    echo "<none> tapedev not specified in amanda.conf."
+    echo `_ '<none> tapedev not specified in amanda.conf.'`
     exit 2
 fi
 SLOTDIR=`echo $TAPE | sed 's/^file://'`
@@ -99,11 +114,11 @@ isinteger() {
 
 # Need rwx access to the virtual tape itself.
 if ! test -d $SLOTDIR; then
-    echo "<none> Virtual-tape directory $SLOTDIR does not exist."
+    echo `_ '<none> Virtual-tape directory %s does not exist.' "$SLOTDIR"`
     exit 2
 fi
 if ! test -w $SLOTDIR; then
-    echo "<none> Virtual-tape directory $SLOTDIR is not writable."
+    echo `_ '<none> Virtual-tape directory %s is not writable.' "$SLOTDIR"`
     exit 2
 fi
 
@@ -120,21 +135,21 @@ fi
 
 CFDir=`dirname ${CHANGERFILE}`
 [ -d ${CFDir} -a -r ${CFDir} -a -w ${CFDir} -a -x ${CFDir} ] ||
-	{ echo "<none> $MYNAME: need 'rwx' access to '$CFDir'"; exit 2 ; }
+	{ echo `_ "<none> %s: need 'rwx' access to '%s'" "$MYNAME" "$CFDir"` ; exit 2 ; }
 
 # check or create changer metadata files
 ACCESSFILE=$CHANGERFILE-access
 [ -f $ACCESSFILE -a -r $ACCESSFILE -a -w $ACCESSFILE ] ||
 	echo 0 > $ACCESSFILE ||
-	{ echo "<none> $MYNAME: could not access or create '$ACCESSFILE'" ; exit 2 ; }
+	{ echo `_ "<none> %s: could not access or create '%s'" "$MYNAME" "$ACCESSFILE"` ; exit 2; }
 CLEANFILE=$CHANGERFILE-clean
 [ -f $CLEANFILE -a -r $CLEANFILE -a -w $CLEANFILE ] ||
 	echo 0 > $CLEANFILE ||
-	{ echo "<none> $MYNAME: could not access or create '$CLEANFILE'" ; exit 2 ; }
+	{ echo `_ "<none> %s: could not access or create '%s'" "$MYNAME" "$CLEANFILE"` ; exit 2 ; }
 SLOTFILE=$CHANGERFILE-slot
 [ -f $SLOTFILE -a -r $SLOTFILE -a -w $SLOTFILE ] ||
 	echo 0 > $SLOTFILE ||
-	{ echo "<none> $MYNAME: could not access or create '$SLOTFILE'" ; exit 2 ; }
+	{ echo `_ "<none> %s: could not access or create '%s'" "$MYNAME" "$SLOTFILE"` ; exit 2; }
 
 # read and check metadata
 ACCESSCOUNT=`cat $ACCESSFILE`
@@ -199,13 +214,13 @@ loadslot() {
     if [ $WHICHSLOT -ge $FIRSTSLOT -a $WHICHSLOT -le $LASTSLOT ]; then
       NEWSLOT=$WHICHSLOT
     else
-      echo "$WHICHSLOT illegal slot"
+      echo `_ '%s illegal slot' "$WHICHSLOT"`
       exit 1
     fi
   elif [ $WHICHSLOT = "clean" ]; then
     NEWSLOT=$CLEANSLOT
   else
-    echo "$WHICHSLOT illegal request"
+    echo `_ '%s illegal request' "$WHICHSLOT"`
     exit 1
   fi
   if [ $NEWSLOT = $CURSLOT ]; then
@@ -253,7 +268,7 @@ reset() {
 eject() {
   readstatus
   if [ $CURSLOT -le 0 ]; then
-    echo "0 Drive was not loaded"
+    echo `_ '0 Drive was not loaded'`
     exit 1
   else
     unload
@@ -310,7 +325,7 @@ while [ $# -ge 1 ];do
             eject
             ;;
     *)
-       echo "<none> Unknown option $1"
+       echo `_ '<none> Unknown option %s' "$1"`
        exit 2
        ;;
   esac

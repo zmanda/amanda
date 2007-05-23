@@ -19,6 +19,21 @@
 # and changerdev, and deal with the possibility that there are several 
 # jukeboxes and several drives in each jukebox involved.
 
+#+
+# Function to:
+#    Simplify gettext usage by allowing printf format
+#    strings for translators, use _() identifier for
+#    xgettext extraction similar to "C" usage and
+#    collapsing "printf `gettext fmt` ...", which is
+#    used everywhere, into one function.
+#-
+_() {
+	fmt=`gettext -d amanda "$1"`
+	shift
+	printf "$fmt" $*
+}
+
+
 #
 # debugging...
 #
@@ -28,7 +43,7 @@ else
 	DBGFILE=/dev/null
 fi
 exec 2>$DBGFILE
-echo "args: $0 $*" >&2
+echo `_ 'args:'` $0 $* >&2
 set -x 
 
 #
@@ -107,7 +122,7 @@ unload_drive_n_clean() {
 	    then
 		:
 	    else
-		echo "$slot $tapedev unable to empty preceding tape from drive $drive"
+		echo `_ '%s %s unable to empty preceding tape from drive %s' "$slot" "$tapedev" "$drive"`
 		exit 1
 	    fi
 
@@ -136,7 +151,7 @@ load_drives() {
 	    juke load -j $changerdev drive $drive slot $rslot >&2
 	    if juke list -j $changerdev drive $drive | grep '(empty)' >&2
 	    then
-		echo "$slot $tapedev unable to load tape into drive"
+		echo `_ '$slot $tapedev unable to load tape into drive' "$slot" "$tapedev"`
 		exit 1
 	    fi
 	    count=`expr $count + 1`
@@ -152,7 +167,7 @@ load_drives() {
 	count=`expr $count + 1`
 	if [ $count -gt 24 ] 
 	then
-	    echo "$slot $tapedev never came online"
+	    echo `_ '%s %s never came online' "$slot" "$tapedev"`
 	    exit 1
 	fi
 	sleep 5

@@ -38,12 +38,19 @@ main(
     int		argc,
     char **	argv)
 {
-	safe_fd(-1, 0);
-
 	(void)argc;	/* Quiet unused parameter warning */
 	(void)argv;	/* Quiet unused parameter warning */
 
-	setlocale(LC_ALL, "C");
+	/*
+	 * Configure program for internationalization:
+	 *   1) Only set the message locale for now.
+	 *   2) Set textdomain for all amanda related programs to "amanda"
+	 *      We don't want to be forced to support dozens of message catalogs.
+	 */  
+	setlocale(LC_MESSAGES, "");
+	textdomain("amanda"); 
+
+	safe_fd(-1, 0);
 
 	set_pname("versionsuffix");
 

@@ -279,17 +279,24 @@ main(
     int    new_argc,   my_argc;
     char **new_argv, **my_argv;
 
+    /*
+     * Configure program for internationalization:
+     *   1) Only set the message locale for now.
+     *   2) Set textdomain for all amanda related programs to "amanda"
+     *      We don't want to be forced to support dozens of message catalogs.
+     */  
+    setlocale(LC_MESSAGES, "");
+    textdomain("amanda"); 
+
     for(fd = 3; fd < (int)FD_SETSIZE; fd++) {
 	/*
 	 * Make sure nobody spoofs us with a lot of extra open files
-	 * that would cause an open we do to get a very high file
+	 * that would cause a successful open to get a very high file
 	 * descriptor, which in turn might be used as an index into
 	 * an array (e.g. an fd_set).
 	 */
 	close(fd);
     }
-
-    setlocale(LC_ALL, "C");
 
     set_pname("amfetchdump");
 

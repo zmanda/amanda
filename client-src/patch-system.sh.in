@@ -8,6 +8,21 @@ prefix="@prefix@"
 exec_prefix="@exec_prefix@"
 libexecdir="@libexecdir@"
 
+#+
+# Function to:
+#    Simplify gettext usage by allowing printf format
+#    strings for translators, use _() identifier for
+#    xgettext extraction similar to "C" usage and
+#    collapsing "printf `gettext fmt` ...", which is
+#    used everywhere, into one function.
+#-
+function _() {
+	fmt=`gettext -d amanda "$1"`
+	shift
+	printf "$fmt" $*
+}
+
+
 USE_VERSION_SUFFIXES="@USE_VERSION_SUFFIXES@"
 if test "$USE_VERSION_SUFFIXES" = "yes"; then
 	SUF="-@VERSION@"
@@ -78,24 +93,24 @@ while [ $# != 0 ]; do
     --tape-port=?*)
 	TAPE_PORT=`echo $1 | sed -e 's/[^=]*=//'`;;
     --usage | --help | -h)
-	echo "call this script with zero or more of the following arguments:"
-	echo "--version-suffix=<suffix>: append to program names [$SUF]"
-	echo "--service-suffix=<suffix>: append to service names [$SERVICE_SUFFIX]"
-	echo "--libexecdir=<dirname>: where daemons should be looked for [$libexecdir]"
-	echo "--inetd=<pathname>: full pathname of inetd.conf [$INETDCONF]"
-	echo "--services=<pathname>: full pathname of services [$SERVICES]"
-	echo "    an empty pathname or /dev/null causes that file to be skipped"
-	echo "--user=<username>: run deamons as this user [$USER]"
-	echo "--enable/disable-client: enable/disable amandad [`$ENABLE_AMANDAD && echo enabled || echo disabled`]"
-	echo "--enable/disable-index: enable/disable index server [`$ENABLE_INDEX && echo enabled || echo disabled`]"
-	echo "--enable/disable-tape: enable/disable tape server [`$ENABLE_TAPE && echo enabled || echo disabled`]"
-	echo "--client-port=<num>: amandad port number [$CLIENT_PORT]"
-	echo "--kclient-port=<num>: kamandad port number [$KCLIENT_PORT]"
-	echo "--index-port=<num>: index server port number [$INDEX_PORT]"
-	echo "--tape-port=<num>: tape server port number [$TAPE_PORT]"
+	echo `_ 'call this script with zero or more of the following arguments:'`
+	echo `_ '--version-suffix=<suffix>: append to program names [%s]' "$SUF"`
+	echo `_ '--service-suffix=<suffix>: append to service names [%s]' "$SERVICE_SUFFIX"`
+	echo `_ '--libexecdir=<dirname>: where daemons should be looked for [%s]' "$libexecdir"`
+	echo `_ '--inetd=<pathname>: full pathname of inetd.conf [%s]' "$INETDCONF"`
+	echo `_ '--services=<pathname>: full pathname of services [%s]' "$SERVICES"`
+	echo `_ '\tan empty pathname or /dev/null causes that file to be skipped'`
+	echo `_ '--user=<username>: run deamons as this user [%s]' "$USER"`
+	echo `_ '--enable/disable-client: enable/disable amandad [%s]' \`$ENABLE_AMANDAD && echo enabled || echo disabled\``
+	echo `_ '--enable/disable-index: enable/disable index server [%s]' \`$ENABLE_INDEX && echo enabled || echo disabled\``
+	echo `_ '--enable/disable-tape: enable/disable tape server [%s]' \`$ENABLE_TAPE && echo enabled || echo disabled\``
+	echo `_ '--client-port=<num>: amandad port number [%s]' "$CLIENT_PORT"`
+	echo `_ '--kclient-port=<num>: kamandad port number [%s]' "$KCLIENT_PORT"`
+	echo `_ '--index-port=<num>: index server port number [%s]' "$INDEX_PORT"`
+	echo `_ '--tape-port=<num>: tape server port number [%s]' "$TAPE_PORT"`
 	exec true;;
     *)
-	echo "$0: invalid argument $1.  run with -h for usage" >&2
+	echo `_ '%s: invalid argument %s.  run with -h for usage\n' "$0" "$1"` >&2
 	exec false;;
     esac
     shift
@@ -113,19 +128,22 @@ elif [ -f "$SERVICES" ]; then
 	    echo "amidxtape${SERVICE_SUFFIX} ${TAPE_PORT}/tcp"
 	} > "$TEMP"
 	if diff "$SERVICES" "$TEMP" >/dev/null 2>/dev/null; then
-		echo "$SERVICES is up to date"
+		echo `_ '%s is up to date' "$SERVICES"`
 	else
-		cp "$TEMP" "$SERVICES" || echo "cannot patch $SERVICES"
+		cp "$TEMP" "$SERVICES" || echo `_ 'cannot patch %s' "$SERVICES"`
 	fi
 	rm -f "$TEMP"
 else
-	echo "$SERVICES not found!"
+	echo `_ '%s not found!' "$SERVICES"`
 fi
 if [ "$INETDCONF" = /dev/null ]; then :
 elif [ -f "$INETDCONF" ]; then
-	$ENABLE_AMANDAD && test ! -f $libexecdir/amandad$SUF && echo "warning: $libexecdir/amandad$SUF does not exist" >&2
-	$ENABLE_INDEX && test ! -f $libexecdir/amindexd$SUF && echo "warning: $libexecdir/amindexd$SUF does not exist" >&2
-	$ENABLE_TAPE && test ! -f $libexecdir/amidxtaped$SUF && echo "warning: $libexecdir/amidxtaped$SUF does not exist" >&2
+	err=`_ 'warning: %s/amandad%s does not exist' "$libexecdir" "$SUF"`
+	$ENABLE_AMANDAD && test ! -f $libexecdir/amandad$SUF && echo "$err" >&2
+	err=`_ 'warning: %s/amindexd%s does not exist' "$libexecdir" "$SUF"`
+	$ENABLE_INDEX && test ! -f $libexecdir/amindexd$SUF && echo "$err" >&2
+	err=`_ 'warning: %s/amidxtaped%s does not exist' "$libexecdir" "$SUF"`
+	$ENABLE_TAPE && test ! -f $libexecdir/amidxtaped$SUF && echo "$err" >&2
 	TEMP="$INETDCONF.new"
 	{
 	    egrep < "$INETDCONF" -v "^(amanda|amandaidx|amidxtape)${SERVICE_SUFFIX}[ 	]"
@@ -134,11 +152,14 @@ elif [ -f "$INETDCONF" ]; then
 	    $ENABLE_TAPE && echo "amidxtape${SERVICE_SUFFIX} stream tcp nowait $USER $libexecdir/amidxtaped$SUF amidxtaped$SUF"
 	} > "$TEMP"
 	if diff "$INETDCONF" "$TEMP" >/dev/null 2>/dev/null; then
-		echo "$INETDCONF is up to date"
+		fmt="%s is up to date\n"
+		printf $fmt $INETDCONF
 	else
-		cp "$TEMP" "$INETDCONF" || echo "cannot patch $INETDCONF"
+		fmt="cannot patch %s\n"
+		cp "$TEMP" "$INETDCONF" || printf $fmt $INETDCONF
 	fi
 	rm -f "$TEMP"
 else
-	echo "$INETDCONF not found!"
+	fmt="%s not found!\n"
+	printf $fmt $INETDCONF
 fi

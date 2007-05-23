@@ -3656,6 +3656,7 @@ ckseen(
 printf_arglist_function(void conf_parserror, const char *, format)
 {
     va_list argp;
+    char *xlated_fmt = gettext(format);
 
     /* print error message */
 
@@ -3663,8 +3664,9 @@ printf_arglist_function(void conf_parserror, const char *, format)
 	fprintf(stderr, _("argument \"%s\": "), conf_line);
     else
 	fprintf(stderr, "\"%s\", line %d: ", conf_confname, conf_line_num);
+    
     arglist_start(argp, format);
-    vfprintf(stderr, format, argp);
+    vfprintf(stderr, xlated_fmt, argp);
     arglist_end(argp);
     fputc('\n', stderr);
 

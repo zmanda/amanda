@@ -44,6 +44,19 @@ else
         SUF=
 fi
 
+#+
+# Function to:
+#    Simplify gettext usage by allowing printf format
+#    strings for translators, use _() identifier for
+#    xgettext extraction similar to "C" usage and
+#    collapsing "printf `gettext fmt` ...", which is
+#    used everywhere, into one function.
+#-
+_() {
+	fmt=`gettext -d amanda "$1"`
+	shift
+	printf "$fmt" $*
+}
 
 #
 # Load configuration data from the config file
@@ -55,7 +68,8 @@ myname=$0
 
 if [ ! -f "$ourconf" ]; then
         code=2
-        echo "Command Line -> $myname $@\nExit($code): $ourconf not found as listed in amanda.conf"
+        echo `_ 'Command Line ->'` $myname $@
+	echo `_ 'Exit(%s): %s not found as listed in amanda.conf' "$code" "$ourconf"` 1>&2
         exit $code
 fi
 
@@ -65,7 +79,8 @@ tmpval1=`grep ^mcutil $ourconf | awk -F\  '{print $2}'`
 tmpval2=`grep ^mcutil $ourconf | awk -F= '{print $2}'`
 if [ -z "$tmpval1" ] && [ -z "$tmpval2" ]; then
 	code=2
-	echo "Command Line -> $myname $@ \nExit($code): mcutil not specified in $ourconf"
+        echo `_ 'Command Line ->'` $myname $@
+	echo `_ 'Exit(%s): mcutil not specified in %s' "$code" "$ourconf"` 1>&2
 	exit $code
 elif [ -z "$tmpval1" ]; then
 	MCUTIL=$tmpval2
@@ -79,7 +94,8 @@ tmpval1=`grep ^tape $ourconf | awk -F\  '{print $2}'`
 tmpval2=`grep ^tape $ourconf | awk -F= '{print $2}'`
 if [ -z "$tmpval1" ] && [ -z "$tmpval2" ]; then
 	code=2
-	echo "Command Line -> $myname $@ \nExit($code): tape not specified in $ourconf"
+        echo `_ 'Command Line ->'` $myname $@
+	echo `_ 'Exit(%s): tape not specified in %s' "$code" "$ourconf"` 1>&2
 	exit $code
 elif [ -z "$tmpval1" ]; then
 	tape=$tmpval2
@@ -93,7 +109,8 @@ tmpval1=`grep ^firstslot $ourconf | awk -F\  '{print $2}'`
 tmpval2=`grep ^firstslot $ourconf | awk -F= '{print $2}'`
 if [ -z "$tmpval1" ] && [ -z "$tmpval2" ]; then
         code=2
-        echo "Command Line -> $myname $@ \nExit($code): firstslot not specified in $ourconf"
+        echo `_ 'Command Line ->'` $myname $@
+        echo `_ 'Exit(%s): firstslot not specified in %s' "$code" "$ourconf"` 1>&2
         exit $code
 elif [ -z "$tmpval1" ]; then
         firstslot=$tmpval2
@@ -107,8 +124,8 @@ tmpval1=`grep ^lastslot $ourconf | awk -F\  '{print $2}'`
 tmpval2=`grep ^lastslot $ourconf | awk -F= '{print $2}'`
 if [ -z "$tmpval1" ] && [ -z "$tmpval2" ]; then
         code=2
-        echo "Command Line -> $myname $@ \nExit($code): lastslot not specified in $ourconf"
-        exit $code
+        echo `_ 'Command Line ->'` $myname $@
+        echo `_ 'Exit(%s): lastslot not specified in %s' "$code" "$ourconf"` 1>&2
 elif [ -z "$tmpval1" ]; then
         lastslot=$tmpval2
 else
@@ -121,7 +138,8 @@ tmpval1=`grep ^use_cleaning $ourconf | awk -F\  '{print $2}'`
 tmpval2=`grep ^use_cleaning $ourconf | awk -F= '{print $2}'`
 if [ -z "$tmpval1" ] && [ -z "$tmpval2" ]; then
         code=2
-        echo "Command Line -> $myname $@ \nExit($code): use_cleaning not specified in $ourconf"
+        echo `_ 'Command Line ->'` $myname $@
+        echo `_ 'Exit(%s): use_cleaning not specified in %s' "$code" "$ourconf"` 1>&2
         exit $code
 elif [ -z "$tmpval1" ]; then
         use_cleaning=$tmpval2
@@ -135,7 +153,8 @@ tmpval1=`grep ^cleanslot $ourconf | awk -F\  '{print $2}'`
 tmpval2=`grep ^cleanslot $ourconf | awk -F= '{print $2}'`
 if [ -z "$tmpval1" ] && [ -z "$tmpval2" ]; then
         code=2
-        echo "Command Line -> $myname $@ \nExit($code): cleanslot not specified in $ourconf"
+        echo `_ 'Command Line ->'` $myname $@
+        echo `_ 'Exit(%s): cleanslot not specified in %s' "$code" "$ourconf"` 1>&2
         exit $code
 elif [ -z "$tmpval1" ]; then
         cleanslot=$tmpval2
@@ -149,7 +168,8 @@ tmpval1=`grep ^cleansleep $ourconf | awk -F\  '{print $2}'`
 tmpval2=`grep ^cleansleep $ourconf | awk -F= '{print $2}'`
 if [ -z "$tmpval1" ] && [ -z "$tmpval2" ]; then
 	code=2
-	echo "Command Line -> $myname $@ \nExit($code): cleansleep not specified in $ourconf"
+        echo `_ 'Command Line ->'` $myname $@
+        echo `_ 'Exit(%s): cleansleep not specified in %s' "$code" "$ourconf"` 1>&2
 	exit $code
 elif [ -z "$tmpval1" ]; then
 	cleansleep=$tmpval2
@@ -163,7 +183,8 @@ tmpval1=`grep ^cleanme $ourconf | awk -F\  '{print $2}'`
 tmpval2=`grep ^cleanme $ourconf | awk -F= '{print $2}'`
 if [ -z "$tmpval1" ] && [ -z "$tmpval2" ]; then
 	code=2
-	echo "Command Line -> $myname $@ \nExit($code): cleanme not specified in $ourconf"
+        echo `_ 'Command Line ->'` $myname $@
+        echo `_ 'Exit(%s): cleanme not specified in %s' "$code" "$ourconf"` 1>&2
 	exit $code
 elif [ -z "$tmpval1" ]; then
 	cleanme=$tmpval2
@@ -177,7 +198,8 @@ tmpval1=`grep ^cleanfile $ourconf | awk -F\  '{print $2}'`
 tmpval2=`grep ^cleanfile $ourconf | awk -F= '{print $2}'`
 if [ -z "$tmpval1" ] && [ -z "$tmpval2" ]; then
         code=2
-        echo "Command Line -> $myname $@ \nExit($code): cleanfile not specified in $ourconf"
+        echo `_ 'Command Line ->'` $myname $@
+        echo `_ 'Exit(%s): cleanfile not specified in %s' "$code" "$ourconf"` 1>&2
         exit $code
 elif [ -z "$tmpval1" ]; then
         cleanfile=$tmpval2
@@ -191,7 +213,8 @@ tmpval1=`grep ^lastfile $ourconf | awk -F\  '{print $2}'`
 tmpval2=`grep ^lastfile $ourconf | awk -F= '{print $2}'`
 if [ -z "$tmpval1" ] && [ -z "$tmpval2" ]; then
 	code=2
-	echo "Command Line -> $myname $@ \nExit($code): lastfile not specified in $ourconf"
+        echo `_ 'Command Line ->'` $myname $@
+        echo `_ 'Exit(%s): lastfile not specified in %s' "$code" "$ourconf"` 1>&2
 	exit $code
 elif [ -z "$tmpval1" ]; then
 	lastfile=$tmpval2
@@ -205,7 +228,8 @@ tmpval1=`grep ^currentslot $ourconf | awk -F\  '{print $2}'`
 tmpval2=`grep ^currentslot $ourconf | awk -F= '{print $2}'`
 if [ -z "$tmpval1" ] && [ -z "$tmpval2" ]; then
 	code=2
-	echo "Command Line -> $myname $@ \nExit($code): currentslot not specified in $ourconf"
+        echo `_ 'Command Line ->'` $myname $@
+        echo `_ 'Exit(%s): currentslot not specified in %s' "$code" "$ourconf"` 1>&2
 	exit $code
 elif [ -z "$tmpval1" ]; then
 	currentslot=$tmpval2
@@ -219,7 +243,8 @@ tmpval1=`grep ^logfile $ourconf | awk -F\  '{print $2}'`
 tmpval2=`grep ^logfile $ourconf | awk -F= '{print $2}'`
 if [ -z "$tmpval1" ] && [ -z "$tmpval2" ]; then
 	code=2
-	echo "Command Line -> $myname $@ \nExit($code): logfile not specified in $ourconf"
+        echo `_ 'Command Line ->'` $myname $@
+        echo `_ 'Exit(%s): logfile not specified in %s' "$code" "$ourconf"` 1>&2
 	exit $code
 elif [ -z "$tmpval1" ]; then
 	logfile=$tmpval2
@@ -235,7 +260,8 @@ tmpval1=`grep ^slot0source $ourconf | awk -F\  '{print $2}'`
 tmpval2=`grep ^slot0source $ourconf | awk -F= '{print $2}'`
 if [ -z "$tmpval1" ] && [ -z "$tmpval2" ]; then
 	code=2
-	echo "Command Line -> $myname $@ \nExit($code): slot0source not specified in $ourconf"
+        echo `_ 'Command Line ->'` $myname $@
+        echo `_ 'Exit(%s): slot0source not specified in %s' "$code" "$ourconf"` 1>&2
 	exit $code
 elif [ -z "$tmpval1" ]; then
 	slot0source=$tmpval2
@@ -258,7 +284,7 @@ current=`cat $currentslot`
 
 # Start logging to $logfile
 echo "\n\n==== `date` ====" >> $logfile
-echo "Command Line -> $myname $@" >> $logfile
+echo `_ 'Command Line ->'` $myname $@ >> $logfile
 
 
 #
@@ -293,10 +319,10 @@ if [ $use_cleaning -eq 1 ]; then
   fi
 
   if [ $diffday -gt $cleanme ] || [ $diffyear -ge 1 ];then
-     if [ $diffyear -ge 1 ];then
-	  echo "Warning, it's been $diffyear year(s) & $diffday days since you last cleaned the tape drive!"
+     if [ $diffyea" -ge 1 ];then
+	  echo `_ "Warning, it's been %s year(s) & %s day(s) since you last cleaned the tape drive!" "$diffyear" "$diffday"`
      else
-	  echo "Warning, it's been $diffday days since you last cleaned the tape drive!"
+	  echo `_ "Warning, it's been %s day(s) since you last cleaned the tape drive!" "$diffday"`
      fi
   fi
 
@@ -308,9 +334,9 @@ fi
 # If so, determine what slot is the tape from
 #
 readstatus() {
-  echo -n "querying tape drive....." >> $logfile
+  echo `_ "querying tape drive....."` >> $logfile
   used=`expr \`$MCUTIL -e drive | tr = \] | cut -d\] -f2\` - $slot0source`
-  echo " Done" >> $logfile
+  echo `_ " Done"` >> $logfile
 
   # Give changer a chance to reset itself
   sleep 3
@@ -321,7 +347,7 @@ readstatus() {
 # If tape is in the drive, eject it
 #
 eject() {
-  echo "tape drive eject was called" >> $logfile
+  echo `_ "tape drive eject was called"` >> $logfile
 
   readstatus 
 
@@ -333,18 +359,18 @@ eject() {
   fi
 
   if [ $code -eq 0 ];then
-    answer="Cartridge $used successfully ejected from $tape"
-    echo "Exit($code): $answer" >> $logfile
-    echo $current $tape		#For amtape output  
+    answer=`_ 'Cartridge %s successfully ejected from %s' "$used" "$tape"`
+    echo `_ "Exit(%s): %s" "$code" "$answer"` >> $logfile
+    echo $current $answer	#For amtape output  
     return $code
   elif [ $code -eq 1 ];then
-    answer="No Cartridge in Tape Drive"
-    echo "Exit($code): $answer" >> $logfile
+    answer=`_ "No Cartridge in Tape Drive"`
+    echo `_ 'Exit(%s): %s' "$code" "$answer"` >> $logfile
     echo $current $answer	#For amtape output
     exit $code
   else
-    answer="Tape abnormally failed"
-    echo "Exit($code): $answer" >> $logfile
+    answer=`_ 'Tape abnormally failed'`
+    echo `_ 'Exit(%s): %s' "$code" "$answer"` >> $logfile
     echo $current $answer	#For amtape output
     exit $code
   fi
@@ -357,7 +383,7 @@ eject() {
 # and inserting the tape in $firstslot
 #
 reset() {
-  echo "tape drive reset was called" >> $logfile
+  echo `_ 'tape drive reset was called'` >> $logfile
 
   readstatus
 
@@ -371,15 +397,15 @@ reset() {
 
   if [ $code -eq 0 ];then
     echo $firstslot > $currentslot
-    answer="$firstslot - Tape drive was successfully reset"
+    answer=`_ '%s - Tape drive was successfully reset' "$firstslot"`
   elif [ $code -eq 1 ];then
-    answer="$firstslot - Tape drive reset failed\nCommand -> $res"
+    answer=`_ '%s - Tape drive reset failed\nCommand -> %s' "$firstslot" "$res"`
   else
     code=2
-    answer="$firstlot - Tape abnormally failed -> $res"
+    answer=`_ '%s - Tape abnormally failed -> %s' "$firstslot" "$res"`
   fi
 
-  echo "Exit($code): slot $answer" >> $logfile
+  echo `_ 'Exit(%s): slot %s' "$code" "$answer"` >> $logfile
   echo $firstslot	#For amtape output 
   exit $code
 }
@@ -391,7 +417,7 @@ reset() {
 # Load a specific cartridge into the changer
 #
 loadslot() {
-  echo "loadslot was called" >> $logfile
+  echo `_ "loadslot was called"` >> $logfile
 
   readstatus
 
@@ -416,8 +442,8 @@ loadslot() {
 	  if [ $whichslot = advance ];then
 	     echo $load > $currentslot
 	     code=0
-	     answer="advancing to slot $load"
-	     echo "Exit($code): $answer" >> $logfile
+	     answer=`_ 'advancing to slot %s' "$load"`
+	     echo `_ 'Exit(%s): %s' "$code" "$answer"` >> $logfile
 	     echo $load $code
 	     exit $code
 	  else
@@ -454,16 +480,16 @@ loadslot() {
 	     reset
 	  else
 	     code=1
-	     answer="Cleaning not enabled in config" >> $logfile
-	     echo "Exit($code): $answer" >> $logfile
+	     answer=`_ "Cleaning not enabled in config"`
+	     echo `_ 'Exit(%s): %s' "$code" "$answer"` >> $logfile
 	     echo $cleanslot $answer
 	     exit $code
 	  fi
 	  ;;
     *)
        code=1
-       answer="\"$whichslot\" invalid menu option"
-       echo "Exit($code): slot $answer" >> $logfile
+       answer=`_ '"%s" invalid menu option' "$whichslot"`
+       echo `_ 'Exit(%s): %s' "$code" "$answer"` >> $logfile
        echo "$answer"
        exit $code
        ;;
@@ -480,8 +506,8 @@ movetape() {
     # If the requested slot is already loaded in the tape drive
     if [ $load -eq $used ]; then
         code=0
-	answer="$load is already loaded"
-        echo "Exit($code): slot $answer" >> $logfile
+	answer=`_ 'slot %s is already loaded' "$load"`
+        echo `_ 'Exit(%s): %s' "$code" "$answer"` >> $logfile
         echo $load $tape	# For amtape output
         exit $code
     elif [ $used -ge $firstslot ];then
@@ -491,23 +517,23 @@ movetape() {
 	echo $load $tape 	# For amtape output
     fi
 
-    echo "Loading slot $load into Tape drive" >> $logfile
+    echo `_ 'Loading slot %s into Tape drive' "$load"` >> $logfile
     $MCUTIL -m  slot:$load drive
     code=$?
 
     if [ $code -eq 0 ];then
 	echo $load > $currentslot
-	answer="Cartridge $load successfully loaded in Tape drive"
+	answer=`_ 'Cartridge %s successfully loaded in Tape drive' "$load"`
     else
-	answer="Cartridge $load failed to load in Tape drive"
+	answer=`_ 'Cartridge %s failed to load in Tape drive' "$load"`
     fi
-	echo "Exit($code): $answer" >> $logfile
-	exit $code
+    echo `_ 'Exit(%s): %s' "$code" "$answer"` >> $logfile
+    exit $code
 }
 
 
 info() {
-  echo "tape drive info was called" >> $logfile
+  echo `_ 'tape drive info was called'` >> $logfile
 
   readstatus
 
@@ -517,7 +543,7 @@ info() {
 
   code=0
   answer="$used $lastslot 1"
-  echo "Exit($code): $answer" >> $logfile
+  echo `_ 'Exit(%s): %s' "$code" "$answer"` >> $logfile
   echo "$answer"
   exit $code
 }
@@ -544,21 +570,21 @@ info() {
 	    eject
 	    ;;
     --help|-help)
-	    echo "-slot {current|next|previous|first|last|$firstslot-$lastslot|clean}"
-	    echo "	current  - show contents of current slot"
-	    echo "	next     - load tape from next slot"
-	    echo "	previous - load tape from previous slot"
-	    echo "	first	 - load tape from first slot"
-	    echo "	last	 - load tape from last slot"
-	    echo "	$firstslot - $lastslot	 - load tape from slot <slot #>"
-	    echo "	clean	 - Clean the drive"
-	    echo "-device   : Show current tape device"
-	    echo "-reset    : Reset changer to known state"
-	    echo "-eject    : Eject current tape from drive"
-	    echo "-info     : Output {current slot | # of slots | can changer go backwards}"
-	    echo "-help     : Display this help"
+	    echo `_ '-slot {current|next|previous|first|last|%s-%s|clean}' "$firstslot" "$lastslot"`
+	    echo `_ '	current  - show contents of current slot'`
+	    echo `_ '	next     - load tape from next slot'`
+	    echo `_ '	previous - load tape from previous slot'`
+	    echo `_ '	first	 - load tape from first slot'`
+	    echo `_ '	last	 - load tape from last slot'`
+	    echo `_ '	%s - %s	 - load tape from slot <slot #>' "$firstslot" "$lastslot"`
+	    echo `_ '	clean	 - Clean the drive'`
+	    echo `_ '-device   : Show current tape device'`
+	    echo `_ '-reset    : Reset changer to known state'`
+	    echo `_ '-eject    : Eject current tape from drive'`
+	    echo `_ '-info     : Output {current slot | # of slots | can changer go backwards}'`
+	    echo `_ '-help     : Display this help'`
 	    ;;
     *)
-       echo "<usage> $myname -{slot|device|reset|eject|help}"
+       echo `_ '<usage> %s -{slot|device|reset|eject|help}" "$myname"`
        ;;
  esac

@@ -89,7 +89,7 @@ printf_arglist_function2(char *log_genstring, logtype_t, typ, char *, pname, cha
     va_list argp;
     char *leader = NULL;
     char linebuf[STR_SIZE];
-
+    char *xlated_fmt = gettext(format);
 
     /* format error message */
 
@@ -102,7 +102,7 @@ printf_arglist_function2(char *log_genstring, logtype_t, typ, char *, pname, cha
     }
 
     arglist_start(argp, format);
-    vsnprintf(linebuf, SIZEOF(linebuf)-1, format, argp);
+    vsnprintf(linebuf, SIZEOF(linebuf)-1, xlated_fmt, argp);
 						/* -1 to allow for '\n' */
     arglist_end(argp);
     return(vstralloc(leader, linebuf, "\n", NULL));
@@ -113,9 +113,9 @@ printf_arglist_function1(void log_add, logtype_t, typ, char *, format)
     va_list argp;
     int saved_errout;
     char *leader = NULL;
+    char *xlated_fmt = gettext(format);
     char linebuf[STR_SIZE];
     size_t n;
-
 
     /* format error message */
 
@@ -128,7 +128,7 @@ printf_arglist_function1(void log_add, logtype_t, typ, char *, format)
     }
 
     arglist_start(argp, format);
-    vsnprintf(linebuf, SIZEOF(linebuf)-1, format, argp);
+    vsnprintf(linebuf, SIZEOF(linebuf)-1, xlated_fmt, argp);
 						/* -1 to allow for '\n' */
     arglist_end(argp);
 

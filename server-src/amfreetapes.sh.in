@@ -15,6 +15,21 @@ export PATH
 
 Program=`basename $0`
 
+#+
+# Function to:
+#    Simplify gettext usage by allowing printf format
+#    strings for translators, use _() identifier for
+#    xgettext extraction similar to "C" usage and
+#    collapsing "printf `gettext fmt` ...", which is
+#    used everywhere, into one function.
+#-
+function _() {
+	fmt=`gettext -d amanda "$1"`
+	shift
+	printf "$fmt" $*
+}
+
+
 log () {
 	echo 1>&2 "$@"
 	return 0
@@ -61,9 +76,9 @@ fi
 AllTapeList="${TapeList}.all"
 
 [ ! -f $AllTapeList ] \
-	&& echo "no tapelist $AllTapeList found" >&2 \
+	&& echo `_ 'no tapelist %s found' "$AllTapeList"` >&2 \
 	&& cat $TapeList | sed 's/^.* //' | sort -u > $AllTapeList \
-	&& echo "$AllTapeList created" >&2
+	&& echo `_ '%s created' "$AllTapeList"` >&2
 
 cat $TapeList | sed 's/^.* //' > $AllTapeList.n
 cat $AllTapeList >> $AllTapeList.n
@@ -71,24 +86,24 @@ sort -u $AllTapeList.n > $AllTapeList && rm -f $AllTapeList.n
 
 MAXTAPE=`cat $AllTapeList | sed "s/^$VOLHEADER//" | sort -n | tail -1`
 NEXTTAPE=`expr $MAXTAPE + 1`
-echo "last Tape is ${VOLHEADER}${MAXTAPE}" >&2
+echo `_ 'last Tape is %s' "${VOLHEADER}${MAXTAPE}"` >&2
 
 I=1
 while [ $I -le $MAXTAPE ]; do
 	WRITTEN=`grep "${VOLHEADER}${I}\$" $TapeList`
 	EXISTS=`grep "${VOLHEADER}${I}\$" $AllTapeList`
 	if [ "$EXISTS" = "" -a "$WRITTEN" = "" ]; then
-		echo "missing tape ${VOLHEADER}${I}" >&2
+		echo `_ 'missing tape %s' "${VOLHEADER}${I}"` >&2
 		echo "${VOLHEADER}${I}" >> $AllTapeList \
-		&& echo "added ${VOLHEADER}${I} to $AllTapeList" >&2
+		&& echo `_ 'added %s to %s' "${VOLHEADER}${I}" "$AllTapeList"` >&2
 	elif [ "$EXISTS" = "" -a "$WRITTEN" != "" ]; then
-		echo "tape written, but not existing: ${VOLHEADER}${I}" >&2
+		echo `_ 'tape written, but not existing: %s' "${VOLHEADER}${I}"` >&2
 	elif [ "$EXISTS" != "" -a "$WRITTEN" = "" ]; then
-		echo "free tape: ${VOLHEADER}${I}" >&2
+		echo `_ 'free tape: %s' "${VOLHEADER}${I}"` >&2
 	fi
 	I=`expr $I + 1`
 done
 
-echo "next tape is ${VOLHEADER}${NEXTTAPE}" >&2
+echo `_ 'next tape is %s' "${VOLHEADER}${NEXTTAPE}"` >&2
 
 exit 0

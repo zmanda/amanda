@@ -1,3 +1,47 @@
+2007-02-23  Jean-Louis Martineau <martineau@zmanda.com> (merged by dustin@zmanda.com)
+	* changer-src/chg-manual.sh.in: Fix quoting; fix gettext usage.
+
+2007-05-23  John Franks <jrfranks@zmanda.com> (merged by dustin@zmanda.com)
+	* configure.in:
+		New gettext routines.
+	* server-src/amcheckdb.sh.in server-src/amcleanup.sh.in
+	  server-src/amverifyrun.sh.in server-src/amrmtape.sh.in
+	  server-src/amverify.sh.in server-src/amdump.sh.in
+	  server-src/amfreetapes.sh.in amplot/amplot.sh.in
+	  changer-src/chg-mtx.sh.in changer-src/chg-null.sh.in
+	  changer-src/chg-manual.sh.in changer-src/chg-zd-mtx.sh.in
+	  changer-src/chg-disk.sh.in changer-src/chg-juke.sh.in
+	  changer-src/chg-rait.sh.in changer-src/chg-scsi.c
+	  changer-src/chg-chs.sh.in changer-src/chg-multi.sh.in
+	  changer-src/chg-mcutil.sh.in client-src/patch-system.sh.in
+	  common-src/amcrypt.sh.in common-src/amaespipe.sh.in
+	  common-src/amcrypt-ossl-asym.sh.in common-src/amcrypt-ossl.sh.in:
+		Internationalize shell messages
+	* autogen config/gettext-macros/nls.m4
+	  config/gettext-macros/lib-link.m4:
+		Update for autoconf version 2.6 autogen
+	* oldrecover-src/amrecover.c recover-src/amrecover.c
+	  server-src/amflush.c server-src/logfile.c server-src/amtrmlog.c
+	  server-src/amlogroll.c server-src/amindexd.c server-src/amcheck.c
+	  server-src/driver.c server-src/dumper.c server-src/chunker.c
+	  server-src/planner.c server-src/reporter.c server-src/amadmin.c
+	  server-src/amtape.c server-src/taper.c server-src/server_util.c
+	  client-src/versionsuffix.c client-src/runtar.c
+	  server-src/amtrmidx.c server-src/amcleanupdisk.c
+	  server-src/getconf.c server-src/diskfile.c
+	  changer-src/chg-scsi-chio.c client-src/noop.c server-src/infofile.c
+	  server-src/amlabel.c client-src/sendbackup.c client-src/getfsent.c
+	  client-src/killpgrp.c client-src/sendsize.c client-src/selfcheck.c
+	  client-src/rundump.c client-src/calcsize.c restore-src/amidxtaped.c
+	  restore-src/amrestore.c restore-src/amfetchdump.c Makefile.am
+	  amandad-src/amandad.c common-src/genversion.c common-src/debug.c
+	  common-src/error.c common-src/statfs.c common-src/amflock.c
+	  common-src/file.c common-src/token.c common-src/security-util.c
+	  common-src/conffile.c common-src/amanda.h common-src/amfeatures.c
+	  tape-src/ammt.c tape-src/amdd.c tape-src/tapeio.c
+	  tape-src/tapetype.c:
+		Use amanda domain for LC_MESSAGES.
+
 2007-05-22  Maitreyee Karmarkar <maitreyee@zmanda.com> (merged by dustin@zmanda.com)
 	* server-src/amcheck.c : Changed some amcheck messages
 	* common-src/conffile.c : Changed some amcheck messages
