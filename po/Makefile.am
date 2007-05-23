@@ -45,8 +45,6 @@ DISTFILES =			\
 	quot.sed		\
 	remove-potcdate.sin	\
 	Rules-quot		\
-	zlocale.pl		\
-	ztranslation		\
 	stamp-po
 
 SUFFIXES = .po .mo .sed .sin

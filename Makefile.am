@@ -30,7 +30,6 @@ PLOT_SUBDIRS = amplot
 endif
 # order is significant, don't change it arbitrarily
 SUBDIRS = \
-	po \
 	gnulib \
 	config \
 	common-src \
@@ -41,7 +40,7 @@ SUBDIRS = \
 	$(RESTORE_SUBDIRS) \
 	$(RECOVER_SUBDIRS) \
 	$(PLOT_SUBDIRS) \
-	man docs example
+	po man docs example
 
 pkgdata_DATA = \
 	ReleaseNotes			\

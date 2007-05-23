@@ -89,7 +89,7 @@ printf_arglist_function2(char *log_genstring, logtype_t, typ, char *, pname, cha
     va_list argp;
     char *leader = NULL;
     char linebuf[STR_SIZE];
-    char *xlated_fmt = gettext(format);
+    char *xlated_fmt = dgettext("C", format);
 
     /* format error message */
 

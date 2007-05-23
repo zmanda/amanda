@@ -81,7 +81,7 @@ printf_arglist_function(void debug_printf, const char *, format)
 	    db_file = stderr;
 	}
 	if(db_file != NULL) {
-	    char *xlated_fmt = gettext(format);
+	    char *xlated_fmt = dgettext("amanda", format);
 
 	    fprintf(db_file, "%s: %s: ", msg_timestamp(), get_pname());
 	    arglist_start(argp, format);

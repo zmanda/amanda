@@ -176,7 +176,7 @@ main(
      *   2) Set textdomain for all amanda related programs to "amanda"
      *      We don't want to be forced to support dozens of message catalogs.
      */  
-    setlocale(LC_MESSAGES, "");
+    setlocale(LC_MESSAGES, "C");
 
     safe_fd(-1, 0);
 

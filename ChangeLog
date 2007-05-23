@@ -1,3 +1,27 @@
+2006-12-21  John Franks <jrfranks@zmanda.com> (merged by dustin@zmanda.com)
+	* autogen:
+		Fix problem of not generating po/Makefile.in on fresh checkout.
+	* server-src/logfile.c:
+		Always output to logfile in "C" locale.
+	* amandad-src/amandad.c changer-src/chg-scsi-chio.c
+	  changer-src/chg-scsi.c client-src/calcsize.c client-src/getfsent.c
+	  client-src/killpgrp.c client-src/noop.c client-src/rundump.c
+	  client-src/runstar.c client-src/runtar.c client-src/selfcheck.c
+	  client-src/sendbackup.c client-src/sendsize.c
+	  client-src/versionsuffix.c common-src/amfeatures.c
+	  common-src/amflock.c common-src/file.c common-src/genversion.c
+	  common-src/statfs.c common-src/token.c oldrecover-src/amrecover.c
+	  recover-src/amrecover.c restore-src/amfetchdump.c
+	  restore-src/amidxtaped.c restore-src/amrestore.c server-src/amadmin.c
+	  server-src/amcheck.c server-src/amcleanupdisk.c server-src/amflush.c
+	  server-src/amindexd.c server-src/amlabel.c server-src/amlogroll.c
+	  server-src/amtape.c server-src/amtrmidx.c server-src/amtrmlog.c
+	  server-src/chunker.c server-src/diskfile.c server-src/driver.c
+	  server-src/dumper.c server-src/getconf.c server-src/infofile.c
+	  server-src/planner.c server-src/reporter.c server-src/taper.c
+	  tape-src/amdd.c tape-src/ammt.c tape-src/tapeio.c tape-src/tapetype.c:
+	  	Change back to always run in "C" locale.
+
 2007-02-23  Jean-Louis Martineau <martineau@zmanda.com> (merged by dustin@zmanda.com)
 	* changer-src/chg-manual.sh.in: Fix quoting; fix gettext usage.
 

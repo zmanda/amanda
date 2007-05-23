@@ -19,10 +19,11 @@ fi
 # Regenerate aclocal.m4
 aclocal --force
 rc=$?
-if test $? -ne 0; then
+if test $rc -ne 0; then
 	echo aclocal failed 1>&2
 else
 	# Now reconfigure...
+	automake --add-missing
 	autoreconf --warning=syntax --warning=no-portability --force ${1+"$@"}
 	rc=$?
 fi
