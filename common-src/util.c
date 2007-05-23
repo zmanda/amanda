@@ -762,7 +762,7 @@ int copy_file(
 	save_errno = errno;
 	quoted = quote_string(src);
 	*errmsg = vstralloc("Can't open file ", quoted, " for reading: %s",
-			    strerror(save_errno));
+			    strerror(save_errno), NULL);
 	amfree(quoted);
 	return -1;
     }
@@ -771,7 +771,7 @@ int copy_file(
 	save_errno = errno;
 	quoted = quote_string(dst);
 	*errmsg = vstralloc("Can't open file ", quoted, " for writting: %s",
-			    strerror(save_errno));
+			    strerror(save_errno), NULL);
 	amfree(quoted);
 	close(infd);
 	return -1;
@@ -782,7 +782,7 @@ int copy_file(
 	    save_errno = errno;
 	    quoted = quote_string(dst);
 	    *errmsg = vstralloc("Error writing to \"", quoted, "\":",
-				strerror(save_errno));
+				strerror(save_errno), NULL);
 	    amfree(quoted);
 	    close(infd);
 	    close(outfd);
@@ -794,7 +794,7 @@ int copy_file(
 	save_errno = errno;
 	quoted = quote_string(src);
 	*errmsg = vstralloc("Error reading from \"", quoted, "\":",
-			    strerror(save_errno));
+			    strerror(save_errno), NULL);
 	amfree(quoted);
 	close(infd);
 	close(outfd);
