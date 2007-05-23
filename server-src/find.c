@@ -106,7 +106,7 @@ find_dump(
 	    logs += search_logfile(&output_find, tp->label, tp->datestamp, logfile);
 	}
 	if(logs == 0 && strcmp(tp->datestamp,"0") != 0)
-	    printf("Warning: no log files found for tape %s written %s\n",
+	    fprintf(stderr, "Warning: no log files found for tape %s written %s\n",
 		   tp->label, find_nicedate(tp->datestamp));
     }
     amfree(logfile);
@@ -189,7 +189,7 @@ find_log(void)
 	    }
 	}
 	if(logs == 0 && strcmp(tp->datestamp,"0") != 0)
-	    printf("Warning: no log files found for tape %s written %s\n",
+	    fprintf(stderr, "Warning: no log files found for tape %s written %s\n",
 		   tp->label, find_nicedate(tp->datestamp));
     }
     amfree(logfile);

@@ -1,3 +1,6 @@
+2007-05-23  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/find.c: Send ouput to stderr.
+
 2007-05-17  Jean-Louis Martineau <martineau@zmanda.com>
 	* amplot/amplot.sh.in: Remove function keyword.
 	* changer-src/chg-lib.sh.in: Remove function keyword.
