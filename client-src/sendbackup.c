@@ -469,8 +469,8 @@ main(
     printf("\n");
     fflush(stdout);
     if (freopen("/dev/null", "w", stdout) == NULL) {
-	dbprintf(_("error redirecting stdout to /dev/null: %s\n"),
-	    strerror(errno));
+	dbprintf(_("Error redirecting stdout to /dev/null: %s\n"),
+		 strerror(errno));
         exit(1);
     }
 
@@ -601,8 +601,8 @@ main(
 	if(!interactive) {
 	    /* redirect stderr */
 	    if(dup2(mesgfd, 2) == -1) {
-		dbprintf(_("error redirecting stderr to fd %d: %s\n"),
-			  mesgfd, strerror(errno));
+		dbprintf(_("Error redirecting stderr to fd %d: %s\n"),
+			 mesgfd, strerror(errno));
 		dbclose();
 		exit(1);
 	    }

@@ -339,7 +339,8 @@ main(
 	    else if((fs.avail + hdp->disksize) < (off_t)0) {
 		log_add(L_WARNING,
 			_("WARNING: %s: not " OFF_T_FMT " KB free."),
-			holdingdisk_get_diskdir(hdp), -hdp->disksize);
+			holdingdisk_get_diskdir(hdp),
+			(OFF_T_FMT_TYPE)-hdp->disksize);
 		hdp->disksize = (off_t)0;
 		continue;
 	    }

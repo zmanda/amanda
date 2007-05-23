@@ -269,7 +269,7 @@ connect_port(
 	fcntl(s, F_SETFL, fcntl(s, F_GETFL, 0)|O_NONBLOCK);
     if (connect(s, (struct sockaddr *)svaddr, SS_LEN(svaddr)) == -1 && !nonblock) {
 	save_errno = errno;
-	dbprintf(_("connect_portrange: connect from %s failed: %s\n"),
+	dbprintf(_("connect_portrange: Connect from %s failed: %s\n"),
 		  str_sockaddr(addrp),
 		  strerror(save_errno));
 	dbprintf(_("connect_portrange: connect to %s failed: %s\n"),
