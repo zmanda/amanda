@@ -3223,10 +3223,14 @@ AC_CACHE_CHECK([for working IPv6],
 
 main()
 {
+#ifndef __CYGWIN__
    int aa;
    aa = socket(AF_INET6, SOCK_STREAM, 0);
    if (aa > 0) return 0;
    return aa;
+#else
+   return -1;
+#endif
 }],amanda_working_ipv6=yes,
    amanda_working_ipv6=no,
    amanda_working_ipv6=yes
