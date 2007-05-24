@@ -564,7 +564,7 @@ sanitize_string(
     } else {
 	ret = stralloc(str);
 	for (s = ret; *s != '\0'; s++) {
-	    if (iscntrl(*s))
+	    if (iscntrl((int)*s))
 		*s = '?';
 	}
     }

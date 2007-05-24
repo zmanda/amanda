@@ -890,7 +890,7 @@ generic_calc_estimates(
     amfree(match_expr);
 
     dbprintf(_("waiting for %s %s child (pid=%d)\n"),
-	      my_argv[0], est->qamdevice, calcpid);
+	      my_argv[0], est->qamdevice, (int)calcpid);
     waitpid(calcpid, &wait_status, 0);
     if (WIFSIGNALED(wait_status)) {
 	errmsg = vstrallocf(_("%s terminated with signal %d: see %s"),
@@ -910,7 +910,7 @@ generic_calc_estimates(
     }
     dbprintf(_("after %s %s wait: child pid=%d status=%d\n"),
 	      my_argv[0], est->qamdevice,
-	      calcpid, WEXITSTATUS(wait_status));
+	      (int)calcpid, WEXITSTATUS(wait_status));
 
     dbprintf(_(".....\n"));
     dbprintf(_("estimate time for %s: %s\n"),

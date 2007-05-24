@@ -1624,9 +1624,9 @@ clean_backslash(
 	    s++;
 	    s1 = s+1;
 	    s2 = s+2;
-	    if (*s != '\0' && isdigit(*s) &&
-		*s1 != '\0' && isdigit(*s1) &&
-		*s2 != '\0' &&  isdigit(*s2)) {
+	    if (*s != '\0' && isdigit((int)*s) &&
+		*s1 != '\0' && isdigit((int)*s1) &&
+		*s2 != '\0' &&  isdigit((int)*s2)) {
 		/* this is \000, an octal value */
 		i = ((*s)-'0')*64 + ((*s1)-'0')*8 + ((*s2)-'0');
 		*p++ = i;

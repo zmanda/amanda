@@ -85,7 +85,11 @@ static vtbl_lbls vtbl_entry[MAX_VOLUMES];
 static off_t splitsize = (off_t)0; /* max size of dumpfile before split (Kb) */
 static off_t mmap_splitsize = (off_t)0;
 static char *mmap_filename = NULL;
+#ifdef HAVE_MMAP
+#ifdef HAVE_SYS_MMAN_H
 static char *mmap_splitbuf = NULL;
+#endif
+#endif
 static char *mem_splitbuf = NULL;
 static char *splitbuf = NULL;
 static off_t mem_splitsize = (off_t)0;
@@ -486,7 +490,11 @@ create_split_buffer(
     char *id_string)
 {
     char *buff_err = NULL;
+#ifdef HAVE_MMAP
+#ifdef HAVE_SYS_MMAN_H
     off_t offset;
+#endif
+#endif
     char *splitbuffer_path = NULL;
     
     /* don't bother if we're not actually splitting */

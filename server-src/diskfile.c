@@ -751,7 +751,7 @@ printf_arglist_function2(void disk_parserror, const char *, filename,
     int, line_num, const char *, format)
 {
     va_list argp;
-    char *xlated_fmt = gettext(format);
+    const char *xlated_fmt = gettext(format);
 
     /* print error message */
 

@@ -1,3 +1,10 @@
+2007-05-24  John Franks <jrfranks@zmanda.com> (merged by dustin@zmanda.com)
+	* client-src/sendbackup.c client-src/sendsize.c client-src/sendbackup-star.c
+	  configure.in server-src/amindexd.c server-src/taper.c server-src/diskfile.c
+	  config/acinclude.m4i common-src/amanda.h common-src/util.c
+	  common-src/security-util.c:
+		Fix compilation problems using GCC on solaris.
+
 2007-05-24  Jean-Louis Martineau <martineau@zmanda.com> (merged by dustin@zmanda.com)
 	* server-src/reporter.c: Split FAILED and STRANGE section.
 
@@ -111,7 +118,7 @@
 	* common-src/Makefile.am: ditto
 	* server-src/Makefile.am: ditto
 
-2006-05-17   John Franks <jrfranks@zmanda.com> (merged by dustin@zmanda.com)
+2007-05-17   John Franks <jrfranks@zmanda.com> (merged by dustin@zmanda.com)
 	* configure.in oldrecover-src/amrecover.c
 	  oldrecover-src/extract_list.c oldrecover-src/display_commands.c
 	  oldrecover-src/help.c oldrecover-src/set_commands.c
@@ -205,7 +212,7 @@
 2007-05-17  Dustin J. Mitchell <dustin@zmanda.com> (merged by dustin@zmanda.com)
 	* common-src/amanda.h: fix typo (missing 'extern') in erroutput_type
 
-2006-05-16	John Franks <jrfranks@zmanda.com> (merged by dustin@zmanda.com)
+2007-05-16	John Franks <jrfranks@zmanda.com> (merged by dustin@zmanda.com)
 	* oldrecover-src/amrecover.c oldrecover-src/extract_list.c
 	  oldrecover-src/display_commands.c oldrecover-src/set_commands.c
 	  recover-src/amrecover.c recover-src/extract_list.c
@@ -259,11 +266,11 @@
 		- Fix kerberos 4 compilation.
 		- Fix kerberos 5 compilation.
 
-2006-05-16  Jean-Louis Martineau <martineau@zmanda.com> (merged by dustin@zmanda.com)
+2007-05-16  Jean-Louis Martineau <martineau@zmanda.com> (merged by dustin@zmanda.com)
 	* common-src/debug.c (debug_rename): Fix for cygwin: rename
 	  will not overwrite an existing file
 
-2006-05-15   John Franks <jrfranks@zmanda.com> (merged by dustin@zmanda.com)
+2007-05-15   John Franks <jrfranks@zmanda.com> (merged by dustin@zmanda.com)
 	* client-src/sendbackup.c common-src/dgram.c common-src/event.c
 	  server-src/changer.c server-src/driverio.c:
 		Cast FD_SETSIZE to int to avoid compilation problems.

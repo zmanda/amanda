@@ -3310,6 +3310,11 @@ if test "x$CC" = "xgcc"; then
   if test $? -eq 0; then
     AM_CFLAGS="$AM_CFLAGS -Wold-style-definition"
   fi
+
+  $CC -v --help 2>&1 | $GREP -- '-Wunknown-pragmas' 2>&1 > /dev/null
+  if test $? -eq 0; then
+    AM_CFLAGS="$AM_CFLAGS -Wno-unknown-pragmas"
+  fi
 fi
 AC_SUBST(AM_CFLAGS)
 

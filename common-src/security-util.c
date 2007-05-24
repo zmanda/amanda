@@ -536,7 +536,7 @@ tcpm_recv_token(
 	    s[6] = (*handle >> 8 ) & 0xFF;
 	    s[7] = (*handle      ) & 0xFF;
 	    i = 8; s[i] = ' ';
-	    while(i<100 && isprint(s[i]) && s[i] != '\n') {
+	    while(i<100 && isprint((int)s[i]) && s[i] != '\n') {
 		switch(net_read(fd, &s[i], 1, 0)) {
 		case -1: s[i] = '\0'; break;
 		case  0: s[i] = '\0'; break;
@@ -2397,7 +2397,7 @@ net_writev(
 	     */
 	    for (; n > 0; iovcnt--, iov++) {
 		/* 'delta' is the bytes written from this iovec */
-		delta = ((size_t)n < iov->iov_len) ? n : (ssize_t)iov->iov_len;
+		delta = ((size_t)n < (size_t)iov->iov_len) ? n : (ssize_t)iov->iov_len;
 		/* subtract from the total num bytes written */
 		n -= delta;
 		assert(n >= 0);
