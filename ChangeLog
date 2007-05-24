@@ -1,4 +1,8 @@
 2007-05-24  John Franks <jrfranks@zmanda.com> (merged by dustin@zmanda.com)
+	* common-src/fileheader.c:
+	  Remove ".exe" extension from program name is tape header.
+
+2007-05-24  John Franks <jrfranks@zmanda.com> (merged by dustin@zmanda.com)
 	* config/gettext-macros/gettext.m4
 	config/gettext-macros/inttypes-pri.m4:
 	  Change name gl_HEADER_INTTYPES_H to gl_AC_HEADER_INTTYPES_H

@@ -555,6 +555,7 @@ build_header(
     int n;
     char *qname;
     char split_data[128] = "";
+    char *program;
 
     dbprintf(_("Building type %d (%s) header of size " SIZE_T_FMT " using:\n"),
 		file->type, filetype2str(file->type),
@@ -583,12 +584,18 @@ build_header(
 	validate_name(file->name);
 	validate_datestamp(file->datestamp);
 	qname = quote_string(file->disk);
+	program = stralloc(file->program);
+	if (match("^.*[.][Ee][Xx][Ee]$", program)) {
+		/* Trim ".exe" from program name */
+		program[strlen(program) - strlen(".exe")] = '\0';
+	}
         n = snprintf(buffer, buflen,
                      "AMANDA: %s %s %s %s %s lev %d comp %s program %s",
 			 filetype2str(file->type),
 			 file->datestamp, file->name, qname,
 			 split_data,
-		         file->dumplevel, file->comp_suffix, file->program); 
+		         file->dumplevel, file->comp_suffix, program); 
+	amfree(program);
 	amfree(qname);
 	if ( n ) {
 	  buffer += n;
@@ -726,7 +733,7 @@ print_header(
 	    filetype2str(file->type), file->datestamp, file->name,
 	    qdisk, file->dumplevel, file->comp_suffix);
 	if (*file->program)
-	    fprintf(outf, " program %s",file->program);
+	    fprintf(outf, " program %s", file->program);
 	if (strcmp(file->encrypt_suffix, "enc") == 0)
 	    fprintf(outf, " crypt %s", file->encrypt_suffix);
 	if (*file->srvcompprog)
