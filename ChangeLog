@@ -1,3 +1,8 @@
+2007-05-24  John Franks <jrfranks@zmanda.com> (merged by dustin@zmanda.com)
+	* config/gettext-macros/gettext.m4
+	config/gettext-macros/inttypes-pri.m4:
+	  Change name gl_HEADER_INTTYPES_H to gl_AC_HEADER_INTTYPES_H
+
 2007-05-24  Dustin J. Mitchell <dustin@zmanda.com>
 	* configure.in: add configure.in recognition for Mac OS X
 

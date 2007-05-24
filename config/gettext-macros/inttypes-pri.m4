@@ -11,7 +11,7 @@ dnl From Bruno Haible.
 
 AC_DEFUN([gt_INTTYPES_PRI],
 [
-  AC_REQUIRE([gl_HEADER_INTTYPES_H])
+  AC_REQUIRE([gl_AC_HEADER_INTTYPES_H])
   if test $gl_cv_header_inttypes_h = yes; then
     AC_CACHE_CHECK([whether the inttypes.h PRIxNN macros are broken],
       gt_cv_inttypes_pri_broken,
