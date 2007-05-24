@@ -1,3 +1,7 @@
+2007-05-24  Kevin Till <ktill@zmanda.com> (merged by dustin@zmanda.com)
+	* server-src/amstatus.pl.in: parse directory and holding_disk_dir with
+	  space correctly
+
 2007-05-24  John Franks <jrfranks@zmanda.com> (merged by dustin@zmanda.com)
 	* client-src/sendbackup.c client-src/sendsize.c client-src/sendbackup-star.c
 	  configure.in server-src/amindexd.c server-src/taper.c server-src/diskfile.c

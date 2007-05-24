@@ -200,7 +200,7 @@ while(<AMDUMP>) {
 			push @datestamp, $gdatestamp;
 		}
 	}
-	elsif(/setup_estimate: ([_\-\d\.A-Za-z]*):(\S+): command .*, options: *(\S+) *last_level -?\d+ next_level0 -?\d+ level_days \d+ *getting estimates (-?\d) \(-2\) (-?\d) \(-2\) (-?\d) \(-2\)/) {
+	elsif(/setup_estimate: ([_\-\d\.A-Za-z]*):(".+"|\S+): command .*, options: *(\S+) *last_level -?\d+ next_level0 -?\d+ level_days \d+ *getting estimates (-?\d) \(-2\) (-?\d) \(-2\) (-?\d) \(-2\)/) {
 		$host=$1;
 		$partition=$2;
 		$hostpart=&make_hostpart($host,$partition,$gdatestamp);
@@ -217,7 +217,7 @@ while(<AMDUMP>) {
 		if($5 != -1) { $getest{$hostpart} .= ":$5:" };
 		if($6 != -1) { $getest{$hostpart} .= ":$6:" };
 	}
-	elsif(/setup_estimate: (\S+):(\S+): command .*, options:/) {
+	elsif(/setup_estimate: (\S+):(".+"|\S+): command .*, options:/) {
 		$host=$1;
 		$partition=$2;
 		$hostpart=&make_hostpart($host,$partition,$gdatestamp);
@@ -242,7 +242,7 @@ while(<AMDUMP>) {
 			die("ERROR $_");
 		}
 	}
-	elsif(/got result for host (\S+) disk (\S+): (\d+) -> (\d+)K,/) {
+	elsif(/got result for host (\S+) disk (".+"|\S+): (\d+) -> (\d+)K,/) {
 		$host=$1;
 		$partition=$2;
 		$hostpart=&make_hostpart($host,$partition,$gdatestamp);
@@ -252,7 +252,7 @@ while(<AMDUMP>) {
 		$partialestimate{$hostpart}=0;
 		$getest{$hostpart} = "";
 	}
-	elsif(/got partial result for host (\S+) disk (\S+): (-?\d+) -> (-?\d+)K, (-?\d+) -> (-?\d+)K, (-?\d+) -> (-?\d+)K/) {
+	elsif(/got partial result for host (\S+) disk (".+"|\S+): (-?\d+) -> (-?\d+)K, (-?\d+) -> (-?\d+)K, (-?\d+) -> (-?\d+)K/) {
 		$host=$1;
 		$partition=$2;
 		$hostpart=&make_hostpart($host,$partition,$gdatestamp);
@@ -277,7 +277,7 @@ while(<AMDUMP>) {
 	elsif(/GENERATING SCHEDULE:/) {
 		$generating_schedule=1;
 	}
-	elsif(/^(\S+) (\S+) (\d+) (\d+) \d+:\d+:\d+:\d+:\d+:\d+ (\d+) \d+/) {
+	elsif(/^(\S+) (".+"|\S+) (\d+) (\d+) \d+:\d+:\d+:\d+:\d+:\d+ (\d+) \d+/) {
 		if($generating_schedule == 1 ) {
 			$host=$1;
 			$partition=$2;
@@ -289,7 +289,7 @@ while(<AMDUMP>) {
 			$degr_level{$hostpart}=-1;
 		}
 	}
-	elsif(/^DUMP (\S+) (\S+) (\S+) (\d+) (\d+) \d+:\d+:\d+:\d+:\d+:\d+ (\d+) \d+/) {
+	elsif(/^DUMP (\S+) (".+"|\S+) (\S+) (\d+) (\d+) \d+:\d+:\d+:\d+:\d+:\d+ (\d+) \d+/) {
 		if($generating_schedule == 1 ) {
 			$host=$1;
 			$partition=$2;
@@ -302,7 +302,7 @@ while(<AMDUMP>) {
 			$degr_level{$hostpart}=-1;
 		}
 	}
-	elsif(/^DUMP (\S+) (\S+) (\S+) (\S+) (\d+) (\d+) \d+:\d+:\d+:\d+:\d+:\d+ (\d+) \d+/) {
+	elsif(/^DUMP (\S+) (\S+) (".+"|\S+) (\S+) (\d+) (\d+) \d+:\d+:\d+:\d+:\d+:\d+ (\d+) \d+/) {
 		if($generating_schedule == 1 ) {
 			$host=$1;
 			$features=$2;
@@ -317,7 +317,7 @@ while(<AMDUMP>) {
 			$degr_level{$hostpart}=-1;
 		}
 	}
-	elsif(/^(\S+) (\S+) (\d+) (\d+) \d+:\d+:\d+:\d+:\d+:\d+ (\d+) \d+ (\d+) \d+:\d+:\d+:\d+:\d+:\d+ ([-]*\d+) \d+/) {
+	elsif(/^(\S+) (".+"|\S+) (\d+) (\d+) \d+:\d+:\d+:\d+:\d+:\d+ (\d+) \d+ (\d+) \d+:\d+:\d+:\d+:\d+:\d+ ([-]*\d+) \d+/) {
 		if($generating_schedule == 1 ) {
 			$host=$1;
 			$partition=$2;
@@ -331,7 +331,7 @@ while(<AMDUMP>) {
 			$degr_size{$hostpart}=32 if ($7 < 32);
 		}
 	}
-	elsif(/^DUMP (\S+) (\S+) (\S+) (\d+) (\d+) \d+:\d+:\d+:\d+:\d+:\d+ (\d+) \d+ (\d+) \d+:\d+:\d+:\d+:\d+:\d+ ([-]*\d+) \d+/) {
+	elsif(/^DUMP (\S+) (".+"|\S+) (\S+) (\d+) (\d+) \d+:\d+:\d+:\d+:\d+:\d+ (\d+) \d+ (\d+) \d+:\d+:\d+:\d+:\d+:\d+ ([-]*\d+) \d+/) {
 		if($generating_schedule == 1 ) {
 			$host=$1;
 			$partition=$2;
@@ -346,7 +346,7 @@ while(<AMDUMP>) {
 			$degr_size{$hostpart}=32 if ($8 < 32);
 		}
 	}
-	elsif(/^FLUSH (\S+) (\S+) (\S+) (\d+) (\S+)/) {
+	elsif(/^FLUSH (\S+) (".+"|\S+) (\S+) (\d+) (".+"\S+)/) {
 		$host=$1;
 		$partition=$2;
 		$datestamp="$3";
@@ -370,7 +370,7 @@ while(<AMDUMP>) {
 	elsif(/^driver: adding holding disk \d+ dir \S+ size (\d+)/) {
 		$holding_space += $1;
 	}
-	elsif(/driver: send-cmd time (\S+) to (dumper\d*): (FILE-DUMP|PORT-DUMP) (\d+-\d+) (\S+) (\S+) (\S+) (\d+)/) {
+	elsif(/driver: send-cmd time (\S+) to (dumper\d*): (FILE-DUMP|PORT-DUMP) (\d+-\d+) (\S+) (\S+) (".+"|\S+) (\d+)/) {
 		$current_time=$1;
 		$host=$6;
 		$partition=$7;
@@ -399,7 +399,7 @@ while(<AMDUMP>) {
 			$dumpers_held[$dumpers_active]={};
 		}
 	}
-	elsif(/driver: send-cmd time (\S+) to (chunker\d*): (PORT-WRITE) (\d+-\d+) (\S+) (\S+) (\S+) (\d+)/) {
+	elsif(/driver: send-cmd time (\S+) to (chunker\d*): (PORT-WRITE) (\d+-\d+) ("[^"]+"|\S+) (\S+) (".+"|\S+) (\d+)/) {
 		$current_time=$1;
 		$host=$6;
 		$partition=$7;
@@ -411,7 +411,7 @@ while(<AMDUMP>) {
 		#$chunk_finished{$hostpart}=0;
 		$holding_file{$hostpart}=$5;
 	}
-	elsif(/driver: send-cmd time (\S+) to (chunker\d*): (PORT-WRITE) (\d+-\d+) (\S+) (\S+) (\S+) (\S+) (\d+)/) {
+	elsif(/driver: send-cmd time (\S+) to (chunker\d*): (PORT-WRITE) (\d+-\d+) (\S+) (\S+) (\S+) (".+"|\S+) (\d+)/) {
 		$current_time=$1;
 		$host=$6;
 		$features=$7;
@@ -425,7 +425,7 @@ while(<AMDUMP>) {
 		#$chunk_finished{$hostpart}=0;
 		$holding_file{$hostpart}=$5;
 	}
-	elsif(/driver: send-cmd time (\S+) to (dumper\d*): (FILE-DUMP|PORT-DUMP) (\d+-\d+) (\S+) (\S+) (\S+) (\S+) (\d+)/) {
+	elsif(/driver: send-cmd time (\S+) to (dumper\d*): (FILE-DUMP|PORT-DUMP) (\d+-\d+) (\S+) (\S+) (".+"|\S+) (\S+) (\d+)/) {
 		$current_time=$1;
 		$host=$6;
 		$partition=$7;
@@ -457,7 +457,7 @@ while(<AMDUMP>) {
 			$dumpers_held[$dumpers_active]={};
 		}
 	}
-	elsif(/driver: send-cmd time (\S+) to (dumper\d*): (FILE-DUMP|PORT-DUMP) (\d+-\d+) (\S+) (\S+) (\S+) (\S+) (\S+) (\d+)/) {
+	elsif(/driver: send-cmd time (\S+) to (dumper\d*): (FILE-DUMP|PORT-DUMP) (\d+-\d+) (\S+) (\S+) (\S+) (".+"|\S+) (\S+) (\d+)/) {
 		$current_time=$1;
 		$host=$6;
 		$features=$7;
@@ -594,7 +594,7 @@ while(<AMDUMP>) {
 			}
 		}
 	}
-	elsif(/driver: send-cmd time (\S+) to taper: FILE-WRITE (\d+-\d+) (\S+) (\S+) (\S+) (\d*) (\S+)/){
+	elsif(/driver: send-cmd time (\S+) to taper: FILE-WRITE (\d+-\d+) ("[^"]+"|\S+) (\S+) (".+"|\S+) (\d*) (\S+)/){
 		$current_time=$1;
 		$serial=$2;
 		$host=$4;
@@ -616,7 +616,7 @@ while(<AMDUMP>) {
 		$ntchunk_size = 0;
 	}
 	#features (maybe missing features)
-	elsif(/driver: send-cmd time (\S+) to taper: FILE-WRITE (\d+-\d+) (\S+) (\S+) (\S*) (\S+) (\d*) (\S+)/){
+	elsif(/driver: send-cmd time (\S+) to taper: FILE-WRITE (\d+-\d+) ("[^"]+"|\S+) (\S+) (\S*) (".+"|\S+) (\d*) (\S+)/){
 		$current_time=$1;
 		$serial=$2;
 		$host=$4;
@@ -639,7 +639,7 @@ while(<AMDUMP>) {
 		$taper_time{$hostpart}=$1;
 		$ntchunk_size = 0;
 	}
-	elsif(/driver: send-cmd time (\S+) to taper: PORT-WRITE (\d+-\d+) (\S+) (\S+) \d+( \d+|)/){
+	elsif(/driver: send-cmd time (\S+) to taper: PORT-WRITE (\d+-\d+) (\S+) (".+"|\S+) \d+( \d+|)/){
 		$current_time=$1;
 		$serial=$2;
 		$host=$3;
@@ -651,7 +651,7 @@ while(<AMDUMP>) {
 		$taper_time{$hostpart}=$1;
 		$ntchunk_size = 0;
 	}
-	elsif(/driver: send-cmd time (\S+) to taper: PORT-WRITE (\d+-\d+) (\S+) (\S+) (\S+) \d+ \d+/){
+	elsif(/driver: send-cmd time (\S+) to taper: PORT-WRITE (\d+-\d+) (\S+) (\S+) (".+"|\S+) \d+ \d+/){
 		$current_time=$1;
 		$serial=$2;
 		$host=$3;
@@ -718,7 +718,7 @@ while(<AMDUMP>) {
 		$taper_finished{$hostpart}=-2;
 		$error{$hostpart} .= "(too many taper retry)";
 	}
-	elsif(/planner: FAILED (\S+) (\S+) (\S+) (-?\d+) (.*)/) {
+	elsif(/planner: FAILED (\S+) (".+"|\S+) (\S+) (-?\d+) (.*)/) {
 		$host=$1;
 		$partition=$2;
 		$datestamp=$3;
