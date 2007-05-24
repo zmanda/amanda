@@ -1,3 +1,7 @@
+2007-05-24  Satya Ganga <gsat@zmanda.com> (merged by dustin@zmanda.com)
+	* server-src/amcleanup.sh.in: rewrite to find all the active
+	process/children for a given configuration
+
 2007-05-24  John Franks <jrfranks@zmanda.com> (merged by dustin@zmanda.com)
 	* common-src/fileheader.c:
 	  Remove ".exe" extension from program name is tape header.

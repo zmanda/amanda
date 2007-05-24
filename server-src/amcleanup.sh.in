@@ -42,9 +42,9 @@ export PATH
 
 USE_VERSION_SUFFIXES="@USE_VERSION_SUFFIXES@"
 if test "$USE_VERSION_SUFFIXES" = yes; then
-	SUF=-@VERSION@
+        SUF=-@VERSION@
 else
-	SUF=
+        SUF=
 fi
 
 #+
@@ -61,7 +61,62 @@ function _() {
 	printf "$fmt" $*
 }
 
-if test -h /proc/1/exe ; then
+#
+#Function to :
+#   parse process tree and get the children of a given process ID
+#
+
+
+find_children() {
+
+#sample ps -ef output
+#500      20810  4938  0 10:21 pts/2    00:00:00 /bin/sh /usr/sbin/amdump tapebackup
+
+	for pid in $(ps -ef | awk "{if ( \$3 == $1 ) { print \$2 }}")
+	do
+		process_name=`ps -e|grep -w ${pid}|awk '{print $4}'`
+		echo `_ '%s: Process %s found running at pid #%s.' "amcleanup" "${process_name}" "${pid}"`
+		pidname[$i]=$pid
+		i=`expr $i + 1`
+		find_children $pid
+	done
+}
+
+#
+#Function to :
+#   send SIGTERM signal to kill given process ID and check if process still alive 
+#   after receiving SIGTERM,  if yes send SIGKILL  
+#
+
+function killpid() {
+
+killPID=$1
+SIGTERM=15
+
+	echo `_ '%s: Sending process %s the %s signal.' "$0" "${killPID}" "SIGTERM"`
+	`kill -${SIGTERM} ${killPID} 2>/dev/null`
+	for second in 0 1 2 3 4 ; do
+		pid_status=`ps -e|grep -w ${killPID}|grep -v grep |wc -l`
+		if [ ${pid_status} -ne 0 ] ; then
+			# process is still alive
+			sleep 1
+		else
+			return 0
+		fi
+	done
+	SIGKILL=9
+	echo `_ '%s: Sending process %s the %s signal.' "$0" "${killPID}" "SIGKILL"`
+	`kill -${SIGKILL} ${killPID} 2>/dev/null`
+	sleep 2
+	pid_status=`ps -e|grep -w ${killPID}|grep -v grep |wc -l`
+	if [ ${pid_status} -ne 0 ] ; then
+		return 1
+	else
+		return 0
+	fi
+}
+
+
 	if test $# -ge 2 && test "$1" == "-k" ; then
 		KILL_ENABLE=1
 		conf=$2
@@ -75,16 +130,19 @@ if test -h /proc/1/exe ; then
 		echo `_ 'Usage: amcleanup [-k] conf'`
 		exit 1
 	fi
-else
-	if test $# -lt 1 ; then
-		echo `_ 'Usage: amcleanup conf'`
-		exit 1
-	else
-		conf=$1
-		shift
-		KILL_ENABLE=0
+
+	#check if amdump/amflush is running for given config  
+       	if test ${KILL_ENABLE} -eq 0 ; then
+        	for am_process in amdump amflush ; do
+                	am_pid=`ps -ef|grep -w ${am_process}|grep -w ${conf}|awk '{print $2}'`
+                	if test ! -z "${am_pid}" ; then
+                        	echo `_ '%s: %s Process is running at PID %s for %s configuration.' "$0" "${am_process}" ${am_pid} ${conf}`
+                        	echo `_ '%s: Use -k option to stop all the process...' "$0"`
+				echo `_ 'Usage: amcleanup [-k] conf'`
+                        	exit 0
+                	fi
+       		done
 	fi
-fi
 
 if test ! -d $confdir/$conf ; then
 	echo `_ '%s: could not cd into %s' "amcleanup" "$confdir/$conf"`
@@ -114,145 +172,39 @@ if test $rc -ne 0 ; then
 	echo `_ '%s: "%s" exited with status: %s' "amcleanup" "amgetconf$SUF $conf dumpuser" "$rc"` 1>&2
 	exit 1
 fi
-
-# Check for running processes which should not be
-# running right now.
 if test ${KILL_ENABLE} -eq 1 ; then
-	if test -h /proc/1/exe ; then
-		USER_PROCESS_NAMES="\
-			@libexecdir@/amandad \
-			@libexecdir@/amcleanupdisk \
-			@libexecdir@/amidxtaped \
-			@libexecdir@/amindexd \
-			@libexecdir@/amlogroll \
-			@libexecdir@/amtrmidx \
-			@libexecdir@/amtrmlog \
-			@libexecdir@/chg-chio \
-			@libexecdir@/chg-chs \
-			@libexecdir@/chg-disk \
-			@libexecdir@/chg-iomega \
-			@libexecdir@/chg-juke \
-			@libexecdir@/chg-manual \
-			@libexecdir@/chg-mcutil \
-			@libexecdir@/chg-mtx \
-			@libexecdir@/chg-multi \
-			@libexecdir@/chg-null \
-			@libexecdir@/chg-rait \
-			@libexecdir@/chg-rth \
-			@libexecdir@/chg-scsi \
-			@libexecdir@/chg-zd-mtx \
-			@libexecdir@/chunker \
-			@libexecdir@/driver \
-			@libexecdir@/generic-dumper \
-			@libexecdir@/gnutar \
-			@libexecdir@/noop \
-			@libexecdir@/patch-system \
-			@libexecdir@/selfcheck \
-			@libexecdir@/sendbackup \
-			@libexecdir@/sendsize \
-			@libexecdir@/star \
-			@libexecdir@/taper \
-			@libexecdir@/versionsuffix \
-			@sbindir@/amaddclient \
-			@sbindir@/amadmin \
-			@sbindir@/amaespipe \
-			@sbindir@/amcheckdb \
-			@sbindir@/amcrypt \
-			@sbindir@/amcryptsimple \
-			@sbindir@/amdd \
-			@sbindir@/amdump \
-			@sbindir@/amfetchdump \
-			@sbindir@/amflush \
-			@sbindir@/amgetconf \
-			@sbindir@/amgpgcrypt \
-			@sbindir@/amlabel \
-			@sbindir@/ammt \
-			@sbindir@/amoverview \
-			@sbindir@/amplot \
-			@sbindir@/amrecover \
-			@sbindir@/amreport \
-			@sbindir@/amrestore \
-			@sbindir@/amrmtape \
-			@sbindir@/amserverconfig \
-			@sbindir@/amstatus \
-			@sbindir@/amtape \
-			@sbindir@/amtapetype \
-			@sbindir@/amtoc \
-			@sbindir@/amverify \
-			@sbindir@/amverifyrun"
 
-		ROOT_PROCESS_NAMES="\
-			@libexecdir@/calcsize \
-			@libexecdir@/killpgrp \
-			@libexecdir@/rundump \
-			@libexecdir@/runtar \
-			@libexecdir@/dumper \
-			@libexecdir@/planner \
-			@sbindir@/amcheck"
+	#check if any one of the dumps are runing, if yes get the process tree and kill them
+        for am_process in amdump amflush ; do
+                unset pidname
+                am_pid=`ps -ef|grep -w ${am_process}|grep -w ${conf}|awk '{print $2}'`
+                #echo "checking children for ${am_pid}"
+                if test ! -z "${am_pid}" ; then
+                        find_children ${am_pid}
+                fi
 
-		PREVIOUS_DIR="`pwd`"
-		cd /proc
-		PIDS_FOUND=0
-		KEEP_CHECKING=1
-		while test ${KEEP_CHECKING} -ne 0 ; do
-			PIDS_THIS_PASS=0
-			for search_user in ${dumpuser} root ; do
-				if test "${search_user}" == "${dumpuser}" ; then
-					PROCESS_NAMES=${USER_PROCESS_NAMES}
-				elif test "${search_user}" == "root" ; then
-					PROCESS_NAMES=${ROOT_PROCESS_NAMES}
-				fi
-				for search_pid in [0-9]* ; do
-					for search_name in ${PROCESS_NAMES} ; do
-						ls -l /proc/${search_pid}/exe 2>/dev/null | grep ${search_name} >/dev/null
-						match_name=$?
-						pid_uid="`cat /proc/${search_pid}/status 2>/dev/null | grep Uid | awk '//{split($_,i); print i[2]}'`"
-						if test ${match_name} -eq 0  && test "${pid_uid}" == "${search_user}" ; then
-							echo `_ '%s: Process %s found running at pid #%s.' "amcleanup" "${search_name}" "${search_pid}"`
-							kill_pid=${search_pid}
-							kill_name=${search_name}
-							PIDS_FOUND=`expr ${PIDS} + 1`
-							PIDS_THIS_PASS=1
-							break
-						else
-							kill_pid=""
-							continue
-						fi
-					done
-					if test ! -z "${kill_pid}" ; then
-						if test -d /proc/${kill_pid} ; then
-							echo `_ '%s: Sending process %s the %s signal.' "$0" "${kill_pid}" "TERM"`
-							kill -15 -- ${kill_pid}
-							sleep 5
-							if test -d /proc/${kill_pid} ; then
-								echo `_ '%s: Sending process %s the %s signal.' "$0" "${kill_pid}" "KILL"`
-								kill -9 -- ${kill_pid}
-							fi
-							sleep 5
-							if test -d /proc/${kill_pid} ; then
-								echo `_ '%s: Process %s did not respond to the %s signal (and may be hung)!' "$0" "${kill_pid}" "KILL"` 1>&2
-								KILL_FAILURES=`expr ${KILL_FAILURES} + 1`
-							fi
-						else
-							echo `_ '%s: Process %s no longer running.  Skipping...' "$0" "${kill_pid}"`
-						fi
-					fi
-				done
-			done
-			if test ${PIDS_THIS_PASS} -eq 0 ; then
-				KEEP_CHECKING=0
-			else
-				KEEP_CHECKING=1
-			fi
-		done
-		if test ${PIDS_FOUND} -gt 0 ; then
-			echo `_ '%s: %s Amanda processes were found running.' "$0" "${PIDS_FOUND}"`
-			echo `_ '%s: %s processes failed to terminate.' "$0" "${KILL_FAILURES}"`
-		else
-			echo `_ '%s: No Amanda processes were found running.' "$0"`
-		fi
-		cd "${PREVIOUS_DIR}"
-	fi
+                KILL_FAILURES=0
+
+                for (( i = 0 ; i < ${#pidname[@]} ; i++ ))
+                do
+                        mypid=`ps -e|grep -w ${pidname[$i]}|grep -v grep|wc -l`
+                        if [ ${mypid} -ne 0 ] ; then
+                                killpid ${pidname[$i]}
+                                rc=$?
+                                if test $rc -ne 0 ; then
+                                        KILL_FAILURES=`expr ${KILL_FAILURES} + 1`
+                                fi
+                        else
+                                echo `_ '%s: Process %s no longer running.  Skipping...' "$0" "${pidname[$i]}"`
+                        fi
+                done
+
+        if test ${#pidname[@]} -gt 0 ; then
+                echo `_ '%s: %s Amanda processes were found running.' "$0" "${#pidname[@]}"`
+                echo `_ '%s: %s processes failed to terminate.' "$0" "${KILL_FAILURES}"`
+        fi
+
+        done
 fi
 
 retstatus=0
