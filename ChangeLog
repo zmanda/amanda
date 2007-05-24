@@ -1,3 +1,6 @@
+2007-05-24  Jean-Louis Martineau <martineau@zmanda.com> (merged by dustin@zmanda.com)
+	* server-src/reporter.c: Split FAILED and STRANGE section.
+
 2007-05-23  John Franks <jrfranks@zmanda.com> (merged by dustin@zmanda.com)
 	* common-src/conffile.c: Fix windows compilation warning.
 

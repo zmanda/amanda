@@ -33,8 +33,10 @@
  * report format
  *     tape label message
  *     error messages
+ *     strange messages
  *     summary stats
  *     details for errors
+ *     details for strange
  *     notes
  *     success summary
  */
@@ -104,15 +106,16 @@ typedef struct taper_s {
 static taper_t *stats_by_tape = NULL;
 static taper_t *current_tape = NULL;
 
-typedef struct strange_s {
+typedef struct X_summary_s {
     char *hostname;
     char *diskname;
     int  level;
     char *str;
-    struct strange_s *next;
-} strange_t;
+    struct X_summary_s *next;
+} X_summary_t;
 
-static strange_t *first_strange=NULL, *last_strange=NULL;
+static X_summary_t *first_strange=NULL, *last_strange=NULL;
+static X_summary_t *first_failed=NULL, *last_failed=NULL;
 
 static double total_time, startup_time, planner_time;
 
@@ -141,6 +144,7 @@ static disklist_t sortq;
 
 static line_t *errsum = NULL;
 static line_t *errdet = NULL;
+static line_t *strangedet = NULL;
 static line_t *notes = NULL;
 
 static char MaxWidthsRequested = 0;	/* determined via config data */
@@ -165,7 +169,8 @@ static repdata_t *find_repdata(disk_t *dp, char *datestamp, int level);
 static repdata_t *handle_chunk(void);
 static repdata_t *handle_success(logtype_t logtype);
 static void	addline(line_t **lp, char *str);
-static void	addtostrange(char *host, char *disk, int level, char *str);
+static void	addtoX_summary(X_summary_t **first, X_summary_t **last,
+			       char *host, char *disk, int level, char *str);
 static void	bogus_line(const char *);
 static void	CalcMaxWidth(void);
 static void	CheckFloatMax(ColumnInfo *cd, double d);
@@ -187,7 +192,7 @@ static void	handle_strange(void);
 static void	handle_summary(void);
 static void	output_lines(line_t *lp, FILE *f);
 static void	output_stats(void);
-static void	output_strange(void);
+static void	output_X_summary(X_summary_t *first);
 static void	output_summary(void);
 static void	output_tapeinfo(void);
 static void	sort_disks(void);
@@ -720,10 +725,14 @@ main(
 
     	output_tapeinfo();
 
-    	if(first_strange || errsum) {
-		fprintf(mailf,_("\nFAILURE AND STRANGE DUMP SUMMARY:\n"));
-		if(first_strange) output_strange();
+    	if(first_failed || errsum) {
+		fprintf(mailf,_("\nFAILURE DUMP SUMMARY:\n"));
+		if(first_failed) output_X_summary(first_failed);
 		if(errsum) output_lines(errsum, mailf);
+    	}
+    	if(first_strange) {
+		fprintf(mailf,_("\nSTRANGE DUMP SUMMARY:\n"));
+		if(first_strange) output_X_summary(first_strange);
     	}
     	fputs("\n\n", mailf);
 	
@@ -731,8 +740,13 @@ main(
 	
     	if(errdet) {
 		fprintf(mailf,"\n\f\n");
-		fprintf(mailf,_("FAILED AND STRANGE DUMP DETAILS:\n"));
+		fprintf(mailf,_("FAILED DUMP DETAILS:\n"));
 		output_lines(errdet, mailf);
+    	}
+    	if(strangedet) {
+		fprintf(mailf,"\n\f\n");
+		fprintf(mailf,_("STRANGE DUMP DETAILS:\n"));
+		output_lines(strangedet, mailf);
     	}
     	if(notes) {
 		fprintf(mailf,"\n\f\n");
@@ -1095,19 +1109,20 @@ output_tapeinfo(void)
 
 /* ----- */
 static void
-output_strange(void)
+output_X_summary(
+    X_summary_t *first)
 {
     size_t len_host=0, len_disk=0;
-    strange_t *strange;
+    X_summary_t *strange;
     char *str = NULL;
 
-    for(strange=first_strange; strange != NULL; strange = strange->next) {
+    for(strange=first; strange != NULL; strange = strange->next) {
 	if(strlen(strange->hostname) > len_host)
 	    len_host = strlen(strange->hostname);
 	if(strlen(strange->diskname) > len_disk)
 	    len_disk = strlen(strange->diskname);
     }
-    for(strange=first_strange; strange != NULL; strange = strange->next) {
+    for(strange=first; strange != NULL; strange = strange->next) {
 	str = vstralloc("  ", prefixstrange(strange->hostname, strange->diskname, strange->level, len_host, len_disk),
 			"  ", strange->str, NULL);
 	fprintf(mailf, "%s\n", str);
@@ -1857,8 +1872,9 @@ handle_stats(void)
 
 	    dp = lookup_disk(hostname, diskname);
 	    if(dp == NULL) {
-		addtostrange(hostname, diskname, level,
-			     _("ERROR [not in disklist]"));
+		addtoX_summary(&first_failed, &last_failed,
+			       hostname, diskname, level,
+			       _("ERROR [not in disklist]"));
 		exit_status |= STATUS_FAILED;
 		amfree(hostname);
 		amfree(diskname);
@@ -2252,7 +2268,8 @@ handle_success(
 
     dp = lookup_disk(hostname, diskname);
     if(dp == NULL) {
-	addtostrange(hostname, qdiskname, level, _("ERROR [not in disklist]"));
+	addtoX_summary(&first_failed, &last_failed, hostname, qdiskname, level,
+		       _("ERROR [not in disklist]"));
 	exit_status |= STATUS_FAILED;
 	amfree(hostname);
 	amfree(diskname);
@@ -2302,7 +2319,8 @@ handle_success(
 
     if (curprog == P_DUMPER &&
 	(sp->result == L_FAIL || sp->result == L_PARTIAL)) {
-	addtostrange(hostname, qdiskname, level, _("was successfully retried"));
+	addtoX_summary(&first_failed, &last_failed, hostname, qdiskname, level,
+		       _("was successfully retried"));
     }
 
     amfree(hostname);
@@ -2398,10 +2416,10 @@ handle_strange(void)
 
     qdisk = quote_string(repdata->disk->name);
 
-    addline(&errdet,"");
+    addline(&strangedet,"");
     str = vstrallocf("/-- %s STRANGE",
 		prefix(repdata->disk->host->hostname, qdisk, repdata->level));
-    addline(&errdet, str);
+    addline(&strangedet, str);
     amfree(str);
 
     while(contline_next()) {
@@ -2411,12 +2429,13 @@ handle_strange(void)
 	if(strncmp_const_skip(curstr, "sendbackup: warning ", s, ch) == 0) {
 	    strangestr = newstralloc(strangestr, s);
 	}
-	addline(&errdet, curstr);
+	addline(&strangedet, curstr);
     }
-    addline(&errdet,"\\--------");
+    addline(&strangedet,"\\--------");
 
     str = vstrallocf("STRANGE %s", strangestr);
-    addtostrange(repdata->disk->host->hostname, qdisk, repdata->level, str);
+    addtoX_summary(&first_strange, &last_strange,
+		   repdata->disk->host->hostname, qdisk, repdata->level, str);
     exit_status |= STATUS_STRANGE;
     amfree(qdisk);
     amfree(str);
@@ -2504,7 +2523,8 @@ handle_failed(void)
     dp = lookup_disk(hostname, diskname);
     amfree(diskname);
     if(dp == NULL) {
-	addtostrange(hostname, qdiskname, level, _("ERROR [not in disklist]"));
+	addtoX_summary(&first_failed, &last_failed, hostname, qdiskname, level,
+		       _("ERROR [not in disklist]"));
     } else {
 	repdata = find_repdata(dp, datestamp, level);
 
@@ -2518,7 +2538,8 @@ handle_failed(void)
     amfree(datestamp);
 
     str = vstrallocf(_("FAILED %s"), errstr);
-    addtostrange(hostname, qdiskname, level, str);
+    addtoX_summary(&first_failed, &last_failed, hostname, qdiskname, level,
+		   str);
     amfree(str);
 
     if(curprog == P_DUMPER) {
@@ -2548,7 +2569,8 @@ generate_missing(void)
     for(dp = diskq.head; dp != NULL; dp = dp->next) {
 	if(dp->todo && data(dp) == NULL) {
 	    qdisk = quote_string(dp->name);
-	    addtostrange(dp->host->hostname, qdisk, -987, _("RESULTS MISSING"));
+	    addtoX_summary(&first_failed, &last_failed, dp->host->hostname,
+			   qdisk, -987, _("RESULTS MISSING"));
 	    exit_status |= STATUS_MISSING;
 	    amfree(qdisk);
 	}
@@ -2681,29 +2703,30 @@ prefixstrange (
 
 
 static void
-addtostrange (
-    char *	host,
-    char *	disk,
-    int		level,
-    char *	str)
+addtoX_summary (
+    X_summary_t **first,
+    X_summary_t **last,
+    char 	 *host,
+    char 	 *disk,
+    int		  level,
+    char 	 *str)
 {
-    strange_t *strange;
+    X_summary_t *X_summary;
 
-    strange = alloc(SIZEOF(strange_t));
-    strange->hostname = stralloc(host);
-    strange->diskname = stralloc(disk);
-    strange->level    = level;
-    strange->str      = stralloc(str);
-    strange->next = NULL;
-    if(first_strange == NULL) {
-	first_strange = strange;
+    X_summary = alloc(SIZEOF(X_summary_t));
+    X_summary->hostname = stralloc(host);
+    X_summary->diskname = stralloc(disk);
+    X_summary->level    = level;
+    X_summary->str      = stralloc(str);
+    X_summary->next = NULL;
+    if (*first == NULL) {
+	*first = X_summary;
     }
     else {
-        last_strange->next = strange;
+        (*last)->next = X_summary;
     }
-    last_strange = strange;
+    *last = X_summary;
 }
-
 
 static void
 copy_template_file(
