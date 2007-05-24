@@ -2225,7 +2225,7 @@ read_schedule(
 	flush_size += sp->act_size;
 	amfree(diskname);
     }
-    printf("driver: flush size " OFF_T_FMT "\n", (OFF_T_FMT_TYPE)flush_size);
+    printf(_("driver: flush size " OFF_T_FMT "\n"), (OFF_T_FMT_TYPE)flush_size);
     amfree(inpline);
     if(line == 0)
 	log_add(L_WARNING, _("WARNING: got empty schedule from planner"));

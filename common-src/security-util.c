@@ -1214,7 +1214,7 @@ udp_recvpkt_callback(
     /* if it didn't come from the same host/port, forget it */
     if (cmp_sockaddr(&rh->peer, &rh->udp->peer, 0) != 0) {
 	amfree(rh->udp->handle);
-	dbprintf("not form same host\n");
+	dbprintf(_("not from same host\n"));
 	dump_sockaddr(&rh->peer);
 	dump_sockaddr(&rh->udp->peer);
 	return;
@@ -2284,7 +2284,7 @@ check_security(
 
     /* what host is making the request? */
     if ((result = getnameinfo((struct sockaddr *)addr, SS_LEN(addr),
-                              hostname, NI_MAXHOST, NULL, 0, 0) == -1)) {
+			      hostname, NI_MAXHOST, NULL, 0, 0)) == -1) {
 	dbprintf(_("getnameinfo failed: %s\n"),
 		  gai_strerror(result));
 	*errstr = vstralloc("[", "addr ", str_sockaddr(addr), ": ",

@@ -573,7 +573,7 @@ main(
 	    argvchild[i] = NULL;
 	    dbprintf(_("%s: running \"%s"), get_pname(), cmd);
 	    for(j=1;j<i;j++) dbprintf(" %s",argvchild[j]);
-	    dbprintf("\"\n");
+	    dbprintf(_("\"\n"));
 	    backup_api_info_tapeheader(mesgfd, prog, options);
 	    execve(cmd, argvchild, safe_env());
 	    exit(1);

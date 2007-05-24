@@ -112,7 +112,7 @@ static const struct {
     { "find", find,
 	_T(" [<hostname> [<disks>]* ]*\t # Show which tapes these dumps are on.") },
     { "holding", holding,
-	" {list [ -l ] |delete} [ <hostname> [ <disk> [ <datestamp> [ .. ] ] ] ]+\t # Show or delete holding disk contents." },
+	_T(" {list [ -l ] |delete} [ <hostname> [ <disk> [ <datestamp> [ .. ] ] ] ]+\t # Show or delete holding disk contents.") },
     { "delete", delete,
 	_T(" [<hostname> [<disks>]* ]+ # Delete from database.") },
     { "info", info,

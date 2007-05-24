@@ -1,3 +1,15 @@
+2007-05-24  Dustin J. Mitchell <dustin@zmanda.com>
+	* changer-src/scsi-changer-driver.c changer-src/scsi-cam.c
+	  client-src/sendbackup.c client-src/selfcheck.c
+	  recover-src/extract_list.c server-src/amindexd.c
+	  server-src/amcheck.c server-src/driver.c server-src/dumper.c
+	  server-src/planner.c server-src/amadmin.c server-src/diskfile.c
+	  contrib/set_prod_link.pl common-src/krb5-security.c
+	  common-src/bsd-security.c common-src/security-util.c
+	  common-src/conffile.c common-src/bsdudp-security.c:
+	  trivial changes to add _(), etc. -- harmonization of branch
+	  divergence caused by manual resolution of merge conflicts
+
 2007-05-24  Satya Ganga <gsat@zmanda.com> (merged by dustin@zmanda.com)
 	* server-src/amcleanup.sh.in: rewrite to find all the active
 	process/children for a given configuration

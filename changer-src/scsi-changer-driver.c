@@ -606,9 +606,12 @@ PrintConf(void)
 
   if (STE != 0)
     {
-      printf("startuse          0  # Which is the first slot to use\n");
-      printf("                     #\n");
-      printf("enduse            " SIZE_T_FMT "  # Which is the last slot to use\n", STE);
+      printf(_(
+	"startuse          0  # Which is the first slot to use\n"
+	"                     #\n"));
+      printf(_(
+	"enduse            %zu  # Which is the last slot to use.\n"),
+		(SIZE_T_FMT_TYPE)STE);
     } else {
       printf(_(
 	"startuse         ??? # Which is the first slot to use\n"
@@ -6129,7 +6132,7 @@ SCSI_LoadUnload(
       /*NOTREACHED*/
     }
 
-  dbprintf("##### STOP SCSI_LoadUnload\n");
+  dbprintf(_("##### STOP SCSI_LoadUnload\n"));
   return(ret);
 }
 

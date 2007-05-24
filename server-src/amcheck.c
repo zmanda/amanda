@@ -1044,17 +1044,17 @@ start_server_check(
 				 FILE_taperscan_output_callback, outf);
 	if (tapename) {
 	    if (tape_access(tapename,F_OK) == -1) {
-		fprintf(outf, "ERROR: Can't access device %s: %s\n", tapename,
+		fprintf(outf, _("ERROR: Can't access device %s: %s\n"), tapename,
 			strerror(errno));
 		tapebad = 1;
 	    }
 	    if (tape_access(tapename,R_OK) == -1) {
-		fprintf(outf, "ERROR: Can't read device %s: %s\n", tapename,
+		fprintf(outf, _("ERROR: Can't read device %s: %s\n"), tapename,
 			strerror(errno));
 		tapebad = 1;
 	    }
 	    if (tape_access(tapename,W_OK) == -1) {
-		fprintf(outf, "ERROR: Can't write to device %s: %s\n", tapename,
+		fprintf(outf, _("ERROR: Can't write to device %s: %s\n"), tapename,
 			strerror(errno));
 		tapebad = 1;
 	    }
@@ -1104,8 +1104,8 @@ start_server_check(
 	fprintf(outf, _("WARNING: skipping tape test because amdump or amflush seem to be running\n"));
 	fprintf(outf, _("WARNING: if they are not, you must run amcleanup\n"));
     } else if (logbad == 2) {
-	fprintf(outf, "WARNING: amdump or amflush seem to be running\n");
-	fprintf(outf, "WARNING: if they are not, you must run amcleanup\n");
+	fprintf(outf, _("WARNING: amdump or amflush seem to be running\n"));
+	fprintf(outf, _("WARNING: if they are not, you must run amcleanup\n"));
     } else {
 	fprintf(outf, _("NOTE: skipping tape checks\n"));
     }

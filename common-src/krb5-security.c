@@ -256,7 +256,7 @@ krb5_connect(
     result = resolve_hostname(hostname, NULL, &canonname);
     if(result != 0) {
 	dbprintf(_("resolve_hostname(%s): %s\n"), hostname, gai_strerror(result));
-	security_seterror(&rh->sech, "resolve_hostname(%s): %s\n", hostname,
+	security_seterror(&rh->sech, _("resolve_hostname(%s): %s\n"), hostname,
 			  gai_strerror(result));
 	(*fn)(arg, &rh->sech, S_ERROR);
 	return;

@@ -22,7 +22,6 @@
 # -----------------------------------------------------------------------
 # History:
 #
-# $Log: set_prod_link.pl,v $
 # Revision 1.3  2006/05/25 01:47:13  johnfranks
 # Allow spaces and arbitrary binary characters in file names
 # and configuration files.

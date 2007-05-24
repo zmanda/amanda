@@ -226,9 +226,8 @@ uncompress_file(
 
 	pipe_stream = fdopen(pipe_from_gzip,"r");
 	if(pipe_stream == NULL) {
-	    *emsg = newvstralloc(*emsg, "Can't fdopen pipe from gzip: ",
-				 strerror(errno),
-				 NULL);
+	    *emsg = newvstrallocf(*emsg, _("Can't fdopen pipe from gzip: %s"),
+				 strerror(errno));
 	    dbprintf("%s\n",*emsg);
 	    amfree(filename);
 	    return NULL;
@@ -522,7 +521,8 @@ is_dump_host_valid(
 	}
     }
 
-    reply(501, "No index records for host: %s. Have you enabled indexing?", host);
+    reply(501, _("No index records for host: %s. Have you enabled indexing?"),
+	  host);
     return NULL;
 }
 

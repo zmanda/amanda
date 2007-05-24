@@ -2145,7 +2145,6 @@ static void handle_failed(
 
     errstr = est(dp)->errstr? est(dp)->errstr : _("hmm, no error indicator!");
 
-fprintf(stderr,_("errstr:%s:\n"), errstr);
     fprintf(stderr, _("%s: FAILED %s %s %s 0 [%s]\n"),
 	get_pname(), dp->host->hostname, qname, planner_timestamp, errstr);
 

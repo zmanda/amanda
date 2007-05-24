@@ -2222,7 +2222,8 @@ extract_files(void)
 	/* connect to the tape handler daemon on the tape drive server */
 	if ((extract_files_setup(elist->tape, elist->fileno)) == -1)
 	{
-	    fprintf(stderr, _("amrecover - can't talk to tape server\n"));
+	    fprintf(stderr, _("amrecover - can't talk to tape server: %s\n"),
+		    errstr);
 	    return;
 	}
 

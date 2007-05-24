@@ -473,7 +473,7 @@ int ScanBus(int print)
                               printf("Comm");
                               break;
                             default:
-                              printf("unknown %d"),pDev[count].inquiry->type);
+                              printf("_(unknown %d"),pDev[count].inquiry->type);
                               break;
                             }
                           printf("\n");

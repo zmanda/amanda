@@ -5127,7 +5127,7 @@ command_overwrite(
 		if (np->validate)
 		    np->validate(np, &valarray[np->parm]);
 		if (duplicate == 1) {
-		    fprintf(stderr,"Duplicate %s option, using %s\n",
+		    fprintf(stderr,_("Duplicate %s option, using %s\n"),
 			    command_option->name, command_option->value);
 		}
 	    }

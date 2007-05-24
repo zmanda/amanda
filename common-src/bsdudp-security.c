@@ -130,7 +130,7 @@ bsdudp_connect(
     result = resolve_hostname(hostname, &res, &canonname);
     if(result != 0) {
 	dbprintf(_("resolve_hostname(%s): %s\n"), hostname, gai_strerror(result));
-	security_seterror(&bh->sech, "resolve_hostname(%s): %s\n", hostname,
+	security_seterror(&bh->sech, _("resolve_hostname(%s): %s\n"), hostname,
 			  gai_strerror(result));
 	(*fn)(arg, &bh->sech, S_ERROR);
 	return;

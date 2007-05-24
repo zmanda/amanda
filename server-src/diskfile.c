@@ -412,7 +412,7 @@ parse_diskline(
 	else if (strcasecmp(hostname, p->hostname) &&
 		 match_host(hostname, p->hostname) &&
 		 match_host(p->hostname, hostname)) {
-	    disk_parserror(filename, line_num, "Duplicate host name: \"%s\" and \"%s\"", p->hostname, hostname);
+	    disk_parserror(filename, line_num, _("Duplicate host name: \"%s\" and \"%s\""), p->hostname, hostname);
 	    return(-1);
 	}
 	amfree(shostp);

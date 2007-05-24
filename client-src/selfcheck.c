@@ -527,7 +527,6 @@ check_disk(
     char *qamdevice = quote_string(amdevice);
     char *qdevice = NULL;
     FILE *toolin;
-    char number[NUM_STR_SIZE];
 
     (void)level;	/* Quiet unused parameter warning */
 
@@ -778,7 +777,7 @@ check_disk(
 		aclose(property_pipe[0]);
 		toolin = fdopen(property_pipe[1],"w");
 		if (!toolin) {
-		    err = vstralloc("Can't fdopen: ", strerror(errno), NULL);
+		    err = vstrallocf(_("Can't fdopen: %s"), strerror(errno));
 		    goto common_exit;
 		}
 		output_tool_property(toolin, options);
@@ -786,17 +785,13 @@ check_disk(
 		fclose(toolin);
 		if (waitpid(backup_api_pid, &status, 0) < 0) {
 		    if (!WIFEXITED(status)) {
-			snprintf(number, SIZEOF(number), "%d",
-				 (int)WTERMSIG(status));
-			err = vstralloc(_("Tool exited with signal "), number,
-					NULL);
+			err = vstrallocf(_("Tool exited with signal %d"),
+					 WTERMSIG(status));
 		    } else if (WEXITSTATUS(status) != 0) {
-			snprintf(number, SIZEOF(number), "%d",
-				 (int)WEXITSTATUS(status));
-			err = vstralloc(_("Tool exited with status "), number,
-					NULL);
+			err = vstrallocf(_("Tool exited with status %d"),
+					 WEXITSTATUS(status));
 		    } else {
-			err = stralloc(_("waitpid returned negative value"));
+			err = vstrallocf(_("waitpid returned negative value"));
 		    }
 		    goto common_exit;
 		}
