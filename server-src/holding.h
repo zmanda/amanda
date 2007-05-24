@@ -39,7 +39,7 @@
  *
  * /data/holding                                     <-- holding disk
  * /data/holding/200703061234                        <-- holding dir
- * /data/holding/200703061234/videoserver._video_a   <-- holding file, 
+ * /data/holding/200703061234/videoserver._video_a   <-- holding file,
                                                          holding file chunk
  * /data/holding/200703061234/videoserver._video_a.1 <-- holding file chunk
  *
@@ -109,14 +109,14 @@ holding_get_files(char *hdir,
  *
  * @param dateargs: sl_t of datestamps to dump, or NULL for all
  * @param interactive: if true, be interactive
- * @returns: a newly allocated sl_t listing all matching holding 
+ * @returns: a newly allocated sl_t listing all matching holding
  * files
  */
 sl_t *
-holding_get_files_for_flush(sl_t *dateargs, 
+holding_get_files_for_flush(sl_t *dateargs,
                             int interactive);
 
-/* Get the total size of a holding file, including all holding 
+/* Get the total size of a holding file, including all holding
  * file chunks, in kilobytes.
  *
  * @param holding_file: full pathname of holding file
@@ -124,8 +124,8 @@ holding_get_files_for_flush(sl_t *dateargs,
  * total size
  * @returns: total size of the holding file, or -1 in an error
  */
-off_t 
-holding_file_size(char *holding_file, 
+off_t
+holding_file_size(char *holding_file,
                   int strip_headers);
 
 /* Unlink a holding file, including all holding file chunks.
@@ -133,7 +133,7 @@ holding_file_size(char *holding_file,
  * @param holding_file: full pathname of holding file
  * @returns: 1 on success, else 0
  */
-int 
+int
 holding_file_unlink(char *holding_file);
 
 /* Given a pathname of a holding file, read the file header.
@@ -144,15 +144,15 @@ holding_file_unlink(char *holding_file);
  * @param file: (result) dumpfile_t structure
  * @returns: 1 on success, else 0
  */
-int 
-holding_file_get_dumpfile(char *fname, 
+int
+holding_file_get_dumpfile(char *fname,
                           dumpfile_t *file);
 
 /*
  * Holding file chunks
  */
 
-/* Get a list of holding files chunks in the given holding 
+/* Get a list of holding files chunks in the given holding
  * file.  Always returns full paths.
  *
  * @param hfile: holding file to enumerate
@@ -191,8 +191,8 @@ pick_all_datestamp(int verbose);
  * @param complete: if 0, set 'is_partial' to 1 in each file
  * @returns: 1 on success, else 0
  */
-int 
-rename_tmp_holding(char *holding_file, 
+int
+rename_tmp_holding(char *holding_file,
                    int complete);
 
 /* Remove any empty datestamp directories.
@@ -200,8 +200,8 @@ rename_tmp_holding(char *holding_file,
  * @param diskdir: holding directory to clean
  * @param verbose: verbose logging to stdout
  */
-void 
-cleanup_holdingdisk(char *diskdir, 
+void
+cleanup_holdingdisk(char *diskdir,
                     int verbose);
 
 /* Set up a holding directory and do basic permission
@@ -210,7 +210,7 @@ cleanup_holdingdisk(char *diskdir,
  * @param diskdir: holding directory to set up
  * @returns: 1 on success, else 0
  */
-int 
+int
 mkholdingdir(char *diskdir);
 
 #endif /* HOLDING_H */

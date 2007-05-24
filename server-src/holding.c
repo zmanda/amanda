@@ -169,9 +169,9 @@ holding_get_directories_per_disk(
         if (is_dot_or_dotdot(workdir->d_name))
             continue;
 
-        if(verbose) 
+        if(verbose)
             printf("  %s: ", workdir->d_name);
-            
+
         hdir = newvstralloc(hdir,
                      hdisk, "/", workdir->d_name,
                      NULL);
@@ -538,7 +538,7 @@ holding_file_get_dumpfile(
 }
 
 /*
- * Interactive functions 
+ * Interactive functions
  */
 
 sl_t *
@@ -740,7 +740,7 @@ cleanup_holdingdisk(
 	else if(rmdir(workdir->d_name) == 0) {
 	    if(verbose)
 	        puts(_("deleted empty Amanda directory."));
- 	}
+	}
      }
      closedir(topdir);
 }
