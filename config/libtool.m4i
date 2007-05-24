@@ -3526,14 +3526,27 @@ case $host_os in
 	if test "$GXX" = yes && test "$with_gnu_ld" = no; then
 	  _LT_AC_TAGVAR(no_undefined_flag, $1)=' ${wl}-z ${wl}defs'
 	  if $CC --version | grep -v '^2\.7' > /dev/null; then
-	    _LT_AC_TAGVAR(archive_cmds, $1)='$CC -shared -nostdlib $LDFLAGS $predep_objects $libobjs $deplibs $postdep_objects $compiler_flags ${wl}-h $wl$soname -o $lib'
-	    _LT_AC_TAGVAR(archive_expsym_cmds, $1)='$echo "{ global:" > $lib.exp~cat $export_symbols | $SED -e "s/\(.*\)/\1;/" >> $lib.exp~$echo "local: *; };" >> $lib.exp~
+	    if $CC -v --help 2>/dev/null | grep -- -shared  > /dev/null 2> /dev/null; then
+	      _LT_AC_TAGVAR(archive_cmds, $1)='$CC -shared -nostdlib $LDFLAGS $predep_objects $libobjs $deplibs $postdep_objects $compiler_flags ${wl}-h $wl$soname -o $lib'
+              _LT_AC_TAGVAR(archive_expsym_cmds, $1)='$echo "{ global:" > $lib.exp~cat $export_symbols | $SED -e "s/\(.*\)/\1;/" >> $lib.exp~$echo "local: *; };" >> $lib.exp~
 		$CC -shared -nostdlib ${wl}-M $wl$lib.exp -o $lib $predep_objects $libobjs $deplibs $postdep_objects $compiler_flags~$rm $lib.exp'
 
-	    # Commands to make compiler produce verbose output that lists
-	    # what "hidden" libraries, object files and flags are used when
-	    # linking a shared library.
-	    output_verbose_link_cmd="$CC -shared $CFLAGS -v conftest.$objext 2>&1 | grep \"\-L\""
+	      # Commands to make compiler produce verbose output that lists
+	      # what "hidden" libraries, object files and flags are used when
+	      # linking a shared library.
+	      output_verbose_link_cmd="$CC -shared $CFLAGS -v conftest.$objext 2>&1 | grep \"\-L\""
+              _LT_AC_TAGVAR(lt_prog_compiler_static, $1)='-static'
+	    else
+	      _LT_AC_TAGVAR(archive_cmds, $1)='$CC ${wl}-G -nostdlib $LDFLAGS $predep_objects $libobjs $deplibs $postdep_objects $compiler_flags ${wl}-h $wl$soname -o $lib'
+              _LT_AC_TAGVAR(archive_expsym_cmds, $1)='$echo "{ global:" > $lib.exp~cat $export_symbols | $SED -e "s/\(.*\)/\1;/" >> $lib.exp~$echo "local: *; };" >> $lib.exp~
+		$CC ${wl}-G -nostdlib ${wl}-M $wl$lib.exp -o $lib $predep_objects $libobjs $deplibs $postdep_objects $compiler_flags~$rm $lib.exp'
+
+	      # Commands to make compiler produce verbose output that lists
+	      # what "hidden" libraries, object files and flags are used when
+	      # linking a shared library.
+	      output_verbose_link_cmd="$CC ${wl}-G $CFLAGS -v conftest.$objext 2>&1 | grep \"\-L\""
+              _LT_AC_TAGVAR(lt_prog_compiler_static, $1)='${wl}-Bstatic'
+	    fi
 	  else
 	    # g++ 2.7 appears to require `-G' NOT `-shared' on this
 	    # platform.
@@ -4913,6 +4926,13 @@ AC_MSG_CHECKING([for $compiler option to produce PIC])
 	    _LT_AC_TAGVAR(lt_prog_compiler_pic, $1)='-PIC'
 	    ;;
 	  *)
+	    if $CC -v --help 2>/dev/null | grep -- -static  > /dev/null 2> /dev/null; then
+	      _LT_AC_TAGVAR(lt_prog_compiler_static, $1)='-static'
+	    else
+	      # GCC with Sun linker
+	      _LT_AC_TAGVAR(lt_prog_compiler_pic, $1)='-KPIC'
+	      _LT_AC_TAGVAR(lt_prog_compiler_static, $1)='${wl}-Bstatic'
+            fi
 	    ;;
 	esac
 	;;
@@ -5864,16 +5884,26 @@ EOF
 
     solaris*)
       _LT_AC_TAGVAR(no_undefined_flag, $1)=' -z text'
-      if test "$GCC" = yes; then
-	wlarc='${wl}'
-	_LT_AC_TAGVAR(archive_cmds, $1)='$CC -shared ${wl}-h ${wl}$soname -o $lib $libobjs $deplibs $compiler_flags'
-	_LT_AC_TAGVAR(archive_expsym_cmds, $1)='$echo "{ global:" > $lib.exp~cat $export_symbols | $SED -e "s/\(.*\)/\1;/" >> $lib.exp~$echo "local: *; };" >> $lib.exp~
-	  $CC -shared ${wl}-M ${wl}$lib.exp ${wl}-h ${wl}$soname -o $lib $libobjs $deplibs $compiler_flags~$rm $lib.exp'
-      else
-	wlarc=''
-	_LT_AC_TAGVAR(archive_cmds, $1)='$LD -G${allow_undefined_flag} -h $soname -o $lib $libobjs $deplibs $linker_flags'
-	_LT_AC_TAGVAR(archive_expsym_cmds, $1)='$echo "{ global:" > $lib.exp~cat $export_symbols | $SED -e "s/\(.*\)/\1;/" >> $lib.exp~$echo "local: *; };" >> $lib.exp~
-  	$LD -G${allow_undefined_flag} -M $lib.exp -h $soname -o $lib $libobjs $deplibs $linker_flags~$rm $lib.exp'
+      if test "x$archive_cmds" = "x"; then
+        if test "$GCC" = yes; then
+	  wlarc='${wl}'
+	  if $CC -v --help 2>/dev/null | grep -- -shared  > /dev/null 2> /dev/null; then
+	    _LT_AC_TAGVAR(archive_cmds, $1)='$CC -shared ${wl}-h ${wl}$soname -o $lib $libobjs $deplibs $compiler_flags'
+	    _LT_AC_TAGVAR(archive_expsym_cmds, $1)='$echo "{ global:" > $lib.exp~cat $export_symbols | $SED -e "s/\(.*\)/\1;/" >> $lib.exp~$echo "local: *; };" >> $lib.exp~
+	    $CC -shared ${wl}-M ${wl}$lib.exp ${wl}-h ${wl}$soname -o $lib $libobjs $deplibs $compiler_flags~$rm $lib.exp'
+	  else
+	    _LT_AC_TAGVAR(archive_cmds, $1)='$CC ${wl}-G ${wl}-h ${wl}$soname -o $lib $libobjs $deplibs $compiler_flags'
+	    _LT_AC_TAGVAR(archive_expsym_cmds, $1)='$echo "{ global:" > $lib.exp~cat $export_symbols | $SED -e "s/\(.*\)/\1;/" >> $lib.exp~$echo "local: *; };" >> $lib.exp~
+	    $CC ${wl}-G ${wl}-M ${wl}$lib.exp ${wl}-h ${wl}$soname -o $lib $libobjs $deplibs $compiler_flags~$rm $lib.exp'
+          fi
+        else
+	  wlarc=''
+          _LT_AC_TAGVAR(lt_prog_compiler_static, $1)='-static'
+	  _LT_AC_TAGVAR(archive_cmds, $1)='$LD -G${allow_undefined_flag} -h $soname -o $lib $libobjs $deplibs $linker_flags'
+	  _LT_AC_TAGVAR(archive_expsym_cmds, $1)='$echo "{ global:" > $lib.exp~cat $export_symbols | $SED -e "s/\(.*\)/\1;/" >> $lib.exp~$echo "local: *; };" >> $lib.exp~
+  	  $LD -G${allow_undefined_flag} -M $lib.exp -h $soname -o $lib $libobjs $deplibs $linker_flags~$rm $lib.exp'
+          _LT_AC_TAGVAR(lt_prog_compiler_static, $1)='-static'
+	fi
       fi
       _LT_AC_TAGVAR(hardcode_libdir_flag_spec, $1)='-R$libdir'
       _LT_AC_TAGVAR(hardcode_shlibpath_var, $1)=no

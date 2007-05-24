@@ -1,3 +1,8 @@
+2007-05-24  John Franks <jrfranks@zmanda.com> (merged by dustin@zmanda.com)
+	* config/libtool.m4i:
+		Fix to pass loader variables correctly on Solaris systems
+		with a gcc that does not use -static or -shared.
+
 2007-05-24  Kevin Till <ktill@zmanda.com> (merged by dustin@zmanda.com)
 	* server-src/amstatus.pl.in: parse directory and holding_disk_dir with
 	  space correctly
