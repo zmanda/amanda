@@ -177,6 +177,8 @@ main(
      *      We don't want to be forced to support dozens of message catalogs.
      */  
     setlocale(LC_MESSAGES, "C");
+    textdomain("amanda");
+
 
     safe_fd(-1, 0);
 
