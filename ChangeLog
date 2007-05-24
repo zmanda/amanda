@@ -1,4 +1,7 @@
-2007-01-24  John Franks <jrfranks@zmanda.com> (merged by dustin@zmanda.com)
+2007-05-24  Dustin J. Mitchell <dustin@zmanda.com>
+	* configure.in: add configure.in recognition for Mac OS X
+
+2007-05-24  John Franks <jrfranks@zmanda.com> (merged by dustin@zmanda.com)
 	* configure.in: IPV6 on cygwin only partially works.
 		Force WORKING_IPV6 to false.
 
