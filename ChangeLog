@@ -1,3 +1,6 @@
+2007-05-25  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amstatus.pl.in: Put all flags in one arguments.
+
 2007-05-23  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/util.c: Fix missing NULL in vstralloc call.
 
