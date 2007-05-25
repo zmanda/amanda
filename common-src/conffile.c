@@ -1306,7 +1306,7 @@ init_defaults(
     conf_init_int      (&conf_data[CNF_DUMPCYCLE]            , 10);
     conf_init_int      (&conf_data[CNF_RUNSPERCYCLE]         , 0);
     conf_init_int      (&conf_data[CNF_TAPECYCLE]            , 15);
-    conf_init_int      (&conf_data[CNF_NETUSAGE]             , 300);
+    conf_init_int      (&conf_data[CNF_NETUSAGE]             , 8000);
     conf_init_int      (&conf_data[CNF_INPARALLEL]           , 10);
     conf_init_string   (&conf_data[CNF_DUMPORDER]            , "ttt");
     conf_init_int      (&conf_data[CNF_BUMPPERCENT]          , 0);
@@ -1931,7 +1931,7 @@ static void
 init_interface_defaults(void)
 {
     conf_init_string(&ifcur.value[INTER_COMMENT] , "");
-    conf_init_int   (&ifcur.value[INTER_MAXUSAGE], 300);
+    conf_init_int   (&ifcur.value[INTER_MAXUSAGE], 8000);
 
     ifcur.curusage = 0;
 }

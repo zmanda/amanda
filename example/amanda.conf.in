@@ -37,7 +37,7 @@ displayunit "k"		# Possible values: "k|m|g|t"
 			# The unit used to print many numbers.
 			# k=kilo, m=mega, g=giga, t=tera
 			
-netusage  600 Kbps	# maximum net bandwidth for Amanda, in KB per sec
+netusage  8000 Kbps	# maximum net bandwidth for Amanda, in KB per sec
 
 dumpcycle 4 weeks	# the number of days in the normal dump cycle
 runspercycle 20         # the number of amdump runs in dumpcycle days
@@ -676,13 +676,13 @@ define dumptype client-encrypt-nocomp {
 
 define interface local {
     comment "a local disk"
-    use 1000 kbps
+    use 8000 kbps
 }
 
-define interface le0 {
-    comment "10 Mbps ethernet"
-    use 400 kbps
-}
+#define interface le0 {
+#    comment "10 Mbps ethernet"
+#    use 400 kbps
+#}
 
 # You may include other amanda configuration files, so you can share
 # dumptypes, tapetypes and interface definitions among several

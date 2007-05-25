@@ -1,3 +1,8 @@
+2007-05-25  Kevin Till <ktill@zmanda.com>
+	* example/amanda.conf.in: ditto
+	* man/xml-source/amanda.conf.5.xml: ditto
+	* common-src/conffile.c: ditto
+
 2007-05-24  Dustin J. Mitchell <dustin@zmanda.com>
 	* changer-src/scsi-changer-driver.c changer-src/scsi-cam.c
 	  client-src/sendbackup.c client-src/selfcheck.c
