@@ -798,7 +798,7 @@ setup_estimate(
     /* adjust priority levels */
 
     /* warn if dump will be overwritten */
-    if(ep->last_level > -1) {
+    if (ep->last_level > -1 && strlen(info.inf[0].label) > 0) {
 	overwrite_runs = when_overwrite(info.inf[0].label);
 	if(overwrite_runs == 0) {
 	    log_add(L_WARNING, "Last full dump of %s:%s "

@@ -1,4 +1,7 @@
 2007-05-29  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/planner.c: Don't report overwrite if no label.
+
+2007-05-29  Jean-Louis Martineau <martineau@zmanda.com>
 	* changer-src/chg-manual.sh.in: Don't reset the slot to 0 on eject.
 
 2007-05-25  Jean-Louis Martineau <martineau@zmanda.com>
