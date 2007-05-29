@@ -192,7 +192,6 @@ eject() {
 	if [ ! -z "$used" ];then
 		echo "     -> offline $tape" >> $logfile
 		$MT $MTF $tape offline >> $logfile 2>&1
-		echo 0 > $slotfile
 		answer="$slot $tape"
 		code=0
 	else
