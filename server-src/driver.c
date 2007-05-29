@@ -823,7 +823,7 @@ start_some_dumps(
 
     for (dumper = dmptable; dumper < dmptable+inparallel; dumper++) {
 
-	if( dumper->busy ) {
+	if( dumper->busy || dumper->down) {
 	    continue;
 	}
 

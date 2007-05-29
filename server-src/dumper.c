@@ -1669,14 +1669,14 @@ sendbackup_response(
     assert(response_error != NULL);
     assert(sech != NULL);
 
-    security_close_connection(sech, hostname);
-
     if (pkt == NULL) {
 	errstr = newvstrallocf(errstr, _("[request failed: %s]"),
 	    security_geterror(sech));
 	*response_error = 1;
 	return;
     }
+
+    security_close_connection(sech, hostname);
 
     extra = NULL;
     memset(ports, 0, SIZEOF(ports));
@@ -1846,7 +1846,6 @@ bad_nak:
 
     /* everything worked */
     *response_error = 0;
-    security_close_connection(sech, hostname);
     return;
 
 parse_error:
@@ -1855,13 +1854,11 @@ parse_error:
 			  extra ? extra : _("(no additional information)"));
     amfree(extra);
     *response_error = 2;
-    security_close_connection(sech, hostname);
     return;
 
 connect_error:
     stop_dump();
     *response_error = 1;
-    security_close_connection(sech, hostname);
 }
 
 static char *
