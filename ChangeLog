@@ -1,4 +1,7 @@
 2007-05-29  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amstatus.pl.in: Use compressed size.
+
+2007-05-29  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/planner.c: Don't report overwrite if no label.
 
 2007-05-29  Jean-Louis Martineau <martineau@zmanda.com>
