@@ -1,3 +1,6 @@
+2007-05-29  Jean-Louis Martineau <martineau@zmanda.com>
+	* changer-src/chg-manual.sh.in: Don't reset the slot to 0 on eject.
+
 2007-05-25  Kevin Till <ktill@zmanda.com>
 	* example/amanda.conf.in: ditto
 	* man/xml-source/amanda.conf.5.xml: ditto
