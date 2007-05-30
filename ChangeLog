@@ -1,4 +1,7 @@
 2007-05-30  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amstatus.pl.in: Set and use chunk_time.
+
+2007-05-30  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/util.c: Don't use -w flags for od execution.
 
 2007-05-29  Jean-Louis Martineau <martineau@zmanda.com>

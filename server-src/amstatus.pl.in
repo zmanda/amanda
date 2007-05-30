@@ -407,7 +407,7 @@ while(<AMDUMP>) {
 		$serial=$4;
 		$serial{$serial}=$hostpart;
 		#$chunk_started{$hostpart}=1;
-		#$chunk_time{$hostpart}=$1;
+		$chunk_time{$hostpart}=$1;
 		#$chunk_finished{$hostpart}=0;
 		$holding_file{$hostpart}=$5;
 	}
@@ -421,7 +421,7 @@ while(<AMDUMP>) {
 		$serial=$4;
 		$serial{$serial}=$hostpart;
 		#$chunk_started{$hostpart}=1;
-		#$chunk_time{$hostpart}=$1;
+		$chunk_time{$hostpart}=$1;
 		#$chunk_finished{$hostpart}=0;
 		$holding_file{$hostpart}=$5;
 	}
@@ -552,9 +552,9 @@ while(<AMDUMP>) {
 		$hostpart=$serial{$serial};
 		$size{$hostpart}=$outputsize;
 		$dump_finished{$hostpart}=1;
-		$busy_time{$2}+=($1-$dump_time{$hostpart});
+		$busy_time{$2}+=($1-$chunk_time{$hostpart});
 		$running_dumper{$2} = "0";
-		$dump_time{$hostpart}=$1;
+		$chunk_time{$hostpart}=$1;
 		$error{$hostpart}="";
 		if ($3 eq "PARTIAL") {
 			$partial{$hostpart} = 1;
