@@ -846,7 +846,7 @@ get_tgt(
      * Resolve keytab file into a keytab object
      */
     if ((ret = krb5_kt_resolve(context, keytab_name, &keytab)) != 0) {
-	error = vstralloc("error resolving keytab ", keytab, ": ",
+	error = vstralloc("error resolving keytab ", keytab_name, ": ",
 	    error_message(ret), NULL);
 	return (error);
     }

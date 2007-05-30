@@ -357,7 +357,6 @@ holding_get_files_for_flush(
     sle_t *datearg;
     sle_t *date, *next_date;
     sle_t *file_elt;
-    int date_matches;
     disk_t *dp;
     char *host;
     char *disk;
