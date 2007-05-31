@@ -1,3 +1,6 @@
+2007-05-31  Jean-Louis Martineau <martineau@zmanda.com>
+	* recover-src/set_commands.c (cd_dir): Validate regex.
+
 2007-05-30  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/krb5-security.c: Use keytab_name.
 	* server-src/holding.c: Remove unused date_matches variable.

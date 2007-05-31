@@ -413,6 +413,7 @@ cd_dir(
 {
     char *path_on_disk_slash = NULL;
     char *dir = NULL;
+    char *s;
 
     int nb_found;
     size_t i;
@@ -420,14 +421,21 @@ cd_dir(
     DIR_ITEM *ditem;
 
     path_on_disk_slash = stralloc2(path_on_disk, "/");
+    if ((s = validate_regexp(path_on_disk_slash)) != NULL) {
+	amfree(path_on_disk_slash);
+    }
+
+    if ((s = validate_regexp(path_on_disk)) != NULL) {
+	path_on_disk = NULL;
+    }
 
     nb_found = 0;
 
     for (ditem=get_dir_list(); ditem!=NULL && nb_found <= 1; 
 			       ditem=get_next_dir_item(ditem))
     {
-	if (match(path_on_disk, ditem->path)
-	    || match(path_on_disk_slash, ditem->path))
+	if ((path_on_disk && match(path_on_disk, ditem->path))
+	    || (path_on_disk_slash && match(path_on_disk_slash, ditem->path)))
 	{
 	    i = strlen(ditem->path);
 	    if((i > 0 && ditem->path[i-1] == '/')
