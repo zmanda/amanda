@@ -1,4 +1,7 @@
 2007-05-31  Jean-Louis Martineau <martineau@zmanda.com>
+	* configure.in: Check backup is not from gnutar.
+
+2007-05-31  Jean-Louis Martineau <martineau@zmanda.com>
 	* recover-src/set_commands.c (cd_dir): Validate regex.
 
 2007-05-30  Jean-Louis Martineau <martineau@zmanda.com>

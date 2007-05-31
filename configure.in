@@ -1745,6 +1745,12 @@ dnl AC_PATH_PROGS(MAKEINFO,makeinfo,,$LOCSYSPATH)
 dnl AC_PATH_PROGS(TEXI2DVI,texi2dvi,,$LOCSYSPATH)
 
 AC_PATH_PROGS(DUMP,$DUMP_PROGRAMS,,$SYSLOCPATH)
+if test "$DUMP" -a `basename $DUMP` = "backup"; then
+  backup_gnutar=`$DUMP --version | $GREP "GNU tar"`
+  if test $? -eq 0; then
+    DUMP=
+  fi
+fi
 AC_PATH_PROGS(RESTORE,ufsrestore restore,,$SYSLOCPATH)
 if test "$DUMP" -a "$RESTORE"; then
     AC_DEFINE_UNQUOTED(DUMP,"$DUMP",[Define the location of the ufsdump, backup, or dump program. ])
