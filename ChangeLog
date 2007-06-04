@@ -1,4 +1,8 @@
-2007-05-31  Jean-Louis Martineau <martineau@zmanda.com>
+2007-06-04  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/krb5-security.c, common-src/bsdtcp-security.c,
+	  common-src/security-util.c: Check return code of getnameinfo.
+
+2007-06-04  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amstatus.pl.in: Perl argument are '-Tw'.
 
 2007-06-04  Dustin J. Mitchell <dustin@zmanda.com>
