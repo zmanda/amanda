@@ -427,7 +427,8 @@ main(
 	sl_t *holding_list;
 	sle_t *holding_file;
 	char *qdisk, *qhname;
-	holding_list = holding_get_files_for_flush(NULL, 0);
+	/* get *all* flushable files in holding */
+	holding_list = holding_get_files_for_flush(NULL);
 	for(holding_file=holding_list->first; holding_file != NULL;
 				       holding_file = holding_file->next) {
 	    holding_file_get_dumpfile(holding_file->name, &file);

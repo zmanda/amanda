@@ -107,14 +107,23 @@ holding_get_files(char *hdir,
  * matching only certain datestamps.  This function filters out
  * files for host/disks that are no longer in the disklist.
  *
- * @param dateargs: sl_t of datestamps to dump, or NULL for all
- * @param interactive: if true, be interactive
+ * @param dateargs: sl_t of datestamps expressions to dump, or NULL 
+ * for all
  * @returns: a newly allocated sl_t listing all matching holding
  * files
  */
 sl_t *
-holding_get_files_for_flush(sl_t *dateargs,
-                            int interactive);
+holding_get_files_for_flush(sl_t *dateargs);
+
+/* Get a list of all datestamps for which dumps are in the holding
+ * disk.  This scans all dumps and takes the union of their
+ * datestamps (some/all of which may actually be timestamps, 
+ * depending on the setting of config option usetimestamps)
+ *
+ * @returns: a newly allocated sl_t listing all datestamps
+ */
+sl_t *
+holding_get_all_datestamps(void);
 
 /* Get the total size of a holding file, including all holding
  * file chunks, in kilobytes.
@@ -166,22 +175,14 @@ holding_get_file_chunks(char *hfile);
  */
 
 /* Allow the user to select a set of datestamps from those in
- * holding disks.
+ * holding disks.  The result can be passed to 
+ * holding_get_files_for_flush.  If less than two dates are
+ * available, then no user interaction takes place.
  *
- * @param verbose: verbose logging to stdout
  * @returns: a new sl_t listing all matching datestamps
  */
 sl_t *
-pick_datestamp(int verbose);
-
-/* Similar to pick_datestamp, but always select all available
- * datestamps.  Non-interactive, but outputs progress to stdout.
- *
- * @param verbose: verbose logging to stdout
- * @returns: a new sl_t listing all matching datestamps
- */
-sl_t *
-pick_all_datestamp(int verbose);
+pick_datestamp(void);
 
 /* Rename holding files from the temporary names used during
  * creation.

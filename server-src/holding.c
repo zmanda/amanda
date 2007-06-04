@@ -330,69 +330,45 @@ holding_get_files(
 
 sl_t *
 holding_get_files_for_flush(
-    sl_t *dateargs,
-    int interactive)
+    sl_t *dateargs)
 {
-    sl_t *date_list;
     sl_t *file_list;
     sl_t *result_list;
-    sle_t *datearg;
-    sle_t *date, *next_date;
+    sle_t *date;
     sle_t *file_elt;
     int date_matches;
     disk_t *dp;
     dumpfile_t file;
-
-    /* make date_list the intersection of available holding directories and
-     * the dateargs parameter.  */
-    if (dateargs) {
-        int ok;
-
-        date_list = pick_all_datestamp(verbose);
-        for (date = date_list->first; date != NULL;) {
-            next_date = date->next;
-            ok = 0;
-            for(datearg=dateargs->first; datearg != NULL && ok==0;
-                datearg = datearg->next) {
-                ok = match_datestamp(datearg->name, date->name);
-            }
-            if(ok == 0) { /* remove dir */
-                remove_sl(date_list, date);
-            }
-            date = next_date;
-        }
-    }
-    else {
-        /* no date args were provided, so use everything */
-        if (interactive)
-            date_list = pick_datestamp(verbose);
-        else
-            date_list = pick_all_datestamp(verbose);
-    }
 
     result_list = new_sl();
     if (!result_list) {
         return NULL;
     }
 
-    /* loop over *all* files, checking each one */
+    /* loop over *all* files, checking each one's datestamp against the expressions
+     * in dateargs */
     file_list = holding_get_files(NULL, 1);
     for (file_elt = file_list->first; file_elt != NULL; file_elt = file_elt->next) {
         /* get info on that file */
-        if (!holding_file_get_dumpfile(file_elt->name, &file))
+	if (!holding_file_get_dumpfile(file_elt->name, &file))
 	    continue;
 
         if (file.type != F_DUMPFILE)
             continue;
 
-        /* loop over dates, until we find a match */
-        date_matches = 0;
-        for (date = date_list->first; date !=NULL; date = date->next) {
-            if (strcmp(file.datestamp, date->name) == 0) {
-                date_matches = 1;
-                break;
-            }
-        }
+	if (dateargs) {
+	    date_matches = 0;
+	    /* loop over date args, until we find a match */
+	    for (date = dateargs->first; date !=NULL; date = date->next) {
+		if (strcmp(date->name, file.datestamp) == 0) {
+		    date_matches = 1;
+		    break;
+		}
+	    }
+	} else {
+	    /* if no date list was provided, then all dates match */
+	    date_matches = 1;
+	}
         if (!date_matches)
             continue;
 
@@ -409,7 +385,6 @@ holding_get_files_for_flush(
         result_list = insert_sort_sl(result_list, file_elt->name);
     }
 
-    if (date_list) free_sl(date_list);
     if (file_list) free_sl(file_list);
 
     return result_list;
@@ -445,6 +420,27 @@ holding_get_file_chunks(char *hfile)
     }
     amfree(filename);
     return rv;
+}
+
+sl_t *
+holding_get_all_datestamps(void)
+{
+    sl_t *all_files;
+    sle_t *file;
+    sl_t *datestamps = NULL;
+
+    /* enumerate all files */
+    all_files = holding_get_files(NULL, 1);
+    for (file = all_files->first; file != NULL; file = file->next) {
+	dumpfile_t dfile;
+	if (!holding_file_get_dumpfile(file->name, &dfile))
+	    continue;
+	datestamps = insert_sort_sl(datestamps, dfile.datestamp);
+    }
+
+    free_sl(all_files);
+
+    return datestamps;
 }
 
 off_t
@@ -542,57 +538,37 @@ holding_file_get_dumpfile(
  */
 
 sl_t *
-pick_all_datestamp(
-    int	v)
+pick_datestamp(void)
 {
-    int old_verbose = holding_set_verbosity(v);
-    sl_t *rv;
-
-    /* get all holding directories, without full paths -- this
-     * will be datestamps only */
-    rv = holding_get_directories(NULL, 0);
-
-    holding_set_verbosity(old_verbose);
-    return rv;
-}
-
-sl_t *
-pick_datestamp(
-    int		verbose)
-{
-    sl_t *holding_list;
-    sl_t *r_holding_list = NULL;
+    sl_t *datestamp_list;
+    sl_t *r_datestamp_list = NULL;
     sle_t *dir;
-    char **directories = NULL;
+    char **datestamps = NULL;
     int i;
     char *answer = NULL;
     char *a = NULL;
     int ch = 0;
     char max_char = '\0', chupper = '\0';
 
-    holding_list = pick_all_datestamp(verbose);
+    datestamp_list = holding_get_all_datestamps();
 
-    if(holding_list->nb_element == 0) {
-	return holding_list;
-    }
-    else if(holding_list->nb_element == 1 || !verbose) {
-	return holding_list;
-    }
-    else {
-	directories = alloc((holding_list->nb_element) * SIZEOF(char *));
-	for(dir = holding_list->first, i=0; dir != NULL; dir = dir->next,i++) {
-	    directories[i] = dir->name;
+    if(datestamp_list->nb_element < 2) {
+	return datestamp_list;
+    } else {
+	datestamps = alloc((datestamp_list->nb_element) * SIZEOF(char *));
+	for(dir = datestamp_list->first, i=0; dir != NULL; dir = dir->next,i++) {
+	    datestamps[i] = dir->name; /* borrowing reference */
 	}
 
 	while(1) {
-	    puts(_("\nMultiple Amanda directories, please pick one by letter:"));
-	    for(dir = holding_list->first, max_char = 'A';
+	    puts(_("\nMultiple Amanda runs in holding disks; please pick one by letter:"));
+	    for(dir = datestamp_list->first, max_char = 'A';
 		dir != NULL && max_char <= 'Z';
 		dir = dir->next, max_char++) {
 		printf("  %c. %s\n", max_char, dir->name);
 	    }
 	    max_char--;
-	    printf(_("Select directories to flush [A..%c]: [ALL] "), max_char);
+	    printf(_("Select datestamps to flush [A..%c]: [ALL] "), max_char);
 	    fflush(stdout); fflush(stderr);
 	    amfree(answer);
 	    if ((answer = agets(stdin)) == NULL) {
@@ -616,23 +592,24 @@ pick_datestamp(
 		}
 		chupper = (char)toupper(ch);
 		if (chupper < 'A' || chupper > max_char) {
-		    free_sl(r_holding_list);
-		    r_holding_list = NULL;
+		    free_sl(r_datestamp_list);
+		    r_datestamp_list = NULL;
 		    break;
 		}
-		r_holding_list = append_sl(r_holding_list,
-					   directories[chupper - 'A']);
+		r_datestamp_list = append_sl(r_datestamp_list,
+					   datestamps[chupper - 'A']);
 	    } while ((ch = *a++) != '\0');
-	    if (r_holding_list && ch == '\0') {
-		free_sl(holding_list);
-		holding_list = r_holding_list;
+	    if (r_datestamp_list && ch == '\0') {
+		free_sl(datestamp_list);
+		datestamp_list = r_datestamp_list;
 		break;
 	    }
 	}
     }
-    amfree(directories);
+    amfree(datestamps);
     amfree(answer);
-    return holding_list;
+
+    return datestamp_list;
 }
 
 /*

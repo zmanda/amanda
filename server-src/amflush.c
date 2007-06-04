@@ -246,29 +246,35 @@ main(
 	error(_("No tapedev or tpchanger specified"));
     }
 
+    /* if dates were specified (-D), then use match_datestamp
+     * against the list of all datestamps to turn that list
+     * into a set of existing datestamps (basically, evaluate the
+     * expressions into actual datestamps) */
     if(datearg) {
-	sle_t *dir, *next_dir;
+	sle_t *datestamp, *next_datestamp;
 	int i, ok;
 
-	datestamp_list = pick_all_datestamp(1);
-	for(dir = datestamp_list->first; dir != NULL;) {
-	    next_dir = dir->next;
+	datestamp_list = holding_get_all_datestamps();
+	for(datestamp = datestamp_list->first; datestamp != NULL;) {
+	    next_datestamp = datestamp->next;
 	    ok = 0;
 	    for(i=0; i<nb_datearg && ok==0; i++) {
-		ok = match_datestamp(datearg[i], dir->name);
+		ok = match_datestamp(datearg[i], datestamp->name);
 	    }
-	    if(ok == 0) { /* remove dir */
-		remove_sl(datestamp_list, dir);
+	    if(ok == 0) { /* remove datestamp from list */
+		remove_sl(datestamp_list, datestamp);
 	    }
-	    dir = next_dir;
+	    datestamp = next_datestamp;
 	}
     }
     else {
+	/* otherwise, in batch mode, use all datestamps */
 	if(batch) {
-	    datestamp_list = pick_all_datestamp(1);
+	    datestamp_list = holding_get_all_datestamps();
 	}
+	/* and finally, allow the user to pick datestamps */
 	else {
-	    datestamp_list = pick_datestamp(1);
+	    datestamp_list = pick_datestamp();
 	}
     }
 
@@ -277,7 +283,7 @@ main(
 	exit(1);
     }
 
-    holding_list = holding_get_files_for_flush(datestamp_list, 1);
+    holding_list = holding_get_files_for_flush(datestamp_list);
     if(holding_list->first == NULL) {
 	printf(_("Could not find any valid dump image, check directory.\n"));
 	exit(1);
@@ -531,15 +537,15 @@ confirm(void)
 {
     tape_t *tp;
     char *tpchanger;
-    sle_t *dir;
+    sle_t *datestamp;
     int ch;
     char *extra;
 
     printf(_("\nToday is: %s\n"),amflush_datestamp);
-    printf(_("Flushing dumps in"));
+    printf(_("Flushing dumps from"));
     extra = "";
-    for(dir = datestamp_list->first; dir != NULL; dir = dir->next) {
-	printf("%s %s", extra, dir->name);
+    for(datestamp = datestamp_list->first; datestamp != NULL; datestamp = datestamp->next) {
+	printf("%s %s", extra, datestamp->name);
 	extra = ",";
     }
     tpchanger = getconf_str(CNF_TPCHANGER);

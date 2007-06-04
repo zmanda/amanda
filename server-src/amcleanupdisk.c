@@ -130,7 +130,7 @@ main(
 	/*NOTREACHED*/
     }
 
-    holding_list = pick_all_datestamp(1);
+    holding_list = holding_get_all_datestamps();
 
     check_disks();
 

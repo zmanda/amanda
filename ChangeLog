@@ -1,9 +1,12 @@
+2007-06-04  Dustin J. Mitchell <dustin@zmanda.com>
+	* server-src/planner.c server-src/amcleanupdisk.c
+	  server-src/amflush.c server-src/holding.c server-src/holding.h:
+	  do not assume anything about the names of holding
+	  directories; use holding disk files themselves to discover
+	  dump time/datestamps
+
 2007-06-04  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/krb5-security.c: Typo.
-
-2007-06-01  Kevin Till <ktill@zmanda.com>
-        * man/xml-source/amaddclient.8.xml: add --no-update-client flag
-	* server-src/amaddclient.pl.in: ditto      
 
 2007-06-01  Ian Turner <ian@zmanda.com>
 	* restore-src/restore.c: Set flags->fsf = 0 by default.
