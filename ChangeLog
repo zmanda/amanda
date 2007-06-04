@@ -1,4 +1,7 @@
 2007-06-04  Dustin J. Mitchell <dustin@zmanda.com>
+	* server-src/amstatus.pl.in: use perl flags -Tw
+
+2007-06-04  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/debug.c common-src/error.c: fix compilation errors
 	  on strict platforms.
 

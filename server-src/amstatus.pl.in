@@ -1,4 +1,4 @@
-#!@PERL@ -w -W -t -T
+#!@PERL@ -Tw
 #
 
 # Run perl.
