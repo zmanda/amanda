@@ -1,3 +1,6 @@
+2007-06-04  Dustin J. Mitchell <dustin@zmanda.com>
+	* server-src/holding.c: Forgotten ==0 in strcmp().
+
 2007-05-31  Jean-Louis Martineau <martineau@zmanda.com>
 	* configure.in: Check backup is not from gnutar.
 

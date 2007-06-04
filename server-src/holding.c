@@ -194,7 +194,7 @@ holding_get_directories_per_disk(
 	    if (date_list) {
 		date_found = 0;
 		for (dl= date_list->first; dl != NULL; dl = dl->next) {
-		    if (strcmp(dl->name, workdir->d_name)) {
+		    if (strcmp(dl->name, workdir->d_name) == 0) {
 			date_found = 1;
 			break;
 		    }
