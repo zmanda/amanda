@@ -1,3 +1,13 @@
+2007-06-04  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/krb5-security.c: Typo.
+
+2007-06-01  Kevin Till <ktill@zmanda.com>
+        * man/xml-source/amaddclient.8.xml: add --no-update-client flag
+	* server-src/amaddclient.pl.in: ditto      
+
+2007-06-01  Ian Turner <ian@zmanda.com>
+	* restore-src/restore.c: Set flags->fsf = 0 by default.
+
 2007-05-29  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/driver.c: Check dumper->down.
 	* server-src/dumper.c (sendbackup_response): Only call
