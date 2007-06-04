@@ -1262,7 +1262,8 @@ match_disklist(
 		prev_match = 1;
 	    }
 	    else {
-		errstr = newvstrallocf(errstr, _("Argument '%s' matches neither a host nor a disk.\n"), sargv[i]);
+		char *errstr1 = vstrallocf(_("Argument '%s' matches neither a host nor a disk.\n"), sargv[i]);
+		vstrextend(&errstr, errstr1, NULL);
 	    }
 	}
     }

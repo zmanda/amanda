@@ -1,4 +1,14 @@
 2007-06-04  Dustin J. Mitchell <dustin@zmanda.com>
+	* changer-src/chg-scsi.c: use long int for tape sleep time
+	* client-src/selfcheck.c: error out if no calcsize program is found
+	* server-src/amindexd.c: run 'sort' in the C locale
+	* server-src/amcheck.c: flag localhost not resolving as an error
+	* server-src/diskfile.c: improve error handling
+	* common-src/amcrypt.sh.in common-src/amcrypt-ossl-asym.sh.in
+	  common-src/amcrypt-ossl.sh.in: search /opt/csw/bin for openssl
+	  binaries; improve error handling
+
+2007-06-04  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/planner.c server-src/amcleanupdisk.c
 	  server-src/amflush.c server-src/holding.c server-src/holding.h:
 	  do not assume anything about the names of holding

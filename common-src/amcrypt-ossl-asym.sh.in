@@ -44,7 +44,7 @@ PRIVKEY=$AMANDA_HOME/backup-privkey.pem
 PUBKEY=$AMANDA_HOME/backup-pubkey.pem
 
 # where might openssl be?
-PATH=/bin:/usr/bin:/usr/local/bin:/usr/ssl/bin:/usr/local/ssl/bin
+PATH=/bin:/usr/bin:/usr/local/bin:/usr/ssl/bin:/usr/local/ssl/bin:/opt/csw/bin
 export PATH
 MAGIC='AmAnDa+OpEnSsL'
 ME=`basename "$0"`
@@ -70,7 +70,7 @@ if [ -z "${OPENSSL:=`which openssl`}" ]; then
 	echo `_ '%s: %s not found' "${ME}" "openssl"` >&2
 	exit 1
 elif [ ! -x "${OPENSSL}" ]; then
-	echo `_ "%s: can't execute openssl (%s)" "${ME}" "${OPENSSL}"` >&2
+	echo `_ "%s: can't execute %s (%s)" "${ME}" "openssl" "${OPENSSL}"` >&2
 	exit 1
 fi
 

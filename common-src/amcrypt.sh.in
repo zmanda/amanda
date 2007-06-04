@@ -13,7 +13,7 @@ AMANDA_HOME=~@CLIENT_LOGIN@
 
 AM_AESPIPE=@sbindir@/amaespipe
 AM_PASSPHRASE=$AMANDA_HOME/.am_passphrase
-PATH=/usr/bin:/usr/local/bin:/sbin:/usr/sbin
+PATH=/usr/bin:/usr/local/bin:/sbin:/usr/sbin:/opt/csw/bin
 export PATH
 
 AESPIPE=`which aespipe`
@@ -34,7 +34,7 @@ _() {
 
 
 if [ $? -ne 0 ] ; then
-	echo `_ '%s: %s not found in %s' "$0" "aespipe" "$PATH"` >&2
+	echo `_ '%s: %s was not found in %s' "$0" "aespipe" "$PATH"` >&2
         exit 2
 fi
 

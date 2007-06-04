@@ -234,6 +234,7 @@ uncompress_file(
 	}
 
 	/* start the sort process */
+	putenv(stralloc("LC_ALL=C"));
 	pid_sort = pipespawn(SORT_PATH, STDIN_PIPE,
 			     &pipe_to_sort, &indexfd, &debugfd,
 			     SORT_PATH, NULL);

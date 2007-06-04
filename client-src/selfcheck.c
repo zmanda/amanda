@@ -538,6 +538,10 @@ check_disk(
 			    amdevice);
 	    goto common_exit;
 	}
+	if (calcprog == NULL) {
+	    err = _("no program for calcsize");
+	    goto common_exit;
+	}
 	myprogram = calcprog;
     }
 
