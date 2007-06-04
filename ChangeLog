@@ -1,4 +1,8 @@
 2007-06-04  Jean-Louis Martineau <martineau@zmanda.com>
+	Original patch by franz Fischer
+	* tape-src/tapetype.c: close and open after a rewind.
+
+2007-06-04  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/krb5-security.c, common-src/bsdtcp-security.c,
 	  common-src/security-util.c: Check return code of getnameinfo.
 
