@@ -89,8 +89,10 @@ const security_driver_t bsdudp_security_driver = {
  * This is data local to the datagram socket.  We have one datagram
  * per process, so it is global.
  */
-static udp_handle_t netfd;
-static int not_init = 1;
+static udp_handle_t netfd4;
+static udp_handle_t netfd6;
+static int not_init4 = 1;
+static int not_init6 = 1;
 
 /* generate new handles from here */
 static unsigned int newhandle = 0;
@@ -123,7 +125,6 @@ bsdudp_connect(
 
     bh = alloc(sizeof(*bh));
     bh->proto_handle=NULL;
-    bh->udp = &netfd;
     bh->rc = NULL;
     security_handleinit(&bh->sech, &bsdudp_security_driver);
 
@@ -154,18 +155,46 @@ bsdudp_connect(
     /*
      * Only init the socket once
      */
-    if (not_init == 1) {
+#ifdef WORKING_IPV6
+    if (res->ai_addr->sa_family == AF_INET6 && not_init6 == 1) {
 	uid_t euid;
-	dgram_zero(&netfd.dgram);
+	dgram_zero(&netfd6.dgram);
 	
 	euid = geteuid();
 	seteuid(0);
-	dgram_bind(&netfd.dgram, res->ai_addr->sa_family, &port);
+	dgram_bind(&netfd6.dgram, res->ai_addr->sa_family, &port);
 	seteuid(euid);
-	netfd.handle = NULL;
-	netfd.pkt.body = NULL;
-	netfd.recv_security_ok = &bsd_recv_security_ok;
-	netfd.prefix_packet = &bsd_prefix_packet;
+	netfd6.handle = NULL;
+	netfd6.pkt.body = NULL;
+	netfd6.recv_security_ok = &bsd_recv_security_ok;
+	netfd6.prefix_packet = &bsd_prefix_packet;
+	/*
+	 * We must have a reserved port.  Bomb if we didn't get one.
+	 */
+	if (port >= IPPORT_RESERVED) {
+	    security_seterror(&bh->sech,
+		"unable to bind to a reserved port (got port %u)",
+		(unsigned int)port);
+	    (*fn)(arg, &bh->sech, S_ERROR);
+	    return;
+	}
+	not_init6 = 0;
+	bh->udp = &netfd6;
+    }
+#endif
+
+    if (res->ai_addr->sa_family == AF_INET && not_init4 == 1) {
+	uid_t euid;
+	dgram_zero(&netfd4.dgram);
+
+	euid = geteuid();
+	seteuid((uid_t)0);
+	dgram_bind(&netfd4.dgram, res->ai_addr->sa_family, &port);
+	seteuid(euid);
+	netfd4.handle = NULL;
+	netfd4.pkt.body = NULL;
+	netfd4.recv_security_ok = &bsd_recv_security_ok;
+	netfd4.prefix_packet = &bsd_prefix_packet;
 	/*
 	 * We must have a reserved port.  Bomb if we didn't get one.
 	 */
@@ -177,8 +206,16 @@ bsdudp_connect(
 	    amfree(canonname);
 	    return;
 	}
-	not_init = 0;
+	not_init4 = 0;
+	bh->udp = &netfd4;
     }
+
+#ifdef WORKING_IPV6
+    if (res->ai_addr->sa_family == AF_INET6)
+	bh->udp = &netfd6;
+    else
+#endif
+	bh->udp = &netfd4;
 
     auth_debug(1, _("Resolved hostname=%s\n"), canonname);
     if ((se = getservbyname(AMANDA_SERVICE_NAME, "udp")) == NULL)
@@ -189,7 +226,7 @@ bsdudp_connect(
     sequence = (int)sequence_time.tv_sec ^ (int)sequence_time.tv_usec;
     handle=alloc(15);
     snprintf(handle,14,"000-%08x", newhandle++);
-    if (udp_inithandle(&netfd, bh, canonname,
+    if (udp_inithandle(bh->udp, bh, canonname,
 		       (struct sockaddr_storage *)res->ai_addr, port,
 		       handle, sequence) < 0) {
 	(*fn)(arg, &bh->sech, S_ERROR);
@@ -224,20 +261,21 @@ bsdudp_accept(
      * We assume in and out point to the same socket, and just use
      * in.
      */
-    dgram_socket(&netfd.dgram, in);
+    dgram_socket(&netfd4.dgram, in);
+    dgram_socket(&netfd6.dgram, in);
 
     /*
      * Assign the function and return.  When they call recvpkt later,
      * the recvpkt callback will call this function when it discovers
      * new incoming connections
      */
-    netfd.accept_fn = fn;
-    netfd.recv_security_ok = &bsd_recv_security_ok;
-    netfd.prefix_packet = &bsd_prefix_packet;
-    netfd.driver = &bsdudp_security_driver;
+    netfd4.accept_fn = fn;
+    netfd4.recv_security_ok = &bsd_recv_security_ok;
+    netfd4.prefix_packet = &bsd_prefix_packet;
+    netfd4.driver = &bsdudp_security_driver;
 
 
-    udp_addref(&netfd, &udp_netfd_read_callback);
+    udp_addref(&netfd4, &udp_netfd_read_callback);
 }
 
 /*
@@ -260,13 +298,19 @@ bsdudp_close(
 	bh->next->prev = bh->prev;
     }
     else {
-	netfd.bh_last = bh->prev;
+	if (!not_init6 && netfd6.bh_last == bh)
+	    netfd6.bh_last = bh->prev;
+	else
+	    netfd4.bh_last = bh->prev;
     }
     if(bh->prev) {
 	bh->prev->next = bh->next;
     }
     else {
-	netfd.bh_first = bh->next;
+	if (!not_init6 && netfd6.bh_first == bh)
+	    netfd6.bh_first = bh->next;
+	else
+	    netfd4.bh_first = bh->next;
     }
 
     amfree(bh->proto_handle);
