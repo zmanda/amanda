@@ -55,10 +55,10 @@ install-exec-hook:
 	@list="$(sbin_PROGRAMS)"; \
 	for p in $$list; do \
 		pa=$(DESTDIR)$(sbindir)/`echo $$p|sed '$(transform)'`; \
-		echo chown $(BINARY_OWNER) $$pa; \
-		chown $(BINARY_OWNER) $$pa; \
-		echo chgrp $(SETUID_GROUP) $$pa; \
-		chgrp $(SETUID_GROUP) $$pa; \
+		echo chown \"$(BINARY_OWNER)\" $$pa;	\
+		chown "$(BINARY_OWNER)" $$pa;		\
+		echo chgrp \"$(SETUID_GROUP)\" $$pa;	\
+		chgrp "$(SETUID_GROUP)" $$pa;		\
 		echo chmod o-rwx $$pa; \
 		chmod o-rwx $$pa; \
 	done

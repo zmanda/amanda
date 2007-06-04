@@ -25,9 +25,9 @@ install-data-hook:
 	@list="$(dumper_SCRIPTS)"; \
 	for p in $$list; do \
 		pa=$(DESTDIR)$(dumperdir)/`echo $$p|sed '$(transform)'`; \
-		echo chown $(BINARY_OWNER) $$pa; \
-		chown $(BINARY_OWNER) $$pa; \
-		echo chgrp $(SETUID_GROUP) $$pa; \
-		chgrp $(SETUID_GROUP) $$pa; \
+		echo chown \"$(BINARY_OWNER)\" $$pa;	\
+		chown "$(BINARY_OWNER)" $$pa;		\
+		echo chgrp \"$(SETUID_GROUP)\" $$pa;	\
+		chgrp "$(SETUID_GROUP)" $$pa;		\
 	done
 

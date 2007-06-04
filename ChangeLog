@@ -1,4 +1,12 @@
 2007-06-04  Dustin J. Mitchell <dustin@zmanda.com>
+	* oldrecover-src/Makefile.am changer-src/Makefile.am
+	  amplot/Makefile.am client-src/Makefile.am
+	  amandad-src/Makefile.am dumper-src/Makefile.am
+	  recover-src/Makefile.am restore-src/Makefile.am
+	  tape-src/Makefile.am: add quotes to allow spaces in user
+	  and group names
+
+2007-06-04  Dustin J. Mitchell <dustin@zmanda.com>
 	* changer-src/chg-scsi.c: use long int for tape sleep time
 	* client-src/selfcheck.c: error out if no calcsize program is found
 	* server-src/amindexd.c: run 'sort' in the C locale
