@@ -1,4 +1,9 @@
 2007-06-04  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/krb5-security.c common-src/bsdtcp-security.c
+	  common-src/security-util.c: check results from getnameinfo()
+	  correctly
+
+2007-06-04  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/amstatus.pl.in: use perl flags -Tw
 
 2007-06-04  Dustin J. Mitchell <dustin@zmanda.com>

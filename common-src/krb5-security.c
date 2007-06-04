@@ -358,7 +358,7 @@ krb5_accept(
 
     }
     if ((result = getnameinfo((struct sockaddr *)&sin, len,
-			      hostname, NI_MAXHOST, NULL, 0, 0) == -1)) {
+			      hostname, NI_MAXHOST, NULL, 0, 0) != 0)) {
 	dbprintf(_("getnameinfo failed: %s\n"),
 		  gai_strerror(result));
 	return;
