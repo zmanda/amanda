@@ -109,7 +109,7 @@ printf_arglist_function(void error, const char *, format)
     va_list argp;
     int i;
     char linebuf[STR_SIZE];
-    char *xlated_fmt = gettext(format);
+    const char *xlated_fmt = gettext(format);
 
     /* format and output the error message */
 
@@ -138,7 +138,7 @@ printf_arglist_function(void errordump, const char *, format)
     va_list argp;
     int i;
     char linebuf[STR_SIZE];
-    char *xlated_fmt = gettext(format);
+    const char *xlated_fmt = gettext(format);
 
     /* format error message */
 
