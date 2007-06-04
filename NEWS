@@ -9,6 +9,8 @@ Changes in release 2.5.2
                  see all debug_* config option
                + tapetype 'readblocksize', if maxtapeblocksize is set too
                  larger for your hardware
+   * Amanda command changes
+         o amadmin: new 'holding list' and 'holding delete' subcommand.
 
 Changes in release 2.5.1p3
 
