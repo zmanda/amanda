@@ -123,23 +123,23 @@ int main(int main_argc, char **main_argv);
 
 static const char *idle_strings[] = {
 #define NOT_IDLE		0
-    _T("not-idle"),
+    T_("not-idle"),
 #define IDLE_NO_DUMPERS		1
-    _T("no-dumpers"),
+    T_("no-dumpers"),
 #define IDLE_START_WAIT		2
-    _T("start-wait"),
+    T_("start-wait"),
 #define IDLE_NO_HOLD		3
-    _T("no-hold"),
+    T_("no-hold"),
 #define IDLE_CLIENT_CONSTRAINED	4
-    _T("client-constrained"),
+    T_("client-constrained"),
 #define IDLE_NO_DISKSPACE	5
-    _T("no-diskspace"),
+    T_("no-diskspace"),
 #define IDLE_TOO_LARGE		6
-    _T("file-too-large"),
+    T_("file-too-large"),
 #define IDLE_NO_BANDWIDTH	7
-    _T("no-bandwidth"),
+    T_("no-bandwidth"),
 #define IDLE_TAPER_WAIT		8
-    _T("taper-wait"),
+    T_("taper-wait"),
 };
 
 int

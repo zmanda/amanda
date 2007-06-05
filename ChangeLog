@@ -1,4 +1,11 @@
 2007-06-04  Dustin J. Mitchell <dustin@zmanda.com>
+	* changer-src/sense.c server-src/driver.c server-src/reporter.c
+	  server-src/amadmin.c server-src/amtape.c common-src/amanda.h:
+	  use T_() instead of _T() as the macro flagging static strings
+	  in need of translation; fixes compilation error on Mac OS X, where
+	  _T is defined in the system headers.
+
+2007-06-04  Dustin J. Mitchell <dustin@zmanda.com>
 	* changer-src/chg-zd-mtx.sh.in changer-src/chg-multi.sh.in:
 	  use chg-lib.sh fully, fix i18n problems.
 

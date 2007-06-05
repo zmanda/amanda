@@ -1572,19 +1572,19 @@ nicedate(
     char date[9];
     int  numdate;
     static char *months[13] = {
-		_T("BogusMonth"),
-		_T("January"),
-		_T("February"),
-		_T("March"),
-		_T("April"),
-		_T("May"),
-		_T("June"),
-		_T("July"),
-		_T("August"),
-		_T("September"),
-		_T("October"),
-		_T("November"),
-		_T("December")
+		T_("BogusMonth"),
+		T_("January"),
+		T_("February"),
+		T_("March"),
+		T_("April"),
+		T_("May"),
+		T_("June"),
+		T_("July"),
+		T_("August"),
+		T_("September"),
+		T_("October"),
+		T_("November"),
+		T_("December")
     };
     int year, month, day;
 

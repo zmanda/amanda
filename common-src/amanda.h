@@ -105,7 +105,7 @@
 #  define dcngettext(Domain, String1, String2, Count, Catagory)		\
 		plural((String1), (String2), (Count))
 #endif
-#define _T(String)			String
+#define T_(String)			String
 #define _(String)			dgettext("amanda", (String))
 
 #ifdef HAVE_FCNTL_H
