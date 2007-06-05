@@ -30,15 +30,12 @@
 # chg-multi.sh - generic tape changer script
 #
 
-prefix=@prefix@
+# source utility functions and values from configure
 exec_prefix=@exec_prefix@
-sbindir=@sbindir@
 libexecdir=@libexecdir@
+. ${libexecdir}/chg-lib.sh
 
 pname="chg-multi"
-
-PATH=$sbindir:$libexecdir:/usr/bin:/bin:/usr/sbin:/sbin:/usr/ucb
-export PATH
 
 if [ -d "@AMANDA_DBGDIR@" ]; then
 	logfile=@AMANDA_DBGDIR@/changer.debug
@@ -46,44 +43,17 @@ else
 	logfile=/dev/null
 fi
 
-#+
-# Function to:
-#    Simplify gettext usage by allowing printf format
-#    strings for translators, use _() identifier for
-#    xgettext extraction similar to "C" usage and
-#    collapsing "printf `gettext fmt` ...", which is
-#    used everywhere, into one function.
-#-
-_() {
-	fmt=`gettext -d amanda "$1"`
-	shift
-	printf "$fmt" $*
-}
-
 echo `_ "arguments ->"` "$@" >> $logfile
 
-USE_VERSION_SUFFIXES="@USE_VERSION_SUFFIXES@"
-if test "$USE_VERSION_SUFFIXES" = "yes"; then
-	SUF="-@VERSION@"
-else
-	SUF=
-fi
+ourconf=`amgetconf changerfile`
 
-ourconf=`amgetconf$SUF changerfile`
+# for now, continue to prefer ammt and amdd, and in fact
+# assume they exist (since we install them..).  These are shell functions
+# (see chg-lib.sh), so there's no path qualification needed
 
-if [ -x $sbindir/ammt$SUF ]; then
-	MT=$sbindir/ammt$SUF
-	MTF=-f
-elif [ -x "@MT@" ]; then
-	MT=@MT@
-	MTF=@MT_FILE_FLAG@
-else
-	answer=`_ '<none> %s: mt program not found' "$myname"`
-	echo `_ 'Exit ->'` $answer >> $logfile
-	echo $answer
-	exit 1
-fi
-echo "MT ->" $MT $MTF >> $logfile
+MT=ammt
+MTF=-f
+echo MT "->" $MT $MTF >> $logfile
 
 EXPR=expr
 # EXPR=/usr/local/bin/expr # in case you need a more powerful expr...

@@ -375,7 +375,7 @@ Exit() {
 	if [ $call_type = Return ]; then
 		return $code
 	fi
-	amgetconf$SUF dbclose.$argv0:$DBGFILE > /dev/null 2>&1
+	amgetconf dbclose.$argv0:$DBGFILE > /dev/null 2>&1
 	exit $code
 }
 
@@ -627,37 +627,20 @@ get_slot_list() {
 	slot_list="$amanda_slot_list"
 }
 
-# Paths
-prefix=@prefix@
-exec_prefix=@exec_prefix@
-sbindir=@sbindir@
-libexecdir=@libexecdir@
-
-# try to hit all the possibilities here
-PATH=$sbindir:$libexecdir:/usr/bin:/bin:/usr/sbin:/sbin:/usr/ucb:/usr/local/bin
-export PATH
-
-USE_VERSION_SUFFIXES="@USE_VERSION_SUFFIXES@"
-if test "$USE_VERSION_SUFFIXES" = "yes"; then
-	SUF="-@VERSION@"
-else
-	SUF=
-fi
-
-DBGFILE=`amgetconf$SUF dbopen.$argv0 2>/dev/null`
+DBGFILE=`amgetconf dbopen.$argv0 2>/dev/null`
 if [ -z "$DBGFILE" ]
 then
 	DBGFILE=/dev/null			# will try this again below
 fi
 
-changerfile=`amgetconf$SUF changerfile 2>/dev/null`
+changerfile=`amgetconf changerfile 2>/dev/null`
 if [ -z "$changerfile" ]; then
 	Exit 2 \
 	     `_ '<none>'` \
 	     "changerfile must be specified in amanda.conf"
 fi
 
-tape=`amgetconf$SUF tapedev 2>/dev/null`
+tape=`amgetconf tapedev 2>/dev/null`
 if [ -z "$tape" ]; then
 	Exit 2 \
 	     `_ '<none>'` \
@@ -667,7 +650,7 @@ elif [ $tape = "/dev/null" -o `expr "$tape" : 'null:'` -eq 5 ]; then
 	     `_ '<none>'` \
 	     "tapedev ($tape) may not be the null device"
 fi
-TAPE=`amgetconf$SUF changerdev 2>/dev/null`
+TAPE=`amgetconf changerdev 2>/dev/null`
 if [ -z "$TAPE" ]; then
 	Exit 2 \
 	     `_ '<none>'` \
@@ -713,11 +696,6 @@ labelfile=$changerfile-barcodes
 [ ! -f $labelfile ] && > $labelfile
 cleancount=`cat $cleanfile`
 accesscount=`cat $accessfile`
-
-test -z "$MT" && Exit 2 "<none>" "No mt command defined"
-test ! -f "$MT" && Exit 2 "<none>" "mt command ($MT) doesn't exist"
-test -z "$MTX" && Exit 2 "<none>" "No mtx command defined"
-test ! -f "$MTX" && Exit 2 "<none>" "mtx command ($MTX) doesn't exist"
 
 #### Dig out of the config file what is needed
 
@@ -1197,7 +1175,7 @@ read_labelfile() {
 		if [ $lbl = "$lbl_search" -o $bc = "$bc_search" ]; then
 			if [ $labelfile_entry_found -ne 0 ]; then
 				Log       `_ 'ERROR    -> Duplicate entries: %s line %s' "$labelfile" "$line"`
-				LogAppend `_ '         -> Remove $labelfile and run "$sbindir/amtape $config update"' "$labelfile" "$sbindir/amtape" "$config"`
+				LogAppend `_ '         -> Remove %s and run "%s %s update"' "$labelfile" "$sbindir/amtape" "$config"`
 				Exit 2 \
 				     `_ '<none>'` \
 				     `_ 'Duplicate entries: %s line %s' "$labelfile" "$line"`
@@ -1285,7 +1263,7 @@ searchtape() {
 	read_labelfile "$tapelabel" "" < $labelfile
 	if [ $labelfile_entry_found -eq 0 ]; then
 		LogAppend `_ '         -> !!! label "%s" not found in %s !!!' "$tapelabel" "$labelfile"`
-		LogAppend `_ '         -> Remove $labelfile and run "%s %s update"' "$labelfile" "$sbindir/amtape" "$config"`
+		LogAppend `_ '         -> Remove %s and run "%s %s update"' "$labelfile" "$sbindir/amtape" "$config"`
 		Exit 2 \
 		     `_ '<none>'` \
 		     `_ '%s: label "%s" not found in %s' "$tapelabel" "$tapelabel" "$labelfile"`

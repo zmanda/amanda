@@ -1,4 +1,8 @@
 2007-06-04  Dustin J. Mitchell <dustin@zmanda.com>
+	* changer-src/chg-zd-mtx.sh.in changer-src/chg-multi.sh.in:
+	  use chg-lib.sh fully, fix i18n problems.
+
+2007-06-04  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/krb5-security.c common-src/bsdtcp-security.c
 	  common-src/security-util.c: check results from getnameinfo()
 	  correctly
