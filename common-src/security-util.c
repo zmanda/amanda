@@ -2544,25 +2544,26 @@ check_name_give_sockaddr(
 
     result = resolve_hostname(hostname, &res, &canonname);
     if (result != 0) {
-	dbprintf(_("check_name_give_sockaddr: resolve_hostname(%s): %s\n"), hostname, gai_strerror(result));
-	*errstr = newvstralloc(*errstr,
-			       " resolve_hostname(", hostname, "): ",
-			       gai_strerror(result), NULL);
+	dbprintf(_("check_name_give_sockaddr: resolve_hostname('%s'): %s\n"), hostname, gai_strerror(result));
+	*errstr = newvstrallocf(*errstr,
+			       _("check_name_give_sockaddr: resolve_hostname('%s'): %s"),
+			       hostname, gai_strerror(result));
 	goto error;
     }
     if (canonname == NULL) {
-	dbprintf(_("resolve_hostname(%s) did not return a canonical name\n"), hostname);
-	*errstr = newvstralloc(*errstr, 
- 		" resolve_hostname(", hostname, ") did not return a canonical name", NULL);
+	dbprintf(_("resolve_hostname('%s') did not return a canonical name\n"), hostname);
+	*errstr = newvstrallocf(*errstr,
+		_("check_name_give_sockaddr: resolve_hostname('%s') did not return a canonical name"),
+		hostname);
 	goto error;
     }
 
     if (strncasecmp(hostname, canonname, strlen(hostname)) != 0) {
-	auth_debug(1, "%s doesn't resolve to itself, it resolves to %s\n",
+	dbprintf(_("%s doesn't resolve to itself, it resolves to %s\n"),
 		       hostname, canonname);
-	*errstr = newvstralloc(*errstr, hostname,
-			       _(" doesn't resolve to itself, it resolves to "),
-			       canonname, NULL);
+	*errstr = newvstrallocf(*errstr,
+			       _("%s doesn't resolve to itself, it resolves to %s"),
+			       hostname, canonname);
 	goto error;
     }
 
@@ -2574,10 +2575,11 @@ check_name_give_sockaddr(
 	}
     }
 
-    *errstr = newvstralloc(*errstr,
-			   hostname, " doesn't resolve to ",
-			   str_sockaddr((struct sockaddr_storage *)addr),
-			   NULL);
+    dbprintf(_("%s doesn't resolve to %s"),
+	    hostname, str_sockaddr((struct sockaddr_storage *)addr));
+    *errstr = newvstrallocf(*errstr,
+			   "%s doesn't resolve to %s",
+			   hostname, str_sockaddr((struct sockaddr_storage *)addr));
 error:
     if (res) freeaddrinfo(res);
     amfree(canonname);

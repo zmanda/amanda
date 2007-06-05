@@ -443,34 +443,34 @@ int ScanBus(int print)
                           switch (pDev[count].inquiry->type)
                             {
                             case TYPE_DISK:
-                              printf("Disk");
+                              printf(_("Disk"));
                               break;
                             case TYPE_TAPE:
-                              printf("Tape");
+                              printf(_("Tape"));
                               break;
                             case TYPE_PRINTER:
-                              printf("Printer");
+                              printf(_("Printer"));
                               break;
                             case TYPE_PROCESSOR:
-                              printf("Processor");
+                              printf(_("Processor"));
                               break;
                             case TYPE_WORM:
-                              printf("Worm");
+                              printf(_("Worm"));
                               break;
                             case TYPE_CDROM:
-                              printf("Cdrom");
+                              printf(_("Cdrom"));
                               break;
                             case TYPE_SCANNER:
-                              printf("Scanner");
+                              printf(_("Scanner"));
                               break;
                             case TYPE_OPTICAL:
-                              printf("Optical");
+                              printf(_("Optical"));
                               break;
                             case TYPE_CHANGER:
-                              printf("Changer");
+                              printf(_("Changer"));
                               break;
                             case TYPE_COMM:
-                              printf("Comm");
+                              printf(_("Comm"));
                               break;
                             default:
                               printf(_("unknown %d"),pDev[count].inquiry->type);

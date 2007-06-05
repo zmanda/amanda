@@ -1047,7 +1047,7 @@ dump_schedule(
 
     for(dp = qp->head; dp != NULL; dp = dp->next) {
         qname = quote_string(dp->name);
-	printf(_("  %-20s %-25s lv %d t %5lu s " OFF_T_FMT " p %d\n"),
+	printf("  %-20s %-25s lv %d t %5lu s %lld p %d\n",
 	       dp->host->hostname, qname, sched(dp)->level,
 	       sched(dp)->est_time,
 	       (OFF_T_FMT_TYPE)sched(dp)->est_size, sched(dp)->priority);

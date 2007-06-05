@@ -561,31 +561,4 @@ debug_prefix(
     return s;
 }
 
-char *
-debug_prefix_time(
-    char *	suffix)
-{
-    int save_errno;
-    static char *s = NULL;
-    char *t1;
-    char *t2;
-    times_t diff;
-    times_t debug_end_time;
-    amanda_timezone dontcare;
-
-    save_errno = errno;
-    if (debug_clock_is_running == 1) {
-	amanda_gettimeofday(&debug_end_time.r, &dontcare);
-	diff = timessub(debug_end_time,debug_start_time);
-	t1 = ": time ";
-	t2 = walltime_str(diff);
-    } else {
-	t1 = t2 = NULL;
-    }
-
-    s = newvstralloc(s, debug_prefix(suffix), t1, t2, NULL);
-
-    errno = save_errno;
-    return s;
-}
 #endif

@@ -347,7 +347,6 @@ bind_portrange(
 		dbprintf(_("bind_portrange2: Try  port %d: Owned by %s - %s\n"),
 			port, servPort->s_name, strerror(errno));
 	    }
-	    dbprintf(_("%s\n"), strerror(errno));
 	} else {
 	        dbprintf(_("bind_portrange2: Skip port %d: Owned by %s.\n"),
 		      port, servPort->s_name);
@@ -637,8 +636,8 @@ int copy_file(
     if ((infd = open(src, O_RDONLY)) == -1) {
 	save_errno = errno;
 	quoted = quote_string(src);
-	*errmsg = vstralloc("Can't open file ", quoted, " for reading: %s",
-			    strerror(save_errno));
+	*errmsg = vstrallocf(_("Can't open file '%s' for reading: %s"),
+			    quoted, strerror(save_errno));
 	amfree(quoted);
 	return -1;
     }
@@ -646,8 +645,8 @@ int copy_file(
     if ((outfd = open(dst, O_WRONLY|O_CREAT, 0600)) == -1) {
 	save_errno = errno;
 	quoted = quote_string(dst);
-	*errmsg = vstralloc("Can't open file ", quoted, " for writting: %s",
-			    strerror(save_errno));
+	*errmsg = vstrallocf(_("Can't open file '%s' for writting: %s"),
+			    quoted, strerror(save_errno));
 	amfree(quoted);
 	close(infd);
 	return -1;
@@ -657,8 +656,8 @@ int copy_file(
 	if(fullwrite(outfd,&buf,(size_t)nb) < nb) {
 	    save_errno = errno;
 	    quoted = quote_string(dst);
-	    *errmsg = vstralloc("Error writing to \"", quoted, "\":",
-				strerror(save_errno));
+	    *errmsg = vstrallocf(_("Error writing to '%s': %s"),
+				quoted, strerror(save_errno));
 	    amfree(quoted);
 	    close(infd);
 	    close(outfd);
@@ -669,8 +668,8 @@ int copy_file(
     if (nb < 0) {
 	save_errno = errno;
 	quoted = quote_string(src);
-	*errmsg = vstralloc("Error reading from \"", quoted, "\":",
-			    strerror(save_errno));
+	*errmsg = vstrallocf(_("Error reading from '%s': %s"),
+			    quoted, strerror(save_errno));
 	amfree(quoted);
 	close(infd);
 	close(outfd);

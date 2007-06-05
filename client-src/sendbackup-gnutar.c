@@ -271,7 +271,7 @@ start_backup(
 		int save_errno = errno;
 		char *qname = quote_string(inputname);
 
-		dbprintf(_("gnutar:: error opening '%s': %s\n"),
+		dbprintf(_("gnutar: error opening '%s': %s\n"),
 			  qname,
 			  strerror(save_errno));
 		if (baselevel < 0) {
@@ -454,11 +454,10 @@ start_backup(
 	    strappend(taropt, "a");
 	}
 
-	dbprintf(_("gnutar: backup of %s"), sharename);
 	if (subdir) {
-	    dbprintf(_("Backup of %s/%s\n"), sharename, subdir);
+	    dbprintf(_("gnutar: backup of %s/%s\n"), sharename, subdir);
 	} else {
-	    dbprintf(_("Backup of %s\n"), sharename);
+	    dbprintf(_("gnutar: backup of %s\n"), sharename);
 	}
 
 	program->backup_name = program->restore_name = SAMBA_CLIENT;

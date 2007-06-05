@@ -460,7 +460,6 @@ FILE *	debug_fp(void);
 char *	debug_fn(void);
 void	set_debug_prefix_pid(pid_t);
 char *	debug_prefix(char *);
-char *	debug_prefix_time(char *);
 
 #else  /* !DEBUG_CODE */
 
@@ -474,7 +473,6 @@ char *	debug_prefix_time(char *);
 #   define dbfn()		NULL
 #   define set_debug_prefix_pid(x)
 #   define debug_prefix(x)	get_pname()
-#   define debug_prefix_time(x)	get_pname()
 
 #endif /* DEBUG_CODE */
 

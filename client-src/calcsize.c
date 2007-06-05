@@ -177,7 +177,7 @@ main(
     set_pname("calcsize");
 
     dbopen(DBG_SUBDIR_CLIENT);
-    dbprintf("version %s\n", version());
+    dbprintf(_("version %s\n"), version());
 
     malloc_size_1 = malloc_inuse(&malloc_hist_1);
 
@@ -190,12 +190,12 @@ main(
     /* need at least program, amname, and directory name */
 
     if(argc < 4) {
-	error("Usage: %s config [DUMP|GNUTAR] name dir [-X exclude-file] [-I include-file] [level date]*",
+	error(_("Usage: %s config [DUMP|STAR|GNUTAR] name dir [-X exclude-file] [-I include-file] [level date]*"),
 	      get_pname());
         /*NOTREACHED*/
     }
 
-    dbprintf("config: %s\n", *argv);
+    dbprintf(_("config: %s\n"), *argv);
     if (strcmp(*argv, "NOCONFIG") != 0) {
 	dbrename(*argv, DBG_SUBDIR_CLIENT);
     }

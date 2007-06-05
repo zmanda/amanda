@@ -511,8 +511,7 @@ parse_diskline(
 	    if (strcmp(diskname, dp->name) != 0 &&
 		 strcmp(sdisk, sdiskp) == 0) {
 		disk_parserror(filename, line_num,
-		 "Two disk are mapping to the same name: \"%s\" and \"%s\""
-		 ", you must use different diskname",
+		 _("Two disks are mapping to the same name: \"%s\" and \"%s\"; you must use different diskname"),
 		 dp->name, diskname);
 	    return(-1);
 	    }

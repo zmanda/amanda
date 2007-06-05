@@ -378,7 +378,6 @@ int SCSI_ExecuteCommand(int DeviceFD,
     { 
       dbprintf(_("SCSI_ExecuteCommand error read \n"));
       dbprintf(_("Status " SSIZE_T_FMT " (" SSIZE_T_FMT ") %2X\n"), status, SCSI_OFF + DataBufferLength,psg_header->result );
-      dbprintf(_("SCSI_ExecuteCommand error read \n"));
       SCSI_CloseDevice(DeviceFD);
       amfree(buffer);
       return(SCSI_ERROR);

@@ -36,7 +36,7 @@ if [ -z "${OPENSSL:=`which openssl`}" ]; then
 	echo `_ '%s: openssl not found' "${ME}"` >&2
 	exit 1
 elif [ ! -x "${OPENSSL}" ]; then
-	echo `_ '%s: can't execute %s (%s)' "${ME}" "openssl" "${OPENSSL}"` >&2
+	echo `_ "%s: can't execute %s (%s)" "${ME}" "openssl" "${OPENSSL}"` >&2
 	exit 1
 fi
 

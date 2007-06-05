@@ -478,7 +478,7 @@ print_find_result(
     max_len_status = 1;
 
     if(output_find==NULL) {
-	printf("\nNo dump to list\n");
+	printf(_("\nNo dump to list\n"));
     }
     else {
 	printf(_("\ndate%*s host%*s disk%*s lv%*s tape or file%*s file%*s part%*s status\n"),

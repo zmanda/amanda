@@ -661,11 +661,11 @@ check_disk(
 		if (rc != 0) {
 		    if (ret == 0) {
 			err = newvstrallocf(err, _("%s%s got signal %d"),
-				sep, err, sig);
+				err, sep, sig);
 			ret = sig;
 		    } else {
 			err = newvstrallocf(err, _("%s%s returned %d"),
-				sep, err, ret);
+				err, sep, ret);
 		    }
 		}
 	    }

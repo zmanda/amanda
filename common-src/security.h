@@ -191,17 +191,21 @@ void security_seterror(security_handle_t *, const char *, ...)
     __attribute__ ((format (printf, 2, 3)));
 
 
-/* void security_connect(const security_driver_t *, const char *,
-    void (*)(void *, security_handle_t *, security_status_t), void *, void *); */
+/* void security_connect(const security_driver_t *, const char *, 
+    char *(*)(char *, void *),
+    void (*)(void *, security_handle_t *, security_status_t), 
+    void *, 
+    void *); */
 #define	security_connect(driver, hostname, conf_fn, fn, arg, datap)	\
     (*(driver)->connect)(hostname, conf_fn, fn, arg, datap)
+
 /* void security_accept(const security_driver_t *, int, int,
     void (*)(security_handle_t *, pkt_t *)); */
 #define	security_accept(driver, in, out, fn)	\
     (*(driver)->accept)(driver, in, out, fn)
 void security_close(security_handle_t *);
 
-/* int security_sendpkt(security_handle_t *, const pkt_t *); */
+/* ssize_t security_sendpkt(security_handle_t *, const pkt_t *); */
 #define	security_sendpkt(handle, pkt)		\
     (*(handle)->driver->sendpkt)(handle, pkt)
 

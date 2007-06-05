@@ -509,7 +509,7 @@ void usage(char *argv[])
   for (cnt=0; cnt < COMCOUNT; cnt++){
     printf("      %s    %s",argv[0],argdefs[cnt].str);
     if (argdefs[cnt].takesparam)
-      printf(" <param>\n");
+      printf(_(" <param>\n"));
     else
       printf("\n");
   }
@@ -653,7 +653,7 @@ clean_tape(
                            " ", getconf_str(CNF_MAILTO),
                            NULL);
       	 if((mailf = popen(mail_cmd, "w")) == NULL){
-        	printf("Mail failed\n");
+        	printf(_("Mail failed\n"));
         	error(_("could not open pipe to \"%s\": %s"),
               	mail_cmd, strerror(errno));
         	/*NOTREACHED*/

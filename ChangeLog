@@ -1,3 +1,17 @@
+2007-06-05  Dustin J. Mitchell <dustin@zmanda.com>
+	* client-src/selfcheck.c: fix formatting typo
+	* common-src/security.h: fix prototypes in comments
+	* common-src/security-util.c common-src/util.c: fix 
+	  vstralloc errors
+	* common-src/debug.c common-src/amanda.h: remove 
+	  debug_prefix_time
+	* changer-src/scsi-linux.c changer-src/chg-scsi-chio.c
+	  changer-src/scsi-cam.c client-src/calcsize.c
+	  recover-src/amrecover.c server-src/driver.c
+	  client-src/sendbackup-gnutar.c server-src/find.c
+	  server-src/diskfile.c : format string / i18n tweaks
+	* common-src/amcrypt-ossl.sh.in: fix shell quoting
+
 2007-06-04  Dustin J. Mitchell <dustin@zmanda.com>
 	* changer-src/sense.c server-src/driver.c server-src/reporter.c
 	  server-src/amadmin.c server-src/amtape.c common-src/amanda.h:

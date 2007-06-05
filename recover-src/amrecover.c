@@ -641,7 +641,7 @@ amindexd_response(
 
     if (pkt->type == P_NAK) {
 #if defined(PACKET_DEBUG)
-	dbprintf(stderr, _("got nak response:\n----\n%s\n----\n\n"), pkt->body);
+	dbprintf(_("got nak response:\n----\n%s\n----\n\n"), pkt->body);
 #endif
 
 	tok = strtok(pkt->body, " ");
