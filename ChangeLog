@@ -1,4 +1,8 @@
 2007-06-06  Jean-Louis Martineau <martineau@zmanda.com>
+	* NEWS: Change in 2.5.2p1.
+	* configure.in: AM_INIT_AUTOMAKE(amanda, 2.5.2p1).
+
+2007-06-06  Jean-Louis Martineau <martineau@zmanda.com>
 	* configure.in: Fix check backup is not from gnutar.
 
 2007-06-04  Jean-Louis Martineau <martineau@zmanda.com>

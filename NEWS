@@ -1,3 +1,18 @@
+Changes in release 2.5.2p1
+
+   * Many bugs fixed
+         o Many IPv6 bugs
+               + missing sockaddr_storage
+               + missing AI_V4MAPPED and AI_ALL
+               + compare of IPv4 and IPv6 v4mapped address.
+               + (bsd/bsdudp): server use two sockets,
+                  one for IPv4 and one for IPv6
+         o amflush/autoflush
+         o chown/chmod
+         o amstatus
+         o compilation on some platform
+         o others small bug
+
 Changes in release 2.5.2
 
    * Many bugs fixed and code cleanup
