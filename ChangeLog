@@ -1,4 +1,7 @@
 2007-06-06  Jean-Louis Martineau <martineau@zmanda.com>
+	* restore-src/restore.c: accept all header with size >= DISK_BLOCK_BYTES
+
+2007-06-06  Jean-Louis Martineau <martineau@zmanda.com>
 	* NEWS: Change in 2.5.2p1.
 	* configure.in: AM_INIT_AUTOMAKE(amanda, 2.5.2p1).
 

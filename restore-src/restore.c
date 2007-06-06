@@ -647,7 +647,7 @@ read_file_header(
 	fprintf(stderr, "%s: error reading file header: %s\n",
 		get_pname(), strerror(errno));
 	file->type = F_UNKNOWN;
-    } else if((size_t)bytes_read < blocksize) {
+    } else if((size_t)bytes_read < DISK_BLOCK_BYTES) {
 	if(bytes_read == 0) {
 	    fprintf(stderr, "%s: missing file header block\n", get_pname());
 	} else {
