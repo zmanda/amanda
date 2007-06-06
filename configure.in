@@ -1745,10 +1745,12 @@ dnl AC_PATH_PROGS(MAKEINFO,makeinfo,,$LOCSYSPATH)
 dnl AC_PATH_PROGS(TEXI2DVI,texi2dvi,,$LOCSYSPATH)
 
 AC_PATH_PROGS(DUMP,$DUMP_PROGRAMS,,$SYSLOCPATH)
-if test "$DUMP" -a `basename $DUMP` = "backup"; then
-  backup_gnutar=`$DUMP --version | $GREP "GNU tar"`
-  if test $? -eq 0; then
-    DUMP=
+if test -n "$DUMP"; then
+  if test "`basename $DUMP`" = "backup"; then
+    backup_gnutar=`$DUMP --version | $GREP "GNU tar"`
+    if test $? -eq 0; then
+      DUMP=
+    fi
   fi
 fi
 AC_PATH_PROGS(RESTORE,ufsrestore restore,,$SYSLOCPATH)

@@ -1,3 +1,6 @@
+2007-06-06  Jean-Louis Martineau <martineau@zmanda.com>
+	* configure.in: Fix check backup is not from gnutar.
+
 2007-06-04  Jean-Louis Martineau <martineau@zmanda.com>
 	Original patch by franz Fischer
 	* tape-src/tapetype.c: close and open after a rewind.
