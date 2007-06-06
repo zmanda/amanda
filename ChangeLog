@@ -1,4 +1,7 @@
 2007-06-06  Jean-Louis Martineau <martineau@zmanda.com>
+	* Amanda 2.5.2p1 released.
+
+2007-06-06  Jean-Louis Martineau <martineau@zmanda.com>
 	* restore-src/restore.c: accept all header with size >= DISK_BLOCK_BYTES
 
 2007-06-06  Jean-Louis Martineau <martineau@zmanda.com>
