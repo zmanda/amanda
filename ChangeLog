@@ -2,6 +2,10 @@
 	Christopher McCrory found the cause of the problem.
 	* server-src/find.c: Send ouput to stderr.
 
+2007-06-07  Jean-Louis Martineau <martineau@zmanda.com>
+	* configure.in: detect GNU tar's 'backup' and ignore it.  Thanks
+	  to Jeanna Geier <jeanna@webteam.net> for spotting this.
+
 2007-06-05  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/util.c: Don't use -w flags for od execution.
 

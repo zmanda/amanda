@@ -1752,6 +1752,19 @@ dnl AC_PATH_PROGS(TEXI2DVI,texi2dvi,,$LOCSYSPATH)
 
 AC_PATH_PROGS(DUMP,$DUMP_PROGRAMS,,$SYSLOCPATH)
 AC_PATH_PROGS(RESTORE,ufsrestore restore,,$SYSLOCPATH)
+
+# newer versions of GNU tar include a program named 'backup' which
+# does *not* implement the expected 'dump' interface.  Detect that here
+# and pretend we never saw it.
+if test -n "$DUMP"; then
+  if test "`basename $DUMP`" = "backup"; then
+    backup_gnutar=`$DUMP --version | $GREP "GNU tar"`
+    if test $? -eq 0; then
+      DUMP=
+    fi
+  fi
+fi
+
 if test "$DUMP" -a "$RESTORE"; then
     AC_DEFINE_UNQUOTED(DUMP,"$DUMP",[Define the location of the ufsdump, backup, or dump program. ])
     AC_DEFINE_UNQUOTED(RESTORE,"$RESTORE",[Define the location of the ufsrestore or restore program. ])
