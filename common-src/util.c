@@ -597,14 +597,14 @@ hexdump(
 {
     ssize_t rc = -1;
 
-    FILE *stream = popen("od -w10 -c -x -", "w");
+    FILE *stream = popen("od -c -x -", "w");
 	
     if (stream != NULL) {
 	fflush(stdout);
 	rc = (ssize_t)fwrite(buffer, len, 1, stream);
 	if (ferror(stream))
 	    rc = -1;
-	fclose(stream);
+	pclose(stream);
     }
     return rc;
 }

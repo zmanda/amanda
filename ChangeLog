@@ -1,3 +1,6 @@
+2007-06-05  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/util.c: Don't use -w flags for od execution.
+
 2007-06-05  Dustin J. Mitchell <dustin@zmanda.com>
 	* client-src/selfcheck.c: fix formatting typo
 	* common-src/security.h: fix prototypes in comments
