@@ -1,3 +1,7 @@
+2007-06-07  Jean-Louis Martineau <martineau@zmanda.com>
+	Christopher McCrory found the cause of the problem.
+	* server-src/find.c: Send ouput to stderr.
+
 2007-06-05  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/util.c: Don't use -w flags for od execution.
 
