@@ -436,11 +436,6 @@ main(
 	}
 	program = programs[i];
     }
-    if (programs[i] == NULL) {
-	error(_("ERROR [unknown program %s]"), prog);
-	/*NOTREACHED*/
-    }
-    program = programs[i];
 
     options = parse_options(stroptions, disk, amdevice, g_options->features, 0);
 

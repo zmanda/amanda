@@ -1,3 +1,6 @@
+2007-06-06  Dustin J. Mitchell <dustin@zmanda.com>
+	* client-src/sendbackup.c: remove bogus check for unknown program
+
 2007-06-07  Jean-Louis Martineau <martineau@zmanda.com>
 	Christopher McCrory found the cause of the problem.
 	* server-src/find.c: Send ouput to stderr.
