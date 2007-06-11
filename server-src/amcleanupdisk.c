@@ -236,6 +236,9 @@ check_disks(void)
     holdingdisk_t *hdisk;
     sle_t *dir;
 
+    /* if there are no holding files, we're done */
+    if (!holding_list) return;
+
     for(dir = holding_list->first; dir !=NULL; dir = dir->next) {
 	for(hdisk = getconf_holdingdisks(); hdisk != NULL; hdisk = hdisk->next)
 	    check_holdingdisk(holdingdisk_get_diskdir(hdisk), dir->name);

@@ -1,3 +1,7 @@
+2007-06-07  Dustin J. Mitchell <dustin@zmanda.com>
+	* server-src/amcleanupdisk.c: don't try to clean up holding disks
+	  if they are empty.
+
 2007-06-06  Dustin J. Mitchell <dustin@zmanda.com>
 	* client-src/sendbackup.c: remove bogus check for unknown program
 
