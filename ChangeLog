@@ -1,3 +1,6 @@
+2007-06-18  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amstatus.pl.in: Set and use chunk_time.
+
 2007-06-07  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/amcleanupdisk.c: don't try to clean up holding disks
 	  if they are empty.
