@@ -240,6 +240,12 @@ do_pass(
 	    sProgName, tapedev, strerror(errno));
     exit(1);
   }
+  if (((-1 == tapefd_close(fd)) ||
+       (-1 == (fd = tape_open(tapedev, O_RDWR))))) {
+    fprintf(stderr, "%s: could not re-open %s: %s\n",
+	    sProgName, tapedev, strerror(errno));
+    exit(1);
+  }
 
   time(&start);
 
@@ -301,6 +307,15 @@ do_pass0(
 	    sProgName, tapedev, strerror(errno));
     exit(1);
   }
+
+  if (dorewind &&
+      ((-1 == tapefd_close(fd)) ||
+       (-1 == (fd = tape_open(tapedev, O_RDWR))))) {
+    fprintf(stderr, "%s: could not re-open %s: %s\n",
+	    sProgName, tapedev, strerror(errno));
+    exit(1);
+  }
+
 
   time(&start);
 

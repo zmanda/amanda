@@ -1,3 +1,8 @@
+2007-06-19  Dustin J. Mitchell <dustin@zmanda.com>
+	* tape-src/tapetype.c: close and re-open tape after rewind
+	  (patch from Franz Fischer <amanda@franz-fischer.de>, modified
+	  by Jean-Louis Martineau <martineau@zmanda.com>)
+
 2007-06-06  Jean-Louis Martineau <martineau@zmanda.com>
         * restore-src/restore.c: accept all header with size >= DISK_BLOCK_BYTES
 
