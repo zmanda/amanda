@@ -1,3 +1,8 @@
+2007-06-20  Dustin J. Mitchell <dustin@zmanda.com>
+	* client-src/sendsize.c: call dbfn(), not debug_fn()
+	* common-src/amanda.h: make dbfn() return a meaningful string
+	  when debugging is disabled
+
 2007-06-19  Dustin J. Mitchell <dustin@zmanda.com>
 	* tape-src/tapetype.c: close and re-open tape after rewind
 	  (patch from Franz Fischer <amanda@franz-fischer.de>, modified

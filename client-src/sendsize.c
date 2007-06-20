@@ -895,18 +895,18 @@ generic_calc_estimates(
     if (WIFSIGNALED(wait_status)) {
 	errmsg = vstrallocf(_("%s terminated with signal %d: see %s"),
 			    "calcsize", WTERMSIG(wait_status),
-			    debug_fn());
+			    dbfn());
     } else if (WIFEXITED(wait_status)) {
 	if (WEXITSTATUS(wait_status) != 0) {
 	    errmsg = vstrallocf(_("%s exited with status %d: see %s"),
 			        "calcsize", WEXITSTATUS(wait_status),
-				debug_fn());
+				dbfn());
 	} else {
 	    /* Normal exit */
 	}
     } else {
 	errmsg = vstrallocf(_("%s got bad exit: see %s"),
-			     "calcsize", debug_fn());
+			     "calcsize", dbfn());
     }
     dbprintf(_("after %s %s wait: child pid=%d status=%d\n"),
 	      my_argv[0], est->qamdevice,
@@ -1538,17 +1538,17 @@ getsize_dump(
     waitpid(dumppid, &wait_status, 0);
     if (WIFSIGNALED(wait_status)) {
 	*errmsg = vstrallocf(_("%s terminated with signal %d: see %s"),
-			     cmd, WTERMSIG(wait_status), debug_fn());
+			     cmd, WTERMSIG(wait_status), dbfn());
     } else if (WIFEXITED(wait_status)) {
 	if (WEXITSTATUS(wait_status) != 0) {
 	    *errmsg = vstrallocf(_("%s exited with status %d: see %s"),
-			         cmd, WEXITSTATUS(wait_status), debug_fn());
+			         cmd, WEXITSTATUS(wait_status), dbfn());
 	} else {
 	    /* Normal exit */
 	}
     } else {
 	*errmsg = vstrallocf(_("%s got bad exit: see %s"),
-			     cmd, debug_fn());
+			     cmd, dbfn());
     }
     dbprintf(_("after %s%s %s wait\n"), cmd, name, qdisk);
 
@@ -1779,18 +1779,18 @@ getsize_smbtar(
     waitpid(dumppid, &wait_status, 0);
     if (WIFSIGNALED(wait_status)) {
 	*errmsg = vstrallocf(_("%s terminated with signal %d: see %s"),
-			     "smbclient", WTERMSIG(wait_status), debug_fn());
+			     "smbclient", WTERMSIG(wait_status), dbfn());
     } else if (WIFEXITED(wait_status)) {
 	if (WEXITSTATUS(wait_status) != 0) {
 	    *errmsg = vstrallocf(_("%s exited with status %d: see %s"),
 			         "smbclient", WEXITSTATUS(wait_status),
-				 debug_fn());
+				 dbfn());
 	} else {
 	    /* Normal exit */
 	}
     } else {
 	*errmsg = vstrallocf(_("%s got bad exit: see %s"),
-			     "smbclient", debug_fn());
+			     "smbclient", dbfn());
     }
     dbprintf(_("after %s %s wait\n"), SAMBA_CLIENT, qdisk);
 
@@ -2074,17 +2074,17 @@ getsize_gnutar(
     waitpid(dumppid, &wait_status, 0);
     if (WIFSIGNALED(wait_status)) {
 	*errmsg = vstrallocf(_("%s terminated with signal %d: see %s"),
-			     cmd, WTERMSIG(wait_status), debug_fn());
+			     cmd, WTERMSIG(wait_status), dbfn());
     } else if (WIFEXITED(wait_status)) {
 	if (WEXITSTATUS(wait_status) != 0) {
 	    *errmsg = vstrallocf(_("%s exited with status %d: see %s"),
-			         cmd, WEXITSTATUS(wait_status), debug_fn());
+			         cmd, WEXITSTATUS(wait_status), dbfn());
 	} else {
 	    /* Normal exit */
 	}
     } else {
 	*errmsg = vstrallocf(_("%s got bad exit: see %s"),
-			     cmd, debug_fn());
+			     cmd, dbfn());
     }
     dbprintf(_("after %s %s wait\n"), my_argv[0], qdisk);
 
@@ -2299,17 +2299,17 @@ getsize_backup_api(
     waitpid(dumppid, &wait_status, 0);
     if (WIFSIGNALED(wait_status)) {
 	*errmsg = vstrallocf(_("%s terminated with signal %d: see %s"),
-			     cmd, WTERMSIG(wait_status), debug_fn());
+			     cmd, WTERMSIG(wait_status), dbfn());
     } else if (WIFEXITED(wait_status)) {
 	if (WEXITSTATUS(wait_status) != 0) {
 	    *errmsg = vstrallocf(_("%s exited with status %d: see %s"), cmd,
-				 WEXITSTATUS(wait_status), debug_fn());
+				 WEXITSTATUS(wait_status), dbfn());
 	} else {
 	    /* Normal exit */
 	}
     } else {
 	*errmsg = vstrallocf(_("%s got bad exit: see %s"),
-			     cmd, debug_fn());
+			     cmd, dbfn());
     }
     dbprintf(_("after %s %s wait\n"), cmd, qdisk);
 

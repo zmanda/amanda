@@ -470,7 +470,7 @@ char *	debug_prefix(char *);
 #   define dbprintf(...)
 #   define dbfd()		(-1)
 #   define dbfp()		NULL
-#   define dbfn()		NULL
+#   define dbfn()		"(debug not enabled)"
 #   define set_debug_prefix_pid(x)
 #   define debug_prefix(x)	get_pname()
 
