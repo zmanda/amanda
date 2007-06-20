@@ -2120,30 +2120,6 @@ static void handle_failed(
     char *errstr;
     char *qname = quote_string(dp->name);
 
-/*
- * From George Scott <George.Scott@cc.monash.edu.au>:
- * --------
- * If a machine is down when the planner is run it guesses from historical
- * data what the size of tonights dump is likely to be and schedules a
- * dump anyway.  The dumper then usually discovers that that machine is
- * still down and ends up with a half full tape.  Unfortunately the
- * planner had to delay another dump because it thought that the tape was
- * full.  The fix here is for the planner to ignore unavailable machines
- * rather than ignore the fact that they are unavailable.
- * --------
- */
-
-#ifdef old_behavior
-    if(est(dp)->last_level != -1) {
-	log_add(L_WARNING,
-		_("Could not get estimate for %s:%s, using historical data."),
-		dp->host->hostname, qname);
-	analyze_estimate(dp);
-	amfree(qname);
-	return;
-    }
-#endif
-
     errstr = est(dp)->errstr? est(dp)->errstr : _("hmm, no error indicator!");
 
     fprintf(stderr, _("%s: FAILED %s %s %s 0 [%s]\n"),

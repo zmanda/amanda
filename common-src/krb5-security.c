@@ -1151,9 +1151,6 @@ krb5_checkuser( char *	host,
 	    continue;
 	}
 
-#if defined(SHOW_SECURITY_DETAIL)                               /* { */
-	auth_debug(1, _("processing line: <%s>\n"), line);
-#endif                                                          /* } */
 	/* if there's more than one column, then it's the host */
 	if( (filehost = strtok(line, " \t")) == NULL) {
 	    amfree(line);

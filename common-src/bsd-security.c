@@ -45,12 +45,6 @@
 #endif
 
 /*
- * Change the following from #undef to #define to cause detailed logging
- * of the security steps, e.g. into /tmp/amanda/amandad*debug.
- */
-#undef SHOW_SECURITY_DETAIL
-
-/*
  * Interface functions
  */
 static void	bsd_connect(const char *, char *(*)(char *, void *), 
