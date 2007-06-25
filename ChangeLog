@@ -1,3 +1,11 @@
+2007-06-25  Dustin J. Mitchell <dustin@zmanda.com>
+	* server-src/cmdline.c server-src/cmdline.h server-src/taperscan.c
+	  server-src/taperscan.h config/docbook-dtd.m4i
+	  config/docbook-xslt-min.m4i config/docbook-xslt.m4i
+	  config/xsltproc.m4i common-src/sockaddr-util.c
+	  common-src/sockaddr-util.h common-src/amaespipe.sh.in:
+	  restrict to GPLv2
+
 2007-06-20  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/planner.c common-src/bsdudp-security.c
 	  common-src/krb5-security.c common-src/bsd-security.c:
