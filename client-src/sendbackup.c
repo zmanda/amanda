@@ -1221,7 +1221,9 @@ start_index(
   /* finished */
   /* check the exit code of the pipe and moan if not 0 */
   if ((exitcode = pclose(pipe_fp)) != 0) {
-    dbprintf(_("Index pipe returned %d\n"), exitcode);
+    char *exitstr = str_exit_status("Index pipe", exitcode);
+    dbprintf("%s\n", exitstr);
+    amfree(exitstr);
   } else {
     dbprintf(_("Index created successfully\n"));
   }

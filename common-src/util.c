@@ -752,3 +752,42 @@ resolve_hostname(const char *hostname,
     return result;
 }
 
+char *
+_str_exit_status(
+    char *subject,
+    amwait_t status)
+{
+    if (WIFEXITED(status)) {
+	int exitstatus = WEXITSTATUS(status);
+	if (exitstatus == 0)
+	    return vstrallocf(_("%s exited normally"), subject);
+	else
+	    return vstrallocf(_("%s exited with status %d"), subject, exitstatus);
+    }
+
+    if (WIFSIGNALED(status)) {
+	int signal = WTERMSIG(status);
+#ifdef WCOREDUMP
+	if (WCOREDUMP(status))
+	    return vstrallocf(_("%s exited after receiving signal %d (core dumped)"),
+		subject, signal);
+	else
+#endif
+	    return vstrallocf(_("%s exited after receiving signal %d"),
+		subject, signal);
+    }
+
+    if (WIFSTOPPED(status)) {
+	int signal = WSTOPSIG(status);
+	return vstrallocf(_("%s stopped temporarily after receiving signal %d"),
+	    subject, signal);
+    }
+
+#ifdef WIFCONTINUED
+    if (WIFCONTINUED(status)) {
+	return vstrallocf(_("%s was resumed"), subject);
+    }
+#endif
+
+    return vstrallocf(_("%s exited in unknown circumstances"), subject);
+}

@@ -786,8 +786,10 @@ main(
         afclose(mailf);
     }
     else if(mailf) {
-        if(pclose(mailf) != 0) {
-            error(_("mail command failed: %s"), mail_cmd);
+	int exitcode;
+        if((exitcode = pclose(mailf)) != 0) {
+	    char *exitstr = str_exit_status("mail command", exitcode);
+            error(exitstr);
 	    /*NOTREACHED*/
 	}
         mailf = NULL;

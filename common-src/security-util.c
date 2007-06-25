@@ -1937,7 +1937,7 @@ check_user(
  * See if a remote user is allowed in.  This version uses ruserok()
  * and friends.
  *
- * Returns 0 on success, or negative on error.
+ * Returns NULL on success, or error message on error.
  */
 char *
 check_user_ruserok(
@@ -1954,7 +1954,6 @@ check_user_ruserok(
     char *es;
     char *result;
     int ok;
-    char number[NUM_STR_SIZE];
     uid_t myuid = getuid();
 
     /*
@@ -2049,19 +2048,15 @@ check_user_ruserok(
     while (pid != ruserok_pid) {
 	if ((pid == (pid_t) -1) && (errno != EINTR)) {
 	    amfree(result);
-	    return stralloc2(_("ruserok wait failed: %s"), strerror(errno));
+	    return vstrallocf(_("ruserok wait failed: %s"), strerror(errno));
 	}
 	pid = wait(&exitcode);
     }
-    if (WIFSIGNALED(exitcode)) {
+    if (!WIFEXITED(exitcode) || WEXITSTATUS(exitcode) != 0) {
 	amfree(result);
-	snprintf(number, SIZEOF(number), "%d", WTERMSIG(exitcode));
-	return stralloc2(_("ruserok child got signal "), number);
-    }
-    if (WEXITSTATUS(exitcode) == 0) {
+	result = str_exit_status("ruserok child", exitcode);
+    } else {
 	amfree(result);
-    } else if (result == NULL) {
-	result = stralloc(_("ruserok failed"));
     }
 
     return result;

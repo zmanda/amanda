@@ -35,6 +35,7 @@
  */
 #include "amanda.h"
 #include "version.h"
+#include "util.h"
 
 #ifdef HAVE_GETPGRP
 #ifdef GETPGRP_VOID
@@ -57,6 +58,7 @@ main(
     char **	argv)
 {
     int ch;
+    char *exitstr;
     amwait_t status;
 
     /*
@@ -108,9 +110,9 @@ main(
 	/*NOTREACHED*/
     }
 
-    /* Consume any extranious input */
     signal(SIGTERM, term_kill_soft);
 
+    /* Consume any extranious input */
     do {
 	ch = getchar();
 	/* wait until EOF */
@@ -126,11 +128,12 @@ main(
 	    /*NOTREACHED*/
 	}
     }
+    exitstr = str_exit_status("child", status);
+    dbprintf("%s\n", exitstr);
+    amfree(exitstr);
 
     /*@ignore@*/
-    dbprintf(_("child process exited with status %d\n"), WEXITSTATUS(status));
-
-    return WEXITSTATUS(status);
+    return WIFEXITED(status)?WEXITSTATUS(status):1;
     /*@end@*/
 }
 

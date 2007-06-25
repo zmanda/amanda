@@ -555,7 +555,7 @@ check_disk(
 	    pid_t checkpid;
 	    amwait_t retstat;
 	    pid_t wpid;
-	    int ret, sig, rc;
+	    int rc;
 	    char *line;
 	    char *sep;
 	    FILE *ferr;
@@ -650,23 +650,15 @@ check_disk(
 	    afclose(ferr);
 	    checkerr = -1;
 	    rc = 0;
+	    sep = "";
 	    while ((wpid = wait(&retstat)) != -1) {
-		if (WIFSIGNALED(retstat)) {
-		    ret = 0;
-		    rc = sig = WTERMSIG(retstat);
-		} else {
-		    sig = 0;
-		    rc = ret = WEXITSTATUS(retstat);
-		}
-		if (rc != 0) {
-		    if (ret == 0) {
-			err = newvstrallocf(err, _("%s%s got signal %d"),
-				err, sep, sig);
-			ret = sig;
-		    } else {
-			err = newvstrallocf(err, _("%s%s returned %d"),
-				err, sep, ret);
-		    }
+		if (!WIFEXITED(retstat) || WEXITSTATUS(retstat) != 0) {
+		    char *exitstr = str_exit_status("smbclient", retstat);
+		    err = newvstralloc(err, err, sep, exitstr);
+		    sep = "\n";
+		    amfree(exitstr);
+
+		    rc = 1;
 		}
 	    }
 	    if (errdos != 0 || rc != 0) {

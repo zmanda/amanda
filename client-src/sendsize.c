@@ -439,7 +439,6 @@ main(
 	if(need_wait) {
 	    pid_t child_pid;
 	    amwait_t child_status;
-	    int exit_code;
 
 	    need_wait = 0;
 	    dbprintf(_("waiting for any estimate child: %d running\n"),
@@ -449,19 +448,15 @@ main(
 		error(_("wait failed: %s"), strerror(errno));
 		/*NOTREACHED*/
 	    }
-	    if(WIFSIGNALED(child_status)) {
-		dbprintf(_("child %ld terminated with signal %d\n"),
-			  (long) child_pid, WTERMSIG(child_status));
-	    } else {
-		exit_code = WEXITSTATUS(child_status);
-		if(exit_code == 0) {
-		    dbprintf(_("child %ld terminated normally\n"),
-			      (long) child_pid);
-		} else {
-		    dbprintf(_("child %ld terminated with code %d\n"),
-			      (long) child_pid, exit_code);
-		}
+
+	    if (!WIFEXITED(child_status) || WEXITSTATUS(child_status) != 0) {
+		char *child_name = vstrallocf(_("child %ld"), (long)child_pid);
+		char *child_status_str = str_exit_status(child_name, child_status);
+		dbprintf("%s\n", child_status_str);
+		amfree(child_status_str);
+		amfree(child_name);
 	    }
+
 	    /*
 	     * Find the child and mark it done.
 	     */

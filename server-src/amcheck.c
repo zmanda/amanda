@@ -430,10 +430,7 @@ main(
 	char *err = NULL;
 	char *extra_info = NULL;
 	char *line = NULL;
-	int ret;
 	int rc;
-	int sig;
-	char number[NUM_STR_SIZE];
 
 	fflush(stdout);
 	if(lseek(mainfd, (off_t)0, SEEK_SET) == (off_t)-1) {
@@ -514,22 +511,12 @@ main(
 	errfd = -1;
 	rc = 0;
 	while (wait(&retstat) != -1) {
-	    if (WIFSIGNALED(retstat)) {
-		    ret = 0;
-		    rc = sig = WTERMSIG(retstat);
-	    } else {
-		    sig = 0;
-		    rc = ret = WEXITSTATUS(retstat);
-	    }
-	    if (rc != 0) {
-		    if (ret == 0) {
-			strappend(err, _("got signal "));
-			ret = sig;
-		    } else {
-			strappend(err, _("returned "));
-		    }
-		    snprintf(number, SIZEOF(number), "%d", ret);
-		    strappend(err, number);
+	    if (!WIFEXITED(retstat) || WEXITSTATUS(retstat) != 0) {
+		char *mailer_error = str_exit_status("mailer", retstat);
+		strappend(err, mailer_error);
+		amfree(mailer_error);
+
+		rc = 1;
 	    }
 	}
 	if (rc != 0) {
@@ -537,7 +524,7 @@ main(
 		fputs(extra_info, stderr);
 		amfree(extra_info);
 	    }
-	    error(_("error running mailer %s: %s"), MAILER, err);
+	    error(_("error running mailer %s: %s"), MAILER, err?err:"(unknown)");
 	    /*NOTREACHED*/
 	}
     }

@@ -86,4 +86,22 @@ char *taperalgo2str(int taperalgo);
  */
 int resolve_hostname(const char *hostname, struct addrinfo **res, char **canonname);
 
+/* Interpret a status (as returned from wait() and friends)
+ * into a human-readable sentence.
+ *
+ * Caller is responsible for freeing the resulting string.
+ * The resulting string has already been translated.
+ *
+ * The macro definition allows this to work even when amwait_t
+ * is 'union wait' (4.3BSD).  The cast is safe because the two
+ * argument types are interchangeable.
+ *
+ * @param subject: subject of the sentence (program name, etc.)
+ * @param status: the exit status
+ * @returns: newly allocated string describing status
+ */
+#define str_exit_status(subject, status) \
+    _str_exit_status((subject), *(amwait_t *)&(status))
+char *_str_exit_status(char *subject, amwait_t status);
+
 #endif	/* UTIL_H */

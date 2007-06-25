@@ -6,6 +6,14 @@
 	  common-src/sockaddr-util.h common-src/amaespipe.sh.in:
 	  restrict to GPLv2
 
+2007-06-25  Dustin J. Mitchell <dustin@zmanda.com>
+	* client-src/sendbackup.c client-src/killpgrp.c
+	  client-src/sendsize.c client-src/selfcheck.c
+	  server-src/amcheck.c server-src/reporter.c common-src/util.c
+	  common-src/util.h common-src/security-util.c: add str_exit_status()
+	  to interpret the status resulting from wait(), use it throughout
+	  the codebase.
+
 2007-06-20  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/planner.c common-src/bsdudp-security.c
 	  common-src/krb5-security.c common-src/bsd-security.c:
