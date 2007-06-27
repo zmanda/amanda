@@ -6,6 +6,7 @@ EXTRA_DIST =	acinclude.m4i	\
 		docbook-dtd.m4i	\
 		docbook-xslt.m4i	\
 		docbook-xslt-min.m4i	\
+		ax_create_stdint_h.m4i	\
 		gettext.m4i	\
 		gnulib.m4i	\
 		install-sh	\

@@ -1,3 +1,11 @@
+2007-06-27  Dustin J. Mitchell <dustin@zmanda.com>
+	* autogen config/ax_create_stdint_h.m4i config/acinclude.m4i
+	  Makefile.am: use updated version of ax_create_stdint_h.m4
+	  from http://autoconf-archive.cryp.to/ax_create_stdint_h.html.
+	  Original by Guido U. Draheim <guidod@gmx.de>, patched locally
+	  to avoid spurious "command not found" on Solaris 10.
+	* config/Makefile.am: add ax_create_stdint_h.m4i
+
 2007-06-25  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/cmdline.c server-src/cmdline.h server-src/taperscan.c
 	  server-src/taperscan.h config/docbook-dtd.m4i
