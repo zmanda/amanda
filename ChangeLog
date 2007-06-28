@@ -1,4 +1,9 @@
 2007-06-28  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/security-util.c: Change authorization error message to
+	"Please add the line "HOST USER SERVICE" to AMANDAHOSTS on the client"
+	as suggested by Paddy Sreenivasan <paddy@zmanda.com>.
+
+2007-06-28  Dustin J. Mitchell <dustin@zmanda.com>
 	* configure.in common-src/amflock-flock.c
 	  common-src/amflock-posix.c common-src/amanda.h
 	  common-src/amflock-lockf.c common-src/amflock-test.c

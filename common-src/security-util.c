@@ -2064,7 +2064,7 @@ check_user_ruserok(
 
 /*
  * Check to see if a user is allowed in.  This version uses .amandahosts
- * Returns -1 on failure, or 0 on success.
+ * Returns an error message on failure, or NULL on success.
  */
 char *
 check_user_amandahosts(
@@ -2229,13 +2229,13 @@ check_user_amandahosts(
     if (! found) {
 	if (strcmp(service, "amindexd") == 0 ||
 	    strcmp(service, "amidxtaped") == 0) {
-	    result = vstrallocf(_("Please add \"amindexd amidxtaped\" to the line in %s on the client"), ptmp);
+	    result = vstrallocf(_("Please add the line \"%s %s amindexd amidxtaped\" to %s on the client"), host, remoteuser, ptmp);
 	} else if (strcmp(service, "amdump") == 0 ||
 		   strcmp(service, "noop") == 0 ||
 		   strcmp(service, "selfcheck") == 0 ||
 		   strcmp(service, "sendsize") == 0 ||
 		   strcmp(service, "sendbackup") == 0) {
-	    result = vstrallocf(_("Please add \"amdump\" to the line in %s on the client"), ptmp);
+	    result = vstrallocf(_("Please add the line \"%s %s amdump\" to %s on the client"), host, remoteuser, ptmp);
 	} else {
 	    result = vstrallocf(_("%s: invalid service %s"), ptmp, service);
 	}
