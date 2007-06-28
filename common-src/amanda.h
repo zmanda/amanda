@@ -31,6 +31,8 @@
 #ifndef AMANDA_H
 #define AMANDA_H
 
+#include "amflock.h"
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif

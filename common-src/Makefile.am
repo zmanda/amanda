@@ -6,6 +6,7 @@ lib_LTLIBRARIES =	libamanda.la
 
 LINT=@AMLINT@
 LINTFLAGS=@AMLINTFLAGS@
+EXTRA_DIST =
 
 sbin_SCRIPTS =	amcrypt amaespipe	\
 	amcrypt-ossl	amcrypt-ossl-asym
@@ -39,6 +40,31 @@ libamanda_la_SOURCES =		\
 	version.c		\
 	versuff.c
 
+if WANT_AMFLOCK_POSIX
+libamanda_la_SOURCES += amflock-posix.c
+else
+EXTRA_DIST += amflock-posix.c
+endif
+
+if WANT_AMFLOCK_FLOCK
+libamanda_la_SOURCES += amflock-flock.c
+else
+EXTRA_DIST += amflock-flock.c
+endif
+
+if WANT_AMFLOCK_LOCKF
+libamanda_la_SOURCES += amflock-lockf.c
+else
+EXTRA_DIST += amflock-lockf.c
+endif
+
+if WANT_AMFLOCK_LNLOCK
+libamanda_la_SOURCES += amflock-lnlock.c
+else
+EXTRA_DIST += amflock-lnlock.c
+endif
+
+
 if WANT_RSH_SECURITY
 libamanda_la_SOURCES += rsh-security.c
 endif
@@ -70,6 +96,7 @@ noinst_HEADERS =		\
 	amfeatures.h		\
 	arglist.h		\
 	clock.h			\
+	amflock.h		\
 	conffile.h		\
 	dgram.h			\
 	event.h			\
@@ -164,6 +191,16 @@ bsdsecurity_LDADD = $(libamanda_a_LIBADD) \
 
 amfeatures_SOURCES = amfeatures.test.c
 amfeatures_LDADD = $(libamanda_la_LIBADD) $(STANDARD_COMMON_STUFF)
+
+# automake-style tests
+
+TESTS = amflock-test
+noinst_PROGRAMS = $(TESTS)
+
+amflock_test_SOURCES = amflock-test.c
+amflock_test_LDADD = libamanda.la
+
+# installation
 
 install-exec-hook:
 	@list="$(sbin_SCRIPTS)"; \

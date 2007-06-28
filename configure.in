@@ -2822,7 +2822,6 @@ ICE_CHECK_DECL(dbm_open,${DB_HEADER-no/db/header/file})
 AC_CHECK_FUNCS(endmntent)
 ICE_CHECK_DECL(fclose,stdio.h)
 ICE_CHECK_DECL(fflush,stdio.h)
-ICE_CHECK_DECL(flock,sys/file.h)
 ICE_CHECK_DECL(fprintf,stdio.h)
 ICE_CHECK_DECL(fputc,stdio.h)
 ICE_CHECK_DECL(fputs,stdio.h)
@@ -3035,111 +3034,123 @@ case $mount in
 	;;
 esac
 
-dnl lock/flock/fcntl
+# find a working file-locking mechanism.
+# Note: these all use AC_TRY_LINK to make sure that we can compile
+# and link each variant.  They do not try to test the variants --
+# that is left to runtime.
+WORKING_FILE_LOCK="no"
+
+# check POSIX locking
 AC_CACHE_CHECK(
-   [whether posix fcntl locking works],
+   [whether POSIX locking (with fcntl(2)) is available],
    amanda_cv_posix_filelocking,
    [
-	AC_RUN_IFELSE([AC_LANG_SOURCE([[
-#undef  ASSERTIONS
-#define CONFIGURE_TEST
-#define USE_POSIX_FCNTL
-#include "${srcdir-.}/common-src/amflock.c"
-]])],[
-	amanda_cv_posix_filelocking=yes
-],[
-	amanda_cv_posix_filelocking="no"
-],[
-	amanda_cv_posix_filelocking="no (cannot run test)"
-])
-    rm -f /tmp/conftest.lock
-])
+	AC_TRY_LINK([
+#if HAVE_SYS_TYPES_H
+# include <sys/types.h>
+#endif
+#if HAVE_UNISTD_H
+# include <unistd.h>
+#endif
+#if HAVE_FCNTL_H
+# include <fcntl.h>
+#endif
+	], [
+	struct flock lock;
+
+	lock.l_type = F_RDLCK;
+	lock.l_start = 0;
+	lock.l_whence = SEEK_CUR;
+	lock.l_len = 0;
+	return fcntl(1, F_SETLK, &lock);
+	], [
+    amanda_cv_posix_filelocking="yes"
+	],[
+    amanda_cv_posix_filelocking="no"
+	])
+    ])
 if test "x$amanda_cv_posix_filelocking" = xyes; then
-    AC_DEFINE(USE_POSIX_FCNTL,1,[Define to use Posix fcntl for file locking.])
-    HAS_WORKING_FILE_LOCK=1
+    AC_DEFINE(WANT_AMFLOCK_POSIX,1,[Define to use POSIX (fcntl()) for file locking])
+    WANT_AMFLOCK_POSIX="yes"
+    WORKING_FILE_LOCK="yes"
 fi
+AM_CONDITIONAL(WANT_AMFLOCK_POSIX, test x"$WANT_AMFLOCK_POSIX" = x"yes")
 
-if test -z "$HAS_WORKING_FILE_LOCK"; then
-    AC_CACHE_CHECK(
-	[whether flock locking works],
-	amanda_cv_flock_filelocking,
-	[
-	    AC_RUN_IFELSE([AC_LANG_SOURCE([[
-#undef  ASSERTIONS
-#define CONFIGURE_TEST
-#define USE_FLOCK
-#include "${srcdir-.}/common-src/amflock.c"
-]])],[
-		    amanda_cv_flock_filelocking="yes"
-],[
-		    amanda_cv_flock_filelocking="no"
-],[
-		    amanda_cv_flock_filelocking="no (cannot run test)"
-])
-	rm -f /tmp/conftest.lock
-])
-    if test "x$amanda_cv_flock_filelocking" = xyes; then
-	AC_DEFINE(USE_FLOCK,1,[Define to use flock for file locking.])
-	HAS_WORKING_FILE_LOCK=1
-    fi
+# check flock-based (BSD) locking
+AC_CACHE_CHECK(
+   [whether flock locking is available],
+   amanda_cv_flock_filelocking,
+   [
+	AC_TRY_LINK([
+#if HAVE_SYS_FILE_H
+# include <sys/file.h>
+#endif
+	], [
+	return flock(1, LOCK_SH);
+	], [
+    amanda_cv_flock_filelocking="yes"
+	],[
+    amanda_cv_flock_filelocking="no"
+	])
+    ])
+if test "x$amanda_cv_flock_filelocking" = xyes; then
+    AC_DEFINE(WANT_AMFLOCK_FLOCK,1,[Define to use flock(2) for file locking])
+    WANT_AMFLOCK_FLOCK="yes"
+    WORKING_FILE_LOCK="yes"
 fi
+AM_CONDITIONAL(WANT_AMFLOCK_FLOCK, test x"$WANT_AMFLOCK_FLOCK" = x"yes")
 
-if test -z "$HAS_WORKING_FILE_LOCK"; then
-    AC_CACHE_CHECK(
-	[whether lockf locking works],
-	amanda_cv_lockf_filelocking,
-	[
-	    AC_RUN_IFELSE([AC_LANG_SOURCE([[
-#undef  ASSERTIONS
-#define CONFIGURE_TEST
-#define USE_LOCKF
-#include "${srcdir-.}/common-src/amflock.c"
-]])],[
-		    amanda_cv_lockf_filelocking="yes"
-],[
-		    amanda_cv_lockf_filelocking="no"
-],[
-		    amanda_cv_lockf_filelocking="no (cannot run test)"
-])
-	rm -f /tmp/conftest.lock
-])
-    if test "x$amanda_cv_lockf_filelocking" = xyes; then
-	AC_DEFINE(USE_LOCKF,1,[Define to use lockf for file locking.])
-	HAS_WORKING_FILE_LOCK=1
-    fi
+# check lockf-based (SVR2, SVR3, SVR4) locking
+AC_CACHE_CHECK(
+   [whether lockf(3) locking is available],
+   amanda_cv_lockf_filelocking,
+   [
+	AC_TRY_LINK([
+#if HAVE_UNISTD_H
+# include <unistd.h>
+#endif
+	], [
+	return lockf(1, F_LOCK, 0);
+	], [
+    amanda_cv_lockf_filelocking="yes"
+	],[
+    amanda_cv_lockf_filelocking="no"
+	])
+    ])
+if test "x$amanda_cv_lockf_filelocking" = xyes; then
+    AC_DEFINE(WANT_AMFLOCK_LOCKF,1,[Define to use lockf(3) for file locking.])
+    WANT_AMFLOCK_LOCKF="yes"
+    WORKING_FILE_LOCK="yes"
 fi
+AM_CONDITIONAL(WANT_AMFLOCK_LOCKF, test x"$WANT_AMFLOCK_LOCKF" = x"yes")
 
-if test -z "$HAS_WORKING_FILE_LOCK"; then
-    AC_CACHE_CHECK(
-	[whether lnlock locking works],
-	amanda_cv_lnlock_filelocking,
-	[
-	    AC_RUN_IFELSE([AC_LANG_SOURCE([[
-#undef  ASSERTIONS
-#define CONFIGURE_TEST
-#define USE_LNLOCK
-#include "${srcdir-.}/common-src/amflock.c"
-#include "${srcdir-.}/common-src/alloc.c"
-#include "${srcdir-.}/common-src/error.c"
-#include "${srcdir-.}/common-src/snprintf.c"
-]])],[
-		    amanda_cv_lnlock_filelocking="yes"
-],[
-		    amanda_cv_lnlock_filelocking="no"
-],[
-		    amanda_cv_lnlock_filelocking="no (cannot run test)"
-])
-	rm -f /tmp/conftest.lock
-])
-    if test "x$amanda_cv_lnlock_filelocking" = xyes; then
-	AC_DEFINE(USE_LNLOCK,1,[Define to use a hard-link based approach for file locking.])
-	HAS_WORKING_FILE_LOCK=1
-    fi
+# check our homebrew hardlink-based locking (requires hardlinks)
+AC_CACHE_CHECK(
+   [whether link(2) is available for locking],
+   amanda_cv_lnlock_filelocking,
+   [
+	AC_TRY_LINK([
+#if HAVE_UNISTD_H
+# include <unistd.h>
+#endif
+	], [
+	return link("/tmp/foo", "/tmp/bar");
+	], [
+    amanda_cv_lnlock_filelocking="yes"
+	],[
+    amanda_cv_lnlock_filelocking="no"
+	])
+    ])
+if test "x$amanda_cv_lnlock_filelocking" = xyes; then
+    AC_DEFINE(WANT_AMFLOCK_LNLOCK,1,[Define to use link(2) to emulate file locking.])
+    WANT_AMFLOCK_LNLOCK="yes"
+    WORKING_FILE_LOCK="yes"
 fi
+AM_CONDITIONAL(WANT_AMFLOCK_LNLOCK, test x"$WANT_AMFLOCK_LNLOCK" = x"yes")
 
-if test -z "$HAS_WORKING_FILE_LOCK"; then
-    AC_MSG_WARN([*** No working file locking capability found!])
-    AC_MSG_WARN([*** Be VERY VERY careful.])
+if test x"$WORKING_FILE_LOCK" = "no"; then
+    # this shouldn't happen, and is *bad* if it does
+    AC_MSG_ERROR([*** No working file locking capability found!])
 fi
 
 dnl extra substitution parameters

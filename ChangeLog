@@ -1,3 +1,15 @@
+2007-06-28  Dustin J. Mitchell <dustin@zmanda.com>
+	* configure.in common-src/amflock-flock.c
+	  common-src/amflock-posix.c common-src/amanda.h
+	  common-src/amflock-lockf.c common-src/amflock-test.c
+	  common-src/amflock-lnlock.c common-src/amflock.c
+	  common-src/amflock.h common-src/Makefile.am:
+	  refactor file locking support into multiple implementations,
+	  only test for availability (not functionality) at configure
+	  time, and add a 'make check' test script.  Fixes a bug reported
+	  by Paul Crittenden.  Chris Hoogendyk, Jon LaBadie, and Jean-Louis
+	  Martineau helped track it down.
+
 2007-06-27  Dustin J. Mitchell <dustin@zmanda.com>
 	* autogen config/ax_create_stdint_h.m4i config/acinclude.m4i
 	  Makefile.am: use updated version of ax_create_stdint_h.m4
