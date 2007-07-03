@@ -41,8 +41,6 @@
 **                       blocking file locks as used by Amanda.
 **     USE_LNLOCK      - Home brew exclusive, blocking file lock.
 **     <none>          - No locking available.  User beware!
-** - "configure" compiles this with -DCONFIGURE_TEST to try and determine
-**   whether a particular type of locking works.
 */
 
 /* FIXME: This code has several limitations to be fixed:

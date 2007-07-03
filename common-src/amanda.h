@@ -286,9 +286,7 @@ struct iovec {
 #include <sys/resource.h>
 #include <sys/socket.h>
 
-#if !defined(CONFIGURE_TEST)
-#  include "amanda-int.h"
-#endif
+#include "amanda-int.h"
 
 #ifdef HAVE_ARPA_INET_H
 #include <arpa/inet.h>
@@ -1283,11 +1281,9 @@ extern int vfprintf(FILE *stream, const char *format, va_list ap);
 extern int vprintf(const char *format, va_list ap);
 #endif
 
-/* GNULIB include */
-#ifndef CONFIGURE_TEST
+/* gnulib includes (hence "" instead of <>) */
 #include "getaddrinfo.h"
 #include "inet_ntop.h"
-#endif
 
 #if !defined(S_ISCHR) && defined(_S_IFCHR) && defined(_S_IFMT)
 #define S_ISCHR(mode) (((mode) & _S_IFMT) == _S_IFCHR)
