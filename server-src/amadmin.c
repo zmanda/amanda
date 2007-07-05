@@ -1062,7 +1062,7 @@ balance(
 		printf("\n");
 		empty_day = 0;
 	    }
-	    printf(_("%-9.9s  %3d " OFF_T_FMT " " OFF_T_FMT " "),
+	    printf(_("%-9.9s  %3d %10"OFF_T_RFMT" %10"OFF_T_RFMT" "),
 		   seqdatestr(seq), sp[seq].disks,
 		   (OFF_T_FMT_TYPE)sp[seq].origsize,
 		   (OFF_T_FMT_TYPE)sp[seq].outsize);
@@ -1074,7 +1074,7 @@ balance(
     }
 
     if(sp[later].disks != 0) {
-	printf(_("later      %3d " OFF_T_FMT " " OFF_T_FMT " "),
+	printf(_("later      %3d %10"OFF_T_RFMT" %10"OFF_T_RFMT" "),
 	       sp[later].disks,
 	       (OFF_T_FMT_TYPE)sp[later].origsize,
 	       (OFF_T_FMT_TYPE)sp[later].outsize);
@@ -1084,7 +1084,7 @@ balance(
 		    (double)balanced));
     }
     printf("----------------------------------------------\n");
-    printf(_("TOTAL      %3d " OFF_T_FMT " " OFF_T_FMT " " OFF_T_FMT "\n"),
+    printf(_("TOTAL      %3d %10"OFF_T_RFMT" %10"OFF_T_RFMT" %9"OFF_T_RFMT"\n"),
 	   sp[total].disks,
 	   (OFF_T_FMT_TYPE)sp[total].origsize,
 	   (OFF_T_FMT_TYPE)sp[total].outsize,
@@ -1092,13 +1092,13 @@ balance(
     if (sp[balance].origsize != sp[total].origsize ||
         sp[balance].outsize != sp[total].outsize ||
 	balanced != total_balanced) {
-	printf(_("BALANCED       " OFF_T_FMT " " OFF_T_FMT " " OFF_T_FMT "\n"),
+	printf(_("BALANCED       %10"OFF_T_RFMT" %10"OFF_T_RFMT" %9"OFF_T_RFMT"\n"),
 	       (OFF_T_FMT_TYPE)sp[balance].origsize,
 	       (OFF_T_FMT_TYPE)sp[balance].outsize,
 	       (OFF_T_FMT_TYPE)balanced);
     }
     if (sp[distinct].disks != sp[total].disks) {
-	printf(_("DISTINCT   %3d " OFF_T_FMT " " OFF_T_FMT "\n"),
+	printf(_("DISTINCT   %3d %10"OFF_T_RFMT" %10"OFF_T_RFMT"\n"),
 	       sp[distinct].disks,
 	       (OFF_T_FMT_TYPE)sp[distinct].origsize,
 	       (OFF_T_FMT_TYPE)sp[distinct].outsize);

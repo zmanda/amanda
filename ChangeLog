@@ -1,3 +1,7 @@
+2007-07-05  Dustin J. Mitchell <dustin@zmanda.com>
+	* server-src/amadmin.c: correct misalignment of 'amadmin x balance'
+	  output, as reported by Stefan G. Weichinger <sgw@amanda.org>.
+
 2007-07-03  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/amanda.h common-src/amflock.c: remove unused 
 	  CONFIGURE_TEST conditionals
