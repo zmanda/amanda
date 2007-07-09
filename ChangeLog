@@ -1,3 +1,9 @@
+2007-07-09  Dustin J. Mitchell <dustin@zmanda.com>
+	Documentation patch as suggested by Chris Hoogendyk and Olivier
+	Nicole.
+	* man/xml-source/amanda.8.xml: add better documentation about the 
+	  -o command-line option for configuration override.
+
 2007-07-09  Jean-Louis Martineau <martineau@zmanda.com>
 	* restore-src/restore.c: Don't do superfluous fsf,
 				 improve error handling.
