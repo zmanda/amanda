@@ -1,3 +1,7 @@
+2007-07-09  Jean-Louis Martineau <martineau@zmanda.com>
+	* restore-src/restore.c: Don't do superfluous fsf,
+				 improve error handling.
+
 2007-07-05  Jean-Louis Martineau <martineau@zmanda.com>
 	Patch by Dustin J. Mitchell <dustin@zmanda.com>
         * server-src/amadmin.c: correct misalignment of 'amadmin x balance'
