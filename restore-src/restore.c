@@ -1552,9 +1552,7 @@ search_a_tape(
 		    send_message(prompt_out, flags, their_features,
 				 _("could not open %s: %s"),
 				 cur_tapedev, strerror(errno));
-		    error(_("could not open %s: %s"),
-			  cur_tapedev, strerror(errno));
-		    /*NOTREACHED*/
+		    break;
 		}
 	    /* if the file is not what we're looking for fsf to next one */
 	    }
@@ -1563,9 +1561,7 @@ search_a_tape(
 		    send_message(prompt_out, flags, their_features,
 				 _("Could not fsf device %s: %s"),
 				 cur_tapedev, strerror(errno));
-		    error(_("Could not fsf device %s: %s"),
-			  cur_tapedev, strerror(errno));
-		    /*NOTREACHED*/
+		    break;
 		}
 		filenum ++;
 	    }
@@ -1579,10 +1575,7 @@ search_a_tape(
 				     OFF_T_FMT ": %s"),
 				     cur_tapedev, (OFF_T_FMT_TYPE)fsf_by,
 				     strerror(errno));
-			error(_("Could not fsf device %s by " OFF_T_FMT ": %s"),
-			      cur_tapedev, (OFF_T_FMT_TYPE)fsf_by,
-			      strerror(errno));
-			/*NOTREACHED*/
+			break;
 		    }
 		    filenum = desired_tape->files[tapefile_idx];
 		}
@@ -1594,6 +1587,8 @@ search_a_tape(
 	if(isafile)
 	    break;
         *read_result = read_file_header(file, tapefd, isafile, flags);
+	if (file->type == F_UNKNOWN)
+	    break;
 
 	/* only restore a single dump, if piping to stdout */
 	if (!headers_equal(prev_rst_file, file, 1) &&
@@ -1602,29 +1597,11 @@ search_a_tape(
 	}
     } /* while we keep seeing headers */
 
-    if (!isafile) {
-	if (file->type == F_EMPTY) {
-	    aclose(tapefd);
-	    if((tapefd = tape_open(cur_tapedev, 0)) < 0) {
-		send_message(prompt_out, flags, their_features,
-			     _("could not open %s: %s"),
-			     cur_tapedev, strerror(errno));
-		error(_("could not open %s: %s"),
-		      cur_tapedev, strerror(errno));
-		/*NOTREACHED*/
-	    }
-	} else {
-	    if (tapefd_fsf(tapefd, (off_t)1) < 0) {
-		send_message(prompt_out, flags, their_features,
-			     _("could not fsf %s: %s"),
-			     cur_tapedev, strerror(errno));;
-		error(_("could not fsf %s: %s"),
-		      cur_tapedev, strerror(errno));
-		/*NOTREACHED*/
-	    }
-	}
+    if (isafile) {
+	close(tapefd);
+    } else {
+	tapefd_close(tapefd);
     }
-    tapefd_close(tapefd);
 
     /* spit out our accumulated list of dumps, if we're inventorying */
     if (logstream) {
@@ -1926,7 +1903,8 @@ search_tapes(
 	if (desired_tape) desired_tape = desired_tape->next;
 
 	/* only restore a single dump, if piping to stdout */
-	if (!headers_equal(&prev_rst_file, &file, 1) &&
+	if (file.type != F_UNKNOWN &&
+	    !headers_equal(&prev_rst_file, &file, 1) &&
 	    flags->pipe_to_fd == fileno(stdout))
 		break;
 
