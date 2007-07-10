@@ -87,6 +87,8 @@ cleancount=`cat $cleanfile`
 accesscount=`cat $accessfile`
 slot=`cat $slotfile`
 
+# define these functions early so that they can be overridden in changerfile.conf
+
 request_tty() {
 	if > /dev/tty; then
 		echo -n `_ 'Insert tape into slot %s and press return' "$1"` > /dev/tty
@@ -162,6 +164,16 @@ fi
 # adjust MT and MTX, if necessary
 test -n "${mt_binary}" && MT="${mt_binary}"
 test -n "${mtx_binary}" && MTX="${mtx_binary}"
+
+# check that MAILER is defined
+if test -z "$MAILER"; then
+    if test x"$request" = x"email" || test x"$request" = x"tty-email"; then
+	answer=`_ "<none> %s: Can't send email because MAILER is not defined" "$myname"`
+	echo `_ 'Exit ->'` $answer >> $logfile
+	echo $answer
+	exit 1
+    fi
+fi
 
 #
 

@@ -1,3 +1,12 @@
+2007-07-10  Dustin J. Mitchell <dustin@zmanda.com>
+	* configure.in: an empty 'MAILER' is no longer an error, just a
+	  warning
+	* changer-src/chg-manual.sh.in changer-src/chg-scsi-chio.c
+	  changer-src/chg-scsi.c server-src/amverify.sh.in
+	  server-src/getconf.c common-src/genversion.c: conditionalize
+	  references to MAILER, to handle the situation when it is not
+	  set.
+
 2007-07-09  Dustin J. Mitchell <dustin@zmanda.com>
 	Documentation patch as suggested by Chris Hoogendyk and Olivier
 	Nicole.

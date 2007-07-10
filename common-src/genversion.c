@@ -299,7 +299,11 @@ main(
     prundefvar(" LPRCMD");
 #endif
 
+#ifdef MAILER
     prvar("MAILER", MAILER);
+#else
+    prundefvar(" MAILER");
+#endif
 
 #ifdef GNUTAR_LISTED_INCREMENTAL_DIR
     prvar("listed_incr_dir", GNUTAR_LISTED_INCREMENTAL_DIR);

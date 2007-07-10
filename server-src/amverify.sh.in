@@ -96,7 +96,13 @@ sendreport() {
 
 		[ -s $REPORT ] \
 			&& cat $REPORT
-		) | $MAIL -s "$ORG AMANDA VERIFY REPORT FOR$TAPELIST" $REPORTTO
+		) | (
+		    if test -n "$MAIL"; then
+			$MAIL -s "$ORG AMANDA VERIFY REPORT FOR$TAPELIST" $REPORTTO
+		    else
+			cat >&2
+		    fi
+		)
 	fi
 }
 

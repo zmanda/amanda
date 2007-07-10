@@ -65,7 +65,9 @@ static struct build_info {
     { "mandir",				mandir },
     { "AMANDA_TMPDIR",			AMANDA_TMPDIR },
     { "CONFIG_DIR",			CONFIG_DIR },
+#ifdef MAILER
     { "MAILER",				MAILER },
+#endif
     { "DEFAULT_SERVER",			DEFAULT_SERVER },
     { "DEFAULT_CONFIG",			DEFAULT_CONFIG },
     { "DEFAULT_TAPE_SERVER",		DEFAULT_TAPE_SERVER },

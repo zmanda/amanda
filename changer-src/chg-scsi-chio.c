@@ -646,6 +646,7 @@ clean_tape(
       char *mail_cmd;
       FILE *mailf;
       int mail_pipe_opened = 1;
+#ifdef MAILER
       if(getconf_seen(CNF_MAILTO) && strlen(getconf_str(CNF_MAILTO)) > 0 && 
          validate_mailto(getconf_str(CNF_MAILTO))) {
       	 mail_cmd = vstralloc(MAILER,
@@ -658,13 +659,16 @@ clean_tape(
               	mail_cmd, strerror(errno));
         	/*NOTREACHED*/
       	}
-      }
-      else{
+      } else {
 	 mail_pipe_opened = 0;
 	 mailf = stderr;
          fprintf(mailf, _("\nNo mail recipient specified, output redirected to stderr"));
-	}
-	
+      }
+#else
+      mail_pipe_opened = 0;
+      mailf = stderr;
+      fprintf(mailf, _("\nNo mailer specified; output redirected to stderr"));
+#endif
       fprintf(mailf, _("\nThe usage count of your cleaning tape in slot %d"),
              cleancart);
       fprintf(mailf,_("\nis more than %d. (cleanmax)"),maxclean);
