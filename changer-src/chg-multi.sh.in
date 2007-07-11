@@ -325,7 +325,7 @@ then
 		echo $answer
 		exit 2
 	    fi
-	    echo `_ '     -> offline'` "$device"` >> $logfile
+	    echo `_ '     -> offline'` "$device" >> $logfile
 	    $MT $MTF $device offline >> $logfile 2>&1
 	    if [ $? -ne 0 ]; then
 		answer=`_ '%s %s: %s: unable to change to slot %s' "$newslot" "$pname" "$device" "$curslot"`

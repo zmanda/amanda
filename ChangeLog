@@ -1,3 +1,7 @@
+2007-07-11  Jean-Louis Martineau <martineau@zmanda.com>
+	Patch by Paul Bijnens
+	* changer-src/chg-multi.sh.in: Typo.
+
 2007-07-09  Jean-Louis Martineau <martineau@zmanda.com>
 	* restore-src/restore.c: Don't do superfluous fsf,
 				 improve error handling.
