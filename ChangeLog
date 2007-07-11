@@ -1,3 +1,7 @@
+2007-07-11  Jean-Louis Martineau <martineau@zmanda.com>
+	Patch by Paul Bijnens
+	* changer-src/chg-multi.sh.in: Typo.
+
 2007-07-10  Dustin J. Mitchell <dustin@zmanda.com>
 	* configure.in: an empty 'MAILER' is no longer an error, just a
 	  warning
