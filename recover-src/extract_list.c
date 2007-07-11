@@ -1421,6 +1421,8 @@ okay_to_continue(
 	    ret = 0;
 	    break;
 	}
+	dbprintf("User prompt: '%s'; response: '%s'\n", prompt, line);
+
 	s = line;
 	while ((ch = *s++) != '\0' && isspace(ch)) {
 	    (void)ch;	/* Quiet empty loop compiler warning */
@@ -2029,6 +2031,7 @@ writer_intermediary(
 	if(sscanf(amidxtaped_line, "FEEDME %132s\n", desired_tape) == 1) {
 	    int done;
 	    printf(_("Load tape %s now\n"), desired_tape);
+	    dbprintf(_("Requesting tape %s from user\n"), desired_tape);
 	    done = okay_to_continue(am_has_feature(indexsrv_features,
 						   fe_amrecover_feedme_tape),
 				    0, 0);
@@ -2180,6 +2183,7 @@ extract_files(void)
     if (samba_extract_method == SAMBA_SMBCLIENT)
       printf(_("(unless it is a Samba backup, that will go through to the SMB server)\n"));
 #endif
+    dbprintf(_("Checking with user before restoring into directory %s\n"), cwd);
     if (!okay_to_continue(0,0,0))
 	return;
     printf("\n");
@@ -2207,6 +2211,7 @@ extract_files(void)
 		   tape_device_name, tape_server_name);
 	    tlist = unmarshal_tapelist_str(elist->tape); 
 	    printf(_("Load tape %s now\n"), tlist->label);
+	    dbprintf(_("Requesting tape %s from user\n"), tlist->label);
 	    free_tapelist(tlist);
 	    otc = okay_to_continue(1,1,0);
 	    if (otc == 0)

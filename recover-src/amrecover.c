@@ -607,6 +607,7 @@ main(
 	if (lineread[0] != '\0') 
 	{
 	    add_history(lineread);
+	    dbprintf(_("user command: '%s'\n"), lineread);
 	    process_line(lineread);	/* act on line's content */
 	}
 	amfree(lineread);

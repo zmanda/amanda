@@ -1,3 +1,7 @@
+2007-07-11  Dustin J. Mitchell <dustin@zmanda.com>
+	* recover-src/amrecover.c recover-src/extract_list.c: Add detailed
+	  logging of the amrecover user conversation.
+
 2007-07-11  Jean-Louis Martineau <martineau@zmanda.com>
 	Patch by Paul Bijnens
 	* changer-src/chg-multi.sh.in: Typo.
