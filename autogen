@@ -7,14 +7,17 @@ cd `dirname $0`
 
 touch config/config.h.in
 
-if test x`ls -1t acinclude.m4 2>/dev/null \
-	    config/gettext.m4i config/gnulib.m4i config/acinclude.m4i config/libtool.m4i |
-	  sed 1q` != x"acinclude.m4"; then
+#if test x`ls -1t acinclude.m4 2>/dev/null \
+#	    config/gettext.m4i config/gnulib.m4i config/acinclude.m4i config/libtool.m4i |
+#	  sed 1q` != x"acinclude.m4"; then
     rm -f acinclude.m4
     # keep libtool.m4i first here, as it has a "serial number" comment that it wants
     # first in the file
-    cat config/libtool.m4i config/gettext.m4i config/gnulib.m4i config/acinclude.m4i config/ax_create_stdint_h.m4i config/docbook-dtd.m4i config/xsltproc.m4i config/docbook-xslt-min.m4i config/docbook-xslt.m4i > acinclude.m4
-fi
+    cat config/libtool.m4i config/gettext.m4i config/gnulib.m4i config/acinclude.m4i \
+	config/ax_create_stdint_h.m4i config/docbook-dtd.m4i config/xsltproc.m4i \
+	config/docbook-xslt-min.m4i config/docbook-xslt.m4i config/ax_compare_version.m4i \
+	> acinclude.m4 
+#fi
 
 # Regenerate aclocal.m4
 aclocal --force

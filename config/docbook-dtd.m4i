@@ -24,7 +24,7 @@
 #
 # LAST MODIFICATION
 #
-#   2007-04-17
+#   2007-06-28
 #
 # AUTHOR
 #
@@ -56,8 +56,6 @@
 #   Contact information: Zmanda Inc., 505 N Mathlida Ave, Suite 120
 #   Sunnyvale, CA 94085, USA, or: http://www.zmanda.com
 
-
-
 AC_DEFUN([AC_CHECK_DOCBOOK_DTD],
 [
     AC_REQUIRE([AC_PROG_XSLTPROC])
@@ -66,6 +64,9 @@ AC_DEFUN([AC_CHECK_DOCBOOK_DTD],
     dnl used with multiple versions
     define([_VERS], $1)
     ifelse(_VERS, [], [define([_VERS], [current])])
+
+    dnl define variable names ending in _VERS which will actually have the
+    dnl version number as a suffix
     define([ac_cv_docbook_dtd_VERS], patsubst([ac_cv_docbook_dtd_]_VERS, [\.], [_]))
     define([HAVE_DOCBOOK_DTD_VERS], patsubst([HAVE_DOCBOOK_DTD_]_VERS, [\.], [_]))
 
@@ -81,10 +82,15 @@ AC_DEFUN([AC_CHECK_DOCBOOK_DTD],
 </book>
 EOF
 	    echo "Trying '$XSLTPROC $MY_XSLTPROC_FLAGS conftest.xml'" >&AS_MESSAGE_LOG_FD
+	    echo "conftest.xml:" >&AS_MESSAGE_LOG_FD
+	    echo "====" >&AS_MESSAGE_LOG_FD
+	    cat conftest.xml >&AS_MESSAGE_LOG_FD
+	    echo "====" >&AS_MESSAGE_LOG_FD
+
 	    $XSLTPROC $MY_XSLTPROC_FLAGS conftest.xml >conftest.out 2>&1
 	    if test "$?" = 0; then
 		# failing to load the DTD is just a warning, so check for it in the output.
-		if grep 'warning: failed to load external entity' conftest_out >/dev/null 2>&1; then
+		if grep 'warning: failed to load external entity' conftest.out >/dev/null 2>&1; then
 		    : # no good..
 		else
 		    ac_cv_docbook_dtd_VERS=yes
@@ -97,6 +103,10 @@ EOF
     ])
 
     HAVE_DOCBOOK_DTD_VERS="$ac_cv_docbook_dtd_VERS"
-    HAVE_DOCBOOK_DTD=HAVE_DOCBOOK_DTD_VERS
+    HAVE_DOCBOOK_DTD="$HAVE_DOCBOOK_DTD_VERS"
+
+    dnl clean up m4 namespace
     undefine([_VERS])
+    undefine([ac_cv_docbook_dtd_VERS])
+    undefine([HAVE_DOCBOOK_DTD_VERS])
 ])

@@ -1,3 +1,9 @@
+2007-07-12  Dustin J. Mitchell <dustin@zmanda.com>
+	* autogen config/Makefile.am config/ax_compare_version.m4i
+	  Makefile.am: new m4 file
+	* config/docbook-xslt-min.m4i config/docbook-dtd.m4i
+	  config/docbook-xslt.m4i: major bug fixing
+
 2007-07-11  Dustin J. Mitchell <dustin@zmanda.com>
 	* recover-src/amrecover.c recover-src/extract_list.c: Add detailed
 	  logging of the amrecover user conversation.

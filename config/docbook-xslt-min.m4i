@@ -19,7 +19,7 @@
 #
 # LAST MODIFICATION
 #
-#   2007-04-20
+#   2007-06-28
 #
 # AUTHOR
 #
@@ -94,45 +94,15 @@ EOF
     if test x"$DOCBOOK_XSLT_CURRENT_VERSION" = x"no"; then
 	AC_MSG_RESULT([no])
     else
-	# compare versions (current on left, minimum on right)
-
-	# for each pattern, get the component number, or default to zero if not found
-	changequote(,)
-	MAJPAT='/^[0-9]*\./{               s/^\([0-9]*\)\..*/\1/;q};                 s/.*/0/; q'
-	MINPAT='/^[0-9]*\.[0-9]*\./{       s/^[0-9]*\.\([0-9]*\)\..*/\1/;q};         s/.*/0/; q'
-	REVPAT='/^[0-9]*\.[0-9]*\.[0-9]*/{ s/^[0-9]*\.[0-9]*\.\([0-9]*\).*/\1/;q};   s/.*/0/; q'
-	changequote([,])
-
-	# major version
-	left=`echo "$DOCBOOK_XSLT_CURRENT_VERSION"|sed "$MAJPAT"`
-	right=`echo "$1"|sed "$MAJPAT"`
-	if test $left -lt $right; then
+	AX_COMPARE_VERSION([$DOCBOOK_XSLT_CURRENT_VERSION], [lt], [$1], [
+	    # version is less than required, so mark it as "no"
 	    DOCBOOK_XSLT_CURRENT_VERSION=no
-	else
-	    # minor version
-	    left=`echo "$DOCBOOK_XSLT_CURRENT_VERSION"|sed "$MINPAT"`
-	    right=`echo "$1"|sed "$MINPAT"`
-	    if test $left -lt $right; then
-		DOCBOOK_XSLT_CURRENT_VERSION=no
-	    else
-		# revision
-		left=`echo "$DOCBOOK_XSLT_CURRENT_VERSION"|sed "$REVPAT"`
-		right=`echo "$1"|sed "$REVPAT"`
-		if test $left -lt $right; then
-		    DOCBOOK_XSLT_CURRENT_VERSION=no
-		fi
-	    fi
-	fi
-	MAJPAT=''
-	MINPAT=''
-	REVPAT=''
-	left=''
-	right=''
+	])
 
 	if test x"$DOCBOOK_XSLT_CURRENT_VERSION" = x"no"; then
 	    AC_MSG_RESULT([no])
 	else
-	    AC_MSG_RESULT([yes])
+	    AC_MSG_RESULT([yes ($DOCBOOK_XSLT_CURRENT_VERSION)])
 	fi
     fi
 ])
