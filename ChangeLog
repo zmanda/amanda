@@ -1,3 +1,6 @@
+2007-07-13  Jean-Louis Martineau <martineau@zmanda.com>
+	* changer-src/chg-lib.sh.in: Remoce duplicate amdd, add ammt.
+
 2007-07-12  Dustin J. Mitchell <dustin@zmanda.com>
 	* autogen config/Makefile.am config/ax_compare_version.m4i
 	  Makefile.am: new m4 file
