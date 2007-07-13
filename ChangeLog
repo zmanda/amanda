@@ -1,3 +1,6 @@
+2007-07-13  Dustin J. Mitchell <dustin@zmanda.com>
+	* configure.in: add /usr/sfw/bin to SYSPATH for Solaris 10
+
 2007-07-13  Jean-Louis Martineau <martineau@zmanda.com>
 	* changer-src/chg-lib.sh.in: Remoce duplicate amdd, add ammt.
 

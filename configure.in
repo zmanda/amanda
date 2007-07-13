@@ -57,7 +57,7 @@ AC_SUBST(VERSION_SUFFIX)
 
 dnl runtime and compile time paths
 dnl
-SYSPATH="/bin:/usr/bin:/sbin:/usr/sbin:/opt/SUNWspro/bin:/usr/ucb:/usr/bsd:/etc:/usr/etc"
+SYSPATH="/bin:/usr/bin:/sbin:/usr/sbin:/opt/SUNWspro/bin:/usr/ucb:/usr/sfw/bin:/usr/bsd:/etc:/usr/etc"
 LOCPATH=`(
     test "x$prefix" = xNONE && prefix=$ac_default_prefix
     test "x$exec_prefix" = xNONE && exec_prefix=${prefix}
