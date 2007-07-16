@@ -1,3 +1,7 @@
+2007-07-16  Dustin J. Mitchell <dustin@zmanda.com>
+	* changer-src/chg-zd-mtx.sh.in: check for validity of 'mt' and 'mtx'
+	  binaries early, and produce appropriate error messages
+
 2007-07-13  Dustin J. Mitchell <dustin@zmanda.com>
 	* configure.in: add /usr/sfw/bin to SYSPATH for Solaris 10
 

@@ -793,6 +793,49 @@ poll_drive_ready=${poll_drive_ready:-'3'}		# default: three seconds
 initial_poll_delay=${initial_poll_delay:-'0'}		# default: zero zeconds
 max_drive_wait=${max_drive_wait:-'120'}			# default: two minutes
 
+# check MT and MTX for sanity
+if test "${MT:0:1}" = "/"; then
+    if ! test -f "${MT}"; then
+	Exit 2 \
+	    `_ '<none>'` \
+	    `_ "mt binary at '%s' not found" "$MT"`
+    fi
+    if ! test -x "${MT}"; then
+	Exit 2 \
+	    `_ '<none>'` \
+	    `_ "mt binary at '%s' is not executable" "$MT"`
+    fi
+else
+    # try running it to see if the shell can find it
+    "$MT" >/dev/null 2>/dev/null
+    if test $? -eq 127 -o $? -eq 126; then
+	Exit 2 \
+	    `_ '<none>'` \
+	    `_ "Could not run mt binary at '%s'" "$MT"`
+    fi
+fi
+
+if test "${MTX:0:1}" = "/"; then
+    if ! test -f "${MTX}"; then
+	Exit 2 \
+	    `_ '<none>'` \
+	    `_ "mtx binary at '%s' not found" "$MTX"`
+    fi
+    if ! test -x "${MTX}"; then
+	Exit 2 \
+	    `_ '<none>'` \
+	    `_ "mtx binary at '%s' is not executable" "$MTX"`
+    fi
+else
+    # try running it to see if the shell can find it
+    "$MTX" >/dev/null 2>/dev/null
+    if test $? -eq 127 -o $? -eq 126; then
+	Exit 2 \
+	    `_ '<none>'` \
+	    `_ "Could not run mtx binary at '%s'" "$MTX"`
+    fi
+fi
+
 get_slot_list
 
 Log `_ "Config info:"`
