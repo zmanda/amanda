@@ -640,11 +640,17 @@ if [ -z "$changerfile" ]; then
 	     "changerfile must be specified in amanda.conf"
 fi
 
-tape=`amgetconf tapedev 2>/dev/null`
-if [ -z "$tape" ]; then
+rawtape=`amgetconf tapedev 2>/dev/null`
+if [ -z "$rawtape" ]; then
 	Exit 2 \
 	     `_ '<none>'` \
 	     "tapedev may not be empty"
+fi
+tape=`tape_device_filename "$rawtape"`
+if [ -z "$tape" ]; then
+        Exit 2 \
+             ` _ '<none>'` \
+             "tapedev $rawtape is not a tape device."
 elif [ $tape = "/dev/null" -o `expr "$tape" : 'null:'` -eq 5 ]; then
 	Exit 2 \
 	     `_ '<none>'` \

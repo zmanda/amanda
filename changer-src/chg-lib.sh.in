@@ -67,3 +67,11 @@ else
         "${sbindir}/amdd" "${@}"
     }
 fi
+
+# This function strips the tape: from the front of device names.
+# Capture its output with ``.
+tape_device_filename() {
+    # Easy (?) to express this in Perl.
+    perl -e '$ARGV[0] =~ /^(?:([^:]+):)?(.*)$/;
+             print $2 if ($1 || "tape") eq "tape"' "$1"
+}

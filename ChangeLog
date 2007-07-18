@@ -1,3 +1,7 @@
+2007-07-18  Ian Turner <ian@zmanda.com> (merged by dustin@zmanda.com)
+	* changer-src/chg-lib.sh.in, changer-src/chg-zd-mtx.sh.in: Correctly
+	  accept the use of tape:/dev/nst0 notation in chg-zd-mtx.
+
 2007-07-18  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/reporter.c: fix reporting of STRANGE messages
 
