@@ -2435,7 +2435,7 @@ handle_strange(void)
     }
     addline(&strangedet,"\\--------");
 
-    str = vstrallocf("STRANGE %s", strangestr);
+    str = vstrallocf("STRANGE %s", strangestr? strangestr : _("(see below)"));
     addtoX_summary(&first_strange, &last_strange,
 		   repdata->disk->host->hostname, qdisk, repdata->level, str);
     exit_status |= STATUS_STRANGE;
