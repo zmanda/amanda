@@ -1,3 +1,7 @@
+2007-07-20  Jean-Louis Martineau <martineau@zmanda.com>
+        Patch by Dimitri Gorokhovik
+        * changer-src/chg-multi.sh.in: Typo.
+
 2007-07-18  Ian Turner <ian@zmanda.com> (merged by dustin@zmanda.com)
 	* changer-src/chg-lib.sh.in, changer-src/chg-zd-mtx.sh.in: Correctly
 	  accept the use of tape:/dev/nst0 notation in chg-zd-mtx.

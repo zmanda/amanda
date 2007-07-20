@@ -381,7 +381,7 @@ if [ $loadslot -eq 1 ]; then	# load the tape from the slot
 	# try to rewind the device
 	device=`awk '$1 == "slot" && $2 == '$curslot' {print $3}' $ourconf 2>/dev/null`
 	if [ "$device" = "" ]; then
-		answer=`_ "%s %s: slot %s device not specified in %s' "$curslot" "$pname" "$curslot" "$ourconf"`
+		answer=`_ '%s %s: slot %s device not specified in %s' "$curslot" "$pname" "$curslot" "$ourconf"`
 		echo `_ 'Exit ->'` $answer >> $logfile
 		echo $answer
 		exit 2
