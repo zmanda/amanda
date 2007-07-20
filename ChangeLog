@@ -1,3 +1,7 @@
+2007-07-20  Jean-Louis Martineau <martineau@zmanda.com>
+	Patch by Dimitri Gorokhovik
+	* changer-src/chg-multi.sh.in: Typo.
+
 2007-07-13  Jean-Louis Martineau <martineau@zmanda.com>
 	* changer-src/chg-lib.sh.in: Remove duplicate amdd, add ammt.
 
