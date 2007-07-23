@@ -2512,8 +2512,13 @@ SetColumDataFromString(
 		if (Width > ColumnData[cn].Precision)
 		    ColumnData[cn].Precision= Width;
 	}
-	else if (Width < ColumnData[cn].Precision)
-	    ColumnData[cn].Precision = Width;
+	else {
+	    if (Width < 0) {
+		ColumnData[cn].MaxWidth= 1;
+	    }
+	    else if (Width < ColumnData[cn].Precision)
+		ColumnData[cn].Precision = Width;
+	}
 	s= strchr(eon+1, ',');
 	if (s != NULL)
 	    s++;

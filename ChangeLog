@@ -1,3 +1,7 @@
+2007-07-23  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c: Set MaxWidth for numerical value
+	* server-src/reporter.c: Calculate the size if a numerical value.
+
 2007-07-20  Jean-Louis Martineau <martineau@zmanda.com>
         Patch by Dimitri Gorokhovik
         * changer-src/chg-multi.sh.in: Typo.

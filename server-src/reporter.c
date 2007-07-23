@@ -1216,6 +1216,7 @@ CheckFloatMax(
     if (cd->MaxWidth) {
     	char testBuf[200];
 	int l;
+
 	snprintf(testBuf, SIZEOF(testBuf),
 	  cd->Format, cd->Width, cd->Precision, d);
 	l = (int)strlen(testBuf);
@@ -1248,6 +1249,15 @@ CalcMaxWidth(void)
     double f;
     repdata_t *repdata;
     char *qdevname;
+    int i, l;
+
+    for (i=0;ColumnData[i].Name != NULL; i++) {
+	if (ColumnData[i].MaxWidth) {
+	    l = (int)strlen(ColumnData[i].Title);
+	    if (ColumnData[i].Width < l)
+		ColumnData[i].Width= l;
+	}
+    }
 
     for(dp = sortq.head; dp != NULL; dp = dp->next) {
       if(dp->todo) {
@@ -1272,7 +1282,7 @@ CalcMaxWidth(void)
 		    f = 0.0;
 		else 
 		    f = repdata->dumper.origsize;
-		CheckStringMax(&ColumnData[Disk], 
+		CheckStringMax(&ColumnData[Compress], 
 			sDivZero(pct(repdata->dumper.outsize), f, Compress));
 
 		if(!amflush_run)
