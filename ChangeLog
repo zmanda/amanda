@@ -1,3 +1,21 @@
+2007-07-24  Dustin J. Mitchell <dustin@zmanda.com>
+	* changer-src/chg-lib.sh.in common-src/amanda-sh-lib.sh.in
+	  configure.in common-src/Makefile.am: new general-purpose
+	  shell-script library
+	* configure.in: check for prog 'gettext'
+	* changer-src/chg-null.sh.in
+	  changer-src/chg-manual.sh.in changer-src/chg-disk.sh.in
+	  changer-src/chg-juke.sh.in changer-src/chg-rait.sh.in
+	  changer-src/chg-chs.sh.in changer-src/chg-mcutil.sh.in
+	  amplot/amplot.sh.in client-src/patch-system.sh.in
+	  server-src/amcheckdb.sh.in server-src/amverifyrun.sh.in
+	  server-src/amrmtape.sh.in server-src/amverify.sh.in
+	  server-src/amfreetapes.sh.in server-src/amcleanup.sh.in
+	  server-src/amdump.sh.in common-src/amcrypt-ossl-asym.sh.in
+	  common-src/amcrypt.sh.in common-src/amaespipe.sh.in
+	  common-src/amcrypt-ossl.sh.in: use new library to function
+	  correctly even when gettext is missing.
+
 2007-07-23  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.c: Set MaxWidth for numerical value
 	* server-src/reporter.c: Calculate the size if a numerical value.

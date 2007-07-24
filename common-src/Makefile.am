@@ -200,6 +200,11 @@ noinst_PROGRAMS = $(TESTS)
 amflock_test_SOURCES = amflock-test.c
 amflock_test_LDADD = libamanda.la
 
+# shell library
+
+amlibexecdir=$(libexecdir)/amanda
+amlibexec_SCRIPTS = amanda-sh-lib.sh
+
 # installation
 
 install-exec-hook:

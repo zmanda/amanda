@@ -19,19 +19,11 @@
 # and changerdev, and deal with the possibility that there are several 
 # jukeboxes and several drives in each jukebox involved.
 
-#+
-# Function to:
-#    Simplify gettext usage by allowing printf format
-#    strings for translators, use _() identifier for
-#    xgettext extraction similar to "C" usage and
-#    collapsing "printf `gettext fmt` ...", which is
-#    used everywhere, into one function.
-#-
-_() {
-	fmt=`gettext -d amanda "$1"`
-	shift
-	printf "$fmt" $*
-}
+prefix="@prefix@"
+exec_prefix="@exec_prefix@"
+sbindir="@sbindir@"
+libexecdir="@libexecdir@"
+. "${libexecdir}/amanda/amanda-sh-lib.sh"
 
 
 #
@@ -49,10 +41,6 @@ set -x
 #
 # the usual config fun
 #
-prefix=@prefix@
-exec_prefix=@exec_prefix@
-sbindir=@sbindir@
-libexecdir=@libexecdir@
 MT=ammt
 
 USE_VERSION_SUFFIXES="@USE_VERSION_SUFFIXES@"
@@ -74,7 +62,8 @@ then
     setup juke
 fi
 
-PATH=$sbindir:$libexecdir:$JUKE_DIR/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/ucb
+# add sbin, ucb, and the JUKE_DIR to PATH
+PATH="$PATH:$JUKE_DIR/bin:/usr/sbin:/sbin:/usr/ucb"
 export PATH JUKE_DIR
 
 build_drivelists() {

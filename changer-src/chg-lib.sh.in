@@ -17,34 +17,15 @@ MTF=@MT_FILE_FLAG@
 # No user-level customization should be required beyond this point.
 ################################################################################
 
-####
-# Set up paths, including PATH for finding amanda executables
-
-PATH="$PATH:@sbindir@:@libexecdir@"
 prefix="@prefix@"
 exec_prefix="@exec_prefix@"
 sbindir="@sbindir@"
 libexecdir="@libexecdir@"
-
-####
-# Gettext
-
-#+
-# Function to:
-#    Simplify gettext usage by allowing printf format
-#    strings for translators, use _() identifier for
-#    xgettext extraction similar to "C" usage and
-#    collapsing "printf `gettext fmt` ...", which is
-#    used everywhere, into one function.
-#-
-_() {
-	fmt=`gettext -d amanda "$1"`
-	shift
-	printf "$fmt" $*
-}
+. "${libexecdir}/amanda/amanda-sh-lib.sh"
 
 ####
 # Eponymous functions to access various amanda apps
+# TODO: move to amanda-sh-lib.sh
 
 if test "@USE_VERSION_SUFFIXES@" = "yes"; then
     amgetconf() {

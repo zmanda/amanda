@@ -1591,6 +1591,7 @@ AC_DEFINE_UNQUOTED(MT_FILE_FLAG, "$MT_FILE_FLAG",[Defined to the switch to be us
 AX_CREATE_STDINT_H(common-src/amanda-int.h)
 
 dnl Check for programs.
+AC_PATH_PROG(GETTEXT,gettext,,$LOCSYSPATH)
 AC_PATH_PROGS(AR,ar,,$LOCSYSPATH)
 
 AC_PROG_AWK
@@ -3372,6 +3373,7 @@ AC_CONFIG_FILES([							\
 	dumper-src/Makefile						\
 									\
 	common-src/versuff.c		common-src/Makefile		\
+	common-src/amanda-sh-lib.sh						\
 									\
 	example/amanda.conf		example/Makefile		\
 	example/chg-mcutil.conf		example/amanda-client.conf	\

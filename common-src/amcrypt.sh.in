@@ -6,32 +6,21 @@
 # to enable gpg-encrypted dumps via aespipe
 # also worked by Matthieu Lochegnies for server-side encryption
 
-prefix=@prefix@
-exec_prefix=@exec_prefix@
-sbindir=@sbindir@
-AMANDA_HOME=~@CLIENT_LOGIN@
+prefix="@prefix@"
+exec_prefix="@exec_prefix@"
+sbindir="@sbindir@"
+libexecdir="@libexecdir@"
+. "${libexecdir}/amanda/amanda-sh-lib.sh"
 
-AM_AESPIPE=@sbindir@/amaespipe
-AM_PASSPHRASE=$AMANDA_HOME/.am_passphrase
-PATH=/usr/bin:/usr/local/bin:/sbin:/usr/sbin:/opt/csw/bin
+# add sbin and ucb dirs, as well as csw (blastwave)
+PATH="$PATH:/usr/sbin:/sbin:/usr/ucb:/opt/csw/bin"
 export PATH
 
+AMANDA_HOME=~@CLIENT_LOGIN@
+AM_AESPIPE=@sbindir@/amaespipe
+AM_PASSPHRASE=$AMANDA_HOME/.am_passphrase
+
 AESPIPE=`which aespipe`
-
-#+
-# Function to:
-#    Simplify gettext usage by allowing printf format
-#    strings for translators, use _() identifier for
-#    xgettext extraction similar to "C" usage and
-#    collapsing "printf `gettext fmt` ...", which is
-#    used everywhere, into one function.
-#-
-_() {
-	fmt=`gettext -d amanda "$1"`
-	shift
-	printf "$fmt" $*
-}
-
 
 if [ $? -ne 0 ] ; then
 	echo `_ '%s: %s was not found in %s' "$0" "aespipe" "$PATH"` >&2

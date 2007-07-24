@@ -3,32 +3,19 @@
 # ICEM internal :-)
 #
 
-prefix=@prefix@
-exec_prefix=@exec_prefix@
-sbindir=@sbindir@
-libexecdir=@libexecdir@
+prefix="@prefix@"
+exec_prefix="@exec_prefix@"
+sbindir="@sbindir@"
+libexecdir="@libexecdir@"
+. "${libexecdir}/amanda/amanda-sh-lib.sh"
 
 ConfigDir=@CONFIG_DIR@
 
-PATH=$sbindir:$libexecdir:/usr/bin:/bin:/usr/sbin:/sbin:/usr/ucb
+# add sbin and ucb dirs
+PATH="$PATH:/usr/sbin:/sbin:/usr/ucb"
 export PATH
 
 Program=`basename $0`
-
-#+
-# Function to:
-#    Simplify gettext usage by allowing printf format
-#    strings for translators, use _() identifier for
-#    xgettext extraction similar to "C" usage and
-#    collapsing "printf `gettext fmt` ...", which is
-#    used everywhere, into one function.
-#-
-function _() {
-	fmt=`gettext -d amanda "$1"`
-	shift
-	printf "$fmt" $*
-}
-
 
 log () {
 	echo 1>&2 "$@"

@@ -6,7 +6,6 @@
 # 2 Fatal Error
 #
 
-# try to hit all the possibilities here
 prefix=@prefix@
 exec_prefix=@exec_prefix@
 libexecdir=@libexecdir@

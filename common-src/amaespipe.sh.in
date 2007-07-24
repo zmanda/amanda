@@ -19,6 +19,15 @@
 # Sunnyvale, CA 94085, USA, or: http://www.zmanda.com
 #
 
+prefix="@prefix@"
+exec_prefix="@exec_prefix@"
+sbindir="@sbindir@"
+libexecdir="@libexecdir@"
+. "${libexecdir}/amanda/amanda-sh-lib.sh"
+
+# add sbin and ucb dirs
+PATH="$PATH:/usr/sbin:/sbin:/usr/ucb"
+export PATH
 
 # wrapper script to use aespipe
 # based on bz2aespipe distributed by aespipe from 
@@ -40,24 +49,6 @@ WAITSECONDS=1
 AMANDA_HOME=~@CLIENT_LOGIN@
 GPGKEY="$AMANDA_HOME/.gnupg/am_key.gpg"
 FDNUMBER=3
-
-PATH=/usr/bin:/usr/local/bin:/sbin:/usr/sbin
-export PATH
-
-#+
-# Function to:
-#    Simplify gettext usage by allowing printf format
-#    strings for translators, use _() identifier for
-#    xgettext extraction similar to "C" usage and
-#    collapsing "printf `gettext fmt` ...", which is
-#    used everywhere, into one function.
-#-
-_() {
-	fmt=`gettext -d amanda "$1"`
-	shift
-	printf "$fmt" $*
-}
-
 
 if test x$1 = x-d ; then
     # decrypt

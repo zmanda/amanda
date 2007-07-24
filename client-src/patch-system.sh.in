@@ -6,22 +6,9 @@
 
 prefix="@prefix@"
 exec_prefix="@exec_prefix@"
+sbindir="@sbindir@"
 libexecdir="@libexecdir@"
-
-#+
-# Function to:
-#    Simplify gettext usage by allowing printf format
-#    strings for translators, use _() identifier for
-#    xgettext extraction similar to "C" usage and
-#    collapsing "printf `gettext fmt` ...", which is
-#    used everywhere, into one function.
-#-
-function _() {
-	fmt=`gettext -d amanda "$1"`
-	shift
-	printf "$fmt" $*
-}
-
+. "${libexecdir}/amanda/amanda-sh-lib.sh"
 
 USE_VERSION_SUFFIXES="@USE_VERSION_SUFFIXES@"
 if test "$USE_VERSION_SUFFIXES" = "yes"; then
