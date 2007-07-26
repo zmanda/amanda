@@ -1,3 +1,8 @@
+2007-07-26  Ian Turner <ian@zmanda.com>
+	* restore-src/restore.c: If tpchanger is not defined, then (duh)
+	  don't use the changer. This patch by Jean-Louis Martineau 
+	  <martineau@zmanda.com>.
+
 2007-07-24  Dustin J. Mitchell <dustin@zmanda.com>
 	* changer-src/chg-lib.sh.in common-src/amanda-sh-lib.sh.in
 	  configure.in common-src/Makefile.am: new general-purpose

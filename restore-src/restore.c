@@ -1660,7 +1660,6 @@ search_tapes(
     rst_flags_t *	flags,
     am_feature_t *	their_features)
 {
-    int have_changer = 1;
     int slot_num = -1;
     int slots = -1;
     FILE *logstream = NULL;
@@ -1710,7 +1709,10 @@ search_tapes(
     }
 
     /* Suss what tape device we're using, whether there's a changer, etc. */
-    if(!use_changer || (have_changer = changer_init()) == 0) {
+    if (use_changer) {
+	use_changer = changer_init();
+    }
+    if (!use_changer) {
 	if (flags->alt_tapedev) {
 	    cur_tapedev = stralloc(flags->alt_tapedev);
 	} else if(!cur_tapedev) {
@@ -1721,10 +1723,6 @@ search_tapes(
 	}
 	/* XXX oughta complain if no config is loaded */
 	fprintf(stderr, _("%s: Using tapedev %s\n"), get_pname(), cur_tapedev);
- 	have_changer = 0;
-    } else if (have_changer != 1) {
-	error(_("changer initialization failed: %s"), strerror(errno));
-	/*NOTREACHED*/
     }
     else{ /* good, the changer works, see what it can do */
 	amfree(curslot);
