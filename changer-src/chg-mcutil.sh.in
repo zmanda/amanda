@@ -307,7 +307,7 @@ if [ $use_cleaning -eq 1 ]; then
   fi
 
   if [ $diffday -gt $cleanme ] || [ $diffyear -ge 1 ];then
-     if [ $diffyea" -ge 1 ];then
+     if [ $diffyear -ge 1 ];then
 	  echo `_ "Warning, it's been %s year(s) & %s day(s) since you last cleaned the tape drive!" "$diffyear" "$diffday"`
      else
 	  echo `_ "Warning, it's been %s day(s) since you last cleaned the tape drive!" "$diffday"`
@@ -573,6 +573,6 @@ info() {
 	    echo `_ '-help     : Display this help'`
 	    ;;
     *)
-       echo `_ '<usage> %s -{slot|device|reset|eject|help}" "$myname"`
+       echo `_ "<usage> %s -{slot|device|reset|eject|help}" "$myname"`
        ;;
  esac

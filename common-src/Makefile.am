@@ -8,8 +8,11 @@ LINT=@AMLINT@
 LINTFLAGS=@AMLINTFLAGS@
 EXTRA_DIST =
 
-sbin_SCRIPTS =	amcrypt amaespipe	\
+SCRIPTS_PERL =
+SCRIPTS_SHELL =	amcrypt amaespipe	\
 	amcrypt-ossl	amcrypt-ossl-asym
+
+sbin_SCRIPTS = $(SCRIPTS_PERL) $(SCRIPTS_SHELL)
 
 
 libamanda_la_SOURCES =		\
@@ -121,7 +124,6 @@ SUFFIXES =		.sh .pl
 .pl:
 	cat $< > $@
 	chmod a+x $@
-	-test -z "$(PERL)" || $(PERL) -c $@
 
 .sh:
 	cat $< > $@
@@ -199,6 +201,14 @@ noinst_PROGRAMS = $(TESTS)
 
 amflock_test_SOURCES = amflock-test.c
 amflock_test_LDADD = libamanda.la
+
+include $(top_srcdir)/config/automake/check-perl.am
+CHECK_PERL=$(SCRIPTS_PERL)
+check-local: check-perl
+
+include $(top_srcdir)/config/automake/check-shell.am
+CHECK_SHELL=$(SCRIPTS_SHELL)
+check-local: check-shell
 
 # shell library
 

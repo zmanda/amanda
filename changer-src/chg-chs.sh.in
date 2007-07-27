@@ -241,8 +241,8 @@ case "$command" in
 		fi
 		;;
 	*)
-		answer=`_ '<none> %s: bad slot name "%s"'` "$pname" "$slotparm"`
-		echo `_ 'Exit ->'` "$answer >> $logfile
+		answer=`_ '<none> %s: bad slot name "%s"' "$pname" "$slotparm"`
+		echo `_ 'Exit ->'` "$answer" >> $logfile
 		echo $answer
 		exit 1
 		;;

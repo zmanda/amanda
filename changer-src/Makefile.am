@@ -22,11 +22,13 @@ endif
 libexec_PROGRAMS =	$(CHG_SCSI)
 EXTRA_PROGRAMS =	$(CHIO_SCSI)
 
-libexec_SCRIPTS =	chg-manual	chg-multi	chg-mtx		\
-			chg-rth		chg-chs		chg-chio	\
-			chg-zd-mtx	chg-juke	chg-rait	\
-			chg-null	chg-mcutil	chg-disk	\
-			chg-iomega  chg-lib.sh
+SCRIPTS_PERL = chg-chio chg-iomega chg-rth
+SCRIPTS_SHELL =		chg-manual	chg-multi	chg-mtx		\
+			chg-chs		chg-zd-mtx	chg-juke	\
+			chg-rait	chg-null	chg-mcutil	\
+			chg-disk	chg-lib.sh
+
+libexec_SCRIPTS = $(SCRIPTS_PERL) $(SCRIPTS_SHELL)
 
 CLEANFILES = $(libexec_SCRIPTS)
 
@@ -59,11 +61,20 @@ EXTRA_DIST = scsi-proto.c
 .pl:
 			cat $< > $@
 			chmod a+x $@
-			-test -z "$(PERL)" || $(PERL) -c $@
 
 .sh:
 			cat $< > $@
 			chmod a+x $@
+
+# automake-style tests
+
+include $(top_srcdir)/config/automake/check-perl.am
+CHECK_PERL=$(SCRIPTS_PERL)
+check-local: check-perl
+
+include $(top_srcdir)/config/automake/check-shell.am
+CHECK_SHELL=$(SCRIPTS_SHELL)
+check-local: check-shell
 
 install-exec-hook:
 	@list="$(sbin_PROGRAMS) $(sbin_SCRIPTS)"; \

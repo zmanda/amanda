@@ -44,12 +44,7 @@ LDADD = ../common-src/libamanda.$(LIB_EXTENSION) \
 	../common-src/libamanda.$(LIB_EXTENSION) \
 	../gnulib/libgnu.$(LIB_EXTENSION)
 
-SUFFIXES =		.sh .pl
-
-.pl:
-			cat $< > $@
-			chmod a+x $@
-			-test -z "$(PERL)" || $(PERL) -c $@
+SUFFIXES =		.sh
 
 .sh:
 			cat $< > $@
@@ -74,7 +69,6 @@ sendbackup_SOURCES = 	sendbackup.c		sendbackup.h	  \
 noinst_HEADERS	= 	amandates.h	getfsent.h	\
 			findpass.h	client_util.h
 			
-
 install-exec-hook:
 	@list="$(sbin_SCRIPTS)"; \
 	for p in $$list; do \

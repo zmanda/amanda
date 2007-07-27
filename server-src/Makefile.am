@@ -22,9 +22,10 @@ libexec_PROGRAMS =	amindexd	amlogroll	amtrmidx	\
 			planner		taper		amcleanupdisk	\
 			chunker
 
-sbin_SCRIPTS =		amcheckdb	amcleanup	amdump		\
-			amoverview	amrmtape	amtoc		\
-			amverify	amverifyrun	amstatus
+SCRIPTS_PERL = amoverview amstatus amtoc
+SCRIPTS_SHELL =		amcheckdb	amcleanup	amdump		\
+			amrmtape	amverify	amverifyrun	
+sbin_SCRIPTS = $(SCRIPTS_PERL) $(SCRIPTS_SHELL)
 
 libamserver_la_SOURCES=	amindex.c	changer.c			\
 			diskfile.c	driverio.c	cmdline.c  \
@@ -64,7 +65,6 @@ SUFFIXES =		.sh .pl
 .pl:
 			cat $< > $@
 			chmod a+x $@
-			-test -z "$(PERL)" || $(PERL) -c -w -W -t -T $@
 
 .sh:
 			cat $< > $@
@@ -89,6 +89,16 @@ noinst_HEADERS = 	amindex.h	changer.h			\
 			holding.h	infofile.h	logfile.h	\
 			tapefile.h	find.h		server_util.h	\
 			taperscan.h cmdline.h
+
+# automake-style tests
+
+include $(top_srcdir)/config/automake/check-perl.am
+CHECK_PERL=$(SCRIPTS_PERL)
+check-local: check-perl
+
+include $(top_srcdir)/config/automake/check-shell.am
+CHECK_SHELL=$(SCRIPTS_SHELL)
+check-local: check-shell
 
 install-exec-hook:
 	@list="$(sbin_PROGRAMS) $(sbin_SCRIPTS)"; \

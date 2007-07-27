@@ -3,7 +3,8 @@
 INCLUDES =	-I$(top_builddir)/common-src \
 		-I$(top_srcdir)/common-src
 
-dumper_SCRIPTS =	amgtar generic-dumper
+SCRIPTS_PERL =	amgtar generic-dumper
+dumper_SCRIPTS = $(SCRIPTS_PERL)
 dumperdir =		@DUMPER_DIR@
 
 SUFFIXES =		.sh .pl
@@ -11,7 +12,6 @@ SUFFIXES =		.sh .pl
 .pl:
 			cat $< > $@
 			chmod a+x $@
-			-test -z "$(PERL)" || $(PERL) -c -w -W -T $@ || rm $@
 
 .sh:
 			cat $< > $@
@@ -19,7 +19,11 @@ SUFFIXES =		.sh .pl
 
 DISTCLEANFILES = $(dumper_SCRIPTS)
 
-# these are used for testing only:
+# automake-style tests
+
+include $(top_srcdir)/config/automake/check-perl.am
+CHECK_PERL=$(SCRIPTS_PERL)
+check-local: check-perl
 
 install-data-hook:
 	@list="$(dumper_SCRIPTS)"; \
