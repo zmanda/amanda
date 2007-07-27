@@ -1,3 +1,7 @@
+2007-07-27  Ian Turner <ian@zmanda.com>
+	* restore-src/amfetchdump.c: Check for required arguments in
+	  all cases.
+
 2007-07-27  Dustin J. Mitchell <dustin@zmanda.com>
 	* config/automake/check-perl.am: new automake fragment to check perl scripts
 	* config/automake/check-shell.am: new automake fragment to check shell scripts

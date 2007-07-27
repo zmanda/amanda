@@ -278,6 +278,7 @@ main(
 #endif
     int    new_argc,   my_argc;
     char **new_argv, **my_argv;
+    int minimum_arguments;
 
     /*
      * Configure program for internationalization:
@@ -336,11 +337,6 @@ main(
     parse_conf(argc, argv, &new_argc, &new_argv);
     my_argc = new_argc;
     my_argv = new_argv;
-
-    if(my_argc <= 1) {
-	usage();
-	/*NOTREACHED*/
-    }
 
     rst_flags = new_rst_flags();
     rst_flags->wait_tape_prompt = 1;
@@ -407,6 +403,17 @@ main(
 	/*NOTREACHED*/
     }
 
+    if (rst_flags->inventory_log) {
+        minimum_arguments = 1;
+    } else {
+        minimum_arguments = 2;
+    }
+    
+    if(my_argc - optind < minimum_arguments) {
+	usage();
+	/*NOTREACHED*/
+    }
+
     config_name = my_argv[optind++];
     config_dir = vstralloc(CONFIG_DIR, "/", config_name, "/", NULL);
     conffile = stralloc2(config_dir, CONFFILE_NAME);
@@ -417,12 +424,6 @@ main(
     amfree(conffile);
 
     dbrename(config_name, DBG_SUBDIR_SERVER);
-
-    if((my_argc - optind) < 1 && !rst_flags->inventory_log){
-	fprintf(stderr, _("Not enough arguments\n\n"));
-	usage();
-	/*NOTREACHED*/
-    }
 
 #define ARG_GET_HOST 0
 #define ARG_GET_DISK 1
