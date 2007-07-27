@@ -1721,7 +1721,6 @@ search_tapes(
 	}
 	/* XXX oughta complain if no config is loaded */
 	fprintf(stderr, "%s: Using tapedev %s\n", get_pname(), cur_tapedev);
- 	have_changer = 0;
     }
     else{ /* good, the changer works, see what it can do */
 	amfree(curslot);
