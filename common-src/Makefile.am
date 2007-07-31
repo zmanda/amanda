@@ -147,7 +147,7 @@ version.c:	genversion$(EXEEXT)
 	./genversion > version.c
 
 # these are used for testing only:
-TEST_PROGS = statfs token file bsdsecurity amfeatures
+TEST_PROGS = token file bsdsecurity amfeatures
 
 CLEANFILES = *.test.c
 
@@ -167,9 +167,6 @@ STANDARD_COMMON_STUFF_NOT_FILE = \
 STANDARD_COMMON_STUFF = \
 	$(STANDARD_COMMON_STUFF_NOT_FILE) \
 	file.$(OBJEXT)
-
-statfs_SOURCES = statfs.test.c
-statfs_LDADD = $(libamanda_la_LIBADD) $(STANDARD_COMMON_STUFF)
 
 token_SOURCES = token.test.c
 token_LDADD = $(libamanda_la_LIBADD) $(STANDARD_COMMON_STUFF)
@@ -196,11 +193,14 @@ amfeatures_LDADD = $(libamanda_la_LIBADD) $(STANDARD_COMMON_STUFF)
 
 # automake-style tests
 
-TESTS = amflock-test
+TESTS = amflock-test statfs-test
 noinst_PROGRAMS = $(TESTS)
 
 amflock_test_SOURCES = amflock-test.c
 amflock_test_LDADD = libamanda.la
+
+statfs_test_SOURCES = statfs-test.c
+statfs_test_LDADD = libamanda.la
 
 include $(top_srcdir)/config/automake/check-perl.am
 CHECK_PERL=$(SCRIPTS_PERL)

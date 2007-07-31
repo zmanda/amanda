@@ -1,3 +1,8 @@
+2007-07-31  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/statfs-test.c common-src/statfs.c common-src/statfs.h
+	  common-src/Makefile.am: Add a statfs-test to make sure that
+	  statfs works on target systems.
+
 2007-07-27  Ian Turner <ian@zmanda.com>
 	* restore-src/amfetchdump.c: Check for required arguments in
 	  all cases.

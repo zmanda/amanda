@@ -24,31 +24,35 @@
  * file named AUTHORS, in the root directory of this distribution.
  */
 /*
- * $Id: statfs.h,v 1.4 2006/05/25 01:47:12 johnfranks Exp $
+ * $Id: statfs.c 6512 2007-05-24 17:00:24Z ian $
  *
- * interface to statfs module
+ * test scaffolding for statfs
  */
-#ifndef STATFS_H
-#define STATFS_H
-
 #include "amanda.h"
+#include "statfs.h"
 
-typedef struct generic_fs_stats {
-    off_t total;		/* total KB in filesystem */
-    off_t avail;		/* KB available to non-superuser */
-    off_t free;		/* KB free for superuser */
+int
+main(
+    int		argc,
+    char **	argv)
+{
+    generic_fs_stats_t statbuf;
+    (void)argc;
+    (void)argv;
 
-    off_t files;		/* total # of files in filesystem */
-    off_t favail;		/* # files avail for non-superuser */
-    off_t ffree;		/* # files free for superuser */
-} generic_fs_stats_t;
+    printf(
+"name                            total     free    avail   files   ffree  favail\n"
+	   );
+    printf(
+"---------------------------- -------- -------- -------- ------- ------- -------\n"
+	   );
 
-/* Get filesystem information on the device containing DIR.
- *
- * @param dir: directory to examine
- * @param sp: (result) returned stats
- * @returns: -1 for error, or 0 on success
- */
-int get_fs_stats(char *dir, generic_fs_stats_t *sp);
-
-#endif	/* !STATFS_H */
+    if(get_fs_stats("/tmp", &statbuf) == -1) {
+	perror("get_fs_stats");
+	return 1;
+    }
+    printf("%-28.28s %8ld %8ld %8ld %7ld %7ld %7ld\n", "/tmp",
+	   statbuf.total, statbuf.free, statbuf.avail,
+	   statbuf.files, statbuf.ffree, statbuf.favail);
+    return 0;
+}
