@@ -1,3 +1,8 @@
+2007-08-01  Dustin J. Mitchell <dustin@zmanda.com>
+	Patch by Satya Ganga <gsat@zmanda.com>
+	* server-src/amcleanup.sh.in: shell-compatibility fixes for bash-2.03
+	  (Solaris 8)
+
 2007-07-31  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/statfs-test.c common-src/statfs.c common-src/statfs.h
 	  common-src/Makefile.am: Add a statfs-test to make sure that
