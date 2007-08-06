@@ -1,3 +1,7 @@
+2007-08-06  Dustin J. Mitchell <dustin@zmanda.com>
+	* example/DLT-A4.ps example/Makefile.am: add new template contributed
+	  by Terry Burton <tez@terryburton.co.uk>.
+
 2007-08-01  Dustin J. Mitchell <dustin@zmanda.com>
 	Patch by Satya Ganga <gsat@zmanda.com>
 	* server-src/amcleanup.sh.in: shell-compatibility fixes for bash-2.03
