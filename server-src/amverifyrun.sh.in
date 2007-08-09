@@ -63,7 +63,12 @@ fi
 NBTAPES=`grep -c "taper: .*wrote label " $AMLOG`
 
 if [ X"$NBTAPES" != X"0" ]; then
-  $AMVERIFY $CONFIG $FIRST_SLOT $NBTAPES
+  if ln -s $AMLOG $LOGDIR/log ; then
+    $AMVERIFY $CONFIG $FIRST_SLOT $NBTAPES
+    if [ -L $LOGDIR/log ] ; then rm $LOGDIR/log ; fi
+  else
+    echo "amdump or amflush is already running, or you must run amcleanup"
+  fi
 else
   echo `_ 'Nothing to verify'`
 fi
