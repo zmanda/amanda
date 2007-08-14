@@ -1,3 +1,15 @@
+2007-08-14  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/amanda.h common-src/util.h: move readline headers
+	  out of amanda.h and into util.h, since the corresponding
+	  functions are in util.c
+	* common-src/util.c: comments
+	* configure.in: check for both headers and libraries and define
+	  HAVE_READLINE if both are found; add new --with-readline
+	  to require readline and --without-readline to not search
+	  for it at all.
+	* oldrecover-src/Makefile.am recover-src/Makefile.am: remove explicit
+	  use of READLINE_LIBS
+
 2007-08-09  Dustin J. Mitchell <dustin@zmanda.com>
 	Patch by C R Ritson <c.r.ritson@newcastle.ac.uk>
 	* server-src/amverifyrun.sh.in: "lock" the logfile by creating a 

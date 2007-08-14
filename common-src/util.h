@@ -104,4 +104,29 @@ int resolve_hostname(const char *hostname, struct addrinfo **res, char **canonna
     _str_exit_status((subject), *(amwait_t *)&(status))
 char *_str_exit_status(char *subject, amwait_t status);
 
+/* Readline support.  This either includes the system readline header we found in configure,
+ * or prototypes some simple stub functions that are used instead.
+ */
+
+#ifdef HAVE_READLINE
+#  ifdef HAVE_READLINE_READLINE_H
+#    include <readline/readline.h>
+#    ifdef HAVE_READLINE_HISTORY_H
+#      include <readline/history.h>
+#    endif
+#  else
+#    ifdef HAVE_READLINE_H
+#      include <readline.h>
+#      ifdef HAVE_HISTORY_H
+#        include <history.h>
+#      endif
+#    endif
+#  endif
+#else
+
+char *	readline(const char *prompt);
+void	add_history(const char *line);
+
+#endif
+
 #endif	/* UTIL_H */

@@ -170,7 +170,7 @@ fi
 AC_SUBST(AMLINTFLAGS)
 
 AC_ARG_WITH(includes,
-    [  --with-includes=DIR    site header files for readline, etc in DIR],
+    [  --with-includes=DIR    look for extra header files in DIR],
     [
 	case "$withval" in
 	"" | y | ye | yes | n | no)
@@ -191,7 +191,7 @@ if test "$INCLUDE_DIRS"; then
 fi
 
 AC_ARG_WITH(libraries,
-    [  --with-libraries=DIR   site library directories for readline, etc in DIR],
+    [  --with-libraries=DIR   look for extra libraries in DIR],
     [
 	case "$withval" in
 	"" | y | ye | yes | n | no)
@@ -2077,7 +2077,6 @@ AC_CHECK_HEADERS(\
 	fnmatch.h \
 	fstab.h \
 	grp.h \
-	history.h \
 	libc.h \
 	libgen.h \
 	limits.h \
@@ -2088,9 +2087,6 @@ AC_CHECK_HEADERS(\
 	ndbm.h \
 	netdb.h \
 	netinet/in_systm.h \
-	readline.h \
-	readline/history.h \
-	readline/readline.h \
 	scsi/sg.h \
 	scsi/scsi_ioctl.h \
 	stdarg.h \
@@ -2386,25 +2382,61 @@ case "$target" in
 			;;
 esac
 
-AC_CHECK_LIB(termcap,tgetent)
-if test "x$ac_cv_lib_termcap_tgetent" != xyes; then
-    AC_CHECK_LIB(curses,tgetent)
-    if test "x$ac_cv_lib_curses_tgetent" != xyes; then
-	AC_CHECK_LIB(ncurses,tgetent)
+AC_ARG_WITH(readline,
+dnl no initial space here, so the results line up properly
+AS_HELP_STRING([--with-readline], [require readline support (for amrecover)])
+AS_HELP_STRING([--without-readline], [don't search for readline]),
+    [ 
+	case "$withval" in
+	    y | ye | yes | n | no) : ;;
+	    *) AC_MSG_ERROR([*** --with-readline does not take a value])
+	esac
+	want_readline="$withval"
+    ], [
+	want_readline="maybe" # meaning "only if we can find it"
+    ])
+
+# unless the user said "no", look for readline.
+if test x"$want_readline" != x"no"; then
+    # we need a tgetent() somewhere..
+    proceed="false"
+    AC_CHECK_LIB(termcap, tgetent, [
+	proceed="true"
+    ], [
+	AC_CHECK_LIB(curses,tgetent, [
+	    proceed="true"
+	], [
+	    AC_CHECK_LIB(ncurses,tgetent, [
+		proceed="true"
+	    ])
+	])
+    ])
+
+    if $proceed; then
+	proceed="false"
+	AC_CHECK_HEADERS( history.h readline.h readline/history.h readline/readline.h, [
+	    # found at least one of the headers, so we can proceed.
+	    proceed="true"
+	])
     fi
-fi
-if test "x$ac_cv_lib_termcap_tgetent" = xyes ||
-   test "x$ac_cv_lib_curses_tgetent" = xyes ||
-   test "x$ac_cv_lib_ncurses_tgetent" = xyes; then
-    AC_CHECK_LIB(readline,readline)
-    if test "x$ac_cv_lib_readline_readline" = xyes; then
-	READLINE_LIBS="-lreadline"
-	AC_SUBST(READLINE_LIBS)
+
+    if $proceed; then
+	proceed="false"
+	AC_CHECK_LIB(readline,readline, [
+	    LIBS="-lreadline $LIBS"
+	    proceed="true"
+	])
+    fi
+
+    if $proceed; then
+	# we have readline!
+	AC_DEFINE(HAVE_READLINE, 1, [System has readline support (headers and libraries)])
     else
-	AC_MSG_WARN([*** No readline library, no history and command line editing in amrecover!])
+	# no readline.  if the user *really* wanted it, bail out.
+	if test x"$want_readline" = x"yes"; then
+	    AC_MSG_ERROR([*** No readline implementation found.  Try using --with-libraries and --with-includes])
+	fi
     fi
-else
-    AC_MSG_WARN([*** No terminal library, no history and command line editing in amrecover!])
 fi
 
 if test "x$ac_cv_header_linux_zftape_h" = xyes; then

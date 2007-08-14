@@ -1478,29 +1478,6 @@ extern ssize_t writev(int fd, const struct iovec *iov, int iovcnt);
 #endif
 #endif
 
-#ifdef HAVE_LIBREADLINE
-#  ifdef HAVE_READLINE_READLINE_H
-#    include <readline/readline.h>
-#    ifdef HAVE_READLINE_HISTORY_H
-#      include <readline/history.h>
-#    endif
-#  else
-#    ifdef HAVE_READLINE_H
-#      include <readline.h>
-#      ifdef HAVE_HISTORY_H
-#        include <history.h>
-#      endif
-#    else
-#      undef HAVE_LIBREADLINE
-#    endif
-#  endif
-#else
-
-char *	readline(const char *prompt);
-void	add_history(const char *line);
-
-#endif
-
 #define BIND_CYCLE_RETRIES	120		/* Total of 30 minutes */
 
 #define DBG_SUBDIR_SERVER  "server"

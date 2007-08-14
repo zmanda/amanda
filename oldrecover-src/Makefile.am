@@ -26,7 +26,6 @@ endif
 LDADD = ../common-src/libamanda.$(LIB_EXTENSION) \
 	@LEXLIB@ \
 	../client-src/libamclient.$(LIB_EXTENSION) \
-	$(READLINE_LIBS) \
 	../common-src/libamanda.$(LIB_EXTENSION) \
 	../gnulib/libgnu.$(LIB_EXTENSION)
 

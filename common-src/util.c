@@ -680,9 +680,11 @@ int copy_file(
     close(outfd);
     return 0;
 }
-#ifndef HAVE_LIBREADLINE
+
+#ifndef HAVE_READLINE
 /*
- * simple readline() replacements
+ * simple readline() replacements, used when we don't have readline
+ * support from the system.
  */
 
 char *
@@ -699,7 +701,7 @@ void
 add_history(
     const char *line)
 {
-    (void)line; 	/* Quite unused parameter warning */
+    (void)line; 	/* Quiet unused parameter warning */
 }
 
 #endif
