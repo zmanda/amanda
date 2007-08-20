@@ -141,6 +141,7 @@ start_backup(
     int		mesgf,
     int		indexf)
 {
+    char tmppath[PATH_MAX];
     int dumpin, dumpout, compout;
     char *cmd = NULL;
     char *indexcmd = NULL;
@@ -228,25 +229,16 @@ start_backup(
     if (gnutar_list_dir) {
 	char *basename = NULL;
 	char number[NUM_STR_SIZE];
-	char *s;
-	int ch;
 	char *inputname = NULL;
 	int baselevel;
+	char *sdisk = sanitise_filename(disk);
 
 	basename = vstralloc(gnutar_list_dir,
 			     "/",
 			     host,
-			     disk,
+			     sdisk,
 			     NULL);
-	/*
-	 * The loop starts at the first character of the host name,
-	 * not the '/'.
-	 */
-	s = basename + strlen(gnutar_list_dir) + 1;
-	while((ch = *s++) != '\0') {
-	    if(ch == '/')
-		s[-1] = '_';
-	}
+	amfree(sdisk);
 
 	snprintf(number, SIZEOF(number), "%d", level);
 	incrname = vstralloc(basename, "_", number, ".new", NULL);
@@ -549,7 +541,8 @@ start_backup(
 	my_argv[i++] = "--file";
 	my_argv[i++] = "-";
 	my_argv[i++] = "--directory";
-	my_argv[i++] = dirname;
+	canonicalize_pathname(dirname, tmppath);
+	my_argv[i++] = tmppath;
 	my_argv[i++] = "--one-file-system";
 	if (gnutar_list_dir && incrname) {
 	    my_argv[i++] = "--listed-incremental";

@@ -1,3 +1,8 @@
+Changes in release 2.5.3alpha
+
+    * Add ':' to the list of characters sanitised when constructing
+      a filename from a hostname or diskname
+
 Changes in release 2.5.2
 
    * Many bugs fixed and code cleanup

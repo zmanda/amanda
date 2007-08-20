@@ -346,11 +346,13 @@ save_core(void)
 /*
 ** Sanitise a file name.
 ** 
-** Convert all '/' characters to '_' so that we can use,
+** Convert all '/', ':', and '\' characters to '_' so that we can use,
 ** for example, disk names as part of file names.
 ** Notes: 
 **  - there is a many-to-one mapping between input and output
-**  - Only / and '\0' are disallowed in filenames by POSIX...
+**  - Only / and '\0' are disallowed in filenames by POSIX, but Windows
+**    disallows ':' and '\' as well.  Furthermore, we use ':' as a 
+**    delimiter at other points in Amanda.
 */
 char *
 sanitise_filename(
@@ -366,7 +368,7 @@ sanitise_filename(
     d = buf;
     s = inp;
     while((ch = *s++) != '\0') {
-	if(ch == '/') {
+	if((ch == '/') || (ch == ':') || (ch == '\\')) {
 	    ch = '_';	/* convert "bad" to "_" */
 	}
 	*d++ = (char)ch;
@@ -404,6 +406,17 @@ old_sanitise_filename(
     *d = '\0';
 
     return buf;
+}
+
+void
+canonicalize_pathname(char *pathname, char *result_buf)
+{
+#ifdef __CYGWIN__
+    cygwin_conv_to_full_posix_path(pathname, result_buf);
+#else
+    strncpy(result_buf, pathname, PATH_MAX-1);
+    result_buf[PATH_MAX-1] = '\0';
+#endif
 }
 
 /*

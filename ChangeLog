@@ -1,3 +1,11 @@
+2007-08-20  Dustin J. Mitchell <dustin@zmanda.com>
+	* client-src/sendbackup-gnutar.c client-src/sendsize.c: use
+	  sanitized, canonicalized, and quoted filenames where necessary
+	* server-src/driver.c: quote diskname in logfile
+	* common-src/amanda.h common-src/file.c: Add ':' to the list
+	  of characters sanitised when constructing filenames from
+	  disknames; add canonicalize_pathname()
+
 2007-08-14  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/amanda.h common-src/util.h: move readline headers
 	  out of amanda.h and into util.h, since the corresponding

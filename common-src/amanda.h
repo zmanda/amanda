@@ -889,6 +889,16 @@ extern int    amfunlock(int fd, char *resource);
 /* from file.c */
 extern int    mkpdir(char *file, mode_t mode, uid_t uid, gid_t gid);
 extern int    rmpdir(char *file, char *topdir);
+
+/* Given a pathname, convert it to "canonical form" for this system.  Currently,
+ * this means nothing on POSIX, but means substituting /cygdrive, etc. on Cygwin.
+ *
+ * @param pathname: the pathname to canonicalize
+ * @param result_buf (output): the canonicalize pathname; this should be a buffer of
+ * at least PATH_MAX bytes.
+ */
+void canonicalize_pathname(char *pathname, char *result_buf);
+
 extern char  *sanitise_filename(char *inp);
 extern char  *old_sanitise_filename(char *inp);
 

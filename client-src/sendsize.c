@@ -787,6 +787,7 @@ generic_calc_estimates(
     char *match_expr;
     amwait_t wait_status;
     char *errmsg = NULL, *qerrmsg;
+    char tmppath[PATH_MAX];
 
     cmd = vstralloc(libexecdir, "/", "calcsize", versionsuffix(), NULL);
 
@@ -801,7 +802,8 @@ generic_calc_estimates(
     my_argv[my_argc++] = stralloc(est->calcprog);
 
     my_argv[my_argc++] = stralloc(est->amname);
-    my_argv[my_argc++] = stralloc(est->dirname);
+    canonicalize_pathname(est->dirname, tmppath);
+    my_argv[my_argc++] = stralloc(tmppath);
 
 
     if(est->options->exclude_file)
@@ -1836,6 +1838,7 @@ getsize_gnutar(
     char *qdisk = quote_string(disk);
     char *gnutar_list_dir;
     amwait_t wait_status;
+    char tmppath[PATH_MAX];
 
     if(options->exclude_file) nb_exclude += options->exclude_file->nb_element;
     if(options->exclude_list) nb_exclude += options->exclude_list->nb_element;
@@ -1853,23 +1856,15 @@ getsize_gnutar(
 	gnutar_list_dir = NULL;
     if (gnutar_list_dir) {
 	char number[NUM_STR_SIZE];
-	char *s;
-	int ch;
 	int baselevel;
+	char *sdisk = sanitise_filename(disk);
 
 	basename = vstralloc(gnutar_list_dir,
 			     "/",
 			     g_options->hostname,
-			     disk,
+			     sdisk,
 			     NULL);
-	/*
-	 * The loop starts at the first character of the host name,
-	 * not the '/'.
-	 */
-	s = basename + strlen(gnutar_list_dir) + 1;
-	while((ch = *s++) != '\0') {
-	    if(ch == '/' || isspace(ch)) s[-1] = '_';
-	}
+	amfree(sdisk);
 
 	snprintf(number, SIZEOF(number), "%d", level);
 	incrname = vstralloc(basename, "_", number, ".new", NULL);
@@ -1969,7 +1964,8 @@ getsize_gnutar(
     my_argv[i++] = "--file";
     my_argv[i++] = "/dev/null";
     my_argv[i++] = "--directory";
-    my_argv[i++] = dirname;
+    canonicalize_pathname(dirname, tmppath);
+    my_argv[i++] = stralloc(tmppath);
     my_argv[i++] = "--one-file-system";
     if (gnutar_list_dir) {
 	    my_argv[i++] = "--listed-incremental";

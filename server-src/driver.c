@@ -1198,7 +1198,8 @@ handle_taper_result(
     int result_argc;
     char *result_argv[MAX_ARGS+1];
     int avail_tapes = 0;
-    
+    char *qname;
+
     (void)cookie;	/* Quiet unused parameter warning */
 
     assert(cookie == NULL);
@@ -1229,9 +1230,11 @@ handle_taper_result(
             
 	    delete_diskspace(dp);
             
+	    qname = quote_string(dp->name);
 	    printf(_("driver: finished-cmd time %s taper wrote %s:%s\n"),
-		   walltime_str(curclock()), dp->host->hostname, dp->name);
+		   walltime_str(curclock()), dp->host->hostname, qname);
 	    fflush(stdout);
+	    amfree(qname);
             
 	    amfree(sched(dp)->destname);
 	    amfree(sched(dp)->dumpdate);
