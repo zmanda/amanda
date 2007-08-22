@@ -1,3 +1,7 @@
+2007-08-22  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/Makefile.am: adjust dependencies so that 'make dist' can
+	  run without a 'make all'
+
 2007-08-20  Dustin J. Mitchell <dustin@zmanda.com>
 	* client-src/sendbackup-gnutar.c client-src/sendsize.c: use
 	  sanitized, canonicalized, and quoted filenames where necessary

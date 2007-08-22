@@ -40,8 +40,9 @@ libamanda_la_SOURCES =		\
 	tapelist.c		\
 	token.c			\
 	util.c			\
-	version.c		\
 	versuff.c
+# version.c is generated; see below
+nodist_libamanda_la_SOURCES = version.c
 
 if WANT_AMFLOCK_POSIX
 libamanda_la_SOURCES += amflock-posix.c
