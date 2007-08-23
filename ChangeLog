@@ -1,3 +1,8 @@
+2007-08-23  Dustin J. Mitchell <dustin@zmanda.com>
+	sf bug #1775316 reported by joerg <altix@users.sourceforge.net>
+	* configure.in: use 'sed' instead of shell substitutions to C-quote
+	  ssh arguments
+
 2007-08-22  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/Makefile.am: adjust dependencies so that 'make dist' can
 	  run without a 'make all'
