@@ -141,6 +141,14 @@ genversion.h: $(top_builddir)/config.status
 	echo '#define CC "$(CC)"' > $@.new
 	echo '#define BUILT_DATE "'`date`'"' >> $@.new
 	echo '#define BUILT_MACH "'`uname -a || echo UNKNOWN HOST`'"' >> $@.new
+	updir=`cd .. && pwd` ; \
+	if svn info "$$updir" > $@.svn; then \
+		rev=`grep Revision: $@.svn|cut -d: -f 2|cut -c2-`; \
+		echo '#define BUILT_REV "'$$rev'"' >> $@.new; \
+		url=`grep URL: $@.svn|cut -d: -f 2-|cut -c2-`; \
+		echo '#define BUILT_BRANCH "'`basename "$$url"`'"' >> $@.new;  \
+	fi
+	-rm $@.svn
 	mv $@.new $@
 
 version.c:	genversion$(EXEEXT)

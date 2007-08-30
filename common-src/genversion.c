@@ -197,6 +197,18 @@ main(
     prundefvar("BUILT_MACH");
 #endif
 
+#ifdef BUILT_REV
+    prvar("BUILT_REV", BUILT_REV);
+#else
+    prundefvar("BUILT_REV");
+#endif
+
+#ifdef BUILT_BRANCH
+    prvar("BUILT_BRANCH", BUILT_BRANCH);
+#else
+    prundefvar("BUILT_BRANCH");
+#endif
+
 #ifdef CC
     prvar("CC", CC);
 #else

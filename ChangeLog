@@ -1,3 +1,7 @@
+2007-08-29  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/genversion.c common-src/Makefile.am: add subversion revision 
+	  and branch info to 'amadmin x version'
+
 2007-08-23  Dustin J. Mitchell <dustin@zmanda.com>
 	sf bug #1775316 reported by joerg <altix@users.sourceforge.net>
 	* configure.in: use 'sed' instead of shell substitutions to C-quote
