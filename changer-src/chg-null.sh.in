@@ -13,7 +13,7 @@ sbindir="@sbindir@"
 libexecdir="@libexecdir@"
 . "${libexecdir}/amanda/amanda-sh-lib.sh"
 
-debugdir=@AMANDA_DEBUGDIR@
+debugdir=@AMANDA_DBGDIR@
 
 # add sbin and ucb dirs
 PATH="$PATH:/usr/sbin:/sbin:/usr/ucb"

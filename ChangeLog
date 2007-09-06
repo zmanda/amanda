@@ -1,3 +1,7 @@
+2007-09-05  Dustin J. Mitchell <dustin@zmanda.com>
+	Bug identified downstream in Debian packaging
+	* changer-src/chg-null.sh.in: fix typo
+
 2007-08-29  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/genversion.c common-src/Makefile.am: add subversion revision 
 	  and branch info to 'amadmin x version'
