@@ -1,3 +1,7 @@
+2007-09-07  Dustin J. Mitchell <dustin@zmanda.com>
+	* gnulib/regenerate/no-error.patch gnulib/Makefile.am: remove
+	  spurious sign-compare warnings from gnulib
+
 2007-09-05  Dustin J. Mitchell <dustin@zmanda.com>
 	Bug identified downstream in Debian packaging
 	* changer-src/chg-null.sh.in: fix typo

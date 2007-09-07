@@ -27,7 +27,7 @@ MAINTAINERCLEANFILES =
 
 AM_CPPFLAGS =
 if GCC_COMPILER
-  AM_CFLAGS += -Wno-error
+  AM_CFLAGS += -Wno-error -Wno-sign-compare
 endif
 
 noinst_LTLIBRARIES += libgnu.la
