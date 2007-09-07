@@ -1,4 +1,8 @@
 2007-09-07  Dustin J. Mitchell <dustin@zmanda.com>
+	Change by Paul Bijnens
+	* man/xml-source/amanda.conf.5.xml: Clarify 'etimeout'
+
+2007-09-07  Dustin J. Mitchell <dustin@zmanda.com>
 	* gnulib/regenerate/no-error.patch gnulib/Makefile.am: remove
 	  spurious sign-compare warnings from gnulib
 

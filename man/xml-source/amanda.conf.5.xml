@@ -507,15 +507,14 @@ will wait before it fails with a data timeout error.</para>
   <listitem>
 <para>Default:
 <emphasis remap='I'>300 seconds</emphasis>.
-Amount of time per disk on a given client that the
-<emphasis remap='B'>planner</emphasis>
-step of
-<command>amdump</command>
-will wait to get the dump size estimates.
-For instance, with the default of 300 seconds and four disks on client A, 
-<emphasis remap='B'>planner</emphasis>
-will wait up to 20 minutes for that machine.
-A negative value will be interpreted as a total amount of time to wait
+Amount of time per estimate on a given client that the
+<emphasis remap='B'>planner</emphasis> step of
+<command>amdump</command> will wait to get the dump size estimates
+(note: Amanda runs up to 3 estimates for each DLE).  For instance,
+with the default of 300 seconds and four DLE's, each estimating level
+0 and level 1 on client A, <emphasis remap='B'>planner</emphasis>
+will wait up to 40 minutes for that machine.  A negative value will
+be interpreted as a total amount of time to wait
 per client instead of per disk.</para>
   </listitem>
   </varlistentry>
@@ -2029,6 +2028,10 @@ At the moment, this is of little use.</para>
 <citerefentry><refentrytitle>amanda-client.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>amcrypt</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>aespipe</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+</para>
+
+<para>
+An updated version of this man page may be available at http://wiki.zmanda.com/index.php/Amanda.conf.
 </para>
 </refsect1>
 </refentry>
