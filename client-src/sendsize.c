@@ -195,6 +195,8 @@ main(
     }
     amfree(conffile);
 
+    check_running_as(RUNNING_AS_CLIENT_LOGIN);
+
     /* handle all service requests */
 
     for(; (line = agets(stdin)) != NULL; free(line)) {

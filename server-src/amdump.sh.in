@@ -84,10 +84,10 @@ if [ $? -ne 0 ]; then
 	fi
 fi
 
-#if [ $runuser != $dumpuser ]; then
-#	echo `_ '%s: must be run as user %s, not %s' "$0" "$dumpuser" "$runuser"` 1>&2
-#	exit 1
-#fi
+if [ $runuser != $dumpuser ]; then
+	echo `_ '%s: must be run as user %s, not %s' "$0" "$dumpuser" "$runuser"` 1>&2
+	exit 1
+fi
 
 if test -f hold; then
 	echo `_ '%s: waiting for hold file to be removed' "$0"` 1>&2

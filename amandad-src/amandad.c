@@ -264,25 +264,13 @@ main(
     }
     amfree(conffile);
 
+    check_running_as(RUNNING_AS_CLIENT_LOGIN);
+
 #ifdef USE_DBMALLOC
     dbmalloc_info.start.size = malloc_inuse(&dbmalloc_info.start.hist);
 #endif
 
     erroutput_type = (ERR_INTERACTIVE|ERR_SYSLOG);
-
-#ifdef FORCE_USERID
-    /* we'd rather not run as root */
-    if (geteuid() == 0) {
-	if(client_uid == (uid_t) -1) {
-	    error(_("error [cannot find user %s in passwd file]\n"), CLIENT_LOGIN);
-	    /*NOTREACHED*/
-	}
-	initgroups(CLIENT_LOGIN, client_gid);
-	setgid(client_gid);
-	setegid(client_gid);
-	seteuid(client_uid);
-    }
-#endif	/* FORCE_USERID */
 
     /*
      * ad-hoc argument parsing
@@ -1401,10 +1389,6 @@ service_new(
 	 * The child.  Put our pipes in their advertised locations
 	 * and start up.
 	 */
-#ifdef FORCE_USERID
-	seteuid((uid_t)0);
-	setuid(client_uid);
-#endif
 
 	/*
 	 * The data stream is stdin in the new process

@@ -590,6 +590,8 @@ is_config_valid(
     }
     amfree(conffile);
 
+    check_running_as(RUNNING_AS_DUMPUSER_PREFERRED);
+
     conf_diskfile = getconf_str(CNF_DISKFILE);
     if (*conf_diskfile == '/') {
 	conf_diskfile = stralloc(conf_diskfile);
@@ -1137,25 +1139,6 @@ main(
 
     /* Don't die when child closes pipe */
     signal(SIGPIPE, SIG_IGN);
-
-#ifdef FORCE_USERID
-
-    /* we'd rather not run as root */
-
-    if(geteuid() == 0) {
-	if(client_uid == (uid_t) -1) {
-	    error(_("error [cannot find user %s in passwd file]\n"), CLIENT_LOGIN);
-	    /*NOTREACHED*/
-	}
-
-	/*@ignore@*/
-	initgroups(CLIENT_LOGIN, client_gid);
-	/*@end@*/
-	setgid(client_gid);
-	setuid(client_uid);
-    }
-
-#endif	/* FORCE_USERID */
 
     dbopen(DBG_SUBDIR_SERVER);
     dbprintf(_("version %s\n"), version());

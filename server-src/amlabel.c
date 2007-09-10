@@ -74,10 +74,6 @@ main(
     tapetype_t *tape;
     size_t tt_blocksize_kb;
     int slotcommand;
-    uid_t uid_me;
-    uid_t uid_dumpuser;
-    char *dumpuser;
-    struct passwd *pw;
     int    new_argc;
     char **new_argv;
 
@@ -140,6 +136,8 @@ main(
 	/*NOTREACHED*/
     }
 
+    check_running_as(RUNNING_AS_DUMPUSER);
+
     dbrename(config_name, DBG_SUBDIR_SERVER);
 
     report_bad_conf_arg();
@@ -152,25 +150,6 @@ main(
     }
     if (read_tapelist(conf_tapelist)) {
 	error(_("could not load tapelist \"%s\""), conf_tapelist);
-	/*NOTREACHED*/
-    }
-
-    uid_me = getuid();
-    uid_dumpuser = uid_me;
-    dumpuser = getconf_str(CNF_DUMPUSER);
-
-    if ((pw = getpwnam(dumpuser)) == NULL) {
-	error(_("cannot look up dump user \"%s\""), dumpuser);
-	/*NOTREACHED*/
-    }
-    uid_dumpuser = pw->pw_uid;
-    if ((pw = getpwuid(uid_me)) == NULL) {
-	error(_("cannot look up my own uid %ld"), (long)uid_me);
-	/*NOTREACHED*/
-    }
-    if (uid_me != uid_dumpuser) {
-	error(_("running as user \"%s\" instead of \"%s\""),
-	      pw->pw_name, dumpuser);
 	/*NOTREACHED*/
     }
 

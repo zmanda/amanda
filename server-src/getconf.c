@@ -310,8 +310,8 @@ static struct build_info {
 	NULL
 #endif
     },
-    { "FORCE_USERID",
-#if defined(FORCE_USERID)
+    { "CHECK_USERID",
+#if defined(CHECK_USERID)
 	"1"
 #else
 	NULL
@@ -604,6 +604,10 @@ main(
 	    result = getconf_byname(parmname);
 	}
     }
+
+    /* This is the first time we can check that we're dumpuser, as the config has
+     * now been loaded */
+    check_running_as(RUNNING_AS_DUMPUSER);
 
     if (result == NULL) {
 	fprintf(stderr, _("%s: no such parameter \"%s\"\n"),

@@ -253,6 +253,8 @@ main(
     }
     amfree(conffile);
 
+    check_running_as(RUNNING_AS_CLIENT_LOGIN);
+
     if(interactive) {
 	/*
 	 * In interactive (debug) mode, the backup data is sent to

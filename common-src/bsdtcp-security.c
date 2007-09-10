@@ -238,15 +238,13 @@ runbsdtcp(
     struct servent *	sp;
     int			server_socket;
     in_port_t		my_port;
-    uid_t		euid;
     struct tcp_conn *	rc = rh->rc;
 
     if ((sp = getservbyname(AMANDA_SERVICE_NAME, "tcp")) == NULL) {
 	error(_("%s/tcp unknown protocol"), "amanda");
     }
 
-    euid = geteuid();
-    seteuid(0);
+    set_root_privs(1);
 
     server_socket = stream_client_privileged(rc->hostname,
 				     (in_port_t)(ntohs((in_port_t)sp->s_port)),
@@ -254,6 +252,7 @@ runbsdtcp(
 				     STREAM_BUFSIZE,
 				     &my_port,
 				     0);
+    set_root_privs(0);
 
     if(server_socket < 0) {
 	security_seterror(&rh->sech,
@@ -261,7 +260,6 @@ runbsdtcp(
 	
 	return -1;
     }
-    seteuid(euid);
 
     if(my_port >= IPPORT_RESERVED) {
 	security_seterror(&rh->sech,

@@ -202,6 +202,8 @@ main(
     argc--;
     argv++;
 
+    check_running_as(RUNNING_AS_CLIENT_LOGIN);
+
     /* parse backup program name */
 
     if(strcmp(*argv, "DUMP") == 0) {

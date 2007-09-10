@@ -33,6 +33,7 @@
  * argv[2] will be argv[0] of the DUMP program
  * ...
  */
+#include "util.h"
 #include "amanda.h"
 #include "version.h"
 
@@ -99,25 +100,11 @@ main(
 
 #else								/* } { */
 
-    if(client_uid == (uid_t) -1) {
-	error(_("error [cannot find user %s in passwd file]\n"), CLIENT_LOGIN);
+#ifdef WRAPPERS_SETUID_ROOT
+    if (!become_root()) {
+	error(_("error [%s could not become root (is the setuid bit set?)]\n", get_pname()));
 	/*NOTREACHED*/
     }
-
-#ifdef FORCE_USERID
-    if (getuid() != client_uid) {
-	error(_("error [must be invoked by %s]\n"), CLIENT_LOGIN);
-	/*NOTREACHED*/
-    }
-
-    if (geteuid() != 0) {
-	error(_("error [must be setuid root]\n"));
-	/*NOTREACHED*/
-    }
-#endif	/* FORCE_USERID */
-
-#if !defined (DONT_SUID_ROOT)
-    setuid(0);
 #endif
 
     /* skip argv[0] */
@@ -129,6 +116,8 @@ main(
 	dbrename(argv[0], DBG_SUBDIR_CLIENT);
     argc--;
     argv++;
+
+    check_running_as(RUNNING_AS_CLIENT_LOGIN);
 
 #ifdef XFSDUMP
 

@@ -145,6 +145,8 @@ main(
     }
     amfree(conffile);
 
+    check_running_as(RUNNING_AS_CLIENT_LOGIN);
+
     our_features = am_init_feature_set();
     our_feature_string = am_feature_to_string(our_features);
 
@@ -1139,8 +1141,7 @@ static void
 check_suid(
     char *	filename)
 {
-/* The following is only valid for real Unixs */
-#ifndef IGNORE_UID_CHECK
+#ifndef SINGLE_USERID
     struct stat stat_buf;
     char *quoted = quote_string(filename);
 

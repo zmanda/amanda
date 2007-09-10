@@ -1,3 +1,28 @@
+2007-09-10  Dustin J. Mitchell <dustin@zmanda.com>
+	* configure.in: change FORCE_USERID to CHECK_USERID, add SINGLE_USERID
+	  (when all of Amanda runs as the same userid) and WANT_SETUID_CLIENT
+	  (clint binaries should be setuid-root), currently only used on
+	  Cygwin.
+	* common-src/util.c common-src/util.h: utility functions for userid
+	  checks and manipulations
+	* oldrecover-src/amrecover.c client-src/runstar.c
+	  client-src/noop.c client-src/runtar.c client-src/sendbackup.c
+	  client-src/killpgrp.c client-src/sendsize.c
+	  client-src/selfcheck.c client-src/rundump.c
+	  client-src/calcsize.c amandad-src/amandad.c
+	  recover-src/amrecover.c server-src/amlogroll.c
+	  server-src/amindexd.c server-src/amcheck.c server-src/dumper.c
+	  server-src/planner.c server-src/chunker.c server-src/amadmin.c
+	  server-src/amtape.c server-src/amcleanupdisk.c
+	  server-src/getconf.c server-src/amflush.c server-src/amtrmlog.c
+	  server-src/amdevcheck.c server-src/driver.c
+	  server-src/reporter.c server-src/taper.c server-src/amdump.sh.in
+	  server-src/amtrmidx.c server-src/amlabel.c common-src/genversion.c 
+	  restore-src/amidxtaped.c restore-src/amfetchdump.c
+	  common-src/bsdtcp-security.c common-src/bsdudp-security.c
+	  common-src/krb5-security.c common-src/krb4-security.c
+	  common-src/bsd-security.c: use utility functions to check userids.
+
 2007-09-07  Dustin J. Mitchell <dustin@zmanda.com>
 	Change by Paul Bijnens
 	* man/xml-source/amanda.conf.5.xml: Clarify 'etimeout'

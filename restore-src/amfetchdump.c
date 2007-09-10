@@ -273,9 +273,6 @@ main(
     char *e;
     int arg_state;
     rst_flags_t *rst_flags;
-#ifdef FORCE_USERID
-    struct passwd *pwent;
-#endif
     int    new_argc,   my_argc;
     char **new_argv, **my_argv;
     int minimum_arguments;
@@ -301,34 +298,10 @@ main(
 
     set_pname("amfetchdump");
 
-    dbopen(DBG_SUBDIR_SERVER);
-
-#ifdef FORCE_USERID
-
-    /* we'd rather not run as root */
-
-    if(client_uid == (uid_t) -1 && (pwent = getpwnam(CLIENT_LOGIN)) != NULL) {
-	client_uid = pwent->pw_uid;
-	client_gid = pwent->pw_gid;
-	endpwent();
-    }
-    if(geteuid() == 0) {
-	if(client_uid == (uid_t) -1) {
-	    error(_("error [cannot find user %s in passwd file]\n"), CLIENT_LOGIN);
-	    /*NOTREACHED*/
-	}
-
-	/*@ignore@*/
-	initgroups(CLIENT_LOGIN, client_gid);
-	/*@end@*/
-	setgid(client_gid);
-	setuid(client_uid);
-    }
-
-#endif	/* FORCE_USERID */
-
     /* Don't die when child closes pipe */
     signal(SIGPIPE, SIG_IGN);
+
+    dbopen(DBG_SUBDIR_SERVER);
 
     erroutput_type = ERR_INTERACTIVE;
 
@@ -422,6 +395,8 @@ main(
 	/*NOTREACHED*/
     }
     amfree(conffile);
+
+    check_running_as(RUNNING_AS_DUMPUSER);
 
     dbrename(config_name, DBG_SUBDIR_SERVER);
 

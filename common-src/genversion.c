@@ -436,8 +436,8 @@ main(
 
     prvar("CLIENT_LOGIN", CLIENT_LOGIN);
 
-#ifdef FORCE_USERID
-    prstr("FORCE_USERID");
+#ifdef CHECK_USERID
+    prstr("CHECK_USERID");
 #endif
 
 #ifdef USE_VERSION_SUFFIXES

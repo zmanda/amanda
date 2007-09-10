@@ -78,7 +78,6 @@ void disklist(int argc, char **argv);
 void disklist_one(disk_t *dp);
 void show_version(int argc, char **argv);
 static void show_config(int argc, char **argv);
-static void check_dumpuser(void);
 
 static char *conf_tapelist = NULL;
 static char *displayunit;
@@ -161,10 +160,10 @@ main(
 
     set_pname("amadmin");
 
-    dbopen(DBG_SUBDIR_SERVER);
-
     /* Don't die when child closes pipe */
     signal(SIGPIPE, SIG_IGN);
+
+    dbopen(DBG_SUBDIR_SERVER);
 
     malloc_size_1 = malloc_inuse(&malloc_hist_1);
 
@@ -191,9 +190,9 @@ main(
 
     dbrename(config_name, DBG_SUBDIR_SERVER);
 
-    report_bad_conf_arg();
+    check_running_as(RUNNING_AS_DUMPUSER);
 
-    check_dumpuser();
+    report_bad_conf_arg();
 
     conf_diskfile = getconf_str(CNF_DISKFILE);
     if (*conf_diskfile == '/') {
@@ -329,40 +328,6 @@ next_level0(
 	return dp->dumpcycle - days_diff(info->inf[0].date, today);
 }
 
-static void
-check_dumpuser(void)
-{
-    static int been_here = 0;
-    uid_t uid_me;
-    uid_t uid_dumpuser;
-    char *dumpuser;
-    struct passwd *pw;
-
-    if (been_here) {
-       return;
-    }
-    uid_me = getuid();
-    uid_dumpuser = uid_me;
-    dumpuser = getconf_str(CNF_DUMPUSER);
-
-    if ((pw = getpwnam(dumpuser)) == NULL) {
-	error(_("cannot look up dump user \"%s\""), dumpuser);
-	/*NOTREACHED*/
-    }
-    uid_dumpuser = pw->pw_uid;
-    if ((pw = getpwuid(uid_me)) == NULL) {
-	error(_("cannot look up my own uid %ld"), (long)uid_me);
-	/*NOTREACHED*/
-    }
-    if (uid_me != uid_dumpuser) {
-	error(_("ERROR: running as user \"%s\" instead of \"%s\""),
-	      pw->pw_name, dumpuser);
-        /*NOTREACHED*/
-    }
-    been_here = 1;
-    return;
-}
-
 /* ----------------------------------------------- */
 
 void
@@ -410,9 +375,6 @@ force_one(
     char *diskname = dp->name;
     info_t info;
 
-#if TEXTDB
-    check_dumpuser();
-#endif
     get_info(hostname, diskname, &info);
     SET(info.command, FORCE_FULL);
     if (ISSET(info.command, FORCE_BUMP)) {
@@ -452,9 +414,6 @@ unforce_one(
 
     get_info(hostname, diskname, &info);
     if (ISSET(info.command, FORCE_FULL)) {
-#if TEXTDB
-	check_dumpuser();
-#endif
 	CLR(info.command, FORCE_FULL);
 	if(put_info(hostname, diskname, &info) == 0){
 	    printf(_("%s: force command for %s:%s cleared.\n"),
@@ -491,9 +450,6 @@ force_bump_one(
     char *diskname = dp->name;
     info_t info;
 
-#if TEXTDB
-    check_dumpuser();
-#endif
     get_info(hostname, diskname, &info);
     SET(info.command, FORCE_BUMP);
     if (ISSET(info.command, FORCE_NO_BUMP)) {
@@ -536,9 +492,6 @@ force_no_bump_one(
     char *diskname = dp->name;
     info_t info;
 
-#if TEXTDB
-    check_dumpuser();
-#endif
     get_info(hostname, diskname, &info);
     SET(info.command, FORCE_NO_BUMP);
     if (ISSET(info.command, FORCE_BUMP)) {
@@ -578,9 +531,6 @@ unforce_bump_one(
 
     get_info(hostname, diskname, &info);
     if (ISSET(info.command, FORCE_BUMP|FORCE_NO_BUMP)) {
-#if TEXTDB
-	check_dumpuser();
-#endif
 	CLR(info.command, FORCE_BUMP|FORCE_NO_BUMP);
 	if(put_info(hostname, diskname, &info) == 0) {
 	    printf(_("%s: bump command for %s:%s cleared.\n"),
@@ -622,7 +572,6 @@ reuse(
 	usage();
     }
 
-    check_dumpuser();
     for(count=3; count< argc; count++) {
 	tp = lookup_tapelabel(argv[count]);
 	if ( tp == NULL) {
@@ -660,7 +609,6 @@ noreuse(
 	usage();
     }
 
-    check_dumpuser();
     for(count=3; count< argc; count++) {
 	tp = lookup_tapelabel(argv[count]);
 	if ( tp == NULL) {
@@ -1711,10 +1659,6 @@ import_one(void)
     char *diskname = NULL;
     OFF_T_FMT_TYPE off_t_tmp;
     TIME_T_FMT_TYPE time_t_tmp;
-
-#if TEXTDB
-    check_dumpuser();
-#endif
 
     memset(&info, 0, SIZEOF(info_t));
 

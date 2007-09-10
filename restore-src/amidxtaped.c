@@ -301,25 +301,6 @@ main(
 	safe_fd(-1, 0);
     }
 
-#ifdef FORCE_USERID
-
-    /* we'd rather not run as root */
-
-    if(geteuid() == 0) {
-	if(client_uid == (uid_t) -1) {
-	    error(_("error [cannot find user %s in passwd file]\n"), CLIENT_LOGIN);
-	    /*NOTREACHED*/
-	}
-
-	/*@ignore@*/
-	initgroups(CLIENT_LOGIN, client_gid);
-	/*@end@*/
-	setgid(client_gid);
-	setuid(client_uid);
-    }
-
-#endif	/* FORCE_USERID */
-
     /* initialize */
     /* close stderr first so that debug file becomes it - amrestore
        chats to stderr, which we don't want going to client */
@@ -502,6 +483,8 @@ main(
 
 	dbrename(config_name, DBG_SUBDIR_SERVER);
     }
+
+    check_running_as(RUNNING_AS_DUMPUSER_PREFERRED);
 
     if(tapes &&
        (!rst_flags->alt_tapedev  ||

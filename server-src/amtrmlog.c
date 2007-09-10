@@ -117,6 +117,8 @@ main(
     }
     amfree(conffile);
 
+    check_running_as(RUNNING_AS_DUMPUSER);
+
     dbrename(config_name, DBG_SUBDIR_SERVER);
 
     report_bad_conf_arg();

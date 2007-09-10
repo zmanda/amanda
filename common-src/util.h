@@ -104,7 +104,56 @@ int resolve_hostname(const char *hostname, struct addrinfo **res, char **canonna
     _str_exit_status((subject), *(amwait_t *)&(status))
 char *_str_exit_status(char *subject, amwait_t status);
 
-/* Readline support.  This either includes the system readline header we found in configure,
+/*
+ * Userid manipulation
+ */
+
+/* Check that the current uid (not euid) is a specific user, 
+ * calling error() if not. Does nothing if CHECK_USERID is not 
+ * defined.
+ *
+ * @param running_as: one of the RUNNING_AS_* constants, below.
+ */
+enum RunningAsWho {
+        /* userid is 0 */
+    RUNNING_AS_ROOT,
+
+        /* userid belongs to dumpuser (from config) */
+    RUNNING_AS_DUMPUSER,
+
+        /* prefer that userid belongs to dumpuser, but accept when userid belongs to
+         * CLIENT_LOGIN with a debug-log message (needed because amandad always runs
+         * as CLIENT_LOGIN, even on server) */
+    RUNNING_AS_DUMPUSER_PREFERRED,
+
+        /* userid belongs to CLIENT_LOGIN (from --with-user) */
+    RUNNING_AS_CLIENT_LOGIN
+};
+
+void check_running_as(enum RunningAsWho who);
+
+/* Drop and regain root priviledges; used from setuid-root binaries which only
+ * need to be root for certain operations. Does nothing if SINGLE_USERID is 
+ * defined.
+ *
+ * @param need_root: if true, try to assume root priviledges; otherwise, drop
+ * priviledges.
+ * @returns: true if the priviledge change succeeded
+ */
+int set_root_privs(int need_root);
+
+/* Become root completely, by setting the uid to 0.  This is used by setuid-root
+ * apps which will exec subprocesses which will also need root priviledges.  Does
+ * nothing if SINGLE_USERID is defined.
+ *
+ * @returns: true if the priviledge change succeeded
+ */
+int become_root(void);
+
+/*
+ * Readline support
+ *
+ * This either includes the system readline header we found in configure,
  * or prototypes some simple stub functions that are used instead.
  */
 

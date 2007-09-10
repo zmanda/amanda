@@ -172,9 +172,9 @@ bsd_connect(
 	dgram_zero(&netfd6.dgram);
 
 	euid = geteuid();
-	seteuid((uid_t)0);
+	set_root_privs(1);
 	dgram_bind(&netfd6.dgram, res->ai_addr->sa_family, &port);
-	seteuid(euid);
+	set_root_privs(0);
 	netfd6.handle = NULL;
 	netfd6.pkt.body = NULL;
 	netfd6.recv_security_ok = &bsd_recv_security_ok;
@@ -201,9 +201,9 @@ bsd_connect(
 	dgram_zero(&netfd4.dgram);
 
 	euid = geteuid();
-	seteuid((uid_t)0);
+	set_root_privs(1);
 	dgram_bind(&netfd4.dgram, res->ai_addr->sa_family, &port);
-	seteuid(euid);
+	set_root_privs(0);
 	netfd4.handle = NULL;
 	netfd4.pkt.body = NULL;
 	netfd4.recv_security_ok = &bsd_recv_security_ok;

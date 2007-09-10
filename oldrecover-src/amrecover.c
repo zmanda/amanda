@@ -429,14 +429,6 @@ main(
 
     dbopen(DBG_SUBDIR_CLIENT);
 
-#ifndef IGNORE_UID_CHECK
-    if (geteuid() != 0) {
-	erroutput_type |= ERR_SYSLOG;
-	error(_("amrecover must be run by root"));
-	/*NOTREACHED*/
-    }
-#endif
-
     localhost = alloc(MAX_HOSTNAME_LENGTH+1);
     if (gethostname(localhost, MAX_HOSTNAME_LENGTH) != 0) {
 	error(_("cannot determine local host name\n"));
@@ -447,6 +439,8 @@ main(
     config = newstralloc(config, DEFAULT_CONFIG);
 
     dbrename(config, DBG_SUBDIR_CLIENT);
+
+    check_running_as(RUNNING_AS_ROOT);
 
     amfree(server_name);
     server_name = getenv("AMANDA_SERVER");
@@ -558,16 +552,6 @@ main(
 	error(_("did not get a reserved port: %d"), my_port);
 	/*NOTREACHED*/
     }
-
-#if 0
-    /*
-     * We may need root privilege again later for a reserved port to
-     * the tape server, so we will drop down now but might have to
-     * come back later.
-     */
-    setegid(getgid());
-    seteuid(getuid());
-#endif
 
     /* get server's banner */
     if (grab_reply(1) == -1) {

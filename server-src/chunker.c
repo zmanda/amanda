@@ -182,6 +182,8 @@ main(
     }
     amfree(conffile);
 
+    check_running_as(RUNNING_AS_DUMPUSER);
+
     dbrename(config_name, DBG_SUBDIR_SERVER);
 
     report_bad_conf_arg();
@@ -193,11 +195,6 @@ main(
     fflush(stderr);
 
     /* now, make sure we are a valid user */
-
-    if (getpwuid(getuid()) == NULL) {
-	error(_("can't get login name for my uid %ld"), (long)getuid());
-	/*NOTREACHED*/
-    }
 
     signal(SIGPIPE, SIG_IGN);
     signal(SIGCHLD, SIG_IGN);

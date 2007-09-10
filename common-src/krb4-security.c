@@ -1341,11 +1341,11 @@ check_ticket(
     memcpy(kh->session_key, auth.session, SIZEOF(kh->session_key));
 
     /*
-     * If FORCE_USERID is set, then we need to specifically
+     * If CHECK_USERID is set, then we need to specifically
      * check the userid we're forcing ourself to.  Otherwise,
      * just check the login we're currently setuid to.
      */
-#ifdef FORCE_USERID
+#ifdef CHECK_USERID
     if ((pwd = getpwnam(CLIENT_LOGIN)) == NULL)
 	error(_("error [getpwnam(%s) fails]"), CLIENT_LOGIN);
 #else

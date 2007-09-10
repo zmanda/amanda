@@ -127,6 +127,8 @@ main(
     safe_cd();
 
     set_pname("amcheck");
+    /* drop root privileges, if we have them */
+    set_root_privs(0);
 
     /* Don't die when child closes pipe */
     signal(SIGPIPE, SIG_IGN);
@@ -142,9 +144,6 @@ main(
     our_features = am_init_feature_set();
     our_feature_string = am_feature_to_string(our_features);
 
-    if(geteuid() == 0) {
-	seteuid(getuid());
-    }
     uid_me = getuid();
 
     alwaysmail = mailout = overwrite = 0;
@@ -279,7 +278,9 @@ main(
     amfree(conf_diskfile);
 
     /*
-     * Make sure we are running as the dump user.
+     * Make sure we are running as the dump user.  Don't use
+     * check_running_as(..) here, because we want to produce more
+     * verbose error messages.
      */
     dumpuser = getconf_str(CNF_DUMPUSER);
     if ((pw = getpwnam(dumpuser)) == NULL) {
@@ -288,16 +289,18 @@ main(
     }
     uid_dumpuser = pw->pw_uid;
     if ((pw = getpwuid(uid_me)) == NULL) {
-	error(_("cannot get uid for dump user"));
-	error(_("cannot get username for running user, uid %d is not in your user database."), (int)uid_me);
+	error(_("cannot get username for running user, uid %ld is not in your user database."),
+	    (long)uid_me);
 	/*NOTREACHED*/
     }
+#ifdef CHECK_USERID
     if (uid_me != uid_dumpuser) {
 	error(_("running as user \"%s\" instead of \"%s\".\n"
 		"Change user to \"%s\" or change dump user to \"%s\" in amanda.conf"),
 	      pw->pw_name, dumpuser, dumpuser, pw->pw_name);
         /*NOTREACHED*/
     }
+#endif
 
     displayunit = getconf_str(CNF_DISPLAYUNIT);
     unitdivisor = getconf_unit_divisor();
@@ -602,12 +605,14 @@ test_server_pgm(
 	fprintf(outf, _("ERROR: program %s: not executable\n"),
 		quoted);
 	pgmbad = 1;
+#ifndef SINGLE_USERID
     } else if (suid \
 	       && dumpuid != 0
 	       && (statbuf.st_uid != 0 || (statbuf.st_mode & 04000) == 0)) {
 	fprintf(outf, _("ERROR: program %s: not setuid-root\n"),
 		quoted);
 	pgmbad = 1;
+#endif /* SINGLE_USERID */
     }
     amfree(quoted);
     amfree(pgm);

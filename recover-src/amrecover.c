@@ -339,14 +339,6 @@ main(
 
     dbopen(DBG_SUBDIR_CLIENT);
 
-#ifndef IGNORE_UID_CHECK
-    if (geteuid() != 0) {
-	erroutput_type |= ERR_SYSLOG;
-	error(_("amrecover must be run by root"));
-	/*NOTREACHED*/
-    }
-#endif
-
     localhost = alloc(MAX_HOSTNAME_LENGTH+1);
     if (gethostname(localhost, MAX_HOSTNAME_LENGTH) != 0) {
 	error(_("cannot determine local host name\n"));
@@ -413,6 +405,8 @@ main(
 	/*NOTREACHED*/
     }
     amfree(conffile);
+
+    check_running_as(RUNNING_AS_ROOT);
 
     config = stralloc(getconf_str(CNF_CONF));
 
@@ -525,16 +519,6 @@ main(
 	fprintf(stderr,"%s\n",errstr);
 	exit(1);
     }
-
-#if 0
-    /*
-     * We may need root privilege again later for a reserved port to
-     * the tape server, so we will drop down now but might have to
-     * come back later.
-     */
-    setegid(getgid());
-    seteuid(getuid());
-#endif
 
     /* get server's banner */
     if (grab_reply(1) == -1) {

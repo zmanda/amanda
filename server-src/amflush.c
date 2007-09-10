@@ -67,8 +67,6 @@ main(
     int foreground;
     int batch;
     int redirect;
-    struct passwd *pw;
-    char *dumpuser;
     char **datearg = NULL;
     int nb_datearg = 0;
     char *conffile;
@@ -110,10 +108,10 @@ main(
 
     set_pname("amflush");
 
-    dbopen(DBG_SUBDIR_SERVER);
-
     /* Don't die when child closes pipe */
     signal(SIGPIPE, SIG_IGN);
+
+    dbopen(DBG_SUBDIR_SERVER);
 
     erroutput_type = ERR_INTERACTIVE;
     foreground = 0;
@@ -167,6 +165,8 @@ main(
     }
     amfree(conffile);
 
+    check_running_as(RUNNING_AS_DUMPUSER);
+
     dbrename(config_name, DBG_SUBDIR_SERVER);
 
     report_bad_conf_arg();
@@ -208,16 +208,6 @@ main(
     }
     else {
 	amflush_timestamp = construct_timestamp(NULL);
-    }
-
-    dumpuser = getconf_str(CNF_DUMPUSER);
-    if((pw = getpwnam(dumpuser)) == NULL) {
-	error(_("dumpuser %s not found in password file"), dumpuser);
-	/*NOTREACHED*/
-    }
-    if(pw->pw_uid != getuid()) {
-	error(_("must run amflush as user %s"), dumpuser);
-	/*NOTREACHED*/
     }
 
     conf_logdir = getconf_str(CNF_LOGDIR);

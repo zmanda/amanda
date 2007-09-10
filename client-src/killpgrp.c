@@ -85,24 +85,13 @@ main(
     if (strcmp(argv[1], "NOCONFIG") != 0)
 	dbrename(argv[1], DBG_SUBDIR_CLIENT);
 
-    if(client_uid == (uid_t) -1) {
-	error(_("error [cannot find user %s in passwd file]"), CLIENT_LOGIN);
-	/*NOTREACHED*/
-    }
+    check_running_as(RUNNING_AS_CLIENT_LOGIN);
 
-#ifdef FORCE_USERID
-    if (getuid() != client_uid) {
-	error(_("error [must be invoked by %s]"), CLIENT_LOGIN);
+#ifdef WRAPPERS_SETUID_ROOT
+    if (!become_root()) {
+	error(_("error [%s could not become root (is the setuid bit set?)]\n", get_pname()));
 	/*NOTREACHED*/
     }
-    if (geteuid() != 0) {
-	error(_("error [must be setuid root]"));
-	/*NOTREACHED*/
-    }
-#endif	/* FORCE_USERID */
-
-#if !defined (DONT_SUID_ROOT)
-    setuid(0);
 #endif
 
     if (AM_GETPGRP() != getpid()) {

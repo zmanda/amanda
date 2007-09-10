@@ -249,7 +249,6 @@ main(
     char *conffile;
     char *q = NULL;
     int a;
-    uid_t ruid;
     int    new_argc,   my_argc;
     char **new_argv, **my_argv;
     int res;
@@ -262,6 +261,9 @@ main(
      */  
     setlocale(LC_MESSAGES, "C");
     textdomain("amanda"); 
+
+    /* Drop root first thing */
+    set_root_privs(0);
 
     safe_fd(-1, 0);
 
@@ -310,24 +312,11 @@ main(
     }
     amfree(conffile);
 
+    check_running_as(RUNNING_AS_DUMPUSER);
+
     dbrename(config_name, DBG_SUBDIR_SERVER);
 
     report_bad_conf_arg();
-    /*
-     * Make our effective uid nonprivlidged, keeping save uid as root
-     * in case we need to get back (to bind privlidged ports, etc).
-     */
-    ruid = getuid();
-    if(geteuid() == 0) {
-	seteuid(ruid);
-	setgid(getgid());
-    }
-#if defined BSD_SECURITY && !defined SSH_SECURITY
-    else {
-    	error(_("must be run setuid root to communicate correctly"));
-	/*NOTREACHED*/
-    }
-#endif
 
     fprintf(stderr,
 	    _("%s: pid %ld executable %s version %s\n"),
@@ -336,11 +325,6 @@ main(
     fflush(stderr);
 
     /* now, make sure we are a valid user */
-
-    if (getpwuid(getuid()) == NULL) {
-	error(_("can't get login name for my uid %ld"), (long)getuid());
-	/*NOTREACHED*/
-    }
 
     signal(SIGPIPE, SIG_IGN);
 
@@ -546,12 +530,6 @@ main(
 	if (outfd != -1)
 	    aclose(outfd);
     } while(cmd != QUIT);
-
-    /* make sure root privilege is dropped */
-    if ( geteuid() == 0 ) {
-      setuid(ruid);
-      seteuid(ruid);
-    }
 
     free_new_argv(new_argc, new_argv);
     free_server_config();

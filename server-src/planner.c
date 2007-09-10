@@ -176,7 +176,6 @@ main(
     char *conf_tapelist;
     char *conf_infofile;
     times_t section_start;
-    uid_t ruid;
     char *qname;
     int    new_argc,   my_argc;
     char **new_argv, **my_argv;
@@ -191,6 +190,9 @@ main(
      */  
     setlocale(LC_MESSAGES, "C");
     textdomain("amanda"); 
+
+    /* Drop root privs as early as possible */
+    set_root_privs(0);
 
     safe_fd(-1, 0);
 
@@ -244,29 +246,9 @@ main(
     /*
      * 1. Networking Setup
      *
-     * Planner runs setuid to get a priviledged socket for BSD security.
-     * We get the socket right away as root, then set euid to normal
-     * user. Keeping saved uid as root.
      */
 
     protocol_init();
-
-    ruid = getuid();
-    if(geteuid() == 0) {
-	seteuid(ruid);
-	setgid(getgid());
-    }
-
-    /*
-     * From this point on we are running under our real uid, so we don't
-     * have to worry about opening security holes below.  Make sure we
-     * are a valid user.
-     */
-
-    if(getpwuid(getuid()) == NULL) {
-	error(_("can't get login name for my uid %ld"), (long)getuid());
-	/*NOTREACHED*/
-    }
 
     /*
      * 2. Read in Configuration Information
@@ -282,6 +264,8 @@ main(
 	/*NOTREACHED*/
     }
     amfree(conffile);
+
+    check_running_as(RUNNING_AS_DUMPUSER);
 
     dbrename(config_name, DBG_SUBDIR_SERVER);
 
@@ -632,12 +616,6 @@ main(
 		    walltime_str(curclock()),
 		    walltime_str(timessub(curclock(), section_start)));
 
-
-    /* done with prvileged ops, make sure root privilege is dropped */
-    if ( geteuid() == 0 ) {
-      setuid(ruid);
-      seteuid(ruid);
-    }
 
     /*
      * 9. Output Schedule

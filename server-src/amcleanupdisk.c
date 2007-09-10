@@ -91,6 +91,8 @@ main(
     }
     amfree(conffile);
 
+    check_running_as(RUNNING_AS_DUMPUSER);
+
     dbrename(config_name, DBG_SUBDIR_SERVER);
 
     conf_diskfile = getconf_str(CNF_DISKFILE);
@@ -118,17 +120,6 @@ main(
     amfree(conf_infofile);
 
     datestamp = construct_datestamp(NULL);
-
-    dumpuser = getconf_str(CNF_DUMPUSER);
-    if((pw = getpwnam(dumpuser)) == NULL) {
-	error(_("dumpuser %s not found in password file"), dumpuser);
-	/*NOTREACHED*/
-    }
-
-    if(pw->pw_uid != getuid()) {
-	error(_("must run amcleanupdisk as user %s"), dumpuser);
-	/*NOTREACHED*/
-    }
 
     holding_list = holding_get_all_datestamps();
 
@@ -244,3 +235,4 @@ check_disks(void)
 	    check_holdingdisk(holdingdisk_get_diskdir(hdisk), dir->name);
     }
 }
+

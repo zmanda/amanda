@@ -438,13 +438,13 @@ AC_DEFINE_UNQUOTED(DEFAULT_SERVER,"$DEFAULT_SERVER",
 AC_SUBST(DEFAULT_SERVER)
 
 AC_ARG_WITH(force-uid,
-    [  --without-force-uid    do not force the uid to --with-user],
-    FORCE_USERID="$withval",
-    : ${FORCE_USERID=yes}
+    [  --without-force-uid    do not check userids when running programs],
+    CHECK_USERID="$withval",
+    : ${CHECK_USERID=yes}
 )
-case "$FORCE_USERID" in
-y | ye | yes) AC_DEFINE(FORCE_USERID, 1,
-	[Define to force to another user on client machines. ])
+case "$CHECK_USERID" in
+y | ye | yes) AC_DEFINE(CHECK_USERID, 1,
+	[Define to check the current userid on program invocation. ])
   ;;
 n | no) :
   ;;
@@ -1444,6 +1444,8 @@ dnl search for on the system.
 DUMP_PROGRAMS="ufsdump dump backup"
 GETCONF_LFS="LFS"
 
+SINGLE_USERID=${SINGLE_USERID:-no}
+WANT_SETUID_CLIENT=${WANT_SETUID_CLIENT:-true}
 dump_returns_1=
 xenix_tapeio=
 case "$target" in
@@ -1538,10 +1540,9 @@ case "$target" in
 			AC_DEFINE(IGNORE_TAR_ERRORS,1,[Define on Cygwin. ])
 			# Cygwin needs PATH to find cygwin1.dll
 			AC_DEFINE(NEED_PATH_ENV,1,[Define on Cygwin. ])
-			AC_DEFINE(IGNORE_UID_CHECK,1,[Define on Cygwin. ])
 			AC_DEFINE(IGNORE_FSTAB,1,[Define on Cygwin. ])
-			AC_DEFINE(DONT_SUID_ROOT,1,[Define on Cygwin. ])
-			NEED_SETUID_CLIENT=false
+			SINGLE_USERID=yes
+			WANT_SETUID_CLIENT=false
 			NEED_RUNTIME_PSEUDO_RELOC=true
 			BROKEN_IPV6=true
 			;;
@@ -1572,6 +1573,10 @@ fi
 
 if test -n "$xenix_tapeio"; then
   AC_DEFINE(XENIX_TAPEIO,1,[Define on XENIX/ISC. ])
+fi
+
+if test x"$SINGLE_USERID" = x"yes"; then
+    AC_DEFINE(SINGLE_USERID, 1, [Define if all of Amanda will run as a single userid (e.g., on Cygwin)])
 fi
 
 AMANDA_CFLAGS="$AMANDA_CFLAGS $KRB4INCLUDES $KRB5INCLUDES $DBMALLOCCFLAGS"
@@ -3203,7 +3208,7 @@ AM_CONDITIONAL(WANT_AMPLOT, test x"$NO_AMPLOT_MODE" != x"true")
 AM_CONDITIONAL(WANT_CHG_SCSI, test x"$NO_SCSI_CHANGER_MODE" != x"true")
 AM_CONDITIONAL(WANT_CHIO_SCSI, test x"$NO_CHIO_CHANGER_MODE" != x"true")
 AM_CONDITIONAL(WANT_RUNTIME_PSEUDO_RELOC, test x"$NEED_RUNTIME_PSEUDO_RELOC" = x"true")
-AM_CONDITIONAL(WANT_SETUID_CLIENT, test x"$NEED_SETUID_CLIENT" != x"false")
+AM_CONDITIONAL(WANT_SETUID_CLIENT, test x"$WANT_SETUID_CLIENT" = x"true")
 
 AM_CONDITIONAL(WANT_SSH_SECURITY, test x"$SSH_SECURITY" = x"yes")
 AM_CONDITIONAL(WANT_RSH_SECURITY, test x"$RSH_SECURITY" = x"yes")

@@ -405,20 +405,20 @@ runkrb5(
     else
 	port = sp->s_port;
 
-    euid = geteuid();
-
     if ((err = get_tgt(keytab_name, principal_name)) != NULL) {
         security_seterror(&rh->sech, "%s: could not get TGT: %s",
             rc->hostname, err);
         return -1;
     }
 
+    set_root_privs(1);
     server_socket = stream_client(rc->hostname,
 				     (in_port_t)(ntohs(port)),
 				     STREAM_BUFSIZE,
 				     STREAM_BUFSIZE,
 				     &my_port,
 				     0);
+    set_root_privs(0);
 
     if(server_socket < 0) {
 	security_seterror(&rh->sech,
@@ -426,7 +426,6 @@ runkrb5(
 	
 	return -1;
     }
-    seteuid(euid);
 
     rc->read = rc->write = server_socket;
 
@@ -588,7 +587,7 @@ gss_server(
 	    (long)getuid());
 	goto out;
     }
-    if (seteuid(0) < 0) {
+    if (!set_root_privs(0)) {
 	snprintf(errbuf, SIZEOF(errbuf),
 	    _("can't seteuid to uid 0: %s"), strerror(errno));
 	goto out;
@@ -604,7 +603,7 @@ gss_server(
     maj_stat = gss_import_name(&min_stat, &send_tok, GSS_C_NULL_OID,
 	&gss_name);
     if (maj_stat != (OM_uint32)GSS_S_COMPLETE) {
-	seteuid(euid);
+	set_root_privs(0);
 	snprintf(errbuf, SIZEOF(errbuf),
 	    _("can't import name %s: %s"), (char *)send_tok.value,
 	    gss_error(maj_stat, min_stat));
@@ -622,7 +621,7 @@ gss_server(
 	    _("can't acquire creds for host key host/%s: %s"), myhostname,
 	    gss_error(maj_stat, min_stat));
 	gss_release_name(&min_stat, &gss_name);
-	seteuid(euid);
+	set_root_privs(0);
 	goto out;
     }
     gss_release_name(&min_stat, &gss_name);
@@ -706,7 +705,7 @@ gss_server(
 
     rval = 0;
 out:
-    seteuid(euid);
+    set_root_privs(0);
     if (rval != 0) {
 	rc->errmsg = stralloc(errbuf);
     } else {

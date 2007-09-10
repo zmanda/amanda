@@ -32,6 +32,7 @@
 #include "arglist.h"
 #include "clock.h"
 #include "sockaddr-util.h"
+#include "conffile.h"
 
 static int make_socket(sa_family_t family);
 static int connect_port(struct sockaddr_storage *addrp, in_port_t port, char *proto,
@@ -792,4 +793,95 @@ _str_exit_status(
 #endif
 
     return vstrallocf(_("%s exited in unknown circumstances"), subject);
+}
+
+void
+check_running_as(enum RunningAsWho who)
+{
+#ifdef CHECK_USERID
+    struct passwd *pw;
+    uid_t uid_me;
+    uid_t uid_target;
+    char *uname_me = NULL;
+    char *uname_target = NULL;
+    char *dumpuser = getconf_str(CNF_DUMPUSER);
+
+    uid_me = getuid();
+    if ((pw = getpwuid(uid_me)) == NULL) {
+        error(_("current userid %ld not found in password database"), (long)uid_me);
+    }
+    uname_me = pw->pw_name;
+
+    switch (who) {
+	case RUNNING_AS_ROOT:
+	    uid_target = 0;
+	    uname_target = "root";
+	    break;
+
+	case RUNNING_AS_DUMPUSER_PREFERRED:
+	    if ((pw = getpwnam(CLIENT_LOGIN)) != NULL &&
+                    uid_me == pw->pw_uid) {
+                /* uid == CLIENT_LOGIN: not ideal, but OK */
+                dbprintf(_("NOTE: running as '%s', which the client user, not the "
+                    "dumpuser ('%s'); forging on anyway\n"),
+                    CLIENT_LOGIN, dumpuser);
+                uid_target = pw->pw_uid; /* force success below */
+                break;
+            }
+            /* FALLTHROUGH */
+
+	case RUNNING_AS_DUMPUSER:
+	    uname_target = dumpuser;
+	    if ((pw = getpwnam(uname_target)) == NULL) {
+		error(_("cannot look up dumpuser \"%s\""), uname_target);
+		/*NOTREACHED*/
+	    }
+	    uid_target = pw->pw_uid;
+	    break;
+
+	case RUNNING_AS_CLIENT_LOGIN:
+	    uname_target = CLIENT_LOGIN;
+	    if ((pw = getpwnam(uname_target)) == NULL) {
+		error(_("cannot look up client user \"%s\""), uname_target);
+		/*NOTREACHED*/
+	    }
+	    uid_target = pw->pw_uid;
+	    break;
+    }
+
+    if (uid_me != uid_target) {
+	error(_("running as user \"%s\" instead of \"%s\""), uname_me, uname_target);
+	/*NOTREACHED*/
+    }
+    amfree(uname_me);
+
+#else
+    (void)who; /* Quiet unused variable warning */
+#endif
+}
+
+int
+set_root_privs(int need_root)
+{
+#ifndef SINGLE_USERID
+    if (need_root) {
+        if (seteuid(0) == -1) return 0;
+        /* (we don't switch the group back) */
+    } else {
+        if (seteuid(getuid()) == -1) return 0;
+        if (setegid(getgid()) == -1) return 0;
+    }
+#else
+    (void)need_root; /* Quiet unused variable warning */
+#endif
+    return 1;
+}
+
+int
+become_root(void)
+{
+#ifndef SINGLE_USERID
+    if (setuid(0) == -1) return 0;
+#endif
+    return 1;
 }
