@@ -612,6 +612,10 @@ test_server_pgm(
 	fprintf(outf, _("ERROR: program %s: not setuid-root\n"),
 		quoted);
 	pgmbad = 1;
+#else
+    /* Quiet unused parameter warnings */
+    (void)suid;
+    (void)dumpuid;
 #endif /* SINGLE_USERID */
     }
     amfree(quoted);

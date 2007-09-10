@@ -1,4 +1,8 @@
 2007-09-10  Dustin J. Mitchell <dustin@zmanda.com>
+	* server-src/amcheck.c: quiet compiler warnings when SINGLE_USERID is
+	  defined
+
+2007-09-10  Dustin J. Mitchell <dustin@zmanda.com>
 	* configure.in: change FORCE_USERID to CHECK_USERID, add SINGLE_USERID
 	  (when all of Amanda runs as the same userid) and WANT_SETUID_CLIENT
 	  (clint binaries should be setuid-root), currently only used on
