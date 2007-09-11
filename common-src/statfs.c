@@ -46,7 +46,9 @@
 # define STATFS_FILES(buf)	(buf).fd_gtot
 # define STATFS_FAVAIL(buf)	(buf).fd_gfree
 # define STATFS_FFREE(buf)	(buf).fd_gfree
-# define STATFS_SCALE(buf)	1024
+# define STATFS_SCALE_TOTAL(buf)	1024
+# define STATFS_SCALE_AVAIL(buf)	1024
+# define STATFS_SCALE_FREE(buf)		1024
 # define STATFS(path, buffer)	statfs(path, &buffer)
 #else
 # if defined(HAVE_SYS_STATVFS_H) && !defined(STATFS_SCO_OS5)
@@ -62,7 +64,9 @@
 #  define STATFS_FILES(buf)	(buf).f_files
 #  define STATFS_FAVAIL(buf)	(buf).f_favail
 #  define STATFS_FFREE(buf)	(buf).f_ffree
-#  define STATFS_SCALE(buf)	((buf).f_frsize?(buf).f_frsize:(buf).f_bsize)
+#  define STATFS_SCALE_TOTAL(buf)	((buf).f_frsize?(buf).f_frsize:(buf).f_bsize)
+#  define STATFS_SCALE_AVAIL(buf)	(buf).f_bsize
+#  define STATFS_SCALE_FREE(buf)	(buf).f_bsize
 #  define STATFS(path, buffer)	statvfs(path, &buffer)
 # else
 #  if HAVE_SYS_VFS_H
@@ -81,7 +85,9 @@
 #   define STATFS_FILES(buf)	(buf).f_files
 #   define STATFS_FAVAIL(buf)	(buf).f_ffree
 #   define STATFS_FFREE(buf)	(buf).f_ffree
-#   define STATFS_SCALE(buf)	(buf).f_bsize
+#   define STATFS_SCALE_TOTAL(buf)	(buf).f_bsize
+#   define STATFS_SCALE_AVAIL(buf)	(buf).f_bsize
+#   define STATFS_SCALE_FREE(buf)	(buf).f_bsize
 #   define STATFS(path, buffer)	statfs(path, &buffer)
 #  else
 #   if HAVE_SYS_STATFS_H
@@ -97,7 +103,9 @@
 #    define STATFS_FILES(buf)	(buf).f_files
 #    define STATFS_FAVAIL(buf)	(buf).f_ffree
 #    define STATFS_FFREE(buf)	(buf).f_ffree
-#    define STATFS_SCALE(buf)	(buf).f_bsize
+#    define STATFS_SCALE_TOTAL(buf)	(buf).f_bsize
+#    define STATFS_SCALE_AVAIL(buf)	(buf).f_bsize
+#    define STATFS_SCALE_FREE(buf)	(buf).f_bsize
 #    define STATFS(path, buffer)	statfs(path, &buffer, SIZEOF(STATFS_STRUCT), 0)
 #   else
 #    if HAVE_SYS_MOUNT_H
@@ -116,7 +124,9 @@
 #     define STATFS_FILES(buf)	(buf).f_files
 #     define STATFS_FAVAIL(buf)	(buf).f_ffree
 #     define STATFS_FFREE(buf)	(buf).f_ffree
-#     define STATFS_SCALE(buf)	(buf).f_bsize
+#     define STATFS_SCALE_TOTAL(buf)	(buf).f_bsize
+#     define STATFS_SCALE_AVAIL(buf)	(buf).f_bsize
+#     define STATFS_SCALE_FREE(buf)	(buf).f_bsize
 #     define STATFS(path, buffer)	statfs(path, &buffer)
 #     ifdef STATFS_OSF1
 #      define STATFS(path, buffer)	statfs(path, &buffer, SIZEOF(STATFS_STRUCT))
@@ -155,11 +165,11 @@ get_fs_stats(
     /* total, avail, free: converted to kbytes, rounded down */
 
     sp->total = scale((off_t)STATFS_TOTAL(statbuf),
-		      (off_t)STATFS_SCALE(statbuf));
+		      (off_t)STATFS_SCALE_TOTAL(statbuf));
     sp->avail = scale((off_t)STATFS_AVAIL(statbuf),
-		      (off_t)STATFS_SCALE(statbuf));
+		      (off_t)STATFS_SCALE_AVAIL(statbuf));
     sp->free  = scale((off_t)STATFS_FREE(statbuf),
-		      (off_t)STATFS_SCALE(statbuf));
+		      (off_t)STATFS_SCALE_FREE(statbuf));
 
     /* inode stats */
 

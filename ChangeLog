@@ -1,3 +1,8 @@
+2007-09-11  Dustin J. Mitchell <dustin@zmanda.com>
+	Bug reported by Bill Bartlett; patch by Jean-Louis Martineau
+	<martineau@zmanda.com>
+	* common-src/statfs.c: fix error in available-space calculations
+
 2007-09-10  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/amcheck.c: quiet compiler warnings when SINGLE_USERID is
 	  defined
