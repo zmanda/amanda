@@ -847,6 +847,10 @@ check_running_as(enum RunningAsWho who)
 	    }
 	    uid_target = pw->pw_uid;
 	    break;
+
+	default:
+	    error(_("Unknown check_running_as() call"));
+	    /* NOTREACHED */
     }
 
     if (uid_me != uid_target) {

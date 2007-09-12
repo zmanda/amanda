@@ -1,3 +1,7 @@
+2007-09-12  Dustin J. Mitchell <dustin@zmanda.com>
+	Bug identified by Satya Ganga <gsat@zmanda.com>
+	* common-src/util.c: handle bad call to check_running_as correctly
+
 2007-09-11  Dustin J. Mitchell <dustin@zmanda.com>
 	Bug reported by Bill Bartlett; patch by Jean-Louis Martineau
 	<martineau@zmanda.com>
