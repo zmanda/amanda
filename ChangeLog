@@ -1,3 +1,7 @@
+2007-09-14  Dustin J. Mitchell <dustin@zmanda.com>
+	* server-src/getconf.c: Don't check running_as in amgetconf, as
+	  it may not have a configuration file (e.g., for build params)
+
 2007-09-12  Dustin J. Mitchell <dustin@zmanda.com>
 	Bug identified by Satya Ganga <gsat@zmanda.com>
 	* common-src/util.c: handle bad call to check_running_as correctly

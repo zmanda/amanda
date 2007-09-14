@@ -500,6 +500,11 @@ main(
 
     safe_cd();
 
+    /* Note that we dont use check_running_as(..) here, because we may not have a configuration
+     * (e.g., when we're examining build parameters).  If folks run this as the wrong user, that's
+     * their own problem.
+     */
+
     /*
      * Fill in the build values that need runtime help.
      */
@@ -604,10 +609,6 @@ main(
 	    result = getconf_byname(parmname);
 	}
     }
-
-    /* This is the first time we can check that we're dumpuser, as the config has
-     * now been loaded */
-    check_running_as(RUNNING_AS_DUMPUSER);
 
     if (result == NULL) {
 	fprintf(stderr, _("%s: no such parameter \"%s\"\n"),
