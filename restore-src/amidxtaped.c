@@ -484,7 +484,7 @@ main(
 	dbrename(config_name, DBG_SUBDIR_SERVER);
     }
 
-    check_running_as(RUNNING_AS_DUMPUSER_PREFERRED);
+    check_running_as(RUNNING_AS_DUMPUSER_PREFERRED | RUNNING_WITHOUT_SETUID);
 
     if(tapes &&
        (!rst_flags->alt_tapedev  ||

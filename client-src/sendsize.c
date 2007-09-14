@@ -195,7 +195,7 @@ main(
     }
     amfree(conffile);
 
-    check_running_as(RUNNING_AS_CLIENT_LOGIN);
+    check_running_as(RUNNING_AS_CLIENT_LOGIN | RUNNING_WITHOUT_SETUID);
 
     /* handle all service requests */
 

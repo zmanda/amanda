@@ -312,7 +312,7 @@ main(
     }
     amfree(conffile);
 
-    check_running_as(RUNNING_AS_DUMPUSER);
+    check_running_as(RUNNING_AS_DUMPUSER | RUNNING_AS_SETUID_ROOT);
 
     dbrename(config_name, DBG_SUBDIR_SERVER);
 

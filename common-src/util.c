@@ -810,9 +810,9 @@ check_running_as(enum RunningAsWho who)
     if ((pw = getpwuid(uid_me)) == NULL) {
         error(_("current userid %ld not found in password database"), (long)uid_me);
     }
-    uname_me = pw->pw_name;
+    uname_me = stralloc(pw->pw_name);
 
-    switch (who) {
+    switch (who & RUNNING_AS_USER_MASK) {
 	case RUNNING_AS_ROOT:
 	    uid_target = 0;
 	    uname_target = "root";
@@ -859,8 +859,27 @@ check_running_as(enum RunningAsWho who)
     }
     amfree(uname_me);
 
+#ifndef SINGLE_USERID
+    if (who & RUNNING_AS_SETUID_ROOT) {
+	if (geteuid() != 0) {
+	    error(_("this program must be run setuid-root"));
+	    /* NOTREACHED */
+	}
+    }
+
+    if (who & RUNNING_WITHOUT_SETUID) {
+	uid_t euid = geteuid();
+	if (euid != uid_me) {
+	    error(_("this program must not be run setuid; uid %lld != euid %lld"), 
+		(long long)uid_me, (long long)euid);
+	    /* NOTREACHED */
+	}
+    }
+#endif
+
 #else
-    (void)who; /* Quiet unused variable warning */
+    /* Quiet unused variable warning */
+    (void)who;
 #endif
 }
 

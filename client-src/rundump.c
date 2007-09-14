@@ -100,11 +100,14 @@ main(
 
 #else								/* } { */
 
-#ifdef WRAPPERS_SETUID_ROOT
+#ifdef WANT_SETUID_CLIENT
+    check_running_as(RUNNING_AS_CLIENT_LOGIN | RUNNING_AS_SETUID_ROOT);
     if (!become_root()) {
-	error(_("error [%s could not become root (is the setuid bit set?)]\n", get_pname()));
+	error(_("error [%s could not become root (is the setuid bit set?)]\n"), get_pname());
 	/*NOTREACHED*/
     }
+#else
+    check_running_as(RUNNING_AS_CLIENT_LOGIN | RUNNING_WITHOUT_SETUID);
 #endif
 
     /* skip argv[0] */
@@ -116,8 +119,6 @@ main(
 	dbrename(argv[0], DBG_SUBDIR_CLIENT);
     argc--;
     argv++;
-
-    check_running_as(RUNNING_AS_CLIENT_LOGIN);
 
 #ifdef XFSDUMP
 

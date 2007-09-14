@@ -1,4 +1,21 @@
 2007-09-14  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/util.c common-src/util.h: add euid checks to
+	  check_running_as
+	* client-src/runstar.c client-src/noop.c client-src/runtar.c
+	  client-src/sendbackup.c client-src/killpgrp.c
+	  client-src/sendsize.c client-src/selfcheck.c
+	  client-src/rundump.c client-src/calcsize.c
+	  amandad-src/amandad.c configure.in server-src/amlogroll.c
+	  server-src/amindexd.c server-src/dumper.c server-src/planner.c
+	  server-src/chunker.c server-src/amadmin.c server-src/amtape.c
+	  server-src/amcleanupdisk.c server-src/amflush.c
+	  server-src/amtrmlog.c server-src/amdevcheck.c
+	  server-src/driver.c server-src/reporter.c server-src/taper.c
+	  server-src/amtrmidx.c server-src/amlabel.c
+	  restore-src/amidxtaped.c restore-src/amfetchdump.c: use them
+	* common-src/krb5-security.c: remove unused variable
+
+2007-09-14  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/getconf.c: Don't check running_as in amgetconf, as
 	  it may not have a configuration file (e.g., for build params)
 

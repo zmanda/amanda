@@ -396,7 +396,6 @@ runkrb5(
     struct servent *	sp;
     int			server_socket;
     in_port_t		my_port, port;
-    uid_t		euid;
     struct tcp_conn *	rc = rh->rc;
     const char *err;
 

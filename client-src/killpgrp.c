@@ -85,13 +85,14 @@ main(
     if (strcmp(argv[1], "NOCONFIG") != 0)
 	dbrename(argv[1], DBG_SUBDIR_CLIENT);
 
-    check_running_as(RUNNING_AS_CLIENT_LOGIN);
-
-#ifdef WRAPPERS_SETUID_ROOT
+#ifdef WANT_SETUID_CLIENT
+    check_running_as(RUNNING_AS_CLIENT_LOGIN | RUNNING_AS_SETUID_ROOT);
     if (!become_root()) {
-	error(_("error [%s could not become root (is the setuid bit set?)]\n", get_pname()));
+	error(_("error [%s could not become root (is the setuid bit set?)]\n"), get_pname());
 	/*NOTREACHED*/
     }
+#else
+    check_running_as(RUNNING_AS_CLIENT_LOGIN | RUNNING_WITHOUT_SETUID);
 #endif
 
     if (AM_GETPGRP() != getpid()) {

@@ -110,9 +110,10 @@ char *_str_exit_status(char *subject, amwait_t status);
 
 /* Check that the current uid (not euid) is a specific user, 
  * calling error() if not. Does nothing if CHECK_USERID is not 
- * defined.
+ * defined.  The setuid checks only apply if SINGLE_USERID
+ * is defined.
  *
- * @param running_as: one of the RUNNING_AS_* constants, below.
+ * @param who: combination of the RUNNING_AS_* constants, below.
  */
 enum RunningAsWho {
         /* userid is 0 */
@@ -127,7 +128,14 @@ enum RunningAsWho {
     RUNNING_AS_DUMPUSER_PREFERRED,
 
         /* userid belongs to CLIENT_LOGIN (from --with-user) */
-    RUNNING_AS_CLIENT_LOGIN
+    RUNNING_AS_CLIENT_LOGIN,
+
+    RUNNING_AS_USER_MASK = (1 << 8) - 1,
+
+	/* bit-or this constant on to check that euid == 0 */
+    RUNNING_AS_SETUID_ROOT = 1 << 8,
+	/* or to check that euid == uid */
+    RUNNING_WITHOUT_SETUID = 1 << 9
 };
 
 void check_running_as(enum RunningAsWho who);

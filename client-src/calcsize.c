@@ -202,7 +202,7 @@ main(
     argc--;
     argv++;
 
-    check_running_as(RUNNING_AS_CLIENT_LOGIN);
+    check_running_as(RUNNING_AS_CLIENT_LOGIN | RUNNING_WITHOUT_SETUID);
 
     /* parse backup program name */
 

@@ -190,7 +190,7 @@ main(
 
     dbrename(config_name, DBG_SUBDIR_SERVER);
 
-    check_running_as(RUNNING_AS_DUMPUSER);
+    check_running_as(RUNNING_AS_DUMPUSER | RUNNING_WITHOUT_SETUID);
 
     report_bad_conf_arg();
 
