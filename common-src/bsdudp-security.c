@@ -50,7 +50,11 @@
 static void bsdudp_connect(const char *,
     char *(*)(char *, void *), 
     void (*)(void *, security_handle_t *, security_status_t), void *, void *);
-static void bsdudp_accept(const struct security_driver *, int, int, void (*)(security_handle_t *, pkt_t *));
+static void bsdudp_accept(const struct security_driver *,
+    char *(*)(char *, void *),
+    int, int,
+    void (*)(security_handle_t *, pkt_t *),
+    void *);
 static void bsdudp_close(void *);
 
 /*
@@ -239,12 +243,16 @@ bsdudp_connect(
 static void
 bsdudp_accept(
     const struct security_driver *driver,
+    char *      (*conf_fn)(char *, void *),
     int		in,
     int		out,
-    void	(*fn)(security_handle_t *, pkt_t *))
+    void	(*fn)(security_handle_t *, pkt_t *),
+    void       *datap)
 {
     (void)driver;	/* Quiet unused parameter warning */
     (void)out;		/* Quiet unused parameter warning */
+    (void)conf_fn;
+    (void)datap;
 
     assert(in >= 0 && out >= 0);
     assert(fn != NULL);

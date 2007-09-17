@@ -88,6 +88,7 @@ char *srv_encrypt = NULL;
 char *clnt_encrypt = NULL;
 char *srv_decrypt_opt = NULL;
 char *clnt_decrypt_opt = NULL;
+static kencrypt_type dumper_kencrypt;
 
 static FILE *errf = NULL;
 static char *hostname = NULL;
@@ -229,6 +230,12 @@ check_options(
 	clnt_decrypt_opt = stralloc(decryptmode + strlen("client-decrypt-option="));
 	*decryptend = ';';
       }
+    }
+
+    if (strstr(options, "kencrypt;") != NULL) {
+	dumper_kencrypt = KENCRYPT_WILL_DO;
+    } else {
+	dumper_kencrypt = KENCRYPT_NONE;
     }
 }
 
@@ -1772,6 +1779,9 @@ bad_nak:
 	goto parse_error;
     }
 
+    if (dumper_kencrypt == KENCRYPT_WILL_DO)
+	dumper_kencrypt = KENCRYPT_YES;
+
     /*
      * Connect the streams to their remote ports
      */
@@ -1859,6 +1869,11 @@ dumper_get_security_conf(
                 return (client_username);
         } else if(strcmp(string, "ssh_keys")==0) {
                 return (ssh_keys);
+        } else if(strcmp(string, "kencrypt")==0) {
+		if (dumper_kencrypt == KENCRYPT_YES)
+                    return ("yes");
+		else
+		    return (NULL);
         }
         return(NULL);
 }

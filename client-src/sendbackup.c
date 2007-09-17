@@ -457,6 +457,10 @@ main(
 	}
     }
 
+    if (options->kencrypt) {
+	printf("KENCRYPT\n");
+    }
+
     printf(_("CONNECT DATA %d MESG %d INDEX %d\n"),
 	   DATA_FD_OFFSET, DATA_FD_OFFSET+1,
 	   indexfd == -1 ? -1 : DATA_FD_OFFSET+2);

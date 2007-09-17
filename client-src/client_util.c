@@ -455,6 +455,7 @@ init_options(
     options->srvcompprog = NULL;
     options->clntcompprog = NULL;
     options->encrypt = ENCRYPT_NONE;
+    options->kencrypt = 0;
     options->srv_encrypt = NULL;
     options->clnt_encrypt = NULL;
     options->srv_decrypt_opt = NULL;
@@ -666,6 +667,9 @@ parse_options(
 	    inc = unquote_string(&tok[13]);
 	    options->include_list = append_sl(options->include_list, inc);
 	    amfree(inc);
+	}
+	else if(BSTRNCMP(tok,"kencrypt") == 0) {
+	    options->kencrypt = 1;
 	}
 	else if(strcmp(tok,"|") != 0) {
 	    quoted = quote_string(tok);

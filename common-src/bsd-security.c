@@ -50,8 +50,11 @@
 static void	bsd_connect(const char *, char *(*)(char *, void *), 
 			void (*)(void *, security_handle_t *, security_status_t),
 			void *, void *);
-static void	bsd_accept(const struct security_driver *, int, int,
-			void (*)(security_handle_t *, pkt_t *));
+static void	bsd_accept(const struct security_driver *,
+			char *(*)(char *, void *),
+			int, int,
+			void (*)(security_handle_t *, pkt_t *),
+			void *);
 static void	bsd_close(void *);
 static void *	bsd_stream_server(void *);
 static int	bsd_stream_accept(void *);
@@ -259,9 +262,11 @@ bsd_connect(
 static void
 bsd_accept(
     const struct security_driver *	driver,
+    char       *(*conf_fn)(char *, void *),
     int		in,
     int		out,
-    void	(*fn)(security_handle_t *, pkt_t *))
+    void	(*fn)(security_handle_t *, pkt_t *),
+    void       *datap)
 {
 
     assert(in >= 0 && out >= 0);
@@ -269,6 +274,8 @@ bsd_accept(
 
     (void)out;	/* Quiet unused parameter warning */
     (void)driver; /* Quiet unused parameter warning */
+    (void)conf_fn;
+    (void)datap;
 
     /*
      * We assume in and out point to the same socket, and just use

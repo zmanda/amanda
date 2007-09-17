@@ -104,9 +104,11 @@ sec_stream_id(
 void
 sec_accept(
     const security_driver_t *driver,
+    char       *(*conf_fn)(char *, void *),
     int		in,
     int		out,
-    void	(*fn)(security_handle_t *, pkt_t *))
+    void	(*fn)(security_handle_t *, pkt_t *),
+    void       *datap)
 {
     struct tcp_conn *rc;
 
@@ -115,6 +117,8 @@ sec_accept(
     rc->write = out;
     rc->accept_fn = fn;
     rc->driver = driver;
+    rc->conf_fn = conf_fn;
+    rc->datap = datap;
     sec_tcp_conn_read(rc);
 }
 
@@ -1462,6 +1466,8 @@ sec_tcp_conn_get(
     rc->recv_security_ok = NULL;
     rc->prefix_packet = NULL;
     rc->auth = 0;
+    rc->conf_fn = NULL;
+    rc->datap = NULL;
     connq_append(rc);
     return (rc);
 }

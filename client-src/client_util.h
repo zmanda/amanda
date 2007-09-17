@@ -57,6 +57,7 @@ typedef struct option_s {
     sl_t *include_list;
     int exclude_optional;
     int include_optional;
+    int kencrypt;
 } option_t;
 
 typedef struct backup_support_option_s {

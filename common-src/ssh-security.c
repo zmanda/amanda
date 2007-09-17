@@ -112,8 +112,6 @@ ssh_connect(
     assert(fn != NULL);
     assert(hostname != NULL);
 
-    (void)conf_fn;	/* Quiet unused parameter warning */
-
     auth_debug(1, "ssh_connect: %s\n", hostname);
 
     rh = alloc(SIZEOF(*rh));
@@ -131,6 +129,8 @@ ssh_connect(
 	return;
     }
     rh->rs = tcpma_stream_client(rh, newhandle++);
+    rh->rc->conf_fn = conf_fn;
+    rh->rc->datap = datap;
 
     if (rh->rs == NULL)
 	goto error;

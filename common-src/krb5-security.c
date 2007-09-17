@@ -82,14 +82,6 @@
 #define KDESTROY_VIA_UNLINK     1
 
 /*
- * Define this if you want all network traffic encrypted.  This will
- * extract a serious performance hit.
- *
- * It would be nice if we could do this on a filesystem-by-filesystem basis.
- */
-/*#define       AMANDA_KRB5_ENCRYPT*/
-
-/*
  * Where the keytab lives, if defined.  Otherwise it expects something in the
  * config file.
  */
@@ -157,8 +149,11 @@ static char myhostname[MAX_HOSTNAME_LENGTH+1];
 /*
  * Interface functions
  */
-static void krb5_accept(const struct security_driver *, int, int,
-    void (*)(security_handle_t *, pkt_t *));
+static void krb5_accept(const struct security_driver *,
+    char *(*)(char *, void *),
+    int, int,
+    void (*)(security_handle_t *, pkt_t *),
+    void *);
 static void krb5_connect(const char *,
     char *(*)(char *, void *), 
     void (*)(void *, security_handle_t *, security_status_t), void *, void *);
@@ -173,12 +168,10 @@ static int	   gss_client(struct sec_handle *);
 static const char *gss_error(OM_uint32, OM_uint32);
 static char       *krb5_checkuser(char *host, char *name, char *realm);
 
-#ifdef AMANDA_KRB5_ENCRYPT
 static int k5_encrypt(void *cookie, void *buf, ssize_t buflen,
 		      void **encbuf, ssize_t *encbuflen);
 static int k5_decrypt(void *cookie, void *buf, ssize_t buflen,
 		      void **encbuf, ssize_t *encbuflen);
-#endif
 
 /*
  * This is our interface to the outside world.
@@ -202,13 +195,8 @@ const security_driver_t krb5_security_driver = {
     tcpm_stream_read_sync,
     tcpm_stream_read_cancel,
     tcpm_close_connection,
-#ifdef AMANDA_KRB5_ENCRYPT
     k5_encrypt,
     k5_decrypt,
-#else
-    NULL,
-    NULL,
-#endif
 };
 
 static int newhandle = 1;
@@ -239,8 +227,6 @@ krb5_connect(
 
     assert(fn != NULL);
     assert(hostname != NULL);
-    (void)conf_fn;	/* Quiet unused parameter warning */
-    (void)datap;	/* Quiet unused parameter warning */
 
     auth_debug(1, "krb5: krb5_connect: %s\n", hostname);
 
@@ -272,6 +258,8 @@ krb5_connect(
     rh->hostname = canonname;        /* will be replaced */
     canonname = NULL; /* steal reference */
     rh->rs = tcpma_stream_client(rh, newhandle++);
+    rh->rc->conf_fn = conf_fn;
+    rh->rc->datap = datap;
     rh->rc->recv_security_ok = NULL;
     rh->rc->prefix_packet = NULL;
 
@@ -337,9 +325,11 @@ error:
 static void
 krb5_accept(
     const struct security_driver *driver,
+    char       *(*conf_fn)(char *, void *),
     int		in,
     int		out,
-    void	(*fn)(security_handle_t *, pkt_t *))
+    void	(*fn)(security_handle_t *, pkt_t *),
+    void       *datap)
 {
     struct sockaddr_storage sin;
     socklen_t len;
@@ -373,6 +363,8 @@ krb5_accept(
 
 
     rc = sec_tcp_conn_get(hostname, 0);
+    rc->conf_fn = conf_fn;
+    rc->datap = datap;
     rc->recv_security_ok = NULL;
     rc->prefix_packet = NULL;
     copy_sockaddr(&rc->peer, &sin);
@@ -976,7 +968,6 @@ gss_error(
     return ((const char *)msg.value);
 }
 
-#ifdef AMANDA_KRB5_ENCRYPT
 static int
 k5_encrypt(
     void *cookie,
@@ -991,28 +982,32 @@ k5_encrypt(
     OM_uint32 maj_stat, min_stat;
     int conf_state;
 
-    auth_debug(1, _("krb5: k5_encrypt: enter %p\n"), rc);
+    if (rc->conf_fn && rc->conf_fn("kencrypt", rc->datap)) {
+	auth_debug(1, _("krb5: k5_encrypt: enter %p\n"), rc);
 
-    dectok.length = buflen;
-    dectok.value  = buf;    
+	dectok.length = buflen;
+	dectok.value  = buf;    
 
-    if (rc->auth == 1) {
-	assert(rc->gss_context != GSS_C_NO_CONTEXT);
-	maj_stat = gss_seal(&min_stat, rc->gss_context, 1,
-			    GSS_C_QOP_DEFAULT, &dectok, &conf_state, &enctok);
-	if (maj_stat != (OM_uint32)GSS_S_COMPLETE || conf_state == 0) {
-	    auth_debug(1, _("krb5 encrypt error to %s: %s\n"),
-		      rc->hostname, gss_error(maj_stat, min_stat));
-	    return (-1);
+	if (rc->auth == 1) {
+	    assert(rc->gss_context != GSS_C_NO_CONTEXT);
+	    maj_stat = gss_seal(&min_stat, rc->gss_context, 1,
+			        GSS_C_QOP_DEFAULT, &dectok, &conf_state,
+				&enctok);
+	    if (maj_stat != (OM_uint32)GSS_S_COMPLETE || conf_state == 0) {
+		auth_debug(1, _("krb5 encrypt error to %s: %s\n"),
+			   rc->hostname, gss_error(maj_stat, min_stat));
+		return (-1);
+	    }
+	    auth_debug(1, _("krb5: k5_encrypt: give %zu bytes\n"),
+		       enctok.length);
+	    *encbuf = enctok.value;
+	    *encbuflen = enctok.length;
+	} else {
+	    *encbuf = buf;
+	    *encbuflen = buflen;
 	}
-	auth_debug(1, _("krb5: k5_encrypt: give %zu bytes\n"), enctok.length);
-	*encbuf = enctok.value;
-	*encbuflen = enctok.length;
-    } else {
-	*encbuf = buf;
-	*encbuflen = buflen;
-    }
 	auth_debug(1, _("krb5: k5_encrypt: exit\n"));
+    }
     return (0);
 }
 
@@ -1031,33 +1026,37 @@ k5_decrypt(
     OM_uint32 maj_stat, min_stat;
     int conf_state, qop_state;
 
-    auth_debug(1, _("krb5: k5_decrypt: enter\n"));
+    if (rc->conf_fn && rc->conf_fn("kencrypt", rc->datap)) {
+	auth_debug(1, _("krb5: k5_decrypt: enter\n"));
+	if (rc->auth == 1) {
+	    enctok.length = buflen;
+	    enctok.value  = buf;    
 
-    if (rc->auth == 1) {
-	enctok.length = buflen;
-	enctok.value  = buf;    
+	    auth_debug(1, _("krb5: k5_decrypt: decrypting %zu bytes\n"), enctok.length);
 
-	auth_debug(1, _("krb5: k5_decrypt: decrypting %zu bytes\n"), enctok.length);
-
-	assert(rc->gss_context != GSS_C_NO_CONTEXT);
-	maj_stat = gss_unseal(&min_stat, rc->gss_context, &enctok, &dectok,
+	    assert(rc->gss_context != GSS_C_NO_CONTEXT);
+	    maj_stat = gss_unseal(&min_stat, rc->gss_context, &enctok, &dectok,
 			      &conf_state, &qop_state);
-	if (maj_stat != (OM_uint32)GSS_S_COMPLETE) {
-	    auth_debug(1, _("krb5 decrypt error from %s: %s\n"),
-		      rc->hostname, gss_error(maj_stat, min_stat));
-	    return (-1);
+	    if (maj_stat != (OM_uint32)GSS_S_COMPLETE) {
+		auth_debug(1, _("krb5 decrypt error from %s: %s\n"),
+			   rc->hostname, gss_error(maj_stat, min_stat));
+		return (-1);
+	    }
+	    auth_debug(1, _("krb5: k5_decrypt: give %zu bytes\n"),
+		       dectok.length);
+	    *decbuf = dectok.value;
+	    *decbuflen = dectok.length;
+	} else {
+	    *decbuf = buf;
+	    *decbuflen = buflen;
 	}
-	auth_debug(1, _("krb5: k5_decrypt: give %zu bytes\n"), dectok.length);
-	*decbuf = dectok.value;
-	*decbuflen = dectok.length;
+	auth_debug(1, _("krb5: k5_decrypt: exit\n"));
     } else {
 	*decbuf = buf;
 	*decbuflen = buflen;
     }
-    auth_debug(1, _("krb5: k5_decrypt: exit\n"));
     return (0);
 }
-#endif
 
 /*
  * check ~/.k5amandahosts to see if this principal is allowed in.  If it's

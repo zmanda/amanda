@@ -83,6 +83,8 @@ struct tcp_conn {
     int			toclose;
     int			donotclose;
     int			auth;
+    char *              (*conf_fn)(char *, void *);
+    void *              datap;
 #ifdef KRB5_SECURITY
     gss_ctx_id_t	gss_context;
 #endif
@@ -206,8 +208,11 @@ typedef struct udp_handle {
 
 int	sec_stream_auth(void *);
 int	sec_stream_id(void *);
-void	sec_accept(const security_driver_t *, int, int,
-		    void (*)(security_handle_t *, pkt_t *));
+void	sec_accept(const security_driver_t *,
+		   char *(*)(char *, void *),
+		   int, int,
+		   void (*)(security_handle_t *, pkt_t *),
+		   void *);
 void	sec_close(void *);
 void	sec_connect_callback(void *);
 void	sec_connect_timeout(void *);

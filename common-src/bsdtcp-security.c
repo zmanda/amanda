@@ -52,8 +52,11 @@
 /*
  * Interface functions
  */
-static void bsdtcp_accept(const struct security_driver *, int, int,
-    void (*)(security_handle_t *, pkt_t *));
+static void bsdtcp_accept(const struct security_driver *,
+    char *(*)(char *, void *),
+    int, int,
+    void (*)(security_handle_t *, pkt_t *),
+    void *);
 static void bsdtcp_connect(const char *,
     char *(*)(char *, void *), 
     void (*)(void *, security_handle_t *, security_status_t), void *, void *);
@@ -188,9 +191,11 @@ error:
 static void
 bsdtcp_accept(
     const struct security_driver *driver,
+    char *	(*conf_fn)(char *, void *),
     int		in,
     int		out,
-    void	(*fn)(security_handle_t *, pkt_t *))
+    void	(*fn)(security_handle_t *, pkt_t *),
+    void       *datap)
 {
     struct sockaddr_storage sin;
     socklen_t len;
@@ -224,6 +229,8 @@ bsdtcp_accept(
     rc->write = out;
     rc->accept_fn = fn;
     rc->driver = driver;
+    rc->conf_fn = conf_fn;
+    rc->datap = datap;
     sec_tcp_conn_read(rc);
 }
 

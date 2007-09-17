@@ -1,3 +1,21 @@
+2007-09-17  Jean-Louis Martineau <martineau@zmanda.com>
+	* client-src/client_util.c: Parse kencrypt in option string.
+	* client-src/sendbackup.c: Send KENCRYPT keyword in REP packet.
+	* client-src/client_util.h: Add kencrypt field in option_t.
+	* amandad-src/amandad.c: Enable kencrypt.
+	* server-src/dumper.c: Enable kencrypt.
+	* common-src/security.h (accept): New prototype, add conf_fn and datap.
+	* common-src/bsdtcp-security.c (bsdtcp_accept): Use new param.
+	* common-src/ssh-security.c (ssh_connect): Set rh->rc->conf_fn and
+						   rh->rc->datap
+	* common-src/security-util.c (sec_accept): Set rc->conf_fn and
+						   rc->datap
+	* common-src/amanda.h (kencrypt_type): New enum.
+	* common-src/bsdudp-security.c (bsdudp_accept): Use new param.
+	* common-src/security-util.h (sec_accept): New prototype.
+	* common-src/krb5-security.c: encryption enabled based on kencrypt.
+	* common-src/bsd-security.c (bsd_accept):  Use new param.
+
 2007-09-14  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/util.c common-src/util.h: add euid checks to
 	  check_running_as

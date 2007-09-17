@@ -66,8 +66,11 @@ typedef struct security_driver {
      * This form sets up a callback that returns new handles as
      * they are received.  It takes an input and output file descriptor.
      */
-    void (*accept)(const struct security_driver *, int, int,
-			void (*)(struct security_handle *, pkt_t *));
+    void (*accept)(const struct security_driver *,
+			char *(*)(char *, void *),
+			int, int,
+			void (*)(struct security_handle *, pkt_t *),
+			void *);
 
     /*
      * Frees up handles allocated by the previous
@@ -199,10 +202,11 @@ void security_seterror(security_handle_t *, const char *, ...)
 #define	security_connect(driver, hostname, conf_fn, fn, arg, datap)	\
     (*(driver)->connect)(hostname, conf_fn, fn, arg, datap)
 
-/* void security_accept(const security_driver_t *, int, int,
-    void (*)(security_handle_t *, pkt_t *)); */
-#define	security_accept(driver, in, out, fn)	\
-    (*(driver)->accept)(driver, in, out, fn)
+/* void security_accept(const security_driver_t *,
+    char *(*)(char *, void *), int, int,
+    void (*)(security_handle_t *, pkt_t *), void *); */
+#define	security_accept(driver, conf_fn, in, out, fn, datap)	\
+    (*(driver)->accept)(driver, conf_fn, in, out, fn, datap)
 void security_close(security_handle_t *);
 
 /* ssize_t security_sendpkt(security_handle_t *, const pkt_t *); */

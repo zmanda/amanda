@@ -147,6 +147,7 @@ static struct {
 static int wait_30s = 1;
 static int exit_on_qlength = 1;
 static char *auth = NULL;
+static kencrypt_type amandad_kencrypt = KENCRYPT_NONE;
 
 int main(int argc, char **argv);
 
@@ -171,6 +172,7 @@ static struct active_service *service_new(security_handle_t *,
 static void service_delete(struct active_service *);
 static int writebuf(struct active_service *, const void *, size_t);
 static ssize_t do_sendpkt(security_handle_t *handle, pkt_t *pkt);
+static char *amandad_get_security_conf (char *, void *);
 
 static void child_signal(int signal);
 
@@ -476,7 +478,7 @@ main(
      * Schedule to call protocol_accept() when new security handles
      * are created on stdin.
      */
-    security_accept(secdrv, in, out, protocol_accept);
+    security_accept(secdrv, amandad_get_security_conf, in, out, protocol_accept, NULL);
 
     /*
      * Schedule an event that will try to exit every 30 seconds if there
@@ -932,7 +934,12 @@ s_processrep(
      * We need to map these to security streams and pass them back
      * to the amanda server.  If the handle is -1, then we don't map.
      */
-    repbuf = stralloc(as->repbuf);
+    if (strncmp_const(as->repbuf,"KENCRYPT\n") == 0) {
+        amandad_kencrypt = KENCRYPT_WILL_DO;
+	repbuf = stralloc(as->repbuf + 9);
+    } else {
+	repbuf = stralloc(as->repbuf);
+    }
     amfree(as->rep_pkt.body);
     pkt_init_empty(&as->rep_pkt, P_REP);
     tok = strtok(repbuf, " ");
@@ -1040,6 +1047,10 @@ s_ackwait(
 
     if (pkt->type != P_ACK)
 	return (A_SENDNAK);
+
+    if (amandad_kencrypt == KENCRYPT_WILL_DO) {
+	amandad_kencrypt = KENCRYPT_YES;
+    }
 
     /*
      * Got the ack, now open the pipes
@@ -1636,3 +1647,23 @@ action2str(
 	    return (actions[i].str);
     return (_("UNKNOWN ACTION"));
 }
+
+static char *
+amandad_get_security_conf(
+    char *      string,
+    void *      arg)
+{
+    (void)arg;      /* Quiet unused parameter warning */
+
+    if (!string || !*string)
+	return(NULL);
+
+    if (strcmp(string, "kencrypt")==0) {
+	if (amandad_kencrypt == KENCRYPT_YES)
+	    return ("yes");
+	else
+	    return (NULL);
+    }
+    return(NULL);
+}
+
