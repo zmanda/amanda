@@ -807,7 +807,7 @@ add_file(
 		clean_pathname(ditem_path);
 
 		qditem_path = quote_string(ditem_path);
-		cmd = stralloc2("ORLD ", qditem_path);
+		cmd = newstralloc2(cmd, "ORLD ", qditem_path);
 		amfree(qditem_path);
 		if(send_command(cmd) == -1) {
 		    amfree(cmd);
@@ -1120,7 +1120,7 @@ delete_file(
 		clean_pathname(ditem_path);
 
 		qditem_path = quote_string(ditem_path);
-		cmd = stralloc2("ORLD ", qditem_path);
+		cmd = newstralloc2(cmd, "ORLD ", qditem_path);
 		amfree(qditem_path);
 		if(send_command(cmd) == -1) {
 		    amfree(cmd);

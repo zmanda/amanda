@@ -652,7 +652,7 @@ void add_file(
 		ditem_path = newstralloc(ditem_path, ditem->path);
 		clean_pathname(ditem_path);
 
-		cmd = stralloc2("ORLD ", ditem_path);
+		cmd = newstralloc2(cmd, "ORLD ", ditem_path);
 		if(send_command(cmd) == -1) {
 		    amfree(cmd);
 		    amfree(ditem_path);
@@ -968,7 +968,7 @@ delete_file(
 		ditem_path = newstralloc(ditem_path, ditem->path);
 		clean_pathname(ditem_path);
 
-		cmd = stralloc2("ORLD ", ditem_path);
+		cmd = newstralloc2(cmd, "ORLD ", ditem_path);
 		if(send_command(cmd) == -1) {
 		    amfree(cmd);
 		    amfree(ditem_path);
