@@ -1,4 +1,10 @@
 2007-09-24  Ian Turner <ian@zmanda.com> (merged by dustin@zmanda.com)
+	* restore-src/amrestore.c: Fix a segmentation fault that occurs
+	  when the user specifies hostname, diskname, and date. Thanks to
+	  Jean-Louis Martineau <martineau@zmanda.com> for finding and 
+	  fixing this bug.
+
+2007-09-24  Ian Turner <ian@zmanda.com> (merged by dustin@zmanda.com)
 	* device-src/device.c (device_set_startup_properties_from_config):
 	  Use tapetype parameters as well as device_property directives.
 	* device-src/device.h: ditto.

@@ -269,6 +269,7 @@ main(
 	    me->hostname = my_argv[optind++];
 	    me->diskname = "";
 	    me->datestamp = "";
+	    me->level = "";
 	    me->next = match_list;
 	    match_list = me;
 	    if(me->hostname[0] != '\0'
