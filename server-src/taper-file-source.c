@@ -102,6 +102,7 @@ taper_file_source_init (TaperFileSource * o G_GNUC_UNUSED)
     o->_priv = malloc(sizeof(TaperFileSourcePrivate));
     o->_priv->part_start_chunk_fd = -1;
     o->_priv->current_chunk_fd = -1;
+    o->_priv->predicted_splits = -1;
     o->holding_disk_file = NULL;
 }
 
@@ -146,7 +147,7 @@ static void compute_splits(TaperFileSource * self) {
     }
     
     fprintf(stderr, "taper: Total dump size should be %" G_GUINT64_FORMAT
-            "kb, chunk size is %" G_GUINT64_FORMAT "kb\n",
+            "kb, part size is %" G_GUINT64_FORMAT "kb\n",
             total_kb, pself->max_part_size);
 
     predicted_splits = (total_kb * 1024) / pself->max_part_size;

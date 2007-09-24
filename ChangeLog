@@ -1,3 +1,13 @@
+2007-09-24  Ian Turner <ian@zmanda.com> (merged by dustin@zmanda.com)
+	* server-src/taper.c: Be slightly more rigorous in sanity-checking
+	  the expected number of splits.
+	* server-src/taper-file-source.c: Correctly predict the number
+	  of splits.
+	
+2007-09-24  Ian Turner <ian@zmanda.com> (merged by dustin@zmanda.com)
+	* device-src/vfs-device.c: Accept device names without a
+	  terminating '/'.
+	
 2007-09-24  Ian Turner <ian@zmanda.com>
 	Merge in new Device API. Thanks to Jean-Louis and Dustin for their
 	code contributions to this patch.
@@ -367,10 +377,6 @@
 	* common-src/debug.c common-src/error.c: fix compilation errors
 	  on strict platforms.
 
-2007-06-04  Ian Turner <ian@zmanda.com>
-	* device-src/vfs-device.c: Accept device names without a
-	  terminating '/'.
-	
 2007-06-04  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/bsd-security.c common-src/bsdudp-security.c: 
 	  Make bsd, bsdudp open an IPv4 and an IPv6 socket; fixes bug reported
