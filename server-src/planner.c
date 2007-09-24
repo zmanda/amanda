@@ -394,25 +394,24 @@ main(
 
     if(conf_autoflush) {
 	dumpfile_t  file;
-	sl_t       *holding_list;
-	sle_t      *holding_file;
+	GSList *holding_list, *holding_file;
 	char *qdisk, *qhname;
 
 	/* get *all* flushable files in holding */
 	holding_list = holding_get_files_for_flush(NULL);
-	for(holding_file=holding_list->first; holding_file != NULL;
+	for(holding_file=holding_list; holding_file != NULL;
 				       holding_file = holding_file->next) {
-	    holding_file_get_dumpfile(holding_file->name, &file);
+	    holding_file_get_dumpfile((char *)holding_file->data, &file);
 
-	    if (holding_file_size(holding_file->name, 1) <= 0) {
+	    if (holding_file_size((char *)holding_file->data, 1) <= 0) {
 		log_add(L_INFO, "%s: removing file with no data.",
-			holding_file->name);
-		holding_file_unlink(holding_file->name);
+			(char *)holding_file->data);
+		holding_file_unlink((char *)holding_file->data);
 		continue;
 	    }
 
-	    qdisk = quote_string(file.disk);	    
-	    qhname = quote_string(holding_file->name);
+	    qdisk = quote_string(file.disk);
+	    qhname = quote_string((char *)holding_file->data);
 	    log_add(L_DISK, "%s %s", file.name, qdisk);
 	    fprintf(stderr,
 		    "FLUSH %s %s %s %d %s\n",
@@ -431,7 +430,7 @@ main(
 	    amfree(qdisk);
 	    amfree(qhname);
 	}
-	free_sl(holding_list);
+	g_slist_free_full(holding_list);
 	holding_list = NULL;
     }
     fprintf(stderr, _("ENDFLUSH\n"));

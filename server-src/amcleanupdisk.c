@@ -37,7 +37,6 @@
 #include "server_util.h"
 #include "timestamp.h"
 
-sl_t *holding_list;
 char *datestamp;
 
 /* local functions */
@@ -122,14 +121,10 @@ main(
 
     datestamp = get_datestamp_from_time(0);
 
-    holding_list = holding_get_all_datestamps();
-
     check_disks();
 
     close_infofile();
 
-    free_sl(holding_list);
-    holding_list = NULL;
     amfree(config_dir);
     return 0;
 }
@@ -226,14 +221,17 @@ void
 check_disks(void)
 {
     holdingdisk_t *hdisk;
-    sle_t *dir;
+    GSList *holding_list;
+    GSList *ds;
+    
+    holding_list = holding_get_all_datestamps();
 
-    /* if there are no holding files, we're done */
-    if (!holding_list) return;
-
-    for(dir = holding_list->first; dir !=NULL; dir = dir->next) {
+    /* XXX assumes that datestamps are also directory names */
+    for(ds = holding_list; ds !=NULL; ds = ds->next) {
 	for(hdisk = getconf_holdingdisks(); hdisk != NULL; hdisk = hdisk->next)
-	    check_holdingdisk(holdingdisk_get_diskdir(hdisk), dir->name);
+	    check_holdingdisk(holdingdisk_get_diskdir(hdisk), (char *)ds->data);
     }
+
+    g_slist_free_full(holding_list);
 }
 

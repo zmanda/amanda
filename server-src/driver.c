@@ -474,7 +474,7 @@ main(
     wait_children(600);
 
     for(hdp = getconf_holdingdisks(); hdp != NULL; hdp = hdp->next) {
-	cleanup_holdingdisk(holdingdisk_get_diskdir(hdp), 0);
+	cleanup_holdingdisk(holdingdisk_get_diskdir(hdp));
 	amfree(hdp->up);
     }
     amfree(newdir);

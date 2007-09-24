@@ -1,4 +1,13 @@
 2007-09-24  Dustin J. Mitchell <dustin@zmanda.com>
+	* server-src/cmdline.c server-src/planner.c server-src/amadmin.c
+	  server-src/amcleanupdisk.c server-src/amflush.c
+	  server-src/holding.c server-src/holding.h server-src/driver.c
+	  server-src/find.c common-src/glib-util.c common-src/glib-util.h:
+	  remove 'verbose' flag, remove holding directories from API (they 
+	  will be gone soon anyway), and rework the holding module to use 
+	  glib data structures
+
+2007-09-24  Dustin J. Mitchell <dustin@zmanda.com>
 	* gnulib/regenerate/regenerate gnulib/Makefile.am
 	  device-src/tests/Makefile.am device-src/Makefile.am
 	  server-src/taper-mem-port-source.c server-src/taper.c

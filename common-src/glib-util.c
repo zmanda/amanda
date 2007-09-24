@@ -254,3 +254,11 @@ gboolean g_value_set_from_string(GValue * val, char * string) {
     return TRUE;
 }
 
+gint
+g_compare_strings(
+    gconstpointer a,
+    gconstpointer b)
+{
+    return strcmp((char *)a, (char *)b);
+}
+

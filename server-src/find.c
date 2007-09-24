@@ -272,16 +272,16 @@ void
 search_holding_disk(
     find_result_t **output_find)
 {
-    sl_t  *holding_file_list;
-    sle_t *e;
+    GSList *holding_file_list;
+    GSList *e;
     char *holding_file;
     disk_t *dp;
     dumpfile_t file;
 
     holding_file_list = holding_get_files(NULL, 1);
 
-    for(e = holding_file_list->first; e != NULL; e = e->next) {
-	holding_file = e->name;
+    for(e = holding_file_list; e != NULL; e = e->next) {
+	holding_file = (char *)e->data;
 
 	if (!holding_file_get_dumpfile(holding_file, &file))
 	    continue;
@@ -318,7 +318,7 @@ search_holding_disk(
 	}
     }
 
-    free_sl(holding_file_list);
+    g_slist_free_full(holding_file_list);
 }
 
 static int

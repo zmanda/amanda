@@ -1327,8 +1327,6 @@ holding(
     else if (strcmp(argv[3], "delete") == 0 && argc > 4)
         action = HOLDING_DELETE;
 
-    holding_set_verbosity(1);
-
     switch (action) {
         case HOLDING_USAGE:
             fprintf(stderr,
@@ -1381,8 +1379,7 @@ holding(
 
                 /* unlink it */
                 if (!holding_file_unlink((char *)li->data)) {
-                    /* holding_file_unlink printed an error message */
-                    exit(1);
+                    error(_("Could not delete '%s'"), (char *)li->data);
                 }
             }
             g_slist_free_full(file_list);

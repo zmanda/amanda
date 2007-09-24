@@ -29,7 +29,8 @@
  * Terminology:
  *
  * Holding disk: a top-level directory given in amanda.conf
- * Holding directory: a subdirectory of a holding disk, named by datestamp
+ * Holding directory: a subdirectory of a holding disk, usually named by 
+ *  datestamp.  These are not accessible through this API.
  * Holding file: one or more os-level files in a holding directory, together
  *  representing a single dump
  * Holding file chunks: the individual os-level files (continuations) of
@@ -51,41 +52,12 @@
 #include "amanda.h"
 #include "diskfile.h"
 #include "fileheader.h"
-#include "sl.h"
-
-/*
- * Verbosity
- */
-
-/* Set verbose flag for holding-disk functions
- *
- * @param verbose: if true, log verbosely to stdout
- * @returns: old verbosity
- */
-int
-holding_set_verbosity(int verbose);
 
 /*
  * Holding disks
  *
  * Use getconf_holdingdisks() to access the list of holding disks.
  */
-
-/*
- * Holding directories
- */
-
-/* Get a list of holding directories, optionally limited to a single
- * holding disk.  Can return a list either of full pathnames or of
- * bare directory names (datestamps).
- *
- * @param hdisk: holding disk to enumerate, or NULL for all
- * @param fullpaths: if true, return full pathnames
- * @returns: newly allocated sl_t of matching directories
- */
-sl_t *
-holding_get_directories(char *hdisk,
-                        int fullpaths);
 
 /*
  * Holding files
@@ -97,9 +69,9 @@ holding_get_directories(char *hdisk,
  *
  * @param hdir: holding directory to enumerate, or NULL for all
  * @param fullpaths: if true, return full pathnames
- * @returns: newly allocated sl_t of matching files
+ * @returns: newly allocated GSList of matching files
  */
-sl_t *
+GSList *
 holding_get_files(char *hdir,
                   int fullpaths);
 
@@ -107,22 +79,22 @@ holding_get_files(char *hdir,
  * matching only certain datestamps.  This function filters out
  * files for host/disks that are no longer in the disklist.
  *
- * @param dateargs: sl_t of datestamps expressions to dump, or NULL 
+ * @param dateargs: GSList of datestamps expressions to dump, or NULL 
  * for all
- * @returns: a newly allocated sl_t listing all matching holding
+ * @returns: a newly allocated GSList listing all matching holding
  * files
  */
-sl_t *
-holding_get_files_for_flush(sl_t *dateargs);
+GSList *
+holding_get_files_for_flush(GSList *dateargs);
 
 /* Get a list of all datestamps for which dumps are in the holding
  * disk.  This scans all dumps and takes the union of their
  * datestamps (some/all of which may actually be timestamps, 
  * depending on the setting of config option usetimestamps)
  *
- * @returns: a newly allocated sl_t listing all datestamps
+ * @returns: a newly allocated GSList listing all datestamps
  */
-sl_t *
+GSList *
 holding_get_all_datestamps(void);
 
 /* Get the total size of a holding file, including all holding
@@ -165,24 +137,14 @@ holding_file_get_dumpfile(char *fname,
  * file.  Always returns full paths.
  *
  * @param hfile: holding file to enumerate
- * @returns: newly allocated sl_t of matching holding file chunks
+ * @returns: newly allocated GSList of matching holding file chunks
  */
-sl_t *
+GSList *
 holding_get_file_chunks(char *hfile);
 
 /*
  * application-specific support
  */
-
-/* Allow the user to select a set of datestamps from those in
- * holding disks.  The result can be passed to 
- * holding_get_files_for_flush.  If less than two dates are
- * available, then no user interaction takes place.
- *
- * @returns: a new sl_t listing all matching datestamps
- */
-sl_t *
-pick_datestamp(void);
 
 /* Rename holding files from the temporary names used during
  * creation.
@@ -199,11 +161,9 @@ rename_tmp_holding(char *holding_file,
 /* Remove any empty datestamp directories.
  *
  * @param diskdir: holding directory to clean
- * @param verbose: verbose logging to stdout
  */
 void
-cleanup_holdingdisk(char *diskdir,
-                    int verbose);
+cleanup_holdingdisk(char *diskdir);
 
 /* Set up a holding directory and do basic permission
  * checks on it

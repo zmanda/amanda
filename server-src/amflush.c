@@ -49,12 +49,12 @@ char *logroll_program;
 char *datestamp;
 char *amflush_timestamp;
 char *amflush_datestamp;
-sl_t *datestamp_list;
 
 /* local functions */
 int main(int main_argc, char **main_argv);
 void flush_holdingdisk(char *diskdir, char *datestamp);
-void confirm(void);
+static GSList * pick_datestamp(void);
+void confirm(GSList *datestamp_list);
 void redirect_stderr(void);
 void detach(void);
 void run_dumps(void);
@@ -82,8 +82,7 @@ main(
     amwait_t exitcode;
     int opt;
     dumpfile_t file;
-    sl_t *holding_list=NULL;
-    sle_t *holding_file;
+    GSList *holding_list=NULL, *holding_file;
     int driver_pipe[2];
     char date_string[100];
     time_t today;
@@ -94,6 +93,7 @@ main(
     char *tapedev;
     char *tpchanger;
     char *qdisk, *qhname;
+    GSList *datestamp_list = NULL;
 
     /*
      * Configure program for internationalization:
@@ -242,45 +242,46 @@ main(
      * into a set of existing datestamps (basically, evaluate the
      * expressions into actual datestamps) */
     if(datearg) {
-	sle_t *datestamp, *next_datestamp;
+	GSList *all_datestamps;
+	GSList *datestamp;
 	int i, ok;
 
-	datestamp_list = holding_get_all_datestamps();
-	for(datestamp = datestamp_list->first; datestamp != NULL;) {
-	    next_datestamp = datestamp->next;
+	all_datestamps = holding_get_all_datestamps();
+	for(datestamp = all_datestamps; datestamp != NULL; datestamp = datestamp->next) {
 	    ok = 0;
 	    for(i=0; i<nb_datearg && ok==0; i++) {
-		ok = match_datestamp(datearg[i], datestamp->name);
+		ok = match_datestamp(datearg[i], (char *)datestamp->data);
 	    }
-	    if(ok == 0) { /* remove datestamp from list */
-		remove_sl(datestamp_list, datestamp);
-	    }
-	    datestamp = next_datestamp;
+	    if (ok)
+		datestamp_list = g_slist_insert_sorted(datestamp_list,
+		    stralloc((char *)datestamp->data),
+		    g_compare_strings);
 	}
+	g_slist_free_full(all_datestamps);
     }
     else {
 	/* otherwise, in batch mode, use all datestamps */
 	if(batch) {
 	    datestamp_list = holding_get_all_datestamps();
 	}
-	/* and finally, allow the user to pick datestamps */
+	/* or allow the user to pick datestamps */
 	else {
 	    datestamp_list = pick_datestamp();
 	}
     }
 
-    if(is_empty_sl(datestamp_list)) {
+    if(!datestamp_list) {
 	printf(_("Could not find any Amanda directories to flush.\n"));
 	exit(1);
     }
 
     holding_list = holding_get_files_for_flush(datestamp_list);
-    if(holding_list->first == NULL) {
+    if (holding_list == NULL) {
 	printf(_("Could not find any valid dump image, check directory.\n"));
 	exit(1);
     }
 
-    if(!batch) confirm();
+    if(!batch) confirm(datestamp_list);
 
     for(dp = diskq.head; dp != NULL; dp = dp->next) {
 	if(dp->todo) {
@@ -344,14 +345,14 @@ main(
     }
 
     fprintf(driver_stream, "DATE %s\n", amflush_timestamp);
-    for(holding_file=holding_list->first; holding_file != NULL;
+    for(holding_file=holding_list; holding_file != NULL;
 				   holding_file = holding_file->next) {
-	holding_file_get_dumpfile(holding_file->name, &file);
+	holding_file_get_dumpfile((char *)holding_file->data, &file);
 
-	if (holding_file_size(holding_file->name, 1) <= 0) {
+	if (holding_file_size((char *)holding_file->data, 1) <= 0) {
 	    log_add(L_INFO, "%s: removing file with no data.",
-		    holding_file->name);
-	    holding_file_unlink(holding_file->name);
+		    (char *)holding_file->data);
+	    holding_file_unlink((char *)holding_file->data);
 	    continue;
 	}
 
@@ -363,7 +364,7 @@ main(
 	if (dp->todo == 0) continue;
 
 	qdisk = quote_string(file.disk);
-	qhname = quote_string(holding_file->name);
+	qhname = quote_string((char *)holding_file->data);
 	fprintf(stderr,
 		"FLUSH %s %s %s %d %s\n",
 		file.name,
@@ -399,9 +400,9 @@ main(
 	}
     }
 
-    free_sl(datestamp_list);
+    g_slist_free_full(datestamp_list);
     datestamp_list = NULL;
-    free_sl(holding_list);
+    g_slist_free_full(holding_list);
     holding_list = NULL;
 
     if(redirect) { /* rename errfile */
@@ -522,25 +523,109 @@ get_letter_from_user(void)
     return r;
 }
 
+/* Allow the user to select a set of datestamps from those in
+ * holding disks.  The result can be passed to 
+ * holding_get_files_for_flush.  If less than two dates are
+ * available, then no user interaction takes place.
+ *
+ * @returns: a new GSList listing the selected datestamps
+ */
+static GSList *
+pick_datestamp(void)
+{
+    GSList *datestamp_list;
+    GSList *r_datestamp_list = NULL;
+    GSList *ds;
+    char **datestamps = NULL;
+    int i;
+    char *answer = NULL;
+    char *a = NULL;
+    int ch = 0;
+    char max_char = '\0', chupper = '\0';
+
+    datestamp_list = holding_get_all_datestamps();
+
+    if(g_slist_length(datestamp_list) < 2) {
+	return datestamp_list;
+    } else {
+	datestamps = alloc(g_slist_length(datestamp_list) * SIZEOF(char *));
+	for(ds = datestamp_list, i=0; ds != NULL; ds = ds->next,i++) {
+	    datestamps[i] = (char *)ds->data; /* borrowing reference */
+	}
+
+	while(1) {
+	    puts(_("\nMultiple Amanda runs in holding disks; please pick one by letter:"));
+	    for(ds = datestamp_list, max_char = 'A';
+		ds != NULL && max_char <= 'Z';
+		ds = ds->next, max_char++) {
+		printf("  %c. %s\n", max_char, (char *)ds->data);
+	    }
+	    max_char--;
+	    printf(_("Select datestamps to flush [A..%c or <enter> for all]: "), max_char);
+	    fflush(stdout); fflush(stderr);
+	    amfree(answer);
+	    if ((answer = agets(stdin)) == NULL) {
+		clearerr(stdin);
+		continue;
+	    }
+
+	    if (*answer == '\0' || strncasecmp(answer, "ALL", 3) == 0) {
+		break;
+	    }
+
+	    a = answer;
+	    while ((ch = *a++) != '\0') {
+		if (!isspace(ch))
+		    break;
+	    }
+
+	    /* rewrite the selected list into r_datestamp_list, then copy it over
+	     * to datestamp_list */
+	    do {
+		if (isspace(ch) || ch == ',') {
+		    continue;
+		}
+		chupper = (char)toupper(ch);
+		if (chupper < 'A' || chupper > max_char) {
+		    g_slist_free_full(r_datestamp_list);
+		    r_datestamp_list = NULL;
+		    break;
+		}
+		r_datestamp_list = g_slist_append(r_datestamp_list,
+					   stralloc(datestamps[chupper - 'A']));
+	    } while ((ch = *a++) != '\0');
+	    if (r_datestamp_list && ch == '\0') {
+		g_slist_free_full(datestamp_list);
+		datestamp_list = r_datestamp_list;
+		break;
+	    }
+	}
+    }
+    amfree(datestamps); /* references in this array are borrowed */
+    amfree(answer);
+
+    return datestamp_list;
+}
+
 
 /*
  * confirm before detaching and running
  */
 
 void
-confirm(void)
+confirm(GSList *datestamp_list)
 {
     tape_t *tp;
     char *tpchanger;
-    sle_t *datestamp;
+    GSList *datestamp;
     int ch;
     char *extra;
 
     printf(_("\nToday is: %s\n"),amflush_datestamp);
     printf(_("Flushing dumps from"));
     extra = "";
-    for(datestamp = datestamp_list->first; datestamp != NULL; datestamp = datestamp->next) {
-	printf("%s %s", extra, datestamp->name);
+    for(datestamp = datestamp_list; datestamp != NULL; datestamp = datestamp->next) {
+	printf("%s %s", extra, (char *)datestamp->data);
 	extra = ",";
     }
     tpchanger = getconf_str(CNF_TPCHANGER);

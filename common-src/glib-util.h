@@ -77,5 +77,8 @@ gboolean g_value_compare(GValue * a, GValue * b);
    parsed. */
 gboolean g_value_set_from_string(GValue * val, char * string);
 
+/* A GCompareFunc that will sort strings alphabetically (using strcmp) */
+gint g_compare_strings(gconstpointer a, gconstpointer b);
+
 #endif
 

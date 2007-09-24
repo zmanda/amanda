@@ -242,28 +242,28 @@ cmdline_match_holding(
     GSList *dumpspec_list)
 {
     dumpspec_t *de;
-    GSList *li;
-    sl_t *holding_files;
-    sle_t *he;
+    GSList *li, *hi;
+    GSList *holding_files;
     GSList *matching_files = NULL;
     dumpfile_t file;
 
-    holding_set_verbosity(0);
     holding_files = holding_get_files(NULL, 1);
 
-    for (he = holding_files->first; he != NULL; he = he->next) {
+    for (hi = holding_files; hi != NULL; hi = hi->next) {
 	/* TODO add level */
-	if (!holding_file_get_dumpfile(he->name, &file)) continue;
+	if (!holding_file_get_dumpfile((char *)hi->data, &file)) continue;
         if (file.type != F_DUMPFILE) continue;
         for (li = dumpspec_list; li != NULL; li = li->next) {
 	    de = (dumpspec_t *)(li->data);
             if (de->host && de->host[0] && !match_host(de->host, file.name)) continue;
             if (de->disk && de->disk[0] && !match_disk(de->disk, file.disk)) continue;
             if (de->datestamp && de->datestamp[0] && !match_datestamp(de->datestamp, file.datestamp)) continue;
-            matching_files = g_slist_append(matching_files, g_strdup(he->name));
+            matching_files = g_slist_append(matching_files, g_strdup((char *)hi->data));
             break;
         }
     }
+
+    g_slist_free_full(holding_files);
 
     return matching_files;
 }
