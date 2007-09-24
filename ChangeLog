@@ -1,3 +1,12 @@
+2007-09-24  Dustin J. Mitchell <dustin@zmanda.com>
+	* server-src/cmdline.c server-src/cmdline.h:
+	  Optionally parse datestamps and levels
+	* server-src/amadmin.c: pass flags to cmdline functions
+	* server-src/find.c restore-src/amidxtaped.c
+	  restore-src/amrestore.c restore-src/restore.c
+	  restore-src/restore.h restore-src/amfetchdump.c:
+	  Use cmdline module in amrestore, amidxtaped, and amfetchdump
+
 2007-09-24  Ian Turner <ian@zmanda.com> (merged by dustin@zmanda.com)
 	* restore-src/amrestore.c: Fix a segmentation fault that occurs
 	  when the user specifies hostname, diskname, and date. Thanks to

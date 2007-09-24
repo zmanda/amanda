@@ -1161,7 +1161,7 @@ get_file_list(
     if (argc == 0 && !allow_empty)
 	return NULL;
 
-    dumplist = cmdline_parse_dumpspecs(argc, argv);
+    dumplist = cmdline_parse_dumpspecs(argc, argv, CMDLINE_PARSE_DATESTAMP);
     if (!dumplist) {
 	fprintf(stderr, _("Could not get dump list\n"));
 	return NULL;
@@ -1355,7 +1355,7 @@ holding(
                     continue;
                 }
 
-                dumpstr = cmdline_format_dumpspec_components(file.name, file.disk, file.datestamp);
+                dumpstr = cmdline_format_dumpspec_components(file.name, file.disk, file.datestamp, NULL);
                 if (long_list) {
                     printf("%-10"OFF_T_RFMT" %-2d %s\n", 
                            (OFF_T_FMT_TYPE)

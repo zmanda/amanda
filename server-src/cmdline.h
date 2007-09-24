@@ -33,13 +33,16 @@
 
 /* A dumpspec can specify a particular dump (combining host, disk, and 
  * datestamp), or can be less specific by leaving out some components.
- * In some cases (such as selecting DLEs), the datestamp is not relevant.
- * Functions for these cases leave the datestamp NULL.
+ * Missing components are NULL, except in the special case of an 
+ * "wildcard" dumpspec, as detailed below.
+ *
+ * All strings in this struct are independently malloc()ed.
  */
 typedef struct dumpspec_s {
     char *host;
     char *disk;
     char *datestamp;
+    char *level;
 } dumpspec_t;
 
 /*
@@ -51,13 +54,15 @@ typedef struct dumpspec_s {
  * @param host: host name
  * @param disk: disk name
  * @param datestamp: datestamp
+ * @param level: level (as a string, allowing regexes)
  * @returns: dumpspec, or NULL on error
  */
 dumpspec_t *
 dumpspec_new(
     char *host, 
     char *disk, 
-    char *datestamp);
+    char *datestamp,
+    char *level);
 
 /* Free memory associated with a single dumpspec.  (Does not chase 
  * next pointers)
@@ -96,12 +101,19 @@ dumpspec_list_free(
  *
  * @param argc: count of command line arguments
  * @param argv: command line arguments
+ * @param flags: bitmask of the CMDLINE_PARSE_* flags
  * @returns: dumpspec list, or NULL on error
  */
 GSList *
 cmdline_parse_dumpspecs(
     int argc,
-    char **argv);
+    char **argv,
+    int flags);
+/* flags values (bitmask): */
+    /* parse datestamps after disks */
+#    define CMDLINE_PARSE_DATESTAMP (1<<0)
+    /* parse levels after datestamps or disks */
+#    define CMDLINE_PARSE_LEVEL (1<<1)
 
 /* Is the dumpspec list the wildcard returned from 
  * cmdline_parse_dumpspecs?
@@ -121,13 +133,9 @@ cmdline_parse_dumpspecs(
  && (((dumpspec_t *)((list)->data))->disk)			\
  && (((dumpspec_t *)((list)->data))->disk[0] == '\0')	        \
  && (((dumpspec_t *)((list)->data))->datestamp)		        \
- && (((dumpspec_t *)((list)->data))->datestamp[0] == '\0'))	\
-
-/* TODO: new name for match_disklist */
-int
-cmdline_parse_disk_list_entries(
-    int argc,
-    char **argv);
+ && (((dumpspec_t *)((list)->data))->datestamp[0] == '\0')	\
+ && (((dumpspec_t *)((list)->data))->level)		        \
+ && (((dumpspec_t *)((list)->data))->level[0] == '\0'))
 
 /*
  * Formatting
@@ -157,7 +165,8 @@ char *
 cmdline_format_dumpspec_components(
     char *host,
     char *disk,
-    char *datestamp);
+    char *datestamp,
+    char *level);
 
 /*
  * Searching

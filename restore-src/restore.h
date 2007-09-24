@@ -39,14 +39,6 @@
 
 #define CREAT_MODE  0640
 
-typedef struct match_list_s {
-    char *hostname;
-    char *diskname;
-    char *datestamp;
-    char *level;
-    struct match_list_s *next;
-} match_list_t;
-
 typedef struct rst_flags_s {
     unsigned int inline_assemble:1;
     unsigned int delay_assemble:1;
@@ -90,26 +82,25 @@ gboolean restore_holding_disk(FILE * prompt_out,
                               am_feature_t * features,
                               tapelist_t * file,
                               seentapes_t ** seen,
-                              match_list_t * match_list,
+                              GSList * dumpspecs,
                               dumpfile_t * this_header,
                               dumpfile_t * last_header);
 
 gboolean search_a_tape(Device * device, FILE *prompt_out, rst_flags_t  *flags,
                        am_feature_t *their_features, 
-                       tapelist_t   *desired_tape, match_list_t *match_list,
+                       tapelist_t   *desired_tape, GSList *dumpspecs,
                        seentapes_t **tape_seen,
                        dumpfile_t * first_restored_file, int tape_count,
                        FILE * logstream);
 
 void flush_open_outputs(int reassemble, dumpfile_t *only_file);
 void search_tapes(FILE *prompt_out, FILE *prompt_in, int use_changer,
-		  tapelist_t *tapelist, match_list_t *restorethese,
+		  tapelist_t *tapelist, GSList *dumpspecs,
 		  rst_flags_t *flags, am_feature_t *their_features);
 int have_all_parts(dumpfile_t *file, int upto);
 rst_flags_t *new_rst_flags(void);
 int check_rst_flags(rst_flags_t *flags);
 void free_rst_flags(rst_flags_t *flags);
-void free_match_list(match_list_t *match_list);
 int lock_logfile(void);
 void send_message(FILE *prompt_out, rst_flags_t *flags,
 		  am_feature_t *their_features, char * format, ...);

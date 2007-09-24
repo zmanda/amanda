@@ -921,10 +921,10 @@ dumps_match(
 	cur_result=cur_result->next) {
 	char level_str[NUM_STR_SIZE];
 	snprintf(level_str, SIZEOF(level_str), "%d", cur_result->level);
-	if((*hostname == '\0' || match_host(hostname, cur_result->hostname)) &&
-	   (*diskname == '\0' || match_disk(diskname, cur_result->diskname)) &&
-	   (*datestamp== '\0' || match_datestamp(datestamp, cur_result->timestamp)) &&
-	   (*level== '\0' || match_level(level, level_str)) &&
+	if((!hostname || *hostname == '\0' || match_host(hostname, cur_result->hostname)) &&
+	   (!diskname || *diskname == '\0' || match_disk(diskname, cur_result->diskname)) &&
+	   (!datestamp || *datestamp== '\0' || match_datestamp(datestamp, cur_result->timestamp)) &&
+	   (!level || *level== '\0' || match_level(level, level_str)) &&
 	   (!ok || !strcmp(cur_result->status, "OK"))){
 
 	    find_result_t *curmatch = alloc(SIZEOF(find_result_t));

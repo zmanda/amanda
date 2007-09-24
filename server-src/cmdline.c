@@ -34,7 +34,8 @@ dumpspec_t *
 dumpspec_new(
     char *host, 
     char *disk, 
-    char *datestamp)
+    char *datestamp,
+    char *level)
 {
     dumpspec_t *rv;
 
@@ -43,6 +44,7 @@ dumpspec_new(
     if (host) rv->host = stralloc(host);
     if (disk) rv->disk = stralloc(disk);
     if (datestamp) rv->datestamp = stralloc(datestamp);
+    if (level) rv->level = stralloc(level);
 
     return rv;
 }
@@ -55,6 +57,7 @@ dumpspec_free(
     if (dumpspec->host) free(dumpspec->host);
     if (dumpspec->disk) free(dumpspec->disk);
     if (dumpspec->datestamp) free(dumpspec->datestamp);
+    if (dumpspec->level) free(dumpspec->level);
     free(dumpspec);
 }
 
@@ -63,7 +66,6 @@ dumpspec_list_free(
     GSList *dumpspec_list)
 {
     /* first free all of the individual dumpspecs */
-    /* (dumpspec_free will ignore the extra NULL) */
     g_slist_foreach_nodata(dumpspec_list, dumpspec_free);
 
     /* then free the list itself */
@@ -73,31 +75,33 @@ dumpspec_list_free(
 GSList *
 cmdline_parse_dumpspecs(
     int argc,
-    char **argv)
+    char **argv,
+    int flags)
 {
     dumpspec_t *dumpspec = NULL;
     GSList *list = NULL;
     char *errstr;
     char *name;
     int optind = 0;
-    enum { ARG_GET_HOST, ARG_GET_DISK, ARG_GET_DATE } arg_state = ARG_GET_HOST;
+    enum { ARG_GET_HOST, ARG_GET_DISK, ARG_GET_DATESTAMP, ARG_GET_LEVEL } arg_state = ARG_GET_HOST;
 
     while (optind < argc) {
-        name = argv[optind++];
+        name = argv[optind];
         switch (arg_state) {
             case ARG_GET_HOST:
+                arg_state = ARG_GET_DISK;
                 if (name[0] != '\0'
                     && (errstr=validate_regexp(name)) != NULL) {
                     fprintf(stderr, _("%s: bad hostname regex \"%s\": %s\n"),
 		                    get_pname(), name, errstr);
                     goto error;
                 }
-                dumpspec = dumpspec_new(name, NULL, NULL);
+                dumpspec = dumpspec_new(name, NULL, NULL, NULL);
 		list = g_slist_append(list, (gpointer)dumpspec);
-                arg_state = ARG_GET_DISK;
                 break;
 
             case ARG_GET_DISK:
+                arg_state = ARG_GET_DATESTAMP;
                 if (name[0] != '\0'
                     && (errstr=validate_regexp(name)) != NULL) {
                     fprintf(stderr, _("%s: bad diskname regex \"%s\": %s\n"),
@@ -105,10 +109,11 @@ cmdline_parse_dumpspecs(
                     goto error;
                 }
                 dumpspec->disk = stralloc(name);
-                arg_state = ARG_GET_DATE;
                 break;
 
-            case ARG_GET_DATE:
+            case ARG_GET_DATESTAMP:
+                arg_state = ARG_GET_LEVEL;
+		if (!(flags & CMDLINE_PARSE_DATESTAMP)) continue;
                 if (name[0] != '\0'
                     && (errstr=validate_regexp(name)) != NULL) {
                     fprintf(stderr, _("%s: bad datestamp regex \"%s\": %s\n"),
@@ -116,14 +121,29 @@ cmdline_parse_dumpspecs(
                     goto error;
                 }
                 dumpspec->datestamp = stralloc(name);
+                break;
+
+            case ARG_GET_LEVEL:
                 arg_state = ARG_GET_HOST;
+		if (!(flags & CMDLINE_PARSE_LEVEL)) continue;
+                if (name[0] != '\0'
+                    && (errstr=validate_regexp(name)) != NULL) {
+                    fprintf(stderr, _("%s: bad level regex \"%s\": %s\n"),
+		                    get_pname(), name, errstr);
+                    goto error;
+                }
+                dumpspec->level = stralloc(name);
                 break;
         }
+
+	optind++;
     }
 
     /* if nothing was processed, add an "empty" element */
     if (dumpspec == NULL) {
-        dumpspec = dumpspec_new("", "", "");
+        dumpspec = dumpspec_new("", "", 
+		(flags & CMDLINE_PARSE_DATESTAMP)?"":NULL,
+		(flags & CMDLINE_PARSE_LEVEL)?"":NULL);
 	list = g_slist_append(list, (gpointer)dumpspec);
     }
 
@@ -142,7 +162,8 @@ cmdline_format_dumpspec(
     return cmdline_format_dumpspec_components(
         dumpspec->host,
         dumpspec->disk,
-        dumpspec->datestamp);
+        dumpspec->datestamp,
+	dumpspec->level);
 }
 
 /* Quote str for shell interpretation, being conservative.
@@ -157,6 +178,9 @@ quote_dumpspec_string(char *str)
     char *p, *q;
     int len = 0;
     int need_single_quotes = 0;
+
+    if (!str[0])
+	return stralloc("''"); /* special-case the empty string */
 
     for (p = str; *p; p++) {
         if (!isalnum(*p) && *p != '.' && *p != '/') need_single_quotes=1;
@@ -181,27 +205,34 @@ char *
 cmdline_format_dumpspec_components(
     char *host,
     char *disk,
-    char *datestamp)
+    char *datestamp,
+    char *level)
 {
     char *rv = NULL;
 
     host = host? quote_dumpspec_string(host):NULL;
     disk = disk? quote_dumpspec_string(disk):NULL;
     datestamp = datestamp? quote_dumpspec_string(datestamp):NULL;
+    level = level? quote_dumpspec_string(level):NULL;
 
     if (host) {
         rv = host;
+	host = NULL;
         if (disk) {
             rv = newvstralloc(rv, rv, " ", disk, NULL);
-            amfree(disk);
             if (datestamp) {
                 rv = newvstralloc(rv, rv, " ", datestamp, NULL);
-                amfree(datestamp);
+		if (level) {
+		    rv = newvstralloc(rv, rv, " ", level, NULL);
+		}
             }
         }
     }
+
+    if (host) amfree(host);
     if (disk) amfree(disk);
     if (datestamp) amfree(datestamp);
+    if (level) amfree(level);
 
     return rv;
 }
@@ -221,6 +252,7 @@ cmdline_match_holding(
     holding_files = holding_get_files(NULL, 1);
 
     for (he = holding_files->first; he != NULL; he = he->next) {
+	/* TODO add level */
 	if (!holding_file_get_dumpfile(he->name, &file)) continue;
         if (file.type != F_DUMPFILE) continue;
         for (li = dumpspec_list; li != NULL; li = li->next) {

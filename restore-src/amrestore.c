@@ -44,6 +44,7 @@
 #include "restore.h"
 #include "conffile.h"
 #include "device.h"
+#include "cmdline.h"
 
 #define CREAT_MODE	0640
 
@@ -89,7 +90,7 @@ static gboolean check_device_type(char * device_name) {
 }
 
 static void handle_holding_disk_restore(char * filename, rst_flags_t * flags,
-                                        match_list_t * match_list) {
+                                        GSList * dumpspecs) {
     dumpfile_t this_header;
     tapelist_t this_disk;
 
@@ -97,14 +98,14 @@ static void handle_holding_disk_restore(char * filename, rst_flags_t * flags,
     this_disk.label = filename;
 
     if (!restore_holding_disk(stderr, flags, NULL, &this_disk, NULL,
-                              match_list, &this_header, NULL)) {
+                              dumpspecs, &this_header, NULL)) {
         fprintf(stderr, "%s did not match requested host.\n", filename);
         return;
     }
 }
 
 static void handle_tape_restore(char * device_name, rst_flags_t * flags,
-                                match_list_t * match_list, char * check_label) {
+                                GSList * dumpspecs, char * check_label) {
     Device * device;
 
     device_api_init();
@@ -131,7 +132,7 @@ static void handle_tape_restore(char * device_name, rst_flags_t * flags,
               check_label, device->volume_label);
     }
 
-    search_a_tape(device, stderr, flags, NULL, NULL, match_list,
+    search_a_tape(device, stderr, flags, NULL, NULL, dumpspecs,
                   NULL, NULL, 0, NULL);
 }
 
@@ -147,18 +148,15 @@ main(
 {
     extern int optind;
     int opt;
-    char *errstr;
     int holding_disk_mode;
     char *tapename = NULL;
-    match_list_t * match_list = NULL;
-    match_list_t * me = NULL;
-    int arg_state;
     char *e;
     char *label = NULL;
     rst_flags_t *rst_flags;
     long tmplong;
     int    new_argc,   my_argc;
     char **new_argv, **my_argv;
+    GSList *dumpspecs;
 
     /*
      * Configure program for internationalization:
@@ -254,62 +252,9 @@ main(
 
     tapename = my_argv[optind++];
 
-#define ARG_GET_HOST 0
-#define ARG_GET_DISK 1
-#define ARG_GET_DATE 2
+    dumpspecs = cmdline_parse_dumpspecs(my_argc - optind, my_argv + optind, 
+					CMDLINE_PARSE_DATESTAMP);
 
-    arg_state = ARG_GET_HOST;
-    while(optind < my_argc) {
-	switch(arg_state) {
-	case ARG_GET_HOST:
-	    /*
-	     * This is a new host/disk/date triple, so allocate a match_list.
-	     */
-	    me = alloc(SIZEOF(*me));
-	    me->hostname = my_argv[optind++];
-	    me->diskname = "";
-	    me->datestamp = "";
-	    me->level = "";
-	    me->next = match_list;
-	    match_list = me;
-	    if(me->hostname[0] != '\0'
-	       && (errstr=validate_regexp(me->hostname)) != NULL) {
-	        fprintf(stderr, _("%s: bad hostname regex \"%s\": %s\n"),
-		        get_pname(), me->hostname, errstr);
-	        usage();
-	    }
-	    arg_state = ARG_GET_DISK;
-	    break;
-	case ARG_GET_DISK:
-	    me->diskname = my_argv[optind++];
-	    if(me->diskname[0] != '\0'
-	       && (errstr=validate_regexp(me->diskname)) != NULL) {
-	        fprintf(stderr, _("%s: bad diskname regex \"%s\": %s\n"),
-		        get_pname(), me->diskname, errstr);
-	        usage();
-	    }
-	    arg_state = ARG_GET_DATE;
-	    break;
-	case ARG_GET_DATE:
-	    me->datestamp = my_argv[optind++];
-	    if(me->datestamp[0] != '\0'
-	       && (errstr=validate_regexp(me->datestamp)) != NULL) {
-	        fprintf(stderr, _("%s: bad datestamp regex \"%s\": %s\n"),
-		        get_pname(), me->datestamp, errstr);
-	        usage();
-	    }
-	    arg_state = ARG_GET_HOST;
-	    break;
-	}
-    }
-    if(match_list == NULL) {
-	match_list = malloc(SIZEOF(*match_list));
-	match_list->hostname = "";
-	match_list->diskname = "";
-	match_list->datestamp = "";
-        match_list->level = "";
-	match_list->next = NULL;
-    }
 
     holding_disk_mode = check_device_type(tapename);
 
@@ -325,9 +270,12 @@ main(
 		    get_pname());
         }
 
-        handle_holding_disk_restore(tapename, rst_flags, match_list);
+        handle_holding_disk_restore(tapename, rst_flags, dumpspecs);
     } else {
-        handle_tape_restore(tapename, rst_flags, match_list, label);
+        handle_tape_restore(tapename, rst_flags, dumpspecs, label);
     }
+
+    dumpspec_list_free(dumpspecs);
+
     return 0;
 }

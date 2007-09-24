@@ -36,6 +36,7 @@
 #include "version.h"
 #include "clock.h"
 #include "restore.h"
+#include "cmdline.h"
 
 #include "changer.h"
 #include "conffile.h"
@@ -238,7 +239,7 @@ main(
     in_port_t data_port = (in_port_t)-1;
     socklen_t socklen;
     struct sockaddr_in addr;
-    match_list_t *match_list;
+    GSList *dumpspecs;
     tapelist_t *tapes = NULL;
     char *their_feature_string = NULL;
     rst_flags_t *rst_flags;
@@ -249,6 +250,7 @@ main(
     tapetype_t *tape;
     char *line;
     char *tapedev;
+    dumpspec_t *ds;
 #ifndef DEBUG_CODE
     int i;
 #endif
@@ -400,14 +402,7 @@ main(
 	}
     }
 
-    /* get the number of arguments */
-    match_list = alloc(SIZEOF(match_list_t));
-    match_list->next = NULL;
-    match_list->hostname = "";
-    match_list->datestamp = "";
-    match_list->level = "";
-    match_list->diskname = "";
-
+    ds = dumpspec_new(NULL, NULL, NULL, NULL);
     for (re_end = 0; re_end == 0; ) {
 	char *s, ch;
 	amfree(buf);
@@ -440,13 +435,13 @@ main(
 	    rst_flags->alt_tapedev= stralloc(s);
 	}
 	else if(strncmp_const_skip(buf, "HOST=", s, ch) == 0) {
-	    match_list->hostname = stralloc(s);
+	    ds->host = stralloc(s);
 	}
 	else if(strncmp_const_skip(buf, "DISK=", s, ch) == 0) {
-	    match_list->diskname = stralloc(s);
+	    ds->disk = stralloc(s);
 	}
 	else if(strncmp_const_skip(buf, "DATESTAMP=", s, ch) == 0) {
-	    match_list->datestamp = stralloc(s);
+	    ds->datestamp = stralloc(s);
 	}
 	else if(strncmp_const(buf, "END") == 0) {
 	    re_end = 1;
@@ -492,6 +487,10 @@ main(
 	rst_flags->check_labels = 1;
 	use_changer = 1;
     }
+
+    /* build the dumpspec list from our single dumpspec */
+    dumpspecs = g_slist_append(NULL, (gpointer)ds);
+    ds = NULL;
 
     if(!tapes && rst_flags->alt_tapedev){
         sleep(10);
@@ -601,7 +600,7 @@ main(
     }
 
     /* actual restoration */
-    search_tapes(cmdout, cmdin, use_changer, tapes, match_list, rst_flags,
+    search_tapes(cmdout, cmdin, use_changer, tapes, dumpspecs, rst_flags,
 		 their_features);
     dbprintf(_("Restoration finished\n"));
 
@@ -613,10 +612,7 @@ main(
 
     amfree(rst_flags->alt_tapedev);
     amfree(rst_flags);
-    amfree(match_list->hostname);
-    amfree(match_list->diskname);
-    amfree(match_list->datestamp);
-    amfree(match_list);
+    dumpspec_list_free(dumpspecs);
     amfree(config_dir);
     amfree(re_config);
     dbclose();

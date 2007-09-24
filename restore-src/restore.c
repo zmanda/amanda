@@ -37,6 +37,7 @@
 #include "logfile.h"
 #include "fileheader.h"
 #include "arglist.h"
+#include "cmdline.h"
 #include <signal.h>
 #include <timestamp.h>
 
@@ -1415,25 +1416,27 @@ static void print_tape_inventory(FILE * logstream, seentapes_t * tape_seen,
     }
 }
 
-/* Check if the given header matches the given match_list. Returns
-   TRUE if match_list is NULL and false if the header is NULL. Returns
+/* Check if the given header matches the given dumpspecs. Returns
+   TRUE if dumpspecs is NULL and false if the header is NULL. Returns
    true if the header matches the  match list. */
-static gboolean run_match_list(match_list_t * match_list,
+static gboolean run_dumpspecs(GSList * dumpspecs,
                                dumpfile_t * header) {
-    match_list_t * me;
+    dumpspec_t *ds;
 
-    if (match_list == NULL)
+    if (dumpspecs == NULL)
         return TRUE;
     if (header == NULL)
         return FALSE;
 
-    for (me = match_list; me != NULL; me = me->next) {
-        if (disk_match(header, me->datestamp, me->hostname,
-                       me->diskname, me->level) != 0) {
+    while (dumpspecs) {
+	ds = (dumpspec_t *)dumpspecs->data;
+        if (disk_match(header, ds->datestamp, ds->host,
+                       ds->disk, ds->level) != 0) {
             return TRUE;
         }
+	dumpspecs = dumpspecs->next;
     }
-    
+
     return FALSE;
 }
 
@@ -1446,7 +1449,7 @@ try_restore_single_file(Device * device, int file_num,
                         rst_flags_t * flags,
                         am_feature_t * their_features,
                         dumpfile_t * first_restored_file,
-                        match_list_t * match_list,
+                        GSList * dumpspecs,
                         seentapes_t * tape_seen) {
     RestoreSource source;
     source.u.device = device;
@@ -1462,7 +1465,7 @@ try_restore_single_file(Device * device, int file_num,
         return RESTORE_STATUS_NEXT_TAPE;
     }
 
-    if (!run_match_list(match_list, source.header)) {
+    if (!run_dumpspecs(dumpspecs, source.header)) {
         fprintf(prompt_out, "%s: %d: skipping ",
                 get_pname(), file_num);
         print_header(prompt_out, source.header);
@@ -1492,7 +1495,7 @@ search_a_tape(Device      * device,
               rst_flags_t  *flags,      /* Restore options. */
               am_feature_t *their_features, 
               tapelist_t   *desired_tape, /* A list of desired tape files */
-              match_list_t *match_list, /* What disks to restore. */
+              GSList *dumpspecs, /* What disks to restore. */
               seentapes_t **tape_seen,  /* Where to record data on
                                            this tape. */
               /* May be NULL. If zeroed, will be filled in with the
@@ -1559,7 +1562,7 @@ search_a_tape(Device      * device,
         restore_status =
             try_restore_single_file(device, flags->fsf, prompt_out, flags,
                                     their_features, first_restored_file,
-                                    match_list, tape_seen_head);
+                                    dumpspecs, tape_seen_head);
     } else {
         /* Search the tape from beginning to end. */
         int file_num;
@@ -1577,7 +1580,7 @@ search_a_tape(Device      * device,
             restore_status =
                 try_restore_single_file(device, file_num, prompt_out, flags,
                                         their_features, first_restored_file,
-                                        match_list, tape_seen_head);
+                                        dumpspecs, tape_seen_head);
             if (restore_status != RESTORE_STATUS_NEXT_FILE)
                 break;
             file_num ++;
@@ -1643,7 +1646,7 @@ gboolean restore_holding_disk(FILE * prompt_out,
                               am_feature_t * features,
                               tapelist_t * file,
                               seentapes_t ** seen,
-                              match_list_t * match_list,
+                              GSList * dumpspecs,
                               dumpfile_t * this_header,
                               dumpfile_t * last_header) {
     RestoreSource source;
@@ -1673,7 +1676,7 @@ gboolean restore_holding_disk(FILE * prompt_out,
         return TRUE;
     }
 
-    if (!run_match_list(match_list, source.header)) {
+    if (!run_dumpspecs(dumpspecs, source.header)) {
         return FALSE;
     }
 
@@ -1727,7 +1730,7 @@ static void
 restore_from_tapelist(FILE * prompt_out,
                       FILE * prompt_in,
                       tapelist_t * tapelist,
-                      match_list_t * match_list,
+                      GSList * dumpspecs,
                       rst_flags_t * flags,
                       am_feature_t * features,
                       char * cur_tapedev,
@@ -1780,7 +1783,7 @@ restore_from_tapelist(FILE * prompt_out,
                     curslot);
 
             if (!search_a_tape(device, prompt_out, flags, features,
-                               cur_volume, match_list, &seentapes,
+                               cur_volume, dumpspecs, &seentapes,
                                &first_restored_file, 0, logstream)) {
                 g_object_unref(device);
                 break;;
@@ -1800,7 +1803,7 @@ restore_from_tapelist(FILE * prompt_out,
 static void
 restore_without_tapelist(FILE * prompt_out,
                          FILE * prompt_in,
-                         match_list_t * match_list,
+                         GSList * dumpspecs,
                          rst_flags_t * flags,
                          am_feature_t * features,
                          char * cur_tapedev,
@@ -1839,7 +1842,7 @@ restore_without_tapelist(FILE * prompt_out,
             break;;
         
         if (!search_a_tape(device, prompt_out, flags, features,
-                           NULL, match_list, &seentapes, &first_restored_file,
+                           NULL, dumpspecs, &seentapes, &first_restored_file,
                            tape_count, logstream)) {
             g_object_unref(device);
             break;
@@ -1865,7 +1868,7 @@ search_tapes(
     FILE *              prompt_in,
     int			use_changer,
     tapelist_t *	tapelist,
-    match_list_t *	match_list,
+    GSList *		dumpspecs,
     rst_flags_t *	flags,
     am_feature_t *	their_features)
 {
@@ -1948,11 +1951,11 @@ search_tapes(
      */
 
     if (tapelist) {
-        restore_from_tapelist(prompt_out, prompt_in, tapelist, match_list,
+        restore_from_tapelist(prompt_out, prompt_in, tapelist, dumpspecs,
                               flags, their_features, cur_tapedev, use_changer,
                               logstream);
     } else {
-        restore_without_tapelist(prompt_out, prompt_in, match_list, flags,
+        restore_without_tapelist(prompt_out, prompt_in, dumpspecs, flags,
                                  their_features, cur_tapedev,
                                  (use_changer ? slots : -1),
                                  logstream);
@@ -2049,29 +2052,6 @@ free_rst_flags(
     amfree(flags->inventory_log);
 
     amfree(flags);
-}
-
-
-/*
- * Clean up after a match_list_t
- */
-void
-free_match_list(
-    match_list_t *	match_list)
-{
-    match_list_t *me;
-    match_list_t *prev = NULL;
-  
-    for(me = match_list; me; me = me->next){
-	/* XXX freeing these is broken? can't work out why */
-/*	amfree(me->hostname);
-	amfree(me->diskname);
-	amfree(me->datestamp);
-	amfree(me->level); */
-	amfree(prev);
-	prev = me;
-    }
-    amfree(prev);
 }
 
 

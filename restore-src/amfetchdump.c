@@ -38,6 +38,7 @@
 #include "find.h"
 #include "changer.h"
 #include "logfile.h"
+#include "cmdline.h"
 
 #define CREAT_MODE	0640
 
@@ -56,7 +57,7 @@ typedef struct needed_tapes_s {
 /* local functions */
 
 void errexit(void);
-tapelist_t *list_needed_tapes(match_list_t *match_list);
+tapelist_t *list_needed_tapes(GSList *dumpspecs);
 void usage(void);
 int main(int argc, char **argv);
 
@@ -109,11 +110,11 @@ usage(void)
  */
 tapelist_t *
 list_needed_tapes(
-    match_list_t *	match_list)
+    GSList *	dumpspecs)
 {
     needed_tape_t *needed_tapes = NULL, *curtape = NULL;
     disklist_t diskqp;
-    match_list_t *me = NULL;
+    dumpspec_t *ds = NULL;
     find_result_t *alldumps = NULL;
     tapelist_t *tapes = NULL;
     int numtapes = 0;
@@ -152,12 +153,13 @@ list_needed_tapes(
     }
 
     /* Compare all known dumps to our match list, note what we'll need */
-    for(me = match_list; me; me = me->next) {
+    while (dumpspecs) {
 	find_result_t *curmatch = NULL;	
 	find_result_t *matches = NULL;	
+	ds = (dumpspec_t *)dumpspecs->data;
 
-	matches = dumps_match(alldumps, me->hostname, me->diskname,
-	                         me->datestamp, me->level, 1);
+	matches = dumps_match(alldumps, ds->host, ds->disk,
+	                         ds->datestamp, ds->level, 1);
 	sort_find_result("Dhklp", &matches);
 	for(curmatch = matches; curmatch; curmatch = curmatch->next){
 	    int havetape = 0;
@@ -228,7 +230,8 @@ list_needed_tapes(
 	    } /* if(!havetape) */
 
 	} /* for(curmatch = matches ... */
-    } /* for(me = match_list ... */
+	dumpspecs = dumpspecs->next;
+    } /* while (dumpspecs) */
 
     if(numtapes == 0){
       fprintf(stderr, _("No matching dumps found\n"));
@@ -262,15 +265,12 @@ main(
 {
     extern int optind;
     int opt;
-    char *errstr;
-    match_list_t *match_list = NULL;
-    match_list_t *me = NULL;
+    GSList *dumpspecs = NULL;
     int fd;
     char *config_name = NULL;
     char *conffile = NULL;
     tapelist_t *needed_tapes = NULL;
     char *e;
-    int arg_state;
     rst_flags_t *rst_flags;
     int    new_argc,   my_argc;
     char **new_argv, **my_argv;
@@ -399,79 +399,7 @@ main(
 
     dbrename(config_name, DBG_SUBDIR_SERVER);
 
-#define ARG_GET_HOST 0
-#define ARG_GET_DISK 1
-#define ARG_GET_DATE 2
-#define ARG_GET_LEVL 3
-
-    arg_state = ARG_GET_HOST;
-    while(optind < my_argc) {
-        switch(arg_state) {
-        case ARG_GET_HOST:
-            /*
-             * New host/disk/date/level set, so allocate a match_list.
-             */
-            me = alloc(SIZEOF(*me));
-            me->hostname = my_argv[optind++];
-            me->diskname = "";
-            me->datestamp = "";
-            me->level = "";
-            me->next = match_list;
-            match_list = me;
-            if(me->hostname[0] != '\0'
-               && (errstr=validate_regexp(me->hostname)) != NULL) {
-                fprintf(stderr, _("%s: bad hostname regex \"%s\": %s\n"),
-                        get_pname(), me->hostname, errstr);
-                usage();
-		/*NOTREACHED*/
-            }
-            arg_state = ARG_GET_DISK;
-            break;
-        case ARG_GET_DISK:
-            me->diskname = my_argv[optind++];
-            if(me->diskname[0] != '\0'
-               && (errstr=validate_regexp(me->diskname)) != NULL) {
-                fprintf(stderr, _("%s: bad diskname regex \"%s\": %s\n"),
-                        get_pname(), me->diskname, errstr);
-                usage();
-		/*NOTREACHED*/
-            }
-            arg_state = ARG_GET_DATE;
-            break;
-        case ARG_GET_DATE:
-            me->datestamp = my_argv[optind++];
-            if(me->datestamp[0] != '\0'
-               && (errstr=validate_regexp(me->datestamp)) != NULL) {
-                fprintf(stderr, _("%s: bad datestamp regex \"%s\": %s\n"),
-                        get_pname(), me->datestamp, errstr);
-                usage();
-		/*NOTREACHED*/
-            }
-            arg_state = ARG_GET_LEVL;
-            break;
-        case ARG_GET_LEVL:
-            me->level = my_argv[optind++];
-            if(me->level[0] != '\0'
-               && (errstr=validate_regexp(me->level)) != NULL) {
-                fprintf(stderr, _("%s: bad level regex \"%s\": %s\n"),
-                        get_pname(), me->level, errstr);
-                usage();
-		/*NOTREACHED*/
-            }
-	    arg_state = ARG_GET_HOST;
-	    break;
-        }
-    }
-
-    /* XXX I don't think this can happen */
-    if(match_list == NULL && !rst_flags->inventory_log) {
-        match_list = alloc(SIZEOF(*match_list));
-        match_list->hostname = "";
-        match_list->diskname = "";
-        match_list->datestamp = "";
-        match_list->level = "";
-        match_list->next = NULL;
-    }
+    dumpspecs = cmdline_parse_dumpspecs(my_argc - optind, my_argv + optind, CMDLINE_PARSE_DATESTAMP|CMDLINE_PARSE_LEVEL);
 
     /*
      * We've been told explicitly to go and search through the tapes the hard
@@ -479,13 +407,13 @@ main(
      */
     if(rst_flags->inventory_log){
 	fprintf(stderr, _("Beginning tape-by-tape search.\n"));
-	search_tapes(stderr, stdin, 1, NULL, match_list, rst_flags, NULL);
+	search_tapes(stderr, stdin, 1, NULL, dumpspecs, rst_flags, NULL);
 	exit(0);
     }
 
 
     /* Decide what tapes we'll need */
-    needed_tapes = list_needed_tapes(match_list);
+    needed_tapes = list_needed_tapes(dumpspecs);
 
     parent_pid = getpid();
     atexit(cleanup);
@@ -493,10 +421,10 @@ main(
     if(get_lock == 0) {
 	error(_("%s exists: amdump or amflush is already running, or you must run amcleanup"), rst_conf_logfile);
     }
-    search_tapes(NULL, stdin, 1, needed_tapes, match_list, rst_flags, NULL);
+    search_tapes(NULL, stdin, 1, needed_tapes, dumpspecs, rst_flags, NULL);
     cleanup();
 
-    free_match_list(match_list);
+    dumpspec_list_free(dumpspecs);
 
     if(rst_flags->inline_assemble || rst_flags->delay_assemble)
 	flush_open_outputs(1, NULL);
