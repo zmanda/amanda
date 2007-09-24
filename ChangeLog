@@ -1,4 +1,8 @@
 2007-09-24  Ian Turner <ian@zmanda.com> (merged by dustin@zmanda.com)
+	* server-src/restore.c: Drop some globals, use data types
+	  responsibly.
+	
+2007-09-24  Ian Turner <ian@zmanda.com> (merged by dustin@zmanda.com)
 	* server-src/taper.c: Be slightly more rigorous in sanity-checking
 	  the expected number of splits.
 	* server-src/taper-file-source.c: Correctly predict the number
@@ -8,7 +12,7 @@
 	* device-src/vfs-device.c: Accept device names without a
 	  terminating '/'.
 	
-2007-09-24  Ian Turner <ian@zmanda.com>
+2007-09-24  Ian Turner <ian@zmanda.com> (merged by dustin@zmanda.com)
 	Merge in new Device API. Thanks to Jean-Louis and Dustin for their
 	code contributions to this patch.
 

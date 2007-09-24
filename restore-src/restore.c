@@ -59,13 +59,12 @@ typedef enum {
 int file_number;
 
 /* stuff we're stuck having global */
-static char *searchlabel = NULL;
 static int backwards;
 static int exitassemble = 0;
 
 char *rst_conf_logdir = NULL;
 char *rst_conf_logfile = NULL;
-char *curslot = NULL;
+static char *curslot = NULL;
 
 typedef struct open_output_s {
     struct open_output_s *next;
@@ -232,18 +231,21 @@ scan_init(G_GNUC_UNUSED void *	ud, int	rc, G_GNUC_UNUSED int ns,
     return 0;
 }
 
+typedef struct {
+    char ** cur_tapedev;
+    char * searchlabel;
+} loadlabel_data;
+
 /* DANGER WILL ROBINSON: This function references globals:
-   static char * searchlabel;
-   static char * cur_tapedev;
           char * curslot;
  */
 int
-loadlabel_slot(void *	data,
+loadlabel_slot(void *	datap,
                int	rc,
                char *	slotstr,
                char *	device_name)
 {
-    char ** cur_tapedev = data;
+    loadlabel_data * data = (loadlabel_data*)datap;
     Device * device;
 
     g_return_val_if_fail(rc > 1 || device_name != NULL, 0);
@@ -288,7 +290,7 @@ loadlabel_slot(void *	data,
     fprintf(stderr, "%s: slot %s: time %-14s label %s",
             get_pname(), slotstr, device->volume_time, device->volume_label);
 
-    if(strcmp(device->volume_label, searchlabel) != 0) {
+    if(strcmp(device->volume_label, data->searchlabel) != 0) {
         fprintf(stderr, " (wrong tape)\n");
         g_object_unref(device);
         return 0;
@@ -298,8 +300,8 @@ loadlabel_slot(void *	data,
 
     g_object_unref(device);
     curslot = newstralloc(curslot, slotstr);
-    amfree(*cur_tapedev);
-    *cur_tapedev = stralloc(device_name);
+    amfree(*(data->cur_tapedev));
+    *(data->cur_tapedev) = stralloc(device_name);
     return 1;
 }
 
@@ -1233,8 +1235,10 @@ load_next_tape(
 		     _("Looking for tape %s..."),
 		     desired_tape->label);
 	if (backwards) {
-	    searchlabel = desired_tape->label; 
-	    changer_find(curslot, scan_init, loadlabel_slot,
+            loadlabel_data data;
+            data.cur_tapedev = cur_tapedev;
+            data.searchlabel = desired_tape->label;
+	    changer_find(&data, scan_init, loadlabel_slot,
 			 desired_tape->label);
             return LOAD_CHANGER;
 	} else {
@@ -1753,9 +1757,14 @@ restore_from_tapelist(FILE * prompt_out,
         } else {
             Device * device = NULL;
             if (use_changer) {
-                changer_find(&cur_tapedev, scan_init, loadlabel_slot,
+                char * tapedev;
+                loadlabel_data data;
+                data.cur_tapedev = &tapedev;
+                data.searchlabel =  cur_volume->label;
+                changer_find(&data, scan_init, loadlabel_slot,
                              cur_volume->label);
-                device = conditional_device_open(cur_tapedev, prompt_out,
+                /* This takes over tapedev, so nothing to free. */
+                device = conditional_device_open(tapedev, prompt_out,
                                                  flags, features,
                                                  cur_volume);
             }
