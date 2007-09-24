@@ -363,7 +363,7 @@ static gboolean find_and_label_new_tape(taper_state_t * state,
     }
     state->next_tape_device = NULL; /* Taken by device_open. */
     
-    device_set_startup_properties_from_config(state->device);
+    device_set_startup_properties_from_config(state->device, FALSE);
     
     if (!device_start(state->device, ACCESS_WRITE, state->next_tape_label,
                       strdup(state->driver_start_time))) {

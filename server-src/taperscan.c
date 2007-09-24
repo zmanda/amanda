@@ -89,7 +89,7 @@ int scan_read_label(
         return -1;
     }
 
-    device_set_startup_properties_from_config(device);
+    device_set_startup_properties_from_config(device, TRUE);
 
     if (device->volume_label != NULL) { 
         *label = g_strdup(device->volume_label);

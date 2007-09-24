@@ -114,7 +114,7 @@ static void handle_tape_restore(char * device_name, rst_flags_t * flags,
         error("Could not open device.\n");
     }
     
-    device_set_startup_properties_from_config(device);
+    device_set_startup_properties_from_config(device, TRUE);
     device_read_label(device);
 
     if (device->volume_label == NULL) {

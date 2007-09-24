@@ -338,8 +338,10 @@ dumpfile_t * make_tapestart_header(Device * self, char * label,
 dumpfile_t * make_tapeend_header(void);
 
 /* Set up first-run properties from loaded configuration file, including
-   DEVICE_MAX_VOLUME_USAGE property based on the tapetype. */
-void device_set_startup_properties_from_config(Device * device);
+ * DEVICE_MAX_VOLUME_USAGE property based on the tapetype. The reading
+ * parameter indicates whether or not read-mode is anticipated. */
+void device_set_startup_properties_from_config(Device * device,
+                                               gboolean reading);
 
 
 #endif /* DEVICE_H */

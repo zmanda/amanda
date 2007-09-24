@@ -668,7 +668,7 @@ static gboolean test_tape_status(FILE * outf) {
         return FALSE;
     }
     
-    device_set_startup_properties_from_config(device);
+    device_set_startup_properties_from_config(device, TRUE);
 
     if (tape_status != 3 && device->volume_label != label &&
                (device->volume_label == NULL || label == NULL ||

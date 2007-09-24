@@ -438,6 +438,41 @@ dumpfile_t * make_tapeend_header(void) {
     return rval;
 }
 
+/* Try setting max/fixed blocksize on a device. Check results, fallback, and
+ * print messages for problems. */
+static void try_set_blocksize(Device * device, guint blocksize,
+                              gboolean try_max_first) {
+    GValue val;
+    gboolean success;
+    bzero(&val, sizeof(val));
+    g_value_init(&val, G_TYPE_UINT);
+    g_value_set_uint(&val, blocksize);
+    if (try_max_first) {
+        success = device_property_set(device,
+                                      PROPERTY_MAX_BLOCK_SIZE,
+                                      &val);
+        if (!success) {
+            fprintf(stderr, "Setting MAX_BLOCK_SIZE to %u "
+                    "not supported for device %s.\n"
+                    "trying BLOCK_SIZE instead.\n",
+                    blocksize, device->device_name);
+        } else {
+            g_value_unset(&val);
+            return;
+        }
+    }
+
+    success = device_property_set(device,
+                                  PROPERTY_BLOCK_SIZE,
+                                  &val);
+    if (!success) {
+        fprintf(stderr, "Setting BLOCK_SIZE to %u "
+                "not supported for device %s.\n",
+                blocksize, device->device_name);
+    }
+    g_value_unset(&val);
+}
+
 /* A GHFunc (callback for g_hash_table_foreach) */
 static void set_device_property(gpointer key_p, gpointer value_p,
                                    gpointer user_data_p) {
@@ -480,18 +515,51 @@ static void set_device_property(gpointer key_p, gpointer value_p,
 
 /* Set up first-run properties, including DEVICE_MAX_VOLUME_USAGE property
  * based on the tapetype. */
-void device_set_startup_properties_from_config(Device * device) {
+void device_set_startup_properties_from_config(Device * device,
+                                               gboolean reading) {
     char * tapetype_name = getconf_str(CNF_TAPETYPE);
     if (tapetype_name != NULL) {
         tapetype_t * tapetype = lookup_tapetype(tapetype_name);
         if (tapetype != NULL) {
             GValue val;
-            guint64 length = tapetype_get_length(tapetype);
+            guint64 length;
+            guint blocksize;
+            gboolean file_pad;
+            gboolean success;
+
             bzero(&val, sizeof(GValue));
-            g_value_init(&val, G_TYPE_UINT64);
-            g_value_set_uint64(&val, length * 1024);
-            device_property_set(device, PROPERTY_MAX_VOLUME_USAGE, &val);
-            g_value_unset(&val);
+            length = tapetype_get_length(tapetype);
+
+            /* These options have no "seen" equivalent, so all we can do
+             * is check for the default values. If what we get is the
+             * default, we assume it was unset and go with the device
+             * defaults. */
+
+            if (length != DEFAULT_TAPE_LENGTH) {
+                g_value_init(&val, G_TYPE_UINT64);
+                g_value_set_uint64(&val, length * 1024);
+                success = device_property_set(device,
+                                              PROPERTY_MAX_VOLUME_USAGE, &val);
+                g_value_unset(&val);
+                if (!success) {
+                    fprintf(stderr, "Setting MAX_VOLUME_USAGE to %llu "
+                            "not supported for device %s.\n",
+                            length, device->device_name);
+                }
+            }
+
+            if (reading) {
+                blocksize = tapetype_get_readblocksize(tapetype);
+                if (blocksize != MAX_TAPE_BLOCK_KB) {
+                    try_set_blocksize(device, blocksize, TRUE);
+                }
+            } else {
+                blocksize = tapetype_get_blocksize(tapetype);
+                if (blocksize != DISK_BLOCK_KB) {
+                    try_set_blocksize(device, blocksize,
+                                      !tapetype_get_file_pad(tapetype));
+                }
+            }
         }
     }
 

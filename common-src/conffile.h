@@ -357,6 +357,8 @@ typedef struct tapetype_s {
 #define tapetype_get_speed(tapetype)         get_conftype_int   (&tapetype->value[TAPETYPE_SPEED])
 #define tapetype_get_file_pad(tapetype)      get_conftype_bool  (&tapetype->value[TAPETYPE_FILE_PAD])
 
+#define DEFAULT_TAPE_LENGTH ((off_t)2000 * 1024)
+
 /* Dump strategies */
 #define DS_SKIP		0	/* Don't do any dumps at all */
 #define DS_STANDARD	1	/* Standard (0 1 1 1 1 2 2 2 ...) */

@@ -1,4 +1,20 @@
 2007-09-24  Ian Turner <ian@zmanda.com> (merged by dustin@zmanda.com)
+	* device-src/device.c (device_set_startup_properties_from_config):
+	  Use tapetype parameters as well as device_property directives.
+	* device-src/device.h: ditto.
+	* common-src/conffile.c: Use a new macro DEFAULT_TAPE_LENGTH
+	  as default tapetype length.
+	* common-src/conffile.h: ditto.
+	* restore-src/amrestore.c: Use new interface to
+	  devic_set_startup_properties_from_config().
+	* restore-src/restore.c: ditto.
+	* server-src/amcheck.c: ditto.
+	* server-src/amlabel.c: ditto.
+	* server-src/amtape.c: ditto.
+	* server-src/taper.c: ditto.
+	* server-src/taperscan.c: ditto.
+
+2007-09-24  Ian Turner <ian@zmanda.com> (merged by dustin@zmanda.com)
 	* server-src/amcheck.c: Return 0 if everything is good with the
 	  tape. Thanks to Dustin Mitchell <dustin@zmanda.com> for 
 	  reporting this issue, and to Jean-Louis Martineau 
