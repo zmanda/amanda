@@ -21,7 +21,7 @@
 
 #include "taper-mem-port-source.h"
 
-#include <physmem.h>
+#include "physmem.h"
 
 struct _TaperMemPortSourcePrivate {
     /* Actual size of this buffer is given by max_part_size in TaperSource. */

@@ -1,5 +1,7 @@
 /* Calculate the size of physical memory.
-   Copyright (C) 2000, 2001, 2003, 2005 Free Software Foundation, Inc.
+
+   Copyright (C) 2000, 2001, 2003, 2005, 2006 Free Software
+   Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -15,7 +17,10 @@
    along with this program; if not, write to the Free Software Foundation,
    Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.  */
 
-/* Written by Paul Eggert; stolen from gnulib. */
+/* Written by Paul Eggert.  */
+
+#include <config.h>
+
 #include "physmem.h"
 
 #include <unistd.h>
@@ -79,8 +84,8 @@ physmem_total (void)
 {
 #if defined _SC_PHYS_PAGES && defined _SC_PAGESIZE
   { /* This works on linux-gnu, solaris2 and cygwin.  */
-      double pages = sysconf (_SC_PHYS_PAGES);
-      double pagesize = sysconf (_SC_PAGESIZE);
+    double pages = sysconf (_SC_PHYS_PAGES);
+    double pagesize = sysconf (_SC_PAGESIZE);
     if (0 <= pages && 0 <= pagesize)
       return pages * pagesize;
   }
@@ -277,3 +282,24 @@ physmem_available (void)
   /* Guess 25% of physical memory.  */
   return physmem_total () / 4;
 }
+
+
+#if DEBUG
+
+# include <stdio.h>
+# include <stdlib.h>
+
+int
+main (void)
+{
+  printf ("%12.f %12.f\n", physmem_total (), physmem_available ());
+  exit (0);
+}
+
+#endif /* DEBUG */
+
+/*
+Local Variables:
+compile-command: "gcc -DDEBUG -g -O -Wall -W physmem.c"
+End:
+*/

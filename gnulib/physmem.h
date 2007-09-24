@@ -16,14 +16,12 @@
    along with this program; if not, write to the Free Software Foundation,
    Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.  */
 
-/* Written by Paul Eggert; stolen from gnulib.  */
+/* Written by Paul Eggert.  */
+
 #ifndef PHYSMEM_H_
 # define PHYSMEM_H_ 1
 
-/* Returns the total amount of memory in the virtual memory system. */
 double physmem_total (void);
-/* Returns the total amount of available memory in the virtual memory
-   system. */
 double physmem_available (void);
 
-#endif
+#endif /* PHYSMEM_H_ */

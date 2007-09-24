@@ -31,7 +31,7 @@
 /* FIXME: This file needs to use gettext. */
 
 #include <glib.h>
-#include <physmem.h>
+#include "physmem.h"
 
 #include "changer.h"
 #include "clock.h"

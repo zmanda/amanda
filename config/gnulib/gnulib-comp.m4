@@ -42,11 +42,13 @@ AC_DEFUN([gl_INIT],
   gl_source_base='gnulib'
   gl_FUNC_ALLOCA
   gl_HEADER_ARPA_INET
+  gl_FUNC_BASE64
   dnl gl_USE_SYSTEM_EXTENSIONS must be added quite early to configure.ac.
   gl_GETADDRINFO
   gl_INET_NTOP
   gl_LOCK
   gl_HEADER_NETINET_IN
+  gl_PHYSMEM
   gl_SIZE_MAX
   gl_FUNC_SNPRINTF
   gl_TYPE_SOCKLEN_T
@@ -98,6 +100,8 @@ AC_DEFUN([gl_FILE_LIST], [
   build-aux/config.rpath
   lib/alloca_.h
   lib/asnprintf.c
+  lib/base64.c
+  lib/base64.h
   lib/gai_strerror.c
   lib/getaddrinfo.c
   lib/getaddrinfo.h
@@ -106,6 +110,8 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/inet_ntop.h
   lib/lock.c
   lib/lock.h
+  lib/physmem.c
+  lib/physmem.h
   lib/printf-args.c
   lib/printf-args.h
   lib/printf-parse.c
@@ -123,6 +129,7 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/absolute-header.m4
   m4/alloca.m4
   m4/arpa_inet_h.m4
+  m4/base64.m4
   m4/eoverflow.m4
   m4/extensions.m4
   m4/getaddrinfo.m4
@@ -138,6 +145,7 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/longlong.m4
   m4/netinet_in_h.m4
   m4/onceonly_2_57.m4
+  m4/physmem.m4
   m4/size_max.m4
   m4/snprintf.m4
   m4/socklen.m4

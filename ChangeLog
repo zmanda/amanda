@@ -1,4 +1,14 @@
 2007-09-24  Dustin J. Mitchell <dustin@zmanda.com>
+	* gnulib/regenerate/regenerate gnulib/Makefile.am
+	  device-src/tests/Makefile.am device-src/Makefile.am
+	  server-src/taper-mem-port-source.c server-src/taper.c
+	  config/gnulib/gnulib-comp.m4 config/gnulib/gnulib-cache.m4
+	  config/gnulib.m4i common-src/physmem.c common-src/physmem.h
+	  common-src/amanda.h common-src/base64.c common-src/Makefile.am
+	  common-src/base64.h: move base64, physmem into gnulib and set
+	  device API to include libgnu.
+
+2007-09-24  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/Makefile.am: remove redundant use of EXTRA_DIST
 
 2007-09-24  Dustin J. Mitchell <dustin@zmanda.com>

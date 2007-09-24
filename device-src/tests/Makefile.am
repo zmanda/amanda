@@ -8,7 +8,8 @@ INCLUDES =	-I$(top_builddir)/common-src \
 noinst_PROGRAMS = queue_test device_test
 LDADD = ../../common-src/libamanda.la \
 	../libamdevice.la \
-	../../common-src/libamanda.la
+	../../common-src/libamanda.la \
+	../../gnulib/libgnu.la
 
 ###
 # Because libamanda includes routines (e.g. regex) provided by some system

@@ -19,7 +19,6 @@ libamanda_la_SOURCES =		\
 	alloc.c			\
 	amfeatures.c		\
 	amflock.c		\
-	base64.c		\
 	clock.c			\
 	conffile.c		\
 	debug.c			\
@@ -33,7 +32,6 @@ libamanda_la_SOURCES =		\
 	match.c			\
 	packet.c		\
 	pipespawn.c		\
-	physmem.c		\
 	protocol.c		\
 	security.c		\
 	security-util.c		\
@@ -97,7 +95,6 @@ noinst_HEADERS =		\
 	amanda.h		\
 	amfeatures.h		\
 	arglist.h		\
-	base64.h		\
 	clock.h			\
 	amflock.h		\
 	conffile.h		\
@@ -109,7 +106,6 @@ noinst_HEADERS =		\
 	glib-util.h		\
 	packet.h		\
 	pipespawn.h		\
-	physmem.h		\
 	protocol.h		\
 	queue.h			\
 	security.h		\
