@@ -1,4 +1,7 @@
 2007-09-24  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/Makefile.am: remove redundant use of EXTRA_DIST
+
+2007-09-24  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/device.c device-src/tests/device_test.c
 	  device-src/rait-device.c server-src/amcheck.c
 	  server-src/amtape.c server-src/taperscan.c server-src/taper.c

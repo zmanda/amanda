@@ -53,26 +53,18 @@ libamanda_la_LIBADD = $(GLIB_LIBS) $(LIBCURL)
 
 if WANT_AMFLOCK_POSIX
 libamanda_la_SOURCES += amflock-posix.c
-else
-EXTRA_DIST += amflock-posix.c
 endif
 
 if WANT_AMFLOCK_FLOCK
 libamanda_la_SOURCES += amflock-flock.c
-else
-EXTRA_DIST += amflock-flock.c
 endif
 
 if WANT_AMFLOCK_LOCKF
 libamanda_la_SOURCES += amflock-lockf.c
-else
-EXTRA_DIST += amflock-lockf.c
 endif
 
 if WANT_AMFLOCK_LNLOCK
 libamanda_la_SOURCES += amflock-lnlock.c
-else
-EXTRA_DIST += amflock-lnlock.c
 endif
 
 
