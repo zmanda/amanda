@@ -1,4 +1,8 @@
 2007-09-24  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/tests/queue_test.c: simplify signal handling to
+	  be more portable
+
+2007-09-24  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/cmdline.c server-src/cmdline.h:
 	  Optionally parse datestamps and levels
 	* server-src/amadmin.c: pass flags to cmdline functions
