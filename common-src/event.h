@@ -47,6 +47,7 @@ typedef struct event_handle event_handle_t;
  * of event we are registering.  This is hopefully wide enough that
  * callers can cast pointers to it and keep the value untruncated and
  * unique.
+ * FIXME: THIS IS NOT 64-BIT CLEAN!
  */
 typedef	unsigned long event_id_t;
 

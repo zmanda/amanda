@@ -12,13 +12,18 @@ LIB_EXTENSION = la
 
 sbin_PROGRAMS=          ammt amdd amtapetype
 
+ammt_CFLAGS = $(GLIB_CFLAGS)
+amdd_CFLAGS = $(GLIB_CFLAGS)
+amtapetype_CFLAGS = $(GLIB_CFLAGS)
+
 libamtape_la_SOURCES = 	output-file.c \
 			output-null.c \
 			output-rait.c \
 			output-tape.c \
 			tapeio.c
 
-libamtape_la_LDFLAGS =  -release $(VERSION)
+libamtape_la_CFLAGS = $(GLIB_CFLAGS)
+libamtape_la_LDFLAGS =  -release $(VERSION) $(GLIB_LIBS)
 
 ###
 # Because libamanda includes routines (e.g. regex) provided by some system

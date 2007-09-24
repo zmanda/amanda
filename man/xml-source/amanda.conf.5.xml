@@ -323,16 +323,6 @@ option set to
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>rawtapedev</emphasis> string</term>
-  <listitem>
-<para>Default:
-<filename>null:</filename>.
-The path name of the raw tape device.
-This is only used if &A; is compiled for Linux machines with floppy tapes
-and is needed for QIC volume table operations.</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
   <term><emphasis remap='B'>tpchanger</emphasis> string</term>
   <listitem>
 <para>Default:

@@ -40,6 +40,7 @@
 #include "holding.h"
 #include "find.h"
 #include "util.h"
+#include "timestamp.h"
 
 disklist_t diskq;
 
@@ -1147,28 +1148,27 @@ find(
 
 /* ------------------------ */
 
-static sl_t *
+static GSList *
 get_file_list(
     int argc,
     char **argv,
     int allow_empty)
 {
-    sl_t * file_list = NULL;
-    dumpspec_list_t * dumplist;
+    GSList * file_list = NULL;
+    GSList * dumplist;
 
-    if (argc > 0) {
-        dumplist = cmdline_parse_dumpspecs(argc, argv);
-        if (!dumplist) {
-            fprintf(stderr, _("Could not get dump list\n"));
-            return NULL;
-        }
+    /* don't match everything by default unless allow_empty */
+    if (argc == 0 && !allow_empty)
+	return NULL;
 
-        file_list = cmdline_match_holding(dumplist);
-        dumpspec_free_list(dumplist);
-    } else if (allow_empty) {
-        /* just list all of them */
-        file_list = holding_get_files(NULL, 1);
+    dumplist = cmdline_parse_dumpspecs(argc, argv);
+    if (!dumplist) {
+	fprintf(stderr, _("Could not get dump list\n"));
+	return NULL;
     }
+
+    file_list = cmdline_match_holding(dumplist);
+    dumpspec_list_free(dumplist);
 
     return file_list;
 }
@@ -1209,7 +1209,7 @@ remove_holding_file_from_catalog(
     /* get to the end of the history list and search backward */
     for (nhist = 0; info.history[nhist].level > -1; nhist++) /* empty loop */;
     for (i = nhist-1; i > -1; i--) {
-        char *info_datestamp = construct_timestamp(&info.history[i].date);
+        char *info_datestamp = get_timestamp_from_time(info.history[i].date);
         int order = strcmp(file.datestamp, info_datestamp);
         amfree(info_datestamp);
 
@@ -1278,7 +1278,7 @@ remove_holding_file_from_catalog(
             char *datestamp;
             if (info.history[i].level <= matching_hist.level) break;
 
-            datestamp = construct_timestamp(&info.history[i].date);
+            datestamp = get_timestamp_from_time(info.history[i].date);
             printf(_("WARNING: Level %d dump made %s can no longer be accurately restored.\n"), 
                 info.history[i].level, datestamp);
             amfree(datestamp);
@@ -1314,8 +1314,8 @@ holding(
     int		argc,
     char **	argv)
 {
-    sl_t *file_list;
-    sle_t *h;
+    GSList *file_list;
+    GSList *li;
     enum { HOLDING_USAGE, HOLDING_LIST, HOLDING_DELETE } action = HOLDING_USAGE;
     int long_list = 0;
     dumpfile_t file;
@@ -1348,42 +1348,44 @@ holding(
             if (long_list) {
                 printf("%-10s %-2s %s\n", "size (kB)", "lv", "dump specification");
             }
-            for (h = file_list->first; h != NULL; h = h->next) {
+            for (li = file_list; li != NULL; li = li->next) {
                 char *dumpstr;
-                if (!holding_file_get_dumpfile(h->name, &file)) {
-                    fprintf(stderr, _("Error reading %s\n"), h->name);
+                if (!holding_file_get_dumpfile((char *)li->data, &file)) {
+                    fprintf(stderr, _("Error reading %s\n"), (char *)li->data);
                     continue;
                 }
 
                 dumpstr = cmdline_format_dumpspec_components(file.name, file.disk, file.datestamp);
                 if (long_list) {
                     printf("%-10"OFF_T_RFMT" %-2d %s\n", 
-                        (OFF_T_FMT_TYPE)holding_file_size(h->name, 0), file.dumplevel, dumpstr);
+                           (OFF_T_FMT_TYPE)
+                           holding_file_size((char *)li->data, 0),
+                           file.dumplevel, dumpstr);
                 } else {
                     printf("%s\n", dumpstr);
                 }
                 amfree(dumpstr);
             }
-            free_sl(file_list);
+            g_slist_free_full(file_list);
             break;
-            
+
         case HOLDING_DELETE:
             argc -= 4; argv += 4;
 
             file_list = get_file_list(argc, argv, 0);
-            for (h = file_list->first; h != NULL; h = h->next) {
-                fprintf(stderr, _("Deleting '%s'\n"), h->name);
+            for (li = file_list; li != NULL; li = li->next) {
+                fprintf(stderr, _("Deleting '%s'\n"), (char *)li->data);
                 /* remove it from the catalog */
-                if (!remove_holding_file_from_catalog(h->name))
+                if (!remove_holding_file_from_catalog((char *)li->data))
                     exit(1);
 
                 /* unlink it */
-                if (!holding_file_unlink(h->name)) {
+                if (!holding_file_unlink((char *)li->data)) {
                     /* holding_file_unlink printed an error message */
                     exit(1);
                 }
             }
-            free_sl(file_list);
+            g_slist_free_full(file_list);
             break;
     }
 }

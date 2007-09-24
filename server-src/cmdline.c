@@ -59,25 +59,24 @@ dumpspec_free(
 }
 
 void
-dumpspec_free_list(
-    dumpspec_list_t *dumpspec_list)
+dumpspec_list_free(
+    GSList *dumpspec_list)
 {
-    dumpspec_t *dumpspec = (dumpspec_t *)dumpspec_list;
-    dumpspec_t *next;
+    /* first free all of the individual dumpspecs */
+    /* (dumpspec_free will ignore the extra NULL) */
+    g_slist_foreach_nodata(dumpspec_list, dumpspec_free);
 
-    while (dumpspec) {
-        next = dumpspec->next;
-        dumpspec_free(dumpspec);
-        dumpspec = next;
-    }
+    /* then free the list itself */
+    g_slist_free(dumpspec_list);
 }
 
-dumpspec_list_t *
+GSList *
 cmdline_parse_dumpspecs(
     int argc,
     char **argv)
 {
-    dumpspec_t *dumpspec = NULL, *t;
+    dumpspec_t *dumpspec = NULL;
+    GSList *list = NULL;
     char *errstr;
     char *name;
     int optind = 0;
@@ -93,9 +92,8 @@ cmdline_parse_dumpspecs(
 		                    get_pname(), name, errstr);
                     goto error;
                 }
-                t = dumpspec_new(name, NULL, NULL);
-                t->next = (dumpspec_t *)dumpspec;
-                dumpspec = t;
+                dumpspec = dumpspec_new(name, NULL, NULL);
+		list = g_slist_append(list, (gpointer)dumpspec);
                 arg_state = ARG_GET_DISK;
                 break;
 
@@ -123,12 +121,16 @@ cmdline_parse_dumpspecs(
         }
     }
 
-    if (dumpspec == NULL) 
+    /* if nothing was processed, add an "empty" element */
+    if (dumpspec == NULL) {
         dumpspec = dumpspec_new("", "", "");
-    return (dumpspec_list_t *)dumpspec;
+	list = g_slist_append(list, (gpointer)dumpspec);
+    }
+
+    return list;
 
 error:
-    dumpspec_free_list((dumpspec_list_t *)dumpspec);
+    dumpspec_list_free(list);
     return NULL;
 }
 
@@ -204,14 +206,15 @@ cmdline_format_dumpspec_components(
     return rv;
 }
 
-sl_t *
+GSList *
 cmdline_match_holding(
-    dumpspec_list_t *dumpspec_list)
+    GSList *dumpspec_list)
 {
     dumpspec_t *de;
+    GSList *li;
     sl_t *holding_files;
     sle_t *he;
-    sl_t *matching_files = new_sl();
+    GSList *matching_files = NULL;
     dumpfile_t file;
 
     holding_set_verbosity(0);
@@ -220,11 +223,12 @@ cmdline_match_holding(
     for (he = holding_files->first; he != NULL; he = he->next) {
 	if (!holding_file_get_dumpfile(he->name, &file)) continue;
         if (file.type != F_DUMPFILE) continue;
-        for (de = (dumpspec_t *)dumpspec_list; de != NULL; de = de->next) {
-            if (de->host && !match_host(de->host, file.name)) continue;
-            if (de->disk && !match_disk(de->disk, file.disk)) continue;
-            if (de->datestamp && !match_datestamp(de->datestamp, file.datestamp)) continue;
-            matching_files = insert_sort_sl(matching_files, he->name);
+        for (li = dumpspec_list; li != NULL; li = li->next) {
+	    de = (dumpspec_t *)(li->data);
+            if (de->host && de->host[0] && !match_host(de->host, file.name)) continue;
+            if (de->disk && de->disk[0] && !match_disk(de->disk, file.disk)) continue;
+            if (de->datestamp && de->datestamp[0] && !match_datestamp(de->datestamp, file.datestamp)) continue;
+            matching_files = g_slist_append(matching_files, g_strdup(he->name));
             break;
         }
     }

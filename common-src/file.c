@@ -30,6 +30,9 @@
 
 #include "amanda.h"
 #include "util.h"
+#include "timestamp.h"
+#include "arglist.h"
+#include "file.h"
 
 static int mk1dir(const char *, mode_t, uid_t, gid_t);
 static void areads_getbuf(const char *s, int l, int fd);
@@ -319,7 +322,7 @@ save_core(void)
         char suffix[2];
         char *old, *new;
 
-	ts = construct_datestamp((time_t *)&sbuf.st_mtime);
+	ts = get_datestamp_from_time(sbuf.st_mtime);
         suffix[0] = 'z';
         suffix[1] = '\0';
         old = vstralloc("core", ts, suffix, NULL);
@@ -685,6 +688,94 @@ debug_areads (
     areads_buffer[fd].endptr[0] = '\0';
     malloc_leave(dbmalloc_caller_loc(s, l));
     return line;
+}
+
+int robust_open(const char * pathname, int flags, mode_t mode) {
+    int result = -1;
+    int e_busy_count = 0;
+
+    for (;;) {
+        if (flags & O_CREAT) {
+            result = open(pathname, flags, mode);
+        } else {
+            result = open(pathname, flags);
+        }
+
+        if (result < 0) {
+#ifdef EBUSY
+            /* EBUSY is a tricky one; sometimes it is synonymous with
+               EINTR, but sometimes it means the device is open
+               elsewhere (e.g., with a tape drive on Linux). We take
+               the middle path and retry, but with limited
+               patience. */
+            if (errno == EBUSY && e_busy_count < 10) {
+                e_busy_count ++;
+                continue;
+            } else
+#endif
+            if (0
+                /* Always retry on EINTR; if the caller did
+                   not specify non-blocking mode, then also retry on
+                   EAGAIN or EWOULDBLOCK. */
+#ifdef EINTR
+                || errno == EINTR
+#endif
+                || ( 1
+#ifdef O_NONBLOCK
+                  && !(flags & O_NONBLOCK)
+#endif
+                  && ( 0
+#ifdef EAGAIN
+                       || errno == EAGAIN
+#endif
+#ifdef EWOULDBLOCK
+                       || errno == EWOULDBLOCK
+#endif
+                       ) ) ) {
+                /* Try again */
+                continue;
+            } else {
+                /* Failure. */
+                return result;
+            }
+        } else {
+            break;
+        }
+    }
+
+#ifdef F_SETFD
+    if (result >= 0) {
+        fcntl(result, F_SETFD, 1); /* Throw away result. */
+    }
+#endif
+
+    return result;
+}
+
+int robust_close(int fd) {
+    for (;;) {
+        int result;
+
+        result = close(fd);
+        if (result != 0 && (0
+#ifdef EINTR
+                            || errno == EINTR
+#endif
+#ifdef EBUSY
+                            || errno == EBUSY
+#endif
+#ifdef EAGAIN
+                            || errno == EAGAIN
+#endif
+#ifdef EWOULDBLOCK
+                            || errno == EWOULDBLOCK
+#endif
+                            )) {
+            continue;
+        } else {
+            return result;
+        }
+    }
 }
 
 #ifdef TEST

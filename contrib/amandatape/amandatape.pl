@@ -148,7 +148,7 @@ my $version=0.4.1;
 
 sub VERSION_MESSAGE {
     my ($fh) = @_;
-    print $fh "$0 Version $version ", '($Rev: 1412 $)', "\n";
+    print $fh "$0 Version $version ", '($Rev$)', "\n";
 }
 sub help_message {
     return "Usage: $0 [options] <conf> [DLE ...]

@@ -33,6 +33,8 @@
 
 #include "amflock.h"
 
+#include <glib.h>
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -405,16 +407,6 @@ extern int errno;
 #define stringconcat(x, y) x ## y
 
 /*
- * So that we can use GNUC attributes (such as to get -Wall warnings
- * for printf-like functions).  Only do this in gcc 2.7 or later ...
- * it may work on earlier stuff, but why chance it.
- */
-#if !defined(__GNUC__) || __GNUC__ < 2 || (__GNUC__ == 2 && __GNUC_MINOR__ < 7) || defined(S_SPLINT_S) || defined(LINT) || defined(__lint)
-#undef __attribute__
-#define __attribute__(__x)
-#endif
-
-/*
  * assertions, but call error() instead of abort 
  */
 #ifndef ASSERTIONS
@@ -520,14 +512,17 @@ char *	debug_prefix(char *);
 #define ERR_SYSLOG	2
 #define ERR_AMANDALOG	4
 
+#include "file.h"
+#include "getcwd.h"
+
 void   set_logerror(void (*f)(char *));
 void   set_pname(char *pname);
 char  *get_pname(void);
 extern int    erroutput_type;
 void   error(const char *format, ...)
-    __attribute__ ((format (printf, 1, 2), noreturn));
+     G_GNUC_NORETURN G_GNUC_PRINTF(1,2);
 void   errordump(const char *format, ...)
-    __attribute__ ((format (printf, 1, 2), noreturn));
+     G_GNUC_PRINTF(1,2);
 int    onerror(void (*errf)(void));
 
 void *debug_alloc(const char *file, int line, size_t size);
@@ -594,9 +589,6 @@ extern void debug_amtable_free(const char *, int, void **, size_t *);
 extern uid_t  client_uid;
 extern gid_t  client_gid;
 
-void	safe_fd(int fd_start, int fd_count);
-void	safe_cd(void);
-void	save_core(void);
 char **	safe_env(void);
 char *	validate_regexp(const char *regex);
 char *	validate_glob(const char *glob);
@@ -611,8 +603,6 @@ int	match_disk(const char *glob, const char *disk);
 int	match_datestamp(const char *dateexp, const char *datestamp);
 int	match_level(const char *levelexp, const char *level);
 time_t	unctime(char *timestr);
-ssize_t	areads_dataready(int fd);
-void	areads_relbuf(int fd);
 
 /*
  * amfree(ptr) -- if allocated, release space and set ptr to NULL.
@@ -641,52 +631,6 @@ void	areads_relbuf(int fd);
     char *t_t_t = (s1) ? stralloc2((s1),(s2)) : stralloc((s2));		\
     amfree((s1));							\
     (s1) = t_t_t;							\
-} while(0)
-
-/*
- * "Safe" close macros.  Close the object then set it to a value that
- * will cause an error if referenced.
- *
- * aclose(fd) -- close a file descriptor and set it to -1.
- * afclose(f) -- close a stdio file and set it to NULL.
- * apclose(p) -- close a stdio pipe file and set it to NULL.
- *
- * Note: be careful not to do the following:
- *
- *  for(fd = low; fd < high; fd++) {
- *      aclose(fd);
- *  }
- *
- * Since aclose() sets the argument to -1, this will loop forever.
- * Just copy fd to a temp variable and use that with aclose().
- *
- * Aclose() interacts with areads() to inform it to release any buffer
- * it has outstanding on the file descriptor.
- */
-
-#define aclose(fd) do {							\
-    if((fd) >= 0) {							\
-	close(fd);							\
-	areads_relbuf(fd);						\
-    }									\
-    (fd) = -1;								\
-    (void)(fd);  /* Fix value never used warning at end of routines */ \
-} while(0)
-
-#define afclose(f) do {							\
-    if((f) != NULL) {							\
-	fclose(f);							\
-	(f) = NULL;							\
-	(void)(f);  /* Fix value never used warning at end of routines */ \
-    }									\
-} while(0)
-
-#define apclose(p) do {							\
-    if((p) != NULL) {							\
-	pclose(p);							\
-	(p) = NULL;							\
-	(void)(p);  /* Fix value never used warning at end of routines */ \
-    }									\
 } while(0)
 
 /*
@@ -886,10 +830,6 @@ extern int    amflock(int fd, char *resource);
 extern int    amroflock(int fd, char *resource);
 extern int    amfunlock(int fd, char *resource);
 
-/* from file.c */
-extern int    mkpdir(char *file, mode_t mode, uid_t uid, gid_t gid);
-extern int    rmpdir(char *file, char *topdir);
-
 /* Given a pathname, convert it to "canonical form" for this system.  Currently,
  * this means nothing on POSIX, but means substituting /cygdrive, etc. on Cygwin.
  *
@@ -1030,14 +970,6 @@ extern int getsockname(int s, struct sockaddr *name, socklen_t *namelen);
 #ifndef HAVE_GETSOCKOPT_DECL
 extern int getsockopt(int s, int level, int optname, char *optval,
 			 socklen_t *optlen);
-#endif
-
-#ifndef HAVE_GETTIMEOFDAY_DECL
-# ifdef HAVE_TWO_ARG_GETTIMEOFDAY
-extern int gettimeofday(struct timeval *tp, struct timezone *tzp);
-# else
-extern int gettimeofday(struct timeval *tp);
-# endif
 #endif
 
 #ifndef HAVE_INITGROUPS
@@ -1220,7 +1152,7 @@ extern int shmget(key_t key, size_t size, int shmflg);
 #ifndef HAVE_SNPRINTF_DECL
 #include "arglist.h"
 int snprintf(char *buf, size_t len, const char *format,...)
-		    __attribute__((format(printf,3,4)));
+     G_GNUC_PRINTF(3,4);
 #endif
 #ifndef HAVE_VSNPRINTF_DECL
 #include "arglist.h"
@@ -1258,7 +1190,7 @@ extern int strncasecmp(const char *s1, const char *s2, int n);
 
 #ifndef HAVE_SYSLOG_DECL
 extern void syslog(int priority, const char *logstring, ...)
-    __attribute__ ((format (printf, 2, 3)));
+     G_GNUC_PRINTF(2,3);
 #endif
 
 #ifndef HAVE_SYSTEM_DECL
@@ -1433,6 +1365,7 @@ extern ssize_t writev(int fd, const struct iovec *iov, int iovcnt);
 #  endif
 #  define AM64_FMT OFF_T_FMT
 #else
+
 #if SIZEOF_LONG == 8
 #  ifdef LONG_MAX
 #    define AM64_MAX (off_t)(LONG_MAX)
@@ -1498,6 +1431,10 @@ extern ssize_t writev(int fd, const struct iovec *iov, int iovcnt);
 
 #ifndef NI_MAXHOST
 #define NI_MAXHOST 1025
+#endif
+
+#ifndef HAVE_CURL_OFF_T
+typedef off_t curl_off_t;
 #endif
 
 #ifndef AI_V4MAPPED

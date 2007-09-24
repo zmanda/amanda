@@ -44,6 +44,7 @@
 #include "amfeatures.h"
 #include "server_util.h"
 #include "util.h"
+#include "timestamp.h"
 
 #define dumper_debug(i,x) do {		\
 	if ((i) <= debug_dumper) {	\
@@ -294,17 +295,19 @@ main(
 	config_name = stralloc(my_argv[1]);
 	config_dir = vstralloc(CONFIG_DIR, "/", config_name, "/", NULL);
     } else {
-	char my_cwd[STR_SIZE];
-
-	if (getcwd(my_cwd, SIZEOF(my_cwd)) == NULL) {
+        char * cwd;
+        
+        cwd = safe_getcwd();
+        if (cwd == NULL) {
 	    error(_("Cannot determine current working directory: %s"),
 		  strerror(errno));
 	    /*NOTREACHED*/
 	}
-	config_dir = stralloc2(my_cwd, "/");
-	if ((config_name = strrchr(my_cwd, '/')) != NULL) {
+	config_dir = stralloc2(cwd, "/");
+	if ((config_name = strrchr(cwd, '/')) != NULL) {
 	    config_name = stralloc(config_name + 1);
 	}
+        amfree(cwd);
     }
 
     safe_cd();
@@ -1025,16 +1028,16 @@ write_tapeheader(
     int		outfd,
     dumpfile_t *file)
 {
-    char buffer[DISK_BLOCK_BYTES];
+    char * buffer;
     ssize_t written;
 
-    build_header(buffer, file, SIZEOF(buffer));
+    buffer = build_header(file, DISK_BLOCK_BYTES);
 
-    written = fullwrite(outfd, buffer, SIZEOF(buffer));
-    if(written == (ssize_t)sizeof(buffer))
-	return 0;
+    written = fullwrite(outfd, buffer, DISK_BLOCK_BYTES);
+    if(written == DISK_BLOCK_BYTES)
+        return 0;
     if(written < 0)
-	return written;
+        return written;
 
     return -1;
 }
@@ -1133,8 +1136,7 @@ do_dump(
 	goto failed;
 
     runtime = stopclock();
-    dumptime = (double)(runtime.r.tv_sec) +
-	       ((double)(runtime.r.tv_usec) / 1000000.0);
+    dumptime = g_timeval_to_double(runtime);
 
     dumpsize -= headersize;		/* don't count the header */
     if (dumpsize < (off_t)0)		/* XXX - maybe this should be fatal? */
@@ -1693,9 +1695,7 @@ bad_nak:
 	return;
     }
 
-#if 1
     fprintf(stderr, _("got response:\n----\n%s\n----\n\n"), pkt->body);
-#endif
 
     for(i = 0; i < NSTREAMS; i++) {
 	ports[i] = -1;
@@ -1964,7 +1964,7 @@ startup_dump(
 		    "\n",
 		    NULL);
 
-fprintf(stderr, _("send request:\n----\n%s\n----\n\n"), req);
+    fprintf(stderr, _("send request:\n----\n%s\n----\n\n"), req);
     secdrv = security_getdriver(authopt);
     if (secdrv == NULL) {
 	error(_("no '%s' security driver available for host '%s'"),

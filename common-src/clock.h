@@ -34,31 +34,27 @@
 
 #include "amanda.h"
 
-typedef struct times_s {
-    struct timeval r;
-
-#ifdef INSTRUMENTATION
-    struct timeval u,s;
-#endif
-} times_t;
+typedef GTimeVal times_t;
 
 extern times_t times_zero, start_time;
 
-#ifdef HAVE_TWO_ARG_GETTIMEOFDAY
-#  define amanda_timezone struct timezone
-#  define amanda_gettimeofday(x, y) gettimeofday((x), (y))
-#else
-#  define amanda_timezone int
-#  define amanda_gettimeofday(x, y) gettimeofday((x))
-#endif
-
+/* NOT THREAD SAFE */
 void startclock(void);
 times_t stopclock(void);
 times_t curclock(void);
-times_t timesadd(times_t a, times_t b);
-times_t timessub(times_t a, times_t b);
-char * times_str(times_t t);
 char * walltime_str(times_t t);
 int clock_is_running(void);
+
+/* Thread safe */
+times_t timeadd(times_t a, times_t b);
+#define timesadd(x, y) timeadd(x, y)
+
+times_t timesub(times_t a, times_t b);
+#define timessub(x, y) timesub(x, y)
+
+double g_timeval_to_double(GTimeVal v);
+
+void amanda_gettimeofday(struct timeval * timeval_time);
+
 
 #endif /* CLOCK_H */

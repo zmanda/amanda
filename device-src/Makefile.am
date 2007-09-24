@@ -1,0 +1,42 @@
+# Makefile for Amanda tape library.
+
+INCLUDES =	-I$(top_builddir)/common-src \
+		-I$(top_srcdir)/common-src \
+		-I$(top_srcdir)/gnulib
+
+lib_LTLIBRARIES = 	libamdevice.la
+LIB_EXTENSION = la
+
+libamdevice_la_SOURCES = property.c device.c queueing.c semaphore.c \
+	null-device.c fd-device.c rait-device.c tape-device.c \
+	vfs-device.c 
+if WANT_TAPE_XENIX
+libamdevice_la_SOURCES += tape-xenix.c
+endif
+if WANT_TAPE_AIX
+libamdevice_la_SOURCES += tape-aix.c
+endif
+if WANT_TAPE_UWARE
+libamdevice_la_SOURCES += tape-uware.c
+endif
+if WANT_TAPE_POSIX
+libamdevice_la_SOURCES += tape-posix.c
+endif
+
+libamdevice_la_CFLAGS = $(GLIB_CFLAGS)
+libamdevice_la_LDFLAGS = $(GLIB_LIBS) -release $(VERSION) $(LIBCURL)
+
+noinst_HEADERS = device.h null-device.h queueing.h semaphore.h \
+	tape-ops.h fd-device.h property.h rait-device.h \
+	tape-device.h vfs-device.h
+
+
+SUBDIRS = . tests
+
+###
+# Because libamanda includes routines (e.g. regex) provided by some system
+# libraries, and because of the way libtool sets up the command line, we
+# need to list libamanda twice here, first to override the system library
+# routines, and second to pick up any references in the other libraries.
+###
+

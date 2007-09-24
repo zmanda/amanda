@@ -31,12 +31,10 @@
 #include "amanda.h"
 #include "conffile.h"
 #include "tapefile.h"
-#include "tapeio.h"
 #include "changer.h"
-
-#ifdef HAVE_LIBVTBLC
-#include <vtblc.h>
-#endif /* HAVE_LIBVTBLC */
+#include <device.h>
+#include <timestamp.h>
+#include <taperscan.h>
 
 /* local functions */
 
@@ -59,16 +57,11 @@ main(
     char *conffile;
     char *conf_tapelist;
     char *outslot = NULL;
-    char *errstr = NULL, *label, *oldlabel=NULL, *tapename = NULL;
+    char *label, *tapename = NULL;
     char *labelstr, *slotstr;
-    char *olddatestamp=NULL;
     char *conf_tapelist_old;
     unsigned long malloc_hist_1, malloc_size_1;
     unsigned long malloc_hist_2, malloc_size_2;
-#ifdef HAVE_LINUX_ZFTAPE_H
-    int fd = -1;
-    int isa_zftape;
-#endif /* HAVE_LINUX_ZFTAPE_H */
     int have_changer;
     int force, tape_ok;
     tapetype_t *tape;
@@ -76,13 +69,7 @@ main(
     int slotcommand;
     int    new_argc;
     char **new_argv;
-
-#ifdef HAVE_LIBVTBLC
-    int vtbl_no      = -1;
-    char *datestr    = NULL;
-    char *rawtapedev = NULL;
-    int first_seg, last_seg;
-#endif /* HAVE_LIBVTBLC */
+    Device * device;
 
     /*
      * Configure program for internationalization:
@@ -99,6 +86,7 @@ main(
     set_pname("amlabel");
 
     dbopen(DBG_SUBDIR_SERVER);
+    device_api_init();
 
     /* Don't die when child closes pipe */
     signal(SIGPIPE, SIG_IGN);
@@ -182,9 +170,6 @@ main(
 	} else {
 	    tapename = stralloc(tapename);
 	}
-#ifdef HAVE_LIBVTBLC
-	rawtapedev = stralloc(getconf_str(CNF_RAWTAPEDEV));
-#endif /* HAVE_LIBVTBLC */
     } else if(have_changer != 1) {
 	error(_("changer initialization failed: %s"), strerror(errno));
 	/*NOTREACHED*/
@@ -197,54 +182,26 @@ main(
 	printf(_("labeling tape in slot %s (%s):\n"), outslot, tapename);
     }
 
-#ifdef HAVE_LINUX_ZFTAPE_H
-    isa_zftape = is_zftape(tapename);
-    if (isa_zftape) {
-	if((fd = tape_open(tapename, O_WRONLY)) == -1) {
-	    errstr = newstralloc2(errstr, "amlabel: ",
-				  (errno == EACCES) ? _("tape is write-protected")
-				  : strerror(errno));
-	    error(errstr);
-	    /*NOTREACHED*/
-	}
-    }
-#endif /* HAVE_LINUX_ZFTAPE_H */
-
-    printf("rewinding"); fflush(stdout);
-
-#ifdef HAVE_LINUX_ZFTAPE_H
-    if (isa_zftape) {
-	if(tapefd_rewind(fd) == -1) {
-	    putchar('\n');
-	    error(strerror(errno));
-	    /*NOTREACHED*/
-	}
-    }
-    else
-#endif /* HAVE_LINUX_ZFTAPE_H */
-    if((errstr = tape_rewind(tapename)) != NULL) {
-	putchar('\n');
-	error(errstr);
-	/*NOTREACHED*/
-    }
-
     tape_ok=1;
-    printf(", reading label");fflush(stdout);
-    if((errstr = tape_rdlabel(tapename, &olddatestamp, &oldlabel)) != NULL) {
-	printf(", %s\n",errstr);
-	tape_ok=1;
+    printf("Reading label...\n");fflush(stdout);
+    device = device_open(tapename);
+    if (device == NULL) {
+        error("Could not open device %s.\n", tapename);
     }
-    else {
+    
+    device_set_startup_properties_from_config(device);
+
+    if (device->volume_label == NULL) {
+        printf("Found an unlabeled tape.\n");
+    } else {
 	/* got an amanda tape */
-	printf(" %s",oldlabel);
-	if(strcmp(oldlabel, FAKE_LABEL) != 0
-	   && match(labelstr, oldlabel) == 0) {
-	    printf(_(", tape is in another amanda configuration"));
+	printf(_("Found Amanda tape %s"),device->volume_label);
+	if(match(labelstr, device->volume_label) == 0) {
+	    printf(_(", but it is not from configuration %s."), config_name);
 	    if(!force)
 		tape_ok=0;
-	}
-	else {
-	    if((lookup_tapelabel(oldlabel)) != NULL) {
+	} else {
+	    if((lookup_tapelabel(device->volume_label)) != NULL) {
 		printf(_(", tape is active"));
 		if(!force)
 		    tape_ok=0;
@@ -252,212 +209,63 @@ main(
 	}
 	printf("\n");
     }
-    amfree(oldlabel);
-    amfree(olddatestamp);
-	
-    printf(_("rewinding")); fflush(stdout);
-
-#ifdef HAVE_LINUX_ZFTAPE_H
-    if (isa_zftape) {
-	if(tapefd_rewind(fd) == -1) {
-	    putchar('\n');
-	    error(strerror(errno));
-	    /*NOTREACHED*/
-	}
-    }
-    else
-#endif /* HAVE_LINUX_ZFTAPE_H */
-    if((errstr = tape_rewind(tapename)) != NULL) {
-	putchar('\n');
-	error(errstr);
-	/*NOTREACHED*/
-    }
 
     if(tape_ok) {
-	printf(_(", writing label %s"), label); fflush(stdout);
+	printf(_("Writing label %s..\n"), label); fflush(stdout);
+        
+        if (!device_start(device, ACCESS_WRITE, label,
+                          get_undef_timestamp())) {
+	    error(_("Error writing label.\n"));
+            g_assert_not_reached();
+	} else if (!device_finish(device)) {
+            error(_("Error closing device.\n"));
+            g_assert_not_reached();
+        }
 
-#ifdef HAVE_LINUX_ZFTAPE_H
-	if (isa_zftape) {
-	    errstr = tapefd_wrlabel(fd, "X", label,
-				    (tt_blocksize_kb * 1024));
-	    if(errstr != NULL) {
-		putchar('\n');
-		error(errstr);
-		/*NOTREACHED*/
-	    }
-	}
-	else
-#endif /* HAVE_LINUX_ZFTAPE_H */
-	errstr = tape_wrlabel(tapename, "X", label,
-			      (tt_blocksize_kb * 1024));
-	if(errstr != NULL) {
-	    putchar('\n');
-	    error(errstr);
-	    /*NOTREACHED*/
-	}
-
-#ifdef HAVE_LINUX_ZFTAPE_H
-	if (isa_zftape) {
-	    tapefd_weof(fd, (off_t)1);
-	}
-#endif /* HAVE_LINUX_ZFTAPE_H */
-
-#ifdef HAVE_LINUX_ZFTAPE_H
-	if (isa_zftape) {
-	    errstr = tapefd_wrendmark(fd, "X",
-			              (tt_blocksize_kb * 1024));
-	    if(errstr != NULL) {
-		putchar('\n');
-		error(errstr);
-		/*NOTREACHED*/
-	    }
-	}
-	else
-#endif /* HAVE_LINUX_ZFTAPE_H */
-	errstr = tape_wrendmark(tapename, "X",
-			        (tt_blocksize_kb * 1024));
-	if(errstr != NULL) {
-	    putchar('\n');
-	    error(errstr);
-	    /*NOTREACHED*/
-	}
-
-#ifdef HAVE_LINUX_ZFTAPE_H
-	if (isa_zftape) {
-	    tapefd_weof(fd, (off_t)1);
-
-	    printf(_(",\nrewinding")); fflush(stdout); 
-     
-	    if(tapefd_rewind(fd) == -1) { 
-		putchar('\n'); 
-		error(strerror(errno)); 
-		/*NOTREACHED*/
-	    } 
-	    close(fd);
-#ifdef HAVE_LIBVTBLC
-	    /* update volume table */
-	    printf(_(", updating volume table")); fflush(stdout);
-    
-	    if ((fd = raw_tape_open(rawtapedev, O_RDWR)) == -1) {
-		if(errno == EACCES) {
-		    errstr = newstralloc(errstr,
-					 _("updating volume table: raw tape device is write protected"));
-		} else {
-		    errstr = newstralloc2(errstr,
-					  _("updating volume table: "), strerror(errno));
-		}
-		putchar('\n');
-		error(errstr);
-		/*NOTREACHED*/
-	    }
-	    /* read volume table */
-	    if ((num_volumes = read_vtbl(fd, volumes, vtbl_buffer,
-					 &first_seg, &last_seg)) == -1 ) {
-		errstr = newstralloc2(errstr,
-				      _("reading volume table: "), strerror(errno));
-		putchar('\n');
-		error(errstr);
-		/*NOTREACHED*/
-	    }
-	    /* set date and volume label for first entry */
-	    vtbl_no = 0;
-	    datestr = NULL; 
-	    if (set_date(datestr, volumes, num_volumes, vtbl_no)){
-		errstr = newstralloc2(errstr,
-				      _("setting date for entry 1: "), strerror(errno));
-		putchar('\n');
-		error(errstr);
-		/*NOTREACHED*/
-	    }
-	    if(set_label(label, volumes, num_volumes, vtbl_no)){
-		errstr = newstralloc2(errstr,
-				      _("setting label for entry 1: "), strerror(errno));
-		putchar('\n');
-		error(errstr);
-		/*NOTREACHED*/
-	    }
-	    /* set date and volume label for last entry */
-	    vtbl_no = 1;
-	    datestr = NULL; 
-	    if (set_date(datestr, volumes, num_volumes, vtbl_no)){
-		errstr = newvstrallocf(errstr,
-				      _("setting date for entry 2: %s"), strerror(errno));
-		putchar('\n');
-		error(errstr);
-		/*NOTREACHED*/
-	    }
-	    if(set_label("AMANDA Tape End", volumes, num_volumes, vtbl_no)){
-		errstr = newvstrallocf(errstr,
-				      "setting label for entry 2: %s", strerror(errno));
-		putchar('\n');
-		error(errstr);
-		/*NOTREACHED*/
-	    }
-	    /* write volume table back */
-	    if (write_vtbl(fd, volumes, vtbl_buffer, num_volumes, first_seg,
-			   op_mode == trunc)) {
-		errstr = newvstrallocf(errstr,
-				      _("writing volume table: %s"), strerror(errno));
-		putchar('\n');
-		error(errstr);
-		/*NOTREACHED*/
-	    }  
-	    close(fd);
-#endif /* HAVE_LIBVTBLC */
-	}
-#endif /* HAVE_LINUX_ZFTAPE_H */
-
-	if (tape_ok) {
-	    printf(_(", checking label")); fflush(stdout);
-
-	    if((errstr = tape_rdlabel(tapename, &olddatestamp, &oldlabel)) != NULL) {
-		putchar('\n');
-		if (strcmp(errstr, _("not an amanda tape")) != 0) {
-		    error(errstr);
-		    /*NOTREACHED*/
-		}
-		error(_("no label found, are you sure %s is non-rewinding?"),
-		      tapename);
-	        /*NOTREACHED*/
-	    }
-
-	    if (strcmp("X", olddatestamp) != 0 ||
-		(strcmp(oldlabel, FAKE_LABEL) != 0
-		 && strcmp(label, oldlabel) != 0)) {
-		putchar('\n');
-		error(_("read label %s back, timestamp %s (expected X), what now?"),
-		      oldlabel, olddatestamp);
-	        /*NOTREACHED*/
-	    }
-	    amfree(oldlabel);
-	    amfree(olddatestamp);
-
-	    /* write tape list */
-
-	    /* make a copy */
-       	    conf_tapelist_old = stralloc2(conf_tapelist, ".amlabel");
-	    if(write_tapelist(conf_tapelist_old)) {
-	        error(_("couldn't write tapelist: %s"), strerror(errno));
-		/*NOTREACHED*/
-	    }
-	    amfree(conf_tapelist_old);
-
-    	    /* XXX add cur_tape number to tape list structure */
-	    remove_tapelabel(label);
-    	    add_tapelabel("0", label);
-	    if(write_tapelist(conf_tapelist)) {
-	        error(_("couldn't write tapelist: %s"), strerror(errno));
-		/*NOTREACHED*/
-	    }
-
-            if (have_changer) {
-                changer_label(outslot, label);
-            }
-	} /* write tape list */
-	printf(_(", done.\n"));
+        printf(_("Checking label...\n")); fflush(stdout);
+        
+        if (!device_start(device, ACCESS_READ, NULL, 0)) {
+            error(_("Error reading label.\n"));
+            g_assert_not_reached();
+        } else if (device->volume_label == NULL) {
+            error(_("no label found.\n"));
+            g_assert_not_reached();
+        } else if (strcmp(device->volume_label, label) != 0) {
+            error(_("Read back a different label: Got %s, but expected %s\n"),
+                  device->volume_label, label);
+            g_assert_not_reached();
+        } else if (get_timestamp_state(device->volume_time) !=
+                   TIME_STATE_UNDEF) {
+            error(_("Read the right label, but the wrong timestamp: "
+                    "Got %s, expected X.\n"), device->volume_time);
+            g_assert_not_reached();
+        }
+        
+        /* write tape list */
+        
+        /* make a copy */
+        conf_tapelist_old = stralloc2(conf_tapelist, ".amlabel");
+        if(write_tapelist(conf_tapelist_old)) {
+            error(_("couldn't write tapelist: %s"), strerror(errno));
+            /*NOTREACHED*/
+        }
+        amfree(conf_tapelist_old);
+        
+        /* XXX add cur_tape number to tape list structure */
+        remove_tapelabel(label);
+        add_tapelabel("0", label);
+        if(write_tapelist(conf_tapelist)) {
+            error(_("couldn't write tapelist: %s"), strerror(errno));
+            /*NOTREACHED*/
+        }
+        
+        printf(_("Success!\n"));
     } else {
 	printf(_("\ntape not labeled\n"));
     }
+    
+    g_object_unref(device);
+    device = NULL;
 
     clear_tapelist();
     free_new_argv(new_argc, new_argv);

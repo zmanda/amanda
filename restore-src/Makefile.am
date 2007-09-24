@@ -2,7 +2,7 @@
 
 INCLUDES =	-I$(top_builddir)/common-src \
 		-I$(top_srcdir)/common-src   \
-		-I$(top_srcdir)/tape-src     \
+		-I$(top_srcdir)/device-src   \
 		-I$(top_srcdir)/server-src   \
 		-I$(top_srcdir)/amandad-src  \
 		-I$(top_srcdir)/gnulib
@@ -40,8 +40,8 @@ amfetchdump_SOURCES = 	amfetchdump.c
 librestore_la_SOURCES	=	restore.c
 librestore_la_LDFLAGS	=	-release $(VERSION)
 librestore_la_LIBADD	=	../common-src/libamanda.$(LIB_EXTENSION) \
-                   ../tape-src/libamtape.$(LIB_EXTENSION) \
-                  ../server-src/libamserver.$(LIB_EXTENSION)
+				../server-src/libamserver.$(LIB_EXTENSION) \
+				../device-src/libamdevice.$(LIB_EXTENSION)
 
 noinst_HEADERS = restore.h
 

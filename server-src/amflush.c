@@ -39,6 +39,7 @@
 #include "holding.h"
 #include "driverio.h"
 #include "server_util.h"
+#include "timestamp.h"
 
 static char *conf_logdir;
 FILE *driver_stream;
@@ -202,12 +203,12 @@ main(
 
     conf_usetimestamps = getconf_boolean(CNF_USETIMESTAMPS);
 
-    amflush_datestamp = construct_datestamp(NULL);
+    amflush_datestamp = get_datestamp_from_time(0);
     if(conf_usetimestamps == 0) {
 	amflush_timestamp = stralloc(amflush_datestamp);
     }
     else {
-	amflush_timestamp = construct_timestamp(NULL);
+	amflush_timestamp = get_timestamp_from_time(0);
     }
 
     conf_logdir = getconf_str(CNF_LOGDIR);
@@ -309,7 +310,11 @@ main(
 	error(_("BAD DATE")); /* should never happen */
     fprintf(stderr, _("amflush: start at %s\n"), date_string);
     fprintf(stderr, _("amflush: datestamp %s\n"), amflush_timestamp);
-    fprintf(stderr, _("amflush: starttime %s\n"), construct_timestamp(NULL));
+    if (1) {
+        char * timestamp = get_proper_stamp_from_time(0);
+        fprintf(stderr, _("amflush: starttime %s\n"), timestamp);
+        amfree(timestamp);
+    }
     log_add(L_START, _("date %s"), amflush_timestamp);
 
     /* START DRIVER */

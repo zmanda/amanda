@@ -33,6 +33,7 @@
 #include "client_util.h"
 #include "getfsent.h"
 #include "util.h"
+#include "timestamp.h"
 #include "pipespawn.h"
 
 #define MAXMAXDUMPS 16
@@ -72,7 +73,7 @@ get_name(
     char *filename;
     char *ts;
 
-    ts = construct_timestamp(&t);
+    ts = get_timestamp_from_time(t);
     if(n == 0)
 	number[0] = '\0';
     else

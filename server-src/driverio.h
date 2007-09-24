@@ -114,7 +114,12 @@ GLOBAL chunker_t chktable[MAX_DUMPERS];
 /* command/result tokens */
 
 GLOBAL int taper, taper_busy;
+GLOBAL int taper_sendresult;
+GLOBAL char *taper_input_error;
+GLOBAL char *taper_tape_error;
 GLOBAL pid_t taper_pid;
+GLOBAL int taper_result;
+GLOBAL dumper_t *taper_dumper;
 GLOBAL event_handle_t *taper_ev_read;
 
 void init_driverio(void);

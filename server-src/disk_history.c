@@ -77,8 +77,10 @@ add_dump(
     strncpy(new->tape, tape, SIZEOF(new->tape)-1);
     new->tape[SIZEOF(new->tape)-1] = '\0';
     new->file = file;
-    if(partnum == -1) new->is_split = 0;
-    else new->is_split = 1;
+    if(partnum == -1)
+        new->is_split = 0;
+    else
+        new->is_split = 1;
     new->tapes = NULL;
     new->hostname = stralloc(hostname);
 

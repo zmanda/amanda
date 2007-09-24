@@ -49,6 +49,7 @@
 #include "logfile.h"
 #include "version.h"
 #include "util.h"
+#include "timestamp.h"
 
 /* don't have (or need) a skipped type except internally to reporter */
 #define L_SKIPPED	L_MARKER
@@ -71,6 +72,7 @@ typedef struct timedata_s {
     double sec, kps;
     int filenum;
     char *tapelabel;
+    int totpart;
 } timedata_t;
 
 typedef struct repdata_s {
@@ -166,7 +168,7 @@ static int	ColWidth(int From, int To);
 static int	contline_next(void);
 static int	sort_by_name(disk_t *a, disk_t *b);
 static repdata_t *find_repdata(disk_t *dp, char *datestamp, int level);
-static repdata_t *handle_chunk(void);
+static repdata_t *handle_chunk(logtype_t logtype);
 static repdata_t *handle_success(logtype_t logtype);
 static void	addline(line_t **lp, char *str);
 static void	addtoX_summary(X_summary_t **first, X_summary_t **last,
@@ -333,7 +335,7 @@ main(
     unsigned long malloc_hist_2, malloc_size_2;
     char *mail_cmd = NULL, *printer_cmd = NULL;
     extern int optind;
-    char my_cwd[STR_SIZE];
+    char * cwd;
     char *ColumnSpec = "";
     char *errstr = NULL;
     int cn;
@@ -370,7 +372,8 @@ main(
     psfname = NULL;
     logfname = NULL;
 
-    if (getcwd(my_cwd, SIZEOF(my_cwd)) == NULL) {
+    cwd = safe_getcwd();
+    if (cwd == NULL) {
 	error(_("Cannot determine current working directory: %s"),
 	      strerror(errno));
 	/*NOTREACHED*/
@@ -381,8 +384,8 @@ main(
     my_argv = new_argv;
 
     if (my_argc < 2) {
-	config_dir = stralloc2(my_cwd, "/");
-	if ((config_name = strrchr(my_cwd, '/')) != NULL) {
+	config_dir = stralloc2(cwd, "/");
+	if ((config_name = strrchr(cwd, '/')) != NULL) {
 	    config_name = stralloc(config_name + 1);
 	}
     } else {
@@ -417,7 +420,7 @@ main(
 		if (*optarg == '/') {
                     outfname = stralloc(optarg);
 		} else {
-                    outfname = vstralloc(my_cwd, "/", optarg, NULL);
+                    outfname = vstralloc(cwd, "/", optarg, NULL);
 		}
                 break;
             case 'l':
@@ -428,7 +431,7 @@ main(
 		if (*optarg == '/') {
 		    logfname = stralloc(optarg);
 		} else {
-                    logfname = vstralloc(my_cwd, "/", optarg, NULL);
+                    logfname = vstralloc(cwd, "/", optarg, NULL);
 		}
                 break;
             case 'p':
@@ -439,7 +442,7 @@ main(
 		if (*optarg == '/') {
                     psfname = stralloc(optarg);
 		} else {
-                    psfname = vstralloc(my_cwd, "/", optarg, NULL);
+                    psfname = vstralloc(cwd, "/", optarg, NULL);
 		}
                 break;
             case '?':
@@ -458,6 +461,7 @@ main(
 	exit(1);
     }
 
+    amfree(cwd);
 
 #if !defined MAILER
     if(!outfname) {
@@ -574,26 +578,29 @@ main(
 
     while(logfile && get_logline(logfile)) {
 	switch(curlog) {
-	case L_START:   handle_start(); break;
-	case L_FINISH:  handle_finish(); break;
+	case L_START:        handle_start(); break;
+	case L_FINISH:       handle_finish(); break;
 
-	case L_INFO:    handle_note(); break;
-	case L_WARNING: handle_note(); break;
+	case L_INFO:         handle_note(); break;
+	case L_WARNING:      handle_note(); break;
 
-	case L_SUMMARY: handle_summary(); break;
-	case L_STATS:   handle_stats(); break;
+	case L_SUMMARY:      handle_summary(); break;
+	case L_STATS:        handle_stats(); break;
 
-	case L_ERROR:   handle_error(); break;
-	case L_FATAL:   handle_error(); break;
+	case L_ERROR:        handle_error(); break;
+	case L_FATAL:        handle_error(); break;
 
-	case L_DISK:    handle_disk(); break;
+	case L_DISK:         handle_disk(); break;
 
-	case L_SUCCESS: handle_success(curlog); break;
+	case L_DONE:         handle_success(curlog); break;
+	case L_SUCCESS:      handle_success(curlog); break;
 	case L_CHUNKSUCCESS: handle_success(curlog); break;
-	case L_CHUNK:   handle_chunk(); break;
-	case L_PARTIAL: handle_partial(); break;
-	case L_STRANGE: handle_strange(); break;
-	case L_FAIL:    handle_failed(); break;
+	case L_PART:         handle_chunk(curlog); break;
+	case L_PARTPARTIAL:  handle_chunk(curlog); break;
+	case L_CHUNK:        handle_chunk(curlog); break;
+	case L_PARTIAL:      handle_partial(); break;
+	case L_STRANGE:      handle_strange(); break;
+	case L_FAIL:         handle_failed(); break;
 
 	default:
 	    curlog = L_ERROR;
@@ -1567,8 +1574,14 @@ static void
 bogus_line(
     const char *err_text)
 {
-    printf(_("line %d of log is bogus: <%s>\n"), curlinenum, curstr);
+    char * s;
+    s = g_strdup_printf(_("line %d of log is bogus: <%s %s %s>\n"),
+                        curlinenum, 
+                        logtype_str[curlog], program_str[curprog], curstr);
+    printf("%s\n", s);
     printf(_("  Scan failed at: <%s>\n"), err_text);
+    addline(&errsum, s);
+    amfree(s);
 }
 
 
@@ -2032,7 +2045,8 @@ handle_disk(void)
  * for a split chunk of the overall dumpfile.
  */
 static repdata_t *
-handle_chunk(void)
+handle_chunk(
+    logtype_t logtype)
 {
     disk_t *dp;
     double sec, kps, kbytes;
@@ -2045,6 +2059,9 @@ handle_chunk(void)
     repdata_t *repdata;
     int level, chunk;
     char *datestamp;
+    char *label = NULL;
+    int fileno;
+    int totpart;
     
     if(curprog != P_TAPER) {
  	bogus_line(curstr);
@@ -2053,12 +2070,36 @@ handle_chunk(void)
     
     s = curstr;
     ch = *s++;
-    
+
     skip_whitespace(s, ch);
     if(ch == '\0') {
  	bogus_line(s - 1);
  	return NULL;
     }
+
+    if (logtype == L_PART || logtype == L_PARTPARTIAL) {
+	fp = s - 1;
+	skip_non_whitespace(s, ch);
+	s[-1] = '\0';
+	label = stralloc(fp);
+	s[-1] = (char)ch;
+    
+	skip_whitespace(s, ch);
+	if(ch == '\0' || sscanf(s - 1, "%d", &fileno) != 1) {
+	    bogus_line(s - 1);
+	    amfree(label);
+	    return NULL;
+	}
+	skip_integer(s, ch);
+	skip_whitespace(s, ch);
+	if(ch == '\0') {
+ 	    bogus_line(s - 1);
+	    amfree(label);
+ 	    return NULL;
+	}
+	amfree(label);
+    }
+
     fp = s - 1;
     skip_non_whitespace(s, ch);
     s[-1] = '\0';
@@ -2099,6 +2140,18 @@ handle_chunk(void)
 	return NULL;
     }
     skip_integer(s, ch);
+
+    if (ch != '\0' && s[-1] == '/') {
+	s++; ch = s[-1];
+	if (sscanf(s - 1, "%d", &totpart) != 1) {
+	    bogus_line(s - 1);
+	    amfree(hostname);
+	    amfree(diskname);
+	    amfree(datestamp);
+	    return NULL;
+	}
+	skip_integer(s, ch);
+    }
 
     skip_whitespace(s, ch);
     if(ch == '\0' || sscanf(s - 1, "%d", &level) != 1) {
@@ -2185,7 +2238,10 @@ handle_success(
     char *diskname = NULL;
     repdata_t *repdata;
     int level = 0;
+    int totpart = 0;
     char *datestamp;
+
+    (void)logtype;
 
     if(curprog != P_TAPER && curprog != P_DUMPER && curprog != P_PLANNER &&
        curprog != P_CHUNKER) {
@@ -2231,13 +2287,14 @@ handle_success(
     datestamp = stralloc(fp);
     s[-1] = (char)ch;
 
-    if(strlen(datestamp) < 3) {
-	level = atoi(datestamp);
+    //datestamp is optional
+    if(strlen(datestamp) < 6) {
+	totpart = atoi(datestamp);
 	datestamp = newstralloc(datestamp, run_datestamp);
     }
     else {
 	skip_whitespace(s, ch);
-	if(ch == '\0' || sscanf(s - 1, "%d", &level) != 1) {
+	if(ch == '\0' || sscanf(s - 1, "%d", &totpart) != 1) {
 	    bogus_line(s - 1);
 	    amfree(hostname);
 	    amfree(diskname);
@@ -2247,6 +2304,27 @@ handle_success(
 	skip_integer(s, ch);
     }
 
+    skip_whitespace(s, ch);
+
+    //totpart is optional
+    if (*(s-1) == '"')
+	s++;
+    if (*(s-1) == '[') {
+	level = totpart;
+	totpart = -1;
+    } else {
+	if(ch == '\0' || sscanf(s - 1, "%d", &level) != 1) {
+	    bogus_line(s - 1);
+	    amfree(hostname);
+	    amfree(diskname);
+	    amfree(datestamp);
+	    return NULL;
+	}
+	skip_integer(s, ch);
+	skip_whitespace(s, ch);
+    }
+
+
     if(level < 0 || level > 9) {
 	amfree(hostname);
 	amfree(diskname);
@@ -2254,7 +2332,6 @@ handle_success(
 	return NULL;
     }
 
-    skip_whitespace(s, ch);
 				/* Planner success messages (for skipped
 				   dumps) do not contain statistics */
     if(curprog != P_PLANNER) {
@@ -2356,6 +2433,7 @@ handle_success(
 	stats[i].taper_time += sec;
 	sp->filenum = ++tapefcount;
 	sp->tapelabel = current_tape->label;
+	sp->totpart = totpart;
 	tapedisks[level] +=1;
 	stats[i].tapedisks +=1;
 	stats[i].tapesize += kbytes;
@@ -2366,11 +2444,6 @@ handle_success(
 		stats[i].coutsize += kbytes;
 	    }
 	}
-	if (logtype == L_SUCCESS || logtype== L_PARTIAL) {
-	    current_tape->taper_time += sec;
-	    current_tape->coutsize += kbytes;
-	}
-	current_tape->corigsize += origkb;
 	current_tape->tapedisks += 1;
     }
 

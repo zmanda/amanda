@@ -300,7 +300,6 @@ taper_cmd(
     char fallback_splitsize[NUM_STR_SIZE];
     char *diskbuffer = NULL;
     disk_t *dp;
-    char *features;
     char *qname;
     char *qdest;
 
@@ -314,19 +313,16 @@ taper_cmd(
 	qdest = quote_string(destname);
 	snprintf(number, SIZEOF(number), "%d", level);
 	snprintf(splitsize, SIZEOF(splitsize), OFF_T_FMT,
-		 (OFF_T_FMT_TYPE)dp->tape_splitsize);
-	features = am_feature_to_string(dp->host->features);
+		 (OFF_T_FMT_TYPE)dp->tape_splitsize * 1024);
 	cmdline = vstralloc(cmdstr[cmd],
 			    " ", disk2serial(dp),
 			    " ", qdest,
 			    " ", dp->host->hostname,
-			    " ", features,
 			    " ", qname,
 			    " ", number,
 			    " ", datestamp,
 			    " ", splitsize,
 			    "\n", NULL);
-	amfree(features);
 	amfree(qdest);
 	amfree(qname);
 	break;
@@ -346,14 +342,12 @@ taper_cmd(
 	    diskbuffer = dp->split_diskbuffer;
 	}
 	snprintf(splitsize, SIZEOF(splitsize), OFF_T_FMT,
-		 (OFF_T_FMT_TYPE)dp->tape_splitsize);
+		 (OFF_T_FMT_TYPE)dp->tape_splitsize * 1024);
 	snprintf(fallback_splitsize, SIZEOF(fallback_splitsize), OFF_T_FMT,
-		 (OFF_T_FMT_TYPE)dp->fallback_splitsize);
-	features = am_feature_to_string(dp->host->features);
+		 (OFF_T_FMT_TYPE)dp->fallback_splitsize * 1024);
 	cmdline = vstralloc(cmdstr[cmd],
 			    " ", disk2serial(dp),
 			    " ", dp->host->hostname,
-			    " ", features,
 			    " ", qname,
 			    " ", number,
 			    " ", datestamp,
@@ -361,9 +355,17 @@ taper_cmd(
 			    " ", diskbuffer,
 			    " ", fallback_splitsize,
 			    "\n", NULL);
-	amfree(features);
 	amfree(qname);
 	break;
+    case DONE: /* handle */
+    case FAILED: /* handle */
+	dp = (disk_t *) ptr;
+	cmdline = vstralloc(cmdstr[cmd],
+			    " ", disk2serial(dp),
+			    "\n", NULL);
+	break;
+    case NEW_TAPE:
+    case NO_NEW_TAPE:
     case QUIT:
 	cmdline = stralloc2(cmdstr[cmd], "\n");
 	break;

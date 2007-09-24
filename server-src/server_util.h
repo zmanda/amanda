@@ -45,8 +45,10 @@ enum {
     START, FILE_DUMP, PORT_DUMP, CONTINUE, ABORT,	/* dumper cmds */
     FAILED, TRYAGAIN, NO_ROOM, RQ_MORE_DISK,		/* dumper results */
     ABORT_FINISHED, BAD_COMMAND,			/* dumper results */
-    START_TAPER, FILE_WRITE, PORT_WRITE,		/* taper cmds */
+    START_TAPER, FILE_WRITE, NEW_TAPE, NO_NEW_TAPE,     /* taper... */
+    PARTDONE, PORT_WRITE, DUMPER_STATUS,                /* ... cmds */
     PORT, TAPE_ERROR, TAPER_OK,	SPLIT_NEEDNEXT,         /* taper results */
+    REQUEST_NEW_TAPE,
     SPLIT_CONTINUE,
     LAST_TOK
 };

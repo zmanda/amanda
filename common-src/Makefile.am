@@ -19,6 +19,7 @@ libamanda_la_SOURCES =		\
 	alloc.c			\
 	amfeatures.c		\
 	amflock.c		\
+	base64.c		\
 	clock.c			\
 	conffile.c		\
 	debug.c			\
@@ -27,9 +28,12 @@ libamanda_la_SOURCES =		\
 	event.c			\
 	file.c			\
 	fileheader.c		\
+	getcwd.c		\
+	glib-util.c		\
 	match.c			\
 	packet.c		\
 	pipespawn.c		\
+	physmem.c		\
 	protocol.c		\
 	security.c		\
 	security-util.c		\
@@ -38,11 +42,14 @@ libamanda_la_SOURCES =		\
 	statfs.c		\
 	stream.c		\
 	tapelist.c		\
+	timestamp.c		\
 	token.c			\
 	util.c			\
 	versuff.c
 # version.c is generated; see below
 nodist_libamanda_la_SOURCES = version.c
+
+libamanda_la_LIBADD = $(GLIB_LIBS) $(LIBCURL)
 
 if WANT_AMFLOCK_POSIX
 libamanda_la_SOURCES += amflock-posix.c
@@ -91,22 +98,26 @@ if WANT_KRB5_SECURITY
 libamanda_la_SOURCES += krb5-security.c
 endif
 
-#libamanda_la_LIBADD =	@LTLIBOBJS@
-
 libamanda_la_LDFLAGS =  -release $(VERSION)
+#libamanda_la_CFLAGS =  $(GLIB_CFLAGS)
 
 noinst_HEADERS =		\
 	amanda.h		\
 	amfeatures.h		\
 	arglist.h		\
+	base64.h		\
 	clock.h			\
 	amflock.h		\
 	conffile.h		\
 	dgram.h			\
 	event.h			\
+	file.h			\
 	fileheader.h		\
+	getcwd.h		\
+	glib-util.h		\
 	packet.h		\
 	pipespawn.h		\
+	physmem.h		\
 	protocol.h		\
 	queue.h			\
 	security.h		\
@@ -116,6 +127,7 @@ noinst_HEADERS =		\
 	sockaddr-util.h		\
 	stream.h		\
 	tapelist.h		\
+	timestamp.h		\
 	token.h			\
 	util.h			\
 	version.h

@@ -126,7 +126,6 @@ bsd_connect(
     struct servent *se;
     in_port_t port = 0;
     struct timeval sequence_time;
-    amanda_timezone dontcare;
     int sequence;
     char *handle;
     int result;
@@ -237,7 +236,7 @@ bsd_connect(
 	port = AMANDA_SERVICE_DEFAULT;
     else
 	port = (in_port_t)ntohs(se->s_port);
-    amanda_gettimeofday(&sequence_time, &dontcare);
+    amanda_gettimeofday(&sequence_time);
     sequence = (int)sequence_time.tv_sec ^ (int)sequence_time.tv_usec;
     handle=alloc(15);
     snprintf(handle, 14, "000-%08x",  (unsigned)newhandle++);

@@ -42,9 +42,13 @@ const char *cmdstr[] = {
     "START", "FILE-DUMP", "PORT-DUMP", "CONTINUE", "ABORT",/* dumper cmds */
     "FAILED", "TRY-AGAIN", "NO-ROOM", "RQ-MORE-DISK",	/* dumper results */
     "ABORT-FINISHED", "BAD-COMMAND",			/* dumper results */
-    "START-TAPER", "FILE-WRITE", "PORT-WRITE",		/* taper cmds */
+    "START-TAPER", "FILE-WRITE", "NEW-TAPE", "NO-NEW-TAPE",
+     
+    "PARTDONE", "PORT-WRITE", "DUMPER-STATUS",		    /* taper cmds */
     "PORT", "TAPE-ERROR", "TAPER-OK", "SPLIT-NEEDNEXT", /* taper results */
+    "REQUEST-NEW-TAPE",
     "SPLIT-CONTINUE",
+    "LAST_TOK",
     NULL
 };
 
@@ -71,6 +75,7 @@ getcmd(
 
     cmdargs->argc = split(line, cmdargs->argv,
 	(int)(sizeof(cmdargs->argv) / sizeof(cmdargs->argv[0])), " ");
+    dbprintf(_("getcmd: %s\n"), line);
     amfree(line);
 
 #if DEBUG
@@ -97,6 +102,7 @@ printf_arglist_function1(void putresult, cmd_t, result, const char *, format)
     va_list argp;
 
     arglist_start(argp, format);
+    dbprintf(_("putresult: %d %s\n"), result, cmdstr[result]);
     printf("%s ", cmdstr[result]);
     vprintf(format, argp);
     fflush(stdout);

@@ -34,7 +34,6 @@
 #include "statfs.h"
 #include "diskfile.h"
 #include "tapefile.h"
-#include "tapeio.h"
 #include "changer.h"
 #include "packet.h"
 #include "security.h"
@@ -47,6 +46,9 @@
 #include "server_util.h"
 #include "pipespawn.h"
 #include "amfeatures.h"
+#include "device.h"
+#include "property.h"
+#include "timestamp.h"
 
 #define BUFFER_SIZE	32768
 
@@ -541,13 +543,8 @@ main(
 
 /* --------------------------------------------------- */
 
-int nslots, backwards, found, got_match, tapedays;
-char *datestamp;
-char *first_match_label = NULL, *first_match = NULL, *found_device = NULL;
-char *label;
-char *searchlabel, *labelstr;
-tape_t *tp;
-FILE *errf = NULL;
+static char *datestamp;
+static FILE *errf = NULL;
 
 int check_tapefile(
     FILE *outf,
@@ -623,17 +620,120 @@ test_server_pgm(
     return pgmbad;
 }
 
+/* check that the tape is a valid amanda tape
+   Returns TRUE if all tests passed; FALSE otherwise. */
+static gboolean test_tape_status(FILE * outf) {
+    int tape_status;
+    Device * device;
+    GValue property_value;
+    char * label = NULL;
+    char * tapename = NULL;
+
+    fprintf(stderr, "%d Testing tape status\n", getpid());
+
+    bzero(&property_value, sizeof(property_value));
+    
+    tapename = getconf_str(CNF_TAPEDEV);
+    g_return_val_if_fail(tapename != NULL, FALSE);
+
+    device_api_init();
+    
+    if (!getconf_seen(CNF_TPCHANGER) && getconf_int(CNF_RUNTAPES) != 1) {
+        fprintf(outf,
+                _("WARNING: if a tape changer is not available, runtapes "
+                  "must be set to 1\n"));
+        fprintf(outf, _("Change the value of the \"runtapes\" parameter in " 
+                        "amanda.conf or configure a tape changer\n"));
+    }
+    
+    tape_status = taper_scan(NULL, &label, &datestamp, &tapename,
+                             FILE_taperscan_output_callback, outf,
+                             NULL, NULL);
+    if (tape_status < 0) {
+        tape_t *exptape = lookup_last_reusable_tape(0);
+        fprintf(outf, _("       (expecting "));
+        if(exptape != NULL) fprintf(outf, _("tape %s or "), exptape->label);
+        fprintf(outf, _("a new tape)\n"));
+        amfree(label);
+        amfree(tapename);
+        return FALSE;
+    }
+
+    device = device_open(tapename); // Frees tapename.
+    tapename = NULL;
+    if (device == NULL) {
+        fprintf(outf, "ERROR: Could not open tape device.\n");
+        amfree(label);
+        amfree(tapename);
+        return FALSE;
+    }
+    
+    device_set_startup_properties_from_config(device);
+
+    if (tape_status != 3 && device->volume_label != label &&
+               (device->volume_label == NULL || label == NULL ||
+                strcmp(device->volume_label, label) != 0)) {
+        fprintf(outf, "WARNING: Reading label the second time failed: "
+                "Got %s first, then %s.\n", label, device->volume_label);
+    }
+    
+    /* If we can't get this property, it's not an error. Maybe the device
+     * doesn't support this property, or needs an actual volume to know
+     * for sure. */
+    if (device_property_get(device, PROPERTY_MEDIUM_TYPE, &property_value)) {
+        g_assert(G_VALUE_TYPE(&property_value) == MEDIA_ACCESS_MODE_TYPE);
+        if (g_value_get_enum(&property_value) ==
+            MEDIA_ACCESS_MODE_WRITE_ONLY) {
+            fprintf(outf, "WARNING: Media access mode is WRITE_ONLY, "
+                    "dumps will be thrown away.\n");
+        }
+    }
+    
+    if (overwrite) {
+        if (!device_start(device, ACCESS_WRITE, g_strdup(label),
+                          get_undef_timestamp())) {
+            if (tape_status == 3) {
+                fprintf(outf, "ERROR: Could not label brand new tape.\n");
+            } else {
+                fprintf(outf,
+                        "ERROR: tape %s label ok, but is not writable.\n",
+                        label);
+            }
+            amfree(label);
+            g_object_unref(device);
+            return FALSE;
+        } else { /* Write succeeded. */
+            if (tape_status != 3) {
+                fprintf(outf, "Tape %s is writable; rewrote label.\n", label);
+            } else {
+                fprintf(outf, "Wrote label %s to brand new tape.\n", label);
+            }
+        }
+    } else { /* !overwrite */
+        fprintf(outf, "NOTE: skipping tape-writable test\n");
+        if (tape_status == 3) {
+            fprintf(outf,
+                    "Found a brand new tape, will label it %s.\n", 
+                    label);
+        } else {
+            fprintf(outf, "Tape %s label ok\n", label);
+        }                    
+    }
+    g_object_unref(device);
+    amfree(label);
+    return TRUE;
+}
+
 pid_t
 start_server_check(
     int		fd,
     int		do_localchk,
     int		do_tapechk)
 {
-    char *tapename;
     generic_fs_stats_t fs;
     FILE *outf = NULL;
     holdingdisk_t *hdp;
-    pid_t pid;
+    pid_t pid G_GNUC_UNUSED;
     int confbad = 0, tapebad = 0, disklow = 0, logbad = 0;
     int userbad = 0, infobad = 0, indexbad = 0, pgmbad = 0;
     int testtape = do_tapechk;
@@ -644,22 +744,22 @@ start_server_check(
     switch(pid = fork()) {
     case -1:
     	error(_("could not spawn a process for checking the server: %s"), strerror(errno));
-	/*NOTREACHED*/
-
+        g_assert_not_reached();
+        
     case 0:
     	break;
-
+        
     default:
 	return pid;
     }
-
+    
     dup2(fd, 1);
     dup2(fd, 2);
-
+    
     set_pname("amcheck-server");
-
+    
     startclock();
-
+    
     if((outf = fdopen(fd, "w")) == NULL) {
 	error(_("fdopen %d: %s"), fd, strerror(errno));
 	/*NOTREACHED*/
@@ -782,6 +882,7 @@ start_server_check(
 	char *tape_dir;
 	char *lastslash;
 	char *holdfile;
+        char * tapename;
 	struct stat statbuf;
 	
 	conf_tapelist=getconf_str(CNF_TAPELIST);
@@ -857,12 +958,6 @@ start_server_check(
 		testtape = 0;
 		do_tapechk = 0;
 	    }
-	} else if (strncmp_const(tapename, "null:") == 0) {
-	    fprintf(outf,
-		    _("WARNING: tapedev is %s (null driver), dumps will be thrown away\n"),
-		    tapename);
-	    testtape = 0;
-	    do_tapechk = 0;
 	}
     }
 
@@ -1022,81 +1117,7 @@ start_server_check(
     }
 
     if (testtape) {
-	/* check that the tape is a valid amanda tape */
-        int tape_status;
-
-	tapedays = getconf_int(CNF_TAPECYCLE);
-	labelstr = getconf_str(CNF_LABELSTR);
-	tapename = getconf_str(CNF_TAPEDEV);
-
-	if (!getconf_seen(CNF_TPCHANGER) && getconf_int(CNF_RUNTAPES) != 1) {
-	    fprintf(outf,
-		    _("WARNING: if a tape changer is not available, runtapes "
-		      "must be set to 1\n"));
-	    fprintf(outf, _("Change the value of the \"runtapes\" parameter in " 
-			    "amanda.conf or configure a tape changer\n"));
-	}
-
-        tape_status = taper_scan(NULL, &label, &datestamp, &tapename,
-				 FILE_taperscan_output_callback, outf);
-	if (tapename) {
-	    if (tape_access(tapename,F_OK) == -1) {
-		fprintf(outf, _("ERROR: Can't access device %s: %s\n"), tapename,
-			strerror(errno));
-		tapebad = 1;
-	    }
-	    if (tape_access(tapename,R_OK) == -1) {
-		fprintf(outf, _("ERROR: Can't read device %s: %s\n"), tapename,
-			strerror(errno));
-		tapebad = 1;
-	    }
-	    if (tape_access(tapename,W_OK) == -1) {
-		fprintf(outf, _("ERROR: Can't write to device %s: %s\n"), tapename,
-			strerror(errno));
-		tapebad = 1;
-	    }
-	}
-        if (tape_status < 0) {
-	    tape_t *exptape = lookup_last_reusable_tape(0);
-	    fprintf(outf, _("       (expecting "));
-	    if(exptape != NULL) fprintf(outf, _("tape %s or "), exptape->label);
-	    fprintf(outf, _("a new tape)\n"));
-            tapebad = 1;
-	} else {
-            if (overwrite) {
-                char *wrlabel_status;
-                wrlabel_status = tape_wrlabel(tapename, "X", label,
-				(unsigned)(tapetype_get_blocksize(tp) * 1024));
-                if (wrlabel_status != NULL) {
-                    if (tape_status == 3) {
-                        fprintf(outf,
-                                _("ERROR: Could not label brand new tape: %s\n"),
-                                wrlabel_status);
-                    } else {
-                        fprintf(outf,
-                                _("ERROR: tape %s label ok, but is not writable (%s)\n"),
-                                label, wrlabel_status);
-                    }
-                    tapebad = 1;
-                } else {
-                    if (tape_status != 3) {
-                        fprintf(outf, _("Tape %s is writable; rewrote label.\n"), label);
-                    } else {
-                        fprintf(outf, _("Wrote label %s to brand new tape.\n"), label);
-                    }
-                }
-            } else {
-                fprintf(outf, _("NOTE: skipping tape-writable test\n"));
-                if (tape_status == 3) {
-                    fprintf(outf,
-                            _("Found a brand new tape, will label it %s.\n"), 
-                            label);
-                } else {
-                    fprintf(outf, _("Tape %s label ok\n"), label);
-                }                    
-            }
-        }
-	amfree(tapename);
+        tapebad = test_tape_status(outf);
     } else if (do_tapechk) {
 	fprintf(outf, _("WARNING: skipping tape test because amdump or amflush seem to be running\n"));
 	fprintf(outf, _("WARNING: if they are not, you must run amcleanup\n"));
@@ -1415,7 +1436,6 @@ start_server_check(
     }
 
     amfree(datestamp);
-    amfree(label);
     amfree(config_dir);
     amfree(config_name);
 

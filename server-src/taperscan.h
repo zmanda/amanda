@@ -29,6 +29,7 @@
 #ifndef TAPERSCAN_H
 #define TAPERSCAN_H
 
+#include <device.h>
 
 /* taper_scan(): Scans the changer to find a tape to use. Reads the tape
  *               label, or invents a new one if label_new_tapes is in use.
@@ -49,11 +50,17 @@
  *
  * All returned strings are newly-allocated. */
 
+typedef void (*TaperscanOutputFunctor)(void * data, char * msg);
+typedef gboolean (*TaperscanProlongFunctor)(void *data);
+
 int taper_scan (char* wantlabel,
-                  char** gotlabel, char** timestamp,
-                  char **tapedev,
-		  void taperscan_output_callback(void *data, char *msg),
-		  void *data);
+                char** gotlabel, char** timestamp,
+                char **tapedev,
+                TaperscanOutputFunctor output_functor,
+                void *output_data,
+                TaperscanProlongFunctor prolong_functor,
+                void *prolong_data
+                );
 void FILE_taperscan_output_callback(void *data, char *msg);
 void CHAR_taperscan_output_callback(void *data, char *msg);
 

@@ -1,3 +1,6 @@
+2007-09-24  Dustin J. Mitchell <dustin@zmanda.com>
+	Merge of Device API, written by Ian Turner <ian@zmanda.com>
+
 2007-09-20  Dustin J. Mitchell <dustin@zmanda.com>
 	* oldrecover-src/extract_list.c recover-src/extract_list.c: 
 	  change stralloc2 to newstralloc2 to avoid possible memory

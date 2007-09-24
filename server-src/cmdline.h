@@ -28,11 +28,8 @@
 #ifndef CMDLINE_H
 #define CMDLINE_H
 
-#include "sl.h"
-
-/* TODO: use glib's linked lists instead; dumpspec_list_t provides basic
- * type-checking to allow that to be implemented with a simple search and
- * replace. */
+#include <glib.h>
+#include "glib-util.h"
 
 /* A dumpspec can specify a particular dump (combining host, disk, and 
  * datestamp), or can be less specific by leaving out some components.
@@ -43,13 +40,7 @@ typedef struct dumpspec_s {
     char *host;
     char *disk;
     char *datestamp;
-
-    struct dumpspec_s * next;
 } dumpspec_t;
-
-/* temporary */
-typedef dumpspec_t dumpspec_list_t;
-#define dumpspec_list_first(dsl) ((dumpspec_t *)(dsl))
 
 /*
  * Dumpspec list management
@@ -77,13 +68,15 @@ void
 dumpspec_free(
     dumpspec_t *dumpspec);
 
-/* Free memory associated with a list of dumpspecs.
+/* Free memory associated with a list of dumpspecs.  CAUTION: do not
+ * use glib's g_slist_free directly on a dumpspec list, as it will not
+ * free the elements themselves.
  *
- * @param dumpspec_list: the dumpspec list to free
+ * @param dumpspec_list: the GSList of dumpspecs to free
  */
 void
-dumpspec_free_list(
-    dumpspec_list_t *dumpspec_list);
+dumpspec_list_free(
+    GSList *dumpspec_list);
 
 /*
  * Parsing
@@ -96,7 +89,8 @@ dumpspec_free_list(
  *
  * If no results are specified, a dumpspec with all entries set to ""
  * is returned; the caller may treat this as a wildcard or an error, as
- * appropriate.
+ * appropriate.  The macro "cmdline_dumpspec_list_is_wildcard" can test
+ * for this condition.
  *
  * Prints a message to stderr and returns NULL if an error occurs.
  *
@@ -104,10 +98,30 @@ dumpspec_free_list(
  * @param argv: command line arguments
  * @returns: dumpspec list, or NULL on error
  */
-dumpspec_list_t *
+GSList *
 cmdline_parse_dumpspecs(
     int argc,
     char **argv);
+
+/* Is the dumpspec list the wildcard returned from 
+ * cmdline_parse_dumpspecs?
+ *
+ * NOTE: 'list' will be evaluated many times; it should be a
+ * simple variable or other side-effect-free value.
+ *
+ * @param list: GSList returned from cmdline_parse_dumpspecs
+ * @return: boolean
+ */
+/* (this is ugly, but the compiler will make short work of it) */
+#define cmdline_dumpspec_list_is_wildcard(list)			\
+   ((list)							\
+ && (!(list)->next)						\
+ && (((dumpspec_t *)((list)->data))->host)			\
+ && (((dumpspec_t *)((list)->data))->host[0] == '\0')	        \
+ && (((dumpspec_t *)((list)->data))->disk)			\
+ && (((dumpspec_t *)((list)->data))->disk[0] == '\0')	        \
+ && (((dumpspec_t *)((list)->data))->datestamp)		        \
+ && (((dumpspec_t *)((list)->data))->datestamp[0] == '\0'))	\
 
 /* TODO: new name for match_disklist */
 int
@@ -149,16 +163,18 @@ cmdline_format_dumpspec_components(
  * Searching
  */
 
-/* TODO: use glib here too */
-
-/* Find all holding files matching the dumpspec list.  
+/* Find all holding files matching the dumpspec list.  If
+ * the dumpspec list contains a dumpspec with all blank
+ * entries, all holding files are returned.
+ *
+ * Free the resulting list with g_slist_free_full()
  *
  * @param dumpspec_list: a list of dumpspecs
  * @returns: a list of holding disk filenames.
  */
-sl_t *
+GSList *
 cmdline_match_holding(
-    dumpspec_list_t *dumpspec_list);
+    GSList *dumpspec_list);
 
 #endif /* CMDLINE_H */
 

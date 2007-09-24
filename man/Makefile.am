@@ -2,16 +2,13 @@
 
 transform =	s,x,x,;
 
-if WANT_AMPLOT
 AMPLOT_MAN8_PAGES = amplot.8
-endif
 
 COMMON_MAN8_PAGES = amanda.8
 
 COMMON_MAN5_PAGES = amanda.conf.5 \
 		    amanda-client.conf.5
 
-#if WANT_SERVER
 SERVER_MAN8_PAGES = amadmin.8 \
 		    amcheck.8 \
 		    amcheckdb.8 \
@@ -36,15 +33,10 @@ SERVER_MAN8_PAGES = amadmin.8 \
 		    amaespipe.8 \
 		    amcrypt-ossl.8 \
 		    amcrypt-ossl-asym.8
-#endif
 
-if WANT_RECOVER
 RECOVER_MAN8_PAGES = amrecover.8
-endif
 
-if WANT_RESTORE
 RESTORE_MAN8_PAGES = amrestore.8
-endif
 
 man8_pages = $(COMMON_MAN8_PAGES) \
 	    $(AMPLOT_MAN8_PAGES) \
@@ -60,6 +52,20 @@ ALL_MAN_PAGES = $(AMPLOT_MAN8_PAGES) \
 	   $(SERVER_MAN8_PAGES) \
 	   $(RECOVER_MAN8_PAGES) \
 	   $(RESTORE_MAN8_PAGES)
+
+WANTED_MAN_PAGES = $(COMMON_MAN5_PAGES) $(COMMON_MAN8_PAGES)
+if WANT_AMPLOT
+  WANTED_MAN_PAGES += $(AMPLOT_MAN8_PAGES)
+endif
+if WANT_SERVER
+  WANTED_MAN_PAGES += $(SERVER_MAN8_PAGES)
+endif
+if WANT_RECOVER
+  WANTED_MAN_PAGES += $(RECOVER_MAN8_PAGES)
+endif
+if WANT_RESTORE
+  WANTED_MAN_PAGES += $(RESTORE_MAN8_PAGES)
+endif
 
 # These lines are needed to force automake to set the $man<n>dir variables.
 man5_MANS =
@@ -95,12 +101,12 @@ else	!ENABLE_MANPAGE_BUILD
 	@echo WARNING: Not building needed $@ because building manpages is disabled.
 endif
 
-all: $(ALL_MAN_PAGES)
+all: $(WANTED_MAN_PAGES)
 
+install-data-hook: $(WANTED_MAN_PAGES)
 # this is conditioned on ENABLE_MANPAGE_BUILD; it checks for the
 # existence of the file to be installed when building manpages is
 # not enabled.
-install-data-hook: $(ALL_MAN_PAGES)
 if	ENABLE_MANPAGE_BUILD
 	@list="$(man8_pages)"; \
 	for p in $$list; do \

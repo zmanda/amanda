@@ -38,7 +38,6 @@
 #include "restore.h"
 
 #include "changer.h"
-#include "tapeio.h"
 #include "conffile.h"
 #include "logfile.h"
 #include "amfeatures.h"
@@ -462,14 +461,6 @@ main(
     }
     amfree(buf);
 
-    if(!tapes && rst_flags->alt_tapedev){
-	dbprintf(_("Looks like we're restoring from a holding file...\n"));
-        tapes = unmarshal_tapelist_str(rst_flags->alt_tapedev);
-	tapes->isafile = 1;
-	amfree(rst_flags->alt_tapedev);
-	rst_flags->alt_tapedev = NULL;
-    }
-
     if(re_config) {
 	char *conffile;
 	config_dir = vstralloc(CONFIG_DIR, "/", re_config, "/", NULL);
@@ -501,6 +492,16 @@ main(
 	rst_flags->check_labels = 1;
 	use_changer = 1;
     }
+
+    if(!tapes && rst_flags->alt_tapedev){
+        sleep(10);
+	dbprintf(_("Looks like we're restoring from a holding file...\n"));
+        tapes = unmarshal_tapelist_str(rst_flags->alt_tapedev);
+	tapes->isafile = 1;
+	amfree(rst_flags->alt_tapedev);
+	rst_flags->alt_tapedev = NULL;
+        use_changer = FALSE;
+    } 
 
     tapedev = getconf_str(CNF_TAPEDEV);
     /* If we'll be stepping on the tape server's devices, lock them. */

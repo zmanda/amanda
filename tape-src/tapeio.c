@@ -924,9 +924,8 @@ tapefd_wrlabel(
 	file.datestamp[SIZEOF(file.datestamp) - 1] = '\0';
 	strncpy(file.name, label, SIZEOF(file.name) - 1);
 	file.name[SIZEOF(file.name) - 1] = '\0';
-	buffer = alloc(size);
 	file.blocksize = size;
-	build_header(buffer, &file, size);
+        buffer = build_header(&file, size);
 	tapefd_setinfo_host(fd, NULL);
 	tapefd_setinfo_disk(fd, label);
 	tapefd_setinfo_level(fd, -1);
@@ -986,9 +985,8 @@ tapefd_wrendmark(
     file.type = F_TAPEEND;
     strncpy(file.datestamp, datestamp, SIZEOF(file.datestamp) - 1);
     file.datestamp[SIZEOF(file.datestamp) - 1] = '\0';
-    buffer = alloc(size);
     file.blocksize = size;
-    build_header(buffer, &file, size);
+    buffer = build_header(&file, size);
     tapefd_setinfo_host(fd, NULL);
     tapefd_setinfo_disk(fd, "TAPEEND");
     tapefd_setinfo_level(fd, -1);

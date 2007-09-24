@@ -52,6 +52,7 @@ typedef enum {
     CNF_MAILTO,
     CNF_DUMPUSER,
     CNF_TAPEDEV,
+    CNF_DEVICE_PROPERTY,
     CNF_CHNGRDEV,
     CNF_CHNGRFILE,
     CNF_LABELSTR,
@@ -78,7 +79,6 @@ typedef enum {
     CNF_DTIMEOUT,
     CNF_CTIMEOUT,
     CNF_TAPEBUFS,
-    CNF_RAWTAPEDEV,
     CNF_PRINTER,
     CNF_AUTOFLUSH,
     CNF_RESERVE,
@@ -88,6 +88,8 @@ typedef enum {
     CNF_AMRECOVER_CHECK_LABEL,
     CNF_AMRECOVER_CHANGER,
     CNF_TAPERALGO,
+    CNF_TAPERSTART,
+    CNF_TAPERFLUSH,
     CNF_DISPLAYUNIT,
     CNF_KRB5KEYTAB,
     CNF_KRB5PRINCIPAL,
@@ -147,6 +149,8 @@ typedef enum {
     CONF_LARGEST,		CONF_LARGESTFIT,	CONF_SMALLEST,
     CONF_LAST,			CONF_DISPLAYUNIT,	CONF_RESERVED_UDP_PORT,
     CONF_RESERVED_TCP_PORT,	CONF_UNRESERVED_TCP_PORT,
+    CONF_TAPERSTART,            CONF_TAPERFLUSH,
+    CONF_DEVICE_PROPERTY,
 
     /* kerberos 5 */
     CONF_KRB5KEYTAB,		CONF_KRB5PRINCIPAL,
@@ -220,9 +224,7 @@ typedef enum {
     CONF_MULT1K,		CONF_MULT1M,		CONF_MULT1G,
 
     /* boolean */
-    CONF_ATRUE,			CONF_AFALSE,
-
-    CONF_RAWTAPEDEV
+    CONF_ATRUE,			CONF_AFALSE
 } tok_t;
 
 /* internal types and variables */
@@ -248,7 +250,8 @@ typedef enum {
     CONFTYPE_PRIORITY,
     CONFTYPE_RATE,
     CONFTYPE_INTRANGE,
-    CONFTYPE_EXINCLUDE
+    CONFTYPE_EXINCLUDE,
+    CONFTYPE_PROPLIST
 } conftype_t;
 
 /* Compression types */
@@ -293,19 +296,22 @@ typedef struct exinclude_s {
     int  optional;
 } exinclude_t;
 
+typedef GHashTable* proplist_t;
+
 typedef struct val_s {
     union {
-       int		i;
-       long		l;
-       off_t		am64;
-       double		r;
-       char		*s;
-       sl_t		*sl;
-       ssize_t		size;
-       time_t		t;
-       float		rate[2];
-       exinclude_t	exinclude;
-       int		intrange[2];
+        int		i;
+        long		l;
+        off_t		am64;
+        double		r;
+        char		*s;
+        sl_t		*sl;
+        ssize_t		size;
+        time_t		t;
+        float		rate[2];
+        exinclude_t	exinclude;
+        int		intrange[2];
+        proplist_t      proplist;
     } v;
     int seen;
     conftype_t type;
@@ -557,12 +563,16 @@ int          get_conftype_taperalgo(val_t *);
 int          get_conftype_priority (val_t *);
 float       *get_conftype_rate     (val_t *);
 exinclude_t  get_conftype_exinclude(val_t *);
-int         *get_conftype_intrange (val_t *);
+proplist_t   get_conftype_proplist (val_t *);
 
 void command_overwrite(command_option_t *command_options, t_conf_var *overwrite_var,
 		       keytab_t *keytab, val_t *valarray, char *prefix);
 
 void free_new_argv(int new_argc, char **new_argv);
+void find_configuration(gboolean use_passed_name,
+                        char * config_name_in,
+                        char **config_name_out,
+                        char **config_dir_out);
 /* this corresponds to the normal output of amanda, but may
  * be adapted to any spacing as you like.
  */
@@ -596,6 +606,7 @@ void parse_conf(int parse_argc, char **parse_argv, int *new_argc,
 char **get_config_options(int);
 void report_bad_conf_arg(void);
 void free_server_config(void);
+void set_server_config_from_options(void);
 
 int read_conffile(char *filename);
 
@@ -615,6 +626,7 @@ off_t getconf_am64(confparm_t parameter);
 double getconf_real(confparm_t parameter);
 char *getconf_str(confparm_t parameter);
 int getconf_taperalgo(confparm_t parameter);
+GHashTable* getconf_proplist(confparm_t parm);
 int *getconf_intrange(confparm_t parameter);
 char *getconf_byname(char *confname);
 char *getconf_list(char *listname);

@@ -191,7 +191,7 @@ void security_streaminit(security_stream_t *, const security_driver_t *);
 /* const char *security_geterror(security_handle_t *); */
 #define	security_geterror(handle)	((handle)->error)
 void security_seterror(security_handle_t *, const char *, ...)
-    __attribute__ ((format (printf, 2, 3)));
+     G_GNUC_PRINTF(2,3);
 
 
 /* void security_connect(const security_driver_t *, const char *, 
@@ -225,7 +225,7 @@ void security_close(security_handle_t *);
 /* const char *security_stream_geterror(security_stream_t *); */
 #define	security_stream_geterror(stream)	((stream)->error)
 void security_stream_seterror(security_stream_t *, const char *, ...)
-    __attribute__ ((format (printf, 2, 3)));
+     G_GNUC_PRINTF(2,3);
 
 /* security_stream_t *security_stream_server(security_handle_t *); */
 #define	security_stream_server(handle)	\

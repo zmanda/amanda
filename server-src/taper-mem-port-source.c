@@ -1,0 +1,225 @@
+/*
+ * Amanda, The Advanced Maryland Automatic Network Disk Archiver
+ * Copyright (c) 2006 Zmanda Inc.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
+#define selfp (self->_priv)
+
+#include "taper-mem-port-source.h"
+
+#include <physmem.h>
+
+struct _TaperMemPortSourcePrivate {
+    /* Actual size of this buffer is given by max_part_size in TaperSource. */
+    char * retry_buffer;
+    guint64 buffer_offset; /* Bytes read from buffer. */
+    guint64 buffer_len;    /* Bytes written to buffer. */
+    gboolean retry_mode;
+};
+/* here are local prototypes */
+static void taper_mem_port_source_init (TaperMemPortSource * o);
+static void taper_mem_port_source_class_init (TaperMemPortSourceClass * c);
+static ssize_t taper_mem_port_source_read (TaperSource * pself, void * buf,
+                                           size_t count);
+static gboolean taper_mem_port_source_seek_to_part_start (TaperSource * pself);
+static void taper_mem_port_source_start_new_part (TaperSource * pself);
+static int taper_mem_port_source_predict_parts(TaperSource * pself);
+
+/* pointer to the class of our parent */
+static TaperSourceClass * source_parent_class = NULL;
+static TaperPortSourceClass *parent_class = NULL;
+
+GType
+taper_mem_port_source_get_type (void)
+{
+    static GType type = 0;
+    
+    if G_UNLIKELY(type == 0) {
+        static const GTypeInfo info = {
+            sizeof (TaperMemPortSourceClass),
+            (GBaseInitFunc) NULL,
+            (GBaseFinalizeFunc) NULL,
+            (GClassInitFunc) taper_mem_port_source_class_init,
+            (GClassFinalizeFunc) NULL,
+            NULL /* class_data */,
+            sizeof (TaperMemPortSource),
+            0 /* n_preallocs */,
+            (GInstanceInitFunc) taper_mem_port_source_init,
+            NULL
+        };
+        
+        type = g_type_register_static (TAPER_TYPE_PORT_SOURCE,
+                                       "TaperMemPortSource", &info,
+                                       (GTypeFlags)0);
+    }
+    
+    return type;
+}
+
+static void
+taper_mem_port_source_finalize(GObject *obj_self) {
+    TaperMemPortSource *self = TAPER_MEM_PORT_SOURCE (obj_self);
+    if(G_OBJECT_CLASS(parent_class)->finalize)
+        (* G_OBJECT_CLASS(parent_class)->finalize)(obj_self);
+    amfree (self->_priv->retry_buffer);
+    amfree (self->_priv);
+}
+
+static void 
+taper_mem_port_source_init (TaperMemPortSource * o) {
+    o->_priv = malloc(sizeof(TaperMemPortSourcePrivate));
+    o->_priv->retry_buffer = NULL;
+    o->_priv->retry_mode = FALSE;
+    o->_priv->buffer_offset = o->_priv->buffer_len = 0;
+}
+
+static void 
+taper_mem_port_source_class_init (TaperMemPortSourceClass * c) {
+    GObjectClass *g_object_class = (GObjectClass*) c;
+    TaperSourceClass *taper_source_class = (TaperSourceClass *)c;
+    
+    parent_class = g_type_class_ref (TAPER_TYPE_PORT_SOURCE);
+    source_parent_class = (TaperSourceClass*)parent_class;
+    
+    taper_source_class->read = taper_mem_port_source_read;
+    taper_source_class->seek_to_part_start =
+        taper_mem_port_source_seek_to_part_start;
+    taper_source_class->start_new_part = taper_mem_port_source_start_new_part;
+    taper_source_class->predict_parts = taper_mem_port_source_predict_parts;
+
+    g_object_class->finalize = taper_mem_port_source_finalize;
+}
+
+static int taper_mem_port_source_predict_parts(TaperSource * pself) {
+    TaperMemPortSource * self = TAPER_MEM_PORT_SOURCE(pself);
+    g_return_val_if_fail(self != NULL, -1);
+
+    return -1;
+}
+
+/* Allocate buffer space, if it hasn't been done yet. */
+static void setup_retry_buffer(TaperMemPortSource * self) {
+    guint64 alloc_size;
+    guint64 max_usage;
+    if (selfp->retry_buffer != NULL)
+        return;
+
+    alloc_size = TAPER_SOURCE(self)->max_part_size;
+    if (alloc_size > SIZE_MAX) {
+        fprintf(stderr, "Fallback split size of %" G_GUINT64_FORMAT
+                " is greater that system maximum of " OFF_T_FMT ".\n",
+                alloc_size, (OFF_T_FMT_TYPE)SIZE_MAX);
+        alloc_size = SIZE_MAX;
+    }
+    
+    max_usage = physmem_available() * .95;
+    if (alloc_size > max_usage) {
+        fprintf(stderr, "Fallback split size of %" G_GUINT64_FORMAT
+                " is greater than 95%% of available memory (%"
+                G_GUINT64_FORMAT " bytes).\n", alloc_size, max_usage);
+        alloc_size = max_usage;
+    }
+    
+    if (alloc_size < DISK_BLOCK_BYTES * 10) {
+        fprintf(stderr, "Fallback split size of %" G_GUINT64_FORMAT
+                " is smaller than 10 blocks (%u bytes).\n", alloc_size,
+                DISK_BLOCK_BYTES * 10);
+        alloc_size = DISK_BLOCK_BYTES * 10;
+    }
+    
+    TAPER_SOURCE(self)->max_part_size = alloc_size;
+    selfp->retry_buffer = malloc(alloc_size);
+}
+
+static ssize_t 
+taper_mem_port_source_read (TaperSource * pself, void * buf, size_t count) {
+    TaperMemPortSource * self = (TaperMemPortSource*)pself;
+    g_return_val_if_fail (self != NULL, -1);
+    g_return_val_if_fail (TAPER_IS_MEM_PORT_SOURCE (self), -1);
+    g_return_val_if_fail (buf != NULL, -1);
+    g_return_val_if_fail (count > 0, -1);
+    
+    if (selfp->retry_mode) {
+        g_assert(selfp->retry_buffer != NULL && selfp->buffer_len > 0);
+        count = MIN(count, selfp->buffer_len - selfp->buffer_offset);
+
+        if (count == 0) {
+            /* It was not before. */
+            pself->end_of_part = TRUE;
+            return 0;
+        }
+
+        memcpy(buf, selfp->retry_buffer + selfp->buffer_offset, count);
+        selfp->buffer_offset += count;
+        return count;
+    } else {
+        int read_result;
+        if (selfp->retry_buffer == NULL) {
+            setup_retry_buffer(self);
+        }
+
+        count = MIN(count, pself->max_part_size - selfp->buffer_len);
+        if (count == 0) /* it was nonzero before */ {
+            pself->end_of_part = TRUE;
+            return 0;
+        }
+        
+        read_result = source_parent_class->read(pself, buf, count);
+        /* TaperPortSource handles EOF and other goodness. */
+        if (read_result <= 0) {
+            return read_result;
+        }
+
+        /* All's well in the world. */
+        memcpy(selfp->retry_buffer + selfp->buffer_len,
+               buf, read_result);
+        selfp->buffer_len += read_result;
+
+        return read_result;
+    }
+
+    g_assert_not_reached();
+}
+
+static gboolean 
+taper_mem_port_source_seek_to_part_start (TaperSource * pself) {
+    TaperMemPortSource * self = (TaperMemPortSource*)pself;
+    g_return_val_if_fail (self != NULL, FALSE);
+    g_return_val_if_fail (TAPER_IS_MEM_PORT_SOURCE (self), FALSE);
+    g_return_val_if_fail (selfp->buffer_len > 0, FALSE);
+
+    selfp->retry_mode = TRUE;
+    selfp->buffer_offset = 0;
+
+    if (source_parent_class->seek_to_part_start)
+        return source_parent_class->seek_to_part_start(pself);
+    else
+        return TRUE;
+}
+
+static void 
+taper_mem_port_source_start_new_part (TaperSource * pself) {
+    TaperMemPortSource * self = (TaperMemPortSource*)pself;
+    g_return_if_fail (self != NULL);
+    g_return_if_fail (TAPER_IS_MEM_PORT_SOURCE (self));
+
+    selfp->buffer_offset = selfp->buffer_len = 0;
+    selfp->retry_mode = FALSE;
+
+    if (source_parent_class->start_new_part)
+        source_parent_class->start_new_part(pself);
+}

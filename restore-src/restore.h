@@ -35,6 +35,7 @@
 #include "fileheader.h"
 #include "tapelist.h"
 #include "amfeatures.h"
+#include "device.h"
 
 #define CREAT_MODE  0640
 
@@ -67,13 +68,39 @@ typedef struct rst_flags_s {
     char *inventory_log;
 } rst_flags_t;
 
+typedef struct {
+    enum { HOLDING_MODE, DEVICE_MODE} restore_mode;
+    dumpfile_t * header;
+    union {
+        int holding_fd;
+        Device * device;
+    } u;
+} RestoreSource;
+
+typedef struct seentapes_s seentapes_t;
+
 char *make_filename(dumpfile_t *file);
 int disk_match(dumpfile_t *file, char *datestamp,
 		    char *hostname, char *diskname, char *level);
 ssize_t read_file_header(dumpfile_t *file, int tapefd, int isafile,
 			 rst_flags_t *flags);
-ssize_t restore(dumpfile_t *file, char *filename, int tapefd, int isafile,
-			rst_flags_t *flags);
+void restore(RestoreSource * source, rst_flags_t * flags);
+gboolean restore_holding_disk(FILE * prompt_out,
+                              rst_flags_t * flags,
+                              am_feature_t * features,
+                              tapelist_t * file,
+                              seentapes_t ** seen,
+                              match_list_t * match_list,
+                              dumpfile_t * this_header,
+                              dumpfile_t * last_header);
+
+gboolean search_a_tape(Device * device, FILE *prompt_out, rst_flags_t  *flags,
+                       am_feature_t *their_features, 
+                       tapelist_t   *desired_tape, match_list_t *match_list,
+                       seentapes_t **tape_seen,
+                       dumpfile_t * first_restored_file, int tape_count,
+                       FILE * logstream);
+
 void flush_open_outputs(int reassemble, dumpfile_t *only_file);
 void search_tapes(FILE *prompt_out, FILE *prompt_in, int use_changer,
 		  tapelist_t *tapelist, match_list_t *restorethese,

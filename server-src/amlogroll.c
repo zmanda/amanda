@@ -51,7 +51,7 @@ main(
     FILE *logfile;
     unsigned long malloc_hist_1, malloc_size_1;
     unsigned long malloc_hist_2, malloc_size_2;
-    char my_cwd[STR_SIZE];
+    char * cwd;
     int    new_argc,   my_argc;
     char **new_argv, **my_argv;
 
@@ -76,10 +76,11 @@ main(
     
     erroutput_type = ERR_INTERACTIVE;
 
-    if (getcwd(my_cwd, SIZEOF(my_cwd)) == NULL) {
+    cwd = safe_getcwd();
+    if (cwd == NULL) {
 	error(_("Cannot determine current working directory: %s"),
 	        strerror(errno));
-	/*NOTREACHED*/
+        g_assert_not_reached();
     }
 
     parse_conf(argc, argv, &new_argc, &new_argv);
@@ -87,8 +88,8 @@ main(
     my_argv = new_argv;
 
     if (my_argc < 2) {
-	config_dir = stralloc2(my_cwd, "/");
-	if ((config_name = strrchr(my_cwd, '/')) != NULL) {
+	config_dir = stralloc2(cwd, "/");
+	if ((config_name = strrchr(cwd, '/')) != NULL) {
 	    config_name = stralloc(config_name + 1);
 	}
     } else {
@@ -96,6 +97,7 @@ main(
 	config_dir = vstralloc(CONFIG_DIR, "/", config_name, "/", NULL);
     }
 
+    amfree(cwd);
     safe_cd();
 
     /* read configuration files */

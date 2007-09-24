@@ -675,7 +675,22 @@ build_disk_table(void)
 	   strcmp(disk_name    , find_output->diskname) == 0 &&
 	   strcmp("OK"         , find_output->status)   == 0) {
 	    int partnum = -1;
-	    if(strcmp("--", find_output->partnum)){
+	    if (strcmp("1/1", find_output->partnum) == 0) {
+		partnum = -1;
+	    } else if (strcmp("1/-1", find_output->partnum) == 0) {
+		if (find_output->next &&
+		    strcmp(dump_hostname, find_output->next->hostname) == 0 &&
+		    strcmp(disk_name, find_output->next->diskname) == 0 &&
+		    strcmp(find_output->timestamp,
+			   find_output->next->timestamp) == 0 &&
+		    strcmp("OK", find_output->next->status) == 0 &&
+		    strcmp("2/-1", find_output->next->partnum) == 0) {
+		    partnum = 1;
+		}
+		else {
+		    partnum = -1;
+		}
+	    } else if (strcmp("--", find_output->partnum)) {
 		partnum = atoi(find_output->partnum);
 	    }
 	    /*

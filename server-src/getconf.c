@@ -477,27 +477,15 @@ main(
 	myarg = 2;
     }
 
-    if (myarg > asklist+1) {
-	config_name = stralloc(my_argv[1]);
-	config_dir = vstralloc(CONFIG_DIR, "/", config_name, "/", NULL);
-    } else {
-	char my_cwd[STR_SIZE];
+    find_configuration(myarg > asklist + 1,
+                       my_argv[1], &config_name, &config_dir);
 
-	if (getcwd(my_cwd, SIZEOF(my_cwd)) == NULL) {
-	    error(_("Cannot determine current working directory: %s"),
-		  strerror(errno));
-	    /*NOTREACHED*/
-	}
-	config_dir = stralloc2(my_cwd, "/");
-	if ((config_name = strrchr(my_cwd, '/')) != NULL) {
-	    config_name = stralloc(config_name + 1);
-	}
-    }
     if (myarg >= my_argc) {
 	error(_("Must specify a parameter"));
     }
     parmname = my_argv[myarg];
 
+            
     safe_cd();
 
     /* Note that we dont use check_running_as(..) here, because we may not have a configuration

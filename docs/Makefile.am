@@ -79,7 +79,6 @@ pkgdata_DATA = \
 	vtape-api.txt \
 	whatwasnew.txt \
 	wishlist.txt \
-	y2k.txt \
-	zftape.txt
+	y2k.txt
 
 EXTRA_DIST = $(pkgdata_DATA)

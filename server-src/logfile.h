@@ -46,7 +46,8 @@ typedef enum logtype_e {
     L_ERROR, L_WARNING,	L_INFO, L_SUMMARY,	 /* information messages */
     L_START, L_FINISH,				     /* start/end of run */
     L_DISK,							 /* disk */
-    L_SUCCESS, L_PARTIAL, L_FAIL, L_STRANGE,	    /* the end of a dump */
+    /* End of a dump: */
+    L_DONE, L_PART, L_PARTPARTIAL, L_SUCCESS, L_PARTIAL, L_FAIL, L_STRANGE,
     L_CHUNK, L_CHUNKSUCCESS,                            /* ... continued */
     L_STATS,						   /* statistics */
     L_MARKER,					  /* marker for reporter */

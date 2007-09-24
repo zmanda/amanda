@@ -30,7 +30,6 @@
  */
 
 #include "amanda.h"
-#include "tapeio.h"
 #include "fileheader.h"
 #include "util.h"
 #include "restore.h"
@@ -339,7 +338,7 @@ main(
 	    rst_flags->compress = 1;
 	    rst_flags->comp_type = COMPRESS_BEST_OPT;
 	    break;
-	case 'p': rst_flags->pipe_to_fd = fileno(stdout); break;
+	case 'p': rst_flags->pipe_to_fd = STDOUT_FILENO; break;
 	case 's': rst_flags->fsf = (off_t)0; break;
 	case 'l': rst_flags->leave_comp = 1; break;
 	case 'i': rst_flags->inventory_log = stralloc(optarg); break;

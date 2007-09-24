@@ -34,9 +34,6 @@
 #include "clock.h"
 
 /* local functions */
-static struct timeval timesub(struct timeval end, struct timeval start);
-static struct timeval timeadd(struct timeval a, struct timeval b);
-
 times_t times_zero;
 times_t start_time;
 static int clock_running = 0;
@@ -50,25 +47,18 @@ clock_is_running(void)
 void
 startclock(void)
 {
-    amanda_timezone dontcare;
-
     clock_running = 1;
-    amanda_gettimeofday(&start_time.r, &dontcare);
+    
+    g_get_current_time(&start_time);
 }
 
 times_t
 stopclock(void)
 {
-    times_t diff;
-    struct timeval end_time;
-    amanda_timezone dontcare;
+    GTimeVal diff;
 
-    if(!clock_running) {
-	fprintf(stderr,_("stopclock botch\n"));
-	exit(1);
-    }
-    amanda_gettimeofday(&end_time, &dontcare);
-    diff.r = timesub(end_time,start_time.r);
+    diff = curclock();
+
     clock_running = 0;
     return diff;
 }
@@ -76,56 +66,15 @@ stopclock(void)
 times_t
 curclock(void)
 {
-    times_t diff;
-    struct timeval end_time;
-    amanda_timezone dontcare;
+    GTimeVal end_time;
 
     if(!clock_running) {
 	fprintf(stderr,_("curclock botch\n"));
 	exit(1);
     }
-    amanda_gettimeofday(&end_time, &dontcare);
-    diff.r = timesub(end_time,start_time.r);
-    return diff;
-}
 
-times_t
-timesadd(
-    times_t	a,
-    times_t	b)
-{
-    times_t sum;
-
-    sum.r = timeadd(a.r,b.r);
-    return sum;
-}
-
-times_t
-timessub(
-    times_t	a,
-    times_t	b)
-{
-    times_t dif;
-
-    dif.r = timesub(a.r,b.r);
-    return dif;
-}
-
-char *
-times_str(
-    times_t	t)
-{
-    static char str[10][NUM_STR_SIZE+10];
-    static size_t n = 0;
-    char *s;
-
-    /* tv_sec/tv_usec are longs on some systems */
-    snprintf(str[n], SIZEOF(str[n]), "rtime %lu.%03lu",
-	     (unsigned long)t.r.tv_sec,
-	     (unsigned long)t.r.tv_usec / 1000);
-    s = str[n++];
-    n %= am_countof(str);
-    return s;
+    g_get_current_time(&end_time);
+    return timesub(end_time,start_time);
 }
 
 char *
@@ -138,19 +87,15 @@ walltime_str(
 
     /* tv_sec/tv_usec are longs on some systems */
     snprintf(str[n], SIZEOF(str[n]), "%lu.%03lu",
-	     (unsigned long)t.r.tv_sec,
-	     (unsigned long)t.r.tv_usec/1000);
+	     (unsigned long)t.tv_sec,
+	     (unsigned long)t.tv_usec/1000);
     s = str[n++];
     n %= am_countof(str);
     return s;
 }
 
-static struct timeval
-timesub(
-    struct timeval	end,
-    struct timeval	start)
-{
-    struct timeval diff;
+GTimeVal timesub(GTimeVal end, GTimeVal start) {
+    GTimeVal diff;
 
     if(end.tv_usec < start.tv_usec) { /* borrow 1 sec */
 	if (end.tv_sec > 0)
@@ -167,12 +112,8 @@ timesub(
     return diff;
 }
 
-static struct timeval
-timeadd(
-    struct timeval	a,
-    struct timeval	b)
-{
-    struct timeval sum;
+GTimeVal timeadd(GTimeVal a, GTimeVal b) {
+    GTimeVal sum;
 
     sum.tv_sec = a.tv_sec + b.tv_sec;
     sum.tv_usec = a.tv_usec + b.tv_usec;
@@ -182,4 +123,16 @@ timeadd(
 	sum.tv_sec += 1;
     }
     return sum;
+}
+
+double g_timeval_to_double(GTimeVal v) {
+    return v.tv_sec + ((double)v.tv_usec) / G_USEC_PER_SEC;
+}
+
+void amanda_gettimeofday(struct timeval * timeval_time) {
+    GTimeVal gtimeval_time;
+
+    g_get_current_time(&gtimeval_time);
+    timeval_time->tv_sec = gtimeval_time.tv_sec;
+    timeval_time->tv_usec = gtimeval_time.tv_usec;
 }

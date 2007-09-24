@@ -32,6 +32,12 @@
 #include "amanda.h"
 #include "sl.h"
 
+#include <glib.h>
+#include <glib-object.h>
+#include <regex.h>
+
+#include "glib-util.h"
+
 #define BIGINT  INT_MAX
 
 #define BSTRNCMP(a,b)  strncmp(a, b, strlen(b))
@@ -68,6 +74,40 @@ int     copy_file(char *dst, char *src, char **errmsg);
 int validate_mailto(const char *mailto);
 
 char *taperalgo2str(int taperalgo);
+
+/* This function is a portable reimplementation of readdir(). It
+ * returns a newly-allocated string, that should be freed with
+ * free(). Returns NULL on error or end of directory.
+ * It is reentrant, with the following exceptions:
+ * - This function cannot be run at the same time as readdir() or
+ *   readdir64().
+ * - This function cannot be run simultaneously on the same directory
+ *   handle. */
+char * portable_readdir(DIR*);
+
+typedef gboolean (*SearchDirectoryFunctor)(const char * filename,
+                                           gpointer user_data);
+/* This function will search the given directory handle for files
+   matching the given POSIX extended regular expression.
+   For each matching file, the functor will be called with the given
+   user data. Stops when the functor returns FALSE, or all files have
+   been searched. Returns the number of matching files. */
+int search_directory(DIR * handle, const char * regex,
+                     SearchDirectoryFunctor functor, gpointer user_data);
+
+/* This function extracts a substring match from a regular expression
+   match result, and copies it into a newly allocated string. Example
+   usage to get the first matched substring:
+   substring = find_regmatch(whole_string, pmatch[1])
+   Note that pmatch[0] yields the entire matching portion of the string. */
+char* find_regex_substring(const char* base_string, const regmatch_t match);
+
+void free_new_argv(int new_argc, char **new_argv);
+
+/* Does g_thread_init(), along with anything else that should be done
+ * before/after thread setup. It's OK to call this function more than once.
+ * Returns TRUE if threads are supported. */
+gboolean amanda_thread_init(void);
 
 /* Given a hostname, call getaddrinfo to resolve it.  Optionally get the
  * entire set of results (if res is not NULL) and the canonical name of

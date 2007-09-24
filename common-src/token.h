@@ -37,10 +37,10 @@ typedef struct {char *word; int value;} table_t;
 
 extern int split(char *str, char **token, int toklen, char *sep);
 extern char *squotef(char *format, ...)
-    __attribute__ ((format (printf, 1, 2)));
+     G_GNUC_PRINTF(1,2);
 extern char *squote(char *str);
 extern char *quotef(char *sep, char *format, ...)
-    __attribute__ ((format (printf, 2, 3)));
+     G_GNUC_PRINTF(2,3);
 extern char *quote(char *sep, char *str);
 extern char *rxquote(char *str);
 #ifndef HAVE_SHQUOTE

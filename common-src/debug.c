@@ -34,6 +34,7 @@
 #include "util.h"
 #include "arglist.h"
 #include "clock.h"
+#include "timestamp.h"
 
 #ifdef USE_DBMALLOC
 #endif
@@ -109,7 +110,7 @@ get_debug_name(
     if(n < 0 || n > 1000) {
 	return NULL;
     }
-    ts = construct_timestamp(&t);
+    ts = get_timestamp_from_time(t);
     if(n == 0) {
 	number[0] = '\0';
     } else {
@@ -298,9 +299,8 @@ debug_open(char *subdir)
     int i;
     char *s = NULL;
     mode_t mask;
-    amanda_timezone dontcare;
-
-    amanda_gettimeofday(&debug_start_time.r, &dontcare);
+    
+    g_get_current_time(&debug_start_time);
     debug_clock_is_running = 1;
 
     /*

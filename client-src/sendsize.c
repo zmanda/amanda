@@ -1053,10 +1053,10 @@ gnutar_calc_estimates(
 typedef struct regex_s {
     char *regex;
     int scale;
-} regex_t;
+} regex_scale_t;
 
 /*@ignore@*/
-regex_t re_size[] = {
+regex_scale_t re_size[] = {
 #ifdef DUMP
     {"  DUMP: estimated -*[0-9][0-9]* tape blocks", 1024},
     {"  DUMP: [Ee]stimated [0-9][0-9]* blocks", 512},
@@ -2350,7 +2350,7 @@ off_t
 handle_dumpline(
     char *	str)
 {
-    regex_t *rp;
+    regex_scale_t *rp;
     double size;
 
     /* check for size match */

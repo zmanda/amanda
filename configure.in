@@ -16,9 +16,10 @@ AC_DEFINE_UNQUOTED(CONFIGURE_COMMAND,"$CONFIGURE_COMMAND",
 AC_SUBST(CONFIGURE_COMMAND)
 
 AM_INIT_AUTOMAKE(amanda, 2.5.3alpha)
-AM_CONFIG_HEADER(config/config.h)
+AC_CONFIG_HEADERS([config/config.h])
 
-AC_PREREQ(2.59)		dnl Minimum Autoconf version required.
+dnl  Minimum Autoconf version required.
+AC_PREREQ(2.59)
 
 if test -f "$srcdir/SNAPSHOT"; then
   cat < "$srcdir/SNAPSHOT"
@@ -549,6 +550,12 @@ AC_ARG_WITH(tape-server,
 AC_DEFINE_UNQUOTED(DEFAULT_TAPE_SERVER,"$DEFAULT_TAPE_SERVER",[This is the default restoring Amanda tape server. ])
 AC_SUBST(DEFAULT_TAPE_SERVER)
 
+AC_CHECK_LIB([crypto], [HMAC_CTX_init])
+
+AC_CHECK_HEADERS([openssl/hmac.h crypto/hmac.h hmac.h],
+                 [USE_HMAC_H=$ac_header
+                  break])
+
 AC_ARG_WITH(tape-device,
     [  --with-tape-device=ARG restoring tape server HOST's no rewinding tape drive],
     [
@@ -570,43 +577,6 @@ else
     EXAMPLE_TAPEDEV="/dev/null"
 fi
 AC_SUBST(EXAMPLE_TAPEDEV)
-
-AC_ARG_WITH(ftape-raw-device,
-    [  --with-ftape-rawdevice=ARG raw device on tape server HOST's if using Linux ftape >=3.04d],
-    [
-	case "$withval" in
-	"" | y | ye | yes | n | no)
-	    AC_MSG_ERROR([*** You must supply an argument to the --with-ftape-rawdevice option.])
-	  ;;
-	*) DEFAULT_RAW_TAPE_DEVICE="$withval"
-	  ;;
-	esac
-    ],
-    [
-	if test -z "$DEFAULT_RAW_TAPE_DEVICE"; then
-	    AC_MSG_CHECKING(for raw ftape device)
-	    dnl Look for tape devices in /dev.
-	    raw_tape_dev=/dev/null
-		dnl Look for tape devices in /dev.
-		for num in 3 2 1 0 ; do
-		    td=/dev/rawft${num}
-		    if test -r $td; then
-			raw_tape_dev=$td
-		    fi
-		done
-	    DEFAULT_RAW_TAPE_DEVICE=$raw_tape_dev
-	    AC_MSG_RESULT($DEFAULT_RAW_TAPE_DEVICE)
-	fi
-    ]
-)
-
-if test -z "$DEFAULT_RAW_TAPE_DEVICE"; then
-    DEFAULT_RAW_TAPE_DEVICE=/dev/null
-fi
-
-AC_DEFINE_UNQUOTED(DEFAULT_RAW_TAPE_DEVICE,"$DEFAULT_RAW_TAPE_DEVICE",[For Linux systems with floppy tapes: 
- * QIC volume table support via raw tape device. ])
-AC_SUBST(DEFAULT_RAW_TAPE_DEVICE)
 
 AC_ARG_WITH(rew-tape,
     [  --with-rew-tape        deprecated, use --with-tape-device],
@@ -1478,7 +1448,7 @@ case "$target" in
   *-ibm-aix*)
 			GETCONF_LFS="XBS5_ILP32_OFFBIG"
 			DUMP_PROGRAMS="backup "$DUMP_PROGRAMS
-			AC_DEFINE(AIX_TAPEIO,1,[Define on AIX. ])
+			aix_tapeio=yes
 			AC_DEFINE(AIX_BACKUP,1,[Define on AIX. ])
 			;;
   m88k-motorola-sysv4)
@@ -1521,7 +1491,7 @@ case "$target" in
 			dump_returns_1=yes
 			;;
   *-sysv4.2uw2*)
-			AC_DEFINE(UWARE_TAPEIO,1,[Define on UnixWare. ])
+			uware_tapeio=yes
 			;;
   *-sco3.2v4*)
 			DEV_PREFIX=/dev/
@@ -1575,6 +1545,14 @@ if test -n "$xenix_tapeio"; then
   AC_DEFINE(XENIX_TAPEIO,1,[Define on XENIX/ISC. ])
 fi
 
+if test -n "$aix_tapeio"; then
+  AC_DEFINE(AIX_TAPEIO,1,[Define on AIX. ])
+fi
+
+if test -n "$uware_tapeio"; then
+  AC_DEFINE(UWARE_TAPEIO,1,[Define on UnixWare. ])
+fi
+
 if test x"$SINGLE_USERID" = x"yes"; then
     AC_DEFINE(SINGLE_USERID, 1, [Define if all of Amanda will run as a single userid (e.g., on Cygwin)])
 fi
@@ -1582,10 +1560,14 @@ fi
 if "$WANT_SETUID_CLIENT"; then
     AC_DEFINE(WANT_SETUID_CLIENT, 1, [Define if client applications should be setuid-root])
 fi
-AMANDA_CFLAGS="$AMANDA_CFLAGS $KRB4INCLUDES $KRB5INCLUDES $DBMALLOCCFLAGS"
+
+AM_PATH_GLIB_2_0(2.2.0,,AC_MSG_ERROR(glib not found or too old),
+		 gmodule gobject gthread)
+
+AMANDA_CFLAGS="$AMANDA_CFLAGS $KRB4INCLUDES $KRB5INCLUDES $DBMALLOCCFLAGS $GLIB_CFLAGS"
 AMANDA_CPPFLAGS="$AMANDA_CPPFLAGS $KRB4INCLUDES $KRB5INCLUDES $DBMALLOCINCLUDES"
 AMANDA_LDFLAGS="$AMANDA_LDFLAGS $KRB4LDFLAGS $KRB5LDFLAGS"
-AMANDA_LIBS="$KRB4LIBS $KRB5LIBS $DBMALLOCLIBS $AMANDA_LIBS"
+AMANDA_LIBS="$KRB4LIBS $KRB5LIBS $DBMALLOCLIBS $AMANDA_LIBS $GLIB_LIBS"
 CFLAGS="$CFLAGS $AMANDA_CFLAGS"
 CPPFLAGS="$CPPFLAGS $AMANDA_CPPFLAGS"
 LDFLAGS="$LDFLAGS $AMANDA_LDFLAGS"
@@ -1922,7 +1904,7 @@ AC_SOCKADDR_STORAGE
 # configure on Win32.
 #
 AC_MSG_CHECKING(printf format modifier for 64-bit integers)
-AC_TRY_RUN([
+AC_RUN_IFELSE([AC_LANG_SOURCE([[
 #include <stdio.h>
 main() {
 	long long int j = 0;
@@ -1932,12 +1914,9 @@ main() {
 	exit((sizeof(long long int) != sizeof(long int))? 0 :
 	     (strcmp(buf, "0") != 0));
 } 
-],
-	[AC_MSG_RESULT(ll)
-	LL_FMT="%lld"; LL_RFMT="lld"],
-	[AC_MSG_RESULT(l)
-	LL_FMT="%ld"; LL_RFMT="ld"],
-	[AC_MSG_RESULT(assuming target platform uses ll)
+]])],[AC_MSG_RESULT(ll)
+	LL_FMT="%lld"; LL_RFMT="lld"],[AC_MSG_RESULT(l)
+	LL_FMT="%ld"; LL_RFMT="ld"],[AC_MSG_RESULT(assuming target platform uses ll)
 	LL_FMT="%lld"; LL_RFMT="lld"])
 AC_DEFINE_UNQUOTED(LL_FMT,"$LL_FMT",
   [Format for a long long printf. ])
@@ -2073,6 +2052,26 @@ AMANDA_CHECK_TYPE(sa_family_t, unsigned short, sys/socket.h)
 
 dnl Checks for header files.
 AC_HEADER_DIRENT
+AC_HEADER_MAJOR
+define(DIR_HEADERS, [
+#if HAVE_DIRENT_H
+# include <dirent.h>
+# define NAMLEN(dirent) strlen((dirent)->d_name)
+#else
+# define dirent direct
+# define NAMLEN(dirent) (dirent)->d_namlen
+# if HAVE_SYS_NDIR_H
+#  include <sys/ndir.h>
+# endif
+# if HAVE_SYS_DIR_H
+#  include <sys/dir.h>
+# endif
+# if HAVE_NDIR_H
+#  include <ndir.h>
+# endif
+#endif
+])
+
 CF_WAIT
 CF_WAIT_INT
 AC_HEADER_TIME
@@ -2152,6 +2151,38 @@ AC_CHECK_HEADERS(sys/mount.h,,,
 #include <sys/param.h>
 #endif
 ]])
+
+AC_CACHE_CHECK([for MTIOCTOP], amanda_cv_HAVE_MTIOCTOP,[
+AC_TRY_COMPILE([
+#ifdef HAVE_SYS_TAPE_H
+# include <sys/tape.h>
+#endif
+#ifdef HAVE_SYS_MTIO_H
+# include <sys/mtio.h>
+#endif
+#ifndef MTIOCTOP
+#error MTIOCTOP not defined
+#endif
+],
+[ int dummy = 0; ],
+amanda_cv_HAVE_MTIOCTOP=yes,
+amanda_cv_HAVE_MTIOCTOP=no,
+amanda_cv_HAVE_MTIOCTOP=cross)]
+if test x"$amanda_cv_HAVE_MTIOCTOP" = xyes || test x"$amanda_cv_HAVE_MTIOCTOP" = xcross; then
+  have_MTIOCTOP=yes
+fi
+)
+
+# decide which tape device to compile (arranged in such a way that
+# only one actually gets compiled)
+AM_CONDITIONAL(WANT_TAPE_XENIX, 
+    test -n "$xenix_tapeio" && test -z "$aix_tapeio" && test -z "$uware_tapeio" && test -z "$have_MTIOCTOP")
+AM_CONDITIONAL(WANT_TAPE_AIX, 
+    test -n "$aix_tapeio" && test -z "$uware_tapeio" && test -z "$have_MTIOCTOP")
+AM_CONDITIONAL(WANT_TAPE_UWARE, 
+    test -n "$uware_tapeio" && test -z "$have_MTIOCTOP")
+AM_CONDITIONAL(WANT_TAPE_POSIX, 
+    test -n "$have_MTIOCTOP")
 
 NO_SCSI_CHANGER_MODE=true
 NO_CHIO_CHANGER_MODE=true
@@ -2447,17 +2478,6 @@ if test x"$want_readline" != x"no"; then
 	if test x"$want_readline" = x"yes"; then
 	    AC_MSG_ERROR([*** No readline implementation found.  Try using --with-libraries and --with-includes])
 	fi
-    fi
-fi
-
-if test "x$ac_cv_header_linux_zftape_h" = xyes; then
-    if test "x$ac_cv_header_vtblc_h" = xyes; then
-        AC_CHECK_LIB(vtblc,main)
-        if test "x$ac_cv_lib_vtblc_main" != xyes; then
-            AC_MSG_WARN([*** vtblc library not found - no QIC volume table support!])
-        fi
-    else
-        AC_MSG_WARN([*** vtblc headers not found - no QIC volume table support!])
     fi
 fi
 
@@ -2869,23 +2889,23 @@ ICE_CHECK_DECL(fputs,stdio.h)
 ICE_CHECK_DECL(fread,stdio.h stdlib.h)
 ICE_CHECK_DECL(fseek,stdio.h)
 ICE_CHECK_DECL(fwrite,stdio.h stdlib.h)
+AC_CHECK_FUNCS(getcwd getwd getfsent)
 AC_CHECK_FUNCS(getfsent)
 ICE_CHECK_DECL(gethostname,unistd.h)
 AC_FUNC_GETMNTENT
 ICE_CHECK_DECL(getopt,stdlib.h unistd.h libc.h)
 ICE_CHECK_DECL(getpeername,sys/types.h sys/socket.h)
-AC_CHECK_FUNCS(getpgrp)
+AC_CHECK_FUNC(getpgrp)
 AC_FUNC_GETPGRP
 ICE_CHECK_DECL(getsockname,sys/types.h sys/socket.h)
 ICE_CHECK_DECL(getsockopt,sys/types.h sys/socket.h)
-ICE_CHECK_DECL(gettimeofday,time.h sys/time.h)
-AMANDA_FUNC_GETTIMEOFDAY_ARGS
 AC_CHECK_FUNCS(getvfsent initgroups isascii)
 ICE_CHECK_DECL(initgroups,grp.h sys/types.h unistd.h libc.h)
 ICE_CHECK_DECL(ioctl,sys/ioctl.h unistd.h libc.h)
 ICE_CHECK_DECL(isnormal,math.h)
 ICE_CHECK_DECL(listen,sys/types.h sys/socket.h)
 ICE_CHECK_DECL(lstat,sys/types.h sys/stat.h)
+AC_CHECK_DECLS([lseek, lseek64])
 ICE_CHECK_DECL(malloc,stdlib.h)
 ICE_CHECK_DECL(memmove,string.h strings.h)
 ICE_CHECK_DECL(memset,string.h strings.h)
@@ -2902,6 +2922,7 @@ ICE_CHECK_DECL(perror,stdio.h)
 ICE_CHECK_DECL(printf,stdio.h)
 AC_CHECK_FUNCS(putenv)
 ICE_CHECK_DECL(puts,stdio.h)
+AC_CHECK_DECLS([readdir, readdir_r, readdir64, readdir64_r],,,[DIR_HEADERS])
 ICE_CHECK_DECL(realloc,stdlib.h)
 ICE_CHECK_DECL(recvfrom,sys/types.h sys/socket.h)
 ICE_CHECK_DECL(remove,stdio.h)
@@ -3277,7 +3298,7 @@ AC_SUBST(XSLREL)
 
 AC_CACHE_CHECK([for working IPv6],
 	       amanda_working_ipv6,
-  [AC_TRY_RUN([#include <sys/types.h>
+  [AC_RUN_IFELSE([AC_LANG_SOURCE([[#include <sys/types.h>
 #ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
 #endif
@@ -3301,10 +3322,8 @@ main()
 #else
    return -1;
 #endif
-}],amanda_working_ipv6=yes,
-   amanda_working_ipv6=no,
-   amanda_working_ipv6=yes
-  )
+}]])],[amanda_working_ipv6=yes],[amanda_working_ipv6=no],[amanda_working_ipv6=yes
+  ])
   ]
 )
 
@@ -3441,6 +3460,7 @@ AC_CONFIG_FILES([							\
 	common-src/amaespipe.sh         common-src/amcrypt-ossl.sh	\
 	common-src/amcrypt-ossl-asym.sh					\
 	tape-src/Makefile						\
+        device-src/Makefile		device-src/tests/Makefile	\
 									\
 	config/Makefile			Makefile])
 

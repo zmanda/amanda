@@ -2094,7 +2094,7 @@ void
 extract_files(void)
 {
     EXTRACT_LIST *elist;
-    char cwd[STR_SIZE];
+    char * cwd;
     char *l;
     int first;
     int otc;
@@ -2171,7 +2171,8 @@ extract_files(void)
     }
     printf("\n");
 
-    if (getcwd(cwd, sizeof(cwd)) == NULL) {
+    cwd = safe_getcwd();
+    if (cwd == NULL) {
 	perror(_("extract_list: Current working directory unavailable"));
 	exit(1);
     }
@@ -2184,13 +2185,16 @@ extract_files(void)
       printf(_("(unless it is a Samba backup, that will go through to the SMB server)\n"));
 #endif
     dbprintf(_("Checking with user before restoring into directory %s\n"), cwd);
-    if (!okay_to_continue(0,0,0))
+    if (!okay_to_continue(0,0,0)) {
+	amfree(cwd);
 	return;
+    }
     printf("\n");
 
     if (!do_unlink_list()) {
 	fprintf(stderr, _("Can't recover because I can't cleanup the cwd (%s)\n"),
 		cwd);
+	amfree(cwd);
 	return;
     }
     free_unlink_list();

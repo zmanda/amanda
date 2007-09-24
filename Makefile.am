@@ -21,7 +21,7 @@ if WANT_TAPE
 TAPE_SUBDIRS = tape-src
 endif
 if WANT_SERVER
-SERVER_SUBDIRS = server-src changer-src
+SERVER_SUBDIRS = device-src server-src changer-src
 endif
 if WANT_RESTORE
 RESTORE_SUBDIRS = restore-src

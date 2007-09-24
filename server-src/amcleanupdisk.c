@@ -35,6 +35,7 @@
 #include "holding.h"
 #include "infofile.h"
 #include "server_util.h"
+#include "timestamp.h"
 
 sl_t *holding_list;
 char *datestamp;
@@ -119,7 +120,7 @@ main(
     }
     amfree(conf_infofile);
 
-    datestamp = construct_datestamp(NULL);
+    datestamp = get_datestamp_from_time(0);
 
     holding_list = holding_get_all_datestamps();
 

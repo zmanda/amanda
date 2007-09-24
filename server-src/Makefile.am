@@ -3,8 +3,8 @@
 INCLUDES =	-I$(top_builddir)/common-src \
 		-I$(top_srcdir)/common-src   \
 		-I$(top_srcdir)/restore-src  \
-		-I$(top_srcdir)/tape-src     \
 		-I$(top_srcdir)/amandad-src  \
+		-I$(top_srcdir)/device-src   \
 		-I$(top_srcdir)/gnulib
 
 LINT=@AMLINT@
@@ -17,10 +17,26 @@ sbin_PROGRAMS =		amadmin		amcheck		amflush		\
 			amgetconf	amlabel		amtape		\
 			amreport
 
+noinst_PROGRAMS = taper_source_test
+
+taper_source_test_SOURCES = taper-source-test.c \
+			taper-source.c \
+			taper-file-source.c \
+			taper-port-source.c \
+			taper-disk-port-source.c \
+			taper-mem-port-source.c
+
 libexec_PROGRAMS =	amindexd	amlogroll	amtrmidx	\
 			amtrmlog	driver		dumper		\
 			planner		taper		amcleanupdisk	\
 			chunker
+
+taper_SOURCES = 	taper.c \
+			taper-source.c \
+			taper-file-source.c \
+			taper-port-source.c \
+			taper-disk-port-source.c \
+			taper-mem-port-source.c
 
 SCRIPTS_PERL = amoverview amstatus amtoc
 SCRIPTS_SHELL =		amcheckdb	amcleanup	amdump		\
@@ -34,6 +50,7 @@ libamserver_la_SOURCES=	amindex.c	changer.c			\
                         taperscan.c
 
 libamserver_la_LDFLAGS= -release $(VERSION)
+libamserver_la_LIBADD= ../device-src/libamdevice.$(LIB_EXTENSION)
 
 ###
 # Because libamanda includes routines (e.g. regex) provided by some system
@@ -44,21 +61,19 @@ libamserver_la_LDFLAGS= -release $(VERSION)
 
 LDADD = ../common-src/libamanda.$(LIB_EXTENSION)   \
 	libamserver.$(LIB_EXTENSION)               \
-	../tape-src/libamtape.$(LIB_EXTENSION)     \
-	../common-src/libamanda.$(LIB_EXTENSION)   \
-	../tape-src/libamtape.$(LIB_EXTENSION)     \
+	../device-src/libamdevice.$(LIB_EXTENSION)     \
 	../common-src/libamanda.$(LIB_EXTENSION)   \
 	../gnulib/libgnu.$(LIB_EXTENSION)          \
         $(READLINE_LIBS)
 
-amindexd_LDADD = ../common-src/libamanda.$(LIB_EXTENSION) \
-	libamserver.$(LIB_EXTENSION) \
-	../amandad-src/libamandad.$(LIB_EXTENSION) \
-	../tape-src/libamtape.$(LIB_EXTENSION) \
-	../common-src/libamanda.$(LIB_EXTENSION) \
-	../tape-src/libamtape.$(LIB_EXTENSION) \
-	../common-src/libamanda.$(LIB_EXTENSION) \
-	../gnulib/libgnu.$(LIB_EXTENSION)
+taper_LDADD = $(LDADD) \
+	../amandad-src/libamandad.$(LIB_EXTENSION)
+
+taper_source_test_LDADD = $(LDADD) \
+	../amandad-src/libamandad.$(LIB_EXTENSION)
+
+amindexd_LDADD = $(LDADD) \
+	../amandad-src/libamandad.$(LIB_EXTENSION)
 
 SUFFIXES =		.sh .pl
 
@@ -84,11 +99,13 @@ amreport_SOURCES =	reporter.c
 
 amgetconf_SOURCES =	getconf.c
 
-noinst_HEADERS = 	amindex.h	changer.h			\
+noinst_HEADERS = 	amindex.h	changer.h	cmdline.h	\
 			diskfile.h	driverio.h	\
 			holding.h	infofile.h	logfile.h	\
 			tapefile.h	find.h		server_util.h	\
-			taperscan.h cmdline.h
+			taperscan.h taper-disk-port-source.h \
+			taper-mem-port-source.h  taper-file-source.h \
+			taper-port-source.h taper-source.h
 
 # automake-style tests
 

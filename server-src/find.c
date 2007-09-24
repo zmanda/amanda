@@ -675,6 +675,9 @@ search_logfile(
     char *disk, *qdisk, *disk_undo;
     char *date, *date_undo;
     char *partnum=NULL, *partnum_undo;
+    char *number;
+    int fileno;
+    char *thelabel;
     char *rest;
     char *ck_label=NULL;
     int level = 0; 
@@ -722,8 +725,9 @@ search_logfile(
     filenum = (off_t)0;
     passlabel = 1;
     while(get_logline(logf) && passlabel) {
-	if((curlog == L_SUCCESS || curlog == L_CHUNK || curlog == L_PARTIAL) &&
-				curprog == P_TAPER && passlabel){
+	if ((curlog == L_SUCCESS ||
+	     curlog == L_CHUNK || curlog == L_PART) &&
+	    curprog == P_TAPER && passlabel) {
 	    filenum++;
 	}
 	if(curlog == L_START && curprog == P_TAPER) {
@@ -736,7 +740,8 @@ search_logfile(
 	    }
 	}
 	partnum = "--";
-	if(curlog == L_SUCCESS || curlog == L_PARTIAL || curlog == L_FAIL || curlog == L_CHUNK) {
+	if (curlog == L_SUCCESS || curlog == L_DONE || curlog == L_FAIL ||
+	    curlog == L_CHUNK || curlog == L_PART) {
 	    s = curstr;
 	    ch = *s++;
 
@@ -746,6 +751,36 @@ search_logfile(
 		    logfile, curstr);
 		continue;
 	    }
+
+	    if (curlog == L_PART) {
+		thelabel = s - 1;
+		skip_non_whitespace(s, ch);
+		s[-1] = '\0';
+
+		if (strcmp(thelabel, label) != 0) {
+		    printf("label doesn't match %s %s\n", thelabel, label);
+		    continue;
+		}
+		skip_whitespace(s, ch);
+		if(ch == '\0') {
+		    printf("strange log line in %s \"%s\"\n",
+			   logfile, curstr);
+		    continue;
+		}
+
+		number = s - 1;
+		skip_non_whitespace(s, ch);
+		s[-1] = '\0';
+		fileno = atoi(number);
+
+		skip_whitespace(s, ch);
+		if(ch == '\0') {
+		    printf("strange log line in %s \"%s\"\n",
+			   logfile, curstr);
+		    continue;
+		}
+	    }
+
 	    host = s - 1;
 	    skip_non_whitespace(s, ch);
 	    host_undo = s - 1;
@@ -779,7 +814,7 @@ search_logfile(
 		date = stralloc(datestamp);
 	    }
 	    else {
-		if(curlog == L_CHUNK){
+		if (curlog == L_CHUNK || curlog == L_PART || curlog == L_DONE){
 		    skip_whitespace(s, ch);
 		    partnum = s - 1;
 		    skip_non_whitespace(s, ch);
@@ -814,7 +849,7 @@ search_logfile(
 		dp = add_disk(find_diskqp, host, disk);
 		enqueue_disk(find_diskqp, dp);
 	    }
-            if(find_match(host, disk) && (curlog != L_SUCCESS ||
+            if(find_match(host, disk) && ((curlog != L_SUCCESS  && curlog != L_DONE) ||
 		!seen_chunk_of(*output_find, date, host, disk, level))) {
 		if(curprog == P_TAPER) {
 		    find_result_t *new_output_find =
@@ -827,7 +862,8 @@ search_logfile(
 		    new_output_find->partnum = stralloc(partnum);
 		    new_output_find->label=stralloc(label);
 		    new_output_find->filenum=filenum;
-		    if(curlog == L_SUCCESS || curlog == L_CHUNK) 
+		    if (curlog == L_SUCCESS || curlog == L_DONE ||
+			curlog == L_CHUNK || curlog == L_PART) 
 			new_output_find->status=stralloc("OK");
 		    else if(curlog == L_PARTIAL)
 			new_output_find->status=stralloc("PARTIAL");

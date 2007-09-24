@@ -42,7 +42,8 @@ char *logtype_str[] = {
     "ERROR", "WARNING",	"INFO", "SUMMARY",	 /* information messages */
     "START", "FINISH",				   /* start/end of a run */
     "DISK",							 /* disk */
-    "SUCCESS", "PARTIAL", "FAIL", "STRANGE",	    /* the end of a dump */
+    /* the end of a dump */
+    "DONE", "PART", "PARTPARTIAL", "SUCCESS", "PARTIAL", "FAIL", "STRANGE",
     "CHUNK", "CHUNKSUCCESS",                            /* ... continued */
     "STATS",						   /* statistics */
     "MARKER",					  /* marker for reporter */

@@ -504,7 +504,6 @@ holding_file_unlink(
             return 0;
         }
     }
-
     return 1;
 }
 
@@ -520,7 +519,7 @@ holding_file_get_dumpfile(
 
     fh_init(file);
     file->type = F_UNKNOWN;
-    if((fd = open(fname, O_RDONLY)) == -1)
+    if((fd = robust_open(fname, O_RDONLY, 0)) == -1)
         return 0;
 
     if(fullread(fd, buffer, SIZEOF(buffer)) != (ssize_t)sizeof(buffer)) {
@@ -632,7 +631,7 @@ rename_tmp_holding(
     filename = stralloc(holding_file);
     while(filename != NULL && filename[0] != '\0') {
 	filename_tmp = newvstralloc(filename_tmp, filename, ".tmp", NULL);
-	if((fd = open(filename_tmp,O_RDONLY)) == -1) {
+	if((fd = robust_open(filename_tmp,O_RDONLY, 0)) == -1) {
 	    fprintf(stderr,_("rename_tmp_holding: open of %s failed: %s\n"),filename_tmp,strerror(errno));
 	    amfree(filename);
 	    amfree(filename_tmp);
@@ -655,7 +654,8 @@ rename_tmp_holding(
 	}
 	parse_file_header(buffer, &file, (size_t)buflen);
 	if(complete == 0 ) {
-	    if((fd = open(filename, O_RDWR)) == -1) {
+            char * header;
+	    if((fd = robust_open(filename, O_RDWR, 0)) == -1) {
 		fprintf(stderr, _("rename_tmp_holdingX: open of %s failed: %s\n"),
 			filename, strerror(errno));
 		amfree(filename);
@@ -664,8 +664,8 @@ rename_tmp_holding(
 
 	    }
 	    file.is_partial = 1;
-	    build_header(buffer, &file, SIZEOF(buffer));
-	    fullwrite(fd, buffer, SIZEOF(buffer));
+            header = build_header(&file, DISK_BLOCK_BYTES);
+	    fullwrite(fd, header, DISK_BLOCK_BYTES);
 	    close(fd);
 	}
 	filename = newstralloc(filename, file.cont_filename);

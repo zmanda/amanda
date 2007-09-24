@@ -145,6 +145,7 @@ static void validate_blocksize            (t_conf_var *, val_t *);
 static void validate_debug                (t_conf_var *, val_t *);
 static void validate_reserved_port_range  (t_conf_var *, val_t *);
 static void validate_unreserved_port_range(t_conf_var *, val_t *);
+static void validate_taperstart           (t_conf_var *, val_t *);
 
 /*static t_conf_var  *get_np(t_conf_var *get_var, int parm);*/
 static int     get_int(void);
@@ -156,8 +157,11 @@ static int     get_bool(void);
 static void    ckseen(int *seen);
 static void    conf_parserror(const char *format, ...)
                 __attribute__ ((format (printf, 1, 2)));
+static void    conf_parswarn(const char *format, ...)
+                __attribute__ ((format (printf, 1, 2)));
 static tok_t   lookup_keyword(char *str);
 
+static void read_property(t_conf_var *, val_t *);
 static void read_string(t_conf_var *, val_t *);
 static void read_ident(t_conf_var *, val_t *);
 static void read_int(t_conf_var *, val_t *);
@@ -189,6 +193,7 @@ static void conf_init_intrange(val_t *, int, int);
 static void conf_init_time(val_t *, time_t);
 /*static void conf_init_sl(val_t *, sl_t *);*/
 static void conf_init_exinclude(val_t *);
+static void conf_init_proplist(val_t *);
 static void conf_set_string(val_t *, char *);
 /*static void conf_set_int(val_t *, int);*/
 static void conf_set_bool(val_t *, int);
@@ -211,8 +216,9 @@ static void read_block(command_option_t *command_options, t_conf_var *read_var,
 
 static void copy_val_t(val_t *, val_t *);
 static void free_val_t(val_t *);
+static char * conf_print_exinclude(val_t *val, int str_need_quote, int file,
+                            char *prefix);
 static char *conf_print(val_t *, int, char *);
-static void conf_print_exinclude(val_t *, int, int, char *prefix, char **buf, int *free_space);
 
 static void get_holdingdisk(void);
 static void init_holdingdisk_defaults(void);
@@ -253,6 +259,7 @@ keytab_t client_keytab[] = {
     { "INDEX_SERVER", CONF_INDEX_SERVER },
     { "TAPE_SERVER", CONF_TAPE_SERVER },
     { "TAPEDEV", CONF_TAPEDEV },
+    { "DEVICE-PROPERTY", CONF_DEVICE_PROPERTY },
     { "AUTH", CONF_AUTH },
     { "SSH_KEYS", CONF_SSH_KEYS },
     { "AMANDAD_PATH", CONF_AMANDAD_PATH },
@@ -369,6 +376,7 @@ keytab_t server_keytab[] = {
     { "DEBUG_SENDSIZE"   , CONF_DEBUG_SENDSIZE },
     { "DEBUG_SENDBACKUP" , CONF_DEBUG_SENDBACKUP },
     { "DEFINE", CONF_DEFINE },
+    { "DEVICE_PROPERTY", CONF_DEVICE_PROPERTY },
     { "DIRECTORY", CONF_DIRECTORY },
     { "DISKFILE", CONF_DISKFILE },
     { "DISPLAYUNIT", CONF_DISPLAYUNIT },
@@ -431,7 +439,6 @@ keytab_t server_keytab[] = {
     { "PRINTER", CONF_PRINTER },
     { "PRIORITY", CONF_PRIORITY },
     { "PROGRAM", CONF_PROGRAM },
-    { "RAWTAPEDEV", CONF_RAWTAPEDEV },
     { "RECORD", CONF_RECORD },
     { "REP_TRIES", CONF_REP_TRIES },
     { "REQ_TRIES", CONF_REQ_TRIES },
@@ -460,6 +467,8 @@ keytab_t server_keytab[] = {
     { "TAPEDEV", CONF_TAPEDEV },
     { "TAPELIST", CONF_TAPELIST },
     { "TAPERALGO", CONF_TAPERALGO },
+    { "TAPERSTART", CONF_TAPERSTART },
+    { "TAPERFLUSH", CONF_TAPERFLUSH },
     { "TAPETYPE", CONF_TAPETYPE },
     { "TAPE_SPLITSIZE", CONF_TAPE_SPLITSIZE },
     { "TPCHANGER", CONF_TPCHANGER },
@@ -476,6 +485,7 @@ t_conf_var server_var [] = {
    { CONF_DUMPUSER             , CONFTYPE_STRING   , read_string  , CNF_DUMPUSER             , NULL },
    { CONF_PRINTER              , CONFTYPE_STRING   , read_string  , CNF_PRINTER              , NULL },
    { CONF_TAPEDEV              , CONFTYPE_STRING   , read_string  , CNF_TAPEDEV              , NULL },
+   { CONF_DEVICE_PROPERTY      , CONFTYPE_PROPLIST, read_property, CNF_DEVICE_PROPERTY              , NULL },
    { CONF_TPCHANGER            , CONFTYPE_STRING   , read_string  , CNF_TPCHANGER            , NULL },
    { CONF_CHNGRDEV             , CONFTYPE_STRING   , read_string  , CNF_CHNGRDEV             , NULL },
    { CONF_CHNGRFILE            , CONFTYPE_STRING   , read_string  , CNF_CHNGRFILE            , NULL },
@@ -502,9 +512,10 @@ t_conf_var server_var [] = {
    { CONF_DTIMEOUT             , CONFTYPE_INT      , read_int     , CNF_DTIMEOUT             , validate_positive1 },
    { CONF_CTIMEOUT             , CONFTYPE_INT      , read_int     , CNF_CTIMEOUT             , validate_positive1 },
    { CONF_TAPEBUFS             , CONFTYPE_INT      , read_int     , CNF_TAPEBUFS             , validate_positive1 },
-   { CONF_RAWTAPEDEV           , CONFTYPE_STRING   , read_string  , CNF_RAWTAPEDEV           , NULL },
    { CONF_COLUMNSPEC           , CONFTYPE_STRING   , read_string  , CNF_COLUMNSPEC           , NULL },
    { CONF_TAPERALGO            , CONFTYPE_TAPERALGO, get_taperalgo, CNF_TAPERALGO            , NULL },
+   { CONF_TAPERSTART           , CONFTYPE_INTRANGE , read_intrange, CNF_TAPERSTART           , validate_taperstart },
+   { CONF_TAPERFLUSH           , CONFTYPE_BOOL     , read_bool    , CNF_TAPERFLUSH           , NULL },
    { CONF_DISPLAYUNIT          , CONFTYPE_STRING   , read_string  , CNF_DISPLAYUNIT          , validate_displayunit },
    { CONF_AUTOFLUSH            , CONFTYPE_BOOL     , read_bool    , CNF_AUTOFLUSH            , NULL },
    { CONF_RESERVE              , CONFTYPE_INT      , read_int     , CNF_RESERVE              , validate_reserve },
@@ -882,6 +893,22 @@ validate_unreserved_port_range(
     }
 }
 
+static void
+validate_taperstart(
+    struct s_conf_var *np,
+    val_t        *val)
+{
+    np = np;
+    if(val->v.intrange[0] < 0|| val->v.intrange[0] > 100) {
+       conf_parserror("taperstart value must be between 0 and 100");
+    } else if(val->v.intrange[1] < 0 || val->v.intrange[1] > 100) {
+       conf_parserror("taperstart value must be between 0 and 100");
+    } else if(val->v.intrange[0] > val->v.intrange[1]) {
+       conf_parserror("taperstart: first value must be smaller than second");
+    }
+}
+
+
 char *
 getconf_byname(
     char *str)
@@ -936,7 +963,7 @@ getconf_byname(
 		   break;
 	    }
 	    if (np->token == CONF_UNKNOWN) return NULL;
-	    tmpstr = stralloc(conf_print(&tp->value[np->parm], 0, ""));
+	    tmpstr = conf_print(&tp->value[np->parm], 0, "");
 	} else if (strcmp(tmpstr, "DUMPTYPE") == 0) {
 	    dp = lookup_dumptype(first_delim);
 	    if (!dp) {
@@ -948,7 +975,7 @@ getconf_byname(
 		   break;
 	    }
 	    if (np->token == CONF_UNKNOWN) return NULL;
-	    tmpstr = stralloc(conf_print(&dp->value[np->parm], 0, ""));
+	    tmpstr = conf_print(&dp->value[np->parm], 0, "");
 	} else if (strcmp(tmpstr, "HOLDINGDISK") == 0) {
 	    hp = lookup_holdingdisk(first_delim);
 	    if (!hp) {
@@ -960,7 +987,7 @@ getconf_byname(
 		   break;
 	    }
 	    if (np->token == CONF_UNKNOWN) return NULL;
-	    tmpstr = stralloc(conf_print(&hp->value[np->parm], 0, ""));
+	    tmpstr = conf_print(&hp->value[np->parm], 0, "");
 	} else if (strcmp(tmpstr, "INTERFACE") == 0) {
 	    ip = lookup_interface(first_delim);
 	    if (!ip) {
@@ -972,7 +999,7 @@ getconf_byname(
 		   break;
 	    }
 	    if (np->token == CONF_UNKNOWN) return NULL;
-	    tmpstr = stralloc(conf_print(&ip->value[np->parm], 0, ""));
+	    tmpstr = conf_print(&ip->value[np->parm], 0, "");
 	} else {
 	    amfree(tmpstr);
 	    return(NULL);
@@ -993,7 +1020,7 @@ getconf_byname(
 
 	if(np->token == CONF_UNKNOWN) return NULL;
 
-	tmpstr = stralloc(conf_print(&conf_data[np->parm], 0, ""));
+	tmpstr = conf_print(&conf_data[np->parm], 0, "");
     }
 
     return tmpstr;
@@ -1153,6 +1180,14 @@ getconf_intrange(
     return(conf_data[parm].v.intrange);
 }
 
+proplist_t getconf_proplist(confparm_t parm) {
+    if (conf_data[parm].type != CONFTYPE_PROPLIST) {
+	error(_("getconf_intrange: parm is not a CONFTYPE_PROPLIST"));
+	/*NOTREACHED*/
+    }
+    return(conf_data[parm].v.proplist);
+}
+
 holdingdisk_t *
 getconf_holdingdisks(
     void)
@@ -1284,6 +1319,7 @@ init_defaults(
     s = NULL;
 #endif
     conf_init_string(&conf_data[CNF_TAPEDEV], s);
+    conf_init_proplist(&conf_data[CNF_DEVICE_PROPERTY]);
 #ifdef DEFAULT_CHANGER_DEVICE
     s = DEFAULT_CHANGER_DEVICE;
 #else
@@ -1320,7 +1356,6 @@ init_defaults(
     conf_init_int      (&conf_data[CNF_DTIMEOUT]             , 1800);
     conf_init_int      (&conf_data[CNF_CTIMEOUT]             , 30);
     conf_init_int      (&conf_data[CNF_TAPEBUFS]             , 20);
-    conf_init_string   (&conf_data[CNF_RAWTAPEDEV]           , s);
     conf_init_string   (&conf_data[CNF_PRINTER]              , "");
     conf_init_bool     (&conf_data[CNF_AUTOFLUSH]            , 0);
     conf_init_int      (&conf_data[CNF_RESERVE]              , 100);
@@ -1330,6 +1365,8 @@ init_defaults(
     conf_init_string   (&conf_data[CNF_AMRECOVER_CHANGER]    , "");
     conf_init_bool     (&conf_data[CNF_AMRECOVER_CHECK_LABEL], 1);
     conf_init_taperalgo(&conf_data[CNF_TAPERALGO]            , 0);
+    conf_init_intrange (&conf_data[CNF_TAPERSTART]           , 0, 0);
+    conf_init_bool     (&conf_data[CNF_TAPERFLUSH]           , 1);
     conf_init_string   (&conf_data[CNF_DISPLAYUNIT]          , "k");
     conf_init_string   (&conf_data[CNF_KRB5KEYTAB]           , "/.amanda-v5-keytab");
     conf_init_string   (&conf_data[CNF_KRB5PRINCIPAL]        , "service/amanda");
@@ -1515,6 +1552,53 @@ read_conffile_recursively(
 
 /* ------------------------ */
 
+static void handle_invalid_keyword(const char * token) {
+    /* Procedure for deprecated keywords:
+     * 1) At time of deprecation, add to warning_deprecated below.
+     *    Note the date of deprecation.
+     * 2) After two years, move the keyword to error_deprecated below.
+     *    Note the date of the move.
+     * 3) After two more years, drop the token entirely. */
+
+    static const char * warning_deprecated[] = {
+        "rawtapedev",
+        NULL
+    };
+    static const char * error_deprecated[] = {
+        NULL
+    };
+    const char ** s;
+
+    for (s = warning_deprecated; *s != NULL; s ++) {
+        if (strcmp(*s, token) == 0) {
+            conf_parswarn(_("warning: Keyword %s is deprecated."),
+                           token);
+            break;
+        }
+    }
+    if (*s == NULL) {
+        for (s = error_deprecated; *s != NULL; s ++) {
+            if (strcmp(*s, token) == 0) {
+                conf_parserror(_("error: Keyword %s is deprecated."),
+                               token);
+                return;
+            }
+        }
+    }
+    if (*s == NULL) {
+        conf_parserror(_("configuration keyword expected"));
+    }
+
+    for (;;) {
+        char c = conftoken_getc();
+        if (c == '\n' || c == -1) {
+            conftoken_ungetc(c);
+            return;
+        }
+    }
+
+    g_assert_not_reached();
+}
 
 static int
 read_confline(
@@ -1574,7 +1658,8 @@ read_confline(
 		if(np->token == tok) break;
 
 	    if(np->token == CONF_UNKNOWN) {
-		conf_parserror(_("configuration keyword expected"));
+                handle_invalid_keyword(tokenval.v.s);
+                
 	    } else {
 		np->read_function(np, &conf_data[np->parm]);
 		if(np->validate)
@@ -1839,8 +1924,8 @@ init_tapetype_defaults(void)
     conf_init_string(&tpcur.value[TAPETYPE_LBL_TEMPL]    , "");
     conf_init_size  (&tpcur.value[TAPETYPE_BLOCKSIZE]    , DISK_BLOCK_KB);
     conf_init_size  (&tpcur.value[TAPETYPE_READBLOCKSIZE], MAX_TAPE_BLOCK_KB);
-    conf_init_am64  (&tpcur.value[TAPETYPE_LENGTH]       , (off_t)2000);
-    conf_init_am64  (&tpcur.value[TAPETYPE_FILEMARK]     , (off_t)1);
+    conf_init_am64  (&tpcur.value[TAPETYPE_LENGTH]       , (off_t)2000 * 1024);
+    conf_init_am64  (&tpcur.value[TAPETYPE_FILEMARK]     , (off_t)1000);
     conf_init_int   (&tpcur.value[TAPETYPE_SPEED]        , 200);
     conf_init_bool  (&tpcur.value[TAPETYPE_FILE_PAD]     , 1);
 }
@@ -2549,6 +2634,7 @@ dump_configuration(
     keytab_t *kt;
     char *prefix;
     char kt_prefix[100];
+    char *msg;
 
     printf(_("AMANDA CONFIGURATION FROM FILE \"%s\":\n\n"), filename);
 
@@ -2561,8 +2647,9 @@ dump_configuration(
 
 	if (kt->token != CONF_IDENT)
 	    snprintf(kt_prefix, 100, "%-21s ", kt->keyword);
-	    printf("%s\n",
-		   conf_print(&conf_data[np->parm], 1, kt_prefix));
+	    msg = conf_print(&conf_data[np->parm], 1, kt_prefix);
+	    printf("%s\n", msg);
+	    amfree(msg);
     }
 
     for(hp = holdingdisks; hp != NULL; hp = hp->next) {
@@ -2583,7 +2670,9 @@ dump_configuration(
 		error(_("holding bad token"));
 
 	    snprintf(kt_prefix, 100, "      %-9s ", kt->keyword);
-	    printf("%s\n", conf_print(&hp->value[i], 1, kt_prefix));
+	    msg = conf_print(&hp->value[i], 1, kt_prefix);
+	    printf("%s\n", msg);
+	    amfree(msg);
 	}
 	printf("}\n");
     }
@@ -2602,7 +2691,9 @@ dump_configuration(
 		error(_("tapetype bad token"));
 
 	    snprintf(kt_prefix, 100, "      %-9s ", kt->keyword);
-	    printf("%s\n", conf_print(&tp->value[i], 1, kt_prefix));
+	    msg = conf_print(&tp->value[i], 1, kt_prefix);
+	    printf("%s\n", msg);
+	    amfree(msg);
 	}
 	printf("}\n");
     }
@@ -2626,7 +2717,9 @@ dump_configuration(
 		    error(_("dumptype bad token"));
 
 		snprintf(kt_prefix, 100, "%s      %-19s ", prefix,kt->keyword);
-		printf("%s\n", conf_print(&dp->value[i], 1, kt_prefix));
+		msg = conf_print(&dp->value[i], 1, kt_prefix);
+		printf("%s\n", msg);
+		amfree(msg);
 	    }
 	    printf("%s}\n", prefix);
 	}
@@ -2650,7 +2743,9 @@ dump_configuration(
 		error(_("interface bad token"));
 
 	    snprintf(kt_prefix, 100, "%s      %-19s ", prefix, kt->keyword);
-	    printf("%s\n", conf_print(&ip->value[i], 1, kt_prefix));
+	    msg = conf_print(&ip->value[i], 1, kt_prefix);
+	    printf("%s\n", msg);
+	    amfree(msg);
 	}
 	printf("%s}\n",prefix);
     }
@@ -2984,7 +3079,7 @@ read_client_confline(void)
 		if(np->token == tok) break;
 
 	    if(np->token == CONF_UNKNOWN) {
-		conf_parserror(_("configuration keyword expected"));
+                handle_invalid_keyword(tokenval.v.s);
 	    } else {
 		np->read_function(np, &conf_data[np->parm]);
 		if(np->validate)
@@ -3016,7 +3111,7 @@ generic_client_get_security_conf(
 		return(getconf_str(CNF_TAPE_SERVER));
 	} else if(strcmp(string, "tapedev")==0) {
 		return(getconf_str(CNF_TAPEDEV));
-	} else if(strcmp(string, "auth")==0) {
+        } else if(strcmp(string, "auth")==0) {
 		return(getconf_str(CNF_AUTH));
 	} else if(strcmp(string, "ssh_keys")==0) {
 		return(getconf_str(CNF_SSH_KEYS));
@@ -3052,7 +3147,7 @@ add_client_conf(
 
     for(np = client_var; np->token != CONF_UNKNOWN; np++)
 	if(np->parm == (int)parm) break;
-
+    
     if(np->token == CONF_UNKNOWN) return -2;
 
     for(kt = client_keytab; kt->token != CONF_UNKNOWN; kt++)
@@ -3658,24 +3753,35 @@ ckseen(
     *seen = conf_line_num;
 }
 
-printf_arglist_function(void conf_parserror, const char *, format)
-{
-    va_list argp;
+static void print_parse_problem(const char * format, va_list argp) {
     const char *xlated_fmt = gettext(format);
-
-    /* print error message */
 
     if(conf_line)
 	fprintf(stderr, _("argument \"%s\": "), conf_line);
     else
 	fprintf(stderr, "\"%s\", line %d: ", conf_confname, conf_line_num);
     
-    arglist_start(argp, format);
     vfprintf(stderr, xlated_fmt, argp);
-    arglist_end(argp);
     fputc('\n', stderr);
+}
+
+printf_arglist_function(void conf_parserror, const char *, format)
+{
+    va_list argp;
+    
+    arglist_start(argp, format);
+    print_parse_problem(format, argp);
+    arglist_end(argp);
 
     got_parserror = 1;
+}
+
+printf_arglist_function(void conf_parswarn, const char *, format) {
+    va_list argp;
+    
+    arglist_start(argp, format);
+    print_parse_problem(format, argp);
+    arglist_end(argp);
 }
 
 tok_t
@@ -4111,6 +4217,17 @@ read_time(
     val->v.t = get_time();
 }
 
+static void read_property(t_conf_var *np, val_t *val) {
+    char *key, *value;
+    np = np;
+    get_conftoken(CONF_STRING);
+    key = strdup(tokenval.v.s);
+    get_conftoken(CONF_STRING);
+    value = strdup(tokenval.v.s);
+
+    g_hash_table_insert(val->v.proplist, key, value);
+}
+
 static void
 copy_val_t(
     val_t *valdst,
@@ -4177,6 +4294,9 @@ copy_val_t(
 	    valdst->v.intrange[1] = valsrc->v.intrange[1];
 	    break;
 
+        case CONFTYPE_PROPLIST:
+            g_assert_not_reached();
+            break;
 	}
     }
 }
@@ -4219,6 +4339,10 @@ free_val_t(
 	    free_sl(val->v.exinclude.sl_list);
 	    free_sl(val->v.exinclude.sl_file);
 	    break;
+
+        case CONFTYPE_PROPLIST:
+            g_hash_table_destroy(val->v.proplist);
+            break;
     }
     val->seen = 0;
 }
@@ -4236,7 +4360,31 @@ taperalgo2str(
     return "UNKNOWN";
 }
 
-static char buffer_conf_print[2049];
+typedef struct {
+    char *prefix;
+    char *msg;
+} print_proplist_user_data_t;
+
+static void print_proplist(
+    gpointer key_p,
+    gpointer value_p,
+    gpointer user_data_p)
+{
+    char *property_s = key_p;
+    char *value_s    = value_p;
+    print_proplist_user_data_t *user_data = user_data_p;
+
+    if (strlen(user_data->msg) > 0) {
+	user_data->msg = vstrextend(&user_data->msg, "\n", NULL);
+    }
+    if (user_data->prefix) {
+	user_data->msg = vstrextend(&user_data->msg, user_data->prefix,
+				    NULL);
+    }
+    user_data->msg = vstrextend(&user_data->msg, "\"", property_s, "\" \"",
+				value_s, "\"", NULL);
+};
+
 
 static char *
 conf_print(
@@ -4244,121 +4392,114 @@ conf_print(
     int    str_need_quote,
     char  *prefix)
 {
-    char *buf;
-    int   free_space;
+    print_proplist_user_data_t proplist_user_data;
+    char *buf = NULL;
 
-    buffer_conf_print[0] = '\0';
-    snprintf(buffer_conf_print, SIZEOF(buffer_conf_print), prefix);
-    free_space = SIZEOF(buffer_conf_print) - strlen(buffer_conf_print);
-    buf = buffer_conf_print + strlen(buffer_conf_print);
     switch(val->type) {
     case CONFTYPE_INT:
-	snprintf(buf, free_space, "%d", val->v.i);
+	buf = vstrallocf("%s%d", prefix, val->v.i);
 	break;
 
     case CONFTYPE_LONG:
-	snprintf(buf, free_space, "%ld", val->v.l);
+	buf = vstrallocf("%s%ld", prefix, val->v.l);
 	break;
 
     case CONFTYPE_SIZE:
-	snprintf(buf, free_space, SSIZE_T_FMT, (SSIZE_T_FMT_TYPE)val->v.size);
+	buf = vstrallocf("%s" SSIZE_T_FMT, prefix,
+			 (SSIZE_T_FMT_TYPE)val->v.size);
 	break;
 
     case CONFTYPE_AM64:
-	snprintf(buf, free_space, OFF_T_FMT, (OFF_T_FMT_TYPE)val->v.am64);
+	buf = vstrallocf("%s" OFF_T_FMT, prefix,
+			 (OFF_T_FMT_TYPE)val->v.am64);
 	break;
 
     case CONFTYPE_REAL:
-	snprintf(buf, free_space, "%0.5f" , val->v.r);
+	buf = vstrallocf("%s%0.5f", prefix, val->v.r);
 	break;
 
     case CONFTYPE_RATE:
-	snprintf(buf, free_space, "%0.5f %0.5f",
-		 val->v.rate[0], val->v.rate[1]);
+	buf = vstrallocf("%s%0.5f %0.5f", prefix,
+			 val->v.rate[0], val->v.rate[1]);
 	break;
 
     case CONFTYPE_INTRANGE:
-	snprintf(buf, free_space, "%d,%d",
-		 val->v.intrange[0], val->v.intrange[1]);
+	buf = vstrallocf("%s%d,%d", prefix,
+			 val->v.intrange[0], val->v.intrange[1]);
 	break;
 
     case CONFTYPE_IDENT:
 	if(val->v.s) {
-	    strncpy(buf, val->v.s, free_space);
+	    buf = vstrallocf("%s%s", prefix, val->v.s);
+        } else {
+	    buf = vstrallocf("%s", prefix);
 	}
 	break;
 
     case CONFTYPE_STRING:
 	if(str_need_quote) {
-	    *buf++ = '"';
-	    free_space++;
             if(val->v.s) {
-		strncpy(buf, val->v.s, free_space);
-		buffer_conf_print[SIZEOF(buffer_conf_print) - 2] = '\0';
-		buffer_conf_print[strlen(buffer_conf_print)] = '"';
-		buffer_conf_print[strlen(buffer_conf_print) + 1] = '\0';
+		buf = vstrallocf("%s\"%s\"", prefix, val->v.s);
             } else {
-		*buf++ = '"';
-		*buf++ = '\0';
-		free_space -= 2;
+		buf = vstrallocf("%s\"\"", prefix);
             }
 	} else {
 	    if(val->v.s) {
-		strncpy(buf, val->v.s, free_space);
-	    }
+		buf = vstrallocf("%s%s", prefix, val->v.s);
+            } else {
+		buf = vstrallocf("%s", prefix);
+            }
 	}
 	break;
 
     case CONFTYPE_TIME:
-	snprintf(buf, free_space, "%2d%02d",
-		 (int)val->v.t/100, (int)val->v.t % 100);
+	buf = vstrallocf("%s%2d%02d", prefix,
+			 (int)val->v.t/100, (int)val->v.t % 100);
 	break;
 
     case CONFTYPE_SL:
 	break;
 
-    case CONFTYPE_EXINCLUDE:
-	buf = buffer_conf_print;
-	free_space = SIZEOF(buffer_conf_print);
-
-	conf_print_exinclude(val, 1, 0, prefix, &buf ,&free_space);
-	*buf++ = '\n';
-	free_space -= 1;
-
-	conf_print_exinclude(val, 1, 1, prefix, &buf, &free_space);
+    case CONFTYPE_EXINCLUDE: {
+        char * buf1 = conf_print_exinclude(val, 1, 0, prefix);
+        char * buf2 = conf_print_exinclude(val, 1, 1, prefix);
+        buf = g_strconcat(buf1, "\n", buf2, NULL);
+        amfree(buf1);
+        amfree(buf2);
 	break;
+    }
 
     case CONFTYPE_BOOL:
 	if(val->v.i)
-	    strncpy(buf, "yes", free_space);
+	    buf = vstrallocf("%syes", prefix);
 	else
-	    strncpy(buf, "no", free_space);
+	    buf = vstrallocf("%sno", prefix);
 	break;
 
     case CONFTYPE_STRATEGY:
 	switch(val->v.i) {
 	case DS_SKIP:
-	    strncpy(buf, "SKIP", free_space);
+	    buf = vstrallocf("%sSKIP", prefix);
 	    break;
 
 	case DS_STANDARD:
-	    strncpy(buf, "STANDARD", free_space);
+	    buf = vstrallocf("%sSTANDARD", prefix);
 	    break;
 
 	case DS_NOFULL:
-	    strncpy(buf, "NOFULL", free_space);
+	    buf = vstrallocf("%sNOFULL", prefix);
 	    break;
 
 	case DS_NOINC:
-	    strncpy(buf, "NOINC", free_space);
+	    buf = vstrallocf("%sNOINC", prefix);
 	    break;
 
 	case DS_HANOI:
-	    strncpy(buf, "HANOI", free_space);
+	    buf = vstrallocf("%sHANOI", prefix);
 	    break;
 
 	case DS_INCRONLY:
-	    strncpy(buf, "INCRONLY", free_space);
+	    buf = vstrallocf("%sINCRONLY", prefix);
 	    break;
 	}
 	break;
@@ -4366,31 +4507,31 @@ conf_print(
     case CONFTYPE_COMPRESS:
 	switch(val->v.i) {
 	case COMP_NONE:
-	    strncpy(buf, "NONE", free_space);
+	    buf = vstrallocf("%sNONE", prefix);
 	    break;
 
 	case COMP_FAST:
-	    strncpy(buf, "CLIENT FAST", free_space);
+	    buf = vstrallocf("%sCLIENT FAST", prefix);
 	    break;
 
 	case COMP_BEST:
-	    strncpy(buf, "CLIENT BEST", free_space);
+	    buf = vstrallocf("%sCLIENT BEST", prefix);
 	    break;
 
 	case COMP_CUST:
-	    strncpy(buf, "CLIENT CUSTOM", free_space);
+	    buf = vstrallocf("%sCLIENT CUSTOM", prefix);
 	    break;
 
 	case COMP_SERVER_FAST:
-	    strncpy(buf, "SERVER FAST", free_space);
+	    buf = vstrallocf("%sSERVER FAST", prefix);
 	    break;
 
 	case COMP_SERVER_BEST:
-	    strncpy(buf, "SERVER FAST", free_space);
+	    buf = vstrallocf("%sSERVER BEST", prefix);
 	    break;
 
 	case COMP_SERVER_CUST:
-	    strncpy(buf, "SERVER CUSTOM", free_space);
+	    buf = vstrallocf("%sSERVER CUSTOM", prefix);
 	    break;
 	}
 	break;
@@ -4398,15 +4539,15 @@ conf_print(
     case CONFTYPE_ESTIMATE:
 	switch(val->v.i) {
 	case ES_CLIENT:
-	    strncpy(buf, "CLIENT", free_space);
+	    buf = vstrallocf("%sCLIENT", prefix);
 	    break;
 
 	case ES_SERVER:
-	    strncpy(buf, "SERVER", free_space);
+	    buf = vstrallocf("%sSERVER", prefix);
 	    break;
 
 	case ES_CALCSIZE:
-	    strncpy(buf, "CALCSIZE", free_space);
+	    buf = vstrallocf("%sCALCSIZE", prefix);
 	    break;
 	}
 	break;
@@ -4414,15 +4555,15 @@ conf_print(
      case CONFTYPE_ENCRYPT:
 	switch(val->v.i) {
 	case ENCRYPT_NONE:
-	    strncpy(buf, "NONE", free_space);
+	    buf = vstrallocf("%sNONE", prefix);
 	    break;
 
 	case ENCRYPT_CUST:
-	    strncpy(buf, "CLIENT", free_space);
+	    buf = vstrallocf("%sCLIENT", prefix);
 	    break;
 
 	case ENCRYPT_SERV_CUST:
-	    strncpy(buf, "SERVER", free_space);
+	    buf = vstrallocf("%sSERVER", prefix);
 	    break;
 	}
 	break;
@@ -4430,98 +4571,91 @@ conf_print(
      case CONFTYPE_HOLDING:
 	switch(val->v.i) {
 	case HOLD_NEVER:
-	    strncpy(buf, "NEVER", free_space);
+	    buf = vstrallocf("%sNEVER", prefix);
 	    break;
 
 	case HOLD_AUTO:
-	    strncpy(buf, "AUTO", free_space);
+	    buf = vstrallocf("%sAUTO", prefix);
 	    break;
 
 	case HOLD_REQUIRED:
-	    strncpy(buf, "REQUIRED", free_space);
+	    buf = vstrallocf("%sREQUIRED", prefix);
 	    break;
 	}
 	break;
 
      case CONFTYPE_TAPERALGO:
-	strncpy(buf, taperalgo2str(val->v.i), free_space);
+	buf = vstrallocf("%s%s", prefix, taperalgo2str(val->v.i));
 	break;
 
      case CONFTYPE_PRIORITY:
 	switch(val->v.i) {
 	case 0:
-	    strncpy(buf, "LOW", free_space);
+	    buf = vstrallocf("%sLOW", prefix);
 	    break;
 
 	case 1:
-	    strncpy(buf, "MEDIUM", free_space);
+	    buf = vstrallocf("%sMEDIUM", prefix);
 	    break;
 
 	case 2:
-	    strncpy(buf, "HIGH", free_space);
+	    buf = vstrallocf("%sHIGH", prefix);
 	    break;
 	}
 	break;
-    }
-    buffer_conf_print[SIZEOF(buffer_conf_print) - 1] = '\0';
-    return buffer_conf_print;
-}
 
-void  conf_print_exinclude(
+    case CONFTYPE_PROPLIST:
+	proplist_user_data.prefix = prefix;
+	proplist_user_data.msg = stralloc("");
+	g_hash_table_foreach(val->v.proplist, print_proplist,
+			     &proplist_user_data);
+	buf = proplist_user_data.msg;
+        break;
+    }
+    return buf;
+    }
+
+static char * conf_print_exinclude(
     val_t *val,
     int    str_need_quote,
     int    file,
-    char  *prefix,
-    char **buf,
-    int   *free_space)
-{
+    char  *prefix)
+    {
     sl_t  *sl;
     sle_t *excl;
+    GString * rval;
 
     (void)str_need_quote;
 
-    snprintf(*buf, *free_space, prefix);
-    *free_space -= strlen(prefix);
-    *buf += strlen(prefix);
+    rval = g_string_new(prefix);
 
     if (val->type != CONFTYPE_EXINCLUDE) {
-	strcpy(*buf,
-	  "ERROR: conf_print_exinclude called for type != CONFTYPE_EXINCLUDE");
-	return;
+        g_string_append(rval, 
+          "ERROR: conf_print_exinclude called for type != CONFTYPE_EXINCLUDE");
+        return g_string_free(rval, FALSE);
     }
 
     if (file == 0) {
 	sl = val->v.exinclude.sl_list;
-	strncpy(*buf, "LIST ", *free_space);
-	*buf += 5;
-	*free_space -= 5;
+        g_string_append(rval, "LIST ");
     } else {
 	sl = val->v.exinclude.sl_file;
-	strncpy(*buf, "FILE ", *free_space);
-	*buf += 5;
-	*free_space -= 5;
+        g_string_append(rval, "FILE ");
     }
 
     if (val->v.exinclude.optional == 1) {
-	strncpy(*buf, "OPTIONAL ", *free_space);
-	*buf += 9;
-	*free_space -= 9;
+        g_string_append(rval, "OPTIONAL ");
     }
 
     if (sl != NULL) {
 	for(excl = sl->first; excl != NULL; excl = excl->next) {
-	    if (3 + (int)strlen(excl->name) < *free_space) {
-		*(*buf)++ = ' ';
-		*(*buf)++ = '"';
-		strcpy(*buf, excl->name);
-		*buf += strlen(excl->name);
-		*(*buf)++ = '"';
-		*free_space -= 3 + strlen(excl->name);
-	    }
+            g_string_append(rval, " \"");
+            g_string_append(rval, excl->name);
+            g_string_append_c(rval, '"');
 	}
     }
 
-    return;
+    return g_string_free(rval, FALSE);
 }
 
 static void
@@ -4737,6 +4871,13 @@ conf_init_exinclude(
     val->v.exinclude.optional = 0;
     val->v.exinclude.sl_list = NULL;
     val->v.exinclude.sl_file = NULL;
+}
+
+static void conf_init_proplist(val_t *val) {
+    val->seen = 0;
+    val->type = CONFTYPE_PROPLIST;
+    val->v.proplist =
+        g_hash_table_new_full(g_str_hash, g_str_equal, g_free, g_free);
 }
 
 static void
@@ -5014,6 +5155,18 @@ get_conftype_exinclude(
 }
 
 
+proplist_t
+get_conftype_proplist(
+    val_t *val)
+{
+    if (val->type != CONFTYPE_PROPLIST) {
+	error(_("get_conftype_proplist: val.type is not CONFTYPE_PROPLIST"));
+	/*NOTREACHED*/
+    }
+    return val->v.proplist;
+}
+
+
 static void
 read_block(
     command_option_t *command_options,
@@ -5132,8 +5285,10 @@ command_overwrite(
 		if (np->validate)
 		    np->validate(np, &valarray[np->parm]);
 		if (duplicate == 1) {
-		    fprintf(stderr,_("Duplicate %s option, using %s\n"),
-			    command_option->name, command_option->value);
+		    if (valarray[np->parm].type != CONFTYPE_PROPLIST) {
+			fprintf(stderr,_("Duplicate %s option, using %s\n"),
+				command_option->name, command_option->value);
+		    }
 		}
 	    }
 	    amfree(myprefix);
@@ -5150,6 +5305,55 @@ free_new_argv(
     for(i=0; i<new_argc; i++)
 	amfree(new_argv[i]);
     amfree(new_argv);
+}
+
+void
+find_configuration(
+    gboolean use_passed_name,
+    char  *config_name_in,
+    char **config_name_out,
+    char **config_dir_out)
+{
+    if (config_name_in != NULL && use_passed_name) {
+        if (config_name_out != NULL) {
+            *config_name_out = g_strdup(config_name_in);
+        }
+        if (config_dir_out != NULL) {
+            *config_dir_out = vstralloc(CONFIG_DIR, "/", config_name_in,
+                                        "/", NULL);
+        }
+    } else {
+        char * cwd;
+
+        cwd = safe_getcwd();
+        if (cwd == NULL) {
+	    error("cannot determine current working directory");
+            g_assert_not_reached();
+        }
+
+        if (config_name_out != NULL) {
+            char * config_tmp;
+            config_tmp = strrchr(cwd, '/');
+            if (config_tmp == NULL) {
+                error("Can't find config name from CWD %s!\n", cwd);
+                g_assert_not_reached();
+            }
+            *config_name_out = g_strdup(config_tmp + 1);
+        }
+        if (config_dir_out != NULL) {
+            *config_dir_out = vstralloc(cwd, "/", NULL);
+        }
+        amfree(cwd);
+    }
+}
+
+void set_server_config_from_options(void)
+{
+    my_keytab = server_keytab;
+    my_var = server_var;
+    init_defaults();
+
+    command_overwrite(program_options, my_var, my_keytab, conf_data, "");
 }
 
 ssize_t

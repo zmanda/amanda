@@ -43,6 +43,7 @@
 #include "amfeatures.h"
 #include "server_util.h"
 #include "holding.h"
+#include "timestamp.h"
 
 #define planner_debug(i,x) do {		\
 	if ((i) <= debug_planner) {	\
@@ -202,22 +203,7 @@ main(
     my_argc = new_argc;
     my_argv = new_argv;
 
-    if (my_argc > 1) {
-	config_name = stralloc(my_argv[1]);
-	config_dir = vstralloc(CONFIG_DIR, "/", config_name, "/", NULL);
-    } else {
-	char my_cwd[STR_SIZE];
-
-	if (getcwd(my_cwd, SIZEOF(my_cwd)) == NULL) {
-	    error(_("Cannot determine current working directory: %s"),
-		  strerror(errno));
-	    /*NOTREACHED*/
-	}
-	config_dir = stralloc2(my_cwd, "/");
-	if ((config_name = strrchr(my_cwd, '/')) != NULL) {
-	    config_name = stralloc(config_name + 1);
-	}
-    }
+    find_configuration((my_argc > 1), my_argv[1], &config_name, &config_dir);
 
     safe_cd();
 
@@ -349,10 +335,10 @@ main(
     amfree(planner_timestamp);
     today = time(0);
     if(conf_usetimestamps == 0) {
-	planner_timestamp = construct_datestamp(NULL);
+	planner_timestamp = get_datestamp_from_time(0);
     }
     else {
-	planner_timestamp = construct_timestamp(NULL);
+	planner_timestamp = get_timestamp_from_time(0);
     }
     log_add(L_START, _("date %s"), planner_timestamp);
     printf("DATE %s\n", planner_timestamp);
@@ -407,10 +393,11 @@ main(
     fprintf(stderr,_("\nSENDING FLUSHES...\n"));
 
     if(conf_autoflush) {
-	dumpfile_t file;
-	sl_t *holding_list;
-	sle_t *holding_file;
+	dumpfile_t  file;
+	sl_t       *holding_list;
+	sle_t      *holding_file;
 	char *qdisk, *qhname;
+
 	/* get *all* flushable files in holding */
 	holding_list = holding_get_files_for_flush(NULL);
 	for(holding_file=holding_list->first; holding_file != NULL;
@@ -423,8 +410,8 @@ main(
 		holding_file_unlink(holding_file->name);
 		continue;
 	    }
-	    
-	    qdisk = quote_string(file.disk);
+
+	    qdisk = quote_string(file.disk);	    
 	    qhname = quote_string(holding_file->name);
 	    log_add(L_DISK, "%s %s", file.name, qdisk);
 	    fprintf(stderr,
@@ -2095,17 +2082,21 @@ static void analyze_estimate(
 static void handle_failed(
     disk_t *dp)
 {
-    char *errstr;
+    char *errstr, *errstr1, *qerrstr;
     char *qname = quote_string(dp->name);
 
     errstr = est(dp)->errstr? est(dp)->errstr : _("hmm, no error indicator!");
+    errstr1 = vstralloc("[",errstr,"]", NULL);
+    qerrstr = quote_string(errstr1);
+    amfree(errstr1);
 
-    fprintf(stderr, _("%s: FAILED %s %s %s 0 [%s]\n"),
-	get_pname(), dp->host->hostname, qname, planner_timestamp, errstr);
+    fprintf(stderr, _("%s: FAILED %s %s %s 0 %s\n"),
+	get_pname(), dp->host->hostname, qname, planner_timestamp, qerrstr);
 
-    log_add(L_FAIL, "%s %s %s 0 [%s]", dp->host->hostname, qname, 
-	    planner_timestamp, errstr);
+    log_add(L_FAIL, _("%s %s %s 0 %s"), dp->host->hostname, qname, 
+	    planner_timestamp, qerrstr);
 
+    amfree(qerrstr);
     amfree(qname);
     /* XXX - memory leak with *dp */
 }

@@ -38,13 +38,13 @@
 
 #define printf_arglist_function(fdecl, \
 				hook_type, hook_name) \
-	__attribute__ ((format (printf, 1, 0))) \
+        G_GNUC_PRINTF(1,0) \
         fdecl(hook_type hook_name, ...)
 
 #define printf_arglist_function1(fdecl, \
 				 arg1_type, arg1_name, \
 				 hook_type, hook_name) \
-	__attribute__ ((format (printf, 2, 0))) \
+        G_GNUC_PRINTF(2,0) \
 	fdecl(arg1_type arg1_name, \
 	      hook_type hook_name, ...)
 
@@ -52,7 +52,7 @@
 				 arg1_type, arg1_name, \
 				 arg2_type, arg2_name, \
 				 hook_type, hook_name) \
-	__attribute__ ((format (printf, 3, 0))) \
+        G_GNUC_PRINTF(3,0) \
 	fdecl(arg1_type arg1_name, \
 	      arg2_type arg2_name, \
 	      hook_type hook_name, ...)
@@ -62,8 +62,8 @@
 				 arg2_type, arg2_name, \
 				 arg3_type, arg3_name, \
 				 hook_type, hook_name) \
-	__attribute__ ((format (printf, 4, 0))) \
-	fdecl(arg1_type arg1_name, \
+        G_GNUC_PRINTF(4,0) \
+        fdecl(arg1_type arg1_name, \
 	      arg2_type arg2_name, \
 	      arg3_type arg3_name, \
 	      hook_type hook_name, ...)

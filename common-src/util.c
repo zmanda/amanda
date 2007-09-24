@@ -29,6 +29,7 @@
 
 #include "amanda.h"
 #include "util.h"
+#include <regex.h>
 #include "arglist.h"
 #include "clock.h"
 #include "sockaddr-util.h"
@@ -363,59 +364,6 @@ bind_portrange(
 }
 
 /*
- * Construct a datestamp (YYYYMMDD) from a time_t.
- */
-char *
-construct_datestamp(
-    time_t *t)
-{
-    struct tm *tm;
-    char datestamp[3 * NUM_STR_SIZE];
-    time_t when;
-
-    if (t == NULL) {
-	when = time((time_t *)NULL);
-    } else {
-	when = *t;
-    }
-    tm = localtime(&when);
-    if (!tm)
-	return stralloc("19000101");
-
-    snprintf(datestamp, SIZEOF(datestamp),
-             "%04d%02d%02d", tm->tm_year+1900, tm->tm_mon+1, tm->tm_mday);
-    return stralloc(datestamp);
-}
-
-/*
- * Construct a timestamp (YYYYMMDDHHMMSS) from a time_t.
- */
-char *
-construct_timestamp(
-    time_t *t)
-{
-    struct tm *tm;
-    char timestamp[6 * NUM_STR_SIZE];
-    time_t when;
-
-    if (t == NULL) {
-	when = time((time_t *)NULL);
-    } else {
-	when = *t;
-    }
-    tm = localtime(&when);
-    if (!tm)
-	return stralloc("19000101000000");
-
-    snprintf(timestamp, SIZEOF(timestamp),
-	     "%04d%02d%02d%02d%02d%02d",
-	     tm->tm_year+1900, tm->tm_mon+1, tm->tm_mday,
-	     tm->tm_hour, tm->tm_min, tm->tm_sec);
-    return stralloc(timestamp);
-}
-
-
-/*
  * Get current GMT time and return a message timestamp.
  * Used for printf calls to logs and such.
  */
@@ -706,6 +654,130 @@ add_history(
 }
 
 #endif
+
+/* Order of preference: readdir64_r(), readdir64(), readdir_r(),
+   readdir(). We prefer 64-bit capability to reentrancy, because we
+   can create our own reentrancy with a mutex. */
+#if HAVE_DECL_READDIR64_R
+# define REENTRANT_READDIR
+# define USE_DIRENT64
+# define USE_READDIR64_R
+#elif HAVE_DECL_READDIR64
+#  define USE_DIRENT64
+#  define USE_READDIR64
+#elif HAVE_DECL_READDIR_R
+#  define REENTRANT_READDIR
+#  define USE_READDIR_R
+#elif HAVE_DECL_READDIR
+#  define USE_READDIR
+#else
+# error No readdir(), readdir_r(), readdir64(), or readdir64_r() available!
+#endif
+
+char * portable_readdir(DIR* handle) {
+#ifdef USE_DIRENT64
+    struct dirent64 entry G_GNUC_UNUSED;
+    struct dirent64 *entry_p;
+#else
+    struct dirent entry G_GNUC_UNUSED;
+    struct dirent *entry_p;
+#endif
+#ifdef REENTRANT_READDIR
+    entry_p = &entry;
+#else
+    static GStaticMutex mutex = G_STATIC_MUTEX_INIT;
+
+    g_static_mutex_lock(&mutex);
+#endif
+
+#ifdef USE_READDIR
+    entry_p = *(readdir(handle));
+#endif
+#ifdef USE_READDIR64
+    entry_p = *(readdir64(handle));
+#endif
+#ifdef USE_READDIR_R
+    readdir_r(handle, &entry, &entry_p);
+#endif
+#ifdef USE_READDIR64_R
+    readdir64_r(handle, &entry, &entry_p);
+#endif
+
+#ifndef REENTRANT_READDIR
+    g_static_mutex_unlock(&mutex);
+#endif
+    
+    if (entry_p == NULL)
+        return NULL;
+
+    /* FIXME: According to glibc documentation, d_name may not be
+       null-terminated in some cases on some very old platforms. Not
+       sure what to do about that case. */
+    return strdup(entry_p->d_name);
+}
+
+int search_directory(DIR * handle, const char * regex,
+                     SearchDirectoryFunctor functor, gpointer user_data) {
+    int rval = 0;
+    regex_t compiled_regex;
+    gboolean done = FALSE;
+
+    if (regcomp(&compiled_regex, regex, REG_EXTENDED | REG_NOSUB) != 0) {
+        regfree(&compiled_regex);
+        return -1;
+    }
+
+    rewinddir(handle);
+
+    while (!done) {
+        char * read_name;
+        int result;
+        read_name = portable_readdir(handle);
+        if (read_name == NULL)
+            return rval;
+        result = regexec(&compiled_regex, read_name, 0, NULL, 0);
+        if (result == 0) {
+            rval ++;
+            done = !functor(read_name, user_data);
+        }
+        amfree(read_name);
+    }
+    return rval;
+}
+
+char* find_regex_substring(const char* base_string, const regmatch_t match) {
+    char * rval;
+    int size;
+
+    size = match.rm_eo - match.rm_so;
+    rval = malloc(size+1);
+    memcpy(rval, base_string + match.rm_so, size);
+    rval[size] = '\0';
+
+    return rval;
+}
+
+gboolean amanda_thread_init(void) {
+    gboolean success = FALSE;
+#ifdef HAVE_LIBCURL
+    static gboolean did_curl_init = FALSE;
+    if (!did_curl_init) {
+# ifdef G_THREADS_ENABLED
+        g_assert(!g_thread_supported());
+# endif
+        g_assert(curl_global_init(CURL_GLOBAL_ALL) == 0);
+        did_curl_init = TRUE;
+    }
+#endif
+#if defined(G_THREADS_ENABLED) && !defined(G_THREADS_IMPL_NONE)
+    if (g_thread_supported()) {
+        return TRUE;
+    }
+    g_thread_init(NULL);
+    success = TRUE;
+#endif
+    return success;
+}
 
 int
 resolve_hostname(const char *hostname,

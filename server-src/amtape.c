@@ -32,30 +32,27 @@
 #include "conffile.h"
 #include "tapefile.h"
 #include "taperscan.h"
-#include "tapeio.h"
 #include "clock.h"
 #include "changer.h"
 #include "version.h"
+#include "device.h"
+#include "timestamp.h"
 
 /* local functions */
-void usage(void);
+static void usage(void);
 int main(int argc, char **argv);
-void reset_changer(int argc, char **argv);
-void eject_tape(int argc, char **argv);
-void clean_tape(int argc, char **argv);
-void load_slot(int argc, char **argv);
-void load_label(int argc, char **argv);
-void show_slots(int argc, char **argv);
-void show_current(int argc, char **argv);
-void update_labeldb (int argc, char **argv);
-void amtape_taper_scan(int argc, char **argv);
-void show_device(int argc, char **argv);
-int update_one_slot (void *ud, int rc, char *slotstr, char *device);
-int loadlabel_slot(void *ud, int rc, char *slotstr, char *device);
+static void reset_changer(int argc, char **argv);
+static void eject_tape(int argc, char **argv);
+static void clean_tape(int argc, char **argv);
+static void load_slot(int argc, char **argv);
+static void load_label(int argc, char **argv);
+static void show_slots(int argc, char **argv);
+static void show_current(int argc, char **argv);
+static void amtape_taper_scan(int argc, char **argv);
+static void show_device(int argc, char **argv);
+static int loadlabel_slot(void *ud, int rc, char *slotstr, char *device);
 int show_init(void *ud, int rc, int ns, int bk, int s);
-int show_init_all(void *ud, int rc, int ns, int bk, int s);
-int show_init_current(void *ud, int rc, int ns, int bk, int s);
-int show_slot(void *ud, int rc, char *slotstr, char *device);
+static int show_slots_slot(void *ud, int rc, char *slotstr, char *device);
 
 static const struct {
     const char *name;
@@ -92,12 +89,12 @@ static const struct {
 	T_("taper                perform taper's scan alg.") },
     { "device", show_device,
 	T_("device               show current tape device") },
-    { "update", update_labeldb,
+    { "update", show_slots,
 	T_("update               update the label matchingdatabase")},
 };
 #define	NCMDS	(int)(sizeof(cmdtab) / sizeof(cmdtab[0]))
 
-void
+static void
 usage(void)
 {
     int i;
@@ -212,15 +209,10 @@ main(
 
 /* ---------------------------- */
 
-void
-reset_changer(
-    int		argc,
-    char **	argv)
-{
+static void
+reset_changer(G_GNUC_UNUSED int	argc,
+              G_GNUC_UNUSED char ** argv) {
     char *slotstr = NULL;
-
-    (void)argc;	/* Quiet unused parameter warning */
-    (void)argv;	/* Quiet unused parameter warning */
 
     switch(changer_reset(&slotstr)) {
     case 0:
@@ -240,15 +232,10 @@ reset_changer(
 
 
 /* ---------------------------- */
-void
-clean_tape(
-    int		argc,
-    char **	argv)
-{
+static void
+clean_tape(G_GNUC_UNUSED int	argc,
+           G_GNUC_UNUSED char ** argv) {
     char *devstr = NULL;
-
-    (void)argc;	/* Quiet unused parameter warning */
-    (void)argv;	/* Quiet unused parameter warning */
 
     if(changer_clean(&devstr) == 0) {
 	fprintf(stderr, _("%s: device %s is clean.\n"), get_pname(), devstr);
@@ -261,20 +248,15 @@ clean_tape(
 
 
 /* ---------------------------- */
-void
-eject_tape(
-    int		argc,
-    char **	argv)
-{
+static void
+eject_tape(G_GNUC_UNUSED int	argc,
+           G_GNUC_UNUSED char ** argv) {
     char *slotstr = NULL;
 
-    (void)argc;	/* Quiet unused parameter warning */
-    (void)argv;	/* Quiet unused parameter warning */
-
     if(changer_eject(&slotstr) == 0) {
-	fprintf(stderr, _("%s: slot %s is ejected.\n"), get_pname(), slotstr);
+	fprintf(stderr, _("%s: slot %3s is ejected.\n"), get_pname(), slotstr);
     } else {
-	fprintf(stderr, _("%s: slot %s not ejected: %s\n"),
+	fprintf(stderr, _("%s: slot %3s not ejected: %s\n"),
 		get_pname(), slotstr ? slotstr : "??", changer_resultstr);
     }
     amfree(slotstr);
@@ -283,32 +265,40 @@ eject_tape(
 
 /* ---------------------------- */
 
-void
+static void
 load_slot(
     int		argc,
     char **	argv)
 {
     char *slotstr = NULL, *devicename = NULL;
-    char *errstr;
     int is_advance;
+    Device * device;
 
     if(argc != 2)
 	usage();
+
+    device_api_init();
 
     is_advance = (strcmp(argv[1], "advance") == 0);
     if(changer_loadslot(argv[1], &slotstr, &devicename)) {
 	error(_("could not load slot %s: %s"), slotstr, changer_resultstr);
 	/*NOTREACHED*/
     }
-    if(! is_advance && (errstr = tape_rewind(devicename)) != NULL) {
-	fprintf(stderr,
-		_("%s: could not rewind %s: %s"), get_pname(), devicename, errstr);
-	amfree(errstr);
+    
+    if (!is_advance) {
+        device = device_open(stralloc(devicename));
+        if (device == NULL) {
+            fprintf(stderr,
+                    _("%s: could not open device %s"), get_pname(),
+                    devicename);
+        } else {
+            g_object_unref(device);
+        }
     }
 
     fprintf(stderr, _("%s: changed to slot %s"), get_pname(), slotstr);
     if(! is_advance) {
-	fprintf(stderr, " on %s", devicename);
+	fprintf(stderr, _(" on %s"), devicename);
     }
     fputc('\n', stderr);
     amfree(slotstr);
@@ -318,269 +308,223 @@ load_slot(
 
 /* ---------------------------- */
 
-int nslots, backwards, found, got_match, tapedays;
-char *datestamp;
-char *label = NULL, *first_match_label = NULL, *first_match = NULL;
-char *searchlabel, *labelstr;
-tape_t *tp;
-static int scan_init(void *ud, int rc, int ns, int bk, int s);
-
+/* This initalizes the ChangerStatus structure for all commands that
+   use changer_find; namely, show_slots, load_label, and
+   show_current. */
 static int 
-scan_init(
-    void *	ud,
-    int		rc,
-    int		ns,
-    int		bk,
-    int		s)
-{
-    (void)ud;	/* Quiet unused parameter warning */
-    (void)s;	/* Quiet unused parameter warning */
-
-    if(rc) {
+scan_init(G_GNUC_UNUSED void * data, int rc, G_GNUC_UNUSED int numslots,
+          G_GNUC_UNUSED int backwards, G_GNUC_UNUSED int searchable) {
+    if(rc != 0) {
 	error(_("could not get changer info: %s"), changer_resultstr);
 	/*NOTREACHED*/
     }
 
-    nslots = ns;
-    backwards = bk;
-
     return 0;
 }
 
-int
+static int scan_init_print(void * data, int rc, int numslots,
+                         int backwards, int searchable) {
+    
+    fprintf(stderr, _("%s: scanning all %d slots in tape-changer rack:\n"),
+            get_pname(), numslots);
+
+    return scan_init(data, rc, numslots, backwards, searchable);
+}
+
+typedef struct {
+    gboolean found;
+    char *searchlabel;
+} LabelChangerStatus;
+
+/* This is the 'user_slot' callback for the 'load label' command. */
+static int
 loadlabel_slot(
     void *	ud,
     int		rc,
     char *	slotstr,
-    char *	device)
+    char *	device_name)
 {
-    char *errstr;
+    LabelChangerStatus * status = ud;
+    Device * device;
 
-    (void)ud;	/* Quiet unused parameter warning */
-
-    if(rc > 1) {
+    if (rc > 1) {
 	error(_("could not load slot %s: %s"), slotstr, changer_resultstr);
-	/*NOTREACHED*/
-    }
-    else if(rc == 1)
-	fprintf(stderr, _("%s: slot %s: %s\n"),
+        g_assert_not_reached();
+    } else if (rc == 1) {
+	fprintf(stderr, _("%s: slot %3s: %s\n"),
 		get_pname(), slotstr, changer_resultstr);
-    else if((errstr = tape_rdlabel(device, &datestamp, &label)) != NULL)
-	fprintf(stderr, _("%s: slot %s: %s\n"), get_pname(), slotstr, errstr);
-    else {
-	fprintf(stderr, _("%s: slot %s: date %-8s label %s"),
-		get_pname(), slotstr, datestamp, label);
-	if(strcmp(label, FAKE_LABEL) != 0
-	   && strcmp(label, searchlabel) != 0)
-	    fprintf(stderr, _(" (wrong tape)\n"));
-	else {
-	    fprintf(stderr, _(" (exact label match)\n"));
-	    if((errstr = tape_rewind(device)) != NULL) {
-		fprintf(stderr,
-			_("%s: could not rewind %s: %s"),
-			get_pname(), device, errstr);
-		amfree(errstr);
-	    }
-	    found = 1;
-	    amfree(datestamp);
-	    amfree(label);
-	    return 1;
-	}
+        return 0;
     }
-    amfree(datestamp);
-    amfree(label);
-    return 0;
+
+    device = device_open(stralloc(device_name));
+    if (device == NULL) {
+        fprintf(stderr, _("%s: slot %3s: Could not open device.\n"),
+                get_pname(), slotstr);
+        return 0;
+    }
+    
+    device_set_startup_properties_from_config(device);
+
+    if (device->volume_label == NULL) {
+        fprintf(stderr, _("%s: slot %3s: Not an Amanda tape.\n"),
+                get_pname(), slotstr);
+        g_object_unref(device);
+        return 0;
+    }
+    
+    fprintf(stderr, _("%s: slot %3s: time %-14s label %s"),
+            get_pname(), slotstr, device->volume_time, device->volume_label);
+
+    if(strcmp(device->volume_label, status->searchlabel) != 0) {
+        fprintf(stderr, _(" (wrong tape)\n"));
+        g_object_unref(device);
+        return 0;
+    } else {
+        fprintf(stderr, _(" (exact label match)\n"));
+        g_object_unref(device);
+        status->found = 1;
+        return 1;
+    }
+
+    g_assert_not_reached();
 }
 
-void
+/* This does the 'load label' command. */
+static void
 load_label(
     int		argc,
     char **	argv)
 {
+    LabelChangerStatus status;
+
     if(argc != 2)
 	usage();
+    
+    device_api_init();
 
-    searchlabel = argv[1];
+    status.searchlabel = argv[1];
 
     fprintf(stderr, _("%s: scanning for tape with label %s\n"),
-	    get_pname(), searchlabel);
+	    get_pname(), status.searchlabel);
 
-    found = 0;
+    status.found = 0;
 
-    changer_find(NULL, scan_init, loadlabel_slot, searchlabel);
+    changer_find(&status, scan_init, loadlabel_slot, status.searchlabel);
 
-    if(found)
+    if(status.found)
 	fprintf(stderr, _("%s: label %s is now loaded.\n"),
-		get_pname(), searchlabel);
+		get_pname(), status.searchlabel);
     else
 	fprintf(stderr, _("%s: could not find label %s in tape rack.\n"),
-		get_pname(), searchlabel);
+		get_pname(), status.searchlabel);
 }
 
 
 /* ---------------------------- */
 
-int
-show_init(
-    void *	ud,
-    int		rc,
-    int		ns,
-    int		bk,
-    int		s)
+/* This is the user_slot function for "amtape show". */
+static int
+show_slots_slot(G_GNUC_UNUSED void * data, int rc, char * slotstr,
+                char * device_name)
 {
-    (void)ud;	/* Quiet unused parameter warning */
-    (void)s;	/* Quiet unused parameter warning */
-
-    if(rc) {
-	error(_("could not get changer info: %s"), changer_resultstr);
-	/*NOTREACHED*/
-    }
-
-    nslots = ns;
-    backwards = bk;
-    return 0;
-}
-
-int
-show_init_all(
-    void *	ud,
-    int		rc,
-    int		ns,
-    int		bk,
-    int		s)
-{
-    int ret = show_init(NULL, rc, ns, bk, s);
-
-    (void)ud;	/* Quiet unused parameter warning */
-
-    fprintf(stderr, _("%s: scanning all %d slots in tape-changer rack:\n"),
-	    get_pname(), nslots);
-    return ret;
-}
-
-int
-show_init_current(
-    void *	ud,
-    int		rc,
-    int		ns,
-    int		bk,
-    int		s)
-{
-    int ret = show_init(NULL, rc, ns, bk, s);
-
-    (void)ud;	/* Quiet unused parameter warning */
-
-    fprintf(stderr, _("%s: scanning current slot in tape-changer rack:\n"),
-	    get_pname());
-    return ret;
-}
-
-int
-show_slot(
-    void *	ud,
-    int		rc,
-    char *	slotstr,
-    char *	device)
-{
-    char *errstr;
-
-    (void)ud;	/* Quiet unused parameter warning */
+    Device * device;
 
     if(rc > 1) {
 	error(_("could not load slot %s: %s"), slotstr, changer_resultstr);
-	/*NOTREACHED*/
+        g_assert_not_reached();
     }
-    else if(rc == 1) {
+
+    if(rc == 1) {
 	fprintf(stderr, _("slot %s: %s\n"), slotstr, changer_resultstr);
+        return 0;
     }
-    else if((errstr = tape_rdlabel(device, &datestamp, &label)) != NULL) {
-	fprintf(stderr, _("slot %s: %s\n"), slotstr, errstr);
-	amfree(errstr);
+
+    device = device_open(stralloc(device_name));
+    if (device == NULL) {
+        fprintf(stderr, _("%s: slot %3s: Could not open device.\n"),
+                get_pname(), slotstr);
     } else {
-	fprintf(stderr, _("slot %s: date %-8s label %s\n"),
-		slotstr, datestamp, label);
+        device_set_startup_properties_from_config(device);
+        if (device->volume_label == NULL) {
+            fprintf(stderr, _("%s: slot %3s: Not an Amanda tape.\n"),
+                    get_pname(), slotstr);
+        } else {
+            fprintf(stderr, _("slot %3s: time %-14s label %s\n"),
+                    slotstr, device->volume_time, device->volume_label);
+        }
     }
-    amfree(datestamp);
-    amfree(label);
+
+    if (device != NULL)
+        g_object_unref(device);
+
     return 0;
 }
 
-void
-show_current(
-    int		argc,
-    char **	argv)
-{
-    (void)argv;	/* Quiet unused parameter warning */
-
+static void
+show_current(int argc, G_GNUC_UNUSED char ** argv) {
     if(argc != 1)
 	usage();
 
-    changer_current(NULL, show_init_current, show_slot);
+    device_api_init();
+
+    fprintf(stderr, _("%s: scanning current slot in tape-changer rack:\n"),
+	    get_pname());
+    changer_current(NULL, scan_init, show_slots_slot);
 }
 
-void
-show_slots(
-    int		argc,
-    char **	argv)
-{
-    (void)argv;	/* Quiet unused parameter warning */
-
+static void
+show_slots(int argc, G_GNUC_UNUSED char ** argv) {
     if(argc != 1)
 	usage();
 
-    changer_find(NULL, show_init_all, show_slot, NULL);
+    device_api_init();
+    changer_find(NULL, scan_init_print, show_slots_slot, NULL);
 }
 
 
 /* ---------------------------- */
 
-void
-amtape_taper_scan(
-    int		argc,
-    char **	argv)
-{
-    char *device = NULL;
+static void
+amtape_taper_scan(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char ** argv) {
     char *label = NULL;
+    char * searchlabel;
+    tape_t * tp;
+    char *timestamp = NULL;
+    char *tapedev = NULL;
 
-    (void)argc;	/* Quiet unused parameter warning */
-    (void)argv;	/* Quiet unused parameter warning */
-
-    if((tp = lookup_last_reusable_tape(0)) == NULL)
-	searchlabel = NULL;
-    else
-	searchlabel = stralloc(tp->label);
-
-    tapedays	= getconf_int(CNF_TAPECYCLE);
-    labelstr	= getconf_str(CNF_LABELSTR);
-    found = 0;
-    got_match = 0;
-
+    device_api_init();
+    
     fprintf(stderr, _("%s: scanning for "), get_pname());
-    if(searchlabel) fprintf(stderr, _("tape label %s or "), searchlabel);
+
+    tp = lookup_last_reusable_tape(0);
+    if (tp == NULL) {
+        searchlabel = NULL;
+    } else {
+	searchlabel = stralloc(tp->label);
+        fprintf(stderr, _("tape label %s or "), searchlabel);
+    }
     fprintf(stderr, _("a new tape.\n"));
 
-    taper_scan(searchlabel, &label, &datestamp,&device, FILE_taperscan_output_callback, stderr);
+    taper_scan(searchlabel, &label, &timestamp, &tapedev,
+               FILE_taperscan_output_callback, stderr, NULL, NULL);
 
     fprintf(stderr, _("%s: label %s is now loaded.\n"),
             get_pname(), label);
 
+
+    amfree(searchlabel);
     amfree(label);
-    amfree(datestamp);
-    amfree(device);
+    amfree(timestamp);
+    amfree(tapedev);
 }
 
 /* ---------------------------- */
 
-void
-show_device(
-    int		argc,
-    char **	argv)
-{
+static void
+show_device(G_GNUC_UNUSED int	argc,
+            G_GNUC_UNUSED char ** argv) {
     char *slot = NULL, *device = NULL;
-
-    (void)argc;	/* Quiet unused parameter warning */
-    (void)argv;	/* Quiet unused parameter warning */
-
+    
     if(changer_loadslot(_("current"), &slot, &device)) {
 	error(_("Could not load current slot.\n"));
 	/*NOTREACHED*/
@@ -589,49 +533,4 @@ show_device(
     printf("%s\n", device);
     amfree(slot);
     amfree(device);
-}
-
-/* ---------------------------- */
-
-int
-update_one_slot(
-    void *	ud,
-    int		rc,
-    char *	slotstr,
-    char *	device)
-{
-    char *errstr = NULL;
-    char *datestamp = NULL;
-    char *label = NULL;
-
-    (void)ud;	/* Quiet unused parameter warning */
-
-    if(rc > 1)
-	error(_("could not load slot %s: %s"), slotstr, changer_resultstr);
-    else if(rc == 1)
-	fprintf(stderr, _("slot %s: %s\n"), slotstr, changer_resultstr);
-    else if((errstr = tape_rdlabel(device, &datestamp, &label)) != NULL)
-	fprintf(stderr, _("slot %s: %s\n"), slotstr, errstr);
-    else {
-	fprintf(stderr, _("slot %s: date %-8s label %s\n"),
-		slotstr, datestamp, label);
-	changer_label(slotstr, label);
-    }
-    amfree(errstr);
-    amfree(datestamp);
-    amfree(label);
-    return 0;
-}
-
-void
-update_labeldb(
-    int		argc,
-    char **	argv)
-{
-    (void)argv;	/* Quiet unused parameter warning */
-
-    if(argc != 1)
-	usage();
-
-    changer_find(NULL, show_init_all, update_one_slot, NULL);
 }

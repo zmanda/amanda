@@ -38,8 +38,8 @@
 
 typedef char string_t[STRMAX];
 typedef enum {
-    F_UNKNOWN, F_WEIRD, F_TAPESTART, F_TAPEEND, 
-    F_DUMPFILE, F_CONT_DUMPFILE, F_SPLIT_DUMPFILE, F_EMPTY
+    F_UNKNOWN = 0, F_WEIRD = -1, F_TAPESTART = 1, F_TAPEEND = 2, 
+    F_DUMPFILE = 3, F_CONT_DUMPFILE = 4, F_SPLIT_DUMPFILE = 5, F_EMPTY = -2
 } filetype_t;
 
 typedef struct file_s {
@@ -73,11 +73,23 @@ typedef struct file_s {
 
 /* local functions */
 
+/* Makes a serialized header from the dumpfile_t representation. The
+ * return value is allocated using malloc(), so you must free it.
+ *
+ * Build_header guarantees that the buffer returned is at least
+ * min_size large, with any extra bytes zeroed out. */
+char *  build_header        (const dumpfile_t *file, size_t min_size);
+
 void	fh_init(dumpfile_t *file);
 void	parse_file_header(const char *buffer, dumpfile_t *file, size_t buflen);
-void	build_header(char *buffer, const dumpfile_t *file, size_t buflen);
 void	print_header(FILE *outf, const dumpfile_t *file);
 int	known_compress_type(const dumpfile_t *file);
 void	dump_dumpfile_t(const dumpfile_t *file);
+
+/* Returns TRUE if the two headers are equal, FALSE otherwise. */
+gboolean headers_are_equal(dumpfile_t * a, dumpfile_t * b);
+
+/* Returns an allocated duplicate header. */
+dumpfile_t * dumpfile_copy(dumpfile_t* from);
 
 #endif /* !FILEHEADER_H */

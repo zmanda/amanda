@@ -44,6 +44,7 @@
 #include "server_util.h"
 #include "util.h"
 #include "holding.h"
+#include "timestamp.h"
 
 #define chunker_debug(i, ...) do {	\
 	if ((i) <= debug_chunker) {	\
@@ -156,22 +157,7 @@ main(
     my_argc = new_argc;
     my_argv = new_argv;
 
-    if (my_argc > 1) {
-	config_name = stralloc(my_argv[1]);
-	config_dir = vstralloc(CONFIG_DIR, "/", config_name, "/", NULL);
-    } else {
-	char my_cwd[STR_SIZE];
-
-	if (getcwd(my_cwd, SIZEOF(my_cwd)) == NULL) {
-	    error(_("Cannot determine current working directory: %s"),
-		  strerror(errno));
-	    /*NOTREACHED*/
-	}
-	config_dir = stralloc2(my_cwd, "/");
-	if ((config_name = strrchr(my_cwd, '/')) != NULL) {
-	    config_name = stralloc(config_name + 1);
-	}
-    }
+    find_configuration((my_argc > 1), my_argv[1], &config_name, &config_dir);
 
     safe_cd();
 
@@ -327,8 +313,7 @@ main(
 		double rt;
 
 		runtime = stopclock();
-		rt = (double)(runtime.r.tv_sec) +
-		     ((double)(runtime.r.tv_usec) / 1000000.0);
+		rt = g_timeval_to_double(runtime);
 		snprintf(kb_str, SIZEOF(kb_str), OFF_T_FMT,
 			 (OFF_T_FMT_TYPE)(dumpsize - (off_t)headersize));
 		snprintf(kps_str, SIZEOF(kps_str), "%3.1lf",
@@ -885,19 +870,15 @@ write_tapeheader(
     int		outfd,
     dumpfile_t *file)
 {
-    char buffer[DISK_BLOCK_BYTES];
+    char *buffer;
     ssize_t written;
 
     file->blocksize = DISK_BLOCK_BYTES;
-    build_header(buffer, file, SIZEOF(buffer));
+    buffer = build_header(file, DISK_BLOCK_BYTES);
 
-    written = fullwrite(outfd, buffer, SIZEOF(buffer));
-    if(written == (ssize_t)sizeof(buffer))
-	return 0;
-
-    if(written < 0)
-	return written;
-
+    written = fullwrite(outfd, buffer, DISK_BLOCK_BYTES);
+    if(written == DISK_BLOCK_BYTES) return 0;
+    if(written < 0) return written;
     errno = ENOSPC;
     return (ssize_t)-1;
 }
