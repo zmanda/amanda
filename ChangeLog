@@ -1,5 +1,6 @@
-2007-09-24  Dustin J. Mitchell <dustin@zmanda.com>
-	Merge of Device API, written by Ian Turner <ian@zmanda.com>
+2007-09-24  Ian Turner <ian@zmanda.com>
+	Merge in new Device API. Thanks to Jean-Louis and Dustin for their
+	code contributions to this patch.
 
 2007-09-20  Dustin J. Mitchell <dustin@zmanda.com>
 	* oldrecover-src/extract_list.c recover-src/extract_list.c: 
@@ -366,6 +367,10 @@
 	* common-src/debug.c common-src/error.c: fix compilation errors
 	  on strict platforms.
 
+2007-06-04  Ian Turner <ian@zmanda.com>
+	* device-src/vfs-device.c: Accept device names without a
+	  terminating '/'.
+	
 2007-06-04  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/bsd-security.c common-src/bsdudp-security.c: 
 	  Make bsd, bsdudp open an IPv4 and an IPv6 socket; fixes bug reported

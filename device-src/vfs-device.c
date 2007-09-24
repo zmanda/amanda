@@ -432,7 +432,7 @@ static gboolean update_volume_size_functor(const char * filename,
     VfsDevice * self = user_data;
     g_return_val_if_fail(IS_VFS_DEVICE(self), FALSE);
     
-    full_filename = vstralloc(self->dir_name, filename, NULL);
+    full_filename = vstralloc(self->dir_name, "/", filename, NULL);
 
     if (stat(full_filename, &stat_buf) < 0) {
         /* Log it and keep going. */
