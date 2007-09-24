@@ -1760,7 +1760,7 @@ restore_from_tapelist(FILE * prompt_out,
         } else {
             Device * device = NULL;
             if (use_changer) {
-                char * tapedev;
+                char * tapedev = NULL;
                 loadlabel_data data;
                 data.cur_tapedev = &tapedev;
                 data.searchlabel =  cur_volume->label;
