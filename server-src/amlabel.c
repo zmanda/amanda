@@ -167,8 +167,6 @@ main(
 	tapename = getconf_str(CNF_TAPEDEV);
 	if (tapename == NULL) {
 	    error(_("No tapedev specified"));
-	} else {
-	    tapename = stralloc(tapename);
 	}
     } else if(have_changer != 1) {
 	error(_("changer initialization failed: %s"), strerror(errno));
@@ -275,7 +273,6 @@ main(
     free_new_argv(new_argc, new_argv);
     free_server_config();
     amfree(outslot);
-    amfree(tapename);
     amfree(conffile);
     amfree(conf_tapelist);
     amfree(config_dir);

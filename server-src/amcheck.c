@@ -655,16 +655,14 @@ static gboolean test_tape_status(FILE * outf) {
         if(exptape != NULL) fprintf(outf, _("tape %s or "), exptape->label);
         fprintf(outf, _("a new tape)\n"));
         amfree(label);
-        amfree(tapename);
         return FALSE;
     }
 
-    device = device_open(tapename); // Frees tapename.
-    tapename = NULL;
+    device = device_open(tapename);
+
     if (device == NULL) {
         fprintf(outf, "ERROR: Could not open tape device.\n");
         amfree(label);
-        amfree(tapename);
         return FALSE;
     }
     

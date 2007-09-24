@@ -132,7 +132,7 @@ int main(int argc, char ** argv) {
 
     device_api_init();
 
-    device = device_open(strdup(argv[1]));
+    device = device_open(argv[1]);
     g_return_val_if_fail(device != NULL, 2);
 
     medium_type = get_medium_type(device);
@@ -162,7 +162,7 @@ int main(int argc, char ** argv) {
             if (appendable && h == 5) {
                 g_object_unref(device);
                 
-                device = device_open(strdup(argv[1]));
+                device = device_open(argv[1]);
                 g_return_val_if_fail(device != NULL, 6);
                 
                 g_return_val_if_fail(device_start(device, ACCESS_APPEND, 
@@ -173,7 +173,7 @@ int main(int argc, char ** argv) {
         
         g_object_unref(device);    
         
-        device = device_open(strdup(argv[1]));
+        device = device_open(argv[1]);
         g_return_val_if_fail(device != NULL, 6);
     }
 

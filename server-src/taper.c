@@ -356,12 +356,11 @@ static gboolean find_and_label_new_tape(taper_state_t * state,
      * say NEW-TAPE if one doesn't. */
 
     state->device = device_open(state->next_tape_device);
+    amfree(state->next_tape_device);
     if (state->device == NULL) {
         amfree(state->next_tape_label);
-        amfree(state->next_tape_device);
         return FALSE;
     }
-    state->next_tape_device = NULL; /* Taken by device_open. */
     
     device_set_startup_properties_from_config(state->device, FALSE);
     

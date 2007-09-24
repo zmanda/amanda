@@ -1,4 +1,11 @@
-2007-09-24  Dustin J. Mitchell <dustin@zmanda.com> (merged by dustin@zmanda.com)
+2007-09-24  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/device.c device-src/tests/device_test.c
+	  device-src/rait-device.c server-src/amcheck.c
+	  server-src/amtape.c server-src/taperscan.c server-src/taper.c
+	  server-src/amlabel.c restore-src/restore.c: device_open() no
+	  longer free()s the device name it is given.
+
+2007-09-24  Dustin J. Mitchell <dustin@zmanda.com>
 	* restore-src/restore.c: fix uninitialized value error
 
 2007-09-24  Dustin J. Mitchell <dustin@zmanda.com>

@@ -1766,10 +1766,10 @@ restore_from_tapelist(FILE * prompt_out,
                 data.searchlabel =  cur_volume->label;
                 changer_find(&data, scan_init, loadlabel_slot,
                              cur_volume->label);
-                /* This takes over tapedev, so nothing to free. */
                 device = conditional_device_open(tapedev, prompt_out,
                                                  flags, features,
                                                  cur_volume);
+		amfree(tapedev);
             }
 
             if (device == NULL)
@@ -1826,6 +1826,7 @@ restore_without_tapelist(FILE * prompt_out,
                 device = conditional_device_open(cur_tapedev, prompt_out,
                                                  flags, features,
                                                  NULL);
+		amfree(cur_tapedev);
                 cur_slot ++;
             }
             if (cur_slot >= slot_count)

@@ -283,8 +283,6 @@ device_open (char * device_name)
     }
 
     handle_device_regex(device_name, &device_driver_name, &device_node_name);
- 
-    amfree(device_name);
 
     factory = lookup_device_factory(device_driver_name);
 

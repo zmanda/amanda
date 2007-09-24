@@ -286,7 +286,7 @@ load_slot(
     }
     
     if (!is_advance) {
-        device = device_open(stralloc(devicename));
+        device = device_open(devicename);
         if (device == NULL) {
             fprintf(stderr,
                     _("%s: could not open device %s"), get_pname(),
@@ -356,7 +356,7 @@ loadlabel_slot(
         return 0;
     }
 
-    device = device_open(stralloc(device_name));
+    device = device_open(device_name);
     if (device == NULL) {
         fprintf(stderr, _("%s: slot %3s: Could not open device.\n"),
                 get_pname(), slotstr);
@@ -439,7 +439,7 @@ show_slots_slot(G_GNUC_UNUSED void * data, int rc, char * slotstr,
         return 0;
     }
 
-    device = device_open(stralloc(device_name));
+    device = device_open(device_name);
     if (device == NULL) {
         fprintf(stderr, _("%s: slot %3s: Could not open device.\n"),
                 get_pname(), slotstr);

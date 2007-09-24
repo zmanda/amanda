@@ -547,7 +547,7 @@ static void open_device_do_op(gpointer data,
     OpenDeviceOp * op = data;
 
     op->result = device_open(op->device_name);
-    op->device_name = NULL; /* Freed by device_open. */
+    amfree(op->device_name);
 }
 
 /* Returns TRUE if and only if the volume label and time are equal. */

@@ -82,7 +82,7 @@ int scan_read_label(
 
     *label = *timestamp = NULL;
 
-    device = device_open(stralloc(dev));
+    device = device_open(dev);
     if (device == NULL ) {
         amfree(*timestamp);
         amfree(*label);
