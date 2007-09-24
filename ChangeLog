@@ -1,4 +1,10 @@
 2007-09-24  Ian Turner <ian@zmanda.com> (merged by dustin@zmanda.com)
+	* server-src/amcheck.c: Return 0 if everything is good with the
+	  tape. Thanks to Dustin Mitchell <dustin@zmanda.com> for 
+	  reporting this issue, and to Jean-Louis Martineau 
+	  <martineau@zmanda.com> for suggesting the form of the fix.
+
+2007-09-24  Ian Turner <ian@zmanda.com> (merged by dustin@zmanda.com)
 	* server-src/restore.c: Only restore files matching requested
 	  disknames. Report and patch by Jean-Louis Martineau
 	  <martineau@zmanda.com>.

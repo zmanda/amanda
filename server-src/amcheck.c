@@ -1117,7 +1117,7 @@ start_server_check(
     }
 
     if (testtape) {
-        tapebad = test_tape_status(outf);
+        tapebad = !test_tape_status(outf);
     } else if (do_tapechk) {
 	fprintf(outf, _("WARNING: skipping tape test because amdump or amflush seem to be running\n"));
 	fprintf(outf, _("WARNING: if they are not, you must run amcleanup\n"));
