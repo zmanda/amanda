@@ -1,4 +1,9 @@
 2007-09-24  Ian Turner <ian@zmanda.com> (merged by dustin@zmanda.com)
+	* server-src/restore.c: Only restore files matching requested
+	  disknames. Report and patch by Jean-Louis Martineau
+	  <martineau@zmanda.com>.
+
+2007-09-24  Ian Turner <ian@zmanda.com> (merged by dustin@zmanda.com)
 	* server-src/restore.c: Drop some globals, use data types
 	  responsibly.
 	

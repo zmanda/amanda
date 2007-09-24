@@ -1577,7 +1577,7 @@ search_a_tape(Device      * device,
             restore_status =
                 try_restore_single_file(device, file_num, prompt_out, flags,
                                         their_features, first_restored_file,
-                                        NULL, tape_seen_head);
+                                        match_list, tape_seen_head);
             if (restore_status != RESTORE_STATUS_NEXT_FILE)
                 break;
             file_num ++;
