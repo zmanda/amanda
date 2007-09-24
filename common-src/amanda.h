@@ -455,11 +455,11 @@ char *	debug_prefix(char *);
 
 #else  /* !DEBUG_CODE */
 
-#   define dbopen(a)
-#   define dbreopen(a, b)
-#   define dbrename(a,b)
-#   define dbclose()
-#   define dbprintf(...)
+#   define dbopen(a)		(void)0
+#   define dbreopen(a, b)	(void)0
+#   define dbrename(a,b)	(void)0
+#   define dbclose()		(void)0
+#   define dbprintf(...)	(void)0
 #   define dbfd()		(-1)
 #   define dbfp()		NULL
 #   define dbfn()		"(debug not enabled)"
@@ -467,6 +467,8 @@ char *	debug_prefix(char *);
 #   define debug_prefix(x)	get_pname()
 
 #endif /* DEBUG_CODE */
+
+void debug_dup_stderr_to_debug(void);
 
 /* amanda #days calculation, with roundoff */
 
@@ -619,12 +621,6 @@ time_t	unctime(char *timestr);
 	errno = e__errno;						\
 	(void)(ptr);  /* Fix value never used warning at end of routines */ \
     }									\
-} while (0)
-
-#define	debug_amfree(f, l, p) do {					\
-    if ((void *)(p) > (void *)sbrk(0))					\
-	    dbprintf(_("amfree: %s:%d bogus free (%p > %p)\n"), (f), (l), (p), sbrk(0));\
-    amfree(p);								\
 } while (0)
 
 #define strappend(s1,s2) do {						\

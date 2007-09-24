@@ -561,4 +561,36 @@ debug_prefix(
     return s;
 }
 
+void
+debug_dup_stderr_to_debug(void)
+{
+    if(dbfd() != -1 && dbfd() != STDERR_FILENO)
+    {
+	if(dup2(dbfd(),STDERR_FILENO) != STDERR_FILENO)
+	{
+	    error(_("can't redirect stderr to the debug file"));
+	    g_assert_not_reached();
+	}
+    }
+}
+
+#else
+
+void
+debug_dup_stderr_to_debug(void)
+{
+    int fd;
+
+    if ((fd = robust_open("/dev/null", O_WRONLY, 0)) == -1)
+	goto error;
+    if (fd == STDERR_FILENO) return; /* sortcut! */
+    if (dup2(fd, STDERR_FILENO) != STDERR_FILENO)
+	goto error;
+    robust_close(fd); /* ignore error */
+    return;
+error:
+    error(_("can't redirect stderr: %s"), strerror(errno));
+    g_assert_not_reached();
+}
+
 #endif

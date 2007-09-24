@@ -1,4 +1,9 @@
 2007-09-24  Dustin J. Mitchell <dustin@zmanda.com>
+	* server-src/changer.c server-src/amindexd.c
+	  restore-src/amidxtaped.c common-src/debug.c common-src/amanda.h
+	  common-src/alloc.c: fix support for builds without --with-debugging
+
+2007-09-24  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/tests/queue_test.c: simplify signal handling to
 	  be more portable
 

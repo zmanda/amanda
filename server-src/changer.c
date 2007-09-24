@@ -396,7 +396,8 @@ changer_command(
 	exitcode = 2;
 	goto done;
     case 0:
-	if(dup2(fd[1], 1) == -1 || dup2(dbfd(), 2) == -1) {
+	debug_dup_stderr_to_debug();
+	if(dup2(fd[1], 1) == -1) {
 	    changer_resultstr = vstrallocf(
 			_("<error> could not open pipe to \"%s\": %s"),
 			cmdstr, strerror(errno));
@@ -409,7 +410,7 @@ changer_command(
 	    changer_resultstr = vstrallocf(
 			_("<error> could not cd to \"%s\": %s"),
 			config_dir, strerror(errno));
-	    (void)fullwrite(2, changer_resultstr, strlen(changer_resultstr));
+	    (void)fullwrite(STDOUT_FILENO, changer_resultstr, strlen(changer_resultstr));
 	    exit(1);
 	}
 	if(arg) {
@@ -421,7 +422,7 @@ changer_command(
 	changer_resultstr = vstrallocf(
 			_("<error> could not exec \"%s\": %s"),
 			tapechanger, strerror(errno));
-	(void)fullwrite(2, changer_resultstr, strlen(changer_resultstr));
+	(void)fullwrite(STDOUT_FILENO, changer_resultstr, strlen(changer_resultstr));
 	exit(1);
     default:
 	aclose(fd[1]);

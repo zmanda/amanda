@@ -159,7 +159,6 @@ uncompress_file(
     int indexfd;
     int nullfd;
     int debugfd;
-    int debugnullfd;
     char line[STR_SIZE];
     FILE *pipe_stream;
     pid_t pid_gzip;
@@ -199,14 +198,8 @@ uncompress_file(
 #  define PARAM_UNCOMPRESS_OPT skip_argument
 #endif
 
-	debugfd = dbfd();
-	debugnullfd = 0;
-	if(debugfd < 0) {
-	    debugfd = open("/dev/null", O_WRONLY);
-	    debugnullfd = 1;
-	}
-
 	nullfd = open("/dev/null", O_RDONLY);
+
 	indexfd = open(filename,O_WRONLY|O_CREAT, 0600);
 	if (indexfd == -1) {
 	    *emsg = newvstrallocf(*emsg, _("Can't open '%s' for writting: %s"),
@@ -215,6 +208,11 @@ uncompress_file(
 	    amfree(filename);
 	    return NULL;
 	}
+
+	/* just use our stderr directly for the pipe's stderr; in 
+	 * main() we send stderr to the debug file, or /dev/null
+	 * if debugging is disabled */
+	debugfd = STDERR_FILENO;
 
 	/* start the uncompress process */
 	putenv(stralloc("LC_ALL=C"));
@@ -238,8 +236,6 @@ uncompress_file(
 	pid_sort = pipespawn(SORT_PATH, STDIN_PIPE,
 			     &pipe_to_sort, &indexfd, &debugfd,
 			     SORT_PATH, NULL);
-	if (debugnullfd == 1)
-	    aclose(debugfd);
 	aclose(indexfd);
 
 	/* send all ouput from uncompress process to sort process */
@@ -1166,12 +1162,7 @@ main(
 	dbprintf(_("WARNING: argv[0] not defined: check inetd.conf\n"));
     }
 
-    {
-	int db_fd = dbfd();
-	if(db_fd != -1) {
-	    dup2(db_fd, 2);
-	}
-    }
+    debug_dup_stderr_to_debug();
 
     /* initialize */
 

@@ -251,9 +251,6 @@ main(
     char *line;
     char *tapedev;
     dumpspec_t *ds;
-#ifndef DEBUG_CODE
-    int i;
-#endif
 
     /*
      * Configure program for internationalization:
@@ -310,25 +307,7 @@ main(
     dbopen(DBG_SUBDIR_SERVER);
     startclock();
     dbprintf(_("%s: version %s\n"), pgm, version());
-#ifdef DEBUG_CODE
-    if(dbfd() != -1 && dbfd() != STDERR_FILENO)
-    {
-	if(dup2(dbfd(),STDERR_FILENO) != STDERR_FILENO)
-	{
-	    perror(_("amidxtaped can't redirect stderr to the debug file"));
-	    dbprintf(_("can't redirect stderr to the debug file\n"));
-	    return 1;
-	}
-    }
-#else
-    if ((i = open("/dev/null", O_WRONLY)) == -1 ||
-	(i != STDERR_FILENO &&
-	 (dup2(i, STDERR_FILENO) != STDERR_FILENO ||
-	  close(i) != 0))) {
-	perror(_("amidxtaped can't redirect stderr"));
-	return 1;
-    }
-#endif
+    debug_dup_stderr_to_debug();
 
     if (! (argc >= 1 && argv != NULL && argv[0] != NULL)) {
 	dbprintf(_("WARNING: argv[0] not defined: check inetd.conf\n"));

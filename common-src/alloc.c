@@ -36,6 +36,19 @@
 
 #define	MIN_ALLOC	64
 
+/*
+ * debug_amfree(file, line, pointer) -- like amfree, but perform basic
+ * checks on 'pointer' before freeing.  Used in this file for extra safety.
+ */
+
+#define	debug_amfree(f, l, p) do {					\
+    if ((void *)(p) > (void *)sbrk(0)) {				\
+	    error(_("amfree: %s:%d bogus free (%p > %p)\n"), (f), (l), (p), sbrk(0));\
+    }									\
+    amfree(p);								\
+} while (0)
+
+
 static char *internal_vstralloc(const char *, int, const char *, va_list);
 
 /*
