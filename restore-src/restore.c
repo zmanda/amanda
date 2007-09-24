@@ -1968,7 +1968,7 @@ new_rst_flags(void)
 
     memset(flags, 0, SIZEOF(rst_flags_t));
 
-    flags->fsf = 1;
+    flags->fsf = 0;
     flags->comp_type = COMPRESS_FAST_OPT;
     flags->inline_assemble = 1;
     flags->pipe_to_fd = -1;
