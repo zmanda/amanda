@@ -1,4 +1,7 @@
 2007-09-24  Ian Turner <ian@zmanda.com> (merged by dustin@zmanda.com)
+	* device-src/device.c: Suppress a compiler warning.
+
+2007-09-24  Ian Turner <ian@zmanda.com> (merged by dustin@zmanda.com)
 	* device-src/device.h, device-src/device.c, device-src/fd-device.c,
 	  device-src/tape-device.c, device-src/vfs-device.c,
 	  device-src/rait-device.c: Update the seek_file API skip missing

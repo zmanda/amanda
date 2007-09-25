@@ -271,8 +271,8 @@ handle_device_regex(const char * user_name, char ** driver_name,
 Device* 
 device_open (char * device_name)
 {
-    char *device_driver_name;
-    char *device_node_name;
+    char *device_driver_name = NULL;
+    char *device_node_name = NULL;
     DeviceFactory factory;
 
     g_return_val_if_fail (device_name != NULL, NULL);
