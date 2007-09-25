@@ -184,6 +184,7 @@ vfs_device_init (VfsDevice * self) {
     prop.access =
         (PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_MASK) &
         (~ PROPERTY_ACCESS_SET_INSIDE_FILE_WRITE);
+    device_add_property(o, &prop, NULL);
 }
 
 static void 
