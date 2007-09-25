@@ -1,3 +1,15 @@
+2007-09-25  Ian Turner <ian@zmanda.com> (merged by dustin@zmanda.com)
+	* example/config.site man/xml-source/amanda.conf.5.xml
+	  device-src/device.c device-src/device.h device-src/property.c
+	  device-src/fd-device.c device-src/tape-device.c
+	  device-src/property.h device-src/tape-device.h
+	  device-src/tape-ops.h server-src/amcheck.c server-src/amtape.c
+	  server-src/taperscan.c server-src/taper.c server-src/amlabel.c
+	  restore-src/amrestore.c restore-src/restore.c:
+	  This patch adds a new property READ_BUFFER_SIZE which is used
+	  only by the tape device. The VFS device still uses BLOCK_SIZE
+	  for reading; other devices don't need the property.
+
 2007-09-25  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/amcheck.c: remove debugging message
 	* device-src/tape-posix.c: fix compilation

@@ -389,6 +389,19 @@ guint device_write_max_size(Device * self) {
     return max_block_size;
 }
 
+guint device_read_max_size(Device * self) {
+    GValue g_tmp;
+    
+    bzero(&g_tmp, sizeof(g_tmp));
+    if (device_property_get(self, PROPERTY_READ_BUFFER_SIZE, &g_tmp)) {
+        guint rval = g_value_get_uint(&g_tmp);
+        g_value_unset(&g_tmp);
+        return rval;
+    } else {
+        return device_write_max_size(self);
+    }
+}
+
 char * device_build_amanda_header(Device * self, const dumpfile_t * info,
                                   int * size, gboolean * oneblock) {
     char *amanda_header;
@@ -514,15 +527,14 @@ static void set_device_property(gpointer key_p, gpointer value_p,
 
 /* Set up first-run properties, including DEVICE_MAX_VOLUME_USAGE property
  * based on the tapetype. */
-void device_set_startup_properties_from_config(Device * device,
-                                               gboolean reading) {
+void device_set_startup_properties_from_config(Device * device) {
     char * tapetype_name = getconf_str(CNF_TAPETYPE);
     if (tapetype_name != NULL) {
         tapetype_t * tapetype = lookup_tapetype(tapetype_name);
         if (tapetype != NULL) {
             GValue val;
             guint64 length;
-            guint blocksize;
+            guint blocksize_kb;
             gboolean success;
 
             bzero(&val, sizeof(GValue));
@@ -547,17 +559,20 @@ void device_set_startup_properties_from_config(Device * device,
                 }
             }
 
-            if (reading) {
-                blocksize = tapetype_get_readblocksize(tapetype);
-                if (blocksize != MAX_TAPE_BLOCK_KB) {
-                    try_set_blocksize(device, blocksize, TRUE);
-                }
-            } else {
-                blocksize = tapetype_get_blocksize(tapetype);
-                if (blocksize != DISK_BLOCK_KB) {
-                    try_set_blocksize(device, blocksize,
-                                      !tapetype_get_file_pad(tapetype));
-                }
+            blocksize_kb = tapetype_get_readblocksize(tapetype);
+            if (blocksize_kb != MAX_TAPE_BLOCK_KB) {
+                g_value_init(&val, G_TYPE_UINT);
+                g_value_set_uint64(&val, blocksize_kb * 1024);
+                success = device_property_set(device,
+                                              PROPERTY_READ_BUFFER_SIZE,
+                                              &val);
+                g_value_unset(&val);
+            }
+            
+            blocksize_kb = tapetype_get_blocksize(tapetype);
+            if (blocksize_kb != DISK_BLOCK_KB) {
+                try_set_blocksize(device, blocksize_kb * 1024,
+                                  !tapetype_get_file_pad(tapetype));
             }
         }
     }
@@ -914,7 +929,6 @@ device_read_block (Device * self, gpointer buffer, int * size)
             *size = device_write_min_size(self);
             return 0;
         }
-            
 
 	klass = DEVICE_GET_CLASS(self);
 

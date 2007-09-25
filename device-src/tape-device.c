@@ -101,10 +101,13 @@ tape_device_init (TapeDevice * self) {
     /* Clear all fields. */
     self->min_block_size = self->max_block_size = self->fixed_block_size =
         MAX_TAPE_BLOCK_BYTES;
+    self->read_block_size = MAX_TAPE_BLOCK_KB;
     
     self->fsf = self->bsf = self->fsr = self->bsr = self->eom =
         self->bsf_after_eom = self->compression = self->first_file = 0;
     self->final_filemarks = 2;
+
+    self->private->write_count = 0;
 
     /* Register properites */
     prop.base = &device_property_concurrency;
@@ -165,7 +168,6 @@ tape_device_init (TapeDevice * self) {
     prop.access = PROPERTY_ACCESS_GET_MASK;
     prop.base = &device_property_canonical_name;
     device_add_property(device_self, &prop, NULL);
-
 }
 
 static void tape_device_finalize(GObject * obj_self) {
@@ -410,7 +412,7 @@ tape_device_seek_file (Device * d_self, guint file) {
         }
     }
 
-    buffer_len = device_write_max_size(d_self);
+    buffer_len = self->read_block_size;
     header_buffer = malloc(buffer_len);
     result = tape_device_robust_read(fd_self, header_buffer, &buffer_len);
 
@@ -732,11 +734,10 @@ tape_device_robust_read (FdDevice * fd_self, void * buf, int * count) {
     g_return_val_if_fail(self != NULL, RESULT_ERROR);
     g_return_val_if_fail(*count >= 0, RESULT_ERROR);
 
-    if ((self->fixed_block_size > 0 &&
-         (guint)(*count) < self->fixed_block_size) ||
-        (guint)(*count) < self->min_block_size)
+    if ((guint)(*count) < self->read_block_size) {
         return RESULT_SMALL_BUFFER;
-    
+    }
+
     for (;;) {
         result = read(fd_self->fd, buf, *count);
         if (result > 0) {
@@ -823,6 +824,8 @@ tape_device_robust_write (FdDevice * fd_self, void * buf, int count) {
 
         if (result == count) {
             /* Success. */
+
+            self->private->write_count ++;
             return RESULT_SUCCESS;
         } else if (result >= 0) {
             /* write() returned a short count. This should not happen. */
@@ -884,11 +887,7 @@ static int drain_tape_blocks(TapeDevice * self, int count) {
 
     fd_self = (FdDevice*)self;
 
-    if (self->fixed_block_size == 0) {
-        buffer_size = self->max_block_size;
-    } else {
-        buffer_size = self->fixed_block_size;
-    }
+    buffer_size = self->read_block_size;
 
     buffer = malloc(sizeof(buffer_size));
 

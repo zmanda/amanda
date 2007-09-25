@@ -187,7 +187,7 @@ main(
         error("Could not open device %s.\n", tapename);
     }
     
-    device_set_startup_properties_from_config(device, TRUE);
+    device_set_startup_properties_from_config(device);
 
     if (device->volume_label == NULL) {
         printf("Found an unlabeled tape.\n");
@@ -211,8 +211,6 @@ main(
     if(tape_ok) {
 	char *timestamp = NULL;
 
-        device_set_startup_properties_from_config(device, FALSE);
-
 	printf(_("Writing label %s..\n"), label); fflush(stdout);
         
 	timestamp = get_undef_timestamp();
@@ -226,8 +224,6 @@ main(
 	amfree(timestamp);
 
         printf(_("Checking label...\n")); fflush(stdout);
-
-        device_set_startup_properties_from_config(device, TRUE);
 
         if (!device_start(device, ACCESS_READ, NULL, NULL)) {
             error(_("Error reading label.\n"));

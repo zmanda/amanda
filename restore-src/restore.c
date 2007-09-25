@@ -272,7 +272,7 @@ loadlabel_slot(void *	datap,
         return 0;
     }
 
-    device_set_startup_properties_from_config(device, TRUE);
+    device_set_startup_properties_from_config(device);
     device_read_label(device);
 
     if (device->volume_label == NULL) {
@@ -1196,7 +1196,7 @@ conditional_device_open(char         *tapedev,
         return NULL;
     }
 
-    device_set_startup_properties_from_config(rval, TRUE);
+    device_set_startup_properties_from_config(rval);
     device_read_label(rval);
 
     if (rval->volume_label == NULL) {

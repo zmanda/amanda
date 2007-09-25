@@ -290,6 +290,9 @@ void device_property_init(void) {
     device_property_fill_and_register(&device_property_final_filemarks,
                                       G_TYPE_UINT, "final_filemarks",
       "How many filemarks to write after the last tape file?" );
+    device_property_fill_and_register(&device_property_read_buffer_size,
+                                      G_TYPE_UINT, "read_buffer_size",
+      "What buffer size should be used for reading?");
 }
 
 DevicePropertyBase device_property_concurrency;
@@ -312,3 +315,4 @@ DevicePropertyBase device_property_bsr;
 DevicePropertyBase device_property_eom;
 DevicePropertyBase device_property_bsf_after_eom;
 DevicePropertyBase device_property_final_filemarks;
+DevicePropertyBase device_property_read_buffer_size;

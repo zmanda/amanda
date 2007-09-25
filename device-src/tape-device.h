@@ -41,7 +41,7 @@ typedef struct TapeDevicePrivate_s TapeDevicePrivate;
 typedef struct _TapeDevice {
     FdDevice __parent__;
 
-    guint min_block_size, max_block_size, fixed_block_size;
+    guint min_block_size, max_block_size, fixed_block_size, read_block_size;
     FeatureSupportFlags fsf, bsf, fsr, bsr, eom, bsf_after_eom;
     int final_filemarks;
     gboolean compression;

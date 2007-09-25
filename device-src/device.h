@@ -191,6 +191,7 @@ gboolean        device_start_file       (Device * self,
 
 guint           device_write_min_size   (Device * self);
 guint           device_write_max_size   (Device * self);
+guint           device_read_max_size   (Device * self);
 
 /* Does what you expect. size had better be inside the block size
  * range, or this function will write nothing.
@@ -355,10 +356,8 @@ dumpfile_t * make_tapestart_header(Device * self, char * label,
 dumpfile_t * make_tapeend_header(void);
 
 /* Set up first-run properties from loaded configuration file, including
- * DEVICE_MAX_VOLUME_USAGE property based on the tapetype. The reading
- * parameter indicates whether or not read-mode is anticipated. */
-void device_set_startup_properties_from_config(Device * device,
-                                               gboolean reading);
+ * DEVICE_MAX_VOLUME_USAGE property based on the tapetype. */
+void device_set_startup_properties_from_config(Device * device);
 
 
 #endif /* DEVICE_H */

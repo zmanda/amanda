@@ -46,8 +46,6 @@ gboolean tape_bsr(int fd, guint count);
 /* Returns tape position file number, or one of the return codes above. */
 gint tape_eod(int fd);
 gboolean tape_weof(int fd, guint8 count);
-/* 0 means variable */
-gboolean tape_setblk(int fd, int blocksize);
 gboolean tape_setcompression(int fd, gboolean on);
 
 typedef enum {

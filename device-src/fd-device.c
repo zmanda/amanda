@@ -221,7 +221,7 @@ fd_device_read_block (Device * pself, gpointer buf,
 
     if (buf == NULL) {
         /* Just a size query. */
-        *size_req = device_write_max_size(pself);
+        *size_req = device_read_max_size(pself);
         return 0;
     }
 
@@ -232,7 +232,7 @@ fd_device_read_block (Device * pself, gpointer buf,
         *size_req = size;
         return size;
     case RESULT_SMALL_BUFFER:
-        *size_req = device_write_max_size(pself);
+        *size_req = device_read_max_size(pself);
         return 0;
     case RESULT_NO_DATA:
         pself->is_eof = TRUE;
@@ -398,7 +398,7 @@ fd_device_seek_file (Device * pself, guint file) {
 
     /* By the time we get here, we assume all the seeking has already been
      * done. We just read a block, and get the header. */
-    buffer_len = device_write_max_size(pself);
+    buffer_len = device_read_max_size(pself);
     buffer = malloc(buffer_len);
     result = fd_device_robust_read(self, buffer, &buffer_len);
     if (result != RESULT_SUCCESS) {

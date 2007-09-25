@@ -363,7 +363,7 @@ loadlabel_slot(
         return 0;
     }
     
-    device_set_startup_properties_from_config(device, TRUE);
+    device_set_startup_properties_from_config(device);
 
     if (device->volume_label == NULL) {
         fprintf(stderr, _("%s: slot %3s: Not an Amanda tape.\n"),
@@ -444,7 +444,7 @@ show_slots_slot(G_GNUC_UNUSED void * data, int rc, char * slotstr,
         fprintf(stderr, _("%s: slot %3s: Could not open device.\n"),
                 get_pname(), slotstr);
     } else {
-        device_set_startup_properties_from_config(device, TRUE);
+        device_set_startup_properties_from_config(device);
         if (device->volume_label == NULL) {
             fprintf(stderr, _("%s: slot %3s: Not an Amanda tape.\n"),
                     get_pname(), slotstr);

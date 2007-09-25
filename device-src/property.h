@@ -262,4 +262,8 @@ extern DevicePropertyBase device_property_bsf_after_eom;
 extern DevicePropertyBase device_property_final_filemarks;
 #define PROPERTY_FINAL_FILEMARKS (device_property_final_filemarks.ID)
 
+/* What buffer size is used for reading? */
+extern DevicePropertyBase device_property_read_buffer_size;
+#define PROPERTY_READ_BUFFER_SIZE (device_property_read_buffer_size.ID)
+
 #endif

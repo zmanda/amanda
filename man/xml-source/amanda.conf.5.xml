@@ -288,6 +288,7 @@ See the
 option.</para>
   </listitem>
   </varlistentry>
+
   <varlistentry>
   <term><emphasis remap='B'>tapedev</emphasis> string</term>
   <listitem>
@@ -319,6 +320,28 @@ and probably only with the
 <emphasis remap='B'>record</emphasis>
 option set to
 <emphasis remap='I'>no</emphasis>.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><emphasis remap='B'>device_property</emphasis> string string</term>
+  <listitem>
+<para>These options can set various device properties, including block size,
+maximum volume usage, authentication information, hardware feature support,
+and more.Specifics of how properties are used are device-dependent, though
+some common properties are supported across multiple device drivers.</para>
+
+<para> Both strings are quoted; the first string contains the name of
+the property to set, and the second contains its value. For example, to set
+a fixed block size of 128k, do <informalexample><programlisting>device_property "BLOCK_SIZE" "131072"</programlisting></informalexample>.</para>
+
+<para>The order in which device properties are set is as follows:
+<orderedlist><listitem>Tapetype parameters, including length, blocksize,
+readblocksize, file-pad, are translated into device properties and set
+accordingly.</listitem>
+<listitem>Device properties from any device_property configuration directives
+are set, in the order they appear in the configuration file.</listitem>
+</orderedlist></para>
   </listitem>
   </varlistentry>
 

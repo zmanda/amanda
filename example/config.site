@@ -195,18 +195,6 @@
 # DEFAULT_TAPE_DEVICE=/dev/nrst0
 
 
-# DEFAULT_RAW_TAPE_DEVICE  --with-ftape-rawdevice=RAW_TAPE_DEVICE
-#           Default: /dev/rawft[0-3]
-#           This sets the default raw tape device for use with the Linux 
-#           floppy tape driver ftape (version 3.04d).
-#           The configure script will search for the lowest numbered
-#           /dev/rawft[0-3] device. If no device is found, /dev/null is used.
-#
-#           This device is needed for QIC volume table operations with 
-#           floppy tapes.
-# DEFAULT_RAW_TAPE_DEVICE=/dev/rawft0
-
-
 # DEFAULT_CHANGER_DEVICE --with-changer-device=CHANGER_DEVICE
 #			Default: /dev/ch0 or /dev/null
 #			This sets the default tape changer device.
