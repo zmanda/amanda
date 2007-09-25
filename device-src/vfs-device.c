@@ -348,6 +348,7 @@ static char * file_number_to_file_name(VfsDevice * self, guint device_file) {
         fprintf(stderr,
                 "Found multiple names for file number %d, choosing file %s.\n",
                 device_file, data.result);
+        return data.result;
     } else {
         g_assert(data.result != NULL);
         return data.result;
@@ -473,7 +474,7 @@ vfs_device_open_device (Device * pself, char * device_name) {
     }
 
     /* Next open the directory itself. */
-    self->dir_handle = opendir(device_name);
+    self->dir_handle = opendir(self->dir_name);
     if (self->dir_handle == NULL) {
         fprintf(stderr, "Couldn't open directory %s for reading: %s\n",
                 device_name, strerror(errno));

@@ -251,7 +251,7 @@ main(
         if (label_status != READ_LABEL_STATUS_SUCCESS) {
             printf("Checking the tape label failed: \n  ");
             print_read_label_status_error(label_status);
-            tape_ok = 0;
+            exit(EXIT_FAILURE);
         } else if (device->volume_label == NULL) {
             error(_("no label found.\n"));
             g_assert_not_reached();

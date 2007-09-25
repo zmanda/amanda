@@ -1,4 +1,11 @@
 2007-09-25  Ian Turner <ian@zmanda.com> (merged by dustin@zmanda.com)
+	* server-src/vfs-device.c: Fix a bug where all VFS device volumes
+	  were thought unlabeled. Also do the right thing when there are
+	  extra files in the VFS volume directory.
+	* server-src/amlabel.c: Fail if there is a problem re-reading the
+	  volume label.
+
+2007-09-25  Ian Turner <ian@zmanda.com> (merged by dustin@zmanda.com)
 	* device-src/device.c: Set the device name before reading the label.
 	* device-src/fd-device.c: An invalid header indicates an unlabeled
 	  volume, not a volume error.
