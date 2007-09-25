@@ -101,7 +101,7 @@ tape_device_init (TapeDevice * self) {
     /* Clear all fields. */
     self->min_block_size = self->max_block_size = self->fixed_block_size =
         MAX_TAPE_BLOCK_BYTES;
-    self->read_block_size = MAX_TAPE_BLOCK_KB;
+    self->read_block_size = MAX_TAPE_BLOCK_KB * 1024;
     
     self->fsf = self->bsf = self->fsr = self->bsr = self->eom =
         self->bsf_after_eom = self->compression = self->first_file = 0;

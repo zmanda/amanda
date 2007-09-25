@@ -1,3 +1,7 @@
+2007-09-25  Ian Turner <ian@zmanda.com> (merged by dustin@zmanda.com)
+	* device-src/tape-device.c: Use the right default block size for
+	  reading.
+
 2007-09-25  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/vfs-device.c: add forgotten device_add_property() call
 
