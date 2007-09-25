@@ -523,7 +523,6 @@ void device_set_startup_properties_from_config(Device * device,
             GValue val;
             guint64 length;
             guint blocksize;
-            gboolean file_pad;
             gboolean success;
 
             bzero(&val, sizeof(GValue));
@@ -543,7 +542,8 @@ void device_set_startup_properties_from_config(Device * device,
                 if (!success) {
                     fprintf(stderr, "Setting MAX_VOLUME_USAGE to %llu "
                             "not supported for device %s.\n",
-                            length, device->device_name);
+                            (long long unsigned int)length,
+			    device->device_name);
                 }
             }
 

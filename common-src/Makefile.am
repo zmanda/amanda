@@ -50,8 +50,6 @@ libamanda_la_SOURCES =		\
 nodist_libamanda_la_SOURCES = version.c
 
 libamanda_la_LIBADD =		\
-	$(GLIB_LIBS)		\
-	$(LIBCURL)		\
 	../gnulib/libgnu.$(LIB_EXTENSION)
 
 if WANT_AMFLOCK_POSIX
@@ -94,7 +92,6 @@ libamanda_la_SOURCES += krb5-security.c
 endif
 
 libamanda_la_LDFLAGS =  -release $(VERSION)
-#libamanda_la_CFLAGS =  $(GLIB_CFLAGS)
 
 noinst_HEADERS =		\
 	amanda.h		\

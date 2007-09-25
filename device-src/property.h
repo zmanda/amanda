@@ -68,7 +68,7 @@ typedef enum {
  * It holds information about a property that is common to all devices of
  * a given type. */
 
-typedef guint DevicePropertyId;
+typedef int DevicePropertyId;
 
 typedef struct {
     DevicePropertyId ID; /* Set by device_property_register() */

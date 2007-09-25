@@ -38,7 +38,7 @@ static Device* null_device_factory(char * device_type,
 /* pointer to the class of our parent */
 static DeviceClass *parent_class = NULL;
 
-void null_device_register() {
+void null_device_register(void) {
     static const char * device_prefix_list[] = { "null", NULL };
     register_device(null_device_factory, device_prefix_list);
 }
@@ -145,7 +145,7 @@ null_device_class_init (NullDeviceClass * c G_GNUC_UNUSED)
 
 
 static Device* null_device_factory(char * device_type,
-                                   char * device_name) {
+                                   char * device_name G_GNUC_UNUSED) {
     g_assert(0 == strcmp(device_type, "null"));
     return DEVICE(g_object_new(TYPE_NULL_DEVICE, NULL));
     

@@ -23,8 +23,7 @@ if WANT_TAPE_POSIX
 libamdevice_la_SOURCES += tape-posix.c
 endif
 
-libamdevice_la_CFLAGS = $(GLIB_CFLAGS)
-libamdevice_la_LDFLAGS = $(GLIB_LIBS) -release $(VERSION) $(LIBCURL)
+libamdevice_la_LDFLAGS = -release $(VERSION) 
 
 noinst_HEADERS = device.h null-device.h queueing.h semaphore.h \
 	tape-ops.h fd-device.h property.h rait-device.h \

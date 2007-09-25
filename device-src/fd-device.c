@@ -303,7 +303,6 @@ fd_device_start (Device * pself, DeviceAccessMode mode, char * label,
         FdDeviceResult result;
         char * amanda_header;
         int header_size;
-        dumpfile_t * dumpinfo;
 
         amanda_header = make_fd_device_tapestart_header(self, label, timestamp,
                                                         &header_size);
@@ -567,7 +566,7 @@ fd_device_robust_write (FdDevice * self, void * buf, int count)
         g_assert (self != NULL);
         g_assert (IS_FD_DEVICE (self));
         g_assert (buf != NULL);
-        g_assert (write > 0);
+        g_assert (count > 0);
         klass = FD_DEVICE_GET_CLASS(self);
 
         if(klass->robust_write)

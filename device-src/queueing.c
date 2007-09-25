@@ -25,7 +25,7 @@
 
 /* Queueing framework here. */
 typedef struct {
-    int block_size;
+    guint block_size;
     ProducerFunctor producer;
     gpointer producer_user_data;
     ConsumerFunctor consumer;
@@ -35,7 +35,7 @@ typedef struct {
     StreamingRequirement streaming_mode;
 } queue_data_t;
 
-static queue_buffer_t *invent_buffer() {
+static queue_buffer_t *invent_buffer(void) {
     queue_buffer_t *rval;
     rval = malloc(sizeof(*rval));
 
@@ -122,7 +122,7 @@ static void heatshrink_buffer(queue_buffer_t *buf) {
     }
 }
 
-gpointer do_producer_thread(gpointer datap) {
+static gpointer do_producer_thread(gpointer datap) {
     queue_data_t* data = datap;
 
     for (;;) {
@@ -173,7 +173,7 @@ gpointer do_producer_thread(gpointer datap) {
     }
 }
 
-gpointer do_consumer_thread(gpointer datap) {
+static gpointer do_consumer_thread(gpointer datap) {
     queue_data_t* data = datap;
     gboolean finished = FALSE;
     queue_buffer_t *buf = NULL;
@@ -264,11 +264,11 @@ static void cleanup_buffer_queue(GAsyncQueue *Q, gboolean full_cleanup) {
 /* This function sacrifices performance, but will still work just
    fine, on systems where threads are not supported. */
 static queue_result_flags
-do_unthreaded_consumer_producer_queue(int block_size,
-                                     ProducerFunctor producer,
-                                     gpointer producer_user_data,
-                                     ConsumerFunctor consumer,
-                                     gpointer consumer_user_data) {
+do_unthreaded_consumer_producer_queue(guint block_size,
+                                      ProducerFunctor producer,
+                                      gpointer producer_user_data,
+                                      ConsumerFunctor consumer,
+                                      gpointer consumer_user_data) {
     queue_buffer_t *buf = NULL, *next_buf = NULL;
     gboolean finished = FALSE;
     queue_result_flags rval = 0;
@@ -411,7 +411,7 @@ do_consumer_producer_queue_full(ProducerFunctor producer,
 
 producer_result_t device_read_producer(gpointer devicep,
                                        queue_buffer_t *buffer,
-                                       int hint_size) {
+                                       int hint_size G_GNUC_UNUSED) {
     Device* device;
 
     device = (Device*) devicep;

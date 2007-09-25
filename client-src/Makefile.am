@@ -29,8 +29,7 @@ libamclient_la_SOURCES=	amandates.c		getfsent.c	\
 			unctime.c		client_util.c	\
 			$(samba_sources)
 
-libamclient_la_CFLAGS = $(GLIB_CFLAGS)
-libamclient_la_LDFLAGS = -release $(VERSION) $(GLIB_LIBS)
+libamclient_la_LDFLAGS = -release $(VERSION)
 
 ###
 # Because libamanda includes routines (e.g. regex) provided by some system

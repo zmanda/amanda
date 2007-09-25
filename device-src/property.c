@@ -122,7 +122,7 @@ static const GFlagsValue _feature_support_flags_values[] = {
       "FEATURE_SURETY_GOOD",
       "good" },
     { FEATURE_SOURCE_DEFAULT,
-      "FEATURE_SOURCE_DEFAULT"
+      "FEATURE_SOURCE_DEFAULT",
       "default" },
     { FEATURE_SOURCE_DETECTED,
       "FEATURE_SOURCE_DETECTED",
@@ -212,7 +212,7 @@ DevicePropertyId device_property_register(DevicePropertyBase* base) {
 }
 
 /* Does the same thing, but fills in a new DevicePropertyBase. */
-extern void
+static void
 device_property_fill_and_register(DevicePropertyBase * base,
                                   GType type,
                                   const char * name,
@@ -225,7 +225,7 @@ device_property_fill_and_register(DevicePropertyBase * base,
 }
 
 
-void device_property_init() {
+void device_property_init(void) {
     device_property_fill_and_register(&device_property_concurrency,
                                       CONCURRENCY_PARADIGM_TYPE, "concurrency",
       "Supported concurrency mode (none, multiple readers, multiple writers)");

@@ -1,3 +1,16 @@
+2007-09-24  Ian Turner <ian@zmanda.com> (merged by dustin@zmanda.com)
+	* client-src/Makefile.am, device-src/tests/Makefile.am,
+	  device-src/Makefile.am, configure.in, common-src/Makefile.am,
+	  tape-src/Makefile.am: Use AM_CFLAGS and LDFLAGS when
+	  compiling. These changes by Dustin J. Mitchell <dustin@zmanda.com>.
+	* device-src/device.c, device-src/null-device.c,
+	  device-src/device.c, device-src/queueing.c, device-src/property.c,
+	  device-src/fd-device.c, device-src/s3-device.c,
+	  device-src/semaphore.h, device-src/property.h,
+	  device-src/vfs-device.c: Fix compiler warnings revealed by above
+	  change. Thanks to Jean-Louis Martineau Jean-Louis Martineau
+	  <martineau@zmanda.com> for help with these fixes.
+
 2007-09-24  Dustin J. Mitchell <dustin@zmanda.com>
 	* restore-src/restore.c restore-src/restore.h:
 	Allow NULLs in arguments to dump_match(); make it a static

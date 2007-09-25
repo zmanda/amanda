@@ -34,7 +34,7 @@ typedef struct {
 
 #define semaphore_new semaphore_new_with_value(1)
 semaphore_t* semaphore_new_with_value(int);
-void semaphore_free();
+void semaphore_free(semaphore_t*);
 #define semaphore_up(semaphore) semphore_increment(semaphore,1)
 void semaphore_increment(semaphore_t*, unsigned int);
 #define semaphore_down(semaphore) semaphore_decrement(semaphore, 1)

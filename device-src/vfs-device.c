@@ -352,6 +352,7 @@ static char * file_number_to_file_name(VfsDevice * self, guint device_file) {
         return data.result;
     }
     g_assert_not_reached();
+    return NULL;
 }
 
 /* This function returns the dynamically-allocated lockfile name for a
@@ -621,6 +622,10 @@ static gboolean vfs_device_write_block(Device * pself, guint size,
         }
 
         return result;
+    } else {
+        /* We depend on FD device. */
+        g_assert_not_reached();
+        return FALSE;
     }
 }
 
@@ -671,7 +676,7 @@ static gboolean get_last_file_number_functor(const char * filename,
         return TRUE;
     }
     /* This condition is needlessly complex due to sign issues. */
-    if (data->rval < 0 || data->rval < file) {
+    if (data->rval < 0 || ((guint)data->rval) < file) {
         data->rval = file;
     }
     return TRUE;
@@ -837,7 +842,7 @@ static gboolean
 vfs_device_seek_block (Device * pself, guint64 block) {
     VfsDevice * self;
     FdDevice * fd_self;
-    guint64 result;
+    off_t result;
 
     self = VFS_DEVICE(pself);
     fd_self = (FdDevice*)(self);
@@ -847,7 +852,7 @@ vfs_device_seek_block (Device * pself, guint64 block) {
 
     /* Pretty simple. We figure out the blocksize and use that. */
     result = lseek(fd_self->fd, (block + 1) * self->block_size, SEEK_SET);
-    return (result >= 0);
+    return (result != (off_t)(-1));
 }
 
 static gboolean
@@ -939,7 +944,7 @@ vfs_device_recycle_file (Device * pself, guint filenum) {
     return TRUE;
 }
 
-static void vfs_device_label_size_range(FdDevice * self,
+static void vfs_device_label_size_range(FdDevice * self G_GNUC_UNUSED,
                                         guint*min, guint*max) {
     if (min != NULL) {
         *min = DISK_BLOCK_BYTES;
