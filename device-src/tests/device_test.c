@@ -144,7 +144,7 @@ int main(int argc, char ** argv) {
 
     if (medium_type != MEDIA_ACCESS_MODE_READ_ONLY) {
         g_return_val_if_fail(device_start(device, ACCESS_WRITE, 
-                                          strdup("foo"), NULL),
+                                          "foo", NULL),
                              2);
         
         for (h = 0; h < 10; h ++) {
@@ -166,7 +166,7 @@ int main(int argc, char ** argv) {
                 g_return_val_if_fail(device != NULL, 6);
                 
                 g_return_val_if_fail(device_start(device, ACCESS_APPEND, 
-                                                  strdup("foo"), NULL),
+                                                  "foo", NULL),
                                      2);
             }
         }
@@ -184,7 +184,7 @@ int main(int argc, char ** argv) {
                device->volume_time);    
         
         g_return_val_if_fail(device_start(device, ACCESS_READ, 
-                                          strdup("foo"), NULL),
+                                          "foo", NULL),
                              2);
         seed = 0;
         for (h = 0; h < 10; h ++) {

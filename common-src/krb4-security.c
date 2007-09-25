@@ -760,8 +760,8 @@ krb4_stream_auth(
      * and present it to the other side.
      */
     gettimeofday(&local, &tz);
-    enc.tv_sec = (long)htonl((uint32_t)local.tv_sec);
-    enc.tv_usec = (long)htonl((uint32_t)local.tv_usec);
+    enc.tv_sec = (long)htonl((guint32)local.tv_sec);
+    enc.tv_usec = (long)htonl((guint32)local.tv_usec);
     encrypt_data(&enc, SIZEOF(enc), &kh->session_key);
     if (knet_write(fd, &enc, SIZEOF(enc)) < 0) {
 	security_stream_seterror(&ks->secstr,
@@ -781,8 +781,8 @@ krb4_stream_auth(
     }
     decrypt_data(&enc, SIZEOF(enc), &kh->session_key);
     /* XXX do timestamp checking here */
-    enc.tv_sec = (long)htonl(ntohl((uint32_t)enc.tv_sec) + 1);
-    enc.tv_usec =(long)htonl(ntohl((uint32_t)enc.tv_usec) + 1);
+    enc.tv_sec = (long)htonl(ntohl((guint32)enc.tv_sec) + 1);
+    enc.tv_usec =(long)htonl(ntohl((guint32)enc.tv_usec) + 1);
     encrypt_data(&enc, SIZEOF(enc), &kh->session_key);
 
     if (knet_write(fd, &enc, SIZEOF(enc)) < 0) {
@@ -802,15 +802,15 @@ krb4_stream_auth(
 	return (-1);
     }
     decrypt_data(&enc, SIZEOF(enc), &kh->session_key);
-    if ((ntohl((uint32_t)enc.tv_sec)  == (uint32_t)(local.tv_sec + 1)) &&
-	(ntohl((uint32_t)enc.tv_usec) == (uint32_t)(local.tv_usec + 1)))
+    if ((ntohl((guint32)enc.tv_sec)  == (uint32_t)(local.tv_sec + 1)) &&
+	(ntohl((guint32)enc.tv_usec) == (uint32_t)(local.tv_usec + 1)))
 	    return (0);
 
     security_stream_seterror(&ks->secstr,
 	_("krb4 handshake failed: sent %ld,%ld - recv %ld,%ld"),
 	    (long)(local.tv_sec + 1), (long)(local.tv_usec + 1),
-	    (long)ntohl((uint32_t)enc.tv_sec),
-	    (long)ntohl((uint32_t)enc.tv_usec));
+	    (long)ntohl((guint32)enc.tv_sec),
+	    (long)ntohl((guint32)enc.tv_usec));
     return (-1);
 }
 
@@ -1139,7 +1139,7 @@ add_mutual_auth(
     assert(kh->session_key[0] != '\0');
 
     memset(&mutual, 0, SIZEOF(mutual));
-    mutual.cksum = (unsigned long)htonl((uint32_t)kh->cksum + 1);
+    mutual.cksum = (unsigned long)htonl((guint32)kh->cksum + 1);
     encrypt_data(&mutual, SIZEOF(mutual), &kh->session_key);
 
     security = vstralloc("SECURITY MUTUAL-AUTH ",
@@ -1395,7 +1395,7 @@ check_mutual_auth(
     /* unencrypt the string using the key in the ticket file */
     host2key(kh->hostname, kh->inst, &kh->session_key);
     decrypt_data(&mutual, (size_t)len, &kh->session_key);
-    mutual.cksum = (unsigned long)ntohl((uint32_t)mutual.cksum);
+    mutual.cksum = (unsigned long)ntohl((guint32)mutual.cksum);
 
     /* the data must be the same as our request cksum + 1 */
     if (mutual.cksum != (kh->cksum + 1)) {

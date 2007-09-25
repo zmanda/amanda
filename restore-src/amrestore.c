@@ -122,7 +122,7 @@ static void handle_tape_restore(char * device_name, rst_flags_t * flags,
         error("Not an Amanda tape.\n");
     } 
 
-    if (!device_start(device, ACCESS_READ, NULL, 0)) {
+    if (!device_start(device, ACCESS_READ, NULL, NULL)) {
         error("Could not open device %s for reading.\n", device_name);
     }
 

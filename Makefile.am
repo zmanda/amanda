@@ -6,12 +6,11 @@ ACINCLUDE_M4I = $(srcdir)/config/acinclude.m4i
 LIBTOOL_M4I = $(srcdir)/config/libtool.m4i
 GETTEXT_M4I = $(srcdir)/config/gettext.m4i
 GNULIB_M4I  = $(srcdir)/config/gnulib.m4i
-AX_CREATE_STDINT_H_M4I = $(srcdir)/config/ax_create_stdint_h.m4i
 XSLTPROC_M4I = $(srcdir)/config/docbook-dtd.m4i  \
 	$(srcdir)/config/docbook-xslt-min.m4i  \
 	$(srcdir)/config/xsltproc.m4i \
 	$(srcdir)/config/docbook-xslt.m4i
-ACINCLUDE_M4_DEPS = $(GNULIB_M4I) $(GETTEXT_M4I) $(ACINCLUDE_M4I) $(LIBTOOL_M4I) $(AX_CREATE_STDINT_H_M4I) $(XSLTPROC_M4I)
+ACINCLUDE_M4_DEPS = $(GNULIB_M4I) $(GETTEXT_M4I) $(ACINCLUDE_M4I) $(LIBTOOL_M4I) $(XSLTPROC_M4I)
 ACLOCAL_AMFLAGS = --force -I config/gettext-macros
 
 if WANT_CLIENT

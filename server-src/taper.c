@@ -365,7 +365,7 @@ static gboolean find_and_label_new_tape(taper_state_t * state,
     device_set_startup_properties_from_config(state->device, FALSE);
     
     if (!device_start(state->device, ACCESS_WRITE, state->next_tape_label,
-                      strdup(state->driver_start_time))) {
+                      state->driver_start_time)) {
         fprintf(stderr, "taper: Error writing label %s to device %s.\n",
                 state->next_tape_label, state->device->device_name);
         g_object_unref(state->device);

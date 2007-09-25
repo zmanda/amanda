@@ -209,24 +209,27 @@ main(
     }
 
     if(tape_ok) {
+	char *timestamp = NULL;
+
         device_set_startup_properties_from_config(device, FALSE);
 
 	printf(_("Writing label %s..\n"), label); fflush(stdout);
         
-        if (!device_start(device, ACCESS_WRITE, label,
-                          get_undef_timestamp())) {
+	timestamp = get_undef_timestamp();
+        if (!device_start(device, ACCESS_WRITE, label, timestamp)) {
 	    error(_("Error writing label.\n"));
             g_assert_not_reached();
 	} else if (!device_finish(device)) {
             error(_("Error closing device.\n"));
             g_assert_not_reached();
         }
+	amfree(timestamp);
 
         printf(_("Checking label...\n")); fflush(stdout);
 
         device_set_startup_properties_from_config(device, TRUE);
 
-        if (!device_start(device, ACCESS_READ, NULL, 0)) {
+        if (!device_start(device, ACCESS_READ, NULL, NULL)) {
             error(_("Error reading label.\n"));
             g_assert_not_reached();
         } else if (device->volume_label == NULL) {

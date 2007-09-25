@@ -688,8 +688,8 @@ static gboolean test_tape_status(FILE * outf) {
     }
     
     if (overwrite) {
-        if (!device_start(device, ACCESS_WRITE, g_strdup(label),
-                          get_undef_timestamp())) {
+	char *timestamp = get_undef_timestamp();
+        if (!device_start(device, ACCESS_WRITE, label, timestamp)) {
             if (tape_status == 3) {
                 fprintf(outf, "ERROR: Could not label brand new tape.\n");
             } else {
@@ -697,6 +697,7 @@ static gboolean test_tape_status(FILE * outf) {
                         "ERROR: tape %s label ok, but is not writable.\n",
                         label);
             }
+	    amfree(timestamp);
             amfree(label);
             g_object_unref(device);
             return FALSE;
@@ -707,6 +708,7 @@ static gboolean test_tape_status(FILE * outf) {
                 fprintf(outf, "Wrote label %s to brand new tape.\n", label);
             }
         }
+	amfree(timestamp);
     } else { /* !overwrite */
         fprintf(outf, "NOTE: skipping tape-writable test\n");
         if (tape_status == 3) {

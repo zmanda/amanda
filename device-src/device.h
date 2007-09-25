@@ -169,9 +169,9 @@ gboolean        device_read_label (Device * self);
  *
  * You should pass a label and timestamp if and only if you are
  * opening in WRITE mode (not READ or APPEND). The label and timestamp
- * should both be allocated with malloc(), and the Device will free()
- * it on cleanup. The passed timestamp may be NULL, in which case it
- * will be filled in with the current time. */
+ * remain the caller's responsibility in terms of memory management. The
+ * passed timestamp may be NULL, in which case it will be filled in with 
+ * the current time. */
 gboolean 	device_start	(Device * self,
                                  DeviceAccessMode mode, char * label,
                                  char * timestamp);

@@ -282,7 +282,7 @@ loadlabel_slot(void *	datap,
         return 0;
     }
 
-    if (!device_start(device, ACCESS_READ, NULL, 0)) {
+    if (!device_start(device, ACCESS_READ, NULL, NULL)) {
         fprintf(stderr, "%s: slot %s: Could not open device for reading.\n",
                 get_pname(), slotstr);
         return 0;
@@ -1206,7 +1206,7 @@ conditional_device_open(char         *tapedev,
         return NULL;
     }
 
-    if (!device_start(rval, ACCESS_READ, NULL, 0)) {
+    if (!device_start(rval, ACCESS_READ, NULL, NULL)) {
         send_message(prompt_out, flags, their_features,
                      "Colud not open device %s for reading.\n",
                      tapedev);

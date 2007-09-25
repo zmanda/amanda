@@ -238,7 +238,7 @@ int SCSI_ExecuteCommand(int DeviceFD,
   extern OpenFiles_T *pDev;
   union ccb *ccb;
   int ret;
-  uint32_t ccb_flags;
+  guint32 ccb_flags;
   OpenFiles_T *pwork = NULL;
 
   /* Basic sanity checks */
@@ -294,7 +294,7 @@ int SCSI_ExecuteCommand(int DeviceFD,
                 /* cbfncp */ NULL,
                 /* flags */ ccb_flags,
                 /* tag_action */ MSG_SIMPLE_Q_TAG,
-                /* data_ptr */ (u_int8_t*)DataBuffer,
+                /* data_ptr */ (guint8*)DataBuffer,
                 /* dxfer_len */ DataBufferLength,
                 /* sense_len */ SSD_FULL_SIZE,
                 /* cdb_len */ CDB_Length,

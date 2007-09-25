@@ -581,10 +581,8 @@ default_device_start (Device * self, DeviceAccessMode mode, char * label,
         if (!device_read_label(self))
             return FALSE;
     } else {
-        amfree(self->volume_label);
-        amfree(self->volume_time);
-        self->volume_label = label;
-        self->volume_time = timestamp;
+        self->volume_label = newstralloc(self->volume_label, label);
+        self->volume_time = newstralloc(self->volume_time, timestamp);
     }
     self->access_mode = mode;
 
@@ -761,6 +759,7 @@ device_start (Device * self, DeviceAccessMode mode,
               char * label, char * timestamp)
 {
 	DeviceClass *klass;
+
 	g_return_val_if_fail (self != NULL, FALSE);
 	g_return_val_if_fail (IS_DEVICE (self), FALSE);
         g_return_val_if_fail (mode != ACCESS_NULL, FALSE);
@@ -768,14 +767,20 @@ device_start (Device * self, DeviceAccessMode mode,
                               FALSE);
 	klass = DEVICE_GET_CLASS(self);
 
-        if (mode == ACCESS_WRITE &&
-            get_timestamp_state(timestamp) == TIME_STATE_REPLACE) {
-            amfree(timestamp);
-            timestamp = get_proper_stamp_from_time(time(NULL));
-        }
-
 	if(klass->start) {
-            return (*klass->start)(self, mode, label, timestamp);
+	    char * local_timestamp = NULL;
+	    gboolean rv;
+
+	    /* fill in a timestamp if none was given */
+	    if (mode == ACCESS_WRITE &&
+		get_timestamp_state(timestamp) == TIME_STATE_REPLACE) {
+		local_timestamp = timestamp = 
+		    get_proper_stamp_from_time(time(NULL));
+	    }
+
+            rv = (*klass->start)(self, mode, label, timestamp);
+	    amfree(local_timestamp);
+	    return rv;
         } else {
             return FALSE;
         }

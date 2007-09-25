@@ -420,8 +420,8 @@ tcpm_send_token(
     const void *buf,
     size_t	len)
 {
-    uint32_t		nethandle;
-    uint32_t		netlength;
+    guint32		nethandle;
+    guint32		netlength;
     struct iovec	iov[3];
     int			nb_iov = 3;
     int			rval;
@@ -442,7 +442,7 @@ tcpm_send_token(
     iov[0].iov_base = (void *)&netlength;
     iov[0].iov_len = SIZEOF(netlength);
 
-    nethandle = htonl((uint32_t)handle);
+    nethandle = htonl((guint32)handle);
     iov[1].iov_base = (void *)&nethandle;
     iov[1].iov_len = SIZEOF(nethandle);
 

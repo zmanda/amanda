@@ -282,7 +282,7 @@ static char ** parse_device_name(char * user_name) {
 /* Find a workable block size. */
 static gboolean find_block_size(RaitDevice * self) {
     uint min = 0;
-    uint max = UINT_MAX;
+    uint max = G_MAXUINT;
     uint result;
     GValue val;
     gboolean rval;

@@ -288,8 +288,6 @@ struct iovec {
 #include <sys/resource.h>
 #include <sys/socket.h>
 
-#include "amanda-int.h"
-
 #ifdef HAVE_ARPA_INET_H
 #include <arpa/inet.h>
 #endif
@@ -1269,7 +1267,7 @@ extern ssize_t writev(int fd, const struct iovec *iov, int iovcnt);
 #  define        SIZE_T_FMT_TYPE unsigned
 #  define        SIZE_T_ATOI	(size_t)atoi
 #  ifndef SIZE_MAX
-#    define      SIZE_MAX	UINT_MAX
+#    define      SIZE_MAX	G_MAXUINT
 #  endif
 #else
 #  define        SIZE_T_FMT	"%lu"
@@ -1307,7 +1305,7 @@ extern ssize_t writev(int fd, const struct iovec *iov, int iovcnt);
 #  define        TIME_T_FMT_TYPE unsigned
 #  define        TIME_T_ATOI	(time_t)atoi
 #  ifndef TIME_MAX
-#    define      TIME_MAX	UINT_MAX
+#    define      TIME_MAX	G_MAXUINT
 #  endif
 #else
 #  define        TIME_T_FMT	"%lu"

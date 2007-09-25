@@ -155,7 +155,7 @@ static gboolean g_value_set_uint_from_string(GValue * val, char * string) {
     unsigned long int strto_result;
     char * strto_end;
     strto_result = strtoul(string, &strto_end, 0);
-    if (*strto_end != '\0' || *string == '\0' || strto_result > UINT_MAX) {
+    if (*strto_end != '\0' || *string == '\0' || strto_result > G_MAXUINT) {
         return FALSE;
     } else {
         g_value_set_uint(val, (guint)strto_result);

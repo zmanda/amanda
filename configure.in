@@ -1561,6 +1561,23 @@ if "$WANT_SETUID_CLIENT"; then
     AC_DEFINE(WANT_SETUID_CLIENT, 1, [Define if client applications should be setuid-root])
 fi
 
+# search for pkg-config, which the glib configuration uses, adding a few
+# system-specific search paths.
+AC_PATH_PROG(PKG_CONFIG, pkg-config, [], $LOCSYSPATH:/opt/csw/bin:/usr/local/bin)
+
+case "$target" in
+    sparc-sun-solaris2.8) # Solaris 8
+	# give the linker a runtime search path; pkg-config doesn't supply this.
+	# Users could also specify this with LD_LIBRARY_PATH to both ./configure
+	# and make.  Adding this support here makes straight './configure; make'
+	# "just work" on Solaris 8
+	if test -n "$PKG_CONFIG"; then
+	    glib_R_flag=`$PKG_CONFIG glib-2.0 --libs-only-L 2>/dev/null | sed -e 's/-L/-R/g'`
+	    LDFLAGS="$LDFLAGS $glib_R_flag"
+	fi
+	;;
+esac
+
 AM_PATH_GLIB_2_0(2.2.0,,AC_MSG_ERROR(glib not found or too old),
 		 gmodule gobject gthread)
 
@@ -1580,8 +1597,6 @@ dnl to use.
 AC_SUBST(MT_FILE_FLAG)
 AC_DEFINE_UNQUOTED(MT_FILE_FLAG, "$MT_FILE_FLAG",[Defined to the switch to be used when invoking mt to specify the
  * tape device. ])
-
-AX_CREATE_STDINT_H(common-src/amanda-int.h)
 
 dnl Check for programs.
 AC_PATH_PROG(GETTEXT,gettext,,$LOCSYSPATH)
