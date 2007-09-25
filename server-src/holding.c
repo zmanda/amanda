@@ -60,18 +60,6 @@ static int is_emptyfile(char *fname);
  */
 static int is_datestr(char *fname);
 
-/* Get a list of holding directories, optionally limited to a single
- * holding disk.  Can return a list either of full pathnames or of
- * bare directory names (datestamps).
- *
- * @param hdisk: holding disk to enumerate, or NULL for all
- * @param fullpaths: if true, return full pathnames
- * @returns: newly allocated GSList of matching directories
- */
-static GSList * holding_get_directories(
-	    char *hdisk,
-	    int fullpaths);
-
 /*
  * Static functions */
 
@@ -145,112 +133,123 @@ is_datestr(
     return 1;
 }
 
-static GSList *
-holding_get_directories_per_disk(
-    char *hdisk,
-    int fullpaths,
-    GSList *rv)
-{
-    DIR *dir;
-    struct dirent *workdir;
-    char *hdir = NULL;
-
-    if ((dir = opendir(hdisk)) == NULL) {
-        if (errno != ENOENT)
-           dbprintf(_("Warning: could not open holding disk %s: %s\n"),
-                  hdisk, strerror(errno));
-        return rv;
-    }
-
-    while ((workdir = readdir(dir)) != NULL) {
-        if (is_dot_or_dotdot(workdir->d_name))
-            continue;
-
-        hdir = newvstralloc(hdir,
-                     hdisk, "/", workdir->d_name,
-                     NULL);
-
-        /* filter out various undesirables */
-        if (!is_dir(hdir)) {
-	    dbprintf(_("skipping cruft file '%s', perhaps you should delete it."), hdir);
-        } else if (!is_datestr(workdir->d_name)) {
-            /* EXT2/3 leave these in the root of each volume */
-            if (strcmp(workdir->d_name, "lost+found")==0)
-                dbprintf(_("skipping system directory '%s'"), hdir);
-	    dbprintf(_("skipping cruft directory '%s', perhaps you should delete it."), hdir);
-        } else {
-            /* found a holding directory -- keep it */
-            if (fullpaths)
-                rv = g_slist_insert_sorted(rv, stralloc(hdir), g_compare_strings);
-            else
-                rv = g_slist_insert_sorted(rv, stralloc(workdir->d_name), g_compare_strings);
-        }
-    }
-
-    if (hdir)
-	amfree(hdir);
-
-    return rv;
-}
-
-
-/* Get a list of holding directories, optionally limited to a single
- * holding disk.  Can return a list either of full pathnames or of
- * bare directory names (datestamps).
- *
- * @param hdisk: holding disk to enumerate, or NULL for all
- * @param fullpaths: if true, return full pathnames
- * @returns: newly allocated GSList of matching directories
- */
-static GSList *
-holding_get_directories(
-    char *hdisk,
-    int fullpaths)
-{
-    holdingdisk_t *hdisk_conf;
-    GSList *rv = NULL;
-
-    /* call _per_disk for the hdisk we were given, or for all
-     * hdisks if we were given NULL */
-    if (hdisk) {
-        rv = holding_get_directories_per_disk(hdisk, fullpaths, rv);
-    } else {
-        for (hdisk_conf = getconf_holdingdisks(); 
-                    hdisk_conf != NULL;
-                    hdisk_conf = hdisk_conf->next) {
-            hdisk = holdingdisk_get_diskdir(hdisk_conf);
-            rv = holding_get_directories_per_disk(hdisk, fullpaths, rv);
-        }
-    }
-
-    return rv;
-}
-
 /*
- * Holding files
+ * Recursion functions
+ *
+ * These implement a general-purpose walk down the holding-* hierarchy.
  */
-static GSList *
-holding_get_files_per_dir(
+
+/* Perform a custom action for this holding element (disk, dir, file, chunk).
+ *
+ * If the element is not cruft, the next step into the tree will only take place 
+ * if this function returns a nonzero value.
+ *
+ * The walk is depth-first, with the callback for an element invoked
+ * before entering that element.  Callbacks may depend on this behavior.
+ *
+ * @param datap: generic user-data pointer
+ * @param base: the parent of the element being examined, or NULL for 
+ * holding disks
+ * @param element: the name of the element being examined
+ * @param fqpath: fully qualified path to 'element'
+ * @param is_cruft: nonzero if this element doesn't belong here
+ * @returns: nonzero if the walk should descend into this element.
+ */
+typedef int (*holding_walk_fn)(
+    gpointer datap,
+    char *base,
+    char *element,
+    char *fqpath,
+    int is_cruft);
+
+typedef enum {
+    STOP_AT_DISK,
+    STOP_AT_DIR,
+    STOP_AT_FILE,
+    STOP_AT_CHUNK
+} stop_at_t;
+
+/* Recurse over all holding chunks in a holding file.
+ *
+ * Call per_chunk_fn for each chunk of the given file
+ *
+ * datap is passed, unchanged, to all holding_walk_fns.
+ *
+ * @param hfile: holding file to examine (fully qualified path)
+ * @param datap: generic user-data pointer
+ * @param per_chunk_fn: function to call for each holding chunk
+ */
+static void holding_walk_file(
+    char *hfile,
+    gpointer datap,
+    holding_walk_fn per_chunk_fn)
+{
+    dumpfile_t file;
+    char *filename = NULL;
+
+    /* Loop through all cont_filenames (subsequent chunks) */
+    filename = stralloc(hfile);
+    while (filename != NULL && filename[0] != '\0') {
+	int is_cruft = 0;
+
+        /* get the header to look for cont_filename */
+        if (!holding_file_get_dumpfile(filename, &file)) {
+	    is_cruft = 1;
+        }
+
+	if (per_chunk_fn) 
+	    per_chunk_fn(datap, 
+			hfile, 
+			filename, 
+			filename, 
+			is_cruft);
+        /* and go on to the next chunk if this wasn't cruft */
+	if (!is_cruft)
+	    filename = stralloc(file.cont_filename);
+    }
+
+    amfree(filename);
+}
+
+/* Recurse over all holding files in a holding directory.
+ *
+ * Call per_file_fn for each file, and so on, stopping at the level given by 
+ * stop_at.
+ *
+ * datap is passed, unchanged, to all holding_walk_fns.
+ *
+ * @param hdir: holding directory to examine (fully qualified path)
+ * @param datap: generic user-data pointer
+ * @param stop_at: do not proceed beyond this level of the hierarchy
+ * @param per_file_fn: function to call for each holding file
+ * @param per_chunk_fn: function to call for each holding chunk
+ */
+static void holding_walk_dir(
     char *hdir,
-    int fullpaths,
-    GSList *rv)
+    gpointer datap,
+    stop_at_t stop_at,
+    holding_walk_fn per_file_fn,
+    holding_walk_fn per_chunk_fn)
 {
     DIR *dir;
     struct dirent *workdir;
     char *hfile = NULL;
     dumpfile_t dumpf;
     int dumpf_ok;
+    int proceed = 1;
 
     if ((dir = opendir(hdir)) == NULL) {
         if (errno != ENOENT)
            dbprintf(_("Warning: could not open holding dir %s: %s\n"),
                   hdir, strerror(errno));
-        return rv;
+        return;
     }
 
     while ((workdir = readdir(dir)) != NULL) {
+	int is_cruft = 0;
+
         if (is_dot_or_dotdot(workdir->d_name))
-            continue;
+            continue; /* expected cruft */
 
         hfile = newvstralloc(hfile,
                      hdir, "/", workdir->d_name,
@@ -258,37 +257,215 @@ holding_get_files_per_dir(
 
         /* filter out various undesirables */
         if (is_emptyfile(hfile))
-            continue;
+            is_cruft = 1;
 
         if (is_dir(hfile)) {
-	    dbprintf(_("%s: ignoring directory\n"), hfile);
-            continue;
+            is_cruft= 1;
         }
 
         if (!(dumpf_ok=holding_file_get_dumpfile(hfile, &dumpf)) ||
             dumpf.type != F_DUMPFILE) {
             if (dumpf_ok && dumpf.type == F_CONT_DUMPFILE)
                 continue; /* silently skip expected file */
-	    dbprintf(_("%s: not a dumpfile\n"), hfile);
-            continue;
+
+            is_cruft = 1;
         }
 
 	if (dumpf.dumplevel < 0 || dumpf.dumplevel > 9) {
-	    dbprintf(_("%s: ignoring file with bogus dump level %d.\n"),
-                       hfile, dumpf.dumplevel);
-	    continue;
+	    is_cruft = 1;
 	}
 
-        /* found a holding file -- keep it */
-        if (fullpaths)
-            rv = g_slist_insert_sorted(rv, stralloc(hfile), g_compare_strings);
-        else
-            rv = g_slist_insert_sorted(rv, stralloc(workdir->d_name), g_compare_strings);
+	if (per_file_fn) 
+	    proceed = per_file_fn(datap, 
+			hdir, 
+			workdir->d_name, 
+			hfile, 
+			is_cruft);
+	if (!is_cruft && proceed && stop_at != STOP_AT_FILE)
+	    holding_walk_file(hfile,
+		    datap,
+		    per_chunk_fn);
     }
 
-    if (hfile) amfree(hfile);
+    closedir(dir);
+    amfree(hfile);
+}
 
-    return rv;
+/* Recurse over all holding directories in a holding disk.
+ *
+ * Call per_dir_fn for each dir, and so on, stopping at the level given by 
+ * stop_at.
+ *
+ * datap is passed, unchanged, to all holding_walk_fns.
+ *
+ * @param hdisk: holding disk to examine (fully qualified path)
+ * @param datap: generic user-data pointer
+ * @param stop_at: do not proceed beyond this level of the hierarchy
+ * @param per_dir_fn: function to call for each holding dir
+ * @param per_file_fn: function to call for each holding file
+ * @param per_chunk_fn: function to call for each holding chunk
+ */
+static void 
+holding_walk_disk(
+    char *hdisk,
+    gpointer datap,
+    stop_at_t stop_at,
+    holding_walk_fn per_dir_fn,
+    holding_walk_fn per_file_fn,
+    holding_walk_fn per_chunk_fn)
+{
+    DIR *dir;
+    struct dirent *workdir;
+    char *hdir = NULL;
+    int proceed = 1;
+
+    if ((dir = opendir(hdisk)) == NULL) {
+        if (errno != ENOENT)
+           dbprintf(_("Warning: could not open holding disk %s: %s\n"),
+                  hdisk, strerror(errno));
+        return;
+    }
+
+    while ((workdir = readdir(dir)) != NULL) {
+	int is_cruft = 0;
+
+        if (is_dot_or_dotdot(workdir->d_name))
+            continue; /* expected cruft */
+
+        hdir = newvstralloc(hdir,
+                     hdisk, "/", workdir->d_name,
+                     NULL);
+
+        /* detect cruft */
+        if (!is_dir(hdir)) {
+	    is_cruft = 1;
+        } else if (!is_datestr(workdir->d_name)) {
+            /* EXT2/3 leave these in the root of each volume */
+            if (strcmp(workdir->d_name, "lost+found") == 0)
+		continue; /* expected cruft */
+	    else
+		is_cruft = 1; /* unexpected */
+        }
+
+	if (per_dir_fn) 
+	    proceed = per_dir_fn(datap, 
+			hdisk, 
+			workdir->d_name, 
+			hdir, 
+			is_cruft);
+	if (!is_cruft && proceed && stop_at != STOP_AT_DIR)
+	    holding_walk_dir(hdir,
+		    datap,
+		    stop_at,
+		    per_file_fn,
+		    per_chunk_fn);
+    }
+
+    closedir(dir);
+    amfree(hdir);
+}
+
+/* Recurse over all holding disks.
+ *
+ * Call per_disk_fn for each disk, per_dir_fn for each dir, and so on, stopping
+ * at the level given by stop_at.
+ *
+ * datap is passed, unchanged, to all holding_walk_fns.
+ *
+ * @param datap: generic user-data pointer
+ * @param stop_at: do not proceed beyond this level of the hierarchy
+ * @param per_disk_fn: function to call for each holding disk
+ * @param per_dir_fn: function to call for each holding dir
+ * @param per_file_fn: function to call for each holding file
+ * @param per_chunk_fn: function to call for each holding chunk
+ */
+static void 
+holding_walk(
+    gpointer datap,
+    stop_at_t stop_at,
+    holding_walk_fn per_disk_fn,
+    holding_walk_fn per_dir_fn,
+    holding_walk_fn per_file_fn,
+    holding_walk_fn per_chunk_fn)
+{
+    holdingdisk_t *hdisk_conf;
+    char *hdisk;
+    int proceed = 1;
+
+    for (hdisk_conf = getconf_holdingdisks(); 
+		hdisk_conf != NULL;
+		hdisk_conf = hdisk_conf->next) {
+	int is_cruft = 0;
+
+	hdisk = holdingdisk_get_diskdir(hdisk_conf);
+	if (!is_dir(hdisk))
+	    is_cruft = 1;
+
+	if (per_disk_fn) 
+	    proceed = per_disk_fn(datap, 
+			NULL, 
+			hdisk, 
+			hdisk, 
+			0);
+	if (proceed && stop_at != STOP_AT_DISK)
+	    holding_walk_disk(hdisk,
+		    datap,
+		    stop_at,
+		    per_dir_fn,
+		    per_file_fn,
+		    per_chunk_fn);
+    }
+}
+
+/*
+ * holding_get_* functions
+ */
+typedef struct {
+    GSList *result;
+    int fullpaths;
+} holding_get_datap_t;
+
+/* Functor for holding_get_*; adds 'element' or 'fqpath' to
+ * the result.
+ */
+static int
+holding_get_walk_fn(
+    gpointer datap,
+    G_GNUC_UNUSED char *base,
+    char *element,
+    char *fqpath,
+    int is_cruft)
+{
+    holding_get_datap_t *data = (holding_get_datap_t *)datap;
+
+    /* ignore cruft */
+    if (is_cruft) return 0;
+
+    if (data->fullpaths)
+	data->result = g_slist_insert_sorted(data->result,
+		stralloc(fqpath), 
+		g_compare_strings);
+    else
+	data->result = g_slist_insert_sorted(data->result, 
+		stralloc(element), 
+		g_compare_strings);
+
+    /* don't proceed any deeper */
+    return 0;
+}
+
+GSList *
+holding_get_disks(void)
+{
+    holding_get_datap_t data;
+    data.result = NULL;
+    data.fullpaths = 1; /* ignored anyway */
+
+    holding_walk((gpointer)&data,
+	STOP_AT_DISK,
+	holding_get_walk_fn, NULL, NULL, NULL);
+
+    return data.result;
 }
 
 GSList *
@@ -296,22 +473,33 @@ holding_get_files(
     char *hdir,
     int fullpaths)
 {
-    GSList *hdirs, *e;
-    GSList *rv = NULL;
+    holding_get_datap_t data;
+    data.result = NULL;
+    data.fullpaths = fullpaths;
 
-    /* call _per_dir for the hdir we were given, or for all
-     * hdir if we were given NULL */
     if (hdir) {
-        rv = holding_get_files_per_dir(hdir, fullpaths, rv);
+        holding_walk_dir(hdir, (gpointer)&data,
+	    STOP_AT_FILE,
+	    holding_get_walk_fn, NULL);
     } else {
-        hdirs = holding_get_directories(NULL, 1);
-        for (e = hdirs; e != NULL; e = e->next) {
-	    rv = holding_get_files_per_dir((char *)e->data, fullpaths, rv);
-        }
-	g_slist_free_full(hdirs);
+        holding_walk((gpointer)&data,
+	    STOP_AT_FILE,
+	    NULL, NULL, holding_get_walk_fn, NULL);
     }
 
-    return rv;
+    return data.result;
+}
+
+GSList *
+holding_get_file_chunks(char *hfile)
+{
+    holding_get_datap_t data;
+    data.result = NULL;
+
+    holding_walk_file(hfile, (gpointer)&data,
+	holding_get_walk_fn);
+
+    return data.result;
 }
 
 GSList *
@@ -369,34 +557,6 @@ holding_get_files_for_flush(
     if (file_list) g_slist_free_full(file_list);
 
     return result_list;
-}
-
-GSList *
-holding_get_file_chunks(char *hfile)
-{
-    dumpfile_t file;
-    char *filename;
-    GSList *rv = NULL;
-
-    /* Loop through all cont_filenames (subsequent chunks) */
-    filename = stralloc(hfile);
-    while (filename != NULL && filename[0] != '\0') {
-        /* get the header to look for cont_filename */
-        if (!holding_file_get_dumpfile(filename, &file)) {
-	    dbprintf(_("holding_get_file_chunks: open of %s failed.\n"), filename);
-            amfree(filename);
-            return rv;
-        }
-
-        /* add the file to the results (steals the reference in 'filename') */
-        rv = g_slist_insert_sorted(rv, filename, g_compare_strings);
-
-        /* and go on to the next chunk */
-	filename = stralloc(file.cont_filename);
-    }
-    amfree(filename);
-
-    return rv;
 }
 
 GSList *
@@ -508,6 +668,171 @@ holding_file_get_dumpfile(
 }
 
 /*
+ * Cleanup
+ */
+
+typedef struct {
+    corrupt_dle_fn corrupt_dle;
+    FILE *verbose_output;
+} holding_cleanup_datap_t;
+
+static int
+holding_cleanup_disk(
+    gpointer datap,
+    G_GNUC_UNUSED char *base,
+    G_GNUC_UNUSED char *element,
+    char *fqpath,
+    int is_cruft)
+{
+    holding_cleanup_datap_t *data = (holding_cleanup_datap_t *)datap;
+
+    if (data->verbose_output) {
+	if (is_cruft)
+	    fprintf(data->verbose_output, 
+		_("Invalid holding disk '%s'\n"), fqpath);
+	else
+	    fprintf(data->verbose_output, 
+		_("Cleaning up holding disk '%s'\n"), fqpath);
+    }
+
+    return 1;
+}
+
+static int
+holding_cleanup_dir(
+    gpointer datap,
+    G_GNUC_UNUSED char *base,
+    char *element,
+    char *fqpath,
+    int is_cruft)
+{
+    holding_cleanup_datap_t *data = (holding_cleanup_datap_t *)datap;
+
+    if (is_cruft) {
+	if (data->verbose_output)
+	    fprintf(data->verbose_output, 
+		_("Invalid holding directory '%s'\n"), fqpath);
+	return 0;
+    }
+
+    /* try removing it */
+    if (rmdir(fqpath) == 0) {
+	/* success, so don't try to walk into it */
+	if (data->verbose_output)
+	    fprintf(data->verbose_output,
+		_(" ..removed empty directory '%s'\n"), element);
+	return 0;
+    }
+
+    if (data->verbose_output)
+	fprintf(data->verbose_output, 
+	    _(" ..cleaning up holding directory '%s'\n"), element);
+
+    return 1;
+}
+
+static int
+holding_cleanup_file(
+    gpointer datap,
+    G_GNUC_UNUSED char *base,
+    char *element,
+    char *fqpath,
+    int is_cruft)
+{
+    holding_cleanup_datap_t *data = (holding_cleanup_datap_t *)datap;
+    int stat;
+    int l;
+    dumpfile_t file;
+    disk_t *dp;
+
+    if (is_cruft) {
+	if (data->verbose_output)
+	    fprintf(data->verbose_output, 
+		_("Invalid holding file '%s'\n"), element);
+	return 0;
+    }
+
+
+    stat = holding_file_get_dumpfile(fqpath, &file);
+
+    if (!stat) {
+	if (data->verbose_output)
+	    fprintf(data->verbose_output, 
+		_("Could not read read header from '%s'\n"), element);
+	return 0;
+    }
+
+    if (file.type != F_DUMPFILE && file.type != F_CONT_DUMPFILE) {
+	if (data->verbose_output)
+	    fprintf(data->verbose_output, 
+		_("File '%s' is not a dump file\n"), element);
+	return 0;
+    }
+
+    if(file.dumplevel < 0 || file.dumplevel > 9) {
+	if (data->verbose_output)
+	    fprintf(data->verbose_output, 
+		_("File '%s' has invalid level %d\n"), element, file.dumplevel);
+	return 0;
+    }
+
+    dp = lookup_disk(file.name, file.disk);
+
+    if (dp == NULL) {
+	if (data->verbose_output)
+	    fprintf(data->verbose_output, 
+		_("File '%s' is for '%s:%s', which is not in the disklist\n"), 
+		    element, file.name, file.disk);
+	return 0;
+    }
+
+    if ((l = strlen(element)) >= 7 && strncmp(&fqpath[l-4],".tmp",4) == 0) {
+	char *destname;
+
+	/* generate a name without '.tmp' */
+	destname = stralloc(fqpath);
+	destname[strlen(destname) - 4] = '\0';
+
+	/* OK, it passes muster -- rename it to salvage some data,
+	 * and mark the DLE as corrupted */
+	if (data->verbose_output)
+	    fprintf(data->verbose_output, 
+		_("Processing partial holding file '%s'\n"), element);
+
+	if(rename_tmp_holding(destname, 0)) {
+	    if (data->corrupt_dle)
+		data->corrupt_dle(dp->host->hostname, dp->name);
+	} else {
+	    dbprintf(_("rename_tmp_holding(%s) failed\n"), destname);
+	    if (data->verbose_output)
+		fprintf(data->verbose_output, 
+		    _("Rename of '%s' to '%s' failed.\n"), element, destname);
+	}
+
+	amfree(destname);
+    }
+
+    return 1;
+}
+
+void
+holding_cleanup(
+    corrupt_dle_fn corrupt_dle,
+    FILE *verbose_output)
+{
+    holding_cleanup_datap_t data;
+    data.corrupt_dle = corrupt_dle;
+    data.verbose_output = verbose_output;
+
+    holding_walk((gpointer)&data,
+	STOP_AT_FILE,
+	holding_cleanup_disk,
+	holding_cleanup_dir,
+	holding_cleanup_file,
+	NULL);
+}
+
+/*
  * Application support
  */
 
@@ -568,48 +893,6 @@ rename_tmp_holding(
     amfree(filename);
     amfree(filename_tmp);
     return 1;
-}
-
-void
-cleanup_holdingdisk(
-    char *	diskdir)
-{
-    DIR *topdir;
-    struct dirent *workdir;
-
-    if((topdir = opendir(diskdir)) == NULL) {
-	if(errno != ENOENT)
-	    dbprintf(_("Warning: could not open holding dir %s: %s\n"),
-		   diskdir, strerror(errno));
-	return;
-   }
-
-    /* find all directories of the right format  */
-
-    if ((chdir(diskdir)) == -1) {
-	log_add(L_INFO, _("%s: could not chdir: %s"),
-		    diskdir, strerror(errno));
-    }
-    while((workdir = readdir(topdir)) != NULL) {
-	if(strcmp(workdir->d_name, ".") == 0
-	   || strcmp(workdir->d_name, "..") == 0
-	   || strcmp(workdir->d_name, "lost+found") == 0)
-	    continue;
-
-	if(!is_dir(workdir->d_name)) {
-	    dbprintf(_("skipping cruft file '%s/%s', perhaps you should delete it."), 
-		    diskdir, workdir->d_name);
-	}
-	else if(!is_datestr(workdir->d_name)) {
-	    if(strcmp(workdir->d_name, "lost+found")!=0)
-	        dbprintf(_("skipping cruft directory '%s/%s', perhaps you should delete it."),
-		    diskdir, workdir->d_name);
-	}
-	else if(rmdir(workdir->d_name) == 0) {
-	    dbprintf(_("deleted empty Amanda directory."));
-	}
-     }
-     closedir(topdir);
 }
 
 

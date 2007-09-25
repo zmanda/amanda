@@ -53,15 +53,13 @@
 #include "diskfile.h"
 #include "fileheader.h"
 
-/*
- * Holding disks
+/* Get a list of holding disks.  This is equivalent to 
+ * getconf_holdingdisks() with holdingdisk_get_diskdir().
  *
- * Use getconf_holdingdisks() to access the list of holding disks.
+ * @returns: newly allocated GSList of matching disks
  */
-
-/*
- * Holding files
- */
+GSList *
+holding_get_disks(void);
 
 /* Get a list of holding files, optionally limited to a single holding
  * directory.  Can return a list either of full pathnames or of
@@ -74,6 +72,15 @@
 GSList *
 holding_get_files(char *hdir,
                   int fullpaths);
+
+/* Get a list of holding files chunks in the given holding
+ * file.  Always returns full paths.
+ *
+ * @param hfile: holding file to enumerate
+ * @returns: newly allocated GSList of matching holding file chunks
+ */
+GSList *
+holding_get_file_chunks(char *hfile);
 
 /* Get a list of holding files that should be flushed, optionally
  * matching only certain datestamps.  This function filters out
@@ -130,17 +137,24 @@ holding_file_get_dumpfile(char *fname,
                           dumpfile_t *file);
 
 /*
- * Holding file chunks
+ * Maintenance
  */
 
-/* Get a list of holding files chunks in the given holding
- * file.  Always returns full paths.
+/* Clean up all holding disks, restoring from a possible crash or
+ * other errors.  This function is intentionally opaque, as the
+ * details of holding disk are hidden from other applications.
  *
- * @param hfile: holding file to enumerate
- * @returns: newly allocated GSList of matching holding file chunks
+ * All error and warning messages go to the debug log.
+ *
+ * @param corrupt_dle: function that is called for any DLEs for
+ * which corrupt dumps are found.
+ * @param verbose_output: if non-NULL, send progress messages to
+ * this file.
  */
-GSList *
-holding_get_file_chunks(char *hfile);
+typedef void (*corrupt_dle_fn)(char *hostname, char *disk);
+void
+holding_cleanup(corrupt_dle_fn corrupt_dle,
+    FILE *verbose_output);
 
 /*
  * application-specific support
@@ -148,6 +162,9 @@ holding_get_file_chunks(char *hfile);
 
 /* Rename holding files from the temporary names used during
  * creation.
+ *
+ * This is currently called by driver.c, but will disappear when
+ * holding is fully converted to the device API
  *
  * @param holding_file: full pathname of holding file,
  * without '.tmp'
@@ -157,13 +174,6 @@ holding_get_file_chunks(char *hfile);
 int
 rename_tmp_holding(char *holding_file,
                    int complete);
-
-/* Remove any empty datestamp directories.
- *
- * @param diskdir: holding directory to clean
- */
-void
-cleanup_holdingdisk(char *diskdir);
 
 /* Set up a holding directory and do basic permission
  * checks on it

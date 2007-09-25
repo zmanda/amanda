@@ -473,10 +473,9 @@ main(
     /* wait for all to die */
     wait_children(600);
 
-    for(hdp = getconf_holdingdisks(); hdp != NULL; hdp = hdp->next) {
-	cleanup_holdingdisk(holdingdisk_get_diskdir(hdp));
-	amfree(hdp->up);
-    }
+    /* cleanup */
+    holding_cleanup(NULL, NULL);
+
     amfree(newdir);
 
     check_unfree_serial();

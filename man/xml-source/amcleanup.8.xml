@@ -22,6 +22,8 @@
 <refsynopsisdiv>
 <cmdsynopsis>
   <command>amcleanup</command>    
+    <arg choice='opt'><option>-k</option></arg>
+    <arg choice='opt'><option>-v</option></arg>
     <arg choice='plain'><replaceable>config</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
@@ -51,6 +53,12 @@ man page for more details about &A;.</para>
   <term><option>-k</option></term>
   <listitem>
    <para>Kill all Amanda processes.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-v</option></term>
+  <listitem>
+   <para>Generate verbose output.</para>
   </listitem>
   </varlistentry>
 </variablelist>

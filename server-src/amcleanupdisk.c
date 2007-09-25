@@ -24,7 +24,7 @@
  * file named AUTHORS, in the root directory of this distribution.
  */
 /*
- * $Id: amcleanupdisk.c,v 1.22 2006/07/25 18:27:57 martinea Exp $
+ * $Id: amcleanupdisk.c 7238 2007-07-06 20:03:37Z dustin $
  */
 #include "amanda.h"
 
@@ -35,26 +35,80 @@
 #include "holding.h"
 #include "infofile.h"
 #include "server_util.h"
-#include "timestamp.h"
 
-char *datestamp;
+/* Utility funcitons */
 
-/* local functions */
-int main(int argc, char **argv);
-void check_holdingdisk(char *diskdir, char *datestamp);
-void check_disks(void);
+/* Call open_diskfile() with the diskfile from the configuration
+ */
+static void
+init_diskfile(char *config_dir)
+{
+    char *conf_diskfile = getconf_str(CNF_DISKFILE);
+    disklist_t diskq; /* never used, but required by read_diskfile */
+
+    if (*conf_diskfile == '/') {
+	conf_diskfile = stralloc(conf_diskfile);
+    } else {
+	conf_diskfile = stralloc2(config_dir, conf_diskfile);
+    }
+    if (read_diskfile(conf_diskfile, &diskq) < 0) {
+	error(_("could not load disklist %s"), conf_diskfile);
+	/*NOTREACHED*/
+    }
+    amfree(conf_diskfile);
+}
+
+/* Call open_infofile() with the infofile from the configuration
+ */
+static void
+init_infofile(char *config_dir)
+{
+    char *conf_infofile = getconf_str(CNF_INFOFILE);
+    if (*conf_infofile == '/') {
+	conf_infofile = stralloc(conf_infofile);
+    } else {
+	conf_infofile = stralloc2(config_dir, conf_infofile);
+    }
+    if (open_infofile(conf_infofile) < 0) {
+	error(_("could not open info db \"%s\""), conf_infofile);
+	/*NOTREACHED*/
+    }
+    amfree(conf_infofile);
+}
+
+/* A callback for holding_cleanup to mark corrupt DLEs with force_no_bump
+ * for their next run.
+ *
+ * @param hostname: hostname of DLE
+ * @param disk: disk of DLE
+ */
+static void
+corrupt_dle(
+    char *hostname,
+    char *disk)
+{
+    info_t info;
+
+    dbprintf(_("Corrupted dump of DLE %s:%s found; setting force-no-bump.\n"),
+	hostname, disk);
+
+    get_info(hostname, disk, &info);
+    info.command &= ~FORCE_BUMP;
+    info.command |= FORCE_NO_BUMP;
+    if(put_info(hostname, disk, &info)) {
+	dbprintf(_("could not put info record for %s:%s: %s"),
+	      hostname, disk, strerror(errno));
+    }
+}
 
 int
 main(
-    int		main_argc,
-    char **	main_argv)
+    int		argc,
+    char **	argv)
 {
-    struct passwd *pw;
-    char *dumpuser;
-    disklist_t diskq;
+    FILE *verbose_output = NULL;
     char *conffile;
-    char *conf_diskfile;
-    char *conf_infofile;
+    char *config_dir;
 
     /*
      * Configure program for internationalization:
@@ -72,15 +126,18 @@ main(
 
     dbopen(DBG_SUBDIR_SERVER);
 
-    /* Don't die when child closes pipe */
-    signal(SIGPIPE, SIG_IGN);
-
-    if(main_argc < 2) {
+    if(argc < 2) {
 	error(_("Usage: amcleanupdisk%s <config>"), versionsuffix());
 	/*NOTREACHED*/
     }
 
-    config_name = main_argv[1];
+    /* parse options */
+    if (argc >= 2 && strcmp(argv[1], "-v") == 0) {
+	verbose_output = stderr;
+	config_name = argv[2];
+    } else {
+	config_name = argv[1];
+    }
 
     config_dir = vstralloc(CONFIG_DIR, "/", config_name, "/", NULL);
 
@@ -95,143 +152,14 @@ main(
 
     dbrename(config_name, DBG_SUBDIR_SERVER);
 
-    conf_diskfile = getconf_str(CNF_DISKFILE);
-    if (*conf_diskfile == '/') {
-	conf_diskfile = stralloc(conf_diskfile);
-    } else {
-	conf_diskfile = stralloc2(config_dir, conf_diskfile);
-    }
-    if (read_diskfile(conf_diskfile, &diskq) < 0) {
-	error(_("could not load disklist %s"), conf_diskfile);
-	/*NOTREACHED*/
-    }
-    amfree(conf_diskfile);
+    init_diskfile(config_dir);
+    init_infofile(config_dir);
+    amfree(config_dir);
 
-    conf_infofile = getconf_str(CNF_INFOFILE);
-    if (*conf_infofile == '/') {
-	conf_infofile = stralloc(conf_infofile);
-    } else {
-	conf_infofile = stralloc2(config_dir, conf_infofile);
-    }
-    if (open_infofile(conf_infofile) < 0) {
-	error(_("could not open info db \"%s\""), conf_infofile);
-	/*NOTREACHED*/
-    }
-    amfree(conf_infofile);
-
-    datestamp = get_datestamp_from_time(0);
-
-    check_disks();
+    /* actually perform the cleanup */
+    holding_cleanup(corrupt_dle, verbose_output);
 
     close_infofile();
-
-    amfree(config_dir);
     return 0;
-}
-
-
-void
-check_holdingdisk(
-    char *	diskdir,
-    char *	datestamp)
-{
-    DIR *workdir;
-    struct dirent *entry;
-    char *dirname = NULL;
-    char *tmpname = NULL;
-    char *destname = NULL;
-    disk_t *dp;
-    info_t info;
-    size_t dl, l;
-    dumpfile_t file;
-    int stat;
-
-    dirname = vstralloc(diskdir, "/", datestamp, NULL);
-    dl = strlen(dirname);
-
-    if((workdir = opendir(dirname)) == NULL) {
-	amfree(dirname);
-	return;
-    }
-
-    while((entry = readdir(workdir)) != NULL) {
-	if(is_dot_or_dotdot(entry->d_name)) {
-	    continue;
-	}
-
-	if((l = strlen(entry->d_name)) < 7 ) {
-	    continue;
-	}
-
-	if(strncmp(&entry->d_name[l-4],".tmp",4) != 0) {
-	    continue;
-	}
-
-	tmpname = newvstralloc(tmpname,
-			       dirname, "/", entry->d_name,
-			       NULL);
-
-	destname = newstralloc(destname, tmpname);
-	destname[dl + 1 + l - 4] = '\0';
-
-	stat = holding_file_get_dumpfile(tmpname, &file);
-	amfree(tmpname);
-
-	if (!stat)
-	    continue;
-
-	if(file.type != F_DUMPFILE)
-	    continue;
-
-	dp = lookup_disk(file.name, file.disk);
-
-	if (dp == NULL) {
-	    continue;
-	}
-
-	if(file.dumplevel < 0 || file.dumplevel > 9) {
-	    continue;
-	}
-
-	if(rename_tmp_holding(destname, 0)) {
-	    get_info(dp->host->hostname, dp->name, &info);
-	    info.command &= ~FORCE_BUMP;
-	    info.command |= FORCE_NO_BUMP;
-	    if(put_info(dp->host->hostname, dp->name, &info)) {
-		error(_("could not put info record for %s:%s: %s"),
-		      dp->host->hostname, dp->name, strerror(errno));
-	        /*NOTREACHED*/
-	    }
-	} else {
-	    fprintf(stderr,_("rename_tmp_holding(%s) failed\n"), destname);
-	}
-    }
-    closedir(workdir);
-
-    /* try to zap the potentially empty working dir */
-    /* ignore any errors -- it either works or it doesn't */
-    (void) rmdir(dirname);
-
-    amfree(destname);
-    amfree(dirname);
-}
-
-
-void
-check_disks(void)
-{
-    holdingdisk_t *hdisk;
-    GSList *holding_list;
-    GSList *ds;
-    
-    holding_list = holding_get_all_datestamps();
-
-    /* XXX assumes that datestamps are also directory names */
-    for(ds = holding_list; ds !=NULL; ds = ds->next) {
-	for(hdisk = getconf_holdingdisks(); hdisk != NULL; hdisk = hdisk->next)
-	    check_holdingdisk(holdingdisk_get_diskdir(hdisk), (char *)ds->data);
-    }
-
-    g_slist_free_full(holding_list);
 }
 

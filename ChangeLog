@@ -1,3 +1,10 @@
+2007-09-25  Dustin J. Mitchell <dustin@zmanda.com>
+	* man/xml-source/amcleanup.8.xml server-src/amcleanupdisk.c
+	  server-src/amcleanup.sh.in: add -v option for verbose output
+	* server-src/holding.c server-src/holding.h: rewrite 
+	  implementation of the holding API to use functors
+	* server-src/driver.c: modifications to holding API changes
+
 2007-09-24  Ian Turner <ian@zmanda.com> (merged by dustin@zmanda.com)
 	* device-src/device.c: Suppress a compiler warning.
 
