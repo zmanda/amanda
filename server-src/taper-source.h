@@ -108,7 +108,7 @@ void 	taper_source_start_new_part	(TaperSource * self);
    copied internally. */
 TaperSource * taper_source_new(char * handle,
                                cmd_t mode, char * holding_disk_file,
-                               int socket_fd, int control_fd,
+                               int socket_fd,
                                char * split_disk_buffer,
                                guint64 splitsize,
                                guint64 fallback_splitsize);

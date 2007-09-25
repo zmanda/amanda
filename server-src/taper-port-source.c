@@ -60,8 +60,18 @@ taper_port_source_get_type (void)
     return type;
 }
 
+static void taper_port_source_finalize(GObject * obj_self) {
+    TaperPortSource *self = TAPER_PORT_SOURCE(obj_self);
+    if (self->socket_fd >= 0) {
+        aclose(self->socket_fd);
+    }
+    
+    G_OBJECT_CLASS (parent_class)->finalize (obj_self);
+}
+
 static void taper_port_source_class_init (TaperPortSourceClass * c) {
     TaperSourceClass *taper_source_class = (TaperSourceClass *)c;
+    GObjectClass *g_object_class = (GObjectClass*)c;
     
     parent_class = g_type_class_ref (TAPER_TYPE_SOURCE);
 
@@ -69,6 +79,8 @@ static void taper_port_source_class_init (TaperPortSourceClass * c) {
     taper_source_class->is_partial = taper_port_source_is_partial;
     taper_source_class->get_first_header = taper_port_source_get_first_header;
     taper_source_class->predict_parts = taper_port_source_predict_parts;
+
+    g_object_class->finalize = taper_port_source_finalize;
 }
 
 /* Check if the header has been read; if not, read and parse it. */
@@ -138,7 +150,6 @@ static ssize_t taper_port_source_read (TaperSource * pself, void * buf,
         } else if (read_result == 0) {
             pself->end_of_data = TRUE;
             aclose(self->socket_fd);
-            aclose(self->control_fd);
             return 0;
         } else if (0
 #ifdef EAGAIN
@@ -169,7 +180,6 @@ taper_port_source_is_partial(TaperSource * pself) {
     TaperPortSource * self = (TaperPortSource*)pself;
 
     g_return_val_if_fail(self->socket_fd < 0, FALSE);
-    g_return_val_if_fail(self->control_fd < 0, FALSE);
 
     /* Query DRIVER about partial dump. */
     putresult(DUMPER_STATUS, "%s\n", pself->driver_handle);

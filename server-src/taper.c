@@ -167,13 +167,15 @@ static gboolean open_read_socket(dump_info_t * info, char * split_diskbuffer,
                 info->hostname, qdiskname, info->timestamp,
                 info->level, q);
         amfree(qdiskname);
-        aclose(fd);
+        aclose(socket);
         amfree(m);
         amfree(q);
         return FALSE;
+    } else {
+        aclose(socket);
     }
 
-    info->source = taper_source_new(info->handle, PORT_WRITE, NULL, fd, socket,
+    info->source = taper_source_new(info->handle, PORT_WRITE, NULL, fd,
                                     split_diskbuffer, splitsize,
                                     fallback_splitsize);
     /* FIXME: This should be handled properly. */
@@ -798,7 +800,7 @@ static void process_file_write(taper_state_t * state,
 					   dump_state.level);
     
     dump_state.source = taper_source_new(dump_state.handle, FILE_WRITE,
-                                         holding_disk_file, -1, -1,
+                                         holding_disk_file, -1,
                                          NULL, splitsize, -1);
     /* FIXME: This should be handled properly. */
     g_assert(dump_state.source != NULL);

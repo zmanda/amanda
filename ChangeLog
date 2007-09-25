@@ -1,4 +1,11 @@
 2007-09-25  Ian Turner <ian@zmanda.com> (merged by dustin@zmanda.com)
+	* server-src/taper-source.c, server-src/taper-source.h,
+	  server-src/taper-source-test.c, server-src/taper-port-source.c,
+	  server-src/taper-port-source.h: Don't have TaperPortSource track
+	  the control FD, and make it responsible for closing the data FD.
+	* server-src/taper.c: ditto, plus close control socket correctly.
+
+2007-09-25  Ian Turner <ian@zmanda.com> (merged by dustin@zmanda.com)
 	* server-src/vfs-device.c: Fix a bug where all VFS device volumes
 	  were thought unlabeled. Also do the right thing when there are
 	  extra files in the VFS volume directory.

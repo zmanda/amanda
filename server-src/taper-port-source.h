@@ -51,7 +51,6 @@ struct _TaperPortSource {
     TaperSource __parent__;
     /*< private >*/
     int socket_fd; /* protected. */
-    int control_fd; /* protected. */
 };
 
 /*

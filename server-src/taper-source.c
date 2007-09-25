@@ -105,7 +105,7 @@ taper_source_class_init (TaperSourceClass * c) {
 
 TaperSource * taper_source_new(char * handle,
                                cmd_t mode, char * holding_disk_file,
-                               int socket_fd, int control_fd,
+                               int socket_fd,
                                char * split_disk_buffer,
                                guint64 splitsize,
                                guint64 fallback_splitsize) {
@@ -175,7 +175,6 @@ TaperSource * taper_source_new(char * handle,
         }
         
         port_rval->socket_fd = socket_fd;
-        port_rval->control_fd = control_fd;
     }
 
     /* If we got here, we have a return value. */

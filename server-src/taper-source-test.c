@@ -40,7 +40,7 @@ int main(int argc, char ** argv) {
         /* FILE-WRITE */
         guint64 splitsize = strtod(argv[3], NULL);
         
-        source = taper_source_new("", FILE_WRITE, argv[2], -1, -1, NULL, 
+        source = taper_source_new("", FILE_WRITE, argv[2], -1, NULL, 
                                   splitsize, 0);
     }
         break;
@@ -49,7 +49,7 @@ int main(int argc, char ** argv) {
         splitsize = strtod(argv[3], NULL);
         fallback_splitsize = strtod(argv[4], NULL);
         
-        source = taper_source_new("", PORT_WRITE, NULL, STDIN_FILENO, -1,
+        source = taper_source_new("", PORT_WRITE, NULL, STDIN_FILENO,
                                   argv[2][0] == '\0' ? NULL : argv[2],
                                   splitsize, fallback_splitsize);
     }
