@@ -1802,7 +1802,7 @@ handle_stats(void)
 {
     char *s, *fp;
     int ch;
-    char *hostname, *diskname, *datestamp;
+    char *hostname, *diskname, *datestamp, *qdiskname;
     int level = 0;
     double sec, kps, nbytes, cbytes;
     repdata_t *repdata;
@@ -1851,10 +1851,11 @@ handle_stats(void)
 		amfree(hostname);
 		return;
 	    }
-	    fp = s - 1;
-	    skip_non_whitespace(s, ch);
+
+	    qdiskname = s - 1;
+	    skip_quoted_string(s, ch);
 	    s[-1] = '\0';
-	    diskname = stralloc(fp);
+	    diskname = unquote_string(qdiskname);
 	    s[-1] = (char)ch;
 
 	    skip_whitespace(s, ch);
@@ -1869,8 +1870,8 @@ handle_stats(void)
 	    s[-1] = '\0';
 	    datestamp = stralloc(fp);
 	    s[-1] = (char)ch;
-
 	    skip_whitespace(s, ch);
+
 	    if(ch == '\0' || sscanf(s - 1, "%d", &level) != 1) {
 		bogus_line(s - 1);
 		amfree(hostname);

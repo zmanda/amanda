@@ -1,3 +1,9 @@
+2007-09-25  Nikhil Bandiwadekar <nikhil@zmanda.com> (merged by dustin@zmanda.com)
+	* server-src/driver.c: Added quoting to directory name while logging
+	    in statistics section
+	* server-src/reporter.c: Handled quoted string for directory name in
+	    statistics section
+
 2007-09-25  Ian Turner <ian@zmanda.com> (merged by dustin@zmanda.com)
 	* device-src/device.c, device-src/device.h, device-src/s3-device.c,
 	  device-src/fd-device.c, device-src/tape-device.c,

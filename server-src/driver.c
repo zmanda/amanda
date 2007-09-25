@@ -1443,6 +1443,7 @@ dumper_taper_result(
 {
     dumper_t *dumper;
     int is_partial;
+    char *qname;
 
     dumper = sched(dp)->dumper;
 
@@ -1452,12 +1453,15 @@ dumper_taper_result(
 			   sched(dp)->dumpsize, sched(dp)->dumptime);
 	update_info_taper(dp, taper_first_label, taper_first_fileno,
 			  sched(dp)->level);
+	qname = quote_string(dp->name); /*quote to take care of spaces*/
+
 	log_add(L_STATS, _("estimate %s %s %s %d [sec %ld nkb %lld ckb %lld kps %lu]"),
-		dp->host->hostname, dp->name, sched(dp)->datestamp,
+		dp->host->hostname, qname, sched(dp)->datestamp,
 		sched(dp)->level,
 		sched(dp)->est_time, (OFF_T_FMT_TYPE)sched(dp)->est_nsize,
 		(OFF_T_FMT_TYPE)sched(dp)->est_csize,
 		sched(dp)->est_kps);
+	amfree(qname);
     } else {
 	update_failed_dump_to_tape(dp);
     }
@@ -1511,6 +1515,7 @@ dumper_chunker_result(
     off_t dummy;
     off_t size;
     int is_partial;
+    char *qname;
 
     dumper = sched(dp)->dumper;
     chunker = dumper->chunker;
@@ -1523,12 +1528,15 @@ dumper_chunker_result(
     if(dumper->result == DONE && chunker->result == DONE) {
 	update_info_dumper(dp, sched(dp)->origsize,
 			   sched(dp)->dumpsize, sched(dp)->dumptime);
+	qname = quote_string(dp->name);/*quote to take care of spaces*/
+
 	log_add(L_STATS, _("estimate %s %s %s %d [sec %ld nkb %lld ckb %lld kps %lu]"),
-		dp->host->hostname, dp->name, sched(dp)->datestamp,
+		dp->host->hostname, qname, sched(dp)->datestamp,
 		sched(dp)->level,
 		sched(dp)->est_time, (OFF_T_FMT_TYPE)sched(dp)->est_nsize, 
                 (OFF_T_FMT_TYPE)sched(dp)->est_csize,
 		sched(dp)->est_kps);
+	amfree(qname);
     }
 
     deallocate_bandwidth(dp->host->netif, sched(dp)->est_kps);
