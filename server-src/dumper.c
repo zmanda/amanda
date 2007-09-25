@@ -826,7 +826,6 @@ add_msg_data(
     } msg = { NULL, 0 };
     char *line, *ch;
     size_t buflen;
-    int	in_quotes = 0;
 
     if (msg.buf != NULL)
 	buflen = strlen(msg.buf);
@@ -882,13 +881,9 @@ add_msg_data(
      * scanning line for unqouted newline.
      */
     for (ch = line = msg.buf; *ch != '\0'; ch++) {
-	if (*ch == '"') {
-	    in_quotes = !in_quotes;
-	} else if ((*ch == '\\') && (*(ch + 1) == '"')) {
-	        ch++;
-	} else if (!in_quotes && (*ch == '\n')) {
+	if (*ch == '\n') {
 	    /*
-	     * Found an unqouted newline.  Terminate and process line.
+	     * Found a newline.  Terminate and process line.
 	     */
 	    *ch = '\0';
 	    process_dumpline(line);

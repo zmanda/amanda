@@ -1,3 +1,7 @@
+2007-09-25  Jean-Louis Martineau <martineau@zmanda.com> (merged by dustin@zmanda.com)
+	* server-src/dumper.c (add_msg_data): Remove bogus handling of "
+					      in mesg stream.
+
 2007-09-25  Ian Turner <ian@zmanda.com> (merged by dustin@zmanda.com)
 	* server-src/taper-file-source.c: If there's a problem reading the
 	  holding disk, log the error as we get it from the OS.
