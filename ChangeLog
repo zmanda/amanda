@@ -1,3 +1,8 @@
+2007-09-24  John Franks <jrfranks@zmanda.com> (merged by dustin@zmanda.com)
+	* Correct Cygwin build errors:
+	  common-src/Makefile.am
+	  common-src/amanda.h
+
 2007-09-24  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/cmdline.c server-src/planner.c server-src/amadmin.c
 	  server-src/amcleanupdisk.c server-src/amflush.c

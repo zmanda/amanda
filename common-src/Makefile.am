@@ -8,6 +8,8 @@ LINT=@AMLINT@
 LINTFLAGS=@AMLINTFLAGS@
 EXTRA_DIST =
 
+LIB_EXTENSION = la
+
 SCRIPTS_PERL =
 SCRIPTS_SHELL =	amcrypt amaespipe	\
 	amcrypt-ossl	amcrypt-ossl-asym
@@ -47,7 +49,10 @@ libamanda_la_SOURCES =		\
 # version.c is generated; see below
 nodist_libamanda_la_SOURCES = version.c
 
-libamanda_la_LIBADD = $(GLIB_LIBS) $(LIBCURL)
+libamanda_la_LIBADD =		\
+	$(GLIB_LIBS)		\
+	$(LIBCURL)		\
+	../gnulib/libgnu.$(LIB_EXTENSION)
 
 if WANT_AMFLOCK_POSIX
 libamanda_la_SOURCES += amflock-posix.c
@@ -133,7 +138,9 @@ SUFFIXES =		.sh .pl
 EXTRA_PROGRAMS = genversion $(TEST_PROGS)
 
 genversion_SOURCES = genversion.c
-genversion_LDADD = $(libamanda_la_LIBADD) versuff.lo
+genversion_LDADD = $(libamanda_la_LIBADD)	\
+    	versuff.lo				\
+	../gnulib/libgnu.$(LIB_EXTENSION)
 
 genversion.@OBJEXT@: genversion.h
 genversion.h: $(top_builddir)/config.status
