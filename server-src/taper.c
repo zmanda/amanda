@@ -570,6 +570,10 @@ static dumpfile_t * munge_headers(dump_info_t * dump_info) {
     
     rval = taper_source_get_first_header(dump_info->source);
 
+    if (rval == NULL) {
+        return NULL;
+    }
+
     rval->cont_filename[0] = '\0';
 
     expected_splits = taper_source_predict_parts(dump_info->source);
@@ -628,12 +632,24 @@ static void run_device_output(taper_state_t * taper_state,
         CountingConsumerData consumer_data;
         dumpfile_t *this_header;
         
+        this_header = munge_headers(dump_info);
+        if (this_header == NULL) {
+            char * qdiskname = quote_string(dump_info->diskname);
+            putresult(FAILED,
+             "%s INPUT-ERROR TAPE-GOOD \"Failed reading dump header.\" \"\"\n",
+                      dump_info->handle);
+            log_add(L_FAIL, "%s %s %s %d \"Failed reading dump header.\"",
+                    dump_info->hostname, qdiskname, dump_info->timestamp,
+                    dump_info->level);
+            amfree(qdiskname);
+            return;
+        }            
+
         if (!find_and_label_new_tape(taper_state, dump_info)) {
             bail_no_volume(dump_info);
             return;
         }
 
-        this_header = munge_headers(dump_info);
         if (!device_start_file(taper_state->device, this_header)) {
             bail_no_volume(dump_info);
             return;

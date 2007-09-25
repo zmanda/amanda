@@ -207,6 +207,8 @@ static gboolean default_taper_source_get_end_of_part(TaperSource * self) {
     return self->end_of_part;
 }
 static dumpfile_t* default_taper_source_get_first_header(TaperSource * self) {
+    if (self->first_header == NULL)
+	return NULL;
     return dumpfile_copy(self->first_header);
 }
 
