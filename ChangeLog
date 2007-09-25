@@ -1,4 +1,11 @@
-2007-09-25  Dustin J. Mitchell <dustin@zmanda.com> (merged by dustin@zmanda.com)
+2007-09-25  Dustin J. Mitchell <dustin@zmanda.com>
+	* man/xml-source/amadmin.8.xml server-src/amadmin.c: add an
+	  'outd' column to 'amadmin CONF holding list -l', indicating
+	  an "outdated" dump, and a '-d' option to list only outdated
+	  holding disk files.  Outdated dumps are described in the
+	  amadmin documentation.
+
+2007-09-25  Dustin J. Mitchell <dustin@zmanda.com>
 	* client-src/sendsize.c configure.in server-src/getconf.c
 	  restore-src/amrestore.c restore-src/amfetchdump.c
 	  common-src/util.c common-src/genversion.c common-src/util.h
@@ -14,7 +21,7 @@
 	  - remove mostly unused debug prefix support
 	  - remove onerror(), replacing its few uses with alternatives
 
-2007-09-25  Dustin J. Mitchell <dustin@zmanda.com> (merged by dustin@zmanda.com)
+2007-09-25  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/tests/device_test.c configure.in
 	  recover-src/extract_list.c recover-src/uparse.y
 	  server-src/amlogroll.c server-src/dumper.c server-src/reporter.c

@@ -1173,6 +1173,93 @@ get_file_list(
     return file_list;
 }
 
+/* Given a file header, find the history element in curinfo most likely
+ * corresponding to that dump (this is not an exact science).
+ *
+ * @param info: the info_t element for this DLE
+ * @param file: the header of the file
+ * @returns: index of the matching history element, or -1 if not found
+ */
+static int
+holding_file_find_history(
+    info_t *info,
+    dumpfile_t *file)
+{
+    int matching_hist_idx = -1;
+    int nhist;
+    int i;
+
+    /* Begin by trying to find the history element matching this dump.
+     * The datestamp on the dump is for the entire run of amdump, while the
+     * 'date' in the history element of 'info' is the time the dump itself
+     * began.  A matching history element, then, is the earliest element
+     * with a 'date' equal to or later than the date of the dumpfile.
+     *
+     * We compare using formatted datestamps; even using seconds since epoch,
+     * we would still face timezone issues, and have to do a reverse (timezone
+     * to gmt) translation.
+     */
+
+    /* get to the end of the history list and search backward */
+    for (nhist = 0; info->history[nhist].level > -1; nhist++) /* empty loop */;
+    for (i = nhist-1; i > -1; i--) {
+        char *info_datestamp = get_timestamp_from_time(info->history[i].date);
+        int order = strcmp(file->datestamp, info_datestamp);
+        amfree(info_datestamp);
+
+        if (order <= 0) {
+            /* only a match if the levels are equal */
+            if (info->history[i].level == file->dumplevel) {
+                matching_hist_idx = i;
+            }
+            break;
+        }
+    }
+
+    return matching_hist_idx;
+}
+
+/* A holding file is 'outdated' if a subsequent dump of the same DLE was made
+ * at the same level or a lower leve; for example, a level 2 dump is outdated if
+ * there is a subsequent level 2, or a subsequent level 0.
+ *
+ * @param file: the header of the file
+ * @returns: true if the file is outdated
+ */
+static int
+holding_file_is_outdated(
+    dumpfile_t *file)
+{
+    info_t info;
+    int matching_hist_idx;
+
+    if (get_info(file->name, file->disk, &info) == -1) {
+	return 0; /* assume it's not outdated */
+    }
+
+    /* if the last level is less than the level of this dump, then
+     * it's outdated */
+    if (info.last_level < file->dumplevel)
+	return 1;
+
+    /* otherwise, we need to see if this dump is the last at its level */
+    matching_hist_idx = holding_file_find_history(&info, file);
+    if (matching_hist_idx == -1) {
+        return 0; /* assume it's not outdated */
+    }
+
+    /* compare the date of the history element with the most recent date
+     * for this level.  If they match, then this is the last dump at this
+     * level, and we checked above for more recent lower-level dumps, so
+     * the dump is not outdated. */
+    if (info.history[matching_hist_idx].date == 
+	info.inf[info.history[matching_hist_idx].level].date) {
+	return 0;
+    } else {
+	return 1;
+    }
+}
+
 static int
 remove_holding_file_from_catalog(
     char *filename)
@@ -1182,7 +1269,6 @@ remove_holding_file_from_catalog(
     info_t info;
     int matching_hist_idx = -1;
     history_t matching_hist; /* will be a copy */
-    int nhist;
     int i;
 
     if (!holding_file_get_dumpfile(filename, &file)) {
@@ -1195,38 +1281,15 @@ remove_holding_file_from_catalog(
 	    return 1; /* not an error */
     }
 
-    /* Begin by trying to find the history element matching this dump.
-     * The datestamp on the dump is for the entire run of amdump, while the
-     * 'date' in the history element of 'info' is the time the dump itself
-     * began.  A matching history element, then, is the earliest element
-     * with a 'date' equal to or later than the date of the dumpfile. 
-     *
-     * We compare using formatted datestamps; even using seconds since epoch,
-     * we would still face timezone issues, and have to do a reverse (timezone
-     * to gmt) translation.
-     */
-
-    /* get to the end of the history list and search backward */
-    for (nhist = 0; info.history[nhist].level > -1; nhist++) /* empty loop */;
-    for (i = nhist-1; i > -1; i--) {
-        char *info_datestamp = get_timestamp_from_time(info.history[i].date);
-        int order = strcmp(file.datestamp, info_datestamp);
-        amfree(info_datestamp);
-
-        if (order <= 0) {
-            /* only a match if the levels are equal */
-            if (info.history[i].level == file.dumplevel) {
-                matching_hist_idx = i;
-                matching_hist = info.history[matching_hist_idx];
-            }
-            break;
-        }
-    }
+    matching_hist_idx = holding_file_find_history(&info, &file);
 
     if (matching_hist_idx == -1) {
         printf(_("WARNING: No dump matching %s found in curinfo.\n"), filename);
-        return 1; /* not an error */
+	return 1; /* not an error */
     }
+
+    /* make a copy */
+    matching_hist = info.history[matching_hist_idx];
 
     /* Remove the history element itself before doing the stats */
     for (i = matching_hist_idx; i <= NB_HISTORY; i++) {
@@ -1309,6 +1372,7 @@ remove_holding_file_from_catalog(
 
     return 1;
 }
+
 void
 holding(
     int		argc,
@@ -1318,6 +1382,7 @@ holding(
     GSList *li;
     enum { HOLDING_USAGE, HOLDING_LIST, HOLDING_DELETE } action = HOLDING_USAGE;
     int long_list = 0;
+    int outdated_list = 0;
     dumpfile_t file;
 
     if (argc < 4)
@@ -1330,38 +1395,62 @@ holding(
     switch (action) {
         case HOLDING_USAGE:
             fprintf(stderr,
-                    _("%s: expecting \"holding list [-l]\" or \"holding delete <host> [ .. ]\"\n"),
+                    _("%s: expecting \"holding list [-l] [-d]\" or \"holding delete <host> [ .. ]\"\n"),
                     get_pname());
             usage();
             return;
 
         case HOLDING_LIST:
             argc -= 4; argv += 4;
-            if (argc && strcmp(argv[0], "-l") == 0) {
-                argc--; argv++;
-                long_list = 1;
+	    while (argc && argv[0][0] == '-') {
+		switch (argv[0][1]) {
+		    case 'l': 
+			long_list = 1; 
+			break;
+		    case 'd': /* have to use '-d', and not '-o', because of parse_config */
+			outdated_list = 1;
+			break;
+		    default:
+			fprintf(stderr, _("Unknown option -%c\n"), argv[0][1]);
+			usage();
+			return;
+		}
+		argc--; argv++;
+	    }
+
+	    /* header */
+            if (long_list) {
+                printf("%-10s %-2s %-4s %s\n", 
+		    _("size (kB)"), _("lv"), _("outd"), _("dump specification"));
             }
 
             file_list = get_file_list(argc, argv, 1);
-            if (long_list) {
-                printf("%-10s %-2s %s\n", "size (kB)", "lv", "dump specification");
-            }
             for (li = file_list; li != NULL; li = li->next) {
                 char *dumpstr;
+		int is_outdated;
+
                 if (!holding_file_get_dumpfile((char *)li->data, &file)) {
                     fprintf(stderr, _("Error reading %s\n"), (char *)li->data);
                     continue;
                 }
 
+	        is_outdated = holding_file_is_outdated(&file);
+
                 dumpstr = cmdline_format_dumpspec_components(file.name, file.disk, file.datestamp, NULL);
-                if (long_list) {
-                    printf("%-10"OFF_T_RFMT" %-2d %s\n", 
-                           (OFF_T_FMT_TYPE)
-                           holding_file_size((char *)li->data, 0),
-                           file.dumplevel, dumpstr);
-                } else {
-                    printf("%s\n", dumpstr);
-                }
+		/* only print this entry if we're printing everything, or if it's outdated and
+		 * we're only printing outdated files (-o) */
+		if (!outdated_list || is_outdated) {
+		    if (long_list) {
+			printf("%-10"OFF_T_RFMT" %-2d %-4s %s\n", 
+			       (OFF_T_FMT_TYPE)
+			       holding_file_size((char *)li->data, 0),
+			       file.dumplevel,
+			       is_outdated? " *":"",
+			       dumpstr);
+		    } else {
+			printf("%s\n", dumpstr);
+		    }
+		}
                 amfree(dumpstr);
             }
             g_slist_free_full(file_list);

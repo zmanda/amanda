@@ -176,12 +176,22 @@ The default sort order is <emphasis remap='B'>hkdlpb</emphasis>.</para>
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>holding list</emphasis> [-l] [ <emphasis remap="I">hostname</emphasis> [ <emphasis remap="I">disk</emphasis> [ <emphasis remap="I">datestamp</emphasis> [ .. ] ] ] ]</term>
+  <term><emphasis remap='B'>holding list</emphasis> [-l] [-d] [ <emphasis remap="I">hostname</emphasis> [ <emphasis remap="I">disk</emphasis> [ <emphasis remap="I">datestamp</emphasis> [ .. ] ] ] ]</term>
   <listitem>
 
     <para>List holding files matching the given specification, or all holding
     files if no specification is provided.  With '-l', additional information
-    (size and level) is provided.</para>
+    (size, level, and whether the dump is outdated) is provided.  With '-d', only
+    outdated dumps are shown.</para>
+
+    <para>An outdated holding file is one which is not required for a
+    restore of the <emphasis>most recent</emphasis> dump.  Note that
+    outdated dumps may still be required for restores at earlier dates.
+    For example, assume that a DLE had a level 0 on Monday, level
+    1's Tuesday through Thursday, and a level 2 on Friday.  Then the
+    files required for a restore of Fridays (the most recent) dump
+    are those from Monday (level 0), Thursday (level 1), and Friday
+    (level 2).  Tuesday and Wednesday's files are outdated. </para>
 
   </listitem>
   </varlistentry>
