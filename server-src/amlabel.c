@@ -235,11 +235,6 @@ main(
 
         printf(_("Checking label...\n")); fflush(stdout);
 
-        if (!device_start(device, ACCESS_READ, NULL, NULL)) {
-            error(_("Error switching device back to read mode.\n"));
-            g_assert_not_reached();
-        }
-
         label_status = device_read_label(device);
         if (label_status != READ_LABEL_STATUS_SUCCESS) {
             char * errstr = 

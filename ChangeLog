@@ -1,3 +1,6 @@
+2007-09-25  Ian Turner <ian@zmanad.com> (merged by dustin@zmanda.com)
+	* server-src/amlabel.c: Don't dump core on successful labeling.
+
 2007-09-25  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/tests/semaphore-test.c device-src/tests/Makefile.am:
 	  test semaphore module
