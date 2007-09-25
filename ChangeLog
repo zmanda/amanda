@@ -1,4 +1,8 @@
 2007-09-25  Ian Turner <ian@zmanda.com> (merged by dustin@zmanda.com)
+	* server-src/taper-file-source.c: If there's a problem reading the
+	  holding disk, log the error as we get it from the OS.
+
+2007-09-25  Ian Turner <ian@zmanda.com> (merged by dustin@zmanda.com)
 	* server-src/taper-source.c, server-src/taper.c: Do the right thing
 	  if the connection to dumper is severed before we recieve a header.
 

@@ -300,6 +300,10 @@ static int retry_read(int fd, void * buf, size_t count) {
             /* Try again. */
             continue;
         } else {
+            if (read_result < 0) {
+                fprintf(stderr, "Error reading holding disk: %s\n",
+                        strerror(errno));
+            }
             return read_result;
         }
     }
@@ -372,7 +376,7 @@ taper_file_source_read (TaperSource * pself, void * buf, size_t count) {
         return read_result;
     } else if (read_result == 0) {
         if (!get_next_chunk(self)) {
-            return FALSE; 
+            return -1; 
         }
 
         if (selfp->current_chunk_fd >= 0) {
