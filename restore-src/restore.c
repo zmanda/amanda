@@ -248,6 +248,7 @@ loadlabel_slot(void *	datap,
 {
     loadlabel_data * data = (loadlabel_data*)datap;
     Device * device;
+    ReadLabelStatusFlags label_status;
 
     g_return_val_if_fail(rc > 1 || device_name != NULL, 0);
     g_return_val_if_fail(slotstr != NULL, 0);
@@ -273,8 +274,20 @@ loadlabel_slot(void *	datap,
     }
 
     device_set_startup_properties_from_config(device);
-    device_read_label(device);
+    label_status = device_read_label(device);
+    if (label_status != READ_LABEL_STATUS_SUCCESS) {
+        char * errstr =
+            g_english_strjoinv_and_free
+                (g_flags_nick_to_strv(label_status,
+                                      READ_LABEL_STATUS_FLAGS_TYPE), "or");
+        fprintf(stderr, "%s: slot %s: Error reading tape label:\n"
+                "%s: slot %s: %s\n",
+                get_pname(), slotstr, get_pname(), slotstr, errstr);
+        g_object_unref(device);
+        return 0;
+    }
 
+    g_assert(device->volume_label != NULL);
     if (device->volume_label == NULL) {
         fprintf(stderr, "%s: slot %s: Could not read tape label.\n",
                 get_pname(), slotstr);

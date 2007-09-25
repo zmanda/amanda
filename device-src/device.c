@@ -79,6 +79,37 @@ static DeviceFactory lookup_device_factory(const char *device_name) {
     }
 }
 
+static const GFlagsValue read_label_status_flags_values[] = {
+    { READ_LABEL_STATUS_SUCCESS,
+      "READ_LABEL_STATUS_SUCCESS",
+      "Success" },
+    { READ_LABEL_STATUS_DEVICE_MISSING,
+      "READ_LABEL_STATUS_DEVICE_MISSING",
+      "Device not found" },
+    { READ_LABEL_STATUS_DEVICE_ERROR,
+      "READ_LABEL_STATUS_DEVICE_ERROR",
+      "Device error" },
+    { READ_LABEL_STATUS_VOLUME_MISSING,
+      "READ_LABEL_STATUS_VOLUME_MISSING",
+      "Volume not found" },
+    { READ_LABEL_STATUS_VOLUME_UNLABELED,
+      "READ_LABEL_STATUS_VOLUME_UNLABELED",
+      "Volume not labeled" },
+    { READ_LABEL_STATUS_VOLUME_ERROR,
+      "READ_LABEL_STATUS_VOLUME_ERROR",
+      "Volume error" },
+    { 0, NULL, NULL }
+};
+
+GType read_label_status_flags_get_type(void) {
+    static GType type = 0;
+    if (G_UNLIKELY(type == 0)) {
+        type = g_flags_register_static("ReadLabelStatusFlags",
+                                       read_label_status_flags_values);
+    }
+    return type;
+}
+
 /* Device class definition starts here. */
 
 struct DevicePrivate_s {
@@ -593,7 +624,7 @@ static gboolean
 default_device_start (Device * self, DeviceAccessMode mode, char * label,
                       char * timestamp) {
     if (mode != ACCESS_WRITE) {
-        if (!device_read_label(self))
+        if (device_read_label(self) != READ_LABEL_STATUS_SUCCESS)
             return FALSE;
     } else {
         self->volume_label = newstralloc(self->volume_label, label);
@@ -734,7 +765,7 @@ device_open_device (Device * self, char * device_name)
 		return FALSE;
 }
 
-gboolean device_read_label(Device * self) {
+ReadLabelStatusFlags device_read_label(Device * self) {
     DeviceClass * klass;
     g_return_val_if_fail(self != NULL, FALSE);
     g_return_val_if_fail(IS_DEVICE(self), FALSE);
@@ -744,7 +775,7 @@ gboolean device_read_label(Device * self) {
     if (klass->read_label) {
         return (klass->read_label)(self);
     } else {
-        return FALSE;
+        return ~ READ_LABEL_STATUS_SUCCESS;
     }
 }
 

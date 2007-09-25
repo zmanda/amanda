@@ -14,6 +14,7 @@ SERVER_MAN8_PAGES = amadmin.8 \
 		    amcheckdb.8 \
 		    amcleanup.8 \
 		    amdd.8 \
+		    amdevcheck.8 \
 		    amdump.8 \
 		    amflush.8 \
 		    amgetconf.8 \

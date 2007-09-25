@@ -53,7 +53,7 @@ static gboolean vfs_device_property_set (Device * pself, DevicePropertyId ID,
 static gboolean vfs_device_recycle_file (Device * pself, guint filenum);
 static Device * vfs_device_factory(char * device_type,
                                    char * device_name);
-static gboolean vfs_device_read_label(Device * dself);
+static ReadLabelStatusFlags vfs_device_read_label(Device * dself);
 static void     vfs_device_label_size_range(FdDevice * self,
                                             guint * min, guint * max);
 static gboolean vfs_device_write_block(Device * self, guint size,
@@ -592,13 +592,15 @@ static gboolean clear_and_prepare_label(VfsDevice * self, char * label) {
     return TRUE;
 }
 
-static gboolean vfs_device_read_label(Device * self) {
+static ReadLabelStatusFlags vfs_device_read_label(Device * self) {
     vfs_device_seek_file(self, 0);
 
     if (device_parent_class->read_label) {
-        return (device_parent_class->read_label)(self);
+        /* No matter what happens, we can't really say "volume missing." */
+        return ((device_parent_class->read_label)(self) &
+                (~ READ_LABEL_STATUS_VOLUME_MISSING));
     } else {
-        return FALSE;
+        return ~ READ_LABEL_STATUS_SUCCESS;
     }
 }
 

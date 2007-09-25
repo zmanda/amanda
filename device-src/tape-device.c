@@ -38,7 +38,7 @@ struct TapeDevicePrivate_s {
 static void tape_device_init (TapeDevice * o);
 static void tape_device_class_init (TapeDeviceClass * c);
 static gboolean tape_device_open_device (Device * self, char * device_name);
-static gboolean tape_device_read_label(Device * self);
+static ReadLabelStatusFlags tape_device_read_label(Device * self);
 static gboolean tape_device_start (Device * self, DeviceAccessMode mode,
                                    char * label, char * timestamp);
 static gboolean tape_device_start_file (Device * self, const dumpfile_t * ji);
@@ -272,7 +272,7 @@ tape_device_open_device (Device * d_self, char * device_name) {
     }
 }
 
-static gboolean tape_device_read_label(Device * dself) {
+static ReadLabelStatusFlags tape_device_read_label(Device * dself) {
     TapeDevice * self;
     FdDevice * fd_self;
 
@@ -283,13 +283,14 @@ static gboolean tape_device_read_label(Device * dself) {
     if (!tape_rewind(fd_self->fd)) {
         fprintf(stderr, "Error rewinding device %s\n",
                 dself->device_name);
-        return FALSE;
+        return (READ_LABEL_STATUS_DEVICE_ERROR |
+                READ_LABEL_STATUS_VOLUME_ERROR);
     }   
 
     if (device_parent_class->read_label) {
         return device_parent_class->read_label(dself);
     } else {
-        return TRUE;
+        return READ_LABEL_STATUS_SUCCESS;
     }
 }
 

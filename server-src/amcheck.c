@@ -628,6 +628,7 @@ static gboolean test_tape_status(FILE * outf) {
     GValue property_value;
     char * label = NULL;
     char * tapename = NULL;
+    ReadLabelStatusFlags label_status;
 
     bzero(&property_value, sizeof(property_value));
     
@@ -665,11 +666,27 @@ static gboolean test_tape_status(FILE * outf) {
     }
     
     device_set_startup_properties_from_config(device);
+    label_status = device_read_label(device);
 
-    if (tape_status != 3 && device->volume_label != label &&
+    if (tape_status == 3 && 
+        !(label_status & READ_LABEL_STATUS_VOLUME_UNLABELED)) {
+        if (label_status == READ_LABEL_STATUS_SUCCESS) {
+            fprintf(outf, "WARNING: Volume was unlabeled, but now "
+                    "is labeled \"%s\".\n", device->volume_label);
+        }
+    } else if (label_status != READ_LABEL_STATUS_SUCCESS) {
+        char * errstr = 
+            g_english_strjoinv_and_free
+                (g_flags_nick_to_strv(label_status &
+                                       (~READ_LABEL_STATUS_VOLUME_UNLABELED),
+                                       READ_LABEL_STATUS_FLAGS_TYPE), "or");
+        fprintf(outf, "WARNING: Reading label the second time failed: "
+                "One of %s.\n", errstr);
+        g_free(errstr);
+    } else if (device->volume_label != label &&
                (device->volume_label == NULL || label == NULL ||
                 strcmp(device->volume_label, label) != 0)) {
-        fprintf(outf, "WARNING: Reading label the second time failed: "
+        fprintf(outf, "WARNING: Label mismatch on re-read: "
                 "Got %s first, then %s.\n", label, device->volume_label);
     }
     

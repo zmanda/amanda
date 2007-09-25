@@ -106,6 +106,25 @@ typedef Device* (*DeviceFactory)(char * device_type,
 extern void register_device(DeviceFactory factory,
                             const char ** device_prefix_list);
 
+/* This structure is a Flags (bitwise OR of values). Zero indicates success;
+ * any other value indicates some kind of problem reading the label. If
+ * multiple bits are set, it does not necessarily indicate that /all/ of
+ * the specified issues occured, but rather that /at least one/ did. */
+typedef enum {
+    /* When changing, Also update read_label_status_flags_values in device.c */
+    READ_LABEL_STATUS_SUCCESS          = 0,
+    READ_LABEL_STATUS_DEVICE_MISSING   = (1 << 0),
+    READ_LABEL_STATUS_DEVICE_ERROR     = (1 << 1),
+    READ_LABEL_STATUS_VOLUME_MISSING   = (1 << 2),
+    READ_LABEL_STATUS_VOLUME_UNLABELED = (1 << 3),
+    READ_LABEL_STATUS_VOLUME_ERROR     = (1 << 4),
+    READ_LABEL_STATUS_FLAGS_MAX              = (1 << 5)
+} ReadLabelStatusFlags;
+
+#define READ_LABEL_STATUS_FLAGS_MASK (READ_LABEL_STATUS_MAX-1)
+#define READ_LABEL_STATUS_FLAGS_TYPE (read_label_status_flags_get_type())
+GType read_label_status_flags_get_type(void);
+
 /*
  * Class definition
  */
@@ -114,7 +133,7 @@ struct _DeviceClass {
     GObjectClass __parent__;
     gboolean (* open_device) (Device * self,
                               char * device_name); /* protected */
-    gboolean (* read_label)(Device * self);
+    ReadLabelStatusFlags (* read_label)(Device * self);
     gboolean (* start) (Device * self, DeviceAccessMode mode,
                         char * label, char * timestamp);
     gboolean (* start_file) (Device * self, const dumpfile_t * info);
@@ -158,9 +177,8 @@ Device* 	device_open	(char * device_name);
 /* This instructs the device to read the label on the current
    volume. It is called automatically after device_open() and before
    device_start(). You can call it yourself anytime between the
-   two. It may return FALSE if no label could be read (as in the case
-   of an unlabeled volume). */
-gboolean        device_read_label (Device * self);
+   two. */
+ReadLabelStatusFlags        device_read_label (Device * self);
 
 /* This tells the Device that it's OK to start reading and writing
  * data. Before you call this, you can only call

@@ -96,6 +96,7 @@ static void handle_holding_disk_restore(char * filename, rst_flags_t * flags,
 static void handle_tape_restore(char * device_name, rst_flags_t * flags,
                                 GSList * dumpspecs, char * check_label) {
     Device * device;
+    ReadLabelStatusFlags read_label_status;
 
     device_api_init();
     
@@ -105,11 +106,16 @@ static void handle_tape_restore(char * device_name, rst_flags_t * flags,
     }
     
     device_set_startup_properties_from_config(device);
-    device_read_label(device);
+    read_label_status = device_read_label(device);
+    if (read_label_status != READ_LABEL_STATUS_SUCCESS) {
+        char * errstr =
+            g_english_strjoinv_and_free
+                (g_flags_nick_to_strv(read_label_status,
+                                      READ_LABEL_STATUS_FLAGS_TYPE), "or");
+        error("Error reading volume label: %s.\n", errstr);
+    }
 
-    if (device->volume_label == NULL) {
-        error("Not an Amanda tape.\n");
-    } 
+    g_assert(device->volume_label != NULL);
 
     if (!device_start(device, ACCESS_READ, NULL, NULL)) {
         error("Could not open device %s for reading.\n", device_name);

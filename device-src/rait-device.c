@@ -64,7 +64,7 @@ static gboolean rait_device_property_set (Device * self, DevicePropertyId id,
                                           GValue * val);
 static gboolean rait_device_recycle_file (Device * self, guint filenum);
 static gboolean rait_device_finish (Device * self);
-static gboolean rait_device_read_label(Device * dself);
+static ReadLabelStatusFlags rait_device_read_label(Device * dself);
 static void find_simple_params(RaitDevice * self, guint * num_children,
                                guint * data_children, int * blocksize);
 
@@ -622,12 +622,21 @@ rait_device_open_device (Device * dself, char * device_name) {
     }
 }
 
-static gboolean rait_device_read_label(Device * dself) {
+/* A GFunc. */
+static void read_label_do_op(gpointer data,
+                             gpointer user_data G_GNUC_UNUSED) {
+    GenericOp * op = data;
+    op->result = GINT_TO_POINTER(device_read_label(op->child));
+}
+
+static ReadLabelStatusFlags rait_device_read_label(Device * dself) {
     RaitDevice * self;
     GPtrArray * ops;
-    gboolean result;
+    ReadLabelStatusFlags failed_result = 0;
+    ReadLabelStatusFlags rval;
+    GenericOp * failed_op = NULL; /* If this is non-null, we will isolate. */
     unsigned int i;
-    GenericOp * first_op;
+    Device * first_success = NULL;
 
     self = RAIT_DEVICE(dself);
     g_return_val_if_fail(self != NULL, FALSE);
@@ -635,36 +644,69 @@ static gboolean rait_device_read_label(Device * dself) {
     amfree(dself->volume_label);
 
     ops = make_generic_boolean_op_array(self);
-
-    first_op = g_ptr_array_index(ops, 0);
-    result = GPOINTER_TO_INT(first_op->result);
-    if (first_op->child->volume_label != NULL) {
-        dself->volume_label = strdup(first_op->child->volume_label);
-    }
-    dself->volume_time = first_op->child->volume_time;
     
-    for (i = 1; i < ops->len; i ++) {
+    do_rait_child_ops(read_label_do_op, ops, NULL);
+    
+    for (i = 0; i < ops->len; i ++) {
         GenericOp * op = g_ptr_array_index(ops, i);
-        if (first_op->result != op->result ||
-            !compare_volume_results(dself, op->child)) {
-            fprintf(stderr, "Inconsistant volume labels: "
-                    "Got %s/%s against %s/%s.\n",
-                    dself->volume_label, dself->volume_time, 
-                    op->child->volume_label,
-                    op->child->volume_time);
-            result = FALSE;
+        ReadLabelStatusFlags result = GPOINTER_TO_INT(op->result);
+        if (op->result == READ_LABEL_STATUS_SUCCESS) {
+            if (first_success == NULL) {
+                /* This is the first successful device. */
+                first_success = op->child;
+            } else if (!compare_volume_results(first_success, op->child)) {
+                /* Doesn't match. :-( */
+                fprintf(stderr, "Inconsistant volume labels: "
+                        "Got %s/%s against %s/%s.\n",
+                        first_success->volume_label,
+                        first_success->volume_time, 
+                        op->child->volume_label,
+                        op->child->volume_time);
+                failed_result |= READ_LABEL_STATUS_VOLUME_ERROR;
+                failed_op = NULL;
+            }
+        } else {
+            if (failed_result == 0 &&
+                self->private->status == RAIT_STATUS_COMPLETE) {
+                /* This is the first failed device; note it and we'll isolate
+                   later. */
+                failed_op = op;
+                failed_result = result;
+            } else {
+                /* We've encountered multiple failures. OR them together. */
+                failed_result |= result;
+                failed_op = NULL;
+            }
         }
     }
 
-    g_ptr_array_free_full(ops);
-
-    if (!result) {
-        amfree(dself->volume_label);
-        dself->volume_time = 0;
+    if (failed_op != NULL) {
+        /* We have a single device to isolate. */
+        failed_result = READ_LABEL_STATUS_SUCCESS; /* Recover later */
+        self->private->failed = failed_op->child_index;
+        fprintf(stderr, "RAIT array %s Isolated device %s.\n",
+                dself->device_name,
+                failed_op->child->device_name);
     }
 
-    return result;
+    if (failed_result != READ_LABEL_STATUS_SUCCESS) {
+        /* We had multiple failures or an inconsistency. */
+        rval = failed_result;
+    } else {
+        /* Everything peachy. */
+        rval = READ_LABEL_STATUS_SUCCESS;
+        g_assert(first_success != NULL);
+        if (first_success->volume_label != NULL) {
+            dself->volume_label = strdup(first_success->volume_label);
+        }
+        if (first_success->volume_time != NULL) {
+            dself->volume_time = strdup(first_success->volume_time);
+        }
+    }
+    
+    g_ptr_array_free_full(ops);
 
+    return rval;
 }
 
 typedef struct {

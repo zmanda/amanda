@@ -79,5 +79,33 @@ gboolean g_value_set_from_string(GValue * val, char * string);
 /* A GCompareFunc that will sort strings alphabetically (using strcmp) */
 gint g_compare_strings(gconstpointer a, gconstpointer b);
 
+/* These functions all take a Flags class and stringify it. They
+ * return a NULL-terminated array of strings that can be
+ * passed to g_strjoinv(), g_strfreev(), g_strdupv(), and
+ * g_strv_length(). Example output looks like:
+ * - g_flags_name_to_strv() -> "MEDIA_ACCESS_MODE_READ_ONLY"
+ * - g_flags_short_name_to_strv() -> "READ_ONLY"
+ * - g_flags_nick_to_strv() -> "read-only"
+ */
+
+char ** g_flags_name_to_strv(int value, GType type);
+char ** g_flags_short_name_to_strv(int value, GType type);
+char ** g_flags_nick_to_strv(int value, GType type);
+
+/* Just like g_strjoinv, but frees the array as well. */
+char * g_strjoinv_and_free(char ** strv, const char * seperator);
+
+/* Just like g_strjoinv, but joins like an English list. The string would
+ * usually be "and" or "or". */
+char * g_english_strjoinv(char ** strv, const char * conjunction);
+
+/* Just like g_english_strjoinv, but also frees the array. */
+char * g_english_strjoinv_and_free(char ** strv, const char * conjunction);
+
+/* Replacement for built-in function. */
+#if !(GLIB_CHECK_VERSION(2,6,0))
+guint g_strv_length(gchar ** strv);
+#endif
+
 #endif
 

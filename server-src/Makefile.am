@@ -29,7 +29,7 @@ taper_source_test_SOURCES = taper-source-test.c \
 libexec_PROGRAMS =	amindexd	amlogroll	amtrmidx	\
 			amtrmlog	driver		dumper		\
 			planner		taper		amcleanupdisk	\
-			chunker
+			chunker		amdevcheck
 
 taper_SOURCES = 	taper.c \
 			taper-source.c \

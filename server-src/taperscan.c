@@ -76,6 +76,7 @@ int scan_read_label(
 {
     Device * device;
     char *labelstr;
+    ReadLabelStatusFlags label_status;
 
     g_return_val_if_fail(dev != NULL, -1);
 
@@ -93,10 +94,12 @@ int scan_read_label(
 
     device_set_startup_properties_from_config(device);
 
+    label_status = device_read_label(device);
+    
     if (device->volume_label != NULL) { 
         *label = g_strdup(device->volume_label);
         *timestamp = strdup(device->volume_time);
-    } else{
+    } else if (label_status & READ_LABEL_STATUS_VOLUME_UNLABELED) {
         g_object_unref(device);
         if (!getconf_seen(CNF_LABEL_NEW_TAPES)) {
             *error_message = newvstrallocf(*error_message,
@@ -119,6 +122,15 @@ int scan_read_label(
                                        *error_message);
 
         return -1;
+    } else {
+        char * label_errstr =
+            g_english_strjoinv_and_free
+                (g_flags_nick_to_strv(label_status,
+                                      READ_LABEL_STATUS_FLAGS_TYPE), "or");
+        *error_message = newvstrallocf(*error_message,
+                                       _("%sError reading label: One of %s.\n"),
+                                       *error_message, label_errstr);
+        g_free(label_errstr);
     }
 
     g_assert(*label != NULL && *timestamp != NULL);

@@ -28,7 +28,7 @@
 static void fd_device_init (FdDevice * o);
 static void fd_device_class_init (FdDeviceClass * c);
 static void fd_device_finalize(GObject * o);
-static gboolean fd_device_read_label(Device * self);
+static ReadLabelStatusFlags fd_device_read_label(Device * self);
 static gboolean fd_device_start(Device * self, DeviceAccessMode mode,
                                 char * label, char * timestamp);
 static gboolean fd_device_finish(Device * self);
@@ -134,7 +134,7 @@ static void fd_device_finalize(GObject * obj_self) {
 }
 
 /* Just a small helper function */
-static gboolean fd_device_read_label(Device * pself) {
+static ReadLabelStatusFlags fd_device_read_label(Device * pself) {
     FdDevice * self;
     char * buf;
     guint buf_size;
@@ -145,28 +145,38 @@ static gboolean fd_device_read_label(Device * pself) {
     self = FD_DEVICE(pself);
     g_return_val_if_fail (self != NULL, FALSE);
 
-    if (self->fd < 0)
-        return FALSE;
+    if (self->fd < 0) {
+        return (READ_LABEL_STATUS_DEVICE_MISSING |
+                READ_LABEL_STATUS_DEVICE_ERROR |
+                READ_LABEL_STATUS_VOLUME_MISSING |
+                READ_LABEL_STATUS_VOLUME_UNLABELED);
+    }
 
     fd_device_label_size_range(self, NULL, &buf_size);
     buf = malloc(buf_size);
     buf_size_int = (int)buf_size;
     read_result = fd_device_robust_read(self, buf, &buf_size_int);
-    if (read_result != RESULT_SUCCESS)
-        return FALSE;
+    if (read_result != RESULT_SUCCESS) {
+        /* Even if the error isn't RESULT_NO_DATA, it could be a missing
+         * volume... */
+        return (READ_LABEL_STATUS_DEVICE_ERROR |
+                READ_LABEL_STATUS_VOLUME_MISSING |
+                READ_LABEL_STATUS_VOLUME_UNLABELED |
+                READ_LABEL_STATUS_VOLUME_ERROR);
+    }
 
     fh_init(&amanda_header);
     parse_file_header(buf, &amanda_header, buf_size_int);
     if (amanda_header.type != F_TAPESTART) {
         fprintf(stderr, "Got a bad volume label:\n%s\n", buf);
         amfree(buf);
-        return FALSE;
+        return READ_LABEL_STATUS_VOLUME_ERROR;
     }
     amfree(buf);
     pself->volume_label = strdup(amanda_header.name);
     pself->volume_time = strdup(amanda_header.datestamp);
     
-    return TRUE;
+    return READ_LABEL_STATUS_SUCCESS;
 }
 
 static gboolean 

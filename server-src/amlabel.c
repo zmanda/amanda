@@ -70,6 +70,7 @@ main(
     int    new_argc;
     char **new_argv;
     Device * device;
+    ReadLabelStatusFlags label_status;
 
     /*
      * Configure program for internationalization:
@@ -188,9 +189,18 @@ main(
     }
     
     device_set_startup_properties_from_config(device);
+    label_status = device_read_label(device);
 
-    if (device->volume_label == NULL) {
+    if (label_status & READ_LABEL_STATUS_VOLUME_UNLABELED) {
         printf("Found an unlabeled tape.\n");
+    } else if (label_status != READ_LABEL_STATUS_SUCCESS) {
+         char * errstr = 
+            g_english_strjoinv_and_free
+                (g_flags_nick_to_strv(label_status,
+                                      READ_LABEL_STATUS_FLAGS_TYPE), "or");
+         printf("Reading the tape label failed: \n"
+                 "  Error was one of %s.\n", errstr);
+         tape_ok = 0;
     } else {
 	/* got an amanda tape */
 	printf(_("Found Amanda tape %s"),device->volume_label);
@@ -226,8 +236,19 @@ main(
         printf(_("Checking label...\n")); fflush(stdout);
 
         if (!device_start(device, ACCESS_READ, NULL, NULL)) {
-            error(_("Error reading label.\n"));
+            error(_("Error switching device back to read mode.\n"));
             g_assert_not_reached();
+        }
+
+        label_status = device_read_label(device);
+        if (label_status != READ_LABEL_STATUS_SUCCESS) {
+            char * errstr = 
+                g_english_strjoinv_and_free
+                    (g_flags_nick_to_strv(label_status,
+                                          READ_LABEL_STATUS_FLAGS_TYPE), "or");
+            printf("Checking the tape label failed: \n"
+                    "  Error was one of %s.\n", errstr);
+            tape_ok = 0;
         } else if (device->volume_label == NULL) {
             error(_("no label found.\n"));
             g_assert_not_reached();

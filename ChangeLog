@@ -1,3 +1,18 @@
+2007-09-25  Ian Turner <ian@zmanda.com> (merged by dustin@zmanda.com)
+	* device-src/device.c, device-src/device.h, device-src/s3-device.c,
+	  device-src/fd-device.c, device-src/tape-device.c,
+	  device-src/vfs-device.c, device-src/rait-device.c: Implement new,
+	  more nuanced device_read_label() interface.
+	* server-src/amcheck.c, server-src/amtape.c, server-src/taperscan.c,
+	  server-src/amlabel.c, restore-src/amrestore.c,
+	  restore-src/restore.c: Use new interface.
+	* common-src/glib-util.c, common-src/glib-util.h: New Flags->string
+	  interface.
+	* server-src/amdevcheck.c: New tool to check device/volume status.
+	* man/xml-source/amdevcheck.8.xml: Document it.
+	* server-src/Makefile.am: Add amdevcheck
+	* man/Makefile.am: Add amdevcheck.8
+
 2007-09-25  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/s3-device.c: adjust glib logging calls to match debug.h's
 	  definitions.

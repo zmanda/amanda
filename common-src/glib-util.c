@@ -27,6 +27,14 @@
 #include "amanda.h"
 #include "glib-util.h"
 
+typedef enum {
+    FLAG_STRING_NAME,
+    FLAG_STRING_SHORT_NAME,
+    FLAG_STRING_NICK
+} FlagString;
+
+static char ** g_flags_to_strv(int value, GType type, FlagString source);
+
 void
 _glib_util_foreach_glue(gpointer data, gpointer func)
 {
@@ -262,3 +270,146 @@ g_compare_strings(
     return strcmp((char *)a, (char *)b);
 }
 
+char * g_strjoinv_and_free(char ** strv, const char * seperator) {
+    char * rval = g_strjoinv(seperator, strv);
+    g_strfreev(strv);
+    return rval;
+}
+
+char ** g_flags_name_to_strv(int value, GType type) {
+    return g_flags_to_strv(value, type, FLAG_STRING_NAME);
+}
+
+char ** g_flags_short_name_to_strv(int value, GType type) {
+    return g_flags_to_strv(value, type, FLAG_STRING_SHORT_NAME);
+}
+
+char ** g_flags_nick_to_strv(int value, GType type) {
+    return g_flags_to_strv(value, type, FLAG_STRING_NICK);
+}
+
+static char * get_name_from_value(GFlagsValue * value, FlagString source) {
+    switch (source) {
+    case FLAG_STRING_NAME:
+    case FLAG_STRING_SHORT_NAME:
+        return strdup(value->value_name);
+    case FLAG_STRING_NICK:
+        return strdup(value->value_nick);
+    default:
+        return NULL;
+    }
+}
+
+/* If freed and notfreed have a common prefix that is different from freed,
+   then return that and free freed. Otherwise, return freed. */
+static char * find_common_prefix(char * freed, const char * notfreed) {
+    char * freed_ptr = freed;
+    const char * notfreed_ptr = notfreed;
+
+    if (freed == NULL) {
+        if (notfreed == NULL) {
+            return NULL;
+        } else {
+            return strdup(notfreed);
+        }
+    } else if (notfreed == NULL) {
+        amfree(freed);
+        return strdup("");
+    }
+
+    while (*freed_ptr == *notfreed_ptr) {
+        freed_ptr ++;
+        notfreed_ptr ++;
+    }
+
+    *freed_ptr = '\0';
+    return freed;
+}
+
+static char ** g_flags_to_strv(int value, GType type,
+                               FlagString source) {
+    GPtrArray * rval;
+    GFlagsValue * flagsvalue;
+    char * common_prefix = NULL;
+    int common_prefix_len;
+    GFlagsClass * class;
+
+    g_return_val_if_fail(G_TYPE_IS_FLAGS(type), NULL);
+    g_return_val_if_fail((class = g_type_class_ref(type)) != NULL, NULL);
+    g_return_val_if_fail(G_IS_FLAGS_CLASS(class), NULL);
+        
+    rval = g_ptr_array_new();
+    for (flagsvalue = class->values;
+         flagsvalue->value_name != NULL;
+         flagsvalue ++) {
+        if (source == FLAG_STRING_SHORT_NAME) {
+            common_prefix = find_common_prefix(common_prefix,
+                                               flagsvalue->value_name);
+        }
+                                               
+        if ((flagsvalue->value == 0 && value == 0) ||
+            (flagsvalue->value != 0 && (value & flagsvalue->value))) {
+            g_ptr_array_add(rval, get_name_from_value(flagsvalue, source));
+        }
+    }
+
+    if (source == FLAG_STRING_SHORT_NAME && common_prefix != NULL &&
+        ((common_prefix_len = strlen(common_prefix))) > 0) {
+        char * old;
+        char * new;
+        guint i;
+        for (i = 0; i < rval->len; i ++) {
+            old = g_ptr_array_index(rval, i);
+            new = strdup(old + common_prefix_len);
+            g_ptr_array_index(rval, i) = new;
+            g_free(old);
+        }
+    }
+    
+    g_ptr_array_add(rval, NULL);
+
+    amfree(common_prefix);
+    return (char**)g_ptr_array_free(rval, FALSE);
+}
+
+char * g_english_strjoinv(char ** strv, const char * conjunction) {
+    int length;
+    char * last;
+    char * joined;
+    char * rval;
+    strv = g_strdupv(strv);
+
+    length = g_strv_length(strv);
+    last = strv[length - 1];
+    strv[length - 1] = NULL;
+    
+    joined = g_strjoinv(", ", strv);
+    rval = g_strdup_printf("%s, %s %s", joined, conjunction, last);
+
+    g_free(joined);
+    g_free(last);
+    g_strfreev(strv);
+    return rval;
+}
+
+char * g_english_strjoinv_and_free(char ** strv, const char * conjunction) {
+    char * rval = g_english_strjoinv(strv, conjunction);
+    g_strfreev(strv);
+    return rval;   
+}
+
+#if !(GLIB_CHECK_VERSION(2,6,0))
+guint g_strv_length(gchar ** strv) {
+    int rval = 0;
+
+    if (G_UNLIKELY(strv == NULL))
+        return 0;
+
+    while (*strv != NULL) {
+        rval ++;
+        strv ++;
+    }
+    return rval;
+}
+
+#endif /* GLIB_CHECK_VERSION(2.6.0) */
