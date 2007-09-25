@@ -50,11 +50,25 @@
  *    error_exit_status() (will not return)
  *  g_warning -- non-fatal problems
  *  g_message -- normal status information
+ *  g_info -- helpful extra details, but not verbose
  *  g_debug -- debug messages
  *
  * g_error and g_critical will respect erroutput_type, potentially
  * sending the error to the Amanda logfile for this run (see logfile.c).
  */
+
+/* g_debug was introduced in glib 2.6, so define it here for systems where
+ * it is lacking.  g_info doesn't exist even in glib 2.13, but maybe it will
+ * be invented soon..
+ */
+
+#ifndef g_debug
+#define g_debug(...) g_log (G_LOG_DOMAIN, G_LOG_LEVEL_DEBUG, __VA_ARGS__)
+#endif
+
+#ifndef g_info
+#define g_info(...) g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO, __VA_ARGS__)
+#endif
 
 /*
  * FATAL ERROR HANDLING

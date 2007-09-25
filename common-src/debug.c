@@ -137,7 +137,7 @@ debug_logging_handler(const gchar *log_domain G_GNUC_UNUSED,
     else if (log_level & G_LOG_LEVEL_MESSAGE)
 	maxlevel = _("message: ");
     else if (log_level & G_LOG_LEVEL_INFO)
-	maxlevel = _("message: ");
+	maxlevel = _("info: ");
     else
 	maxlevel = ""; /* no level displayed for debugging */
 

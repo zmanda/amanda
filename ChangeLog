@@ -1,3 +1,10 @@
+2007-09-25  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/s3-device.c: adjust glib logging calls to match debug.h's
+	  definitions.
+	* common-src/debug.c: typo
+	* common-src/debug.h: add definitions for g_info() and g_debug() if
+	  they are missing
+
 2007-09-25  Ian Turner <ian@zmanda.com> (merged by dustin@zmanda.com)
 	Thanks to Pavel Pragin <ppragin@zmanda.com> for finding these issues.
 	* server-src/amtape.c: Update the changer database in 'amtape update'.
