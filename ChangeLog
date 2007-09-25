@@ -1,3 +1,10 @@
+2007-09-25  Ian Turner <ian@zmanda.com> (merged by dustin@zmanda.com)
+	* device-src/s3.c, device-src/tape-device.c,
+	  device-src/rait-device.c: Fix a number of compiler warnings, some
+	  legimate, others not. Thanks to Dustin J. Mitchell
+	  <dustin@zmanda.com> and Jean-Louis Martineau <martineau@zmanda.com>
+	  for help identifying warnings that need fixing.
+
 2007-09-25  Dustin J. Mitchell <dustin@zmanda.com>
 	* man/xml-source/amcleanup.8.xml server-src/amcleanupdisk.c
 	  server-src/amcleanup.sh.in: add -v option for verbose output

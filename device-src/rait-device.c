@@ -1001,7 +1001,7 @@ rait_device_seek_file (Device * dself, guint file) {
     gboolean success;
     dumpfile_t * rval;
     RaitDevice * self = RAIT_DEVICE(dself);
-    guint actual_file;
+    guint actual_file = 0;
     g_return_val_if_fail(self != NULL, FALSE);
 
     ops = g_ptr_array_sized_new(self->private->children->len);
@@ -1155,7 +1155,7 @@ static gboolean raid_block_reconstruction(RaitDevice * self, GPtrArray * ops,
     int blocksize, child_blocksize;
     guint i;
     int parity_child;
-    gpointer parity_block;
+    gpointer parity_block = NULL;
     gboolean success;
 
     success = TRUE;
@@ -1213,7 +1213,7 @@ static gboolean raid_block_reconstruction(RaitDevice * self, GPtrArray * ops,
             /* do nothing. */
         } else if (num_children >= 2) {
             /* Reconstruct failed block from parity block. */
-            GPtrArray * data_extents;            
+            GPtrArray * data_extents = g_ptr_array_new();            
 
             for (i = 0; i < data_children; i ++) {
                 ReadBlockOp * op = g_ptr_array_index(ops, i);
@@ -1229,6 +1229,9 @@ static gboolean raid_block_reconstruction(RaitDevice * self, GPtrArray * ops,
                                       buf + (child_blocksize *
                                              self->private->failed),
                                       child_blocksize);
+
+            /* The array members belong to our ops argument. */
+            g_ptr_array_free(data_extents, TRUE);
         } else {
             g_assert_not_reached();
         }
@@ -1246,7 +1249,7 @@ rait_device_read_block (Device * dself, gpointer buf, int * size) {
     guint num_children, data_children;
     int blocksize;
 
-    RaitDevice * self = RAIT_DEVICE(self);
+    RaitDevice * self = RAIT_DEVICE(dself);
     g_return_val_if_fail(self != NULL, -1);
 
     find_simple_params(self, &num_children, &data_children,
@@ -1404,7 +1407,7 @@ static gboolean property_get_streaming(GPtrArray * ops, GValue * val) {
     
 /* Merge MediaAccessMode results. */
 static gboolean property_get_medium_type(GPtrArray * ops, GValue * val) {
-    MediaAccessMode result;
+    MediaAccessMode result = 0;
     guint i = 0;
 
     for (i = 0; i < ops->len; i ++) {
@@ -1479,7 +1482,7 @@ static gboolean property_get_free_space(GPtrArray * ops, GValue * val) {
     
 /* Merge boolean results by ANDing them together. */
 static gboolean property_get_boolean_and(GPtrArray * ops, GValue * val) {
-    gboolean result;
+    gboolean result = FALSE;
     guint i = 0;
 
     for (i = 0; i < ops->len; i ++) {

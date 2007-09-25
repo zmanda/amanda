@@ -574,7 +574,7 @@ static gboolean
 tape_device_property_set (Device * d_self, DevicePropertyId id, GValue * val) {
     TapeDevice * self;
     FdDevice * fd_self;
-    FeatureSupportFlags feature_request_flags;
+    FeatureSupportFlags feature_request_flags = 0;
     const DevicePropertyBase * base;
 
     self = TAPE_DEVICE(d_self);
