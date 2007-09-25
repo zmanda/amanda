@@ -72,8 +72,6 @@ typedef struct {
 typedef struct seentapes_s seentapes_t;
 
 char *make_filename(dumpfile_t *file);
-int disk_match(dumpfile_t *file, char *datestamp,
-		    char *hostname, char *diskname, char *level);
 ssize_t read_file_header(dumpfile_t *file, int tapefd, int isafile,
 			 rst_flags_t *flags);
 void restore(RestoreSource * source, rst_flags_t * flags);

@@ -556,14 +556,19 @@ make_filename(
     return fn;
 }
 
-/*
- * Returns 1 if the current dump file matches the hostname and diskname
+/* Returns 1 if the dump file matches the hostname and diskname
  * regular expressions given on the command line, 0 otherwise.  As a 
- * special case, empty regexs are considered equivalent to ".*": they 
- * match everything.
+ * special case, empty regexs and NULLs are considered equivalent to 
+ * ".*": they match everything.
+ *
+ * @param file: the file to examine
+ * @param datestamp: the datestamp regex, or NULL for any
+ * @param hostname: the hostname regex, or NULL for any
+ * @param diskname: the diskname regex, or NULL for any
+ * @param level: the level regex, or NULL for any
+ * @returns: 1 if the dump file matches
  */
-
-int
+static int
 disk_match(
     dumpfile_t *file,
     char *	datestamp,
@@ -576,10 +581,10 @@ disk_match(
 
     if(file->type != F_DUMPFILE && file->type != F_SPLIT_DUMPFILE) return 0;
 
-    if((*hostname == '\0' || match_host(hostname, file->name)) &&
-       (*diskname == '\0' || match_disk(diskname, file->disk)) &&
-       (*datestamp == '\0' || match_datestamp(datestamp, file->datestamp)) &&
-       (*level == '\0' || match_level(level, level_str)))
+    if((!hostname || *hostname == '\0' || match_host(hostname, file->name)) &&
+       (!diskname || *diskname == '\0' || match_disk(diskname, file->disk)) &&
+       (!datestamp || *datestamp == '\0' || match_datestamp(datestamp, file->datestamp)) &&
+       (!level || *level == '\0' || match_level(level, level_str)))
 	return 1;
     else
 	return 0;
