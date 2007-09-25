@@ -29,7 +29,6 @@ libamanda_la_SOURCES =		\
 	event.c			\
 	file.c			\
 	fileheader.c		\
-	getcwd.c		\
 	glib-util.c		\
 	match.c			\
 	packet.c		\
@@ -104,7 +103,6 @@ noinst_HEADERS =		\
 	event.h			\
 	file.h			\
 	fileheader.h		\
-	getcwd.h		\
 	glib-util.h		\
 	packet.h		\
 	pipespawn.h		\

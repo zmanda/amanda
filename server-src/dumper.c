@@ -297,7 +297,7 @@ main(
     } else {
         char * cwd;
         
-        cwd = safe_getcwd();
+        cwd = g_get_current_dir();
         if (cwd == NULL) {
 	    error(_("Cannot determine current working directory: %s"),
 		  strerror(errno));

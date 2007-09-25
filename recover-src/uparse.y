@@ -155,7 +155,7 @@ deletex_path:
   ;
 
 local_command:
-	LPWD { char * buf= safe_getcwd(); puts(buf); free(buf); }
+	LPWD { char * buf= g_get_current_dir(); puts(buf); free(buf); }
   |     LCD PATH {
 		local_cd($2);
 		amfree($2);

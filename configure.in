@@ -2904,7 +2904,6 @@ ICE_CHECK_DECL(fputs,stdio.h)
 ICE_CHECK_DECL(fread,stdio.h stdlib.h)
 ICE_CHECK_DECL(fseek,stdio.h)
 ICE_CHECK_DECL(fwrite,stdio.h stdlib.h)
-AC_CHECK_FUNCS(getcwd getwd getfsent)
 AC_CHECK_FUNCS(getfsent)
 ICE_CHECK_DECL(gethostname,unistd.h)
 AC_FUNC_GETMNTENT

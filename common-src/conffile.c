@@ -5223,7 +5223,7 @@ find_configuration(
     } else {
         char * cwd;
 
-        cwd = safe_getcwd();
+        cwd = g_get_current_dir();
         if (cwd == NULL) {
 	    error("cannot determine current working directory");
             g_assert_not_reached();

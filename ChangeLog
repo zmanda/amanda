@@ -1,3 +1,12 @@
+2007-09-25  Dustin J. Mitchell <dustin@zmanda.com> (merged by dustin@zmanda.com)
+	* device-src/tests/device_test.c configure.in
+	  recover-src/extract_list.c recover-src/uparse.y
+	  server-src/amlogroll.c server-src/dumper.c server-src/reporter.c
+	  common-src/conffile.c common-src/amanda.h common-src/getcwd.c
+	  common-src/getcwd.h common-src/Makefile.am: Replace calls
+	  to safe_getcwd with calls to g_get_current_dir(), which
+	  has the same signature and semantics.
+
 2007-09-25  Ian Turner <ian@zmanda.com> (merged by dustin@zmanda.com)
 	* restore-src/restore.c: Fix a bug where amfetchdump would not
 	  restore anything when given the -p option. Thanks to Jean-Louis

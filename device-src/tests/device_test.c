@@ -38,7 +38,7 @@ static gboolean write_whole_file(Device * device) {
     strcpy(dumpfile.datestamp, tmp);
     amfree(tmp);
     strcpy(dumpfile.name, "localhost");
-    tmp = getcwd(NULL, 0);
+    tmp = g_get_current_dir();
     strcpy(dumpfile.disk, tmp);
     amfree(tmp);
     strcpy(dumpfile.program, "TESTER");

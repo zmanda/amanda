@@ -76,7 +76,7 @@ main(
     
     erroutput_type = ERR_INTERACTIVE;
 
-    cwd = safe_getcwd();
+    cwd = g_get_current_dir();
     if (cwd == NULL) {
 	error(_("Cannot determine current working directory: %s"),
 	        strerror(errno));

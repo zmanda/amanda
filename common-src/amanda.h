@@ -513,7 +513,6 @@ void debug_dup_stderr_to_debug(void);
 #define ERR_AMANDALOG	4
 
 #include "file.h"
-#include "getcwd.h"
 
 void   set_logerror(void (*f)(char *));
 void   set_pname(char *pname);

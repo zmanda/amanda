@@ -2171,7 +2171,7 @@ extract_files(void)
     }
     printf("\n");
 
-    cwd = safe_getcwd();
+    cwd = g_get_current_dir();
     if (cwd == NULL) {
 	perror(_("extract_list: Current working directory unavailable"));
 	exit(1);
