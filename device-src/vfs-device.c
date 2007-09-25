@@ -231,8 +231,8 @@ static void vfs_device_finalize(GObject * obj_self) {
 
     if(G_OBJECT_CLASS(parent_class)->finalize)
         (* G_OBJECT_CLASS(parent_class)->finalize)(obj_self);
-    /* Above frees self->dir_name. */
-    self->dir_name = NULL;
+
+    amfree(self->dir_name);
 
     if(self->dir_handle) {
         closedir (self->dir_handle);
@@ -460,24 +460,16 @@ static void update_volume_size(VfsDevice * self) {
 static gboolean 
 vfs_device_open_device (Device * pself, char * device_name) {
     VfsDevice * self;
-    char * subdir;
     
     self = VFS_DEVICE(pself);
     g_return_val_if_fail (self != NULL, FALSE);
     g_return_val_if_fail (device_name != NULL, FALSE);
-    
-    /* First thing first. Do we have a directory? */
-    if (!check_is_dir(device_name, TRUE)) {
-        return FALSE;
-    }
 
-    /* Now, figure out if we are using old or new mode.
-     * If there is a subdirectory (or link to one) named 'data', we
-     * use that instead. */
-    subdir = g_strconcat(device_name, "/data/", NULL);
-    if (check_is_dir(subdir, FALSE)) {
-        amfree(device_name);
-        device_name = subdir;
+    /* We don't have to free this ourselves; it will be freed by
+     * vfs_device_finalize whether we succeed here or not. */
+    self->dir_name = g_strconcat(device_name, "/data/", NULL);
+    if (!check_is_dir(self->dir_name, TRUE)) {
+        return FALSE;
     }
 
     /* Next open the directory itself. */
@@ -485,11 +477,8 @@ vfs_device_open_device (Device * pself, char * device_name) {
     if (self->dir_handle == NULL) {
         fprintf(stderr, "Couldn't open directory %s for reading: %s\n",
                 device_name, strerror(errno));
-        amfree(device_name);
         return FALSE;
     }
-
-    self->dir_name = device_name;
 
     if (!open_lock(self, -1, FALSE))
         return FALSE;
