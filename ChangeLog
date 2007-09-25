@@ -1,4 +1,7 @@
 2007-09-25  Jean-Louis Martineau <martineau@zmanda.com> (merged by dustin@zmanda.com)
+	* restore-src/restore.c: Don't send text to prompt_out if amidxtaped.
+
+2007-09-25  Jean-Louis Martineau <martineau@zmanda.com> (merged by dustin@zmanda.com)
 	* restore-src/amfetchdump.c: Fix a bug where amfetchdump will never
 				     try to use the changer.
 

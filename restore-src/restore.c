@@ -1504,9 +1504,11 @@ try_restore_single_file(Device * device, int file_num, int* next_file,
     
 
     if (!run_dumpspecs(dumpspecs, source.header)) {
-        fprintf(prompt_out, "%s: %d: skipping ",
-                get_pname(), file_num);
-        print_header(prompt_out, source.header);
+	if(!flags->amidxtaped) {
+            fprintf(prompt_out, "%s: %d: skipping ",
+		    get_pname(), file_num);
+            print_header(prompt_out, source.header);
+	}
         return RESTORE_STATUS_NEXT_FILE;
     }
 
@@ -1517,9 +1519,11 @@ try_restore_single_file(Device * device, int file_num, int* next_file,
         return RESTORE_STATUS_STOP;
     }
 
-    fprintf(prompt_out, "%s: %d: restoring ",
-            get_pname(), file_num);
-    print_header(prompt_out, source.header);
+    if (!flags->amidxtaped) {
+	fprintf(stderr, "%s: %d: restoring ",
+		get_pname(), file_num);
+	print_header(stderr, source.header);
+    }
     record_seen_dump(tape_seen, source.header);
     restore(&source, flags);
     return RESTORE_STATUS_NEXT_FILE;
@@ -1612,8 +1616,11 @@ search_a_tape(Device      * device,
             file_num = 1;
         }
 
-        fprintf(prompt_out, "Restoring from tape %s starting with file %d.\n",
-                device->volume_label, file_num);
+	if (!flags->amidxtaped) {
+            fprintf(prompt_out, "Restoring from tape %s starting with file %d.\n",
+		    device->volume_label, file_num);
+	    fflush(prompt_out);
+	}
 
         for (;;) {
             restore_status =
