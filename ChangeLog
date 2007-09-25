@@ -1,4 +1,9 @@
 2007-09-25  Dustin J. Mitchell <dustin@zmanda.com>
+	* server-src/amcheck.c: remove debugging message
+	* device-src/tape-posix.c: fix compilation
+	  errors when MTCOMPRESSION is not defined
+
+2007-09-25  Dustin J. Mitchell <dustin@zmanda.com>
 	* Makefile.am config/Makefile.am config/ax_create_stdint_h.m4i
 	  autogen configure.in: remove AX_CREATE_STDINT_H
 	* configure.in: add system-specific glib configuration

@@ -114,7 +114,8 @@ gboolean tape_weof(int fd, guint8 count) {
     return 0 == ioctl(fd, MTIOCTOP, &mt);
 }
 
-gboolean tape_setcompression(int fd, gboolean on) {
+gboolean tape_setcompression(int fd G_GNUC_UNUSED, 
+	gboolean on G_GNUC_UNUSED) {
 #ifdef MTCOMPRESSION
     struct mtop mt;
     mt.mt_op = MTCOMPRESSION;

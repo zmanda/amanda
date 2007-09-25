@@ -629,8 +629,6 @@ static gboolean test_tape_status(FILE * outf) {
     char * label = NULL;
     char * tapename = NULL;
 
-    fprintf(stderr, "%d Testing tape status\n", getpid());
-
     bzero(&property_value, sizeof(property_value));
     
     tapename = getconf_str(CNF_TAPEDEV);
