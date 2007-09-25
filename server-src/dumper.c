@@ -1695,7 +1695,7 @@ bad_nak:
 	return;
     }
 
-    fprintf(stderr, _("got response:\n----\n%s\n----\n\n"), pkt->body);
+    dbprintf(_("got response:\n----\n%s\n----\n\n"), pkt->body);
 
     for(i = 0; i < NSTREAMS; i++) {
 	ports[i] = -1;
@@ -1964,7 +1964,7 @@ startup_dump(
 		    "\n",
 		    NULL);
 
-    fprintf(stderr, _("send request:\n----\n%s\n----\n\n"), req);
+    dbprintf(_("send request:\n----\n%s\n----\n\n"), req);
     secdrv = security_getdriver(authopt);
     if (secdrv == NULL) {
 	error(_("no '%s' security driver available for host '%s'"),

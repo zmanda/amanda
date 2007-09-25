@@ -2538,6 +2538,7 @@ arglist_function1(
     char *sep;
     char *next;
     char *qname = quote_string(dp->name);
+    char *errstr, *qerrstr;
 
     arglist_start(argp, delete);
 
@@ -2567,12 +2568,17 @@ arglist_function1(
 			   " ", planner_timestamp ? planner_timestamp : "?",
 			   " ", level_str,
 			   NULL);
-    sep = " [";
+    errstr = NULL;
+    sep = "[";
     while ((next = arglist_val(argp, char *)) != NULL) {
-	bi->errstr = newvstralloc(bi->errstr, bi->errstr, sep, next, NULL);
+	vstrextend(&errstr, sep, next, NULL);
 	sep = " ";
     }
-    strappend(bi->errstr, "]");
+    strappend(errstr, "]");
+    qerrstr = quote_string(errstr);
+    vstrextend(&bi->errstr, " ", qerrstr);
+    amfree(errstr);
+    amfree(qerrstr);
     arglist_end(argp);
 
     if (delete) {
@@ -2847,7 +2853,7 @@ static void output_scheduleline(
     if(ep->dump_csize == (off_t)-1) {
 	/* no estimate, fail the disk */
 	fprintf(stderr,
-		_("%s: FAILED %s %s %s %d [no estimate]\n"),
+		_("%s: FAILED %s %s %s %d \"[no estimate]\"\n"),
 		get_pname(),
 		dp->host->hostname, qname, planner_timestamp, ep->dump_level);
 	log_add(L_FAIL, _("%s %s %s %d [no estimate]"),

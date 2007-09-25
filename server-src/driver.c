@@ -1196,7 +1196,8 @@ handle_taper_result(
             
 	    dp = serial2disk(result_argv[2]);
 	    assert(dp == taper_disk);
-	    free_serial(result_argv[2]);
+	    if (!taper_dumper)
+		free_serial(result_argv[2]);
             
 	    qname = quote_string(dp->name);
 	    printf(_("driver: finished-cmd time %s taper wrote %s:%s\n"),
@@ -1224,7 +1225,8 @@ handle_taper_result(
             
 	    dp = serial2disk(result_argv[2]);
 	    assert(dp == taper_disk);
-	    free_serial(result_argv[2]);
+            if (!taper_dumper)
+                free_serial(result_argv[2]);
 
 	    printf(_("driver: finished-cmd time %s taper wrote %s:%s\n"),
 		   walltime_str(curclock()), dp->host->hostname, dp->name);
@@ -1317,7 +1319,8 @@ handle_taper_result(
 
         case TAPE_ERROR: /* TAPE-ERROR <handle> <err mess> */
             dp = serial2disk(result_argv[2]);
-            free_serial(result_argv[2]);
+	    if (!taper_dumper)
+		free_serial(result_argv[2]);
             printf(_("driver: finished-cmd time %s taper wrote %s:%s\n"),
                    walltime_str(curclock()), dp->host->hostname, dp->name);
             fflush(stdout);
@@ -1362,7 +1365,10 @@ handle_taper_result(
 
 	if (taper_result != LAST_TOK) {
 	    if(taper_dumper) {
-		dumper_taper_result(taper_disk);
+		if (taper_dumper->result != LAST_TOK) {
+		    // Dumper already returned it's result
+		    dumper_taper_result(taper_disk);
+		}
 	    } else {
 		file_taper_result(taper_disk);
 	    }
@@ -1617,8 +1623,6 @@ handle_dumper_result(
 		/*NOTREACHED*/
 	    }
 
-	    /*free_serial(result_argv[2]);*/
-
 	    sched(dp)->origsize = OFF_T_ATOI(result_argv[3]);
 	    sched(dp)->dumptime = TIME_T_ATOI(result_argv[5]);
 
@@ -1717,6 +1721,9 @@ handle_dumper_result(
 		}
 		taper_sendresult = 0;
 	    }
+	}
+	if (taper_dumper && taper_result != LAST_TOK) {
+	    dumper_taper_result(dp);
 	}
     } while(areads_dataready(dumper->fd));
 }

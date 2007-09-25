@@ -287,12 +287,18 @@ while($lineX = <AMDUMP>) {
 	} elsif($line[0] eq "GENERATING" &&
 				$line[1] eq "SCHEDULE") {
 		$generating_schedule=1;
+	} elsif($line[0] eq "--------") {
+		if ($generating_schedule == 1) {
+			$generating_schedule = 2;
+		} elsif ($generating_schedule == 2) {
+			$generating_schedule = 3;
+		}
 	} elsif($line[0] eq "DUMP") {
-		if($generating_schedule == 1 ) {
+		if($generating_schedule == 2 ) {
 			$host = $line[1];
 			$partition = $line[3];
 			$datestamp = $line[4];
-		   $hostpart=&make_hostpart($host,$partition,$datestamp);
+			$hostpart=&make_hostpart($host,$partition,$datestamp);
 			$level{$hostpart}=$line[6];
 			$esize=$line[14];	#compressed size
 			$esize=32 if $esize<32;

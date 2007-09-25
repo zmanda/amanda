@@ -1,4 +1,12 @@
 2007-09-25  Ian Turner <ian@zmanda.com> (merged by dustin@zmanda.com)
+	Thanks to Jean-Louis Martineau <martineau@zmanda.com> for these fixes:
+	* server-src/dumper.c: Log packet to debug file.
+	* server-src/planner.c: Improve quoting.
+	* server-src/driver.c: Don't call free_serial if we still need it.
+	* server-src/driver.c: Wait for dumper result if taper fail.
+	* server-src/amstatus.pl.in: Improve parsing of initial schedule.
+
+2007-09-25  Ian Turner <ian@zmanda.com> (merged by dustin@zmanda.com)
 	* device-src/tape-device.c: Use the right default block size for
 	  reading.
 
