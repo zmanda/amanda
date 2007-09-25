@@ -1,4 +1,9 @@
 2007-09-25  Ian Turner <ian@zmanda.com> (merged by dustin@zmanda.com)
+	* server-src/taper-source.c, server-src/taper-disk-port-source.c,
+	  server-src/taper.c: Be careful not to use strings from getcwd()
+	  past the next invocation of getcwd().
+
+2007-09-25  Ian Turner <ian@zmanda.com> (merged by dustin@zmanda.com)
 	* device-src/vfs-device.c: Use old VFS device specification.
 
 2007-09-25  Ian Turner <ian@zmanad.com> (merged by dustin@zmanda.com)

@@ -145,7 +145,7 @@ TaperSource * taper_source_new(char * handle,
             if (disk_rval == NULL)
                 return NULL;
 
-            disk_rval->buffer_dir_name = split_disk_buffer;
+            disk_rval->buffer_dir_name = g_strdup(split_disk_buffer);
             disk_rval->fallback_buffer_size = fallback_splitsize;
             source_rval->max_part_size = splitsize;
         } else {

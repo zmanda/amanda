@@ -722,9 +722,10 @@ static void process_port_write(taper_state_t * state,
         g_assert_not_reached();
     }
     
-    split_diskbuffer = cmdargs->argv[8];
-    if (strcmp(split_diskbuffer, "NULL") == 0) {
+    if (strcmp(cmdargs->argv[8], "NULL") == 0) {
         split_diskbuffer = NULL;
+    } else {
+        split_diskbuffer = g_strdup(cmdargs->argv[8]);
     }
     
     errno = 0;
@@ -741,8 +742,10 @@ static void process_port_write(taper_state_t * state,
     
     if (!open_read_socket(&dump_state, split_diskbuffer, splitsize,
                           fallback_splitsize)) {
+        free(split_diskbuffer);
         return;
     }
+    free(split_diskbuffer);
 
     run_device_output(state, &dump_state);
 
