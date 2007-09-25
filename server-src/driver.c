@@ -978,9 +978,9 @@ start_some_dumps(
 		sched(diskp)->dumper = NULL;
 		dumper->busy = 0;
 		dumper->dp = NULL;
-		sched(diskp)->attempted++;
+		sched(diskp)->dump_attempted++;
 		free_serial_dp(diskp);
-		if(sched(diskp)->attempted < 2)
+		if(sched(diskp)->dump_attempted < 2)
 		    enqueue_disk(rq, diskp);
 	    }
 	    else {
@@ -1387,21 +1387,50 @@ file_taper_result(
 			  sched(dp)->level);
     }
 
-    sched(dp)->attempted += 1;
+    sched(dp)->taper_attempted += 1;
 
     if (taper_input_error) {
 	printf("driver: taper failed %s %s: %s\n",
 		   dp->host->hostname, dp->name, taper_input_error);
-	delete_diskspace(dp);
-	amfree(sched(dp)->destname);
-	amfree(sched(dp)->dumpdate);
-	amfree(sched(dp)->degr_dumpdate);
-	amfree(sched(dp)->datestamp);
-	amfree(dp->up);
-	
+	if (strcmp(sched(dp)->datestamp, driver_timestamp) == 0) {
+	    if(sched(dp)->taper_attempted >= 2) {
+		log_add(L_FAIL, _("%s %s %s %d [too many taper retries after holding disk error: %s]"),
+		    dp->host->hostname, dp->name, sched(dp)->datestamp,
+		    sched(dp)->level, taper_input_error);
+		printf("driver: taper failed %s %s, too many taper retry after holding disk error\n",
+		   dp->host->hostname, dp->name);
+		amfree(sched(dp)->destname);
+		amfree(sched(dp)->dumpdate);
+		amfree(sched(dp)->degr_dumpdate);
+		amfree(sched(dp)->datestamp);
+		amfree(dp->up);
+	    } else {
+		log_add(L_INFO, _("%s %s %s %d [Will retry dump because of holding disk error: %s]"),
+			dp->host->hostname, dp->name, sched(dp)->datestamp,
+			sched(dp)->level, taper_input_error);
+		printf("driver: taper will retry %s %s because of holding disk error\n",
+			dp->host->hostname, dp->name);
+		if (dp->to_holdingdisk != HOLD_REQUIRED) {
+		    dp->to_holdingdisk = HOLD_NEVER;
+		    sched(dp)->dump_attempted -= 1;
+		    headqueue_disk(&runq, dp);
+		} else {
+		    amfree(sched(dp)->destname);
+		    amfree(sched(dp)->dumpdate);
+		    amfree(sched(dp)->degr_dumpdate);
+		    amfree(sched(dp)->datestamp);
+		    amfree(dp->up);
+		}
+	    }
+	} else {
+	    amfree(sched(dp)->destname);
+	    amfree(sched(dp)->dumpdate);
+	    amfree(sched(dp)->degr_dumpdate);
+	    amfree(sched(dp)->datestamp);
+	    amfree(dp->up);
+	}
     } else if (taper_tape_error) {
-	sched(dp)->attempted++;
-	if(sched(dp)->attempted >= 2) {
+	if(sched(dp)->taper_attempted >= 2) {
 	    log_add(L_FAIL, _("%s %s %s %d [too many taper retries]"),
 		    dp->host->hostname, dp->name, sched(dp)->datestamp,
 		    sched(dp)->level);
@@ -1468,10 +1497,12 @@ dumper_taper_result(
 
     is_partial = dumper->result != DONE || taper_result != DONE;
 
-    sched(dp)->attempted += 1;
+    sched(dp)->dump_attempted += 1;
+    sched(dp)->taper_attempted += 1;
 
     if((dumper->result != DONE || taper_result != DONE) &&
-	sched(dp)->attempted <= 1) {
+	sched(dp)->dump_attempted <= 1 &&
+	sched(dp)->taper_attempted <= 1) {
 	enqueue_disk(&runq, dp);
     }
 
@@ -1554,15 +1585,14 @@ dumper_chunker_result(
     holdalloc(h[activehd]->disk)->allocated_dumpers--;
     adjust_diskspace(dp, DONE);
 
-    sched(dp)->attempted += 1;
+    sched(dp)->dump_attempted += 1;
 
     if((dumper->result != DONE || chunker->result != DONE) &&
-       sched(dp)->attempted <= 1) {
+       sched(dp)->dump_attempted <= 1) {
 	delete_diskspace(dp);
 	enqueue_disk(&runq, dp);
     }
     else if(size > (off_t)DISK_BLOCK_KB) {
-	sched(dp)->attempted = 0;
 	enqueue_disk(&tapeq, dp);
 	startaflush();
     }
@@ -1648,7 +1678,7 @@ handle_dumper_result(
 	     * Requeue this disk, and fall through to the FAILED
 	     * case for cleanup.
 	     */
-	    if(sched(dp)->attempted) {
+	    if(sched(dp)->dump_attempted) {
 		log_add(L_FAIL, _("%s %s %s %d [too many dumper retry: %s]"),
 	    	    dp->host->hostname, dp->name, sched(dp)->datestamp,
 	    	    sched(dp)->level, result_argv[3]);
@@ -1687,7 +1717,7 @@ handle_dumper_result(
 	    dumper->down = 1;	/* mark it down so it isn't used again */
 	    if(dp) {
 		/* if it was dumping something, zap it and try again */
-		if(sched(dp)->attempted) {
+		if(sched(dp)->dump_attempted) {
 	    	log_add(L_FAIL, _("%s %s %s %d [%s died]"),
 	    		dp->host->hostname, qname, sched(dp)->datestamp,
 	    		sched(dp)->level, dumper->name);
@@ -1897,7 +1927,7 @@ handle_chunker_result(
 		    /*NOTREACHED*/
 		}
 		qname = quote_string(dp->name);
-		if(sched(dp)->attempted) {
+		if(sched(dp)->dump_attempted) {
 		    log_add(L_FAIL, _("%s %s %s %d [%s died]"),
 	    		    dp->host->hostname, qname, sched(dp)->datestamp,
 	    		    sched(dp)->level, chunker->name);
@@ -2085,7 +2115,8 @@ read_flush(void)
 	sp->est_kps = 10;
 	sp->priority = 0;
 	sp->degr_level = -1;
-	sp->attempted = 0;
+	sp->dump_attempted = 0;
+	sp->taper_attempted = 0;
 	sp->act_size = holding_file_size(destname, 0);
 	sp->holdp = build_diskspace(destname);
 	if(sp->holdp == NULL) continue;
@@ -2343,7 +2374,8 @@ read_schedule(
 	}
 	/*@end@*/
 
-	sp->attempted = 0;
+	sp->dump_attempted = 0;
+	sp->taper_attempted = 0;
 	sp->act_size = (off_t)0;
 	sp->holdp = NULL;
 	sp->activehd = -1;

@@ -78,7 +78,9 @@ typedef struct assignedhd_s {
 /* schedule structure */
 
 typedef struct sched_s {
-    int attempted, priority;
+    int dump_attempted;
+    int taper_attempted;
+    int  priority;
     int level, degr_level;
     unsigned long est_time, degr_time;
     off_t est_nsize, est_csize, est_size;
