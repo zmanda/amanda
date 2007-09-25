@@ -733,30 +733,27 @@ validate_positive1(
 
 static void
 validate_runspercycle(
-    struct s_conf_var *np,
+    struct s_conf_var *np G_GNUC_UNUSED,
     val_t        *val)
 {
-    np = np;
     if(val->v.i < -1)
 	conf_parserror(_("runspercycle must be >= -1"));
 }
 
 static void
 validate_bumppercent(
-    struct s_conf_var *np,
+    struct s_conf_var *np G_GNUC_UNUSED,
     val_t        *val)
 {
-    np = np;
     if(val->v.i < 0 || val->v.i > 100)
 	conf_parserror(_("bumppercent must be between 0 and 100"));
 }
 
 static void
 validate_inparallel(
-    struct s_conf_var *np,
+    struct s_conf_var *np G_GNUC_UNUSED,
     val_t        *val)
 {
-    np = np;
     if(val->v.i < 1 || val->v.i >MAX_DUMPERS)
 	conf_parserror(_("inparallel must be between 1 and MAX_DUMPERS (%d)"),
 		       MAX_DUMPERS);
@@ -764,10 +761,9 @@ validate_inparallel(
 
 static void
 validate_bumpmult(
-    struct s_conf_var *np,
+    struct s_conf_var *np G_GNUC_UNUSED,
     val_t        *val)
 {
-    np = np;
     if(val->v.r < 0.999) {
 	conf_parserror(_("bumpmult must be positive"));
     }
@@ -775,10 +771,9 @@ validate_bumpmult(
 
 static void
 validate_displayunit(
-    struct s_conf_var *np,
+    struct s_conf_var *np G_GNUC_UNUSED,
     val_t        *val)
 {
-    np = np;
     if(strcmp(val->v.s, "k") == 0 ||
        strcmp(val->v.s, "K") == 0) {
 	val->v.s[0] = (char)toupper(val->v.s[0]);
@@ -806,29 +801,26 @@ validate_displayunit(
 
 static void
 validate_reserve(
-    struct s_conf_var *np,
+    struct s_conf_var *np G_GNUC_UNUSED,
     val_t        *val)
 {
-    np = np;
     if(val->v.i < 0 || val->v.i > 100)
 	conf_parserror(_("reserve must be between 0 and 100"));
 }
 
 static void
 validate_use(
-    struct s_conf_var *np,
+    struct s_conf_var *np G_GNUC_UNUSED,
     val_t        *val)
 {
-    np = np;
     val->v.am64 = am_floor(val->v.am64, DISK_BLOCK_KB);
 }
 
 static void
 validate_chunksize(
-    struct s_conf_var *np,
+    struct s_conf_var *np G_GNUC_UNUSED,
     val_t        *val)
 {
-    np = np;
     if(val->v.am64 == 0) {
 	val->v.am64 = ((AM64_MAX / 1024) - (2 * DISK_BLOCK_KB));
     }
@@ -843,10 +835,9 @@ validate_chunksize(
 
 static void
 validate_blocksize(
-    struct s_conf_var *np,
+    struct s_conf_var *np G_GNUC_UNUSED,
     val_t        *val)
 {
-    np = np;
     if(val->v.l < DISK_BLOCK_KB) {
 	conf_parserror(_("Tape blocksize must be at least %d KBytes"),
 		  DISK_BLOCK_KB);
@@ -858,10 +849,9 @@ validate_blocksize(
 
 static void
 validate_debug(
-    struct s_conf_var *np,
+    struct s_conf_var *np G_GNUC_UNUSED,
     val_t        *val)
 {
-    np = np;
     if(val->v.i < 0 || val->v.i > 9) {
 	conf_parserror(_("Debug must be between 0 and 9"));
     }
@@ -869,10 +859,9 @@ validate_debug(
 
 static void
 validate_reserved_port_range(
-    struct s_conf_var *np,
+    struct s_conf_var *np G_GNUC_UNUSED,
     val_t        *val)
 {
-    np = np;
     if(val->v.intrange[0] < 1 || val->v.intrange[0] > IPPORT_RESERVED-1) {
 	conf_parserror(_("portrange must be between 1 and %d"), IPPORT_RESERVED-1);
     } else if(val->v.intrange[1] < 1 || val->v.intrange[1] > IPPORT_RESERVED-1) {
@@ -882,10 +871,9 @@ validate_reserved_port_range(
 
 static void
 validate_unreserved_port_range(
-    struct s_conf_var *np,
+    struct s_conf_var *np G_GNUC_UNUSED,
     val_t        *val)
 {
-    np = np;
     if(val->v.intrange[0] < IPPORT_RESERVED+1 || val->v.intrange[0] > 65536) {
 	conf_parserror(_("portrange must be between %d and 65536"), IPPORT_RESERVED+1);
     } else if(val->v.intrange[1] < IPPORT_RESERVED+1 || val->v.intrange[1] > 65536) {
@@ -895,10 +883,9 @@ validate_unreserved_port_range(
 
 static void
 validate_taperstart(
-    struct s_conf_var *np,
+    struct s_conf_var *np G_GNUC_UNUSED,
     val_t        *val)
 {
-    np = np;
     if(val->v.intrange[0] < 0|| val->v.intrange[0] > 100) {
        conf_parserror("taperstart value must be between 0 and 100");
     } else if(val->v.intrange[1] < 0 || val->v.intrange[1] > 100) {
@@ -2078,10 +2065,9 @@ copy_interface(void)
 
 static void
 get_comprate(
-    t_conf_var *np,
+    t_conf_var *np G_GNUC_UNUSED,
     val_t *val)
 {
-    np = np;
     get_conftoken(CONF_REAL);
     val->v.rate[0] = tokenval.v.r;
     val->v.rate[1] = tokenval.v.r;
@@ -2114,10 +2100,9 @@ get_comprate(
 
 static void
 read_intrange(
-    t_conf_var *np,
+    t_conf_var *np G_GNUC_UNUSED,
     val_t *val)
 {
-    np = np;
     get_conftoken(CONF_INT);
     val->v.intrange[0] = tokenval.v.i;
     val->v.intrange[1] = tokenval.v.i;
@@ -2144,14 +2129,13 @@ read_intrange(
 
 static void
 get_compress(
-    t_conf_var *np,
+    t_conf_var *np G_GNUC_UNUSED,
     val_t *val)
 {
     int serv, clie, none, fast, best, custom;
     int done;
     comp_t comp;
 
-    np = np;
     ckseen(&val->seen);
 
     serv = clie = none = fast = best = custom  = 0;
@@ -2203,12 +2187,11 @@ get_compress(
 
 static void
 get_encrypt(
-    t_conf_var *np,
+    t_conf_var *np G_GNUC_UNUSED,
     val_t *val)
 {
    encrypt_t encrypt;
 
-   np = np;
    ckseen(&val->seen);
 
    get_conftoken(CONF_ANY);
@@ -2236,12 +2219,11 @@ get_encrypt(
 
 static void
 get_holding(
-    t_conf_var *np,
+    t_conf_var *np G_GNUC_UNUSED,
     val_t *val)
 {
    dump_holdingdisk_t holding;
 
-   np = np;
    ckseen(&val->seen);
 
    get_conftoken(CONF_ANY);
@@ -2275,10 +2257,9 @@ get_holding(
 
 static void
 get_taperalgo(
-    t_conf_var *np,
+    t_conf_var *np G_GNUC_UNUSED,
     val_t *val)
 {
-    np = np;
     ckseen(&val->seen);
 
     get_conftoken(CONF_ANY);
@@ -2296,12 +2277,11 @@ get_taperalgo(
 
 static void
 get_priority(
-    t_conf_var *np,
+    t_conf_var *np G_GNUC_UNUSED,
     val_t *val)
 {
     int pri;
 
-    np = np;
     ckseen(&val->seen);
 
     get_conftoken(CONF_ANY);
@@ -2319,12 +2299,11 @@ get_priority(
 
 static void
 get_strategy(
-    t_conf_var *np,
+    t_conf_var *np G_GNUC_UNUSED,
     val_t *val)
 {
     int strat;
 
-    np = np;
     ckseen(&val->seen);
 
     get_conftoken(CONF_ANY);
@@ -2356,12 +2335,11 @@ get_strategy(
 
 static void
 get_estimate(
-    t_conf_var *np,
+    t_conf_var *np G_GNUC_UNUSED,
     val_t *val)
 {
     int estime;
 
-    np = np;
     ckseen(&val->seen);
 
     get_conftoken(CONF_ANY);
@@ -2384,14 +2362,13 @@ get_estimate(
 
 static void
 get_exclude(
-    t_conf_var *np,
+    t_conf_var *np G_GNUC_UNUSED,
     val_t *val)
 {
     int file, got_one = 0;
     sl_t *exclude;
     int optional = 0;
 
-    np = np;
     get_conftoken(CONF_ANY);
     if(tok == CONF_LIST) {
 	file = 0;
@@ -2433,64 +2410,6 @@ get_exclude(
 	val->v.exinclude.sl_file = exclude;
     val->v.exinclude.optional = optional;
 }
-
-/*
-static void get_include(np, val)
-    t_conf_var *np;
-    val_t *val;
-{
-    int list, got_one = 0;
-    sl_t *include;
-    int optional = 0;
-    int append = 0;
-
-    get_conftoken(CONF_ANY);
-    if(tok == CONF_LIST) {
-	list = 1;
-	include = dpcur.value[DUMPTYPE_INCLUDE_LIST].v.sl;
-	ckseen(&dpcur.value[DUMPTYPE_INCLUDE_LIST].seen);
-	get_conftoken(CONF_ANY);
-    }
-    else {
-	list = 0;
-	include = dpcur.value[DUMPTYPE_INCLUDE_FILE].v.sl;
-	ckseen(&dpcur.value[DUMPTYPE_INCLUDE_FILE].seen);
-	if(tok == CONF_EFILE) get_conftoken(CONF_ANY);
-    }
-
-    if(tok == CONF_OPTIONAL) {
-	get_conftoken(CONF_ANY);
-	optional = 1;
-    }
-
-    if(tok == CONF_APPEND) {
-	get_conftoken(CONF_ANY);
-	append = 1;
-    }
-    else {
-	free_sl(include);
-	include = NULL;
-	append = 0;
-    }
-
-    while(tok == CONF_STRING) {
-	include = append_sl(include, tokenval.v.s);
-	got_one = 1;
-	get_conftoken(CONF_ANY);
-    }
-    unget_conftoken();
-
-    if(got_one == 0) { free_sl(include); include = NULL; }
-
-    if(list == 0)
-	dpcur.value[DUMPTYPE_INCLUDE_FILE].v.sl = include;
-    else {
-	dpcur.value[DUMPTYPE_INCLUDE_LIST].v.sl = include;
-	if(!append || optional)
-	    dpcur.value[DUMPTYPE_INCLUDE_OPTIONAL].v.i = optional;
-    }
-}
-*/
 
 /* ------------------------ */
 
@@ -4124,10 +4043,9 @@ negative_number: /* look for goto negative_number below sign is set there */
 
 static void
 read_string(
-    t_conf_var *np,
+    t_conf_var *np G_GNUC_UNUSED,
     val_t *val)
 {
-    np = np;
     ckseen(&val->seen);
     get_conftoken(CONF_STRING);
     val->v.s = newstralloc(val->v.s, tokenval.v.s);
@@ -4135,10 +4053,9 @@ read_string(
 
 static void
 read_ident(
-    t_conf_var *np,
+    t_conf_var *np G_GNUC_UNUSED,
     val_t *val)
 {
-    np = np;
     ckseen(&val->seen);
     get_conftoken(CONF_IDENT);
     val->v.s = newstralloc(val->v.s, tokenval.v.s);
@@ -4146,62 +4063,45 @@ read_ident(
 
 static void
 read_int(
-    t_conf_var *np,
+    t_conf_var *np G_GNUC_UNUSED,
     val_t *val)
 {
-    np = np;
     ckseen(&val->seen);
     val->v.i = get_int();
 }
 
-/*
-static void
-read_long(
-    t_conf_var *np,
-    val_t *val)
-{
-    np = np;
-    ckseen(&val->seen);
-    val->v.l = get_long();
-}
-*/
-
 static void
 read_size(
-    t_conf_var *np,
+    t_conf_var *np G_GNUC_UNUSED,
     val_t *val)
 {
-    np = np;
     ckseen(&val->seen);
     val->v.size = get_size();
 }
 
 static void
 read_am64(
-    t_conf_var *np,
+    t_conf_var *np G_GNUC_UNUSED,
     val_t *val)
 {
-    np = np;
     ckseen(&val->seen);
     val->v.am64 = get_am64_t();
 }
 
 static void
 read_bool(
-    t_conf_var *np,
+    t_conf_var *np G_GNUC_UNUSED,
     val_t *val)
 {
-    np = np;
     ckseen(&val->seen);
     val->v.i = get_bool();
 }
 
 static void
 read_real(
-    t_conf_var *np,
+    t_conf_var *np G_GNUC_UNUSED,
     val_t *val)
 {
-    np = np;
     ckseen(&val->seen);
     get_conftoken(CONF_REAL);
     val->v.r = tokenval.v.r;
@@ -4209,17 +4109,15 @@ read_real(
 
 static void
 read_time(
-    t_conf_var *np,
+    t_conf_var *np G_GNUC_UNUSED,
     val_t *val)
 {
-    np = np;
     ckseen(&val->seen);
     val->v.t = get_time();
 }
 
-static void read_property(t_conf_var *np, val_t *val) {
+static void read_property(t_conf_var *np G_GNUC_UNUSED, val_t *val) {
     char *key, *value;
-    np = np;
     get_conftoken(CONF_STRING);
     key = strdup(tokenval.v.s);
     get_conftoken(CONF_STRING);
