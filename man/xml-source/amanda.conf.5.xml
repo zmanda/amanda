@@ -895,7 +895,9 @@ with one space before it.</para>
 <para>Default:
 <emphasis remap='I'>none</emphasis>.
 The name of an &A; configuration file to include within the current file.
-Useful for sharing dumptypes, tapetypes and interface definitions among several configurations.</para>
+Useful for sharing dumptypes, tapetypes and interface definitions among several configurations.
+Relative pathnames are relative to the configuration directory.
+</para>
   </listitem>
   </varlistentry>
 

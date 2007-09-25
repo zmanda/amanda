@@ -1,4 +1,10 @@
 2007-09-25  Dustin J. Mitchell <dustin@zmanda.com>
+	* man/xml-source/amanda.conf.5.xml: note that includefile can
+	  take relative paths
+	* server-src/amcleanupdisk.c: fix local variable shadowing 
+	  config_dir
+
+2007-09-25  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/holding.c (holding_walk_file): amfree(filename).
 
 2007-09-25  John Franks <jrfranks@zmanda.com> (merged by dustin@zmanda.com)

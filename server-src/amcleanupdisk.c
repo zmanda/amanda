@@ -108,7 +108,6 @@ main(
 {
     FILE *verbose_output = NULL;
     char *conffile;
-    char *config_dir;
 
     /*
      * Configure program for internationalization:
