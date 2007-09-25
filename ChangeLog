@@ -1,3 +1,9 @@
+2007-09-25  Ian Turner <ian@zmanda.com> (merged by dustin@zmanda.com)
+	* restore-src/restore.c: Fix a bug where amfetchdump would not
+	  restore anything when given the -p option. Thanks to Jean-Louis
+	  Martineau <martineau@zmanda.com> for help in the development of
+	  this patch.
+
 2007-09-25  Dustin J. Mitchell <dustin@zmanda.com>
 	* man/xml-source/amanda.conf.5.xml: note that includefile can
 	  take relative paths

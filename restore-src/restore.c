@@ -1510,7 +1510,8 @@ try_restore_single_file(Device * device, int file_num, int* next_file,
         return RESTORE_STATUS_NEXT_FILE;
     }
 
-    if (first_restored_file != NULL && 
+    if (first_restored_file != NULL &&
+        first_restored_file->type != F_UNKNOWN &&
         !headers_equal(first_restored_file, source.header, 1) &&
         (flags->pipe_to_fd == fileno(stdout))) {
         return RESTORE_STATUS_STOP;
