@@ -394,7 +394,8 @@ main(
      */
     if(rst_flags->inventory_log){
 	fprintf(stderr, _("Beginning tape-by-tape search.\n"));
-	search_tapes(stderr, stdin, 1, NULL, dumpspecs, rst_flags, NULL);
+	search_tapes(stderr, stdin, rst_flags->alt_tapedev == NULL,
+                     NULL, dumpspecs, rst_flags, NULL);
 	exit(0);
     }
 
@@ -408,7 +409,8 @@ main(
     if(get_lock == 0) {
 	error(_("%s exists: amdump or amflush is already running, or you must run amcleanup"), rst_conf_logfile);
     }
-    search_tapes(NULL, stdin, 1, needed_tapes, dumpspecs, rst_flags, NULL);
+    search_tapes(NULL, stdin, rst_flags->alt_tapedev != NULL,
+                 needed_tapes, dumpspecs, rst_flags, NULL);
     cleanup();
 
     dumpspec_list_free(dumpspecs);
