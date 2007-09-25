@@ -409,7 +409,7 @@ main(
     if(get_lock == 0) {
 	error(_("%s exists: amdump or amflush is already running, or you must run amcleanup"), rst_conf_logfile);
     }
-    search_tapes(NULL, stdin, rst_flags->alt_tapedev != NULL,
+    search_tapes(NULL, stdin, rst_flags->alt_tapedev == NULL,
                  needed_tapes, dumpspecs, rst_flags, NULL);
     cleanup();
 
