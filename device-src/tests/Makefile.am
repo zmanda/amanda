@@ -6,10 +6,6 @@ INCLUDES =	-I$(top_builddir)/common-src \
 		-I..
 
 noinst_PROGRAMS = queue_test device_test
-LDADD = ../../common-src/libamanda.la \
-	../libamdevice.la \
-	../../common-src/libamanda.la \
-	../../gnulib/libgnu.la
 
 ###
 # Because libamanda includes routines (e.g. regex) provided by some system
@@ -17,4 +13,11 @@ LDADD = ../../common-src/libamanda.la \
 # need to list libamanda twice here, first to override the system library
 # routines, and second to pick up any references in the other libraries.
 ###
+LDADD = ../../common-src/libamanda.la \
+	../libamdevice.la \
+	../../common-src/libamanda.la \
+	../../gnulib/libgnu.la
 
+
+TESTS = semaphore-test
+noinst_PROGRAMS += $(TESTS)

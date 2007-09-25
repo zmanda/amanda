@@ -1,3 +1,9 @@
+2007-09-25  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/tests/semaphore-test.c device-src/tests/Makefile.am:
+	  test semaphore module
+	* device-src/semaphore.c: bugfixes, optimizations
+	* device-src/semaphore.h: inline documentation
+
 2007-09-25  Nikhil Bandiwadekar <nikhil@zmanda.com> (merged by dustin@zmanda.com)
 	* server-src/driver.c: Added quoting to directory name while logging
 	    in statistics section

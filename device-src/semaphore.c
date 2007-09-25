@@ -52,11 +52,11 @@ void semaphore_free(semaphore_t* o) {
     free(o);
 }
 
-/* This function checks if the semaphore would be zero or negative
-   after adjusting by the given amount. If so, the zero_cond is
-   signalled. We assume that the mutex is locked. */
-static void check_empty(semaphore_t * o, int adjust) {
-    if (o->value - adjust <= 0) {
+/* This function checks if the semaphore would is zero or negative.
+ * If so, the zero_cond is signalled. We assume that the mutex is
+ * locked. */
+static void check_empty(semaphore_t * o) {
+    if (o->value <= 0) {
         g_cond_broadcast(o->zero_cond);
     }
 }
@@ -75,11 +75,11 @@ void semaphore_decrement(semaphore_t* o, unsigned int dec) {
     g_return_if_fail(sdec >= 0);
 
     g_mutex_lock(o->mutex);
-    check_empty(o, sdec);
     while (o->value < sdec) {
         g_cond_wait(o->decrement_cond, o->mutex);
     }
     o->value -= sdec;
+    check_empty(o);
     g_mutex_unlock(o->mutex);
 }
 
@@ -88,19 +88,25 @@ void semaphore_force_adjust(semaphore_t* o, int inc) {
 
     g_mutex_lock(o->mutex);
     o->value += inc;
-    check_empty(o, 0);
-    g_cond_broadcast(o->decrement_cond);
+    if (inc < 0)
+	check_empty(o);
+    else
+	g_cond_broadcast(o->decrement_cond);
     g_mutex_unlock(o->mutex);
 
 }
 
 void semaphore_force_set(semaphore_t* o, int value) {
+    int oldvalue;
     g_return_if_fail(o != NULL);
     
     g_mutex_lock(o->mutex);
+    oldvalue = o->value;
     o->value = value;
-    check_empty(o, 0);
-    g_cond_broadcast(o->decrement_cond);
+    if (value < oldvalue)
+	check_empty(o);
+    else
+	g_cond_broadcast(o->decrement_cond);
     g_mutex_unlock(o->mutex);
     
 }
