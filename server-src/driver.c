@@ -726,6 +726,7 @@ startaflush(void)
 	    taper_tape_error = NULL;
 	    taper_result = LAST_TOK;
 	    taper_sendresult = 0;
+	    taper_first_label = NULL;
 	    qname = quote_string(dp->name);
 	    taper_cmd(FILE_WRITE, dp, sched(dp)->destname, sched(dp)->level,
 		      sched(dp)->datestamp);
@@ -1170,7 +1171,6 @@ handle_taper_result(
     void *cookie)
 {
     disk_t *dp;
-    off_t filenum;
     cmd_t cmd;
     int result_argc;
     char *result_argv[MAX_ARGS+1];
@@ -1215,19 +1215,17 @@ handle_taper_result(
 
 	    break;
             
-	case PARTIAL:	/* PARTIAL <handle> INPUT-* TAPE-* <label> <tape file> <stat mess> <input err mesg> <tape err mesg>*/
-	case DONE:	/* DONE <handle> INPUT-GOOD TAPE-GOOD <label> <tape file> <stat mess> <input err mesg> <tape err mesg> */
+	case PARTIAL:	/* PARTIAL <handle> INPUT-* TAPE-* <stat mess> <input err mesg> <tape err mesg>*/
+	case DONE:	/* DONE <handle> INPUT-GOOD TAPE-GOOD <stat mess> <input err mesg> <tape err mesg> */
 	    if(result_argc != 7) {
-		error(_("error: [taper PARTIAL result_argc != 9: %d"), result_argc);
+		error(_("error: [taper PARTIAL result_argc != 7: %d"), result_argc);
 		/*NOTREACHED*/
 	    }
             
 	    dp = serial2disk(result_argv[2]);
 	    assert(dp == taper_disk);
 	    free_serial(result_argv[2]);
-            
-	    filenum = OFF_T_ATOI(result_argv[6]);
-           
+
 	    printf(_("driver: finished-cmd time %s taper wrote %s:%s\n"),
 		   walltime_str(curclock()), dp->host->hostname, dp->name);
 	    fflush(stdout);
@@ -1251,6 +1249,10 @@ handle_taper_result(
                       result_argc);
 		/*NOTREACHED*/
             }
+	    if (!taper_first_label) {
+		taper_first_label = stralloc(result_argv[3]);
+		taper_first_fileno = OFF_T_ATOI(result_argv[4]);
+	    }
             
             break;
         case SPLIT_NEEDNEXT:  /* SPLIT-NEEDNEXT <handle> <kb written> */
@@ -1375,14 +1377,8 @@ file_taper_result(
     disk_t *dp)
 {
     if (taper_result == DONE) {
-	update_info_dumper(dp, sched(dp)->origsize,
-			   sched(dp)->dumpsize, sched(dp)->dumptime);
-	log_add(L_STATS, _("estimate %s %s %s %d [sec %ld nkb %lld ckb %lld kps %lu]"),
-		dp->host->hostname, dp->name, sched(dp)->datestamp,
-		sched(dp)->level,
-		sched(dp)->est_time, (OFF_T_FMT_TYPE)sched(dp)->est_nsize,
-		(OFF_T_FMT_TYPE)sched(dp)->est_csize,
-		sched(dp)->est_kps);
+	update_info_taper(dp, taper_first_label, taper_first_fileno,
+			  sched(dp)->level);
     }
 
     sched(dp)->attempted += 1;
@@ -1448,6 +1444,8 @@ dumper_taper_result(
     if(dumper->result == DONE && taper_result == DONE) {
 	update_info_dumper(dp, sched(dp)->origsize,
 			   sched(dp)->dumpsize, sched(dp)->dumptime);
+	update_info_taper(dp, taper_first_label, taper_first_fileno,
+			  sched(dp)->level);
 	log_add(L_STATS, _("estimate %s %s %s %d [sec %ld nkb %lld ckb %lld kps %lu]"),
 		dp->host->hostname, dp->name, sched(dp)->datestamp,
 		sched(dp)->level,
@@ -2886,6 +2884,7 @@ dump_to_tape(
     taper_disk = dp;
     taper_input_error = NULL;
     taper_tape_error = NULL;
+    taper_first_label = NULL;
     dp->host->inprogress += 1;
     dp->inprogress = 1;
     sched(dp)->timestamp = time((time_t *)0);

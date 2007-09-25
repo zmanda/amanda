@@ -121,6 +121,8 @@ GLOBAL pid_t taper_pid;
 GLOBAL int taper_result;
 GLOBAL dumper_t *taper_dumper;
 GLOBAL event_handle_t *taper_ev_read;
+GLOBAL char *taper_first_label;
+GLOBAL off_t taper_first_fileno;
 
 void init_driverio(void);
 void startup_tape_process(char *taper_program);

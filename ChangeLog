@@ -1,3 +1,8 @@
+2007-09-25  Patch by Jean-Louis Martineau <martineau@zmanda.com> (merged by dustin@zmanda.com)
+	* server-src/driverio.h server-src/driver.c: Record
+	  information from first PARTDONE result.  Remove duplicate
+	  update_info_dumper.  Call update_info_taper as needed.
+
 2007-09-25  Jean-Louis Martineau <martineau@zmanda.com> (merged by dustin@zmanda.com)
 	* restore-src/restore.c: Don't send text to prompt_out if amidxtaped.
 
