@@ -1,4 +1,9 @@
 2007-09-25  Jean-Louis Martineau <martineau@zmanda.com> (merged by dustin@zmanda.com)
+	* server-src/amadmin.c: Allow 'f' sort order.
+	* server-src/find.c: Fix parsing of log files.
+	* server-src/find.h (DEFAULT_SORT_ORDER): Set to "hkdlpbf".
+
+2007-09-25  Jean-Louis Martineau <martineau@zmanda.com> (merged by dustin@zmanda.com)
 	* server-src/driverio.h (sched_t): Split attempted in dump_attempted
 					   and taper_attempted.
 	* server-src/driver.c: Split attempted in dump_attempted

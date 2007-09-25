@@ -3,7 +3,7 @@
 
 #include "diskfile.h"
 
-#define DEFAULT_SORT_ORDER      "hkdlpb"
+#define DEFAULT_SORT_ORDER      "hkdlpbf"
 
 typedef struct find_result_s {
     struct find_result_s *next;
