@@ -28,7 +28,6 @@ SERVER_MAN8_PAGES = amadmin.8 \
 		    amtoc.8 \
 		    amverify.8 \
 		    amverifyrun.8 \
-		    amfetchdump.8 \
 		    amcrypt.8 \
 		    amaespipe.8 \
 		    amcrypt-ossl.8 \
@@ -36,13 +35,10 @@ SERVER_MAN8_PAGES = amadmin.8 \
 
 RECOVER_MAN8_PAGES = amrecover.8
 
-RESTORE_MAN8_PAGES = amrestore.8
+RESTORE_MAN8_PAGES = amrestore.8 \
+		     amfetchdump.8
 
-man8_pages = $(COMMON_MAN8_PAGES) \
-	    $(AMPLOT_MAN8_PAGES) \
-	    $(SERVER_MAN8_PAGES) \
-	    $(RECOVER_MAN8_PAGES) \
-	    $(RESTORE_MAN8_PAGES)
+man8_pages = $(COMMON_MAN8_PAGES)
 
 man5_pages = $(COMMON_MAN5_PAGES)
 
@@ -55,15 +51,19 @@ ALL_MAN_PAGES = $(AMPLOT_MAN8_PAGES) \
 
 WANTED_MAN_PAGES = $(COMMON_MAN5_PAGES) $(COMMON_MAN8_PAGES)
 if WANT_AMPLOT
+  man8_pages += $(AMPLOT_MAN8_PAGES)
   WANTED_MAN_PAGES += $(AMPLOT_MAN8_PAGES)
 endif
 if WANT_SERVER
+  man8_pages += $(SERVER_MAN8_PAGES)
   WANTED_MAN_PAGES += $(SERVER_MAN8_PAGES)
 endif
 if WANT_RECOVER
+  man8_pages += $(RECOVER_MAN8_PAGES)
   WANTED_MAN_PAGES += $(RECOVER_MAN8_PAGES)
 endif
 if WANT_RESTORE
+  man8_pages += $(RESTORE_MAN8_PAGES)
   WANTED_MAN_PAGES += $(RESTORE_MAN8_PAGES)
 endif
 
