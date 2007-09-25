@@ -203,6 +203,8 @@ static void holding_walk_file(
 			filename, 
 			filename, 
 			is_cruft);
+	amfree(filename);
+
         /* and go on to the next chunk if this wasn't cruft */
 	if (!is_cruft)
 	    filename = stralloc(file.cont_filename);
