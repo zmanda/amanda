@@ -1,4 +1,11 @@
 2007-09-25  Ian Turner <ian@zmanda.com> (merged by dustin@zmanda.com)
+	Thanks to Pavel Pragin <ppragin@zmanda.com> for finding these issues.
+	* server-src/amtape.c: Update the changer database in 'amtape update'.
+	  Thanks to Dustin J. Mitchell <dustin@zmanda.com> for this fix.
+	* server-src/taperscan.c: Update the changer database during the
+	  taper scan algorithm.
+
+2007-09-25  Ian Turner <ian@zmanda.com> (merged by dustin@zmanda.com)
 	Thanks to Jean-Louis Martineau <martineau@zmanda.com> for these fixes:
 	* server-src/dumper.c: Log packet to debug file.
 	* server-src/planner.c: Improve quoting.

@@ -33,7 +33,7 @@
 #include "timestamp.h"
 #include "taperscan.h"
 
-int scan_read_label (char *dev, char *wantlabel,
+int scan_read_label (char *dev, char * slot, char *wantlabel,
                        char** label, char** timestamp,
                        char**error_message);
 int changer_taper_scan (char *wantlabel, char** gotlabel, char** timestamp,
@@ -61,13 +61,15 @@ void CHAR_taperscan_output_callback (void *data, char *msg);
  */
 
 /* This function checks the label of a single tape, which may or may not
- * have been loaded by the changer. With the addition of char *dev, it has
- * the same interface as taper_scan. 
+ * have been loaded by the changer. With the addition of char *dev, and *slot,
+ * it has the same interface as taper_scan. slot should be the slot where
+ * this tape is found, or NULL if no changer is in use.
  * Return value is the same as taper_scan.
  */
 int scan_read_label(
     char *dev,
     char *desired_label,
+    char *slot,
     char** label,
     char** timestamp,
     char** error_message)
@@ -125,6 +127,11 @@ int scan_read_label(
     *error_message = newvstrallocf(*error_message,
                                    _("%sread label `%s', date `%s'\n"),
                                    *error_message, *label, *timestamp);
+
+    /* Register this with the barcode database, even if its not ours. */
+    if (slot != NULL) {
+        changer_label(slot, *label);
+    }
     
     if (desired_label != NULL && strcmp(*label, desired_label) == 0) {
         /* Got desired label. */
@@ -225,7 +232,8 @@ scan_slot(
 					_("slot %s:"), slotstr);
 	amfree(*ct->gotlabel);
 	amfree(*ct->timestamp);
-        label_result = scan_read_label(device, ct->wantlabel, ct->gotlabel,
+        label_result = scan_read_label(device, slotstr,
+                                       ct->wantlabel, ct->gotlabel,
                                        ct->timestamp, ct->error_message);
         if (label_result == 1 || label_result == 3 ||
             (label_result == 2 && !ct->backwards)) {
@@ -310,7 +318,8 @@ changer_taper_scan(
                                   &outslotstr, tapedev);
         amfree(outslotstr);
         if (result == 0) {
-            result = scan_read_label(*tapedev, NULL, gotlabel, timestamp,
+            result = scan_read_label(*tapedev, NULL, NULL,
+                                     gotlabel, timestamp,
                                      &error_message);
             taperscan_output_callback(output_data, error_message);
             amfree(error_message);
@@ -351,15 +360,14 @@ int taper_scan(char* wantlabel,
 	                             tapedev,
                                      output_functor, output_data,
                                      prolong_functor, prolong_data);
-    }
-    else {
+    } else {
 	*tapedev = stralloc(getconf_str(CNF_TAPEDEV));
 	if (*tapedev == NULL) {
 	    result = -1;
 	    output_functor(output_data, _("No tapedev specified"));
 	} else {
 	    *tapedev = stralloc(*tapedev);
-	    result =  scan_read_label(*tapedev, wantlabel,
+	    result =  scan_read_label(*tapedev, NULL, wantlabel,
 				      gotlabel, timestamp, &error_message);
 	output_functor(output_data, error_message);
 	    amfree(error_message);
