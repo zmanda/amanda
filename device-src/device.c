@@ -637,8 +637,8 @@ default_device_start (Device * self, DeviceAccessMode mode, char * label,
 
 static gboolean default_device_open_device(Device * self,
                                            char * device_name) {
-    device_read_label(self);
     self->device_name = device_name;
+    device_read_label(self);
     return TRUE;
 }
 

@@ -100,8 +100,7 @@ tape_device_init (TapeDevice * self) {
 
     /* Clear all fields. */
     self->min_block_size = self->max_block_size = self->fixed_block_size =
-        MAX_TAPE_BLOCK_BYTES;
-    self->read_block_size = MAX_TAPE_BLOCK_KB * 1024;
+        self->read_block_size = MAX_TAPE_BLOCK_BYTES;
     
     self->fsf = self->bsf = self->fsr = self->bsr = self->eom =
         self->bsf_after_eom = self->compression = self->first_file = 0;
@@ -763,8 +762,8 @@ tape_device_robust_read (FdDevice * fd_self, void * buf, int * count) {
                 continue;
             } else if ((self->fixed_block_size == 0) &&
                        (0
-#ifdef ENOSPC
-                        || errno == ENOSPC /* bad user-space buffer */
+#ifdef ENOMEM
+                        || errno == ENOMEM /* bad user-space buffer */
 #endif
 #ifdef EOVERFLOW
                         || errno == EOVERFLOW /* bad kernel-space buffer */
@@ -776,8 +775,8 @@ tape_device_robust_read (FdDevice * fd_self, void * buf, int * count) {
                 /* Buffer too small. */
                 return RESULT_SMALL_BUFFER;
             } else {
-                fprintf(stderr, "Error reading %s: %s\n",
-                        d_self->device_name, strerror(errno));
+                fprintf(stderr, "Error reading %d bytes from %s: %s\n",
+                        *count, d_self->device_name, strerror(errno));
                 return RESULT_ERROR;
             }
         }

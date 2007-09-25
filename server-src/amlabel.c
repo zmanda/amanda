@@ -39,14 +39,30 @@
 /* local functions */
 
 int main(int argc, char **argv);
-void usage(void);
 
-void
-usage(void)
-{
+static void usage(void) {
     fprintf(stderr, _("Usage: %s [-f] <conf> <label> [slot <slot-number>] [-o configoption]*\n"),
 	    get_pname());
     exit(1);
+}
+
+static void print_read_label_status_error(ReadLabelStatusFlags status) {
+    char ** status_strv;
+
+    if (status == READ_LABEL_STATUS_SUCCESS)
+        return;
+
+    status_strv = g_flags_nick_to_strv(status,
+                                       READ_LABEL_STATUS_FLAGS_TYPE);
+    g_assert(g_strv_length(status_strv) > 0);
+    if (g_strv_length(status_strv) == 1) {
+        printf("Error was %s.\n", *status_strv);
+    } else {
+        char * status_list = g_english_strjoinv(status_strv, "or");
+        printf("Error was one of %s.\n", status_list);
+        amfree(status_list);
+    }
+    g_strfreev(status_strv);
 }
 
 int
@@ -194,13 +210,9 @@ main(
     if (label_status & READ_LABEL_STATUS_VOLUME_UNLABELED) {
         printf("Found an unlabeled tape.\n");
     } else if (label_status != READ_LABEL_STATUS_SUCCESS) {
-         char * errstr = 
-            g_english_strjoinv_and_free
-                (g_flags_nick_to_strv(label_status,
-                                      READ_LABEL_STATUS_FLAGS_TYPE), "or");
-         printf("Reading the tape label failed: \n"
-                 "  Error was one of %s.\n", errstr);
-         tape_ok = 0;
+        printf("Reading the tape label failed: \n  ");
+        print_read_label_status_error(label_status);
+        tape_ok = 0;
     } else {
 	/* got an amanda tape */
 	printf(_("Found Amanda tape %s"),device->volume_label);
@@ -237,12 +249,8 @@ main(
 
         label_status = device_read_label(device);
         if (label_status != READ_LABEL_STATUS_SUCCESS) {
-            char * errstr = 
-                g_english_strjoinv_and_free
-                    (g_flags_nick_to_strv(label_status,
-                                          READ_LABEL_STATUS_FLAGS_TYPE), "or");
-            printf("Checking the tape label failed: \n"
-                    "  Error was one of %s.\n", errstr);
+            printf("Checking the tape label failed: \n  ");
+            print_read_label_status_error(label_status);
             tape_ok = 0;
         } else if (device->volume_label == NULL) {
             error(_("no label found.\n"));

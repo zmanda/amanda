@@ -170,7 +170,7 @@ static ReadLabelStatusFlags fd_device_read_label(Device * pself) {
     if (amanda_header.type != F_TAPESTART) {
         fprintf(stderr, "Got a bad volume label:\n%s\n", buf);
         amfree(buf);
-        return READ_LABEL_STATUS_VOLUME_ERROR;
+        return READ_LABEL_STATUS_VOLUME_UNLABELED;
     }
     amfree(buf);
     pself->volume_label = strdup(amanda_header.name);
@@ -296,8 +296,7 @@ static gboolean
 fd_device_start (Device * pself, DeviceAccessMode mode, char * label,
                  char * timestamp) {
     FdDevice * self;
-    /* We don't need to read the label here (we did that already in 
-     * fd_device_open_device), but we may need to write it. */
+    /* We don't need to read the label here, but we may need to write it. */
     self = FD_DEVICE(pself);
     g_return_val_if_fail (self != NULL, FALSE);
 

@@ -1,4 +1,13 @@
 2007-09-25  Ian Turner <ian@zmanda.com> (merged by dustin@zmanda.com)
+	* device-src/device.c: Set the device name before reading the label.
+	* device-src/fd-device.c: An invalid header indicates an unlabeled
+	  volume, not a volume error.
+	* device-src/taper-device.c: Insufficient buffer space causes
+	  ENOMEM, not ENOSPC, at least on Linux.
+	* server-src/amlabel.c: Correctly handle the case where
+	  device_read_label() returns exactly 1 set bit.
+
+2007-09-25  Ian Turner <ian@zmanda.com> (merged by dustin@zmanda.com)
 	* server-src/taper-source.c, server-src/taper-disk-port-source.c,
 	  server-src/taper.c: Be careful not to use strings from getcwd()
 	  past the next invocation of getcwd().

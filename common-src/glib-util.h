@@ -102,7 +102,7 @@ char * g_english_strjoinv(char ** strv, const char * conjunction);
 /* Just like g_english_strjoinv, but also frees the array. */
 char * g_english_strjoinv_and_free(char ** strv, const char * conjunction);
 
-/* Replacement for built-in function. */
+/* Replacement for built-in functions. */
 #if !(GLIB_CHECK_VERSION(2,6,0))
 guint g_strv_length(gchar ** strv);
 #endif
