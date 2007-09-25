@@ -282,13 +282,6 @@ static struct build_info {
 	NULL
 #endif
     },
-    { "DEBUG_CODE",
-#if defined(DEBUG_CODE)
-	"1"
-#else
-	NULL
-#endif
-    },
     { "BSD_SECURITY",
 #if defined(BSD_SECURITY)
 	"1"

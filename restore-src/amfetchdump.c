@@ -56,7 +56,6 @@ typedef struct needed_tapes_s {
 
 /* local functions */
 
-void errexit(void);
 tapelist_t *list_needed_tapes(GSList *dumpspecs);
 void usage(void);
 int main(int argc, char **argv);
@@ -64,17 +63,6 @@ int main(int argc, char **argv);
 /* exit routine */
 static pid_t parent_pid = -1;
 static void cleanup(void);
-
-
-/*
- * Do exit(2) after an error, rather than exit(1).
- */
-
-void
-errexit(void)
-{
-    exit(2);
-}
 
 
 /*
@@ -303,8 +291,7 @@ main(
     dbopen(DBG_SUBDIR_SERVER);
 
     erroutput_type = ERR_INTERACTIVE;
-
-    onerror(errexit);
+    error_exit_status = 2;
 
     parse_conf(argc, argv, &new_argc, &new_argv);
     my_argc = new_argc;

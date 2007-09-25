@@ -402,10 +402,6 @@ main(
     prstr("ASSERTIONS");
 #endif
 
-#ifdef DEBUG_CODE
-    prstr("DEBUG_CODE");
-#endif
-
 #ifdef AMANDA_DEBUG_DAYS
     prnum("AMANDA_DEBUG_DAYS", AMANDA_DEBUG_DAYS);
 #endif

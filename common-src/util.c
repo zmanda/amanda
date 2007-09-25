@@ -363,23 +363,6 @@ bind_portrange(
     return -1;
 }
 
-/*
- * Get current GMT time and return a message timestamp.
- * Used for printf calls to logs and such.
- */
-char *
-msg_timestamp(void)
-{
-    static char timestamp[128];
-    struct timeval tv;
-
-    gettimeofday(&tv, NULL);
-    snprintf(timestamp, SIZEOF(timestamp), "%lld.%06ld",
-		(long long)tv.tv_sec, (long)tv.tv_usec);
-
-    return timestamp;
-}
-
 
 int
 needs_quotes(

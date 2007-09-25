@@ -186,8 +186,6 @@ main(
     our_features = am_init_feature_set();
     our_feature_string = am_feature_to_string(our_features);
 
-    set_debug_prefix_pid(getpid());
-
     conffile = vstralloc(CONFIG_DIR, "/", "amanda-client.conf", NULL);
     if (read_clientconf(conffile) > 0) {
 	error(_("error reading conffile: %s"), conffile);
@@ -523,7 +521,6 @@ main(
 	} else {
 	    done = 0;
 	    if((est->child = fork()) == 0) {
-		set_debug_prefix_pid(getpid());
 		calc_estimates(est);		/* child does the estimate */
 		exit(0);
 	    } else if(est->child == -1) {

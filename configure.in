@@ -1332,7 +1332,7 @@ AC_DEFINE_UNQUOTED(AMANDA_TMPDIR,"$AMANDA_TMPDIR",[The directory in which Amanda
 AC_SUBST(AMANDA_TMPDIR)
 
 AC_ARG_WITH(debugging,
-    [  --with[[out]]-debugging[[=/debug/dir]] [[do not]] record runtime debugging information in specified directory [[--with-tmpdir]]],
+    [  --with-debugging[[=/debug/dir]] specify debug logging directory (default is from --with-tmpdir)],
     debugging="$withval",
     : ${debugging=yes}
 )
@@ -1342,18 +1342,13 @@ debugging=`(
     eval echo "$debugging"
 )`
 case "$debugging" in
-n | no) AMANDA_DBGDIR="";;
 y |  ye | yes) AMANDA_DBGDIR="$AMANDA_TMPDIR";;
 /*) AMANDA_DBGDIR="$debugging";;
 *) AC_MSG_ERROR([*** You must supply a full pathname to --with-debugging option.])
   ;;
 esac
-case "$AMANDA_DBGDIR" in
-"") :;;
-*) AC_DEFINE(DEBUG_CODE,1,[Define if you want debugging. ])
-   AC_DEFINE_UNQUOTED(AMANDA_DBGDIR,"$AMANDA_DBGDIR",[Location of Amanda directories and files. ])
-   AC_SUBST(AMANDA_DBGDIR);;
-esac
+AC_DEFINE_UNQUOTED(AMANDA_DBGDIR,"$AMANDA_DBGDIR",[Debugging log directory])
+AC_SUBST(AMANDA_DBGDIR)
 
 AC_ARG_WITH(debug_days,
     [  --with-debug-days=NN    number of days to keep debugging files [[default=4]]],

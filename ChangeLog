@@ -1,4 +1,20 @@
 2007-09-25  Dustin J. Mitchell <dustin@zmanda.com> (merged by dustin@zmanda.com)
+	* client-src/sendsize.c configure.in server-src/getconf.c
+	  restore-src/amrestore.c restore-src/amfetchdump.c
+	  common-src/util.c common-src/genversion.c common-src/util.h
+	  common-src/debug.c common-src/error.c common-src/amanda.h
+	  common-src/Makefile.am:
+	  - support the glib logging infrastructure by feeding messages
+	    into debug logs
+	  - merge the error module into the debug module
+	  - document debug.h with verbose comments
+	  - call g_critical() for error() and g_error() for errordump()
+	  - remove double dgettext() call in debug_printf
+	  - remove --without-debugging (so debugging is always on)
+	  - remove mostly unused debug prefix support
+	  - remove onerror(), replacing its few uses with alternatives
+
+2007-09-25  Dustin J. Mitchell <dustin@zmanda.com> (merged by dustin@zmanda.com)
 	* device-src/tests/device_test.c configure.in
 	  recover-src/extract_list.c recover-src/uparse.y
 	  server-src/amlogroll.c server-src/dumper.c server-src/reporter.c

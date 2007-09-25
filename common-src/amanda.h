@@ -404,70 +404,6 @@ extern int errno;
 #define stringize(x) #x
 #define stringconcat(x, y) x ## y
 
-/*
- * assertions, but call error() instead of abort 
- */
-#ifndef ASSERTIONS
-
-#define assert(exp) ((void)0)
-
-#else	/* ASSERTIONS */
-
-#define assert(exp)	do {						\
-    if (!(exp)) {							\
-	onerror(abort);							\
-	error(_("assert: %s is false: file %s, line %d"),		\
-	   stringize(exp), __FILE__, __LINE__);				\
-        /*NOTREACHED*/							\
-    }									\
-} while (0)
-
-#endif	/* ASSERTIONS */
-
-/*
- * print debug output, else compile to nothing.
- */
-
-#ifdef DEBUG_CODE
-
-#   define dbopen(a)		debug_open(a)
-#   define dbreopen(a,b)	debug_reopen(a,b)
-#   define dbrename(a,b)	debug_rename(a,b)
-#   define dbclose()		debug_close()
-#   define dbprintf		debug_printf
-#   define dbfd()		debug_fd()
-#   define dbfp()		debug_fp()
-#   define dbfn()		debug_fn()
-
-void	debug_open(char *subdir);
-void	debug_reopen(char *file, char *notation);
-void	debug_rename(char *config, char *subdir);
-void	debug_close(void);
-void	debug_printf(const char *format, ...)
-	    __attribute__ ((format (printf, 1, 2)));
-int	debug_fd(void);
-FILE *	debug_fp(void);
-char *	debug_fn(void);
-void	set_debug_prefix_pid(pid_t);
-char *	debug_prefix(char *);
-
-#else  /* !DEBUG_CODE */
-
-#   define dbopen(a)		(void)0
-#   define dbreopen(a, b)	(void)0
-#   define dbrename(a,b)	(void)0
-#   define dbclose()		(void)0
-#   define dbprintf(...)	(void)0
-#   define dbfd()		(-1)
-#   define dbfp()		NULL
-#   define dbfn()		"(debug not enabled)"
-#   define set_debug_prefix_pid(x)
-#   define debug_prefix(x)	get_pname()
-
-#endif /* DEBUG_CODE */
-
-void debug_dup_stderr_to_debug(void);
-
 /* amanda #days calculation, with roundoff */
 
 #define SECS_PER_DAY	(24*60*60)
@@ -507,22 +443,8 @@ void debug_dup_stderr_to_debug(void);
 #define MAX_TAPE_LABEL_BUF (MAX_TAPE_LABEL_LEN+1)
 #define MAX_TAPE_LABEL_FMT "%10240s"
 
-/* Define miscellaneous amanda functions.  */
-#define ERR_INTERACTIVE	1
-#define ERR_SYSLOG	2
-#define ERR_AMANDALOG	4
-
+#include "debug.h"
 #include "file.h"
-
-void   set_logerror(void (*f)(char *));
-void   set_pname(char *pname);
-char  *get_pname(void);
-extern int    erroutput_type;
-void   error(const char *format, ...)
-     G_GNUC_NORETURN G_GNUC_PRINTF(1,2);
-void   errordump(const char *format, ...)
-     G_GNUC_PRINTF(1,2);
-int    onerror(void (*errf)(void));
 
 void *debug_alloc(const char *file, int line, size_t size);
 void *debug_newalloc(const char *file, int line, void *old, size_t size);
@@ -1415,10 +1337,6 @@ extern ssize_t writev(int fd, const struct iovec *iov, int iovcnt);
 #endif
 
 #define BIND_CYCLE_RETRIES	120		/* Total of 30 minutes */
-
-#define DBG_SUBDIR_SERVER  "server"
-#define DBG_SUBDIR_CLIENT  "client"
-#define DBG_SUBDIR_AMANDAD "amandad"
 
 #define MAX_DUMPERS 63
 

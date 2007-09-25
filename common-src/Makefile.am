@@ -25,7 +25,6 @@ libamanda_la_SOURCES =		\
 	conffile.c		\
 	debug.c			\
 	dgram.c			\
-	error.c			\
 	event.c			\
 	file.c			\
 	fileheader.c		\
@@ -99,6 +98,7 @@ noinst_HEADERS =		\
 	clock.h			\
 	amflock.h		\
 	conffile.h		\
+	debug.h			\
 	dgram.h			\
 	event.h			\
 	file.h			\
@@ -170,7 +170,6 @@ STANDARD_COMMON_STUFF_NOT_FILE = \
 	alloc.$(OBJEXT) \
 	clock.$(OBJEXT) \
 	debug.$(OBJEXT) \
-	error.$(OBJEXT) \
 	util.$(OBJEXT) \
 	match.$(OBJEXT) \
 	sl.$(OBJEXT)
@@ -191,7 +190,6 @@ bsdsecurity_LDADD = $(libamanda_a_LIBADD) \
 		    clock.$(OBJEXT) \
 		    debug.$(OBJEXT) \
 		    dgram.$(OBJEXT) \
-		    error.$(OBJEXT) \
 		    event.$(OBJEXT) \
 		    file.$(OBJEXT) \
 		    packet.$(OBJEXT) \

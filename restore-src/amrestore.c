@@ -49,17 +49,6 @@
 #define CREAT_MODE	0640
 
 /*
- * Do exit(2) after an error, rather than exit(1).
- */
-
-static void
-errexit(void)
-{
-    exit(2);
-}
-
-
-/*
  * Print usage message and terminate.
  */
 
@@ -177,8 +166,7 @@ main(
     signal(SIGPIPE, SIG_IGN);
 
     erroutput_type = ERR_INTERACTIVE;
-
-    onerror(errexit);
+    error_exit_status = 2;
 
     rst_flags = new_rst_flags();
     rst_flags->inline_assemble = 0;

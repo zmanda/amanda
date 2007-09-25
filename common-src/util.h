@@ -55,7 +55,6 @@ int	bind_portrange(int, struct sockaddr_storage *, in_port_t, in_port_t,
 
 char *	construct_datestamp(time_t *t);
 char *	construct_timestamp(time_t *t);
-char *	msg_timestamp(void);
 
 /*@only@*//*@null@*/char *quote_string(const char *str);
 /*@only@*//*@null@*/char *unquote_string(const char *str);
