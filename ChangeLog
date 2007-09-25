@@ -1,3 +1,7 @@
+2007-09-25  Ian Turner <ian@zmanda.com> (merged by dustin@zmanda.com)
+	* server-src/taper.c: Remove an erroneous assertion. Thanks to
+	  Jean-Louis Martineau <martineau@zmanda.com> for noticing this issue.
+
 2007-09-25  Patch by Jean-Louis Martineau <martineau@zmanda.com> (merged by dustin@zmanda.com)
 	* server-src/driverio.h server-src/driver.c: Record
 	  information from first PARTDONE result.  Remove duplicate

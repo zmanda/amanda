@@ -571,7 +571,6 @@ static dumpfile_t * munge_headers(dump_info_t * dump_info) {
     rval->cont_filename[0] = '\0';
 
     expected_splits = taper_source_predict_parts(dump_info->source);
-    g_return_val_if_fail(expected_splits > 0, rval);
 
     if (expected_splits != 1) {
         rval->type = F_SPLIT_DUMPFILE;
