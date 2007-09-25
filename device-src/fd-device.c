@@ -396,8 +396,6 @@ fd_device_seek_file (Device * pself, guint file) {
     self = FD_DEVICE(pself);
     g_return_val_if_fail (self != NULL, FALSE);
 
-    rval = malloc(sizeof(*rval));
-    
     /* By the time we get here, we assume all the seeking has already been
      * done. We just read a block, and get the header. */
     buffer_len = device_write_max_size(pself);
@@ -408,7 +406,10 @@ fd_device_seek_file (Device * pself, guint file) {
         free(buffer);
         return FALSE;
     }
+    
+    rval = malloc(sizeof(*rval));
     parse_file_header(buffer, rval, buffer_len);
+    free(buffer);
     switch (rval->type) {
     case F_DUMPFILE:
     case F_CONT_DUMPFILE:

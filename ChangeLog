@@ -1,4 +1,12 @@
 2007-09-24  Ian Turner <ian@zmanda.com> (merged by dustin@zmanda.com)
+	* device-src/device.h, device-src/device.c, device-src/fd-device.c,
+	  device-src/tape-device.c, device-src/vfs-device.c,
+	  device-src/rait-device.c: Update the seek_file API skip missing
+	  files. Thanks to Dustin J. Mitchell <dustin@zmanda.com> and
+	  Jean-Louis Martineau <martineau@zmanda.com> for help with this patch.
+	* restore-src/restore.c: Use the new API.
+
+2007-09-24  Ian Turner <ian@zmanda.com> (merged by dustin@zmanda.com)
 	* client-src/Makefile.am, device-src/tests/Makefile.am,
 	  device-src/Makefile.am, configure.in, common-src/Makefile.am,
 	  tape-src/Makefile.am: Use AM_CFLAGS and LDFLAGS when

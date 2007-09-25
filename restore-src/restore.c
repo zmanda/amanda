@@ -1447,9 +1447,17 @@ static gboolean run_dumpspecs(GSList * dumpspecs,
 
 /* A wrapper around restore() above. This function does some extra
    checking to seek to the file in question and ensure that we really,
-   really want to use it. */
+   really want to use it.
+
+   The next_file argument provides instruction on what to do if the
+   requested file does not exist on the volume: If next_file is NULL
+   then if the requested file is missing the function will return
+   RESTORE_STATUS_NEXT_FILE. If next_file is not NULL then the first
+   extant file whose number is equal to or greater than file_num will
+   be attempted. *next_file will be filled in with the number of the
+   file following the one that was attempted. */
 static RestoreFileStatus
-try_restore_single_file(Device * device, int file_num,
+try_restore_single_file(Device * device, int file_num, int* next_file,
                         FILE * prompt_out,
                         rst_flags_t * flags,
                         am_feature_t * their_features,
@@ -1463,12 +1471,37 @@ try_restore_single_file(Device * device, int file_num,
     source.header = device_seek_file(device, file_num);
 
     if (source.header == NULL) {
-        /* This probably indicates end of tape. */
+        /* This definitely indicates an error. */
         send_message(prompt_out, flags, their_features,
                      "Could not seek device %s to file %d.",
                      device->device_name, file_num);
         return RESTORE_STATUS_NEXT_TAPE;
+    } else if (source.header->type == F_TAPEEND) {
+        amfree(source.header);
+        return RESTORE_STATUS_NEXT_TAPE;
+    } else if (device->file != file_num) {
+        if (next_file == NULL) {
+            send_message(prompt_out, flags, their_features,
+                         "Requested file %d does not exist.",
+                         file_num);
+            return RESTORE_STATUS_NEXT_FILE;
+        } else {
+            send_message(prompt_out, flags, their_features,
+                         "Skipped from file %d to file %d.", 
+                         file_num, device->file);
+            file_num = device->file;
+        }
     }
+
+    if (next_file != NULL) {
+        *next_file = file_num + 1;
+    }
+    
+    g_return_val_if_fail(source.header->type == F_DUMPFILE ||
+                         source.header->type == F_CONT_DUMPFILE ||
+                         source.header->type == F_SPLIT_DUMPFILE,
+                         RESTORE_STATUS_NEXT_FILE);
+    
 
     if (!run_dumpspecs(dumpspecs, source.header)) {
         fprintf(prompt_out, "%s: %d: skipping ",
@@ -1554,7 +1587,7 @@ search_a_tape(Device      * device,
         for (file_index = 0; file_index < desired_tape->numfiles;
              file_index ++) {
             int file_num = desired_tape->files[file_index];
-            restore_status = try_restore_single_file(device, file_num,
+            restore_status = try_restore_single_file(device, file_num, NULL,
                                                      prompt_out, flags,
                                                      their_features,
                                                      first_restored_file,
@@ -1565,7 +1598,7 @@ search_a_tape(Device      * device,
     } else if(flags->fsf && flags->amidxtaped) {
         /* Restore a single file, then quit. */
         restore_status =
-            try_restore_single_file(device, flags->fsf, prompt_out, flags,
+            try_restore_single_file(device, flags->fsf, NULL, prompt_out, flags,
                                     their_features, first_restored_file,
                                     dumpspecs, tape_seen_head);
     } else {
@@ -1583,12 +1616,12 @@ search_a_tape(Device      * device,
 
         for (;;) {
             restore_status =
-                try_restore_single_file(device, file_num, prompt_out, flags,
+                try_restore_single_file(device, file_num, &file_num,
+                                        prompt_out, flags,
                                         their_features, first_restored_file,
                                         dumpspecs, tape_seen_head);
             if (restore_status != RESTORE_STATUS_NEXT_FILE)
                 break;
-            file_num ++;
         }
     }
     

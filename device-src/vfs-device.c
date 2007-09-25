@@ -702,6 +702,54 @@ static gint get_last_file_number(VfsDevice * self) {
     return data.rval;
 }
 
+typedef struct {
+    VfsDevice * self;
+    guint request;
+    int best_found;
+} gnfn_data;
+
+/* A SearchDirectoryFunctor. */
+static gboolean get_next_file_number_functor(const char * filename,
+                                             gpointer datap) {
+    guint file;
+    gnfn_data * data = (gnfn_data*)datap;
+    g_return_val_if_fail(IS_VFS_DEVICE(data->self), FALSE);
+    file = g_ascii_strtoull(filename, NULL, 10); /* Guaranteed to work. */
+    if (file > G_MAXINT) {
+        fprintf(stderr, "Super-large device file %s found, ignoring.\n",
+               filename);
+        return TRUE;
+    }
+    /* This condition is needlessly complex due to sign issues. */
+    if (file >= data->request &&
+        (data->best_found < 0 || file < (guint)data->best_found)) {
+        data->best_found = file;
+    }
+    return TRUE;
+}
+
+/* Returns the file number equal to or greater than the given requested
+ * file number. */
+static gint get_next_file_number(VfsDevice * self, guint request) {
+    gnfn_data data;
+    int count;
+    data.self = self;
+    data.request = request;
+    data.best_found = -1;
+    
+    count = search_directory(self->dir_handle, "^[0-9]+\\.",
+                             get_next_file_number_functor, &data);
+
+    if (count <= 0) {
+        /* Somebody deleted something important while we weren't looking. */
+        fprintf(stderr, "Error identifying VFS device contents!\n");
+        return -1;
+    }
+    
+    /* Could be -1. */
+    return data.best_found;
+}
+
 /* Finds the file number, acquires a lock, and returns the new file name. */
 static
 char * make_new_file_name(VfsDevice * self, const dumpfile_t * ji) {
@@ -798,9 +846,10 @@ vfs_device_finish_file (Device * pself) {
  * volume label for reading at startup. In that second case, we avoid
  * FdDevice-related side effects. */
 static dumpfile_t * 
-vfs_device_seek_file (Device * pself, guint file) {
+vfs_device_seek_file (Device * pself, guint requested_file) {
     VfsDevice * self;
     FdDevice * fd_self;
+    int file;
 
     self = VFS_DEVICE(pself);
     g_return_val_if_fail (self != NULL, NULL);
@@ -809,6 +858,24 @@ vfs_device_seek_file (Device * pself, guint file) {
     pself->in_file = FALSE;
     
     release_file(self);
+
+    if (requested_file > 0) {
+        file = get_next_file_number(self, requested_file);
+    } else {
+        file = requested_file;
+    }
+
+    if (file < 0) {
+        /* Did they request one past the end? */
+        char * tmp_file_name;
+        tmp_file_name = file_number_to_file_name(self, requested_file - 1);
+        if (tmp_file_name != NULL) {
+            free(tmp_file_name);
+            return make_tapeend_header();
+        } else {
+            return NULL;
+        }
+    }
 
     if (!open_lock(self, file, FALSE)) {
         return NULL;

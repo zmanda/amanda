@@ -983,13 +983,15 @@ rait_device_finish_file (Device * self) {
 
 typedef struct {
     GenericOp base;
-    int file;                /* IN */
+    guint requested_file;                /* IN */
+    guint actual_file;                   /* OUT */
 } SeekFileOp;
 
 /* a GFunc. */
 static void seek_file_do_op(gpointer data, gpointer user_data G_GNUC_UNUSED) {
     SeekFileOp * op = data;
-    op->base.result = device_seek_file(op->base.child, op->file);
+    op->base.result = device_seek_file(op->base.child, op->requested_file);
+    op->actual_file = op->base.child->file;
 }
 
 static dumpfile_t * 
@@ -999,6 +1001,7 @@ rait_device_seek_file (Device * dself, guint file) {
     gboolean success;
     dumpfile_t * rval;
     RaitDevice * self = RAIT_DEVICE(dself);
+    guint actual_file;
     g_return_val_if_fail(self != NULL, FALSE);
 
     ops = g_ptr_array_sized_new(self->private->children->len);
@@ -1009,7 +1012,7 @@ rait_device_seek_file (Device * dself, guint file) {
         op = malloc(sizeof(*op));
         op->base.child = g_ptr_array_index(self->private->children, i);
         op->base.child_index = i;
-        op->file = file;
+        op->requested_file = file;
         g_ptr_array_add(ops, op);
     }
     
@@ -1022,19 +1025,27 @@ rait_device_seek_file (Device * dself, guint file) {
 
     rval = NULL;
     for (i = 0; i < self->private->children->len; i ++) {
+        SeekFileOp * this_op;
         dumpfile_t * this_result;
+        guint this_actual_file;
         if ((int)i == self->private->failed)
             continue;
         
-        this_result = ((SeekFileOp*)g_ptr_array_index(ops, i))->base.result;
+        this_op = (SeekFileOp*)g_ptr_array_index(ops, i);
+        this_result = this_op->base.result;
+        this_actual_file = this_op->actual_file;
+
         if (rval == NULL) {
             rval = this_result;
+            actual_file = this_actual_file;
         } else {
-            if (!headers_are_equal(rval, this_result)) {
+            if (headers_are_equal(rval, this_result) &&
+                actual_file == this_actual_file) {
+                /* Do nothing. */
+            } else {
                 success = FALSE;
             }
             free(this_result);
-
         }
     }
 

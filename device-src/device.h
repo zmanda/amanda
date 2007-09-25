@@ -222,9 +222,25 @@ gboolean 	device_write_from_fd	(Device * self,
 gboolean 	device_finish_file	(Device * self);
 
 /* For reading only: Seeks to the beginning of a particular
- * filemark. You don't have to do this when writing; opening in
+ * filemark. Only do this when reading; opening in
  * ACCESS_WRITE will start you out at the first file, and opening in
  * ACCESS_APPEND will automatically seek to the end of the medium.
+ * 
+ * If the requested file doesn't exist, this function will seek to the
+ * next-numbered valid file. You can check where this function seeked to
+ * by examining the file field of the Device structure. If the requested
+ * file number is exactly one more than the last valid file, this
+ * function returns a TAPEEND header.
+ *
+ * If an error occurs or if the requested file is two or more beyond the
+ * last valid file, this function returns NULL.
+ *
+ * Example results for a volume that has only files 1 and 3:
+ * 1 -> Seeks to file 1
+ * 2 -> Seeks to file 3
+ * 3 -> Seeks to file 3
+ * 4 -> Returns TAPEEND
+ * 5 -> Returns NULL
  *
  * The returned dumpfile_t is yours to keep, at no extra charge. */
 dumpfile_t* 	device_seek_file	(Device * self,

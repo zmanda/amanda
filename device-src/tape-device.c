@@ -378,12 +378,19 @@ tape_device_seek_file (Device * d_self, guint file) {
     TapeDevice * self;
     FdDevice * fd_self;
     int difference;
+    char * header_buffer;
+    dumpfile_t * rval;
+    int buffer_len;
+    FdDeviceResult result;
 
     self = TAPE_DEVICE(d_self);
     g_return_val_if_fail(d_self != NULL, NULL);
     fd_self = (FdDevice*)self;
 
+    d_self->in_file = FALSE;
+
     difference = file - d_self->file;
+
     /* Check if we already read a filemark. */
     if (d_self->is_eof) {
         difference --;
@@ -393,22 +400,49 @@ tape_device_seek_file (Device * d_self, guint file) {
         /* Seeking forwards */
         if (!tape_device_fsf(self, difference)) {
             tape_rewind(fd_self->fd);
-            d_self->file = 0;
             return NULL;
         }
     } else if (difference < 0) {
         /* Seeking backwards */
         if (!tape_device_bsf(self, -difference, d_self->file)) {
             tape_rewind(fd_self->fd);
-            d_self->file = 0;
             return NULL;
         }
     }
 
-    /* Chain up. */
-    if (device_parent_class->seek_file) {
-        return (device_parent_class->seek_file)(d_self, file);
-    } else {
+    buffer_len = device_write_max_size(d_self);
+    header_buffer = malloc(buffer_len);
+    result = tape_device_robust_read(fd_self, header_buffer, &buffer_len);
+
+    if (result != RESULT_SUCCESS) {
+        free(header_buffer);
+        tape_rewind(fd_self->fd);
+        if (result == RESULT_NO_DATA) {
+            /* If we read 0 bytes, that means we encountered a double
+             * filemark, which indicates end of tape. This should
+             * work even with QIC tapes on operating systems with
+             * proper support. */
+            return make_tapeend_header();
+        }
+        /* I/O error. */
+        fprintf(stderr, "Error reading Amanda header.\n");
+        return FALSE;
+    }
+        
+    rval = malloc(sizeof(*rval));
+    parse_file_header(header_buffer, rval, buffer_len);
+    amfree(header_buffer);
+    switch (rval->type) {
+    case F_DUMPFILE:
+    case F_CONT_DUMPFILE:
+    case F_SPLIT_DUMPFILE:
+        /* Chain up. */
+        d_self->in_file = TRUE;
+        d_self->file = file;
+        return rval;
+    default:
+        tape_rewind(fd_self->fd);
+        amfree(rval);
         return NULL;
     }
 }
