@@ -901,7 +901,7 @@ tape_device_robust_read (TapeDevice * self, void * buf, int * count) {
     g_return_val_if_fail(self != NULL, RESULT_ERROR);
     g_return_val_if_fail(*count >= 0, RESULT_ERROR);
     /* Callers should ensure this. */
-    g_assert((guint)(*count) < self->read_block_size);
+    g_assert((guint)(*count) <= self->read_block_size);
 
     for (;;) {
         result = read(self->fd, buf, *count);

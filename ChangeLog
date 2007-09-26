@@ -1,4 +1,9 @@
 2007-09-25  Ian Turner <ian@zmanda.com> (merged by dustin@zmanda.com)
+	* device-src/tape-device.c: Fix a border case bug where
+	  tape_device_robust_read() would abort when called with a buffer
+	  exactly equal to the minimum read size.
+
+2007-09-25  Ian Turner <ian@zmanda.com> (merged by dustin@zmanda.com)
 	* device-src/tape-device.c: Use g_strdup() instead of strdup().
 
 2007-09-25  Ian Turner <ian@zmanda.com> (merged by dustin@zmanda.com)
