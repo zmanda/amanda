@@ -1268,7 +1268,7 @@ addlabel() {
 		echo "$tapelabel $loadedbarcode" >> $labelfile
 		LogAppend `_ '         -> appended %s entry: %s %s' "$labelfile" "$tapelabel" "$loadedbarcode"`
 	fi
-	Exit 0 "$loadedslot" "$tape"
+	Exit 0 "$loadedslot" "$rawtape"
 	return $?				# in case we are internal
 }
 
