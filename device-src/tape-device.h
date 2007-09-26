@@ -21,7 +21,7 @@
 #ifndef TAPE_DEVICE_H
 #define TAPE_DEVICE_H
 
-#include <fd-device.h>
+#include <device.h>
 
 /*
  * Type checking and casting macros
@@ -39,8 +39,10 @@
  */
 typedef struct TapeDevicePrivate_s TapeDevicePrivate;
 typedef struct _TapeDevice {
-    FdDevice __parent__;
+    Device __parent__;
 
+    /* It should go without saying that all this stuff is
+     * look-but-don't-touch. */
     guint min_block_size, max_block_size, fixed_block_size, read_block_size;
     FeatureSupportFlags fsf, bsf, fsr, bsr, eom, bsf_after_eom;
     int final_filemarks;
@@ -48,6 +50,7 @@ typedef struct _TapeDevice {
     /* 0 if we opened with O_RDWR; error otherwise. */
     gboolean write_open_errno;
     gboolean first_file; /* Is this the first file in append mode? */
+    int fd;
 
     TapeDevicePrivate * private;
 } TapeDevice;
@@ -57,7 +60,7 @@ typedef struct _TapeDevice {
  */
 typedef struct _TapeDeviceClass TapeDeviceClass;
 struct _TapeDeviceClass {
-	FdDeviceClass __parent__;
+	DeviceClass __parent__;
 };
 
 

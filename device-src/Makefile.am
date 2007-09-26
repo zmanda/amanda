@@ -8,8 +8,7 @@ lib_LTLIBRARIES = 	libamdevice.la
 LIB_EXTENSION = la
 
 libamdevice_la_SOURCES = property.c device.c queueing.c semaphore.c \
-	null-device.c fd-device.c rait-device.c tape-device.c \
-	vfs-device.c 
+	null-device.c rait-device.c tape-device.c vfs-device.c 
 if WANT_TAPE_XENIX
 libamdevice_la_SOURCES += tape-xenix.c
 endif
@@ -26,7 +25,7 @@ endif
 libamdevice_la_LDFLAGS = -release $(VERSION) 
 
 noinst_HEADERS = device.h null-device.h queueing.h semaphore.h \
-	tape-ops.h fd-device.h property.h rait-device.h \
+	tape-ops.h property.h rait-device.h \
 	tape-device.h vfs-device.h
 
 

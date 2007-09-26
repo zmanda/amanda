@@ -24,13 +24,14 @@
 
 #include <glib.h>
 #include <glib-object.h>
-#include "fd-device.h"
+#include "device.h"
 #ifndef VFS_DEVICE_H
 #define VFS_DEVICE_H
 
 #define VFS_DEVICE_MIN_BLOCK_SIZE (1)
 #define VFS_DEVICE_MAX_BLOCK_SIZE (INT_MAX)
 #define VFS_DEVICE_DEFAULT_BLOCK_SIZE (MAX_TAPE_BLOCK_BYTES)
+#define VFS_DEVICE_LABEL_SIZE (32768)
 
 /* This looks dangerous, but is actually modified by the umask. */
 #define VFS_DEVICE_CREAT_MODE 0666
@@ -50,7 +51,7 @@
  * Main object structure
  */
 typedef struct {
-    FdDevice __parent__;
+    Device __parent__;
 
     /*< private >*/
     DIR * dir_handle;
@@ -60,6 +61,7 @@ typedef struct {
     char * file_lock_name;
     int volume_lock_fd;
     char * volume_lock_name;
+    int open_file_fd;
     
     /* Properties */
     int block_size;
@@ -71,7 +73,7 @@ typedef struct {
  * Class definition
  */
 typedef struct {
-	FdDeviceClass __parent__;
+    DeviceClass __parent__;
 } VfsDeviceClass;
 
 

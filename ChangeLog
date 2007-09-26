@@ -1,4 +1,14 @@
 2007-09-25  Ian Turner <ian@zmanda.com> (merged by dustin@zmanda.com)
+	* device-src/vfs-device.h, device-src/fd-device.c,
+	  device-src/tape-device.c, device-src/Makefile.am,
+	  device-src/fd-device.h, device-src/tape-device.h,
+	  device-src/vfs-device.c: Delete the FdDevice and make TapeDevice
+	  and VfsDevice direct descendants of Device. Also, correct all
+	  reading and writing of volume and part labels for both drivers.
+	* server-src/amcheck.c: Unlabeled tapes are OK, at least with
+	  label_new_tapes_option.
+
+2007-09-25  Ian Turner <ian@zmanda.com> (merged by dustin@zmanda.com)
 	* server-src/taperscan.c: Fix the order of arguments to
 	  scan_read_label(). Patch by Dustin J. Mitchell <dustin@zmanda.com>.
 

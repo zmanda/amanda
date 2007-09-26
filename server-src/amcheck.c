@@ -674,7 +674,7 @@ static gboolean test_tape_status(FILE * outf) {
             fprintf(outf, "WARNING: Volume was unlabeled, but now "
                     "is labeled \"%s\".\n", device->volume_label);
         }
-    } else if (label_status != READ_LABEL_STATUS_SUCCESS) {
+    } else if (label_status != READ_LABEL_STATUS_SUCCESS && tape_status != 3) {
         char * errstr = 
             g_english_strjoinv_and_free
                 (g_flags_nick_to_strv(label_status &
@@ -775,7 +775,7 @@ start_server_check(
     set_pname("amcheck-server");
     
     startclock();
-    
+
     if((outf = fdopen(fd, "w")) == NULL) {
 	error(_("fdopen %d: %s"), fd, strerror(errno));
 	/*NOTREACHED*/
