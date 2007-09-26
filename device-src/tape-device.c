@@ -326,8 +326,8 @@ static ReadLabelStatusFlags tape_device_read_label(Device * dself) {
         return READ_LABEL_STATUS_VOLUME_UNLABELED;
     }
      
-    dself->volume_label = strdup(header.name);
-    dself->volume_time = strdup(header.datestamp);
+    dself->volume_label = g_strdup(header.name);
+    dself->volume_time = g_strdup(header.datestamp);
    
     if (parent_class->read_label) {
         return parent_class->read_label(dself);
