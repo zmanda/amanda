@@ -1,4 +1,8 @@
 2007-09-25  Dustin J. Mitchell <dustin@zmanda.com>
+	* client-src/sendsize.c: change "smbclient" to SAMBA_CLIENT to allow
+	  configurable name
+
+2007-09-25  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/amflock-flock.c common-src/amflock-posix.c
 	  common-src/amflock-lockf.c common-src/amflock-lnlock.c
 	  common-src/amflock.c: use G_GNUC_UNUSED to avoid compiler

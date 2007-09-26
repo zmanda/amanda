@@ -1775,18 +1775,18 @@ getsize_smbtar(
     waitpid(dumppid, &wait_status, 0);
     if (WIFSIGNALED(wait_status)) {
 	*errmsg = vstrallocf(_("%s terminated with signal %d: see %s"),
-			     "smbclient", WTERMSIG(wait_status), dbfn());
+			     SAMBA_CLIENT, WTERMSIG(wait_status), dbfn());
     } else if (WIFEXITED(wait_status)) {
 	if (WEXITSTATUS(wait_status) != 0) {
 	    *errmsg = vstrallocf(_("%s exited with status %d: see %s"),
-			         "smbclient", WEXITSTATUS(wait_status),
+			         SAMBA_CLIENT, WEXITSTATUS(wait_status),
 				 dbfn());
 	} else {
 	    /* Normal exit */
 	}
     } else {
 	*errmsg = vstrallocf(_("%s got bad exit: see %s"),
-			     "smbclient", dbfn());
+			     SAMBA_CLIENT, dbfn());
     }
     dbprintf(_("after %s %s wait\n"), SAMBA_CLIENT, qdisk);
 
