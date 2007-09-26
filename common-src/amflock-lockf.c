@@ -36,19 +36,17 @@
 static int
 lockf_lock(
     int	fd,
-    char *resource)
+    G_GNUC_UNUSED char *resource)
 {
-    (void)resource;
     return lockf(fd, F_LOCK, (off_t)0);
 }
 
 static int
 lockf_unlock(
     int	fd,
-    char *resource)
+    G_GNUC_UNUSED char *resource)
 {
     off_t pos;
-    (void)resource;
 
     /* unlock from here on */
     if (lockf(fd, F_UNLOCK, (off_t)0) == -1) return -1;

@@ -31,18 +31,16 @@
 static int
 flock_lock(
     int	fd,
-    char *resource)
+    G_GNUC_UNUSED char *resource)
 {
-    (void)resource;
     return flock(fd, LOCK_EX);
 }
 
 static int
 flock_unlock(
     int	fd,
-    char *resource)
+    G_GNUC_UNUSED char *resource)
 {
-    (void)resource;
     return flock(fd, LOCK_UN);
 }
 

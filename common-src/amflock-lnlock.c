@@ -239,19 +239,17 @@ ln_lock(
 
 static int
 lnlock_lock(
-    int fd,
+    G_GNUC_UNUSED int fd,
     char *resource)
 {
-    (void)fd;
     return ln_lock(resource, 1);
 }
 
 static int
 lnlock_unlock(
-    int fd,
+    G_GNUC_UNUSED int fd,
     char *resource)
 {
-    (void)fd;
     return ln_lock(resource, 0);
 }
 

@@ -24,7 +24,7 @@
  * file named AUTHORS, in the root directory of this distribution.
  */
 /*
- * $Id: amflock.c 6783 2007-06-18 16:24:23Z dustin $
+ * $Id: amflock.c 7161 2007-07-03 16:27:26Z dustin $
  *
  * file locking routines, put here to hide the system dependant stuff
  * from the rest of the code
@@ -42,17 +42,6 @@
 **     USE_LNLOCK      - Home brew exclusive, blocking file lock.
 **     <none>          - No locking available.  User beware!
 */
-
-/* FIXME: This code has several limitations to be fixed:
- * - It should be possible to select a locking mode (or detect the
- *   best mode for a particular filesystem) at runtime.
- * - There should be a locking mode that works with NFS filesystems.
- * - Semantics should be clear when different parts of a single 
- *   process (possibly in the same/different threads) both try to lock 
- *   the same file (but with different file descriptors).
- * - It should be possible to promote a read-only lock to an 
- *   exclusive lock.
- * - Arbitrary strings should be useable as resource names. */
 
 /* FIXME: This code has several limitations to be fixed:
  * - It should be possible to select a locking mode (or detect the

@@ -1,4 +1,10 @@
 2007-09-25  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/amflock-flock.c common-src/amflock-posix.c
+	  common-src/amflock-lockf.c common-src/amflock-lnlock.c
+	  common-src/amflock.c: use G_GNUC_UNUSED to avoid compiler
+	  warnings
+
+2007-09-25  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/amanda.h common-src/file.h: move declaration of 
 	  canonicalize_pathname to file.h
 

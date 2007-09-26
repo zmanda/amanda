@@ -31,10 +31,9 @@
 static int
 posix_lock(
     int	fd,
-    char *resource)
+    G_GNUC_UNUSED char *resource)
 {
     struct flock lock;
-    (void)resource;
 
     lock.l_type = F_WRLCK;
     lock.l_start = 0;
@@ -46,10 +45,9 @@ posix_lock(
 static int
 posix_rolock(
     int	fd,
-    char *resource)
+    G_GNUC_UNUSED char *resource)
 {
     struct flock lock;
-    (void)resource;
 
     lock.l_type = F_RDLCK;
     lock.l_start = 0;
@@ -61,10 +59,9 @@ posix_rolock(
 static int
 posix_unlock(
     int	fd,
-    char *resource)
+    G_GNUC_UNUSED char *resource)
 {
     struct flock lock;
-    (void)resource;
 
     lock.l_type = F_UNLCK;
     lock.l_start = 0;
