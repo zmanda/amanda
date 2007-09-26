@@ -464,10 +464,10 @@ show_slots_slot(G_GNUC_UNUSED void * data, int rc, char * slotstr,
         } else {
             fprintf(stderr, _("slot %3s: time %-14s label %s\n"),
                     slotstr, device->volume_time, device->volume_label);
-        }
 
-	/* update the changer db */
-	changer_label(slotstr, device->volume_label);
+	    /* update the changer db */
+	    changer_label(slotstr, device->volume_label);
+        }
     }
 
     if (device != NULL)

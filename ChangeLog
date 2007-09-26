@@ -1,4 +1,7 @@
 2007-09-25  Jean-Louis Martineau <martineau@zmanda.com> (merged by dustin@zmanda.com)
+	* server-src/amtape.c: changer_label should be called only on success.
+
+2007-09-25  Jean-Louis Martineau <martineau@zmanda.com> (merged by dustin@zmanda.com)
 	* restore-src/restore.c: init cur_tapedev.
 
 2007-09-25  Dustin J. Mitchell <dustin@zmanda.com>
