@@ -47,13 +47,10 @@ echo `_ "arguments ->"` "$@" >> $logfile
 
 ourconf=`amgetconf changerfile`
 
-# for now, continue to prefer ammt and amdd, and in fact
-# assume they exist (since we install them..).  These are shell functions
-# (see chg-lib.sh), so there's no path qualification needed
-
-MT=ammt
-MTF=-f
-echo MT "->" $MT $MTF >> $logfile
+if ! error=try_find_mt; then
+    echo <none> $error
+    exit 2
+fi
 
 EXPR=expr
 # EXPR=/usr/local/bin/expr # in case you need a more powerful expr...
@@ -303,8 +300,7 @@ then
 		exit 2
 	    fi
 	    echo `_ '     -> offline'` "$device" >> $logfile
-	    $MT $MTF $device offline >> $logfile 2>&1
-	    if [ $? -ne 0 ]; then
+            if ! try_eject_device $device; then
 		answer=`_ '%s %s: %s: unable to change to slot %s' "$newslot" "$pname" "$device" "$curslot"`
 		echo `_ 'Exit ->'` $answer >> $logfile
 		echo $answer
@@ -347,7 +343,7 @@ then
 		exit 2
 	fi
 	echo `_ '     -> offline'` $device >> $logfile
-	$MT $MTF $device offline >> $logfile 2>&1
+        try_eject_device $device
 	if [ $? -ne 0 ]; then
 		#
 		# XXX if the changer-specific eject command can distinguish
@@ -386,8 +382,7 @@ if [ $loadslot -eq 1 ]; then	# load the tape from the slot
 		echo $answer
 		exit 2
 	fi
-	echo `_ '     -> rewind'` $device >> $logfile
-	$MT $MTF $device rewind >> $logfile 2>&1
+        amdevcheck_status $device
 	if [ $? -ne 0 ]; then
 		#
 		# XXX if the changer-specific load command can distinguish

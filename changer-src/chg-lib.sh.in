@@ -31,23 +31,54 @@ if test "@USE_VERSION_SUFFIXES@" = "yes"; then
     amgetconf() {
         "${sbindir}/amgetconf-@VERSION@" "${@}"
     }
-    ammt() {
-        "${sbindir}/ammt-@VERSION@" "${@}"
-    }
-    amdd() {
-        "${sbindir}/amdd-@VERSION@" "${@}"
+    amdevcheck() {
+        "${sbindir}/amdevcheck-@VERSION@" "${@}"
     }
 else
     amgetconf() {
         "${sbindir}/amgetconf" "${@}"
     }
-    amtt() {
-        "${sbindir}/amtt" "${@}"
-    }
-    amdd() {
-        "${sbindir}/amdd" "${@}"
+    amdevcheck() {
+        "${sbindir}/amdevcheck" "${@}"
     }
 fi
+
+# This function tries to find a useable mt binary. If a fully-qualified path
+# was provided at configure time or via a config file, we check that it
+# exists and is executable. If an incomplete path was specified (e.g., "mt"),
+# we ask the shell to search the path. Returns 0 on success, 1 on failure.
+
+try_find_mt() {
+    # Only do this once.
+    if -n $mt_found; then
+        return 0
+    fi
+
+    if -z $MT; then
+        MT=mt
+    fi
+
+    if test "${MT:0:1}" = "/"; then
+        if ! test -f "${MT}"; then
+            echo `_ "mt binary at '%s' not found" "$MTX"`
+            return 1
+        fi
+        if ! test -x "${MT}"; then
+            echo `_ "mt binary at '%s' is not executable" "$MTX"`
+            return 1
+        fi
+    else
+        # try running it to see if the shell can find it
+        "$MT" >/dev/null 2>/dev/null
+        if test $? -eq 127 -o $? -eq 126; then
+            echo `_ "Could not run mt binary at '%s'" "$MTX"`
+            return 1
+        fi
+    fi
+
+    mt_found=yes
+    return 0
+}
 
 # This function strips the tape: from the front of device names.
 # Capture its output with ``.
@@ -57,3 +88,45 @@ tape_device_filename() {
              print $2 if ($1 || "tape") eq "tape"' "$1"
 }
 
+# Runs amdevcheck to find out if a particular device is usable. Finds the
+# config name based on pwd, so run it from the config directory. The sole
+# argument should be the device name to check. Note that amdevcheck can FP
+# on device status, since some devices can't differentiate between device
+# problems and an unlabeled volume.
+amdevcheck_status() {
+    amdevcheck_config_dir=`pwd`
+    amdevcheck_config_name=`basename $amdevcheck_config_dir`
+    amdevcheck_output=`amdevcheck $amdevcheck_config_name $@`
+
+    if test $? -eq 0 || \
+        echo $amdevcheck_output | grep UNLABELED > /dev/null; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+# This attempts to eject a device using whatever system tools are available.
+# At the moment, that means mt for tapes, and nothing otherwise, but might
+# be extended at some later time.
+
+try_eject_device() {
+    if echo "$1" | grep -e '^tape:' > /dev/null; then
+        try_eject_device_tape="`echo "$1" | cut -b6-`"
+        #` <- for confused emacs
+    elif echo "$1" | grep -v : > /dev/null; then
+        try_eject_device_tape="$1"
+    else
+        try_eject_device_tape=
+    fi
+
+    if test -n "$try_eject_device_tape"; then
+        if try_find_mt; then
+            $MT $MTF "$try_eject_device_tape" eject
+        fi
+    else
+        # Technically we failed to eject the device, but we presume that's
+        # because it doesn't require ejection.
+        return 0
+    fi
+}

@@ -1,4 +1,12 @@
 2007-09-25  Ian Turner <ian@zmanda.com> (merged by dustin@zmanda.com)
+	* changer-src/chg-mtx.sh.in, changer-src/chg-manual.sh.in,
+	  changer-src/chg-zd-mtx.sh.in, changer-src/chg-juke.sh.in,
+	  changer-src/chg-chs.sh.in, changer-src/chg-multi.sh.in: Don't use
+	  ammt for anything; use system mt and only for device operations that
+	  require it.
+	* changer-src/chg-lib.sh.in: Support for above change.
+
+2007-09-25  Ian Turner <ian@zmanda.com> (merged by dustin@zmanda.com)
 	* device-src/tape-device.c: Fix a border case bug where
 	  tape_device_robust_read() would abort when called with a buffer
 	  exactly equal to the minimum read size.

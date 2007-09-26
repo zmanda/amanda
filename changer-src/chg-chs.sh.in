@@ -50,20 +50,6 @@ fi
 
 CHS=@CHS@
 
-if [ -x $sbindir/ammt$SUF ]; then
-	MT=$sbindir/ammt$SUF
-	MTF=-f
-elif [ -x "@MT@" ]; then
-	MT=@MT@
-	MTF=@MT_FILE_FLAG@
-else
-	answer=`_ '<none> %s: mt program not found' "$pname"`
-	echo `_ 'Exit ->'` $answer >> $logfile
-	echo $answer
-	exit 1
-fi
-echo "MT ->" $MT $MTF >> $logfile
-
 USE_VERSION_SUFFIXES="@USE_VERSION_SUFFIXES@"
 if test "$USE_VERSION_SUFFIXES" = "yes"; then
 	SUF="-@VERSION@"
@@ -312,7 +298,7 @@ if [ $ejectslot -eq 1 ]; then	# eject the tape from the drive
 	if [ $multieject -eq 1 ]; then
 		loopslot=$curslot
 		while [ $loopslot -lt $newslot ]; do
-			$MT $MTF $device offline >/dev/null 2>&1
+                        try_eject_device $device
 			if [ $? -ne 0 ]; then
 				answer=`_ '%s %s: %s: unable to change slot %s' "$newslot" "$pname" "$device" "$loopslot"`
 				echo `_ 'Exit ->'` $answer >> $logfile
@@ -324,7 +310,7 @@ if [ $ejectslot -eq 1 ]; then	# eject the tape from the drive
 	fi
   
 	# second, try to unload the device
-	$MT $MTF $device offline >/dev/null 2>&1
+        try_eject_device $device
 	$CHS deselect -d1 -s$curslot >/dev/null 2>&1
 	if [ $? -ne 0 ]; then
 		#
@@ -369,7 +355,7 @@ if [ \( $loadslot -eq 1 \) -a \( \( $curloaded -ne 1 \) -o \( \( $curloaded -eq 
 	sleep 60
 
 	# second, try to rewind the device
-	$MT $MTF $device rewind >/dev/null 2>&1
+        amdevcheck_status $device
 	if [ $? -ne 0 ]; then
 		#
 		# XXX if the changer-specific load command can distinguish

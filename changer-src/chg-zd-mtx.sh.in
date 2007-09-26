@@ -800,27 +800,6 @@ initial_poll_delay=${initial_poll_delay:-'0'}		# default: zero zeconds
 max_drive_wait=${max_drive_wait:-'120'}			# default: two minutes
 
 # check MT and MTX for sanity
-if test "${MT:0:1}" = "/"; then
-    if ! test -f "${MT}"; then
-	Exit 2 \
-	    `_ '<none>'` \
-	    `_ "mt binary at '%s' not found" "$MT"`
-    fi
-    if ! test -x "${MT}"; then
-	Exit 2 \
-	    `_ '<none>'` \
-	    `_ "mt binary at '%s' is not executable" "$MT"`
-    fi
-else
-    # try running it to see if the shell can find it
-    "$MT" >/dev/null 2>/dev/null
-    if test $? -eq 127 -o $? -eq 126; then
-	Exit 2 \
-	    `_ '<none>'` \
-	    `_ "Could not run mt binary at '%s'" "$MT"`
-    fi
-fi
-
 if test "${MTX:0:1}" = "/"; then
     if ! test -f "${MTX}"; then
 	Exit 2 \
@@ -840,6 +819,11 @@ else
 	    `_ '<none>'` \
 	    `_ "Could not run mtx binary at '%s'" "$MTX"`
     fi
+fi
+
+error=`try_find_mt`
+if $? -ne 0; then
+    Exit 2 '<none>' $error
 fi
 
 get_slot_list
@@ -934,7 +918,7 @@ eject() {
 	if [ $loadedslot -gt 0 ]; then
 		Log `_ 'EJECT    -> moving tape from drive %s to storage slot %s' "$driveslot" "$loadedslot"`
 		if [ $offline_before_unload -ne 0 ]; then
-			Run $MT $MTF $tape offline > /dev/null 2>&1
+                        Run try_eject_device $tape
 		fi
 		sleep $unloadpause
 		result=`Run $MTX unload $loadedslot $driveslot 2>&1`
@@ -1142,7 +1126,7 @@ loadslot() {
 	ready=0
 	sleep $initial_poll_delay
 	while [ $waittime -lt $max_drive_wait ]; do
-		result=`Run $MT $MTF $tape rewind 2>&1`
+                amdevcheck_status $tape
 		if [ $? -eq 0 ]; then
 			ready=1
 			break

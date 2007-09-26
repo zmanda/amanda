@@ -36,16 +36,6 @@ if [ "$tape" = "/dev/null" -o "$TAPE" = "/dev/null" ]; then
   exit 2;
 fi
 
-# for now, continue to prefer ammt and amdd, and in fact
-# assume they exist (since we install them..).  These are shell functions
-# (see chg-lib.sh), so there's no path qualification needed
-
-MT=ammt
-MTF=-f
-echo MT "->" $MT $MTF >> $logfile
-DD=amdd
-echo DD "->" $DD >> $logfile
-
 firstslot=1
 lastslot=5
 # counted from 1 !!!
@@ -199,9 +189,7 @@ loadslot() {
     echo `_ '     -> status %s' "$status"` >> $logfile
     echo `_ '     -> result %s' "$res"` >> $logfile
     if [ $status -eq 0 ];then
-      echo `_ '     -> rewind %s' "$load"` >> $logfile
-      $MT $MTF $tape rewind
-      $DD if=$tape bs=32k count=1 >> $logfile 2>&1
+      amdevcheck_status $tape
       answer="$load $tape"
       code=0
     else

@@ -41,7 +41,6 @@ set -x
 #
 # the usual config fun
 #
-MT=ammt
 
 USE_VERSION_SUFFIXES="@USE_VERSION_SUFFIXES@"
 if test "$USE_VERSION_SUFFIXES" = "yes"; then
@@ -93,9 +92,8 @@ unload_drive_n_clean() {
     #
     # if the drive is ONLINE, mt unload it
     #
-    if $MT -t $tapedev status | egrep "$ONLINEREGEX" >&2
-    then
-	$MT -t $tapedev offline >&2 || true
+    if amdevcheck_status $tapedev; then
+        try_eject_device $tapedev
     fi
 
     #
@@ -151,8 +149,7 @@ load_drives() {
     # wait for drive(s) to come online
     #
     count=0
-    until  $MT -t $tapedev status | egrep "$ONLINEREGEX" >&2
-    do
+    until amdevcheck_status $tapedev; do
 	count=`expr $count + 1`
 	if [ $count -gt 24 ] 
 	then
