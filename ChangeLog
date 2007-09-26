@@ -1,3 +1,7 @@
+2007-09-25  Ian Turner <ian@zmanda.com> (merged by dustin@zmanda.com)
+	* server-src/taperscan.c: Fix the order of arguments to
+	  scan_read_label(). Patch by Dustin J. Mitchell <dustin@zmanda.com>.
+
 2007-09-25  Jean-Louis Martineau <martineau@zmanda.com> (merged by dustin@zmanda.com)
 	* restore-src/restore.c: Change "no tapedev specified" message.
 

@@ -68,8 +68,8 @@ void CHAR_taperscan_output_callback (void *data, char *msg);
  */
 int scan_read_label(
     char *dev,
-    char *desired_label,
     char *slot,
+    char *desired_label,
     char** label,
     char** timestamp,
     char** error_message)
