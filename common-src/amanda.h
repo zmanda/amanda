@@ -503,9 +503,7 @@ extern int debug_amtable_alloc(const char *file,
 						     (b),             \
 						     (f))
 
-extern void debug_amtable_free(const char *, int, void **, size_t *);
-#define amtable_free(t, c)    debug_amtable_free(__FILE__, __LINE__, (t), (c))
-
+extern void amtable_free(void **, size_t *);
 
 extern uid_t  client_uid;
 extern gid_t  client_gid;

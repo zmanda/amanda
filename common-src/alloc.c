@@ -36,19 +36,6 @@
 
 #define	MIN_ALLOC	64
 
-/*
- * debug_amfree(file, line, pointer) -- like amfree, but perform basic
- * checks on 'pointer' before freeing.  Used in this file for extra safety.
- */
-
-#define	debug_amfree(f, l, p) do {					\
-    if ((void *)(p) > (void *)sbrk(0)) {				\
-	    error(_("amfree: %s:%d bogus free (%p > %p)\n"), (f), (l), (p), sbrk(0));\
-    }									\
-    amfree(p);								\
-} while (0)
-
-
 static char *internal_vstralloc(const char *, int, const char *, va_list);
 
 /*
@@ -167,7 +154,7 @@ debug_newalloc(
 
     malloc_enter(debug_caller_loc(file, line));
     addr = debug_alloc(file, line, size);
-    debug_amfree(file, line, old);
+    amfree(old);
     malloc_leave(debug_caller_loc(file, line));
     return addr;
 }
@@ -294,7 +281,7 @@ debug_newstralloc(
 
     malloc_enter(debug_caller_loc(file, line));
     addr = debug_stralloc(file, line, newstr);
-    debug_amfree(file, line, oldstr);
+    amfree(oldstr);
     malloc_leave(debug_caller_loc(file, line));
     return (addr);
 }
@@ -318,7 +305,7 @@ debug_newvstralloc(
     arglist_start(argp, newstr);
     result = internal_vstralloc(file, line, newstr, argp);
     arglist_end(argp);
-    debug_amfree(file, line, oldstr);
+    amfree(oldstr);
     malloc_leave(debug_caller_loc(file, line));
     return result;
 }
@@ -348,7 +335,7 @@ debug_vstrallocf(
 	arglist_end(argp);
 
 	if (size >= (size_t)MIN_ALLOC) {
-	    debug_amfree(file, line, result);
+	    amfree(result);
 	    result = debug_alloc(file, line, size + 1);
 
 	    arglist_start(argp, fmt);
@@ -388,7 +375,7 @@ debug_newvstrallocf(
 	arglist_end(argp);
 
 	if (size >= MIN_ALLOC) {
-	    debug_amfree(file, line, result);
+	    amfree(result);
 	    result = debug_alloc(file, line, size + 1);
 
 	    arglist_start(argp, fmt);
@@ -396,7 +383,7 @@ debug_newvstrallocf(
 	    arglist_end(argp);
 	}
     }
-    debug_amfree(file, line, oldstr);
+    amfree(oldstr);
     malloc_leave(debug_caller_loc(file, line));
     return result;
 }
@@ -418,7 +405,7 @@ debug_vstrextend(
 	if (*oldstr == NULL)
 		*oldstr = "";
 	*oldstr = internal_vstralloc(file, line, *oldstr, ap);
-        debug_amfree(file, line, keep);
+        amfree(keep);
 
 	arglist_end(ap);
         return *oldstr;
@@ -561,12 +548,10 @@ debug_amtable_alloc(
  */
 
 void
-debug_amtable_free(
-    const char *file,
-    int		line,
+amtable_free(
     void **	table,
     size_t *	current)
 {
-    debug_amfree(file, line, *table);
+    amfree(*table);
     *current = 0;
 }

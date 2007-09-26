@@ -1,3 +1,8 @@
+2007-09-25  Ian Turner <ian@zmanda.com> (merged by dustin@zmanda.com)
+	* common-src/alloc.c: Do away with debug_amfree(), which makes invalid
+	  assumptions about the way system malloc() works.
+	* common-src/amanda.h: Update definition of amtable_free() accordingly.
+
 2007-09-25  Jean-Louis Martineau <martineau@zmanda.com> (merged by dustin@zmanda.com)
 	* server-src/amadmin.c: Allow 'f' sort order.
 	* server-src/find.c: Fix parsing of log files.
