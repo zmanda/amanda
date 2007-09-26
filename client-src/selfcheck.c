@@ -145,7 +145,7 @@ main(
     }
     amfree(conffile);
 
-    check_running_as(RUNNING_AS_CLIENT_LOGIN | RUNNING_WITHOUT_SETUID);
+    check_running_as(RUNNING_AS_CLIENT_LOGIN);
 
     our_features = am_init_feature_set();
     our_feature_string = am_feature_to_string(our_features);

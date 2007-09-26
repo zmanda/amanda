@@ -266,7 +266,7 @@ main(
     }
     amfree(conffile);
 
-    check_running_as(RUNNING_AS_CLIENT_LOGIN | RUNNING_WITHOUT_SETUID);
+    check_running_as(RUNNING_AS_CLIENT_LOGIN);
 
 #ifdef USE_DBMALLOC
     dbmalloc_info.start.size = malloc_inuse(&dbmalloc_info.start.hist);

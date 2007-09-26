@@ -586,7 +586,7 @@ is_config_valid(
     }
     amfree(conffile);
 
-    check_running_as(RUNNING_AS_DUMPUSER_PREFERRED | RUNNING_WITHOUT_SETUID);
+    check_running_as(RUNNING_AS_DUMPUSER_PREFERRED);
 
     conf_diskfile = getconf_str(CNF_DISKFILE);
     if (*conf_diskfile == '/') {

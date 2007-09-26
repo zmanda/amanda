@@ -66,7 +66,7 @@ main(
 
     safe_fd(-1, 0);
 
-    check_running_as(RUNNING_AS_CLIENT_LOGIN | RUNNING_WITHOUT_SETUID);
+    check_running_as(RUNNING_AS_CLIENT_LOGIN);
 
     do {
  	/* soak up any stdin */

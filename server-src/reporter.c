@@ -480,7 +480,7 @@ main(
     read_conffile(conffile);
     amfree(conffile);
 
-    check_running_as(RUNNING_AS_DUMPUSER | RUNNING_WITHOUT_SETUID);
+    check_running_as(RUNNING_AS_DUMPUSER);
 
     dbrename(config_name, DBG_SUBDIR_SERVER);
 

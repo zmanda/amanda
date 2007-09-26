@@ -171,6 +171,13 @@ main(
     unsigned long malloc_hist_1, malloc_size_1;
     unsigned long malloc_hist_2, malloc_size_2;
 
+    /* drop root privileges; we'll regain them for the required operations */
+#ifdef WANT_SETUID_CLIENT
+    if (!set_root_privs(0)) {
+	error(_("calcsize must be run setuid root"));
+    }
+#endif
+
     safe_fd(-1, 0);
     safe_cd();
 
@@ -202,7 +209,7 @@ main(
     argc--;
     argv++;
 
-    check_running_as(RUNNING_AS_CLIENT_LOGIN | RUNNING_WITHOUT_SETUID);
+    check_running_as(RUNNING_AS_CLIENT_LOGIN);
 
     /* parse backup program name */
 
@@ -406,6 +413,8 @@ traverse_dirs(
     has_exclude = !is_empty_sl(exclude_sl) && (use_gtar_excl || use_star_excl);
     aparent = vstralloc(parent_dir, "/", include, NULL);
 
+    /* We (may) need root privs for the *stat() calls here. */
+    set_root_privs(1);
     if(stat(parent_dir, &finfo) != -1)
 	parent_dev = finfo.st_dev;
 
@@ -490,6 +499,10 @@ traverse_dirs(
 	    perror(dirname);
 #endif
     }
+
+    /* drop root privs -- we're done with the permission-sensitive calls */
+    set_root_privs(0);
+
     amfree(newbase);
     amfree(newname);
     amfree(aparent);

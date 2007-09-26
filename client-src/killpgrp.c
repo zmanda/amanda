@@ -86,13 +86,13 @@ main(
 	dbrename(argv[1], DBG_SUBDIR_CLIENT);
 
 #ifdef WANT_SETUID_CLIENT
-    check_running_as(RUNNING_AS_CLIENT_LOGIN | RUNNING_AS_SETUID_ROOT);
+    check_running_as(RUNNING_AS_CLIENT_LOGIN | RUNNING_AS_UID_ONLY);
     if (!become_root()) {
 	error(_("error [%s could not become root (is the setuid bit set?)]\n"), get_pname());
 	/*NOTREACHED*/
     }
 #else
-    check_running_as(RUNNING_AS_CLIENT_LOGIN | RUNNING_WITHOUT_SETUID);
+    check_running_as(RUNNING_AS_CLIENT_LOGIN);
 #endif
 
     if (AM_GETPGRP() != getpid()) {

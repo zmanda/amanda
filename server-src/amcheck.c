@@ -129,8 +129,10 @@ main(
     safe_cd();
 
     set_pname("amcheck");
-    /* drop root privileges, if we have them */
-    set_root_privs(0);
+    /* drop root privileges */
+    if (!set_root_privs(0)) {
+	error(_("amcheck must be run setuid root"));
+    }
 
     /* Don't die when child closes pipe */
     signal(SIGPIPE, SIG_IGN);

@@ -270,8 +270,10 @@ main(
     setlocale(LC_MESSAGES, "C");
     textdomain("amanda"); 
 
-    /* Drop root first thing */
-    set_root_privs(0);
+    /* drop root privileges */
+    if (!set_root_privs(0)) {
+	error(_("dumper must be run setuid root"));
+    }
 
     safe_fd(-1, 0);
 
@@ -322,7 +324,7 @@ main(
     }
     amfree(conffile);
 
-    check_running_as(RUNNING_AS_DUMPUSER | RUNNING_AS_SETUID_ROOT);
+    check_running_as(RUNNING_AS_DUMPUSER);
 
     dbrename(config_name, DBG_SUBDIR_SERVER);
 

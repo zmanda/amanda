@@ -859,13 +859,22 @@ check_running_as(enum RunningAsWho who)
     uid_t uid_target;
     char *uname_me = NULL;
     char *uname_target = NULL;
-    char *dumpuser = getconf_str(CNF_DUMPUSER);
+    char *dumpuser;
 
     uid_me = getuid();
     if ((pw = getpwuid(uid_me)) == NULL) {
         error(_("current userid %ld not found in password database"), (long)uid_me);
+	/* NOTREACHED */
     }
     uname_me = stralloc(pw->pw_name);
+
+#ifndef SINGLE_USERID
+    if (!(who & RUNNING_AS_UID_ONLY) && uid_me != geteuid()) {
+	error(_("euid (%d) does not match uid (%d); is this program setuid-root when it shouldn't be?"),
+		geteuid(), uid_me);
+	/* NOTREACHED */
+    }
+#endif
 
     switch (who & RUNNING_AS_USER_MASK) {
 	case RUNNING_AS_ROOT:
@@ -874,6 +883,7 @@ check_running_as(enum RunningAsWho who)
 	    break;
 
 	case RUNNING_AS_DUMPUSER_PREFERRED:
+	    dumpuser = getconf_str(CNF_DUMPUSER);
 	    if ((pw = getpwnam(CLIENT_LOGIN)) != NULL &&
                     uid_me == pw->pw_uid) {
                 /* uid == CLIENT_LOGIN: not ideal, but OK */
@@ -886,7 +896,7 @@ check_running_as(enum RunningAsWho who)
             /* FALLTHROUGH */
 
 	case RUNNING_AS_DUMPUSER:
-	    uname_target = dumpuser;
+	    uname_target = getconf_str(CNF_DUMPUSER);
 	    if ((pw = getpwnam(uname_target)) == NULL) {
 		error(_("cannot look up dumpuser \"%s\""), uname_target);
 		/*NOTREACHED*/
@@ -914,24 +924,6 @@ check_running_as(enum RunningAsWho who)
     }
     amfree(uname_me);
 
-#ifndef SINGLE_USERID
-    if (who & RUNNING_AS_SETUID_ROOT) {
-	if (geteuid() != 0) {
-	    error(_("this program must be run setuid-root"));
-	    /* NOTREACHED */
-	}
-    }
-
-    if (who & RUNNING_WITHOUT_SETUID) {
-	uid_t euid = geteuid();
-	if (euid != uid_me) {
-	    error(_("this program must not be run setuid; uid %lld != euid %lld"), 
-		(long long)uid_me, (long long)euid);
-	    /* NOTREACHED */
-	}
-    }
-#endif
-
 #else
     /* Quiet unused variable warning */
     (void)who;
@@ -946,6 +938,7 @@ set_root_privs(int need_root)
         if (seteuid(0) == -1) return 0;
         /* (we don't switch the group back) */
     } else {
+	if (geteuid() != 0) return 0;
         if (seteuid(getuid()) == -1) return 0;
         if (setegid(getgid()) == -1) return 0;
     }

@@ -97,6 +97,8 @@ main(
     }
     amfree(conffile);
 
+    check_running_as(RUNNING_AS_DUMPUSER);
+
     if (argc == 3) {
         device_name = argv[2];
     } else {
