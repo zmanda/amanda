@@ -25,6 +25,10 @@
  *			   University of Maryland at College Park
  */
 
+/* NOTE: this driver is *deprecated* and should not be used.  See the Device API
+ * in device-src/ for the new implementation.
+ */
+
 /*
  * $Id: output-tape.h,v 1.6 2006/05/25 01:47:27 johnfranks Exp $
  *

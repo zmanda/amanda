@@ -1,3 +1,7 @@
+/* NOTE: this driver is *deprecated* and should not be used.  See the Device API
+ * in device-src/ for the new implementation.
+ */
+
 #ifdef NO_AMANDA
 #include <stdio.h>
 #include <stdlib.h>

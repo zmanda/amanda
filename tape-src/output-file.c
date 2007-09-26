@@ -25,6 +25,10 @@
  *			   University of Maryland at College Park
  */
 
+/* NOTE: this driver is *deprecated* and should not be used.  See the Device API
+ * in device-src/ for the new implementation.
+ */
+
 /*
  * $Id: output-file.c,v 1.14 2006/07/06 15:04:18 martinea Exp $
  *

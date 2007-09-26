@@ -131,7 +131,13 @@ do_consumer_producer_queue_full(ProducerFunctor producer,
 /* Some commonly-useful producers and consumers.*/
 
 /* These functions will call device_read_block and device_write_block
- * respectively. The user data should be a Device*. */
+ * respectively. The user data should be a Device*.
+ *
+ * device_write_consumer assumes that the block_size passed to
+ * do_consumer_producer_queue_full is at least device_write_min_size();
+ * do_consumer_thread() will not pass a buffer of less than block_size
+ * to the consumer unless it has received EOF from the producer thread.
+ */
 producer_result_t device_read_producer(gpointer device,
                                        queue_buffer_t *buffer,
                                        int hint_size);

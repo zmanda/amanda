@@ -1,3 +1,11 @@
+2007-09-25  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/device.h device-src/queueing.h: expand comments
+	* tape-src/output-rait.h tape-src/output-null.c 
+	  tape-src/output-null.h tape-src/output-file.c 
+	  tape-src/output-file.h tape-src/output-tape.c 
+	  tape-src/output-tape.h tape-src/output-rait.c: add deprecation
+	  comment
+
 2007-09-25  Ian Turner <ian@zmanda.com> (merged by dustin@zmanda.com)
 	* changer-src/chg-zd-mtx.sh.in: Don't pass stripped device names back
 	  to Amanda.

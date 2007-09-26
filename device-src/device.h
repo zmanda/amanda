@@ -171,13 +171,16 @@ GType	device_get_type	(void);
  * file:/path/to/storage, and (assuming everything goes OK) you will get
  * back a nice happy Device* that you can do operations on. Note that you
  * must device_start() it before you can do anything besides talk about
- * properties or read the label. */
+ * properties or read the label. device_name remains the responsibility
+ * of the caller. */
 Device* 	device_open	(char * device_name);
 
 /* This instructs the device to read the label on the current
-   volume. It is called automatically after device_open() and before
-   device_start(). You can call it yourself anytime between the
-   two. */
+ * volume. It may called automatically during device_open() or
+ * device_start().  If you need the most up-to-date information (for
+ * example, after setting properties that may affect the result),
+ * call the function explicitly.  Otherwise, consult
+ * device->volume_label, which may be NULL. */
 ReadLabelStatusFlags        device_read_label (Device * self);
 
 /* This tells the Device that it's OK to start reading and writing
