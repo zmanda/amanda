@@ -32,7 +32,7 @@
  * argv[1] is the config name or NOCONFIG
  */
 #include "amanda.h"
-#include "statfs.h"
+#include "fsusage.h"
 #include "version.h"
 #include "sl.h"
 #include "util.h"
@@ -566,20 +566,20 @@ final_size_dump(
     int		level,
     char *	topdir)
 {
-    generic_fs_stats_t stats;
+    struct fs_usage fsusage;
     off_t mapsize;
     char *s;
 
     /* calculate the map sizes */
 
     s = stralloc2(topdir, "/.");
-    if(get_fs_stats(s, &stats) == -1) {
+    if(get_fs_usage(s, NULL, &fsusage) == -1) {
 	error("statfs %s: %s", s, strerror(errno));
 	/*NOTREACHED*/
     }
     amfree(s);
 
-    mapsize = (stats.files + (off_t)7) / (off_t)8;    /* in bytes */
+    mapsize = (fsusage.fsu_files + (off_t)7) / (off_t)8;    /* in bytes */
     mapsize = (mapsize + (off_t)1023) / (off_t)1024;  /* in kbytes */
 
     /* the dump contains three maps plus the files */

@@ -44,21 +44,27 @@ AC_DEFUN([gl_INIT],
   gl_HEADER_ARPA_INET
   gl_FUNC_BASE64
   dnl gl_USE_SYSTEM_EXTENSIONS must be added quite early to configure.ac.
+  gl_FSUSAGE
   gl_GETADDRINFO
   gl_INET_NTOP
   gl_LOCK
   gl_HEADER_NETINET_IN
   gl_PHYSMEM
+  gl_SAFE_READ
+  gl_SAFE_WRITE
   gl_SIZE_MAX
   gl_FUNC_SNPRINTF
   gl_TYPE_SOCKLEN_T
+  gt_TYPE_SSIZE_T
   AM_STDBOOL_H
+  gl_STDINT_H
   gl_FUNC_STRDUP
   gl_HEADER_STRING_H
   gl_HEADER_SYS_SOCKET
   AC_PROG_MKDIR_P
   gl_FUNC_VASNPRINTF
   gl_VISIBILITY
+  gl_WCHAR_H
   gl_XSIZE
   m4_popdef([AC_LIBSOURCES])
   m4_popdef([AC_REPLACE_FUNCS])
@@ -102,6 +108,12 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/asnprintf.c
   lib/base64.c
   lib/base64.h
+  lib/fsusage.c
+  lib/fsusage.h
+  lib/full-read.c
+  lib/full-read.h
+  lib/full-write.c
+  lib/full-write.h
   lib/gai_strerror.c
   lib/getaddrinfo.c
   lib/getaddrinfo.h
@@ -116,15 +128,21 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/printf-args.h
   lib/printf-parse.c
   lib/printf-parse.h
+  lib/safe-read.c
+  lib/safe-read.h
+  lib/safe-write.c
+  lib/safe-write.h
   lib/size_max.h
   lib/snprintf.c
   lib/snprintf.h
   lib/socket_.h
   lib/stdbool_.h
+  lib/stdint_.h
   lib/strdup.c
   lib/string_.h
   lib/vasnprintf.c
   lib/vasnprintf.h
+  lib/wchar_.h
   lib/xsize.h
   m4/absolute-header.m4
   m4/alloca.m4
@@ -132,6 +150,7 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/base64.m4
   m4/eoverflow.m4
   m4/extensions.m4
+  m4/fsusage.m4
   m4/getaddrinfo.m4
   m4/gnulib-common.m4
   m4/inet_ntop.m4
@@ -146,17 +165,23 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/netinet_in_h.m4
   m4/onceonly_2_57.m4
   m4/physmem.m4
+  m4/safe-read.m4
+  m4/safe-write.m4
   m4/size_max.m4
   m4/snprintf.m4
   m4/socklen.m4
   m4/sockpfaf.m4
+  m4/ssize_t.m4
   m4/stdbool.m4
+  m4/stdint.m4
   m4/stdint_h.m4
   m4/strdup.m4
   m4/string_h.m4
   m4/sys_socket_h.m4
+  m4/ulonglong.m4
   m4/vasnprintf.m4
   m4/visibility.m4
+  m4/wchar.m4
   m4/wchar_t.m4
   m4/wint_t.m4
   m4/xsize.m4

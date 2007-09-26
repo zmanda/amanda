@@ -42,7 +42,7 @@
 #include "holding.h"
 #include "infofile.h"
 #include "logfile.h"
-#include "statfs.h"
+#include "fsusage.h"
 #include "version.h"
 #include "driverio.h"
 #include "server_util.h"
@@ -156,7 +156,7 @@ main(
     int dsk;
     dumper_t *dumper;
     char *newdir = NULL;
-    generic_fs_stats_t fs;
+    struct fs_usage fsusage;
     holdingdisk_t *hdp;
     unsigned long malloc_hist_1, malloc_size_1;
     unsigned long malloc_hist_2, malloc_size_2;
@@ -173,6 +173,7 @@ main(
     int    new_argc,   my_argc;
     char **new_argv, **my_argv;
     char hostname[1025];
+    intmax_t kb_avail;
 
     /*
      * Configure program for internationalization:
@@ -314,7 +315,7 @@ main(
 	holdalloc(hdp)->allocated_dumpers = 0;
 	holdalloc(hdp)->allocated_space = (off_t)0;
 
-	if(get_fs_stats(holdingdisk_get_diskdir(hdp), &fs) == -1
+	if(get_fs_usage(holdingdisk_get_diskdir(hdp), NULL, &fsusage) == -1
 	   || access(holdingdisk_get_diskdir(hdp), W_OK) == -1) {
 	    log_add(L_WARNING, _("WARNING: ignoring holding disk %s: %s\n"),
 		    holdingdisk_get_diskdir(hdp), strerror(errno));
@@ -322,29 +323,34 @@ main(
 	    continue;
 	}
 
-	if(fs.avail != (off_t)-1) {
-	    if(hdp->disksize > (off_t)0) {
-		if(hdp->disksize > fs.avail) {
-		    log_add(L_WARNING,
-			    _("WARNING: %s: %lld KB requested, "
-			    "but only %lld KB available."),
-			    holdingdisk_get_diskdir(hdp),
-			    (OFF_T_FMT_TYPE)hdp->disksize,
-			    (OFF_T_FMT_TYPE)fs.avail);
-			    hdp->disksize = fs.avail;
-		}
-	    }
-	    else if((fs.avail + hdp->disksize) < (off_t)0) {
+	/* do the division first to avoid potential integer overflow */
+	if (fsusage.fsu_bavail_top_bit_set)
+	    kb_avail = 0;
+	else
+	    kb_avail = fsusage.fsu_bavail / 1024 * fsusage.fsu_blocksize;
+
+	if(hdp->disksize > (off_t)0) {
+	    if(hdp->disksize > kb_avail) {
 		log_add(L_WARNING,
-			_("WARNING: %s: not " OFF_T_FMT " KB free."),
+			_("WARNING: %s: %lld KB requested, "
+			"but only %lld KB available."),
 			holdingdisk_get_diskdir(hdp),
-			(OFF_T_FMT_TYPE)-hdp->disksize);
-		hdp->disksize = (off_t)0;
-		continue;
+			(OFF_T_FMT_TYPE)hdp->disksize,
+			(OFF_T_FMT_TYPE)kb_avail);
+			hdp->disksize = kb_avail;
 	    }
-	    else
-		hdp->disksize += fs.avail;
 	}
+	/* hdp->disksize is negative; use all but that amount */
+	else if(kb_avail < -hdp->disksize) {
+	    log_add(L_WARNING,
+		    _("WARNING: %s: not " OFF_T_FMT " KB free."),
+		    holdingdisk_get_diskdir(hdp),
+		    (OFF_T_FMT_TYPE)-hdp->disksize);
+	    hdp->disksize = (off_t)0;
+	    continue;
+	}
+	else
+	    hdp->disksize += kb_avail;
 
 	printf(_("driver: adding holding disk %d dir %s size %lld chunksize %lld\n"),
 	       dsk, holdingdisk_get_diskdir(hdp),

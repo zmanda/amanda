@@ -31,7 +31,7 @@
 #include "amanda.h"
 #include "util.h"
 #include "conffile.h"
-#include "statfs.h"
+#include "fsusage.h"
 #include "diskfile.h"
 #include "tapefile.h"
 #include "changer.h"
@@ -745,7 +745,7 @@ start_server_check(
     int		do_localchk,
     int		do_tapechk)
 {
-    generic_fs_stats_t fs;
+    struct fs_usage fsusage;
     FILE *outf = NULL;
     holdingdisk_t *hdp;
     pid_t pid G_GNUC_UNUSED;
@@ -755,6 +755,7 @@ start_server_check(
     tapetype_t *tp = NULL;
     char *quoted;
     int res;
+    intmax_t kb_avail;
 
     switch(pid = fork()) {
     case -1:
@@ -981,13 +982,22 @@ start_server_check(
     if(do_localchk) {
 	for(hdp = holdingdisks; hdp != NULL; hdp = hdp->next) {
     	    quoted = quote_string(holdingdisk_get_diskdir(hdp));
-	    if(get_fs_stats(holdingdisk_get_diskdir(hdp), &fs) == -1) {
+	    if(get_fs_usage(holdingdisk_get_diskdir(hdp), NULL, &fsusage) == -1) {
 		fprintf(outf, _("ERROR: holding dir %s (%s), "
 			"you must create a directory.\n"),
 			quoted, strerror(errno));
 		disklow = 1;
+		amfree(quoted);
+		continue;
 	    }
-	    else if(access(holdingdisk_get_diskdir(hdp), W_OK) == -1) {
+
+	    /* do the division first to avoid potential integer overflow */
+	    if (fsusage.fsu_bavail_top_bit_set)
+		kb_avail = 0;
+	    else
+		kb_avail = fsusage.fsu_bavail / 1024 * fsusage.fsu_blocksize;
+
+	    if(access(holdingdisk_get_diskdir(hdp), W_OK) == -1) {
 		fprintf(outf, _("ERROR: holding disk %s: not writable: %s.\n"),
 			quoted, strerror(errno));
 		fprintf(outf, _("Check permissions\n"));
@@ -999,20 +1009,21 @@ start_server_check(
 		fprintf(outf, _("Check permissions of ancestors of %s\n"), quoted);
 		disklow = 1;
 	    }
-	    else if(fs.avail == (off_t)-1) {
-		fprintf(outf,
-			_("WARNING: holding disk %s: "
-			"Could not determine whether the requested " OFF_T_FMT"KB is available)\n"),
-			quoted, (OFF_T_FMT_TYPE)holdingdisk_get_disksize(hdp));
-		disklow = 1;
-	    }
 	    else if(holdingdisk_get_disksize(hdp) > (off_t)0) {
-		if(fs.avail < holdingdisk_get_disksize(hdp)) {
+		if(kb_avail == 0) {
 		    fprintf(outf,
 			    _("WARNING: holding disk %s: "
 			    "only " OFF_T_FMT " %sB free ("
-			    OFF_T_FMT " %sB requested)\n"), quoted,
-			    (OFF_T_FMT_TYPE)(fs.avail / (off_t)unitdivisor),
+			    "no space available (" OFF_T_FMT " %sB requested)\n"), quoted,
+			    (OFF_T_FMT_TYPE)(holdingdisk_get_disksize(hdp)/(off_t)unitdivisor),
+			    displayunit);
+		    disklow = 1;
+		}
+		else if(kb_avail < holdingdisk_get_disksize(hdp)) {
+		    fprintf(outf,
+			    _("WARNING: holding disk %s: "
+			    "only " OFF_T_FMT " %sB available (" OFF_T_FMT " %sB requested)\n"), quoted,
+			    (OFF_T_FMT_TYPE)(kb_avail / (off_t)unitdivisor),
 			    displayunit,
 			    (OFF_T_FMT_TYPE)(holdingdisk_get_disksize(hdp)/(off_t)unitdivisor),
 			    displayunit);
@@ -1024,18 +1035,18 @@ start_server_check(
 			    " %sB disk space available,"
 			    " using " OFF_T_FMT " %sB as requested\n"),
 			    quoted,
-			    (OFF_T_FMT_TYPE)(fs.avail/(off_t)unitdivisor),
+			    (OFF_T_FMT_TYPE)(kb_avail / (off_t)unitdivisor),
 			    displayunit,
 			    (OFF_T_FMT_TYPE)(holdingdisk_get_disksize(hdp)/(off_t)unitdivisor),
 			    displayunit);
 		}
 	    }
 	    else {
-		if((fs.avail + holdingdisk_get_disksize(hdp)) < (off_t)0) {
+		if(kb_avail < -holdingdisk_get_disksize(hdp)) {
 		    fprintf(outf,
 			    _("WARNING: holding disk %s: "
 			    "only " OFF_T_FMT " %sB free, using nothing\n"),
-			    quoted, (OFF_T_FMT_TYPE)(fs.avail/(off_t)unitdivisor),
+			    quoted, (OFF_T_FMT_TYPE)(kb_avail / (off_t)unitdivisor),
 			    displayunit);
 	            fprintf(outf, _("WARNING: Not enough free space specified in amanda.conf\n"));
 		    disklow = 1;
@@ -1046,9 +1057,9 @@ start_server_check(
 			    OFF_T_FMT " %sB disk space available, using "
 			    OFF_T_FMT " %sB\n"),
 			    quoted,
-			    (OFF_T_FMT_TYPE)(fs.avail/(off_t)unitdivisor),
+			    (OFF_T_FMT_TYPE)(kb_avail/(off_t)unitdivisor),
 			    displayunit,
-			    (OFF_T_FMT_TYPE)((fs.avail + holdingdisk_get_disksize(hdp)) / (off_t)unitdivisor),
+			    (OFF_T_FMT_TYPE)((kb_avail + holdingdisk_get_disksize(hdp)) / (off_t)unitdivisor),
 			    displayunit);
 		}
 	    }

@@ -31,7 +31,7 @@
  */
 
 #include "amanda.h"
-#include "statfs.h"
+#include "fsusage.h"
 #include "version.h"
 #include "getfsent.h"
 #include "amandates.h"
@@ -1043,16 +1043,27 @@ check_space(
     char *	dir,
     off_t	kbytes)
 {
-    generic_fs_stats_t statp;
+    struct fs_usage fsusage;
     char *quoted = quote_string(dir);
+    intmax_t kb_avail;
 
-    if(get_fs_stats(dir, &statp) == -1) {
-	printf(_("ERROR [cannot statfs %s: %s]\n"), quoted, strerror(errno));
-    } else if(statp.avail < kbytes) {
+    if(get_fs_usage(dir, NULL, &fsusage) == -1) {
+	printf(_("ERROR [cannot get filesystem usage for %s: %s]\n"), quoted, strerror(errno));
+	amfree(quoted);
+	return;
+    }
+
+    /* do the division first to avoid potential integer overflow */
+    kb_avail = fsusage.fsu_bavail / 1024 * fsusage.fsu_blocksize;
+
+    if (fsusage.fsu_bavail_top_bit_set || fsusage.fsu_bavail == 0) {
+	printf(_("ERROR [dir %s needs " OFF_T_FMT "KB, has nothing available.]\n"), quoted,
+		(OFF_T_FMT_TYPE)kbytes);
+    } else if (kb_avail < kbytes) {
 	printf(_("ERROR [dir %s needs " OFF_T_FMT "KB, only has "
 		OFF_T_FMT "KB available.]\n"), quoted,
 		(OFF_T_FMT_TYPE)kbytes,
-		(OFF_T_FMT_TYPE)statp.avail);
+		(OFF_T_FMT_TYPE)kb_avail);
     } else {
 	printf(_("OK %s has more than " OFF_T_FMT " KB available.\n"),
 		quoted, (OFF_T_FMT_TYPE)kbytes);

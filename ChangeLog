@@ -1,3 +1,12 @@
+2007-09-25  Dustin J. Mitchell <dustin@zmanda.com>
+	* gnulib/regenerate/regenerate gnulib/* config/gnulib/*: add
+	  gnulib module 'fsusage'
+	* common-src/statfs-test.c common-src/statfs.c
+	  common-src/statfs.h common-src/Makefile.am: remove old statfs
+	* client-src/selfcheck.c client-src/calcsize.c
+	  server-src/amcheck.c server-src/driver.c: use fsusage instead of
+	  statfs
+
 2007-09-25  Ian Turner <ian@zmanda.com> (merged by dustin@zmanda.com)
 	* common-src/alloc.c: Do away with debug_amfree(), which makes invalid
 	  assumptions about the way system malloc() works.

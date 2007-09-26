@@ -37,7 +37,6 @@ libamanda_la_SOURCES =		\
 	security-util.c		\
 	sl.c			\
 	sockaddr-util.c		\
-	statfs.c		\
 	stream.c		\
 	tapelist.c		\
 	timestamp.c		\
@@ -111,7 +110,6 @@ noinst_HEADERS =		\
 	security.h		\
 	security-util.h		\
 	sl.h			\
-	statfs.h		\
 	sockaddr-util.h		\
 	stream.h		\
 	tapelist.h		\
@@ -202,14 +200,11 @@ amfeatures_LDADD = $(libamanda_la_LIBADD) $(STANDARD_COMMON_STUFF)
 
 # automake-style tests
 
-TESTS = amflock-test statfs-test
+TESTS = amflock-test
 noinst_PROGRAMS = $(TESTS)
 
 amflock_test_SOURCES = amflock-test.c
 amflock_test_LDADD = libamanda.la
-
-statfs_test_SOURCES = statfs-test.c
-statfs_test_LDADD = libamanda.la
 
 include $(top_srcdir)/config/automake/check-perl.am
 CHECK_PERL=$(SCRIPTS_PERL)
