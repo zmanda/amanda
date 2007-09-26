@@ -1197,7 +1197,7 @@ conditional_device_open(char         *tapedev,
 
     if (tapedev == NULL) {
 	send_message(prompt_out, flags, their_features,
-		     _("no tapedev specified"));
+		     _("Volume labeled '%s' not found."), desired_tape->label);
         return NULL;
     }
 
