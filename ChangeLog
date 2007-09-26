@@ -1,4 +1,7 @@
 2007-09-25  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/property.c device-src/property.h: create VERBOSE property
+
+2007-09-25  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/device.h device-src/queueing.h: expand comments
 	* tape-src/output-rait.h tape-src/output-null.c 
 	  tape-src/output-null.h tape-src/output-file.c 

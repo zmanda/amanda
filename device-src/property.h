@@ -266,4 +266,9 @@ extern DevicePropertyBase device_property_final_filemarks;
 extern DevicePropertyBase device_property_read_buffer_size;
 #define PROPERTY_READ_BUFFER_SIZE (device_property_read_buffer_size.ID)
 
+/* Should the device produce verbose output?  Value is a gboolean.  Not
+ * recognized by all devices. */
+extern DevicePropertyBase device_property_verbose;
+#define PROPERTY_VERBOSE (device_property_verbose.ID)
+
 #endif

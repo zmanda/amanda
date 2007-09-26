@@ -293,6 +293,9 @@ void device_property_init(void) {
     device_property_fill_and_register(&device_property_read_buffer_size,
                                       G_TYPE_UINT, "read_buffer_size",
       "What buffer size should be used for reading?");
+    device_property_fill_and_register(&device_property_verbose,
+                                     G_TYPE_BOOLEAN, "verbose",
+       "Should the device produce verbose output?");
 }
 
 DevicePropertyBase device_property_concurrency;
@@ -316,3 +319,4 @@ DevicePropertyBase device_property_eom;
 DevicePropertyBase device_property_bsf_after_eom;
 DevicePropertyBase device_property_final_filemarks;
 DevicePropertyBase device_property_read_buffer_size;
+DevicePropertyBase device_property_verbose;
