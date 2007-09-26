@@ -1,4 +1,8 @@
 2007-09-25  Ian Turner <ian@zmanda.com> (merged by dustin@zmanda.com)
+	* changer-src/chg-zd-mtx.sh.in: Don't pass stripped device names back
+	  to Amanda.
+
+2007-09-25  Ian Turner <ian@zmanda.com> (merged by dustin@zmanda.com)
 	* changer-src/chg-mtx.sh.in, changer-src/chg-manual.sh.in,
 	  changer-src/chg-zd-mtx.sh.in, changer-src/chg-juke.sh.in,
 	  changer-src/chg-chs.sh.in, changer-src/chg-multi.sh.in: Don't use

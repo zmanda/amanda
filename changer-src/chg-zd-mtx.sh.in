@@ -656,6 +656,7 @@ elif [ $tape = "/dev/null" -o `expr "$tape" : 'null:'` -eq 5 ]; then
 	     `_ '<none>'` \
 	     "tapedev ($tape) may not be the null device"
 fi
+# Confusingly, TAPE is the name of the changer device...
 TAPE=`amgetconf changerdev 2>/dev/null`
 if [ -z "$TAPE" ]; then
 	Exit 2 \
@@ -668,7 +669,7 @@ elif [ $TAPE = "/dev/null" ]; then
 fi
 export TAPE					# for mtx command
 
-CHANGER=$TAPE
+CHANGER=$TAPE 
 export CHANGER					# for mtx command
 
 #### Set up the various config files.
@@ -752,11 +753,6 @@ if [ $DBGFILE = /dev/null ]; then
 		DBGFILE=/dev/null
 	fi
 	Log `_ '=== Start %s ===' "\`date\`"`
-fi
-if [ -z "$driveslot" ]; then
-	Exit 2 \
-	     `_ '<none>'` \
-	     `_ 'cannot determine drive slot from %s' "$tape"`
 fi
 
 stdout=$TMPDIR/$myname.1.$$
@@ -929,7 +925,7 @@ eject() {
 			answer="$result"
 			code=2
 		else
-			answer="$tape"
+			answer="$rawtape"
 			code=0
 		fi
 	else
@@ -1038,11 +1034,11 @@ loadslot() {
 			rm -f $slotfile
 			echo $loadslot > $slotfile
 		fi
-		Exit 0 "$loadedslot" "$tape"
+		Exit 0 "$loadedslot" "$rawtape"
 		return $?			# in case we are internal
 	fi
 	if [ $loadedslot -eq -2 ]; then
-		Exit 0 "$loadedslot" "$tape"
+		Exit 0 "$loadedslot" "$rawtape"
 		return $?			# in case we are internal
         fi
 
@@ -1115,7 +1111,7 @@ loadslot() {
 	###
 	if [ $loadslot -eq $cleanslot ]; then
 		Run sleep $cleancycle
-		Exit 0 "$loadslot" "$tape"
+		Exit 0 "$loadslot" "$rawtape"
 		return $?			# in case we are internal
 	fi
 
@@ -1143,7 +1139,7 @@ loadslot() {
 		rm -f $slotfile
 		echo $loadslot > $slotfile
 	fi
-	Exit 0 "$loadslot" "$tape"
+	Exit 0 "$loadslot" "$rawtape"
 	return $?				# in case we are internal
 }
 
