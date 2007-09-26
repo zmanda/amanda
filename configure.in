@@ -696,7 +696,7 @@ AC_ARG_WITH(samba-user,
 )
 
 AC_ARG_WITH(gnutar-listdir,
-   [  --with-gnutar-listdir=DIR  gnutar directory lists go in DIR [[localstatedir/amanda/gnutar-lists]]],
+   [  --with-gnutar-listdir=DIR  gnutar directory lists go in DIR [[localstatedir/lib/amanda/gnutar-lists]]],
    [
 	case "$withval" in
 	    n | no)		unset GNUTAR_LISTDIR ;;
@@ -3323,14 +3323,10 @@ AC_CACHE_CHECK([for working IPv6],
 
 main()
 {
-#ifndef __CYGWIN__
    int aa;
    aa = socket(AF_INET6, SOCK_STREAM, 0);
    if (aa > 0) return 0;
    return aa;
-#else
-   return -1;
-#endif
 }]])],[amanda_working_ipv6=yes],[amanda_working_ipv6=no],[amanda_working_ipv6=yes
   ])
   ]
@@ -3338,9 +3334,7 @@ main()
 
 if test "$BROKEN_IPV6" = true; then
     amanda_working_ipv6=no;
-fi
-
-if test "$amanda_working_ipv6" = yes; then
+elif test "$amanda_working_ipv6" = yes; then
     if test "$amanda_ipv6" != false; then
 	AC_DEFINE(WORKING_IPV6,1,[Define if IPv6 is working. ])
     fi

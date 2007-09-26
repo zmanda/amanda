@@ -265,7 +265,7 @@ main(
 	    char *oldlogfile = vstralloc(conf_logdir, "/oldlog/log.",
 					 driver_timestamp, ".0", NULL);
 	    if(access(logfile, F_OK) == 0 || access(oldlogfile, F_OK) == 0) {
-		log_add(L_WARNING, "WARNING: This is not the first amdump run today. Enable the usetimestamps option in the configuration file if you want to run amdump more than once per calendar day.");
+		log_add(L_WARNING, _("WARNING: This is not the first amdump run today. Enable the usetimestamps option in the configuration file if you want to run amdump more than once per calendar day."));
 	    }
 	    amfree(oldlogfile);
 	    amfree(logfile);
@@ -1181,7 +1181,7 @@ handle_taper_result(
     int result_argc;
     char *result_argv[MAX_ARGS+1];
     char *qname;
-    
+
     (void)cookie;	/* Quiet unused parameter warning */
 
     assert(cookie == NULL);
@@ -1209,8 +1209,8 @@ handle_taper_result(
 	    printf(_("driver: finished-cmd time %s taper wrote %s:%s\n"),
 		   walltime_str(curclock()), dp->host->hostname, qname);
 	    fflush(stdout);
-	    amfree(qname);
-            
+            amfree(qname);
+
 	    if (strcmp(result_argv[3], "INPUT-ERROR") == 0) {
 		taper_input_error = stralloc(result_argv[5]);
 	    }

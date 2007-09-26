@@ -313,7 +313,7 @@ main(
 		double rt;
 
 		runtime = stopclock();
-		rt = g_timeval_to_double(runtime);
+                rt = g_timeval_to_double(runtime);
 		snprintf(kb_str, SIZEOF(kb_str), OFF_T_FMT,
 			 (OFF_T_FMT_TYPE)(dumpsize - (off_t)headersize));
 		snprintf(kps_str, SIZEOF(kps_str), "%3.1lf",

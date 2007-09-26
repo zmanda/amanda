@@ -1378,7 +1378,7 @@ udp_netfd_read_callback(
 
     result = getnameinfo((struct sockaddr *)&udp->peer, SS_LEN(&udp->peer),
 			 hostname, sizeof(hostname), NULL, 0, 0);
-    if (result != 0) {
+    if (result == -1) {
 	dbprintf("getnameinfo failed: %s\n",
 		  gai_strerror(result));
 	security_seterror(&rh->sech, "getnameinfo failed: %s",
@@ -2285,7 +2285,7 @@ check_security(
 
     /* what host is making the request? */
     if ((result = getnameinfo((struct sockaddr *)addr, SS_LEN(addr),
-                              hostname, NI_MAXHOST, NULL, 0, 0)) != 0) {
+			      hostname, NI_MAXHOST, NULL, 0, 0)) == -1) {
 	dbprintf(_("getnameinfo failed: %s\n"),
 		  gai_strerror(result));
 	*errstr = vstralloc("[", "addr ", str_sockaddr(addr), ": ",

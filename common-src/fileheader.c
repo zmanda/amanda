@@ -693,11 +693,11 @@ print_header(
 	break;
 
     case F_WEIRD:
-	fprintf(outf, "WEIRD file\n_(");
+	fprintf(outf, _("WEIRD file\n"));
 	break;
 
     case F_TAPESTART:
-	fprintf(outf, ")start of tape: date %s label %s\n",
+	fprintf(outf, _("start of tape: date %s label %s\n"),
 	       file->datestamp, file->name);
 	break;
 

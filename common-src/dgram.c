@@ -41,7 +41,7 @@ dgram_socket(
     dgram_t *	dgram,
     int		socket)
 {
-    if(socket < 0 || socket >= FD_SETSIZE) {
+    if(socket < 0 || socket >= (int)FD_SETSIZE) {
 	error(_("dgram_socket: socket %d out of range (0 .. %d)\n"),
 	      socket, (int)FD_SETSIZE-1);
         /*NOTREACHED*/
@@ -176,7 +176,7 @@ dgram_send_addr(
 #endif
     }
 
-    if(s < 0 || s >= FD_SETSIZE) {
+    if(s < 0 || s >= (int)FD_SETSIZE) {
 	dbprintf(_("dgram_send_addr: socket out of range: %d\n"), s);
 	errno = EMFILE;				/* out of range */
 	rc = -1;

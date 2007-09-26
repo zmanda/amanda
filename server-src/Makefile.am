@@ -121,18 +121,18 @@ install-exec-hook:
 	@list="$(sbin_PROGRAMS) $(sbin_SCRIPTS)"; \
 	for p in $$list; do \
 		pa=$(DESTDIR)$(sbindir)/`echo $$p|sed '$(transform)'`; \
-		echo chown $(BINARY_OWNER) $$pa; \
-		chown $(BINARY_OWNER) $$pa; \
-		echo chgrp $(SETUID_GROUP) $$pa; \
-		chgrp $(SETUID_GROUP) $$pa; \
+		echo chown \"$(BINARY_OWNER)\" $$pa;	\
+		chown "$(BINARY_OWNER)" $$pa;		\
+		echo chgrp \"$(SETUID_GROUP)\" $$pa;	\
+		chgrp "$(SETUID_GROUP)" $$pa;		\
 	done
 	@list="$(libexec_PROGRAMS) $(libexec_SCRIPTS)"; \
 	for p in $$list; do \
 		pa=$(DESTDIR)$(libexecdir)/`echo $$p|sed '$(transform)'`; \
-		echo chown $(BINARY_OWNER) $$pa; \
-		chown $(BINARY_OWNER) $$pa; \
-		echo chgrp $(SETUID_GROUP) $$pa; \
-		chgrp $(SETUID_GROUP) $$pa; \
+		echo chown \"$(BINARY_OWNER)\" $$pa;	\
+		chown "$(BINARY_OWNER)" $$pa;		\
+		echo chgrp \"$(SETUID_GROUP)\" $$pa;	\
+		chgrp "$(SETUID_GROUP)" $$pa;		\
 	done
 	@list="amcheck"; \
 	for p in $$list; do \

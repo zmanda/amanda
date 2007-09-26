@@ -2186,7 +2186,7 @@ extract_files(void)
 #endif
     dbprintf(_("Checking with user before restoring into directory %s\n"), cwd);
     if (!okay_to_continue(0,0,0)) {
-	amfree(cwd);
+        amfree(cwd);
 	return;
     }
     printf("\n");
@@ -2194,7 +2194,7 @@ extract_files(void)
     if (!do_unlink_list()) {
 	fprintf(stderr, _("Can't recover because I can't cleanup the cwd (%s)\n"),
 		cwd);
-	amfree(cwd);
+        amfree(cwd);
 	return;
     }
     free_unlink_list();

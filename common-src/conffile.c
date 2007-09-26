@@ -4511,7 +4511,7 @@ conf_print(
         break;
     }
     return buf;
-    }
+}
 
 static char * conf_print_exinclude(
     val_t *val,

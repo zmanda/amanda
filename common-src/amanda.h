@@ -31,9 +31,9 @@
 #ifndef AMANDA_H
 #define AMANDA_H
 
-#include "amflock.h"
-
 #include <glib.h>
+
+#include "amflock.h"
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -742,9 +742,6 @@ time_t	unctime(char *timestr);
 extern int    amflock(int fd, char *resource);
 extern int    amroflock(int fd, char *resource);
 extern int    amfunlock(int fd, char *resource);
-
-extern char  *sanitise_filename(char *inp);
-extern char  *old_sanitise_filename(char *inp);
 
 /* from old bsd-security.c */
 extern int debug;
