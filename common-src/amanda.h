@@ -743,15 +743,6 @@ extern int    amflock(int fd, char *resource);
 extern int    amroflock(int fd, char *resource);
 extern int    amfunlock(int fd, char *resource);
 
-/* Given a pathname, convert it to "canonical form" for this system.  Currently,
- * this means nothing on POSIX, but means substituting /cygdrive, etc. on Cygwin.
- *
- * @param pathname: the pathname to canonicalize
- * @param result_buf (output): the canonicalize pathname; this should be a buffer of
- * at least PATH_MAX bytes.
- */
-void canonicalize_pathname(char *pathname, char *result_buf);
-
 extern char  *sanitise_filename(char *inp);
 extern char  *old_sanitise_filename(char *inp);
 

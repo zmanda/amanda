@@ -1,4 +1,8 @@
 2007-09-25  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/amanda.h common-src/file.h: move declaration of 
+	  canonicalize_pathname to file.h
+
+2007-09-25  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/util.c common-src/util.h: only check euid==uid
 	  if not RUNNING_AS_UID_ONLY; set_root_privs() checks that euid=0
 	* client-src/runstar.c client-src/noop.c client-src/runtar.c
