@@ -1993,8 +1993,9 @@ search_tapes(
     }
     desired_tape = tapelist;
 
-    if(use_changer && !cur_tapedev) { /* load current slot */
+    if (use_changer) { /* load current slot */
 	amfree(curslot);
+	cur_tapedev = NULL;
 	changer_loadslot("current", &curslot, &cur_tapedev);
     }
 

@@ -1,3 +1,6 @@
+2007-09-25  Jean-Louis Martineau <martineau@zmanda.com> (merged by dustin@zmanda.com)
+	* restore-src/restore.c: init cur_tapedev.
+
 2007-09-25  Dustin J. Mitchell <dustin@zmanda.com>
 	* gnulib/regenerate/regenerate gnulib/* config/gnulib/*: add
 	  gnulib module 'fsusage'
