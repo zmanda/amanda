@@ -3,7 +3,7 @@
 INCLUDES =	-I$(top_builddir)/common-src \
 		-I$(top_srcdir)/common-src \
 		-I$(top_srcdir)/gnulib \
-		-I..
+		-I$(top_srcdir)/device-src
 
 noinst_PROGRAMS = queue_test device_test
 

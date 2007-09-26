@@ -234,9 +234,9 @@ install-exec-hook:
 
 lint:
 	@echo $(LINT) $(libamanda_la_SOURCES)
-	@$(LINT) $(LINTFLAGS) $(CPPFLAGS) $(DEFS) -I. -I../config $(INCLUDES) $(libamanda_la_SOURCES)
+	@$(LINT) $(LINTFLAGS) $(CPPFLAGS) $(DEFS) -I. -I$(top_builddir)/config $(INCLUDES) $(libamanda_la_SOURCES)
 	@echo $(LINT) $(genversion_SOURCES)
-	@$(LINT) $(LINTFLAGS) $(CPPFLAGS) $(DEFS) -I. -I../config $(INCLUDES) $(genversion_SOURCES)
+	@$(LINT) $(LINTFLAGS) $(CPPFLAGS) $(DEFS) -I. -I$(top_builddir)/config $(INCLUDES) $(genversion_SOURCES)
 
 listlibsrc:
 	@ for p in $(libamanda_la_SOURCES) $(REGEXCSRC); do	\

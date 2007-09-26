@@ -1,4 +1,14 @@
 2007-09-25  Dustin J. Mitchell <dustin@zmanda.com>
+	* oldrecover-src/Makefile.am changer-src/Makefile.am
+	  client-src/Makefile.am amandad-src/Makefile.am
+	  recover-src/Makefile.am server-src/Makefile.am
+	  restore-src/Makefile.am common-src/Makefile.am
+	  tape-src/Makefile.am: replace -I../config with 
+	  -I$(top_builddir)/config
+	* device-src/tests/Makefile.am: Replace -I.. with 
+	  -I$(top_srcdir)/device-src
+
+2007-09-25  Dustin J. Mitchell <dustin@zmanda.com>
 	* client-src/sendsize.c: change "smbclient" to SAMBA_CLIENT to allow
 	  configurable name
 

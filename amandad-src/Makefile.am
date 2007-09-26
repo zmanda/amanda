@@ -51,7 +51,7 @@ lint:
 		(cd ../server-src; make listlibsrc);				\
 		f="$$f "`cat ../server-src/listlibsrc.output`;			\
 		echo $(LINT) $$f;						\
-		$(LINT) $(LINTFLAGS) $(CPPFLAGS) $(DEFS) -I. -I../config	\
+		$(LINT) $(LINTFLAGS) $(CPPFLAGS) $(DEFS) -I. -I$(top_builddir)/config	\
 		    $(INCLUDES) $$f;						\
 		if [ $$? -ne 0 ]; then						\
 		    exit 1;							\
