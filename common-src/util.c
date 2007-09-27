@@ -870,8 +870,8 @@ check_running_as(enum RunningAsWho who)
 
 #ifndef SINGLE_USERID
     if (!(who & RUNNING_AS_UID_ONLY) && uid_me != geteuid()) {
-	error(_("euid (%d) does not match uid (%d); is this program setuid-root when it shouldn't be?"),
-		geteuid(), uid_me);
+	error(_("euid (%lld) does not match uid (%lld); is this program setuid-root when it shouldn't be?"),
+		(long long int)geteuid(), (long long int)uid_me);
 	/* NOTREACHED */
     }
 #endif

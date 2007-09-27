@@ -1,3 +1,6 @@
+2007-09-25  Dan Locks <dwlocks@zmanda.com>
+	* common-src/util.c: cast uid_t to long long for printf formatting
+
 2007-09-25  Dustin J. Mitchell <dustin@zmanda.com>
 	* oldrecover-src/Makefile.am changer-src/Makefile.am
 	  client-src/Makefile.am amandad-src/Makefile.am
