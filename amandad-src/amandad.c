@@ -747,8 +747,8 @@ state_machine(
 	 * Service is done.  Remove it and finish.
 	 */
 	case A_FINISH:
-	    service_delete(as);
 	    amandad_debug(1, _("state_machine: %p leaving (A_FINISH)\n"), as);
+	    service_delete(as);
 	    return;
 
 	default:

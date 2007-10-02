@@ -1,3 +1,7 @@
+2007-10-01  Dustin J. Mitchell <dustin@zmanda.com>
+	Coverity bug #237
+	* amandad-src/amandad.c: fix a use-after-free
+
 2007-10-01  Ian Turner <ian@zmanda.com>
 	* device-src/tape-posix.c: Use MTEOD on systems that have it but not
 	  MTEOM.
