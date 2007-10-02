@@ -377,11 +377,6 @@ device_property_get_list (Device * self)
         return (const DeviceProperty*) selfp->property_list->data;
 }
 
-gboolean
-device_is_eof(Device * self) {
-    return self->is_eof;
-}
-
 guint device_write_min_size(Device * self) {
     GValue g_tmp;
     int block_size, min_block_size;

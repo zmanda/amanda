@@ -1,3 +1,9 @@
+2007-10-01  Ian Turner <ian@zmanda.com>
+	* device-src/rait-device.c, device-src/queueing.c,
+	  device-src/tests/device_test.c, device-src/device.h,
+	  device-src/device.c: Remove device_is_eof() function in favor of
+	  accessing is_eof member directly.
+
 2007-10-01  Dustin J. Mitchell <dustin@zmanda.com>
 	Coverity bug #237
 	* amandad-src/amandad.c: fix a use-after-free

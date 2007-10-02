@@ -1177,7 +1177,7 @@ static gboolean extract_boolean_read_block_op_data(gpointer data) {
 /* A BooleanExtractor. This one checks for EOF. */
 static gboolean extract_boolean_read_block_op_eof(gpointer data) {
     ReadBlockOp * op = data;
-    return device_is_eof(op->base.child);
+    return op->base.child->is_eof;
 }
 
 static int g_ptr_array_count(GPtrArray * array, BooleanExtractor filter) {

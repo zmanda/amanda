@@ -103,7 +103,7 @@ static gboolean read_whole_file(Device * device, int fileno) {
     size = blocksize;
     buf = malloc(blocksize);
     g_assert(-1 == device_read_block(device, &buf, &size));
-    g_return_val_if_fail(device_is_eof(device), FALSE);
+    g_return_val_if_fail(device->is_eof, FALSE);
     free(buf);
 
     return TRUE;

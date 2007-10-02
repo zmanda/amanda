@@ -428,7 +428,7 @@ producer_result_t device_read_producer(gpointer devicep,
         } else if (result == 0) {
             buffer->data = realloc(buffer->data, read_size);
             buffer->alloc_size = read_size;
-        } else if (device_is_eof(device)) {
+        } else if (device->is_eof) {
             return PRODUCER_FINISHED;
         } else {
             buffer->data_size = 0;

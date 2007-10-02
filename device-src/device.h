@@ -82,7 +82,8 @@ typedef struct {
     char * device_name;
     /* Holds the user-specified access-mode. */
     DeviceAccessMode access_mode;
-    /* Is all the data for this file read? */
+    /* In reading mode, FALSE unless all the data from the current file
+     * was successfully read. */
     gboolean is_eof;
     /* Holds the label and time of the currently-inserted volume,
      * or NULL if it has not been read/written yet. */
@@ -296,10 +297,6 @@ int 	device_read_block	(Device * self,
  * there is a problem writing to the fd. */
 gboolean 	device_read_to_fd	(Device * self,
 					int fd);
-
-/* Returns TRUE if the last device_read_block returned -1 because
- * there is no data left to read. */
-gboolean        device_is_eof           (Device * self);
 
 /* This function tells you what properties are supported by this
  * device, and when you are allowed to get and set them. The return
