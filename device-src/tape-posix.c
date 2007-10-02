@@ -27,8 +27,13 @@
 #if !defined(MTCOMPRESSION) && defined(MTCOMP)
 # define MTCOMPRESSION MTCOMP
 #endif
+
 #if !defined(MTSETBLK) && defined(MTSETBSIZ)
-#define MTSETBLK MTSETBSIZ
+# define MTSETBLK MTSETBSIZ
+#endif
+
+#if !defined(MTEOM) && defined(MTEOD)
+# define MTEOM MTEOD
 #endif
 
 #ifdef HAVE_LIMITS_H

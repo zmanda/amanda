@@ -461,7 +461,7 @@ dumpfile_t * make_tapestart_header(Device * self, char * label,
     if (get_timestamp_state(timestamp) == TIME_STATE_REPLACE) {
         self->volume_time = get_proper_stamp_from_time(time(NULL));
     } else {
-        self->volume_time = strdup(timestamp);
+        self->volume_time = g_strdup(timestamp);
     }
     strncpy(rval->datestamp, self->volume_time, sizeof(rval->datestamp));
     strncpy(rval->name, label, sizeof(rval->name));

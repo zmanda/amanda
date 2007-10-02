@@ -697,10 +697,10 @@ static ReadLabelStatusFlags rait_device_read_label(Device * dself) {
         rval = READ_LABEL_STATUS_SUCCESS;
         g_assert(first_success != NULL);
         if (first_success->volume_label != NULL) {
-            dself->volume_label = strdup(first_success->volume_label);
+            dself->volume_label = g_strdup(first_success->volume_label);
         }
         if (first_success->volume_time != NULL) {
-            dself->volume_time = strdup(first_success->volume_time);
+            dself->volume_time = g_strdup(first_success->volume_time);
         }
     }
     
@@ -749,8 +749,8 @@ rait_device_start (Device * dself, DeviceAccessMode mode, char * label,
         op = malloc(sizeof(*op));
         op->base.child = g_ptr_array_index(self->private->children, i);
         op->mode = mode;
-        op->label = strdup(label);
-        op->timestamp = strdup(timestamp);
+        op->label = g_strdup(label);
+        op->timestamp = g_strdup(timestamp);
         g_ptr_array_add(ops, op);
     }
     

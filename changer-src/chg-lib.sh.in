@@ -50,11 +50,11 @@ fi
 
 try_find_mt() {
     # Only do this once.
-    if -n $mt_found; then
+    if test -n $mt_found; then
         return 0
     fi
 
-    if -z $MT; then
+    if test -z $MT; then
         MT=mt
     fi
 
@@ -112,8 +112,7 @@ amdevcheck_status() {
 
 try_eject_device() {
     if echo "$1" | grep -e '^tape:' > /dev/null; then
-        try_eject_device_tape="`echo "$1" | cut -b6-`"
-        #` <- for confused emacs
+        try_eject_device_tape="`echo \"$1\" | cut -b6-`"
     elif echo "$1" | grep -v : > /dev/null; then
         try_eject_device_tape="$1"
     else

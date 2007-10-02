@@ -1,3 +1,15 @@
+2007-10-01  Ian Turner <ian@zmanda.com>
+	* device-src/tape-posix.c: Use MTEOD on systems that have it but not
+	  MTEOM.
+
+2007-10-01  Ian Turner <ian@zmanda.com>
+	* device-src/device.c, device-src/vfs-device.c,
+	  device-src/rait-device.c: Use g_strdup() instead of strdup().
+
+2007-10-01  Ian Turner <ian@zmanda.com>
+	* changer-src/chg-lib.sh.in: Fix some compilation problems on
+	  Solaris 10.
+
 2007-09-25  Dan Locks <dwlocks@zmanda.com>
 	* common-src/util.c: cast uid_t to long long for printf formatting
 
