@@ -1,3 +1,6 @@
+2007-10-02  Jean-Louis Martineau <martineau@zmanda.com>
+	* man/xml-source/amanda.conf.5.xml: Fix indentation.
+
 2007-10-02  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/amcheck.c: Fix typo in merge found by
 	  martineau@zmanda.com

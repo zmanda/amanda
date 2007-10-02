@@ -333,14 +333,14 @@ some common properties are supported across multiple device drivers.</para>
 
 <para> Both strings are quoted; the first string contains the name of
 the property to set, and the second contains its value. For example, to set
-a fixed block size of 128k, do <informalexample><programlisting>device_property "BLOCK_SIZE" "131072"</programlisting></informalexample>.</para>
-
+a fixed block size of 128k, do:</para><programlisting>device_property "BLOCK_SIZE" "131072"</programlisting>
+<para></para>
 <para>The order in which device properties are set is as follows:
-<orderedlist><listitem>Tapetype parameters, including length, blocksize,
+<orderedlist><listitem><para>Tapetype parameters, including length, blocksize,
 readblocksize, file-pad, are translated into device properties and set
-accordingly.</listitem>
-<listitem>Device properties from any device_property configuration directives
-are set, in the order they appear in the configuration file.</listitem>
+accordingly.</para></listitem>
+<listitem><para>Device properties from any device_property configuration directives
+are set, in the order they appear in the configuration file.</para></listitem>
 </orderedlist></para>
   </listitem>
   </varlistentry>
