@@ -1015,7 +1015,6 @@ start_server_check(
 		if(kb_avail == 0) {
 		    fprintf(outf,
 			    _("WARNING: holding disk %s: "
-			    "only " OFF_T_FMT " %sB free ("
 			    "no space available (" OFF_T_FMT " %sB requested)\n"), quoted,
 			    (OFF_T_FMT_TYPE)(holdingdisk_get_disksize(hdp)/(off_t)unitdivisor),
 			    displayunit);
