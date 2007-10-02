@@ -3,6 +3,10 @@
 	* amandad-src/amandad.c: fix a use-after-free
 
 2007-10-01  Ian Turner <ian@zmanda.com>
+	* device-src/device.c: Automatically register the CANONICAL_NAME
+	  property for all devices.
+
+2007-10-01  Ian Turner <ian@zmanda.com>
 	* device-src/tape-posix.c: Use MTEOD on systems that have it but not
 	  MTEOM.
 

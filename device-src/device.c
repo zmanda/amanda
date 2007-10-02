@@ -637,8 +637,24 @@ default_device_start (Device * self, DeviceAccessMode mode, char * label,
 
 static gboolean default_device_open_device(Device * self,
                                            char * device_name) {
+    DeviceProperty prop;
+    guint i;
+
     self->device_name = device_name;
     device_read_label(self);
+
+    prop.base = &device_property_canonical_name;
+    prop.access = PROPERTY_ACCESS_GET_MASK;
+
+    for(i = 0; i < selfp->property_list->len; i ++) {
+        if (g_array_index(selfp->property_list,
+                          DeviceProperty, i).base->ID == prop.base->ID) {
+            return TRUE;
+        }
+    }
+    /* If we got here, the property was not registered. */
+    device_add_property(self, &prop, NULL);
+
     return TRUE;
 }
 
