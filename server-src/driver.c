@@ -1274,6 +1274,9 @@ handle_taper_result(
 		taper_cmd(NEW_TAPE, NULL, NULL, 0, NULL);
 	    } else {
 		taper_cmd(NO_NEW_TAPE, NULL, NULL, 0, NULL);
+		log_add(L_WARNING,
+			_("Out of tapes; going into degraded mode."));
+		start_degraded_mode(&runq);
 	    }
 	    break;
 
@@ -1287,6 +1290,9 @@ handle_taper_result(
 		taper_cmd(NEW_TAPE, NULL, NULL, 0, NULL);
 	    } else {
 		taper_cmd(NO_NEW_TAPE, NULL, NULL, 0, NULL);
+		log_add(L_WARNING,
+			_("Out of tapes; going into degraded mode."));
+		start_degraded_mode(&runq);
 	    }
 	    break;
 

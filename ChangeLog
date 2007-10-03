@@ -1,3 +1,6 @@
+2007-10-03  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/driver.c: Go in degraded mode after out of tape.
+
 2007-10-02  Jean-Louis Martineau <martineau@zmanda.com>
 	* man/xml-source/amanda.conf.5.xml: Fix indentation.
 
