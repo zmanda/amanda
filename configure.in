@@ -1558,7 +1558,7 @@ fi
 
 # search for pkg-config, which the glib configuration uses, adding a few
 # system-specific search paths.
-AC_PATH_PROG(PKG_CONFIG, pkg-config, [], $LOCSYSPATH:/opt/csw/bin:/usr/local/bin)
+AC_PATH_PROG(PKG_CONFIG, pkg-config, [], $LOCSYSPATH:/opt/csw/bin:/usr/local/bin:/opt/local/bin)
 
 case "$target" in
     sparc-sun-solaris2.8) # Solaris 8
@@ -1573,7 +1573,7 @@ case "$target" in
 	;;
 esac
 
-AM_PATH_GLIB_2_0(2.2.0,,AC_MSG_ERROR(glib not found or too old),
+AM_PATH_GLIB_2_0(2.2.0,,AC_MSG_ERROR(glib not found or too old.  See http://wiki.zmanda.com/index.php/Installation for help),
 		 gmodule gobject gthread)
 
 AMANDA_CFLAGS="$AMANDA_CFLAGS $KRB4INCLUDES $KRB5INCLUDES $DBMALLOCCFLAGS $GLIB_CFLAGS"
