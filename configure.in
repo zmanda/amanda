@@ -2194,6 +2194,14 @@ AM_CONDITIONAL(WANT_TAPE_UWARE,
 AM_CONDITIONAL(WANT_TAPE_POSIX, 
     test -n "$have_MTIOCTOP")
 
+# or no tape device at all (e.g., Mac OS X)?
+if test -n "$xenix_tapeio" || test -n "$aix_tapeio" || test -n "$uware_tapeio" || test -n "$have_MTIOCTOP"; then
+    want_tape_device=yes
+    AC_DEFINE(WANT_TAPE_DEVICE, 1, [Define if the tape-device will be built])
+fi
+AM_CONDITIONAL(WANT_TAPE_DEVICE,
+    test -n "$want_tape_device")
+
 NO_SCSI_CHANGER_MODE=true
 NO_CHIO_CHANGER_MODE=true
 

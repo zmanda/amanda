@@ -1,3 +1,8 @@
+2007-10-04  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/device.c device-src/Makefile.am configure.in: add
+	  WANT_TAPE_DEVICE conditional, for machines that have no tape
+	  support whatsoever (Mac OS X)
+
 2007-10-03  Dan Locks <dwlocks@zmanda.com>
 	* configure.in: Added /opt/local/bin AC_PATH_PROG(PKG_CONFIG.. for 
 	  mac osx and macports

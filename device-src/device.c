@@ -35,7 +35,9 @@
 #include "timestamp.h"
 #include "vfs-device.h"
 #include "util.h"
+#ifdef WANT_TAPE_DEVICE
 #include "tape-device.h"
+#endif
 #include "rait-device.h"
 
 static GHashTable* driverList = NULL;
@@ -49,7 +51,9 @@ void device_api_init(void) {
     /* register other types and devices. */
     null_device_register();
     vfs_device_register();
+#ifdef WANT_TAPE_DEVICE
     tape_device_register();
+#endif
     rait_device_register();
 }
 
