@@ -21,7 +21,7 @@ prefix="@prefix@"
 exec_prefix="@exec_prefix@"
 sbindir="@sbindir@"
 libexecdir="@libexecdir@"
-. "${libexecdir}/amanda/amanda-sh-lib.sh"
+. "${libexecdir}/amanda-sh-lib.sh"
 
 ####
 # Eponymous functions to access various amanda apps

@@ -216,8 +216,7 @@ check-local: check-shell
 
 # shell library
 
-amlibexecdir=$(libexecdir)/amanda
-amlibexec_SCRIPTS = amanda-sh-lib.sh
+libexec_SCRIPTS = amanda-sh-lib.sh
 
 # installation
 
