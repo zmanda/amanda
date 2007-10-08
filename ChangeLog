@@ -1,3 +1,9 @@
+2007-10-04  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/tests/Makefile.am device-src/tests/vfs_test.c: add a test
+	  for the vfs device
+	* device-src/property.c device-src/vfs-device.c: add
+	  PROPERTY_FREE_SPACE
+
 2007-10-04  Dan Locks <dwlocks@zmanda.com>
 	* amanda.spec: add .spec file Zmanda uses for community builds
 	

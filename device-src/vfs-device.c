@@ -21,6 +21,7 @@
 #include <string.h> /* memset() */
 
 #include "vfs-device.h"
+#include "fsusage.h"
 #include "amanda.h"
 #include <regex.h>
 
@@ -1054,6 +1055,29 @@ vfs_device_property_get (Device * pself, DevicePropertyId ID, GValue * val) {
         g_value_unset_init(val, G_TYPE_UINT64);
         g_value_set_uint64(val, self->volume_limit);
         return TRUE;
+    } else if (ID == PROPERTY_FREE_SPACE) {
+	QualifiedSize qsize;
+	struct fs_usage fsusage;
+	guint64 bytes_avail;
+
+	if (get_fs_usage(self->dir_name, NULL, &fsusage) == 0) {
+	    if (fsusage.fsu_bavail_top_bit_set)
+		bytes_avail = 0;
+	    else
+		bytes_avail = fsusage.fsu_bavail * fsusage.fsu_blocksize;
+	    if (self->volume_limit && (guint64)self->volume_limit < bytes_avail / 1024)
+		bytes_avail = (guint64)self->volume_limit * 1024;
+
+	    qsize.accuracy = SIZE_ACCURACY_REAL;
+	    qsize.bytes = bytes_avail;
+	} else {
+	    g_warning(_("get_fs_usage('%s') failed: %s"), self->dir_name, strerror(errno));
+	    qsize.accuracy = SIZE_ACCURACY_UNKNOWN;
+	    qsize.bytes = 0;
+	}
+	g_value_unset_init(val, QUALIFIED_SIZE_TYPE);
+	g_value_set_boxed(val, &qsize);
+	return TRUE;
     } else {
         if (parent_class->property_get) {
             return parent_class->property_get(pself, ID, val);

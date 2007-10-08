@@ -94,7 +94,7 @@ GType media_access_mode_get_type (void) {
 /* Copy function for GBoxed QualifiedSize. */
 static gpointer qualified_size_copy(gpointer source) {
     gpointer rval = malloc(sizeof(QualifiedSize));
-    memcpy(source, rval, sizeof(QualifiedSize));
+    memcpy(rval, source, sizeof(QualifiedSize));
     return rval;
 }
 

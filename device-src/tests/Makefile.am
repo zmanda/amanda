@@ -5,7 +5,9 @@ INCLUDES =	-I$(top_builddir)/common-src \
 		-I$(top_srcdir)/gnulib \
 		-I$(top_srcdir)/device-src
 
-noinst_PROGRAMS = queue_test device_test
+# automake-style tests
+
+noinst_PROGRAMS = queue_test device_test $(TESTS)
 
 ###
 # Because libamanda includes routines (e.g. regex) provided by some system
@@ -19,5 +21,8 @@ LDADD = ../../common-src/libamanda.la \
 	../../gnulib/libgnu.la
 
 
-TESTS = semaphore-test
-noinst_PROGRAMS += $(TESTS)
+TESTS = semaphore-test vfs_test
+
+semaphore_test_SOURCES = semaphore-test.c
+
+vfs_test_SOURCES = vfs_test.c
