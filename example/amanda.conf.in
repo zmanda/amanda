@@ -312,6 +312,12 @@ define tapetype MIMSY-MEGATAPE {
     speed 170 kbytes		# limited by the Emulex bus interface, ugh
 }
 
+define tapetype SEAGATE-ULTRIUM-LTO {
+     comment "SEAGATE ULTRIUM 06242 LTO, compression off"
+     length 99584 mbytes
+     filemark 0 kbytes
+     speed 11288 kps
+}
 
 # dumptypes
 #

@@ -1,3 +1,6 @@
+2007-10-08  Kevin Till <ktill@zmanda.com>  (merged by dustin@zmanda.com)
+	* example/amanda.conf.in: add segate LTO tapetype
+
 2007-10-08  Paddy Sreenivasan <paddy@zmanda.com>
 	* changer-src/chg-lib.sh.in
 	  changer-src/chg-null.sh.in changer-src/chg-disk.sh.in
