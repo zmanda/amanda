@@ -98,7 +98,7 @@ tape_tapefd_fsf(
 }
 #endif									/* } */
 
-#ifdef UWARE_TAPEIO							/* { */
+#ifdef WANT_TAPE_UWARE							/* { */
 
 #include <sys/tape.h>
 
@@ -169,7 +169,7 @@ tape_tapefd_weof(
 }
 
 #else									/* }{ */
-#ifdef AIX_TAPEIO							/* { */
+#ifdef WANT_TAPE_AIX							/* { */
 
 #include <sys/tape.h>
 
@@ -255,8 +255,8 @@ tape_tapefd_weof(
     return ioctl(fd, STIOCTOP, &st);
 }
 
-#else /* AIX_TAPEIO */							/* }{ */
-#ifdef XENIX_TAPEIO							/* { */
+#else /* WANT_TAPE_AIX */							/* }{ */
+#ifdef WANT_TAPE_XENIX							/* { */
 
 #include <sys/tape.h>
 
@@ -337,7 +337,7 @@ tape_tapefd_weof(
     return status;
 }
 
-#else	/* ! AIX_TAPEIO && !XENIX_TAPEIO */				/* }{ */
+#else	/* ! WANT_TAPE_AIX && !WANT_TAPE_XENIX */				/* }{ */
 
 #include <sys/mtio.h>
 
@@ -459,9 +459,9 @@ tape_tapefd_weof(
     return ioctl(fd, MTIOCTOP, &mt);
 }
 
-#endif /* !XENIX_TAPEIO */						/* } */
-#endif /* !AIX_TAPEIO */						/* } */
-#endif /* !UWARE_TAPEIO */						/* } */
+#endif /* !WANT_TAPE_XENIX */						/* } */
+#endif /* !WANT_TAPE_AIX */						/* } */
+#endif /* !WANT_TAPE_UWARE */						/* } */
 
 /*
  * At this point we have pulled in every conceivable #include file :-),

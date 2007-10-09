@@ -38,7 +38,6 @@
 
 #include "amanda.h"
 
-#if defined(HAVE_HPUX_SCSI_CHIO)
 # include <sys/scsi.h>
 # include <sys/mtio.h>  /* for eject_tape ioctls */
 
@@ -338,5 +337,3 @@ int CloseDevice(char *device, int DeviceFD)
   dbprintf(_("CloseDevice(%s) returns %d\n"), device, ret);
   return(ret);
 }
-
-#endif

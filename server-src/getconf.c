@@ -40,8 +40,8 @@ int main(int argc, char **argv);
  * HOSTNAME_INSTANCE may not be defined at this point.
  * We define it locally if it is needed...
  *
- * If CLIENT_HOST_PRINCIPLE is defined as HOSTNAME_INSTANCE
- * then local host is the client host principle.
+ * If CLIENT_HOST_PRINCIPAL is defined as HOSTNAME_INSTANCE
+ * then local host is the client host principal.
  */
 #ifndef HOSTNAME_INSTANCE
 #  define HOSTNAME_INSTANCE "localhost"
@@ -225,13 +225,6 @@ static struct build_info {
 	NULL
 #endif
     },
-    { "AIX_TAPEIO",
-#if defined(AIX_TAPEIO)
-	"1"
-#else
-	NULL
-#endif
-    },
     { "DUMP_RETURNS_1",
 #if defined(DUMP_RETURNS_1)
 	"1"
@@ -332,9 +325,16 @@ static struct build_info {
 	NULL
 #endif
     },
-    { "SERVER_HOST_PRINCIPLE",
+    { "SERVER_HOST_PRINCIPAL",
 #if defined(KRB4_SECURITY)
-	SERVER_HOST_PRINCIPLE
+	SERVER_HOST_PRINCIPAL
+#else
+	NULL
+#endif
+    },
+    { "SERVER_HOST_PRINCIPLE", /* backward-compatibility (spelling error) */
+#if defined(KRB4_SECURITY)
+	SERVER_HOST_PRINCIPAL
 #else
 	NULL
 #endif
@@ -353,9 +353,16 @@ static struct build_info {
 	NULL
 #endif
     },
-    { "CLIENT_HOST_PRINCIPLE",
+    { "CLIENT_HOST_PRINCIPAL",
 #if defined(KRB4_SECURITY)
-	CLIENT_HOST_PRINCIPLE
+	CLIENT_HOST_PRINCIPAL
+#else
+	NULL
+#endif
+    },
+    { "CLIENT_HOST_PRINCIPLE", /* backward-compatibility (spelling error) */
+#if defined(KRB4_SECURITY)
+	CLIENT_HOST_PRINCIPAL
 #else
 	NULL
 #endif
@@ -413,8 +420,6 @@ main(
     char **	argv)
 {
     char *result;
-    unsigned long malloc_hist_1, malloc_size_1;
-    unsigned long malloc_hist_2, malloc_size_2;
     char *pgm;
     char *conffile;
     char *parmname;
@@ -434,8 +439,6 @@ main(
      */  
     setlocale(LC_MESSAGES, "C");
     textdomain("amanda"); 
-
-    malloc_size_1 = malloc_inuse(&malloc_hist_1);
 
     safe_fd(-1, 0);
 
@@ -609,12 +612,6 @@ main(
     amfree(config_name);
     for(i = 0; i < 3; i++) {
 	amfree(build_info[i].value);
-    }
-
-    malloc_size_2 = malloc_inuse(&malloc_hist_2);
-
-    if(malloc_size_1 != malloc_size_2) {
-	malloc_list(fileno(stderr), malloc_hist_1, malloc_hist_2);
     }
 
     return 0;

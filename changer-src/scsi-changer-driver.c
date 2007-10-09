@@ -5,37 +5,9 @@ static char rcsid[] = "$Id: scsi-changer-driver.c,v 1.52 2006/07/21 00:25:50 mar
  * Copyright (c) Thomas Hepper th@ant.han.de
  */
 
-#include <amanda.h>
+#include "amanda.h"
 
 #include "arglist.h"
-/*
-#ifdef HAVE_STDIO_H
-*/
-#include <stdio.h>
-/*
-#endif
-*/
-#ifdef  HAVE_STDLIB_H
-#include <stdlib.h>
-#endif
-#ifdef HAVE_FCNTL_H
-#include <fcntl.h>
-#endif
-#ifdef HAVE_ERRNO_H
-#include <errno.h>
-#endif
-#ifdef HAVE_STRING_H
-#include <string.h>
-#endif
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
-#
-#ifdef STDC_HEADERS
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 
 #include "scsi-defs.h"
 

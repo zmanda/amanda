@@ -142,8 +142,6 @@ main(
     int i;
     char *conf_diskfile;
     char *conf_infofile;
-    unsigned long malloc_hist_1, malloc_size_1;
-    unsigned long malloc_hist_2, malloc_size_2;
     int new_argc;
     char **new_argv;
 
@@ -165,8 +163,6 @@ main(
     signal(SIGPIPE, SIG_IGN);
 
     dbopen(DBG_SUBDIR_SERVER);
-
-    malloc_size_1 = malloc_inuse(&malloc_hist_1);
 
     erroutput_type = ERR_INTERACTIVE;
 
@@ -250,12 +246,6 @@ main(
     amfree(config_dir);
 
 done:
-
-    malloc_size_2 = malloc_inuse(&malloc_hist_2);
-
-    if(malloc_size_1 != malloc_size_2) {
-	malloc_list(fileno(stderr), malloc_hist_1, malloc_hist_2);
-    }
 
     amfree(conffile);
     free_disklist(&diskq);

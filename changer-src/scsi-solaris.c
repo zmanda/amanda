@@ -32,25 +32,7 @@
  */
 
 
-#include <amanda.h>
-
-#ifdef HAVE_SOLARIS_LIKE_SCSI
-/*
-#ifdef HAVE_STDIO_H
-*/
-#include <stdio.h>
-/*
-#endif
-*/
-#ifdef HAVE_SYS_TYPES_H
-#include <sys/types.h>
-#endif
-#ifdef HAVE_SYS_STAT_H
-#include <sys/stat.h>
-#endif
-#ifdef HAVE_FCNTL_H
-#include <fcntl.h>
-#endif
+#include "amanda.h"
 
 #include <sys/scsi/impl/uscsi.h>
 
@@ -328,7 +310,6 @@ int ScanBus(int print)
 	return(-1);
 }
 
-#endif
 /*
  * Local variables:
  * indent-tabs-mode: nil

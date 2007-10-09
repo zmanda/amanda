@@ -392,7 +392,6 @@ parse_diskline(
     host = lookup_host(fp);
     if (host == NULL) {
 	hostname = stralloc(fp);
-	malloc_mark(hostname);
     } else {
 	hostname = stralloc(host->hostname);
 	if (strcmp(host->hostname, fp) != 0) {
@@ -493,12 +492,10 @@ parse_diskline(
     }
     if (!disk) {
 	disk = alloc(SIZEOF(disk_t));
-	malloc_mark(disk);
 	disk->line = line_num;
 	disk->hostname = stralloc(hostname);
 	disk->name = diskname;
 	disk->device = diskdevice;
-	malloc_mark(disk->name);
 	disk->spindle = -1;
 	disk->up = NULL;
 	disk->inprogress = 0;
@@ -716,7 +713,6 @@ parse_diskline(
 
     if(host == NULL) {			/* new host */
 	host = alloc(SIZEOF(am_host_t));
-	malloc_mark(host);
 	host->next = hostlist;
 	hostlist = host;
 
@@ -1345,8 +1341,6 @@ main(
   char *conf_diskfile;
   disklist_t lst;
   int result;
-  unsigned long malloc_hist_1, malloc_size_1;
-  unsigned long malloc_hist_2, malloc_size_2;
 
   /*
    * Configure program for internationalization:
@@ -1365,8 +1359,6 @@ main(
 
   /* Don't die when child closes pipe */
   signal(SIGPIPE, SIG_IGN);
-
-  malloc_size_1 = malloc_inuse(&malloc_hist_1);
 
   if (argc>1) {
     config_name = argv[1];
@@ -1395,12 +1387,6 @@ main(
   }
   amfree(conffile);
   amfree(config_dir);
-
-  malloc_size_2 = malloc_inuse(&malloc_hist_2);
-
-  if(malloc_size_1 != malloc_size_2) {
-    malloc_list(fileno(stderr), malloc_hist_1, malloc_hist_2);
-  }
 
   return result;
 }

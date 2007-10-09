@@ -75,9 +75,6 @@ usage(void)
     /*NOTREACHED*/
 }
 
-static unsigned long malloc_hist_1, malloc_size_1;
-static unsigned long malloc_hist_2, malloc_size_2;
-
 static am_feature_t *our_features = NULL;
 static char *our_feature_string = NULL;
 static char *displayunit;
@@ -122,8 +119,6 @@ main(
      */  
     setlocale(LC_MESSAGES, "C");
     textdomain("amanda"); 
-
-    malloc_size_1 = malloc_inuse(&malloc_hist_1);
 
     safe_fd(-1, 0);
     safe_cd();
@@ -413,11 +408,6 @@ main(
     amfree(our_feature_string);
     am_release_feature_set(our_features);
     our_features = NULL;
-
-    malloc_size_2 = malloc_inuse(&malloc_hist_2);
-    if(malloc_size_1 != malloc_size_2) {
-	malloc_list(fileno(stderr), malloc_hist_1, malloc_hist_2);
-    }
 
     /* send mail if requested, but only if there were problems */
 #ifdef MAILER
@@ -1198,7 +1188,6 @@ start_server_check(
 	    conf_indexdir = stralloc2(config_dir, conf_indexdir);
 	}
 
-#if TEXTDB
 	quoted = quote_string(conf_infofile);
 	if(stat(conf_infofile, &statbuf) == -1) {
 	    if (errno == ENOENT) {
@@ -1231,12 +1220,10 @@ start_server_check(
 	    strappend(conf_infofile, "/");
 	}
 	amfree(quoted);
-#endif
 
 	while(!empty(origq)) {
 	    hostp = origq.head->host;
 	    host = sanitise_filename(hostp->hostname);
-#if TEXTDB
 	    if(conf_infofile) {
 		hostinfodir = newstralloc2(hostinfodir, conf_infofile, host);
 		quoted = quote_string(hostinfodir);
@@ -1268,10 +1255,8 @@ start_server_check(
 		}
 		amfree(quoted);
 	    }
-#endif
 	    for(dp = hostp->disks; dp != NULL; dp = dp->hostnext) {
 		disk = sanitise_filename(dp->name);
-#if TEXTDB
 		if(hostinfodir) {
 		    char *quotedif;
 
@@ -1324,7 +1309,6 @@ start_server_check(
 		    amfree(quoted);
 		    amfree(infofile);
 		}
-#endif
 		if(dp->index) {
 		    if(! indexdir_checked) {
 			quoted = quote_string(conf_indexdir);
@@ -1469,11 +1453,6 @@ start_server_check(
     fprintf(outf, _("Server check took %s seconds\n"), walltime_str(curclock()));
 
     fflush(outf);
-
-    malloc_size_2 = malloc_inuse(&malloc_hist_2);
-    if(malloc_size_1 != malloc_size_2) {
-	malloc_list(fd, malloc_hist_1, malloc_hist_2);
-    }
 
     exit(userbad \
 	 || confbad \
@@ -1876,11 +1855,6 @@ start_client_checks(
 
     amfree(config_dir);
     amfree(config_name);
-
-    malloc_size_2 = malloc_inuse(&malloc_hist_2);
-    if(malloc_size_1 != malloc_size_2) {
-	malloc_list(fd, malloc_hist_1, malloc_hist_2);
-    }
 
     exit(userbad || remote_errors > 0);
     /*NOTREACHED*/

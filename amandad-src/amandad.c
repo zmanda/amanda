@@ -133,17 +133,6 @@ static struct {
     TAILQ_HEAD_INITIALIZER(serviceq.tailq), 0
 };
 
-/*
- * Data for dbmalloc to check for memory leaks
- */
-#ifdef USE_DBMALLOC
-static struct {
-    struct {
-	unsigned long size, hist;
-    } start, end;
-} dbmalloc_info;
-#endif
-
 static int wait_30s = 1;
 static int exit_on_qlength = 1;
 static char *auth = NULL;
@@ -267,10 +256,6 @@ main(
     amfree(conffile);
 
     check_running_as(RUNNING_AS_CLIENT_LOGIN);
-
-#ifdef USE_DBMALLOC
-    dbmalloc_info.start.size = malloc_inuse(&dbmalloc_info.start.hist);
-#endif
 
     erroutput_type = (ERR_INTERACTIVE|ERR_SYSLOG);
 
@@ -523,15 +508,6 @@ exit_check(
      */
     if (no_exit)
 	return;
-
-#ifdef USE_DBMALLOC
-    dbmalloc_info.end.size = malloc_inuse(&dbmalloc_info.end.hist);
-
-    if (dbmalloc_info.start.size != dbmalloc_info.end.size) {
-	malloc_list(dbfd(), dbmalloc_info.start.hist,
-	    dbmalloc_info.end.hist);
-    }
-#endif
 
     dbclose();
     exit(0);

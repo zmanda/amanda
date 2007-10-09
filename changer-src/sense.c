@@ -1,12 +1,4 @@
-#include <amanda.h>
-
-#ifdef HAVE_STDIO_H
-#include <stdio.h>
-#endif
-
-#ifdef HAVE_STRING_H
-#include <string.h>
-#endif
+#include "amanda.h"
 
 #include "scsi-defs.h"
 /*

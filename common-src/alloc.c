@@ -39,83 +39,6 @@
 static char *internal_vstralloc(const char *, int, const char *, va_list);
 
 /*
- *=====================================================================
- * debug_caller_loc -- keep track of all allocation callers
- *
- * const char *debug_caller_loc(const char *file, int line)
- *
- * entry:	file = source file
- *		line = source line
- * exit:	a string like "genversion.c@999"
- *
- * The debug malloc library has a concept of a call stack that can be used
- * to fine tune what was running when a particular allocation was done.
- * We use it to tell who called our various allocation wrappers since
- * it wouldn't do much good to tell us a problem happened because of
- * the malloc call in alloc (they are all from there at some point).
- *
- * But the library expects the string passed to malloc_enter/malloc_leave
- * to be static, so we build a linked list of each one we get (there are
- * not really that many during a given execution).  When we get a repeat
- * we return the previously allocated string.  For a bit of performance,
- * we keep the list in least recently used order, which helps because
- * the calls to us come in pairs (one for malloc_enter and one right
- * after for malloc_leave).
- *=====================================================================
- */
-
-const char *
-debug_caller_loc(
-    const char *file,
-    int		line)
-{
-    /*@keep@*/
-    struct loc_str {
-	char *str;
-	LIST_ENTRY(loc_str) le;
-    } *ls;
-    static LIST_HEAD(, loc_str) root = LIST_HEAD_INITIALIZER(root);
-    static char loc[256];	/* big enough for filename@lineno */
-    const char *p;
-
-    if ((p = strrchr(file, '/')) != NULL)
-	file = p + 1;				/* just the last path element */
-
-    snprintf(loc, SIZEOF(loc), "%s@%d", file, line);
-
-    for (ls = LIST_FIRST(&root); ls != NULL; ls = LIST_NEXT(ls, le)) {
-	if (strcmp(loc, ls->str) == 0) {
-	    if (ls != LIST_FIRST(&root)) {
-		/*
-		 * This is a repeat and was not at the head of the list.
-		 * Unlink it and move it to the front.
-		 */
-		LIST_REMOVE(ls, le);
-		LIST_INSERT_HEAD(&root, ls, le);
-	    }
-	    return (ls->str);
-	}
-    }
-
-    /*
-     * This is a new entry.  Put it at the head of the list.
-     */
-    ls = malloc(SIZEOF(*ls));
-    if (ls == NULL)
-	return ("??");			/* not much better than abort */
-    ls->str = malloc(strlen(loc) + 1);
-    if (ls->str == NULL) {
-	free(ls);
-	return ("??");			/* not much better than abort */
-    }
-    strcpy(ls->str, loc);
-    malloc_mark(ls);
-    malloc_mark(ls->str);
-    LIST_INSERT_HEAD(&root, ls, le);
-    return (ls->str);
-}
-
-/*
  * alloc - a wrapper for malloc.
  */
 void *
@@ -126,7 +49,6 @@ debug_alloc(
 {
     void *addr;
 
-    malloc_enter(debug_caller_loc(file, line));
     addr = (void *)malloc(max(size, 1));
     if (addr == NULL) {
 	errordump(_("%s@%d: memory allocation failed (" SIZE_T_FMT " bytes requested)"),
@@ -135,7 +57,6 @@ debug_alloc(
 		  (SIZE_T_FMT_TYPE)size);
 	/*NOTREACHED*/
     }
-    malloc_leave(debug_caller_loc(file, line));
     return addr;
 }
 
@@ -152,10 +73,8 @@ debug_newalloc(
 {
     char *addr;
 
-    malloc_enter(debug_caller_loc(file, line));
     addr = debug_alloc(file, line, size);
     amfree(old);
-    malloc_leave(debug_caller_loc(file, line));
     return addr;
 }
 
@@ -172,10 +91,8 @@ debug_stralloc(
 {
     char *addr;
 
-    malloc_enter(debug_caller_loc(file, line));
     addr = debug_alloc(file, line, strlen(str) + 1);
     strcpy(addr, str);
-    malloc_leave(debug_caller_loc(file, line));
     return (addr);
 }
 
@@ -258,11 +175,9 @@ debug_vstralloc(
     va_list argp;
     char *result;
 
-    malloc_enter(debug_caller_loc(file, line));
     arglist_start(argp, str);
     result = internal_vstralloc(file, line, str, argp);
     arglist_end(argp);
-    malloc_leave(debug_caller_loc(file, line));
     return result;
 }
 
@@ -279,10 +194,8 @@ debug_newstralloc(
 {
     char *addr;
 
-    malloc_enter(debug_caller_loc(file, line));
     addr = debug_stralloc(file, line, newstr);
     amfree(oldstr);
-    malloc_leave(debug_caller_loc(file, line));
     return (addr);
 }
 
@@ -301,12 +214,10 @@ debug_newvstralloc(
     va_list argp;
     char *result;
 
-    malloc_enter(debug_caller_loc(file, line));
     arglist_start(argp, newstr);
     result = internal_vstralloc(file, line, newstr, argp);
     arglist_end(argp);
     amfree(oldstr);
-    malloc_leave(debug_caller_loc(file, line));
     return result;
 }
 
@@ -325,7 +236,6 @@ debug_vstrallocf(
     size_t	size;
     va_list	argp;
 
-    malloc_enter(debug_caller_loc(file, line));
 
     result = debug_alloc(file, line, MIN_ALLOC);
     if (result != NULL) {
@@ -344,7 +254,6 @@ debug_vstrallocf(
 	}
     }
 
-    malloc_leave(debug_caller_loc(file, line));
     return result;
 }
 
@@ -364,9 +273,6 @@ debug_newvstrallocf(
     char *	result;
     va_list	argp;
 
-    malloc_enter(debug_caller_loc(file, line));
-
-
     result = debug_alloc(file, line, MIN_ALLOC);
     if (result != NULL) {
 
@@ -384,7 +290,6 @@ debug_newvstrallocf(
 	}
     }
     amfree(oldstr);
-    malloc_leave(debug_caller_loc(file, line));
     return result;
 }
 

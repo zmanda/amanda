@@ -158,8 +158,6 @@ main(
     char *newdir = NULL;
     struct fs_usage fsusage;
     holdingdisk_t *hdp;
-    unsigned long malloc_hist_1, malloc_size_1;
-    unsigned long malloc_hist_2, malloc_size_2;
     unsigned long reserve = 100;
     char *conffile;
     char *conf_diskfile;
@@ -198,8 +196,6 @@ main(
 
     /* Don't die when child closes pipe */
     signal(SIGPIPE, SIG_IGN);
-
-    malloc_size_1 = malloc_inuse(&malloc_hist_1);
 
     erroutput_type = (ERR_AMANDALOG|ERR_INTERACTIVE);
     set_logerror(logerror);
@@ -495,12 +491,6 @@ main(
     amfree(taper_program);
     amfree(config_dir);
     amfree(config_name);
-
-    malloc_size_2 = malloc_inuse(&malloc_hist_2);
-
-    if(malloc_size_1 != malloc_size_2) {
-	malloc_list(fileno(stderr), malloc_hist_1, malloc_hist_2);
-    }
 
     dbclose();
 

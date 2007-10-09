@@ -36,10 +36,6 @@
 #include "conffile.h"
 #include "clock.h"
 
-#ifdef HAVE_LIMITS_H
-#include <limits.h>
-#endif
-
 #ifndef AMANDATES_FILE
 #define AMANDATES_FILE "/etc/amandates"
 #endif

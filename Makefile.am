@@ -1,17 +1,7 @@
 ## Process this file with automake to produce Makefile.in
 AUTOMAKE_OPTIONS = 1.4 foreign
 
-ACINCLUDE_M4 = $(srcdir)/acinclude.m4
-ACINCLUDE_M4I = $(srcdir)/config/acinclude.m4i
-LIBTOOL_M4I = $(srcdir)/config/libtool.m4i
-GETTEXT_M4I = $(srcdir)/config/gettext.m4i
-GNULIB_M4I  = $(srcdir)/config/gnulib.m4i
-XSLTPROC_M4I = $(srcdir)/config/docbook-dtd.m4i  \
-	$(srcdir)/config/docbook-xslt-min.m4i  \
-	$(srcdir)/config/xsltproc.m4i \
-	$(srcdir)/config/docbook-xslt.m4i
-ACINCLUDE_M4_DEPS = $(GNULIB_M4I) $(GETTEXT_M4I) $(ACINCLUDE_M4I) $(LIBTOOL_M4I) $(XSLTPROC_M4I)
-ACLOCAL_AMFLAGS = --force -I config/gettext-macros
+ACLOCAL_AMFLAGS = --force -I . -I config -I config/gettext-macros -I config/gnulib -I config/amanda -I config/macro-archive
 
 if WANT_CLIENT
 CLIENT_SUBDIRS = client-src dumper-src
@@ -71,10 +61,6 @@ EXTRA_DIST = $(SNAPSHOT_STAMP) \
 	patches/regex-3.6alpha.patch	\
 	patches/samba-largefs.patch	\
 	patches/tar-1.12.patch
-
-$(ACINCLUDE_M4): $(ACINCLUDE_M4_DEPS)
-	@-rm -f $@
-	@cat $(ACINCLUDE_M4_DEPS) > $@
 
 libtool: $(LIBTOOL_DEPS)
 	$(SHELL) ./config.status --recheck

@@ -15,7 +15,7 @@ amplotdir =		$(libexecdir)
 EXTRA_DIST =		amplot.awk		amplot.g
 
 CLEANFILES = amplot.gp.new
-DISTCLEANFILES = amplot.gp amplot
+DISTCLEANFILES = amplot.gp $(sbin_SCRIPTS)
 
 amplot.gp:		amplot.g
 			cat $(srcdir)/amplot.g > amplot.gp.new

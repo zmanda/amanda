@@ -42,17 +42,12 @@ GNULIB_MODULES="getaddrinfo lock visibility base64 physmem fsusage"
 ## End modules                                                      ##
 ######################################################################
 
-# check out a brand new gnulib directory and gnulib.m4i
+# create a brand new gnulib directory
 
 "${GNULIB_TOOL}" --import \
         --dir=. --lib=libgnu --source-base=gnulib --m4-base=config/gnulib \
         --doc-base=doc --aux-dir=config --libtool --macro-prefix=gl \
         ${GNULIB_MODULES} || exit 1
-
-for filename in config/gnulib/*.m4
- do
-    echo "m4_include([$filename])"
-done > config/gnulib.m4i || exit 1
 
 ########################## DEVELOPERS! ###############################
 ## Add your patch commands here, or use sed invoacations, etc.      ##

@@ -168,8 +168,6 @@ main(
     disklist_t origq;
     disk_t *dp;
     int moved_one;
-    unsigned long malloc_hist_1, malloc_size_1;
-    unsigned long malloc_hist_2, malloc_size_2;
     off_t initial_size;
     int i;
     char *conffile;
@@ -215,8 +213,6 @@ main(
 
     /* Don't die when child closes pipe */
     signal(SIGPIPE, SIG_IGN);
-
-    malloc_size_1 = malloc_inuse(&malloc_hist_1);
 
     erroutput_type = (ERR_AMANDALOG|ERR_INTERACTIVE);
     set_logerror(logerror);
@@ -630,12 +626,6 @@ main(
     am_release_feature_set(our_features);
     our_features = NULL;
 
-    malloc_size_2 = malloc_inuse(&malloc_hist_2);
-
-    if(malloc_size_1 != malloc_size_2) {
-	malloc_list(fileno(stderr), malloc_hist_1, malloc_hist_2);
-    }
-
     dbclose();
 
     return 0;
@@ -685,7 +675,6 @@ static void askfor(
     ep->level[seq] = lev;
 
     ep->dumpdate[seq] = stralloc(get_dumpdate(info,lev));
-    malloc_mark(ep->dumpdate[seq]);
 
     ep->est_size[seq] = (off_t)-2;
 
@@ -719,7 +708,6 @@ setup_estimate(
     /* setup working data struct for disk */
 
     ep = alloc(SIZEOF(est_t));
-    malloc_mark(ep);
     dp->up = (void *) ep;
     ep->state = DISK_READY;
     ep->dump_nsize = (off_t)-1;

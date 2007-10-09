@@ -76,8 +76,6 @@ main(
     char *label, *tapename = NULL;
     char *labelstr, *slotstr;
     char *conf_tapelist_old;
-    unsigned long malloc_hist_1, malloc_size_1;
-    unsigned long malloc_hist_2, malloc_size_2;
     int have_changer;
     int force, tape_ok;
     tapetype_t *tape;
@@ -107,8 +105,6 @@ main(
 
     /* Don't die when child closes pipe */
     signal(SIGPIPE, SIG_IGN);
-
-    malloc_size_1 = malloc_inuse(&malloc_hist_1);
 
     erroutput_type = ERR_INTERACTIVE;
 
@@ -301,12 +297,6 @@ main(
     amfree(config_dir);
     config_name=NULL;
     dbclose();
-
-    malloc_size_2 = malloc_inuse(&malloc_hist_2);
-
-    if(malloc_size_1 != malloc_size_2) {
-	malloc_list(fileno(stderr), malloc_hist_1, malloc_hist_2);
-    }
 
     return 0;
 }

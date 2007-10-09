@@ -647,8 +647,6 @@ main(
     generic_fsent_t fsent;
     char *s;
     char *name = NULL;
-    unsigned long malloc_hist_1, malloc_size_1;
-    unsigned long malloc_hist_2, malloc_size_2;
 
     /*
      * Configure program for internationalization:
@@ -667,8 +665,6 @@ main(
 
     /* Don't die when child closes pipe */
     signal(SIGPIPE, SIG_IGN);
-
-    malloc_size_1 = malloc_inuse(&malloc_hist_1);
 
     if(!open_fstab()) {
 	fprintf(stderr, _("getfsent_test: could not open fstab\n"));
@@ -756,12 +752,6 @@ main(
     }
 
     amfree(name);
-
-    malloc_size_2 = malloc_inuse(&malloc_hist_2);
-
-    if(malloc_size_1 != malloc_size_2) {
-	malloc_list(fileno(stderr), malloc_hist_1, malloc_hist_2);
-    }
 
     return 0;
 }

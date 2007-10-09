@@ -32,23 +32,7 @@
  */
 
 
-#include <amanda.h>
-
-#ifdef HAVE_HPUX_LIKE_SCSI
-
-# ifdef HAVE_FCNTL_H
-#include <fcntl.h>
-#endif
-/*
-#ifdef HAVE_STDIO_H
-*/
-#include <stdio.h>
-/*
-#endif
-*/
-#ifdef HAVE_SYS_IOCTL_H
-#include <sys/ioctl.h>
-#endif
+#include "amanda.h"
 
 #include <sys/scsi.h>
 #include <sys/mtio.h>
@@ -311,7 +295,6 @@ int ScanBus(int print)
 */
   return(-1);
 }
-#endif
 /*
  * Local variables:
  * indent-tabs-mode: nil

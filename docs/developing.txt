@@ -1,0 +1,49 @@
+Notes For Developers
+====================
+
+Adding Gnulib Modules
+---------------------
+
+Edit the clearly marked section in gnulib/regenerate/regenerate,
+then re-run that script as directed below.
+
+Updating Gnulib
+---------------
+
+This should probably be done after most releases, so that we have
+adequate time to uncover any bugs or problems in the new gnulib before
+we make another release.
+
+To update the gnulib files included with Amanda, you'll first need a
+CVS checkout of gnulib; let's call it $GNULIB_CO.  Then, in the root
+of the Amanda source, run
+
+  GNULIB_TOOL=$GNULIB_CO/gnulib-tool ./gnulib/regenerate/regenerate
+
+Use 'svn status' to figure out what changed, and 'svn add' / 'svn rm'
+to inform Subversion.  Then re-run autogen, configure, make, and test
+the result.  If all is well, commit.
+
+Updating Libtool
+----------------
+
+Libtool includes such useful files as config/config.guess.
+Occasionally (probably right after a release), these files should be
+updated.  On a machine with libtool installed, simply run 
+  libtoolize --force --copy
+
+Then use 'svn status' to see what changed, test it out, and commit.
+
+Updating Gettext
+----------------
+
+The gettext library contains a significant number of files.  Assuming
+you have the proper version of gettext installed, these files can be
+updated by running
+
+  po/reautopoint
+
+and then adjusting as appropriate with 'svn add' / 'svn rm', testing,
+and committing.  Note that this script post-processes the results of
+autopoint rather extensively, and will probably need to be adjusted
+for a new version of autopoint.

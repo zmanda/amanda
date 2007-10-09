@@ -5,16 +5,14 @@ INCLUDES =	-I$(top_builddir)/common-src \
 		-I$(top_srcdir)/client-src   \
 		-I$(top_srcdir)/gnulib
 
+AM_CFLAGS = $(AMANDA_WARNING_CFLAGS)
+
 LINT=@AMLINT@
 LINTFLAGS=@AMLINTFLAGS@
 
 LIB_EXTENSION = la
 
 sbin_PROGRAMS =		amrecover
-
-if WANT_RUNTIME_PSEUDO_RELOC
-AM_LDFLAGS = -Wl,-enable-runtime-pseudo-reloc
-endif
 
 ###
 # Because libamanda includes routines (e.g. regex) provided by some system
@@ -43,6 +41,8 @@ AM_YFLAGS =		-d
 # otherwise we might have makedepend problems
 $(srcdir)/uscan.c: $(srcdir)/uparse.h
 
+# these two commands are specially defined to omit $(AMANDA_WARNING_CFLAGS)
+# since we don't want warnings for generated code
 uscan.$(OBJEXT): $(srcdir)/uscan.c
 	$(CC) $(CFLAGS) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(CPPFLAGS) -c $<
 

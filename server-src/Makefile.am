@@ -7,6 +7,8 @@ INCLUDES =	-I$(top_builddir)/common-src \
 		-I$(top_srcdir)/device-src   \
 		-I$(top_srcdir)/gnulib
 
+AM_CFLAGS = $(AMANDA_WARNING_CFLAGS)
+
 LINT=@AMLINT@
 LINTFLAGS=@AMLINTFLAGS@
 
@@ -90,7 +92,8 @@ TEST_PROGS = diskfile infofile
 
 EXTRA_PROGRAMS =	$(TEST_PROGS)
 
-CLEANFILES = *.test.c $(sbin_SCRIPTS)
+CLEANFILES = *.test.c
+DISTCLEANFILES = $(sbin_SCRIPTS)
 
 amindexd_CSRC =		amindexd.c	disk_history.c	list_dir.c
 amindexd_SOURCES =	disk_history.h	list_dir.h	$(amindexd_CSRC)

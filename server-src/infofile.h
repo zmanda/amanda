@@ -86,10 +86,6 @@ void close_infofile(void);
 char *get_dumpdate(info_t *info, int level);
 double perf_average(double *array, double def);
 int get_info(char *hostname, char *diskname, info_t *info);
-int get_firstkey(char *hostname, int hostname_size,
-		    char *diskname, int diskname_size);
-int get_nextkey(char *hostname, int hostname_size,
-		    char *diskname, int diskname_size);
 int put_info(char *hostname, char *diskname, info_t *info);
 int del_info(char *hostname, char *diskname);
 

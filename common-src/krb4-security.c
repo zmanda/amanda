@@ -330,12 +330,12 @@ get_tgt(void)
     strncpy(realm, krb_realmofhost(hostname), SIZEOF(realm) - 1);
     realm[SIZEOF(realm) - 1] = '\0';
 
-    rc = krb_get_svc_in_tkt(SERVER_HOST_PRINCIPLE, SERVER_HOST_INSTANCE,
+    rc = krb_get_svc_in_tkt(SERVER_HOST_PRINCIPAL, SERVER_HOST_INSTANCE,
 	realm, "krbtgt", realm, TICKET_LIFETIME, SERVER_HOST_KEY_FILE);
 
     if (rc != 0) {
 	error(_("could not get krbtgt for %s.%s@%s from %s: %s"),
-	    SERVER_HOST_PRINCIPLE, SERVER_HOST_INSTANCE, realm,
+	    SERVER_HOST_PRINCIPAL, SERVER_HOST_INSTANCE, realm,
 	    SERVER_HOST_KEY_FILE, krb_err_txt[rc]);
     }
 
@@ -1096,12 +1096,12 @@ add_ticket(
      * Get a ticket with the user-defined service and instance,
      * and using the checksum of the body of the request packet.
      */
-    rc = krb_mk_req(&ticket, CLIENT_HOST_PRINCIPLE, inst, kh->realm,
+    rc = krb_mk_req(&ticket, CLIENT_HOST_PRINCIPAL, inst, kh->realm,
 	kh->cksum);
     if (rc == NO_TKT_FIL) {
 	/* It's been kdestroyed.  Get a new one and try again */
 	get_tgt();
-	rc = krb_mk_req(&ticket, CLIENT_HOST_PRINCIPLE, inst, kh->realm,
+	rc = krb_mk_req(&ticket, CLIENT_HOST_PRINCIPAL, inst, kh->realm,
 	    kh->cksum);
     }
     if (rc != 0) {
@@ -1321,7 +1321,7 @@ check_ticket(
     inst[SIZEOF(inst) - 1] = '\0';
 
     /* get the checksum out of the ticket */
-    rc = krb_rd_req(&ticket, CLIENT_HOST_PRINCIPLE, inst,
+    rc = krb_rd_req(&ticket, CLIENT_HOST_PRINCIPAL, inst,
 	kh->peer.sin6_addr.s_addr, &auth, CLIENT_HOST_KEY_FILE);
     if (rc != 0) {
 	security_seterror(&kh->sech,
@@ -1517,7 +1517,7 @@ host2key(
 #if CLIENT_HOST_INSTANCE != HOSTNAME_INSTANCE
     inst = CLIENT_HOST_INSTANCE
 #endif
-    krb_get_cred(CLIENT_HOST_PRINCIPLE, (char *)inst, realm, &cred);
+    krb_get_cred(CLIENT_HOST_PRINCIPAL, (char *)inst, realm, &cred);
     memcpy(key, cred.session, SIZEOF(des_cblock));
 }
 

@@ -2,6 +2,8 @@
 
 INCLUDES =      -I$(top_srcdir)/gnulib   
 
+AM_CFLAGS = $(AMANDA_WARNING_CFLAGS)
+
 lib_LTLIBRARIES =	libamanda.la
 
 LINT=@AMLINT@
@@ -13,7 +15,6 @@ LIB_EXTENSION = la
 SCRIPTS_PERL =
 SCRIPTS_SHELL =	amcrypt amaespipe	\
 	amcrypt-ossl	amcrypt-ossl-asym
-
 sbin_SCRIPTS = $(SCRIPTS_PERL) $(SCRIPTS_SHELL)
 
 
@@ -160,7 +161,7 @@ TEST_PROGS = token file bsdsecurity amfeatures
 
 CLEANFILES = *.test.c
 
-DISTCLEANFILES = version.c genversion.h genversion amanda-int.h
+DISTCLEANFILES = $(sbin_SCRIPTS) version.c genversion.h genversion amanda-int.h
 
 # used for testing only
 

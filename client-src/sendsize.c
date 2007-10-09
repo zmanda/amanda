@@ -147,10 +147,6 @@ main(
     char *conffile;
     char *amandates_file;
     int   amandates_read = 0;
-#if defined(USE_DBMALLOC)
-    unsigned long malloc_hist_1, malloc_size_1;
-    unsigned long malloc_hist_2, malloc_size_2;
-#endif
 
     (void)argc;	/* Quiet unused parameter warning */
     (void)argv;	/* Quiet unused parameter warning */
@@ -173,10 +169,6 @@ main(
 
     /* Don't die when child closes pipe */
     signal(SIGPIPE, SIG_IGN);
-
-#if defined(USE_DBMALLOC)
-    malloc_size_1 = malloc_inuse(&malloc_hist_1);
-#endif
 
     erroutput_type = (ERR_INTERACTIVE|ERR_SYSLOG);
     dbopen(DBG_SUBDIR_CLIENT);
@@ -546,14 +538,6 @@ main(
     amfree(g_options->hostname);
     amfree(g_options->str);
     amfree(g_options);
-
-#if defined(USE_DBMALLOC)
-    malloc_size_2 = malloc_inuse(&malloc_hist_2);
-
-    if(malloc_size_1 != malloc_size_2) {
-	malloc_list(dbfd(), malloc_hist_1, malloc_hist_2);
-    }
-#endif
 
     dbclose();
     return 0;

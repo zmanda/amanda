@@ -5,6 +5,8 @@ INCLUDES =	-I$(top_builddir)/common-src \
 		-I$(top_srcdir)/amandad-src  \
 		-I$(top_srcdir)/gnulib
 
+AM_CFLAGS = $(AMANDA_WARNING_CFLAGS)
+
 LINT=@AMLINT@
 LINTFLAGS=@AMLINTFLAGS@
 
@@ -19,10 +21,6 @@ libexec_SCRIPTS =	patch-system
 
 if WANT_SAMBA
 samba_sources = findpass.c
-endif
-
-if WANT_RUNTIME_PSEUDO_RELOC
-AM_LDFLAGS = -Wl,-enable-runtime-pseudo-reloc
 endif
 
 libamclient_la_SOURCES=	amandates.c		getfsent.c	\
@@ -59,7 +57,7 @@ CLEANFILES = *.test.c patch-system
 
 EXTRA_SCRIPTS =		amhpfixdevs		amsinixfixdevs
 
-DISTCLEANFILES = 	$(EXTRA_SCRIPTS)
+DISTCLEANFILES = 	$(EXTRA_SCRIPTS) $(sbin_SCRIPTS) $(libexec_SCRIPTS)
 
 EXTRA_DIST =		amhpfixdevs.sh		amsinixfixdevs.sh
 

@@ -15,8 +15,6 @@
 #include "amanda.h"
 #include "libscsi.h"
 
-#if defined(PROTO_H) 
-
 char *modname = "@(#)" __FILE__
 		": SCSI support library for the proto scsi interface @(#)";
 
@@ -124,5 +122,3 @@ int get_drive_count(int fd)
      */
     return number_of_data-transfer_devices;
 }
-
-#endif

@@ -18,7 +18,7 @@
  * Sunnyvale, CA 94085, USA, or: http://www.zmanda.com
  */
 
-#include <amanda.h>
+#include "amanda.h"
 #include "tape-ops.h"
 #include "property.h"
 #include <glob.h>
@@ -39,7 +39,6 @@
 #ifdef HAVE_LIMITS_H
 # include <limits.h>
 #endif
-
 
 gboolean tape_rewind(int fd) {
     int count = 5;

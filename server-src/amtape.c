@@ -114,8 +114,6 @@ main(
     char *conffile;
     char *conf_tapelist;
     char *argv0 = argv[0];
-    unsigned long malloc_hist_1, malloc_size_1;
-    unsigned long malloc_hist_2, malloc_size_2;
     int i;
     int have_changer;
     int new_argc;
@@ -139,8 +137,6 @@ main(
     signal(SIGPIPE, SIG_IGN);
 
     dbopen(DBG_SUBDIR_SERVER);
-
-    malloc_size_1 = malloc_inuse(&malloc_hist_1);
 
     erroutput_type = ERR_INTERACTIVE;
 
@@ -196,12 +192,6 @@ main(
     amfree(changer_resultstr);
     amfree(conffile);
     amfree(config_dir);
-
-    malloc_size_2 = malloc_inuse(&malloc_hist_2);
-
-    if(malloc_size_1 != malloc_size_2) {
-	malloc_list(fileno(stderr), malloc_hist_1, malloc_hist_2);
-    }
 
     dbclose();
     return 0;

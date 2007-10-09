@@ -49,8 +49,6 @@ main(
     char *logfname;
     char *conf_logdir;
     FILE *logfile;
-    unsigned long malloc_hist_1, malloc_size_1;
-    unsigned long malloc_hist_2, malloc_size_2;
     char * cwd;
     int    new_argc,   my_argc;
     char **new_argv, **my_argv;
@@ -69,8 +67,6 @@ main(
     set_pname("amlogroll");
 
     dbopen(DBG_SUBDIR_SERVER);
-
-    malloc_size_1 = malloc_inuse(&malloc_hist_1);
 
     /* Process options */
     
@@ -150,12 +146,6 @@ main(
     amfree(config_name);
     free_new_argv(new_argc, new_argv);
     free_server_config();
-
-    malloc_size_2 = malloc_inuse(&malloc_hist_2);
-
-    if(malloc_size_1 != malloc_size_2) {
-	malloc_list(fileno(stderr), malloc_hist_1, malloc_hist_2);
-    }
 
     dbclose();
 

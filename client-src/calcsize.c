@@ -168,8 +168,6 @@ main(
     char *dirname=NULL;
     char *amname=NULL, *qamname=NULL;
     char *filename=NULL, *qfilename = NULL;
-    unsigned long malloc_hist_1, malloc_size_1;
-    unsigned long malloc_hist_2, malloc_size_2;
 
     /* drop root privileges; we'll regain them for the required operations */
 #ifdef WANT_SETUID_CLIENT
@@ -185,8 +183,6 @@ main(
 
     dbopen(DBG_SUBDIR_CLIENT);
     dbprintf(_("version %s\n"), version());
-
-    malloc_size_1 = malloc_inuse(&malloc_hist_1);
 
 #if 0
     erroutput_type = (ERR_INTERACTIVE|ERR_SYSLOG);
@@ -357,12 +353,6 @@ main(
 	fflush(stderr);
 
 	amfunlock(1, "size");
-    }
-
-    malloc_size_2 = malloc_inuse(&malloc_hist_2);
-
-    if(malloc_size_1 != malloc_size_2) {
-	malloc_list(fileno(stderr), malloc_hist_1, malloc_hist_2);
     }
 
     return 0;

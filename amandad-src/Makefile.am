@@ -4,6 +4,8 @@ INCLUDES =	-I$(top_builddir)/common-src \
 		-I$(top_srcdir)/common-src \
 		-I$(top_srcdir)/gnulib
 
+AM_CFLAGS = $(AMANDA_WARNING_CFLAGS)
+
 LINT=@AMLINT@
 LINTFLAGS=@AMLINTFLAGS@
 
@@ -11,10 +13,6 @@ lib_LTLIBRARIES =       libamandad.la
 LIB_EXTENSION = la
 
 libexec_PROGRAMS =	amandad
-
-if WANT_RUNTIME_PSEUDO_RELOC
-AM_LDFLAGS = -Wl,-enable-runtime-pseudo-reloc
-endif
 
 libamandad_la_SOURCES= amandad_util.c
 libamandad_la_LDFLAGS = -release $(VERSION)

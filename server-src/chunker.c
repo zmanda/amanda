@@ -117,8 +117,6 @@ main(
     struct cmdargs cmdargs;
     cmd_t cmd;
     int infd;
-    unsigned long malloc_hist_1, malloc_size_1;
-    unsigned long malloc_hist_2, malloc_size_2;
     char *conffile;
     char *q = NULL;
     char *filename = NULL;
@@ -147,8 +145,6 @@ main(
 
     /* Don't die when child closes pipe */
     signal(SIGPIPE, SIG_IGN);
-
-    malloc_size_1 = malloc_inuse(&malloc_hist_1);
 
     erroutput_type = (ERR_AMANDALOG|ERR_INTERACTIVE);
     set_logerror(logerror);
@@ -400,11 +396,6 @@ main(
     amfree(config_name);
     am_release_feature_set(their_features);
     their_features = NULL;
-
-    malloc_size_2 = malloc_inuse(&malloc_hist_2);
-
-    if (malloc_size_1 != malloc_size_2)
-	malloc_list(fileno(stderr), malloc_hist_1, malloc_hist_2);
 
     dbclose();
 

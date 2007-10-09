@@ -1,3 +1,52 @@
+2007-10-08  Dustin J. Mitchell <dustin@zmanda.com>
+	* autogen configure.in config/macro-archive/*.m4
+	  config/amanda/*.m4 config/libtool/*.m4: move most autoconf
+	  checks to macros in .m4 files.  Hilights of changes along the way:
+	  - use AC_REQUIRES to enforce check ordering
+	  - Add a post-configure summary of important results
+	  - use AM_CONDITIONAL to control conditional compilation of whole
+	    files, instead of preprocessor macros
+	  - correct spelling of PRINCIPLE -> PRINCIPAL
+	  - remove support for dbmalloc (we use valgrind, coverity, etc. now)
+	  - remove support for infofiles in anything but text format
+	  - change DONT_SUID_ROOT to !WANT_SETUID_ROOT
+	  - remove unused --with-broken-fsf
+	  - remove multiple unused function and header checks, the defines
+	    from which do not appear in any source file
+	  - remove LTLIBOBJS cruft based on
+	    http://www.delorie.com/gnu/docs/autoconf/autoconf_165.html
+	  - remove unused LTALLOCA definition based on
+	    http://www.delorie.com/gnu/docs/libtool/libtool_30.html
+	  - use autoconf macro archive's
+	    AC_DEFINE_DIR to expand $prefix, etc. in directory variables
+	  - do not *require* --with-{user,group}; this allows 'make distcheck'
+	    to run successfully
+	* docs/developing.txt: describe how to update gnulib, libtool, and
+	  gettext
+	* po/reautopoint.patch po/reautopoint: script to update gettext,
+	  parallel to gnulib/regenerate/regenerate
+	* amandad-src/amandad.c changer-src/scsi-aix.c
+	  changer-src/scsi-bsd.c changer-src/scsi-cam.c
+	  changer-src/scsi-changer-driver.c changer-src/scsi-chio.c
+	  changer-src/scsi-hpux.c changer-src/scsi-hpux_new.c
+	  changer-src/scsi-irix.c changer-src/scsi-linux.c
+	  changer-src/scsi-proto.c changer-src/scsi-solaris.c
+	  changer-src/sense.c client-src/calcsize.c client-src/getfsent.c
+	  client-src/selfcheck.c client-src/sendbackup.c
+	  client-src/sendsize.c common-src/alloc.c common-src/amanda.h
+	  common-src/conffile.c common-src/debug.c common-src/file.c
+	  common-src/genversion.c common-src/krb4-security.c
+	  common-src/writev.c device-src/tape-posix.c server-src/amadmin.c
+	  server-src/amcheck.c server-src/amlabel.c server-src/amlogroll.c
+	  server-src/amtape.c server-src/amtrmidx.c server-src/amtrmlog.c
+	  server-src/changer.c server-src/chunker.c server-src/diskfile.c
+	  server-src/driver.c server-src/dumper.c server-src/getconf.c
+	  server-src/infofile.c server-src/infofile.h server-src/planner.c
+	  server-src/reporter.c tape-src/output-tape.c: changes corresponding
+	  to simplifications and fixes in autoconf
+	* gnulib/regenerate/no-error.patch gnulib/regenerate/regenerate: no
+	  need to create gnulib.m4i anymore
+
 2007-10-08  Kevin Till <ktill@zmanda.com>  (merged by dustin@zmanda.com)
 	* example/amanda.conf.in: add segate LTO tapetype
 

@@ -292,51 +292,18 @@ struct iovec {
 #include <arpa/inet.h>
 #endif
 
+/* Support for missing IPv6 components */
 #ifndef HAVE_SOCKADDR_STORAGE
 #  define sockaddr_storage sockaddr_in
 #  define ss_family sin_family
 #endif
 
-#ifndef INET_ADDRSTRLEN
-#define INET_ADDRSTRLEN 16
+#ifdef WORKING_IPV6
+#define INET6
 #endif
 
-/*
- * The dbmalloc package comes from:
- *
- *  http://www.clark.net/pub/dickey/dbmalloc/dbmalloc.tar.gz
- *
- * or
- *
- *  ftp://gatekeeper.dec.com/pub/usenet/comp.sources.misc/volume32/dbmalloc/
- *
- * The following functions are sprinkled through the code, but are
- * disabled unless USE_DBMALLOC is defined:
- *
- *  malloc_enter(char *) -- stack trace for malloc reports
- *  malloc_leave(char *) -- stack trace for malloc reports
- *  malloc_mark(void *) -- mark an area as never to be free-d
- *  malloc_chain_check(void) -- check the malloc area now
- *  malloc_dump(int fd) -- report the malloc contents to a file descriptor
- *  malloc_list(int fd, ulong a, ulong b) -- report memory activated since
- *	history stamp a that is still active as of stamp b (leak check)
- *  malloc_inuse(ulong *h) -- create history stamp h and return the amount
- *	of memory currently in use.
- */
-
-#ifdef USE_DBMALLOC
-#include "malloc.h"
-#include "dbmalloc.h"
-#define	dbmalloc_caller_loc(x,y)	x
-#else
-#define	malloc_enter(func)		((void)0)
-#define	malloc_leave(func)		((void)0)
-#define	malloc_mark(ptr)		((void)0)
-#define	malloc_chain_check()		((void)0)
-#define	malloc_dump(fd)			((void)0)
-#define	malloc_list(a,b,c)		((void)0)
-#define	malloc_inuse(hist)		(*(hist) = 0, 0)
-#define	dbmalloc_caller_loc(x,y)	x
+#ifndef INET_ADDRSTRLEN
+#define INET_ADDRSTRLEN 16
 #endif
 
 #if !defined(HAVE_SIGACTION) && defined(HAVE_SIGVEC)
@@ -482,8 +449,6 @@ char *debug_vstrextend(const char *file, int line, char **oldstr, ...);
 /*@only@*/ /*@null@*/ char *debug_areads(const char *file, int line, int fd);
 #define agets(f)	      debug_agets(__FILE__,__LINE__,(f))
 #define areads(f)	      debug_areads(__FILE__,__LINE__,(f))
-
-const char *debug_caller_loc (const char *file, int line);
 
 extern int debug_amtable_alloc(const char *file,
 				  int line,
@@ -787,33 +752,6 @@ extern void closelog(void);
 
 #ifndef HAVE_CONNECT_DECL
 extern int connect(int s, struct sockaddr *name, socklen_t namelen);
-#endif
-
-#if !defined(TEXTDB) && !defined(HAVE_DBM_OPEN_DECL)
-#undef   DBM_INSERT
-#define  DBM_INSERT  0
-
-#undef   DBM_REPLACE
-#define  DBM_REPLACE 1
-
-    typedef struct {
-	int dummy[10];
-    } DBM;
-
-#ifndef HAVE_STRUCT_DATUM
-    typedef struct {
-	char    *dptr;
-	int     dsize;
-    } datum;
-#endif
-
-    extern DBM   *dbm_open(char *file, int flags, int mode);
-    extern void   dbm_close(DBM *db);
-    extern datum  dbm_fetch(DBM *db, datum key);
-    extern datum  dbm_firstkey(DBM *db);
-    extern datum  dbm_nextkey(DBM *db);
-    extern int    dbm_delete(DBM *db, datum key);
-    extern int    dbm_store(DBM *db, datum key, datum content, int flg);
 #endif
 
 #ifndef HAVE_FCLOSE_DECL
@@ -1328,10 +1266,6 @@ extern ssize_t writev(int fd, const struct iovec *iov, int iovcnt);
 
 #ifndef NI_MAXHOST
 #define NI_MAXHOST 1025
-#endif
-
-#ifndef HAVE_CURL_OFF_T
-typedef off_t curl_off_t;
 #endif
 
 #ifndef AI_V4MAPPED

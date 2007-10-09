@@ -215,12 +215,6 @@ main(
     prundefvar("CC");
 #endif
 
-#ifdef CC
-    prvar("CONFIGURE_COMMAND", CONFIGURE_COMMAND);
-#else
-    prundefvar("CONFIGURE_COMMAND");
-#endif
-
     endline();
 
     startline("paths:");
@@ -336,10 +330,6 @@ main(
 
 #ifdef AIX_BACKUP
     prstr("AIX_BACKUP");
-#endif
-
-#ifdef AIX_TAPEIO
-    prstr("AIX_TAPEIO");
 #endif
 
 #ifdef BROKEN_VOID

@@ -1,0 +1,42 @@
+#! /bin/bash
+
+# script to regenerate the gettext-related files from autopoint
+
+die() {
+    echo ${@}
+    exit 1
+}
+
+[ -f configure.in ] || die "Must be called from the root directory"
+
+# "sandbox" autopoint, since it assumes a certain directory structure.
+
+tmpdir="`pwd`/tmp.XXXXXX"
+tmpdir=$(mktemp -d "$tmpdir")
+trap "rm -rf \"$tmpdir\"" EXIT INT QUIT
+
+# get just enough of configure.in in there to run autopoint
+grep AM_GNU_GETTEXT_VERSION configure.in > "$tmpdir/configure.in" || die "no AM_GNU_GETTEXT_VERSION in configure.in"
+
+# run autopoint in the sandbox
+( cd "$tmpdir" && autopoint) || die "Error running autopoint"
+
+# copy the files to their real destinations
+
+# TODO include this file..
+# cp "$tmpdir/ABOUT-NLS" .
+
+# blow away the old gettext macros, so 'svn' will flag them with '!'
+rm -f config/gettext-macros/* || die "Error removing old gettext macros"
+cp "$tmpdir/m4/"* config/gettext-macros || die "Error copying new gettext macros"
+
+# there are valuable things in po/, so we can't just blow it away..
+cp "$tmpdir/po/"* po/ || die "Error copying new files to po/"
+
+# clean out stuff we don't need
+rm -f po/Makevars.template po/Makefile.in.in
+
+# and patch up the rest..
+patch -p0 -E < po/reautopoint.patch
+
+svn status

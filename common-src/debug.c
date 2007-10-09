@@ -451,21 +451,6 @@ debug_open(char *subdir)
     }
     (void)umask(mask); /* Restore mask */
 
-#ifdef USE_DBMALLOC
-    {
-	union dbmalloptarg	m;
-
-	m.i = M_HANDLE_CORE | M_HANDLE_DUMP;
-	dbmallopt(MALLOC_WARN, &m);
-
-	m.i = M_HANDLE_ABORT;
-	dbmallopt(MALLOC_FATAL, &m);
-
-	m.str = s;
-	dbmallopt(MALLOC_ERRFILE, &m);
-    }
-#endif
-
     /*
      * Finish setup.
      *

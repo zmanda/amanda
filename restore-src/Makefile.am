@@ -7,6 +7,8 @@ INCLUDES =	-I$(top_builddir)/common-src \
 		-I$(top_srcdir)/amandad-src  \
 		-I$(top_srcdir)/gnulib
 
+AM_CFLAGS = $(AMANDA_WARNING_CFLAGS)
+
 LINT=@AMLINT@
 LINTFLAGS=@AMLINTFLAGS@
 

@@ -14,9 +14,6 @@
 #include "amanda.h"
 #include "scsi-defs.h"
 
-#if (defined(HAVE_CHIO_H) || defined(HAVE_SYS_CHIO_H)) \
-    && !defined(HAVE_CAMLIB_H)
-
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/mtio.h>
@@ -304,7 +301,6 @@ int CloseDevice (char *device, int DeviceFD)
    return ret;
 }
 
-#endif
 /*
  * Local variables:
  * indent-tabs-mode: nil

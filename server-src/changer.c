@@ -333,7 +333,6 @@ changer_command(
     if (*tapechanger != '/') {
 	tapechanger = vstralloc(libexecdir, "/", tapechanger, versionsuffix(),
 			        NULL);
-	malloc_mark(tapechanger);
     }
     cmdstr = vstralloc(tapechanger, " ",
 		       cmd, arg ? " " : "", 

@@ -32,26 +32,7 @@
  */
 
 
-#include <amanda.h>
-
-#ifdef HAVE_IRIX_LIKE_SCSI
-
-/*
-#ifdef HAVE_STDIO_H
-*/
-#include <stdio.h>
-/*
-#endif
-*/
-#ifdef HAVE_SYS_TYPES_H
-#include <sys/types.h>
-#endif
-#ifdef HAVE_SYS_STAT_H
-#include <sys/stat.h>
-#endif
-#ifdef HAVE_FCNTL_H
-#include <fcntl.h>
-#endif
+#include "amanda.h"
 
 #include <sys/scsi.h>
 #include <sys/dsreq.h>
@@ -413,7 +394,6 @@ int ScanBus(int print)
   return 0;
 }
 
-#endif
 /*
  * Local variables:
  * indent-tabs-mode: nil

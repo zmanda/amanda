@@ -84,8 +84,7 @@ else
         if test -x "$ac_with_xsltproc"; then
             XSLTPROC="$ac_with_xsltproc";
         else
-            AC_MSG_WARN([Specified xsltproc of $ac_with_xsltproc isn't])
-            AC_MSG_WARN([executable; searching for an alternative.])
+            AMANDA_MSG_WARN([Specified xsltproc of $ac_with_xsltproc isn't executable; searching for an alternative.])
             AC_PATH_PROGS(XSLTPROC,xsltproc,,$LOCSYSPATH)
         fi
     fi

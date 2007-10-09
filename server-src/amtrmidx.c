@@ -33,9 +33,6 @@
 
 #include "amanda.h"
 #include "arglist.h"
-#ifdef HAVE_NETINET_IN_SYSTM_H
-#include <netinet/in_systm.h>
-#endif
 #include "conffile.h"
 #include "diskfile.h"
 #include "tapefile.h"

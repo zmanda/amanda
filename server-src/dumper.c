@@ -252,8 +252,6 @@ main(
     int outfd = -1;
     int rc;
     in_port_t taper_port;
-    unsigned long malloc_hist_1, malloc_size_1;
-    unsigned long malloc_hist_2, malloc_size_2;
     char *conffile;
     char *q = NULL;
     int a;
@@ -283,8 +281,6 @@ main(
 
     /* Don't die when child closes pipe */
     signal(SIGPIPE, SIG_IGN);
-
-    malloc_size_1 = malloc_inuse(&malloc_hist_1);
 
     erroutput_type = (ERR_AMANDALOG|ERR_INTERACTIVE);
     set_logerror(logerror);
@@ -565,12 +561,6 @@ main(
     amfree(options);
     amfree(config_dir);
     amfree(config_name);
-
-    malloc_size_2 = malloc_inuse(&malloc_hist_2);
-
-    if (malloc_size_1 != malloc_size_2) {
-	malloc_list(fileno(stderr), malloc_hist_1, malloc_hist_2);
-    }
 
     dbclose();
     return (0); /* exit */

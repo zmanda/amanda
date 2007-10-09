@@ -196,8 +196,6 @@ main(
     char *conffile;
     int i;
     int ch;
-    unsigned long malloc_hist_1, malloc_size_1;
-    unsigned long malloc_hist_2, malloc_size_2;
     FILE *toolin;
     int status;
 
@@ -223,8 +221,6 @@ main(
 
     /* Don't die when interrupt received */
     signal(SIGINT, SIG_IGN);
-
-    malloc_size_1 = malloc_inuse(&malloc_hist_1);
 
     if(argc > 1 && strcmp(argv[1],"-t") == 0) {
 	interactive = 1;
@@ -646,12 +642,6 @@ main(
     amfree(g_options);
 
     dbclose();
-
-    malloc_size_2 = malloc_inuse(&malloc_hist_2);
-
-    if(malloc_size_1 != malloc_size_2) {
-	malloc_list(fileno(stderr), malloc_hist_1, malloc_hist_2);
-    }
 
     return 0;
 

@@ -32,40 +32,7 @@
  */
 
 
-#include <amanda.h>
-
-#ifdef HAVE_DMALLOC_H
-#include <dmalloc.h>
-#endif
-
-#ifdef HAVE_LINUX_LIKE_SCSI
-
-/*
-#ifdef HAVE_STDIO_H
-*/
-#include <stdio.h>
-/*
-#endif
-*/
-#ifdef HAVE_SYS_TYPES_H
-#include <sys/types.h>
-#endif
-#ifdef HAVE_SYS_STAT_H
-#include <sys/stat.h>
-#endif
-#ifdef HAVE_FCNTL_H
-#include <fcntl.h>
-#endif
-
-#ifdef HAVE_DIRENT_H
-#include <dirent.h>
-#endif
-
-#include <time.h>
-
-#ifdef HAVE_SCSI_SCSI_IOCTL_H
-#include <scsi/scsi_ioctl.h>
-#endif
+#include "amanda.h"
 
 #ifdef HAVE_SCSI_SG_H
 #include <scsi/sg.h>
@@ -690,7 +657,6 @@ int ScanBus(int print)
     }
   return 0;
 }
-#endif
 /*
  * Local variables:
  * indent-tabs-mode: nil

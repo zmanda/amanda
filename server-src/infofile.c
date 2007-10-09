@@ -36,7 +36,6 @@
 
 static void zero_info(info_t *);
 
-#ifdef TEXTDB
   static char *infodir = (char *)0;
   static char *infofile = (char *)0;
   static char *newinfofile;
@@ -47,15 +46,6 @@ static void zero_info(info_t *);
   static int read_txinfofile(FILE *, info_t *);
   static int write_txinfofile(FILE *, info_t *);
   static int delete_txinfofile(char *, char *);
-#else
-#  define MAX_KEY 256
-/*#  define HEADER	(SIZEOF(info_t)-DUMP_LEVELS*SIZEOF(stats_t))*/
-
-  static DBM *infodb = NULL;
-  static lockfd = -1;
-#endif
-
-#ifdef TEXTDB
 
 static FILE *
 open_txinfofile(
@@ -511,66 +501,24 @@ delete_txinfofile(
 
     return rc;
 }
-#endif
-
-#ifndef TEXTDB
-static char *lockname = NULL;
-#endif
 
 int
 open_infofile(
     char *	filename)
 {
-#ifdef TEXTDB
     assert(infodir == (char *)0);
 
     infodir = stralloc(filename);
 
     return 0; /* success! */
-#else
-    /* lock the dbm file */
-
-    lockname = newstralloc2(lockname, filename, ".lck");
-    if((lockfd = open(lockname, O_CREAT|O_RDWR, 0644)) == -1)
-	return 2;
-
-    if(amflock(lockfd, "info") == -1) {
-	aclose(lockfd);
-	unlink(lockname);
-	return 3;
-    }
-
-    if(!(infodb = dbm_open(filename, O_CREAT|O_RDWR, 0644))) {
-	amfunlock(lockfd, "info");
-	aclose(lockfd);
-	unlink(lockname);
-	return 1;
-    }
-
-    return (infodb == NULL);	/* return 1 on error */
-#endif
 }
 
 void
 close_infofile(void)
 {
-#ifdef TEXTDB
     assert(infodir != (char *)0);
 
     amfree(infodir);
-#else
-    dbm_close(infodb);
-
-    if(amfunlock(lockfd, "info") == -1) {
-	error(_("could not unlock infofile: %s"), strerror(errno));
-	/*NOTREACHED*/
-    }
-
-    aclose(lockfd);
-    lockfd = -1;
-
-    unlink(lockname);
-#endif
 }
 
 /* Convert a dump level to a GMT based time stamp */
@@ -667,7 +615,6 @@ get_info(
     (void) zero_info(info);
 
     {
-#ifdef TEXTDB
 	FILE *infof;
 
 	infof = open_txinfofile(hostname, diskname, "r");
@@ -680,131 +627,9 @@ get_info(
 
 	    close_txinfofile(infof);
 	}
-#else
-	datum k, d;
-
-	/* setup key */
-
-	k.dptr = vstralloc(hostname, ":", diskname, NULL);
-	k.dsize = strlen(k.dptr)+1;
-
-	/* lookup record */
-
-	d = dbm_fetch(infodb, k);
-	amfree(k.dptr);
-	if(d.dptr == NULL) {
-	    rc = -1; /* record not found */
-	}
-	else {
-	    memcpy(info, d.dptr, d.dsize);
-	    rc = 0;
-	}
-#endif
     }
 
     return rc;
-}
-
-
-int
-get_firstkey(
-    char *	hostname,
-    int		hostname_size,
-    char *	diskname,
-    int		diskname_size)
-{
-#ifdef TEXTDB
-    (void)hostname;		/* Quiet unused parameter warning */
-    (void)hostname_size;	/* Quiet unused parameter warning */
-    (void)diskname;		/* Quiet unused parameter warning */
-    (void)diskname_size;	/* Quiet unused parameter warning */
-
-    assert(0);
-    return 0;
-#else
-    datum k;
-    int rc;
-    char *s, *fp;
-    int ch;
-
-    k = dbm_firstkey(infodb);
-    if(k.dptr == NULL) return 0;
-
-    s = k.dptr;
-    ch = *s++;
-
-    skip_whitespace(s, ch);
-    if(ch == '\0') return 0;
-    fp = hostname;
-    while(ch && ch != ':') {
-	if(fp >= hostname+hostname_size-1) {
-	    fp = NULL;
-	    break;
-	}
-	*fp = ch;
-	ch = *s++;
-    }
-    if(fp == NULL) return 0;
-    *fp = '\0';
-
-    if(ch != ':') return 0;
-    ch = *s++;
-    copy_string(s, ch, diskname, diskname_size, fp);
-    if(fp == NULL) return 0;
-
-    return 1;
-#endif
-}
-
-
-int
-get_nextkey(
-    char *	hostname,
-    int		hostname_size,
-    char *	diskname,
-    int		diskname_size)
-{
-#ifdef TEXTDB
-    (void)hostname;		/* Quiet unused parameter warning */
-    (void)hostname_size;	/* Quiet unused parameter warning */
-    (void)diskname;		/* Quiet unused parameter warning */
-    (void)diskname_size;	/* Quiet unused parameter warning */
-
-    assert(0);
-    return 0;
-#else
-    datum k;
-    int rc;
-    char *s, *fp;
-    int ch;
-
-    k = dbm_nextkey(infodb);
-    if(k.dptr == NULL) return 0;
-
-    s = k.dptr;
-    ch = *s++;
-
-    skip_whitespace(s, ch);
-    if(ch == '\0') return 0;
-    fp = hostname;
-    while(ch && ch != ':') {
-	if(fp >= hostname+hostname_size-1) {
-	    fp = NULL;
-	    break;
-	}
-	*fp = ch;
-	ch = *s++;
-    }
-    if(fp == NULL) return 0;
-    *fp = '\0';
-
-    if(ch != ':') return 0;
-    ch = *s++;
-    copy_string(s, ch, diskname, diskname_size, fp);
-    if(fp == NULL) return 0;
-
-    return 1;
-#endif
 }
 
 
@@ -814,7 +639,6 @@ put_info(
      char *	diskname,
      info_t *	info)
 {
-#ifdef TEXTDB
     FILE *infof;
     int rc;
 
@@ -827,28 +651,6 @@ put_info(
     rc = rc || close_txinfofile(infof);
 
     return rc;
-#else
-    datum k, d;
-    int maxlev;
-
-    /* setup key */
-
-    k.dptr = vstralloc(hostname, ":", diskname, NULL);
-    k.dsize = strlen(k.dptr)+1;
-
-    d.dptr = (char *)info;
-    d.dsize = SIZEOF(info_t);
-
-    /* store record */
-
-    if(dbm_store(infodb, k, d, DBM_REPLACE) != 0) {
-	amfree(k.dptr);
-	return -1;
-    }
-
-    amfree(k.dptr);
-    return 0;
-#endif
 }
 
 
@@ -857,26 +659,7 @@ del_info(
     char *	hostname,
     char *	diskname)
 {
-#ifdef TEXTDB
     return delete_txinfofile(hostname, diskname);
-#else
-    char key[MAX_KEY];
-    datum k;
-
-    /* setup key */
-
-    k.dptr = vstralloc(hostname, ":", diskname, NULL);
-    k.dsize = strlen(key)+1;
-
-    /* delete key and record */
-
-    if(dbm_delete(infodb, k) != 0) {
-	amfree(k.dptr);
-	return -1;
-    }
-    amfree(k.dptr);
-    return 0;
-#endif
 }
 
 
@@ -913,7 +696,6 @@ dump_rec(
    printf(_("last_level: %d %d\n"), info->last_level, info->consecutive_runs);
 }
 
-#ifdef TEXTDB
 void dump_db( char *host, char *disk);
 
 void
@@ -930,36 +712,6 @@ dump_db(
 	printf(_("cannot fetch information for %s:%s rc=%d\n"), host, disk, rc);
     }
 }
-#else
-void
-dump_db(
-    char *	str)
-{
-    datum k,d;
-    int rec,r,num;
-    info_t info;
-
-
-    printf(_("info database %s:\n--------\n"), str);
-    rec = 0;
-    k = dbm_firstkey(infodb);
-    while(k.dptr != NULL) {
-
-	printf(_("%3d: KEY %s =\n"), rec, k.dptr);
-
-	d = dbm_fetch(infodb, k);
-	memset(&info, '\0', SIZEOF(info));
-	memcpy(&info, d.dptr, d.dsize);
-
-	num = (d.dsize-HEADER)/SIZEOF(stats_t);
-	dump_rec(&info);
-
-	k = dbm_nextkey(infodb);
-	rec++;
-    }
-    puts("--------\n");
-}
-#endif
 
 int
 main(
@@ -967,8 +719,6 @@ main(
     char **	argv)
 {
   int i;
-  unsigned long malloc_hist_1, malloc_size_1;
-  unsigned long malloc_hist_2, malloc_size_2;
 
   /*
    * Configure program for internationalization:
@@ -985,10 +735,7 @@ main(
 
   dbopen(DBG_SUBDIR_SERVER);
 
-  malloc_size_1 = malloc_inuse(&malloc_hist_1);
-
   for(i = 1; i < argc; ++i) {
-#ifdef TEXTDB
     if(i+1 >= argc) {
       fprintf(stderr,_("usage: %s host disk [host disk ...]\n"),argv[0]);
       return 1;
@@ -996,17 +743,7 @@ main(
     open_infofile("curinfo");
     dump_db(argv[i], argv[i+1]);
     i++;
-#else
-    open_infofile(argv[i]);
-    dump_db(argv[i]);
-#endif
     close_infofile();
-  }
-
-  malloc_size_2 = malloc_inuse(&malloc_hist_2);
-
-  if(malloc_size_1 != malloc_size_2) {
-    malloc_list(fileno(stderr), malloc_hist_1, malloc_hist_2);
   }
 
   return 0;

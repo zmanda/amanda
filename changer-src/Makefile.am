@@ -5,12 +5,14 @@ INCLUDES =	-I$(top_builddir)/common-src \
 		-I$(top_srcdir)/tape-src     \
 		-I$(top_srcdir)/gnulib
 
+AM_CFLAGS = $(AMANDA_WARNING_CFLAGS)
+
 LINT=@AMLINT@
 LINTFLAGS=@AMLINTFLAGS@
 
 LIB_EXTENSION = la
 
-if WANT_CHIO_SCSI
+if WANT_CHG_SCSI_CHIO
 CHIO_SCSI = chg-scsi-chio
 endif
 
@@ -29,7 +31,7 @@ SCRIPTS_SHELL =		chg-manual	chg-multi	chg-mtx		\
 
 libexec_SCRIPTS = $(SCRIPTS_PERL) $(SCRIPTS_SHELL)
 
-CLEANFILES = $(libexec_SCRIPTS)
+DISTCLEANFILES = $(libexec_SCRIPTS)
 
 ###
 # Because libamanda includes routines (e.g. regex) provided by some system
@@ -46,12 +48,38 @@ LDADD = ../common-src/libamanda.$(LIB_EXTENSION) \
 
 SUFFIXES =		.pl .sh
 
-chg_scsi_CSRC = chg-scsi.c scsi-aix.c scsi-changer-driver.c		\
-		scsi-hpux_new.c scsi-irix.c scsi-linux.c scsi-solaris.c	\
-		scsi-bsd.c scsi-cam.c sense.c 
+chg_scsi_CSRC = chg-scsi.c scsi-changer-driver.c sense.c 
+if WANT_SCSI_AIX
+chg_scsi_CSRC += scsi-aix.c
+endif
+if WANT_SCSI_HPUX_NEW
+chg_scsi_CSRC += scsi-hpux_new.c
+endif
+if WANT_SCSI_IRIX
+chg_scsi_CSRC += scsi-irix.c
+endif
+if WANT_SCSI_LINUX
+chg_scsi_CSRC += scsi-linux.c
+endif
+if WANT_SCSI_SOLARIS
+chg_scsi_CSRC += scsi-solaris.c
+endif
+if WANT_SCSI_BSD
+chg_scsi_CSRC += scsi-bsd.c
+endif
+if WANT_SCSI_CAM
+chg_scsi_CSRC += scsi-cam.c
+endif
+
 chg_scsi_SOURCES = libscsi.h scsi-defs.h $(chg_scsi_CSRC)
 
-chg_scsi_chio_CSRC = chg-scsi-chio.c scsi-hpux.c scsi-chio.c
+chg_scsi_chio_CSRC = chg-scsi-chio.c
+if WANT_SCSI_HPUX
+chg_scsi_chio_CSRC += scsi-hpux.c
+endif
+if WANT_SCSI_CHIO
+chg_scsi_chio_CSRC += scsi-chio.c
+endif
 chg_scsi_chio_SOURCES = libscsi.h $(chg_scsi_chio_CSRC)
 
 EXTRA_DIST = scsi-proto.c

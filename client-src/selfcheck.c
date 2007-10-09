@@ -100,10 +100,6 @@ main(
     char *conffile;
     option_t *options;
     int ch;
-#if defined(USE_DBMALLOC)
-    unsigned long malloc_hist_1, malloc_size_1;
-    unsigned long malloc_hist_2, malloc_size_2;
-#endif
 
     /* initialize */
 
@@ -123,10 +119,6 @@ main(
 
     /* Don't die when child closes pipe */
     signal(SIGPIPE, SIG_IGN);
-
-#if defined(USE_DBMALLOC)
-    malloc_size_1 = malloc_inuse(&malloc_hist_1);
-#endif
 
     erroutput_type = (ERR_INTERACTIVE|ERR_SYSLOG);
     dbopen(DBG_SUBDIR_CLIENT);
@@ -317,14 +309,6 @@ main(
     amfree(g_options->str);
     amfree(g_options->hostname);
     amfree(g_options);
-
-#if defined(USE_DBMALLOC)
-    malloc_size_2 = malloc_inuse(&malloc_hist_2);
-
-    if(malloc_size_1 != malloc_size_2) {
-	malloc_list(dbfd(), malloc_hist_1, malloc_hist_2);
-    }
-#endif
 
     dbclose();
     return 0;

@@ -639,8 +639,6 @@ debug_areads (
     size_t size;
     ssize_t r;
 
-    malloc_enter(dbmalloc_caller_loc(s, l));
-
     if(fd < 0) {
 	errno = EBADF;
 	return NULL;
@@ -673,7 +671,6 @@ debug_areads (
 	    if(r == 0) {
 		errno = 0;		/* flag EOF instead of error */
 	    }
-	    malloc_leave(dbmalloc_caller_loc(s, l));
 	    return NULL;
 	}
 	endptr[r] = '\0';		/* we always leave room for this */
@@ -686,7 +683,6 @@ debug_areads (
     memmove(buffer, nl, size);
     areads_buffer[fd].endptr = buffer + size;
     areads_buffer[fd].endptr[0] = '\0';
-    malloc_leave(dbmalloc_caller_loc(s, l));
     return line;
 }
 

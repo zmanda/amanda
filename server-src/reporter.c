@@ -331,8 +331,6 @@ main(
     char *logfname, *psfname, *outfname, *subj_str = NULL;
     tapetype_t *tp;
     int opt;
-    unsigned long malloc_hist_1, malloc_size_1;
-    unsigned long malloc_hist_2, malloc_size_2;
     char *mail_cmd = NULL, *printer_cmd = NULL;
     extern int optind;
     char * cwd;
@@ -362,8 +360,6 @@ main(
 
     /* Don't die when child closes pipe */
     signal(SIGPIPE, SIG_IGN);
-
-    malloc_size_1 = malloc_inuse(&malloc_hist_1);
 
     /* Process options */
     
@@ -815,12 +811,6 @@ main(
     amfree(printer_cmd);
     amfree(mail_cmd);
     amfree(logfname);
-
-    malloc_size_2 = malloc_inuse(&malloc_hist_2);
-
-    if(malloc_size_1 != malloc_size_2) {
-	malloc_list(fileno(stderr), malloc_hist_1, malloc_hist_2);
-    }
 
     dbclose();
     return exit_status;
