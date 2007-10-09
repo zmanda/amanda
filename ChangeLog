@@ -1,3 +1,13 @@
+2007-10-09  Dustin J. Mitchell <dustin@zmanda.com>
+	* gnulib/regenerate/regenerate gnulib/mkdtemp.c gnulib/mkdtemp.h
+	  gnulib/gettimeofday.c gnulib/sys_time_.h gnulib/tempname.c
+	  gnulib/tempname.h gnulib/stat_.h gnulib/Makefile.am
+	  device-src/tests/vfs_test.c config/gnulib/mkdtemp.m4
+	  config/gnulib/sys_time_h.m4 config/gnulib/tempname.m4
+	  config/gnulib/gnulib-comp.m4 config/gnulib/sys_stat_h.m4
+	  config/gnulib/gnulib-cache.m4 config/gnulib/gettimeofday.m4:
+	  add 'mkdtemp' gnulib module, use it in vfs_test.c
+
 2007-10-09  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/util.c (portable_readdir): Don't use reentrant function.
 
