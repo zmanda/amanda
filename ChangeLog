@@ -1,4 +1,8 @@
 2007-10-09  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/amflock-test.c: lock files in the cwd, rather than /tmp,
+	  and pay attention to errors from unlink()
+
+2007-10-09  Dustin J. Mitchell <dustin@zmanda.com>
 	* gnulib/regenerate/regenerate gnulib/mkdtemp.c gnulib/mkdtemp.h
 	  gnulib/gettimeofday.c gnulib/sys_time_.h gnulib/tempname.c
 	  gnulib/tempname.h gnulib/stat_.h gnulib/Makefile.am

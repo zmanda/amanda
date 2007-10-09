@@ -33,7 +33,7 @@ int
 main(void)
 {
     amflock_impl_t **imp = amflock_impls;
-    char *filename = "/tmp/amflocktest.lck";
+    char *filename = "./amflocktest.file";
     char *resource = "rez";
     int fd;
     int lock_ro;
@@ -42,8 +42,11 @@ main(void)
 	fprintf(stderr, _("Testing amflock-%s\n"), (*imp)->impl_name);
 	alarm(5); /* time out after 5 seconds */
 
-	for (lock_ro = 0; lock_ro < 2; lock_ro++) {
-	    unlink(filename); /* ignore error */
+	for (lock_ro = 0; lock_ro < 2; lock_ro++) { /* false (0) or true (1) */
+	    if (unlink(filename) == -1 && errno != ENOENT) {
+		perror("unlink");
+		return 1;
+	    }
 
 	    if ((fd = open(filename, O_RDWR | O_CREAT | O_EXCL, 0600)) == -1) {
 		perror("open");
