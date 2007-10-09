@@ -638,57 +638,36 @@ add_history(
 
 #endif
 
-/* Order of preference: readdir64_r(), readdir64(), readdir_r(),
-   readdir(). We prefer 64-bit capability to reentrancy, because we
-   can create our own reentrancy with a mutex. */
-#if HAVE_DECL_READDIR64_R
-# define REENTRANT_READDIR
-# define USE_DIRENT64
-# define USE_READDIR64_R
-#elif HAVE_DECL_READDIR64
+/* Order of preference: readdir64(), readdir(). */
+#if HAVE_DECL_READDIR64
 #  define USE_DIRENT64
 #  define USE_READDIR64
-#elif HAVE_DECL_READDIR_R
-#  define REENTRANT_READDIR
-#  define USE_READDIR_R
 #elif HAVE_DECL_READDIR
 #  define USE_READDIR
 #else
-# error No readdir(), readdir_r(), readdir64(), or readdir64_r() available!
+# error No readdir() or readdir64() available!
 #endif
 
 char * portable_readdir(DIR* handle) {
+
 #ifdef USE_DIRENT64
-    struct dirent64 entry G_GNUC_UNUSED;
     struct dirent64 *entry_p;
 #else
-    struct dirent entry G_GNUC_UNUSED;
     struct dirent *entry_p;
 #endif
-#ifdef REENTRANT_READDIR
-    entry_p = &entry;
-#else
+
     static GStaticMutex mutex = G_STATIC_MUTEX_INIT;
 
     g_static_mutex_lock(&mutex);
-#endif
 
 #ifdef USE_READDIR
-    entry_p = *(readdir(handle));
+    entry_p = readdir(handle);
 #endif
 #ifdef USE_READDIR64
-    entry_p = *(readdir64(handle));
-#endif
-#ifdef USE_READDIR_R
-    readdir_r(handle, &entry, &entry_p);
-#endif
-#ifdef USE_READDIR64_R
-    readdir64_r(handle, &entry, &entry_p);
+    entry_p = readdir64(handle);
 #endif
 
-#ifndef REENTRANT_READDIR
     g_static_mutex_unlock(&mutex);
-#endif
     
     if (entry_p == NULL)
         return NULL;

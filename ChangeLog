@@ -1,3 +1,6 @@
+2007-10-09  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/util.c (portable_readdir): Don't use reentrant function.
+
 2007-10-08  Dustin J. Mitchell <dustin@zmanda.com>
 	* autogen configure.in config/macro-archive/*.m4
 	  config/amanda/*.m4 config/libtool/*.m4: move most autoconf
