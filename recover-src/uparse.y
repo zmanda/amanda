@@ -48,8 +48,8 @@ extern char *	yytext;
 
 	/* literal keyword tokens */
 
-%token LISTHOST LISTDISK SETHOST SETDISK SETDATE SETTAPE SETMODE
-%token CD CDX QUIT DHIST LS ADD ADDX EXTRACT
+%token LISTHOST LISTDISK SETHOST SETDISK SETDATE SETTAPE SETMODE SETDEVICE
+%token CD CDX QUIT DHIST LS ADD ADDX EXTRACT DASH_H
 %token LIST DELETE DELETEX PWD CLEAR HELP LCD LPWD MODE SMB TAR
 
         /* typed tokens */
@@ -89,7 +89,10 @@ set_command:
   |     SETDISK PATH PATH { set_disk($2, $3); amfree($2); amfree($3); }
   |     SETDISK PATH { set_disk($2, NULL); amfree($2); }
   |     SETTAPE PATH { set_tape($2); amfree($2); }
-  |     SETTAPE { set_tape(""); }
+  |     SETTAPE { set_tape("default"); }
+  |	SETDEVICE PATH { set_device(NULL, $2); }
+  |	SETDEVICE DASH_H PATH PATH { set_device($3, $4); }
+  |	SETDEVICE { set_device(NULL, NULL); }
   |     CD PATH { cd_glob($2); amfree($2); }
   |     CDX PATH { cd_regex($2); amfree($2); }
   |     SETMODE SMB {

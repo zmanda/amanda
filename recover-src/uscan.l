@@ -75,6 +75,8 @@ setdisk		{ return SETDISK; }
 setdate		{ return SETDATE; }
 setmode		{ return SETMODE; }
 settape		{ return SETTAPE; }
+setdevice	{ return SETDEVICE; }
+-h		{ return DASH_H; }
 cd		{ return CD; }
 cdx		{ return CDX; }
 quit		{ return QUIT; }

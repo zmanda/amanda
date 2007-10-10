@@ -203,20 +203,11 @@ mount point instead of full pathnames.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>settape</emphasis> [[<emphasis remap='I'>server</emphasis>]:][<emphasis remap='I'>tapedev</emphasis>|<emphasis remap='I'>default</emphasis>]</term>
+  <term><emphasis remap='B'>setdevice</emphasis> [[-h <emphasis remap='I'>tape-server</emphasis>] <emphasis remap='I'>tapedev</emphasis>]</term>
   <listitem>
-<para>Specifies the host to use as the tape server, and which of its tape
-devices to use.
-If the server is omitted, but the colon is not, the
-server name reverts to the configure-time
-default.
-If the tape device is omitted, it remains unchanged.
-To use the default tape device selected by the tape server, the word
-<emphasis remap='I'>default</emphasis>
-must be specified.
-If no argument is specified, or the argument is an
-empty string, no changes occur, and the current settings are
-displayed.</para>
+<para>Specifies the host to use as the tape server, and which of its tape devices to use.
+If the server is omitted, the server name reverts to the configure-time default.
+If the tape device is omitted, the default is used.</para>
 
 <para>If you want amrecover to use your changer, the 
 <emphasis remap='I'>tapedev</emphasis>

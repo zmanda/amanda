@@ -62,7 +62,7 @@ help_list(void)
     printf(_("        {YYYY-MM-DD-HH-MM-SS}      - set date of look\n"));
     printf(_("setdisk diskname [mountpoint]      - select disk on dump host\n"));
     printf(_("sethost host                       - select dump host\n"));
-    printf(_("settape [host:][device|default]    - select tape server and/or device\n"));
-    printf(_("setmode smb|tar                 - select the method used to extract SMB shares\n"));
+    printf(_("setdevice [[-h host] device]       - select tape server and/or device\n"));
+    printf(_("setmode smb|tar                    - select the method used to extract SMB shares\n"));
     printf("\n");
 }

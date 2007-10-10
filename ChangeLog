@@ -1,3 +1,13 @@
+2007-09-14  Dustin J. Mitchell <dustin@zmanda.com>
+	* recover-src/uscan.l recover-src/extract_list.c 
+	  recover-src/uparse.y recover-src/amrecover.h 
+	  recover-src/help.c recover-src/set_commands.c: deprecate
+	  'settape', add 'setdevice'
+	* man/xml-source/amrecover.8.xml: corresponding doc update
+	* example/amanda.conf.in: update comments in example config, 
+	  change default value of amrecover_changer from the confusing
+	  "/dev/null"
+
 2007-10-09  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/amflock-test.c: lock files in the cwd, rather than /tmp,
 	  and pay attention to errors from unlink()

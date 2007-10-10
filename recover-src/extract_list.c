@@ -1393,16 +1393,16 @@ okay_to_continue(
     char *line = NULL;
     char *s;
     char *prompt;
-    int get_tape;
+    int get_device;
 
-    get_tape = 0;
+    get_device = 0;
     while (ret < 0) {
-	if (get_tape) {
-	    prompt = _("New tape device [?]: ");
+	if (get_device) {
+	    prompt = _("New device name [?]: ");
 	} else if (allow_tape && allow_skip) {
-	    prompt = _("Continue [?/Y/n/s/t]? ");
+	    prompt = _("Continue [?/Y/n/s/d]? ");
 	} else if (allow_tape && !allow_skip) {
-	    prompt = _("Continue [?/Y/n/t]? ");
+	    prompt = _("Continue [?/Y/n/d]? ");
 	} else if (allow_retry) {
 	    prompt = _("Continue [?/Y/n/r]? ");
 	} else {
@@ -1414,8 +1414,8 @@ okay_to_continue(
 	if ((line = agets(stdin)) == NULL) {
 	    putchar('\n');
 	    clearerr(stdin);
-	    if (get_tape) {
-		get_tape = 0;
+	    if (get_device) {
+		get_device = 0;
 		continue;
 	    }
 	    ret = 0;
@@ -1428,8 +1428,8 @@ okay_to_continue(
 	    (void)ch;	/* Quiet empty loop compiler warning */
 	}
 	if (ch == '?') {
-	    if (get_tape) {
-		printf(_("Enter a new device ([host:]device) or \"default\"\n"));
+	    if (get_device) {
+		printf(_("Enter a new device name or \"default\"\n"));
 	    } else {
 		printf(_("Enter \"y\"es to continue, \"n\"o to stop"));
 		if(allow_skip) {
@@ -1439,17 +1439,28 @@ okay_to_continue(
 		    printf(_(" or \"r\"etry this tape"));
 		}
 		if (allow_tape) {
-		    printf(_(" or \"t\"ape to change tape drives"));
+		    printf(_(" or \"d\" to change to a new device"));
 		}
 		putchar('\n');
 	    }
-	} else if (get_tape) {
-	    set_tape(s - 1);
-	    get_tape = 0;
+	} else if (get_device) {
+	    char *tmp = stralloc(tape_server_name);
+
+	    if (strncmp_const(s - 1, "default") == 0) {
+		set_device(tmp, NULL); /* default device, existing host */
+	    } else if (s[-1] != '\0') {
+		set_device(tmp, s - 1); /* specified device, existing host */
+	    } else {
+		printf(_("No change.\n"));
+	    }
+
+	    amfree(tmp);
+
+	    get_device = 0;
 	} else if (ch == '\0' || ch == 'Y' || ch == 'y') {
 	    ret = 1;
-	} else if (allow_tape && (ch == 'T' || ch == 't')) {
-	    get_tape = 1;
+	} else if (allow_tape && (ch == 'D' || ch == 'd' || ch == 'T' || ch == 't')) {
+	    get_device = 1; /* ('T' and 't' are for backward-compatibility) */
 	} else if (ch == 'N' || ch == 'n') {
 	    ret = 0;
 	} else if (allow_retry && (ch == 'R' || ch == 'r')) {

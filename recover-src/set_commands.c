@@ -592,31 +592,38 @@ show_directory(void)
 }
 
 
-/* set the tape server and device */
+/* set the tape server and device (deprecated version) */
 void
 set_tape(
     char *	tape)
 {
     char *uqtape = unquote_string(tape);
     char *tapedev = strchr(uqtape, ':');
+    char *host = NULL;
+
+    printf(_("NOTE: 'settape' is deprecated; use setdevice instead.\n"));
 
     if (tapedev)
     {
+	/* This command is deprecated because this parsing is going to fall 
+	 * behind the list of available device names at some point, or to shadow
+	 * an interesting hostname (wouldn't 'tape' be a good name for a 
+	 * tape server?) */
 	if (tapedev != uqtape) {
 	    if((strchr(tapedev+1, ':') == NULL) &&
-	       (strncmp(uqtape, "null:", 5) == 0 ||
-		strncmp(uqtape, "rait:", 5) == 0 ||
-		strncmp(uqtape, "file:", 5) == 0 ||
-		strncmp(uqtape, "tape:", 5) == 0)) {
+	       (strncmp_const(uqtape, "null:") == 0 ||
+		strncmp_const(uqtape, "rait:") == 0 ||
+		strncmp_const(uqtape, "file:") == 0 ||
+		strncmp_const(uqtape, "s3:") == 0 ||
+		strncmp_const(uqtape, "tape:") == 0)) {
 		tapedev = uqtape;
 	    }
 	    else {
 		*tapedev = '\0';
-		tape_server_name = newstralloc(tape_server_name, uqtape);
+		host = stralloc(uqtape);
 		++tapedev;
 	    }
-	} else { /* reset server_name if start with : */
-	    amfree(tape_server_name);
+	} else {
 	    ++tapedev;
 	}
     } else
@@ -625,11 +632,33 @@ set_tape(
     if (tapedev[0])
     {
 	if (strcmp(tapedev, "default") == 0)
-	    amfree(tape_device_name);
-	else
-	    tape_device_name = newstralloc(tape_device_name, tapedev);
+	    tapedev = NULL;
     }
 
+    /* call out to the new version */
+    set_device(host, tapedev);
+
+    amfree(host);
+    amfree(uqtape);
+}
+
+/* set the tape server and device, for real */
+void
+set_device(
+    char *	host,
+    char *	device)
+{
+    if (host)
+	tape_server_name = newstralloc(tape_server_name, host);
+    else
+	amfree(tape_server_name);
+
+    if (device)
+	tape_device_name = newstralloc(tape_device_name, device);
+    else
+	amfree(tape_device_name);
+
+    /* print the current status */
     if (tape_device_name)
 	printf (_("Using tape \"%s\""), tape_device_name);
     else

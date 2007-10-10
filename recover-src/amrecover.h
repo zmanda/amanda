@@ -88,6 +88,7 @@ extern void cd_glob(char *dir);
 extern void cd_regex(char *dir);
 extern void cd_dir(char *dir, char *default_dir);
 extern void set_tape(char *tape);
+extern void set_device(char *host, char *device);
 extern void show_directory(void);
 extern void set_mode(int mode);
 extern void show_mode(void);

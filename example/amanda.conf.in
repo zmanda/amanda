@@ -112,11 +112,10 @@ amrecover_do_fsf yes		# amrecover will call amrestore with the
 				# -f flag for faster positioning of the tape.
 amrecover_check_label yes	# amrecover will call amrestore with the
 				# -l flag to check the label.
-amrecover_changer "@EXAMPLE_TAPEDEV@"	# amrecover will use the changer if you restore
-				# from this device.
-				# It could be a string like 'changer' and
-				# amrecover will use your changer if you
-				# set your tape with 'settape changer'
+amrecover_changer "changer"	# amrecover will use the changer if you restore
+    # from this device. It could be a string like 'changer' and amrecover will use your
+    # changer if you set your tape to 'changer' with 'setdevice changer' or via 
+    # 'tapedev "changer"' in amanda-client.conf
 
 # Specify holding disks.  These are used as a temporary staging area for
 # dumps before they are written to tape and are recommended for most sites.
