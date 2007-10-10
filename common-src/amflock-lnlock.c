@@ -29,6 +29,7 @@
 #include "amanda.h"
 
 static int ln_lock(char *res, int op);
+char *_lnlock_dir = AMANDA_TMPDIR; /* amflock-test changes this; it's a constant otherwise */
 
 /* XXX - error checking in this section needs to be tightened up */
 
@@ -197,7 +198,7 @@ ln_lock(
 
 	mypid = (long)getpid();
 
-	lockfile = vstralloc(AMANDA_TMPDIR, "/am", res, ".lock", NULL);
+	lockfile = vstralloc(_lnlock_dir, "/am", res, ".lock", NULL);
 
 	if (!op) {
 		/* unlock the resource */
@@ -211,7 +212,7 @@ ln_lock(
 	/* lock the resource */
 
 	snprintf(pid_str, SIZEOF(pid_str), "%ld", mypid);
-	tlockfile = vstralloc(AMANDA_TMPDIR, "/am", res, ".", pid_str, NULL);
+	tlockfile = vstralloc(_lnlock_dir, "/am", res, ".", pid_str, NULL);
 
 	(void)create_lock(tlockfile, mypid);
 

@@ -38,6 +38,10 @@ main(void)
     int fd;
     int lock_ro;
 
+    /* set lnlock's lock directory to the current directory */
+    extern char *_lnlock_dir;
+    _lnlock_dir = ".";
+
     while (*imp) {
 	fprintf(stderr, _("Testing amflock-%s\n"), (*imp)->impl_name);
 	alarm(5); /* time out after 5 seconds */
