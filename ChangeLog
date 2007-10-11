@@ -1,3 +1,6 @@
+2007-10-11  Dustin J. Mitchell <dustin@zmanda.com>
+	* config/amanda/tape.m4: fix typo (have_MTIOCTOP -> HAVE_MTIOCTOP)
+
 2007-10-10  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/amflock-test.c common-src/amflock-lnlock.c: don't use
 	  AMANDA_TMPDIR during build-time testing
