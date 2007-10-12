@@ -576,6 +576,10 @@ s_repwait(
 
     assert(action == PA_RCVDATA);
 
+    /* Finish if we get a NAK */
+    if (pkt->type == P_NAK)
+	return (PA_FINISH);
+
     /*
      * We've received some data.  If we didn't get a reply,
      * requeue the packet and retry.  Otherwise, acknowledge
