@@ -1,3 +1,7 @@
+2007-10-12  Dustin J. Mitchell <dustin@zmanda.com>
+	* changer-src/chg-mtx.sh.in changer-src/chg-zd-mtx.sh.in
+	  changer-src/chg-multi.sh.in: add missing definition of prefix
+
 2007-10-12  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/protocol.c (s_repwait): return PA_FINISH on P_NAK.
 
