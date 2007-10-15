@@ -1,3 +1,7 @@
+2007-10-15  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/device.c: do not fall back to tape:/foo if the tape
+	  device is not available (WANT_TAPE_DEVICE is not set)
+
 2007-10-12  Dustin J. Mitchell <dustin@zmanda.com>
 	* changer-src/chg-mtx.sh.in changer-src/chg-zd-mtx.sh.in
 	  changer-src/chg-multi.sh.in: add missing definition of prefix

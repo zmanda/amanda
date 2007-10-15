@@ -264,7 +264,7 @@ regex_message(int result, regex_t *regex) {
     return rval;
 }
 
-static void
+static gboolean
 handle_device_regex(const char * user_name, char ** driver_name,
                     char ** device) {
     regex_t regex;
@@ -280,7 +280,7 @@ handle_device_regex(const char * user_name, char ** driver_name,
         fprintf(stderr, "Error compiling regular expression \"%s\": %s\n",
                regex_string, message);
         amfree(message);
-        return;
+        return FALSE;
     }
 
     reg_result = regexec(&regex, user_name, 3, pmatch, 0);
@@ -289,18 +289,25 @@ handle_device_regex(const char * user_name, char ** driver_name,
         fprintf(stderr, "Error applying regular expression \"%s\" to string \"%s\":\n"
                "%s\n", user_name, regex_string, message);
         regfree(&regex);
-        return;
+        return FALSE;
     } else if (reg_result == REG_NOMATCH) {
+#ifdef WANT_TAPE_DEVICE
         fprintf(stderr, "\"%s\" uses deprecated device naming convention; \n"
                 "using \"tape:%s\" instead.\n",
                 user_name, user_name);
         *driver_name = stralloc("tape");
         *device = stralloc(user_name);
+#else /* !WANT_TAPE_DEVICE */
+        fprintf(stderr, "\"%s\" is not a valid device name.\n", user_name);
+	regfree(&regex);
+	return FALSE;
+#endif /* WANT_TAPE_DEVICE */
     } else {
         *driver_name = find_regex_substring(user_name, pmatch[1]);
         *device = find_regex_substring(user_name, pmatch[2]);
     }
     regfree(&regex);
+    return TRUE;
 }
 
 Device* 
@@ -318,7 +325,11 @@ device_open (char * device_name)
         g_assert_not_reached();
     }
 
-    handle_device_regex(device_name, &device_driver_name, &device_node_name);
+    if (!handle_device_regex(device_name, &device_driver_name, &device_node_name)) {
+        amfree(device_driver_name);
+        amfree(device_node_name);
+        return NULL;
+    }
 
     factory = lookup_device_factory(device_driver_name);
 
