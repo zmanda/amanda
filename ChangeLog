@@ -1,4 +1,7 @@
 2007-10-12  Jean-Louis Martineau <martineau@zmanda.com>
+	* changer-src/chg-zd-mtx.sh.in: Add missing definition of prefix.
+
+2007-10-12  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/protocol.c (s_repwait): return PA_FINISH on P_NAK.
 
 2007-07-27  Jean-Louis Martineau <martineau@zmanda.com>
