@@ -285,6 +285,8 @@ typedef struct {        /* token table entry */
     char *keyword;
     tok_t token;
 } keytab_t;
+/* This is also used by glib-util.c. */
+extern keytab_t numb_keytable[];
 
 typedef struct {
     char *name;

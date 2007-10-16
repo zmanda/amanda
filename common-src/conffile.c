@@ -3184,6 +3184,8 @@ get_time(void)
     return hhmm;
 }
 
+/* These constants are also used by glib-util.c in parsing serialized
+ * GValues. */
 keytab_t numb_keytable[] = {
     { "B", CONF_MULT1 },
     { "BPS", CONF_MULT1 },

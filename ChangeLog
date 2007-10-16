@@ -1,4 +1,11 @@
 2007-10-16  Ian Turner <ian@zmanda.com>
+	* common-src/glib-util.c: Allow use of units in parsing GValues; in
+	  particular, this allows use of units when specifying device
+	  properties in the configuration file.
+	* common-src/conffile.c, common-src/conffile.h: Make unit suffixes
+	  available outside of conffile.c.
+
+2007-10-16  Ian Turner <ian@zmanda.com>
 	* device-src/device.c: Fix a compilation error in
 	  device_set_startup_properties_from_config().
 
