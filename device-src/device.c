@@ -589,15 +589,9 @@ void device_set_startup_properties_from_config(Device * device) {
             if (length != DEFAULT_TAPE_LENGTH) {
                 g_value_init(&val, G_TYPE_UINT64);
                 g_value_set_uint64(&val, length * 1024);
-                success = device_property_set(device,
-                                              PROPERTY_MAX_VOLUME_USAGE, &val);
+                /* If this fails, it's not really an error. */
+                device_property_set(device, PROPERTY_MAX_VOLUME_USAGE, &val);
                 g_value_unset(&val);
-                if (!success) {
-                    fprintf(stderr, "Setting MAX_VOLUME_USAGE to %llu "
-                            "not supported for device %s.\n",
-                            (long long unsigned int)length,
-			    device->device_name);
-                }
             }
 
             blocksize_kb = tapetype_get_readblocksize(tapetype);
@@ -608,6 +602,12 @@ void device_set_startup_properties_from_config(Device * device) {
                                               PROPERTY_READ_BUFFER_SIZE,
                                               &val);
                 g_value_unset(&val);
+                if (!success) {
+                    fprintf(stderr, "Setting READ_BUFFER_SIZE to %llu "
+                            "not supported for device %s.\n",
+                            1024*(long long unsigned int)blocksize_kb,
+			    device->device_name);
+                }
             }
             
             blocksize_kb = tapetype_get_blocksize(tapetype);
