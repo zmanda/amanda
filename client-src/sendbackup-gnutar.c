@@ -536,7 +536,11 @@ start_backup(
 	    my_argv[i++] = g_options->config;
 	else
 	    my_argv[i++] = "NOCONFIG";
-	my_argv[i++] = "gtar";
+#ifdef GNUTAR
+	my_argv[i++] = GNUTAR;
+#else
+	my_argv[i++] = "tar";
+#endif
 	my_argv[i++] = "--create";
 	my_argv[i++] = "--file";
 	my_argv[i++] = "-";

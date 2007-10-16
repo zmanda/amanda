@@ -1,3 +1,6 @@
+2007-10-16  Jean-Louis Martineau <martineau@zmanda.com>
+	* client-src/sendbackup-gnutar.c: Use GNUTAR.
+
 2007-10-15  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/device.c: do not fall back to tape:/foo if the tape
 	  device is not available (WANT_TAPE_DEVICE is not set)
