@@ -779,18 +779,26 @@ file.
   </listitem>
   </varlistentry>
   <varlistentry>
+  <term><emphasis remap='B'>device_output_buffer_size</emphasis> <emphasis remap='I'> int</emphasis></term>
+  <listitem>
+<para>Default:
+<literal>640k</literal>.
+Controls the amount of memory used by &A;
+to hold data as it is read from the network or disk before it is written to
+the output device. Higher values may be
+useful on fast tape drives and optical media.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
   <term><emphasis remap='B'>tapebufs</emphasis> <emphasis remap='I'> int</emphasis></term>
   <listitem>
 <para>Default:
 <literal>20</literal>.
-The number of buffers used by the
-<emphasis remap='B'>taper</emphasis>
-process run by
-<command>amdump</command>
-and
-<emphasis remap='B'>amflush</emphasis>
-to hold data as it is read from the network or disk before it is written to tape.
-Each buffer is a little larger than 32 KBytes and is held in a shared memory region.</para>
+This option is deprecated; use
+the <emphasis remap='B'>device_output_buffer_size</emphasis> directive
+instead. <emphasis remap='B'>tapebufs</emphasis> works the same way,
+but the number specified is multiplied by the device blocksize prior
+to use.</para>
   </listitem>
   </varlistentry>
   <varlistentry>

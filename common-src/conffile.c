@@ -127,8 +127,8 @@ static keytab_t *keytable = NULL;
 char *get_token_name(tok_t);
 
 
-static void validate_positive0            (t_conf_var *, val_t *);
-static void validate_positive1            (t_conf_var *, val_t *);
+static void validate_nonnegative            (t_conf_var *, val_t *);
+static void validate_positive            (t_conf_var *, val_t *);
 static void validate_runspercycle         (t_conf_var *, val_t *);
 static void validate_bumppercent          (t_conf_var *, val_t *);
 static void validate_bumpmult             (t_conf_var *, val_t *);
@@ -301,9 +301,9 @@ t_conf_var client_var [] = {
    { CONF_AMANDATES          , CONFTYPE_STRING  , read_string  , CNF_AMANDATES          , NULL },
    { CONF_KRB5KEYTAB         , CONFTYPE_STRING  , read_string  , CNF_KRB5KEYTAB         , NULL },
    { CONF_KRB5PRINCIPAL      , CONFTYPE_STRING  , read_string  , CNF_KRB5PRINCIPAL      , NULL },
-   { CONF_CONNECT_TRIES      , CONFTYPE_INT     , read_int     , CNF_CONNECT_TRIES      , validate_positive1 },
-   { CONF_REP_TRIES          , CONFTYPE_INT     , read_int     , CNF_REP_TRIES          , validate_positive1 },
-   { CONF_REQ_TRIES          , CONFTYPE_INT     , read_int     , CNF_REQ_TRIES          , validate_positive1 },
+   { CONF_CONNECT_TRIES      , CONFTYPE_INT     , read_int     , CNF_CONNECT_TRIES      , validate_positive },
+   { CONF_REP_TRIES          , CONFTYPE_INT     , read_int     , CNF_REP_TRIES          , validate_positive },
+   { CONF_REQ_TRIES          , CONFTYPE_INT     , read_int     , CNF_REQ_TRIES          , validate_positive },
    { CONF_DEBUG_AMANDAD      , CONFTYPE_INT     , read_int     , CNF_DEBUG_AMANDAD      , validate_debug },
    { CONF_DEBUG_AMIDXTAPED   , CONFTYPE_INT     , read_int     , CNF_DEBUG_AMIDXTAPED   , validate_debug },
    { CONF_DEBUG_AMINDEXD     , CONFTYPE_INT     , read_int     , CNF_DEBUG_AMINDEXD     , validate_debug },
@@ -459,6 +459,7 @@ keytab_t server_keytab[] = {
     { "STARTTIME", CONF_STARTTIME },
     { "STRATEGY", CONF_STRATEGY },
     { "TAPEBUFS", CONF_TAPEBUFS },
+    { "DEVICE_OUTPUT_BUFFER_SIZE", CONF_DEVICE_OUTPUT_BUFFER_SIZE },
     { "TAPECYCLE", CONF_TAPECYCLE },
     { "TAPEDEV", CONF_TAPEDEV },
     { "TAPELIST", CONF_TAPELIST },
@@ -492,22 +493,23 @@ t_conf_var server_var [] = {
    { CONF_LOGDIR               , CONFTYPE_STRING   , read_string  , CNF_LOGDIR               , NULL },
    { CONF_INDEXDIR             , CONFTYPE_STRING   , read_string  , CNF_INDEXDIR             , NULL },
    { CONF_TAPETYPE             , CONFTYPE_IDENT    , read_ident   , CNF_TAPETYPE             , NULL },
-   { CONF_DUMPCYCLE            , CONFTYPE_INT      , read_int     , CNF_DUMPCYCLE            , validate_positive0 },
+   { CONF_DUMPCYCLE            , CONFTYPE_INT      , read_int     , CNF_DUMPCYCLE            , validate_nonnegative },
    { CONF_RUNSPERCYCLE         , CONFTYPE_INT      , read_int     , CNF_RUNSPERCYCLE         , validate_runspercycle },
-   { CONF_RUNTAPES             , CONFTYPE_INT      , read_int     , CNF_RUNTAPES             , validate_positive0 },
-   { CONF_TAPECYCLE            , CONFTYPE_INT      , read_int     , CNF_TAPECYCLE            , validate_positive1 },
-   { CONF_BUMPDAYS             , CONFTYPE_INT      , read_int     , CNF_BUMPDAYS             , validate_positive1 },
-   { CONF_BUMPSIZE             , CONFTYPE_AM64     , read_am64    , CNF_BUMPSIZE             , validate_positive1 },
+   { CONF_RUNTAPES             , CONFTYPE_INT      , read_int     , CNF_RUNTAPES             , validate_nonnegative },
+   { CONF_TAPECYCLE            , CONFTYPE_INT      , read_int     , CNF_TAPECYCLE            , validate_positive },
+   { CONF_BUMPDAYS             , CONFTYPE_INT      , read_int     , CNF_BUMPDAYS             , validate_positive },
+   { CONF_BUMPSIZE             , CONFTYPE_AM64     , read_am64    , CNF_BUMPSIZE             , validate_positive },
    { CONF_BUMPPERCENT          , CONFTYPE_INT      , read_int     , CNF_BUMPPERCENT          , validate_bumppercent },
    { CONF_BUMPMULT             , CONFTYPE_REAL     , read_real    , CNF_BUMPMULT             , validate_bumpmult },
-   { CONF_NETUSAGE             , CONFTYPE_INT      , read_int     , CNF_NETUSAGE             , validate_positive1 },
+   { CONF_NETUSAGE             , CONFTYPE_INT      , read_int     , CNF_NETUSAGE             , validate_positive },
    { CONF_INPARALLEL           , CONFTYPE_INT      , read_int     , CNF_INPARALLEL           , validate_inparallel },
    { CONF_DUMPORDER            , CONFTYPE_STRING   , read_string  , CNF_DUMPORDER            , NULL },
-   { CONF_MAXDUMPS             , CONFTYPE_INT      , read_int     , CNF_MAXDUMPS             , validate_positive1 },
+   { CONF_MAXDUMPS             , CONFTYPE_INT      , read_int     , CNF_MAXDUMPS             , validate_positive },
    { CONF_ETIMEOUT             , CONFTYPE_INT      , read_int     , CNF_ETIMEOUT             , NULL },
-   { CONF_DTIMEOUT             , CONFTYPE_INT      , read_int     , CNF_DTIMEOUT             , validate_positive1 },
-   { CONF_CTIMEOUT             , CONFTYPE_INT      , read_int     , CNF_CTIMEOUT             , validate_positive1 },
-   { CONF_TAPEBUFS             , CONFTYPE_INT      , read_int     , CNF_TAPEBUFS             , validate_positive1 },
+   { CONF_DTIMEOUT             , CONFTYPE_INT      , read_int     , CNF_DTIMEOUT             , validate_positive },
+   { CONF_CTIMEOUT             , CONFTYPE_INT      , read_int     , CNF_CTIMEOUT             , validate_positive },
+   { CONF_TAPEBUFS             , CONFTYPE_INT      , read_int     , CNF_TAPEBUFS             , validate_positive },
+   { CONF_DEVICE_OUTPUT_BUFFER_SIZE, CONFTYPE_SIZE , read_size     , CNF_DEVICE_OUTPUT_BUFFER_SIZE, validate_positive },
    { CONF_COLUMNSPEC           , CONFTYPE_STRING   , read_string  , CNF_COLUMNSPEC           , NULL },
    { CONF_TAPERALGO            , CONFTYPE_TAPERALGO, get_taperalgo, CNF_TAPERALGO            , NULL },
    { CONF_TAPERSTART           , CONFTYPE_INTRANGE , read_intrange, CNF_TAPERSTART           , validate_taperstart },
@@ -523,9 +525,9 @@ t_conf_var server_var [] = {
    { CONF_AMRECOVER_DO_FSF     , CONFTYPE_BOOL     , read_bool    , CNF_AMRECOVER_DO_FSF     , NULL },
    { CONF_AMRECOVER_CHANGER    , CONFTYPE_STRING   , read_string  , CNF_AMRECOVER_CHANGER    , NULL },
    { CONF_AMRECOVER_CHECK_LABEL, CONFTYPE_BOOL     , read_bool    , CNF_AMRECOVER_CHECK_LABEL, NULL },
-   { CONF_CONNECT_TRIES        , CONFTYPE_INT      , read_int     , CNF_CONNECT_TRIES        , validate_positive1 },
-   { CONF_REP_TRIES            , CONFTYPE_INT      , read_int     , CNF_REP_TRIES            , validate_positive1 },
-   { CONF_REQ_TRIES            , CONFTYPE_INT      , read_int     , CNF_REQ_TRIES            , validate_positive1 },
+   { CONF_CONNECT_TRIES        , CONFTYPE_INT      , read_int     , CNF_CONNECT_TRIES        , validate_positive },
+   { CONF_REP_TRIES            , CONFTYPE_INT      , read_int     , CNF_REP_TRIES            , validate_positive },
+   { CONF_REQ_TRIES            , CONFTYPE_INT      , read_int     , CNF_REQ_TRIES            , validate_positive },
    { CONF_DEBUG_AMANDAD        , CONFTYPE_INT      , read_int     , CNF_DEBUG_AMANDAD        , validate_debug },
    { CONF_DEBUG_AMIDXTAPED     , CONFTYPE_INT      , read_int     , CNF_DEBUG_AMIDXTAPED     , validate_debug },
    { CONF_DEBUG_AMINDEXD       , CONFTYPE_INT      , read_int     , CNF_DEBUG_AMINDEXD       , validate_debug },
@@ -553,9 +555,9 @@ t_conf_var tapetype_var [] = {
    { CONF_LBL_TEMPL   , CONFTYPE_STRING, read_string, TAPETYPE_LBL_TEMPL    , NULL },
    { CONF_BLOCKSIZE   , CONFTYPE_SIZE  , read_size  , TAPETYPE_BLOCKSIZE    , validate_blocksize },
    { CONF_READBLOCKSIZE, CONFTYPE_SIZE  , read_size , TAPETYPE_READBLOCKSIZE, validate_blocksize },
-   { CONF_LENGTH      , CONFTYPE_AM64  , read_am64  , TAPETYPE_LENGTH       , validate_positive0 },
+   { CONF_LENGTH      , CONFTYPE_AM64  , read_am64  , TAPETYPE_LENGTH       , validate_nonnegative },
    { CONF_FILEMARK    , CONFTYPE_AM64  , read_am64  , TAPETYPE_FILEMARK     , NULL },
-   { CONF_SPEED       , CONFTYPE_INT   , read_int   , TAPETYPE_SPEED        , validate_positive0 },
+   { CONF_SPEED       , CONFTYPE_INT   , read_int   , TAPETYPE_SPEED        , validate_nonnegative },
    { CONF_FILE_PAD    , CONFTYPE_BOOL  , read_bool  , TAPETYPE_FILE_PAD     , NULL },
    { CONF_UNKNOWN     , CONFTYPE_INT   , NULL       , TAPETYPE_TAPETYPE     , NULL }
 };
@@ -570,15 +572,15 @@ t_conf_var dumptype_var [] = {
    { CONF_COMPRATE          , CONFTYPE_REAL     , get_comprate, DUMPTYPE_COMPRATE          , NULL },
    { CONF_COMPRESS          , CONFTYPE_INT      , get_compress, DUMPTYPE_COMPRESS          , NULL },
    { CONF_ENCRYPT           , CONFTYPE_INT      , get_encrypt , DUMPTYPE_ENCRYPT           , NULL },
-   { CONF_DUMPCYCLE         , CONFTYPE_INT      , read_int    , DUMPTYPE_DUMPCYCLE         , validate_positive0 },
+   { CONF_DUMPCYCLE         , CONFTYPE_INT      , read_int    , DUMPTYPE_DUMPCYCLE         , validate_nonnegative },
    { CONF_EXCLUDE           , CONFTYPE_EXINCLUDE, get_exclude , DUMPTYPE_EXCLUDE           , NULL },
    { CONF_INCLUDE           , CONFTYPE_EXINCLUDE, get_exclude , DUMPTYPE_INCLUDE           , NULL },
    { CONF_IGNORE            , CONFTYPE_BOOL     , read_bool   , DUMPTYPE_IGNORE            , NULL },
    { CONF_HOLDING           , CONFTYPE_HOLDING  , get_holding , DUMPTYPE_HOLDINGDISK       , NULL },
    { CONF_INDEX             , CONFTYPE_BOOL     , read_bool   , DUMPTYPE_INDEX             , NULL },
    { CONF_KENCRYPT          , CONFTYPE_BOOL     , read_bool   , DUMPTYPE_KENCRYPT          , NULL },
-   { CONF_MAXDUMPS          , CONFTYPE_INT      , read_int    , DUMPTYPE_MAXDUMPS          , validate_positive1 },
-   { CONF_MAXPROMOTEDAY     , CONFTYPE_INT      , read_int    , DUMPTYPE_MAXPROMOTEDAY     , validate_positive0 },
+   { CONF_MAXDUMPS          , CONFTYPE_INT      , read_int    , DUMPTYPE_MAXDUMPS          , validate_positive },
+   { CONF_MAXPROMOTEDAY     , CONFTYPE_INT      , read_int    , DUMPTYPE_MAXPROMOTEDAY     , validate_nonnegative },
    { CONF_PRIORITY          , CONFTYPE_PRIORITY , get_priority, DUMPTYPE_PRIORITY          , NULL },
    { CONF_PROGRAM           , CONFTYPE_STRING   , read_string , DUMPTYPE_PROGRAM           , NULL },
    { CONF_RECORD            , CONFTYPE_BOOL     , read_bool   , DUMPTYPE_RECORD            , NULL },
@@ -586,7 +588,7 @@ t_conf_var dumptype_var [] = {
    { CONF_SKIP_INCR         , CONFTYPE_BOOL     , read_bool   , DUMPTYPE_SKIP_INCR         , NULL },
    { CONF_STARTTIME         , CONFTYPE_TIME     , read_time   , DUMPTYPE_STARTTIME         , NULL },
    { CONF_STRATEGY          , CONFTYPE_INT      , get_strategy, DUMPTYPE_STRATEGY          , NULL },
-   { CONF_TAPE_SPLITSIZE    , CONFTYPE_AM64     , read_am64   , DUMPTYPE_TAPE_SPLITSIZE    , validate_positive0 },
+   { CONF_TAPE_SPLITSIZE    , CONFTYPE_AM64     , read_am64   , DUMPTYPE_TAPE_SPLITSIZE    , validate_nonnegative },
    { CONF_SPLIT_DISKBUFFER  , CONFTYPE_STRING   , read_string , DUMPTYPE_SPLIT_DISKBUFFER  , NULL },
    { CONF_ESTIMATE          , CONFTYPE_INT      , get_estimate, DUMPTYPE_ESTIMATE          , NULL },
    { CONF_SRV_ENCRYPT       , CONFTYPE_STRING   , read_string , DUMPTYPE_SRV_ENCRYPT       , NULL },
@@ -678,7 +680,7 @@ read_conffile(
 }
 
 static void
-validate_positive0(
+validate_nonnegative(
     struct s_conf_var *np,
     val_t        *val)
 {
@@ -695,13 +697,17 @@ validate_positive0(
 	if(val->v.am64 < 0)
 	    conf_parserror(_("%s must be positive"), get_token_name(np->token));
 	break;
+    case CONFTYPE_SIZE:
+	if(val->v.size < 0)
+	    conf_parserror(_("%s must be positive"), get_token_name(np->token));
+	break;
     default:
-	conf_parserror(_("validate_positive0 invalid type %d\n"), val->type);
+	conf_parserror(_("validate_nonnegative invalid type %d\n"), val->type);
     }
 }
 
 static void
-validate_positive1(
+validate_positive(
     struct s_conf_var *np,
     val_t        *val)
 {
@@ -722,8 +728,12 @@ validate_positive1(
 	if(val->v.t < 1)
 	    conf_parserror(_("%s must be positive"), get_token_name(np->token));
 	break;
+    case CONFTYPE_SIZE:
+	if(val->v.size < 1)
+	    conf_parserror(_("%s must be positive"), get_token_name(np->token));
+	break;
     default:
-	conf_parserror(_("validate_positive1 invalid type %d\n"), val->type);
+	conf_parserror(_("validate_positive invalid type %d\n"), val->type);
     }
 }
 
@@ -1339,6 +1349,7 @@ init_defaults(
     conf_init_int      (&conf_data[CNF_DTIMEOUT]             , 1800);
     conf_init_int      (&conf_data[CNF_CTIMEOUT]             , 30);
     conf_init_int      (&conf_data[CNF_TAPEBUFS]             , 20);
+    conf_init_size     (&conf_data[CNF_DEVICE_OUTPUT_BUFFER_SIZE], 40*32768);
     conf_init_string   (&conf_data[CNF_PRINTER]              , "");
     conf_init_bool     (&conf_data[CNF_AUTOFLUSH]            , 0);
     conf_init_int      (&conf_data[CNF_RESERVE]              , 100);
@@ -1544,7 +1555,8 @@ static void handle_invalid_keyword(const char * token) {
      * 3) After two more years, drop the token entirely. */
 
     static const char * warning_deprecated[] = {
-        "rawtapedev",
+        "rawtapedev", /* 2007-01-23 */
+        "tapebufs",   /* 2007-10-15 */
         NULL
     };
     static const char * error_deprecated[] = {
@@ -1963,7 +1975,7 @@ copy_tapetype(void)
 
 t_conf_var interface_var [] = {
    { CONF_COMMENT, CONFTYPE_STRING, read_string, INTER_COMMENT , NULL },
-   { CONF_USE    , CONFTYPE_INT   , read_int   , INTER_MAXUSAGE, validate_positive1 },
+   { CONF_USE    , CONFTYPE_INT   , read_int   , INTER_MAXUSAGE, validate_positive },
    { CONF_UNKNOWN, CONFTYPE_INT   , NULL       , INTER_INTER   , NULL }
 };
 

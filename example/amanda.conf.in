@@ -59,8 +59,8 @@ dtimeout 1800		# number of idle seconds before a dump is aborted.
 ctimeout 30		# maximum number of seconds that amcheck waits
 			# for each client host
  
-tapebufs 20             # A positive integer telling taper how many 
-                        # 32k buffers to allocate.  The default is 20 (640k).
+device_output_buffer_size 1280k
+                        # amount of buffer space to use when writing to devices
 
 # By default, Amanda can only track at most one run per calendar day. When
 # the usetimestamps option is enabled, however, Amanda can track as many

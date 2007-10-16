@@ -3,6 +3,12 @@
 	  device_set_startup_properties_from_config().
 
 2007-10-16  Ian Turner <ian@zmanda.com>
+	* man/xml-source/amanda.conf.5.xml, server-src/taper.c,
+	  common-src/conffile.c, common-src/conffile.h: Add new
+	  configuration directive device_output_buffer_size to replace
+	  tapebufs.
+
+2007-10-15  Ian Turner <ian@zmanda.com>
 	* device-src/device.c: Don't complain about problems setting
 	  MAX_VOLUME_USAGE; do complain about problems setting
 	  READ_BUFFER_SIZE.

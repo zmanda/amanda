@@ -54,7 +54,6 @@
 typedef struct {
     Device * device;
     char * driver_start_time;
-    size_t max_memory;
     int    cur_tape;
     char * next_tape_label;
     char * next_tape_device;
@@ -631,6 +630,7 @@ static void run_device_output(taper_state_t * taper_state,
         queue_result_flags queue_result;
         CountingConsumerData consumer_data;
         dumpfile_t *this_header;
+        size_t max_memory;
         
         this_header = munge_headers(dump_info);
         if (this_header == NULL) {
@@ -672,13 +672,28 @@ static void run_device_output(taper_state_t * taper_state,
 
         g_get_current_time(&start_time);
 
+        if (getconf_seen(CNF_DEVICE_OUTPUT_BUFFER_SIZE)) {
+            max_memory = getconf_size(CNF_DEVICE_OUTPUT_BUFFER_SIZE);
+            if (getconf_seen(CNF_TAPEBUFS)) {
+                fprintf(stderr,
+                        "Configuration directives 'device_output_buffer_size' "
+                        "and \n"
+                        "'tapebufs' are incompatible; using former.\n");
+            }
+        } else if (getconf_seen(CNF_TAPEBUFS)) {
+            max_memory = getconf_int(CNF_TAPEBUFS) *
+                device_write_max_size(taper_state->device);
+        } else {
+            /* Use default. */
+            max_memory = getconf_size(CNF_DEVICE_OUTPUT_BUFFER_SIZE);
+        }
+
         queue_result = do_consumer_producer_queue_full
             (taper_source_producer,
              dump_info->source,
              counting_consumer,
              &consumer_data,
-             device_write_max_size(taper_state->device),
-             taper_state->max_memory,
+             device_write_max_size(taper_state->device), max_memory,
              streaming_mode);
         
         g_get_current_time(&end_time);
