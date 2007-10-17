@@ -87,7 +87,7 @@ AC_DEFUN([AMANDA_SETUP_DEFAULTS],
 	    [This is the default no-rewinding tape device. ])
 	EXAMPLE_TAPEDEV="$DEFAULT_TAPE_DEVICE"
     else
-	EXAMPLE_TAPEDEV="/dev/null"
+	EXAMPLE_TAPEDEV="tape:/dev/YOUR-TAPE-DEVICE-HERE"
     fi
     AC_SUBST(DEFAULT_TAPE_DEVICE)
     AC_SUBST(EXAMPLE_TAPEDEV)
