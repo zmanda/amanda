@@ -703,11 +703,6 @@ time_t	unctime(char *timestr);
 		 ((ptr)+=sizeof((cnst))-1, (var)=(ptr)[-1], 0)		\
 		:1)
 
-/* from amflock.c */
-extern int    amflock(int fd, char *resource);
-extern int    amroflock(int fd, char *resource);
-extern int    amfunlock(int fd, char *resource);
-
 /* from old bsd-security.c */
 extern int debug;
 extern int check_security(struct sockaddr_storage *, char *, unsigned long, char **);

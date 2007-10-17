@@ -1,3 +1,6 @@
+2007-10-17  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/amanda.h: remove amflock cruft
+
 2007-10-16  Dustin J. Mitchell <dustin@zmanda.com>
 	* config/amanda/defaults.m4: Change EXAMPLE_TAPEDEV to use the 'tape:'
 	syntax, and to indicate "you need to change this!" more explicitly
