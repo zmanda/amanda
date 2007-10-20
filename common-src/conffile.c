@@ -868,14 +868,23 @@ validate_debug(
 }
 
 static void
-validate_reserved_port_range(
+validate_port_range(
     struct s_conf_var *np G_GNUC_UNUSED,
-    val_t        *val)
+    val_t        *val,
+    int		 smallest,
+    int		 largest)
 {
-    if(val->v.intrange[0] < 1 || val->v.intrange[0] > IPPORT_RESERVED-1) {
-	conf_parserror(_("portrange must be between 1 and %d"), IPPORT_RESERVED-1);
-    } else if(val->v.intrange[1] < 1 || val->v.intrange[1] > IPPORT_RESERVED-1) {
-	conf_parserror(_("portrange must be between 1 and IPPORT_RESERVED-1"));
+    int i;
+    /* check both values are in range */
+    for (i = 0; i < 2; i++) {
+        if(val->v.intrange[0] < smallest || val->v.intrange[0] > largest) {
+	    conf_parserror(_("portrange must be in the range %d to %d, inclusive"), smallest, largest);
+	}
+    }
+
+    /* and check they're in the right order and not equal */
+    if (val->v.intrange[0] > val->v.intrange[1]) {
+	conf_parserror(_("portranges must be in order from low to high"));
     }
 }
 
@@ -884,11 +893,15 @@ validate_unreserved_port_range(
     struct s_conf_var *np G_GNUC_UNUSED,
     val_t        *val)
 {
-    if(val->v.intrange[0] < IPPORT_RESERVED+1 || val->v.intrange[0] > 65536) {
-	conf_parserror(_("portrange must be between %d and 65536"), IPPORT_RESERVED+1);
-    } else if(val->v.intrange[1] < IPPORT_RESERVED+1 || val->v.intrange[1] > 65536) {
-	conf_parserror(_("portrange must be between %d and 65536"), IPPORT_RESERVED+1);
-    }
+    validate_port_range(np, val, IPPORT_RESERVED, 65535);
+}
+
+static void
+validate_reserved_port_range(
+    struct s_conf_var *np G_GNUC_UNUSED,
+    val_t        *val)
+{
+    validate_port_range(np, val, 1, IPPORT_RESERVED-1);
 }
 
 static void
@@ -1392,17 +1405,17 @@ init_defaults(
 #ifdef UDPPORTRANGE
     conf_init_intrange (&conf_data[CNF_RESERVED_UDP_PORT]    , UDPPORTRANGE);
 #else
-    conf_init_intrange (&conf_data[CNF_RESERVED_UDP_PORT]    , 512, 1023);
+    conf_init_intrange (&conf_data[CNF_RESERVED_UDP_PORT]    , 512, IPPORT_RESERVED-1);
 #endif
 #ifdef LOW_TCPPORTRANGE
     conf_init_intrange (&conf_data[CNF_RESERVED_TCP_PORT]    , LOW_TCPPORTRANGE);
 #else
-    conf_init_intrange (&conf_data[CNF_RESERVED_TCP_PORT]    , 512, 1023);
+    conf_init_intrange (&conf_data[CNF_RESERVED_TCP_PORT]    , 512, IPPORT_RESERVED-1);
 #endif
 #ifdef TCPPORTRANGE
     conf_init_intrange (&conf_data[CNF_UNRESERVED_TCP_PORT]  , TCPPORTRANGE);
 #else
-    conf_init_intrange (&conf_data[CNF_UNRESERVED_TCP_PORT]  , 0, 0);
+    conf_init_intrange (&conf_data[CNF_UNRESERVED_TCP_PORT]  , IPPORT_RESERVED, 65535);
 #endif
 
     /* defaults for internal variables */
