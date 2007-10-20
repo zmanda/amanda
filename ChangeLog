@@ -1,3 +1,7 @@
+2007-10-20  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c: Allow reserved-udp-port and reserved-tcp-port
+				 in amanda-client.conf.
+
 2007-10-17  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/amanda.h: remove amflock cruft
 

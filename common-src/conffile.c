@@ -284,6 +284,8 @@ keytab_t client_keytab[] = {
     { "DEBUG_SELFCHECK", CONF_DEBUG_SELFCHECK },
     { "DEBUG_SENDSIZE", CONF_DEBUG_SENDSIZE },
     { "DEBUG_SENDBACKUP", CONF_DEBUG_SENDBACKUP },
+    { "RESERVED-UDP-PORT", CONF_RESERVED_UDP_PORT },
+    { "RESERVED-TCP-PORT", CONF_RESERVED_TCP_PORT },
     { "UNRESERVED-TCP-PORT", CONF_UNRESERVED_TCP_PORT },
     { NULL, CONF_UNKNOWN },
 };
@@ -320,6 +322,8 @@ t_conf_var client_var [] = {
    { CONF_DEBUG_SELFCHECK    , CONFTYPE_INT     , read_int     , CNF_DEBUG_SELFCHECK    , validate_debug },
    { CONF_DEBUG_SENDSIZE     , CONFTYPE_INT     , read_int     , CNF_DEBUG_SENDSIZE     , validate_debug },
    { CONF_DEBUG_SENDBACKUP   , CONFTYPE_INT     , read_int     , CNF_DEBUG_SENDBACKUP   , validate_debug },
+   { CONF_RESERVED_UDP_PORT  , CONFTYPE_INTRANGE, read_intrange, CNF_RESERVED_UDP_PORT  , validate_reserved_port_range },
+   { CONF_RESERVED_TCP_PORT  , CONFTYPE_INTRANGE, read_intrange, CNF_RESERVED_TCP_PORT  , validate_reserved_port_range },
    { CONF_UNRESERVED_TCP_PORT, CONFTYPE_INTRANGE, read_intrange, CNF_UNRESERVED_TCP_PORT, validate_unreserved_port_range },
    { CONF_UNKNOWN            , CONFTYPE_INT     , NULL         , CNF_CNF                , NULL }
 };
