@@ -715,6 +715,8 @@ main(
 
     amfree(subj_str);
 
+    sort_disks();
+
     if(mailf) {
 
     	if(!got_finish) fputs(_("*** THE DUMPS DID NOT FINISH PROPERLY!\n\n"), mailf);
@@ -758,7 +760,6 @@ main(
 		fprintf(mailf,_("NOTES:\n"));
 		output_lines(notes, mailf);
     	}
-    	sort_disks();
     	if(sortq.head != NULL) {
 		fprintf(mailf,"\n\f\n");
 		fprintf(mailf,_("DUMP SUMMARY:\n"));

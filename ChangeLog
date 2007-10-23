@@ -1,4 +1,7 @@
 2007-10-20  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/reporter.c: Always call sort_disks.
+
+2007-10-20  Jean-Louis Martineau <martineau@zmanda.com>
 	* man/xml-source/amanda.conf.5.xml: Correctly document portrange.
 	* common-src/conffile.c: Fix portrange.
 
