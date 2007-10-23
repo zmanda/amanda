@@ -1,3 +1,6 @@
+2007-10-20  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/reporter.c: Always call sort_disks.
+
 2007-10-12  Jean-Louis Martineau <martineau@zmanda.com>
 	* changer-src/chg-zd-mtx.sh.in: Add missing definition of prefix.
 
