@@ -1,3 +1,14 @@
+2007-10-23  Dustin J. Mitchell <dustin@zmanda.com>
+	* config/automake/scripts.am: rules to build (substitute) scripts
+	* config/automake/vars.am: define empty variables for later appending
+	* config/automake/check-perl.am config/automake/check-shell.pm:
+	  removed
+	* changer-src/Makefile.am amplot/Makefile.am client-src/Makefile.am
+	  dumper-src/Makefile.am server-src/Makefile.am 
+	  common-src/Makefile.am: Use new include files
+	* configure.in: remove now-unnecessary AC_CONFIG_FILES
+	* *.sh.in *.pl.in *.awk.in: renamed
+
 2007-10-20  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/reporter.c: Always call sort_disks.
 

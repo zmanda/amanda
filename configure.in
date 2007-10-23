@@ -354,39 +354,15 @@ AC_CONFIG_FILES([
     Makefile
     amandad-src/Makefile
     amplot/Makefile
-    amplot/amcat.awk
-    amplot/amplot.sh
     changer-src/Makefile
-    changer-src/chg-chio.pl
-    changer-src/chg-chs.sh
-    changer-src/chg-disk.sh
-    changer-src/chg-iomega.pl	
-    changer-src/chg-juke.sh
-    changer-src/chg-lib.sh
-    changer-src/chg-manual.sh
-    changer-src/chg-mcutil.sh	
-    changer-src/chg-mtx.sh
-    changer-src/chg-multi.sh	
-    changer-src/chg-null.sh
-    changer-src/chg-rait.sh
-    changer-src/chg-rth.pl
-    changer-src/chg-zd-mtx.sh
     client-src/Makefile
-    client-src/patch-system.sh
     common-src/Makefile
-    common-src/amaespipe.sh
-    common-src/amanda-sh-lib.sh
-    common-src/amcrypt-ossl-asym.sh
-    common-src/amcrypt-ossl.sh
-    common-src/amcrypt.sh
     common-src/versuff.c
     config/Makefile
     device-src/Makefile
     device-src/tests/Makefile
     docs/Makefile
     dumper-src/Makefile
-    dumper-src/amgtar.pl
-    dumper-src/generic-dumper.pl
     example/Makefile
     example/amanda-client.conf
     example/amanda.conf
@@ -398,16 +374,6 @@ AC_CONFIG_FILES([
     recover-src/Makefile
     restore-src/Makefile
     server-src/Makefile
-    server-src/amcheckdb.sh
-    server-src/amcleanup.sh
-    server-src/amdump.sh
-    server-src/amfreetapes.sh
-    server-src/amoverview.pl
-    server-src/amrmtape.sh
-    server-src/amstatus.pl
-    server-src/amtoc.pl
-    server-src/amverify.sh
-    server-src/amverifyrun.sh
     tape-src/Makefile
 ])
 

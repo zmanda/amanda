@@ -1,5 +1,8 @@
 # Makefile for Amanda server programs.
 
+include $(top_srcdir)/config/automake/vars.am
+include $(top_srcdir)/config/automake/scripts.am
+
 INCLUDES =	-I$(top_builddir)/common-src \
 		-I$(top_srcdir)/common-src   \
 		-I$(top_srcdir)/restore-src  \
@@ -9,11 +12,10 @@ INCLUDES =	-I$(top_builddir)/common-src \
 
 AM_CFLAGS = $(AMANDA_WARNING_CFLAGS)
 
-LINT=@AMLINT@
-LINTFLAGS=@AMLINTFLAGS@
+LINT=$(AMLINT)
+LINTFLAGS=$(AMLINTFLAGS)
 
 lib_LTLIBRARIES = 	libamserver.la
-LIB_EXTENSION = la
 
 sbin_PROGRAMS =		amadmin		amcheck		amflush		\
 			amgetconf	amlabel		amtape		\
@@ -40,9 +42,19 @@ taper_SOURCES = 	taper.c \
 			taper-disk-port-source.c \
 			taper-mem-port-source.c
 
-SCRIPTS_PERL = amoverview amstatus amtoc
-SCRIPTS_SHELL =		amcheckdb	amcleanup	amdump		\
-			amrmtape	amverify	amverifyrun	
+SCRIPTS_PERL =  \
+	    amoverview \
+	    amstatus \
+	    amtoc
+
+SCRIPTS_SHELL = \
+	    amcheckdb \
+	    amcleanup \
+	    amdump \
+	    amrmtape \
+	    amverify \
+	    amverifyrun
+
 sbin_SCRIPTS = $(SCRIPTS_PERL) $(SCRIPTS_SHELL)
 
 libamserver_la_SOURCES=	amindex.c	changer.c			\
@@ -52,7 +64,7 @@ libamserver_la_SOURCES=	amindex.c	changer.c			\
                         taperscan.c
 
 libamserver_la_LDFLAGS= -release $(VERSION)
-libamserver_la_LIBADD= ../device-src/libamdevice.$(LIB_EXTENSION)
+libamserver_la_LIBADD= ../device-src/libamdevice.la
 
 ###
 # Because libamanda includes routines (e.g. regex) provided by some system
@@ -61,39 +73,28 @@ libamserver_la_LIBADD= ../device-src/libamdevice.$(LIB_EXTENSION)
 # routines, and second to pick up any references in the other libraries.
 ###
 
-LDADD = ../common-src/libamanda.$(LIB_EXTENSION)   \
-	libamserver.$(LIB_EXTENSION)               \
-	../device-src/libamdevice.$(LIB_EXTENSION)     \
-	../common-src/libamanda.$(LIB_EXTENSION)   \
-	../gnulib/libgnu.$(LIB_EXTENSION)          \
+LDADD = ../common-src/libamanda.la   \
+	libamserver.la               \
+	../device-src/libamdevice.la     \
+	../common-src/libamanda.la   \
+	../gnulib/libgnu.la          \
         $(READLINE_LIBS)
 
 taper_LDADD = $(LDADD) \
-	../amandad-src/libamandad.$(LIB_EXTENSION)
+	../amandad-src/libamandad.la
 
 taper_source_test_LDADD = $(LDADD) \
-	../amandad-src/libamandad.$(LIB_EXTENSION)
+	../amandad-src/libamandad.la
 
 amindexd_LDADD = $(LDADD) \
-	../amandad-src/libamandad.$(LIB_EXTENSION)
-
-SUFFIXES =		.sh .pl
-
-.pl:
-			cat $< > $@
-			chmod a+x $@
-
-.sh:
-			cat $< > $@
-			chmod a+x $@
+	../amandad-src/libamandad.la
 
 # there are used for testing only:
 TEST_PROGS = diskfile infofile
 
 EXTRA_PROGRAMS =	$(TEST_PROGS)
 
-CLEANFILES = *.test.c
-DISTCLEANFILES = $(sbin_SCRIPTS)
+CLEANFILES += *.test.c
 
 amindexd_CSRC =		amindexd.c	disk_history.c	list_dir.c
 amindexd_SOURCES =	disk_history.h	list_dir.h	$(amindexd_CSRC)
@@ -109,16 +110,6 @@ noinst_HEADERS = 	amindex.h	changer.h	cmdline.h	\
 			taperscan.h taper-disk-port-source.h \
 			taper-mem-port-source.h  taper-file-source.h \
 			taper-port-source.h taper-source.h
-
-# automake-style tests
-
-include $(top_srcdir)/config/automake/check-perl.am
-CHECK_PERL=$(SCRIPTS_PERL)
-check-local: check-perl
-
-include $(top_srcdir)/config/automake/check-shell.am
-CHECK_SHELL=$(SCRIPTS_SHELL)
-check-local: check-shell
 
 install-exec-hook:
 	@list="$(sbin_PROGRAMS) $(sbin_SCRIPTS)"; \

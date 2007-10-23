@@ -1,27 +1,25 @@
 # Makefile for amplot.
 
-SUFFIXES =		.sh
+include $(top_srcdir)/config/automake/vars.am
+include $(top_srcdir)/config/automake/scripts.am
 
-.sh:
-			cat $< > $@
-			chmod a+x $@
+SCRIPTS_SHELL = amplot
+SCRIPTS_AWK = amcat.awk
 
-sbin_SCRIPTS =		amplot
-
-amplot_DATA =		amcat.awk amplot.awk amplot.g amplot.gp
-
+sbin_SCRIPTS =		$(SCRIPTS_SHELL)
 amplotdir =		$(libexecdir)
+amplot_DATA =		$(SCRIPTS_AWK) amplot.awk amplot.g amplot.gp
 
-EXTRA_DIST =		amplot.awk		amplot.g
+EXTRA_DIST +=		amplot.awk		amplot.g
 
-CLEANFILES = amplot.gp.new
-DISTCLEANFILES = amplot.gp $(sbin_SCRIPTS)
+CLEANFILES += amplot.gp.new
+DISTCLEANFILES += amplot.gp
 
-amplot.gp:		amplot.g
-			cat $(srcdir)/amplot.g > amplot.gp.new
-			echo "pause -1;" >> amplot.gp.new
-			rm -f amplot.gp
-			mv amplot.gp.new amplot.gp
+amplot.gp: amplot.g
+	cat $(srcdir)/amplot.g > amplot.gp.new
+	echo "pause -1;" >> amplot.gp.new
+	rm -f amplot.gp
+	mv amplot.gp.new amplot.gp
 
 install-exec-hook:
 	@list="$(sbin_SCRIPTS)"; \

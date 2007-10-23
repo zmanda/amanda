@@ -1,5 +1,8 @@
 # Makefile for Amanda tape changer programs.
 
+include $(top_srcdir)/config/automake/vars.am
+include $(top_srcdir)/config/automake/scripts.am
+
 INCLUDES =	-I$(top_builddir)/common-src \
 		-I$(top_srcdir)/common-src   \
 		-I$(top_srcdir)/tape-src     \
@@ -7,10 +10,8 @@ INCLUDES =	-I$(top_builddir)/common-src \
 
 AM_CFLAGS = $(AMANDA_WARNING_CFLAGS)
 
-LINT=@AMLINT@
-LINTFLAGS=@AMLINTFLAGS@
-
-LIB_EXTENSION = la
+LINT=$(AMLINT)
+LINTFLAGS=$(AMLINTFLAGS)
 
 if WANT_CHG_SCSI_CHIO
 CHIO_SCSI = chg-scsi-chio
@@ -23,15 +24,25 @@ endif
 libexec_PROGRAMS =	$(CHG_SCSI)
 EXTRA_PROGRAMS =	$(CHIO_SCSI)
 
-SCRIPTS_PERL = chg-chio chg-iomega chg-rth
-SCRIPTS_SHELL =		chg-manual	chg-multi	chg-mtx		\
-			chg-chs		chg-zd-mtx	chg-juke	\
-			chg-rait	chg-null	chg-mcutil	\
-			chg-disk	chg-lib.sh
+SCRIPTS_PERL = \
+		chg-chio \
+		chg-iomega \
+		chg-rth
+
+SCRIPTS_SHELL = \
+		chg-manual \
+		chg-multi \
+		chg-mtx \
+		chg-chs \
+		chg-zd-mtx \
+		chg-juke \
+		chg-rait \
+		chg-null \
+		chg-mcutil \
+		chg-disk \
+		chg-lib.sh
 
 libexec_SCRIPTS = $(SCRIPTS_PERL) $(SCRIPTS_SHELL)
-
-DISTCLEANFILES = $(libexec_SCRIPTS)
 
 ###
 # Because libamanda includes routines (e.g. regex) provided by some system
@@ -40,13 +51,11 @@ DISTCLEANFILES = $(libexec_SCRIPTS)
 # routines, and second to pick up any references in the other libraries.
 ###
 
-LDADD = ../common-src/libamanda.$(LIB_EXTENSION) \
-	../tape-src/libamtape.$(LIB_EXTENSION) \
-	../common-src/libamanda.$(LIB_EXTENSION) \
-	../gnulib/libgnu.$(LIB_EXTENSION) \
+LDADD = ../common-src/libamanda.la \
+	../tape-src/libamtape.la \
+	../common-src/libamanda.la \
+	../gnulib/libgnu.la \
 	$(READLINE_LIBS)
-
-SUFFIXES =		.pl .sh
 
 chg_scsi_CSRC = chg-scsi.c scsi-changer-driver.c sense.c 
 if WANT_SCSI_AIX
@@ -82,25 +91,9 @@ chg_scsi_chio_CSRC += scsi-chio.c
 endif
 chg_scsi_chio_SOURCES = libscsi.h $(chg_scsi_chio_CSRC)
 
-EXTRA_DIST = scsi-proto.c
-
-.pl:
-			cat $< > $@
-			chmod a+x $@
-
-.sh:
-			cat $< > $@
-			chmod a+x $@
+EXTRA_DIST += scsi-proto.c
 
 # automake-style tests
-
-include $(top_srcdir)/config/automake/check-perl.am
-CHECK_PERL=$(SCRIPTS_PERL)
-check-local: check-perl
-
-include $(top_srcdir)/config/automake/check-shell.am
-CHECK_SHELL=$(SCRIPTS_SHELL)
-check-local: check-shell
 
 install-exec-hook:
 	@list="$(sbin_PROGRAMS) $(sbin_SCRIPTS)"; \

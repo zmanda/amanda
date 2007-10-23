@@ -1,5 +1,8 @@
 # Makefile for Amanda client programs.
 
+include $(top_srcdir)/config/automake/vars.am
+include $(top_srcdir)/config/automake/scripts.am
+
 INCLUDES =	-I$(top_builddir)/common-src \
 		-I$(top_srcdir)/common-src   \
 		-I$(top_srcdir)/amandad-src  \
@@ -7,20 +10,25 @@ INCLUDES =	-I$(top_builddir)/common-src \
 
 AM_CFLAGS = $(AMANDA_WARNING_CFLAGS)
 
-LINT=@AMLINT@
-LINTFLAGS=@AMLINTFLAGS@
+LINT=$(AMLINT)
+LINTFLAGS=$(AMLINTFLAGS)
 
 lib_LTLIBRARIES =	libamclient.la
-LIB_EXTENSION = la
 
 libexec_PROGRAMS =	noop calcsize killpgrp rundump runtar selfcheck sendbackup sendsize versionsuffix
 
-sbin_SCRIPTS =		@CLIENT_SCRIPTS_OPT@
+sbin_SCRIPTS = @CLIENT_SCRIPTS_OPT@
+EXTRA_SCRIPTS =	amhpfixdevs amsinixfixdevs
 
-libexec_SCRIPTS =	patch-system
+libexec_SCRIPTS = patch-system
 
+SCRIPTS_PERL = $(sbin_SCRIPTS)
+SCRIPTS_SHELL = $(libexec_SCRIPTS)
+
+libamclient_la_SOURCES=	amandates.c		getfsent.c	\
+			unctime.c		client_util.c
 if WANT_SAMBA
-samba_sources = findpass.c
+libamclient_la_SOURCES += findpass.c
 endif
 
 libamclient_la_SOURCES=	amandates.c		getfsent.c	\
@@ -36,30 +44,19 @@ libamclient_la_LDFLAGS = -release $(VERSION)
 # routines, and second to pick up any references in the other libraries.
 ###
 
-LDADD = ../common-src/libamanda.$(LIB_EXTENSION) \
-	libamclient.$(LIB_EXTENSION) \
-	../amandad-src/libamandad.$(LIB_EXTENSION) \
-	../common-src/libamanda.$(LIB_EXTENSION) \
-	../gnulib/libgnu.$(LIB_EXTENSION)
-
-SUFFIXES =		.sh
-
-.sh:
-			cat $< > $@
-			chmod a+x $@
+LDADD = ../common-src/libamanda.la \
+	libamclient.la \
+	../amandad-src/libamandad.la \
+	../common-src/libamanda.la \
+	../gnulib/libgnu.la
 
 # these are used for testing only:
 TEST_PROGS = getfsent
 
 EXTRA_PROGRAMS =	$(TEST_PROGS)
 
-CLEANFILES = *.test.c patch-system
+CLEANFILES += *.test.c
 
-EXTRA_SCRIPTS =		amhpfixdevs		amsinixfixdevs
-
-DISTCLEANFILES = 	$(EXTRA_SCRIPTS) $(sbin_SCRIPTS) $(libexec_SCRIPTS)
-
-EXTRA_DIST =		amhpfixdevs.sh		amsinixfixdevs.sh
 
 sendbackup_SOURCES = 	sendbackup.c		sendbackup.h	  \
 			sendbackup-dump.c	sendbackup-gnutar.c

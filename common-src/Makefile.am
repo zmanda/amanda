@@ -1,22 +1,16 @@
 # Makefile for Amanda library.
 
+include $(top_srcdir)/config/automake/vars.am
+include $(top_srcdir)/config/automake/scripts.am
+
 INCLUDES =      -I$(top_srcdir)/gnulib   
 
 AM_CFLAGS = $(AMANDA_WARNING_CFLAGS)
 
 lib_LTLIBRARIES =	libamanda.la
 
-LINT=@AMLINT@
-LINTFLAGS=@AMLINTFLAGS@
-EXTRA_DIST =
-
-LIB_EXTENSION = la
-
-SCRIPTS_PERL =
-SCRIPTS_SHELL =	amcrypt amaespipe	\
-	amcrypt-ossl	amcrypt-ossl-asym
-sbin_SCRIPTS = $(SCRIPTS_PERL) $(SCRIPTS_SHELL)
-
+LINT=$(AMLINT)
+LINTFLAGS=$(AMLINTFLAGS)
 
 libamanda_la_SOURCES =		\
 	alloc.c			\
@@ -48,7 +42,7 @@ libamanda_la_SOURCES =		\
 nodist_libamanda_la_SOURCES = version.c
 
 libamanda_la_LIBADD =		\
-	../gnulib/libgnu.$(LIB_EXTENSION)
+	../gnulib/libgnu.la
 
 if WANT_AMFLOCK_POSIX
 libamanda_la_SOURCES += amflock-posix.c
@@ -119,24 +113,13 @@ noinst_HEADERS =		\
 	util.h			\
 	version.h
 
-SUFFIXES =		.sh .pl
-
-.pl:
-	cat $< > $@
-	chmod a+x $@
-
-.sh:
-	cat $< > $@
-	chmod a+x $@
-
 EXTRA_PROGRAMS = genversion $(TEST_PROGS)
 
-genversion_SOURCES = genversion.c
+genversion_SOURCES = genversion.c genversion.h
 genversion_LDADD = $(libamanda_la_LIBADD)	\
     	versuff.lo				\
-	../gnulib/libgnu.$(LIB_EXTENSION)
+	../gnulib/libgnu.la
 
-genversion.@OBJEXT@: genversion.h
 genversion.h: $(top_builddir)/config.status
 	-rm -f $@ $@.new
 	echo '#define CC "$(CC)"' > $@.new
@@ -152,30 +135,31 @@ genversion.h: $(top_builddir)/config.status
 	-rm $@.svn
 	mv $@.new $@
 
-version.c:	genversion$(EXEEXT)
+version.c: genversion$(EXEEXT)
 	-rm -f version.c
-	./genversion > version.c
+	./genversion$(EXEEXT) > version.c
+
+BUILT_SOURCES = genversion.h version.c
 
 # these are used for testing only:
 TEST_PROGS = token file bsdsecurity amfeatures
 
-CLEANFILES = *.test.c
-
-DISTCLEANFILES = $(sbin_SCRIPTS) version.c genversion.h genversion amanda-int.h
+CLEANFILES += *.test.c
+DISTCLEANFILES += version.c genversion genversion.h
 
 # used for testing only
 
 STANDARD_COMMON_STUFF_NOT_FILE = \
-	alloc.$(OBJEXT) \
-	clock.$(OBJEXT) \
-	debug.$(OBJEXT) \
-	util.$(OBJEXT) \
-	match.$(OBJEXT) \
-	sl.$(OBJEXT)
+	alloc.lo \
+	clock.lo \
+	debug.lo \
+	util.lo \
+	match.lo \
+	sl.lo
 
 STANDARD_COMMON_STUFF = \
 	$(STANDARD_COMMON_STUFF_NOT_FILE) \
-	file.$(OBJEXT)
+	file.lo
 
 token_SOURCES = token.test.c
 token_LDADD = $(libamanda_la_LIBADD) $(STANDARD_COMMON_STUFF)
@@ -185,16 +169,16 @@ file_LDADD = $(libamanda_la_LIBADD) $(STANDARD_COMMON_STUFF_NOT_FILE)
 
 bsdsecurity_SOURCES = bsd-security.test.c
 bsdsecurity_LDADD = $(libamanda_a_LIBADD) \
-		    alloc.$(OBJEXT) \
-		    clock.$(OBJEXT) \
-		    debug.$(OBJEXT) \
-		    dgram.$(OBJEXT) \
-		    event.$(OBJEXT) \
-		    file.$(OBJEXT) \
-		    packet.$(OBJEXT) \
-		    security.$(OBJEXT) \
-		    ssh-security.$(OBJEXT) \
-		    versuff.$(OBJEXT)
+		    alloc.lo \
+		    clock.lo \
+		    debug.lo \
+		    dgram.lo \
+		    event.lo \
+		    file.lo \
+		    packet.lo \
+		    security.lo \
+		    ssh-security.lo \
+		    versuff.lo
 
 amfeatures_SOURCES = amfeatures.test.c
 amfeatures_LDADD = $(libamanda_la_LIBADD) $(STANDARD_COMMON_STUFF)
@@ -207,17 +191,26 @@ noinst_PROGRAMS = $(TESTS)
 amflock_test_SOURCES = amflock-test.c
 amflock_test_LDADD = libamanda.la
 
-include $(top_srcdir)/config/automake/check-perl.am
-CHECK_PERL=$(SCRIPTS_PERL)
-check-local: check-perl
+# scripts
 
-include $(top_srcdir)/config/automake/check-shell.am
-CHECK_SHELL=$(SCRIPTS_SHELL)
-check-local: check-shell
+# divide scripts up both by language and by destination directory.
+sbin_SCRIPTS_PERL =
 
-# shell library
+sbin_SCRIPTS_SHELL = \
+	    amcrypt \
+	    amaespipe \
+	    amcrypt-ossl \
+	    amcrypt-ossl-asym
 
-libexec_SCRIPTS = amanda-sh-lib.sh
+libexec_SCRIPTS_PERL = 
+
+libexec_SCRIPTS_SHELL = \
+	    amanda-sh-lib.sh
+
+SCRIPTS_PERL = $(sbin_SCRIPTS_PERL) $(libexec_SCRIPTS_PERL)
+SCRIPTS_SHELL = $(sbin_SCRIPTS_SHELL) $(libexec_SCRIPTS_SHELL)
+libexec_SCRIPTS = $(libexec_SCRIPTS_PERL) $(libexec_SCRIPTS_SHELL)
+sbin_SCRIPTS = $(sbin_SCRIPTS_PERL) $(sbin_SCRIPTS_SHELL)
 
 # installation
 
