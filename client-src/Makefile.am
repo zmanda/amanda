@@ -31,10 +31,6 @@ if WANT_SAMBA
 libamclient_la_SOURCES += findpass.c
 endif
 
-libamclient_la_SOURCES=	amandates.c		getfsent.c	\
-			unctime.c		client_util.c	\
-			$(samba_sources)
-
 libamclient_la_LDFLAGS = -release $(VERSION)
 
 ###
