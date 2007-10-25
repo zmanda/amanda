@@ -1,15 +1,15 @@
---- gnulib/getaddrinfo.c	2007-03-06 13:17:25.733225500 -0600
-+++ gnulib/getaddrinfo.c	2007-03-06 13:17:32.345638750 -0600
-@@ -40,6 +40,8 @@
+--- gnulib/getaddrinfo.c.orig	2007-10-25 16:46:34.728843739 -0500
++++ gnulib/getaddrinfo.c	2007-10-25 16:47:17.395395249 -0500
+@@ -42,6 +42,8 @@
+ 
  #include "inet_ntop.h"
- #include "snprintf.h"
  
 +extern int h_errno;
 +
  /* BeOS has AF_INET, but not PF_INET.  */
  #ifndef PF_INET
  # define PF_INET AF_INET
-@@ -147,25 +149,29 @@
+@@ -149,25 +151,29 @@
      return getaddrinfo_ptr (nodename, servname, hints, res);
  #endif
  
@@ -46,25 +46,7 @@
  #else
        nodename = "0.0.0.0";
  #endif
-@@ -175,11 +181,13 @@
-     {
-       struct servent *se = NULL;
-       const char *proto =
--	(hints && hints->ai_socktype == SOCK_DGRAM) ? "udp" : "tcp";
-+	(hints && (hints->ai_socktype == SOCK_DGRAM)) ? "udp" : "tcp";
- 
--      if (!(hints->ai_flags & AI_NUMERICSERV))
--	/* FIXME: Use getservbyname_r if available. */
--	se = getservbyname (servname, proto);
-+      if ((hints == NULL) || !(hints->ai_flags & AI_NUMERICSERV))
-+        {
-+	  /* FIXME: Use getservbyname_r if available. */
-+	  se = getservbyname (servname, proto);
-+        }
- 
-       if (!se)
- 	{
-@@ -196,7 +204,7 @@
+@@ -198,7 +204,7 @@
      }
  
    /* FIXME: Use gethostbyname_r if available. */
@@ -73,7 +55,7 @@
    if (!he || he->h_addr_list[0] == NULL)
      return EAI_NONAME;
  
-@@ -277,7 +285,7 @@
+@@ -279,7 +285,7 @@
        return EAI_NODATA;
      }
  
@@ -82,7 +64,7 @@
      {
        const char *cn;
        if (he->h_name)
-@@ -341,9 +349,7 @@
+@@ -343,9 +349,7 @@
  #endif
  
    /* FIXME: Support other flags. */
@@ -93,7 +75,7 @@
      return EAI_BADFLAGS;
  
    if (sa == NULL || salen < sizeof (sa->sa_family))
-@@ -367,34 +373,89 @@
+@@ -369,34 +373,89 @@
        return EAI_FAMILY;
      }
  

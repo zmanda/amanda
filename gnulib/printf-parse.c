@@ -15,24 +15,49 @@
    with this program; if not, write to the Free Software Foundation,
    Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.  */
 
-#include <config.h>
+/* This file can be parametrized with the following macros:
+     CHAR_T             The element type of the format string.
+     CHAR_T_ONLY_ASCII  Set to 1 to enable verification that all characters
+                        in the format string are ASCII.
+     DIRECTIVE          Structure denoting a format directive.
+                        Depends on CHAR_T.
+     DIRECTIVES         Structure denoting the set of format directives of a
+                        format string.  Depends on CHAR_T.
+     PRINTF_PARSE       Function that parses a format string.
+                        Depends on CHAR_T.
+     STATIC             Set to 'static' to declare the function static.
+     ENABLE_UNISTDIO    Set to 1 to enable the unistdio extensions.  */
+
+#ifndef PRINTF_PARSE
+# include <config.h>
+#endif
 
 /* Specification.  */
-#if WIDE_CHAR_VERSION
-# include "wprintf-parse.h"
-#else
+#ifndef PRINTF_PARSE
 # include "printf-parse.h"
+#endif
+
+/* Default parameters.  */
+#ifndef PRINTF_PARSE
+# define PRINTF_PARSE printf_parse
+# define CHAR_T char
+# define DIRECTIVE char_directive
+# define DIRECTIVES char_directives
 #endif
 
 /* Get size_t, NULL.  */
 #include <stddef.h>
 
 /* Get intmax_t.  */
-#if HAVE_STDINT_H_WITH_UINTMAX
+#ifdef IN_LIBINTL
+# if HAVE_STDINT_H_WITH_UINTMAX
+#  include <stdint.h>
+# endif
+# if HAVE_INTTYPES_H_WITH_UINTMAX
+#  include <inttypes.h>
+# endif
+#else
 # include <stdint.h>
-#endif
-#if HAVE_INTTYPES_H_WITH_UINTMAX
-# include <inttypes.h>
 #endif
 
 /* malloc(), realloc(), free().  */
@@ -41,16 +66,9 @@
 /* Checked size_t computations.  */
 #include "xsize.h"
 
-#if WIDE_CHAR_VERSION
-# define PRINTF_PARSE wprintf_parse
-# define CHAR_T wchar_t
-# define DIRECTIVE wchar_t_directive
-# define DIRECTIVES wchar_t_directives
-#else
-# define PRINTF_PARSE printf_parse
-# define CHAR_T char
-# define DIRECTIVE char_directive
-# define DIRECTIVES char_directives
+#if CHAR_T_ONLY_ASCII
+/* c_isascii().  */
+# include "c-ctype.h"
 #endif
 
 #ifdef STATIC
@@ -115,7 +133,7 @@ PRINTF_PARSE (const CHAR_T *format, DIRECTIVES *d, arguments *a)
       if (c == '%')
 	{
 	  size_t arg_index = ARG_NONE;
-	  DIRECTIVE *dp = &d->dir[d->count];/* pointer to next directive */
+	  DIRECTIVE *dp = &d->dir[d->count]; /* pointer to next directive */
 
 	  /* Initialize the next directive.  */
 	  dp->dir_start = cp - 1;
@@ -326,7 +344,6 @@ PRINTF_PARSE (const CHAR_T *format, DIRECTIVES *d, arguments *a)
 		      flags += 8;
 		      cp++;
 		    }
-#if HAVE_INTMAX_T
 		  else if (*cp == 'j')
 		    {
 		      if (sizeof (intmax_t) > sizeof (long))
@@ -341,7 +358,6 @@ PRINTF_PARSE (const CHAR_T *format, DIRECTIVES *d, arguments *a)
 			}
 		      cp++;
 		    }
-#endif
 		  else if (*cp == 'z' || *cp == 'Z')
 		    {
 		      /* 'z' is standardized in ISO C 99, but glibc uses 'Z'
@@ -419,12 +435,10 @@ PRINTF_PARSE (const CHAR_T *format, DIRECTIVES *d, arguments *a)
 		  break;
 		case 'f': case 'F': case 'e': case 'E': case 'g': case 'G':
 		case 'a': case 'A':
-#if HAVE_LONG_DOUBLE
 		  if (flags >= 16 || (flags & 4))
 		    type = TYPE_LONGDOUBLE;
 		  else
-#endif
-		  type = TYPE_DOUBLE;
+		    type = TYPE_DOUBLE;
 		  break;
 		case 'c':
 		  if (flags >= 8)
@@ -479,6 +493,17 @@ PRINTF_PARSE (const CHAR_T *format, DIRECTIVES *d, arguments *a)
 		  else
 		    type = TYPE_COUNT_INT_POINTER;
 		  break;
+#if ENABLE_UNISTDIO
+		/* The unistdio extensions.  */
+		case 'U':
+		  if (flags >= 16)
+		    type = TYPE_U32_STRING;
+		  else if (flags >= 8)
+		    type = TYPE_U16_STRING;
+		  else
+		    type = TYPE_U8_STRING;
+		  break;
+#endif
 		case '%':
 		  type = TYPE_NONE;
 		  break;
@@ -522,6 +547,13 @@ PRINTF_PARSE (const CHAR_T *format, DIRECTIVES *d, arguments *a)
 	      d->dir = memory;
 	    }
 	}
+#if CHAR_T_ONLY_ASCII
+      else if (!c_isascii (c))
+	{
+	  /* Non-ASCII character.  Not supported.  */
+	  goto error;
+	}
+#endif
     }
   d->dir[d->count].dir_start = cp;
 
@@ -537,7 +569,8 @@ error:
   return -1;
 }
 
+#undef PRINTF_PARSE
 #undef DIRECTIVES
 #undef DIRECTIVE
+#undef CHAR_T_ONLY_ASCII
 #undef CHAR_T
-#undef PRINTF_PARSE

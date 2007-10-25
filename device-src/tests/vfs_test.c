@@ -20,7 +20,6 @@
 
 #include <device.h>
 #include <amanda.h>
-#include "mkdtemp.h"
 
 /* global so the 'atexit' handler can access it */
 

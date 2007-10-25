@@ -16,13 +16,12 @@
    along with this program; if not, write to the Free Software Foundation,
    Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.  */
 
-#ifndef _GL_STDINT_H
-#define _GL_STDINT_H
-
 /*
  * ISO C 99 <stdint.h> for platforms that lack it.
  * <http://www.opengroup.org/susv3xbd/stdint.h.html>
  */
+
+#ifndef _GL_STDINT_H
 
 /* Get those types that are already defined in other system include
    files, so that we can "#define int8_t signed char" below without
@@ -42,16 +41,20 @@
   /* Other systems may have an incomplete or buggy <stdint.h>.
      Include it before <inttypes.h>, since any "#include <stdint.h>"
      in <inttypes.h> would reinclude us, skipping our contents because
-     _GL_STDINT_H is defined.  */
-# include @ABSOLUTE_STDINT_H@
+     _GL_STDINT_H is defined.
+     The include_next requires a split double-inclusion guard.  */
+# @INCLUDE_NEXT@ @NEXT_STDINT_H@
 #endif
+
+#if ! defined _GL_STDINT_H && ! defined _GL_JUST_INCLUDE_SYSTEM_STDINT_H
+#define _GL_STDINT_H
 
 /* <sys/types.h> defines some of the stdint.h types as well, on glibc,
    IRIX 6.5, and OpenBSD 3.8 (via <machine/types.h>).
    AIX 5.2 <sys/types.h> isn't needed and causes troubles.
    MacOS X 10.4.6 <sys/types.h> includes <stdint.h> (which is us), but
    relies on the system <stdint.h> definitions, so include
-   <sys/types.h> after @ABSOLUTE_STDINT_H@.  */
+   <sys/types.h> after @NEXT_STDINT_H@.  */
 #if @HAVE_SYS_TYPES_H@ && ! defined _AIX
 # include <sys/types.h>
 #endif
@@ -63,9 +66,9 @@
   /* In OpenBSD 3.8, <inttypes.h> includes <machine/types.h>, which defines
      int{8,16,32,64}_t, uint{8,16,32,64}_t and __BIT_TYPES_DEFINED__.
      <inttypes.h> also defines intptr_t and uintptr_t.  */
-# define _GL_JUST_INCLUDE_ABSOLUTE_INTTYPES_H
+# define _GL_JUST_INCLUDE_SYSTEM_INTTYPES_H
 # include <inttypes.h>
-# undef _GL_JUST_INCLUDE_ABSOLUTE_INTTYPES_H
+# undef _GL_JUST_INCLUDE_SYSTEM_INTTYPES_H
 #elif @HAVE_SYS_INTTYPES_H@
   /* Solaris 7 <sys/inttypes.h> has the types except the *_fast*_t types, and
      the macros except for *_FAST*_*, INTPTR_MIN, PTRDIFF_MIN, PTRDIFF_MAX.  */
@@ -120,22 +123,34 @@
 #define int32_t int
 #define uint32_t unsigned int
 
-#undef int64_t
+/* Do not undefine int64_t if gnulib is not being used with 64-bit
+   types, since otherwise it breaks platforms like Tandem/NSK.  */
 #if LONG_MAX >> 31 >> 31 == 1
+# undef int64_t
 # define int64_t long int
+# define GL_INT64_T
 #elif defined _MSC_VER
+# undef int64_t
 # define int64_t __int64
+# define GL_INT64_T
 #elif @HAVE_LONG_LONG_INT@
+# undef int64_t
 # define int64_t long long int
+# define GL_INT64_T
 #endif
 
-#undef uint64_t
 #if ULONG_MAX >> 31 >> 31 >> 1 == 1
+# undef uint64_t
 # define uint64_t unsigned long int
+# define GL_UINT64_T
 #elif defined _MSC_VER
+# undef uint64_t
 # define uint64_t unsigned __int64
+# define GL_UINT64_T
 #elif @HAVE_UNSIGNED_LONG_LONG_INT@
+# undef uint64_t
 # define uint64_t unsigned long long int
+# define GL_UINT64_T
 #endif
 
 /* Avoid collision with Solaris 2.5.1 <pthread.h> etc.  */
@@ -164,10 +179,10 @@
 #define uint_least16_t uint16_t
 #define int_least32_t int32_t
 #define uint_least32_t uint32_t
-#ifdef int64_t
+#ifdef GL_INT64_T
 # define int_least64_t int64_t
 #endif
-#ifdef uint64_t
+#ifdef GL_UINT64_T
 # define uint_least64_t uint64_t
 #endif
 
@@ -195,10 +210,10 @@
 #define uint_fast16_t unsigned int_fast16_t
 #define int_fast32_t long int
 #define uint_fast32_t unsigned int_fast32_t
-#ifdef int64_t
+#ifdef GL_INT64_T
 # define int_fast64_t int64_t
 #endif
-#ifdef uint64_t
+#ifdef GL_UINT64_T
 # define uint_fast64_t uint64_t
 #endif
 
@@ -217,7 +232,7 @@
 #undef intmax_t
 #if @HAVE_LONG_LONG_INT@ && LONG_MAX >> 30 == 1
 # define intmax_t long long int
-#elif defined int64_t
+#elif defined GL_INT64_T
 # define intmax_t int64_t
 #else
 # define intmax_t long int
@@ -226,7 +241,7 @@
 #undef uintmax_t
 #if @HAVE_UNSIGNED_LONG_LONG_INT@ && ULONG_MAX >> 31 == 1
 # define uintmax_t unsigned long long int
-#elif defined uint64_t
+#elif defined GL_UINT64_T
 # define uintmax_t uint64_t
 #else
 # define uintmax_t unsigned long int
@@ -264,13 +279,15 @@
 
 #undef INT64_MIN
 #undef INT64_MAX
-#ifdef int64_t
-# define INT64_MIN  (~ INT64_MAX)
+#ifdef GL_INT64_T
+/* Prefer (- INTMAX_C (1) << 63) over (~ INT64_MAX) because SunPRO C 5.0
+   evaluates the latter incorrectly in preprocessor expressions.  */
+# define INT64_MIN  (- INTMAX_C (1) << 63)
 # define INT64_MAX  INTMAX_C (9223372036854775807)
 #endif
 
 #undef UINT64_MAX
-#ifdef uint64_t
+#ifdef GL_UINT64_T
 # define UINT64_MAX  UINTMAX_C (18446744073709551615)
 #endif
 
@@ -303,13 +320,13 @@
 
 #undef INT_LEAST64_MIN
 #undef INT_LEAST64_MAX
-#ifdef int64_t
+#ifdef GL_INT64_T
 # define INT_LEAST64_MIN  INT64_MIN
 # define INT_LEAST64_MAX  INT64_MAX
 #endif
 
 #undef UINT_LEAST64_MAX
-#ifdef uint64_t
+#ifdef GL_UINT64_T
 # define UINT_LEAST64_MAX  UINT64_MAX
 #endif
 
@@ -342,13 +359,13 @@
 
 #undef INT_FAST64_MIN
 #undef INT_FAST64_MAX
-#ifdef int64_t
+#ifdef GL_INT64_T
 # define INT_FAST64_MIN  INT64_MIN
 # define INT_FAST64_MAX  INT64_MAX
 #endif
 
 #undef UINT_FAST64_MAX
-#ifdef uint64_t
+#ifdef GL_UINT64_T
 # define UINT_FAST64_MAX  UINT64_MAX
 #endif
 
@@ -365,10 +382,11 @@
 
 #undef INTMAX_MIN
 #undef INTMAX_MAX
-#define INTMAX_MIN  (~ INTMAX_MAX)
 #ifdef INT64_MAX
+# define INTMAX_MIN  INT64_MIN
 # define INTMAX_MAX  INT64_MAX
 #else
+# define INTMAX_MIN  INT32_MIN
 # define INTMAX_MAX  INT32_MAX
 #endif
 
@@ -469,7 +487,7 @@
 #undef INTMAX_C
 #if @HAVE_LONG_LONG_INT@ && LONG_MAX >> 30 == 1
 # define INTMAX_C(x)   x##LL
-#elif defined int64_t
+#elif defined GL_INT64_T
 # define INTMAX_C(x)   INT64_C(x)
 #else
 # define INTMAX_C(x)   x##L
@@ -478,7 +496,7 @@
 #undef UINTMAX_C
 #if @HAVE_UNSIGNED_LONG_LONG_INT@ && ULONG_MAX >> 31 == 1
 # define UINTMAX_C(x)  x##ULL
-#elif defined uint64_t
+#elif defined GL_UINT64_T
 # define UINTMAX_C(x)  UINT64_C(x)
 #else
 # define UINTMAX_C(x)  x##UL
@@ -487,3 +505,4 @@
 #endif /* !defined __cplusplus || defined __STDC_CONSTANT_MACROS */
 
 #endif /* _GL_STDINT_H */
+#endif /* !defined _GL_STDINT_H && !defined _GL_JUST_INCLUDE_SYSTEM_STDINT_H */

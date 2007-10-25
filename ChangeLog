@@ -1,3 +1,10 @@
+2007-10-25  Dustin J. Mitchell <dustin@zmanda.com>
+	* gnulib/* config/*: updated to latest gnulib
+	* gnulib/regenerate/regenerate: update gnulib date
+	* gnulib/regenerate/getaddrinfo-cygwin.patch: update to patch new
+	  getaddrinfo.c
+	* device-src/tests/vfs_test.c: mkdtemp.h no longer exists
+
 2007-10-24  Jean-Louis Martineau <martineau@zmanda.com>
 	* client-src/Makefile.am: Remove duplicate entry for
 				  libamclient_la_SOURCES.

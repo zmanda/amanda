@@ -31,6 +31,9 @@
 /* Get memcpy, strdup. */
 #include <string.h>
 
+/* Get snprintf. */
+#include <stdio.h>
+
 #include <stdbool.h>
 
 #include "gettext.h"
@@ -38,7 +41,6 @@
 #define N_(String) String
 
 #include "inet_ntop.h"
-#include "snprintf.h"
 
 extern int h_errno;
 
@@ -181,13 +183,11 @@ getaddrinfo (const char *restrict nodename,
     {
       struct servent *se = NULL;
       const char *proto =
-	(hints && (hints->ai_socktype == SOCK_DGRAM)) ? "udp" : "tcp";
+	(hints && hints->ai_socktype == SOCK_DGRAM) ? "udp" : "tcp";
 
-      if ((hints == NULL) || !(hints->ai_flags & AI_NUMERICSERV))
-        {
-	  /* FIXME: Use getservbyname_r if available. */
-	  se = getservbyname (servname, proto);
-        }
+      if (hints == NULL || !(hints->ai_flags & AI_NUMERICSERV))
+	/* FIXME: Use getservbyname_r if available. */
+	se = getservbyname (servname, proto);
 
       if (!se)
 	{
