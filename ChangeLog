@@ -1,4 +1,12 @@
 2007-10-25  Dustin J. Mitchell <dustin@zmanda.com>
+	* config/mkinstalldirs config/depcomp config/config.guess
+	  config/ltmain.sh config/config.sub config/missing
+	  config/install-sh config/ylwrap: update files with automake-1.10, 
+	  libtool-1.5.24
+	* autogen: don't call automake with --add-missing, as it stomps all
+	  over the working copy
+
+2007-10-25  Dustin J. Mitchell <dustin@zmanda.com>
 	* gnulib/* config/*: updated to latest gnulib
 	* gnulib/regenerate/regenerate: update gnulib date
 	* gnulib/regenerate/getaddrinfo-cygwin.patch: update to patch new
