@@ -1,0 +1,159 @@
+# vim:ft=perl
+package Amconfig;
+use File::Path;
+use Carp;
+
+=head1 NAME
+
+Amconfig - set up amanda configurations for installcheck testing
+
+=head1 SYNOPSIS
+
+  use Amconfig;
+
+  my $testconf = Amconfig->new();
+  $testconf->add_param("runtapes", "5");
+  # ...
+  $testconf->write();
+
+The resulting configuration is always named "TESTCONF".  The basic
+configuration contains only a few parameters that are necessary just to
+run Amanda applications in the test environment; 
+
+Note that it's quite possible to produce an invalid configuration with this
+package (and, in fact, some of the tests do just that).
+
+=head1 WARNING
+
+Using this module I<will> destroy any existing configuration named
+TESTDIR.  I<Please> do not use this on a production machine!
+
+=head1 FUNCTIONS
+
+=head2 new()
+
+=cut
+
+sub new {
+    my $class = shift;
+
+    # An instance is a blessed hash containing parameters.  Start with
+    # some defaults to make sure things run.
+    my $self = {
+	'mailto' => '"nobody@invalidomain"',
+	'dumpuser' => '"' . (getpwuid($<))[0] . '"', # current username
+
+	# These dirs are under CONFIG_DIR just for ease of destruction.
+	# This is not a recommended layout!
+	'infofile' => '"@CONFIG_DIR@/TESTCONF/curinfo"',
+	'logdir' => '"@CONFIG_DIR@/TESTCONF/log"',
+	'indexdir' => '"@CONFIG_DIR@/TESTCONF/index"',
+
+	'tapetype' => '"TEST-TAPE"',
+
+	# Subsections are stored as a hashref of hashrefs, keyed by
+	# subsection name
+
+	'_tapetypes' => {
+	    'TEST-TAPE' => {
+		'length' => '50 mbytes',
+		'filemark' => '4 kbytes'
+	    },
+	},
+
+	'_dumptypes' => { # TODO
+	},
+
+	'_interfaces' => { # TODO
+	},
+
+	'_holdingdisks' => { # TODO
+	},
+    };
+    bless($self, $class);
+    return $self;
+}
+
+=head2 add_param($param, $value)
+
+Add the given parameter to the configuration file, overriding any
+previous value.  Note that strings which should be quoted in the configuration
+file itself must be double-quoted here, e.g.,
+
+  $testconf->add_param('org' => '"MyOrganization"');
+
+=cut
+
+sub add_param {
+    my $self = shift;
+    my ($param, $value) = @_;
+
+    $self->{$param} = $value;
+}
+
+=head2 write()
+
+Write out the accumulated configuration file, along with any other files necessary to
+run Amanda.
+
+=cut
+
+sub write {
+    my $self = shift;
+
+    my $testconf_dir = '@CONFIG_DIR@/TESTCONF';
+    if (-e $testconf_dir) {
+	rmtree($testconf_dir);
+    }
+    mkpath($testconf_dir);
+
+    # set up curinfo dir, etc.
+    mkpath($self->{'infofile'});
+    mkpath($self->{'logdir'});
+    mkpath($self->{'indexdir'});
+
+    # create an empty tapelist
+    open(my $tapelist, ">", "$testconf_dir/tapelist");
+    close($tapelist);
+
+    $self->_write_amanda_conf("$testconf_dir/amanda.conf");
+}
+
+sub _write_amanda_conf {
+    my $self = shift;
+    my ($filename) = @_;
+
+    open my $amanda_conf, ">", $filename
+	or croak("Could not open '$filename'");
+
+    # write key/value pairs
+    for my $param (keys %$self) {
+	next if ($param =~ /^_/); # skip _tapetypes, etc.
+	print $amanda_conf "$param $self->{$param}\n";
+    }
+
+    # write out subsections
+    $self->_write_amanda_conf_subsection($amanda_conf, "tapetype", $self->{"_tapetypes"});
+    $self->_write_amanda_conf_subsection($amanda_conf, "dumptype", $self->{"_dumptypes"});
+    $self->_write_amanda_conf_subsection($amanda_conf, "interface", $self->{"_interfaces"});
+    $self->_write_amanda_conf_subsection($amanda_conf, "holdingdisk", $self->{"_holdingdisks"});
+
+    close($amanda_conf);
+}
+
+sub _write_amanda_conf_subsection {
+    my $self = shift;
+    my ($amanda_conf, $subsec_type, $subsec_ref) = @_;
+
+    for my $subsec_name (keys %$subsec_ref) {
+	$subsec_ref = $subsec_ref->{$subsec_name};
+	
+	print $amanda_conf "\ndefine $subsec_type $subsec_name {\n";
+	for my $param (keys %$subsec_ref) {
+	    print $amanda_conf "  $param $subsec_ref->{$param}\n";
+	}
+	print $amanda_conf "}\n";
+    }
+}
+
+1;

@@ -345,10 +345,15 @@ debug_setup_2(
     amfree(db_filename);
     db_filename = s;
     s = NULL;
-    if ((rc = chown(db_filename, client_uid, client_gid)) < 0) {
-	dbprintf(_("chown(%s, %d, %d) failed. <%s>"),
-		  db_filename, (int)client_uid, (int)client_gid, strerror(errno));
-	(void)rc;
+
+    /* If we're root, change the ownership of the debug files.  If we're not root,
+     * this would either be redundant or an error. */
+    if (geteuid() == 0) {
+	if ((rc = chown(db_filename, client_uid, client_gid)) < 0) {
+	    dbprintf(_("chown(%s, %d, %d) failed. <%s>"),
+		      db_filename, (int)client_uid, (int)client_gid, strerror(errno));
+	    (void)rc;
+	}
     }
     amfree(dbgdir);
     /*

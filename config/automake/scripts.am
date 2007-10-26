@@ -88,7 +88,7 @@ check-perl: $(SCRIPTS_PERL)
 	@SCRIPTS_PERL="$(SCRIPTS_PERL)"; \
 	if test -n "$(PERL)"; then \
 		for perlobj in $$SCRIPTS_PERL; do \
-			$(PERL) -c -w -T $$perlobj || exit 1; \
+			$(PERL) $(CHECK_PERL_FLAGS) -c -w -T $$perlobj || exit 1; \
 		done; \
 	fi
 check-local: check-perl

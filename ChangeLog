@@ -1,3 +1,12 @@
+2007-10-26  Dustin J. Mitchell <dustin@zmanda.com>
+	Add support for post-install tests, which can be more thorough than
+	unit tests.
+	* configure.in Makefile.am installcheck/*: new directory
+	* installcheck/amgetconf.pl: test some of amgetconf's functionality
+	* docs/developing.txt: notes on various test mechanisms
+	* config/automake/scripts.am: add CHECK_PERL_FLAGS
+	* common-src/debug.c: only try to chown debug files if running as root
+
 2007-10-25  Dustin J. Mitchell <dustin@zmanda.com>
 	* config/mkinstalldirs config/depcomp config/config.guess
 	  config/ltmain.sh config/config.sub config/missing

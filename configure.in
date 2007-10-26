@@ -368,6 +368,7 @@ AC_CONFIG_FILES([
     example/amanda.conf
     example/chg-mcutil.conf
     gnulib/Makefile
+    installcheck/Makefile
     man/Makefile
     oldrecover-src/Makefile
     po/Makefile

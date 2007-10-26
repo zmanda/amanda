@@ -1,0 +1,67 @@
+# vim:ft=perl
+package Installdirs;
+
+=head1 NAME
+
+Installdirs - supply directories from configure
+
+=head1 SYNOPSIS
+
+  use Installdirs;
+
+  my $filename = "$libexecdir/foo/bar";
+
+This package is a means of getting all of the necessary variables provided
+by configure into Perl scripts, without a bunch of boilerplate.  
+
+All of the variables in @EXPORT will be automatically imported into
+your test module's namespace.  See the source, rather than the perldoc, to
+find out what's in @EXPORT.
+
+=cut
+
+use Cwd 'abs_path';
+use Exporter;
+@ISA = qw( Exporter );
+
+@EXPORT = qw(
+    $prefix
+    $exec_prefix
+    $bindir
+    $sbindir
+    $libexecdir
+    $mandir
+    $datarootdir
+    $top_builddir
+    $AMANDA_TMPDIR
+    $CONFIG_DIR
+    $AMANDA_DBGDIR
+);
+
+# NOTE:
+#
+# Each assignment here is followed by a bogus use of that variable, to
+# eliminate perl's only-used-once warnings.  This is ugly, but perl 5.5
+# doesn't support 'no warnings', so it's the only choice to avoid the warnings.
+
+# these need to go in order, due to the way autoconf sets these dirs up
+$prefix = "@prefix@"; $v = $prefix;
+$exec_prefix = "@exec_prefix@"; $v = $exec_prefix;
+$bindir = "@bindir@"; $v = $bindir;
+$sbindir = "@sbindir@"; $v = $sbindir;
+$libexecdir = "@libexecdir@"; $v = $libexecdir;
+$mandir = "@mandir@"; $v = $mandir;
+
+# (config.status worries if it doesn't see this)
+$datarootdir = "@datarootdir@"; $v = $datarootdir;
+
+# this variable comes from the Makefile
+$top_builddir = abs_path(".."); $v = $top_builddir;
+# make it an absolute path in case someone changes the working dir
+sub set_top_builddir { $top_builddir = abs_path(shift); }
+
+# and these come from various Amanda configuration parameters; order isn't important.
+$AMANDA_TMPDIR = "@AMANDA_TMPDIR@"; $v = $AMANDA_TMPDIR;
+$CONFIG_DIR = "@CONFIG_DIR@"; $v = $CONFIG_DIR;
+$AMANDA_DBGDIR = "@AMANDA_DBGDIR@"; $v = $AMANDA_DBGDIR;
+

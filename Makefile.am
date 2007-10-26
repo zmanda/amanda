@@ -33,7 +33,11 @@ SUBDIRS = \
 	$(RESTORE_SUBDIRS) \
 	$(RECOVER_SUBDIRS) \
 	$(PLOT_SUBDIRS) \
-	po man docs example
+	po \
+	man \
+	docs \
+	example \
+	installcheck
 
 pkgdata_DATA = \
 	ReleaseNotes			\
@@ -88,3 +92,7 @@ lint:
 
 dist-hook:
 	find $(distdir)/. -name '*.test.c' -exec rm {} \;
+
+# ensure that configure gets the right arguments for distcheck; this keeps the
+# user/group through to the distcheck, rather than defaulting back to 'amanda'.
+DISTCHECK_CONFIGURE_FLAGS="--with-user=$(CLIENT_LOGIN) --with-group=$(SETUID_GROUP)"
