@@ -180,5 +180,5 @@ void
 yyerror(
     char *	s)
 {
-	printf("%s\n", s);
+	g_printf("%s\n", s);
 }

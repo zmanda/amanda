@@ -259,7 +259,7 @@ safe_fd(
 {
     int			fd;
 
-    for(fd = 0; fd < FD_SETSIZE; fd++) {
+    for(fd = 0; fd < (int)FD_SETSIZE; fd++) {
 	if (fd < 3) {
 	    /*
 	     * Open three file descriptors.  If one of the standard
@@ -272,7 +272,7 @@ safe_fd(
 	     */
 	    if (fcntl(fd, F_GETFD) == -1) {
 		if (open("/dev/null", O_RDWR) == -1) {
-		   fprintf(stderr, _("/dev/null is inaccessable: %s\n"),
+		   g_fprintf(stderr, _("/dev/null is inaccessable: %s\n"),
 		           strerror(errno));
 		   exit(1);
 		}
@@ -819,25 +819,25 @@ main(
 		name = argv[3];
 	}
 
-	fprintf(stderr, _("Create parent directories of %s ..."), name);
+	g_fprintf(stderr, _("Create parent directories of %s ..."), name);
 	rc = mkpdir(name, (mode_t)02777, (uid_t)-1, (gid_t)-1);
 	if (rc == 0)
-		fprintf(stderr, " done\n");
+		g_fprintf(stderr, " done\n");
 	else {
 		perror(_("failed"));
 		return rc;
 	}
 
-	fprintf(stderr, _("Delete %s back to %s ..."), name, top);
+	g_fprintf(stderr, _("Delete %s back to %s ..."), name, top);
 	rc = rmpdir(name, top);
 	if (rc == 0)
-		fprintf(stderr, _(" done\n"));
+		g_fprintf(stderr, _(" done\n"));
 	else {
 		perror(_("failed"));
 		return rc;
 	}
 
-	fprintf(stderr, _("areads dump of %s ..."), file);
+	g_fprintf(stderr, _("areads dump of %s ..."), file);
 	if ((fd = open (file, 0)) < 0) {
 		perror(file);
 		return 1;
@@ -848,9 +848,9 @@ main(
 		amfree(line);
 	}
 	aclose(fd);
-	fprintf(stderr, _(" done.\n"));
+	g_fprintf(stderr, _(" done.\n"));
 
-	fprintf(stderr, _("Finished.\n"));
+	g_fprintf(stderr, _("Finished.\n"));
 	return 0;
 }
 

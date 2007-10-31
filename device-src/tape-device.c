@@ -244,21 +244,21 @@ tape_device_open_device (Device * d_self, char * device_name) {
         self->fd = robust_open(device_name, O_RDONLY, 0);
     }
     if (self->fd < 0) {
-        fprintf(stderr, "Can't open tape device %s: %s\n",
+        g_fprintf(stderr, "Can't open tape device %s: %s\n",
                 device_name, strerror(errno));
         return FALSE;
     }
 
     /* Check that this is actually a tape device. */
     if (tape_is_tape_device(self->fd) == TAPE_CHECK_FAILURE) {
-        fprintf(stderr, "File %s is not a tape device.\n",
+        g_fprintf(stderr, "File %s is not a tape device.\n",
                 device_name);
         return FALSE;
     }
 
     /* Rewind it. */
     if (!tape_rewind(self->fd)) {
-        fprintf(stderr, "Error rewinding device %s\n",
+        g_fprintf(stderr, "Error rewinding device %s\n",
                 device_name);
         return FALSE;
     }
@@ -295,7 +295,7 @@ static ReadLabelStatusFlags tape_device_read_label(Device * dself) {
     g_return_val_if_fail(self != NULL, FALSE);
 
     if (!tape_rewind(self->fd)) {
-        fprintf(stderr, "Error rewinding device %s\n",
+        g_fprintf(stderr, "Error rewinding device %s\n",
                 dself->device_name);
         return (READ_LABEL_STATUS_DEVICE_ERROR |
                 READ_LABEL_STATUS_VOLUME_ERROR);
@@ -309,7 +309,7 @@ static ReadLabelStatusFlags tape_device_read_label(Device * dself) {
         free(header_buffer);
         tape_rewind(self->fd);
         /* I/O error. */
-        fprintf(stderr, "Error reading Amanda header.\n");
+        g_fprintf(stderr, "Error reading Amanda header.\n");
         if (result == RESULT_NO_DATA) {
             return (READ_LABEL_STATUS_VOLUME_ERROR |
                     READ_LABEL_STATUS_VOLUME_UNLABELED);
@@ -442,7 +442,7 @@ static gboolean write_tapestart_header(TapeDevice * self, char * label,
                                              
      if (!header_fits) {
          amfree(header_buf);
-         fprintf(stderr, "Tapestart header won't fit in a single block!\n");
+         g_fprintf(stderr, "Tapestart header won't fit in a single block!\n");
          return FALSE;
      }
 
@@ -463,11 +463,11 @@ tape_device_start (Device * d_self, DeviceAccessMode mode, char * label,
     if (IS_WRITABLE_ACCESS_MODE(mode)) {
         if (self->write_open_errno != 0) {
             /* We tried and failed to open the device in write mode. */
-            fprintf(stderr, "Can't open tape device %s for writing: %s\n",
+            g_fprintf(stderr, "Can't open tape device %s for writing: %s\n",
                     d_self->device_name, strerror(self->write_open_errno));
             return FALSE;
         } else if (!tape_rewind(self->fd)) {
-            fprintf(stderr, "Couldn't rewind device: %s\n",
+            g_fprintf(stderr, "Couldn't rewind device: %s\n",
                     strerror(errno));
         }
     }
@@ -482,7 +482,7 @@ tape_device_start (Device * d_self, DeviceAccessMode mode, char * label,
         
     case ACCESS_READ:
         if (!tape_rewind(self->fd)) {
-            fprintf(stderr, "Error rewinding device %s\n",
+            g_fprintf(stderr, "Error rewinding device %s\n",
                     d_self->device_name);
             return FALSE;
         }
@@ -521,7 +521,7 @@ static gboolean tape_device_start_file(Device * d_self,
 
     if (!(d_self->access_mode == ACCESS_APPEND && self->first_file)) {
         if (!tape_weof(self->fd, 1)) {
-            fprintf(stderr, "Error writing filemark: %s\n", strerror(errno));
+            g_fprintf(stderr, "Error writing filemark: %s\n", strerror(errno));
             return FALSE;
         }
     }
@@ -597,7 +597,7 @@ tape_device_seek_file (Device * d_self, guint file) {
             return make_tapeend_header();
         }
         /* I/O error. */
-        fprintf(stderr, "Error reading Amanda header.\n");
+        g_fprintf(stderr, "Error reading Amanda header.\n");
         return FALSE;
     }
         
@@ -866,7 +866,7 @@ tape_device_finish (Device * d_self) {
     if (self->final_filemarks > 1 &&
         IS_WRITABLE_ACCESS_MODE(d_self->access_mode)) {
         if (!tape_weof(self->fd, 1)) {
-            fprintf(stderr, "Error writing final filemark: %s\n",
+            g_fprintf(stderr, "Error writing final filemark: %s\n",
                     strerror(errno));
             return FALSE;
         }
@@ -874,7 +874,7 @@ tape_device_finish (Device * d_self) {
 
     /* Rewind. */
     if (!tape_rewind(self->fd)) {
-        fprintf(stderr, "Error rewinding tape: %s\n", strerror(errno));
+        g_fprintf(stderr, "Error rewinding tape: %s\n", strerror(errno));
         return FALSE;
     }
 
@@ -940,7 +940,7 @@ tape_device_robust_read (TapeDevice * self, void * buf, int * count) {
                 /* Buffer too small. */
                 return RESULT_SMALL_BUFFER;
             } else {
-                fprintf(stderr, "Error reading %d bytes from %s: %s\n",
+                g_fprintf(stderr, "Error reading %d bytes from %s: %s\n",
                         *count, d_self->device_name, strerror(errno));
                 return RESULT_ERROR;
             }
@@ -966,7 +966,7 @@ static void check_resetofs(TapeDevice * self G_GNUC_UNUSED,
 
     result = lseek(self->fd, 0, SEEK_SET);
     if (result < 0) {
-        fprintf(stderr,
+        g_fprintf(stderr,
                 "Warning: lseek() failed during kernel 2GB workaround.\n");
     }
 #endif
@@ -992,7 +992,7 @@ tape_device_robust_write (TapeDevice * self, void * buf, int count) {
             return RESULT_SUCCESS;
         } else if (result >= 0) {
             /* write() returned a short count. This should not happen. */
-            fprintf(stderr,
+            g_fprintf(stderr,
                   "Mysterious short write on tape device: Tried %d, got %d.\n",
                     count, result);
             return RESULT_ERROR;
@@ -1020,14 +1020,14 @@ tape_device_robust_write (TapeDevice * self, void * buf, int count) {
             /* Probably EOT. Print a message if we got EIO. */
 #ifdef EIO
             if (errno == EIO) {
-                fprintf(stderr, "Got EIO on %s, assuming end of tape.\n",
+                g_fprintf(stderr, "Got EIO on %s, assuming end of tape.\n",
                         d_self->device_name);
             }
 #endif
             return RESULT_NO_SPACE;
         } else {
             /* WTF */
-            fprintf(stderr,
+            g_fprintf(stderr,
      "Kernel gave unexpected write() result of \"%s\" on device %s.\n",
                     strerror(errno), d_self->device_name);
             return RESULT_ERROR;

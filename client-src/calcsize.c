@@ -147,21 +147,21 @@ main(
     signal(SIGPIPE, SIG_IGN);
 
     if (argc < 2) {
-	fprintf(stderr,_("Usage: %s file[s]\n"),argv[0]);
+	g_fprintf(stderr,_("Usage: %s file[s]\n"),argv[0]);
 	return 1;
     }
     for(i=1; i<argc; i++) {
 	if(lstat(argv[i], &finfo) == -1) {
-	    fprintf(stderr, "%s: %s\n", argv[i], strerror(errno));
+	    g_fprintf(stderr, "%s: %s\n", argv[i], strerror(errno));
 	    continue;
 	}
-	printf("%s: st_size=%lu", argv[i],(unsigned long)finfo.st_size);
-	printf(": blocks=%llu\n", ST_BLOCKS(finfo));
+	g_printf("%s: st_size=%lu", argv[i],(unsigned long)finfo.st_size);
+	g_printf(": blocks=%llu\n", ST_BLOCKS(finfo));
 	dump_total += (ST_BLOCKS(finfo) + (off_t)1) / (off_t)2 + (off_t)1;
 	gtar_total += ROUND(4,(ST_BLOCKS(finfo) + (off_t)1));
     }
-    printf("           gtar           dump\n");
-    printf("total      %-9lu         %-9lu\n",gtar_total,dump_total);
+    g_printf("           gtar           dump\n");
+    g_printf("total      %-9lu         %-9lu\n",gtar_total,dump_total);
     return 0;
 #else
     int i;
@@ -268,12 +268,12 @@ main(
 	filename = stralloc(*argv);
 	qfilename = quote_string(filename);
 	if (access(filename, R_OK) != 0) {
-	    fprintf(stderr,"Cannot open exclude file %s\n", qfilename);
+	    g_fprintf(stderr,"Cannot open exclude file %s\n", qfilename);
 	    use_gtar_excl = use_star_excl = 0;
 	} else {
 	    exclude_sl = calc_load_file(filename);
 	    if (!exclude_sl) {
-		fprintf(stderr,"Cannot open exclude file %s: %s\n", qfilename,
+		g_fprintf(stderr,"Cannot open exclude file %s: %s\n", qfilename,
 			strerror(errno));
 		use_gtar_excl = use_star_excl = 0;
 	    }
@@ -292,12 +292,12 @@ main(
 	filename = stralloc(*argv);
 	qfilename = quote_string(filename);
 	if (access(filename, R_OK) != 0) {
-	    fprintf(stderr,"Cannot open include file %s\n", qfilename);
+	    g_fprintf(stderr,"Cannot open include file %s\n", qfilename);
 	    use_gtar_excl = use_star_excl = 0;
 	} else {
 	    include_sl = calc_load_file(filename);
 	    if (!include_sl) {
-		fprintf(stderr,"Cannot open include file %s: %s\n", qfilename,
+		g_fprintf(stderr,"Cannot open include file %s: %s\n", qfilename,
 			strerror(errno));
 		use_gtar_excl = use_star_excl = 0;
 	    }
@@ -344,12 +344,12 @@ main(
 
 	amflock(1, "size");
 
-	dbprintf("calcsize: %s %d SIZE " OFF_T_FMT "\n",
+	dbprintf("calcsize: %s %d SIZE %lld\n",
 	       qamname, dumplevel[i],
-	       (OFF_T_FMT_TYPE)final_size(i, dirname));
-	fprintf(stderr, "%s %d SIZE " OFF_T_FMT "\n",
+	       (long long)final_size(i, dirname));
+	g_fprintf(stderr, "%s %d SIZE %lld\n",
 	       qamname, dumplevel[i],
-	       (OFF_T_FMT_TYPE)final_size(i, dirname));
+	       (long long)final_size(i, dirname));
 	fflush(stderr);
 
 	amfunlock(1, "size");
@@ -438,7 +438,7 @@ traverse_dirs(
 
 	    newname = newstralloc2(newname, newbase, f->d_name);
 	    if(lstat(newname, &finfo) == -1) {
-		fprintf(stderr, "%s/%s: %s\n",
+		g_fprintf(stderr, "%s/%s: %s\n",
 			dirname, f->d_name, strerror(errno));
 		continue;
 	    }

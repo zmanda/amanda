@@ -83,7 +83,7 @@ main(
 
 #ifndef GNUTAR
 
-    fprintf(stderr,_("gnutar not available on this system.\n"));
+    g_fprintf(stderr,_("gnutar not available on this system.\n"));
     dbprintf(_("%s: gnutar not available on this system.\n"), argv[0]);
     dbclose();
     return 1;
@@ -162,7 +162,7 @@ main(
     dbprintf(_("execve of %s failed (%s)\n"), GNUTAR, e);
     dbclose();
 
-    fprintf(stderr, _("runtar: could not exec %s: %s\n"), GNUTAR, e);
+    g_fprintf(stderr, _("runtar: could not exec %s: %s\n"), GNUTAR, e);
     return 1;
 #endif
 }

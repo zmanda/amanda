@@ -223,11 +223,11 @@ static gboolean simple_taper_scan(taper_state_t * state,
                         CHAR_taperscan_output_callback, 
                         error_message, boolean_prolong, prolong);
     if (result < 0) {
-        fprintf(stderr, "Failed taper scan:\n%s\n", *error_message);
+        g_fprintf(stderr, "Failed taper scan:\n%s\n", *error_message);
         amfree(timestamp);
         return FALSE;
     } else {
-        fprintf(stderr, _("taper: using label `%s' date `%s'\n"), *label,
+        g_fprintf(stderr, _("taper: using label `%s' date `%s'\n"), *label,
                 state->driver_start_time);
         if (result == 3) {
             log_add(L_INFO,
@@ -293,7 +293,7 @@ static gboolean find_new_tape(taper_state_t * state, dump_info_t * dump) {
     cmd = getcmd(&args);
     switch (cmd) {
     default:
-        fprintf(stderr, "taper: Got odd message from driver, expected NEW-TAPE or NO-NEW-TAPE.\n");
+        g_fprintf(stderr, "taper: Got odd message from driver, expected NEW-TAPE or NO-NEW-TAPE.\n");
         /* FALLTHROUGH. */
     case NEW_TAPE: {
         gboolean search_result;
@@ -367,7 +367,7 @@ static gboolean find_and_label_new_tape(taper_state_t * state,
     
     if (!device_start(state->device, ACCESS_WRITE, state->next_tape_label,
                       state->driver_start_time)) {
-        fprintf(stderr, "taper: Error writing label %s to device %s.\n",
+        g_fprintf(stderr, "taper: Error writing label %s to device %s.\n",
                 state->next_tape_label, state->device->device_name);
         g_object_unref(state->device);
         state->device = NULL;
@@ -387,7 +387,7 @@ static gboolean find_and_label_new_tape(taper_state_t * state,
 	tapelist_name_old = stralloc2(tapelist_name, ".yesterday");
     } else {
 	char cur_str[NUM_STR_SIZE];
-	snprintf(cur_str, SIZEOF(cur_str), "%d", state->cur_tape - 1);
+	g_snprintf(cur_str, SIZEOF(cur_str), "%d", state->cur_tape - 1);
 	tapelist_name_old = vstralloc(tapelist_name,
 				      ".today.", cur_str, NULL);
     }
@@ -658,7 +658,7 @@ static void run_device_output(taper_state_t * taper_state,
         bzero(&val, sizeof(val));
         if (!device_property_get(taper_state->device, PROPERTY_STREAMING, &val)
             || !G_VALUE_HOLDS(&val, STREAMING_REQUIREMENT_TYPE)) {
-            fprintf(stderr, "taper: Couldn't get streaming type!\n");
+            g_fprintf(stderr, "taper: Couldn't get streaming type!\n");
             streaming_mode = STREAMING_REQUIREMENT_REQUIRED;
         } else {
             streaming_mode = g_value_get_enum(&val);
@@ -675,7 +675,7 @@ static void run_device_output(taper_state_t * taper_state,
         if (getconf_seen(CNF_DEVICE_OUTPUT_BUFFER_SIZE)) {
             max_memory = getconf_size(CNF_DEVICE_OUTPUT_BUFFER_SIZE);
             if (getconf_seen(CNF_TAPEBUFS)) {
-                fprintf(stderr,
+                g_fprintf(stderr,
                         "Configuration directives 'device_output_buffer_size' "
                         "and \n"
                         "'tapebufs' are incompatible; using former.\n");
@@ -845,7 +845,7 @@ static void process_file_write(taper_state_t * state,
    returns false. */
 static gboolean send_quitting(taper_state_t * state) {
     putresult(QUITTING, "\n");
-    fprintf(stderr,"taper: DONE\n");
+    g_fprintf(stderr,"taper: DONE\n");
     cleanup(state);
     return FALSE;
 }
@@ -1008,7 +1008,7 @@ int main(int real_argc, char ** real_argv) {
     signal(SIGPIPE, SIG_IGN);
 
     parse_conf(real_argc, real_argv, &argc, &argv);
-    fprintf(stderr, _("%s: pid %ld executable %s version %s\n"),
+    g_fprintf(stderr, _("%s: pid %ld executable %s version %s\n"),
 	    get_pname(), (long) getpid(), argv[0], version());
     dbprintf(_("%s: pid %ld executable %s version %s\n"),
               get_pname(), (long) getpid(), argv[0], version());

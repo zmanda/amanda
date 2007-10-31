@@ -88,7 +88,7 @@ str_sockaddr(
 	inet_ntop(AF_INET, &((struct sockaddr_in *)sa)->sin_addr, ipstr,
 		  sizeof(ipstr));
     }
-    snprintf(mystr_sockaddr,sizeof(mystr_sockaddr),"%s.%d", ipstr, port);
+    g_snprintf(mystr_sockaddr,sizeof(mystr_sockaddr),"%s.%d", ipstr, port);
     return mystr_sockaddr;
 }
 

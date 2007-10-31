@@ -220,7 +220,7 @@ bsdudp_connect(
     amanda_gettimeofday(&sequence_time);
     sequence = (int)sequence_time.tv_sec ^ (int)sequence_time.tv_usec;
     handle=alloc(15);
-    snprintf(handle,14,"000-%08x", newhandle++);
+    g_snprintf(handle,14,"000-%08x", newhandle++);
     if (udp_inithandle(bh->udp, bh, canonname,
 		       (struct sockaddr_storage *)res->ai_addr, port,
 		       handle, sequence) < 0) {

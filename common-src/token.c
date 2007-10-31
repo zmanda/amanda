@@ -135,7 +135,7 @@ printf_arglist_function(char *squotef, char *, format)
 	/* Format the token */
 
 	arglist_start(argp, format);
-	vsnprintf(linebuf, SIZEOF(linebuf), format, argp);
+	g_vsnprintf(linebuf, SIZEOF(linebuf), format, argp);
 	arglist_end(argp);
 
 	return quote(" ", linebuf);
@@ -149,7 +149,7 @@ printf_arglist_function1(char *quotef, char *, sep, char *, format)
 	/* Format the token */
 
 	arglist_start(argp, format);
-	vsnprintf(linebuf, SIZEOF(linebuf), format, argp);
+	g_vsnprintf(linebuf, SIZEOF(linebuf), format, argp);
 	arglist_end(argp);
 
 	return quote(sep, linebuf);
@@ -441,37 +441,38 @@ main(
 
 	erroutput_type = ERR_INTERACTIVE;
 
-	printf(_("Testing split() with \" \" token separator\n"));
+	g_printf(_("Testing split() with \" \" token separator\n"));
 	while(1) {
-		printf(_("Input string: "));
+		g_printf(_("Input string: "));
 		amfree(str);
 		if ((str = agets(stdin)) == NULL) {
-			printf("\n");
+			g_printf("\n");
 			break;
 		}
 		r = split(str, t, 20, " ");
-		printf(plural(_("%d token:\n"), _("%d token:\n"), r), r);
+		g_printf(plural(_("%d token:\n"), _("%d token:\n"), r), r);
 		for (i=0; i <= r; i++)
-			printf("tok[%d] = \"%s\"\n", i, t[i]);
+			g_printf("tok[%d] = \"%s\"\n", i, t[i]);
 	}
 	amfree(str);
-	printf("\n");
+	g_printf("\n");
 
-	printf(_("Testing quote()\n"));
+	g_printf(_("Testing quote()\n"));
 	while(1) {
-		printf(_("Input string: "));
+		g_printf(_("Input string: "));
 		amfree(str);
 		if ((str = agets(stdin)) == NULL) {
-			printf("\n");
+			g_printf("\n");
 			break;
 		}
 		sr = squote(str);
-		printf(_("Quoted   = \"%s\"\n"), sr);
+		g_printf(_("Quoted   = \"%s\"\n"), sr);
 		strncpy(str,sr,SIZEOF(str)-1);
 		str[SIZEOF(str)-1] = '\0';
 		r = split(str, t, 20, " ");
-		if (r != 1) printf("split()=%d!\n", r);
-		printf(_("Unquoted = \"%s\"\n"), t[1]);
+		if (r != 1)
+			g_printf("split()=%d!\n", r);
+		g_printf(_("Unquoted = \"%s\"\n"), t[1]);
 		amfree(sr);
 	}
 	amfree(str);

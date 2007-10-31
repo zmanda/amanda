@@ -88,7 +88,7 @@ static void handle_holding_disk_restore(char * filename, rst_flags_t * flags,
 
     if (!restore_holding_disk(stderr, flags, NULL, &this_disk, NULL,
                               dumpspecs, &this_header, NULL)) {
-        fprintf(stderr, "%s did not match requested host.\n", filename);
+        g_fprintf(stderr, "%s did not match requested host.\n", filename);
         return;
     }
 }
@@ -200,7 +200,7 @@ main(
 		/*NOTREACHED*/
 	    }
 	    if(rst_flags->blocksize > MAX_TAPE_BLOCK_KB * 1024) {
-		fprintf(stderr,_("maximum block size is %dk, using it\n"),
+		g_fprintf(stderr,_("maximum block size is %dk, using it\n"),
 			MAX_TAPE_BLOCK_KB);
 		rst_flags->blocksize = MAX_TAPE_BLOCK_KB * 1024;
 		/*NOTREACHED*/
@@ -233,13 +233,13 @@ main(
     set_server_config_from_options();
 
     if(rst_flags->compress && rst_flags->raw) {
-	fprintf(stderr,
+	g_fprintf(stderr,
 		_("Cannot specify both -r (raw) and -c (compressed) output.\n"));
 	usage();
     }
 
     if(optind >= my_argc) {
-	fprintf(stderr, _("%s: Must specify tape-device or holdingfile\n"),
+	g_fprintf(stderr, _("%s: Must specify tape-device or holdingfile\n"),
 			get_pname());
 	usage();
     }
@@ -254,12 +254,12 @@ main(
 
     if (holding_disk_mode) {
         if (label) {
-	    fprintf(stderr,_("%s: ignoring -l flag when restoring from a file.\n"),
+	    g_fprintf(stderr,_("%s: ignoring -l flag when restoring from a file.\n"),
 		    get_pname());
         }
 
         if (rst_flags->fsf > 0) {
-            fprintf(stderr,
+            g_fprintf(stderr,
                     "%s: ignoring -f flag when restoring from a file.\n",
 		    get_pname());
         }

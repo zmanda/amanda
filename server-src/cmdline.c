@@ -92,7 +92,7 @@ cmdline_parse_dumpspecs(
                 arg_state = ARG_GET_DISK;
                 if (name[0] != '\0'
                     && (errstr=validate_regexp(name)) != NULL) {
-                    fprintf(stderr, _("%s: bad hostname regex \"%s\": %s\n"),
+                    g_fprintf(stderr, _("%s: bad hostname regex \"%s\": %s\n"),
 		                    get_pname(), name, errstr);
                     goto error;
                 }
@@ -104,7 +104,7 @@ cmdline_parse_dumpspecs(
                 arg_state = ARG_GET_DATESTAMP;
                 if (name[0] != '\0'
                     && (errstr=validate_regexp(name)) != NULL) {
-                    fprintf(stderr, _("%s: bad diskname regex \"%s\": %s\n"),
+                    g_fprintf(stderr, _("%s: bad diskname regex \"%s\": %s\n"),
 		                    get_pname(), name, errstr);
                     goto error;
                 }
@@ -116,7 +116,7 @@ cmdline_parse_dumpspecs(
 		if (!(flags & CMDLINE_PARSE_DATESTAMP)) continue;
                 if (name[0] != '\0'
                     && (errstr=validate_regexp(name)) != NULL) {
-                    fprintf(stderr, _("%s: bad datestamp regex \"%s\": %s\n"),
+                    g_fprintf(stderr, _("%s: bad datestamp regex \"%s\": %s\n"),
 		                    get_pname(), name, errstr);
                     goto error;
                 }
@@ -128,7 +128,7 @@ cmdline_parse_dumpspecs(
 		if (!(flags & CMDLINE_PARSE_LEVEL)) continue;
                 if (name[0] != '\0'
                     && (errstr=validate_regexp(name)) != NULL) {
-                    fprintf(stderr, _("%s: bad level regex \"%s\": %s\n"),
+                    g_fprintf(stderr, _("%s: bad level regex \"%s\": %s\n"),
 		                    get_pname(), name, errstr);
                     goto error;
                 }
@@ -183,7 +183,7 @@ quote_dumpspec_string(char *str)
 	return stralloc("''"); /* special-case the empty string */
 
     for (p = str; *p; p++) {
-        if (!isalnum(*p) && *p != '.' && *p != '/') need_single_quotes=1;
+        if (!isalnum((int)*p) && *p != '.' && *p != '/') need_single_quotes=1;
         if (*p == '\'' || *p == '\\') len++; /* extra byte for '\' */
         len++;
     }

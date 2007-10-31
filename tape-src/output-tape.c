@@ -503,7 +503,7 @@ tape_tape_open(
 	    /*
 	     * Open failed completely: just return
 	     */
-	    fprintf(stderr, _("Opening tapedev %s: got error %s.\n"),
+	    g_fprintf(stderr, _("Opening tapedev %s: got error %s.\n"),
 			filename, strerror(errno));
 	    return -1;
 	}
@@ -515,7 +515,7 @@ tape_tape_open(
 	timeout -= delay;
 	if (timeout <= 0) {
 	    /* Open failed: just return */
-	    fprintf(stderr, _("Opening tapedev %s: not ready.\n"), filename);
+	    g_fprintf(stderr, _("Opening tapedev %s: not ready.\n"), filename);
 	    return -1;
 	}
 
@@ -534,14 +534,14 @@ tape_tape_open(
 	memset(&mt, 0, SIZEOF(mt));
 	if (ioctl(ret, MTIOCGET, &mt) < 0) {
 	    close(ret);
-	    fprintf(stderr, _("tapedev %s is not a tape device!\n"), filename);
+	    g_fprintf(stderr, _("tapedev %s is not a tape device!\n"), filename);
 	    return -1;
 	}
 
 #ifdef GMT_ONLINE
 	if (!GMT_ONLINE(mt.mt_gstat)) {
 	    close(ret);
-	    fprintf(stderr, _("tapedev %s is offline or has no loaded tape.\n"),
+	    g_fprintf(stderr, _("tapedev %s is offline or has no loaded tape.\n"),
 		    filename);
 	    return -1;
 	}

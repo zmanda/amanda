@@ -97,9 +97,8 @@ add_dir_list_item(
 {
     DIR_ITEM *next;
 
-    dbprintf(_("add_dir_list_item: Adding \"%s\" \"%d\" \"%s\" \""
-	      OFF_T_FMT "\" \"%s\"\n"),
-	      date, level, tape, (OFF_T_FMT_TYPE)fileno, path);
+    dbprintf(_("add_dir_list_item: Adding \"%s\" \"%d\" \"%s\" \"%lld\" \"%s\"\n"),
+	      date, level, tape, (long long)fileno, path);
 
     next = (DIR_ITEM *)alloc(sizeof(DIR_ITEM));
     memset(next, 0, sizeof(DIR_ITEM));
@@ -143,7 +142,7 @@ suck_dir_list_from_server(void)
     int ch;
 
     if (disk_path == NULL) {
-	printf(_("Directory must be set before getting listing\n"));
+	g_printf(_("Directory must be set before getting listing\n"));
 	return;
     } else if(strcmp(disk_path, "/") == 0) {
 	disk_path_slash = stralloc(disk_path);
@@ -169,7 +168,7 @@ suck_dir_list_from_server(void)
     {
 	amfree(disk_path_slash);
 	l = reply_line();
-	printf("%s\n", l);
+	g_printf("%s\n", l);
 	return;
     }
     disk_path_slash_dot = stralloc2(disk_path_slash, ".");
@@ -195,7 +194,7 @@ suck_dir_list_from_server(void)
 	l = reply_line();
 	if (!server_happy())
 	{
-	    printf("%s\n", l);
+	    g_printf("%s\n", l);
 	    continue;
 	}
 	s = l;
@@ -233,9 +232,9 @@ suck_dir_list_from_server(void)
 	*tape_undo = '\0';
 
 	if(am_has_feature(indexsrv_features, fe_amindexd_fileno_in_OLSD)) {
-	    OFF_T_FMT_TYPE fileno_ = (OFF_T_FMT_TYPE)0;
+	    long long fileno_ = (long long)0;
 	    skip_whitespace(s, ch);
-	    if(ch == '\0' || sscanf(s - 1, OFF_T_FMT, &fileno_) != 1) {
+	    if(ch == '\0' || sscanf(s - 1, "%lld", &fileno_) != 1) {
 		err = _("bad reply: cannot parse fileno field");
 		continue;
 	    }
@@ -289,7 +288,7 @@ list_directory(void)
     char *quoted;
 
     if (disk_path == NULL) {
-	printf(_("Must select a disk before listing files; use the setdisk command.\n"));
+	g_printf(_("Must select a disk before listing files; use the setdisk command.\n"));
 	return;
     }
 
@@ -304,7 +303,7 @@ list_directory(void)
     pager_command = stralloc2(pager, " ; /bin/cat > /dev/null");
     if ((fp = popen(pager_command, "w")) == NULL)
     {
-	printf(_("Warning - can't pipe through %s\n"), pager);
+	g_printf(_("Warning - can't pipe through %s\n"), pager);
 	fp = stdout;
     }
     amfree(pager_command);
@@ -313,7 +312,7 @@ list_directory(void)
 	i++;				/* so disk_path != "/" */
     for (item = get_dir_list(); item != NULL; item=get_next_dir_item(item)) {
 	quoted = quote_string(item->path + i);
-	fprintf(fp, "%s %s\n", item->date, quoted);
+	g_fprintf(fp, "%s %s\n", item->date, quoted);
 	amfree(quoted);
     }
     apclose(fp);

@@ -54,6 +54,6 @@ main(
 
 	set_pname("versionsuffix");
 
-	printf("%s\n", versionsuffix());
+	g_printf("%s\n", versionsuffix());
 	return 0;
 }

@@ -258,7 +258,7 @@ main(
 	 * programs on the tape host are set up.  The index service is
 	 * run and goes to stdout.
 	 */
-	fprintf(stderr, _("%s: running in interactive test mode\n"), get_pname());
+	g_fprintf(stderr, _("%s: running in interactive test mode\n"), get_pname());
 	fflush(stderr);
     }
 
@@ -274,7 +274,7 @@ main(
 	if (line[0] == '\0')
 	    continue;
 	if(interactive) {
-	    fprintf(stderr, "%s> ", get_pname());
+	    g_fprintf(stderr, "%s> ", get_pname());
 	    fflush(stderr);
 	}
 	if(strncmp_const(line, "OPTIONS ") == 0) {
@@ -447,30 +447,30 @@ main(
 
     if(options->auth && amandad_auth) {
 	if(strcasecmp(options->auth, amandad_auth) != 0) {
-	    printf(_("ERROR [client configured for auth=%s while server requested '%s']\n"),
+	    g_printf(_("ERROR [client configured for auth=%s while server requested '%s']\n"),
 		   amandad_auth, options->auth);
 	    exit(-1);
 	}
     }
 
     if (options->kencrypt) {
-	printf("KENCRYPT\n");
+	g_printf("KENCRYPT\n");
     }
 
-    printf(_("CONNECT DATA %d MESG %d INDEX %d\n"),
+    g_printf(_("CONNECT DATA %d MESG %d INDEX %d\n"),
 	   DATA_FD_OFFSET, DATA_FD_OFFSET+1,
 	   indexfd == -1 ? -1 : DATA_FD_OFFSET+2);
-    printf(_("OPTIONS "));
+    g_printf(_("OPTIONS "));
     if(am_has_feature(g_options->features, fe_rep_options_features)) {
-	printf("features=%s;", our_feature_string);
+	g_printf("features=%s;", our_feature_string);
     }
     if(am_has_feature(g_options->features, fe_rep_options_hostname)) {
-	printf("hostname=%s;", g_options->hostname);
+	g_printf("hostname=%s;", g_options->hostname);
     }
     if(am_has_feature(g_options->features, fe_rep_options_sendbackup_options)) {
-	printf("%s", optionstr(options));
+	g_printf("%s", optionstr(options));
     }
-    printf("\n");
+    g_printf("\n");
     fflush(stdout);
     if (freopen("/dev/null", "w", stdout) == NULL) {
 	dbprintf(_("Error redirecting stdout to /dev/null: %s\n"),
@@ -557,7 +557,7 @@ main(
 	    argvchild[i++] = amdevice;
 	    if (level <= bsu->max_level) {
 		argvchild[i++] = "--level";
-		snprintf(levelstr,19,"%d",level);
+		g_snprintf(levelstr,19,"%d",level);
 		argvchild[i++] = levelstr;
 	    }
 	    if (indexfd != 0 && bsu->index_line == 1) {
@@ -646,7 +646,7 @@ main(
     return 0;
 
  err:
-    printf(_("FORMAT ERROR IN REQUEST PACKET\n"));
+    g_printf(_("FORMAT ERROR IN REQUEST PACKET\n"));
     dbprintf(_("REQ packet is bogus%s%s\n"),
 	      err_extra ? ": " : "",
 	      err_extra ? err_extra : "");
@@ -704,7 +704,7 @@ check_status(
 	 * but the failure is noted.
 	 */
 	if(ret != 0) {
-	    fprintf(stderr, _("? index %s returned %d\n"), str, ret);
+	    g_fprintf(stderr, _("? index %s returned %d\n"), str, ret);
 	    rc = 0;
 	}
 	indexpid = -1;
@@ -777,11 +777,11 @@ check_status(
 void
 info_tapeheader(void)
 {
-    fprintf(stderr, "%s: info BACKUP=%s\n", get_pname(), program->backup_name);
+    g_fprintf(stderr, "%s: info BACKUP=%s\n", get_pname(), program->backup_name);
 
-    fprintf(stderr, "%s: info RECOVER_CMD=", get_pname());
+    g_fprintf(stderr, "%s: info RECOVER_CMD=", get_pname());
     if (options->compress == COMP_FAST || options->compress == COMP_BEST)
-	fprintf(stderr, "%s %s |", UNCOMPRESS_PATH,
+	g_fprintf(stderr, "%s %s |", UNCOMPRESS_PATH,
 #ifdef UNCOMPRESS_OPT
 		UNCOMPRESS_OPT
 #else
@@ -789,13 +789,13 @@ info_tapeheader(void)
 #endif
 		);
 
-    fprintf(stderr, "%s -xpGf - ...\n", program->restore_name);
+    g_fprintf(stderr, "%s -xpGf - ...\n", program->restore_name);
 
     if (options->compress == COMP_FAST || options->compress == COMP_BEST)
-	fprintf(stderr, "%s: info COMPRESS_SUFFIX=%s\n",
+	g_fprintf(stderr, "%s: info COMPRESS_SUFFIX=%s\n",
 			get_pname(), COMPRESS_SUFFIX);
 
-    fprintf(stderr, "%s: info end\n", get_pname());
+    g_fprintf(stderr, "%s: info end\n", get_pname());
 }
 
 void
@@ -806,26 +806,26 @@ backup_api_info_tapeheader(
 {
     char line[1024];
 
-    snprintf(line, 1024, "%s: info BACKUP=DUMPER\n", get_pname());
+    g_snprintf(line, 1024, "%s: info BACKUP=DUMPER\n", get_pname());
     if (fullwrite(mesgfd, line, strlen(line)) != (ssize_t)strlen(line)) {
 	dbprintf(_("error writing to mesgfd socket: %s"), strerror(errno));
 	return;
     }
 
-    snprintf(line, 1024, "%s: info DUMPER=%s\n", get_pname(), prog);
+    g_snprintf(line, 1024, "%s: info DUMPER=%s\n", get_pname(), prog);
     if (fullwrite(mesgfd, line, strlen(line)) != (ssize_t)strlen(line)) {
 	dbprintf(_("error writing to mesgfd socket: %s"), strerror(errno));
 	return;
     }
 
-    snprintf(line, 1024, "%s: info RECOVER_CMD=", get_pname());
+    g_snprintf(line, 1024, "%s: info RECOVER_CMD=", get_pname());
     if (fullwrite(mesgfd, line, strlen(line)) != (ssize_t)strlen(line)) {
 	dbprintf(_("error writing to mesgfd socket: %s"), strerror(errno));
 	return;
     }
 
     if (options->compress) {
-	snprintf(line, 1024, "%s %s |", UNCOMPRESS_PATH,
+	g_snprintf(line, 1024, "%s %s |", UNCOMPRESS_PATH,
 #ifdef UNCOMPRESS_OPT
 		 UNCOMPRESS_OPT
 #else
@@ -837,14 +837,14 @@ backup_api_info_tapeheader(
 	    return;
 	}
     }
-    snprintf(line, 1024, "%s -f... -\n", prog);
+    g_snprintf(line, 1024, "%s -f... -\n", prog);
     if (fullwrite(mesgfd, line, strlen(line)) != (ssize_t)strlen(line)) {
 	dbprintf(_("error writing to mesgfd socket: %s"), strerror(errno));
 	return;
     }
 
     if (options->compress) {
-	snprintf(line, 1024, "%s: info COMPRESS_SUFFIX=%s\n",
+	g_snprintf(line, 1024, "%s: info COMPRESS_SUFFIX=%s\n",
 		 get_pname(), COMPRESS_SUFFIX);
 	if (fullwrite(mesgfd, line, strlen(line)) != (ssize_t)strlen(line)) {
 	    dbprintf(_("error writing to mesgfd socket: %s"), strerror(errno));
@@ -852,7 +852,7 @@ backup_api_info_tapeheader(
 	}
     }
 
-    snprintf(line, 1024, "%s: info end\n", get_pname());
+    g_snprintf(line, 1024, "%s: info end\n", get_pname());
     if (fullwrite(mesgfd, line, strlen(line)) != (ssize_t)strlen(line)) {
 	dbprintf(_("error writing to mesgfd socket: %s"), strerror(errno));
 	return;
@@ -983,8 +983,8 @@ parse_backup_messages(
 
     program->end_backup(goterror);
 
-    fprintf(stderr, _("%s: size %ld\n"), get_pname(), dump_size);
-    fprintf(stderr, _("%s: end\n"), get_pname());
+    g_fprintf(stderr, _("%s: size %ld\n"), get_pname(), dump_size);
+    g_fprintf(stderr, _("%s: end\n"), get_pname());
 }
 
 
@@ -1063,7 +1063,7 @@ process_dumpline(
 	      type,
 	      startchr,
 	      str);
-    fprintf(stderr, "%c %s\n", startchr, str);
+    g_fprintf(stderr, "%c %s\n", startchr, str);
 }
 
 

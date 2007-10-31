@@ -252,7 +252,7 @@ changer_find(
 
     if (rc != 0) {
         /* Problem with the changer script. Bail. */
-        fprintf(stderr, _("Changer problem: %s\n"), changer_resultstr);
+        g_fprintf(stderr, _("Changer problem: %s\n"), changer_resultstr);
         return;
     }
 
@@ -340,7 +340,7 @@ changer_command(
 		       NULL);
 
     if(changer_debug) {
-	fprintf(stderr, _("changer: opening pipe to: %s\n"), cmdstr);
+	g_fprintf(stderr, _("changer: opening pipe to: %s\n"), cmdstr);
 	fflush(stderr);
     }
 

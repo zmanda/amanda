@@ -99,10 +99,10 @@ usage(void)
 {
     int i;
 
-    fprintf(stderr, _("Usage: amtape%s <conf> <command> {<args>} [-o configoption]*\n"), versionsuffix());
-    fprintf(stderr, _("\tValid commands are:\n"));
+    g_fprintf(stderr, _("Usage: amtape%s <conf> <command> {<args>} [-o configoption]*\n"), versionsuffix());
+    g_fprintf(stderr, _("\tValid commands are:\n"));
     for (i = 0; i < NCMDS; i++)
-	fprintf(stderr, "\t\t%s\n", _(cmdtab[i].usage));
+	g_fprintf(stderr, "\t\t%s\n", _(cmdtab[i].usage));
     exit(1);
 }
 
@@ -185,7 +185,7 @@ main(
 	    break;
 	}
     if (i == NCMDS) {
-	fprintf(stderr, _("%s: unknown command \"%s\"\n"), argv0, new_argv[0]);
+	g_fprintf(stderr, _("%s: unknown command \"%s\"\n"), argv0, new_argv[0]);
 	usage();
     }
 
@@ -206,11 +206,11 @@ reset_changer(G_GNUC_UNUSED int	argc,
 
     switch(changer_reset(&slotstr)) {
     case 0:
-	fprintf(stderr, _("%s: changer is reset, slot %s is loaded.\n"),
+	g_fprintf(stderr, _("%s: changer is reset, slot %s is loaded.\n"),
 		get_pname(), slotstr);
 	break;
     case 1:
-	fprintf(stderr, _("%s: changer is reset, but slot %s not loaded: %s\n"),
+	g_fprintf(stderr, _("%s: changer is reset, but slot %s not loaded: %s\n"),
 		get_pname(), slotstr, changer_resultstr);
 	break;
     default:
@@ -228,9 +228,9 @@ clean_tape(G_GNUC_UNUSED int	argc,
     char *devstr = NULL;
 
     if(changer_clean(&devstr) == 0) {
-	fprintf(stderr, _("%s: device %s is clean.\n"), get_pname(), devstr);
+	g_fprintf(stderr, _("%s: device %s is clean.\n"), get_pname(), devstr);
     } else {
-	fprintf(stderr, _("%s: device %s not clean: %s\n"),
+	g_fprintf(stderr, _("%s: device %s not clean: %s\n"),
 		get_pname(), devstr ? devstr : "??", changer_resultstr);
     }
     amfree(devstr);
@@ -244,9 +244,9 @@ eject_tape(G_GNUC_UNUSED int	argc,
     char *slotstr = NULL;
 
     if(changer_eject(&slotstr) == 0) {
-	fprintf(stderr, _("%s: slot %3s is ejected.\n"), get_pname(), slotstr);
+	g_fprintf(stderr, _("%s: slot %3s is ejected.\n"), get_pname(), slotstr);
     } else {
-	fprintf(stderr, _("%s: slot %3s not ejected: %s\n"),
+	g_fprintf(stderr, _("%s: slot %3s not ejected: %s\n"),
 		get_pname(), slotstr ? slotstr : "??", changer_resultstr);
     }
     amfree(slotstr);
@@ -278,7 +278,7 @@ load_slot(
     if (!is_advance) {
         device = device_open(devicename);
         if (device == NULL) {
-            fprintf(stderr,
+            g_fprintf(stderr,
                     _("%s: could not open device %s"), get_pname(),
                     devicename);
         } else {
@@ -286,9 +286,9 @@ load_slot(
         }
     }
 
-    fprintf(stderr, _("%s: changed to slot %s"), get_pname(), slotstr);
+    g_fprintf(stderr, _("%s: changed to slot %s"), get_pname(), slotstr);
     if(! is_advance) {
-	fprintf(stderr, _(" on %s"), devicename);
+	g_fprintf(stderr, _(" on %s"), devicename);
     }
     fputc('\n', stderr);
     amfree(slotstr);
@@ -315,7 +315,7 @@ scan_init(G_GNUC_UNUSED void * data, int rc, G_GNUC_UNUSED int numslots,
 static int scan_init_print(void * data, int rc, int numslots,
                          int backwards, int searchable) {
     
-    fprintf(stderr, _("%s: scanning all %d slots in tape-changer rack:\n"),
+    g_fprintf(stderr, _("%s: scanning all %d slots in tape-changer rack:\n"),
             get_pname(), numslots);
 
     return scan_init(data, rc, numslots, backwards, searchable);
@@ -342,14 +342,14 @@ loadlabel_slot(
 	error(_("could not load slot %s: %s"), slotstr, changer_resultstr);
         g_assert_not_reached();
     } else if (rc == 1) {
-	fprintf(stderr, _("%s: slot %3s: %s\n"),
+	g_fprintf(stderr, _("%s: slot %3s: %s\n"),
 		get_pname(), slotstr, changer_resultstr);
         return 0;
     }
 
     device = device_open(device_name);
     if (device == NULL) {
-        fprintf(stderr, _("%s: slot %3s: Could not open device.\n"),
+        g_fprintf(stderr, _("%s: slot %3s: Could not open device.\n"),
                 get_pname(), slotstr);
         return 0;
     }
@@ -362,21 +362,21 @@ loadlabel_slot(
             g_english_strjoinv_and_free
                 (g_flags_nick_to_strv(label_status,
                                       READ_LABEL_STATUS_FLAGS_TYPE), "or");
-        fprintf(stderr, _("%s: slot %3s: %s\n"),
+        g_fprintf(stderr, _("%s: slot %3s: %s\n"),
                 get_pname(), slotstr, errstr);
         g_object_unref(device);
         return 0;
     }
     
-    fprintf(stderr, _("%s: slot %3s: time %-14s label %s"),
+    g_fprintf(stderr, _("%s: slot %3s: time %-14s label %s"),
             get_pname(), slotstr, device->volume_time, device->volume_label);
 
     if(strcmp(device->volume_label, status->searchlabel) != 0) {
-        fprintf(stderr, _(" (wrong tape)\n"));
+        g_fprintf(stderr, _(" (wrong tape)\n"));
         g_object_unref(device);
         return 0;
     } else {
-        fprintf(stderr, _(" (exact label match)\n"));
+        g_fprintf(stderr, _(" (exact label match)\n"));
         g_object_unref(device);
         status->found = 1;
         return 1;
@@ -400,7 +400,7 @@ load_label(
 
     status.searchlabel = argv[1];
 
-    fprintf(stderr, _("%s: scanning for tape with label %s\n"),
+    g_fprintf(stderr, _("%s: scanning for tape with label %s\n"),
 	    get_pname(), status.searchlabel);
 
     status.found = 0;
@@ -408,10 +408,10 @@ load_label(
     changer_find(&status, scan_init, loadlabel_slot, status.searchlabel);
 
     if(status.found)
-	fprintf(stderr, _("%s: label %s is now loaded.\n"),
+	g_fprintf(stderr, _("%s: label %s is now loaded.\n"),
 		get_pname(), status.searchlabel);
     else
-	fprintf(stderr, _("%s: could not find label %s in tape rack.\n"),
+	g_fprintf(stderr, _("%s: could not find label %s in tape rack.\n"),
 		get_pname(), status.searchlabel);
 }
 
@@ -431,13 +431,13 @@ show_slots_slot(G_GNUC_UNUSED void * data, int rc, char * slotstr,
     }
 
     if(rc == 1) {
-	fprintf(stderr, _("slot %s: %s\n"), slotstr, changer_resultstr);
+	g_fprintf(stderr, _("slot %s: %s\n"), slotstr, changer_resultstr);
         return 0;
     }
 
     device = device_open(device_name);
     if (device == NULL) {
-        fprintf(stderr, _("%s: slot %3s: Could not open device.\n"),
+        g_fprintf(stderr, _("%s: slot %3s: Could not open device.\n"),
                 get_pname(), slotstr);
     } else {
         ReadLabelStatusFlags label_status;
@@ -449,10 +449,10 @@ show_slots_slot(G_GNUC_UNUSED void * data, int rc, char * slotstr,
                 g_english_strjoinv_and_free
                 (g_flags_nick_to_strv(label_status,
                                       READ_LABEL_STATUS_FLAGS_TYPE), "or");
-            fprintf(stderr, _("%s: slot %3s: %s\n"),
+            g_fprintf(stderr, _("%s: slot %3s: %s\n"),
                     get_pname(), slotstr, errstr);
         } else {
-            fprintf(stderr, _("slot %3s: time %-14s label %s\n"),
+            g_fprintf(stderr, _("slot %3s: time %-14s label %s\n"),
                     slotstr, device->volume_time, device->volume_label);
 
 	    /* update the changer db */
@@ -473,7 +473,7 @@ show_current(int argc, G_GNUC_UNUSED char ** argv) {
 
     device_api_init();
 
-    fprintf(stderr, _("%s: scanning current slot in tape-changer rack:\n"),
+    g_fprintf(stderr, _("%s: scanning current slot in tape-changer rack:\n"),
 	    get_pname());
     changer_current(NULL, scan_init, show_slots_slot);
 }
@@ -500,21 +500,21 @@ amtape_taper_scan(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char ** argv) {
 
     device_api_init();
     
-    fprintf(stderr, _("%s: scanning for "), get_pname());
+    g_fprintf(stderr, _("%s: scanning for "), get_pname());
 
     tp = lookup_last_reusable_tape(0);
     if (tp == NULL) {
         searchlabel = NULL;
     } else {
 	searchlabel = stralloc(tp->label);
-        fprintf(stderr, _("tape label %s or "), searchlabel);
+        g_fprintf(stderr, _("tape label %s or "), searchlabel);
     }
-    fprintf(stderr, _("a new tape.\n"));
+    g_fprintf(stderr, _("a new tape.\n"));
 
     taper_scan(searchlabel, &label, &timestamp, &tapedev,
                FILE_taperscan_output_callback, stderr, NULL, NULL);
 
-    fprintf(stderr, _("%s: label %s is now loaded.\n"),
+    g_fprintf(stderr, _("%s: label %s is now loaded.\n"),
             get_pname(), label);
 
 
@@ -536,7 +536,7 @@ show_device(G_GNUC_UNUSED int	argc,
 	/*NOTREACHED*/
     }
 
-    printf("%s\n", device);
+    g_printf("%s\n", device);
     amfree(slot);
     amfree(device);
 }

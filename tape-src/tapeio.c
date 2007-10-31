@@ -819,10 +819,10 @@ tape_fsf(
 				  strerror(errno));
     } else if(tapefd_fsf(fd, count) == -1) {
 	r = errstr = newvstrallocf(errstr,
-			          plural(_("tape_fsf: fsf " OFF_T_FMT " file: %s"),
-			                 _("tape_fsf: fsf " OFF_T_FMT " files: %s"),
+			          plural(_("tape_fsf: fsf %lld file: %s"),
+			                 _("tape_fsf: fsf %lld files: %s"),
 				         count),
-				  (OFF_T_FMT_TYPE)count, strerror(errno));
+				  (long long)count, strerror(errno));
     }
     if(fd >= 0) {
 	tapefd_close(fd);
@@ -1079,20 +1079,20 @@ static char *pgm;
 static void
 do_help(void)
 {
-    fprintf(stderr, _("  ?|help\n"));
-    fprintf(stderr, _("  open [\"file\"|$TAPE [\"mode\":O_RDONLY]]\n"));
-    fprintf(stderr, _("  read [\"records\":\"all\"]\n"));
-    fprintf(stderr, _("  write [\"records\":1] [\"file#\":\"+\"] [\"record#\":\"+\"] [\"host\"] [\"disk\"] [\"level\"]\n"));
-    fprintf(stderr, _("  eof|weof [\"count\":1]\n"));
-    fprintf(stderr, _("  fsf [\"count\":1]\n"));
-    fprintf(stderr, _("  rewind\n"));
-    fprintf(stderr, _("  unload\n"));
+    g_fprintf(stderr, _("  ?|help\n"));
+    g_fprintf(stderr, _("  open [\"file\"|$TAPE [\"mode\":O_RDONLY]]\n"));
+    g_fprintf(stderr, _("  read [\"records\":\"all\"]\n"));
+    g_fprintf(stderr, _("  write [\"records\":1] [\"file#\":\"+\"] [\"record#\":\"+\"] [\"host\"] [\"disk\"] [\"level\"]\n"));
+    g_fprintf(stderr, _("  eof|weof [\"count\":1]\n"));
+    g_fprintf(stderr, _("  fsf [\"count\":1]\n"));
+    g_fprintf(stderr, _("  rewind\n"));
+    g_fprintf(stderr, _("  unload\n"));
 }
 
 static void
 usage(void)
 {
-    fprintf(stderr, _("usage: %s [-c cmd [args] [%% cmd [args] ...]]\n"), pgm);
+    g_fprintf(stderr, _("usage: %s [-c cmd [args] [%% cmd [args] ...]]\n"), pgm);
     do_help();
 }
 
@@ -1126,7 +1126,7 @@ do_open(void)
     if(token_count < 2
        || (token_count >= 2 && strcmp(token[1], "$TAPE") == 0)) {
 	if((file = getenv("TAPE")) == NULL) {
-	    fprintf(stderr, _("tape_open: no file name and $TAPE not set\n"));
+	    g_fprintf(stderr, _("tape_open: no file name and $TAPE not set\n"));
 	    return;
 	}
     } else {
@@ -1138,11 +1138,11 @@ do_open(void)
 	mode = O_RDONLY;
     }
 
-    fprintf(stderr, _("tapefd_open(\"%s\", %d): "), file, mode);
+    g_fprintf(stderr, _("tapefd_open(\"%s\", %d): "), file, mode);
     if((fd = tape_open(file, mode, 0644)) < 0) {
 	perror("");
     } else {
-	fprintf(stderr, _("%d (OK)\n"), fd);
+	g_fprintf(stderr, _("%d (OK)\n"), fd);
 	if(have_length) {
 	    tapefd_setinfo_length(fd, length);
 	}
@@ -1154,11 +1154,11 @@ do_close(void)
 {
     int	result;
 
-    fprintf(stderr, _("tapefd_close(): "));
+    g_fprintf(stderr, _("tapefd_close(): "));
     if((result = tapefd_close(fd)) < 0) {
 	perror("");
     } else {
-	fprintf(stderr, _("%d (OK)\n"), result);
+	g_fprintf(stderr, _("%d (OK)\n"), result);
     }
 }
 
@@ -1182,12 +1182,12 @@ do_read(void)
 
     p = (int *)buf;
     for(i = 0; (! have_count) || (i < count); i++) {
-	fprintf(stderr, _("tapefd_read(" OFF_T_FMT "): "), (OFF_T_FMT_TYPE)i);
+	g_fprintf(stderr, _("tapefd_read(%lld): "), (long long)i);
 	if((result = tapefd_read(fd, buf, SIZEOF(buf))) < 0) {
 	    perror("");
 	    break;
 	} else if(result == 0) {
-	    fprintf(stderr,  _(SSIZE_T_FMT" (EOF)\n"), result);
+	    g_fprintf(stderr,  _("%zd (EOF)\n"), result);
 	    /*
 	     * If we were not given a count, EOF breaks the loop, otherwise
 	     * we keep trying (to test read after EOF handling).
@@ -1208,8 +1208,8 @@ do_read(void)
 	     * well screwed up at this point anyway so it is not worth
 	     * the effort to deal with.
 	     */
-	    fprintf(stderr,
-		    _(SSIZE_T_FMT " (%s): file %d: record %d"),
+	    g_fprintf(stderr,
+		    _("%zd (%s): file %d: record %d"),
 		    result,
 		    s,
 		    p[0],
@@ -1217,7 +1217,7 @@ do_read(void)
 	    if(show_timestamp) {
 		then = p[2];
 		tm = localtime(&then);
-		fprintf(stderr,
+		g_fprintf(stderr,
 			": %04d/%02d/%02d %02d:%02d:%02d\n",
 			tm->tm_year + 1900,
 			tm->tm_mon + 1,
@@ -1275,7 +1275,7 @@ do_write(void)
     for(i = 0; i < count; i++, (current_record += (off_t)1)) {
 	p[0] = current_file;
 	p[1] = current_record;
-	fprintf(stderr, _("tapefd_write(" OFF_T_FMT "): "), i);
+	g_fprintf(stderr, _("tapefd_write(%lld): "), i);
 	if((result = tapefd_write(fd, write_buf, SIZEOF(write_buf))) < 0) {
 	    perror("");
 	    break;
@@ -1285,14 +1285,14 @@ do_write(void)
 	    } else {
 		s = _("short write");
 	    }
-	    fprintf(stderr,
-		    _("%d (%s): file " OFF_T_FMT ": record " OFF_T_FMT),
+	    g_fprintf(stderr,
+		    _("%d (%s): file %lld: record %lld"),
 		    result,
 		    s,
 		    p[0],
 		    p[1]);
 	    if(show_timestamp) {
-		fprintf(stderr,
+		g_fprintf(stderr,
 			": %04d/%02d/%02d %02d:%02d:%02d\n",
 			tm->tm_year + 1900,
 			tm->tm_mon + 1,
@@ -1318,11 +1318,11 @@ do_fsf(void)
 	count = (off_t)1;
     }
 
-    fprintf(stderr, _("tapefd_fsf(" OFF_T_FMT "): "), (OFF_T_FMT_TYPE)count);
+    g_fprintf(stderr, _("tapefd_fsf(%lld): "), (long long)count);
     if((result = tapefd_fsf(fd, count)) < 0) {
 	perror("");
     } else {
-	fprintf(stderr, _("%d (OK)\n"), result);
+	g_fprintf(stderr, _("%d (OK)\n"), result);
 	current_file += count;
 	current_record = (off_t)0;
     }
@@ -1340,11 +1340,11 @@ do_weof(void)
 	count = (off_t)1;
     }
 
-    fprintf(stderr, _("tapefd_weof(" OFF_T_FMT "): "), count);
+    g_fprintf(stderr, _("tapefd_weof(%lld): "), count);
     if((result = tapefd_weof(fd, count)) < 0) {
 	perror("");
     } else {
-	fprintf(stderr, _("%d (OK)\n"), result);
+	g_fprintf(stderr, _("%d (OK)\n"), result);
 	current_file += count;
 	current_record = (off_t)0;
     }
@@ -1355,11 +1355,11 @@ do_rewind(void)
 {
     int	result;
 
-    fprintf(stderr, _("tapefd_rewind(): "));
+    g_fprintf(stderr, _("tapefd_rewind(): "));
     if((result = tapefd_rewind(fd)) < 0) {
 	perror("");
     } else {
-	fprintf(stderr, _("%d (OK)\n"), result);
+	g_fprintf(stderr, _("%d (OK)\n"), result);
 	current_file = (off_t)0;
 	current_record = (off_t)0;
     }
@@ -1370,11 +1370,11 @@ do_unload(void)
 {
     int	result;
 
-    fprintf(stderr, _("tapefd_unload(): "));
+    g_fprintf(stderr, _("tapefd_unload(): "));
     if((result = tapefd_unload(fd)) < 0) {
 	perror("");
     } else {
-	fprintf(stderr, _("%d (OK)\n"), result);
+	g_fprintf(stderr, _("%d (OK)\n"), result);
 	current_file = (off_t)-1;
 	current_record = (off_t)-1;
     }
@@ -1557,7 +1557,7 @@ main(
 	    }
 	}
 	if(cmd[i].name == NULL) {
-	    fprintf(stderr, _("%s: unknown command: %s\n"), pgm, token[0]);
+	    g_fprintf(stderr, _("%s: unknown command: %s\n"), pgm, token[0]);
 	    exit(1);
 	}
 	(*cmd[i].func)();

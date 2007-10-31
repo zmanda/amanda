@@ -166,7 +166,7 @@ finish_amandates(void)
 	    for(level = 0; level < DUMP_LEVELS; level++) {
 		if(amdp->dates[level] == EPOCH) continue;
 		qname = quote_string(amdp->name);
-		fprintf(amdf, "%s %d %ld\n",
+		g_fprintf(amdf, "%s %d %ld\n",
 			qname, level, (long) amdp->dates[level]);
 		amfree(qname);
 	    }

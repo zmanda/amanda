@@ -197,14 +197,14 @@ static gboolean open_buffer_file(TaperDiskPortSource * self) {
     fd = g_mkstemp(filename);
     umask(old_umask);
     if (fd < 0) {
-        fprintf(stderr, "Couldn't open temporary file with template %s: %s\n",
+        g_fprintf(stderr, "Couldn't open temporary file with template %s: %s\n",
                 filename, strerror(errno));
         return FALSE;
     }
 
     /* If it fails, that's annoying, but no great loss. */
     if (unlink(filename) != 0) {
-        fprintf(stderr, "Unlinking %s failed: %s\n", filename,
+        g_fprintf(stderr, "Unlinking %s failed: %s\n", filename,
                 strerror(errno));
     }
 
@@ -271,7 +271,7 @@ static ssize_t write_disk_buffer(TaperDiskPortSource * self, void * buf,
             bytes_written += write_result;
             continue;
         } else if (write_result == 0) {
-            fprintf(stderr, "Writing disk buffer: Wrote 0 bytes.\n");
+            g_fprintf(stderr, "Writing disk buffer: Wrote 0 bytes.\n");
             continue;
         } else {
             if (0
@@ -389,7 +389,7 @@ static gboolean try_rewind(TaperDiskPortSource * self) {
     gint64 result;
     result = lseek(selfp->buffer_fd, 0, SEEK_SET);
     if (result != 0) {
-        fprintf(stderr, "Couldn't seek split buffer: %s\n", strerror(errno));
+        g_fprintf(stderr, "Couldn't seek split buffer: %s\n", strerror(errno));
         selfp->disk_problem = TRUE;
         return FALSE;
     } else {

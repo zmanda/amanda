@@ -51,7 +51,7 @@ static void print_result(ReadLabelStatusFlags flags) {
     flags_str = g_strjoinv_and_free
         (g_flags_short_name_to_strv(flags,
                                     READ_LABEL_STATUS_FLAGS_TYPE), "\n");
-    printf("%s\n", flags_str);
+    g_printf("%s\n", flags_str);
     amfree(flags_str);
 }
 

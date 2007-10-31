@@ -138,15 +138,14 @@ static void compute_splits(TaperFileSource * self) {
 
     total_kb = holding_file_size(self->holding_disk_file, TRUE);
     if (total_kb <= 0) {
-        fprintf(stderr, "taper: " OFF_T_FMT
-      		" kb holding file makes no sense, not precalculating splits\n",
-		(OFF_T_FMT_TYPE)total_kb);
+        g_fprintf(stderr, "taper: %lld KB holding file makes no sense, not precalculating splits\n",
+		(long long)total_kb);
         fflush(stderr);
         selfp->predicted_splits = -1;
         return;
     }
     
-    fprintf(stderr, "taper: Total dump size should be %" G_GUINT64_FORMAT
+    g_fprintf(stderr, "taper: Total dump size should be %" G_GUINT64_FORMAT
             "kb, part size is %" G_GUINT64_FORMAT "kb\n",
             total_kb, pself->max_part_size);
 
@@ -195,7 +194,7 @@ static gboolean open_holding_file(char * filename, int * fd_pointer,
 
     fd = robust_open(filename, O_NOCTTY | O_RDONLY, 0);
     if (fd < 0) {
-        fprintf(stderr, "Could not open holding disk file %s: %s\n",
+        g_fprintf(stderr, "Could not open holding disk file %s: %s\n",
                 filename, strerror(errno));
         return FALSE;
     }
@@ -203,7 +202,7 @@ static gboolean open_holding_file(char * filename, int * fd_pointer,
     header_buffer = malloc(DISK_BLOCK_BYTES);
     read_result = fullread(fd, header_buffer, DISK_BLOCK_BYTES);
     if (read_result < DISK_BLOCK_BYTES) {
-        fprintf(stderr,
+        g_fprintf(stderr,
                 "Could not read header from holding disk file %s: %s\n",
                 filename, strerror(errno));
         aclose(fd);
@@ -215,7 +214,7 @@ static gboolean open_holding_file(char * filename, int * fd_pointer,
     
     if (!(header_pointer->type == F_DUMPFILE ||
           header_pointer->type == F_CONT_DUMPFILE)) {
-        fprintf(stderr, "Got strange header from file %s.\n",
+        g_fprintf(stderr, "Got strange header from file %s.\n",
                 filename);
         aclose(fd);
         return FALSE;
@@ -238,7 +237,7 @@ static gboolean copy_chunk_data(int * from_fd, int* to_fd,
     
     *to_fd = dup(*from_fd);
     if (*to_fd < 0) {
-        fprintf(stderr, "dup(%d) failed!\n", *from_fd);
+        g_fprintf(stderr, "dup(%d) failed!\n", *from_fd);
         return FALSE;
     }
 
@@ -301,7 +300,7 @@ static int retry_read(int fd, void * buf, size_t count) {
             continue;
         } else {
             if (read_result < 0) {
-                fprintf(stderr, "Error reading holding disk: %s\n",
+                g_fprintf(stderr, "Error reading holding disk: %s\n",
                         strerror(errno));
             }
             return read_result;
@@ -415,7 +414,7 @@ static gboolean taper_file_source_seek_to_part_start (TaperSource * pself) {
                          DISK_BLOCK_BYTES + selfp->current_chunk_position,
                          SEEK_SET);
     if (lseek_result < 0) {
-        fprintf(stderr, "Could not seek holding disk file: %s\n",
+        g_fprintf(stderr, "Could not seek holding disk file: %s\n",
                 strerror(errno));
         return FALSE;
     }

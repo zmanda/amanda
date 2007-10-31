@@ -113,7 +113,7 @@ mode    { return MODE; }
 
 \"			{
     if(string_buf != NULL) {
-	printf("ERROR:string_buf != NULL: %s\n",string_buf);
+	g_printf("ERROR:string_buf != NULL: %s\n",string_buf);
     }
     BEGIN(quotedpath);
     strappend(string_buf, yytext);
@@ -242,11 +242,11 @@ ll_parse_date(
 	yyerror("invalid second");
     } else if(type < 4) {
 	yylval.strval = alloc(DATE_ALLOC_SIZE);
-	snprintf(yylval.strval, DATE_ALLOC_SIZE, "%04d-%02d-%02d", y, m, d);
+	g_snprintf(yylval.strval, DATE_ALLOC_SIZE, "%04d-%02d-%02d", y, m, d);
 	ret = DATE;
     } else {
 	yylval.strval = alloc(DATE_ALLOC_SIZE);
-	snprintf(yylval.strval, DATE_ALLOC_SIZE, "%04d-%02d-%02d-%02d-%02d-%02d", y, m, d, h, mi, s);
+	g_snprintf(yylval.strval, DATE_ALLOC_SIZE, "%04d-%02d-%02d-%02d-%02d-%02d", y, m, d, h, mi, s);
 	ret = DATE;
     }
     return ret;

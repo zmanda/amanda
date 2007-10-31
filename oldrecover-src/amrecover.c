@@ -86,11 +86,11 @@ get_line(void)
 		fputc('\n', stderr);
 	    }
 	    if(save_errno != 0) {
-		fprintf(stderr, _("%s: Error reading line from server: %s\n"),
+		g_fprintf(stderr, _("%s: Error reading line from server: %s\n"),
 				get_pname(),
 				strerror(save_errno));
 	    } else {
-		fprintf(stderr, _("%s: Unexpected end of file, check amindexd*debug on server %s\n"),
+		g_fprintf(stderr, _("%s: Unexpected end of file, check amindexd*debug on server %s\n"),
 			get_pname(),
 			server_name);
 	    }
@@ -295,7 +295,7 @@ guess_disk (
 	/*NOTREACHED*/
     }
     cwd_length = strlen(cwd);
-    dbprintf(_("guess_disk: " SSIZE_T_FMT ": \"%s\"\n"), cwd_length, cwd);
+    dbprintf(_("guess_disk: %zu: \"%s\"\n"), cwd_length, cwd);
 
     if (open_fstab() == 0) {
 	return -1;
@@ -305,7 +305,7 @@ guess_disk (
     while (get_fstab_nextentry(&fsent))
     {
 	current_length = fsent.mntdir ? strlen(fsent.mntdir) : (size_t)0;
-	dbprintf(_("guess_disk: " SSIZE_T_FMT ": " SSIZE_T_FMT": \"%s\": \"%s\"\n"),
+	dbprintf(_("guess_disk: %zu: %zu: \"%s\": \"%s\"\n"),
 		  longest_match,
 		  current_length,
 		  fsent.mntdir ? fsent.mntdir : _("(mntdir null)"),
@@ -347,7 +347,7 @@ guess_disk (
     /* have mount point now */
     /* disk name may be specified by mount point (logical name) or
        device name, have to determine */
-    printf(_("Trying disk %s ...\n"), *mpt_guess);
+    g_printf(_("Trying disk %s ...\n"), *mpt_guess);
     disk_try = stralloc2("DISK ", *mpt_guess);		/* try logical name */
     if (exchange(disk_try) == -1)
 	exit(1);
@@ -358,7 +358,7 @@ guess_disk (
 	amfree(fsname);
 	return 1;
     }
-    printf(_("Trying disk %s ...\n"), fsname);
+    g_printf(_("Trying disk %s ...\n"), fsname);
     disk_try = stralloc2("DISK ", fsname);		/* try device name */
     if (exchange(disk_try) == -1)
 	exit(1);
@@ -501,13 +501,13 @@ main(
 
 	    case 'U':
 	    case '?':
-		(void)printf(USAGE);
+		(void)g_printf(USAGE);
 		return 0;
 	}
     }
     if (optind != argc)
     {
-	(void)fprintf(stderr, USAGE);
+	(void)g_fprintf(stderr, USAGE);
 	exit(1);
     }
 
@@ -530,7 +530,7 @@ main(
 
     service_name = stralloc2("amandaidx", SERVICE_SUFFIX);
 
-    printf(_("AMRECOVER Version %s. Contacting server on %s ...\n"),
+    g_printf(_("AMRECOVER Version %s. Contacting server on %s ...\n"),
 	   version(), server_name);  
     if ((sp = getservbyname(service_name, "tcp")) == NULL) {
 	error(_("%s/tcp unknown protocol"), service_name);
@@ -606,7 +606,7 @@ main(
     else
 	error(_("BAD DATE"));
 
-    printf(_("Setting restore date to today (%s)\n"), dump_date);
+    g_printf(_("Setting restore date to today (%s)\n"), dump_date);
     line = stralloc2("DATE ", dump_date);
     if (converse(line) == -1) {
         aclose(server_socket);
@@ -634,20 +634,20 @@ main(
 	    {
 		case 1:
 		    /* okay, got a guess. Set disk accordingly */
-		    printf(_("$CWD '%s' is on disk '%s' mounted at '%s'.\n"),
+		    g_printf(_("$CWD '%s' is on disk '%s' mounted at '%s'.\n"),
 			   cwd, dn_guess, mpt_guess);
 		    set_disk(dn_guess, mpt_guess);
 		    set_directory(cwd);
 		    if (server_happy() && strcmp(cwd, mpt_guess) != 0)
-		        printf(_("WARNING: not on root of selected filesystem, check man-page!\n"));
+		        g_printf(_("WARNING: not on root of selected filesystem, check man-page!\n"));
 		    amfree(dn_guess);
 		    amfree(mpt_guess);
 		    break;
 
 		case 0:
-		    printf(_("$CWD '%s' is on a network mounted disk\n"),
+		    g_printf(_("$CWD '%s' is on a network mounted disk\n"),
 			   cwd);
-		    printf(_("so you must 'sethost' to the server\n"));
+		    g_printf(_("so you must 'sethost' to the server\n"));
 		    /* fake an unhappy server */
 		    server_line[0] = '5';
 		    break;
@@ -655,7 +655,7 @@ main(
 		case 2:
 		case -1:
 		default:
-		    printf(_("Use the setdisk command to choose dump disk to recover\n"));
+		    g_printf(_("Use the setdisk command to choose dump disk to recover\n"));
 		    /* fake an unhappy server */
 		    server_line[0] = '5';
 		    break;

@@ -728,9 +728,9 @@ DumpSense(void)
 	{
 		if (pwork->sense == UCHAR_MAX)
 		{
-			printf("\n");
+			g_printf("\n");
 		} else {
-			printf(_("%s %s %02X %02X %02X %d %s\n"),pwork->ident, pwork->vendor,
+			g_printf(_("%s %s %02X %02X %02X %d %s\n"),pwork->ident, pwork->vendor,
 				pwork->sense,
 				pwork->asc,
 				pwork->ascq,

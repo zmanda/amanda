@@ -200,17 +200,17 @@ main(
 		g_options->hostname[MAX_HOSTNAME_LENGTH] = '\0';
 	    }
 
-	    printf("OPTIONS ");
+	    g_printf("OPTIONS ");
 	    if(am_has_feature(g_options->features, fe_rep_options_features)) {
-		printf("features=%s;", our_feature_string);
+		g_printf("features=%s;", our_feature_string);
 	    }
 	    if(am_has_feature(g_options->features, fe_rep_options_maxdumps)) {
-		printf("maxdumps=%d;", g_options->maxdumps);
+		g_printf("maxdumps=%d;", g_options->maxdumps);
 	    }
 	    if(am_has_feature(g_options->features, fe_rep_options_hostname)) {
-		printf("hostname=%s;", g_options->hostname);
+		g_printf("hostname=%s;", g_options->hostname);
 	    }
-	    printf("\n");
+	    g_printf("\n");
 	    fflush(stdout);
 
 	    if (g_options->config) {
@@ -542,7 +542,7 @@ main(
     dbclose();
     return 0;
  err:
-    printf(_("FORMAT ERROR IN REQUEST PACKET\n"));
+    g_printf(_("FORMAT ERROR IN REQUEST PACKET\n"));
     if (err_extra) {
 	dbprintf(_("REQ packet is bogus: %s\n"), err_extra);
 	amfree(err_extra);
@@ -719,7 +719,7 @@ backup_api_calc_estimate(
 
     for(level = 0; level < DUMP_LEVELS; level++) {
 	if (est->est[level].needestimate) {
-	    dbprintf(_("getting size via backup-api for %s %s level %d\n"),
+	    dbprintf(_("getting size via application API for %s %s level %d\n"),
 		      est->qamname, est->qamdevice, level);
 	    size = getsize_backup_api(est->program, est->amname, est->amdevice,
 				      level, est->options,
@@ -727,14 +727,14 @@ backup_api_calc_estimate(
 
 	    amflock(1, "size");
 
-	    printf(_("%s %d SIZE " OFF_T_FMT "\n"), est->qamname, level,
-		   (OFF_T_FMT_TYPE)size);
+	    g_printf(_("%s %d SIZE %lld\n"), est->qamname, level,
+		   (long long)size);
 	    if (errmsg && errmsg[0] != '\0') {
 		if(am_has_feature(g_options->features,
 				  fe_rep_sendsize_quoted_error)) {
 		    qerrmsg = quote_string(errmsg);
 		    dbprintf(_("errmsg is %s\n"), errmsg);
-		    printf(_("%s %d ERROR %s\n"),
+		    g_printf(_("%s %d ERROR %s\n"),
 			   est->qamname, level, qerrmsg);
 		    amfree(qerrmsg);
 		}
@@ -824,10 +824,10 @@ generic_calc_estimates(
 
     for(level = 0; level < DUMP_LEVELS; level++) {
 	if(est->est[level].needestimate) {
-	    snprintf(number, SIZEOF(number), "%d", level);
+	    g_snprintf(number, SIZEOF(number), "%d", level);
 	    my_argv[my_argc++] = stralloc(number); 
 	    dbprintf(" %s", number);
-	    snprintf(number, SIZEOF(number),
+	    g_snprintf(number, SIZEOF(number),
 			"%ld", (long)est->est[level].dumpsince);
 	    my_argv[my_argc++] = stralloc(number); 
 	    dbprintf(" %s", number);
@@ -853,14 +853,14 @@ generic_calc_estimates(
 	error(_("Can't fdopen: %s"), strerror(errno));
 	/*NOTREACHED*/
     }
-    match_expr = vstralloc(est->qamname," %d SIZE " OFF_T_FMT, NULL);
+    match_expr = vstralloc(est->qamname," %d SIZE %lld", NULL);
     for(size = (off_t)-1; (line = agets(dumpout)) != NULL; free(line)) {
-	OFF_T_FMT_TYPE size_ = (OFF_T_FMT_TYPE)0;
+	long long size_ = (long long)0;
 	if (line[0] == '\0')
 	    continue;
 	if(sscanf(line, match_expr, &level, &size_) == 2) {
-	    printf("%s\n", line); /* write to amandad */
-	    dbprintf(_("estimate size for %s level %d: " OFF_T_FMT " KB\n"),
+	    g_printf("%s\n", line); /* write to amandad */
+	    dbprintf(_("estimate size for %s level %d: %lld KB\n"),
 		      est->qamname,
 		      level,
 		      size_);
@@ -902,7 +902,7 @@ common_exit:
 	if(am_has_feature(g_options->features, fe_rep_sendsize_quoted_error)) {
 	    qerrmsg = quote_string(errmsg);
 	    dbprintf(_("errmsg is %s\n"), errmsg);
-	    printf("%s %d ERROR %s\n",
+	    g_printf("%s %d ERROR %s\n",
 		    est->qamname, 0, qerrmsg);
 	    amfree(qerrmsg);
 	}
@@ -932,14 +932,14 @@ dump_calc_estimates(
 
 	    amflock(1, "size");
 
-	    printf("%s %d SIZE " OFF_T_FMT "\n",
-		   est->qamname, level, (OFF_T_FMT_TYPE)size);
+	    g_printf(_("%s %d SIZE %lld\n"),
+		   est->qamname, level, (long long)size);
 	    if (errmsg && errmsg[0] != '\0') {
 		if(am_has_feature(g_options->features,
 				  fe_rep_sendsize_quoted_error)) {
 		    qerrmsg = quote_string(errmsg);
 		    dbprintf(_("errmsg is %s\n"), errmsg);
-		    printf("%s %d ERROR %s\n",
+		    g_printf("%s %d ERROR %s\n",
 			   est->qamname, level, qerrmsg);
 		    amfree(qerrmsg);
 		}
@@ -970,14 +970,14 @@ smbtar_calc_estimates(
 
 	    amflock(1, "size");
 
-	    printf("%s %d SIZE " OFF_T_FMT "\n",
-		   est->qamname, level, (OFF_T_FMT_TYPE)size);
+	    g_printf(_("%s %d SIZE %lld\n"),
+		   est->qamname, level, (long long)size);
 	    if (errmsg && errmsg[0] != '\0') {
 		if(am_has_feature(g_options->features,
 				  fe_rep_sendsize_quoted_error)) {
 		    qerrmsg = quote_string(errmsg);
 		    dbprintf(_("errmsg is %s\n"), errmsg);
-		    printf("%s %d ERROR %s\n",
+		    g_printf("%s %d ERROR %s\n",
 			   est->qamname, level, qerrmsg);
 		    amfree(qerrmsg);
 		}
@@ -1010,14 +1010,14 @@ gnutar_calc_estimates(
 
 	    amflock(1, "size");
 
-	    printf(_("%s %d SIZE " OFF_T_FMT "\n"),
-		   est->qamname, level, (OFF_T_FMT_TYPE)size);
+	    g_printf(_("%s %d SIZE %lld\n"),
+		   est->qamname, level, (long long)size);
 	    if (errmsg && errmsg[0] != '\0') {
 		if(am_has_feature(g_options->features,
 				  fe_rep_sendsize_quoted_error)) {
 		    qerrmsg = quote_string(errmsg);
 		    dbprintf(_("errmsg is %s\n"), errmsg);
-		    printf(_("%s %d ERROR %s\n"),
+		    g_printf(_("%s %d ERROR %s\n"),
 			   est->qamname, level, qerrmsg);
 		    amfree(qerrmsg);
 		}
@@ -1129,7 +1129,7 @@ getsize_dump(
 
     (void)getsize_smbtar;	/* Quiet unused parameter warning */
 
-    snprintf(level_str, SIZEOF(level_str), "%d", level);
+    g_snprintf(level_str, SIZEOF(level_str), "%d", level);
 
     device = amname_to_devname(amdevice);
     qdevice = quote_string(device);
@@ -1473,10 +1473,10 @@ getsize_dump(
 		  cmd, name, disk);
 	dbprintf(".....\n");
     } else {
-	    dbprintf(_("estimate size for %s level %d: " OFF_T_FMT " KB\n"),
+	    dbprintf(_("estimate size for %s level %d: %lld KB\n"),
 	      qdisk,
 	      level,
-	      (OFF_T_FMT_TYPE)size);
+	      (long long)size);
     }
 
     if (killctl[1] != -1) {
@@ -1748,10 +1748,10 @@ getsize_smbtar(
 		  SAMBA_CLIENT, disk);
 	dbprintf(".....\n");
     }
-    dbprintf(_("estimate size for %s level %d: " OFF_T_FMT " KB\n"),
+    dbprintf(_("estimate size for %s level %d: %lld KB\n"),
 	      qdisk,
 	      level,
-	      (OFF_T_FMT_TYPE)size);
+	      (long long)size);
 
     kill(-dumppid, SIGTERM);
 
@@ -1763,7 +1763,7 @@ getsize_smbtar(
     } else if (WIFEXITED(wait_status)) {
 	if (WEXITSTATUS(wait_status) != 0) {
 	    *errmsg = vstrallocf(_("%s exited with status %d: see %s"),
-			         SAMBA_CLIENT, WEXITSTATUS(wait_status),
+				 SAMBA_CLIENT, WEXITSTATUS(wait_status),
 				 dbfn());
 	} else {
 	    /* Normal exit */
@@ -1849,7 +1849,7 @@ getsize_gnutar(
 			     NULL);
 	amfree(sdisk);
 
-	snprintf(number, SIZEOF(number), "%d", level);
+	g_snprintf(number, SIZEOF(number), "%d", level);
 	incrname = vstralloc(basename, "_", number, ".new", NULL);
 	unlink(incrname);
 
@@ -1862,7 +1862,7 @@ getsize_gnutar(
 	infd = -1;
 	while (infd == -1) {
 	    if (--baselevel >= 0) {
-		snprintf(number, SIZEOF(number), "%d", baselevel);
+		g_snprintf(number, SIZEOF(number), "%d", baselevel);
 		inputname = newvstralloc(inputname,
 					 basename, "_", number, NULL);
 	    } else {
@@ -1924,7 +1924,7 @@ getsize_gnutar(
     }
 
     gmtm = gmtime(&dumpsince);
-    snprintf(dumptimestr, SIZEOF(dumptimestr),
+    g_snprintf(dumptimestr, SIZEOF(dumptimestr),
 		"%04d-%02d-%02d %2d:%02d:%02d GMT",
 		gmtm->tm_year + 1900, gmtm->tm_mon+1, gmtm->tm_mday,
 		gmtm->tm_hour, gmtm->tm_min, gmtm->tm_sec);
@@ -2037,10 +2037,10 @@ getsize_gnutar(
 		  my_argv[0], disk);
 	dbprintf(".....\n");
     }
-    dbprintf(_("estimate size for %s level %d: " OFF_T_FMT " KB\n"),
+    dbprintf(_("estimate size for %s level %d: %lld KB\n"),
 	      qdisk,
 	      level,
-	      (OFF_T_FMT_TYPE)size);
+	      (long long)size);
 
     kill(-dumppid, SIGTERM);
 
@@ -2118,7 +2118,7 @@ getsize_backup_api(
 
     (void)options;
     gmtm = gmtime(&dumpsince);
-    snprintf(dumptimestr, SIZEOF(dumptimestr),
+    g_snprintf(dumptimestr, SIZEOF(dumptimestr),
 		"%04d-%02d-%02d %2d:%02d:%02d GMT",
 		gmtm->tm_year + 1900, gmtm->tm_mon+1, gmtm->tm_mday,
 		gmtm->tm_hour, gmtm->tm_min, gmtm->tm_sec);
@@ -2150,7 +2150,7 @@ getsize_backup_api(
     }
     if (level <= bsu->max_level) {
 	argvchild[i++] = "--level";
-	snprintf(levelstr,SIZEOF(levelstr),"%d",level);
+	g_snprintf(levelstr,SIZEOF(levelstr),"%d",level);
 	argvchild[i++] = levelstr;
     }
 
@@ -2224,12 +2224,12 @@ getsize_backup_api(
     }
 
     for(size = (off_t)-1; (line = agets(dumpout)) != NULL; free(line)) {
-	OFF_T_FMT_TYPE size1_ = (OFF_T_FMT_TYPE)0;
-	OFF_T_FMT_TYPE size2_ = (OFF_T_FMT_TYPE)0;
+	long long size1_ = (long long)0;
+	long long size2_ = (long long)0;
 	if (line[0] == '\0')
 	    continue;
 	dbprintf("%s\n", line);
-	i = sscanf(line, OFF_T_FMT " " OFF_T_FMT, &size1_, &size2_);
+	i = sscanf(line, "%lld %lld", &size1_, &size2_);
 	size1 = (off_t)size1_;
 	size2 = (off_t)size2_;
 	if(i == 2) {
@@ -2262,10 +2262,10 @@ getsize_backup_api(
 		  cmd, qdisk);
 	dbprintf(".....\n");
     }
-    dbprintf(_("estimate size for %s level %d: " OFF_T_FMT " KB\n"),
+    dbprintf(_("estimate size for %s level %d: %lld KB\n"),
 	      qamdevice,
 	      level,
-	      (OFF_T_FMT_TYPE)size);
+	      (long long)size);
 
     kill(-dumppid, SIGTERM);
 

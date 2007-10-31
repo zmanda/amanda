@@ -63,7 +63,7 @@ getcmd(
     assert(cmdargs != NULL);
 
     if (isatty(0)) {
-	printf("%s> ", get_pname());
+	g_printf("%s> ", get_pname());
 	fflush(stdout);
         line = readline(NULL);
     } else {
@@ -81,9 +81,9 @@ getcmd(
 #if DEBUG
     {
 	int i;
-	fprintf(stderr,_("argc = %d\n"), cmdargs->argc);
+	g_fprintf(stderr,_("argc = %d\n"), cmdargs->argc);
 	for (i = 0; i < cmdargs->argc+1; i++)
-	    fprintf(stderr,_("argv[%d] = \"%s\"\n"), i, cmdargs->argv[i]);
+	    g_fprintf(stderr,_("argv[%d] = \"%s\"\n"), i, cmdargs->argv[i]);
     }
 #endif
 
@@ -103,8 +103,8 @@ printf_arglist_function1(void putresult, cmd_t, result, const char *, format)
 
     arglist_start(argp, format);
     dbprintf(_("putresult: %d %s\n"), result, cmdstr[result]);
-    printf("%s ", cmdstr[result]);
-    vprintf(format, argp);
+    g_printf("%s ", cmdstr[result]);
+    g_vprintf(format, argp);
     fflush(stdout);
     arglist_end(argp);
 }

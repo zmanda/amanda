@@ -69,7 +69,7 @@ create_lock(
 	    aclose(fd);
 	    return -1;
 	}
-	fprintf(f, "%ld\n", pid);
+	g_fprintf(f, "%ld\n", pid);
 	if (fclose(f) == EOF)
 	    return -1;
 	return 0;
@@ -211,7 +211,7 @@ ln_lock(
 
 	/* lock the resource */
 
-	snprintf(pid_str, SIZEOF(pid_str), "%ld", mypid);
+	g_snprintf(pid_str, SIZEOF(pid_str), "%ld", mypid);
 	tlockfile = vstralloc(_lnlock_dir, "/am", res, ".", pid_str, NULL);
 
 	(void)create_lock(tlockfile, mypid);

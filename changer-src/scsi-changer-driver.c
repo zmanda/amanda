@@ -479,31 +479,31 @@ PrintConf(void)
   int count;
   char *cwd;
 
-  printf(_("# Please replace every ??? with the correct parameter.\n"));
-  printf(_("# It is not possible to guess everything :-)\n"));
-  printf(_("# Remove the line if the option is not needed."));
-  printf(_("#   Example: cleanmax if you have no cleaning tape"));
-  printf(_("#\n"));
-  printf(_(
+  g_printf(_("# Please replace every ??? with the correct parameter.\n"));
+  g_printf(_("# It is not possible to guess everything :-)\n"));
+  g_printf(_("# Remove the line if the option is not needed."));
+  g_printf(_("#   Example: cleanmax if you have no cleaning tape"));
+  g_printf(_("#\n"));
+  g_printf(_(
    "number_configs  1 # Number of configs, you can have more than 1 config\n"
    "                  # if you have for example more than one drive, or you\n"
    "                  # to split your lib to use different dump levels\n"
    "                  #\n"));
-  printf(_(
+  g_printf(_(
    "emubarcode      1 # If you drive has no barcode reader this will try\n"
    "                  # keep an inventory of your tapes to find them faster\n"
    "                  #\n"));
-  printf(_(
+  g_printf(_(
    "havebarcode     0 # Set this to 1 if you have a library with a\n"
    "                  # barcode reader\n"
    "                  #\n"));
-  printf(_(
+  g_printf(_(
    "debuglevel    0:0 # For debuging, see the docs /docs/TAPE-CHANGER\n"
    "                  #\n"));
-  printf(_(
+  g_printf(_(
    "eject         ??? # set this to 1 if your drive needs an eject before move\n"
    "                  #\n"));
-  printf(_(
+  g_printf(_(
    "sleep         ??? # How long to wait after an eject command before moving\n"
    "                  # the tape\n"
    "                  #\n"));
@@ -514,7 +514,7 @@ PrintConf(void)
 	{
 	  if (pDev[count].inquiry != NULL && pDev[count].inquiry->type == TYPE_CHANGER)
 	    {
-	      printf(_("changerdev   %s # This is the device to communicate with the robot\n"), pDev[count].dev);
+	      g_printf(_("changerdev   %s # This is the device to communicate with the robot\n"), pDev[count].dev);
 	      break;
 	    }
 	}
@@ -529,26 +529,26 @@ PrintConf(void)
     {
       pDev[count].functions->function_status(count, 1);
     } else {
-      printf(_("changerdev ???       # Ups nothing found. Please check the docs\n"));
+      g_printf(_("changerdev ???       # Ups nothing found. Please check the docs\n"));
     }
 
-  printf(_(
+  g_printf(_(
    "                     #\n"));
-  printf(_(
+  g_printf(_(
    "                     # Here now comes the config for the first tape\n"));
-  printf(_(
+  g_printf(_(
    "config             0 # This value is the one which is used in the amanda\n"
    "                     # config file to tell the chg-scsi programm which tape\n"
    "                     # and which slots to use\n"
    "                     #\n"));
-  printf(_(
+  g_printf(_(
    "cleancart        ??? # The slot where the cleaning tape is located\n"
    "                     # remove it if you have no cleaning tape\n"
    "                     #\n"));
-  printf(_(
+  g_printf(_(
    "drivenum           0 # Which tape drive to use if there are more than one drive\n"
    "                     #\n"));
-  printf(_(
+  g_printf(_(
    "dev              ??? # Which is the raw device to read/write data from the tape\n"
    "                     # It is important to use the non rewinding tape, like\n"
    "                     # /dev/nrst0 on linux, /dev/nrsa0 on BSD ....\n"
@@ -565,7 +565,7 @@ PrintConf(void)
 	{
 	  if (pDev[count].inquiry != NULL && pDev[count].inquiry->type == TYPE_TAPE)
 	    {
-	      printf(_(
+	      g_printf(_(
 		"scsitapedev   %s # This is the device to communicate with the tape\n"
 	        "                 # to get some device stats, not so important, and\n"
 	        "                 # if you run into problems delete it completely\n"
@@ -578,20 +578,19 @@ PrintConf(void)
 
   if (STE != 0)
     {
-      printf(_(
+      g_printf(_(
 	"startuse          0  # Which is the first slot to use\n"
 	"                     #\n"));
-      printf(_(
-	"enduse            %zu  # Which is the last slot to use.\n"),
-		(SIZE_T_FMT_TYPE)STE);
+      g_printf(_(
+	"enduse            %zu  # Which is the last slot to use.\n"), STE);
     } else {
-      printf(_(
+      g_printf(_(
 	"startuse         ??? # Which is the first slot to use\n"
 	"                     #\n"));
-      printf(_(
+      g_printf(_(
 	"enduse           ??? # Which is the last slot to use.\n"));
     }
-    printf(_(
+    g_printf(_(
 	"                     # Decrement this value by 1 if you have a\n"
 	"                     # cleaning tape in the last slot\n"
 	"                     #\n"));
@@ -600,11 +599,11 @@ PrintConf(void)
       cwd = _("<unknown>");
   }
 
-  printf(_("statfile %s/tape0-slot #\n"),cwd);
-  printf(_("cleanfile %s/tape0-clean #\n"), cwd);
-  printf(_("usagecount %s/tape0-totaltime #\n"), cwd);
-  printf(_("tapestatus %s/tape0-tapestatus #\n"), cwd);
-  printf(_("labelfile %s/labelfile #\n"), cwd);
+  g_printf(_("statfile %s/tape0-slot #\n"),cwd);
+  g_printf(_("cleanfile %s/tape0-clean #\n"), cwd);
+  g_printf(_("usagecount %s/tape0-totaltime #\n"), cwd);
+  g_printf(_("tapestatus %s/tape0-tapestatus #\n"), cwd);
+  g_printf(_("labelfile %s/labelfile #\n"), cwd);
 }
 
 
@@ -891,16 +890,16 @@ find_empty(
     }
 
   DebugPrint(DEBUG_INFO, SECTION_ELEMENT,
-	     _("start at " SIZE_T_FMT ", end at " SIZE_T_FMT "\n"),
-	     (SIZE_T_FMT_TYPE)start,
-	     (SIZE_T_FMT_TYPE)end);
+	     _("start at %zu, end at %zu\n"),
+	     (size_t)start,
+	     (size_t)end);
 
   for (x = start; x < end; x++)
     {
       if (pSTE[x].status == 'E')
         {
           DebugPrint(DEBUG_INFO,SECTION_ELEMENT,
-		     _("###### END find_empty [" SIZE_T_FMT "]\n"), x);
+		     _("###### END find_empty [%lu]\n"), x);
           return((ssize_t)x);
 	  /*NOTREACHED*/
         }
@@ -1338,8 +1337,7 @@ get_slot_count(
       pDev[fd].functions->function_status(fd, 1);
     }
   DebugPrint(DEBUG_INFO, SECTION_ELEMENT,
-	     _("##### STOP get_slot_count (" SIZE_T_FMT ")\n"),
-	     (SIZE_T_FMT_TYPE)STE);
+	     _("##### STOP get_slot_count (%zu)\n"), STE);
   return((ssize_t)STE);
   /*
    * return the number of slots in the robot
@@ -1374,8 +1372,7 @@ get_drive_count(
 	    }
       }
   DebugPrint(DEBUG_INFO, SECTION_SCSI,
-	     _("###### STOP get_drive_count (" SIZE_T_FMT " drives)\n"),
-	     (SIZE_T_FMT_TYPE)DTE);
+	     _("###### STOP get_drive_count (%zu drives)\n"), DTE);
   return((ssize_t)DTE);
 }
 
@@ -1447,7 +1444,7 @@ OpenDevice(
       /* divide generic in generic_type, where type is the */
       /* num returned by the inquiry command */
       p = (ChangerCMD_T *)&ChangerIO;
-      snprintf(&tmpstr[0], SIZEOF(tmpstr), "%s_%s","generic",pDev[0].type);
+      g_snprintf(&tmpstr[0], SIZEOF(tmpstr), "%s_%s","generic",pDev[0].type);
       DebugPrint(DEBUG_INFO, SECTION_SCSI,"##### OpenDevice trying GENERIC Device %s\n",tmpstr);
       while(p->ident != NULL)
         {
@@ -1708,15 +1705,15 @@ DecodeModeSense(
   if (block) /* Do we have an block descriptor page ?*/
     {
       if (out != NULL)
-     	 fprintf(out, _("DecodeModeSense : Density Code %x\n"), (unsigned)buffer[0]);
+     	 g_fprintf(out, _("DecodeModeSense : Density Code %x\n"), (unsigned)buffer[0]);
       buffer++;
 
       if (out != NULL)
-      	fprintf(out, _("DecodeModeSense : Number of Blocks %d\n"), V3(buffer));
+      	g_fprintf(out, _("DecodeModeSense : Number of Blocks %d\n"), V3(buffer));
       buffer = buffer + 4;
 
       if (out != NULL)
-      	fprintf(out, _("DecodeModeSense : Block Length %d\n"), V3(buffer));
+      	g_fprintf(out, _("DecodeModeSense : Block Length %d\n"), V3(buffer));
       buffer = buffer + 3;
     }
 
@@ -1732,14 +1729,14 @@ DecodeModeSense(
           prp = (ReadWriteErrorRecoveryPage_T *)buffer;
 	  if (out != NULL)
           {
-          	fprintf(out, _("DecodeModeSense : Read/Write Error Recovery Page\n"));
-          	fprintf(out,_("\tTransfer Block            %d\n"), prp->tb);
-          	fprintf(out,_("\tEnable Early Recovery     %d\n"), prp->eer);
-          	fprintf(out,_("\tPost Error                %d\n"), prp->per);
-          	fprintf(out,_("\tDisable Transfer on Error %d\n"), prp->dte);
-          	fprintf(out,_("\tDisable ECC Correction    %d\n"), prp->dcr);
-          	fprintf(out,_("\tRead Retry Count          %d\n"), prp->ReadRetryCount);
-          	fprintf(out,_("\tWrite Retry Count         %d\n"), prp->WriteRetryCount);
+          	g_fprintf(out, _("DecodeModeSense : Read/Write Error Recovery Page\n"));
+          	g_fprintf(out,_("\tTransfer Block            %d\n"), prp->tb);
+          	g_fprintf(out,_("\tEnable Early Recovery     %d\n"), prp->eer);
+          	g_fprintf(out,_("\tPost Error                %d\n"), prp->per);
+          	g_fprintf(out,_("\tDisable Transfer on Error %d\n"), prp->dte);
+          	g_fprintf(out,_("\tDisable ECC Correction    %d\n"), prp->dcr);
+          	g_fprintf(out,_("\tRead Retry Count          %d\n"), prp->ReadRetryCount);
+          	g_fprintf(out,_("\tWrite Retry Count         %d\n"), prp->WriteRetryCount);
 	  }
           buffer++;
           break;
@@ -1747,18 +1744,18 @@ DecodeModeSense(
           pdrp = (DisconnectReconnectPage_T *)buffer;
 	  if (out != NULL)
           {
-          	fprintf(out, _("DecodeModeSense : Disconnect/Reconnect Page\n"));
-          	fprintf(out,_("\tBuffer Full Ratio     %d\n"), pdrp->BufferFullRatio);
-          	fprintf(out,_("\tBuffer Empty Ratio    %d\n"), pdrp->BufferEmptyRatio);
-          	fprintf(out,_("\tBus Inactivity Limit  %d\n"),
+          	g_fprintf(out, _("DecodeModeSense : Disconnect/Reconnect Page\n"));
+          	g_fprintf(out,_("\tBuffer Full Ratio     %d\n"), pdrp->BufferFullRatio);
+          	g_fprintf(out,_("\tBuffer Empty Ratio    %d\n"), pdrp->BufferEmptyRatio);
+          	g_fprintf(out,_("\tBus Inactivity Limit  %d\n"),
                   V2(pdrp->BusInactivityLimit));
-          	fprintf(out,_("\tDisconnect Time Limit %d\n"),
+          	g_fprintf(out,_("\tDisconnect Time Limit %d\n"),
                   V2(pdrp->DisconnectTimeLimit));
-          	fprintf(out,_("\tConnect Time Limit    %d\n"),
+          	g_fprintf(out,_("\tConnect Time Limit    %d\n"),
                   V2(pdrp->ConnectTimeLimit));
-          	fprintf(out,_("\tMaximum Burst Size    %d\n"),
+          	g_fprintf(out,_("\tMaximum Burst Size    %d\n"),
                   V2(pdrp->MaximumBurstSize));
-          	fprintf(out,_("\tDTDC                  %d\n"), pdrp->DTDC);
+          	g_fprintf(out,_("\tDTDC                  %d\n"), pdrp->DTDC);
 	  }
           buffer++;
           break;
@@ -1766,22 +1763,22 @@ DecodeModeSense(
           pEAAPage = (EAAPage_T *)buffer;
 	  if (out != NULL)
 	  {
-          	fprintf(out,_("DecodeModeSense : Element Address Assignment Page\n"));
-          	fprintf(out,_("\tMedium Transport Element Address     %d\n"),
+          	g_fprintf(out,_("DecodeModeSense : Element Address Assignment Page\n"));
+          	g_fprintf(out,_("\tMedium Transport Element Address     %d\n"),
                     V2(pEAAPage->MediumTransportElementAddress));
-          	fprintf(out,_("\tNumber of Medium Transport Elements  %d\n"),
+          	g_fprintf(out,_("\tNumber of Medium Transport Elements  %d\n"),
                     V2(pEAAPage->NoMediumTransportElements));
-          	fprintf(out, _("\tFirst Storage Element Address       %d\n"),
+          	g_fprintf(out, _("\tFirst Storage Element Address       %d\n"),
                     V2(pEAAPage->FirstStorageElementAddress));
-          	fprintf(out, _("\tNumber of  Storage Elements         %d\n"),
+          	g_fprintf(out, _("\tNumber of  Storage Elements         %d\n"),
                     V2(pEAAPage->NoStorageElements));
-          	fprintf(out, _("\tFirst Import/Export Element Address %d\n"),
+          	g_fprintf(out, _("\tFirst Import/Export Element Address %d\n"),
                     V2(pEAAPage->FirstImportExportElementAddress));
-          	fprintf(out, _("\tNumber of  ImportExport Elements    %d\n"),
+          	g_fprintf(out, _("\tNumber of  ImportExport Elements    %d\n"),
                     V2(pEAAPage->NoImportExportElements));
-          	fprintf(out, _("\tFirst Data Transfer Element Address %d\n"),
+          	g_fprintf(out, _("\tFirst Data Transfer Element Address %d\n"),
                     V2(pEAAPage->FirstDataTransferElementAddress));
-          	fprintf(out, _("\tNumber of  Data Transfer Elements   %d\n"),
+          	g_fprintf(out, _("\tNumber of  Data Transfer Elements   %d\n"),
                     V2(pEAAPage->NoDataTransferElements));
 	  }
           buffer++;
@@ -1790,43 +1787,43 @@ DecodeModeSense(
           pDeviceCapabilitiesPage = (DeviceCapabilitiesPage_T *)buffer;
 	  if (out != NULL)
 	  {
-          	fprintf(out, _("DecodeModeSense : MT can store data cartridges %d\n"),
+          	g_fprintf(out, _("DecodeModeSense : MT can store data cartridges %d\n"),
                     pDeviceCapabilitiesPage->MT);
-          	fprintf(out, _("DecodeModeSense : ST can store data cartridges %d\n"),
+          	g_fprintf(out, _("DecodeModeSense : ST can store data cartridges %d\n"),
                     pDeviceCapabilitiesPage->ST);
-          	fprintf(out, _("DecodeModeSense : IE can store data cartridges %d\n"),
+          	g_fprintf(out, _("DecodeModeSense : IE can store data cartridges %d\n"),
                     pDeviceCapabilitiesPage->IE);
-          	fprintf(out, _("DecodeModeSense : DT can store data cartridges %d\n"),
+          	g_fprintf(out, _("DecodeModeSense : DT can store data cartridges %d\n"),
                     pDeviceCapabilitiesPage->DT);
-          	fprintf(out, _("DecodeModeSense : MT to MT %d\n"),
+          	g_fprintf(out, _("DecodeModeSense : MT to MT %d\n"),
                     pDeviceCapabilitiesPage->MT2MT);
-          	fprintf(out, _("DecodeModeSense : MT to ST %d\n"),
+          	g_fprintf(out, _("DecodeModeSense : MT to ST %d\n"),
                     pDeviceCapabilitiesPage->MT2ST);
-          	fprintf(out, _("DecodeModeSense : MT to IE %d\n"),
+          	g_fprintf(out, _("DecodeModeSense : MT to IE %d\n"),
                     pDeviceCapabilitiesPage->MT2IE);
-          	fprintf(out, _("DecodeModeSense : MT to DT %d\n"),
+          	g_fprintf(out, _("DecodeModeSense : MT to DT %d\n"),
                     pDeviceCapabilitiesPage->MT2DT);
-          	fprintf(out, _("DecodeModeSense : ST to MT %d\n"),
+          	g_fprintf(out, _("DecodeModeSense : ST to MT %d\n"),
                     pDeviceCapabilitiesPage->ST2ST);
-          	fprintf(out, _("DecodeModeSense : ST to MT %d\n"),
+          	g_fprintf(out, _("DecodeModeSense : ST to MT %d\n"),
                     pDeviceCapabilitiesPage->ST2ST);
-          	fprintf(out, _("DecodeModeSense : ST to DT %d\n"),
+          	g_fprintf(out, _("DecodeModeSense : ST to DT %d\n"),
                     pDeviceCapabilitiesPage->ST2DT);
-          	fprintf(out, _("DecodeModeSense : IE to MT %d\n"),
+          	g_fprintf(out, _("DecodeModeSense : IE to MT %d\n"),
                     pDeviceCapabilitiesPage->IE2MT);
-          	fprintf(out, _("DecodeModeSense : IE to ST %d\n"),
+          	g_fprintf(out, _("DecodeModeSense : IE to ST %d\n"),
                     pDeviceCapabilitiesPage->IE2IE);
-          	fprintf(out, _("DecodeModeSense : IE to ST %d\n"),
+          	g_fprintf(out, _("DecodeModeSense : IE to ST %d\n"),
                     pDeviceCapabilitiesPage->IE2DT);
-          	fprintf(out, _("DecodeModeSense : IE to ST %d\n"),
+          	g_fprintf(out, _("DecodeModeSense : IE to ST %d\n"),
                     pDeviceCapabilitiesPage->IE2DT);
-          	fprintf(out, _("DecodeModeSense : DT to MT %d\n"),
+          	g_fprintf(out, _("DecodeModeSense : DT to MT %d\n"),
                     pDeviceCapabilitiesPage->DT2MT);
-          	fprintf(out, _("DecodeModeSense : DT to ST %d\n"),
+          	g_fprintf(out, _("DecodeModeSense : DT to ST %d\n"),
                     pDeviceCapabilitiesPage->DT2ST);
-          	fprintf(out, _("DecodeModeSense : DT to IE %d\n"),
+          	g_fprintf(out, _("DecodeModeSense : DT to IE %d\n"),
                     pDeviceCapabilitiesPage->DT2IE);
-          	fprintf(out, _("DecodeModeSense : DT to DT %d\n"),
+          	g_fprintf(out, _("DecodeModeSense : DT to DT %d\n"),
                     pDeviceCapabilitiesPage->DT2DT);
 	  }
           buffer++;
@@ -1860,67 +1857,67 @@ DecodeSense(
       return(0);
       /*NOTREACHED*/
     }
-  fprintf(out,_("##### START DecodeSense\n"));
-  fprintf(out,_("%sSense Keys\n"), pstring);
+  g_fprintf(out,_("##### START DecodeSense\n"));
+  g_fprintf(out,_("%sSense Keys\n"), pstring);
   if (sense->ErrorCode == 0x70)
     {
-    fprintf(out,_("\tExtended Sense                     \n"));
+    g_fprintf(out,_("\tExtended Sense                     \n"));
     } else {
-      fprintf(out,_("\tErrorCode                     %02x\n"), sense->ErrorCode);
-      fprintf(out,_("\tValid                         %d\n"), sense->Valid);
+      g_fprintf(out,_("\tErrorCode                     %02x\n"), sense->ErrorCode);
+      g_fprintf(out,_("\tValid                         %d\n"), sense->Valid);
     }
-  fprintf(out,_("\tASC                           %02X\n"), sense->AdditionalSenseCode);
-  fprintf(out,_("\tASCQ                          %02X\n"), sense->AdditionalSenseCodeQualifier);
-  fprintf(out,_("\tSense key                     %02X\n"), sense->SenseKey);
+  g_fprintf(out,_("\tASC                           %02X\n"), sense->AdditionalSenseCode);
+  g_fprintf(out,_("\tASCQ                          %02X\n"), sense->AdditionalSenseCodeQualifier);
+  g_fprintf(out,_("\tSense key                     %02X\n"), sense->SenseKey);
   switch (sense->SenseKey)
     {
     case 0:
-      fprintf(out,_("\t\tNo Sense\n"));
+      g_fprintf(out,_("\t\tNo Sense\n"));
       break;
     case 1:
-      fprintf(out,_("\t\tRecoverd Error\n"));
+      g_fprintf(out,_("\t\tRecoverd Error\n"));
       break;
     case 2:
-      fprintf(out,_("\t\tNot Ready\n"));
+      g_fprintf(out,_("\t\tNot Ready\n"));
       break;
     case 3:
-      fprintf(out,_("\t\tMedium Error\n"));
+      g_fprintf(out,_("\t\tMedium Error\n"));
       break;
     case 4:
-      fprintf(out,_("\t\tHardware Error\n"));
+      g_fprintf(out,_("\t\tHardware Error\n"));
       break;
     case 5:
-      fprintf(out,_("\t\tIllegal Request\n"));
+      g_fprintf(out,_("\t\tIllegal Request\n"));
       break;
     case 6:
-      fprintf(out,_("\t\tUnit Attention\n"));
+      g_fprintf(out,_("\t\tUnit Attention\n"));
       break;
     case 7:
-      fprintf(out,_("\t\tData Protect\n"));
+      g_fprintf(out,_("\t\tData Protect\n"));
       break;
     case 8:
-      fprintf(out,_("\t\tBlank Check\n"));
+      g_fprintf(out,_("\t\tBlank Check\n"));
       break;
     case 9:
-      fprintf(out,_("\t\tVendor uniq\n"));
+      g_fprintf(out,_("\t\tVendor uniq\n"));
       break;
     case 0xa:
-      fprintf(out,_("\t\tCopy Aborted\n"));
+      g_fprintf(out,_("\t\tCopy Aborted\n"));
       break;
     case 0xb:
-      fprintf(out,_("\t\tAborted Command\n"));
+      g_fprintf(out,_("\t\tAborted Command\n"));
       break;
     case 0xc:
-      fprintf(out,_("\t\tEqual\n"));
+      g_fprintf(out,_("\t\tEqual\n"));
       break;
     case 0xd:
-      fprintf(out,_("\t\tVolume Overflow\n"));
+      g_fprintf(out,_("\t\tVolume Overflow\n"));
       break;
     case 0xe:
-      fprintf(out,_("\t\tMiscompare\n"));
+      g_fprintf(out,_("\t\tMiscompare\n"));
       break;
     case 0xf:
-      fprintf(out,_("\t\tReserved\n"));
+      g_fprintf(out,_("\t\tReserved\n"));
       break;
     }
   return(0);
@@ -1934,65 +1931,65 @@ DecodeExtSense(
 {
   ExtendedRequestSense_T *p;
 
-  fprintf(out,_("##### START DecodeExtSense\n"));
+  g_fprintf(out,_("##### START DecodeExtSense\n"));
   p = sense;
 
-  fprintf(out,_("%sExtended Sense\n"), pstring);
+  g_fprintf(out,_("%sExtended Sense\n"), pstring);
   DecodeSense((RequestSense_T *)p, pstring, out);
-  fprintf(out,_("\tLog Parameter Page Code         %02X\n"), sense->LogParameterPageCode);
-  fprintf(out,_("\tLog Parameter Code              %02X\n"), sense->LogParameterCode);
-  fprintf(out,_("\tUnderrun/Overrun Counter        %02X\n"), sense->UnderrunOverrunCounter);
-  fprintf(out,_("\tRead/Write Error Counter        %d\n"), V3((char *)sense->ReadWriteDataErrorCounter));
+  g_fprintf(out,_("\tLog Parameter Page Code         %02X\n"), sense->LogParameterPageCode);
+  g_fprintf(out,_("\tLog Parameter Code              %02X\n"), sense->LogParameterCode);
+  g_fprintf(out,_("\tUnderrun/Overrun Counter        %02X\n"), sense->UnderrunOverrunCounter);
+  g_fprintf(out,_("\tRead/Write Error Counter        %d\n"), V3((char *)sense->ReadWriteDataErrorCounter));
   if (sense->AdditionalSenseLength > (u_char)sizeof(RequestSense_T))
     {
       if (sense->PF)
-        fprintf(out,_("\tPower Fail\n"));
+        g_fprintf(out,_("\tPower Fail\n"));
       if (sense->BPE)
-        fprintf(out,_("\tSCSI Bus Parity Error\n"));
+        g_fprintf(out,_("\tSCSI Bus Parity Error\n"));
       if (sense->FPE)
-        fprintf(out,_("\tFormatted Buffer parity Error\n"));
+        g_fprintf(out,_("\tFormatted Buffer parity Error\n"));
       if (sense->ME)
-        fprintf(out,_("\tMedia Error\n"));
+        g_fprintf(out,_("\tMedia Error\n"));
       if (sense->ECO)
-        fprintf(out,_("\tError Counter Overflow\n"));
+        g_fprintf(out,_("\tError Counter Overflow\n"));
       if (sense->TME)
-        fprintf(out,_("\tTapeMotion Error\n"));
+        g_fprintf(out,_("\tTapeMotion Error\n"));
       if (sense->TNP)
-        fprintf(out,_("\tTape Not Present\n"));
+        g_fprintf(out,_("\tTape Not Present\n"));
       if (sense->LBOT)
-        fprintf(out,_("\tLogical Beginning of tape\n"));
+        g_fprintf(out,_("\tLogical Beginning of tape\n"));
       if (sense->TMD)
-        fprintf(out,_("\tTape Mark Detect Error\n"));
+        g_fprintf(out,_("\tTape Mark Detect Error\n"));
       if (sense->WP)
-        fprintf(out,_("\tWrite Protect\n"));
+        g_fprintf(out,_("\tWrite Protect\n"));
       if (sense->FMKE)
-        fprintf(out,_("\tFilemark Error\n"));
+        g_fprintf(out,_("\tFilemark Error\n"));
       if (sense->URE)
-        fprintf(out,_("\tUnder Run Error\n"));
+        g_fprintf(out,_("\tUnder Run Error\n"));
       if (sense->WEI)
-        fprintf(out,_("\tWrite Error 1\n"));
+        g_fprintf(out,_("\tWrite Error 1\n"));
       if (sense->SSE)
-        fprintf(out,_("\tServo System Error\n"));
+        g_fprintf(out,_("\tServo System Error\n"));
       if (sense->FE)
-        fprintf(out,_("\tFormatter Error\n"));
+        g_fprintf(out,_("\tFormatter Error\n"));
       if (sense->UCLN)
-        fprintf(out,_("\tCleaning Cartridge is empty\n"));
+        g_fprintf(out,_("\tCleaning Cartridge is empty\n"));
       if (sense->RRR)
-        fprintf(out,_("\tReverse Retries Required\n"));
+        g_fprintf(out,_("\tReverse Retries Required\n"));
       if (sense->CLND)
-        fprintf(out,_("\tTape Drive has been cleaned\n"));
+        g_fprintf(out,_("\tTape Drive has been cleaned\n"));
       if (sense->CLN)
-        fprintf(out,_("\tTape Drive needs to be cleaned\n"));
+        g_fprintf(out,_("\tTape Drive needs to be cleaned\n"));
       if (sense->PEOT)
-        fprintf(out,_("\tPhysical End of Tape\n"));
+        g_fprintf(out,_("\tPhysical End of Tape\n"));
       if (sense->WSEB)
-        fprintf(out,_("\tWrite Splice Error\n"));
+        g_fprintf(out,_("\tWrite Splice Error\n"));
       if (sense->WSEO)
-        fprintf(out,_("\tWrite Splice Error\n"));
-      fprintf(out,_("\tRemaing 1024 byte tape blocks   %d\n"), V3((char *)sense->RemainingTape));
-      fprintf(out,_("\tTracking Retry Counter          %02X\n"), sense->TrackingRetryCounter);
-      fprintf(out,_("\tRead/Write Retry Counter        %02X\n"), sense->ReadWriteRetryCounter);
-      fprintf(out,_("\tFault Sympton Code              %02X\n"), sense->FaultSymptomCode);
+        g_fprintf(out,_("\tWrite Splice Error\n"));
+      g_fprintf(out,_("\tRemaing 1024 byte tape blocks   %d\n"), V3((char *)sense->RemainingTape));
+      g_fprintf(out,_("\tTracking Retry Counter          %02X\n"), sense->TrackingRetryCounter);
+      g_fprintf(out,_("\tRead/Write Retry Counter        %02X\n"), sense->ReadWriteRetryCounter);
+      g_fprintf(out,_("\tFault Sympton Code              %02X\n"), sense->FaultSymptomCode);
     }
   return(0);
 }
@@ -2950,11 +2947,11 @@ GenericResetStatus(
 
       if (ret < 0)
         {
-          /*        fprintf(stderr, _("%s: Request Sense[Inquiry]: %02X"), */
+          /*        g_fprintf(stderr, _("%s: Request Sense[Inquiry]: %02X"), */
           /*                "chs", ((u_char *) &pRequestSense)[0]); */
           /*        for (i = 1; i < SIZEOF(RequestSense_T); i++)                */
-          /*          fprintf(stderr, " %02X", ((u_char *) &pRequestSense)[i]); */
-          /*        fprintf(stderr, "\n");    */
+          /*          g_fprintf(stderr, " %02X", ((u_char *) &pRequestSense)[i]); */
+          /*        g_fprintf(stderr, "\n");    */
 	  free(pRequestSense);
           return(ret);
 	  /*NOTREACHED*/
@@ -4868,9 +4865,9 @@ LogSense(
 
 	  if ((chgscsi_result = (char *)tape_rdlabel(pDev[INDEX_TAPE].dev, &chgscsi_datestamp, &chgscsi_label)) == NULL)
 	    {
-	      fprintf(StatFile, _("==== %s ==== %s ====\n"), chgscsi_datestamp, chgscsi_label);
+	      g_fprintf(StatFile, _("==== %s ==== %s ====\n"), chgscsi_datestamp, chgscsi_label);
 	    } else {
-	      fprintf(StatFile, "%s\n", chgscsi_result);
+	      g_fprintf(StatFile, "%s\n", chgscsi_result);
 	    }
 	}
 
@@ -4952,14 +4949,14 @@ LogSense(
             if ((strcmp(pDev[INDEX_TAPECTL].ident, p->ident) == 0 ||strcmp("*", p->ident) == 0)  && p->LogPage == logpages[count]) {
               p->decode(LogParameter, length);
               found = 1;
-              fprintf(StatFile, "\n");
+              g_fprintf(StatFile, "\n");
               break;
             }
             p++;
           }
 
           if (!found) {
-            fprintf(StatFile, _("Logpage No %d = %x\n"), count ,logpages[count]);
+            g_fprintf(StatFile, _("Logpage No %d = %x\n"), count ,logpages[count]);
 
             while ((u_char *)LogParameter < (buffer + length)) {
               i = LogParameter->ParameterLength;
@@ -4967,30 +4964,30 @@ LogSense(
               switch (i) {
               case 1:
                 value = V1((u_char *)LogParameter + SIZEOF(LogParameter_T));
-                fprintf(StatFile, _("ParameterCode %02X = %u(%d)\n"), ParameterCode, value, i);
+                g_fprintf(StatFile, _("ParameterCode %02X = %u(%d)\n"), ParameterCode, value, i);
                 break;
               case 2:
                 value = V2((u_char *)LogParameter + SIZEOF(LogParameter_T));
-                fprintf(StatFile, _("ParameterCode %02X = %u(%d)\n"), ParameterCode, value, i);
+                g_fprintf(StatFile, _("ParameterCode %02X = %u(%d)\n"), ParameterCode, value, i);
                 break;
               case 3:
                 value = V3((u_char *)LogParameter + SIZEOF(LogParameter_T));
-                fprintf(StatFile, _("ParameterCode %02X = %u(%d)\n"), ParameterCode, value, i);
+                g_fprintf(StatFile, _("ParameterCode %02X = %u(%d)\n"), ParameterCode, value, i);
                 break;
               case 4:
                 value = V4((u_char *)LogParameter + SIZEOF(LogParameter_T));
-                fprintf(StatFile, _("ParameterCode %02X = %u(%d)\n"), ParameterCode, value, i);
+                g_fprintf(StatFile, _("ParameterCode %02X = %u(%d)\n"), ParameterCode, value, i);
                 break;
               case 5:
                 value = V5((u_char *)LogParameter + SIZEOF(LogParameter_T));
-                fprintf(StatFile, _("ParameterCode %02X = %u(%d)\n"), ParameterCode, value, i);
+                g_fprintf(StatFile, _("ParameterCode %02X = %u(%d)\n"), ParameterCode, value, i);
                 break;
               default:
-                fprintf(StatFile, _("ParameterCode %02X size %d\n"), ParameterCode, i);
+                g_fprintf(StatFile, _("ParameterCode %02X size %d\n"), ParameterCode, i);
               }
               LogParameter = (LogParameter_T *)((u_char *)LogParameter +  SIZEOF(LogParameter_T) + i);
             }
-            fprintf(StatFile, "\n");
+            g_fprintf(StatFile, "\n");
           }
         }
       }
@@ -5049,7 +5046,7 @@ WriteErrorCountersPage(
   unsigned ParameterCode;
   LogParameter = buffer;
 
-  fprintf(StatFile, _("\tWrite Error Counters Page\n"));
+  g_fprintf(StatFile, _("\tWrite Error Counters Page\n"));
 
   while ((u_char *)LogParameter < ((u_char *)buffer + length)) {
     i = LogParameter->ParameterLength;
@@ -5059,38 +5056,38 @@ WriteErrorCountersPage(
     if (Decode(LogParameter, &value) == 0) {
       switch (ParameterCode) {
       case 2:
-        fprintf(StatFile, _("%-30s = %u\n"),
+        g_fprintf(StatFile, _("%-30s = %u\n"),
                 _("Total Rewrites"),
                 value);
         break;
       case 3:
-        fprintf(StatFile, _("%-30s = %u\n"),
+        g_fprintf(StatFile, _("%-30s = %u\n"),
                 _("Total Errors Corrected"),
                 value);
         break;
       case 4:
-        fprintf(StatFile, _("%-30s = %u\n"),
+        g_fprintf(StatFile, _("%-30s = %u\n"),
                 _("Total Times E. Processed"),
                 value);
         break;
       case 5:
-        fprintf(StatFile, _("%-30s = %u\n"),
+        g_fprintf(StatFile, _("%-30s = %u\n"),
                 _("Total Bytes Processed"),
                 value);
         break;
       case 6:
-        fprintf(StatFile, _("%-30s = %u\n"),
+        g_fprintf(StatFile, _("%-30s = %u\n"),
                 _("Total Unrecoverable Errors"),
                 value);
         break;
       default:
-        fprintf(StatFile, _("Unknown ParameterCode %02X = %u(%d)\n"),
+        g_fprintf(StatFile, _("Unknown ParameterCode %02X = %u(%d)\n"),
                 ParameterCode,
                 value, i);
         break;
       }
     } else {
-      fprintf(StatFile, _("Error decoding Result\n"));
+      g_fprintf(StatFile, _("Error decoding Result\n"));
     }
     LogParameter = (LogParameter_T *)((u_char *)LogParameter +  SIZEOF(LogParameter_T) + i);
   }
@@ -5107,7 +5104,7 @@ ReadErrorCountersPage(
   unsigned ParameterCode;
   LogParameter = buffer;
 
-  fprintf(StatFile, _("\tRead Error Counters Page\n"));
+  g_fprintf(StatFile, _("\tRead Error Counters Page\n"));
 
   while ((u_char *)LogParameter < ((u_char *)buffer + length)) {
     i = LogParameter->ParameterLength;
@@ -5117,38 +5114,38 @@ ReadErrorCountersPage(
     if (Decode(LogParameter, &value) == 0) {
       switch (ParameterCode) {
       case 2:
-        fprintf(StatFile, _("%-30s = %u\n"),
+        g_fprintf(StatFile, _("%-30s = %u\n"),
                 _("Total Rereads"),
                 value);
         break;
       case 3:
-        fprintf(StatFile, _("%-30s = %u\n"),
+        g_fprintf(StatFile, _("%-30s = %u\n"),
                 _("Total Errors Corrected"),
                 value);
         break;
       case 4:
-        fprintf(StatFile, _("%-30s = %u\n"),
+        g_fprintf(StatFile, _("%-30s = %u\n"),
                 _("Total Times E. Processed"),
                 value);
         break;
       case 5:
-        fprintf(StatFile, _("%-30s = %u\n"),
+        g_fprintf(StatFile, _("%-30s = %u\n"),
                 _("Total Bytes Processed"),
                 value);
         break;
       case 6:
-        fprintf(StatFile, _("%-30s = %u\n"),
+        g_fprintf(StatFile, _("%-30s = %u\n"),
                 _("Total Unrecoverable Errors"),
                 value);
         break;
       default:
-        fprintf(StatFile, _("Unknown ParameterCode %02X = %u(%d)\n"),
+        g_fprintf(StatFile, _("Unknown ParameterCode %02X = %u(%d)\n"),
                 ParameterCode,
                 value, i);
         break;
       }
     } else {
-      fprintf(StatFile, _("Error decoding Result\n"));
+      g_fprintf(StatFile, _("Error decoding Result\n"));
     }
     LogParameter = (LogParameter_T *)((u_char *)LogParameter +  SIZEOF(LogParameter_T) + i);
   }
@@ -5165,7 +5162,7 @@ C1553APage30(
   unsigned ParameterCode;
   LogParameter = buffer;
 
-  fprintf(StatFile, _("\tData compression transfer Page\n"));
+  g_fprintf(StatFile, _("\tData compression transfer Page\n"));
 
   while ((u_char *)LogParameter < ((u_char *)buffer + length)) {
     i = LogParameter->ParameterLength;
@@ -5175,7 +5172,7 @@ C1553APage30(
     if (Decode(LogParameter, &value) == 0) {
       switch (ParameterCode) {
       default:
-        fprintf(StatFile, _("Unknown ParameterCode %02X = %u(%d)\n"),
+        g_fprintf(StatFile, _("Unknown ParameterCode %02X = %u(%d)\n"),
                 ParameterCode,
                 value, i);
         break;
@@ -5196,7 +5193,7 @@ C1553APage37(
   unsigned ParameterCode;
   LogParameter = buffer;
 
-  fprintf(StatFile, _("\tDrive Counters Page\n"));
+  g_fprintf(StatFile, _("\tDrive Counters Page\n"));
 
   while ((u_char *)LogParameter < ((unsigned char *)buffer + length)) {
     i = LogParameter->ParameterLength;
@@ -5206,22 +5203,22 @@ C1553APage37(
     if (Decode(LogParameter, &value) == 0) {
       switch (ParameterCode) {
       case 1:
-        fprintf(StatFile, _("%-30s = %u\n"),
+        g_fprintf(StatFile, _("%-30s = %u\n"),
                 _("Total loads"),
                 value);
         break;
       case 2:
-        fprintf(StatFile, _("%-30s = %u\n"),
+        g_fprintf(StatFile, _("%-30s = %u\n"),
                 _("Total write drive errors"),
                 value);
         break;
       case 3:
-        fprintf(StatFile, _("%-30s = %u\n"),
+        g_fprintf(StatFile, _("%-30s = %u\n"),
                 _("Total read drive errors"),
                 value);
         break;
       default:
-        fprintf(StatFile, _("Unknown ParameterCode %02X = %u(%d)\n"),
+        g_fprintf(StatFile, _("Unknown ParameterCode %02X = %u(%d)\n"),
                 ParameterCode,
                 value, i);
         break;
@@ -5242,7 +5239,7 @@ EXB85058HEPage39(
   unsigned ParameterCode;
   LogParameter = buffer;
 
-  fprintf(StatFile, _("\tData Compression Page\n"));
+  g_fprintf(StatFile, _("\tData Compression Page\n"));
 
   while ((u_char *)LogParameter < ((unsigned char *)buffer + length)) {
     i = LogParameter->ParameterLength;
@@ -5252,17 +5249,17 @@ EXB85058HEPage39(
     if (Decode(LogParameter, &value) == 0) {
       switch (ParameterCode) {
       case 5:
-        fprintf(StatFile, _("%-30s = %u\n"),
+        g_fprintf(StatFile, _("%-30s = %u\n"),
                 _("KB to Compressor"),
                 value);
         break;
       case 7:
-        fprintf(StatFile, _("%-30s = %u\n"),
+        g_fprintf(StatFile, _("%-30s = %u\n"),
                 _("KB to tape"),
                 value);
         break;
       default:
-        fprintf(StatFile, _("Unknown ParameterCode %02X = %u(%d)\n"),
+        g_fprintf(StatFile, _("Unknown ParameterCode %02X = %u(%d)\n"),
                 ParameterCode,
                 value, i);
         break;
@@ -5283,7 +5280,7 @@ EXB85058HEPage3c(
   unsigned ParameterCode;
   LogParameter = buffer;
 
-  fprintf(StatFile, _("\tDrive Usage Information Page\n"));
+  g_fprintf(StatFile, _("\tDrive Usage Information Page\n"));
 
   while ((u_char *)LogParameter < ((unsigned char *)buffer + length)) {
     i = LogParameter->ParameterLength;
@@ -5299,12 +5296,12 @@ EXB85058HEPage3c(
       case 5:
         break;
       case 6:
-        fprintf(StatFile, _("%-30s = %u\n"),
+        g_fprintf(StatFile, _("%-30s = %u\n"),
                 _("Total Load Count"),
                 value);
         break;
       case 7:
-        fprintf(StatFile, _("%-30s = %u\n"),
+        g_fprintf(StatFile, _("%-30s = %u\n"),
                 _("MinutesSince Last Clean"),
                 value);
         break;
@@ -5312,7 +5309,7 @@ EXB85058HEPage3c(
       case 9:
         break;
       case 0xa:
-        fprintf(StatFile, _("%-30s = %u\n"),
+        g_fprintf(StatFile, _("%-30s = %u\n"),
                 _("Cleaning Count"),
                 value);
         break;
@@ -5324,7 +5321,7 @@ EXB85058HEPage3c(
       case 0x10:
         break;
       case 0x11:
-        fprintf(StatFile, _("%-30s = %u\n"),
+        g_fprintf(StatFile, _("%-30s = %u\n"),
                 _("Time to clean"),
                 value);
         break;
@@ -5333,7 +5330,7 @@ EXB85058HEPage3c(
       case 0x14:
         break;
       default:
-        fprintf(StatFile, _("Unknown ParameterCode %02X = %u(%d)\n"),
+        g_fprintf(StatFile, _("Unknown ParameterCode %02X = %u(%d)\n"),
                 ParameterCode,
                 value, i);
         break;
@@ -5373,7 +5370,7 @@ Decode(
     *value = V6((u_char *)LogParameter + SIZEOF(LogParameter_T));
     break;
   default:
-    fprintf(StatFile, _("Can't decode ParameterCode %02X size %d\n"),
+    g_fprintf(StatFile, _("Can't decode ParameterCode %02X size %d\n"),
             V2(LogParameter->ParameterCode), LogParameter->ParameterLength);
     DebugPrint(DEBUG_INFO, SECTION_SCSI,_("##### STOP Decode (1)\n"));
     return(1);
@@ -5391,14 +5388,14 @@ DumpDev(
 {
 	if (p != NULL)
 	{
-		printf(_("%s Devicefd   %d\n"), device, p->fd);
-		printf(_("%s Can SCSI   %d\n"), device, p->SCSI);
-		printf(_("%s Device     %s\n"), device, (p->dev != NULL)? p->dev:_("No set"));
-		printf(_("%s ConfigName %s\n"), device, (p->ConfigName != NULL) ? p->ConfigName:_("Not ser"));
+		g_printf(_("%s Devicefd   %d\n"), device, p->fd);
+		g_printf(_("%s Can SCSI   %d\n"), device, p->SCSI);
+		g_printf(_("%s Device     %s\n"), device, (p->dev != NULL)? p->dev:_("No set"));
+		g_printf(_("%s ConfigName %s\n"), device, (p->ConfigName != NULL) ? p->ConfigName:_("Not ser"));
 	} else {
-		printf(_("%s Null Pointer ....\n"), device);
+		g_printf(_("%s Null Pointer ....\n"), device);
 	}
-	printf(_("\n"));
+	g_printf(_("\n"));
 }
 
 void
@@ -5460,7 +5457,7 @@ ChangerStatus(
 
   if ((out = fdopen(1 , "w")) == NULL)
     {
-      printf(_("Error fdopen stdout\n"));
+      g_printf(_("Error fdopen stdout\n"));
       free(pbarcoderes);
       return;
       /*NOTREACHED*/
@@ -5470,7 +5467,7 @@ ChangerStatus(
   {
     while(p->ident != NULL)
       {
-         printf (_("Ident = %s, type = %s\n"),p->ident, p->type);
+         g_printf (_("Ident = %s, type = %s\n"),p->ident, p->type);
          p++;
       }
     DumpSense();
@@ -5482,7 +5479,7 @@ ChangerStatus(
           {
             if (pDev[INDEX_CHANGER].functions->function_status(pDev[INDEX_CHANGER].fd, 1) != 0)
               {
-                printf(_("Can not initialize changer status\n"));
+                g_printf(_("Can not initialize changer status\n"));
 		free(pbarcoderes);
 	        fclose(out);
                 return;
@@ -5492,17 +5489,17 @@ ChangerStatus(
         /*      0123456789012345678901234567890123456789012 */
 	if (HasBarCode)
 	{
-        	printf(_("Address Type Status From Barcode Label\n"));
+        	g_printf(_("Address Type Status From Barcode Label\n"));
 	} else {
-        	printf(_("Address Type Status From\n"));
+        	g_printf(_("Address Type Status From\n"));
 	}
-        printf(_("-------------------------------------------\n"));
+        g_printf(_("-------------------------------------------\n"));
 
 
         for ( x = 0; x < MTE; x++)
 	if (HasBarCode)
 	{
-          printf(_("%07d MTE  %s  %04d %s "),pMTE[x].address,
+          g_printf(_("%07d MTE  %s  %04d %s "),pMTE[x].address,
                  (pMTE[x].full ? _("Full ") :_("Empty")),
                  pMTE[x].from, pMTE[x].VolTag);
 
@@ -5514,15 +5511,15 @@ ChangerStatus(
 
 	      if (MapBarCode(labelfile, pbarcoderes) == 0 )
 		{
-		  printf(_("No mapping\n"));
+		  g_printf(_("No mapping\n"));
 		} else {
-		  printf(_("%s \n"),pbarcoderes->data.voltag);
+		  g_printf(_("%s \n"),pbarcoderes->data.voltag);
 		}
 	    } else {
-	      printf("\n");
+	      g_printf("\n");
 	    }
 	} else {
-          printf(_("%07d MTE  %s  %04d \n"),pMTE[x].address,
+          g_printf(_("%07d MTE  %s  %04d \n"),pMTE[x].address,
                  (pMTE[x].full ? _("Full ") :_("Empty")),
                  pMTE[x].from);
 	}
@@ -5531,7 +5528,7 @@ ChangerStatus(
         for ( x = 0; x < STE; x++)
 	if (HasBarCode)
 	{
-          printf(_("%07d STE  %s  %04d %s "),pSTE[x].address,
+          g_printf(_("%07d STE  %s  %04d %s "),pSTE[x].address,
                  (pSTE[x].full ? _("Full "):_("Empty")),
                  pSTE[x].from, pSTE[x].VolTag);
 
@@ -5543,15 +5540,15 @@ ChangerStatus(
 
 	      if (MapBarCode(labelfile, pbarcoderes) == 0 )
 		{
-		  printf(_("No mapping\n"));
+		  g_printf(_("No mapping\n"));
 		} else {
-		  printf(_("%s \n"),pbarcoderes->data.voltag);
+		  g_printf(_("%s \n"),pbarcoderes->data.voltag);
 		}
 	    } else {
-	      printf("\n");
+	      g_printf("\n");
 	    }
 	} else {
-          printf(_("%07d STE  %s  %04d %s\n"),pSTE[x].address,
+          g_printf(_("%07d STE  %s  %04d %s\n"),pSTE[x].address,
                  (pSTE[x].full ? _("Full"):_("Empty")),
                  pSTE[x].from, pSTE[x].VolTag);
 	}
@@ -5560,7 +5557,7 @@ ChangerStatus(
         for ( x = 0; x < DTE; x++)
 	if (HasBarCode)
 	{
-          printf(_("%07d DTE  %s  %04d %s "),pDTE[x].address,
+          g_printf(_("%07d DTE  %s  %04d %s "),pDTE[x].address,
                  (pDTE[x].full ? _("Full") : _("Empty")),
                  pDTE[x].from, pDTE[x].VolTag);
 
@@ -5572,16 +5569,16 @@ ChangerStatus(
 
 	      if (MapBarCode(labelfile, pbarcoderes) == 0 )
 		{
-		  printf(_("No mapping\n"));
+		  g_printf(_("No mapping\n"));
 		} else {
-		  printf("%s \n",pbarcoderes->data.voltag);
+		  g_printf("%s \n",pbarcoderes->data.voltag);
 		}
 	    } else {
-	      printf("\n");
+	      g_printf("\n");
 	    }
 
 	} else {
-          printf(_("%07d DTE  %s  %04d %s\n"),pDTE[x].address,
+          g_printf(_("%07d DTE  %s  %04d %s\n"),pDTE[x].address,
                  (pDTE[x].full ?_( "Full ") : _("Empty")),
                  pDTE[x].from, pDTE[x].VolTag);
 	}
@@ -5589,7 +5586,7 @@ ChangerStatus(
         for ( x = 0; x < IEE; x++)
 	if (HasBarCode)
 	{
-          printf(_("%07d IEE  %s  %04d %s "),pIEE[x].address,
+          g_printf(_("%07d IEE  %s  %04d %s "),pIEE[x].address,
                  (pIEE[x].full ? _("Full ") : _("Empty")),
                  pIEE[x].from, pIEE[x].VolTag);
 
@@ -5601,16 +5598,16 @@ ChangerStatus(
 
 	      if (MapBarCode(labelfile, pbarcoderes) == 0 )
 		{
-		  printf(_("No mapping\n"));
+		  g_printf(_("No mapping\n"));
 		} else {
-		  printf(_("%s \n"),pbarcoderes->data.voltag);
+		  g_printf(_("%s \n"),pbarcoderes->data.voltag);
 		}
 	    } else {
-	      printf("\n");
+	      g_printf("\n");
 	    }
 
 	} else {
-          printf(_("%07d IEE  %s  %04d %s\n"),pIEE[x].address,
+          g_printf(_("%07d IEE  %s  %04d %s\n"),pIEE[x].address,
                  (pIEE[x].full ? _("Full ") : _("Empty")),
                  pIEE[x].from, pIEE[x].VolTag);
 	}
@@ -5621,23 +5618,23 @@ ChangerStatus(
     {
       if (pDev[INDEX_CHANGER].SCSI == 1)
 	{
-           printf(_("\nSense Status from robot:\n"));
+           g_printf(_("\nSense Status from robot:\n"));
            RequestSense(INDEX_CHANGER , &ExtRequestSense, 0);
            DecodeExtSense(&ExtRequestSense, "", out);
 	}
 
       if (pDev[INDEX_TAPE].SCSI == 1)
         {
-          printf("\n");
-          printf(_("Sense Status from tape (tapectl):\n"));
+          g_printf("\n");
+          g_printf(_("Sense Status from tape (tapectl):\n"));
           RequestSense(INDEX_TAPE, &ExtRequestSense, 0);
           DecodeExtSense(&ExtRequestSense, "", out);
         }
 
       if (pDev[INDEX_TAPECTL].SCSI == 1)
         {
-          printf("\n");
-          printf(_("Sense Status from tape (tapectl):\n"));
+          g_printf("\n");
+          g_printf(_("Sense Status from tape (tapectl):\n"));
           RequestSense(INDEX_TAPECTL, &ExtRequestSense, 0);
           DecodeExtSense(&ExtRequestSense, "", out);
         }
@@ -5645,7 +5642,7 @@ ChangerStatus(
 
     if (strcmp("ModeSenseRobot", option) == 0 || strcmp("all", option) == 0)
       {
-        printf("\n");
+        g_printf("\n");
         if (SCSI_ModeSense(INDEX_CHANGER, pModePage, 0xff, 0x08, 0x3f) == 0)
           {
             DecodeModeSense(pModePage, 0, "Changer :" , 0, out);
@@ -5656,7 +5653,7 @@ ChangerStatus(
       {
         if (pDev[INDEX_TAPECTL].SCSI == 1)
         {
-          printf("\n");
+          g_printf("\n");
           if (SCSI_ModeSense(INDEX_TAPECTL, pModePage, 0xff, 0x0, 0x3f) == 0)
             {
               DecodeModeSense(pModePage, 0, "Tape :" , 1, out);
@@ -5666,16 +5663,16 @@ ChangerStatus(
 
     if (strcmp("fd", option) == 0 || strcmp("all", option) == 0)
     {
-      printf("changer_dev  %s\n",changer_dev);
-      printf("changer_file %s\n", changer_file);
-      printf("tape_device  %s\n\n", tape_device);
+      g_printf("changer_dev  %s\n",changer_dev);
+      g_printf("changer_file %s\n", changer_file);
+      g_printf("tape_device  %s\n\n", tape_device);
       DumpDev(&pDev[INDEX_TAPE], "pTapeDev");
       DumpDev(&pDev[INDEX_TAPECTL], "pTapeDevCtl");
       DumpDev(&pDev[INDEX_CHANGER], "pChangerDev");
     }
 
   if (GenericClean("") == 1)
-    printf(_("Tape needs cleaning\n"));
+    g_printf(_("Tape needs cleaning\n"));
 
   free(pbarcoderes);
   fclose(out);
@@ -5731,7 +5728,7 @@ ChgExit(
     (void)level;	/* Quiet unused parameter warning */
 
    dbprintf(_("ChgExit in %s, reason %s\n"), where, reason);
-   fprintf(stderr,"%s\n",reason);
+   g_fprintf(stderr,"%s\n",reason);
    exit(2);
 }
 
@@ -6596,7 +6593,7 @@ printf_arglist_function2(void DebugPrint, int, level, int, section, char *, fmt)
     }
 
   arglist_start(argp, fmt);
-  vsnprintf(buf, SIZEOF(buf), fmt, argp);
+  g_vsnprintf(buf, SIZEOF(buf), fmt, argp);
   if (dlevel >= level)
     {
       if (section == dsection || dsection == 0)

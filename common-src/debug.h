@@ -168,8 +168,7 @@ void	debug_close(void);
  *
  * This function is deprecated in favor of glib's g_debug().
  */
-void	debug_printf(const char *format, ...)
-	    __attribute__ ((format (printf, 1, 2)));
+void	debug_printf(const char *format, ...) G_GNUC_PRINTF(1,2);
 
 /* Get the file descriptor for the debug file
  *

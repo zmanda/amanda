@@ -277,7 +277,7 @@ handle_device_regex(const char * user_name, char ** driver_name,
     reg_result = regcomp(&regex, regex_string, REG_EXTENDED | REG_ICASE);
     if (reg_result != 0) {
         char * message = regex_message(reg_result, &regex);
-        fprintf(stderr, "Error compiling regular expression \"%s\": %s\n",
+        g_fprintf(stderr, "Error compiling regular expression \"%s\": %s\n",
                regex_string, message);
         amfree(message);
         return FALSE;
@@ -286,19 +286,19 @@ handle_device_regex(const char * user_name, char ** driver_name,
     reg_result = regexec(&regex, user_name, 3, pmatch, 0);
     if (reg_result != 0 && reg_result != REG_NOMATCH) {
         char * message = regex_message(reg_result, &regex);
-        fprintf(stderr, "Error applying regular expression \"%s\" to string \"%s\":\n"
+        g_fprintf(stderr, "Error applying regular expression \"%s\" to string \"%s\":\n"
                "%s\n", user_name, regex_string, message);
         regfree(&regex);
         return FALSE;
     } else if (reg_result == REG_NOMATCH) {
 #ifdef WANT_TAPE_DEVICE
-        fprintf(stderr, "\"%s\" uses deprecated device naming convention; \n"
+        g_fprintf(stderr, "\"%s\" uses deprecated device naming convention; \n"
                 "using \"tape:%s\" instead.\n",
                 user_name, user_name);
         *driver_name = stralloc("tape");
         *device = stralloc(user_name);
 #else /* !WANT_TAPE_DEVICE */
-        fprintf(stderr, "\"%s\" is not a valid device name.\n", user_name);
+        g_fprintf(stderr, "\"%s\" is not a valid device name.\n", user_name);
 	regfree(&regex);
 	return FALSE;
 #endif /* WANT_TAPE_DEVICE */
@@ -334,7 +334,7 @@ device_open (char * device_name)
     factory = lookup_device_factory(device_driver_name);
 
     if (factory == NULL) {
-        fprintf(stderr, "Device driver %s is not known.\n",
+        g_fprintf(stderr, "Device driver %s is not known.\n",
                 device_driver_name);
         amfree(device_driver_name);
         amfree(device_node_name);
@@ -505,7 +505,7 @@ static void try_set_blocksize(Device * device, guint blocksize,
                                       PROPERTY_MAX_BLOCK_SIZE,
                                       &val);
         if (!success) {
-            fprintf(stderr, "Setting MAX_BLOCK_SIZE to %u "
+            g_fprintf(stderr, "Setting MAX_BLOCK_SIZE to %u "
                     "not supported for device %s.\n"
                     "trying BLOCK_SIZE instead.\n",
                     blocksize, device->device_name);
@@ -519,7 +519,7 @@ static void try_set_blocksize(Device * device, guint blocksize,
                                   PROPERTY_BLOCK_SIZE,
                                   &val);
     if (!success) {
-        fprintf(stderr, "Setting BLOCK_SIZE to %u "
+        g_fprintf(stderr, "Setting BLOCK_SIZE to %u "
                 "not supported for device %s.\n",
                 blocksize, device->device_name);
     }
@@ -542,7 +542,7 @@ static void set_device_property(gpointer key_p, gpointer value_p,
     property_base = device_property_get_by_name(property_s);
     if (property_base == NULL) {
         /* Nonexistant property name. */
-        fprintf(stderr, _("Unknown device property name %s.\n"), property_s);
+        g_fprintf(stderr, _("Unknown device property name %s.\n"), property_s);
         return;
     }
     
@@ -550,7 +550,7 @@ static void set_device_property(gpointer key_p, gpointer value_p,
     g_value_init(&property_value, property_base->type);
     if (!g_value_set_from_string(&property_value, value_s)) {
         /* Value type could not be interpreted. */
-        fprintf(stderr,
+        g_fprintf(stderr,
                 _("Could not parse property value %s for property type %s.\n"),
                 value_s, g_type_name(property_base->type));
         return;
@@ -560,7 +560,7 @@ static void set_device_property(gpointer key_p, gpointer value_p,
 
     if (!device_property_set(device, property_base->ID, &property_value)) {
         /* Device rejects property. */
-        fprintf(stderr, _("Could not set property %s to %s on device %s.\n"),
+        g_fprintf(stderr, _("Could not set property %s to %s on device %s.\n"),
                 property_base->name, value_s, device->device_name);
         return;
     }
@@ -603,7 +603,7 @@ void device_set_startup_properties_from_config(Device * device) {
                                               &val);
                 g_value_unset(&val);
                 if (!success) {
-                    fprintf(stderr, "Setting READ_BUFFER_SIZE to %llu "
+                    g_fprintf(stderr, "Setting READ_BUFFER_SIZE to %llu "
                             "not supported for device %s.\n",
                             1024*(long long unsigned int)blocksize_kb,
 			    device->device_name);

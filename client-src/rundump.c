@@ -93,7 +93,7 @@ main(
 
 #ifdef ERRMSG							/* { */
 
-    fprintf(stderr, ERRMSG);
+    g_fprintf(stderr, ERRMSG);
     dbprintf("%s: %s", argv[0], ERRMSG);
     dbclose();
     return 1;
@@ -175,7 +175,7 @@ main(
     dbprintf(_("failed (%s)\n"), e);
     dbclose();
 
-    fprintf(stderr, _("rundump: could not exec %s: %s\n"), dump_program, e);
+    g_fprintf(stderr, _("rundump: could not exec %s: %s\n"), dump_program, e);
     return 1;
 #endif								/* } */
 }

@@ -63,8 +63,8 @@ set_date(
 	}
 	else
 	{
-	    printf(_("No index records for cwd on new date\n"));
-	    printf(_("Setting cwd to mount point\n"));
+	    g_printf(_("No index records for cwd on new date\n"));
+	    g_printf(_("Setting cwd to mount point\n"));
 	    disk_path = newstralloc(disk_path, "/");	/* fake it */
 	    clear_dir_list();
 	}
@@ -86,7 +86,7 @@ set_host(
 
     if (is_extract_list_nonempty())
     {
-	printf(_("Must clear extract list before changing host\n"));
+	g_printf(_("Must clear extract list before changing host\n"));
 	return;
     }
 
@@ -105,7 +105,7 @@ set_host(
 	 */
 	if ((hp = gethostbyname(uqhost)) != NULL) {
 	    host = hp->h_name;
-	    printf(_("Trying host %s ...\n"), host);
+	    g_printf(_("Trying host %s ...\n"), host);
 	    cmd = newstralloc2(cmd, "HOST ", host);
 	    if (converse(cmd) == -1)
 		exit(1);
@@ -117,7 +117,7 @@ set_host(
 	    {
 	        for (hostp = hp->h_aliases; (host = *hostp) != NULL; hostp++)
 	        {
-		    printf(_("Trying host %s ...\n"), host);
+		    g_printf(_("Trying host %s ...\n"), host);
 		    cmd = newstralloc2(cmd, "HOST ", host);
 		    if (converse(cmd) == -1)
 		        exit(1);
@@ -165,7 +165,7 @@ set_disk(
 
     if (is_extract_list_nonempty())
     {
-	printf(_("Must clear extract list before changing disk\n"));
+	g_printf(_("Must clear extract list before changing disk\n"));
 	return;
     }
 
@@ -173,7 +173,7 @@ set_disk(
     if (mtpt != NULL) {
 	uqmtpt = unquote_string(mtpt);
 	if (*mtpt != '/') {
-	    printf(_("Mount point \"%s\" invalid - must start with /\n"), uqmtpt);
+	    g_printf(_("Mount point \"%s\" invalid - must start with /\n"), uqmtpt);
 	    amfree(uqmtpt);
 	    return;
 	}
@@ -224,8 +224,8 @@ set_disk(
     }
     else
     {
-	printf(_("No index records for disk for specified date\n"));
-	printf(_("If date correct, notify system administrator\n"));
+	g_printf(_("No index records for disk for specified date\n"));
+	g_printf(_("If date correct, notify system administrator\n"));
 	disk_path = newstralloc(disk_path, "/");	/* fake it */
 	clear_dir_list();
     }
@@ -279,7 +279,7 @@ cd_glob(
     char *path_on_disk = NULL;
 
     if (disk_name == NULL) {
-	printf(_("Must select disk before changing directory\n"));
+	g_printf(_("Must select disk before changing directory\n"));
 	return;
     }
 
@@ -287,7 +287,7 @@ cd_glob(
     regex = glob_to_regex(uqglob);
     dbprintf(_("cd_glob (%s) -> %s\n"), uqglob, regex);
     if ((s = validate_regexp(regex)) != NULL) {
-        printf(_("\"%s\" is not a valid shell wildcard pattern: "), glob);
+        g_printf(_("\"%s\" is not a valid shell wildcard pattern: "), glob);
         puts(s);
 	amfree(regex);
         return;
@@ -331,13 +331,13 @@ cd_regex(
     char *path_on_disk = NULL;
 
     if (disk_name == NULL) {
-	printf(_("Must select disk before changing directory\n"));
+	g_printf(_("Must select disk before changing directory\n"));
 	return;
     }
 
     uqregex = unquote_string(regex);
     if ((s = validate_regexp(uqregex)) != NULL) {
-	printf(_("\"%s\" is not a valid regular expression: "), uqregex);
+	g_printf(_("\"%s\" is not a valid regular expression: "), uqregex);
 	amfree(uqregex);
 	puts(s);
 	return;
@@ -410,7 +410,7 @@ cd_dir(
 	set_directory(dir);
     }
     else {
-	printf(_("Too many directory\n"));
+	g_printf(_("Too many directory\n"));
     }
     amfree(dir);
 }
@@ -432,7 +432,7 @@ set_directory(
     }
 
     if (disk_name == NULL) {
-	printf(_("Must select disk before setting directory\n"));
+	g_printf(_("Must select disk before setting directory\n"));
 	return;
 	/*NOTREACHED*/
     }
@@ -452,7 +452,7 @@ set_directory(
 	{
 	    if (strncmp(mount_point, ldir, strlen(mount_point)) != 0)
 	    {
-		printf(_("Invalid directory - Can't cd outside mount point \"%s\"\n"),
+		g_printf(_("Invalid directory - Can't cd outside mount point \"%s\"\n"),
 		       mount_point);
 		amfree(ldir);
 		return;
@@ -488,7 +488,7 @@ set_directory(
 	if (strcmp(dp, "..") == 0) {
 	    if (strcmp(new_dir, "/") == 0) {
 		/* at top of disk */
-		printf(_("Invalid directory - Can't cd outside mount point \"%s\"\n"),
+		g_printf(_("Invalid directory - Can't cd outside mount point \"%s\"\n"),
 		       mount_point);
 		/*@ignore@*/
 		amfree(new_dir);
@@ -532,7 +532,7 @@ set_directory(
     }
     else
     {
-	printf(_("Invalid directory - %s\n"), dir);
+	g_printf(_("Invalid directory - %s\n"), dir);
     }
 
     /*@ignore@*/
@@ -547,13 +547,13 @@ void
 show_directory(void)
 {
     if (mount_point == NULL || disk_path == NULL)
-        printf(_("Must select disk first\n"));
+        g_printf(_("Must select disk first\n"));
     else if (strcmp(mount_point, "/") == 0)
-	printf("%s\n", disk_path);
+	g_printf("%s\n", disk_path);
     else if (strcmp(disk_path, "/") == 0)
-	printf("%s\n", mount_point);
+	g_printf("%s\n", mount_point);
     else
-	printf("%s%s\n", mount_point, disk_path);
+	g_printf("%s%s\n", mount_point, disk_path);
 }
 
 
@@ -596,14 +596,14 @@ set_tape(
     }
 
     if (tape_device_name)
-	printf (_("Using tape \"%s\""), tape_device_name);
+	g_printf (_("Using tape \"%s\""), tape_device_name);
     else
-	printf (_("Using default tape"));
+	g_printf (_("Using default tape"));
 
     if (tape_server_name)
-	printf (_(" from server %s.\n"), tape_server_name);
+	g_printf (_(" from server %s.\n"), tape_server_name);
     else
-	printf (_(".\nTape server unspecified, assumed to be %s.\n"),
+	g_printf (_(".\nTape server unspecified, assumed to be %s.\n"),
 		server_name);
 }
 
@@ -613,11 +613,11 @@ set_mode(
 {
 #ifdef SAMBA_CLIENT
   if (mode == SAMBA_SMBCLIENT) {
-    printf (_("SAMBA dumps will be extracted using smbclient\n"));
+    g_printf (_("SAMBA dumps will be extracted using smbclient\n"));
     samba_extract_method = SAMBA_SMBCLIENT;
   } else {
     if (mode == SAMBA_TAR) {
-      printf (_("SAMBA dumps will be extracted as TAR dumps\n"));
+      g_printf (_("SAMBA dumps will be extracted as TAR dumps\n"));
       samba_extract_method = SAMBA_TAR;
     }
   }
@@ -630,12 +630,12 @@ void
 show_mode(void) 
 {
 #ifdef SAMBA_CLIENT
-  printf (_("SAMBA dumps are extracted "));
+  g_printf (_("SAMBA dumps are extracted "));
 
   if (samba_extract_method == SAMBA_TAR) {
-    printf (_(" as TAR dumps\n"));
+    g_printf (_(" as TAR dumps\n"));
   } else {
-    printf (_("using smbclient\n"));
+    g_printf (_("using smbclient\n"));
   }
 #endif /* SAMBA_CLIENT */
 }

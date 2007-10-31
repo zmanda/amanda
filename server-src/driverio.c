@@ -75,7 +75,7 @@ childstr(
 	if (dumper->chunker->fd == fd)
 	    return (dumper->chunker->name);
     }
-    snprintf(buf, SIZEOF(buf), _("unknown child (fd %d)"), fd);
+    g_snprintf(buf, SIZEOF(buf), _("unknown child (fd %d)"), fd);
     return (buf);
 }
 
@@ -161,7 +161,7 @@ startup_dump_process(
 	dumper->ev_read = NULL;
 	dumper->busy = dumper->down = 0;
 	dumper->dp = NULL;
-	fprintf(stderr,_("driver: started %s pid %u\n"),
+	g_fprintf(stderr,_("driver: started %s pid %u\n"),
 		dumper->name, (unsigned)dumper->pid);
 	fflush(stderr);
     }
@@ -178,7 +178,7 @@ startup_dump_processes(
     char number[NUM_STR_SIZE];
 
     for(dumper = dmptable, i = 0; i < inparallel; dumper++, i++) {
-	snprintf(number, SIZEOF(number), "%d", i);
+	g_snprintf(number, SIZEOF(number), "%d", i);
 	dumper->name = stralloc2("dumper", number);
 	dumper->chunker = &chktable[i];
 	chktable[i].name = stralloc2("chunker", number);
@@ -227,7 +227,7 @@ startup_chunk_process(
 	chunker->down = 0;
 	chunker->fd = fd[0];
 	chunker->ev_read = NULL;
-	fprintf(stderr,_("driver: started %s pid %u\n"),
+	g_fprintf(stderr,_("driver: started %s pid %u\n"),
 		chunker->name, (unsigned)chunker->pid);
 	fflush(stderr);
     }
@@ -256,25 +256,25 @@ getresult(
     }
 
     if(show) {
-	printf(_("driver: result time %s from %s:"),
+	g_printf(_("driver: result time %s from %s:"),
 	       walltime_str(curclock()),
 	       childstr(fd));
 	if(line) {
 	    for(arg = 1; arg <= *result_argc; arg++) {
-		printf(" %s", result_argv[arg]);
+		g_printf(" %s", result_argv[arg]);
 	    }
 	    putchar('\n');
 	} else {
-	    printf(" (eof)\n");
+	    g_printf(" (eof)\n");
 	}
 	fflush(stdout);
     }
     amfree(line);
 
 #ifdef DEBUG
-    printf("argc = %d\n", *result_argc);
+    g_printf("argc = %d\n", *result_argc);
     for(arg = 0; arg < *result_argc; arg++)
-	printf("argv[%d] = \"%s\"\n", arg, result_argv[arg]);
+	g_printf("argv[%d] = \"%s\"\n", arg, result_argv[arg]);
 #endif
 
     if(*result_argc < 1) return BOGUS;
@@ -311,9 +311,9 @@ taper_cmd(
 	dp = (disk_t *) ptr;
         qname = quote_string(dp->name);
 	qdest = quote_string(destname);
-	snprintf(number, SIZEOF(number), "%d", level);
-	snprintf(splitsize, SIZEOF(splitsize), OFF_T_FMT,
-		 (OFF_T_FMT_TYPE)dp->tape_splitsize * 1024);
+	g_snprintf(number, SIZEOF(number), "%d", level);
+	g_snprintf(splitsize, SIZEOF(splitsize), "%lld",
+		 (long long)dp->tape_splitsize * 1024);
 	cmdline = vstralloc(cmdstr[cmd],
 			    " ", disk2serial(dp),
 			    " ", qdest,
@@ -329,7 +329,7 @@ taper_cmd(
     case PORT_WRITE:
 	dp = (disk_t *) ptr;
         qname = quote_string(dp->name);
-	snprintf(number, SIZEOF(number), "%d", level);
+	g_snprintf(number, SIZEOF(number), "%d", level);
 
 	/*
           If we haven't been given a place to buffer split dumps to disk,
@@ -341,10 +341,10 @@ taper_cmd(
 	} else {
 	    diskbuffer = dp->split_diskbuffer;
 	}
-	snprintf(splitsize, SIZEOF(splitsize), OFF_T_FMT,
-		 (OFF_T_FMT_TYPE)dp->tape_splitsize * 1024);
-	snprintf(fallback_splitsize, SIZEOF(fallback_splitsize), OFF_T_FMT,
-		 (OFF_T_FMT_TYPE)dp->fallback_splitsize * 1024);
+	g_snprintf(splitsize, SIZEOF(splitsize), "%lld",
+		 (long long)dp->tape_splitsize * 1024);
+	g_snprintf(fallback_splitsize, SIZEOF(fallback_splitsize), "%lld",
+		 (long long)dp->fallback_splitsize * 1024);
 	cmdline = vstralloc(cmdstr[cmd],
 			    " ", disk2serial(dp),
 			    " ", dp->host->hostname,
@@ -377,11 +377,11 @@ taper_cmd(
     /*
      * Note: cmdline already has a '\n'.
      */
-    printf(_("driver: send-cmd time %s to taper: %s"),
+    g_printf(_("driver: send-cmd time %s to taper: %s"),
 	   walltime_str(curclock()), cmdline);
     fflush(stdout);
     if ((fullwrite(taper, cmdline, strlen(cmdline))) < 0) {
-	printf(_("writing taper command '%s' failed: %s\n"),
+	g_printf(_("writing taper command '%s' failed: %s\n"),
 		cmdline, strerror(errno));
 	fflush(stdout);
 	amfree(cmdline);
@@ -422,8 +422,8 @@ dumper_cmd(
 	if (dp != NULL) {
 	    device = quote_string((dp->device) ? dp->device : "NODEVICE");
 	    qname = quote_string(dp->name);
-	    snprintf(number, SIZEOF(number), "%d", sched(dp)->level);
-	    snprintf(numberport, SIZEOF(numberport), "%d", dumper->output_port);
+	    g_snprintf(number, SIZEOF(number), "%d", sched(dp)->level);
+	    g_snprintf(numberport, SIZEOF(numberport), "%d", dumper->output_port);
 	    features = am_feature_to_string(dp->host->features);
 	    o = optionstr(dp, dp->host->features, NULL);
 	    if ( o == NULL ) {
@@ -475,14 +475,14 @@ dumper_cmd(
      * Note: cmdline already has a '\n'.
      */
     if(dumper->down) {
-	printf(_("driver: send-cmd time %s ignored to down dumper %s: %s"),
+	g_printf(_("driver: send-cmd time %s ignored to down dumper %s: %s"),
 	       walltime_str(curclock()), dumper->name, cmdline);
     } else {
-	printf(_("driver: send-cmd time %s to %s: %s"),
+	g_printf(_("driver: send-cmd time %s to %s: %s"),
 	       walltime_str(curclock()), dumper->name, cmdline);
 	fflush(stdout);
 	if (fullwrite(dumper->fd, cmdline, strlen(cmdline)) < 0) {
-	    printf(_("writing %s command: %s\n"), dumper->name, strerror(errno));
+	    g_printf(_("writing %s command: %s\n"), dumper->name, strerror(errno));
 	    fflush(stdout);
 	    amfree(cmdline);
 	    return 0;
@@ -524,11 +524,11 @@ chunker_cmd(
 	    qname = quote_string(dp->name);
 	    qdest = quote_string(sched(dp)->destname);
 	    holdalloc(h[activehd]->disk)->allocated_dumpers++;
-	    snprintf(number, SIZEOF(number), "%d", sched(dp)->level);
-	    snprintf(chunksize, SIZEOF(chunksize), OFF_T_FMT,
-		    (OFF_T_FMT_TYPE)holdingdisk_get_chunksize(h[0]->disk));
-	    snprintf(use, SIZEOF(use), OFF_T_FMT,
-		    (OFF_T_FMT_TYPE)h[0]->reserved);
+	    g_snprintf(number, SIZEOF(number), "%d", sched(dp)->level);
+	    g_snprintf(chunksize, SIZEOF(chunksize), "%lld",
+		    (long long)holdingdisk_get_chunksize(h[0]->disk));
+	    g_snprintf(use, SIZEOF(use), "%lld",
+		    (long long)h[0]->reserved);
 	    features = am_feature_to_string(dp->host->features);
 	    o = optionstr(dp, dp->host->features, NULL);
 	    if ( o == NULL ) {
@@ -567,10 +567,10 @@ chunker_cmd(
 	    qname = quote_string(dp->name);
 	    qdest = quote_string(h[activehd]->destname);
 	    holdalloc(h[activehd]->disk)->allocated_dumpers++;
-	    snprintf(chunksize, SIZEOF(chunksize), OFF_T_FMT, 
-		     (OFF_T_FMT_TYPE)holdingdisk_get_chunksize(h[activehd]->disk));
-	    snprintf(use, SIZEOF(use), OFF_T_FMT, 
-		     (OFF_T_FMT_TYPE)(h[activehd]->reserved - h[activehd]->used));
+	    g_snprintf(chunksize, SIZEOF(chunksize), "%lld", 
+		     (long long)holdingdisk_get_chunksize(h[activehd]->disk));
+	    g_snprintf(use, SIZEOF(use), "%lld", 
+		     (long long)(h[activehd]->reserved - h[activehd]->used));
 	    cmdline = vstralloc(cmdstr[cmd],
 				" ", disk2serial(dp),
 				" ", qdest,
@@ -605,11 +605,11 @@ chunker_cmd(
     /*
      * Note: cmdline already has a '\n'.
      */
-    printf(_("driver: send-cmd time %s to %s: %s"),
+    g_printf(_("driver: send-cmd time %s to %s: %s"),
 	   walltime_str(curclock()), chunker->name, cmdline);
     fflush(stdout);
     if (fullwrite(chunker->fd, cmdline, strlen(cmdline)) < 0) {
-	printf(_("writing %s command: %s\n"), chunker->name, strerror(errno));
+	g_printf(_("writing %s command: %s\n"), chunker->name, strerror(errno));
 	fflush(stdout);
 	amfree(cmdline);
 	return 0;
@@ -644,7 +644,7 @@ serial2disk(
 	/*NOTREACHED*/
     }
     if(gen != stable[s].gen)
-	printf(_("driver: serial2disk error time %s serial gen mismatch %s\n"),
+	g_printf(_("driver: serial2disk error time %s serial gen mismatch %s\n"),
 	       walltime_str(curclock()), str);
     return stable[s].dp;
 }
@@ -659,14 +659,14 @@ free_serial(
     rc = sscanf(str, _("%d-%ld"), &s, &gen);
     if(!(rc == 2 && s >= 0 && s < MAX_SERIAL)) {
 	/* nuke self to get core dump for Brett */
-	fprintf(stderr, _("driver: free_serial: str \"%s\" rc %d s %d\n"),
+	g_fprintf(stderr, _("driver: free_serial: str \"%s\" rc %d s %d\n"),
 		str, rc, s);
 	fflush(stderr);
 	abort();
     }
 
     if(gen != stable[s].gen)
-	printf(_("driver: free_serial error time %s serial gen mismatch %s\n"),
+	g_printf(_("driver: free_serial error time %s serial gen mismatch %s\n"),
 	       walltime_str(curclock()),str);
     stable[s].gen = 0;
     stable[s].dp = NULL;
@@ -687,7 +687,7 @@ free_serial_dp(
 	}
     }
 
-    printf(_("driver: error time %s serial not found\n"),
+    g_printf(_("driver: error time %s serial not found\n"),
 	   walltime_str(curclock()));
 }
 
@@ -700,7 +700,7 @@ check_unfree_serial(void)
     /* find used serial number */
     for(s = 0; s < MAX_SERIAL; s++) {
 	if(stable[s].gen != 0 || stable[s].dp != NULL) {
-	    printf(_("driver: error time %s bug: serial in use: %02d-%05ld\n"),
+	    g_printf(_("driver: error time %s bug: serial in use: %02d-%05ld\n"),
 		   walltime_str(curclock()), s, stable[s].gen);
 	}
     }
@@ -714,7 +714,7 @@ char *disk2serial(
 
     for(s = 0; s < MAX_SERIAL; s++) {
 	if(stable[s].dp == dp) {
-	    snprintf(str, SIZEOF(str), "%02d-%05ld", s, stable[s].gen);
+	    g_snprintf(str, SIZEOF(str), "%02d-%05ld", s, stable[s].gen);
 	    return str;
 	}
     }
@@ -724,7 +724,7 @@ char *disk2serial(
 	if(stable[s].gen == 0 && stable[s].dp == NULL)
 	    break;
     if(s >= MAX_SERIAL) {
-	printf(_("driver: error time %s bug: out of serial numbers\n"),
+	g_printf(_("driver: error time %s bug: out of serial numbers\n"),
 	       walltime_str(curclock()));
 	s = 0;
     }
@@ -732,7 +732,7 @@ char *disk2serial(
     stable[s].gen = generation++;
     stable[s].dp = dp;
 
-    snprintf(str, SIZEOF(str), "%02d-%05ld", s, stable[s].gen);
+    g_snprintf(str, SIZEOF(str), "%02d-%05ld", s, stable[s].gen);
     return str;
 }
 

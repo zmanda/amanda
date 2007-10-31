@@ -634,7 +634,7 @@ print_entry(
     generic_fsent_t *	fsent)
 {
 #define nchk(s)	((s)? (s) : "<NULL>")
-    printf("%-20.20s %-14.14s %-7.7s %4d %5d %s\n",
+    g_printf("%-20.20s %-14.14s %-7.7s %4d %5d %s\n",
 	   nchk(fsent->fsname), nchk(fsent->mntdir), nchk(fsent->fstype),
 	   fsent->freq, fsent->passno, nchk(fsent->mntopts));
 }
@@ -667,87 +667,87 @@ main(
     signal(SIGPIPE, SIG_IGN);
 
     if(!open_fstab()) {
-	fprintf(stderr, _("getfsent_test: could not open fstab\n"));
+	g_fprintf(stderr, _("getfsent_test: could not open fstab\n"));
 	return 1;
     }
 
-    printf("getfsent (%s)\n",GETFSENT_TYPE);
-    printf("l/r fsname               mntdir         fstype  freq pass# mntopts\n");
+    g_printf("getfsent (%s)\n",GETFSENT_TYPE);
+    g_printf("l/r fsname               mntdir         fstype  freq pass# mntopts\n");
     while(get_fstab_nextentry(&fsent)) {
-	printf("%c  ",is_local_fstype(&fsent)? 'l' : 'r');
+	g_printf("%c  ",is_local_fstype(&fsent)? 'l' : 'r');
 	print_entry(&fsent);
     }
-    printf("--------\n");
+    g_printf("--------\n");
 
     close_fstab();
 
     name = newstralloc(name, "/usr");
     if(search_fstab(name, &fsent, 1) || search_fstab(name, &fsent, 0)) {
-	printf(_("Found %s mount for %s:\n"),
+	g_printf(_("Found %s mount for %s:\n"),
 	       is_local_fstype(&fsent)? _("local") : _("remote"), name);
 	print_entry(&fsent);
     }
     else 
-	printf(_("Mount for %s not found\n"), name);
+	g_printf(_("Mount for %s not found\n"), name);
 
     name = newstralloc(name, "/");
     if(search_fstab(name, &fsent, 1) || search_fstab(name, &fsent, 0)) {
-	printf(_("Found %s mount for %s:\n"),
+	g_printf(_("Found %s mount for %s:\n"),
 	       is_local_fstype(&fsent)? _("local") : _("remote"), name);
 	print_entry(&fsent);
     }
     else 
-	printf(_("Mount for %s not found\n"), name);
+	g_printf(_("Mount for %s not found\n"), name);
 
     name = newstralloc(name, "/");
     s = amname_to_fstype(name);
-    printf(_("fstype of `%s': %s\n"), name, s);
+    g_printf(_("fstype of `%s': %s\n"), name, s);
     amfree(s);
     name = newstralloc(name, "/dev/root");
     s = amname_to_fstype(name);
-    printf(_("fstype of `%s': %s\n"), name, s);
+    g_printf(_("fstype of `%s': %s\n"), name, s);
     amfree(s);
     name = newstralloc(name, "/usr");
     s = amname_to_fstype(name);
-    printf(_("fstype of `%s': %s\n"), name, s);
+    g_printf(_("fstype of `%s': %s\n"), name, s);
     amfree(s);
     name = newstralloc(name, "c0t3d0s0");
     s = amname_to_fstype(name);
-    printf(_("fstype of `%s': %s\n"), name, s);
+    g_printf(_("fstype of `%s': %s\n"), name, s);
     amfree(s);
 
     name = newstralloc(name, "/tmp/foo");
     s = amname_to_devname(name);
-    printf(_("device of `%s': %s\n"), name, s);
+    g_printf(_("device of `%s': %s\n"), name, s);
     amfree(s);
     s = amname_to_dirname(name);
-    printf(_("dirname of `%s': %s\n"), name, s);
+    g_printf(_("dirname of `%s': %s\n"), name, s);
     amfree(s);
     s = amname_to_fstype(name);
-    printf(_("fstype of `%s': %s\n"), name, s);
+    g_printf(_("fstype of `%s': %s\n"), name, s);
     amfree(s);
 
     name = newstralloc(name, "./foo");
     s = amname_to_devname(name);
-    printf(_("device of `%s': %s\n"), name, s);
+    g_printf(_("device of `%s': %s\n"), name, s);
     amfree(s);
     s = amname_to_dirname(name);
-    printf(_("dirname of `%s': %s\n"), name, s);
+    g_printf(_("dirname of `%s': %s\n"), name, s);
     amfree(s);
     s = amname_to_fstype(name);
-    printf(_("fstype of `%s': %s\n"), name, s);
+    g_printf(_("fstype of `%s': %s\n"), name, s);
     amfree(s);
 
     while (--argc > 0) {
 	name = newstralloc(name, *++argv);
 	s = amname_to_devname(name);
-	printf(_("device of `%s': %s\n"), name, s);
+	g_printf(_("device of `%s': %s\n"), name, s);
 	amfree(s);
 	s = amname_to_dirname(name);
-	printf(_("dirname of `%s': %s\n"), name, s);
+	g_printf(_("dirname of `%s': %s\n"), name, s);
 	amfree(s);
 	s = amname_to_fstype(name);
-	printf(_("fstype of `%s': %s\n"), name, s);
+	g_printf(_("fstype of `%s': %s\n"), name, s);
 	amfree(s);
     }
 

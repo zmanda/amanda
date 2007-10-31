@@ -326,7 +326,7 @@ main(
 
     report_bad_conf_arg();
 
-    fprintf(stderr,
+    g_fprintf(stderr,
 	    _("%s: pid %ld executable %s version %s\n"),
 	    get_pname(), (long) getpid(),
 	    my_argv[0], version());
@@ -653,7 +653,7 @@ process_dumpeof(void)
     add_msg_data(NULL, 0);
     if(!ISSET(status, GOT_SIZELINE) && dump_result < 2) {
 	/* make a note if there isn't already a failure */
-	fprintf(errf,
+	g_fprintf(errf,
 		_("? %s: strange [missing size line from sendbackup]\n"),
 		get_pname());
 	if(errstr == NULL) {
@@ -663,7 +663,7 @@ process_dumpeof(void)
     }
 
     if(!ISSET(status, GOT_ENDLINE) && dump_result < 2) {
-	fprintf(errf,
+	g_fprintf(errf,
 		_("? %s: strange [missing end line from sendbackup]\n"),
 		get_pname());
 	if(errstr == NULL) {
@@ -799,11 +799,11 @@ process_dumpline(
     default:
 bad_line:
 	/* prefix with ?? */
-	fprintf(errf, "??");
+	g_fprintf(errf, "??");
 	dump_result = max(dump_result, 1);
 	break;
     }
-    fprintf(errf, "%s\n", str);
+    g_fprintf(errf, "%s\n", str);
     amfree(buf);
 }
 
@@ -831,10 +831,9 @@ add_msg_data(
     if (str == NULL) {
 	if (buflen == 0)
 	    return;
-	fprintf(errf,_("? %s: error [partial line in msgbuf: "
-				SIZE_T_FMT " bytes]\n"), get_pname(),
-				(SIZE_T_FMT_TYPE)buflen);
-	fprintf(errf,_("? %s: error [partial line in msgbuf: \"%s\"]\n"),
+	g_fprintf(errf,_("? %s: error [partial line in msgbuf: %zu bytes]\n"),
+	    get_pname(), buflen);
+	g_fprintf(errf,_("? %s: error [partial line in msgbuf: \"%s\"]\n"),
 	    get_pname(), msg.buf);
 	msg.buf[0] = '\0';
 	return;
@@ -944,21 +943,21 @@ finish_tapeheader(
 #define	UNCOMPRESS_OPT	""
 #endif
 	if (srvcompress == COMP_SERVER_CUST) {
-	    snprintf(file->uncompress_cmd, SIZEOF(file->uncompress_cmd),
+	    g_snprintf(file->uncompress_cmd, SIZEOF(file->uncompress_cmd),
 		     " %s %s |", srvcompprog, "-d");
 	    strncpy(file->comp_suffix, "cust", SIZEOF(file->comp_suffix) - 1);
 	    file->comp_suffix[SIZEOF(file->comp_suffix) - 1] = '\0';
 	    strncpy(file->srvcompprog, srvcompprog, SIZEOF(file->srvcompprog) - 1);
 	    file->srvcompprog[SIZEOF(file->srvcompprog) - 1] = '\0';
 	} else if ( srvcompress == COMP_CUST ) {
-	    snprintf(file->uncompress_cmd, SIZEOF(file->uncompress_cmd),
+	    g_snprintf(file->uncompress_cmd, SIZEOF(file->uncompress_cmd),
 		     " %s %s |", clntcompprog, "-d");
 	    strncpy(file->comp_suffix, "cust", SIZEOF(file->comp_suffix) - 1);
 	    file->comp_suffix[SIZEOF(file->comp_suffix) - 1] = '\0';
 	    strncpy(file->clntcompprog, clntcompprog, SIZEOF(file->clntcompprog));
 	    file->clntcompprog[SIZEOF(file->clntcompprog) - 1] = '\0';
 	} else {
-	    snprintf(file->uncompress_cmd, SIZEOF(file->uncompress_cmd),
+	    g_snprintf(file->uncompress_cmd, SIZEOF(file->uncompress_cmd),
 		" %s %s |", UNCOMPRESS_PATH, UNCOMPRESS_OPT);
 	    strncpy(file->comp_suffix, COMPRESS_SUFFIX,SIZEOF(file->comp_suffix) - 1);
 	    file->comp_suffix[SIZEOF(file->comp_suffix) - 1] = '\0';
@@ -977,7 +976,7 @@ finish_tapeheader(
     if (srvencrypt != ENCRYPT_NONE) {
       file->encrypted= 1;
       if (srvencrypt == ENCRYPT_SERV_CUST) {
-	snprintf(file->decrypt_cmd, SIZEOF(file->decrypt_cmd),
+	g_snprintf(file->decrypt_cmd, SIZEOF(file->decrypt_cmd),
 		 " %s %s |", srv_encrypt, srv_decrypt_opt); 
 	strncpy(file->encrypt_suffix, "enc", SIZEOF(file->encrypt_suffix) - 1);
 	file->encrypt_suffix[SIZEOF(file->encrypt_suffix) - 1] = '\0';
@@ -986,7 +985,7 @@ finish_tapeheader(
 	strncpy(file->srv_decrypt_opt, srv_decrypt_opt, SIZEOF(file->srv_decrypt_opt) - 1);
 	file->srv_decrypt_opt[SIZEOF(file->srv_decrypt_opt) - 1] = '\0';
       } else if ( srvencrypt == ENCRYPT_CUST ) {
-	snprintf(file->decrypt_cmd, SIZEOF(file->decrypt_cmd),
+	g_snprintf(file->decrypt_cmd, SIZEOF(file->decrypt_cmd),
 		 " %s %s |", clnt_encrypt, clnt_decrypt_opt);
 	strncpy(file->encrypt_suffix, "enc", SIZEOF(file->encrypt_suffix) - 1);
 	file->encrypt_suffix[SIZEOF(file->encrypt_suffix) - 1] = '\0';
@@ -1051,7 +1050,7 @@ do_dump(
     dumpbytes = dumpsize = headersize = origsize = (off_t)0;
     fh_init(&file);
 
-    snprintf(level_str, SIZEOF(level_str), "%d", level);
+    g_snprintf(level_str, SIZEOF(level_str), "%d", level);
     fn = sanitise_filename(diskname);
     errfname = newvstralloc(errfname,
 			    AMANDA_TMPDIR,
@@ -1131,15 +1130,15 @@ do_dump(
 
     amfree(errstr);
     errstr = alloc(128);
-    snprintf(errstr, 128, _("sec %s kb " OFF_T_FMT " kps %3.1lf orig-kb " OFF_T_FMT ""),
+    g_snprintf(errstr, 128, _("sec %s kb %lld kps %3.1lf orig-kb %lld"),
 	walltime_str(runtime),
-	(OFF_T_FMT_TYPE)dumpsize,
+	(long long)dumpsize,
 	(isnormal(dumptime) ? ((double)dumpsize / (double)dumptime) : 0.0),
-	(OFF_T_FMT_TYPE)origsize);
+	(long long)origsize);
     q = squotef("[%s]", errstr);
-    putresult(DONE, _("%s " OFF_T_FMT " " OFF_T_FMT " %lu %s\n"), handle,
-    		(OFF_T_FMT_TYPE)origsize,
-		(OFF_T_FMT_TYPE)dumpsize,
+    putresult(DONE, _("%s %lld %lld %lu %s\n"), handle,
+    		(long long)origsize,
+		(long long)dumpsize,
 	        (unsigned long)((double)dumptime+0.5), q);
     amfree(q);
 
@@ -1193,10 +1192,10 @@ failed:
     aclose(db->fd);
     /* kill all child process */
     if (db->compresspid != -1) {
-	fprintf(stderr,_("%s: kill compress command\n"),get_pname());
+	g_fprintf(stderr,_("%s: kill compress command\n"),get_pname());
 	if (kill(db->compresspid, SIGTERM) < 0) {
 	    if (errno != ESRCH)
-		fprintf(stderr,_("%s: can't kill compress command: %s\n"), 
+		g_fprintf(stderr,_("%s: can't kill compress command: %s\n"), 
 		    get_pname(), strerror(errno));
 	}
 	else {
@@ -1205,10 +1204,10 @@ failed:
     }
 
     if (db->encryptpid != -1) {
-	fprintf(stderr,_("%s: kill encrypt command\n"),get_pname());
+	g_fprintf(stderr,_("%s: kill encrypt command\n"),get_pname());
 	if (kill(db->encryptpid, SIGTERM) < 0) {
 	    if (errno != ESRCH)
-		fprintf(stderr,_("%s: can't kill encrypt command: %s\n"), 
+		g_fprintf(stderr,_("%s: can't kill encrypt command: %s\n"), 
 		    get_pname(), strerror(errno));
 	}
 	else {
@@ -1217,10 +1216,10 @@ failed:
     }
 
     if (indexpid != -1) {
-	fprintf(stderr,_("%s: kill index command\n"),get_pname());
+	g_fprintf(stderr,_("%s: kill index command\n"),get_pname());
 	if (kill(indexpid, SIGTERM) < 0) {
 	    if (errno != ESRCH)
-		fprintf(stderr,_("%s: can't kill index command: %s\n"), 
+		g_fprintf(stderr,_("%s: can't kill index command: %s\n"), 
 		    get_pname(),strerror(errno));
 	}
 	else {
@@ -1656,7 +1655,7 @@ sendbackup_response(
     memset(ports, 0, SIZEOF(ports));
     if (pkt->type == P_NAK) {
 #if defined(PACKET_DEBUG)
-	fprintf(stderr, _("got nak response:\n----\n%s\n----\n\n"), pkt->body);
+	g_fprintf(stderr, _("got nak response:\n----\n%s\n----\n\n"), pkt->body);
 #endif
 
 	tok = strtok(pkt->body, " ");
@@ -1921,7 +1920,7 @@ startup_dump(
 	}
     }
 
-    snprintf(level_string, SIZEOF(level_string), "%d", level);
+    g_snprintf(level_string, SIZEOF(level_string), "%d", level);
     if(strcmp(progname, "DUMP") == 0
        || strcmp(progname, "GNUTAR") == 0) {
 	backup_api = "";

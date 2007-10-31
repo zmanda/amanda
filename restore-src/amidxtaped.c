@@ -356,7 +356,7 @@ main(
 
 	if(amandad_auth && g_options->auth) {
 	    if(strcasecmp(amandad_auth, g_options->auth) != 0) {
-		printf(_("ERROR recover program ask for auth=%s while amidxtaped is configured for '%s'\n"),
+		g_printf(_("ERROR recover program ask for auth=%s while amidxtaped is configured for '%s'\n"),
 		       g_options->auth, amandad_auth);
 		error(_("ERROR recover program ask for auth=%s while amidxtaped is configured for '%s'"),
 		      g_options->auth, amandad_auth);
@@ -364,8 +364,8 @@ main(
 	    }
 	}
 	/* send the REP packet */
-	printf("CONNECT CTL %d DATA %d\n", DATA_FD_OFFSET, DATA_FD_OFFSET+1);
-	printf("\n");
+	g_printf("CONNECT CTL %d DATA %d\n", DATA_FD_OFFSET, DATA_FD_OFFSET+1);
+	g_printf("\n");
 	fflush(stdout);
 	fclose(stdin);
 	fclose(stdout);
@@ -404,9 +404,9 @@ main(
 	    amfree(their_feature_string);
 	    our_feature_string = am_feature_to_string(our_features);
 	    if(from_amandad == 1) 
-		fprintf(cmdout,"FEATURES=%s\r\n", our_feature_string);
+		g_fprintf(cmdout,"FEATURES=%s\r\n", our_feature_string);
 	    else
-		fprintf(cmdout,"%s", our_feature_string);
+		g_fprintf(cmdout,"%s", our_feature_string);
 	    fflush(cmdout);
 	    amfree(our_feature_string);
 	}
@@ -532,7 +532,7 @@ main(
 	    dbprintf(_("Local port %d set aside for data\n"), data_port);
 
 	    /* tell client where to connect */
-	    printf(_("CONNECT %hu\n"), (unsigned short)data_port);
+	    g_printf(_("CONNECT %hu\n"), (unsigned short)data_port);
 	    fflush(stdout);
 
 	    if((data_fd = stream_accept(data_sock, TIMEOUT, STREAM_BUFSIZE, 

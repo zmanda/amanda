@@ -120,22 +120,19 @@ static void setup_retry_buffer(TaperMemPortSource * self) {
 
     alloc_size = TAPER_SOURCE(self)->max_part_size;
     if (alloc_size > SIZE_MAX) {
-        fprintf(stderr, "Fallback split size of %" G_GUINT64_FORMAT
-                " is greater that system maximum of " OFF_T_FMT ".\n",
-                alloc_size, (OFF_T_FMT_TYPE)SIZE_MAX);
+        g_fprintf(stderr, "Fallback split size of %lld is greater that system maximum of %lld.\n",
+                (long long)alloc_size, (long long)SIZE_MAX);
         alloc_size = SIZE_MAX;
     }
     
     max_usage = physmem_available() * .95;
     if (alloc_size > max_usage) {
-        fprintf(stderr, "Fallback split size of %" G_GUINT64_FORMAT
-                " is greater than 95%% of available memory (%"
-                G_GUINT64_FORMAT " bytes).\n", alloc_size, max_usage);
+        g_fprintf(stderr, "Fallback split size of %lld is greater than 95%% of available memory (%lld bytes).\n", (long long)alloc_size, (long long)max_usage);
         alloc_size = max_usage;
     }
     
     if (alloc_size < DISK_BLOCK_BYTES * 10) {
-        fprintf(stderr, "Fallback split size of %" G_GUINT64_FORMAT
+        g_fprintf(stderr, "Fallback split size of %" G_GUINT64_FORMAT
                 " is smaller than 10 blocks (%u bytes).\n", alloc_size,
                 DISK_BLOCK_BYTES * 10);
         alloc_size = DISK_BLOCK_BYTES * 10;

@@ -457,7 +457,7 @@ main(
     signal(SIGPIPE, SIG_IGN);
 
     if(my_argc < 2) {
-	fprintf(stderr, _("Usage: %s [config] [--list] <parmname> [-o configoption]*\n"), pgm);
+	g_fprintf(stderr, _("Usage: %s [config] [--list] <parmname> [-o configoption]*\n"), pgm);
 	exit(1);
     }
 
@@ -498,14 +498,14 @@ main(
 #else
     i = -1;
 #endif
-    snprintf(number, SIZEOF(number), "%ld", (long)i);
+    g_snprintf(number, SIZEOF(number), "%ld", (long)i);
     build_info[1].value = stralloc(number);
 #if defined(KRB4_SECURITY)
     i = TICKET_LIFETIME;
 #else
     i = -1;
 #endif
-    snprintf(number, SIZEOF(number), "%ld", (long)i);
+    g_snprintf(number, SIZEOF(number), "%ld", (long)i);
     build_info[2].value = stralloc(number);
 
 #undef p
@@ -595,7 +595,7 @@ main(
     }
 
     if (result == NULL) {
-	fprintf(stderr, _("%s: no such parameter \"%s\"\n"),
+	g_fprintf(stderr, _("%s: no such parameter \"%s\"\n"),
 		get_pname(), parmname);
 	fflush(stderr);
     } else {

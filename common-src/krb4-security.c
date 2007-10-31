@@ -300,7 +300,7 @@ init(void)
      * This file also needs to be removed so that no extra tickets are
      * hanging around.
      */
-    snprintf(tktfile, SIZEOF(tktfile), "/tmp/tkt%ld-%ld.amanda",
+    g_snprintf(tktfile, SIZEOF(tktfile), "/tmp/tkt%ld-%ld.amanda",
 	(long)getuid(), (long)getpid());
     ticketfilename = stralloc(tktfile);
     unlink(ticketfilename);
@@ -384,7 +384,7 @@ krb4_connect(
 	port = (int)KAMANDA_SERVICE_DEFAULT;
     else
 	port = ntohs(se->s_port);
-    snprintf(handle, SIZEOF(handle), "%ld", (long)time(NULL));
+    g_snprintf(handle, SIZEOF(handle), "%ld", (long)time(NULL));
     inithandle(kh, he, (int)port, handle);
     (*fn)(arg, &kh->sech, S_OK);
 }
@@ -1421,7 +1421,7 @@ kpkthdr2str(
     assert(kh != NULL);
     assert(pkt != NULL);
 
-    snprintf(retbuf, SIZEOF(retbuf), "Amanda %d.%d %s HANDLE %s SEQ %d\n",
+    g_snprintf(retbuf, SIZEOF(retbuf), "Amanda %d.%d %s HANDLE %s SEQ %d\n",
 	VERSION_MAJOR, VERSION_MINOR, pkt_type2str(pkt->type),
 	kh->proto_handle, kh->sequence);
 
@@ -1751,7 +1751,8 @@ print_hex(
 
     dbprintf("%s:", str);
     for(i=0;i<len;i++) {
-	if(i%25 == 0) dbprintf("\n");
+	if(i%25 == 0)
+		dbprintf("\n");
 	dbprintf(" %02X", buf[i]);
     }
     dbprintf("\n");
@@ -1771,10 +1772,10 @@ static void
 print_auth(
     AUTH_DAT *authp)
 {
-    printf("\nAuth Data:\n");
-    printf("  Principal \"%s\" Instance \"%s\" Realm \"%s\"\n",
+    g_printf("\nAuth Data:\n");
+    g_printf("  Principal \"%s\" Instance \"%s\" Realm \"%s\"\n",
 	   authp->pname, authp->pinst, authp->prealm);
-    printf("  cksum %d life %d keylen %ld\n", authp->checksum,
+    g_printf("  cksum %d life %d keylen %ld\n", authp->checksum,
 	   authp->life, SIZEOF(authp->session));
     print_hex("session key", authp->session, SIZEOF(authp->session));
     fflush(stdout);
@@ -1784,8 +1785,8 @@ static void
 print_credentials(
     CREDENTIALS *credp)
 {
-    printf("\nCredentials:\n");
-    printf("  service \"%s\" instance \"%s\" realm \"%s\" life %d kvno %d\n",
+    g_printf("\nCredentials:\n");
+    g_printf("  service \"%s\" instance \"%s\" realm \"%s\" life %d kvno %d\n",
 	   credp->service, credp->instance, credp->realm, credp->lifetime,
 	   credp->kvno);
     print_hex("session key", credp->session, SIZEOF(credp->session));

@@ -225,7 +225,7 @@ stream_sendpkt(
 	amfree(s);
 
     auth_debug(1,
-     _("sec: stream_sendpkt: %s (%d) pkt_t (len " SIZE_T_FMT ") contains:\n\n\"%s\"\n\n"),
+     _("sec: stream_sendpkt: %s (%d) pkt_t (len %zu) contains:\n\n\"%s\"\n\n"),
       pkt_type2str(pkt->type), pkt->type, strlen(pkt->body), pkt->body);
 
     if (security_stream_write(&rh->rs->secstr, buf, len) < 0) {
@@ -324,7 +324,7 @@ tcpm_stream_write(
     assert(rs != NULL);
     assert(rs->rc != NULL);
 
-    auth_debug(1, _("sec: stream_write: writing " SIZE_T_FMT " bytes to %s:%d %d\n"),
+    auth_debug(1, _("sec: stream_write: writing %zu bytes to %s:%d %d\n"),
 		   size, rs->rc->hostname, rs->handle,
 		   rs->rc->write);
 
@@ -544,7 +544,9 @@ tcpm_recv_token(
 		switch(net_read(fd, &s[i], 1, 0)) {
 		case -1: s[i] = '\0'; break;
 		case  0: s[i] = '\0'; break;
-		default: dbprintf(_("read: %c\n"), s[i]); i++; s[i]=' ';break;
+		default:
+			 dbprintf(_("read: %c\n"), s[i]); i++; s[i]=' ';
+			 break;
 		}
 	    }
 	    s[i] = '\0';
@@ -552,7 +554,7 @@ tcpm_recv_token(
 	    dbprintf(_("tcpm_recv_token: invalid size %s\n"), s);
 	} else {
 	    *errmsg = newvstrallocf(*errmsg, _("tcpm_recv_token: invalid size"));
-	    dbprintf(_("tcpm_recv_token: invalid size " SSIZE_T_FMT "\n"), *size);
+	    dbprintf(_("tcpm_recv_token: invalid size %zd\n"), *size);
 	}
 	*size = -1;
 	return -1;
@@ -580,7 +582,7 @@ tcpm_recv_token(
 	break;
     }
 
-    auth_debug(1, _("tcpm_recv_token: read " SSIZE_T_FMT " bytes from %d\n"), *size, *handle);
+    auth_debug(1, _("tcpm_recv_token: read %zd bytes from %d\n"), *size, *handle);
 
     if (*size > 0 && rc->driver->data_decrypt != NULL) {
 	void *decbuf;
@@ -1090,7 +1092,7 @@ udpbsd_sendpkt(
     dgram_cat(&rh->udp->dgram, pkt->body);
 
     auth_debug(1,
-     _("sec: udpbsd_sendpkt: %s (%d) pkt_t (len " SIZE_T_FMT ") contains:\n\n\"%s\"\n\n"),
+     _("sec: udpbsd_sendpkt: %s (%d) pkt_t (len %zu) contains:\n\n\"%s\"\n\n"),
       pkt_type2str(pkt->type), pkt->type, strlen(pkt->body), pkt->body);
 
     if (dgram_send_addr(&rh->peer, &rh->udp->dgram) != 0) {
@@ -1567,7 +1569,7 @@ recvpkt_callback(
 
     assert(rh != NULL);
 
-    auth_debug(1, _("sec: recvpkt_callback: " SSIZE_T_FMT "\n"), bufsize);
+    auth_debug(1, _("sec: recvpkt_callback: %zd\n"), bufsize);
     /*
      * We need to cancel the recvpkt request before calling
      * the callback because the callback may reschedule us.
@@ -1642,7 +1644,7 @@ stream_read_sync_callback(
 	return;
     }
     auth_debug(1,
-	    _("sec: stream_read_callback_sync: read " SSIZE_T_FMT " bytes from %s:%d\n"),
+	    _("sec: stream_read_callback_sync: read %zd bytes from %s:%d\n"),
 	    rs->rc->pktlen, rs->rc->hostname, rs->handle);
 }
 
@@ -1688,7 +1690,7 @@ stream_read_callback(
 	(*rs->fn)(rs->arg, NULL, rs->rc->pktlen);
 	return;
     }
-    auth_debug(1, _("sec: stream_read_callback: read " SSIZE_T_FMT " bytes from %s:%d\n"),
+    auth_debug(1, _("sec: stream_read_callback: read %zd bytes from %s:%d\n"),
 		   rs->rc->pktlen, rs->rc->hostname, rs->handle);
     (*rs->fn)(rs->arg, rs->rc->pkt, rs->rc->pktlen);
     auth_debug(1, _("sec: after callback stream_read_callback\n"));
@@ -1716,7 +1718,7 @@ sec_tcp_conn_read_callback(
     /* Read the data off the wire.  If we get errors, shut down. */
     rval = tcpm_recv_token(rc, rc->read, &rc->handle, &rc->errmsg, &rc->pkt,
 				&rc->pktlen, 60);
-    auth_debug(1, _("sec: conn_read_callback: tcpm_recv_token returned " SSIZE_T_FMT "\n"),
+    auth_debug(1, _("sec: conn_read_callback: tcpm_recv_token returned %zd\n"),
 		   rval);
     if (rval < 0 || rc->handle == H_EOF) {
 	rc->pktlen = rval;
@@ -1748,7 +1750,7 @@ sec_tcp_conn_read_callback(
     /* If there are events waiting on this handle, we're done */
     rc->donotclose = 1;
     revent = event_wakeup((event_id_t)rc);
-    auth_debug(1, _("sec: conn_read_callback: event_wakeup return " SSIZE_T_FMT "\n"), rval);
+    auth_debug(1, _("sec: conn_read_callback: event_wakeup return %zd\n"), rval);
     rc->donotclose = 0;
     if (rc->handle == H_TAKEN || rc->pktlen == 0) {
 	if(rc->refcnt == 0) amfree(rc);
@@ -1788,7 +1790,7 @@ parse_pkt(
 {
     const unsigned char *bufp = buf;
 
-    auth_debug(1, _("sec: parse_pkt: parsing buffer of " SSIZE_T_FMT " bytes\n"), bufsize);
+    auth_debug(1, _("sec: parse_pkt: parsing buffer of %zu bytes\n"), bufsize);
 
     pkt->type = (pktype_t)*bufp++;
     bufsize--;
@@ -1820,7 +1822,7 @@ pkthdr2str(
     assert(rh != NULL);
     assert(pkt != NULL);
 
-    snprintf(retbuf, SIZEOF(retbuf), _("Amanda %d.%d %s HANDLE %s SEQ %d\n"),
+    g_snprintf(retbuf, SIZEOF(retbuf), _("Amanda %d.%d %s HANDLE %s SEQ %d\n"),
 	VERSION_MAJOR, VERSION_MINOR, pkt_type2str(pkt->type),
 	rh->proto_handle, rh->sequence);
 
@@ -1989,7 +1991,7 @@ check_user_ruserok(
 	}
 	/* pamper braindead ruserok's */
 	if (chdir(pwd->pw_dir) != 0) {
-	    fprintf(fError, _("chdir(%s) failed: %s"),
+	    g_fprintf(fError, _("chdir(%s) failed: %s"),
 		    pwd->pw_dir, strerror(errno));
 	    fclose(fError);
 	    exit(1);
@@ -2428,10 +2430,10 @@ net_read(
     ssize_t nread;
     size_t size = origsize;
 
-    auth_debug(1, _("net_read: begin " SIZE_T_FMT "\n"), origsize);
+    auth_debug(1, _("net_read: begin %zu\n"), origsize);
 
     while (size > 0) {
-	auth_debug(1, _("net_read: while " SIZE_T_FMT "\n"), size);
+	auth_debug(1, _("net_read: while %zu\n"), size);
 	nread = net_read_fillbuf(fd, timeout, buf, size);
 	if (nread < 0) {
     	    auth_debug(1, _("db: net_read: end return(-1)\n"));
@@ -2444,7 +2446,7 @@ net_read(
 	buf += nread;
 	size -= nread;
     }
-    auth_debug(1, _("net_read: end " SIZE_T_FMT "\n"), origsize);
+    auth_debug(1, _("net_read: end %zu\n"), origsize);
     return ((ssize_t)origsize);
 }
 
@@ -2486,7 +2488,7 @@ net_read_fillbuf(
     nread = read(fd, buf, size);
     if (nread < 0)
 	return (-1);
-    auth_debug(1, _("net_read_fillbuf: end " SSIZE_T_FMT "\n"), nread);
+    auth_debug(1, _("net_read_fillbuf: end %zd\n"), nread);
     return (nread);
 }
 
@@ -2514,13 +2516,13 @@ show_stat_info(
     }
     if ((pwptr = getpwuid(sbuf.st_uid)) == NULL) {
 	owner = alloc(NUM_STR_SIZE + 1);
-	snprintf(owner, NUM_STR_SIZE, "%ld", (long)sbuf.st_uid);
+	g_snprintf(owner, NUM_STR_SIZE, "%ld", (long)sbuf.st_uid);
     } else {
 	owner = stralloc(pwptr->pw_name);
     }
     if ((grptr = getgrgid(sbuf.st_gid)) == NULL) {
 	group = alloc(NUM_STR_SIZE + 1);
-	snprintf(owner, NUM_STR_SIZE, "%ld", (long)sbuf.st_gid);
+	g_snprintf(owner, NUM_STR_SIZE, "%ld", (long)sbuf.st_gid);
     } else {
 	group = stralloc(grptr->gr_name);
     }

@@ -367,7 +367,7 @@ am_feature_to_string(
     } else {
 	result = alloc((f->size * 2) + 1);
 	for (i = 0; i < f->size; i++) {
-	    snprintf(result + (i * 2), 2 + 1, "%02x", f->bytes[i]);
+	    g_snprintf(result + (i * 2), 2 + 1, "%02x", f->bytes[i]);
 	}
 	result[i * 2] = '\0';
     }
@@ -459,18 +459,18 @@ main(
 
     f = am_init_feature_set();
     if (f == NULL) {
-	fprintf(stderr, _("cannot initialize feature set\n"));
+	g_fprintf(stderr, _("cannot initialize feature set\n"));
 	return 1;
     }
 
     s = am_feature_to_string(f);
-    printf(_("base features=%s\n"), s);
+    g_printf(_("base features=%s\n"), s);
 
     f1 = am_string_to_feature(s);
     s1 = am_feature_to_string(f1);
     if (strcmp(s, s1) != 0) {
-	fprintf(stderr, _("base feature -> string -> feature set mismatch\n"));
-	fprintf(stderr, _("conv features=%s\n"), s);
+	g_fprintf(stderr, _("base feature -> string -> feature set mismatch\n"));
+	g_fprintf(stderr, _("conv features=%s\n"), s);
     }
 
     amfree(s1);
@@ -480,29 +480,29 @@ main(
 	if (argv[i][0] == '+') {
 	    n = atoi(&argv[i][1]);
 	    if (am_add_feature(f, (am_feature_e)n)) {
-		printf(_("added feature number %d\n"), n);
+		g_printf(_("added feature number %d\n"), n);
 	    } else {
-		printf(_("could not add feature number %d\n"), n);
+		g_printf(_("could not add feature number %d\n"), n);
 	    }
 	} else if (argv[i][0] == '-') {
 	    n = atoi(&argv[i][1]);
 	    if (am_remove_feature(f, (am_feature_e)n)) {
-		printf(_("removed feature number %d\n"), n);
+		g_printf(_("removed feature number %d\n"), n);
 	    } else {
-		printf(_("could not remove feature number %d\n"), n);
+		g_printf(_("could not remove feature number %d\n"), n);
 	    }
 	} else {
 	    n = atoi(argv[i]);
 	    if (am_has_feature(f, (am_feature_e)n)) {
-		printf(_("feature %d is set\n"), n);
+		g_printf(_("feature %d is set\n"), n);
 	    } else {
-		printf(_("feature %d is not set\n"), n);
+		g_printf(_("feature %d is not set\n"), n);
 	    }
 	}
     }
 
     s = am_feature_to_string(f);
-    printf(_(" new features=%s\n"), s);
+    g_printf(_(" new features=%s\n"), s);
     amfree(s);
 
     return 0;

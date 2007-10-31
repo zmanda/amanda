@@ -57,10 +57,10 @@ strange_header(
     if (expected == NULL)
 	expected = "<null>";
 
-    fprintf(stderr, _("%s: strange amanda header: \"%.*s\"\n"), get_pname(),
+    g_fprintf(stderr, _("%s: strange amanda header: \"%.*s\"\n"), get_pname(),
 		(int)buflen, buffer);
 
-    fprintf(stderr, _("%s: Expected: \"%s\"  Actual: \"%s\"\n"), get_pname(),
+    g_fprintf(stderr, _("%s: Expected: \"%s\"  Actual: \"%s\"\n"), get_pname(),
 		expected, actual);
 
     file->type = F_WEIRD;
@@ -105,9 +105,9 @@ parse_file_header(
 
     tok = strtok(line1, " ");
     if (tok == NULL) {
-        fprintf(stderr, _("%s: Empty amanda header: buflen=%zu lsize=%zu\n"), get_pname(),
-	    (SIZE_T_FMT_TYPE)buflen, 
-	    (SIZE_T_FMT_TYPE)lsize);
+        g_fprintf(stderr, _("%s: Empty amanda header: buflen=%zu lsize=%zu\n"), get_pname(),
+	    buflen, 
+	    lsize);
 	hexdump(buffer, lsize);
 	strange_header(file, buffer, buflen, _("<Non-empty line>"), tok);
 	goto out;
@@ -442,15 +442,15 @@ parse_file_header(
 		strncpy(file->recover_cmd, cmd1,
 			SIZEOF(file->recover_cmd) - 1);
 	      } else {
-		snprintf(file->uncompress_cmd,
+		g_snprintf(file->uncompress_cmd,
 			 SIZEOF(file->uncompress_cmd), "%s|", cmd1);
 		strncpy(file->recover_cmd, cmd2,
 			SIZEOF(file->recover_cmd) - 1);
 	      }
 	    } else {    /* cmd3 presents:  decrypt | uncompress | recover */
-	      snprintf(file->decrypt_cmd,
+	      g_snprintf(file->decrypt_cmd,
 		       SIZEOF(file->decrypt_cmd), "%s|", cmd1);
-	      snprintf(file->uncompress_cmd,
+	      g_snprintf(file->uncompress_cmd,
 		       SIZEOF(file->uncompress_cmd), "%s|", cmd2);
 	      strncpy(file->recover_cmd, cmd3,
 		      SIZEOF(file->recover_cmd) - 1);
@@ -497,8 +497,7 @@ dump_dumpfile_t(
 	dbprintf(_("    is_partial       = %d\n"), file->is_partial);
 	dbprintf(_("    partnum          = %d\n"), file->partnum);
 	dbprintf(_("    totalparts       = %d\n"), file->totalparts);
-	dbprintf(_("    blocksize        = %zu\n"), 
-			(SIZE_T_FMT_TYPE)file->blocksize);
+	dbprintf(_("    blocksize        = %zu\n"), file->blocksize);
 }
 
 static void
@@ -554,8 +553,7 @@ build_header(const dumpfile_t * file, size_t min_size)
     char *program;
 
     dbprintf(_("Building type %d (%s) header of size %zu using:\n"),
-		file->type, filetype2str(file->type),
-		(SIZE_T_FMT_TYPE)min_size);
+		file->type, filetype2str(file->type), min_size);
     dump_dumpfile_t(file);
 
     rval = g_string_sized_new(min_size);
@@ -644,7 +642,7 @@ build_header(const dumpfile_t * file, size_t min_size)
 	/* \014 == ^L == form feed */
         g_string_append_printf(rval,
                                "\tdd if=<tape> bs=%zuk skip=1 |%s %s %s\n\014\n",
-                               (SIZE_T_FMT_TYPE)file->blocksize / 1024,
+                               file->blocksize / 1024,
                                file->decrypt_cmd, file->uncompress_cmd,
                                file->recover_cmd);
 	break;
@@ -685,79 +683,79 @@ print_header(
 
     switch(file->type) {
     case F_EMPTY:
-	fprintf(outf, _("EMPTY file\n"));
+	g_fprintf(outf, _("EMPTY file\n"));
 	break;
 
     case F_UNKNOWN:
-	fprintf(outf, _("UNKNOWN file\n"));
+	g_fprintf(outf, _("UNKNOWN file\n"));
 	break;
 
     case F_WEIRD:
-	fprintf(outf, _("WEIRD file\n"));
+	g_fprintf(outf, _("WEIRD file\n"));
 	break;
 
     case F_TAPESTART:
-	fprintf(outf, _("start of tape: date %s label %s\n"),
+	g_fprintf(outf, _("start of tape: date %s label %s\n"),
 	       file->datestamp, file->name);
 	break;
 
     case F_DUMPFILE:
     case F_CONT_DUMPFILE:
 	qdisk = quote_string(file->disk);
-	fprintf(outf, "%s: date %s host %s disk %s lev %d comp %s",
+	g_fprintf(outf, "%s: date %s host %s disk %s lev %d comp %s",
 	    filetype2str(file->type), file->datestamp, file->name,
 	    qdisk, file->dumplevel, file->comp_suffix);
 	if (*file->program)
-	    fprintf(outf, " program %s", file->program);
+	    g_fprintf(outf, " program %s", file->program);
 	if (strcmp(file->encrypt_suffix, "enc") == 0)
-	    fprintf(outf, " crypt %s", file->encrypt_suffix);
+	    g_fprintf(outf, " crypt %s", file->encrypt_suffix);
 	if (*file->srvcompprog)
-	    fprintf(outf, " server_custom_compress %s", file->srvcompprog);
+	    g_fprintf(outf, " server_custom_compress %s", file->srvcompprog);
 	if (*file->clntcompprog)
-	    fprintf(outf, " client_custom_compress %s", file->clntcompprog);
+	    g_fprintf(outf, " client_custom_compress %s", file->clntcompprog);
 	if (*file->srv_encrypt)
-	    fprintf(outf, " server_encrypt %s", file->srv_encrypt);
+	    g_fprintf(outf, " server_encrypt %s", file->srv_encrypt);
 	if (*file->clnt_encrypt)
-	    fprintf(outf, " client_encrypt %s", file->clnt_encrypt);
+	    g_fprintf(outf, " client_encrypt %s", file->clnt_encrypt);
 	if (*file->srv_decrypt_opt)
-	    fprintf(outf, " server_decrypt_option %s", file->srv_decrypt_opt);
+	    g_fprintf(outf, " server_decrypt_option %s", file->srv_decrypt_opt);
 	if (*file->clnt_decrypt_opt)
-	    fprintf(outf, " client_decrypt_option %s", file->clnt_decrypt_opt);
-	fprintf(outf, "\n");
+	    g_fprintf(outf, " client_decrypt_option %s", file->clnt_decrypt_opt);
+	g_fprintf(outf, "\n");
 	amfree(qdisk);
 	break;
 
     case F_SPLIT_DUMPFILE:
         if(file->totalparts > 0){
-            snprintf(number, SIZEOF(number), "%d", file->totalparts);
+            g_snprintf(number, SIZEOF(number), "%d", file->totalparts);
         }   
-        else snprintf(number, SIZEOF(number), "UNKNOWN");
+        else g_snprintf(number, SIZEOF(number), "UNKNOWN");
 	qdisk = quote_string(file->disk);
-        fprintf(outf, "split dumpfile: date %s host %s disk %s part %d/%s lev %d comp %s",
+        g_fprintf(outf, "split dumpfile: date %s host %s disk %s part %d/%s lev %d comp %s",
                       file->datestamp, file->name, qdisk, file->partnum,
                       number, file->dumplevel, file->comp_suffix);
         if (*file->program)
-            fprintf(outf, " program %s",file->program);
+            g_fprintf(outf, " program %s",file->program);
 	if (strcmp(file->encrypt_suffix, "enc") == 0)
-	    fprintf(outf, " crypt %s", file->encrypt_suffix);
+	    g_fprintf(outf, " crypt %s", file->encrypt_suffix);
 	if (*file->srvcompprog)
-	    fprintf(outf, " server_custom_compress %s", file->srvcompprog);
+	    g_fprintf(outf, " server_custom_compress %s", file->srvcompprog);
 	if (*file->clntcompprog)
-	    fprintf(outf, " client_custom_compress %s", file->clntcompprog);
+	    g_fprintf(outf, " client_custom_compress %s", file->clntcompprog);
 	if (*file->srv_encrypt)
-	    fprintf(outf, " server_encrypt %s", file->srv_encrypt);
+	    g_fprintf(outf, " server_encrypt %s", file->srv_encrypt);
 	if (*file->clnt_encrypt)
-	    fprintf(outf, " client_encrypt %s", file->clnt_encrypt);
+	    g_fprintf(outf, " client_encrypt %s", file->clnt_encrypt);
 	if (*file->srv_decrypt_opt)
-	    fprintf(outf, " server_decrypt_option %s", file->srv_decrypt_opt);
+	    g_fprintf(outf, " server_decrypt_option %s", file->srv_decrypt_opt);
 	if (*file->clnt_decrypt_opt)
-	    fprintf(outf, " client_decrypt_option %s", file->clnt_decrypt_opt);
-        fprintf(outf, "\n");
+	    g_fprintf(outf, " client_decrypt_option %s", file->clnt_decrypt_opt);
+        g_fprintf(outf, "\n");
 	amfree(qdisk);
         break;
 
     case F_TAPEEND:
-	fprintf(outf, "end of tape: date %s\n", file->datestamp);
+	g_fprintf(outf, "end of tape: date %s\n", file->datestamp);
 	break;
     }
 }

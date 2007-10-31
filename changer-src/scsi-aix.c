@@ -347,10 +347,10 @@ int SCSI_Scan(void)
     {
       for (lun = 0; lun < 7; lun++)
         {
-          printf(_("Target:Lun %d:%d\n"), target,lun);
+          g_printf(_("Target:Lun %d:%d\n"), target,lun);
           if (ioctl(fd, SCIOSTART, IDLUN(target, lun)) == -1) {
             if (errno == EINVAL) {
-              printf(_("is in use\n"));
+              g_printf(_("is in use\n"));
               isbusy = 1;
             } else {
               return(1);
@@ -366,12 +366,12 @@ int SCSI_Scan(void)
           si.inquiry_ptr = (char *)&buf;
           if (ioctl(fd, SCIOINQU, &si) == -1)
             {
-              printf("SCIOINQU: %s\n", strerror(errno));
+              g_printf("SCIOINQU: %s\n", strerror(errno));
             } else {
               dump_hex(&buf, 255, DEBUG_INFO, SECTION_SCSI);
               type = buf[0] & 0x1lf;
               buf[8+28] = 0;
-              printf(_("%-28s|Device Type %d\n"),buf[8], type);
+              g_printf(_("%-28s|Device Type %d\n"),buf[8], type);
             }
           if (!isbusy && ioctl(fd, SCIOSTOP, IDLUN(target, lun)) == -1)
             return(1);

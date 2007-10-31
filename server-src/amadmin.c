@@ -234,7 +234,7 @@ main(
 	    break;
 	}
     if (i == NCMDS) {
-	fprintf(stderr, _("%s: unknown command \"%s\"\n"), new_argv[0], new_argv[2]);
+	g_fprintf(stderr, _("%s: unknown command \"%s\"\n"), new_argv[0], new_argv[2]);
 	usage();
     }
 
@@ -260,11 +260,11 @@ usage(void)
 {
     int i;
 
-    fprintf(stderr, _("\nUsage: %s%s <conf> <command> {<args>} [-o configoption]* ...\n"),
+    g_fprintf(stderr, _("\nUsage: %s%s <conf> <command> {<args>} [-o configoption]* ...\n"),
 	    get_pname(), versionsuffix());
-    fprintf(stderr, _("    Valid <command>s are:\n"));
+    g_fprintf(stderr, _("    Valid <command>s are:\n"));
     for (i = 0; i < NCMDS; i++)
-	fprintf(stderr, "\t%s%s\n", cmdtab[i].name, _(cmdtab[i].usage));
+	g_fprintf(stderr, "\t%s%s\n", cmdtab[i].name, _(cmdtab[i].usage));
     exit(1);
 }
 
@@ -294,7 +294,7 @@ seqdatestr(
     tm = localtime(&t);
 
     if (tm)
-	snprintf(str, SIZEOF(str),
+	g_snprintf(str, SIZEOF(str),
 		 "%2d/%02d %3s", tm->tm_mon+1, tm->tm_mday, _(dow[tm->tm_wday]));
     else
 	strcpy(str, _("BAD DATE"));
@@ -333,14 +333,14 @@ diskloop(
     char *errstr;
 
     if(argc < 4) {
-	fprintf(stderr,_("%s: expecting \"%s [<hostname> [<disks>]* ]+\"\n"),
+	g_fprintf(stderr,_("%s: expecting \"%s [<hostname> [<disks>]* ]+\"\n"),
 		get_pname(), cmdname);
 	usage();
     }
 
     errstr = match_disklist(&diskq, argc-3, argv+3);
     if (errstr) {
-	printf("%s", errstr);
+	g_printf("%s", errstr);
 	amfree(errstr);
     }
 
@@ -351,7 +351,7 @@ diskloop(
 	}
     }
     if(count==0) {
-	fprintf(stderr,_("%s: no disk matched\n"),get_pname());
+	g_fprintf(stderr,_("%s: no disk matched\n"),get_pname());
     }
 }
 
@@ -370,14 +370,14 @@ force_one(
     SET(info.command, FORCE_FULL);
     if (ISSET(info.command, FORCE_BUMP)) {
 	CLR(info.command, FORCE_BUMP);
-	printf(_("%s: WARNING: %s:%s FORCE_BUMP command was cleared.\n"),
+	g_printf(_("%s: WARNING: %s:%s FORCE_BUMP command was cleared.\n"),
 	       get_pname(), hostname, diskname);
     }
     if(put_info(hostname, diskname, &info) == 0) {
-	printf(_("%s: %s:%s is set to a forced level 0 at next run.\n"),
+	g_printf(_("%s: %s:%s is set to a forced level 0 at next run.\n"),
 	       get_pname(), hostname, diskname);
     } else {
-	fprintf(stderr, _("%s: %s:%s could not be forced.\n"),
+	g_fprintf(stderr, _("%s: %s:%s could not be forced.\n"),
 		get_pname(), hostname, diskname);
     }
 }
@@ -407,16 +407,16 @@ unforce_one(
     if (ISSET(info.command, FORCE_FULL)) {
 	CLR(info.command, FORCE_FULL);
 	if(put_info(hostname, diskname, &info) == 0){
-	    printf(_("%s: force command for %s:%s cleared.\n"),
+	    g_printf(_("%s: force command for %s:%s cleared.\n"),
 		   get_pname(), hostname, diskname);
 	} else {
-	    fprintf(stderr,
+	    g_fprintf(stderr,
 		    _("%s: force command for %s:%s could not be cleared.\n"),
 		    get_pname(), hostname, diskname);
 	}
     }
     else {
-	printf(_("%s: no force command outstanding for %s:%s, unchanged.\n"),
+	g_printf(_("%s: no force command outstanding for %s:%s, unchanged.\n"),
 	       get_pname(), hostname, diskname);
     }
 }
@@ -445,19 +445,19 @@ force_bump_one(
     SET(info.command, FORCE_BUMP);
     if (ISSET(info.command, FORCE_NO_BUMP)) {
 	CLR(info.command, FORCE_NO_BUMP);
-	printf(_("%s: WARNING: %s:%s FORCE_NO_BUMP command was cleared.\n"),
+	g_printf(_("%s: WARNING: %s:%s FORCE_NO_BUMP command was cleared.\n"),
 	       get_pname(), hostname, diskname);
     }
     if (ISSET(info.command, FORCE_FULL)) {
 	CLR(info.command, FORCE_FULL);
-	printf(_("%s: WARNING: %s:%s FORCE_FULL command was cleared.\n"),
+	g_printf(_("%s: WARNING: %s:%s FORCE_FULL command was cleared.\n"),
 	       get_pname(), hostname, diskname);
     }
     if(put_info(hostname, diskname, &info) == 0) {
-	printf(_("%s: %s:%s is set to bump at next run.\n"),
+	g_printf(_("%s: %s:%s is set to bump at next run.\n"),
 	       get_pname(), hostname, diskname);
     } else {
-	fprintf(stderr, _("%s: %s:%s could not be forced to bump.\n"),
+	g_fprintf(stderr, _("%s: %s:%s could not be forced to bump.\n"),
 		get_pname(), hostname, diskname);
     }
 }
@@ -487,14 +487,14 @@ force_no_bump_one(
     SET(info.command, FORCE_NO_BUMP);
     if (ISSET(info.command, FORCE_BUMP)) {
 	CLR(info.command, FORCE_BUMP);
-	printf(_("%s: WARNING: %s:%s FORCE_BUMP command was cleared.\n"),
+	g_printf(_("%s: WARNING: %s:%s FORCE_BUMP command was cleared.\n"),
 	       get_pname(), hostname, diskname);
     }
     if(put_info(hostname, diskname, &info) == 0) {
-	printf(_("%s: %s:%s is set to not bump at next run.\n"),
+	g_printf(_("%s: %s:%s is set to not bump at next run.\n"),
 	       get_pname(), hostname, diskname);
     } else {
-	fprintf(stderr, _("%s: %s:%s could not be force to not bump.\n"),
+	g_fprintf(stderr, _("%s: %s:%s could not be force to not bump.\n"),
 		get_pname(), hostname, diskname);
     }
 }
@@ -524,15 +524,15 @@ unforce_bump_one(
     if (ISSET(info.command, FORCE_BUMP|FORCE_NO_BUMP)) {
 	CLR(info.command, FORCE_BUMP|FORCE_NO_BUMP);
 	if(put_info(hostname, diskname, &info) == 0) {
-	    printf(_("%s: bump command for %s:%s cleared.\n"),
+	    g_printf(_("%s: bump command for %s:%s cleared.\n"),
 		   get_pname(), hostname, diskname);
 	} else {
-	    fprintf(stderr, _("%s: %s:%s bump command could not be cleared.\n"),
+	    g_fprintf(stderr, _("%s: %s:%s bump command could not be cleared.\n"),
 		    get_pname(), hostname, diskname);
 	}
     }
     else {
-	printf(_("%s: no bump command outstanding for %s:%s, unchanged.\n"),
+	g_printf(_("%s: no bump command outstanding for %s:%s, unchanged.\n"),
 	       get_pname(), hostname, diskname);
     }
 }
@@ -558,7 +558,7 @@ reuse(
     int count;
 
     if(argc < 4) {
-	fprintf(stderr,_("%s: expecting \"reuse <tapelabel> ...\"\n"),
+	g_fprintf(stderr,_("%s: expecting \"reuse <tapelabel> ...\"\n"),
 		get_pname());
 	usage();
     }
@@ -566,16 +566,16 @@ reuse(
     for(count=3; count< argc; count++) {
 	tp = lookup_tapelabel(argv[count]);
 	if ( tp == NULL) {
-	    fprintf(stderr, _("reuse: tape label %s not found in tapelist.\n"),
+	    g_fprintf(stderr, _("reuse: tape label %s not found in tapelist.\n"),
 		argv[count]);
 	    continue;
 	}
 	if( tp->reuse == 0 ) {
 	    tp->reuse = 1;
-	    printf(_("%s: marking tape %s as reusable.\n"),
+	    g_printf(_("%s: marking tape %s as reusable.\n"),
 		   get_pname(), argv[count]);
 	} else {
-	    fprintf(stderr, _("%s: tape %s already reusable.\n"),
+	    g_fprintf(stderr, _("%s: tape %s already reusable.\n"),
 		    get_pname(), argv[count]);
 	}
     }
@@ -595,7 +595,7 @@ noreuse(
     int count;
 
     if(argc < 4) {
-	fprintf(stderr,_("%s: expecting \"no-reuse <tapelabel> ...\"\n"),
+	g_fprintf(stderr,_("%s: expecting \"no-reuse <tapelabel> ...\"\n"),
 		get_pname());
 	usage();
     }
@@ -603,16 +603,16 @@ noreuse(
     for(count=3; count< argc; count++) {
 	tp = lookup_tapelabel(argv[count]);
 	if ( tp == NULL) {
-	    fprintf(stderr, _("no-reuse: tape label %s not found in tapelist.\n"),
+	    g_fprintf(stderr, _("no-reuse: tape label %s not found in tapelist.\n"),
 		argv[count]);
 	    continue;
 	}
 	if( tp->reuse == 1 ) {
 	    tp->reuse = 0;
-	    printf(_("%s: marking tape %s as not reusable.\n"),
+	    g_printf(_("%s: marking tape %s as not reusable.\n"),
 		   get_pname(), argv[count]);
 	} else {
-	    fprintf(stderr, _("%s: tape %s already not reusable.\n"),
+	    g_fprintf(stderr, _("%s: tape %s already not reusable.\n"),
 		    get_pname(), argv[count]);
 	}
     }
@@ -637,7 +637,7 @@ delete_one(
     info_t info;
 
     if(get_info(hostname, diskname, &info)) {
-	printf(_("%s: %s:%s NOT currently in database.\n"),
+	g_printf(_("%s: %s:%s NOT currently in database.\n"),
 	       get_pname(), hostname, diskname);
 	return;
     }
@@ -648,7 +648,7 @@ delete_one(
 	      hostname, diskname, strerror(errno));
         /*NOTREACHED*/
     } else {
-	printf(_("%s: %s:%s deleted from curinfo database.\n"),
+	g_printf(_("%s: %s:%s deleted from curinfo database.\n"),
 	       get_pname(), hostname, diskname);
     }
 }
@@ -662,7 +662,7 @@ delete(
     diskloop(argc, argv, "delete", delete_one);
 
    if(deleted)
-	printf(
+	g_printf(
 	 _("%s: NOTE: you'll have to remove these from the disklist yourself.\n"),
 	 get_pname());
 }
@@ -680,44 +680,42 @@ info_one(
 
     get_info(dp->host->hostname, dp->name, &info);
 
-    printf(_("\nCurrent info for %s %s:\n"), dp->host->hostname, dp->name);
+    g_printf(_("\nCurrent info for %s %s:\n"), dp->host->hostname, dp->name);
     if (ISSET(info.command, FORCE_FULL))
-	printf(_("  (Forcing to level 0 dump at next run)\n"));
+	g_printf(_("  (Forcing to level 0 dump at next run)\n"));
     if (ISSET(info.command, FORCE_BUMP))
-	printf(_("  (Forcing bump at next run)\n"));
+	g_printf(_("  (Forcing bump at next run)\n"));
     if (ISSET(info.command, FORCE_NO_BUMP))
-	printf(_("  (Forcing no-bump at next run)\n"));
-    printf(_("  Stats: dump rates (kps), Full:  %5.1lf, %5.1lf, %5.1lf\n"),
+	g_printf(_("  (Forcing no-bump at next run)\n"));
+    g_printf(_("  Stats: dump rates (kps), Full:  %5.1lf, %5.1lf, %5.1lf\n"),
 	   info.full.rate[0], info.full.rate[1], info.full.rate[2]);
-    printf(_("                    Incremental:  %5.1lf, %5.1lf, %5.1lf\n"),
+    g_printf(_("                    Incremental:  %5.1lf, %5.1lf, %5.1lf\n"),
 	   info.incr.rate[0], info.incr.rate[1], info.incr.rate[2]);
-    printf(_("          compressed size, Full: %5.1lf%%,%5.1lf%%,%5.1lf%%\n"),
+    g_printf(_("          compressed size, Full: %5.1lf%%,%5.1lf%%,%5.1lf%%\n"),
 	   info.full.comp[0]*100, info.full.comp[1]*100, info.full.comp[2]*100);
-    printf(_("                    Incremental: %5.1lf%%,%5.1lf%%,%5.1lf%%\n"),
+    g_printf(_("                    Incremental: %5.1lf%%,%5.1lf%%,%5.1lf%%\n"),
 	   info.incr.comp[0]*100, info.incr.comp[1]*100, info.incr.comp[2]*100);
 
-    printf(_("  Dumps: lev datestmp  tape             file   origK   compK secs\n"));
+    g_printf(_("  Dumps: lev datestmp  tape             file   origK   compK secs\n"));
     for(lev = 0, sp = &info.inf[0]; lev < 9; lev++, sp++) {
 	if(sp->date < (time_t)0 && sp->label[0] == '\0') continue;
 	tm = localtime(&sp->date);
 	if (tm) {
-	    printf(_("          %d  %04d%02d%02d  %-15s  "
-		   OFF_T_FMT " " OFF_T_FMT " " OFF_T_FMT " " TIME_T_FMT "\n"),
+	    g_printf(_("          %d  %04d%02d%02d  %-15s  %lld %lld %lld %jd\n"),
 		   lev, tm->tm_year+1900, tm->tm_mon+1, tm->tm_mday,
 		   sp->label,
-		   (OFF_T_FMT_TYPE)sp->filenum,
-		   (OFF_T_FMT_TYPE)sp->size,
-		   (OFF_T_FMT_TYPE)sp->csize,
-		   (TIME_T_FMT_TYPE)sp->secs);
+		   (long long)sp->filenum,
+		   (long long)sp->size,
+		   (long long)sp->csize,
+		   (intmax_t)sp->secs);
 	} else {
-	    printf(_("          %d  BAD-DATE  %-15s  "
-		   OFF_T_FMT " " OFF_T_FMT " " OFF_T_FMT " " TIME_T_FMT "\n"),
+	    g_printf(_("          %d  BAD-DATE  %-15s  %lld %lld %lld %jd\n"),
 		   lev,
 		   sp->label,
-		   (OFF_T_FMT_TYPE)sp->filenum,
-		   (OFF_T_FMT_TYPE)sp->size,
-		   (OFF_T_FMT_TYPE)sp->csize,
-		   (TIME_T_FMT_TYPE)sp->secs);
+		   (long long)sp->filenum,
+		   (long long)sp->size,
+		   (long long)sp->csize,
+		   (intmax_t)sp->secs);
 	}
     }
 }
@@ -749,20 +747,20 @@ due_one(
 
     hp = dp->host;
     if(get_info(hp->hostname, dp->name, &info)) {
-	printf(_("new disk %s:%s ignored.\n"), hp->hostname, dp->name);
+	g_printf(_("new disk %s:%s ignored.\n"), hp->hostname, dp->name);
     }
     else {
 	days = next_level0(dp, &info);
 	if(days < 0) {
-	    printf(_("Overdue %2d day%s %s:%s\n"),
+	    g_printf(_("Overdue %2d day%s %s:%s\n"),
 		   -days, (-days == 1) ? ": " : "s:",
 		   hp->hostname, dp->name);
 	}
 	else if(days == 0) {
-	    printf(_("Due today: %s:%s\n"), hp->hostname, dp->name);
+	    g_printf(_("Due today: %s:%s\n"), hp->hostname, dp->name);
 	}
 	else {
-	    printf(_("Due in %2d day%s %s:%s\n"), days,
+	    g_printf(_("Due in %2d day%s %s:%s\n"), days,
 		   (days == 1) ? ": " : "s:",
 		   hp->hostname, dp->name);
 	}
@@ -798,7 +796,7 @@ tape(
     if(argc > 4 && strcmp(argv[3],"--days") == 0) {
 	nb_days = atoi(argv[4]);
 	if(nb_days < 1) {
-	    printf(_("days must be an integer bigger than 0\n"));
+	    g_printf(_("days must be an integer bigger than 0\n"));
 	    return;
 	}
 	if (nb_days > 10000)
@@ -811,16 +809,16 @@ tape(
     for ( j=0 ; j < nb_days ; j++ ) {
 	for ( i=0 ; i < runtapes ; i++ ) {
 	    if(i==0)
-		printf(_("The next Amanda run should go onto "));
+		g_printf(_("The next Amanda run should go onto "));
 	    else
-		printf("                                   ");
+		g_printf("                                   ");
 	    if(tp != NULL) {
-		printf(_("tape %s or a new tape.\n"), tp->label);
+		g_printf(_("tape %s or a new tape.\n"), tp->label);
 	    } else {
 		if (runtapes - i == 1)
-		    printf(_("1 new tape.\n"));
+		    g_printf(_("1 new tape.\n"));
 		else
-		    printf(_("%d new tapes.\n"), runtapes - i);
+		    g_printf(_("%d new tapes.\n"), runtapes - i);
 		i = runtapes;
 	    }
 	
@@ -839,20 +837,20 @@ tape(
 	lasttp = lookup_tapepos(lookup_nb_tape());
 	i = runtapes;
 	if(c == 1) {
-	    printf(_("The next new tape already labelled is: %s.\n"),
+	    g_printf(_("The next new tape already labelled is: %s.\n"),
 		   lasttp->label);
 	}
 	else {
-	    printf(_("The next %d new tapes already labelled are: %s"), c,
+	    g_printf(_("The next %d new tapes already labelled are: %s"), c,
 		   lasttp->label);
 	    lasttp = lasttp->prev;
 	    c--;
 	    while(lasttp && c > 0 && strcmp(lasttp->datestamp,"0") == 0) {
-		printf(", %s", lasttp->label);
+		g_printf(", %s", lasttp->label);
 		lasttp = lasttp->prev;
 		c--;
 	    }
-	    printf(".\n");
+	    g_printf(".\n");
 	}
     }
 }
@@ -915,7 +913,7 @@ balance(
 
     for(dp = diskq.head; dp != NULL; dp = dp->next) {
 	if(get_info(dp->host->hostname, dp->name, &info)) {
-	    printf(_("new disk %s:%s ignored.\n"), dp->host->hostname, dp->name);
+	    g_printf(_("new disk %s:%s ignored.\n"), dp->host->hostname, dp->name);
 	    continue;
 	}
 	if (dp->strategy == DS_NOFULL) {
@@ -972,7 +970,7 @@ balance(
     }
 
     if(sp[total].outsize == (off_t)0 && sp[later].outsize == (off_t)0) {
-	printf(_("\nNo data to report on yet.\n"));
+	g_printf(_("\nNo data to report on yet.\n"));
 	amfree(sp);
 	return;
     }
@@ -987,9 +985,9 @@ balance(
     }
 
     empty_day = 0;
-    printf(_("\n due-date  #fs    orig %cB     out %cB   balance\n"),
+    g_printf(_("\n due-date  #fs    orig %cB     out %cB   balance\n"),
 	   displayunit[0], displayunit[0]);
-    printf("----------------------------------------------\n");
+    g_printf("----------------------------------------------\n");
     for(seq = 0; seq < later; seq++) {
 	if(sp[seq].disks == 0 &&
 	   ((seq > 0 && sp[seq-1].disks == 0) ||
@@ -998,59 +996,59 @@ balance(
 	}
 	else {
 	    if(empty_day > 0) {
-		printf("\n");
+		g_printf("\n");
 		empty_day = 0;
 	    }
-	    printf(_("%-9.9s  %3d %10"OFF_T_RFMT" %10"OFF_T_RFMT" "),
+	    g_printf(_("%-9.9s  %3d %10lld %10lld "),
 		   seqdatestr(seq), sp[seq].disks,
-		   (OFF_T_FMT_TYPE)sp[seq].origsize,
-		   (OFF_T_FMT_TYPE)sp[seq].outsize);
-	    if(!sp[seq].outsize) printf("     --- \n");
-	    else printf(_("%+8.1lf%%\n"),
+		   (long long)sp[seq].origsize,
+		   (long long)sp[seq].outsize);
+	    if(!sp[seq].outsize) g_printf("     --- \n");
+	    else g_printf(_("%+8.1lf%%\n"),
 			(((double)sp[seq].outsize - (double)balanced) * 100.0 /
 			(double)balanced));
 	}
     }
 
     if(sp[later].disks != 0) {
-	printf(_("later      %3d %10"OFF_T_RFMT" %10"OFF_T_RFMT" "),
+	g_printf(_("later      %3d %10lld %10lld "),
 	       sp[later].disks,
-	       (OFF_T_FMT_TYPE)sp[later].origsize,
-	       (OFF_T_FMT_TYPE)sp[later].outsize);
-	if(!sp[later].outsize) printf("     --- \n");
-	else printf(_("%+8.1lf%%\n"),
+	       (long long)sp[later].origsize,
+	       (long long)sp[later].outsize);
+	if(!sp[later].outsize) g_printf("     --- \n");
+	else g_printf(_("%+8.1lf%%\n"),
 		    (((double)sp[later].outsize - (double)balanced) * 100.0 /
 		    (double)balanced));
     }
-    printf("----------------------------------------------\n");
-    printf(_("TOTAL      %3d %10"OFF_T_RFMT" %10"OFF_T_RFMT" %9"OFF_T_RFMT"\n"),
+    g_printf("----------------------------------------------\n");
+    g_printf(_("TOTAL      %3d %10lld %10lld %9lld\n"),
 	   sp[total].disks,
-	   (OFF_T_FMT_TYPE)sp[total].origsize,
-	   (OFF_T_FMT_TYPE)sp[total].outsize,
-	   (OFF_T_FMT_TYPE)total_balanced);
+	   (long long)sp[total].origsize,
+	   (long long)sp[total].outsize,
+	   (long long)total_balanced);
     if (sp[balance].origsize != sp[total].origsize ||
         sp[balance].outsize != sp[total].outsize ||
 	balanced != total_balanced) {
-	printf(_("BALANCED       %10"OFF_T_RFMT" %10"OFF_T_RFMT" %9"OFF_T_RFMT"\n"),
-	       (OFF_T_FMT_TYPE)sp[balance].origsize,
-	       (OFF_T_FMT_TYPE)sp[balance].outsize,
-	       (OFF_T_FMT_TYPE)balanced);
+	g_printf(_("BALANCED       %10lld %10lld %9lld\n"),
+	       (long long)sp[balance].origsize,
+	       (long long)sp[balance].outsize,
+	       (long long)balanced);
     }
     if (sp[distinct].disks != sp[total].disks) {
-	printf(_("DISTINCT   %3d %10"OFF_T_RFMT" %10"OFF_T_RFMT"\n"),
+	g_printf(_("DISTINCT   %3d %10lld %10lld\n"),
 	       sp[distinct].disks,
-	       (OFF_T_FMT_TYPE)sp[distinct].origsize,
-	       (OFF_T_FMT_TYPE)sp[distinct].outsize);
+	       (long long)sp[distinct].origsize,
+	       (long long)sp[distinct].outsize);
     }
-    printf(plural(_("  (estimated %d run per dumpcycle)\n"),
+    g_printf(plural(_("  (estimated %d run per dumpcycle)\n"),
 		  _("  (estimated %d runs per dumpcycle)\n"),
 		  runs_per_cycle),
 	   runs_per_cycle);
     if (overdue) {
-	printf(plural(_(" (%d filesystem overdue."),
+	g_printf(plural(_(" (%d filesystem overdue."),
 		      _(" (%d filesystems overdue."), overdue),
 	       overdue);
-	printf(plural(_(" The most being overdue %d day.)\n"),
+	g_printf(plural(_(" The most being overdue %d day.)\n"),
 	              _(" The most being overdue %d days.)\n"), max_overdue),
 	       max_overdue);
     }
@@ -1071,7 +1069,7 @@ find(
     char *errstr;
 
     if(argc < 3) {
-	fprintf(stderr,
+	g_fprintf(stderr,
 		_("%s: expecting \"find [--sort <hkdlpbf>] [hostname [<disk>]]*\"\n"),
 		get_pname());
 	usage();
@@ -1105,8 +1103,8 @@ find(
 	if(valid_sort) {
 	    sort_order = newstralloc(sort_order, argv[4]);
 	} else {
-	    printf(_("Invalid sort order: %s\n"), argv[4]);
-	    printf(_("Use default sort order: %s\n"), sort_order);
+	    g_printf(_("Invalid sort order: %s\n"), argv[4]);
+	    g_printf(_("Use default sort order: %s\n"), sort_order);
 	}
 	start_argc=6;
     } else {
@@ -1114,7 +1112,7 @@ find(
     }
     errstr = match_disklist(&diskq, argc-(start_argc-1), argv+(start_argc-1));
     if (errstr) {
-	printf("%s", errstr);
+	g_printf("%s", errstr);
 	amfree(errstr);
     }
 
@@ -1124,7 +1122,7 @@ find(
 	errstr = match_disklist(&diskq, argc-(start_argc-1),
 					argv+(start_argc-1));
 	if (errstr) {
-	    printf("%s", errstr);
+	    g_printf("%s", errstr);
 	    amfree(errstr);
 	}
 	output_find = find_dump(0, NULL);
@@ -1155,7 +1153,7 @@ get_file_list(
 
     dumplist = cmdline_parse_dumpspecs(argc, argv, CMDLINE_PARSE_DATESTAMP);
     if (!dumplist) {
-	fprintf(stderr, _("Could not get dump list\n"));
+	g_fprintf(stderr, _("Could not get dump list\n"));
 	return NULL;
     }
 
@@ -1264,19 +1262,19 @@ remove_holding_file_from_catalog(
     int i;
 
     if (!holding_file_get_dumpfile(filename, &file)) {
-        printf(_("Could not read holding file %s\n"), filename);
+        g_printf(_("Could not read holding file %s\n"), filename);
         return 0;
     }
 
     if (get_info(file.name, file.disk, &info) == -1) {
-	    printf(_("WARNING: No curinfo record for %s:%s\n"), file.name, file.disk);
+	    g_printf(_("WARNING: No curinfo record for %s:%s\n"), file.name, file.disk);
 	    return 1; /* not an error */
     }
 
     matching_hist_idx = holding_file_find_history(&info, &file);
 
     if (matching_hist_idx == -1) {
-        printf(_("WARNING: No dump matching %s found in curinfo.\n"), filename);
+        g_printf(_("WARNING: No dump matching %s found in curinfo.\n"), filename);
 	return 1; /* not an error */
     }
 
@@ -1319,10 +1317,10 @@ remove_holding_file_from_catalog(
          * or lower */
         info.last_level = matching_hist.level;
         if (info.last_level == 0) {
-            printf(_("WARNING: Deleting the most recent full dump; forcing a full dump at next run.\n"));
+            g_printf(_("WARNING: Deleting the most recent full dump; forcing a full dump at next run.\n"));
             SET(info.command, FORCE_FULL);
         } else {
-            printf(_("WARNING: Deleting the most recent level %d dump; forcing a level %d dump or \nWARNING: lower at next run.\n"),
+            g_printf(_("WARNING: Deleting the most recent level %d dump; forcing a level %d dump or \nWARNING: lower at next run.\n"),
                 info.last_level, info.last_level);
             SET(info.command, FORCE_NO_BUMP);
         }
@@ -1334,14 +1332,14 @@ remove_holding_file_from_catalog(
             if (info.history[i].level <= matching_hist.level) break;
 
             datestamp = get_timestamp_from_time(info.history[i].date);
-            printf(_("WARNING: Level %d dump made %s can no longer be accurately restored.\n"), 
+            g_printf(_("WARNING: Level %d dump made %s can no longer be accurately restored.\n"), 
                 info.history[i].level, datestamp);
             amfree(datestamp);
 
             warnings_printed = 1;
         }
         if (warnings_printed)
-            printf(_("WARNING: (note, dates shown above are for dumps, and may be later than the\nWARNING: corresponding run date)\n"));
+            g_printf(_("WARNING: (note, dates shown above are for dumps, and may be later than the\nWARNING: corresponding run date)\n"));
     }
 
     /* recalculate consecutive_runs based on the history: find the first run
@@ -1358,7 +1356,7 @@ remove_holding_file_from_catalog(
 
     /* write out the changes */
     if (put_info(file.name, file.disk, &info) == -1) {
-	    printf(_("Could not write curinfo record for %s:%s\n"), file.name, file.disk);
+	    g_printf(_("Could not write curinfo record for %s:%s\n"), file.name, file.disk);
 	    return 0;
     }
 
@@ -1386,7 +1384,7 @@ holding(
 
     switch (action) {
         case HOLDING_USAGE:
-            fprintf(stderr,
+            g_fprintf(stderr,
                     _("%s: expecting \"holding list [-l] [-d]\" or \"holding delete <host> [ .. ]\"\n"),
                     get_pname());
             usage();
@@ -1403,7 +1401,7 @@ holding(
 			outdated_list = 1;
 			break;
 		    default:
-			fprintf(stderr, _("Unknown option -%c\n"), argv[0][1]);
+			g_fprintf(stderr, _("Unknown option -%c\n"), argv[0][1]);
 			usage();
 			return;
 		}
@@ -1412,7 +1410,7 @@ holding(
 
 	    /* header */
             if (long_list) {
-                printf("%-10s %-2s %-4s %s\n", 
+                g_printf("%-10s %-2s %-4s %s\n", 
 		    _("size (kB)"), _("lv"), _("outd"), _("dump specification"));
             }
 
@@ -1422,7 +1420,7 @@ holding(
 		int is_outdated;
 
                 if (!holding_file_get_dumpfile((char *)li->data, &file)) {
-                    fprintf(stderr, _("Error reading %s\n"), (char *)li->data);
+                    g_fprintf(stderr, _("Error reading %s\n"), (char *)li->data);
                     continue;
                 }
 
@@ -1433,14 +1431,13 @@ holding(
 		 * we're only printing outdated files (-o) */
 		if (!outdated_list || is_outdated) {
 		    if (long_list) {
-			printf("%-10"OFF_T_RFMT" %-2d %-4s %s\n", 
-			       (OFF_T_FMT_TYPE)
-			       holding_file_size((char *)li->data, 0),
+			g_printf("%-10lld %-2d %-4s %s\n", 
+			       (long long)holding_file_size((char *)li->data, 0),
 			       file.dumplevel,
 			       is_outdated? " *":"",
 			       dumpstr);
 		    } else {
-			printf("%s\n", dumpstr);
+			g_printf("%s\n", dumpstr);
 		    }
 		}
                 amfree(dumpstr);
@@ -1453,7 +1450,7 @@ holding(
 
             file_list = get_file_list(argc, argv, 0);
             for (li = file_list; li != NULL; li = li->next) {
-                fprintf(stderr, _("Deleting '%s'\n"), (char *)li->data);
+                g_fprintf(stderr, _("Deleting '%s'\n"), (char *)li->data);
                 /* remove it from the catalog */
                 if (!remove_holding_file_from_catalog((char *)li->data))
                     exit(1);
@@ -1498,32 +1495,32 @@ bumpsize(
     (void)argc;	/* Quiet unused parameter warning */
     (void)argv;	/* Quiet unused parameter warning */
 
-    printf(_("Current bump parameters:\n"));
+    g_printf(_("Current bump parameters:\n"));
     if(conf_bumppercent == 0) {
-	printf(_("  bumpsize %5d KB\t- minimum savings (threshold) to bump level 1 -> 2\n"),
+	g_printf(_("  bumpsize %5d KB\t- minimum savings (threshold) to bump level 1 -> 2\n"),
 	       getconf_int(CNF_BUMPSIZE));
-	printf(_("  bumpdays %5d\t- minimum days at each level\n"),
+	g_printf(_("  bumpdays %5d\t- minimum days at each level\n"),
 	       getconf_int(CNF_BUMPDAYS));
-	printf(_("  bumpmult %5.5lg\t- threshold = bumpsize * bumpmult**(level-1)\n\n"),
+	g_printf(_("  bumpmult %5.5lg\t- threshold = bumpsize * bumpmult**(level-1)\n\n"),
 	       conf_bumpmult);
 
-	printf(_("      Bump -> To  Threshold\n"));
+	g_printf(_("      Bump -> To  Threshold\n"));
 	for(l = 1; l < 9; l++)
-	    printf(_("\t%d  ->  %d  %9d KB\n"), l, l+1, bump_thresh(l));
+	    g_printf(_("\t%d  ->  %d  %9d KB\n"), l, l+1, bump_thresh(l));
 	putchar('\n');
     }
     else {
 	double bumppercent = (double)conf_bumppercent;
 
-	printf(_("  bumppercent %3d %%\t- minimum savings (threshold) to bump level 1 -> 2\n"),
+	g_printf(_("  bumppercent %3d %%\t- minimum savings (threshold) to bump level 1 -> 2\n"),
 	       conf_bumppercent);
-	printf(_("  bumpdays %5d\t- minimum days at each level\n"),
+	g_printf(_("  bumpdays %5d\t- minimum days at each level\n"),
 	       getconf_int(CNF_BUMPDAYS));
-	printf(_("  bumpmult %5.5lg\t- threshold = disk_size * bumppercent * bumpmult**(level-1)\n\n"),
+	g_printf(_("  bumpmult %5.5lg\t- threshold = disk_size * bumppercent * bumpmult**(level-1)\n\n"),
 	       conf_bumpmult);
-	printf(_("      Bump -> To  Threshold\n"));
+	g_printf(_("      Bump -> To  Threshold\n"));
 	for(l = 1; l < 9; l++) {
-	    printf(_("\t%d  ->  %d  %7.2lf %%\n"), l, l+1, bumppercent);
+	    g_printf(_("\t%d  ->  %d  %7.2lf %%\n"), l, l+1, bumppercent);
 	    bumppercent *= conf_bumpmult;
 	    if(bumppercent >= 100.000) { bumppercent = 100.0;}
 	}
@@ -1545,7 +1542,7 @@ export_db(
     char hostname[MAX_HOSTNAME_LENGTH+1];
     int i;
 
-    printf(_("CURINFO Version %s CONF %s\n"), version(), getconf_str(CNF_ORG));
+    g_printf(_("CURINFO Version %s CONF %s\n"), version(), getconf_str(CNF_ORG));
 
     curtime = time(0);
     if(gethostname(hostname, SIZEOF(hostname)-1) == -1) {
@@ -1553,15 +1550,15 @@ export_db(
 	/*NOTREACHED*/
     }
     hostname[SIZEOF(hostname)-1] = '\0';
-    printf(_("# Generated by:\n#    host: %s\n#    date: %s"),
+    g_printf(_("# Generated by:\n#    host: %s\n#    date: %s"),
 	   hostname, ctime(&curtime));
 
-    printf(_("#    command:"));
+    g_printf(_("#    command:"));
     for(i = 0; i < argc; i++)
-	printf(_(" %s"), argv[i]);
+	g_printf(_(" %s"), argv[i]);
 
-    printf(_("\n# This file can be merged back in with \"amadmin import\".\n"));
-    printf(_("# Edit only with care.\n"));
+    g_printf(_("\n# This file can be merged back in with \"amadmin import\".\n"));
+    g_printf(_("# Edit only with care.\n"));
 
     if(argc >= 4)
 	diskloop(argc, argv, "export", export_one);
@@ -1577,42 +1574,42 @@ export_one(
     int i,l;
 
     if(get_info(dp->host->hostname, dp->name, &info)) {
-	fprintf(stderr, _("Warning: no curinfo record for %s:%s\n"),
+	g_fprintf(stderr, _("Warning: no curinfo record for %s:%s\n"),
 		dp->host->hostname, dp->name);
 	return;
     }
-    printf(_("host: %s\ndisk: %s\n"), dp->host->hostname, dp->name);
-    printf(_("command: %u\n"), info.command);
-    printf(_("last_level: %d\n"),info.last_level);
-    printf(_("consecutive_runs: %d\n"),info.consecutive_runs);
-    printf(_("full-rate:"));
-    for(i=0;i<AVG_COUNT;i++) printf(_(" %lf"), info.full.rate[i]);
-    printf(_("\nfull-comp:"));
-    for(i=0;i<AVG_COUNT;i++) printf(_(" %lf"), info.full.comp[i]);
+    g_printf(_("host: %s\ndisk: %s\n"), dp->host->hostname, dp->name);
+    g_printf(_("command: %u\n"), info.command);
+    g_printf(_("last_level: %d\n"),info.last_level);
+    g_printf(_("consecutive_runs: %d\n"),info.consecutive_runs);
+    g_printf(_("full-rate:"));
+    for(i=0;i<AVG_COUNT;i++) g_printf(_(" %lf"), info.full.rate[i]);
+    g_printf(_("\nfull-comp:"));
+    for(i=0;i<AVG_COUNT;i++) g_printf(_(" %lf"), info.full.comp[i]);
 
-    printf(_("\nincr-rate:"));
-    for(i=0;i<AVG_COUNT;i++) printf(_(" %lf"), info.incr.rate[i]);
-    printf(_("\nincr-comp:"));
-    for(i=0;i<AVG_COUNT;i++) printf(_(" %lf"), info.incr.comp[i]);
-    printf("\n");
+    g_printf(_("\nincr-rate:"));
+    for(i=0;i<AVG_COUNT;i++) g_printf(_(" %lf"), info.incr.rate[i]);
+    g_printf(_("\nincr-comp:"));
+    for(i=0;i<AVG_COUNT;i++) g_printf(_(" %lf"), info.incr.comp[i]);
+    g_printf("\n");
     for(l=0;l<DUMP_LEVELS;l++) {
 	if(info.inf[l].date < (time_t)0 && info.inf[l].label[0] == '\0') continue;
-	printf(_("stats: %d " OFF_T_FMT " " OFF_T_FMT " " TIME_T_FMT " " TIME_T_FMT " " OFF_T_FMT " %s\n"), l,
-	       (OFF_T_FMT_TYPE)info.inf[l].size,
-	       (OFF_T_FMT_TYPE)info.inf[l].csize,
-	       (TIME_T_FMT_TYPE)info.inf[l].secs,
-	       (TIME_T_FMT_TYPE)info.inf[l].date,
-	       (OFF_T_FMT_TYPE)info.inf[l].filenum,
+	g_printf(_("stats: %d %lld %lld %jd %jd %lld %s\n"), l,
+	       (long long)info.inf[l].size,
+	       (long long)info.inf[l].csize,
+	       (intmax_t)info.inf[l].secs,
+	       (intmax_t)info.inf[l].date,
+	       (long long)info.inf[l].filenum,
 	       info.inf[l].label);
     }
     for(l=0;info.history[l].level > -1;l++) {
-	printf(_("history: %d " OFF_T_FMT " " OFF_T_FMT " " TIME_T_FMT "\n"),
+	g_printf(_("history: %d %lld %lld %jd\n"),
 	       info.history[l].level,
-	       (OFF_T_FMT_TYPE)info.history[l].size,
-	       (OFF_T_FMT_TYPE)info.history[l].csize,
-	       (TIME_T_FMT_TYPE)info.history[l].date);
+	       (long long)info.history[l].size,
+	       (long long)info.history[l].csize,
+	       (intmax_t)info.history[l].date);
     }
-    printf("//\n");
+    g_printf("//\n");
 }
 
 /* ----------------------------------------------- */
@@ -1642,7 +1639,7 @@ import_db(
     /* process header line */
 
     if((line = agets(stdin)) == NULL) {
-	fprintf(stderr, _("%s: empty input.\n"), get_pname());
+	g_fprintf(stderr, _("%s: empty input.\n"), get_pname());
 	return;
     }
 
@@ -1698,13 +1695,13 @@ import_db(
 	    (vers_min != VERSION_MINOR)? vers_min > VERSION_MINOR :
 					 vers_patch > VERSION_PATCH;
     if(newer)
-	fprintf(stderr,
+	g_fprintf(stderr,
 	     _("%s: WARNING: input is from newer Amanda version: %d.%d.%d.\n"),
 		get_pname(), vers_maj, vers_min, vers_patch);
     /*@end@*/
 
     if(strcmp(org, getconf_str(CNF_ORG)) != 0) {
-	fprintf(stderr, _("%s: WARNING: input is from different org: %s\n"),
+	g_fprintf(stderr, _("%s: WARNING: input is from different org: %s\n"),
 		get_pname(), org);
     }
 
@@ -1718,9 +1715,9 @@ import_db(
  bad_header:
 
     /*@i@*/ amfree(line);
-    fprintf(stderr, _("%s: bad CURINFO header line in input: %s.\n"),
+    g_fprintf(stderr, _("%s: bad CURINFO header line in input: %s.\n"),
 	    get_pname(), hdr);
-    fprintf(stderr, _("    Was the input in \"amadmin export\" format?\n"));
+    g_fprintf(stderr, _("    Was the input in \"amadmin export\" format?\n"));
     return;
 }
 
@@ -1737,8 +1734,8 @@ import_one(void)
     int nb_history, i;
     char *hostname = NULL;
     char *diskname = NULL;
-    OFF_T_FMT_TYPE off_t_tmp;
-    TIME_T_FMT_TYPE time_t_tmp;
+    long long off_t_tmp;
+    intmax_t time_t_tmp;
 
     memset(&info, 0, SIZEOF(info_t));
 
@@ -1854,40 +1851,40 @@ import_one(void)
 	skip_integer(s, ch);
 
 	skip_whitespace(s, ch);
-	if(ch == '\0' || sscanf(s - 1, OFF_T_FMT, &off_t_tmp) != 1) {
+	if(ch == '\0' || sscanf(s - 1, "%lld", &off_t_tmp) != 1) {
 	    goto parse_err;
 	}
-	onestat.size = off_t_tmp;
+	onestat.size = (off_t)off_t_tmp;
 	skip_integer(s, ch);
 
 	skip_whitespace(s, ch);
-	if(ch == '\0' || sscanf(s - 1, OFF_T_FMT, &off_t_tmp) != 1) {
+	if(ch == '\0' || sscanf(s - 1, "%lld", &off_t_tmp) != 1) {
 	    goto parse_err;
 	}
-	onestat.csize = off_t_tmp;
+	onestat.csize = (off_t)off_t_tmp;
 	skip_integer(s, ch);
 
 	skip_whitespace(s, ch);
-	if(ch == '\0' || sscanf(s - 1, TIME_T_FMT, &time_t_tmp) != 1) {
+	if(ch == '\0' || sscanf(s - 1, "%ju", &time_t_tmp) != 1) {
 	    goto parse_err;
 	}
-        onestat.secs = time_t_tmp;
+        onestat.secs = (time_t)time_t_tmp;
 	skip_integer(s, ch);
 
 	skip_whitespace(s, ch);
-	if(ch == '\0' || sscanf(s - 1, TIME_T_FMT, &time_t_tmp) != 1) {
+	if(ch == '\0' || sscanf(s - 1, "%ju", &time_t_tmp) != 1) {
 	    goto parse_err;
 	}
 	/* time_t not guarranteed to be long */
-	/*@i1@*/ onestat.date = time_t_tmp;
+	/*@i1@*/ onestat.date = (time_t)time_t_tmp;
 	skip_integer(s, ch);
 
 	skip_whitespace(s, ch);
 	if(ch != '\0') {
-	    if(sscanf(s - 1, OFF_T_FMT, &off_t_tmp) != 1) {
+	    if(sscanf(s - 1, "%lld", &off_t_tmp) != 1) {
 		goto parse_err;
 	    }
-	    onestat.filenum = off_t_tmp;
+	    onestat.filenum = (off_t)off_t_tmp;
 	    skip_integer(s, ch);
 
 	    skip_whitespace(s, ch);
@@ -1931,25 +1928,25 @@ import_one(void)
 	skip_integer(s, ch);
 
 	skip_whitespace(s, ch);
-	if(ch == '\0' || sscanf((s - 1), OFF_T_FMT, &off_t_tmp) != 1) {
+	if(ch == '\0' || sscanf((s - 1), "%lld", &off_t_tmp) != 1) {
 	    break;
 	}
-	onehistory.size = off_t_tmp;
+	onehistory.size = (off_t)off_t_tmp;
 	skip_integer(s, ch);
 
 	skip_whitespace(s, ch);
-	if(ch == '\0' || sscanf((s - 1), OFF_T_FMT, &off_t_tmp) != 1) {
+	if(ch == '\0' || sscanf((s - 1), "%lld", &off_t_tmp) != 1) {
 	    break;
 	}
-	onehistory.csize = off_t_tmp;
+	onehistory.csize = (off_t)off_t_tmp;
 	skip_integer(s, ch);
 
 	skip_whitespace(s, ch);
-	if((ch == '\0') || sscanf((s - 1), TIME_T_FMT, &time_t_tmp) != 1) {
+	if((ch == '\0') || sscanf((s - 1), "%ju", &time_t_tmp) != 1) {
 	    break;
 	}
 	/* time_t not guarranteed to be long */
-	/*@i1@*/ onehistory.date = time_t_tmp;
+	/*@i1@*/ onehistory.date = (time_t)time_t_tmp;
 	skip_integer(s, ch);
 
 	info.history[nb_history++] = onehistory;
@@ -1961,7 +1958,7 @@ import_one(void)
     /* got a full record, now write it out to the database */
 
     if(put_info(hostname, diskname, &info)) {
-	fprintf(stderr, _("%s: error writing record for %s:%s\n"),
+	g_fprintf(stderr, _("%s: error writing record for %s:%s\n"),
 		get_pname(), hostname, diskname);
     }
     amfree(hostname);
@@ -1972,14 +1969,14 @@ import_one(void)
     /*@i@*/ amfree(line);
     amfree(hostname);
     amfree(diskname);
-    fprintf(stderr, _("%s: parse error reading import record.\n"), get_pname());
+    g_fprintf(stderr, _("%s: parse error reading import record.\n"), get_pname());
     return 0;
 
  shortfile_err:
     /*@i@*/ amfree(line);
     amfree(hostname);
     amfree(diskname);
-    fprintf(stderr, _("%s: short file reading import record.\n"), get_pname());
+    g_fprintf(stderr, _("%s: short file reading import record.\n"), get_pname());
     return 0;
 }
 
@@ -2005,7 +2002,7 @@ impget_line(void)
 	/* otherwise, a blank line, so keep going */
     }
     if(ferror(stdin)) {
-	fprintf(stderr, _("%s: reading stdin: %s\n"),
+	g_fprintf(stderr, _("%s: reading stdin: %s\n"),
 		get_pname(), strerror(errno));
     }
     return NULL;
@@ -2024,168 +2021,168 @@ disklist_one(
     hp = dp->host;
     ip = hp->netif;
 
-    printf("line %d:\n", dp->line);
+    g_printf("line %d:\n", dp->line);
 
-    printf("    host %s:\n", hp->hostname);
-    printf("        interface %s\n",
+    g_printf("    host %s:\n", hp->hostname);
+    g_printf("        interface %s\n",
 	   ip->name[0] ? ip->name : "default");
-    printf("    disk %s:\n", dp->name);
-    if(dp->device) printf("        device %s\n", dp->device);
+    g_printf("    disk %s:\n", dp->name);
+    if(dp->device) g_printf("        device %s\n", dp->device);
 
-    printf("        program \"%s\"\n", dp->program);
+    g_printf("        program \"%s\"\n", dp->program);
     if(dp->exclude_file != NULL && dp->exclude_file->nb_element > 0) {
-	printf("        exclude file");
+	g_printf("        exclude file");
 	for(excl = dp->exclude_file->first; excl != NULL; excl = excl->next) {
-	    printf(" \"%s\"", excl->name);
+	    g_printf(" \"%s\"", excl->name);
 	}
-	printf("\n");
+	g_printf("\n");
     }
     if(dp->exclude_list != NULL && dp->exclude_list->nb_element > 0) {
-	printf("        exclude list");
-	if(dp->exclude_optional) printf(" optional");
+	g_printf("        exclude list");
+	if(dp->exclude_optional) g_printf(" optional");
 	for(excl = dp->exclude_list->first; excl != NULL; excl = excl->next) {
-	    printf(" \"%s\"", excl->name);
+	    g_printf(" \"%s\"", excl->name);
 	}
-	printf("\n");
+	g_printf("\n");
     }
     if(dp->include_file != NULL && dp->include_file->nb_element > 0) {
-	printf("        include file");
+	g_printf("        include file");
 	for(excl = dp->include_file->first; excl != NULL; excl = excl->next) {
-	    printf(" \"%s\"", excl->name);
+	    g_printf(" \"%s\"", excl->name);
 	}
-	printf("\n");
+	g_printf("\n");
     }
     if(dp->include_list != NULL && dp->include_list->nb_element > 0) {
-	printf("        include list");
-	if(dp->include_optional) printf(" optional");
+	g_printf("        include list");
+	if(dp->include_optional) g_printf(" optional");
 	for(excl = dp->include_list->first; excl != NULL; excl = excl->next) {
-	    printf(" \"%s\"", excl->name);
+	    g_printf(" \"%s\"", excl->name);
 	}
-	printf("\n");
+	g_printf("\n");
     }
-    printf("        priority %d\n", dp->priority);
-    printf("        dumpcycle %d\n", dp->dumpcycle);
-    printf("        maxdumps %d\n", dp->maxdumps);
-    printf("        maxpromoteday %d\n", dp->maxpromoteday);
+    g_printf("        priority %d\n", dp->priority);
+    g_printf("        dumpcycle %d\n", dp->dumpcycle);
+    g_printf("        maxdumps %d\n", dp->maxdumps);
+    g_printf("        maxpromoteday %d\n", dp->maxpromoteday);
     if(dp->bumppercent > 0) {
-	printf("        bumppercent %d\n", dp->bumppercent);
+	g_printf("        bumppercent %d\n", dp->bumppercent);
     }
     else {
-	printf("        bumpsize " OFF_T_FMT "\n",
-		(OFF_T_FMT_TYPE)dp->bumpsize);
+	g_printf("        bumpsize %lld\n",
+		(long long)dp->bumpsize);
     }
-    printf("        bumpdays %d\n", dp->bumpdays);
-    printf("        bumpmult %lf\n", dp->bumpmult);
+    g_printf("        bumpdays %d\n", dp->bumpdays);
+    g_printf("        bumpmult %lf\n", dp->bumpmult);
 
-    printf("        strategy ");
+    g_printf("        strategy ");
     switch(dp->strategy) {
     case DS_SKIP:
-	printf("SKIP\n");
+	g_printf("SKIP\n");
 	break;
     case DS_STANDARD:
-	printf("STANDARD\n");
+	g_printf("STANDARD\n");
 	break;
     case DS_NOFULL:
-	printf("NOFULL\n");
+	g_printf("NOFULL\n");
 	break;
     case DS_NOINC:
-	printf("NOINC\n");
+	g_printf("NOINC\n");
 	break;
     case DS_HANOI:
-	printf("HANOI\n");
+	g_printf("HANOI\n");
 	break;
     case DS_INCRONLY:
-	printf("INCRONLY\n");
+	g_printf("INCRONLY\n");
 	break;
     }
-    printf("        ignore %s\n", (dp->ignore? "YES" : "NO"));
-    printf("        estimate ");
+    g_printf("        ignore %s\n", (dp->ignore? "YES" : "NO"));
+    g_printf("        estimate ");
     switch(dp->estimate) {
     case ES_CLIENT:
-	printf("CLIENT\n");
+	g_printf("CLIENT\n");
 	break;
     case ES_SERVER:
-	printf("SERVER\n");
+	g_printf("SERVER\n");
 	break;
     case ES_CALCSIZE:
-	printf("CALCSIZE\n");
+	g_printf("CALCSIZE\n");
 	break;
     }
 
-    printf("        compress ");
+    g_printf("        compress ");
     switch(dp->compress) {
     case COMP_NONE:
-	printf("NONE\n");
+	g_printf("NONE\n");
 	break;
     case COMP_FAST:
-	printf("CLIENT FAST\n");
+	g_printf("CLIENT FAST\n");
 	break;
     case COMP_BEST:
-	printf("CLIENT BEST\n");
+	g_printf("CLIENT BEST\n");
 	break;
     case COMP_SERVER_FAST:
-	printf("SERVER FAST\n");
+	g_printf("SERVER FAST\n");
 	break;
     case COMP_SERVER_BEST:
-	printf("SERVER BEST\n");
+	g_printf("SERVER BEST\n");
 	break;
     }
     if(dp->compress != COMP_NONE) {
-	printf("        comprate %.2lf %.2lf\n",
+	g_printf("        comprate %.2lf %.2lf\n",
 	       dp->comprate[0], dp->comprate[1]);
     }
 
-    printf("        encrypt ");
+    g_printf("        encrypt ");
     switch(dp->encrypt) {
     case ENCRYPT_NONE:
-	printf("NONE\n");
+	g_printf("NONE\n");
 	break;
     case ENCRYPT_CUST:
-	printf("CLIENT\n");
+	g_printf("CLIENT\n");
 	break;
     case ENCRYPT_SERV_CUST:
-	printf("SERVER\n");
+	g_printf("SERVER\n");
 	break;
     }
 
-    printf("        auth %s\n", dp->security_driver);
-    printf("        kencrypt %s\n", (dp->kencrypt? "YES" : "NO"));
-    printf("        amandad_path %s\n", dp->amandad_path);
-    printf("        client_username %s\n", dp->client_username);
-    printf("        ssh_keys %s\n", dp->ssh_keys);
+    g_printf("        auth %s\n", dp->security_driver);
+    g_printf("        kencrypt %s\n", (dp->kencrypt? "YES" : "NO"));
+    g_printf("        amandad_path %s\n", dp->amandad_path);
+    g_printf("        client_username %s\n", dp->client_username);
+    g_printf("        ssh_keys %s\n", dp->ssh_keys);
 
-    printf("        holdingdisk ");
+    g_printf("        holdingdisk ");
     switch(dp->to_holdingdisk) {
     case HOLD_NEVER:
-	printf("NEVER\n");
+	g_printf("NEVER\n");
 	break;
     case HOLD_AUTO:
-	printf("AUTO\n");
+	g_printf("AUTO\n");
 	break;
     case HOLD_REQUIRED:
-	printf("REQUIRED\n");
+	g_printf("REQUIRED\n");
 	break;
     }
 
-    printf("        record %s\n", (dp->record? "YES" : "NO"));
-    printf("        index %s\n", (dp->index? "YES" : "NO"));
-    printf("        starttime %04d\n", (int)dp->starttime);
+    g_printf("        record %s\n", (dp->record? "YES" : "NO"));
+    g_printf("        index %s\n", (dp->index? "YES" : "NO"));
+    g_printf("        starttime %04d\n", (int)dp->starttime);
     if(dp->tape_splitsize > (off_t)0) {
-	printf("        tape_splitsize " OFF_T_FMT "\n",
-	       (OFF_T_FMT_TYPE)dp->tape_splitsize);
+	g_printf("        tape_splitsize %lld\n",
+	       (long long)dp->tape_splitsize);
     }
     if(dp->split_diskbuffer) {
-	printf("        split_diskbuffer %s\n", dp->split_diskbuffer);
+	g_printf("        split_diskbuffer %s\n", dp->split_diskbuffer);
     }
     if(dp->fallback_splitsize > (off_t)0) {
-	printf("        fallback_splitsize " OFF_T_FMT "Mb\n",
-	       (OFF_T_FMT_TYPE)(dp->fallback_splitsize / (off_t)1024));
+	g_printf("        fallback_splitsize %lldMb\n",
+	       (long long)(dp->fallback_splitsize / (off_t)1024));
     }
-    printf("        skip-incr %s\n", (dp->skip_incr? "YES" : "NO"));
-    printf("        skip-full %s\n", (dp->skip_full? "YES" : "NO"));
-    printf("        spindle %d\n", dp->spindle);
+    g_printf("        skip-incr %s\n", (dp->skip_incr? "YES" : "NO"));
+    g_printf("        skip-full %s\n", (dp->skip_full? "YES" : "NO"));
+    g_printf("        spindle %d\n", dp->spindle);
 
-    printf("\n");
+    g_printf("\n");
 }
 
 void
@@ -2213,7 +2210,7 @@ show_version(
     (void)argv;	/* Quiet unused parameter warning */
 
     for(i = 0; version_info[i] != NULL; i++)
-	printf("%s", version_info[i]);
+	g_printf("%s", version_info[i]);
 }
 
 

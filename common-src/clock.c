@@ -69,7 +69,7 @@ curclock(void)
     GTimeVal end_time;
 
     if(!clock_running) {
-	fprintf(stderr,_("curclock botch\n"));
+	g_fprintf(stderr,_("curclock botch\n"));
 	exit(1);
     }
 
@@ -86,7 +86,7 @@ walltime_str(
     char *s;
 
     /* tv_sec/tv_usec are longs on some systems */
-    snprintf(str[n], SIZEOF(str[n]), "%lu.%03lu",
+    g_snprintf(str[n], SIZEOF(str[n]), "%lu.%03lu",
 	     (unsigned long)t.tv_sec,
 	     (unsigned long)t.tv_usec/1000);
     s = str[n++];

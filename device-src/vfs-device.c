@@ -291,13 +291,13 @@ static gboolean check_is_dir(const char * name, gboolean printmsg) {
         }
 #endif /* EINTR */
         if (printmsg) {
-            fprintf(stderr, "Error checking directory %s: %s\n",
+            g_fprintf(stderr, "Error checking directory %s: %s\n",
                     name, strerror(errno));
         }
         return FALSE;
     } else if (!S_ISDIR(dir_status.st_mode)) {
         if (printmsg) {
-            fprintf(stderr, "VFS Device path %s is not a directory.\n",
+            g_fprintf(stderr, "VFS Device path %s is not a directory.\n",
                     name);
         }
         return FALSE;
@@ -324,10 +324,10 @@ static gboolean file_number_to_file_name_functor(const char * filename,
     /* Just to be thorough, let's check that it's a real
        file. */
     if (0 != stat(result_tmp, &file_status)) {
-        fprintf(stderr, "Cannot stat file %s (%s), ignoring it.\n", 
+        g_fprintf(stderr, "Cannot stat file %s (%s), ignoring it.\n", 
                 result_tmp, strerror(errno));
     } else if (!S_ISREG(file_status.st_mode)) {
-        fprintf(stderr, "%s is not a regular file, ignoring it.\n",
+        g_fprintf(stderr, "%s is not a regular file, ignoring it.\n",
                 result_tmp);
     } else {
         data->count ++;
@@ -364,7 +364,7 @@ static char * file_number_to_file_name(VfsDevice * self, guint device_file) {
         g_assert(data.result == NULL);
         return NULL;
     } else if (data.count > 1) {
-        fprintf(stderr,
+        g_fprintf(stderr,
                 "Found multiple names for file number %d, choosing file %s.\n",
                 device_file, data.result);
         return data.result;
@@ -417,7 +417,7 @@ static gboolean open_lock(VfsDevice * self, int file, gboolean exclusive) {
     fd = robust_open(name, O_CREAT | O_WRONLY, VFS_DEVICE_CREAT_MODE);
 
     if (fd < 0) {
-        fprintf(stderr, "Can't open lock file %s: %s\n",
+        g_fprintf(stderr, "Can't open lock file %s: %s\n",
                 name, strerror(errno));
         return FALSE;
     }
@@ -459,7 +459,7 @@ static gboolean update_volume_size_functor(const char * filename,
 
     if (stat(full_filename, &stat_buf) < 0) {
         /* Log it and keep going. */
-        fprintf(stderr, "Couldn't stat file %s: %s\n",
+        g_fprintf(stderr, "Couldn't stat file %s: %s\n",
                 full_filename, strerror(errno));
         amfree(full_filename);
         return TRUE;
@@ -495,7 +495,7 @@ vfs_device_open_device (Device * pself, char * device_name) {
     /* Next open the directory itself. */
     self->dir_handle = opendir(self->dir_name);
     if (self->dir_handle == NULL) {
-        fprintf(stderr, "Couldn't open directory %s for reading: %s\n",
+        g_fprintf(stderr, "Couldn't open directory %s for reading: %s\n",
                 device_name, strerror(errno));
         return FALSE;
     }
@@ -532,7 +532,7 @@ static gboolean delete_vfs_files_functor(const char * filename,
 
     path_name = vstralloc(self->dir_name, "/", filename, NULL);
     if (unlink(path_name) != 0) {
-        fprintf(stderr, "Error unlinking %s: %s\n", path_name,
+        g_fprintf(stderr, "Error unlinking %s: %s\n", path_name,
                 strerror(errno));
     }
     amfree(path_name);
@@ -566,7 +566,7 @@ static gboolean check_dir_empty_functor(const char * filename,
 
     path_name = vstralloc(self->dir_name, "/", filename, NULL);
 
-    fprintf(stderr, "Found spurious storage file %s\n", path_name);
+    g_fprintf(stderr, "Found spurious storage file %s\n", path_name);
 
     amfree(path_name);
     return TRUE;
@@ -583,7 +583,7 @@ static gboolean write_amanda_header(VfsDevice * self,
     label_buffer = build_header(header, VFS_DEVICE_LABEL_SIZE);
     if (strlen(label_buffer)+1 > VFS_DEVICE_LABEL_SIZE) {
         amfree(label_buffer);
-        fprintf(stderr, "Amanda header header won't fit on VFS device!\n");
+        g_fprintf(stderr, "Amanda header header won't fit on VFS device!\n");
         return FALSE;
     }
 
@@ -616,7 +616,7 @@ static gboolean clear_and_prepare_label(VfsDevice * self, char * label,
                                      O_CREAT | O_EXCL | O_WRONLY,
                                      VFS_DEVICE_CREAT_MODE);
     if (self->open_file_fd < 0) {
-        fprintf(stderr, "Can't open file %s: %s\n", self->file_name,
+        g_fprintf(stderr, "Can't open file %s: %s\n", self->file_name,
                 strerror(errno));
         return FALSE;
     }
@@ -649,7 +649,7 @@ static ReadLabelStatusFlags vfs_device_read_label(Device * dself) {
 
     if (amanda_header->type != F_TAPESTART) {
         /* This is an error, and should not happen. */
-        fprintf(stderr, "Got a bad volume label\n");
+        g_fprintf(stderr, "Got a bad volume label\n");
         amfree(amanda_header);
         return READ_LABEL_STATUS_VOLUME_ERROR;
     }
@@ -763,7 +763,7 @@ static gboolean get_last_file_number_functor(const char * filename,
     g_return_val_if_fail(IS_VFS_DEVICE(data->self), FALSE);
     file = g_ascii_strtoull(filename, NULL, 10); /* Guaranteed to work. */
     if (file > G_MAXINT) {
-        fprintf(stderr, "Super-large device file %s found, ignoring.\n",
+        g_fprintf(stderr, "Super-large device file %s found, ignoring.\n",
                filename);
         return TRUE;
     }
@@ -785,7 +785,7 @@ static gint get_last_file_number(VfsDevice * self) {
 
     if (count <= 0) {
         /* Somebody deleted something important while we weren't looking. */
-        fprintf(stderr, "Error identifying VFS device contents!\n");
+        g_fprintf(stderr, "Error identifying VFS device contents!\n");
         return -1;
     } else {
         g_assert(data.rval >= 0);
@@ -808,7 +808,7 @@ static gboolean get_next_file_number_functor(const char * filename,
     g_return_val_if_fail(IS_VFS_DEVICE(data->self), FALSE);
     file = g_ascii_strtoull(filename, NULL, 10); /* Guaranteed to work. */
     if (file > G_MAXINT) {
-        fprintf(stderr, "Super-large device file %s found, ignoring.\n",
+        g_fprintf(stderr, "Super-large device file %s found, ignoring.\n",
                filename);
         return TRUE;
     }
@@ -834,7 +834,7 @@ static gint get_next_file_number(VfsDevice * self, guint request) {
 
     if (count <= 0) {
         /* Somebody deleted something important while we weren't looking. */
-        fprintf(stderr, "Error identifying VFS device contents!\n");
+        g_fprintf(stderr, "Error identifying VFS device contents!\n");
         return -1;
     }
     
@@ -899,7 +899,7 @@ vfs_device_start_file (Device * pself, const dumpfile_t * ji) {
                                      O_CREAT | O_EXCL | O_RDWR,
                                      VFS_DEVICE_CREAT_MODE);
     if (self->open_file_fd < 0) {
-        fprintf(stderr, "Can't create file %s: %s\n", self->file_name,
+        g_fprintf(stderr, "Can't create file %s: %s\n", self->file_name,
                 strerror(errno));
         release_file(self);
         return FALSE;
@@ -985,7 +985,7 @@ vfs_device_seek_file (Device * pself, guint requested_file) {
 
     self->open_file_fd = robust_open(self->file_name, O_RDONLY, 0);
     if (self->open_file_fd <= 0) {
-        fprintf(stderr, "Couldn't open file %s: %s\n", self->file_name,
+        g_fprintf(stderr, "Couldn't open file %s: %s\n", self->file_name,
                 strerror(errno));
         amfree(self->file_name);
         release_file(self);
@@ -995,7 +995,7 @@ vfs_device_seek_file (Device * pself, guint requested_file) {
     result = vfs_device_robust_read(self, header_buffer,
                                     &header_buffer_size);
     if (result != RESULT_SUCCESS) {
-        fprintf(stderr, "Problem reading Amanda header.\n");
+        g_fprintf(stderr, "Problem reading Amanda header.\n");
         release_file(self);
         return NULL;
     }
@@ -1113,7 +1113,7 @@ vfs_device_property_set (Device * pself, DevicePropertyId ID, GValue * val) {
 
 static gboolean try_unlink(const char * file) {
     if (unlink(file) < 0) {
-        fprintf(stderr, "Can't unlink file %s: %s\n", file, strerror(errno));
+        g_fprintf(stderr, "Can't unlink file %s: %s\n", file, strerror(errno));
         return FALSE;
     } else {
         return TRUE;
@@ -1187,7 +1187,7 @@ static IoResult vfs_device_robust_read(VfsDevice * self, void *buf,
             continue;
         } else {
             /* Error occured. */
-            fprintf(stderr, "Error reading fd %d: %s\n", fd, strerror(errno));
+            g_fprintf(stderr, "Error reading fd %d: %s\n", fd, strerror(errno));
             *count = got;
             return -1;
         }
@@ -1233,7 +1233,7 @@ vfs_device_robust_write(VfsDevice * self,  void *buf, int count) {
             return RESULT_NO_SPACE;
         } else {
             /* Error occured. Note that here we handle EIO as an error. */
-            fprintf(stderr, "Error writing device fd %d: %s\n",
+            g_fprintf(stderr, "Error writing device fd %d: %s\n",
                     fd, strerror(errno));
             
             return RESULT_ERROR;

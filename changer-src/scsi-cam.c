@@ -407,7 +407,7 @@ int ScanBus(int print)
         {
           for (lun = 0; lun < 8; lun++)
             {
-              sprintf(pDev[count].dev, "%d:%d:%d", bus, target, lun);
+              g_sprintf(pDev[count].dev, "%d:%d:%d", bus, target, lun);
               pDev[count].inqdone = 0;
               if (OpenDevice(count, pDev[count].dev, "Scan", NULL))
                 {
@@ -419,45 +419,45 @@ int ScanBus(int print)
                     } else {
                       if (print)
                         {
-                          printf(_("bus:target:lun -> %s == "),pDev[count].dev);
+                          g_printf(_("bus:target:lun -> %s == "),pDev[count].dev);
                           
                           switch (pDev[count].inquiry->type)
                             {
                             case TYPE_DISK:
-                              printf(_("Disk"));
+                              g_printf(_("Disk"));
                               break;
                             case TYPE_TAPE:
-                              printf(_("Tape"));
+                              g_printf(_("Tape"));
                               break;
                             case TYPE_PRINTER:
-                              printf(_("Printer"));
+                              g_printf(_("Printer"));
                               break;
                             case TYPE_PROCESSOR:
-                              printf(_("Processor"));
+                              g_printf(_("Processor"));
                               break;
                             case TYPE_WORM:
-                              printf(_("Worm"));
+                              g_printf(_("Worm"));
                               break;
                             case TYPE_CDROM:
-                              printf(_("Cdrom"));
+                              g_printf(_("Cdrom"));
                               break;
                             case TYPE_SCANNER:
-                              printf(_("Scanner"));
+                              g_printf(_("Scanner"));
                               break;
                             case TYPE_OPTICAL:
-                              printf(_("Optical"));
+                              g_printf(_("Optical"));
                               break;
                             case TYPE_CHANGER:
-                              printf(_("Changer"));
+                              g_printf(_("Changer"));
                               break;
                             case TYPE_COMM:
-                              printf(_("Comm"));
+                              g_printf(_("Comm"));
                               break;
                             default:
-                              printf(_("unknown %d"),pDev[count].inquiry->type);
+                              g_printf(_("unknown %d"),pDev[count].inquiry->type);
                               break;
                             }
-                          printf("\n");
+                          g_printf("\n");
                         }
                     } 
                 }

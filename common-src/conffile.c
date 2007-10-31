@@ -151,10 +151,8 @@ static ssize_t get_size(void);
 static off_t   get_am64_t(void);
 static int     get_bool(void);
 static void    ckseen(int *seen);
-static void    conf_parserror(const char *format, ...)
-                __attribute__ ((format (printf, 1, 2)));
-static void    conf_parswarn(const char *format, ...)
-                __attribute__ ((format (printf, 1, 2)));
+static void    conf_parserror(const char *format, ...) G_GNUC_PRINTF(1,2);
+static void    conf_parswarn(const char *format, ...) G_GNUC_PRINTF(1,2);
 static tok_t   lookup_keyword(char *str);
 
 static void read_property(t_conf_var *, val_t *);
@@ -835,7 +833,8 @@ validate_chunksize(
 	val->v.am64 = ((AM64_MAX / 1024) - (2 * DISK_BLOCK_KB));
     }
     else if(val->v.am64 < 0) {
-	conf_parserror(_("Negative chunksize ("OFF_T_FMT") is no longer supported"), (OFF_T_FMT_TYPE)val->v.am64);
+	conf_parserror(_("Negative chunksize (%lld) is no longer supported"),
+		       (long long)val->v.am64);
     }
     val->v.am64 = am_floor(val->v.am64, (off_t)DISK_BLOCK_KB);
     if (val->v.am64 < 2*DISK_BLOCK_KB) {
@@ -1537,7 +1536,7 @@ read_conffile_recursively(
     }
 
     if((conf_conf = fopen(conf_confname, "r")) == NULL) {
-	fprintf(stderr, _("could not open conf file \"%s\": %s\n"), conf_confname,
+	g_fprintf(stderr, _("could not open conf file \"%s\": %s\n"), conf_confname,
 		strerror(errno));
 	amfree(conf_confname);
 	got_parserror = -1;
@@ -2512,7 +2511,7 @@ SetColumDataFromString(
 	if (eon == NULL) {
 	    *errstr = stralloc2(_("invalid columnspec: "), s);
 #ifdef TEST
-	    fprintf(stderr, "%s: %s\n", myname, *errstr);
+	    g_fprintf(stderr, "%s: %s\n", myname, *errstr);
 #endif
 	    return -1;
 	}
@@ -2521,14 +2520,14 @@ SetColumDataFromString(
 	if (ColumnData[cn].Name == NULL) {
 	    *errstr = stralloc2(_("invalid column name: "), s);
 #ifdef TEST
-	    fprintf(stderr, "%s: %s\n", myname, *errstr);
+	    g_fprintf(stderr, "%s: %s\n", myname, *errstr);
 #endif
 	    return -1;
 	}
 	if (sscanf(eon+1, "%d:%d", &Space, &Width) != 2) {
 	    *errstr = stralloc2(_("invalid format: "), eon + 1);
 #ifdef TEST
-	    fprintf(stderr, "%s: %s\n", myname, *errstr);
+	    g_fprintf(stderr, "%s: %s\n", myname, *errstr);
 #endif
 	    return -1;
 	}
@@ -2580,7 +2579,7 @@ dump_configuration(
     char kt_prefix[100];
     char *msg;
 
-    printf(_("AMANDA CONFIGURATION FROM FILE \"%s\":\n\n"), filename);
+    g_printf(_("AMANDA CONFIGURATION FROM FILE \"%s\":\n\n"), filename);
 
     for(np=server_var; np->token != CONF_UNKNOWN; np++) {
 	for(kt = server_keytab; kt->token != CONF_UNKNOWN; kt++) 
@@ -2590,14 +2589,14 @@ dump_configuration(
 	    error(_("server bad token"));
 
 	if (kt->token != CONF_IDENT)
-	    snprintf(kt_prefix, 100, "%-21s ", kt->keyword);
+	    g_snprintf(kt_prefix, 100, "%-21s ", kt->keyword);
 	    msg = conf_print(&conf_data[np->parm], 1, kt_prefix);
-	    printf("%s\n", msg);
+	    g_printf("%s\n", msg);
 	    amfree(msg);
     }
 
     for(hp = holdingdisks; hp != NULL; hp = hp->next) {
-	printf("\nHOLDINGDISK %s {\n", hp->name);
+	g_printf("\nHOLDINGDISK %s {\n", hp->name);
 	for(i=0; i < HOLDING_HOLDING; i++) {
 	    for(np=holding_var; np->token != CONF_UNKNOWN; np++) {
 		if(np->parm == i)
@@ -2613,16 +2612,16 @@ dump_configuration(
 	    if(kt->token == CONF_UNKNOWN)
 		error(_("holding bad token"));
 
-	    snprintf(kt_prefix, 100, "      %-9s ", kt->keyword);
+	    g_snprintf(kt_prefix, 100, "      %-9s ", kt->keyword);
 	    msg = conf_print(&hp->value[i], 1, kt_prefix);
-	    printf("%s\n", msg);
+	    g_printf("%s\n", msg);
 	    amfree(msg);
 	}
-	printf("}\n");
+	g_printf("}\n");
     }
 
     for(tp = tapelist; tp != NULL; tp = tp->next) {
-	printf("\nDEFINE TAPETYPE %s {\n", tp->name);
+	g_printf("\nDEFINE TAPETYPE %s {\n", tp->name);
 	for(i=0; i < TAPETYPE_TAPETYPE; i++) {
 	    for(np=tapetype_var; np->token != CONF_UNKNOWN; np++)
 		if(np->parm == i) break;
@@ -2634,12 +2633,12 @@ dump_configuration(
 	    if(kt->token == CONF_UNKNOWN)
 		error(_("tapetype bad token"));
 
-	    snprintf(kt_prefix, 100, "      %-9s ", kt->keyword);
+	    g_snprintf(kt_prefix, 100, "      %-9s ", kt->keyword);
 	    msg = conf_print(&tp->value[i], 1, kt_prefix);
-	    printf("%s\n", msg);
+	    g_printf("%s\n", msg);
 	    amfree(msg);
 	}
-	printf("}\n");
+	g_printf("}\n");
     }
 
     for(dp = dumplist; dp != NULL; dp = dp->next) {
@@ -2648,7 +2647,7 @@ dump_configuration(
 		prefix = "#";
 	    else
 		prefix = "";
-	    printf("\n%sDEFINE DUMPTYPE %s {\n", prefix, dp->name);
+	    g_printf("\n%sDEFINE DUMPTYPE %s {\n", prefix, dp->name);
 	    for(i=0; i < DUMPTYPE_DUMPTYPE; i++) {
 		for(np=dumptype_var; np->token != CONF_UNKNOWN; np++)
 		    if(np->parm == i) break;
@@ -2660,12 +2659,12 @@ dump_configuration(
 		if(kt->token == CONF_UNKNOWN)
 		    error(_("dumptype bad token"));
 
-		snprintf(kt_prefix, 100, "%s      %-19s ", prefix,kt->keyword);
+		g_snprintf(kt_prefix, 100, "%s      %-19s ", prefix,kt->keyword);
 		msg = conf_print(&dp->value[i], 1, kt_prefix);
-		printf("%s\n", msg);
+		g_printf("%s\n", msg);
 		amfree(msg);
 	    }
-	    printf("%s}\n", prefix);
+	    g_printf("%s}\n", prefix);
 	}
     }
 
@@ -2674,7 +2673,7 @@ dump_configuration(
 	    prefix = "#";
 	else
 	    prefix = "";
-	printf("\n%sDEFINE INTERFACE %s {\n", prefix, ip->name);
+	g_printf("\n%sDEFINE INTERFACE %s {\n", prefix, ip->name);
 	for(i=0; i < INTER_INTER; i++) {
 	    for(np=interface_var; np->token != CONF_UNKNOWN; np++)
 		if(np->parm == i) break;
@@ -2686,12 +2685,12 @@ dump_configuration(
 	    if(kt->token == CONF_UNKNOWN)
 		error(_("interface bad token"));
 
-	    snprintf(kt_prefix, 100, "%s      %-19s ", prefix, kt->keyword);
+	    g_snprintf(kt_prefix, 100, "%s      %-19s ", prefix, kt->keyword);
 	    msg = conf_print(&ip->value[i], 1, kt_prefix);
-	    printf("%s\n", msg);
+	    g_printf("%s\n", msg);
 	    amfree(msg);
 	}
-	printf("%s}\n",prefix);
+	g_printf("%s}\n",prefix);
     }
 
 }
@@ -2812,7 +2811,7 @@ report_bad_conf_arg(void)
     for(command_option = program_options; command_option->name != NULL;
 							command_option++) {
 	if(command_option->used == 0) {
-	    fprintf(stderr,_("argument -o%s=%s not used. Fix command line argument\n"),
+	    g_fprintf(stderr,_("argument -o%s=%s not used. Fix command line argument\n"),
 		    command_option->name, command_option->value);
 	}
     }
@@ -3703,11 +3702,11 @@ static void print_parse_problem(const char * format, va_list argp) {
     const char *xlated_fmt = gettext(format);
 
     if(conf_line)
-	fprintf(stderr, _("argument \"%s\": "), conf_line);
+	g_fprintf(stderr, _("argument \"%s\": "), conf_line);
     else
-	fprintf(stderr, "\"%s\", line %d: ", conf_confname, conf_line_num);
+	g_fprintf(stderr, "\"%s\", line %d: ", conf_confname, conf_line_num);
     
-    vfprintf(stderr, xlated_fmt, argp);
+    g_vfprintf(stderr, xlated_fmt, argp);
     fputc('\n', stderr);
 }
 
@@ -4330,13 +4329,11 @@ conf_print(
 	break;
 
     case CONFTYPE_SIZE:
-	buf = vstrallocf("%s" SSIZE_T_FMT, prefix,
-			 (SSIZE_T_FMT_TYPE)val->v.size);
+	buf = vstrallocf("%s%zd", prefix, (ssize_t)val->v.size);
 	break;
 
     case CONFTYPE_AM64:
-	buf = vstrallocf("%s" OFF_T_FMT, prefix,
-			 (OFF_T_FMT_TYPE)val->v.am64);
+	buf = vstrallocf("%s%lld", prefix, (long long)val->v.am64);
 	break;
 
     case CONFTYPE_REAL:
@@ -5211,7 +5208,7 @@ command_overwrite(
 		    np->validate(np, &valarray[np->parm]);
 		if (duplicate == 1) {
 		    if (valarray[np->parm].type != CONFTYPE_PROPLIST) {
-			fprintf(stderr,_("Duplicate %s option, using %s\n"),
+			g_fprintf(stderr,_("Duplicate %s option, using %s\n"),
 				command_option->name, command_option->value);
 		    }
 		}

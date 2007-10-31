@@ -61,8 +61,7 @@ struct cmdargs {
 
 cmd_t getcmd(struct cmdargs *cmdargs);
 cmd_t getresult(int fd, int show, int *result_argc, char **result_argv, int max_arg);
-void putresult(cmd_t result, const char *, ...)
-     __attribute__ ((format (printf, 2, 3)));
+void putresult(cmd_t result, const char *, ...) G_GNUC_PRINTF(2, 3);
 int taper_cmd(cmd_t cmd, void *ptr, char *destname, int level, char *datestamp);
 
 struct disk_s;

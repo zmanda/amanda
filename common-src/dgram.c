@@ -330,7 +330,7 @@ printf_arglist_function1(int dgram_cat, dgram_t *, dgram, const char *, fmt)
 	return -1;
 
     arglist_start(argp, fmt);
-    len = vsnprintf(dgram->cur, (size_t)bufsize, fmt, argp);
+    len = g_vsnprintf(dgram->cur, (size_t)bufsize, fmt, argp);
     arglist_end(argp);
     if(len < 0) {
 	return -1;

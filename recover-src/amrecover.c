@@ -387,12 +387,12 @@ main(
 
 	    case 'U':
 	    case '?':
-		(void)printf(USAGE);
+		(void)g_printf(USAGE);
 		return 0;
 	}
     }
     if (optind != new_argc) {
-	(void)fprintf(stderr, USAGE);
+	(void)g_fprintf(stderr, USAGE);
 	exit(1);
     }
 
@@ -429,7 +429,7 @@ main(
     if (!server_name) {
 	server_name = getenv("AMANDA_SERVER");
 	if (server_name) {
-	    printf(_("Using index server from environment AMANDA_SERVER (%s)\n"), server_name);
+	    g_printf(_("Using index server from environment AMANDA_SERVER (%s)\n"), server_name);
 	}
     }
     if (!server_name) {
@@ -450,10 +450,10 @@ main(
 	if (!tape_server_name) {
 	    tape_server_name = getenv("AMANDA_TAPESERVER");
 	    if (tape_server_name) {
-		printf(_("Using tape server from environment AMANDA_TAPESERVER (%s)\n"), tape_server_name);
+		g_printf(_("Using tape server from environment AMANDA_TAPESERVER (%s)\n"), tape_server_name);
 	    }
 	} else {
-	    printf(_("Using tape server from environment AMANDA_TAPE_SERVER (%s)\n"), tape_server_name);
+	    g_printf(_("Using tape server from environment AMANDA_TAPE_SERVER (%s)\n"), tape_server_name);
 	}
     }
     if (!tape_server_name) {
@@ -512,11 +512,11 @@ main(
     amfree(req);
     protocol_run();
 
-    printf(_("AMRECOVER Version %s. Contacting server on %s ...\n"),
+    g_printf(_("AMRECOVER Version %s. Contacting server on %s ...\n"),
 	   version(), server_name);
 
     if(response_error != 0) {
-	fprintf(stderr,"%s\n",errstr);
+	g_fprintf(stderr,"%s\n",errstr);
 	exit(1);
     }
 
@@ -555,7 +555,7 @@ main(
     else
 	error(_("BAD DATE"));
 
-    printf(_("Setting restore date to today (%s)\n"), dump_date);
+    g_printf(_("Setting restore date to today (%s)\n"), dump_date);
     line = vstrallocf("DATE %s", dump_date);
     if (converse(line) == -1) {
         aclose(server_socket);
@@ -575,9 +575,9 @@ main(
 	amfree(dump_hostname);
 	set_host(localhost);
 	if (dump_hostname)
-	    printf(_("Use the setdisk command to choose dump disk to recover\n"));
+	    g_printf(_("Use the setdisk command to choose dump disk to recover\n"));
 	else
-	    printf(_("Use the sethost command to choose a host to recover\n"));
+	    g_printf(_("Use the sethost command to choose a host to recover\n"));
 
     }
 
@@ -653,7 +653,7 @@ bad_nak:
     }
 
 #if defined(PACKET_DEBUG)
-    fprintf(stderr, _("got response:\n----\n%s\n----\n\n"), pkt->body);
+    g_fprintf(stderr, _("got response:\n----\n%s\n----\n\n"), pkt->body);
 #endif
 
     for(i = 0; i < NSTREAMS; i++) {

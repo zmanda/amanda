@@ -412,7 +412,7 @@ find_brand_new_tape_label(void)
     auto_len = -1; /* Only find the first '%' */
     while (*format != '\0') {
         if (label_len + 4 > AUTO_LABEL_MAX_LEN) {
-            fprintf(stderr, _("Auto label format is too long!\n"));
+            g_fprintf(stderr, _("Auto label format is too long!\n"));
             return NULL;
         }
 
@@ -441,17 +441,17 @@ find_brand_new_tape_label(void)
     }
 
     if (auto_pos == NULL) {
-        fprintf(stderr, _("Auto label template contains no '%%'!\n"));
+        g_fprintf(stderr, _("Auto label template contains no '%%'!\n"));
         return NULL;
     }
 
-    snprintf(tmpfmt, SIZEOF(tmpfmt), "%%0" SIZE_T_FMT "d",
-	     (SIZE_T_FMT_TYPE)auto_len);
+    g_snprintf(tmpfmt, SIZEOF(tmpfmt), "%%0%zdd",
+	     (size_t)auto_len);
 
     for (i = 1; i < INT_MAX; i ++) {
-        snprintf(tmpnum, SIZEOF(tmpnum), tmpfmt, i);
+        g_snprintf(tmpnum, SIZEOF(tmpnum), tmpfmt, i);
         if (strlen(tmpnum) != (size_t)auto_len) {
-            fprintf(stderr, _("All possible auto-labels used.\n"));
+            g_fprintf(stderr, _("All possible auto-labels used.\n"));
             return NULL;
         }
 
@@ -461,7 +461,7 @@ find_brand_new_tape_label(void)
         if (tp == NULL) {
             /* Got it. Double-check that this is a labelstr match. */
             if (!match(getconf_str(CNF_LABELSTR), newlabel)) {
-                fprintf(stderr, _("New label %s does not match labelstr %s from amanda.conf\n"),
+                g_fprintf(stderr, _("New label %s does not match labelstr %s from amanda.conf\n"),
                         newlabel, getconf_str(CNF_LABELSTR));
                 return 0;
             }
@@ -470,7 +470,7 @@ find_brand_new_tape_label(void)
     }
 
     /* Should not get here unless you have over two billion tapes. */
-    fprintf(stderr, _("Taper internal error in find_brand_new_tape_label."));
+    g_fprintf(stderr, _("Taper internal error in find_brand_new_tape_label."));
     return 0;
 }
 
@@ -483,9 +483,9 @@ FILE_taperscan_output_callback(
     if(strlen(msg) == 0) return;
 
     if(data)
-	fprintf((FILE *)data, "%s", msg);
+	g_fprintf((FILE *)data, "%s", msg);
     else
-	printf("%s", msg);
+	g_printf("%s", msg);
 }
 
 void

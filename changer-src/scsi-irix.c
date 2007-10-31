@@ -335,7 +335,7 @@ int ScanBus(int print)
       {
         pDev[count].dev = malloc(10);
         pDev[count].inqdone = 0;
-        sprintf(pDev[count].dev,"/dev/scsi/%s", dirent->d_name);
+        g_sprintf(pDev[count].dev,"/dev/scsi/%s", dirent->d_name);
         if (OpenDevice(count,pDev[count].dev, "Scan", NULL ))
           {
             SCSI_CloseDevice(count);
@@ -343,48 +343,48 @@ int ScanBus(int print)
             
             if (print)
               {
-                printf(_("name /dev/scsi/%s "), dirent->d_name);
+                g_printf(_("name /dev/scsi/%s "), dirent->d_name);
                 
                 switch (pDev[count].inquiry->type)
                   {
                   case TYPE_DISK:
-                    printf(_("Disk"));
+                    g_printf(_("Disk"));
                     break;
                   case TYPE_TAPE:
-                    printf(_("Tape"));
+                    g_printf(_("Tape"));
                     break;
                   case TYPE_PRINTER:
-                    printf(_("Printer"));
+                    g_printf(_("Printer"));
                     break;
                   case TYPE_PROCESSOR:
-                    printf(_("Processor"));
+                    g_printf(_("Processor"));
                     break;
                   case TYPE_WORM:
-                    printf(_("Worm"));
+                    g_printf(_("Worm"));
                     break;
                   case TYPE_CDROM:
-                    printf(_("Cdrom"));
+                    g_printf(_("Cdrom"));
                     break;
                   case TYPE_SCANNER:
-                    printf(_("Scanner"));
+                    g_printf(_("Scanner"));
                     break;
                   case TYPE_OPTICAL:
-                    printf(_("Optical"));
+                    g_printf(_("Optical"));
                     break;
                   case TYPE_CHANGER:
-                    printf(_("Changer"));
+                    g_printf(_("Changer"));
                     break;
                   case TYPE_COMM:
-                    printf(_("Comm"));
+                    g_printf(_("Comm"));
                     break;
                   default:
-                    printf(_("unknown %d"),pDev[count].inquiry->type);
+                    g_printf(_("unknown %d"),pDev[count].inquiry->type);
                     break;
                   }
-                printf("\n");
+                g_printf("\n");
               }
             count++;
-	    printf(_("Count %d\n"),count);
+	    g_printf(_("Count %d\n"),count);
           } else {
             free(pDev[count].dev);
             pDev[count].dev=NULL;

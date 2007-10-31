@@ -83,7 +83,7 @@ find_dump(
 	for(seq = 0; 1; seq++) {
 	    char seq_str[NUM_STR_SIZE];
 
-	    snprintf(seq_str, SIZEOF(seq_str), "%u", seq);
+	    g_snprintf(seq_str, SIZEOF(seq_str), "%u", seq);
 	    logfile = newvstralloc(logfile,
 			conf_logdir, "/log.", tp->datestamp, ".", seq_str, NULL);
 	    if(access(logfile, R_OK) != 0) break;
@@ -105,7 +105,7 @@ find_dump(
 	    logs += search_logfile(&output_find, tp->label, tp->datestamp, logfile);
 	}
 	if(logs == 0 && strcmp(tp->datestamp,"0") != 0)
-	    fprintf(stderr, _("Warning: no log files found for tape %s written %s\n"),
+	    g_fprintf(stderr, _("Warning: no log files found for tape %s written %s\n"),
 		   tp->label, find_nicedate(tp->datestamp));
     }
     amfree(logfile);
@@ -151,7 +151,7 @@ find_log(void)
 	for(seq = 0; 1; seq++) {
 	    char seq_str[NUM_STR_SIZE];
 
-	    snprintf(seq_str, SIZEOF(seq_str), "%u", seq);
+	    g_snprintf(seq_str, SIZEOF(seq_str), "%u", seq);
 	    logfile = newvstralloc(logfile,
 			conf_logdir, "/log.", tp->datestamp, ".", seq_str, NULL);
 	    if(access(logfile, R_OK) != 0) break;
@@ -186,7 +186,7 @@ find_log(void)
 	    }
 	}
 	if(logs == 0 && strcmp(tp->datestamp,"0") != 0)
-	    fprintf(stderr, _("Warning: no log files found for tape %s written %s\n"),
+	    g_fprintf(stderr, _("Warning: no log files found for tape %s written %s\n"),
 		   tp->label, find_nicedate(tp->datestamp));
     }
     amfree(logfile);
@@ -405,10 +405,10 @@ print_find_result(
     max_len_status = 1;
 
     if(output_find==NULL) {
-	printf(_("\nNo dump to list\n"));
+	g_printf(_("\nNo dump to list\n"));
     }
     else {
-	printf(_("\ndate%*s host%*s disk%*s lv%*s tape or file%*s file%*s part%*s status\n"),
+	g_printf(_("\ndate%*s host%*s disk%*s lv%*s tape or file%*s file%*s part%*s status\n"),
 	       max_len_datestamp-4,"",
 	       max_len_hostname-4 ,"",
 	       max_len_diskname-4 ,"",
@@ -423,14 +423,14 @@ print_find_result(
 
 	    qdiskname = quote_string(output_find_result->diskname);
 	    /*@ignore@*/
-	    printf("%-*s %-*s %-*s %*d %-*s %*" OFF_T_RFMT " %*s %-*s\n",
+	    g_printf("%-*s %-*s %-*s %*d %-*s %*lld %*s %-*s\n",
 		    max_len_datestamp, 
 			find_nicedate(output_find_result->timestamp),
 		    max_len_hostname,  output_find_result->hostname,
 		    max_len_diskname,  qdiskname,
 		    max_len_level,     output_find_result->level,
 		    max_len_label,     output_find_result->label,
-		    max_len_filenum,   (OFF_T_FMT_TYPE)output_find_result->filenum,
+		    max_len_filenum,   (long long)output_find_result->filenum,
 		    max_len_part,      output_find_result->partnum,
 		    max_len_status,    output_find_result->status
 		    );
@@ -491,7 +491,7 @@ find_nicedate(
     day   = numdate % 100;
 
     if(strlen(datestamp) <= 8) {
-	snprintf(nice, SIZEOF(nice), "%4d-%02d-%02d",
+	g_snprintf(nice, SIZEOF(nice), "%4d-%02d-%02d",
 		year, month, day);
     }
     else {
@@ -502,7 +502,7 @@ find_nicedate(
 	minutes = (numtime / 100) % 100;
 	seconds = numtime % 100;
 
-	snprintf(nice, SIZEOF(nice), "%4d-%02d-%02d %02d:%02d:%02d",
+	g_snprintf(nice, SIZEOF(nice), "%4d-%02d-%02d %02d:%02d:%02d",
 		year, month, day, hours, minutes, seconds);
     }
 
@@ -629,7 +629,7 @@ search_logfile(
 	if(curlog == L_START && curprog == P_TAPER) {
 	    if(parse_taper_datestamp_log(curstr,
 					 &ck_datestamp, &ck_label) == 0) {
-		printf(_("strange log line \"start taper %s\" curstr='%s'\n"),
+		g_printf(_("strange log line \"start taper %s\" curstr='%s'\n"),
 		    logfile, curstr);
 	    } else if(strcmp(ck_datestamp, datestamp) == 0
 		      && strcmp(ck_label, label) == 0) {
@@ -662,7 +662,7 @@ search_logfile(
 	if(curlog == L_START && curprog == P_TAPER) {
 	    if(parse_taper_datestamp_log(curstr,
 					 &ck_datestamp2, &ck_label) == 0) {
-		printf(_("strange log line in %s \"start taper %s\"\n"),
+		g_printf(_("strange log line in %s \"start taper %s\"\n"),
 		    logfile, curstr);
 	    } else if (strcmp(ck_label, label)) {
 		passlabel = !passlabel;
@@ -677,7 +677,7 @@ search_logfile(
 
 	    skip_whitespace(s, ch);
 	    if(ch == '\0') {
-		printf(_("strange log line in %s \"%s\"\n"),
+		g_printf(_("strange log line in %s \"%s\"\n"),
 		    logfile, curstr);
 		continue;
 	    }
@@ -688,12 +688,12 @@ search_logfile(
 		s[-1] = '\0';
 
 		if (strcmp(thelabel, label) != 0) {
-		    printf("label doesn't match %s %s\n", thelabel, label);
+		    g_printf("label doesn't match %s %s\n", thelabel, label);
 		    continue;
 		}
 		skip_whitespace(s, ch);
 		if(ch == '\0') {
-		    printf("strange log line in %s \"%s\"\n",
+		    g_printf("strange log line in %s \"%s\"\n",
 			   logfile, curstr);
 		    continue;
 		}
@@ -705,7 +705,7 @@ search_logfile(
 
 		skip_whitespace(s, ch);
 		if(ch == '\0') {
-		    printf("strange log line in %s \"%s\"\n",
+		    g_printf("strange log line in %s \"%s\"\n",
 			   logfile, curstr);
 		    continue;
 		}
@@ -718,7 +718,7 @@ search_logfile(
 
 	    skip_whitespace(s, ch);
 	    if(ch == '\0') {
-		printf(_("strange log line in %s \"%s\"\n"),
+		g_printf(_("strange log line in %s \"%s\"\n"),
 		    logfile, curstr);
 		continue;
 	    }
@@ -730,7 +730,7 @@ search_logfile(
 
 	    skip_whitespace(s, ch);
 	    if(ch == '\0') {
-		printf(_("strange log line in %s \"%s\"\n"),
+		g_printf(_("strange log line in %s \"%s\"\n"),
 		    logfile, curstr);
 		continue;
 	    }
@@ -753,7 +753,7 @@ search_logfile(
 		}
 		skip_whitespace(s, ch);
 		if(ch == '\0' || sscanf(s - 1, "%d", &level) != 1) {
-		    printf(_("strange log line in %s \"%s\"\n"),
+		    g_printf(_("strange log line in %s \"%s\"\n"),
 		    logfile, curstr);
 		    continue;
 		}
@@ -762,7 +762,7 @@ search_logfile(
 
 	    skip_whitespace(s, ch);
 	    if(ch == '\0') {
-		printf(_("strange log line in %s \"%s\"\n"),
+		g_printf(_("strange log line in %s \"%s\"\n"),
 		    logfile, curstr);
 		continue;
 	    }
@@ -884,7 +884,7 @@ dumps_match(
 	cur_result;
 	cur_result=cur_result->next) {
 	char level_str[NUM_STR_SIZE];
-	snprintf(level_str, SIZEOF(level_str), "%d", cur_result->level);
+	g_snprintf(level_str, SIZEOF(level_str), "%d", cur_result->level);
 	if((!hostname || *hostname == '\0' || match_host(hostname, cur_result->hostname)) &&
 	   (!diskname || *diskname == '\0' || match_disk(diskname, cur_result->diskname)) &&
 	   (!datestamp || *datestamp== '\0' || match_datestamp(datestamp, cur_result->timestamp)) &&

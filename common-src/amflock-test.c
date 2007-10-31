@@ -43,7 +43,7 @@ main(void)
     _lnlock_dir = ".";
 
     while (*imp) {
-	fprintf(stderr, _("Testing amflock-%s\n"), (*imp)->impl_name);
+	g_fprintf(stderr, _("Testing amflock-%s\n"), (*imp)->impl_name);
 	alarm(5); /* time out after 5 seconds */
 
 	for (lock_ro = 0; lock_ro < 2; lock_ro++) { /* false (0) or true (1) */

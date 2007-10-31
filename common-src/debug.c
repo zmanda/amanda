@@ -103,7 +103,7 @@ get_debug_name(
     if(n == 0) {
 	number[0] = '\0';
     } else {
-	snprintf(number, SIZEOF(number), "%03d", n - 1);
+	g_snprintf(number, SIZEOF(number), "%03d", n - 1);
     }
     result = vstralloc(get_pname(), ".", ts, number, ".debug", NULL);
     amfree(ts);
@@ -159,7 +159,7 @@ debug_logging_handler(const gchar *log_domain G_GNUC_UNUSED,
 	}
 
 	if (erroutput_type & ERR_INTERACTIVE) {
-	    fprintf(stderr, "%s: %s: %s\n", get_pname(), msg_timestamp(), message);
+	    g_fprintf(stderr, "%s: %s: %s\n", get_pname(), msg_timestamp(), message);
 	    fflush(stderr);
 	}
 
@@ -385,7 +385,7 @@ debug_setup_2(
 }
 
 /* Get current GMT time and return a message timestamp.
- * Used for printf calls to logs and such.  The return value
+ * Used for g_printf calls to logs and such.  The return value
  * is to a static buffer, so it should be used immediately.
  *
  * @returns: timestamp
@@ -397,7 +397,7 @@ msg_timestamp(void)
     struct timeval tv;
 
     gettimeofday(&tv, NULL);
-    snprintf(timestamp, SIZEOF(timestamp), "%lld.%06ld",
+    g_snprintf(timestamp, SIZEOF(timestamp), "%lld.%06ld",
 		(long long)tv.tv_sec, (long)tv.tv_usec);
 
     return timestamp;
@@ -596,7 +596,7 @@ debug_close(void)
 	int save_errno = errno;
 
 	db_file = NULL;				/* prevent recursion */
-	fprintf(stderr, _("close debug file: %s"), strerror(save_errno));
+	g_fprintf(stderr, _("close debug file: %s"), strerror(save_errno));
 	/*NOTREACHED*/
     }
     db_fd = 2;
@@ -616,7 +616,7 @@ printf_arglist_function(void debug_printf, const char *, format)
     /*
      * It is common in the code to call dbprintf to write out
      * syserrno(errno) and then turn around and try to do something else
-     * with errno (e.g. printf() or log()), so we make sure errno goes
+     * with errno (e.g. g_printf() or log()), so we make sure errno goes
      * back out with the same value it came in with.
      */
 
@@ -627,9 +627,9 @@ printf_arglist_function(void debug_printf, const char *, format)
 	db_file = stderr;
     }
     if(db_file != NULL) {
-	fprintf(db_file, "%s: %s: ", msg_timestamp(), get_pname());
+	g_fprintf(db_file, "%s: %s: ", msg_timestamp(), get_pname());
 	arglist_start(argp, format);
-	vfprintf(db_file, format, argp);
+	g_vfprintf(db_file, format, argp);
 	arglist_end(argp);
 	fflush(db_file);
     }

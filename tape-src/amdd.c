@@ -30,15 +30,15 @@ static void usage(void);
 static void
 usage(void)
 {
-    fprintf(stderr, _("usage: %s "), pgm);
-    fprintf(stderr, _(" [-d]"));
-    fprintf(stderr, _(" [-l length]"));
-    fprintf(stderr, _(" [if=input]"));
-    fprintf(stderr, _(" [of=output]"));
-    fprintf(stderr, _(" [bs=blocksize]"));
-    fprintf(stderr, _(" [count=count]"));
-    fprintf(stderr, _(" [skip=count]"));
-    fprintf(stderr, _("\n"));
+    g_fprintf(stderr, _("usage: %s "), pgm);
+    g_fprintf(stderr, _(" [-d]"));
+    g_fprintf(stderr, _(" [-l length]"));
+    g_fprintf(stderr, _(" [if=input]"));
+    g_fprintf(stderr, _(" [of=output]"));
+    g_fprintf(stderr, _(" [bs=blocksize]"));
+    g_fprintf(stderr, _(" [count=count]"));
+    g_fprintf(stderr, _(" [skip=count]"));
+    g_fprintf(stderr, _("\n"));
     exit(1);
 }
 
@@ -84,7 +84,7 @@ main(
 	switch(ch) {
 	case 'd':
 	    debug_amdd = 1;
-	    fprintf(stderr, _("debug mode!\n"));
+	    g_fprintf(stderr, _("debug mode!\n"));
 	    break;
 
 #ifndef __lint
@@ -124,33 +124,33 @@ main(
 	if(0 == strncmp("if", argv[optind], (size_t)len)) {
 	    if((infd = tape_open(eq + 1, O_RDONLY, 0)) < 0) {
 		save_errno = errno;
-		fprintf(stderr, "%s: %s: ", pgm, eq + 1);
+		g_fprintf(stderr, "%s: %s: ", pgm, eq + 1);
 		errno = save_errno;
 		perror("open");
 		return 1;
 	    }
 	    read_func = tapefd_read;
             if(debug_amdd) {
-		fprintf(stderr, _("input opened \"%s\", got fd %d\n"),
+		g_fprintf(stderr, _("input opened \"%s\", got fd %d\n"),
 				eq + 1, infd);
 	    }
 	} else if(0 == strncmp("of", argv[optind], (size_t)len)) {
 	    if((outfd = tape_open(eq + 1, O_RDWR|O_CREAT|O_TRUNC, 0644)) < 0) {
 		save_errno = errno;
-		fprintf(stderr, "%s: %s: ", pgm, eq + 1);
+		g_fprintf(stderr, "%s: %s: ", pgm, eq + 1);
 		errno = save_errno;
 		perror("open");
 		return 1;
 	    }
 	    write_func = tapefd_write;
             if(debug_amdd) {
-		fprintf(stderr, _("output opened \"%s\", got fd %d\n"),
+		g_fprintf(stderr, _("output opened \"%s\", got fd %d\n"),
 				eq + 1, outfd);
 	    }
 	    if(have_length) {
 		if(debug_amdd) {
-		    fprintf(stderr, _("length set to " OFF_T_FMT "\n"),
-			(OFF_T_FMT_TYPE)length);
+		    g_fprintf(stderr, _("length set to %lld\n"),
+			(long long)length);
 		}
 		tapefd_setinfo_length(outfd, length);
 	    }
@@ -165,31 +165,28 @@ main(
 		}
 	    }
 	    if(debug_amdd) {
-		fprintf(stderr, _("blocksize set to " SIZE_T_FMT "\n"),
-			(SIZE_T_FMT_TYPE)blocksize);
+		g_fprintf(stderr, _("blocksize set to %zu\n"), blocksize);
 	    }
 	} else if(0 == strncmp("count", argv[optind], (size_t)len)) {
 	    count = OFF_T_ATOI(eq + 1);
 	    have_count = 1;
 	    if(debug_amdd) {
-		fprintf(stderr, _("count set to " OFF_T_FMT "\n"),
-			(OFF_T_FMT_TYPE)count);
+		g_fprintf(stderr, _("count set to %lld\n"), (long long)count);
 	    }
 	} else if(0 == strncmp("skip", argv[optind], (size_t)len)) {
 	    skip = OFF_T_ATOI(eq + 1);
 	    if(debug_amdd) {
-		fprintf(stderr, _("skip set to " OFF_T_FMT "\n"),
-			(OFF_T_FMT_TYPE)skip);
+		g_fprintf(stderr, _("skip set to %lld\n"), (long long)skip);
 	    }
 	} else {
-	    fprintf(stderr, _("%s: bad argument: \"%s\"\n"), pgm, argv[optind]);
+	    g_fprintf(stderr, _("%s: bad argument: \"%s\"\n"), pgm, argv[optind]);
 	    return 1;
 	}
     }
 
     if(0 == (buf = malloc(blocksize))) {
 	save_errno = errno;
-	fprintf(stderr, "%s: ", pgm);
+	g_fprintf(stderr, "%s: ", pgm);
 	errno = save_errno;
 	perror(_("malloc error"));
 	return 1;
@@ -224,16 +221,16 @@ main(
     }
     if(len < 0) {
 	save_errno = errno;
-	fprintf(stderr, "%s: ", pgm);
+	g_fprintf(stderr, "%s: ", pgm);
 	errno = save_errno;
 	perror(eq);
 	res = 1;
     }
-    fprintf(stderr, _("%d+%d in\n%d+%d out\n"), fread, pread, fwrite, pwrite);
+    g_fprintf(stderr, _("%d+%d in\n%d+%d out\n"), fread, pread, fwrite, pwrite);
     if(read_func == tapefd_read) {
 	if(0 != tapefd_close(infd)) {
 	    save_errno = errno;
-	    fprintf(stderr, "%s: ", pgm);
+	    g_fprintf(stderr, "%s: ", pgm);
 	    errno = save_errno;
 	    perror(_("input close"));
 	    res = 1;
@@ -242,7 +239,7 @@ main(
     if(write_func == tapefd_write) {
 	if(0 != tapefd_close(outfd)) {
 	    save_errno = errno;
-	    fprintf(stderr, "%s: ", pgm);
+	    g_fprintf(stderr, "%s: ", pgm);
 	    errno = save_errno;
 	    perror(_("output close"));
 	    res = 1;

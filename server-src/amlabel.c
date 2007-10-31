@@ -41,7 +41,7 @@
 int main(int argc, char **argv);
 
 static void usage(void) {
-    fprintf(stderr, _("Usage: %s [-f] <conf> <label> [slot <slot-number>] [-o configoption]*\n"),
+    g_fprintf(stderr, _("Usage: %s [-f] <conf> <label> [slot <slot-number>] [-o configoption]*\n"),
 	    get_pname());
     exit(1);
 }
@@ -56,10 +56,10 @@ static void print_read_label_status_error(ReadLabelStatusFlags status) {
                                        READ_LABEL_STATUS_FLAGS_TYPE);
     g_assert(g_strv_length(status_strv) > 0);
     if (g_strv_length(status_strv) == 1) {
-        printf("Error was %s.\n", *status_strv);
+        g_printf("Error was %s.\n", *status_strv);
     } else {
         char * status_list = g_english_strjoinv(status_strv, "or");
-        printf("Error was one of %s.\n", status_list);
+        g_printf("Error was one of %s.\n", status_list);
         amfree(status_list);
     }
     g_strfreev(status_strv);
@@ -172,7 +172,7 @@ main(
 
     if((have_changer = changer_init()) == 0) {
 	if(slotcommand) {
-	    fprintf(stderr,
+	    g_fprintf(stderr,
 	     _("%s: no tpchanger specified in \"%s\", so slot command invalid\n"),
 		    new_argv[0], conffile);
 	    usage();
@@ -190,11 +190,11 @@ main(
 	    /*NOTREACHED*/
 	}
 
-	printf(_("labeling tape in slot %s (%s):\n"), outslot, tapename);
+	g_printf(_("labeling tape in slot %s (%s):\n"), outslot, tapename);
     }
 
     tape_ok=1;
-    printf("Reading label...\n");fflush(stdout);
+    g_printf("Reading label...\n");fflush(stdout);
     device = device_open(tapename);
     if (device == NULL) {
         error("Could not open device %s.\n", tapename);
@@ -204,32 +204,32 @@ main(
     label_status = device_read_label(device);
 
     if (label_status & READ_LABEL_STATUS_VOLUME_UNLABELED) {
-        printf("Found an unlabeled tape.\n");
+        g_printf("Found an unlabeled tape.\n");
     } else if (label_status != READ_LABEL_STATUS_SUCCESS) {
-        printf("Reading the tape label failed: \n  ");
+        g_printf("Reading the tape label failed: \n  ");
         print_read_label_status_error(label_status);
         tape_ok = 0;
     } else {
 	/* got an amanda tape */
-	printf(_("Found Amanda tape %s"),device->volume_label);
+	g_printf(_("Found Amanda tape %s"),device->volume_label);
 	if(match(labelstr, device->volume_label) == 0) {
-	    printf(_(", but it is not from configuration %s."), config_name);
+	    g_printf(_(", but it is not from configuration %s."), config_name);
 	    if(!force)
 		tape_ok=0;
 	} else {
 	    if((lookup_tapelabel(device->volume_label)) != NULL) {
-		printf(_(", tape is active"));
+		g_printf(_(", tape is active"));
 		if(!force)
 		    tape_ok=0;
 	    }
 	}
-	printf("\n");
+	g_printf("\n");
     }
 
     if(tape_ok) {
 	char *timestamp = NULL;
 
-	printf(_("Writing label %s..\n"), label); fflush(stdout);
+	g_printf(_("Writing label %s..\n"), label); fflush(stdout);
         
 	timestamp = get_undef_timestamp();
         if (!device_start(device, ACCESS_WRITE, label, timestamp)) {
@@ -241,11 +241,11 @@ main(
         }
 	amfree(timestamp);
 
-        printf(_("Checking label...\n")); fflush(stdout);
+        g_printf(_("Checking label...\n")); fflush(stdout);
 
         label_status = device_read_label(device);
         if (label_status != READ_LABEL_STATUS_SUCCESS) {
-            printf("Checking the tape label failed: \n  ");
+            g_printf("Checking the tape label failed: \n  ");
             print_read_label_status_error(label_status);
             exit(EXIT_FAILURE);
         } else if (device->volume_label == NULL) {
@@ -280,9 +280,9 @@ main(
             /*NOTREACHED*/
         }
         
-        printf(_("Success!\n"));
+        g_printf(_("Success!\n"));
     } else {
-	printf(_("\ntape not labeled\n"));
+	g_printf(_("\ntape not labeled\n"));
     }
     
     g_object_unref(device);

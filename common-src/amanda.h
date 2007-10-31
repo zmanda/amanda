@@ -32,6 +32,7 @@
 #define AMANDA_H
 
 #include <glib.h>
+#include <glib/gprintf.h>
 
 #include "amflock.h"
 
@@ -422,9 +423,9 @@ char *debug_vstralloc(const char *file, int line, const char *str, ...);
 char *debug_newvstralloc(const char *file, int line,
 		char *oldstr, const char *str, ...);
 char *debug_vstrallocf(const char *file, int line, const char *fmt,
-		...) __attribute__ ((format (printf, 3, 4)));
+		...) G_GNUC_PRINTF(3, 4);
 char *debug_newvstrallocf(const char *file, int line, char *oldstr,
-		const char *fmt, ...) __attribute__ ((format (printf, 4, 5)));
+		const char *fmt, ...) G_GNUC_PRINTF(4, 5);
 
 /* Usage: vstrextend(foo, "bar, "baz", NULL). Extends the existing 
  * string, or allocates a brand new one. */
@@ -1103,15 +1104,11 @@ extern ssize_t writev(int fd, const struct iovec *iov, int iovcnt);
 #endif
 
 #if SIZEOF_SIZE_T == SIZEOF_INT
-#  define        SIZE_T_FMT	"%u"
-#  define        SIZE_T_FMT_TYPE unsigned
 #  define        SIZE_T_ATOI	(size_t)atoi
 #  ifndef SIZE_MAX
 #    define      SIZE_MAX	G_MAXUINT
 #  endif
 #else
-#  define        SIZE_T_FMT	"%lu"
-#  define        SIZE_T_FMT_TYPE unsigned long
 #  define        SIZE_T_ATOI	(size_t)atol
 #  ifndef SIZE_MAX
 #    define      SIZE_MAX	ULONG_MAX
@@ -1119,8 +1116,6 @@ extern ssize_t writev(int fd, const struct iovec *iov, int iovcnt);
 #endif
 
 #if SIZEOF_SSIZE_T == SIZEOF_INT
-#  define        SSIZE_T_FMT	"%d"
-#  define        SSIZE_T_FMT_TYPE int
 #  define        SSIZE_T_ATOI	(ssize_t)atoi
 #  ifndef SSIZE_MAX
 #    define      SSIZE_MAX	INT_MAX
@@ -1129,8 +1124,6 @@ extern ssize_t writev(int fd, const struct iovec *iov, int iovcnt);
 #    define      SSIZE_MIN	INT_MIN
 #  endif
 #else
-#  define        SSIZE_T_FMT	"%ld"
-#  define        SSIZE_T_FMT_TYPE long
 #  define        SSIZE_T_ATOI	(ssize_t)atol
 #  ifndef SSIZE_MAX
 #    define      SSIZE_MAX	LONG_MAX
@@ -1141,15 +1134,11 @@ extern ssize_t writev(int fd, const struct iovec *iov, int iovcnt);
 #endif
 
 #if SIZEOF_TIME_T == SIZEOF_INT
-#  define        TIME_T_FMT	"%u"
-#  define        TIME_T_FMT_TYPE unsigned
 #  define        TIME_T_ATOI	(time_t)atoi
 #  ifndef TIME_MAX
 #    define      TIME_MAX	G_MAXUINT
 #  endif
 #else
-#  define        TIME_T_FMT	"%lu"
-#  define        TIME_T_FMT_TYPE unsigned long
 #  define        TIME_T_ATOI	(time_t)atol
 #  ifndef TIME_MAX
 #    define      TIME_MAX	ULONG_MAX
@@ -1157,30 +1146,21 @@ extern ssize_t writev(int fd, const struct iovec *iov, int iovcnt);
 #endif
 
 #if SIZEOF_OFF_T > SIZEOF_LONG
-#  define        OFF_T_FMT       LL_FMT
-#  define        OFF_T_RFMT      LL_RFMT
-#  define        OFF_T_FMT_TYPE  long long
 #  ifdef HAVE_ATOLL
-#    define      OFF_T_ATOI	 (off_t)atoll
+#    define        OFF_T_ATOI	 (off_t)atoll
 #  else
-#    define      OFF_T_ATOI      (off_t)atol
+#    define        OFF_T_ATOI	 (off_t)atol
 #  endif
 #  ifdef HAVE_STRTOLL
-#    define      OFF_T_STRTOL	 (off_t)strtoll
+#    define        OFF_T_STRTOL	 (off_t)strtoll
 #  else
-#    define      OFF_T_STRTOL      (off_t)strtol
+#    define        OFF_T_STRTOL	 (off_t)strtol
 #  endif
 #else
 #  if SIZEOF_OFF_T == SIZEOF_LONG
-#    define        OFF_T_FMT       "%ld"
-#    define        OFF_T_RFMT      "ld"
-#    define        OFF_T_FMT_TYPE  long
 #    define        OFF_T_ATOI	 (off_t)atol
 #    define        OFF_T_STRTOL	 (off_t)strtol
 #  else
-#    define        OFF_T_FMT       "%d"
-#    define        OFF_T_RFMT      "d"
-#    define        OFF_T_FMT_TYPE  int
 #    define        OFF_T_ATOI	 (off_t)atoi
 #    define        OFF_T_STRTOL	 (off_t)strtol
 #  endif
@@ -1197,9 +1177,7 @@ extern ssize_t writev(int fd, const struct iovec *iov, int iovcnt);
 #  else
 #    define AM64_MIN (off_t)(-9223372036854775807LL -1LL)
 #  endif
-#  define AM64_FMT OFF_T_FMT
 #else
-
 #if SIZEOF_LONG == 8
 #  ifdef LONG_MAX
 #    define AM64_MAX (off_t)(LONG_MAX)
@@ -1211,7 +1189,6 @@ extern ssize_t writev(int fd, const struct iovec *iov, int iovcnt);
 #  else
 #    define AM64_MIN (off_t)(-9223372036854775807L -1L)
 #  endif
-#  define AM64_FMT "%ld"
 #else
 #if SIZEOF_LONG_LONG == 8
 #  ifdef LONG_LONG_MAX
@@ -1224,7 +1201,6 @@ extern ssize_t writev(int fd, const struct iovec *iov, int iovcnt);
 #  else
 #    define AM64_MIN (off_t)(-9223372036854775807LL -1LL)
 #  endif
-#  define AM64_FMT LL_FMT
 #else
 #if SIZEOF_INTMAX_T == 8
 #  ifdef INTMAX_MAX
@@ -1237,7 +1213,6 @@ extern ssize_t writev(int fd, const struct iovec *iov, int iovcnt);
 #  else
 #    define AM64_MIN (off_t)(-9223372036854775807LL -1LL)
 #  endif
-#  define AM64_FMT LL_FMT
 #else  /* no 64 bits type found, use long. */
 #  ifdef LONG_MAX
 #    define AM64_MAX (off_t)(LONG_MAX)
@@ -1249,7 +1224,6 @@ extern ssize_t writev(int fd, const struct iovec *iov, int iovcnt);
 #  else
 #    define AM64_MIN (off_t)(-2147483647 -1)
 #  endif
-#  define AM64_FMT "%ld"
 #endif
 #endif
 #endif

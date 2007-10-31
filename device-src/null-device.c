@@ -167,7 +167,7 @@ null_device_start (Device * pself, DeviceAccessMode mode,
             return TRUE;
         }
     } else {
-        fprintf(stderr, "Can't open NULL device for reading or appending.\n");
+        g_fprintf(stderr, "Can't open NULL device for reading or appending.\n");
         return FALSE;
     }
 }

@@ -244,7 +244,7 @@ TextRule(
     leng = (int)strlen(s);
     if(leng >= (RuleSpaceSize - cd->PrefixSpace))
 	leng = RuleSpaceSize - cd->PrefixSpace - 1;
-    snprintf(RuleSpace, (size_t)RuleSpaceSize, "%*s%*.*s ", cd->PrefixSpace, "", 
+    g_snprintf(RuleSpace, (size_t)RuleSpaceSize, "%*s%*.*s ", cd->PrefixSpace, "", 
 	     leng, leng, s);
     txtlength = cd->PrefixSpace + leng + 1;
     nbrules = ColWidth(From,To) - txtlength;
@@ -263,10 +263,10 @@ sDivZero(
     ColumnInfo *cd= &ColumnData[cn];
     static char PrtBuf[256];
     if (!isnormal(b))
-    	snprintf(PrtBuf, SIZEOF(PrtBuf),
+    	g_snprintf(PrtBuf, SIZEOF(PrtBuf),
 	  "%*s", cd->Width, "-- ");
     else
-    	snprintf(PrtBuf, SIZEOF(PrtBuf),
+    	g_snprintf(PrtBuf, SIZEOF(PrtBuf),
 	  cd->Format, cd->Width, cd->Precision, a/b);
     return PrtBuf;
 }
@@ -453,7 +453,7 @@ main(
 	my_argv += optind;
     }
     if( !mailout && mailto ){
-	printf(_("You cannot specify both -i & -M at the same time\n"));
+	g_printf(_("You cannot specify both -i & -M at the same time\n"));
 	exit(1);
     }
 
@@ -461,8 +461,8 @@ main(
 
 #if !defined MAILER
     if(!outfname) {
-	printf(_("You must run amreport with '-f <output file>' because configure\n"));
-	printf(_("didn't find a mailer.\n"));
+	g_printf(_("You must run amreport with '-f <output file>' because configure\n"));
+	g_printf(_("didn't find a mailer.\n"));
 	exit (1);
     }
 #endif
@@ -634,8 +634,8 @@ main(
 	    error(_("could not open output file: %s %s"), outfname, strerror(errno));
 	    /*NOTREACHED*/
 	}
-	fprintf(mailf, "To: %s\n", mailto);
-	fprintf(mailf, "Subject: %s\n\n", subj_str);
+	g_fprintf(mailf, "To: %s\n", mailto);
+	g_fprintf(mailf, "Subject: %s\n\n", subj_str);
 
     } else {
 #ifdef MAILER
@@ -651,8 +651,8 @@ main(
 	}
 	else {
 		if(mailout) {
-                   printf(_("No mail sent! "));
-		   printf(_("No valid mail address has been specified in amanda.conf or on the commmand line\n"));
+                   g_printf(_("No mail sent! "));
+		   g_printf(_("No valid mail address has been specified in amanda.conf or on the commmand line\n"));
 		}
 		mailf = NULL;
 	}
@@ -722,23 +722,23 @@ main(
     	if(!got_finish) fputs(_("*** THE DUMPS DID NOT FINISH PROPERLY!\n\n"), mailf);
 
 	if (ghostname) {
-	    fprintf(mailf, _("Hostname: %s\n"), ghostname);
-	    fprintf(mailf, _("Org     : %s\n"), getconf_str(CNF_ORG));
-	    fprintf(mailf, _("Config  : %s\n"), config_name);
-	    fprintf(mailf, _("Date    : %s\n"),
+	    g_fprintf(mailf, _("Hostname: %s\n"), ghostname);
+	    g_fprintf(mailf, _("Org     : %s\n"), getconf_str(CNF_ORG));
+	    g_fprintf(mailf, _("Config  : %s\n"), config_name);
+	    g_fprintf(mailf, _("Date    : %s\n"),
 		    nicedate(run_datestamp ? run_datestamp : "0"));
-	    fprintf(mailf,"\n");
+	    g_fprintf(mailf,"\n");
 	}
 
     	output_tapeinfo();
 
     	if(first_failed || errsum) {
-		fprintf(mailf,_("\nFAILURE DUMP SUMMARY:\n"));
+		g_fprintf(mailf,_("\nFAILURE DUMP SUMMARY:\n"));
 		if(first_failed) output_X_summary(first_failed);
 		if(errsum) output_lines(errsum, mailf);
     	}
     	if(first_strange) {
-		fprintf(mailf,_("\nSTRANGE DUMP SUMMARY:\n"));
+		g_fprintf(mailf,_("\nSTRANGE DUMP SUMMARY:\n"));
 		if(first_strange) output_X_summary(first_strange);
     	}
     	fputs("\n\n", mailf);
@@ -746,26 +746,26 @@ main(
     	output_stats();
 	
     	if(errdet) {
-		fprintf(mailf,"\n\f\n");
-		fprintf(mailf,_("FAILED DUMP DETAILS:\n"));
+		g_fprintf(mailf,"\n\f\n");
+		g_fprintf(mailf,_("FAILED DUMP DETAILS:\n"));
 		output_lines(errdet, mailf);
     	}
     	if(strangedet) {
-		fprintf(mailf,"\n\f\n");
-		fprintf(mailf,_("STRANGE DUMP DETAILS:\n"));
+		g_fprintf(mailf,"\n\f\n");
+		g_fprintf(mailf,_("STRANGE DUMP DETAILS:\n"));
 		output_lines(strangedet, mailf);
     	}
     	if(notes) {
-		fprintf(mailf,"\n\f\n");
-		fprintf(mailf,_("NOTES:\n"));
+		g_fprintf(mailf,"\n\f\n");
+		g_fprintf(mailf,_("NOTES:\n"));
 		output_lines(notes, mailf);
     	}
     	if(sortq.head != NULL) {
-		fprintf(mailf,"\n\f\n");
-		fprintf(mailf,_("DUMP SUMMARY:\n"));
+		g_fprintf(mailf,"\n\f\n");
+		g_fprintf(mailf,_("DUMP SUMMARY:\n"));
 		output_summary();
     	}
-    	fprintf(mailf,_("\n(brought to you by Amanda version %s)\n"),
+    	g_fprintf(mailf,_("\n(brought to you by Amanda version %s)\n"),
 	    	version());
     }
 
@@ -829,21 +829,21 @@ main(
     do {       	       	       	       	    \
 	double q = (b);			    \
 	if (!isnormal(q))		    \
-	    fprintf((fp),"  -- ");	    \
+	    g_fprintf((fp),"  -- ");	    \
 	else if ((q = (a)/q) >= 999.95)	    \
-	    fprintf((fp), "###.#");	    \
+	    g_fprintf((fp), "###.#");	    \
 	else				    \
-	    fprintf((fp), "%5.1lf",q);	    \
+	    g_fprintf((fp), "%5.1lf",q);	    \
     } while(0)
 #define divzero_wide(fp,a,b)	       	    \
     do {       	       	       	       	    \
 	double q = (b);			    \
 	if (!isnormal(q))		    \
-	    fprintf((fp),"    -- ");	    \
+	    g_fprintf((fp),"    -- ");	    \
 	else if ((q = (a)/q) >= 99999.95)   \
-	    fprintf((fp), "#####.#");	    \
+	    g_fprintf((fp), "#####.#");	    \
 	else				    \
-	    fprintf((fp), "%7.1lf",q);	    \
+	    g_fprintf((fp), "%7.1lf",q);	    \
     } while(0)
 
 static void
@@ -880,33 +880,33 @@ output_stats(void)
     idle_time = (total_time - startup_time) - stats[2].taper_time;
     if(idle_time < 0) idle_time = 0.0;
 
-    fprintf(mailf,_("STATISTICS:\n"));
-    fprintf(mailf,
+    g_fprintf(mailf,_("STATISTICS:\n"));
+    g_fprintf(mailf,
 	    _("                          Total       Full      Incr.\n"));
-    fprintf(mailf,
+    g_fprintf(mailf,
 	    _("                        --------   --------   --------\n"));
 
-    fprintf(mailf,
+    g_fprintf(mailf,
 	    _("Estimate Time (hrs:min)   %2d:%02d\n"), hrmn(planner_time));
 
-    fprintf(mailf,
+    g_fprintf(mailf,
 	    _("Run Time (hrs:min)        %2d:%02d\n"), hrmn(total_time));
 
-    fprintf(mailf,
+    g_fprintf(mailf,
 	    _("Dump Time (hrs:min)       %2d:%02d      %2d:%02d      %2d:%02d\n"),
 	    hrmn(stats[2].dumper_time), hrmn(stats[0].dumper_time),
 	    hrmn(stats[1].dumper_time));
 
-    fprintf(mailf,
+    g_fprintf(mailf,
 	    _("Output Size (meg)      %8.1lf   %8.1lf   %8.1lf\n"),
 	    mb(stats[2].outsize), mb(stats[0].outsize), mb(stats[1].outsize));
 
-    fprintf(mailf,
+    g_fprintf(mailf,
 	    _("Original Size (meg)    %8.1lf   %8.1lf   %8.1lf\n"),
 	    mb(stats[2].origsize), mb(stats[0].origsize),
 	    mb(stats[1].origsize));
 
-    fprintf(mailf, _("Avg Compressed Size (%%)   "));
+    g_fprintf(mailf, _("Avg Compressed Size (%%)   "));
     divzero(mailf, pct(stats[2].coutsize),stats[2].corigsize);
     fputs(_("      "), mailf);
     divzero(mailf, pct(stats[0].coutsize),stats[0].corigsize);
@@ -916,7 +916,7 @@ output_stats(void)
     if(stats[1].dumpdisks > 0) fputs(_("   (level:#disks ...)"), mailf);
     putc('\n', mailf);
 
-    fprintf(mailf,
+    g_fprintf(mailf,
 	    _("Filesystems Dumped         %4d       %4d       %4d"),
 	    stats[2].dumpdisks, stats[0].dumpdisks, stats[1].dumpdisks);
 
@@ -925,13 +925,13 @@ output_stats(void)
 	for(lv = 1; lv < 10; lv++) if(dumpdisks[lv]) {
 	    fputs(first?_("   ("):_(" "), mailf);
 	    first = 0;
-	    fprintf(mailf, _("%d:%d"), lv, dumpdisks[lv]);
+	    g_fprintf(mailf, _("%d:%d"), lv, dumpdisks[lv]);
 	}
 	putc(')', mailf);
     }
     putc('\n', mailf);
 
-    fprintf(mailf, _("Avg Dump Rate (k/s)     "));
+    g_fprintf(mailf, _("Avg Dump Rate (k/s)     "));
     divzero_wide(mailf, stats[2].outsize,stats[2].dumper_time);
     fputs(_("    "), mailf);
     divzero_wide(mailf, stats[0].outsize,stats[0].dumper_time);
@@ -940,17 +940,17 @@ output_stats(void)
     putc('\n', mailf);
 
     putc('\n', mailf);
-    fprintf(mailf,
+    g_fprintf(mailf,
 	    _("Tape Time (hrs:min)       %2d:%02d      %2d:%02d      %2d:%02d\n"),
 	    hrmn(stats[2].taper_time), hrmn(stats[0].taper_time),
 	    hrmn(stats[1].taper_time));
 
-    fprintf(mailf,
+    g_fprintf(mailf,
 	    _("Tape Size (meg)        %8.1lf   %8.1lf   %8.1lf\n"),
 	    mb(stats[2].tapesize), mb(stats[0].tapesize),
 	    mb(stats[1].tapesize));
 
-    fprintf(mailf, _("Tape Used (%%)             "));
+    g_fprintf(mailf, _("Tape Used (%%)             "));
     divzero(mailf, pct(stats[2].tapesize+marksize*(stats[2].tapedisks+stats[2].tapechunks)),(double)tapesize);
     fputs(_("      "), mailf);
     divzero(mailf, pct(stats[0].tapesize+marksize*(stats[0].tapedisks+stats[0].tapechunks)),(double)tapesize);
@@ -960,7 +960,7 @@ output_stats(void)
     if(stats[1].tapedisks > 0) fputs(_("   (level:#disks ...)"), mailf);
     putc('\n', mailf);
 
-    fprintf(mailf,
+    g_fprintf(mailf,
 	    _("Filesystems Taped          %4d       %4d       %4d"),
 	    stats[2].tapedisks, stats[0].tapedisks, stats[1].tapedisks);
 
@@ -969,7 +969,7 @@ output_stats(void)
 	for(lv = 1; lv < 10; lv++) if(tapedisks[lv]) {
 	    fputs(first?_("   ("):_(" "), mailf);
 	    first = 0;
-	    fprintf(mailf, _("%d:%d"), lv, tapedisks[lv]);
+	    g_fprintf(mailf, _("%d:%d"), lv, tapedisks[lv]);
 	}
 	putc(')', mailf);
     }
@@ -978,7 +978,7 @@ output_stats(void)
     if(stats[1].tapechunks > 0) fputs(_("   (level:#chunks ...)"), mailf);
     putc('\n', mailf);
 
-    fprintf(mailf,
+    g_fprintf(mailf,
 	    _("Chunks Taped               %4d       %4d       %4d"),
 	    stats[2].tapechunks, stats[0].tapechunks, stats[1].tapechunks);
 
@@ -987,13 +987,13 @@ output_stats(void)
 	for(lv = 1; lv < 10; lv++) if(tapechunks[lv]) {
 	    fputs(first?_("   ("):_(" "), mailf);
 	    first = 0;
-	    fprintf(mailf, _("%d:%d"), lv, tapechunks[lv]);
+	    g_fprintf(mailf, _("%d:%d"), lv, tapechunks[lv]);
 	}
 	putc(')', mailf);
     }
     putc('\n', mailf);
 
-    fprintf(mailf, _("Avg Tp Write Rate (k/s) "));
+    g_fprintf(mailf, _("Avg Tp Write Rate (k/s) "));
     divzero_wide(mailf, stats[2].tapesize,stats[2].taper_time);
     fputs(_("    "), mailf);
     divzero_wide(mailf, stats[0].tapesize,stats[0].taper_time);
@@ -1003,19 +1003,19 @@ output_stats(void)
 
     if(stats_by_tape) {
 	int label_length = (int)strlen(stats_by_tape->label) + 5;
-	fprintf(mailf,_("\nUSAGE BY TAPE:\n"));
-	fprintf(mailf,_("  %-*s  Time      Size      %%    Nb    Nc\n"),
+	g_fprintf(mailf,_("\nUSAGE BY TAPE:\n"));
+	g_fprintf(mailf,_("  %-*s  Time      Size      %%    Nb    Nc\n"),
 		label_length, _("Label"));
 	for(current_tape = stats_by_tape; current_tape != NULL;
 	    current_tape = current_tape->next) {
-	    fprintf(mailf, _("  %-*s"), label_length, current_tape->label);
-	    fprintf(mailf, _(" %2d:%02d"), hrmn(current_tape->taper_time));
-	    fprintf(mailf, _(" %8.0lf%s  "), du(current_tape->coutsize), displayunit);
+	    g_fprintf(mailf, _("  %-*s"), label_length, current_tape->label);
+	    g_fprintf(mailf, _(" %2d:%02d"), hrmn(current_tape->taper_time));
+	    g_fprintf(mailf, _(" %8.0lf%s  "), du(current_tape->coutsize), displayunit);
 	    divzero(mailf, pct(current_tape->coutsize + marksize *
 		   (current_tape->tapedisks+current_tape->tapechunks)),
 		   (double)tapesize);
-	    fprintf(mailf, _("  %4d"), current_tape->tapedisks);
-	    fprintf(mailf, _("  %4d\n"), current_tape->tapechunks);
+	    g_fprintf(mailf, _("  %4d"), current_tape->tapedisks);
+	    g_fprintf(mailf, _("  %4d\n"), current_tape->tapechunks);
 	}
     }
 }
@@ -1031,13 +1031,13 @@ output_tapeinfo(void)
 
     if (last_run_tapes > 0) {
 	if(amflush_run)
-	    fprintf(mailf,
+	    g_fprintf(mailf,
 		    plural(_("The dumps were flushed to tape %s.\n"),
 			   _("The dumps were flushed to tapes %s.\n"),
 			   last_run_tapes),
 		    tape_labels ? tape_labels : "");
 	else
-	    fprintf(mailf,
+	    g_fprintf(mailf,
 		    plural(_("These dumps were to tape %s.\n"),
 			   _("These dumps were to tapes %s.\n"),
 			   last_run_tapes),
@@ -1045,10 +1045,10 @@ output_tapeinfo(void)
     }
 
     if(degraded_mode) {
-	fprintf(mailf,
+	g_fprintf(mailf,
 		_("*** A TAPE ERROR OCCURRED: %s.\n"), tapestart_error);
 	fputs(_("Some dumps may have been left in the holding disk.\n"), mailf);
-	fprintf(mailf, _("Run amflush to flush them to tape.\n"));
+	g_fprintf(mailf, _("Run amflush to flush them to tape.\n"));
     }
 
     tp = lookup_last_reusable_tape(skip);
@@ -1058,17 +1058,17 @@ output_tapeinfo(void)
     if (run_tapes == 1)
 	fputs(_("The next tape Amanda expects to use is: "), mailf);
     else if(run_tapes > 1)
-	fprintf(mailf, _("The next %d tapes Amanda expects to use are: "),
+	g_fprintf(mailf, _("The next %d tapes Amanda expects to use are: "),
 		run_tapes);
     
     while(run_tapes > 0) {
 	if(tp != NULL) {
-	    fprintf(mailf, "%s", tp->label);
+	    g_fprintf(mailf, "%s", tp->label);
 	} else {
 	    if (run_tapes == 1)
-		fprintf(mailf, _("a new tape"));
+		g_fprintf(mailf, _("a new tape"));
 	    else
-		fprintf(mailf, _("%d new tapes"), run_tapes);
+		g_fprintf(mailf, _("%d new tapes"), run_tapes);
 	    run_tapes = 1;
 	}
 
@@ -1091,20 +1091,20 @@ output_tapeinfo(void)
 	}
 	lasttp = lookup_tapepos(lookup_nb_tape());
 	if(c == 1) {
-	    fprintf(mailf, _("The next new tape already labelled is: %s.\n"),
+	    g_fprintf(mailf, _("The next new tape already labelled is: %s.\n"),
 		    lasttp->label);
 	}
 	else {
-	    fprintf(mailf, _("The next %d new tapes already labelled are: %s"), c,
+	    g_fprintf(mailf, _("The next %d new tapes already labelled are: %s"), c,
 		    lasttp->label);
 	    lasttp = lasttp->prev;
 	    c--;
 	    while(lasttp && c > 0 && strcmp(lasttp->datestamp,"0") == 0) {
-		fprintf(mailf, ", %s", lasttp->label);
+		g_fprintf(mailf, ", %s", lasttp->label);
 		lasttp = lasttp->prev;
 		c--;
 	    }
-	    fprintf(mailf, ".\n");
+	    g_fprintf(mailf, ".\n");
 	}
     }
 }
@@ -1127,7 +1127,7 @@ output_X_summary(
     for(strange=first; strange != NULL; strange = strange->next) {
 	str = vstralloc("  ", prefixstrange(strange->hostname, strange->diskname, strange->level, len_host, len_disk),
 			"  ", strange->str, NULL);
-	fprintf(mailf, "%s\n", str);
+	g_fprintf(mailf, "%s\n", str);
 	amfree(str);
     }
 }
@@ -1200,7 +1200,7 @@ CheckIntMax(
     	char testBuf[200];
     	int l;
 
-	snprintf(testBuf, SIZEOF(testBuf),
+	g_snprintf(testBuf, SIZEOF(testBuf),
 	  cd->Format, cd->Width, cd->Precision, n);
 	l = (int)strlen(testBuf);
 	if (cd->Width < l)
@@ -1217,7 +1217,7 @@ CheckFloatMax(
     	char testBuf[200];
 	int l;
 
-	snprintf(testBuf, SIZEOF(testBuf),
+	g_snprintf(testBuf, SIZEOF(testBuf),
 	  cd->Format, cd->Width, cd->Precision, d);
 	l = (int)strlen(testBuf);
 	if (cd->Width < l)
@@ -1286,10 +1286,10 @@ CalcMaxWidth(void)
 			sDivZero(pct(repdata->dumper.outsize), f, Compress));
 
 		if(!amflush_run)
-		    snprintf(TimeRateBuffer, SIZEOF(TimeRateBuffer),
+		    g_snprintf(TimeRateBuffer, SIZEOF(TimeRateBuffer),
 				"%3d:%02d", mnsc(repdata->dumper.sec));
 		else
-		    snprintf(TimeRateBuffer, SIZEOF(TimeRateBuffer),
+		    g_snprintf(TimeRateBuffer, SIZEOF(TimeRateBuffer),
 				"N/A ");
 		CheckStringMax(&ColumnData[DumpTime], TimeRateBuffer);
 
@@ -1302,10 +1302,10 @@ CalcMaxWidth(void)
 	    }
 	    if(repdata->taper.result == L_SUCCESS ||
 	       repdata->taper.result == L_CHUNKSUCCESS)
-		snprintf(TimeRateBuffer, SIZEOF(TimeRateBuffer), 
+		g_snprintf(TimeRateBuffer, SIZEOF(TimeRateBuffer), 
 		  "%3d:%02d", mnsc(repdata->taper.sec));
 	    else
-		snprintf(TimeRateBuffer, SIZEOF(TimeRateBuffer),
+		g_snprintf(TimeRateBuffer, SIZEOF(TimeRateBuffer),
 		  "N/A ");
 	    CheckStringMax(&ColumnData[TapeTime], TimeRateBuffer);
 
@@ -1359,23 +1359,23 @@ output_summary(void)
     } else {
 	h = (wDump-h)/2;
     }
-    fprintf(mailf, "%*s", w1+h, "");
-    fprintf(mailf, "%-*s", wDump-h, ds);
+    g_fprintf(mailf, "%*s", w1+h, "");
+    g_fprintf(mailf, "%-*s", wDump-h, ds);
     h = (int)strlen(ts);
     if (h > wTape) {
 	h = 0;
     } else {
 	h = (wTape-h)/2;
     }
-    fprintf(mailf, "%*s", h, "");
-    fprintf(mailf, "%-*s", wTape-h, ts);
+    g_fprintf(mailf, "%*s", h, "");
+    g_fprintf(mailf, "%-*s", wTape-h, ts);
     fputc('\n', mailf);
 
     /* print the titles */
     for (i=0; ColumnData[i].Name != NULL; i++) {
     	char *fmt;
     	ColumnInfo *cd= &ColumnData[i];
-    	fprintf(mailf, "%*s", cd->PrefixSpace, "");
+    	g_fprintf(mailf, "%*s", cd->PrefixSpace, "");
 	if (cd->Format[1] == '-')
 	    fmt= "%-*s";
 	else
@@ -1390,7 +1390,7 @@ output_summary(void)
 	    cd->Title = stralloc("OUT-KB");
 	    cd->Title[4] = displayunit[0];
 	}
-	fprintf(mailf, fmt, cd->Width, cd->Title);
+	g_fprintf(mailf, fmt, cd->Width, cd->Title);
     }
     fputc('\n', mailf);
 
@@ -1410,48 +1410,48 @@ output_summary(void)
 	    size_t devlen;
 
 	    cd= &ColumnData[HostName];
-	    fprintf(mailf, "%*s", cd->PrefixSpace, "");
-	    fprintf(mailf, cd->Format, cd->Width, cd->Width, dp->host->hostname);
+	    g_fprintf(mailf, "%*s", cd->PrefixSpace, "");
+	    g_fprintf(mailf, cd->Format, cd->Width, cd->Width, dp->host->hostname);
 
 	    cd= &ColumnData[Disk];
-	    fprintf(mailf, "%*s", cd->PrefixSpace, "");
+	    g_fprintf(mailf, "%*s", cd->PrefixSpace, "");
 	    devname = sanitize_string(dp->name);
 	    qdevname = quote_string(devname);
 	    devlen = strlen(qdevname);
 	    if (devlen > (size_t)cd->Width) {
 	   	fputc('-', mailf); 
-		fprintf(mailf, cd->Format, cd->Width-1, cd->Precision-1,
+		g_fprintf(mailf, cd->Format, cd->Width-1, cd->Precision-1,
 			qdevname+devlen - (cd->Width-1) );
 	    }
 	    else
-		fprintf(mailf, cd->Format, cd->Width, cd->Width, qdevname);
+		g_fprintf(mailf, cd->Format, cd->Width, cd->Width, qdevname);
 	    amfree(devname);
 	    amfree(qdevname);
 	    cd= &ColumnData[Level];
 	    if (repdata->dumper.result == L_BOGUS &&
 		repdata->taper.result  == L_BOGUS) {
 	      if(amflush_run){
-		fprintf(mailf, "%*s%s\n", cd->PrefixSpace+cd->Width, "",
+		g_fprintf(mailf, "%*s%s\n", cd->PrefixSpace+cd->Width, "",
 			tmp=TextRule(OrigKB, TapeRate, "NO FILE TO FLUSH"));
 	      } else {
-		fprintf(mailf, "%*s%s\n", cd->PrefixSpace+cd->Width, "",
+		g_fprintf(mailf, "%*s%s\n", cd->PrefixSpace+cd->Width, "",
 			tmp=TextRule(OrigKB, TapeRate, "MISSING"));
 	      }
 	      amfree(tmp);
 	      continue;
 	    }
 	    
-	    fprintf(mailf, "%*s", cd->PrefixSpace, "");
-	    fprintf(mailf, cd->Format, cd->Width, cd->Precision,repdata->level);
+	    g_fprintf(mailf, "%*s", cd->PrefixSpace, "");
+	    g_fprintf(mailf, cd->Format, cd->Width, cd->Precision,repdata->level);
 
 	    if (repdata->dumper.result == L_SKIPPED) {
-		fprintf(mailf, "%s\n",
+		g_fprintf(mailf, "%s\n",
 			tmp=TextRule(OrigKB, TapeRate, "SKIPPED"));
 		amfree(tmp);
 		continue;
 	    }
 	    if (repdata->dumper.result == L_FAIL && (repdata->chunker.result != L_PARTIAL && repdata->taper.result  != L_PARTIAL)) {
-		fprintf(mailf, "%s\n",
+		g_fprintf(mailf, "%s\n",
 			tmp=TextRule(OrigKB, TapeRate, "FAILED"));
 		amfree(tmp);
 		exit_status |= STATUS_FAILED;
@@ -1480,19 +1480,19 @@ output_summary(void)
 		outsize  = repdata->dumper.outsize;
 
 	    cd= &ColumnData[OrigKB];
-	    fprintf(mailf, "%*s", cd->PrefixSpace, "");
+	    g_fprintf(mailf, "%*s", cd->PrefixSpace, "");
 	    if(isnormal(origsize))
-		fprintf(mailf, cd->Format, cd->Width, cd->Precision, du(origsize));
+		g_fprintf(mailf, cd->Format, cd->Width, cd->Precision, du(origsize));
 	    else
-		fprintf(mailf, "%*.*s", cd->Width, cd->Width, "N/A");
+		g_fprintf(mailf, "%*.*s", cd->Width, cd->Width, "N/A");
 
 	    cd= &ColumnData[OutKB];
-	    fprintf(mailf, "%*s", cd->PrefixSpace, "");
+	    g_fprintf(mailf, "%*s", cd->PrefixSpace, "");
 
-	    fprintf(mailf, cd->Format, cd->Width, cd->Precision, du(outsize));
+	    g_fprintf(mailf, cd->Format, cd->Width, cd->Precision, du(outsize));
 	    	
 	    cd= &ColumnData[Compress];
-	    fprintf(mailf, "%*s", cd->PrefixSpace, "");
+	    g_fprintf(mailf, "%*s", cd->PrefixSpace, "");
 
 	    if(dp->compress == COMP_NONE)
 		f = 0.0;
@@ -1504,28 +1504,28 @@ output_summary(void)
 	    fputs(sDivZero(pct(outsize), f, Compress), mailf);
 
 	    cd= &ColumnData[DumpTime];
-	    fprintf(mailf, "%*s", cd->PrefixSpace, "");
+	    g_fprintf(mailf, "%*s", cd->PrefixSpace, "");
 	    if(repdata->dumper.result == L_SUCCESS ||
 	       repdata->dumper.result == L_CHUNKSUCCESS)
-		snprintf(TimeRateBuffer, SIZEOF(TimeRateBuffer),
+		g_snprintf(TimeRateBuffer, SIZEOF(TimeRateBuffer),
 		  "%3d:%02d", mnsc(repdata->dumper.sec));
 	    else
-		snprintf(TimeRateBuffer, SIZEOF(TimeRateBuffer),
+		g_snprintf(TimeRateBuffer, SIZEOF(TimeRateBuffer),
 		  "N/A ");
-	    fprintf(mailf, cd->Format, cd->Width, cd->Width, TimeRateBuffer);
+	    g_fprintf(mailf, cd->Format, cd->Width, cd->Width, TimeRateBuffer);
 
 	    cd= &ColumnData[DumpRate];
-	    fprintf(mailf, "%*s", cd->PrefixSpace, "");
+	    g_fprintf(mailf, "%*s", cd->PrefixSpace, "");
 	    if(repdata->dumper.result == L_SUCCESS ||
 		    repdata->dumper.result == L_CHUNKSUCCESS)
-		fprintf(mailf, cd->Format, cd->Width, cd->Precision, repdata->dumper.kps);
+		g_fprintf(mailf, cd->Format, cd->Width, cd->Precision, repdata->dumper.kps);
 	    else
-		fprintf(mailf, "%*s", cd->Width, "N/A ");
+		g_fprintf(mailf, "%*s", cd->Width, "N/A ");
 
 	    cd= &ColumnData[TapeTime];
-	    fprintf(mailf, "%*s", cd->PrefixSpace, "");
+	    g_fprintf(mailf, "%*s", cd->PrefixSpace, "");
 	    if(repdata->taper.result == L_FAIL) {
-		fprintf(mailf, "%s\n",
+		g_fprintf(mailf, "%s\n",
 			tmp=TextRule(TapeTime, TapeRate, "FAILED "));
 		amfree(tmp);
 		continue;
@@ -1534,26 +1534,26 @@ output_summary(void)
 	    if(repdata->taper.result == L_SUCCESS || 
 	       repdata->taper.result == L_PARTIAL ||
 	       repdata->taper.result == L_CHUNKSUCCESS)
-		snprintf(TimeRateBuffer, SIZEOF(TimeRateBuffer),
+		g_snprintf(TimeRateBuffer, SIZEOF(TimeRateBuffer),
 		  "%3d:%02d", mnsc(repdata->taper.sec));
 	    else
-		snprintf(TimeRateBuffer, SIZEOF(TimeRateBuffer),
+		g_snprintf(TimeRateBuffer, SIZEOF(TimeRateBuffer),
 		  "N/A ");
-	    fprintf(mailf, cd->Format, cd->Width, cd->Width, TimeRateBuffer);
+	    g_fprintf(mailf, cd->Format, cd->Width, cd->Width, TimeRateBuffer);
 
 	    cd= &ColumnData[TapeRate];
-	    fprintf(mailf, "%*s", cd->PrefixSpace, "");
+	    g_fprintf(mailf, "%*s", cd->PrefixSpace, "");
 	    if(repdata->taper.result == L_SUCCESS || 
 	       repdata->taper.result == L_PARTIAL ||
 	       repdata->taper.result == L_CHUNKSUCCESS)
-		fprintf(mailf, cd->Format, cd->Width, cd->Precision, repdata->taper.kps);
+		g_fprintf(mailf, cd->Format, cd->Width, cd->Precision, repdata->taper.kps);
 	    else
-		fprintf(mailf, "%*s", cd->Width, "N/A ");
+		g_fprintf(mailf, "%*s", cd->Width, "N/A ");
 
 	    if (repdata->chunker.result == L_PARTIAL)
-		fprintf(mailf, " PARTIAL");
+		g_fprintf(mailf, " PARTIAL");
 	    else if(repdata->taper.result == L_PARTIAL)
-		fprintf(mailf, " TAPE-PARTIAL");
+		g_fprintf(mailf, " TAPE-PARTIAL");
 
 	    fputc('\n', mailf);
 	}
@@ -1569,8 +1569,8 @@ bogus_line(
     s = g_strdup_printf(_("line %d of log is bogus: <%s %s %s>\n"),
                         curlinenum, 
                         logtype_str[curlog], program_str[curprog], curstr);
-    printf("%s\n", s);
-    printf(_("  Scan failed at: <%s>\n"), err_text);
+    g_printf("%s\n", s);
+    g_printf(_("  Scan failed at: <%s>\n"), err_text);
     addline(&errsum, s);
     amfree(s);
 }
@@ -1615,7 +1615,7 @@ nicedate(
     if (month > 12 )
 	month = 0;
 
-    snprintf(nice, SIZEOF(nice), "%s %d, %d", _(months[month]), day, year);
+    g_snprintf(nice, SIZEOF(nice), "%s %d, %d", _(months[month]), day, year);
 
     return nice;
 }
@@ -2681,14 +2681,14 @@ generate_bad_estimate(void)
 			outsize  = repdata->dumper.outsize;
 
 		    if(repdata->est_csize * 0.9 > outsize) {
-			snprintf(s, 1000,
+			g_snprintf(s, 1000,
 				_("  big estimate: %s %s %d"),
 				 repdata->disk->host->hostname,
 				 repdata->disk->name,
 				 repdata->level);
 			s[999] = '\0';
 			addline(&notes, s);
-			snprintf(s, 1000,
+			g_snprintf(s, 1000,
 				 _("                est: %.0lf%s    out %.0lf%s"),
 				 du(repdata->est_csize), displayunit,
 				 du(outsize), displayunit);
@@ -2696,14 +2696,14 @@ generate_bad_estimate(void)
 			addline(&notes, s);
 		    }
 		    else if(repdata->est_csize * 1.1 < outsize) {
-			snprintf(s, 1000,
+			g_snprintf(s, 1000,
 				_("  small estimate: %s %s %d"),
 				 repdata->disk->host->hostname,
 				 repdata->disk->name,
 				 repdata->level);
 			s[999] = '\0';
 			addline(&notes, s);
-			snprintf(s, 1000,
+			g_snprintf(s, 1000,
 				 _("                  est: %.0lf%s    out %.0lf%s"),
 				 du(repdata->est_csize), displayunit,
 				 du(outsize), displayunit);
@@ -2920,28 +2920,28 @@ do_postscript_output(void)
 	    return;
 
 	/* generate a few elements */
-	fprintf(postscript,"(%s) DrawDate\n\n",
+	g_fprintf(postscript,"(%s) DrawDate\n\n",
 		    nicedate(run_datestamp ? run_datestamp : "0"));
-	fprintf(postscript,_("(Amanda Version %s) DrawVers\n"),version());
-	fprintf(postscript,"(%s) DrawTitle\n", current_tape->label);
+	g_fprintf(postscript,_("(Amanda Version %s) DrawVers\n"),version());
+	g_fprintf(postscript,"(%s) DrawTitle\n", current_tape->label);
 
 	/* Stats */
-	fprintf(postscript, "(Total Size:        %6.1lf MB) DrawStat\n",
+	g_fprintf(postscript, "(Total Size:        %6.1lf MB) DrawStat\n",
 	      mb(current_tape->coutsize));
-	fprintf(postscript, _("(Tape Used (%%)       "));
+	g_fprintf(postscript, _("(Tape Used (%%)       "));
 	divzero(postscript, pct(current_tape->coutsize + 
 				marksize * (current_tape->tapedisks + current_tape->tapechunks)),
 				(double)tapesize);
-	fprintf(postscript," %%) DrawStat\n");
-	fprintf(postscript, _("(Compression Ratio:  "));
+	g_fprintf(postscript," %%) DrawStat\n");
+	g_fprintf(postscript, _("(Compression Ratio:  "));
 	divzero(postscript, pct(current_tape->coutsize),current_tape->corigsize);
-	fprintf(postscript," %%) DrawStat\n");
-	fprintf(postscript,_("(Filesystems Taped: %4d) DrawStat\n"),
+	g_fprintf(postscript," %%) DrawStat\n");
+	g_fprintf(postscript,_("(Filesystems Taped: %4d) DrawStat\n"),
 		  current_tape->tapedisks);
 
 	/* Summary */
 
-	fprintf(postscript,
+	g_fprintf(postscript,
 	      "(-) (%s) (-) (  0) (      32) (      32) DrawHost\n",
 	      current_tape->label);
 
@@ -2970,13 +2970,13 @@ do_postscript_output(void)
 		if (repdata->taper.result == L_SUCCESS ||
 		    repdata->taper.result == L_PARTIAL) {
 		    if(isnormal(origsize)) {
-			fprintf(postscript,"(%s) (%s) (%d) (%3.0d) (%8.0lf) (%8.0lf) DrawHost\n",
+			g_fprintf(postscript,"(%s) (%s) (%d) (%3.0d) (%8.0lf) (%8.0lf) DrawHost\n",
 			    dp->host->hostname, dp->name, repdata->level,
 			    repdata->taper.filenum, origsize, 
 			    outsize);
 		    }
 		    else {
-			fprintf(postscript,"(%s) (%s) (%d) (%3.0d) (%8s) (%8.0lf) DrawHost\n",
+			g_fprintf(postscript,"(%s) (%s) (%d) (%3.0d) (%8s) (%8.0lf) DrawHost\n",
 			    dp->host->hostname, dp->name, repdata->level,
 			    repdata->taper.filenum, "N/A", 
 			    outsize);
@@ -2985,6 +2985,6 @@ do_postscript_output(void)
 	    }
 	}
 	
-	fprintf(postscript,"\nshowpage\n");
+	g_fprintf(postscript,"\nshowpage\n");
     }
 }

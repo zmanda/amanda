@@ -64,7 +64,7 @@ getindexfname(
     datebuf[SIZEOF(datebuf)-1] = '\0';
     dc = datebuf;
 
-    snprintf(level_str, SIZEOF(level_str), "%d", level);
+    g_snprintf(level_str, SIZEOF(level_str), "%d", level);
   }
 
   host = sanitise_filename(host);
@@ -126,7 +126,7 @@ getoldindexfname(
     datebuf[SIZEOF(datebuf)-1] = '\0';
     dc = datebuf;
 
-    snprintf(level_str, SIZEOF(level_str), "%d", level);
+    g_snprintf(level_str, SIZEOF(level_str), "%d", level);
   }
 
   host = old_sanitise_filename(host);

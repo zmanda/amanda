@@ -104,7 +104,7 @@ main(
     }
 
     if (my_argc < 2) {
-	fprintf(stderr, _("Usage: %s [-t] <config> [-o configoption]*\n"), my_argv[0]);
+	g_fprintf(stderr, _("Usage: %s [-t] <config> [-o configoption]*\n"), my_argv[0]);
 	return 1;
     }
 

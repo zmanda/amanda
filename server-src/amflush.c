@@ -136,7 +136,7 @@ main(
 	case 'D': if (datearg == NULL)
 		      datearg = alloc(21*SIZEOF(char *));
 		  if(nb_datearg == 20) {
-		      fprintf(stderr,_("maximum of 20 -D arguments.\n"));
+		      g_fprintf(stderr,_("maximum of 20 -D arguments.\n"));
 		      exit(1);
 		  }
 		  datearg[nb_datearg++] = stralloc(optarg);
@@ -145,7 +145,7 @@ main(
 	}
     }
     if(!foreground && !redirect) {
-	fprintf(stderr,_("Can't redirect to stdout/stderr if not in forground.\n"));
+	g_fprintf(stderr,_("Can't redirect to stdout/stderr if not in forground.\n"));
 	exit(1);
     }
 
@@ -184,7 +184,7 @@ main(
     }
     errstr = match_disklist(&diskq, my_argc-1, my_argv+1);
     if (errstr) {
-	printf(_("%s"),errstr);
+	g_printf(_("%s"),errstr);
 	amfree(errstr);
     }
     amfree(conf_diskfile);
@@ -271,13 +271,13 @@ main(
     }
 
     if(!datestamp_list) {
-	printf(_("Could not find any Amanda directories to flush.\n"));
+	g_printf(_("Could not find any Amanda directories to flush.\n"));
 	exit(1);
     }
 
     holding_list = holding_get_files_for_flush(datestamp_list);
     if (holding_list == NULL) {
-	printf(_("Could not find any valid dump image, check directory.\n"));
+	g_printf(_("Could not find any valid dump image, check directory.\n"));
 	exit(1);
     }
 
@@ -309,11 +309,11 @@ main(
 	strftime(date_string, 100, "%a %b %e %H:%M:%S %Z %Y", tm);
     else
 	error(_("BAD DATE")); /* should never happen */
-    fprintf(stderr, _("amflush: start at %s\n"), date_string);
-    fprintf(stderr, _("amflush: datestamp %s\n"), amflush_timestamp);
+    g_fprintf(stderr, _("amflush: start at %s\n"), date_string);
+    g_fprintf(stderr, _("amflush: datestamp %s\n"), amflush_timestamp);
     if (1) {
         char * timestamp = get_proper_stamp_from_time(0);
-        fprintf(stderr, _("amflush: starttime %s\n"), timestamp);
+        g_fprintf(stderr, _("amflush: starttime %s\n"), timestamp);
         amfree(timestamp);
     }
     log_add(L_START, _("date %s"), amflush_timestamp);
@@ -344,7 +344,7 @@ main(
 	/*NOTREACHED*/
     }
 
-    fprintf(driver_stream, "DATE %s\n", amflush_timestamp);
+    g_fprintf(driver_stream, "DATE %s\n", amflush_timestamp);
     for(holding_file=holding_list; holding_file != NULL;
 				   holding_file = holding_file->next) {
 	holding_file_get_dumpfile((char *)holding_file->data, &file);
@@ -365,14 +365,14 @@ main(
 
 	qdisk = quote_string(file.disk);
 	qhname = quote_string((char *)holding_file->data);
-	fprintf(stderr,
+	g_fprintf(stderr,
 		"FLUSH %s %s %s %d %s\n",
 		file.name,
 		qdisk,
 		file.datestamp,
 		file.dumplevel,
 		qhname);
-	fprintf(driver_stream,
+	g_fprintf(driver_stream,
 		"FLUSH %s %s %s %d %s\n",
 		file.name,
 		qdisk,
@@ -382,8 +382,8 @@ main(
 	amfree(qdisk);
 	amfree(qhname);
     }
-    fprintf(stderr, "ENDFLUSH\n"); fflush(stderr);
-    fprintf(driver_stream, "ENDFLUSH\n"); fflush(driver_stream);
+    g_fprintf(stderr, "ENDFLUSH\n"); fflush(stderr);
+    g_fprintf(driver_stream, "ENDFLUSH\n"); fflush(driver_stream);
     fclose(driver_stream);
 
     /* WAIT DRIVER */
@@ -421,21 +421,21 @@ main(
 	/* First, find out the last existing errfile,           */
 	/* to avoid ``infinite'' loops if tapecycle is infinite */
 
-	snprintf(number,100,"%d",days);
+	g_snprintf(number,100,"%d",days);
 	errfilex = newvstralloc(errfilex, errfile, ".", number, NULL);
 	while ( days < maxdays && stat(errfilex,&stat_buf)==0) {
 	    days++;
-	    snprintf(number,100,"%d",days);
+	    g_snprintf(number,100,"%d",days);
 	    errfilex = newvstralloc(errfilex, errfile, ".", number, NULL);
 	}
-	snprintf(number,100,"%d",days);
+	g_snprintf(number,100,"%d",days);
 	errfilex = newvstralloc(errfilex, errfile, ".", number, NULL);
 	nerrfilex = NULL;
 	while (days > 1) {
 	    amfree(nerrfilex);
 	    nerrfilex = errfilex;
 	    days--;
-	    snprintf(number,100,"%d",days);
+	    g_snprintf(number,100,"%d",days);
 	    errfilex = vstralloc(errfile, ".", number, NULL);
 	    if (rename(errfilex, nerrfilex) != 0) {
 		error(_("cannot rename \"%s\" to \"%s\": %s"),
@@ -558,10 +558,10 @@ pick_datestamp(void)
 	    for(ds = datestamp_list, max_char = 'A';
 		ds != NULL && max_char <= 'Z';
 		ds = ds->next, max_char++) {
-		printf("  %c. %s\n", max_char, (char *)ds->data);
+		g_printf("  %c. %s\n", max_char, (char *)ds->data);
 	    }
 	    max_char--;
-	    printf(_("Select datestamps to flush [A..%c or <enter> for all]: "), max_char);
+	    g_printf(_("Select datestamps to flush [A..%c or <enter> for all]: "), max_char);
 	    fflush(stdout); fflush(stderr);
 	    amfree(answer);
 	    if ((answer = agets(stdin)) == NULL) {
@@ -621,29 +621,31 @@ confirm(GSList *datestamp_list)
     int ch;
     char *extra;
 
-    printf(_("\nToday is: %s\n"),amflush_datestamp);
-    printf(_("Flushing dumps from"));
+    g_printf(_("\nToday is: %s\n"),amflush_datestamp);
+    g_printf(_("Flushing dumps from"));
     extra = "";
     for(datestamp = datestamp_list; datestamp != NULL; datestamp = datestamp->next) {
-	printf("%s %s", extra, (char *)datestamp->data);
+	g_printf("%s %s", extra, (char *)datestamp->data);
 	extra = ",";
     }
     tpchanger = getconf_str(CNF_TPCHANGER);
     if(*tpchanger != '\0') {
-	printf(_(" using tape changer \"%s\".\n"), tpchanger);
+	g_printf(_(" using tape changer \"%s\".\n"), tpchanger);
     } else {
-	printf(_(" to tape drive \"%s\".\n"), getconf_str(CNF_TAPEDEV));
+	g_printf(_(" to tape drive \"%s\".\n"), getconf_str(CNF_TAPEDEV));
     }
 
-    printf(_("Expecting "));
+    g_printf(_("Expecting "));
     tp = lookup_last_reusable_tape(0);
-    if(tp != NULL) printf(_("tape %s or "), tp->label);
-    printf(_("a new tape."));
+    if(tp != NULL)
+	g_printf(_("tape %s or "), tp->label);
+    g_printf(_("a new tape."));
     tp = lookup_tapepos(1);
-    if(tp != NULL) printf(_("  (The last dumps were to tape %s)"), tp->label);
+    if(tp != NULL)
+	g_printf(_("  (The last dumps were to tape %s)"), tp->label);
 
     while (1) {
-	printf(_("\nAre you sure you want to do this [yN]? "));
+	g_printf(_("\nAre you sure you want to do this [yN]? "));
 	if((ch = get_letter_from_user()) == 'Y') {
 	    return;
 	} else if (ch == 'N' || ch == '\0' || ch == EOF) {
@@ -654,7 +656,7 @@ confirm(GSList *datestamp_list)
 	}
     }
 
-    printf(_("Ok, quitting.  Run amflush again when you are ready.\n"));
+    g_printf(_("Ok, quitting.  Run amflush again when you are ready.\n"));
     exit(1);
 }
 

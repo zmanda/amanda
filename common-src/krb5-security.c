@@ -573,13 +573,13 @@ gss_server(
      */
     euid = geteuid();
     if (getuid() != 0) {
-	snprintf(errbuf, SIZEOF(errbuf),
+	g_snprintf(errbuf, SIZEOF(errbuf),
 	    _("real uid is %ld, needs to be 0 to read krb5 host key"),
 	    (long)getuid());
 	goto out;
     }
     if (!set_root_privs(0)) {
-	snprintf(errbuf, SIZEOF(errbuf),
+	g_snprintf(errbuf, SIZEOF(errbuf),
 	    _("can't seteuid to uid 0: %s"), strerror(errno));
 	goto out;
     }
@@ -595,7 +595,7 @@ gss_server(
 	&gss_name);
     if (maj_stat != (OM_uint32)GSS_S_COMPLETE) {
 	set_root_privs(0);
-	snprintf(errbuf, SIZEOF(errbuf),
+	g_snprintf(errbuf, SIZEOF(errbuf),
 	    _("can't import name %s: %s"), (char *)send_tok.value,
 	    gss_error(maj_stat, min_stat));
 	amfree(send_tok.value);
@@ -608,7 +608,7 @@ gss_server(
     maj_stat = gss_acquire_cred(&min_stat, gss_name, 0,
 	GSS_C_NULL_OID_SET, GSS_C_ACCEPT, &gss_creds, NULL, NULL);
     if (maj_stat != (OM_uint32)GSS_S_COMPLETE) {
-	snprintf(errbuf, SIZEOF(errbuf),
+	g_snprintf(errbuf, SIZEOF(errbuf),
 	    _("can't acquire creds for host key host/%s: %s"), myhostname,
 	    gss_error(maj_stat, min_stat));
 	gss_release_name(&min_stat, &gss_name);
@@ -625,11 +625,11 @@ gss_server(
 				 (ssize_t *)&recv_tok.length, 60);
 	if (rvalue <= 0) {
 	    if (rvalue < 0) {
-		snprintf(errbuf, SIZEOF(errbuf),
+		g_snprintf(errbuf, SIZEOF(errbuf),
 		    _("recv error in gss loop: %s"), rc->errmsg);
 		amfree(rc->errmsg);
 	    } else
-		snprintf(errbuf, SIZEOF(errbuf), _("EOF in gss loop"));
+		g_snprintf(errbuf, SIZEOF(errbuf), _("EOF in gss loop"));
 	    goto out;
 	}
 
@@ -639,7 +639,7 @@ gss_server(
 
 	if (maj_stat != (OM_uint32)GSS_S_COMPLETE &&
 	    maj_stat != (OM_uint32)GSS_S_CONTINUE_NEEDED) {
-	    snprintf(errbuf, SIZEOF(errbuf),
+	    g_snprintf(errbuf, SIZEOF(errbuf),
 		_("error accepting context: %s"), gss_error(maj_stat, min_stat));
 	    amfree(recv_tok.value);
 	    goto out;
@@ -666,7 +666,7 @@ gss_server(
 
     maj_stat = gss_display_name(&min_stat, gss_name, &send_tok, &doid);
     if (maj_stat != (OM_uint32)GSS_S_COMPLETE) {
-	snprintf(errbuf, SIZEOF(errbuf),
+	g_snprintf(errbuf, SIZEOF(errbuf),
 	    _("can't display gss name: %s"), gss_error(maj_stat, min_stat));
 	gss_release_name(&min_stat, &gss_name);
 	goto out;
@@ -675,7 +675,7 @@ gss_server(
 
     /* get rid of the realm */
     if ((p = strchr(send_tok.value, '@')) == NULL) {
-	snprintf(errbuf, SIZEOF(errbuf),
+	g_snprintf(errbuf, SIZEOF(errbuf),
 	    _("malformed gss name: %s"), (char *)send_tok.value);
 	amfree(send_tok.value);
 	goto out;
@@ -687,7 +687,7 @@ gss_server(
      * If the principal doesn't match, complain
      */
     if ((msg = krb5_checkuser(rc->hostname, send_tok.value, realm)) != NULL) {
-	snprintf(errbuf, SIZEOF(errbuf),
+	g_snprintf(errbuf, SIZEOF(errbuf),
 	    _("access not allowed from %s: %s"), (char *)send_tok.value, msg);
 	amfree(send_tok.value);
 	goto out;
@@ -735,7 +735,7 @@ krb5_init(void)
     {
 	char *ccache;
 	ccache = malloc(128);
-	snprintf(ccache, SIZEOF(ccache),
+	g_snprintf(ccache, SIZEOF(ccache),
 		 "KRB5_ENV_CCNAME=FILE:/tmp/amanda_ccache.%ld.%ld",
 		 (long)geteuid(), (long)getpid());
 	putenv(ccache);
@@ -772,7 +772,7 @@ cleanup(void)
 {
 #ifdef KDESTROY_VIA_UNLINK
     char ccache[64];
-    snprintf(ccache, SIZEOF(ccache), "/tmp/amanda_ccache.%ld.%ld",
+    g_snprintf(ccache, SIZEOF(ccache), "/tmp/amanda_ccache.%ld.%ld",
         (long)geteuid(), (long)getpid());
     unlink(ccache);
 #else

@@ -101,9 +101,8 @@ int check_rst_flags(rst_flags_t *flags);
 void free_rst_flags(rst_flags_t *flags);
 int lock_logfile(void);
 void send_message(FILE *prompt_out, rst_flags_t *flags,
-		  am_feature_t *their_features, char * format, ...);
-	/*     __attribute__ ((format (printf, 4, 5))); */
-
+		  am_feature_t *their_features,
+		  char * format, ...) G_GNUC_PRINTF(4,5);
 
 #endif /* RESTORE_H */
 

@@ -170,7 +170,7 @@ main(
 
     report_bad_conf_arg();
 
-    fprintf(stderr,
+    g_fprintf(stderr,
 	    _("%s: pid %ld executable %s version %s\n"),
 	    get_pname(), (long) getpid(),
 	    my_argv[0], version());
@@ -310,9 +310,9 @@ main(
 
 		runtime = stopclock();
                 rt = g_timeval_to_double(runtime);
-		snprintf(kb_str, SIZEOF(kb_str), OFF_T_FMT,
-			 (OFF_T_FMT_TYPE)(dumpsize - (off_t)headersize));
-		snprintf(kps_str, SIZEOF(kps_str), "%3.1lf",
+		g_snprintf(kb_str, SIZEOF(kb_str), "%lld",
+			 (long long)(dumpsize - (off_t)headersize));
+		g_snprintf(kps_str, SIZEOF(kps_str), "%3.1lf",
 				isnormal(rt) ? (double)dumpsize / rt : 0.0);
 		errstr = newvstrallocf(errstr, "sec %s kb %s kps %s",
 				walltime_str(runtime), kb_str, kps_str);
@@ -323,8 +323,8 @@ main(
 		    cmd = getcmd(&cmdargs);
 		switch(cmd) {
 		case DONE:
-		    putresult(DONE, "%s " OFF_T_FMT " %s\n", handle,
-			     (OFF_T_FMT_TYPE)(dumpsize - (off_t)headersize), q);
+		    putresult(DONE, "%s %lld %s\n", handle,
+			     (long long)(dumpsize - (off_t)headersize), q);
 		    log_add(L_SUCCESS, "%s %s %s %d [%s]",
 			    hostname, qdiskname, chunker_timestamp, level, errstr);
 		    break;
@@ -333,8 +333,8 @@ main(
 		case FAILED:
 		case ABORT_FINISHED:
 		    if(dumpsize > (off_t)DISK_BLOCK_KB) {
-			putresult(PARTIAL, "%s " OFF_T_FMT " %s\n", handle,
-				 (OFF_T_FMT_TYPE)(dumpsize - (off_t)headersize),
+			putresult(PARTIAL, "%s %lld %s\n", handle,
+				 (long long)(dumpsize - (off_t)headersize),
 				 q);
 			log_add(L_PARTIAL, "%s %s %s %d [%s]",
 				hostname, qdiskname, chunker_timestamp, level, errstr);
@@ -448,8 +448,8 @@ startup_chunker(
 	amfree(tmp_filename);
 	aclose(infd);
 	if(save_errno == ENOSPC) {
-	    putresult(NO_ROOM, "%s " OFF_T_FMT "\n",
-	    	      handle, (OFF_T_FMT_TYPE)use);
+	    putresult(NO_ROOM, "%s %lld\n",
+	    	      handle, (long long)use);
 	    return -2;
 	} else {
 	    return -1;
@@ -485,9 +485,8 @@ do_chunk(
 	if(nread < 0) {
 	    errstr = vstrallocf(_("cannot read header: %s"), strerror(errno));
 	} else {
-	    errstr = vstrallocf(_("cannot read header: got " SSIZE_T_FMT
-				" bytes instead of %d"),
-				(SSIZE_T_FMT_TYPE)nread,
+	    errstr = vstrallocf(_("cannot read header: got %zd bytes instead of %d"),
+				nread,
 				DISK_BLOCK_BYTES);
 	}
 	return 0;
@@ -499,8 +498,8 @@ do_chunk(
 	errstr = squotef(_("write_tapeheader file %s: %s"),
 			 db->filename, strerror(errno));
 	if(save_errno == ENOSPC) {
-	    putresult(NO_ROOM, "%s " OFF_T_FMT "\n", handle, 
-		      (OFF_T_FMT_TYPE)(db->use+db->split_size-dumpsize));
+	    putresult(NO_ROOM, "%s %lld\n", handle, 
+		      (long long)(db->use+db->split_size-dumpsize));
 	}
 	return 0;
     }
@@ -693,7 +692,7 @@ databuf_flush(
 	 * First, open the new chunk file, and give it a new header
 	 * that has no cont_filename pointer.
 	 */
-	snprintf(sequence, SIZEOF(sequence), "%d", db->filename_seq);
+	g_snprintf(sequence, SIZEOF(sequence), "%d", db->filename_seq);
 	new_filename = newvstralloc(new_filename,
 				    db->filename,
 				    ".",
@@ -712,8 +711,8 @@ databuf_flush(
 	    int save_errno = errno;
 
 	    if(save_errno == ENOSPC) {
-		putresult(NO_ROOM, "%s " OFF_T_FMT "\n", handle, 
-			  (OFF_T_FMT_TYPE)(db->use+db->split_size-dumpsize));
+		putresult(NO_ROOM, "%s %lld\n", handle, 
+			  (long long)(db->use+db->split_size-dumpsize));
 		db->use = (off_t)0;			/* force RQ_MORE_DISK */
 		db->split_size = dumpsize;
 		continue;
@@ -733,8 +732,8 @@ databuf_flush(
 
 	    aclose(newfd);
 	    if(save_errno == ENOSPC) {
-		putresult(NO_ROOM, "%s " OFF_T_FMT "\n", handle, 
-			  (OFF_T_FMT_TYPE)(db->use+db->split_size-dumpsize));
+		putresult(NO_ROOM, "%s %lld\n", handle, 
+			  (long long)(db->use+db->split_size-dumpsize));
 		db->use = (off_t)0;			/* force RQ_MORE DISK */
 		db->split_size = dumpsize;
 		continue;
@@ -830,8 +829,8 @@ databuf_flush(
 	 * NO-ROOM is informational only.  Later, RQ_MORE_DISK will be
 	 * issued to use another holding disk.
 	 */
-	putresult(NO_ROOM, "%s " OFF_T_FMT "\n", handle,
-		  (OFF_T_FMT_TYPE)(db->use+db->split_size-dumpsize));
+	putresult(NO_ROOM, "%s %lld\n", handle,
+		  (long long)(db->use+db->split_size-dumpsize));
 	db->use = (off_t)0;				/* force RQ_MORE_DISK */
 	db->split_size = dumpsize;
 	goto common_exit;

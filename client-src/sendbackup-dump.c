@@ -150,12 +150,12 @@ start_backup(
 
     (void)dumpdate;	/* Quiet unused parameter warning */
 
-    snprintf(level_str, SIZEOF(level_str), "%d", level);
+    g_snprintf(level_str, SIZEOF(level_str), "%d", level);
 
     qdisk = quote_string(disk);
     dbprintf(_("start: %s:%s lev %d\n"), host, qdisk, level);
 
-    fprintf(stderr, _("%s: start [%s:%s level %d]\n"),
+    g_fprintf(stderr, _("%s: start [%s:%s level %d]\n"),
 	    get_pname(), host, qdisk, level);
     amfree(qdisk);
 

@@ -101,12 +101,9 @@ static char *amandad_auth = NULL;
 static FILE *cmdin;
 static FILE *cmdout;
 
-static void reply(int, char *, ...)
-    __attribute__ ((format (printf, 2, 3)));
-static void lreply(int, char *, ...)
-    __attribute__ ((format (printf, 2, 3)));
-static void fast_lreply(int, char *, ...)
-    __attribute__ ((format (printf, 2, 3)));
+static void reply(int, char *, ...) G_GNUC_PRINTF(2, 3);
+static void lreply(int, char *, ...) G_GNUC_PRINTF(2, 3);
+static void fast_lreply(int, char *, ...) G_GNUC_PRINTF(2, 3);
 static am_host_t *is_dump_host_valid(char *);
 static int is_disk_valid(char *);
 static int is_config_valid(char *);
@@ -382,7 +379,7 @@ printf_arglist_function1(static void reply, int, n, char *, fmt)
 
     while(1) {
 	arglist_start(args, fmt);
-	len = vsnprintf(reply_buffer, reply_buffer_size, fmt, args);
+	len = g_vsnprintf(reply_buffer, reply_buffer_size, fmt, args);
 	arglist_end(args);
 
 	if (len > -1 && (size_t)len < reply_buffer_size-1)
@@ -393,7 +390,7 @@ printf_arglist_function1(static void reply, int, n, char *, fmt)
 	reply_buffer = alloc(reply_buffer_size);
     }
 
-    if (fprintf(cmdout,"%03d %s\r\n", n, reply_buffer) < 0)
+    if (g_fprintf(cmdout,"%03d %s\r\n", n, reply_buffer) < 0)
     {
 	dbprintf(_("! error %d (%s) in printf\n"), errno, strerror(errno));
 	uncompress_remove = remove_files(uncompress_remove);
@@ -419,7 +416,7 @@ printf_arglist_function1(static void lreply, int, n, char *, fmt)
 
     while(1) {
 	arglist_start(args, fmt);
-	len = vsnprintf(reply_buffer, reply_buffer_size, fmt, args);
+	len = g_vsnprintf(reply_buffer, reply_buffer_size, fmt, args);
 	arglist_end(args);
 
 	if (len > -1 && (size_t)len < reply_buffer_size-1)
@@ -430,7 +427,7 @@ printf_arglist_function1(static void lreply, int, n, char *, fmt)
 	reply_buffer = alloc(reply_buffer_size);
     }
 
-    if (fprintf(cmdout,"%03d-%s\r\n", n, reply_buffer) < 0)
+    if (g_fprintf(cmdout,"%03d-%s\r\n", n, reply_buffer) < 0)
     {
 	dbprintf(_("! error %d (%s) in printf\n"),
 		  errno, strerror(errno));
@@ -460,7 +457,7 @@ printf_arglist_function1(static void fast_lreply, int, n, char *, fmt)
 
     while(1) {
 	arglist_start(args, fmt);
-	len = vsnprintf(reply_buffer, reply_buffer_size, fmt, args);
+	len = g_vsnprintf(reply_buffer, reply_buffer_size, fmt, args);
 	arglist_end(args);
 
 	if (len > -1 && (size_t)len < reply_buffer_size-1)
@@ -471,7 +468,7 @@ printf_arglist_function1(static void fast_lreply, int, n, char *, fmt)
 	reply_buffer = alloc(reply_buffer_size);
     }
 
-    if (fprintf(cmdout,"%03d-%s\r\n", n, reply_buffer) < 0)
+    if (g_fprintf(cmdout,"%03d-%s\r\n", n, reply_buffer) < 0)
     {
 	dbprintf(_("! error %d (%s) in printf\n"),
 		  errno, strerror(errno));
@@ -708,10 +705,10 @@ build_disk_table(void)
 	    date = amindexd_nicedate(find_output->timestamp);
 	    add_dump(find_output->hostname, date, find_output->level,
 		     find_output->label, find_output->filenum, partnum);
-	    dbprintf("- %s %d %s " OFF_T_FMT " %d\n",
+	    dbprintf("- %s %d %s %lld %d\n",
 		     date, find_output->level, 
 		     find_output->label,
-		     (OFF_T_FMT_TYPE)find_output->filenum,
+		     (long long)find_output->filenum,
 		     partnum);
 	}
     }
@@ -753,8 +750,8 @@ disk_history_list(void)
 	    lreply(201, " %s %d %s", date, item->level, tapelist_str);
 	}
 	else{
-	    lreply(201, " %s %d %s " OFF_T_FMT, date, item->level,
-		tapelist_str, (OFF_T_FMT_TYPE)item->file);
+	    lreply(201, " %s %d %s %lld", date, item->level,
+		tapelist_str, (long long)item->file);
 	}
 	amfree(tapelist_str);
     }
@@ -995,11 +992,11 @@ void opaque_ls_one(
 				     fe_amindexd_fileno_in_OLSD)) ||
        (recursive && am_has_feature(their_features,
 				    fe_amindexd_fileno_in_ORLD))) {
-	fast_lreply(201, " %s %d %s " OFF_T_FMT " %s",
+	fast_lreply(201, " %s %d %s %lld %s",
 		    date,
 		    dir_item->dump->level,
 		    tapelist_str,
-		    (OFF_T_FMT_TYPE)dir_item->dump->file,
+		    (long long)dir_item->dump->file,
 		    qpath);
     }
     else {
@@ -1249,7 +1246,7 @@ main(
 
 	if(amandad_auth && g_options->auth) {
 	    if(strcasecmp(amandad_auth, g_options->auth) != 0) {
-		printf(_("ERROR recover program ask for auth=%s while amindexd is configured for '%s'\n"),
+		g_printf(_("ERROR recover program ask for auth=%s while amindexd is configured for '%s'\n"),
 		       g_options->auth, amandad_auth);
 		error(_("amindexd: ERROR recover program ask for auth=%s while amindexd is configured for '%s'"),
 		      g_options->auth, amandad_auth);
@@ -1257,8 +1254,8 @@ main(
 	    }
 	}
 	/* send the REP packet */
-	printf("CONNECT MESG %d\n", DATA_FD_OFFSET);
-	printf("\n");
+	g_printf("CONNECT MESG %d\n", DATA_FD_OFFSET);
+	g_printf("\n");
 	fflush(stdin);
 	fflush(stdout);
 	fclose(stdin);
@@ -1575,7 +1572,7 @@ amindexd_nicedate(
     day   = numdate % 100;
 
     if(strlen(datestamp) <= 8) {
-	snprintf(nice, SIZEOF(nice), "%4d-%02d-%02d",
+	g_snprintf(nice, SIZEOF(nice), "%4d-%02d-%02d",
 		year, month, day);
     }
     else {
@@ -1586,7 +1583,7 @@ amindexd_nicedate(
 	minutes = (numtime / 100) % 100;
 	seconds = numtime % 100;
 
-	snprintf(nice, SIZEOF(nice), "%4d-%02d-%02d-%02d-%02d-%02d",
+	g_snprintf(nice, SIZEOF(nice), "%4d-%02d-%02d-%02d-%02d-%02d",
 		year, month, day, hours, minutes, seconds);
     }
 

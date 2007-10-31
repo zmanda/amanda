@@ -168,7 +168,7 @@ start_backup(
     qdisk = quote_string(disk);
     dbprintf(_("start: %s:%s lev %d\n"), host, qdisk, level);
 
-    fprintf(stderr, _("%s: start [%s:%s level %d]\n"),
+    g_fprintf(stderr, _("%s: start [%s:%s level %d]\n"),
 	    get_pname(), host, qdisk, level);
 
      /*  apply client-side encryption here */
@@ -240,7 +240,7 @@ start_backup(
 			     NULL);
 	amfree(sdisk);
 
-	snprintf(number, SIZEOF(number), "%d", level);
+	g_snprintf(number, SIZEOF(number), "%d", level);
 	incrname = vstralloc(basename, "_", number, ".new", NULL);
 	unlink(incrname);
 
@@ -253,7 +253,7 @@ start_backup(
 	infd = -1;
 	while (infd == -1) {
 	    if (--baselevel >= 0) {
-		snprintf(number, SIZEOF(number), "%d", baselevel);
+		g_snprintf(number, SIZEOF(number), "%d", baselevel);
 		inputname = newvstralloc(inputname,
 					 basename, "_", number, NULL);
 	    } else {
@@ -339,7 +339,7 @@ start_backup(
     free_amandates();
 
     gmtm = gmtime(&prev_dumptime);
-    snprintf(dumptimestr, SIZEOF(dumptimestr),
+    g_snprintf(dumptimestr, SIZEOF(dumptimestr),
 		"%04d-%02d-%02d %2d:%02d:%02d GMT",
 		gmtm->tm_year + 1900, gmtm->tm_mon+1, gmtm->tm_mday,
 		gmtm->tm_hour, gmtm->tm_min, gmtm->tm_sec);
@@ -618,7 +618,7 @@ end_backup(
 	    nodotnew = stralloc(incrname);
 	    nodotnew[strlen(nodotnew)-4] = '\0';
 	    if (rename(incrname, nodotnew)) {
-		fprintf(stderr, _("%s: warning [renaming %s to %s: %s]\n"), 
+		g_fprintf(stderr, _("%s: warning [renaming %s to %s: %s]\n"), 
 			get_pname(), incrname, nodotnew, strerror(errno));
 	    }
 	    amfree(nodotnew);
@@ -626,7 +626,7 @@ end_backup(
 	}
 
         if(!start_amandates(amandates_file, 1)) {
-	    fprintf(stderr, _("%s: warning [opening %s: %s]"), get_pname(),
+	    g_fprintf(stderr, _("%s: warning [opening %s: %s]"), get_pname(),
 		    amandates_file, strerror(errno));
 	}
 	else {

@@ -623,7 +623,7 @@ char *
 readline(
     const char *prompt)
 {
-    printf("%s", prompt);
+    g_printf("%s", prompt);
     fflush(stdout);
     fflush(stderr);
     return agets(stdin);

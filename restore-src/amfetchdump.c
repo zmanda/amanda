@@ -72,22 +72,22 @@ static void cleanup(void);
 void
 usage(void)
 {
-    fprintf(stderr, _("Usage: amfetchdump [options] config hostname [diskname [datestamp [level [hostname [diskname [datestamp [level ... ]]]]]]] [-o configoption]*\n\n"));
-    fprintf(stderr, _("Goes and grabs a dump from tape, moving tapes around and assembling parts as\n"));
-    fprintf(stderr, _("necessary.  Files are restored to the current directory, unless otherwise\nspecified.\n\n"));
-    fprintf(stderr, _("  -p Pipe exactly *one* complete dumpfile to stdout, instead of to disk.\n"));
-    fprintf(stderr, _("  -O <output dir> Restore files to this directory.\n"));
-    fprintf(stderr, _("  -d <device> Force restoration from a particular tape device.\n"));
-    fprintf(stderr, _("  -c Compress output, fastest method available.\n"));
-    fprintf(stderr, _("  -C Compress output, best filesize method available.\n"));
-    fprintf(stderr, _("  -l Leave dumps (un)compressed, whichever way they were originally on tape.\n"));
-    fprintf(stderr, _("  -a Assume all tapes are available via changer, do not prompt for initial load.\n"));
-    fprintf(stderr, _("  -i <dst_file> Search through tapes and write out an inventory while we\n     restore.  Useful only if normal logs are unavailable.\n"));
-    fprintf(stderr, _("  -w Wait to put split dumps together until all chunks have been restored.\n"));
-    fprintf(stderr, _("  -n Do not reassemble split dumpfiles.\n"));
-    fprintf(stderr, _("  -k Skip the rewind/label read when reading a new tape.\n"));
-    fprintf(stderr, _("  -s Do not use fast forward to skip files we won't restore.  Use only if fsf\n     causes your tapes to skip too far.\n"));
-    fprintf(stderr, _("  -b <blocksize> Force a particular block size (default is 32kb).\n"));
+    g_fprintf(stderr, _("Usage: amfetchdump [options] config hostname [diskname [datestamp [level [hostname [diskname [datestamp [level ... ]]]]]]] [-o configoption]*\n\n"));
+    g_fprintf(stderr, _("Goes and grabs a dump from tape, moving tapes around and assembling parts as\n"));
+    g_fprintf(stderr, _("necessary.  Files are restored to the current directory, unless otherwise\nspecified.\n\n"));
+    g_fprintf(stderr, _("  -p Pipe exactly *one* complete dumpfile to stdout, instead of to disk.\n"));
+    g_fprintf(stderr, _("  -O <output dir> Restore files to this directory.\n"));
+    g_fprintf(stderr, _("  -d <device> Force restoration from a particular tape device.\n"));
+    g_fprintf(stderr, _("  -c Compress output, fastest method available.\n"));
+    g_fprintf(stderr, _("  -C Compress output, best filesize method available.\n"));
+    g_fprintf(stderr, _("  -l Leave dumps (un)compressed, whichever way they were originally on tape.\n"));
+    g_fprintf(stderr, _("  -a Assume all tapes are available via changer, do not prompt for initial load.\n"));
+    g_fprintf(stderr, _("  -i <dst_file> Search through tapes and write out an inventory while we\n     restore.  Useful only if normal logs are unavailable.\n"));
+    g_fprintf(stderr, _("  -w Wait to put split dumps together until all chunks have been restored.\n"));
+    g_fprintf(stderr, _("  -n Do not reassemble split dumpfiles.\n"));
+    g_fprintf(stderr, _("  -k Skip the rewind/label read when reading a new tape.\n"));
+    g_fprintf(stderr, _("  -s Do not use fast forward to skip files we won't restore.  Use only if fsf\n     causes your tapes to skip too far.\n"));
+    g_fprintf(stderr, _("  -b <blocksize> Force a particular block size (default is 32kb).\n"));
     exit(1);
 }
 
@@ -136,7 +136,7 @@ list_needed_tapes(
     alldumps = find_dump(1, &diskqp);
     free_disklist(&diskqp);
     if(alldumps == NULL){
-        fprintf(stderr, _("No dump records found\n"));
+        g_fprintf(stderr, _("No dump records found\n"));
         exit(1);
     }
 
@@ -152,7 +152,7 @@ list_needed_tapes(
 	for(curmatch = matches; curmatch; curmatch = curmatch->next){
 	    int havetape = 0;
 	    if(strcmp("OK", curmatch->status)){
-		fprintf(stderr,_("Dump %s %s %s %d had status '%s', skipping\n"),
+		g_fprintf(stderr,_("Dump %s %s %s %d had status '%s', skipping\n"),
 		                 curmatch->timestamp, curmatch->hostname,
 				 curmatch->diskname, curmatch->level,
 				 curmatch->status);
@@ -172,10 +172,10 @@ list_needed_tapes(
 			    rsttemp;
 			    rsttemp=rsttemp->next){
 			if(rstfile->filenum == rsttemp->filenum){
-			    fprintf(stderr, _("Seeing multiple entries for tape "
-				   "%s file " OFF_T_FMT ", using most recent\n"),
+			    g_fprintf(stderr, _("Seeing multiple entries for tape "
+				   "%s file %lld, using most recent\n"),
 				    curtape->label,
-				    (OFF_T_FMT_TYPE)rstfile->filenum);
+				    (long long)rstfile->filenum);
 			    keep = 0;
 			}
 		    }
@@ -222,7 +222,7 @@ list_needed_tapes(
     } /* while (dumpspecs) */
 
     if(numtapes == 0){
-      fprintf(stderr, _("No matching dumps found\n"));
+      g_fprintf(stderr, _("No matching dumps found\n"));
       exit(1);
       /* NOTREACHED */
     }
@@ -236,7 +236,7 @@ list_needed_tapes(
 	}
     }
 
-    fprintf(stderr, _("%d tape(s) needed for restoration\n"), numtapes);
+    g_fprintf(stderr, _("%d tape(s) needed for restoration\n"), numtapes);
     return(tapes);
 }
 
@@ -348,11 +348,11 @@ main(
 	    error(_("Cannot force compression when doing inventory/search"));
 	    /*NOTREACHED*/
 	}
-	fprintf(stderr, _("Doing inventory/search, dumps will not be uncompressed or assembled on-the-fly.\n"));
+	g_fprintf(stderr, _("Doing inventory/search, dumps will not be uncompressed or assembled on-the-fly.\n"));
     }
     else{
 	if(rst_flags->delay_assemble){
-	    fprintf(stderr, _("Using -w, split dumpfiles will *not* be automatically uncompressed.\n"));
+	    g_fprintf(stderr, _("Using -w, split dumpfiles will *not* be automatically uncompressed.\n"));
 	}
     }
 
@@ -393,7 +393,7 @@ main(
      * way.
      */
     if(rst_flags->inventory_log){
-	fprintf(stderr, _("Beginning tape-by-tape search.\n"));
+	g_fprintf(stderr, _("Beginning tape-by-tape search.\n"));
 	search_tapes(stderr, stdin, rst_flags->alt_tapedev == NULL,
                      NULL, dumpspecs, rst_flags, NULL);
 	exit(0);

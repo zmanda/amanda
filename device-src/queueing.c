@@ -499,7 +499,7 @@ producer_result_t fd_read_producer(gpointer fdp, queue_buffer_t *buffer,
                 continue;
         } else {
             /* Error occured. */
-            fprintf(stderr, "Error reading fd %d: %s\n", fd, strerror(errno));
+            g_fprintf(stderr, "Error reading fd %d: %s\n", fd, strerror(errno));
             return PRODUCER_ERROR;
         }
     }
@@ -535,7 +535,7 @@ int fd_write_consumer(gpointer fdp, queue_buffer_t *buffer) {
                 continue;
         } else {
             /* Error occured. */
-            fprintf(stderr, "Error writing fd %d: %s\n", fd, strerror(errno));
+            g_fprintf(stderr, "Error writing fd %d: %s\n", fd, strerror(errno));
             return -1;
         }        
     }

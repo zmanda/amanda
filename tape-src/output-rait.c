@@ -516,8 +516,8 @@ rait_lseek(
 	 total;			/* total of results */
     RAIT *pr;			/* RAIT slot in table */
 
-    rait_debug(stderr, _("rait_lseek(%d, " OFF_T_FMT ", %d)\n"),
-		fd, (OFF_T_FMT_TYPE)pos, whence);
+    rait_debug(stderr, _("rait_lseek(%d, %lld, %d)\n"),
+		fd, (long long)pos, whence);
 
     if ((fd < 0) || ((size_t)fd >= rait_table_count)) {
 	errno = EBADF;

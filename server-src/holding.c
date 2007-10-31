@@ -690,10 +690,10 @@ holding_cleanup_disk(
 
     if (data->verbose_output) {
 	if (is_cruft)
-	    fprintf(data->verbose_output, 
+	    g_fprintf(data->verbose_output, 
 		_("Invalid holding disk '%s'\n"), fqpath);
 	else
-	    fprintf(data->verbose_output, 
+	    g_fprintf(data->verbose_output, 
 		_("Cleaning up holding disk '%s'\n"), fqpath);
     }
 
@@ -712,7 +712,7 @@ holding_cleanup_dir(
 
     if (is_cruft) {
 	if (data->verbose_output)
-	    fprintf(data->verbose_output, 
+	    g_fprintf(data->verbose_output, 
 		_("Invalid holding directory '%s'\n"), fqpath);
 	return 0;
     }
@@ -721,13 +721,13 @@ holding_cleanup_dir(
     if (rmdir(fqpath) == 0) {
 	/* success, so don't try to walk into it */
 	if (data->verbose_output)
-	    fprintf(data->verbose_output,
+	    g_fprintf(data->verbose_output,
 		_(" ..removed empty directory '%s'\n"), element);
 	return 0;
     }
 
     if (data->verbose_output)
-	fprintf(data->verbose_output, 
+	g_fprintf(data->verbose_output, 
 	    _(" ..cleaning up holding directory '%s'\n"), element);
 
     return 1;
@@ -749,7 +749,7 @@ holding_cleanup_file(
 
     if (is_cruft) {
 	if (data->verbose_output)
-	    fprintf(data->verbose_output, 
+	    g_fprintf(data->verbose_output, 
 		_("Invalid holding file '%s'\n"), element);
 	return 0;
     }
@@ -759,21 +759,21 @@ holding_cleanup_file(
 
     if (!stat) {
 	if (data->verbose_output)
-	    fprintf(data->verbose_output, 
+	    g_fprintf(data->verbose_output, 
 		_("Could not read read header from '%s'\n"), element);
 	return 0;
     }
 
     if (file.type != F_DUMPFILE && file.type != F_CONT_DUMPFILE) {
 	if (data->verbose_output)
-	    fprintf(data->verbose_output, 
+	    g_fprintf(data->verbose_output, 
 		_("File '%s' is not a dump file\n"), element);
 	return 0;
     }
 
     if(file.dumplevel < 0 || file.dumplevel > 9) {
 	if (data->verbose_output)
-	    fprintf(data->verbose_output, 
+	    g_fprintf(data->verbose_output, 
 		_("File '%s' has invalid level %d\n"), element, file.dumplevel);
 	return 0;
     }
@@ -782,7 +782,7 @@ holding_cleanup_file(
 
     if (dp == NULL) {
 	if (data->verbose_output)
-	    fprintf(data->verbose_output, 
+	    g_fprintf(data->verbose_output, 
 		_("File '%s' is for '%s:%s', which is not in the disklist\n"), 
 		    element, file.name, file.disk);
 	return 0;
@@ -798,7 +798,7 @@ holding_cleanup_file(
 	/* OK, it passes muster -- rename it to salvage some data,
 	 * and mark the DLE as corrupted */
 	if (data->verbose_output)
-	    fprintf(data->verbose_output, 
+	    g_fprintf(data->verbose_output, 
 		_("Processing partial holding file '%s'\n"), element);
 
 	if(rename_tmp_holding(destname, 0)) {
@@ -807,7 +807,7 @@ holding_cleanup_file(
 	} else {
 	    dbprintf(_("rename_tmp_holding(%s) failed\n"), destname);
 	    if (data->verbose_output)
-		fprintf(data->verbose_output, 
+		g_fprintf(data->verbose_output, 
 		    _("Rename of '%s' to '%s' failed.\n"), element, destname);
 	}
 

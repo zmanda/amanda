@@ -256,7 +256,7 @@ static char ** parse_device_name(char * user_name) {
 
         case '\0':
             /* Unexpected NULL; abort. */
-            fprintf(stderr, "Invalid RAIT device name %s\n", user_name);
+            g_fprintf(stderr, "Invalid RAIT device name %s\n", user_name);
             g_ptr_array_free_full(rval);
             return NULL;
 
@@ -269,7 +269,7 @@ static char ** parse_device_name(char * user_name) {
  OUTER_END:
     
     if (cur_end[1] != '\0') {
-        fprintf(stderr, "Invalid RAIT device name %s\n", user_name);
+        g_fprintf(stderr, "Invalid RAIT device name %s\n", user_name);
         g_ptr_array_free_full(rval);
         return NULL;
     }
@@ -521,7 +521,7 @@ static gboolean g_ptr_array_union_robust(RaitDevice * self, GPtrArray * ops,
                 if (!(op->result)) {
                     isolated_op = g_ptr_array_remove_index_fast(ops, i);
                     self->private->failed = op->child_index;
-                    fprintf(stderr, "RAIT array %s Isolated device %s.\n",
+                    g_fprintf(stderr, "RAIT array %s Isolated device %s.\n",
                             DEVICE(self)->device_name,
                             op->child->device_name);
                     break;
@@ -656,7 +656,7 @@ static ReadLabelStatusFlags rait_device_read_label(Device * dself) {
                 first_success = op->child;
             } else if (!compare_volume_results(first_success, op->child)) {
                 /* Doesn't match. :-( */
-                fprintf(stderr, "Inconsistant volume labels: "
+                g_fprintf(stderr, "Inconsistant volume labels: "
                         "Got %s/%s against %s/%s.\n",
                         first_success->volume_label,
                         first_success->volume_time, 
@@ -684,7 +684,7 @@ static ReadLabelStatusFlags rait_device_read_label(Device * dself) {
         /* We have a single device to isolate. */
         failed_result = READ_LABEL_STATUS_SUCCESS; /* Recover later */
         self->private->failed = failed_op->child_index;
-        fprintf(stderr, "RAIT array %s Isolated device %s.\n",
+        g_fprintf(stderr, "RAIT array %s Isolated device %s.\n",
                 dself->device_name,
                 failed_op->child->device_name);
     }
@@ -1242,7 +1242,7 @@ static gboolean raid_block_reconstruction(RaitDevice * self, GPtrArray * ops,
             
             if (0 != memcmp(parity_block, constructed_parity,
                             child_blocksize)) {
-                fprintf(stderr, "RAIT is inconsistant: "
+                g_fprintf(stderr, "RAIT is inconsistant: "
                         "Parity block did not match data blocks.\n");
                 success = FALSE;
             }

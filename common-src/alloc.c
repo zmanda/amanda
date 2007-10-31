@@ -51,10 +51,10 @@ debug_alloc(
 
     addr = (void *)malloc(max(size, 1));
     if (addr == NULL) {
-	errordump(_("%s@%d: memory allocation failed (" SIZE_T_FMT " bytes requested)"),
+	errordump(_("%s@%d: memory allocation failed (%zu bytes requested)"),
 		  file ? file : _("(unknown)"),
 		  file ? line : -1,
-		  (SIZE_T_FMT_TYPE)size);
+		  size);
 	/*NOTREACHED*/
     }
     return addr;
@@ -241,7 +241,7 @@ debug_vstrallocf(
     if (result != NULL) {
 
 	arglist_start(argp, fmt);
-	size = vsnprintf(result, MIN_ALLOC, fmt, argp);
+	size = g_vsnprintf(result, MIN_ALLOC, fmt, argp);
 	arglist_end(argp);
 
 	if (size >= (size_t)MIN_ALLOC) {
@@ -249,7 +249,7 @@ debug_vstrallocf(
 	    result = debug_alloc(file, line, size + 1);
 
 	    arglist_start(argp, fmt);
-	    (void)vsnprintf(result, size + 1, fmt, argp);
+	    (void)g_vsnprintf(result, size + 1, fmt, argp);
 	    arglist_end(argp);
 	}
     }
@@ -277,7 +277,7 @@ debug_newvstrallocf(
     if (result != NULL) {
 
 	arglist_start(argp, fmt);
-	size = vsnprintf(result, MIN_ALLOC, fmt, argp);
+	size = g_vsnprintf(result, MIN_ALLOC, fmt, argp);
 	arglist_end(argp);
 
 	if (size >= MIN_ALLOC) {
@@ -285,7 +285,7 @@ debug_newvstrallocf(
 	    result = debug_alloc(file, line, size + 1);
 
 	    arglist_start(argp, fmt);
-	    (void)vsnprintf(result, size + 1, fmt, argp);
+	    (void)g_vsnprintf(result, size + 1, fmt, argp);
 	    arglist_end(argp);
 	}
     }

@@ -281,7 +281,7 @@ static gboolean g_value_set_flags_from_string(GValue * val, char * string) {
             flag_value = g_flags_get_value_by_nick(flags_class, token);
         }
         if (flag_value == NULL) {
-            fprintf(stderr, _("Invalid flag %s for type %s\n"), token,
+            g_fprintf(stderr, _("Invalid flag %s for type %s\n"), token,
                     g_type_name(G_VALUE_TYPE(val)));
             continue;
         }
@@ -292,7 +292,7 @@ static gboolean g_value_set_flags_from_string(GValue * val, char * string) {
     amfree(string_copy);
     
     if (value == 0) {
-        fprintf(stderr, _("No valid flags for type %s in string %s\n"),
+        g_fprintf(stderr, _("No valid flags for type %s in string %s\n"),
                 g_type_name(G_VALUE_TYPE(val)), string);
         return FALSE;
     }

@@ -92,14 +92,14 @@ write_tapelist(
     }
 
     for(tp = tape_list; tp != NULL; tp = tp->next) {
-	fprintf(tapef, "%s %s", tp->datestamp, tp->label);
-	if(tp->reuse) fprintf(tapef, " reuse");
-	else fprintf(tapef, " no-reuse");
-	fprintf(tapef, "\n");
+	g_fprintf(tapef, "%s %s", tp->datestamp, tp->label);
+	if(tp->reuse) g_fprintf(tapef, " reuse");
+	else g_fprintf(tapef, " no-reuse");
+	g_fprintf(tapef, "\n");
     }
 
     if (fclose(tapef) == EOF) {
-	fprintf(stderr,_("error [closing %s: %s]"), newtapefile, strerror(errno));
+	g_fprintf(stderr,_("error [closing %s: %s]"), newtapefile, strerror(errno));
 	amfree(newtapefile);
 	return 1;
     }

@@ -220,8 +220,8 @@ read_txinfofile(
     for(rc = -2; (line = agets(infof)) != NULL; free(line)) {
 	stats_t onestat;	/* one stat record */
 	int level = 0;
-	OFF_T_FMT_TYPE off_t_tmp;
-	TIME_T_FMT_TYPE time_t_tmp;
+	long long off_t_tmp;
+	intmax_t time_t_tmp;
 
 	if (line[0] == '\0')
 	    continue;
@@ -252,40 +252,39 @@ read_txinfofile(
 	skip_integer(s, ch);
 
 	skip_whitespace(s, ch);
-	if(ch == '\0' || sscanf((s - 1), OFF_T_FMT, &off_t_tmp) != 1) {
+	if(ch == '\0' || sscanf((s - 1), "%lld", &off_t_tmp) != 1) {
 	    break;
 	}
-	onestat.size = off_t_tmp;
+	onestat.size = (off_t)off_t_tmp;
 	skip_integer(s, ch);
 
 	skip_whitespace(s, ch);
-	if(ch == '\0' || sscanf((s - 1), OFF_T_FMT, &off_t_tmp) != 1) {
+	if(ch == '\0' || sscanf((s - 1), "%lld", &off_t_tmp) != 1) {
 	    break;
 	}
-	onestat.csize = off_t_tmp;
+	onestat.csize = (off_t)off_t_tmp;
 	skip_integer(s, ch);
 
 	skip_whitespace(s, ch);
-	if(ch == '\0' || sscanf((s - 1), TIME_T_FMT, &time_t_tmp) != 1) {
+	if(ch == '\0' || sscanf((s - 1), "%jd", &time_t_tmp) != 1) {
 	    break;
 	}
-        onestat.secs = time_t_tmp;
+        onestat.secs = (time_t)time_t_tmp;
 	skip_integer(s, ch);
 
 	skip_whitespace(s, ch);
-	if(ch == '\0' || sscanf((s - 1), TIME_T_FMT, &time_t_tmp) != 1) {
+	if(ch == '\0' || sscanf((s - 1), "%jd", &time_t_tmp) != 1) {
 	    break;
 	}
-	/* time_t not guarranteed to be long */
-	/*@i1@*/ onestat.date = time_t_tmp;
+	onestat.date = (time_t)time_t_tmp;
 	skip_integer(s, ch);
 
 	skip_whitespace(s, ch);
 	if(ch != '\0') {
-	    if(sscanf((s - 1), OFF_T_FMT, &off_t_tmp) != 1) {
+	    if(sscanf((s - 1), "%lld", &off_t_tmp) != 1) {
 		break;
 	    }
-	    onestat.filenum = off_t_tmp;
+	    onestat.filenum = (off_t)off_t_tmp;
 	    skip_integer(s, ch);
 
 	    skip_whitespace(s, ch);
@@ -318,8 +317,8 @@ read_txinfofile(
 
     for(rc = -2; (line = agets(infof)) != NULL; free(line)) {
 	history_t onehistory;	/* one history record */
-	OFF_T_FMT_TYPE off_t_tmp;
-	TIME_T_FMT_TYPE time_t_tmp;
+	long long off_t_tmp;
+	intmax_t time_t_tmp;
 
 	if (line[0] == '\0')
 	    continue;
@@ -348,38 +347,37 @@ read_txinfofile(
 	skip_integer(s, ch);
 
 	skip_whitespace(s, ch);
-	if(ch == '\0' || sscanf((s - 1), OFF_T_FMT, &off_t_tmp) != 1) {
+	if(ch == '\0' || sscanf((s - 1), "%lld", &off_t_tmp) != 1) {
 	    amfree(line);
 	    break;
 	}
-	onehistory.size = off_t_tmp;
+	onehistory.size = (off_t)off_t_tmp;
 	skip_integer(s, ch);
 
 	skip_whitespace(s, ch);
-	if(ch == '\0' || sscanf((s - 1), OFF_T_FMT, &off_t_tmp) != 1) {
+	if(ch == '\0' || sscanf((s - 1), "%lld", &off_t_tmp) != 1) {
 	    amfree(line);
 	    break;
 	}
-	onehistory.csize = off_t_tmp;
+	onehistory.csize = (off_t)off_t_tmp;
 	skip_integer(s, ch);
 
 	skip_whitespace(s, ch);
-	if(ch == '\0' || sscanf((s - 1), TIME_T_FMT, &time_t_tmp) != 1) {
+	if(ch == '\0' || sscanf((s - 1), "%jd", &time_t_tmp) != 1) {
 	    amfree(line);
 	    break;
 	}
-	/* time_t not guaranteed to be long */
-	/*@i1@*/ onehistory.date = time_t_tmp;
+	onehistory.date = (time_t)time_t_tmp;
 	skip_integer(s, ch);
 
 	onehistory.secs = (unsigned long)-1;
 	skip_whitespace(s, ch);
 	if(ch != '\0') {
-	    if(sscanf((s - 1), TIME_T_FMT, &time_t_tmp) != 1) {
+	    if(sscanf((s - 1), "%jd", &time_t_tmp) != 1) {
 		amfree(line);
 		break;
 	    }
-	    onehistory.secs = time_t_tmp;
+	    onehistory.secs = (time_t)time_t_tmp;
 	    skip_integer(s, ch);
 	}
 
@@ -408,65 +406,62 @@ write_txinfofile(
     perf_t *pp;
     int level;
 
-    fprintf(infof, _("version: %d\n"), 0);
+    g_fprintf(infof, _("version: %d\n"), 0);
 
-    fprintf(infof, _("command: %u\n"), info->command);
+    g_fprintf(infof, _("command: %u\n"), info->command);
 
     pp = &info->full;
 
-    fprintf(infof, "full-rate:");
+    g_fprintf(infof, "full-rate:");
     for(i=0; i<AVG_COUNT; i++)
 	if(pp->rate[i] >= 0.0)
-	    fprintf(infof, " %lf", pp->rate[i]);
-    fprintf(infof, "\n");
+	    g_fprintf(infof, " %lf", pp->rate[i]);
+    g_fprintf(infof, "\n");
 
-    fprintf(infof, "full-comp:");
+    g_fprintf(infof, "full-comp:");
     for(i=0; i<AVG_COUNT; i++)
 	if(pp->comp[i] >= 0.0)
-	    fprintf(infof, " %lf", pp->comp[i]);
-    fprintf(infof, "\n");
+	    g_fprintf(infof, " %lf", pp->comp[i]);
+    g_fprintf(infof, "\n");
 
     pp = &info->incr;
 
-    fprintf(infof, "incr-rate:");
+    g_fprintf(infof, "incr-rate:");
     for(i=0; i<AVG_COUNT; i++)
 	if(pp->rate[i] >= 0.0)
-	    fprintf(infof, " %lf", pp->rate[i]);
-    fprintf(infof, "\n");
+	    g_fprintf(infof, " %lf", pp->rate[i]);
+    g_fprintf(infof, "\n");
 
-    fprintf(infof, "incr-comp:");
+    g_fprintf(infof, "incr-comp:");
     for(i=0; i<AVG_COUNT; i++)
 	if(pp->comp[i] >= 0.0)
-	    fprintf(infof, " %lf", pp->comp[i]);
-    fprintf(infof, "\n");
+	    g_fprintf(infof, " %lf", pp->comp[i]);
+    g_fprintf(infof, "\n");
 
     for(level=0; level<DUMP_LEVELS; level++) {
 	sp = &info->inf[level];
 
 	if(sp->date < (time_t)0 && sp->label[0] == '\0') continue;
 
-	fprintf(infof, "stats: %d " OFF_T_FMT " " OFF_T_FMT
-		" " TIME_T_FMT " " OFF_T_FMT,
-		level, (OFF_T_FMT_TYPE)sp->size, (OFF_T_FMT_TYPE)sp->csize,
-		(TIME_T_FMT_TYPE)sp->secs, (OFF_T_FMT_TYPE)sp->date);
+	g_fprintf(infof, "stats: %d %lld %lld %ju %lld",
+		level, (long long)sp->size, (long long)sp->csize,
+		(intmax_t)sp->secs, (long long)sp->date);
 	if(sp->label[0] != '\0')
-	    fprintf(infof, " " OFF_T_FMT " %s",
-		(OFF_T_FMT_TYPE)sp->filenum, sp->label);
-	fprintf(infof, "\n");
+	    g_fprintf(infof, " %lld %s", (long long)sp->filenum, sp->label);
+	g_fprintf(infof, "\n");
     }
 
-    fprintf(infof, _("last_level: %d %d\n"), info->last_level, info->consecutive_runs);
+    g_fprintf(infof, _("last_level: %d %d\n"), info->last_level, info->consecutive_runs);
 
     for(i=0;info->history[i].level > -1;i++) {
-	fprintf(infof, _("history: %d " OFF_T_FMT " " OFF_T_FMT
-		" " TIME_T_FMT " " TIME_T_FMT "\n"),
+	g_fprintf(infof, _("history: %d %lld %lld %ju %ju\n"),
 		info->history[i].level,
-		(OFF_T_FMT_TYPE)info->history[i].size,
-		(OFF_T_FMT_TYPE)info->history[i].csize,
-		(TIME_T_FMT_TYPE)info->history[i].date,
-		(TIME_T_FMT_TYPE)info->history[i].secs);
+		(long long)info->history[i].size,
+		(long long)info->history[i].csize,
+		(intmax_t)info->history[i].date,
+		(intmax_t)info->history[i].secs);
     }
-    fprintf(infof, "//\n");
+    g_fprintf(infof, "//\n");
 
     return 0;
 }
@@ -540,7 +535,7 @@ get_dumpdate(
     }
 
     t = gmtime(&last);
-    snprintf(stamp, SIZEOF(stamp), "%d:%d:%d:%d:%d:%d",
+    g_snprintf(stamp, SIZEOF(stamp), "%d:%d:%d:%d:%d:%d",
 		t->tm_year+1900, t->tm_mon+1, t->tm_mday,
 		t->tm_hour, t->tm_min, t->tm_sec);
 
@@ -674,26 +669,26 @@ dump_rec(
     int i;
     stats_t *sp;
 
-    printf(_("command word: %d\n"), info->command);
-    printf(_("full dump rate (K/s) %5.1lf, %5.1lf, %5.1lf\n"),
+    g_printf(_("command word: %d\n"), info->command);
+    g_printf(_("full dump rate (K/s) %5.1lf, %5.1lf, %5.1lf\n"),
 	   info->full.rate[0],info->full.rate[1],info->full.rate[2]);
-    printf(_("full comp rate %5.1lf, %5.1lf, %5.1lf\n"),
+    g_printf(_("full comp rate %5.1lf, %5.1lf, %5.1lf\n"),
 	   info->full.comp[0]*100,info->full.comp[1]*100,info->full.comp[2]*100);
-    printf(_("incr dump rate (K/s) %5.1lf, %5.1lf, %5.1lf\n"),
+    g_printf(_("incr dump rate (K/s) %5.1lf, %5.1lf, %5.1lf\n"),
 	   info->incr.rate[0],info->incr.rate[1],info->incr.rate[2]);
-    printf(_("incr comp rate %5.1lf, %5.1lf, %5.1lf\n"),
+    g_printf(_("incr comp rate %5.1lf, %5.1lf, %5.1lf\n"),
 	   info->incr.comp[0]*100,info->incr.comp[1]*100,info->incr.comp[2]*100);
     for(i = 0; i < DUMP_LEVELS; i++) {
 	sp = &info->inf[i];
 	if( sp->size != -1) {
 
-	    printf(_("lev %d date %ld tape %s filenum " OFF_T_FMT " size %ld csize %ld secs %ld\n"),
+	    g_printf(_("lev %d date %ld tape %s filenum %lld size %ld csize %ld secs %ld\n"),
 	           i, (long)sp->date, sp->label, sp->filenum,
 	           sp->size, sp->csize, sp->secs);
 	}
     }
     putchar('\n');
-   printf(_("last_level: %d %d\n"), info->last_level, info->consecutive_runs);
+    g_printf(_("last_level: %d %d\n"), info->last_level, info->consecutive_runs);
 }
 
 void dump_db( char *host, char *disk);
@@ -709,7 +704,7 @@ dump_db(
     if((rc = get_info(host, disk, &info)) == 0) {
 	dump_rec(&info);
     } else {
-	printf(_("cannot fetch information for %s:%s rc=%d\n"), host, disk, rc);
+	g_printf(_("cannot fetch information for %s:%s rc=%d\n"), host, disk, rc);
     }
 }
 
@@ -737,7 +732,7 @@ main(
 
   for(i = 1; i < argc; ++i) {
     if(i+1 >= argc) {
-      fprintf(stderr,_("usage: %s host disk [host disk ...]\n"),argv[0]);
+      g_fprintf(stderr,_("usage: %s host disk [host disk ...]\n"),argv[0]);
       return 1;
     }
     open_infofile("curinfo");

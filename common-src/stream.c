@@ -433,7 +433,7 @@ try_socksize(
 		  (which == SO_SNDBUF) ? _("send") : _("receive"),
 		  isize);
     } else {
-	dbprintf(_("try_socksize: could not allocate %s buffer of " SIZE_T_FMT "\n"),
+	dbprintf(_("try_socksize: could not allocate %s buffer of %zu\n"),
 		  (which == SO_SNDBUF) ? _("send") : _("receive"),
 		  origsize);
     }

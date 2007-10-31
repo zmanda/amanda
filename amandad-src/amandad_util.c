@@ -67,13 +67,13 @@ parse_g_options(
 	    if(g_options->features != NULL) {
 		dbprintf(_("multiple features option\n"));
 		if(verbose) {
-		    printf(_("ERROR [multiple features option]\n"));
+		    g_printf(_("ERROR [multiple features option]\n"));
 		}
 	    }
 	    if((g_options->features = am_string_to_feature(tok+9)) == NULL) {
 		dbprintf(_("bad features value \"%s\"\n"), tok+10);
 		if(verbose) {
-		    printf(_("ERROR [bad features value \"%s\"]\n"), tok+10);
+		    g_printf(_("ERROR [bad features value \"%s\"]\n"), tok+10);
 		}
 	    }
 	}
@@ -81,7 +81,7 @@ parse_g_options(
 	    if(g_options->hostname != NULL) {
 		dbprintf(_("multiple hostname option\n"));
 		if(verbose) {
-		    printf(_("ERROR [multiple hostname option]\n"));
+		    g_printf(_("ERROR [multiple hostname option]\n"));
 		}
 	    }
 	    g_options->hostname = stralloc(tok+9);
@@ -90,7 +90,7 @@ parse_g_options(
 	    if(g_options->auth != NULL) {
 		dbprintf(_("multiple auth option\n"));
 		if(verbose) {
-		    printf(_("ERROR [multiple auth option]\n"));
+		    g_printf(_("ERROR [multiple auth option]\n"));
 		}
 	    }
 	    g_options->auth = stralloc(tok+5);
@@ -99,7 +99,7 @@ parse_g_options(
 	    if(g_options->maxdumps != 0) {
 		dbprintf(_("multiple maxdumps option\n"));
 		if(verbose) {
-		    printf(_("ERROR [multiple maxdumps option]\n"));
+		    g_printf(_("ERROR [multiple maxdumps option]\n"));
 		}
 	    }
 	    if(sscanf(tok+9, "%d;", &new_maxdumps) == 1) {
@@ -112,7 +112,7 @@ parse_g_options(
 		else {
 		    dbprintf(_("bad maxdumps value \"%s\"\n"), tok+9);
 		    if(verbose) {
-			printf(_("ERROR [bad maxdumps value \"%s\"]\n"),
+			g_printf(_("ERROR [bad maxdumps value \"%s\"]\n"),
 			       tok+9);
 		    }
 		}
@@ -120,7 +120,7 @@ parse_g_options(
 	    else {
 		dbprintf(_("bad maxdumps value \"%s\"\n"), tok+9);
 		if(verbose) {
-		    printf(_("ERROR [bad maxdumps value \"%s\"]\n"),
+		    g_printf(_("ERROR [bad maxdumps value \"%s\"]\n"),
 			   tok+9);
 		}
 	    }
@@ -129,7 +129,7 @@ parse_g_options(
 	    if(g_options->config != NULL) {
 		dbprintf(_("multiple config option\n"));
 		if(verbose) {
-		    printf(_("ERROR [multiple config option]\n"));
+		    g_printf(_("ERROR [multiple config option]\n"));
 		}
 	    }
 	    g_options->config = stralloc(tok+7);
@@ -137,14 +137,14 @@ parse_g_options(
 		amfree(g_options->config);
 		dbprintf(_("invalid character in config option\n"));
 		if(verbose) {
-		    printf(_("ERROR [invalid character in config option]\n"));
+		    g_printf(_("ERROR [invalid character in config option]\n"));
 		}
 	    }
 	}
 	else {
 	    dbprintf(_("unknown option \"%s\"\n"), tok);
 	    if(verbose) {
-		printf(_("ERROR [unknown option \"%s\"]\n"), tok);
+		g_printf(_("ERROR [unknown option \"%s\"]\n"), tok);
 	    }
 	}
 	tok = strtok(NULL, ";");

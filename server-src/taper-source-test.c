@@ -29,7 +29,7 @@ int main(int argc, char ** argv) {
 
     switch (argc) {
     default:
-        fprintf(stderr, "USAGE: %16s volume-size ( holding-disk-file splitsize | \n"
+        g_fprintf(stderr, "USAGE: %16s volume-size ( holding-disk-file splitsize | \n"
                "                                          "
                "split-disk-buffer splitsize\n"
                "                                          "
@@ -72,24 +72,24 @@ int main(int argc, char ** argv) {
 
         if (success) {
             if (taper_source_get_end_of_data(source)) {
-                fprintf(stderr, "Got end of data.\n");
+                g_fprintf(stderr, "Got end of data.\n");
                 return EXIT_SUCCESS;
             } else if (taper_source_get_end_of_part(source)) {
                 taper_source_start_new_part(source);
-                fprintf(stderr, "Finished part. Starting new one.\n");
+                g_fprintf(stderr, "Finished part. Starting new one.\n");
                 continue;
             } else {
-                fprintf(stderr, "Read error.\n");
+                g_fprintf(stderr, "Read error.\n");
                 return EXIT_FAILURE;
             }
         } else {
             /* Write or read error. (we can't tell) */
             info.tape_used = 0;
             if (taper_source_seek_to_part_start(source)) {
-                fprintf(stderr, "Retrying a part.\n");
+                g_fprintf(stderr, "Retrying a part.\n");
                 continue;
             } else {
-                fprintf(stderr, "Couldn't seek. Dying.\n");
+                g_fprintf(stderr, "Couldn't seek. Dying.\n");
                 return EXIT_FAILURE;
             }
         }

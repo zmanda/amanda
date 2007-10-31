@@ -125,7 +125,7 @@ printf_arglist_function1(void security_seterror, security_handle_t *, handle,
 
     assert(handle->error != NULL);
     arglist_start(argp, fmt);
-    vsnprintf(buf, SIZEOF(buf), fmt, argp);
+    g_vsnprintf(buf, SIZEOF(buf), fmt, argp);
     arglist_end(argp);
     handle->error = newstralloc(handle->error, buf);
     dbprintf(_("security_seterror(handle=%p, driver=%p (%s) error=%s)\n"),
@@ -166,7 +166,7 @@ printf_arglist_function1(void security_stream_seterror,
     va_list argp;
 
     arglist_start(argp, fmt);
-    vsnprintf(buf, SIZEOF(buf), fmt, argp);
+    g_vsnprintf(buf, SIZEOF(buf), fmt, argp);
     arglist_end(argp);
     stream->error = newstralloc(stream->error, buf);
     dbprintf(_("security_stream_seterr(%p, %s)\n"), stream, stream->error);
