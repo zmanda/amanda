@@ -19,7 +19,7 @@ die() {
     exit 1
 }
 
-echo "See docs/developing.txt for instructions on updating:"
+echo "See DEVELOPING for instructions on updating:"
 echo " * gettext macros"
 echo " * gnulib"
 echo " * libtool files"

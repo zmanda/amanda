@@ -361,7 +361,6 @@ AC_CONFIG_FILES([
     config/Makefile
     device-src/Makefile
     device-src/tests/Makefile
-    docs/Makefile
     dumper-src/Makefile
     example/Makefile
     example/amanda-client.conf

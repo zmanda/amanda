@@ -35,7 +35,6 @@ SUBDIRS = \
 	$(PLOT_SUBDIRS) \
 	po \
 	man \
-	docs \
 	example \
 	installcheck
 

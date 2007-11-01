@@ -4,6 +4,11 @@
 	  (size_t) and 'j' (intmax_t) size specifiers.  Convert various
 	  printf format strings accordingly.
 
+2007-10-30  Dustin J. Mitchell <dustin@zmanda.com>
+	* docs autogen INSTALL UPGRADING configure.in 
+	  DEVELOPING Makefile.am: remove docs/ directory in favor of
+	  manpages and online reference; most docs/* were outdated
+
 2007-10-29  Dustin J. Mitchell <dustin@zmanda.com>
 	* changer-src/chg-zd-mtx.sh: fix typo
 
