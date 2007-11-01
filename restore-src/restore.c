@@ -1838,8 +1838,14 @@ restore_from_tapelist(FILE * prompt_out,
             if (device == NULL)
                 break;;
 
-            g_fprintf(stderr, "Scanning %s (slot %s)\n", device->volume_label,
-                    curslot);
+            if (use_changer) {
+                g_fprintf(stderr, "Scanning volume %s (slot %s)\n",
+                          device->volume_label,
+                          curslot);
+            } else {
+                g_fprintf(stderr, "Scanning volume %s\n",
+                          device->volume_label);
+            }
 
             if (!search_a_tape(device, prompt_out, flags, features,
                                cur_volume, dumpspecs, &seentapes,

@@ -819,7 +819,7 @@ else
 fi
 
 error=`try_find_mt`
-if $? -ne 0; then
+if test $? -ne 0; then
     Exit 2 '<none>' $error
 fi
 

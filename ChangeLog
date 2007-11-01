@@ -4,6 +4,13 @@
 	  (size_t) and 'j' (intmax_t) size specifiers.  Convert various
 	  printf format strings accordingly.
 
+2007-10-29  Dustin J. Mitchell <dustin@zmanda.com>
+	* changer-src/chg-zd-mtx.sh: fix typo
+
+2007-10-29  Ian Turner <ian@zmanda.com>
+	* restore-src/restore.c: Don't mention slot numbers when running
+	  without a changer.
+
 2007-10-29  Ian Turner <ian@zmanda.com>
 	* man/xml-source/amfetchdump.8.xml: Remove documentation for
 	  amfetchdump -i.
