@@ -115,6 +115,14 @@ noinst_HEADERS =		\
 
 EXTRA_PROGRAMS = genversion $(TEST_PROGS)
 
+# Version-building steps:
+#
+# 1. genversion.c gets subversion information via svn keywords
+# 2. Makefile creates genversion.h with build-time information
+# 3. Makefile builds genversion
+# 4. Makefile runs genversion to create version.c
+# 5. version.c is compiled into libamanda like any other C file
+
 genversion_SOURCES = genversion.c genversion.h
 genversion_LDADD = $(libamanda_la_LIBADD)	\
     	versuff.lo				\
@@ -124,15 +132,7 @@ genversion.h: $(top_builddir)/config.status
 	-rm -f $@ $@.new
 	echo '#define CC "$(CC)"' > $@.new
 	echo '#define BUILT_DATE "'`date`'"' >> $@.new
-	echo '#define BUILT_MACH "'`uname -a || echo UNKNOWN HOST`'"' >> $@.new
-	updir=`cd .. && pwd` ; \
-	if svn info "$$updir" > $@.svn; then \
-		rev=`grep Revision: $@.svn|cut -d: -f 2|cut -c2-`; \
-		echo '#define BUILT_REV "'$$rev'"' >> $@.new; \
-		url=`grep URL: $@.svn|cut -d: -f 2-|cut -c2-`; \
-		echo '#define BUILT_BRANCH "'`basename "$$url"`'"' >> $@.new;  \
-	fi
-	-rm $@.svn
+	echo '#define BUILT_MACH "$(target)"' >> $@.new
 	mv $@.new $@
 
 version.c: genversion$(EXEEXT)

@@ -131,6 +131,7 @@ int scan_read_label(
                                        _("%sError reading label: One of %s.\n"),
                                        *error_message, label_errstr);
         g_free(label_errstr);
+        return -1;
     }
 
     g_assert(*label != NULL && *timestamp != NULL);

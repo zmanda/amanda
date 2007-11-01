@@ -4,6 +4,15 @@
 	  (size_t) and 'j' (intmax_t) size specifiers.  Convert various
 	  printf format strings accordingly.
 
+2007-10-31  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/genversion.c common-src/Makefile.am: fix BUILD_REV
+	  and BUILD_BRANCH to work even when packages are built from
+	  distribution tarballs
+
+2007-10-31  Ian Turner <ian@zmanda.com>
+	* server-src/taperscan.c: Don't segfault if there is an error opening
+	  a device during taperscan.
+
 2007-10-30  Dustin J. Mitchell <dustin@zmanda.com>
 	* docs autogen INSTALL UPGRADING configure.in 
 	  DEVELOPING Makefile.am: remove docs/ directory in favor of

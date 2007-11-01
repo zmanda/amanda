@@ -24,7 +24,7 @@
  * file named AUTHORS, in the root directory of this distribution.
  */
 /*
- * $Id: genversion.c,v 1.36 2006/07/13 03:22:20 paddy_s Exp $
+ * $Id$
  *
  * dump the current Amanda version info
  */
@@ -197,17 +197,8 @@ main(
     prundefvar("BUILT_MACH");
 #endif
 
-#ifdef BUILT_REV
-    prvar("BUILT_REV", BUILT_REV);
-#else
-    prundefvar("BUILT_REV");
-#endif
-
-#ifdef BUILT_BRANCH
-    prvar("BUILT_BRANCH", BUILT_BRANCH);
-#else
-    prundefvar("BUILT_BRANCH");
-#endif
+    prvar("BUILT_REV", "$Rev$");
+    prvar("BUILT_PATH", "$URL$");
 
 #ifdef CC
     prvar("CC", CC);
