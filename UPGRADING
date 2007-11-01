@@ -1,0 +1,69 @@
+Upgrading
+=========
+
+This file describes the process for ugprading Amanda from a previous
+version.  In general, the Amanda development team aims for seamless
+upgrades.  In the rare cases where an upgrade requires other changes
+on your system, they are described in this file.
+
+The file is organized from oldest to newest.  Please follow all of
+the directions, in order, for the range of versions over which you
+are upgrading.
+
+See also http://wiki.zmanda.com/index.php/Version_compatibility for notes
+on the compatibility of various versions of Amanda.
+
+Upgrading from pre-2.4.0
+------------------------
+
+Amanda 2.4.0 has introduced a major incompatibility in the Amanda protocol.
+This means that pre-2.4.0 clients won't interoperate with a 2.4.0 server, nor
+will 2.4.0 clients interoperate with pre-2.4.0 servers. You have to upgrade
+them all at the same time.
+
+To ease the upgrade process Amanda has, from release 2.4.0 on, a configure flag
+(--with-testing) that will cause Amanda to use alternate service names (Amanda-
+test) instead of the standard ones. This allows you to keep using your old
+version of Amanda while you test the new one.
+
+Depending upon the version of Amanda you are upgrading from, Amanda may use a
+different database library to store the backup information, and the new Amanda
+may not be able to read the old Amanda database files. In this case, you will
+want to do something like the following:
+
+Before the upgrade (using the old version of amadmin):
+
+  	# cd /var/AMANDA/CONFIG
+  	# amadmin CONFIG export > zzz
+  	# mkdir backup
+  	# mv curinfo* backup
+  	
+
+and after the upgrade (using the new version of amadmin):
+
+  	# cd /var/AMANDA/CONFIG
+  	# amadmin CONFIG import < zzz
+  	
+
+and a month :-) after you are happy with the new version:
+
+  	# cd /var/AMANDA/CONFIG
+  	# rm -rf backup
+  	
+
+After 2.4.0, the structure of the directory holding the index files was changed
+to have three levels instead of being flat. This greatly reduces the number of
+files in a given directory, which was a problem for some systems.
+
+The new layout is:
+
+  [indexdir]/hostname/filesystem/YYYYMMDD_L.gz
+
+where hostname and filesystem are "sanitized" versions of the names from
+disklist, i.e. '/' characters are converted to '_' and so on. This new naming
+convention matches the one used for the text formatted database.
+
+A script is available to convert the flat directory structure to the new
+layout:
+
+  http://www.amanda.org/2.4-conv/msg00428.html

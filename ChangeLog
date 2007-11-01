@@ -1,3 +1,9 @@
+2007-11-01  Dustin J. Mitchell <dustin@zmanda.com>
+	Suggested by Jon LaBadie
+	* config/automake/precompile.am: new rule to make
+	  precompiler output files; useful for debugging
+	* */Makefile.am: include precompile.am
+
 2007-11-01  Jean-Louis Martineau <martineau@zmanda.com>
 	* AUTHORS: Add Dustin J. Mitchell.
 

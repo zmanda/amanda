@@ -63,7 +63,9 @@ EXTRA_DIST = $(SNAPSHOT_STAMP) \
 	contrib/gsc/ucfggsc.c		\
 	patches/regex-3.6alpha.patch	\
 	patches/samba-largefs.patch	\
-	patches/tar-1.12.patch
+	patches/tar-1.12.patch		\
+	UPGRADING			\
+	DEVELOPING
 
 libtool: $(LIBTOOL_DEPS)
 	$(SHELL) ./config.status --recheck

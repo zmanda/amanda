@@ -2,6 +2,7 @@
 
 include $(top_srcdir)/config/automake/vars.am
 include $(top_srcdir)/config/automake/scripts.am
+include $(top_srcdir)/config/automake/precompile.am
 
 SCRIPTS_SHELL = amplot
 SCRIPTS_AWK = amcat.awk

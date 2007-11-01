@@ -1,5 +1,7 @@
 # Makefile for Amanda client programs.
 
+include $(top_srcdir)/config/automake/precompile.am
+
 INCLUDES =	-I$(top_builddir)/common-src \
 		-I$(top_srcdir)/common-src \
 		-I$(top_srcdir)/gnulib
