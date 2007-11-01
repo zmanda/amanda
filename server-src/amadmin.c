@@ -1111,7 +1111,7 @@ find(
 
     if(argc < 3) {
 	fprintf(stderr,
-		"%s: expecting \"find [--sort <hkdlpb>] [hostname [<disk>]]*\"\n",
+		"%s: expecting \"find [--sort <hkdlpbf>] [hostname [<disk>]]*\"\n",
 		get_pname());
 	usage();
     }
@@ -1129,6 +1129,8 @@ find(
 	    case 'K':
 	    case 'd':
 	    case 'D':
+	    case 'f':
+	    case 'F':
 	    case 'l':
 	    case 'L':
 	    case 'p':

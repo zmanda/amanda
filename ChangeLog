@@ -1,3 +1,8 @@
+2007-11-01  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amadmin.c: Allow 'f' sort order.
+	* server-src/find.c: Fix parsing of log files.
+	* server-src/find.h (DEFAULT_SORT_ORDER): Set to "hkdlpbf".
+
 2007-10-20  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/reporter.c: Always call sort_disks.
 

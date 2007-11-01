@@ -39,7 +39,6 @@
 int find_match(char *host, char *disk);
 int search_logfile(find_result_t **output_find, char *label, char *datestamp, char *logfile);
 void search_holding_disk(find_result_t **output_find);
-void strip_failed_chunks(find_result_t **output_find);
 char *find_nicedate(char *datestamp);
 static int find_compare(const void *, const void *);
 static int parse_taper_datestamp_log(char *logline, char **datestamp, char **level);
@@ -114,8 +113,6 @@ find_dump(
 
     search_holding_disk(&output_find);
 
-    strip_failed_chunks(&output_find);
-    
     return(output_find);
 }
 
@@ -196,76 +193,6 @@ find_log(void)
     amfree(conf_logdir);
     *current_log = NULL;
     return(output_find_log);
-}
-
-/*
- * Remove CHUNK entries from dumps that ultimately failed from our report.
- */
-void strip_failed_chunks(
-    find_result_t **output_find)
-{
-    find_result_t *cur, *prev = NULL, *failed = NULL, *failures = NULL;
-
-    /* Generate a list of failures */
-    for(cur=*output_find; cur; cur=cur->next) {
-	if(!cur->hostname  || !cur->diskname ||
-	   !cur->timestamp || !cur->label)
-	    continue;
-
-	if(strcmp(cur->status, "OK")){
-	    failed = alloc(SIZEOF(find_result_t));
-	    memcpy(failed, cur, SIZEOF(find_result_t));
-	    failed->next = failures;
-	    failures = failed;
-	}
-    }
-
-    /* Now if a CHUNK matches the parameters of a failed dump, remove it */
-    for(failed=failures; failed; failed=failed->next) {
-	prev = NULL;
-	cur = *output_find;
-	while (cur != NULL) {
-	    find_result_t *next = cur->next;
-	    if(!cur->hostname  || !cur->diskname || 
-	       !cur->timestamp || !cur->label    || !cur->partnum ||
-	       !strcmp(cur->partnum, "--") || strcmp(cur->status, "OK")) {
-	        prev = cur;
-		cur = next;
-	    }
-	    else if(!strcmp(cur->hostname, failed->hostname) &&
-	         !strcmp(cur->diskname, failed->diskname) &&
-	         !strcmp(cur->timestamp, failed->timestamp) &&
-	         !strcmp(cur->label, failed->label) &&
-	         cur->level == failed->level){
-		amfree(cur->diskname);
-		amfree(cur->hostname);
-		amfree(cur->label);
-		amfree(cur->timestamp);
-		amfree(cur->partnum);
-		amfree(cur->status);
-		cur = next;
-		if (prev) {
-		    amfree(prev->next);
-  		    prev->next = next;
-		} else {
-		    amfree(*output_find);
-		    *output_find = next;
-		}
-	    }
-            else {
-		prev = cur;
-		cur = next;
-	    }
-
-	}
-    }
-
-    for(failed=failures; failed;) {
-	find_result_t *fai = failed->next;
-	fai = failed->next;
-	amfree(failed);
-	failed=fai;
-    }
 }
 
 void
@@ -685,6 +612,8 @@ search_logfile(
     char *s;
     int ch;
     disk_t *dp;
+    find_result_t *part_find = NULL;  /* List for all part of a DLE */
+    find_result_t *a_part_find;
 
     if((logf = fopen(logfile, "r")) == NULL) {
 	error("could not open logfile %s: %s", logfile, strerror(errno));
@@ -736,7 +665,7 @@ search_logfile(
 	    }
 	}
 	partnum = "--";
-	if(curlog == L_SUCCESS || curlog == L_PARTIAL || curlog == L_FAIL || curlog == L_CHUNK) {
+	if(curlog == L_SUCCESS || curlog == L_PARTIAL || curlog == L_FAIL || curlog == L_CHUNK || curlog == L_CHUNKSUCCESS) {
 	    s = curstr;
 	    ch = *s++;
 
@@ -819,7 +748,6 @@ search_logfile(
 		if(curprog == P_TAPER) {
 		    find_result_t *new_output_find =
 			(find_result_t *)alloc(SIZEOF(find_result_t));
-		    new_output_find->next=*output_find;
 		    new_output_find->timestamp = stralloc(date);
 		    new_output_find->hostname=stralloc(host);
 		    new_output_find->diskname=stralloc(disk);
@@ -827,13 +755,43 @@ search_logfile(
 		    new_output_find->partnum = stralloc(partnum);
 		    new_output_find->label=stralloc(label);
 		    new_output_find->filenum=filenum;
-		    if(curlog == L_SUCCESS || curlog == L_CHUNK) 
-			new_output_find->status=stralloc("OK");
-		    else if(curlog == L_PARTIAL)
-			new_output_find->status=stralloc("PARTIAL");
-		    else
-			new_output_find->status=stralloc(rest);
-		    *output_find=new_output_find;
+		    new_output_find->next=NULL;
+		    if (curlog == L_SUCCESS) {
+			new_output_find->status = stralloc("OK");
+			new_output_find->next = *output_find;
+			*output_find = new_output_find;
+		    } else if (curlog == L_CHUNKSUCCESS ||
+			       curlog == L_PARTIAL      || curlog == L_FAIL) {
+			/* result line */
+			if (curlog == L_PARTIAL || curlog == L_FAIL) {
+			     /* change status of each part */
+			    for (a_part_find = part_find; a_part_find;
+				 a_part_find = a_part_find->next) {
+				if (curlog == L_PARTIAL)
+				     a_part_find->status = stralloc("PARTIAL");
+				else
+				     a_part_find->status = stralloc(rest);
+			    }
+			}
+			if (part_find) { /* find last element */
+			    for (a_part_find = part_find;
+				 a_part_find->next != NULL;
+				 a_part_find=a_part_find->next) {
+			    }
+			    /* merge part_find to *output_find */
+			    a_part_find->next = *output_find;
+			    *output_find = part_find;
+			    part_find = NULL;
+			}
+		    } else { /* part line */
+			if (curlog == L_CHUNK)
+			    new_output_find->status=stralloc("OK");
+			else /* PARTPARTIAL */
+			    new_output_find->status=stralloc("PARTIAL");
+			/* Add to part_find list */
+			new_output_find->next = part_find;
+			part_find = new_output_find;
+		    }
 		}
 		else if(curlog == L_FAIL) {	/* print other failures too */
 		    find_result_t *new_output_find =
@@ -859,6 +817,11 @@ search_logfile(
 	}
     }
     afclose(logf);
+
+    if (part_find != NULL) {
+	dbprintf(("part_find not empty\n"));
+    }
+
     return 1;
 }
 
