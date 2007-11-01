@@ -33,8 +33,7 @@ point after release 2.3.0.4.
 - John R. Jackson <jrj@gandalf.cc.purdue.edu>: security fixes, active
 developer and supporter
 
-- Jean-Louis Martineau <martinea@iro.umontreal.ca>: active developer
-and supporter
+- Jean-Louis Martineau <martineau@amanda.com>: active developer and supporter
 
 - Thomas Hepper <th@ant.han.de>: active developer of changer-src
 
@@ -49,6 +48,8 @@ and supporter
 - Kevin Till (kevin.till@zmanda.com>: active developer and supporter
 
 - Ian Turner (ian@zmanda.com>: active developer and supporter
+
+- Dustin J. Mitchell (dustin@zmanda.com>: active developer and supporter
 
 Many other people have contributed to the development of Amanda; check
 the ChangeLog for their names and e-mail addresses.

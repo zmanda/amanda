@@ -1,3 +1,6 @@
+2007-11-01  Jean-Louis Martineau <martineau@zmanda.com>
+	* AUTHORS: Add Dustin J. Mitchell.
+
 2007-10-31  John Franks <jrfranks@zmanda.com> (merged by dustin@zmanda.com)
 	* most C files, amanda.h: Switch to using the g_printf family, which
 	  supports a consistent set of %-conversions, including the 'z'
