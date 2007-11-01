@@ -24,7 +24,6 @@
     <arg choice='opt'>-pcClawns</arg>
     <arg choice='opt'>-d <replaceable>device</replaceable></arg>
     <arg choice='opt'>-O <replaceable>directory</replaceable></arg>
-    <arg choice='opt'>-i <replaceable>logfile</replaceable></arg>
     <arg choice='opt'>-b <replaceable>blocksize</replaceable></arg>
     <arg choice='plain'><replaceable>config</replaceable></arg>
     <arg choice='plain'><replaceable>hostname</replaceable></arg>
@@ -124,11 +123,6 @@ otherwise, instead of prompting the operator to ensure that all tapes
 are loaded.</para></listitem>
   </varlistentry>
   <varlistentry>
-    <term><option>-i</option> <replaceable>filename</replaceable></term>
-<listitem><para>Generate an inventory of all dumps &quot;seen&quot; on the
-tapes we search, for later use as a log.</para></listitem>
-  </varlistentry>
-  <varlistentry>
     <term><option>-w</option></term>
 <listitem><para>Wait to put split dumps together until all chunks have been
 restored. Normally, <emphasis remap='B'>amfetchdump</emphasis> will
@@ -196,26 +190,6 @@ automatically extract the dump.</para>
 $ amfetchdump -p SetA vanya /home 20051020 | gtar -xvpf -
 </literallayout> <!-- .fi -->
 
-<para>In a situation where all of our dump logs have been wiped out,
-we could also use amfetchdump to inventory our tapes and recreate an
-imitation of those logs, which we'll send to <emphasis
-remap="I">stdout</emphasis> for casual perusal.
-<!-- .RS -->
-<literallayout remap='.nf'>
-$ amfetchdump -i - SetA
-</literallayout> <!-- .fi -->
-</para>
-
-<para>Note that you can specify a restore while in inventory mode, and
-<command>amfetchdump</command> will continue searching for more dumps
-from this host even after successfully restoring a dump, inventorying
-all the while. If your backup searcher has been trashed, this is a
-handy way to recover what you have.
-<!-- .RS -->
-<literallayout remap='.nf'>
-$ amfetchdump -i /var/amanda/log SetA backupserver
-</literallayout> <!-- .fi -->
-</para>
 </refsect1>
 
 <refsect1><title>CAVEATS</title>
