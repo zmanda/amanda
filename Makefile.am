@@ -96,4 +96,4 @@ dist-hook:
 
 # ensure that configure gets the right arguments for distcheck; this keeps the
 # user/group through to the distcheck, rather than defaulting back to 'amanda'.
-DISTCHECK_CONFIGURE_FLAGS="--with-user=$(CLIENT_LOGIN) --with-group=$(SETUID_GROUP)"
+DISTCHECK_CONFIGURE_FLAGS = --with-user=$(CLIENT_LOGIN) --with-group=$(SETUID_GROUP) --with-owner=$(BINARY_OWNER) --disable-installperms

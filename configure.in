@@ -60,6 +60,7 @@ AMANDA_WITH_ASSERTIONS
 AMANDA_WITH_DEBUGGING
 AMANDA_WITH_DEBUG_DAYS
 AMANDA_WITH_TESTING
+AMANDA_DISABLE_INSTALLPERMS
 
 dnl -------------------------------------------------------------------------
 

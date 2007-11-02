@@ -1,5 +1,6 @@
 # Makefile for Amanda file recovery programs.
 
+include $(top_srcdir)/config/automake/installperms.am
 include $(top_srcdir)/config/automake/precompile.am
 
 INCLUDES =	-I$(top_builddir)/common-src \
@@ -51,19 +52,8 @@ uscan.$(OBJEXT): $(srcdir)/uscan.c
 uparse.$(OBJEXT): $(srcdir)/uparse.c
 	$(CC) $(CFLAGS) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(CPPFLAGS) -c $<
 
-
-install-exec-hook:
-	@list="$(sbin_PROGRAMS)"; \
-	for p in $$list; do \
-		pa=$(DESTDIR)$(sbindir)/`echo $$p|sed '$(transform)'`; \
-		echo chown \"$(BINARY_OWNER)\" $$pa;	\
-		chown "$(BINARY_OWNER)" $$pa;		\
-		echo chgrp \"$(SETUID_GROUP)\" $$pa;	\
-		chgrp "$(SETUID_GROUP)" $$pa;		\
-		echo chmod o-rwx $$pa; \
-		chmod o-rwx $$pa; \
-	done
-
+INSTALLPERMS_exec = \
+	dest=$(sbindir) chown=amanda chmod=o-rwx $(sbin_PROGRAMS)
 
 lint:
 	@f="$(amrecover_CSRC)";							\

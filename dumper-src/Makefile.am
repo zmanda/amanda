@@ -2,6 +2,7 @@
 
 include $(top_srcdir)/config/automake/vars.am
 include $(top_srcdir)/config/automake/scripts.am
+include $(top_srcdir)/config/automake/installperms.am
 include $(top_srcdir)/config/automake/precompile.am
 
 INCLUDES =	-I$(top_builddir)/common-src \
@@ -16,13 +17,4 @@ SCRIPTS_PERL =	\
 dumperdir = $(DUMPER_DIR)
 dumper_SCRIPTS = $(SCRIPTS_PERL)
 
-install-data-hook:
-	@list="$(dumper_SCRIPTS)"; \
-	for p in $$list; do \
-		pa=$(DESTDIR)$(dumperdir)/`echo $$p|sed '$(transform)'`; \
-		echo chown \"$(BINARY_OWNER)\" $$pa;	\
-		chown "$(BINARY_OWNER)" $$pa;		\
-		echo chgrp \"$(SETUID_GROUP)\" $$pa;	\
-		chgrp "$(SETUID_GROUP)" $$pa;		\
-	done
-
+INSTALLPERMS_data = dest=$(dumperdir) chown=amanda $(dumper_SCRIPTS)

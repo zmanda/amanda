@@ -1,4 +1,17 @@
 2007-11-01  Dustin J. Mitchell <dustin@zmanda.com>
+	* config/automake/installperms.am: new method of specifying
+	  permissions on installed files
+	* config/amanda/userid.m4 configure.in: add --disable-installperms
+	  to disable any permsisions settings (useful for packaging builds)
+	* oldrecover-src/Makefile.am example/Makefile.am
+	  changer-src/Makefile.am amplot/Makefile.am
+	  client-src/Makefile.am amandad-src/Makefile.am man/Makefile.am
+	  dumper-src/Makefile.am recover-src/Makefile.am
+	  server-src/Makefile.am restore-src/Makefile.am
+	  Makefile.am support/Makefile.am common-src/Makefile.am
+	  tape-src/Makefile.am: use installperms.am
+
+2007-11-01  Dustin J. Mitchell <dustin@zmanda.com>
 	Suggested by Jon LaBadie
 	* config/automake/precompile.am: new rule to make
 	  precompiler output files; useful for debugging

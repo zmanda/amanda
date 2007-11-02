@@ -1,5 +1,6 @@
 # Makefile for Amanda restore programs.
 
+include $(top_srcdir)/config/automake/installperms.am
 include $(top_srcdir)/config/automake/precompile.am
 
 INCLUDES =	-I$(top_builddir)/common-src \
@@ -49,23 +50,9 @@ librestore_la_LIBADD	=	../common-src/libamanda.$(LIB_EXTENSION) \
 
 noinst_HEADERS = restore.h
 
-install-exec-hook:
-	@list="$(sbin_PROGRAMS)"; \
-	for p in $$list; do \
-		pa=$(DESTDIR)$(sbindir)/`echo $$p|sed '$(transform)'`; \
-		echo chown \"$(BINARY_OWNER)\" $$pa;	\
-		chown "$(BINARY_OWNER)" $$pa;		\
-		echo chgrp \"$(SETUID_GROUP)\" $$pa;	\
-		chgrp "$(SETUID_GROUP)" $$pa;		\
-	done
-	@list="$(libexec_PROGRAMS)"; \
-	for p in $$list; do \
-		pa=$(DESTDIR)$(libexecdir)/`echo $$p|sed '$(transform)'`; \
-		echo chown \"$(BINARY_OWNER)\" $$pa;	\
-		chown "$(BINARY_OWNER)" $$pa;		\
-		echo chgrp \"$(SETUID_GROUP)\" $$pa;	\
-		chgrp "$(SETUID_GROUP)" $$pa;		\
-	done
+INSTALLPERMS_exec = \
+	dest=$(sbindir) chown=amanda $(sbin_PROGRAMS) \
+	dest=$(libexecdir) chown=amanda $(libexec_PROGRAMS)
 
 lint:
 	@ for p in $(libexec_PROGRAMS) $(sbin_PROGRAMS); do			\

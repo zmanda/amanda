@@ -2,6 +2,7 @@
 
 include $(top_srcdir)/config/automake/vars.am
 include $(top_srcdir)/config/automake/scripts.am
+include $(top_srcdir)/config/automake/installperms.am
 include $(top_srcdir)/config/automake/precompile.am
 
 INCLUDES =	-I$(top_builddir)/common-src \
@@ -94,24 +95,15 @@ chg_scsi_chio_SOURCES = libscsi.h $(chg_scsi_chio_CSRC)
 
 EXTRA_DIST += scsi-proto.c
 
-# automake-style tests
+INSTALLPERMS_exec = \
+	chown=amanda \
+	dest=$(sbindir) $(sbin_PROGRAMS) \
+	dest=$(libexecdir) $(libexec_PROGRAMS) 
 
-install-exec-hook:
-	@list="$(sbin_PROGRAMS) $(sbin_SCRIPTS)"; \
-	for p in $$list; do \
-		pa=$(DESTDIR)$(sbindir)/`echo $$p|sed '$(transform)'`; \
-		echo chown \"$(BINARY_OWNER)\" $$pa;	\
-		chown "$(BINARY_OWNER)" $$pa;		\
-		echo chgrp \"$(SETUID_GROUP)\" $$pa;	\
-		chgrp "$(SETUID_GROUP)" $$pa;		\
-	done
-	@list="$(libexec_PROGRAMS) $(libexec_SCRIPTS)"; \
-	for p in $$list; do \
-		pa=$(DESTDIR)$(libexecdir)/`echo $$p|sed '$(transform)'`; \
-		echo chown \"$(BINARY_OWNER)\" $$pa;	\
-		chown "$(BINARY_OWNER)" $$pa;		\
-		echo chgrp \"$(SETUID_GROUP)\" $$pa;	\
-	done
+INSTALLPERMS_data = \
+	chown=amanda \
+	dest=$(sbindir) $(sbin_SCRIPTS) \
+	dest=$(libexecdir) $(libexec_SCRIPTS)
 
 lint:
 	@ for p in $(libexec_PROGRAMS) $(EXTRA_PROGRAMS); do			\

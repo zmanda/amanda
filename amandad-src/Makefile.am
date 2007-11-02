@@ -1,5 +1,6 @@
 # Makefile for Amanda client programs.
 
+include $(top_srcdir)/config/automake/installperms.am
 include $(top_srcdir)/config/automake/precompile.am
 
 INCLUDES =	-I$(top_builddir)/common-src \
@@ -33,15 +34,13 @@ LDADD = ../common-src/libamanda.$(LIB_EXTENSION) \
 	../common-src/libamanda.$(LIB_EXTENSION) \
 	../gnulib/libgnu.$(LIB_EXTENSION)
 
-install-exec-hook:
-	@list="$(libexec_PROGRAMS) $(libexec_SCRIPTS)"; \
-	for p in $$list; do \
-		pa=$(DESTDIR)$(libexecdir)/`echo $$p|sed '$(transform)'`; \
-		echo chown \"$(BINARY_OWNER)\" $$pa;	\
-		chown "$(BINARY_OWNER)" $$pa;		\
-		echo chgrp \"$(SETUID_GROUP)\" $$pa;	\
-		chgrp "$(SETUID_GROUP)" $$pa;		\
-	done
+INSTALLPERMS_exec = \
+	dest=$(libexecdir) chown=amanda \
+		$(libexec_PROGRAMS)
+
+INSTALLPERMS_data = \
+	dest=$(libexecdir) chown=amanda \
+		$(libexec_SCRIPTS)
 
 lint:
 	@ for p in $(libexec_PROGRAMS); do					\

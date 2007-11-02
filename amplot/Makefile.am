@@ -2,6 +2,7 @@
 
 include $(top_srcdir)/config/automake/vars.am
 include $(top_srcdir)/config/automake/scripts.am
+include $(top_srcdir)/config/automake/installperms.am
 include $(top_srcdir)/config/automake/precompile.am
 
 SCRIPTS_SHELL = amplot
@@ -22,22 +23,6 @@ amplot.gp: amplot.g
 	rm -f amplot.gp
 	mv amplot.gp.new amplot.gp
 
-install-exec-hook:
-	@list="$(sbin_SCRIPTS)"; \
-	for p in $$list; do \
-		pa=$(DESTDIR)$(sbindir)/`echo $$p|sed '$(transform)'`; \
-		echo chown \"$(BINARY_OWNER)\" $$pa;	\
-		chown "$(BINARY_OWNER)" $$pa;		\
-		echo chgrp \"$(SETUID_GROUP)\" $$pa;	\
-		chgrp "$(SETUID_GROUP)" $$pa;		\
-	done
-
-install-data-hook:
-	@list="$(amplot_DATA)"; \
-	for p in $$list; do \
-		pa=$(DESTDIR)$(libexecdir)/$$p; \
-		echo chown \"$(BINARY_OWNER)\" $$pa;	\
-		chown "$(BINARY_OWNER)" $$pa;		\
-		echo chgrp \"$(SETUID_GROUP)\" $$pa;	\
-		chgrp "$(SETUID_GROUP)" $$pa;		\
-        done
+INSTALLPERMS_data = \
+	dest=$(amplotdir) chown=amanda $(amplot_DATA) \
+	dest=$(sbindir) chown=amanda $(sbin_SCRIPTS)

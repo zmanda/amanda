@@ -52,23 +52,9 @@ noinst_HEADERS = 	\
 			output-tape.h \
 			tapeio.h
 
-install-exec-hook:
-	@list="$(sbin_PROGRAMS) $(sbin_SCRIPTS)"; \
-	for p in $$list; do \
-		pa=$(DESTDIR)$(sbindir)/`echo $$p|sed '$(transform)'`; \
-		echo chown \"$(BINARY_OWNER)\" $$pa;	\
-		chown "$(BINARY_OWNER)" $$pa;		\
-		echo chgrp \"$(SETUID_GROUP)\" $$pa;	\
-		chgrp "$(SETUID_GROUP)" $$pa;		\
-	done
-	@list="$(libexec_PROGRAMS) $(libexec_SCRIPTS)"; \
-	for p in $$list; do \
-		pa=$(DESTDIR)$(libexecdir)/`echo $$p|sed '$(transform)'`; \
-		echo chown \"$(BINARY_OWNER)\" $$pa;	\
-		chown "$(BINARY_OWNER)" $$pa;		\
-		echo chgrp \"$(SETUID_GROUP)\" $$pa;	\
-		chgrp "$(SETUID_GROUP)" $$pa;		\
-	done
+INSTALLPERMS_exec = \
+	dest=$(sbindir) chown=amanda $(sbin_PROGRAMS) $(sbin_SCRIPTS) \
+	dest=$(libexecdir) chown=amanda $(libexec_PROGRAMS) $(libexec_SCRIPTS)
 
 amtapeio_SOURCES = amtapeio.test.c
 amtapeio_LDADD =	../common-src/libamanda.$(LIB_EXTENSION) \

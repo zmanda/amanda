@@ -2,14 +2,13 @@
 
 transform =	s,x,x,;
 
-AMPLOT_MAN8_PAGES = amplot.8
+AMPLOT_MAN_PAGES =  amplot.8
 
-COMMON_MAN8_PAGES = amanda.8
-
-COMMON_MAN5_PAGES = amanda.conf.5 \
+COMMON_MAN_PAGES =  amanda.8 \
+		    amanda.conf.5 \
 		    amanda-client.conf.5
 
-SERVER_MAN8_PAGES = amadmin.8 \
+SERVER_MAN_PAGES =  amadmin.8 \
 		    amcheck.8 \
 		    amcheckdb.8 \
 		    amcleanup.8 \
@@ -34,43 +33,31 @@ SERVER_MAN8_PAGES = amadmin.8 \
 		    amcrypt-ossl.8 \
 		    amcrypt-ossl-asym.8
 
-RECOVER_MAN8_PAGES = amrecover.8
+RECOVER_MAN_PAGES =  amrecover.8
 
-RESTORE_MAN8_PAGES = amrestore.8 \
+RESTORE_MAN_PAGES =  amrestore.8 \
 		     amfetchdump.8
 
-man8_pages = $(COMMON_MAN8_PAGES)
+ALL_MAN_PAGES = $(AMPLOT_MAN_PAGES) \
+	   $(COMMON_MAN_PAGES) \
+	   $(COMMON_MAN_PAGES) \
+	   $(SERVER_MAN_PAGES) \
+	   $(RECOVER_MAN_PAGES) \
+	   $(RESTORE_MAN_PAGES)
 
-man5_pages = $(COMMON_MAN5_PAGES)
-
-ALL_MAN_PAGES = $(AMPLOT_MAN8_PAGES) \
-	   $(COMMON_MAN5_PAGES) \
-	   $(COMMON_MAN8_PAGES) \
-	   $(SERVER_MAN8_PAGES) \
-	   $(RECOVER_MAN8_PAGES) \
-	   $(RESTORE_MAN8_PAGES)
-
-WANTED_MAN_PAGES = $(COMMON_MAN5_PAGES) $(COMMON_MAN8_PAGES)
+WANTED_MAN_PAGES = $(COMMON_MAN_PAGES)
 if WANT_AMPLOT
-  man8_pages += $(AMPLOT_MAN8_PAGES)
-  WANTED_MAN_PAGES += $(AMPLOT_MAN8_PAGES)
+  WANTED_MAN_PAGES += $(AMPLOT_MAN_PAGES)
 endif
 if WANT_SERVER
-  man8_pages += $(SERVER_MAN8_PAGES)
-  WANTED_MAN_PAGES += $(SERVER_MAN8_PAGES)
+  WANTED_MAN_PAGES += $(SERVER_MAN_PAGES)
 endif
 if WANT_RECOVER
-  man8_pages += $(RECOVER_MAN8_PAGES)
-  WANTED_MAN_PAGES += $(RECOVER_MAN8_PAGES)
+  WANTED_MAN_PAGES += $(RECOVER_MAN_PAGES)
 endif
 if WANT_RESTORE
-  man8_pages += $(RESTORE_MAN8_PAGES)
-  WANTED_MAN_PAGES += $(RESTORE_MAN8_PAGES)
+  WANTED_MAN_PAGES += $(RESTORE_MAN_PAGES)
 endif
-
-# These lines are needed to force automake to set the $man<n>dir variables.
-man5_MANS =
-man8_MANS =
 
 SRCMANPAGEDIR  = $(srcdir)/xml-source
 
@@ -100,58 +87,7 @@ else	!ENABLE_MANPAGE_BUILD
 
 %: $(SRCMANPAGEDIR)/%.xml
 	@echo WARNING: Not building needed $@ because building manpages is disabled.
+
 endif
 
-all: $(WANTED_MAN_PAGES)
-
-install-data-hook: $(WANTED_MAN_PAGES)
-# this is conditioned on ENABLE_MANPAGE_BUILD; it checks for the
-# existence of the file to be installed when building manpages is
-# not enabled.
-if	ENABLE_MANPAGE_BUILD
-	@list="$(man8_pages)"; \
-	for p in $$list; do \
-		pa=$(DESTDIR)$(man8dir)/`echo $$p|sed '$(transform)'`; \
-		echo $(INSTALL) -c -m 644 $$p $(DESTDIR)$(man8dir); \
-		$(INSTALL) -c -m 644 $$p $(DESTDIR)$(man8dir); \
-		echo chown \"$(BINARY_OWNER)\" $$pa;	\
-		chown "$(BINARY_OWNER)" $$pa;		\
-		echo chgrp \"$(SETUID_GROUP)\" $$pa;	\
-		chgrp "$(SETUID_GROUP)" $$pa;		\
-	done
-	@list="$(man5_pages)"; \
-	for p in $$list; do \
-		pa=$(DESTDIR)$(man5dir)/`echo $$p|sed '$(transform)'`; \
-		echo $(INSTALL) -c -m 644 $$p $(DESTDIR)$(man5dir); \
-		$(INSTALL) -c -m 644 $$p $(DESTDIR)$(man5dir); \
-		echo chown \"$(BINARY_OWNER)\" $$pa;	\
-		chown "$(BINARY_OWNER)" $$pa;		\
-		echo chgrp \"$(SETUID_GROUP)\" $$pa;	\
-		chgrp "$(SETUID_GROUP)" $$pa;		\
-	done
-else	!ENABLE_MANPAGE_BUILD
-	@list="$(man8_pages)"; \
-	for p in $$list; do \
-	    if test -e $$p; then \
-		pa=$(DESTDIR)$(man8dir)/`echo $$p|sed '$(transform)'`; \
-		echo $(INSTALL) -c -m 644 $$p $(DESTDIR)$(man8dir); \
-		$(INSTALL) -c -m 644 $$p $(DESTDIR)$(man8dir); \
-		echo chown \"$(BINARY_OWNER)\" $$pa;	\
-		chown "$(BINARY_OWNER)" $$pa;		\
-		echo chgrp \"$(SETUID_GROUP)\" $$pa;	\
-		chgrp "$(SETUID_GROUP)" $$pa;		\
-	    fi \
-	done
-	@list="$(man5_pages)"; \
-	for p in $$list; do \
-	    if test -e $$p; then \
-		pa=$(DESTDIR)$(man5dir)/`echo $$p|sed '$(transform)'`; \
-		echo $(INSTALL) -c -m 644 $$p $(DESTDIR)$(man5dir); \
-		$(INSTALL) -c -m 644 $$p $(DESTDIR)$(man5dir); \
-		echo chown \"$(BINARY_OWNER)\" $$pa;	\
-		chown "$(BINARY_OWNER)" $$pa;		\
-		echo chgrp \"$(SETUID_GROUP)\" $$pa;	\
-		chgrp "$(SETUID_GROUP)" $$pa;		\
-	    fi \
-	done
-endif
+man_MANS = $(WANTED_MAN_PAGES)

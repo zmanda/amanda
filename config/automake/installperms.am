@@ -1,0 +1,87 @@
+# vim:ft=automake
+#
+# Adjust post-install permissions settings.  This rule works off two
+# specially-formatted variables, INSTALLPERMS_exec and INSTALLPERMS_data. 
+# Each is a whitespace-separated list of commands, all of which are either
+# a variable assignment or a filename.  Three variables are available:
+#
+#  - dest= sets the destination directory to e.g., $(sbindir)
+#  - chown= controls changes in ownership; value is first argument to chown
+#  - chmod= controls changes in permissions; value is first argument to chmod
+#
+# As a special case, chown=amanda is taken as equivalent to 
+# chown=$(BINARY_OWNER):$(SETUID_GROUP), which may otherwise have problems with
+# whitespace in the user/group names.
+# 
+# when a filename is seen, the currently active variables are applied.
+#
+# Note that scripts are data, not executables!
+#
+# EXAMPLE
+#
+# sbin_PROGRAMS = foo bar bing
+# libexec_PROGRAMS = pro gram
+# sbin_SCRIPTS = sk ript
+# INSTALLPERMS_exec = \
+# 	dest=$(sbindir) chown=amanda chmod= \
+# 		foo bar \
+# 	chmod=u+s,o-rwx \
+# 		bing
+# 	dest=$(libexecdir) chmod= \
+# 		$(libexec_PROGRAMS)
+# INSTALLPERMS_data = \
+# 	dest=$(sbindir) chown=amanda chmod= \
+# 		$(sbin_SCRIPTS)
+#
+# This whole operation is not required when making builds for packaging,
+# and can be disabled with --disable-installperms, via the WANT_INSTALLPERMS
+# AM_CONDITIONAL.
+
+if WANT_INSTALLPERMS
+installperms-exec:
+	@installperms="$(INSTALLPERMS_exec)"; \
+	test -n "$$installperms" && echo "Setting installation permissions on executables"; \
+	dest=; chown=; chmod=; \
+	for cmd in $$installperms; do \
+	    case "$$cmd" in \
+		chown=amanda) \
+			echo "  ($$cmd)"; chown="$(BINARY_OWNER):$(SETUID_GROUP)";; \
+		dest=*|chown=*|chmod=*) \
+			echo "  ($$cmd)"; eval $$cmd;; \
+		*)  pa="$(DESTDIR)$$dest"/`echo "$$cmd"|sed '$(transform)'`; \
+		    if test -n "$$chown"; then \
+			echo chown "$$chown" "$$pa"; \
+			chown "$$chown" "$$pa" || exit 1; \
+		    fi; \
+		    if test -n "$$chmod"; then \
+			echo chmod "$$chmod" "$$pa"; \
+			chmod "$$chmod" "$$pa" || exit 1; \
+		    fi; \
+	    esac; \
+	done
+
+installperms-data:
+	@installperms="$(INSTALLPERMS_data)"; \
+	test -n "$$installperms" && echo "Setting installation permissions on data"; \
+	dest=; chown=; chmod=; \
+	for cmd in $$installperms; do \
+	    case "$$cmd" in \
+		chown=amanda) \
+			echo "  ($$cmd)"; chown="$(BINARY_OWNER):$(SETUID_GROUP)";; \
+		dest=*|chown=*|chmod=*) \
+			echo "  ($$cmd)"; eval $$cmd;; \
+		*)  pa="$(DESTDIR)$$dest"/`echo "$$cmd"|sed '$(transform)'`; \
+		    if test -n "$$chown"; then \
+			echo chown "$$chown" "$$pa"; \
+			chown "$$chown" "$$pa" || exit 1; \
+		    fi; \
+		    if test -n "$$chmod"; then \
+			echo chmod "$$chmod" "$$pa"; \
+			chmod "$$chmod" "$$pa" || exit 1; \
+		    fi; \
+	    esac; \
+	done
+
+install-exec-hook: installperms-exec
+install-data-hook: installperms-data
+endif

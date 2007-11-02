@@ -2,6 +2,7 @@
 
 include $(top_srcdir)/config/automake/vars.am
 include $(top_srcdir)/config/automake/scripts.am
+include $(top_srcdir)/config/automake/installperms.am
 include $(top_srcdir)/config/automake/precompile.am
 
 INCLUDES =      -I$(top_srcdir)/gnulib   
@@ -215,16 +216,7 @@ sbin_SCRIPTS = $(sbin_SCRIPTS_PERL) $(sbin_SCRIPTS_SHELL)
 
 # installation
 
-install-exec-hook:
-	@list="$(sbin_SCRIPTS)"; \
-	for p in $$list; do \
-	pa=$(DESTDIR)$(sbindir)/`echo $$p|sed '$(transform)'`; \
-	echo chown \"$(BINARY_OWNER)\" $$pa;    \
-	chown "$(BINARY_OWNER)" $$pa;           \
-	echo chgrp \"$(SETUID_GROUP)\" $$pa;    \
-	chgrp "$(SETUID_GROUP)" $$pa;           \
-	done
-
+INSTALLPERMS_data = dest=$(sbindir) chown=amanda $(sbin_SCRIPTS)
 
 lint:
 	@echo $(LINT) $(libamanda_la_SOURCES)

@@ -2,6 +2,7 @@
 
 include $(top_srcdir)/config/automake/vars.am
 include $(top_srcdir)/config/automake/scripts.am
+include $(top_srcdir)/config/automake/installperms.am
 include $(top_srcdir)/config/automake/precompile.am
 
 INCLUDES =	-I$(top_builddir)/common-src \
@@ -24,24 +25,10 @@ sbin_PROGRAMS =		amadmin		amcheck		amflush		\
 
 noinst_PROGRAMS = taper_source_test
 
-taper_source_test_SOURCES = taper-source-test.c \
-			taper-source.c \
-			taper-file-source.c \
-			taper-port-source.c \
-			taper-disk-port-source.c \
-			taper-mem-port-source.c
-
 libexec_PROGRAMS =	amindexd	amlogroll	amtrmidx	\
 			amtrmlog	driver		dumper		\
 			planner		taper		amcleanupdisk	\
 			chunker		amdevcheck
-
-taper_SOURCES = 	taper.c \
-			taper-source.c \
-			taper-file-source.c \
-			taper-port-source.c \
-			taper-disk-port-source.c \
-			taper-mem-port-source.c
 
 SCRIPTS_PERL =  \
 	    amoverview \
@@ -58,14 +45,21 @@ SCRIPTS_SHELL = \
 
 sbin_SCRIPTS = $(SCRIPTS_PERL) $(SCRIPTS_SHELL)
 
-libamserver_la_SOURCES=	amindex.c	changer.c			\
-			diskfile.c	driverio.c	cmdline.c  \
-			holding.c	infofile.c	logfile.c	\
-			tapefile.c	find.c		server_util.c   \
-                        taperscan.c
+INSTALLPERMS_exec = \
+	dest=$(sbindir) chown=amanda chmod= \
+		$(sbin_PROGRAMS) \
+	chown=root chmod=u+s,o-rwx \
+		amcheck \
+	dest=$(libexecdir) chown=amanda chmod= \
+		$(libexec_PROGRAMS) \
+	chown=root chmod=u+s,o-rwx \
+		dumper planner
 
-libamserver_la_LDFLAGS= -release $(VERSION)
-libamserver_la_LIBADD= ../device-src/libamdevice.la
+INSTALLPERMS_data = \
+	dest=$(sbindir) chown=amanda chmod= \
+		$(sbin_SCRIPTS) \
+	dest=$(libexecdir) chown=amanda chmod= \
+		$(libexec_SCRIPTS)
 
 ###
 # Because libamanda includes routines (e.g. regex) provided by some system
@@ -80,6 +74,29 @@ LDADD = ../common-src/libamanda.la   \
 	../common-src/libamanda.la   \
 	../gnulib/libgnu.la          \
         $(READLINE_LIBS)
+
+libamserver_la_SOURCES=	amindex.c	changer.c			\
+			diskfile.c	driverio.c	cmdline.c  \
+			holding.c	infofile.c	logfile.c	\
+			tapefile.c	find.c		server_util.c   \
+                        taperscan.c
+
+libamserver_la_LDFLAGS= -release $(VERSION)
+libamserver_la_LIBADD= ../device-src/libamdevice.la
+
+taper_source_test_SOURCES = taper-source-test.c \
+			taper-source.c \
+			taper-file-source.c \
+			taper-port-source.c \
+			taper-disk-port-source.c \
+			taper-mem-port-source.c
+
+taper_SOURCES = 	taper.c \
+			taper-source.c \
+			taper-file-source.c \
+			taper-port-source.c \
+			taper-disk-port-source.c \
+			taper-mem-port-source.c
 
 taper_LDADD = $(LDADD) \
 	../amandad-src/libamandad.la
@@ -111,50 +128,6 @@ noinst_HEADERS = 	amindex.h	changer.h	cmdline.h	\
 			taperscan.h taper-disk-port-source.h \
 			taper-mem-port-source.h  taper-file-source.h \
 			taper-port-source.h taper-source.h
-
-install-exec-hook:
-	@list="$(sbin_PROGRAMS) $(sbin_SCRIPTS)"; \
-	for p in $$list; do \
-		pa=$(DESTDIR)$(sbindir)/`echo $$p|sed '$(transform)'`; \
-		echo chown \"$(BINARY_OWNER)\" $$pa;	\
-		chown "$(BINARY_OWNER)" $$pa;		\
-		echo chgrp \"$(SETUID_GROUP)\" $$pa;	\
-		chgrp "$(SETUID_GROUP)" $$pa;		\
-	done
-	@list="$(libexec_PROGRAMS) $(libexec_SCRIPTS)"; \
-	for p in $$list; do \
-		pa=$(DESTDIR)$(libexecdir)/`echo $$p|sed '$(transform)'`; \
-		echo chown \"$(BINARY_OWNER)\" $$pa;	\
-		chown "$(BINARY_OWNER)" $$pa;		\
-		echo chgrp \"$(SETUID_GROUP)\" $$pa;	\
-		chgrp "$(SETUID_GROUP)" $$pa;		\
-	done
-	@list="amcheck"; \
-	for p in $$list; do \
-		if echo "$(sbin_PROGRAMS)" | grep $$p >/dev/null 2>&1; then \
-			pa=$(DESTDIR)$(sbindir)/`echo $$p|sed '$(transform)'`; \
-			echo chown root $$pa; \
-			chown root $$pa; \
-			echo chmod u+s,o-rwx $$pa; \
-			chmod u+s,o-rwx $$pa; \
-		else true; \
-		fi; \
-	done
-##						       ##
-## enterprise version will install dumper/planner suid ##
-##						       ##
-
-	@list="dumper planner"; \
-	for p in $$list; do \
-		if echo "$(libexec_PROGRAMS)" | grep $$p >/dev/null 2>&1; then \
-			pa=$(DESTDIR)$(libexecdir)/`echo $$p|sed '$(transform)'`; \
-			echo chown root $$pa; \
-			chown root $$pa; \
-			echo chmod u+s,o-rwx $$pa; \
-			chmod u+s,o-rwx $$pa; \
-		else true; \
-		fi; \
-	done
 
 lint:
 	@ for p in $(libexec_PROGRAMS) $(sbin_PROGRAMS); do			\

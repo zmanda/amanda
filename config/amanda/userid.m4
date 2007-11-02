@@ -1,5 +1,28 @@
 # SYNOPSIS
 #
+#   AMANDA_DISABLE_INSTALLPERMS
+#
+# OVERVIEW
+#
+#   Handle the --disable-installperms option, which disables all post-install
+#   chown/chmod operations.  This is useful when packaging, as most packaging
+#   systems build as non-root, and apply permissions in the post-install step of
+#   the package itself.
+#
+AC_DEFUN([AMANDA_DISABLE_INSTALLPERMS],
+[
+    WANT_INSTALLPERMS=yes
+    AC_ARG_ENABLE(installperms,
+        AS_HELP_STRING([--disable-installperms],
+                [do not modify ownership and permissions on installed files]),
+        [ WANT_INSTALLPERMS="$withval" ],
+        [ WANT_INSTALLPERMS="yes" ]
+    )
+    AM_CONDITIONAL(WANT_INSTALLPERMS, test x"$WANT_INSTALLPERMS" = x"yes")
+])
+
+# SYNOPSIS
+#
 #   AMANDA_WITH_FORCE_UID
 #
 # OVERVIEW
