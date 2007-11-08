@@ -31,6 +31,8 @@ libexec_PROGRAMS =	amindexd	amlogroll	amtrmidx	\
 			chunker		amdevcheck
 
 SCRIPTS_PERL =  \
+	    amserverconfig \
+	    amaddclient \
 	    amoverview \
 	    amstatus \
 	    amtoc

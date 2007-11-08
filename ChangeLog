@@ -1,3 +1,20 @@
+2007-11-07  Paddy Sreenivasan <paddy@zmanda.com>
+	* server-src/amserverconfig.pl server-src/amaddclient.pl: 
+          new configuration tools
+	* common-src/amgpgcrypt.pl common-src/amcryptsimple.pl: 
+          new encryption plugins
+	* man/xml-source/amaddclient.8.xml man/xml-source/amgpgcrypt.8.xml 
+          man/xml-source/amcryptsimple.8.xml 
+	  man/xml-source/amserverconfig.8.xml: man pages for new tools
+	* example/template.d/* - Configuration file templates
+	* example/amanda-client.conf.in: Updated amanda configuration file
+	* example/Makefile.am man/Makefile.am server-src/Makefile.am
+          common-src/Makefile.am: Added amserverconfig, amaddclient, 
+          amgpgcrypt and amcryptsimple
+	* device-src/Makefile.am: Fixed libamdevice version
+	* configure.in: Added template files
+        * amanda.spec: Updated spec file for new utilities
+
 2007-11-01  Dustin J. Mitchell <dustin@zmanda.com>
 	* config/automake/installperms.am: new method of specifying
 	  permissions on installed files

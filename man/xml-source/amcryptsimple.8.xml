@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"
+[
+  <!-- entities files to use -->
+  <!ENTITY % global_entities SYSTEM '../entities/global.entities'>
+  %global_entities;
+]>
+
+<refentry id='amcryptsimple.8'>
+<refmeta>
+<refentrytitle>amcryptsimple</refentrytitle>
+<manvolnum>8</manvolnum>
+</refmeta>
+<refnamediv>
+<refname>amcryptsimple</refname>
+<refpurpose>reference simple crypt program for &A; symmetric data encryption</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv>
+<cmdsynopsis>
+  <command>amcryptsimple</command>  to be called by &A; only 
+</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsect1><title>DESCRIPTION</title>
+<para>&amcryptsimple;
+calls <emphasis remap='B'>gpg</emphasis> to perform symmetric data encryption
+on &A; backup.
+&amcryptsimple; will search for the gpg program in the following directories:
+/usr/local/bin:/usr/bin:/usr/sbin:/bin:/sbin</para>
+<para>&amcryptsimple; uses one passphrase to encrypt the &A; data
+and uses the same passphrase to decrypt the &A; backup data. &amcryptsimple; uses
+AES256 as the symmetric cipher.</para> 
+</refsect1>
+
+
+<refsect1><title>How to Create Passphrase</title>
+
+Store  the  passphrase  inside the home-directory of the AMANDA-user($amanda_user) and protect it with proper permissions:
+
+   echo my_secret_passphrase > ~$amanda_user/.am_passphrase
+   chown $amanda_user:disk ~$amanda_user/.am_passphrase
+   chmod 700 ~$amanda_user/.am_passphrase
+</refsect1>
+
+<refsect1><title>NOTES</title>
+<para>Choose a good passphrase and protect it properly. Backup data can only be
+restored with the passphrase. There is no backdoor.</para>
+<para>If storing and securing passphrase in your environment presents challenges,
+&A; provide public-key data encryption through &amgpgcrypt;. Public-key
+encryption uses the public key to encrypt and uses the private key to decrypt.</para>
+</refsect1>
+
+<refsect1><title>AUTHOR</title>
+  <para>
+    The tool and its documentation was written by Zmanda, Inc (http://www.zmanda.com/). 
+  </para>
+</refsect1>
+
+<refsect1><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>amanda.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>amcrypt</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>amgpgcrypt</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>amrestore</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+<citerefentry><refentrytitle>gpg</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+</para>
+</refsect1>
+</refentry>
+

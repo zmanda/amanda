@@ -130,7 +130,6 @@ Version: %{amanda_version}
 %endif
 Release: %{rpm_release}
 Source: %{name}-%{version}.tar.gz
-Patch0: community-rpm-Makefiles.patch.gz
 License: http://wiki.zmanda.com/index.php/Amanda_Copyright
 Vendor: Zmanda, Inc.
 Packager: www.zmanda.com
@@ -211,6 +210,7 @@ Provides: libamanda-%{version}.so
 Provides: libamserver-%{version}.so
 Provides: librestore-%{version}.so
 Provides: libamtape-%{version}.so
+Provides: libamdevice-%{version}.so
 
 # --- Package descriptions ---
 
@@ -260,7 +260,8 @@ Amanda Documentation is available at: http://wiki.zmanda.com/
 %define LIBEXECDIR	%{EPREFIX}/lib/amanda
 %define DATADIR		%{PREFIX}/share
 %define SYSCONFDIR	/etc
-%define LOCALSTATEDIR	/var/lib/amanda
+%define LOCALSTATEDIR	/var
+%define AMANDAHOMEDIR   %{LOCALSTATEDIR}/lib/amanda
 %define LIBDIR		%{EPREFIX}/lib
 %define INCLUDEDIR	%{PREFIX}/include
 %define INFODIR		%{PREFIX}/info
@@ -272,17 +273,16 @@ Amanda Documentation is available at: http://wiki.zmanda.com/
 %define ROOT_LIBEXECDIR		%{buildroot}/%{LIBEXECDIR}
 %define ROOT_DATADIR		%{buildroot}/%{DATADIR}
 %define ROOT_SYSCONFDIR		%{buildroot}/%{SYSCONFDIR}
-%define ROOT_LOCALSTATEDIR	%{buildroot}/%{LOCALSTATEDIR}
+%define ROOT_AMANDAHOMEDIR	%{buildroot}/%{AMANDAHOMEDIR}
 %define ROOT_LIBDIR		%{buildroot}/%{LIBDIR}
 %define ROOT_INFODIR		%{buildroot}/%{INFODIR}
 %define ROOT_MANDIR		%{buildroot}/%{MANDIR}
 %define ROOT_LOGDIR		%{buildroot}/%{LOGDIR}
 
-# --- Unpack and apply patches (if any) ---
+# --- Unpack ---
 
 %prep
 %setup
-%patch -P 0 -p1
 
 # --- Configure and compile ---
 
@@ -306,7 +306,7 @@ CFLAGS="%{optflags} -m32 -g" CXXFLAGS="%{optflags} -m32" \
 	--infodir=%{INFODIR} \
 	--mandir=%{MANDIR} \
 	--with-gnutar=/bin/tar \
-	--with-gnutar-listdir=%{LOCALSTATEDIR}/gnutar-lists \
+	--with-gnutar-listdir=%{AMANDAHOMEDIR}/gnutar-lists \
 	--with-dumperdir=%{LIBEXECDIR} \
 	--with-index-server=localhost \
 	--with-tape-server=localhost \
@@ -319,7 +319,8 @@ CFLAGS="%{optflags} -m32 -g" CXXFLAGS="%{optflags} -m32" \
 	--with-bsdudp-security \
 	--with-debugging=%{LOGDIR} \
 	--with-ssh-security \
-        --with-assertions
+        --with-assertions \
+	--disable-installperms
 
 make
 
@@ -338,21 +339,13 @@ fi
 make DESTDIR=%{buildroot} install
 
 rm -rf %{ROOT_DATADIR}/amanda
-rm -f %{ROOT_LOCALSTATEDIR}/example/inetd.conf.amandaclient
-mkdir %{buildroot}/{etc,var/,var/log,var/lib,var/lib/amanda,var/lib/amanda/example,var/lib/amanda/example/label-templates}
+rm -f %{ROOT_AMANDAHOMEDIR}/example/inetd.conf.amandaclient
+mkdir %{buildroot}/{etc,var/log}
 mkdir %{ROOT_SYSCONFDIR}/amanda
-mkdir %{ROOT_LOCALSTATEDIR}/gnutar-lists
+mkdir %{ROOT_AMANDAHOMEDIR}/gnutar-lists
 mkdir %{ROOT_LOGDIR}
-cp example/amanda.conf %{ROOT_LOCALSTATEDIR}/example/amanda.conf
-cp example/amanda-client.conf %{ROOT_LOCALSTATEDIR}/example/amanda-client.conf
-cp example/DLT.ps %{ROOT_LOCALSTATEDIR}/example/label-templates/
-cp example/EXB-8500.ps %{ROOT_LOCALSTATEDIR}/example/label-templates/
-cp example/HP-DAT.ps %{ROOT_LOCALSTATEDIR}/example/label-templates/
-cp example/8.5x11.ps %{ROOT_LOCALSTATEDIR}/example/label-templates/
-cp example/3hole.ps %{ROOT_LOCALSTATEDIR}/example/label-templates/
-cp example/DIN-A4.ps %{ROOT_LOCALSTATEDIR}/example/label-templates/
 
-echo "%{amanda_version_info}" >%{ROOT_LOCALSTATEDIR}/amanda-release
+echo "%{amanda_version_info}" >%{ROOT_AMANDAHOMEDIR}/amanda-release
 
 # --- Clean up buildroot ---
 
@@ -383,7 +376,7 @@ echo "`date +'%b %e %Y %T'`: Preparing to install: %{amanda_version_info}" >${TM
 # Check for the 'amanda' user
 echo "`date +'%b %e %Y %T'`: Checking for '%{amanda_user}' user..." >>${TMPFILE}
 if [ "`id -u %{amanda_user} >&/dev/null && echo 0 || echo 1`" != "0" ] ; then
-	useradd -c "Amanda" -M -g disk -d %{LOCALSTATEDIR} -s /bin/sh %{amanda_user}
+	useradd -c "Amanda" -M -g disk -d %{AMANDAHOMEDIR} -s /bin/sh %{amanda_user}
 	if [ %{is_suse10} -eq 1 ] || [ %{is_sles9} -eq 1 ] || [ %{is_sles10} -eq 1 ]; then
 		PASSWD_EXIT=$?
 	else
@@ -405,7 +398,7 @@ if [ "`id -u %{amanda_user} >&/dev/null && echo 0 || echo 1`" != "0" ] ; then
 		echo "`date +'%b %e %Y %T'`:  pre-existing Amanda configurations in %{SYSCONFDIR}/amanda" >>${TMPFILE}
 		echo "`date +'%b %e %Y %T'`:  you should ensure that 'dumpuser' is set to '%{amanda_user}'" >>${TMPFILE}
 		echo "`date +'%b %e %Y %T'`:  in those configurations.  Additionally, you should ensure" >>${TMPFILE}
-		echo "`date +'%b %e %Y %T'`:  that %{LOCALSTATEDIR}/.amandahosts on your client systems" >>${TMPFILE}
+		echo "`date +'%b %e %Y %T'`:  that %{AMANDAHOMEDIR}/.amandahosts on your client systems" >>${TMPFILE}
 		echo "`date +'%b %e %Y %T'`:  is properly configured to allow connections for the user" >>${TMPFILE}
 		echo "`date +'%b %e %Y %T'`:  '%{amanda_user}'." >>${TMPFILE}
 		echo "`date +'%b %e %Y %T'`:" >>${TMPFILE}
@@ -437,7 +430,7 @@ else
 	echo "`date +'%b %e %Y %T'`:  user.:" >>${TMPFILE}
 	echo "`date +'%b %e %Y %T'`:" >>${TMPFILE}
 	echo "`date +'%b %e %Y %T'`:  SHELL:          /bin/sh" >>${TMPFILE}
-	echo "`date +'%b %e %Y %T'`:  HOME:           %{LOCALSTATEDIR}" >>${TMPFILE}
+	echo "`date +'%b %e %Y %T'`:  HOME:           %{AMANDAHOMEDIR}" >>${TMPFILE}
 	echo "`date +'%b %e %Y %T'`:  Default group:  %{amanda_group}" >>${TMPFILE}
 	echo "`date +'%b %e %Y %T'`:  Verifying %{amanda_user} parameters :" >>${TMPFILE}
 
@@ -459,10 +452,10 @@ else
                 echo "`date +'%b %e %Y %T'`:  Verified Default shell for user 'amandabackup'" >>${TMPFILE}
         fi
 
-        if [ "`grep ^%{amanda_user} /etc/passwd|cut -d: -f6`" != "%{LOCALSTATEDIR}" ] ; then
+        if [ "`grep ^%{amanda_user} /etc/passwd|cut -d: -f6`" != "%{AMANDAHOMEDIR}" ] ; then
                 echo "`date +'%b %e %Y %T'`:  !!! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! !!!" >>${TMPFILE}
                 echo "`date +'%b %e %Y %T'`:  !!! user 'amandabackup' home directory should be set to   !!!" >>${TMPFILE}
-                echo "`date +'%b %e %Y %T'`:  !!! %{LOCALSTATEDIR} Pl correct before using amanda       !!!" >>${TMPFILE}
+                echo "`date +'%b %e %Y %T'`:  !!! %{AMANDAHOMEDIR} Pl correct before using amanda       !!!" >>${TMPFILE}
                 echo "`date +'%b %e %Y %T'`:  !!! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! !!!" >>${TMPFILE}
         else
                 echo "`date +'%b %e %Y %T'`:  Verified Default home directory for user amandabackup" >>${TMPFILE}
@@ -470,15 +463,15 @@ else
 	echo "`date +'%b %e %Y %T'`:" >>${TMPFILE}
 	PASSWD_OK=0
 fi
-if [ -d %{LOCALSTATEDIR} ] ; then
-	echo -n "`date +'%b %e %Y %T'`:  Checking ownership of '%{LOCALSTATEDIR}'... " >>${TMPFILE}
-	if [ "`ls -dl %{LOCALSTATEDIR} | awk '//{split($_,x); print x[3]}'`" == "%{amanda_user}" ] && \
-	   [ "`ls -dl %{LOCALSTATEDIR} | awk '//{split($_,x); print x[4]}'`" == "%{amanda_group}" ] ; then
+if [ -d %{AMANDAHOMEDIR} ] ; then
+	echo -n "`date +'%b %e %Y %T'`:  Checking ownership of '%{AMANDAHOMEDIR}'... " >>${TMPFILE}
+	if [ "`ls -dl %{AMANDAHOMEDIR} | awk '//{split($_,x); print x[3]}'`" == "%{amanda_user}" ] && \
+	   [ "`ls -dl %{AMANDAHOMEDIR} | awk '//{split($_,x); print x[4]}'`" == "%{amanda_group}" ] ; then
 		echo "correct." >>${TMPFILE}
 		VARLIB_OK=0
 	else
 		echo "incorrect!" >>${TMPFILE}
-		echo "`date +'%b %e %Y %T'`:  Please ensure that the directory '%{LOCALSTATEDIR}' is owned by" >>${TMPFILE}
+		echo "`date +'%b %e %Y %T'`:  Please ensure that the directory '%{AMANDAHOMEDIR}' is owned by" >>${TMPFILE}
 		echo "`date +'%b %e %Y %T'`:  the user '%{amanda_user}' and group '%{amanda_group}'." >>${TMPFILE}
 		VARLIB_OK=1
 	fi
@@ -557,36 +550,36 @@ else
 fi
 
 # Install .amandahosts
-echo "`date +'%b %e %Y %T'`: Checking '%{LOCALSTATEDIR}/.amandahosts' file." >${TMPFILE}
-if [ ! -f %{LOCALSTATEDIR}/.amandahosts ] ; then
-	touch %{LOCALSTATEDIR}/.amandahosts >>${TMPFILE} 2>&1
+echo "`date +'%b %e %Y %T'`: Checking '%{AMANDAHOMEDIR}/.amandahosts' file." >${TMPFILE}
+if [ ! -f %{AMANDAHOMEDIR}/.amandahosts ] ; then
+	touch %{AMANDAHOMEDIR}/.amandahosts >>${TMPFILE} 2>&1
 fi
 for host in localhost localhost.localdomain ; do
-	if [ -z "`grep \"^${host}[[:blank:]]\+root[[:blank:]]\+amindexd[[:blank:]]\+amidxtaped\" %{LOCALSTATEDIR}/.amandahosts`" ] ; then
-	 echo "${host}   root amindexd amidxtaped" >>%{LOCALSTATEDIR}/.amandahosts
+	if [ -z "`grep \"^${host}[[:blank:]]\+root[[:blank:]]\+amindexd[[:blank:]]\+amidxtaped\" %{AMANDAHOMEDIR}/.amandahosts`" ] ; then
+	 echo "${host}   root amindexd amidxtaped" >>%{AMANDAHOMEDIR}/.amandahosts
 	fi
-	if [ -z "`grep \"^${host}[[:blank:]]\+%{amanda_user}[[:blank:]]\+amdump\" %{LOCALSTATEDIR}/.amandahosts`" ] ; then
-	 echo "${host}   %{amanda_user} amdump" >>%{LOCALSTATEDIR}/.amandahosts
+	if [ -z "`grep \"^${host}[[:blank:]]\+%{amanda_user}[[:blank:]]\+amdump\" %{AMANDAHOMEDIR}/.amandahosts`" ] ; then
+	 echo "${host}   %{amanda_user} amdump" >>%{AMANDAHOMEDIR}/.amandahosts
 	fi
 done
-chown %{amanda_user}:%{amanda_group} %{LOCALSTATEDIR}/.amandahosts >>${TMPFILE} 2>&1
-chmod 0600 %{LOCALSTATEDIR}/.amandahosts >>${TMPFILE} 2>&1
+chown %{amanda_user}:%{amanda_group} %{AMANDAHOMEDIR}/.amandahosts >>${TMPFILE} 2>&1
+chmod 0600 %{AMANDAHOMEDIR}/.amandahosts >>${TMPFILE} 2>&1
 cat ${TMPFILE}
 cat ${TMPFILE} >>${INSTALL_LOG}
 
 # environment variables (~amandabackup/.profile)
-echo "`date +'%b %e %Y %T'`: Checking for '%{LOCALSTATEDIR}/.profile' and ensuring correct environment." >${TMPFILE}
-if [ ! -f %{LOCALSTATEDIR}/.profile ] ; then
-	touch %{LOCALSTATEDIR}/.profile >>${TMPFILE} 2>&1
+echo "`date +'%b %e %Y %T'`: Checking for '%{AMANDAHOMEDIR}/.profile' and ensuring correct environment." >${TMPFILE}
+if [ ! -f %{AMANDAHOMEDIR}/.profile ] ; then
+	touch %{AMANDAHOMEDIR}/.profile >>${TMPFILE} 2>&1
 fi
-if [ -z "`grep PATH %{LOCALSTATEDIR}/.profile | grep '%{SBINDIR}'`" ] ; then
-	echo "export PATH=\"\$PATH:%{SBINDIR}\"" >>%{LOCALSTATEDIR}/.profile 2>>${TMPFILE}
+if [ -z "`grep PATH %{AMANDAHOMEDIR}/.profile | grep '%{SBINDIR}'`" ] ; then
+	echo "export PATH=\"\$PATH:%{SBINDIR}\"" >>%{AMANDAHOMEDIR}/.profile 2>>${TMPFILE}
 fi
-echo "`date +'%b %e %Y %T'`: Setting ownership and permissions for '%{LOCALSTATEDIR}/.profile'" >>${TMPFILE}
+echo "`date +'%b %e %Y %T'`: Setting ownership and permissions for '%{AMANDAHOMEDIR}/.profile'" >>${TMPFILE}
 cat ${TMPFILE}
 cat ${TMPFILE} >>${INSTALL_LOG}
-chown %{amanda_user}:%{amanda_group} %{LOCALSTATEDIR}/.profile >>${TMPFILE} 2>&1
-chmod 0640 %{LOCALSTATEDIR}/.profile >>${TMPFILE} 2>&1
+chown %{amanda_user}:%{amanda_group} %{AMANDAHOMEDIR}/.profile >>${TMPFILE} 2>&1
+chmod 0640 %{AMANDAHOMEDIR}/.profile >>${TMPFILE} 2>&1
 
 echo "`date +'%b %e %Y %T'`: === Amanda installation complete. ===" >${TMPFILE}
 
@@ -616,7 +609,7 @@ echo "`date +'%b %e %Y %T'`: Preparing to install: %{amanda_version_info}" >${TM
 # Check for the 'amanda' user
 echo "`date +'%b %e %Y %T'`: Checking for '%{amanda_user}' user..." >>${TMPFILE}
 if [ "`id -u %{amanda_user} >&/dev/null && echo 0 || echo 1`" != "0" ] ; then
-	useradd -c "Amanda" -M -g disk -d %{LOCALSTATEDIR} -s /bin/sh %{amanda_user}
+	useradd -c "Amanda" -M -g disk -d %{AMANDAHOMEDIR} -s /bin/sh %{amanda_user}
 	if [ %{is_suse10} -eq 1 ] || [ %{is_sles9} -eq 1 ] || [ %{is_sles10} -eq 1 ]; then
 		PASSWD_EXIT=$?
 	else
@@ -638,7 +631,7 @@ if [ "`id -u %{amanda_user} >&/dev/null && echo 0 || echo 1`" != "0" ] ; then
 		echo "`date +'%b %e %Y %T'`:  pre-existing Amanda configurations in %{SYSCONFDIR}/amanda" >>${TMPFILE}
 		echo "`date +'%b %e %Y %T'`:  you should ensure that 'dumpuser' is set to '%{amanda_user}'" >>${TMPFILE}
 		echo "`date +'%b %e %Y %T'`:  in those configurations.  Additionally, you should ensure" >>${TMPFILE}
-		echo "`date +'%b %e %Y %T'`:  that %{LOCALSTATEDIR}/.amandahosts on your client systems" >>${TMPFILE}
+		echo "`date +'%b %e %Y %T'`:  that %{AMANDAHOMEDIR}/.amandahosts on your client systems" >>${TMPFILE}
 		echo "`date +'%b %e %Y %T'`:  is properly configured to allow connections for the user" >>${TMPFILE}
 		echo "`date +'%b %e %Y %T'`:  '%{amanda_user}'." >>${TMPFILE}
 		echo "`date +'%b %e %Y %T'`:" >>${TMPFILE}
@@ -670,7 +663,7 @@ else
 	echo "`date +'%b %e %Y %T'`:  user.:" >>${TMPFILE}
 	echo "`date +'%b %e %Y %T'`:" >>${TMPFILE}
 	echo "`date +'%b %e %Y %T'`:  SHELL:          /bin/sh" >>${TMPFILE}
-	echo "`date +'%b %e %Y %T'`:  HOME:           %{LOCALSTATEDIR}" >>${TMPFILE}
+	echo "`date +'%b %e %Y %T'`:  HOME:           %{AMANDAHOMEDIR}" >>${TMPFILE}
 	echo "`date +'%b %e %Y %T'`:  Default group:  %{amanda_group}" >>${TMPFILE}
         echo "`date +'%b %e %Y %T'`:  Verifying %{amanda_user} parameters :" >>${TMPFILE}
 
@@ -692,10 +685,10 @@ else
                 echo "`date +'%b %e %Y %T'`:  Verified Default shell for user 'amandabackup'" >>${TMPFILE}
         fi
 
-        if [ "`grep ^%{amanda_user} /etc/passwd|cut -d: -f6`" != "%{LOCALSTATEDIR}" ] ; then
+        if [ "`grep ^%{amanda_user} /etc/passwd|cut -d: -f6`" != "%{AMANDAHOMEDIR}" ] ; then
                 echo "`date +'%b %e %Y %T'`:  !!! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! !!!" >>${TMPFILE}
                 echo "`date +'%b %e %Y %T'`:  !!! user 'amandabackup' home directory should be set to   !!!" >>${TMPFILE}
-                echo "`date +'%b %e %Y %T'`:  !!! %{LOCALSTATEDIR} Pl correct before using amanda       !!!" >>${TMPFILE}
+                echo "`date +'%b %e %Y %T'`:  !!! %{AMANDAHOMEDIR} Pl correct before using amanda       !!!" >>${TMPFILE}
                 echo "`date +'%b %e %Y %T'`:  !!! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! !!!" >>${TMPFILE}
         else
                 echo "`date +'%b %e %Y %T'`:  Verified Default home directory for user amandabackup" >>${TMPFILE}
@@ -703,15 +696,15 @@ else
 	echo "`date +'%b %e %Y %T'`:" >>${TMPFILE}
 	PASSWD_OK=0
 fi
-if [ -d %{LOCALSTATEDIR} ] ; then
-	echo -n "`date +'%b %e %Y %T'`:  Checking ownership of '%{LOCALSTATEDIR}'... " >>${TMPFILE}
-	if [ "`ls -dl %{LOCALSTATEDIR} | awk '//{split($_,x); print x[3]}'`" == "%{amanda_user}" ] && \
-	   [ "`ls -dl %{LOCALSTATEDIR} | awk '//{split($_,x); print x[4]}'`" == "%{amanda_group}" ] ; then
+if [ -d %{AMANDAHOMEDIR} ] ; then
+	echo -n "`date +'%b %e %Y %T'`:  Checking ownership of '%{AMANDAHOMEDIR}'... " >>${TMPFILE}
+	if [ "`ls -dl %{AMANDAHOMEDIR} | awk '//{split($_,x); print x[3]}'`" == "%{amanda_user}" ] && \
+	   [ "`ls -dl %{AMANDAHOMEDIR} | awk '//{split($_,x); print x[4]}'`" == "%{amanda_group}" ] ; then
 		echo "correct." >>${TMPFILE}
 		VARLIB_OK=0
 	else
 		echo "incorrect!" >>${TMPFILE}
-		echo "`date +'%b %e %Y %T'`:  Please ensure that the directory '%{LOCALSTATEDIR}' is owned by" >>${TMPFILE}
+		echo "`date +'%b %e %Y %T'`:  Please ensure that the directory '%{AMANDAHOMEDIR}' is owned by" >>${TMPFILE}
 		echo "`date +'%b %e %Y %T'`:  the user '%{amanda_user}' and group '%{amanda_group}'." >>${TMPFILE}
 		VARLIB_OK=1
 	fi
@@ -787,34 +780,34 @@ else
 fi
 
 # Install .amandahosts to server
-echo "`date +'%b %e %Y %T'`: Checking '%{LOCALSTATEDIR}/.amandahosts' file." >${TMPFILE}
-if [ ! -f %{LOCALSTATEDIR}/.amandahosts ] ; then
-	touch %{LOCALSTATEDIR}/.amandahosts >>${TMPFILE} 2>&1
+echo "`date +'%b %e %Y %T'`: Checking '%{AMANDAHOMEDIR}/.amandahosts' file." >${TMPFILE}
+if [ ! -f %{AMANDAHOMEDIR}/.amandahosts ] ; then
+	touch %{AMANDAHOMEDIR}/.amandahosts >>${TMPFILE} 2>&1
 fi
 for host in localhost localhost.localdomain ; do
-	if [ -z "`grep \"^${host}[[:blank:]]\+root[[:blank:]]\+amindexd[[:blank:]]\+amidxtaped\" %{LOCALSTATEDIR}/.amandahosts`" ] ; then
-	 echo "${host}   root amindexd amidxtaped" >>%{LOCALSTATEDIR}/.amandahosts
+	if [ -z "`grep \"^${host}[[:blank:]]\+root[[:blank:]]\+amindexd[[:blank:]]\+amidxtaped\" %{AMANDAHOMEDIR}/.amandahosts`" ] ; then
+	 echo "${host}   root amindexd amidxtaped" >>%{AMANDAHOMEDIR}/.amandahosts
 	fi
-	if [ -z "`grep \"^${host}[[:blank:]]\+%{amanda_user}[[:blank:]]\+amdump\" %{LOCALSTATEDIR}/.amandahosts`" ] ; then
-	 echo "${host}   %{amanda_user} amdump" >>%{LOCALSTATEDIR}/.amandahosts
+	if [ -z "`grep \"^${host}[[:blank:]]\+%{amanda_user}[[:blank:]]\+amdump\" %{AMANDAHOMEDIR}/.amandahosts`" ] ; then
+	 echo "${host}   %{amanda_user} amdump" >>%{AMANDAHOMEDIR}/.amandahosts
 	fi
 done
-chown %{amanda_user}:%{amanda_group} %{LOCALSTATEDIR}/.amandahosts >>${TMPFILE} 2>&1
-chmod 0600 %{LOCALSTATEDIR}/.amandahosts >>${TMPFILE} 2>&1
+chown %{amanda_user}:%{amanda_group} %{AMANDAHOMEDIR}/.amandahosts >>${TMPFILE} 2>&1
+chmod 0600 %{AMANDAHOMEDIR}/.amandahosts >>${TMPFILE} 2>&1
 cat ${TMPFILE}
 cat ${TMPFILE} >>${INSTALL_LOG}
 
 # environment variables (~amandabackup/.profile)
-echo "`date +'%b %e %Y %T'`: Checking for '%{LOCALSTATEDIR}/.profile' and ensuring correct environment." >${TMPFILE}
-if [ ! -f %{LOCALSTATEDIR}/.profile ] ; then
-	touch %{LOCALSTATEDIR}/.profile >>${TMPFILE} 2>&1
+echo "`date +'%b %e %Y %T'`: Checking for '%{AMANDAHOMEDIR}/.profile' and ensuring correct environment." >${TMPFILE}
+if [ ! -f %{AMANDAHOMEDIR}/.profile ] ; then
+	touch %{AMANDAHOMEDIR}/.profile >>${TMPFILE} 2>&1
 fi
-if [ -z "`grep PATH %{LOCALSTATEDIR}/.profile | grep '%{SBINDIR}'`" ] ; then
-	echo "export PATH=\"\$PATH:%{SBINDIR}\"" >>%{LOCALSTATEDIR}/.profile 2>>${TMPFILE}
+if [ -z "`grep PATH %{AMANDAHOMEDIR}/.profile | grep '%{SBINDIR}'`" ] ; then
+	echo "export PATH=\"\$PATH:%{SBINDIR}\"" >>%{AMANDAHOMEDIR}/.profile 2>>${TMPFILE}
 fi
-echo "`date +'%b %e %Y %T'`: Setting ownership and permissions for '%{LOCALSTATEDIR}/.profile'" >>${TMPFILE}
-chown %{amanda_user}:%{amanda_group} %{LOCALSTATEDIR}/.profile >>${TMPFILE} 2>&1
-chmod 0640 %{LOCALSTATEDIR}/.profile >>${TMPFILE} 2>&1
+echo "`date +'%b %e %Y %T'`: Setting ownership and permissions for '%{AMANDAHOMEDIR}/.profile'" >>${TMPFILE}
+chown %{amanda_user}:%{amanda_group} %{AMANDAHOMEDIR}/.profile >>${TMPFILE} 2>&1
+chmod 0640 %{AMANDAHOMEDIR}/.profile >>${TMPFILE} 2>&1
 cat ${TMPFILE}
 cat ${TMPFILE} >>${INSTALL_LOG}
 
@@ -844,7 +837,7 @@ echo "`date +'%b %e %Y %T'`: Preparing to install: %{amanda_version_info}" >${TM
 # Check for the 'amanda' user
 echo "`date +'%b %e %Y %T'`: Checking for '%{amanda_user}' user..." >>${TMPFILE}
 if [ "`id -u %{amanda_user} >&/dev/null && echo 0 || echo 1`" != "0" ] ; then
-	useradd -c "Amanda" -M -g disk -d %{LOCALSTATEDIR} -s /bin/sh %{amanda_user} >>${TMPFILE} 2>&1
+	useradd -c "Amanda" -M -g disk -d %{AMANDAHOMEDIR} -s /bin/sh %{amanda_user} >>${TMPFILE} 2>&1
 	if [ %{is_suse10} -eq 1 ] || [ %{is_sles9} -eq 1 ] || [ %{is_sles10} -eq 1 ]; then
 		PASSWD_EXIT=$?
 	else
@@ -866,7 +859,7 @@ if [ "`id -u %{amanda_user} >&/dev/null && echo 0 || echo 1`" != "0" ] ; then
 		echo "`date +'%b %e %Y %T'`:  pre-existing Amanda configurations in %{SYSCONFDIR}/amanda" >>${TMPFILE}
 		echo "`date +'%b %e %Y %T'`:  you should ensure that 'dumpuser' is set to '%{amanda_user}'" >>${TMPFILE}
 		echo "`date +'%b %e %Y %T'`:  in those configurations.  Additionally, you should ensure" >>${TMPFILE}
-		echo "`date +'%b %e %Y %T'`:  that %{LOCALSTATEDIR}/.amandahosts on your client systems" >>${TMPFILE}
+		echo "`date +'%b %e %Y %T'`:  that %{AMANDAHOMEDIR}/.amandahosts on your client systems" >>${TMPFILE}
 		echo "`date +'%b %e %Y %T'`:  is properly configured to allow connections for the user" >>${TMPFILE}
 		echo "`date +'%b %e %Y %T'`:  '%{amanda_user}'." >>${TMPFILE}
 		echo "`date +'%b %e %Y %T'`:" >>${TMPFILE}
@@ -898,7 +891,7 @@ else
 	echo "`date +'%b %e %Y %T'`:  user.:" >>${TMPFILE}
 	echo "`date +'%b %e %Y %T'`:" >>${TMPFILE}
 	echo "`date +'%b %e %Y %T'`:  SHELL:          /bin/sh" >>${TMPFILE}
-	echo "`date +'%b %e %Y %T'`:  HOME:           %{LOCALSTATEDIR}" >>${TMPFILE}
+	echo "`date +'%b %e %Y %T'`:  HOME:           %{AMANDAHOMEDIR}" >>${TMPFILE}
 	echo "`date +'%b %e %Y %T'`:  Default group:  %{amanda_group}" >>${TMPFILE}
         echo "`date +'%b %e %Y %T'`:  Verifying %{amanda_user} parameters :" >>${TMPFILE}
 
@@ -920,10 +913,10 @@ else
                 echo "`date +'%b %e %Y %T'`:  Verified Default shell for user 'amandabackup'" >>${TMPFILE}
         fi
 
-        if [ "`grep ^%{amanda_user} /etc/passwd|cut -d: -f6`" != "%{LOCALSTATEDIR}" ] ; then
+        if [ "`grep ^%{amanda_user} /etc/passwd|cut -d: -f6`" != "%{AMANDAHOMEDIR}" ] ; then
                 echo "`date +'%b %e %Y %T'`:  !!! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! !!!" >>${TMPFILE}
                 echo "`date +'%b %e %Y %T'`:  !!! user 'amandabackup' home directory should be set to   !!!" >>${TMPFILE}
-                echo "`date +'%b %e %Y %T'`:  !!! %{LOCALSTATEDIR} Pl correct before using Amanda       !!!" >>${TMPFILE}
+                echo "`date +'%b %e %Y %T'`:  !!! %{AMANDAHOMEDIR} Pl correct before using Amanda       !!!" >>${TMPFILE}
                 echo "`date +'%b %e %Y %T'`:  !!! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! !!!" >>${TMPFILE}
         else
                 echo "`date +'%b %e %Y %T'`:  Verified Default home directory for user amandabackup" >>${TMPFILE}
@@ -932,15 +925,15 @@ else
 	echo "`date +'%b %e %Y %T'`:" >>${TMPFILE}
 	PASSWD_OK=0
 fi
-if [ -d %{LOCALSTATEDIR} ] ; then
-	echo -n "`date +'%b %e %Y %T'`:  Checking ownership of '%{LOCALSTATEDIR}'... " >>${TMPFILE}
-	if [ "`ls -dl %{LOCALSTATEDIR} | awk '//{split($_,x); print x[3]}'`" == "%{amanda_user}" ] && \
-	   [ "`ls -dl %{LOCALSTATEDIR} | awk '//{split($_,x); print x[4]}'`" == "%{amanda_group}" ] ; then
+if [ -d %{AMANDAHOMEDIR} ] ; then
+	echo -n "`date +'%b %e %Y %T'`:  Checking ownership of '%{AMANDAHOMEDIR}'... " >>${TMPFILE}
+	if [ "`ls -dl %{AMANDAHOMEDIR} | awk '//{split($_,x); print x[3]}'`" == "%{amanda_user}" ] && \
+	   [ "`ls -dl %{AMANDAHOMEDIR} | awk '//{split($_,x); print x[4]}'`" == "%{amanda_group}" ] ; then
 		echo "correct." >>${TMPFILE}
 		VARLIB_OK=0
 	else
 		echo "incorrect!" >>${TMPFILE}
-		echo "`date +'%b %e %Y %T'`:  Please ensure that the directory '%{LOCALSTATEDIR}' is owned by" >>${TMPFILE}
+		echo "`date +'%b %e %Y %T'`:  Please ensure that the directory '%{AMANDAHOMEDIR}' is owned by" >>${TMPFILE}
 		echo "`date +'%b %e %Y %T'`:  the user '%{amanda_user}' and group '%{amanda_group}'." >>${TMPFILE}
 		VARLIB_OK=1
 	fi
@@ -1005,31 +998,31 @@ cat ${TMPFILE}
 cat ${TMPFILE} >>${INSTALL_LOG}
 
 # Install .amandahosts to client
-echo "`date +'%b %e %Y %T'`: Checking '%{LOCALSTATEDIR}/.amandahosts' file." >${TMPFILE}
-if [ ! -f %{LOCALSTATEDIR}/.amandahosts ] ; then
-	touch %{LOCALSTATEDIR}/.amandahosts >>${TMPFILE} 2>&1
+echo "`date +'%b %e %Y %T'`: Checking '%{AMANDAHOMEDIR}/.amandahosts' file." >${TMPFILE}
+if [ ! -f %{AMANDAHOMEDIR}/.amandahosts ] ; then
+	touch %{AMANDAHOMEDIR}/.amandahosts >>${TMPFILE} 2>&1
 fi
 for host in localhost localhost.localdomain ; do
-		if [ -z "`grep \"^${host}[[:blank:]]\+\" %{LOCALSTATEDIR}/.amandahosts | grep \"[[:blank:]]\+%{amanda_user}[[:blank:]]\+amdump\"`" ] ; then
-			echo "${host}   %{amanda_user} amdump" >>%{LOCALSTATEDIR}/.amandahosts
+		if [ -z "`grep \"^${host}[[:blank:]]\+\" %{AMANDAHOMEDIR}/.amandahosts | grep \"[[:blank:]]\+%{amanda_user}[[:blank:]]\+amdump\"`" ] ; then
+			echo "${host}   %{amanda_user} amdump" >>%{AMANDAHOMEDIR}/.amandahosts
 		fi
 done
-chown %{amanda_user}:%{amanda_group} %{LOCALSTATEDIR}/.amandahosts >>${TMPFILE} 2>&1
-chmod 0600 %{LOCALSTATEDIR}/.amandahosts >>${TMPFILE} 2>&1
+chown %{amanda_user}:%{amanda_group} %{AMANDAHOMEDIR}/.amandahosts >>${TMPFILE} 2>&1
+chmod 0600 %{AMANDAHOMEDIR}/.amandahosts >>${TMPFILE} 2>&1
 cat ${TMPFILE}
 cat ${TMPFILE} >>${INSTALL_LOG}
 
 # environment variables (~amandabackup/.profile)
-echo "`date +'%b %e %Y %T'`: Checking for '%{LOCALSTATEDIR}/.profile' and ensuring correct environment." >${TMPFILE}
-if [ ! -f %{LOCALSTATEDIR}/.profile ] ; then
-	touch %{LOCALSTATEDIR}/.profile >>${TMPFILE} 2>&1
+echo "`date +'%b %e %Y %T'`: Checking for '%{AMANDAHOMEDIR}/.profile' and ensuring correct environment." >${TMPFILE}
+if [ ! -f %{AMANDAHOMEDIR}/.profile ] ; then
+	touch %{AMANDAHOMEDIR}/.profile >>${TMPFILE} 2>&1
 fi
-if [ -z "`grep PATH %{LOCALSTATEDIR}/.profile | grep '%{SBINDIR}'`" ] ; then
-	echo "export PATH=\"\$PATH:%{SBINDIR}\"" >>%{LOCALSTATEDIR}/.profile 2>>${TMPFILE}
+if [ -z "`grep PATH %{AMANDAHOMEDIR}/.profile | grep '%{SBINDIR}'`" ] ; then
+	echo "export PATH=\"\$PATH:%{SBINDIR}\"" >>%{AMANDAHOMEDIR}/.profile 2>>${TMPFILE}
 fi
-echo "`date +'%b %e %Y %T'`: Setting ownership and permissions for '%{LOCALSTATEDIR}/.profile'" >>${TMPFILE}
-chown %{amanda_user}:%{amanda_group} %{LOCALSTATEDIR}/.profile >>${TMPFILE} 2>&1
-chmod 0640 %{LOCALSTATEDIR}/.profile >>${TMPFILE} 2>&1
+echo "`date +'%b %e %Y %T'`: Setting ownership and permissions for '%{AMANDAHOMEDIR}/.profile'" >>${TMPFILE}
+chown %{amanda_user}:%{amanda_group} %{AMANDAHOMEDIR}/.profile >>${TMPFILE} 2>&1
+chmod 0640 %{AMANDAHOMEDIR}/.profile >>${TMPFILE} 2>&1
 cat ${TMPFILE}
 cat ${TMPFILE} >>${INSTALL_LOG}
 
@@ -1049,8 +1042,8 @@ echo "Amanda installation log can be found in '${INSTALL_LOG}' and errors (if an
 
 %files backup_client
 %defattr(0755,%{amanda_user},%{amanda_group})
-%dir %{LOCALSTATEDIR}
-%dir %{LOCALSTATEDIR}/gnutar-lists
+%dir %{AMANDAHOMEDIR}
+%dir %{AMANDAHOMEDIR}/gnutar-lists
 %dir %{LIBEXECDIR}
 %{LIBDIR}/libamanda.a
 %{LIBDIR}/libamanda.la
@@ -1060,6 +1053,10 @@ echo "Amanda installation log can be found in '${INSTALL_LOG}' and errors (if an
 %{LIBDIR}/libamandad.la
 %{LIBDIR}/libamandad-%{version}.so
 %{LIBDIR}/libamandad.so
+%{LIBDIR}/libamdevice.a
+%{LIBDIR}/libamdevice.la
+%{LIBDIR}/libamdevice-%{version}.so
+%{LIBDIR}/libamdevice.so
 %{LIBDIR}/libamclient.a
 %{LIBDIR}/libamclient.la
 %{LIBDIR}/libamclient-%{version}.so
@@ -1083,12 +1080,15 @@ echo "Amanda installation log can be found in '${INSTALL_LOG}' and errors (if an
 %{LIBEXECDIR}/killpgrp
 %{LIBEXECDIR}/rundump
 %{LIBEXECDIR}/runtar
+%{LIBEXECDIR}/amanda-sh-lib.sh
 %defattr(0750,%{amanda_user},%{amanda_group})
 %dir %{LOGDIR}
 %{SBINDIR}/amaespipe
 %{SBINDIR}/amcrypt
 %{SBINDIR}/amcrypt-ossl
 %{SBINDIR}/amcrypt-ossl-asym
+%{SBINDIR}/amcryptsimple
+%{SBINDIR}/amgpgcrypt
 %{SBINDIR}/amoldrecover
 %{SBINDIR}/amrecover
 %defattr(0644,%{amanda_user},%{amanda_group})
@@ -1097,20 +1097,21 @@ echo "Amanda installation log can be found in '${INSTALL_LOG}' and errors (if an
 %{MANDIR}/man8/amanda.8.gz
 %{MANDIR}/man8/amplot.8.gz
 %{MANDIR}/man8/amrecover.8.gz
-%{LOCALSTATEDIR}/example/amanda-client.conf
 %{LIBEXECDIR}/amcat.awk
 %{LIBEXECDIR}/amplot.awk
 %{LIBEXECDIR}/amplot.g
 %{LIBEXECDIR}/amplot.gp
 %defattr(0640,%{amanda_user},%{amanda_group})
-%{LOCALSTATEDIR}/amanda-release
+%{AMANDAHOMEDIR}/amanda-release
+%{AMANDAHOMEDIR}/example/xinetd.amandaclient
+%{AMANDAHOMEDIR}/example/amanda-client.conf
 
 %files backup_server
 %defattr(0755,%{amanda_user},%{amanda_group})
 %dir %{SYSCONFDIR}/amanda
 %dir %{LIBEXECDIR}
-%dir %{LOCALSTATEDIR}
-%dir %{LOCALSTATEDIR}/gnutar-lists
+%dir %{AMANDAHOMEDIR}
+%dir %{AMANDAHOMEDIR}/gnutar-lists
 %{LIBDIR}/libamanda.a
 %{LIBDIR}/libamanda.la
 %{LIBDIR}/libamanda-%{version}.so
@@ -1168,6 +1169,9 @@ echo "Amanda installation log can be found in '${INSTALL_LOG}' and errors (if an
 %{LIBEXECDIR}/sendsize
 %{LIBEXECDIR}/taper
 %{LIBEXECDIR}/versionsuffix
+%{LIBEXECDIR}/amdevcheck
+%{LIBEXECDIR}/amanda-sh-lib.sh
+%{SBINDIR}/amaddclient
 %{SBINDIR}/amadmin
 %{SBINDIR}/amcheckdb
 %{SBINDIR}/amcleanup
@@ -1183,6 +1187,7 @@ echo "Amanda installation log can be found in '${INSTALL_LOG}' and errors (if an
 %{SBINDIR}/amreport
 %{SBINDIR}/amrestore
 %{SBINDIR}/amrmtape
+%{SBINDIR}/amserverconfig
 %{SBINDIR}/amstatus
 %{SBINDIR}/amtape
 %{SBINDIR}/amtapetype
@@ -1199,11 +1204,13 @@ echo "Amanda installation log can be found in '${INSTALL_LOG}' and errors (if an
 %{SBINDIR}/amcheck
 %defattr(0750,%{amanda_user},%{amanda_group})
 %dir %{LOGDIR}
-%dir %{LOCALSTATEDIR}/example
+%dir %{AMANDAHOMEDIR}/example
 %{SBINDIR}/amaespipe
 %{SBINDIR}/amcrypt
 %{SBINDIR}/amcrypt-ossl
 %{SBINDIR}/amcrypt-ossl-asym
+%{SBINDIR}/amcryptsimple
+%{SBINDIR}/amgpgcrypt
 %{SBINDIR}/amoldrecover
 %{SBINDIR}/amrecover
 %defattr(0644,%{amanda_user},%{amanda_group})
@@ -1213,6 +1220,7 @@ echo "Amanda installation log can be found in '${INSTALL_LOG}' and errors (if an
 %{LIBEXECDIR}/amplot.gp
 %{MANDIR}/man5/amanda.conf.5.gz
 %{MANDIR}/man5/amanda-client.conf.5.gz
+%{MANDIR}/man8/amaddclient.8.gz
 %{MANDIR}/man8/amadmin.8.gz
 %{MANDIR}/man8/amanda.8.gz
 %{MANDIR}/man8/amcheck.8.gz
@@ -1231,6 +1239,7 @@ echo "Amanda installation log can be found in '${INSTALL_LOG}' and errors (if an
 %{MANDIR}/man8/amreport.8.gz
 %{MANDIR}/man8/amrestore.8.gz
 %{MANDIR}/man8/amrmtape.8.gz
+%{MANDIR}/man8/amserverconfig.8.gz
 %{MANDIR}/man8/amstatus.8.gz
 %{MANDIR}/man8/amtape.8.gz
 %{MANDIR}/man8/amtapetype.8.gz
@@ -1240,21 +1249,25 @@ echo "Amanda installation log can be found in '${INSTALL_LOG}' and errors (if an
 %{MANDIR}/man8/amcrypt.8.gz
 %{MANDIR}/man8/amcrypt-ossl.8.gz
 %{MANDIR}/man8/amcrypt-ossl-asym.8.gz
+%{MANDIR}/man8/amcryptsimple.8.gz
+%{MANDIR}/man8/amgpgcrypt.8.gz
 %{MANDIR}/man8/amaespipe.8.gz
-%{LOCALSTATEDIR}/example/amanda.conf
-%{LOCALSTATEDIR}/example/amanda-client.conf
-%{LOCALSTATEDIR}/example/label-templates/DLT.ps
-%{LOCALSTATEDIR}/example/label-templates/EXB-8500.ps
-%{LOCALSTATEDIR}/example/label-templates/HP-DAT.ps
-%{LOCALSTATEDIR}/example/label-templates/8.5x11.ps
-%{LOCALSTATEDIR}/example/label-templates/3hole.ps
-%{LOCALSTATEDIR}/example/label-templates/DIN-A4.ps
+%{MANDIR}/man8/amdevcheck.8.gz
+%{AMANDAHOMEDIR}/template.d/*
+%{AMANDAHOMEDIR}/example/amanda.conf
+%{AMANDAHOMEDIR}/example/label-templates/*
 %defattr(0640,%{amanda_user},%{amanda_group})
-%{LOCALSTATEDIR}/amanda-release
+%{AMANDAHOMEDIR}/amanda-release
+%{AMANDAHOMEDIR}/example/amanda-client.conf
+%defattr(0644,%{amanda_user},%{amanda_group})
+%{AMANDAHOMEDIR}/example/xinetd.amandaserver
 
 # --- ChangeLog
 
 %changelog
+* Wed Nov 7 2007 Paddy Sreenivasan <paddy at zmanda dot com>
+- Added amserverconfig, amaddclient, amgpgcrypt, amcryptsimple and libamdevice.
+- Added amanda configuration template files
 * Fri Sep 21 2007 Paddy Sreenivasan <paddy at zmanda dot com>
 - Remove libamserver, libamtape from client rpm
 * Wed Sep 19 2007 Paddy Sreenivasan <paddy at zmanda dot com>

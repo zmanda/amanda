@@ -196,7 +196,9 @@ amflock_test_LDADD = libamanda.la
 # scripts
 
 # divide scripts up both by language and by destination directory.
-sbin_SCRIPTS_PERL =
+sbin_SCRIPTS_PERL = \
+	    amgpgcrypt \
+	    amcryptsimple
 
 sbin_SCRIPTS_SHELL = \
 	    amcrypt \

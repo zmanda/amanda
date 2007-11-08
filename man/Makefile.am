@@ -28,8 +28,12 @@ SERVER_MAN_PAGES =  amadmin.8 \
 		    amtoc.8 \
 		    amverify.8 \
 		    amverifyrun.8 \
+		    amserverconfig.8 \
+		    amaddclient.8 \
 		    amcrypt.8 \
 		    amaespipe.8 \
+		    amgpgcrypt.8 \
+		    amcryptsimple.8  \
 		    amcrypt-ossl.8 \
 		    amcrypt-ossl-asym.8
 

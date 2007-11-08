@@ -34,6 +34,8 @@ endif
 
 endif
 
+libamdevice_la_LDFLAGS =  -release $(VERSION)
+
 noinst_HEADERS = device.h null-device.h queueing.h semaphore.h \
 	tape-ops.h property.h rait-device.h \
 	tape-device.h vfs-device.h
