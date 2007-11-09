@@ -27,90 +27,81 @@
 %{?srpm_only: %define build_srpm 1}
 
 # Define which Distribution we are building:
-%define is_rhel3   0
-%define is_rhel4   0
-%define is_rhel5   0
-%define is_fedora3 0
-%define is_fedora4 0
-%define is_fedora5 0
-%define is_fedora6 0
-%define is_fedora7 0
-%define is_suse10  0
-%define is_sles9  0
-%define is_sles10  0
-%{?build_rhel3:   %define is_rhel3   1}
-%{?build_rhel4:   %define is_rhel4   1}
-%{?build_rhel5:   %define is_rhel5   1}
-%{?build_fedora3: %define is_fedora3 1}
-%{?build_fedora4: %define is_fedora4 1}
-%{?build_fedora5: %define is_fedora5 1}
-%{?build_fedora6: %define is_fedora6 1}
-%{?build_fedora7: %define is_fedora7 1}
-%{?build_suse10:  %define is_suse10  1}
-%{?build_sles9:   %define is_sles9   1}
-%{?build_sles10:  %define is_sles10   1}
-
-%if ! %{is_rhel3} && ! %{is_rhel4} && ! %{is_rhel5} && ! %{is_fedora3} && ! %{is_fedora4} && ! %{is_fedora5} && ! %{is_fedora6} && ! %{is_fedora7} && ! %{is_suse10} && ! %{is_sles9} && ! %{is_sles10}
-%(error: Please specify which distribution to build RPMS for.)
-exit 1
+# Try to detect the distribution we are building:
+%if %{_vendor} == redhat 
+    # Fedora symlinks /etc/fedora-release to /etc/redhat-release for at least
+    # fc3-7.  So RHEL and Fedora look at the same file.  The awk trickery here
+    # forces the field to be numeric so that the spec comparison works
+    %if %(awk '{print $1}' /etc/redhat-release) == "Fedora" && %(awk '{print $4+0}' /etc/redhat-release) == 3
+	%define dist fedora
+        %define disttag fc
+	%define distver 3
+    %endif
+    %if %(awk '{print $1}' /etc/redhat-release) == "Fedora" && %(awk '{print$4+0}' /etc/redhat-release) == 4
+	%define dist fedora
+        %define disttag fc
+	%define distver 4
+    %endif
+    %if %(awk '{print $1}' /etc/redhat-release) == "Fedora" && %(awk '{print $4+0}' /etc/redhat-release) == 5
+	%define dist fedora
+        %define disttag fc
+	%define distver 5
+    %endif
+    %if %(awk '{print $1}' /etc/redhat-release) == "Fedora" && %(awk '{print $4+0}' /etc/redhat-release) == 6
+	%define dist fedora
+        %define disttag fc
+	%define distver 6
+    %endif
+    %if %(awk '{print $1}' /etc/redhat-release) == "Fedora" && %(awk '{print $3+0}' /etc/redhat-release) == 7
+	%define dist fedora
+        %define disttag fc
+	%define distver 7
+    %endif
+    %if %(awk '{print $1}' /etc/redhat-release) == "Red" && %(awk '{print $7+0}' /etc/redhat-release) == 3
+        %define dist redhat
+	%define disttag rhel
+	%define distver 3
+    %endif
+    %if %(awk '{print $1}' /etc/redhat-release) == "Red" && %(awk '{print $7+0}' /etc/redhat-release) == 4
+        %define dist redhat
+	%define disttag rhel
+	%define distver 4
+    %endif
+    %if %(awk '{print $1}' /etc/redhat-release) == "Red" && %(awk '{print $7+0}' /etc/redhat-release) == 5
+        %define dist redhat
+	%define disttag rhel
+	%define distver 5
+    %endif
+%endif
+# Detect Suse variants.  Suse gives us some nice macros in their rpms
+%if %{_vendor} == "suse"
+    %if %{suse_version} == 910
+	%define dist SuSE
+	%define disttag sles
+	%define distver 9
+    %endif
+    %if %{suse_version} == 1010
+	%define dist SuSE
+	%define disttag sles
+	%define distver 10
+    %endif
+    %if %{suse_version} == 1000
+	%define dist SuSE
+	%define disttag suse
+	%define distver 10
+    %endif
 %endif
 
 # Set options per distribution
-%if %{is_rhel3} || %{is_rhel4} || %{is_rhel5}
-%define dist redhat
-%define disttag rhel
-%define build_host i386-redhat-linux
-%define distver %(cat /etc/redhat-release | awk '{split($_,v); print v[7]}')
-%define rpm_group Applications/Archiving
+%if %{dist} == redhat || %{dist} == fedora
+    %define build_host i386-redhat-linux
+    %define rpm_group Applications/Archiving
+    %define xinetd_reload restart
 %endif
-%if %{is_fedora3}
-%define dist fedora
-%define disttag fc
-%define build_host i386-redhat-linux
-%define distver %(release="`rpm -q --queryformat='%{VERSION}' %{dist}-release 2> /dev/null | tr . : | sed s/://g`" ; if test $? != 0 ; then release="" ; fi ; echo "$release")
-%define rpm_group Applications/Archiving
-%endif
-%if %{is_fedora4}
-%define dist fedora
-%define disttag fc
-%define build_host i386-redhat-linux
-%define distver %(release="`rpm -q --queryformat='%{VERSION}' %{dist}-release 2> /dev/null | tr . : | sed s/://g`" ; if test $? != 0 ; then release="" ; fi ; echo "$release")
-%define rpm_group Applications/Archiving
-%endif
-%if %{is_fedora5}
-%define dist fedora
-%define disttag fc
-%define build_host i386-redhat-linux
-%define distver %(release="`rpm -q --queryformat='%{VERSION}' %{dist}-release 2> /dev/null | tr . : | sed s/://g`" ; if test $? != 0 ; then release="" ; fi ; echo "$release")
-%define rpm_group Applications/Archiving
-%endif
-%if %{is_fedora6}
-%define dist fedora
-%define disttag fc
-%define build_host i386-redhat-linux
-%define distver %(release="`rpm -q --queryformat='%{VERSION}' %{dist}-release 2> /dev/null | tr . : | sed s/://g`" ; if test $? != 0 ; then release="" ; fi ; echo "$release")
-%define rpm_group Applications/Archiving
-%endif
-%if %{is_fedora7}
-%define dist fedora
-%define disttag fc
-%define build_host i386-redhat-linux
-%define distver %(release="`rpm -q --queryformat='%{VERSION}' %{dist}-release 2> /dev/null | tr . : | sed s/://g`" ; if test $? != 0 ; then release="" ; fi ; echo "$release")
-%define rpm_group Applications/Archiving
-%endif
-%if %{is_suse10}
-%define dist SuSE
-%define disttag suse
-%define build_host i586-suse-linux
-%define distver %(cat /etc/SuSE-release | grep VERSION | awk '{split($_,v); print v[3]}')
-%define rpm_group Productivity/Archiving/Backup
-%endif
-%if %{is_sles9} || %{is_sles10}
-%define dist SuSE
-%define disttag sles
-%define build_host i586-suse-linux
-%define distver %(cat /etc/SuSE-release | grep VERSION | awk '{split($_,v); print v[3]}')
-%define rpm_group Productivity/Archiving/Backup
+%if %{dist} == SuSE
+    %define build_host i586-suse-linux
+    %define rpm_group Productivity/Archiving/Backup
+    %define xinetd_reload restart
 %endif
 
 %define packer %(%{__id_u} -n)
@@ -149,15 +140,15 @@ BuildRequires: bison
 BuildRequires: flex
 BuildRequires: gcc
 BuildRequires: glibc
-BuildRequires: gnuplot
 BuildRequires: readline
 Requires: /bin/awk
 Requires: fileutils
 Requires: grep
+Requires: gnuplot
 Requires: libc.so.6
 Requires: libm.so.6
 Requires: libnsl.so.1
-%if  %{is_rhel3} || %{is_rhel4} || %{is_rhel5} || %{is_fedora3} || %{is_fedora4} || %{is_fedora5} || %{is_fedora6} || %{is_fedora7}
+%if  %{dist} == redhat || %{dist}== fedora
 Requires: libtermcap.so.2
 Requires: initscripts
 %endif
@@ -175,7 +166,7 @@ Requires: grep
 Requires: libc.so.6
 Requires: libm.so.6
 Requires: libnsl.so.1
-%if  %{is_rhel3} || %{is_rhel4} || %{is_rhel5} || %{is_fedora3} || %{is_fedora4} || %{is_fedora5} || %{is_fedora6} || %{is_fedora7}
+%if  %{dist} == redhat || %{dist}== fedora
 Requires: libtermcap.so.2
 Requires: initscripts
 %endif
@@ -197,7 +188,7 @@ Requires: grep
 Requires: libc.so.6
 Requires: libm.so.6
 Requires: libnsl.so.1
-%if  %{is_rhel3} || %{is_rhel4} || %{is_rhel5} || %{is_fedora3} || %{is_fedora4} || %{is_fedora5} || %{is_fedora6} || %{is_fedora7}
+%if  %{dist} == redhat || %{dist}== fedora
 Requires: libtermcap.so.2
 Requires: initscripts
 %endif
@@ -328,7 +319,7 @@ make
 
 %install
 if [ "%{buildroot}" != "/" ]; then
-	if [ -d "%{buildroot}" ]; then
+	if [ -d "%{buildroot}" ] ; then
 		rm -rf %{buildroot}
 	fi
 else
@@ -377,7 +368,7 @@ echo "`date +'%b %e %Y %T'`: Preparing to install: %{amanda_version_info}" >${TM
 echo "`date +'%b %e %Y %T'`: Checking for '%{amanda_user}' user..." >>${TMPFILE}
 if [ "`id -u %{amanda_user} >&/dev/null && echo 0 || echo 1`" != "0" ] ; then
 	useradd -c "Amanda" -M -g disk -d %{AMANDAHOMEDIR} -s /bin/sh %{amanda_user}
-	if [ %{is_suse10} -eq 1 ] || [ %{is_sles9} -eq 1 ] || [ %{is_sles10} -eq 1 ]; then
+	if [ %{dist} = "SuSE" ]; then
 		PASSWD_EXIT=$?
 	else
 		# Lock the amanda account until admin sets password
@@ -610,7 +601,7 @@ echo "`date +'%b %e %Y %T'`: Preparing to install: %{amanda_version_info}" >${TM
 echo "`date +'%b %e %Y %T'`: Checking for '%{amanda_user}' user..." >>${TMPFILE}
 if [ "`id -u %{amanda_user} >&/dev/null && echo 0 || echo 1`" != "0" ] ; then
 	useradd -c "Amanda" -M -g disk -d %{AMANDAHOMEDIR} -s /bin/sh %{amanda_user}
-	if [ %{is_suse10} -eq 1 ] || [ %{is_sles9} -eq 1 ] || [ %{is_sles10} -eq 1 ]; then
+	if [ %{dist} = "SuSE" ; then
 		PASSWD_EXIT=$?
 	else
 		# Lock the amanda account until admin sets password
@@ -838,7 +829,7 @@ echo "`date +'%b %e %Y %T'`: Preparing to install: %{amanda_version_info}" >${TM
 echo "`date +'%b %e %Y %T'`: Checking for '%{amanda_user}' user..." >>${TMPFILE}
 if [ "`id -u %{amanda_user} >&/dev/null && echo 0 || echo 1`" != "0" ] ; then
 	useradd -c "Amanda" -M -g disk -d %{AMANDAHOMEDIR} -s /bin/sh %{amanda_user} >>${TMPFILE} 2>&1
-	if [ %{is_suse10} -eq 1 ] || [ %{is_sles9} -eq 1 ] || [ %{is_sles10} -eq 1 ]; then
+	if [ %{dist} = "SuSE" ] ; then
 		PASSWD_EXIT=$?
 	else
 		# Lock the amanda account until admin sets password
@@ -1265,6 +1256,8 @@ echo "Amanda installation log can be found in '${INSTALL_LOG}' and errors (if an
 # --- ChangeLog
 
 %changelog
+* Thu Nov  8 2007 Dan Locks <dwlocks at zmanda dot com>
+- Added Linux distribution detection
 * Wed Nov 7 2007 Paddy Sreenivasan <paddy at zmanda dot com>
 - Added amserverconfig, amaddclient, amgpgcrypt, amcryptsimple and libamdevice.
 - Added amanda configuration template files
