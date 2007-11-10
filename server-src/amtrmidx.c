@@ -63,15 +63,13 @@ main(
     disk_t *diskp;
     disklist_t diskl;
     size_t i;
-    char *conffile;
     char *conf_diskfile;
     char *conf_tapelist;
     char *conf_indexdir;
     find_result_t *output_find;
     time_t tmp_time;
     int amtrmidx_debug = 0;
-    int    new_argc,   my_argc;
-    char **new_argv, **my_argv;
+    config_overwrites_t *cfg_ovr = NULL;
 
     /*
      * Configure program for internationalization:
@@ -93,55 +91,35 @@ main(
     dbopen(DBG_SUBDIR_SERVER);
     dbprintf(_("%s: version %s\n"), argv[0], version());
 
-    parse_conf(argc, argv, &new_argc, &new_argv);
-    my_argc = new_argc;
-    my_argv = new_argv;
+    cfg_ovr = extract_commandline_config_overwrites(&argc, &argv);
 
-    if (my_argc > 1 && strcmp(my_argv[1], "-t") == 0) {
+    if (argc > 1 && strcmp(argv[1], "-t") == 0) {
 	amtrmidx_debug = 1;
-	my_argc--;
-	my_argv++;
+	argc--;
+	argv++;
     }
 
-    if (my_argc < 2) {
-	g_fprintf(stderr, _("Usage: %s [-t] <config> [-o configoption]*\n"), my_argv[0]);
+    if (argc < 2) {
+	g_fprintf(stderr, _("Usage: %s [-t] <config> [-o configoption]*\n"), argv[0]);
 	return 1;
     }
 
-    config_name = my_argv[1];
-
-    config_dir = vstralloc(CONFIG_DIR, "/", config_name, "/", NULL);
-    conffile = stralloc2(config_dir, CONFFILE_NAME);
-    if (read_conffile(conffile)) {
-	error(_("errors processing config file \"%s\""), conffile);
-	/*NOTREACHED*/
-    }
-    amfree(conffile);
+    config_init(CONFIG_INIT_EXPLICIT_NAME | CONFIG_INIT_FATAL | CONFIG_INIT_USE_CWD,
+	argv[1]);
+    apply_config_overwrites(cfg_ovr);
 
     check_running_as(RUNNING_AS_DUMPUSER);
 
     dbrename(config_name, DBG_SUBDIR_SERVER);
 
-    report_bad_conf_arg();
-
-    conf_diskfile = getconf_str(CNF_DISKFILE);
-    if(*conf_diskfile == '/') {
-	conf_diskfile = stralloc(conf_diskfile);
-    } else {
-	conf_diskfile = stralloc2(config_dir, conf_diskfile);
-    }
+    conf_diskfile = config_dir_relative(getconf_str(CNF_DISKFILE));
     if (read_diskfile(conf_diskfile, &diskl) < 0) {
 	error(_("could not load disklist \"%s\""), conf_diskfile);
 	/*NOTREACHED*/
     }
     amfree(conf_diskfile);
 
-    conf_tapelist = getconf_str(CNF_TAPELIST);
-    if(*conf_tapelist == '/') {
-	conf_tapelist = stralloc(conf_tapelist);
-    } else {
-	conf_tapelist = stralloc2(config_dir, conf_tapelist);
-    }
+    conf_tapelist = config_dir_relative(getconf_str(CNF_TAPELIST));
     if(read_tapelist(conf_tapelist)) {
 	error(_("could not load tapelist \"%s\""), conf_tapelist);
 	/*NOTREACHED*/
@@ -150,12 +128,7 @@ main(
 
     output_find = find_dump(1, &diskl);
 
-    conf_indexdir = getconf_str(CNF_INDEXDIR);
-    if(*conf_indexdir == '/') {
-	conf_indexdir = stralloc(conf_indexdir);
-    } else {
-	conf_indexdir = stralloc2(config_dir, conf_indexdir);
-    }
+    conf_indexdir = config_dir_relative(getconf_str(CNF_INDEXDIR));
 
     /* now go through the list of disks and find which have indexes */
     time(&tmp_time);
@@ -297,12 +270,9 @@ main(
     }
 
     amfree(conf_indexdir);
-    amfree(config_dir);
     free_find_result(&output_find);
     clear_tapelist();
     free_disklist(&diskl);
-    free_new_argv(new_argc, new_argv);
-    free_server_config();
 
     dbclose();
 

@@ -357,6 +357,17 @@ AC_DEFUN([AMANDA_PROG_PERL],
     AC_REQUIRE([AMANDA_INIT_PROGS])
     AC_PATH_PROGS(PERL,perl5 perl,,$LOCSYSPATH)
     AC_ARG_VAR([PERL], [Path to the 'perl' binary])
+    AC_PROG_PERL_VERSION([5.6.0], [], [
+	AC_MSG_ERROR([Amanda requires at least perl 5.6.0])
+    ])
+])
+
+AC_DEFUN([AMANDA_PROG_SWIG],
+[
+    AC_REQUIRE([AMANDA_INIT_PROGS])
+    AC_PATH_PROGS(SWIG,swig,,$LOCSYSPATH)
+    AC_ARG_VAR([SWIG], [Path to the 'swig' binary (developers only)])
+    AC_PROG_SWIG([1.3.28])
 ])
 
 AC_DEFUN([AMANDA_PROG_AR],

@@ -12,7 +12,7 @@ AM_CFLAGS = $(AMANDA_WARNING_CFLAGS)
 LINT=@AMLINT@
 LINTFLAGS=@AMLINTFLAGS@
 
-lib_LTLIBRARIES =       libamandad.la
+amlib_LTLIBRARIES =       libamandad.la
 LIB_EXTENSION = la
 
 libexec_PROGRAMS =	amandad

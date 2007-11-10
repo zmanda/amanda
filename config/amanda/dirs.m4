@@ -165,6 +165,11 @@ AC_DEFUN([AMANDA_WITH_TMPDIR],
 #   - libexecdir
 #   - mandir
 #
+#   Also defines the following directories and expands any variable references:
+#   - amlibdir = ${libdir}/amanda
+#   - amincludedir = ${includedir}/amanda
+#   - amperldir = ${amlibdir}/perl
+#
 AC_DEFUN([AMANDA_EXPAND_DIRS],
 [
     AC_DEFINE_DIR([bindir], [bindir],
@@ -178,6 +183,19 @@ AC_DEFUN([AMANDA_EXPAND_DIRS],
 
     AC_DEFINE_DIR([mandir], [mandir],
         [Directory in which man-pages should be installed])
+
+    # amanda-specific directories
+    amlibdir="${libdir}/amanda"
+    AC_DEFINE_DIR([amlibdir], [amlibdir],
+	[Directory in which Amanda libraries should be installed])
+
+    amincludedir="${includedir}/amanda"
+    AC_DEFINE_DIR([amincludedir], [amincludedir],
+	[Directory in which Amanda header files should be installed])
+
+    amperldir="${amlibdir}/perl"
+    AC_DEFINE_DIR([amperldir], [amperldir],
+	[Directory in which Amanda perl libraries should be installed])
 ])
 
 # SYNOPSIS

@@ -1254,13 +1254,9 @@ main(
       break;
     }
 
-  if(read_conffile(CONFFILE_NAME)) {
-    perror(CONFFILE_NAME);
-    exit(1);
-    /*NOTREACHED*/
-  }
+  config_init(CONFIG_INIT_USE_CWD | CONFIG_INIT_FATAL, NULL);
 
-  chg_scsi_conf = getconf_str(CNF_CHNGRFILE);
+  chg_scsi_conf = getconf_str(CNF_CHANGERFILE);
   tape_device = getconf_str(CNF_TAPEDEV);
 
   /* Get the configuration parameters */

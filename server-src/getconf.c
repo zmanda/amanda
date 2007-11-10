@@ -419,17 +419,16 @@ main(
     int		argc,
     char **	argv)
 {
-    char *result;
-    char *pgm;
-    char *conffile;
-    char *parmname;
+    char *result = NULL;
+    char *pgm = NULL;
+    char *parmname = NULL;
     int i;
     int asklist;
     char number[NUM_STR_SIZE];
-    int    new_argc,   my_argc;
-    char **new_argv, **my_argv;
     int myarg;
-
+    config_overwrites_t *cfg_ovr = NULL;
+    char *cfg_opt = NULL;
+    gboolean cfg_ok;
 
     /*
      * Configure program for internationalization:
@@ -442,12 +441,10 @@ main(
 
     safe_fd(-1, 0);
 
-    parse_conf(argc, argv, &new_argc, &new_argv);
-    my_argc = new_argc;
-    my_argv = new_argv;
+    cfg_ovr = extract_commandline_config_overwrites(&argc, &argv);
 
-    if((pgm = strrchr(my_argv[0], '/')) == NULL) {
-	pgm = my_argv[0];
+    if((pgm = strrchr(argv[0], '/')) == NULL) {
+	pgm = argv[0];
     } else {
 	pgm++;
     }
@@ -456,38 +453,41 @@ main(
     /* Don't die when child closes pipe */
     signal(SIGPIPE, SIG_IGN);
 
-    if(my_argc < 2) {
+    if(argc < 2) {
 	g_fprintf(stderr, _("Usage: %s [config] [--list] <parmname> [-o configoption]*\n"), pgm);
 	exit(1);
     }
 
     asklist = 0;
     myarg = 1;
-    if (strcmp(my_argv[1],"--list") == 0) {
+    if (strcmp(argv[1],"--list") == 0) {
 	asklist = 1;
 	myarg = 2;
-    } else if (my_argc > 2 && strcmp(my_argv[2],"--list") == 0) {
+    } else if (argc > 2 && strcmp(argv[2],"--list") == 0) {
 	asklist = 1;
 	myarg = 3;
-    } else if (my_argc > 2) {
+    } else if (argc > 2) {
 	myarg = 2;
     }
 
-    find_configuration(myarg > asklist + 1,
-                       my_argv[1], &config_name, &config_dir);
+    if (myarg > asklist + 1)
+	cfg_opt = argv[1];
 
-    if (myarg >= my_argc) {
+    if (myarg >= argc) {
 	error(_("Must specify a parameter"));
     }
-    parmname = my_argv[myarg];
+    parmname = argv[myarg];
 
-            
-    safe_cd();
+    /* do the config_init() now, although the result isn't checked until the end,
+     * when we try to look up config parameters */
+    cfg_ok = config_init(CONFIG_INIT_EXPLICIT_NAME | CONFIG_INIT_USE_CWD, cfg_opt);
+    if (cfg_ok) apply_config_overwrites(cfg_ovr);
+
+    safe_cd(); /* call this *after* config_init() */
 
     /* Note that we dont use check_running_as(..) here, because we may not have a configuration
      * (e.g., when we're examining build parameters).  If folks run this as the wrong user, that's
-     * their own problem.
-     */
+     * their own problem. */
 
     /*
      * Fill in the build values that need runtime help.
@@ -579,18 +579,31 @@ main(
 	amfree(t);
 
     } else {
-	conffile = stralloc2(config_dir, CONFFILE_NAME);
-	if(read_conffile(conffile)) {
-	    error(_("errors processing config file \"%s\""), conffile);
-	    /*NOTREACHED*/
+	/* *now* we check the result of config_init */
+	if (!cfg_ok) {
+	    if (cfg_opt) {
+		error(_("errors processing conf file \"%s\""), cfg_opt);
+		/*NOTREACHED*/
+	    } else {
+		error(_("errors processing conf file in current directory."));
+		/*NOTREACHED*/
+	    }
 	}
-	amfree(conffile);
+
 	dbrename(config_name, DBG_SUBDIR_SERVER);
-	report_bad_conf_arg();
 	if (asklist) {
-	    result = getconf_list(parmname);
+	    GSList *list = getconf_list(parmname);
+	    GSList *iter;
+	    result = stralloc("");
+
+	    for (iter = list; iter != NULL; iter = iter->next) {
+		result = newvstralloc(result, result, iter->data, "\n", NULL);
+	    }
+
+	    g_slist_free(list);
 	} else {
-	    result = getconf_byname(parmname);
+	    val_t *val = getconf_byname(parmname);
+	    if (val) result = val_t_display_str(val, FALSE);
 	}
     }
 
@@ -605,11 +618,7 @@ main(
 	    puts(result); /* add a '\n' */
     }
 
-    free_new_argv(new_argc, new_argv);
-    free_server_config();
     amfree(result);
-    amfree(config_dir);
-    amfree(config_name);
     for(i = 0; i < 3; i++) {
 	amfree(build_info[i].value);
     }

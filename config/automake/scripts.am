@@ -42,6 +42,14 @@
 #   fooscript.pl barscript.pl perl-lib.pl.in perlmod.pm.in
 #   shell1.sh shell2.sh sh-lib.sh.in
 #   talk.awk balk.awk chalk.awk awk-lib.awk.in
+#
+# by default, all shell and perl scripts are syntax checked.  If this is
+# a problem (for example, perl scripts depending on Amanda extension 
+# modules), then assign to CHECK_{PERL,SHELL} the list of files you wish
+# to be checked (which can be empty).
+#
+# To add extra flags to the perl checks (e.g., to add new -I flags), set
+# CHECK_PERL_FLAGS.
 
 # Implementation note:
 #
@@ -84,21 +92,23 @@ CLEANFILES += config.log
 DISTCLEANFILES += $(SCRIPTS_SHELL) $(SCRIPTS_PERL) $(SCRIPTS_AWK)
 
 # syntax-check perl scripts on 'make check'
-check-perl: $(SCRIPTS_PERL)
-	@SCRIPTS_PERL="$(SCRIPTS_PERL)"; \
+CHECK_PERL = $(SCRIPTS_PERL)
+check-perl: $(CHECK_PERL)
+	@CHECK_PERL="$(CHECK_PERL)"; \
 	if test -n "$(PERL)"; then \
-		for perlobj in $$SCRIPTS_PERL; do \
+		for perlobj in $$CHECK_PERL; do \
 			$(PERL) $(CHECK_PERL_FLAGS) -c -w -T $$perlobj || exit 1; \
 		done; \
 	fi
 check-local: check-perl
 
 # syntax-check shell scripts on 'make check'
-check-shell: $(SCRIPTS_SHELL)
-	@SCRIPTS_SHELL="$(SCRIPTS_SHELL)"; \
-	if test -n "$$SCRIPTS_SHELL"; then \
+CHECK_SHELL = $(SCRIPTS_SHELL)
+check-shell: $(CHECK_SHELL)
+	@CHECK_SHELL="$(CHECK_SHELL)"; \
+	if test -n "$$CHECK_SHELL"; then \
 		if test -n "$(BASH)"; then \
-			for shobj in $$SCRIPTS_SHELL; do \
+			for shobj in $$CHECK_SHELL; do \
 				if $(BASH) -n $$shobj; then \
 					echo "$$shobj syntax OK"; \
 				else \

@@ -747,14 +747,10 @@ main(
   parse_args(argc,argv,&com);
 
   changer = alloc(SIZEOF(changer_t));
-  if(read_conffile(CONFFILE_NAME)) {
-    g_fprintf(stderr, _("%s: could not find config file \"%s\""),
-		    changer_dev, conffile);
-    exit(1);
-  }
+  config_init(CONFIG_INIT_USE_CWD | CONFIG_INIT_FATAL, NULL);
 
-  changer_dev = getconf_str(CNF_CHNGRDEV);
-  changer_file = getconf_str(CNF_CHNGRFILE);
+  changer_dev = getconf_str(CNF_CHANGERDEV);
+  changer_file = getconf_str(CNF_CHANGERFILE);
   tape_device = getconf_str(CNF_TAPEDEV);
 
   /* Get the configuration parameters */

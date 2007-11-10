@@ -1,4 +1,4 @@
-use Test::More tests => 22;
+use Test::More tests => 34;
 
 use Amconfig;
 use Installdirs;
@@ -81,10 +81,66 @@ $testconf->add_param("reserve", '27');
 $testconf->write();
 
 is(amgetconf('TESTCONF', "reserved-udp-port"), "100,200", 
-    "correctly returns portrange parameters from the file");
+    "correctly returns intrange parameters from the file");
 is(amgetconf('TESTCONF', "printer"), "/dev/lp", 
     "correctly returns string parameters from the file");
 is(amgetconf('TESTCONF', "reserve"), "27", 
     "correctly returns integer parameters from the file");
 is(amgetconf('TESTCONF', "rEsErVe"), "27", 
     "is case-insensitive");
+
+##
+# device_property can appear multiple times
+
+$testconf = Amconfig->new();
+$testconf->add_param("device_property", '"power" "on"');
+$testconf->add_param("device_property", '"turbo" "engaged"');
+$testconf->write();
+
+my @device_property_lines = 
+is_deeply([sort(split(qr/\n/, amgetconf('TESTCONF', 'device_property')))],
+	  [sort('"power" "on"', '"turbo" "engaged"')],
+    "device_property can have multiple values");
+
+##
+# Subsections
+
+$testconf = Amconfig->new();
+$testconf->add_tapetype("cassette", [ length => "32 k" ]);
+$testconf->add_tapetype("reel2reel", [ length => "1 M" ]);
+$testconf->add_tapetype("scotch", [ length => "500 bytes" ]); # (use a sharpie)
+$testconf->add_dumptype("testdump", [ comment => '"testdump-dumptype"' ]);
+$testconf->add_interface("testiface", [ use => '10' ]);
+$testconf->add_holdingdisk("hd17", [ chunksize => '128' ]);
+$testconf->write();
+
+my @got;
+my @expected;
+
+is_deeply([sort(split(/\n/, amgetconf('TESTCONF', '--list', 'tapetype')))],
+	  [sort("cassette", "reel2reel", "scotch", "TEST-TAPE")],
+	"--list returns correct set of tapetypes");
+is(amgetconf('TESTCONF', 'tapetype:scotch:length'), '500', "returns tapetype parameter correctly");
+
+ok(grep { $_ eq 'testdump' } split(/\n/, amgetconf('TESTCONF', '--list', 'dumptype')),
+	"--list returns a test dumptype among the default dumptypes");
+is(amgetconf('TESTCONF', 'dumptype:testdump:comment'), 'testdump-dumptype', "returns dumptype parameter correctly");
+
+is_deeply([sort(split(/\n/, amgetconf('TESTCONF', '--list', 'interface')))], 
+          [sort("testiface", "default")],
+	"--list returns correct set of interfaces");
+is(amgetconf('TESTCONF', 'interface:testiface:use'), '10', "returns interface parameter correctly");
+
+is_deeply([sort(split(/\n/, amgetconf('TESTCONF', '--list', 'holdingdisk')))], 
+	  [sort("hd17")], 
+	"--list returns correct set of holdingdisks");
+is(amgetconf('TESTCONF', 'holdingdisk:hd17:chunksize'), '128',
+    "returns holdingdisk parameter correctly");
+
+# non-existent subsection types, names, and parameters
+like(amgetconf('TESTCONF', 'NOSUCHTYPE:testiface:comment'), qr/no such parameter/, 
+    "handles bad subsection type");
+like(amgetconf('TESTCONF', 'dumptype:NOSUCHDUMP:comment'), qr/no such parameter/, 
+    "handles bad dumptype namek");
+like(amgetconf('TESTCONF', 'dumptype:testdump:NOSUCHPARAM'), qr/no such parameter/, 
+    "handles bad dumptype parameter name");

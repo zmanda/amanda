@@ -243,8 +243,8 @@ check_options(
 
 int
 main(
-    int		main_argc,
-    char **	main_argv)
+    int		argc,
+    char **	argv)
 {
     static struct databuf db;
     struct cmdargs cmdargs;
@@ -252,12 +252,11 @@ main(
     int outfd = -1;
     int rc;
     in_port_t taper_port;
-    char *conffile;
     char *q = NULL;
     int a;
-    int    new_argc,   my_argc;
-    char **new_argv, **my_argv;
     int res;
+    config_overwrites_t *cfg_ovr = NULL;
+    char *cfg_opt = NULL;
 
     /*
      * Configure program for internationalization:
@@ -285,51 +284,26 @@ main(
     erroutput_type = (ERR_AMANDALOG|ERR_INTERACTIVE);
     set_logerror(logerror);
 
-    parse_conf(main_argc, main_argv, &new_argc, &new_argv);
-    my_argc = new_argc;
-    my_argv = new_argv;
+    cfg_ovr = extract_commandline_config_overwrites(&argc, &argv);
+    if (argc > 1)
+	cfg_opt = argv[1];
+    config_init(CONFIG_INIT_EXPLICIT_NAME | CONFIG_INIT_USE_CWD | CONFIG_INIT_FATAL,
+		cfg_opt);
+    apply_config_overwrites(cfg_ovr);
 
-    if (my_argc > 1) {
-	config_name = stralloc(my_argv[1]);
-	config_dir = vstralloc(CONFIG_DIR, "/", config_name, "/", NULL);
-    } else {
-        char * cwd;
-        
-        cwd = g_get_current_dir();
-        if (cwd == NULL) {
-	    error(_("Cannot determine current working directory: %s"),
-		  strerror(errno));
-	    /*NOTREACHED*/
-	}
-	config_dir = stralloc2(cwd, "/");
-	if ((config_name = strrchr(cwd, '/')) != NULL) {
-	    config_name = stralloc(config_name + 1);
-	}
-        amfree(cwd);
-    }
-
-    safe_cd();
-
-    our_features = am_init_feature_set();
-    our_feature_string = am_feature_to_string(our_features);
-
-    conffile = stralloc2(config_dir, CONFFILE_NAME);
-    if(read_conffile(conffile)) {
-	error(_("errors processing config file \"%s\""), conffile);
-	/*NOTREACHED*/
-    }
-    amfree(conffile);
+    safe_cd(); /* do this *after* config_init() */
 
     check_running_as(RUNNING_AS_DUMPUSER);
 
     dbrename(config_name, DBG_SUBDIR_SERVER);
 
-    report_bad_conf_arg();
+    our_features = am_init_feature_set();
+    our_feature_string = am_feature_to_string(our_features);
 
     g_fprintf(stderr,
 	    _("%s: pid %ld executable %s version %s\n"),
 	    get_pname(), (long) getpid(),
-	    my_argv[0], version());
+	    argv[0], version());
     fflush(stderr);
 
     /* now, make sure we are a valid user */
@@ -539,8 +513,6 @@ main(
 	    aclose(outfd);
     } while(cmd != QUIT);
 
-    free_new_argv(new_argc, new_argv);
-    free_server_config();
     am_release_feature_set(our_features);
     amfree(our_feature_string);
     amfree(errstr);
@@ -559,8 +531,6 @@ main(
     amfree(srv_decrypt_opt);
     amfree(clnt_decrypt_opt);
     amfree(options);
-    amfree(config_dir);
-    amfree(config_name);
 
     dbclose();
     return (0); /* exit */

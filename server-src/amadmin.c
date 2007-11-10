@@ -142,8 +142,7 @@ main(
     int i;
     char *conf_diskfile;
     char *conf_infofile;
-    int new_argc;
-    char **new_argv;
+    config_overwrites_t *cfg_ovr = NULL;
 
     /*
      * Configure program for internationalization:
@@ -166,59 +165,38 @@ main(
 
     erroutput_type = ERR_INTERACTIVE;
 
-    parse_conf(argc, argv, &new_argc, &new_argv);
+    cfg_ovr = extract_commandline_config_overwrites(&argc, &argv);
 
-    if(new_argc < 3) usage();
+    if(argc < 3) usage();
 
-    if(strcmp(new_argv[2],"version") == 0) {
-	show_version(new_argc, new_argv);
+    if(strcmp(argv[2],"version") == 0) {
+	show_version(argc, argv);
 	goto done;
     }
 
-    config_name = new_argv[1];
-
-    config_dir = vstralloc(CONFIG_DIR, "/", config_name, "/", NULL);
-    conffile = stralloc2(config_dir, CONFFILE_NAME);
-
-    if(read_conffile(conffile)) {
-	error(_("errors processing config file \"%s\""), conffile);
-	/*NOTREACHED*/
-    }
+    config_init(CONFIG_INIT_EXPLICIT_NAME | CONFIG_INIT_FATAL, argv[1]);
+    apply_config_overwrites(cfg_ovr);
 
     dbrename(config_name, DBG_SUBDIR_SERVER);
 
     check_running_as(RUNNING_AS_DUMPUSER);
 
-    report_bad_conf_arg();
-
-    conf_diskfile = getconf_str(CNF_DISKFILE);
-    if (*conf_diskfile == '/') {
-	conf_diskfile = stralloc(conf_diskfile);
-    } else {
-	conf_diskfile = stralloc2(config_dir, conf_diskfile);
-    }
+    conf_diskfile = config_dir_relative(getconf_str(CNF_DISKFILE));
     if (read_diskfile(conf_diskfile, &diskq) < 0) {
 	error(_("could not load disklist \"%s\""), conf_diskfile);
 	/*NOTREACHED*/
     }
     amfree(conf_diskfile);
 
-    conf_tapelist = getconf_str(CNF_TAPELIST);
-    if (*conf_tapelist == '/') {
-	conf_tapelist = stralloc(conf_tapelist);
-    } else {
-	conf_tapelist = stralloc2(config_dir, conf_tapelist);
-    }
+    conf_tapelist = config_dir_relative(getconf_str(CNF_TAPELIST));
     if(read_tapelist(conf_tapelist)) {
 	error(_("could not load tapelist \"%s\""), conf_tapelist);
 	/*NOTREACHED*/
     }
-    conf_infofile = getconf_str(CNF_INFOFILE);
-    if (*conf_infofile == '/') {
-	conf_infofile = stralloc(conf_infofile);
-    } else {
-	conf_infofile = stralloc2(config_dir, conf_infofile);
-    }
+    /* conf_tapelist is not freed yet -- it may be used to write the
+     * tapelist later. */
+
+    conf_infofile = config_dir_relative(getconf_str(CNF_INFOFILE));
     if(open_infofile(conf_infofile)) {
 	error(_("could not open info db \"%s\""), conf_infofile);
 	/*NOTREACHED*/
@@ -229,27 +207,23 @@ main(
     unitdivisor = getconf_unit_divisor();
 
     for (i = 0; i < NCMDS; i++)
-	if (strcmp(new_argv[2], cmdtab[i].name) == 0) {
-	    (*cmdtab[i].fn)(new_argc, new_argv);
+	if (strcmp(argv[2], cmdtab[i].name) == 0) {
+	    (*cmdtab[i].fn)(argc, argv);
 	    break;
 	}
     if (i == NCMDS) {
-	g_fprintf(stderr, _("%s: unknown command \"%s\"\n"), new_argv[0], new_argv[2]);
+	g_fprintf(stderr, _("%s: unknown command \"%s\"\n"), argv[0], argv[2]);
 	usage();
     }
-
-    free_new_argv(new_argc, new_argv);
 
     close_infofile();
     clear_tapelist();
     amfree(conf_tapelist);
-    amfree(config_dir);
 
 done:
 
     amfree(conffile);
     free_disklist(&diskq);
-    free_server_config();
     dbclose();
     return 0;
 }
@@ -2015,7 +1989,7 @@ disklist_one(
     disk_t *	dp)
 {
     am_host_t *hp;
-    interface_t *ip;
+    netif_t *ip;
     sle_t *excl;
 
     hp = dp->host;
@@ -2025,7 +1999,7 @@ disklist_one(
 
     g_printf("    host %s:\n", hp->hostname);
     g_printf("        interface %s\n",
-	   ip->name[0] ? ip->name : "default");
+	   interface_name(ip->config)[0] ? interface_name(ip->config) : "default");
     g_printf("    disk %s:\n", dp->name);
     if(dp->device) g_printf("        device %s\n", dp->device);
 

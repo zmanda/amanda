@@ -1,0 +1,210 @@
+/*
+ * Copyright (c) Zmanda, Inc.  All Rights Reserved.
+ *
+ * This library is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License version 2.1
+ * as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
+ * License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this library; if not, write to the Free Software Foundation,
+ * Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA.
+ *
+ * Contact information: Zmanda Inc., 505 N Mathlida Ave, Suite 120
+ * Sunnyvale, CA 94085, USA, or: http://www.zmanda.com
+ */
+
+%module "Amanda::Cmdline"
+%include "amglue/exports.swg"
+%include "amglue/constants.swg"
+
+%{
+#include <glib.h>
+#include "cmdline.h"
+%}
+
+%perlcode %{
+=head1 NAME
+
+Amanda::Cmdline - utilities for handling command lines
+
+=head1 SYNOPSIS
+
+  use Amanda::Cmdline;
+
+  my $spec = Amanda::Cmdline::dumpspec_t->new($host, $disk, $datestamp, $level);
+  print "host: $spec->{'host'}; disk: $spec->{'disk'}\n";
+
+  my @specs = Amanda::Cmdline::parse_dumpspecs(["host", "disk", "date"],
+			    $Amanda::Cmdline::CMDLINE_PARSE_DATESTAMP);
+  
+=head1 API STATUS
+
+Will change.
+
+=head1 Amanda::Cmdline::dumpspec_t Objects
+
+=head2 Instance Variables
+
+=over
+
+=item C<$host>
+
+=item C<$disk>
+
+=item C<$datestamp>
+
+=item C<$level>
+
+=back
+
+=head2 Methods
+
+=over
+
+=cut
+%}
+
+/* Add a few methods to make this type act like a class */
+typedef struct dumpspec_t {
+    %immutable;
+    char *host;
+    char *disk;
+    char *datestamp;
+    char *level;
+    %mutable;
+
+    %extend {
+	/* constructor */
+	dumpspec_t(char *host, char *disk, char *datestamp, char *level) {
+	    return dumpspec_new(host, disk, datestamp, level);
+	}
+
+	~dumpspec_t() {
+	    dumpspec_free(self);
+	}
+
+%perlcode %{
+=item C<format()>
+
+Format the dumpspec as a string.
+
+=cut
+%}
+	%newobject format;
+	char *format() {
+	    return cmdline_format_dumpspec(self);
+	}
+    }
+%perlcode %{
+=back
+
+=cut
+%}
+
+} dumpspec_t;
+
+%perlcode %{
+=head1 Functions
+
+=over
+
+=item C<format_dumpspec_components($host, $disk, $datestamp, $level)>
+
+This function returns a string representing the formatted form of the given dumpspec.  This formatting
+is the same as performed by C<format_dumpspec_components>, but does not need a C<dumpspec_t>.
+
+=cut
+%}
+
+%rename(format_dumpspec_components) cmdline_format_dumpspec_components;
+char *cmdline_format_dumpspec_components(char *host, char *disk, char *datestamp, char *level);
+
+/* Typemap to convert the GSList that cmdline_parse_dumpspecs will
+ * return into an array of dumpspec_t's.  This uses some SWIG trickery
+ * to manage to convert the GSList itself to an array, while leaving the
+ * dumpspecs as C objects.
+ */
+%typemap(out) GSList * {
+    GSList *iter;
+    EXTEND(SP, g_slist_length($1)); /* make room for return values */
+
+    iter = $1;
+    while (iter) {
+	/* Let SWIG take ownership of the object; we'll free the GSList momentarily */
+	$result = SWIG_NewPointerObj(iter->data, $descriptor(dumpspec_t*), SWIG_OWNER | SWIG_SHADOW);
+	argvi++;
+	iter = iter->next;
+    }
+
+    /* Now free the GSList, but *not* its contents (which are now "owned" by SWIG) */
+    g_slist_free($1);
+}
+
+/* Typemap to convert a perl list of strings to the strv that 
+ * cmdline_parse_dumpspecs expects.
+ */
+%typemap(in, numinputs=1) (int argc, char **argv) {
+    AV *av;
+    int i;
+
+    if (!SvROK($input) || SvTYPE(SvRV($input)) != SVt_PVAV) {
+	SWIG_exception(SWIG_TypeError, "Expected an arrayref");
+    }
+    av = (AV *)SvRV($input);
+
+    $1 = av_len(av)+1; /* av_len(av) is like $#av */
+    $2 = malloc(sizeof(char *) * $1);
+    for (i = 0; i < $1; i++) {
+	SV **elt = av_fetch(av, i, 0);
+	if (!elt || !SvPOK(*elt)) {
+	    SWIG_exception(SWIG_TypeError, "Non-string in arrayref");
+	}
+	$2[i] = SvPV_nolen(*elt); /* TODO: handle unicode here */
+    }
+}
+
+/* Free the space allocated by the previous typemap */
+%typemap(freearg) (int argc, char **argv) {
+    free($2);
+}
+
+%perlcode %{
+=item C<parse_dumpspecs(@cmdline, $flags)> 
+
+This function parses C<@cmdline> into a list of C<dumpspec_t> objects,
+according to C<$flags>, which is a logical combination of zero or
+more of C<$CMDLINE_PARSE_DATESTAMP> to recognize datestamps and
+C<$CMDLINE_PARSE_LEVEL> to recognize levels.
+
+=cut
+%}
+
+amglue_add_flag_tag_fns(cmdline_parse_dumpspecs_flags);
+amglue_add_constant(CMDLINE_PARSE_DATESTAMP, cmdline_parse_dumpspecs_flags);
+amglue_add_constant(CMDLINE_PARSE_LEVEL, cmdline_parse_dumpspecs_flags);
+
+%rename(parse_dumpspecs) cmdline_parse_dumpspecs;
+GSList *cmdline_parse_dumpspecs(int argc, char **argv, int flags);
+
+/* TODO: detect wildcard in perl */
+
+/* TODO:
+ * convert AV back to GSList as input, convert resulting GSList into an AV of strings
+ * on output
+ */
+/* GSList * cmdline_match_holding(GSList *dumpspec_list); */
+
+%perlcode %{
+=back
+
+=head1 SEE ALSO
+
+L<Amanda::Config> handles C<-o> options itself, through C<config_overwrites>.
+
+=cut
+%}

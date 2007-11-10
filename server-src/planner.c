@@ -170,16 +170,15 @@ main(
     int moved_one;
     off_t initial_size;
     int i;
-    char *conffile;
     char *conf_diskfile;
     char *conf_tapelist;
     char *conf_infofile;
     times_t section_start;
     char *qname;
-    int    new_argc,   my_argc;
-    char **new_argv, **my_argv;
     int    nb_disk;
     char  *errstr = NULL;
+    config_overwrites_t *cfg_ovr = NULL;
+    char *cfg_opt = NULL;
 
     /*
      * Configure program for internationalization:
@@ -197,22 +196,29 @@ main(
 
     safe_fd(-1, 0);
 
-    setvbuf(stderr, (char *)NULL, (int)_IOLBF, 0);
-
-    parse_conf(argc, argv, &new_argc, &new_argv);
-    my_argc = new_argc;
-    my_argv = new_argv;
-
-    find_configuration((my_argc > 1), my_argv[1], &config_name, &config_dir);
-
-    safe_cd();
-
     set_pname("planner");
 
     dbopen(DBG_SUBDIR_SERVER);
 
+    cfg_ovr = extract_commandline_config_overwrites(&argc, &argv);
+
+    if (argc > 1) 
+	cfg_opt = argv[1];
+
+    config_init(CONFIG_INIT_EXPLICIT_NAME | CONFIG_INIT_USE_CWD | CONFIG_INIT_FATAL,
+		cfg_opt);
+    apply_config_overwrites(cfg_ovr);
+
+    safe_cd();
+
+    check_running_as(RUNNING_AS_DUMPUSER);
+
+    dbrename(config_name, DBG_SUBDIR_SERVER);
+
     /* Don't die when child closes pipe */
     signal(SIGPIPE, SIG_IGN);
+
+    setvbuf(stderr, (char *)NULL, (int)_IOLBF, 0);
 
     erroutput_type = (ERR_AMANDALOG|ERR_INTERACTIVE);
     set_logerror(logerror);
@@ -223,7 +229,7 @@ main(
     our_feature_string = am_feature_to_string(our_features);
 
     g_fprintf(stderr, _("%s: pid %ld executable %s version %s\n"),
-	    get_pname(), (long) getpid(), my_argv[0], version());
+	    get_pname(), (long) getpid(), argv[0], version());
     for (i = 0; version_info[i] != NULL; i++)
 	g_fprintf(stderr, _("%s: %s"), get_pname(), version_info[i]);
 
@@ -240,27 +246,9 @@ main(
      * All the Amanda configuration files are loaded before we begin.
      */
 
-    g_fprintf(stderr,_("READING CONF FILES...\n"));
+    g_fprintf(stderr,_("READING CONF INFO...\n"));
 
-    conffile = stralloc2(config_dir, CONFFILE_NAME);
-    if(read_conffile(conffile)) {
-	error(_("errors processing config file \"%s\""), conffile);
-	/*NOTREACHED*/
-    }
-    amfree(conffile);
-
-    check_running_as(RUNNING_AS_DUMPUSER);
-
-    dbrename(config_name, DBG_SUBDIR_SERVER);
-
-    report_bad_conf_arg();
-
-    conf_diskfile = getconf_str(CNF_DISKFILE);
-    if (*conf_diskfile == '/') {
-	conf_diskfile = stralloc(conf_diskfile);
-    } else {
-	conf_diskfile = stralloc2(config_dir, conf_diskfile);
-    }
+    conf_diskfile = config_dir_relative(getconf_str(CNF_DISKFILE));
     if (read_diskfile(conf_diskfile, &origq) < 0) {
 	error(_("could not load disklist \"%s\""), conf_diskfile);
 	/*NOTREACHED*/
@@ -270,7 +258,7 @@ main(
 	/*NOTREACHED*/
     }
 
-    errstr = match_disklist(&origq, my_argc-2, my_argv+2);
+    errstr = match_disklist(&origq, argc-2, argv+2);
     if (errstr) {
 	g_fprintf(stderr,"%s",errstr);
 	amfree(errstr);
@@ -291,24 +279,14 @@ main(
     }
     amfree(conf_diskfile);
 
-    conf_tapelist = getconf_str(CNF_TAPELIST);
-    if (*conf_tapelist == '/') {
-	conf_tapelist = stralloc(conf_tapelist);
-    } else {
-	conf_tapelist = stralloc2(config_dir, conf_tapelist);
-    }
+    conf_tapelist = config_dir_relative(getconf_str(CNF_TAPELIST));
     if(read_tapelist(conf_tapelist)) {
 	error(_("could not load tapelist \"%s\""), conf_tapelist);
 	/*NOTREACHED*/
     }
     amfree(conf_tapelist);
 
-    conf_infofile = getconf_str(CNF_INFOFILE);
-    if (*conf_infofile == '/') {
-	conf_infofile = stralloc(conf_infofile);
-    } else {
-	conf_infofile = stralloc2(config_dir, conf_infofile);
-    }
+    conf_infofile = config_dir_relative(getconf_str(CNF_INFOFILE));
     if(open_infofile(conf_infofile)) {
 	error(_("could not open info db \"%s\""), conf_infofile);
 	/*NOTREACHED*/
@@ -616,11 +594,7 @@ main(
     log_add(L_FINISH, _("date %s time %s"), planner_timestamp, walltime_str(curclock()));
 
     clear_tapelist();
-    free_new_argv(new_argc, new_argv);
-    free_server_config();
     amfree(planner_timestamp);
-    amfree(config_dir);
-    amfree(config_name);
     amfree(our_feature_string);
     am_release_feature_set(our_features);
     our_features = NULL;

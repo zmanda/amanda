@@ -196,12 +196,7 @@ log_rename(
 
     if(datestamp == NULL) datestamp = "error";
 
-    conf_logdir = getconf_str(CNF_LOGDIR);
-    if (*conf_logdir == '/') {
-	conf_logdir = stralloc(conf_logdir);
-    } else {
-	conf_logdir = stralloc2(config_dir, conf_logdir);
-    }
+    conf_logdir = config_dir_relative(getconf_str(CNF_LOGDIR));
     logfile = vstralloc(conf_logdir, "/log", NULL);
 
     for(seq = 0; 1; seq++) {	/* if you've got MAXINT files in your dir... */
@@ -231,12 +226,7 @@ open_log(void)
 {
     char *conf_logdir;
 
-    conf_logdir = getconf_str(CNF_LOGDIR);
-    if (*conf_logdir == '/') {
-	conf_logdir = stralloc(conf_logdir);
-    } else {
-	conf_logdir = stralloc2(config_dir, conf_logdir);
-    }
+    conf_logdir = config_dir_relative(getconf_str(CNF_LOGDIR));
     logfile = vstralloc(conf_logdir, "/log", NULL);
     amfree(conf_logdir);
 

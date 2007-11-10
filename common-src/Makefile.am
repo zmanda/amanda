@@ -9,7 +9,7 @@ INCLUDES =      -I$(top_srcdir)/gnulib
 
 AM_CFLAGS = $(AMANDA_WARNING_CFLAGS)
 
-lib_LTLIBRARIES =	libamanda.la
+amlib_LTLIBRARIES =	libamanda.la
 
 LINT=$(AMLINT)
 LINTFLAGS=$(AMLINTFLAGS)
@@ -19,6 +19,7 @@ libamanda_la_SOURCES =		\
 	amfeatures.c		\
 	amflock.c		\
 	clock.c			\
+	columnar.c		\
 	conffile.c		\
 	debug.c			\
 	dgram.c			\
@@ -92,6 +93,7 @@ noinst_HEADERS =		\
 	amfeatures.h		\
 	arglist.h		\
 	clock.h			\
+	columnar.h		\
 	amflock.h		\
 	conffile.h		\
 	debug.h			\

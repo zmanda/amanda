@@ -193,7 +193,6 @@ main(
     char *line = NULL;
     char *err_extra = NULL;
     char *s;
-    char *conffile;
     int i;
     int ch;
     FILE *toolin;
@@ -242,12 +241,7 @@ main(
     our_features = am_init_feature_set();
     our_feature_string = am_feature_to_string(our_features);
 
-    conffile = vstralloc(CONFIG_DIR, "/", "amanda-client.conf", NULL);
-    if (read_clientconf(conffile) > 0) {
-	error(_("error reading conffile: %s"), conffile);
-	/*NOTREACHED*/
-    }
-    amfree(conffile);
+    config_init(CONFIG_INIT_CLIENT, NULL);
 
     check_running_as(RUNNING_AS_CLIENT_LOGIN);
 
@@ -286,15 +280,11 @@ main(
 	    }
 
 	    if (g_options->config) {
-		conffile = vstralloc(CONFIG_DIR, "/", g_options->config, "/",
-				     "amanda-client.conf", NULL);
-		if (read_clientconf(conffile) > 0) {
-		    error(_("error reading conffile: %s"), conffile);
-		    /*NOTREACHED*/
-		}
-		amfree(conffile);
+		/* overlay this configuration on the existing (nameless) configuration */
+		config_init(CONFIG_INIT_CLIENT | CONFIG_INIT_EXPLICIT_NAME | CONFIG_INIT_OVERLAY,
+			    g_options->config);
 
-		dbrename(g_options->config, DBG_SUBDIR_CLIENT);
+		dbrename(config_name, DBG_SUBDIR_CLIENT);
 	    }
 	    continue;
 	}

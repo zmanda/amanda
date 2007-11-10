@@ -51,7 +51,6 @@ char *amflush_timestamp;
 char *amflush_datestamp;
 
 /* local functions */
-int main(int main_argc, char **main_argv);
 void flush_holdingdisk(char *diskdir, char *datestamp);
 static GSList * pick_datestamp(void);
 void confirm(GSList *datestamp_list);
@@ -62,15 +61,14 @@ static int get_letter_from_user(void);
 
 int
 main(
-    int		main_argc,
-    char **	main_argv)
+    int		argc,
+    char **	argv)
 {
     int foreground;
     int batch;
     int redirect;
     char **datearg = NULL;
     int nb_datearg = 0;
-    char *conffile;
     char *conf_diskfile;
     char *conf_tapelist;
     char *conf_logfile;
@@ -86,14 +84,13 @@ main(
     int driver_pipe[2];
     char date_string[100];
     time_t today;
-    int    new_argc,   my_argc;
-    char **new_argv, **my_argv;
     char *errstr;
     struct tm *tm;
     char *tapedev;
     char *tpchanger;
     char *qdisk, *qhname;
     GSList *datestamp_list = NULL;
+    config_overwrites_t *cfg_ovr;
 
     /*
      * Configure program for internationalization:
@@ -121,17 +118,16 @@ main(
 
     /* process arguments */
 
-    parse_conf(main_argc, main_argv, &new_argc, &new_argv);
-    my_argc = new_argc;
-    my_argv = new_argv;
-
-    while((opt = getopt(my_argc, my_argv, "bfsD:")) != EOF) {
+    cfg_ovr = new_config_overwrites(argc/2);
+    while((opt = getopt(argc, argv, "bfso:D:")) != EOF) {
 	switch(opt) {
 	case 'b': batch = 1;
 		  break;
 	case 'f': foreground = 1;
 		  break;
 	case 's': redirect = 0;
+		  break;
+	case 'o': add_config_overwrite_opt(cfg_ovr, optarg);
 		  break;
 	case 'D': if (datearg == NULL)
 		      datearg = alloc(21*SIZEOF(char *));
@@ -144,57 +140,38 @@ main(
 		  break;
 	}
     }
+    argc -= optind, argv += optind;
+
     if(!foreground && !redirect) {
 	g_fprintf(stderr,_("Can't redirect to stdout/stderr if not in forground.\n"));
 	exit(1);
     }
 
-    my_argc -= optind, my_argv += optind;
-
-    if(my_argc < 1) {
+    if(argc < 1) {
 	error(_("Usage: amflush%s [-b] [-f] [-s] [-D date]* <confdir> [host [disk]* ]* [-o configoption]*"), versionsuffix());
 	/*NOTREACHED*/
     }
 
-    config_name = my_argv[0];
-    config_dir = vstralloc(CONFIG_DIR, "/", config_name, "/", NULL);
-
-    conffile = stralloc2(config_dir, CONFFILE_NAME);
-    if(read_conffile(conffile)) {
-	error(_("errors processing config file \"%s\""), conffile);
-	/*NOTREACHED*/
-    }
-    amfree(conffile);
-
+    config_init(CONFIG_INIT_EXPLICIT_NAME | CONFIG_INIT_FATAL,
+		argv[0]);
+    apply_config_overwrites(cfg_ovr);
     check_running_as(RUNNING_AS_DUMPUSER);
 
     dbrename(config_name, DBG_SUBDIR_SERVER);
 
-    report_bad_conf_arg();
-
-    conf_diskfile = getconf_str(CNF_DISKFILE);
-    if (*conf_diskfile == '/') {
-	conf_diskfile = stralloc(conf_diskfile);
-    } else {
-	conf_diskfile = stralloc2(config_dir, conf_diskfile);
-    }
+    conf_diskfile = config_dir_relative(getconf_str(CNF_DISKFILE));
     if (read_diskfile(conf_diskfile, &diskq) < 0) {
 	error(_("could not read disklist file \"%s\""), conf_diskfile);
 	/*NOTREACHED*/
     }
-    errstr = match_disklist(&diskq, my_argc-1, my_argv+1);
+    errstr = match_disklist(&diskq, argc-1, argv+1);
     if (errstr) {
 	g_printf(_("%s"),errstr);
 	amfree(errstr);
     }
     amfree(conf_diskfile);
 
-    conf_tapelist = getconf_str(CNF_TAPELIST);
-    if (*conf_tapelist == '/') {
-	conf_tapelist = stralloc(conf_tapelist);
-    } else {
-	conf_tapelist = stralloc2(config_dir, conf_tapelist);
-    }
+    conf_tapelist = config_dir_relative(getconf_str(CNF_TAPELIST));
     if(read_tapelist(conf_tapelist)) {
 	error(_("could not load tapelist \"%s\""), conf_tapelist);
 	/*NOTREACHED*/
@@ -211,12 +188,7 @@ main(
 	amflush_timestamp = get_timestamp_from_time(0);
     }
 
-    conf_logdir = getconf_str(CNF_LOGDIR);
-    if (*conf_logdir == '/') {
-	conf_logdir = stralloc(conf_logdir);
-    } else {
-	conf_logdir = stralloc2(config_dir, conf_logdir);
-    }
+    conf_logdir = config_dir_relative(getconf_str(CNF_LOGDIR));
     conf_logfile = vstralloc(conf_logdir, "/log", NULL);
     if (access(conf_logfile, F_OK) == 0) {
 	error(_("%s exists: amdump or amflush is already running, or you must run amcleanup"), conf_logfile);

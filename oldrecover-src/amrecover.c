@@ -409,7 +409,6 @@ main(
     char *service_name;
     char *line = NULL;
     struct tm *tm;
-    char *conffile;
 
     /*
      * Configure program for internationalization:
@@ -452,12 +451,7 @@ main(
     if(!tape_server_name) tape_server_name = DEFAULT_TAPE_SERVER;
     tape_server_name = stralloc(tape_server_name);
 
-    conffile = vstralloc(CONFIG_DIR, "/", "amanda-client.conf", NULL);
-    if (read_clientconf(conffile) > 0) {
-	error(_("error reading conffile: %s"), conffile);
-	/*NOTREACHED*/
-    }
-    amfree(conffile);
+    config_init(CONFIG_INIT_CLIENT, NULL);
 
     if (argc > 1 && argv[1][0] != '-')
     {

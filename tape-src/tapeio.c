@@ -1055,6 +1055,24 @@ tape_writable(
     return r;
 }
 
+ssize_t
+getconf_readblocksize(void)
+{
+    tapetype_t *tape;
+    char       *conf_tapetype;
+
+    conf_tapetype = getconf_str(CNF_TAPETYPE);
+
+    if (!conf_tapetype || strlen(conf_tapetype) == 0)
+	return MAX_TAPE_BLOCK_KB;
+
+    tape = lookup_tapetype(conf_tapetype);
+    if (!tape)
+	return MAX_TAPE_BLOCK_KB;
+
+    return tapetype_get_readblocksize(tape);
+}
+
 #ifdef TEST
 
 /*

@@ -106,7 +106,7 @@ static void lreply(int, char *, ...) G_GNUC_PRINTF(2, 3);
 static void fast_lreply(int, char *, ...) G_GNUC_PRINTF(2, 3);
 static am_host_t *is_dump_host_valid(char *);
 static int is_disk_valid(char *);
-static int is_config_valid(char *);
+static int check_and_load_config(char *);
 static int build_disk_table(void);
 static int disk_history_list(void);
 static int is_dir_valid_opaque(char *);
@@ -559,10 +559,9 @@ is_disk_valid(
 
 
 static int
-is_config_valid(
+check_and_load_config(
     char *	config)
 {
-    char *conffile;
     char *conf_diskfile;
     char *conf_tapelist;
     char *conf_indexdir;
@@ -574,23 +573,15 @@ is_config_valid(
 	return -1;
     }
 
-    /* read conffile */
-    conffile = stralloc2(config_dir, CONFFILE_NAME);
-    if (read_conffile(conffile)) {
-	reply(501, _("Could not read config file %s!"), conffile);
-	amfree(conffile);
+    /* (re-)initialize configuration with the new config name */
+    if (!config_init(CONFIG_INIT_EXPLICIT_NAME, config)) {
+	reply(501, _("Could not read config file for %s!"), config);
 	return -1;
     }
-    amfree(conffile);
 
     check_running_as(RUNNING_AS_DUMPUSER_PREFERRED);
 
-    conf_diskfile = getconf_str(CNF_DISKFILE);
-    if (*conf_diskfile == '/') {
-	conf_diskfile = stralloc(conf_diskfile);
-    } else {
-	conf_diskfile = stralloc2(config_dir, conf_diskfile);
-    }
+    conf_diskfile = config_dir_relative(getconf_str(CNF_DISKFILE));
     if (read_diskfile(conf_diskfile, &disk_list) < 0) {
 	reply(501, _("Could not read disk file %s!"), conf_diskfile);
 	amfree(conf_diskfile);
@@ -598,12 +589,7 @@ is_config_valid(
     }
     amfree(conf_diskfile);
 
-    conf_tapelist = getconf_str(CNF_TAPELIST);
-    if (*conf_tapelist == '/') {
-	conf_tapelist = stralloc(conf_tapelist);
-    } else {
-	conf_tapelist = stralloc2(config_dir, conf_tapelist);
-    }
+    conf_tapelist = config_dir_relative(getconf_str(CNF_TAPELIST));
     if(read_tapelist(conf_tapelist)) {
 	reply(501, _("Could not read tapelist file %s!"), conf_tapelist);
 	amfree(conf_tapelist);
@@ -611,17 +597,12 @@ is_config_valid(
     }
     amfree(conf_tapelist);
 
-    dbrename(config, DBG_SUBDIR_SERVER);
+    dbrename(config_name, DBG_SUBDIR_SERVER);
 
     output_find = find_dump(1, &disk_list);
     sort_find_result("DLKHpB", &output_find);
 
-    conf_indexdir = getconf_str(CNF_INDEXDIR);
-    if(*conf_indexdir == '/') {
-	conf_indexdir = stralloc(conf_indexdir);
-    } else {
-	conf_indexdir = stralloc2(config_dir, conf_indexdir);
-    }
+    conf_indexdir = config_dir_relative(getconf_str(CNF_INDEXDIR));
     if (stat (conf_indexdir, &dir_stat) != 0 || !S_ISDIR(dir_stat.st_mode)) {
 	reply(501, _("Index directory %s does not exist"), conf_indexdir);
 	amfree(conf_indexdir);
@@ -1116,6 +1097,7 @@ main(
     char *errstr = NULL;
     char *pgm = "amindexd";		/* in case argv[0] is not set */
     char his_hostname[MAX_HOSTNAME_LENGTH];
+    char *cfg_opt = NULL;
 
     /*
      * Configure program for internationalization:
@@ -1188,8 +1170,7 @@ main(
     }
 
     if (argc > 0) {
-	config_name = stralloc(*argv);
-	config_dir = vstralloc(CONFIG_DIR, "/", config_name, "/", NULL);
+	cfg_opt = *argv;
 	argc--;
 	argv++;
     }
@@ -1283,7 +1264,7 @@ main(
     our_features = am_init_feature_set();
     their_features = am_set_default_feature_set();
 
-    if (config_name != NULL && is_config_valid(config_name) != -1) {
+    if (cfg_opt != NULL && check_and_load_config(cfg_opt) != -1) { /* load the config */
 	return 1;
     }
 
@@ -1492,19 +1473,12 @@ main(
 	    s[-1] = (char)ch;
 	} else if (strcmp(cmd, "SCNF") == 0 && arg) {
 	    s[-1] = '\0';
-	    amfree(config_name);
-	    amfree(config_dir);
-	    config_name = newstralloc(config_name, arg);
-	    config_dir = vstralloc(CONFIG_DIR, "/", config_name, "/", NULL);
-	    if (is_config_valid(arg) != -1) {
+	    if (check_and_load_config(arg) != -1) {    /* try to load the new config */
 		amfree(dump_hostname);		/* invalidate any value */
 		amfree(qdisk_name);		/* invalidate any value */
 		amfree(disk_name);		/* invalidate any value */
 		reply(200, _("Config set to %s."), config_name);
-	    } else {
-		amfree(config_name);
-		amfree(config_dir);
-	    }
+	    } /* check_and_load_config replies with any failure messages */
 	    s[-1] = (char)ch;
 	} else if (strcmp(cmd, "FEATURES") == 0 && arg) {
 	    char *our_feature_string = NULL;

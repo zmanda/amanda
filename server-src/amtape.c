@@ -111,13 +111,10 @@ main(
     int		argc,
     char **	argv)
 {
-    char *conffile;
     char *conf_tapelist;
-    char *argv0 = argv[0];
     int i;
     int have_changer;
-    int new_argc;
-    char **new_argv;
+    config_overwrites_t *cfg_ovr = NULL;
 
     /*
      * Configure program for internationalization:
@@ -140,28 +137,18 @@ main(
 
     erroutput_type = ERR_INTERACTIVE;
 
-    parse_conf(argc, argv, &new_argc, &new_argv);
-    if(new_argc < 3) usage();
+    cfg_ovr = extract_commandline_config_overwrites(&argc, &argv);
+    if(argc < 3) usage();
 
-    config_name = new_argv[1];
-
-    config_dir = vstralloc(CONFIG_DIR, "/", config_name, "/", NULL);
-    conffile = stralloc2(config_dir, CONFFILE_NAME);
-    if (read_conffile(conffile)) {
-	error(_("errors processing config file \"%s\""), conffile);
-	/*NOTREACHED*/
-    }
+    config_init(CONFIG_INIT_EXPLICIT_NAME | CONFIG_INIT_FATAL,
+		argv[1]);
+    apply_config_overwrites(cfg_ovr);
 
     check_running_as(RUNNING_AS_DUMPUSER);
 
     dbrename(config_name, DBG_SUBDIR_SERVER);
 
-    conf_tapelist = getconf_str(CNF_TAPELIST);
-    if (*conf_tapelist == '/') {
-	conf_tapelist = stralloc(conf_tapelist);
-    } else {
-	conf_tapelist = stralloc2(config_dir, conf_tapelist);
-    }
+    conf_tapelist = config_dir_relative(getconf_str(CNF_TAPELIST));
     if (read_tapelist(conf_tapelist)) {
 	error(_("could not load tapelist \"%s\""), conf_tapelist);
 	/*NOTREACHED*/
@@ -169,7 +156,7 @@ main(
     amfree(conf_tapelist);
 
     if((have_changer = changer_init()) == 0) {
-	error(_("no tpchanger specified in \"%s\""), conffile);
+	error(_("no tpchanger specified in \"%s\""), config_filename);
 	/*NOTREACHED*/
     } else if (have_changer != 1) {
 	error(_("changer initialization failed: %s"), strerror(errno));
@@ -178,20 +165,18 @@ main(
 
     /* switch on command name */
 
-    new_argc -= 2; new_argv += 2;
+    argc -= 2; argv += 2;
     for (i = 0; i < NCMDS; i++)
-	if (strcmp(new_argv[0], cmdtab[i].name) == 0) {
-	    (*cmdtab[i].fn)(new_argc, new_argv);
+	if (strcmp(argv[0], cmdtab[i].name) == 0) {
+	    (*cmdtab[i].fn)(argc, argv);
 	    break;
 	}
     if (i == NCMDS) {
-	g_fprintf(stderr, _("%s: unknown command \"%s\"\n"), argv0, new_argv[0]);
+	g_fprintf(stderr, _("%s: unknown command \"%s\"\n"), get_pname(), argv[0]);
 	usage();
     }
 
     amfree(changer_resultstr);
-    amfree(conffile);
-    amfree(config_dir);
 
     dbclose();
     return 0;

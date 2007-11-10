@@ -1,14 +1,19 @@
 # Makefile for Amanda tape library.
 
+SUBDIRS = . tests
+
 include $(top_srcdir)/config/automake/precompile.am
 
 INCLUDES =	-I$(top_builddir)/common-src \
 		-I$(top_srcdir)/common-src \
 		-I$(top_srcdir)/gnulib
 
-lib_LTLIBRARIES = 	libamdevice.la
-LIB_EXTENSION = la
+sbin_PROGRAMS =
 
+## libamdevice.la
+
+amlib_LTLIBRARIES = 	libamdevice.la
+libamdevice_la_LDFLAGS = -release $(VERSION) 
 libamdevice_la_SOURCES = property.c device.c queueing.c semaphore.c \
 	null-device.c rait-device.c vfs-device.c 
 
@@ -37,7 +42,6 @@ endif
 noinst_HEADERS = device.h null-device.h queueing.h semaphore.h \
 	tape-ops.h property.h rait-device.h \
 	tape-device.h vfs-device.h
-
 
 SUBDIRS = . tests
 

@@ -109,27 +109,18 @@ list_needed_tapes(
     char *conf_diskfile, *conf_tapelist;
 
     /* For disks and tape lists */
-    conf_diskfile = getconf_str(CNF_DISKFILE);
-    conf_tapelist = getconf_str(CNF_TAPELIST);
-    if (*conf_diskfile == '/') {
-        conf_diskfile = stralloc(conf_diskfile);
-    } else {
-        conf_diskfile = stralloc2(config_dir, conf_diskfile);
-    }
+    conf_diskfile = config_dir_relative(getconf_str(CNF_DISKFILE));
     if(read_diskfile(conf_diskfile, &diskqp) != 0) {
         error(_("could not load disklist \"%s\""), conf_diskfile);
 	/*NOTREACHED*/
     }
-    if (*conf_tapelist == '/') {
-        conf_tapelist = stralloc(conf_tapelist);
-    } else {
-        conf_tapelist = stralloc2(config_dir, conf_tapelist);
-    }
+    amfree(conf_diskfile);
+
+    conf_tapelist = config_dir_relative(getconf_str(CNF_TAPELIST));
     if(read_tapelist(conf_tapelist)) {
         error(_("could not load tapelist \"%s\""), conf_tapelist);
 	/*NOTREACHED*/
     }
-    amfree(conf_diskfile);
     amfree(conf_tapelist);
 
     /* Grab a find_output_t of all logged dumps */
@@ -255,14 +246,11 @@ main(
     int opt;
     GSList *dumpspecs = NULL;
     int fd;
-    char *config_name = NULL;
-    char *conffile = NULL;
     tapelist_t *needed_tapes = NULL;
     char *e;
     rst_flags_t *rst_flags;
-    int    new_argc,   my_argc;
-    char **new_argv, **my_argv;
     int minimum_arguments;
+    config_overwrites_t *cfg_ovr = NULL;
 
     /*
      * Configure program for internationalization:
@@ -293,15 +281,12 @@ main(
     erroutput_type = ERR_INTERACTIVE;
     error_exit_status = 2;
 
-    parse_conf(argc, argv, &new_argc, &new_argv);
-    my_argc = new_argc;
-    my_argv = new_argv;
-
     rst_flags = new_rst_flags();
     rst_flags->wait_tape_prompt = 1;
 
     /* handle options */
-    while( (opt = getopt(my_argc, my_argv, "alht:scCpb:nwi:d:O:")) != -1) {
+    cfg_ovr = new_config_overwrites(argc/2);
+    while( (opt = getopt(argc, argv, "alht:scCpb:nwi:d:O:o:")) != -1) {
 	switch(opt) {
 	case 'b':
             rst_flags->blocksize = (ssize_t)strtol(optarg, &e, 10);
@@ -333,6 +318,7 @@ main(
 	case 'w': rst_flags->delay_assemble = 1; break;
 	case 'a': rst_flags->wait_tape_prompt = 0; break;
 	case 'h': rst_flags->headers = 1; break;
+	case 'o': add_config_overwrite_opt(cfg_ovr, optarg); break;
 	default:
 	    usage();
 	    /*NOTREACHED*/
@@ -367,26 +353,21 @@ main(
     } else {
         minimum_arguments = 2;
     }
-    
-    if(my_argc - optind < minimum_arguments) {
+ 
+    if(argc - optind < minimum_arguments) {
 	usage();
 	/*NOTREACHED*/
     }
 
-    config_name = my_argv[optind++];
-    config_dir = vstralloc(CONFIG_DIR, "/", config_name, "/", NULL);
-    conffile = stralloc2(config_dir, CONFFILE_NAME);
-    if (read_conffile(conffile)) {
-	error(_("errors processing config file \"%s\""), conffile);
-	/*NOTREACHED*/
-    }
-    amfree(conffile);
+    config_init(CONFIG_INIT_EXPLICIT_NAME | CONFIG_INIT_FATAL, argv[optind++]);
+    apply_config_overwrites(cfg_ovr);
 
     check_running_as(RUNNING_AS_DUMPUSER);
 
     dbrename(config_name, DBG_SUBDIR_SERVER);
 
-    dumpspecs = cmdline_parse_dumpspecs(my_argc - optind, my_argv + optind, CMDLINE_PARSE_DATESTAMP|CMDLINE_PARSE_LEVEL);
+    dumpspecs = cmdline_parse_dumpspecs(argc - optind, argv + optind,
+	    CMDLINE_PARSE_DATESTAMP|CMDLINE_PARSE_LEVEL);
 
     /*
      * We've been told explicitly to go and search through the tapes the hard
@@ -420,7 +401,6 @@ main(
     else flush_open_outputs(0, NULL);
 
     free_rst_flags(rst_flags);
-    free_new_argv(new_argc, new_argv);
 
     return(0);
 }

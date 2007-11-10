@@ -68,8 +68,20 @@ typedef struct dumper_s {
     chunker_t *chunker;
 } dumper_t;
 
+/* holding disk reservation structure; this is built as a list parallel
+ * to the configuration's linked list of holding disks. */
+
+typedef struct holdalloc_s {
+    struct holdalloc_s *next;
+    holdingdisk_t *hdisk;
+
+    off_t disksize;
+    int allocated_dumpers;
+    off_t allocated_space;
+} holdalloc_t;
+
 typedef struct assignedhd_s {
-    holdingdisk_t	*disk;
+    holdalloc_t		*disk;
     off_t		used;
     off_t		reserved;
     char		*destname;
@@ -100,15 +112,6 @@ typedef struct sched_s {
 
 #define sched(dp)	((sched_t *) (dp)->up)
 
-
-/* holding disk reservation structure */
-
-typedef struct holdalloc_s {
-    int allocated_dumpers;
-    off_t allocated_space;
-} holdalloc_t;
-
-#define holdalloc(hp)	((holdalloc_t *) (hp)->up)
 
 GLOBAL dumper_t dmptable[MAX_DUMPERS];
 GLOBAL chunker_t chktable[MAX_DUMPERS];

@@ -61,12 +61,7 @@ find_dump(
 
     dynamic_disklist = dyna_disklist;
     find_diskqp = diskqp;
-    conf_logdir = getconf_str(CNF_LOGDIR);
-    if (*conf_logdir == '/') {
-	conf_logdir = stralloc(conf_logdir);
-    } else {
-	conf_logdir = stralloc2(config_dir, conf_logdir);
-    }
+    conf_logdir = config_dir_relative(getconf_str(CNF_LOGDIR));
     maxtape = lookup_nb_tape();
 
     for(tape = 1; tape <= maxtape; tape++) {
@@ -126,12 +121,7 @@ find_log(void)
     char **output_find_log = NULL;
     char **current_log;
 
-    conf_logdir = getconf_str(CNF_LOGDIR);
-    if (*conf_logdir == '/') {
-	conf_logdir = stralloc(conf_logdir);
-    } else {
-	conf_logdir = stralloc2(config_dir, conf_logdir);
-    }
+    conf_logdir = config_dir_relative(getconf_str(CNF_LOGDIR));
     maxtape = lookup_nb_tape();
 
     output_find_log = alloc((maxtape*5+10) * SIZEOF(char *));

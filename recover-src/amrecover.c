@@ -56,7 +56,6 @@ int main(int argc, char **argv);
 
 #define USAGE _("Usage: amrecover [[-C] <config>] [-s <index-server>] [-t <tape-server>] [-d <tape-device>] [-o <clientconfigoption>]*\n")
 
-char *config = NULL;
 char *server_name = NULL;
 int server_socket;
 char *server_line = NULL;
@@ -313,13 +312,11 @@ main(
     extern char *optarg;
     extern int optind;
     char *line = NULL;
-    char *conffile;
     const security_driver_t *secdrv;
     char *req = NULL;
     int response_error;
-    int new_argc;
-    char **new_argv;
     struct tm *tm;
+    config_overwrites_t *cfg_ovr;
 
     /*
      * Configure program for internationalization:
@@ -346,43 +343,45 @@ main(
     }
     localhost[MAX_HOSTNAME_LENGTH] = '\0';
 
-    parse_conf(argc, argv, &new_argc, &new_argv);
+    /* load the base client configuration */
+    config_init(CONFIG_INIT_CLIENT, NULL);
 
-    if (new_argc > 1 && new_argv[1][0] != '-') {
-	/*
-	 * If the first argument is not an option flag, then we assume
-	 * it is a configuration name to match the syntax of the other
-	 * Amanda utilities.
-	 */
-	char **new_argv1;
+    /* treat amrecover-specific command line options as the equivalent
+     * -o command-line options to set configuration values */
+    cfg_ovr = new_config_overwrites(argc/2);
 
-	new_argv1 = (char **) alloc((size_t)((new_argc + 1 + 1) * sizeof(*new_argv1)));
-	new_argv1[0] = new_argv[0];
-	new_argv1[1] = "-C";
-	for (i = 1; i < new_argc; i++) {
-	    new_argv1[i + 1] = new_argv[i];
-	}
-	new_argv1[i + 1] = NULL;
-	new_argc++;
-	amfree(new_argv);
-	new_argv = new_argv1;
+    /* If the first argument is not an option flag, then we assume
+     * it is a configuration name to match the syntax of the other
+     * Amanda utilities. */
+    if (argc > 1 && argv[1][0] != '-') {
+	add_config_overwrite(cfg_ovr, "conf", argv[1]);
+
+	/* remove that option from the command line */
+	argv[1] = argv[0];
+	argv++; argc--;
     }
-    while ((i = getopt(new_argc, new_argv, "C:s:t:d:U")) != EOF) {
+
+    /* now parse regular command-line '-' options */
+    while ((i = getopt(argc, argv, "o:C:s:t:d:U")) != EOF) {
 	switch (i) {
 	    case 'C':
-		add_client_conf(CNF_CONF, optarg);
+		add_config_overwrite(cfg_ovr, "conf", optarg);
 		break;
 
 	    case 's':
-		add_client_conf(CNF_INDEX_SERVER, optarg);
+		add_config_overwrite(cfg_ovr, "index_server", optarg);
 		break;
 
 	    case 't':
-		add_client_conf(CNF_TAPE_SERVER, optarg);
+		add_config_overwrite(cfg_ovr, "tape_server", optarg);
 		break;
 
 	    case 'd':
-		add_client_conf(CNF_TAPEDEV, optarg);
+		add_config_overwrite(cfg_ovr, "tapedev", optarg);
+		break;
+
+	    case 'o':
+		add_config_overwrite_opt(cfg_ovr, optarg);
 		break;
 
 	    case 'U':
@@ -391,36 +390,22 @@ main(
 		return 0;
 	}
     }
-    if (optind != new_argc) {
+    if (optind != argc) {
 	(void)g_fprintf(stderr, USAGE);
 	exit(1);
     }
 
-    our_features = am_init_feature_set();
-    our_features_string = am_feature_to_string(our_features);
-
-    conffile = vstralloc(CONFIG_DIR, "/", "amanda-client.conf", NULL);
-    if (read_clientconf(conffile) > 0) {
-	error(_("error reading conffile: %s"), conffile);
-	/*NOTREACHED*/
-    }
-    amfree(conffile);
+    /* and now try to load the configuration named in that file */
+    config_init(CONFIG_INIT_CLIENT | CONFIG_INIT_EXPLICIT_NAME | CONFIG_INIT_OVERLAY,
+		getconf_str(CNF_CONF));
+    apply_config_overwrites(cfg_ovr);
 
     check_running_as(RUNNING_AS_ROOT);
 
-    config = stralloc(getconf_str(CNF_CONF));
+    dbrename(config_name, DBG_SUBDIR_CLIENT);
 
-    conffile = vstralloc(CONFIG_DIR, "/", config, "/", "amanda-client.conf",
-			 NULL);
-    if (read_clientconf(conffile) > 0) {
-	error(_("error reading conffile: %s"), conffile);
-	/*NOTREACHED*/
-    }
-    amfree(conffile);
-
-    dbrename(config, DBG_SUBDIR_CLIENT);
-
-    report_bad_conf_arg();
+    our_features = am_init_feature_set();
+    our_features_string = am_feature_to_string(our_features);
 
     server_name = NULL;
     if (getconf_seen(CNF_INDEX_SERVER) == -2) { /* command line argument */
@@ -563,7 +548,7 @@ main(
     }
     amfree(line);
 
-    line = vstrallocf("SCNF %s", config);
+    line = vstrallocf("SCNF %s", config_name);
     if (converse(line) == -1) {
         aclose(server_socket);
 	exit(1);

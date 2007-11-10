@@ -579,14 +579,9 @@ void device_set_startup_properties_from_config(Device * device) {
             gboolean success;
 
             bzero(&val, sizeof(GValue));
-            length = tapetype_get_length(tapetype);
 
-            /* These options have no "seen" equivalent, so all we can do
-             * is check for the default values. If what we get is the
-             * default, we assume it was unset and go with the device
-             * defaults. */
-
-            if (length != DEFAULT_TAPE_LENGTH) {
+            if (tapetype_seen(tapetype, TAPETYPE_LENGTH)) {
+		length = tapetype_get_length(tapetype);
                 g_value_init(&val, G_TYPE_UINT64);
                 g_value_set_uint64(&val, length * 1024);
                 /* If this fails, it's not really an error. */
@@ -594,8 +589,8 @@ void device_set_startup_properties_from_config(Device * device) {
                 g_value_unset(&val);
             }
 
-            blocksize_kb = tapetype_get_readblocksize(tapetype);
-            if (blocksize_kb != MAX_TAPE_BLOCK_KB) {
+            if (tapetype_seen(tapetype, TAPETYPE_READBLOCKSIZE)) {
+		blocksize_kb = tapetype_get_readblocksize(tapetype);
                 g_value_init(&val, G_TYPE_UINT);
                 g_value_set_uint64(&val, blocksize_kb * 1024);
                 success = device_property_set(device,
@@ -609,9 +604,9 @@ void device_set_startup_properties_from_config(Device * device) {
 			    device->device_name);
                 }
             }
-            
-            blocksize_kb = tapetype_get_blocksize(tapetype);
-            if (blocksize_kb != DISK_BLOCK_KB) {
+
+            if (tapetype_seen(tapetype, TAPETYPE_BLOCKSIZE)) {
+		blocksize_kb = tapetype_get_blocksize(tapetype);
                 try_set_blocksize(device, blocksize_kb * 1024,
                                   !tapetype_get_file_pad(tapetype));
             }
@@ -744,6 +739,7 @@ default_device_property_get(Device * self, DevicePropertyId ID,
         if (ID == PROPERTY_CANONICAL_NAME) {
             g_value_unset_init(value, G_TYPE_STRING);
             g_value_set_string(value, self->device_name);
+	    return TRUE;
         } else {
             return FALSE;
         }

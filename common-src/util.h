@@ -72,8 +72,6 @@ int     copy_file(char *dst, char *src, char **errmsg);
  */
 int validate_mailto(const char *mailto);
 
-char *taperalgo2str(int taperalgo);
-
 /* This function is a portable reimplementation of readdir(). It
  * returns a newly-allocated string, that should be freed with
  * free(). Returns NULL on error or end of directory.

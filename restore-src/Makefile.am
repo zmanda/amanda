@@ -15,7 +15,7 @@ AM_CFLAGS = $(AMANDA_WARNING_CFLAGS)
 LINT=@AMLINT@
 LINTFLAGS=@AMLINTFLAGS@
 
-lib_LTLIBRARIES =	librestore.la
+amlib_LTLIBRARIES =	librestore.la
 LIB_EXTENSION = la
 
 sbin_PROGRAMS = 	amrestore amfetchdump

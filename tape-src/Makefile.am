@@ -11,7 +11,7 @@ AM_CFLAGS = $(AMANDA_WARNING_CFLAGS)
 LINT=@AMLINT@
 LINTFLAGS=@AMLINTFLAGS@
 
-lib_LTLIBRARIES = 	libamtape.la
+amlib_LTLIBRARIES = 	libamtape.la
 LIB_EXTENSION = la
 
 sbin_PROGRAMS=          ammt amdd amtapetype

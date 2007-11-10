@@ -111,7 +111,9 @@
 		plural((String1), (String2), (Count))
 #endif
 #define T_(String)			String
+#ifndef SWIG /* TODO: make this go away */
 #define _(String)			dgettext("amanda", (String))
+#endif
 
 #ifdef HAVE_FCNTL_H
 #  include <fcntl.h>

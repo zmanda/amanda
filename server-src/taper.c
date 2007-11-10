@@ -376,13 +376,7 @@ static gboolean find_and_label_new_tape(taper_state_t * state,
     }
     state->next_tape_label = NULL; /* Taken by device_start. */
 
-    tapelist_name = getconf_str(CNF_TAPELIST);
-    if (tapelist_name[0] == '/') {
-        tapelist_name = g_strdup(tapelist_name);
-    } else {
-        tapelist_name = stralloc2(config_dir, tapelist_name);
-    }
-
+    tapelist_name = config_dir_relative(getconf_str(CNF_TAPELIST));
     if (state->cur_tape == 0) {
 	tapelist_name_old = stralloc2(tapelist_name, ".yesterday");
     } else {
@@ -978,14 +972,12 @@ static gboolean process_driver_command(taper_state_t * state) {
     return TRUE;
 }
 
-int main(int real_argc, char ** real_argv) {
-    char *conffile;
-    int argc;
-    char ** argv;
-    char * config_name;
+int main(int argc, char ** argv) {
     char * tapelist_name;
     int have_changer;
     taper_state_t state;
+    config_overwrites_t *cfg_ovr = NULL;
+    char *cfg_opt = NULL;
 
     /*
      * Configure program for internationalization:
@@ -1007,44 +999,34 @@ int main(int real_argc, char ** real_argv) {
     /* Don't die when child closes pipe */
     signal(SIGPIPE, SIG_IGN);
 
-    parse_conf(real_argc, real_argv, &argc, &argv);
     g_fprintf(stderr, _("%s: pid %ld executable %s version %s\n"),
 	    get_pname(), (long) getpid(), argv[0], version());
     dbprintf(_("%s: pid %ld executable %s version %s\n"),
               get_pname(), (long) getpid(), argv[0], version());
 
+    /* Process options */
+
+    cfg_ovr = extract_commandline_config_overwrites(&argc, &argv);
+
     if(argc > 2) {
         error("Too many arguments!\n");
         g_assert_not_reached();
     }
- 
-    find_configuration(argc > 1, argv[1], &config_name, &config_dir);
+    if (argc > 1)
+	cfg_opt = argv[1];
+    config_init(CONFIG_INIT_EXPLICIT_NAME | CONFIG_INIT_USE_CWD | CONFIG_INIT_FATAL,
+		cfg_opt);
+    apply_config_overwrites(cfg_ovr);
 
     safe_cd();
 
     set_logerror(logerror);
 
-    free_new_argv(argc, argv);
-
-    conffile = stralloc2(config_dir, CONFFILE_NAME);
-    if (read_conffile(conffile)) {
-	error("errors processing config file \"%s\"", conffile);
-	/*NOTREACHED*/
-    }
-    amfree(conffile);
-
     check_running_as(RUNNING_AS_DUMPUSER);
 
     dbrename(config_name, DBG_SUBDIR_SERVER);
 
-    report_bad_conf_arg();
-
-    tapelist_name = getconf_str(CNF_TAPELIST);
-    if (tapelist_name[0] == '/') {
-        tapelist_name = g_strdup(tapelist_name);
-    } else {
-        tapelist_name = stralloc2(config_dir, tapelist_name);
-    }
+    tapelist_name = config_dir_relative(getconf_str(CNF_TAPELIST));
 
     if (read_tapelist(tapelist_name) != 0) {
         error("could not load tapelist \"%s\"", tapelist_name);

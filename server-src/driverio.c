@@ -523,10 +523,10 @@ chunker_cmd(
 	if (dp && h) {
 	    qname = quote_string(dp->name);
 	    qdest = quote_string(sched(dp)->destname);
-	    holdalloc(h[activehd]->disk)->allocated_dumpers++;
+	    h[activehd]->disk->allocated_dumpers++;
 	    g_snprintf(number, SIZEOF(number), "%d", sched(dp)->level);
 	    g_snprintf(chunksize, SIZEOF(chunksize), "%lld",
-		    (long long)holdingdisk_get_chunksize(h[0]->disk));
+		    (long long)holdingdisk_get_chunksize(h[0]->disk->hdisk));
 	    g_snprintf(use, SIZEOF(use), "%lld",
 		    (long long)h[0]->reserved);
 	    features = am_feature_to_string(dp->host->features);
@@ -566,9 +566,9 @@ chunker_cmd(
 	if(dp && h) {
 	    qname = quote_string(dp->name);
 	    qdest = quote_string(h[activehd]->destname);
-	    holdalloc(h[activehd]->disk)->allocated_dumpers++;
+	    h[activehd]->disk->allocated_dumpers++;
 	    g_snprintf(chunksize, SIZEOF(chunksize), "%lld", 
-		     (long long)holdingdisk_get_chunksize(h[activehd]->disk));
+		     (long long)holdingdisk_get_chunksize(h[activehd]->disk->hdisk));
 	    g_snprintf(use, SIZEOF(use), "%lld", 
 		     (long long)(h[activehd]->reserved - h[activehd]->used));
 	    cmdline = vstralloc(cmdstr[cmd],
@@ -751,12 +751,7 @@ update_info_dumper(
 
     level = sched(dp)->level;
 
-    conf_infofile = getconf_str(CNF_INFOFILE);
-    if (*conf_infofile == '/') {
-	conf_infofile = stralloc(conf_infofile);
-    } else {
-	conf_infofile = stralloc2(config_dir, conf_infofile);
-    }
+    conf_infofile = config_dir_relative(getconf_str(CNF_INFOFILE));
     if (open_infofile(conf_infofile)) {
 	error(_("could not open info db \"%s\""), conf_infofile);
 	/*NOTREACHED*/

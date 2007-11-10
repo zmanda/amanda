@@ -5,12 +5,20 @@ include $(top_srcdir)/config/automake/vars.am
 include $(top_srcdir)/config/automake/scripts.am
 
 # Add your tests here.
-tests = amgetconf
+tests = \
+	Amanda_Logfile \
+	Amanda_Cmdline \
+	Amanda_Config \
+	amdevcheck \
+	amgetconf
 
 # Add any common files (that should not be run as tests) here:
 test_utils = Amconfig.pm Installdirs.pm
 
 SCRIPTS_PERL = $(tests) $(test_utils)
+
+# we don't need to syntax check the test scripts..
+CHECK_PERL =
 
 # The test modules 'use' test_utils, which are in the current directory. checks
 # run with taint mode on, which leaves '.' out of @INC.  So we add it back in

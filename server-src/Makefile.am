@@ -17,7 +17,7 @@ AM_CFLAGS = $(AMANDA_WARNING_CFLAGS)
 LINT=$(AMLINT)
 LINTFLAGS=$(AMLINTFLAGS)
 
-lib_LTLIBRARIES = 	libamserver.la
+amlib_LTLIBRARIES = 	libamserver.la
 
 sbin_PROGRAMS =		amadmin		amcheck		amflush		\
 			amgetconf	amlabel		amtape		\
@@ -28,12 +28,16 @@ noinst_PROGRAMS = taper_source_test
 libexec_PROGRAMS =	amindexd	amlogroll	amtrmidx	\
 			amtrmlog	driver		dumper		\
 			planner		taper		amcleanupdisk	\
-			chunker		amdevcheck
+			chunker
 
-SCRIPTS_PERL =  \
+# Exclude scripts which depend on perl extension modules from the syntax checks
+CHECK_PERL = \
 	    amoverview \
 	    amstatus \
 	    amtoc
+SCRIPTS_PERL =  \
+	    $(CHECK_PERL) \
+	    amdevcheck
 
 SCRIPTS_SHELL = \
 	    amcheckdb \

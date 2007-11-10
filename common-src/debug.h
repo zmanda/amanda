@@ -32,8 +32,8 @@
 /* this file is included from amanda.h; there is no need to include
  * it explicitly in source files. */
 
-#ifndef DEBUG_H
-#define DEBUG_H
+#ifndef AMANDA_DEBUG_H
+#define AMANDA_DEBUG_H
 
 /*
  * GENERAL LOGGING
@@ -222,6 +222,7 @@ char *get_pname(void);
  * ASSERTIONS
  */
 
+#ifndef SWIG
 #ifdef ASSERTIONS
 
 /* Like the standard assert(), but call g_error() to log the result properly */
@@ -238,5 +239,6 @@ char *get_pname(void);
 #define assert(exp) ((void)0)
 
 #endif	/* ASSERTIONS */
+#endif	/* SWIG */
 
-#endif /* DEBUG_H */
+#endif /* AMANDA_DEBUG_H */

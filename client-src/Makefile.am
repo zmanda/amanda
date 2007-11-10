@@ -15,7 +15,7 @@ AM_CFLAGS = $(AMANDA_WARNING_CFLAGS)
 LINT=$(AMLINT)
 LINTFLAGS=$(AMLINTFLAGS)
 
-lib_LTLIBRARIES =	libamclient.la
+amlib_LTLIBRARIES =	libamclient.la
 
 libexec_PROGRAMS =	noop calcsize killpgrp rundump runtar selfcheck sendbackup sendsize versionsuffix
 

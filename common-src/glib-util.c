@@ -26,7 +26,7 @@
 
 #include "amanda.h"
 #include "glib-util.h"
-#include "conffile.h" /* For multiplier strings. */
+#include "conffile.h" /* For find_multiplier. */
 
 typedef enum {
     FLAG_STRING_NAME,
@@ -144,49 +144,6 @@ static gboolean g_value_set_boolean_from_string(GValue * val, char * string) {
     }
 
     return TRUE;
-}
-
-/* Looks for a unit value like b, byte, bytes, bps, etc. Technically
-   the return value should never be < 1, but we return a signed value
-   to help mitigate bad C promotion semantics. Returns 0 on error. */
-static gint64 find_multiplier(char * casestr) {
-    keytab_t * table_entry;
-    char * str = g_utf8_strup(casestr, -1);
-    g_strstrip(str);
-
-    if (*str == '\0') {
-        g_free(str);
-        return 1;
-    }
-    
-    for (table_entry = numb_keytable; table_entry->keyword != NULL;
-         table_entry ++) {
-        if (strcmp(casestr, table_entry->keyword) == 0) {
-            g_free(str);
-            switch (table_entry->token) {
-            case CONF_MULT1K:
-                return 1024;
-            case CONF_MULT1M:
-                return 1024*1024;
-            case CONF_MULT1G:
-                return 1024*1024*1024;
-            case CONF_MULT7:
-                return 7;
-            case CONF_AMINFINITY:
-                return G_MAXINT64;
-            case CONF_MULT1:
-            case CONF_IDENT:
-                return 1;
-            default:
-                /* Should not happen. */
-                return 0;
-            }
-        }
-    }
-
-    /* None found; this is an error. */
-    g_free(str);
-    return 0;
 }
 
 static gboolean g_value_set_int_from_string(GValue * val, char * string) {

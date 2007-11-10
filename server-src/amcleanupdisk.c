@@ -41,16 +41,11 @@
 /* Call open_diskfile() with the diskfile from the configuration
  */
 static void
-init_diskfile(char *config_dir)
+init_diskfile(void)
 {
-    char *conf_diskfile = getconf_str(CNF_DISKFILE);
+    char *conf_diskfile = config_dir_relative(getconf_str(CNF_DISKFILE));
     disklist_t diskq; /* never used, but required by read_diskfile */
 
-    if (*conf_diskfile == '/') {
-	conf_diskfile = stralloc(conf_diskfile);
-    } else {
-	conf_diskfile = stralloc2(config_dir, conf_diskfile);
-    }
     if (read_diskfile(conf_diskfile, &diskq) < 0) {
 	error(_("could not load disklist %s"), conf_diskfile);
 	/*NOTREACHED*/
@@ -61,14 +56,9 @@ init_diskfile(char *config_dir)
 /* Call open_infofile() with the infofile from the configuration
  */
 static void
-init_infofile(char *config_dir)
+init_infofile(void)
 {
-    char *conf_infofile = getconf_str(CNF_INFOFILE);
-    if (*conf_infofile == '/') {
-	conf_infofile = stralloc(conf_infofile);
-    } else {
-	conf_infofile = stralloc2(config_dir, conf_infofile);
-    }
+    char *conf_infofile = config_dir_relative(getconf_str(CNF_INFOFILE));
     if (open_infofile(conf_infofile) < 0) {
 	error(_("could not open info db \"%s\""), conf_infofile);
 	/*NOTREACHED*/
@@ -107,7 +97,7 @@ main(
     char **	argv)
 {
     FILE *verbose_output = NULL;
-    char *conffile;
+    char *cfg_opt = NULL;
 
     /*
      * Configure program for internationalization:
@@ -133,27 +123,20 @@ main(
     /* parse options */
     if (argc >= 2 && strcmp(argv[1], "-v") == 0) {
 	verbose_output = stderr;
-	config_name = argv[2];
+	cfg_opt = argv[2];
     } else {
-	config_name = argv[1];
+	cfg_opt = argv[1];
     }
 
-    config_dir = vstralloc(CONFIG_DIR, "/", config_name, "/", NULL);
-
-    conffile = stralloc2(config_dir, CONFFILE_NAME);
-    if(read_conffile(conffile)) {
-	error(_("errors processing config file \"%s\""), conffile);
-	/*NOTREACHED*/
-    }
-    amfree(conffile);
+    config_init(CONFIG_INIT_EXPLICIT_NAME | CONFIG_INIT_FATAL,
+		cfg_opt);
 
     check_running_as(RUNNING_AS_DUMPUSER);
 
     dbrename(config_name, DBG_SUBDIR_SERVER);
 
-    init_diskfile(config_dir);
-    init_infofile(config_dir);
-    amfree(config_dir);
+    init_diskfile();
+    init_infofile();
 
     /* actually perform the cleanup */
     holding_cleanup(corrupt_dle, verbose_output);

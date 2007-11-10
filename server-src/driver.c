@@ -81,24 +81,26 @@ static char *driver_timestamp;
 static char *hd_driver_timestamp;
 static am_host_t *flushhost = NULL;
 static int need_degraded=0;
+static holdalloc_t *holdalloc;
+static int num_holdalloc;
 
 static event_handle_t *dumpers_ev_time = NULL;
 static event_handle_t *schedule_ev_read = NULL;
 
 static int wait_children(int count);
 static void wait_for_children(void);
-static void allocate_bandwidth(interface_t *ip, unsigned long kps);
+static void allocate_bandwidth(netif_t *ip, unsigned long kps);
 static int assign_holdingdisk(assignedhd_t **holdp, disk_t *diskp);
 static void adjust_diskspace(disk_t *diskp, cmd_t cmd);
 static void delete_diskspace(disk_t *diskp);
 static assignedhd_t **build_diskspace(char *destname);
 static int client_constrained(disk_t *dp);
-static void deallocate_bandwidth(interface_t *ip, unsigned long kps);
+static void deallocate_bandwidth(netif_t *ip, unsigned long kps);
 static void dump_schedule(disklist_t *qp, char *str);
 static void dump_to_tape(disk_t *dp);
 static assignedhd_t **find_diskspace(off_t size, int *cur_idle,
 					assignedhd_t *preferred);
-static unsigned long free_kps(interface_t *ip);
+static unsigned long free_kps(netif_t *ip);
 static off_t free_space(void);
 static void dumper_chunker_result(disk_t *dp);
 static void dumper_taper_result(disk_t *dp);
@@ -123,8 +125,6 @@ static void update_failed_dump_to_tape(disk_t *);
 #if 0
 static void dump_state(const char *str);
 #endif
-int main(int main_argc, char **main_argv);
-
 static const char *idle_strings[] = {
 #define NOT_IDLE		0
     T_("not-idle"),
@@ -148,8 +148,8 @@ static const char *idle_strings[] = {
 
 int
 main(
-    int		main_argc,
-    char **	main_argv)
+    int		argc,
+    char **	argv)
 {
     disklist_t origq;
     disk_t *diskp;
@@ -159,7 +159,6 @@ main(
     struct fs_usage fsusage;
     holdingdisk_t *hdp;
     unsigned long reserve = 100;
-    char *conffile;
     char *conf_diskfile;
     cmd_t cmd;
     int result_argc;
@@ -168,10 +167,11 @@ main(
     char *conf_tapetype;
     tapetype_t *tape;
     char *line;
-    int    new_argc,   my_argc;
-    char **new_argv, **my_argv;
     char hostname[1025];
     intmax_t kb_avail;
+    config_overwrites_t *cfg_ovr = NULL;
+    char *cfg_opt = NULL;
+    holdalloc_t *ha, *ha_last;
 
     /*
      * Configure program for internationalization:
@@ -202,35 +202,28 @@ main(
 
     startclock();
 
-    parse_conf(main_argc, main_argv, &new_argc, &new_argv);
-    my_argc = new_argc;
-    my_argv = new_argv;
+    cfg_ovr = extract_commandline_config_overwrites(&argc, &argv);
+
+    if (argc > 1)
+	cfg_opt = argv[1];
+    config_init(CONFIG_INIT_EXPLICIT_NAME | CONFIG_INIT_USE_CWD | CONFIG_INIT_FATAL,
+		cfg_opt);
+    apply_config_overwrites(cfg_ovr);
 
     g_printf(_("%s: pid %ld executable %s version %s\n"),
-	   get_pname(), (long) getpid(), my_argv[0], version());
+	   get_pname(), (long) getpid(), argv[0], version());
 
-    find_configuration((my_argc > 1), my_argv[1], &config_name, &config_dir);
-
-    if(my_argc > 2) {
-        if(strncmp(my_argv[2], "nodump", 6) == 0) {
+    if(argc > 2) {
+        if(strncmp(argv[2], "nodump", 6) == 0) {
             nodump = 1;
         }
     }
 
-    safe_cd();
-
-    conffile = stralloc2(config_dir, CONFFILE_NAME);
-    if(read_conffile(conffile)) {
-	error(_("errors processing config file \"%s\""), conffile);
-	/*NOTREACHED*/
-    }
-    amfree(conffile);
+    safe_cd(); /* do this *after* config_init */
 
     check_running_as(RUNNING_AS_DUMPUSER);
 
     dbrename(config_name, DBG_SUBDIR_SERVER);
-
-    report_bad_conf_arg();
 
     amfree(driver_timestamp);
     /* read timestamp from stdin */
@@ -287,12 +280,7 @@ main(
 
     /* start initializing: read in databases */
 
-    conf_diskfile = getconf_str(CNF_DISKFILE);
-    if (*conf_diskfile == '/') {
-	conf_diskfile = stralloc(conf_diskfile);
-    } else {
-	conf_diskfile = stralloc2(config_dir, conf_diskfile);
-    }
+    conf_diskfile = config_dir_relative(getconf_str(CNF_DISKFILE));
     if (read_diskfile(conf_diskfile, &origq) < 0) {
 	error(_("could not load disklist \"%s\""), conf_diskfile);
 	/*NOTREACHED*/
@@ -306,16 +294,31 @@ main(
     reserve = (unsigned long)getconf_int(CNF_RESERVE);
 
     total_disksize = (off_t)0;
-    for(hdp = getconf_holdingdisks(), dsk = 0; hdp != NULL; hdp = hdp->next, dsk++) {
-	hdp->up = (void *)alloc(SIZEOF(holdalloc_t));
-	holdalloc(hdp)->allocated_dumpers = 0;
-	holdalloc(hdp)->allocated_space = (off_t)0;
+    ha_last = NULL;
+    num_holdalloc = 0;
+    for(hdp = getconf_holdingdisks(), dsk = 0; hdp != NULL; hdp = holdingdisk_next(hdp), dsk++) {
+	ha = alloc(SIZEOF(holdalloc_t));
+	num_holdalloc++;
 
+	/* link the list in the same order as getconf_holdingdisks's results */
+	ha->next = NULL;
+	if (ha_last == NULL)
+	    holdalloc = ha;
+	else
+	    ha_last->next = ha;
+	ha_last = ha;
+
+	ha->hdisk = hdp;
+	ha->allocated_dumpers = 0;
+	ha->allocated_space = (off_t)0;
+	ha->disksize = holdingdisk_get_disksize(hdp);
+
+	/* get disk size */
 	if(get_fs_usage(holdingdisk_get_diskdir(hdp), NULL, &fsusage) == -1
 	   || access(holdingdisk_get_diskdir(hdp), W_OK) == -1) {
 	    log_add(L_WARNING, _("WARNING: ignoring holding disk %s: %s\n"),
 		    holdingdisk_get_diskdir(hdp), strerror(errno));
-	    hdp->disksize = 0L;
+	    ha->disksize = 0L;
 	    continue;
 	}
 
@@ -325,41 +328,41 @@ main(
 	else
 	    kb_avail = fsusage.fsu_bavail / 1024 * fsusage.fsu_blocksize;
 
-	if(hdp->disksize > (off_t)0) {
-	    if(hdp->disksize > kb_avail) {
+	if(ha->disksize > (off_t)0) {
+	    if(ha->disksize > kb_avail) {
 		log_add(L_WARNING,
 			_("WARNING: %s: %lld KB requested, "
 			"but only %lld KB available."),
 			holdingdisk_get_diskdir(hdp),
-			(long long)hdp->disksize,
+			(long long)ha->disksize,
 			(long long)kb_avail);
-			hdp->disksize = kb_avail;
+			ha->disksize = kb_avail;
 	    }
 	}
-	/* hdp->disksize is negative; use all but that amount */
-	else if(kb_avail < -hdp->disksize) {
+	/* ha->disksize is negative; use all but that amount */
+	else if(kb_avail < -ha->disksize) {
 	    log_add(L_WARNING,
 		    _("WARNING: %s: not %lld KB free."),
 		    holdingdisk_get_diskdir(hdp),
-		    (long long)-hdp->disksize);
-	    hdp->disksize = (off_t)0;
+		    (long long)-ha->disksize);
+	    ha->disksize = (off_t)0;
 	    continue;
 	}
 	else
-	    hdp->disksize += kb_avail;
+	    ha->disksize += kb_avail;
 
 	g_printf(_("driver: adding holding disk %d dir %s size %lld chunksize %lld\n"),
 	       dsk, holdingdisk_get_diskdir(hdp),
-	       (long long)hdp->disksize,
+	       (long long)ha->disksize,
 	       (long long)(holdingdisk_get_chunksize(hdp)));
 
 	newdir = newvstralloc(newdir,
 			      holdingdisk_get_diskdir(hdp), "/", hd_driver_timestamp,
 			      NULL);
 	if(!mkholdingdir(newdir)) {
-	    hdp->disksize = (off_t)0;
+	    ha->disksize = (off_t)0;
 	}
-	total_disksize += hdp->disksize;
+	total_disksize += ha->disksize;
     }
 
     reserved_space = total_disksize * (off_t)(reserve / 100);
@@ -400,7 +403,7 @@ main(
     log_add(L_STATS, _("startup time %s"), walltime_str(curclock()));
 
     g_printf(_("driver: start time %s inparallel %d bandwidth %lu diskspace %lld "), walltime_str(curclock()), inparallel,
-	   free_kps((interface_t *)0), (long long)free_space());
+	   free_kps(NULL), (long long)free_space());
     g_printf(_(" dir %s datestamp %s driver: drain-ends tapeq %s big-dumpers %s\n"),
 	   "OBSOLETE", driver_timestamp, taperalgo2str(conf_taperalgo),
 	   getconf_str(CNF_DUMPORDER));
@@ -486,11 +489,8 @@ main(
     log_add(L_FINISH,_("date %s time %s"), driver_timestamp, walltime_str(curclock()));
     amfree(driver_timestamp);
 
-    free_new_argv(new_argc, new_argv);
     amfree(dumper_program);
     amfree(taper_program);
-    amfree(config_dir);
-    amfree(config_name);
 
     dbclose();
 
@@ -966,7 +966,7 @@ start_some_dumps(
 		h = sched(diskp)->holdp;
 		activehd = sched(diskp)->activehd;
 		h[activehd]->used = 0;
-		holdalloc(h[activehd]->disk)->allocated_dumpers--;
+		h[activehd]->disk->allocated_dumpers--;
 		adjust_diskspace(diskp, DONE);
 		delete_diskspace(diskp);
 		diskp->host->inprogress--;
@@ -1584,7 +1584,7 @@ dumper_chunker_result(
 
     size = holding_file_size(sched(dp)->destname, 0);
     h[activehd]->used = size - dummy;
-    holdalloc(h[activehd]->disk)->allocated_dumpers--;
+    h[activehd]->disk->allocated_dumpers--;
     adjust_diskspace(dp, DONE);
 
     sched(dp)->dump_attempted += 1;
@@ -1862,7 +1862,7 @@ handle_chunker_result(
 	    }
 	    h[activehd]->used -= OFF_T_ATOI(result_argv[3]);
 	    h[activehd]->reserved -= OFF_T_ATOI(result_argv[3]);
-	    holdalloc(h[activehd]->disk)->allocated_space -= OFF_T_ATOI(result_argv[3]);
+	    h[activehd]->disk->allocated_space -= OFF_T_ATOI(result_argv[3]);
 	    h[activehd]->disk->disksize -= OFF_T_ATOI(result_argv[3]);
 	    break;
 
@@ -1871,7 +1871,7 @@ handle_chunker_result(
 		error(_("!h || activehd < 0"));
 		/*NOTREACHED*/
 	    }
-	    holdalloc(h[activehd]->disk)->allocated_dumpers--;
+	    h[activehd]->disk->allocated_dumpers--;
 	    h[activehd]->used = h[activehd]->reserved;
 	    if( h[++activehd] ) { /* There's still some allocated space left.
 				   * Tell the dumper about it. */
@@ -2406,16 +2406,16 @@ read_schedule(
 
 static unsigned long
 free_kps(
-    interface_t *ip)
+    netif_t *ip)
 {
     unsigned long res;
 
-    if (ip == (interface_t *)0) {
-	interface_t *p;
+    if (ip == NULL) {
+	netif_t *p;
 	unsigned long maxusage=0;
 	unsigned long curusage=0;
-	for(p = lookup_interface(NULL); p != NULL; p = p->next) {
-	    maxusage += interface_get_maxusage(p);
+	for(p = disklist_netifs(); p != NULL; p = p->next) {
+	    maxusage += interface_get_maxusage(p->config);
 	    curusage += p->curusage;
 	}
 	if (maxusage >= curusage)
@@ -2424,8 +2424,8 @@ free_kps(
 	    res = 0;
 #ifndef __lint
     } else {
-	if ((unsigned long)interface_get_maxusage(ip) >= ip->curusage)
-	    res = interface_get_maxusage(ip) - ip->curusage;
+	if ((unsigned long)interface_get_maxusage(ip->config) >= ip->curusage)
+	    res = interface_get_maxusage(ip->config) - ip->curusage;
 	else
 	    res = 0;
 #endif
@@ -2438,19 +2438,19 @@ static void
 interface_state(
     char *time_str)
 {
-    interface_t *ip;
+    netif_t *ip;
 
     g_printf(_("driver: interface-state time %s"), time_str);
 
-    for(ip = lookup_interface(NULL); ip != NULL; ip = ip->next) {
-	g_printf(_(" if %s: free %lu"), ip->name, free_kps(ip));
+    for(ip = disklist_netifs(); ip != NULL; ip = ip->next) {
+	g_printf(_(" if %s: free %lu"), interface_name(ip->config), free_kps(ip));
     }
     g_printf("\n");
 }
 
 static void
 allocate_bandwidth(
-    interface_t *	ip,
+    netif_t *		ip,
     unsigned long	kps)
 {
     ip->curusage += kps;
@@ -2458,7 +2458,7 @@ allocate_bandwidth(
 
 static void
 deallocate_bandwidth(
-    interface_t *	ip,
+    netif_t *		ip,
     unsigned long	kps)
 {
     assert(kps <= ip->curusage);
@@ -2469,13 +2469,13 @@ deallocate_bandwidth(
 static off_t
 free_space(void)
 {
-    holdingdisk_t *hdp;
+    holdalloc_t *ha;
     off_t total_free;
     off_t diff;
 
     total_free = (off_t)0;
-    for(hdp = getconf_holdingdisks(); hdp != NULL; hdp = hdp->next) {
-	diff = hdp->disksize - holdalloc(hdp)->allocated_space;
+    for(ha = holdalloc; ha != NULL; ha = ha->next) {
+	diff = ha->disksize - ha->allocated_space;
 	if(diff > (off_t)0)
 	    total_free += diff;
     }
@@ -2498,8 +2498,8 @@ find_diskspace(
     assignedhd_t *	pref)
 {
     assignedhd_t **result = NULL;
-    holdingdisk_t *minp, *hdp;
-    int i=0, num_holdingdisks=0; /* are we allowed to use the global thing? */
+    holdalloc_t *ha, *minp;
+    int i=0;
     int j, minj;
     char *used;
     off_t halloc, dalloc, hfree, dfree;
@@ -2513,34 +2513,30 @@ find_diskspace(
     hold_debug(1, _("find_diskspace: want %lld K\n"),
 		   (long long)size);
 
-    for(hdp = getconf_holdingdisks(); hdp != NULL; hdp = hdp->next) {
-	num_holdingdisks++;
-    }
-
-    used = alloc(SIZEOF(*used) * num_holdingdisks);/*disks used during this run*/
-    memset( used, 0, (size_t)num_holdingdisks );
-    result = alloc(SIZEOF(assignedhd_t *) * (num_holdingdisks + 1));
+    used = alloc(SIZEOF(*used) * num_holdalloc);/*disks used during this run*/
+    memset( used, 0, (size_t)num_holdalloc );
+    result = alloc(SIZEOF(assignedhd_t *) * (num_holdalloc + 1));
     result[0] = NULL;
 
-    while( i < num_holdingdisks && size > (off_t)0 ) {
+    while( i < num_holdalloc && size > (off_t)0 ) {
 	/* find the holdingdisk with the fewest active dumpers and among
 	 * those the one with the biggest free space
 	 */
 	minp = NULL; minj = -1;
-	for(j = 0, hdp = getconf_holdingdisks(); hdp != NULL; hdp = hdp->next, j++ ) {
-	    if( pref && pref->disk == hdp && !used[j] &&
-		holdalloc(hdp)->allocated_space <= hdp->disksize - (off_t)DISK_BLOCK_KB) {
-		minp = hdp;
+	for(j = 0, ha = holdalloc; ha != NULL; ha = ha->next, j++ ) {
+	    if( pref && pref->disk == ha && !used[j] &&
+		ha->allocated_space <= ha->disksize - (off_t)DISK_BLOCK_KB) {
+		minp = ha;
 		minj = j;
 		break;
 	    }
-	    else if( holdalloc(hdp)->allocated_space <= hdp->disksize - (off_t)(2*DISK_BLOCK_KB) &&
+	    else if( ha->allocated_space <= ha->disksize - (off_t)(2*DISK_BLOCK_KB) &&
 		!used[j] &&
 		(!minp ||
-		 holdalloc(hdp)->allocated_dumpers < holdalloc(minp)->allocated_dumpers ||
-		 (holdalloc(hdp)->allocated_dumpers == holdalloc(minp)->allocated_dumpers &&
-		  hdp->disksize-holdalloc(hdp)->allocated_space > minp->disksize-holdalloc(minp)->allocated_space)) ) {
-		minp = hdp;
+		 ha->allocated_dumpers < minp->allocated_dumpers ||
+		 (ha->allocated_dumpers == minp->allocated_dumpers &&
+		  ha->disksize-ha->allocated_space > minp->disksize-minp->allocated_space)) ) {
+		minp = ha;
 		minj = j;
 	    }
 	}
@@ -2550,16 +2546,16 @@ find_diskspace(
 	used[minj] = 1;
 
 	/* hfree = free space on the disk */
-	hfree = minp->disksize - holdalloc(minp)->allocated_space;
+	hfree = minp->disksize - minp->allocated_space;
 
 	/* dfree = free space for data, remove 1 header for each chunksize */
-	dfree = hfree - (((hfree-(off_t)1)/holdingdisk_get_chunksize(minp))+(off_t)1) * (off_t)DISK_BLOCK_KB;
+	dfree = hfree - (((hfree-(off_t)1)/holdingdisk_get_chunksize(minp->hdisk))+(off_t)1) * (off_t)DISK_BLOCK_KB;
 
 	/* dalloc = space I can allocate for data */
 	dalloc = ( dfree < size ) ? dfree : size;
 
 	/* halloc = space to allocate, including 1 header for each chunksize */
-	halloc = dalloc + (((dalloc-(off_t)1)/holdingdisk_get_chunksize(minp))+(off_t)1) * (off_t)DISK_BLOCK_KB;
+	halloc = dalloc + (((dalloc-(off_t)1)/holdingdisk_get_chunksize(minp->hdisk))+(off_t)1) * (off_t)DISK_BLOCK_KB;
 
 	hold_debug(1, _("find_diskspace: find diskspace: size %lld hf %lld df %lld da %lld ha %lld\n"),
 		       (long long)size,
@@ -2575,7 +2571,7 @@ find_diskspace(
 	result[i]->destname = NULL;
 	result[i+1] = NULL;
 	i++;
-    } /* while i < num_holdingdisks && size > 0 */
+    }
     amfree(used);
 
     if(size != (off_t)0) { /* not enough space available */
@@ -2588,11 +2584,11 @@ find_diskspace(
     if (debug_holding > 1) {
 	for( i = 0; result && result[i]; i++ ) {
 	    hold_debug(1, _("find_diskspace: find diskspace: selected %s free %lld reserved %lld dumpers %d\n"),
-			   holdingdisk_get_diskdir(result[i]->disk),
+			   holdingdisk_get_diskdir(result[i]->disk->hdisk),
 			   (long long)(result[i]->disk->disksize -
-			     holdalloc(result[i]->disk)->allocated_space),
+			     result[i]->disk->allocated_space),
 			   (long long)result[i]->reserved,
-			   holdalloc(result[i]->disk)->allocated_dumpers);
+			   result[i]->disk->allocated_dumpers);
 	}
     }
 
@@ -2636,12 +2632,12 @@ assign_holdingdisk(
 	l=j;
 	if( sched(diskp)->holdp[j-1]->disk == holdp[0]->disk ) { /* Yes! */
 	    sched(diskp)->holdp[j-1]->reserved += holdp[0]->reserved;
-	    holdalloc(holdp[0]->disk)->allocated_space += holdp[0]->reserved;
+	    holdp[0]->disk->allocated_space += holdp[0]->reserved;
 	    size = (holdp[0]->reserved>size) ? (off_t)0 : size-holdp[0]->reserved;
 	    qname = quote_string(diskp->name);
 	    hold_debug(1, _("assign_holdingdisk: merging holding disk %s to disk %s:%s, add %lld for reserved %lld, left %lld\n"),
 			   holdingdisk_get_diskdir(
-					       sched(diskp)->holdp[j-1]->disk),
+					       sched(diskp)->holdp[j-1]->disk->hdisk),
 			   diskp->host->hostname, qname,
 			   (long long)holdp[0]->reserved,
 			   (long long)sched(diskp)->holdp[j-1]->reserved,
@@ -2656,19 +2652,19 @@ assign_holdingdisk(
     /* copy assignedhd_s to sched(diskp), adjust allocated_space */
     for( ; holdp[i]; i++ ) {
 	holdp[i]->destname = newvstralloc( holdp[i]->destname,
-					   holdingdisk_get_diskdir(holdp[i]->disk), "/",
+					   holdingdisk_get_diskdir(holdp[i]->disk->hdisk), "/",
 					   hd_driver_timestamp, "/",
 					   diskp->host->hostname, ".",
 					   sfn, ".",
 					   lvl, NULL );
 	sched(diskp)->holdp[j++] = holdp[i];
-	holdalloc(holdp[i]->disk)->allocated_space += holdp[i]->reserved;
+	holdp[i]->disk->allocated_space += holdp[i]->reserved;
 	size = (holdp[i]->reserved > size) ? (off_t)0 :
 		  (size - holdp[i]->reserved);
 	qname = quote_string(diskp->name);
 	hold_debug(1,
 		   _("assign_holdingdisk: %d assigning holding disk %s to disk %s:%s, reserved %lld, left %lld\n"),
-		    i, holdingdisk_get_diskdir(holdp[i]->disk),
+		    i, holdingdisk_get_diskdir(holdp[i]->disk->hdisk),
 		    diskp->host->hostname, qname,
 		    (long long)holdp[i]->reserved,
 		    (long long)size);
@@ -2706,16 +2702,15 @@ adjust_diskspace(
     for( i = 0; holdp[i]; i++ ) { /* for each allocated disk */
 	diff = holdp[i]->used - holdp[i]->reserved;
 	total += holdp[i]->used;
-	holdalloc(holdp[i]->disk)->allocated_space += diff;
-	hqname = quote_string(holdp[i]->disk->name);
+	holdp[i]->disk->allocated_space += diff;
+	hqname = quote_string(holdingdisk_name(holdp[i]->disk->hdisk));
 	hold_debug(1, _("adjust_diskspace: hdisk %s done, reserved %lld used %lld diff %lld alloc %lld dumpers %d\n"),
-		       holdp[i]->disk->name,
+		       holdingdisk_name(holdp[i]->disk->hdisk),
 		       (long long)holdp[i]->reserved,
 		       (long long)holdp[i]->used,
 		       (long long)diff,
-		       (long long)holdalloc(holdp[i]->disk)
-							     ->allocated_space,
-		       holdalloc(holdp[i]->disk)->allocated_dumpers );
+		       (long long)holdp[i]->disk->allocated_space,
+		       holdp[i]->disk->allocated_dumpers );
 	holdp[i]->reserved += diff;
 	amfree(hqname);
     }
@@ -2744,7 +2739,7 @@ delete_diskspace(
 	/* find all files of this dump on that disk, and subtract their
 	 * reserved sizes from the disk's allocated space
 	 */
-	holdalloc(holdp[i]->disk)->allocated_space -= holdp[i]->used;
+	holdp[i]->disk->allocated_space -= holdp[i]->used;
     }
 
     holding_file_unlink(holdp[0]->destname);	/* no need for the entire list,
@@ -2766,21 +2761,17 @@ build_diskspace(
     char buffer[DISK_BLOCK_BYTES];
     dumpfile_t file;
     assignedhd_t **result;
-    holdingdisk_t *hdp;
+    holdalloc_t *ha;
     off_t *used;
-    int num_holdingdisks=0;
     char dirname[1000], *ch;
     struct stat finfo;
     char *filename = destname;
 
     memset(buffer, 0, sizeof(buffer));
-    for(hdp = getconf_holdingdisks(); hdp != NULL; hdp = hdp->next) {
-        num_holdingdisks++;
-    }
-    used = alloc(SIZEOF(off_t) * num_holdingdisks);
-    for(i=0;i<num_holdingdisks;i++)
+    used = alloc(SIZEOF(off_t) * num_holdalloc);
+    for(i=0;i<num_holdalloc;i++)
 	used[i] = (off_t)0;
-    result = alloc(SIZEOF(assignedhd_t *) * (num_holdingdisks + 1));
+    result = alloc(SIZEOF(assignedhd_t *) * (num_holdalloc + 1));
     result[0] = NULL;
     while(filename != NULL && filename[0] != '\0') {
 	strncpy(dirname, filename, 999);
@@ -2790,9 +2781,8 @@ build_diskspace(
 	ch = strrchr(dirname,'/');
         *ch = '\0';
 
-	for(j = 0, hdp = getconf_holdingdisks(); hdp != NULL;
-						 hdp = hdp->next, j++ ) {
-	    if(strcmp(dirname, holdingdisk_get_diskdir(hdp))==0) {
+	for(j = 0, ha = holdalloc; ha != NULL; ha = ha->next, j++ ) {
+	    if(strcmp(dirname, holdingdisk_get_diskdir(ha->hdisk))==0) {
 		break;
 	    }
 	}
@@ -2814,11 +2804,10 @@ build_diskspace(
 	filename = file.cont_filename;
     }
 
-    for(j = 0, i=0, hdp = getconf_holdingdisks(); hdp != NULL;
-						  hdp = hdp->next, j++ ) {
+    for(j = 0, i=0, ha = holdalloc; ha != NULL; ha = ha->next, j++ ) {
 	if(used[j] != (off_t)0) {
 	    result[i] = alloc(SIZEOF(assignedhd_t));
-	    result[i]->disk = hdp;
+	    result[i]->disk = ha;
 	    result[i]->reserved = used[j];
 	    result[i]->used = used[j];
 	    result[i]->destname = stralloc(destname);
@@ -2835,16 +2824,16 @@ static void
 holdingdisk_state(
     char *	time_str)
 {
-    holdingdisk_t *hdp;
+    holdalloc_t *ha;
     int dsk;
     off_t diff;
 
     g_printf(_("driver: hdisk-state time %s"), time_str);
 
-    for(hdp = getconf_holdingdisks(), dsk = 0; hdp != NULL; hdp = hdp->next, dsk++) {
-	diff = hdp->disksize - holdalloc(hdp)->allocated_space;
+    for(ha = holdalloc, dsk = 0; ha != NULL; ha = ha->next, dsk++) {
+	diff = ha->disksize - ha->allocated_space;
 	g_printf(_(" hdisk %d: free %lld dumpers %d"), dsk,
-	       (long long)diff, holdalloc(hdp)->allocated_dumpers);
+	       (long long)diff, ha->allocated_dumpers);
     }
     g_printf("\n");
 }
@@ -2971,7 +2960,7 @@ short_dump_state(void)
 
     g_printf(_("driver: state time %s "), wall_time);
     g_printf(_("free kps: %lu space: %lld taper: "),
-	   free_kps((interface_t *)0),
+	   free_kps(NULL),
 	   (long long)free_space());
     if(degraded_mode) g_printf(_("DOWN"));
     else if(!taper_busy) g_printf(_("idle"));
@@ -3001,7 +2990,7 @@ dump_state(
     g_printf("================\n");
     g_printf(_("driver state at time %s: %s\n"), walltime_str(curclock()), str);
     g_printf(_("free kps: %lu, space: %lld\n"),
-    	   free_kps((interface_t *)0),
+    	   free_kps(NULL),
     	   (long long)free_space());
     if(degraded_mode) g_printf(_("taper: DOWN\n"));
     else if(!taper_busy) g_printf(_("taper: idle\n"));

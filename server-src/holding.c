@@ -396,7 +396,7 @@ holding_walk(
 
     for (hdisk_conf = getconf_holdingdisks(); 
 		hdisk_conf != NULL;
-		hdisk_conf = hdisk_conf->next) {
+		hdisk_conf = holdingdisk_next(hdisk_conf)) {
 	int is_cruft = 0;
 
 	hdisk = holdingdisk_get_diskdir(hdisk_conf);
