@@ -176,7 +176,6 @@ Requires: tar
 Provides: amanda-backup_client
 Provides: libamclient-%{version}.so
 Provides: libamanda-%{version}.so
-Provides: librestore-%{version}.so
 Conflicts: amanda-backup_server
 
 %package backup_server
@@ -1036,26 +1035,8 @@ echo "Amanda installation log can be found in '${INSTALL_LOG}' and errors (if an
 %dir %{AMANDAHOMEDIR}
 %dir %{AMANDAHOMEDIR}/gnutar-lists
 %dir %{LIBEXECDIR}
-%{LIBDIR}/libamanda.a
-%{LIBDIR}/libamanda.la
-%{LIBDIR}/libamanda-%{version}.so
-%{LIBDIR}/libamanda.so
-%{LIBDIR}/libamandad.a
-%{LIBDIR}/libamandad.la
-%{LIBDIR}/libamandad-%{version}.so
-%{LIBDIR}/libamandad.so
-%{LIBDIR}/libamdevice.a
-%{LIBDIR}/libamdevice.la
-%{LIBDIR}/libamdevice-%{version}.so
-%{LIBDIR}/libamdevice.so
-%{LIBDIR}/libamclient.a
-%{LIBDIR}/libamclient.la
-%{LIBDIR}/libamclient-%{version}.so
-%{LIBDIR}/libamclient.so
-%{LIBDIR}/librestore.a
-%{LIBDIR}/librestore.la
-%{LIBDIR}/librestore-%{version}.so
-%{LIBDIR}/librestore.so
+%{LIBDIR}/libamanda*
+%{LIBDIR}/libamclient*
 %{LIBEXECDIR}/amandad
 %{LIBEXECDIR}/generic-dumper
 %{LIBEXECDIR}/amgtar
@@ -1103,30 +1084,12 @@ echo "Amanda installation log can be found in '${INSTALL_LOG}' and errors (if an
 %dir %{LIBEXECDIR}
 %dir %{AMANDAHOMEDIR}
 %dir %{AMANDAHOMEDIR}/gnutar-lists
-%{LIBDIR}/libamanda.a
-%{LIBDIR}/libamanda.la
-%{LIBDIR}/libamanda-%{version}.so
-%{LIBDIR}/libamanda.so
-%{LIBDIR}/libamandad.a
-%{LIBDIR}/libamandad.la
-%{LIBDIR}/libamandad-%{version}.so
-%{LIBDIR}/libamandad.so
-%{LIBDIR}/libamclient.a
-%{LIBDIR}/libamclient.la
-%{LIBDIR}/libamclient-%{version}.so
-%{LIBDIR}/libamclient.so
-%{LIBDIR}/libamserver.a
-%{LIBDIR}/libamserver.la
-%{LIBDIR}/libamserver-%{version}.so
-%{LIBDIR}/libamserver.so
-%{LIBDIR}/libamtape.a
-%{LIBDIR}/libamtape.la
-%{LIBDIR}/libamtape-%{version}.so
-%{LIBDIR}/libamtape.so
-%{LIBDIR}/librestore.a
-%{LIBDIR}/librestore.la
-%{LIBDIR}/librestore-%{version}.so
-%{LIBDIR}/librestore.so
+%{LIBDIR}/libamanda*
+%{LIBDIR}/libamclient*
+%{LIBDIR}/libamserver*
+%{LIBDIR}/libamtape*
+%{LIBDIR}/libamdevice*
+%{LIBDIR}/librestore*
 %{LIBEXECDIR}/amandad
 %{LIBEXECDIR}/amcleanupdisk
 %{LIBEXECDIR}/amidxtaped
