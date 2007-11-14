@@ -1,4 +1,7 @@
 2007-11-14  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amstatus.pl: Handle taper FAILED message.
+
+2007-11-14  Jean-Louis Martineau <martineau@zmanda.com>
 	* config/amanda/userid.m4: Use $enableval in AC_ARG_ENABLE.
 
 2007-11-07  Paddy Sreenivasan <paddy@zmanda.com>

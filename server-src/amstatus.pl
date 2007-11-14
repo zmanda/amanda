@@ -566,6 +566,24 @@ while($lineX = <AMDUMP>) {
 						$error{$hostpart}="driver: $error";
 					}
 				}
+				elsif($line[6] eq "FAILED") {
+					#7:handle 8:INPUT- 9:TAPE- 10:input_message 11:tape_message
+				   $serial=$line[7];
+					$hostpart=$serial{$serial};
+					if(defined $hostpart) {
+						if($line[9] eq "TAPE-ERROR") {
+							$error=$line[11];
+							$taper_finished{$hostpart} = -2;
+						}
+						else {
+							$error=$line[10];
+							$taper_finished{$hostpart} = -1;
+						}
+						$busy_time{"taper"}+=($current_time-$taper_time{$hostpart});
+						$taper_time{$hostpart}=$current_time;
+						$error{$hostpart}="$error";
+					}
+				}
 			}
 		}
 		elsif($line[1] eq "finished-cmd" && $line[2] eq "time") {
@@ -893,6 +911,8 @@ foreach $host (sort @hosts) {
 							else {
 								print " failed to flush";
 							}
+							print ": ",$error{$hostpart} if defined $error{$hostpart};
+						
 							print " (will retry)" unless $taper_finished{$hostpart} < -1;
 							if( defined $starttime ) {
 								print " (", &showtime($taper_time{$hostpart}), ")";
