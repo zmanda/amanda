@@ -15,7 +15,7 @@ AC_DEFUN([AMANDA_DISABLE_INSTALLPERMS],
     AC_ARG_ENABLE(installperms,
         AS_HELP_STRING([--disable-installperms],
                 [do not modify ownership and permissions on installed files]),
-        [ WANT_INSTALLPERMS="$withval" ],
+        [ WANT_INSTALLPERMS="$enableval" ],
         [ WANT_INSTALLPERMS="yes" ]
     )
     AM_CONDITIONAL(WANT_INSTALLPERMS, test x"$WANT_INSTALLPERMS" = x"yes")
