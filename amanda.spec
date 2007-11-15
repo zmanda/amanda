@@ -745,6 +745,39 @@ echo "done." >>${TMPFILE}
 cat ${TMPFILE}
 cat ${TMPFILE} >>${INSTALL_LOG}
 
+if [ -e /etc/xinetd.d ] && [ -d /etc/xinetd.d ] ; then
+	if [ ! -f /etc/xinetd.d/amandaserver ] ; then
+		cp %{AMANDAHOMEDIR}/example/xinetd.amandaserver /etc/xinetd.d/amandaserver
+		chmod 0644 /etc/xinetd.d/amandaserver >>${TMPFILE} 2>&1
+		if [ -f /etc/xinetd.d/amandaclient ] ; then
+			rm /etc/xinetd.d/amandaclient
+		fi
+
+		echo -n "`date +'%b %e %Y %T'`: Reloading xinetd configuration..." >${TMPFILE}
+		if [ "%{xinetd_reload}" == "reload" ] ; then
+			/etc/init.d/xinetd %{xinetd_reload} >>${TMPFILE} 2>&1
+			ret_val=$?
+			if [ ${ret_val} -ne 0 ] ; then
+				echo -n "reload failed.  Attempting restart..." >>${TMPFILE}
+				/etc/init.d/xinetd restart >>${TMPFILE} 2>&1
+				ret_val=$?
+			fi
+		else
+			/etc/init.d/xinetd %{xinetd_reload} >>${TMPFILE} 2>&1
+			ret_val=$?
+		fi
+		if [ ${ret_val} -eq 0 ] ; then
+			echo "success." >>${TMPFILE}
+			cat ${TMPFILE}
+			cat ${TMPFILE} >>${INSTALL_LOG}
+		else
+			echo "failed.  Please check your system logs." >>${TMPFILE}
+			cat ${TMPFILE} 1>&2
+			cat ${TMPFILE} >>${INSTALL_ERR}
+		fi
+	fi
+fi
+
 echo "`date +'%b %e %Y %T'`: Installing '%{SYSCONFDIR}/amandates'." >${TMPFILE}
 ret_val=0
 if [ ! -f %{SYSCONFDIR}/amandates ] ; then
@@ -786,6 +819,17 @@ chown %{amanda_user}:%{amanda_group} %{AMANDAHOMEDIR}/.amandahosts >>${TMPFILE} 
 chmod 0600 %{AMANDAHOMEDIR}/.amandahosts >>${TMPFILE} 2>&1
 cat ${TMPFILE}
 cat ${TMPFILE} >>${INSTALL_LOG}
+
+# Install amanda client configuration file
+echo "`date +'%b %e %Y %T'`: Checking '%{SYSCONFDIR}/amanda/amanda-client.conf' file." >${TMPFILE}
+if [ ! -f %{SYSCONFDIR}/amanda/amanda-client.conf ] ; then
+	cp %{AMANDAHOMEDIR}/example/amanda-client.conf %{SYSCONFDIR}/amanda/amanda-client.conf >>${TMPFILE} 2>&1
+fi
+chown %{amanda_user}:%{amanda_group} %{SYSCONFDIR}/amanda/amanda-client.conf >>${TMPFILE} 2>&1
+chmod 0600 %{SYSCONFDIR}/amanda/amanda-client.conf >>${TMPFILE} 2>&1
+cat ${TMPFILE}
+cat ${TMPFILE} >>${INSTALL_LOG}
+
 
 # environment variables (~amandabackup/.profile)
 echo "`date +'%b %e %Y %T'`: Checking for '%{AMANDAHOMEDIR}/.profile' and ensuring correct environment." >${TMPFILE}
@@ -976,6 +1020,35 @@ echo "done." >>${TMPFILE}
 cat ${TMPFILE}
 cat ${TMPFILE} >>${INSTALL_LOG}
 
+if [ -e /etc/xinetd.d ] && [ -d /etc/xinetd.d ] ; then
+	if [ ! -f /etc/xinetd.d/amandaclient ] ; then
+		cp %{AMANDAHOMEDIR}/example/xinetd.amandaclient /etc/xinetd.d/amandaclient
+
+		echo -n "`date +'%b %e %Y %T'`: Reloading xinetd configuration..." >${TMPFILE}
+		if [ "%{xinetd_reload}" == "reload" ] ; then
+			/etc/init.d/xinetd %{xinetd_reload} >>${TMPFILE} 2>&1
+			ret_val=$?
+			if [ ${ret_val} -ne 0 ] ; then
+				echo -n "reload failed.  Attempting restart..." >>${TMPFILE}
+				/etc/init.d/xinetd restart >>${TMPFILE} 2>&1
+				ret_val=$?
+			fi
+		else
+			/etc/init.d/xinetd %{xinetd_reload} >>${TMPFILE} 2>&1
+			ret_val=$?
+		fi
+		if [ ${ret_val} -eq 0 ] ; then
+			echo "success." >>${TMPFILE}
+			cat ${TMPFILE}
+			cat ${TMPFILE} >>${INSTALL_LOG}
+		else
+			echo "failed.  Please check your system logs." >>${TMPFILE}
+			cat ${TMPFILE}
+			cat ${TMPFILE} >>${INSTALL_LOG}
+		fi
+	fi
+fi
+
 if [ ! -f %{SYSCONFDIR}/amandates ] ; then
 	touch %{SYSCONFDIR}/amandates
 	echo "`date +'%b %e %Y %T'`: The file '%{SYSCONFDIR}/amandates' has been created." >${TMPFILE}
@@ -999,6 +1072,16 @@ for host in localhost localhost.localdomain ; do
 done
 chown %{amanda_user}:%{amanda_group} %{AMANDAHOMEDIR}/.amandahosts >>${TMPFILE} 2>&1
 chmod 0600 %{AMANDAHOMEDIR}/.amandahosts >>${TMPFILE} 2>&1
+cat ${TMPFILE}
+cat ${TMPFILE} >>${INSTALL_LOG}
+
+# Install amanda client configuration file
+echo "`date +'%b %e %Y %T'`: Checking '%{SYSCONFDIR}/amanda/amanda-client.conf' file." >${TMPFILE}
+if [ ! -f %{SYSCONFDIR}/amanda/amanda-client.conf ] ; then
+	cp %{AMANDAHOMEDIR}/example/amanda-client.conf %{SYSCONFDIR}/amanda/amanda-client.conf >>${TMPFILE} 2>&1
+fi
+chown %{amanda_user}:%{amanda_group} %{SYSCONFDIR}/amanda/amanda-client.conf >>${TMPFILE} 2>&1
+chmod 0600 %{SYSCONFDIR}/amanda/amanda-client.conf >>${TMPFILE} 2>&1
 cat ${TMPFILE}
 cat ${TMPFILE} >>${INSTALL_LOG}
 
@@ -1032,6 +1115,7 @@ echo "Amanda installation log can be found in '${INSTALL_LOG}' and errors (if an
 
 %files backup_client
 %defattr(0755,%{amanda_user},%{amanda_group})
+%dir %{SYSCONFDIR}/amanda
 %dir %{AMANDAHOMEDIR}
 %dir %{AMANDAHOMEDIR}/gnutar-lists
 %dir %{LIBEXECDIR}
@@ -1219,6 +1303,9 @@ echo "Amanda installation log can be found in '${INSTALL_LOG}' and errors (if an
 # --- ChangeLog
 
 %changelog
+* Tue Nov  13 2007 Paddy Sreenivasan <paddy at zmanda dot com>
+- Added SYSCONFDIR to client rpm
+- Set xinetd and amanda-client.conf configuration files as part of postinstall
 * Thu Nov  8 2007 Dan Locks <dwlocks at zmanda dot com>
 - Added Linux distribution detection
 * Wed Nov 7 2007 Paddy Sreenivasan <paddy at zmanda dot com>
