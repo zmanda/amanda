@@ -11,9 +11,9 @@ tape_server  "@DEFAULT_TAPE_SERVER@"	# your amidxtaped server
 tapedev      "@EXAMPLE_TAPEDEV@"	# your tape device
 
 #   auth	- authentication scheme to use between server and client.
-#		  Valid values are "bsd", "krb4", "krb5" and "ssh".  
-#		  Default: [auth "bsd"]
-auth "bsd"
+#		  Valid values are "bsd", "bsdtcp", "krb4", "krb5" and "ssh".  
+#		  Default: [auth "bsdtcp"]
+auth "bsdtcp"
 
 ssh_keys ""			# your ssh keys file if you use ssh auth
 

@@ -1,3 +1,7 @@
+2007-11-20  Paddy Sreenivasan <paddy@zmanda.com>
+        * amanda.spec: Added calls to Zmanda
+	* example/amanda-client.conf.in: Switch to bsdtcp
+
 2007-11-14  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amstatus.pl: Handle taper FAILED message.
 

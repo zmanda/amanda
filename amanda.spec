@@ -571,6 +571,11 @@ cat ${TMPFILE} >>${INSTALL_LOG}
 chown %{amanda_user}:%{amanda_group} %{AMANDAHOMEDIR}/.profile >>${TMPFILE} 2>&1
 chmod 0640 %{AMANDAHOMEDIR}/.profile >>${TMPFILE} 2>&1
 
+echo "`date +'%b %e %Y %T'`: Sending anonymous distribution and version information to Zmanda" >> ${INSTALL_LOG}
+if [ -x /usr/bin/wget ]; then 
+	/usr/bin/wget -q -o /dev/null -O - --timeout=5 http://www.zmanda.com/amanda-tips.php\?version=%{amanda_version}\&os=%{disttag}%{distver}\&type=server 
+fi
+
 echo "`date +'%b %e %Y %T'`: === Amanda installation complete. ===" >${TMPFILE}
 
 cat ${TMPFILE}
@@ -845,6 +850,11 @@ chmod 0640 %{AMANDAHOMEDIR}/.profile >>${TMPFILE} 2>&1
 cat ${TMPFILE}
 cat ${TMPFILE} >>${INSTALL_LOG}
 
+echo "`date +'%b %e %Y %T'`: Sending anonymous distribution and version information to Zmanda" >> ${INSTALL_LOG}
+if [ -x /usr/bin/wget ]; then 
+	/usr/bin/wget -q -o /dev/null -O - --timeout=5 http://www.zmanda.com/amanda-tips.php\?version=%{amanda_version}\&os=%{disttag}%{distver}\&type=server 
+fi
+
 echo "`date +'%b %e %Y %T'`: === Amanda backup server installation complete. ===" >${TMPFILE}
 
 cat ${TMPFILE}
@@ -1098,6 +1108,11 @@ chown %{amanda_user}:%{amanda_group} %{AMANDAHOMEDIR}/.profile >>${TMPFILE} 2>&1
 chmod 0640 %{AMANDAHOMEDIR}/.profile >>${TMPFILE} 2>&1
 cat ${TMPFILE}
 cat ${TMPFILE} >>${INSTALL_LOG}
+
+echo "`date +'%b %e %Y %T'`: Sending anonymous distribution and version information to Zmanda" >> ${INSTALL_LOG}
+if [ -x /usr/bin/wget ]; then 
+	/usr/bin/wget -q -o /dev/null -O - --timeout=5 http://www.zmanda.com/amanda-tips.php\?version=%{amanda_version}\&os=%{disttag}%{distver}\&type=client 
+fi
 
 echo "`date +'%b %e %Y %T'`: === Amanda backup client installation complete. ===" >>${TMPFILE}
 
