@@ -1,4 +1,7 @@
 2007-11-23  Jean-Louis Martineau <martineau@zmanda.com>
+	* config/amanda/readline.m4: Include termcap, curses or ncurese in LIBS.
+
+2007-11-23  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/diskfile.c (match_disklist): Fix for disk not found.
 
 2007-11-23  Jean-Louis Martineau <martineau@zmanda.com>

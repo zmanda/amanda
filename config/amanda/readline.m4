@@ -30,12 +30,15 @@ AS_HELP_STRING([--without-readline], [don't search for readline]),
         # we need a tgetent() somewhere..
         proceed="false"
         AC_CHECK_LIB(termcap, tgetent, [
+            READLINE_LIBS="-ltermcap"
             proceed="true"
         ], [
             AC_CHECK_LIB(curses, tgetent, [
+                READLINE_LIBS="-lcurses"
                 proceed="true"
             ], [
                 AC_CHECK_LIB(ncurses, tgetent, [
+                    READLINE_LIBS="-lncurses"
                     proceed="true"
                 ])
             ])
@@ -52,9 +55,9 @@ AS_HELP_STRING([--without-readline], [don't search for readline]),
         if $proceed; then
             proceed="false"
             AC_CHECK_LIB(readline,readline, [
-                LIBS="-lreadline $LIBS"
+                LIBS="-lreadline $READLINE_LIBS $LIBS"
                 proceed="true"
-            ])
+            ],,$READLINE_LIBS)
         fi
 
         if $proceed; then
