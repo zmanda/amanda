@@ -1,4 +1,7 @@
 2007-11-23  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/diskfile.c (match_disklist): Fix for disk not found.
+
+2007-11-23  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/driver.c: Don't release taper_ev_read in
                                start_degraded_mode.
 
