@@ -1039,11 +1039,6 @@ start_degraded_mode(
     off_t est_full_size;
     char *qname;
 
-    if (taper_ev_read != NULL) {
-	event_release(taper_ev_read);
-	taper_ev_read = NULL;
-    }
-
     newq.head = newq.tail = 0;
 
     dump_schedule(queuep, _("before start degraded mode"));
