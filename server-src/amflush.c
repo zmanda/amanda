@@ -94,6 +94,7 @@ main(
     char *tpchanger;
     char *qdisk, *qhname;
     GSList *datestamp_list = NULL;
+    char **config_options;
 
     /*
      * Configure program for internationalization:
@@ -329,9 +330,11 @@ main(
 	 */
 	dup2(driver_pipe[0], 0);
 	close(driver_pipe[1]);
-	execle(driver_program,
-	       "driver", config_name, "nodump", (char *)0,
-	       safe_env());
+	config_options = get_config_options(3);
+	config_options[0] = "driver";
+	config_options[1] = config_name;
+	config_options[2] = "nodump";
+	execve(driver_program, config_options, safe_env());
 	error(_("cannot exec %s: %s"), driver_program, strerror(errno));
 	/*NOTREACHED*/
     } else if(driver_pid == -1) {
@@ -464,9 +467,10 @@ main(
 	/*
 	 * This is the child process.
 	 */
-	execle(reporter_program,
-	       "amreport", config_name, (char *)0,
-	       safe_env());
+	config_options = get_config_options(2);
+	config_options[0] = "amreport";
+	config_options[1] = config_name;
+	execve(reporter_program, config_options, safe_env());
 	error(_("cannot exec %s: %s"), reporter_program, strerror(errno));
 	/*NOTREACHED*/
     } else if(reporter_pid == -1) {
@@ -490,9 +494,10 @@ main(
      * Call amlogroll to rename the log file to its datestamped version.
      * Since we exec at this point, our exit code will be that of amlogroll.
      */
-    execle(logroll_program,
-	   "amlogroll", config_name, (char *)0,
-	   safe_env());
+    config_options = get_config_options(2);
+    config_options[0] = "amlogroll";
+    config_options[1] = config_name;
+    execve(logroll_program, config_options, safe_env());
     error(_("cannot exec %s: %s"), logroll_program, strerror(errno));
     /*NOTREACHED*/
     return 0;				/* keep the compiler happy */

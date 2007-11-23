@@ -1,4 +1,7 @@
 2007-11-23  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amflush.c: Send config option (-o) to child process.
+
+2007-11-23  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/planner.c: Don't set est(dp)->state before testing it.
 
 2007-11-23  Jean-Louis Martineau <martineau@zmanda.com>
