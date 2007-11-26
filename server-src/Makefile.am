@@ -19,16 +19,16 @@ LINTFLAGS=$(AMLINTFLAGS)
 
 lib_LTLIBRARIES = 	libamserver.la
 
-sbin_PROGRAMS =		amadmin		amcheck		amflush		\
-			amgetconf	amlabel		amtape		\
-			amreport
+sbin_PROGRAMS =		amadmin		amcheck		amdevcheck	\
+			amflush		amgetconf	amlabel		\
+			amtape		amreport
 
 noinst_PROGRAMS = taper_source_test
 
 libexec_PROGRAMS =	amindexd	amlogroll	amtrmidx	\
 			amtrmlog	driver		dumper		\
 			planner		taper		amcleanupdisk	\
-			chunker		amdevcheck
+			chunker
 
 SCRIPTS_PERL =  \
 	    amserverconfig \
