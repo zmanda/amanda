@@ -123,13 +123,34 @@ int scan_read_label(
 
         return -1;
     } else {
-        char * label_errstr =
-            g_english_strjoinv_and_free
-                (g_flags_nick_to_strv(label_status,
-                                      READ_LABEL_STATUS_FLAGS_TYPE), "or");
-        *error_message = newvstrallocf(*error_message,
-                                       _("%sError reading label: One of %s.\n"),
-                                       *error_message, label_errstr);
+        char * label_errstr;
+        char ** label_strv =
+            g_flags_nick_to_strv(label_status, READ_LABEL_STATUS_FLAGS_TYPE);
+        
+        switch (g_strv_length(label_strv)) {
+        case 0:
+            label_errstr = g_strdup(_("Unknown error reading volume label.\n"));
+            break;
+
+        case 1:
+            label_errstr =
+                g_strdup_printf(_("Error reading volume label: %s\n"),
+                                *label_strv);
+
+        default:
+            {
+                char * tmp_str = g_english_strjoinv(label_strv, "or");
+                label_errstr =
+                    g_strdup_printf(_("Error reading label: One of %s\n"),
+                                    tmp_str);
+                g_free(tmp_str);
+            }
+        }
+        
+        g_strfreev(label_strv);
+
+        *error_message = newvstralloc(*error_message, *error_message,
+                                      label_errstr, NULL);
         g_free(label_errstr);
         return -1;
     }

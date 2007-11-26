@@ -1,3 +1,7 @@
+2007-11-06  Ian Turner <ian@zmada.com>
+	* server-src/taperscan.c: Print a proper message if there is
+	  only one flag from device_read_label().
+
 2007-11-26  Dustin J. Mitchell <dustin@zmanda.com>
 	* configure.in config/amanda/config.m4 common-src/genversion.c
 	  common-src/Makefile.am: explicitly generate svn info at configure
