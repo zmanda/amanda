@@ -1,3 +1,7 @@
+2007-11-20  Ian Turner <ian@zmanda.com>
+	* changer-src/chg-lib.sh.in: Use a more robust check for MT path.
+	* server-src/amverify.sh.in: Use amrestore instead of amdd/ammt.
+
 2007-11-09  Ian Turner <ian@zmanda.com>
 	* server-src/taperscan.c: Fix a memory allocation bug and be a little
 	  more paranoid.

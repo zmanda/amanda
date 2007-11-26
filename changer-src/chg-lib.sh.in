@@ -58,7 +58,7 @@ try_find_mt() {
         MT=mt
     fi
 
-    if test "${MT:0:1}" = "/"; then
+    if "`echo $MT | dd bs=1 count=1`" = "/"; then
         if ! test -f "${MT}"; then
             echo `_ "mt binary at '%s' not found" "$MTX"`
             return 1

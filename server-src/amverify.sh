@@ -120,7 +120,7 @@ doonefile() {
 	# does not go back and terminate the "dd" early.
 	###
 
-	HEADER=`$DD bs=512 count=64 | ( sed 1q ; cat > /dev/null )`
+        HEADER=`$DD bs=512 count=64 2>/dev/null | ( sed 1q ; cat > /dev/null )`
 	CMD=
 	result=1
 	if [ X"$HEADER" = X"" ]; then
@@ -223,39 +223,10 @@ VXDUMP=@VXDUMP@
 VXRESTORE=@VXRESTORE@
 XFSDUMP=@XFSDUMP@
 XFSRESTORE=@XFSRESTORE@
-if [ -x $sbindir/ammt$SUF ]; then
-	MT=$sbindir/ammt$SUF
-	MTF=-f
-elif [ -x "@MT@" ]; then
-	MT=@MT@
-	MTF=@MT_FILE_FLAG@
-else
-	$Echoe "amverify$SUF mt program not found"
-	exit 1
-fi
-if [ -x $sbindir/amdd$SUF ]; then
-	DD=$sbindir/amdd$SUF
-elif [ -x "@DD@" ]; then
-	DD=@DD@
-else
-	$Echoe "amverify$SUF dd program not found"
-	exit 1
-fi
 MAIL=@MAILER@
-if [ X"`/bin/uname -s 2>/dev/null`" = X"AIX" ]; then
-	IS_AIX=1
+DD=@DD@
 
-	# The AIX "mt stat" function does not really do anything w.r.t.
-	# checking the drive for ready, and in fact, will fail under
-	# some conditions (e.g. if the tape "file" is a symlink to the
-	# real device).  We let the rewind do the equivalent since all
-	# we use this for is to wait for device ready.
-
-	DEVICE_READY=:
-else
-	IS_AIX=0
-	DEVICE_READY='$MT $MTF $DEVICE stat'
-fi
+. ${libexecdir}/chg-lib.sh
 
 #
 # config file
@@ -382,46 +353,38 @@ while [ $SLOT -lt $SLOTS ]; do
 	report "Using device $DEVICE"
 	$Echon "Waiting for device to go ready..."
 	count=1800
-	until eval $DEVICE_READY > $TEMP/ammt.out 2>&1; do
-		[ count -lt 0 ] \
-			&& report "Device not ready" \
-			&& report "`cat $TEMP/ammt.out`" \
-			&& report cat $TEMP/ammt.out >> $DEFECTS \
-			&& break;
-		sleep 3
-		count=`expr $count - 3`
-	done
-	$Echon "Rewinding..."
-	ERRORS=0
-	until $MT $MTF $DEVICE rewind > $TEMP/ammt.out 2>&1; do
-		RESULT=`grep "No medium found" $TEMP/ammt.out`
-		[ X"$RESULT" != X"" ] \
-			&& report "** Error rewinding tape" \
-			&& report "`cat $TEMP/ammt.out`" \
-			&& cat $TEMP/ammt.out >> $DEFECTS \
-			&& break
-		ERRORS=`expr $ERRORS + 1`
-		[ $ERRORS -gt 100 ] \
-			&& report "** Error rewinding tape" \
-			&& report "`cat $TEMP/ammt.out`" \
-			&& cat $TEMP/ammt.out >> $DEFECTS \
-			&& break
-		sleep 3
+        while true; do
+            amdevcheck_output="`amdevcheck $CONFIG $DEVICE`"
+            amdevcheck_status=$?
+            if [ $amdevcheck_status -eq 0 ]; then
+                break;
+            else
+                if echo $amdevcheck_output | grep UNLABELED > /dev/null; then
+		    if [ count -lt 0 ]; then
+		        report "Device not ready"
+                        break;
+		    fi
+                    sleep 3
+		    count=`expr $count - 3`
+                else
+                    report "Volume in $DEVICE unlabeled."
+                    break;
+                fi
+            fi
 	done
 	$Echon "Processing label..."
-	$DD if=$DEVICE count=1 bs=@MAXTAPEBLOCKSIZE@k 2> $TEMP/errors > $TEMP/header
-	[ ! -s $TEMP/header ] \
-		&& report "** Error reading label on tape" \
-		&& cat $TEMP/errors >> $DEFECTS \
-		&& continue
-	TAPENDATE=`sed 1q < $TEMP/header | grep '^AMANDA: TAPESTART'`
-	[ X"$TAPENDATE" = X"" ] \
-		&& report "** No amanda tape in slot" \
-		&& continue
-	set X $TAPENDATE
-	shift
-	shift			# "AMANDA:"
-	shift			# "TAPESTART"
+        amtape_output="`amtape $CONFIG current 2>&1`";
+        set X $amtape_output
+        if ! echo $amtape_output | \
+            egrep "\bslot +[0-9]+: time [^ ]+ +label [^ ]+" > /dev/null; then
+            report "Error reading tape label using amtape."
+            continue
+        fi
+        
+        until [ "$1" = "time" ]; do
+            shift
+        done
+        
 	VOLUME=$4
 	DWRITTEN=$2
 	report "Volume $VOLUME, Date $DWRITTEN"
@@ -429,36 +392,22 @@ while [ $SLOT -lt $SLOTS ]; do
 		&& report "Fresh tape. Skipping..." \
 		&& continue
 	TAPELIST="$TAPELIST $VOLUME"
-	$Echon "Rewinding..."
-	until $MT $MTF $DEVICE rewind; do
-		sleep 3
-	done
+
+        FILENO=0
 	ERG=0
 	ERRORS=0
 	while [ $ERG = 0 ]; do
-		if [ $Echon = echon ]; then
-			$Echon `_ 'Waiting for device to go ready...'`
-		fi
-		count=1800
-		until eval $DEVICE_READY > $TEMP/ammt.out 2>&1; do
-			[ count -lt 0 ] \
-				&& report "Device not ready" \
-				&& report "`cat $TEMP/ammt.out`" \
-				&& report cat $TEMP/ammt.out >> $DEFECTS \
-				&& break;
-			sleep 3
-			count=`expr $count - 3`
-		done
-		if [ $Echon = echon ]; then
-			$Echon `_ 'Reading...'`
-		fi
-		RESULT=`$AMRESTORE -h -p $DEVICE 2> $TEMP/amrestore.out \
+	        FILENO=`expr $FILENO + 1`
+#            { cat <<EOF; dd if=/dev/zero bs=32k count=1; } | doonefile
+#AMANDA: FILE 20070925205916 localhost /boot  lev 0 comp N program /bin/tar
+#To restore, position tape at start of file and run:
+#        dd if=<tape> bs=32k skip=1 |      /bin/tar -xpGf - ...
+#EOF
+		RESULT=`$AMRESTORE -h -p -f $FILENO $DEVICE \
+                            2> $TEMP/amrestore.out \
 			| doonefile 2> $TEMP/onefile.errors`
 		FILE=`grep restoring $TEMP/amrestore.out \
 			| sed 's/^.*restoring //'`
-		EOF=`grep "reached end of tape" $TEMP/amrestore.out`
-		EOI=`grep "reached end of information" $TEMP/amrestore.out`
-		# amrestore:   0: restoring sundae._mnt_sol1_usr.19961127.1
 		if [ X"$FILE" != X"" -a X"$RESULT" = X"0" ]; then
 			report "Checked $FILE"
 		elif [ X"$FILE" != X"" -a X"$RESULT" = X"500" ]; then
@@ -470,12 +419,10 @@ while [ $SLOT -lt $SLOTS ]; do
 			fi
 		elif [ X"$FILE" != X"" -a X"$RESULT" = X"999" ]; then
 			report "Skipped $FILE (`cat $TEMP/errors`)"
-		elif [ -n "$EOF" ]; then
+		elif [ -z "$FILE" ]; then
+                        # Unless we went over, there is no extra output.
 			report "End-of-Tape detected."
 			break
-		elif [ -n "$EOI" ]; then
-                        report "End-of-Information detected."
-                        break
 		else
 			report "** Error detected ($FILE)"
 			echo "$VOLUME ($FILE):" >>$DEFECTS
@@ -493,10 +440,6 @@ while [ $SLOT -lt $SLOTS ]; do
 				&& report "Too many errors." \
 				&& break
 		fi
-	done
-	$Echon "Rewinding..."
-	until $MT $MTF $DEVICE rewind; do
-		sleep 3
 	done
 	rm -f $TEMP/header \
 	      $TEMP/amtape.out \
