@@ -620,8 +620,15 @@ void device_set_startup_properties_from_config(Device * device) {
 
     g_hash_table_foreach(getconf_proplist(CNF_DEVICE_PROPERTY),
                          set_device_property, device);
+}
 
-    device_read_label(device);
+void device_clear_volume_details(Device * device) {
+    if (device == NULL || device->access_mode != ACCESS_NULL) {
+        return;
+    }
+
+    amfree(device->volume_label);
+    amfree(device->volume_time);
 }
 
 /* Here we put default implementations of virtual functions. Since
@@ -633,7 +640,7 @@ void device_set_startup_properties_from_config(Device * device) {
 static gboolean
 default_device_start (Device * self, DeviceAccessMode mode, char * label,
                       char * timestamp) {
-    if (mode != ACCESS_WRITE) {
+    if (mode != ACCESS_WRITE && self->volume_label == NULL) {
         if (device_read_label(self) != READ_LABEL_STATUS_SUCCESS)
             return FALSE;
     } else {
@@ -651,7 +658,6 @@ static gboolean default_device_open_device(Device * self,
     guint i;
 
     self->device_name = device_name;
-    device_read_label(self);
 
     prop.base = &device_property_canonical_name;
     prop.access = PROPERTY_ACCESS_GET_MASK;

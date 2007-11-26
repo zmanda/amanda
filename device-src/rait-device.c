@@ -1350,8 +1350,9 @@ rait_device_read_block (Device * dself, gpointer buf, int * size) {
 
 typedef struct {
     GenericOp base;
-    DevicePropertyId id; /* IN */
-    GValue value;        /* IN/OUT */
+    DevicePropertyId id;   /* IN */
+    GValue value;          /* IN/OUT */
+    gboolean label_changed; /* Did the device label change? OUT; _set only*/
 } PropertyOp;
 
 /* Creates a GPtrArray of PropertyOf for a get or set operation. */
@@ -1625,24 +1626,53 @@ rait_device_property_get (Device * dself, DevicePropertyId id, GValue * val) {
 static void property_set_do_op(gpointer data,
                                gpointer user_data G_GNUC_UNUSED) {
     PropertyOp * op = data;
+    gboolean label_set = (op->base.child->volume_label != NULL);
     op->base.result =
         GINT_TO_POINTER(device_property_set(op->base.child, op->id,
                                             &(op->value)));
+    op->label_changed = (label_set != (op->base.child->volume_label != NULL));
+}
+
+/* A BooleanExtractor */
+static gboolean extract_label_changed_property_op(gpointer data) {
+    PropertyOp * op = data;
+    return op->label_changed;
+}
+
+/* A GFunc. */
+static void clear_volume_details_do_op(gpointer data,
+                                       gpointer user_data G_GNUC_UNUSED) {
+    GenericOp * op = data;
+    device_clear_volume_details(op->child);
 }
 
 static gboolean 
-rait_device_property_set (Device * self, DevicePropertyId id, GValue * val) {
+rait_device_property_set (Device * d_self, DevicePropertyId id, GValue * val) {
+    RaitDevice * self;
     GPtrArray * ops;
     gboolean success;
+    gboolean label_changed;
 
-    ops = make_property_op_array(RAIT_DEVICE(self), id, val);
+    self = RAIT_DEVICE(self);
+    g_return_val_if_fail(self != NULL, FALSE);
+
+    ops = make_property_op_array(self, id, val);
     
     do_rait_child_ops(property_set_do_op, ops, NULL);
 
-    success = g_ptr_array_union_robust(RAIT_DEVICE(self),
-                                       ops, extract_boolean_generic_op);
-    
+    success = g_ptr_array_union_robust(self, ops, extract_boolean_generic_op);
+    label_changed =
+        g_ptr_array_union_robust(self, ops,
+                                 extract_label_changed_property_op);
     g_ptr_array_free_full(ops);
+
+    if (label_changed) {
+        /* At least one device considered this property set a label-changing
+         * operation, so now we clear labels on all devices. */
+        ops = make_generic_boolean_op_array(self);
+        do_rait_child_ops(clear_volume_details_do_op, ops, NULL);
+        g_ptr_array_free_full(ops);
+    }
 
     return success;
 }

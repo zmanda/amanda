@@ -177,11 +177,9 @@ GType	device_get_type	(void);
 Device* 	device_open	(char * device_name);
 
 /* This instructs the device to read the label on the current
- * volume. It may called automatically during device_open() or
- * device_start().  If you need the most up-to-date information (for
- * example, after setting properties that may affect the result),
- * call the function explicitly.  Otherwise, consult
- * device->volume_label, which may be NULL. */
+ * volume. device->volume_label will not be initalized until after this
+ * is called. You are encouraged to read the label only after setting any
+ * properties that may affect the label-reading process. */
 ReadLabelStatusFlags        device_read_label (Device * self);
 
 /* This tells the Device that it's OK to start reading and writing
@@ -377,5 +375,9 @@ dumpfile_t * make_tapeend_header(void);
  * DEVICE_MAX_VOLUME_USAGE property based on the tapetype. */
 void device_set_startup_properties_from_config(Device * device);
 
+/* Erase any stored volume information. Use this if something happens (e.g.,
+ * a property is set) that voids previously-read volume details.
+ * This function is a NOOP unless the device is in the NULL state. */
+void device_clear_volume_details(Device * device);
 
 #endif /* DEVICE_H */
