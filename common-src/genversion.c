@@ -30,6 +30,11 @@
  */
 #include "amanda.h"
 #include "version.h"
+
+/* distribution-time information */
+#include "svn-info.h"
+
+/* build-time information */
 #include "genversion.h"
 
 #define	LMARGIN		6
@@ -197,8 +202,17 @@ main(
     prundefvar("BUILT_MACH");
 #endif
 
-    prvar("BUILT_REV", "$Rev$");
-    prvar("BUILT_PATH", "$URL$");
+#ifdef BUILT_REV
+    prvar("BUILT_REV", BUILT_REV);
+#else
+    prundefvar("BUILT_REV");
+#endif
+
+#ifdef BUILT_BRANCH
+    prvar("BUILT_BRANCH", BUILT_BRANCH);
+#else
+    prundefvar("BUILT_BRANCH");
+#endif
 
 #ifdef CC
     prvar("CC", CC);

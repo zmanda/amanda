@@ -119,13 +119,14 @@ EXTRA_PROGRAMS = genversion $(TEST_PROGS)
 
 # Version-building steps:
 #
-# 1. genversion.c gets subversion information via svn keywords
+# 1. configure builds svn-info.h, if svn info is available; this
+#    file is included in distribution tarballs
 # 2. Makefile creates genversion.h with build-time information
 # 3. Makefile builds genversion
 # 4. Makefile runs genversion to create version.c
-# 5. version.c is compiled into libamanda like any other C file
+# 5. version.c is compiled into libamanda normally
 
-genversion_SOURCES = genversion.c genversion.h
+genversion_SOURCES = genversion.c genversion.h svn-info.h
 genversion_LDADD = $(libamanda_la_LIBADD)	\
     	versuff.lo				\
 	../gnulib/libgnu.la

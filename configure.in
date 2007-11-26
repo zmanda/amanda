@@ -19,6 +19,7 @@ AMANDA_INIT_SUMMARY
 AMANDA_SNAPSHOT_STAMP
 AMANDA_SPLIT_VERSION
 AMANDA_CONFIG_LOCAL
+AMANDA_GET_SVN_INFO
 
 #
 # Set up compiler location, basic flags, and include locations
