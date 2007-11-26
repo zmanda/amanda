@@ -95,6 +95,8 @@ int scan_read_label(
     device_set_startup_properties_from_config(device);
 
     label_status = device_read_label(device);
+    g_assert((device->volume_label != NULL) ==
+             (label_status == READ_LABEL_STATUS_SUCCESS));
     
     if (device->volume_label != NULL) { 
         *label = g_strdup(device->volume_label);
@@ -400,10 +402,9 @@ int taper_scan(char* wantlabel,
 	    result = -1;
 	    output_functor(output_data, _("No tapedev specified"));
 	} else {
-	    *tapedev = stralloc(*tapedev);
 	    result =  scan_read_label(*tapedev, NULL, wantlabel,
 				      gotlabel, timestamp, &error_message);
-	output_functor(output_data, error_message);
+            output_functor(output_data, error_message);
 	    amfree(error_message);
 	}
     }
