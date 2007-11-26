@@ -319,7 +319,7 @@ debug_setup_1(char *config, char *subdir)
  * appropriately, move its file descriptor above MIN_DB_FD, and
  * add an initial log entry to the file.
  *
- * This function records the file's identity in the globals 
+ * This function records the file's identity in the globals
  * db_filename, db_fd, and db_file.  It does *not* set db_name.
  * db_file is not set if fd is -1
  *
@@ -339,7 +339,7 @@ debug_setup_2(
     int		fd,
     char *	annotation)
 {
-    int i, rc;
+    int i;
     int fd_close[MIN_DB_FD+1];
 
     amfree(db_filename);
@@ -349,10 +349,9 @@ debug_setup_2(
     /* If we're root, change the ownership of the debug files.  If we're not root,
      * this would either be redundant or an error. */
     if (geteuid() == 0) {
-	if ((rc = chown(db_filename, client_uid, client_gid)) < 0) {
-	    dbprintf(_("chown(%s, %d, %d) failed. <%s>"),
-		      db_filename, (int)client_uid, (int)client_gid, strerror(errno));
-	    (void)rc;
+	if (chown(db_filename, client_uid, client_gid) < 0) {
+	    dbprintf(_("chown(%s, %d, %d) failed: %s"),
+		     db_filename, (int)client_uid, (int)client_gid, strerror(errno));
 	}
     }
     amfree(dbgdir);
@@ -423,7 +422,7 @@ debug_open(char *subdir)
 
     /* set up logging while we're here */
     debug_setup_logging();
-    
+
     /* set 'dbgdir' and clean out old debug files */
     debug_setup_1(NULL, subdir);
 
@@ -437,7 +436,7 @@ debug_open(char *subdir)
     for(i = 0; fd < 0; i++) {
 	amfree(db_name);
 	if ((db_name = get_debug_name(open_time, i)) == NULL) {
-	    error(_("Cannot create debug file"));
+	    error(_("Cannot create debug file name in %d tries."), i);
 	    /*NOTREACHED*/
 	}
 
@@ -448,7 +447,8 @@ debug_open(char *subdir)
 
 	if ((fd = open(s, O_WRONLY|O_CREAT|O_EXCL|O_APPEND, 0640)) < 0) {
 	    if (errno != EEXIST) {
-	        error(_("Cannot create debug file: %s"), strerror(errno));
+	        error(_("Cannot create debug file \"%s\": %s"),
+			s, strerror(errno));
 	        /*NOTREACHED*/
 	    }
 	    amfree(s);
@@ -525,28 +525,58 @@ debug_rename(
 
     mask = (mode_t)umask((mode_t)0037);
 
-/* On cygwin, rename will not overwrite an existing file */
 #if defined(__CYGWIN__)
-    /* check if a file with the same name already exist */
-    if (rename(db_filename, s) < 0) {
-	for(i = 0; fd < 0; i++) {
-	    amfree(db_name);
-	    if ((db_name = get_debug_name(open_time, i)) == NULL) {
-		dbprintf(_("Cannot create debug file"));
-		break;
-	    }
+    /*
+     * On cygwin, rename will not overwrite an existing file nor
+     * will it rename a file that is open for writing...
+     *
+     * Rename file directly.  Expect failure if file already exists
+     * or is open by another user.
+     */
 
-	    s = newvstralloc(s, dbgdir, db_name, NULL);
-	    if (rename(db_filename, s) < 0) {
-		if (errno != EEXIST) {
-		    dbprintf(_("Cannot rename debug file: %s"), strerror(errno));
-		    break;
-		}
-	    }
+    i = 0;
+    while (rename(db_filename, s) < 0) {
+	if (errno != EEXIST) {
+	    /*
+	     * If the failure was not due to the target file name already
+	     * existing then we have bigger issues at hand so we keep 
+	     * the existing file.
+	     */
+	    dbprintf(_("Cannot rename \"%s\" to \"%s\": %s\n"),
+		     db_filename, s, strerror(errno));
+	    s = newvstralloc(s, db_filename, NULL);
+	    i = -1;
+	    break;
+	}
+
+	/*
+	 * Files already exists:
+	 * Continue searching for a unique file name that will work.
+	 */
+	amfree(db_name);
+	if ((db_name = get_debug_name(open_time, i++)) == NULL) {
+	    dbprintf(_("Cannot create unique debug file name"));
+	    break;
+	}
+	s = newvstralloc(s, dbgdir, db_name, NULL);
+    }
+    if (i >= 0) {
+	/*
+	 * We need to close and reopen the original file handle to
+	 * release control of the original debug file name.
+	 */
+	if ((fd = open(s, O_WRONLY|O_APPEND, 0640)) >= 0) {
+	    /*
+	     * We can safely close the the original log file
+	     * since we now have a new working handle.
+	     */
+	    db_fd = 2;
+	    fclose(db_file);
+	    db_file = NULL;
 	}
     }
 #else
-    /* check if a file with the same name already exist */
+    /* check if a file with the same name already exists. */
     if ((fd = open(s, O_WRONLY|O_CREAT|O_EXCL|O_APPEND, 0640)) < 0) {
 	for(i = 0; fd < 0; i++) {
 	    amfree(db_name);
@@ -569,9 +599,10 @@ debug_rename(
     if (fd >= 0) {
 	close(fd);
 	if (rename(db_filename, s) == -1) {
-	    dbprintf(_("Can't rename(\"%s\",\"%s\"): %s\n"), db_filename, s,
-		      strerror(errno));
+	    dbprintf(_("Cannot rename \"%s\" to \"%s\": %s\n"),
+		     db_filename, s, strerror(errno));
 	}
+	fd = -1;
     }
 #endif
 
@@ -581,7 +612,7 @@ debug_rename(
      *
      * Note: we release control of the string 's' points to.
      */
-    debug_setup_2(s, -1, "rename");
+    debug_setup_2(s, fd, "rename");
 }
 
 void

@@ -1,3 +1,10 @@
+2007-11-26  John Franks <jrfranks@zmanda.com>
+	* common-src/debug.c	For cygwin builds: change to
+	  close and reopen log file handle on successful rename.
+	  This is to ensure that Windows has no possibility of
+	  preventing access to the original file name if processes
+	  collide.
+		
 2007-11-23  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amflush.c: Send config option (-o) to child process.
 
