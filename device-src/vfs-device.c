@@ -472,6 +472,7 @@ static gboolean update_volume_size_functor(const char * filename,
 }
 
 static void update_volume_size(VfsDevice * self) {
+    self->volume_bytes = 0;
     search_directory(self->dir_handle, "^[0-9]+\\.",
                      update_volume_size_functor, self);
 
@@ -503,14 +504,12 @@ vfs_device_open_device (Device * pself, char * device_name) {
     if (!open_lock(self, -1, FALSE))
         return FALSE;
 
-    /* Check size of existing files. */
-    update_volume_size(self);
-    
     /* Not an error if this fails. Note that we ignore the class hierarchy.
      */
     vfs_device_seek_file(pself, 0);
 
     if (parent_class->open_device) {
+        /* Will call vfs_device_read_label. */
         return (parent_class->open_device)(pself, device_name);
     } else {
         return TRUE;
@@ -624,6 +623,7 @@ static gboolean clear_and_prepare_label(VfsDevice * self, char * label,
     label_header = make_tapestart_header(DEVICE(self), label, timestamp);
     if (write_amanda_header(self, label_header)) {
         amfree(label_header);
+        self->volume_bytes = VFS_DEVICE_LABEL_SIZE;
         return TRUE;
     } else {
         amfree(label_header);
@@ -657,6 +657,8 @@ static ReadLabelStatusFlags vfs_device_read_label(Device * dself) {
     dself->volume_label = g_strdup(amanda_header->name);
     dself->volume_time = g_strdup(amanda_header->datestamp);
     amfree(amanda_header);
+
+    update_volume_size(self);
 
     if (parent_class->read_label) {
         return (parent_class->read_label)(dself);
@@ -1123,6 +1125,8 @@ static gboolean try_unlink(const char * file) {
 static gboolean 
 vfs_device_recycle_file (Device * pself, guint filenum) {
     VfsDevice * self;
+    struct stat file_status;
+    off_t file_size;
 
     self = VFS_DEVICE(pself);
     g_return_val_if_fail(self != NULL, FALSE);
@@ -1144,12 +1148,20 @@ vfs_device_recycle_file (Device * pself, guint filenum) {
     if (!open_lock(self, filenum, TRUE))
         return FALSE;
 
+    if (0 != stat(self->file_name, &file_status)) {
+        fprintf(stderr, "Cannot stat file %s (%s), so not removing.\n",
+                self->file_name, strerror(errno));
+        return FALSE;
+    }
+    file_size = file_status.st_size;
+    
     if (!try_unlink(self->file_name) ||
         !try_unlink(self->file_lock_name)) {
         release_file(self);
         return FALSE;
     }
 
+    self->volume_bytes -= file_size;
     release_file(self);
     return TRUE;
 }

@@ -1,4 +1,8 @@
 2007-11-20  Ian Turner <ian@zmanda.com>
+	* device-src/vfs-device.c: Be more thourough about updating volume
+	  usage statistics.
+
+2007-11-20  Ian Turner <ian@zmanda.com>
 	* changer-src/chg-lib.sh.in: Use a more robust check for MT path.
 	* server-src/amverify.sh.in: Use amrestore instead of amdd/ammt.
 
