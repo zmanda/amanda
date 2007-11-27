@@ -1,4 +1,7 @@
 2007-11-27  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/planner.c: Check dp->todo before using (est)->dp.
+
+2007-11-27  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/device.c (default_device_start): Overwrite label only
 						      if mode == ACCESS_WRITE.
 
