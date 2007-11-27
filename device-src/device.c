@@ -643,7 +643,7 @@ default_device_start (Device * self, DeviceAccessMode mode, char * label,
     if (mode != ACCESS_WRITE && self->volume_label == NULL) {
         if (device_read_label(self) != READ_LABEL_STATUS_SUCCESS)
             return FALSE;
-    } else {
+    } else if (mode == ACCESS_WRITE) {
         self->volume_label = newstralloc(self->volume_label, label);
         self->volume_time = newstralloc(self->volume_time, timestamp);
     }
