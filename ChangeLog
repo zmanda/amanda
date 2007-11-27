@@ -1,10 +1,18 @@
+2007-11-28  Dustin J. Mitchell <dustin@zmanda.com>
+	* config/automake/installperms.am: strip directory names from build
+	  filenames when setting permissions; fixes errors from examples/
+	  install
+
+2007-11-28  Dustin J. Mitchell <dustin@zmanda.com>
+	* man/Makefile.am: Allow installs, but not tarballs, without
+	  manpages
+
 2007-11-27  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/planner.c: Check dp->todo before using (est)->dp.
 
 2007-11-27  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/device.c (default_device_start): Overwrite label only
 						      if mode == ACCESS_WRITE.
-
 
 2007-11-20  Ian Turner <ian@zmanda.com>
 	* device-src/device.c, device-src/device.h

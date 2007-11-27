@@ -37,6 +37,10 @@
 # and can be disabled with --disable-installperms, via the WANT_INSTALLPERMS
 # AM_CONDITIONAL.
 
+# sed expression to strip leading directories from a filename; this converts e.g.,
+# src/foo/bar.so to bar.so.
+strip_leading_dirs=s|^.*/||
+
 if WANT_INSTALLPERMS
 installperms-exec:
 	@installperms="$(INSTALLPERMS_exec)"; \
@@ -48,7 +52,7 @@ installperms-exec:
 			echo "  ($$cmd)"; chown="$(BINARY_OWNER):$(SETUID_GROUP)";; \
 		dest=*|chown=*|chmod=*) \
 			echo "  ($$cmd)"; eval $$cmd;; \
-		*)  pa="$(DESTDIR)$$dest"/`echo "$$cmd"|sed '$(transform)'`; \
+		*)  pa="$(DESTDIR)$$dest"/`echo "$$cmd"|sed '$(strip_leading_dirs)'|sed '$(transform)'`; \
 		    if test -n "$$chown"; then \
 			echo chown "$$chown" "$$pa"; \
 			chown "$$chown" "$$pa" || exit 1; \
@@ -70,7 +74,7 @@ installperms-data:
 			echo "  ($$cmd)"; chown="$(BINARY_OWNER):$(SETUID_GROUP)";; \
 		dest=*|chown=*|chmod=*) \
 			echo "  ($$cmd)"; eval $$cmd;; \
-		*)  pa="$(DESTDIR)$$dest"/`echo "$$cmd"|sed '$(transform)'`; \
+		*)  pa="$(DESTDIR)$$dest"/`echo "$$cmd"|sed '$(strip_leading_dirs)'|sed '$(transform)'`; \
 		    if test -n "$$chown"; then \
 			echo chown "$$chown" "$$pa"; \
 			chown "$$chown" "$$pa" || exit 1; \

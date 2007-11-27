@@ -91,7 +91,17 @@ else	!ENABLE_MANPAGE_BUILD
 
 %: $(SRCMANPAGEDIR)/%.xml
 	@echo WARNING: Not building needed $@ because building manpages is disabled.
+	@echo 'DUMMY' > $@
 
 endif
+
+# double-check that we don't ship dummy manpages
+dist-hook:
+	for f in $(WANTED_MAN_PAGES); do \
+		if sed -e 1q $(distdir)/$$f | $(GREP) '^DUMMY$$' >/dev/null 2>/dev/null; then \
+			echo "$(distdir)/$$f is a dummy manpage; cannot create distribution"; \
+			exit 1; \
+		fi; \
+	done
 
 man_MANS = $(WANTED_MAN_PAGES)
