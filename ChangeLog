@@ -1,4 +1,7 @@
 2007-11-28  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/file.c: only chown new directories when running as root
+
+2007-11-28  Dustin J. Mitchell <dustin@zmanda.com>
 	* config/automake/installperms.am: strip directory names from build
 	  filenames when setting permissions; fixes errors from examples/
 	  install

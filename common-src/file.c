@@ -41,31 +41,36 @@ uid_t client_uid = (uid_t) -1;
 gid_t client_gid = (gid_t) -1;
 
 /* Make a directory (internal function).
-** If the directory already exists then we pretend we created it.
-** XXX - I'm not sure about the use of the chown() stuff.  On most systems
-**       it will do nothing - only root is permitted to change the owner
-**       of a file.
-*/
+ * If the directory already exists then we pretend we created it.
+ *
+ * The uid and gid are used only if we are running as root.
+ */
 static int
 mk1dir(
     const char *dir, /* directory to create */
     mode_t	mode,	/* mode for new directory */
-    uid_t	uid,	/* uid for new directory */
-    gid_t	gid)	/* gid for new directory */
+    uid_t	G_GNUC_UNUSED uid,	/* uid for new directory */
+    gid_t	G_GNUC_UNUSED gid)	/* gid for new directory */
 {
     int rc;	/* return code */
 
-    if((rc = mkdir(dir, mode)) == 0) {
-	if ((rc = chown(dir, uid, gid)) == 0) { /* mkdir() affected by the umask */
-	    rc = chmod(dir, mode);
-	}
-    } else {			/* maybe someone beat us to it */
+    rc = mkdir(dir, mode);
+    if(rc != 0) {	/* maybe someone beat us to it */
 	int serrno;
 
 	serrno = errno;
 	if(access(dir, F_OK) != 0)
 	    rc = -1;
 	errno = serrno;	/* pass back the real error */
+    }
+
+    /* mkdir is affected by umask, so set the mode bits manually */
+    if (rc == 0) {
+	rc = chmod(dir, mode);
+    }
+
+    if (rc == 0 && geteuid() == 0) {
+	rc = chown(dir, uid, gid);
     }
 
     return rc;
