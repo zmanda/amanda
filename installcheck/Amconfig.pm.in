@@ -107,10 +107,10 @@ sub write {
     }
     mkpath($testconf_dir);
 
-    # set up curinfo dir, etc.
-    mkpath($self->{'infofile'});
-    mkpath($self->{'logdir'});
-    mkpath($self->{'indexdir'});
+    # set up curinfo dir, etc. (substr's are to strip quotes)
+    mkpath(substr($self->{'infofile'}, 1, -1));
+    mkpath(substr($self->{'logdir'}, 1, -1));
+    mkpath(substr($self->{'indexdir'}, 1, -1));
 
     # create an empty tapelist
     open(my $tapelist, ">", "$testconf_dir/tapelist");

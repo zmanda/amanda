@@ -1,4 +1,8 @@
 2007-11-28  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Amconfig.pm.in: fix quoting error leading to
+	directories named '"'
+
+2007-11-28  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/file.c: only chown new directories when running as root
 
 2007-11-28  Dustin J. Mitchell <dustin@zmanda.com>
