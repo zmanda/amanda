@@ -1,3 +1,6 @@
+2007-11-28  Jean-Louis Martineau <martineau@zmanda.com>
+	* config/macro-archive/docbook-dtd.m4: Check return code of 5.
+
 2007-11-28  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Amconfig.pm.in: fix quoting error leading to
 	directories named '"'

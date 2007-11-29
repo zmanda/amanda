@@ -88,7 +88,7 @@ EOF
 	    echo "====" >&AS_MESSAGE_LOG_FD
 
 	    $XSLTPROC $MY_XSLTPROC_FLAGS conftest.xml >conftest.out 2>&1
-	    if test "$?" = 0; then
+	    if test "$?" = 0 -o "$?" = 5; then
 		# failing to load the DTD is just a warning, so check for it in the output.
 		if grep 'warning: failed to load external entity' conftest.out >/dev/null 2>&1; then
 		    : # no good..
