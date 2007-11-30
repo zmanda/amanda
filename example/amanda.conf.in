@@ -70,6 +70,46 @@ device_output_buffer_size 1280k
 #          edition 2.5
 usetimestamps yes
 
+# flush-threshold-dumped, flush-threshold-scheduled, taperflush, and autoflush
+# are used to tune tape utilization. See the amanda.conf (5) manpage for
+# details on how they work. Taping will not start until all criteria are
+# satisfied. Here are some examples:
+#
+# You want to fill tapes completely even in the case of failed dumps, and
+# don't care if some dumps are left on the holding disk after a run:
+# flush-threshold-dumped	100 # (or more)
+# flush-threshold-scheduled	100 # (or more)
+# taperflush			100
+# autoflush			yes
+#
+# You want to improve tape performance by waiting for a complete tape of data
+# before writing anything. However, all dumps will be flushed; none will
+# be left on the holding disk.
+# flush-threshold-dumped	100 # (or more)
+# flush-threshold-scheduled	100 # (or more)
+# taperflush	0
+#
+# You don't want to use a new tape for every run, but want to start writing
+# to tape as soon as possible:
+# flush-threshold-dumped	0   # (or more)
+# flush-threshold-scheduled	100 # (or more)
+# taperflush	100
+# autoflush     yes
+# maxdumpsize   100k # amount of data to dump each run; see above.
+#
+# You want to keep the most recent dumps on holding disk, for faster recovery.
+# Older dumps will be rotated to tape during each run.
+# flush-threshold-dumped	300 # (or more)
+# flush-threshold-scheduled	300 # (or more)
+# taperflush	300
+# autoflush     yes
+#
+# Defaults:
+# (no restrictions; flush to tape immediately; don't flush old dumps.)
+flush-threshold-dumped 0
+flush-threshold-scheduled 0
+taperflush 0
+autoflush no
 
 # Specify tape device and/or tape changer.  If you don't have a tape
 # changer, and you don't want to use more than one tape per run of
@@ -164,10 +204,6 @@ holdingdisk hd1 {
 # reserve 30 # percent
 # This means save at least 30% of the holding disk space for degraded
 # mode backups.  
-
-autoflush no #
-# if autoflush is set to yes, then amdump will schedule all dump on
-# holding disks to be flush to tape during the run.
 
 # The format for a ColumnSpec is a ',' seperated list of triples.
 # Each triple consists of

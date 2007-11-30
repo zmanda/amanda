@@ -991,6 +991,88 @@ Debug level of the taper process</para>
   </varlistentry>
 
   <varlistentry>
+  <term><emphasis remap='B'>flush-threshold-dumped</emphasis> int</term>
+  <listitem>
+<para>Default: <emphasis remap='I'>0</emphasis>.
+  &A; will not begin writing data to a new volume until the amount of
+  data on the holding disk is at least this percentage of the volume
+  size. In other words, &A; will not begin until the
+  inequality <inlineequation><mathphrase>h &lt; t &times;
+  d</mathphrase></inlineequation> is satisfied,
+  where <mathphrase>h</mathphrase> is the amount of data on the
+  holding disk, <mathphrase>t</mathphrase> is the capacity of a
+  volume, and <mathphrase>d</mathphrase> is this parameter, expressed as a
+  percentage.</para>
+<para> Needless to say, your holding disk must be big enough
+  that this criterion could be satisfied. If the holding disk cannot
+  be used for a particular dump (because, for example, there is no
+  remaining holding space) then &A; will disregard the constraint
+  specified by this setting and start a new volume anyway. Once
+  writing to a volume has begun, this constraint is not applied unless
+  and until a new volume is needed.</para>
+<para> A valid configuration must satisfy the inequalities:
+</para>
+<programlisting>
+  <mathphrase>taperflush &le; flush-threshold-scheduled</mathphrase>
+  <mathphrase>flush-threshold-dumped &le; flush-threshold-scheduled</mathphrase>
+</programlisting>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><emphasis remap='B'>flush-threshold-scheduled</emphasis> int</term>
+  <listitem>
+<para>Default: <emphasis remap='I'>0</emphasis>.
+  &A; will not begin writing data to a new volume until the sum of the
+  amount of data on the holding disk and the estimated amount of data
+  remaining to be dumped during this run is at least this percentage
+  of the volume size. In other words, &A; will not begin until the
+  inequality <inlineequation><mathphrase>h + s &lt; t &times;
+  d</mathphrase></inlineequation> is satisfied,
+  where <mathphrase>h</mathphrase> is the amount of data on the
+  holding disk, <mathphrase>s</mathphrase> is the total amount of
+  data scheduled for this run but not dumped
+  yet, <mathphrase>t</mathphrase> is the capacity of a volume,
+  and <mathphrase>d</mathphrase> is this parameter, expressed as a
+  percentage.</para>
+<para>  Needless to say, your holding disk must be big enough
+  that this criterion could be satisfied. If the holding disk cannot
+  be used for a particular dump (because, for example, there is no
+  remaining holding space) then &A; will disregard the constraint
+  specified by this setting and start a new volume anyway.  Once
+  writing to a volume has begun, this constraint is not applied unless
+  and until a new volume is needed.</para>
+<para> The value of this parameter may not be less than that of
+  the <emphasis remap='B'>flush-threshold-dumped</emphasis>
+  parameter.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><emphasis remap='B'>taperflush</emphasis> int</term>
+  <listitem>
+<para>Default: <emphasis remap='I'>0</emphasis>.
+  At the end of a run, &A; will start a new tape to flush remaining
+  data if there is more data on the holding disk at the end of a run
+  than this setting allows; the amount is specified as a percentage of
+  the capacity of a single
+  volume. In other words, at the end of a run, &A; will begin
+  a new tape if the 
+  inequality <inlineequation><mathphrase>h &lt; t &times;
+  f</mathphrase></inlineequation> is satisfied,
+  where <mathphrase>h</mathphrase> is the amount of data remaining on the
+  holding disk from this or previous runs, <mathphrase>t</mathphrase>
+  is the capacity of a volume,
+  and <mathphrase>f</mathphrase> is this parameter, expressed as a
+  percentage.</para>
+<para> The value of this parameter may not exceed that of
+  the <emphasis remap='B'>flush-threshold-scheduled</emphasis>
+  parameter.; <emphasis remap='B'>autoflush</emphasis> must be set to 'yes' if
+ <emphasis remap='B'>taperflush</emphasis> is greater than 0.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
   <term><emphasis remap='B'>reserved-udp-port</emphasis> int,int</term>
   <listitem>
 <para>Default: --with-udpportrange or 

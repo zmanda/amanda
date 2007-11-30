@@ -466,10 +466,10 @@ static gboolean finish_part_attempt(taper_state_t * taper_state,
                 dump_info->timestamp, dump_info->current_part,
                 taper_source_predict_parts(dump_info->source),
                 dump_info->level, part_time, part_kbytes, part_kbps);
-        putresult(PARTDONE, "%s %s %d \"[sec %f kb %"
+        putresult(PARTDONE, "%s %s %d %ld \"[sec %f kb %"
                   G_GUINT64_FORMAT " kps %f]\"\n",
                   dump_info->handle, taper_state->device->volume_label,
-                  taper_state->device->file, part_time, part_kbytes,
+                  taper_state->device->file, part_kbytes, part_time, part_kbytes,
                   part_kbps);
         
         if (taper_source_get_end_of_data(dump_info->source)) {
@@ -598,7 +598,7 @@ static void bail_no_volume(dump_info_t * dump_info) {
         double dump_kbps = dump_kbytes / dump_time;
         putresult(PARTIAL,
                   "%s INPUT-GOOD TAPE-ERROR "
-                  "\"[sec %f kb %" G_GUINT64_FORMAT " kps %f]\" \"\" \"\"\n",
+                  "\"[sec %f kb %" G_GUINT64_FORMAT " kps %f]\" \"\" \"no new tape\"\n",
                   dump_info->handle, 
                   dump_time, dump_kbytes, dump_kbps);
         put_partial_log(dump_info, dump_time, dump_kbytes);
@@ -695,7 +695,7 @@ static void run_device_output(taper_state_t * taper_state,
              &consumer_data,
              device_write_max_size(taper_state->device), max_memory,
              streaming_mode);
-        
+
         g_get_current_time(&end_time);
         run_time = timesub(end_time, start_time);
 
@@ -705,7 +705,7 @@ static void run_device_output(taper_state_t * taper_state,
             !device_finish_file(taper_state->device)) {
             queue_result = queue_result | QUEUE_CONSUMER_ERROR;
         }
-        
+
         if (!finish_part_attempt(taper_state, dump_info, queue_result,
                                  run_time, consumer_data.bytes_written)) {
             break;

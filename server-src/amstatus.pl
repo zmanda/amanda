@@ -178,6 +178,7 @@ $ntsize{$nb_tape} = 0;
 $ntesize{$nb_tape} = 0;
 $tape_size = 0;
 $driver_finished = 0;
+$generating_schedule = 0;
 
 while($lineX = <AMDUMP>) {
 	chomp $lineX;
@@ -552,14 +553,23 @@ while($lineX = <AMDUMP>) {
 					}
 				}
 				elsif($line[6] eq "PARTDONE") {
-					#7:handle 8:label 9:filenum 10:errstr
-					$line[10] =~ /.*kb (\d*) kps/;
-					$size=$1 / $unitdivisor;
+					#7:handle 8:label 9:filenum 10:ksize 11:errstr
+					#$line[11] =~ /.*kb (\d*) kps/;
+					#$size=$1 / $unitdivisor;
+					$size=$line[10] / $unitdivisor;
 					$tapedsize{$hostpart} += $size;
 					$ntchunk{$nb_tape}++;
 					$ntsize{$nb_tape} += $size;
 					$ntesize{$nb_tape} += $size;
 					$ntchunk_size += $size;
+				}
+				elsif($line[6] eq "REQUEST-NEW-TAPE") {
+					#7:serial
+					$serial=$line[7];
+					$hostpart=$serial{$serial};
+					if (defined $hostpart) {
+						$error{$hostpart} = "waiting for a new tape";
+					}
 				}
 				elsif($line[6] eq "TRY-AGAIN" || $line[6] eq "TAPE-ERROR") {
 					#7:handle 8:errstr
@@ -877,6 +887,7 @@ foreach $host (sort @hosts) {
 							if( defined $starttime ) {
 								print " (", &showtime($taper_time{$hostpart}), ")";
 							}
+							print ", ", $error{$hostpart} if $error{$hostpart} ne "";
 							print "\n";
 						}
 						$tapartition++;

@@ -1,4 +1,23 @@
 2007-11-30  Jean-Louis Martineau <martineau@zmanda.com>
+       * server-src/server_util.c (cmdstr): Remove SPLIT-NEEDNEXT
+                                            and SPLIT-CONTINUE
+       * server-src/server_util.h (cmd_t): Remove SPLIT_NEEDNEXT
+                                           and SPLIT_CONTINUE.
+       * server-src/taper.c: Send part_kbyte in PARTDONE result.
+       * server-src/amstatus.pl: Parse part_kbyte in PARTDONE result line.
+                                 Parse REQUEST-NEW_TAPE line.
+       * common-src/conffile.h: CONF_FLUSH_THRESHOLD_DUMPED,
+			        CONF_FLUSH_THRESHOLD_SCHEDULE, CONF_TAPERFLUSH.
+       * common-src/conffile.c: CNF_FLUSH_THRESHOLD_DUMPED,
+                                CNF_FLUSH_THRESHOLD_SCHEDULE, CNF_TAPERFLUSH.
+       * server-src/driverio.h: Add Many globals.
+       * server-src/driver.c: Split runq in runq and directq.
+                              Implement flush-threshold-*/taperflush.
+       * example/amanda.conf.in: Example for flush-threshold-* and taperflush.
+       * man/xml-source/amanda.conf.5.xml: Document flush-threshold-*
+					   and taperflush.
+
+2007-11-30  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/taperscan.c: Fix output formating.
 
 2007-11-30  Jean-Louis Martineau <martineau@zmanda.com>

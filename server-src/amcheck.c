@@ -815,6 +815,26 @@ start_server_check(
 #endif
 	}
 
+	if (getconf_int(CNF_FLUSH_THRESHOLD_SCHEDULED) <
+				 getconf_int(CNF_FLUSH_THRESHOLD_DUMPED)) {
+	    g_fprintf(outf, _("WARNING: flush_threshold_dumped (%d) must be less than or equal to flush_threshold_scheduled (%d).\n"), 
+		      getconf_int(CNF_FLUSH_THRESHOLD_DUMPED),
+		      getconf_int(CNF_FLUSH_THRESHOLD_SCHEDULED));
+	}
+
+	if (getconf_int(CNF_FLUSH_THRESHOLD_SCHEDULED) <
+				 getconf_int(CNF_TAPERFLUSH)) {
+	    g_fprintf(outf, _("WARNING: taperflush (%d) must be less than or equal to flush_threshold_scheduled (%d).\n"), 
+		      getconf_int(CNF_TAPERFLUSH),
+		      getconf_int(CNF_FLUSH_THRESHOLD_SCHEDULED));
+	}
+
+	if (getconf_int(CNF_TAPERFLUSH) > 0 &&
+	    !getconf_boolean(CNF_AUTOFLUSH)) {
+	    g_fprintf(outf, _("WARNING: autoflush must be set to 'yes' if taperflush (%d) is greater that 0.\n"),
+		      getconf_int(CNF_TAPERFLUSH));
+	}
+
 	/* Double-check that 'localhost' resolves properly */
 	if ((res = resolve_hostname("localhost", NULL, NULL) != 0)) {
 	    g_fprintf(outf, _("ERROR: Cannot resolve `localhost': %s\n"), gai_strerror(res));

@@ -115,6 +115,15 @@ GLOBAL chunker_t chktable[MAX_DUMPERS];
 
 /* command/result tokens */
 
+typedef enum {
+   TAPER_STATE_DEFAULT       = 0,
+   TAPER_STATE_DUMP_TO_TAPE  = (1 << 0), // if taper is doing a dump to tape
+   TAPER_STATE_WAIT_FOR_TAPE = (1 << 1), // if taper wait for a tape, after a
+					 //   REQUEST-NEW-TAPE
+   TAPER_STATE_TAPE_STARTED  = (1 << 2)	 // taper already started to write to
+					 //   a tape.
+} TaperState;
+
 GLOBAL int taper, taper_busy;
 GLOBAL int taper_sendresult;
 GLOBAL char *taper_input_error;
@@ -125,6 +134,9 @@ GLOBAL dumper_t *taper_dumper;
 GLOBAL event_handle_t *taper_ev_read;
 GLOBAL char *taper_first_label;
 GLOBAL off_t taper_first_fileno;
+GLOBAL TaperState taper_state;
+GLOBAL off_t taper_written;		// Number of kb already written to tape
+					//   for the DLE.
 
 void init_driverio(void);
 void startup_tape_process(char *taper_program);

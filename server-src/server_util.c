@@ -45,9 +45,8 @@ const char *cmdstr[] = {
     "START-TAPER", "FILE-WRITE", "NEW-TAPE", "NO-NEW-TAPE",
      
     "PARTDONE", "PORT-WRITE", "DUMPER-STATUS",		    /* taper cmds */
-    "PORT", "TAPE-ERROR", "TAPER-OK", "SPLIT-NEEDNEXT", /* taper results */
+    "PORT", "TAPE-ERROR", "TAPER-OK",			 /* taper results */
     "REQUEST-NEW-TAPE",
-    "SPLIT-CONTINUE",
     "LAST_TOK",
     NULL
 };

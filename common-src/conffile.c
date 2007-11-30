@@ -141,7 +141,6 @@ static void validate_blocksize            (t_conf_var *, val_t *);
 static void validate_debug                (t_conf_var *, val_t *);
 static void validate_reserved_port_range  (t_conf_var *, val_t *);
 static void validate_unreserved_port_range(t_conf_var *, val_t *);
-static void validate_taperstart           (t_conf_var *, val_t *);
 
 /*static t_conf_var  *get_np(t_conf_var *get_var, int parm);*/
 static int     get_int(void);
@@ -466,7 +465,8 @@ keytab_t server_keytab[] = {
     { "TAPEDEV", CONF_TAPEDEV },
     { "TAPELIST", CONF_TAPELIST },
     { "TAPERALGO", CONF_TAPERALGO },
-    { "TAPERSTART", CONF_TAPERSTART },
+    { "FLUSH-THRESHOLD-DUMPED", CONF_FLUSH_THRESHOLD_DUMPED },
+    { "FLUSH-THRESHOLD-SCHEDULED", CONF_FLUSH_THRESHOLD_SCHEDULED },
     { "TAPERFLUSH", CONF_TAPERFLUSH },
     { "TAPETYPE", CONF_TAPETYPE },
     { "TAPE_SPLITSIZE", CONF_TAPE_SPLITSIZE },
@@ -511,11 +511,12 @@ t_conf_var server_var [] = {
    { CONF_DTIMEOUT             , CONFTYPE_INT      , read_int     , CNF_DTIMEOUT             , validate_positive },
    { CONF_CTIMEOUT             , CONFTYPE_INT      , read_int     , CNF_CTIMEOUT             , validate_positive },
    { CONF_TAPEBUFS             , CONFTYPE_INT      , read_int     , CNF_TAPEBUFS             , validate_positive },
-   { CONF_DEVICE_OUTPUT_BUFFER_SIZE, CONFTYPE_SIZE , read_size     , CNF_DEVICE_OUTPUT_BUFFER_SIZE, validate_positive },
+   { CONF_DEVICE_OUTPUT_BUFFER_SIZE, CONFTYPE_SIZE , read_size    , CNF_DEVICE_OUTPUT_BUFFER_SIZE, validate_positive },
    { CONF_COLUMNSPEC           , CONFTYPE_STRING   , read_string  , CNF_COLUMNSPEC           , NULL },
    { CONF_TAPERALGO            , CONFTYPE_TAPERALGO, get_taperalgo, CNF_TAPERALGO            , NULL },
-   { CONF_TAPERSTART           , CONFTYPE_INTRANGE , read_intrange, CNF_TAPERSTART           , validate_taperstart },
-   { CONF_TAPERFLUSH           , CONFTYPE_BOOL     , read_bool    , CNF_TAPERFLUSH           , NULL },
+   { CONF_FLUSH_THRESHOLD_DUMPED, CONFTYPE_INT     , read_int     , CNF_FLUSH_THRESHOLD_DUMPED, validate_nonnegative },
+   { CONF_FLUSH_THRESHOLD_SCHEDULED, CONFTYPE_INT  , read_int     , CNF_FLUSH_THRESHOLD_SCHEDULED, validate_nonnegative },
+   { CONF_TAPERFLUSH           , CONFTYPE_INT      , read_int     , CNF_TAPERFLUSH           , validate_nonnegative },
    { CONF_DISPLAYUNIT          , CONFTYPE_STRING   , read_string  , CNF_DISPLAYUNIT          , validate_displayunit },
    { CONF_AUTOFLUSH            , CONFTYPE_BOOL     , read_bool    , CNF_AUTOFLUSH            , NULL },
    { CONF_RESERVE              , CONFTYPE_INT      , read_int     , CNF_RESERVE              , validate_reserve },
@@ -677,6 +678,8 @@ read_conffile(
     debug_selfcheck  = getconf_int(CNF_DEBUG_SELFCHECK);
     debug_sendsize   = getconf_int(CNF_DEBUG_SENDSIZE);
     debug_sendbackup = getconf_int(CNF_DEBUG_SENDBACKUP);
+
+    amfree(conf_confname);
 
     return got_parserror;
 }
@@ -902,21 +905,6 @@ validate_reserved_port_range(
 {
     validate_port_range(np, val, 1, IPPORT_RESERVED-1);
 }
-
-static void
-validate_taperstart(
-    struct s_conf_var *np G_GNUC_UNUSED,
-    val_t        *val)
-{
-    if(val->v.intrange[0] < 0|| val->v.intrange[0] > 100) {
-       conf_parserror("taperstart value must be between 0 and 100");
-    } else if(val->v.intrange[1] < 0 || val->v.intrange[1] > 100) {
-       conf_parserror("taperstart value must be between 0 and 100");
-    } else if(val->v.intrange[0] > val->v.intrange[1]) {
-       conf_parserror("taperstart: first value must be smaller than second");
-    }
-}
-
 
 char *
 getconf_byname(
@@ -1276,6 +1264,8 @@ init_defaults(
 
     /* defaults for exported variables */
 
+    conf_confname = NULL;
+
 #ifdef DEFAULT_CONFIG
     s = DEFAULT_CONFIG;
 #else
@@ -1375,8 +1365,9 @@ init_defaults(
     conf_init_string   (&conf_data[CNF_AMRECOVER_CHANGER]    , "");
     conf_init_bool     (&conf_data[CNF_AMRECOVER_CHECK_LABEL], 1);
     conf_init_taperalgo(&conf_data[CNF_TAPERALGO]            , 0);
-    conf_init_intrange (&conf_data[CNF_TAPERSTART]           , 0, 0);
-    conf_init_bool     (&conf_data[CNF_TAPERFLUSH]           , 1);
+    conf_init_int      (&conf_data[CNF_FLUSH_THRESHOLD_DUMPED]   , 0);
+    conf_init_int      (&conf_data[CNF_FLUSH_THRESHOLD_SCHEDULED], 0);
+    conf_init_int      (&conf_data[CNF_TAPERFLUSH]               , 0);
     conf_init_string   (&conf_data[CNF_DISPLAYUNIT]          , "k");
     conf_init_string   (&conf_data[CNF_KRB5KEYTAB]           , "/.amanda-v5-keytab");
     conf_init_string   (&conf_data[CNF_KRB5PRINCIPAL]        , "service/amanda");
@@ -1551,12 +1542,13 @@ read_conffile_recursively(
     } while (rc != 0);
     afclose(conf_conf);
 
-    amfree(conf_confname);
-
     /* Restore servers */
     conf_line_num = save_line_num;
     conf_conf     = save_conf;
-    conf_confname = save_confname;
+    if (save_confname != NULL) {
+	amfree(conf_confname);
+	conf_confname = save_confname;
+    }
 }
 
 
@@ -2933,6 +2925,8 @@ int read_clientconf(
     debug_selfcheck  = getconf_int(CNF_DEBUG_SELFCHECK);
     debug_sendsize   = getconf_int(CNF_DEBUG_SENDSIZE);
     debug_sendbackup = getconf_int(CNF_DEBUG_SENDBACKUP);
+
+    amfree(conf_confname);
 
     return got_parserror;
 }
