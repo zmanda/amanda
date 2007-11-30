@@ -1,3 +1,6 @@
+2007-11-30  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/find.c: Remove seen_chunk_of function.
+
 2007-11-28  Jean-Louis Martineau <martineau@zmanda.com>
 	* config/macro-archive/docbook-dtd.m4: Check return code of 5.
 

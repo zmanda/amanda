@@ -42,7 +42,6 @@ void search_holding_disk(find_result_t **output_find);
 char *find_nicedate(char *datestamp);
 static int find_compare(const void *, const void *);
 static int parse_taper_datestamp_log(char *logline, char **datestamp, char **level);
-static int seen_chunk_of(find_result_t *output_find, char *date, char *host, char *disk, int level);
 
 static char *find_sort_order = NULL;
 int dynamic_disklist = 0;
@@ -556,34 +555,6 @@ parse_taper_datestamp_log(
     return 1;
 }
 
-/*
- * Check whether we've already seen a CHUNK log entry for the given dump.
- * This is so we can interpret the final SUCCESS entry for a split dump as 
- * 'list its parts' instead.  Return 1 if we have, 0 if not.
- */
-int
-seen_chunk_of(
-    find_result_t *output_find,
-    char *date,
-    char *host,
-    char *disk,
-    int level)
-{
-    find_result_t *cur;
-
-    if(!host || !disk) return(0);
-
-    for(cur=output_find; cur; cur=cur->next) {
-	if(atoi(cur->partnum) < 1 || !cur->hostname || !cur->diskname) continue;
-
-	if(strcmp(cur->timestamp, date) == 0 && strcmp(cur->hostname, host) == 0 &&
-	        strcmp(cur->diskname, disk) == 0 && cur->level == level){
-	    return(1);
-	}
-    }
-    return(0);
-}
-
 /* if output_find is NULL					*/
 /*	return 1 if this is the logfile for this label		*/
 /*	return 0 if this is not the logfile for this label	*/
@@ -780,8 +751,7 @@ search_logfile(
 		enqueue_disk(find_diskqp, dp);
 	    }
 
-            if(find_match(host, disk) && ((curlog != L_SUCCESS) ||
-		!seen_chunk_of(*output_find, date, host, disk, level))) {
+            if (find_match(host, disk)) {
 		if(curprog == P_TAPER) {
 		    find_result_t *new_output_find =
 			(find_result_t *)alloc(SIZEOF(find_result_t));
