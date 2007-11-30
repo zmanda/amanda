@@ -435,11 +435,10 @@ static void put_partial_log(dump_info_t * dump_info, double dump_time,
                             guint64 dump_kbytes) {
     char * qdiskname = quote_string(dump_info->diskname);
 
-    log_add(L_PARTIAL, "%s %s %s %d %d [sec %f kb %"
-            G_GUINT64_FORMAT " kps %f] \"\"",
+    log_add(L_PARTIAL, "%s %s %s %d %d [sec %f kb %ju kps %f] \"\"",
             dump_info->hostname, qdiskname, dump_info->timestamp,
             dump_info->current_part, dump_info->level, dump_time,
-            dump_kbytes, dump_kbytes / dump_time);
+            (uintmax_t)dump_kbytes, dump_kbytes / dump_time);
     amfree(qdiskname);
 }
 
@@ -459,18 +458,16 @@ static gboolean finish_part_attempt(taper_state_t * taper_state,
         dump_info->total_time = timesadd(run_time, dump_info->total_time);
         dump_info->total_bytes += run_bytes;
 
-        log_add(L_PART, "%s %d %s %s %s %d/%d %d [sec %f kb %"
-                G_GUINT64_FORMAT " kps %f]",
+        log_add(L_PART, "%s %d %s %s %s %d/%d %d [sec %f kb %ju kps %f]",
                 taper_state->device->volume_label,
                 taper_state->device->file, dump_info->hostname, qdiskname,
                 dump_info->timestamp, dump_info->current_part,
                 taper_source_predict_parts(dump_info->source),
-                dump_info->level, part_time, part_kbytes, part_kbps);
-        putresult(PARTDONE, "%s %s %d %ld \"[sec %f kb %"
-                  G_GUINT64_FORMAT " kps %f]\"\n",
+                dump_info->level, part_time, (uintmax_t)part_kbytes, part_kbps);
+        putresult(PARTDONE, "%s %s %d %ju \"[sec %f kb %ju kps %f]\"\n",
                   dump_info->handle, taper_state->device->volume_label,
-                  taper_state->device->file, part_kbytes, part_time, part_kbytes,
-                  part_kbps);
+                  taper_state->device->file, (uintmax_t)part_kbytes, part_time,
+		  (uintmax_t)part_kbytes, part_kbps);
         
         if (taper_source_get_end_of_data(dump_info->source)) {
             cmd_t result_cmd;
@@ -484,14 +481,13 @@ static gboolean finish_part_attempt(taper_state_t * taper_state,
             g_object_unref(dump_info->source);
             dump_info->source = NULL;
         
-            log_add(result_log, "%s %s %s %d %d [sec %f kb %"
-                    G_GUINT64_FORMAT " kps %f]",
+            log_add(result_log, "%s %s %s %d %d [sec %f kb %ju kps %f]",
                     dump_info->hostname, qdiskname, dump_info->timestamp,
                     dump_info->current_part, dump_info->level, dump_time,
-		    dump_kbytes, dump_kbps);
+		    (uintmax_t)dump_kbytes, dump_kbps);
             putresult(result_cmd, "%s INPUT-GOOD TAPE-GOOD "
-                      "\"[sec %f kb %" G_GUINT64_FORMAT " kps %f]\" \"\" \"\"\n",
-                      dump_info->handle, dump_time, dump_kbytes,
+                      "\"[sec %f kb %ju kps %f]\" \"\" \"\"\n",
+                      dump_info->handle, dump_time, (uintmax_t)dump_kbytes,
                       dump_kbps);
             
             amfree(qdiskname);
@@ -521,12 +517,11 @@ static gboolean finish_part_attempt(taper_state_t * taper_state,
         }
         
         log_add(L_PARTPARTIAL,
-                "%s %d %s %s %s %d/%d %d [sec %f kb %"
-                G_GUINT64_FORMAT " kps %f] \"\"",
+                "%s %d %s %s %s %d/%d %d [sec %f kb %ju kps %f] \"\"",
                 volume_label, file_number, dump_info->hostname, qdiskname,
                 dump_info->timestamp, dump_info->current_part,
                 taper_source_predict_parts(dump_info->source),
-                dump_info->level, part_time, part_kbytes, part_kbps);
+                dump_info->level, part_time, (uintmax_t)part_kbytes, part_kbps);
         amfree(volume_label);
         
         if ((queue_result & QUEUE_CONSUMER_ERROR) &&
@@ -549,11 +544,11 @@ static gboolean finish_part_attempt(taper_state_t * taper_state,
         
         putresult(PARTIAL,
                   "%s INPUT-%s TAPE-%s "
-                  "\"[sec %f kb %" G_GUINT64_FORMAT " kps %f]\" \"\" \"\"\n",
+                  "\"[sec %f kb %ju kps %f]\" \"\" \"\"\n",
                   dump_info->handle,
                   (queue_result & QUEUE_PRODUCER_ERROR) ? "ERROR" : "GOOD",
                   (queue_result & QUEUE_CONSUMER_ERROR) ? "ERROR" : "GOOD",
-                  dump_time, dump_kbytes, dump_kbps);
+                  dump_time, (uintmax_t)dump_kbytes, dump_kbps);
         put_partial_log(dump_info, dump_time, dump_kbytes);
     }
 
@@ -598,9 +593,9 @@ static void bail_no_volume(dump_info_t * dump_info) {
         double dump_kbps = dump_kbytes / dump_time;
         putresult(PARTIAL,
                   "%s INPUT-GOOD TAPE-ERROR "
-                  "\"[sec %f kb %" G_GUINT64_FORMAT " kps %f]\" \"\" \"no new tape\"\n",
+                  "\"[sec %f kb %ju kps %f]\" \"\" \"no new tape\"\n",
                   dump_info->handle, 
-                  dump_time, dump_kbytes, dump_kbps);
+                  dump_time, (uintmax_t)dump_kbytes, dump_kbps);
         put_partial_log(dump_info, dump_time, dump_kbytes);
     } else {
         char * qdiskname = quote_string(dump_info->diskname);

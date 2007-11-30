@@ -132,9 +132,8 @@ static void setup_retry_buffer(TaperMemPortSource * self) {
     }
     
     if (alloc_size < DISK_BLOCK_BYTES * 10) {
-        g_fprintf(stderr, "Fallback split size of %" G_GUINT64_FORMAT
-                " is smaller than 10 blocks (%u bytes).\n", alloc_size,
-                DISK_BLOCK_BYTES * 10);
+        g_fprintf(stderr, "Fallback split size of %ju is smaller than 10 blocks (%u bytes).\n",
+		  (uintmax_t)alloc_size, DISK_BLOCK_BYTES * 10);
         alloc_size = DISK_BLOCK_BYTES * 10;
     }
     

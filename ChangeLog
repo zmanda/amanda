@@ -1,4 +1,8 @@
 2007-11-30  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/taper-mem-port-source.c, server-src/taper-file-source.c
+	  server-src/taper.c: Cast guint64 to uintmax_t and use %ju to print.
+
+2007-11-30  Jean-Louis Martineau <martineau@zmanda.com>
 	* man/xml-source/amanda.conf.5.xml: Improve documentation.
 	* example/amanda.conf.in: Ditto.
 
