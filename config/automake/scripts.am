@@ -51,30 +51,30 @@
 # configure.in
 
 # Perl
-%: %.pl
+%: %.pl $(top_builddir)/config.status
 	$(top_builddir)/config.status --file=$@:$<
 	chmod a+x $@
 
-%.pl: %.pl.in
+%.pl: %.pl.in $(top_builddir)/config.status
 	$(top_builddir)/config.status --file=$@:$<
 
-%.pm: %.pm.in
+%.pm: %.pm.in $(top_builddir)/config.status
 	$(top_builddir)/config.status --file=$@:$<
 
 # Shell
-%: %.sh
+%: %.sh $(top_builddir)/config.status
 	$(top_builddir)/config.status --file=$@:$<
 	chmod a+x $@
 
-%.sh: %.sh.in
+%.sh: %.sh.in $(top_builddir)/config.status
 	$(top_builddir)/config.status --file=$@:$<
 
 # Awk
-%: %.awk
+%: %.awk $(top_builddir)/config.status
 	$(top_builddir)/config.status --file=$@:$<
 	chmod a+x $@
 
-%.awk: %.awk.in
+%.awk: %.awk.in $(top_builddir)/config.status
 	$(top_builddir)/config.status --file=$@:$<
 
 # config.status leaves config.log files around

@@ -1,4 +1,8 @@
 2007-11-30  Jean-Louis Martineau <martineau@zmanda.com>
+	* config/automake/scripts.am: Build of the scripts also depend on
+				      $(top_builddir)/config.status
+
+2007-11-30  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amdump.sh: Pass a --startime argument to planner.
 	* server-src/planner.c: Get the --starttime command line argument.
 
