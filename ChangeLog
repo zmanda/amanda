@@ -1,4 +1,8 @@
 2007-11-30  Jean-Louis Martineau <martineau@zmanda.com>
+	* recover-src/set_commands.c: Add a terminating '/' in cd_regex.
+				      Never add it in cd_dir.
+
+2007-11-30  Jean-Louis Martineau <martineau@zmanda.com>
 	* config/automake/scripts.am: Build of the scripts also depend on
 				      $(top_builddir)/config.status
 

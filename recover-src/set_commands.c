@@ -358,7 +358,9 @@ cd_regex(
     char *	regex)
 {
     char *s;
+    char *uq_orig_regex;
     char *uqregex;
+    int  len_uqregex;
 
     char *path_on_disk = NULL;
 
@@ -367,9 +369,22 @@ cd_regex(
 	return;
     }
 
-    uqregex = unquote_string(regex);
+    uq_orig_regex = unquote_string(regex);
+    uqregex = stralloc(uq_orig_regex);
+
+    /* Add a terminating '/' if it is not there, maybe before a '$' */
+    len_uqregex = strlen(uqregex);
+    if (uqregex[len_uqregex-1] == '$') {
+	if (uqregex[len_uqregex-2] != '/') {
+	    uqregex[len_uqregex-1] = '\0';
+	    strappend(uqregex, "/$");
+	}
+    } else if (uqregex[len_uqregex-1] != '/') {
+	//uqregex[len_uqregex-1] = '\0';
+	strappend(uqregex, "/");
+    }
     if ((s = validate_regexp(uqregex)) != NULL) {
-	g_printf(_("\"%s\" is not a valid regular expression: "), uqregex);
+	g_printf(_("\"%s\" is not a valid regular expression: "), uq_orig_regex);
 	amfree(uqregex);
 	puts(s);
 	return;
@@ -377,17 +392,18 @@ cd_regex(
 
     /* convert path (assumed in cwd) to one on disk */
     if (strcmp(disk_path, "/") == 0)
-        path_on_disk = stralloc2("/", regex);
+        path_on_disk = stralloc2("/", uqregex);
     else {
         char *clean_disk_path = clean_regex(disk_path);
         path_on_disk = vstralloc(clean_disk_path, "/", regex, NULL);
         amfree(clean_disk_path);
     }
 
-    cd_dir(path_on_disk, uqregex);
+    cd_dir(path_on_disk, uq_orig_regex);
 
     amfree(path_on_disk);
     amfree(uqregex);
+    amfree(uq_orig_regex);
 }
 
 void
@@ -395,23 +411,24 @@ cd_dir(
     char *	path_on_disk,
     char *	default_dir)
 {
-    char *path_on_disk_slash = NULL;
     char *dir = NULL;
-
+    char *s;
     int nb_found;
     size_t i;
 
     DIR_ITEM *ditem;
 
-    path_on_disk_slash = stralloc2(path_on_disk, "/");
+    if ((s = validate_regexp(path_on_disk)) != NULL) {
+	set_directory(default_dir);
+	return;
+    }
 
     nb_found = 0;
 
     for (ditem=get_dir_list(); ditem!=NULL && nb_found <= 1; 
 			       ditem=get_next_dir_item(ditem))
     {
-	if (match(path_on_disk, ditem->path)
-	    || match(path_on_disk_slash, ditem->path))
+	if (match(path_on_disk, ditem->path))
 	{
 	    i = strlen(ditem->path);
 	    if((i > 0 && ditem->path[i-1] == '/')
@@ -433,7 +450,6 @@ cd_dir(
 	    }
 	}
     }
-    amfree(path_on_disk_slash);
 
     if(nb_found==0) {
 	set_directory(default_dir);
