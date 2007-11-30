@@ -1,4 +1,8 @@
 2007-11-30  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amdump.sh: Pass a --startime argument to planner.
+	* server-src/planner.c: Get the --starttime command line argument.
+
+2007-11-30  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amstatus.pl: New --locale-independent-date-format option.
 	* man/xml-source/amstatus.8.xml: Document it.
 	* server-src/amflush.c: Output a "starttime-locale-independent" line.

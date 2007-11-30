@@ -168,6 +168,7 @@ main(
     disklist_t origq;
     disk_t *dp;
     int moved_one;
+    int diskarg_offset;
     off_t initial_size;
     int i;
     char *conffile;
@@ -227,6 +228,13 @@ main(
     for (i = 0; version_info[i] != NULL; i++)
 	g_fprintf(stderr, _("%s: %s"), get_pname(), version_info[i]);
 
+    diskarg_offset = 2;
+    if (my_argc > 3 && strcmp(my_argv[2], "--starttime") == 0) {
+	planner_timestamp = my_argv[3];
+	diskarg_offset += 2;
+    }
+
+
     /*
      * 1. Networking Setup
      *
@@ -270,7 +278,8 @@ main(
 	/*NOTREACHED*/
     }
 
-    errstr = match_disklist(&origq, my_argc-2, my_argv+2);
+    errstr = match_disklist(&origq, my_argc-diskarg_offset,
+				    my_argv+diskarg_offset);
     if (errstr) {
 	g_fprintf(stderr,"%s",errstr);
 	amfree(errstr);
@@ -330,9 +339,12 @@ main(
     conf_autoflush = getconf_boolean(CNF_AUTOFLUSH);
     conf_usetimestamps = getconf_boolean(CNF_USETIMESTAMPS);
 
-    amfree(planner_timestamp);
     today = time(0);
-    if(conf_usetimestamps == 0) {
+    if (planner_timestamp) {
+	if (conf_usetimestamps == 0) {
+	    planner_timestamp[6] = '\0';
+	}
+    } else if(conf_usetimestamps == 0) {
 	planner_timestamp = get_datestamp_from_time(0);
     }
     else {

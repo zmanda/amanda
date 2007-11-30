@@ -112,11 +112,15 @@ exit_code=$?
 exec </dev/null 2>>$errfile 1>&2
 exit_code=$?
 [ $exit_code -ne 0 ] && exit_status=$exit_code
-printf '%s: start at %s\n' "amdump" "`date`"
-printf '%s: datestamp %s\n' "amdump" "`date +%Y%m%d`"
-printf '%s: starttime %s\n' "amdump" "`date +%Y%m%d%H%M%S`"
-printf '%s: starttime-locale-independent %s\n' "amdump" "`date +'%Y-%m-%d %H:%M:%S %Z'`"
-$libexecdir/planner$SUF $conf "$@" | $libexecdir/driver$SUF $conf "$@"
+date=`date`
+date_datestamp=`date +%Y%m%d -d "$date"`
+date_starttime=`date +%Y%m%d%H%M%S -d "$date"`
+date_locale_independent=`date +'%Y-%m-%d %H:%M:%S %Z' -d "$date"`
+printf '%s: start at %s\n' "amdump" "$date"
+printf '%s: datestamp %s\n' "amdump" "$date_datestamp"
+printf '%s: starttime %s\n' "amdump" "$date_starttime"
+printf '%s: starttime-locale-independent %s\n' "amdump" "$date_locale_independent"
+$libexecdir/planner$SUF $conf --starttime $date_starttime "$@" | $libexecdir/driver$SUF $conf "$@"
 exit_code=$?
 [ $exit_code -ne 0 ] && exit_status=$exit_code
 printf '%s: end at %s\n' "amdump" "`date`"
