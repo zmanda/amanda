@@ -1010,12 +1010,9 @@ Debug level of the taper process</para>
   specified by this setting and start a new volume anyway. Once
   writing to a volume has begun, this constraint is not applied unless
   and until a new volume is needed.</para>
-<para> A valid configuration must satisfy the inequalities:
-</para>
-<programlisting>
-  <mathphrase>taperflush &le; flush-threshold-scheduled</mathphrase>
-  <mathphrase>flush-threshold-dumped &le; flush-threshold-scheduled</mathphrase>
-</programlisting>
+<para> The value of this parameter may not exceed than that of
+  the <emphasis remap='B'>flush-threshold-scheduled</emphasis>
+  parameter.</para>
   </listitem>
   </varlistentry>
 
@@ -1044,7 +1041,7 @@ Debug level of the taper process</para>
   and until a new volume is needed.</para>
 <para> The value of this parameter may not be less than that of
   the <emphasis remap='B'>flush-threshold-dumped</emphasis>
-  parameter.</para>
+  or <emphasis remap='B'>taperflush</emphasis> parameters.</para>
   </listitem>
   </varlistentry>
 

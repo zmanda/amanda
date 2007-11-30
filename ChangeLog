@@ -1,4 +1,8 @@
 2007-11-30  Jean-Louis Martineau <martineau@zmanda.com>
+	* man/xml-source/amanda.conf.5.xml: Improve documentation.
+	* example/amanda.conf.in: Ditto.
+
+2007-11-30  Jean-Louis Martineau <martineau@zmanda.com>
        * server-src/server_util.c (cmdstr): Remove SPLIT-NEEDNEXT
                                             and SPLIT-CONTINUE
        * server-src/server_util.h (cmd_t): Remove SPLIT_NEEDNEXT

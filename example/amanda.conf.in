@@ -71,7 +71,7 @@ device_output_buffer_size 1280k
 usetimestamps yes
 
 # flush-threshold-dumped, flush-threshold-scheduled, taperflush, and autoflush
-# are used to tune tape utilization. See the amanda.conf (5) manpage for
+# are used to control tape utilization. See the amanda.conf (5) manpage for
 # details on how they work. Taping will not start until all criteria are
 # satisfied. Here are some examples:
 #
