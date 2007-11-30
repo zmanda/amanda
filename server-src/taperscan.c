@@ -138,6 +138,7 @@ int scan_read_label(
             label_errstr =
                 g_strdup_printf(_("Error reading volume label: %s\n"),
                                 *label_strv);
+	    break;
 
         default:
             {
@@ -161,7 +162,7 @@ int scan_read_label(
     g_object_unref(device);
 
     *error_message = newvstrallocf(*error_message,
-                                   _("%sread label `%s', date `%s'\n"),
+                                   _("%sread label `%s', date `%s'.\n"),
                                    *error_message, *label, *timestamp);
 
     /* Register this with the barcode database, even if its not ours. */
@@ -178,7 +179,7 @@ int scan_read_label(
     labelstr = getconf_str(CNF_LABELSTR);
     if(!match(labelstr, *label)) {
         *error_message = newvstrallocf(*error_message,
-                              _("%slabel \"%s\" doesn't match \"%s\"\n"),
+                              _("%slabel \"%s\" doesn't match \"%s\".\n"),
                                        *error_message, *label, labelstr);
 
         return -1;
@@ -201,8 +202,8 @@ int scan_read_label(
         } else if(tp != NULL && !reusable_tape(tp)) {
             *error_message = 
                 newvstrallocf(*error_message,
-                              _("%s. Tape with label %s is still active" 
-                                " and cannot be overwriten\n"),
+                              _("%sTape with label %s is still active" 
+                                " and cannot be overwriten.\n"),
                               *error_message, *label);
             return -1;
         }
