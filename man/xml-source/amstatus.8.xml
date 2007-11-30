@@ -37,6 +37,7 @@
     <arg choice='opt'>--estimate </arg>
     <arg choice='opt'>--gestimate </arg>
     <arg choice='opt'>--stats </arg>
+    <arg choice='opt'>--locale-independent-date-format </arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 
@@ -140,6 +141,12 @@ Works only during the estimate phase.</para>
   <term><option>--stats|statistics</option></term>
   <listitem>
 <para>Display statistics about active-time of taper and dumpers.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>--locale-independent-date-format</option></term>
+  <listitem>
+<para>Output the date in a locale independent format. The format is the same executing: date +'%Y-%m-%d %H:%M:%S %Z'</para>
   </listitem>
   </varlistentry>
 </variablelist>

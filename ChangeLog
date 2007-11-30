@@ -1,4 +1,10 @@
 2007-11-30  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amstatus.pl: New --locale-independent-date-format option.
+	* man/xml-source/amstatus.8.xml: Document it.
+	* server-src/amflush.c: Output a "starttime-locale-independent" line.
+	* server-src/amdump.sh: Output a "starttime-locale-independent" line.
+
+2007-11-30  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/find.c: Remove seen_chunk_of function.
 
 2007-11-28  Jean-Louis Martineau <martineau@zmanda.com>

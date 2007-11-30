@@ -115,6 +115,7 @@ exit_code=$?
 printf '%s: start at %s\n' "amdump" "`date`"
 printf '%s: datestamp %s\n' "amdump" "`date +%Y%m%d`"
 printf '%s: starttime %s\n' "amdump" "`date +%Y%m%d%H%M%S`"
+printf '%s: starttime-locale-independent %s\n' "amdump" "`date +'%Y-%m-%d %H:%M:%S %Z'`"
 $libexecdir/planner$SUF $conf "$@" | $libexecdir/driver$SUF $conf "$@"
 exit_code=$?
 [ $exit_code -ne 0 ] && exit_status=$exit_code

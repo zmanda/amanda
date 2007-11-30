@@ -85,6 +85,7 @@ main(
     GSList *holding_list=NULL, *holding_file;
     int driver_pipe[2];
     char date_string[100];
+    char date_string_standard[100];
     time_t today;
     int    new_argc,   my_argc;
     char **new_argv, **my_argv;
@@ -306,15 +307,19 @@ main(
     set_logerror(logerror);
     today = time(NULL);
     tm = localtime(&today);
-    if (tm)
+    if (tm) {
 	strftime(date_string, 100, "%a %b %e %H:%M:%S %Z %Y", tm);
-    else
+	strftime(date_string_standard, 100, "%Y-%m-%d %H:%M:%S %Z", tm);
+    } else {
 	error(_("BAD DATE")); /* should never happen */
+    }
     g_fprintf(stderr, _("amflush: start at %s\n"), date_string);
     g_fprintf(stderr, _("amflush: datestamp %s\n"), amflush_timestamp);
     if (1) {
         char * timestamp = get_proper_stamp_from_time(0);
         g_fprintf(stderr, _("amflush: starttime %s\n"), timestamp);
+        g_fprintf(stderr, _("amflush: starttime-locale-independent %s\n"),
+		  date_string_standard);
         amfree(timestamp);
     }
     log_add(L_START, _("date %s"), amflush_timestamp);

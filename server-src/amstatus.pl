@@ -45,7 +45,8 @@ $result = &NGetOpt (	"summary",
 			"gestimate|gettingestimate",
 			"date",
 			"config|c:s",
-			"file:s"
+			"file:s",
+			"locale-independent-date-format",
 			);
 if($result !=1 ) {
 	&usage();
@@ -189,7 +190,9 @@ while($lineX = <AMDUMP>) {
 		if ($line[1] eq "start" && $line[2] eq "at") {
 			$datestr = $lineX;
 			$datestr =~ s/.*start at //g;
-			print "From " . $datestr . "\n";
+			if (!defined $opt_locale_independent_date_format) {
+				print "From " . $datestr . "\n";
+			}
 		} elsif($line[1] eq "datestamp") {
 			$gdatestamp = $line[2];
 			if(!defined $datestamp{$gdatestamp}) {
@@ -198,6 +201,10 @@ while($lineX = <AMDUMP>) {
 			}
 		} elsif($line[1] eq "starttime") {
 			$starttime=&set_starttime($line[2]);
+		} elsif($line[1] eq "starttime-locale-independent") {
+			if (defined $opt_locale_independent_date_format) {
+				printf "From " . $line[2] . " " . $line[3] . ":" . $line[4] . ":" . $line[5] . " " . $line[6] . "\n";
+			}
 		}
 		if($line[0] eq "amflush") {
 			$estimate_done=1;
@@ -1395,6 +1402,6 @@ sub usage() {
 	print "amstatus [--config] config [--file amdump_file]\n";
 	print "         [--summary] [--dumping] [--waitdumping] [--waittaper]\n";
 	print "         [--dumpingtape] [--writingtape] [--finished] [--failed]\n";
-	print "         [--estimate] [--gestimate] [--stats] [--date]\n";
+	print "         [--estimate] [--gestimate] [--stats] [--date] [--locale-independent-date-format]\n";
 	exit 0;
 }
