@@ -50,17 +50,12 @@ It will create /var/lib/amanda/guntar-lists directory if one does
 
 
 <refsect1><title>Options</title>
+<para>Options may be abbreviated, as long as the abbreviation is not ambiguous. Option argument can either separated by '=' or a space.
+Example:  --templ=harddisk --tapedev /dev/nst0</para>
+
+<para>&amserverconfig; builds a new "config" &A; configuration. Customize the configuration with the options below.</para>
+
 <variablelist remap='TP'>
- <varlistentry>
-Options may be abbreviated, as long as the abbreviation is not ambiguous. Option argument can either separated by '=' or a space.
-Example:  --templ=harddisk --tapedev /dev/nst0
-</varlistentry>
-
-
-  <varlistentry>
-&amserverconfig; builds a new "config" &A; configuration. Customize the configuration with the options below.
-  </varlistentry>
-
   <varlistentry>
   <term><option>--template template</option></term>
   <listitem>

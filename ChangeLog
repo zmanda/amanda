@@ -1,3 +1,6 @@
+2007-12-03  Jean-Louis Martineau <martineau@zmanda.com>
+	* man/xml-source/amserverconfig.8.xml: Fix indentation.
+
 2007-11-30  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/taper-mem-port-source.c, server-src/taper-file-source.c
 	  server-src/taper.c: Cast guint64 to uintmax_t and use %ju to print.
