@@ -1796,12 +1796,12 @@ start_host(
 
     secdrv = security_getdriver(hostp->disks->security_driver);
     if (secdrv == NULL) {
-	error(_("could not find security driver \"%s\" for host \"%s\". auth for this dle is invalid"),
+	fprintf(stderr, _("Could not find security driver \"%s\" for host \"%s\". auth for this dle is invalid\n"),
 	      hostp->disks->security_driver, hostp->hostname);
-        /*NOTREACHED*/
+    } else {
+	protocol_sendreq(hostp->hostname, secdrv, amhost_get_security_conf, 
+			 req, conf_ctimeout, handle_result, hostp);
     }
-    protocol_sendreq(hostp->hostname, secdrv, amhost_get_security_conf, 
-		     req, conf_ctimeout, handle_result, hostp);
 
     amfree(req);
 

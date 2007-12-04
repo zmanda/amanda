@@ -1605,9 +1605,12 @@ static void getsize(
 
     secdrv = security_getdriver(hostp->disks->security_driver);
     if (secdrv == NULL) {
-	error(_("could not find security driver '%s' for host '%s'"),
-	    hostp->disks->security_driver, hostp->hostname);
-	/*NOTREACHED*/
+	hostp->up = HOST_DONE;
+	log_add(L_ERROR,
+		_("Could not find security driver '%s' for host '%s'"),
+		hostp->disks->security_driver, hostp->hostname);
+	amfree(req);
+	return;
     }
     hostp->up = HOST_ACTIVE;
 
@@ -1623,6 +1626,7 @@ static void getsize(
 
     protocol_sendreq(hostp->hostname, secdrv, amhost_get_security_conf, 
 	req, timeout, handle_result, hostp);
+
     amfree(req);
 }
 

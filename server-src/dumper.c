@@ -1953,9 +1953,10 @@ startup_dump(
     dbprintf(_("send request:\n----\n%s\n----\n\n"), req);
     secdrv = security_getdriver(authopt);
     if (secdrv == NULL) {
-	error(_("no '%s' security driver available for host '%s'"),
-	    authopt, hostname);
-	/*NOTREACHED*/
+	errstr = newvstrallocf(errstr,
+		_("[could not find security driver '%s']"), authopt);
+	amfree(req);
+	return 2;
     }
 
     protocol_sendreq(hostname, secdrv, dumper_get_security_conf, req,

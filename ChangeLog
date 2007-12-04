@@ -1,4 +1,8 @@
 2007-12-04  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amcheck.c, server-src/dumper.c
+	  server-src/planner.c: Don't crash is securoty driver is not found.
+
+2007-12-04  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/changer.c: Print better message if the changer script
 				has no output.
 
