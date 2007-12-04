@@ -497,6 +497,7 @@ amtape_taper_scan(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char ** argv) {
     tape_t * tp;
     char *timestamp = NULL;
     char *tapedev = NULL;
+    int result;
 
     device_api_init();
     
@@ -511,12 +512,20 @@ amtape_taper_scan(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char ** argv) {
     }
     g_fprintf(stderr, _("a new tape.\n"));
 
-    taper_scan(searchlabel, &label, &timestamp, &tapedev,
-               FILE_taperscan_output_callback, stderr, NULL, NULL);
+    result = taper_scan(searchlabel, &label, &timestamp, &tapedev,
+	                FILE_taperscan_output_callback, stderr, NULL, NULL);
 
-    g_fprintf(stderr, _("%s: label %s is now loaded.\n"),
-            get_pname(), label);
-
+    if (result < 0) {
+	g_fprintf(stderr, _("Could not find a  non-active Amanda tape.\n"));
+	if (label) {
+	    g_fprintf(stderr, _("Tape with label `%s' is now loaded.\n"), label);
+	}
+    } else if (result == 3) {
+	g_fprintf(stderr, _("New tape loaded, it will be labelled `%s'.\n"),
+		  label);
+    } else {
+	g_fprintf(stderr, _("Tape with label `%s' is now loaded.\n"), label);
+    }
 
     amfree(searchlabel);
     amfree(label);
