@@ -428,9 +428,15 @@ changer_command(
     }
 
     if((changer_resultstr = areads(fd[0])) == NULL) {
-	changer_resultstr = vstrallocf(
+	if (errno == 0) {
+	    changer_resultstr = vstrallocf(
+			_("<error> could not read result from \"%s\": Premature end of file, see %s"),
+			tapechanger, dbfn());
+	} else {
+	    changer_resultstr = vstrallocf(
 			_("<error> could not read result from \"%s\": %s"),
 			tapechanger, strerror(errno));
+	}
     }
 
     while(1) {
