@@ -1,3 +1,12 @@
+2007-12-04  Ian Turner <ian@zmanda.com>
+	* server-src/taperscan.c, server-src/taperscan.h: Support persistence
+	  between invocations of taper_scan(), so that you can get second-best
+	  and further tapes.
+	* server-src/amcheck.c, server-src/amtape.c: Use the new taperscan 
+	  interface.
+	* server-src/taper.c: Do the right thing if there is an error writing
+	  the tape label.
+
 2007-12-04  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amtape.c: Correctly output the result of taper scan.
 

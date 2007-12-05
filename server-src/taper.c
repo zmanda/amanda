@@ -57,6 +57,7 @@ typedef struct {
     int    cur_tape;
     char * next_tape_label;
     char * next_tape_device;
+    taper_scan_tracker_t * taper_scan_tracker;
 } taper_state_t;
 
 typedef struct {
@@ -72,15 +73,19 @@ typedef struct {
     guint64 total_bytes;
 } dump_info_t;
 
+static gboolean label_new_tape(taper_state_t * state, dump_info_t * dump_info);
+
 static void init_taper_state(taper_state_t* state) {
     state->device = NULL;
     state->driver_start_time = NULL;
+    state->taper_scan_tracker = taper_scan_tracker_new();
 }
 
 static void cleanup(taper_state_t * state) {
     amfree(state->driver_start_time);
     amfree(state->next_tape_label);
     amfree(state->next_tape_device);
+    taper_scan_tracker_free(state->taper_scan_tracker);
     if (state->device != NULL) {
         g_object_unref(state->device);
         state->device = NULL;
@@ -220,7 +225,8 @@ static gboolean simple_taper_scan(taper_state_t * state,
     char *timestamp = NULL;
     int result;
     result = taper_scan(NULL, label, &timestamp, device,
-                        CHAR_taperscan_output_callback, 
+                        state->taper_scan_tracker,
+                        CHAR_taperscan_output_callback,
                         error_message, boolean_prolong, prolong);
     if (result < 0) {
         g_fprintf(stderr, "Failed taper scan:\n%s\n", *error_message);
@@ -262,6 +268,25 @@ static gpointer tape_search_thread(gpointer data) {
         (simple_taper_scan(request->state,
                            &(request->prolong),
 			   &(request->errmsg)));
+}
+
+static void log_taper_scan_errmsg(char * errmsg) {
+    char *c, *c1;
+    if (errmsg == NULL)
+        return;
+
+    c = c1 = errmsg;
+    while (*c != '\0') {
+        if (*c == '\n') {
+            *c = '\0';
+            log_add(L_WARNING,"%s", c1);
+            c1 = c+1;
+        }
+        c++;
+    }
+    if (strlen(c1) > 1 )
+        log_add(L_WARNING,"%s", c1);
+    amfree(errmsg);
 }
 
 /* If handle is NULL, then this function assumes that we are in startup mode.
@@ -309,21 +334,7 @@ static gboolean find_new_tape(taper_state_t * state, dump_info_t * dump) {
             return TRUE;
         } else {
             putresult(NO_NEW_TAPE, "%s\n", dump->handle);
-	    if (search_request.errmsg != NULL) {
-		char *c, *c1;
-		c = c1 = search_request.errmsg;
-		while (*c != '\0') {
-		    if (*c == '\n') {
-			*c = '\0';
-			log_add(L_WARNING,"%s", c1);
-			c1 = c+1;
-		    }
-		    c++;
-		}
-		if (strlen(c1) > 1 )
-		    log_add(L_WARNING,"%s", c1);
-		amfree(search_request.errmsg);
-	    }
+            log_taper_scan_errmsg(search_request.errmsg);
             return FALSE;
         }
     }
@@ -336,13 +347,29 @@ static gboolean find_new_tape(taper_state_t * state, dump_info_t * dump) {
     }
 }
 
+/* Returns TRUE if the old volume details are not the same as the new ones. */
+static gboolean check_volume_changed(Device * device,
+                                     char * old_label, char * old_timestamp) {
+    /* If one is NULL and the other is not, something changed. */
+    if ((old_label == NULL) != (device->volume_label == NULL))
+        return TRUE;
+    if ((old_timestamp == NULL) != (device->volume_time == NULL))
+        return TRUE;
+    /* If details were not NULL and is now different, we have a difference. */
+    if (old_label != NULL && strcmp(old_label, device->volume_label) != 0)
+        return TRUE;
+    if (old_timestamp != NULL &&
+        strcmp(old_timestamp, device->volume_time) != 0)
+        return TRUE;
+
+    /* If we got here, everything is cool. */
+    return FALSE;
+}
+
 /* Find and label a new tape, if one is not already open. Returns TRUE
  * if a tape could be written. */
 static gboolean find_and_label_new_tape(taper_state_t * state,
                                         dump_info_t * dump_info) {
-    char *tapelist_name;
-    char *tapelist_name_old;
-
     if (state->device != NULL) {
         return TRUE;
     }
@@ -350,6 +377,15 @@ static gboolean find_and_label_new_tape(taper_state_t * state,
     if (!find_new_tape(state, dump_info)) {
         return FALSE;
     }
+
+    return label_new_tape(state, dump_info);
+}
+
+static gboolean label_new_tape(taper_state_t * state, dump_info_t * dump_info) {
+    char *tapelist_name;
+    char *tapelist_name_old;
+    char * old_volume_name;
+    char * old_volume_time;
 
     /* If we got here, it means that we have found a tape to label and
      * have gotten permission from the driver to write it. But we
@@ -364,17 +400,58 @@ static gboolean find_and_label_new_tape(taper_state_t * state,
     }
     
     device_set_startup_properties_from_config(state->device);
+    device_read_label(state->device);
+    old_volume_name = strdup(state->device->volume_label);
+    old_volume_time = strdup(state->device->volume_time);
     
     if (!device_start(state->device, ACCESS_WRITE, state->next_tape_label,
                       state->driver_start_time)) {
+        gboolean tape_used;
+        /* Something broke, see if we can tell if the volume was erased or
+         * not. */
         g_fprintf(stderr, "taper: Error writing label %s to device %s.\n",
                 state->next_tape_label, state->device->device_name);
+        device_finish(state->device);
+        device_read_label(state->device);
+        tape_used = check_volume_changed(state->device, old_volume_name, 
+                                         old_volume_time);
         g_object_unref(state->device);
         state->device = NULL;
         amfree(state->next_tape_label);
-        return FALSE;
+        /* If the volume was written, we tell the driver and then immediately
+         * try again. */
+        if (tape_used) {
+            putresult(NEW_TAPE, "%s\n", state->device->volume_label);
+            log_add(L_WARNING, "Problem writing label to volume %s, "
+                    "volume may be erased.\n", old_volume_name);
+            amfree(old_volume_name);
+            amfree(old_volume_time);
+            return find_and_label_new_tape(state, dump_info);
+        } else {
+            /* Otherwise, we grab a new tape without talking to the driver
+             * again. */
+            tape_search_request_t request;
+            gboolean search_result;
+            log_add(L_WARNING, "Problem writing label to volume %s, "
+                    "old volume intact\n", old_volume_name);
+            amfree(old_volume_name);
+            amfree(old_volume_time);
+            request.state = state;
+            request.prolong = TRUE;
+            request.errmsg = NULL;
+            search_result = GPOINTER_TO_INT(tape_search_thread(&request));
+            if (search_result) {
+                amfree(request.errmsg);
+                return label_new_tape(state, dump_info);
+            } else {
+                /* Problem finding a new tape! */
+                log_taper_scan_errmsg(request.errmsg);
+                putresult(NO_NEW_TAPE, "%s\n", dump_info->handle);
+                return FALSE;
+            }
+        }
     }
-    state->next_tape_label = NULL; /* Taken by device_start. */
+    amfree(state->next_tape_label);
 
     tapelist_name = getconf_str(CNF_TAPELIST);
     if (tapelist_name[0] == '/') {

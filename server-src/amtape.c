@@ -512,7 +512,7 @@ amtape_taper_scan(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char ** argv) {
     }
     g_fprintf(stderr, _("a new tape.\n"));
 
-    result = taper_scan(searchlabel, &label, &timestamp, &tapedev,
+    result = taper_scan(searchlabel, &label, &timestamp, &tapedev, NULL,
 	                FILE_taperscan_output_callback, stderr, NULL, NULL);
 
     if (result < 0) {

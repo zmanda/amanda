@@ -637,7 +637,7 @@ static gboolean test_tape_status(FILE * outf) {
                         "amanda.conf or configure a tape changer\n"));
     }
     
-    tape_status = taper_scan(NULL, &label, &datestamp, &tapename,
+    tape_status = taper_scan(NULL, &label, &datestamp, &tapename, NULL,
                              FILE_taperscan_output_callback, outf,
                              NULL, NULL);
     if (tape_status < 0) {

@@ -31,11 +31,17 @@
 
 #include <device.h>
 
+typedef struct taper_scan_tracker_s taper_scan_tracker_t;
+
 /* taper_scan(): Scans the changer to find a tape to use. Reads the tape
  *               label, or invents a new one if label_new_tapes is in use.
  *               Note that the returned label information should not be
  *               re-read, because there may not actually exist a label
  *               on-tape (for WORM or newly-labeled media).
+ *
+ *               This function may be run multiple times consecutively with
+ *               the same tracker; each run will return a different elegible
+ *               tape. The 
  *
  * Inputs: wantlabel
  * Outputs: Returns: -1 if an error occured or no tape was found.
@@ -47,6 +53,8 @@
  *         timestamp: What the timestamp string on-tape was. May be "X".
  *     error_message: Debugging output.
  *           tapedev: What device to use from now on.
+ *           tracker: Pointer to an allocated taper_scan_tracker_t, used for
+ *                    persistance between runs.
  *
  * All returned strings are newly-allocated. */
 
@@ -56,6 +64,7 @@ typedef gboolean (*TaperscanProlongFunctor)(void *data);
 int taper_scan (char* wantlabel,
                 char** gotlabel, char** timestamp,
                 char **tapedev,
+                taper_scan_tracker_t* tracker,
                 TaperscanOutputFunctor output_functor,
                 void *output_data,
                 TaperscanProlongFunctor prolong_functor,
@@ -63,5 +72,11 @@ int taper_scan (char* wantlabel,
                 );
 void FILE_taperscan_output_callback(void *data, char *msg);
 void CHAR_taperscan_output_callback(void *data, char *msg);
+
+/* Returns a newly allocated tracker object. */
+taper_scan_tracker_t* taper_scan_tracker_new(void);
+
+/* Frees a tracker object. */
+void taper_scan_tracker_free(taper_scan_tracker_t*);
 
 #endif	/* !TAPERSCAN_H */

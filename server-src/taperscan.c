@@ -33,11 +33,15 @@
 #include "timestamp.h"
 #include "taperscan.h"
 
+struct taper_scan_tracker_s {
+    GHashTable * scanned_slots;
+};
+
 int scan_read_label (char *dev, char * slot, char *wantlabel,
                        char** label, char** timestamp,
                        char**error_message);
 int changer_taper_scan (char *wantlabel, char** gotlabel, char** timestamp,
-                        char **tapedev,
+                        char **tapedev, taper_scan_tracker_t * tracker,
                         TaperscanOutputFunctor output_functor,
                         void *output_data,
                         TaperscanProlongFunctor prolong_functor,
@@ -213,14 +217,14 @@ int scan_read_label(
     return 2;
 }
 
-/* Interface is the same as taper_scan, with the addition of the tapedev
- * output. */
+/* Interface is the same as taper_scan, with some additional bookkeeping. */
 typedef struct {
     char *wantlabel;
     char **gotlabel;
     char **timestamp;
     char **error_message;
     char **tapedev;
+    char *slotstr; /* Best-choice slot number. */
     char *first_labelstr_slot;
     int backwards;
     int tape_status;
@@ -228,6 +232,7 @@ typedef struct {
     void *output_data;
     TaperscanProlongFunctor prolong_callback;
     void * prolong_data;
+    taper_scan_tracker_t * persistent;
 } changertrack_t;
 
 int
@@ -244,6 +249,17 @@ scan_slot(
     if (ct->prolong_callback &&
         !ct->prolong_callback(ct->prolong_data)) {
         return 1;
+    }
+
+    if (ct->persistent != NULL) {
+        gpointer key;
+        gpointer value;
+        if (g_hash_table_lookup_extended(ct->persistent->scanned_slots,
+                                         slotstr, &key, &value)) {
+            /* We already returned this slot in a previous invocation,
+               skip it now. */
+            return 0;
+        }
     }
 
     if (*(ct->error_message) == NULL)
@@ -276,6 +292,8 @@ scan_slot(
             (label_result == 2 && !ct->backwards)) {
             *(ct->tapedev) = stralloc(device);
             ct->tape_status = label_result;
+            amfree(ct->slotstr);
+            ct->slotstr = stralloc(slotstr);
             result = 1;
         } else {
 	    if ((label_result == 2) && (ct->first_labelstr_slot == NULL))
@@ -317,6 +335,7 @@ changer_taper_scan(
     char **gotlabel,
     char **timestamp,
     char **tapedev,
+    taper_scan_tracker_t * tracker,
     TaperscanOutputFunctor taperscan_output_callback,
     void *output_data,
     TaperscanProlongFunctor prolong_callback,
@@ -340,11 +359,19 @@ changer_taper_scan(
     local_data.output_data = output_data;
     local_data.prolong_callback = prolong_callback;
     local_data.prolong_data = prolong_data;
+    local_data.persistent = tracker;
+    local_data.slotstr = NULL;
 
     changer_find(&local_data, scan_init, scan_slot, wantlabel);
     
     if (*(local_data.tapedev)) {
         /* We got it, and it's loaded. */
+        if (local_data.persistent != NULL && local_data.slotstr != NULL) {
+            g_hash_table_insert(local_data.persistent->scanned_slots,
+                                local_data.slotstr, NULL);
+        } else {
+            amfree(local_data.slotstr);
+        }
         return local_data.tape_status;
     } else if (local_data.first_labelstr_slot) {
         /* Use plan B. */
@@ -360,6 +387,13 @@ changer_taper_scan(
                                      &error_message);
             taperscan_output_callback(output_data, error_message);
             amfree(error_message);
+            if (result > 0 && local_data.persistent != NULL &&
+                local_data.slotstr != NULL) {
+                g_hash_table_insert(local_data.persistent->scanned_slots,
+                                    local_data.slotstr, NULL);
+            } else {
+                amfree(local_data.slotstr);
+            }
             return result;
         }
     }
@@ -376,6 +410,7 @@ changer_taper_scan(
 
 int taper_scan(char* wantlabel,
                char** gotlabel, char** timestamp, char** tapedev,
+               taper_scan_tracker_t * tracker,
                TaperscanOutputFunctor output_functor,
                void *output_data,
                TaperscanProlongFunctor prolong_functor,
@@ -394,17 +429,18 @@ int taper_scan(char* wantlabel,
 
     if (changer_init()) {
         result =  changer_taper_scan(wantlabel, gotlabel, timestamp,
-	                             tapedev,
+	                             tapedev, tracker,
                                      output_functor, output_data,
                                      prolong_functor, prolong_data);
     } else {
+        /* Note that the tracker is not used in this case. */
 	*tapedev = stralloc(getconf_str(CNF_TAPEDEV));
 	if (*tapedev == NULL) {
 	    result = -1;
 	    output_functor(output_data, _("No tapedev specified"));
 	} else {
-	    result =  scan_read_label(*tapedev, NULL, wantlabel,
-				      gotlabel, timestamp, &error_message);
+	    result =  scan_read_label(*tapedev, NULL, wantlabel, gotlabel,
+                                      timestamp, &error_message);
             output_functor(output_data, error_message);
 	    amfree(error_message);
 	}
@@ -527,3 +563,21 @@ CHAR_taperscan_output_callback(
     else
 	*s = stralloc(msg);
 }
+
+taper_scan_tracker_t * taper_scan_tracker_new(void) {
+    taper_scan_tracker_t * rval = malloc(sizeof(*rval));
+    
+    rval->scanned_slots = g_hash_table_new_full(g_str_hash, g_str_equal,
+                                                g_free, NULL);
+
+    return rval;
+}
+
+void taper_scan_tracker_free(taper_scan_tracker_t * tracker) {
+    if (tracker->scanned_slots != NULL) {
+        g_hash_table_destroy(tracker->scanned_slots);
+    }
+    
+    free(tracker);
+}
+
