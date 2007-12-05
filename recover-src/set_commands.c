@@ -147,7 +147,7 @@ set_host(
 	char *canonname;
 	int result;
 
-	result = resolve_hostname(uqhost, NULL, &canonname);
+	result = resolve_hostname(uqhost, 0, NULL, &canonname);
 	if (result == 0 && canonname) {
 	    host = canonname;
 	    g_printf(_("Trying host %s ...\n"), host);

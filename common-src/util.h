@@ -123,7 +123,8 @@ gboolean amanda_thread_init(void);
  * @returns: newly allocated canonical hostname, or NULL if no
  * canonical hostname was available.
  */
-int resolve_hostname(const char *hostname, struct addrinfo **res, char **canonname);
+int resolve_hostname(const char *hostname, int socktype,
+		     struct addrinfo **res, char **canonname);
 
 /* Interpret a status (as returned from wait() and friends)
  * into a human-readable sentence.

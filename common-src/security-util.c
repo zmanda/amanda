@@ -2545,7 +2545,7 @@ check_name_give_sockaddr(
     struct addrinfo *res = NULL, *res1;
     char *canonname;
 
-    result = resolve_hostname(hostname, &res, &canonname);
+    result = resolve_hostname(hostname, 0, &res, &canonname);
     if (result != 0) {
 	dbprintf(_("check_name_give_sockaddr: resolve_hostname('%s'): %s\n"), hostname, gai_strerror(result));
 	*errstr = newvstrallocf(*errstr,

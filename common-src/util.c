@@ -743,6 +743,7 @@ gboolean amanda_thread_init(void) {
 
 int
 resolve_hostname(const char *hostname,
+	int socktype,
 	struct addrinfo **res,
 	char **canonname)
 {
@@ -764,6 +765,7 @@ resolve_hostname(const char *hostname,
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_UNSPEC;
     hints.ai_flags = flags;
+    hints.ai_socktype = socktype;
     result = getaddrinfo(hostname, NULL, &hints, &myres);
     if (result != 0) {
 	return result;

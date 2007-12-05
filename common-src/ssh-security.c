@@ -122,7 +122,7 @@ ssh_connect(
     rh->rc = NULL;
 
     rh->hostname = NULL;
-    if (resolve_hostname(hostname, NULL, &rh->hostname) || rh->hostname == NULL) {
+    if (resolve_hostname(hostname, 0, NULL, &rh->hostname) || rh->hostname == NULL) {
 	security_seterror(&rh->sech,
 	    _("%s: ssh could not resolve hostname"), hostname);
 	(*fn)(arg, &rh->sech, S_ERROR);

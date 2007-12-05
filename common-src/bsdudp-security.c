@@ -125,7 +125,7 @@ bsdudp_connect(
     bh->rc = NULL;
     security_handleinit(&bh->sech, &bsdudp_security_driver);
 
-    result = resolve_hostname(hostname, &res, &canonname);
+    result = resolve_hostname(hostname, SOCK_DGRAM, &res, &canonname);
     if(result != 0) {
 	dbprintf(_("resolve_hostname(%s): %s\n"), hostname, gai_strerror(result));
 	security_seterror(&bh->sech, _("resolve_hostname(%s): %s\n"), hostname,

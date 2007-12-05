@@ -1,4 +1,14 @@
 2007-12-05  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/util.c (resolve_hostname): Take a new socktype argument.
+	* common-src/util.h (resolve_hostname): New prototype.
+	* common-src/bsd-security.c, common-src/bsdtcp-security.c,
+	  common-src/bsdudp-security.c, common-src/krb5-security.c,
+	  common-src/rsh-security.c, common-src/security-util.c,
+	  common-src/ssh-security.c, common-src/stream.c,
+	  recover-src/set_commands.c, server-src/amcheck.c,
+	  server-src/dumper.c: Call resolve_hostname with socktype argument.
+
+2007-12-05  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/util.c (resolve_hostname): Don't return V4MAPPED address.
 	* common-src/amanda.h (AI_V4MAPPED, AI_ALL): Don't define.
 

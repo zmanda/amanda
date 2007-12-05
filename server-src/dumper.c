@@ -464,7 +464,7 @@ main(
 	    }
 
 	    /* Double-check that 'localhost' resolves properly */
-	    if ((res = resolve_hostname("localhost", NULL, NULL) != 0)) {
+	    if ((res = resolve_hostname("localhost", 0, NULL, NULL) != 0)) {
 		errstr = newvstrallocf(errstr,
 				     _("could not resolve localhost: %s"),
 				     gai_strerror(res));

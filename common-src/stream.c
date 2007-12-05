@@ -205,7 +205,7 @@ stream_client_internal(
 
     f = priv ? "stream_client_privileged" : "stream_client";
 
-    result = resolve_hostname(hostname, &res, NULL);
+    result = resolve_hostname(hostname, SOCK_STREAM, &res, NULL);
     if(result != 0) {
 	dbprintf(_("resolve_hostname(%s): %s\n"), hostname, gai_strerror(result));
 	errno = EHOSTUNREACH;

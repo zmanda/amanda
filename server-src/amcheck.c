@@ -836,7 +836,7 @@ start_server_check(
 	}
 
 	/* Double-check that 'localhost' resolves properly */
-	if ((res = resolve_hostname("localhost", NULL, NULL) != 0)) {
+	if ((res = resolve_hostname("localhost", 0, NULL, NULL) != 0)) {
 	    g_fprintf(outf, _("ERROR: Cannot resolve `localhost': %s\n"), gai_strerror(res));
 	    confbad = 1;
 	}

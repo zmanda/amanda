@@ -125,7 +125,7 @@ bsdtcp_connect(
     rh->ev_timeout = NULL;
     rh->rc = NULL;
 
-    result = resolve_hostname(hostname, NULL, &canonname);
+    result = resolve_hostname(hostname, 0, NULL, &canonname);
     if(result != 0) {
 	dbprintf(_("resolve_hostname(%s): %s\n"), hostname, gai_strerror(result));
 	security_seterror(&rh->sech, _("resolve_hostname(%s): %s\n"), hostname,
