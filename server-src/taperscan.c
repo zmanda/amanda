@@ -399,12 +399,7 @@ changer_taper_scan(
     }
 
     /* Didn't find a tape. :-( */
-    if (prolong_callback == NULL ||
-        prolong_callback(prolong_data)) {
-        assert(local_data.tape_status <= 0);
-        taperscan_output_callback(output_data, _("changer problem: "));
-        taperscan_output_callback(output_data, changer_resultstr);
-    }
+    assert(local_data.tape_status <= 0);
     return -1;
 }
 
