@@ -757,21 +757,14 @@ resolve_hostname(const char *hostname,
 	flags = AI_CANONNAME;
     }
 
+#ifdef AI_ADDRCONFIG
+    flags |= AI_ADDRCONFIG;
+#endif
+
     memset(&hints, 0, sizeof(hints));
-#ifdef WORKING_IPV6
-    hints.ai_family = AF_INET6; hints.ai_flags = flags | AI_V4MAPPED | AI_ALL;
-#else
-    hints.ai_family = AF_INET; hints.ai_flags = flags;
-#endif
+    hints.ai_family = AF_UNSPEC;
+    hints.ai_flags = flags;
     result = getaddrinfo(hostname, NULL, &hints, &myres);
-#ifdef WORKING_IPV6
-    /* if the call fails with AF_INET6, try again with AF_UNSPEC */
-    if (result != 0) {
-	hints.ai_family = AF_UNSPEC;
-	hints.ai_flags = flags; /* remove AI_V4MAPPED and AI_ALL */
-	result = getaddrinfo(hostname, NULL, &hints, &myres);
-    }
-#endif
     if (result != 0) {
 	return result;
     }

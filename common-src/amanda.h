@@ -1237,14 +1237,6 @@ extern ssize_t writev(int fd, const struct iovec *iov, int iovcnt);
 #define NI_MAXHOST 1025
 #endif
 
-#ifndef AI_V4MAPPED
-#define AI_V4MAPPED 0
-#endif
-
-#ifndef AI_ALL
-#define AI_ALL 0
-#endif
-
 typedef enum {
     KENCRYPT_NONE,	/* krb5 encryption not enabled */
     KENCRYPT_WILL_DO,	/* krb5 encryption will be enabled once amanda
