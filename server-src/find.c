@@ -626,7 +626,7 @@ search_logfile(
     passlabel = 1;
     while(get_logline(logf) && passlabel) {
 	if ((curlog == L_SUCCESS ||
-	     curlog == L_CHUNK || curlog == L_PART) &&
+	     curlog == L_CHUNK || curlog == L_PART || curlog == L_PARTPARTIAL) &&
 	    curprog == P_TAPER && passlabel) {
 	    filenum++;
 	}
@@ -642,7 +642,8 @@ search_logfile(
 	partnum = "--";
 	if (curlog == L_SUCCESS || curlog == L_CHUNKSUCCESS ||
 	    curlog == L_DONE    || curlog == L_FAIL ||
-	    curlog == L_CHUNK   || curlog == L_PART || curlog == L_PARTIAL) {
+	    curlog == L_CHUNK   || curlog == L_PART || curlog == L_PARTIAL ||
+	    curlog == L_PARTPARTIAL ) {
 	    s = curstr;
 	    ch = *s++;
 
@@ -653,7 +654,7 @@ search_logfile(
 		continue;
 	    }
 
-	    if (curlog == L_PART) {
+	    if (curlog == L_PART || curlog == L_PARTPARTIAL) {
 		thelabel = s - 1;
 		skip_non_whitespace(s, ch);
 		s[-1] = '\0';
@@ -673,6 +674,7 @@ search_logfile(
 		skip_non_whitespace(s, ch);
 		s[-1] = '\0';
 		fileno = atoi(number);
+		filenum = fileno;
 
 		skip_whitespace(s, ch);
 		if(ch == '\0') {
@@ -715,7 +717,8 @@ search_logfile(
 		date = stralloc(datestamp);
 	    }
 	    else {
-		if (curlog == L_CHUNK || curlog == L_PART || curlog == L_DONE){
+		if (curlog == L_CHUNK || curlog == L_PART ||
+		    curlog == L_PARTPARTIAL ||curlog == L_DONE){
 		    skip_whitespace(s, ch);
 		    partnum = s - 1;
 		    skip_non_whitespace(s, ch);
@@ -798,6 +801,16 @@ search_logfile(
 			/* Add to part_find list */
 			new_output_find->next = part_find;
 			part_find = new_output_find;
+			if (curlog == L_PARTPARTIAL) {
+			    for (a_part_find = part_find;
+				 a_part_find->next != NULL;
+				 a_part_find=a_part_find->next) {
+			    }
+			    /* merge part_find to *output_find */
+			    a_part_find->next = *output_find;
+			    *output_find = part_find;
+			    part_find = NULL;
+			}
 		    }
 		}
 		else if(curlog == L_FAIL) {	/* print other failures too */
@@ -826,7 +839,7 @@ search_logfile(
     afclose(logf);
 
     if (part_find != NULL) {
-	dbprintf(_("part_find not empty\n"));
+	dbprintf(_("part_find not empty %s %s\n"), logfile, label);
     }
 
     return 1;
