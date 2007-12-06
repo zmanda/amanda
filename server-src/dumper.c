@@ -1020,6 +1020,7 @@ write_tapeheader(
     buffer = build_header(file, DISK_BLOCK_BYTES);
 
     written = fullwrite(outfd, buffer, DISK_BLOCK_BYTES);
+    amfree(buffer);
     if(written == DISK_BLOCK_BYTES)
         return 0;
     if(written < 0)

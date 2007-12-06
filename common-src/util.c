@@ -695,8 +695,10 @@ int search_directory(DIR * handle, const char * regex,
         char * read_name;
         int result;
         read_name = portable_readdir(handle);
-        if (read_name == NULL)
+        if (read_name == NULL) {
+            regfree(&compiled_regex);
             return rval;
+	}
         result = regexec(&compiled_regex, read_name, 0, NULL, 0);
         if (result == 0) {
             rval ++;
@@ -704,6 +706,7 @@ int search_directory(DIR * handle, const char * regex,
         }
         amfree(read_name);
     }
+    regfree(&compiled_regex);
     return rval;
 }
 

@@ -354,6 +354,7 @@ main(
 
 	amfunlock(1, "size");
     }
+    amfree(qamname);
 
     return 0;
 #endif

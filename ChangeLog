@@ -1,4 +1,16 @@
 2007-12-06  Jean-Louis Martineau <martineau@zmanda.com>
+	* client-src/sendbackup.c, client-src/sendsize.c,
+	  client-src/selfcheck.c, client-src/calcsize.c,
+	  amandad-src/amandad.c, device-src/device.c,
+	  device-src/vfs-device.c, server-src/changer.c,
+	  server-src/dumper.c, server-src/planner.c,
+	  server-src/chunker.c, server-src/server_util.c,
+	  server-src/taperscan.c, server-src/driver.c,
+	  server-src/taper.c, server-src/find.c,
+	  server-src/diskfile.c, common-src/pipespawn.c,
+	  common-src/util.c, common-src/conffile.c: Fix memory leak.
+
+2007-12-06  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/find.c (search_logfile): Parse PARTPARTIAL line.
 
 2007-12-06  Jean-Louis Martineau <martineau@zmanda.com>

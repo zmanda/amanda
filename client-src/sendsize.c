@@ -533,11 +533,7 @@ main(
     amfree(our_feature_string);
     am_release_feature_set(our_features);
     our_features = NULL;
-    am_release_feature_set(g_options->features);
-    g_options->features = NULL;
-    amfree(g_options->hostname);
-    amfree(g_options->str);
-    amfree(g_options);
+    free_g_options(g_options);
 
     dbclose();
     return 0;
@@ -1948,7 +1944,7 @@ getsize_gnutar(
     my_argv[i++] = "/dev/null";
     my_argv[i++] = "--directory";
     canonicalize_pathname(dirname, tmppath);
-    my_argv[i++] = stralloc(tmppath);
+    my_argv[i++] = tmppath;
     my_argv[i++] = "--one-file-system";
     if (gnutar_list_dir) {
 	    my_argv[i++] = "--listed-incremental";

@@ -230,7 +230,7 @@ main(
 
     diskarg_offset = 2;
     if (my_argc > 3 && strcmp(my_argv[2], "--starttime") == 0) {
-	planner_timestamp = my_argv[3];
+	planner_timestamp = stralloc(my_argv[3]);
 	diskarg_offset += 2;
     }
 

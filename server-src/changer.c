@@ -63,7 +63,12 @@ static int run_changer_command(char *cmd, char *arg, char **slotstr, char **rest
 int
 changer_init(void)
 {
-    tapechanger = getconf_str(CNF_TPCHANGER);
+    if (tapechanger == NULL)
+	tapechanger = getconf_str(CNF_TPCHANGER);
+    if (*tapechanger != '\0' && *tapechanger != '/') {
+	tapechanger = vstralloc(libexecdir, "/", tapechanger, versionsuffix(),
+			        NULL);
+    }
     return strcmp(tapechanger, "") != 0;
 }
 
@@ -330,10 +335,6 @@ changer_command(
     pid_t pid, changer_pid = 0;
     int fd_to_close[4], *pfd_to_close = fd_to_close;
 
-    if (*tapechanger != '/') {
-	tapechanger = vstralloc(libexecdir, "/", tapechanger, versionsuffix(),
-			        NULL);
-    }
     cmdstr = vstralloc(tapechanger, " ",
 		       cmd, arg ? " " : "", 
 		       arg ? arg : "",

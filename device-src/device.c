@@ -197,6 +197,7 @@ static void device_finalize(GObject *obj_self) {
 
     amfree(self->device_name);
     amfree(self->volume_label);
+    amfree(self->volume_time);
     g_array_free(selfp->property_list, TRUE);
     g_hash_table_destroy(selfp->property_response);
     amfree(self->private);
@@ -316,6 +317,7 @@ device_open (char * device_name)
     char *device_driver_name = NULL;
     char *device_node_name = NULL;
     DeviceFactory factory;
+    Device *device;
 
     g_return_val_if_fail (device_name != NULL, NULL);
 
@@ -341,7 +343,10 @@ device_open (char * device_name)
         return NULL;
     }
 
-    return factory(device_driver_name, device_node_name);
+    device = factory(device_driver_name, device_node_name);
+    amfree(device_driver_name);
+    amfree(device_node_name);
+    return device;
 }
 
 void 
@@ -468,6 +473,7 @@ dumpfile_t * make_tapestart_header(Device * self, char * label,
     rval = malloc(sizeof(*rval));
     fh_init(rval);
     rval->type = F_TAPESTART;
+    amfree(self->volume_time);
     if (get_timestamp_state(timestamp) == TIME_STATE_REPLACE) {
         self->volume_time = get_proper_stamp_from_time(time(NULL));
     } else {
@@ -657,7 +663,7 @@ static gboolean default_device_open_device(Device * self,
     DeviceProperty prop;
     guint i;
 
-    self->device_name = device_name;
+    self->device_name = stralloc(device_name);
 
     prop.base = &device_property_canonical_name;
     prop.access = PROPERTY_ACCESS_GET_MASK;

@@ -946,8 +946,10 @@ getconf_byname(
 		break;
 	}
 
-	if(kt->token == CONF_UNKNOWN)
+	if(kt->token == CONF_UNKNOWN) {
+	    amfree(tmpstr);
 	    return NULL;
+	}
 
 	if (strcmp(tmpstr, "TAPETYPE") == 0) {
 	    tp = lookup_tapetype(first_delim);
@@ -960,6 +962,7 @@ getconf_byname(
 		   break;
 	    }
 	    if (np->token == CONF_UNKNOWN) return NULL;
+	    amfree(tmpstr);
 	    tmpstr = conf_print(&tp->value[np->parm], 0, "");
 	} else if (strcmp(tmpstr, "DUMPTYPE") == 0) {
 	    dp = lookup_dumptype(first_delim);
@@ -972,6 +975,7 @@ getconf_byname(
 		   break;
 	    }
 	    if (np->token == CONF_UNKNOWN) return NULL;
+	    amfree(tmpstr);
 	    tmpstr = conf_print(&dp->value[np->parm], 0, "");
 	} else if (strcmp(tmpstr, "HOLDINGDISK") == 0) {
 	    hp = lookup_holdingdisk(first_delim);
@@ -984,6 +988,7 @@ getconf_byname(
 		   break;
 	    }
 	    if (np->token == CONF_UNKNOWN) return NULL;
+	    amfree(tmpstr);
 	    tmpstr = conf_print(&hp->value[np->parm], 0, "");
 	} else if (strcmp(tmpstr, "INTERFACE") == 0) {
 	    ip = lookup_interface(first_delim);
@@ -996,6 +1001,7 @@ getconf_byname(
 		   break;
 	    }
 	    if (np->token == CONF_UNKNOWN) return NULL;
+	    amfree(tmpstr);
 	    tmpstr = conf_print(&ip->value[np->parm], 0, "");
 	} else {
 	    amfree(tmpstr);
@@ -1007,8 +1013,10 @@ getconf_byname(
 		break;
 	}
 
-	if(kt->token == CONF_UNKNOWN)
+	if(kt->token == CONF_UNKNOWN) {
+	    amfree(tmpstr);
 	    return NULL;
+	}
 
 	for(np = my_var; np->token != CONF_UNKNOWN; np++) {
 	    if(np->token == kt->token)
@@ -1017,6 +1025,7 @@ getconf_byname(
 
 	if(np->token == CONF_UNKNOWN) return NULL;
 
+	amfree(tmpstr);
 	tmpstr = conf_print(&conf_data[np->parm], 0, "");
     }
 
@@ -1369,8 +1378,6 @@ init_defaults(
     conf_init_int      (&conf_data[CNF_FLUSH_THRESHOLD_SCHEDULED], 0);
     conf_init_int      (&conf_data[CNF_TAPERFLUSH]               , 0);
     conf_init_string   (&conf_data[CNF_DISPLAYUNIT]          , "k");
-    conf_init_string   (&conf_data[CNF_KRB5KEYTAB]           , "/.amanda-v5-keytab");
-    conf_init_string   (&conf_data[CNF_KRB5PRINCIPAL]        , "service/amanda");
     conf_init_string   (&conf_data[CNF_LABEL_NEW_TAPES]      , "");
     conf_init_bool     (&conf_data[CNF_USETIMESTAMPS]        , 0);
     conf_init_int      (&conf_data[CNF_CONNECT_TRIES]        , 3);

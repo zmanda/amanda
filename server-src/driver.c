@@ -2132,6 +2132,7 @@ read_flush(void)
 	    if( file.type != F_CONT_DUMPFILE )
 		log_add(L_INFO, _("%s: ignoring cruft file."), destname);
 	    amfree(diskname);
+	    amfree(destname);
 	    continue;
 	}
 
@@ -2141,6 +2142,7 @@ read_flush(void)
 	    log_add(L_INFO, _("disk %s:%s not consistent with file %s"),
 		    hostname, diskname, destname);
 	    amfree(diskname);
+	    amfree(destname);
 	    continue;
 	}
 	amfree(diskname);
@@ -2150,18 +2152,21 @@ read_flush(void)
 	if (dp == NULL) {
 	    log_add(L_INFO, _("%s: disk %s:%s not in database, skipping it."),
 		    destname, file.name, file.disk);
+	    amfree(destname);
 	    continue;
 	}
 
 	if(file.dumplevel < 0 || file.dumplevel > 9) {
 	    log_add(L_INFO, _("%s: ignoring file with bogus dump level %d."),
 		    destname, file.dumplevel);
+	    amfree(destname);
 	    continue;
 	}
 
 	if (holding_file_size(destname,1) <= 0) {
 	    log_add(L_INFO, "%s: removing file with no data.", destname);
 	    holding_file_unlink(destname);
+	    amfree(destname);
 	    continue;
 	}
 
@@ -2181,7 +2186,7 @@ read_flush(void)
 	flushhost->disks = dp1;
 
 	sp = (sched_t *) alloc(SIZEOF(sched_t));
-	sp->destname = stralloc(destname);
+	sp->destname = destname;
 	sp->level = file.dumplevel;
 	sp->dumpdate = NULL;
 	sp->degr_dumpdate = NULL;

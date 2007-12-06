@@ -635,11 +635,7 @@ main(
     amfree(our_feature_string);
     am_release_feature_set(our_features);
     our_features = NULL;
-    am_release_feature_set(g_options->features);
-    g_options->features = NULL;
-    amfree(g_options->hostname);
-    amfree(g_options->str);
-    amfree(g_options);
+    free_g_options(g_options);
 
     dbclose();
 

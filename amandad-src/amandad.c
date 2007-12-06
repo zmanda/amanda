@@ -478,6 +478,7 @@ main(
      */
     event_loop(0);
 
+    free_server_config();
     close(in);
     close(out);
     dbclose();

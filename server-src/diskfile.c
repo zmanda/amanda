@@ -318,6 +318,8 @@ free_disklist(
     while (dl->head != NULL) {
 	dp = dequeue_disk(dl);
 	amfree(dp->name);
+	amfree(dp->hostname);
+	amfree(dp->device);
 	free_sl(dp->exclude_file);
 	free_sl(dp->exclude_list);
 	free_sl(dp->include_file);

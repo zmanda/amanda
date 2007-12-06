@@ -372,6 +372,7 @@ changer_taper_scan(
         } else {
             amfree(local_data.slotstr);
         }
+	amfree(local_data.first_labelstr_slot);
         return local_data.tape_status;
     } else if (local_data.first_labelstr_slot) {
         /* Use plan B. */
@@ -380,8 +381,11 @@ changer_taper_scan(
         }
         result = changer_loadslot(local_data.first_labelstr_slot,
                                   &outslotstr, tapedev);
+	amfree(local_data.first_labelstr_slot);
         amfree(outslotstr);
         if (result == 0) {
+	    amfree(*gotlabel);
+	    amfree(*timestamp);
             result = scan_read_label(*tapedev, NULL, NULL,
                                      gotlabel, timestamp,
                                      &error_message);

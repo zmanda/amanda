@@ -227,5 +227,6 @@ pipespawnv_passwd(
 	error(_("error [exec %s: %s]"), prog, e);
 	/*NOTREACHED*/
     }
+    amfree(cmdline);
     return pid;
 }

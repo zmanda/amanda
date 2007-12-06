@@ -481,6 +481,7 @@ static void update_volume_size(VfsDevice * self) {
 static gboolean 
 vfs_device_open_device (Device * pself, char * device_name) {
     VfsDevice * self;
+    dumpfile_t * rval;
     
     self = VFS_DEVICE(pself);
     g_return_val_if_fail (self != NULL, FALSE);
@@ -506,7 +507,8 @@ vfs_device_open_device (Device * pself, char * device_name) {
 
     /* Not an error if this fails. Note that we ignore the class hierarchy.
      */
-    vfs_device_seek_file(pself, 0);
+    rval = vfs_device_seek_file(pself, 0);
+    amfree(rval);
 
     if (parent_class->open_device) {
         /* Will call vfs_device_read_label. */

@@ -96,6 +96,7 @@ static void free_dump_info(dump_info_t * info) {
     amfree(info->handle);
     amfree(info->hostname);
     amfree(info->diskname);
+    amfree(info->timestamp);
     amfree(info->id_string);
     if (info->source != NULL) {
         g_object_unref(info->source);
@@ -450,7 +451,11 @@ static gboolean label_new_tape(taper_state_t * state, dump_info_t * dump_info) {
                 return FALSE;
             }
         }
+    } else {
+	amfree(old_volume_name);
+	amfree(old_volume_time);
     }
+
     amfree(state->next_tape_label);
 
     tapelist_name = getconf_str(CNF_TAPELIST);
@@ -476,7 +481,7 @@ static gboolean label_new_tape(taper_state_t * state, dump_info_t * dump_info) {
     amfree(tapelist_name_old);
 
     remove_tapelabel(state->device->volume_label);
-    add_tapelabel(strdup(state->driver_start_time),
+    add_tapelabel(state->driver_start_time,
                   state->device->volume_label);
     if (write_tapelist(tapelist_name)) {
 	error("could not write tapelist: %s", strerror(errno));
@@ -719,13 +724,16 @@ static void run_device_output(taper_state_t * taper_state,
 
         if (!find_and_label_new_tape(taper_state, dump_info)) {
             bail_no_volume(dump_info);
+	    amfree(this_header);
             return;
         }
 
         if (!device_start_file(taper_state->device, this_header)) {
             bail_no_volume(dump_info);
+	    amfree(this_header);
             return;
         }
+	amfree(this_header);
 
         bzero(&val, sizeof(val));
         if (!device_property_get(taper_state->device, PROPERTY_STREAMING, &val)
@@ -1109,6 +1117,7 @@ int main(int real_argc, char ** real_argv) {
 
     dbrename(config_name, DBG_SUBDIR_SERVER);
 
+    amfree(config_name);
     report_bad_conf_arg();
 
     tapelist_name = getconf_str(CNF_TAPELIST);
@@ -1122,6 +1131,7 @@ int main(int real_argc, char ** real_argv) {
         error("could not load tapelist \"%s\"", tapelist_name);
         g_assert_not_reached();
     }
+    amfree(tapelist_name);
 
     have_changer = changer_init();
     if (have_changer < 0) {

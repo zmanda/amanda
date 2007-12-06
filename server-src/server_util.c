@@ -186,6 +186,9 @@ int check_infofile(
 		}
 	    }
 	}
+	amfree(diskdir);
+	amfree(hostinfodir);
+	amfree(infofile);
     }
     return 0;
 }

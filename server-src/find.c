@@ -456,7 +456,6 @@ free_find_result(
 	amfree(output_find_result->label);
 	amfree(output_find_result->partnum);
 	amfree(output_find_result->status);
-	amfree(output_find_result->timestamp);
 	prev = output_find_result;
     }
     amfree(prev);
@@ -753,7 +752,6 @@ search_logfile(
 		dp = add_disk(find_diskqp, host, disk);
 		enqueue_disk(find_diskqp, dp);
 	    }
-
             if (find_match(host, disk)) {
 		if(curprog == P_TAPER) {
 		    find_result_t *new_output_find =
@@ -764,6 +762,7 @@ search_logfile(
 		    new_output_find->level=level;
 		    new_output_find->partnum = stralloc(partnum);
 		    new_output_find->label=stralloc(label);
+		    new_output_find->status=NULL;
 		    new_output_find->filenum=filenum;
 		    new_output_find->next=NULL;
 		    if (curlog == L_SUCCESS) {
@@ -793,6 +792,7 @@ search_logfile(
 			    *output_find = part_find;
 			    part_find = NULL;
 			}
+			free_find_result(&new_output_find);
 		    } else { /* part line */
 			if (curlog == L_PART || curlog == L_CHUNK)
 			    new_output_find->status=stralloc("OK");
