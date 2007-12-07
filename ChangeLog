@@ -1,4 +1,7 @@
 2007-12-07  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amindexd.c: Don't use duplicate part.
+
+2007-12-07  Jean-Louis Martineau <martineau@zmanda.com>
 	* restore-src/amfetchdump.c: Don't use duplicate part.
 
 2007-12-07  Jean-Louis Martineau <martineau@zmanda.com>

@@ -698,6 +698,13 @@ build_disk_table(void)
 	       partnum == last_partnum && last_filenum == 0) {
 		continue;
 	    }
+	    /* ignore duplicate partnum */
+	    if(last_timestamp &&
+	       strcmp(find_output->timestamp, last_timestamp) == 0 &&
+	       find_output->level == last_level && 
+	       partnum == last_partnum) {
+		continue;
+	    }
 	    last_timestamp = find_output->timestamp;
 	    last_filenum = find_output->filenum;
 	    last_level = find_output->level;
