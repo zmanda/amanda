@@ -675,7 +675,7 @@ static gboolean test_tape_status(FILE * outf) {
         g_fprintf(outf, "WARNING: Reading label the second time failed: "
                 "One of %s.\n", errstr);
         g_free(errstr);
-    } else if (device->volume_label != label &&
+    } else if (tape_status != 3 &&
                (device->volume_label == NULL || label == NULL ||
                 strcmp(device->volume_label, label) != 0)) {
         g_fprintf(outf, "WARNING: Label mismatch on re-read: "
