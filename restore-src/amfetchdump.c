@@ -151,6 +151,7 @@ list_needed_tapes(
 	sort_find_result("Dhklp", &matches);
 	for(curmatch = matches; curmatch; curmatch = curmatch->next){
 	    int havetape = 0;
+	    int have_part = 0;
 	    if(strcmp("OK", curmatch->status)){
 		g_fprintf(stderr,_("Dump %s %s %s %d had status '%s', skipping\n"),
 		                 curmatch->timestamp, curmatch->hostname,
@@ -158,6 +159,18 @@ list_needed_tapes(
 				 curmatch->status);
 		continue;
 	    }
+	    /* check if we already have that part */
+	    for(curtape = needed_tapes; curtape; curtape = curtape->next) {
+		find_result_t *rsttemp = NULL;
+		for(rsttemp = curtape->files;
+		    rsttemp;
+		    rsttemp=rsttemp->next) {
+		    if (strcmp(rsttemp->partnum, curmatch->partnum) == 0)
+			have_part = 1;
+		}
+	    }
+	    if (have_part)
+		continue;
 	    for(curtape = needed_tapes; curtape; curtape = curtape->next) {
 		if(!strcmp(curtape->label, curmatch->label)){
 		    find_result_t *rsttemp = NULL;
