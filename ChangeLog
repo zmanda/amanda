@@ -1,4 +1,8 @@
 2007-12-07  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/holding.c (holding_get_all_datestamps): Don't add
+	  duplicate datestamp.
+
+2007-12-07  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amcheck.c: Don't complain about correct unlabeled
 				volumes.
 

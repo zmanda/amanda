@@ -573,9 +573,12 @@ holding_get_all_datestamps(void)
 	dumpfile_t dfile;
 	if (!holding_file_get_dumpfile((char *)file->data, &dfile))
 	    continue;
-	datestamps = g_slist_insert_sorted(datestamps, 
-	    stralloc(dfile.datestamp), 
-	    g_compare_strings);
+	if (!g_slist_find_custom(datestamps, dfile.datestamp,
+				 g_compare_strings)) {
+	    datestamps = g_slist_insert_sorted(datestamps, 
+					       stralloc(dfile.datestamp), 
+					       g_compare_strings);
+	}
     }
 
     g_slist_free_full(all_files);
