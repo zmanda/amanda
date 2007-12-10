@@ -1,4 +1,8 @@
 2007-12-10  Jean-Louis Martineau <martineau@zmanda.com>
+	* config/amanda/progs.m4: Define AMLINT To 'echo;false' to no lint
+				  are found.
+
+2007-12-10  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/bsdudp-security.c: Loop over all address until a bind
 					is successful.
 	* common-src/bsd-security.c: Loop over all address until a bind
