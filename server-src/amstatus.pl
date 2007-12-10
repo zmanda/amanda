@@ -554,6 +554,8 @@ while($lineX = <AMDUMP>) {
 				}
 				elsif($line[6] eq "PARTDONE") {
 					#7:handle 8:label 9:filenum 10:ksize 11:errstr
+					$serial=$line[7];
+					$hostpart=$serial{$serial};
 					#$line[11] =~ /.*kb (\d*) kps/;
 					#$size=$1 / $unitdivisor;
 					$size=$line[10] / $unitdivisor;
@@ -569,6 +571,14 @@ while($lineX = <AMDUMP>) {
 					$hostpart=$serial{$serial};
 					if (defined $hostpart) {
 						$error{$hostpart} = "waiting for a new tape";
+					}
+				}
+				elsif($line[6] eq "NEW-TAPE") {
+					#7:serial #8:label
+					$serial=$line[7];
+					$hostpart=$serial{$serial};
+					if (defined $hostpart) {
+						$error{$hostpart} = "";
 					}
 				}
 				elsif($line[6] eq "TRY-AGAIN" || $line[6] eq "TAPE-ERROR") {

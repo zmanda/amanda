@@ -1,4 +1,9 @@
 2007-12-10  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amstatus.pl: Parse NEW-TAPE line
+	* server-src/taper.c: Add the handle in NEW-TAPE result.
+	* server-src/driver.c: Check number of arguments in NEW-TAPE result.
+
+2007-12-10  Jean-Louis Martineau <martineau@zmanda.com>
 	* config/amanda/progs.m4: Define AMLINT To 'echo;false' to no lint
 				  are found.
 

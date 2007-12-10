@@ -1356,11 +1356,11 @@ handle_taper_result(
 	    break;
 
 	case NEW_TAPE: /* NEW-TAPE <handle> <label> */
-            //if (result_argc != 3) {
-            //    error(_("error [taper NEW_TAPE result_argc != 3: %d]"),
-            //          result_argc);
+            if (result_argc != 3) {
+                error(_("error [taper NEW_TAPE result_argc != 3: %d]"),
+                      result_argc);
 		/*NOTREACHED*/
-            //}
+            }
 
             /* Update our tape counter and reset tape_left */
 	    current_tape++;

@@ -422,7 +422,8 @@ static gboolean label_new_tape(taper_state_t * state, dump_info_t * dump_info) {
         /* If the volume was written, we tell the driver and then immediately
          * try again. */
         if (tape_used) {
-            putresult(NEW_TAPE, "%s\n", state->device->volume_label);
+            putresult(NEW_TAPE, "%s %s\n", dump_info->handle,
+		      state->device->volume_label);
             log_add(L_WARNING, "Problem writing label to volume %s, "
                     "volume may be erased.\n", old_volume_name);
             amfree(old_volume_name);
@@ -493,7 +494,8 @@ static gboolean label_new_tape(taper_state_t * state, dump_info_t * dump_info) {
     log_add(L_START, "datestamp %s label %s tape %d",
             state->driver_start_time, state->device->volume_label,
             state->cur_tape);
-    putresult(NEW_TAPE, "%s\n", state->device->volume_label);
+    putresult(NEW_TAPE, "%s %s\n", dump_info->handle,
+	      state->device->volume_label);
 
     return TRUE;
 }
