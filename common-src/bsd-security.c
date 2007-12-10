@@ -129,8 +129,9 @@ bsd_connect(
     int sequence;
     char *handle;
     int result;
-    struct addrinfo *res;
+    struct addrinfo *res, *res_addr;
     char *canonname;
+    int result_bind;
 
     assert(hostname != NULL);
 
@@ -165,67 +166,102 @@ bsd_connect(
        return;
     }
 
-    /*
-     * Only init the socket once
-     */
+    for (res_addr = res; res_addr != NULL; res_addr = res_addr->ai_next) {
 #ifdef WORKING_IPV6
-    if (res->ai_addr->sa_family == AF_INET6 && not_init6 == 1) {
-	uid_t euid;
-	dgram_zero(&netfd6.dgram);
-
-	euid = geteuid();
-	set_root_privs(1);
-	dgram_bind(&netfd6.dgram, res->ai_addr->sa_family, &port);
-	set_root_privs(0);
-	netfd6.handle = NULL;
-	netfd6.pkt.body = NULL;
-	netfd6.recv_security_ok = &bsd_recv_security_ok;
-	netfd6.prefix_packet = &bsd_prefix_packet;
-	/*
-	 * We must have a reserved port.  Bomb if we didn't get one.
-	 */
-	if (port >= IPPORT_RESERVED) {
-	    security_seterror(&bh->sech,
-		_("unable to bind to a reserved port (got port %u)"),
-		(unsigned int)port);
-	    (*fn)(arg, &bh->sech, S_ERROR);
-	    freeaddrinfo(res);
-	    amfree(canonname);
-	    return;
+	/* IPv6 socket already bound */
+	if (res_addr->ai_addr->sa_family == AF_INET6 && not_init6 == 0) {
+	    break;
 	}
-	not_init6 = 0;
-	bh->udp = &netfd6;
-    }
+	/*
+	 * Only init the IPv6 socket once
+	 */
+	if (res_addr->ai_addr->sa_family == AF_INET6 && not_init6 == 1) {
+	    uid_t euid;
+	    dgram_zero(&netfd6.dgram);
+
+	    euid = geteuid();
+	    set_root_privs(1);
+	    result_bind = dgram_bind(&netfd6.dgram,
+				     res_addr->ai_addr->sa_family, &port);
+	    set_root_privs(0);
+	    if (result_bind != 0) {
+		continue;
+	    }
+	    netfd6.handle = NULL;
+	    netfd6.pkt.body = NULL;
+	    netfd6.recv_security_ok = &bsd_recv_security_ok;
+	    netfd6.prefix_packet = &bsd_prefix_packet;
+	    /*
+	     * We must have a reserved port.  Bomb if we didn't get one.
+	     */
+	    if (port >= IPPORT_RESERVED) {
+		security_seterror(&bh->sech,
+		    _("unable to bind to a reserved port (got port %u)"),
+		    (unsigned int)port);
+		(*fn)(arg, &bh->sech, S_ERROR);
+		freeaddrinfo(res);
+		amfree(canonname);
+		return;
+	    }
+	    not_init6 = 0;
+	    bh->udp = &netfd6;
+	    break;
+	}
 #endif
 
-    if (res->ai_addr->sa_family == AF_INET && not_init4 == 1) {
-	uid_t euid;
-	dgram_zero(&netfd4.dgram);
-
-	euid = geteuid();
-	set_root_privs(1);
-	dgram_bind(&netfd4.dgram, res->ai_addr->sa_family, &port);
-	set_root_privs(0);
-	netfd4.handle = NULL;
-	netfd4.pkt.body = NULL;
-	netfd4.recv_security_ok = &bsd_recv_security_ok;
-	netfd4.prefix_packet = &bsd_prefix_packet;
-	/*
-	 * We must have a reserved port.  Bomb if we didn't get one.
-	 */
-	if (port >= IPPORT_RESERVED) {
-	    security_seterror(&bh->sech,
-		"unable to bind to a reserved port (got port %u)",
-		(unsigned int)port);
-	    (*fn)(arg, &bh->sech, S_ERROR);
-	    return;
+	/* IPv4 socket already bound */
+	if (res_addr->ai_addr->sa_family == AF_INET && not_init4 == 0) {
+	    break;
 	}
-	not_init4 = 0;
-	bh->udp = &netfd4;
+
+	/*
+	 * Only init the IPv4 socket once
+	 */
+	if (res_addr->ai_addr->sa_family == AF_INET && not_init4 == 1) {
+	    uid_t euid;
+	    dgram_zero(&netfd4.dgram);
+
+	    euid = geteuid();
+	    set_root_privs(1);
+	    result_bind = dgram_bind(&netfd4.dgram,
+				     res_addr->ai_addr->sa_family, &port);
+	    set_root_privs(0);
+	    if (result_bind != 0) {
+		continue;
+	    }
+	    netfd4.handle = NULL;
+	    netfd4.pkt.body = NULL;
+	    netfd4.recv_security_ok = &bsd_recv_security_ok;
+	    netfd4.prefix_packet = &bsd_prefix_packet;
+	    /*
+	     * We must have a reserved port.  Bomb if we didn't get one.
+	     */
+	    if (port >= IPPORT_RESERVED) {
+		security_seterror(&bh->sech,
+		    "unable to bind to a reserved port (got port %u)",
+		    (unsigned int)port);
+		(*fn)(arg, &bh->sech, S_ERROR);
+		freeaddrinfo(res);
+		amfree(canonname);
+		return;
+	    }
+	    not_init4 = 0;
+	    bh->udp = &netfd4;
+	    break;
+	}
+    }
+
+    if (res_addr == NULL) {
+	dbprintf(_("Can't bind a socket to connect to %s\n"), hostname);
+	security_seterror(&bh->sech,
+	        _("Can't bind a socket to connect to %s\n"), hostname);
+	(*fn)(arg, &bh->sech, S_ERROR);
+       amfree(canonname);
+       return;
     }
 
 #ifdef WORKING_IPV6
-    if (res->ai_addr->sa_family == AF_INET6)
+    if (res_addr->ai_addr->sa_family == AF_INET6)
 	bh->udp = &netfd6;
     else
 #endif
@@ -241,7 +277,7 @@ bsd_connect(
     handle=alloc(15);
     g_snprintf(handle, 14, "000-%08x",  (unsigned)newhandle++);
     if (udp_inithandle(bh->udp, bh, canonname,
-	(struct sockaddr_storage *)res->ai_addr, port, handle, sequence) < 0) {
+	(struct sockaddr_storage *)res_addr->ai_addr, port, handle, sequence) < 0) {
 	(*fn)(arg, &bh->sech, S_ERROR);
 	amfree(bh->hostname);
 	amfree(bh);

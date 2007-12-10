@@ -201,7 +201,7 @@ stream_client_internal(
     int client_socket;
     int *portrange;
     int result;
-    struct addrinfo *res;
+    struct addrinfo *res, *res_addr;
 
     f = priv ? "stream_client_privileged" : "stream_client";
 
@@ -217,33 +217,38 @@ stream_client_internal(
 	return -1;
     }
 
-    /* copy the first (preferred) address we found */
-    copy_sockaddr(&svaddr, res->ai_addr);
-    freeaddrinfo(res);
-    SS_SET_PORT(&svaddr, port);
+    for (res_addr = res; res_addr != NULL; res_addr = res_addr->ai_next) {
+	/* copy the first (preferred) address we found */
+	copy_sockaddr(&svaddr, res_addr->ai_addr);
+	SS_SET_PORT(&svaddr, port);
 
-    SS_INIT(&claddr, svaddr.ss_family);
-    SS_SET_INADDR_ANY(&claddr);
+	SS_INIT(&claddr, svaddr.ss_family);
+	SS_SET_INADDR_ANY(&claddr);
 
-    /*
-     * If a privileged port range was requested, we try to get a port in
-     * that range first and fail if it is not available.  Next, we try
-     * to get a port in the range built in when Amanda was configured.
-     * If that fails, we just go for any port.
-     *
-     * It is up to the caller to make sure we have the proper permissions
-     * to get the desired port, and to make sure we return a port that
-     * is within the range it requires.
-     */
-    if (priv) {
-	portrange = getconf_intrange(CNF_RESERVED_TCP_PORT);
-    } else {
-	portrange = getconf_intrange(CNF_UNRESERVED_TCP_PORT);
+	/*
+	 * If a privileged port range was requested, we try to get a port in
+	 * that range first and fail if it is not available.  Next, we try
+	 * to get a port in the range built in when Amanda was configured.
+	 * If that fails, we just go for any port.
+	 *
+	 * It is up to the caller to make sure we have the proper permissions
+	 * to get the desired port, and to make sure we return a port that
+	 * is within the range it requires.
+	 */
+	if (priv) {
+	    portrange = getconf_intrange(CNF_RESERVED_TCP_PORT);
+	} else {
+	    portrange = getconf_intrange(CNF_UNRESERVED_TCP_PORT);
+	}
+	client_socket = connect_portrange(&claddr, (in_port_t)portrange[0],
+					  (in_port_t)portrange[1],
+					  "tcp", &svaddr, nonblock);
+	save_errno = errno;
+	if (client_socket > 0)
+	    break;
     }
-    client_socket = connect_portrange(&claddr, (in_port_t)portrange[0],
-				      (in_port_t)portrange[1],
-                                      "tcp", &svaddr, nonblock);
-    save_errno = errno;
+
+    freeaddrinfo(res);
 					  
     if (client_socket > 0)
 	goto out;

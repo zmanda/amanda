@@ -1,3 +1,11 @@
+2007-12-10  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/bsdudp-security.c: Loop over all address until a bind
+					is successful.
+	* common-src/bsd-security.c: Loop over all address until a bind
+				     is successful.
+	* common-src/stream.c: Loop over all address until a connect is
+			       successful.
+
 2007-12-07  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amindexd.c: Don't use duplicate part.
 
