@@ -1,4 +1,8 @@
 2007-12-14  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/find.c (search_logfile): Parse taper result line before
+					      merging part_find.
+
+2007-12-14  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/find.c (find_log): Result should not have duplicate
 					logfile.
 

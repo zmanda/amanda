@@ -811,16 +811,6 @@ search_logfile(
 			/* Add to part_find list */
 			new_output_find->next = part_find;
 			part_find = new_output_find;
-			if (curlog == L_PARTPARTIAL) {
-			    for (a_part_find = part_find;
-				 a_part_find->next != NULL;
-				 a_part_find=a_part_find->next) {
-			    }
-			    /* merge part_find to *output_find */
-			    a_part_find->next = *output_find;
-			    *output_find = part_find;
-			    part_find = NULL;
-			}
 		    }
 		}
 		else if(curlog == L_FAIL) {	/* print other failures too */
@@ -846,11 +836,36 @@ search_logfile(
 	    amfree(disk);
 	}
     }
-    afclose(logf);
 
     if (part_find != NULL) {
-	dbprintf(_("part_find not empty %s %s\n"), logfile, label);
+	if (label) {
+	    /* parse log file until PARTIAL/DONE/SUCCESS/FAIL from taper */
+	    while(get_logline(logf)) {
+		if (curprog == P_TAPER &&
+		    (curlog == L_DONE || curlog == L_SUCCESS ||
+		     curlog == L_PARTIAL || curlog == L_FAIL)) {
+		    break;
+		}
+	    }
+	}
+	for (a_part_find = part_find; a_part_find;
+	     a_part_find = a_part_find->next) {
+	    if (curlog == L_PARTIAL)
+		a_part_find->status = stralloc("PARTIAL");
+	    else if (curlog == L_FAIL)
+		a_part_find->status = stralloc("FAIL");
+	}
+	for (a_part_find = part_find;
+	     a_part_find->next != NULL;
+	     a_part_find=a_part_find->next) {
+	}
+	/* merge part_find to *output_find */
+	a_part_find->next = *output_find;
+	*output_find = part_find;
+	part_find = NULL;
     }
+
+    afclose(logf);
 
     return 1;
 }
