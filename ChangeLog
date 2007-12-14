@@ -1,3 +1,11 @@
+2007-12-14  Ian Turner <ian@zmanda.com>
+	* device-src/tape-device.c: Try to open tape devices as O_NONBLOCK
+	  at first; if the device is not ready, we will let the changer script
+	  retry, instead of having the kernel do it for us.
+	* device-src/tape-ops.h, device-src/tape-aix.c,
+	  device-src/tape-uware.c, device-src/tape-xenix.c,
+	  device-src/tape-posix.c: Add new tape_is_ready() function.
+
 2007-12-14  Jean-Louis Martineau <martineau@zmanda.com>
 	* config/amanda/dumpers.m4: Don't set STAR in AMANDA_PROG_SAMBA_CLIENT.
 

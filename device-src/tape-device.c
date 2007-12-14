@@ -228,6 +228,49 @@ void tape_device_register(void) {
     register_device(tape_device_factory, device_prefix_list);
 }
 
+#ifdef O_NONBLOCK
+/* Open the tape device, trying various combinations of O_RDWR and
+   O_NONBLOCK. */
+static int try_open_tape_device(TapeDevice * self, char * device_name) {
+    int rval;
+    rval  = robust_open(device_name, O_RDWR | O_NONBLOCK, 0);
+    if (rval < 0 && (errno == EWOULDBLOCK || errno == EINVAL)) {
+        /* Maybe we don't support O_NONBLOCK for tape devices. */
+        rval = robust_open(device_name, O_RDWR, 0);
+    }
+    if (rval >= 0) {
+        self->write_open_errno = 0;
+    } else {
+        if (errno == EACCES || errno == EPERM) {
+            /* Device is write-protected. */
+            self->write_open_errno = errno;
+            rval = robust_open(device_name, O_RDONLY | O_NONBLOCK, 0);
+            if (rval < 0 && (errno == EWOULDBLOCK || errno == EINVAL)) {
+                rval = robust_open(device_name, O_RDONLY, 0);
+            }
+        }
+    }
+    /* Clear O_NONBLOCK for operations from now on. */
+    fcntl(rval, F_SETFL, fcntl(rval, F_GETFL, 0) & ~O_NONBLOCK);
+    return rval;
+}
+#else /* !defined(O_NONBLOCK) */
+static int try_open_tape_device(TapeDevice * self, char * device_name) {
+    int rval;
+    rval = robust_open(device_name, O_RDWR);
+    if (rval >= 0) {
+        self->write_open_errno = 0;
+    } else {
+        if (errno == EACCES || errno == EPERM) {
+            /* Device is write-protected. */
+            self->write_open_errno = errno;
+            rval = robust_open(device_name, O_RDONLY);
+        }
+    }
+    return rval;
+}
+#endif /* O_NONBLOCK */
+
 static gboolean 
 tape_device_open_device (Device * d_self, char * device_name) {
     TapeDevice * self;
@@ -236,13 +279,8 @@ tape_device_open_device (Device * d_self, char * device_name) {
     g_return_val_if_fail (self != NULL, FALSE);
     g_return_val_if_fail (device_name != NULL, FALSE);
 
-    self->fd = robust_open(device_name, O_RDWR, 0);
-    if (self->fd >= 0) {
-        self->write_open_errno = 0;
-    } else {
-        self->write_open_errno = errno;
-        self->fd = robust_open(device_name, O_RDONLY, 0);
-    }
+    self->fd = try_open_tape_device(self, device_name);
+
     if (self->fd < 0) {
         g_fprintf(stderr, "Can't open tape device %s: %s\n",
                 device_name, strerror(errno));
@@ -253,6 +291,15 @@ tape_device_open_device (Device * d_self, char * device_name) {
     if (tape_is_tape_device(self->fd) == TAPE_CHECK_FAILURE) {
         g_fprintf(stderr, "File %s is not a tape device.\n",
                 device_name);
+        robust_close(self->fd);
+        return FALSE;
+    }
+
+    if (tape_is_ready(self->fd) == TAPE_CHECK_FAILURE) {
+        g_fprintf(stderr,
+                  "Tape device %s is not ready or is empty.\n",
+                  device_name);
+        robust_close(self->fd);
         return FALSE;
     }
 
@@ -260,6 +307,7 @@ tape_device_open_device (Device * d_self, char * device_name) {
     if (!tape_rewind(self->fd)) {
         g_fprintf(stderr, "Error rewinding device %s\n",
                 device_name);
+        robust_close(self->fd);
         return FALSE;
     }
 
@@ -278,10 +326,13 @@ tape_device_open_device (Device * d_self, char * device_name) {
 
     /* Chain up */
     if (parent_class->open_device) {
-        return (parent_class->open_device)(d_self, device_name);
-    } else {
-        return TRUE;
+        if (!(parent_class->open_device)(d_self, device_name)) {
+            robust_close(self->fd);
+            return FALSE;
+        }
     }
+
+    return TRUE;
 }
 
 static ReadLabelStatusFlags tape_device_read_label(Device * dself) {
