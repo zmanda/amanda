@@ -85,7 +85,7 @@ AC_DEFUN([AMANDA_PROG_SAMBA_CLIENT],
 		       [use PROG as 'smbclient']),
 	[
 	    case "$withval" in
-		/*) STAR="$withval";;
+		/*) SAMBA_CLIENT="$withval";;
 		y|ye|yes) :;;
 		n|no) SAMBA_CLIENT=no ;;
 		*)  AC_MSG_ERROR([*** You must supply a full pathname to --with-smbclient]);;
