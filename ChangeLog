@@ -1,3 +1,7 @@
+2007-12-14  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/find.c (find_log): Result should not have duplicate
+					logfile.
+
 2007-12-10  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amstatus.pl: Parse NEW-TAPE line
 	* server-src/taper.c: Add the handle in NEW-TAPE result.

@@ -119,6 +119,7 @@ char **
 find_log(void)
 {
     char *conf_logdir, *logfile = NULL;
+    char *pathlogfile = NULL;
     int tape, maxtape, logs;
     unsigned seq;
     tape_t *tp;
@@ -151,12 +152,14 @@ find_log(void)
 	    char seq_str[NUM_STR_SIZE];
 
 	    g_snprintf(seq_str, SIZEOF(seq_str), "%u", seq);
-	    logfile = newvstralloc(logfile,
-			conf_logdir, "/log.", tp->datestamp, ".", seq_str, NULL);
-	    if(access(logfile, R_OK) != 0) break;
-	    if( search_logfile(NULL, tp->label, tp->datestamp, logfile)) {
-		*current_log = vstralloc("log.", tp->datestamp, ".", seq_str, NULL);
-		current_log++;
+	    logfile = newvstralloc(logfile, "log.", tp->datestamp, ".", seq_str, NULL);
+	    pathlogfile = newvstralloc(pathlogfile, conf_logdir, "/", logfile, NULL);
+	    if (access(pathlogfile, R_OK) != 0) break;
+	    if (search_logfile(NULL, tp->label, tp->datestamp, pathlogfile)) {
+		if (current_log == output_find_log || strcmp(*(current_log-1), logfile)) {
+		    *current_log = stralloc(logfile);
+		    current_log++;
+		}
 		logs++;
 		break;
 	    }
@@ -164,31 +167,38 @@ find_log(void)
 
 	/* search old-style amflush log, if any */
 
-	logfile = newvstralloc(logfile,
-			       conf_logdir, "/log.", tp->datestamp, ".amflush", NULL);
-	if(access(logfile,R_OK) == 0) {
-	    if( search_logfile(NULL, tp->label, tp->datestamp, logfile)) {
-		*current_log = vstralloc("log.", tp->datestamp, ".amflush", NULL);
-		current_log++;
+	logfile = newvstralloc(logfile, "log.", tp->datestamp, ".amflush", NULL);
+	pathlogfile = newvstralloc(pathlogfile, conf_logdir, "/", logfile, NULL);
+	if (access(pathlogfile, R_OK) == 0) {
+	    if (search_logfile(NULL, tp->label, tp->datestamp, pathlogfile)) {
+		if (current_log == output_find_log || strcmp(*(current_log-1), logfile)) {
+		    *current_log = stralloc(logfile);
+		    current_log++;
+		}
 		logs++;
 	    }
 	}
 
 	/* search old-style main log, if any */
 
-	logfile = newvstralloc(logfile, conf_logdir, "/log.", tp->datestamp, NULL);
-	if(access(logfile,R_OK) == 0) {
-	    if(search_logfile(NULL, tp->label, tp->datestamp, logfile)) {
-		*current_log = vstralloc("log.", tp->datestamp, NULL);
-		current_log++;
+	logfile = newvstralloc(logfile, "log.", tp->datestamp, NULL);
+	pathlogfile = newvstralloc(pathlogfile, conf_logdir, "/", logfile, NULL);
+	if (access(pathlogfile, R_OK) == 0) {
+	    if (search_logfile(NULL, tp->label, tp->datestamp, pathlogfile)) {
+		if (current_log == output_find_log || strcmp(*(current_log-1), logfile)) {
+		    *current_log = stralloc(logfile);
+		    current_log++;
+		}
 		logs++;
 	    }
 	}
+
 	if(logs == 0 && strcmp(tp->datestamp,"0") != 0)
 	    g_fprintf(stderr, _("Warning: no log files found for tape %s written %s\n"),
 		   tp->label, find_nicedate(tp->datestamp));
     }
     amfree(logfile);
+    amfree(pathlogfile);
     amfree(conf_logdir);
     *current_log = NULL;
     return(output_find_log);
