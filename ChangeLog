@@ -1,3 +1,7 @@
+2007-12-19  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/planner.c: Correctly set planner_timestamp if
+				usetimestamps is set to no.
+
 2007-12-18  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/driverio.c (childstr): Check dumper->chunker.
 

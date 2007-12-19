@@ -342,7 +342,7 @@ main(
     today = time(0);
     if (planner_timestamp) {
 	if (conf_usetimestamps == 0) {
-	    planner_timestamp[6] = '\0';
+	    planner_timestamp[8] = '\0';
 	}
     } else if(conf_usetimestamps == 0) {
 	planner_timestamp = get_datestamp_from_time(0);
