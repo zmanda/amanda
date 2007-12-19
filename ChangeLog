@@ -1,3 +1,6 @@
+2007-12-19  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/util.c (quote_string): Quote ':'.
+
 2007-12-19  Ian Turner <ian@zmanda.com>
 	* server-src/taper.c: Don't crash if there is a problem writing a
 	  brand new tape.

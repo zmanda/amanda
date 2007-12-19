@@ -386,7 +386,7 @@ quote_string(
 
     if ((str == NULL) || (*str == '\0')) {
 	ret = stralloc("\"\"");
-    } else if ((match("[\\\"[:space:][:cntrl:]]", str)) == 0) {
+    } else if ((match("[:\\\"[:space:][:cntrl:]]", str)) == 0) {
 	/*
 	 * String does not need to be quoted since it contains
 	 * neither whitespace, control or quote characters.
