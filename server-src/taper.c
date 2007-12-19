@@ -424,8 +424,13 @@ static gboolean label_new_tape(taper_state_t * state, dump_info_t * dump_info) {
         if (tape_used) {
             putresult(NEW_TAPE, "%s %s\n", dump_info->handle,
 		      state->device->volume_label);
-            log_add(L_WARNING, "Problem writing label to volume %s, "
-                    "volume may be erased.\n", old_volume_name);
+            if (old_volume_name) {
+                log_add(L_WARNING, "Problem writing label to volume %s, "
+                        "volume may be erased.\n", old_volume_name);
+            } else {
+                log_add(L_WARNING, "Problem writing label %s to new volume, "
+                        "volume may be erased.\n", state->next_tape_label);
+            }
             amfree(old_volume_name);
             amfree(old_volume_time);
             return find_and_label_new_tape(state, dump_info);
@@ -434,8 +439,13 @@ static gboolean label_new_tape(taper_state_t * state, dump_info_t * dump_info) {
              * again. */
             tape_search_request_t request;
             gboolean search_result;
-            log_add(L_WARNING, "Problem writing label to volume %s, "
-                    "old volume intact\n", old_volume_name);
+            if (old_volume_name) {
+                log_add(L_WARNING, "Problem writing label to volume %s, "
+                        "old volume data intact\n", old_volume_name);
+            } else {
+                log_add(L_WARNING, "Problem writing label %s to new volume, "
+                        "old volume data intact\n", state->next_tape_label);
+            }
             amfree(old_volume_name);
             amfree(old_volume_time);
             request.state = state;

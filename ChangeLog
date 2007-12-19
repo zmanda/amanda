@@ -1,3 +1,7 @@
+2007-12-19  Ian Turner <ian@zmanda.com>
+	* server-src/taper.c: Don't crash if there is a problem writing a
+	  brand new tape.
+
 2007-12-19  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/planner.c: Correctly set planner_timestamp if
 				usetimestamps is set to no.
