@@ -72,7 +72,7 @@ childstr(
     for (dumper = dmptable; dumper < dmptable + MAX_DUMPERS; dumper++) {
 	if (dumper->fd == fd)
 	    return (dumper->name);
-	if (dumper->chunker->fd == fd)
+	if (dumper->chunker && dumper->chunker->fd == fd)
 	    return (dumper->chunker->name);
     }
     g_snprintf(buf, SIZEOF(buf), _("unknown child (fd %d)"), fd);
