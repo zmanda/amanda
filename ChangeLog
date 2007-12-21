@@ -1,3 +1,7 @@
+2007-12-21  Satya Ganga <gsat@zmanda.com>
+	* server-src/amserverconfig.pl: amserverconfig needs to create a empty
+	  changer.conf file
+
 2007-12-21  Jean-Louis Martineau <martineau@zmanda.com>
 	Bug reported by Tim Bunnell.
 	* client-src/getfsent.c (dev2rdev): Do it only for block device.

@@ -543,7 +543,15 @@ if ( defined $template ) {
       open (CCONF, ">$changerfile")
 	|| &log_and_die ("ERROR: Cannot create $changerfile: $!\n", 1);
       close (CCONF);
+  } elsif ($template eq "S3" ) {
+
+      unless ($changerfile) {$changerfile="$confdir/$config/changer.conf";}
+      open (CCONF, ">$changerfile")
+    || &log_and_die ("ERROR: Cannot create $changerfile: $!\n", 1);
+      close (CCONF);
+
   }
+
 }
 
 &check_gnutarlist_dir;
