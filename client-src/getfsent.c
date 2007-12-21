@@ -433,7 +433,7 @@ dev2rdev(
   char *s;
   int ch;
 
-  if(stat(name, &st) == 0 && S_ISCHR(st.st_mode)) {
+  if(stat(name, &st) == 0 && !S_ISBLK(st.st_mode)) {
     /*
      * If the input is already a character device, just return it.
      */

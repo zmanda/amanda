@@ -1,4 +1,8 @@
 2007-12-21  Jean-Louis Martineau <martineau@zmanda.com>
+	Bug reported by Tim Bunnell.
+	* client-src/getfsent.c (dev2rdev): Do it only for block device.
+
+2007-12-21  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/taper.c: Unquote holding_disk_file.
 
 2007-12-19  Jean-Louis Martineau <martineau@zmanda.com>
