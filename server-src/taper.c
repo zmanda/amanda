@@ -896,7 +896,7 @@ static void process_file_write(taper_state_t * state,
     validate_args(FILE_WRITE, cmdargs, argnames);
 
     dump_state.handle = g_strdup(cmdargs->argv[2]);
-    holding_disk_file = cmdargs->argv[3];
+    holding_disk_file = unquote_string(cmdargs->argv[3]);
     dump_state.hostname = g_strdup(cmdargs->argv[4]);
     dump_state.diskname = unquote_string(cmdargs->argv[5]);
     
@@ -931,6 +931,7 @@ static void process_file_write(taper_state_t * state,
     run_device_output(state, &dump_state);
 
     free_dump_info(&dump_state);
+    amfree(holding_disk_file);
 }
 
 /* Send QUITTING message to driver and associated logging. Always
