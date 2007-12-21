@@ -13,6 +13,9 @@
 2007-12-21  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/taper.c: Unquote holding_disk_file.
 
+2007-12-20  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/debug.h: fix (cosmetic, but confusing) typo
+
 2007-12-19  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/util.c (quote_string): Quote ':'.
 

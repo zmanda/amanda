@@ -77,8 +77,8 @@
 /* for compatibility; these should eventually be substituted throughout
  * the codebase.  Extra calls to exit() and abort() should be optimized
  * away, and are there only for stupid compilers. */
-#define errordump(...) do { g_error(__VA_ARGS__); exit(error_exit_status); } while (0)
-#define error(...) do { g_critical(__VA_ARGS__); abort(); } while (0)
+#define errordump(...) do { g_error(__VA_ARGS__); abort(); } while (0)
+#define error(...) do { g_critical(__VA_ARGS__); exit(error_exit_status); } while (0)
 
 /* Additional handling for error and critical messages. */
 typedef enum {
