@@ -1,4 +1,8 @@
 2007-12-21  Satya Ganga <gsat@zmanda.com>
+	* server-src/amserverconfig.pl: correct holding disk size
+	  validation logic so that it works on solaris too
+
+2007-12-21  Satya Ganga <gsat@zmanda.com>
 	* server-src/amserverconfig.pl: amserverconfig needs to create a empty
 	  changer.conf file
 

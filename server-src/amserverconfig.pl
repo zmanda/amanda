@@ -204,14 +204,14 @@ sub create_holding {
     return;
   }
     my $div=1;
-    my $out = `df $amandahomedir`;
+    my $out = `df -k $amandahomedir`;
     my @dfout = split(" " , $out);
     unless ( $#dfout == 12 ) {	# df should output 12 elem
 	&mprint ("WARNING: df failed, holding disk directory not created\n");
 	$holding_err++;
 	return;
     }
-    unless ( $dfout[1] eq "1K-blocks" ) {
+    unless (( $dfout[1] eq "1K-blocks" ) || ( $dfout[1] eq "kbytes")) {
          $div=2;	# 512-blocks displayed by df
      }
     
