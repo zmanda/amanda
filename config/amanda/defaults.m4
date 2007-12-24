@@ -11,6 +11,8 @@
 #	    define and substitute DEFAULT_TAPE_DEVICE; substitue EXAMPLE_TAPEDEV
 #	--with-changer-device
 #	    define and substitute DEFAULT_CHANGER_DEVICE
+#	--with-amandates
+#	    define and substitute DEFAULT_AMANDATES_FILE
 #
 AC_DEFUN([AMANDA_SETUP_DEFAULTS],
 [
@@ -82,14 +84,15 @@ AC_DEFUN([AMANDA_SETUP_DEFAULTS],
 	]
     )
 
+    AC_DEFINE_UNQUOTED(DEFAULT_TAPE_DEVICE,"$DEFAULT_TAPE_DEVICE",
+	[This is the default no-rewinding tape device. ])
+    AC_SUBST(DEFAULT_TAPE_DEVICE)
+
     if test "${DEFAULT_TAPE_DEVICE+set}" = "set"; then
-	AC_DEFINE_UNQUOTED(DEFAULT_TAPE_DEVICE,"$DEFAULT_TAPE_DEVICE",
-	    [This is the default no-rewinding tape device. ])
 	EXAMPLE_TAPEDEV="$DEFAULT_TAPE_DEVICE"
     else
 	EXAMPLE_TAPEDEV="tape:/dev/YOUR-TAPE-DEVICE-HERE"
     fi
-    AC_SUBST(DEFAULT_TAPE_DEVICE)
     AC_SUBST(EXAMPLE_TAPEDEV)
 
     AC_ARG_WITH(changer-device,
@@ -116,4 +119,20 @@ AC_DEFUN([AMANDA_SETUP_DEFAULTS],
     AC_DEFINE_UNQUOTED(DEFAULT_CHANGER_DEVICE,"$DEFAULT_CHANGER_DEVICE",
 	[This is the default changer device. ])
     AC_SUBST(DEFAULT_CHANGER_DEVICE)
+
+    AC_ARG_WITH(amandates,
+        AS_HELP_STRING([--with-amandates],
+            [default location for 'amandates' (default: $sysconfdir/amandates)]),
+        [ amandates="$withval" ],
+	[ amandates="yes" ]
+    )
+
+    case "$tmpdir" in
+        n | no) AC_MSG_ERROR([*** --without-amandates is not allowed.]);;
+        y |  ye | yes) amandates='$sysconfdir/amandates' ;;
+        *) amandates="$tmpdir";;
+    esac
+
+    AC_DEFINE_DIR([DEFAULT_AMANDATES_FILE], [amandates],
+        [Default location for 'amandates'])
 ])

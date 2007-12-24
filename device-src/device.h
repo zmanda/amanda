@@ -22,11 +22,11 @@
  * capabilities from the rest of the Amanda code base. It supports
  * pluggable modules for different kinds of devices. */
 
-#include <glib.h>
-#include <glib-object.h>
-
 #ifndef DEVICE_H
 #define DEVICE_H
+
+#include <glib.h>
+#include <glib-object.h>
 
 #include "property.h"
 #include "fileheader.h"

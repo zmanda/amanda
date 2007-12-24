@@ -36,6 +36,7 @@
 #include "util.h"
 
 static am_host_t *hostlist;
+static netif_t *all_netifs;
 
 /* local functions */
 static char *upcase(char *st);
@@ -364,7 +365,8 @@ parse_diskline(
     am_host_t *host;
     disk_t *disk;
     dumptype_t *dtype;
-    interface_t *netif = 0;
+    netif_t *netif = NULL;
+    interface_t *cfg_if = NULL;
     char *hostname = NULL;
     char *diskname, *diskdevice;
     char *dumptype;
@@ -596,7 +598,7 @@ parse_diskline(
 	return (-1);
     }
 
-    disk->dtype_name	     = dtype->name;
+    disk->dtype_name	     = dumptype_name(dtype);
     disk->program	     = dumptype_get_program(dtype);
     disk->exclude_list     = duplicate_sl(dumptype_get_exclude(dtype).sl_list);
     disk->exclude_file     = duplicate_sl(dumptype_get_exclude(dtype).sl_file);
@@ -690,7 +692,7 @@ parse_diskline(
     if(ch && ch != '#') {		/* get optional network interface */
 	skip_non_whitespace(s, ch);
 	s[-1] = '\0';
-	if((netif = lookup_interface(upcase(fp))) == NULL) {
+	if((cfg_if = lookup_interface(upcase(fp))) == NULL) {
 	    disk_parserror(filename, line_num,
 		_("undefined network interface `%s'"), fp);
 	    amfree(hostname);
@@ -699,7 +701,22 @@ parse_diskline(
 	    return (-1);
 	}
     } else {
-	netif = lookup_interface("default");
+	cfg_if = lookup_interface("default");
+    }
+
+    /* see if we already have a netif_t for this interface */
+    for (netif = all_netifs; netif != NULL; netif = netif->next) {
+	if (netif->config == cfg_if)
+	    break;
+    }
+
+    /* nope; make up a new one */
+    if (!netif) {
+	netif = alloc(sizeof(*netif));
+	netif->next = all_netifs;
+	all_netifs = netif;
+	netif->config = cfg_if;
+	netif->curusage = 0;
     }
 
     skip_whitespace(s, ch);
@@ -1282,6 +1299,11 @@ match_disklist(
     return errstr;
 }
 
+netif_t *
+disklist_netifs(void)
+{
+    return all_netifs;
+}
 
 #ifdef TEST
 
@@ -1314,10 +1336,13 @@ dump_disklist(
     g_printf(_("DISKLIST BY HOSTNAME:\n"));
 
     for(hp = hostlist; hp != NULL; hp = hp->next) {
+	char *if_name = NULL;
+	if (hp->netif && hp->netif->config)
+	    if_name = interface_name(hp->netif->config);
+
 	g_printf(_("HOST %s INTERFACE %s\n"),
 	       hp->hostname,
-	       (hp->netif == NULL||hp->netif->name == NULL) ? _("(null)")
-							    : hp->netif->name);
+	       if_name ? _("(null)") : if_name);
 	for(dp = hp->disks; dp != NULL; dp = dp->hostnext)
 	    dump_disk(dp);
 	putchar('\n');
@@ -1376,12 +1401,7 @@ main(
   }
   conffile = stralloc2(config_dir, CONFFILE_NAME);
   if((result = read_conffile(conffile)) == 0) {
-    conf_diskfile = getconf_str(CNF_DISKFILE);
-    if (*conf_diskfile == '/') {
-      conf_diskfile = stralloc(conf_diskfile);
-    } else {
-      conf_diskfile = stralloc2(config_dir, conf_diskfile);
-    }
+    conf_diskfile = config_dir_relative(getconf_str(CNF_DISKFILE));
     result = read_diskfile(conf_diskfile, &lst);
     if(result == 0) {
       dump_disklist(&lst);

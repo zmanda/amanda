@@ -92,9 +92,7 @@ cmdline_parse_dumpspecs(
                 arg_state = ARG_GET_DISK;
                 if (name[0] != '\0'
                     && (errstr=validate_regexp(name)) != NULL) {
-                    g_fprintf(stderr, _("%s: bad hostname regex \"%s\": %s\n"),
-		                    get_pname(), name, errstr);
-                    goto error;
+                    error(_("bad hostname regex \"%s\": %s\n"), name, errstr);
                 }
                 dumpspec = dumpspec_new(name, NULL, NULL, NULL);
 		list = g_slist_append(list, (gpointer)dumpspec);
@@ -104,9 +102,7 @@ cmdline_parse_dumpspecs(
                 arg_state = ARG_GET_DATESTAMP;
                 if (name[0] != '\0'
                     && (errstr=validate_regexp(name)) != NULL) {
-                    g_fprintf(stderr, _("%s: bad diskname regex \"%s\": %s\n"),
-		                    get_pname(), name, errstr);
-                    goto error;
+                    error(_("bad diskname regex \"%s\": %s\n"), name, errstr);
                 }
                 dumpspec->disk = stralloc(name);
                 break;
@@ -116,9 +112,7 @@ cmdline_parse_dumpspecs(
 		if (!(flags & CMDLINE_PARSE_DATESTAMP)) continue;
                 if (name[0] != '\0'
                     && (errstr=validate_regexp(name)) != NULL) {
-                    g_fprintf(stderr, _("%s: bad datestamp regex \"%s\": %s\n"),
-		                    get_pname(), name, errstr);
-                    goto error;
+                    error(_("bad datestamp regex \"%s\": %s\n"), name, errstr);
                 }
                 dumpspec->datestamp = stralloc(name);
                 break;
@@ -128,9 +122,7 @@ cmdline_parse_dumpspecs(
 		if (!(flags & CMDLINE_PARSE_LEVEL)) continue;
                 if (name[0] != '\0'
                     && (errstr=validate_regexp(name)) != NULL) {
-                    g_fprintf(stderr, _("%s: bad level regex \"%s\": %s\n"),
-		                    get_pname(), name, errstr);
-                    goto error;
+                    error(_("bad level regex \"%s\": %s\n"), name, errstr);
                 }
                 dumpspec->level = stralloc(name);
                 break;
@@ -139,8 +131,9 @@ cmdline_parse_dumpspecs(
 	optind++;
     }
 
-    /* if nothing was processed, add an "empty" element */
-    if (dumpspec == NULL) {
+    /* if nothing was processed and the caller has requested it, 
+     * then add an "empty" element */
+    if (list == NULL && (flags & CMDLINE_EMPTY_TO_WILDCARD)) {
         dumpspec = dumpspec_new("", "", 
 		(flags & CMDLINE_PARSE_DATESTAMP)?"":NULL,
 		(flags & CMDLINE_PARSE_LEVEL)?"":NULL);
@@ -148,10 +141,6 @@ cmdline_parse_dumpspecs(
     }
 
     return list;
-
-error:
-    dumpspec_list_free(list);
-    return NULL;
 }
 
 char *

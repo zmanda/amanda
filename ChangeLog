@@ -1,3 +1,109 @@
+2007-12-23  Dustin J. Mitchell <dustin@zmanda.com>
+	Large-scale merge of perl interface to Amanda, along with
+	a fleet of related changes.  Patch authors are given for
+	changes not made by Dustin.
+
+	* perl/Makefile.am config/amanda/swig.m4: use
+	  ExtUtils::Embed::perl_inc() to get the include directory
+	  and let Amanda's compiler/linker flags and libtool take
+	  care of the rest
+	* perl/Amanda/Config.swg: use accessors for config_name, 
+	  config_filename, and config_dir 
+	* server-src/amcheckdump.pl server-src/amdevcheck.pl
+	  perl/Amanda/Util.swg installcheck/Amanda_Config.pl: use
+	  new accessors
+	* perl/Amanda/Util.swg common-src/amanda.h: use a .-relative
+	  path in two #include directives to avoid accidentally 
+	  including perl's headers of the same name; this is a temporary
+	  hack until a larger-scale overhaul of Amanda's headers is done.
+	* config/amanda/swig.m4: error out if shared libraries are disabled
+	* server-src/amcheckdump.pl: Use timestamp from latest
+	  amdump.1 or amflush.1 log file.  (Jean-Loius Martineau
+	  <martineau@zmanda.com>)
+	* server-src/amcheckdump.pl: Output partnum.  (Jean-Loius
+	  Martineau <martineau@zmanda.com>)
+	* server-src/amcheckdump.pl: Add a '/' after the config name.
+	(Jean-Loius Martineau <martineau@zmanda.com>)
+	* perl/Amanda/Logfile.swg perl/Amanda/Device.swg perl/Makefile.am
+	  perl/amglue/integers.swg perl/amglue/amglue.h
+	  perl/amglue/amglue.swg perl/amglue/glib.swg
+	  perl/amglue/bigint.c: Always use Math::BigInt to convert numeric 
+	  quantities from C to Perl, to avoid integer overflow and automatic
+	  promotion to double.
+	* perl/Amanda/Debug.swg client-src/versionsuffix.c
+	  common-src/util.c common-src/util.h common-src/debug.c
+	  common-src/debug.h common-src/conffile.c
+	  common-src/conffile.h common-src/file.c common-src/file.h:
+	  - move get_/set_pname to util.c
+	  - rename RunningAsWho to running_as_flags
+	  - cache original cwd before changing it in safe_cd, and use the
+	    cached value in conffile
+	* server-src/logfile.c: call set_logerror in open_log
+	* client-src/runtar.c common-src/debug.c common-src/amanda.h
+	  common-src/file.c common-src/file.h: replace client_uid,
+	  client_gid globals with functions, to eliminate the need
+	  for initialization
+	* server-src/logfile.c: Update warning about globals
+	* server-src/find.c: Update search_logfile to possibly search
+	  all tapes in a logfile. Also, other miscellaneous
+	  refactoring.  (Ian Turner <ian@zmanda.com>)
+	* server-src/find.h: Document new interface.
+	* server-src/amindexd.c, server-src/amadmin.c,
+	  server-src/amtrmidx.c, restore-src/amfetchdump.c: Use new
+	  find_dump interface.
+	* common-src/util.c, common-src/util.h: New function
+	  compare_possibly_null_strings, which is like strcmp() but
+	  orders NULL pointers before non-null strings.
+	* Makefile.am: reflect BINARY_OWNER into distcheck-triggered
+	  ./configure
+	* common-src/conffile.c common-src/conffile.h: completely
+	  new API, almost complete rewrite
+	* common-src/columnar.c common-src/columnar.h
+	  common-src/Makefile.am: new files, extracted from
+	  conffile.[ch]
+	* oldrecover-src/amrecover.c oldrecover-src/extract_list.c
+	  changer-src/chg-scsi-chio.c changer-src/chg-scsi.c
+	  client-src/sendbackup.c client-src/sendsize.c
+	  client-src/selfcheck.c amandad-src/amandad.c
+	  device-src/device.c recover-src/amrecover.c
+	  recover-src/extract_list.c server-src/diskfile.h
+	  server-src/logfile.c server-src/amlogroll.c
+	  server-src/amindexd.c server-src/amcheck.c
+	  server-src/dumper.c server-src/planner.c
+	  server-src/chunker.c server-src/amadmin.c
+	  server-src/amtape.c server-src/amcleanupdisk.c
+	  server-src/getconf.c server-src/amflush.c
+	  server-src/amtrmlog.c server-src/driverio.c
+	  server-src/holding.c server-src/driverio.h
+	  server-src/driver.c server-src/reporter.c server-src/taper.c
+	  server-src/find.c server-src/amindex.c server-src/amtrmidx.c
+	  server-src/diskfile.c server-src/amlabel.c
+	  perl/Amanda/Config.swg config/amanda/defaults.m4
+	  restore-src/amidxtaped.c restore-src/amrestore.c
+	  restore-src/restore.c restore-src/amfetchdump.c
+	  common-src/util.h common-src/glib-util.c tape-src/tapeio.c
+	  common-src/amanda.h tape-src/tapeio.h: use new conffile API
+	* installcheck/Makefile.am installcheck/Amconfig.pm.in
+	  installcheck/Installdirs.pm.in installcheck/Amanda_Config.pl
+	  installcheck/Amanda_Changer.pl installcheck/Amanda_Cmdline.pl
+	  installcheck/Amanda_Logfile.pl installcheck/amcheckdump.pl
+	  installcheck/amdevcheck.pl installcheck/amgetconf.pl:
+	  new unit tests for new modules, applications
+	* server-src/amdevcheck.pl server-src/amcheckdump.pl: new pure-
+	  Perl applications; amcheckdump.pl is by Ian Turner
+	  <ian@zmanda.com>
+	* perl/Amanda perl/Makefile.am perl/Amanda/Paths.pm.in
+	  perl/Amanda/Logfile.swg perl/Amanda/Changer.pm
+	  perl/Amanda/Config.swg perl/Amanda/Debug.swg
+	  perl/Amanda/Tapefile.swg perl/Amanda/Cmdline.swg
+	  perl/Amanda/Util.swg perl/Amanda/Device.swg: new directory
+	  containing perl interfaces to Amanda modules
+	* perl/amglue perl/amglue/integers.swg perl/amglue/amglue.h
+	  perl/amglue/exports.swg perl/amglue/ghashtable.c
+	  perl/amglue/amglue.swg perl/amglue/constants.swg
+	  perl/amglue/glib.swg perl/amglue/bigint.c: functions and
+	  macros to glue Amanda to perl
+
 2007-12-21  Satya Ganga <gsat@zmanda.com>
 	* server-src/amserverconfig.pl: correct holding disk size
 	  validation logic so that it works on solaris too

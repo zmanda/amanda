@@ -25,6 +25,8 @@
 #include <glib.h>
 #include <glib-object.h>
 #include "device.h"
+#include <dirent.h>
+
 #ifndef VFS_DEVICE_H
 #define VFS_DEVICE_H
 

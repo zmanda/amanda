@@ -30,6 +30,7 @@
  */
 
 #include "amanda.h"
+#include "conffile.h"
 #include "version.h"
 #include "amrecover.h"
 #include "fileheader.h"
@@ -1446,7 +1447,7 @@ extract_files_setup(
        am_has_feature(indexsrv_features, fe_amidxtaped_datestamp)) {
 
 	if(am_has_feature(indexsrv_features, fe_amidxtaped_config)) {
-	    tt = newstralloc2(tt, "CONFIG=", config);
+	    tt = newstralloc2(tt, "CONFIG=", config_name);
 	    send_to_tape_server(tape_control_sock, tt);
 	}
 	if(am_has_feature(indexsrv_features, fe_amidxtaped_label) &&

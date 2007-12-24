@@ -196,12 +196,7 @@ log_rename(
 
     if(datestamp == NULL) datestamp = "error";
 
-    conf_logdir = getconf_str(CNF_LOGDIR);
-    if (*conf_logdir == '/') {
-	conf_logdir = stralloc(conf_logdir);
-    } else {
-	conf_logdir = stralloc2(config_dir, conf_logdir);
-    }
+    conf_logdir = config_dir_relative(getconf_str(CNF_LOGDIR));
     logfile = vstralloc(conf_logdir, "/log", NULL);
 
     for(seq = 0; 1; seq++) {	/* if you've got MAXINT files in your dir... */
@@ -231,12 +226,12 @@ open_log(void)
 {
     char *conf_logdir;
 
-    conf_logdir = getconf_str(CNF_LOGDIR);
-    if (*conf_logdir == '/') {
-	conf_logdir = stralloc(conf_logdir);
-    } else {
-	conf_logdir = stralloc2(config_dir, conf_logdir);
-    }
+    /* now that we have a logfile, let the debug module know how to write
+     * error messages to it.  This is due to some rather obscure linking 
+     * problems. */
+    set_logerror(logerror);
+
+    conf_logdir = config_dir_relative(getconf_str(CNF_LOGDIR));
     logfile = vstralloc(conf_logdir, "/log", NULL);
     amfree(conf_logdir);
 
@@ -271,7 +266,8 @@ close_log(void)
     amfree(logfile);
 }
 
-
+/* WARNING: Function accesses globals curstr, curlog, and curprog
+ * WARNING: Function has static member logline, returned via globals */
 int
 get_logline(
     FILE *	logf)

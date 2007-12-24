@@ -30,6 +30,7 @@
  */
 #include "amanda.h"
 #include "version.h"
+#include "util.h"
 
 int main(int argc, char **argv);
 

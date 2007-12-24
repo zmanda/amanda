@@ -31,6 +31,7 @@
 #include "amanda.h"
 #include "util.h"
 #include "conffile.h"
+#include "columnar.h"
 #include "fsusage.h"
 #include "diskfile.h"
 #include "tapefile.h"
@@ -102,14 +103,12 @@ main(
     int mailout;
     int alwaysmail;
     char *tempfname = NULL;
-    char *conffile;
     char *conf_diskfile;
     char *dumpuser;
     struct passwd *pw;
     uid_t uid_me;
-    int    new_argc,   my_argc;
-    char **new_argv, **my_argv;
     char *errstr;
+    config_overwrites_t *cfg_ovr;
 
     /*
      * Configure program for internationalization:
@@ -150,13 +149,10 @@ main(
     server_probs = client_probs = 0;
     tempfd = mainfd = -1;
 
-    parse_conf(argc, argv, &new_argc, &new_argv);
-    my_argc = new_argc;
-    my_argv = new_argv;
-
     /* process arguments */
 
-    while((opt = getopt(my_argc, my_argv, "M:mawsclt")) != EOF) {
+    cfg_ovr = new_config_overwrites(argc/2);
+    while((opt = getopt(argc, argv, "M:mawsclto:")) != EOF) {
 	switch(opt) {
 	case 'M':	mailto=stralloc(optarg);
 			if(!validate_mailto(mailto)){
@@ -193,6 +189,8 @@ main(
 			break;
 	case 'w':	overwrite = 1;
 			break;
+	case 'o':	add_config_overwrite_opt(cfg_ovr, optarg);
+			break;
 	case 't':	do_tapechk = 1;
 			break;
 	case '?':
@@ -200,8 +198,8 @@ main(
 	    usage();
 	}
     }
-    my_argc -= optind, my_argv += optind;
-    if(my_argc < 1) usage();
+    argc -= optind, argv += optind;
+    if(argc < 1) usage();
 
 
     if ((do_localchk | do_clientchk | do_tapechk) == 0) {
@@ -212,20 +210,11 @@ main(
     if(overwrite)
 	do_tapechk = 1;
 
-    config_name = stralloc(*my_argv);
-
-    config_dir = vstralloc(CONFIG_DIR, "/", config_name, "/", NULL);
-    conffile = stralloc2(config_dir, CONFFILE_NAME);
-    if(read_conffile(conffile)) {
-	error(_("errors processing config file \"%s\"."), conffile);
-	/*NOTREACHED*/
-    }
-
+    config_init(CONFIG_INIT_EXPLICIT_NAME|CONFIG_INIT_FATAL,
+		argv[0]);
+    apply_config_overwrites(cfg_ovr);
     dbrename(config_name, DBG_SUBDIR_SERVER);
 
-    report_bad_conf_arg();
-
-    amfree(conffile);
     if(mailout && !mailto && 
        (getconf_seen(CNF_MAILTO)==0 || strlen(getconf_str(CNF_MAILTO)) == 0)) {
 	g_printf(_("\nWARNING:No mail address configured in  amanda.conf.\n"));
@@ -259,17 +248,12 @@ main(
 
     conf_ctimeout = (time_t)getconf_int(CNF_CTIMEOUT);
 
-    conf_diskfile = getconf_str(CNF_DISKFILE);
-    if (*conf_diskfile == '/') {
-	conf_diskfile = stralloc(conf_diskfile);
-    } else {
-	conf_diskfile = stralloc2(config_dir, conf_diskfile);
-    }
+    conf_diskfile = config_dir_relative(getconf_str(CNF_DISKFILE));
     if(read_diskfile(conf_diskfile, &origq) < 0) {
 	error(_("could not load disklist %s. Make sure it exists and has correct permissions"), conf_diskfile);
 	/*NOTREACHED*/
     }
-    errstr = match_disklist(&origq, my_argc-1, my_argv+1);
+    errstr = match_disklist(&origq, argc-1, argv+1);
     if (errstr) {
 	g_printf(_("%s"),errstr);
 	amfree(errstr);
@@ -403,8 +387,6 @@ main(
 	/*NOTREACHED*/
     }
     amfree(version_string);
-    amfree(config_dir);
-    amfree(config_name);
     amfree(our_feature_string);
     am_release_feature_set(our_features);
     our_features = NULL;
@@ -526,9 +508,6 @@ main(
 	}
     }
 #endif
-    free_new_argv(new_argc, new_argv);
-    free_server_config();
-
     dbclose();
     return (server_probs || client_probs);
 }
@@ -790,18 +769,14 @@ start_server_check(
 	char *lbl_templ;
 
 	ColumnSpec = getconf_str(CNF_COLUMNSPEC);
-	if(SetColumDataFromString(ColumnData, ColumnSpec, &errstr) < 0) {
+	if(SetColumnDataFromString(ColumnData, ColumnSpec, &errstr) < 0) {
 	    g_fprintf(outf, _("ERROR: %s\n"), errstr);
 	    amfree(errstr);
 	    confbad = 1;
 	}
 	lbl_templ = tapetype_get_lbl_templ(tp);
 	if(strcmp(lbl_templ, "") != 0) {
-	    if(strchr(lbl_templ, '/') == NULL) {
-		lbl_templ = stralloc2(config_dir, lbl_templ);
-	    } else {
-		lbl_templ = stralloc(lbl_templ);
-	    }
+	    lbl_templ = config_dir_relative(lbl_templ);
 	    if(access(lbl_templ, R_OK) == -1) {
 		g_fprintf(outf,
 			_("ERROR: cannot read label template (lbl-templ) file %s: %s. Check permissions\n"),
@@ -904,7 +879,6 @@ start_server_check(
      */
 
     if(do_localchk || do_tapechk) {
-	char *conf_tapelist;
 	char *tapefile;
 	char *newtapefile;
 	char *tape_dir;
@@ -913,12 +887,7 @@ start_server_check(
         char * tapename;
 	struct stat statbuf;
 	
-	conf_tapelist=getconf_str(CNF_TAPELIST);
-	if (*conf_tapelist == '/') {
-	    tapefile = stralloc(conf_tapelist);
-	} else {
-	    tapefile = stralloc2(config_dir, conf_tapelist);
-	}
+	tapefile = config_dir_relative(getconf_str(CNF_TAPELIST));
 	/*
 	 * XXX There Really Ought to be some error-checking here... dhw
 	 */
@@ -968,7 +937,7 @@ start_server_check(
 	    tapebad |= check_tapefile(outf, newtapefile);
 	    amfree(newtapefile);
 	}
-	holdfile = vstralloc(config_dir, "/", "hold", NULL);
+	holdfile = config_dir_relative("hold");
 	if(access(holdfile, F_OK) != -1) {
 	    quoted = quote_string(holdfile);
 	    g_fprintf(outf, _("WARNING: hold file %s exists."), holdfile);
@@ -992,7 +961,7 @@ start_server_check(
     /* check available disk space */
 
     if(do_localchk) {
-	for(hdp = holdingdisks; hdp != NULL; hdp = hdp->next) {
+	for(hdp = getconf_holdingdisks(); hdp != NULL; hdp = holdingdisk_next(hdp)) {
     	    quoted = quote_string(holdingdisk_get_diskdir(hdp));
 	    if(get_fs_usage(holdingdisk_get_diskdir(hdp), NULL, &fsusage) == -1) {
 		g_fprintf(outf, _("ERROR: holding dir %s (%s), "
@@ -1084,12 +1053,7 @@ start_server_check(
 	struct stat stat_old;
 	struct stat statbuf;
 
-	conf_logdir = getconf_str(CNF_LOGDIR);
-	if (*conf_logdir == '/') {
-	    conf_logdir = stralloc(conf_logdir);
-	} else {
-	    conf_logdir = stralloc2(config_dir, conf_logdir);
-	}
+	conf_logdir = config_dir_relative(getconf_str(CNF_LOGDIR));
 	logfile = vstralloc(conf_logdir, "/log", NULL);
 
 	quoted = quote_string(conf_logdir);
@@ -1191,19 +1155,8 @@ start_server_check(
 			conf_tapecycle, conf_runspercycle);
 	}
 
-	conf_infofile = getconf_str(CNF_INFOFILE);
-	if (*conf_infofile == '/') {
-	    conf_infofile = stralloc(conf_infofile);
-	} else {
-	    conf_infofile = stralloc2(config_dir, conf_infofile);
-	}
-
-	conf_indexdir = getconf_str(CNF_INDEXDIR);
-	if (*conf_indexdir == '/') {
-	    conf_indexdir = stralloc(conf_indexdir);
-	} else {
-	    conf_indexdir = stralloc2(config_dir, conf_indexdir);
-	}
+	conf_infofile = config_dir_relative(getconf_str(CNF_INFOFILE));
+	conf_indexdir = config_dir_relative(getconf_str(CNF_INDEXDIR));
 
 	quoted = quote_string(conf_infofile);
 	if(stat(conf_infofile, &statbuf) == -1) {
@@ -1464,8 +1417,6 @@ start_server_check(
     }
 
     amfree(datestamp);
-    amfree(config_dir);
-    amfree(config_name);
 
     g_fprintf(outf, _("Server check took %s seconds\n"), walltime_str(curclock()));
 
@@ -1869,9 +1820,6 @@ start_client_checks(
 			 _("  %d problems found.\n"), remote_errors),
 	    remote_errors);
     fflush(outf);
-
-    amfree(config_dir);
-    amfree(config_name);
 
     exit(userbad || remote_errors > 0);
     /*NOTREACHED*/

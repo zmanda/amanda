@@ -110,14 +110,13 @@ static int do_chunk(int, struct databuf *);
 
 int
 main(
-    int		main_argc,
-    char **	main_argv)
+    int		argc,
+    char **	argv)
 {
     static struct databuf db;
     struct cmdargs cmdargs;
     cmd_t cmd;
     int infd;
-    char *conffile;
     char *q = NULL;
     char *filename = NULL;
     char *qfilename = NULL;
@@ -125,8 +124,8 @@ main(
     times_t runtime;
     am_feature_t *their_features = NULL;
     int a;
-    int    new_argc,   my_argc;
-    char **new_argv, **my_argv;
+    config_overwrites_t *cfg_ovr = NULL;
+    char *cfg_opt = NULL;
 
     /*
      * Configure program for internationalization:
@@ -149,31 +148,25 @@ main(
     erroutput_type = (ERR_AMANDALOG|ERR_INTERACTIVE);
     set_logerror(logerror);
 
-    parse_conf(main_argc, main_argv, &new_argc, &new_argv);
-    my_argc = new_argc;
-    my_argv = new_argv;
+    cfg_ovr = extract_commandline_config_overwrites(&argc, &argv);
 
-    find_configuration((my_argc > 1), my_argv[1], &config_name, &config_dir);
+    if (argc > 1) 
+	cfg_opt = argv[1];
 
-    safe_cd();
+    config_init(CONFIG_INIT_EXPLICIT_NAME | CONFIG_INIT_USE_CWD | CONFIG_INIT_FATAL,
+		cfg_opt);
+    apply_config_overwrites(cfg_ovr);
 
-    conffile = stralloc2(config_dir, CONFFILE_NAME);
-    if(read_conffile(conffile)) {
-	error(_("errors processing config file \"%s\""), conffile);
-	/*NOTREACHED*/
-    }
-    amfree(conffile);
+    safe_cd(); /* do this *after* config_init() */
 
     check_running_as(RUNNING_AS_DUMPUSER);
 
     dbrename(config_name, DBG_SUBDIR_SERVER);
 
-    report_bad_conf_arg();
-
     g_fprintf(stderr,
 	    _("%s: pid %ld executable %s version %s\n"),
 	    get_pname(), (long) getpid(),
-	    my_argv[0], version());
+	    argv[0], version());
     fflush(stderr);
 
     /* now, make sure we are a valid user */
@@ -381,8 +374,6 @@ main(
 
 /*    } while(cmd != QUIT); */
 
-    free_new_argv(new_argc, new_argv);
-    free_server_config();
     amfree(errstr);
     amfree(chunker_timestamp);
     amfree(handle);
@@ -392,8 +383,6 @@ main(
     amfree(dumpdate);
     amfree(progname);
     amfree(options);
-    amfree(config_dir);
-    amfree(config_name);
     am_release_feature_set(their_features);
     their_features = NULL;
 

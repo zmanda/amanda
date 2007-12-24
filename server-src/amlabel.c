@@ -70,7 +70,6 @@ main(
     int		argc,
     char **	argv)
 {
-    char *conffile;
     char *conf_tapelist;
     char *outslot = NULL;
     char *label, *tapename = NULL;
@@ -81,10 +80,10 @@ main(
     tapetype_t *tape;
     size_t tt_blocksize_kb;
     int slotcommand;
-    int    new_argc;
-    char **new_argv;
     Device * device;
     ReadLabelStatusFlags label_status;
+    char *cfg_opt = NULL;
+    config_overwrites_t *cfg_ovr = NULL;
 
     /*
      * Configure program for internationalization:
@@ -108,47 +107,37 @@ main(
 
     erroutput_type = ERR_INTERACTIVE;
 
-    parse_conf(argc, argv, &new_argc, &new_argv);
+    cfg_ovr = extract_commandline_config_overwrites(&argc, &argv);
 
-    if(new_argc > 1 && strcmp(new_argv[1],"-f") == 0)
+    if(argc > 1 && strcmp(argv[1],"-f") == 0)
 	 force=1;
     else force=0;
 
-    if(new_argc != 3+force && new_argc != 5+force)
+    if(argc != 3+force && argc != 5+force)
 	usage();
 
-    config_name = new_argv[1+force];
-    label = new_argv[2+force];
+    cfg_opt = argv[1+force];
+    label = argv[2+force];
 
-    if(new_argc == 5+force) {
-	if(strcmp(new_argv[3+force], "slot"))
+    if(argc == 5+force) {
+	if(strcmp(argv[3+force], "slot"))
 	    usage();
-	slotstr = new_argv[4+force];
+	slotstr = argv[4+force];
 	slotcommand = 1;
     } else {
 	slotstr = "current";
 	slotcommand = 0;
     }
 
-    config_dir = vstralloc(CONFIG_DIR, "/", config_name, "/", NULL);
-    conffile = stralloc2(config_dir, CONFFILE_NAME);
-    if (read_conffile(conffile)) {
-	error(_("errors processing config file \"%s\""), conffile);
-	/*NOTREACHED*/
-    }
+    config_init(CONFIG_INIT_EXPLICIT_NAME | CONFIG_INIT_FATAL,
+		cfg_opt);
+    apply_config_overwrites(cfg_ovr);
 
     check_running_as(RUNNING_AS_DUMPUSER);
 
     dbrename(config_name, DBG_SUBDIR_SERVER);
 
-    report_bad_conf_arg();
-
-    conf_tapelist = getconf_str(CNF_TAPELIST);
-    if (*conf_tapelist == '/') {
-	conf_tapelist = stralloc(conf_tapelist);
-    } else {
-	conf_tapelist = stralloc2(config_dir, conf_tapelist);
-    }
+    conf_tapelist = config_dir_relative(getconf_str(CNF_TAPELIST));
     if (read_tapelist(conf_tapelist)) {
 	error(_("could not load tapelist \"%s\""), conf_tapelist);
 	/*NOTREACHED*/
@@ -174,7 +163,7 @@ main(
 	if(slotcommand) {
 	    g_fprintf(stderr,
 	     _("%s: no tpchanger specified in \"%s\", so slot command invalid\n"),
-		    new_argv[0], conffile);
+		    argv[0], config_filename);
 	    usage();
 	}
 	tapename = getconf_str(CNF_TAPEDEV);
@@ -289,12 +278,8 @@ main(
     device = NULL;
 
     clear_tapelist();
-    free_new_argv(new_argc, new_argv);
-    free_server_config();
     amfree(outslot);
-    amfree(conffile);
     amfree(conf_tapelist);
-    amfree(config_dir);
     config_name=NULL;
     dbclose();
 

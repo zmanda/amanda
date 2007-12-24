@@ -203,7 +203,6 @@ main(
     const int on = 1;
     int r;
 #endif
-    char *conffile;
 
     /*
      * Configure program for internationalization:
@@ -248,12 +247,7 @@ main(
 	/*NOTREACHED*/
     }
 
-    conffile = vstralloc(CONFIG_DIR, "/", "amanda-client.conf", NULL);
-    if (read_clientconf(conffile) > 0) {
-	error(_("error reading conffile: %s"), conffile);
-	/*NOTREACHED*/
-    }
-    amfree(conffile);
+    config_init(CONFIG_INIT_CLIENT, NULL);
 
     check_running_as(RUNNING_AS_CLIENT_LOGIN);
 
@@ -478,7 +472,6 @@ main(
      */
     event_loop(0);
 
-    free_server_config();
     close(in);
     close(out);
     dbclose();

@@ -149,9 +149,8 @@ main(
     char *label = NULL;
     rst_flags_t *rst_flags;
     long tmplong;
-    int    new_argc,   my_argc;
-    char **new_argv, **my_argv;
     GSList *dumpspecs;
+    config_overwrites_t *cfg_ovr;
 
     /*
      * Configure program for internationalization:
@@ -177,12 +176,9 @@ main(
     rst_flags = new_rst_flags();
     rst_flags->inline_assemble = 0;
 
-    parse_conf(argc, argv, &new_argc, &new_argv);
-    my_argc = new_argc;
-    my_argv = new_argv;
-
+    cfg_ovr = new_config_overwrites(argc/2);
     /* handle options */
-    while( (opt = getopt(my_argc, my_argv, "b:cCd:rphf:l:")) != -1) {
+    while( (opt = getopt(argc, argv, "b:cCd:rphf:l:o:")) != -1) {
 	switch(opt) {
 	case 'b':
 	    tmplong = strtol(optarg, &e, 10);
@@ -207,6 +203,9 @@ main(
 	    }
 	    break;
 	case 'c': rst_flags->compress = 1; break;
+	case 'o':
+	    add_config_overwrite_opt(cfg_ovr, optarg);
+	    break;
 	case 'C':
 	    rst_flags->compress = 1;
 	    rst_flags->comp_type = COMPRESS_BEST_OPT;
@@ -230,7 +229,9 @@ main(
 	}
     }
 
-    set_server_config_from_options();
+    /* initialize a generic configuration without reading anything */
+    config_init(CONFIG_INIT_CLIENT, NULL);
+    apply_config_overwrites(cfg_ovr);
 
     if(rst_flags->compress && rst_flags->raw) {
 	g_fprintf(stderr,
@@ -238,17 +239,17 @@ main(
 	usage();
     }
 
-    if(optind >= my_argc) {
+    if(optind >= argc) {
 	g_fprintf(stderr, _("%s: Must specify tape-device or holdingfile\n"),
 			get_pname());
 	usage();
     }
 
-    tapename = my_argv[optind++];
+    tapename = argv[optind++];
 
-    dumpspecs = cmdline_parse_dumpspecs(my_argc - optind, my_argv + optind, 
-					CMDLINE_PARSE_DATESTAMP);
-
+    dumpspecs = cmdline_parse_dumpspecs(argc - optind, argv + optind, 
+					CMDLINE_PARSE_DATESTAMP |
+					CMDLINE_EMPTY_TO_WILDCARD);
 
     holding_disk_mode = check_device_type(tapename);
 

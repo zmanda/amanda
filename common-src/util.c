@@ -722,6 +722,22 @@ char* find_regex_substring(const char* base_string, const regmatch_t match) {
     return rval;
 }
 
+int compare_possibly_null_strings(const char * a, const char * b) {
+    if (a == b) {
+        /* NULL or otherwise, they're the same. */
+        return 0;
+    } else if (a == NULL) {
+        /* b != NULL */
+        return -1;
+    } else if (b == NULL) {
+        /* a != NULL */
+        return 1;
+    } else {
+        /* a != NULL != b */
+        return strcmp(a, b);
+    }
+}
+
 gboolean amanda_thread_init(void) {
     gboolean success = FALSE;
 #ifdef HAVE_LIBCURL
@@ -828,7 +844,7 @@ _str_exit_status(
 }
 
 void
-check_running_as(enum RunningAsWho who)
+check_running_as(running_as_flags who)
 {
 #ifdef CHECK_USERID
     struct passwd *pw;
@@ -933,3 +949,24 @@ become_root(void)
 #endif
     return 1;
 }
+
+/*
+ * Process parameters
+ */
+
+/* current process name */
+#define MAX_PNAME 128
+static char pname[MAX_PNAME] = "unknown";
+
+void
+set_pname(char *p)
+{
+    g_strlcpy(pname, p, sizeof(pname));
+}
+
+char *
+get_pname(void)
+{
+    return pname;
+}
+

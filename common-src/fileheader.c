@@ -30,6 +30,7 @@
 #include "amanda.h"
 #include "fileheader.h"
 #include <glib.h>
+#include "util.h"
 
 static const char *	filetype2str(filetype_t);
 static filetype_t	str2filetype(const char *);

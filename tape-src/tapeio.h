@@ -148,4 +148,6 @@ char *tapeio_next_devname(char * dev_left,
 #define NOT_AMANDA_TAPE_MSG "not an amanda tape"
 #define CHECK_NOT_AMANDA_TAPE_MSG(x) (!BSTRNCMP(x, NOT_AMANDA_TAPE_MSG))
 
+ssize_t getconf_readblocksize(void);
+
 #endif /* ! TAPEIO_H */

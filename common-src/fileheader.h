@@ -31,8 +31,8 @@
 #ifndef FILEHEADER_H
 #define FILEHEADER_H
 
-#include "amanda.h"
-#include "util.h"		/* for bstrncmp() */
+#include <glib.h>
+#include <stdio.h>
 
 #define STRMAX		256
 

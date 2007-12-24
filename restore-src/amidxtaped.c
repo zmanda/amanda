@@ -56,7 +56,6 @@
 static char *pgm = "amidxtaped";	/* in case argv[0] is not set */
 
 extern char *rst_conf_logfile;
-extern char *config_dir;
 
 static int get_lock = 0;
 static int from_amandad;
@@ -429,24 +428,14 @@ main(
 	    re_config = stralloc(s);
 	}
 	else if(buf[0] != '\0' && buf[0] >= '0' && buf[0] <= '9') {
-/* XXX does nothing?     amrestore_nargs = atoi(buf); */
 	    re_end = 1;
 	}
     }
     amfree(buf);
 
     if(re_config) {
-	char *conffile;
-	config_dir = vstralloc(CONFIG_DIR, "/", re_config, "/", NULL);
-	conffile = stralloc2(config_dir, CONFFILE_NAME);
-	if (read_conffile(conffile)) {
-	    dbprintf(_("config '%s' not found\n"), re_config);
-	    amfree(re_config);
-	    re_config = NULL;
-	}
-	amfree(conffile);
-
-	dbrename(config_name, DBG_SUBDIR_SERVER);
+	config_init(CONFIG_INIT_EXPLICIT_NAME | CONFIG_INIT_FATAL, re_config);
+	dbrename(re_config, DBG_SUBDIR_SERVER);
     }
 
     check_running_as(RUNNING_AS_DUMPUSER_PREFERRED);
@@ -592,7 +581,6 @@ main(
     amfree(rst_flags->alt_tapedev);
     amfree(rst_flags);
     dumpspec_list_free(dumpspecs);
-    amfree(config_dir);
     amfree(re_config);
     dbclose();
     return 0;

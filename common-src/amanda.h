@@ -37,7 +37,8 @@
 #include "amflock.h"
 
 #ifdef HAVE_CONFIG_H
-#include "config.h"
+/* use a relative path here to avoid conflicting with Perl's config.h. */
+#include "../config/config.h"
 #endif
 
 /*
@@ -111,7 +112,9 @@
 		plural((String1), (String2), (Count))
 #endif
 #define T_(String)			String
+#ifndef SWIG /* TODO: make this go away */
 #define _(String)			dgettext("amanda", (String))
+#endif
 
 #ifdef HAVE_FCNTL_H
 #  include <fcntl.h>
@@ -470,9 +473,6 @@ extern int debug_amtable_alloc(const char *file,
 						     (f))
 
 extern void amtable_free(void **, size_t *);
-
-extern uid_t  client_uid;
-extern gid_t  client_gid;
 
 char **	safe_env(void);
 char *	validate_regexp(const char *regex);

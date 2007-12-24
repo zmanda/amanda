@@ -72,8 +72,6 @@ int     copy_file(char *dst, char *src, char **errmsg);
  */
 int validate_mailto(const char *mailto);
 
-char *taperalgo2str(int taperalgo);
-
 /* This function is a portable reimplementation of readdir(). It
  * returns a newly-allocated string, that should be freed with
  * free(). Returns NULL on error or end of directory.
@@ -102,6 +100,10 @@ int search_directory(DIR * handle, const char * regex,
 char* find_regex_substring(const char* base_string, const regmatch_t match);
 
 void free_new_argv(int new_argc, char **new_argv);
+
+/* Like strcmp(a, b), except that NULL strings are sorted before non-NULL
+ * strings, instead of segfaulting. */
+int compare_possibly_null_strings(const char * a, const char * b);
 
 /* Does g_thread_init(), along with anything else that should be done
  * before/after thread setup. It's OK to call this function more than once.
@@ -154,7 +156,7 @@ char *_str_exit_status(char *subject, amwait_t status);
  *
  * @param who: one of the RUNNING_AS_* constants, below.
  */
-enum RunningAsWho {
+typedef enum {
         /* userid is 0 */
     RUNNING_AS_ROOT,
 
@@ -173,9 +175,9 @@ enum RunningAsWho {
 	/* '&' this on to only check the uid, not the euid; use this for programs
 	 * that will call become_root() */
     RUNNING_AS_UID_ONLY = 1 << 8
-};
+} running_as_flags;
 
-void check_running_as(enum RunningAsWho who);
+void check_running_as(running_as_flags who);
 
 /* Drop and regain root priviledges; used from setuid-root binaries which only
  * need to be root for certain operations. Does nothing if SINGLE_USERID is 
@@ -194,6 +196,25 @@ int set_root_privs(int need_root);
  * @returns: true if the priviledge change succeeded
  */
 int become_root(void);
+
+/*
+ * Process parameters
+ */
+
+/* Set the name of the process.  The parameter is copied, and remains
+ * the responsibility of the caller on return. This value is used in log
+ * messages and other output throughout Amanda.
+ *
+ * @param pname: the new process name
+ */
+void set_pname(char *pname);
+
+/* Get the current process name; the result is in a static buffer, and
+ * should *not* be free()d by the caller.
+ *
+ * @returns: process name
+ */
+char *get_pname(void);
 
 /*
  * Readline support

@@ -18,6 +18,9 @@
  * Sunnyvale, CA 94085, USA, or: http://www.zmanda.com
  */
 
+#ifndef QUEUEING_H
+#define QUEUEING_H
+
 /* This file contains the code for fast threaded reading and writing to/from
  * media, for devices that don't require any special handling. Some
  * devices (e.g., CD-ROM) may use a different method for bulk reads or
@@ -25,9 +28,6 @@
 
 #include <glib.h>
 #include "property.h"
-
-#ifndef QUEUEING_H
-#define QUEUEING_H
 
 #define DEFAULT_MAX_BUFFER_MEMORY (1*1024*1024)
 

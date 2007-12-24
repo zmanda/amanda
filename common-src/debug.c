@@ -55,10 +55,6 @@ static char *dbgdir = NULL;
 /* time debug log was opened (timestamp of the file) */
 static time_t open_time;
 
-/* current process name */
-#define MAX_PNAME 128
-static char pname[MAX_PNAME] = "unknown";
-
 /* pointer to logfile.c's 'logerror()', if we're linked
  * with it */
 static void (*logerror_fn)(char *) = NULL;
@@ -199,7 +195,6 @@ debug_setup_logging(void)
 static void
 debug_setup_1(char *config, char *subdir)
 {
-    struct passwd *pwent;
     char *pname;
     size_t pname_len;
     char *e = NULL;
@@ -216,11 +211,6 @@ debug_setup_1(char *config, char *subdir)
     int i;
 
     memset(&sbuf, 0, SIZEOF(sbuf));
-    if(client_uid == (uid_t) -1 && (pwent = getpwnam(CLIENT_LOGIN)) != NULL) {
-	client_uid = pwent->pw_uid;
-	client_gid = pwent->pw_gid;
-	endpwent();
-    }
 
     pname = get_pname();
     pname_len = strlen(pname);
@@ -240,7 +230,7 @@ debug_setup_1(char *config, char *subdir)
 	dbgdir = vstralloc(AMANDA_DBGDIR, "/", subdir, "/", NULL);
     else
 	dbgdir = stralloc2(AMANDA_DBGDIR, "/");
-    if(mkpdir(dbgdir, 02700, client_uid, client_gid) == -1) {
+    if(mkpdir(dbgdir, 02700, get_client_uid(), get_client_gid()) == -1) {
 	error(_("create debug directory \"%s\": %s"),
 	      dbgdir, strerror(errno));
 	/*NOTREACHED*/
@@ -349,9 +339,9 @@ debug_setup_2(
     /* If we're root, change the ownership of the debug files.  If we're not root,
      * this would either be redundant or an error. */
     if (geteuid() == 0) {
-	if (chown(db_filename, client_uid, client_gid) < 0) {
+	if (chown(db_filename, get_client_uid(), get_client_gid()) < 0) {
 	    dbprintf(_("chown(%s, %d, %d) failed: %s"),
-		     db_filename, (int)client_uid, (int)client_gid, strerror(errno));
+		     db_filename, (int)get_client_uid(), (int)get_client_gid(), strerror(errno));
 	}
     }
     amfree(dbgdir);
@@ -696,17 +686,5 @@ debug_dup_stderr_to_debug(void)
 	   g_assert_not_reached();
        }
     }
-}
-
-void
-set_pname(char *p)
-{
-    g_strlcpy(pname, p, sizeof(pname));
-}
-
-char *
-get_pname(void)
-{
-    return pname;
 }
 

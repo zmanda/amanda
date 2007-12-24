@@ -112,7 +112,7 @@ main(
 	}
     } while(0);
 
-    if(client_uid == (uid_t) -1) {
+    if(get_client_uid() == (uid_t) -1) {
 	error(_("error [cannot find user %s in passwd file]\n"), CLIENT_LOGIN);
 	/*NOTREACHED*/
     }

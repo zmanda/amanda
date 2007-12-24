@@ -132,12 +132,7 @@ handle_sigint(
 int
 lock_logfile(void)
 {
-    rst_conf_logdir = getconf_str(CNF_LOGDIR);
-    if (*rst_conf_logdir == '/') {
-	rst_conf_logdir = stralloc(rst_conf_logdir);
-    } else {
-	rst_conf_logdir = stralloc2(config_dir, rst_conf_logdir);
-    }
+    rst_conf_logdir = config_dir_relative(getconf_str(CNF_LOGDIR));
     rst_conf_logfile = vstralloc(rst_conf_logdir, "/log", NULL);
     if (access(rst_conf_logfile, F_OK) == 0) {
 	dbprintf(_("%s exists: amdump or amflush is already running, "

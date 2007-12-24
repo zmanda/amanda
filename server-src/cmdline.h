@@ -92,17 +92,16 @@ dumpspec_list_free(
  *
  *  [ host [ disk [ datestamp [ host [ disk [ datestamp .. ] ] ] ] ] ]
  *
- * If no results are specified, a dumpspec with all entries set to ""
- * is returned; the caller may treat this as a wildcard or an error, as
- * appropriate.  The macro "cmdline_dumpspec_list_is_wildcard" can test
- * for this condition.
+ * If no results are specified, the function either returns NULL (an 
+ * empty list) or, if CMDLINE_EMPTY_TO_WILDCARD is given, a list 
+ * containing a single dumpspec with all fields set to "".
  *
- * Prints a message to stderr and returns NULL if an error occurs.
+ * Calls error() with any fatal errors, e.g., invalid regexes.
  *
  * @param argc: count of command line arguments
  * @param argv: command line arguments
- * @param flags: bitmask of the CMDLINE_PARSE_* flags
- * @returns: dumpspec list, or NULL on error
+ * @param flags: bitmask of the CMDLINE_* flags
+ * @returns: dumpspec list
  */
 GSList *
 cmdline_parse_dumpspecs(
@@ -114,28 +113,8 @@ cmdline_parse_dumpspecs(
 #    define CMDLINE_PARSE_DATESTAMP (1<<0)
     /* parse levels after datestamps or disks */
 #    define CMDLINE_PARSE_LEVEL (1<<1)
-
-/* Is the dumpspec list the wildcard returned from 
- * cmdline_parse_dumpspecs?
- *
- * NOTE: 'list' will be evaluated many times; it should be a
- * simple variable or other side-effect-free value.
- *
- * @param list: GSList returned from cmdline_parse_dumpspecs
- * @return: boolean
- */
-/* (this is ugly, but the compiler will make short work of it) */
-#define cmdline_dumpspec_list_is_wildcard(list)			\
-   ((list)							\
- && (!(list)->next)						\
- && (((dumpspec_t *)((list)->data))->host)			\
- && (((dumpspec_t *)((list)->data))->host[0] == '\0')	        \
- && (((dumpspec_t *)((list)->data))->disk)			\
- && (((dumpspec_t *)((list)->data))->disk[0] == '\0')	        \
- && (((dumpspec_t *)((list)->data))->datestamp)		        \
- && (((dumpspec_t *)((list)->data))->datestamp[0] == '\0')	\
- && (((dumpspec_t *)((list)->data))->level)		        \
- && (((dumpspec_t *)((list)->data))->level[0] == '\0'))
+    /* an empty argv should result in a wildcard dumpspec */
+#    define CMDLINE_EMPTY_TO_WILDCARD (1<<2)
 
 /*
  * Formatting

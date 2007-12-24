@@ -43,6 +43,7 @@
 
 #include "amanda.h"
 #include "conffile.h"
+#include "columnar.h"
 #include "tapefile.h"
 #include "diskfile.h"
 #include "infofile.h"
@@ -324,7 +325,6 @@ main(
     int		argc,
     char **	argv)
 {
-    char *conffile;
     char *conf_diskfile;
     char *conf_tapelist;
     char *conf_infofile;
@@ -333,15 +333,15 @@ main(
     int opt;
     char *mail_cmd = NULL, *printer_cmd = NULL;
     extern int optind;
-    char * cwd;
+    char * cwd = NULL;
     char *ColumnSpec = "";
     char *errstr = NULL;
     int cn;
     int mailout = 1;
     char *mailto = NULL;
-    int    new_argc,   my_argc;
-    char **new_argv, **my_argv;
     char *lbl_templ = NULL;
+    config_overwrites_t *cfg_ovr = NULL;
+    char *cfg_opt = NULL;
 
     /*
      * Configure program for internationalization:
@@ -375,24 +375,18 @@ main(
 	/*NOTREACHED*/
     }
 
-    parse_conf(argc, argv, &new_argc, &new_argv);
-    my_argc = new_argc;
-    my_argv = new_argv;
-
-    if (my_argc < 2) {
-	config_dir = stralloc2(cwd, "/");
-	if ((config_name = strrchr(cwd, '/')) != NULL) {
-	    config_name = stralloc(config_name + 1);
-	}
-    } else {
-	if (my_argv[1][0] == '-') {
+    if (argc >= 2) {
+	if (argv[1][0] == '-') {
 	    usage();
 	    return 1;
 	}
-	config_name = stralloc(my_argv[1]);
-	config_dir = vstralloc(CONFIG_DIR, "/", config_name, "/", NULL);
-	--my_argc; ++my_argv;
-	while((opt = getopt(my_argc, my_argv, "M:f:l:p:i")) != EOF) {
+
+	/* get the config name and move past it */
+	cfg_opt = argv[1];
+	--argc; ++argv;
+
+	cfg_ovr = new_config_overwrites(argc/2);
+	while((opt = getopt(argc, argv, "o:M:f:l:p:i")) != EOF) {
 	    switch(opt) {
 	    case 'i': 
 		mailout = 0;
@@ -441,6 +435,9 @@ main(
                     psfname = vstralloc(cwd, "/", optarg, NULL);
 		}
                 break;
+	    case 'o':
+		add_config_overwrite_opt(cfg_ovr, optarg);
+		break;
             case '?':
 		usage();
 		return 1;
@@ -449,8 +446,8 @@ main(
 	    }
 	}
 
-	my_argc -= optind;
-	my_argv += optind;
+	argc -= optind;
+	argv += optind;
     }
     if( !mailout && mailto ){
 	g_printf(_("You cannot specify both -i & -M at the same time\n"));
@@ -467,26 +464,19 @@ main(
     }
 #endif
 
-    safe_cd();
-
     /* read configuration files */
 
-    conffile = stralloc2(config_dir, CONFFILE_NAME);
-    /* Ignore error from read_conffile */
-    read_conffile(conffile);
-    amfree(conffile);
+    /* ignore any errors reading the config file (amreport can run without a config) */
+    config_init(CONFIG_INIT_EXPLICIT_NAME | CONFIG_INIT_USE_CWD, cfg_opt);
+    if (cfg_ovr) apply_config_overwrites(cfg_ovr);
 
     check_running_as(RUNNING_AS_DUMPUSER);
 
     dbrename(config_name, DBG_SUBDIR_SERVER);
 
-    report_bad_conf_arg();
-    conf_diskfile = getconf_str(CNF_DISKFILE);
-    if (*conf_diskfile == '/') {
-	conf_diskfile = stralloc(conf_diskfile);
-    } else {
-	conf_diskfile = stralloc2(config_dir, conf_diskfile);
-    }
+    safe_cd(); /* must be called *after* config_init() */
+
+    conf_diskfile = config_dir_relative(getconf_str(CNF_DISKFILE));
     /* Ignore error from read_diskfile */
     read_diskfile(conf_diskfile, &diskq);
     amfree(conf_diskfile);
@@ -498,21 +488,11 @@ main(
                 }
     }
     
-    conf_tapelist = getconf_str(CNF_TAPELIST);
-    if (*conf_tapelist == '/') {
-	conf_tapelist = stralloc(conf_tapelist);
-    } else {
-	conf_tapelist = stralloc2(config_dir, conf_tapelist);
-    }
+    conf_tapelist = config_dir_relative(getconf_str(CNF_TAPELIST));
     /* Ignore error from read_tapelist */
     read_tapelist(conf_tapelist);
     amfree(conf_tapelist);
-    conf_infofile = getconf_str(CNF_INFOFILE);
-    if (*conf_infofile == '/') {
-	conf_infofile = stralloc(conf_infofile);
-    } else {
-	conf_infofile = stralloc2(config_dir, conf_infofile);
-    }
+    conf_infofile = config_dir_relative(getconf_str(CNF_INFOFILE));
     if(open_infofile(conf_infofile)) {
 	error(_("could not open info db \"%s\""), conf_infofile);
 	/*NOTREACHED*/
@@ -523,7 +503,7 @@ main(
     unitdivisor = getconf_unit_divisor();
 
     ColumnSpec = getconf_str(CNF_COLUMNSPEC);
-    if(SetColumDataFromString(ColumnData, ColumnSpec, &errstr) < 0) {
+    if(SetColumnDataFromString(ColumnData, ColumnSpec, &errstr) < 0) {
 	curlog = L_ERROR;
 	curprog = P_REPORTER;
 	curstr = errstr;
@@ -531,7 +511,7 @@ main(
         amfree(errstr);
 	curstr = NULL;
 	ColumnSpec = "";		/* use the default */
-	if(SetColumDataFromString(ColumnData, ColumnSpec, &errstr) < 0) {
+	if(SetColumnDataFromString(ColumnData, ColumnSpec, &errstr) < 0) {
 	    curlog = L_ERROR;
 	    curprog = P_REPORTER;
 	    curstr = errstr;
@@ -550,12 +530,7 @@ main(
     if(!logfname) {
 	char *conf_logdir;
 
-	conf_logdir = getconf_str(CNF_LOGDIR);
-	if (*conf_logdir == '/') {
-	    conf_logdir = stralloc(conf_logdir);
-	} else {
-	    conf_logdir = stralloc2(config_dir, conf_logdir);
-	}
+	conf_logdir = config_dir_relative(getconf_str(CNF_LOGDIR));
 	logfname = vstralloc(conf_logdir, "/", "log", NULL);
 	amfree(conf_logdir);
     }
@@ -803,12 +778,8 @@ main(
 
     clear_tapelist();
     free_disklist(&diskq);
-    free_new_argv(new_argc, new_argv);
-    free_server_config();
     amfree(run_datestamp);
     amfree(tape_labels);
-    amfree(config_dir);
-    amfree(config_name);
     amfree(printer_cmd);
     amfree(mail_cmd);
     amfree(logfname);
@@ -2815,11 +2786,7 @@ copy_template_file(
   int fd;
   ssize_t numread;
 
-  if (strchr(lbl_templ, '/') == NULL) {
-    lbl_templ = stralloc2(config_dir, lbl_templ);
-  } else {
-    lbl_templ = stralloc(lbl_templ);
-  }
+  lbl_templ = config_dir_relative(lbl_templ);
   if ((fd = open(lbl_templ, 0)) < 0) {
     curlog = L_ERROR;
     curprog = P_REPORTER;

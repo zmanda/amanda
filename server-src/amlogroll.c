@@ -45,13 +45,11 @@ main(
     int		argc,
     char **	argv)
 {
-    char *conffile;
     char *logfname;
     char *conf_logdir;
     FILE *logfile;
-    char * cwd;
-    int    new_argc,   my_argc;
-    char **new_argv, **my_argv;
+    config_overwrites_t *cfg_ovr = NULL;
+    char *cfg_opt = NULL;
 
     /*
      * Configure program for internationalization:
@@ -68,55 +66,28 @@ main(
 
     dbopen(DBG_SUBDIR_SERVER);
 
-    /* Process options */
-    
     erroutput_type = ERR_INTERACTIVE;
 
-    cwd = g_get_current_dir();
-    if (cwd == NULL) {
-	error(_("Cannot determine current working directory: %s"),
-	        strerror(errno));
-        g_assert_not_reached();
+    /* Process options */
+    cfg_ovr = extract_commandline_config_overwrites(&argc, &argv);
+
+    if (argc >= 2) {
+	cfg_opt = argv[1];
     }
-
-    parse_conf(argc, argv, &new_argc, &new_argv);
-    my_argc = new_argc;
-    my_argv = new_argv;
-
-    if (my_argc < 2) {
-	config_dir = stralloc2(cwd, "/");
-	if ((config_name = strrchr(cwd, '/')) != NULL) {
-	    config_name = stralloc(config_name + 1);
-	}
-    } else {
-	config_name = stralloc(my_argv[1]);
-	config_dir = vstralloc(CONFIG_DIR, "/", config_name, "/", NULL);
-    }
-
-    amfree(cwd);
-    safe_cd();
 
     /* read configuration files */
 
-    conffile = stralloc2(config_dir, CONFFILE_NAME);
-    if(read_conffile(conffile)) {
-        error(_("errors processing config file \"%s\""), conffile);
-	/*NOTREACHED*/
-    }
-    amfree(conffile);
+    config_init(CONFIG_INIT_EXPLICIT_NAME | CONFIG_INIT_USE_CWD | CONFIG_INIT_FATAL,
+		cfg_opt);
+    apply_config_overwrites(cfg_ovr);
+
+    safe_cd(); /* must happen after config_init */
 
     check_running_as(RUNNING_AS_DUMPUSER);
 
     dbrename(config_name, DBG_SUBDIR_SERVER);
 
-    report_bad_conf_arg();
-
-    conf_logdir = getconf_str(CNF_LOGDIR);
-    if (*conf_logdir == '/') {
-        conf_logdir = stralloc(conf_logdir);
-    } else {
-        conf_logdir = stralloc2(config_dir, conf_logdir);
-    }
+    conf_logdir = config_dir_relative(getconf_str(CNF_LOGDIR));
     logfname = vstralloc(conf_logdir, "/", "log", NULL);
     amfree(conf_logdir);
 
@@ -142,10 +113,6 @@ main(
     log_rename(datestamp);
 
     amfree(datestamp);
-    amfree(config_dir);
-    amfree(config_name);
-    free_new_argv(new_argc, new_argv);
-    free_server_config();
 
     dbclose();
 

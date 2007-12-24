@@ -76,6 +76,7 @@ AMANDA_SETUP_LFS
 AMANDA_SETUP_CHANGER
 AMANDA_SETUP_GETFSENT
 AMANDA_SETUP_FILE_LOCKING
+AMANDA_SETUP_SWIG
 AMANDA_CHECK_COMPRESSION
 AMANDA_CHECK_IPV6
 AMANDA_CHECK_SETUID
@@ -131,6 +132,7 @@ AMANDA_PROG_AR
 AMANDA_PROG_GETTEXT
 AC_PROG_AWK
 AC_PROG_YACC
+AC_PROG_MKDIR_P
 AMANDA_PROG_DD
 AMANDA_PROG_BASH
 AMANDA_PROG_SORT
@@ -139,6 +141,7 @@ AMANDA_PROG_MT
 AMANDA_PROG_PRINT
 AMANDA_PROG_PCAT
 AMANDA_PROG_PERL
+AMANDA_PROG_SWIG
 
 dnl -------------------------------------------------------------------------
 
@@ -376,6 +379,7 @@ AC_CONFIG_FILES([
     installcheck/Makefile
     man/Makefile
     oldrecover-src/Makefile
+    perl/Makefile
     po/Makefile
     recover-src/Makefile
     restore-src/Makefile

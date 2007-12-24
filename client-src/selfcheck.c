@@ -97,7 +97,6 @@ main(
     char *optstr = NULL;
     char *err_extra = NULL;
     char *s, *fp;
-    char *conffile;
     option_t *options;
     int ch;
 
@@ -129,13 +128,7 @@ main(
 	amandad_auth = stralloc(argv[2]);
     }
 
-    conffile = vstralloc(CONFIG_DIR, "/", "amanda-client.conf", NULL);
-    if (read_clientconf(conffile) > 0) {
-	g_printf(_("ERROR [reading conffile: %s]\n"), conffile);
-	error(_("error reading conffile: %s"), conffile);
-	/*NOTREACHED*/
-    }
-    amfree(conffile);
+    config_init(CONFIG_INIT_CLIENT, NULL);
 
     check_running_as(RUNNING_AS_CLIENT_LOGIN);
 
@@ -169,16 +162,11 @@ main(
 	    fflush(stdout);
 
 	    if (g_options->config) {
-		conffile = vstralloc(CONFIG_DIR, "/", g_options->config, "/",
-				     "amanda-client.conf", NULL);
-		if (read_clientconf(conffile) > 0) {
-		    g_printf(_("ERROR [reading conffile: %s]\n"), conffile);
-		    error(_("error reading conffile: %s"), conffile);
-		    /*NOTREACHED*/
-		}
-		amfree(conffile);
+		/* overlay this configuration on the existing (nameless) configuration */
+		config_init(CONFIG_INIT_CLIENT | CONFIG_INIT_EXPLICIT_NAME | CONFIG_INIT_OVERLAY,
+			    g_options->config);
 
-		dbrename(g_options->config, DBG_SUBDIR_CLIENT);
+		dbrename(config_name, DBG_SUBDIR_CLIENT);
 	    }
 
 	    continue;
@@ -306,7 +294,6 @@ main(
     am_release_feature_set(our_features);
     our_features = NULL;
     free_g_options(g_options);
-    free_server_config();
 
     dbclose();
     return 0;

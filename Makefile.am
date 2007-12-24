@@ -33,6 +33,7 @@ SUBDIRS = \
 	$(RESTORE_SUBDIRS) \
 	$(RECOVER_SUBDIRS) \
 	$(PLOT_SUBDIRS) \
+	perl \
 	po \
 	man \
 	example \

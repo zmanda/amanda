@@ -1,14 +1,19 @@
 # Makefile for Amanda tape library.
 
+SUBDIRS = . tests
+
 include $(top_srcdir)/config/automake/precompile.am
 
 INCLUDES =	-I$(top_builddir)/common-src \
 		-I$(top_srcdir)/common-src \
 		-I$(top_srcdir)/gnulib
 
-lib_LTLIBRARIES = 	libamdevice.la
-LIB_EXTENSION = la
+sbin_PROGRAMS =
 
+## libamdevice.la
+
+amlib_LTLIBRARIES = 	libamdevice.la
+libamdevice_la_LDFLAGS = -release $(VERSION) 
 libamdevice_la_SOURCES = property.c device.c queueing.c semaphore.c \
 	null-device.c rait-device.c vfs-device.c 
 
@@ -36,17 +41,7 @@ endif
 
 libamdevice_la_LDFLAGS =  -release $(VERSION)
 
-noinst_HEADERS = device.h null-device.h queueing.h semaphore.h \
+noinst_HEADERS = null-device.h semaphore.h \
 	tape-ops.h property.h rait-device.h \
 	tape-device.h vfs-device.h
-
-
-SUBDIRS = . tests
-
-###
-# Because libamanda includes routines (e.g. regex) provided by some system
-# libraries, and because of the way libtool sets up the command line, we
-# need to list libamanda twice here, first to override the system library
-# routines, and second to pick up any references in the other libraries.
-###
-
+aminclude_HEADERS = device.h queueing.h

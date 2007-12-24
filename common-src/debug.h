@@ -32,8 +32,8 @@
 /* this file is included from amanda.h; there is no need to include
  * it explicitly in source files. */
 
-#ifndef DEBUG_H
-#define DEBUG_H
+#ifndef AMANDA_DEBUG_H
+#define AMANDA_DEBUG_H
 
 /*
  * GENERAL LOGGING
@@ -201,27 +201,11 @@ void debug_dup_stderr_to_debug(void);
  * PROCESS NAME
  */
 
-/* Get and set the notion of the "current process name", as used in log
- * messages and other output throughout Amanda.  */
-
-/* Set the name of the process.  The parameter is copied, and remains
- * the responsibility of the caller on return.
- *
- * @param pname: the new process name
- */
-void set_pname(char *pname);
-
-/* Get the current process name; the result is in a static buffer, and
- * should *not* be free()d by the caller.
- *
- * @returns: process name
- */
-char *get_pname(void);
-
 /*
  * ASSERTIONS
  */
 
+#ifndef SWIG
 #ifdef ASSERTIONS
 
 /* Like the standard assert(), but call g_error() to log the result properly */
@@ -238,5 +222,6 @@ char *get_pname(void);
 #define assert(exp) ((void)0)
 
 #endif	/* ASSERTIONS */
+#endif	/* SWIG */
 
-#endif /* DEBUG_H */
+#endif /* AMANDA_DEBUG_H */

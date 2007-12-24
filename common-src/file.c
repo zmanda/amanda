@@ -36,9 +36,7 @@
 
 static int mk1dir(const char *, mode_t, uid_t, gid_t);
 static void areads_getbuf(const char *s, int l, int fd);
-
-uid_t client_uid = (uid_t) -1;
-gid_t client_gid = (gid_t) -1;
+static char *original_cwd = NULL;
 
 /* Make a directory (internal function).
  * If the directory already exists then we pretend we created it.
@@ -169,9 +167,6 @@ rmpdir(
  *
  * void safe_cd (void)
  *
- * entry:	client_uid and client_gid set to CLIENT_LOGIN information
- * exit:	none
- *
  * Set a default umask of 0077.
  *
  * Create the Amada debug directory (if defined) and the Amanda temp
@@ -194,16 +189,16 @@ safe_cd(void)
 {
     int			cd_ok = 0;
     struct stat		sbuf;
-    struct passwd	*pwent;
     char		*d;
-
-    if(client_uid == (uid_t) -1 && (pwent = getpwnam(CLIENT_LOGIN)) != NULL) {
-	client_uid = pwent->pw_uid;
-	client_gid = pwent->pw_gid;
-	endpwent();
-    }
+    uid_t		client_uid = get_client_uid();
+    gid_t		client_gid = get_client_gid();
 
     (void) umask(0077);
+
+    /* stash away the current directory for later reference */
+    if (original_cwd == NULL) {
+	original_cwd = g_get_current_dir();
+    }
 
     if (client_uid != (uid_t) -1) {
 #if defined(AMANDA_DBGDIR)
@@ -779,6 +774,44 @@ int robust_close(int fd) {
     }
 }
 
+uid_t
+get_client_uid(void)
+{
+    static uid_t client_uid = (uid_t) -1;
+    struct passwd      *pwent;
+
+    if(client_uid == (uid_t) -1 && (pwent = getpwnam(CLIENT_LOGIN)) != NULL) {
+	client_uid = pwent->pw_uid;
+	endpwent();
+    }
+
+    return client_uid;
+}
+
+gid_t
+get_client_gid(void)
+{
+    static gid_t client_gid = (gid_t) -1;
+    struct passwd      *pwent;
+
+    if(client_gid == (gid_t) -1 && (pwent = getpwnam(CLIENT_LOGIN)) != NULL) {
+	client_gid = pwent->pw_gid;
+	endpwent();
+    }
+
+    return client_gid;
+}
+
+char *
+get_original_cwd(void)
+{
+    if (original_cwd == NULL) {
+	original_cwd = g_get_current_dir();
+    }
+
+    return original_cwd;
+}
+
 #ifdef TEST
 
 int
@@ -860,3 +893,4 @@ main(
 }
 
 #endif
+

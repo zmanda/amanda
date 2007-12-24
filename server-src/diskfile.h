@@ -36,13 +36,19 @@
 #include "conffile.h"
 #include "amfeatures.h"
 
+typedef struct netif_s {
+    struct netif_s *next;
+    interface_t *config;
+    unsigned long curusage;
+} netif_t;
+
 typedef struct amhost_s {
     struct amhost_s *next;		/* next host */
     char *hostname;			/* name of host */
     struct disk_s *disks;		/* linked list of disk records */
     int inprogress;			/* # dumps in progress */
     int maxdumps;			/* maximum dumps in parallel */
-    interface_t *netif;			/* network interface this host is on */
+    netif_t *netif;			/* network interface this host is on */
     time_t start_t;			/* start dump after this time */
     char *up;				/* generic user pointer */
     am_feature_t *features;		/* feature set */
@@ -137,5 +143,7 @@ char *optionstr(disk_t *dp, am_feature_t *their_features, FILE *fdout);
 
 char *match_disklist(disklist_t *origqp, int sargc, char **sargv);
 void free_disklist(disklist_t *dl);
+
+netif_t *disklist_netifs(void);
 
 #endif /* ! DISKFILE_H */

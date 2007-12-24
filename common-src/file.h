@@ -41,6 +41,20 @@ void    safe_fd(int fd_start, int fd_count);
 void	safe_cd(void);
 void	save_core(void);
 
+/* Get the uid of CLIENT_LOGIN, or -1 if it doesn't exist.  Note that, if
+ * only running a server, CLIENT_LOGIN may legitimately not exist.
+ *
+ * @returns: userid, or -1 if invalid
+ */
+uid_t get_client_uid(void);
+
+/* Get the gid of CLIENT_LOGIN, or -1 if it doesn't exist.  Note that, if
+ * only running a server, CLIENT_LOGIN may legitimately not exist.
+ *
+ * @returns: groupid, or -1 if invalid
+ */
+gid_t get_client_gid(void);
+
 extern /*@only@*/ /*@null@*/ char *debug_agets(const char *c, int l, FILE *file);
 extern /*@only@*/ /*@null@*/ char *debug_areads(const char *c, int l, int fd);
 #define agets(f)	      debug_agets(__FILE__,__LINE__,(f))
@@ -100,3 +114,9 @@ extern int robust_open(const char * pathname, int flags, mode_t mode);
 
 /* Same idea but for close. */
 extern int robust_close(int fd);
+
+/* Get the original working directory, at application startup
+ *
+ * @returns: pointer to statically allocated string
+ */
+char *get_original_cwd(void);
