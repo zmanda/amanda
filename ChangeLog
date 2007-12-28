@@ -1,6 +1,10 @@
 2007-12-28  Satya Ganga <gsat@zmanda.com>
 	* server-src/amserverconfig.pl: unspecified bugfix
 
+2007-12-27  Ian Turner <ian@zmanda.com>
+	* server-src/taperscan.c server-src/taper.c: only print error_message
+	  if it is non-NULL
+
 2007-12-27  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/amrmtape.sh: remove @DB_EXT@, which no longer
 	  exists (since 2007-10-09).

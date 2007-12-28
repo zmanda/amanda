@@ -91,6 +91,9 @@ int scan_read_label(
 
     device = device_open(dev);
     if (device == NULL ) {
+        *error_message = newvstrallocf(*error_message,
+                                       _("%sError opening device %s.\n"),
+                                       *error_message, dev);
         amfree(*timestamp);
         amfree(*label);
         return -1;

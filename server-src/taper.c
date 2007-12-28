@@ -229,8 +229,11 @@ static gboolean simple_taper_scan(taper_state_t * state,
                         state->taper_scan_tracker,
                         CHAR_taperscan_output_callback,
                         error_message, boolean_prolong, prolong);
-    if (result < 0) {
-        g_fprintf(stderr, "Failed taper scan:\n%s\n", *error_message);
+    if (prolong != NULL && !*prolong) {
+        g_fprintf(stderr, _("Cancelled taper scan.\n"));
+        return FALSE;
+    } else if (result < 0) {
+        g_fprintf(stderr, _("Failed taper scan: %s\n"), (*error_message)?(*error_message):_("(no error message)"));
         amfree(timestamp);
         return FALSE;
     } else {
