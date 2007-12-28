@@ -1,6 +1,10 @@
 2007-12-28  Satya Ganga <gsat@zmanda.com>
 	* server-src/amserverconfig.pl: unspecified bugfix
 
+2007-12-27  Satya Ganga <gsat@zmanda.com>
+	* server-src/amserverconfig.pl: holding disk will be created
+	  only if we have at least 1G free space in the Amanda home dir
+
 2007-12-27  Ian Turner <ian@zmanda.com>
 	* server-src/taperscan.c server-src/taper.c: only print error_message
 	  if it is non-NULL

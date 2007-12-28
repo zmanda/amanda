@@ -614,7 +614,7 @@ if ( defined $template ) {
 		$tapedev="$def_tapedev/$config";
 		&copy_template_file($template);
 		if ($template ne "harddisk") {
-		  unless ( -e "$amandahomedir/holdings" ) {
+		  unless ( -e "$amandahomedir/holdings/$config" ) {
 		    &create_holding;
 		  }
 		} else {  # harddisk and template only
