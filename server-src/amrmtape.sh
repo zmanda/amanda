@@ -102,12 +102,10 @@ CleanTapelist () {
     log `_ '%s: %s does not exist or is not a directory.' "$0" "${VarDir}"`
     return 1
   fi
-  for dbext in @DB_EXT@; do
-    if [ ! -r ${InfoFile}${dbext} ] && [ ! -d ${InfoFile}${dbext} ]; then
-      log `_ '%s: %s does not exist or is not readable.' "${Program}" "${InfoFile}${dbext}"`
-      return 1
-    fi
-  done
+  if [ ! -r "${InfoFile}" ] && [ ! -d "${InfoFile}" ]; then
+    log `_ '%s: %s does not exist or is not readable.' "${Program}" "${InfoFile}"`
+    return 1
+  fi
 
   if [ ! -d @AMANDA_TMPDIR@ ]; then
     log `_ '%s: directory %s does not exist.' "$0" "@AMANDA_TMPDIR@"`

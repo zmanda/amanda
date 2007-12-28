@@ -1,6 +1,10 @@
 2007-12-28  Satya Ganga <gsat@zmanda.com>
 	* server-src/amserverconfig.pl: unspecified bugfix
 
+2007-12-27  Dustin J. Mitchell <dustin@zmanda.com>
+	* server-src/amrmtape.sh: remove @DB_EXT@, which no longer
+	  exists (since 2007-10-09).
+
 2007-12-26  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/amverify.sh: fix multiple non-portable shell
 	  techniques
