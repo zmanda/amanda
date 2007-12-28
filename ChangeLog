@@ -1,6 +1,10 @@
 2007-12-28  Satya Ganga <gsat@zmanda.com>
 	* server-src/amserverconfig.pl: unspecified bugfix
 
+2007-12-26  Dustin J. Mitchell <dustin@zmanda.com>
+	* server-src/amverify.sh: fix multiple non-portable shell
+	  techniques
+
 2007-12-23  Dustin J. Mitchell <dustin@zmanda.com>
 	Large-scale merge of perl interface to Amanda, along with
 	a fleet of related changes.  Patch authors are given for

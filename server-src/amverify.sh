@@ -374,13 +374,15 @@ while [ $SLOT -lt $SLOTS ]; do
 	done
 	$Echon "Processing label..."
         amtape_output="`amtape $CONFIG current 2>&1`";
-        set X $amtape_output
-        if ! echo $amtape_output | \
-            egrep "\bslot +[0-9]+: time [^ ]+ +label [^ ]+" > /dev/null; then
+        if echo "$amtape_output" | \
+            egrep "^slot +[0-9]+: time [^ ]+ +label [^ ]+" > /dev/null; then
+	    : # everything is fine
+	else
             report "Error reading tape label using amtape."
             continue
         fi
         
+        set X $amtape_output
         until [ "$1" = "time" ]; do
             shift
         done
