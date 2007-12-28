@@ -1,6 +1,9 @@
 2007-12-28  Satya Ganga <gsat@zmanda.com>
 	* server-src/amserverconfig.pl: unspecified bugfix
 
+2007-12-27  Paddy Sreenivasan <paddy@zmanda.com>
+	* server-src/reporter.c: Check for NULL mailto
+
 2007-12-27  Satya Ganga <gsat@zmanda.com>
 	* server-src/amserverconfig.pl: holding disk will be created
 	  only if we have at least 1G free space in the Amanda home dir

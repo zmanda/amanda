@@ -609,8 +609,10 @@ main(
 	    error(_("could not open output file: %s %s"), outfname, strerror(errno));
 	    /*NOTREACHED*/
 	}
-	g_fprintf(mailf, "To: %s\n", mailto);
-	g_fprintf(mailf, "Subject: %s\n\n", subj_str);
+        if (mailto != NULL) {
+		g_fprintf(mailf, "To: %s\n", mailto);
+		g_fprintf(mailf, "Subject: %s\n\n", subj_str);
+	}
 
     } else {
 #ifdef MAILER
