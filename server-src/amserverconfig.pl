@@ -529,7 +529,7 @@ if ( defined $template ) {
 # if tape-changer is chosen, check if mtx is installed
     if ($template eq "tape-changer") {
       my $ok = 0;
-      for $dir ("/usr/sbin", "/usr/local/sbin", "/usr/local/bin", "/usr/bin", "/bin",  split(":",$oldPATH)) {
+      for $dir ("/usr/sbin", "/usr/local/sbin", "/usr/local/bin", "/usr/bin", "/bin","/opt/csw/sbin",split(":",$oldPATH)) {
 	if ( -e "$dir/mtx" ) {
 	  $ok = 1;
 	  last;
