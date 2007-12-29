@@ -176,11 +176,6 @@ AMANDA_DISABLE_GCC_WARNING([unknown-pragmas])
 
 
 #
-# printf
-#
-AMANDA_CHECK_PRINTF_FORMATS
-
-#
 # Libtool
 #
 AM_PROG_LIBTOOL
