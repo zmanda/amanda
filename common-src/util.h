@@ -61,8 +61,6 @@ char *	construct_timestamp(time_t *t);
 int	needs_quotes(const char * str);
 
 char *	sanitize_string(const char *str);
-char *	strquotedstr(void);
-ssize_t	hexdump(const char *buffer, size_t bytes);
 int     copy_file(char *dst, char *src, char **errmsg);
 
 /*

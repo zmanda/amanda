@@ -36,6 +36,8 @@ static const char *	filetype2str(filetype_t);
 static filetype_t	str2filetype(const char *);
 static void		strange_header(dumpfile_t *, const char *,
 				size_t, const char *, const char *);
+static char *		strquotedstr(void);
+static ssize_t 		hexdump(const char *buffer, size_t len);
 
 void
 fh_init(
@@ -829,3 +831,47 @@ dumpfile_t * dumpfile_copy(dumpfile_t* source) {
     memcpy(rval, source, sizeof(dumpfile_t));
     return rval;
 }
+
+/*
+ * This function modify strtok context.
+ */
+static char *
+strquotedstr(void)
+{
+    char *  tok = strtok(NULL, " ");
+    size_t	len;
+
+    len = strlen(tok);
+    if ((tok != NULL) && (tok[0] == '"') &&
+	(len > 1 && (tok[len - 1] != '"') && (tok[len - 2] != '\\'))) {
+	char *	t;
+
+	do {
+	    t = strtok(NULL, " ");
+	    tok[len] = ' ';
+	    len = strlen(tok);
+	} while ((t != NULL) &&
+	         (tok[len - 1] != '"') && (tok[len - 2] != '\\'));
+    }
+    return tok;
+}
+
+static ssize_t
+hexdump(
+    const char *buffer,
+    size_t	len)
+{
+    ssize_t rc = -1;
+
+    FILE *stream = popen("od -c -x -", "w");
+	
+    if (stream != NULL) {
+	fflush(stdout);
+	rc = (ssize_t)fwrite(buffer, len, 1, stream);
+	if (ferror(stream))
+	    rc = -1;
+	pclose(stream);
+    }
+    return rc;
+}
+

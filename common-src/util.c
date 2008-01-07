@@ -502,45 +502,6 @@ sanitize_string(
     return (ret);
 }
 
-char *
-strquotedstr(void)
-{
-    char *  tok = strtok(NULL, " ");
-
-    if ((tok != NULL) && (tok[0] == '"')) {
-	char *	t;
-	size_t	len;
-
-        len = strlen(tok);
-	do {
-	    t = strtok(NULL, " ");
-	    tok[len] = ' ';
-	    len = strlen(tok);
-	} while ((t != NULL) &&
-	         (tok[len - 1] != '"') && (tok[len - 2] != '\\'));
-    }
-    return tok;
-}
-
-ssize_t
-hexdump(
-    const char *buffer,
-    size_t	len)
-{
-    ssize_t rc = -1;
-
-    FILE *stream = popen("od -c -x -", "w");
-	
-    if (stream != NULL) {
-	fflush(stdout);
-	rc = (ssize_t)fwrite(buffer, len, 1, stream);
-	if (ferror(stream))
-	    rc = -1;
-	pclose(stream);
-    }
-    return rc;
-}
-
 /*
    Return 0 if the following characters are present
    * ( ) < > [ ] , ; : ! $ \ / "
