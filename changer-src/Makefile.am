@@ -26,10 +26,12 @@ endif
 libexec_PROGRAMS =	$(CHG_SCSI)
 EXTRA_PROGRAMS =	$(CHIO_SCSI)
 
-SCRIPTS_PERL = \
+CHECK_PERL = \
 		chg-chio \
 		chg-iomega \
 		chg-rth
+
+SCRIPTS_PERL = $(CHECK_PERL)
 
 SCRIPTS_SHELL = \
 		chg-manual \

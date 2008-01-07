@@ -1,4 +1,11 @@
 2008-01-07  Jean-Louis Martineau <martineau@zmanda.com>
+	* config/automake/scripts.am: Don't set CHECK_PERL.
+	* changer-src/Makefile.am: Set CHECK_PERL.
+	* client-src/Makefile.am: Set CHECK_PERL.
+	* dumper-src/Makefile.am: Set CHECK_PERL.
+	* common-src/Makefile.am: Set CHECK_PERL.
+
+2008-01-07  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/krb5-security.c: Fix argument to resolve_hostname.
 	* config/amanda/krb4-security.m4: Check .a or .so lib.
 	* config/amanda/krb5-security.m4: Check .a or .so lib.

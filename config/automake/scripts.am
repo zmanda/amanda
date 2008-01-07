@@ -92,7 +92,6 @@ CLEANFILES += config.log
 DISTCLEANFILES += $(SCRIPTS_SHELL) $(SCRIPTS_PERL) $(SCRIPTS_AWK)
 
 # syntax-check perl scripts on 'make check'
-CHECK_PERL = $(SCRIPTS_PERL)
 check-perl: $(CHECK_PERL)
 	@CHECK_PERL="$(CHECK_PERL)"; \
 	if test -n "$(PERL)"; then \

@@ -10,9 +10,10 @@ INCLUDES =	-I$(top_builddir)/common-src \
 
 AM_CFLAGS = $(AMANDA_WARNING_CFLAGS)
 
-SCRIPTS_PERL =	\
-	amgtar \
-	generic-dumper
+CHECK_PERL = \
+	    amgtar \
+	    generic-dumper
+SCRIPTS_PERL = $(CHECK_PERL)
 
 dumperdir = $(DUMPER_DIR)
 dumper_SCRIPTS = $(SCRIPTS_PERL)

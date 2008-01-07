@@ -214,7 +214,8 @@ libexec_SCRIPTS_PERL =
 libexec_SCRIPTS_SHELL = \
 	    amanda-sh-lib.sh
 
-SCRIPTS_PERL = $(sbin_SCRIPTS_PERL) $(libexec_SCRIPTS_PERL)
+CHECK_PERL = $(sbin_SCRIPTS_PERL) $(libexec_SCRIPTS_PERL)
+SCRIPTS_PERL = $(CHECK_PERL)
 SCRIPTS_SHELL = $(sbin_SCRIPTS_SHELL) $(libexec_SCRIPTS_SHELL)
 libexec_SCRIPTS = $(libexec_SCRIPTS_PERL) $(libexec_SCRIPTS_SHELL)
 sbin_SCRIPTS = $(sbin_SCRIPTS_PERL) $(sbin_SCRIPTS_SHELL)

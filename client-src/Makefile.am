@@ -24,7 +24,8 @@ EXTRA_SCRIPTS =	amhpfixdevs amsinixfixdevs
 
 libexec_SCRIPTS = patch-system
 
-SCRIPTS_PERL = $(sbin_SCRIPTS)
+CHECK_PERL = $(sbin_SCRIPTS)
+SCRIPTS_PERL = $(CHECK_PERL)
 SCRIPTS_SHELL = $(libexec_SCRIPTS)
 
 libamclient_la_SOURCES=	amandates.c		getfsent.c	\
