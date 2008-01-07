@@ -13,7 +13,6 @@ sbin_PROGRAMS =
 ## libamdevice.la
 
 amlib_LTLIBRARIES = 	libamdevice.la
-libamdevice_la_LDFLAGS = -release $(VERSION) 
 libamdevice_la_SOURCES = property.c device.c queueing.c semaphore.c \
 	null-device.c rait-device.c vfs-device.c 
 
@@ -39,7 +38,7 @@ endif
 
 endif
 
-libamdevice_la_LDFLAGS =  -release $(VERSION)
+libamdevice_la_LDFLAGS = -release $(VERSION) 
 
 noinst_HEADERS = null-device.h semaphore.h \
 	tape-ops.h property.h rait-device.h \

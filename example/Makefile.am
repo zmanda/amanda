@@ -10,7 +10,7 @@ lbltempldir   = $(amanda_dir)/example/label-templates
 EXTRA_DIST =	chg-multi.conf \
 		chg-scsi.conf \
 		config.site \
-		disklist \ 
+		disklist \
 		chg-mcutil.conf
 
 dist_template_DATA = template.d/advanced.conf \
