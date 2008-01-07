@@ -1,4 +1,7 @@
 2008-01-07  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Changer.pm: Use Amanda::Config::get_config_dir().
+
+2008-01-07  Jean-Louis Martineau <martineau@zmanda.com>
 	* config/automake/scripts.am: Don't set CHECK_PERL.
 	* changer-src/Makefile.am: Set CHECK_PERL.
 	* client-src/Makefile.am: Set CHECK_PERL.

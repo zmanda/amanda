@@ -298,9 +298,10 @@ sub run_tpchanger {
 
         # cd into the config dir, if one exists
         # TODO: construct a "fake" config dir including any "-o" overrides
-        if ($Amanda::Config::config_dir) {
-            if (!chdir($Amanda::Config::config_dir)) {
-                print "<error> Could not chdir to '$Amanda::Config::config_dir'\n";
+        my $config_dir = Amanda::Config::get_config_dir();
+        if ($config_dir) {
+            if (!chdir($config_dir)) {
+                print "<error> Could not chdir to '$config_dir'\n";
                 exit(2);
             }
         }
