@@ -32,7 +32,7 @@ AC_DEFUN([AMANDA_KRB5_SECURITY],
         AS_HELP_STRING([--with-krb5-security=DIR],
             [Location of Kerberos V software @<:@/usr/kerberos /usr/cygnus /usr /opt/kerberos@:>@]),
         [
-            case "$KRB5_SECURITY" in
+            case "$withval" in
                 n | no) KRB5_SECURITY=no ;;
                 y | ye | yes) KRB5_SECURITY=yes ;;
                 *) KRB5_SPOTS="$KRB5_SECURITY"
@@ -51,24 +51,24 @@ AC_DEFUN([AMANDA_KRB5_SECURITY],
         for dir in $KRB5_SPOTS; do
           for lib in lib lib64; do
             k5libdir=${dir}/${lib}
-            if test -f ${k5libdir}/libkrb5.a -a -f ${k5libdir}/libgssapi_krb5.a -a -f ${k5libdir}/libcom_err.a; then
-                if test -f ${k5libdir}/libk5crypto.a; then
+            if test \( -f ${k5libdir}/libkrb5.a -o -f ${k5libdir}/libkrb5.so \) -a \( -f ${k5libdir}/libgssapi_krb5.so -o -f ${k5libdir}/libgssapi_krb5.a \) -a \( -f ${k5libdir}/libcom_err.a -o -f ${k5libdir}/libcom_err.so \); then
+                if test -f ${k5libdir}/libk5crypto.a -o -f ${k5libdir}/libk5crypto.so; then
                     K5CRYPTO=-lk5crypto
-                elif test -f ${k5libdir}/libcrypto.a; then
+                elif test -f ${k5libdir}/libcrypto.a -o -f ${k5libdir}/libcrypto.so; then
                     K5CRYPTO=-lcrypto
                 else
                     K5CRYPTO=""
                 fi
-                if test -f ${k5libdir}/libkrb5support.a; then
+                if test -f ${k5libdir}/libkrb5support.a -o -f ${k5libdir}/libkrb5support.so; then
                     K5SUPPORT=-lkrb5support
                 else
                     K5SUPPORT=""
                 fi
                 KRB5_DIR_FOUND=$dir
+                KRB5_LIBDIR_FOUND=$k5libdir
                 AMANDA_ADD_LIBS([-lgssapi_krb5 -lkrb5 $K5CRYPTO $K5SUPPORT -lcom_err])
                 break
-            elif test -f ${k5libdir}/libkrb5.a -a -f ${k5libdir}/libasn1.a -a -f ${k5libdir}/libgssapi.a; then
-                KRB5_DIR_FOUND=$dir
+            elif test \( -f ${k5libdir}/libkrb5.a -o -f ${k5libdir}/libkrb5.so \) -a \( -f ${k5libdir}/libasn1.a -o -f ${k5libdir}/libasn1.so \) -a \( -f ${k5libdir}/libgssapi.a -o -f ${k5libdir}/libgssapi.so \); then
                 AMANDA_ADD_LIBS([-lgssapi -lkrb5 -lasn1])
                 AMANDA_ADD_CPPFLAGS([-DKRB5_HEIMDAL_INCLUDES])
                 break
@@ -90,7 +90,7 @@ AC_DEFUN([AMANDA_KRB5_SECURITY],
                 AMANDA_ADD_CPPFLAGS([-I$KRB5_DIR_FOUND/include])
             fi
                 AC_CHECK_LIB(krb5support,main)
-            AMANDA_ADD_LDFLAGS([-L$k5libdir])
+            AMANDA_ADD_LDFLAGS([-L$KRB5_LIBDIR_FOUND])
 
             AC_DEFINE(KRB5_SECURITY,1,
                 [Define if Kerberos 5 security is to be enabled. ])

@@ -32,7 +32,7 @@ AC_DEFUN([AMANDA_KRB4_SECURITY],
         AS_HELP_STRING([--with-krb4-security=DIR],
             [Location of Kerberos software @<:@/usr/kerberos /usr/cygnus /usr /opt/kerberos@:>@]),
         [
-            case "$KRB4_SECURITY" in
+            case "$withval" in
                 n | no) ;;
                 y | ye | yes) KRB4_SECURITY="yes" ;;
                 *) KRB4_SPOTS="$KRB4_SECURITY"
@@ -166,7 +166,7 @@ AC_DEFUN([AMANDA_KRB4_SECURITY],
         AC_MSG_CHECKING(for Kerberos and Amanda kerberos4 bits)
         found="no"
         for dir in $KRB4_SPOTS; do
-            if test -f ${dir}/lib/libkrb.a -a -f ${dir}/lib/libdes.a ; then
+            if test \( -f ${dir}/lib/libkrb.a -o -f ${dir}/lib/libkrb.so \) -a \( -f ${dir}/lib/libdes.a -o -f ${dir}/lib/libdes.so \) ; then
                 #
                 # This is the original Kerberos 4.
                 #
@@ -187,9 +187,9 @@ AC_DEFUN([AMANDA_KRB4_SECURITY],
                     AMANDA_ADD_LIBS([-lcom_err])
                 fi
                 break
-            elif test -f ${dir}/lib/libkrb4.a &&
-                 test -f ${dir}/lib/libcrypto.a &&
-                 test -f ${dir}/lib/libdes425.a ; then
+            elif test \( -f ${dir}/lib/libkrb4.a -o -f ${dir}/lib/libkrb4.so \) &&
+                 test \( -f ${dir}/lib/libcrypto.a -o -f ${dir}/lib/libcrypto.so \) &&
+                 test \( -f ${dir}/lib/libdes425.a -o -f ${dir}/lib/libdes425.so \) ; then
                 #
                 # This is Kerberos 5 with Kerberos 4 back-support.
                 #
@@ -197,8 +197,8 @@ AC_DEFUN([AMANDA_KRB4_SECURITY],
                 found="yes"
                 AMANDA_ADD_CPPFLAGS([-I$dir/include -I$dir/include/kerberosIV])
                 AMANDA_ADD_LDFLAGS([-L$dir/lib])
-                if test -f ${dir}/lib/libkrb5.a &&
-                   test -f ${dir}/lib/libcom_err.a; then
+                if test \( -f ${dir}/lib/libkrb5.a -o -f ${dir}/lib/libkrb5.so \) &&
+                   test \( -f ${dir}/lib/libcom_err.a -o -f ${dir}/lib/libcom_err.so \) ; then
                     AMANDA_ADD_LIBS([-lkrb4 -lkrb5 -lcrypto -ldes425 -lcom_err])
                 else
                     AMANDA_ADD_LIBS([-lkrb4 -lcrypto -ldes425])

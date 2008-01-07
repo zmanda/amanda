@@ -1,9 +1,11 @@
 2008-01-07  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/krb5-security.c: Fix argument to resolve_hostname.
+	* config/amanda/krb4-security.m4: Check .a or .so lib.
+	* config/amanda/krb5-security.m4: Check .a or .so lib.
+
+2008-01-07  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/Makefile.am: Merge typo.
 	* example/Makefile.am: Merge Typo.
-
-2007-12-28  Satya Ganga <gsat@zmanda.com>
-	* server-src/amserverconfig.pl: unspecified bugfix
 
 2007-12-27  Dustin J. Mitchell <dustin@zmanda.com>
 	* configure.in config/amanda/printf.m4: remove unused

@@ -749,7 +749,7 @@ krb5_init(void)
      * In case it isn't fully qualified, do a DNS lookup.  Ignore
      * any errors (this is best-effort).
      */
-    if (resolve_hostname(myhostname, NULL, &myfqhostname) == 0
+    if (resolve_hostname(myhostname, SOCK_STREAM, NULL, &myfqhostname) == 0
 	&& myfqhostname != NULL) {
 	strncpy(myhostname, myfqhostname, SIZEOF(myhostname)-1);
 	myhostname[SIZEOF(myhostname)-1] = '\0';
