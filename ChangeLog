@@ -70,12 +70,12 @@
 	  hack until a larger-scale overhaul of Amanda's headers is done.
 	* config/amanda/swig.m4: error out if shared libraries are disabled
 	* server-src/amcheckdump.pl: Use timestamp from latest
-	  amdump.1 or amflush.1 log file.  (Jean-Loius Martineau
+	  amdump.1 or amflush.1 log file.  (Jean-Louis Martineau
 	  <martineau@zmanda.com>)
-	* server-src/amcheckdump.pl: Output partnum.  (Jean-Loius
+	* server-src/amcheckdump.pl: Output partnum.  (Jean-Louis
 	  Martineau <martineau@zmanda.com>)
 	* server-src/amcheckdump.pl: Add a '/' after the config name.
-	(Jean-Loius Martineau <martineau@zmanda.com>)
+	(Jean-Louis Martineau <martineau@zmanda.com>)
 	* perl/Amanda/Logfile.swg perl/Amanda/Device.swg perl/Makefile.am
 	  perl/amglue/integers.swg perl/amglue/amglue.h
 	  perl/amglue/amglue.swg perl/amglue/glib.swg
