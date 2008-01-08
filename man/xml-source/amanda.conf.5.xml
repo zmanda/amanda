@@ -1237,6 +1237,8 @@ tcp connection for all data stream.</para>
 authorization.</para>
 <para><emphasis remap='B'>krb5</emphasis> to use Kerberos-V
 authorization.</para>
+<para><emphasis remap='B'>local</emphasis>, if the client is the server, it 
+doesn't require authencation setup.</para>
 <para><emphasis remap='B'>rsh</emphasis> to use rsh
 authorization.</para>
 <para><emphasis remap='B'>ssh</emphasis> to use OpenSSH

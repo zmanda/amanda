@@ -55,6 +55,7 @@ extern const security_driver_t bsdtcp_security_driver;
 #ifdef BSDUDP_SECURITY
 extern const security_driver_t bsdudp_security_driver;
 #endif
+extern const security_driver_t local_security_driver;
 
 static const security_driver_t *drivers[] = {
 #ifdef BSD_SECURITY
@@ -78,6 +79,7 @@ static const security_driver_t *drivers[] = {
 #ifdef BSDUDP_SECURITY
     &bsdudp_security_driver,
 #endif
+    &local_security_driver,
 };
 #define	NDRIVERS	(size_t)(sizeof(drivers) / sizeof(drivers[0]))
 
