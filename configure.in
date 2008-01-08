@@ -97,6 +97,7 @@ AM_GNU_GETTEXT([external])
 #
 # Devices
 #
+AMANDA_S3_DEVICE
 AMANDA_TAPE_DEVICE
 
 #
@@ -366,6 +367,7 @@ AC_CONFIG_FILES([
     example/amanda-client.conf
     example/amanda.conf
     example/chg-mcutil.conf
+    example/amanda-S3.conf
     example/template.d/advanced.conf
     example/template.d/amanda-harddisk.conf
     example/template.d/amanda-single-tape.conf

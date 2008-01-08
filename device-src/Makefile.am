@@ -13,6 +13,7 @@ sbin_PROGRAMS =
 ## libamdevice.la
 
 amlib_LTLIBRARIES = 	libamdevice.la
+libamdevice_la_LDFLAGS = -release $(VERSION) 
 libamdevice_la_SOURCES = property.c device.c queueing.c semaphore.c \
 	null-device.c rait-device.c vfs-device.c 
 
@@ -38,9 +39,20 @@ endif
 
 endif
 
-libamdevice_la_LDFLAGS = -release $(VERSION) 
+if WANT_S3_DEVICE
+libamdevice_la_SOURCES += s3-device.c s3.c
+endif
+
+## activate-devpay
+
+if WANT_DEVPAY
+sbin_PROGRAMS += activate-devpay
+activate_devpay_SOURCES = activate-devpay.c
+endif
+
+## headers
 
 noinst_HEADERS = null-device.h semaphore.h \
-	tape-ops.h property.h rait-device.h \
-	tape-device.h vfs-device.h
+	tape-ops.h property.h rait-device.h s3.h \
+	s3-device.h tape-device.h vfs-device.h
 aminclude_HEADERS = device.h queueing.h

@@ -293,6 +293,17 @@ void device_property_init(void) {
     device_property_fill_and_register(&device_property_read_buffer_size,
                                       G_TYPE_UINT, "read_buffer_size",
       "What buffer size should be used for reading?");
+    device_property_fill_and_register(&device_property_s3_secret_key,
+                                      G_TYPE_STRING, "s3_secret_key",
+       "Secret access key to authenticate with Amazon S3");
+    device_property_fill_and_register(&device_property_s3_access_key,
+                                      G_TYPE_STRING, "s3_access_key",
+       "Access key ID to authenticate with Amazon S3");
+#ifdef WANT_DEVPAY
+    device_property_fill_and_register(&device_property_s3_user_token,
+                                      G_TYPE_STRING, "s3_user_token",
+       "User token for authentication Amazon devpay requests");
+#endif
     device_property_fill_and_register(&device_property_verbose,
                                      G_TYPE_BOOLEAN, "verbose",
        "Should the device produce verbose output?");
@@ -319,4 +330,7 @@ DevicePropertyBase device_property_eom;
 DevicePropertyBase device_property_bsf_after_eom;
 DevicePropertyBase device_property_final_filemarks;
 DevicePropertyBase device_property_read_buffer_size;
+DevicePropertyBase device_property_s3_access_key;
+DevicePropertyBase device_property_s3_secret_key;
+DevicePropertyBase device_property_s3_user_token;
 DevicePropertyBase device_property_verbose;

@@ -39,6 +39,9 @@
 #include "tape-device.h"
 #endif
 #include "rait-device.h"
+#ifdef WANT_S3_DEVICE
+  #include "s3-device.h"
+#endif
 
 static GHashTable* driverList = NULL;
 
@@ -55,6 +58,9 @@ void device_api_init(void) {
     tape_device_register();
 #endif
     rait_device_register();
+#ifdef WANT_S3_DEVICE
+    s3_device_register();
+#endif
 }
 
 void register_device(DeviceFactory factory,

@@ -35,6 +35,10 @@
 #include "sockaddr-util.h"
 #include "conffile.h"
 
+#ifdef HAVE_LIBCURL
+#include <curl/curl.h>
+#endif
+
 static int make_socket(sa_family_t family);
 static int connect_port(struct sockaddr_storage *addrp, in_port_t port, char *proto,
 			struct sockaddr_storage *svaddr, int nonblock);

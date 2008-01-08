@@ -1,3 +1,25 @@
+2008-01-08  Ian Turner <ian@zmanda.com>
+	Most of this work was done by Dustin J. Mitchell
+	<dustin@zmanda.com>, with contributions by Ian Turner <ian@zmanda.com>.
+	* example/template.d/amanda-S3.conf.in: Example configuration
+	  using Amazon S3.
+	* device-src/device.c: Register the S3 device.
+	* device-src/tests/get-activation-key.pl: Tool to retrieve 
+	  a DevPay activation key.
+	* device-src/s3-device.c, device-src/s3-device.h: S3 device driver.
+	* device-src/s3.c, device-src/s3.h: Network support for S3 driver.
+	* device-src/property.c, device-src/property.h: Register S3
+	  authentication properties.
+	* device-src/activate-devpay.c: Tool to convert a devpay 
+	  activation key into user tokens.
+	* device-src/Makefile.am: Support all these new files.
+	* configure.in: Check S3 prerequesites.
+	* config/amanda/s3-device.m4: Check if the S3 device should be
+	  built.
+	* config/amanda/libs.m4: Code to check for libcurl version and
+	  features.
+	* common-src/util.c: Use libcurl header.
+
 2008-01-08  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/local-security.c: New 'local' security driver.
 	* common-src/security.c (drivers): Add local_security_driver

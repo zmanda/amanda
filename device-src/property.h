@@ -266,6 +266,19 @@ extern DevicePropertyBase device_property_final_filemarks;
 extern DevicePropertyBase device_property_read_buffer_size;
 #define PROPERTY_READ_BUFFER_SIZE (device_property_read_buffer_size.ID)
 
+/* Authentication information for Amazon S3. Both of these are strings. */
+extern DevicePropertyBase device_property_s3_secret_key;
+extern DevicePropertyBase device_property_s3_access_key;
+#define PROPERTY_S3_SECRET_KEY (device_property_s3_secret_key.ID)
+#define PROPERTY_S3_ACCESS_KEY (device_property_s3_access_key.ID)
+
+#ifdef WANT_DEVPAY
+/* Same, but for S3 with DevPay. This directory can be relative to the
+ * config director, or absolute. */
+extern DevicePropertyBase device_property_s3_user_token;
+#define PROPERTY_S3_USER_TOKEN (device_property_s3_user_token.ID)
+#endif
+
 /* Should the device produce verbose output?  Value is a gboolean.  Not
  * recognized by all devices. */
 extern DevicePropertyBase device_property_verbose;
