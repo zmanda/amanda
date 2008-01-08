@@ -287,13 +287,9 @@ main(
     }
     g_fprintf(stderr, _("amflush: start at %s\n"), date_string);
     g_fprintf(stderr, _("amflush: datestamp %s\n"), amflush_timestamp);
-    if (1) {
-        char * timestamp = get_proper_stamp_from_time(0);
-        g_fprintf(stderr, _("amflush: starttime %s\n"), timestamp);
-        g_fprintf(stderr, _("amflush: starttime-locale-independent %s\n"),
-		  date_string_standard);
-        amfree(timestamp);
-    }
+    g_fprintf(stderr, _("amflush: starttime %s\n"), amflush_timestamp);
+    g_fprintf(stderr, _("amflush: starttime-locale-independent %s\n"),
+	      date_string_standard);
     log_add(L_START, _("date %s"), amflush_timestamp);
 
     /* START DRIVER */

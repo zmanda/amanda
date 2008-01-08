@@ -1,3 +1,8 @@
+2008-01-08  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amcheckdump.pl: Parse 'amflush: starttime' and
+				     'planner: timestamp' line.
+	* server-src/amflush.c: Print correct starttime line.
+
 2008-01-08  Ian Turner <ian@zmanda.com>
 	Most of this work was done by Dustin J. Mitchell
 	<dustin@zmanda.com>, with contributions by Ian Turner <ian@zmanda.com>.
@@ -19,6 +24,10 @@
 	* config/amanda/libs.m4: Code to check for libcurl version and
 	  features.
 	* common-src/util.c: Use libcurl header.
+
+2008-01-08  Dustin J. Mitchell <dustin@zmanda.com>
+	* server-src/amcheckdump.pl: call critical() rather than
+	  using die().
 
 2008-01-08  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/local-security.c: New 'local' security driver.

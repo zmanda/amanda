@@ -218,6 +218,12 @@ if (!defined $timestamp) {
 	if (/^amdump: starttime (\d*)$/) {
 	    $timestamp = $1;
 	}
+	elsif (/^amflush: starttime (\d*)$/) {
+	    $timestamp = $1;
+	}
+	elsif (/^planner: timestamp (\d*)$/) {
+	    $timestamp = $1;
+	}
     }
     close AMDUMP;
 }
