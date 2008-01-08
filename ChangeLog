@@ -1,3 +1,12 @@
+2008-01-08  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Types.swg perl/Makefile.am: add new Amanda::Types module
+	to contain data structures common to several other modules.
+	* perl/Amanda/Device.swg: move dumpfile_t to Amanda::Types
+	* installcheck/Amanda_Types.pl installcheck/Makefile.am: simple tests
+	  for the new module
+	* common-src/fileheader.c common-src/fileheader.h: build_header
+	  now takes a precise size, not a minimum.
+
 2008-01-08  Jean-Louis Martineau <martineau@zmanda.com>
 	* recover-src/amrecover.c: Call apply_config_overwrites before
 				   config_init(CONFIG_INIT_EXPLICIT_NAME ...)

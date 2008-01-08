@@ -74,12 +74,18 @@ AMGLUE_SWG = amglue/amglue.swg \
 	amglue/integers.swg
 EXTRA_DIST += $(AMGLUE_SWG)
 
+# SWIG OPTIONS:
+# -perl5 -proxy: generate perl code, with proxy (shadow) classes
+# -DSWIG_TYPE_TABLE: the name for the global type table; customized
+#  to minimize type collisions with other SWIG-generated modules
+# -I$(srcdir) use include files relative to this directory
+SWIG_OPTIONS=-perl5 -proxy -DSWIG_TYPE_TABLE=SWIG_TYPES_Amanda -I$(srcdir)
+
 # Suffix rules.  These are parallel-build compatible, but may cause
 # strange behavior if there are other .c files in this directory.  The
 # 'rm -f $@' is needed because SWIG sometimes fails to remove its output
 # file in the event of a syntax error.  .i files are pre-processor output;
 # they are only used during development.
-SWIG_OPTIONS=-perl5 -proxy -I$(srcdir)
 %.c : %.swg $(AMGLUE_SWG)
 	$(mkdir_p) `dirname $@`
 	$(SWIG) $(SWIG_OPTIONS) -o $@ $(top_srcdir)/perl/$< || { rm -f $@; false; }
@@ -175,6 +181,17 @@ libUtil_la_LIBADD = libamglue.la \
 Amanda_DATA += Amanda/Util.pm
 EXTRA_DIST += Amanda/Util.swg Amanda/Util.pm
 MAINTAINERCLEANFILES += Amanda/Util.c Amanda/Util.pm
+
+# PACKAGE: Amanda::Types
+libTypesdir = $(amperldir)/auto/Amanda/Types
+libTypes_LTLIBRARIES = libTypes.la
+libTypes_la_SOURCES = Amanda/Types.c $(AMGLUE_SWG)
+libTypes_la_LDFLAGS = $(PERL_EXT_LDFLAGS)
+libTypes_la_LIBADD = libamglue.la \
+	$(top_builddir)/common-src/libamanda.la
+Amanda_DATA += Amanda/Types.pm
+EXTRA_DIST += Amanda/Types.swg Amanda/Types.pm
+MAINTAINERCLEANFILES += Amanda/Types.c Amanda/Types.pm
 
 # PACKAGE: Amanda::Paths
 Amanda_DATA += Amanda/Paths.pm

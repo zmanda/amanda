@@ -549,17 +549,17 @@ validate_parts(
 }
 
 char *
-build_header(const dumpfile_t * file, size_t min_size)
+build_header(const dumpfile_t * file, size_t size)
 {
     GString *rval, *split_data;
     char *qname;
     char *program;
 
     dbprintf(_("Building type %d (%s) header of size %zu using:\n"),
-		file->type, filetype2str(file->type), min_size);
+		file->type, filetype2str(file->type), size);
     dump_dumpfile_t(file);
 
-    rval = g_string_sized_new(min_size);
+    rval = g_string_sized_new(size);
     split_data = g_string_sized_new(10);
     
     switch (file->type) {
@@ -666,8 +666,12 @@ build_header(const dumpfile_t * file, size_t min_size)
     }
     
     g_string_free(split_data, TRUE);
+
+    /* Since we don't return the length, it is an error for the header to be
+     * more than 'size' bytes */
+    assert(rval->len <= size);
     /* Clear extra bytes. */
-    if (rval->len < min_size) {
+    if (rval->len < size) {
         bzero(rval->str + rval->len, rval->allocated_len - rval->len);
     }
     return g_string_free(rval, FALSE);

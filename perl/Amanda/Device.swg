@@ -28,6 +28,9 @@
 #include "fileheader.h"
 %}
 
+/* import dumptype_t, among others */
+%import "Amanda/Types.swg";
+
 %perlcode %{
 =head1 NAME
 
@@ -87,7 +90,7 @@ See the wiki for descriptions of these functions
 
 =item C<start_file($jobinfo)>
 
-where C<$jobinfo> is a C<dumpfile_t>
+where C<$jobinfo> is a C<dumpfile_t> (see L<Amanda::Datatypes)
 
 =item C<write_min_size()>
 
@@ -553,49 +556,6 @@ typedef struct Device {
 	}
     };
 } Device;
-
-/* TODO: move this to its own module */
-
-amglue_add_flag_tag_fns(filetype_t);
-amglue_add_constant(F_UNKNOWN, filetype_t);
-amglue_add_constant(F_WEIRD, filetype_t);
-amglue_add_constant(F_TAPESTART, filetype_t);
-amglue_add_constant(F_TAPEEND, filetype_t);
-amglue_add_constant(F_DUMPFILE, filetype_t);
-amglue_add_constant(F_CONT_DUMPFILE, filetype_t);
-amglue_add_constant(F_SPLIT_DUMPFILE, filetype_t);
-amglue_add_constant(F_EMPTY, filetype_t);
-
-typedef struct {
-    %immutable;
-    filetype_t type;
-    char *datestamp;
-    int dumplevel;
-    int compressed;
-    int encrypted;
-    char *comp_suffix;
-    char *encrypt_suffix;
-    char *name;	/* hostname or label */
-    char *disk;
-    char *program;
-    char *dumper;
-    char *srvcompprog;
-    char *clntcompprog;
-    char *srv_encrypt;
-    char *clnt_encrypt;
-    char *recover_cmd;
-    char *uncompress_cmd;
-    char *encrypt_cmd;
-    char *decrypt_cmd;
-    char *srv_decrypt_opt;
-    char *clnt_decrypt_opt;
-    char *cont_filename;
-    int is_partial;
-    int partnum;
-    int totalparts; /* -1 == UNKNOWN */
-    size_t blocksize;
-    %mutable;
-} dumpfile_t;
 
 /*
  * Constants

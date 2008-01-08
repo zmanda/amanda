@@ -76,9 +76,9 @@ typedef struct file_s {
 /* Makes a serialized header from the dumpfile_t representation. The
  * return value is allocated using malloc(), so you must free it.
  *
- * Build_header guarantees that the buffer returned is at least
- * min_size large, with any extra bytes zeroed out. */
-char *  build_header        (const dumpfile_t *file, size_t min_size);
+ * Build_header guarantees that the buffer returned is exactly
+ * 'size' bytes, with any extra bytes zeroed out. */
+char *  build_header        (const dumpfile_t *file, size_t size);
 
 void	fh_init(dumpfile_t *file);
 void	parse_file_header(const char *buffer, dumpfile_t *file, size_t buflen);
