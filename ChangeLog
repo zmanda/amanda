@@ -1,3 +1,7 @@
+2008-01-08  Jean-Louis Martineau <martineau@zmanda.com>
+	* recover-src/amrecover.c: Call apply_config_overwrites before
+				   config_init(CONFIG_INIT_EXPLICIT_NAME ...)
+
 2008-01-07  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/util.c (strquotedstr, hexdump): Remove function.
 	* common-src/util.h (strquotedstr, hexdump): Remove prototype.

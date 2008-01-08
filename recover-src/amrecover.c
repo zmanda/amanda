@@ -396,9 +396,9 @@ main(
     }
 
     /* and now try to load the configuration named in that file */
+    apply_config_overwrites(cfg_ovr);
     config_init(CONFIG_INIT_CLIENT | CONFIG_INIT_EXPLICIT_NAME | CONFIG_INIT_OVERLAY,
 		getconf_str(CNF_CONF));
-    apply_config_overwrites(cfg_ovr);
 
     check_running_as(RUNNING_AS_ROOT);
 
