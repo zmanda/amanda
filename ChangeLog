@@ -10,6 +10,10 @@
 	* changer-src/chg-zd-mtx.sh.in: Don't write a corrupt changerfile
 	  when a tape has no barcode label.
 
+2008-01-08  Dustin J. Mitchell <dustin@zmanda.com>
+	* server-src/amcheckdump.pl: call critical() rather than
+	  using die().
+
 2008-01-08  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amcheckdump.pl: Parse 'amflush: starttime' and
 				     'planner: timestamp' line.

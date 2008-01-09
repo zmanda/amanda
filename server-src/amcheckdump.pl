@@ -145,14 +145,14 @@ sub find_validation_command($) {
             # Changer script.
             if (!$changer_init_done) {
                 my $error = (Amanda::Changer::reset())[0];
-                die $error if $error;
+                critical($error) if $error;
                 $changer_init_done = 1;
             }
             my ($error, $slot, $tapedev) = Amanda::Changer::find($label);
             if ($error) {
-                die "Error operating changer: $error\n";
+                critical("Error operating changer: $error\n");
             } elsif ($slot eq "<none>") {
-                die "Could not find tape label $label in changer.\n";
+                critical("Could not find tape label $label in changer.\n");
             } else {
                 return $tapedev;
             }
@@ -212,7 +212,7 @@ if (!defined $timestamp) {
 	exit;
     }
 
-    open (AMDUMP, "<$logfile") || die();
+    open (AMDUMP, "<$logfile") || critical();
     while(<AMDUMP>) {
 	if (/^amdump: starttime (\d*)$/) {
 	    $timestamp = $1;
@@ -230,12 +230,12 @@ if (!defined $timestamp) {
 # Find logfiles matching our timestamp and scan them.
 my @images;
 my $logfile_dir = config_dir_relative(getconf($CNF_LOGDIR));
-opendir(LOGFILE_DIR, $logfile_dir) || die "Can't opendir() $logfile_dir.\n";
+opendir(LOGFILE_DIR, $logfile_dir) || critical("Can't opendir() $logfile_dir.\n");
 my @logfiles =
     grep { $_ =~ /^log\.$timestamp(?:\.[0-9]+|\.amflush)?$/ }
     readdir(LOGFILE_DIR);
 unless (@logfiles) {
-    die "Can't find any logfiles with timestamp $timestamp.\n"
+    critical("Can't find any logfiles with timestamp $timestamp.\n");
 }
 for my $logfile (@logfiles) {
     push @images, Amanda::Logfile::search_logfile(undef, $timestamp,
@@ -258,7 +258,7 @@ if (!@images) {
 my @tapes = sort { $a cmp $b } keys %{{map { ($_->{label}, undef) } @images}};
 
 if (!@tapes) {
-    die "Did not find any dumps to check!\n";
+    critical("Did not find any dumps to check!\n");
 }
 
 printf("You will need the following tape%s: %s\n", (@tapes > 1) ? "s" : "",
@@ -352,13 +352,13 @@ while (1) {
                                $validation_command);
         
         unless ($validation_pid) {
-            die "Can't execute validation command: $!\n";
+            critical("Can't execute validation command: $!\n");
             next;
         }
     }
     
     if (!$device->read_to_fd(fileno(VALIDATION_PIPELINE))) {
-        die "Error reading device or writing data to validation command.\n";
+        critical("Error reading device or writing data to validation command.\n");
     }
 
     last unless @images;
@@ -375,7 +375,7 @@ while (1) {
          $image->{diskname} ne $next_image->{diskname} ||
          $image->{level} != $next_image->{level})) {
         if (!close(VALIDATION_PIPELINE)) {
-            die "Error closing validation pipeline.\n";
+            critical("Error closing validation pipeline.\n");
         }
         undef $validation_pid;
     }
