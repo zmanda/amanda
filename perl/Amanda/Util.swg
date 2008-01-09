@@ -32,6 +32,7 @@
 %perlcode %{
 use Amanda::Debug qw(:init);
 use Carp;
+use POSIX qw(:fcntl_h);
 
 =head1 NAME
 
@@ -113,7 +114,7 @@ sub setup_application {
     set_pname($name);
 
     safe_cd(); # (also sets umask)
-    safe_fd(-1, 0);
+    check_std_fds();
 
     # set up debugging for this application type
     dbopen($type);
@@ -191,7 +192,6 @@ amglue_add_constant(RUNNING_AS_UID_ONLY, running_as_flags);
 
 void set_pname(char *name);
 void safe_cd(void);
-void safe_fd(int fd_start, int fd_count);
 
 void check_running_as(running_as_flags who);
 
@@ -213,5 +213,15 @@ set_erroutput_type(char *type, char *context)
 	    erroutput_type = ERR_INTERACTIVE|ERR_SYSLOG;
 	}
     }
+}
+%}
+
+/* Check that fd's 0, 1, and 2 are open, calling critical() if not.
+ */
+%perlcode %{
+sub check_std_fds {
+    fcntl(STDIN, F_GETFD, 0) or critical("Standard input is not open");
+    fcntl(STDOUT, F_GETFD, 0) or critical("Standard output is not open");
+    fcntl(STDERR, F_GETFD, 0) or critical("Standard error is not open");
 }
 %}

@@ -51,6 +51,11 @@
 	  example/template.d/dumptypes: Document 'local' security driver.
 
 2008-01-08  Dustin J. Mitchell <dustin@zmanda.com>
+	* server-src/amcheckdump.pl perl/Amanda/Util.swg: don't use
+	  the C safe_fd, which kills the Perl debugger; just check
+	  that fd's 0-2 are open
+
+2008-01-08  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Types.swg perl/Makefile.am: add new Amanda::Types module
 	to contain data structures common to several other modules.
 	* perl/Amanda/Device.swg: move dumpfile_t to Amanda::Types

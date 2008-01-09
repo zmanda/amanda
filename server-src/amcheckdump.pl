@@ -169,8 +169,7 @@ sub find_validation_command($) {
 
 ## Application initialization
 
-# This interferes with perl debugger.
-#Amanda::Util::setup_application("amcheckdump", "server", "cmdline");
+Amanda::Util::setup_application("amcheckdump", "server", "cmdline");
 
 my $timestamp = undef;
 GetOptions('timestamp|t=s' => \$timestamp,
