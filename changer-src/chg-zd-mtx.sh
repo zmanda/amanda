@@ -1239,6 +1239,10 @@ addlabel() {
 		Exit 1 `_ '<none>'` `_ 'No tape currently loaded'`
 		return $?			# in case we are internal
 	fi
+	if [ -z "$loadedbarcode" ]; then
+		Exit 1 `_ '<none>'` `_ 'No barcode found for tape %s.' $tapelabel`
+		return $?			# in case we are internal
+	fi
 	Log       `_ 'LABEL    -> Adding label "%s" with barcode "%s" for slot %s into %s' "$tapelabel" "$loadedbarcode" "$loadedslot" "$labelfile"`
 	read_labelfile "$tapelabel" "$loadedbarcode" < $labelfile
 	if [ $labelfile_entry_found -ne 0 ]; then
