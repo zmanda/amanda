@@ -17,6 +17,7 @@ dist_template_DATA = template.d/advanced.conf \
 		template.d/amanda-harddisk.conf \
 		template.d/amanda-single-tape.conf \
 		template.d/amanda-tape-changer.conf \
+		template.d/amanda-S3.conf \
 		template.d/dumptypes \
 		template.d/tapetypes \
 		template.d/README   \

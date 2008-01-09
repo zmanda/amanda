@@ -1,4 +1,9 @@
 2008-01-09  Jean-Louis Martineau <martineau@zmanda.com>
+	* configure.in (AC_CONFIG_FILES): Add example/template.d/amanda-S3.conf
+	* example/Makefile.am (dist_template_DATA): Add
+						    template.d/amanda-S3.conf
+
+2008-01-09  Jean-Louis Martineau <martineau@zmanda.com>
 	* changer-src/scsi-solaris.c: Cleanup.
 
 2008-01-09  Ian Turner <ian@zmanda.com>
