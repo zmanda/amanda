@@ -1,3 +1,6 @@
+2008-01-09  Jean-Louis Martineau <martineau@zmanda.com>
+	* changer-src/scsi-solaris.c: Cleanup.
+
 2008-01-09  Ian Turner <ian@zmanda.com>
 	* changer-src/chg-zd-mtx.sh.in: Don't write a corrupt changerfile
 	  when a tape has no barcode label.

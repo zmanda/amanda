@@ -137,7 +137,6 @@ int SCSI_ExecuteCommand(int DeviceFD,
   extern FILE * debug_file;
   int ret = 0;
   int retries = 1;
-  extern int errno;
   struct uscsi_cmd Command;
   static int depth = 0;
 
