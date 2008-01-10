@@ -1,3 +1,14 @@
+2008-01-10  Jean-Louis Martineau <martineau@zmanda.com>
+	* config/amanda/flags.m4 (AMANDA_STATIC_FLAGS):
+	  Set AMANDA_STATIC_LDFLAGS to '-static' if set.
+	* configure.in: Call AMANDA_STATIC_FLAGS.
+	* amandad-src/Makefile.am, changer-src/Makefile.am,
+	  client-src/Makefile.am, common-src/Makefile.am,
+	  dumper-src/Makefile.am, oldrecover-src/Makefile.am,
+	  recover-src/Makefile.am, restore-src/Makefile.am,
+	  server-src/Makefile.am,
+	  tape-src/Makefile.am(AM_LDFLAGS): Set to AMANDA_STATIC_LDFLAGS.
+
 2008-01-09  Jean-Louis Martineau <martineau@zmanda.com>
 	* configure.in (AC_CONFIG_FILES): Add example/template.d/amanda-S3.conf
 	* example/Makefile.am (dist_template_DATA): Add

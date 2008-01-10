@@ -110,6 +110,35 @@ AC_DEFUN([AMANDA_INIT_FLAGS],
 
 # SYNOPSIS
 #
+#   AMANDA_STATIC_FLAGS(new_flags)
+#
+# DESCRIPTION
+#
+#   Set AMANDA_STATIC_LDFLAGS to -static if --enable-static-binary
+#
+AC_DEFUN([AMANDA_STATIC_FLAGS],
+[
+    AC_ARG_ENABLE(static-binary,
+	AS_HELP_STRING([--enable-static-binary],
+		       [To build statically linked binaries]),
+	[
+	    case "$withval" in
+	    "" | y | ye | yes)
+		AMANDA_STATIC_LDFLAGS=-static
+		if test x"$enable_static" = x"no"; then
+			AC_MSG_ERROR([*** --enable-static-binary is incompatible with --disable-static])
+		fi
+		;;
+	    *n | no)
+		AMANDA_STATIC_LDFLAGS=
+		;;
+	    esac
+	])
+    AC_SUBST([AMANDA_STATIC_LDFLAGS])
+])
+
+# SYNOPSIS
+#
 #   AMANDA_ADD_CFLAGS(new_flags)
 #
 # DESCRIPTION
