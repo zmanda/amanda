@@ -1,3 +1,6 @@
+2008-01-11  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Config.swg perl/Amanda/Debug.swg: complete documentation
+
 2008-01-11  Jean-Louis Martineau <martineau@zmanda.com>
 	* amandad-src/Makefile.am: Install amandad in $libexecdir/amanda
 	* installcheck/amgetconf.pl: usetimestamps defaults to yes.

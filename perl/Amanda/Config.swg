@@ -36,12 +36,12 @@ Amanda::Config - access to Amanda configuration parameters
   use Amanda::Config qw( :init :getconf );
 
   config_init($CONFIG_INIT_EXPLICIT_NAME, $ARGV[1])
-    or die("errors processing config file $Amanda::Config::config_filename");
+    or die("errors processing config file " . $Amanda::Config::get_config_filename());
 
   print "tape device is ", getconf($CNF_TAPEDEV), "\n";
 
-This API closely parallels the C api.  See L<conffile.h> for details on
-the functinos and constants available here.
+This API closely parallels the C API.  See L<conffile.h> for details
+on the functions and constants available here.
 
 =head1 API STATUS
 
@@ -49,26 +49,170 @@ Stable
 
 =head1 INITIALIZATION
 
-TBD
+The Amanda configuration is treated as a global state for the
+application.  It is not possible to load two configurations
+simultaneously.
 
 All initialization-related symbols can be imported with the tag
 C<:init>.
 
+=head2 LOADING CONFIGURATION
+
+The Amanda configuration is loaded with the aptly named
+C<config_init($flags, $name)>.  Because of the great variety in
+invocation method among Amanda applications, this function has a number
+of flags that affect its behavior.  These flags can be OR'd together.
+
+=over
+
+=item If C<CONFIG_INIT_EXPLICIT_NAME> is given, then the C<$name>
+parameter can contain the name of a configuration to load.
+
+=item If C<CONFIG_INIT_USE_CWD> is given, and if the current directory
+contains C<amanda.conf>, then that file is loaded.
+
+=item If C<CONFIG_INIT_CLIENT> is given, then a client configuration
+is loaded.
+
+=item If C<CONFIG_INIT_OVERLAY> is given, then any existing
+configuration is not reset.
+
+=item If C<CONFIG_INIT_FATAL> is given, then any errors are considered
+fatal, and C<config_init> does not return.
+
+=back
+
+See C<conffile.h> for more detailed information on these flags and
+their interactions.
+
+C<config_uninit()> reverses the effects of C<config_init>.  It is
+not often used.
+
+Once the configuration is loaded, the configuration name
+(e.g., "DailySet1"), directory (C</etc/amanda/DailySet1>),
+and filename (C</etc/amanda/DailySet1/amanda.conf>) are
+available from C<get_config_name()>, C<get_config_dir()>, and
+C<get_config_filename()>, respectively.
+
+=head2 CONFIG OVERWRITES
+
+Most Amanda applications accept the command-line option C<-o>
+to "overwrite" configuration values in C<amanda.conf>.  In Perl
+applications, these options should be parsed with L<Getopt::Long>, with
+the action being a call to C<add_config_overwrite_opt>.  For example:
+
+  my $config_overwrites = new_config_overwrites($#ARGV+1);
+    GetOptions(
+	# ...
+	'o=s' => sub { add_config_overwrite_opt($config_overwrites, $_[1]); },
+    ) or usage();
+  my $cfg_ok = config_init($CONFIG_INIT_EXPLICIT_NAME | $CONFIG_INIT_USE_CWD, $config_name);
+  apply_config_overwrites($config_overwrites);
+
+C<new_config_overwrites($size_estimate)> creates a new
+overwrites object, using the given size as an estimate of
+the number of items it will contain (C<$#ARGC/2> is a good
+estimate).  Individual configuration options are then added via
+C<add_config_overwrite($co, $key, $value)> (which takes a key/value
+pair) or C<add_config_overwrite_opt($co, $optarg)>, which parses a
+string following C<-o> on the command line.
+
+Once the overwrites are gathered, they are applied with
+C<apply_config_overwrites($co)>, which applies the overwrites to the
+active configuration.  No further operations can be performed on the
+overwrites object after C<apply_config_overwrites> has been called.
+
+The utility function C<get_config_options()> returns a list of
+command-line arguments to represent any overwrites that were used
+to generate the current configuration.  (TODO: this function isn't
+available yet)
+
 =head1 PARAMETER ACCESS
 
-TBD
+Amanda configurations consist of "global" parameters and several
+sets of "subsections" -- one set for dumptypes, one for tapetypes,
+and so on.
 
-All parameter access functions can be imported with the tag C<:getconf>.
+All of the global parameters are represented by a constant beginning
+with C<$CNF_>, e.g., C<$CNF_LABELSTR>.  The function C<getconf($cnf)>
+returns the value of parameter C<$cnf>, in whatever format is
+appropriate for the parameter.  C<getconf_seen($cnf)> returns a true
+value if C<$cnf> was seen in the configuration file.  If it was not
+seen, then it will have its default value.
 
-...
+Some parameters have enumerated types.  The values for those
+enumerations are available from this module with the same name as
+in C<conffile.h>.  For example, C<$CNF_TAPERALGO> will yield a value
+from the enumeration C<taperalgo_t>, the constants for which all
+begin with C<$ALGO_>.  See C<conffile.h> for the details.
+
+Each subsection type has the following functions:
+
+=over
+
+=item C<lookup_TYP($subsec_name)>, which returns an opaque object
+(C<$ss>) representing the subsection, or C<undef> if no subsection
+with that name exists;
+
+=item C<TYP_name($ss)>, returning the name of the subsection;
+
+=item C<TYP_getconf($ss, $cnf)>, which fetches a parameter value from
+C<$ss>; and
+
+=item C<TYP_seen($ss, $cnf)>, which returns a true value if <$cnf>
+was seen in the subsection.
+
+=back
+
+The subsections are:
+
+=over
+
+=item C<tapetype>, with constants beginning with C<$TAPETYPE_>,
+
+=item C<dumptype>, with constants beginning with C<$DUMPTYPE_>,
+
+=item C<interface>, with constants beginning with C<$INTER_>, and
+
+=item C<holdingdisk>, with constants beginning with C<$HOLDING_>.
+
+=back
+
+See C<conffile.h> for the names of the constants themselves.
+
+Parameter values are available by name from C<getconf_byname($name)>.
+This function implements the C<TYP:NAME:PARAM> syntax advertised by
+C<amgetconf> to access values in subsections.  C<getconf_list($typ)>
+returns a list of the names of all subsections of the given type.
+
+The C<$CNF_DISPLAYUNIT> implies a certain divisor to convert from
+kilobytes to the desired unit.  This divisor is available from
+C<getconf_unit_divisor()>.  Note carefully that it is a I<divisor>
+for a value in I<kilobytes>!
+
+Finally, various subsections of Amanda enable verbose debugging via
+configuration parameters.  The status of each parameter is available
+a similarly-named variable, e.g., C<$debug_auth>.
+
+All parameter access functions and constants can be imported with
+the tag C<:getconf>.
 
 =head1 MISCELLANEOUS
 
+These functions defy categorization.
+
 The function C<config_dir_relative> will interpret a path relative to
 the current configuration directory.  Absolute paths are passed through
-unchanged, while relative paths are converted to an absolute path.
+unchanged, while relative paths are converted to absolute paths.
 
-...
+C<dump_configuration()> dumps the current configuration, in a format
+suitable for re-evaluation for this module, to standard output.
+This function may be revised to return a string.
+
+Several parts of Amanda need to convert unit modifier value like
+"gbytes" to a multiplier.  The function C<find_multiplier($str)>
+returns the unit multiplier for such a string.  For example, "mbytes"
+is converted to 1048576 (1024*1024).
 
 =cut
 %}
