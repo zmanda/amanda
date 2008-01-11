@@ -1,4 +1,7 @@
 2008-01-10  Jean-Louis Martineau <martineau@zmanda.com>
+	* config/amanda/defaults.m4: Set amandates to $localstatedir/amanda/amandate
+
+2008-01-10  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amfreetapes.sh: Use amlibexecdir.
 
 2008-01-10  Jean-Louis Martineau <martineau@zmanda.com>

@@ -122,16 +122,16 @@ AC_DEFUN([AMANDA_SETUP_DEFAULTS],
 
     AC_ARG_WITH(amandates,
         AS_HELP_STRING([--with-amandates],
-            [default location for 'amandates' (default: $sysconfdir/amandates)]),
-        [ amandates="$withval" ],
-	[ amandates="yes" ]
+            [default location for 'amandates' (default: $localstatedir/amanda/amandates)]),
+	    [
+	    case "$withval" in
+	        n | no) AC_MSG_ERROR([*** --without-amandates is not allowed.]);;
+	        y |  ye | yes) amandates='$localstatedir/amanda/amandates' ;;
+	        *) amandates="$withval";;
+	    esac
+	    ],
+	    [amandates='$localstatedir/amanda/amandates']
     )
-
-    case "$tmpdir" in
-        n | no) AC_MSG_ERROR([*** --without-amandates is not allowed.]);;
-        y |  ye | yes) amandates='$sysconfdir/amandates' ;;
-        *) amandates="$tmpdir";;
-    esac
 
     AC_DEFINE_DIR([DEFAULT_AMANDATES_FILE], [amandates],
         [Default location for 'amandates'])
