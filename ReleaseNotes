@@ -4,6 +4,13 @@ amcheckdump
   New program written entirely in perl, it replaces 'amverify' and
   'amveryfyrun'
 
+amcryptsimple, amgpgcrypt
+  New encryption plugins based on gpg.
+
+amserverconfig, amaddclient
+  New Initial Amanda configuration tools, these tools make assumptions,
+   please see man page.
+
 Deprecated programs
   'amverify' and 'amveryfyrun' are deprecated -- use amcheckdump.
   'amdd' and 'ammt' are also deprecated. If you have scripts that use
