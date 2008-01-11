@@ -1,4 +1,8 @@
 2008-01-10  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c (usetimestamps): Default ot yes.
+	* man/xml-source/amanda.conf.5.xml (usetimestamps): Document it.
+
+2008-01-10  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amverifyrun.sh, server-src/amverify.sh,
 	  tape-src/ammt.c, tape-src/amdd.c: Write deprecated message.
 

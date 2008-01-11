@@ -232,15 +232,10 @@ with damaged or misplaced tapes or schedule adjustments that call for slight adj
   <term><emphasis remap='B'>usetimestamps</emphasis>
 	<emphasis remap='I'> bool</emphasis></term>
     <listitem>
-      <para>Default: <emphasis remap='B'>No</emphasis>.
-By default, Amanda can only track at most one run per calendar day. When
-this option is enabled, however, Amanda can track as many runs as you care
-to make.
-      </para>
-      <para>
-<emphasis remap='B'>WARNING</emphasis>: This option is not backward-compatible.
-Do not enable it if you intend to downgrade your server installation to
-Amanda community edition 2.5.0
+      <para>Default: <emphasis remap='B'>Yes</emphasis>.
+This option allows Amanda to track multiple runs per calendar
+day. The only reason one might disable it is that Amanda versions before 2.5.1
+can't read logfiles written when this option was enabled.
       </para>
     </listitem>
   </varlistentry>
