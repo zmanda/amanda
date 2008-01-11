@@ -12,6 +12,9 @@ Changes in release 2.6.0
    * The amandates file, previously at /etc/amandates, is now at
      $localstatedir/amanda/amandates.  You may want to move your existing
      /etc/amandates when you upgrade Amanda.
+   * New 'amcryptsimple', 'amgpgcrypt' - encryption plugins based on gpg.
+   * New 'amserverconfig', 'amaddclient' - Initial Amanda configuration tools
+     these tools make assumptions, please see man page.
    * Many bugs fixed and code rewrite/cleanup
    * glib is required to compile and run amanda.
    * Device API: pluggable interface to storage devices, supporting tapes,

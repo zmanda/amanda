@@ -1,4 +1,8 @@
 2008-01-11  Jean-Louis Martineau <martineau@zmanda.com>
+	* NEWS: Add amcryptsimple, amgpgcrypt, amserverconfig and amaddclient.
+	* ReleaseNotes: Ditto.
+
+2008-01-11  Jean-Louis Martineau <martineau@zmanda.com>
 	* ReleaseNotes: Update for amanda-2.6.0
 	* News: Update for amanda-2.6.0
 	* configure.in: AM_INIT_AUTOMAKE(amanda, "2.6.0b1")
