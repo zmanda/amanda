@@ -309,8 +309,8 @@
 # source utility functions and values from configure
 prefix=@prefix@
 exec_prefix=@exec_prefix@
-libexecdir=@libexecdir@
-. ${libexecdir}/chg-lib.sh
+amlibexecdir=@amlibexecdir@
+. ${amlibexecdir}/chg-lib.sh
 
 test -n "$DEBUG" && set -x
 TMPDIR="@AMANDA_TMPDIR@"

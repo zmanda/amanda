@@ -66,7 +66,7 @@ changer_init(void)
     if (tapechanger == NULL)
 	tapechanger = getconf_str(CNF_TPCHANGER);
     if (*tapechanger != '\0' && *tapechanger != '/') {
-	tapechanger = vstralloc(libexecdir, "/", tapechanger, versionsuffix(),
+	tapechanger = vstralloc(amlibexecdir, "/", tapechanger, versionsuffix(),
 			        NULL);
     }
     return strcmp(tapechanger, "") != 0;

@@ -18,16 +18,16 @@ LINTFLAGS=$(AMLINTFLAGS)
 
 amlib_LTLIBRARIES =	libamclient.la
 
-libexec_PROGRAMS =	noop calcsize killpgrp rundump runtar selfcheck sendbackup sendsize versionsuffix
+amlibexec_PROGRAMS =	noop calcsize killpgrp rundump runtar selfcheck sendbackup sendsize versionsuffix
 
 sbin_SCRIPTS = @CLIENT_SCRIPTS_OPT@
 EXTRA_SCRIPTS =	amhpfixdevs amsinixfixdevs
 
-libexec_SCRIPTS = patch-system
+amlibexec_SCRIPTS = patch-system
 
 CHECK_PERL = $(sbin_SCRIPTS)
 SCRIPTS_PERL = $(CHECK_PERL)
-SCRIPTS_SHELL = $(libexec_SCRIPTS)
+SCRIPTS_SHELL = $(amlibexec_SCRIPTS)
 
 libamclient_la_SOURCES=	amandates.c		getfsent.c	\
 			unctime.c		client_util.c
@@ -65,19 +65,19 @@ noinst_HEADERS	= 	amandates.h	getfsent.h	\
 			findpass.h	client_util.h
 			
 INSTALLPERMS_exec = chown=amanda \
-	dest=$(libexecdir) $(libexec_PROGRAMS)
+	dest=$(amlibexecdir) $(amlibexec_PROGRAMS)
 
 INSTALLPERMS_data = chown=amanda \
 	dest=$(sbindir) $(sbin_SCRIPTS) \
-	dest=$(libexecdir) $(libexec_SCRIPTS)
+	dest=$(amlibexecdir) $(amlibexec_SCRIPTS)
 
 if WANT_SETUID_CLIENT
-INSTALLPERMS_exec += dest=$(libexecdir) chown=root chmod=u+s,o-rwx \
+INSTALLPERMS_exec += dest=$(amlibexecdir) chown=root chmod=u+s,o-rwx \
 		calcsize killpgrp rundump runtar
 endif
 
 lint:
-	@ for p in $(libexec_PROGRAMS); do					\
+	@ for p in $(amlibexec_PROGRAMS); do					\
 		f="$$p.c $(libamclient_la_SOURCES)";				\
 		(cd ../common-src; make listlibsrc);				\
 		f="$$f "`cat ../common-src/listlibsrc.output`;			\

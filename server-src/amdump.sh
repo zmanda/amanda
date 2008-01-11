@@ -33,8 +33,8 @@
 prefix="@prefix@"
 exec_prefix="@exec_prefix@"
 sbindir="@sbindir@"
-libexecdir="@libexecdir@"
-. "${libexecdir}/amanda-sh-lib.sh"
+amlibexecdir="@amlibexecdir@"
+. "${amlibexecdir}/amanda-sh-lib.sh"
 
 confdir=@CONFIG_DIR@
 
@@ -120,7 +120,7 @@ printf '%s: start at %s\n' "amdump" "$date"
 printf '%s: datestamp %s\n' "amdump" "$date_datestamp"
 printf '%s: starttime %s\n' "amdump" "$date_starttime"
 printf '%s: starttime-locale-independent %s\n' "amdump" "$date_locale_independent"
-$libexecdir/planner$SUF $conf --starttime $date_starttime "$@" | $libexecdir/driver$SUF $conf "$@"
+$amlibexecdir/planner$SUF $conf --starttime $date_starttime "$@" | $amlibexecdir/driver$SUF $conf "$@"
 exit_code=$?
 [ $exit_code -ne 0 ] && exit_status=$exit_code
 printf '%s: end at %s\n' "amdump" "`date`"
@@ -131,17 +131,17 @@ exit_code=$?
 [ $exit_code -ne 0 ] && exit_status=$exit_code
 
 # Roll the log file to its datestamped name.
-$libexecdir/amlogroll$SUF $conf "$@"
+$amlibexecdir/amlogroll$SUF $conf "$@"
 exit_code=$?
 [ $exit_code -ne 0 ] && exit_status=$exit_code
 
 # Trim the log file to those for dumps that still exist.
-$libexecdir/amtrmlog$SUF $conf "$@"
+$amlibexecdir/amtrmlog$SUF $conf "$@"
 exit_code=$?
 [ $exit_code -ne 0 ] && exit_status=$exit_code
 
 # Trim the index file to those for dumps that still exist.
-$libexecdir/amtrmidx$SUF $conf "$@"
+$amlibexecdir/amtrmidx$SUF $conf "$@"
 exit_code=$?
 [ $exit_code -ne 0 ] && exit_status=$exit_code
 

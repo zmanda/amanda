@@ -592,7 +592,7 @@ protocol_accept(
 	goto send_pkt_out;
     }
 
-    service_path = vstralloc(libexecdir, "/", service, versionsuffix(), NULL);
+    service_path = vstralloc(amlibexecdir, "/", service, versionsuffix(), NULL);
     if (access(service_path, X_OK) < 0) {
 	dbprintf(_("can't execute %s: %s\n"), service_path, strerror(errno));
 	    pkt_init(&pkt_out, P_NAK,

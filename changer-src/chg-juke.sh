@@ -22,8 +22,8 @@
 prefix="@prefix@"
 exec_prefix="@exec_prefix@"
 sbindir="@sbindir@"
-libexecdir="@libexecdir@"
-. "${libexecdir}/amanda-sh-lib.sh"
+amlibexecdir="@amlibexecdir@"
+. "${amlibexecdir}/amanda-sh-lib.sh"
 
 
 #

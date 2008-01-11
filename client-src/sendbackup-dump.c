@@ -213,7 +213,7 @@ start_backup(
     dbprintf(_("dumping device '%s' with '%s'\n"), device, fstype);
 
 #if defined(USE_RUNDUMP) || !defined(DUMP)
-    cmd = vstralloc(libexecdir, "/", "rundump", versionsuffix(), NULL);
+    cmd = vstralloc(amlibexecdir, "/", "rundump", versionsuffix(), NULL);
     cmdX = cmd;
     if (g_options->config)
 	config = g_options->config;
@@ -234,7 +234,7 @@ start_backup(
     if (1)
 #endif							/* } */
     {
-        char *progname = cmd = newvstralloc(cmd, libexecdir, "/", "rundump",
+        char *progname = cmd = newvstralloc(cmd, amlibexecdir, "/", "rundump",
 					    versionsuffix(), NULL);
 	cmdX = cmd;
 	if (g_options->config)
@@ -279,7 +279,7 @@ start_backup(
 #endif
     {
 #ifdef USE_RUNDUMP
-        char *progname = cmd = newvstralloc(cmd, libexecdir, "/", "rundump",
+        char *progname = cmd = newvstralloc(cmd, amlibexecdir, "/", "rundump",
 					    versionsuffix(), NULL);
 	cmdX = cmd;
 	if (g_options->config)
@@ -330,7 +330,7 @@ start_backup(
     if (1)
 #endif
     {
-        char *progname = cmd = newvstralloc(cmd, libexecdir, "/", "rundump",
+        char *progname = cmd = newvstralloc(cmd, amlibexecdir, "/", "rundump",
 					    versionsuffix(), NULL);
 	cmdX = cmd;
 	if (g_options->config)

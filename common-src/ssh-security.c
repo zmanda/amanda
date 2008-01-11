@@ -224,7 +224,7 @@ runssh(
     safe_fd(-1, 0);
 
     if(!xamandad_path || strlen(xamandad_path) <= 1) 
-	xamandad_path = vstralloc(libexecdir, "/", "amandad",
+	xamandad_path = vstralloc(amlibexecdir, "/", "amandad",
 				 versionsuffix(), NULL);
     if(!xclient_username || strlen(xclient_username) <= 1)
 	xclient_username = CLIENT_LOGIN;

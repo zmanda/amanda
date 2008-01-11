@@ -838,7 +838,7 @@ check_overall(void)
 
     if( need_runtar )
     {
-	cmd = vstralloc(libexecdir, "/", "runtar", versionsuffix(), NULL);
+	cmd = vstralloc(amlibexecdir, "/", "runtar", versionsuffix(), NULL);
 	check_file(cmd,X_OK);
 	check_suid(cmd);
 	amfree(cmd);
@@ -846,7 +846,7 @@ check_overall(void)
 
     if( need_rundump )
     {
-	cmd = vstralloc(libexecdir, "/", "rundump", versionsuffix(), NULL);
+	cmd = vstralloc(amlibexecdir, "/", "rundump", versionsuffix(), NULL);
 	check_file(cmd,X_OK);
 	check_suid(cmd);
 	amfree(cmd);
@@ -938,7 +938,7 @@ check_overall(void)
     if( need_calcsize ) {
 	char *cmd;
 
-	cmd = vstralloc(libexecdir, "/", "calcsize", versionsuffix(), NULL);
+	cmd = vstralloc(amlibexecdir, "/", "calcsize", versionsuffix(), NULL);
 
 	check_file(cmd, X_OK);
 

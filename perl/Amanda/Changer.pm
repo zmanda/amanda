@@ -285,7 +285,7 @@ sub run_tpchanger {
     # get the tape changer and extend it to a full path
     my $tapechanger = getconf($CNF_TPCHANGER);
     if ($tapechanger !~ qr(^/)) {
-        $tapechanger = "$libexecdir/$tapechanger";
+        $tapechanger = "$amlibexecdir/$tapechanger";
     }
 
     my $pid = open(my $child, "-|");

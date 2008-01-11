@@ -37,7 +37,7 @@ my $prefix='@prefix@';
 $prefix=$prefix;		# avoid warnings about possible typo
 my $exec_prefix="@exec_prefix@";
 $exec_prefix=$exec_prefix;	# ditto
-my $libexecdir="@libexecdir@";
+my $amlibexecdir="@amlibexecdir@";
 my $sbindir="@sbindir@";
  
 # The directory where configurations can be found.

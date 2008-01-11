@@ -11,8 +11,8 @@
 prefix="@prefix@"
 exec_prefix="@exec_prefix@"
 sbindir="@sbindir@"
-libexecdir="@libexecdir@"
-. "${libexecdir}/amanda-sh-lib.sh"
+amlibexecdir="@amlibexecdir@"
+. "${amlibexecdir}/amanda-sh-lib.sh"
 
 # add sbin and ucb dirs
 PATH="$PATH:/usr/sbin:/sbin:/usr/ucb"
@@ -208,7 +208,7 @@ doonefile() {
 #	IS_AIX		true if this is an AIX system
 
 CONFIG_DIR=@CONFIG_DIR@
-libexecdir=$libexecdir
+amlibexecdir=$amlibexecdir
 sbindir=$sbindir
 AMRESTORE=$sbindir/amrestore$SUF
 AMGETCONF=$sbindir/amgetconf$SUF
@@ -226,7 +226,7 @@ XFSRESTORE=@XFSRESTORE@
 MAIL=@MAILER@
 DD=@DD@
 
-. ${libexecdir}/chg-lib.sh
+. ${amlibexecdir}/chg-lib.sh
 
 #
 # config file

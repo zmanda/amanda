@@ -1,4 +1,37 @@
 2008-01-10  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amfreetapes.sh: Use amlibexecdir.
+
+2008-01-10  Jean-Louis Martineau <martineau@zmanda.com>
+	* config/amanda/dirs.m4: Set amlibexecdir to $libexecdir/amanda.
+	* amandad-src/amandad.c, amplot/amplot.sh,
+	  amplot/Makefile.am, changer-src/chg-chs.sh,
+	  changer-src/chg-disk.sh, changer-src/chg-juke.sh,
+	  changer-src/chg-lib.sh.in, changer-src/chg-manual.sh,
+	  changer-src/chg-mcutil.sh, changer-src/chg-mtx.sh,
+	  changer-src/chg-multi.sh, changer-src/chg-null.sh,
+	  changer-src/chg-rait.sh, changer-src/chg-rth.pl,
+	  changer-src/chg-zd-mtx.sh, changer-src/Makefile.am,
+	  client-src/Makefile.am, client-src/patch-system.sh,
+	  client-src/selfcheck.c, client-src/sendbackup-dump.c,
+	  client-src/sendbackup-gnutar.c, client-src/sendsize.c,
+	  common-src/amaespipe.sh, common-src/amanda-sh-lib.sh.in,
+	  common-src/amcrypt-ossl-asym.sh, common-src/amcrypt-ossl.sh,
+	  common-src/amcrypt.sh, common-src/genversion.c,
+	  common-src/local-security.c, common-src/Makefile.am,
+	  common-src/rsh-security.c, common-src/ssh-security.c,
+	  dumper-src/amgtar.pl, example/xinetd.amandaclient,
+	  example/xinetd.amandaserver, installcheck/amgetconf.pl,
+	  perl/Amanda/Changer.pm, perl/Amanda/Paths.pm.in,
+	  restore-src/Makefile.am, server-src/amcheck.c,
+	  server-src/amcheckdb.sh, server-src/amcleanup.sh,
+	  server-src/amdump.sh, server-src/amflush.c,
+	  server-src/amoverview.pl, server-src/amrmtape.sh,
+	  server-src/amverifyrun.sh, server-src/amverify.sh,
+	  server-src/changer.c, server-src/driver.c,
+	  server-src/getconf.c, server-src/Makefile.am,
+	  tape-src/Makefile.am: Use amlibexecdir.
+
+2008-01-10  Jean-Louis Martineau <martineau@zmanda.com>
 	* config/amanda/flags.m4 (AMANDA_STATIC_FLAGS):
 	  Set AMANDA_STATIC_LDFLAGS to '-static' if set.
 	* configure.in: Call AMANDA_STATIC_FLAGS.

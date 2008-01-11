@@ -281,10 +281,10 @@ main(
 	hd_driver_timestamp = stralloc(driver_timestamp);
     }
 
-    taper_program = vstralloc(libexecdir, "/", "taper", versionsuffix(), NULL);
-    dumper_program = vstralloc(libexecdir, "/", "dumper", versionsuffix(),
+    taper_program = vstralloc(amlibexecdir, "/", "taper", versionsuffix(), NULL);
+    dumper_program = vstralloc(amlibexecdir, "/", "dumper", versionsuffix(),
 			       NULL);
-    chunker_program = vstralloc(libexecdir, "/", "chunker", versionsuffix(),
+    chunker_program = vstralloc(amlibexecdir, "/", "chunker", versionsuffix(),
 			       NULL);
 
     conf_taperalgo = getconf_taperalgo(CNF_TAPERALGO);

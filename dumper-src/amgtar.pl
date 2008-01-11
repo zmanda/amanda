@@ -23,8 +23,8 @@ $prefix='@prefix@';
 $prefix = $prefix;
 $exec_prefix="@exec_prefix@";
 $exec_prefix=$exec_prefix;
-$libexecdir="@libexecdir@";
-$libexecdir=$libexecdir;
+$amlibexecdir="@amlibexecdir@";
+$amlibexecdir=$amlibexecdir;
 
 $USE_VERSION_SUFFIXES='@USE_VERSION_SUFFIXES@';
 $suf = '';
@@ -34,7 +34,7 @@ if ( $USE_VERSION_SUFFIXES =~ /^yes$/i ) {
 
 $myhost = hostname;
 $myhost =~ s/\..*$//;
-$runtar="${libexecdir}/runtar${suf}";
+$runtar="${amlibexecdir}/runtar${suf}";
 $gnulist = '@GNUTAR_LISTED_INCREMENTAL_DIR@';
 $gnutar = '@GNUTAR@';
 

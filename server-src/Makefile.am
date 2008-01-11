@@ -26,7 +26,7 @@ sbin_PROGRAMS =		amadmin		amcheck		\
 
 noinst_PROGRAMS = taper_source_test
 
-libexec_PROGRAMS =	amindexd	amlogroll	amtrmidx	\
+amlibexec_PROGRAMS =	amindexd	amlogroll	amtrmidx	\
 			amtrmlog	driver		dumper		\
 			planner		taper		amcleanupdisk	\
 			chunker
@@ -58,16 +58,16 @@ INSTALLPERMS_exec = \
 		$(sbin_PROGRAMS) \
 	chown=root chmod=u+s,o-rwx \
 		amcheck \
-	dest=$(libexecdir) chown=amanda chmod= \
-		$(libexec_PROGRAMS) \
+	dest=$(amlibexecdir) chown=amanda chmod= \
+		$(amlibexec_PROGRAMS) \
 	chown=root chmod=u+s,o-rwx \
 		dumper planner
 
 INSTALLPERMS_data = \
 	dest=$(sbindir) chown=amanda chmod= \
 		$(sbin_SCRIPTS) \
-	dest=$(libexecdir) chown=amanda chmod= \
-		$(libexec_SCRIPTS)
+	dest=$(amlibexecdir) chown=amanda chmod= \
+		$(amlibexec_SCRIPTS)
 
 ###
 # Because libamanda includes routines (e.g. regex) provided by some system
@@ -138,7 +138,7 @@ noinst_HEADERS = 	amindex.h	changer.h	cmdline.h	\
 			taper-port-source.h taper-source.h
 
 lint:
-	@ for p in $(libexec_PROGRAMS) $(sbin_PROGRAMS); do			\
+	@ for p in $(amlibexec_PROGRAMS) $(sbin_PROGRAMS); do			\
 		if [ $$p = "amindexd" ]; then					\
 			s="$(amindexd_CSRC)";					\
 		elif [ $$p = "amreport" ]; then					\

@@ -63,7 +63,7 @@ like(amgetconf('TESTCONF', "foos_per_bar"), qr/no such parameter/,
 # test build parameters (just the most common)
 is(amgetconf('TESTCONF', "build.bindir"), $bindir, "build.bindir is correct");
 is(amgetconf('TESTCONF', "build.sbindir"), $sbindir, "build.sbindir is correct");
-is(amgetconf('TESTCONF', "build.libexecdir"), $libexecdir, "build.libexecdir is correct");
+is(amgetconf('TESTCONF', "build.amlibexecdir"), $amlibexecdir, "build.amlibexecdir is correct");
 is(amgetconf('TESTCONF', "build.mandir"), $mandir, "build.mandir is correct");
 is(amgetconf('TESTCONF', "build.AMANDA_DBGDIR"), $AMANDA_DBGDIR, "build.AMANDA_DBGDIR is correct");
 is(amgetconf('TESTCONF', "build.AMANDA_TMPDIR"), $AMANDA_TMPDIR, "build.AMANDA_TMPDIR is correct");

@@ -526,7 +526,7 @@ start_backup(
 
 	my_argv = alloc(SIZEOF(char *) * (22 + (nb_exclude*2)+(nb_include*2)));
 
-	cmd = vstralloc(libexecdir, "/", "runtar", versionsuffix(), NULL);
+	cmd = vstralloc(amlibexecdir, "/", "runtar", versionsuffix(), NULL);
 	info_tapeheader();
 
 	start_index(options->createindex, dumpout, mesgf, indexf, indexcmd);

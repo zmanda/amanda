@@ -4,8 +4,8 @@
 # Include this file as follows:
 #   prefix="@prefix@"
 #   exec_prefix="@exec_prefix@"
-#   libexecdir="@libexecdir@"
-#   . "${libexecdir}/amanda-sh-lib.sh"
+#   amlibexecdir="@amlibexecdir@"
+#   . "${amlibexecdir}/amanda-sh-lib.sh"
 
 ####
 # Configure variables
@@ -26,7 +26,7 @@ AWK="@AWK@"
 ####
 # Set up PATH for finding amanda executables
 
-PATH="@sbindir@:@libexecdir@:$PATH"
+PATH="@sbindir@:@amlibexecdir@:$PATH"
 
 ####
 # Gettext

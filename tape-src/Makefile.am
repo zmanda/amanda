@@ -55,7 +55,7 @@ noinst_HEADERS = 	\
 
 INSTALLPERMS_exec = \
 	dest=$(sbindir) chown=amanda $(sbin_PROGRAMS) $(sbin_SCRIPTS) \
-	dest=$(libexecdir) chown=amanda $(libexec_PROGRAMS) $(libexec_SCRIPTS)
+	dest=$(amlibexecdir) chown=amanda $(amlibexec_PROGRAMS) $(amlibexec_SCRIPTS)
 
 amtapeio_SOURCES = amtapeio.test.c
 amtapeio_LDADD =	../common-src/libamanda.$(LIB_EXTENSION) \

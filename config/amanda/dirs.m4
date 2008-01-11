@@ -189,6 +189,10 @@ AC_DEFUN([AMANDA_EXPAND_DIRS],
     AC_DEFINE_DIR([amlibdir], [amlibdir],
 	[Directory in which Amanda libraries should be installed])
 
+    amlibexecdir="${libexecdir}/amanda"
+    AC_DEFINE_DIR([amlibexecdir], [amlibexecdir],
+	[Directory in which Amanda own programs should be installed])
+
     amincludedir="${includedir}/amanda"
     AC_DEFINE_DIR([amincludedir], [amincludedir],
 	[Directory in which Amanda header files should be installed])

@@ -4,8 +4,8 @@
 prefix="@prefix@"
 exec_prefix="@exec_prefix@"
 sbindir="@sbindir@"
-libexecdir="@libexecdir@"
-. "${libexecdir}/amanda-sh-lib.sh"
+amlibexecdir="@amlibexecdir@"
+. "${amlibexecdir}/amanda-sh-lib.sh"
 
 # add sbin and ucb dirs
 PATH="$PATH:/usr/sbin:/sbin:/usr/ucb"
@@ -23,7 +23,7 @@ getparm() {
 }
 
 CONFIG=$1
-libexecdir=$libexecdir  
+amlibexecdir=$amlibexecdir  
 sbindir=$sbindir
 AMGETCONF=$sbindir/amgetconf$SUF
 AMVERIFY=$sbindir/amverify$SUF

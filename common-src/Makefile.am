@@ -212,15 +212,15 @@ sbin_SCRIPTS_SHELL = \
 	    amcrypt-ossl \
 	    amcrypt-ossl-asym
 
-libexec_SCRIPTS_PERL = 
+amlibexec_SCRIPTS_PERL = 
 
-libexec_SCRIPTS_SHELL = \
+amlibexec_SCRIPTS_SHELL = \
 	    amanda-sh-lib.sh
 
-CHECK_PERL = $(sbin_SCRIPTS_PERL) $(libexec_SCRIPTS_PERL)
+CHECK_PERL = $(sbin_SCRIPTS_PERL) $(amlibexec_SCRIPTS_PERL)
 SCRIPTS_PERL = $(CHECK_PERL)
-SCRIPTS_SHELL = $(sbin_SCRIPTS_SHELL) $(libexec_SCRIPTS_SHELL)
-libexec_SCRIPTS = $(libexec_SCRIPTS_PERL) $(libexec_SCRIPTS_SHELL)
+SCRIPTS_SHELL = $(sbin_SCRIPTS_SHELL) $(amlibexec_SCRIPTS_SHELL)
+amlibexec_SCRIPTS = $(amlibexec_SCRIPTS_PERL) $(amlibexec_SCRIPTS_SHELL)
 sbin_SCRIPTS = $(sbin_SCRIPTS_PERL) $(sbin_SCRIPTS_SHELL)
 
 # installation

@@ -35,7 +35,7 @@ $prefix=$prefix;		# avoid warnings about possible typo
 $exec_prefix="@exec_prefix@";
 $exec_prefix=$exec_prefix;	# ditto
 $sbindir="@sbindir@";
-$libexecdir="@libexecdir@";
+$amlibexecdir="@amlibexecdir@";
 if ("@USE_VERSION_SUFFIXES@" eq "yes") {
     $suf = "-@VERSION@";
 } else {

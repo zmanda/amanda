@@ -62,6 +62,7 @@ static struct build_info {
     { "bindir",				bindir },
     { "sbindir",			sbindir },
     { "libexecdir",			libexecdir },
+    { "amlibexecdir",			amlibexecdir },
     { "mandir",				mandir },
     { "AMANDA_TMPDIR",			AMANDA_TMPDIR },
     { "CONFIG_DIR",			CONFIG_DIR },

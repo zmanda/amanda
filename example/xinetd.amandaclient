@@ -14,6 +14,6 @@ service amanda
 	user		= amandabackup
 	group		= disk
 	groups		= yes
-	server		= /usr/lib/amanda/amandad 
+	server		= /usr/libexec/amanda/amandad 
 	server_args     = -auth=bsdtcp amdump
 }

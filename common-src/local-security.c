@@ -245,7 +245,7 @@ runlocal(
     safe_fd(-1, 0);
 
     if(!xamandad_path || strlen(xamandad_path) <= 1) 
-	xamandad_path = vstralloc(libexecdir, "/", "amandad",
+	xamandad_path = vstralloc(amlibexecdir, "/", "amandad",
 				 versionsuffix(), NULL);
 
 #ifndef SINGLE_USERID

@@ -198,11 +198,11 @@ main(
     }
     amfree(conf_logfile);
 
-    driver_program = vstralloc(libexecdir, "/", "driver", versionsuffix(),
+    driver_program = vstralloc(amlibexecdir, "/", "driver", versionsuffix(),
 			       NULL);
     reporter_program = vstralloc(sbindir, "/", "amreport", versionsuffix(),
 				 NULL);
-    logroll_program = vstralloc(libexecdir, "/", "amlogroll", versionsuffix(),
+    logroll_program = vstralloc(amlibexecdir, "/", "amlogroll", versionsuffix(),
 				NULL);
 
     tapedev = getconf_str(CNF_TAPEDEV);

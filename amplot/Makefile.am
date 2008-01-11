@@ -9,7 +9,7 @@ SCRIPTS_SHELL = amplot
 SCRIPTS_AWK = amcat.awk
 
 sbin_SCRIPTS =		$(SCRIPTS_SHELL)
-amplotdir =		$(libexecdir)
+amplotdir =		$(amlibexecdir)
 amplot_DATA =		$(SCRIPTS_AWK) amplot.awk amplot.g amplot.gp
 
 EXTRA_DIST +=		amplot.awk		amplot.g

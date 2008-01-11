@@ -227,6 +227,7 @@ main(
     prvar("bindir", bindir);
     prvar("sbindir", sbindir);
     prvar("libexecdir", libexecdir);
+    prvar("amlibexecdir", amlibexecdir);
     prvar("mandir", mandir);
     prvar("AMANDA_TMPDIR", AMANDA_TMPDIR);
 #ifdef AMANDA_DBGDIR

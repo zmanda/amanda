@@ -9,8 +9,8 @@
 # source utility functions and values from configure
 prefix=@prefix@
 exec_prefix=@exec_prefix@
-libexecdir=@libexecdir@
-. ${libexecdir}/chg-lib.sh
+amlibexecdir=@amlibexecdir@
+. ${amlibexecdir}/chg-lib.sh
 
 if [ -d "@AMANDA_DBGDIR@" ]; then
 	logfile=@AMANDA_DBGDIR@/changer.debug

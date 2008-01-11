@@ -39,8 +39,8 @@
 prefix="@prefix@"
 exec_prefix="@exec_prefix@"
 sbindir="@sbindir@"
-libexecdir="@libexecdir@"
-. "${libexecdir}/amanda-sh-lib.sh"
+amlibexecdir="@amlibexecdir@"
+. "${amlibexecdir}/amanda-sh-lib.sh"
  
 confdir=@CONFIG_DIR@
  
@@ -115,7 +115,7 @@ fi
 
 tmp_files="bandw_free disk_alloc dump_idle finished run_queue tape_* title" 
 
-my_plot=$libexecdir/amplot.g
+my_plot=$amlibexecdir/amplot.g
 paper=0 
 gnuplot=1
 cmpres=0
@@ -176,12 +176,12 @@ do
 		f=`ls "$i" "$i".*[zZ] 2>/dev/null`
 	fi
 	if [ -f "$f" ] ; then 		# found file 
-                disp=`$AWK -f $libexecdir/amcat.awk $AVARFLAG f="$f"`
+                disp=`$AWK -f $amlibexecdir/amcat.awk $AVARFLAG f="$f"`
 		if [ -z "$disp" ] ; then 
 			_ 'Do not know how to [gz|z]cat this file\n'
 		else
 			/bin/rm -f $tmp_files 
-			$disp "$f" | $AWK -f $libexecdir/amplot.awk $para
+			$disp "$f" | $AWK -f $amlibexecdir/amplot.awk $para
 			$GNUPLOT $plot $my_plot
 			if [ $disp = "cat" -a  $cmpres -eq 1 ] ; then
 				list=$list" "$f

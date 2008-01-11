@@ -758,7 +758,7 @@ generic_calc_estimates(
     char *errmsg = NULL, *qerrmsg;
     char tmppath[PATH_MAX];
 
-    cmd = vstralloc(libexecdir, "/", "calcsize", versionsuffix(), NULL);
+    cmd = vstralloc(amlibexecdir, "/", "calcsize", versionsuffix(), NULL);
 
     my_argc = 0;
 
@@ -1124,7 +1124,7 @@ getsize_dump(
     dbprintf(_("calculating for device %s with %s\n"),
 	      qdevice, fstype);
 
-    cmd = vstralloc(libexecdir, "/rundump", versionsuffix(), NULL);
+    cmd = vstralloc(amlibexecdir, "/rundump", versionsuffix(), NULL);
     rundump_cmd = stralloc(cmd);
     if (g_options->config)
         config = g_options->config;
@@ -1300,7 +1300,7 @@ getsize_dump(
 	    default:
 	    {
 		char *config;
-		char *killpgrp_cmd = vstralloc(libexecdir, "/killpgrp",
+		char *killpgrp_cmd = vstralloc(amlibexecdir, "/killpgrp",
 					       versionsuffix(), NULL);
 		dbprintf(_("running %s\n"), killpgrp_cmd);
 		dup2(killctl[0], 0);
@@ -1917,7 +1917,7 @@ getsize_gnutar(
 
     dirname = amname_to_dirname(amdevice);
 
-    cmd = vstralloc(libexecdir, "/", "runtar", versionsuffix(), NULL);
+    cmd = vstralloc(amlibexecdir, "/", "runtar", versionsuffix(), NULL);
     my_argv[i++] = "runtar";
     if (g_options->config)
 	my_argv[i++] = g_options->config;

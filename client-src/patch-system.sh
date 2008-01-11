@@ -7,8 +7,8 @@
 prefix="@prefix@"
 exec_prefix="@exec_prefix@"
 sbindir="@sbindir@"
-libexecdir="@libexecdir@"
-. "${libexecdir}/amanda-sh-lib.sh"
+amlibexecdir="@amlibexecdir@"
+. "${amlibexecdir}/amanda-sh-lib.sh"
 
 USE_VERSION_SUFFIXES="@USE_VERSION_SUFFIXES@"
 if test "$USE_VERSION_SUFFIXES" = "yes"; then

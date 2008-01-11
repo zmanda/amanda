@@ -32,8 +32,8 @@
 prefix="@prefix@"
 exec_prefix="@exec_prefix@"
 sbindir="@sbindir@"
-libexecdir="@libexecdir@"
-. "${libexecdir}/amanda-sh-lib.sh"
+amlibexecdir="@amlibexecdir@"
+. "${amlibexecdir}/amanda-sh-lib.sh"
 
 confdir=@CONFIG_DIR@
 
@@ -279,7 +279,7 @@ v=''
 if test $VERBOSE -eq 1; then
     v='-v'
 fi
-$libexecdir/amcleanupdisk $v $conf "$@"
+$amlibexecdir/amcleanupdisk $v $conf "$@"
 rc=$?
 if test $rc -ne 0 ; then
 	echo `_ '%s: "%s" exited with status: %s' "$0" "amcleanupdisk" "$rc"` 1>&2

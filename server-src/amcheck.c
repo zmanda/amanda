@@ -824,25 +824,25 @@ start_server_check(
 	/* 
 	 * entreprise version will do planner/dumper suid check
 	 */
-	if(access(libexecdir, X_OK) == -1) {
-	    quoted = quote_string(libexecdir);
+	if(access(amlibexecdir, X_OK) == -1) {
+	    quoted = quote_string(amlibexecdir);
 	    g_fprintf(outf, _("ERROR: Directory %s containing Amanda tools is not accessible\n."),
 		    quoted);
 	    g_fprintf(outf, _("Check permissions\n"));
 	    pgmbad = 1;
 	    amfree(quoted);
 	} else {
-	    if(test_server_pgm(outf, libexecdir, "planner", 1, uid_dumpuser))
+	    if(test_server_pgm(outf, amlibexecdir, "planner", 1, uid_dumpuser))
 		pgmbad = 1;
-	    if(test_server_pgm(outf, libexecdir, "dumper", 1, uid_dumpuser))
+	    if(test_server_pgm(outf, amlibexecdir, "dumper", 1, uid_dumpuser))
 		pgmbad = 1;
-	    if(test_server_pgm(outf, libexecdir, "driver", 0, uid_dumpuser))
+	    if(test_server_pgm(outf, amlibexecdir, "driver", 0, uid_dumpuser))
 		pgmbad = 1;
-	    if(test_server_pgm(outf, libexecdir, "taper", 0, uid_dumpuser))
+	    if(test_server_pgm(outf, amlibexecdir, "taper", 0, uid_dumpuser))
 		pgmbad = 1;
-	    if(test_server_pgm(outf, libexecdir, "amtrmidx", 0, uid_dumpuser))
+	    if(test_server_pgm(outf, amlibexecdir, "amtrmidx", 0, uid_dumpuser))
 		pgmbad = 1;
-	    if(test_server_pgm(outf, libexecdir, "amlogroll", 0, uid_dumpuser))
+	    if(test_server_pgm(outf, amlibexecdir, "amlogroll", 0, uid_dumpuser))
 		pgmbad = 1;
 	}
 	if(access(sbindir, X_OK) == -1) {

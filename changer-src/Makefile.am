@@ -24,7 +24,7 @@ if WANT_CHG_SCSI
 CHG_SCSI = chg-scsi
 endif
 
-libexec_PROGRAMS =	$(CHG_SCSI)
+amlibexec_PROGRAMS =	$(CHG_SCSI)
 EXTRA_PROGRAMS =	$(CHIO_SCSI)
 
 CHECK_PERL = \
@@ -47,7 +47,7 @@ SCRIPTS_SHELL = \
 		chg-disk \
 		chg-lib.sh
 
-libexec_SCRIPTS = $(SCRIPTS_PERL) $(SCRIPTS_SHELL)
+amlibexec_SCRIPTS = $(SCRIPTS_PERL) $(SCRIPTS_SHELL)
 
 ###
 # Because libamanda includes routines (e.g. regex) provided by some system
@@ -101,15 +101,15 @@ EXTRA_DIST += scsi-proto.c
 INSTALLPERMS_exec = \
 	chown=amanda \
 	dest=$(sbindir) $(sbin_PROGRAMS) \
-	dest=$(libexecdir) $(libexec_PROGRAMS) 
+	dest=$(amlibexecdir) $(amlibexec_PROGRAMS) 
 
 INSTALLPERMS_data = \
 	chown=amanda \
 	dest=$(sbindir) $(sbin_SCRIPTS) \
-	dest=$(libexecdir) $(libexec_SCRIPTS)
+	dest=$(amlibexecdir) $(amlibexec_SCRIPTS)
 
 lint:
-	@ for p in $(libexec_PROGRAMS) $(EXTRA_PROGRAMS); do			\
+	@ for p in $(amlibexec_PROGRAMS) $(EXTRA_PROGRAMS); do			\
 		f="$$p.c $(libamandad_la_SOURCES)";				\
 		(cd ../common-src; make listlibsrc);				\
 		f="$$f "`cat ../common-src/listlibsrc.output`;			\

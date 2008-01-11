@@ -21,7 +21,7 @@ LIB_EXTENSION = la
 
 sbin_PROGRAMS = 	amrestore amfetchdump
 
-libexec_PROGRAMS = 	amidxtaped
+amlibexec_PROGRAMS = 	amidxtaped
 
 ###
 # Because libamanda includes routines (e.g. regex) provided by some system
@@ -53,10 +53,10 @@ noinst_HEADERS = restore.h
 
 INSTALLPERMS_exec = \
 	dest=$(sbindir) chown=amanda $(sbin_PROGRAMS) \
-	dest=$(libexecdir) chown=amanda $(libexec_PROGRAMS)
+	dest=$(amlibexecdir) chown=amanda $(amlibexec_PROGRAMS)
 
 lint:
-	@ for p in $(libexec_PROGRAMS) $(sbin_PROGRAMS); do			\
+	@ for p in $(amlibexec_PROGRAMS) $(sbin_PROGRAMS); do			\
 		f="$$p.c $(librestore_la_SOURCES)";				\
 		(cd ../common-src; make listlibsrc);				\
 		f="$$f "`cat ../common-src/listlibsrc.output`;			\

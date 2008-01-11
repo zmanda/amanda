@@ -27,7 +27,7 @@ Amanda::Paths - perl access to build-time configuration values
 
   use Amanda::Paths;
 
-  my $filename = "$libexecdir/foo/bar";
+  my $filename = "$amlibexecdir/foo/bar";
 
 This package is a means of getting all of the necessary variables provided
 by configure into Perl scripts, without a bunch of boilerplate, and without
@@ -48,6 +48,7 @@ use Exporter;
     $bindir
     $sbindir
     $libexecdir
+    $amlibexecdir
     $mandir
     $datarootdir
 
@@ -68,6 +69,7 @@ $exec_prefix = "@exec_prefix@";
 $bindir = "@bindir@";
 $sbindir = "@sbindir@";
 $libexecdir = "@libexecdir@";
+$amlibexecdir = "@amlibexecdir@";
 $mandir = "@mandir@";
 # (config.status worries if it doesn't see this:)
 $datarootdir = "@datarootdir@";
