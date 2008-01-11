@@ -75,6 +75,8 @@ main(
     setlocale(LC_MESSAGES, "C");
     textdomain("amanda"); 
 
+    fprintf(stderr, _("amdd is deprecated\n"));
+
     if((pgm = strrchr(argv[0], '/')) != NULL) {
 	pgm++;
     } else {

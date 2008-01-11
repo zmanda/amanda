@@ -1,4 +1,8 @@
 2008-01-10  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amverifyrun.sh, server-src/amverify.sh,
+	  tape-src/ammt.c, tape-src/amdd.c: Write deprecated message.
+
+2008-01-10  Jean-Louis Martineau <martineau@zmanda.com>
 	* config/amanda/defaults.m4: Set amandates to $localstatedir/amanda/amandate
 
 2008-01-10  Jean-Louis Martineau <martineau@zmanda.com>

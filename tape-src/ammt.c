@@ -174,6 +174,8 @@ main(
     setlocale(LC_MESSAGES, "C");
     textdomain("amanda"); 
 
+    fprintf(stderr, _("ammt is deprecated\n"));
+
     /* Don't die when child closes pipe */
     signal(SIGPIPE, SIG_IGN);
 

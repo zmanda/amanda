@@ -1,6 +1,8 @@
 #!@SHELL@
 #
 
+echo "amverifyrun is deprecated -- use amcheckdump" >& 2
+
 prefix="@prefix@"
 exec_prefix="@exec_prefix@"
 sbindir="@sbindir@"

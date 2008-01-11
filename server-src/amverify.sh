@@ -8,6 +8,8 @@
 # amverify: check amanda tapes and report errors
 #
 
+echo "amverify is deprecated -- use amcheckdump" >& 2
+
 prefix="@prefix@"
 exec_prefix="@exec_prefix@"
 sbindir="@sbindir@"
