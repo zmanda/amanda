@@ -23,6 +23,7 @@ Changes in release 2.6.0
      applications in Perl.
    * New 'local' security driver supports backups of the amanda server
      without any network connection or other configuration.
+   * Almost 200 unit tests are available via 'make installcheck'.
    * Amanda configuration file changes
          o amanda.conf changes
                + flush-threshold-dumped

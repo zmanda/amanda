@@ -1,4 +1,9 @@
 2008-01-11  Jean-Louis Martineau <martineau@zmanda.com>
+	* amandad-src/Makefile.am: Install amandad in $libexecdir/amanda
+	* installcheck/amgetconf.pl: usetimestamps defaults to yes.
+	* NEWS, ReleaseNotes: Notes about make installcheck.
+
+2008-01-11  Jean-Louis Martineau <martineau@zmanda.com>
 	* NEWS: Add amcryptsimple, amgpgcrypt, amserverconfig and amaddclient.
 	* ReleaseNotes: Ditto.
 

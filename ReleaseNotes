@@ -57,6 +57,11 @@ local security driver (auth)
   configuration, and similarly allows amrecover to work on the Amanda
   server without any network configuration.
 
+make installcheck
+  Almost 200 unit tests are available, which should be run on an installed
+  copy of Amanda.  See http://wiki.zmanda.com/index.php/Testing for more
+  information.
+
 flush-threshold-dumped, flush-threshold-scheduled, taperflush
   These three config options allow to better fill your tapes.
   They are what was known as the taperstart/taperflush feature.

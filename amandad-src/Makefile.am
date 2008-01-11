@@ -16,7 +16,7 @@ LINTFLAGS=@AMLINTFLAGS@
 amlib_LTLIBRARIES =       libamandad.la
 LIB_EXTENSION = la
 
-libexec_PROGRAMS =	amandad
+amlibexec_PROGRAMS =	amandad
 
 libamandad_la_SOURCES= amandad_util.c
 libamandad_la_LDFLAGS = -release $(VERSION)
@@ -36,15 +36,15 @@ LDADD = ../common-src/libamanda.$(LIB_EXTENSION) \
 	../gnulib/libgnu.$(LIB_EXTENSION)
 
 INSTALLPERMS_exec = \
-	dest=$(libexecdir) chown=amanda \
-		$(libexec_PROGRAMS)
+	dest=$(amlibexecdir) chown=amanda \
+		$(amlibexec_PROGRAMS)
 
 INSTALLPERMS_data = \
-	dest=$(libexecdir) chown=amanda \
-		$(libexec_SCRIPTS)
+	dest=$(amlibexecdir) chown=amanda \
+		$(amlibexec_SCRIPTS)
 
 lint:
-	@ for p in $(libexec_PROGRAMS); do					\
+	@ for p in $(amlibexec_PROGRAMS); do					\
 		f="$$p.c $(libamandad_la_SOURCES)";				\
 		(cd ../common-src; make listlibsrc);				\
 		f="$$f "`cat ../common-src/listlibsrc.output`;			\

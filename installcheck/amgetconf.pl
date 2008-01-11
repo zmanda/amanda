@@ -53,8 +53,8 @@ is(amgetconf('TESTCONF', "reserve"), "100",
     "reserve defaults to 100");
 is(amgetconf('TESTCONF', "tapelist"), "tapelist", 
     "tapelist defaults to 'tapelist'");
-is(amgetconf('TESTCONF', "usetimestamps"), "no", 
-    "usetimestamps defaults to 'no'");
+is(amgetconf('TESTCONF', "usetimestamps"), "yes", 
+    "usetimestamps defaults to 'yes'");
 
 # test a nonexistent parameter
 like(amgetconf('TESTCONF', "foos_per_bar"), qr/no such parameter/, 
