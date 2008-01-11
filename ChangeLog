@@ -1,3 +1,10 @@
+2008-01-11  Jean-Louis Martineau <martineau@zmanda.com>
+	* ReleaseNotes: Update for amanda-2.6.0
+	* News: Update for amanda-2.6.0
+	* configure.in: AM_INIT_AUTOMAKE(amanda, "2.6.0b1")
+	* Makefile.am (pkgdata_DATA): Add NEWS, ChangeLog and amanda.spec
+	* amanda.spec: %{!?amanda_version: %define amanda_version 2.6.0b1}
+
 2008-01-10  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.c (usetimestamps): Default ot yes.
 	* man/xml-source/amanda.conf.5.xml (usetimestamps): Document it.

@@ -20,7 +20,7 @@
 #
 
 # Define amanda_version if it is not already defined.
-%{!?amanda_version: %define amanda_version 2.5.3alpha}
+%{!?amanda_version: %define amanda_version 2.6.0b1}
 %{!?amanda_release: %define amanda_release 1}
 
 %define build_srpm 0

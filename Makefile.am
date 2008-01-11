@@ -40,8 +40,11 @@ SUBDIRS = \
 	installcheck
 
 pkgdata_DATA = \
-	ReleaseNotes			\
-	COPYRIGHT
+	ReleaseNotes	\
+	COPYRIGHT	\
+	NEWS		\
+	ChangeLog	\
+	amanda.spec
 
 EXTRA_DIST = $(SNAPSHOT_STAMP) \
 	$(pkgdata_DATA)			\

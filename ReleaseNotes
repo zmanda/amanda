@@ -1,3 +1,60 @@
+		Release Notes for amanda-2.6.0
+
+amcheckdump
+  New program written entirely in perl, it replaces 'amverify' and
+  'amveryfyrun'
+
+Deprecated programs
+  'amverify' and 'amveryfyrun' are deprecated -- use amcheckdump.
+  'amdd' and 'ammt' are also deprecated. If you have scripts that use
+  them, then you must rewrite them in perl using the new perl modules.
+
+Configure options
+  --disable-shared doesn't work because perl module require shared library.
+  Instead, use --with-static-binaries to build staticailly linked binaries.
+
+Path changes
+  Libraries are installed in $libdir/amanda (previously $libdir)
+  Internal programs are installed in $libexecdir/amanda (previously $libexecdir)
+  You must change your inetd/xinetd config for the new amandad path.
+  The amandates files is now $localstatedir/amanda/amandates, previously it
+  was /etc/amandates, this file must be created on all client.
+
+usetimestamps
+  It now defaults to 'yes'.
+
+Glib
+  glib is required to compile and run amanda.
+  It is free and can be downloaded form http://www.gtk.org/download/
+
+Device API
+  The Device API is a complete rewrite of all tape-access functionality.
+  To use the Device API, all devices must be specified by their full
+  name, e.g., tape:/dev/nst0.  Existing functionality is now available
+  in the tape, file, and rait devices, and a new Amazon S3 backend named
+  's3' is also available.
+
+Perl Module
+  Link directly to Amanda, to support writing Amanda applications in Perl
+  Available Modules:
+    Changer (Execute changer scripts)
+    Cmdline (Parse command line argument)
+    Config (Parse config files)
+    Device (device-api)
+    Debug (Write to debug files)
+    Logfile (Parse log files)
+    Tapefile (Parse tapelist file)
+
+local security driver (auth)
+  Allows backups of the Amanda server without any need for network
+  configuration, and similarly allows amrecover to work on the Amanda
+  server without any network configuration.
+
+flush-threshold-dumped, flush-threshold-scheduled, taperflush
+  These three config options allow to better fill your tapes.
+  They are what was known as the taperstart/taperflush feature.
+
+
 		Release Notes for amanda-2.5.2
 
 IPv6

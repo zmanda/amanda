@@ -1,7 +1,47 @@
-Changes in release 2.5.3alpha
+Changes in release 2.6.0
 
-    * Add ':' to the list of characters sanitised when constructing
-      a filename from a hostname or diskname
+   * configure --disable-shared doesn't work because perl modules require
+     shared libraries.  Use configure --with-static-binaries to build
+     statically linked binaries.
+   * 'amverify' and 'amverifyrun' are deprecated and replaced with the
+     new, more flexible 'amcheckdump'
+   * 'amdd' and 'ammt' are deprecated.
+   * Some Amanda files are now installed in new "amanda/" subdirectories:
+     libraries are now installed in $libdir/amanda and internal programs
+     are now installed in $libexecdir/amanda.
+   * The amandates file, previously at /etc/amandates, is now at
+     $localstatedir/amanda/amandates.  You may want to move your existing
+     /etc/amandates when you upgrade Amanda.
+   * Many bugs fixed and code rewrite/cleanup
+   * glib is required to compile and run amanda.
+   * Device API: pluggable interface to storage devices, supporting tapes,
+     vtapes, RAIT, and Amazon S3
+   * New perl modules link directly to Amanda, to support writing Amanda
+     applications in Perl.
+   * New 'local' security driver supports backups of the amanda server
+     without any network connection or other configuration.
+   * Amanda configuration file changes
+         o amanda.conf changes
+               + flush-threshold-dumped
+               + flush-threshold-scheduled
+               + taperflush
+               + device_property
+               + usetimestamps default to yes
+
+Changes in release 2.5.2p1
+
+   * Many bugs fixed
+         o Many IPv6 bugs
+               + missing sockaddr_storage
+               + missing AI_V4MAPPED and AI_ALL
+               + compare of IPv4 and IPv6 v4mapped address.
+               + (bsd/bsdudp): server use two sockets,
+                  one for IPv4 and one for IPv6
+         o amflush/autoflush
+         o chown/chmod
+         o amstatus
+         o compilation on some platform
+         o others small bug
 
 Changes in release 2.5.2
 
