@@ -54,5 +54,7 @@ endif
 
 noinst_HEADERS = null-device.h semaphore.h \
 	tape-ops.h property.h rait-device.h s3.h \
-	s3-device.h tape-device.h vfs-device.h
-aminclude_HEADERS = device.h queueing.h
+	s3-device.h tape-device.h vfs-device.h \
+	device.h queueing.h
+	
+aminclude_HEADERS = 
