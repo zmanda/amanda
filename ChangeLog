@@ -1,5 +1,8 @@
+2008-01-13  Dustin J. Mitchell <dustin@zmanda.com>
+	* man/xml-source/amanda.conf.5.xml: use &#215; instead of &times;
+
 2008-01-11  Paddy Sreenivasan <paddy@zmanda.com>
-        * device-src/Makefile.am: Don't install queueing.h and device.h
+	* device-src/Makefile.am: Don't install queueing.h and device.h
 
 2008-01-11  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Config.swg perl/Amanda/Debug.swg: complete documentation
