@@ -96,7 +96,7 @@ AC_DEFUN([AMANDA_KRB5_SECURITY],
                 [Define if Kerberos 5 security is to be enabled. ])
         else
             AC_MSG_RESULT(no krb5 system libraries found)
-            AMANDA_MSG_WARN([No Kerberos V libraries were found on your system; disabling krb5-security])
+            AC_MSG_ERROR([No Kerberos V libraries were found on your system; krb5-security cannot be enabled])
             KRB5_SECURITY="no"
         fi
     fi

@@ -1,3 +1,7 @@
+2008-01-14  Dustin J. Mitchell <dustin@zmanda.com>
+	* config/amanda/krb5-security.m4: abort configure run if krb5
+	  is requested by libraries aren't found
+
 2008-01-13  Dustin J. Mitchell <dustin@zmanda.com>
 	* man/xml-source/amanda.conf.5.xml: use &#215; instead of &times;
 
