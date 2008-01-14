@@ -1,4 +1,9 @@
 2008-01-14  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/amglue/bigint.c: fix the range-checking mechanics for large
+	  integers, since the precompiler seems to get confused by large
+	  constants.
+
+2008-01-14  Dustin J. Mitchell <dustin@zmanda.com>
 	* config/amanda/krb5-security.m4: abort configure run if krb5
 	  is requested by libraries aren't found
 

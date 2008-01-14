@@ -192,7 +192,7 @@ bigint2int64(SV *bigint)
     if ((absval == G_MAXUINT64 && errno == ERANGE)
         || (!negative && absval > (guint64)(G_MAXINT64))
 	|| (negative && absval > (guint64)(G_MAXINT64)+1))
-	croak("Expected a signed 64-bit value or smaller; value out of range", str);
+	croak("Expected a signed 64-bit value or smaller; value '%s' out of range", str);
     if (errno)
 	croak("Math::BigInt->bstr returned invalid number '%s'", str);
 
@@ -269,7 +269,7 @@ bigint2uint64(SV *bigint)
     errno = 0;
     rv = g_ascii_strtoull(str, NULL, 0);
     if (rv == G_MAXUINT64 && errno == ERANGE)
-	croak("Expected an unsigned 64-bit value or smaller; value out of range", str);
+	croak("Expected an unsigned 64-bit value or smaller; value '%s' out of range", str);
     if (errno)
 	croak("Math::BigInt->bstr returned invalid number '%s'", str);
 
@@ -290,11 +290,16 @@ gint64 amglue_SvI64(SV *sv)
 	}
     } else if (SvNOK(sv)) {
 	double dv = SvNV(sv);
-	if (dv < (double)G_MININT64 || dv > (double)G_MAXINT64) {
-	    croak("Expected a signed 64-bit value or smaller; value out of range");
+
+	/* preprocessor constants seem to have trouble here, so we convert to gint64 and
+	 * back, and if the result differs, then we have lost something.  Note that this will
+	 * also error out on integer truncation .. which is probably OK */
+	gint64 iv = (gint64)dv;
+	if (dv != (double)iv) {
+	    croak("Expected a signed 64-bit value or smaller; value '%.0f' out of range", (float)dv);
 	    return 0;
 	} else {
-	    return (guint64)dv;
+	    return iv;
 	}
     } else {
 	return bigint2int64(sv);
