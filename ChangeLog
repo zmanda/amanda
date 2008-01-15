@@ -1,3 +1,7 @@
+2008-01-15  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Types.swg perl/Amanda/Config.swg perl/Amanda/Device.swg
+	  perl/amglue/integers.swg: fix typos and compiler warnings
+
 2008-01-15  Jean-Louis Martineau <martineau@zmanda.com>
 	* packaging/Makefile.am: New file.
 	* packaging/README: New file.

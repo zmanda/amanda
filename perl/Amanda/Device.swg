@@ -197,7 +197,7 @@ set_sv_from_gvalue(GValue *value)
 		/* build a hash */
 		hv = (HV *)sv_2mortal((SV *)newHV());
 		hv_store(hv, "accuracy", 8, newSViv(qs.accuracy), 0);
-		hv_store(hv, "bytes", 5, newSVi64(qs.bytes), 0);
+		hv_store(hv, "bytes", 5, amglue_newSVi64(qs.bytes), 0);
 
 		sv = newRV((SV *)hv);
 		return newRV((SV *)hv);
@@ -497,9 +497,6 @@ typedef struct Device {
 	    $2 = &found;
 	}
 	%typemap(argout) (GValue *out_val, gboolean *val_found) {
-	    GType fundamental;
-
-
 	    /* if the result is valid */
 	    if (*$2) {
 		/* move data from $1 to $result, somehow */

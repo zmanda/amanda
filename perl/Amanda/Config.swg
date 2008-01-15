@@ -479,7 +479,6 @@ amglue_copy_to_tag(taperalgo_t, getconf);
 	    SV *optional = sv_newmortal();
 	    HV *hv;
 	    sle_t *iter;
-	    SV *r;
 
 	    /* first set up each of the hash values */
 

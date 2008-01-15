@@ -65,7 +65,7 @@
 %define typemap_in_unsigned(type)
 %typemap(in) type {
     if (sizeof(type) == 1) {
-	$1 = amgulue_SvU8($input);
+	$1 = amglue_SvU8($input);
     } else if (sizeof(type) == 2) {
 	$1 = amglue_SvU16($input);
     } else if (sizeof(type) == 4) {
@@ -73,7 +73,7 @@
     } else if (sizeof(type) == 8) {
 	$1 = amglue_SvU64($input);
     } else {
-	error("Unexpected type >64 bits?"); /* should be optimized out unless sizeof(type) > 8 */
+	croak("Unexpected type >64 bits?"); /* should be optimized out unless sizeof(type) > 8 */
     }
 }
 %enddef

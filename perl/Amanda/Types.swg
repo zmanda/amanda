@@ -139,14 +139,14 @@ typedef struct {
 
     %extend {
 	/* constructor */
-	dumpfile_t() {
+	dumpfile_t(void) {
 	    dumpfile_t *df = malloc(sizeof(*df));
 	    fh_init(df);
 	    return df;
 	}
 
 	/* destructor */
-	~dumpfile_t() {
+	~dumpfile_t(void) {
 	    free(self);
 	}
     }
