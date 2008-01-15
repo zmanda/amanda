@@ -1,3 +1,9 @@
+2008-01-15  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/Makefile.am (AM_CFLAGS): Set to $(AMANDA_WARNING_CFLAGS)
+	* device-src/tape-device.c, device-src/tape-posix.c,
+	  device-src/vfs-device.c: include "util.h"
+	* device-src/rait-device.c: fix compiler warning.
+
 2008-01-14  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/amglue/bigint.c: fix the range-checking mechanics for large
 	  integers, since the precompiler seems to get confused by large

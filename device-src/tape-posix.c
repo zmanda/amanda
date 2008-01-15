@@ -19,6 +19,7 @@
  */
 
 #include "amanda.h"
+#include "util.h"
 #include "tape-ops.h"
 #include "property.h"
 #include <glob.h>

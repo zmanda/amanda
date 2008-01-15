@@ -1653,7 +1653,7 @@ rait_device_property_set (Device * d_self, DevicePropertyId id, GValue * val) {
     gboolean success;
     gboolean label_changed;
 
-    self = RAIT_DEVICE(self);
+    self = RAIT_DEVICE(d_self);
     g_return_val_if_fail(self != NULL, FALSE);
 
     ops = make_property_op_array(self, id, val);

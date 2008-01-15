@@ -23,6 +23,7 @@
 #include "vfs-device.h"
 #include "fsusage.h"
 #include "amanda.h"
+#include "util.h"
 #include <regex.h>
 
 /* This regex will match all VfsDevice files in a directory. We use it

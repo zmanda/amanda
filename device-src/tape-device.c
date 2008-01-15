@@ -19,7 +19,7 @@
  */
 
 #include <string.h> /* memset() */
-
+#include "util.h"
 #include "tape-device.h"
 #include "tape-ops.h"
 
