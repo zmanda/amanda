@@ -1,0 +1,25 @@
+This directory contains scripts and data files necessary to build various binary
+(or source) installation packages.  These are the currently functional packages:
+	-Macintosh OS X >=10.4 .pkg files
+	-RPMs for various OSes that use them.  TODO: Wiki page with a full
+	 list of RPM using distros and versions the .spec supports.
+	-Solaris .pkg files for 9,10
+Coming soon:
+	-ebuilds for Gentoo
+	-.deb Debian style packages for various OSes that use them.
+	-.msi packages for Windows XP and Server 2003 
+
+The Directory layout is as follows:
+packaging/
+	common/		# Common files which can be shared by all packages such
+			# License.txt, README, or Copyrights.  So far, empty :-)
+	deb/		# Debian
+	macosx-pkg/	# Macintosh OSX 
+	msi/		# MicroSoft Installer for Windows
+	rpm/		# RPM
+	sun-pkg/	# Solaris .pkg 
+
+Each subdirectory (except common) has a shell script named buildpkg.  This script will 
+actually build the package with Zmanda's defaults for you.
+
+See http://wiki.zmanda.com/index.php/Installation for more information.

@@ -377,6 +377,7 @@ AC_CONFIG_FILES([
     installcheck/Makefile
     man/Makefile
     oldrecover-src/Makefile
+    packaging/Makefile
     perl/Makefile
     po/Makefile
     recover-src/Makefile

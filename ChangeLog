@@ -1,4 +1,16 @@
 2008-01-15  Jean-Louis Martineau <martineau@zmanda.com>
+	* packaging/Makefile.am: New file.
+	* packaging/README: New file.
+	* packaging/rpm/buildpkg: New file.
+	* packaging/rpm/amanda.spec: New file.
+	* configure.in
+	* config/amanda/dirs.m4 (AMANDA_WITH_DUMPERDIR): Give a warning if used.
+	* config/amanda/dirs.m4 (AMANDA_EXPAND_DIRS): Expand DUMPER_DIR to
+					 ${amlibexecdir}/application
+	* Makefile.am (SUBDIRS): Add packaging.
+	* amanda.spec: Remove file.
+
+2008-01-15  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/Makefile.am (AM_CFLAGS): Set to $(AMANDA_WARNING_CFLAGS)
 	* device-src/tape-device.c, device-src/tape-posix.c,
 	  device-src/vfs-device.c: include "util.h"

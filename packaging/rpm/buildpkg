@@ -1,0 +1,43 @@
+#!/bin/bash
+# Buildpkg script for producing RPM packages. Does not require root access.
+
+# This is useful for debugging
+set -x
+# Buildbot exports some useful env variables.
+# Check for $AMVER.  I couldn't come up with a good way to detect it.
+if [ -z $AMVER ]; then
+    AMVER=amanda-2.6.0b1
+fi
+# Check for AMTARBALL.
+if [ -z $AMTARBALL ]; then 
+    AMTARBALL=$AMVER.tar.gz
+fi
+# Check for the packaging dirs.
+if [ -z $AMPKGDIR ]; then
+    AMPKGDIR=${PWD}
+fi
+if [ ! -d ${AMPKGDIR} ]; then
+    mkdir ${AMPKGDIR}
+fi
+cd ${AMPKGDIR}
+
+if [ -d rpm ]; then
+    rm -rf rpm
+fi
+mkdir rpm
+mkdir rpm/SOURCES
+mkdir rpm/SRPMS
+mkdir rpm/SPECS
+mkdir rpm/BUILD
+mkdir rpm/RPMS
+
+# Make a copy of the tarball with the name that rpmbuild expects
+cp ${AMTARBALL} rpm/SOURCES/${AMVER}.tar.gz
+tar -xzvf ${AMTARBALL} ${AMVER}/packaging/rpm/amanda.spec 
+mv ${AMVER}/packaging/rpm/amanda.spec rpm/SPECS
+rm -rf ${AMVER}
+# Rpmbuild requires absolute paths.  annoying.  If you need to change the 
+# default value of some rpm.spec variable, just pass extra --define options.
+# this is useful for changing %amanda_release or %amanda_version
+rpmbuild -ba --define "_topdir ${AMPKGDIR}/rpm" \
+             ${AMPKGDIR}/rpm/SPECS/amanda.spec 

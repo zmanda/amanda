@@ -4,7 +4,6 @@
 #
 # OVERVIEW
 #
-#   Allow user to specify the dumperdir, defaulting to ${exec_prefix}/dumper.
 #   Define and substitute DUMPER_DIR with the result.
 #
 AC_DEFUN([AMANDA_WITH_DUMPERDIR],
@@ -13,18 +12,9 @@ AC_DEFUN([AMANDA_WITH_DUMPERDIR],
 	AS_HELP_STRING([--with-dumperdir=DIR],
 	    [where we install the dumpers (default: exec_prefix/dumper)]),
 	[
-	    case "$withval" in
-	    "" | y | ye | yes | n | no)
-		AC_MSG_ERROR([*** You must supply an argument to the --with-dumperdir option.])
-	      ;;
-	    esac
-	    DUMPER_DIR="$withval"
-	], [
-	    DUMPER_DIR='${exec_prefix}/dumper' # (variable will be evaluated below)
+            AMANDA_MSG_WARN([--with-dumperdir is no longer used.])
 	]
     )
-    AC_DEFINE_DIR([DUMPER_DIR],[DUMPER_DIR],
-	    [Directory in which dumper interfaces should be installed and searched. ])
 ])
 
 # SYNOPSIS
@@ -169,6 +159,7 @@ AC_DEFUN([AMANDA_WITH_TMPDIR],
 #   - amlibdir = ${libdir}/amanda
 #   - amincludedir = ${includedir}/amanda
 #   - amperldir = ${amlibdir}/perl
+#   - DUMPER_DIR = ${amlibexecdir}/application
 #
 AC_DEFUN([AMANDA_EXPAND_DIRS],
 [
@@ -200,6 +191,11 @@ AC_DEFUN([AMANDA_EXPAND_DIRS],
     amperldir="${amlibdir}/perl"
     AC_DEFINE_DIR([amperldir], [amperldir],
 	[Directory in which Amanda perl libraries should be installed])
+
+    DUMPER_DIR='${amlibexecdir}/application'
+    AC_DEFINE_DIR([DUMPER_DIR],[DUMPER_DIR],
+           [Directory in which dumper interfaces should be installed and searched. ])
+    # TODO: rename to APPLICATION_DIR, add to Amanda::Paths and 'amgtconf build.APPLICATION_DIR'
 ])
 
 # SYNOPSIS

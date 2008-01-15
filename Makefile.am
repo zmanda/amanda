@@ -37,14 +37,14 @@ SUBDIRS = \
 	po \
 	man \
 	example \
+	packaging \
 	installcheck
 
 pkgdata_DATA = \
 	ReleaseNotes	\
 	COPYRIGHT	\
 	NEWS		\
-	ChangeLog	\
-	amanda.spec
+	ChangeLog
 
 EXTRA_DIST = $(SNAPSHOT_STAMP) \
 	$(pkgdata_DATA)			\
