@@ -293,7 +293,7 @@ Amanda Documentation is available at: http://wiki.zmanda.com/
 
 CFLAGS="%{optflags} -g" CXXFLAGS="%{optflags}" \
 %if  %{disttag} == rhel && %{distver} == 3
-PKG_CONFIG_PATH=%{LIBDIR}/pkgconfig/ ./configure \
+./configure \
 	--prefix=%{PREFIX} \
 	--sysconfdir=%{SYSCONFDIR} \
 	--sharedstatedir=%{LOCALSTATEDIR} \
@@ -321,7 +321,7 @@ PKG_CONFIG_PATH=%{LIBDIR}/pkgconfig/ ./configure \
 	--disable-installperms \
         --without-ipv6 
 %else
-PKG_CONFIG_PATH=%{LIBDIR}/pkgconfig/ ./configure \
+./configure \
 	--prefix=%{PREFIX} \
 	--sysconfdir=%{SYSCONFDIR} \
 	--sharedstatedir=%{LOCALSTATEDIR} \

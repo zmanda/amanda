@@ -1,4 +1,7 @@
 2008-01-16  Jean-Louis Martineau <martineau@zmanda.com>
+	* packaging/rpm/amanda.spec: Don't set PKG_CONFIG_PATH.
+
+2008-01-16  Jean-Louis Martineau <martineau@zmanda.com>
 	* oldrecover-src/extract_list.c, client-src/sendbackup.c,
 	  client-src/sendsize.c, client-src/selfcheck.c,
 	  recover-src/extract_list.c, server-src/changer.c,
