@@ -96,12 +96,10 @@
 
 # Set options per distribution
 %if %{dist} == redhat || %{dist} == fedora
-    %define build_host i386-redhat-linux
     %define rpm_group Applications/Archiving
     %define xinetd_reload restart
 %endif
 %if %{dist} == SuSE
-    %define build_host i586-suse-linux
     %define rpm_group Productivity/Archiving/Backup
     %define xinetd_reload restart
 %endif
@@ -296,7 +294,6 @@ Amanda Documentation is available at: http://wiki.zmanda.com/
 CFLAGS="%{optflags} -g" CXXFLAGS="%{optflags}" \
 %if  %{disttag} == rhel && %{distver} == 3
 PKG_CONFIG_PATH=%{LIBDIR}/pkgconfig/ ./configure \
-	--build=%{build_host} \
 	--prefix=%{PREFIX} \
 	--sysconfdir=%{SYSCONFDIR} \
 	--sharedstatedir=%{LOCALSTATEDIR} \
@@ -325,7 +322,6 @@ PKG_CONFIG_PATH=%{LIBDIR}/pkgconfig/ ./configure \
         --without-ipv6 
 %else
 PKG_CONFIG_PATH=%{LIBDIR}/pkgconfig/ ./configure \
-	--build=%{build_host} \
 	--prefix=%{PREFIX} \
 	--sysconfdir=%{SYSCONFDIR} \
 	--sharedstatedir=%{LOCALSTATEDIR} \
