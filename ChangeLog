@@ -1,3 +1,10 @@
+2008-01-16  Jean-Louis Martineau <martineau@zmanda.com>
+	* oldrecover-src/extract_list.c, client-src/sendbackup.c,
+	  client-src/sendsize.c, client-src/selfcheck.c,
+	  recover-src/extract_list.c, server-src/changer.c,
+	  server-src/amflush.c, server-src/driverio.c,
+	  common-src/pipespawn.c: Call safe_fd before exec*.
+
 2008-01-15  Jean-Louis Martineau <martineau@zmanda.com>
 	* packaging/rpm/amanda.spec: Remove build_host.
 

@@ -220,6 +220,9 @@ pipespawnv_passwd(
 	    newenv[i + 1] = NULL;
 	    amfree(env);
 	    env = newenv;
+	    safe_fd(passwdpipe[0], 1);
+	} else {
+	    safe_fd(-1, 0);
 	}
 
 	execve(prog, my_argv, env);

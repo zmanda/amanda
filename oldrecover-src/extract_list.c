@@ -1843,6 +1843,7 @@ extract_files_child(
 	    else
   	        dbprintf("\t%s\n", restore_args[i]);
 	}
+	safe_fd(-1, 0);
         (void)execv(cmd, restore_args);
 	/* only get here if exec failed */
 	save_errno = errno;

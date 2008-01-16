@@ -307,6 +307,7 @@ main(
 	config_options[0] = "driver";
 	config_options[1] = config_name;
 	config_options[2] = "nodump";
+	safe_fd(-1, 0);
 	execve(driver_program, config_options, safe_env());
 	error(_("cannot exec %s: %s"), driver_program, strerror(errno));
 	/*NOTREACHED*/
@@ -443,6 +444,7 @@ main(
 	config_options = get_config_options(2);
 	config_options[0] = "amreport";
 	config_options[1] = config_name;
+	safe_fd(-1, 0);
 	execve(reporter_program, config_options, safe_env());
 	error(_("cannot exec %s: %s"), reporter_program, strerror(errno));
 	/*NOTREACHED*/
@@ -470,6 +472,7 @@ main(
     config_options = get_config_options(2);
     config_options[0] = "amlogroll";
     config_options[1] = config_name;
+    safe_fd(-1, 0);
     execve(logroll_program, config_options, safe_env());
     error(_("cannot exec %s: %s"), logroll_program, strerror(errno));
     /*NOTREACHED*/

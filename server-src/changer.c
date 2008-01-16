@@ -413,6 +413,7 @@ changer_command(
 	    (void)fullwrite(STDOUT_FILENO, changer_resultstr, strlen(changer_resultstr));
 	    exit(1);
 	}
+	safe_fd(-1, 0);
 	if(arg) {
 	    execle(tapechanger, tapechanger, cmd, arg, (char *)NULL,
 		   safe_env());

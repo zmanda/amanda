@@ -522,6 +522,9 @@ main(
 		}
 		fcntl(indexfd, F_SETFD, 0);
 		fcntl(3, F_SETFD, 0);
+		safe_fd(3, 1);
+	    } else {
+		safe_fd(-1, 0);
 	    }
 	    cmd = vstralloc(DUMPER_DIR, "/", prog, NULL);
 	    i=0;

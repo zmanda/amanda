@@ -1314,6 +1314,7 @@ getsize_dump(
 		    config = g_options->config;
 		else
 		    config = "NOCONFIG";
+		safe_fd(-1, 0);
 		execle(killpgrp_cmd, killpgrp_cmd, config, (char *)0,
 		       safe_env());
 		dbprintf(_("cannot execute %s: %s\n"),
@@ -1334,6 +1335,7 @@ getsize_dump(
 	    aclose(killctl[0]);
 	if (killctl[1] != -1)
 	    aclose(killctl[1]);
+	safe_fd(-1, 0);
 
 #ifdef XFSDUMP
 #ifdef DUMP
@@ -2183,6 +2185,7 @@ getsize_backup_api(
       dup2(nullfd, 2);
       aclose(pipeinfd[1]);
       aclose(pipeoutfd[0]);
+      safe_fd(-1, 0);
 
       execve(cmd, argvchild, safe_env());
       error(_("exec %s failed: %s"), cmd, strerror(errno));

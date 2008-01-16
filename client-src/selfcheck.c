@@ -734,6 +734,7 @@ check_disk(
 		argvchild[j++] = NULL;
 		dup2(property_pipe[0], 0);
 		aclose(property_pipe[1]);
+		safe_fd(-1, 0);
 		execve(cmd,argvchild,safe_env());
 		g_printf(_("ERROR [Can't execute %s: %s]\n"), cmd, strerror(errno));
 		exit(127);
