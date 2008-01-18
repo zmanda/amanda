@@ -18,7 +18,7 @@ tests = \
 	amgetconf
 
 # Add any common files (that should not be run as tests) here:
-test_utils = Amconfig.pm
+test_utils = Installcheck/Config.pm Installcheck/Run.pm
 
 SCRIPTS_PERL = $(tests) $(test_utils)
 

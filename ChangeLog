@@ -1,4 +1,19 @@
 2008-01-18  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Amanda_Types.pl
+	  installcheck/Amanda_Config.pl installcheck/Amanda_Changer.pl
+	  installcheck/Amconfig.pm.in installcheck/amdevcheck.pl
+	  installcheck/Installcheck installcheck/Installcheck/Run.pm
+	  installcheck/Installcheck/Config.pm installcheck/Makefile.am
+	  installcheck/amcheckdump.pl installcheck/Amanda_Logfile.pl
+	  installcheck/amgetconf.pl: tweaks:
+	   - Move installcheck utilities to the Installcheck::* namespace
+	   - add Installcheck::Run to help with setting up amdump runs, and
+	     running applications in general
+	   - Add complete runs to amdevcheck, amcheckdump
+	   - Return a nonzero exit status from amgetconf when an invalid 
+	     configuration parameter is specified.
+
+2008-01-18  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Tapelist.swg perl/Amanda/Tapefile.swg perl/Makefile.am:
 	  new module (Tapelist) replaces old stub (Tapefile)
 	* installcheck/Amanda_Tapelist.pl installcheck/Makefile.am: test new

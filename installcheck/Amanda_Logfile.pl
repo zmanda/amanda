@@ -18,10 +18,10 @@
 
 use Test::More qw(no_plan);
 use File::Path;
-use Amconfig;
 use strict;
 
 use lib "@amperldir@";
+use Installcheck::Config;
 use Amanda::Paths;
 use Amanda::Tapelist;
 use Amanda::Logfile qw(:logtype_t :program_t open_logfile get_logline close_logfile);
@@ -151,7 +151,7 @@ sub res2arr {
 }
 
 # set up a basic config
-my $testconf = Amconfig->new();
+my $testconf = Installcheck::Config->new();
 $testconf->add_param("tapecycle", "20");
 $testconf->write();
 

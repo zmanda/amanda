@@ -17,7 +17,6 @@
 # Sunnyvale, CA 94085, USA, or: http://www.zmanda.com
 
 use Test::More qw(no_plan);
-use Amconfig;
 use strict;
 
 use lib "@amperldir@";

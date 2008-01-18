@@ -17,10 +17,10 @@
 # Sunnyvale, CA 94085, USA, or: http://www.zmanda.com
 
 use Test::More qw(no_plan);
-use Amconfig;
 use strict;
 
 use lib "@amperldir@";
+use Installcheck::Config;
 use Amanda::Paths;
 use Amanda::Config qw( :init :getconf );
 
@@ -44,7 +44,7 @@ if ($is_64bit) {
     $bignum = '2147483647';
 }
 
-$testconf = Amconfig->new();
+$testconf = Installcheck::Config->new();
 $testconf->add_param('reserve', '75');
 $testconf->add_param('autoflush', 'yes');
 $testconf->add_param('tapedev', '"/dev/foo"');
@@ -331,7 +331,7 @@ like($dump, qr/INCLUDE\s+FILE OPTIONAL "rhyme"/i,
 # We may want to change this, but we should do so intentionally.
 # This is also tested by the 'amgetconf' installcheck.
 
-$testconf = Amconfig->new();
+$testconf = Installcheck::Config->new();
 $testconf->add_dumptype('mydumptype', [
     'exclude list' => '"foo" "bar"',
     'exclude list optional append' => '"true" "star"',
@@ -349,7 +349,7 @@ SKIP: {
 	"'optional' has no effect when not on the last occurrence");
 }
 
-$testconf = Amconfig->new();
+$testconf = Installcheck::Config->new();
 $testconf->add_dumptype('mydumptype', [
     'exclude file' => '"foo" "bar"',
     'exclude file optional append' => '"true" "star"',

@@ -1,34 +1,59 @@
 use Test::More qw( no_plan );
-
-use Amconfig;
-
 use lib "@amperldir@";
+
+use Installcheck::Config;
+use Installcheck::Run qw(run run_get run_err);
 use Amanda::Paths;
 
-sub amcheckdump {
-    my $cmd = "$sbindir/amcheckdump " . join(" ", @_) . " 2>&1";
-    my $result = `$cmd`;
-    chomp $result;
-    return $result;
-}
-
 my $testconf;
+my $dumpok;
 
 ##
 # First, try amgetconf out without a config
 
-like(amcheckdump(), qr/\AUSAGE:/i, 
-    "bare 'amcheckdump' gives usage message");
-like(amcheckdump("this-probably-doesnt-exist"), qr(could not open conf file)i, 
-    "error message when configuration parameter doesn't exist");
+ok(!run('amcheckdump'),
+    "amcheckdump with no arguments returns an error exit status");
+like($Installcheck::Run::stdout, qr/\AUSAGE:/i, 
+    ".. and gives usage message");
+
+like(run_err('amcheckdump', 'this-probably-doesnt-exist'), qr(could not open conf file)i, 
+    "run with non-existent config fails with an appropriate error message.");
 
 ##
-# Now use a config with a vtape
+# Now use a config with a vtape and without usetimestamps
 
-# this is re-created for each test
-$testconf = Amconfig->new();
-$testconf->setup_vtape();
+$testconf = Installcheck::Run::setup();
+$testconf->add_param('label_new_tapes', '"TESTCONF%%"');
+$testconf->add_param('usetimestamps', 'no');
 $testconf->write();
 
-like(amcheckdump("TESTCONF"), qr(could not find)i,
-     "'amcheckdump' on a brand-new config finds no dumps.");
+ok(run('amcheckdump', 'TESTCONF'),
+    "amcheck with a new config succeeds");
+like($Installcheck::Run::stdout, qr(could not find)i,
+     "..but finds no dumps.");
+
+ok($dumpok = run('amdump', 'TESTCONF'), "a dump runs successfully without usetimestamps");
+
+SKIP: {
+    skip "Dump failed", 1 unless $dumpok;
+    like(run_get('amcheckdump', 'TESTCONF'), qr(Validating),
+	"amdevcheck succeeds, claims to validate something (usetimestamps=no)");
+}
+
+##
+# And a config with usetimestamps enabled
+
+$testconf = Installcheck::Run::setup();
+$testconf->add_param('label_new_tapes', '"TESTCONF%%"');
+$testconf->add_param('usetimestamps', 'yes');
+$testconf->write();
+
+ok($dumpok = run('amdump', 'TESTCONF'), "a dump runs successfully with usetimestamps");
+
+SKIP: {
+    skip "Dump failed", 1 unless $dumpok;
+    like(run_get('amcheckdump', 'TESTCONF'), qr(Validating),
+	"amdevcheck succeeds, claims to validate something (usetimestamps=yes)");
+}
+
+Installcheck::Run::cleanup();

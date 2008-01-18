@@ -17,11 +17,11 @@
 # Sunnyvale, CA 94085, USA, or: http://www.zmanda.com
 
 use Test::More qw(no_plan);
-use Amconfig;
 use File::Path;
 use strict;
 
 use lib "@amperldir@";
+use Installcheck::Config;
 use Amanda::Paths;
 use Amanda::Device;
 use Amanda::Debug;
@@ -51,7 +51,7 @@ sub setup_changer {
 }
 
 # set up and load a simple config with a tpchanger
-my $testconf = Amconfig->new();
+my $testconf = Installcheck::Config->new();
 $testconf->add_param('tpchanger', "\"$changer_filename\"");
 $testconf->write();
 config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF') or die("Could not load test config");
