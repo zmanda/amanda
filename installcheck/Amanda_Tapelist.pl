@@ -16,11 +16,11 @@
 # Contact information: Zmanda Inc, 505 N Mathlida Ave, Suite 120
 # Sunnyvale, CA 94085, USA, or: http://www.zmanda.com
 
-use Test::More qw(no_plan);
+use Test::More tests => 18;
 use strict;
 
 use lib "@amperldir@";
-use Amconfig;
+use Installcheck::Config;
 use Amanda::Tapelist;
 use Amanda::Config qw( :init :getconf config_dir_relative );
 
@@ -31,7 +31,7 @@ my @lines;
 
 # First try reading a tapelist
 
-my $testconf = Amconfig->new();
+my $testconf = Installcheck::Config->new();
 $testconf->write();
 
 config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF") or die("config_init failed");

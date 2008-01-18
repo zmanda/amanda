@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 505 N Mathlida Ave, Suite 120
 # Sunnyvale, CA 94085, USA, or: http://www.zmanda.com
 
-use Test::More qw( no_plan );
+use Test::More tests => 11;
 
 use lib "@amperldir@";
 use Installcheck::Config;

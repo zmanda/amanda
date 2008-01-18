@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 505 N Mathlida Ave, Suite 120
 # Sunnyvale, CA 94085, USA, or: http://www.zmanda.com
 
-use Test::More qw(no_plan);
+use Test::More tests => 28;
 use File::Path;
 use strict;
 
@@ -27,20 +27,25 @@ use Amanda::Tapelist;
 use Amanda::Logfile qw(:logtype_t :program_t open_logfile get_logline close_logfile);
 use Amanda::Config qw( :init :getconf config_dir_relative );
 
+my $log_filename = "$AMANDA_TMPDIR/Amanda_Logfile_test.log";
+
 # write a logfile and return the filename
 sub write_logfile {
     my ($contents) = @_;
-    my $filename = "$AMANDA_TMPDIR/Amanda_Logfile_test.log";
 
     if (!-e $AMANDA_TMPDIR) {
 	mkpath($AMANDA_TMPDIR);
     }
 
-    open my $logfile, ">", $filename or die("Could not create temporary log file");
+    open my $logfile, ">", $log_filename or die("Could not create temporary log file '$log_filename': $!");
     print $logfile $contents;
     close $logfile;
 
-    return $filename;
+    return $log_filename;
+}
+
+sub unlink_logfile {
+    unlink($log_filename);
 }
 
 ####
@@ -167,7 +172,7 @@ print $tlf "20071110010002 TESTCONF003 reuse\n";
 print $tlf "20071109010002 TESTCONF002 reuse\n";
 print $tlf "20071108010001 TESTCONF001 reuse\n";
 close $tlf;
-Amanda::Tapelist::read_tapelist($tapelist) == 0 or die("Could not read tapelist");
+Amanda::Tapelist::read_tapelist($tapelist);
 
 # set up a number of logfiles in logdir.
 my $logf;
@@ -281,3 +286,5 @@ is($#filtered+1, 8, "of those, 8 results are 'OK'");
 
 @filtered = Amanda::Logfile::dumps_match([@results], undef, undef, undef, "2", 0);
 is($#filtered+1, 3, "3 results are at level 2");
+
+unlink_logfile();

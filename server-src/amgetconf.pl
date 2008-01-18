@@ -116,6 +116,7 @@ my %build_info = (
     
     'amanda_debug_days' => $Amanda::Constants::AMANDA_DEBUG_DAYS,
     'default_server' => $Amanda::Constants::DEFAULT_SERVER,
+    'default_amandates_file' => $Amanda::Constants::DEFAULT_AMANDATES_FILE,
     'default_config' => $Amanda::Constants::DEFAULT_CONFIG,
     'default_tape_server' => $Amanda::Constants::DEFAULT_TAPE_SERVER,
     'default_tape_device' => $Amanda::Constants::DEFAULT_TAPE_DEVICE,

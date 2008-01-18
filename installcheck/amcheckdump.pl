@@ -1,6 +1,24 @@
-use Test::More qw( no_plan );
-use lib "@amperldir@";
+# Copyright (c) 2006 Zmanda Inc.  All Rights Reserved.
+#
+# This program is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License version 2 as published
+# by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+# or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+# for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
+#
+# Contact information: Zmanda Inc, 505 N Mathlida Ave, Suite 120
+# Sunnyvale, CA 94085, USA, or: http://www.zmanda.com
 
+use Test::More tests => 9;
+
+use lib "@amperldir@";
 use Installcheck::Config;
 use Installcheck::Run qw(run run_get run_err);
 use Amanda::Paths;
@@ -28,7 +46,7 @@ $testconf->add_param('usetimestamps', 'no');
 $testconf->write();
 
 ok(run('amcheckdump', 'TESTCONF'),
-    "amcheck with a new config succeeds");
+    "amcheckdump with a new config succeeds");
 like($Installcheck::Run::stdout, qr(could not find)i,
      "..but finds no dumps.");
 
@@ -37,7 +55,7 @@ ok($dumpok = run('amdump', 'TESTCONF'), "a dump runs successfully without usetim
 SKIP: {
     skip "Dump failed", 1 unless $dumpok;
     like(run_get('amcheckdump', 'TESTCONF'), qr(Validating),
-	"amdevcheck succeeds, claims to validate something (usetimestamps=no)");
+	"amcheckdump succeeds, claims to validate something (usetimestamps=no)");
 }
 
 ##
@@ -53,7 +71,7 @@ ok($dumpok = run('amdump', 'TESTCONF'), "a dump runs successfully with usetimest
 SKIP: {
     skip "Dump failed", 1 unless $dumpok;
     like(run_get('amcheckdump', 'TESTCONF'), qr(Validating),
-	"amdevcheck succeeds, claims to validate something (usetimestamps=yes)");
+	"amcheckdump succeeds, claims to validate something (usetimestamps=yes)");
 }
 
 Installcheck::Run::cleanup();
