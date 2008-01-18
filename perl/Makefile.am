@@ -193,6 +193,17 @@ Amanda_DATA += Amanda/Types.pm
 EXTRA_DIST += Amanda/Types.swg Amanda/Types.pm
 MAINTAINERCLEANFILES += Amanda/Types.c Amanda/Types.pm
 
+# PACKAGE: Amanda::Tests
+libTestsdir = $(amperldir)/auto/Amanda/Tests
+libTests_LTLIBRARIES = libTests.la
+libTests_la_SOURCES = Amanda/Tests.c $(AMGLUE_SWG)
+libTests_la_LDFLAGS = $(PERL_EXT_LDFLAGS)
+libTests_la_LIBADD = libamglue.la \
+	$(top_builddir)/common-src/libamanda.la
+Amanda_DATA += Amanda/Tests.pm
+EXTRA_DIST += Amanda/Tests.swg Amanda/Tests.pm
+MAINTAINERCLEANFILES += Amanda/Tests.c Amanda/Tests.pm
+
 # PACKAGE: Amanda::Paths
 Amanda_DATA += Amanda/Paths.pm
 EXTRA_DIST += Amanda/Paths.pm.in

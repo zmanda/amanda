@@ -1,4 +1,10 @@
 2008-01-18  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Tests.swg perl/Makefile.am installcheck/bigint.pl
+	  installcheck/Makefile.am: new tests for integer-handling
+	  SWIG support, including an installed module (Amanda::Test) that
+	  is not used except by this test.
+
+2008-01-18  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Amanda_Types.pl
 	  installcheck/Amanda_Config.pl installcheck/Amanda_Changer.pl
 	  installcheck/Amconfig.pm.in installcheck/amdevcheck.pl
