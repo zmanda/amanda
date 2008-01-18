@@ -47,7 +47,7 @@ Amanda::Util::setup_application("amdevcheck", "server", "cmdline");
 usage() if ( $#ARGV < 0 || $#ARGV > 1 );
 my $config_name = $ARGV[0];
 if (!config_init($CONFIG_INIT_EXPLICIT_NAME, $config_name)) {
-    critical('errors processing config file "' .
+    die('errors processing config file "' .
 	       Amanda::Config::get_config_filename() . '"');
 }
 

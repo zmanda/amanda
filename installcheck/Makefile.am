@@ -10,6 +10,7 @@ tests = \
 	Amanda_Changer \
 	Amanda_Cmdline \
 	Amanda_Config \
+	Amanda_Debug \
 	Amanda_Types \
 	amcheckdump \
 	amdevcheck \

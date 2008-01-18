@@ -31,6 +31,9 @@ use Amanda::Changer;
 # set up debugging so debug output doesn't interfere with test results
 Amanda::Debug::dbopen("installcheck");
 
+# and disable Debug's die() and warn() overrides
+Amanda::Debug::disable_die_override();
+
 my $changer_filename = "$AMANDA_TMPDIR/chg-test";
 
 sub setup_changer {

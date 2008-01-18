@@ -301,6 +301,7 @@ if (!$pid) {
 }
 my $dump = join'', <$kid>;
 close $kid;
+waitpid $pid, 0;
 
 my $fn = Amanda::Config::get_config_filename();
 like($dump, qr/AMANDA CONFIGURATION FROM FILE "$fn"/,

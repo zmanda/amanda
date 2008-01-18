@@ -1,4 +1,13 @@
 2008-01-18  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Makefile.am perl/Amanda/Debug.swg: handle die() and warn() with
+	  critical() and warning(), respectively
+	* server-src/amgetconf.pl server-src/amcheckdump.pl
+	  server-src/amdevcheck.pl: use die()
+	* installcheck/Amanda_Config.pl installcheck/Amanda_Changer.pl
+	  installcheck/Amanda_Debug.pl installcheck/Makefile.am: new/updated
+	  unit tests
+
+2008-01-18  Dustin J. Mitchell <dustin@zmanda.com>
 	* man/xml-source/amgetconf.8.xml server-src/amgetconf.pl
 	  server-src/getconf.c server-src/Makefile.am: rewrite amgetconf in
 	  Perl, and add the ability to list available build variables.

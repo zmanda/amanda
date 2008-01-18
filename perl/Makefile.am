@@ -154,7 +154,7 @@ libDebugdir = $(amperldir)/auto/Amanda/Debug
 libDebug_LTLIBRARIES = libDebug.la
 libDebug_la_SOURCES = Amanda/Debug.c $(AMGLUE_SWG)
 libDebug_la_LDFLAGS = $(PERL_EXT_LDFLAGS)
-libDebug_la_LIBADD = \
+libDebug_la_LIBADD = libamglue.la \
 	$(top_builddir)/common-src/libamanda.la
 Amanda_DATA += Amanda/Debug.pm
 EXTRA_DIST += Amanda/Debug.swg Amanda/Debug.pm

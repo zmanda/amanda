@@ -14,8 +14,9 @@ use Getopt::Long;
 # with build configuration information without a config file, and lets it set
 # up debugging for the caller.  
 #
-# The most obvious consequence is that, rather than calling Amanda::Debug::critical,
-# this file uses 'fail' to print error messages.
+# The most obvious consequence is that, rather than calling die (which interfaces
+# with Amanda::Debug), this file uses a locally defined 'fail' to print error 
+# messages.
 
 sub usage {
     print <<EOF;
