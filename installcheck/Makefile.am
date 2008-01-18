@@ -12,6 +12,7 @@ tests = \
 	Amanda_Config \
 	Amanda_Debug \
 	Amanda_Types \
+	Amanda_Tapelist \
 	amcheckdump \
 	amdevcheck \
 	amgetconf

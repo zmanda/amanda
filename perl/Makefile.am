@@ -131,17 +131,17 @@ Amanda_DATA += Amanda/Cmdline.pm
 EXTRA_DIST += Amanda/Cmdline.swg Amanda/Cmdline.pm
 MAINTAINERCLEANFILES += Amanda/Cmdline.c Amanda/Cmdline.pm
 
-# PACKAGE: Amanda::Tapefile
-libTapefiledir = $(amperldir)/auto/Amanda/Tapefile
-libTapefile_LTLIBRARIES = libTapefile.la
-libTapefile_la_SOURCES = Amanda/Tapefile.c $(AMGLUE_SWG)
-libTapefile_la_LDFLAGS = $(PERL_EXT_LDFLAGS)
-libTapefile_la_LIBADD = libamglue.la \
+# PACKAGE: Amanda::Tapelist
+libTapelistdir = $(amperldir)/auto/Amanda/Tapelist
+libTapelist_LTLIBRARIES = libTapelist.la
+libTapelist_la_SOURCES = Amanda/Tapelist.c $(AMGLUE_SWG)
+libTapelist_la_LDFLAGS = $(PERL_EXT_LDFLAGS)
+libTapelist_la_LIBADD = libamglue.la \
 	$(top_builddir)/server-src/libamserver.la \
 	$(top_builddir)/common-src/libamanda.la
-Amanda_DATA += Amanda/Tapefile.pm
-EXTRA_DIST += Amanda/Tapefile.swg Amanda/Tapefile.pm
-MAINTAINERCLEANFILES += Amanda/Tapefile.c Amanda/Tapefile.pm
+Amanda_DATA += Amanda/Tapelist.pm
+EXTRA_DIST += Amanda/Tapelist.swg Amanda/Tapelist.pm
+MAINTAINERCLEANFILES += Amanda/Tapelist.c Amanda/Tapelist.pm
 
 # PACKAGE: Amanda::Changer
 Amanda_DATA += Amanda/Changer.pm

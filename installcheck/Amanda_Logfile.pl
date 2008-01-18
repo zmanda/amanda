@@ -23,7 +23,7 @@ use strict;
 
 use lib "@amperldir@";
 use Amanda::Paths;
-use Amanda::Tapefile;
+use Amanda::Tapelist;
 use Amanda::Logfile qw(:logtype_t :program_t open_logfile get_logline close_logfile);
 use Amanda::Config qw( :init :getconf config_dir_relative );
 
@@ -159,14 +159,15 @@ $testconf->write();
 ok(config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF"), "config_init is OK");
 my $tapelist = config_dir_relative("tapelist");
 
-# set up and read the tapelist
+# set up and read the tapelist (we don't use Amanda::Tapelist to write this,
+# in case it's broken)
 open my $tlf, ">", $tapelist or die("Could not write tapelist");
 print $tlf "20071111010002 TESTCONF004 reuse\n";
 print $tlf "20071110010002 TESTCONF003 reuse\n";
 print $tlf "20071109010002 TESTCONF002 reuse\n";
 print $tlf "20071108010001 TESTCONF001 reuse\n";
 close $tlf;
-Amanda::Tapefile::read_tapelist($tapelist) == 0 or die("Could not read tapelist");
+Amanda::Tapelist::read_tapelist($tapelist) == 0 or die("Could not read tapelist");
 
 # set up a number of logfiles in logdir.
 my $logf;

@@ -11,7 +11,7 @@ use Amanda::Debug qw( :logging );
 use Amanda::Config qw( :init :getconf config_dir_relative );
 use Amanda::Logfile;
 use Amanda::Util qw( :running_as_flags );
-use Amanda::Tapefile;
+use Amanda::Tapelist;
 use Amanda::Changer;
 
 # Try to open the device and set properties. Does not read the label.
@@ -194,7 +194,7 @@ if (@ARGV) {
 }
 
 # Read the tape list.
-Amanda::Tapefile::read_tapelist(config_dir_relative(getconf($CNF_TAPELIST)));
+my $tl = Amanda::Tapelist::read_tapelist(config_dir_relative(getconf($CNF_TAPELIST)));
 
 if (!defined $timestamp) {
     my $amdump_log = config_dir_relative(getconf($CNF_LOGDIR)) . "/amdump.1";

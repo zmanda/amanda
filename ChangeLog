@@ -1,4 +1,12 @@
 2008-01-18  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Tapelist.swg perl/Amanda/Tapefile.swg perl/Makefile.am:
+	  new module (Tapelist) replaces old stub (Tapefile)
+	* installcheck/Amanda_Tapelist.pl installcheck/Makefile.am: test new
+	  module
+	* server-src/amcheckdump.pl installcheck/Amanda_Logfile.pl: use new
+	  module
+
+2008-01-18  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Makefile.am perl/Amanda/Debug.swg: handle die() and warn() with
 	  critical() and warning(), respectively
 	* server-src/amgetconf.pl server-src/amcheckdump.pl
