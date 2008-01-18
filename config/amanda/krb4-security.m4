@@ -7,9 +7,9 @@
 #   Handle configuration for KRB4 security, implementing the --with-krb4-security
 #   option.  If libraries are found, they are added to the relevant compiler flags.
 #
-#   Defines KRB4_SECURITY, and sets AM_CONDITIONAL WANT_KRB4_SECURITY,
+#   Defines and substitutes KRB4_SECURITY, and sets AM_CONDITIONAL WANT_KRB4_SECURITY,
 #   if the user has selected this mechanism.  Also, the following parameters
-#   are taken from options and defined:
+#   are taken from options, defined, and substituted:
 #
 #    - SERVER_HOST_PRINCIPAL
 #    - SERVER_HOST_INSTANCE
@@ -231,4 +231,14 @@ AC_DEFUN([AMANDA_KRB4_SECURITY],
         fi
     fi
     AM_CONDITIONAL(WANT_KRB4_SECURITY, test x"$KRB4_SECURITY" = x"yes")
+
+    AC_SUBST(KRB4_SECURITY)
+
+    AC_SUBST(SERVER_HOST_PRINCIPAL)
+    AC_SUBST(SERVER_HOST_INSTANCE)
+    AC_SUBST(SERVER_HOST_KEY_FILE)
+    AC_SUBST(CLIENT_HOST_PRINCIPAL)
+    AC_SUBST(CLIENT_HOST_INSTANCE)
+    AC_SUBST(CLIENT_HOST_KEY_FILE)
+    AC_SUBST(TICKET_LIFETIME)
 ])

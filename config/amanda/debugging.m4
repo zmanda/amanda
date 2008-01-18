@@ -4,10 +4,12 @@
 #
 # OVERVIEW
 #
-#   Handles the --with-assertions flag.  Defines ASSERTIONS if the flag is given.
+#   Handles the --with-assertions flag.  Defines and substitutes ASSERTIONS
+#   if the flag is given.
 #
 AC_DEFUN([AMANDA_WITH_ASSERTIONS],
 [
+    ASSERTIONS=
     AC_ARG_WITH(assertions,
         AS_HELP_STRING([--with-assertions],
             [compile assertions into code]),
@@ -15,6 +17,7 @@ AC_DEFUN([AMANDA_WITH_ASSERTIONS],
             case "$withval" in
                 n | no) : ;;
                 y |  ye | yes)
+		    ASSERTIONS=1
                     AC_DEFINE(ASSERTIONS,1,
                         [Define if you want assertion checking. ])
                   ;;
@@ -23,6 +26,7 @@ AC_DEFUN([AMANDA_WITH_ASSERTIONS],
             esac
         ]
     )
+    AC_SUBST(ASSERTIONS)
 ])
 
 # SYNOPSIS

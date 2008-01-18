@@ -28,5 +28,6 @@ AC_DEFUN([AMANDA_RSH_SECURITY],
                 [Define if RSH transport should be enabled. ])
     fi
     AM_CONDITIONAL(WANT_RSH_SECURITY, test x"$RSH_SECURITY" = x"yes")
+    AC_SUBST(RSH_SECURITY)
 ])
 

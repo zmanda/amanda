@@ -7,17 +7,9 @@
 #   Handle configuration for KRB5 security, implementing the --with-krb5-security
 #   option.  If libraries are found, they are added to the relevant compiler flags.
 #
-#   Defines KRB5_SECURITY, and sets AM_CONDITIONAL WANT_KRB5_SECURITY,
-#   if the user has selected this mechanism.  Also, the following parameters
-#   are taken from options and defined:
-#
-#    - SERVER_HOST_PRINCIPAL
-#    - SERVER_HOST_INSTANCE
-#    - SERVER_HOST_KEY_FILE
-#    - CLIENT_HOST_PRINCIPAL
-#    - CLIENT_HOST_INSTANCE
-#    - CLIENT_HOST_KEY_FILE
-#    - TICKET_LIFETIME
+#   Defines and substitutes KRB5_SECURITY, and sets AM_CONDITIONAL 
+#   WANT_KRB5_SECURITY, if the user has selected this mechanism.  Also, the
+#   following parameters are taken from options, defined, and substituted:
 #
 AC_DEFUN([AMANDA_KRB5_SECURITY],
 [
@@ -102,4 +94,5 @@ AC_DEFUN([AMANDA_KRB5_SECURITY],
     fi
 
     AM_CONDITIONAL(WANT_KRB5_SECURITY, test x"$KRB5_SECURITY" = x"yes")
+    AC_SUBST(KRB5_SECURITY)
 ])

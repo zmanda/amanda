@@ -28,8 +28,8 @@ AC_DEFUN([AMANDA_DISABLE_INSTALLPERMS],
 # OVERVIEW
 #
 #   Handle the --without-force-id option, which disables userid checks for
-#   all Amanda applications.  Defines CHECK_USERID *unless* this option is
-#   given.
+#   all Amanda applications.  Defines and substitutes CHECK_USERID *unless* 
+#   this option is given.
 #
 AC_DEFUN([AMANDA_WITH_FORCE_UID],
 [
@@ -41,14 +41,17 @@ AC_DEFUN([AMANDA_WITH_FORCE_UID],
     )
     case "$CHECK_USERID" in
         y | ye | yes) 
+	    CHECK_USERID=1
             AC_DEFINE(CHECK_USERID, 1,
                 [Define to force to another user on client machines. ])
           ;;
         n | no) :
+	    CHECK_USERID=
           ;;
         *)
             AC_MSG_ERROR([*** You must not supply an argument to --with-force-uid option.])
     esac
+    AC_SUBST(CHECK_USERID)
 ])
 
 # SYNOPSIS

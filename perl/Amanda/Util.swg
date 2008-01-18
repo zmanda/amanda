@@ -135,6 +135,7 @@ this applciation.
 The user is specified by one of the following flags, which are
 available in export tag C<:check_running_as_flags>:
 
+  $RUNNING_AS_ANY                 # any user is OK
   $RUNNING_AS_ROOT                # root
   $RUNNING_AS_DUMPUSER            # dumpuser, from configuration
   $RUNNING_AS_DUMPUSER_PREFERRED  # dumpuser, but client_login is OK too
@@ -180,6 +181,7 @@ sub safe_env {
 %}
 
 amglue_add_flag_tag_fns(running_as_flags);
+amglue_add_constant(RUNNING_AS_ANY, running_as_flags);
 amglue_add_constant(RUNNING_AS_ROOT, running_as_flags);
 amglue_add_constant(RUNNING_AS_DUMPUSER, running_as_flags);
 amglue_add_constant(RUNNING_AS_DUMPUSER_PREFERRED, running_as_flags);

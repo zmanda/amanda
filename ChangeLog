@@ -1,3 +1,21 @@
+2008-01-18  Dustin J. Mitchell <dustin@zmanda.com>
+	* man/xml-source/amgetconf.8.xml server-src/amgetconf.pl
+	  server-src/getconf.c server-src/Makefile.am: rewrite amgetconf in
+	  Perl, and add the ability to list available build variables.
+	* config/amanda/krb4-security.m4 config/amanda/krb5-security.m4
+	  config/amanda/bsd-security.m4 config/amanda/dumpers.m4
+	  config/amanda/bsdtcp-security.m4 config/amanda/userid.m4
+	  config/amanda/rsh-security.m4 config/amanda/ssh-security.m4
+	  config/amanda/bsdudp-security.m4 config/amanda/compress.m4
+	  config/amanda/debugging.m4 config/amanda/flock.m4: AC_SUBST a bunch
+	  of constants for use in Amanda::Constants
+	* perl/Makefile.am perl/Amanda/Paths.pm.in
+	  perl/Amanda/Constants.pm.in: add new constants
+	* perl/Amanda/Config.swg: add getconf_byname_strs
+	* installcheck/amgetconf.pl: check new functionality
+	* perl/Amanda/Util.swg common-src/util.c common-src/util.h: add
+	  RUNNING_AS_ANY
+
 2008-01-17  Jean-Louis Martineau <martineau@zmanda.com>
 	* packaging/rpm/buildpkg, packaging/rpm/amanda.spec,
 	  configure.in: Set for release 2.6.1alpha.

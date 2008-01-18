@@ -11,9 +11,10 @@
 #   Note that the defaults for *both* of these options are "yes", unlike
 #   the remainder of the security implementations.
 #
-#   Defines BSD_SECURITY, and sets AM_CONDITIONAL WANT_BSD_SECURITY,
-#   if the user has selected this mechanism.  Also defines USE_AMANDAHOSTS
-#   unless the user has specified --without-amandahosts.
+#   Defines and substitues BSD_SECURITY, and sets AM_CONDITIONAL
+#   WANT_BSD_SECURITY, if the user has selected this mechanism.
+#   Also defines and substitutes USE_AMANDAHOSTS unless the user has
+#   specified --without-amandahosts.
 #
 AC_DEFUN([AMANDA_BSD_SECURITY],
 [
@@ -55,4 +56,6 @@ AC_DEFUN([AMANDA_BSD_SECURITY],
     fi
 
     AM_CONDITIONAL(WANT_BSD_SECURITY, test x"$BSD_SECURITY" = x"yes")
+    AC_SUBST(BSD_SECURITY)
+    AC_SUBST(USE_AMANDAHOSTS)
 ])

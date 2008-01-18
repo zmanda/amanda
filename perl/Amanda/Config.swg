@@ -180,10 +180,15 @@ The subsections are:
 
 See C<conffile.h> for the names of the constants themselves.
 
-Parameter values are available by name from C<getconf_byname($name)>.
-This function implements the C<TYP:NAME:PARAM> syntax advertised by
-C<amgetconf> to access values in subsections.  C<getconf_list($typ)>
-returns a list of the names of all subsections of the given type.
+Parameter values are available by name from C<getconf_byname($name)> and
+C<getconf_byname_strs($name, $str_needs_quotes)>.  These functions implement
+the C<TYP:NAME:PARAM> syntax advertised by C<amgetconf> to access values in
+subsections.  The first function returns a perl value, while the second returns
+a string suitable for use in C<amanda.conf>, including quotes around strings if
+C<$str_needs_quotes> is true.
+
+C<getconf_list($typ)> returns a list of the names of all subsections of the
+given type.
 
 The C<$CNF_DISPLAYUNIT> implies a certain divisor to convert from
 kilobytes to the desired unit.  This divisor is available from
@@ -442,123 +447,128 @@ amglue_copy_to_tag(taperalgo_t, getconf);
  *  - CONFTYPE_PROPLIST -> hashref
  */
 %typemap (out) val_t * {
-    switch ($1->type) {
-	case CONFTYPE_RATE: {
-	    $result= sv_newmortal();
-	    sv_setnv($result, val_t__rate($1)[0]);
-	    argvi++;
+    if (!$1) {
+	$result = &PL_sv_undef;
+	argvi++;
+    } else {
+	switch ($1->type) {
+	    case CONFTYPE_RATE: {
+		$result= sv_newmortal();
+		sv_setnv($result, val_t__rate($1)[0]);
+		argvi++;
 
-	    $result= sv_newmortal();
-	    sv_setnv($result, val_t__rate($1)[1]);
-	    argvi++;
-	    break;
-	}
-
-	case CONFTYPE_INTRANGE: {
-	    $result= sv_newmortal();
-	    sv_setiv($result, val_t__intrange($1)[0]);
-	    argvi++;
-
-	    $result= sv_newmortal();
-	    sv_setiv($result, val_t__intrange($1)[1]);
-	    argvi++;
-	    break;
-	    break;
-	}
-
-	case CONFTYPE_EXINCLUDE: {
-	    /* exincludes are represented in perl as {
-	     *	'list' : [ 'list1', 'list2', ..],
-	     *	'file' : [ 'file1', 'file2', ..],
-	     *	'optional' : 1,
-	     * }
-	     */
-	    exinclude_t *ei = &val_t__exinclude($1);
-	    AV *list_entries = (AV *)sv_2mortal((SV *)newAV());
-	    AV *file_entries = (AV *)sv_2mortal((SV *)newAV());
-	    SV *optional = sv_newmortal();
-	    HV *hv;
-	    sle_t *iter;
-
-	    /* first set up each of the hash values */
-
-	    if (ei->sl_list) {
-		for (iter = ei->sl_list->first; iter != NULL; iter = iter->next) {
-		    av_push(list_entries, newSVpv(iter->name, 0));
-		}
+		$result= sv_newmortal();
+		sv_setnv($result, val_t__rate($1)[1]);
+		argvi++;
+		break;
 	    }
 
-	    if(ei->sl_file) {
-		for (iter = ei->sl_file->first; iter != NULL; iter = iter->next) {
-		    av_push(file_entries, newSVpv(iter->name, 0));
-		}
+	    case CONFTYPE_INTRANGE: {
+		$result= sv_newmortal();
+		sv_setiv($result, val_t__intrange($1)[0]);
+		argvi++;
+
+		$result= sv_newmortal();
+		sv_setiv($result, val_t__intrange($1)[1]);
+		argvi++;
+		break;
+		break;
 	    }
 
-	    sv_setiv(optional, ei->optional);
+	    case CONFTYPE_EXINCLUDE: {
+		/* exincludes are represented in perl as {
+		 *	'list' : [ 'list1', 'list2', ..],
+		 *	'file' : [ 'file1', 'file2', ..],
+		 *	'optional' : 1,
+		 * }
+		 */
+		exinclude_t *ei = &val_t__exinclude($1);
+		AV *list_entries = (AV *)sv_2mortal((SV *)newAV());
+		AV *file_entries = (AV *)sv_2mortal((SV *)newAV());
+		SV *optional = sv_newmortal();
+		HV *hv;
+		sle_t *iter;
 
-	    /* now build the hash */
-	    hv = (HV *)sv_2mortal((SV *)newHV());
-	    
-	    hv_store(hv, "file", 4, newRV((SV *)file_entries), 0);
-	    hv_store(hv, "list", 4, newRV((SV *)list_entries), 0);
-	    hv_store(hv, "optional", 8, optional, 0);
-	    SvREFCNT_inc(optional);
+		/* first set up each of the hash values */
 
-	    $result = sv_2mortal(newRV((SV *)hv));
-	    argvi++;
-	    break;
+		if (ei->sl_list) {
+		    for (iter = ei->sl_list->first; iter != NULL; iter = iter->next) {
+			av_push(list_entries, newSVpv(iter->name, 0));
+		    }
+		}
+
+		if(ei->sl_file) {
+		    for (iter = ei->sl_file->first; iter != NULL; iter = iter->next) {
+			av_push(file_entries, newSVpv(iter->name, 0));
+		    }
+		}
+
+		sv_setiv(optional, ei->optional);
+
+		/* now build the hash */
+		hv = (HV *)sv_2mortal((SV *)newHV());
+		
+		hv_store(hv, "file", 4, newRV((SV *)file_entries), 0);
+		hv_store(hv, "list", 4, newRV((SV *)list_entries), 0);
+		hv_store(hv, "optional", 8, optional, 0);
+		SvREFCNT_inc(optional);
+
+		$result = sv_2mortal(newRV((SV *)hv));
+		argvi++;
+		break;
+	    }
+
+	    case CONFTYPE_PROPLIST:
+		$result = sv_2mortal(g_hash_table_to_hashref(val_t__proplist($1)));
+		argvi++;
+		break;
+
+	    case CONFTYPE_SIZE:
+		$result = sv_2mortal(amglue_newSVi64(val_t__size($1)));
+		argvi++;
+		break;
+
+	    case CONFTYPE_AM64:
+		$result = sv_2mortal(amglue_newSVi64(val_t__am64($1)));
+		argvi++;
+		break;
+
+	    case CONFTYPE_BOOLEAN:	    /* all same as INT.. */
+	    case CONFTYPE_COMPRESS:
+	    case CONFTYPE_ENCRYPT:
+	    case CONFTYPE_ESTIMATE:
+	    case CONFTYPE_STRATEGY:
+	    case CONFTYPE_TAPERALGO:
+	    case CONFTYPE_PRIORITY:
+	    case CONFTYPE_HOLDING:
+	    case CONFTYPE_INT:
+		$result = sv_2mortal(amglue_newSVi64(val_t__int($1)));
+		argvi++;
+		break;
+
+	    case CONFTYPE_TIME:
+		$result = sv_2mortal(amglue_newSVi64(val_t__time($1)));
+		argvi++;
+		break;
+
+	    case CONFTYPE_REAL:
+		$result = sv_newmortal();
+		sv_setnv($result, val_t__real($1));
+		argvi++;
+		break;
+
+	    case CONFTYPE_IDENT:	    /* same as STRING */
+	    case CONFTYPE_STR:
+		$result = sv_newmortal();
+		sv_setpv($result, val_t__str($1));
+		argvi++;
+		break;
+
+	    /* No match yet -> not one of the "complex" types */
+	    default:
+		SWIG_exception(SWIG_TypeError, "Unknown val_t conftype");
+		break;
 	}
-
-	case CONFTYPE_PROPLIST:
-	    $result = sv_2mortal(g_hash_table_to_hashref(val_t__proplist($1)));
-	    argvi++;
-	    break;
-
-	case CONFTYPE_SIZE:
-	    $result = sv_2mortal(amglue_newSVi64(val_t__size($1)));
-	    argvi++;
-	    break;
-
-	case CONFTYPE_AM64:
-	    $result = sv_2mortal(amglue_newSVi64(val_t__am64($1)));
-	    argvi++;
-	    break;
-
-	case CONFTYPE_BOOLEAN:	    /* all same as INT.. */
-	case CONFTYPE_COMPRESS:
-	case CONFTYPE_ENCRYPT:
-	case CONFTYPE_ESTIMATE:
-	case CONFTYPE_STRATEGY:
-	case CONFTYPE_TAPERALGO:
-	case CONFTYPE_PRIORITY:
-	case CONFTYPE_HOLDING:
-	case CONFTYPE_INT:
-	    $result = sv_2mortal(amglue_newSVi64(val_t__int($1)));
-	    argvi++;
-	    break;
-
-	case CONFTYPE_TIME:
-	    $result = sv_2mortal(amglue_newSVi64(val_t__time($1)));
-	    argvi++;
-	    break;
-
-	case CONFTYPE_REAL:
-	    $result = sv_newmortal();
-	    sv_setnv($result, val_t__real($1));
-	    argvi++;
-	    break;
-
-	case CONFTYPE_IDENT:	    /* same as STRING */
-	case CONFTYPE_STR:
-	    $result = sv_newmortal();
-	    sv_setpv($result, val_t__str($1));
-	    argvi++;
-	    break;
-
-	/* No match yet -> not one of the "complex" types */
-	default:
-	    SWIG_exception(SWIG_TypeError, "Unknown val_t conftype");
-	    break;
     }
 }
 
@@ -578,13 +588,37 @@ amglue_copy_to_tag(taperalgo_t, getconf);
     g_slist_free($1);
 }
 
+/* typedef and typemap for getconf_byname_strs, which is like getconf_byname, 
+ * but converts the result with val_t_dispaly_strs
+ */
+%typemap (out) val_t_strs {
+    char **it = $1;
+
+    while (it && *it) {
+	$result = sv_2mortal(newSVpv(*it, 0));
+	argvi++;
+	it++;
+    }
+    g_strfreev($1);
+}
+
 val_t *getconf(confparm_key key);
 gboolean getconf_seen(confparm_key key);
 val_t *getconf_byname(char *key);
 GSList *getconf_list(char *listname);
+%inline %{
+typedef char **val_t_strs;
+val_t_strs getconf_byname_strs(char *key, int str_needs_quotes) {
+    val_t *val = getconf_byname(key);
+    if (!val) return NULL;
+    return val_t_display_strs(val, str_needs_quotes);
+}
+%}
+
 amglue_export_tag(getconf,
     getconf getconf_seen 
-    getconf_byname getconf_list
+    getconf_byname getconf_byname_strs
+    getconf_list
 );
 
 tapetype_t *lookup_tapetype(char *identifier);

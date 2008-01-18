@@ -835,6 +835,11 @@ check_running_as(running_as_flags who)
 #endif
 
     switch (who & RUNNING_AS_USER_MASK) {
+	case RUNNING_AS_ANY:
+	    uid_target = uid_me;
+	    uname_target = uname_me;
+	    return;
+
 	case RUNNING_AS_ROOT:
 	    uid_target = 0;
 	    uname_target = "root";

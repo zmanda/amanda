@@ -197,3 +197,8 @@ MAINTAINERCLEANFILES += Amanda/Types.c Amanda/Types.pm
 Amanda_DATA += Amanda/Paths.pm
 EXTRA_DIST += Amanda/Paths.pm.in
 DISTCLEANFILES += Amanda/Paths.pm
+
+# PACKAGE: Amanda::Constants
+Amanda_DATA += Amanda/Constants.pm
+EXTRA_DIST += Amanda/Constants.pm.in
+DISTCLEANFILES += Amanda/Constants.pm

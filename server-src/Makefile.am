@@ -21,7 +21,7 @@ LINTFLAGS=$(AMLINTFLAGS)
 amlib_LTLIBRARIES = 	libamserver.la
 
 sbin_PROGRAMS =		amadmin		amcheck		\
-			amflush		amgetconf	amlabel		\
+			amflush		amlabel		\
 			amtape		amreport
 
 noinst_PROGRAMS = taper_source_test
@@ -41,7 +41,8 @@ CHECK_PERL = \
 SCRIPTS_PERL =  \
 	    $(CHECK_PERL) \
 	    amdevcheck \
-	    amcheckdump
+	    amcheckdump \
+	    amgetconf
 
 SCRIPTS_SHELL = \
 	    amcheckdb \
@@ -127,8 +128,6 @@ amindexd_SOURCES =	disk_history.h	list_dir.h	$(amindexd_CSRC)
 
 amreport_SOURCES =	reporter.c
 
-amgetconf_SOURCES =	getconf.c
-
 noinst_HEADERS = 	amindex.h	changer.h	cmdline.h	\
 			diskfile.h	driverio.h	\
 			holding.h	infofile.h	logfile.h	\
@@ -143,8 +142,6 @@ lint:
 			s="$(amindexd_CSRC)";					\
 		elif [ $$p = "amreport" ]; then					\
 			s="$(amreport_SOURCES)";				\
-		elif [ $$p = "amgetconf" ]; then				\
-			s="$(getconf_SOURCES)";					\
 		else								\
 			s=$$p.c;						\
 		fi; 								\

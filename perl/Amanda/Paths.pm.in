@@ -21,7 +21,7 @@ package Amanda::Paths;
 
 =head1 NAME
 
-Amanda::Paths - perl access to build-time configuration values
+Amanda::Paths - perl access to build-time configuration paths
 
 =head1 SYNOPSIS
 
@@ -55,6 +55,7 @@ use Exporter;
     $AMANDA_TMPDIR
     $CONFIG_DIR
     $AMANDA_DBGDIR
+    $GNUTAR_LISTED_INCREMENTAL_DIR
 );
 
 # the 'warnings' pragma doesn't recognized exported variables as "used", and generates warnings
@@ -79,3 +80,4 @@ $datarootdir = "@datarootdir@";
 $AMANDA_TMPDIR = "@AMANDA_TMPDIR@";
 $CONFIG_DIR = "@CONFIG_DIR@";
 $AMANDA_DBGDIR = "@AMANDA_DBGDIR@";
+$GNUTAR_LISTED_INCREMENTAL_DIR = "@GNUTAR_LISTED_INCREMENTAL_DIR@";

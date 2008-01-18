@@ -7,8 +7,8 @@
 #   Handle configuration for BSDUDP security, implementing the 
 #   --with-bsdudp-security option.
 #
-#   Defines BSDUDP_SECURITY, and sets AM_CONDITIONAL WANT_BSDUDP_SECURITY,
-#   if the user has selected this mechanism.
+#   Defines and substitutes BSDUDP_SECURITY, and sets AM_CONDITIONAL
+#   WANT_BSDUDP_SECURITY, if the user has selected this mechanism.
 #
 AC_DEFUN([AMANDA_BSDUDP_SECURITY],
 [
@@ -30,5 +30,7 @@ AC_DEFUN([AMANDA_BSDUDP_SECURITY],
         AC_DEFINE(BSDUDP_SECURITY,1,
             [Define if BSDUDP transport should be enabled.])
     fi
+
     AM_CONDITIONAL(WANT_BSDUDP_SECURITY, test x"$BSDUDP_SECURITY" = x"yes")
+    AC_SUBST(BSDUDP_SECURITY)
 ])

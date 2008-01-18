@@ -155,6 +155,9 @@ char *_str_exit_status(char *subject, amwait_t status);
  * @param who: one of the RUNNING_AS_* constants, below.
  */
 typedef enum {
+        /* doesn't matter */
+    RUNNING_AS_ANY,
+
         /* userid is 0 */
     RUNNING_AS_ROOT,
 

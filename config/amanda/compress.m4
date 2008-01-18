@@ -4,7 +4,7 @@
 #
 # OVERVIEW
 #
-#   Find a suitable compression program and define the following:
+#   Find a suitable compression program and substitute and define the following:
 #
 #    - COMPRESS_PATH
 #    - COMPRESS_SUFFIX
@@ -20,9 +20,11 @@ AC_DEFUN([AMANDA_CHECK_COMPRESSION],
     AC_REQUIRE([AMANDA_PROG_COMPRESS])
     AC_REQUIRE([AMANDA_PROG_GZIP])
 
+    HAVE_GZIP=
     if test "$GZIP"; then
 	AC_DEFINE(HAVE_GZIP,1,
 	    [Define if Amanda is using the gzip program. ])
+	HAVE_GZIP=1
 	COMPRESS_PATH="$GZIP"
 	COMPRESS_SUFFIX=".gz"
 	COMPRESS_FAST_OPT="--fast"
@@ -65,6 +67,14 @@ AC_DEFUN([AMANDA_CHECK_COMPRESSION],
 	[Define as the exact path to the gzip or compress command. ])
     AC_DEFINE_UNQUOTED(UNCOMPRESS_OPT,"$UNCOMPRESS_OPT",
 	[Define as any optional arguments to get UNCOMPRESS_PATH to uncompress. ])
+
+    AC_SUBST(COMPRESS_PATH)
+    AC_SUBST(COMPRESS_SUFFIX)
+    AC_SUBST(COMPRESS_FAST_OPT)
+    AC_SUBST(COMPRESS_BEST_OPT)
+    AC_SUBST(UNCOMPRESS_PATH)
+    AC_SUBST(UNCOMPRESS_OPT)
+    AC_SUBST(HAVE_GZIP)
 
     # Empty GZIP so that make dist works.
     GZIP=

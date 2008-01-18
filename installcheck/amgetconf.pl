@@ -21,6 +21,7 @@ use Test::More qw(no_plan);
 use Amconfig;
 use lib "@amperldir@";
 use Amanda::Paths;
+use Cwd;
 
 # wrapper to call amgetconf and return the results
 sub amgetconf {
@@ -39,7 +40,7 @@ my $testconf;
 
 like(amgetconf(), qr(\AUsage: )i, 
     "bare 'amgetconf' gives usage message");
-like(amgetconf("this-probably-doesnt-exist"), qr(could not open conf file)i, 
+like(amgetconf("this-probably-doesnt-exist", "tapedev"), qr(could not open conf file)i, 
     "error message when configuration parameter doesn't exist");
 
 ##
@@ -59,8 +60,11 @@ is(amgetconf('TESTCONF', "usetimestamps"), "yes",
 # test a nonexistent parameter
 like(amgetconf('TESTCONF', "foos_per_bar"), qr/no such parameter/, 
     "handles nonexistent parameters");
+like(amgetconf('TESTCONF', "build.foos_per_bar"), qr/no such parameter/, 
+    "handles nonexistent build parameters");
 
-# test build parameters (just the most common)
+# Test build parameters that we can determine easily.  Testing all parameters
+# would be more of a maintenance bother than a help.
 is(amgetconf('TESTCONF', "build.bindir"), $bindir, "build.bindir is correct");
 is(amgetconf('TESTCONF', "build.sbindir"), $sbindir, "build.sbindir is correct");
 is(amgetconf('TESTCONF', "build.amlibexecdir"), $amlibexecdir, "build.amlibexecdir is correct");
@@ -68,6 +72,12 @@ is(amgetconf('TESTCONF', "build.mandir"), $mandir, "build.mandir is correct");
 is(amgetconf('TESTCONF', "build.AMANDA_DBGDIR"), $AMANDA_DBGDIR, "build.AMANDA_DBGDIR is correct");
 is(amgetconf('TESTCONF', "build.AMANDA_TMPDIR"), $AMANDA_TMPDIR, "build.AMANDA_TMPDIR is correct");
 is(amgetconf('TESTCONF', "build.CONFIG_DIR"), $CONFIG_DIR, "build.CONFIG_DIR is correct");
+# TODO: test that an invalid build variable produces a nonzero exit status
+
+is(amgetconf('TESTCONF', "build.config_dir"), $CONFIG_DIR, 
+    "build parameters are case-insensitive");
+
+is(amgetconf("build.bindir"), $bindir, "build variables are available without a config");
 
 # dbopen, dbclose
 my $dbfile = amgetconf('TESTCONF', "dbopen.foo");
@@ -75,10 +85,14 @@ like($dbfile, qr(^$AMANDA_DBGDIR/server/foo.[0-9]*.debug$),
     "'amgetconf dbopen.foo' returns a proper debug filename");
 ok(-f $dbfile,
     "'amgetconf dbopen.foo' creates the debug file");
-like(amgetconf('TESTCONF', "dbclose.foo"), qr/cannot parse/,
-    "dbclose without filename fails");
-is(amgetconf('TESTCONF', "dbclose.foo:$dbfile"), $dbfile, 
-    "'amgetconf dbclose.foo:<filename>' returns the debug filename");
+SKIP: {
+    skip "dbopen didn't work, so I'll skip the rest", 2
+	unless (-f $dbfile);
+    like(amgetconf('TESTCONF', "dbclose.foo"), qr/cannot parse/,
+	"dbclose without filename fails");
+    is(amgetconf('TESTCONF', "dbclose.foo:$dbfile"), $dbfile, 
+	"'amgetconf dbclose.foo:<filename>' returns the debug filename");
+}
 
 ##
 # Test an invalid config file
@@ -107,6 +121,13 @@ is(amgetconf('TESTCONF', "reserve"), "27",
     "correctly returns integer parameters from the file");
 is(amgetconf('TESTCONF', "rEsErVe"), "27", 
     "is case-insensitive");
+
+# check runs without a config
+my $olddir = getcwd();
+chdir("$CONFIG_DIR/TESTCONF") or die("Could not 'cd' to TESTCONF directory");
+is(amgetconf("printer"), "/dev/lp", 
+    "uses current directory when no configuration name is given");
+chdir($olddir) or die("Could not 'cd' back to my original directory");
 
 ##
 # device_property can appear multiple times
@@ -138,7 +159,7 @@ is_deeply([sort(split(/\n/, amgetconf('TESTCONF', '--list', 'tapetype')))],
 is(amgetconf('TESTCONF', 'tapetype:scotch:length'), '500', 
     "returns tapetype parameter correctly");
 
-ok(grep { $_ eq 'testdump' } split(/\n/, amgetconf('TESTCONF', '--list', 'dumptype')),
+ok(scalar(grep { $_ eq 'testdump' } split(/\n/, amgetconf('TESTCONF', '--list', 'dumptype'))),
 	"--list returns a test dumptype among the default dumptypes");
 is(amgetconf('TESTCONF', 'dumptype:testdump:comment'), 'testdump-dumptype', 
     "returns dumptype parameter correctly");
@@ -154,6 +175,9 @@ is_deeply([sort(split(/\n/, amgetconf('TESTCONF', '--list', 'holdingdisk')))],
 	"--list returns correct set of holdingdisks");
 is(amgetconf('TESTCONF', 'holdingdisk:hd17:chunksize'), '128',
     "returns holdingdisk parameter correctly");
+
+like(amgetconf('TESTCONF', '--list', 'build'), qr(.*version.*),
+	"'--list build' lists build variables");
 
 # non-existent subsection types, names, and parameters
 like(amgetconf('TESTCONF', 'NOSUCHTYPE:testiface:comment'), qr/no such parameter/, 

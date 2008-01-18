@@ -210,7 +210,8 @@ AC_DEFUN([AMANDA_PROG_XFSDUMP_XFSRESTORE],
 #   the binaries we search for depends on the target system.  If working
 #   binaries are found, DUMP and RESTORE are defined to their full paths.
 #
-#   DUMP_RETURNS is defined if the system's 'dump' returns 1 on success.
+#   DUMP_RETURNS_1 is defined and substituted if the system's 'dump'
+#   returns 1 on success.
 #
 #   HAVE_DUMP_ESTIMATE is defined to the dump flag which enables estimates.
 #
@@ -229,23 +230,25 @@ AC_DEFUN([AMANDA_PROG_DUMP_RESTORE],
     # a variable is set up here to specify the order of dump programs to
     # search for on the system.
     DUMP_PROGRAMS="ufsdump dump backup"
-    dump_returns_1=
+    DUMP_RETURNS_1=
+    AIX_BACKUP=
     case "$target" in
 	*-dg-*)
 	    DUMP_PROGRAMS="dump "$DUMP_PROGRAMS
-	    dump_returns_1=yes
+	    DUMP_RETURNS_1=1
 	    ;;
       *-ibm-aix*)
 	    DUMP_PROGRAMS="backup "$DUMP_PROGRAMS
+	    AIX_BACKUP=1
 	    AC_DEFINE(AIX_BACKUP,1,
 		[Is DUMP the AIX program 'backup'?])
 	    ;;
       *-ultrix*)
-	    dump_returns_1=yes
+	    DUMP_RETURNS_1=1
 	    ;;
     esac
 
-    if test -n "$dump_returns_1"; then
+    if test -n "$DUMP_RETURNS_1"; then
       AC_DEFINE(DUMP_RETURNS_1,1,
 	[Define this if this system's dump exits with 1 as a success code. ])
     fi
@@ -358,6 +361,9 @@ AC_DEFUN([AMANDA_PROG_DUMP_RESTORE],
 	    fi
 	])
     fi
+
+    AC_SUBST(AIX_BACKUP)
+    AC_SUBST(DUMP_RETURNS_1)
 ])
 
 # SYNOPSIS
@@ -367,7 +373,7 @@ AC_DEFUN([AMANDA_PROG_DUMP_RESTORE],
 # DESCRIPTION
 #
 #   Decide if the 'rundump' setuid-root wrapper should be used to invoke
-#   dump.  If so, USE_RUNDUMP is #defined.
+#   dump.  If so, USE_RUNDUMP is defined and substituted.
 #
 AC_DEFUN([AMANDA_CHECK_USE_RUNDUMP], [
     USE_RUNDUMP=no
@@ -388,7 +394,12 @@ AC_DEFUN([AMANDA_CHECK_USE_RUNDUMP], [
         ])
 
     if test x"$USE_RUNDUMP" = x"yes"; then
+	USE_RUNDUMP=1
         AC_DEFINE(USE_RUNDUMP,1,
             [Define to invoke rundump (setuid-root) instead of DUMP program directly. ])
+    else
+	USE_RUNDUMP=
     fi
+
+    AC_SUBST(USE_RUNDUMP)
 ])
