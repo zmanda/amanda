@@ -1,4 +1,8 @@
 2008-01-22  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Makefile.am: condition installchecks on the selected
+	  components
+
+2008-01-22  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Makefile.am Makefile.am: distribute
 	  installcheck/Installcheck scripts, make sure enough parameters
 	  are passed along to distcheck for it to succeed, and also clean
