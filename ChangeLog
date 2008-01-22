@@ -1,3 +1,9 @@
+2008-01-22  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Makefile.am Makefile.am: distribute
+	  installcheck/Installcheck scripts, make sure enough parameters
+	  are passed along to distcheck for it to succeed, and also clean
+	  up properly after tests are run.
+
 2008-01-18  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/amgetconf.pl perl/Amanda/Constants.pm.in
 	  installcheck/Amanda_Types.pl installcheck/Amanda_Config.pl
