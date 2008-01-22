@@ -1,3 +1,7 @@
+2008-01-22  Dustin J. Mitchell <dustin@zmanda.com>
+	* config/amanda/dumpers.m4: eliminate strange warning when
+	  --without-smbclient is given
+
 2008-01-16  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Makefile.am: Require user to specify
 	  CLOBBER_MY_CONFIG=OK when running installchecks
