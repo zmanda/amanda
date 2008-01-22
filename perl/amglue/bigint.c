@@ -20,43 +20,6 @@
 
 #include "amglue.h"
 
-/* These defines are missing from older glibs, so we add them here */
-#ifndef G_MAXINT8
-#define G_MAXINT8 (127)
-#endif
-
-#ifndef G_MININT8
-#define G_MININT8 (-127-1)
-#endif
-
-#ifndef G_MAXUINT8
-#define G_MAXUINT8 (255)
-#endif
-
-#ifndef G_MAXINT16
-#define G_MAXINT16 (32767)
-#endif
-
-#ifndef G_MININT16
-#define G_MININT16 (-32767-1)
-#endif
-
-#ifndef G_MAXUINT16
-#define G_MAXUINT16 (65535)
-#endif
-
-#ifndef G_MAXINT32
-#define G_MAXINT32 (2147483647)
-#endif
-
-#ifndef G_MININT32
-#define G_MININT32 (-2147483647-1)
-#endif
-
-#ifndef G_MAXUINT32
-#define G_MAXUINT32 (4294967295U)
-#endif
-
 /*
  * C -> Perl
  */

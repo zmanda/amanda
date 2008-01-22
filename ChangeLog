@@ -1,4 +1,8 @@
 2008-01-22  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/amglue/amglue.h perl/amglue/bigint.c: Include integer limits
+	  for all amglue files where they are missing from glib headers
+
+2008-01-22  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Makefile.am: condition installchecks on the selected
 	  components
 
