@@ -5,24 +5,32 @@ include $(top_srcdir)/config/automake/vars.am
 include $(top_srcdir)/config/automake/scripts.am
 
 # Add your tests here.
-tests = \
-	Amanda_Logfile \
-	Amanda_Changer \
-	Amanda_Cmdline \
+
+common_tests = \
 	Amanda_Config \
 	Amanda_Debug \
-	Amanda_Types \
+	Amanda_Types
+
+server_tests = \
+	Amanda_Changer \
+	Amanda_Cmdline \
+	Amanda_Logfile \
 	Amanda_Tapelist \
 	bigint \
 	amcheckdump \
 	amdevcheck \
 	amgetconf
 
+tests = $(common_tests)
+if WANT_SERVER
+tests += $(server_tests)
+endif
+
 # Add any common files (that should not be run as tests) here:
 test_utils = Installcheck/Config.pm Installcheck/Run.pm
 EXTRA_DIST += $(test_utils)
 
-SCRIPTS_PERL = $(tests) $(test_utils)
+SCRIPTS_PERL = $(common_tests) $(server_tests) $(test_utils)
 
 # we don't need to syntax check the test scripts..
 CHECK_PERL =
@@ -47,6 +55,7 @@ clobber_my_config_is_ok:
 	fi
 
 installcheck-local: clobber_my_config_is_ok $(SCRIPTS_PERL)
+	$(mkdir_p) $(AMANDA_TMPDIR)
 	$(PERL) -I$(srcdir) -I$(builddir) -e 'use Test::Harness qw(&runtests); runtests(@ARGV);' $(tests)
 	rm -rf "$(CONFIG_DIR)/TESTCONF"
 	rm -rf "$(CONFIG_DIR)/amanda-client.conf"
