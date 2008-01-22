@@ -1,4 +1,7 @@
 2008-01-22  Dustin J. Mitchell <dustin@zmanda.com>
+	* configure.in config/amanda/userid.m4: add --with-single-userid
+
+2008-01-22  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/amglue/amglue.h perl/amglue/bigint.c: Include integer limits
 	  for all amglue files where they are missing from glib headers
 
