@@ -152,17 +152,24 @@ AC_DEFUN([AMANDA_WITH_OWNER],
 
 # SYNOPSIS
 #
-#   AMANDA_CHECK_SETUID
+#   AMANDA_WITH_SINGLE_USERID
 #
 # OVERVIEW
 #
 #   Check if this system is one on which clients should be built setuid, 
-#   Sets up AM_CONDITIONAL WANT_SETUID_CLIENT.
+#   Sets up AM_CONDITIONAL/define WANT_SETUID_CLIENT and defines 
+#   SINGLE_USERID if either the system requires it or the user specified it.
 #
-AC_DEFUN([AMANDA_CHECK_SETUID],
+AC_DEFUN([AMANDA_WITH_SINGLE_USERID],
 [
     SINGLE_USERID=${SINGLE_USERID:-no}
     WANT_SETUID_CLIENT=${WANT_SETUID_CLIENT:-true}
+
+    AC_ARG_WITH(single-userid,
+        AS_HELP_STRING([--with-single-userid]
+            [force amanda to run as a single userid (for testing)]),
+        [   SINGLE_USERID=$withval ])
+
     case "$target" in
         *-pc-cygwin)
             WANT_SETUID_CLIENT=false
@@ -178,6 +185,6 @@ AC_DEFUN([AMANDA_CHECK_SETUID],
 
     if test x"$SINGLE_USERID" = x"yes"; then
         AC_DEFINE(SINGLE_USERID, 1,
-	    [Define if all of Amanda will run as a single userid (e.g., on Cygwin)])
+	    [Define if all of Amanda will run as a single userid (e.g., on Cygwin or for installchecks)])
     fi
 ])

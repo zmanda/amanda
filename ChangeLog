@@ -1,4 +1,7 @@
 2008-01-22  Dustin J. Mitchell <dustin@zmanda.com>
+	* configure.in config/amanda/userid.m4: add --with-single-userid
+
+2008-01-22  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/amfreetapes.sh: remove unused script
 
 2008-01-22  Dustin J. Mitchell <dustin@zmanda.com>
