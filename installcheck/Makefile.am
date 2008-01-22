@@ -17,6 +17,7 @@ tests = \
 
 # Add any common files (that should not be run as tests) here:
 test_utils = Amconfig.pm
+EXTRA_DIST += $(test_utils)
 
 SCRIPTS_PERL = $(tests) $(test_utils)
 
@@ -43,5 +44,8 @@ clobber_my_config_is_ok:
 	fi
 
 installcheck-local: clobber_my_config_is_ok $(SCRIPTS_PERL)
-	$(PERL) -I. -e 'use Test::Harness qw(&runtests); runtests(@ARGV);' $(tests)
+	$(PERL) -I$(srcdir) -I$(builddir) -e 'use Test::Harness qw(&runtests); runtests(@ARGV);' $(tests)
 	rm -rf "$(CONFIG_DIR)/TESTCONF"
+	rm -rf "$(CONFIG_DIR)/amanda-client.conf"
+	rm -rf "$(DEFAULT_AMANDATES_FILE)"
+	rm -rf "$(GNUTAR_LISTED_INCREMENTAL_DIR)"

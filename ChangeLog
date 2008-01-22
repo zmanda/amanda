@@ -1,4 +1,10 @@
 2008-01-22  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Makefile.am Makefile.am: distribute
+	  installcheck/Installcheck scripts, make sure enough parameters
+	  are passed along to distcheck for it to succeed, and also clean
+	  up properly after tests are run.
+
+2008-01-22  Dustin J. Mitchell <dustin@zmanda.com>
 	* config/amanda/dumpers.m4: eliminate strange warning when
 	  --without-smbclient is given
 
