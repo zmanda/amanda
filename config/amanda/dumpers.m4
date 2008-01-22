@@ -100,27 +100,27 @@ AC_DEFUN([AMANDA_PROG_SAMBA_CLIENT],
     )
 
     if test "x$SAMBA_CLIENT" != "xno"; then
-	AC_PATH_PROG(SAMBA_CLIENT,smbclient,,$LOCSYSPATH)
-    fi
-    smbversion=0
-    if test ! -z "$SAMBA_CLIENT"; then
-      case "`\"$SAMBA_CLIENT\" '\\\\not.a.host.name\\notashare' -U nosuchuser -N -Tx /dev/null 2>&1`" in
-      *"Unknown host"*)
-		    smbversion=1
-		    ;;
-      *"Connection to not.a.host.name failed"*)
-		    smbversion=2
-		    ;;
-      *)
-		    AMANDA_MSG_WARN([$SAMBA_CLIENT does not seem to be smbclient, so it will not be used.])
-		    SAMBA_CLIENT=
-		    ;;
-      esac
-      if test -n "$SAMBA_CLIENT"; then
-	AC_DEFINE_UNQUOTED(SAMBA_CLIENT,"$SAMBA_CLIENT",
-		[Define the location of smbclient for backing up Samba PC clients. ])
-	AC_DEFINE_UNQUOTED(SAMBA_VERSION, $smbversion,
-		[Not the actual samba version, just a number that should be increased whenever we start to rely on a new samba feature. ])
+      AC_PATH_PROG(SAMBA_CLIENT,smbclient,,$LOCSYSPATH)
+      smbversion=0
+      if test ! -z "$SAMBA_CLIENT"; then
+        case "`\"$SAMBA_CLIENT\" '\\\\not.a.host.name\\notashare' -U nosuchuser -N -Tx /dev/null 2>&1`" in
+        *"Unknown host"*)
+		      smbversion=1
+		      ;;
+        *"Connection to not.a.host.name failed"*)
+		      smbversion=2
+		      ;;
+        *)
+		      AMANDA_MSG_WARN([$SAMBA_CLIENT does not seem to be smbclient, so it will not be used.])
+		      SAMBA_CLIENT=
+		      ;;
+        esac
+        if test -n "$SAMBA_CLIENT"; then
+	  AC_DEFINE_UNQUOTED(SAMBA_CLIENT,"$SAMBA_CLIENT",
+		  [Define the location of smbclient for backing up Samba PC clients. ])
+	  AC_DEFINE_UNQUOTED(SAMBA_VERSION, $smbversion,
+		  [Not the actual samba version, just a number that should be increased whenever we start to rely on a new samba feature. ])
+        fi
       fi
     fi
 

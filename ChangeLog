@@ -4,6 +4,10 @@
 	  are passed along to distcheck for it to succeed, and also clean
 	  up properly after tests are run.
 
+2008-01-22  Dustin J. Mitchell <dustin@zmanda.com>
+	* config/amanda/dumpers.m4: eliminate strange warning when
+	  --without-smbclient is given
+
 2008-01-18  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/amgetconf.pl perl/Amanda/Constants.pm.in
 	  installcheck/Amanda_Types.pl installcheck/Amanda_Config.pl
