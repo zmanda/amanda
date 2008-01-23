@@ -30,6 +30,7 @@ SERVER_MAN_PAGES =  amadmin.8 \
 		    amverifyrun.8 \
 		    amserverconfig.8 \
 		    amaddclient.8 \
+		    amcheckdump.8 \
 		    amcrypt.8 \
 		    amaespipe.8 \
 		    amgpgcrypt.8 \
