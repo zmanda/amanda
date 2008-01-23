@@ -32,17 +32,9 @@ sub try_open_device($) {
     return $device;
 }
 
-# print the results, one flag per line
-sub print_result {
-    my ($flags) = @_;
-
-    print join( "\n", ReadLabelStatusFlags_to_strings($flags) ), "\n";
-}
-
 sub usage {
     print <<EOF;
-USAGE:	amcheckdump config [ -t timestamp ] [ hostname [ disk [ date [ level
-		[ hostname [ ... ] ] ] ] ] ]
+USAGE:	amcheckdump config [ --timestamp|-t timestamp ]
     amcheckdump validates Amanda dump images by reading them from storage
 volume(s), and verifying archive integrity if the proper tool is locally
 available. amcheckdump does not actually compare the data located in the image
@@ -53,8 +45,6 @@ to anything; it just validates that the archive stream is valid.
 			the most recent dump; if this parameter is specified,
 			check the most recent dump matching the given
 			date- or timestamp.
-	hostname/disk/date/level - Limit checking of data to images matching
-			the given criteria.
 EOF
     exit(1);
 }
@@ -188,11 +178,6 @@ if (!config_init($CONFIG_INIT_EXPLICIT_NAME |
 
 Amanda::Util::finish_setup($RUNNING_AS_DUMPUSER);
 
-my $match_list = undef;
-if (@ARGV) {
-    # TODO: Get the match-list.
-}
-
 # Read the tape list.
 Amanda::Tapefile::read_tapelist(config_dir_relative(getconf($CNF_TAPELIST)));
 
@@ -251,8 +236,6 @@ if (!@images) {
     print "Could not find any matching dumps\n";
     exit;
 }
-
-# TODO: Check images against match list.
 
 # Find unique tapelist. This confusing expression uses an anonymous hash.
 my @tapes = sort { $a cmp $b } keys %{{map { ($_->{label}, undef) } @images}};

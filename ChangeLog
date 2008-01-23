@@ -1,4 +1,8 @@
 2008-01-22  Dustin J. Mitchell <dustin@zmanda.com>
+	* man/Makefile.am man/xml-source/amcheckdump.8.xml: new manpage
+	* server-src/amcheckdump.pl: fix usage message
+
+2008-01-22  Dustin J. Mitchell <dustin@zmanda.com>
 	* configure.in config/amanda/userid.m4: add --with-single-userid
 
 2008-01-22  Dustin J. Mitchell <dustin@zmanda.com>
