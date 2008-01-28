@@ -119,22 +119,23 @@ if($nb_options == 0 ) {
 
 $unit=`$sbindir/amgetconf$suf displayunit`;
 chomp($unit);
+$unit =~ tr/A-Z/a-z/;
 $unitdivisor=1;
-if($unit eq 'K') {
+if($unit eq 'k') {
   $unitdivisor = 1;
-  $unit='k';
 }
-elsif($unit eq 'M') {
+elsif($unit eq 'm') {
   $unitdivisor = 1024;
-  $unit='m';
 }
-elsif($unit eq 'G') {
+elsif($unit eq 'g') {
   $unitdivisor = 1024*1024;
-  $unit='g';
 }
-elsif($unit eq 'T') {
+elsif($unit eq 't') {
   $unitdivisor = 1024*1024*1024;
-  $unit='t';
+}
+else {
+  $unit = 'k';
+  $unitdivisor = 1;
 }
 
 
