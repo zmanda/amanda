@@ -898,7 +898,8 @@ foreach $host (sort @hosts) {
 							if( defined $starttime ) {
 								print " (", &showtime($taper_time{$hostpart}), ")";
 							}
-							print ", ", $error{$hostpart} if $error{$hostpart} ne "";
+							print ", ", $error{$hostpart} if defined($error{$hostpart} &&
+																	   $error{$hostpart} ne "");
 							print "\n";
 						}
 						$tapartition++;
