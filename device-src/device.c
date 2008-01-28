@@ -527,6 +527,9 @@ static void try_set_blocksize(Device * device, guint blocksize,
         }
     }
 
+    g_value_unset(&val);
+    g_value_init(&val, G_TYPE_INT);
+    g_value_set_int(&val, blocksize);
     success = device_property_set(device,
                                   PROPERTY_BLOCK_SIZE,
                                   &val);
@@ -604,7 +607,7 @@ void device_set_startup_properties_from_config(Device * device) {
             if (tapetype_seen(tapetype, TAPETYPE_READBLOCKSIZE)) {
 		blocksize_kb = tapetype_get_readblocksize(tapetype);
                 g_value_init(&val, G_TYPE_UINT);
-                g_value_set_uint64(&val, blocksize_kb * 1024);
+                g_value_set_uint(&val, blocksize_kb * 1024);
                 success = device_property_set(device,
                                               PROPERTY_READ_BUFFER_SIZE,
                                               &val);

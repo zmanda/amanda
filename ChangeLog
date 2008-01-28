@@ -1,3 +1,7 @@
+2008-01-28  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/device.c: Set PROPERTY_BLOCK_SIZE with a G_TYPE_INT
+			       Set PROPERTY_READ_BUFFER_SIZE with a G_TYPE_UINT
+
 2008-01-22  Dustin J. Mitchell <dustin@zmanda.com>
 	* man/Makefile.am man/xml-source/amcheckdump.8.xml: new manpage
 	* server-src/amcheckdump.pl: fix usage message
