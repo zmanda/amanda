@@ -1,3 +1,7 @@
+2008-01-28  Paddy Sreenivasan <paddy@zmanda.com>
+	* man/xml-source/amanda.8.xml: Update amanda(8) to reflect 2.6.0
+	  status
+
 2008-01-28  Jean-Louis Martineau <martineau@zmanda.com>
 	* amandad-src/amandad.c: Send service stderr to amandad debug file,
 	  Wait for service termination and send error message to server.

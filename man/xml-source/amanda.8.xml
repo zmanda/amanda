@@ -176,16 +176,25 @@
 </cmdsynopsis>
 
 <cmdsynopsis>
-    <command>amverify</command>
+    <command>amcheckdump</command>
+    <arg choice='opt'><replaceable>options</replaceable></arg>
     <arg choice='plain'><replaceable>config</replaceable></arg>
     <sbr/>
 </cmdsynopsis>
 
 <cmdsynopsis>
-  <command>amverifyrun</command>    
+    <command>amserverconfig</command>
+    <arg choice='opt'><replaceable>options</replaceable></arg>
     <arg choice='plain'><replaceable>config</replaceable></arg>
+    <sbr/>
 </cmdsynopsis>
 
+<cmdsynopsis>
+    <command>amaddclient</command>
+    <arg choice='plain'><replaceable>config</replaceable></arg>
+    <arg choice='opt'><replaceable>options</replaceable></arg>
+    <sbr/>
+</cmdsynopsis>
 </refsynopsisdiv>
 
 
@@ -320,9 +329,21 @@ ejecting tapes and scanning the tape storage slots.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>amverify</emphasis></term>
+  <term><emphasis remap='B'>amcheckdump</emphasis></term>
   <listitem>
-<para>Check &A; backup tapes for errors.</para>
+<para>Check the results of an &A; dump.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>amserverconfig</emphasis></term>
+  <listitem>
+<para>Program to setup initial &A; configuration.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>amaddclient</emphasis></term>
+  <listitem>
+<para>Program to add client to an existing &A; configuration.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
@@ -1286,8 +1307,9 @@ amdump -otapedev=/dev/nst1 -otpchanger=''
 <citerefentry><refentrytitle>amtape</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>amtapetype</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>amtoc</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>amverify</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>amverifyrun</refentrytitle><manvolnum>8</manvolnum></citerefentry></para>
+<citerefentry><refentrytitle>amcheckdump</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>amserverconfig</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>amaddclient</refentrytitle><manvolnum>8</manvolnum></citerefentry></para>
 </refsect1>
 </refentry>
 
