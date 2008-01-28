@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 505 N Mathlida Ave, Suite 120
 # Sunnyvale, CA 94085, USA, or: http://www.zmanda.com
 
-use Test::More tests => 76;
+use Test::More tests => 77;
 use strict;
 
 use lib "@amperldir@";
@@ -133,6 +133,8 @@ SKIP: { # global parameters
 	"taperalgo global confparam");
     is_deeply([getconf($CNF_RESERVED_UDP_PORT)], [100,200],
 	"intrange global confparm");
+    is(getconf($CNF_DISPLAYUNIT), "M",
+	"displayunit is correctly uppercased");
     is_deeply(getconf($CNF_DEVICE_PROPERTY),
 	      { "foo" => "bar", "blue" => "car" },
 	    "proplist global confparm");
