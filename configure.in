@@ -196,6 +196,7 @@ AC_CHECK_HEADERS(
 	limits.h \
 	math.h \
 	netdb.h \
+	netinet/in.h \
 	stdarg.h \
 	stdlib.h \
 	string.h \
@@ -235,6 +236,7 @@ AC_TYPE_SIGNAL
 AC_STRUCT_TM
 AMANDA_CHECK_TYPE(socklen_t, int, sys/socket.h)
 AMANDA_CHECK_TYPE(sa_family_t, unsigned short, sys/socket.h)
+AMANDA_CHECK_TYPE(in_port_t, unsigned short, netinet/in.h)
 CF_WAIT
 CF_WAIT_INT
 

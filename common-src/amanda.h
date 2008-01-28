@@ -282,9 +282,12 @@ struct iovec {
 #  include <unistd.h>
 #endif
 
+#ifdef HAVE_NETINET_IN_H
+#  include <netinet/in.h>
+#endif
+
 #include <ctype.h>
 #include <errno.h>
-#include <netinet/in.h>
 #include <pwd.h>
 #include <signal.h>
 #include <setjmp.h>
