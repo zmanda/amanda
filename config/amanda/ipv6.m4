@@ -83,7 +83,6 @@ AC_DEFUN([AMANDA_CHECK_IPV6],
 #include <winsock2.h>
 #endif
 #include <sys/socket.h>
-#include <netinet/in.h>
 #include <errno.h>
 
 main()

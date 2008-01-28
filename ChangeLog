@@ -1,3 +1,9 @@
+2008-01-28  Dustin J. Mitchell <dustin@zmanda.com>
+	* configure.in config/amanda/ipv6.m4 common-src/amanda.h: check
+	  for netinet/in.h and in_port_t, and define the latter if 
+	  necessary.  Thanks to Craig Dewick <cdewick@lios.apana.org.au>
+	  for the suggestion.
+
 2008-01-28  Paddy Sreenivasan <paddy@zmanda.com>
 	* man/xml-source/amanda.8.xml: Update amanda(8) to reflect 2.6.0
 	  status
