@@ -2854,21 +2854,25 @@ validate_displayunit(
     char *s = val_t__str(val);
     if (strlen(s) == 1) {
 	switch (s[0]) {
-	    case 'k':
 	    case 'K':
-	    case 'm':
 	    case 'M':
-	    case 'g':
 	    case 'G':
-	    case 't':
 	    case 'T':
 		return; /* all good */
 
-	    default:
-		conf_parserror(_("displayunit must be k,m,g or t."));
+	    /* lower-case values should get folded to upper case */
+	    case 'k':
+	    case 'm':
+	    case 'g':
+	    case 't':
+		s[0] = toupper(s[0]);
+		return;
+
+	    default:	/* bad */
 		break;
 	}
     }
+    conf_parserror(_("displayunit must be k,m,g or t."));
 }
 
 static void
