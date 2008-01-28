@@ -1,4 +1,8 @@
 2008-01-28  Jean-Louis Martineau <martineau@zmanda.com>
+	* amandad-src/amandad.c: Send service stderr to amandad debug file,
+	  Wait for service termination and send error message to server.
+
+2008-01-28  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/device.c: Set PROPERTY_BLOCK_SIZE with a G_TYPE_INT
 			       Set PROPERTY_READ_BUFFER_SIZE with a G_TYPE_UINT
 

@@ -163,29 +163,8 @@ static int writebuf(struct active_service *, const void *, size_t);
 static ssize_t do_sendpkt(security_handle_t *handle, pkt_t *pkt);
 static char *amandad_get_security_conf (char *, void *);
 
-static void child_signal(int signal);
-
 static const char *state2str(state_t);
 static const char *action2str(action_t);
-
-/*
- * Harvests defunct processes...
- */
-
-static void
-child_signal(
-    int		signal)
-{
-    pid_t	rp;
-
-    (void)signal;	/* Quite compiler warning */
-    /*
-     * Reap and child status and promptly ignore since we don't care...
-     */
-    do {
-    	rp = waitpid(-1, NULL, WNOHANG);
-    } while (rp > 0);
-}
 
 int
 main(
@@ -197,7 +176,6 @@ main(
     int in, out;
     const security_driver_t *secdrv;
     int no_exit = 0;
-    struct sigaction act, oact;
     char *pgm = "amandad";		/* in case argv[0] is not set */
 #if defined(USE_REUSEADDR)
     const int on = 1;
@@ -237,15 +215,6 @@ main(
 
     /* Don't die when child closes pipe */
     signal(SIGPIPE, SIG_IGN);
-
-    /* Tell me when a child exits or dies... */
-    act.sa_handler = child_signal;
-    sigemptyset(&act.sa_mask);
-    act.sa_flags = 0;
-    if(sigaction(SIGCHLD, &act, &oact) != 0) {
-	error(_("error setting SIGCHLD handler: %s"), strerror(errno));
-	/*NOTREACHED*/
-    }
 
     config_init(CONFIG_INIT_CLIENT, NULL);
 
@@ -780,8 +749,14 @@ s_repwait(
     action_t			action,
     pkt_t *			pkt)
 {
-    ssize_t n;
-    char *repbuf_temp;
+    ssize_t   n;
+    char     *repbuf_temp;
+    char     *what;
+    char     *msg;
+    int       code = 0;
+    int       t;
+    int       pid;
+    amwait_t  retstat;
 
     /*
      * We normally shouldn't receive any packets while waiting
@@ -832,6 +807,48 @@ s_repwait(
 	do_sendpkt(as->security_handle, &as->rep_pkt);
 	return (A_FINISH);
     }
+
+    /* If end of service, wait for process status */
+    if (n == 0) {
+	t = 0;
+	pid = waitpid(as->pid, &retstat, WNOHANG);
+	while (t<5 && pid == 0) {
+	    sleep(1);
+	    t++;
+	    pid = waitpid(as->pid, &retstat, WNOHANG);
+	}
+
+	if (pid > 0) {
+	    what = NULL;
+	    if (! WIFEXITED(retstat)) {
+		what = _("signal");
+		code = WTERMSIG(retstat);
+	    } else if (WEXITSTATUS(retstat) != 0) {
+		what = _("code");
+		code = WEXITSTATUS(retstat);
+	    }
+	    if (what) {
+		dbprintf(_("service %s failed: pid %u exited with %s %d\n"),
+			 (as->cmd)?as->cmd:_("??UNKONWN??"),
+			 (unsigned)as->pid,
+			 what, code);
+		msg = vstrallocf(
+		     _("ERROR service %s failed: pid %u exited with %s %d\n"),
+		     (as->cmd)?as->cmd:_("??UNKONWN??"), (unsigned)as->pid,
+		     what, code);
+		if (as->repbufsize + strlen(msg) >= (as->bufsize - 1)) {
+			as->bufsize *= 2;
+			repbuf_temp = alloc(as->bufsize);
+			memcpy(repbuf_temp, as->repbuf, as->repbufsize + 1);
+			amfree(as->repbuf);
+			as->repbuf = repbuf_temp;
+		}
+		strcpy(as->repbuf + as->repbufsize, msg);
+		as->repbufsize += strlen(msg);
+	    }
+	}
+    }
+
     /*
      * If we got some data, go back and wait for more, or EOF.  Nul terminate
      * the buffer first.
@@ -1439,8 +1456,9 @@ service_new(
 	}
 
 	/* close all unneeded fd */
+	close(STDERR_FILENO);
+	debug_dup_stderr_to_debug();
 	safe_fd(DATA_FD_OFFSET, DATA_FD_COUNT*2);
-	close(2);
 
 	execle(cmd, cmd, "amandad", auth, (char *)NULL, safe_env());
 	error(_("could not exec service %s: %s\n"), cmd, strerror(errno));
