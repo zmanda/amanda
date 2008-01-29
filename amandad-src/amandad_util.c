@@ -162,10 +162,12 @@ void
 free_g_options(
     g_option_t *	g_options)
 {
-    amfree(g_options->str);
-    am_release_feature_set(g_options->features);
-    amfree(g_options->hostname);
-    amfree(g_options->auth);
-    amfree(g_options->config);
-    amfree(g_options);
+    if (g_options != NULL) {
+	amfree(g_options->str);
+	am_release_feature_set(g_options->features);
+	amfree(g_options->hostname);
+	amfree(g_options->auth);
+	amfree(g_options->config);
+	amfree(g_options);
+    }
 }

@@ -391,6 +391,11 @@ main(
 	stroptions = stralloc(s - 1);
     }
     amfree(line);
+    if (g_options == NULL) {
+	printf(_("ERROR [Missing OPTIONS line in sendbackup input]\n"));
+	error(_("Missing OPTIONS line in sendbackup input\n"));
+	/*NOTREACHED*/
+    }
 
     if (prog       == NULL ||
 	disk       == NULL ||

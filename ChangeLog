@@ -1,3 +1,9 @@
+2008-01-29  Jean-Louis Martineau <martineau@zmanda.com>
+	* client-src/sendbackup.c: Check for g_options.
+	* client-src/sendsize.c: Check for g_options.
+	* client-src/selfcheck.c: Check for g_options.
+	* amandad-src/amandad_util.c (free_g_options): Check g_options != NULL.
+
 2008-01-28  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amstatus.pl: Fix "Use of uninitialized value in string".
 
