@@ -53,5 +53,9 @@ amcheckdump MYCONFIG
 amcheckdump MYCONFIG --timestamp 19780615
 </programlisting></para>
 </refsect1>
-
+ <refsect1><title>SEE ALSO</title>
+ <para><citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>,  
+ <citerefentry><refentrytitle>http://wiki.zmanda.com</refentrytitle></citerefentry>          
+ </para>
+ </refsect1>                                                                          
 </refentry>

@@ -209,7 +209,9 @@ legitimate lines the program needs to be taught about.</para>
 <citerefentry><refentrytitle>gnuplot</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>sh</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>compress</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>gzip</refentrytitle><manvolnum>1</manvolnum></citerefentry></para>
+<citerefentry><refentrytitle>gzip</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+  <citerefentry><refentrytitle>http://wiki.zmanda.com</refentrytitle></citerefentry>
+</para>
 </refsect1>
 </refentry>
 
