@@ -1,3 +1,9 @@
+
+2008-01-29  Dan Locks <dwlocks@zmanda.com>
+	* packaging/rpm/amanda.spec: changed %{SYSCONFDIR} to %{LOCALSTATEDIR}
+	  where amanda/amandates is concerned.  also added %{LOCALSTATEDIR} to
+	  the %files list.
+
 2008-01-29  Dan Locks <dwlocks@zmanda.com>
 	* man/xml-src/*: added wiki.zmanda.com to "see also" section of all
 	  man pages.

@@ -585,29 +585,29 @@ if [ -e /etc/xinetd.d ] && [ -d /etc/xinetd.d ] ; then
 	fi
 fi
 
-echo "`date +'%b %e %Y %T'`: Installing '%{SYSCONFDIR}/amandates'." >${TMPFILE}
+echo "`date +'%b %e %Y %T'`: Installing '%{LOCALSTATEDIR}/amanda/amandates'." >${TMPFILE}
 ret_val=0
-if [ ! -f %{SYSCONFDIR}/amandates ] ; then
-	touch %{SYSCONFDIR}/amandates >>${TMPFILE} 2>&1
+if [ ! -f %{LOCALSTATEDIR}/amanda/amandates ] ; then
+	touch %{LOCALSTATEDIR}/amanda/amandates >>${TMPFILE} 2>&1
 	ret_val=$?
 	if [ ${ret_val} -eq 0 ]; then
-		echo "`date +'%b %e %Y %T'`: The file '%{SYSCONFDIR}/amandates' has been created." >>${TMPFILE}
+		echo "`date +'%b %e %Y %T'`: The file '%{LOCALSTATEDIR}/amanda/amandates' has been created." >>${TMPFILE}
 	fi
 fi
 if [ ${ret_val} -eq 0 ]; then
-	echo "`date +'%b %e %Y %T'`: Ensuring correct permissions for '%{SYSCONFDIR}/amandates'." >>${TMPFILE}
-	chown %{amanda_user}:%{amanda_group} %{SYSCONFDIR}/amandates >>${TMPFILE} 2>&1
-	chmod 0640 %{SYSCONFDIR}/amandates >>${TMPFILE} 2>&1
+	echo "`date +'%b %e %Y %T'`: Ensuring correct permissions for '%{LOCALSTATEDIR}/amanda/amandates'." >>${TMPFILE}
+	chown %{amanda_user}:%{amanda_group} %{LOCALSTATEDIR}/amanda/amandates >>${TMPFILE} 2>&1
+	chmod 0640 %{LOCALSTATEDIR}/amanda/amandates >>${TMPFILE} 2>&1
 	if [ -x /sbin/restorecon ] ; then
-	      /sbin/restorecon %{SYSCONFDIR}/amandates  >>${TMPFILE} 2>&1
+	      /sbin/restorecon %{LOCALSTATEDIR}/amanda/amandates  >>${TMPFILE} 2>&1
 	fi
 fi
 if [ ${ret_val} -eq 0 ]; then
-	echo "`date +'%b %e %Y %T'`: '%{SYSCONFDIR}/amandates' Installation successful." >>${TMPFILE}
+	echo "`date +'%b %e %Y %T'`: '%{LOCALSTATEDIR}/amanda/amandates' Installation successful." >>${TMPFILE}
 	cat ${TMPFILE}
 	cat ${TMPFILE} >>${INSTALL_LOG}
 else
-	echo "`date +'%b %e %Y %T'`: '%{SYSCONFDIR}/amandates' Installation failed." >>${TMPFILE}
+	echo "`date +'%b %e %Y %T'`: '%{LOCALSTATEDIR}/amanda/amandates' Installation failed." >>${TMPFILE}
 	cat ${TMPFILE}
 	cat ${TMPFILE} >>${INSTALL_ERR}
 fi
@@ -950,26 +950,26 @@ if [ -e /etc/xinetd.d ] && [ -d /etc/xinetd.d ] ; then
 	fi
 fi
 
-echo "`date +'%b %e %Y %T'`: Installing '%{SYSCONFDIR}/amandates'." >${TMPFILE}
+echo "`date +'%b %e %Y %T'`: Installing '%{LOCALSTATEDIR}/amanda/amandates'." >${TMPFILE}
 ret_val=0
-if [ ! -f %{SYSCONFDIR}/amandates ] ; then
-	touch %{SYSCONFDIR}/amandates >>${TMPFILE} 2>&1
+if [ ! -f %{LOCALSTATEDIR}/amanda/amandates ] ; then
+	touch %{LOCALSTATEDIR}/amanda/amandates >>${TMPFILE} 2>&1
 	ret_val=$?
 	if [ ${ret_val} -eq 0 ]; then
-		echo "`date +'%b %e %Y %T'`: The file '%{SYSCONFDIR}/amandates' has been created." >>${TMPFILE}
+		echo "`date +'%b %e %Y %T'`: The file '%{LOCALSTATEDIR}/amanda/amandates' has been created." >>${TMPFILE}
 	fi
 fi
 if [ ${ret_val} -eq 0 ]; then
-	echo "`date +'%b %e %Y %T'`: Ensuring correct permissions for '%{SYSCONFDIR}/amandates'." >>${TMPFILE}
-	chown %{amanda_user}:%{amanda_group} %{SYSCONFDIR}/amandates >>${TMPFILE} 2>&1
-	chmod 0640 %{SYSCONFDIR}/amandates >>${TMPFILE} 2>&1
+	echo "`date +'%b %e %Y %T'`: Ensuring correct permissions for '%{LOCALSTATEDIR}/amanda/amandates'." >>${TMPFILE}
+	chown %{amanda_user}:%{amanda_group} %{LOCALSTATEDIR}/amanda/amandates >>${TMPFILE} 2>&1
+	chmod 0640 %{LOCALSTATEDIR}/amanda/amandates >>${TMPFILE} 2>&1
 fi
 if [ ${ret_val} -eq 0 ]; then
-	echo "`date +'%b %e %Y %T'`: '%{SYSCONFDIR}/amandates' Installation successful." >>${TMPFILE}
+	echo "`date +'%b %e %Y %T'`: '%{LOCALSTATEDIR}/amanda/amandates' Installation successful." >>${TMPFILE}
 	cat ${TMPFILE}
 	cat ${TMPFILE} >>${INSTALL_LOG}
 else
-	echo "`date +'%b %e %Y %T'`: '%{SYSCONFDIR}/amandates' Installation failed." >>${TMPFILE}
+	echo "`date +'%b %e %Y %T'`: '%{LOCALSTATEDIR}/amanda/amandates' Installation failed." >>${TMPFILE}
 	cat ${TMPFILE}
 	cat ${TMPFILE} >>${INSTALL_ERR}
 fi
@@ -1334,26 +1334,26 @@ if [ -e /etc/xinetd.d ] && [ -d /etc/xinetd.d ] ; then
 	fi
 fi
 
-echo "`date +'%b %e %Y %T'`: Installing '%{SYSCONFDIR}/amandates'." >${TMPFILE}
+echo "`date +'%b %e %Y %T'`: Installing '%{LOCALSTATEDIR}/amanda/amandates'." >${TMPFILE}
 ret_val=0
-if [ ! -f %{SYSCONFDIR}/amandates ] ; then
-	touch %{SYSCONFDIR}/amandates >>${TMPFILE} 2>&1
+if [ ! -f %{LOCALSTATEDIR}/amanda/amandates ] ; then
+	touch %{LOCALSTATEDIR}/amanda/amandates >>${TMPFILE} 2>&1
 	ret_val=$?
 	if [ ${ret_val} -eq 0 ]; then
-		echo "`date +'%b %e %Y %T'`: The file '%{SYSCONFDIR}/amandates' has been created." >>${TMPFILE}
+		echo "`date +'%b %e %Y %T'`: The file '%{LOCALSTATEDIR}/amanda/amandates' has been created." >>${TMPFILE}
 	fi
 fi
 if [ ${ret_val} -eq 0 ]; then
-	echo "`date +'%b %e %Y %T'`: Ensuring correct permissions for '%{SYSCONFDIR}/amandates'." >>${TMPFILE}
-	chown %{amanda_user}:%{amanda_group} %{SYSCONFDIR}/amandates >>${TMPFILE} 2>&1
-	chmod 0640 %{SYSCONFDIR}/amandates >>${TMPFILE} 2>&1
+	echo "`date +'%b %e %Y %T'`: Ensuring correct permissions for '%{LOCALSTATEDIR}/amanda/amandates'." >>${TMPFILE}
+	chown %{amanda_user}:%{amanda_group} %{LOCALSTATEDIR}/amanda/amandates >>${TMPFILE} 2>&1
+	chmod 0640 %{LOCALSTATEDIR}/amanda/amandates >>${TMPFILE} 2>&1
 fi
 if [ ${ret_val} -eq 0 ]; then
-	echo "`date +'%b %e %Y %T'`: '%{SYSCONFDIR}/amandates' Installation successful." >>${TMPFILE}
+	echo "`date +'%b %e %Y %T'`: '%{LOCALSTATEDIR}/amanda/amandates' Installation successful." >>${TMPFILE}
 	cat ${TMPFILE}
 	cat ${TMPFILE} >>${INSTALL_LOG}
 else
-	echo "`date +'%b %e %Y %T'`: '%{SYSCONFDIR}/amandates' Installation failed." >>${TMPFILE}
+	echo "`date +'%b %e %Y %T'`: '%{LOCALSTATEDIR}/amanda/amandates' Installation failed." >>${TMPFILE}
 	cat ${TMPFILE}
 	cat ${TMPFILE} >>${INSTALL_ERR}
 fi
@@ -1488,6 +1488,7 @@ echo "Amanda installation log can be found in '${INSTALL_LOG}' and errors (if an
 %{AMLIBEXECDIR}/application
 %{AMLIBDIR}
 %{AMLIBEXECDIR}/amanda-sh-lib.sh
+%{LOCALSTATEDIR}/amanda
 %defattr(4750,root,disk)
 %{AMLIBEXECDIR}/calcsize
 %{AMLIBEXECDIR}/killpgrp
@@ -1522,6 +1523,7 @@ echo "Amanda installation log can be found in '${INSTALL_LOG}' and errors (if an
 %{AMLIBDIR}
 %{AMANDAHOMEDIR}
 %{AMANDAHOMEDIR}/gnutar-lists
+%{LOCALSTATEDIR}/amanda
 %{SBINDIR}/amaddclient
 %{SBINDIR}/amadmin
 %{SBINDIR}/amcheckdb
@@ -1619,6 +1621,9 @@ echo "Amanda installation log can be found in '${INSTALL_LOG}' and errors (if an
 # --- ChangeLog
 
 %changelog
+* Wed Jan 23 2008  Dan Locks <dwlocks at zmanda dot com>
+- Change %{SYSCONFDIR}/amanda/amandates to %{LOCALSTATEDIR}/amanda/amandates,
+  and added %{LOCALSTATEDIR}/amanda to the files lists.
 * Mon Jan 14 2008  Dan Locks <dwlocks at zmanda dot com>
 - Updates for perlified amanda, file location moves, gpg setup.
 * Tue Nov  13 2007 Paddy Sreenivasan <paddy at zmanda dot com>
