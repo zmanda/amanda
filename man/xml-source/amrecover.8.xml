@@ -589,7 +589,9 @@ but will be overridden by the -t switch.
 <citerefentry><refentrytitle>amanda-client.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>amrestore</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>amfetchdump</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>readline</refentrytitle><manvolnum>3</manvolnum></citerefentry></para>
+<citerefentry><refentrytitle>readline</refentrytitle><manvolnum>3</manvolnum></citerefentry>,
+  <citerefentry><refentrytitle>http://wiki.zmanda.com</refentrytitle></citerefentry>
+</para>
 </refsect1>
 </refentry>
 

@@ -341,8 +341,10 @@ College Park: Original text</para>
 <para><citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>amdump</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>amflush</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>tar</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-<citerefentry><refentrytitle>restore</refentrytitle><manvolnum>8</manvolnum></citerefentry></para>
+<citerefentry><refentrytitle>tar</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>restore</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+  <citerefentry><refentrytitle>http://wiki.zmanda.com</refentrytitle></citerefentry>
+</para>
 </refsect1>
 </refentry>
 

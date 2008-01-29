@@ -439,6 +439,8 @@ TOTAL      241  12412187   7316312   731631  (estimated 8 runs per dumpcycle)
 <citerefentry><refentrytitle>amcheck</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>amdump</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>amrestore</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>amfetchdump</refentrytitle><manvolnum>8</manvolnum></citerefentry></para>
+<citerefentry><refentrytitle>amfetchdump</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>http://wiki.zmanda.com</refentrytitle></citerefentry>
+</para>
 </refsect1>
 </refentry>

@@ -279,6 +279,7 @@ On success, zero is returned.  On error, 1 is returned.
 <citerefentry><refentrytitle>ssh-keygen</refentrytitle><manvolnum>1</manvolnum></citerefentry>
 <citerefentry><refentrytitle>ssh-add</refentrytitle><manvolnum>1</manvolnum></citerefentry>
 <citerefentry><refentrytitle>scp</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+<citerefentry><refentrytitle>http://wiki.zmanda.com</refentrytitle></citerefentry>
 </para>
 </refsect1>
 </refentry>

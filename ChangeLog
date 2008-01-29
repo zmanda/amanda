@@ -1,3 +1,7 @@
+2008-01-29  Dan Locks <dwlocks@zmanda.com>
+	* man/xml-source/* added http://wiki.zmanda.com to the "see also"
+	  section
+
 2008-01-29  Jean-Louis Martineau <martineau@zmanda.com>
 	* client-src/sendbackup.c: Check for g_options.
 	* client-src/sendsize.c: Check for g_options.
