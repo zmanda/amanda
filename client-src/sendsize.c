@@ -401,6 +401,7 @@ main(
 	amfree(qamdevice);
     }
     if (g_options == NULL) {
+	printf(_("ERROR [Missing OPTIONS line in sendsize input]\n"));
 	error(_("Missing OPTIONS line in sendsize input\n"));
 	/*NOTREACHED*/
     }

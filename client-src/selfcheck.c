@@ -286,6 +286,11 @@ main(
 	amfree(qamdevice);
 	amfree(amdevice);
     }
+    if (g_options == NULL) {
+	printf(_("ERROR [Missing OPTIONS line in selfcheck input]\n"));
+	error(_("Missing OPTIONS line in selfcheck input\n"));
+	/*NOTREACHED*/
+    }
 
     check_overall();
 
