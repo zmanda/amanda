@@ -275,7 +275,8 @@ Amanda Documentation is available at: http://wiki.zmanda.com/
 %define ROOT_SBINDIR		%{buildroot}/%{SBINDIR}
 %define ROOT_LIBEXECDIR		%{buildroot}/%{LIBEXECDIR}
 %define ROOT_DATADIR		%{buildroot}/%{DATADIR}
-%define ROOT_SYSCONFDIR		%{buildroot}/%{SYSCONFDIR}
+%define ROOT_LOCALSTATEDIR      %{buildroot}/%{LOCALSTATEDIR}
+%define ROOT_SYSCONFDIR         %{buildroot}/%{SYSCONFDIR}
 %define ROOT_AMANDAHOMEDIR	%{buildroot}/%{AMANDAHOMEDIR}
 %define ROOT_LIBDIR		%{buildroot}/%{LIBDIR}
 %define ROOT_MANDIR		%{buildroot}/%{MANDIR}
@@ -369,6 +370,7 @@ make -j1 DESTDIR=%{buildroot} install
 rm -rf %{ROOT_DATADIR}/amanda
 rm -f %{ROOT_AMANDAHOMEDIR}/example/inetd.conf.amandaclient
 mkdir %{buildroot}/{etc,var/log}
+mkdir %{ROOT_LOCALSTATEDIR}/amanda 
 mkdir %{ROOT_SYSCONFDIR}/amanda
 mkdir %{ROOT_AMANDAHOMEDIR}/gnutar-lists
 mkdir %{ROOT_LOGDIR}
@@ -1506,10 +1508,9 @@ echo "Amanda installation log can be found in '${INSTALL_LOG}' and errors (if an
 %{MANDIR}/man5/amanda.conf.5.gz
 %{MANDIR}/man5/amanda-client.conf.5.gz
 %{MANDIR}/man8/amanda.8.gz
-%{MANDIR}/man8/amplot.8.gz
+%{MANDIR}/man8/amcheckdump.8.gz
 %{MANDIR}/man8/amrecover.8.gz
 %{AMLIBEXECDIR}/amcat.awk
-%{AMLIBEXECDIR}/amplot*
 %defattr(0640,%{amanda_user},%{amanda_group})
 %{AMANDAHOMEDIR}/amanda-release
 %{AMANDAHOMEDIR}/example/xinetd.amandaclient
@@ -1584,6 +1585,7 @@ echo "Amanda installation log can be found in '${INSTALL_LOG}' and errors (if an
 %{MANDIR}/man8/amanda.8.gz
 %{MANDIR}/man8/amcheck.8.gz
 %{MANDIR}/man8/amcheckdb.8.gz
+%{MANDIR}/man8/amcheckdump.8.gz
 %{MANDIR}/man8/amcleanup.8.gz
 %{MANDIR}/man8/amdd.8.gz
 %{MANDIR}/man8/amdump.8.gz
@@ -1621,9 +1623,13 @@ echo "Amanda installation log can be found in '${INSTALL_LOG}' and errors (if an
 # --- ChangeLog
 
 %changelog
+* Fri Feb 01 2008 Dan Locks <dwlocks at zmanda dot com>
+- Removed amplot executable and manpages from client installation
+- Added amcheckdump.8 manpage
+- Fixed %{_LOCALSTATEDIR}/amanda dir creation.
 * Wed Jan 23 2008  Dan Locks <dwlocks at zmanda dot com>
-- Change %{SYSCONFDIR}/amanda/amandates to %{LOCALSTATEDIR}/amanda/amandates,
-  and added %{LOCALSTATEDIR}/amanda to the files lists.
+- Change %{_SYSCONFDIR}/amanda/amandates to %{_LOCALSTATEDIR}/amanda/amandates,
+  and added %{_LOCALSTATEDIR}/amanda to the files lists.
 * Mon Jan 14 2008  Dan Locks <dwlocks at zmanda dot com>
 - Updates for perlified amanda, file location moves, gpg setup.
 * Tue Nov  13 2007 Paddy Sreenivasan <paddy at zmanda dot com>
