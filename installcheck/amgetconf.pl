@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 505 N Mathlida Ave, Suite 120
 # Sunnyvale, CA 94085, USA, or: http://www.zmanda.com
 
-use Test::More tests => 43;
+use Test::More tests => 48;
 
 use lib "@amperldir@";
 use Installcheck::Config;
@@ -51,6 +51,16 @@ is(run_get('amgetconf', 'TESTCONF', "tapelist"), "tapelist",
 is(run_get('amgetconf', 'TESTCONF', "usetimestamps"), "yes", 
     "usetimestamps defaults to 'yes'");
 
+# test command-line parsing
+is(run_get('amgetconf', 'TESTCONF', '-o', 'reserve=50', 'reserve'), "50",
+    "-o reserve=50");
+is(run_get('amgetconf', 'TESTCONF', '-oreserve=50', 'reserve'), "50",
+    "-oreserve=50");
+is(run_get('amgetconf', '-o', 'reserve=50', 'TESTCONF', 'reserve'), "50",
+    "-oreserve=50 before config name");
+is(run_get('amgetconf', 'TESTCONF', 'reserve', 'a', 'table', 'for', 'two', '-o', 'reserve=50'), "50",
+    "extra command-line arguments are ignored");
+
 # test a nonexistent parameter
 like(run_err('amgetconf', 'TESTCONF', "foos_per_bar"), qr/no such parameter/, 
     "handles nonexistent parameters as an error");
@@ -75,6 +85,8 @@ is(run_get('amgetconf', 'TESTCONF', "build.AMANDA_TMPDIR"), $AMANDA_TMPDIR,
     "build.AMANDA_TMPDIR is correct");
 is(run_get('amgetconf', 'TESTCONF', "build.CONFIG_DIR"), $CONFIG_DIR,
     "build.CONFIG_DIR is correct");
+is(run_get('amgetconf', 'TESTCONF', "build.__empty"), "",
+    "empty build variables handled correctly");
 
 like(run_err('amgetconf', 'TESTCONF', "build.bogus-param"), qr(no such parameter),
     "bogus build parameters result in an error");

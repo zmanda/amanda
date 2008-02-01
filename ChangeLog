@@ -1,3 +1,10 @@
+2008-02-01  Dustin J. Mitchell <dustin@zmanda.com>
+	* server-src/amgetconf.pl installcheck/amgetconf.pl
+	  common-src/conffile.c: fix and test amgetconf to allow extra
+	  command-line arguments (undocumented), to allow -o options without a
+	  space, and to correctly return empty results for empty build
+	  variables
+
 2008-02-01  Dan Locks <dwlocks@zmanda.com>
 	* packaging/rpm/amanda.spec: added amdumpcheck.8.gz to the %files list
 	  for both client and server, removed amplot from client, added missing

@@ -143,6 +143,8 @@ my %build_info = (
     # (historical typos:)
     'server_host_principle' => $Amanda::Constants::SERVER_HOST_PRINCIPAL,
     'client_host_principle' => $Amanda::Constants::CLIENT_HOST_PRINCIPAL,
+    # (for testing purposes)
+    '__empty' => '',
 
 );
 
@@ -159,7 +161,7 @@ sub build_param {
 	my ($pname) = $parameter =~ /^build\.(.*)/;
 
 	my $val = $build_info{lc $pname};
-	no_such_param($parameter) unless ($val);
+	no_such_param($parameter) unless (defined($val));
 
 	print "$val\n";
     }
@@ -210,6 +212,7 @@ sub conf_param {
 my $opt_list = '';
 my $config_overwrites = new_config_overwrites($#ARGV+1);
 
+Getopt::Long::Configure(qw{bundling});
 GetOptions(
     'list|l' => \$opt_list,
     'o=s' => sub { add_config_overwrite_opt($config_overwrites, $_[1]); },
@@ -220,7 +223,9 @@ my $parameter;
 
 if (@ARGV == 1) {
     $parameter = $ARGV[0];
-} elsif (@ARGV == 2) {
+} elsif (@ARGV >= 2) {
+    # note that we ignore any arguments past these two.  Amdump lazily passes 
+    # such arguments on to us, so we have no choice.
     $config_name = $ARGV[0];
     $parameter = $ARGV[1];
 } else {
