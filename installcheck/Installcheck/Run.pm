@@ -81,8 +81,8 @@ the proper vtape directories.  These are controlled by C<chg-disk>.
 The tapes are not labeled, and C<label_new_tapes> is not set by
 default, although C<labelstr> is set to C<TESTCONF[0-9][0-9]>.
 
-The vtapes are created in a subdirectory of C<AMANDA_TMPDIR> for ease
-of later deletion.
+The vtapes are created in a subdirectory of C<AMANDA_TMPDIR> for ease of later
+deletion.  The subdirectory is available from C<vtape_dir($slot)>.
 
 =head2 HOLDING
 
@@ -196,6 +196,11 @@ sub setup_disklist {
 	'compress' => 'none',
 	'program' => '"GNUTAR"',
     ]);
+}
+
+sub vtape_dir {
+    my ($slot) = @_;
+    my $tapepath = "$taperoot/slot$slot";
 }
 
 sub run {

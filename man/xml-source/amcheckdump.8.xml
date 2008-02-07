@@ -22,6 +22,7 @@
   <command>amcheckdump</command>    
     <arg choice='plain'><replaceable>config</replaceable></arg>
     <arg choice='opt'>--timestamp|-t <replaceable>timestamp</replaceable></arg>
+    <arg choice='plain' rep='repeat'><group><arg choice='plain'>-o </arg><replaceable>configoption</replaceable></group></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 
@@ -42,6 +43,10 @@ than on the client, then the verification will most likely fail.</para>
 <para>If a changer is available, it is used to load the required
 tapes.  Otherwise, the application interactively requests the tapes.</para>
 
+<para>See the "<emphasis
+remap='B'>CONFIGURATION OVERRIDE</emphasis>" section in
+<citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+for information on the <literal>-o</literal> option.</para>
 </refsect1>
 
 <refsect1><title>EXAMPLE</title>

@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 505 N Mathlida Ave, Suite 120
 # Sunnyvale, CA 94085, USA, or: http://www.zmanda.com
 
-use Test::More tests => 9;
+use Test::More tests => 11;
 
 use lib "@amperldir@";
 use Installcheck::Config;
@@ -59,6 +59,16 @@ SKIP: {
 }
 
 ##
+# and check command-line handling
+
+SKIP: {
+    skip "Dump failed", 1 unless $dumpok;
+
+    like(run_get('amcheckdump', 'TESTCONF', '-oorg=installcheck'), qr(Validating),
+	"amcheckdump accepts '-o' options on the command line");
+}
+
+##
 # And a config with usetimestamps enabled
 
 $testconf = Installcheck::Run::setup();
@@ -72,6 +82,28 @@ SKIP: {
     skip "Dump failed", 1 unless $dumpok;
     like(run_get('amcheckdump', 'TESTCONF'), qr(Validating),
 	"amcheckdump succeeds, claims to validate something (usetimestamps=yes)");
+}
+
+##
+# now try zeroing out the dumps
+
+SKIP: {
+    skip "Dump failed", 1 unless $dumpok;
+
+    my $vtape1 = Installcheck::Run::vtape_dir(1);
+    opendir(my $vtape_dir, $vtape1) || die "can't opendir $vtape1: $!";
+    @dump1 = grep { /^0+1/ } readdir($vtape_dir);
+    closedir $vtape_dir;
+
+    for my $dumpfile (@dump1) {
+	open(my $dumpfh, "+<", "$vtape1/$dumpfile");
+	sysseek($dumpfh, 32768, 0); # jump past the header
+	syswrite($dumpfh, "\0" * 100); # and write some zeroes
+	close($dumpfh);
+    }
+
+    ok(!run('amcheckdump', 'TESTCONF'),
+	"amcheckdump detects a failure from a zeroed-out dumpfile");
 }
 
 Installcheck::Run::cleanup();

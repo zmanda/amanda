@@ -3,7 +3,6 @@ use lib '@amperldir@';
 use strict;
 
 use File::Basename;
-use IPC::Open2;
 use Getopt::Long;
 
 use Amanda::Device qw( :constants );
@@ -13,28 +12,14 @@ use Amanda::Logfile;
 use Amanda::Util qw( :running_as_flags );
 use Amanda::Tapelist;
 use Amanda::Changer;
+use Amanda::Constants;
 
-# Try to open the device and set properties. Does not read the label.
-sub try_open_device($) {
-    my ($device_name) = @_;
-
-    if ( !$device_name ) {
-        return undef;
-    }
-
-    my $device = Amanda::Device->new($device_name);
-    if ( !$device ) {
-        return undef;
-    }
-
-    $device->set_startup_properties_from_config();
-
-    return $device;
-}
+# Have all images been verified successfully so far?
+my $all_success = 1;
 
 sub usage {
     print <<EOF;
-USAGE:	amcheckdump config [ --timestamp|-t timestamp ]
+USAGE:	amcheckdump config [ --timestamp|-t timestamp ] [-o configoption]*
     amcheckdump validates Amanda dump images by reading them from storage
 volume(s), and verifying archive integrity if the proper tool is locally
 available. amcheckdump does not actually compare the data located in the image
@@ -45,6 +30,7 @@ to anything; it just validates that the archive stream is valid.
 			the most recent dump; if this parameter is specified,
 			check the most recent dump matching the given
 			date- or timestamp.
+	-o configoption	- see the CONFIGURATION OVERRIDE section of amanda(8)
 EOF
     exit(1);
 }
@@ -79,35 +65,184 @@ sub find_logfile_name($) {
     return undef;
 }
 
+## Device management
+
+my $changer_init_done = 0;
+my $current_device;
+my $current_device_label;
+
+sub find_next_device {
+    my $label = shift;
+    if (getconf_seen($CNF_TPCHANGER)) {
+	# We're using a changer script.
+	if (!$changer_init_done) {
+	    my $error = (Amanda::Changer::reset())[0];
+	    die($error) if $error;
+	    $changer_init_done = 1;
+	}
+	my ($error, $slot, $tapedev) = Amanda::Changer::find($label);
+	if ($error) {
+	    die("Error operating changer: $error.");
+	} elsif ($slot eq "<none>") {
+	    die("Could not find tape label $label in changer.");
+	} else {
+	    return $tapedev;
+	}
+    } else {
+	# The user is changing tapes for us.
+	my $device_name = getconf($CNF_TAPEDEV);
+	printf("Insert volume with label %s in device %s and press ENTER: ",
+	       $label, $device_name);
+	<>;
+	return $device_name;
+    }
+}
+
+# Try to open a device containing a volume with the given label.  Returns undef
+# if there is a problem.
+sub try_open_device {
+    my ($label) = @_;
+
+    # can we use the same device as last time?
+    if ($current_device_label eq $label) {
+	return $current_device;
+    }
+
+    # nope -- get rid of that device
+    close_device();
+
+    my $device_name = find_next_device($label);
+    if ( !$device_name ) {
+	print "Could not find a device for label '$label'.\n";
+        return undef;
+    }
+
+    my $device = Amanda::Device->new($device_name);
+    if ( !$device ) {
+	print "Could not open '$device_name'.\n";
+        return undef;
+    }
+
+    $device->set_startup_properties_from_config();
+
+    my $label_status = $device->read_label();
+    if ($label_status != $READ_LABEL_STATUS_SUCCESS) {
+	print "Could not read device $device_name: one of ",
+	     join(", ", ReadLabelStatusFlags_to_strings($label_status)),
+	     "\n";
+	return undef;
+    }
+
+    if ($device->{volume_label} ne $label) {
+	printf("Labels do not match: Expected '%s', but the device contains '%s'.\n",
+		     $label, $device->{volume_label});
+	return undef;
+    }
+
+    if (!$device->start($ACCESS_READ, undef, undef)) {
+	printf("Error reading device %s.\n", $device_name);
+	return undef;
+    }
+
+    $current_device = $device;
+    $current_device_label = $device->{volume_label};
+
+    return $device;
+}
+
+sub close_device {
+    $current_device = undef;
+    $current_device_label = undef;
+}
+
+## Validation application
+
+my ($current_validation_pid, $current_validation_pipeline, $current_validation_image);
+
+# Return a filehandle for the validation application that will handle this
+# image.  This function takes care of split dumps.  At the moment, we have
+# a single "current" validation application, and as such assume that split dumps
+# are stored contiguously and in order on the volume.
+sub open_validation_app {
+    my ($image, $header) = @_;
+
+    # first, see if this is the same image we were looking at previously
+    if (defined($current_validation_image)
+	and $current_validation_image->{timestamp} eq $image->{timestamp}
+	and $current_validation_image->{hostname} eq $image->{hostname}
+	and $current_validation_image->{diskname} eq $image->{diskname}
+	and $current_validation_image->{level} == $image->{level}) {
+	# TODO: also check that the part number is correct
+        print "Continuing with previously started validation process.\n";
+	return $current_validation_pipeline;
+    }
+
+    # nope, new image.  close the previous pipeline
+    close_validation_app();
+	
+    my $validation_command = find_validation_command($header);
+    print "  using '$validation_command'.\n";
+    $current_validation_pid = open($current_validation_pipeline, "|-", $validation_command);
+        
+    if (!$current_validation_pid) {
+	print "Can't execute validation command: $!\n";
+	undef $current_validation_pid;
+	undef $current_validation_pipeline;
+	return undef;
+    }
+
+    $current_validation_image = $image;
+    return $current_validation_pipeline;
+}
+
+# Close any running validation app, checking its exit status for errors.  Sets
+# $all_success to false if there is an error.
+sub close_validation_app {
+    if (!defined($current_validation_pipeline)) {
+	return;
+    }
+
+    # first close the applications standard input to signal it to stop
+    if (!close($current_validation_pipeline)) {
+	my $exit_value = $? >> 8;
+	print "Validation process returned $exit_value (full status $?)\n";
+	$all_success = 0; # flag this as a failure
+    }
+
+    $current_validation_pid = undef;
+    $current_validation_pipeline = undef;
+    $current_validation_image = undef;
+}
+
 # Given a dumpfile_t, figure out the command line to validate.
-sub find_validation_command($) {
-    my $header = shift @_;
+sub find_validation_command {
+    my ($header) = @_;
+
     # We base the actual archiver on our own table, but just trust
     # whatever is listed as the decrypt/uncompress commands.
     my $program = uc(basename($header->{program}));
     
-    # TODO: Is there a way to access the configured variables?
     my $validation_program;
     my %validation_programs = (
-        "STAR" => "star -t -f -",
-        "DUMP" => "restore tbf 2 -",
-        "VDUMP" => "vrestore tf -",
-        "VXDUMP" => "vxrestore tbf 2 -",
-        "XFSDUMP" => "xfsrestore -t -v silent -",
-        "TAR" => "tar tf -",
-        "GTAR" => "tar tf -",
-        "GNUTAR" => "tar tf -",
-        "SMBCLIENT" => "tar tf -",
+        "STAR" => "$Amanda::Constants::STAR -t -f -",
+        "DUMP" => "$Amanda::Constants::RESTORE tbf 2 -",
+        "VDUMP" => "$Amanda::Constants::VRESTORE tf -",
+        "VXDUMP" => "$Amanda::Constants::VXRESTORE tbf 2 -",
+        "XFSDUMP" => "$Amanda::Constants::XFSRESTORE -t -v silent -",
+        "TAR" => "$Amanda::Constants::GNUTAR tf -",
+        "GTAR" => "$Amanda::Constants::GNUTAR tf -",
+        "GNUTAR" => "$Amanda::Constants::GNUTAR tf -",
+        "SMBCLIENT" => "$Amanda::Constants::SAMBA_CLIENT tf -",
     );
 
     $validation_program = $validation_programs{$program};
     if (!defined $validation_program) {
-        warn("Could not determine validation for dumper $program;\n\t".
-             "Will send dumps to /dev/null instead.\n");
+        warn("Could not determine validation for dumper $program; ".
+             "Will send dumps to /dev/null instead.");
         $validation_program = "cat > /dev/null";
     } else {
         # This is to clean up any extra output the program doesn't read.
-        $validation_program .= " > /dev/null; cat > /dev/null";
+        $validation_program .= " > /dev/null && cat > /dev/null";
     }
     
     my $cmdline = "";
@@ -124,50 +259,21 @@ sub find_validation_command($) {
     return $cmdline;
 }
 
-# Figures out the next device to use, either prompting the user or
-# accessing the changer. The argument is the desired volume label.
-{ 
-    # This is a static identifying if the changer has been initialized.
-    my $changer_init_done = 0;
-    sub find_next_device($) {
-        my $label = shift;
-        if (getconf_seen($CNF_TPCHANGER)) {
-            # Changer script.
-            if (!$changer_init_done) {
-                my $error = (Amanda::Changer::reset())[0];
-                die($error) if $error;
-                $changer_init_done = 1;
-            }
-            my ($error, $slot, $tapedev) = Amanda::Changer::find($label);
-            if ($error) {
-                die("Error operating changer: $error\n");
-            } elsif ($slot eq "<none>") {
-                die("Could not find tape label $label in changer.\n");
-            } else {
-                return $tapedev;
-            }
-        } else {
-            # Meatware changer.
-            my $device_name = getconf_seen($CNF_TAPEDEV);
-            printf("Insert volume with label %s in device %s and press ENTER: ",
-                   $label, $device_name);
-            <>;
-            return $device_name;
-        }
-    }
-}
-
 ## Application initialization
 
 Amanda::Util::setup_application("amcheckdump", "server", "cmdline");
 
 my $timestamp = undef;
-GetOptions('timestamp|t=s' => \$timestamp,
-           'help|usage|?' => \&usage);
+my $config_overwrites = new_config_overwrites($#ARGV+1);
 
-if (@ARGV < 1) {
-    usage();
-}
+Getopt::Long::Configure(qw(bundling));
+GetOptions(
+    'timestamp|t=s' => \$timestamp,
+    'help|usage|?' => \&usage,
+    'o=s' => sub { add_config_overwrite_opt($config_overwrites, $_[1]); },
+) or usage();
+
+usage() if (@ARGV < 1);
 
 my $config_name = shift @ARGV;
 if (!config_init($CONFIG_INIT_EXPLICIT_NAME |
@@ -175,12 +281,15 @@ if (!config_init($CONFIG_INIT_EXPLICIT_NAME |
     die('errors processing config file "' . 
                Amanda::Config::get_config_filename() . '"');
 }
+apply_config_overwrites($config_overwrites);
 
 Amanda::Util::finish_setup($RUNNING_AS_DUMPUSER);
 
 # Read the tape list.
 my $tl = Amanda::Tapelist::read_tapelist(config_dir_relative(getconf($CNF_TAPELIST)));
 
+# If we weren't given a timestamp, find the newer of
+# amdump.1 or amflush.1 and extract the datestamp from it.
 if (!defined $timestamp) {
     my $amdump_log = config_dir_relative(getconf($CNF_LOGDIR)) . "/amdump.1";
     my $amflush_log = config_dir_relative(getconf($CNF_LOGDIR)) . "/amflush.1";
@@ -193,10 +302,11 @@ if (!defined $timestamp) {
     } elsif (-f $amflush_log) {
          $logfile=$amflush_log;
     } else {
-	print "Could not find any log file\n";
+	print "Could not find any dump log file.\n";
 	exit;
     }
 
+    # extract the datestamp from the dump log
     open (AMDUMP, "<$logfile") || die();
     while(<AMDUMP>) {
 	if (/^amdump: starttime (\d*)$/) {
@@ -212,156 +322,109 @@ if (!defined $timestamp) {
     close AMDUMP;
 }
 
-# Find logfiles matching our timestamp and scan them.
-my @images;
-my $logfile_dir = config_dir_relative(getconf($CNF_LOGDIR));
-opendir(LOGFILE_DIR, $logfile_dir) || die("Can't opendir() $logfile_dir.\n");
+# Find all logfiles matching our timestamp
 my @logfiles =
     grep { $_ =~ /^log\.$timestamp(?:\.[0-9]+|\.amflush)?$/ }
-    readdir(LOGFILE_DIR);
-unless (@logfiles) {
-    die("Can't find any logfiles with timestamp $timestamp.\n");
+    Amanda::Logfile::find_log();
+
+if (!@logfiles) {
+    die("Can't find any logfiles with timestamp $timestamp.");
 }
+
+# compile a list of *all* dumps in those logfiles
+my $logfile_dir = config_dir_relative(getconf($CNF_LOGDIR));
+my @images;
 for my $logfile (@logfiles) {
     push @images, Amanda::Logfile::search_logfile(undef, $timestamp,
                                                   "$logfile_dir/$logfile", 1);
 }
-closedir(LOGFILE_DIR);
 
-# filter only "ok" dumps
+# filter only "ok" dumps, removing partial and failed dumps
 @images = Amanda::Logfile::dumps_match([@images],
 	undef, undef, undef, undef, 1);
 
 if (!@images) {
-    print "Could not find any matching dumps\n";
-    exit;
+    die("Could not find any matching dumps");
 }
 
-# Find unique tapelist. This confusing expression uses an anonymous hash.
-my @tapes = sort { $a cmp $b } keys %{{map { ($_->{label}, undef) } @images}};
+# Find unique tapelist, using a hash to filter duplicate tapes
+my %tapes = map { ($_->{label}, undef) } @images;
+my @tapes = sort { $a cmp $b } keys %tapes;
 
 if (!@tapes) {
-    die("Did not find any dumps to check!\n");
+    die("Could not find any matching dumps");
 }
 
 printf("You will need the following tape%s: %s\n", (@tapes > 1) ? "s" : "",
        join(", ", @tapes));
 
-my $device;
-my $validation_pid;
-my $image;
-while (1) {
-    $image = $images[0];
-    if (!defined $device) {
-        my $device_name = find_next_device($image->{label});
-        $device = try_open_device($device_name);
-        if (!defined $device) {
-            warn "Could not open device $device_name.\n";
-            next;
-        }
+# Now loop over the images, verifying each one.  
 
-        my $label_status = $device->read_label;
-        if ($label_status != $READ_LABEL_STATUS_SUCCESS) {
-            warn("Could not read device $device_name: one of " .
-                 join(", ", ReadLabelStatusFlags_to_strings($label_status)).
-                 "\n");
-            undef $device;
-            next;
-        }
-
-        if ($device->{volume_label} ne $image->{label}) {
-            warn(sprintf("Labels do not match: Expected %s, got %s.\n",
-                         $image->{label}, $device->volume_label));
-            undef $device;
-            next;
-        }
-
-        if (!$device->start($ACCESS_READ, undef, undef)) {
-            warn(sprintf("Error reading device %s.\n", $device_name));
-            undef $device;
-            next;
-        }
-    }
-
-    # Errors below this point are problems with the image, not just the
-    # device or volume.
-    shift @images;
-
-    # Now get the dump information.
-    my $image_header = $device->seek_file($image->{filenum});
-    if (!defined $image_header) {
-        warn(sprintf("Could not seek to file %d of volume %s.\n",
-                     $image->{filenum}, $image->{label}));
-        next;
-    }
-
+IMAGE:
+for my $image (@images) {
     # Currently, L_PART results will be n/x, n >= 1, x >= -1
     # In the past (before split dumps), L_PART could be --
     # Headers can give partnum >= 0, where 0 means not split.
-    my $logfile_part;
+    my $logfile_part = 1; # assume this is not a split dump
     if ($image->{partnum} =~ m$(\d+)/(-?\d+)$) {
         $logfile_part = $1;
-    } else {
-        # Not split, I guess.
-        $logfile_part = 1;
     }
 
-    my $volume_part = $image_header->{partnum};
+    printf("Validating image %s:%s datestamp %s level %s part %s on tape %s file #%d\n",
+           $image->{hostname}, $image->{diskname}, $image->{timestamp},
+           $image->{level}, $logfile_part, $image->{label}, $image->{filenum});
+
+    # note that if there is a device failure, we may try the same device
+    # again for the next image.  That's OK -- it may give a user with an
+    # intermittent drive some indication of such.
+    my $device = try_open_device($image->{label});
+    if (!defined $device) {
+	# error message already printed
+	$all_success = 0;
+	next IMAGE;
+    }
+
+    # Now get the header from the device
+    my $header = $device->seek_file($image->{filenum});
+    if (!defined $header) {
+        printf("Could not seek to file %d of volume %s.\n",
+                     $image->{filenum}, $image->{label});
+	$all_success = 0;
+        next IMAGE;
+    }
+
+    # Make sure that the on-device header matches what the logfile
+    # told us we'd find.
+
+    my $volume_part = $header->{partnum};
     if ($volume_part == 0) {
         $volume_part = 1;
     }
 
-    if ($image->{timestamp} ne $image_header->{datestamp} ||
-        $image->{hostname} ne $image_header->{name} ||
-        $image->{diskname} ne $image_header->{disk} ||
-        $image->{level} != $image_header->{dumplevel} ||
+    if ($image->{timestamp} ne $header->{datestamp} ||
+        $image->{hostname} ne $header->{name} ||
+        $image->{diskname} ne $header->{disk} ||
+        $image->{level} != $header->{dumplevel} ||
         $logfile_part != $volume_part) {
-        warn(sprintf("Details of dump at file %d of volume %s ".
-                     "do not match logfile.\n",
-                     $image->{filenum}, $image->{label}));
-        next;
+        printf("Details of dump at file %d of volume %s do not match logfile.\n",
+                     $image->{filenum}, $image->{label});
+	$all_success = 0;
+        next IMAGE;
     }
     
-    printf("Validating image %s/%s/%s/%s:%s on image %s:%d\n",
-           $image->{hostname}, $image->{diskname}, $image->{timestamp},
-           $image->{level}, $logfile_part, $image->{label}, $image->{filenum});
-    if ($validation_pid) {
-        print "Using previously started command.\n"
-    } else {
-        # Skipped if we are reusing from previous part.
-        my $validation_command = find_validation_command($image_header);
-        print "Using command $validation_command.\n";
-        $validation_pid = open(VALIDATION_PIPELINE, "|-",
-                               $validation_command);
-        
-        unless ($validation_pid) {
-            die("Can't execute validation command: $!\n");
-            next;
-        }
-    }
-    
-    if (!$device->read_to_fd(fileno(VALIDATION_PIPELINE))) {
-        die("Error reading device or writing data to validation command.\n");
-    }
+    # get the validation application pipeline that will process this dump.
+    my $pipeline = open_validation_app($image, $header);
 
-    last unless @images;
-} continue {
-    # Check if device should be closed.
-    my $next_image = $images[0]; # Could be the same.
-    if ($image->{label} ne $next_image->{label}) {
-        undef $device;
-    }
-    # Check if validation pipeline should be closed.
-    if ($validation_pid &&
-        ($image->{timestamp} ne $next_image->{timestamp} ||
-         $image->{hostname} ne $next_image->{hostname} ||
-         $image->{diskname} ne $next_image->{diskname} ||
-         $image->{level} != $next_image->{level})) {
-        if (!close(VALIDATION_PIPELINE)) {
-            die("Error closing validation pipeline.\n");
-        }
-        undef $validation_pid;
+    # send the datastream from the device straight to the application
+    if (!$device->read_to_fd(fileno($pipeline))) {
+        print "Error reading device or writing data to validation command.\n";
+	$all_success = 0;
+	next IMAGE;
     }
 }
 
-exit 0;
+# clean up
+close_validation_app();
+close_device();
+
+exit($all_success? 0 : 1);

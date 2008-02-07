@@ -1,3 +1,13 @@
+2008-02-07  Dustin J. Mitchell <dustin@zmanda.com>
+	* packaging/rpm/amanda_enterprise.spec man/Makefile.am
+	  man/xml-source/amverify.8.xml man/xml-source/amverifyrun.8.xml
+	  man/xml-source/amcheckdump.8.xml server-src/amverifyrun.sh
+	  server-src/amverify.sh server-src/Makefile.am: remove amverify*
+	* server-src/amdevcheck.pl: tweak @ARGV parsing
+	* server-src/amcheckdump.pl installcheck/Installcheck/Run.pm
+	  installcheck/amcheckdump.pl: significant rewrite to catch more errors
+	  and not loop for ever on some errors.
+
 2008-02-01  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/amgetconf.pl installcheck/amgetconf.pl
 	  common-src/conffile.c: fix and test amgetconf to allow extra

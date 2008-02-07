@@ -8,35 +8,34 @@ COMMON_MAN_PAGES =  amanda.8 \
 		    amanda.conf.5 \
 		    amanda-client.conf.5
 
-SERVER_MAN_PAGES =  amadmin.8 \
-		    amcheck.8 \
-		    amcheckdb.8 \
-		    amcleanup.8 \
-		    amdd.8 \
-		    amdevcheck.8 \
-		    amdump.8 \
-		    amflush.8 \
-		    amgetconf.8 \
-		    amlabel.8 \
-		    ammt.8 \
-		    amoverview.8 \
-		    amreport.8 \
-		    amrmtape.8 \
-		    amstatus.8 \
-		    amtape.8 \
-		    amtapetype.8 \
-		    amtoc.8 \
-		    amverify.8 \
-		    amverifyrun.8 \
-		    amserverconfig.8 \
-		    amaddclient.8 \
-		    amcheckdump.8 \
-		    amcrypt.8 \
-		    amaespipe.8 \
-		    amgpgcrypt.8 \
-		    amcryptsimple.8  \
-		    amcrypt-ossl.8 \
-		    amcrypt-ossl-asym.8
+SERVER_MAN_PAGES =  \
+    amaddclient.8    \
+    amadmin.8 \
+    amaespipe.8 \
+    amcheck.8 \
+    amcheckdb.8 \
+    amcheckdump.8 \
+    amcleanup.8 \
+    amcrypt-ossl-asym.8 \
+    amcrypt-ossl.8   \
+    amcrypt.8 \
+    amcryptsimple.8  \
+    amdd.8 \
+    amdevcheck.8 \
+    amdump.8 \
+    amflush.8 \
+    amgetconf.8 \
+    amgpgcrypt.8 \
+    amlabel.8 \
+    ammt.8 \
+    amoverview.8 \
+    amreport.8 \
+    amrmtape.8 \
+    amserverconfig.8 \
+    amstatus.8 \
+    amtape.8 \
+    amtapetype.8 \
+    amtoc.8
 
 RECOVER_MAN_PAGES =  amrecover.8
 

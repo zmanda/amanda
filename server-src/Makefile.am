@@ -48,9 +48,7 @@ SCRIPTS_SHELL = \
 	    amcheckdb \
 	    amcleanup \
 	    amdump \
-	    amrmtape \
-	    amverify \
-	    amverifyrun
+	    amrmtape
 
 sbin_SCRIPTS = $(SCRIPTS_PERL) $(SCRIPTS_SHELL)
 
