@@ -11,6 +11,7 @@ COMMON_MAN_PAGES =  amanda.8 \
 SERVER_MAN_PAGES =  amadmin.8 \
 		    amcheck.8 \
 		    amcheckdb.8 \
+		    amcheckdump.8 \
 		    amcleanup.8 \
 		    amdd.8 \
 		    amdevcheck.8 \
