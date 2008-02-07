@@ -1,4 +1,10 @@
 2008-02-07  Jean-Louis Martineau <martineau@zmanda.com>
+	* Amanda 2.6.0b2 released.
+	* configure.in: AM_INIT_AUTOMAKE(amanda, "2.6.0b2")
+	* packaging/rpm/amanda.spec: %define amanda_version 2.6.0b2
+	* packaging/rpm/buildpkg: AMVER=amanda-2.6.0b2
+
+2008-02-07  Jean-Louis Martineau <martineau@zmanda.com>
 	* recover-src/amrecover.c: Use tapedev from server if it is not set
 	                           in amanda.client.conf
 	* example/amanda-client.conf.in: Document it.
