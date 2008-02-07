@@ -145,15 +145,8 @@ TapeCheckResult tape_is_tape_device(int fd) {
 TapeCheckResult tape_is_ready(int fd) {
     struct mtget get;
     if (0 == ioctl(fd, MTIOCGET, &get)) {
-#if defined(GMT_ONLINE) || defined(GMT_DR_OPEN)
-        if (1
-#ifdef GMT_ONLINE
-            && GMT_ONLINE(get.mt_gstat)
-#endif
-#ifdef GMT_DR_OPEN
-            && !GMT_DR_OPEN(get.mt_gstat)
-#endif
-            ) {
+#if defined(GMT_DR_OPEN)
+        if (!GMT_DR_OPEN(get.mt_gstat)) {
             return TAPE_CHECK_SUCCESS;
         } else {
             return TAPE_CHECK_FAILURE;
