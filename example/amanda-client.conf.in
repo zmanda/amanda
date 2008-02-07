@@ -8,7 +8,11 @@ conf "@DEFAULT_CONFIG@"		# your config name
 
 index_server "@DEFAULT_SERVER@"	# your amindexd server
 tape_server  "@DEFAULT_TAPE_SERVER@"	# your amidxtaped server
-tapedev      "@EXAMPLE_TAPEDEV@"	# your tape device
+#tapedev      "@EXAMPLE_TAPEDEV@"	# your tape device
+			# if not set, Use configure or ask server.
+			# if set to empty string "", ask server
+			# amrecover will use the changer if set to the value
+			# of 'amrecover_changer' in the server amanda.conf.
 
 #   auth	- authentication scheme to use between server and client.
 #		  Valid values are "bsd", "bsdudp", "bsdtcp", "krb5", "local",

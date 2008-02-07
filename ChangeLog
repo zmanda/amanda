@@ -1,4 +1,9 @@
 2008-02-07  Jean-Louis Martineau <martineau@zmanda.com>
+	* recover-src/amrecover.c: Use tapedev from server if it is not set
+	                           in amanda.client.conf
+	* example/amanda-client.conf.in: Document it.
+
+2008-02-07  Jean-Louis Martineau <martineau@zmanda.com>
         * device-src/tape-device.c (tape_device_init): Init min_block_size
           and fixed_block_size to 32768.
 

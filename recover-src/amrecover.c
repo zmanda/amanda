@@ -452,8 +452,13 @@ main(
 
     amfree(tape_device_name);
     tape_device_name = getconf_str(CNF_TAPEDEV);
-    if (tape_device_name)
+    if (!tape_device_name ||
+	strlen(tape_device_name) == 0 ||
+	!getconf_seen(CNF_TAPEDEV)) {
+	tape_device_name = NULL;
+    } else {
 	tape_device_name = stralloc(tape_device_name);
+    }
 
     authopt = stralloc(getconf_str(CNF_AUTH));
 
