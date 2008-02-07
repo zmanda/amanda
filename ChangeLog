@@ -1,4 +1,8 @@
 2008-02-07  Jean-Louis Martineau <martineau@zmanda.com>
+        * device-src/tape-device.c (tape_device_init): Init min_block_size
+          and fixed_block_size to 32768.
+
+2008-02-07  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/tape-posix.c (tape_is_ready): Don't use GMT_ONLINE.
 
 2008-02-07  Dustin J. Mitchell <dustin@zmanda.com>

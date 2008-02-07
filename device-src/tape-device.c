@@ -117,8 +117,8 @@ tape_device_init (TapeDevice * self) {
     self->private = malloc(sizeof(TapeDevicePrivate));
 
     /* Clear all fields. */
-    self->min_block_size = self->max_block_size = self->fixed_block_size =
-        self->read_block_size = MAX_TAPE_BLOCK_BYTES;
+    self->min_block_size = self->fixed_block_size = 32768;
+    self->max_block_size = self->read_block_size = MAX_TAPE_BLOCK_BYTES;
 
     self->fd = -1;
     
