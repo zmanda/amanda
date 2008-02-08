@@ -1,4 +1,7 @@
 2008-02-07  Jean-Louis Martineau <martineau@zmanda.com>
+	* NEWS, ReleaseNotes: Add notes about rsh/ssh and amandad_path.
+
+2008-02-07  Jean-Louis Martineau <martineau@zmanda.com>
 	* Amanda 2.6.0b2 released.
 	* configure.in: AM_INIT_AUTOMAKE(amanda, "2.6.0b2")
 	* packaging/rpm/amanda.spec: %define amanda_version 2.6.0b2

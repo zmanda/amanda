@@ -8,7 +8,9 @@ Changes in release 2.6.0
    * 'amdd' and 'ammt' are deprecated.
    * Some Amanda files are now installed in new "amanda/" subdirectories:
      libraries are now installed in $libdir/amanda and internal programs
-     are now installed in $libexecdir/amanda.
+     are now installed in $libexecdir/amanda. If you mix 2.6.0 and earlier
+     version with rsh/ssh auth, you need to add an 'amandad_path' to the
+     dumptype and to amanda-client.conf
    * The amandates file, previously at /etc/amandates, is now at
      $localstatedir/amanda/amandates.  You may want to move your existing
      /etc/amandates when you upgrade Amanda.

@@ -24,6 +24,21 @@ Path changes
   Libraries are installed in $libdir/amanda (previously $libdir)
   Internal programs are installed in $libexecdir/amanda (previously $libexecdir)
   You must change your inetd/xinetd config for the new amandad path.
+  The amandad path change affect rsh/ssh auth, amanda-2.6.0 installations
+  will need to add an 'amandad_path' parameter to configuration files in
+  order to talk to older versions of Amanda:
+     amanda-2.6.0 client -> amanda-2.5.2 or earlier server: add
+       'amandad_path "/usr/libexec/amandad"' (or the appropriate path) to
+       /etc/amanda/amanda-client.conf
+     amanda-2.5.2 or earlier client -> amanda-2.6.0 server: add
+       'amandad_path "/usr/libexec/amanda/amandad"' (or the appropriate path)
+       to /etc/amanda/amanda-client.conf
+     amanda-2.6.0 server -> amanda-2.5.2 or earlier client: add
+       'amandad_path "/usr/libexec/amandad"' (or the appropriate path) to the
+       dumptype
+     amanda-2.5.2 or earlier server -> amanda-2.6.0 client: add
+       'amandad_path "/usr/libexec/amanda/amandad"' (or the appropriate path)
+       to the dumptype
   The amandates files is now $localstatedir/amanda/amandates, previously it
   was /etc/amandates, this file must be created on all client.
 
