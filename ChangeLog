@@ -1,4 +1,8 @@
 2008-02-11  Dustin J. Mitchell <dustin@zmanda.com>
+	* all source files: update GPL dates
+	* perl/*: use LGPL instead of GPL
+
+2008-02-11  Dustin J. Mitchell <dustin@zmanda.com>
 	* amandad-src/amandad.c: fix use of non-constant array size
 
 2008-02-11  Dustin J. Mitchell <dustin@zmanda.com>

@@ -14,8 +14,8 @@
  * along with this library; if not, write to the Free Software Foundation,
  * Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA.
  *
- * Contact information: Zmanda Inc., 505 N Mathlida Ave, Suite 120
- * Sunnyvale, CA 94085, USA, or: http://www.zmanda.com
+ * Contact information: Zmanda Inc., 465 S Mathlida Ave, Suite 300
+ * Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
  */
 
 %module "Amanda::Tapelist"

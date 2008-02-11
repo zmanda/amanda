@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005 Zmanda, Inc.  All Rights Reserved.
+ * Copyright (c) 2005-2008 Zmanda Inc.  All Rights Reserved.
  *
  * This library is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License version 2.1 as
@@ -14,8 +14,8 @@
  * along with this library; if not, write to the Free Software Foundation,
  * Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA.
  *
- * Contact information: Zmanda Inc., 505 N Mathlida Ave, Suite 120
- * Sunnyvale, CA 94085, USA, or: http://www.zmanda.com
+ * Contact information: Zmanda Inc., 465 S Mathlida Ave, Suite 300
+ * Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
  */
 
 #ifndef AMANDA_AMGLUE_H

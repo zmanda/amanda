@@ -32,7 +32,7 @@
 #
 # COPYRIGHT
 #
-#   Copyright (c) 2007 Zmanda Inc.  All Rights Reserved.
+#   Copyright (c) 2005-2008 Zmanda Inc.  All Rights Reserved.
 #  
 #   This program is free software; you can redistribute it and/or modify it
 #   under the terms of the GNU General Public License version 2 as published
@@ -53,8 +53,8 @@
 #   may extend this special exception to the GPL to apply to your
 #   modified version as well.
 #
-#   Contact information: Zmanda Inc., 505 N Mathlida Ave, Suite 120
-#   Sunnyvale, CA 94085, USA, or: http://www.zmanda.com
+#   Contact information: Zmanda Inc., 465 S Mathlida Ave, Suite 300
+#   Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
 AC_DEFUN([AC_CHECK_DOCBOOK_DTD],
 [
