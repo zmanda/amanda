@@ -69,7 +69,7 @@ typedef action_t (*state_t)(struct active_service *, action_t, pkt_t *);
 
 /* string that we scan for in sendbackup's MESG stream */
 static const char info_end_str[] = "sendbackup: info end\n";
-#define INFO_END_LEN strlen(info_end_str)
+#define INFO_END_LEN 21
 
 /* 
  * Here are the services that we allow.

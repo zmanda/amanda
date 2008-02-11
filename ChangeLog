@@ -1,4 +1,7 @@
 2008-02-11  Dustin J. Mitchell <dustin@zmanda.com>
+	* amandad-src/amandad.c: fix use of non-constant array size
+
+2008-02-11  Dustin J. Mitchell <dustin@zmanda.com>
 	* amandad-src/amandad.c: add hack to avoid a race condition in
 	  sendbackup operation
 	* common-src/security-util.c: issue debug log message when data
