@@ -67,6 +67,36 @@ typedef enum { A_START, A_RECVPKT, A_RECVREP, A_PENDING, A_FINISH, A_CONTINUE,
 struct active_service;
 typedef action_t (*state_t)(struct active_service *, action_t, pkt_t *);
 
+/* string that we scan for in sendbackup's MESG stream */
+static const char info_end_str[] = "sendbackup: info end\n";
+#define INFO_END_LEN strlen(info_end_str)
+
+/* 
+ * Here are the services that we allow.
+ */
+typedef enum {
+    SERVICE_NOOP,
+    SERVICE_SELFCHECK,
+    SERVICE_SENDSIZE,
+    SERVICE_SENDBACKUP,
+    SERVICE_AMINDEXD,
+    SERVICE_AMIDXTAPED
+} service_t;
+
+static struct services {
+    char *name;
+    int  active;
+    service_t service;
+} services[] = {
+   { "noop", 1, SERVICE_NOOP },
+   { "sendsize", 1, SERVICE_SENDSIZE },
+   { "sendbackup", 1, SERVICE_SENDBACKUP },
+   { "selfcheck", 1, SERVICE_SELFCHECK },
+   { "amindexd", 0, SERVICE_AMINDEXD },
+   { "amidxtaped", 0, SERVICE_AMIDXTAPED }
+};
+#define	NSERVICES	(int)(sizeof(services) / sizeof(services[0]))
+
 /*
  * This structure describes an active running service.
  *
@@ -76,6 +106,7 @@ typedef action_t (*state_t)(struct active_service *, action_t, pkt_t *);
  * for communications with the amanda server.
  */
 struct active_service {
+    service_t service;			/* service name */
     char *cmd;				/* name of command we ran */
     char *arguments;			/* arguments we sent it */
     security_handle_t *security_handle;	/* remote server */
@@ -91,6 +122,9 @@ struct active_service {
     size_t bufsize;			/* length of repbuf */
     size_t repbufsize;			/* length of repbuf */
     int repretry;			/* times we'll retry sending the rep */
+    int seen_info_end;			/* have we seen "sendbackup info end\n"? */
+    char info_end_buf[INFO_END_LEN];	/* last few bytes read, used for scanning for info end */
+
     /*
      * General user streams to the process, and their equivalent
      * network streams.
@@ -106,22 +140,6 @@ struct active_service {
     char databuf[NETWORK_BLOCK_BYTES];	/* buffer to relay netfd data in */
     TAILQ_ENTRY(active_service) tq;	/* queue handle */
 };
-
-/* 
- * Here are the services that we allow.
- */
-static struct services {
-    char *name;
-    int  active;
-} services[] = {
-    { "noop", 1 },
-    { "sendsize", 1 },
-    { "sendbackup", 1 },
-    { "selfcheck", 1 },
-    { "amindexd", 0 },
-    { "amidxtaped", 0 }
-};
-#define	NSERVICES	(int)(sizeof(services) / sizeof(services[0]))
 
 /*
  * Queue of outstanding requests that we are running.
@@ -157,7 +175,7 @@ static void protocol_recv(void *, pkt_t *, security_status_t);
 static void process_readnetfd(void *);
 static void process_writenetfd(void *, void *, ssize_t);
 static struct active_service *service_new(security_handle_t *,
-    const char *, const char *);
+    const char *, service_t, const char *);
 static void service_delete(struct active_service *);
 static int writebuf(struct active_service *, const void *, size_t);
 static ssize_t do_sendpkt(security_handle_t *handle, pkt_t *pkt);
@@ -587,7 +605,7 @@ protocol_accept(
      * the request pipe.
      */
     dbprintf(_("creating new service: %s\n%s\n"), service, arguments);
-    as = service_new(handle, service_path, arguments);
+    as = service_new(handle, service_path, services[i].service, arguments);
     if (writebuf(as, arguments, strlen(arguments)) < 0) {
 	const char *errmsg = strerror(errno);
 	dbprintf(_("error sending arguments to %s: %s\n"), service, errmsg);
@@ -1052,9 +1070,18 @@ s_ackwait(
 	    dh->netfd = NULL;
 	    continue;
 	}
-	/* setup an event for reads from it */
-	dh->ev_read = event_register((event_id_t)dh->fd_read, EV_READFD,
-				     process_readnetfd, dh);
+
+	/* setup an event for reads from it.  As a special case, don't start
+	 * listening on as->data[0] until we read some data on another fd, if
+	 * the service is sendbackup.  This ensures that we send a MESG or 
+	 * INDEX token before any DATA tokens, as dumper assumes. This is a
+	 * hack, if that wasn't already obvious! */
+	if (dh != &as->data[0] || as->service != SERVICE_SENDBACKUP) {
+	    dh->ev_read = event_register((event_id_t)dh->fd_read, EV_READFD,
+					 process_readnetfd, dh);
+	} else {
+	    amandad_debug(1, "Skipping registration of sendbackup's data FD\n");
+	}
 
 	security_stream_read(dh->netfd, process_writenetfd, dh);
 
@@ -1197,6 +1224,34 @@ process_readnetfd(
 	service_delete(as);
 	return;
     }
+
+    /* Handle the special case of recognizing "sendbackup info end"
+     * from sendbackup's MESG fd */
+    if (as->service == SERVICE_SENDBACKUP && !as->seen_info_end && dh == &as->data[1]) {
+	/* make a buffer containing the combined data from info_end_buf
+	 * and what we've read this time, and search it for info_end_strj
+	 * This includes a NULL byte for strstr's sanity. */
+	char *combined_buf = malloc(INFO_END_LEN + n + 1);
+	memcpy(combined_buf, as->info_end_buf, INFO_END_LEN);
+	memcpy(combined_buf+INFO_END_LEN, as->databuf, n);
+	combined_buf[INFO_END_LEN+n] = '\0';
+
+	as->seen_info_end = (strstr(combined_buf, info_end_str) != NULL);
+
+	/* fill info_end_buf from the tail end of combined_buf */
+	memcpy(as->info_end_buf, combined_buf + n, INFO_END_LEN);
+
+	/* if we did see info_end_str, start reading the data fd (fd 0) */
+	if (as->seen_info_end) {
+	    struct datafd_handle *dh = &as->data[0];
+	    amandad_debug(1, "Opening datafd to sendbackup (delayed until sendbackup sent header info)\n");
+	    dh->ev_read = event_register((event_id_t)dh->fd_read, EV_READFD,
+					 process_readnetfd, dh);
+	} else {
+	    amandad_debug(1, "sendbackup header info still not complete\n");
+	}
+    }
+
     if (security_stream_write(dh->netfd, as->databuf, (size_t)n) < 0) {
 	/* stream has croaked */
 	pkt_init(&nak, P_NAK, _("ERROR write error on stream %d: %s\n"),
@@ -1289,6 +1344,7 @@ static struct active_service *
 service_new(
     security_handle_t *	security_handle,
     const char *	cmd,
+    service_t		service,
     const char *	arguments)
 {
     int i;
@@ -1322,14 +1378,17 @@ service_new(
 	/*
 	 * The parent.  Close the far ends of our pipes and return.
 	 */
-	as = alloc(SIZEOF(*as));
+	as = g_new0(struct active_service, 1);
 	as->cmd = stralloc(cmd);
 	as->arguments = stralloc(arguments);
 	as->security_handle = security_handle;
 	as->state = NULL;
 	as->pid = pid;
 	as->send_partial_reply = 0;
-	if(strcmp(cmd+(strlen(cmd)-8), "sendsize") == 0) {
+	as->seen_info_end = FALSE;
+	/* fill in info_end_buf with non-null characters */
+	memset(as->info_end_buf, '-', sizeof(as->info_end_buf));
+	if(service == SERVICE_SENDSIZE) {
 	    g_option_t *g_options;
 	    char *option_str, *p;
 

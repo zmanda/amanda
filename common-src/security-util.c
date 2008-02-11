@@ -1750,11 +1750,14 @@ sec_tcp_conn_read_callback(
     /* If there are events waiting on this handle, we're done */
     rc->donotclose = 1;
     revent = event_wakeup((event_id_t)rc);
-    auth_debug(1, _("sec: conn_read_callback: event_wakeup return %zd\n"), rval);
+    auth_debug(1, _("sec: conn_read_callback: event_wakeup return %d\n"), revent);
     rc->donotclose = 0;
     if (rc->handle == H_TAKEN || rc->pktlen == 0) {
 	if(rc->refcnt == 0) amfree(rc);
 	return;
+    } else {
+	g_warning("sec: conn_read_callback: %zd bytes for handle %d went unclaimed!", 
+		rc->pktlen, rc->handle);
     }
 
     assert(rc->refcnt > 0);
