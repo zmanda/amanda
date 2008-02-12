@@ -1,3 +1,7 @@
+2008-02-12  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amstatus.pl: Report failure if dumper succeed and
+				  chunker failed.
+
 2008-02-07  Jean-Louis Martineau <martineau@zmanda.com>
 	* NEWS, ReleaseNotes: Add notes about rsh/ssh and amandad_path.
 
