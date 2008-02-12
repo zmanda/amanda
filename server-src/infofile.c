@@ -75,7 +75,7 @@ open_txinfofile(
 
     /* create the directory structure if in write mode */
     if (writing) {
-        if (mkpdir(infofile, 02755, (uid_t)-1, (gid_t)-1) == -1) {
+        if (mkpdir(infofile, 0755, (uid_t)-1, (gid_t)-1) == -1) {
 	    amfree(infofile);
 	    return NULL;
 	}

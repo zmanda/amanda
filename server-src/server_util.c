@@ -176,7 +176,7 @@ int check_infofile(
 		    }
 		}
 		if (other_dle_match == 0) {
-		    if(mkpdir(infofile, (mode_t)02755, (uid_t)-1,
+		    if(mkpdir(infofile, (mode_t)0755, (uid_t)-1,
 			      (gid_t)-1) == -1) 
 			*errmsg = vstralloc("Can't create directory for ",
 					    infofile, NULL);

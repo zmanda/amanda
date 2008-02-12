@@ -1044,7 +1044,7 @@ do_dump(
 	indexfile_real = getindexfname(hostname, diskname, dumper_timestamp, level);
 	indexfile_tmp = stralloc2(indexfile_real, ".tmp");
 
-	if (mkpdir(indexfile_tmp, 02755, (uid_t)-1, (gid_t)-1) == -1) {
+	if (mkpdir(indexfile_tmp, 0755, (uid_t)-1, (gid_t)-1) == -1) {
 	   errstr = newvstrallocf(errstr,
 				 _("err create %s: %s"),
 				 indexfile_tmp,
