@@ -1,3 +1,6 @@
+2008-02-12  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/amcheckdump.pl: fix typo
+
 2008-02-12  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/dumper.c: Fail if no header or no data.
 

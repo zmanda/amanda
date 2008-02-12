@@ -98,7 +98,7 @@ SKIP: {
     for my $dumpfile (@dump1) {
 	open(my $dumpfh, "+<", "$vtape1/$dumpfile");
 	sysseek($dumpfh, 32768, 0); # jump past the header
-	syswrite($dumpfh, "\0" * 100); # and write some zeroes
+	syswrite($dumpfh, "\0" x 100); # and write some zeroes
 	close($dumpfh);
     }
 
