@@ -463,7 +463,7 @@ while($lineX = <AMDUMP>) {
 					$busy_time{$line[5]}+=($current_time-$dump_time{$hostpart});
 			      $running_dumper{$line[5]} = "0";
 			      $dump_time{$hostpart}=$current_time;
-			      $error{$hostpart}="driver: $error";
+			      $error{$hostpart}="dumper: $error";
 			      $dumpers_active--;
 
 				}
@@ -490,7 +490,7 @@ while($lineX = <AMDUMP>) {
 					$busy_time{$line[5]}+=($current_time-$dump_time{$hostpart});
 					$running_dumper{$line[5]} = "0";
 					$dump_time{$hostpart}=$current_time;
-					$error{$hostpart}="driver: (aborted)";
+					$error{$hostpart}="dumper: (aborted)";
 					$dumpers_active--;
 				}
 			}
@@ -513,7 +513,16 @@ while($lineX = <AMDUMP>) {
 						$partial{$hostpart} = 0;
 					}
 				}
-				if($line[6] eq "RQ-MORE-DISK") {
+				elsif($line[6] eq "FAILED") {
+					$serial=$line[7];
+					$hostpart=$serial{$serial};
+					$dump_finished{$hostpart}=-1;
+					$busy_time{$line[5]}+=($current_time-$chunk_time{$hostpart});
+					$running_dumper{$line[5]} = "0";
+					$chunk_time{$hostpart}=$current_time;
+					$error{$hostpart}="chunker: " .$line[8] if $error{$hostpart} eq "";
+				}
+				elsif($line[6] eq "RQ-MORE-DISK") {
 					#7:handle
 					$serial=$line[7];
 					$hostpart=$serial{$serial};
@@ -591,7 +600,7 @@ while($lineX = <AMDUMP>) {
 						$taper_finished{$hostpart}= $line[6] eq 'TAPE-ERROR' ? -2 : -1;
 						$busy_time{"taper"}+=($current_time-$taper_time{$hostpart});
 						$taper_time{$hostpart}=$current_time;
-						$error{$hostpart}="driver: $error";
+						$error{$hostpart}="taper: $error";
 					}
 				}
 				elsif($line[6] eq "FAILED") {

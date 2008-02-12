@@ -1,4 +1,8 @@
 2008-02-12  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amstatus.pl: Report failure if dumper succeed and
+				  chunker failed.
+
+2008-02-12  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.h (config_name, config_dir, config_filename):
 				 Remove extern declaration.
 	* common-src/conffile.h (get_config_name, get_config_dir,
