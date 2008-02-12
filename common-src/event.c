@@ -29,13 +29,23 @@
  * Event handler.  Serializes different kinds of events to allow for
  * a uniform interface, central state storage, and centralized
  * interdependency logic.
+ *
+ * This is a compatibility wrapper over Glib's GMainLoop.  New code should
+ * use Glib's interface directly.
+ *
+ * Each event_handle is associated with a unique GSource, identified by it
+ * event_source_id.
  */
 
 #include "amanda.h"
-#include "event.h"
-#include "queue.h"
 #include "conffile.h"
+#include "event.h"
 
+/* TODO: use mem chunks to allocate event_handles */
+/* TODO: lock stuff for threading */
+
+/* Write a debugging message if the config variable debug_event
+ * is greater than or equal to i */
 #define event_debug(i, ...) do {	\
        if ((i) <= debug_event) {	\
            dbprintf(__VA_ARGS__);	\
@@ -49,56 +59,125 @@
 struct event_handle {
     event_fn_t fn;		/* function to call when this fires */
     void *arg;			/* argument to pass to previous function */
+
     event_type_t type;		/* type of event */
     event_id_t data;		/* type data */
-    time_t lastfired;		/* timestamp of last fired (EV_TIME only) */
-    LIST_ENTRY(event_handle) le; /* queue handle */
+
+    GSource *source;		/* Glib event source, if one exists */
+    guint source_id;	        /* ID of the glib event source */
+
+    gboolean has_fired;		/* for use by event_wait() */
+    gboolean is_dead;		/* should this event be deleted? */
 };
 
-/*
- * eventq is a queue of currently active events.
- * cache is a queue of unused handles.  We keep a few around to avoid
- * malloc overhead when doing a lot of register/releases.
- */
-static struct {
-    LIST_HEAD(, event_handle) listhead;
-    int qlength;
-} eventq = {
-    LIST_HEAD_INITIALIZER(eventq.listhead), 0
-}, cache = {
-    LIST_HEAD_INITIALIZER(eventq.listhead), 0
-};
-#define	eventq_first(q)		LIST_FIRST(&q.listhead)
-#define	eventq_next(eh)		LIST_NEXT(eh, le)
-#define	eventq_add(q, eh)	LIST_INSERT_HEAD(&q.listhead, eh, le);
-#define	eventq_remove(eh)	LIST_REMOVE(eh, le);
+/* A list of all extant event_handle objects, used for searching for particular
+ * events and for deleting dead events */
+GSList *all_events;
 
 /*
- * How many items we can have in the handle cache before we start
- * freeing.
+ * Utility functions
  */
-#define	CACHEDEPTH	10
+
+static const char *event_type2str(event_type_t type);
+
+/* "Fire" an event handle, by calling its callback function */
+#define	fire(eh) do { \
+	event_debug(1, "firing %p: %s/%jd\n", eh, event_type2str((eh)->type), (eh)->data); \
+	(*(eh)->fn)((eh)->arg); \
+	(eh)->has_fired = TRUE; \
+} while(0)
+
+/* Adapt a Glib callback to an event_handle_t callback; assumes that the
+ * user_ptr for the Glib callback is a pointer to the event_handle_t.  */
+static gboolean 
+event_handle_callback(
+    gpointer user_ptr)
+{
+    event_handle_t *hdl = (event_handle_t *)user_ptr;
+
+    /* if the handle is dead, then don't fire the callback; this means that
+     * we're in the process of freeing the event */
+    if (!hdl->is_dead) {
+	fire(hdl);
+    }
+
+    /* don't ever let GMainLoop destroy GSources */
+    return TRUE;
+}
 
 /*
- * A table of currently set signal handlers.
+ * FDSource -- a source for a file descriptor
+ *
+ * We could use Glib's GIOChannel for this, but it adds some buffering
+ * and Unicode functionality that we really don't want.  The custom GSource
+ * is simple enough anyway, and the Glib documentation describes it in prose.
  */
-static struct sigtabent {
-    event_handle_t *handle;	/* handle for this signal */
-    int score;			/* number of signals recvd since last checked */
-    void (*oldhandler)(int);/* old handler (for unsetting) */
-} sigtable[NSIG];
 
-static const char *event_type2str(event_type_t);
-#define	fire(eh)	(*(eh)->fn)((eh)->arg)
-static void signal_handler(int);
-static event_handle_t *gethandle(void);
-static void puthandle(event_handle_t *);
-static int event_loop_wait (event_handle_t *, const int);
+typedef struct FDSource {
+    GSource source; /* must be the first element in the struct */
+    GPollFD pollfd; /* Our file descriptor */
+} FDSource;
+
+static gboolean
+fdsource_prepare(
+    GSource *source G_GNUC_UNUSED,
+    gint *timeout_)
+{
+    *timeout_ = -1; /* block forever, as far as we're concerned */
+    return FALSE;
+}
+
+static gboolean
+fdsource_check(
+    GSource *source)
+{
+    FDSource *fds = (FDSource *)source;
+
+    /* we need to be dispatched if any interesting events have been received by the FD */
+    return fds->pollfd.events & fds->pollfd.revents;
+}
+
+static gboolean
+fdsource_dispatch(
+    GSource *source G_GNUC_UNUSED,
+    GSourceFunc callback,
+    gpointer user_data)
+{
+    if (callback) callback(user_data);
+
+    /* Never automatically un-queue the event source */
+    return TRUE;
+}
+
+static GSource *
+new_fdsource(gint fd, GIOCondition events)
+{
+    static GSourceFuncs *fdsource_funcs = NULL;
+    GSource *src;
+    FDSource *fds;
+
+    /* initialize these here to avoid a compiler warning */
+    if (!fdsource_funcs) {
+	fdsource_funcs = g_new0(GSourceFuncs, 1);
+	fdsource_funcs->prepare = fdsource_prepare;
+	fdsource_funcs->check = fdsource_check;
+	fdsource_funcs->dispatch = fdsource_dispatch;
+    }
+
+    src = g_source_new(fdsource_funcs, sizeof(FDSource));
+    fds = (FDSource *)src;
+
+    fds->pollfd.fd = fd;
+    fds->pollfd.events = events;
+    g_source_add_poll(src, &fds->pollfd);
+
+    return src;
+}
 
 /*
- * Add a new event.  See the comment in event.h for what the arguments
- * mean.
+ * Public functions
  */
+
 event_handle_t *
 event_register(
     event_id_t data,
@@ -107,42 +186,75 @@ event_register(
     void *arg)
 {
     event_handle_t *handle;
+    GIOCondition cond;
 
+    /* sanity-checking */
     if ((type == EV_READFD) || (type == EV_WRITEFD)) {
 	/* make sure we aren't given a high fd that will overflow a fd_set */
 	if (data >= (int)FD_SETSIZE) {
-	    error(_("event_register: Invalid file descriptor %lu"), data);
+	    error(_("event_register: Invalid file descriptor %jd"), data);
 	    /*NOTREACHED*/
 	}
-#if !defined(__lint) /* Global checking knows that these are never called */
-    } else if (type == EV_SIG) {
-	/* make sure signals are within range */
-	if (data >= NSIG) {
-	    error(_("event_register: Invalid signal %lu"), data);
-	    /*NOTREACHED*/
+    } else if (type == EV_TIME) {
+	if (data <= 0) {
+	    error(_("event_register: interval for EV_TIME must be greater than 0; got %jd"), data);
 	}
-	if (sigtable[data].handle != NULL) { 
-	    error(_("event_register: signal %lu already registered"), data);
-	    /*NOTREACHED*/
-	}
-    } else if (type >= EV_DEAD) {
-	error(_("event_register: Invalid event type %d"), type);
-	/*NOTREACHED*/
-#endif
     }
 
-    handle = gethandle();
+    handle = g_new0(event_handle_t, 1);
     handle->fn = fn;
     handle->arg = arg;
     handle->type = type;
     handle->data = data;
-    handle->lastfired = -1;
-    eventq_add(eventq, handle);
-    eventq.qlength++;
+    handle->is_dead = FALSE;
 
-    event_debug(1, _("event: register: %p->data=%lu, type=%s\n"),
+    event_debug(1, _("event: register: %p->data=%jd, type=%s\n"),
 		    handle, handle->data, event_type2str(handle->type));
-    return (handle);
+
+    /* add to the list of events */
+    all_events = g_slist_prepend(all_events, (gpointer)handle);
+
+    /* and set up the GSource for this event */
+    switch (type) {
+	case EV_READFD:
+	case EV_WRITEFD:
+	    /* create a new source */
+	    if (type == EV_READFD) {
+		cond = G_IO_IN | G_IO_HUP | G_IO_ERR;
+	    } else {
+		cond = G_IO_OUT | G_IO_ERR;
+	    }
+
+	    handle->source = new_fdsource(data, cond);
+
+	    /* attach it to the default GMainLoop */
+	    g_source_attach(handle->source, NULL);
+	    handle->source_id = g_source_get_id(handle->source);
+
+	    /* And set its callbacks */
+	    g_source_set_callback(handle->source, event_handle_callback,
+				  (gpointer)handle, NULL);
+	    break;
+
+	case EV_TIME:
+	    /* Glib provides a nice shortcut for timeouts.  The *1000 converts
+	     * seconds to milliseconds. */
+	    handle->source_id = g_timeout_add(data * 1000, event_handle_callback,
+					      (gpointer)handle);
+
+	    /* But it doesn't give us the source directly.. */
+	    handle->source = g_main_context_find_source_by_id(NULL, handle->source_id);
+	    break;
+
+	case EV_WAIT:
+	    /* nothing to do -- these are handled independently of GMainLoop */
+	    break;
+
+	default:
+	    error(_("Unknown event type %s"), event_type2str(type));
+    }
+
+    return handle;
 }
 
 /*
@@ -154,37 +266,15 @@ void
 event_release(
     event_handle_t *handle)
 {
-
     assert(handle != NULL);
 
-    event_debug(1, _("event: release (mark): %p data=%lu, type=%s\n"),
+    event_debug(1, _("event: release (mark): %p data=%jd, type=%s\n"),
 		    handle, handle->data,
 		    event_type2str(handle->type));
-    assert(handle->type != EV_DEAD);
+    assert(!handle->is_dead);
 
-    /*
-     * For signal events, we need to specially remove then from the
-     * signal event table.
-     */
-    if (handle->type == EV_SIG) {
-	struct sigtabent *se = &sigtable[handle->data];
-
-	assert(se->handle == handle);
-	signal((int)handle->data, se->oldhandler);
-	se->handle = NULL;
-	se->score = 0;
-    }
-
-    /*
-     * Decrement the qlength now since this is no longer a real
-     * event.
-     */
-    eventq.qlength--;
-
-    /*
-     * Mark it as dead and leave it for the loop to remove.
-     */
-    handle->type = EV_DEAD;
+    /* Mark it as dead and leave it for the event_loop to remove */
+    handle->is_dead = TRUE;
 }
 
 /*
@@ -194,401 +284,143 @@ int
 event_wakeup(
     event_id_t id)
 {
-    event_handle_t *eh;
+    GSList *iter;
+    GSList *tofire = NULL;
     int nwaken = 0;
 
-    event_debug(1, _("event: wakeup: enter (%lu)\n"), id);
+    event_debug(1, _("event: wakeup: enter (%jd)\n"), id);
 
-    for (eh = eventq_first(eventq); eh != NULL; eh = eventq_next(eh)) {
-
-	if (eh->type == EV_WAIT && eh->data == id) {
-	    event_debug(1, _("event: wakeup: %p id=%lu\n"), eh, id);
-	    fire(eh);
-	    nwaken++;
+    /* search for any and all matching events, and record them.  This way
+     * we have determined the whole list of events we'll be firing *before*
+     * we fire any of them. */
+    for (iter = all_events; iter != NULL; iter = g_slist_next(iter)) {
+	event_handle_t *eh = (event_handle_t *)iter->data;
+	if (eh->type == EV_WAIT && eh->data == id && !eh->is_dead) {
+	    tofire = g_slist_append(tofire, (gpointer)eh);
 	}
     }
+
+    /* fire them */
+    for (iter = tofire; iter != NULL; iter = g_slist_next(iter)) {
+	event_handle_t *eh = (event_handle_t *)iter->data;
+
+	event_debug(1, _("event: wakeup triggering: %p id=%jd\n"), eh, id);
+	fire(eh);
+	nwaken++;
+    }
+
+    /* and free the temporary list */
+    g_slist_free(tofire);
+
     return (nwaken);
 }
 
 
 /*
- * The event loop.  We need to be specially careful here with adds and
- * deletes.  Since adds and deletes will often happen while this is running,
- * we need to make sure we don't end up referencing a dead event handle.
+ * The event loop.
  */
+
+static void event_loop_wait (event_handle_t *, const int);
+
 void
 event_loop(
-    const int dontblock)
+    int nonblock)
 {
-    event_loop_wait((event_handle_t *)NULL, dontblock);
+    event_loop_wait(NULL, nonblock);
 }
 
-
-
-int
+void
 event_wait(
     event_handle_t *eh)
 {
-    return event_loop_wait(eh, 0);
+    event_loop_wait(eh, 0);
 }
 
-/*
- * The event loop.  We need to be specially careful here with adds and
- * deletes.  Since adds and deletes will often happen while this is running,
- * we need to make sure we don't end up referencing a dead event handle.
+/* Flush out any dead events in all_events.  Be careful that this
+ * isn't called while someone is iterating over all_events.
+ *
+ * @param wait_eh: the event handle we're waiting on, which shouldn't
+ *	    be flushed.
  */
-static int
+static void
+flush_dead_events(event_handle_t *wait_eh)
+{
+    GSList *iter, *next;
+
+    for (iter = all_events; iter != NULL; iter = next) {
+	event_handle_t *hdl = (event_handle_t *)iter->data;
+	next = g_slist_next(iter);
+
+	/* (handle the case when wait_eh is dead by simply not deleting
+	 * it; the next run of event_loop will take care of it) */
+	if (hdl->is_dead && hdl != wait_eh) {
+	    all_events = g_slist_delete_link(all_events, iter);
+	    if (hdl->source) g_source_destroy(hdl->source);
+
+	    amfree(hdl);
+	}
+    }
+}
+
+/* Return TRUE if we have any events outstanding that can be dispatched
+ * by GMainLoop.  Recall EV_WAIT events appear in all_events, but are
+ * not dispatched by GMainLoop.  */
+static gboolean
+any_mainloop_events(void)
+{
+    GSList *iter;
+
+    for (iter = all_events; iter != NULL; iter = g_slist_next(iter)) {
+	event_handle_t *hdl = (event_handle_t *)iter->data;
+	if (hdl->type != EV_WAIT)
+	    return TRUE;
+    }
+
+    return FALSE;
+}
+
+static void
 event_loop_wait(
     event_handle_t *wait_eh,
-    const int       dontblock)
+    int nonblock)
 {
-#ifdef ASSERTIONS
-    static int entry = 0;
-#endif
-    SELECT_ARG_TYPE readfds, writefds, errfds, werrfds;
-    struct timeval timeout, *tvptr;
-    int ntries, maxfd, rc;
-    long interval;
-    time_t curtime;
-    event_handle_t *eh, *nexteh;
-    struct sigtabent *se;
-    int event_wait_fired = 0;
-    int see_event;
+    event_debug(1, _("event: loop: enter: nonblockg=%d, eh=%p\n"), nonblock, wait_eh);
 
-    event_debug(1, _("event: loop: enter: dontblock=%d, qlength=%d, eh=%p\n"),
-		    dontblock, eventq.qlength, wait_eh);
-
-    /*
-     * If we have no events, we have nothing to do
-     */
-    if (eventq.qlength == 0)
-	return 0;
-
-    /*
-     * We must not be entered twice
-     */
-    assert(++entry == 1);
-
-    ntries = 0;
-
-    /*
-     * Save a copy of the current time once, to reduce syscall load
-     * slightly.
-     */
-    curtime = time(NULL);
-
-    do {
-	if (debug_event >= 1) {
-	    event_debug(1, _("event: loop: dontblock=%d, qlength=%d eh=%p\n"),
-			    dontblock, eventq.qlength, wait_eh);
-	    for (eh = eventq_first(eventq); eh != NULL; eh = eventq_next(eh)) {
-		event_debug(1, _("%p): %s data=%lu fn=%p arg=%p\n"),
-				eh, event_type2str(eh->type), eh->data, eh->fn,
-				eh->arg);
-	    }
-	}
-	/*
-	 * Set ourselves up with no timeout initially.
-	 */
-	timeout.tv_sec = 0;
-	timeout.tv_usec = 0;
-
-	/*
-	 * If we can block, initially set the tvptr to NULL.  If
-	 * we come across timeout events in the loop below, they
-	 * will set it to an appropriate buffer.  If we don't
-	 * see any timeout events, then tvptr will remain NULL
-	 * and the select will properly block indefinately.
-	 *
-	 * If we can't block, set it to point to the timeout buf above.
-	 */
-	if (dontblock)
-	    tvptr = &timeout;
-	else
-	    tvptr = NULL;
-
-	/*
-	 * Rebuild the select bitmasks each time.
-	 */
-	FD_ZERO(&readfds);
-	FD_ZERO(&writefds);
-	FD_ZERO(&errfds);
-	maxfd = 0;
-
-	see_event = (wait_eh == (event_handle_t *)NULL);
-	/*
-	 * Run through each event handle and setup the events.
-	 * We save our next pointer early in case we GC some dead
-	 * events.
-	 */
-	for (eh = eventq_first(eventq); eh != NULL; eh = nexteh) {
-	    nexteh = eventq_next(eh);
-
-	    switch (eh->type) {
-
-	    /*
-	     * Read fds just get set into the select bitmask
-	     */
-	    case EV_READFD:
-		FD_SET((int)eh->data, &readfds);
-		FD_SET((int)eh->data, &errfds);
-		maxfd = max(maxfd, (int)eh->data);
-		see_event |= (eh == wait_eh);
-		break;
-
-	    /*
-	     * Likewise with write fds
-	     */
-	    case EV_WRITEFD:
-		FD_SET((int)eh->data, &writefds);
-		FD_SET((int)eh->data, &errfds);
-		maxfd = max(maxfd, (int)eh->data);
-		see_event |= (eh == wait_eh);
-		break;
-
-	    /*
-	     * Only set signals that aren't already set to avoid unnecessary
-	     * syscall overhead.
-	     */
-	    case EV_SIG:
-		se = &sigtable[eh->data];
-		see_event |= (eh == wait_eh);
-
-		if (se->handle == eh)
-		    break;
-
-		/* no previous handle */
-		assert(se->handle == NULL);
-		se->handle = eh;
-		se->score = 0;
-		/*@ignore@*/
-		se->oldhandler = signal((int)eh->data, signal_handler);
-		/*@end@*/
-		break;
-
-	    /*
-	     * Compute the timeout for this select
-	     */
-	    case EV_TIME:
-		/* if we're not supposed to block, then leave it at 0 */
-		if (dontblock)
-		    break;
-
-		if (eh->lastfired == -1)
-		    eh->lastfired = curtime;
-
-		interval = (long)(eh->data - (curtime - eh->lastfired));
-		if (interval < 0)
-		    interval = 0;
-
-		if (tvptr != NULL)
-		    timeout.tv_sec = min(timeout.tv_sec, interval);
-		else {
-		    /* this is the first timeout */
-		    tvptr = &timeout;
-		    timeout.tv_sec = interval;
-		}
-		see_event |= (eh == wait_eh);
-		break;
-
-	    /*
-	     * Wait events are processed immediately by event_wakeup()
-	     */
-	    case EV_WAIT:
-		see_event |= (eh == wait_eh);
-		break;
-
-	    /*
-	     * Prune dead events
-	     */
-	    case EV_DEAD:
-		eventq_remove(eh);
-		puthandle(eh);
-		break;
-
-	    default:
-		assert(0);
-		break;
-	    }
-	}
-
-	if(!see_event) {
-	    assert(--entry == 0);
-	    return 0;
-	}
-
-	/*
-	 * Let 'er rip
-	 */
-	event_debug(1,
-		    _("event: select: dontblock=%d, maxfd=%d, timeout=%ld\n"),
-		     dontblock, maxfd,
-		     tvptr != NULL ? timeout.tv_sec : -1);
-	rc = select(maxfd + 1, &readfds, &writefds, &errfds, tvptr);
-	event_debug(1, _("event: select returns %d\n"), rc);
-
-	/*
-	 * Select errors can mean many things.  Interrupted events should
-	 * not be fatal, since they could be delivered signals which still
-	 * need to have their events fired.
-	 */
-	if (rc < 0) {
-	    if (errno != EINTR) {
-		if (++ntries > 5) {
-		    error(_("select failed: %s"), strerror(errno));
-		    /*NOTREACHED*/
-		}
-		continue;
-	    }
-	    /* proceed if errno == EINTR, we may have caught a signal */
-
-	    /* contents cannot be trusted */
-	    FD_ZERO(&readfds);
-	    FD_ZERO(&writefds);
-	    FD_ZERO(&errfds);
-	}
-
-	/*
-	 * Grab the current time again for use in timed events.
-	 */
-	curtime = time(NULL);
-
-	/*
-	 * We need to copy the errfds into werrfds, so file descriptors
-	 * that are being polled for both reading and writing have
-	 * both of their poll events 'see' the error.
-	 */
-	memcpy(&werrfds, &errfds, SIZEOF(werrfds));
-
-	/*
-	 * Now run through the events and fire the ones that are ready.
-	 * Don't handle file descriptor events if the select failed.
-	 */
-	for (eh = eventq_first(eventq); eh != NULL; eh = eventq_next(eh)) {
-
-	    switch (eh->type) {
-
-	    /*
-	     * Read fds: just fire the event if set in the bitmask
-	     */
-	    case EV_READFD:
-		if (FD_ISSET((int)eh->data, &readfds) ||
-		    FD_ISSET((int)eh->data, &errfds)) {
-		    FD_CLR((int)eh->data, &readfds);
-		    FD_CLR((int)eh->data, &errfds);
-		    fire(eh);
-		    if(eh == wait_eh) event_wait_fired = 1;
-		}
-		break;
-
-	    /*
-	     * Write fds: same as Read fds
-	     */
-	    case EV_WRITEFD:
-		if (FD_ISSET((int)eh->data, &writefds) ||
-		    FD_ISSET((int)eh->data, &werrfds)) {
-		    FD_CLR((int)eh->data, &writefds);
-		    FD_CLR((int)eh->data, &werrfds);
-		    fire(eh);
-		    if(eh == wait_eh) event_wait_fired = 1;
-		}
-		break;
-
-	    /*
-	     * Signal events: check the score for fires, and run the
-	     * event if we got one.
-	     */
-	    case EV_SIG:
-		se = &sigtable[eh->data];
-		if (se->score > 0) {
-		    assert(se->handle == eh);
-		    se->score = 0;
-		    fire(eh);
-		    if(eh == wait_eh) event_wait_fired = 1;
-		}
-		break;
-
-	    /*
-	     * Timed events: check the interval elapsed since last fired,
-	     * and set it off if greater or equal to requested interval.
-	     */
-	    case EV_TIME:
-		if (eh->lastfired == -1)
-		    eh->lastfired = curtime;
-		if ((curtime - eh->lastfired) >= (time_t)eh->data) {
-		    eh->lastfired = curtime;
-		    fire(eh);
-		    if(eh == wait_eh) event_wait_fired = 1;
-		}
-		break;
-
-	    /*
-	     * Wait events are handled immediately by event_wakeup()
-	     * Dead events are handled by the pre-select loop.
-	     */
-	    case EV_WAIT:
-	    case EV_DEAD:
-		break;
-
-	    default:
-		assert(0);
-		break;
-	    }
-	}
-    } while (!dontblock && eventq.qlength > 0 && event_wait_fired == 0);
-
-    assert(--entry == 0);
-    
-    return (event_wait_fired == 1);
-}
-
-/*
- * Generic signal handler.  Used to count caught signals for the event
- * loop.
- */
-static void
-signal_handler(
-    int	signo)
-{
-
-    assert((signo >= 0) && ((size_t)signo < (size_t)(sizeof(sigtable) / sizeof(sigtable[0]))));
-    sigtable[signo].score++;
-}
-
-/*
- * Return a new handle.  Take from the handle cache if not empty.  Otherwise,
- * alloc a new one.
- */
-static event_handle_t *
-gethandle(void)
-{
-    event_handle_t *eh;
-
-    if ((eh = eventq_first(cache)) != NULL) {
-	assert(cache.qlength > 0);
-	eventq_remove(eh);
-	cache.qlength--;
-	return (eh);
+    /* If we're waiting for a specific event, then reset its has_fired flag */
+    if (wait_eh) {
+	wait_eh->has_fired = FALSE;
     }
-    assert(cache.qlength == 0);
-    return (alloc(SIZEOF(*eh)));
-}
 
-/*
- * Free a handle.  If there's space in the handle cache, put it there.
- * Otherwise, free it.
- */
-static void
-puthandle(
-    event_handle_t *eh)
-{
+    /* Keep looping until there are no events, or until wait_eh has fired */
+    while (1) {
+	/* clean up first, so we don't accidentally check a dead source */
+	flush_dead_events(wait_eh);
 
-    if (cache.qlength > CACHEDEPTH) {
-	amfree(eh);
-	return;
+	/* if there's nothing to wait for, then don't block, but run an
+	 * iteration so that any other users of GMainLoop will get a chance
+	 * to run. */
+	if (!any_mainloop_events())
+	    break;
+
+	/* Do an interation */
+	g_main_context_iteration(NULL, !nonblock);
+
+	/* If the event we've been waiting for has fired or been released, as
+	 * appropriate, we're done.  See the comments for event_wait in event.h
+	 * for the skinny on this weird expression. */
+	if (wait_eh && ((wait_eh->type == EV_WAIT && wait_eh->is_dead)
+	             || (wait_eh->type != EV_WAIT && wait_eh->has_fired)))
+	    break;
+
+	/* Don't loop if we're not blocking */
+	if (nonblock)
+	    break;
     }
-    eventq_add(cache, eh);
-    cache.qlength++;
+
+    /* extra cleanup, to keep all_events short, and to delete wait_eh if it
+     * has been released. */
+    flush_dead_events(NULL);
+
 }
 
 /*
@@ -605,10 +437,8 @@ event_type2str(
 #define	X(s)	{ s, stringize(s) }
 	X(EV_READFD),
 	X(EV_WRITEFD),
-	X(EV_SIG),
 	X(EV_TIME),
 	X(EV_WAIT),
-	X(EV_DEAD),
 #undef X
     };
     size_t i;

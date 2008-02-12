@@ -1383,6 +1383,7 @@ service_new(
 	as->arguments = stralloc(arguments);
 	as->security_handle = security_handle;
 	as->state = NULL;
+	as->service = service;
 	as->pid = pid;
 	as->send_partial_reply = 0;
 	as->seen_info_end = FALSE;

@@ -1,4 +1,10 @@
 2008-02-12  Dustin J. Mitchell <dustin@zmanda.com>
+	* amandad-src/amandad.c: initialize as->service
+	* common-src/event.c common-src/event.h: new GMainLoop-based
+	  version of the event library, allowing GMainLoop-based and 
+	  event-based processes to co-exist peacefully
+
+2008-02-12  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/amcheckdump.pl: fix typo
 
 2008-02-12  Jean-Louis Martineau <martineau@zmanda.com>
