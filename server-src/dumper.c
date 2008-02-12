@@ -1089,15 +1089,23 @@ do_dump(
      */
     event_loop(0);
 
+    if (!ISSET(status, HEADER_DONE)) {
+	dump_result = max(dump_result, 2);
+	if (!errstr) errstr = stralloc(_("got no header information"));
+    }
+
+    dumpsize -= headersize;		/* don't count the header */
+    if (dumpsize <= (off_t)0) {
+	dumpsize = (off_t)0;
+	dump_result = max(dump_result, 2);
+	if (!errstr) errstr = stralloc(_("got no data"));
+    }
+
     if (dump_result > 1)
 	goto failed;
 
     runtime = stopclock();
     dumptime = g_timeval_to_double(runtime);
-
-    dumpsize -= headersize;		/* don't count the header */
-    if (dumpsize < (off_t)0)		/* XXX - maybe this should be fatal? */
-	dumpsize = (off_t)0;
 
     amfree(errstr);
     errstr = alloc(128);
