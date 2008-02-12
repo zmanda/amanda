@@ -1,4 +1,7 @@
 2008-02-12  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/dumper.c: Fail if no header or no data.
+
+2008-02-12  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amstatus.pl: Report failure if dumper succeed and
 				  chunker failed.
 
