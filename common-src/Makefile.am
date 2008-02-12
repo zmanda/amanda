@@ -193,11 +193,14 @@ amfeatures_LDADD = $(libamanda_la_LIBADD) $(STANDARD_COMMON_STUFF)
 
 # automake-style tests
 
-TESTS = amflock-test
+TESTS = amflock-test event-test
 noinst_PROGRAMS = $(TESTS)
 
 amflock_test_SOURCES = amflock-test.c
 amflock_test_LDADD = libamanda.la
+
+event_test_SOURCES = event-test.c
+event_test_LDADD = libamanda.la
 
 # scripts
 

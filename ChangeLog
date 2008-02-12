@@ -1,4 +1,8 @@
 2008-02-12  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/event-test.c common-src/Makefile.am: add checks
+	  for the event module
+
+2008-02-12  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/dumper.c server-src/server_util.c
 	  server-src/infofile.c server-src/amtrmlog.c common-src/debug.c
 	  common-src/file.c: Always call mkpdir without the 02000 bit set,
