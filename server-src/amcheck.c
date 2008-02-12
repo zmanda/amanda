@@ -213,7 +213,7 @@ main(
     config_init(CONFIG_INIT_EXPLICIT_NAME|CONFIG_INIT_FATAL,
 		argv[0]);
     apply_config_overwrites(cfg_ovr);
-    dbrename(config_name, DBG_SUBDIR_SERVER);
+    dbrename(get_config_name(), DBG_SUBDIR_SERVER);
 
     if(mailout && !mailto && 
        (getconf_seen(CNF_MAILTO)==0 || strlen(getconf_str(CNF_MAILTO)) == 0)) {
@@ -1543,7 +1543,7 @@ start_host(
 			has_hostname ? hostp->hostname : "",
 			has_hostname ? ";" : "",
 			has_config   ? "config=" : "",
-			has_config   ? config_name : "",
+			has_config   ? get_config_name() : "",
 			has_config   ? ";" : "",
 			"\n",
 			NULL);

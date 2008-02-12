@@ -891,21 +891,14 @@ void config_uninit(void);
  */
 char **get_config_options(int first);
 
-/* The name of the configuration under which this application is running.
- * This variable is initialized by config_init, and should be treated as
- * read-only.
- */
-extern char *config_name;
+/* Get the config name */
+char *get_config_name(void);
 
-/* The directory containing the configuration for this application.  This
- * variable is initialized by config_init, and should be treated as read-only.
- */
-extern char *config_dir;
+/* Get the config directory */
+char *get_config_dir(void);
 
-/* The most recently read top-level configuration file.  This variable is
- * initialized by config_init, and should be treated as read-only.
- */
-extern char *config_filename;
+/* Get the config filename */
+char *get_config_filename(void);
 
 /*
  * Utilities

@@ -1120,7 +1120,7 @@ int main(int argc, char ** argv) {
 
     check_running_as(RUNNING_AS_DUMPUSER);
 
-    dbrename(config_name, DBG_SUBDIR_SERVER);
+    dbrename(get_config_name(), DBG_SUBDIR_SERVER);
 
     tapelist_name = config_dir_relative(getconf_str(CNF_TAPELIST));
 

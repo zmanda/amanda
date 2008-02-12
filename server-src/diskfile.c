@@ -1389,25 +1389,16 @@ main(
   signal(SIGPIPE, SIG_IGN);
 
   if (argc>1) {
-    config_name = argv[1];
-    if (strchr(config_name, '/') != NULL) {
-      config_dir = stralloc2(argv[1], "/");
-      config_name = strrchr(config_name, '/') + 1;
-    } else {
-      config_dir = vstralloc(CONFIG_DIR, "/", config_name, "/", NULL);
-    }
+    config_init(CONFIG_INIT_EXPLICIT_NAME|CONFIG_INIT_FATAL, argv[1]);
   } else {
-    config_dir = stralloc("");
+    config_init(CONFIG_INIT_USE_CWD|CONFIG_INIT_FATAL, NULL)
   }
-  conffile = stralloc2(config_dir, CONFFILE_NAME);
-  if((result = read_conffile(conffile)) == 0) {
-    conf_diskfile = config_dir_relative(getconf_str(CNF_DISKFILE));
-    result = read_diskfile(conf_diskfile, &lst);
-    if(result == 0) {
-      dump_disklist(&lst);
-    }
-    amfree(conf_diskfile);
+  conf_diskfile = config_dir_relative(getconf_str(CNF_DISKFILE));
+  result = read_diskfile(conf_diskfile, &lst);
+  if(result == 0) {
+    dump_disklist(&lst);
   }
+  amfree(conf_diskfile);
   amfree(conffile);
   amfree(config_dir);
 

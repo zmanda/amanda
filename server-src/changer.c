@@ -406,10 +406,10 @@ changer_command(
 	}
 	aclose(fd[0]);
 	aclose(fd[1]);
-	if(config_dir && chdir(config_dir) == -1) {
+	if (get_config_dir() && chdir(get_config_dir()) == -1) {
 	    changer_resultstr = vstrallocf(
 			_("<error> could not cd to \"%s\": %s"),
-			config_dir, strerror(errno));
+			get_config_dir(), strerror(errno));
 	    (void)fullwrite(STDOUT_FILENO, changer_resultstr, strlen(changer_resultstr));
 	    exit(1);
 	}

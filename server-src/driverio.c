@@ -113,7 +113,7 @@ startup_tape_process(
 	    error(_("taper dup2: %s"), strerror(errno));
 	config_options = get_config_options(2);
 	config_options[0] = "taper";
-	config_options[1] = config_name;
+	config_options[1] = get_config_name();
 	safe_fd(-1, 0);
 	execve(taper_program, config_options, safe_env());
 	error("exec %s: %s", taper_program, strerror(errno));
@@ -150,7 +150,7 @@ startup_dump_process(
 	    error(_("%s dup2: %s"), dumper->name, strerror(errno));
 	config_options = get_config_options(2);
 	config_options[0] = dumper->name ? dumper->name : "dumper",
-	config_options[1] = config_name;
+	config_options[1] = get_config_name();
 	safe_fd(-1, 0);
 	execve(dumper_program, config_options, safe_env());
 	error(_("exec %s (%s): %s"), dumper_program,
@@ -218,7 +218,7 @@ startup_chunk_process(
 	}
 	config_options = get_config_options(2);
 	config_options[0] = chunker->name ? chunker->name : "chunker",
-	config_options[1] = config_name;
+	config_options[1] = get_config_name();
 	safe_fd(-1, 0);
 	execve(chunker_program, config_options, safe_env());
 	error(_("exec %s (%s): %s"), chunker_program,

@@ -295,7 +295,7 @@ main(
 
     check_running_as(RUNNING_AS_DUMPUSER);
 
-    dbrename(config_name, DBG_SUBDIR_SERVER);
+    dbrename(get_config_name(), DBG_SUBDIR_SERVER);
 
     our_features = am_init_feature_set();
     our_feature_string = am_feature_to_string(our_features);
@@ -1907,7 +1907,7 @@ startup_dump(
 		    has_hostname ? hostname : "",
 		    has_hostname ? ";" : "",
 		    has_config   ? "config=" : "",
-		    has_config   ? config_name : "",
+		    has_config   ? get_config_name() : "",
 		    has_config   ? ";" : "",
 		    "\n",
 		    backup_api, progname,

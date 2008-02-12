@@ -424,14 +424,20 @@ static void validate_unreserved_port_range(conf_var_t *, val_t *);
  * Initialization
  */
 
-/* Name of the current configuration (part of API) */
-char *config_name = NULL;
+/* The name of the configuration under which this application is running.
+ * This variable is initialized by config_init.
+ */
+static char *config_name = NULL;
 
-/* Current configuration directory (part of API) */
-char *config_dir = NULL;
+/* The directory containing the configuration for this application.  This
+ * variable is initialized by config_init
+ */
+static char *config_dir = NULL;
 
-/* Current toplevel configuration file (part of API) */
-char *config_filename = NULL;
+/* The most recently read top-level configuration file.  This variable is
+ * initialized by config_init
+ */
+static char *config_filename = NULL;
 
 /* Has the config been initialized? */
 static gboolean config_initialized = FALSE;
@@ -5025,3 +5031,23 @@ printf_arglist_function(void conf_parswarn, const char *, format) {
     print_parse_problem(format, argp);
     arglist_end(argp);
 }
+
+/* Get the config name */
+char *get_config_name(void)
+{
+    return config_name;
+}
+
+/* Get the config directory */
+char *get_config_dir(void)
+{
+    return config_dir;
+}
+
+/* Get the config filename */
+char *get_config_filename(void)
+{
+    return config_filename;
+}
+
+

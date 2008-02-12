@@ -135,7 +135,7 @@ main(
 
     check_running_as(RUNNING_AS_DUMPUSER);
 
-    dbrename(config_name, DBG_SUBDIR_SERVER);
+    dbrename(get_config_name(), DBG_SUBDIR_SERVER);
 
     conf_tapelist = config_dir_relative(getconf_str(CNF_TAPELIST));
     if (read_tapelist(conf_tapelist)) {
@@ -163,7 +163,7 @@ main(
 	if(slotcommand) {
 	    g_fprintf(stderr,
 	     _("%s: no tpchanger specified in \"%s\", so slot command invalid\n"),
-		    argv[0], config_filename);
+		    argv[0], get_config_filename());
 	    usage();
 	}
 	tapename = getconf_str(CNF_TAPEDEV);
@@ -202,7 +202,8 @@ main(
 	/* got an amanda tape */
 	g_printf(_("Found Amanda tape %s"),device->volume_label);
 	if(match(labelstr, device->volume_label) == 0) {
-	    g_printf(_(", but it is not from configuration %s."), config_name);
+	    g_printf(_(", but it is not from configuration %s."),
+		     get_config_name());
 	    if(!force)
 		tape_ok=0;
 	} else {
@@ -280,7 +281,6 @@ main(
     clear_tapelist();
     amfree(outslot);
     amfree(conf_tapelist);
-    config_name=NULL;
     dbclose();
 
     return 0;

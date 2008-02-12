@@ -166,7 +166,7 @@ main(
 		config_init(CONFIG_INIT_CLIENT | CONFIG_INIT_EXPLICIT_NAME | CONFIG_INIT_OVERLAY,
 			    g_options->config);
 
-		dbrename(config_name, DBG_SUBDIR_CLIENT);
+		dbrename(get_config_name(), DBG_SUBDIR_CLIENT);
 	    }
 
 	    continue;

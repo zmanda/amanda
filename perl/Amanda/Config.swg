@@ -719,22 +719,13 @@ gboolean config_init(config_init_flags flags,
 		     char *arg_config_name);
 void config_uninit(void);
 char **get_config_options(int first);
+char *get_config_name(void);
+char *get_config_dir(void);
+char *get_config_filename(void);
+
 amglue_export_tag(init,
     config_init config_uninit get_config_options
-);
-
-/* These are accessor functions, because SWIG's wrapping of global string
- * variables is no so good -- the resulting strings can't be passed to other
- * functions expecting char * arguments.  */
-%inline %{
-    char *get_config_name(void) { return config_name; }
-    char *get_config_dir(void) { return config_dir; }
-    char *get_config_filename(void) { return config_filename; }
-%}
-amglue_export_tag(init,
-    get_config_name 
-    get_config_dir 
-    get_config_filename
+    get_config_name get_config_dir get_config_filename
 );
 
 /*
@@ -745,6 +736,7 @@ void dump_configuration(void);
 char *config_dir_relative(char *filename);
 char *taperalgo2str(taperalgo_t taperalgo);
 gint64 find_multiplier(char * casestr);
+
 amglue_export_ok(
     dump_configuration config_dir_relative taperalgo2str find_multiplier
 );

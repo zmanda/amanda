@@ -377,7 +377,7 @@ main(
 
     check_running_as(RUNNING_AS_DUMPUSER);
 
-    dbrename(config_name, DBG_SUBDIR_SERVER);
+    dbrename(get_config_name(), DBG_SUBDIR_SERVER);
 
     dumpspecs = cmdline_parse_dumpspecs(argc - optind, argv + optind,
 					CMDLINE_PARSE_DATESTAMP |

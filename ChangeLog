@@ -1,3 +1,28 @@
+2008-02-12  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.h (config_name, config_dir, config_filename):
+				 Remove extern declaration.
+	* common-src/conffile.h (get_config_name, get_config_dir,
+				 get_config_filename): New prototype.
+	* common-src/conffile.c (config_name, config_dir, config_filename):
+				 Declare static.
+	* common-src/conffile.h (get_config_name, get_config_dir,
+				 get_config_filename): New functions.
+	* perl/Amanda/Config.swg: Don't inline the functions.
+	* oldrecover-src/extract_list.c, client-src/sendbackup.c,
+	  client-src/sendsize.c, client-src/selfcheck.c,
+	  recover-src/amrecover.c, recover-src/extract_list.c,
+	  server-src/changer.c, server-src/amlogroll.c,
+	  server-src/amindexd.c, server-src/amcheck.c,
+	  server-src/dumper.c, server-src/planner.c,
+	  server-src/chunker.c, server-src/amadmin.c,
+	  server-src/amtape.c, server-src/amcleanupdisk.c,
+	  server-src/amflush.c, server-src/amtrmlog.c,
+	  server-src/driverio.c, server-src/driver.c,
+	  server-src/reporter.c, server-src/taper.c,
+	  server-src/amtrmidx.c, server-src/diskfile.c,
+	  server-src/amlabel.c,
+	  restore-src/amfetchdump.c: Use new functions.
+
 2008-02-12  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/event-test.c common-src/Makefile.am: add checks
 	  for the event module

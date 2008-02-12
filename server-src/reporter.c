@@ -472,7 +472,7 @@ main(
 
     check_running_as(RUNNING_AS_DUMPUSER);
 
-    dbrename(config_name, DBG_SUBDIR_SERVER);
+    dbrename(get_config_name(), DBG_SUBDIR_SERVER);
 
     safe_cd(); /* must be called *after* config_init() */
 
@@ -701,7 +701,7 @@ main(
 	if (ghostname) {
 	    g_fprintf(mailf, _("Hostname: %s\n"), ghostname);
 	    g_fprintf(mailf, _("Org     : %s\n"), getconf_str(CNF_ORG));
-	    g_fprintf(mailf, _("Config  : %s\n"), config_name);
+	    g_fprintf(mailf, _("Config  : %s\n"), get_config_name());
 	    g_fprintf(mailf, _("Date    : %s\n"),
 		    nicedate(run_datestamp ? run_datestamp : "0"));
 	    g_fprintf(mailf,"\n");

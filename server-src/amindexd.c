@@ -491,7 +491,7 @@ is_dump_host_valid(
     am_host_t   *ihost;
     disk_t      *diskp;
 
-    if (config_name == NULL) {
+    if (get_config_name() == NULL) {
 	reply(501, _("Must set config before setting host."));
 	return NULL;
     }
@@ -528,7 +528,7 @@ is_disk_valid(
     disk_t *idisk;
     char *qdisk;
 
-    if (config_name == NULL) {
+    if (get_config_name() == NULL) {
 	reply(501, _("Must set config,host before setting disk."));
 	return -1;
     }
@@ -597,7 +597,7 @@ check_and_load_config(
     }
     amfree(conf_tapelist);
 
-    dbrename(config_name, DBG_SUBDIR_SERVER);
+    dbrename(get_config_name(), DBG_SUBDIR_SERVER);
 
     output_find = find_dump(&disk_list);
     sort_find_result("DLKHpB", &output_find);
@@ -624,7 +624,7 @@ build_disk_table(void)
     int last_partnum;
     find_result_t *find_output;
 
-    if (config_name == NULL) {
+    if (get_config_name() == NULL) {
 	reply(590, _("Must set config,host,disk before building disk table"));
 	return -1;
     }
@@ -710,7 +710,7 @@ disk_history_list(void)
     DUMP_ITEM *item;
     char date[20];
 
-    if (config_name == NULL) {
+    if (get_config_name() == NULL) {
 	reply(502, _("Must set config,host,disk before listing history"));
 	return -1;
     }
@@ -724,7 +724,7 @@ disk_history_list(void)
     }
 
     lreply(200, _(" Dump history for config \"%s\" host \"%s\" disk %s"),
-	  config_name, dump_hostname, qdisk_name);
+	  get_config_name(), dump_hostname, qdisk_name);
 
     for (item=first_dump(); item!=NULL; item=next_dump(item)){
         char *tapelist_str = marshal_tapelist(item->tapes, 1);
@@ -745,7 +745,7 @@ disk_history_list(void)
     }
 
     reply(200, _("Dump history for config \"%s\" host \"%s\" disk %s"),
-	  config_name, dump_hostname, qdisk_name);
+	  get_config_name(), dump_hostname, qdisk_name);
 
     return 0;
 }
@@ -770,7 +770,7 @@ is_dir_valid_opaque(
     size_t ldir_len;
     static char *emsg = NULL;
 
-    if (config_name == NULL || dump_hostname == NULL || disk_name == NULL) {
+    if (get_config_name() == NULL || dump_hostname == NULL || disk_name == NULL) {
 	reply(502, _("Must set config,host,disk before asking about directories"));
 	return -1;
     }
@@ -878,7 +878,7 @@ opaque_ls(
 
     clear_dir_list();
 
-    if (config_name == NULL) {
+    if (get_config_name() == NULL) {
 	reply(502, _("Must set config,host,disk before listing a directory"));
 	return -1;
     }
@@ -1010,7 +1010,7 @@ tapedev_is(void)
     char *result;
 
     /* check state okay to do this */
-    if (config_name == NULL) {
+    if (get_config_name() == NULL) {
 	reply(501, _("Must set config before asking about tapedev."));
 	return -1;
     }
@@ -1051,7 +1051,7 @@ are_dumps_compressed(void)
     disk_t *diskp;
 
     /* check state okay to do this */
-    if (config_name == NULL) {
+    if (get_config_name() == NULL) {
 	reply(501, _("Must set config,host,disk name before asking about dumps."));
 	return -1;
     }
@@ -1390,11 +1390,11 @@ main(
 	    int nbhost = 0,
                 found = 0;
 	    s[-1] = '\0';
-	    if (config_name == NULL) {
+	    if (get_config_name() == NULL) {
 		reply(501, _("Must set config before listhost"));
 	    }
 	    else {
-		lreply(200, _(" List hosts for config %s"), config_name);
+		lreply(200, _(" List hosts for config %s"), get_config_name());
 		for (disk = disk_list.head; disk!=NULL; disk = disk->next) {
                     found = 0;
 		    for (diskdup = disk_list.head; diskdup!=disk; diskdup = diskdup->next) {
@@ -1409,10 +1409,10 @@ main(
                     }
 		}
 		if(nbhost > 0) {
-		    reply(200, _(" List hosts for config %s"), config_name);
+		    reply(200, _(" List hosts for config %s"), get_config_name());
 		}
 		else {
-		    reply(200, _("No hosts for config %s"), config_name);
+		    reply(200, _("No hosts for config %s"), get_config_name());
 		}
 	    }
 	    s[-1] = (char)ch;
@@ -1431,7 +1431,7 @@ main(
 	    disk_t *disk;
 	    int nbdisk = 0;
 	    s[-1] = '\0';
-	    if (config_name == NULL) {
+	    if (get_config_name() == NULL) {
 		reply(501, _("Must set config, host before listdisk"));
 	    }
 	    else if (dump_hostname == NULL) {
@@ -1484,7 +1484,7 @@ main(
 		amfree(dump_hostname);		/* invalidate any value */
 		amfree(qdisk_name);		/* invalidate any value */
 		amfree(disk_name);		/* invalidate any value */
-		reply(200, _("Config set to %s."), config_name);
+		reply(200, _("Config set to %s."), get_config_name());
 	    } /* check_and_load_config replies with any failure messages */
 	    s[-1] = (char)ch;
 	} else if (strcmp(cmd, "FEATURES") == 0 && arg) {

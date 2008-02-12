@@ -85,7 +85,7 @@ main(
 
     check_running_as(RUNNING_AS_DUMPUSER);
 
-    dbrename(config_name, DBG_SUBDIR_SERVER);
+    dbrename(get_config_name(), DBG_SUBDIR_SERVER);
 
     conf_logdir = config_dir_relative(getconf_str(CNF_LOGDIR));
     logfname = vstralloc(conf_logdir, "/", "log", NULL);

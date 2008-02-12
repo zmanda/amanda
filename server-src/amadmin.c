@@ -175,7 +175,7 @@ main(
     config_init(CONFIG_INIT_EXPLICIT_NAME | CONFIG_INIT_FATAL, argv[1]);
     apply_config_overwrites(cfg_ovr);
 
-    dbrename(config_name, DBG_SUBDIR_SERVER);
+    dbrename(get_config_name(), DBG_SUBDIR_SERVER);
 
     check_running_as(RUNNING_AS_DUMPUSER);
 

@@ -1613,7 +1613,7 @@ extract_files_setup(
        am_has_feature(indexsrv_features, fe_amidxtaped_datestamp)) {
 
 	if(am_has_feature(indexsrv_features, fe_amidxtaped_config)) {
-	    tt = newstralloc2(tt, "CONFIG=", config_name);
+	    tt = newstralloc2(tt, "CONFIG=", get_config_name());
 	    send_to_tape_server(amidxtaped_streams[CTLFD].fd, tt);
 	}
 	if(am_has_feature(indexsrv_features, fe_amidxtaped_label) &&
@@ -1876,7 +1876,7 @@ extract_files_child(
 	restore_args[j++] = stralloc(file.dumper);
 	restore_args[j++] = stralloc("restore");
 	restore_args[j++] = stralloc("--config");
-	restore_args[j++] = stralloc(config_name);
+	restore_args[j++] = stralloc(get_config_name());
 	restore_args[j++] = stralloc("--disk");
 	restore_args[j++] = stralloc(file.disk);
 	break;

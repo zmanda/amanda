@@ -214,7 +214,7 @@ main(
 
     check_running_as(RUNNING_AS_DUMPUSER);
 
-    dbrename(config_name, DBG_SUBDIR_SERVER);
+    dbrename(get_config_name(), DBG_SUBDIR_SERVER);
 
     /* Don't die when child closes pipe */
     signal(SIGPIPE, SIG_IGN);
@@ -1317,7 +1317,7 @@ static void getsize(
 			has_hostname ? hostp->hostname : "",
 			has_hostname ? ";" : "",
 			has_config   ? "config=" : "",
-			has_config   ? config_name : "",
+			has_config   ? get_config_name() : "",
 			has_config   ? ";" : "",
 			"\n",
 			NULL);

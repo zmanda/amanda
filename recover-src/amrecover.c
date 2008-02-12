@@ -402,7 +402,7 @@ main(
 
     check_running_as(RUNNING_AS_ROOT);
 
-    dbrename(config_name, DBG_SUBDIR_CLIENT);
+    dbrename(get_config_name(), DBG_SUBDIR_CLIENT);
 
     our_features = am_init_feature_set();
     our_features_string = am_feature_to_string(our_features);
@@ -553,7 +553,7 @@ main(
     }
     amfree(line);
 
-    line = vstrallocf("SCNF %s", config_name);
+    line = vstrallocf("SCNF %s", get_config_name());
     if (converse(line) == -1) {
         aclose(server_socket);
 	exit(1);

@@ -146,7 +146,7 @@ main(
 
     check_running_as(RUNNING_AS_DUMPUSER);
 
-    dbrename(config_name, DBG_SUBDIR_SERVER);
+    dbrename(get_config_name(), DBG_SUBDIR_SERVER);
 
     conf_tapelist = config_dir_relative(getconf_str(CNF_TAPELIST));
     if (read_tapelist(conf_tapelist)) {
@@ -156,7 +156,7 @@ main(
     amfree(conf_tapelist);
 
     if((have_changer = changer_init()) == 0) {
-	error(_("no tpchanger specified in \"%s\""), config_filename);
+	error(_("no tpchanger specified in \"%s\""), get_config_filename());
 	/*NOTREACHED*/
     } else if (have_changer != 1) {
 	error(_("changer initialization failed: %s"), strerror(errno));

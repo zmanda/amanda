@@ -159,7 +159,7 @@ main(
     apply_config_overwrites(cfg_ovr);
     check_running_as(RUNNING_AS_DUMPUSER);
 
-    dbrename(config_name, DBG_SUBDIR_SERVER);
+    dbrename(get_config_name(), DBG_SUBDIR_SERVER);
 
     conf_diskfile = config_dir_relative(getconf_str(CNF_DISKFILE));
     if (read_diskfile(conf_diskfile, &diskq) < 0) {
@@ -305,7 +305,7 @@ main(
 	close(driver_pipe[1]);
 	config_options = get_config_options(3);
 	config_options[0] = "driver";
-	config_options[1] = config_name;
+	config_options[1] = get_config_name();
 	config_options[2] = "nodump";
 	safe_fd(-1, 0);
 	execve(driver_program, config_options, safe_env());
@@ -443,7 +443,7 @@ main(
 	 */
 	config_options = get_config_options(2);
 	config_options[0] = "amreport";
-	config_options[1] = config_name;
+	config_options[1] = get_config_name();
 	safe_fd(-1, 0);
 	execve(reporter_program, config_options, safe_env());
 	error(_("cannot exec %s: %s"), reporter_program, strerror(errno));
@@ -471,7 +471,7 @@ main(
      */
     config_options = get_config_options(2);
     config_options[0] = "amlogroll";
-    config_options[1] = config_name;
+    config_options[1] = get_config_name();
     safe_fd(-1, 0);
     execve(logroll_program, config_options, safe_env());
     error(_("cannot exec %s: %s"), logroll_program, strerror(errno));
