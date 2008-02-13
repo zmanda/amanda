@@ -1,4 +1,8 @@
 2008-02-12  Dustin J. Mitchell <dustin@zmanda.com>
+	* amandad-src/amandad.c: use sizeof() instead of strlen()
+	  in a constant expression
+
+2008-02-12  Dustin J. Mitchell <dustin@zmanda.com>
 	* amandad-src/amandad.c: initialize as->service
 	* common-src/event.c common-src/event.h: new GMainLoop-based
 	  version of the event library, allowing GMainLoop-based and 
