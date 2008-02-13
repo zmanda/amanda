@@ -75,6 +75,7 @@ struct tcp_conn {
     char *		errmsg;			/* error passed up */
     int			refcnt;			/* number of handles using */
     int			handle;			/* last proto handle read */
+    int			event_id;		/* event ID fired when token read */
     void		(*accept_fn)(security_handle_t *, pkt_t *);
     struct sockaddr_storage	peer;
     TAILQ_ENTRY(tcp_conn) tq;			/* queue handle */

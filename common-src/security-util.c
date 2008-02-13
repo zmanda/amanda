@@ -354,7 +354,7 @@ tcpm_stream_read(
      * Only one read request can be active per stream.
      */
     if (rs->ev_read == NULL) {
-	rs->ev_read = event_register((event_id_t)rs->rc, EV_WAIT,
+	rs->ev_read = event_register((event_id_t)rs->rc->event_id, EV_WAIT,
 	    stream_read_callback, rs);
 	sec_tcp_conn_read(rs->rc);
     }
@@ -380,7 +380,7 @@ tcpm_stream_read_sync(
     if (rs->ev_read != NULL) {
 	return -1;
     }
-    rs->ev_read = event_register((event_id_t)rs->rc, EV_WAIT,
+    rs->ev_read = event_register((event_id_t)rs->rc->event_id, EV_WAIT,
         stream_read_sync_callback, rs);
     sec_tcp_conn_read(rs->rc);
     event_wait(rs->ev_read);
@@ -1470,6 +1470,7 @@ sec_tcp_conn_get(
     rc->auth = 0;
     rc->conf_fn = NULL;
     rc->datap = NULL;
+    rc->event_id = newevent++;
     connq_append(rc);
     return (rc);
 }
@@ -1723,7 +1724,7 @@ sec_tcp_conn_read_callback(
     if (rval < 0 || rc->handle == H_EOF) {
 	rc->pktlen = rval;
 	rc->handle = H_EOF;
-	revent = event_wakeup((event_id_t)rc);
+	revent = event_wakeup((event_id_t)rc->event_id);
 	auth_debug(1, _("sec: conn_read_callback: event_wakeup return %d\n"),
 		       revent);
 	/* delete our 'accept' reference */
@@ -1741,7 +1742,7 @@ sec_tcp_conn_read_callback(
 
     if(rval == 0) {
 	rc->pktlen = 0;
-	revent = event_wakeup((event_id_t)rc);
+	revent = event_wakeup((event_id_t)rc->event_id);
 	auth_debug(1,
 		   _("sec: conn_read_callback: event_wakeup return %d\n"), revent);
 	return;
@@ -1749,7 +1750,7 @@ sec_tcp_conn_read_callback(
 
     /* If there are events waiting on this handle, we're done */
     rc->donotclose = 1;
-    revent = event_wakeup((event_id_t)rc);
+    revent = event_wakeup((event_id_t)rc->event_id);
     auth_debug(1, _("sec: conn_read_callback: event_wakeup return %d\n"), revent);
     rc->donotclose = 0;
     if (rc->handle == H_TAKEN || rc->pktlen == 0) {
