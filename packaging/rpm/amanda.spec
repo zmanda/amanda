@@ -23,6 +23,18 @@
 %define build_srpm 0
 %{?srpm_only: %define build_srpm 1}
 
+# Pkg-config sometimes needs its own path set, and we need to allow users to
+# override our guess during detection.  This macro takes care of that.
+# If no --define PKG_CONFIG_PATH was passed
+%{!?PKG_CONFIG_PATH: %{expand:%(
+    # Drop into bash and return a define string if PKG_CONFIG_PATH is defined
+    if [ $PKG_CONFIG_PATH ]; then
+        echo "%%define PKG_CONFIG_PATH $PKG_CONFIG_PATH";
+    fi
+)}}
+
+%{?PKG_CONFIG_PATH:%{echo:PKG_CONFIG_PATH = %{PKG_CONFIG_PATH}}
+
 # Define which Distribution we are building:
 # Try to detect the distribution we are building:
 %if %{_vendor} == redhat 
@@ -58,6 +70,11 @@
 	%define dist fedora
         %define disttag fc
 	%define distver 8
+        # TODO: generalize this so that any platform can cross compile
+        %if %{_host_cpu} == x86_64 && %{_target_cpu} == i686
+                # Do nothing if PKG_CONFIG_PATH was set by the user above.
+                %{!?PKG_CONFIG_PATH: %define PKG_CONFIG_PATH /usr/lib/pkgconfig}
+        %endif
     %endif
     %if %(awk '{print $1}' /etc/redhat-release) == "Red" && %(awk '{print $7+0}' /etc/redhat-release) == 3
         %define dist redhat
@@ -322,6 +339,9 @@ CFLAGS="%{optflags} -g" CXXFLAGS="%{optflags}" \
 	--disable-installperms \
         --without-ipv6 
 %else
+# This confusing macro results in PKG_CONFIG_PATH=some/path if some/path
+# was set on the command line, or by the platform detection bits.
+%{?PKG_CONFIG_PATH: PKG_CONFIG_PATH=%PKG_CONFIG_PATH} \
 ./configure \
 	--prefix=%{PREFIX} \
 	--sysconfdir=%{SYSCONFDIR} \
@@ -1623,6 +1643,10 @@ echo "Amanda installation log can be found in '${INSTALL_LOG}' and errors (if an
 # --- ChangeLog
 
 %changelog
+* Wed Feb 13 2008 Dan Locks <dwlocks at zmanda dot com>
+- added an environment check for PKG_CONFIG_PATH
+- added PKG_CONFIG_PATH conditional to handle cross comp on FC8 (environment 
+  var is used if provided)
 * Fri Feb 01 2008 Dan Locks <dwlocks at zmanda dot com>
 - Removed amplot executable and manpages from client installation
 - Added amcheckdump.8 manpage

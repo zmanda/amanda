@@ -1,3 +1,8 @@
+2008-02-13  Dan Locks <dwlocks@zmanda.com>
+        * packaging/rpm/amanda.spec: added a check for PKG_CONFIG_PATH in the
+          build environment as well as if provided on rpmbuild commandline.
+          Conditionalized this var to handle cross compiling on FC8.
+
 2008-02-12  Dustin J. Mitchell <dustin@zmanda.com>
 	* amandad-src/amandad.c: use sizeof() instead of strlen()
 	  in a constant expression
