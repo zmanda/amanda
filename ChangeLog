@@ -1,3 +1,7 @@
+2008-02-14  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/event-test.c: make tests more robust to environmental
+	  variations, clean up forked children
+
 2008-02-13  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/security-util.c 
 	  common-src/security-util.h: don't cast pointers to

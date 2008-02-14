@@ -391,6 +391,9 @@ test_ev_readfd(void)
     /* let it run */
     event_loop(0);
 
+    if (dbgmsg) fprintf(stderr, "waiting for writer to die..\n");
+    waitpid(writer_pid, NULL, 0);
+
     /* and see what we got */
     if (!accumulator) {
 	if (dbgmsg) fprintf(stderr, "no data was read\n");
@@ -499,9 +502,9 @@ test_ev_writefd_cb(void *up G_GNUC_UNUSED)
 	buf[i] = (char)i;
     }
 
-    /* write some bytes */
+    /* write some bytes, but no more than global */
     if (dbgmsg) fprintf(stderr, "test_ev_writefd_cb called\n");
-    len = write(cb_fd, buf, sizeof(buf));
+    len = write(cb_fd, buf, min((size_t)global, sizeof(buf)));
     if (len <= 0) {
 	if (dbgmsg) fprintf(stderr, " write() returned %d\n", len);
 	return;
@@ -573,12 +576,16 @@ test_ev_writefd(void)
     /* set up a EV_WRITEFD on the write end of the pipe */
     cb_fd = p[1];
     fcntl(cb_fd, F_SETFL, O_NONBLOCK);
-    global = WRITE_CHUNK_SIZE * 10; /* number of bytes to write */
+    /* set the number of bytes to write, approx. length of tests in seconds */
+    global = WRITE_CHUNK_SIZE * 5;
     close(p[0]);
     hdl[0] = event_register(p[1], EV_WRITEFD, test_ev_writefd_cb, NULL);
 
     /* let it run */
     event_loop(0);
+
+    if (dbgmsg) fprintf(stderr, "waiting for reader to die..\n");
+    waitpid(reader_pid, NULL, 0);
 
     /* and see what we got */
     if (global != 0) {
