@@ -1,4 +1,8 @@
 2008-02-14  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Makefile.am installcheck/amdump.pl: add a check
+	  that runs 'amdump' directly, since that fails often
+
+2008-02-14  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/event-test.c: make tests more robust to environmental
 	  variations, clean up forked children
 

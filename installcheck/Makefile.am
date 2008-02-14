@@ -19,6 +19,7 @@ server_tests = \
 	bigint \
 	amcheckdump \
 	amdevcheck \
+	amdump \
 	amgetconf
 
 tests = $(common_tests)
@@ -40,16 +41,13 @@ clobber_my_config_is_ok:
 	@if test "$(CLOBBER_MY_CONFIG)" != "OK"; then \
 		echo ""; \
 		echo "'make installcheck' is a dangerous tool.  It will overwrite your"; \
-		echo "amanda-client.conf and amandates, and (if it"; \
-		echo "triggers an as-yet undetected bug) may do other unexpected things.  You are"; \
-		echo "strongly encouraged"; \
+		echo "amanda-client.conf and amandates, and (if it triggers an as-yet undetected"; \
+		echo "bug) may do other unexpected things.  You are strongly encouraged"; \
  		echo "  - not to run installchecks on a production install"; \
  		echo "  - not to run installchecks as root"; \
 		echo "See http://wiki.zmanda.com/index.php/Testing for instructions on setting up a"; \
-		echo "test environment in which"; \
-		echo "potential damage is limited by your filesystem's permissions.  To actually run"; \
-		echo "the installchecks, invoke make"; \
-		echo "as follows:"; \
+		echo "test environment in which potential damage is limited by your filesystem's"; \
+		echo "permissions.  To actually run the installchecks, invoke make as follows:"; \
   		echo "  $(MAKE) CLOBBER_MY_CONFIG=OK installcheck"; \
 		exit 1; \
 	fi
