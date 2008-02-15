@@ -112,14 +112,26 @@ exit_code=$?
 exec </dev/null 2>>$errfile 1>&2
 exit_code=$?
 [ $exit_code -ne 0 ] && exit_status=$exit_code
-date=`date`
-date_datestamp=`date +%Y%m%d -d "$date"`
-date_starttime=`date +%Y%m%d%H%M%S -d "$date"`
-date_locale_independent=`date +'%Y-%m-%d %H:%M:%S %Z' -d "$date"`
+
+gdate=`date +'%a %b %e %H:%M:%S %Z %YAAAAA%Y%m%dBBBBB%Y%m%d%H%M%SCCCCC%Y-%m-%d %H:%M:%S %Z'`
+
+#date=%a %b %e %H:%M:%S %Z %Y
+date=`echo $gdate |sed -e "s/AAAAA.*$//"`
+
+#date_datestamp="%Y%m%d"
+date_datestamp=`echo $gdate |sed -e "s/^.*AAAAA//;s/BBBBB.*$//"`
+
+#date_starttime="%Y%m%d%H%M%S"
+date_starttime=`echo $gdate |sed -e "s/^.*BBBBB//;s/CCCCC.*$//"`
+
+#date_locale_independent=%Y-%m-%d %H:%M:%S %Z
+date_locale_independent=`echo $gdate |sed -e "s/^.*CCCCC//"`
+
 printf '%s: start at %s\n' "amdump" "$date"
 printf '%s: datestamp %s\n' "amdump" "$date_datestamp"
 printf '%s: starttime %s\n' "amdump" "$date_starttime"
 printf '%s: starttime-locale-independent %s\n' "amdump" "$date_locale_independent"
+
 $amlibexecdir/planner$SUF $conf --starttime $date_starttime "$@" | $amlibexecdir/driver$SUF $conf "$@"
 exit_code=$?
 [ $exit_code -ne 0 ] && exit_status=$exit_code
