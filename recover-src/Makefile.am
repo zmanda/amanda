@@ -43,14 +43,14 @@ AM_YFLAGS =		-d
 
 # so that uscan.c is never generated before uparse.h
 # otherwise we might have makedepend problems
-$(srcdir)/uscan.c: $(srcdir)/uparse.h
+uscan.c: uparse.h
 
 # these two commands are specially defined to omit $(AMANDA_WARNING_CFLAGS)
 # since we don't want warnings for generated code
-uscan.$(OBJEXT): $(srcdir)/uscan.c
+uscan.$(OBJEXT): uscan.c
 	$(CC) $(CFLAGS) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(CPPFLAGS) -c $<
 
-uparse.$(OBJEXT): $(srcdir)/uparse.c
+uparse.$(OBJEXT): uparse.c
 	$(CC) $(CFLAGS) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(CPPFLAGS) -c $<
 
 INSTALLPERMS_exec = \

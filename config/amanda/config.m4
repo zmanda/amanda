@@ -35,7 +35,7 @@ AC_DEFUN([AMANDA_GET_SVN_INFO],
 
     AC_PATH_PROG(SVN, svn,, $LOCSYSPATH)
     AC_MSG_CHECKING([Subversion revision information])
-    if test -d .svn && test -n "$SVN" && $SVN info . > conftemp.svn; then
+    if test -d $srcdir/.svn && test -n "$SVN" && (cd $srcdir > /dev/null ; $SVN info . ) > conftemp.svn; then
 	rev=`$GREP Revision: conftemp.svn|cut -d: -f 2|cut -c2-`
 	url=`$GREP URL: conftemp.svn|cut -d: -f 2-|cut -c2-`
 	( echo '#define BUILT_REV "'$rev'"'
@@ -47,10 +47,11 @@ AC_DEFUN([AMANDA_GET_SVN_INFO],
 	# Makefiles will be upset if the file doesn't exist, so double-check
 	if test -f common-src/svn-info.h; then
 	    : # all good
+	    AC_MSG_RESULT([not changed])
 	else
 	    echo '/* no information available */' > common-src/svn-info.h
+	    AC_MSG_RESULT([not available])
 	fi
-	AC_MSG_RESULT([not changed])
     fi
 
     rm -f conftemp.svn

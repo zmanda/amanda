@@ -1,4 +1,11 @@
 2008-02-15  Jean-Louis Martineau <martineau@zmanda.com>
+	* oldrecover-src/Makefile.am: Build all files in the build directory.
+	* recover-src/Makefile.am: Build all files in the build directory.
+	* config/amanda/config.m4: Use $srcdir to buld common-src/svn-info.h
+	* configure.in: execute AMANDA_GET_SVN_INFO after AC_OUTPUT because
+	  AC_OUTPUT create the common-src directory.
+
+2008-02-15  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amadmin.c: Use 'long long' and '%lld' to sscanf.
 	* file server-src/infofile.c: Use %jd to print intmax_t value.
 	* file server-src/driver.c: Use 'long long' and '%lld' to sscanf.
