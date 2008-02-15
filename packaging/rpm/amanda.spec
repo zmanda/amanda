@@ -1568,8 +1568,6 @@ echo "Amanda installation log can be found in '${INSTALL_LOG}' and errors (if an
 %{SBINDIR}/amtape
 %{SBINDIR}/amtapetype
 %{SBINDIR}/amtoc
-%{SBINDIR}/amverify
-%{SBINDIR}/amverifyrun
 %{AMLIBEXECDIR}/amanda-sh-lib.sh
 %defattr(4750,root,disk)
 %{AMLIBEXECDIR}/calcsize
@@ -1625,8 +1623,6 @@ echo "Amanda installation log can be found in '${INSTALL_LOG}' and errors (if an
 %{MANDIR}/man8/amtape.8.gz
 %{MANDIR}/man8/amtapetype.8.gz
 %{MANDIR}/man8/amtoc.8.gz
-%{MANDIR}/man8/amverify.8.gz
-%{MANDIR}/man8/amverifyrun.8.gz
 %{MANDIR}/man8/amcrypt.8.gz
 %{MANDIR}/man8/amcrypt-ossl.8.gz
 %{MANDIR}/man8/amcrypt-ossl-asym.8.gz
