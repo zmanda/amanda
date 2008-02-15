@@ -264,7 +264,7 @@ find_compare(
 
     for(k=0;k<nb_compare;k++) {
         char sort_key = find_sort_order[k];
-        if (isupper(sort_key)) {
+        if (isupper((int)sort_key)) {
             /* swap */
             sort_key = tolower(sort_key);
             j = *(find_result_t **)i1;
