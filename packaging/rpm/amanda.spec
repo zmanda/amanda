@@ -33,7 +33,7 @@
     fi
 )}}
 
-%{?PKG_CONFIG_PATH:%{echo:PKG_CONFIG_PATH = %{PKG_CONFIG_PATH}}
+%{?PKG_CONFIG_PATH:%{echo:PKG_CONFIG_PATH = %{PKG_CONFIG_PATH}}}
 
 # Define which Distribution we are building:
 # Try to detect the distribution we are building:

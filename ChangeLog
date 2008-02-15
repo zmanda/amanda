@@ -1,4 +1,7 @@
 2008-02-15  Jean-Louis Martineau <martineau@zmanda.com>
+	* packaging/rpm/amanda.spec: Fix typo.
+
+2008-02-15  Jean-Louis Martineau <martineau@zmanda.com>
 	* oldrecover-src/Makefile.am: Build all files in the build directory.
 	* recover-src/Makefile.am: Build all files in the build directory.
 	* config/amanda/config.m4: Use $srcdir to buld common-src/svn-info.h
