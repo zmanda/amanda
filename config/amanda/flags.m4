@@ -258,7 +258,7 @@ AC_DEFUN([AMANDA_DISABLE_GCC_WARNING],
 AC_DEFUN([AMANDA_TEST_GCC_WARNING_FLAG],
 [
     AC_REQUIRE([AC_PROG_CC])
-    AC_REQUIRE([AMANDA_PROG_EGREP])
+    AC_REQUIRE([AC_PROG_EGREP])
     AC_MSG_CHECKING(for gcc flag $1)
     if test "x$GCC" = "xyes"; then
 	changequote(,)dnl

@@ -231,12 +231,6 @@ AC_DEFUN([AMANDA_PROG_GREP],
 	    [Define the location of the grep program. ])
 ])
 
-AC_DEFUN([AMANDA_PROG_EGREP],
-[
-    AC_REQUIRE([AMANDA_INIT_PROGS])
-    AC_PATH_PROG(EGREP,egrep,grep -E,$LOCSYSPATH)
-])
-
 AC_DEFUN([AMANDA_PROG_CAT],
 [
     AC_REQUIRE([AMANDA_INIT_PROGS])
