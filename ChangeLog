@@ -1,4 +1,7 @@
 2008-02-15  Jean-Louis Martineau <martineau@zmanda.com>
+	* packaging/rpm/amanda.spec: Fix typo.
+
+2008-02-15  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amdump.sh: Don't use 'date -d', use sed.
 
 2008-02-14  Dustin J. Mitchell <dustin@zmanda.com>
