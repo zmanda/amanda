@@ -1,4 +1,9 @@
 2008-02-15  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amadmin.c: Use 'long long' and '%lld' to sscanf.
+	* file server-src/infofile.c: Use %jd to print intmax_t value.
+	* file server-src/driver.c: Use 'long long' and '%lld' to sscanf.
+
+2008-02-15  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amdump.sh: Don't use 'date -d', use sed.
 
 2008-02-13  Dan Locks <dwlocks@zmanda.com>
