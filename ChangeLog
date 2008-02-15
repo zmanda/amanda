@@ -1,4 +1,8 @@
 2008-02-14  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Installcheck/Run.pm: run test dumps of a smaller
+	  directory, to avoid overflowing test tapes
+
+2008-02-14  Dustin J. Mitchell <dustin@zmanda.com>
 	* dumper-src/amstar.pl dumper-src/amgtar.pl
 	  device-src/tests/get-activation-key.pl server-src/amcheckdump.pl
 	  server-src/amdevcheck.pl: add GPL header
