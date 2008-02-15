@@ -2231,7 +2231,7 @@ read_schedule(
     int ch;
     off_t flush_size = (off_t)0;
     char *qname = NULL;
-    intmax_t time_;
+    long long time_;
     long long nsize_;
     long long csize_;
     long long degr_nsize_;
@@ -2344,7 +2344,7 @@ read_schedule(
 	skip_integer(s, ch);
 
 	skip_whitespace(s, ch);			/* find the time number */
-	if(ch == '\0' || sscanf(s - 1, "%ju", &time_) != 1) {
+	if(ch == '\0' || sscanf(s - 1, "%lld", &time_) != 1) {
 	    error(_("schedule line %d: syntax error (bad estimated time)"), line);
 	    /*NOTREACHED*/
 	}
@@ -2395,7 +2395,7 @@ read_schedule(
 	    skip_integer(s, ch);
 
 	    skip_whitespace(s, ch);		/* find the degr time number */
-	    if(ch == '\0' || sscanf(s - 1, "%ju", &time_) != 1) {
+	    if(ch == '\0' || sscanf(s - 1, "%lld", &time_) != 1) {
 		error(_("schedule line %d: syntax error (bad degr estimated time)"), line);
 		/*NOTREACHED*/
 	    }

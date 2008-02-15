@@ -1701,7 +1701,7 @@ import_one(void)
     char *hostname = NULL;
     char *diskname = NULL;
     long long off_t_tmp;
-    intmax_t time_t_tmp;
+    long long time_t_tmp;
 
     memset(&info, 0, SIZEOF(info_t));
 
@@ -1831,14 +1831,14 @@ import_one(void)
 	skip_integer(s, ch);
 
 	skip_whitespace(s, ch);
-	if(ch == '\0' || sscanf(s - 1, "%ju", &time_t_tmp) != 1) {
+	if(ch == '\0' || sscanf(s - 1, "%lld", &time_t_tmp) != 1) {
 	    goto parse_err;
 	}
         onestat.secs = (time_t)time_t_tmp;
 	skip_integer(s, ch);
 
 	skip_whitespace(s, ch);
-	if(ch == '\0' || sscanf(s - 1, "%ju", &time_t_tmp) != 1) {
+	if(ch == '\0' || sscanf(s - 1, "%lld", &time_t_tmp) != 1) {
 	    goto parse_err;
 	}
 	/* time_t not guarranteed to be long */
@@ -1908,7 +1908,7 @@ import_one(void)
 	skip_integer(s, ch);
 
 	skip_whitespace(s, ch);
-	if((ch == '\0') || sscanf((s - 1), "%ju", &time_t_tmp) != 1) {
+	if((ch == '\0') || sscanf((s - 1), "%lld", &time_t_tmp) != 1) {
 	    break;
 	}
 	/* time_t not guarranteed to be long */

@@ -443,7 +443,7 @@ write_txinfofile(
 
 	if(sp->date < (time_t)0 && sp->label[0] == '\0') continue;
 
-	g_fprintf(infof, "stats: %d %lld %lld %ju %lld",
+	g_fprintf(infof, "stats: %d %lld %lld %jd %lld",
 		level, (long long)sp->size, (long long)sp->csize,
 		(intmax_t)sp->secs, (long long)sp->date);
 	if(sp->label[0] != '\0')
@@ -454,7 +454,7 @@ write_txinfofile(
     g_fprintf(infof, _("last_level: %d %d\n"), info->last_level, info->consecutive_runs);
 
     for(i=0;info->history[i].level > -1;i++) {
-	g_fprintf(infof, _("history: %d %lld %lld %ju %ju\n"),
+	g_fprintf(infof, _("history: %d %lld %lld %jd %jd\n"),
 		info->history[i].level,
 		(long long)info->history[i].size,
 		(long long)info->history[i].csize,
