@@ -365,6 +365,7 @@ print_find_result(
     for(output_find_result=output_find;
 	output_find_result;
 	output_find_result=output_find_result->next) {
+	char *qdiskname;
 
 	len=strlen(find_nicedate(output_find_result->timestamp));
 	if((int)len > max_len_datestamp)
@@ -374,7 +375,9 @@ print_find_result(
 	if((int)len > max_len_hostname)
 	    max_len_hostname = (int)len;
 
-	len=strlen(output_find_result->diskname);
+	qdiskname=quote_string(output_find_result->diskname);
+	len=strlen(qdiskname);
+	amfree(qdiskname);
 	if((int)len > max_len_diskname)
 	    max_len_diskname = (int)len;
 
