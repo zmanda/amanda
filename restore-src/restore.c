@@ -107,10 +107,10 @@ char *label_of_current_slot(char *cur_tapedev, FILE *prompt_out,
 			    am_feature_t *their_features,
 			    ssize_t *read_result, tapelist_t *desired_tape);
 
-int load_next_tape(char **cur_tapedev, FILE *prompt_out, int backwards,
+LoadStatus load_next_tape(char **cur_tapedev, FILE *prompt_out, int backwards,
 		   rst_flags_t *flags, am_feature_t *their_features,
 		   tapelist_t *desired_tape);
-int load_manual_tape(char **cur_tapedev, FILE *prompt_out, FILE *prompt_in,
+LoadStatus load_manual_tape(char **cur_tapedev, FILE *prompt_out, FILE *prompt_in,
 		     rst_flags_t *flags, am_feature_t *their_features,
 		     tapelist_t *desired_tape);
 

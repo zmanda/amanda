@@ -73,7 +73,7 @@ void register_device(DeviceFactory factory,
 
     tmp = (char**)device_prefix_list;
     while (*tmp != NULL) {
-        g_hash_table_insert(driverList, *tmp, factory);
+        g_hash_table_insert(driverList, *tmp, (gpointer)factory);
         tmp ++;
     }
 }
@@ -83,7 +83,7 @@ static DeviceFactory lookup_device_factory(const char *device_name) {
     g_assert(driverList != NULL);
 
     if (g_hash_table_lookup_extended(driverList, device_name, &key, &value)) {
-        return value;
+        return (DeviceFactory)value;
     } else {
         return NULL;
     }

@@ -191,5 +191,5 @@ null_device_write_block (Device * pself, guint size, gpointer data,
         return TRUE;
     }
 
-    return FALSE;
+    g_assert_not_reached();
 }

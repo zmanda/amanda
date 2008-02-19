@@ -492,7 +492,7 @@ typedef struct Device {
 	 * them to a perl SV. */
 	%typemap(in,numinputs=0) (GValue *out_val, gboolean *val_found)
 			    (GValue val, gboolean found) {
-	    bzero(&val, sizeof(val));
+	    memset(&val, 0, sizeof(val));
 	    $1 = &val;
 	    $2 = &found;
 	}
@@ -529,7 +529,7 @@ typedef struct Device {
 	gboolean
 	property_set(DevicePropertyBase *pbase, SV *sv) {
 	    GValue gval;
-	    bzero(&gval, sizeof(gval));
+	    memset(&gval, 0, sizeof(gval));
 	    g_value_init(&gval, pbase->type);
 	    if (!set_gvalue_from_sv(sv, &gval))
 		goto fail;

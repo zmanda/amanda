@@ -280,7 +280,7 @@ gboolean sts_refresh_token(char ** token, const char * directory);
 /* These functions are for if you want to use curl on your own. You get more
  * control, but it's a lot of work that way: */
 typedef struct {
-    void *buffer;
+    char *buffer;
     guint buffer_len;
     guint buffer_pos;
     guint max_buffer_size;

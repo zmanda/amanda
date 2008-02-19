@@ -34,7 +34,7 @@
 /* Valid data in this structure starts at data + offset, and has size
  * data_size. Allocation starts at data and has size alloc_size. */
 typedef struct {
-    gpointer data;
+    char *data;
     guint alloc_size;
     guint data_size;
     guint offset;

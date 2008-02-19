@@ -215,7 +215,7 @@ static gboolean open_buffer_file(TaperDiskPortSource * self) {
 
 /* An error has occured with the disk buffer; store the extra data in
    memory until we can recover. */
-static void store_excess(TaperDiskPortSource * self, void * buf,
+static void store_excess(TaperDiskPortSource * self, char * buf,
                          size_t attempted_size, size_t disk_size) {
     TaperSource * pself = (TaperSource*)self;
     g_return_if_fail(attempted_size > 0);
@@ -261,7 +261,7 @@ static size_t handle_excess_buffer_read(TaperDiskPortSource * self,
     
 /* Write data out to the disk buffer, and handle any problems that
    crop up along the way. */
-static ssize_t write_disk_buffer(TaperDiskPortSource * self, void * buf,
+static ssize_t write_disk_buffer(TaperDiskPortSource * self, char * buf,
                                  size_t read_size) {
     size_t bytes_written = 0;
     while (bytes_written < read_size) {

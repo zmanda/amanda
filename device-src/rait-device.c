@@ -936,7 +936,7 @@ rait_device_write_block (Device * dself, guint size, gpointer data,
     g_return_val_if_fail(size % data_children == 0 || last_block, FALSE);
 
     if (last_block) {
-        gpointer new_data;
+        char *new_data;
 
         new_data = malloc(blocksize);
         memcpy(new_data, data, size);
@@ -1216,7 +1216,7 @@ static gboolean raid_block_reconstruction(RaitDevice * self, GPtrArray * ops,
         if ((int)(op->base.child_index) == parity_child) {
             parity_block = op->buffer;
         } else {
-            memcpy(buf + child_blocksize * op->base.child_index, op->buffer,
+            memcpy((char *)buf + child_blocksize * op->base.child_index, op->buffer,
                    child_blocksize);
         }
     }
@@ -1268,7 +1268,7 @@ static gboolean raid_block_reconstruction(RaitDevice * self, GPtrArray * ops,
                as the parity generation. This even works if there is
                only one remaining device! */
             make_parity_block_extents(data_extents,
-                                      buf + (child_blocksize *
+                                      (char *)buf + (child_blocksize *
                                              self->private->failed),
                                       child_blocksize);
 
@@ -1454,7 +1454,7 @@ static gboolean property_get_medium_type(GPtrArray * ops, GValue * val) {
     guint i = 0;
 
     for (i = 0; i < ops->len; i ++) {
-        StreamingRequirement cur;
+        MediaAccessMode cur;
         PropertyOp * op = g_ptr_array_index(ops, i);
         g_return_val_if_fail(G_VALUE_TYPE(&(op->value)) ==
                              MEDIA_ACCESS_MODE_TYPE, FALSE);

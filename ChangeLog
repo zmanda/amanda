@@ -1,4 +1,14 @@
 2008-02-19  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/device.c, device-src/null-device.c,
+	  device-src/s3.c, device-src/tape-device.c,
+	  device-src/queueing.h, device-src/s3.h,
+	  device-src/vfs-device.c, device-src/rait-device.c,
+	  server-src/taper-source-test.c, server-src/server_util.c,
+	  server-src/taper-disk-port-source.c, perl/Amanda/Device.swg,
+	  perl/amglue/integers.swg, restore-src/restore.c,
+	  common-src/glib-util.c: Fix solaris compiler warning.
+
+2008-02-19  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/util.c (quote_string): Quote single quote (').
 	* server-src/find.c:Correctly compute length of diskname.
 

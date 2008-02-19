@@ -39,7 +39,7 @@ static char ** g_flags_to_strv(int value, GType type, FlagString source);
 void
 _glib_util_foreach_glue(gpointer data, gpointer func)
 {
-    void (*one_arg_fn)(gpointer *) = func;
+    void (*one_arg_fn)(gpointer) = (void (*)(gpointer))func;
     one_arg_fn(data);
 }
 
