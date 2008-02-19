@@ -1,3 +1,7 @@
+2008-02-19  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/util.c (quote_string): Quote single quote (').
+	* server-src/find.c:Correctly compute length of diskname.
+
 2008-02-15  Dustin J. Mitchell <dustin@zmanda.com>
 	* configure.in config/amanda/progs.m4 config/amanda/flags.m4:
 	  use AC_PROG_EGREP instead of the Amanda version
