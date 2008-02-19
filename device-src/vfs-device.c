@@ -70,9 +70,9 @@ static ReadLabelStatusFlags vfs_device_read_label(Device * dself);
 static gboolean vfs_device_write_block(Device * self, guint size,
                                        gpointer data, gboolean last_block);
 static int vfs_device_read_block(Device * self, gpointer data, int * size_req);
-static IoResult vfs_device_robust_write(VfsDevice * self,  void *buf,
+static IoResult vfs_device_robust_write(VfsDevice * self,  char *buf,
                                               int count);
-static IoResult vfs_device_robust_read(VfsDevice * self, void *buf,
+static IoResult vfs_device_robust_read(VfsDevice * self, char *buf,
                                              int *count);
 
 /* Various helper functions. */
@@ -81,7 +81,7 @@ static gboolean check_is_dir(const char * name, gboolean printmsg);
 static char* file_number_to_file_name(VfsDevice * self, guint file);
 static gboolean file_number_to_file_name_functor(const char * filename,
                                                  gpointer datap);
-static char* lockfile_name(VfsDevice * self, guint file);
+//static char* lockfile_name(VfsDevice * self, guint file);
 static gboolean open_lock(VfsDevice * self, int file, gboolean exclusive);
 static void promote_volume_lock(VfsDevice * self);
 static void demote_volume_lock(VfsDevice * self);
@@ -374,14 +374,15 @@ static char * file_number_to_file_name(VfsDevice * self, guint device_file) {
         return data.result;
     }
     g_assert_not_reached();
-    return NULL;
 }
 
 /* This function returns the dynamically-allocated lockfile name for a
    given file number. */
+/*
 static char * lockfile_name(VfsDevice * self, guint number) {
     return g_strdup_printf("%s/%05d-lock", self->dir_name, number);
 }
+*/
 
 /* Does what you expect. If the lock already exists, it is released
  * and regained, in case the mode is changing.
@@ -390,13 +391,16 @@ static char * lockfile_name(VfsDevice * self, guint number) {
  * - file = 0: Open the volume lock as a volume file (for setup).
  * - file < 0: Open the volume lock as a volume lock (persistantly).
  */
-static gboolean open_lock(VfsDevice * self, int file, gboolean exclusive) {
-    int fd;
-    char * name;
-    
+static gboolean open_lock(G_GNUC_UNUSED VfsDevice * self,
+			  G_GNUC_UNUSED int file,
+			  G_GNUC_UNUSED gboolean exclusive) {
+
     /* At the moment, file locking is horribly broken. */
     return TRUE;
 
+/*
+    int fd;
+    char * name;
     if (file < 0) {
         if (self->volume_lock_name == NULL) {
             self->volume_lock_name = lockfile_name(self, 0);
@@ -435,6 +439,7 @@ static gboolean open_lock(VfsDevice * self, int file, gboolean exclusive) {
         self->file_lock_fd = fd;
     }
     return TRUE;
+*/
 }
 
 /* For now, does it the bad way. */
@@ -1169,7 +1174,7 @@ vfs_device_recycle_file (Device * pself, guint filenum) {
     return TRUE;
 }
 
-static IoResult vfs_device_robust_read(VfsDevice * self, void *buf,
+static IoResult vfs_device_robust_read(VfsDevice * self, char *buf,
                                              int *count) {
     int fd = self->open_file_fd;
     int want = *count, got = 0;
@@ -1213,7 +1218,7 @@ static IoResult vfs_device_robust_read(VfsDevice * self, void *buf,
 }
 
 static IoResult
-vfs_device_robust_write(VfsDevice * self,  void *buf, int count) {
+vfs_device_robust_write(VfsDevice * self,  char *buf, int count) {
     int fd = self->open_file_fd;
     int rval = 0;
 

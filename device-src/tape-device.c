@@ -391,7 +391,7 @@ static gboolean
 tape_device_write_block(Device * pself, guint size,
                         gpointer data, gboolean short_block) {
     TapeDevice * self;
-    gpointer replacement_buffer = NULL;
+    char *replacement_buffer = NULL;
     IoResult result;
 
     self = TAPE_DEVICE(pself);
@@ -419,8 +419,7 @@ tape_device_write_block(Device * pself, guint size,
         return FALSE;
     }
     
-    amfree(replacement_buffer);
-    return FALSE;
+    g_assert_not_reached();
 }
 
 static int tape_device_read_block (Device * pself, gpointer buf,
@@ -1243,7 +1242,7 @@ tape_device_bsr (TapeDevice * self, guint count, guint file, guint block) {
         
         return tape_device_fsr(self, block);
     }
-    return FALSE;
+    g_assert_not_reached();
 }
 
 /* Go to the right place to write more data, and update the file

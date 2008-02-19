@@ -568,7 +568,7 @@ size_t buffer_readfunction(void *ptr, size_t size,
     if (bytes_desired > data->buffer_len - data->buffer_pos)
         bytes_desired = data->buffer_len - data->buffer_pos;
 
-    memcpy(ptr, data->buffer + data->buffer_pos, bytes_desired);
+    memcpy((char *)ptr, data->buffer + data->buffer_pos, bytes_desired);
     data->buffer_pos += bytes_desired;
 
     return bytes_desired;

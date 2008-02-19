@@ -95,5 +95,5 @@ int main(int argc, char ** argv) {
         }
     }
 
-    return 0;
+    g_assert_not_reached();
 }

@@ -102,7 +102,7 @@ typemap_in_unsigned(uintmax_t)
     } else if (sizeof(type) == 8) {
 	$1 = amglue_SvI64($input);
     } else {
-	error("Unexpected type >64 bits?"); /* should be optimized out unless sizeof(type) > 8 */
+	g_critical("Unexpected type >64 bits?"); /* should be optimized out unless sizeof(type) > 8 */
     }
 }
 %enddef
