@@ -1879,6 +1879,9 @@ static void handle_result(
 	amfree(qname);
     }
     getsize(hostp);
+    /* try to clean up any defunct processes, since Amanda doesn't wait() for
+       them explicitly */
+    while(waitpid(-1, NULL, WNOHANG)> 0);
     return;
 
  NAK_parse_failed:
@@ -1922,6 +1925,9 @@ static void handle_result(
     }
     hostp->up = HOST_DONE;
     amfree(errbuf);
+    /* try to clean up any defunct processes, since Amanda doesn't wait() for
+       them explicitly */
+    while(waitpid(-1, NULL, WNOHANG)> 0);
 }
 
 

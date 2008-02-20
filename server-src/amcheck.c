@@ -1928,4 +1928,7 @@ handle_result(
     start_host(hostp);
     if(hostp->up == HOST_DONE)
 	security_close_connection(sech, hostp->hostname);
+    /* try to clean up any defunct processes, since Amanda doesn't wait() for
+       them explicitly */
+    while(waitpid(-1, NULL, WNOHANG)> 0);
 }
