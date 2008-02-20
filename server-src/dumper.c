@@ -489,6 +489,9 @@ main(
 		amfree(q);
 	    } else {
 		do_dump(&db);
+		/* try to clean up any defunct processes, since Amanda doesn't
+		   wait() for them explicitly */
+		while(waitpid(-1, NULL, WNOHANG)> 0);
 	    }
 
 	    amfree(amandad_path);
