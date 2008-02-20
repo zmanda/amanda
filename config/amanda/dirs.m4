@@ -175,13 +175,36 @@ AC_DEFUN([AMANDA_EXPAND_DIRS],
     AC_DEFINE_DIR([mandir], [mandir],
         [Directory in which man-pages should be installed])
 
+
     # amanda-specific directories
-    amlibdir="${libdir}/amanda"
-    AC_DEFINE_DIR([amlibdir], [amlibdir],
+    AMLIBDIR=$libdir/amanda
+    AC_ARG_WITH(amlibdir,
+	AS_HELP_STRING([--with-amlibdir],
+		[Where library are installed, default: $libdir/amanda]),
+	[
+	    case "$withval" in
+		n | no) AMLIBDIR=$libdir ;;
+		y | ye | yes) AMLIBDIR=$libdir/amanda ;;
+		*) AMLIBDIR=$withval ;;
+	    esac
+	]
+    )
+    AC_DEFINE_DIR([amlibdir], [AMLIBDIR],
 	[Directory in which Amanda libraries should be installed])
 
-    amlibexecdir="${libexecdir}/amanda"
-    AC_DEFINE_DIR([amlibexecdir], [amlibexecdir],
+    AMLIBEXECDIR=$libexecdir/amanda
+    AC_ARG_WITH(amlibexecdir,
+	AS_HELP_STRING([--with-amlibexecdir],
+		[Where amanda own programs are installed, default: $libexecdir/amanda]),
+	[
+	    case "$withval" in
+		n | no) AMLIBEXECDIR=$libexecdir ;;
+		y | ye | yes) AMLIBEXECDIR=$libexecdir/amanda ;;
+		*) AMLIBEXECDIR=$withval ;;
+	    esac
+	]
+    )
+    AC_DEFINE_DIR([amlibexecdir], [AMLIBEXECDIR],
 	[Directory in which Amanda own programs should be installed])
 
     amincludedir="${includedir}/amanda"

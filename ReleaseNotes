@@ -18,11 +18,20 @@ Deprecated programs
 
 Configure options
   --disable-shared doesn't work because perl module require shared library.
-  Instead, use --with-static-binaries to build staticailly linked binaries.
+  Instead, use --with-static-binaries to build statically linked binaries.
+  --with-amlibdir, libraries are now installed in $amlibdir
+    --without-amlibdir              : amlibdir=$libdir
+    --with-amlibdir=yes             : amlibdir=$libdir/amanda  (default value)
+    --with-amlibdir=/path/to/libdir : amlibdir=/path/to/libdir
+  --with-amlibexecdir, internal programs are installed in $amlibexecdir
+    --without-amlibexecdir                  : amlibdir=$libexecdir
+    --with-amlibexecdir=yes                 : amlibdir=$libexecdir/amanda
+							      (default value)
+    --with-amlibexecdir=/path/to/libexecdir : amlibdir=/path/to/libexecdir
 
 Path changes
-  Libraries are installed in $libdir/amanda (previously $libdir)
-  Internal programs are installed in $libexecdir/amanda (previously $libexecdir)
+  Libraries are installed in $amlibdir (previously $libdir)
+  Internal programs are installed in $amlibexecdir (previously $libexecdir)
   You must change your inetd/xinetd config for the new amandad path.
   The amandad path change affect rsh/ssh auth, amanda-2.6.0 installations
   will need to add an 'amandad_path' parameter to configuration files in

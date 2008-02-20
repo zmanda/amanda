@@ -1,4 +1,8 @@
 2008-02-20  Jean-Louis Martineau <martineau@zmanda.com>
+	* config/amanda/dirs.m4: Add --with-amlibdir and --with-amlibexecdir.
+	* NEWS, ReleaseNotes: Document it.
+
+2008-02-20  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amcheck.c, server-src/dumper.c,
 	  server-src/planner.c: Call waitpid to cleanup defunct process.
 
