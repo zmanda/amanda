@@ -138,6 +138,8 @@ TapeCheckResult tape_is_tape_device(int fd) {
     if (0 == ioctl(fd, MTIOCTOP, &mt)) {
         return TAPE_CHECK_SUCCESS;
     } else {
+	dbprintf("tape_is_tape_device: ioctl(MTIOCTOP/MTNOP) failed: %s",
+		 strerror(errno));
         return TAPE_CHECK_FAILURE;
     }
 }
@@ -149,6 +151,7 @@ TapeCheckResult tape_is_ready(int fd) {
         if (!GMT_DR_OPEN(get.mt_gstat)) {
             return TAPE_CHECK_SUCCESS;
         } else {
+	    dbprintf("tape_is_read: ioctl(MTIOCGET) failed: %s", strerror(errno));
             return TAPE_CHECK_FAILURE;
         }
 #else /* Neither macro is defined. */
