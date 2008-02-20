@@ -1,3 +1,7 @@
+2008-02-20  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/tape-posix.c: keep ioctl error message in
+	  debug log
+
 2008-02-19  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/device.c, device-src/null-device.c,
 	  device-src/s3.c, device-src/tape-device.c,
