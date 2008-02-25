@@ -51,6 +51,7 @@
 #include "version.h"
 #include "util.h"
 #include "timestamp.h"
+#include "holding.h"
 
 /* don't have (or need) a skipped type except internally to reporter */
 #define L_SKIPPED	L_MARKER
@@ -133,6 +134,7 @@ static int degraded_mode = 0; /* defined in driverio too */
 static int normal_run = 0;
 static int amflush_run = 0;
 static int got_finish = 0;
+static int cmdlogfname = 0;
 static char *ghostname = NULL;
 
 static char *tapestart_error = NULL;
@@ -152,8 +154,8 @@ static line_t *notes = NULL;
 
 static char MaxWidthsRequested = 0;	/* determined via config data */
 
-char *displayunit;
-long int unitdivisor;
+static char *displayunit;
+static long int unitdivisor;
 
 /* local functions */
 int main(int argc, char **argv);
@@ -367,6 +369,7 @@ main(
     outfname = NULL;
     psfname = NULL;
     logfname = NULL;
+    cmdlogfname = 0;
 
     cwd = g_get_current_dir();
     if (cwd == NULL) {
@@ -414,6 +417,7 @@ main(
 		}
                 break;
             case 'l':
+		cmdlogfname = 1;
 		if (logfname != NULL) {
 		    error(_("you may specify at most one -l"));
 		    /*NOTREACHED*/
@@ -1020,8 +1024,39 @@ output_tapeinfo(void)
     if(degraded_mode) {
 	g_fprintf(mailf,
 		_("*** A TAPE ERROR OCCURRED: %s.\n"), tapestart_error);
-	fputs(_("Some dumps may have been left in the holding disk.\n"), mailf);
-	g_fprintf(mailf, _("Run amflush to flush them to tape.\n"));
+    }
+    if (cmdlogfname == 1) {
+	if(degraded_mode) {
+	    fputs(_("Some dumps may have been left in the holding disk.\n"),
+		  mailf);
+	    g_fprintf(mailf,"\n");
+	}
+    }  else {
+	GSList *holding_list, *holding_file;
+	off_t  h_size = 0, mh_size;
+
+	holding_list = holding_get_files_for_flush(NULL);
+	for(holding_file=holding_list; holding_file != NULL;
+				       holding_file = holding_file->next) {
+	    mh_size = holding_file_size((char *)holding_file->data, 1);
+	    if (mh_size > 0)
+		h_size += mh_size;
+	}
+
+	if (h_size > 0) {
+	    g_fprintf(mailf,
+		    _("There are %lld%s of dumps left in the holding disk.\n"),
+		    (long long)h_size, displayunit);
+	    if (getconf_boolean(CNF_AUTOFLUSH)) {
+		g_fprintf(mailf, _("They will be flushed on the next run.\n"));
+	    } else {
+		g_fprintf(mailf, _("Run amflush to flush them to tape.\n"));
+	    }
+	    g_fprintf(mailf,"\n");
+	} else if (degraded_mode) {
+	    g_fprintf(mailf, _("No dumps are left in the holding disk. %lld%s\n"), (long long)h_size, displayunit);
+	    g_fprintf(mailf,"\n");
+	}
     }
 
     tp = lookup_last_reusable_tape(skip);
