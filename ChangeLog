@@ -1,3 +1,6 @@
+2008-02-25  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/reporter.c: Report size of data on holding disk.
+
 2008-02-20  Jean-Louis Martineau <martineau@zmanda.com>
 	* config/amanda/dirs.m4: Add --with-amlibdir and --with-amlibexecdir.
 
