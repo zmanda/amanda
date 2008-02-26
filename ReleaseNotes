@@ -17,7 +17,7 @@ Deprecated programs
   them, then you must rewrite them in perl using the new perl modules.
 
 Configure options
-  --disable-shared doesn't work because perl module require shared library.
+  --disable-shared doesn't work because perl modules require shared library.
   Instead, use --with-static-binaries to build statically linked binaries.
   --with-amlibdir, libraries are now installed in $amlibdir
     --without-amlibdir              : amlibdir=$libdir
@@ -26,8 +26,13 @@ Configure options
   --with-amlibexecdir, internal programs are installed in $amlibexecdir
     --without-amlibexecdir                  : amlibdir=$libexecdir
     --with-amlibexecdir=yes                 : amlibdir=$libexecdir/amanda
-							      (default value)
+                                                             (default value)
     --with-amlibexecdir=/path/to/libexecdir : amlibdir=/path/to/libexecdir
+  --with-amperldir, Where to install perl modules
+    --without-amperldir               : amperldir=$amlibdir/perl
+    --with-amperldir=yes              : amperldir= $(perl installsitelib)
+                                                                (default value)
+    --with-amperldir=/path/to/perldir : amperldir=/path/to/perldir
 
 Path changes
   Libraries are installed in $amlibdir (previously $libdir)
@@ -75,6 +80,7 @@ Perl Module
     Debug (Write to debug files)
     Logfile (Parse log files)
     Tapefile (Parse tapelist file)
+  Perl modules are installed in $amperldir
 
 local security driver (auth)
   Allows backups of the Amanda server without any need for network

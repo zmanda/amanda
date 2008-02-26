@@ -23,7 +23,9 @@ Changes in release 2.6.0
    * Device API: pluggable interface to storage devices, supporting tapes,
      vtapes, RAIT, and Amazon S3
    * New perl modules link directly to Amanda, to support writing Amanda
-     applications in Perl.
+     applications in Perl. Perl module are installed by default in the perl
+     installsitelib directory. It can be changed with
+     'configure --with-amperldir'.
    * New 'local' security driver supports backups of the amanda server
      without any network connection or other configuration.
    * Almost 200 unit tests are available via 'make installcheck'.

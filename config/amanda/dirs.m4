@@ -182,8 +182,10 @@ AC_DEFUN([AMANDA_EXPAND_DIRS],
     # amanda-specific directories
     AMLIBDIR=$libdir/amanda
     AC_ARG_WITH(amlibdir,
-	AS_HELP_STRING([--with-amlibdir],
-		[Where library are installed, default: $libdir/amanda]),
+	AS_HELP_STRING([--with-amlibdir[[[[[=PATH]]]]]],
+		[Where library are installed, default: $libdir/amanda])
+	AS_HELP_STRING([--without-amlibdir],
+		[Library are installed in $libdir]),
 	[
 	    case "$withval" in
 		n | no) AMLIBDIR=$libdir ;;
@@ -197,8 +199,10 @@ AC_DEFUN([AMANDA_EXPAND_DIRS],
 
     AMLIBEXECDIR=$libexecdir/amanda
     AC_ARG_WITH(amlibexecdir,
-	AS_HELP_STRING([--with-amlibexecdir],
-		[Where amanda own programs are installed, default: $libexecdir/amanda]),
+	AS_HELP_STRING([--with-amlibexecdir[[[[[=PATH]]]]]],
+		[Where amanda own programs are installed, default: $libexecdir/amanda])
+	AS_HELP_STRING([--without-amlibexecdir],
+		[Amanda own programs are installed in $libexecdir]),
 	[
 	    case "$withval" in
 		n | no) AMLIBEXECDIR=$libexecdir ;;
@@ -215,14 +219,14 @@ AC_DEFUN([AMANDA_EXPAND_DIRS],
 	[Directory in which Amanda header files should be installed])
 
     AC_ARG_WITH(amperldir,
-	AS_HELP_STRING([--with-amperldir],
+	AS_HELP_STRING([--with-amperldir[[[[[=PATH]]]]]],
 		[Where amanda's perl modules are installed; default: installsitelib])
 	AS_HELP_STRING([--without-amperldir],
 		[Install amanda's perl modules in $amlibdir/perl]),
 	[
 	    case "$withval" in
 		y | ye | yes) AMPERLLIB=DEFAULT ;;
-		n | no) AMPERLLIB=$libdir/amanda/perl ;;
+		n | no) AMPERLLIB=$amlibdir/perl ;;
 		*) AMPERLLIB=$withval ;;
 	    esac
 	], [

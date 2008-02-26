@@ -1,3 +1,9 @@
+2008-02-26  Jean-Louis Martineau <martineau@zmanda.com>
+	* NEWS, ReleaseNotes: Document --with-amlibdir.
+	* config/amanda/dirs.m4: Add AS_HELP_STRING for --without-amlibdir and
+				--without-amlibexecdir,
+				Set AMPERLLIB to $amlibdir/perl.
+
 2008-02-26  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Makefile.am config/amanda/dirs.m4 config/amanda/summary.m4:
 	  add --with-amperldir, --without-amperldir, and install perl modules
