@@ -842,14 +842,18 @@ check_running_as(running_as_flags who)
 
 	case RUNNING_AS_DUMPUSER_PREFERRED:
 	    dumpuser = getconf_str(CNF_DUMPUSER);
-	    if ((pw = getpwnam(CLIENT_LOGIN)) != NULL &&
-                    uid_me == pw->pw_uid) {
-                /* uid == CLIENT_LOGIN: not ideal, but OK */
-                dbprintf(_("NOTE: running as '%s', which the client user, not the "
-                    "dumpuser ('%s'); forging on anyway\n"),
-                    CLIENT_LOGIN, dumpuser);
-                uid_target = pw->pw_uid; /* force success below */
-                break;
+	    if ((pw = getpwnam(dumpuser)) != NULL &&
+                    uid_me != pw->pw_uid) {
+		if ((pw = getpwnam(CLIENT_LOGIN)) != NULL &&
+		    uid_me == pw->pw_uid) {
+		    /* uid == CLIENT_LOGIN: not ideal, but OK */
+		    dbprintf(_("NOTE: running as '%s', which is the client"
+			       " user, not the dumpuser ('%s'); forging"
+			       " on anyway\n"),
+			     CLIENT_LOGIN, dumpuser);
+		    uid_target = uid_me; /* force success below */
+		   break;
+		}
             }
             /* FALLTHROUGH */
 

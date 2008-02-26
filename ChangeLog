@@ -1,3 +1,7 @@
+2008-02-26  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/util.c: Don't log a note if CLIENT_LOGIN == dumpuser for
+			     RUNNING_AS_DUMPUSER_PREFERRED.
+
 2008-02-25  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/reporter.c: Report size of data on holding disk.
 
