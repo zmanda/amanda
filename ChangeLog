@@ -1,3 +1,9 @@
+2008-02-26  Jean-Louis Martineau <martineau@zmanda.com>
+	* NEWS, ReleaseNotes: Document --with-amlibdir.
+	* config/amanda/dirs.m4: Add AS_HELP_STRING for --without-amlibdir and
+				 --without-amlibexecdir,
+				 Set AMPERLLIB to $amlibdir/perl.
+
 2008-02-26  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/event-test.c: a more robust and effective test of
 	  EV_READFD; thanks to Jean-Louis Martineau for the suggestions.

@@ -17,13 +17,42 @@ Deprecated programs
   them, then you must rewrite them in perl using the new perl modules.
 
 Configure options
-  --disable-shared doesn't work because perl module require shared library.
+  --disable-shared doesn't work because perl modules require shared library.
   Instead, use --with-static-binaries to build staticailly linked binaries.
+  --with-amlibdir, libraries are now installed in $amlibdir
+    --without-amlibdir              : amlibdir=$libdir
+    --with-amlibdir=yes             : amlibdir=$libdir/amanda  (default value)
+    --with-amlibdir=/path/to/libdir : amlibdir=/path/to/libdir
+  --with-amlibexecdir, internal programs are installed in $amlibexecdir
+    --without-amlibexecdir                  : amlibdir=$libexecdir
+    --with-amlibexecdir=yes                 : amlibdir=$libexecdir/amanda
+                                                             (default value)
+    --with-amlibexecdir=/path/to/libexecdir : amlibdir=/path/to/libexecdir
+  --with-amperldir, Where to install perl modules
+    --without-amperldir               : amperldir=$amlibdir/perl
+    --with-amperldir=yes              : amperldir= $(perl installsitelib)
+                                                                (default value)
+    --with-amperldir=/path/to/perldir : amperldir=/path/to/perldir
 
 Path changes
-  Libraries are installed in $libdir/amanda (previously $libdir)
-  Internal programs are installed in $libexecdir/amanda (previously $libexecdir)
+  Libraries are installed in $amlibdir (previously $libdir)
+  Internal programs are installed in $amlibexecdir (previously $libexecdir)
   You must change your inetd/xinetd config for the new amandad path.
+  The amandad path change affect rsh/ssh auth, amanda-2.6.0 installations
+  will need to add an 'amandad_path' parameter to configuration files in
+  order to talk to older versions of Amanda:
+     amanda-2.6.0 client -> amanda-2.5.2 or earlier server: add
+       'amandad_path "/usr/libexec/amandad"' (or the appropriate path) to
+       /etc/amanda/amanda-client.conf
+     amanda-2.5.2 or earlier client -> amanda-2.6.0 server: add
+       'amandad_path "/usr/libexec/amanda/amandad"' (or the appropriate path)
+       to /etc/amanda/amanda-client.conf
+     amanda-2.6.0 server -> amanda-2.5.2 or earlier client: add
+       'amandad_path "/usr/libexec/amandad"' (or the appropriate path) to the
+       dumptype
+     amanda-2.5.2 or earlier server -> amanda-2.6.0 client: add
+       'amandad_path "/usr/libexec/amanda/amandad"' (or the appropriate path)
+       to the dumptype
   The amandates files is now $localstatedir/amanda/amandates, previously it
   was /etc/amandates, this file must be created on all client.
 
@@ -51,6 +80,7 @@ Perl Module
     Debug (Write to debug files)
     Logfile (Parse log files)
     Tapefile (Parse tapelist file)
+  Perl modules are installed in $amperldir
 
 local security driver (auth)
   Allows backups of the Amanda server without any need for network
