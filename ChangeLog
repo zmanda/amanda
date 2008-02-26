@@ -1,3 +1,9 @@
+2008-02-26  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Makefile.am config/amanda/dirs.m4 config/amanda/summary.m4:
+	  add --with-amperldir, --without-amperldir, and install perl modules
+	  in Perl's installsitearch by default; thanks to Orion Poplawski
+	  <orion@cora.nwra.com> for help and suggestions.
+
 2008-02-26  Jean-Louis Martineau <martineau@zmanda.com>
 	* client-src/getfsent.c: Don't fail if stat of mount point fail.
 

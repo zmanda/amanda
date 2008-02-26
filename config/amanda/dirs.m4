@@ -156,13 +156,16 @@ AC_DEFUN([AMANDA_WITH_TMPDIR],
 #   - mandir
 #
 #   Also defines the following directories and expands any variable references:
-#   - amlibdir = ${libdir}/amanda
+#   - amlibdir = --with-amlibdir or ${libdir}/amanda
+#   - amlibexecdir = --with-amlibexecdir or ${libexecdir}/amanda
 #   - amincludedir = ${includedir}/amanda
-#   - amperldir = ${amlibdir}/perl
+#   - amperldir = --with-amperldir or `perl -V:installsitearch`
 #   - DUMPER_DIR = ${amlibexecdir}/application
 #
 AC_DEFUN([AMANDA_EXPAND_DIRS],
 [
+    AC_REQUIRE([AMANDA_PROG_PERL])
+
     AC_DEFINE_DIR([bindir], [bindir],
         [Directory in which user binaries should be installed. ])
 
@@ -211,9 +214,28 @@ AC_DEFUN([AMANDA_EXPAND_DIRS],
     AC_DEFINE_DIR([amincludedir], [amincludedir],
 	[Directory in which Amanda header files should be installed])
 
-    amperldir="${amlibdir}/perl"
-    AC_DEFINE_DIR([amperldir], [amperldir],
-	[Directory in which Amanda perl libraries should be installed])
+    AC_ARG_WITH(amperldir,
+	AS_HELP_STRING([--with-amperldir],
+		[Where amanda's perl modules are installed; default: installsitelib])
+	AS_HELP_STRING([--without-amperldir],
+		[Install amanda's perl modules in $amlibdir/perl]),
+	[
+	    case "$withval" in
+		y | ye | yes) AMPERLLIB=DEFAULT ;;
+		n | no) AMPERLLIB=$libdir/amanda/perl ;;
+		*) AMPERLLIB=$withval ;;
+	    esac
+	], [
+	    AMPERLLIB=DEFAULT
+	]
+    )
+    # apply the default if no value was given.
+    if test x"$AMPERLLIB" = x"DEFAULT"; then
+	eval `$PERL -V:installsitelib`
+	AMPERLLIB=$installsitelib
+    fi
+    AC_DEFINE_DIR([amperldir], [AMPERLLIB],
+	[Directory in which perl modules should be installed])
 
     DUMPER_DIR='${amlibexecdir}/application'
     AC_DEFINE_DIR([DUMPER_DIR],[DUMPER_DIR],
@@ -232,6 +254,7 @@ AC_DEFUN([AMANDA_EXPAND_DIRS],
 AC_DEFUN([AMANDA_SHOW_DIRS_SUMMARY],
 [
     echo "Directories:"
+    echo "  Perl modules (amperldir): $amperldir"
     echo "  Dumper: $DUMPER_DIR"
     echo "  Configuration: $CONFIG_DIR"
     echo "  GNU Tar lists: $GNUTAR_LISTED_INCREMENTAL_DIR"
