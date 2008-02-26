@@ -1,4 +1,7 @@
 2008-02-26  Jean-Louis Martineau <martineau@zmanda.com>
+	* client-src/getfsent.c: Don't fail if stat of mount point fail.
+
+2008-02-26  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/util.c: Don't log a note if CLIENT_LOGIN == dumpuser for
 			     RUNNING_AS_DUMPUSER_PREFERRED.
 

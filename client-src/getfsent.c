@@ -30,6 +30,7 @@
  */
 
 #include "amanda.h"
+#include "util.h"
 
 #ifdef TEST
 #  include <stdio.h>
@@ -538,9 +539,8 @@ search_fstab(
 
     amfree(rdev);
 
-    if(fsent->mntdir != NULL &&
-       (smnt = stat(fsent->mntdir, &mntstat)) == -1)
-      continue;
+    if(fsent->mntdir != NULL)
+       smnt = stat(fsent->mntdir, &mntstat);
 
     if(fsent->fsname != NULL) {
       sfs = stat(fsent->fsname, &fsstat);
