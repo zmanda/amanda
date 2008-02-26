@@ -50,14 +50,6 @@ libamglue_la_SOURCES = \
 EXTRA_DIST += $(libamglue_la_SOURCES)
 
 ##
-## Plain old perl modules
-##
-
-# (Amandadir/Amanda_DATA are also used by the SWIG modules)
-Amandadir=$(amperldir)/Amanda
-Amanda_DATA =
-
-##
 ## SWIG-generated packages
 ##
 
@@ -93,6 +85,9 @@ SWIG_OPTIONS=-perl5 -proxy -DSWIG_TYPE_TABLE=SWIG_TYPES_Amanda -I$(srcdir)
 	@echo "$@ was produced as a side-effect of creating $<"
 %.i : %.swg $(AMGLUE_SWG)
 	$(SWIG) $(SWIG_OPTIONS) -E $(top_srcdir)/perl/$< >$@
+
+Amandadir=$(amperldir)/Amanda
+Amanda_DATA =
 
 if WANT_SERVER
 # PACKAGE: Amanda::Device

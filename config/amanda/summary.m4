@@ -57,6 +57,7 @@ AC_DEFUN([AMANDA_SHOW_SUMMARY], [
     AMANDA_SHOW_COMPONENTS_SUMMARY
     AMANDA_SHOW_IPV6_SUMMARY
     AMANDA_SHOW_DOCUMENTATION_SUMMARY
+    AMANDA_SHOW_DIRS_SUMMARY
     if test -f config.warnings; then
 	echo "WARNINGS:"
 	cat config.warnings | sed -e 's/^/  /g'
