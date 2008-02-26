@@ -301,67 +301,61 @@ test_event_wait_2(void)
 /****
  * Test that EV_READFD is triggered correctly when there's data available
  * for reading.  The source of read events is a spawned child which writes
- * bytes to a pipe, separated by sleep() calls.
+ * lots of data to a pipe, in hopes of overflowing the pipe buffer.
  */
 static void
-test_ev_readfd_cb(void *up)
+test_ev_readfd_cb(void *up G_GNUC_UNUSED)
 {
-    char **string = (char **)up;
     char buf[1024];
     int len;
 
-    if (dbgmsg) fprintf(stderr, "test_ev_readfd_cb called\n");
-    /* read from the fd, putting each block read on its own line; release
-     * when the last character read is 'Z'. */
+    /* read from the fd until we're out of bytes */
+    if (dbgmsg) fprintf(stderr, "reader: callback executing\n");
     len = read(cb_fd, buf, sizeof(buf));
-    if (len <= 0) {
-	if (dbgmsg) fprintf(stderr, " read() returned %d\n", len);
-	*string = newvstralloc(*string, (*string)?(*string):"", "(empty)\n", NULL);
+    if (len == 0) {
+	if (dbgmsg) fprintf(stderr, "reader: callback returning\n");
+    } else if (len < 0) {
+	if (dbgmsg) fprintf(stderr, "reader: read() returned %d: %s\n", len, strerror(errno));
+	/* do we need to handle e.g., EAGAIN here? */
     } else {
-	buf[len] = '\0';
-	if (dbgmsg) fprintf(stderr, " read() returned '%s'\n", buf);
-	*string = newvstralloc(*string, (*string)?(*string):"", buf, "\n", NULL);
-
-	if (buf[len-1] == 'Z') {
+	if (dbgmsg) fprintf(stderr, "reader: read %d bytes\n", len);
+	global -= len;
+	/* release this event if we've read all of the available bytes */
+	if (global <= 0) {
+	    close(cb_fd);
 	    event_release(hdl[0]);
 	}
     }
 }
 
 static void
-test_ev_readfd_writer(int fd, char *lines)
+test_ev_readfd_writer(int fd, size_t count)
 {
-    while (1) {
-	char *p = lines;
+    char buf[256];
+    size_t i;
+
+    for (i = 0; i < sizeof(buf); i++) {
+	buf[i] = (char)i;
+    }
+
+    while (count > 0) {
 	int len;
 
-	while (*p && *p != '\n') p++;
-	len = p-lines;
-
-	if (dbgmsg) fprintf(stderr, "writing %d bytes\n", len);
-	while (len)
-	    len -= write(fd, p-len, len);
-
-	if (!*p)
-	    break;
-
-	g_usleep(100000); /* sleep to prevent the OS from "bundling" our writes */
-
-	lines = p+1;
+	len = write(fd, buf, min(sizeof(buf), count));
+	if (dbgmsg) fprintf(stderr, "writer wrote %d bytes\n", len);
+	count -= len;
     }
 
     close(fd);
 }
+
+#define TEST_EV_READFD_SIZE (1024*1024*20)
 
 static int
 test_ev_readfd(void)
 {
     int writer_pid;
     int p[2];
-    char *text = "Fourscore and seven years ago\n"
-		 "There comes a time in every man's life\n"
-		 "This should end the transmission: Z\n";
-    char *accumulator = NULL;
 
     /* make a pipe */
     pipe(p);
@@ -370,7 +364,7 @@ test_ev_readfd(void)
     switch (writer_pid = fork()) {
 	case 0: /* child */
 	    close(p[0]);
-	    test_ev_readfd_writer(p[1], text);
+	    test_ev_readfd_writer(p[1], TEST_EV_READFD_SIZE);
 	    exit(0);
 	    break;
 
@@ -386,7 +380,8 @@ test_ev_readfd(void)
     cb_fd = p[0];
     fcntl(cb_fd, F_SETFL, O_NONBLOCK);
     close(p[1]);
-    hdl[0] = event_register(p[0], EV_READFD, test_ev_readfd_cb, &accumulator);
+    global = TEST_EV_READFD_SIZE;
+    hdl[0] = event_register(p[0], EV_READFD, test_ev_readfd_cb, NULL);
 
     /* let it run */
     event_loop(0);
@@ -394,16 +389,8 @@ test_ev_readfd(void)
     if (dbgmsg) fprintf(stderr, "waiting for writer to die..\n");
     waitpid(writer_pid, NULL, 0);
 
-    /* and see what we got */
-    if (!accumulator) {
-	if (dbgmsg) fprintf(stderr, "no data was read\n");
-	return 0;
-    }
-
-    if (strcmp(accumulator, text) != 0) {
-	if (dbgmsg)
-	    fprintf(stderr, "text differs; expected\n---\n%s\n--- but got ---\n%s\n---\n",
-		    text, accumulator);
+    if (global != 0) {
+	if (dbgmsg) fprintf(stderr, "%d bytes remain unread..\n", global);
 	return 0;
     }
 
@@ -484,16 +471,13 @@ test_read_timeout(void)
 
 /****
  * Test that EV_WRITEFD is triggered correctly when there's buffer space to
- * support a write, by writing to a "slow" consumer.  If the buffers on this 
- * system are ridiculously large, then this may spuriously succeed. */
-
-/* hopefully this is large enough to exceed the system's pipe buffer */
-#define WRITE_CHUNK_SIZE (1024*1024)
+ * support a write.  
+ */
 
 static void
 test_ev_writefd_cb(void *up G_GNUC_UNUSED)
 {
-    char buf[WRITE_CHUNK_SIZE];
+    char buf[1024];
     int len;
     unsigned int i;
 
@@ -504,30 +488,31 @@ test_ev_writefd_cb(void *up G_GNUC_UNUSED)
 
     /* write some bytes, but no more than global */
     if (dbgmsg) fprintf(stderr, "test_ev_writefd_cb called\n");
-    len = write(cb_fd, buf, min((size_t)global, sizeof(buf)));
-    if (len <= 0) {
-	if (dbgmsg) fprintf(stderr, " write() returned %d\n", len);
-	return;
-    } else {
+    while (1) {
+	len = write(cb_fd, buf, min((size_t)global, sizeof(buf)));
+	if (len < 0) {
+	    if (dbgmsg) fprintf(stderr, "test_ev_writefd_cb: write() returned %d\n", len);
+	    return;
+	} else if (len == 0) {
+	    /* do we need to handle EAGAIN, etc. here? */
+	    if (dbgmsg) fprintf(stderr, "test_ev_writefd_cb done\n");
+	    return;
+	}
 	if (dbgmsg) fprintf(stderr, " write() wrote %d bytes\n", len);
-    }
-
-    /* and deduct those bytes from the number we're to write */
-    global -= len;
-    if (global <= 0) {
-	close(cb_fd);
-	event_release(hdl[0]);
+	global -= len;
+	if (global <= 0) {
+	    close(cb_fd);
+	    event_release(hdl[0]);
+	    return;
+	}
     }
 }
 
 static void
-test_ev_writefd_consumer(int fd)
+test_ev_writefd_consumer(int fd, size_t count)
 {
-    unsigned int nsleeps = 0;
-    size_t bytes_read = 0;
-    /* Read the data "slowly" and consume it. We read WRITE_CHUNK_SIZE per 0.1s */
-    while (1) {
-	char buf[WRITE_CHUNK_SIZE];
+    while (count > 0) {
+	char buf[1024];
 	int len;
 
 	if (dbgmsg) fprintf(stderr, "reader: calling read(%d)\n", (int)sizeof(buf));
@@ -538,15 +523,11 @@ test_ev_writefd_consumer(int fd)
 
 	if (dbgmsg) fprintf(stderr, "reader: read() returned %d bytes\n", len);
 
-	/* now make sure we're not running too quickly.. */
-	bytes_read += len;
-	while (nsleeps < bytes_read * 10 / WRITE_CHUNK_SIZE) {
-	    /* sleep 0.01s */
-	    g_usleep(10000);
-	    nsleeps++;
-	}
+	count -= len;
     }
 }
+
+#define TEST_EV_WRITEFD_SIZE (1024*1024*40)
 
 static int
 test_ev_writefd(void)
@@ -561,14 +542,14 @@ test_ev_writefd(void)
     switch (reader_pid = fork()) {
 	case 0: /* child */
 	    close(p[1]);
-	    test_ev_writefd_consumer(p[0]);
+	    test_ev_writefd_consumer(p[0], TEST_EV_WRITEFD_SIZE);
 	    exit(0);
 	    break;
-	
+
 	case -1: /* error */
 	    perror("fork");
 	    return 0;
-	
+
 	default: /* parent */
 	    break;
     }
@@ -576,8 +557,7 @@ test_ev_writefd(void)
     /* set up a EV_WRITEFD on the write end of the pipe */
     cb_fd = p[1];
     fcntl(cb_fd, F_SETFL, O_NONBLOCK);
-    /* set the number of bytes to write, approx. length of tests in seconds */
-    global = WRITE_CHUNK_SIZE * 5;
+    global = TEST_EV_WRITEFD_SIZE;
     close(p[0]);
     hdl[0] = event_register(p[1], EV_WRITEFD, test_ev_writefd_cb, NULL);
 

@@ -1,4 +1,8 @@
 2008-02-26  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/event-test.c: a more robust and effective test of
+	  EV_READFD; thanks to Jean-Louis Martineau for the suggestions.
+
+2008-02-26  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Makefile.am config/amanda/dirs.m4 config/amanda/summary.m4:
 	  add --with-amperldir, --without-amperldir, and install perl modules
 	  in Perl's installsitearch by default; thanks to Orion Poplawski
