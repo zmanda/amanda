@@ -274,7 +274,7 @@ find_compare(
             j = *(find_result_t **)j1;
         }            
         
-	switch (find_sort_order[k]) {
+	switch (sort_key) {
 	case 'h' : compare=strcmp(i->hostname,j->hostname);
 		   break;
 	case 'k' : compare=strcmp(i->diskname,j->diskname);

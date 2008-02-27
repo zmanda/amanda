@@ -1,3 +1,6 @@
+2008-02-27  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/find.c: Use sort_key in switch statement.
+
 2008-02-26  Jean-Louis Martineau <martineau@zmanda.com>
 	* NEWS, ReleaseNotes: Document --with-amlibdir.
 	* config/amanda/dirs.m4: Add AS_HELP_STRING for --without-amlibdir and
