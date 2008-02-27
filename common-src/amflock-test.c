@@ -25,12 +25,16 @@
  */
 
 #include "amanda.h"
+#include "testutils.h"
 
 /* from amflock.c */
 extern amflock_impl_t *amflock_impls[];
 
-int
-main(void)
+/* Test all amflock implementations available for basic 
+ * functionality
+ */
+static int
+test_impls(void)
 {
     amflock_impl_t **imp = amflock_impls;
     char *filename = "./amflocktest.file";
@@ -43,43 +47,57 @@ main(void)
     _lnlock_dir = ".";
 
     while (*imp) {
-	g_fprintf(stderr, _("Testing amflock-%s\n"), (*imp)->impl_name);
-	alarm(5); /* time out after 5 seconds */
+	tu_dbg("Testing amflock-%s\n", (*imp)->impl_name);
 
 	for (lock_ro = 0; lock_ro < 2; lock_ro++) { /* false (0) or true (1) */
 	    if (unlink(filename) == -1 && errno != ENOENT) {
 		perror("unlink");
-		return 1;
+		return 0;
 	    }
 
 	    if ((fd = open(filename, O_RDWR | O_CREAT | O_EXCL, 0600)) == -1) {
 		perror("open");
-		return 1;
+		return 0;
 	    }
 
 	    if (lock_ro) {
 		if ((*imp)->amroflock_impl(fd, resource) != 0) {
 		    perror("amroflock");
-		    return 1;
+		    return 0;
 		}
 	    } else {
 		if ((*imp)->amflock_impl(fd, resource) != 0) {
 		    perror("amflock");
-		    return 1;
+		    return 0;
 		}
 	    }
 
 	    if ((*imp)->amfunlock_impl(fd, resource) != 0) {
 		perror("amfunlock");
-		return 1;
+		return 0;
 	    }
 
 	    close(fd); /* ignore error */
 	    unlink(filename); /* ignore error */
 	}
 
+	fprintf(stderr, "  PASS amflock-%s\n", (*imp)->impl_name);
+
 	imp++;
     }
 
-    return 0;
+    return 1;
+}
+
+/* TODO: a more serious test of exclusion using multiple processes */
+
+int
+main(int argc, char **argv)
+{
+    static TestUtilsTest tests[] = {
+	TU_TEST(test_impls, 10),
+	TU_END()
+    };
+
+    return testutils_run_tests(argc, argv, tests);
 }

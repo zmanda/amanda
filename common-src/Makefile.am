@@ -191,16 +191,25 @@ bsdsecurity_LDADD = $(libamanda_a_LIBADD) \
 amfeatures_SOURCES = amfeatures.test.c
 amfeatures_LDADD = $(libamanda_la_LIBADD) $(STANDARD_COMMON_STUFF)
 
+# libtestutils.la
+#
+# Convenience library (never installed) for 'make check'-based tests.
+
+noinst_LTLIBRARIES = libtestutils.la
+libtestutils_la_SOURCES = \
+	testutils.c \
+	testutils.h
+
 # automake-style tests
 
 TESTS = amflock-test event-test
 noinst_PROGRAMS = $(TESTS)
 
 amflock_test_SOURCES = amflock-test.c
-amflock_test_LDADD = libamanda.la
+amflock_test_LDADD = libamanda.la libtestutils.la
 
 event_test_SOURCES = event-test.c
-event_test_LDADD = libamanda.la
+event_test_LDADD = libamanda.la libtestutils.la
 
 # scripts
 

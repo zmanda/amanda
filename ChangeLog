@@ -1,3 +1,9 @@
+2008-02-27  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/testutils.c common-src/testutils.h
+	  common-src/Makefile.am: add libtestutils.la
+	* common-src/event-test.c common-src/amflock-test.c:
+	  use libtestutils.la
+
 2008-02-27  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/find.c: Use sort_key in switch statement.
 

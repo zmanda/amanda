@@ -21,6 +21,7 @@
  */
 
 #include "amanda.h"
+#include "testutils.h"
 #include "event.h"
 
 /* a random global variable to flag that some function has been called */
@@ -32,53 +33,9 @@ static int cb_fd;
 /* and some easy access to the event handles for callbacks */
 static event_handle_t *hdl[10];
 
-/* Debug output (-d on the command line) */
-static int dbgmsg = 0;
-
 /*
  * Utils
  */
-
-static void
-timeout(int sig G_GNUC_UNUSED)
-{
-    fprintf(stderr, "-- TEST TIMED OUT --\n");
-    exit(1);
-}
-
-/* Call testfn in a forked process, such that any failures will trigger a
- * test failure, but allow the other tests to proceed.
- */
-static int
-callinfork( int (*testfn)(void), char *testname)
-{
-    pid_t pid;
-    int success;
-    amwait_t status;
-
-    switch (pid = fork()) {
-	case 0:	/* child */
-	    /* kill the test after 10s */
-	    signal(SIGALRM, timeout);
-	    alarm(10);
-
-	    success = testfn();
-	    exit(success? 0:1);
-
-	case -1:
-	    perror("fork");
-	    exit(1);
-
-	default: /* parent */
-	    waitpid(pid, &status, 0);
-	    if (status == 0) {
-		fprintf(stderr, " PASS %s\n", testname);
-	    } else {
-		fprintf(stderr, " FAIL %s\n", testname);
-	    }
-	    return status == 0;
-    }
-}
 
 /* A common event callback that just decrements 'global', and frees
  * hdl[0] if global reaches zero.
@@ -87,9 +44,9 @@ static void
 test_decrement_cb(void *up G_GNUC_UNUSED)
 {
     global--;
-    if (dbgmsg) fprintf(stderr, "Decrement global to %d\n", global);
+    tu_dbg("Decrement global to %d\n", global);
     if (global == 0) {
-	if (dbgmsg) fprintf(stderr, "Release event\n");
+	tu_dbg("Release event\n");
 	event_release(hdl[0]);
     }
 }
@@ -162,14 +119,14 @@ static void
 test_ev_wait_2_cb(void *up G_GNUC_UNUSED)
 {
     global--;
-    if (dbgmsg) fprintf(stderr, "Decrement global to %d\n", global);
+    tu_dbg("Decrement global to %d\n", global);
 
     if (global >= 0) {
-	if (dbgmsg) fprintf(stderr, "release EV_WAIT event\n");
+	tu_dbg("release EV_WAIT event\n");
 	event_release(hdl[0]);
     }
     if (global > 0) {
-	if (dbgmsg) fprintf(stderr, "register new EV_WAIT event with same ID\n");
+	tu_dbg("register new EV_WAIT event with same ID\n");
 	hdl[0] = event_register(84, EV_WAIT, test_ev_wait_2_cb, NULL);
     }
 }
@@ -202,7 +159,7 @@ test_event_wait_cb(void *up G_GNUC_UNUSED)
     (*cb_fired) = 1;
 
     /* immediately unregister ourselves */
-    if (dbgmsg) fprintf(stderr, "test_event_wait_cb called\n");
+    tu_dbg("test_event_wait_cb called\n");
     event_release(hdl[1]);
 }
 
@@ -225,13 +182,13 @@ test_event_wait(void)
     /* at this point, test_decrement_cb should have fired once or twice, but not
      * three times */
     if (global == 0) {
-	if (dbgmsg) fprintf(stderr, "global is already zero!\n");
+	tu_dbg("global is already zero!\n");
 	return 0;
     }
 
     /* and our own callback should have fired */
     if (!cb_fired) {
-	if (dbgmsg) fprintf(stderr, "test_event_wait_cb didn't fire\n");
+	tu_dbg("test_event_wait_cb didn't fire\n");
 	return 0;
     }
 
@@ -245,7 +202,7 @@ static void
 test_event_wait_2_cb(void *up)
 {
     int *wakeups_remaining = (int *)up;
-    if (dbgmsg) fprintf(stderr, "test_event_wait_2_cb called\n");
+    tu_dbg("test_event_wait_2_cb called\n");
 
     if (--(*wakeups_remaining) == 0) {
 	/* unregister ourselves if we've awakened enough times */
@@ -257,7 +214,7 @@ test_event_wait_2_cb(void *up)
 static void
 test_event_wait_2_wakeup_cb(void *up G_GNUC_UNUSED)
 {
-    if (dbgmsg) fprintf(stderr, "test_event_wait_2_wakeup_cb called\n");
+    tu_dbg("test_event_wait_2_wakeup_cb called\n");
 
     /* wake up the EV_WAIT event */
     event_wakeup(9876);
@@ -285,13 +242,13 @@ test_event_wait_2(void)
     /* at this point, test_decrement_cb should have fired twice, but not
      * three times */
     if (global == 0) {
-	if (dbgmsg) fprintf(stderr, "global is already zero!\n");
+	tu_dbg("global is already zero!\n");
 	return 0;
     }
 
     /* and our own callback should have fired twice, not just once */
     if (wakeups_remaining != 0) {
-	if (dbgmsg) fprintf(stderr, "test_event_wait_2_cb didn't fire twice\n");
+	tu_dbg("test_event_wait_2_cb didn't fire twice\n");
 	return 0;
     }
 
@@ -310,15 +267,15 @@ test_ev_readfd_cb(void *up G_GNUC_UNUSED)
     int len;
 
     /* read from the fd until we're out of bytes */
-    if (dbgmsg) fprintf(stderr, "reader: callback executing\n");
+    tu_dbg("reader: callback executing\n");
     len = read(cb_fd, buf, sizeof(buf));
     if (len == 0) {
-	if (dbgmsg) fprintf(stderr, "reader: callback returning\n");
+	tu_dbg("reader: callback returning\n");
     } else if (len < 0) {
-	if (dbgmsg) fprintf(stderr, "reader: read() returned %d: %s\n", len, strerror(errno));
+	tu_dbg("reader: read() returned %d: %s\n", len, strerror(errno));
 	/* do we need to handle e.g., EAGAIN here? */
     } else {
-	if (dbgmsg) fprintf(stderr, "reader: read %d bytes\n", len);
+	tu_dbg("reader: read %d bytes\n", len);
 	global -= len;
 	/* release this event if we've read all of the available bytes */
 	if (global <= 0) {
@@ -342,7 +299,7 @@ test_ev_readfd_writer(int fd, size_t count)
 	int len;
 
 	len = write(fd, buf, min(sizeof(buf), count));
-	if (dbgmsg) fprintf(stderr, "writer wrote %d bytes\n", len);
+	tu_dbg("writer wrote %d bytes\n", len);
 	count -= len;
     }
 
@@ -386,11 +343,11 @@ test_ev_readfd(void)
     /* let it run */
     event_loop(0);
 
-    if (dbgmsg) fprintf(stderr, "waiting for writer to die..\n");
+    tu_dbg("waiting for writer to die..\n");
     waitpid(writer_pid, NULL, 0);
 
     if (global != 0) {
-	if (dbgmsg) fprintf(stderr, "%d bytes remain unread..\n", global);
+	tu_dbg("%d bytes remain unread..\n", global);
 	return 0;
     }
 
@@ -416,7 +373,7 @@ test_read_timeout_slow_writer(int fd)
 static void
 test_read_timeout_cb(void *up G_GNUC_UNUSED)
 {
-    if (dbgmsg) fprintf(stderr, "read timed out (this is supposed to happen)\n");
+    tu_dbg("read timed out (this is supposed to happen)\n");
     global = 1234; /* sentinel value */
 
     /* free up all of the events so that event_loop returns */
@@ -487,18 +444,18 @@ test_ev_writefd_cb(void *up G_GNUC_UNUSED)
     }
 
     /* write some bytes, but no more than global */
-    if (dbgmsg) fprintf(stderr, "test_ev_writefd_cb called\n");
+    tu_dbg("test_ev_writefd_cb called\n");
     while (1) {
 	len = write(cb_fd, buf, min((size_t)global, sizeof(buf)));
 	if (len < 0) {
-	    if (dbgmsg) fprintf(stderr, "test_ev_writefd_cb: write() returned %d\n", len);
+	    tu_dbg("test_ev_writefd_cb: write() returned %d\n", len);
 	    return;
 	} else if (len == 0) {
 	    /* do we need to handle EAGAIN, etc. here? */
-	    if (dbgmsg) fprintf(stderr, "test_ev_writefd_cb done\n");
+	    tu_dbg("test_ev_writefd_cb done\n");
 	    return;
 	}
-	if (dbgmsg) fprintf(stderr, " write() wrote %d bytes\n", len);
+	tu_dbg(" write() wrote %d bytes\n", len);
 	global -= len;
 	if (global <= 0) {
 	    close(cb_fd);
@@ -515,13 +472,13 @@ test_ev_writefd_consumer(int fd, size_t count)
 	char buf[1024];
 	int len;
 
-	if (dbgmsg) fprintf(stderr, "reader: calling read(%d)\n", (int)sizeof(buf));
+	tu_dbg("reader: calling read(%d)\n", (int)sizeof(buf));
 	len = read(fd, buf, sizeof(buf));
 
 	/* exit on a read error or EOF */
 	if (len < 1) return;
 
-	if (dbgmsg) fprintf(stderr, "reader: read() returned %d bytes\n", len);
+	tu_dbg("reader: read() returned %d bytes\n", len);
 
 	count -= len;
     }
@@ -564,12 +521,12 @@ test_ev_writefd(void)
     /* let it run */
     event_loop(0);
 
-    if (dbgmsg) fprintf(stderr, "waiting for reader to die..\n");
+    tu_dbg("waiting for reader to die..\n");
     waitpid(reader_pid, NULL, 0);
 
     /* and see what we got */
     if (global != 0) {
-	if (dbgmsg) fprintf(stderr, "writes did not complete\n");
+	tu_dbg("writes did not complete\n");
 	return 0;
     }
 
@@ -583,22 +540,18 @@ test_ev_writefd(void)
 int
 main(int argc, char **argv)
 {
-    int success = 1;
+    static TestUtilsTest tests[] = {
+	TU_TEST(test_ev_time, 10),
+	TU_TEST(test_ev_wait, 10),
+	TU_TEST(test_ev_wait_2, 10),
+	TU_TEST(test_ev_readfd, 20),    /* slightly longer timeout */
+	TU_TEST(test_ev_writefd, 10),
+	TU_TEST(test_event_wait, 10),
+	TU_TEST(test_event_wait_2, 10),
+	TU_TEST(test_nonblock, 10),
+	TU_TEST(test_read_timeout, 10),
+	TU_END()
+    };
 
-    /* A '-d' flag turns on dbgmsg output */
-    if (argc > 1 && strcmp(argv[1], "-d") == 0) {
-	dbgmsg = 1;
-    }
-
-    success = callinfork(test_ev_time, "test_ev_time") && success;
-    success = callinfork(test_ev_wait, "test_ev_wait") && success;
-    success = callinfork(test_ev_wait_2, "test_ev_wait_2") && success;
-    success = callinfork(test_ev_readfd, "test_ev_readfd") && success;
-    success = callinfork(test_ev_writefd, "test_ev_writefd") && success;
-    success = callinfork(test_event_wait, "test_event_wait") && success;
-    success = callinfork(test_event_wait_2, "test_event_wait_2") && success;
-    success = callinfork(test_nonblock, "test_nonblock") && success;
-    success = callinfork(test_read_timeout, "test_read_timeout") && success;
-
-    return success? 0:1;
+    return testutils_run_tests(argc, argv, tests);
 }
