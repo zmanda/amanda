@@ -37,6 +37,7 @@ typedef struct DUMP_ITEM
     char date[20];
     int  level;
     int  is_split;
+    int  maxpart;
     char tape[256];
     tapelist_t *tapes;
     off_t  file;
@@ -49,6 +50,8 @@ DUMP_ITEM;
 #define next_dump(item)	((item)->next)
 
 extern void clear_list(void);
-extern void add_dump(char *hostname, char *date, int level, char *tape, off_t file, int partnum);
+extern void add_dump(char *hostname, char *date, int level, char *tape,
+		     off_t file, int partnum, int maxpart);
+extern void clean_dump(void);
 extern DUMP_ITEM *first_dump(void);
 #endif	/* !DISK_HISTORY_H */

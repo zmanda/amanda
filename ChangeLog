@@ -1,4 +1,19 @@
 2008-02-28  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amindexd.c: Compute maxpart, call clean_dump.
+	* server-src/disk_history.h (DUMP_ITEM): Add maxpart field.
+	* server-src/disk_history.h (add_dump): New prototype,
+	                                        add maxpart argument.
+	* server-src/disk_history.c (add_dump): Remove a DUMP_ITEM if the
+	                                previous part is not already added.
+	* server-src/disk_history.c (clean_dump): New function to remove
+	                                DUMP_ITEM if all part are not added.
+	* common-src/tapelist.h (tapelist_t): Add partnum field.
+	* common-src/tapelist.h (append_to_tapelist): New prototype,
+	                                              add partnum argument.
+	* common-src/tapelist.c (append_to_tapelist): New partnum argument.
+	* restore-src/amfetchdump.c: Use new append_to_tapelist prototype.
+
+2008-02-28  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/security-util.c: Don't write unclaimed warning if we have
 				      an accept function.
 
