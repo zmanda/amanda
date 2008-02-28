@@ -1,3 +1,7 @@
+2008-02-28  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/security-util.c: Don't write unclaimed warning if we have
+				      an accept function.
+
 2008-02-27  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/testutils.c common-src/testutils.h
 	  common-src/Makefile.am: add libtestutils.la

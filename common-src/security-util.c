@@ -1756,16 +1756,17 @@ sec_tcp_conn_read_callback(
     if (rc->handle == H_TAKEN || rc->pktlen == 0) {
 	if(rc->refcnt == 0) amfree(rc);
 	return;
-    } else {
-	g_warning("sec: conn_read_callback: %zd bytes for handle %d went unclaimed!", 
-		rc->pktlen, rc->handle);
     }
 
     assert(rc->refcnt > 0);
 
     /* If there is no accept fn registered, then drop the packet */
-    if (rc->accept_fn == NULL)
+    if (rc->accept_fn == NULL) {
+	g_warning(
+	  _("sec: conn_read_callback: %zd bytes for handle %d went unclaimed!"),
+	  rc->pktlen, rc->handle);
 	return;
+    }
 
     rh = alloc(SIZEOF(*rh));
     security_handleinit(&rh->sech, rc->driver);
