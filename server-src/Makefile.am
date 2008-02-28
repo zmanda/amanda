@@ -55,11 +55,11 @@ sbin_SCRIPTS = $(SCRIPTS_PERL) $(SCRIPTS_SHELL)
 INSTALLPERMS_exec = \
 	dest=$(sbindir) chown=amanda chmod= \
 		$(sbin_PROGRAMS) \
-	chown=root chmod=u+s,o-rwx \
+	chown=root chmod=04750 \
 		amcheck \
 	dest=$(amlibexecdir) chown=amanda chmod= \
 		$(amlibexec_PROGRAMS) \
-	chown=root chmod=u+s,o-rwx \
+	chown=root chmod=04750 \
 		dumper planner
 
 INSTALLPERMS_data = \

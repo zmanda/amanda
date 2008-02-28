@@ -1,8 +1,18 @@
 2008-02-28  Dustin J. Mitchell <dustin@zmanda.com>
+	* config/automake/installperms.am: --without-installperms now
+	  generates a shell-parsable list of desired permissions
+	* Makefile.am: erase installperms.sh before beginning a 'make 
+	  install'
+	* oldrecover-src/Makefile.am client-src/Makefile.am
+	  recover-src/Makefile.am server-src/Makefile.am: give mode
+	  bits in octal
+
+2008-02-28  Dustin J. Mitchell <dustin@zmanda.com>
 	Thanks to John E. Hein <jhein@timing.com> for identifying this problem
 	* perl/Amanda/Tests.swg: expose sizeof(size_t) to perl
 	* installcheck/Amanda_Config.pl: use a properly-sized constant to
 	  check parsing of large configuration values
+
 
 2008-02-28  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amindexd.c: Compute maxpart, call clean_dump.

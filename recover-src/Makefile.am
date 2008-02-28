@@ -54,7 +54,7 @@ uparse.$(OBJEXT): uparse.c
 	$(CC) $(CFLAGS) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(CPPFLAGS) -c $<
 
 INSTALLPERMS_exec = \
-	dest=$(sbindir) chown=amanda chmod=o-rwx $(sbin_PROGRAMS)
+	dest=$(sbindir) chown=amanda chmod=0750 $(sbin_PROGRAMS)
 
 lint:
 	@f="$(amrecover_CSRC)";							\

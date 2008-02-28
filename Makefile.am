@@ -1,6 +1,8 @@
 ## Process this file with automake to produce Makefile.in
 AUTOMAKE_OPTIONS = 1.4 foreign
 
+include $(top_srcdir)/config/automake/installperms.am
+
 ACLOCAL_AMFLAGS = --force -I . -I config -I config/gettext-macros -I config/gnulib -I config/amanda -I config/macro-archive
 
 if WANT_CLIENT
@@ -22,7 +24,7 @@ if WANT_AMPLOT
 PLOT_SUBDIRS = amplot
 endif
 # order is significant, don't change it arbitrarily
-SUBDIRS = \
+SUBDIRS = . \
 	gnulib \
 	config \
 	common-src \
@@ -73,6 +75,10 @@ EXTRA_DIST = $(SNAPSHOT_STAMP) \
 
 libtool: $(LIBTOOL_DEPS)
 	$(SHELL) ./config.status --recheck
+
+# empty out the installperms manifest file when we start
+install-exec-local: installperms-init
+install-data-local: installperms-init
 
 ## This is only meaningful for snapshots, but it won't hurt releases.
 CONFIG_STATUS = config.status
