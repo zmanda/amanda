@@ -65,10 +65,52 @@ add_dump(
     int		level,
     char *	tape,
     off_t	file,
-    int		partnum)
+    int		partnum,
+    int		maxpart)
 {
     DUMP_ITEM *new, *item, *before;
     int isafile = 0;
+
+    if(tape[0] == '/')
+	isafile = 1; /* XXX kludgey, like this whole thing */
+
+    /* See if we already have partnum=partnum-1 */
+    if (partnum > 1) {
+	int partnum_minus_1 = 0;
+	for(item = disk_hist, before = NULL; item;
+	    before = item, item = item->next) {
+	    if (!strcmp(item->date, date) &&
+		    item->level == level && item->is_split) {
+		tapelist_t *cur_tape;
+		for (cur_tape = item->tapes; cur_tape;
+					     cur_tape = cur_tape->next) {
+		    int files;
+		    for(files=0; files<cur_tape->numfiles; files++) {
+			if (cur_tape->partnum[files] == partnum - 1)
+			    partnum_minus_1 = 1;
+		    }
+		}
+		if (partnum_minus_1 == 1) {
+		    item->tapes = append_to_tapelist(item->tapes, tape, file,
+						     partnum, isafile);
+		    if (maxpart > item->maxpart)
+			item->maxpart = maxpart;
+		} else {
+		    /* some part are missing, remove the item from disk_hist */
+		    if (before)
+			before->next = item->next;
+		    else
+			disk_hist = item->next;
+		    /* free item */
+		    free_tapelist(item->tapes);
+		    amfree(item->hostname);
+		    amfree(item);
+		}
+		return;
+	    }
+	}
+	return;
+    }
 
     new = (DUMP_ITEM *)alloc(SIZEOF(DUMP_ITEM));
     strncpy(new->date, date, SIZEOF(new->date)-1);
@@ -77,6 +119,7 @@ add_dump(
     strncpy(new->tape, tape, SIZEOF(new->tape)-1);
     new->tape[SIZEOF(new->tape)-1] = '\0';
     new->file = file;
+    new->maxpart = maxpart;
     if(partnum == -1)
         new->is_split = 0;
     else
@@ -84,30 +127,14 @@ add_dump(
     new->tapes = NULL;
     new->hostname = stralloc(hostname);
 
-    if(new->tape[0] == '/')
-	isafile = 1; /* XXX kludgey, like this whole thing */
+    new->tapes = append_to_tapelist(new->tapes, tape, file, partnum, isafile);
 
     if (disk_hist == NULL)
     {
 	disk_hist = new;
-	new->tapes = append_to_tapelist(new->tapes, tape, file, isafile);
 	new->next = NULL;
 	return;
     }
-
-    /* see if we already have part of this dump somewhere */
-    if(new->is_split){
-	for(item = disk_hist; item; item = item->next){
-	    if (!strcmp(item->date, new->date) &&
-		    item->level == new->level && item->is_split){
-		item->tapes = append_to_tapelist(item->tapes, tape, file, isafile);
-		amfree(new);
-		return;
-	    }
-	}
-    }
-
-    new->tapes = append_to_tapelist(new->tapes, tape, file, isafile);
 
     /* prepend this item to the history list, if it's newer */
     /* XXX this should probably handle them being on the same date with
@@ -131,6 +158,44 @@ add_dump(
     before->next = new;
 }
 
+void
+clean_dump(void)
+{
+    DUMP_ITEM *item, *before;
+
+    /* check if the maxpart part is avaliable */
+    for(item = disk_hist, before = NULL; item;
+					 before = item, item = item->next) {
+	int found_maxpart = 0;
+	tapelist_t *cur_tape;
+
+	if (item->maxpart > 1) {
+	    for (cur_tape = item->tapes; cur_tape; cur_tape = cur_tape->next) {
+		int files;
+		for(files=0; files<cur_tape->numfiles; files++) {
+		    if (cur_tape->partnum[files] == item->maxpart) {
+			found_maxpart = 1;
+		    }
+		}
+	    }
+	    if (found_maxpart == 0) {
+		DUMP_ITEM *myitem = item; 
+
+		if (before)
+		    before->next = item->next;
+		else
+		    disk_hist = item->next;
+		item = item->next;
+		/* free myitem */
+		free_tapelist(myitem->tapes);
+		amfree(myitem->hostname);
+		amfree(myitem);
+		if (item == NULL)
+		    break;
+	    }
+	}
+    }
+}
 
 DUMP_ITEM *
 first_dump(void)

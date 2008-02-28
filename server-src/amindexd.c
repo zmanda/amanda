@@ -260,7 +260,7 @@ uncompress_file(
 			  strerror(errno));
 	    }
 	}
-	if (waitpid(pid_sort, &wait_status, 0)) {
+	if (waitpid(pid_sort, &wait_status, 0) < 0) {
 	    if (!WIFEXITED(wait_status)) {
 		dbprintf(_("Sort exited with signal %d"),
 			  WTERMSIG(wait_status));
@@ -649,6 +649,7 @@ build_disk_table(void)
 	   strcmp(disk_name    , find_output->diskname) == 0 &&
 	   strcmp("OK"         , find_output->status)   == 0) {
 	    int partnum = -1;
+	    int maxpart = -1;
 	    if (strcmp("1/1", find_output->partnum) == 0) {
 		partnum = -1;
 	    } else if (strcmp("1/-1", find_output->partnum) == 0) {
@@ -665,7 +666,13 @@ build_disk_table(void)
 		    partnum = -1;
 		}
 	    } else if (strcmp("--", find_output->partnum)) {
+		char *c;
 		partnum = atoi(find_output->partnum);
+		c = strchr(find_output->partnum,'/');
+		if (c)
+		    maxpart = atoi(c+1);
+		else
+		    maxpart = -1;
 	    }
 	    /*
 	     * The sort order puts holding disk entries first.  We want to
@@ -692,14 +699,18 @@ build_disk_table(void)
 	    last_partnum = partnum;
 	    date = amindexd_nicedate(find_output->timestamp);
 	    add_dump(find_output->hostname, date, find_output->level,
-		     find_output->label, find_output->filenum, partnum);
-	    dbprintf("- %s %d %s %lld %d\n",
+		     find_output->label, find_output->filenum, partnum,
+		     maxpart);
+	    dbprintf("- %s %d %s %lld %d %d\n",
 		     date, find_output->level, 
 		     find_output->label,
 		     (long long)find_output->filenum,
-		     partnum);
+		     partnum, maxpart);
 	}
     }
+
+    clean_dump();
+
     return 0;
 }
 

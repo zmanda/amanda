@@ -236,7 +236,7 @@ list_needed_tapes(
 	find_result_t *curfind = NULL;
 	for(curfind = curtape->files; curfind; curfind = curfind->next) {
 	    tapes = append_to_tapelist(tapes, curtape->label,
-				       curfind->filenum, curtape->isafile);
+				       curfind->filenum, -1, curtape->isafile);
 	}
     }
 
