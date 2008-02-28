@@ -140,5 +140,16 @@ gint8 give_gint8(char *input) {
     if (input[0] == '+') return G_MAXINT8;
     return 0;
 }
+%}
+
+/*
+ * Various compiler/system characteristics
+ */
+
+%inline %{
+
+int sizeof_size_t(void) {
+    return sizeof(size_t);
+}
 
 %}

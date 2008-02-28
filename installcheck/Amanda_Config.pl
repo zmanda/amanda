@@ -16,12 +16,13 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 77;
+use Test::More tests => 75;
 use strict;
 
 use lib "@amperldir@";
 use Installcheck::Config;
 use Amanda::Paths;
+use Amanda::Tests;
 use Amanda::Config qw( :init :getconf );
 
 my $testconf;
@@ -33,25 +34,24 @@ ok(config_init(0, ''), "Initialize with no configuration");
 ##
 # Parse up a basic configuration
 
-# invent a "large" unsigned number, depending on the system bitlength
-my $is_64bit = 1 << 60 > 1 << 30;
-my $bignum;
-if ($is_64bit) {
-    # 0xA000B000C000 / 1024
-    $bignum = '171801575472';
+# invent a "large" unsigned number, and make $size_t_num 
+# depend on the length of size_t
+my $am64_num = '171801575472'; # 0xA000B000C000 / 1024
+my $size_t_num;
+if (Amanda::Tests::sizeof_size_t() > 4) {
+    $size_t_num = $am64_num;
 } else {
-    # 0x7fffffff
-    $bignum = '2147483647';
+    $size_t_num = '2147483647'; # 0x7fffffff
 }
 
 $testconf = Installcheck::Config->new();
 $testconf->add_param('reserve', '75');
 $testconf->add_param('autoflush', 'yes');
 $testconf->add_param('tapedev', '"/dev/foo"');
-$testconf->add_param('bumpsize', $bignum);
+$testconf->add_param('bumpsize', $am64_num);
 $testconf->add_param('bumpmult', '1.4');
 $testconf->add_param('reserved-udp-port', '100,200');
-$testconf->add_param('device_output_buffer_size', $bignum);
+$testconf->add_param('device_output_buffer_size', $size_t_num);
 $testconf->add_param('taperalgo', 'last');
 $testconf->add_param('device_property', '"foo" "bar"');
 $testconf->add_param('device_property', '"blue" "car"');
@@ -64,7 +64,7 @@ $testconf->add_tapetype('mytapetype', [
 $testconf->add_dumptype('mydumptype', [
     'comment' => '"mine"',
     'priority' => 'high',  # == 2
-    'bumpsize' => $bignum,
+    'bumpsize' => $am64_num,
     'bumpmult' => 1.75,
     'starttime' => 1829,
     'holdingdisk' => 'required',
@@ -117,16 +117,12 @@ SKIP: { # global parameters
 
     is(getconf($CNF_RESERVE), 75,
 	"integer global confparm");
-    is(getconf($CNF_BUMPSIZE), $bignum+0,
+    is(getconf($CNF_BUMPSIZE), $am64_num+0,
 	"am64 global confparm");
-    isnt(getconf($CNF_BUMPSIZE), 2883632,
-	"am64 isn't truncated to 32 bits");
     is(getconf($CNF_TAPEDEV), "/dev/foo",
 	"string global confparm");
-    is(getconf($CNF_DEVICE_OUTPUT_BUFFER_SIZE), $bignum+0,
+    is(getconf($CNF_DEVICE_OUTPUT_BUFFER_SIZE), $size_t_num+0,
 	"size global confparm");
-    isnt(getconf($CNF_DEVICE_OUTPUT_BUFFER_SIZE), 2883632,
-	"size isn't truncated to 32 bits");
     ok(getconf($CNF_AUTOFLUSH),
 	"boolean global confparm");
     is(getconf($CNF_TAPERALGO), $Amanda::Config::ALGO_LAST,
@@ -184,10 +180,8 @@ SKIP: { # dumptypes
 	"dumptype string");
     is(dumptype_getconf($dtyp, $DUMPTYPE_PRIORITY), 2, 
 	"dumptype priority");
-    is(dumptype_getconf($dtyp, $DUMPTYPE_BUMPSIZE), $bignum+0,
+    is(dumptype_getconf($dtyp, $DUMPTYPE_BUMPSIZE), $am64_num+0,
 	"dumptype size");
-    isnt(dumptype_getconf($dtyp, $DUMPTYPE_BUMPSIZE), 2883632,
-	"dumptype size isn't truncated to 32 bits");
     is(dumptype_getconf($dtyp, $DUMPTYPE_BUMPMULT), 1.75,
 	"dumptype real");
     is(dumptype_getconf($dtyp, $DUMPTYPE_STARTTIME), 1829,
