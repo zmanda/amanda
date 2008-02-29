@@ -1,4 +1,7 @@
 2008-02-29  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/amanda.h: add <stdint.h>
+
+2008-02-29  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Amanda_Config.pl: fix Amanda_Config's use of the
 	  missing Amanda::Tests
 
