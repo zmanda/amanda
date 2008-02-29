@@ -1,3 +1,7 @@
+2008-02-29  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Makefile.am: remove Amconfig.pm from EXTRA_DIST, as it
+	  is a generated file.
+
 2008-02-28  Dustin J. Mitchell <dustin@zmanda.com>
 	Thanks to John E. Hein <jhein@timing.com> for identifying this problem
 	* perl/Amanda/Tests.swg: expose sizeof(size_t) to perl

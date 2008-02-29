@@ -25,7 +25,6 @@ endif
 
 # Add any common files (that should not be run as tests) here:
 test_utils = Amconfig.pm
-EXTRA_DIST += $(test_utils)
 
 SCRIPTS_PERL = $(common_tests) $(server_tests) $(test_utils)
 
