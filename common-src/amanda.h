@@ -60,6 +60,9 @@
 #  include <sys/types.h>
 #endif
 
+/* gnulib creates this header locally if the system doesn't provide it */
+#include <stdint.h>
+
 /*
  * I would prefer that each Amanda module include only those system headers
  * that are locally needed, but on most Unixes the system header files are not
@@ -1061,7 +1064,7 @@ extern int vfprintf(FILE *stream, const char *format, va_list ap);
 extern int vprintf(const char *format, va_list ap);
 #endif
 
-/* gnulib includes (hence "" instead of <>) */
+/* gnulib-only includes (hence "" instead of <>) */
 #include "getaddrinfo.h"
 #include "inet_ntop.h"
 
