@@ -22,7 +22,6 @@ use strict;
 
 use lib "@amperldir@";
 use Amanda::Paths;
-use Amanda::Tests;
 use Amanda::Config qw( :init :getconf );
 
 my $testconf;
@@ -34,15 +33,9 @@ ok(config_init(0, ''), "Initialize with no configuration");
 ##
 # Parse up a basic configuration
 
-# invent a "large" unsigned number, and make $size_t_num 
-# depend on the length of size_t
+# invent "large" values for CONFTYPE_AM64 and CONFTYPE_SIZE
 my $am64_num = '171801575472'; # 0xA000B000C000 / 1024
-my $size_t_num;
-if (Amanda::Tests::sizeof_size_t() > 4) {
-    $size_t_num = $am64_num;
-} else {
-    $size_t_num = '2147483647'; # 0x7fffffff
-}
+my $size_t_num = '2147483647'; # 0x7fffffff
 
 $testconf = Amconfig->new();
 $testconf->add_param('reserve', '75');
