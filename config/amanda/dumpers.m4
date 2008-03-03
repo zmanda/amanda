@@ -196,7 +196,7 @@ AC_DEFUN([AMANDA_PROG_XFSDUMP_XFSRESTORE],
 		[Define the location of the xfsdump program on Irix hosts. ])
 	AC_DEFINE_UNQUOTED(XFSRESTORE,"$XFSRESTORE",
 		[Define the location of the xfsrestore program on Irix hosts. ])
-	AMANDA_MSG_WARN([[xfsdump causes the setuid-root rundump program to be enabled.  To to disable it, just #undef XFSDUMP in config/config.h]])
+	AMANDA_MSG_WARN([[xfsdump causes the setuid-root rundump program to be enabled.  To disable it, just #undef XFSDUMP in config/config.h]])
     fi
 ])
 

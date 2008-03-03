@@ -1,4 +1,7 @@
 2008-03-03  Jean-Louis Martineau <martineau@zmanda.com>
+	* config/amanda/dumpers.m4: Typo.
+
+2008-03-03  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/tests/vfs_test.c, common-src/event-test.c: Fix ignoring
 	  return value of 'pipe', declared with attribute warn_unused_result.
 
