@@ -1,4 +1,7 @@
 2008-03-03  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/security-util.c: getnameinfo return != 0 on error.
+
+2008-03-03  Jean-Louis Martineau <martineau@zmanda.com>
 	* config/amanda/dumpers.m4: Typo.
 
 2008-03-03  Jean-Louis Martineau <martineau@zmanda.com>
