@@ -315,7 +315,9 @@ test_ev_readfd(void)
     int p[2];
 
     /* make a pipe */
-    pipe(p);
+    if (pipe(p) == -1) {
+	exit(1);
+    }
 
     /* fork off the writer */
     switch (writer_pid = fork()) {
@@ -366,7 +368,9 @@ test_read_timeout_slow_writer(int fd)
     /* this should exceed the timeout, which is 1s */
     sleep(2);
 
-    write(fd, buf, strlen(buf)+1);
+    if (write(fd, buf, strlen(buf)+1) == -1) {
+	exit(1);
+    }
     close(fd);
 }
 
@@ -388,7 +392,9 @@ test_read_timeout(void)
     int p[2];
 
     /* make a pipe */
-    pipe(p);
+    if (pipe(p) == -1) {
+	exit(1);
+    }
 
     /* fork off the writer */
     switch (writer_pid = fork()) {
@@ -493,7 +499,9 @@ test_ev_writefd(void)
     int p[2];
 
     /* make a pipe */
-    pipe(p);
+    if (pipe(p) == -1) {
+	exit(1);
+    }
 
     /* fork off the reader */
     switch (reader_pid = fork()) {

@@ -1,3 +1,7 @@
+2008-03-03  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/tests/vfs_test.c, common-src/event-test.c: Fix ignoring
+	  return value of 'pipe', declared with attribute warn_unused_result.
+
 2008-02-29  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/amanda.h: add <stdint.h>
 

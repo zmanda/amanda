@@ -30,7 +30,9 @@ cleanup_vtape_dir(char *device_path)
     char *cmd = vstralloc("rm -rf ", quoted, NULL);
 
     /* would you rather write 'rm -rf' here? */
-    system(cmd);
+    if (system(cmd) == -1) {
+	exit(1);
+    }
 
     amfree(cmd);
     amfree(quoted);
