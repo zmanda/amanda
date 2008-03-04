@@ -1,3 +1,9 @@
+2008-03-04  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Makefile.am config/amanda/swig.m4: add a special case for
+	  FreeBSD-6.2: include -lpthread in the linking of each perl
+	  extension, because libgthread does not pull in libpthread as
+	  it does on other platforms.
+
 2008-03-03  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/security-util.c: getnameinfo return != 0 on error.
 
