@@ -18,7 +18,8 @@ Changes in release 2.6.0
    * New 'amcryptsimple', 'amgpgcrypt' - encryption plugins based on gpg.
    * New 'amserverconfig', 'amaddclient' - Initial Amanda configuration tools
      these tools make assumptions, please see man page.
-   * Many bugs fixed and code rewrite/cleanup
+   * Many bugs fixed and code rewrite/cleanup.
+     Speedup in 'amrecover find' and starting amrecover.
    * glib is required to compile and run amanda.
    * Device API: pluggable interface to storage devices, supporting tapes,
      vtapes, RAIT, and Amazon S3
