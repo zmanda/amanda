@@ -311,9 +311,9 @@ Amanda Documentation is available at: http://wiki.zmanda.com/
 
 %define PERLSITELIB %(eval "`perl -V:installsitelib`"; echo $installsitelib)
 
-CFLAGS="%{optflags} -g" CXXFLAGS="%{optflags}" \
 %if  %{disttag} == rhel && %{distver} == 3
 ./configure \
+	CFLAGS="%{optflags} -g" CXXFLAGS="%{optflags}" \
 	--prefix=%{PREFIX} \
 	--sysconfdir=%{SYSCONFDIR} \
 	--sharedstatedir=%{LOCALSTATEDIR} \
@@ -343,8 +343,9 @@ CFLAGS="%{optflags} -g" CXXFLAGS="%{optflags}" \
 %else
 # This confusing macro results in PKG_CONFIG_PATH=some/path if some/path
 # was set on the command line, or by the platform detection bits.
-%{?PKG_CONFIG_PATH: PKG_CONFIG_PATH=%PKG_CONFIG_PATH} \
 ./configure \
+	%{?PKG_CONFIG_PATH: PKG_CONFIG_PATH=%PKG_CONFIG_PATH} \
+	CFLAGS="%{optflags} -g" CXXFLAGS="%{optflags}" \
 	--prefix=%{PREFIX} \
 	--sysconfdir=%{SYSCONFDIR} \
 	--sharedstatedir=%{LOCALSTATEDIR} \
