@@ -44,10 +44,14 @@ SCRIPTS_SHELL = \
 		chg-rait \
 		chg-null \
 		chg-mcutil \
-		chg-disk \
+		chg-disk
+
+SCRIPTSDATA = \
 		chg-lib.sh
 
 amlibexec_SCRIPTS = $(SCRIPTS_PERL) $(SCRIPTS_SHELL)
+
+amlibexec_DATA = $(SCRIPTSDATA)
 
 ###
 # Because libamanda includes routines (e.g. regex) provided by some system
@@ -106,7 +110,7 @@ INSTALLPERMS_exec = \
 INSTALLPERMS_data = \
 	chown=amanda \
 	dest=$(sbindir) $(sbin_SCRIPTS) \
-	dest=$(amlibexecdir) $(amlibexec_SCRIPTS)
+	dest=$(amlibexecdir) $(amlibexec_SCRIPTS) $(amlibexec_DATA)
 
 lint:
 	@ for p in $(amlibexec_PROGRAMS) $(EXTRA_PROGRAMS); do			\

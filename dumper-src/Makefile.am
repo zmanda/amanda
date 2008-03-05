@@ -11,12 +11,16 @@ INCLUDES =	-I$(top_builddir)/common-src \
 AM_CFLAGS = $(AMANDA_WARNING_CFLAGS)
 AM_LDFLAGS = $(AMANDA_STATIC_LDFLAGS)
 
-CHECK_PERL = \
-	    amgtar \
+SCRIPTS_PERL = \
+	    amgtar
+
+SCRIPTSDATA = \
 	    generic-dumper
-SCRIPTS_PERL = $(CHECK_PERL)
+
+CHECK_PERL = $(SCRIPTS_PERL) $(SCRIPTSDATA)
 
 dumperdir = $(DUMPER_DIR)
 dumper_SCRIPTS = $(SCRIPTS_PERL)
+dumper_DATA = $(SCRIPTSDATA)
 
 INSTALLPERMS_data = dest=$(dumperdir) chown=amanda $(dumper_SCRIPTS)
