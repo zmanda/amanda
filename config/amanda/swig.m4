@@ -23,18 +23,32 @@ AC_DEFUN([AMANDA_SETUP_SWIG],
     fi
 
     case "$target" in
-	i386-unknown-freebsd6.2) # FreeBSD 6.2 only
-	    # FreeBSD 6.2 systems don't include a DT_NEEDS segment in libgthread to automatically
-	    # pull in the desired threading library.  Instead, they assume that any application
-	    # linking against libgthread will pull in the threading library.  This is fine for
-	    # Amanda C applications, but for Perl applications this assumption means that the
-	    # perl binary would pull in the threading library.  But perl is compiled without
-	    # threading by default.  The easiest solution for the "default" case is to link all
-	    # perl extension libraries against the threading library, so it is loaded when perl
-	    # loads the extension library.  The default threading library is libpthread.  This
-	    # can be overridden with --with-perlextlibs.  We can't use -pthread because gcc on
-	    # FreeBSD ignores -pthread in combination with -shared.  See
+	i386-unknown-freebsd[123456]*) # up to and including FreeBSD 6.*
+	    # Before 7.0, FreeBSD systems don't include a DT_NEEDS segment in
+	    # libgthread to automatically pull in the desired threading library.
+	    # Instead, they assume that any application linking against
+	    # libgthread will pull in the threading library.  This is fine for
+	    # Amanda C applications, but for Perl applications this assumption
+	    # means that the perl binary would pull in the threading library.
+	    # But perl is compiled without threading by default.  
+	    #
+	    # Specifically, this occurs on any FreeBSD using gcc-3.*: the linking
+	    # decision is made in gcc's spec files, which were changed in
+	    # gcc-4.0.  For a more in-depth discussion, see
+	    #  http://wiki.zmanda.com/index.php/Installation/OS_Specific_Notes/Installing_Amanda_on_FreeBSD
+	    #
+	    # The easiest solution for the "default" case is to link all perl
+	    # extension libraries against the threading library, so it is loaded
+	    # when perl loads the extension library.  The default threading
+	    # library in FreeBSD is libpthread.  The below default will work on
+	    # such a FreeBSD system, but ports maintainers and those with
+	    # different configurations may need to override this value with
+	    # --with-perlextlibs.
+	    #
+	    # We can't use -pthread because gcc on FreeBSD ignores -pthread in
+	    # combination with -shared.  See
 	    #   http://lists.freebsd.org/pipermail/freebsd-stable/2006-June/026229.html
+
 	    PERLEXTLIBS="-lpthread"
 	    ;;
     esac

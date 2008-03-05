@@ -1,4 +1,9 @@
 2008-03-05  Dustin J. Mitchell <dustin@zmanda.com>
+	* config/amanda/swig.m4: With many thanks to John E. Hein
+	  <jhein@timing.com>, fix the comment and make the change committed
+	  yesterday apply to all FreeBSD < 7.0.
+
+2008-03-05  Dustin J. Mitchell <dustin@zmanda.com>
 	* config/amanda/summary.m4: quote all warning messages that will be
 	  included in heredocs, to avoid spurious interpretation of backquotes
 
