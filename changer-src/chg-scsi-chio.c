@@ -59,6 +59,7 @@
 #include "conffile.h"
 #include "libscsi.h"
 #include "scsi-defs.h"
+int Tape_Ready1 ( char *tapedev , int wait);
 
 char *tapestatfile = NULL;
 
@@ -104,7 +105,6 @@ int	read_config(char *configfile, changer_t *chg);
 int	get_current_slot(char *count_file);
 void	put_current_slot(char *count_file,int slot);
 void	usage(char *argv[]);
-void	parse_args(int argc, char *argv[],command *rval);
 int	get_relative_target(int fd,int nslots,char *parameter,int loaded, 
                         char *changer_file,int slot_offset,int maxslot);
 int	is_positive_number(char *tmp);
@@ -122,14 +122,14 @@ init_changer_struct(
     changer_t *	chg,
     size_t	number_of_config)
 {
-  int i;
+  size_t i;
  
   memset(chg, 0, SIZEOF(*chg));
   chg->number_of_configs = number_of_config;
   chg->eject = 1;
   chg->sleep = 0;
   chg->cleanmax = 0;
-  chg->device = NULL
+  chg->device = NULL;
   chg->conf = alloc(SIZEOF(config_t) * number_of_config);
   for (i=0; i < number_of_config; i++){
     chg->conf[i].drivenum     = 0;
@@ -158,7 +158,7 @@ dump_changer_struct(
 
   dbprintf(_("Number of configurations: %d\n"), chg->number_of_configs);
   dbprintf(_("Tapes need eject: %s\n"), (chg->eject>0 ? _("Yes") : _("No")));
-  dbprintf(_("Tapes need sleep: %d seconds\n"), chg->sleep);
+  dbprintf(_("Tapes need sleep: %lld seconds\n"), (long long)chg->sleep);
   dbprintf(_("Clean cycles    : %d\n"), chg->cleanmax);
   dbprintf(_("Changer device  : %s\n"), chg->device);
   for (i = 0; i < chg->number_of_configs; i++){
@@ -271,7 +271,7 @@ read_config(
   size_t numconf;
   FILE *file;
   int init_flag = 0;
-  int drivenum=0;
+  size_t drivenum=0;
   char *linebuffer;
   int token;
   char *value;
@@ -300,7 +300,7 @@ read_config(
           init_flag=1;
         }
         switch (token){
-        case NUMDRIVE: if (atoi(value) != numconf)
+        case NUMDRIVE: if ((size_t)atoi(value) != numconf)
           g_fprintf(stderr,_("Error: number_drives at wrong place, should be "
                   "first in file\n"));
         break;
@@ -341,7 +341,7 @@ read_config(
             chg->conf[drivenum].start = atoi(value);
           } else {
             g_fprintf(stderr,_("Error: drive is not less than number_drives"
-                    " startuse ignored\n")(;
+                    " startuse ignored\n"));
           }
           break;
         case END:
@@ -461,6 +461,8 @@ typedef struct com_stru
   char *parameter;
 } command;
 
+
+void	parse_args(int argc, char *argv[], command *rval);
 
 /* major command line args */
 #define COMCOUNT 5
@@ -899,7 +901,7 @@ main(
         break;
       }
     if (need_sleep)
-      Tape_Ready(scsitapedevice, need_sleep);
+      Tape_Ready1(scsitapedevice, need_sleep);
     g_printf(_("%d %s\n"), target-slot_offset, tape_device);
     break;
 
@@ -950,7 +952,7 @@ main(
       put_current_slot(changer_file, slot_offset);
     }
     if (need_sleep)
-      Tape_Ready(scsitapedevice, need_sleep);
+      Tape_Ready1(scsitapedevice, need_sleep);
     if (changer_file != NULL)
       {
         g_printf("%d %s\n", get_current_slot(changer_file), tape_device);
