@@ -309,6 +309,8 @@ Amanda Documentation is available at: http://wiki.zmanda.com/
 %define config_user %{amanda_user}
 %define config_group %{amanda_group}
 
+%define PERLSITELIB %(eval "`perl -V:installsitelib`"; echo $installsitelib)
+
 CFLAGS="%{optflags} -g" CXXFLAGS="%{optflags}" \
 %if  %{disttag} == rhel && %{distver} == 3
 ./configure \
@@ -1509,6 +1511,7 @@ echo "Amanda installation log can be found in '${INSTALL_LOG}' and errors (if an
 %{AMLIBEXECDIR}
 %{AMLIBEXECDIR}/application
 %{AMLIBDIR}
+%{PERLSITELIB}
 %{AMLIBEXECDIR}/amanda-sh-lib.sh
 %{LOCALSTATEDIR}/amanda
 %defattr(4750,root,disk)
@@ -1542,6 +1545,7 @@ echo "Amanda installation log can be found in '${INSTALL_LOG}' and errors (if an
 %{AMLIBEXECDIR}
 %{AMLIBEXECDIR}/application
 %{AMLIBDIR}
+%{PERLSITELIB}
 %{AMANDAHOMEDIR}
 %{AMANDAHOMEDIR}/gnutar-lists
 %{LOCALSTATEDIR}/amanda
