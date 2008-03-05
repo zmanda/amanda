@@ -1,4 +1,7 @@
 2008-03-05  Jean-Louis Martineau <martineau@zmanda.com>
+	* config/amanda/swig.m4: Check for *freebsd[123456]*
+
+2008-03-05  Jean-Louis Martineau <martineau@zmanda.com>
 	* changer-src/chg-scsi-chio.c: Compile fix.
 	* changer-src/scsi-chio.c: Compile fix.
 	* config/amanda/changer.m4: Check for linux/chio.h
