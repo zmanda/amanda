@@ -634,6 +634,7 @@ tape_device_seek_file (Device * d_self, guint file) {
 
     buffer_len = self->read_block_size;
     header_buffer = malloc(buffer_len);
+    d_self->is_eof = FALSE;
     result = tape_device_robust_read(self, header_buffer, &buffer_len);
 
     if (result != RESULT_SUCCESS) {
