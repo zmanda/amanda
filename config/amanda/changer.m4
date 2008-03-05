@@ -22,6 +22,7 @@ AC_DEFUN([AMANDA_SETUP_CHANGER], [
     AC_CHECK_HEADERS( \
 	camlib.h \
 	chio.h \
+	linux/chio.h \
 	scsi/sg.h \
 	scsi/scsi_ioctl.h \
 	sys/chio.h \
@@ -240,6 +241,7 @@ AC_DEFUN([AMANDA_SETUP_CHANGER], [
     # include files for the SCSI interfaces
     # chio.h and sys/chio.h are chio based systems
     if test x"$ac_cv_header_chio_h" = x"yes" ||
+       test x"$ac_cv_header_linux_chio_h" = x"yes" ||
        test x"$ac_cv_header_sys_chio_h" = x"yes"; then
        # chg-scsi does not support FreeBSD 3.0's chio.h; it became backward
        # incompatible with the introduction of camlib.h
