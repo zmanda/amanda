@@ -33,16 +33,21 @@ AC_DEFUN([AMANDA_MSG_WARN], [
 
 # SYNOPSIS
 #
-#   AMANDA_ADD_WARNING(warning-text)
+#   AMANDA_ADD_WARNING_QUOTED(warning-text) #if text already quoted
+#   AMANDA_ADD_WARNING(warning-text)        #if text not quoted
 #
 # DESCRIPTION
 #
 #   Add the given text to the warnings summary
 #
-AC_DEFUN([AMANDA_ADD_WARNING], [
+AC_DEFUN([AMANDA_ADD_WARNING_QUOTED], [
     cat <<AAW_EOF >>config.warnings
 $1
 AAW_EOF])
+
+AC_DEFUN([AMANDA_ADD_WARNING], [
+AMANDA_ADD_WARNING_QUOTED([_AS_QUOTE([$1])])
+])
 
 # SYNOPSIS
 #
