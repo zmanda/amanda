@@ -1,4 +1,8 @@
 2008-03-05  Jean-Louis Martineau <martineau@zmanda.com>
+	* changer-src/Makefile.am: Move chg-lib.sh to SCRIPTSDATA.
+	* dumper-src/Makefile.am: Move generic-dumper to SCRIPTSDATA.
+
+2008-03-05  Jean-Louis Martineau <martineau@zmanda.com>
 	* config/amanda/swig.m4: Check for *freebsd[123456]*
 
 2008-03-05  Jean-Louis Martineau <martineau@zmanda.com>
