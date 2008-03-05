@@ -1,4 +1,11 @@
 2008-03-05  Jean-Louis Martineau <martineau@zmanda.com>
+	* restore-src/amidxtaped: Use default config if amrecover doesn't send                         a config name.  (amoldrecover doesn't send a config).
+	* restore-src/restore.c: amrecover from 2.4.5 doesn't send the filenum,          so desired_tape->numfiles == 0.
+	  If amidxtaped is launched directly from xinetd, then
+	  flags->pipe_to_fd == STDOUT_FILENO, but this test should only
+	  succeed for amrestore of amfetchdump.
+
+2008-03-05  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/tape-device.c: Set d_self->is_eof to FALSE.
 
 2008-03-04  Dustin J. Mitchell <dustin@zmanda.com>

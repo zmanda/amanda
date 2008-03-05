@@ -426,6 +426,8 @@ main(
 	}
 	else if(strncmp_const_skip(buf, "CONFIG=", s, ch) == 0) {
 	    re_config = stralloc(s);
+	    if(strlen(re_config) == 0)
+		amfree(re_config);
 	}
 	else if(buf[0] != '\0' && buf[0] >= '0' && buf[0] <= '9') {
 	    re_end = 1;
@@ -436,6 +438,8 @@ main(
     if(re_config) {
 	config_init(CONFIG_INIT_EXPLICIT_NAME | CONFIG_INIT_FATAL, re_config);
 	dbrename(re_config, DBG_SUBDIR_SERVER);
+    } else {
+	config_init(0, NULL);
     }
 
     check_running_as(RUNNING_AS_DUMPUSER_PREFERRED);

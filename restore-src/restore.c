@@ -1594,7 +1594,7 @@ search_a_tape(Device      * device,
         tape_seen_head = *tape_seen;
     }
 	
-    if (desired_tape) {
+    if (desired_tape && desired_tape->numfiles > 0) {
         /* Iterate the tape list, handle each file in order. */
         int file_index;
         for (file_index = 0; file_index < desired_tape->numfiles;
@@ -1734,7 +1734,8 @@ gboolean restore_holding_disk(FILE * prompt_out,
         return FALSE;
     }
 
-    if (last_header != NULL && flags->pipe_to_fd == STDOUT_FILENO &&
+    if (last_header != NULL && !flags->amidxtaped &&
+	flags->pipe_to_fd == STDOUT_FILENO &&
         !headers_equal(last_header, source.header, 1)) {
         return FALSE;
     } else if (this_header != NULL) {
@@ -1831,7 +1832,7 @@ restore_from_tapelist(FILE * prompt_out,
                                           prompt_in, flags, features);
 
             if (device == NULL)
-                break;;
+                break;
 
             if (use_changer) {
                 g_fprintf(stderr, "Scanning volume %s (slot %s)\n",
