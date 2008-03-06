@@ -241,7 +241,7 @@ sbin_SCRIPTS = $(sbin_SCRIPTS_PERL) $(sbin_SCRIPTS_SHELL)
 # installation
 
 INSTALLPERMS_data = dest=$(sbindir) chown=amanda $(sbin_SCRIPTS) \
-		    dest=$(amlibexec) chown=amanda $(amlibexec_SCRIPTS) $(amlibexec_DATA)
+		    dest=$(amlibexecdir) chown=amanda $(amlibexec_SCRIPTS) $(amlibexec_DATA)
 
 lint:
 	@echo $(LINT) $(libamanda_la_SOURCES)
