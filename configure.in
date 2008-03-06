@@ -41,7 +41,7 @@ dnl -------------------------------------------------------------------------
 
 AMANDA_WITH_USER
 AMANDA_WITH_GROUP
-AMANDA_WITH_DUMPERDIR
+AMANDA_WITH_APPLICATIONDIR
 AMANDA_WITH_CONFIGDIR
 AMANDA_WITH_INDEXDIR
 AMANDA_WITH_DBDIR
@@ -364,7 +364,7 @@ AC_CONFIG_FILES([
     config/Makefile
     device-src/Makefile
     device-src/tests/Makefile
-    dumper-src/Makefile
+    application-src/Makefile
     example/Makefile
     example/amanda-client.conf
     example/amanda.conf

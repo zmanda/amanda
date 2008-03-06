@@ -1,16 +1,26 @@
 require "newgetopt.pl";
 use Text::ParseWords;
 
-print DEBUG "FHOUT 6: ARGV[0]=" . $ARGV[0] . "\n" if ($debug == 1);
-print DEBUG "FHOUT 6: ARGV[1]=" . $ARGV[1] . "\n" if ($debug == 1);
-print DEBUG "FHOUT 6: ARGV[2]=" . $ARGV[2] . "\n" if ($debug == 1);
-print DEBUG "FHOUT 6: ARGV[3]=" . $ARGV[3] . "\n" if ($debug == 1);
-print DEBUG "FHOUT 6: ARGV[4]=" . $ARGV[4] . "\n" if ($debug == 1);
-print DEBUG "FHOUT 6: ARGV[5]=" . $ARGV[5] . "\n" if ($debug == 1);
-print DEBUG "FHOUT 6: ARGV[6]=" . $ARGV[6] . "\n" if ($debug == 1);
-print DEBUG "FHOUT 6: ARGV[7]=" . $ARGV[7] . "\n" if ($debug == 1);
-print DEBUG "FHOUT 6: ARGV[8]=" . $ARGV[8] . "\n" if ($debug == 1);
-print DEBUG "FHOUT 6: ARGV[9]=" . $ARGV[9] . "\n" if ($debug == 1);
+print DEBUG "FHOUT 6: ARGV[ 0]=" . $ARGV[0] . "\n" if ($debug == 1);
+print DEBUG "FHOUT 6: ARGV[ 1]=" . $ARGV[1] . "\n" if ($debug == 1);
+print DEBUG "FHOUT 6: ARGV[ 2]=" . $ARGV[2] . "\n" if ($debug == 1);
+print DEBUG "FHOUT 6: ARGV[ 3]=" . $ARGV[3] . "\n" if ($debug == 1);
+print DEBUG "FHOUT 6: ARGV[ 4]=" . $ARGV[4] . "\n" if ($debug == 1);
+print DEBUG "FHOUT 6: ARGV[ 5]=" . $ARGV[5] . "\n" if ($debug == 1);
+print DEBUG "FHOUT 6: ARGV[ 6]=" . $ARGV[6] . "\n" if ($debug == 1);
+print DEBUG "FHOUT 6: ARGV[ 7]=" . $ARGV[7] . "\n" if ($debug == 1);
+print DEBUG "FHOUT 6: ARGV[ 8]=" . $ARGV[8] . "\n" if ($debug == 1);
+print DEBUG "FHOUT 6: ARGV[ 9]=" . $ARGV[9] . "\n" if ($debug == 1);
+print DEBUG "FHOUT 6: ARGV[10]=" . $ARGV[10] . "\n" if ($debug == 1);
+print DEBUG "FHOUT 6: ARGV[11]=" . $ARGV[11] . "\n" if ($debug == 1);
+print DEBUG "FHOUT 6: ARGV[12]=" . $ARGV[12] . "\n" if ($debug == 1);
+print DEBUG "FHOUT 6: ARGV[13]=" . $ARGV[13] . "\n" if ($debug == 1);
+print DEBUG "FHOUT 6: ARGV[14]=" . $ARGV[14] . "\n" if ($debug == 1);
+print DEBUG "FHOUT 6: ARGV[15]=" . $ARGV[15] . "\n" if ($debug == 1);
+print DEBUG "FHOUT 6: ARGV[16]=" . $ARGV[16] . "\n" if ($debug == 1);
+print DEBUG "FHOUT 6: ARGV[17]=" . $ARGV[17] . "\n" if ($debug == 1);
+print DEBUG "FHOUT 6: ARGV[18]=" . $ARGV[18] . "\n" if ($debug == 1);
+print DEBUG "FHOUT 6: ARGV[19]=" . $ARGV[19] . "\n" if ($debug == 1);
 
 $result = &NGetOpt ("config=s", "host=s", "disk=s", "device=s", "level=s", "index=s", "message=s", "collection", "record");
 $result = $result;
@@ -43,14 +53,16 @@ if (defined $opt_host) {
   $opt_host = $1;
 }
 
-if (defined $opt_disk) {
-  $opt_disk =~ /^([\/\_\:\.A-Za-z0-9]*)$/;
-  $opt_disk = $1;
-}
-
 if (defined $opt_device) {
   $opt_device =~ /^([\/\_\:\.A-Za-z0-9]*)$/;
   $opt_device = $1;
+}
+
+if (defined $opt_disk) {
+  $opt_disk =~ /^([\/\_\:\.A-Za-z0-9]*)$/;
+  $opt_disk = $1;
+} else {
+  $opt_disk = $opt_device;
 }
 
 if (defined $opt_level) {
@@ -63,17 +75,19 @@ if (defined $opt_level) {
 $command = $ARGV[0];
 
 %property = ();
-while($property_line = <STDIN>) {
-  chomp $property_line;
-  ($prop_name, $prop_value) = shellwords($property_line);
-  push @{$property{$prop_name}}, $prop_value;
-  print DEBUG "$prop_name = $prop_value\n" if ($debug == 1);
-}
+if ($command ne "restore") {
+  while($property_line = <STDIN>) {
+    chomp $property_line;
+    @prop_value = shellwords($property_line);
+    $prop_name = shift @prop_value;
+    push @{$property{$prop_name}}, @prop_value;
+  }
 
-if ($debug == 1) {
-  foreach $prop_name (keys(%property)) {
-    print DEBUG "PROPERTY: $prop_name\n";
-    print DEBUG "    VALUE: ", join(',',@{$property{$prop_name}}) , "\n";
+  if ($debug == 1) {
+    foreach $prop_name (keys(%property)) {
+      print DEBUG "PROPERTY: $prop_name\n";
+      print DEBUG "    VALUE: ", join(',',@{$property{$prop_name}}) , "\n";
+    }
   }
 }
 
@@ -109,6 +123,9 @@ sub wrapper_support() {
       command_support($opt_config, $opt_host, $opt_disk, $opt_device, $opt_level);
       exit 0;
    }
+   print "CONFIG YES\n"       if defined($has_config)   && $has_config   == 1;
+   print "HOST YES\n"         if defined($has_host)     && $has_host     == 1;
+   print "DISK YES\n"         if defined($has_disk)     && $has_disk     == 1;
    print "LEVEL 0-", $max_level , "\n" if defined($max_level);
    print "INDEX-LINE YES\n"   if defined($index_line)   && $index_line   == 1;
    print "INDEX-XML NO\n"     if defined($index_xml)    && $index_xml    == 1;

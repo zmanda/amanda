@@ -36,6 +36,7 @@
 #include "util.h"
 #include "conffile.h"
 #include "diskfile.h"
+#include "pipespawn.h"
 
 const char *cmdstr[] = {
     "BOGUS", "QUIT", "QUITTING", "DONE", "PARTIAL", 
@@ -192,4 +193,117 @@ int check_infofile(
 	amfree(infofile);
     }
     return 0;
+}
+
+
+void
+run_server_script(
+    pp_script_t  *pp_script,
+    execute_on_t  execute_on,
+    char         *config,
+    disk_t	 *dp)
+{
+    pid_t   scriptpid;
+    int     scriptin, scriptout, scripterr;
+    char   *cmd;
+    char  **argvchild;
+    int     i;
+    FILE   *streamin;
+    FILE   *streamout;
+    char   *line;
+    char   *plugin;
+    proplist_t property;
+
+    if ((pp_script_get_execute_on(pp_script) & execute_on) == 0)
+	return;
+    if (pp_script_get_execute_where(pp_script) != ES_SERVER)
+	return;
+
+    plugin = pp_script_get_plugin(pp_script);
+    cmd = vstralloc(APPLICATION_DIR, "/", plugin, NULL);
+    argvchild = malloc(12 * SIZEOF(char *));
+    i = 0;
+    argvchild[i++] = plugin;
+
+    switch (execute_on) {
+    case EXECUTE_ON_PRE_DLE_AMCHECK:
+	argvchild[i++] = "PRE-DLE-AMCHECK"; break;
+    case EXECUTE_ON_PRE_HOST_AMCHECK:
+	argvchild[i++] = "PRE-HOST-AMCHECK"; break;
+    case EXECUTE_ON_POST_DLE_AMCHECK:
+	argvchild[i++] = "POST-DLE-AMCHECK"; break;
+    case EXECUTE_ON_POST_HOST_AMCHECK:
+	argvchild[i++] = "POST-HOST-AMCHECK"; break;
+    case EXECUTE_ON_PRE_DLE_ESTIMATE:
+	argvchild[i++] = "PRE-DLE-ESTIMATE"; break;
+    case EXECUTE_ON_PRE_HOST_ESTIMATE:
+	argvchild[i++] = "PRE-HOST-ESTIMATE"; break;
+    case EXECUTE_ON_POST_DLE_ESTIMATE:
+	argvchild[i++] = "POST-DLE-ESTIMATE"; break;
+    case EXECUTE_ON_POST_HOST_ESTIMATE:
+	argvchild[i++] = "POST-HOST-ESTIMATE"; break;
+    case EXECUTE_ON_PRE_DLE_BACKUP:
+	argvchild[i++] = "PRE-DLE-BACKUP"; break;
+    case EXECUTE_ON_PRE_HOST_BACKUP:
+	argvchild[i++] = "PRE-HOST-BACKUP"; break;
+    case EXECUTE_ON_POST_DLE_BACKUP:
+	argvchild[i++] = "POST-DLE-BACKUP"; break;
+    case EXECUTE_ON_POST_HOST_BACKUP:
+	argvchild[i++] = "POST-HOST-BACKUP"; break;
+    }
+
+    if (config) {
+	argvchild[i++] = "--config";
+	argvchild[i++] = config;
+    }
+    if (dp->host->hostname) {
+	argvchild[i++] = "--host";
+	argvchild[i++] = dp->host->hostname;
+    }
+    if (dp->name) {
+	argvchild[i++] = "--disk";
+	argvchild[i++] = dp->name;
+    }
+    if (dp->device) {
+	argvchild[i++] = "--device";
+	argvchild[i++] = dp->device;
+    }
+    argvchild[i++] = NULL;
+
+    scripterr = fileno(stderr);
+    scriptpid = pipespawnv(cmd, STDIN_PIPE|STDOUT_PIPE, 0, &scriptin,
+			   &scriptout, &scripterr, argvchild);
+
+    streamin = fdopen(scriptin, "w");
+    property = pp_script_get_proplist(pp_script);
+    if (property) {
+	g_hash_table_foreach(property,
+			     &output_tool_proplist,
+			     streamin);
+    }
+    fclose(streamin);
+
+    streamout = fdopen(scriptout, "r");
+    if (streamout) {
+	while((line = agets(streamout)) != NULL) {
+	    dbprintf("script: %s\n", line);
+	}
+    }
+    fclose(streamout);
+    waitpid(scriptpid, NULL, 0);
+}
+
+
+void
+run_server_scripts(
+    execute_on_t  execute_on,
+    char         *config,
+    disk_t	 *dp)
+{
+    GSList   *pp_scriptlist;
+
+    for (pp_scriptlist = dp->pp_scriptlist; pp_scriptlist != NULL;
+	 pp_scriptlist = pp_scriptlist->next) {
+	run_server_script(pp_scriptlist->data, execute_on, config, dp);
+    }
 }

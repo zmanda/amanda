@@ -838,6 +838,7 @@ start_some_dumps(
 {
     int cur_idle;
     disk_t *diskp, *delayed_diskp, *diskp_accept;
+    disk_t *dp;
     assignedhd_t **holdp=NULL, **holdp_accept;
     const time_t now = time(NULL);
     cmd_t cmd;
@@ -1058,6 +1059,15 @@ start_some_dumps(
 						   handle_chunker_result, chunker);
 		dumper->output_port = atoi(result_argv[2]);
 
+		if (diskp->host->pre_script == 0) {
+		    for (dp=diskp->host->disks; dp != NULL; dp = dp->hostnext) {
+			run_server_scripts(EXECUTE_ON_PRE_HOST_BACKUP,
+					   get_config_name(), dp);
+		    }
+		    diskp->host->pre_script = 1;
+		}
+		run_server_scripts(EXECUTE_ON_PRE_DLE_BACKUP,
+				   get_config_name(), diskp);
 		dumper_cmd(dumper, PORT_DUMP, diskp);
 	    }
 	    diskp->host->start_t = now + 15;
@@ -1701,7 +1711,7 @@ handle_dumper_result(
 {
     /*static int pending_aborts = 0;*/
     dumper_t *dumper = cookie;
-    disk_t *dp, *sdp;
+    disk_t *dp, *sdp, *dp1;
     cmd_t cmd;
     int result_argc;
     char *qname;
@@ -1809,6 +1819,24 @@ handle_dumper_result(
 	    assert(0);
 	}
         amfree(qname);
+
+	if (cmd != BOGUS) {
+	    int last_dump = 1;
+	    run_server_scripts(EXECUTE_ON_POST_DLE_BACKUP,
+			       get_config_name(), dp);
+	    for (dp1=runq.head; dp1 != NULL; dp1 = dp1->next) {
+		if (dp1 != dp) last_dump = 0;
+	    }
+	    if (last_dump && dp->host->post_script == 0) {
+		if (dp->host->post_script == 0) {
+		    for (dp1=dp->host->disks; dp1 != NULL; dp1 = dp1->hostnext) {
+			run_server_scripts(EXECUTE_ON_POST_HOST_BACKUP,
+					   get_config_name(), dp1);
+		    }
+		    dp->host->post_script = 1;
+		}
+	    }
+	}
 
 	/* send the dumper result to the chunker */
 	if (dumper->chunker) {
@@ -2949,6 +2977,7 @@ dump_to_tape(
     int result_argc;
     char *result_argv[MAX_ARGS+1];
     char *qname;
+    disk_t *dp1;
 
     qname = quote_string(dp->name);
     g_printf(_("driver: dumping %s:%s directly to tape\n"),
@@ -2991,6 +3020,15 @@ dump_to_tape(
     dumper->result = LAST_TOK;
     taper_result = LAST_TOK;
     sched(dp)->dumper = dumper;
+
+    if (dp->host->pre_script == 0) {
+	for (dp1=dp->host->disks; dp1 != NULL; dp1 = dp1->hostnext) {
+	    run_server_scripts(EXECUTE_ON_PRE_HOST_BACKUP,
+			       get_config_name(), dp1);
+	}
+	dp->host->pre_script = 1;
+    }
+    run_server_scripts(EXECUTE_ON_PRE_DLE_BACKUP, get_config_name(), dp);
 
     /* tell the dumper to dump to a port */
     dumper_cmd(dumper, PORT_DUMP, dp);

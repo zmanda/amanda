@@ -48,7 +48,6 @@ SCRIPTS_SHELL = \
 
 SCRIPTS_INCLUDE = \
 		chg-lib.sh
-
 EXTRA_DIST += chg-lib.sh.in
 
 amlibexec_SCRIPTS = $(SCRIPTS_PERL) $(SCRIPTS_SHELL)

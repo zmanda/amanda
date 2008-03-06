@@ -375,6 +375,20 @@ amglue_add_constant(HOLDING_DISKSIZE, holdingdisk_key);
 amglue_add_constant(HOLDING_CHUNKSIZE, holdingdisk_key);
 amglue_copy_to_tag(holdingdisk_key, getconf);
 
+amglue_add_enum_tag_fns(application_key);
+amglue_add_constant(APPLICATION_COMMENT, application_key);
+amglue_add_constant(APPLICATION_PLUGIN, application_key);
+amglue_add_constant(APPLICATION_PROPERTY, application_key);
+amglue_copy_to_tag(application_key, getconf);
+
+amglue_add_enum_tag_fns(pp_script_key);
+amglue_add_constant(PP_SCRIPT_COMMENT, pp_script_key);
+amglue_add_constant(PP_SCRIPT_PLUGIN, pp_script_key);
+amglue_add_constant(PP_SCRIPT_PROPERTY, pp_script_key);
+amglue_add_constant(PP_SCRIPT_EXECUTE_ON, pp_script_key);
+amglue_add_constant(PP_SCRIPT_EXECUTE_WHERE, pp_script_key);
+amglue_copy_to_tag(pp_script_key, getconf);
+
 /*
  * Various enumerated conftypes
  */
@@ -427,6 +441,20 @@ amglue_add_constant(ALGO_SMALLEST, taperalgo_t);
 amglue_add_constant(ALGO_LAST, taperalgo_t);
 amglue_copy_to_tag(taperalgo_t, getconf);
 
+amglue_add_enum_tag_fns(execute_on_t);
+amglue_add_constant(EXECUTE_ON_PRE_DLE_AMCHECK, execute_on_t);
+amglue_add_constant(EXECUTE_ON_PRE_HOST_AMCHECK, execute_on_t);
+amglue_add_constant(EXECUTE_ON_POST_DLE_AMCHECK, execute_on_t);
+amglue_add_constant(EXECUTE_ON_POST_HOST_AMCHECK, execute_on_t);
+amglue_add_constant(EXECUTE_ON_PRE_DLE_ESTIMATE, execute_on_t);
+amglue_add_constant(EXECUTE_ON_PRE_HOST_ESTIMATE, execute_on_t);
+amglue_add_constant(EXECUTE_ON_POST_DLE_ESTIMATE, execute_on_t);
+amglue_add_constant(EXECUTE_ON_POST_HOST_ESTIMATE, execute_on_t);
+amglue_add_constant(EXECUTE_ON_PRE_DLE_BACKUP, execute_on_t);
+amglue_add_constant(EXECUTE_ON_PRE_HOST_BACKUP, execute_on_t);
+amglue_add_constant(EXECUTE_ON_POST_DLE_BACKUP, execute_on_t);
+amglue_add_constant(EXECUTE_ON_POST_HOST_BACKUP, execute_on_t);
+amglue_copy_to_tag(execute_on_t, getconf);
 /*
  * val_t typemaps
  */
@@ -439,7 +467,8 @@ amglue_copy_to_tag(taperalgo_t, getconf);
  *  - CONFTYPE_STR, CONFTYPE_IDENT -> PV
  *  - CONFTYPE_TIME -> IV (epoch timestamp)
  *  - CONFTYPE_COMPRESS, CONFTYPE_ENCRYPT, CONFTYPE_ESTIMATE, CONFTYPE_STRATEGY,
- *    CONFTYPE_TAPERALGO, CONFTYPE_PRIORITY, CONFTYPE_HOLDING -> IV (enums)
+ *    CONFTYPE_TAPERALGO, CONFTYPE_PRIORITY, CONFTYPE_HOLDING, CONFTYPE_EXECUTE_ON,
+ *    CONFTYPE_EXECUTE_WHERE -> IV (enums)
  *  - CONFTYPE_RATE -> list of two NVs
  *  - CONFTYPE_INTRANGE -> list of two IVs
  *  - CONFTYPE_EXINCLUDE -> hashref with keys 'list' (listref), 'file' (listref), 
@@ -519,7 +548,7 @@ amglue_copy_to_tag(taperalgo_t, getconf);
 	    }
 
 	    case CONFTYPE_PROPLIST:
-		$result = sv_2mortal(g_hash_table_to_hashref(val_t__proplist($1)));
+		$result = sv_2mortal(g_hash_table_to_hashref_gslist(val_t__proplist($1)));
 		argvi++;
 		break;
 
@@ -541,6 +570,8 @@ amglue_copy_to_tag(taperalgo_t, getconf);
 	    case CONFTYPE_TAPERALGO:
 	    case CONFTYPE_PRIORITY:
 	    case CONFTYPE_HOLDING:
+	    case CONFTYPE_EXECUTE_ON:
+	    case CONFTYPE_EXECUTE_WHERE:
 	    case CONFTYPE_INT:
 		$result = sv_2mortal(amglue_newSVi64(val_t__int($1)));
 		argvi++;
@@ -658,6 +689,24 @@ amglue_export_tag(getconf,
     lookup_holdingdisk holdingdisk_getconf holdingdisk_name
     getconf_holdingdisks holdingdisk_next
     holdingdisk_seen holdingdisk_seen
+);
+
+application_t *lookup_application(char *identifier);
+val_t *application_getconf(application_t *app, application_key key);
+char *application_name(application_t *app);
+gboolean application_seen(application_t *app, application_key key);
+amglue_export_tag(getconf,
+    lookup_application application_getconf application_name
+    application_seen application_seen
+);
+
+pp_script_t *lookup_pp_script(char *identifier);
+val_t *pp_script_getconf(pp_script_t *pps, pp_script_key key);
+char *pp_script_name(pp_script_t *pps);
+gboolean pp_script_seen(pp_script_t *app, pp_script_key key);
+amglue_export_tag(getconf,
+    lookup_pp_script pp_script_getconf pp_script_name
+    pp_script_seen pp_script_seen
 );
 
 long int getconf_unit_divisor(void);

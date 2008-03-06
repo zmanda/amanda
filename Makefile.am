@@ -6,7 +6,7 @@ include $(top_srcdir)/config/automake/installperms.am
 ACLOCAL_AMFLAGS = --force -I . -I config -I config/gettext-macros -I config/gnulib -I config/amanda -I config/macro-archive
 
 if WANT_CLIENT
-CLIENT_SUBDIRS = client-src dumper-src
+CLIENT_SUBDIRS = client-src application-src
 endif
 if WANT_TAPE
 TAPE_SUBDIRS = tape-src

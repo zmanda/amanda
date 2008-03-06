@@ -6,7 +6,7 @@
 
 char skip_argument[1];
 
-pid_t pipespawnv_passwd(char *prog, int pipedef,
+pid_t pipespawnv_passwd(char *prog, int pipedef, int need_root,
                   int *stdinfd, int *stdoutfd, int *stderrfd,
                   char **my_argv);
 
@@ -19,6 +19,7 @@ pid_t
 pipespawn(
     char *	prog,
     int		pipedef,
+    int         need_root,
     int *	stdinfd,
     int *	stdoutfd,
     int *	stderrfd,
@@ -49,7 +50,8 @@ pipespawn(
     }
     arglist_end(ap);
 
-    pid = pipespawnv_passwd(prog, pipedef, stdinfd, stdoutfd, stderrfd, argv);
+    pid = pipespawnv_passwd(prog, pipedef, need_root,
+			    stdinfd, stdoutfd, stderrfd, argv);
     amfree(argv);
     return pid;
 }
@@ -58,12 +60,14 @@ pid_t
 pipespawnv(
     char *	prog,
     int		pipedef,
+    int		need_root,
     int *	stdinfd,
     int *	stdoutfd,
     int *	stderrfd,
     char **	my_argv)
 {
-    return pipespawnv_passwd(prog, pipedef, stdinfd, stdoutfd, stderrfd,
+    return pipespawnv_passwd(prog, pipedef, need_root,
+			     stdinfd, stdoutfd, stderrfd,
 	my_argv);
 }
 
@@ -71,6 +75,7 @@ pid_t
 pipespawnv_passwd(
     char *	prog,
     int		pipedef,
+    int		need_root,
     int *	stdinfd,
     int *	stdoutfd,
     int *	stderrfd,
@@ -225,6 +230,8 @@ pipespawnv_passwd(
 	    safe_fd(-1, 0);
 	}
 
+	if (need_root)
+	    become_root();
 	execve(prog, my_argv, env);
 	e = strerror(errno);
 	error(_("error [exec %s: %s]"), prog, e);

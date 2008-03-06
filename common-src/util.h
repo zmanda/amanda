@@ -245,4 +245,10 @@ void	add_history(const char *line);
 
 #endif
 
+char *base64_decode_alloc_string(char *);
+
+void output_tool_proplist(gpointer key_p,
+			  gpointer value_p,
+			  gpointer user_data_p);
+
 #endif	/* UTIL_H */

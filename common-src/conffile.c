@@ -35,6 +35,7 @@
 #include "util.h"
 #include "conffile.h"
 #include "clock.h"
+#include <glib.h>
 
 /*
  * Lexical analysis
@@ -81,7 +82,18 @@ typedef enum {
     CONF_TAPERFLUSH,
     CONF_FLUSH_THRESHOLD_DUMPED,
     CONF_FLUSH_THRESHOLD_SCHEDULED,
-    CONF_DEVICE_PROPERTY,
+    CONF_DEVICE_PROPERTY,      CONF_PROPERTY,          CONF_PLUGIN,
+    CONF_APPLICATION,          CONF_APPLICATION_TOOL,
+    CONF_PP_SCRIPT,            CONF_PP_SCRIPT_TOOL,
+    CONF_EXECUTE_ON,           CONF_EXECUTE_WHERE,
+
+    /* execute on 5 */
+    CONF_PRE_DLE_AMCHECK,    CONF_PRE_HOST_AMCHECK,
+    CONF_POST_DLE_AMCHECK,   CONF_POST_HOST_AMCHECK,
+    CONF_PRE_DLE_ESTIMATE,     CONF_PRE_HOST_ESTIMATE,
+    CONF_POST_DLE_ESTIMATE,    CONF_POST_HOST_ESTIMATE,
+    CONF_PRE_DLE_BACKUP,       CONF_PRE_HOST_BACKUP,
+    CONF_POST_DLE_BACKUP,      CONF_POST_HOST_BACKUP,
 
     /* kerberos 5 */
     CONF_KRB5KEYTAB,		CONF_KRB5PRINCIPAL,
@@ -210,6 +222,12 @@ static void unget_conftoken(void);
 static int  conftoken_getc(void);
 static int  conftoken_ungetc(int c);
 
+static void copy_proplist(gpointer key_p,
+                          gpointer value_p,
+                          gpointer user_data_p);
+static void copy_pp_scriptlist(gpointer data_p,
+                               gpointer user_data_p);
+
 /*
  * Parser
  */
@@ -268,6 +286,22 @@ struct holdingdisk_s {
     char *name;
 
     val_t value[HOLDING_HOLDING];
+};
+
+struct application_s {
+    struct application_s *next;
+    int seen;
+    char *name;
+
+    val_t value[APPLICATION_APPLICATION];
+};
+
+struct pp_script_s {
+    struct pp_script_s *next;
+    int seen;
+    char *name;
+
+    val_t value[PP_SCRIPT_PP_SCRIPT];
 };
 
 /* The current parser table */
@@ -357,6 +391,18 @@ static void init_interface_defaults(void);
 static void save_interface(void);
 static void copy_interface(void);
 
+static application_t apcur;
+static void get_application(void);
+static void init_application_defaults(void);
+static void save_application(void);
+static void copy_application(void);
+
+static pp_script_t pscur;
+static void get_pp_script(void);
+static void init_pp_script_defaults(void);
+static void save_pp_script(void);
+static void copy_pp_script(void);
+
 /* read_functions -- these fit into the read_function slot in a parser
  * table entry, and are responsible for calling getconf_token as necessary
  * to consume their arguments, and setting their second argument with the
@@ -380,7 +426,11 @@ static void read_priority(conf_var_t *, val_t *);
 static void read_rate(conf_var_t *, val_t *);
 static void read_exinclude(conf_var_t *, val_t *);
 static void read_intrange(conf_var_t *, val_t *);
+static void read_dapplication(conf_var_t *, val_t *);
+static void read_dpp_script(conf_var_t *, val_t *);
 static void read_property(conf_var_t *, val_t *);
+static void read_execute_on(conf_var_t *, val_t *);
+static void read_execute_where(conf_var_t *, val_t *);
 
 /* Functions to get various types of values.  These are called by
  * read_functions to take care of any variations in the way that these
@@ -419,6 +469,7 @@ static void validate_debug(conf_var_t *, val_t *);
 static void validate_port_range(val_t *, int, int);
 static void validate_reserved_port_range(conf_var_t *, val_t *);
 static void validate_unreserved_port_range(conf_var_t *, val_t *);
+static void validate_program(conf_var_t *, val_t *);
 
 /*
  * Initialization
@@ -457,6 +508,8 @@ static holdingdisk_t *holdinglist = NULL;
 static dumptype_t *dumplist = NULL;
 static tapetype_t *tapelist = NULL;
 static interface_t *interface_list = NULL;
+static application_t *application_list = NULL;
+static pp_script_t *pp_script_list = NULL;
 
 /* storage for derived values */
 static long int unit_divisor = 1;
@@ -508,6 +561,8 @@ static void conf_init_compress(val_t *val, comp_t i);
 static void conf_init_encrypt(val_t *val, encrypt_t i);
 static void conf_init_holding(val_t *val, dump_holdingdisk_t i);
 static void conf_init_estimate(val_t *val, estimate_t i);
+static void conf_init_execute_on(val_t *, int);
+static void conf_init_execute_where(val_t *, int);
 static void conf_init_strategy(val_t *val, strategy_t);
 static void conf_init_taperalgo(val_t *val, taperalgo_t i);
 static void conf_init_priority(val_t *val, int i);
@@ -515,6 +570,8 @@ static void conf_init_rate(val_t *val, float r1, float r2);
 static void conf_init_exinclude(val_t *val); /* to empty list */
 static void conf_init_intrange(val_t *val, int i1, int i2);
 static void conf_init_proplist(val_t *val); /* to empty list */
+static void conf_init_pp_scriptlist(val_t *);
+static void conf_init_application(val_t *val);
 
 /*
  * Command-line Handling
@@ -546,6 +603,7 @@ static void free_val_t(val_t *);
 /* Utility functions/structs for val_t_display_strs */
 static char *exinclude_display_str(val_t *val, int file);
 static void proplist_display_str_foreach_fn(gpointer key_p, gpointer value_p, gpointer user_data_p);
+static void pp_scriptlist_display_str_foreach_fn(gpointer data_p, gpointer user_data_p);
 static void val_t_print_token(FILE *output, char *prefix, char *format, keytab_t *kt, val_t *val);
 
 /* Given a key name as used in config overwrites, return a pointer to the corresponding
@@ -620,7 +678,13 @@ keytab_t client_keytab[] = {
     { "RESERVED-UDP-PORT", CONF_RESERVED_UDP_PORT },
     { "RESERVED-TCP-PORT", CONF_RESERVED_TCP_PORT },
     { "UNRESERVED-TCP-PORT", CONF_UNRESERVED_TCP_PORT },
-    { NULL, CONF_UNKNOWN },
+    { "DEFINE", CONF_DEFINE },
+    { "COMMENT", CONF_COMMENT },
+    { "PLUGIN", CONF_PLUGIN },
+    { "PROPERTY", CONF_PROPERTY },
+    { "APPLICATION-TOOL", CONF_APPLICATION_TOOL },
+    { NULL, CONF_IDENT },
+    { NULL, CONF_UNKNOWN }
 };
 
 keytab_t server_keytab[] = {
@@ -632,6 +696,8 @@ keytab_t server_keytab[] = {
     { "AUTH", CONF_AUTH },
     { "AUTO", CONF_AUTO },
     { "AUTOFLUSH", CONF_AUTOFLUSH },
+    { "APPLICATION", CONF_APPLICATION },
+    { "APPLICATION-TOOl", CONF_APPLICATION_TOOL },
     { "BEST", CONF_BEST },
     { "BLOCKSIZE", CONF_BLOCKSIZE },
     { "BUMPDAYS", CONF_BUMPDAYS },
@@ -686,6 +752,8 @@ keytab_t server_keytab[] = {
     { "EXCLUDE", CONF_EXCLUDE },
     { "EXCLUDE-FILE", CONF_EXCLUDE_FILE },
     { "EXCLUDE-LIST", CONF_EXCLUDE_LIST },
+    { "EXECUTE-ON", CONF_EXECUTE_ON },
+    { "EXECUTE-WHERE", CONF_EXECUTE_WHERE },
     { "FALLBACK_SPLITSIZE", CONF_FALLBACK_SPLITSIZE },
     { "FAST", CONF_FAST },
     { "FILE", CONF_EFILE },
@@ -731,9 +799,23 @@ keytab_t server_keytab[] = {
     { "NONE", CONF_NONE },
     { "OPTIONAL", CONF_OPTIONAL },
     { "ORG", CONF_ORG },
+    { "PLUGIN", CONF_PLUGIN },
+    { "PRE-DLE-AMCHECK", CONF_PRE_DLE_AMCHECK },
+    { "PRE-HOST-AMCHECK", CONF_PRE_HOST_AMCHECK },
+    { "POST-DLE-AMCHECK", CONF_POST_DLE_AMCHECK },
+    { "POST-HOST-AMCHECK", CONF_POST_HOST_AMCHECK },
+    { "PRE-DLE-ESTIMATE", CONF_PRE_DLE_ESTIMATE },
+    { "PRE-HOST-ESTIMATE", CONF_PRE_HOST_ESTIMATE },
+    { "POST-DLE-ESTIMATE", CONF_POST_DLE_ESTIMATE },
+    { "POST-HOST-ESTIMATE", CONF_POST_HOST_ESTIMATE },
+    { "POST-DLE-BACKUP", CONF_POST_DLE_BACKUP },
+    { "POST-HOST-BACKUP", CONF_POST_HOST_BACKUP },
+    { "PRE-DLE-BACKUP", CONF_PRE_DLE_BACKUP },
+    { "PRE-HOST-BACKUP", CONF_PRE_HOST_BACKUP },
     { "PRINTER", CONF_PRINTER },
     { "PRIORITY", CONF_PRIORITY },
     { "PROGRAM", CONF_PROGRAM },
+    { "PROPERTY", CONF_PROPERTY },
     { "RECORD", CONF_RECORD },
     { "REP_TRIES", CONF_REP_TRIES },
     { "REQ_TRIES", CONF_REQ_TRIES },
@@ -743,6 +825,8 @@ keytab_t server_keytab[] = {
     { "RESERVED-TCP-PORT", CONF_RESERVED_TCP_PORT },
     { "RUNSPERCYCLE", CONF_RUNSPERCYCLE },
     { "RUNTAPES", CONF_RUNTAPES },
+    { "SCRIPT", CONF_PP_SCRIPT },
+    { "SCRIPT-TOOl", CONF_PP_SCRIPT_TOOL },
     { "SERVER", CONF_SERVER },
     { "SERVER_CUSTOM_COMPRESS", CONF_SRVCOMPPROG },
     { "SERVER_DECRYPT_OPTION", CONF_SRV_DECRYPT_OPT },
@@ -980,7 +1064,7 @@ conf_var_t dumptype_var [] = {
    { CONF_MAXDUMPS          , CONFTYPE_INT      , read_int      , DUMPTYPE_MAXDUMPS          , validate_positive },
    { CONF_MAXPROMOTEDAY     , CONFTYPE_INT      , read_int      , DUMPTYPE_MAXPROMOTEDAY     , validate_nonnegative },
    { CONF_PRIORITY          , CONFTYPE_PRIORITY , read_priority , DUMPTYPE_PRIORITY          , NULL },
-   { CONF_PROGRAM           , CONFTYPE_STR      , read_str      , DUMPTYPE_PROGRAM           , NULL },
+   { CONF_PROGRAM           , CONFTYPE_STR      , read_str      , DUMPTYPE_PROGRAM           , validate_program },
    { CONF_RECORD            , CONFTYPE_BOOLEAN  , read_bool     , DUMPTYPE_RECORD            , NULL },
    { CONF_SKIP_FULL         , CONFTYPE_BOOLEAN  , read_bool     , DUMPTYPE_SKIP_FULL         , NULL },
    { CONF_SKIP_INCR         , CONFTYPE_BOOLEAN  , read_bool     , DUMPTYPE_SKIP_INCR         , NULL },
@@ -999,6 +1083,8 @@ conf_var_t dumptype_var [] = {
    { CONF_FALLBACK_SPLITSIZE, CONFTYPE_AM64     , read_am64     , DUMPTYPE_FALLBACK_SPLITSIZE, NULL },
    { CONF_SRV_DECRYPT_OPT   , CONFTYPE_STR      , read_str      , DUMPTYPE_SRV_DECRYPT_OPT   , NULL },
    { CONF_CLNT_DECRYPT_OPT  , CONFTYPE_STR      , read_str      , DUMPTYPE_CLNT_DECRYPT_OPT  , NULL },
+   { CONF_APPLICATION       , CONFTYPE_STR      , read_dapplication, DUMPTYPE_APPLICATION    , NULL },
+   { CONF_PP_SCRIPT         , CONFTYPE_STR      , read_dpp_script, DUMPTYPE_PP_SCRIPTLIST    , NULL },
    { CONF_UNKNOWN           , CONFTYPE_INT      , NULL          , DUMPTYPE_DUMPTYPE          , NULL }
 };
 
@@ -1016,6 +1102,22 @@ conf_var_t interface_var [] = {
    { CONF_UNKNOWN, CONFTYPE_INT   , NULL       , INTER_INTER   , NULL }
 };
 
+
+conf_var_t application_var [] = {
+   { CONF_COMMENT  , CONFTYPE_STR     , read_str     , APPLICATION_COMMENT    , NULL },
+   { CONF_PLUGIN   , CONFTYPE_STR     , read_str     , APPLICATION_PLUGIN     , NULL },
+   { CONF_PROPERTY , CONFTYPE_PROPLIST, read_property, APPLICATION_PROPERTY   , NULL },
+   { CONF_UNKNOWN  , CONFTYPE_INT     , NULL         , APPLICATION_APPLICATION, NULL }
+};
+
+conf_var_t pp_script_var [] = {
+   { CONF_COMMENT      , CONFTYPE_STR     , read_str     , PP_SCRIPT_COMMENT      , NULL },
+   { CONF_PLUGIN       , CONFTYPE_STR     , read_str     , PP_SCRIPT_PLUGIN       , NULL },
+   { CONF_PROPERTY     , CONFTYPE_PROPLIST, read_property, PP_SCRIPT_PROPERTY     , NULL },
+   { CONF_EXECUTE_ON   , CONFTYPE_EXECUTE_ON  , read_execute_on  , PP_SCRIPT_EXECUTE_ON   , NULL },
+   { CONF_EXECUTE_WHERE, CONFTYPE_EXECUTE_WHERE  , read_execute_where  , PP_SCRIPT_EXECUTE_WHERE, NULL },
+   { CONF_UNKNOWN      , CONFTYPE_INT     , NULL         , PP_SCRIPT_PP_SCRIPT    , NULL }
+};
 
 /*
  * Lexical Analysis Implementation
@@ -1451,7 +1553,9 @@ read_confline(
 	    if(tok == CONF_DUMPTYPE) get_dumptype();
 	    else if(tok == CONF_TAPETYPE) get_tapetype();
 	    else if(tok == CONF_INTERFACE) get_interface();
-	    else conf_parserror(_("DUMPTYPE, INTERFACE or TAPETYPE expected"));
+	    else if(tok == CONF_APPLICATION_TOOL) get_application();
+	    else if(tok == CONF_PP_SCRIPT_TOOL) get_pp_script();
+	    else conf_parserror(_("DUMPTYPE, INTERFACE, TAPETYPE, APPLICATION-TOOL or SCRIPT-TOOL expected"));
 	}
 	break;
 
@@ -1752,6 +1856,8 @@ init_dumptype_defaults(void)
     conf_init_bool     (&dpcur.value[DUMPTYPE_KENCRYPT]          , 0);
     conf_init_bool     (&dpcur.value[DUMPTYPE_IGNORE]            , 0);
     conf_init_bool     (&dpcur.value[DUMPTYPE_INDEX]             , 1);
+    conf_init_application(&dpcur.value[DUMPTYPE_APPLICATION]);
+    conf_init_pp_scriptlist(&dpcur.value[DUMPTYPE_PP_SCRIPTLIST]);
 }
 
 static void
@@ -1962,6 +2068,265 @@ copy_interface(void)
 	if(ip->value[i].seen) {
 	    free_val_t(&ifcur.value[i]);
 	    copy_val_t(&ifcur.value[i], &ip->value[i]);
+	}
+    }
+}
+
+
+application_t *
+read_application(
+    char *name,
+    FILE *from,
+    char *fname,
+    int *linenum)
+{
+    int save_overwrites;
+    FILE *saved_conf = NULL;
+    char *saved_fname = NULL;
+    char *prefix;
+
+    if (from) {
+	saved_conf = current_file;
+	current_file = from;
+    }
+
+    if (fname) {
+	saved_fname = current_filename;
+	current_filename = fname;
+    }
+
+    if (linenum)
+	current_line_num = *linenum;
+
+    save_overwrites = allow_overwrites;
+    allow_overwrites = 1;
+
+    init_application_defaults();
+    if (name) {
+	apcur.name = name;
+    } else {
+	get_conftoken(CONF_IDENT);
+	apcur.name = stralloc(tokenval.v.s);
+    }
+    apcur.seen = current_line_num;
+
+    prefix = vstralloc( "APPLICATION-TOOL:", apcur.name, ":", NULL);
+    read_block(application_var, apcur.value,
+	       _("application-tool parameter expected"),
+	       (name == NULL), *copy_application);
+    amfree(prefix);
+    if(!name)
+	get_conftoken(CONF_NL);
+
+    save_application();
+
+    allow_overwrites = save_overwrites;
+
+    if (linenum)
+	*linenum = current_line_num;
+
+    if (fname)
+	current_filename = saved_fname;
+
+    if (from)
+	current_file = saved_conf;
+
+    return lookup_application(apcur.name);
+}
+
+static void
+get_application(
+    void)
+{
+    read_application(NULL, NULL, NULL, NULL);
+}
+
+static void
+init_application_defaults(
+    void)
+{
+    apcur.name = NULL;
+    conf_init_str(&apcur.value[APPLICATION_COMMENT] , "");
+    conf_init_str(&apcur.value[APPLICATION_PLUGIN]  , "");
+    conf_init_proplist(&apcur.value[APPLICATION_PROPERTY]);
+}
+
+static void
+save_application(
+    void)
+{
+    application_t *ap, *ap1;
+
+    ap = lookup_application(apcur.name);
+
+    if(ap != (application_t *)0) {
+	conf_parserror(_("application-tool %s already defined on line %d"),
+		       ap->name, ap->seen);
+	return;
+    }
+
+    ap = alloc(sizeof(application_t));
+    *ap = apcur;
+    ap->next = NULL;
+    /* add at end of list */
+    if (!application_list)
+	application_list = ap;
+    else {
+	ap1 = application_list;
+	while (ap1->next != NULL) {
+	    ap1 = ap1->next;
+	}
+	ap1->next = ap;
+    }
+}
+
+static void
+copy_application(void)
+{
+    application_t *ap;
+    int i;
+
+    ap = lookup_application(tokenval.v.s);
+
+    if(ap == NULL) {
+	conf_parserror(_("application parameter expected"));
+	return;
+    }
+
+    for(i=0; i < APPLICATION_APPLICATION; i++) {
+	if(ap->value[i].seen) {
+	    free_val_t(&apcur.value[i]);
+	copy_val_t(&apcur.value[i], &ap->value[i]);
+	}
+    }
+}
+
+pp_script_t *
+read_pp_script(
+    char *name,
+    FILE *from,
+    char *fname,
+    int *linenum)
+{
+    int save_overwrites;
+    FILE *saved_conf = NULL;
+    char *saved_fname = NULL;
+    char *prefix;
+
+    if (from) {
+	saved_conf = current_file;
+	current_file = from;
+    }
+
+    if (fname) {
+	saved_fname = current_filename;
+	current_filename = fname;
+    }
+
+    if (linenum)
+	current_line_num = *linenum;
+
+    save_overwrites = allow_overwrites;
+    allow_overwrites = 1;
+
+    init_pp_script_defaults();
+    if (name) {
+	pscur.name = name;
+    } else {
+	get_conftoken(CONF_IDENT);
+	pscur.name = stralloc(tokenval.v.s);
+    }
+    pscur.seen = current_line_num;
+
+    prefix = vstralloc( "SCRIPT-TOOL:", pscur.name, ":", NULL);
+    read_block(pp_script_var, pscur.value,
+	       _("script-tool parameter expected"),
+	       (name == NULL), *copy_pp_script);
+    amfree(prefix);
+    if(!name)
+	get_conftoken(CONF_NL);
+
+    save_pp_script();
+
+    allow_overwrites = save_overwrites;
+
+    if (linenum)
+	*linenum = current_line_num;
+
+    if (fname)
+	current_filename = saved_fname;
+
+    if (from)
+	current_file = saved_conf;
+
+    return lookup_pp_script(pscur.name);
+}
+
+static void
+get_pp_script(
+    void)
+{
+    read_pp_script(NULL, NULL, NULL, NULL);
+}
+
+static void
+init_pp_script_defaults(
+    void)
+{
+    pscur.name = NULL;
+    conf_init_str(&pscur.value[PP_SCRIPT_COMMENT] , "");
+    conf_init_str(&pscur.value[PP_SCRIPT_PLUGIN]  , "");
+    conf_init_proplist(&pscur.value[PP_SCRIPT_PROPERTY]);
+    conf_init_execute_on(&pscur.value[PP_SCRIPT_EXECUTE_ON], 0);
+    conf_init_execute_where(&pscur.value[PP_SCRIPT_EXECUTE_WHERE], ES_CLIENT);
+}
+
+static void
+save_pp_script(
+    void)
+{
+    pp_script_t *ps, *ps1;
+
+    ps = lookup_pp_script(pscur.name);
+
+    if(ps != (pp_script_t *)0) {
+	conf_parserror(_("script-tool %s already defined on line %d"),
+		       ps->name, ps->seen);
+	return;
+    }
+
+    ps = alloc(sizeof(pp_script_t));
+    *ps = pscur;
+    ps->next = NULL;
+    /* add at end of list */
+    if (!pp_script_list)
+	pp_script_list = ps;
+    else {
+	ps1 = pp_script_list;
+	while (ps1->next != NULL) {
+	    ps1 = ps1->next;
+	}
+	ps1->next = ps;
+    }
+}
+
+static void
+copy_pp_script(void)
+{
+    pp_script_t *ps;
+    int i;
+
+    ps = lookup_pp_script(tokenval.v.s);
+
+    if(ps == NULL) {
+	conf_parserror(_("script parameter expected"));
+	return;
+    }
+
+    for(i=0; i < PP_SCRIPT_PP_SCRIPT; i++) {
+	if(ps->value[i].seen) {
+	    free_val_t(&pscur.value[i]);
+	    copy_val_t(&pscur.value[i], &ps->value[i]);
 	}
     }
 }
@@ -2394,15 +2759,148 @@ read_intrange(
 static void
 read_property(
     conf_var_t *np G_GNUC_UNUSED,
+    val_t      *val)
+{
+    char *key;
+    GSList *values;
+    int append = 0;
+
+    get_conftoken(CONF_ANY);
+    if (tok == CONF_APPEND) {
+	append = 1;
+	get_conftoken(CONF_ANY);
+    }
+    if (tok != CONF_STRING) {
+	conf_parserror(_("key expected"));
+	return;
+    }
+    key = strdup(tokenval.v.s);
+
+    get_conftoken(CONF_ANY);
+    if (tok == CONF_NL ||  tok == CONF_END) {
+	g_hash_table_remove(val->v.proplist, key);
+	unget_conftoken();
+	return;
+    }
+    if (tok != CONF_STRING) {
+	conf_parserror(_("value expected"));
+	return;
+    }
+
+    if(val->seen == 0)
+	val->seen = current_line_num;
+
+    if (append) {
+	values = g_hash_table_lookup(val->v.proplist, key);
+    } else {
+	values = g_hash_table_lookup(val->v.proplist, key);
+	if (values)
+	    g_slist_free(values);
+	values = NULL;
+    }
+    while(tok == CONF_STRING) {
+	values = g_slist_append(values, strdup(tokenval.v.s));
+	get_conftoken(CONF_ANY);
+    }
+    unget_conftoken();
+    g_hash_table_insert(val->v.proplist, key, values);
+}
+
+
+static void
+read_dapplication(
+    conf_var_t *np G_GNUC_UNUSED,
+    val_t      *val)
+{
+
+    get_conftoken(CONF_ANY);
+    if (tok == CONF_LBRACE) {
+	val->v.application = read_application(vstralloc("custom(DUMPTYPE:", dpcur.name, ")", NULL), NULL, NULL, NULL);
+
+    } else if (tok == CONF_STRING) {
+	val->v.application = lookup_application(tokenval.v.s);
+	if (val->v.application == NULL) {
+	    conf_parserror(_("Unknown application named: %s"), tokenval.v.s);
+	    return;
+	}
+    } else {
+	conf_parserror(_("application name expected: %d %d"), tok, CONF_STRING);
+	return;
+    }
+    ckseen(&val->seen);
+}
+
+static void
+read_dpp_script(
+    conf_var_t *np G_GNUC_UNUSED,
+    val_t      *val)
+{
+    pp_script_t *pp_script;
+    get_conftoken(CONF_ANY);
+    if (tok == CONF_LBRACE) {
+	pp_script = read_pp_script(vstralloc("custom(DUMPTYPE:", dpcur.name, ")", NULL), NULL, NULL, NULL);
+    } else if (tok == CONF_STRING) {
+	pp_script = lookup_pp_script(tokenval.v.s);
+	if (pp_script == NULL) {
+	    conf_parserror(_("Unknown pp_script named: %s"), tokenval.v.s);
+	    return;
+	}
+    } else {
+	conf_parserror(_("pp_script name expected: %d %d"), tok, CONF_STRING);
+	return;
+    }
+    val->v.pp_scriptlist = g_slist_append(val->v.pp_scriptlist, pp_script);
+    ckseen(&val->seen);
+}
+static void
+read_execute_on(
+    conf_var_t *np G_GNUC_UNUSED,
     val_t *val)
 {
-    char *key, *value;
-    get_conftoken(CONF_STRING);
-    key = strdup(tokenval.v.s);
-    get_conftoken(CONF_STRING);
-    value = strdup(tokenval.v.s);
+    ckseen(&val->seen);
 
-    g_hash_table_insert(val_t__proplist(val), key, value);
+    get_conftoken(CONF_ANY);
+    val->v.i = 0;
+    do {
+	switch(tok) {
+	case CONF_PRE_DLE_AMCHECK:   val->v.i |= EXECUTE_ON_PRE_DLE_AMCHECK;   break;
+	case CONF_PRE_HOST_AMCHECK:  val->v.i |= EXECUTE_ON_PRE_HOST_AMCHECK;  break;
+	case CONF_POST_DLE_AMCHECK:  val->v.i |= EXECUTE_ON_POST_DLE_AMCHECK;  break;
+	case CONF_POST_HOST_AMCHECK: val->v.i |= EXECUTE_ON_POST_HOST_AMCHECK; break;
+	case CONF_PRE_DLE_ESTIMATE:    val->v.i |= EXECUTE_ON_PRE_DLE_ESTIMATE;    break;
+	case CONF_PRE_HOST_ESTIMATE:   val->v.i |= EXECUTE_ON_PRE_HOST_ESTIMATE;   break;
+	case CONF_POST_DLE_ESTIMATE:   val->v.i |= EXECUTE_ON_POST_DLE_ESTIMATE;   break;
+	case CONF_POST_HOST_ESTIMATE:  val->v.i |= EXECUTE_ON_POST_HOST_ESTIMATE;  break;
+	case CONF_PRE_DLE_BACKUP:      val->v.i |= EXECUTE_ON_PRE_DLE_BACKUP;      break;
+	case CONF_PRE_HOST_BACKUP:     val->v.i |= EXECUTE_ON_PRE_HOST_BACKUP;     break;
+	case CONF_POST_DLE_BACKUP:     val->v.i |= EXECUTE_ON_POST_DLE_BACKUP;     break;
+	case CONF_POST_HOST_BACKUP:    val->v.i |= EXECUTE_ON_POST_HOST_BACKUP;    break;
+	default:
+	conf_parserror(_("Execute_on expected"));
+	}
+	get_conftoken(CONF_ANY);
+	if (tok != CONF_COMMA) {
+	    unget_conftoken();
+	    break;
+	}
+	get_conftoken(CONF_ANY);
+    } while (1);
+}
+
+static void
+read_execute_where(
+    conf_var_t *np G_GNUC_UNUSED,
+    val_t *val)
+{
+    ckseen(&val->seen);
+
+    get_conftoken(CONF_ANY);
+    switch(tok) {
+    case CONF_CLIENT:      val->v.i = ES_CLIENT;   break;
+    case CONF_SERVER:      val->v.i = ES_SERVER;   break;
+    default:
+	conf_parserror(_("CLIENT or  SERVER expected"));
+    }
 }
 
 /* get_* functions */
@@ -3621,8 +4119,41 @@ conf_init_proplist(
     val->seen = 0;
     val->type = CONFTYPE_PROPLIST;
     val_t__proplist(val) =
-        g_hash_table_new_full(g_str_hash, g_str_equal, g_free, g_free);
+        g_hash_table_new_full(g_str_hash, g_str_equal, NULL, NULL);
 }
+
+static void
+conf_init_execute_on(
+    val_t *val,
+    int    i)
+{
+    val->seen = 0;
+    val->type = CONFTYPE_EXECUTE_ON;
+    val->v.i = i;
+}
+
+static void
+conf_init_execute_where(
+    val_t *val,
+    int    i)
+{
+    val->seen = 0;
+    val->type = CONFTYPE_EXECUTE_WHERE;
+    val->v.i = i;
+}
+
+static void conf_init_pp_scriptlist(val_t *val) {
+    val->seen = 0;
+    val->type = CONFTYPE_PP_SCRIPTLIST;
+    val->v.proplist = NULL;
+}
+
+static void conf_init_application(val_t *val) {
+    val->seen = 0;
+    val->type = CONFTYPE_APPLICATION;
+    val->v.application = NULL;
+}
+
 
 /*
  * Config access implementation
@@ -3643,6 +4174,8 @@ getconf_list(
     dumptype_t *dp;
     interface_t *ip;
     holdingdisk_t *hp;
+    application_t *ap;
+    pp_script_t   *pp;
     GSList *rv = NULL;
 
     if (strcasecmp(listname,"tapetype") == 0) {
@@ -3660,6 +4193,14 @@ getconf_list(
     } else if (strcasecmp(listname,"interface") == 0) {
 	for(ip = interface_list; ip != NULL; ip=ip->next) {
 	    rv = g_slist_append(rv, ip->name);
+	}
+    } else if (strcasecmp(listname,"application-tool") == 0) {
+	for(ap = application_list; ap != NULL; ap=ap->next) {
+	    rv = g_slist_append(rv, ap->name);
+	}
+    } else if (strcasecmp(listname,"script-tool") == 0) {
+	for(pp = pp_script_list; pp != NULL; pp=pp->next) {
+	    rv = g_slist_append(rv, pp->name);
 	}
     }
     return rv;
@@ -3698,6 +4239,19 @@ tapetype_getconf(
     assert(key < TAPETYPE_TAPETYPE);
     return &ttyp->value[key];
 }
+
+static void
+validate_program(
+    conf_var_t *np G_GNUC_UNUSED,
+    val_t        *val)
+{
+    if (strcmp(val->v.s, "DUMP") != 0 &&
+    	strcmp(val->v.s, "GNUTAR") != 0 &&
+    	strcmp(val->v.s, "STAR") != 0 &&
+    	strcmp(val->v.s, "APPLICATION") != 0)
+       conf_parserror("program must be \"DUMP\", \"GNUTAR\", \"STAR\" or \"APPLICATION\"");
+}
+
 
 char *
 tapetype_name(
@@ -3810,6 +4364,66 @@ holdingdisk_name(
 {
     assert(hdisk != NULL);
     return hdisk->name;
+}
+
+application_t *
+lookup_application(
+    char *str)
+{
+    application_t *p;
+
+    for(p = application_list; p != NULL; p = p->next) {
+	if(strcasecmp(p->name, str) == 0) return p;
+    }
+    return NULL;
+}
+
+val_t *
+application_getconf(
+    application_t *ap,
+    application_key key)
+{
+    assert(ap != NULL);
+    assert(key < APPLICATION_APPLICATION);
+    return &ap->value[key];
+}
+
+char *
+application_name(
+    application_t *ap)
+{
+    assert(ap != NULL);
+    return ap->name;
+}
+
+pp_script_t *
+lookup_pp_script(
+    char *str)
+{
+    pp_script_t *pps;
+
+    for(pps = pp_script_list; pps != NULL; pps = pps->next) {
+	if(strcasecmp(pps->name, str) == 0) return pps;
+    }
+    return NULL;
+}
+
+val_t *
+pp_script_getconf(
+    pp_script_t *pps,
+    pp_script_key key)
+{
+    assert(pps != NULL);
+    assert(key < PP_SCRIPT_PP_SCRIPT);
+    return &pps->value[key];
+}
+
+char *
+pp_script_name(
+    pp_script_t *pps)
+{
+    assert(pps != NULL);
+    return pps->name;
 }
 
 long int
@@ -4120,7 +4734,7 @@ val_t_to_estimate(
     val_t *val)
 {
     if (val->type != CONFTYPE_ESTIMATE) {
-	error(_("val_t_to_extimate: val.type is not CONFTYPE_ESTIMATE"));
+	error(_("val_t_to_estimate: val.type is not CONFTYPE_ESTIMATE"));
 	/*NOTREACHED*/
     }
     return val_t__estimate(val);
@@ -4219,6 +4833,8 @@ copy_val_t(
 	case CONFTYPE_ENCRYPT:
 	case CONFTYPE_HOLDING:
 	case CONFTYPE_ESTIMATE:
+	case CONFTYPE_EXECUTE_ON:
+	case CONFTYPE_EXECUTE_WHERE:
 	case CONFTYPE_STRATEGY:
 	case CONFTYPE_TAPERALGO:
 	case CONFTYPE_PRIORITY:
@@ -4263,10 +4879,59 @@ copy_val_t(
 	    break;
 
         case CONFTYPE_PROPLIST:
-            g_assert_not_reached();
-            break;
+	    if (valsrc->v.proplist) {
+		valdst->v.proplist = g_hash_table_new_full(g_str_hash,
+							   g_str_equal,
+							   NULL, NULL);
+
+		g_hash_table_foreach(valsrc->v.proplist, &copy_proplist,
+				     valdst->v.proplist);
+	    } else {
+		valdst->v.proplist = NULL;
+	    }
+	    break;
+
+	case CONFTYPE_PP_SCRIPTLIST:
+	    valdst->v.pp_scriptlist = NULL;
+	    if (valsrc->v.pp_scriptlist) {
+		g_slist_foreach(valsrc->v.pp_scriptlist, &copy_pp_scriptlist,
+				valdst->v.pp_scriptlist);
+	    }
+	    break;
+
+	case CONFTYPE_APPLICATION:
+	    valdst->v.application = valsrc->v.application;
+	    break;
 	}
     }
+}
+
+static void
+copy_proplist(
+    gpointer key_p,
+    gpointer value_p,
+    gpointer user_data_p)
+{
+    char *property_s = key_p;
+    GSList *value_s   = value_p;
+    proplist_t proplist = user_data_p;
+    GSList *elem, *list = NULL;
+
+    for(elem = value_s;elem != NULL; elem=elem->next) {
+	list = g_slist_append(list, stralloc(elem->data));
+    }
+    g_hash_table_insert(proplist, property_s, list);
+}
+
+static void
+copy_pp_scriptlist(
+    gpointer data_p,
+    gpointer user_data_p)
+{
+    pp_script_t *pp_script   = data_p;
+    pp_scriptlist_t pp_scriptlist = user_data_p;
+
+    pp_scriptlist = g_slist_append(pp_scriptlist, pp_script);
 }
 
 static void
@@ -4280,6 +4945,8 @@ free_val_t(
 	case CONFTYPE_ENCRYPT:
 	case CONFTYPE_HOLDING:
 	case CONFTYPE_ESTIMATE:
+	case CONFTYPE_EXECUTE_WHERE:
+	case CONFTYPE_EXECUTE_ON:
 	case CONFTYPE_STRATEGY:
 	case CONFTYPE_SIZE:
 	case CONFTYPE_TAPERALGO:
@@ -4306,6 +4973,13 @@ free_val_t(
         case CONFTYPE_PROPLIST:
             g_hash_table_destroy(val_t__proplist(val));
             break;
+
+	case CONFTYPE_PP_SCRIPTLIST:
+	    g_slist_free_full(val->v.pp_scriptlist);
+	    break;
+
+	case CONFTYPE_APPLICATION:
+	    break;
     }
     val->seen = 0;
 }
@@ -4376,6 +5050,8 @@ dump_configuration(void)
     dumptype_t *dp;
     interface_t *ip;
     holdingdisk_t *hp;
+    application_t *ap;
+    pp_script_t *ps;
     int i;
     conf_var_t *np;
     keytab_t *kt;
@@ -4484,6 +5160,49 @@ dump_configuration(void)
 	g_printf("%s}\n",prefix);
     }
 
+    for(ap = application_list; ap != NULL; ap = ap->next) {
+	if(strcmp(ap->name,"default") == 0)
+	    prefix = "#";
+	else
+	    prefix = "";
+	printf("\n%sDEFINE APPLICATION-TOOL %s {\n", prefix, ap->name);
+	for(i=0; i < APPLICATION_APPLICATION; i++) {
+	    for(np=application_var; np->token != CONF_UNKNOWN; np++)
+		if(np->parm == i) break;
+	    if(np->token == CONF_UNKNOWN)
+		error(_("application-tool bad value"));
+
+	    for(kt = server_keytab; kt->token != CONF_UNKNOWN; kt++)
+		if(kt->token == np->token) break;
+	    if(kt->token == CONF_UNKNOWN)
+		error(_("application bad token"));
+
+	    val_t_print_token(stdout, prefix, "      %-19s ", kt, &ap->value[i]);
+	}
+	g_printf("%s}\n",prefix);
+    }
+
+    for(ps = pp_script_list; ps != NULL; ps = ps->next) {
+	if(strcmp(ps->name,"default") == 0)
+	    prefix = "#";
+	else
+	    prefix = "";
+	printf("\n%sDEFINE SCRIPT-TOOL %s {\n", prefix, ps->name);
+	for(i=0; i < PP_SCRIPT_PP_SCRIPT; i++) {
+	    for(np=pp_script_var; np->token != CONF_UNKNOWN; np++)
+		if(np->parm == i) break;
+	    if(np->token == CONF_UNKNOWN)
+		error(_("script-tool bad value"));
+
+	    for(kt = server_keytab; kt->token != CONF_UNKNOWN; kt++)
+		if(kt->token == np->token) break;
+	    if(kt->token == CONF_UNKNOWN)
+		error(_("script bad token"));
+
+	    val_t_print_token(stdout, prefix, "      %-19s ", kt, &ps->value[i]);
+	}
+	g_printf("%s}\n",prefix);
+    }
 }
 
 static void
@@ -4676,6 +5395,18 @@ val_t_display_strs(
 	}
 	break;
 
+    case CONFTYPE_EXECUTE_WHERE:
+	switch(val->v.i) {
+	case ES_CLIENT:
+	    buf[0] = vstrallocf("CLIENT");
+	    break;
+
+	case ES_SERVER:
+	    buf[0] = vstrallocf("SERVER");
+	    break;
+	}
+	break;
+
      case CONFTYPE_ENCRYPT:
 	switch(val_t__encrypt(val)) {
 	case ENCRYPT_NONE:
@@ -4737,12 +5468,140 @@ val_t_display_strs(
 	buf = malloc((nb_property+1)*SIZEOF(char*));
 	buf[nb_property] = NULL;
 	mybuf = buf;
-	g_hash_table_foreach(val_t__proplist(val), proplist_display_str_foreach_fn, &mybuf);
+	g_hash_table_foreach(val_t__proplist(val),
+			     proplist_display_str_foreach_fn,
+			     &mybuf);
         break;
     }
+
+    case CONFTYPE_PP_SCRIPTLIST: {
+	int    nb_pp_scriplist;
+	char **mybuf;
+
+	nb_pp_scriplist = g_slist_length(val_t__pp_scriptlist(val));
+	amfree(buf);
+	buf = malloc((nb_pp_scriplist+1)*SIZEOF(char*));
+	buf[nb_pp_scriplist] = NULL;
+	mybuf = buf;
+	g_slist_foreach(val_t__pp_scriptlist(val),
+			pp_scriptlist_display_str_foreach_fn,
+			&mybuf);
+        break;
+    }
+
+    case CONFTYPE_APPLICATION: {
+	if (val->v.application) {
+	    buf[0] = vstrallocf("\"%s\"", val->v.application->name);
+	} else {
+	    buf[0] = stralloc("");
+	}
+	break;
+    }
+
+    case CONFTYPE_EXECUTE_ON:
+	buf[0] = stralloc("");
+	if (val->v.i != 0) {
+	    char *sep = "";
+	    if (val->v.i & EXECUTE_ON_PRE_DLE_AMCHECK) {
+		buf[0] = vstrextend(&buf[0], sep, "PRE-DLE-AMCHECK", NULL);
+		sep = ", ";
+	    }
+	    if (val->v.i & EXECUTE_ON_PRE_HOST_AMCHECK) {
+		buf[0] = vstrextend(&buf[0], sep, "PRE-HOST-AMCHECK", NULL);
+		sep = ", ";
+	    }
+	    if (val->v.i & EXECUTE_ON_POST_DLE_AMCHECK) {
+		buf[0] = vstrextend(&buf[0], sep, "POST-DLE-AMCHECK", NULL);
+		sep = ", ";
+	    }
+	    if (val->v.i & EXECUTE_ON_POST_HOST_AMCHECK) {
+		buf[0] = vstrextend(&buf[0], sep, "POST-HOST-AMCHECK", NULL);
+		sep = ", ";
+	    }
+	    if (val->v.i & EXECUTE_ON_PRE_DLE_ESTIMATE) {
+		buf[0] = vstrextend(&buf[0], sep, "PRE-DLE-ESTIMATE", NULL);
+		sep = ", ";
+	    }
+	    if (val->v.i & EXECUTE_ON_PRE_HOST_ESTIMATE) {
+		buf[0] = vstrextend(&buf[0], sep, "PRE-HOST-ESTIMATE", NULL);
+		sep = ", ";
+	    }
+	    if (val->v.i & EXECUTE_ON_POST_DLE_ESTIMATE) {
+		buf[0] = vstrextend(&buf[0], sep, "POST-DLE-ESTIMATE", NULL);
+		sep = ", ";
+	    }
+	    if (val->v.i & EXECUTE_ON_POST_HOST_ESTIMATE) {
+		buf[0] = vstrextend(&buf[0], sep, "POST-HOST-ESTIMATE", NULL);
+		sep = ", ";
+	    }
+	    if (val->v.i & EXECUTE_ON_PRE_DLE_BACKUP) {
+		buf[0] = vstrextend(&buf[0], sep, "PRE-DLE-BACKUP", NULL);
+		sep = ", ";
+	    }
+	    if (val->v.i & EXECUTE_ON_PRE_HOST_BACKUP) {
+		buf[0] = vstrextend(&buf[0], sep, "PRE-HOST-BACKUP", NULL);
+		sep = ", ";
+	    }
+	    if (val->v.i & EXECUTE_ON_POST_DLE_BACKUP) {
+		buf[0] = vstrextend(&buf[0], sep, "POST-DLE-BACKUP", NULL);
+		sep = ", ";
+	    }
+	    if (val->v.i & EXECUTE_ON_POST_HOST_BACKUP) {
+		buf[0] = vstrextend(&buf[0], sep, "POST-HOST-BACKUP", NULL);
+		sep = ", ";
+	    }
+	}
+        break;
+
     }
     return buf;
 }
+
+int
+val_t_to_execute_on(
+    val_t *val)
+{
+    if (val->type != CONFTYPE_EXECUTE_ON) {
+	error(_("get_conftype_execute_on: val.type is not CONFTYPE_EXECUTE_ON"));
+	/*NOTREACHED*/
+    }
+    return val_t__execute_on(val);
+}
+
+int
+val_t_to_execute_where(
+    val_t *val)
+{
+    if (val->type != CONFTYPE_EXECUTE_WHERE) {
+	error(_("get_conftype_execute_where: val.type is not CONFTYPE_EXECUTE_WHERE"));
+	/*NOTREACHED*/
+    }
+    return val->v.i;
+}
+
+pp_scriptlist_t
+val_t_to_pp_scriptlist(
+    val_t *val)
+{
+    if (val->type != CONFTYPE_PP_SCRIPTLIST) {
+	error(_("get_conftype_proplist: val.type is not CONFTYPE_PP_SCRIPTLIST"));
+	/*NOTREACHED*/
+    }
+    return val->v.pp_scriptlist;
+}
+
+
+application_t *
+val_t_to_application(
+    val_t *val)
+{
+    if (val->type != CONFTYPE_APPLICATION) {
+	error(_("get_conftype_applicaiton: val.type is not CONFTYPE_APPLICATION"));
+	/*NOTREACHED*/
+    }
+    return val->v.application;
+}
+
 
 static void
 proplist_display_str_foreach_fn(
@@ -4750,13 +5609,30 @@ proplist_display_str_foreach_fn(
     gpointer value_p,
     gpointer user_data_p)
 {
-    char *property_s = key_p;
-    char *value_s    = value_p;
-    char ***msg	     = (char ***)user_data_p;
+    char   *property_s = key_p;
+    GSList *value_s    = value_p;
+    GSList *value;
+    char ***msg      = (char ***)user_data_p;
 
-    **msg = vstralloc("\"", property_s, "\" \"", value_s, "\"", NULL);
+    **msg = vstralloc("\"", property_s, "\"", NULL);
+    for(value=value_s; value != NULL; value = value->next) {
+	**msg = vstrextend(*msg, " \"", value->data, "\"", NULL);
+    }
     (*msg)++;
 }
+
+static void
+pp_scriptlist_display_str_foreach_fn(
+    gpointer data_p,
+    gpointer user_data_p)
+{
+    pp_script_t *pp_script = data_p;
+    char ***msg      = (char ***)user_data_p;
+
+    **msg = vstralloc("\"", pp_script->name, "\"", NULL);
+    (*msg)++;
+};
+
 
 static char *
 exinclude_display_str(
@@ -4837,6 +5713,8 @@ parm_key_info(
     dumptype_t *dp;
     interface_t *ip;
     holdingdisk_t *hp;
+    application_t *ap;
+    pp_script_t   *pp;
     int success = FALSE;
 
     /* WARNING: assumes globals keytable and parsetable are set correctly. */
@@ -4922,6 +5800,30 @@ parm_key_info(
 	    if (np->token == CONF_UNKNOWN) goto out;
 
 	    if (val) *val = &ip->value[np->parm];
+	    if (parm) *parm = np;
+	    success = TRUE;
+	} else if (strcmp(subsec_type, "APPLICATION-TOOL") == 0) {
+	    ap = lookup_application(subsec_name);
+	    if (!ap) goto out;
+	    for(np = application_var; np->token != CONF_UNKNOWN; np++) {
+		if(np->token == kt->token)
+		   break;
+	    }
+	    if (np->token == CONF_UNKNOWN) goto out;
+
+	    if (val) *val = &ap->value[np->parm];
+	    if (parm) *parm = np;
+	    success = TRUE;
+	} else if (strcmp(subsec_type, "SCRIPT-TOOL") == 0) {
+	    pp = lookup_pp_script(subsec_name);
+	    if (!pp) goto out;
+	    for(np = pp_script_var; np->token != CONF_UNKNOWN; np++) {
+		if(np->token == kt->token)
+		   break;
+	    }
+	    if (np->token == CONF_UNKNOWN) goto out;
+
+	    if (val) *val = &pp->value[np->parm];
 	    if (parm) *parm = np;
 	    success = TRUE;
 	} 

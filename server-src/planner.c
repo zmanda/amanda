@@ -24,7 +24,7 @@
  * file named AUTHORS, in the root directory of this distribution.
  */
 /*
- * $Id: planner.c,v 1.206 2006/08/10 23:57:27 paddy_s Exp $
+ * $Id: planner.c 10421 2008-03-06 18:48:30Z martineau $
  *
  * backup schedule planner for the Amanda backup system.
  */
@@ -44,6 +44,7 @@
 #include "server_util.h"
 #include "holding.h"
 #include "timestamp.h"
+#include "amxml.h"
 
 #define planner_debug(i,x) do {		\
 	if ((i) <= debug_planner) {	\
@@ -95,6 +96,7 @@ typedef struct est_s {
     int next_level0;
     int level_days;
     int promote;
+    int post_dle;
     double fullrate, incrrate;
     double fullcomp, incrcomp;
     char *errstr;
@@ -700,6 +702,7 @@ setup_estimate(
     ep->dump_priority = dp->priority;
     ep->errstr = 0;
     ep->promote = 0;
+    ep->post_dle = 0;
 
     /* calculated fields */
 
@@ -1177,7 +1180,7 @@ static void handle_result(void *datap, pkt_t *pkt, security_handle_t *sech);
 static void get_estimates(void)
 {
     am_host_t *hostp;
-    disk_t *dp;
+    disk_t *dp, *dp1;
     int something_started;
 
     something_started = 1;
@@ -1187,6 +1190,14 @@ static void get_estimates(void)
 	    hostp = dp->host;
 	    if(hostp->up == HOST_READY) {
 		something_started = 1;
+		for(dp1 = hostp->disks; dp1 != NULL; dp1 = dp1->hostnext) {
+		    run_server_scripts(EXECUTE_ON_PRE_HOST_ESTIMATE,
+				       get_config_name(), dp1);
+		}
+		for(dp1 = hostp->disks; dp1 != NULL; dp1 = dp1->hostnext) {
+		    run_server_scripts(EXECUTE_ON_PRE_DLE_ESTIMATE,
+				       get_config_name(), dp1);
+		}
 		getsize(hostp);
 		protocol_check();
 		/*
@@ -1273,10 +1284,10 @@ static void getsize(
     time_t	estimates, timeout;
     size_t	req_len;
     const	security_driver_t *secdrv;
-    char *	backup_api;
+    char *	application_api;
     char *	calcsize;
-    char *	qname;
-    char *	qdevice;
+    char *	qname, *b64disk = NULL;
+    char *	qdevice, *b64device = NULL;
 
     assert(hostp->disks != NULL);
 
@@ -1339,102 +1350,170 @@ static void getsize(
 	    }
 
 	    qname = quote_string(dp->name);
+	    b64disk = amxml_format_tag("disk", dp->name);
 	    qdevice = quote_string(dp->device);
+	    if (dp->device)
+		b64device = amxml_format_tag("diskdevice", dp->device);
 	    if(dp->estimate == ES_CLIENT ||
 	       dp->estimate == ES_CALCSIZE) {
 		nb_client++;
 
-		for(i = 0; i < MAX_LEVELS; i++) {
-		    char *l;
-		    char *exclude1 = "";
-		    char *exclude2 = "";
-		    char *excludefree = NULL;
-		    char *include1 = "";
-		    char *include2 = "";
-		    char *includefree = NULL;
-		    char spindle[NUM_STR_SIZE];
+		if (am_has_feature(hostp->features, fe_req_xml)) {
+		    char *levelstr = NULL;
+		    char *spindlestr = NULL;
 		    char level[NUM_STR_SIZE];
-		    int lev = est(dp)->level[i];
+		    char spindle[NUM_STR_SIZE];
+		    char *o;
+		    char *l;
 
-		    if(lev == -1) break;
-
-		    g_snprintf(level, SIZEOF(level), "%d", lev);
+		    for(i = 0; i < MAX_LEVELS; i++) {
+			int lev = est(dp)->level[i];
+			if (lev == -1) break;
+			g_snprintf(level, SIZEOF(level), "%d", lev);
+			vstrextend(&levelstr, "  <level>",
+				   level,
+				   "</level>\n", NULL);
+		    }
 		    g_snprintf(spindle, SIZEOF(spindle), "%d", dp->spindle);
-		    if(am_has_feature(hostp->features,fe_sendsize_req_options)){
-			exclude1 = " OPTIONS |";
-			exclude2 = optionstr(dp, hostp->features, NULL);
-			if ( exclude2 == NULL ) {
-			  error(_("problem with option string, check the dumptype definition.\n"));
-			}
-			excludefree = exclude2;
-			includefree = NULL;
+		    spindlestr = vstralloc("  <spindle>",
+					   spindle,
+					   "</spindle>\n", NULL);
+		    o = xml_optionstr(dp, hostp->features, NULL);
+		    if (o == NULL) {
+			error(_("problem with option string, check the dumptype definition.\n"));
 		    }
-		    else {
-			if(dp->exclude_file &&
-			   dp->exclude_file->nb_element == 1) {
-			    exclude1 = " exclude-file=";
-			    exclude2 =
-				quote_string(dp->exclude_file->first->name);
-			    excludefree = exclude2;
-			}
-			else if(dp->exclude_list &&
-				dp->exclude_list->nb_element == 1) {
-			    exclude1 = " exclude-list=";
-			    exclude2 =
-				quote_string(dp->exclude_list->first->name);
-			    excludefree = exclude2;
-			}
-			if(dp->include_file &&
-			   dp->include_file->nb_element == 1) {
-			    include1 = " include-file=";
-			    include2 =
-				quote_string(dp->include_file->first->name);
-			    includefree = include2;
-			}
-			else if(dp->include_list &&
-				dp->include_list->nb_element == 1) {
-			    include1 = " include-list=";
-			    include2 =
-				quote_string(dp->include_list->first->name);
-			    includefree = include2;
-			}
-		    }
-
-		    if(dp->estimate == ES_CALCSIZE &&
-		       !am_has_feature(hostp->features, fe_calcsize_estimate)) {
-			log_add(L_WARNING,_("%s:%s does not support CALCSIZE for estimate, using CLIENT.\n"),
-				hostp->hostname, qname);
-			dp->estimate = ES_CLIENT;
-		    }
-		    if(dp->estimate == ES_CLIENT)
-			calcsize = "";
-		    else
-			calcsize = "CALCSIZE ";
-
-		    if(strcmp(dp->program,"DUMP") == 0 || 
-		       strcmp(dp->program,"GNUTAR") == 0) {
-			backup_api = "";
+		    
+		    if (strcmp(dp->program,"DUMP") == 0 ||
+			strcmp(dp->program,"GNUTAR") == 0) {
+			l = vstralloc("<dle>\n",
+				      "  <program>",
+				      dp->program,
+				      "</program>\n", NULL);
 		    } else {
-			backup_api = "BACKUP ";
+			l = vstralloc("<dle>\n",
+				      "  <program>APPLICATION</program>\n",
+				      NULL);
+			if (dp->application) {
+			    char *xml_app = xml_application(dp->application);
+			    vstrextend(&l, xml_app, NULL);
+			    amfree(xml_app);
+			}
 		    }
-		    l = vstralloc(calcsize,
-				  backup_api,
-				  dp->program,
-				  " ", qname,
-				  " ", dp->device ? qdevice : "",
-				  " ", level,
-				  " ", est(dp)->dumpdate[i],
-				  " ", spindle,
-				  " ", exclude1, exclude2,
-				  ((includefree != NULL) ? " " : ""),
-				    include1, include2,
-				  "\n",
-				  NULL);
+
+		    if (dp->estimate == ES_CALCSIZE) {
+			if (!am_has_feature(hostp->features,
+					    fe_calcsize_estimate)) {
+			    log_add(L_WARNING,
+				    _("%s:%s does not support CALCSIZE for estimate, using CLIENT.\n"),
+				    hostp->hostname, qname);
+			    dp->estimate = ES_CLIENT;
+			} else {
+			    vstrextend(&l, "  <calcsize>YES</calcsize>\n",
+				       NULL);
+			}
+		    }
+		    vstrextend(&l, "  ", b64disk, "\n", NULL);
+		    if (dp->device)
+			vstrextend(&l, "  ", b64device, "\n", NULL);
+		    vstrextend(&l, levelstr, spindlestr, o, "</dle>\n", NULL);
 		    strappend(s, l);
 		    s_len += strlen(l);
 		    amfree(l);
-		    amfree(includefree);
-		    amfree(excludefree);
+		} else {
+		    for(i = 0; i < MAX_LEVELS; i++) {
+			char *l;
+			char *exclude1 = "";
+			char *exclude2 = "";
+			char *excludefree = NULL;
+			char *include1 = "";
+			char *include2 = "";
+			char *includefree = NULL;
+			char spindle[NUM_STR_SIZE];
+			char level[NUM_STR_SIZE];
+			int lev = est(dp)->level[i];
+
+			if(lev == -1) break;
+
+			g_snprintf(level, SIZEOF(level), "%d", lev);
+			g_snprintf(spindle, SIZEOF(spindle), "%d", dp->spindle);
+			if (am_has_feature(hostp->features,
+					   fe_sendsize_req_options)){
+			    exclude1 = " OPTIONS |";
+			    exclude2 = optionstr(dp, hostp->features, NULL);
+			    if ( exclude2 == NULL ) {
+				error(_("problem with option string, check the dumptype definition.\n"));
+			    }
+			    excludefree = exclude2;
+			    includefree = NULL;
+			} else {
+			    if (dp->exclude_file &&
+				dp->exclude_file->nb_element == 1) {
+				exclude1 = " exclude-file=";
+				exclude2 = quote_string(
+						dp->exclude_file->first->name);
+				excludefree = exclude2;
+			    }
+			    else if (dp->exclude_list &&
+				     dp->exclude_list->nb_element == 1) {
+				exclude1 = " exclude-list=";
+				exclude2 = quote_string(
+						dp->exclude_list->first->name);
+				excludefree = exclude2;
+			    }
+			    if (dp->include_file &&
+				dp->include_file->nb_element == 1) {
+				include1 = " include-file=";
+				include2 = quote_string(
+						dp->include_file->first->name);
+				includefree = include2;
+			    }
+			    else if (dp->include_list &&
+				     dp->include_list->nb_element == 1) {
+				include1 = " include-list=";
+				include2 = quote_string(
+						dp->include_list->first->name);
+				includefree = include2;
+			    }
+			}
+
+			if (dp->estimate == ES_CALCSIZE &&
+		   	    !am_has_feature(hostp->features,
+					    fe_calcsize_estimate)) {
+			    log_add(L_WARNING,
+				    _("%s:%s does not support CALCSIZE for estimate, using CLIENT.\n"),
+				    hostp->hostname, qname);
+			    dp->estimate = ES_CLIENT;
+			}
+			if(dp->estimate == ES_CLIENT)
+			    calcsize = "";
+			else
+			    calcsize = "CALCSIZE ";
+
+			if (strcmp(dp->program,"DUMP") == 0 || 
+			    strcmp(dp->program,"GNUTAR") == 0) {
+			    application_api = "";
+			} else {
+			    application_api = "BACKUP ";
+			}
+			l = vstralloc(calcsize,
+				      application_api,
+				      dp->program,
+				      " ", qname,
+				      " ", dp->device ? qdevice : "",
+				      " ", level,
+				      " ", est(dp)->dumpdate[i],
+				      " ", spindle,
+				      " ", exclude1, exclude2,
+				      ((includefree != NULL) ? " " : ""),
+				        include1, include2,
+				      "\n",
+				      NULL);
+			strappend(s, l);
+			s_len += strlen(l);
+			amfree(l);
+			amfree(includefree);
+			amfree(excludefree);
+		    }
 		}
 		if (s != NULL) {
 		    estimates += i;
@@ -1444,8 +1523,7 @@ static void getsize(
 		}
 		est(dp)->state = DISK_ACTIVE;
 		remove_disk(&startq, dp);
-	    }
-	    else if (dp->estimate == ES_SERVER) {
+	    } else if (dp->estimate == ES_SERVER) {
 		info_t info;
 		nb_server++;
 		get_info(dp->host->hostname, dp->name, &info);
@@ -1875,9 +1953,29 @@ static void handle_result(
 		    }
 		}
 	    }
+	    hostp->up = HOST_DONE;
+	}
+	if (est(dp)->post_dle == 0 &&
+	    (pkt->type == P_REP ||
+	     ((est(dp)->level[0] == -1 || est(dp)->est_size[0] > (off_t)0) &&
+	      (est(dp)->level[1] == -1 || est(dp)->est_size[1] > (off_t)0) &&
+	      (est(dp)->level[2] == -1 || est(dp)->est_size[2] > (off_t)0)))) {
+	    run_server_scripts(EXECUTE_ON_POST_DLE_ESTIMATE,
+			       get_config_name(), dp);
+	    est(dp)->post_dle = 1;
 	}
 	amfree(qname);
     }
+
+    if(hostp->up == HOST_DONE) {
+	for(dp = hostp->disks; dp != NULL; dp = dp->hostnext) {
+	    if (pkt->type == P_REP) {
+		run_server_scripts(EXECUTE_ON_POST_HOST_ESTIMATE,
+				   get_config_name(), dp);
+	    }
+	}
+    }
+
     getsize(hostp);
     /* try to clean up any defunct processes, since Amanda doesn't wait() for
        them explicitly */

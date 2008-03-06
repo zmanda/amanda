@@ -50,6 +50,7 @@
 #include "device.h"
 #include "property.h"
 #include "timestamp.h"
+#include "amxml.h"
 
 #define BUFFER_SIZE	32768
 
@@ -445,7 +446,7 @@ main(
 	    error("nullfd: /dev/null: %s", strerror(errno));
 	    /*NOTREACHED*/
 	}
-	pipespawn(MAILER, STDIN_PIPE | STDERR_PIPE,
+	pipespawn(MAILER, STDIN_PIPE | STDERR_PIPE, 0,
 			    &mailfd, &nullfd, &errfd,
 			    MAILER,
 			    "-s", subject,
@@ -1556,19 +1557,25 @@ start_host(
 	    size_t l_len;
 	    char *o;
 	    char *calcsize;
-	    char *qname;
-	    char *qdevice;
+	    char *qname, *b64disk;
+	    char *qdevice, *b64device = NULL;
 
 	    if(dp->up != DISK_READY || dp->todo != 1) {
 		continue;
 	    }
-	    o = optionstr(dp, hostp->features, outf);
+	    if (am_has_feature(hostp->features, fe_req_xml))
+		o = xml_optionstr(dp, hostp->features, outf);
+	    else
+		o = optionstr(dp, hostp->features, outf);
 	    if (o == NULL) {
 	        remote_errors++;
 		continue;
 	    }
-	    qname = quote_string(dp->name); 
+	    qname = quote_string(dp->name);
+	    b64disk = amxml_format_tag("disk", dp->name);
 	    qdevice = quote_string(dp->device); 
+	    if (dp->device)
+		b64device = amxml_format_tag("diskdevice", dp->device);
 	    if ((dp->name && qname[0] == '"') || 
 		(dp->device && qdevice[0] == '"')) {
 		if(!am_has_feature(hostp->features, fe_interface_quoted_text)) {
@@ -1607,8 +1614,9 @@ start_host(
 				    " or don't specify a diskdevice in the disklist.\n"));	
 		}
 	    }
-	    if(strcmp(dp->program,"DUMP") == 0 || 
-	       strcmp(dp->program,"GNUTAR") == 0) {
+	    if (dp->program &&
+	        (strcmp(dp->program,"DUMP") == 0 || 
+	         strcmp(dp->program,"GNUTAR") == 0)) {
 		if(strcmp(dp->program, "DUMP") == 0 &&
 		   !am_has_feature(hostp->features, fe_program_dump)) {
 		    g_fprintf(outf, _("ERROR: %s:%s does not support DUMP.\n"),
@@ -1665,52 +1673,85 @@ start_host(
 		    remote_errors++;
 		  } 
 		}
-		if(dp->device) {
-		    l = vstralloc(calcsize,
-				  dp->program, " ",
-				  qname, " ",
-				  qdevice,
-				  " 0 OPTIONS |",
-				  o,
-				  "\n",
-				  NULL);
-		}
-		else {
-		    l = vstralloc(calcsize,
-				  dp->program, " ",
-				  qname,
-				  " 0 OPTIONS |",
-				  o,
-				  "\n",
-				  NULL);
+		if (am_has_feature(hostp->features, fe_req_xml)) {
+		    l = vstralloc("<dle>\n"
+				  "  <program>",
+				  dp->program,
+				  "</program>\n", NULL);
+                    if (strlen(calcsize) > 0)
+			vstrextend(&l, "  <calcsize>YES</calcsize>\n", NULL);
+		    vstrextend(&l, "  ", b64disk, "\n", NULL);
+		    if (dp->device)
+			vstrextend(&l, "  ", b64device, "\n", NULL);
+		    vstrextend(&l, o, "</dle>\n", NULL);
+		} else {
+		    if (dp->device) {
+			l = vstralloc(calcsize,
+				      dp->program, " ",
+				      qname, " ",
+				      qdevice,
+				      " 0 OPTIONS |",
+				      o,
+				      "\n",
+				      NULL);
+		    } else {
+			l = vstralloc(calcsize,
+				      dp->program, " ",
+				      qname,
+				      " 0 OPTIONS |",
+				      o,
+				      "\n",
+				      NULL);
+		    }
 		}
 	    } else {
-		if(!am_has_feature(hostp->features, fe_program_backup_api)) {
-		    g_fprintf(outf, _("ERROR: %s:%s does not support BACKUP-API.\n"),
+		if (!am_has_feature(hostp->features, fe_program_application_api)) {
+		    g_fprintf(outf, _("ERROR: %s:%s does not support APPLICATION-API.\n"),
 			    hostp->hostname, qname);
 		    g_fprintf(outf, _("Dumptype configuration is not GNUTAR or DUMP."
 				    " It is case sensitive\n"));
 		}
-		if(dp->device) {
-		    l = vstralloc("BACKUP ",
-			          dp->program, 
-			          " ",
-			          qname,
-			          " ",
-			          qdevice,
-			          " 0 OPTIONS |",
-			          o,
-			          "\n",
-			          NULL);
+		if (am_has_feature(hostp->features, fe_req_xml)) {
+		    l = vstralloc("<dle>\n"
+				  "  <program>APPLICATION</program>\n", NULL);
+		    if (dp->application) {
+			char *xml_app = xml_application(dp->application);
+			vstrextend(&l, xml_app, NULL);
+			amfree(xml_app);
+		    }
+		    if (dp->pp_scriptlist) {
+			if (!am_has_feature(hostp->features, fe_pp_script)) {
+			    g_fprintf(outf,
+			      _("ERROR: %s:%s does not support SCRIPT-API.\n"),
+			      hostp->hostname, qname);
+			}
+		    }
+		    vstrextend(&l, "  ", b64disk, "\n", NULL);
+		    if (dp->device)
+			vstrextend(&l, "  ", b64device, "\n", NULL);
+		    vstrextend(&l, o, "</dle>\n", NULL);
 		} else {
-		    l = vstralloc("BACKUP ",
-			          dp->program, 
-			          " ",
-			          qname,
-			          " 0 OPTIONS |",
-			          o,
-			          "\n",
-			          NULL);
+		    if (dp->device) {
+			l = vstralloc("APPLICATION ",
+				      dp->program, 
+				      " ",
+				      qname,
+				      " ",
+				      qdevice,
+				      " 0 OPTIONS |",
+				      o,
+				      "\n",
+				      NULL);
+		    } else {
+			l = vstralloc("APPLICATION ",
+				      dp->program, 
+				      " ",
+				      qname,
+				      " 0 OPTIONS |",
+				      o,
+				      "\n",
+				      NULL);
+		    }
 		}
 	    }
 	    amfree(qname);
@@ -1764,7 +1805,7 @@ start_client_checks(
     int		fd)
 {
     am_host_t *hostp;
-    disk_t *dp;
+    disk_t *dp, *dp1;
     int hostcount;
     pid_t pid;
     int userbad = 0;
@@ -1804,6 +1845,14 @@ start_client_checks(
     for(dp = origq.head; dp != NULL; dp = dp->next) {
 	hostp = dp->host;
 	if(hostp->up == HOST_READY && dp->todo == 1) {
+	    for(dp1 = hostp->disks; dp1 != NULL; dp1 = dp1->hostnext) {
+		run_server_scripts(EXECUTE_ON_PRE_HOST_AMCHECK,
+				   get_config_name(), dp1);
+	    }
+	    for(dp1 = hostp->disks; dp1 != NULL; dp1 = dp1->hostnext) {
+		run_server_scripts(EXECUTE_ON_PRE_DLE_AMCHECK,
+				   get_config_name(), dp1);
+	    }
 	    start_host(hostp);
 	    hostcount++;
 	    protocol_check();
@@ -1926,8 +1975,17 @@ handle_result(
 	}
     }
     start_host(hostp);
-    if(hostp->up == HOST_DONE)
+    if(hostp->up == HOST_DONE) {
 	security_close_connection(sech, hostp->hostname);
+	for(dp = hostp->disks; dp != NULL; dp = dp->hostnext) {
+	    run_server_scripts(EXECUTE_ON_POST_DLE_AMCHECK,
+			       get_config_name(), dp);
+	}
+	for(dp = hostp->disks; dp != NULL; dp = dp->hostnext) {
+	    run_server_scripts(EXECUTE_ON_POST_HOST_AMCHECK,
+			       get_config_name(), dp);
+	}
+    }
     /* try to clean up any defunct processes, since Amanda doesn't wait() for
        them explicitly */
     while(waitpid(-1, NULL, WNOHANG)> 0);

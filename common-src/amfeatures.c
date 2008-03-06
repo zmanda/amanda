@@ -72,7 +72,7 @@ am_init_feature_set(void)
 
 	am_add_feature(f, fe_program_dump);
 	am_add_feature(f, fe_program_gnutar);
-	am_add_feature(f, fe_program_backup_api);
+	am_add_feature(f, fe_program_application_api);
 
 	am_add_feature(f, fe_options_compress_fast);
 	am_add_feature(f, fe_options_compress_best);
@@ -147,6 +147,8 @@ am_init_feature_set(void)
 	am_add_feature(f, fe_req_options_config);
 
 	am_add_feature(f, fe_rep_sendsize_quoted_error);
+	am_add_feature(f, fe_req_xml);
+	am_add_feature(f, fe_pp_script);
     }
     return f;
 }

@@ -54,7 +54,7 @@ An in-memory representation of an Amanda header, with keys
 =item C<name> -- hostname or label;
 =item C<disk>;
 =item C<program>;
-=item C<dumper>;
+=item C<application>;
 =item C<srvcompprog>;
 =item C<clntcompprog>;
 =item C<srv_encrypt>;
@@ -120,7 +120,7 @@ typedef struct {
     string_t name;	/* hostname or label */
     string_t disk;
     string_t program;
-    string_t dumper;
+    string_t application;
     string_t srvcompprog;
     string_t clntcompprog;
     string_t srv_encrypt;

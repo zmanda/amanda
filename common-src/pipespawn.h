@@ -12,10 +12,10 @@ extern char skip_argument[1];
 #define STDERR_PIPE	(1 << 2)
 #define PASSWD_PIPE	(1 << 3)
 
-pid_t pipespawn(char *prog, int pipedef,
+pid_t pipespawn(char *prog, int pipedef, int need_root,
 		 int *stdinfd, int *stdoutfd, int *stderrfd,
 		 ...);
-pid_t pipespawnv(char *prog, int pipedef,
+pid_t pipespawnv(char *prog, int pipedef, int need_root,
 		  int *stdinfd, int *stdoutfd, int *stderrfd,
 		  char **my_argv);
 

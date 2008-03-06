@@ -53,7 +53,7 @@ typedef struct file_s {
     string_t name;	/* hostname or label */
     string_t disk;
     string_t program;
-    string_t dumper;
+    string_t application;
     string_t srvcompprog;
     string_t clntcompprog;
     string_t srv_encrypt;

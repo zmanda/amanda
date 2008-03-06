@@ -1701,15 +1701,44 @@ high (2), medium (1), low (0) or a number of your choice.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>program</emphasis> <emphasis remap='I'> string</emphasis></term>
+  <term><emphasis remap='B'>program</emphasis> [DUMP|GNUTAR|APPLICATION]</term>
   <listitem>
 <para>Default:
 <emphasis remap='I'>DUMP</emphasis>.
-The type of backup to perform. Valid values are
-<emphasis remap='B'>DUMP</emphasis>
-for the native operating system backup program, and
-<emphasis remap='B'>GNUTAR</emphasis>
-to use &gnutar; or to do PC backups using Samba.</para>
+The type of backup to perform. Valid values are:</para>
+  <!-- .RS -->
+    <variablelist remap='TP'>
+      <varlistentry>
+      <term><emphasis remap='B'>DUMP</emphasis></term>
+      <listitem>
+<para>The native operating system backup program.</para>
+      </listitem>
+      </varlistentry>
+      <varlistentry>
+      <term><emphasis remap='B'>GNUTAR</emphasis></term>
+      <listitem>
+<para>To use GNU-tar or to do PC backups using Samba.</para>
+      </listitem>
+      </varlistentry>
+      <varlistentry>
+      <term><emphasis remap='B'>APPLICATION</emphasis></term>
+      <listitem>
+<para>To use an application-tool, see the <emphasis>application</emphasis> option.</para>
+      </listitem>
+      </varlistentry>
+    </variablelist>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>application</emphasis> <emphasis remap='I'> string</emphasis></term>
+  <listitem>
+<para>No default. Must be the name of an application-tool if <emphasis>program</emphasis> is set to <emphasis remap='I'>APPLICATION</emphasis>. See APPLICATION SECTION below.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>script</emphasis> <emphasis remap='I'> string</emphasis></term>
+  <listitem>
+<para>No default. Must be the name of a script-tool. You can have many script. See SCRIPT SECTION below.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
@@ -2119,6 +2148,179 @@ name may be entered, which makes this
 inherit options from another
 <emphasis remap='B'>interface</emphasis>.
 At the moment, this is of little use.</para>
+</refsect1>
+
+<refsect1><title>APPLICATION SECTION</title>
+<para>The
+<emphasis remap='B'>amanda.conf</emphasis>
+file may define multiple types of application.
+The information is entered in a <emphasis remap='B'>application-tool</emphasis>
+section, which looks like this:</para>
+
+<programlisting>
+define application-tool <emphasis remap='I'>name</emphasis> {
+    <emphasis remap='I'>application-option</emphasis> <emphasis remap='I'>application-value</emphasis>
+    <literal>...</literal>
+}
+</programlisting>
+
+<para><emphasis remap='I'>name</emphasis>
+is the name of this type of application. It is referenced from the
+<emphasis remap='I'>dumptype</emphasis></para>
+
+<para>The application-tool options and values are:</para>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><emphasis remap='B'>comment</emphasis> <emphasis remap='I'>string</emphasis></term>
+  <listitem>
+<para>Default:
+<emphasis remap='I'>none</emphasis>.
+A comment string describing this application.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>plugin</emphasis> <emphasis remap='I'>string</emphasis></term>
+  <listitem>
+<para>No default. Must be set to the name of the program. This program must be in the <emphasis remap='I'>$libexecdir/amanda/application</emphasis> directory on the client.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>property</emphasis> <emphasis remap='I'>string</emphasis> <emphasis remap='I'>string</emphasis></term>
+  <listitem>
+<para>No default. You can set property for the application, each application have a different set of property.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1><title>SCRIPT SECTION</title>
+<para>The
+<emphasis remap='B'>amanda.conf</emphasis>
+file may define multiple types of script. 
+The information is entered in a <emphasis remap='B'>script-tool</emphasis>
+section, which looks like this:</para>
+
+<programlisting>
+define script-tool <emphasis remap='I'>name</emphasis> {
+    <emphasis remap='I'>script-option</emphasis> <emphasis remap='I'>script-value</emphasis>
+    <literal>...</literal>
+}
+</programlisting>
+
+<para><emphasis remap='I'>name</emphasis>
+is the name of this type of script. It is referenced from the
+<emphasis remap='I'>dumptype</emphasis></para>
+
+<para>The script-tool options and values are:</para>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><emphasis remap='B'>comment</emphasis> <emphasis remap='I'>string</emphasis></term>
+  <listitem>
+<para>Default:
+<emphasis remap='I'>none</emphasis>.
+A comment string describing this script.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>plugin</emphasis> <emphasis remap='I'>string</emphasis></term>
+  <listitem>
+<para>No default. Must be set to the name of the program. This program must be in the <emphasis remap='I'>$libdir/amanda/application</emphasis> directory on the client and/or server.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>execute_where</emphasis> [client|server]</term>
+  <listitem>
+<para>Default: <emphasis remap='I'>client</emphasis>. Where the script must be executed, on the client or server.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>execute_on</emphasis> <emphasis remap='I'>execute_on</emphasis>[,<emphasis remap='I'>execute_on</emphasis>]*</term>
+  <listitem>
+<para>No default. When the script must be executed, you can specify many of them:</para>
+    <!-- .RS -->
+    <variablelist remap='TP'>
+      <varlistentry>
+      <term><emphasis remap='B'>pre-dle-amcheck</emphasis></term>
+      <listitem>
+<para>Execute before the amcheck command for the dle.</para>
+      </listitem>
+      </varlistentry>
+      <varlistentry>
+      <term><emphasis remap='B'>pre-host-amcheck</emphasis></term>
+      <listitem>
+<para>Execute before the amcheck command for all dle for the client.</para>
+      </listitem>
+      </varlistentry>
+      <varlistentry>
+      <term><emphasis remap='B'>post-dle-amcheck</emphasis></term>
+      <listitem>
+<para>Execute after the amcheck command for the dle.</para>
+      </listitem>
+      </varlistentry>
+      <varlistentry>
+      <term><emphasis remap='B'>post-host-amcheck</emphasis></term>
+      <listitem>
+<para>Execute after the amcheck command for all dle for the client.</para>
+      </listitem>
+      </varlistentry>
+      <varlistentry>
+      <term><emphasis remap='B'>pre-dle-estimate</emphasis></term>
+      <listitem>
+<para>Execute before the estimate command for the dle.</para>
+      </listitem>
+      </varlistentry>
+      <varlistentry>
+      <term><emphasis remap='B'>pre-host-estimate</emphasis></term>
+      <listitem>
+<para>Execute before the estimate command for all dle for the client.</para>
+      </listitem>
+      </varlistentry>
+      <varlistentry>
+      <term><emphasis remap='B'>post-dle-estimate</emphasis></term>
+      <listitem>
+<para>Execute after the estimate command for the dle.</para>
+      </listitem>
+      </varlistentry>
+      <varlistentry>
+      <term><emphasis remap='B'>post-host-estimate</emphasis></term>
+      <listitem>
+<para>Execute after the estimate command for all dle for the client.</para>
+      </listitem>
+      </varlistentry>
+      <varlistentry>
+      <term><emphasis remap='B'>pre-dle-backup</emphasis></term>
+      <listitem>
+<para>Execute before the backup command for the dle.</para>
+      </listitem>
+      </varlistentry>
+      <varlistentry>
+      <term><emphasis remap='B'>pre-host-backup</emphasis></term>
+      <listitem>
+<para>Execute before the backup command for all dle for the client.</para>
+      </listitem>
+      </varlistentry>
+      <varlistentry>
+      <term><emphasis remap='B'>post-dle-backup</emphasis></term>
+      <listitem>
+<para>Execute after the backup command for the dle.</para>
+      </listitem>
+      </varlistentry>
+      <varlistentry>
+      <term><emphasis remap='B'>post-host-backup</emphasis></term>
+      <listitem>
+<para>Execute after the backup command for all dle for the client.</para>
+      </listitem>
+      </varlistentry>
+    </variablelist>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>property</emphasis> <emphasis remap='I'>string</emphasis> <emphasis remap='I'>string</emphasis></term>
+  <listitem>
+<para>No default. You can set property for the script, each script have a different set of property.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
 </refsect1>
 
 <refsect1><title>AUTHOR</title>

@@ -132,11 +132,8 @@ static char *amandates_file;
  */
 static void
 start_backup(
-    char *	host,
-    char *	disk,
-    char *	amdevice,
-    int		level,
-    char *	dumpdate,
+    dle_t      *dle,
+    char       *host,
     int		dataf,
     int		mesgf,
     int		indexf)
@@ -161,37 +158,35 @@ start_backup(
     ssize_t nb;
     char buf[32768];
 
-    (void)dumpdate;	/* Quiet unused parameter warning */
-
     error_pn = stralloc2(get_pname(), "-smbclient");
 
-    qdisk = quote_string(disk);
-    dbprintf(_("start: %s:%s lev %d\n"), host, qdisk, level);
+    qdisk = quote_string(dle->disk);
+    dbprintf(_("start: %s:%s lev %d\n"), host, qdisk, GPOINTER_TO_INT(dle->level->data));
 
     g_fprintf(stderr, _("%s: start [%s:%s level %d]\n"),
-	    get_pname(), host, qdisk, level);
+	    get_pname(), host, qdisk, GPOINTER_TO_INT(dle->level->data));
 
      /*  apply client-side encryption here */
-     if ( options->encrypt == ENCRYPT_CUST ) {
-         encpid = pipespawn(options->clnt_encrypt, STDIN_PIPE,
+     if ( dle->encrypt == ENCRYPT_CUST ) {
+         encpid = pipespawn(dle->clnt_encrypt, STDIN_PIPE, 0, 
 			&compout, &dataf, &mesgf, 
-			options->clnt_encrypt, encryptopt, NULL);
-         dbprintf(_("gnutar: pid %ld: %s\n"), (long)encpid, options->clnt_encrypt);
+			dle->clnt_encrypt, encryptopt, NULL);
+         dbprintf(_("gnutar: pid %ld: %s\n"), (long)encpid, dle->clnt_encrypt);
     } else {
        compout = dataf;
        encpid = -1;
     } 
      /*  now do the client-side compression */
-    if(options->compress == COMP_FAST || options->compress == COMP_BEST) {
+    if(dle->compress == COMP_FAST || dle->compress == COMP_BEST) {
           compopt = skip_argument;
 #if defined(COMPRESS_BEST_OPT) && defined(COMPRESS_FAST_OPT)
-	if(options->compress == COMP_BEST) {
+	if(dle->compress == COMP_BEST) {
 	    compopt = COMPRESS_BEST_OPT;
 	} else {
 	    compopt = COMPRESS_FAST_OPT;
 	}
 #endif
-	comppid = pipespawn(COMPRESS_PATH, STDIN_PIPE,
+	comppid = pipespawn(COMPRESS_PATH, STDIN_PIPE, 0,
 			    &dumpout, &compout, &mesgf,
 			    COMPRESS_PATH, compopt, NULL);
 	dbprintf(_("gnutar: pid %ld: %s"), (long)comppid, COMPRESS_PATH);
@@ -201,16 +196,16 @@ start_backup(
 	} else {
 	    dbprintf(_("pid %ld: %s\n"), (long)comppid, COMPRESS_PATH);
 	}
-     } else if (options->compress == COMP_CUST) {
+     } else if (dle->compress == COMP_CUST) {
         compopt = skip_argument;
-	comppid = pipespawn(options->clntcompprog, STDIN_PIPE,
+	comppid = pipespawn(dle->compprog, STDIN_PIPE, 0,
 			    &dumpout, &compout, &mesgf,
-			    options->clntcompprog, compopt, NULL);
+			    dle->compprog, compopt, NULL);
 	if(compopt != skip_argument) {
 	    dbprintf(_("pid %ld: %s %s\n"),
-		     (long)comppid, options->clntcompprog, compopt);
+		     (long)comppid, dle->compprog, compopt);
 	} else {
-	    dbprintf(_("pid %ld: %s\n"), (long)comppid, options->clntcompprog);
+	    dbprintf(_("pid %ld: %s\n"), (long)comppid, dle->compprog);
 	}
     } else {
 	dumpout = compout;
@@ -222,7 +217,7 @@ start_backup(
 	gnutar_list_dir = NULL;
 
 #ifdef SAMBA_CLIENT							/* { */
-    if (amdevice[0] == '/' && amdevice[1]=='/')
+    if (dle->device[0] == '/' && dle->device[1]=='/')
 	amfree(incrname);
     else
 #endif									/* } */
@@ -231,7 +226,7 @@ start_backup(
 	char number[NUM_STR_SIZE];
 	char *inputname = NULL;
 	int baselevel;
-	char *sdisk = sanitise_filename(disk);
+	char *sdisk = sanitise_filename(dle->disk);
 
 	basename = vstralloc(gnutar_list_dir,
 			     "/",
@@ -240,7 +235,7 @@ start_backup(
 			     NULL);
 	amfree(sdisk);
 
-	g_snprintf(number, SIZEOF(number), "%d", level);
+	g_snprintf(number, SIZEOF(number), "%d", GPOINTER_TO_INT(dle->level->data));
 	incrname = vstralloc(basename, "_", number, ".new", NULL);
 	unlink(incrname);
 
@@ -249,7 +244,7 @@ start_backup(
 	 * backward until one is found.  If none are found (which will also
 	 * be true for a level 0), arrange to read from /dev/null.
 	 */
-	baselevel = level;
+	baselevel = GPOINTER_TO_INT(dle->level->data);
 	infd = -1;
 	while (infd == -1) {
 	    if (--baselevel >= 0) {
@@ -308,11 +303,11 @@ start_backup(
 	if(baselevel >= 0) {
 	    fquoted = quote_string(inputname);
 	    dbprintf(_("doing level %d dump as listed-incremental from '%s' to '%s'\n"),
-		     level, fquoted, tquoted);
+		     GPOINTER_TO_INT(dle->level->data), fquoted, tquoted);
 	    amfree(fquoted);
 	} else {
 	    dbprintf(_("doing level %d dump as listed-incremental to '%s'\n"),
-		     level, tquoted);
+		     GPOINTER_TO_INT(dle->level->data), tquoted);
 	}
 	amfree(tquoted);
 	amfree(inputname);
@@ -327,10 +322,10 @@ start_backup(
 	/*NOTREACHED*/
     }
 
-    amdates = amandates_lookup(disk);
+    amdates = amandates_lookup(dle->disk);
 
     prev_dumptime = EPOCH;
-    for(l = 0; l < level; l++) {
+    for(l = 0; l < GPOINTER_TO_INT(dle->level->data); l++) {
 	if(amdates->dates[l] > prev_dumptime)
 	    prev_dumptime = amdates->dates[l];
     }
@@ -345,13 +340,13 @@ start_backup(
 		gmtm->tm_hour, gmtm->tm_min, gmtm->tm_sec);
 
     dbprintf(_("gnutar: doing level %d dump from date: %s\n"),
-	      level, dumptimestr);
+	      GPOINTER_TO_INT(dle->level->data), dumptimestr);
 
-    dirname = amname_to_dirname(amdevice);
+    dirname = amname_to_dirname(dle->device);
 
     cur_dumptime = time(0);
-    cur_level = level;
-    cur_disk = stralloc(disk);
+    cur_level = GPOINTER_TO_INT(dle->level->data);
+    cur_disk = stralloc(dle->disk);
 #ifdef GNUTAR
 #  define PROGRAM_GNUTAR GNUTAR
 #else
@@ -367,7 +362,7 @@ start_backup(
 
 #ifdef SAMBA_CLIENT							/* { */
     /* Use sambatar if the disk to back up is a PC disk */
-    if (amdevice[0] == '/' && amdevice[1]=='/') {
+    if (dle->device[0] == '/' && dle->device[1]=='/') {
 	char *sharename = NULL, *user_and_password = NULL, *domain = NULL;
 	char *share = NULL, *subdir = NULL;
 	char *pwtext = NULL;
@@ -377,7 +372,7 @@ start_backup(
 	size_t pwtext_len;
 	char *pw_fd_env;
 
-	parsesharename(amdevice, &share, &subdir);
+	parsesharename(dle->device, &share, &subdir);
 	if (!share) {
 	    amfree(share);
 	    amfree(subdir);
@@ -433,16 +428,16 @@ start_backup(
 	}
 
 	taropt = stralloc("-T");
-	if(options->exclude_file && options->exclude_file->nb_element == 1) {
+	if(dle->exclude_file && dle->exclude_file->nb_element == 1) {
 	    strappend(taropt, "X");
 	}
 #if SAMBA_VERSION >= 2
 	strappend(taropt, "q");
 #endif
 	strappend(taropt, "c");
-	if (level != 0) {
+	if (GPOINTER_TO_INT(dle->level->data) != 0) {
 	    strappend(taropt, "g");
-	} else if (!options->no_record) {
+	} else if (dle->record) {
 	    strappend(taropt, "a");
 	}
 
@@ -454,16 +449,16 @@ start_backup(
 
 	program->backup_name = program->restore_name = SAMBA_CLIENT;
 	cmd = stralloc(program->backup_name);
-	info_tapeheader();
+	info_tapeheader(dle);
 
-	start_index(options->createindex, dumpout, mesgf, indexf, indexcmd);
+	start_index(dle->create_index, dumpout, mesgf, indexf, indexcmd);
 
 	if (pwtext_len > 0) {
 	    pw_fd_env = "PASSWD_FD";
 	} else {
 	    pw_fd_env = "dummy_PASSWD_FD";
 	}
-	dumppid = pipespawn(cmd, STDIN_PIPE|PASSWD_PIPE,
+	dumppid = pipespawn(cmd, STDIN_PIPE|PASSWD_PIPE, 0,
 			    &dumpin, &dumpout, &mesgf,
 			    pw_fd_env, &passwdf,
 			    "smbclient",
@@ -480,7 +475,7 @@ start_backup(
 			    "-d0",
 			    taropt,
 			    "-",
-			    options->exclude_file && options->exclude_file->nb_element == 1 ? options->exclude_file->first->name : skip_argument,
+			    dle->exclude_file && dle->exclude_file->nb_element == 1 ? dle->exclude_file->first->name : skip_argument,
 			    NULL);
 	if(domain) {
 	    memset(domain, '\0', strlen(domain));
@@ -516,20 +511,20 @@ start_backup(
 	char *file_exclude = NULL;
 	char *file_include = NULL;
 
-	if(options->exclude_file) nb_exclude+=options->exclude_file->nb_element;
-	if(options->exclude_list) nb_exclude+=options->exclude_list->nb_element;
-	if(options->include_file) nb_include+=options->include_file->nb_element;
-	if(options->include_list) nb_include+=options->include_list->nb_element;
+	if (dle->exclude_file) nb_exclude+=dle->exclude_file->nb_element;
+	if (dle->exclude_list) nb_exclude+=dle->exclude_list->nb_element;
+	if (dle->include_file) nb_include+=dle->include_file->nb_element;
+	if (dle->include_list) nb_include+=dle->include_list->nb_element;
 
-	if(nb_exclude > 0) file_exclude = build_exclude(disk, amdevice, options, 0);
-	if(nb_include > 0) file_include = build_include(disk, amdevice, options, 0);
+	if (nb_exclude > 0) file_exclude = build_exclude(dle, 0);
+	if (nb_include > 0) file_include = build_include(dle, 0);
 
 	my_argv = alloc(SIZEOF(char *) * (22 + (nb_exclude*2)+(nb_include*2)));
 
 	cmd = vstralloc(amlibexecdir, "/", "runtar", versionsuffix(), NULL);
-	info_tapeheader();
+	info_tapeheader(dle);
 
-	start_index(options->createindex, dumpout, mesgf, indexf, indexcmd);
+	start_index(dle->create_index, dumpout, mesgf, indexf, indexcmd);
 
         my_argv[i++] = "runtar";
 	if (g_options->config)
@@ -581,7 +576,7 @@ start_backup(
 	    my_argv[i++] = ".";
 	}
 	my_argv[i++] = NULL;
-	dumppid = pipespawnv(cmd, STDIN_PIPE,
+	dumppid = pipespawnv(cmd, STDIN_PIPE, 0,
 			     &dumpin, &dumpout, &mesgf, my_argv);
 	tarpid = dumppid;
 	amfree(file_exclude);
@@ -603,15 +598,16 @@ start_backup(
     aclose(compout);
     aclose(dataf);
     aclose(mesgf);
-    if (options->createindex)
+    if (dle->create_index)
 	aclose(indexf);
 }
 
 static void
 end_backup(
+    dle_t      *dle,
     int		goterror)
 {
-    if(!options->no_record && !goterror) {
+    if(dle->record && !goterror) {
 	if (incrname != NULL && strlen(incrname) > 4) {
 	    char *nodotnew;
 	

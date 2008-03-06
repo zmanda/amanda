@@ -213,7 +213,7 @@ uncompress_file(
 
 	/* start the uncompress process */
 	putenv(stralloc("LC_ALL=C"));
-	pid_gzip = pipespawn(UNCOMPRESS_PATH, STDOUT_PIPE,
+	pid_gzip = pipespawn(UNCOMPRESS_PATH, STDOUT_PIPE, 0,
 			     &nullfd, &pipe_from_gzip, &debugfd,
 			     UNCOMPRESS_PATH, PARAM_UNCOMPRESS_OPT,
 			     filename_gz, NULL);
@@ -230,7 +230,7 @@ uncompress_file(
 
 	/* start the sort process */
 	putenv(stralloc("LC_ALL=C"));
-	pid_sort = pipespawn(SORT_PATH, STDIN_PIPE,
+	pid_sort = pipespawn(SORT_PATH, STDIN_PIPE, 0,
 			     &pipe_to_sort, &indexfd, &debugfd,
 			     SORT_PATH, NULL);
 	aclose(indexfd);

@@ -19,6 +19,7 @@ libamanda_la_SOURCES =		\
 	alloc.c			\
 	amfeatures.c		\
 	amflock.c		\
+	amxml.c			\
 	clock.c			\
 	columnar.c		\
 	conffile.c		\
@@ -94,6 +95,7 @@ libamanda_la_LDFLAGS =  -release $(VERSION)
 noinst_HEADERS =		\
 	amanda.h		\
 	amfeatures.h		\
+	amxml.h			\
 	arglist.h		\
 	clock.h			\
 	columnar.h		\

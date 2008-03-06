@@ -116,9 +116,9 @@ static amregex_t re_table[] = {
   AM_STRANGE_RE(NULL)
 };
 
-static void start_backup(char *host, char *disk, char *amdevice, int level,
-		char *dumpdate, int dataf, int mesgf, int indexf);
-static void end_backup(int status);
+static void start_backup(dle_t *dle, char *host,
+			 int dataf, int mesgf, int indexf);
+static void end_backup(dle_t *dle, int status);
 
 /*
  *  doing similar to $ dump | compression | encryption
@@ -126,11 +126,8 @@ static void end_backup(int status);
 
 static void
 start_backup(
-    char *	host,
-    char *	disk,
-    char *	amdevice,
-    int		level,
-    char *	dumpdate,
+    dle_t      *dle,
+    char       *host,
     int		dataf,
     int		mesgf,
     int		indexf)
@@ -148,23 +145,21 @@ start_backup(
     char *qdisk;
     char *config;
 
-    (void)dumpdate;	/* Quiet unused parameter warning */
+    g_snprintf(level_str, SIZEOF(level_str), "%d", GPOINTER_TO_INT(dle->level->data));
 
-    g_snprintf(level_str, SIZEOF(level_str), "%d", level);
-
-    qdisk = quote_string(disk);
-    dbprintf(_("start: %s:%s lev %d\n"), host, qdisk, level);
+    qdisk = quote_string(dle->disk);
+    dbprintf(_("start: %s:%s lev %d\n"), host, qdisk, GPOINTER_TO_INT(dle->level->data));
 
     g_fprintf(stderr, _("%s: start [%s:%s level %d]\n"),
-	    get_pname(), host, qdisk, level);
+	    get_pname(), host, qdisk, GPOINTER_TO_INT(dle->level->data));
     amfree(qdisk);
 
     /*  apply client-side encryption here */
-    if ( options->encrypt == ENCRYPT_CUST ) {
-        encpid = pipespawn(options->clnt_encrypt, STDIN_PIPE,
-                       &compout, &dataf, &mesgf,
-                       options->clnt_encrypt, encryptopt, NULL);
-        dbprintf(_("gnutar: pid %ld: %s\n"), (long)encpid, options->clnt_encrypt);
+    if (dle->encrypt == ENCRYPT_CUST ) {
+        encpid = pipespawn(dle->clnt_encrypt, STDIN_PIPE, 0,
+	                   &compout, &dataf, &mesgf,
+	                   dle->clnt_encrypt, encryptopt, NULL);
+        dbprintf(_("gnutar: pid %ld: %s\n"), (long)encpid, dle->clnt_encrypt);
     } else {
         compout = dataf;
         encpid = -1;
@@ -172,17 +167,17 @@ start_backup(
     /*  now do the client-side compression */
 
 
-    if(options->compress == COMP_FAST || options->compress == COMP_BEST) {
+    if(dle->compress == COMP_FAST || dle->compress == COMP_BEST) {
 	compopt = skip_argument;
 
 #if defined(COMPRESS_BEST_OPT) && defined(COMPRESS_FAST_OPT)
-	if(options->compress == COMP_BEST) {
+	if(dle->compress == COMP_BEST) {
 	    compopt = COMPRESS_BEST_OPT;
 	} else {
 	    compopt = COMPRESS_FAST_OPT;
 	}
 #endif
-	comppid = pipespawn(COMPRESS_PATH, STDIN_PIPE,
+	comppid = pipespawn(COMPRESS_PATH, STDIN_PIPE, 0,
 			    &dumpout, &compout, &mesgf,
 			    COMPRESS_PATH, compopt, NULL);
 	dbprintf(_("dump: pid %ld: %s"), (long)comppid, COMPRESS_PATH);
@@ -190,13 +185,13 @@ start_backup(
 	    dbprintf(" %s", compopt);
 	}
 	dbprintf("\n");
-     } else if (options->compress == COMP_CUST) {
+     } else if (dle->compress == COMP_CUST) {
         compopt = skip_argument;
-	comppid = pipespawn(options->clntcompprog, STDIN_PIPE,
+	comppid = pipespawn(dle->compprog, STDIN_PIPE, 0,
 			    &dumpout, &compout, &mesgf,
-			    options->clntcompprog, compopt, NULL);
+			    dle->compprog, compopt, NULL);
 	dbprintf(_("gnutar-cust: pid %ld: %s"),
-		(long)comppid, options->clntcompprog);
+		(long)comppid, dle->compprog);
 	if(compopt != skip_argument) {
 	    dbprintf(" %s", compopt);
 	}
@@ -207,8 +202,8 @@ start_backup(
     }
 
     /* invoke dump */
-    device = amname_to_devname(amdevice);
-    fstype = amname_to_fstype(amdevice);
+    device = amname_to_devname(dle->device);
+    fstype = amname_to_fstype(dle->device);
 
     dbprintf(_("dumping device '%s' with '%s'\n"), device, fstype);
 
@@ -229,7 +224,7 @@ start_backup(
     /* normal dump */
 #ifdef XFSDUMP						/* { */
 #ifdef DUMP						/* { */
-    if (strcmp(amname_to_fstype(amdevice), "xfs") == 0)
+    if (strcmp(amname_to_fstype(dle->device), "xfs") == 0)
 #else							/* } { */
     if (1)
 #endif							/* } */
@@ -253,16 +248,16 @@ start_backup(
 			     " | sed",
 			     " -e", " \'s/^/\\//\'",
 			     NULL);
-	info_tapeheader();
+	info_tapeheader(dle);
 
-	start_index(options->createindex, dumpout, mesgf, indexf, indexcmd);
+	start_index(dle->create_index, dumpout, mesgf, indexf, indexcmd);
 
 	dumpkeys = stralloc(level_str);
-	dumppid = pipespawn(progname, STDIN_PIPE,
+	dumppid = pipespawn(progname, STDIN_PIPE, 0,
 			    &dumpin, &dumpout, &mesgf,
 			    cmdX, config,
 			    "xfsdump",
-			    options->no_record ? "-J" : skip_argument,
+			    !dle->record ? "-J" : skip_argument,
 			    "-F",
 			    "-l", dumpkeys,
 			    "-",
@@ -273,7 +268,7 @@ start_backup(
 #endif							/* } */
 #ifdef VXDUMP						/* { */
 #ifdef DUMP
-    if (strcmp(amname_to_fstype(amdevice), "vxfs") == 0)
+    if (strcmp(amname_to_fstype(dle->device), "vxfs") == 0)
 #else
     if (1)
 #endif
@@ -295,7 +290,7 @@ start_backup(
 	program->restore_name = VXRESTORE;
 
 	dumpkeys = vstralloc(level_str,
-			     options->no_record ? "" : "u",
+			     !dle->record ? "" : "u",
 			     "s",
 			     "f",
 			     NULL);
@@ -306,11 +301,11 @@ start_backup(
 			     " | ",
 			     LEAF_AND_DIRS,
 			     NULL);
-	info_tapeheader();
+	info_tapeheader(dle);
 
-	start_index(options->createindex, dumpout, mesgf, indexf, indexcmd);
+	start_index(dle->create_index, dumpout, mesgf, indexf, indexcmd);
 
-	dumppid = pipespawn(progname, STDIN_PIPE,
+	dumppid = pipespawn(progname, STDIN_PIPE, 0,
 			    &dumpin, &dumpout, &mesgf, 
 			    cmdX, config,
 			    "vxdump",
@@ -325,7 +320,7 @@ start_backup(
 
 #ifdef VDUMP						/* { */
 #ifdef DUMP
-    if (strcmp(amname_to_fstype(amdevice), "advfs") == 0)
+    if (strcmp(amname_to_fstype(dle->device), "advfs") == 0)
 #else
     if (1)
 #endif
@@ -337,12 +332,12 @@ start_backup(
 	    config = g_options->config;
 	else
 	    config = "NOCONFIG";
-	device = newstralloc(device, amname_to_dirname(amdevice));
+	device = newstralloc(device, amname_to_dirname(dle->device));
 	program->backup_name  = VDUMP;
 	program->restore_name = VRESTORE;
 
 	dumpkeys = vstralloc(level_str,
-			     options->no_record ? "" : "u",
+			     !dle->record ? "" : "u",
 			     "b",
 			     "f",
 			     NULL);
@@ -353,11 +348,11 @@ start_backup(
 			     " | ",
 			     "sed -e \'\n/^\\./ {\ns/^\\.//\ns/, [0-9]*$//\ns/^\\.//\ns/ @-> .*$//\nt\n}\nd\n\'",
 			     NULL);
-	info_tapeheader();
+	info_tapeheader(dle);
 
-	start_index(options->createindex, dumpout, mesgf, indexf, indexcmd);
+	start_index(dle->create-index, dumpout, mesgf, indexf, indexcmd);
 
-	dumppid = pipespawn(cmd, STDIN_PIPE,
+	dumppid = pipespawn(cmd, STDIN_PIPE, 0,
 			    &dumpin, &dumpout, &mesgf, 
 			    cmdX, config,
 			    "vdump",
@@ -381,7 +376,7 @@ start_backup(
 #  define PARAM_HONOR_NODUMP ""
 #endif
 	dumpkeys = vstralloc(level_str,
-			     options->no_record ? "" : "u",
+			     !dle->record ? "" : "u",
 			     "s",
 			     PARAM_HONOR_NODUMP,
 			     "f",
@@ -394,11 +389,11 @@ start_backup(
 			     " | ",
 			     LEAF_AND_DIRS,
 			     NULL);
-	info_tapeheader();
+	info_tapeheader(dle);
 
-	start_index(options->createindex, dumpout, mesgf, indexf, indexcmd);
+	start_index(dle->create_index, dumpout, mesgf, indexf, indexcmd);
 
-	dumppid = pipespawn(cmd, STDIN_PIPE,
+	dumppid = pipespawn(cmd, STDIN_PIPE, 0,
 			    &dumpin, &dumpout, &mesgf, 
 			    cmdX, config,
 			    "dump",
@@ -415,7 +410,7 @@ start_backup(
     /* AIX backup program */
     dumpkeys = vstralloc("-",
 			 level_str,
-			 options->no_record ? "" : "u",
+			 !dle->record ? "" : "u",
 			 "f",
 			 NULL);
 
@@ -426,11 +421,11 @@ start_backup(
 			 " | ",
 			 LEAF_AND_DIRS,
 			 NULL);
-    info_tapeheader();
+    info_tapeheader(dle);
 
-    start_index(options->createindex, dumpout, mesgf, indexf, indexcmd);
+    start_index(dle->create_index, dumpout, mesgf, indexf, indexcmd);
 
-    dumppid = pipespawn(cmd, STDIN_PIPE,
+    dumppid = pipespawn(cmd, STDIN_PIPE, 0,
 			&dumpin, &dumpout, &mesgf, 
 			cmdX, config,
 			"backup",
@@ -453,14 +448,16 @@ start_backup(
     aclose(compout);
     aclose(dataf);
     aclose(mesgf);
-    if (options->createindex)
+    if (dle->create_index)
 	aclose(indexf);
 }
 
 static void
 end_backup(
+    dle_t      *dle,
     int		status)
 {
+    (void)dle;
     (void)status;	/* Quiet unused parameter warning */
 
     /* don't need to do anything for dump */

@@ -397,11 +397,11 @@ parse_file_header(
 	    continue;
 	}
 #undef SC
-#define SC "DUMPER="
+#define SC "APPLICATION="
 	if (strncmp(line, SC, SIZEOF(SC) - 1) == 0) {
 	    line += SIZEOF(SC) - 1;
-	    strncpy(file->dumper, line,
-		    SIZEOF(file->dumper) - 1);
+	    strncpy(file->application, line,
+		    SIZEOF(file->application) - 1);
 	    continue;
 	}
 #undef SC
@@ -485,7 +485,7 @@ dump_dumpfile_t(
 	dbprintf(_("    name             = '%s'\n"), file->name);
 	dbprintf(_("    disk             = '%s'\n"), file->disk);
 	dbprintf(_("    program          = '%s'\n"), file->program);
-	dbprintf(_("    dumper           = '%s'\n"), file->dumper);
+	dbprintf(_("    application      = '%s'\n"), file->application);
 	dbprintf(_("    srvcompprog      = '%s'\n"), file->srvcompprog);
 	dbprintf(_("    clntcompprog     = '%s'\n"), file->clntcompprog);
 	dbprintf(_("    srv_encrypt      = '%s'\n"), file->srv_encrypt);
@@ -632,8 +632,8 @@ build_header(const dumpfile_t * file, size_t size)
             g_string_append_printf(rval, "CONT_FILENAME=%s\n",
                                    file->cont_filename);
 	}
-	if (file->dumper[0] != '\0') {
-            g_string_append_printf(rval, "DUMPER=%s\n", file->dumper);
+	if (file->application[0] != '\0') {
+            g_string_append_printf(rval, "APPLICATION=%s\n", file->application);
 	}
 	if (file->is_partial != 0) {
             g_string_append_printf(rval, "PARTIAL=YES\n");

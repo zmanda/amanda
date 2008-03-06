@@ -132,6 +132,8 @@ sub add_param {
 =item C<add_dumptype($name, $values_arrayref)>
 =item C<addholdingdisk($name, $values_arrayref)>
 =item C<add_interface($name, $values_arrayref)>
+=item C<add_application($name, $values_arrayref)>
+=item C<add_script($name, $values_arrayref)>
 
 Add the given subsection to the configuration file, including all
 values in the arrayref.  The values should be specified as alternating
@@ -161,6 +163,18 @@ sub add_interface {
     my $self = shift;
     my ($name, $values_arrayref) = @_;
     $self->{'interfaces'}{$name} = $values_arrayref;
+}
+
+sub add_application {
+    my $self = shift;
+    my ($name, $values_arrayref) = @_;
+    $self->{'application-tool'}{$name} = $values_arrayref;
+}
+
+sub add_script {
+    my $self = shift;
+    my ($name, $values_arrayref) = @_;
+    $self->{'script-tool'}{$name} = $values_arrayref;
 }
 
 =item C<add_dle($line)>
@@ -249,6 +263,8 @@ sub _write_amanda_conf {
 
     # write out subsections
     $self->_write_amanda_conf_subsection($amanda_conf, "tapetype", $self->{"tapetypes"});
+    $self->_write_amanda_conf_subsection($amanda_conf, "application-tool", $self->{"application-tool"});
+    $self->_write_amanda_conf_subsection($amanda_conf, "script-tool", $self->{"script-tool"});
     $self->_write_amanda_conf_subsection($amanda_conf, "dumptype", $self->{"dumptypes"});
     $self->_write_amanda_conf_subsection($amanda_conf, "interface", $self->{"interfaces"});
     $self->_write_amanda_conf_subsection($amanda_conf, "holdingdisk", $self->{"holdingdisks"});

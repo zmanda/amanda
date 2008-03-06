@@ -43,6 +43,7 @@
 #include "conffile.h"
 #include "protocol.h"
 #include "event.h"
+#include "client_util.h"
 #include "security.h"
 
 typedef struct EXTRACT_LIST_ITEM {
@@ -1708,7 +1709,7 @@ enum dumptypes {
 	IS_TAR,
 	IS_SAMBA,
 	IS_SAMBA_TAR,
-	IS_BACKUP_API
+	IS_APPLICATION_API
 };
 
 static void
@@ -1807,7 +1808,7 @@ extract_files_child(
 	}
 #endif
     	break;
-    case IS_BACKUP_API:
+    case IS_APPLICATION_API:
 	extra_params = 5;
 	break;
     }
@@ -1872,8 +1873,8 @@ extract_files_child(
 	}
 #endif
 	break;
-    case IS_BACKUP_API:
-	restore_args[j++] = stralloc(file.dumper);
+    case IS_APPLICATION_API:
+	restore_args[j++] = stralloc(file.application);
 	restore_args[j++] = stralloc("restore");
 	restore_args[j++] = stralloc("--config");
 	restore_args[j++] = stralloc(get_config_name());
@@ -1968,8 +1969,8 @@ extract_files_child(
 	    cmd = stralloc("restore");
 	}
 	break;
-    case IS_BACKUP_API:
-	cmd = vstralloc(DUMPER_DIR, "/", file.dumper, NULL);
+    case IS_APPLICATION_API:
+	cmd = vstralloc(APPLICATION_DIR, "/", file.application, NULL);
 	break;
     }
     if (cmd) {

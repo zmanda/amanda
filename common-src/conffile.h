@@ -131,6 +131,23 @@ typedef enum {
     ALGO_ALGO /* sentinel */
 } taperalgo_t;
 
+/* execute_on types */
+#define EXECUTE_ON_PRE_DLE_AMCHECK     1<<0
+#define EXECUTE_ON_PRE_HOST_AMCHECK    1<<1
+#define EXECUTE_ON_POST_DLE_AMCHECK    1<<2
+#define EXECUTE_ON_POST_HOST_AMCHECK   1<<3
+#define EXECUTE_ON_PRE_DLE_ESTIMATE    1<<4
+#define EXECUTE_ON_PRE_HOST_ESTIMATE   1<<5
+#define EXECUTE_ON_POST_DLE_ESTIMATE   1<<6
+#define EXECUTE_ON_POST_HOST_ESTIMATE  1<<7
+#define EXECUTE_ON_PRE_DLE_BACKUP      1<<8
+#define EXECUTE_ON_PRE_HOST_BACKUP     1<<9
+#define EXECUTE_ON_POST_DLE_BACKUP     1<<10
+#define EXECUTE_ON_POST_HOST_BACKUP    1<<11
+typedef int execute_on_t;
+
+typedef int execute_where_t;
+
 typedef struct exinclude_s {
     sl_t *sl_list;
     sl_t *sl_file;
@@ -138,6 +155,7 @@ typedef struct exinclude_s {
 } exinclude_t;
 
 typedef GHashTable* proplist_t;
+typedef GSList* pp_scriptlist_t;
 
 /* Names for the type of value in a val_t.  Mostly for internal use, but useful
  * for wrapping val_t's, too. */
@@ -160,7 +178,11 @@ typedef enum {
     CONFTYPE_RATE,
     CONFTYPE_INTRANGE,
     CONFTYPE_EXINCLUDE,
-    CONFTYPE_PROPLIST
+    CONFTYPE_PROPLIST,
+    CONFTYPE_APPLICATION,
+    CONFTYPE_EXECUTE_ON,
+    CONFTYPE_EXECUTE_WHERE,
+    CONFTYPE_PP_SCRIPTLIST
 } conftype_t;
 
 /* This should be considered an opaque type for any other modules.  The complete
@@ -178,6 +200,8 @@ typedef struct val_s {
         exinclude_t	exinclude;
         int		intrange[2];
         proplist_t      proplist;
+	struct application_s  *application;
+	pp_scriptlist_t pp_scriptlist;
     } v;
     int seen;
     conftype_t type;
@@ -186,25 +210,29 @@ typedef struct val_s {
 /* Functions to typecheck and extract a particular type of
  * value from a val_t.  All call error() if the type is incorrect,
  * as this is a programming error.  */
-int                 val_t_to_int      (val_t *);
-off_t               val_t_to_am64     (val_t *);
-float               val_t_to_real     (val_t *);
-char               *val_t_to_str      (val_t *); /* (also converts CONFTYPE_IDENT) */
-char               *val_t_to_ident    (val_t *); /* (also converts CONFTYPE_STR) */
-time_t              val_t_to_time     (val_t *);
-ssize_t             val_t_to_size     (val_t *);
-int                 val_t_to_boolean  (val_t *);
-comp_t              val_t_to_compress (val_t *);
-encrypt_t           val_t_to_encrypt  (val_t *);
-dump_holdingdisk_t  val_t_to_holding  (val_t *);
-estimate_t          val_t_to_estimate (val_t *);
-strategy_t          val_t_to_strategy (val_t *);
-taperalgo_t         val_t_to_taperalgo(val_t *);
-int                 val_t_to_priority (val_t *);
-float              *val_t_to_rate     (val_t *); /* array of two floats */
-exinclude_t         val_t_to_exinclude(val_t *);
-int                *val_t_to_intrange (val_t *); /* array of two ints */
-proplist_t          val_t_to_proplist (val_t *);
+int                   val_t_to_int      (val_t *);
+off_t                 val_t_to_am64     (val_t *);
+float                 val_t_to_real     (val_t *);
+char                 *val_t_to_str      (val_t *); /* (also converts CONFTYPE_IDENT) */
+char                 *val_t_to_ident    (val_t *); /* (also converts CONFTYPE_STR) */
+time_t                val_t_to_time     (val_t *);
+ssize_t               val_t_to_size     (val_t *);
+int                   val_t_to_boolean  (val_t *);
+comp_t                val_t_to_compress (val_t *);
+encrypt_t             val_t_to_encrypt  (val_t *);
+dump_holdingdisk_t    val_t_to_holding  (val_t *);
+estimate_t            val_t_to_estimate (val_t *);
+strategy_t            val_t_to_strategy (val_t *);
+taperalgo_t           val_t_to_taperalgo(val_t *);
+int                   val_t_to_priority (val_t *);
+float                *val_t_to_rate     (val_t *); /* array of two floats */
+exinclude_t           val_t_to_exinclude(val_t *);
+int                  *val_t_to_intrange (val_t *); /* array of two ints */
+proplist_t            val_t_to_proplist (val_t *);
+struct application_s *val_t_to_application(val_t *);
+pp_scriptlist_t       val_t_to_pp_scriptlist(val_t *);
+execute_on_t          val_t_to_execute_on(val_t *);
+execute_where_t       val_t_to_execute_where(val_t *);
 
 /* Has the given val_t been seen in a configuration file or config overwrite?
  *
@@ -227,26 +255,30 @@ proplist_t          val_t_to_proplist (val_t *);
  * (in the macro name) to the corresponding union field.  The macros work
  * as lvalues, too.
  */
-#define val_t__seen(val)        ((val)->seen)
-#define val_t__int(val)         ((val)->v.i)
-#define val_t__am64(val)        ((val)->v.am64)
-#define val_t__real(val)        ((val)->v.r)
-#define val_t__str(val)         ((val)->v.s)
-#define val_t__ident(val)       ((val)->v.s)
-#define val_t__time(val)        ((val)->v.t)
-#define val_t__size(val)        ((val)->v.size)
-#define val_t__boolean(val)     ((val)->v.i)
-#define val_t__compress(val)    ((val)->v.i)
-#define val_t__encrypt(val)     ((val)->v.i)
-#define val_t__holding(val)     ((val)->v.i)
-#define val_t__estimate(val)    ((val)->v.i)
-#define val_t__strategy(val)    ((val)->v.i)
-#define val_t__taperalgo(val)   ((val)->v.i)
-#define val_t__priority(val)    ((val)->v.i)
-#define val_t__rate(val)        ((val)->v.rate)
-#define val_t__exinclude(val)   ((val)->v.exinclude)
-#define val_t__intrange(val)    ((val)->v.intrange)
-#define val_t__proplist(val)    ((val)->v.proplist)
+#define val_t__seen(val)          ((val)->seen)
+#define val_t__int(val)           ((val)->v.i)
+#define val_t__am64(val)          ((val)->v.am64)
+#define val_t__real(val)          ((val)->v.r)
+#define val_t__str(val)           ((val)->v.s)
+#define val_t__ident(val)         ((val)->v.s)
+#define val_t__time(val)          ((val)->v.t)
+#define val_t__size(val)          ((val)->v.size)
+#define val_t__boolean(val)       ((val)->v.i)
+#define val_t__compress(val)      ((val)->v.i)
+#define val_t__encrypt(val)       ((val)->v.i)
+#define val_t__holding(val)       ((val)->v.i)
+#define val_t__estimate(val)      ((val)->v.i)
+#define val_t__strategy(val)      ((val)->v.i)
+#define val_t__taperalgo(val)     ((val)->v.i)
+#define val_t__priority(val)      ((val)->v.i)
+#define val_t__rate(val)          ((val)->v.rate)
+#define val_t__exinclude(val)     ((val)->v.exinclude)
+#define val_t__intrange(val)      ((val)->v.intrange)
+#define val_t__proplist(val)      ((val)->v.proplist)
+#define val_t__pp_scriptlist(val) ((val)->v.pp_scriptlist)
+#define val_t__application(val)   ((val)->v.application)
+#define val_t__execute_on(val)    ((val)->v.i)
+#define val_t__execute_where(val) ((val)->v.i)
 /*
  * Parameters
  *
@@ -273,6 +305,13 @@ typedef enum {
     CNF_DUMPUSER,
     CNF_TAPEDEV,
     CNF_DEVICE_PROPERTY,
+    CNF_PROPERTY,
+    CNF_APPLICATION,
+    CNF_APPLICATION_TOOL,
+    CNF_EXECUTE_ON,
+    CNF_PP_SCRIPT,
+    CNF_PP_SCRIPT_TOOL,
+    CNF_PLUGIN,
     CNF_CHANGERDEV,
     CNF_CHANGERFILE,
     CNF_LABELSTR,
@@ -542,6 +581,8 @@ typedef enum {
     DUMPTYPE_KENCRYPT,
     DUMPTYPE_IGNORE,
     DUMPTYPE_INDEX,
+    DUMPTYPE_APPLICATION,
+    DUMPTYPE_PP_SCRIPTLIST,
     DUMPTYPE_DUMPTYPE /* sentinel */
 } dumptype_key;
 
@@ -625,6 +666,8 @@ char *dumptype_name(dumptype_t *dtyp);
 #define dumptype_get_kencrypt(dtyp)            (val_t_to_boolean(dumptype_getconf((dtyp), DUMPTYPE_KENCRYPT)))
 #define dumptype_get_ignore(dtyp)              (val_t_to_boolean(dumptype_getconf((dtyp), DUMPTYPE_IGNORE)))
 #define dumptype_get_index(dtyp)               (val_t_to_boolean(dumptype_getconf((dtyp), DUMPTYPE_INDEX)))
+#define dumptype_get_application(dtyp)          (val_t_to_application(dumptype_getconf((dtyp), DUMPTYPE_APPLICATION)))
+#define dumptype_get_pp_scriptlist(dtyp)        (val_t_to_pp_scriptlist(dumptype_getconf((dtyp), DUMPTYPE_PP_SCRIPTLIST)))
 
 /*
  * Interface parameter access
@@ -750,6 +793,122 @@ char *holdingdisk_name(holdingdisk_t *hdisk);
 #define holdingdisk_get_diskdir(hdisk)   (val_t_to_str(holdingdisk_getconf((hdisk), HOLDING_DISKDIR)))
 #define holdingdisk_get_disksize(hdisk)  (val_t_to_am64(holdingdisk_getconf((hdisk), HOLDING_DISKSIZE)))
 #define holdingdisk_get_chunksize(hdisk) (val_t_to_am64(holdingdisk_getconf((hdisk), HOLDING_CHUNKSIZE)))
+
+/* A application-tool interface */
+typedef enum application_e  {
+    APPLICATION_COMMENT,
+    APPLICATION_PLUGIN,
+    APPLICATION_PROPERTY,
+    APPLICATION_APPLICATION
+} application_key;
+
+/* opaque object */
+typedef struct application_s application_t;
+
+/* Given the name of the application, return a application object.  Returns NULL
+ * if no matching application exists.  Note that the match is case-insensitive.
+ *
+ * @param identifier: name of the desired application
+ * @returns: object or NULL
+ */
+
+application_t *lookup_application(char *identifier);
+
+/* Given a application and a key, return a pointer to the corresponding val_t.
+ *
+ * @param ttyp: the application to examine
+ * @param key: application (one of the APPLICATION_* constants)
+ * @returns: pointer to value
+ */
+val_t *application_getconf(application_t *app, application_key key);
+
+/* Get the name of this application.
+ *
+ * @param ttyp: the application to examine
+ * @returns: name of the application
+ */
+char *application_name(application_t *app);
+
+/* (convenience macro) has this parameter been seen in this application?  This
+ * applies to the specific parameter *within* the application.
+ *
+ * @param key: application_key
+ * @returns: boolean
+ */
+#define application_seen(app, key)       (val_t_seen(application_getconf((app), (key))))
+
+/* (convenience macros)
+ * fetch a particular parameter; caller must know the correct type.
+ *
+ * @param ttyp: the application to examine
+ * @returns: various
+ */
+#define application_get_comment(application)  (val_t_to_str(application_getconf((application), APPLICATION_COMMENT))
+#define application_get_plugin(application)   (val_t_to_str(application_getconf((application), APPLICATION_PLUGIN)))
+#define application_get_proplist(application) (val_t_to_proplist(application_getconf((application), APPLICATION_PROPERTY)))
+
+application_t *read_application(char *name, FILE *from, char *fname, int *linenum);
+
+/* A pp-script-tool interface */
+typedef enum pp_script_e  {
+    PP_SCRIPT_COMMENT,
+    PP_SCRIPT_PLUGIN,
+    PP_SCRIPT_PROPERTY,
+    PP_SCRIPT_EXECUTE_ON,
+    PP_SCRIPT_EXECUTE_WHERE,
+    PP_SCRIPT_PP_SCRIPT
+} pp_script_key;
+
+/* opaque object */
+typedef struct pp_script_s pp_script_t;
+
+/* Given the name of the pp_script, return a pp_script object.  Returns NULL
+ * if no matching pp_script exists.  Note that the match is case-insensitive.
+ *
+ * @param identifier: name of the desired pp_script
+ * @returns: object or NULL
+ */
+
+pp_script_t *lookup_pp_script(char *identifier);
+
+/* Given a pp_script and a key, return a pointer to the corresponding val_t.
+ *
+ * @param ttyp: the pp_script to examine
+ * @param key: pp_script (one of the PP_SCRIPT_* constants)
+ * @returns: pointer to value
+ */
+val_t *pp_script_getconf(pp_script_t *pps, pp_script_key key);
+
+/* Get the name of this pp_script.
+ *
+ * @param ttyp: the pp_script to examine
+ * @returns: name of the pp_script
+ */
+char *pp_script_name(pp_script_t *pps);
+
+/* (convenience macro) has this parameter been seen in this pp_script?  This
+ * applies to the specific parameter *within* the pp_script.
+ *
+ * @param key: pp_script_key
+ * @returns: boolean
+ */
+#define pp_script_seen(pps, key)       (val_t_seen(pp_script_getconf((pps), (key))))
+
+/* (convenience macros)
+ * fetch a particular parameter; caller must know the correct type.
+ *
+ * @param ttyp: the pp_script to examine
+ * @returns: various
+ */
+
+#define pp_script_get_comment(pp_script)   (val_t_to_str(pp_script_getconf((pp_script), PP_SCRIPT_COMMENT)))
+#define pp_script_get_plugin(pp_script)   (val_t_to_str(pp_script_getconf((pp_script), PP_SCRIPT_PLUGIN)))
+#define pp_script_get_proplist(pp_script)   (val_t_to_proplist(pp_script_getconf((pp_script), PP_SCRIPT_PROPERTY)))
+#define pp_script_get_execute_on(pp_script)   (val_t_to_execute_on(pp_script_getconf((pp_script), PP_SCRIPT_EXECUTE_ON)))
+#define pp_script_get_execute_where(pp_script)   (val_t_to_execute_where(pp_script_getconf((pp_script), PP_SCRIPT_EXECUTE_WHERE)))
+
+pp_script_t *read_pp_script(char *name, FILE *from, char *fname, int *linenum);
+pp_script_t *lookup_pp_script(char *identifier);
 
 /*
  * Command-line handling

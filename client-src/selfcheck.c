@@ -25,7 +25,7 @@
  *			   University of Maryland at College Park
  */
 /* 
- * $Id: selfcheck.c,v 1.95 2006/08/29 11:21:00 martinea Exp $
+ * $Id: selfcheck.c 10421 2008-03-06 18:48:30Z martineau $
  *
  * do self-check and send back any error messages
  */
@@ -42,6 +42,8 @@
 #include "client_util.h"
 #include "conffile.h"
 #include "amandad.h"
+#include "amxml.h"
+#include "base64.h"
 
 #ifdef SAMBA_CLIENT
 #include "findpass.h"
@@ -61,7 +63,7 @@ int need_runtar=0;
 int need_gnutar=0;
 int need_compress_path=0;
 int need_calcsize=0;
-int program_is_backup_api=0;
+int program_is_application_api=0;
 
 static char *amandad_auth = NULL;
 static am_feature_t *our_features = NULL;
@@ -71,14 +73,10 @@ static g_option_t *g_options = NULL;
 /* local functions */
 int main(int argc, char **argv);
 
-static void check_options(char *program, char *calcprog, char *disk, char *amdevice, option_t *options);
-static void check_disk(char *program, char *calcprog, char *disk, char *amdevice, int level, option_t *options);
+static void check_options(dle_t *dle);
+static void check_disk(dle_t *dle);
 static void check_overall(void);
-static void check_access(char *filename, int mode);
 static int check_file_exist(char *filename);
-static void check_file(char *filename, int mode);
-static void check_dir(char *dirname, int mode);
-static void check_suid(char *filename);
 static void check_space(char *dir, off_t kbytes);
 
 int
@@ -86,19 +84,15 @@ main(
     int		argc,
     char **	argv)
 {
-    int level;
     char *line = NULL;
-    char *program = NULL;
-    char *calcprog = NULL;
-    char *disk = NULL;
     char *qdisk = NULL;
-    char *amdevice = NULL;
     char *qamdevice = NULL;
     char *optstr = NULL;
     char *err_extra = NULL;
     char *s, *fp;
-    option_t *options;
     int ch;
+    dle_t *dle;
+    int level;
 
     /* initialize */
 
@@ -169,9 +163,13 @@ main(
 		dbrename(get_config_name(), DBG_SUBDIR_CLIENT);
 	    }
 
+	    if (am_has_feature(g_options->features, fe_req_xml)) {
+		break;
+	    }
 	    continue;
 	}
 
+	dle = alloc_dle();
 	s = line;
 	ch = *s++;
 
@@ -179,33 +177,34 @@ main(
 	if (ch == '\0') {
 	    goto err;				/* no program */
 	}
-	program = s - 1;
+	dle->program = s - 1;
 	skip_non_whitespace(s, ch);
 	s[-1] = '\0';				/* terminate the program name */
 
-	program_is_backup_api = 0;
-	if(strcmp(program,"BACKUP")==0) {
-	    program_is_backup_api = 1;
+	dle->program_is_application_api = 0;
+	if(strcmp(dle->program,"APPLICARTION")==0) {
+	    dle->program_is_application_api = 1;
 	    skip_whitespace(s, ch);		/* find dumper name */
 	    if (ch == '\0') {
 		goto err;			/* no program */
 	    }
-	    program = s - 1;
+	    dle->program = s - 1;
 	    skip_non_whitespace(s, ch);
 	    s[-1] = '\0';			/* terminate the program name */
 	}
 
-	if(strncmp_const(program, "CALCSIZE") == 0) {
+	if(strncmp_const(dle->program, "CALCSIZE") == 0) {
 	    skip_whitespace(s, ch);		/* find program name */
 	    if (ch == '\0') {
 		goto err;			/* no program */
 	    }
-	    calcprog = s - 1;
+	    dle->program = s - 1;
 	    skip_non_whitespace(s, ch);
 	    s[-1] = '\0';
+	    dle->calcsize = 1;
 	}
 	else {
-	    calcprog = NULL;
+	    dle->calcsize = 0;
 	}
 
 	skip_whitespace(s, ch);			/* find disk name */
@@ -215,7 +214,7 @@ main(
 	qdisk = s - 1;
 	skip_quoted_string(s, ch);
 	s[-1] = '\0';				/* terminate the disk name */
-	disk = unquote_string(qdisk);
+	dle->disk = unquote_string(qdisk);
 
 	skip_whitespace(s, ch);                 /* find the device or level */
 	if (ch == '\0') {
@@ -226,17 +225,19 @@ main(
 	    skip_quoted_string(s, ch);
 	     s[-1] = '\0';			/* terminate the device */
 	    qamdevice = stralloc(fp);
-	    amdevice = unquote_string(qamdevice);
+	    dle->device = unquote_string(qamdevice);
 	    skip_whitespace(s, ch);		/* find level number */
 	}
 	else {
-	    amdevice = stralloc(disk);
+	    dle->device = stralloc(dle->disk);
+	    qamdevice = stralloc(qdisk);
 	}
 
 						/* find level number */
 	if (ch == '\0' || sscanf(s - 1, "%d", &level) != 1) {
 	    goto err;				/* bad level */
 	}
+	dle->level = g_slist_append(dle->level, GINT_TO_POINTER(level));
 	skip_integer(s, ch);
 
 	skip_whitespace(s, ch);
@@ -248,18 +249,13 @@ main(
 	    optstr = s - 1;
 	    skip_quoted_string(s, ch);
 	    s[-1] = '\0';			/* terminate the options */
-	    options = parse_options(optstr, disk, amdevice, g_options->features, 1);
+	    parse_options(optstr, dle, g_options->features, 1);
 	    /*@ignore@*/
-	    check_options(program, calcprog, disk, amdevice, options);
-	    check_disk(program, calcprog, disk, amdevice, level, options);
+
+	    check_options(dle);
+	    check_disk(dle);
+
 	    /*@end@*/
-	    free_sl(options->exclude_file);
-	    free_sl(options->exclude_list);
-	    free_sl(options->include_file);
-	    free_sl(options->include_list);
-	    amfree(options->auth);
-	    amfree(options->str);
-	    amfree(options);
 	} else if (ch == '\0') {
 	    /* check all since no option */
 	    need_samba=1;
@@ -277,19 +273,40 @@ main(
 	    need_compress_path=1;
 	    need_calcsize=1;
 	    /*@ignore@*/
-	    check_disk(program, calcprog, disk, amdevice, level, NULL);
+	    check_disk(dle);
 	    /*@end@*/
 	} else {
 	    goto err;				/* bad syntax */
 	}
-	amfree(disk);
 	amfree(qamdevice);
-	amfree(amdevice);
     }
     if (g_options == NULL) {
-	printf(_("ERROR [Missing OPTIONS line in selfcheck input]\n"));
+	g_printf(_("ERROR [Missing OPTIONS line in selfcheck input]\n"));
 	error(_("Missing OPTIONS line in selfcheck input\n"));
 	/*NOTREACHED*/
+    }
+
+    if (am_has_feature(g_options->features, fe_req_xml)) {
+	char  *errmsg = NULL;
+	dle_t *dles, *dle;
+
+	dles = amxml_parse_node_FILE(stdin, &errmsg);
+	if (errmsg) {
+	    err_extra = errmsg;
+	    goto err;
+	}
+	for (dle = dles; dle != NULL; dle = dle->next) {
+	    run_client_scripts(EXECUTE_ON_PRE_HOST_AMCHECK, g_options, dle);
+	}
+	for (dle = dles; dle != NULL; dle = dle->next) {
+	    check_options(dle);
+	    run_client_scripts(EXECUTE_ON_PRE_DLE_AMCHECK, g_options, dle);
+	    check_disk(dle);
+	    run_client_scripts(EXECUTE_ON_POST_DLE_AMCHECK, g_options, dle);
+	}
+	for (dle = dles; dle != NULL; dle = dle->next) {
+	    run_client_scripts(EXECUTE_ON_POST_HOST_AMCHECK, g_options, dle);
+	}
     }
 
     check_overall();
@@ -304,10 +321,13 @@ main(
     return 0;
 
  err:
-    g_printf(_("ERROR [BOGUS REQUEST PACKET]\n"));
-    dbprintf(_("REQ packet is bogus%s%s\n"),
-	      err_extra ? ": " : "",
-	      err_extra ? err_extra : "");
+    if (err_extra) {
+	g_printf(_("ERROR [FORMAT ERROR IN REQUEST PACKET %s]\n"), err_extra);
+	dbprintf(_("REQ packet is bogus: %s\n"), err_extra);
+    } else {
+	g_printf(_("ERROR [FORMAT ERROR IN REQUEST PACKET]\n"));
+	dbprintf(_("REQ packet is bogus\n"));
+    }
     dbclose();
     return 1;
 }
@@ -315,71 +335,59 @@ main(
 
 static void
 check_options(
-    char *	program,
-    char *	calcprog,
-    char *	disk,
-    char *	amdevice,
-    option_t *	options)
+    dle_t *dle)
 {
-    char *myprogram = program;
-
-    if(strcmp(myprogram,"CALCSIZE") == 0) {
+    if (dle->calcsize == 1) {
 	int nb_exclude = 0;
 	int nb_include = 0;
 	char *file_exclude = NULL;
 	char *file_include = NULL;
 
-	if(options->exclude_file) nb_exclude += options->exclude_file->nb_element;
-	if(options->exclude_list) nb_exclude += options->exclude_list->nb_element;
-	if(options->include_file) nb_include += options->include_file->nb_element;
-	if(options->include_list) nb_include += options->include_list->nb_element;
+	if (dle->exclude_file) nb_exclude += dle->exclude_file->nb_element;
+	if (dle->exclude_list) nb_exclude += dle->exclude_list->nb_element;
+	if (dle->include_file) nb_include += dle->include_file->nb_element;
+	if (dle->include_list) nb_include += dle->include_list->nb_element;
 
-	if(nb_exclude > 0) file_exclude = build_exclude(disk, amdevice, options, 1);
-	if(nb_include > 0) file_include = build_include(disk, amdevice, options, 1);
+	if (nb_exclude > 0) file_exclude = build_exclude(dle, 1);
+	if (nb_include > 0) file_include = build_include(dle, 1);
 
 	amfree(file_exclude);
 	amfree(file_include);
 
 	need_calcsize=1;
-	if (calcprog == NULL) {
-	    g_printf(_("ERROR [no program name for calcsize]\n"));
-	} else {
-	    myprogram = calcprog;
-	}
     }
 
-    if(strcmp(myprogram,"GNUTAR") == 0) {
+    if (strcmp(dle->program,"GNUTAR") == 0) {
 	need_gnutar=1;
-        if(amdevice[0] == '/' && amdevice[1] == '/') {
-	    if(options->exclude_file && options->exclude_file->nb_element > 1) {
+        if(dle->device[0] == '/' && dle->device[1] == '/') {
+	    if(dle->exclude_file && dle->exclude_file->nb_element > 1) {
 		g_printf(_("ERROR [samba support only one exclude file]\n"));
 	    }
-	    if(options->exclude_list && options->exclude_list->nb_element > 0 &&
-	       options->exclude_optional==0) {
+	    if (dle->exclude_list && dle->exclude_list->nb_element > 0 &&
+	        dle->exclude_optional==0) {
 		g_printf(_("ERROR [samba does not support exclude list]\n"));
 	    }
-	    if(options->include_file && options->include_file->nb_element > 0) {
+	    if (dle->include_file && dle->include_file->nb_element > 0) {
 		g_printf(_("ERROR [samba does not support include file]\n"));
 	    }
-	    if(options->include_list && options->include_list->nb_element > 0 &&
-	       options->include_optional==0) {
+	    if (dle->include_list && dle->include_list->nb_element > 0 &&
+	        dle->include_optional==0) {
 		g_printf(_("ERROR [samba does not support include list]\n"));
 	    }
 	    need_samba=1;
-	}
-	else {
+	} else {
 	    int nb_exclude = 0;
 	    int nb_include = 0;
 	    char *file_exclude = NULL;
 	    char *file_include = NULL;
 
-	    if(options->exclude_file) nb_exclude += options->exclude_file->nb_element;
-	    if(options->exclude_list) nb_exclude += options->exclude_list->nb_element;
-	    if(options->include_file) nb_include += options->include_file->nb_element;
-	    if(options->include_list) nb_include += options->include_list->nb_element;
+	    if (dle->exclude_file) nb_exclude += dle->exclude_file->nb_element;
+	    if (dle->exclude_list) nb_exclude += dle->exclude_list->nb_element;
+	    if (dle->include_file) nb_include += dle->include_file->nb_element;
+	    if (dle->include_list) nb_include += dle->include_list->nb_element;
 
-	    if(nb_exclude > 0) file_exclude = build_exclude(disk, amdevice, options, 1);
-	    if(nb_include > 0) file_include = build_include(disk, amdevice, options, 1);
+	    if (nb_exclude > 0) file_exclude = build_exclude(dle, 1);
+	    if (nb_include > 0) file_include = build_include(dle, 1);
 
 	    amfree(file_exclude);
 	    amfree(file_include);
@@ -388,17 +396,17 @@ check_options(
 	}
     }
 
-    if(strcmp(myprogram,"DUMP") == 0) {
-	if(options->exclude_file && options->exclude_file->nb_element > 0) {
+    if (strcmp(dle->program,"DUMP") == 0) {
+	if (dle->exclude_file && dle->exclude_file->nb_element > 0) {
 	    g_printf(_("ERROR [DUMP does not support exclude file]\n"));
 	}
-	if(options->exclude_list && options->exclude_list->nb_element > 0) {
+	if (dle->exclude_list && dle->exclude_list->nb_element > 0) {
 	    g_printf(_("ERROR [DUMP does not support exclude list]\n"));
 	}
-	if(options->include_file && options->include_file->nb_element > 0) {
+	if (dle->include_file && dle->include_file->nb_element > 0) {
 	    g_printf(_("ERROR [DUMP does not support include file]\n"));
 	}
-	if(options->include_list && options->include_list->nb_element > 0) {
+	if (dle->include_list && dle->include_list->nb_element > 0) {
 	    g_printf(_("ERROR [DUMP does not support include list]\n"));
 	}
 #ifdef USE_RUNDUMP
@@ -407,66 +415,66 @@ check_options(
 #ifndef AIX_BACKUP
 #ifdef VDUMP
 #ifdef DUMP
-	if (strcmp(amname_to_fstype(amdevice), "advfs") == 0)
+	if (strcmp(amname_to_fstype(dle->device), "advfs") == 0)
 #else
 	if (1)
 #endif
 	{
 	    need_vdump=1;
 	    need_rundump=1;
-	    if (options->createindex)
+	    if (dle->create_index)
 		need_vrestore=1;
 	}
 	else
 #endif /* VDUMP */
 #ifdef XFSDUMP
 #ifdef DUMP
-	if (strcmp(amname_to_fstype(amdevice), "xfs") == 0)
+	if (strcmp(amname_to_fstype(dle->device), "xfs") == 0)
 #else
 	if (1)
 #endif
 	{
 	    need_xfsdump=1;
 	    need_rundump=1;
-	    if (options->createindex)
+	    if (dle->create_index)
 		need_xfsrestore=1;
 	}
 	else
 #endif /* XFSDUMP */
 #ifdef VXDUMP
 #ifdef DUMP
-	if (strcmp(amname_to_fstype(amdevice), "vxfs") == 0)
+	if (strcmp(amname_to_fstype(dle->device), "vxfs") == 0)
 #else
 	if (1)
 #endif
 	{
 	    need_vxdump=1;
-	    if (options->createindex)
+	    if (dle->create-index)
 		need_vxrestore=1;
 	}
 	else
 #endif /* VXDUMP */
 	{
 	    need_dump=1;
-	    if (options->createindex)
+	    if (dle->create_index)
 		need_restore=1;
 	}
 #else
 	/* AIX backup program */
 	need_dump=1;
-	if (options->createindex)
+	if (dle->create_index)
 	    need_restore=1;
 #endif
     }
-    if ((options->compress == COMP_BEST) || (options->compress == COMP_FAST) 
-		|| (options->compress == COMP_CUST)) {
+    if ((dle->compress == COMP_BEST) || (dle->compress == COMP_FAST) 
+		|| (dle->compress == COMP_CUST)) {
 	need_compress_path=1;
     }
-    if(options->auth && amandad_auth) {
-	if(strcasecmp(options->auth, amandad_auth) != 0) {
+    if (dle->auth && amandad_auth) {
+	if (strcasecmp(dle->auth, amandad_auth) != 0) {
 	    g_fprintf(stdout,_("ERROR [client configured for auth=%s while server requested '%s']\n"),
-		    amandad_auth, options->auth);
-	    if(strcmp(options->auth, "ssh") == 0)  {	
+		    amandad_auth, dle->auth);
+	    if (strcmp(dle->auth, "ssh") == 0)  {	
 		g_fprintf(stderr, _("ERROR [The auth in ~/.ssh/authorized_keys "
 				  "should be \"--auth=ssh\", or use another auth "
 				  " for the DLE]\n"));
@@ -481,12 +489,7 @@ check_options(
 
 static void
 check_disk(
-    char *	program,
-    char *	calcprog,
-    char *	disk,
-    char *	amdevice,
-    int		level,
-    option_t    *options)
+    dle_t *dle)
 {
     char *device = stralloc("nodevice");
     char *err = NULL;
@@ -498,31 +501,22 @@ check_disk(
     int access_result;
     char *access_type;
     char *extra_info = NULL;
-    char *myprogram = program;
-    char *qdisk = quote_string(disk);
-    char *qamdevice = quote_string(amdevice);
+    char *qdisk = quote_string(dle->disk);
+    char *qamdevice = quote_string(dle->device);
     char *qdevice = NULL;
     FILE *toolin;
 
-    (void)level;	/* Quiet unused parameter warning */
-
     dbprintf(_("checking disk %s\n"), qdisk);
-
-    if(strcmp(myprogram,"CALCSIZE") == 0) {
-	if(amdevice[0] == '/' && amdevice[1] == '/') {
+    if (dle->calcsize == 1) {
+	if (dle->device[0] == '/' && dle->device[1] == '/') {
 	    err = vstrallocf(_("Can't use CALCSIZE for samba estimate, use CLIENT: %s"),
-			    amdevice);
+			    dle->device);
 	    goto common_exit;
 	}
-	if (calcprog == NULL) {
-	    err = _("no program for calcsize");
-	    goto common_exit;
-	}
-	myprogram = calcprog;
     }
 
-    if (strcmp(myprogram, "GNUTAR")==0) {
-        if(amdevice[0] == '/' && amdevice[1] == '/') {
+    if (strcmp(dle->program, "GNUTAR")==0) {
+        if(dle->device[0] == '/' && dle->device[1] == '/') {
 #ifdef SAMBA_CLIENT
 	    int nullfd, checkerr;
 	    int passwdfd;
@@ -538,23 +532,23 @@ check_disk(
 	    char *pw_fd_env;
 	    int errdos;
 
-	    parsesharename(amdevice, &share, &subdir);
+	    parsesharename(dle->device, &share, &subdir);
 	    if (!share) {
-		err = vstrallocf(_("cannot parse for share/subdir disk entry %s"), amdevice);
+		err = vstrallocf(_("cannot parse for share/subdir disk entry %s"), dle->device);
 		goto common_exit;
 	    }
 	    if ((subdir) && (SAMBA_VERSION < 2)) {
 		err = vstrallocf(_("subdirectory specified for share '%s' but, samba is not v2 or better"),
-				amdevice);
+				dle->device);
 		goto common_exit;
 	    }
 	    if ((user_and_password = findpass(share, &domain)) == NULL) {
-		err = vstrallocf(_("cannot find password for %s"), amdevice);
+		err = vstrallocf(_("cannot find password for %s"), dle->device);
 		goto common_exit;
 	    }
 	    lpass = strlen(user_and_password);
 	    if ((pwtext = strchr(user_and_password, '%')) == NULL) {
-		err = vstrallocf(_("password field not \'user%%pass\' for %s"), amdevice);
+		err = vstrallocf(_("password field not \'user%%pass\' for %s"), dle->device);
 		goto common_exit;
 	    }
 	    *pwtext++ = '\0';
@@ -575,7 +569,7 @@ check_disk(
 	    } else {
 		pw_fd_env = "dummy_PASSWD_FD";
 	    }
-	    checkpid = pipespawn(SAMBA_CLIENT, STDERR_PIPE|PASSWD_PIPE,
+	    checkpid = pipespawn(SAMBA_CLIENT, STDERR_PIPE|PASSWD_PIPE, 0,
 				 &nullfd, &nullfd, &checkerr,
 				 pw_fd_env, &passwdfd,
 				 "smbclient",
@@ -597,7 +591,7 @@ check_disk(
 	    if ((pwtext_len > 0)
 	      && fullwrite(passwdfd, pwtext, (size_t)pwtext_len) < 0) {
 		err = vstrallocf(_("password write failed: %s: %s"),
-				amdevice, strerror(errno));
+				dle->device, strerror(errno));
 		aclose(passwdfd);
 		goto common_exit;
 	    }
@@ -641,11 +635,11 @@ check_disk(
 		if (extra_info) {
 		    err = newvstrallocf(err,
 				   _("samba access error: %s: %s %s"),
-				   amdevice, extra_info, err);
+				   dle->device, extra_info, err);
 		    amfree(extra_info);
 		} else {
 		    err = newvstrallocf(err, _("samba access error: %s: %s"),
-				   amdevice, err);
+				   dle->device, err);
 		}
 	    }
 #else
@@ -656,9 +650,9 @@ check_disk(
 	}
 	amode = F_OK;
 	amfree(device);
-	device = amname_to_dirname(amdevice);
-    } else if (strcmp(myprogram, "DUMP") == 0) {
-	if(amdevice[0] == '/' && amdevice[1] == '/') {
+	device = amname_to_dirname(dle->device);
+    } else if (strcmp(dle->program, "DUMP") == 0) {
+	if(dle->device[0] == '/' && dle->device[1] == '/') {
 	    err = vstrallocf(
 		  _("The DUMP program cannot handle samba shares, use GNUTAR: %s"),
 		  qdisk);
@@ -666,19 +660,19 @@ check_disk(
 	}
 #ifdef VDUMP								/* { */
 #ifdef DUMP								/* { */
-        if (strcmp(amname_to_fstype(amdevice), "advfs") == 0)
+        if (strcmp(amname_to_fstype(dle->device), "advfs") == 0)
 #else									/* }{ */
 	if (1)
 #endif									/* } */
 	{
 	    amfree(device);
-	    device = amname_to_dirname(amdevice);
+	    device = amname_to_dirname(dle->device);
 	    amode = F_OK;
 	} else
 #endif									/* } */
 	{
 	    amfree(device);
-	    device = amname_to_devname(amdevice);
+	    device = amname_to_devname(dle->device);
 #ifdef USE_RUNDUMP
 	    amode = F_OK;
 #else
@@ -686,12 +680,12 @@ check_disk(
 #endif
 	}
     }
-    else { /* program_is_backup_api==1 */
-	pid_t  backup_api_pid;
+    else { /* program_is_application_api==1 */
+	pid_t  application_api_pid;
 	int    property_pipe[2];
 	backup_support_option_t *bsu;
 
-	bsu = backup_support_option(program, g_options, disk, amdevice);
+	bsu = backup_support_option(dle->program, g_options, dle->disk, dle->device);
 
 	if (pipe(property_pipe) < 0) {
 	    err = vstrallocf(_("pipe failed: %s"), strerror(errno));
@@ -699,17 +693,17 @@ check_disk(
 	}
 	fflush(stdout);fflush(stderr);
 	
-	switch (backup_api_pid = fork()) {
+	switch (application_api_pid = fork()) {
 	case -1:
 	    err = vstrallocf(_("fork failed: %s"), strerror(errno));
 	    goto common_exit;
 
 	case 0: /* child */
 	    {
-		char *argvchild[14];
-		char *cmd = vstralloc(DUMPER_DIR, "/", program, NULL);
+		char *argvchild[17];
+		char *cmd = vstralloc(APPLICATION_DIR, "/", dle->program, NULL);
 		int j=0;
-		argvchild[j++] = program;
+		argvchild[j++] = dle->program;
 		argvchild[j++] = "selfcheck";
 		if (bsu->message_line == 1) {
 		    argvchild[j++] = "--message";
@@ -723,24 +717,24 @@ check_disk(
 		    argvchild[j++] = "--host";
 		    argvchild[j++] = g_options->hostname;
 		}
-		if (disk != NULL && bsu->disk == 1) {
+		if (dle->disk != NULL && bsu->disk == 1) {
 		    argvchild[j++] = "--disk";
-		    argvchild[j++] = disk;
+		    argvchild[j++] = dle->disk;
 		}
 		argvchild[j++] = "--device";
-		argvchild[j++] = amdevice;
-		if(options && options->createindex && bsu->index_line == 1) {
+		argvchild[j++] = dle->device;
+		if (dle->create_index && bsu->index_line == 1) {
 		    argvchild[j++] = "--index";
 		    argvchild[j++] = "line";
 		}
-		if (!options->no_record && bsu->record == 1) {
+		if (dle->record && bsu->record == 1) {
 		    argvchild[j++] = "--record";
 		}
 		argvchild[j++] = NULL;
 		dup2(property_pipe[0], 0);
 		aclose(property_pipe[1]);
 		safe_fd(-1, 0);
-		execve(cmd,argvchild,safe_env());
+		execve(cmd, argvchild, safe_env());
 		g_printf(_("ERROR [Can't execute %s: %s]\n"), cmd, strerror(errno));
 		exit(127);
 	    }
@@ -753,10 +747,10 @@ check_disk(
 		    err = vstrallocf(_("Can't fdopen: %s"), strerror(errno));
 		    goto common_exit;
 		}
-		output_tool_property(toolin, options);
+		output_tool_property(toolin, dle);
 		fflush(toolin);
 		fclose(toolin);
-		if (waitpid(backup_api_pid, &status, 0) < 0) {
+		if (waitpid(application_api_pid, &status, 0) < 0) {
 		    if (!WIFEXITED(status)) {
 			err = vstrallocf(_("Tool exited with signal %d"),
 					 WTERMSIG(status));
@@ -1045,30 +1039,6 @@ check_space(
     amfree(quoted);
 }
 
-static void
-check_access(
-    char *	filename,
-    int		mode)
-{
-    char *noun, *adjective;
-    char *quoted = quote_string(filename);
-
-    if(mode == F_OK)
-        noun = "find", adjective = "exists";
-    else if((mode & X_OK) == X_OK)
-	noun = "execute", adjective = "executable";
-    else if((mode & (W_OK|R_OK)) == (W_OK|R_OK))
-	noun = "read/write", adjective = "read/writable";
-    else 
-	noun = "access", adjective = "accessible";
-
-    if(access(filename, mode) == -1)
-	g_printf(_("ERROR [can not %s %s: %s]\n"), noun, quoted, strerror(errno));
-    else
-	g_printf(_("OK %s %s\n"), quoted, adjective);
-    amfree(quoted);
-}
-
 static int
 check_file_exist(
     char *filename)
@@ -1083,66 +1053,3 @@ check_file_exist(
     return 1;
 }
 
-static void
-check_file(
-    char *	filename,
-    int		mode)
-{
-    struct stat stat_buf;
-    char *quoted;
-
-    if(!stat(filename, &stat_buf)) {
-	if(!S_ISREG(stat_buf.st_mode)) {
-	    quoted = quote_string(filename);
-	    g_printf(_("ERROR [%s is not a file]\n"), quoted);
-	    amfree(quoted);
-	}
-    }
-    check_access(filename, mode);
-}
-
-static void
-check_dir(
-    char *	dirname,
-    int		mode)
-{
-    struct stat stat_buf;
-    char *quoted;
-    char *dir;
-
-    if(!stat(dirname, &stat_buf)) {
-	if(!S_ISDIR(stat_buf.st_mode)) {
-	    quoted = quote_string(dirname);
-	    g_printf(_("ERROR [%s is not a directory]\n"), quoted);
-	    amfree(quoted);
-	}
-    }
-    dir = stralloc2(dirname, "/.");
-    check_access(dir, mode);
-    amfree(dir);
-}
-
-static void
-check_suid(
-    char *	filename)
-{
-#ifndef SINGLE_USERID
-    struct stat stat_buf;
-    char *quoted = quote_string(filename);
-
-    if(!stat(filename, &stat_buf)) {
-	if(stat_buf.st_uid != 0 ) {
-	    g_printf(_("ERROR [%s is not owned by root]\n"), quoted);
-	}
-	if((stat_buf.st_mode & S_ISUID) != S_ISUID) {
-	    g_printf(_("ERROR [%s is not SUID root]\n"), quoted);
-	}
-    }
-    else {
-	g_printf(_("ERROR [can not stat %s]\n"), quoted);
-    }
-    amfree(quoted);
-#else
-    (void)filename;	/* Quiet unused parameter warning */
-#endif
-}

@@ -1,4 +1,11 @@
 2008-03-06  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/Installcheck/Run.pm: merge from application-api.
+	* installcheck/Installcheck/Config.pm: merge from application-api.
+
+2008-03-06  Jean-Louis Martineau <martineau@zmanda.com>
+	* merge application-api
+
+2008-03-06  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/Makefile.am: dest=$(amlibexecdir).
 
 2008-03-06  Jean-Louis Martineau <martineau@zmanda.com>

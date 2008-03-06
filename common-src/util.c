@@ -34,6 +34,7 @@
 #include "clock.h"
 #include "sockaddr-util.h"
 #include "conffile.h"
+#include "base64.h"
 
 #ifdef HAVE_LIBCURL
 #include <curl/curl.h>
@@ -919,10 +920,57 @@ int
 become_root(void)
 {
 #ifndef SINGLE_USERID
+    // if euid !=0, it set only euid
+    if (setuid(0) == -1) return 0;
+    // will set ruid because euid == 0.
     if (setuid(0) == -1) return 0;
 #endif
     return 1;
 }
+
+
+char *
+base64_decode_alloc_string(
+    char *in)
+{
+    char   *out;
+    size_t  in_len = strlen(in);
+    size_t  out_len = 3 * (in_len / 4) + 3;
+
+    out = malloc(out_len);
+    if (!base64_decode(in, in_len, out, &out_len)) {
+	amfree(out);
+	return NULL;
+    }
+    out[out_len] = '\0';
+
+    return out;
+}
+
+
+/* A GHFunc (callback for g_hash_table_foreach) */
+void output_tool_proplist(
+    gpointer key_p,
+    gpointer value_p,
+    gpointer user_data_p)
+{
+    char   *property_s = key_p;
+    GSList *value_s = value_p;
+    FILE   *tool = user_data_p;
+    GSList *value;
+    char   *q;
+
+    q = quote_string(property_s);
+    g_fprintf(tool, "%s", q);
+    amfree(q);
+    for(value=value_s; value != NULL; value = value->next) {
+	q = quote_string((char *)value->data);
+	g_fprintf(tool, " %s", q);
+	amfree(q);
+    }
+    g_fprintf(tool, "\n");
+}
+
 
 /*
  * Process parameters

@@ -61,7 +61,8 @@ amgetconf will return all values, one on each line.</para>
 parameters of the form <literal>TYPE:NAME:PARAMETER</literal>,
 where <literal>TYPE</literal> is the subsection type (one
 of <literal>dumptype</literal>, <literal>tapetype</literal>,
-<literal>interface</literal>, or <literal>holdingdisk</literal>;
+<literal>interface</literal>, <literal>holdingdisk</literal>,
+<literal>application-tool</literal>, or <literal>script-tool</literal>;
 <literal>NAME</literal> is the name of the subsection (e.g.,
 <literal>user-tar</literal>), and <literal>PARAMETER</literal> is
 the name of the disired parameter within that subsection.</para>

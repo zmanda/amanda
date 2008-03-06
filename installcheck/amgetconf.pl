@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 48;
+use Test::More tests => 54;
 
 use lib "@amperldir@";
 use Installcheck::Config;
@@ -167,6 +167,9 @@ $testconf->add_tapetype("scotch", [ length => "500 bytes" ]); # (use a sharpie)
 $testconf->add_dumptype("testdump", [ comment => '"testdump-dumptype"' ]);
 $testconf->add_interface("testiface", [ use => '10' ]);
 $testconf->add_holdingdisk("hd17", [ chunksize => '128' ]);
+$testconf->add_application('app_amgtar', [ plugin => '"amgtar"' ]);
+$testconf->add_application('app_amstar', [ plugin => '"amstar"' ]);
+$testconf->add_script('my_script', [ plugin => '"script-email"' ]);
 $testconf->write();
 
 is_deeply([sort(split(/\n/, run_get('amgetconf', 'TESTCONF', '--list', 'tapetype')))],
@@ -197,6 +200,20 @@ is(run_get('amgetconf', 'TESTCONF', 'holdingdisk:hd17:chunksize'), '128',
 like(run_get('amgetconf', 'TESTCONF', '--list', 'build'), qr(.*version.*),
 	"'--list build' lists build variables");
 
+is_deeply([sort(split(/\n/, run_get('amgetconf', 'TESTCONF', '--list', 'application-tool')))],
+          [sort("app_amgtar", "app_amstar")],
+        "--list returns correct set of application-tool");
+
+is(run_get('amgetconf', 'TESTCONF', 'application-tool:app_amgtar:plugin'), 'amgtar',
+    "returns application-tool parameter correctly");
+
+is_deeply([sort(split(/\n/, run_get('amgetconf', 'TESTCONF', '--list', 'script-tool')))],
+          [sort("my_script")],
+        "--list returns correct set of script-tool");
+
+is(run_get('amgetconf', 'TESTCONF', 'script-tool:my_script:plugin'), 'script-email',
+    "returns script-tool parameter correctly");
+
 # non-existent subsection types, names, and parameters
 like(run_err('amgetconf', 'TESTCONF', 'NOSUCHTYPE:testiface:comment'), qr/no such parameter/, 
     "handles bad subsection type");
@@ -204,6 +221,10 @@ like(run_err('amgetconf', 'TESTCONF', 'dumptype:NOSUCHDUMP:comment'), qr/no such
     "handles bad dumptype namek");
 like(run_err('amgetconf', 'TESTCONF', 'dumptype:testdump:NOSUCHPARAM'), qr/no such parameter/, 
     "handles bad dumptype parameter name");
+like(run_err('amgetconf', 'TESTCONF', 'application-tool:app_amgtar:NOSUCHPARAM'), qr/no such parameter/, 
+    "handles bad application-tool parameter name");
+like(run_err('amgetconf', 'TESTCONF', 'script-tool:my-script:NOSUCHPARAM'), qr/no such parameter/, 
+    "handles bad script-tool parameter name");
 
 ##
 # exclude lists are a bit funny, too
@@ -228,4 +249,5 @@ is_deeply([sort(split(qr/\n/, run_get('amgetconf', 'TESTCONF', 'dumptype:testdum
 	  [sort('FILE OPTIONAL "ifo"',
 	        'LIST OPTIONAL "ilo"')],
     "a final 'OPTIONAL' makes the whole include/exclude optional")
+
 

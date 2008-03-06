@@ -52,6 +52,8 @@ typedef struct amhost_s {
     time_t start_t;			/* start dump after this time */
     char *up;				/* generic user pointer */
     am_feature_t *features;		/* feature set */
+    int	 pre_script;
+    int  post_script;
 } am_host_t;
 
 typedef struct disk_s {
@@ -112,6 +114,8 @@ typedef struct disk_s {
     int		spindle;		/* spindle # - for parallel dumps */
     int		inprogress;		/* being dumped now? */
     int		todo;
+    application_t *application;
+    pp_scriptlist_t pp_scriptlist;
     void	*up;			/* generic user pointer */
 } disk_t;
 
@@ -140,6 +144,9 @@ void remove_disk(disklist_t *list, disk_t *disk);
 void dump_queue(char *str, disklist_t q, int npr, FILE *f);
 
 char *optionstr(disk_t *dp, am_feature_t *their_features, FILE *fdout);
+char *xml_optionstr(disk_t *dp, am_feature_t *their_features, FILE *fdout);
+char *xml_application(application_t *);
+char *xml_scripts(pp_scriptlist_t pp_scriptlist);
 
 char *match_disklist(disklist_t *origqp, int sargc, char **sargv);
 void free_disklist(disklist_t *dl);

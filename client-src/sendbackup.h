@@ -36,7 +36,7 @@
 #include "client_util.h"
 #include "amandad.h"
 
-void info_tapeheader(void);
+void info_tapeheader(dle_t *dle);
 void start_index(int createindex, int input, int mesg, 
 		    int index, char *cmd);
 
@@ -75,14 +75,13 @@ typedef struct regex_s {
 
 extern pid_t  comppid, dumppid, encpid, tarpid;
 extern pid_t indexpid;
-extern option_t *options;
 extern g_option_t *g_options;
 
 typedef struct backup_program_s {
     char *name, *backup_name, *restore_name;
     amregex_t *re_table;
-    void (*start_backup)(char *host, char *disk, char *amdevice, int level, char *dumpdate, int dataf, int mesgf, int indexf);
-    void (*end_backup)(int goterror);
+    void (*start_backup)(dle_t *dle, char *host, int dataf, int mesgf, int indexf);
+    void (*end_backup)(dle_t *dle, int goterror);
 } backup_program_t;
 
 extern backup_program_t *programs[], *program;

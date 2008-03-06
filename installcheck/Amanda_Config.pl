@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 74;
+use Test::More tests => 86;
 use strict;
 
 use lib "@amperldir@";
@@ -54,7 +54,7 @@ $testconf->add_param('reserved-udp-port', '100,200');
 $testconf->add_param('device_output_buffer_size', $size_t_num);
 $testconf->add_param('taperalgo', 'last');
 $testconf->add_param('device_property', '"foo" "bar"');
-$testconf->add_param('device_property', '"blue" "car"');
+$testconf->add_param('device_property', '"blue" "car" "tar"');
 $testconf->add_param('displayunit', '"m"');
 $testconf->add_param('debug_auth', '1');
 $testconf->add_tapetype('mytapetype', [
@@ -95,6 +95,18 @@ $testconf->add_holdingdisk('hd1', [
 $testconf->add_holdingdisk('hd2', [
     'comment' => '"empty"',
 ]);
+$testconf->add_application('my_app', [
+    'comment' => '"my_app_comment"',
+    'plugin' => '"amgtar"',
+]);
+$testconf->add_script('my_script', [
+  'comment' => '"my_script_comment"',
+  'plugin' => '"script-email"',
+  'execute-on' => 'pre-host-backup, post-host-backup',
+  'execute-where' => 'client',
+  'property' => '"mailto" "amandabackup" "amanda"',
+]);
+
 $testconf->write();
 
 my $cfg_ok = config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');
@@ -132,9 +144,8 @@ SKIP: { # global parameters
     is(getconf($CNF_DISPLAYUNIT), "M",
 	"displayunit is correctly uppercased");
     is_deeply(getconf($CNF_DEVICE_PROPERTY),
-	      { "foo" => "bar", "blue" => "car" },
+	      { "foo" => ["bar"], "blue" => ["car", "tar"] },
 	    "proplist global confparm");
-
     ok(getconf_seen($CNF_TAPEDEV),
 	"'tapedev' parm was seen");
     ok(!getconf_seen($CNF_NETUSAGE),
@@ -281,6 +292,43 @@ SKIP: { # holdingdisks
     is_deeply([ sort(getconf_list("holdingdisk")) ],
 	      [ sort('hd1', 'hd2') ],
 	"getconf_list lists all holdingdisks (in any order)");
+}
+
+SKIP: { # application
+    skip "error loading config" unless $cfg_ok;
+    my $app = lookup_application("my_app");
+    ok($app, "found my_app");
+    is(application_name($app), "my_app",
+	"my_app knows its name");
+    is(application_getconf($app, $APPLICATION_COMMENT), 'my_app_comment', 
+	"application comment");
+    is(application_getconf($app, $APPLICATION_PLUGIN), 'amgtar',
+	"application plugin (amgtar)");
+
+    is_deeply([ sort(getconf_list("application-tool")) ],
+	      [ sort("my_app") ],
+	"getconf_list lists all application-tool");
+}
+
+SKIP: { # script
+    skip "error loading config" unless $cfg_ok;
+    my $sc = lookup_pp_script("my_script");
+    ok($sc, "found my_script");
+    is(pp_script_name($sc), "my_script",
+	"my_script knows its name");
+    is(pp_script_getconf($sc, $PP_SCRIPT_COMMENT), 'my_script_comment', 
+	"script comment");
+    is(pp_script_getconf($sc, $PP_SCRIPT_PLUGIN), 'script-email',
+	"script plugin (script-email)");
+    is(pp_script_getconf($sc, $PP_SCRIPT_EXECUTE_WHERE), $ES_CLIENT,
+	"script execute_where (client)");
+    is(pp_script_getconf($sc, $PP_SCRIPT_EXECUTE_ON),
+	$EXECUTE_ON_PRE_HOST_BACKUP|$EXECUTE_ON_POST_HOST_BACKUP,
+	"script execute_on");
+
+    is_deeply([ sort(getconf_list("script-tool")) ],
+	      [ sort("my_script") ],
+	"getconf_list lists all script-tool");
 }
 
 ##

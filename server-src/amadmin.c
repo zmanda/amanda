@@ -1983,6 +1983,7 @@ disklist_one(
     am_host_t *hp;
     netif_t *ip;
     sle_t *excl;
+    pp_scriptlist_t pp_scriptlist;
 
     hp = dp->host;
     ip = hp->netif;
@@ -1993,17 +1994,19 @@ disklist_one(
     g_printf("        interface %s\n",
 	   interface_name(ip->config)[0] ? interface_name(ip->config) : "default");
     g_printf("    disk %s:\n", dp->name);
-    if(dp->device) g_printf("        device %s\n", dp->device);
+    if (dp->device) g_printf("        device %s\n", dp->device);
 
     g_printf("        program \"%s\"\n", dp->program);
-    if(dp->exclude_file != NULL && dp->exclude_file->nb_element > 0) {
+    if (dp->application)
+	g_printf("        application \"%s\"\n", application_name(dp->application));
+    if (dp->exclude_file != NULL && dp->exclude_file->nb_element > 0) {
 	g_printf("        exclude file");
 	for(excl = dp->exclude_file->first; excl != NULL; excl = excl->next) {
 	    g_printf(" \"%s\"", excl->name);
 	}
 	g_printf("\n");
     }
-    if(dp->exclude_list != NULL && dp->exclude_list->nb_element > 0) {
+    if (dp->exclude_list != NULL && dp->exclude_list->nb_element > 0) {
 	g_printf("        exclude list");
 	if(dp->exclude_optional) g_printf(" optional");
 	for(excl = dp->exclude_list->first; excl != NULL; excl = excl->next) {
@@ -2011,16 +2014,16 @@ disklist_one(
 	}
 	g_printf("\n");
     }
-    if(dp->include_file != NULL && dp->include_file->nb_element > 0) {
+    if (dp->include_file != NULL && dp->include_file->nb_element > 0) {
 	g_printf("        include file");
 	for(excl = dp->include_file->first; excl != NULL; excl = excl->next) {
 	    g_printf(" \"%s\"", excl->name);
 	}
 	g_printf("\n");
     }
-    if(dp->include_list != NULL && dp->include_list->nb_element > 0) {
+    if (dp->include_list != NULL && dp->include_list->nb_element > 0) {
 	g_printf("        include list");
-	if(dp->include_optional) g_printf(" optional");
+	if (dp->include_optional) g_printf(" optional");
 	for(excl = dp->include_list->first; excl != NULL; excl = excl->next) {
 	    g_printf(" \"%s\"", excl->name);
 	}
@@ -2030,7 +2033,7 @@ disklist_one(
     g_printf("        dumpcycle %d\n", dp->dumpcycle);
     g_printf("        maxdumps %d\n", dp->maxdumps);
     g_printf("        maxpromoteday %d\n", dp->maxpromoteday);
-    if(dp->bumppercent > 0) {
+    if (dp->bumppercent > 0) {
 	g_printf("        bumppercent %d\n", dp->bumppercent);
     }
     else {
@@ -2147,6 +2150,11 @@ disklist_one(
     g_printf("        skip-incr %s\n", (dp->skip_incr? "YES" : "NO"));
     g_printf("        skip-full %s\n", (dp->skip_full? "YES" : "NO"));
     g_printf("        spindle %d\n", dp->spindle);
+    pp_scriptlist = dp->pp_scriptlist;
+    while (pp_scriptlist != NULL) {
+	g_printf("        script \"%s\"\n", (pp_script_name(pp_scriptlist->data)));
+	pp_scriptlist = pp_scriptlist->next;
+    }
 
     g_printf("\n");
 }

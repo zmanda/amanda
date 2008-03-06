@@ -38,3 +38,29 @@ g_hash_table_to_hashref(GHashTable *hash)
 
     return newRV((SV *)hv);
 }
+
+static void 
+foreach_fn_gslist(gpointer key_p, gpointer value_p, gpointer user_data_p)
+{
+    char   *key = key_p;
+    GSList *value_s = value_p;
+    GSList *value;
+    HV     *hv = user_data_p;
+    AV *list = newAV();
+
+    for(value=value_s; value != NULL; value = value->next) {
+	av_push(list, newSVpv(value->data, 0));
+    }
+
+    hv_store(hv, key, strlen(key), newRV_noinc((SV*)list), 0);
+}
+
+SV *
+g_hash_table_to_hashref_gslist(GHashTable *hash)
+{
+    HV *hv = (HV *)sv_2mortal((SV *)newHV());
+
+    g_hash_table_foreach(hash, foreach_fn_gslist, hv);
+
+    return newRV((SV *)hv);
+}

@@ -544,11 +544,12 @@ static void try_set_blocksize(Device * device, guint blocksize,
 /* A GHFunc (callback for g_hash_table_foreach) */
 static void set_device_property(gpointer key_p, gpointer value_p,
                                    gpointer user_data_p) {
-    char * property_s = key_p;
-    char * value_s = value_p;
+    char   * property_s = key_p;
+    GSList * value_s = value_p;
     Device * device = user_data_p;
     const DevicePropertyBase* property_base;
     GValue property_value;
+    char   * value;
 
     g_return_if_fail(IS_DEVICE(device));
     g_return_if_fail(property_s != NULL);
@@ -560,14 +561,20 @@ static void set_device_property(gpointer key_p, gpointer value_p,
         g_fprintf(stderr, _("Unknown device property name %s.\n"), property_s);
         return;
     }
+    if (g_slist_length(value_s) > 1) {
+	g_fprintf(stderr,
+		  _("Multiple value for property name %s.\n"), property_s);
+	return;
+    }
     
     bzero(&property_value, sizeof(property_value));
     g_value_init(&property_value, property_base->type);
-    if (!g_value_set_from_string(&property_value, value_s)) {
+    value = value_s->data;
+    if (!g_value_set_from_string(&property_value, value)) {
         /* Value type could not be interpreted. */
         g_fprintf(stderr,
                 _("Could not parse property value %s for property type %s.\n"),
-                value_s, g_type_name(property_base->type));
+                value, g_type_name(property_base->type));
         return;
     } else {
         g_assert (G_VALUE_HOLDS(&property_value, property_base->type));
@@ -576,7 +583,7 @@ static void set_device_property(gpointer key_p, gpointer value_p,
     if (!device_property_set(device, property_base->ID, &property_value)) {
         /* Device rejects property. */
         g_fprintf(stderr, _("Could not set property %s to %s on device %s.\n"),
-                property_base->name, value_s, device->device_name);
+                property_base->name, value, device->device_name);
         return;
     }
 }

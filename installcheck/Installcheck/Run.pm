@@ -92,7 +92,7 @@ holding disk, with a chunksize of 1M (to help exercise the chunker).
 =head2 DISKLIST
 
 The disklist has a single entry:
-  localhost /path/to/build/gnulib installcheck-test
+  localhost /path/to/build/common-src installcheck-test
 
 The C<installcheck-test> dumptype specifies
   auth "local"
@@ -122,11 +122,11 @@ require Exporter;
 our $stdout = '';
 our $stderr = '';
 
-# diskname is gnulib, which, when full of object files, is about 2M in
+# diskname is common-src, which, when full of object files, is about 7M in
 # my environment.  Consider creating a directory full of a configurable amount
 # of junk and pointing to that, to eliminate a potential point of variation in
 # tests.
-our $diskname = abs_path(getcwd() . "/../gnulib");
+our $diskname = abs_path(getcwd() . "/../common-src");
 
 # common paths
 my $taperoot = "$AMANDA_TMPDIR/installcheck-vtapes";

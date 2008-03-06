@@ -428,11 +428,22 @@ dumper_cmd(
 	    g_snprintf(number, SIZEOF(number), "%d", sched(dp)->level);
 	    g_snprintf(numberport, SIZEOF(numberport), "%d", dumper->output_port);
 	    features = am_feature_to_string(dp->host->features);
-	    o = optionstr(dp, dp->host->features, NULL);
+	    if (am_has_feature(dp->host->features, fe_req_xml)) {
+		o = xml_optionstr(dp, dp->host->features, NULL);
+		if (dp->application) {
+		    char *app = xml_application(dp->application);
+		    vstrextend(&o, app, NULL);
+		    amfree(app);
+		}
+		o = quote_string(o);
+	    } else {
+		o = optionstr(dp, dp->host->features, NULL);
+	    }
 	    if ( o == NULL ) {
 	      error(_("problem with option string, check the dumptype definition.\n"));
 	    }
-	      
+
+	    dbprintf("security_driver %s\n", dp->security_driver);
 	    cmdline = vstralloc(cmdstr[cmd],
 			    " ", disk2serial(dp),
 			    " ", numberport,
@@ -442,10 +453,11 @@ dumper_cmd(
 			    " ", device,
 			    " ", number,
 			    " ", sched(dp)->dumpdate,
-			    " ", dp->program,
+			    " ", dp->program && strcmp(dp->program,"APPLICATION")!=0 ? dp->program: application_get_plugin(dp->application),
 			    " ", dp->amandad_path,
 			    " ", dp->client_username,
 			    " ", dp->ssh_keys,
+			    " ", dp->security_driver,
 			    " |", o,
 			    "\n", NULL);
 	    amfree(features);

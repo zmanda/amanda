@@ -38,6 +38,8 @@ With --list, <paramname> can be one of
   dumptype
   interface
   holdingdisk
+  application-tool
+  script-tool
 EOF
     exit(1);
 }
@@ -69,6 +71,7 @@ my %build_info = (
     'amanda_tmpdir' => $AMANDA_TMPDIR,
     'config_dir' => $CONFIG_DIR,
     'amanda_dbgdir' => $AMANDA_DBGDIR,
+    'application_dir' => $APPLICATION_DIR,
     'gnutar_listed_incremental_dir' => $GNUTAR_LISTED_INCREMENTAL_DIR,
     'listed_inc_dir' => $GNUTAR_LISTED_INCREMENTAL_DIR, # (historical alias)
 

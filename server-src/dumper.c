@@ -45,6 +45,7 @@
 #include "server_util.h"
 #include "util.h"
 #include "timestamp.h"
+#include "amxml.h"
 
 #define dumper_debug(i,x) do {		\
 	if ((i) <= debug_dumper) {	\
@@ -95,13 +96,14 @@ static FILE *errf = NULL;
 static char *hostname = NULL;
 am_feature_t *their_features = NULL;
 static char *diskname = NULL;
-static char *qdiskname = NULL;
-static char *device = NULL;
+static char *qdiskname = NULL, *b64disk;
+static char *device = NULL, *b64device;
 static char *options = NULL;
 static char *progname = NULL;
 static char *amandad_path=NULL;
 static char *client_username=NULL;
 static char *ssh_keys=NULL;
+static char *auth=NULL;
 static int level;
 static char *dumpdate = NULL;
 static char *dumper_timestamp = NULL;
@@ -131,6 +133,7 @@ static char *our_feature_string = NULL;
 int		main(int, char **);
 static int	do_dump(struct databuf *);
 static void	check_options(char *);
+static void     xml_check_options(char *optionstr);
 static void	finish_tapeheader(dumpfile_t *);
 static ssize_t	write_tapeheader(int, dumpfile_t *);
 static void	databuf_init(struct databuf *, int);
@@ -149,7 +152,8 @@ static int	runencrypt(int, pid_t *,  encrypt_t);
 static void	sendbackup_response(void *, pkt_t *, security_handle_t *);
 static int	startup_dump(const char *, const char *, const char *, int,
 			const char *, const char *, const char *,
-			const char *, const char *, const char *);
+			const char *, const char *, const char *,
+			const char *);
 static void	stop_dump(void);
 
 static void	read_indexfd(void *, void *, ssize_t);
@@ -170,7 +174,7 @@ check_options(
   char *decryptend = NULL;
 
     /* parse the compression option */
-  if (strstr(options, "srvcomp-best;") != NULL) 
+    if (strstr(options, "srvcomp-best;") != NULL) 
       srvcompress = COMP_BEST;
     else if (strstr(options, "srvcomp-fast;") != NULL)
       srvcompress = COMP_FAST;
@@ -237,6 +241,51 @@ check_options(
 	dumper_kencrypt = KENCRYPT_WILL_DO;
     } else {
 	dumper_kencrypt = KENCRYPT_NONE;
+    }
+}
+
+
+static void
+xml_check_options(
+    char *optionstr)
+{
+    char *o, *oo;
+    char *errmsg = NULL;
+    dle_t *dle;
+
+    char *uoptionstr = unquote_string(optionstr);
+    o = oo = vstralloc("<dle>", strchr(uoptionstr,'<'), "</dle>", NULL);
+  
+
+    dle = amxml_parse_node_CHAR(o, &errmsg);
+    if (dle == NULL) {
+	error("amxml_parse_node_CHAR failed: %s\n", errmsg);
+    }
+
+    if (dle->compress == COMP_SERVER_FAST) {
+	srvcompress = COMP_FAST;
+    } else if (dle->compress == COMP_SERVER_BEST) {
+	srvcompress = COMP_BEST;
+    } else if (dle->compress == COMP_SERVER_CUST) {
+	srvcompress = COMP_SERVER_CUST;
+	srvcompprog = dle->compprog;
+    } else if (dle->compress == COMP_CUST) {
+	srvcompress = COMP_CUST;
+	srvcompprog = dle->compprog;
+    } else {
+	srvcompress = COMP_NONE;
+    }
+
+    if (dle->encrypt == ENCRYPT_CUST) {
+	srvencrypt = ENCRYPT_CUST;
+	clnt_encrypt = dle->clnt_encrypt;
+	clnt_decrypt_opt = dle->clnt_decrypt_opt;
+    } else if (dle->encrypt == ENCRYPT_SERV_CUST) {
+	srvencrypt = ENCRYPT_SERV_CUST;
+	srv_encrypt = dle->srv_encrypt;
+	srv_decrypt_opt = dle->srv_decrypt_opt;
+    } else {
+	srvencrypt = ENCRYPT_NONE;
     }
 }
 
@@ -345,6 +394,7 @@ main(
 	     *   amandad_path
 	     *   client_username
 	     *   ssh_keys
+	     *   security_driver
 	     *   options
 	     */
 	    cmdargs.argc++;			/* true count of args */
@@ -383,12 +433,14 @@ main(
 	    if (diskname != NULL)
 		amfree(diskname);
 	    diskname = unquote_string(qdiskname);
+	    b64disk = amxml_format_tag("disk", diskname);
 
 	    if(a >= cmdargs.argc) {
 		error(_("error [dumper PORT-DUMP: not enough args: device]"));
 		/*NOTREACHED*/
 	    }
 	    device = newstralloc(device, cmdargs.argv[a++]);
+	    b64device = amxml_format_tag("diskdevice", device);
 	    if(strcmp(device,"NODEVICE") == 0)
 		amfree(device);
 
@@ -425,6 +477,11 @@ main(
 		error(_("error [dumper PORT-DUMP: not enough args: ssh_keys]"));
 	    }
 	    ssh_keys = newstralloc(ssh_keys, cmdargs.argv[a++]);
+
+	    if(a >= cmdargs.argc) {
+		error(_("error [dumper PORT-DUMP: not enough args: auth]"));
+	    }
+	    auth = newstralloc(auth, cmdargs.argv[a++]);
 
 	    if(a >= cmdargs.argc) {
 		error(_("error [dumper PORT-DUMP: not enough args: options]"));
@@ -467,7 +524,10 @@ main(
 	    }
 	    databuf_init(&db, outfd);
 
-	    check_options(options);
+	    if (am_has_feature(their_features, fe_req_xml))
+		xml_check_options(options);
+	    else
+		check_options(options);
 
 	    rc = startup_dump(hostname,
 			      diskname,
@@ -478,6 +538,7 @@ main(
 			      amandad_path,
 			      client_username,
 			      ssh_keys,
+			      auth,
 			      options);
 	    if (rc != 0) {
 		q = squote(errstr);
@@ -661,7 +722,7 @@ parse_info_line(
 	size_t len;
     } fields[] = {
 	{ "BACKUP", file.program, SIZEOF(file.program) },
-	{ "DUMPER", file.dumper, SIZEOF(file.dumper) },
+	{ "APPLICATION", file.application, SIZEOF(file.application) },
 	{ "RECOVER_CMD", file.recover_cmd, SIZEOF(file.recover_cmd) },
 	{ "COMPRESS_SUFFIX", file.comp_suffix, SIZEOF(file.comp_suffix) },
 	{ "SERVER_CUSTOM_COMPRESS", file.srvcompprog, SIZEOF(file.srvcompprog) },
@@ -1100,6 +1161,16 @@ do_dump(
     dumpsize -= headersize;		/* don't count the header */
     if (dumpsize <= (off_t)0) {
 	dumpsize = (off_t)0;
+	dump_result = max(dump_result, 2);
+	if (!errstr) errstr = stralloc(_("got no data"));
+    }
+
+    if (!ISSET(status, HEADER_DONE)) {
+	dump_result = max(dump_result, 2);
+	if (!errstr) errstr = stralloc(_("got no header information"));
+    }
+
+    if (dumpsize == 0) {
 	dump_result = max(dump_result, 2);
 	if (!errstr) errstr = stralloc(_("got no data"));
     }
@@ -1857,14 +1928,15 @@ startup_dump(
     const char *amandad_path,
     const char *client_username,
     const char *ssh_keys,
+    const char *auth,
     const char *options)
 {
     char level_string[NUM_STR_SIZE];
     char *req = NULL;
-    char *authopt, *endauthopt, authoptbuf[80];
+    char *authopt;
     int response_error;
     const security_driver_t *secdrv;
-    char *backup_api;
+    char *application_api;
     int has_features;
     int has_hostname;
     int has_device;
@@ -1874,6 +1946,7 @@ startup_dump(
     (void)amandad_path;		/* Quiet unused parameter warning */
     (void)client_username;	/* Quiet unused parameter warning */
     (void)ssh_keys;		/* Quiet unused parameter warning */
+    (void)auth;			/* Quiet unused parameter warning */
 
     has_features = am_has_feature(their_features, fe_req_options_features);
     has_hostname = am_has_feature(their_features, fe_req_options_hostname);
@@ -1886,28 +1959,13 @@ startup_dump(
      * Options really need to be pre-parsed into some sort of structure
      * much earlier, and then flattened out again before transmission.
      */
-    authopt = strstr(options, "auth=");
-    if (authopt == NULL) {
-	authopt = "BSD";
-    } else {
-	endauthopt = strchr(authopt, ';');
-	if ((endauthopt == NULL) ||
-	  ((sizeof(authoptbuf) - 1) < (size_t)(endauthopt - authopt))) {
-	    authopt = "BSD";
-	} else {
-	    authopt += strlen("auth=");
-	    strncpy(authoptbuf, authopt, (size_t)(endauthopt - authopt));
-	    authoptbuf[endauthopt - authopt] = '\0';
-	    authopt = authoptbuf;
-	}
-    }
 
     g_snprintf(level_string, SIZEOF(level_string), "%d", level);
     if(strcmp(progname, "DUMP") == 0
        || strcmp(progname, "GNUTAR") == 0) {
-	backup_api = "";
+	application_api = "";
     } else {
-	backup_api = "BACKUP ";
+	application_api = "BACKUP ";
     }
     req = vstralloc("SERVICE sendbackup\n",
 		    "OPTIONS ",
@@ -1921,22 +1979,49 @@ startup_dump(
 		    has_config   ? get_config_name() : "",
 		    has_config   ? ";" : "",
 		    "\n",
-		    backup_api, progname,
-		    " ", qdiskname,
-		    " ", device && has_device ? device : "",
-		    " ", level_string,
-		    " ", dumpdate,
-		    " OPTIONS ", options,
-		    /* compat: if auth=krb4, send krb4-auth */
-		    (strcasecmp(authopt, "krb4") ? "" : "krb4-auth"),
-		    "\n",
 		    NULL);
 
+    if (am_has_feature(their_features, fe_req_xml)) {
+	char *o;
+	o = unquote_string(options+1);
+	vstrextend(&req, "<dle>\n", NULL);
+	if (*application_api != '\0') {
+	    vstrextend(&req, "  <program>APPLICATION</program>\n", NULL);
+	} else {
+	    vstrextend(&req, "  <program>", progname, "</program>\n", NULL);
+	}
+	vstrextend(&req, "  ", b64disk, "\n", NULL);
+	if (device && has_device) {
+	    vstrextend(&req, "  ", b64device, "\n",
+		       NULL);
+	}
+	vstrextend(&req, "  <level>", level_string, "</level>\n", NULL);
+	vstrextend(&req, "  <dumpdate>", dumpdate, "</dumpdate>\n", NULL);
+	vstrextend(&req, o, "</dle>\n", NULL);
+	amfree(o);
+    } else {
+	authopt = strstr(options, "auth=");
+	if (auth == NULL) {
+	    auth = "BSD";
+	}
+	vstrextend(&req,
+		   application_api, progname,
+		   " ", qdiskname,
+		   " ", device && has_device ? device : "",
+		   " ", level_string,
+		   " ", dumpdate,
+		   " OPTIONS ", options,
+		   /* compat: if authopt=krb4, send krb4-auth */
+		   (strcasecmp(authopt, "krb4") ? "" : "krb4-auth"),
+		   "\n",
+		   NULL);
+    }
+
     dbprintf(_("send request:\n----\n%s\n----\n\n"), req);
-    secdrv = security_getdriver(authopt);
+    secdrv = security_getdriver(auth);
     if (secdrv == NULL) {
 	errstr = newvstrallocf(errstr,
-		_("[could not find security driver '%s']"), authopt);
+		_("[could not find security driver '%s']"), auth);
 	amfree(req);
 	return 2;
     }

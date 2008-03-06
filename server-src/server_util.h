@@ -73,4 +73,12 @@ int dumper_cmd(struct dumper_s *dumper, cmd_t cmd, struct disk_s *dp);
 char *amhost_get_security_conf(char *string, void *arg);
 int check_infofile(char *infodir, disklist_t *dl, char **errmsg);
 
+void run_server_script(pp_script_t  *pp_script,
+		       execute_on_t  execute_on,
+		       char         *config,
+		       disk_t       *dp);
+void run_server_scripts(execute_on_t  execute_on,
+			char         *config,
+			disk_t       *dp);
+
 #endif	/* SERVER_UTIL_H */
