@@ -1,4 +1,7 @@
 2008-03-06  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/Makefile.am: dest=$(amlibexecdir).
+
+2008-03-06  Jean-Louis Martineau <martineau@zmanda.com>
 	* changer-src/Makefile.am: Rename SCRIPTSDATA to SCRIPTS_INCLUDE,
 				   Add chg-lib.sh.in to EXTRA_DIST.
 	* dumper-src/Makefile.am: Rename SCRIPTSDATA to SCRIPTS_INCLUDE,
