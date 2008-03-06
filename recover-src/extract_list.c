@@ -1755,7 +1755,7 @@ extract_files_child(
 
     if (file.program != NULL) {
 	if (strcmp(file.program, "BACKUP") == 0)
-	    dumptype = IS_BACKUP_API;
+	    dumptype = IS_APPLICATION_API;
 #ifdef GNUTAR
 	if (strcmp(file.program, GNUTAR) == 0)
 	    dumptype = IS_GNUTAR;
@@ -1886,7 +1886,7 @@ extract_files_child(
     for (i = 0, fn = elist->files; i < files_off_tape; i++, fn = fn->next)
     {
 	switch (dumptype) {
-    	case IS_BACKUP_API:
+    	case IS_APPLICATION_API:
     	case IS_TAR:
     	case IS_GNUTAR:
     	case IS_SAMBA_TAR:
