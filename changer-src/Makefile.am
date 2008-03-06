@@ -46,12 +46,13 @@ SCRIPTS_SHELL = \
 		chg-mcutil \
 		chg-disk
 
-SCRIPTSDATA = \
+SCRIPTS_INCLUDE = \
 		chg-lib.sh
 
-amlibexec_SCRIPTS = $(SCRIPTS_PERL) $(SCRIPTS_SHELL)
+EXTRA_DIST += chg-lib.sh.in
 
-amlibexec_DATA = $(SCRIPTSDATA)
+amlibexec_SCRIPTS = $(SCRIPTS_PERL) $(SCRIPTS_SHELL)
+amlibexec_DATA = $(SCRIPTS_INCLUDE)
 
 ###
 # Because libamanda includes routines (e.g. regex) provided by some system

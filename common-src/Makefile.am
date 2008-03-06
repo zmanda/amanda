@@ -226,18 +226,22 @@ sbin_SCRIPTS_SHELL = \
 
 amlibexec_SCRIPTS_PERL = 
 
-amlibexec_SCRIPTS_SHELL = \
+SCRIPTS_INCLUDE = \
 	    amanda-sh-lib.sh
+
+EXTRA_DIST += amanda-sh-lib.sh.in
 
 CHECK_PERL = $(sbin_SCRIPTS_PERL) $(amlibexec_SCRIPTS_PERL)
 SCRIPTS_PERL = $(CHECK_PERL)
 SCRIPTS_SHELL = $(sbin_SCRIPTS_SHELL) $(amlibexec_SCRIPTS_SHELL)
+amlibexec_DATA = $(SCRIPTS_INCLUDE)
 amlibexec_SCRIPTS = $(amlibexec_SCRIPTS_PERL) $(amlibexec_SCRIPTS_SHELL)
 sbin_SCRIPTS = $(sbin_SCRIPTS_PERL) $(sbin_SCRIPTS_SHELL)
 
 # installation
 
-INSTALLPERMS_data = dest=$(sbindir) chown=amanda $(sbin_SCRIPTS)
+INSTALLPERMS_data = dest=$(sbindir) chown=amanda $(sbin_SCRIPTS) \
+		    dest=$(amlibexec) chown=amanda $(amlibexec_SCRIPTS) $(amlibexec_DATA)
 
 lint:
 	@echo $(LINT) $(libamanda_la_SOURCES)

@@ -14,13 +14,14 @@ AM_LDFLAGS = $(AMANDA_STATIC_LDFLAGS)
 SCRIPTS_PERL = \
 	    amgtar
 
-SCRIPTSDATA = \
+SCRIPTS_INCLUDE = \
 	    generic-dumper
+EXTRA_DIST += generic-dumper.pl
 
-CHECK_PERL = $(SCRIPTS_PERL) $(SCRIPTSDATA)
+CHECK_PERL = $(SCRIPTS_PERL) $(SCRIPTS_INCLUDE)
 
 dumperdir = $(DUMPER_DIR)
 dumper_SCRIPTS = $(SCRIPTS_PERL)
-dumper_DATA = $(SCRIPTSDATA)
+dumper_DATA = $(SCRIPTS_INCLUDE)
 
 INSTALLPERMS_data = dest=$(dumperdir) chown=amanda $(dumper_SCRIPTS) $(dumper_DATA)

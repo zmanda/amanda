@@ -1,3 +1,11 @@
+2008-03-06  Jean-Louis Martineau <martineau@zmanda.com>
+	* changer-src/Makefile.am: Rename SCRIPTSDATA to SCRIPTS_INCLUDE,
+				   Add chg-lib.sh.in to EXTRA_DIST.
+	* dumper-src/Makefile.am: Rename SCRIPTSDATA to SCRIPTS_INCLUDE,
+				  Add generic-dumper.pl to EXTRA_DIST.
+	* common-src/Makefile.am: Add amanda-sh-lib.sh to SCRIPTS_INCLUDE,
+				  Add amanda-sh-lib.sh.in to EXTRA_DIST.
+
 2008-03-05  Jean-Louis Martineau <martineau@zmanda.com>
 	* changer-src/Makefile.am: Move chg-lib.sh to SCRIPTSDATA.
 	* dumper-src/Makefile.am: Move generic-dumper to SCRIPTSDATA.
