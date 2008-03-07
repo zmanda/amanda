@@ -1,3 +1,7 @@
+2008-03-07  Dan Locks <dwlocks@zmanda.com>
+	* packaging/rpm/buildpkg:  Simplified usage of packaging script by
+	  creating a tarball from existing source.
+
 2008-03-06  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/Installcheck/Run.pm: merge from application-api.
 	* installcheck/Installcheck/Config.pm: merge from application-api.

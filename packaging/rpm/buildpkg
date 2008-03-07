@@ -1,5 +1,26 @@
 #!/bin/bash
-# Buildpkg script for producing RPM packages. Does not require root access.
+
+# Buildpkg script for producing RPM packages. (Does not require root access.)
+# Buildpkg is designed to be used by both buildbot (to automate rpm production)
+# and by J Random User (to build an rpm for kicks).  The odd way of handling
+# all optioins through environment variables is a product of buildbot.
+#
+# AMVER: the version of amanda we're working on.  This will become part of the
+#     rpm name.  AMVER must line up with the version number mentioned in the
+#     .spec file.
+# AMTARBALL: the name of the tarball which contains the source code.  it must
+#     unpack into a directory named AMVER.  It's easiest and safest to just 
+#     let the script create a new one for you, even if it's a bit more overhead
+# AMPKGDIR: Rpmbuild expects absolute paths, so we provide this var.  It also
+#     allows you to build somewhere other than `pwd`.  You probably don't want
+#     to use the system-wide location, as the script tries to blow these
+#     directories away.
+# 
+# Other Hints:
+# Not everyone will want to use the ./configure options we provide.  The
+# easiest way to change them is by editing the .spec file.  This isn't so
+# easy, unfortunately.  Look at the %build section, and the %define xxxx 
+# statements immediately above it. good luck.
 
 # This is useful for debugging
 set -x
@@ -8,10 +29,20 @@ set -x
 if [ -z $AMVER ]; then
     AMVER=amanda-2.6.1alpha
 fi
-# Check for AMTARBALL.
+
+# Check for AMTARBALL variable.
 if [ -z $AMTARBALL ]; then 
     AMTARBALL=$AMVER.tar.gz
 fi
+
+# Check for AMTARBALL file, if it's not there, create it.
+if [ ! -f ${AMTARBALL} ]; then
+    mkdir ${AMVER}
+    cp -R * ${AMVER}/
+    tar -cvf ${AMTARBALL} -z ${AMVER}
+    rf -rf ${AMVER}
+fi
+
 # Check for the packaging dirs.
 if [ -z $AMPKGDIR ]; then
     AMPKGDIR=${PWD}
@@ -33,9 +64,7 @@ mkdir rpm/RPMS
 
 # Make a copy of the tarball with the name that rpmbuild expects
 cp ${AMTARBALL} rpm/SOURCES/${AMVER}.tar.gz
-tar -xzvf ${AMTARBALL} ${AMVER}/packaging/rpm/amanda.spec 
-mv ${AMVER}/packaging/rpm/amanda.spec rpm/SPECS
-rm -rf ${AMVER}
+cp packaging/rpm/amanda.spec rpm/SPECS
 # Rpmbuild requires absolute paths.  annoying.  If you need to change the 
 # default value of some rpm.spec variable, just pass extra --define options.
 # this is useful for changing %amanda_release or %amanda_version
