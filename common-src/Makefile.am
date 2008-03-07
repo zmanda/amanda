@@ -260,3 +260,6 @@ listlibsrc:
 %.test.c: $(srcdir)/%.c
 	echo '#define TEST' >$@
 	echo '#include "$<"' >>$@
+
+distclean-local:
+	if test "$(srcdir)" != "$(builddir)"; then rm -f svn-info.h; fi

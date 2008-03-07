@@ -89,7 +89,7 @@
 CLEANFILES += config.log
 
 # and we'll need to clean up our generated files for distclean
-DISTCLEANFILES += $(SCRIPTS_SHELL) $(SCRIPTS_PERL) $(SCRIPTS_AWK)
+DISTCLEANFILES += $(SCRIPTS_SHELL) $(SCRIPTS_PERL) $(SCRIPTS_AWK) $(SCRIPTS_INCLUDE)
 
 # syntax-check perl scripts on 'make check'
 check-perl: $(CHECK_PERL)

@@ -1,6 +1,7 @@
 ## Process this file with automake to produce Makefile.in
 AUTOMAKE_OPTIONS = 1.4 foreign
 
+include $(top_srcdir)/config/automake/vars.am
 include $(top_srcdir)/config/automake/installperms.am
 
 ACLOCAL_AMFLAGS = --force -I . -I config -I config/gettext-macros -I config/gnulib -I config/amanda -I config/macro-archive
@@ -48,7 +49,7 @@ pkgdata_DATA = \
 	NEWS		\
 	ChangeLog
 
-EXTRA_DIST = $(SNAPSHOT_STAMP) \
+EXTRA_DIST += $(SNAPSHOT_STAMP) \
 	$(pkgdata_DATA)			\
         autogen 			\
 	contrib/README			\
@@ -106,4 +107,4 @@ dist-hook:
 
 # ensure that configure gets the right arguments for distcheck; this keeps the
 # user/group through to the distcheck, rather than defaulting back to 'amanda'.
-DISTCHECK_CONFIGURE_FLAGS = --with-user=$(CLIENT_LOGIN) --with-group=$(SETUID_GROUP) --with-owner=$(BINARY_OWNER) --disable-installperms --without-force-uid --with-tmpdir=$(AMANDA_TMPDIR) SINGLE_USERID=yes
+DISTCHECK_CONFIGURE_FLAGS = --with-user=$(CLIENT_LOGIN) --with-group=$(SETUID_GROUP) --with-owner=$(BINARY_OWNER) --disable-installperms --without-amperldir --without-force-uid --with-tmpdir=$(AMANDA_TMPDIR) SINGLE_USERID=yes CLOBBER_MY_CONFIG=OK

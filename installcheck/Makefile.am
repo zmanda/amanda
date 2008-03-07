@@ -4,6 +4,9 @@
 include $(top_srcdir)/config/automake/vars.am
 include $(top_srcdir)/config/automake/scripts.am
 
+#set CLOBBER_MY_CONFIG with the 'configure CLOBBER_MY_CONFIG=' value
+CLOBBER_MY_CONFIG=@CLOBBER_MY_CONFIG@
+
 # Add your tests here.
 
 common_tests = \
@@ -54,8 +57,13 @@ clobber_my_config_is_ok:
 
 installcheck-local: clobber_my_config_is_ok $(SCRIPTS_PERL)
 	$(mkdir_p) $(AMANDA_TMPDIR)
+	if test -f "$(CONFIG_DIR)/amanda-client.conf" -a ! -f "$(CONFIG_DIR)/amanda-client.conf.install-backup"; then \
+	    cp "$(CONFIG_DIR)/amanda-client.conf" "$(CONFIG_DIR)/amanda-client.conf.install-backup"; \
+	fi 
 	$(PERL) -I$(srcdir) -I$(builddir) -e 'use Test::Harness qw(&runtests); runtests(@ARGV);' $(tests)
 	rm -rf "$(CONFIG_DIR)/TESTCONF"
-	rm -rf "$(CONFIG_DIR)/amanda-client.conf"
-	rm -rf "$(DEFAULT_AMANDATES_FILE)"
-	rm -rf "$(GNUTAR_LISTED_INCREMENTAL_DIR)"
+	if test -f "$(CONFIG_DIR)/amanda-client.conf.install-backup"; then \
+	    mv -f "$(CONFIG_DIR)/amanda-client.conf.install-backup" "$(CONFIG_DIR)/amanda-client.conf"; \
+	fi
+	rm -rf "$(AMANDA_TMPDIR)/TESTCONF/amandates"
+	rm -rf "$(AMANDA_TMPDIR)/TESTCONF/gnutar_listdir"

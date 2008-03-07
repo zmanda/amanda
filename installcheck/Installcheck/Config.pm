@@ -209,16 +209,18 @@ sub write {
     mkpath($self->{'infofile'}) or die("Could not create infofile directory");
     mkpath($self->{'logdir'}) or die("Could not create logdir directory");
     mkpath($self->{'indexdir'}) or die("Could not create indexdir directory");
-    if (! -d $GNUTAR_LISTED_INCREMENTAL_DIR) {
-	mkpath($GNUTAR_LISTED_INCREMENTAL_DIR)
-	    or die("Could not create '$GNUTAR_LISTED_INCREMENTAL_DIR'");
+    my $amandates = $AMANDA_TMPDIR . "/TESTCONF/amandates";
+    my $gnutar_listdir = $AMANDA_TMPDIR . "/TESTCONF/gnutar_listdir";
+    if (! -d $gnutar_listdir) {
+	mkpath($gnutar_listdir)
+	    or die("Could not create '$gnutar_listdir'");
     }
 
     $self->_write_tapelist("$testconf_dir/tapelist");
     $self->_write_disklist("$testconf_dir/disklist");
     $self->_write_amanda_conf("$testconf_dir/amanda.conf");
-    $self->_write_amandates($Amanda::Constants::DEFAULT_AMANDATES_FILE);
-    $self->_write_amanda_client_conf("$CONFIG_DIR/amanda-client.conf");
+    $self->_write_amandates($amandates);
+    $self->_write_amanda_client_conf("$CONFIG_DIR/amanda-client.conf", $amandates, $gnutar_listdir);
 }
 
 sub _write_tapelist {
@@ -308,10 +310,12 @@ sub _write_amandates {
 
 sub _write_amanda_client_conf {
     my $self = shift;
-    my ($filename) = @_;
+    my ($filename, $amandates, $gnutar_listdir) = @_;
 
     # just an empty file for now
     open(my $amanda_client_conf, ">", $filename) or die("Could not write to '$filename'");
+    print $amanda_client_conf "amandates \"$amandates\"\n";
+    print $amanda_client_conf "gnutar_list_dir \"$gnutar_listdir\"\n";
     close($amanda_client_conf);
 }
 

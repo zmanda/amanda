@@ -64,9 +64,10 @@ do_file=pa="$(DESTDIR)$$dest"/`echo "$$cmd"|sed '$(strip_leading_dirs)'|sed '$(t
 	chmod "$$chmod" "$$pa" || exit 1; \
     fi 
 else
-installperms_sh="$(top_srcdir)/installperms.sh"
+installperms_sh="$(top_builddir)/installperms.sh"
 do_file=pa="$$dest"/`echo "$$cmd"|sed '$(strip_leading_dirs)'|sed '$(transform)'`; \
     echo "installperm \"$$chown\" \"$$chmod\" \"$$pa\"" >> "$(installperms_sh)"
+DISTCLEANFILES += $(installperms_sh)
 endif
 
 installperms-exec:

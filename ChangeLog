@@ -1,3 +1,19 @@
+2008-03-07  Jean-Louis Martineau <martineau@zmanda.com>
+	* oldrecover-src/Makefile.am, example/Makefile.am,
+	  amandad-src/Makefile.am, recover-src/Makefile.am,
+	  restore-src/Makefile.am, Makefile.am: Include config/automake/vars.am.
+	* installcheck/Amanda_Config.pl: Check config_filename.
+	* installcheck/Installcheck/Config.pm: Use local amandates and
+					       gnutar_listdir.
+	* installcheck/Makefile.am: Take a copy of amanda-client.conf
+	* config/amanda/defaults.m4: AC_SUBST(CLOBBER_MY_CONFIG)
+	* config/automake/scripts.am: DISTCLEANFILES += $(SCRIPTS_INCLUDE)
+	* config/automake/installperms.am: installperms.sh in top_builddir,
+					   DISTCLEANFILES += $(installperms_sh)
+	* Makefile.am: add '--without-amperldir CLOBBER_MY_CONFIG=OK' to
+		       DISTCHECK_CONFIGURE_FLAGS.
+	* common-src/Makefile.am: distclean-local: remove svn-info.h.
+
 2008-03-07  Dan Locks <dwlocks@zmanda.com>
 	* packaging/rpm/buildpkg:  Simplified usage of packaging script by
 	  creating a tarball from existing source.

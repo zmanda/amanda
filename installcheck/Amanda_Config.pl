@@ -343,12 +343,17 @@ if (!$pid) {
     Amanda::Config::dump_configuration();
     exit 1;
 }
-my $dump = join'', <$kid>;
+my $dump_first_line = <$kid>;
+my $dump = join'', $dump_first_line, <$kid>;
 close $kid;
 waitpid $pid, 0;
 
 my $fn = Amanda::Config::get_config_filename();
-like($dump, qr/AMANDA CONFIGURATION FROM FILE "$fn"/,
+my $dump_filename = $dump_first_line;
+chomp $dump_filename;
+$dump_filename =~ s/^# AMANDA CONFIGURATION FROM FILE "//g;
+$dump_filename =~ s/":$//g;
+is($dump_filename, $fn, 
     "config filename is included correctly");
 
 like($dump, qr/DEVICE_PROPERTY\s+"foo" "bar"\n/i,

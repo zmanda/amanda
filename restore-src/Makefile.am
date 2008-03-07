@@ -1,5 +1,6 @@
 # Makefile for Amanda restore programs.
 
+include $(top_srcdir)/config/automake/vars.am
 include $(top_srcdir)/config/automake/installperms.am
 include $(top_srcdir)/config/automake/precompile.am
 
