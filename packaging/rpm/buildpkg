@@ -6,7 +6,7 @@ set -x
 # Buildbot exports some useful env variables.
 # Check for $AMVER.  I couldn't come up with a good way to detect it.
 if [ -z $AMVER ]; then
-    AMVER=amanda-2.6.0b2
+    AMVER=amanda-2.6.0b3
 fi
 # Check for AMTARBALL.
 if [ -z $AMTARBALL ]; then 
