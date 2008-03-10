@@ -254,7 +254,7 @@ main(void)
     gboolean pass = TRUE;
 
 #if defined(G_THREADS_ENABLED) && !defined(G_THREADS_IMPL_NONE)
-    if (!g_thread_supported()) g_thread_init(NULL);
+    amanda_thread_init(NULL);
 
     pass = test_decr_wait() && pass;
     pass = test_wait_empty() && pass;
