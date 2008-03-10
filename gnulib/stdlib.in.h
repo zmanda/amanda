@@ -1,11 +1,11 @@
 /* A GNU-like <stdlib.h>.
 
-   Copyright (C) 1995, 2001-2002, 2006-2007 Free Software Foundation, Inc.
+   Copyright (C) 1995, 2001-2004, 2006-2007 Free Software Foundation, Inc.
 
-   This program is free software; you can redistribute it and/or modify
+   This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 2, or (at your option)
-   any later version.
+   the Free Software Foundation; either version 3 of the License, or
+   (at your option) any later version.
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -13,8 +13,7 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software Foundation,
-   Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.  */
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #if defined __need_malloc_and_calloc
 /* Special invocation convention inside glibc header files.  */
@@ -165,6 +164,38 @@ extern int mkstemp (char * /*template*/);
     (GL_LINK_WARNING ("mkstemp is unportable - " \
                       "use gnulib module mkstemp for portability"), \
      mkstemp (t))
+#endif
+
+
+#if @GNULIB_PUTENV@
+# if @REPLACE_PUTENV@
+#  undef putenv
+#  define putenv rpl_putenv
+extern int putenv (char *string);
+# endif
+#endif
+
+
+#if @GNULIB_SETENV@
+# if !@HAVE_SETENV@
+/* Set NAME to VALUE in the environment.
+   If REPLACE is nonzero, overwrite an existing value.  */
+extern int setenv (const char *name, const char *value, int replace);
+# endif
+#endif
+
+
+#if @GNULIB_UNSETENV@
+# if @HAVE_UNSETENV@
+#  if @VOID_UNSETENV@
+/* On some systems, unsetenv() returns void.
+   This is the case for MacOS X 10.3, FreeBSD 4.8, NetBSD 1.6, OpenBSD 3.4.  */
+#   define unsetenv(name) ((unsetenv)(name), 0)
+#  endif
+# else
+/* Remove the variable NAME from the environment.  */
+extern int unsetenv (const char *name);
+# endif
 #endif
 
 

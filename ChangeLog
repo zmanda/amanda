@@ -1,3 +1,6 @@
+2008-03-10  Jean-Louis Martineau <martineau@zmanda.com>
+	* gnulib: Update to latest version, add getopt module.
+
 2008-03-07  Jean-Louis Martineau <martineau@zmanda.com>
 	* oldrecover-src/Makefile.am, example/Makefile.am,
 	  amandad-src/Makefile.am, recover-src/Makefile.am,

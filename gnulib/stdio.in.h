@@ -1,10 +1,10 @@
 /* A GNU-like <stdio.h>.
 
-   Copyright (C) 2004, 2007 Free Software Foundation, Inc.
+   Copyright (C) 2004, 2007-2008 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 2, or (at your option)
+   the Free Software Foundation; either version 3, or (at your option)
    any later version.
 
    This program is distributed in the hope that it will be useful,
@@ -45,7 +45,7 @@
 
 #ifndef __attribute__
 /* This feature is available in gcc versions 2.5 and later.  */
-# if __GNUC__ < 2 || (__GNUC__ == 2 && __GNUC_MINOR__ < 5) || __STRICT_ANSI__
+# if __GNUC__ < 2 || (__GNUC__ == 2 && __GNUC_MINOR__ < 5)
 #  define __attribute__(Spec) /* empty */
 # endif
 /* The __-protected variants of `format' and `printf' attributes
@@ -212,6 +212,32 @@ extern int vsprintf (char *str, const char *format, va_list args)
 # endif
 #endif
 
+#if @GNULIB_FOPEN@
+# if @REPLACE_FOPEN@
+#  define fopen rpl_fopen
+extern FILE * fopen (const char *filename, const char *mode);
+# endif
+#elif defined GNULIB_POSIXCHECK
+# undef fopen
+# define fopen(f,m) \
+   (GL_LINK_WARNING ("fopen on Win32 platforms is not POSIX compatible - " \
+                     "use gnulib module fopen for portability"), \
+    fopen (f, m))
+#endif
+
+#if @GNULIB_FREOPEN@
+# if @REPLACE_FREOPEN@
+#  define freopen rpl_freopen
+extern FILE * freopen (const char *filename, const char *mode, FILE *stream);
+# endif
+#elif defined GNULIB_POSIXCHECK
+# undef freopen
+# define freopen(f,m,s) \
+   (GL_LINK_WARNING ("freopen on Win32 platforms is not POSIX compatible - " \
+                     "use gnulib module freopen for portability"), \
+    freopen (f, m, s))
+#endif
+
 #if @GNULIB_FSEEKO@
 # if @REPLACE_FSEEKO@
 /* Provide fseek, fseeko functions that are aware of a preceding
@@ -308,12 +334,14 @@ extern long rpl_ftell (FILE *fp);
 
 #if @GNULIB_GETDELIM@
 # if !@HAVE_DECL_GETDELIM@
-  /* Read up to (and including) a DELIMITER from FP into *LINEPTR (and
-     NUL-terminate it).  *LINEPTR is a pointer returned from malloc (or
-     NULL), pointing to *N characters of space.  It is realloc'ed as
-     necessary.  Returns the number of characters read (not including
-     the null terminator), or -1 on error or EOF.  */
-  extern ssize_t getdelim (char **, size_t *, int delim, FILE *);
+/* Read input, up to (and including) the next occurrence of DELIMITER, from
+   STREAM, store it in *LINEPTR (and NUL-terminate it).
+   *LINEPTR is a pointer returned from malloc (or NULL), pointing to *LINESIZE
+   bytes of space.  It is realloc'd as necessary.
+   Return the number of bytes read and stored at *LINEPTR (not including the
+   NUL terminator), or -1 on error or EOF.  */
+extern ssize_t getdelim (char **lineptr, size_t *linesize, int delimiter,
+			 FILE *stream);
 # endif
 #elif defined GNULIB_POSIXCHECK
 # undef getdelim
@@ -329,12 +357,13 @@ extern long rpl_ftell (FILE *fp);
 #  define getline rpl_getline
 # endif
 # if !@HAVE_DECL_GETLINE@ || @REPLACE_GETLINE@
-  /* Read up to (and including) a newline from FP into *LINEPTR (and
-     NUL-terminate it).  *LINEPTR is a pointer returned from malloc (or
-     NULL), pointing to *N characters of space.  It is realloc'ed as
-     necessary.  Returns the number of characters read (not including
-     the null terminator), or -1 on error or EOF.  */
-  extern ssize_t getline (char **, size_t *, FILE *);
+/* Read a line, up to (and including) the next newline, from STREAM, store it
+   in *LINEPTR (and NUL-terminate it).
+   *LINEPTR is a pointer returned from malloc (or NULL), pointing to *LINESIZE
+   bytes of space.  It is realloc'd as necessary.
+   Return the number of bytes read and stored at *LINEPTR (not including the
+   NUL terminator), or -1 on error or EOF.  */
+extern ssize_t getline (char **lineptr, size_t *linesize, FILE *stream);
 # endif
 #elif defined GNULIB_POSIXCHECK
 # undef getline
