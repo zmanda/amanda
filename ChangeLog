@@ -1,4 +1,10 @@
 2008-03-12  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/Makefile.am: Remove CONFIG_CLOBBER_MY_CONFIG,
+				    it is done automaticaly.
+	* config/amanda/defaults.m4: AC_SUBST(CONFIG_CLOBBER_MY_CONFIG) to not
+				     conflict with make CLOBBER_MY_CONFIG.
+
+2008-03-12  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/Makefile.am: Use CONFIG_CLOBBER_MY_CONFIG for Makefile
 				    variable.
 

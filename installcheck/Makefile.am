@@ -4,9 +4,6 @@
 include $(top_srcdir)/config/automake/vars.am
 include $(top_srcdir)/config/automake/scripts.am
 
-#set CONFIG_CLOBBER_MY_CONFIG with the 'configure CLOBBER_MY_CONFIG=' value
-CONFIG_CLOBBER_MY_CONFIG=@CLOBBER_MY_CONFIG@
-
 # Add your tests here.
 
 common_tests = \
