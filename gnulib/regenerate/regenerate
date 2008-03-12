@@ -1,7 +1,10 @@
 #! /bin/bash
 
-# Gnulib files in zmanda repo are from gnulib CVS updated with:
-#   cvs update -D '2007-10-25 17:00:00 -0600'
+# Gnulib files in zmanda repo are from gnulib GIT.  To check out the
+# same version as was used to generate the source in the repository,
+# run the following in your git repository:
+#
+#   git checkout 03400ebfaa064922caf3767d6641d7e1cdc8cd1b
 
 # get to the project root
 cd `dirname $0`/../..
@@ -68,7 +71,7 @@ patch -p0 < "${PATCH_DIR}/getaddrinfo-cygwin.patch" || exit 1
 # the distribution tarball
 (   echo ""
     echo "# Make sure regenerate/* are in the distribution tarball"
-    echo "EXTRA_DIST += "`cd gnulib; find regenerate -name .svn -prune -o -type f -print `
+    echo "EXTRA_DIST += "`cd gnulib; find regenerate -name .svn -prune -o -type f -print | sort`
 ) >> gnulib/Makefile.am
 
 ######################################################################

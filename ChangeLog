@@ -1,3 +1,7 @@
+2008-03-12  Dustin J. Mitchell <dustin@zmanda.com>
+	* gnulib/regenerate/regenerate gnulib/Makefile.am DEVELOPING: update
+	  documentation to reflect use of gnulib's git repository
+
 2008-03-12  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/Makefile.am: Remove CONFIG_CLOBBER_MY_CONFIG,
 				    it is done automaticaly.

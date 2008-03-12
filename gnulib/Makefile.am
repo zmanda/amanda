@@ -707,4 +707,4 @@ mostlyclean-local: mostlyclean-generic
 	:
 
 # Make sure regenerate/* are in the distribution tarball
-EXTRA_DIST += regenerate/no-error.patch regenerate/regenerate regenerate/getaddrinfo-cygwin.patch
+EXTRA_DIST += regenerate/getaddrinfo-cygwin.patch regenerate/no-error.patch regenerate/regenerate
