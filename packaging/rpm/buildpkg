@@ -39,7 +39,7 @@ fi
 if [ ! -f ${AMTARBALL} ]; then
     mkdir ${AMVER}
     cp -R * ${AMVER}/
-    tar -cvf ${AMTARBALL} -z ${AMVER}
+    tar -cf ${AMTARBALL} -z ${AMVER}
     rf -rf ${AMVER}
 fi
 
