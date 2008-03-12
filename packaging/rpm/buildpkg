@@ -8,10 +8,19 @@ set -x
 if [ -z $AMVER ]; then
     AMVER=amanda-2.6.0b3
 fi
-# Check for AMTARBALL.
+# Check for AMTARBALL variable.
 if [ -z $AMTARBALL ]; then 
     AMTARBALL=$AMVER.tar.gz
 fi
+
+# Check for AMTARBALL file, if it's not there, create it.
+if [ ! -f ${AMTARBALL} ]; then
+    mkdir ${AMVER}
+    cp -R * ${AMVER}/
+    tar -cf ${AMTARBALL} -z ${AMVER}
+    rf -rf ${AMVER}
+fi
+
 # Check for the packaging dirs.
 if [ -z $AMPKGDIR ]; then
     AMPKGDIR=${PWD}
@@ -33,9 +42,7 @@ mkdir rpm/RPMS
 
 # Make a copy of the tarball with the name that rpmbuild expects
 cp ${AMTARBALL} rpm/SOURCES/${AMVER}.tar.gz
-tar -xzvf ${AMTARBALL} ${AMVER}/packaging/rpm/amanda.spec 
-mv ${AMVER}/packaging/rpm/amanda.spec rpm/SPECS
-rm -rf ${AMVER}
+cp packaging/rpm/amanda.spec rpm/SPECS/amanda.spec
 # Rpmbuild requires absolute paths.  annoying.  If you need to change the 
 # default value of some rpm.spec variable, just pass extra --define options.
 # this is useful for changing %amanda_release or %amanda_version

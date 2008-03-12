@@ -1,3 +1,9 @@
+2008-03-12  Dan Locks <dwlocks@zmanda.com>
+	* packaging/rpm/buildpkg: made the script quieter, simplified its
+	  usage by creating the required tarball on the fly.
+	* packaging/rpm/amanda.spec: fixed a number of complaints from rpmlint,
+	  added --quiet to the configure invocation
+
 2008-03-10  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/tests/semaphore-test.c,
 	  device-src/tests/vfs_test.c: Call amanda_thread_init(NULL).
