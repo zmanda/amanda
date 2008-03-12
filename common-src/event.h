@@ -112,4 +112,29 @@ void event_wait(event_handle_t *evt);
  */
 void event_loop(int nonblock);
 
+/*
+ * Utility GSources
+ */
+
+/* Create a GSource that will callback when the given file descriptor is in
+ * any of the given conditions.  The callback is a simple GSourceFunc.
+ *
+ * @param fd: the file descriptr
+ * @param events: the conditions (GIOCondition flags)
+ * @return: GSource object
+ */
+GSource * new_fdsource(gint fd, GIOCondition events);
+
+/* Create a GSource that will callback when the given child dies.  The callback
+ * should match ChildWatchFunc.  Once the callback made, it will not be called
+ * again by this source.
+ *
+ * Note: This is provided by glib in later versions, but not in version 2.2.0.
+ * This function and callback is modeled on g_child_watch_source_new.
+ *
+ * @param pid: the process ID @return: GSource object
+ */
+typedef void (*ChildWatchFunc)(pid_t pid, gint status, gpointer data); 
+GSource * new_child_watch_source(pid_t pid);
+
 #endif	/* EVENT_H */

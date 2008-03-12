@@ -541,6 +541,89 @@ test_ev_writefd(void)
     return 1;
 }
 
+/****
+ * Test that a child_watch_source works correctly.
+ */
+
+static gint test_child_watch_result = 0;
+static GMainLoop *test_child_watch_main_loop = NULL;
+
+static void
+test_child_watch_callback(
+    pid_t pid,
+    gint status,
+    gpointer data)
+{
+    static int count = 0;
+    gint expected_pid = GPOINTER_TO_INT(data);
+
+    if (pid != expected_pid
+	    || !WIFEXITED(status)
+	    || WEXITSTATUS(status) != 13)
+	test_child_watch_result = FALSE;
+    else
+	test_child_watch_result = TRUE;
+
+    count++;
+    if(count >= 2)
+	g_main_loop_quit(test_child_watch_main_loop);
+}
+
+static int
+test_child_watch_source(void)
+{
+    int pid, pid2;
+    GSource *src, *src2;
+
+    /* fork off the child we want to watch die */
+    switch (pid = fork()) {
+	case 0: /* child */
+	    exit(13);
+	    break;
+
+	case -1: /* error */
+	    perror("fork");
+	    return 0;
+
+	default: /* parent */
+	    break;
+    }
+
+    /* set up a child watch */
+    src = new_child_watch_source(pid);
+    g_source_set_callback(src, (GSourceFunc)test_child_watch_callback,
+	     GINT_TO_POINTER(pid), NULL);
+    g_source_attach(src, NULL);
+    g_source_unref(src);
+
+    switch (pid2 = fork()) {
+	case 0: /* child */
+	    exit(13);
+	    break;
+
+	case -1: /* error */
+	    perror("fork");
+	    return 0;
+
+	default: /* parent */
+	    break;
+    }
+
+    sleep(1);
+    /* set up a child watch */
+    src2 = new_child_watch_source(pid2);
+    g_source_set_callback(src2, (GSourceFunc)test_child_watch_callback,
+	     GINT_TO_POINTER(pid2), NULL);
+    g_source_attach(src2, NULL);
+    g_source_unref(src2);
+
+    /* let it run */
+    test_child_watch_main_loop = g_main_loop_new(NULL, 1);
+    g_main_loop_run(test_child_watch_main_loop);
+
+    return test_child_watch_result;
+}
+
 /*
  * Main driver
  */
@@ -558,6 +641,8 @@ main(int argc, char **argv)
 	TU_TEST(test_event_wait_2, 10),
 	TU_TEST(test_nonblock, 10),
 	TU_TEST(test_read_timeout, 10),
+	TU_TEST(test_child_watch_source, 5),
+	/* fdsource is used by ev_readfd/ev_writefd, and is sufficiently tested there */
 	TU_END()
     };
 

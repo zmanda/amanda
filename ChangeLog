@@ -1,4 +1,11 @@
 2008-03-12  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/event.c common-src/event.h common-src/event-test.c:
+	  add two new GSources: child_watch_source (sends events when a child
+	  dies) and fdsource (sends events when file descriptors match
+	  conditions).  Thanks to Jean-Louis Martineau for finding and fixing
+	  a race condition.
+
+2008-03-12  Dustin J. Mitchell <dustin@zmanda.com>
 	* gnulib/regenerate/regenerate gnulib/Makefile.am DEVELOPING: update
 	  documentation to reflect use of gnulib's git repository
 

@@ -40,6 +40,7 @@
 #include "amanda.h"
 #include "conffile.h"
 #include "event.h"
+#include "glib-util.h"
 
 /* TODO: use mem chunks to allocate event_handles */
 /* TODO: lock stuff for threading */
@@ -106,75 +107,6 @@ event_handle_callback(
 }
 
 /*
- * FDSource -- a source for a file descriptor
- *
- * We could use Glib's GIOChannel for this, but it adds some buffering
- * and Unicode functionality that we really don't want.  The custom GSource
- * is simple enough anyway, and the Glib documentation describes it in prose.
- */
-
-typedef struct FDSource {
-    GSource source; /* must be the first element in the struct */
-    GPollFD pollfd; /* Our file descriptor */
-} FDSource;
-
-static gboolean
-fdsource_prepare(
-    GSource *source G_GNUC_UNUSED,
-    gint *timeout_)
-{
-    *timeout_ = -1; /* block forever, as far as we're concerned */
-    return FALSE;
-}
-
-static gboolean
-fdsource_check(
-    GSource *source)
-{
-    FDSource *fds = (FDSource *)source;
-
-    /* we need to be dispatched if any interesting events have been received by the FD */
-    return fds->pollfd.events & fds->pollfd.revents;
-}
-
-static gboolean
-fdsource_dispatch(
-    GSource *source G_GNUC_UNUSED,
-    GSourceFunc callback,
-    gpointer user_data)
-{
-    if (callback) callback(user_data);
-
-    /* Never automatically un-queue the event source */
-    return TRUE;
-}
-
-static GSource *
-new_fdsource(gint fd, GIOCondition events)
-{
-    static GSourceFuncs *fdsource_funcs = NULL;
-    GSource *src;
-    FDSource *fds;
-
-    /* initialize these here to avoid a compiler warning */
-    if (!fdsource_funcs) {
-	fdsource_funcs = g_new0(GSourceFuncs, 1);
-	fdsource_funcs->prepare = fdsource_prepare;
-	fdsource_funcs->check = fdsource_check;
-	fdsource_funcs->dispatch = fdsource_dispatch;
-    }
-
-    src = g_source_new(fdsource_funcs, sizeof(FDSource));
-    fds = (FDSource *)src;
-
-    fds->pollfd.fd = fd;
-    fds->pollfd.events = events;
-    g_source_add_poll(src, &fds->pollfd);
-
-    return src;
-}
-
-/*
  * Public functions
  */
 
@@ -234,6 +166,10 @@ event_register(
 	    /* And set its callbacks */
 	    g_source_set_callback(handle->source, event_handle_callback,
 				  (gpointer)handle, NULL);
+
+	    /* drop our reference to it, so when it's detached, it will be
+	     * destroyed. */
+	    g_source_unref(handle->source);
 	    break;
 
 	case EV_TIME:
@@ -447,4 +383,209 @@ event_type2str(
 	if (type == event_types[i].type)
 	    return (event_types[i].name);
     return (_("BOGUS EVENT TYPE"));
+}
+
+/*
+ * FDSource -- a source for a file descriptor
+ *
+ * We could use Glib's GIOChannel for this, but it adds some buffering
+ * and Unicode functionality that we really don't want.  The custom GSource
+ * is simple enough anyway, and the Glib documentation describes it in prose.
+ */
+
+typedef struct FDSource {
+    GSource source; /* must be the first element in the struct */
+    GPollFD pollfd; /* Our file descriptor */
+} FDSource;
+
+static gboolean
+fdsource_prepare(
+    GSource *source G_GNUC_UNUSED,
+    gint *timeout_)
+{
+    *timeout_ = -1; /* block forever, as far as we're concerned */
+    return FALSE;
+}
+
+static gboolean
+fdsource_check(
+    GSource *source)
+{
+    FDSource *fds = (FDSource *)source;
+
+    /* we need to be dispatched if any interesting events have been received by the FD */
+    return fds->pollfd.events & fds->pollfd.revents;
+}
+
+static gboolean
+fdsource_dispatch(
+    GSource *source G_GNUC_UNUSED,
+    GSourceFunc callback,
+    gpointer user_data)
+{
+    if (callback)
+	return callback(user_data);
+
+    /* Don't automatically detach the event source if there's no callback. */
+    return TRUE;
+}
+
+GSource *
+new_fdsource(gint fd, GIOCondition events)
+{
+    static GSourceFuncs *fdsource_funcs = NULL;
+    GSource *src;
+    FDSource *fds;
+
+    /* initialize these here to avoid a compiler warning */
+    if (!fdsource_funcs) {
+	fdsource_funcs = g_new0(GSourceFuncs, 1);
+	fdsource_funcs->prepare = fdsource_prepare;
+	fdsource_funcs->check = fdsource_check;
+	fdsource_funcs->dispatch = fdsource_dispatch;
+    }
+
+    src = g_source_new(fdsource_funcs, sizeof(FDSource));
+    fds = (FDSource *)src;
+
+    fds->pollfd.fd = fd;
+    fds->pollfd.events = events;
+    g_source_add_poll(src, &fds->pollfd);
+
+    return src;
+}
+
+/*
+ * ChildWatchSource -- a source for a file descriptor
+ *
+ * Newer versions of glib provide equivalent functionality; consider
+ * optionally using that, protected by a GLIB_CHECK_VERSION condition.
+ */
+
+typedef struct ChildWatchSource {
+    GSource source; /* must be the first element in the struct */
+
+    pid_t pid;
+
+    gint last_checked; /* value of child_watch_counter before last check */
+
+    gint dead;
+    gint status;
+} ChildWatchSource;
+
+static gint child_watch_counter = 0;
+
+static gboolean
+child_watch_check(
+    ChildWatchSource *cws)
+{
+    if (cws->dead) return TRUE;
+
+    /* have we gotten a sigchld since we last checked? */
+    if (cws->last_checked != child_watch_counter) {
+	cws->last_checked = child_watch_counter;
+
+	/* is it dead? */
+	if (waitpid(cws->pid, &cws->status, WNOHANG) > 0) {
+	    cws->dead = TRUE;
+	}
+    }
+
+    return cws->dead;
+}
+
+static gboolean
+child_watch_source_prepare(
+    GSource *source G_GNUC_UNUSED,
+    gint *timeout_)
+{
+    ChildWatchSource *cws = (ChildWatchSource *)source;
+
+    *timeout_ = -1;
+    return child_watch_check(cws);
+}
+
+static gboolean
+child_watch_source_check(
+    GSource *source)
+{
+    ChildWatchSource *cws = (ChildWatchSource *)source;
+
+    return child_watch_check(cws);
+}
+
+static gboolean
+child_watch_source_dispatch(
+    GSource *source G_GNUC_UNUSED,
+    GSourceFunc callback,
+    gpointer user_data)
+{
+    ChildWatchSource *cws = (ChildWatchSource *)source;
+
+    /* this shouldn't happen, but just in case */
+    if (cws->dead) {
+	if (!callback) {
+	    g_warning("child %d died before callback was registered", cws->pid);
+	    return FALSE;
+	}
+
+	((ChildWatchFunc)callback)(cws->pid, cws->status, user_data);
+
+	/* Un-queue this source unconditionally -- the child can't die twice */
+	return FALSE;
+    }
+
+    return TRUE;
+}
+
+static void
+child_watch_source_sigchld(
+    int signal G_GNUC_UNUSED)
+{
+    /* just increment the counter to indicate something's happened;
+     * this assumes that the signal itself wakes any running poll()
+     * or select() call. */
+    child_watch_counter++;
+}
+
+GSource *
+new_child_watch_source(pid_t pid)
+{
+    static GSourceFuncs *child_watch_source_funcs = NULL;
+    static gboolean sig_handler_installed = FALSE;
+    GSource *src;
+    ChildWatchSource *cws;
+
+    /* initialize these here to avoid a compiler warning */
+    if (!child_watch_source_funcs) {
+	child_watch_source_funcs = g_new0(GSourceFuncs, 1);
+	child_watch_source_funcs->prepare = child_watch_source_prepare;
+	child_watch_source_funcs->check = child_watch_source_check;
+	child_watch_source_funcs->dispatch = child_watch_source_dispatch;
+    }
+
+    src = g_source_new(child_watch_source_funcs, sizeof(ChildWatchSource));
+    cws = (ChildWatchSource *)src;
+
+    cws->pid = pid;
+    /* force a check in case child is already dead */
+    cws->last_checked = child_watch_counter - 1;
+    cws->dead = FALSE;
+
+    /* install the SIGCHLD handler if necessary */
+    if (!sig_handler_installed) {
+	struct sigaction act, oact;
+
+	act.sa_handler = child_watch_source_sigchld;
+	sigemptyset(&act.sa_mask);
+	act.sa_flags = SA_NOCLDSTOP;
+	if(sigaction(SIGCHLD, &act, &oact) != 0){
+	    g_critical("error setting SIGCHLD handler: %s", strerror(errno));
+	    /*NOTREACHED*/
+	}
+
+	sig_handler_installed = TRUE;
+    }
+
+    return src;
 }
