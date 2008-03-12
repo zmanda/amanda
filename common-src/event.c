@@ -525,7 +525,7 @@ child_watch_source_dispatch(
     /* this shouldn't happen, but just in case */
     if (cws->dead) {
 	if (!callback) {
-	    g_warning("child %d died before callback was registered", cws->pid);
+	    g_warning("child %jd died before callback was registered", (uintmax_t)cws->pid);
 	    return FALSE;
 	}
 
