@@ -1,3 +1,6 @@
+2008-03-12  Jean-Louis Martineau <martineau@zmanda.com>
+	* client-src/sendbackup.c: Set stroptions to "".
+
 2008-03-12  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/event.c common-src/event.h common-src/event-test.c:
 	  add two new GSources: child_watch_source (sends events when a child

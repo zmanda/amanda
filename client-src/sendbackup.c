@@ -322,6 +322,7 @@ main(
 	    dle->device = stralloc(dle->disk);
 	qamdevice = quote_string(dle->device);
 	dumpdate = stralloc("NODATE");
+	stroptions = stralloc("");
     } else {
 	parse_options(stroptions, dle, g_options->features, 0);
     }
