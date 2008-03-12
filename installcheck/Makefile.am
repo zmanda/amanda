@@ -4,8 +4,8 @@
 include $(top_srcdir)/config/automake/vars.am
 include $(top_srcdir)/config/automake/scripts.am
 
-#set CLOBBER_MY_CONFIG with the 'configure CLOBBER_MY_CONFIG=' value
-CLOBBER_MY_CONFIG=@CLOBBER_MY_CONFIG@
+#set CONFIG_CLOBBER_MY_CONFIG with the 'configure CLOBBER_MY_CONFIG=' value
+CONFIG_CLOBBER_MY_CONFIG=@CLOBBER_MY_CONFIG@
 
 # Add your tests here.
 
@@ -41,7 +41,8 @@ CHECK_PERL =
 
 .PHONY: clobber_my_config_is_ok
 clobber_my_config_is_ok:
-	@if test "$(CLOBBER_MY_CONFIG)" != "OK"; then \
+	@if test "$(CONFIG_CLOBBER_MY_CONFIG)" != "OK" -a \
+                 "$(CLOBBER_MY_CONFIG)" != "OK"; then \
 		echo ""; \
 		echo "'make installcheck' is a dangerous tool.  It will overwrite your"; \
 		echo "amanda-client.conf and amandates, and (if it triggers an as-yet undetected"; \
