@@ -159,7 +159,7 @@ protocol_sendreq(
     p->resettries = RESET_TRIES;
     p->reqtries = getconf_int(CNF_REQ_TRIES);
     p->conf_fn = conf_fn;
-    pkt_init(&p->req, P_REQ, req);
+    pkt_init(&p->req, P_REQ, "%s", req);
 
     /*
      * These are here for the caller

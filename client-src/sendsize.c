@@ -752,6 +752,7 @@ generic_calc_estimates(
     amwait_t wait_status;
     char *errmsg = NULL, *qerrmsg;
     char tmppath[PATH_MAX];
+    int len;
 
     cmd = vstralloc(amlibexecdir, "/", "calcsize", versionsuffix(), NULL);
 
@@ -832,12 +833,15 @@ generic_calc_estimates(
 	error(_("Can't fdopen: %s"), strerror(errno));
 	/*NOTREACHED*/
     }
-    match_expr = vstralloc(est->qamname," %d SIZE %lld", NULL);
+    match_expr = vstralloc(" %d SIZE %lld", NULL);
+    len = strlen(est->qamname);
     for(size = (off_t)-1; (line = agets(dumpout)) != NULL; free(line)) {
 	long long size_ = (long long)0;
-	if (line[0] == '\0')
+	if (line[0] == '\0' || (int)strlen(line) <= len)
 	    continue;
-	if(sscanf(line, match_expr, &level, &size_) == 2) {
+	/* Don't use sscanf for est->qamname because it can have a '%'. */
+	if (strncmp(line, est->qamname, len) == 0 &&
+	    sscanf(line+len, match_expr, &level, &size_) == 2) {
 	    g_printf("%s\n", line); /* write to amandad */
 	    dbprintf(_("estimate size for %s level %d: %lld KB\n"),
 		      est->qamname,

@@ -1,4 +1,10 @@
 2008-03-13  Jean-Louis Martineau <martineau@zmanda.com>
+	* client-src/sendsize.c: Don't use sscanf for est->qamname because it
+				 can have a '%'.
+	* server-src/diskfile.c: Clean the diskname before using it as a regex.
+	* common-src/protocol.c: Fix bug if packet have a '%' character.
+
+2008-03-13  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/Installcheck/Run.pm: Increase size of TAPE.
 
 2008-03-12  Dustin J. Mitchell <dustin@zmanda.com>

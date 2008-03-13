@@ -484,12 +484,17 @@ parse_diskline(
 	} else {
 	    disk = host->disks;
 	    do {
-		if (match_disk(diskname, disk->name) &&
-		    match_disk(disk->name, diskname)) {
+		char *a1, *a2;
+		a1 = clean_regex(diskname);
+		a2 = clean_regex(disk->name);
+
+		if (match_disk(a1, disk->name) && match_disk(a2, diskname)) {
 		    dup = 1;
 		} else {
 		    disk = disk->hostnext;
 		}
+		amfree(a1);
+		amfree(a2);
 	    }
 	    while (dup == 0 && disk != NULL);
 	}
