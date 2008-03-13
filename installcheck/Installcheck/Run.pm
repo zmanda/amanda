@@ -136,7 +136,7 @@ sub setup {
     my $testconf = Installcheck::Config->new();
 
     setup_vtapes($testconf, 3);
-    setup_holding($testconf, 15);
+    setup_holding($testconf, 25);
     setup_disklist($testconf);
 
     return $testconf;
@@ -166,7 +166,7 @@ sub setup_vtapes {
 
     # this overwrites the existing TEST-TAPE tapetype
     $testconf->add_tapetype('TEST-TAPE', [
-	'length' => '10 mbytes',
+	'length' => '20 mbytes',
 	'filemark' => '4 kbytes',
     ]);
 }

@@ -1,3 +1,6 @@
+2008-03-13  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/Installcheck/Run.pm: Increase size of TAPE.
+
 2008-03-12  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/event.c: Use %jd to print a pid_t, since it may be
 	  larger on some platforms.
