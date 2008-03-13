@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005-2008 Zmanda Inc.  All Rights Reserved.
+ * Copyright (c) 2005 Zmanda, Inc.  All Rights Reserved.
  *
  * This library is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License version 2.1 as
@@ -19,7 +19,9 @@
  */
 
 #include "semaphore.h"
+#include "testutils.h"
 #include "amanda.h"
+#include "util.h"
 
 /*
  * test that decrement waits properly
@@ -55,9 +57,6 @@ test_decr_wait(void)
     };
     int rv;
 
-    /* die after 10 seconds (default signal disposition is to fail) */
-    alarm(10);
-
     th = g_thread_create(test_decr_wait_thread, (gpointer)&data, TRUE, NULL);
 
     /* sleep to give semaphore_decrement() a chance to block (or not). */
@@ -72,13 +71,7 @@ test_decr_wait(void)
 
     semaphore_free(data.sem);
 
-    if (rv == 1) {
-	printf(" PASS: semaphore-test.test_decr_wait\n");
-	return TRUE;
-    } else {
-	printf(" FAIL: semaphore-test.test_decr_wait\n");
-	return FALSE;
-    }
+    return (rv == 1);
 }
 
 
@@ -114,9 +107,6 @@ test_wait_empty(void)
     semaphore_t *sem = semaphore_new_with_value(10);
     int rv;
 
-    /* die after 10 seconds (default signal disposition is to fail) */
-    alarm(10);
-
     th = g_thread_create(test_wait_empty_thread, (gpointer)sem, TRUE, NULL);
 
     /* sleep to give semaphore_decrement() a chance to block (or not). */
@@ -133,13 +123,7 @@ test_wait_empty(void)
 
     semaphore_free(sem);
 
-    if (rv == 1) {
-	printf(" PASS: semaphore-test.test_wait_empty\n");
-	return TRUE;
-    } else {
-	printf(" FAIL: semaphore-test.test_wait_empty\n");
-	return FALSE;
-    }
+    return (rv == 1);
 }
 
 /*
@@ -167,9 +151,6 @@ test_force_adjust(void)
     GThread *th;
     semaphore_t *sem = semaphore_new_with_value(10);
 
-    /* die after 10 seconds (default signal disposition is to fail) */
-    alarm(10);
-
     th = g_thread_create(test_force_adjust_thread, (gpointer)sem, TRUE, NULL);
 
     /* sleep to give semaphore_decrement() a chance to block (or not). */
@@ -189,7 +170,6 @@ test_force_adjust(void)
     semaphore_free(sem);
 
     /* it we didn't hang yet, it's all good */
-    printf(" PASS: semaphore-test.test_force_adjust\n");
     return TRUE;
 }
 
@@ -218,9 +198,6 @@ test_force_set(void)
     GThread *th;
     semaphore_t *sem = semaphore_new_with_value(10);
 
-    /* die after 10 seconds (default signal disposition is to fail) */
-    alarm(10);
-
     th = g_thread_create(test_force_set_thread, (gpointer)sem, TRUE, NULL);
 
     /* sleep to give semaphore_decrement() a chance to block (or not). */
@@ -240,7 +217,6 @@ test_force_set(void)
     semaphore_free(sem);
 
     /* it we didn't hang yet, it's all good */
-    printf(" PASS: semaphore-test.test_force_set\n");
     return TRUE;
 }
 
@@ -249,21 +225,22 @@ test_force_set(void)
  */
 
 int
-main(void)
+main(int argc, char **argv)
 {
-    gboolean pass = TRUE;
-
 #if defined(G_THREADS_ENABLED) && !defined(G_THREADS_IMPL_NONE)
-    if (!g_thread_supported()) g_thread_init(NULL);
+    static TestUtilsTest tests[] = {
+	TU_TEST(test_decr_wait, 10),
+	TU_TEST(test_wait_empty, 10),
+	TU_TEST(test_force_adjust, 10),
+	TU_TEST(test_force_set, 10),
+	TU_END()
+    };
 
-    pass = test_decr_wait() && pass;
-    pass = test_wait_empty() && pass;
-    pass = test_force_adjust() && pass;
-    pass = test_force_set() && pass;
+    glib_init();
 
-    return pass?0:1;
+    return testutils_run_tests(argc, argv, tests);
 #else
-    printf("No thread support on this platform -- nothing to test\n");
+    g_fprintf(stderr, "No thread support on this platform -- nothing to test\n");
     return 0;
 #endif
 }

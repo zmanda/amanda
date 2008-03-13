@@ -1,0 +1,73 @@
+/*
+ * Copyright (c) 2005-2008 Zmanda, Inc.  All Rights Reserved.
+ *
+ * This library is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License version 2.1 as
+ * published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
+ * License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this library; if not, write to the Free Software Foundation,
+ * Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA.
+ *
+ * Contact information: Zmanda Inc., 465 S Mathlida Ave, Suite 300
+ * Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
+ */
+
+#include "amanda.h"
+#include "device-queueing.h"
+#include "device.h"
+
+producer_result_t device_read_producer(gpointer devicep,
+                                       queue_buffer_t *buffer,
+                                       size_t hint_size G_GNUC_UNUSED) {
+    Device* device;
+
+    device = (Device*) devicep;
+    g_assert(IS_DEVICE(device));
+
+    buffer->offset = 0;
+    for (;;) {
+        int result, read_size;
+        read_size = buffer->alloc_size;
+        result = device_read_block(device, buffer->data, &read_size);
+        if (result > 0) {
+            buffer->data_size = read_size;
+            return PRODUCER_MORE;
+        } else if (result == 0) {
+            buffer->data = realloc(buffer->data, read_size);
+            buffer->alloc_size = read_size;
+        } else if (device->is_eof) {
+            return PRODUCER_FINISHED;
+        } else {
+            buffer->data_size = 0;
+            return PRODUCER_ERROR;
+        }
+    }
+}
+
+ssize_t device_write_consumer(gpointer devicep, queue_buffer_t *buffer) {
+    Device* device;
+    size_t write_size;
+
+    device = (Device*) devicep;
+    g_assert(IS_DEVICE(device));
+    write_size = MIN(buffer->data_size,
+                     device_write_max_size(device));
+
+    if (device_write_block(device, write_size,
+                           buffer->data + buffer->offset,
+                           buffer->data_size <
+                               device_write_min_size(device))) {
+        /* Success! */
+        return write_size;
+    } else {
+        /* Nope, really an error. */
+        return -1;
+    }
+}
+

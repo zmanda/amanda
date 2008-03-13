@@ -23,6 +23,7 @@
 
 #include <glib.h>
 #include <glib-object.h>
+#include "queueing.h" /* for StreamingRequirement */
 
 /* The properties interface defines define capabilities and other interesting
  * properties. */
@@ -106,11 +107,6 @@ typedef enum {
 #define CONCURRENCY_PARADIGM_TYPE concurrency_paradigm_get_type()
 GType concurrency_paradigm_get_type (void);
 
-typedef enum {
-    STREAMING_REQUIREMENT_NONE,
-    STREAMING_REQUIREMENT_DESIRED,
-    STREAMING_REQUIREMENT_REQUIRED
-} StreamingRequirement;
 #define STREAMING_REQUIREMENT_TYPE streaming_requirement_get_type()
 GType streaming_requirement_get_type (void);
 

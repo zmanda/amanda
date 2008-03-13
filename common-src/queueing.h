@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005-2008 Zmanda Inc.  All Rights Reserved.
+ * Copyright (c) 2005 Zmanda, Inc.  All Rights Reserved.
  * 
  * This library is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License version 2.1 as 
@@ -26,18 +26,24 @@
  * devices (e.g., CD-ROM) may use a different method for bulk reads or
  * writes. */
 
+#include "amanda.h"
 #include <glib.h>
-#include "property.h"
 
 #define DEFAULT_MAX_BUFFER_MEMORY (1*1024*1024)
+
+typedef enum {
+    STREAMING_REQUIREMENT_NONE,
+    STREAMING_REQUIREMENT_DESIRED,
+    STREAMING_REQUIREMENT_REQUIRED
+} StreamingRequirement;
 
 /* Valid data in this structure starts at data + offset, and has size
  * data_size. Allocation starts at data and has size alloc_size. */
 typedef struct {
     char *data;
-    guint alloc_size;
-    guint data_size;
-    guint offset;
+    size_t alloc_size;
+    size_t data_size;
+    size_t offset;
 } queue_buffer_t;
 
 void free_buffer(queue_buffer_t*);
@@ -84,8 +90,8 @@ typedef enum {
  * consumer.*/
 typedef producer_result_t (* ProducerFunctor)(gpointer user_data,
                                               queue_buffer_t* buffer,
-                                              int hint_size);
-typedef int (* ConsumerFunctor)(gpointer user_data,
+                                              size_t hint_size);
+typedef ssize_t (* ConsumerFunctor)(gpointer user_data,
                                 queue_buffer_t* buffer);
 
 
@@ -124,30 +130,17 @@ do_consumer_producer_queue_full(ProducerFunctor producer,
                                 gpointer producer_user_data,
                                 ConsumerFunctor consumer,
                                 gpointer consumer_user_data,
-                                int block_size,
+                                size_t block_size,
                                 size_t max_memory,
                                 StreamingRequirement streaming_mode);
 
 /* Some commonly-useful producers and consumers.*/
 
-/* These functions will call device_read_block and device_write_block
- * respectively. The user data should be a Device*.
- *
- * device_write_consumer assumes that the block_size passed to
- * do_consumer_producer_queue_full is at least device_write_min_size();
- * do_consumer_thread() will not pass a buffer of less than block_size
- * to the consumer unless it has received EOF from the producer thread.
- */
-producer_result_t device_read_producer(gpointer device,
-                                       queue_buffer_t *buffer,
-                                       int hint_size);
-int device_write_consumer(gpointer device, queue_buffer_t *buffer);
-
 /* These functions will call read() or write() respectively. The user
    data should be a file descriptor stored with GINT_TO_POINTER. */
 producer_result_t fd_read_producer(gpointer fd, queue_buffer_t *buffer,
-                                   int hint_size);
-int fd_write_consumer(gpointer fd, queue_buffer_t *buffer);
+                                   size_t hint_size);
+ssize_t fd_write_consumer(gpointer fd, queue_buffer_t *buffer);
 
 
 

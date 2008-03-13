@@ -46,6 +46,8 @@
 #include "timestamp.h"
 #include "token.h"
 #include "version.h"
+#include "queueing.h"
+#include "device-queueing.h"
 
 /* FIXME: This should not be here. */
 #define CONNECT_TIMEOUT (2*60)
@@ -197,8 +199,8 @@ typedef struct {
 /* A ConsumerFunctor. This consumer just passes its arguments on to a
    second consumer, but counts the number of bytes successfully
    written. */
-static int counting_consumer(gpointer user_data, queue_buffer_t * buffer) {
-    int result;
+static ssize_t counting_consumer(gpointer user_data, queue_buffer_t * buffer) {
+    ssize_t result;
     CountingConsumerData * data = user_data;
 
     result = data->next_consumer(data->next_consumer_data, buffer);

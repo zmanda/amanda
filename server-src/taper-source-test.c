@@ -8,9 +8,9 @@ typedef struct {
 } tape_info_t;
 
 /* A ConsumerFunctor. */
-static int size_limited_consumer(gpointer user_data, queue_buffer_t * buffer) {
+static ssize_t size_limited_consumer(gpointer user_data, queue_buffer_t * buffer) {
     tape_info_t * info = user_data;
-    int result;
+    ssize_t result;
     
     result = info->consumer(info->consumer_data, buffer);
 
@@ -25,7 +25,7 @@ int main(int argc, char ** argv) {
     TaperSource * source;
     tape_info_t info;
     
-    g_type_init();
+    glib_init();
 
     switch (argc) {
     default:

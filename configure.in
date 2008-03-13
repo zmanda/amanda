@@ -369,8 +369,8 @@ AC_CONFIG_FILES([
     example/amanda-client.conf
     example/amanda.conf
     example/chg-mcutil.conf
-    example/template.d/amanda-S3.conf
     example/template.d/advanced.conf
+    example/template.d/amanda-S3.conf
     example/template.d/amanda-harddisk.conf
     example/template.d/amanda-single-tape.conf
     example/template.d/amanda-tape-changer.conf
@@ -385,6 +385,7 @@ AC_CONFIG_FILES([
     restore-src/Makefile
     server-src/Makefile
     tape-src/Makefile
+    xfer-src/Makefile
 ])
 
 AC_OUTPUT

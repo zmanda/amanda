@@ -28,6 +28,37 @@
 #include "glib-util.h"
 #include "conffile.h" /* For find_multiplier. */
 
+#ifdef HAVE_LIBCURL
+#include <curl/curl.h>
+#endif
+
+void
+glib_init(void) {
+    static gboolean did_glib_init = FALSE;
+    if (did_glib_init) return;
+    did_glib_init = TRUE;
+
+    /* Initialize glib's type system */
+    g_type_init();
+
+    /* set up libcurl (this must happen before threading 
+     * is initialized) */
+#ifdef HAVE_LIBCURL
+# ifdef G_THREADS_ENABLED
+    g_assert(!g_thread_supported());
+# endif
+    g_assert(curl_global_init(CURL_GLOBAL_ALL) == 0);
+#endif
+
+    /* And set up glib's threads */
+#if defined(G_THREADS_ENABLED) && !defined(G_THREADS_IMPL_NONE)
+    if (g_thread_supported()) {
+        return;
+    }
+    g_thread_init(NULL);
+#endif
+}
+
 typedef enum {
     FLAG_STRING_NAME,
     FLAG_STRING_SHORT_NAME,

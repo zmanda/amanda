@@ -359,6 +359,15 @@ event_loop_wait(
 
 }
 
+GMainLoop *
+default_main_loop(void)
+{
+    static GMainLoop *loop = NULL;
+    if (!loop)
+	loop = g_main_loop_new(NULL, TRUE);
+    return loop;
+}
+
 /*
  * Convert an event type into a string
  */

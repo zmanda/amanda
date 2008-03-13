@@ -334,9 +334,9 @@ taper_source_is_partial (TaperSource * self)
 
 producer_result_t taper_source_producer(gpointer data,
                                         queue_buffer_t * buffer,
-                                        int hint_size) {
+                                        size_t hint_size) {
     TaperSource * source;
-    int result;
+    ssize_t result;
 
     source = data;
     g_assert(TAPER_IS_SOURCE(source));

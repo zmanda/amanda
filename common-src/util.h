@@ -103,11 +103,6 @@ void free_new_argv(int new_argc, char **new_argv);
  * strings, instead of segfaulting. */
 int compare_possibly_null_strings(const char * a, const char * b);
 
-/* Does g_thread_init(), along with anything else that should be done
- * before/after thread setup. It's OK to call this function more than once.
- * Returns TRUE if threads are supported. */
-gboolean amanda_thread_init(void);
-
 /* Given a hostname, call getaddrinfo to resolve it.  Optionally get the
  * entire set of results (if res is not NULL) and the canonical name of
  * the host (if canonname is not NULL).  The canonical name might

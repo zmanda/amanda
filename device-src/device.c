@@ -29,6 +29,7 @@
 
 #include "device.h"
 #include "queueing.h"
+#include "device-queueing.h"
 #include "property.h"
 
 #include "null-device.h"
@@ -46,8 +47,7 @@
 static GHashTable* driverList = NULL;
 
 void device_api_init(void) {
-    g_type_init();
-    amanda_thread_init();
+    glib_init();
     device_property_init();
     driverList = g_hash_table_new(g_str_hash, g_str_equal);
 

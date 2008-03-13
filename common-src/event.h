@@ -113,6 +113,13 @@ void event_wait(event_handle_t *evt);
 void event_loop(int nonblock);
 
 /*
+ * Get the default GMainLoop object.  Applications which use the Glib
+ * main loop directly should use this object for calls to e.g.,
+ * g_main_loop_run(loop).
+ */
+GMainLoop *default_main_loop(void);
+
+/*
  * Utility GSources
  */
 

@@ -69,7 +69,7 @@ typedef struct TestUtilsTest {
  * is given on the commandline. */
 #define tu_dbg(...) if (tu_debugging_enabled) { fprintf(stderr, __VA_ARGS__); }
 
-/* (set internally) */
+/* Is debugging enabled for this test run? (set internally) */
 int tu_debugging_enabled;
 
 /*

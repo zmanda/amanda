@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005-2008 Zmanda Inc.  All Rights Reserved.
+ * Copyright (c) 2005 Zmanda, Inc.  All Rights Reserved.
  * 
  * This library is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License version 2.1 as 
@@ -19,20 +19,22 @@
  */
 
 #include "queueing.h"
-#include "device.h"
 #include "semaphore.h"
 #include "amanda.h"
 
 /* Queueing framework here. */
 typedef struct {
-    guint block_size;
+    size_t block_size;
+    StreamingRequirement streaming_mode;
+
     ProducerFunctor producer;
     gpointer producer_user_data;
+
     ConsumerFunctor consumer;
     gpointer consumer_user_data;
+
     GAsyncQueue *data_queue, *free_queue;
     semaphore_t *free_memory;
-    StreamingRequirement streaming_mode;
 } queue_data_t;
 
 static queue_buffer_t *invent_buffer(void) {
@@ -96,7 +98,8 @@ static queue_buffer_t * merge_buffers(queue_buffer_t *buf1,
 
 /* Invalidate the first "bytes" bytes of the buffer, by adjusting the
    offset and data size. */
-static void consume_buffer(queue_buffer_t* buf, int bytes) {
+static void consume_buffer(queue_buffer_t* buf, ssize_t bytes) {
+    g_assert(bytes >= 0 && bytes <= (ssize_t)buf->data_size);
     buf->offset += bytes;
     buf->data_size -= bytes;
 }
@@ -264,7 +267,7 @@ static void cleanup_buffer_queue(GAsyncQueue *Q, gboolean full_cleanup) {
 /* This function sacrifices performance, but will still work just
    fine, on systems where threads are not supported. */
 static queue_result_flags
-do_unthreaded_consumer_producer_queue(guint block_size,
+do_unthreaded_consumer_producer_queue(size_t block_size,
                                       ProducerFunctor producer,
                                       gpointer producer_user_data,
                                       ConsumerFunctor consumer,
@@ -276,7 +279,7 @@ do_unthreaded_consumer_producer_queue(guint block_size,
     /* The basic theory of operation here is to read until we have
        enough data to write, then write until we don't.. */
     while (!finished) {
-        int result;
+        producer_result_t result;
         
         while ((buf == NULL || buf->data_size < block_size) && !finished) {
             if (next_buf == NULL)
@@ -334,7 +337,7 @@ do_consumer_producer_queue_full(ProducerFunctor producer,
                                 gpointer producer_user_data,
                                 ConsumerFunctor consumer,
                                 gpointer consumer_user_data,
-                                int block_size,
+                                size_t block_size,
                                 size_t max_memory,
                                 StreamingRequirement streaming_mode) {
     GThread     * producer_thread;
@@ -409,57 +412,8 @@ do_consumer_producer_queue_full(ProducerFunctor producer,
 
 /* Commonly-useful producers and consumers below. */
 
-producer_result_t device_read_producer(gpointer devicep,
-                                       queue_buffer_t *buffer,
-                                       int hint_size G_GNUC_UNUSED) {
-    Device* device;
-
-    device = (Device*) devicep;
-    g_assert(IS_DEVICE(device));
-
-    buffer->offset = 0;
-    for (;;) {
-        int result, read_size;
-        read_size = buffer->alloc_size;
-        result = device_read_block(device, buffer->data, &read_size);
-        if (result > 0) {
-            buffer->data_size = read_size;
-            return PRODUCER_MORE;
-        } else if (result == 0) {
-            buffer->data = realloc(buffer->data, read_size);
-            buffer->alloc_size = read_size;
-        } else if (device->is_eof) {
-            return PRODUCER_FINISHED;
-        } else {
-            buffer->data_size = 0;
-            return PRODUCER_ERROR;
-        }
-    }
-}
-
-int device_write_consumer(gpointer devicep, queue_buffer_t *buffer) {
-    Device* device;
-    unsigned int write_size;
-
-    device = (Device*) devicep;
-    g_assert(IS_DEVICE(device));
-    write_size = MIN(buffer->data_size,
-                     device_write_max_size(device));
-
-    if (device_write_block(device, write_size,
-                           buffer->data + buffer->offset,
-                           buffer->data_size <
-                               device_write_min_size(device))) {
-        /* Success! */
-        return write_size;
-    } else {
-        /* Nope, really an error. */
-        return -1;
-    }
-}
-
 producer_result_t fd_read_producer(gpointer fdp, queue_buffer_t *buffer,
-                                   int hint_size) {
+                                   size_t hint_size) {
     int fd;
 
     fd = GPOINTER_TO_INT(fdp);
@@ -475,7 +429,7 @@ producer_result_t fd_read_producer(gpointer fdp, queue_buffer_t *buffer,
     }
 
     for (;;) {
-        int result;
+        ssize_t result;
         result = read(fd, buffer->data, buffer->alloc_size);
 
         if (result > 0) {
@@ -505,7 +459,7 @@ producer_result_t fd_read_producer(gpointer fdp, queue_buffer_t *buffer,
     }
 }
 
-int fd_write_consumer(gpointer fdp, queue_buffer_t *buffer) {
+ssize_t fd_write_consumer(gpointer fdp, queue_buffer_t *buffer) {
     int fd;
 
     fd = GPOINTER_TO_INT(fdp);
@@ -514,7 +468,7 @@ int fd_write_consumer(gpointer fdp, queue_buffer_t *buffer) {
     g_return_val_if_fail(buffer->data_size > 0, 0);
 
     for (;;) {
-        int write_size;
+        ssize_t write_size;
         write_size = write(fd, buffer->data + buffer->offset,
                            buffer->data_size);
         

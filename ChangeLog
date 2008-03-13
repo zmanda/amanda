@@ -1,3 +1,33 @@
+2008-03-13  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/device-queueing.c device-src/device-queueing.h
+	  server-src/taper-source.c server-src/taper-source.h
+	  server-src/taper-source-test.c server-src/taper.c
+	  common-src/queueing.c common-src/queueing.h: change ints in
+	  consumer/producer to (s)size_t
+	* device-src/device.c device-src/device-queueing.c
+	  device-src/tests/semaphore-test.c device-src/tests/Makefile.am
+	  device-src/queueing.c device-src/semaphore.c
+	  device-src/device-queueing.h device-src/queueing.h
+	  device-src/Makefile.am device-src/semaphore.h
+	  device-src/property.h server-src/taper.c common-src/queueing.c
+	  common-src/queueing.h common-src/semaphore-test.c
+	  common-src/semaphore.c common-src/semaphore.h
+	  common-src/Makefile.am: move queueing and semaphore into
+	  common-src, along with their tests
+	* configure.in xfer-src/source-random.c xfer-src/xfer-element.h
+	  xfer-src/xfer-dest.c xfer-src/xfer-test.c xfer-src/xfer.c
+	  xfer-src/xfer-dest.h xfer-src/amxfer.h xfer-src/dest-null.c
+	  xfer-src/Makefile.am xfer-src/xfer.h xfer-src/xfer-element.c
+	  xfer-src/filter-xor.c Makefile.am: introduce transfer architecture
+	* xfer-src/xmsg.c xfer-src/xfer-element.h xfer-src/xfer-test.c
+	  xfer-src/xmsg.h xfer-src/xfer.c xfer-src/amxfer.h
+	  xfer-src/Makefile.am xfer-src/xfer.h: support for sending
+	  and receiving XMsgs.
+	* common-src/event.c common-src/event.h: add default_event_loop().
+	* device-src/device.c server-src/taper-source-test.c common-src/util.c
+	  common-src/util.h common-src/glib-util.c common-src/glib-util.h:
+	  create new glib_init() to do g_type_init(), initialize threads, etc.
+
 2008-03-13  Jean-Louis Martineau <martineau@zmanda.com>
 	* client-src/sendsize.c: Don't use sscanf for est->qamname because it
 				 can have a '%'.

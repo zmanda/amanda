@@ -29,6 +29,13 @@
 #include <glib.h>
 #include <glib-object.h>
 
+/* Call the requisite glib init functions, including calling
+ * g_init_types and setting up threading support.  This function can
+ * be called multiple times with no harm, although it is not
+ * re-entrant.
+ */
+void glib_init(void);
+
 /* like g_[s]list_foreach, but with a function taking only
  * one argument.
  */

@@ -117,6 +117,6 @@ TaperSource * taper_source_new(char * handle,
    device-src/queueing.h. */
 producer_result_t taper_source_producer(gpointer taper_source,
                                         queue_buffer_t * buffer,
-                                        int hint_size);
+                                        size_t hint_size);
 
 #endif

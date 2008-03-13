@@ -17,7 +17,7 @@ sbin_PROGRAMS =
 
 amlib_LTLIBRARIES = 	libamdevice.la
 libamdevice_la_LDFLAGS = -release $(VERSION) 
-libamdevice_la_SOURCES = property.c device.c queueing.c semaphore.c \
+libamdevice_la_SOURCES = property.c device.c device-queueing.c \
 	null-device.c rait-device.c vfs-device.c 
 
 # tape-device has *lots* of conditionals; the first is whether to support
@@ -55,9 +55,9 @@ endif
 
 ## headers
 
-noinst_HEADERS = null-device.h semaphore.h \
+noinst_HEADERS = null-device.h \
 	tape-ops.h property.h rait-device.h s3.h \
 	s3-device.h tape-device.h vfs-device.h \
-	device.h queueing.h
+	device.h  device-queueing.h
 	
 aminclude_HEADERS = 

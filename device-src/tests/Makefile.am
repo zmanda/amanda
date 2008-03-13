@@ -21,8 +21,6 @@ LDADD = ../../common-src/libamanda.la \
 	../../gnulib/libgnu.la
 
 
-TESTS = semaphore-test vfs_test
-
-semaphore_test_SOURCES = semaphore-test.c
+TESTS = vfs_test
 
 vfs_test_SOURCES = vfs_test.c

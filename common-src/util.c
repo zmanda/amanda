@@ -36,10 +36,6 @@
 #include "conffile.h"
 #include "base64.h"
 
-#ifdef HAVE_LIBCURL
-#include <curl/curl.h>
-#endif
-
 static int make_socket(sa_family_t family);
 static int connect_port(struct sockaddr_storage *addrp, in_port_t port, char *proto,
 			struct sockaddr_storage *svaddr, int nonblock);
@@ -702,28 +698,6 @@ int compare_possibly_null_strings(const char * a, const char * b) {
         /* a != NULL != b */
         return strcmp(a, b);
     }
-}
-
-gboolean amanda_thread_init(void) {
-    gboolean success = FALSE;
-#ifdef HAVE_LIBCURL
-    static gboolean did_curl_init = FALSE;
-    if (!did_curl_init) {
-# ifdef G_THREADS_ENABLED
-        g_assert(!g_thread_supported());
-# endif
-        g_assert(curl_global_init(CURL_GLOBAL_ALL) == 0);
-        did_curl_init = TRUE;
-    }
-#endif
-#if defined(G_THREADS_ENABLED) && !defined(G_THREADS_IMPL_NONE)
-    if (g_thread_supported()) {
-        return TRUE;
-    }
-    g_thread_init(NULL);
-    success = TRUE;
-#endif
-    return success;
 }
 
 int

@@ -118,6 +118,8 @@ main(int argc G_GNUC_UNUSED, char **argv G_GNUC_UNUSED)
     pid_t pid;
     amwait_t status;
 
+    glib_init();
+
     device_path = setup_vtape_dir();
 
     /* run the tests in a subprocess so we can clean up even if they fail */

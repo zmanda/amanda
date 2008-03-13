@@ -30,6 +30,7 @@ SUBDIRS = . \
 	config \
 	common-src \
 	amandad-src \
+	xfer-src \
 	$(TAPE_SUBDIRS) \
 	$(CLIENT_SUBDIRS) \
 	$(SERVER_SUBDIRS) \
@@ -97,6 +98,7 @@ lint:
 	(cd restore-src; make lint)
 	(cd server-src; make lint)
 	(cd tape-src; make lint)
+	(cd xfer-src; make lint)
 
 ## Do not release the *.test.c sources.  They get built on the fly and
 ## would contain a path from the distribution machine, which will just

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005-2008 Zmanda Inc.  All Rights Reserved.
+ * Copyright (c) 2005 Zmanda, Inc.  All Rights Reserved.
  * 
  * This library is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License version 2.1 as 
