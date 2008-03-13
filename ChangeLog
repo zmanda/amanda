@@ -3,6 +3,9 @@
 	  larger on some platforms.
 
 2008-03-12  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c: Fix solaris 8 cc warning.
+
+2008-03-12  Jean-Louis Martineau <martineau@zmanda.com>
 	* client-src/sendbackup.c: Set stroptions to "".
 
 2008-03-12  Dustin J. Mitchell <dustin@zmanda.com>

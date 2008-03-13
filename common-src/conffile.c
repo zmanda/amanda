@@ -5631,7 +5631,7 @@ pp_scriptlist_display_str_foreach_fn(
 
     **msg = vstralloc("\"", pp_script->name, "\"", NULL);
     (*msg)++;
-};
+}
 
 
 static char *
