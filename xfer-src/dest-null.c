@@ -85,7 +85,7 @@ read_data_thread(gpointer data)
 	    ssize_t i;
 	    g_printf("data: ");
 	    for (i = 0; i < len; i++) {
-		if (isprint(buf[i]))
+		if (isprint((int)buf[i]))
 		    g_printf("%c", buf[i]);
 		else
 		    g_printf("\\x%02x", (int)buf[i]);
