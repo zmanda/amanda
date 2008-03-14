@@ -25,13 +25,9 @@
 
 # Pkg-config sometimes needs its own path set, and we need to allow users to
 # override our guess during detection.  This macro takes care of that.
-# If no --define PKG_CONFIG_PATH was passed
-%{!?PKG_CONFIG_PATH: %{expand:%(
-    # Drop into bash and return a define string if PKG_CONFIG_PATH is defined
-    if [ $PKG_CONFIG_PATH ]; then
-        echo "%%define PKG_CONFIG_PATH $PKG_CONFIG_PATH";
-    fi
-)}}
+# If no --define PKG_CONFIG_PATH was passed and env var $PKG_CONFIG_PATH is 
+# set then use the env var.
+%{!?PKG_CONFIG_PATH: %{expand:%(echo ${PKG_CONFIG_PATH:+"%%define PKG_CONFIG_PATH $PKG_CONFIG_PATH"})}}
 
 %{?PKG_CONFIG_PATH:%{echo:PKG_CONFIG_PATH = %{PKG_CONFIG_PATH}}}
 
