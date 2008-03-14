@@ -1686,7 +1686,7 @@ xml_application(
     xml_app = vstralloc("  <backup-program>\n",
 		        "    ", b64plugin, "\n",
 			NULL);
-    proplist = application_get_proplist(application);
+    proplist = application_get_property(application);
     g_hash_table_foreach(proplist, xml_property, &xml_app);
     vstrextend(&xml_app, "  </backup-program>\n", NULL);
 
@@ -1787,7 +1787,7 @@ xml_scripts(
 				  "    <execute_on>", eo_str,
 				  "</execute_on>\n");
 	amfree(eo_str);
-	proplist = pp_script_get_proplist(pp_script);
+	proplist = pp_script_get_property(pp_script);
 	g_hash_table_foreach(proplist, xml_property, &xml_scr1);
 	xml_scr1 = vstrextend(&xml_scr1, "  </script>\n", NULL);
 	xml_scr = vstrextend(&xml_scr, xml_scr1, NULL);

@@ -964,6 +964,7 @@ conf_var_t server_var [] = {
    { CONF_PRINTER              , CONFTYPE_STR      , read_str         , CNF_PRINTER              , NULL },
    { CONF_TAPEDEV              , CONFTYPE_STR      , read_str         , CNF_TAPEDEV              , NULL },
    { CONF_DEVICE_PROPERTY      , CONFTYPE_PROPLIST , read_property    , CNF_DEVICE_PROPERTY      , NULL },
+   { CONF_PROPERTY             , CONFTYPE_PROPLIST , read_property    , CNF_PROPERTY             , NULL },
    { CONF_TPCHANGER            , CONFTYPE_STR      , read_str         , CNF_TPCHANGER            , NULL },
    { CONF_CHANGERDEV           , CONFTYPE_STR      , read_str         , CNF_CHANGERDEV           , NULL },
    { CONF_CHANGERFILE          , CONFTYPE_STR      , read_str         , CNF_CHANGERFILE          , NULL },
@@ -1065,6 +1066,7 @@ conf_var_t dumptype_var [] = {
    { CONF_MAXPROMOTEDAY     , CONFTYPE_INT      , read_int      , DUMPTYPE_MAXPROMOTEDAY     , validate_nonnegative },
    { CONF_PRIORITY          , CONFTYPE_PRIORITY , read_priority , DUMPTYPE_PRIORITY          , NULL },
    { CONF_PROGRAM           , CONFTYPE_STR      , read_str      , DUMPTYPE_PROGRAM           , validate_program },
+   { CONF_PROPERTY          , CONFTYPE_PROPLIST , read_property , DUMPTYPE_PROPERTY          , NULL },
    { CONF_RECORD            , CONFTYPE_BOOLEAN  , read_bool     , DUMPTYPE_RECORD            , NULL },
    { CONF_SKIP_FULL         , CONFTYPE_BOOLEAN  , read_bool     , DUMPTYPE_SKIP_FULL         , NULL },
    { CONF_SKIP_INCR         , CONFTYPE_BOOLEAN  , read_bool     , DUMPTYPE_SKIP_INCR         , NULL },
@@ -1858,6 +1860,7 @@ init_dumptype_defaults(void)
     conf_init_bool     (&dpcur.value[DUMPTYPE_INDEX]             , 1);
     conf_init_application(&dpcur.value[DUMPTYPE_APPLICATION]);
     conf_init_pp_scriptlist(&dpcur.value[DUMPTYPE_PP_SCRIPTLIST]);
+    conf_init_proplist(&dpcur.value[DUMPTYPE_PROPERTY]);
 }
 
 static void
@@ -3646,6 +3649,7 @@ init_defaults(
     conf_init_str(&conf_data[CNF_DUMPUSER], CLIENT_LOGIN);
     conf_init_str(&conf_data[CNF_TAPEDEV], DEFAULT_TAPE_DEVICE);
     conf_init_proplist(&conf_data[CNF_DEVICE_PROPERTY]);
+    conf_init_proplist(&conf_data[CNF_PROPERTY]);
     conf_init_str(&conf_data[CNF_CHANGERDEV], DEFAULT_CHANGER_DEVICE);
     conf_init_str(&conf_data[CNF_CHANGERFILE], "/usr/adm/amanda/changer-status");
     conf_init_str   (&conf_data[CNF_LABELSTR]             , ".*");

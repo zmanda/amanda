@@ -1,3 +1,14 @@
+2008-03-14  Jean-Louis Martineau <martineau@zmanda.com>
+	* man/xml-source/amanda.conf.5.xml: Document global and by dumptype
+					    property.
+	* server-src/server_util.c: Rename _proplist to _property.
+	* server-src/diskfile.c: Rename _proplist to _property.
+	* server-src/amadmin.c (disklist_one): Print property.
+	* perl/Amanda/Config.swg: Add new constants to Amanda::Config
+	* installcheck/Amanda_Config.pl: Test global property.
+	* common-src/conffile.c: Add global and by dumptype property.
+	* common-src/conffile.h: Add global and by dumptype property.
+
 2008-03-14  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/MainLoop.swg perl/Makefile.am: new perl module
 	* perl/amglue/amglue.h perl/amglue/mainloop.c: support for new module

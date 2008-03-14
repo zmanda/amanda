@@ -583,6 +583,7 @@ typedef enum {
     DUMPTYPE_INDEX,
     DUMPTYPE_APPLICATION,
     DUMPTYPE_PP_SCRIPTLIST,
+    DUMPTYPE_PROPERTY,
     DUMPTYPE_DUMPTYPE /* sentinel */
 } dumptype_key;
 
@@ -666,8 +667,9 @@ char *dumptype_name(dumptype_t *dtyp);
 #define dumptype_get_kencrypt(dtyp)            (val_t_to_boolean(dumptype_getconf((dtyp), DUMPTYPE_KENCRYPT)))
 #define dumptype_get_ignore(dtyp)              (val_t_to_boolean(dumptype_getconf((dtyp), DUMPTYPE_IGNORE)))
 #define dumptype_get_index(dtyp)               (val_t_to_boolean(dumptype_getconf((dtyp), DUMPTYPE_INDEX)))
-#define dumptype_get_application(dtyp)          (val_t_to_application(dumptype_getconf((dtyp), DUMPTYPE_APPLICATION)))
-#define dumptype_get_pp_scriptlist(dtyp)        (val_t_to_pp_scriptlist(dumptype_getconf((dtyp), DUMPTYPE_PP_SCRIPTLIST)))
+#define dumptype_get_application(dtyp)         (val_t_to_application(dumptype_getconf((dtyp), DUMPTYPE_APPLICATION)))
+#define dumptype_get_pp_scriptlist(dtyp)       (val_t_to_pp_scriptlist(dumptype_getconf((dtyp), DUMPTYPE_PP_SCRIPTLIST)))
+#define dumptype_get_property(dtyp)            (val_t_to_proplist(dumptype_getconf((dtyp), DUMPTYPE_PROPERTY)))
 
 /*
  * Interface parameter access
@@ -845,7 +847,7 @@ char *application_name(application_t *app);
  */
 #define application_get_comment(application)  (val_t_to_str(application_getconf((application), APPLICATION_COMMENT))
 #define application_get_plugin(application)   (val_t_to_str(application_getconf((application), APPLICATION_PLUGIN)))
-#define application_get_proplist(application) (val_t_to_proplist(application_getconf((application), APPLICATION_PROPERTY)))
+#define application_get_property(application) (val_t_to_proplist(application_getconf((application), APPLICATION_PROPERTY)))
 
 application_t *read_application(char *name, FILE *from, char *fname, int *linenum);
 
@@ -903,7 +905,7 @@ char *pp_script_name(pp_script_t *pps);
 
 #define pp_script_get_comment(pp_script)   (val_t_to_str(pp_script_getconf((pp_script), PP_SCRIPT_COMMENT)))
 #define pp_script_get_plugin(pp_script)   (val_t_to_str(pp_script_getconf((pp_script), PP_SCRIPT_PLUGIN)))
-#define pp_script_get_proplist(pp_script)   (val_t_to_proplist(pp_script_getconf((pp_script), PP_SCRIPT_PROPERTY)))
+#define pp_script_get_property(pp_script)   (val_t_to_proplist(pp_script_getconf((pp_script), PP_SCRIPT_PROPERTY)))
 #define pp_script_get_execute_on(pp_script)   (val_t_to_execute_on(pp_script_getconf((pp_script), PP_SCRIPT_EXECUTE_ON)))
 #define pp_script_get_execute_where(pp_script)   (val_t_to_execute_where(pp_script_getconf((pp_script), PP_SCRIPT_EXECUTE_WHERE)))
 

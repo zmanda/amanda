@@ -2156,6 +2156,20 @@ disklist_one(
 	pp_scriptlist = pp_scriptlist->next;
     }
 
+    {
+	dumptype_t *dtype;
+	char **prop, **p1;;
+
+	dtype = lookup_dumptype(dp->dtype_name);
+	prop = val_t_display_strs(dumptype_getconf((dtype), DUMPTYPE_PROPERTY),
+				  0);
+	for(p1 = prop; *p1 != NULL; p1++) {
+	    g_printf("        property %s\n", *p1);
+	    free(*p1);
+	}
+	amfree(prop);
+    }
+
     g_printf("\n");
 }
 

@@ -341,6 +341,16 @@ are set, in the order they appear in the configuration file.</para></listitem>
   </varlistentry>
 
   <varlistentry>
+  <term><emphasis remap='B'>property</emphasis> string string</term>
+  <listitem>
+<para>These options can set various properties, they can be used by third
+ party software to store information in the configuration file.</para>
+<para>Both strings are quoted; the first string contains the name of
+the property to set, and the second contains its value.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
   <term><emphasis remap='B'>tpchanger</emphasis> string</term>
   <listitem>
 <para>Default:
@@ -1741,6 +1751,16 @@ The type of backup to perform. Valid values are:</para>
 <para>No default. Must be the name of a script-tool. You can have many script. See SCRIPT SECTION below.</para>
   </listitem>
   </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>property</emphasis> string string</term>
+  <listitem>
+<para>These options can set various properties, they can be used by third
+ party software to store information in the configuration file.</para>
+<para>Both strings are quoted; the first string contains the name of
+the property to set, and the second contains its value.</para>
+  </listitem>
+  </varlistentry>
+
   <varlistentry>
   <term><emphasis remap='B'>record</emphasis> <emphasis remap='I'> boolean</emphasis></term>
   <listitem>

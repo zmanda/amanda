@@ -243,6 +243,7 @@ amglue_add_constant(CNF_MAILTO, confparm_key);
 amglue_add_constant(CNF_DUMPUSER, confparm_key);
 amglue_add_constant(CNF_TAPEDEV, confparm_key);
 amglue_add_constant(CNF_DEVICE_PROPERTY, confparm_key);
+amglue_add_constant(CNF_PROPERTY, confparm_key);
 amglue_add_constant(CNF_CHANGERDEV, confparm_key);
 amglue_add_constant(CNF_CHANGERFILE, confparm_key);
 amglue_add_constant(CNF_LABELSTR, confparm_key);
@@ -361,6 +362,9 @@ amglue_add_constant(DUMPTYPE_HOLDINGDISK, dumptype_key);
 amglue_add_constant(DUMPTYPE_KENCRYPT, dumptype_key);
 amglue_add_constant(DUMPTYPE_IGNORE, dumptype_key);
 amglue_add_constant(DUMPTYPE_INDEX, dumptype_key);
+amglue_add_constant(DUMPTYPE_APPLICATION, dumptype_key);
+amglue_add_constant(DUMPTYPE_PP_SCRIPTLIST, dumptype_key);
+amglue_add_constant(DUMPTYPE_PROPERTY, dumptype_key);
 amglue_copy_to_tag(dumptype_key, getconf);
 
 amglue_add_enum_tag_fns(interface_key);

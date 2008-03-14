@@ -275,7 +275,7 @@ run_server_script(
 			   &scriptout, &scripterr, argvchild);
 
     streamin = fdopen(scriptin, "w");
-    property = pp_script_get_proplist(pp_script);
+    property = pp_script_get_property(pp_script);
     if (property) {
 	g_hash_table_foreach(property,
 			     &output_tool_proplist,

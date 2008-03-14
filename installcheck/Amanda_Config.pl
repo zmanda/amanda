@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 86;
+use Test::More tests => 87;
 use strict;
 
 use lib "@amperldir@";
@@ -78,6 +78,8 @@ $testconf->add_dumptype('mydumptype', [
     'include list' => '"bing" "ting"',
     'include list append' => '"string" "fling"',
     'include file optional' => '"rhyme"',
+    'property' => '"prop" "erty"',
+    'property' => '"drop" "qwerty" "asdfg"',
 ]);
 $testconf->add_interface('inyoface', [
     'comment' => '"mine"',
@@ -217,6 +219,9 @@ SKIP: { # dumptypes
 	  'list' => [ 'foo', 'bar', 'true', 'star' ],
 	  'optional' => 0 },
 	"dumptype exclude list");
+    is_deeply(dumptype_getconf($dtyp, $DUMPTYPE_PROPERTY),
+	      { "prop" => ["erty"], "drop" => ["qwerty", "asdfg"] },
+	    "dumptype proplist");
 
     ok(dumptype_seen($dtyp, $DUMPTYPE_EXCLUDE),
 	"'exclude' parm was seen");
