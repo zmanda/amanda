@@ -46,6 +46,7 @@ amlib_LTLIBRARIES = libamglue.la
 libamglue_la_SOURCES = \
 	amglue/ghashtable.c \
 	amglue/bigint.c \
+	amglue/mainloop.c \
 	amglue/amglue.h
 EXTRA_DIST += $(libamglue_la_SOURCES)
 
@@ -202,6 +203,17 @@ libTests_la_LIBADD = libamglue.la \
 Amanda_DATA += Amanda/Tests.pm
 EXTRA_DIST += Amanda/Tests.swg Amanda/Tests.pm
 MAINTAINERCLEANFILES += Amanda/Tests.c Amanda/Tests.pm
+
+# PACKAGE: Amanda::MainLoop
+libMainLoopdir = $(amperldir)/auto/Amanda/MainLoop
+libMainLoop_LTLIBRARIES = libMainLoop.la
+libMainLoop_la_SOURCES = Amanda/MainLoop.c $(AMGLUE_SWG)
+libMainLoop_la_LDFLAGS = $(PERL_EXT_LDFLAGS)
+libMainLoop_la_LIBADD = libamglue.la \
+	$(top_builddir)/common-src/libamanda.la
+Amanda_DATA += Amanda/MainLoop.pm
+EXTRA_DIST += Amanda/MainLoop.swg Amanda/MainLoop.pm
+MAINTAINERCLEANFILES += Amanda/MainLoop.c Amanda/MainLoop.pm
 
 # PACKAGE: Amanda::Paths
 Amanda_DATA += Amanda/Paths.pm

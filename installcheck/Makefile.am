@@ -9,6 +9,7 @@ include $(top_srcdir)/config/automake/scripts.am
 common_tests = \
 	Amanda_Config \
 	Amanda_Debug \
+	Amanda_MainLoop \
 	Amanda_Types
 
 server_tests = \

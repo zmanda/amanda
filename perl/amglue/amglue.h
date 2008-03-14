@@ -123,4 +123,48 @@ guint16 amglue_SvU16(SV *sv);
 gint8 amglue_SvI8(SV *sv);
 guint8 amglue_SvU8(SV *sv);
 
+/*
+ * prototypes for mainloop.c
+ */
+
+typedef enum amglue_Source_state {
+    AMGLUE_SOURCE_NEW,
+    AMGLUE_SOURCE_ATTACHED,
+    AMGLUE_SOURCE_DESTROYED
+} amglue_Source_state;
+
+typedef struct amglue_Source {
+    GSource *src;
+    GSourceFunc callback;
+    SV *callback_sv;
+    amglue_Source_state state;
+} amglue_Source;
+
+/* Create a new amglue_Source object with the given
+ * attributes.  This function takes ownership
+ * of the given GSource, so the caller should not call
+ * g_source_unref().
+ *
+ * The 'callback' parameter should be a C function with the
+ * appropriate signature for this GSource.  The callback will
+ * be given an amglue_Source as its 'data' argument, and should
+ * invoke its callback_sv as a Perl sub with the appropriate
+ * parameters.  Simple GSources can use amglue_source_callback_simple,
+ * below.
+ *
+ * @param gsrc: the GSource object to wrap
+ * @param callback: function to trigger a perl callback
+ */
+amglue_Source *amglue_new_source(GSource *gsrc, GSourceFunc callback);
+
+/* Free an amglue_Source object.  This removes the source from the
+ * event loop, unref's the underlying GSource, and frees the object
+ * itself.
+ */
+void amglue_source_free(amglue_Source *);
+
+/* a simple main loop callback exactly matching GSourceFunc, 
+ * with no additional arguments */
+gboolean amglue_source_callback_simple(gpointer *data);
+
 #endif /* AMANDA_AMGLUE_H */

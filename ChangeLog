@@ -1,4 +1,11 @@
 2008-03-14  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/MainLoop.swg perl/Makefile.am: new perl module
+	* perl/amglue/amglue.h perl/amglue/mainloop.c: support for new module
+	* installcheck/Amanda_MainLoop.pl installcheck/Makefile.am: tests for
+	  new module
+	* common-src/event.h: fix typo in comment
+
+2008-03-14  Dustin J. Mitchell <dustin@zmanda.com>
 	* xfer-src/dest-null.c: fix Solaris 8 compilation problem: isprint()
 	  expects an int, not a char.
 

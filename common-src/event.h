@@ -133,7 +133,7 @@ GMainLoop *default_main_loop(void);
 GSource * new_fdsource(gint fd, GIOCondition events);
 
 /* Create a GSource that will callback when the given child dies.  The callback
- * should match ChildWatchFunc.  Once the callback made, it will not be called
+ * should match ChildWatchFunc.  Once the callback is made, it will not be called
  * again by this source.
  *
  * Note: This is provided by glib in later versions, but not in version 2.2.0.
