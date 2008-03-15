@@ -46,7 +46,7 @@ amlib_LTLIBRARIES = libamglue.la
 libamglue_la_SOURCES = \
 	amglue/ghashtable.c \
 	amglue/bigint.c \
-	amglue/mainloop.c \
+	amglue/source.c \
 	amglue/amglue.h
 EXTRA_DIST += $(libamglue_la_SOURCES)
 

@@ -51,7 +51,7 @@ amglue_source_callback_simple(
     gpointer *data)
 {
     dSP;
-    amglue_Source *src = (SV *)data;
+    amglue_Source *src = (amglue_Source *)data;
     g_assert(src->callback_sv != NULL);
 
     PUSHMARK(SP);

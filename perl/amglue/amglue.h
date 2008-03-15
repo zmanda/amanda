@@ -124,7 +124,7 @@ gint8 amglue_SvI8(SV *sv);
 guint8 amglue_SvU8(SV *sv);
 
 /*
- * prototypes for mainloop.c
+ * prototypes for source.c
  */
 
 typedef enum amglue_Source_state {

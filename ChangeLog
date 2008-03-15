@@ -1,3 +1,8 @@
+2008-03-15  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Makefile.am perl/amglue/mainloop.c perl/amglue/amglue.h
+	  perl/amglue/source.c: rename mainloop.c to source.c to avoid
+	  conflicts with MainLoop.c on case-insensitive filesystems
+
 2008-03-14  Dan Locks <dwlocks@zmanda.com>
 	* Initial debian release: This package is based on Bdale Garbee's
 	  work as the official debian maintainer for amanda.
