@@ -1,0 +1,10 @@
+amanda-backup-server: non-standard-dir-perm var/lib/amanda/gnutar-lists
+amanda-backup-server: non-standard-dir-perm var/log/amanda 
+amanda-backup-server: setuid-binary calcsize 
+amanda-backup-server: setuid-binary dumper 
+amanda-backup-server: setuid-binary killgrp 
+amanda-backup-server: setuid-binary planner 
+amanda-backup-server: setuid-binary rundump 
+amanda-backup-server: setuid-binary runtar
+amanda-backup-server: package-name-doesnt-match-sonames
+amanda-backup-server: depends-on-essential-package-without-using-version depends: grep
