@@ -1,3 +1,7 @@
+2008-03-14  Dan Locks <dwlocks@zmanda.com>
+	* Initial debian release: This package is based on Bdale Garbee's
+	  work as the official debian maintainer for amanda.
+
 2008-03-14  Jean-Louis Martineau <martineau@zmanda.com>
 	* man/xml-source/amanda.conf.5.xml: Document global and by dumptype
 					    property.

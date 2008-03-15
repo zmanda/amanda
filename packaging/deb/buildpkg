@@ -1,0 +1,130 @@
+#! /bin/bash
+set -x
+#### Configure variables.  Feel free to change these, but be careful!
+SRCDIR=$(pwd)
+# You can pass your own temp directory as an environment variable.
+if [ -z $TMPDIR ]
+then
+    TMPDIR="/tmp/buildpkg.deb"
+fi
+# This prefix is prepended to all directories during "make install" 
+FAKEROOT="${TMPDIR}/froot"
+# Configure and Compilation directory.
+BUILDDIR="${TMPDIR}/build"
+# Config variables to mirror those in RPM .spec file
+amanda_user=amandabackup
+amanda_group=admin
+udpportrange="700,740"
+tcpportrange="11000,11040"
+low_tcpportrange="700,710"
+PREFIX="/usr"
+EPREFIX="${PREFIX}"
+BINDIR="${EPREFIX}/bin"
+SBINDIR="${EPREFIX}/sbin"
+LIBEXECDIR="${EPREFIX}/lib/amanda"
+DATADIR="${PREFIX}/share"
+SYSCONFDIR="/etc"
+LOCALSTATEDIR="/var"
+AMANDAHOMEDIR="${LOCALSTATEDIR}/lib/amanda"
+LIBDIR="${EPREFIX}/lib"
+INCLUDEDIR="${PREFIX}/include"
+INFODIR="${PREFIX}/info"
+MANDIR="${DATADIR}/man"
+LOGDIR="${LOCALSTATEDIR}/log/amanda"                  
+
+#### CHECKS
+
+if [ ! -f common-src/amanda.h ]
+then
+    echo "'buildpkg' must be run from the root of an otherwise unused amanda source directory." >&2
+    exit 1
+fi
+
+if [ ! -f configure ]
+then
+    echo "The source directory has not been autogen'd -- please download a source distribution tarball or run ./autogen."
+    echo "You will need autoconf, automake, and libtool to run autogen (but not to compile from a distribution tarball)."
+    exit 1
+fi
+
+if [ -z $AMVER ]
+then
+    AMVER=amanda-2.6.1alpha
+fi
+
+if [ -z $AMTARBALL ]
+then
+    AMTARBALL=$AMVER.tar.gz
+fi
+
+#### Build functions
+
+do_build() {
+
+    echo "Running configure"
+    ./configure --quiet \
+        --prefix=${PREFIX} \
+        --bindir=${BINDIR} \
+        --sbindir=${SBINDIR} \
+        --mandir=${MANDIR} \
+        --libexecdir=${LIBEXECDIR} \
+        --sysconfdir=${SYSCONFDIR} \
+        --localstatedir=${LOCALSTATEDIR} \
+        --with-star=/bin/star \
+        --with-gnutar=/bin/tar \
+        --with-gnutar-listdir=${AMANDAHOMEDIR}/gnutar-lists \
+        --with-index-server=localhost \
+        --with-tape-server=localhost \
+        --with-user=${amanda_user} \
+        --with-group=${amanda_group} \
+        --with-owner=${amanda_user} \
+        --with-fqdn \
+        --with-bsd-security \
+        --with-bsdtcp-security \
+        --with-bsdudp-security \
+        --with-amandahosts \
+        --with-smbclient=/usr/bin/smbclient \
+        --with-ssh-security \
+        --with-udpportrange=${udpportrange} \
+        --with-tcpportrange=${tcpportrange} \
+        --with-low-tcpportrange=${low_tcpportrange} \
+        --with-debugging=${LOGDIR} \
+        --disable-installperms \
+        --enable-s3-device \
+        --with-assertions \
+	|| exit 1
+
+}
+
+do_resources() {
+    # Setup directories and files as dpkg-buildpkg expects.
+    if [ -d debian ]; then
+        rm -rf debian
+    fi
+    cp -Rf packaging/deb debian
+    if [ -d $AMVER ]; then
+        rm -rf $AMVER
+    fi
+    mkdir $AMVER
+    cp -Rf * $AMVER
+}
+
+do_package() {
+
+    echo "Building package"
+    cd $AMVER
+    # This assumes that you have loaded zmanda's GPG key into your keyring to
+    # sign the packages.
+    dpkg-buildpackage -rfakeroot -k3C5D1C92 -tc
+}
+
+
+do_all() {
+    do_build $1
+    do_resources $1
+    do_package $1
+}
+
+do_build
+do_resources
+do_package
