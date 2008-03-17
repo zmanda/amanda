@@ -1,3 +1,7 @@
+2008-03-17  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/diskfile.c: Correctly check if two hosts map to the same
+				 name.
+
 2008-03-15  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Makefile.am perl/amglue/mainloop.c perl/amglue/amglue.h
 	  perl/amglue/source.c: rename mainloop.c to source.c to avoid
