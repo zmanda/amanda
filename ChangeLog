@@ -1,3 +1,7 @@
+2008-03-17  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/diskfile.c: Correctly check if two hosts map to the same
+				 name.
+
 2008-03-14  Dan Locks <dwlocks@zmanda.com>
 	* packaging/deb/*: Initial debian package release.  This package is 
 	  based on Bdale Garbee's work as the official debian maintainer for 

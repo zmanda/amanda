@@ -407,9 +407,9 @@ parse_diskline(
     shost = sanitise_filename(hostname);
     for (p = hostlist; p != NULL; p = p->next) {
 	char *shostp = sanitise_filename(p->hostname);
-	if (!strcmp(hostname, p->hostname) &&
-	     strcmp(shost, shostp)) {
-	    disk_parserror(filename, line_num, "Two host are mapping to the same name: \"%s\" and \"%s\"", p->hostname, hostname);
+	if (strcmp(hostname, p->hostname) &&
+	    !strcmp(shost, shostp)) {
+	    disk_parserror(filename, line_num, "Two hosts are mapping to the same name: \"%s\" and \"%s\"", p->hostname, hostname);
 	    return(-1);
 	}
 	else if (strcasecmp(hostname, p->hostname) &&
