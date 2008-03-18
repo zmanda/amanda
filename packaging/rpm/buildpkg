@@ -18,7 +18,7 @@ if [ ! -f ${AMTARBALL} ]; then
     mkdir ${AMVER}
     cp -R * ${AMVER}/
     tar -cf ${AMTARBALL} -z ${AMVER}
-    rf -rf ${AMVER}
+    rm -rf ${AMVER}
 fi
 
 # Check for the packaging dirs.
