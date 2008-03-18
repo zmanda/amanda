@@ -1,3 +1,9 @@
+2008-03-18  Jean-Louis Martineau <martineau@zmanda.com>
+	* Amanda 2.6.0 released.
+	* configure.in: AM_INIT_AUTOMAKE(amanda, "2.6.0")
+	* packaging/rpm/amanda.spec: %define amanda_version 2.6.0
+	* packaging/rpm/buildpkg: AMVER=amanda-2.6.0
+
 2008-03-17  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/diskfile.c: Correctly check if two hosts map to the same
 				 name.
