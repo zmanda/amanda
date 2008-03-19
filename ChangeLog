@@ -1,3 +1,6 @@
+2008-03-18  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/activate-devpay.c: fix type warning
+
 2008-03-17  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/diskfile.c: Correctly check if two hosts map to the same
 				 name.

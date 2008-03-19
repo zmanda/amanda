@@ -147,7 +147,7 @@ static void parser_got_text(GMarkupParseContext * context,
             /* Do nothing; wait for the message. */
         }
     } else if (g_strrstr(current_tag, "Message")) {
-        g_set_error(error, G_MARKUP_ERROR, -1, "%.*s", text_len, text);
+        g_set_error(error, G_MARKUP_ERROR, -1, "%.*s", (int)text_len, text);
     }
 }               
 
