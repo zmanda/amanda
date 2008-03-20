@@ -1,3 +1,15 @@
+2008-03-20  Dan Locks <dwlocks@zmanda.com>
+	* packaging/deb/control: removed grep dependency
+	* packaging/deb/amanda-backup-client.postinst 
+	  packaging/deb/amanda-backup-server.postinst 
+	  packaging/deb/amanda-backup-server.postrm
+	  packaging/deb/amanda-backup-client.postrm:  removed call to
+	  ldconfig to satisfy lintian
+	* packaging/deb/amanda-backup-server.lintian
+	  packaging/deb/amanda-backup-client.lintian: sorted and added new
+	  overrides
+	* packaging/deb/amanda-backup-client.dirs: removed var/amanda
+
 2008-03-18  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/activate-devpay.c: fix type warning
 
