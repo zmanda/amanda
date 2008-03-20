@@ -8,8 +8,6 @@ amanda_user=amandabackup
 amanda_group=disk
 xinetd_reload="restart"
 
-echo -n "`date +'%b %e %Y %T'`: Updating system library cache..." 
-/sbin/ldconfig || exit 1
 
 # Installing xinetd config and make it active.
 if [ -e /etc/xinetd.d ] && [ -d /etc/xinetd.d ] ; then

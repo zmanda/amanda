@@ -23,7 +23,7 @@ Description: Amanda Network Backup and Archiving software
 
 Package: amanda-backup-client
 Architecture: any
-Depends: xinetd, perl (>=5.6.0), grep, libglib2.0-0 (>=2.2.0)
+Depends: xinetd, perl (>=5.6.0), libglib2.0-0 (>=2.2.0)
 Conflicts: amanda-backup-server (>=${Source-Version})
 Description: Amanda Network Backup and Archiving software
  .
