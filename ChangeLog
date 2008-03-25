@@ -1,3 +1,7 @@
+2008-03-25  Dustin J. Mitchell <dustin@zmanda.com>
+	* config/amanda/swig.m4: fix the fix to the fix for FreeBSD systems'
+	  peculiar linking of threading libraries.
+
 2008-03-20  Dan Locks <dwlocks@zmanda.com>
 	* packaging/deb/control: removed grep dependency
 	* packaging/deb/amanda-backup-client.postinst 
