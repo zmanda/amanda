@@ -1,4 +1,18 @@
 2008-03-25  Jean-Louis Martineau <martineau@zmanda.com>
+	* config/amanda/readline.m4: Don't add READLINE_LIBS to LIBS.
+	* oldrecover-src/Makefile.am (LDAAD): Add READLINE_LIBS.
+	* recover-src/Makefile.am (LDAAD): Add READLINE_LIBS.
+	* config/amanda/swig.m4: AM_CONDITIONAL(WANT_CYGWIN_COPY_PERL_DLL)
+	* config/amanda/swig.m4: Add library to PERLEXTLIBS on cygwin.
+	* config/amanda/syshacks.m4: Add '-no-undefined' to AMANDA_ADD_LDFLAGS.
+	* amandad-src/Makefile.am,
+	* client-src/Makefile.am, device-src/Makefile.am,
+	  server-src/Makefile.am, server-src/server_util.c,
+	  tape-src/Makefile.am: Add library to many *_LIBADD.
+	* perl/Makefile.am (install-data-hook): Copy cygwin ddl if
+	  WANT_CYGWIN_COPY_PERL_DLL.
+
+2008-03-25  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.c: Fix typo and remove unused prefix.
 
 2008-03-25  Jean-Louis Martineau <martineau@zmanda.com>

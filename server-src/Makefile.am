@@ -89,7 +89,8 @@ libamserver_la_SOURCES=	amindex.c	changer.c			\
                         taperscan.c
 
 libamserver_la_LDFLAGS= -release $(VERSION)
-libamserver_la_LIBADD= ../device-src/libamdevice.la
+libamserver_la_LIBADD= ../device-src/libamdevice.la \
+		       ../common-src/libamanda.la
 
 taper_source_test_SOURCES = taper-source-test.c \
 			taper-source.c \

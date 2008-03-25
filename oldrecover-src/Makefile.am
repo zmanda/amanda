@@ -28,6 +28,7 @@ sbin_PROGRAMS =		amoldrecover
 
 LDADD = ../common-src/libamanda.$(LIB_EXTENSION) \
 	@LEXLIB@ \
+	$(READLINE_LIBS) \
 	../client-src/libamclient.$(LIB_EXTENSION) \
 	../common-src/libamanda.$(LIB_EXTENSION) \
 	../gnulib/libgnu.$(LIB_EXTENSION)

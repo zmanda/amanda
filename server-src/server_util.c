@@ -65,7 +65,7 @@ getcmd(
     if (isatty(0)) {
 	g_printf("%s> ", get_pname());
 	fflush(stdout);
-        line = readline(NULL);
+        line = agets(stdin);
     } else {
         line = agets(stdin);
     }

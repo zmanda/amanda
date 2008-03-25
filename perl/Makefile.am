@@ -48,6 +48,7 @@ libamglue_la_SOURCES = \
 	amglue/bigint.c \
 	amglue/source.c \
 	amglue/amglue.h
+libamglue_la_LDFLAGS = $(PERL_EXT_LDFLAGS)
 EXTRA_DIST += $(libamglue_la_SOURCES)
 
 ##
@@ -224,3 +225,15 @@ DISTCLEANFILES += Amanda/Paths.pm
 Amanda_DATA += Amanda/Constants.pm
 EXTRA_DIST += Amanda/Constants.pm.in
 DISTCLEANFILES += Amanda/Constants.pm
+
+# perl doesn't use the cyg prefix and it doesn't search in the bin
+# directory, dll must be copied to their modules directories.
+if WANT_CYGWIN_COPY_PERL_DLL
+amperldirauto="$(DESTDIR)$(amperldir)/auto/Amanda"
+install-data-hook:
+	@for cygdll in $(amperldirauto)/bin/cyg*.dll; do \
+	    destfname=`echo $$cygdll|sed 's!/bin/cyg\([^.]*\).dll!/\1/\1.dll!'`; \
+	   cp "$$cygdll" "$$destfname"; \
+	done
+endif
+
