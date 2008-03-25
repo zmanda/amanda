@@ -697,7 +697,7 @@ keytab_t server_keytab[] = {
     { "AUTO", CONF_AUTO },
     { "AUTOFLUSH", CONF_AUTOFLUSH },
     { "APPLICATION", CONF_APPLICATION },
-    { "APPLICATION-TOOl", CONF_APPLICATION_TOOL },
+    { "APPLICATION-TOOL", CONF_APPLICATION_TOOL },
     { "BEST", CONF_BEST },
     { "BLOCKSIZE", CONF_BLOCKSIZE },
     { "BUMPDAYS", CONF_BUMPDAYS },
@@ -826,7 +826,7 @@ keytab_t server_keytab[] = {
     { "RUNSPERCYCLE", CONF_RUNSPERCYCLE },
     { "RUNTAPES", CONF_RUNTAPES },
     { "SCRIPT", CONF_PP_SCRIPT },
-    { "SCRIPT-TOOl", CONF_PP_SCRIPT_TOOL },
+    { "SCRIPT-TOOL", CONF_PP_SCRIPT_TOOL },
     { "SERVER", CONF_SERVER },
     { "SERVER_CUSTOM_COMPRESS", CONF_SRVCOMPPROG },
     { "SERVER_DECRYPT_OPTION", CONF_SRV_DECRYPT_OPT },
@@ -2086,7 +2086,6 @@ read_application(
     int save_overwrites;
     FILE *saved_conf = NULL;
     char *saved_fname = NULL;
-    char *prefix;
 
     if (from) {
 	saved_conf = current_file;
@@ -2113,11 +2112,9 @@ read_application(
     }
     apcur.seen = current_line_num;
 
-    prefix = vstralloc( "APPLICATION-TOOL:", apcur.name, ":", NULL);
     read_block(application_var, apcur.value,
 	       _("application-tool parameter expected"),
 	       (name == NULL), *copy_application);
-    amfree(prefix);
     if(!name)
 	get_conftoken(CONF_NL);
 
@@ -2214,7 +2211,6 @@ read_pp_script(
     int save_overwrites;
     FILE *saved_conf = NULL;
     char *saved_fname = NULL;
-    char *prefix;
 
     if (from) {
 	saved_conf = current_file;
@@ -2241,11 +2237,9 @@ read_pp_script(
     }
     pscur.seen = current_line_num;
 
-    prefix = vstralloc( "SCRIPT-TOOL:", pscur.name, ":", NULL);
     read_block(pp_script_var, pscur.value,
 	       _("script-tool parameter expected"),
 	       (name == NULL), *copy_pp_script);
-    amfree(prefix);
     if(!name)
 	get_conftoken(CONF_NL);
 

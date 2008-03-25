@@ -1,4 +1,7 @@
 2008-03-25  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c: Fix typo and remove unused prefix.
+
+2008-03-25  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/reporter.c: Check difference between origsize and outsize
 	  to find if the image is compressed.
 
