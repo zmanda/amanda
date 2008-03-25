@@ -1286,7 +1286,7 @@ CalcMaxWidth(void)
 			      (double)du(repdata->dumper.origsize));
 		CheckFloatMax(&ColumnData[OutKB],
 			      (double)du(repdata->dumper.outsize));
-		if(dp->compress == COMP_NONE)
+		if(abs(repdata->dumper.outsize - repdata->dumper.origsize)< 32)
 		    f = 0.0;
 		else 
 		    f = repdata->dumper.origsize;
@@ -1502,7 +1502,7 @@ output_summary(void)
 	    cd= &ColumnData[Compress];
 	    g_fprintf(mailf, "%*s", cd->PrefixSpace, "");
 
-	    if(dp->compress == COMP_NONE)
+	    if(abs(outsize - origsize) < 32)
 		f = 0.0;
 	    else if(origsize < 1.0)
 		f = 0.0;
@@ -2440,7 +2440,7 @@ handle_success(
 	sp->outsize = kbytes;
 	if(!isnormal(repdata->chunker.outsize) && isnormal(repdata->dumper.outsize)) { /* dump to tape */
 	    stats[i].outsize += kbytes;
-	    if(dp->compress != COMP_NONE) {
+	    if (abs(kbytes - origkb) >= 32) {
 		stats[i].coutsize += kbytes;
 	    }
 	}
@@ -2449,7 +2449,7 @@ handle_success(
 
     if(curprog == P_DUMPER) {
 	stats[i].dumper_time += sec;
-	if(dp->compress == COMP_NONE) {
+	if (abs(kbytes - origkb) < 32) {
 	    sp->origsize = kbytes;
 	}
 	else {
@@ -2463,7 +2463,7 @@ handle_success(
     if(curprog == P_CHUNKER) {
 	sp->outsize = kbytes;
 	stats[i].outsize += kbytes;
-	if(dp->compress != COMP_NONE) {
+	if (abs(kbytes - origkb) >= 32) {
 	    stats[i].coutsize += kbytes;
 	}
     }
