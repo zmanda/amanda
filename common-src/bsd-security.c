@@ -387,8 +387,9 @@ bsd_stream_server(
 
     bs = alloc(SIZEOF(*bs));
     security_streaminit(&bs->secstr, &bsd_security_driver);
-    bs->socket = stream_server(&bs->port, (size_t)STREAM_BUFSIZE, 
-			(size_t)STREAM_BUFSIZE, 0);
+    bs->socket = stream_server(bh->udp->peer.ss_family, &bs->port,
+			       (size_t)STREAM_BUFSIZE, (size_t)STREAM_BUFSIZE,
+			       0);
     if (bs->socket < 0) {
 	security_seterror(&bh->sech,
 	    _("can't create server stream: %s"), strerror(errno));

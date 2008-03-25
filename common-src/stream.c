@@ -45,6 +45,7 @@ static int stream_client_internal(const char *hostname, in_port_t port,
 
 int
 stream_server(
+    int family,
     in_port_t *portp,
     size_t sendsize,
     size_t recvsize,
@@ -63,8 +64,13 @@ stream_server(
     int socket_family;
 
     *portp = USHRT_MAX;				/* in case we error exit */
-    socket_family = AF_NATIVE;
-    server_socket = socket(AF_NATIVE, SOCK_STREAM, 0);
+    if (family == -1) {
+	socket_family = AF_NATIVE;
+    } else {
+	socket_family = family;
+    }
+    server_socket = socket(socket_family, SOCK_STREAM, 0);
+    
 #ifdef WORKING_IPV6
     /* if that address family actually isn't supported, just try AF_INET */
     if (server_socket == -1 && errno == EAFNOSUPPORT) {

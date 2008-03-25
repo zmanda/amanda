@@ -37,7 +37,8 @@
 #define NETWORK_BLOCK_BYTES	DISK_BLOCK_BYTES
 #define STREAM_BUFSIZE		(NETWORK_BLOCK_BYTES * 2)
 
-int stream_server(in_port_t *port, size_t sendsize, size_t recvsize, int priv);
+int stream_server(int family, in_port_t *port, size_t sendsize,
+		  size_t recvsize, int priv);
 int stream_accept(int sock, int timeout, size_t sendsize, size_t recvsize);
 int stream_client_privileged(const char *hostname,
 				in_port_t port,

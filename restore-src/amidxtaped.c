@@ -517,7 +517,7 @@ main(
 
 	    dbprintf(_("Client understands split dumpfiles\n"));
 
-	    if((data_sock = stream_server(&data_port, STREAM_BUFSIZE, 
+	    if((data_sock = stream_server(AF_INET, &data_port, STREAM_BUFSIZE, 
 		 STREAM_BUFSIZE, 0)) < 0){
 		error(_("could not create data socket: %s"), strerror(errno));
 		/*NOTREACHED*/

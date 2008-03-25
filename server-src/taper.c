@@ -130,8 +130,32 @@ static gboolean open_read_socket(dump_info_t * info, char * split_diskbuffer,
     in_port_t port = 0;
     int socket;
     int fd;
+    int result;
+    struct addrinfo *res;
 
-    socket = stream_server(&port, 0, STREAM_BUFSIZE, 0);
+    if ((result = resolve_hostname("localhost", 0, &res, NULL) != 0)) {
+        char *m;
+        char *q;
+	int save_errno = errno;
+        char *qdiskname = quote_string(info->diskname);
+
+        m = vstralloc("[localhost resolve failure: ",
+                      strerror(save_errno),
+                      "]",
+                      NULL);
+        q = squote(m);
+        putresult(TAPE_ERROR, "%s %s\n", info->handle, q);
+        log_add(L_FAIL, "%s %s %s %d %s",
+                info->hostname, qdiskname, info->timestamp,
+                info->level, q);
+        amfree(qdiskname);
+        amfree(m);
+        amfree(q);
+        return FALSE;
+    }
+
+    socket = stream_server(res->ai_family, &port, 0, STREAM_BUFSIZE, 0);
+    freeaddrinfo(res);
 
     if (socket < 0) {
         char *m;

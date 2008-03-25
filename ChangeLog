@@ -1,4 +1,15 @@
 2008-03-25  Jean-Louis Martineau <martineau@zmanda.com>
+	Greg Troxel reported the bug and possible solution.
+	* common-src/stream.c (stream_server): New family argument, it is used
+	                                       to create the socket.
+	* common-src/stream.h (stream_server): New prototype.
+	* server-src/chunker.c, server-src/taper.c: Call stream_server with
+	  family of 'localhost', it's the name dumper use to contact them.
+	* restore-src/amidxtaped.c: Call stream_server with AF_INET.
+	* common-src/bsd-security.c, common-src/security-util.c: Call
+	  stream_server with family of incoming packet.
+
+2008-03-25  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/security-util.c (show_stat_info): Use getpwuid_r
 						       and getgrgid_r.
 
