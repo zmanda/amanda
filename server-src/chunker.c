@@ -406,9 +406,17 @@ startup_chunker(
     char *tmp_filename, *pc;
     in_port_t data_port;
     int data_socket;
+    int result;
+    struct addrinfo *res;
 
     data_port = 0;
-    data_socket = stream_server(&data_port, 0, STREAM_BUFSIZE, 0);
+    if ((result = resolve_hostname("localhost", 0, &res, NULL) != 0)) {
+	errstr = newvstrallocf(errstr, _("could not resolve localhost: %s"),
+			       gai_strerror(result));
+	return -1;
+    }
+    data_socket = stream_server(res->ai_family, &data_port, 0,
+				STREAM_BUFSIZE, 0);
 
     if(data_socket < 0) {
 	errstr = vstrallocf(_("error creating stream server: %s"), strerror(errno));

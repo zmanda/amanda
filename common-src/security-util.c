@@ -764,8 +764,8 @@ tcp1_stream_server(
 	rh->rc = sec_tcp_conn_get(rh->hostname, 1);
 	rh->rc->driver = rh->sech.driver;
 	rs->rc = rh->rc;
-	rs->socket = stream_server(&rs->port, STREAM_BUFSIZE, 
-		STREAM_BUFSIZE, 0);
+	rs->socket = stream_server(rh->udp->peer.ss_family, &rs->port,
+				   STREAM_BUFSIZE, STREAM_BUFSIZE, 0);
 	if (rs->socket < 0) {
 	    security_seterror(&rh->sech,
 			    _("can't create server stream: %s"), strerror(errno));
