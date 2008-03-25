@@ -24,6 +24,7 @@ libamtape_la_SOURCES = 	output-file.c \
 			tapeio.c
 
 libamtape_la_LDFLAGS =  -release $(VERSION)
+libamtape_la_LIBADD = ../common-src/libamanda.$(LIB_EXTENSION)
 
 ###
 # Because libamanda includes routines (e.g. regex) provided by some system

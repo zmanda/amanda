@@ -47,6 +47,7 @@ libamglue_la_SOURCES = \
 	amglue/ghashtable.c \
 	amglue/bigint.c \
 	amglue/amglue.h
+libamglue_la_LDFLAGS = $(PERL_EXT_LDFLAGS)
 EXTRA_DIST += $(libamglue_la_SOURCES)
 
 ##
@@ -153,7 +154,7 @@ libDebugdir = $(amperldir)/auto/Amanda/Debug
 libDebug_LTLIBRARIES = libDebug.la
 libDebug_la_SOURCES = Amanda/Debug.c $(AMGLUE_SWG)
 libDebug_la_LDFLAGS = $(PERL_EXT_LDFLAGS)
-libDebug_la_LIBADD = \
+libDebug_la_LIBADD = libamglue.la \
 	$(top_builddir)/common-src/libamanda.la
 Amanda_DATA += Amanda/Debug.pm
 EXTRA_DIST += Amanda/Debug.swg Amanda/Debug.pm
@@ -196,3 +197,14 @@ MAINTAINERCLEANFILES += Amanda/Types.c Amanda/Types.pm
 Amanda_DATA += Amanda/Paths.pm
 EXTRA_DIST += Amanda/Paths.pm.in
 DISTCLEANFILES += Amanda/Paths.pm
+
+# perl doesn't use the cyg prefix and it doesn't search in the bin
+# directory, dll must be copied to their modules directories.
+if WANT_CYGWIN_COPY_PERL_DLL
+amperldirauto="$(DESTDIR)$(amperldir)/auto/Amanda"
+install-data-hook:
+	@for cygdll in $(amperldirauto)/bin/cyg*.dll; do \
+	    destfname=`echo $$cygdll|sed 's!/bin/cyg\([^.]*\).dll!/\1/\1.dll!'`; \
+	    cp "$$cygdll" "$$destfname"; \
+	done
+endif

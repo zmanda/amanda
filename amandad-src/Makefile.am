@@ -20,6 +20,7 @@ amlibexec_PROGRAMS =	amandad
 
 libamandad_la_SOURCES= amandad_util.c
 libamandad_la_LDFLAGS = -release $(VERSION)
+libamandad_la_LIBADD = ../common-src/libamanda.la
 
 noinst_HEADERS  = amandad.h
 

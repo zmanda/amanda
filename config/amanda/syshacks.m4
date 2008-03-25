@@ -88,7 +88,7 @@ AC_DEFUN([AMANDA_SYSHACKS], [
 		    # Cygwin needs PATH to find cygwin1.dll
 		    AC_DEFINE(NEED_PATH_ENV,1,[Define on Cygwin. ])
 		    AC_DEFINE(IGNORE_FSTAB,1,[Define on Cygwin. ])
-		    AMANDA_ADD_LDFLAGS([-Wl,-enable-runtime-pseudo-reloc])
+		    AMANDA_ADD_LDFLAGS([-Wl,-enable-runtime-pseudo-reloc -no-undefined])
 		    ;;
         *-apple-darwin7*) # MacOS X 10.3.* (Panther)
 		    ;;

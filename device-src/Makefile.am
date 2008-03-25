@@ -19,6 +19,7 @@ amlib_LTLIBRARIES = 	libamdevice.la
 libamdevice_la_LDFLAGS = -release $(VERSION) 
 libamdevice_la_SOURCES = property.c device.c queueing.c semaphore.c \
 	null-device.c rait-device.c vfs-device.c 
+libamdevice_la_LIBADD = ../common-src/libamanda.la
 
 # tape-device has *lots* of conditionals; the first is whether to support
 # the device at all, and the remainder select a particular kind of OS-specific

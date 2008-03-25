@@ -14,6 +14,9 @@ AC_DEFUN([AMANDA_SETUP_SWIG],
     AC_REQUIRE([AMANDA_PROG_SWIG])
     AC_REQUIRE([AMANDA_PROG_PERL])
 
+    # If we want cygwin to copy ddl to modules directory.
+    WANT_CYGWIN_COPY_PERL_DLL="false"
+
     # get the include path for building perl extensions
     PERL_INC=`$PERL -MExtUtils::Embed -e perl_inc`
     AC_SUBST(PERL_INC)
@@ -51,7 +54,14 @@ AC_DEFUN([AMANDA_SETUP_SWIG],
 
 	    PERLEXTLIBS="-lpthread"
 	    ;;
+	*-pc-cygwin)
+	    # When need -lperl and the '-L' where it is located,
+	    # we don't want the DynaLoader.a
+	    PERLEXTLIBS=`perl -MExtUtils::Embed -e ldopts | sed -e 's/^.*-L/-L/'`
+	    WANT_CYGWIN_COPY_PERL_DLL="true";
+	    ;;
     esac
+    AM_CONDITIONAL(WANT_CYGWIN_COPY_PERL_DLL,$WANT_CYGWIN_COPY_PERL_DLL)
 
     AC_ARG_WITH(perlextlibs,
 	AC_HELP_STRING([--with-perlextlibs=libs],[extra LIBS for Perl extensions]),

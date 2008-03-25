@@ -36,6 +36,7 @@ libamclient_la_SOURCES += findpass.c
 endif
 
 libamclient_la_LDFLAGS = -release $(VERSION)
+libamclient_la_LIBADD  = ../common-src/libamanda.la
 
 ###
 # Because libamanda includes routines (e.g. regex) provided by some system

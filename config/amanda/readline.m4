@@ -6,7 +6,7 @@
 #
 #   Check for readline support.  Defines HAVE_READLINE if readline
 #   is available, and also checks for a number of readline headers and
-#   adds readline libraries to LIBS.
+#   adds readline libraries to READLINE_LIBS.
 #
 #   See common-src/util.{c,h}.
 #
@@ -55,7 +55,7 @@ AS_HELP_STRING([--without-readline], [don't search for readline]),
         if $proceed; then
             proceed="false"
             AC_CHECK_LIB(readline,readline, [
-                LIBS="-lreadline $READLINE_LIBS $LIBS"
+                READLINE_LIBS="-lreadline $READLINE_LIBS"
                 proceed="true"
             ],,$READLINE_LIBS)
         fi
@@ -68,6 +68,8 @@ AS_HELP_STRING([--without-readline], [don't search for readline]),
             if test x"$want_readline" = x"yes"; then
                 AC_MSG_ERROR([*** No readline implementation found.  Try using --with-libraries and --with-includes])
             fi
+            READLINE_LIBS=""
         fi
     fi
+    AC_SUBST(READLINE_LIBS)
 ])
