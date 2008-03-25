@@ -1,3 +1,6 @@
+2008-03-25  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/security-util.c (show_stat_info): Use getpwuid_r
+						       and getgrgid_r.
 2008-03-25  Dustin J. Mitchell <dustin@zmanda.com>
 	* config/amanda/swig.m4: fix the fix to the fix for FreeBSD systems'
 	  peculiar linking of threading libraries.
