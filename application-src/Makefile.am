@@ -31,9 +31,17 @@ EXTRA_DIST += generic-dumper.pl generic-script.pl
 
 CHECK_PERL = $(SCRIPTS_PERL) $(SCRIPTS_INCLUDE)
 
+#We use two variables, applicationdir applicationexecdir, to segregate the
+#platform-independent (applicationdir) files installed by install-data from the
+#platform-dependent files (applicationexecdir) installed by install-exec. 
+#Automake recognizes the 'exec' substring in the variable name.  From the
+#Automake manual: "Any variable using a user-defined directory prefix with
+#‘exec’ in the name (e.g., myexecbin_PROGRAMS) is installed by install-exec.
+#All other user-defined prefixes are installed by install-data." (section 12.2)
+applicationexecdir = $(APPLICATION_DIR)
 applicationdir = $(APPLICATION_DIR)
-application_PROGRAMS = amgtar amstar
-application_SCRIPTS = $(SCRIPTS_PERL)
+applicationexec_PROGRAMS = amgtar amstar
+applicationexec_SCRIPTS = $(SCRIPTS_PERL)
 application_DATA = $(SCRIPTS_INCLUDE)
 
 LDADD = ../common-src/libamanda.$(LIB_EXTENSION) \
@@ -42,6 +50,6 @@ LDADD = ../common-src/libamanda.$(LIB_EXTENSION) \
 	../common-src/libamanda.$(LIB_EXTENSION) \
 	../gnulib/libgnu.$(LIB_EXTENSION)
 
-INSTALLPERMS_exec = dest=$(applicationdir) chown=amanda $(application_PROGRAMS)
-INSTALLPERMS_data = dest=$(applicationdir) chown=amanda $(application_SCRIPTS)\
-		    $(application_DATA)
+INSTALLPERMS_exec = dest=$(applicationdir) chown=amanda $(applicationexec_PROGRAMS) \
+		    dest=$(applicationdir) chown=amanda $(applicationexec_SCRIPTS)
+INSTALLPERMS_data = dest=$(applicationdir) chown=amanda $(application_DATA)

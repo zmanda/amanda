@@ -1,4 +1,9 @@
 2008-03-25  Jean-Louis Martineau <martineau@zmanda.com>
+	Davor Ocelic reported the problem.
+	* application-src/Makefile.am: Use applicationexec_PROGRAMS and
+	  applicationexec_SCRIPTS to install executable.
+
+2008-03-25  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/security-util.c (show_stat_info): Use getpwuid_r
 						       and getgrgid_r.
 2008-03-25  Dustin J. Mitchell <dustin@zmanda.com>
