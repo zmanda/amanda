@@ -2505,22 +2505,38 @@ show_stat_info(
     char *name = vstralloc(a, b, NULL);
     struct stat sbuf;
     struct passwd *pwptr;
+    struct passwd pw;
     char *owner;
     struct group *grptr;
+    struct group gr;
     char *group;
+    int buflen;
+    char *buf;
 
     if (stat(name, &sbuf) != 0) {
 	auth_debug(1, _("bsd: cannot stat %s: %s\n"), name, strerror(errno));
 	amfree(name);
 	return;
     }
-    if ((pwptr = getpwuid(sbuf.st_uid)) == NULL) {
+
+#ifdef _SC_GETPW_R_SIZE_MAX
+    buflen = sysconf(_SC_GETPW_R_SIZE_MAX);
+    if (buflen == -1)
+	buflen = 1024;
+#else
+    buflen = 1024;
+#endif
+    buf = malloc(buflen);
+
+    if (getpwuid_r(sbuf.st_uid, &pw, buf, buflen, &pwptr) != 0 ||
+	pwptr == NULL) {
 	owner = alloc(NUM_STR_SIZE + 1);
 	g_snprintf(owner, NUM_STR_SIZE, "%ld", (long)sbuf.st_uid);
     } else {
 	owner = stralloc(pwptr->pw_name);
     }
-    if ((grptr = getgrgid(sbuf.st_gid)) == NULL) {
+    if (getgrgid_r(sbuf.st_gid, &gr, buf, buflen, &grptr) != 0 ||
+	grptr == NULL) {
 	group = alloc(NUM_STR_SIZE + 1);
 	g_snprintf(owner, NUM_STR_SIZE, "%ld", (long)sbuf.st_gid);
     } else {
@@ -2533,6 +2549,7 @@ show_stat_info(
     amfree(name);
     amfree(owner);
     amfree(group);
+    amfree(buf);
 }
 
 int
