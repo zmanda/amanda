@@ -1,4 +1,8 @@
 2008-03-25  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/reporter.c: Check difference between origsize and outsize
+	  to find if the image is compressed.
+
+2008-03-25  Jean-Louis Martineau <martineau@zmanda.com>
 	Greg Troxel reported the bug and possible solution.
 	* common-src/stream.c (stream_server): New family argument, it is used
 	                                       to create the socket.
