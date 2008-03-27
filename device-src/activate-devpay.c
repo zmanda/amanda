@@ -39,7 +39,7 @@ static void usage(void) {
 static const char * parse_commandline(int argc, char ** argv) {
     if (argc != 2) {
         usage();
-        g_assert_not_reached();
+        return NULL;
     } else {
         return argv[1];
     }
