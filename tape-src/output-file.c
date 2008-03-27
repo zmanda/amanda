@@ -766,7 +766,7 @@ file_tapefd_write(
     ssize_t write_count = (ssize_t)count;
     off_t length;
     off_t kbytes_left;
-    ssize_t result;
+    size_t result;
     off_t pos;
 
     /*
@@ -868,8 +868,8 @@ file_tapefd_write(
 	volume_info[fd].at_bof = 0;
 	volume_info[fd].at_eom = 1;
     }
-    result = fullwrite(file_fd, buffer, (size_t)write_count);
-    if (result >= 0) {
+    result = full_write(file_fd, buffer, (size_t)write_count);
+    if (result > 0) {
 	volume_info[fd].last_operation_write = 1;
 	pos = volume_info[fd].file_current;
 	put_record_size(&volume_info[fd].fi[pos],

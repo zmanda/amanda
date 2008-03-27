@@ -1,3 +1,21 @@
+2008-03-27  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/util.c common-src/util.h: remove fullread(), fullwrite()
+	* gnulib/regenerate/regenerate gnulib/Makefile.am
+	  config/gnulib/gnulib-cache.m4: add full-read, full-write modules
+	* oldrecover-src/extract_list.c client-src/noop.c
+	  client-src/sendbackup-gnutar.c client-src/sendbackup.c
+	  client-src/sendsize.c client-src/selfcheck.c amandad-src/amandad.c
+	  application-src/amgtar.c recover-src/extract_list.c
+	  server-src/changer.c server-src/logfile.c server-src/amindexd.c
+	  server-src/amcheck.c server-src/dumper.c server-src/chunker.c
+	  server-src/taper-port-source.c server-src/driverio.c
+	  server-src/holding.c server-src/driver.c
+	  server-src/taper-file-source.c restore-src/restore.c
+	  common-src/security-util.c common-src/amanda.h 
+	  tape-src/output-file.c: use gnulib full_read, full_write functions,
+	  which have slightly different error semantics than the corresponding
+	  Amanda functions.
+
 2008-03-27  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/amgtar.c: Add 'CHECK-DEVICE' property.
 

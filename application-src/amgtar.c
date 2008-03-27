@@ -760,7 +760,7 @@ amgtar_get_incrname(
     char *basename;
     char *incrname = NULL;
     int   infd, outfd;
-    int   nb;
+    ssize_t   nb;
     char *inputname = NULL;
     char **errmsg = NULL;
     char *buf;
@@ -819,7 +819,7 @@ amgtar_get_incrname(
 	}
 
 	while ((nb = read(infd, &buf, SIZEOF(buf))) > 0) {
-	    if (fullwrite(outfd, &buf, (size_t)nb) < nb) {
+	    if (full_write(outfd, &buf, (size_t)nb) < (size_t)nb) {
 		*errmsg = vstrallocf(_("writing to %s: %s"),
 				     incrname, strerror(errno));
 		dbprintf("%s\n", *errmsg);

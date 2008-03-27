@@ -45,9 +45,6 @@
 /* internal types and variables */
 
 
-ssize_t	fullread(int, void *, size_t);
-ssize_t	fullwrite(int, const void *, size_t);
-
 int	connect_portrange(struct sockaddr_storage *, in_port_t, in_port_t, char *,
 			  struct sockaddr_storage *, int);
 int	bind_portrange(int, struct sockaddr_storage *, in_port_t, in_port_t,

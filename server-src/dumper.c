@@ -642,7 +642,7 @@ static int
 databuf_flush(
     struct databuf *	db)
 {
-    ssize_t written;
+    size_t written;
 
     /*
      * If there's no data, do nothing.
@@ -654,7 +654,7 @@ databuf_flush(
     /*
      * Write out the buffer
      */
-    written = fullwrite(db->fd, db->dataout,
+    written = full_write(db->fd, db->dataout,
 			(size_t)(db->datain - db->dataout));
     if (written > 0) {
 	db->dataout += written;
@@ -664,7 +664,7 @@ databuf_flush(
 	dumpsize += (dumpbytes / (off_t)1024);
 	dumpbytes %= (off_t)1024;
     }
-    if (written < 0) {
+    if (written == 0) {
 	errstr = squotef(_("data write: %s"), strerror(errno));
 	return -1;
     }
@@ -1049,16 +1049,14 @@ write_tapeheader(
     dumpfile_t *file)
 {
     char * buffer;
-    ssize_t written;
+    size_t written;
 
     buffer = build_header(file, DISK_BLOCK_BYTES);
 
-    written = fullwrite(outfd, buffer, DISK_BLOCK_BYTES);
+    written = full_write(outfd, buffer, DISK_BLOCK_BYTES);
     amfree(buffer);
     if(written == DISK_BLOCK_BYTES)
         return 0;
-    if(written < 0)
-        return written;
 
     return -1;
 }
@@ -1491,7 +1489,7 @@ read_indexfd(
     /*
      * We ignore error while writing to the index file.
      */
-    if (fullwrite(fd, buf, (size_t)size) < 0) {
+    if (full_write(fd, buf, (size_t)size) < (size_t)size) {
 	/* Ignore error, but schedule another read. */
 	if(indexfderror == 0) {
 	    indexfderror = 1;

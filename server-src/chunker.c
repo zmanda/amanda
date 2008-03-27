@@ -463,7 +463,7 @@ do_chunk(
     int			infd,
     struct databuf *	db)
 {
-    ssize_t nread;
+    size_t nread;
     char header_buf[DISK_BLOCK_BYTES];
 
     startclock();
@@ -477,14 +477,13 @@ do_chunk(
      * need to save into "file", as well as write out.  Later, the
      * chunk code will rewrite it.
      */
-    nread = fullread(infd, header_buf, SIZEOF(header_buf));
-    if (nread != DISK_BLOCK_BYTES) {
-	if(nread < 0) {
+    nread = full_read(infd, header_buf, SIZEOF(header_buf));
+    if (nread != sizeof(header_buf)) {
+	if(errno != 0) {
 	    errstr = vstrallocf(_("cannot read header: %s"), strerror(errno));
 	} else {
-	    errstr = vstrallocf(_("cannot read header: got %zd bytes instead of %d"),
-				nread,
-				DISK_BLOCK_BYTES);
+	    errstr = vstrallocf(_("cannot read header: got %zd bytes instead of %zd"),
+				nread, sizeof(header_buf));
 	}
 	return 0;
     }
@@ -508,7 +507,7 @@ do_chunk(
      * We've written the file header.  Now, just write data until the
      * end.
      */
-    while ((nread = fullread(infd, db->buf,
+    while ((nread = full_read(infd, db->buf,
 			     (size_t)(db->datalimit - db->datain))) > 0) {
 	db->datain += nread;
 	while(db->dataout < db->datain) {
@@ -560,7 +559,7 @@ databuf_flush(
 {
     struct cmdargs cmdargs;
     int rc = 1;
-    ssize_t written;
+    size_t written;
     off_t left_in_chunk;
     char *arg_filename = NULL;
     char *qarg_filename = NULL;
@@ -806,7 +805,7 @@ databuf_flush(
     /*
      * Write out the buffer
      */
-    written = fullwrite(db->fd, db->dataout,
+    written = full_write(db->fd, db->dataout,
 			(size_t)(db->datain - db->dataout));
     if (written > 0) {
 	db->dataout += written;
@@ -815,7 +814,7 @@ databuf_flush(
     dumpsize += (dumpbytes / (off_t)1024);
     filesize += (dumpbytes / (off_t)1024);
     dumpbytes %= 1024;
-    if (written < 0) {
+    if (written == 0) {
 	if (errno != ENOSPC) {
 	    errstr = squotef(_("data write: %s"), strerror(errno));
 	    rc = 0;
@@ -858,15 +857,18 @@ write_tapeheader(
     dumpfile_t *file)
 {
     char *buffer;
-    ssize_t written;
+    size_t written;
 
     file->blocksize = DISK_BLOCK_BYTES;
     buffer = build_header(file, DISK_BLOCK_BYTES);
 
-    written = fullwrite(outfd, buffer, DISK_BLOCK_BYTES);
+    written = full_write(outfd, buffer, DISK_BLOCK_BYTES);
     amfree(buffer);
     if(written == DISK_BLOCK_BYTES) return 0;
-    if(written < 0) return written;
-    errno = ENOSPC;
+
+    /* fake ENOSPC when we get a short write without errno set */
+    if(errno == 0)
+	errno = ENOSPC;
+
     return (ssize_t)-1;
 }

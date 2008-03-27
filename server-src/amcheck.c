@@ -95,7 +95,7 @@ main(
     int do_localchk, do_tapechk, server_probs;
     pid_t clientchk_pid, serverchk_pid;
     int opt, tempfd, mainfd;
-    ssize_t size;
+    size_t size;
     amwait_t retstat;
     pid_t pid;
     extern int optind;
@@ -353,7 +353,7 @@ main(
 	    char *wait_msg = NULL;
 
 	    wait_msg = vstrallocf(_("parent: reaped bogus pid %ld\n"), (long)pid);
-	    if (fullwrite(mainfd, wait_msg, strlen(wait_msg)) < 0) {
+	    if (full_write(mainfd, wait_msg, strlen(wait_msg)) < strlen(wait_msg)) {
 		error(_("write main file: %s"), strerror(errno));
 		/*NOTREACHED*/
 	    }
@@ -369,13 +369,13 @@ main(
 	    /*NOTREACHED*/
 	}
 
-	while((size = fullread(tempfd, buffer, SIZEOF(buffer))) > 0) {
-	    if (fullwrite(mainfd, buffer, (size_t)size) < 0) {
+	while((size = full_read(tempfd, buffer, SIZEOF(buffer))) > 0) {
+	    if (full_write(mainfd, buffer, size) < size) {
 		error(_("write main file: %s"), strerror(errno));
 		/*NOTREACHED*/
 	    }
 	}
-	if(size < 0) {
+	if(size == 0) {
 	    error(_("read temp file: %s"), strerror(errno));
 	    /*NOTREACHED*/
 	}
@@ -383,7 +383,7 @@ main(
     }
 
     version_string = vstrallocf(_("\n(brought to you by Amanda %s)\n"), version());
-    if (fullwrite(mainfd, version_string, strlen(version_string)) < 0) {
+    if (full_write(mainfd, version_string, strlen(version_string)) < strlen(version_string)) {
 	error(_("write main file: %s"), strerror(errno));
 	/*NOTREACHED*/
     }
@@ -405,8 +405,8 @@ main(
 	char *subject;
 	char **a;
 	amwait_t retstat;
-	ssize_t r;
-	ssize_t w;
+	size_t r;
+	size_t w;
 	char *err = NULL;
 	char *extra_info = NULL;
 	char *line = NULL;
@@ -461,12 +461,12 @@ main(
 	 * cases, the pipe will break and we will exit out of the loop.
 	 */
 	signal(SIGPIPE, SIG_IGN);
-	while((r = fullread(mainfd, buffer, SIZEOF(buffer))) > 0) {
-	    if((w = fullwrite(mailfd, buffer, (size_t)r)) != (ssize_t)r) {
-		if(w < 0 && errno == EPIPE) {
+	while((r = full_read(mainfd, buffer, SIZEOF(buffer))) > 0) {
+	    if((w = full_write(mailfd, buffer, r)) != r) {
+		if(errno == EPIPE) {
 		    strappend(extra_info, _("EPIPE writing to mail process\n"));
 		    break;
-		} else if(w < 0) {
+		} else if(errno != 0) {
 		    error(_("mailfd write: %s"), strerror(errno));
 		    /*NOTREACHED*/
 		} else {

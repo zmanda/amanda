@@ -241,7 +241,7 @@ uncompress_file(
 	    if (line[0] != '\0') {
 		if (index(line,'/')) {
 		    clean_backslash(line);
-		    fullwrite(pipe_to_sort,line,strlen(line));
+		    full_write(pipe_to_sort,line,strlen(line));
 		}
 	    }
 	}

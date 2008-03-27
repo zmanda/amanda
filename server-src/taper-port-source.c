@@ -87,14 +87,14 @@ static void taper_port_source_class_init (TaperPortSourceClass * c) {
 static void check_first_header(TaperPortSource * self) {
     TaperSource * pself = (TaperSource*)self;
     char buf[DISK_BLOCK_BYTES];
-    int result;
+    size_t result;
     dumpfile_t * rval;
     
     if (G_LIKELY(pself->first_header != NULL)) {
         return;
     }
     
-    result = fullread(self->socket_fd, buf, DISK_BLOCK_BYTES);
+    result = full_read(self->socket_fd, buf, DISK_BLOCK_BYTES);
     if (result != DISK_BLOCK_BYTES) {
         return;
     }

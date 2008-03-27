@@ -608,7 +608,7 @@ read_holding_disk_header(
     int                        tapefd,
     rst_flags_t *      flags)
 {
-    ssize_t bytes_read;
+    size_t bytes_read;
     char *buffer;
     size_t blocksize;
 
@@ -618,24 +618,27 @@ read_holding_disk_header(
         blocksize = DISK_BLOCK_BYTES;
     buffer = alloc(blocksize);
 
-    bytes_read = fullread(tapefd, buffer, blocksize);
-    if(bytes_read < 0) {
-	g_fprintf(stderr, _("%s: error reading file header: %s\n"),
-		get_pname(), strerror(errno));
-	file->type = F_UNKNOWN;
-    } else if((size_t)bytes_read < DISK_BLOCK_BYTES) {
-	if(bytes_read == 0) {
-	    g_fprintf(stderr, _("%s: missing file header block\n"), get_pname());
+    bytes_read = full_read(tapefd, buffer, blocksize);
+    if(bytes_read < blocksize) {
+	const char *errtxt;
+	if(errno == 0)
+	    errtxt = "Unexpected EOF";
+	else
+	    errtxt = strerror(errno);
+
+	if (bytes_read == 0) {
+	    g_fprintf(stderr, _("%s: missing file header block: %s\n"), 
+		get_pname(), errtxt);
 	} else {
 	    g_fprintf(stderr,
-		    plural(_("%s: short file header block: %zd byte"),
-	    		   _("%s: short file header block: %zd bytes\n"),
+		    plural(_("%s: short file header block: %zd byte: %s"),
+	    		   _("%s: short file header block: %zd bytes: %s\n"),
 			   bytes_read),
-		    get_pname(), (size_t)bytes_read);
+		    get_pname(), bytes_read, errtxt);
 	}
 	file->type = F_UNKNOWN;
     } else {
-        parse_file_header(buffer, file, (size_t)bytes_read);
+        parse_file_header(buffer, file, bytes_read);
     }
     amfree(buffer);
     return (file->type != F_UNKNOWN &&
@@ -828,9 +831,9 @@ void restore(RestoreSource * source,
 	buffer = alloc(DISK_BLOCK_BYTES);
 	buffer = build_header(source->header, DISK_BLOCK_BYTES);
 
-	if((w = fullwrite(out, buffer,
+	if((w = full_write(out, buffer,
                           DISK_BLOCK_BYTES)) != DISK_BLOCK_BYTES) {
-	    if(w < 0) {
+	    if(errno != 0) {
 		error(_("write error: %s"), strerror(errno));
 		/*NOTREACHED*/
 	    } else {

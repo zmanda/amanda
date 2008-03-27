@@ -2558,7 +2558,7 @@ read_amidxtaped_data(
     /*
      * We ignore errors while writing to the index file.
      */
-    (void)fullwrite(fd, buf, (size_t)size);
+    (void)full_write(fd, buf, (size_t)size);
     security_stream_read(amidxtaped_streams[DATAFD].fd, read_amidxtaped_data, cookie);
 }
 

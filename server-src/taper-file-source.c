@@ -184,7 +184,7 @@ static dumpfile_t * taper_file_source_get_first_header(TaperSource * pself) {
 static gboolean open_holding_file(char * filename, int * fd_pointer,
                                   dumpfile_t * header_pointer) {
     int fd;
-    int read_result;
+    size_t read_result;
     char * header_buffer;
 
     g_return_val_if_fail(filename != NULL, FALSE);
@@ -199,11 +199,17 @@ static gboolean open_holding_file(char * filename, int * fd_pointer,
     }
 
     header_buffer = malloc(DISK_BLOCK_BYTES);
-    read_result = fullread(fd, header_buffer, DISK_BLOCK_BYTES);
+    read_result = full_read(fd, header_buffer, DISK_BLOCK_BYTES);
     if (read_result < DISK_BLOCK_BYTES) {
-        g_fprintf(stderr,
-                "Could not read header from holding disk file %s: %s\n",
-                filename, strerror(errno));
+	if (errno != 0) {
+	    g_fprintf(stderr,
+		    "Could not read header from holding disk file %s: %s\n",
+		    filename, strerror(errno));
+	} else {
+	    g_fprintf(stderr,
+		    "Could not read header from holding disk file %s: got EOF\n",
+		    filename);
+	}
         aclose(fd);
         return FALSE;
     }
@@ -366,7 +372,7 @@ taper_file_source_read (TaperSource * pself, void * buf, size_t count) {
         return 0;
     }
 
-    /* We don't use fullread, because we would rather return a partial
+    /* We don't use full_read, because we would rather return a partial
      * read ASAP. */
     read_result = retry_read(selfp->current_chunk_fd, buf, count);
     if (read_result < 0) {

@@ -1301,9 +1301,9 @@ send_to_tape_server(
 {
     char *msg = stralloc2(cmd, "\r\n");
 
-    if (fullwrite(tss, msg, strlen(msg)) < 0)
+    if (full_write(tss, msg, strlen(msg)) < strlen(msg))
     {
-	error(_("Error writing to tape server"));
+	error(_("Error writing to tape server: %s"), strerror(errno));
 	/*NOTREACHED*/
     }
     amfree(msg);
@@ -1874,7 +1874,7 @@ writer_intermediary(
     int child_pipe[2];
     pid_t pid;
     char buffer[DISK_BLOCK_BYTES];
-    ssize_t bytes_read;
+    size_t bytes_read;
     amwait_t extractor_status;
     int max_fd, nfound;
     SELECT_ARG_TYPE readset, selectset;
@@ -2014,7 +2014,7 @@ writer_intermediary(
                  * spit what we got from the server to the child
                  *  process handling actual dumpfile extraction
                  */
-                if(fullwrite(child_pipe[1], buffer, (size_t)bytes_read) < 0) {
+                if(full_write(child_pipe[1], buffer, bytes_read) < bytes_read) {
                     if(errno == EPIPE) {
                         error(_("pipe data reader has quit: %s\n"),
                               strerror(errno));

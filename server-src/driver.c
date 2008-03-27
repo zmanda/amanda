@@ -2867,7 +2867,7 @@ build_diskspace(
 {
     int i, j;
     int fd;
-    ssize_t buflen;
+    size_t buflen;
     char buffer[DISK_BLOCK_BYTES];
     dumpfile_t file;
     assignedhd_t **result;
@@ -2907,8 +2907,8 @@ build_diskspace(
 		    filename, strerror(errno));
 	    return NULL;
 	}
-	if ((buflen = fullread(fd, buffer, SIZEOF(buffer))) > 0) {;
-		parse_file_header(buffer, &file, (size_t)buflen);
+	if ((buflen = full_read(fd, buffer, SIZEOF(buffer))) > 0) {;
+		parse_file_header(buffer, &file, buflen);
 	}
 	close(fd);
 	filename = file.cont_filename;

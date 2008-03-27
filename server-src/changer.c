@@ -401,7 +401,7 @@ changer_command(
 	    changer_resultstr = vstrallocf(
 			_("<error> could not open pipe to \"%s\": %s"),
 			cmdstr, strerror(errno));
-	    (void)fullwrite(fd[1], changer_resultstr, strlen(changer_resultstr));
+	    (void)full_write(fd[1], changer_resultstr, strlen(changer_resultstr));
 	    exit(1);
 	}
 	aclose(fd[0]);
@@ -410,7 +410,7 @@ changer_command(
 	    changer_resultstr = vstrallocf(
 			_("<error> could not cd to \"%s\": %s"),
 			get_config_dir(), strerror(errno));
-	    (void)fullwrite(STDOUT_FILENO, changer_resultstr, strlen(changer_resultstr));
+	    (void)full_write(STDOUT_FILENO, changer_resultstr, strlen(changer_resultstr));
 	    exit(1);
 	}
 	safe_fd(-1, 0);
@@ -423,7 +423,7 @@ changer_command(
 	changer_resultstr = vstrallocf(
 			_("<error> could not exec \"%s\": %s"),
 			tapechanger, strerror(errno));
-	(void)fullwrite(STDOUT_FILENO, changer_resultstr, strlen(changer_resultstr));
+	(void)full_write(STDOUT_FILENO, changer_resultstr, strlen(changer_resultstr));
 	exit(1);
     default:
 	aclose(fd[1]);

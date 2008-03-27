@@ -662,7 +662,7 @@ holding_file_get_dumpfile(
     if((fd = robust_open(fname, O_RDONLY, 0)) == -1)
         return 0;
 
-    if(fullread(fd, buffer, SIZEOF(buffer)) != (ssize_t)sizeof(buffer)) {
+    if(full_read(fd, buffer, SIZEOF(buffer)) != sizeof(buffer)) {
         aclose(fd);
         return 0;
     }
@@ -847,7 +847,7 @@ rename_tmp_holding(
     int		complete)
 {
     int fd;
-    ssize_t buflen;
+    size_t buflen;
     char buffer[DISK_BLOCK_BYTES];
     dumpfile_t file;
     char *filename;
@@ -863,7 +863,7 @@ rename_tmp_holding(
 	    amfree(filename_tmp);
 	    return 0;
 	}
-	buflen = fullread(fd, buffer, SIZEOF(buffer));
+	buflen = full_read(fd, buffer, SIZEOF(buffer));
 	close(fd);
 
 	if(rename(filename_tmp, filename) != 0) {
@@ -890,7 +890,14 @@ rename_tmp_holding(
 	    }
 	    file.is_partial = 1;
             header = build_header(&file, DISK_BLOCK_BYTES);
-	    fullwrite(fd, header, DISK_BLOCK_BYTES);
+	    if (full_write(fd, header, DISK_BLOCK_BYTES) != DISK_BLOCK_BYTES) {
+		dbprintf(_("rename_tmp_holding: writing new header failed: %s"),
+			strerror(errno));
+		amfree(filename);
+		amfree(filename_tmp);
+		close(fd);
+		return 0;
+	    }
 	    close(fd);
 	}
 	filename = newstralloc(filename, file.cont_filename);

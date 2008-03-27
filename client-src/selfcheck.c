@@ -589,7 +589,7 @@ check_disk(
 	    aclose(nullfd);
 	    /*@ignore@*/
 	    if ((pwtext_len > 0)
-	      && fullwrite(passwdfd, pwtext, (size_t)pwtext_len) < 0) {
+	      && full_write(passwdfd, pwtext, pwtext_len) < pwtext_len) {
 		err = vstrallocf(_("password write failed: %s: %s"),
 				dle->device, strerror(errno));
 		aclose(passwdfd);

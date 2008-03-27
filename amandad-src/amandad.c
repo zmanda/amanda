@@ -1285,7 +1285,7 @@ process_writenetfd(
     if (dh->fd_write <= 0) {
 	dbprintf(_("process_writenetfd: dh->fd_write <= 0\n"));
     } else if (size > 0) {
-	fullwrite(dh->fd_write, buf, (size_t)size);
+	full_write(dh->fd_write, buf, (size_t)size);
 	security_stream_read(dh->netfd, process_writenetfd, dh);
     }
     else {
@@ -1607,7 +1607,7 @@ writebuf(
     size_t			size)
 {
     pid_t pid;
-    ssize_t    writesize;
+    size_t    writesize;
 
     switch (pid=fork()) {
     case -1:
@@ -1619,8 +1619,8 @@ writebuf(
 
     case 0: 				/* this is the child */
 	close(as->repfd);
-	writesize = fullwrite(as->reqfd, bufp, size);
-	exit(writesize != (ssize_t)size);
+	writesize = full_write(as->reqfd, bufp, size);
+	exit(writesize != size);
 	/* NOTREACHED */
     }
     return -1;

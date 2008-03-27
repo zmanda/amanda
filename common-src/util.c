@@ -40,68 +40,6 @@ static int make_socket(sa_family_t family);
 static int connect_port(struct sockaddr_storage *addrp, in_port_t port, char *proto,
 			struct sockaddr_storage *svaddr, int nonblock);
 
-/*
- * Keep calling read() until we've read buflen's worth of data, or EOF,
- * or we get an error.
- *
- * Returns the number of bytes read, 0 on EOF, or negative on error.
- */
-ssize_t
-fullread(
-    int		fd,
-    void *	vbuf,
-    size_t	buflen)
-{
-    ssize_t nread, tot = 0;
-    char *buf = vbuf;	/* cast to char so we can ++ it */
-
-    while (buflen > 0) {
-	nread = read(fd, buf, buflen);
-	if (nread < 0) {
-	    if ((errno == EINTR) || (errno == EAGAIN))
-		continue;
-	    return ((tot > 0) ? tot : -1);
-	}
-
-	if (nread == 0)
-	    break;
-
-	tot += nread;
-	buf += nread;
-	buflen -= nread;
-    }
-    return (tot);
-}
-
-/*
- * Keep calling write() until we've written buflen's worth of data,
- * or we get an error.
- *
- * Returns the number of bytes written, or negative on error.
- */
-ssize_t
-fullwrite(
-    int		fd,
-    const void *vbuf,
-    size_t	buflen)
-{
-    ssize_t nwritten, tot = 0;
-    const char *buf = vbuf;	/* cast to char so we can ++ it */
-
-    while (buflen > 0) {
-	nwritten = write(fd, buf, buflen);
-	if (nwritten < 0) {
-	    if ((errno == EINTR) || (errno == EAGAIN))
-		continue;
-	    return ((tot > 0) ? tot : -1);
-	}
-	tot += nwritten;
-	buf += nwritten;
-	buflen -= nwritten;
-    }
-    return (tot);
-}
-
 static int
 make_socket(
     sa_family_t family)
@@ -523,7 +461,7 @@ int copy_file(
 {
     int     infd, outfd;
     int     save_errno;
-    ssize_t nb;
+    size_t nb;
     char    buf[32768];
     char   *quoted;
 
@@ -547,7 +485,7 @@ int copy_file(
     }
 
     while((nb=read(infd, &buf, SIZEOF(buf))) > 0) {
-	if(fullwrite(outfd,&buf,(size_t)nb) < nb) {
+	if(full_write(outfd,&buf,nb) < nb) {
 	    save_errno = errno;
 	    quoted = quote_string(dst);
 	    *errmsg = vstrallocf(_("Error writing to '%s': %s"),
@@ -559,7 +497,7 @@ int copy_file(
 	}
     }
 
-    if (nb < 0) {
+    if (errno != 0) {
 	save_errno = errno;
 	quoted = quote_string(src);
 	*errmsg = vstrallocf(_("Error reading from '%s': %s"),

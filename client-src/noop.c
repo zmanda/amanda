@@ -81,7 +81,7 @@ main(
     amfree(our_feature_string);
     am_release_feature_set(our_features);
     our_features = NULL;
-    if (fullwrite(1, options, strlen(options)) < 0) {
+    if (full_write(1, options, strlen(options)) < strlen(options)) {
 	error(_("error sending noop response: %s"), strerror(errno));
 	/*NOTREACHED*/
     }

@@ -1067,6 +1067,8 @@ extern int vprintf(const char *format, va_list ap);
 /* gnulib-only includes (hence "" instead of <>) */
 #include "getaddrinfo.h"
 #include "inet_ntop.h"
+#include "full-read.h"
+#include "full-write.h"
 
 #if !defined(S_ISCHR) && defined(_S_IFCHR) && defined(_S_IFMT)
 #define S_ISCHR(mode) (((mode) & _S_IFMT) == _S_IFCHR)

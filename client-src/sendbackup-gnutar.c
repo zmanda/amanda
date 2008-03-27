@@ -278,7 +278,7 @@ start_backup(
 	}
 
 	while ((nb = read(infd, &buf, SIZEOF(buf))) > 0) {
-	    if (fullwrite(outfd, &buf, (size_t)nb) < nb) {
+	    if (full_write(outfd, &buf, (size_t)nb) < (size_t)nb) {
 		error(_("error [writing to '%s': %s]"), incrname,
 		       strerror(errno));
 		/*NOTREACHED*/
@@ -481,7 +481,7 @@ start_backup(
 	    memset(domain, '\0', strlen(domain));
 	    amfree(domain);
 	}
-	if(pwtext_len > 0 && fullwrite(passwdf, pwtext, pwtext_len) < 0) {
+	if(pwtext_len > 0 && full_write(passwdf, pwtext, pwtext_len) < pwtext_len) {
 	    int save_errno = errno;
 
 	    aclose(passwdf);

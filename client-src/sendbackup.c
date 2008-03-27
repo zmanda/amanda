@@ -741,19 +741,19 @@ application_api_info_tapeheader(
     char line[1024];
 
     g_snprintf(line, 1024, "%s: info BACKUP=APPLICATION\n", get_pname());
-    if (fullwrite(mesgfd, line, strlen(line)) != (ssize_t)strlen(line)) {
+    if (full_write(mesgfd, line, strlen(line)) != strlen(line)) {
 	dbprintf(_("error writing to mesgfd socket: %s"), strerror(errno));
 	return;
     }
 
     g_snprintf(line, 1024, "%s: info APPLICATION=%s\n", get_pname(), prog);
-    if (fullwrite(mesgfd, line, strlen(line)) != (ssize_t)strlen(line)) {
+    if (full_write(mesgfd, line, strlen(line)) != strlen(line)) {
 	dbprintf(_("error writing to mesgfd socket: %s"), strerror(errno));
 	return;
     }
 
     g_snprintf(line, 1024, "%s: info RECOVER_CMD=", get_pname());
-    if (fullwrite(mesgfd, line, strlen(line)) != (ssize_t)strlen(line)) {
+    if (full_write(mesgfd, line, strlen(line)) != strlen(line)) {
 	dbprintf(_("error writing to mesgfd socket: %s"), strerror(errno));
 	return;
     }
@@ -766,13 +766,13 @@ application_api_info_tapeheader(
 		 ""
 #endif
 		 );
-	if (fullwrite(mesgfd, line, strlen(line)) != (ssize_t)strlen(line)) {
+	if (full_write(mesgfd, line, strlen(line)) != strlen(line)) {
 	    dbprintf(_("error writing to mesgfd socket: %s"), strerror(errno));
 	    return;
 	}
     }
     g_snprintf(line, 1024, "%s -f... -\n", prog);
-    if (fullwrite(mesgfd, line, strlen(line)) != (ssize_t)strlen(line)) {
+    if (full_write(mesgfd, line, strlen(line)) != strlen(line)) {
 	dbprintf(_("error writing to mesgfd socket: %s"), strerror(errno));
 	return;
     }
@@ -780,14 +780,14 @@ application_api_info_tapeheader(
     if (dle->compress) {
 	g_snprintf(line, 1024, "%s: info COMPRESS_SUFFIX=%s\n",
 		 get_pname(), COMPRESS_SUFFIX);
-	if (fullwrite(mesgfd, line, strlen(line)) != (ssize_t)strlen(line)) {
+	if (full_write(mesgfd, line, strlen(line)) != strlen(line)) {
 	    dbprintf(_("error writing to mesgfd socket: %s"), strerror(errno));
 	    return;
 	}
     }
 
     g_snprintf(line, 1024, "%s: info end\n", get_pname());
-    if (fullwrite(mesgfd, line, strlen(line)) != (ssize_t)strlen(line)) {
+    if (full_write(mesgfd, line, strlen(line)) != strlen(line)) {
 	dbprintf(_("error writing to mesgfd socket: %s"), strerror(errno));
 	return;
     }
@@ -1073,7 +1073,7 @@ start_index(
     char buffer[BUFSIZ], *ptr;
     ssize_t bytes_read;
     size_t bytes_written;
-    ssize_t just_written;
+    size_t just_written;
 
     do {
 	bytes_read = read(0, buffer, SIZEOF(buffer));
@@ -1090,8 +1090,8 @@ start_index(
     /* write the stuff to the subprocess */
     ptr = buffer;
     bytes_written = 0;
-    just_written = fullwrite(fileno(pipe_fp), ptr, (size_t)bytes_read);
-    if (just_written < 0) {
+    just_written = full_write(fileno(pipe_fp), ptr, (size_t)bytes_read);
+    if (just_written < (size_t)bytes_read) {
 	/* 
 	 * just as we waited for write() to complete.
 	 */
@@ -1108,8 +1108,8 @@ start_index(
        occurs */
     ptr = buffer;
     bytes_written = 0;
-    just_written = fullwrite(3, ptr, (size_t)bytes_read);
-    if (just_written < 0) {
+    just_written = full_write(3, ptr, bytes_read);
+    if (just_written < (size_t)bytes_read) {
 	error(_("index tee cannot write [%s]"), strerror(errno));
 	/*NOTREACHED*/
     } else {

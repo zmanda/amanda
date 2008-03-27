@@ -383,7 +383,7 @@ taper_cmd(
     g_printf(_("driver: send-cmd time %s to taper: %s"),
 	   walltime_str(curclock()), cmdline);
     fflush(stdout);
-    if ((fullwrite(taper, cmdline, strlen(cmdline))) < 0) {
+    if ((full_write(taper, cmdline, strlen(cmdline))) < strlen(cmdline)) {
 	g_printf(_("writing taper command '%s' failed: %s\n"),
 		cmdline, strerror(errno));
 	fflush(stdout);
@@ -496,7 +496,7 @@ dumper_cmd(
 	g_printf(_("driver: send-cmd time %s to %s: %s"),
 	       walltime_str(curclock()), dumper->name, cmdline);
 	fflush(stdout);
-	if (fullwrite(dumper->fd, cmdline, strlen(cmdline)) < 0) {
+	if (full_write(dumper->fd, cmdline, strlen(cmdline)) < strlen(cmdline)) {
 	    g_printf(_("writing %s command: %s\n"), dumper->name, strerror(errno));
 	    fflush(stdout);
 	    amfree(cmdline);
@@ -623,7 +623,7 @@ chunker_cmd(
     g_printf(_("driver: send-cmd time %s to %s: %s"),
 	   walltime_str(curclock()), chunker->name, cmdline);
     fflush(stdout);
-    if (fullwrite(chunker->fd, cmdline, strlen(cmdline)) < 0) {
+    if (full_write(chunker->fd, cmdline, strlen(cmdline)) < strlen(cmdline)) {
 	g_printf(_("writing %s command: %s\n"), chunker->name, strerror(errno));
 	fflush(stdout);
 	amfree(cmdline);

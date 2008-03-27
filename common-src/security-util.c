@@ -862,7 +862,7 @@ tcp_stream_write(
 
     assert(rs != NULL);
 
-    if (fullwrite(rs->fd, buf, size) < 0) {
+    if (full_write(rs->fd, buf, size) < size) {
         security_stream_seterror(&rs->secstr,
             _("write error on stream %d: %s"), rs->port, strerror(errno));
         return (-1);

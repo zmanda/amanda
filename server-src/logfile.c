@@ -142,7 +142,7 @@ printf_arglist_function1(void log_add, logtype_t, typ, char *, format)
 
     if(multiline == -1) open_log();
 
-    if (fullwrite(logfd, leader, strlen(leader)) < 0) {
+    if (full_write(logfd, leader, strlen(leader)) < strlen(leader)) {
 	error(_("log file write error: %s"), strerror(errno));
 	/*NOTREACHED*/
     }
@@ -153,7 +153,7 @@ printf_arglist_function1(void log_add, logtype_t, typ, char *, format)
     if(n == 0 || linebuf[n-1] != '\n') linebuf[n++] = '\n';
     linebuf[n] = '\0';
 
-    if (fullwrite(logfd, linebuf, n) < 0) {
+    if (full_write(logfd, linebuf, n) < n) {
 	error(_("log file write error: %s"), strerror(errno));
 	/*NOTREACHED*/
     }

@@ -1661,7 +1661,7 @@ getsize_smbtar(
 	amfree(domain);
     }
     aclose(nullfd);
-    if(pwtext_len > 0 && fullwrite(passwdfd, pwtext, (size_t)pwtext_len) < 0) {
+    if(pwtext_len > 0 && full_write(passwdfd, pwtext, pwtext_len) < pwtext_len) {
 	int save_errno = errno;
 
 	memset(user_and_password, '\0', (size_t)lpass);
@@ -1862,7 +1862,7 @@ getsize_gnutar(
 	}
 
 	while ((nb = read(infd, &buf, SIZEOF(buf))) > 0) {
-	    if (fullwrite(outfd, &buf, (size_t)nb) < nb) {
+	    if (full_write(outfd, &buf, (size_t)nb) < (size_t)nb) {
 		*errmsg = vstrallocf(_("writing to %s: %s"),
 				     incrname, strerror(errno));
 		dbprintf("%s\n", *errmsg);
