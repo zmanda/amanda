@@ -36,6 +36,7 @@
  * ONE-FILE-SYSTEM (default YES)
  * SPARSE          (default YES)
  * ATIME-PRESERVE  (default YES)
+ * CHECK-DEVICE    (default YES)
  * INCLUDE-FILE
  * INCLUDE-LIST
  * INCLUDE-OPTIONAL
@@ -124,6 +125,7 @@ static char *gnutar_path;
 static char *gnutar_listdir;
 static int gnutar_onefilesystem;
 static int gnutar_atimepreserve;
+static int gnutar_checkdevice;
 static int gnutar_sparse;
 
 static struct option long_options[] = {
@@ -162,6 +164,7 @@ main(
     gnutar_listdir = NULL;
     gnutar_onefilesystem = 1;
     gnutar_atimepreserve = 1;
+    gnutar_checkdevice = 1;
     gnutar_sparse = 1;
 
     /* initialize */
@@ -291,6 +294,7 @@ dbprintf("line: %s\n", line);
 	     strcmp(prop_name, "GNUTAR-LISTDIR")   != 0 &&
 	     strcmp(prop_name, "ONE-FILE-SYSTEM")  != 0 &&
 	     strcmp(prop_name, "ATIME-PRESERVE")   != 0 &&
+	     strcmp(prop_name, "CHECK-DEVICE")     != 0 &&
 	     strcmp(prop_name, "SPARSE")           != 0 &&
 	     strcmp(prop_name, "INCLUDE-FILE")     != 0 &&
 	     strcmp(prop_name, "INCLUDE-LIST")     != 0 &&
@@ -321,6 +325,11 @@ dbprintf("line: %s\n", line);
 					   "ATIME-PRESERVE"))) {
 	if (strcasecmp((char *)prop_values->data, "YES") != 0)
 	    gnutar_atimepreserve = 0;
+    }
+    if ((prop_values = g_hash_table_lookup(argument.property,
+					   "CHECK-DEVICE"))) {
+	if (strcasecmp((char *)prop_values->data, "YES") != 0)
+	    gnutar_checkdevice = 0;
     }
     if ((prop_values = g_hash_table_lookup(argument.property,
 					   "SPARSE"))) {
@@ -886,6 +895,8 @@ char **amgtar_build_argv(
 	my_argv[i++] = "--one-file-system";
     if (gnutar_atimepreserve)
 	my_argv[i++] = "--atime-preserve=system";
+    if (!gnutar_checkdevice)
+	my_argv[i++] = "--no-check-device";
     my_argv[i++] = "--listed-incremental";
     my_argv[i++] = incrname;
     if (gnutar_sparse)

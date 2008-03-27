@@ -1,4 +1,7 @@
 2008-03-27  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amgtar.c: Add 'CHECK-DEVICE' property.
+
+2008-03-27  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/activate-devpay.c (parse_commandline): Always return.
 
 2008-03-25  Jean-Louis Martineau <martineau@zmanda.com>
