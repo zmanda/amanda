@@ -375,7 +375,7 @@ main(
 		/*NOTREACHED*/
 	    }
 	}
-	if(size == 0) {
+	if(errno != 0) {
 	    error(_("read temp file: %s"), strerror(errno));
 	    /*NOTREACHED*/
 	}
