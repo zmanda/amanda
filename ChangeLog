@@ -1,3 +1,6 @@
+2008-03-31  Dan Locks <dwlocks@zmanda.com>
+	* packaging/Makefile.am: add deb subdirectory.
+
 2008-03-27  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/activate-devpay.c (parse_commandline): Always return.
 
