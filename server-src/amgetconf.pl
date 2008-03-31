@@ -243,18 +243,19 @@ if ($parameter =~ /^build(?:\..*)?/) {
     exit(0);
 } 
 
-# try to load the configuration now, although a failure isn't recognized
-# until the end, when we try to look up configure parameters.
-my $cfg_ok = config_init($CONFIG_INIT_EXPLICIT_NAME | $CONFIG_INIT_USE_CWD, $config_name);
-apply_config_overwrites($config_overwrites);
-
 if ($parameter =~ /^db(open|close)\./) {
     db_param($parameter, $opt_list);
     exit(0);
 }
 
-# we don't become a "real" application until now..
 Amanda::Util::setup_application("amgetconf", "server", "cmdline");
+
+# try to load the configuration now, although a failure isn't recognized
+# until the end, when we try to look up configure parameters.
+my $cfg_ok = config_init($CONFIG_INIT_EXPLICIT_NAME | $CONFIG_INIT_USE_CWD, $config_name);
+apply_config_overwrites($config_overwrites);
+
+# we don't become a "real" application until now..
 Amanda::Util::finish_setup($RUNNING_AS_ANY);
 
 # *now* we can check whether config_init was successful

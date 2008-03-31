@@ -1,4 +1,7 @@
 2008-03-31  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amgetconf.pl: Parse config after setup_applccation call.
+
+2008-03-31  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amcheck.c: Check errno after full_read.
 
 2008-03-31  Dan Locks <dwlocks@zmanda.com>
