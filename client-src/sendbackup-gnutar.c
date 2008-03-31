@@ -126,7 +126,6 @@ time_t cur_dumptime;
 
 static char *gnutar_list_dir = NULL;
 static char *incrname = NULL;
-static char *amandates_file;
 /*
  *  doing similar to $ gtar | compression | encryption 
  */
@@ -144,10 +143,10 @@ start_backup(
     char *indexcmd = NULL;
     char *dirname = NULL;
     int l;
-    char dumptimestr[80];
+    char dumptimestr[80] = "UNUSED";
     struct tm *gmtm;
-    amandates_t *amdates;
-    time_t prev_dumptime;
+    amandates_t *amdates = NULL;
+    time_t prev_dumptime = 0;
     char *error_pn = NULL;
     char *compopt  = NULL;
     char *encryptopt = skip_argument;
@@ -157,6 +156,7 @@ start_backup(
     int infd, outfd;
     ssize_t nb;
     char buf[32768];
+    char *amandates_file = NULL;
 
     error_pn = stralloc2(get_pname(), "-smbclient");
 
@@ -312,35 +312,36 @@ start_backup(
 	amfree(tquoted);
 	amfree(inputname);
 	amfree(basename);
+    } else {
+	/* no gnutar-listdir, so we're using amandates */
+
+	/* find previous dump time, failing completely if there's a problem */
+	amandates_file = getconf_str(CNF_AMANDATES);
+	if(!start_amandates(amandates_file, 0)) {
+	    error(_("error [opening %s: %s]"), amandates_file, strerror(errno));
+	    /*NOTREACHED*/
+	}
+
+	amdates = amandates_lookup(dle->disk);
+
+	prev_dumptime = EPOCH;
+	for(l = 0; l < GPOINTER_TO_INT(dle->level->data); l++) {
+	    if(amdates->dates[l] > prev_dumptime)
+		prev_dumptime = amdates->dates[l];
+	}
+
+	finish_amandates();
+	free_amandates();
+
+	gmtm = gmtime(&prev_dumptime);
+	g_snprintf(dumptimestr, SIZEOF(dumptimestr),
+		    "%04d-%02d-%02d %2d:%02d:%02d GMT",
+		    gmtm->tm_year + 1900, gmtm->tm_mon+1, gmtm->tm_mday,
+		    gmtm->tm_hour, gmtm->tm_min, gmtm->tm_sec);
+
+	dbprintf(_("gnutar: doing level %d dump from amandates-derived date: %s\n"),
+		  GPOINTER_TO_INT(dle->level->data), dumptimestr);
     }
-
-    /* find previous dump time */
-
-    amandates_file = getconf_str(CNF_AMANDATES);
-    if(!start_amandates(amandates_file, 0)) {
-	error(_("error [opening %s: %s]"), amandates_file, strerror(errno));
-	/*NOTREACHED*/
-    }
-
-    amdates = amandates_lookup(dle->disk);
-
-    prev_dumptime = EPOCH;
-    for(l = 0; l < GPOINTER_TO_INT(dle->level->data); l++) {
-	if(amdates->dates[l] > prev_dumptime)
-	    prev_dumptime = amdates->dates[l];
-    }
-
-    finish_amandates();
-    free_amandates();
-
-    gmtm = gmtime(&prev_dumptime);
-    g_snprintf(dumptimestr, SIZEOF(dumptimestr),
-		"%04d-%02d-%02d %2d:%02d:%02d GMT",
-		gmtm->tm_year + 1900, gmtm->tm_mon+1, gmtm->tm_mday,
-		gmtm->tm_hour, gmtm->tm_min, gmtm->tm_sec);
-
-    dbprintf(_("gnutar: doing level %d dump from date: %s\n"),
-	      GPOINTER_TO_INT(dle->level->data), dumptimestr);
 
     dirname = amname_to_dirname(dle->device);
 
@@ -607,6 +608,8 @@ end_backup(
     dle_t      *dle,
     int		goterror)
 {
+    char *amandates_file = NULL;
+
     if(dle->record && !goterror) {
 	if (incrname != NULL && strlen(incrname) > 4) {
 	    char *nodotnew;
@@ -621,14 +624,22 @@ end_backup(
 	    amfree(incrname);
 	}
 
-        if(!start_amandates(amandates_file, 1)) {
-	    g_fprintf(stderr, _("%s: warning [opening %s: %s]"), get_pname(),
-		    amandates_file, strerror(errno));
-	}
-	else {
+	/* update the amandates file */
+	amandates_file = getconf_str(CNF_AMANDATES);
+	if(start_amandates(amandates_file, 1)) {
 	    amandates_updateone(cur_disk, cur_level, cur_dumptime);
 	    finish_amandates();
 	    free_amandates();
+	} else {
+	    /* failure is only fatal if we didn't get a gnutar-listdir */
+	    char *gnutar_list_dir = getconf_str(CNF_GNUTAR_LIST_DIR);
+	    if (!gnutar_list_dir || !*gnutar_list_dir) {
+		error(_("error [opening %s for writing: %s]"), amandates_file, strerror(errno));
+		/* NOTREACHED */
+	    } else {
+		g_debug(_("non-fatal error opening '%s' for writing: %s]"),
+			amandates_file, strerror(errno));
+	    }
 	}
     }
 }

@@ -922,19 +922,18 @@ check_overall(void)
 #else
 	g_printf(_("ERROR [GNUTAR program not available]\n"));
 #endif
-	need_amandates = 1;
 	gnutar_list_dir = getconf_str(CNF_GNUTAR_LIST_DIR);
 	if (strlen(gnutar_list_dir) == 0)
 	    gnutar_list_dir = NULL;
-	if (gnutar_list_dir) 
+	if (gnutar_list_dir) {
+	    /* make sure our listed-incremental dir is ready */
 	    check_dir(gnutar_list_dir, R_OK|W_OK);
+	} else {
+	    /* no listed-incremental dir, so check that amandates is ready */
+	    need_amandates = 1;
+	}
     }
 
-    if (need_amandates) {
-	char *amandates_file;
-	amandates_file = getconf_str(CNF_AMANDATES);
-	check_file(amandates_file, R_OK|W_OK);
-    }
     if( need_calcsize ) {
 	char *cmd;
 
@@ -943,6 +942,15 @@ check_overall(void)
 	check_file(cmd, X_OK);
 
 	amfree(cmd);
+
+	/* calcsize uses amandates */
+	need_amandates = 1;
+    }
+
+    if (need_amandates) {
+	char *amandates_file;
+	amandates_file = getconf_str(CNF_AMANDATES);
+	check_file(amandates_file, R_OK|W_OK);
     }
 
     if( need_samba ) {

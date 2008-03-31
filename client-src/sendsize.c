@@ -98,6 +98,7 @@ disk_estimates_t *est_list;
 static am_feature_t *our_features = NULL;
 static char *our_feature_string = NULL;
 static g_option_t *g_options = NULL;
+static gboolean amandates_started = FALSE;
 
 /* local functions */
 int main(int argc, char **argv);
@@ -110,7 +111,6 @@ void smbtar_calc_estimates(disk_estimates_t *);
 void gnutar_calc_estimates(disk_estimates_t *);
 void application_api_calc_estimate(disk_estimates_t *);
 void generic_calc_estimates(disk_estimates_t *);
-
 
 int
 main(
@@ -132,8 +132,6 @@ main(
     char *qdisk = NULL;
     char *qlist = NULL;
     char *qamdevice = NULL;
-    char *amandates_file;
-    int   amandates_read = 0;
     dle_t *dle;
 
     (void)argc;	/* Quiet unused parameter warning */
@@ -208,14 +206,6 @@ main(
 		break;
 	    }
 	    continue;
-	}
-
-	if (amandates_read == 0) {
-	    amandates_file = getconf_str(CNF_AMANDATES);
-	    if(!start_amandates(amandates_file, 0))
-	        error("error [opening %s: %s]", amandates_file,
-		      strerror(errno));
-	    amandates_read = 1;
 	}
 
 	dle = alloc_dle();
@@ -400,8 +390,11 @@ main(
 	}
     }
 
-    finish_amandates();
-    free_amandates();
+    if (amandates_started) {
+	finish_amandates();
+	free_amandates();
+	amandates_started = FALSE;
+    }
 
     for(est = est_list; est != NULL; est = est->next) {
 	run_client_scripts(EXECUTE_ON_PRE_HOST_ESTIMATE, g_options, est->dle);
@@ -555,11 +548,43 @@ dle_add_diskest(
     int dumplev, estlev;
     time_t dumpdate;
     GSList *level;
+    char *amandates_file;
+    gboolean need_amandates = FALSE;
 
     level = dle->level;
     if (level == NULL) {
 	g_printf(_("ERROR Missing level in request\n"));
 	return;
+    }
+
+    /* should we use amandates for this? */
+    if (dle->calcsize)
+	need_amandates = TRUE;
+    if (strcmp(dle->program, "GNUTAR") == 0) {
+	/* GNUTAR only needs amandates if gnutar_list_dir is NULL */
+	char *gnutar_list_dir = getconf_str(CNF_GNUTAR_LIST_DIR);
+	if (!gnutar_list_dir || !*gnutar_list_dir)
+	    need_amandates = TRUE;
+    }
+
+    /* start amandates here, before adding this DLE to est_list, in case
+     * we encounter an error. */
+    if (need_amandates) {
+	if (!amandates_started) {
+	    amandates_file = getconf_str(CNF_AMANDATES);
+	    if(!start_amandates(amandates_file, 0)) {
+		char *errstr = strerror(errno);
+		char *qamname = quote_string(dle->disk);
+		char *errmsg = vstrallocf(_("could not open %s: %s"), amandates_file, errstr);
+		char *qerrmsg = quote_string(errmsg);
+		g_printf(_("%s %d ERROR %s\n"), qamname, 0, qerrmsg);
+		amfree(qamname);
+		amfree(errmsg);
+		amfree(qerrmsg);
+		return;
+	    }
+	    amandates_started = TRUE;
+	}
     }
 
     while (level != NULL) {
@@ -605,15 +630,21 @@ dle_add_diskest(
     newp->dle = dle;
 
     /* fill in dump-since dates */
+    if (need_amandates) {
+	amdp = amandates_lookup(newp->dle->disk);
 
-    amdp = amandates_lookup(newp->dle->disk);
-
-    newp->est[0].dumpsince = EPOCH;
-    for(dumplev = 0; dumplev < DUMP_LEVELS; dumplev++) {
-	dumpdate = amdp->dates[dumplev];
-	for(estlev = dumplev+1; estlev < DUMP_LEVELS; estlev++) {
-	    if(dumpdate > newp->est[estlev].dumpsince)
-		newp->est[estlev].dumpsince = dumpdate;
+	newp->est[0].dumpsince = EPOCH;
+	for(dumplev = 0; dumplev < DUMP_LEVELS; dumplev++) {
+	    dumpdate = amdp->dates[dumplev];
+	    for(estlev = dumplev+1; estlev < DUMP_LEVELS; estlev++) {
+		if(dumpdate > newp->est[estlev].dumpsince)
+		    newp->est[estlev].dumpsince = dumpdate;
+	    }
+	}
+    } else {
+	/* just zero everything out */
+	for(dumplev = 0; dumplev < DUMP_LEVELS; dumplev++) {
+	    newp->est[dumplev].dumpsince = 0;
 	}
     }
 }

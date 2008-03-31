@@ -57,8 +57,10 @@ start_amandates(
     int ch;
     char *qname;
 
-    if (amandates_file == NULL)
+    if (amandates_file == NULL) {
+	errno = 0;
 	return 0;
+    }
 
     /* clean up from previous invocation */
 

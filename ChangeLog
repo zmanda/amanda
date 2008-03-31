@@ -1,3 +1,11 @@
+2008-03-31  Dustin J. Mitchell <dustin@zmanda.com>, Jean-Louis Martineau <martineau@zmanda.com>
+	* client-src/sendbackup-gnutar.c client-src/sendsize.c
+	  client-src/selfcheck.c: update amandates whenever possible, but only
+	  complain when it is really needed: when using calcsize, or when
+	  using GNUTAR and --without-gnutar-listdir.
+	* client-src/amandates.c: Set errno before return of start_amandates
+	* perl/Amanda/Paths.pm.in: always terminate a perl mod with '1;'
+
 2008-03-31  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amgetconf.pl: Parse config after setup_applccation call.
 
