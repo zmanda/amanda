@@ -117,6 +117,7 @@ rsh_connect(
     void *		arg,
     void *		datap)
 {
+    int result;
     struct sec_handle *rh;
     char *amandad_path=NULL, *client_username=NULL;
 
@@ -132,10 +133,12 @@ rsh_connect(
     rh->ev_timeout = NULL;
     rh->rc = NULL;
 
+    /* get the canonical hostname */
     rh->hostname = NULL;
-    if (resolve_hostname(hostname, 0, NULL, &rh->hostname) || rh->hostname == NULL) {
+    if ((result = resolve_hostname(hostname, 0, NULL, &rh->hostname)) || rh->hostname == NULL) {
 	security_seterror(&rh->sech,
-	    _("%s: could not resolve hostname"), hostname);
+	    _("rsh_security could not find canonical name for '%s': %s"),
+	    hostname, gai_strerror(result));
 	(*fn)(arg, &rh->sech, S_ERROR);
 	return;
     }
