@@ -1,3 +1,7 @@
+ 2008-03-31  Dan Locks <dwlocks@zmanda.com>
+ 	* packaging/deb/buildpkg
+	  packaging/rpm/buildpkg: added -p to cp to preserve file timestamps.
+
 2008-03-31  Dustin J. Mitchell <dustin@zmanda.com>, Jean-Louis Martineau <martineau@zmanda.com>
 	* client-src/sendbackup-gnutar.c client-src/sendsize.c
 	  client-src/selfcheck.c: update amandates whenever possible, but only

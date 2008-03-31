@@ -106,7 +106,7 @@ do_resources() {
         rm -rf $AMVER
     fi
     mkdir $AMVER
-    cp -Rf * $AMVER
+    cp -Rfp * $AMVER
 }
 
 do_package() {

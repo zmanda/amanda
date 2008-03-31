@@ -38,7 +38,7 @@ fi
 # Check for AMTARBALL file, if it's not there, create it.
 if [ ! -f ${AMTARBALL} ]; then
     mkdir ${AMVER}
-    cp -R * ${AMVER}/
+    cp -Rfp * ${AMVER}/
     tar -cf ${AMTARBALL} -z ${AMVER}
     rm -rf ${AMVER}
 fi
