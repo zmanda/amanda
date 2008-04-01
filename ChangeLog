@@ -1,3 +1,7 @@
+2008-04-01  Satya Ganga <gsat@zmanda.com>
+	* example/template.d/amanda-S3.conf.in: S3 device should have
+	  "infinite" tape length
+
 2008-03-31  John Franks <jfranks@zmanda.com>
 	* common-src/stream.c
 	  Fix warning about ininitialized variables.
@@ -8,8 +12,8 @@
 	  restore-src/Makefile.am:
 	  Fix build problems with multiply defined symbols.
 
- 2008-03-31  Dan Locks <dwlocks@zmanda.com>
- 	* packaging/deb/buildpkg
+2008-03-31  Dan Locks <dwlocks@zmanda.com>
+	* packaging/deb/buildpkg
 	  packaging/rpm/buildpkg: added -p to cp to preserve file timestamps.
 
 2008-03-31  Dustin J. Mitchell <dustin@zmanda.com>, Jean-Louis Martineau <martineau@zmanda.com>

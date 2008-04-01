@@ -14,7 +14,7 @@ tpchanger "chg-multi"	# the tape-changer glue script
 tapedev "S3:"		# the no-rewind tape device to be used
 changerfile "@CONFIG_DIR@/@DEFAULT_CONFIG@/changer.conf" 
 #changerdev "/dev/sg1"
-tapetype HARDDISK	# what kind of tape it is (see tapetypes below)
+tapetype S3	# what kind of tape it is (see tapetypes below)
 
 holdingdisk hd2 {
     directory "/var/lib/amanda/holdings/@DEFAULT_CONFIG@"
@@ -47,6 +47,10 @@ define tapetype HARDDISK {
     length 5000 mbytes
 }
 
+define tapetype S3 {
+    comment "S3 Bucket"
+    length 10240 gigabytes # Bucket size 10TB
+}
 
 includefile "./advanced.conf"
 includefile "@CONFIG_DIR@/template.d/dumptypes"
