@@ -1,3 +1,13 @@
+2008-03-31  John Franks <jfranks@zmanda.com>
+	* common-src/stream.c
+	  Fix warning about ininitialized variables.
+
+2008-03-31  John Franks <jfranks@zmanda.com>
+	* oldrecover-src/Makefile.am xfer-src/Makefile.am
+	  recover-src/Makefile.am server-src/Makefile.am
+	  restore-src/Makefile.am:
+	  Fix build problems with multiply defined symbols.
+
  2008-03-31  Dan Locks <dwlocks@zmanda.com>
  	* packaging/deb/buildpkg
 	  packaging/rpm/buildpkg: added -p to cp to preserve file timestamps.

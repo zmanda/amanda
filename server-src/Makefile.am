@@ -79,7 +79,6 @@ LDADD = ../common-src/libamanda.la   \
 	libamserver.la               \
 	../device-src/libamdevice.la     \
 	../common-src/libamanda.la   \
-	../gnulib/libgnu.la          \
         $(READLINE_LIBS)
 
 libamserver_la_SOURCES=	amindex.c	changer.c			\

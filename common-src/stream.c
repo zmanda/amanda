@@ -202,10 +202,10 @@ stream_client_internal(
     int priv)
 {
     struct sockaddr_storage svaddr, claddr;
-    int save_errno;
+    int save_errno = 0;
     char *f;
-    int client_socket;
-    int *portrange;
+    int client_socket = 0;
+    int *portrange = NULL;
     int result;
     struct addrinfo *res, *res_addr;
 

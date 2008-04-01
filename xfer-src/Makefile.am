@@ -24,6 +24,9 @@ libamxfer_la_SOURCES = \
 	xfer.c \
 	xmsg.c
 
+libamxfer_la_LIBADD = \
+	../common-src/libamanda.la
+
 noinst_HEADERS = \
 	amxfer.h \
 	xfer-element.h \
