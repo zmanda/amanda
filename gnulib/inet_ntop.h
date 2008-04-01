@@ -37,6 +37,6 @@
    <http://www.opengroup.org/susv3xsh/inet_ntop.html>.  */
 
 #if !HAVE_DECL_INET_NTOP
-extern const char *inet_ntop (int af, const void *restrict src,
-			      char *restrict dst, socklen_t cnt);
+extern const char *inet_ntop (int af, const void *src,
+			      char *dst, socklen_t cnt);
 #endif

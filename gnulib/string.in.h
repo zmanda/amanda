@@ -68,7 +68,7 @@ extern void *memmem (void const *__haystack, size_t __haystack_len,
    last written byte.  */
 #if @GNULIB_MEMPCPY@
 # if ! @HAVE_MEMPCPY@
-extern void *mempcpy (void *restrict __dest, void const *restrict __src,
+extern void *mempcpy (void *__dest, void const *__src,
 		      size_t __n);
 # endif
 #elif defined GNULIB_POSIXCHECK
@@ -96,7 +96,7 @@ extern void *memrchr (void const *, int, size_t)
 /* Copy SRC to DST, returning the address of the terminating '\0' in DST.  */
 #if @GNULIB_STPCPY@
 # if ! @HAVE_STPCPY@
-extern char *stpcpy (char *restrict __dst, char const *restrict __src);
+extern char *stpcpy (char *__dst, char const *__src);
 # endif
 #elif defined GNULIB_POSIXCHECK
 # undef stpcpy
@@ -111,7 +111,7 @@ extern char *stpcpy (char *restrict __dst, char const *restrict __src);
 #if @GNULIB_STPNCPY@
 # if ! @HAVE_STPNCPY@
 #  define stpncpy gnu_stpncpy
-extern char *stpncpy (char *restrict __dst, char const *restrict __src,
+extern char *stpncpy (char *__dst, char const *__src,
 		      size_t __n);
 # endif
 #elif defined GNULIB_POSIXCHECK
@@ -272,7 +272,7 @@ extern char *strpbrk (char const *__s, char const *__accept)
    See also strtok_r().  */
 #if @GNULIB_STRSEP@
 # if ! @HAVE_STRSEP@
-extern char *strsep (char **restrict __stringp, char const *restrict __delim);
+extern char *strsep (char **__stringp, char const *__delim);
 # endif
 # if defined GNULIB_POSIXCHECK
 #  undef strsep
@@ -359,8 +359,8 @@ extern char *strcasestr (const char *haystack, const char *needle)
    See also strsep().  */
 #if @GNULIB_STRTOK_R@
 # if ! @HAVE_DECL_STRTOK_R@
-extern char *strtok_r (char *restrict s, char const *restrict delim,
-		       char **restrict save_ptr);
+extern char *strtok_r (char *s, char const *delim,
+		       char **save_ptr);
 # endif
 # if defined GNULIB_POSIXCHECK
 #  undef strtok_r

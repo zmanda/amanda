@@ -70,8 +70,8 @@ static const char *inet_ntop6 (const unsigned char *src, char *dst, socklen_t si
  *	Paul Vixie, 1996.
  */
 const char *
-inet_ntop (int af, const void *restrict src,
-	   char *restrict dst, socklen_t cnt)
+inet_ntop (int af, const void *src,
+	   char *dst, socklen_t cnt)
 {
   switch (af)
     {

@@ -1,3 +1,12 @@
+2008-04-01  John Franks <jfranks@zmanda.com>
+	* gnulib/regenerate/regenerate gnulib/regenerate/no-restrict.patch:
+	  Patches to reapply after gnulib updates.
+	* gnulib/inet_ntop.c gnulib/inet_ntop.h gnulib/string.in.h
+	  gnulib/gettimeofday.c gnulib/sys_time.in.h gnulib/base64.c
+	  gnulib/getaddrinfo.c gnulib/Makefile.am gnulib/base64.h
+	  gnulib/getaddrinfo.h:
+	  Remove restricted keywords from source files.
+
 2008-04-01  Satya Ganga <gsat@zmanda.com>
 	* example/template.d/amanda-S3.conf.in: S3 device should have
 	  "infinite" tape length

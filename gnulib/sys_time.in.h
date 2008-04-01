@@ -46,7 +46,7 @@ struct timeval
 # if @REPLACE_GETTIMEOFDAY@
 #  undef gettimeofday
 #  define gettimeofday rpl_gettimeofday
-int gettimeofday (struct timeval *restrict, void *restrict);
+int gettimeofday (struct timeval *, void *);
 # endif
 
 #endif /* _GL_SYS_TIME_H */

@@ -113,10 +113,10 @@ struct addrinfo
    socket addresses.
    For more details, see the POSIX:2001 specification
    <http://www.opengroup.org/susv3xsh/getaddrinfo.html>.  */
-extern int getaddrinfo (const char *restrict nodename,
-			const char *restrict servname,
-			const struct addrinfo *restrict hints,
-			struct addrinfo **restrict res);
+extern int getaddrinfo (const char *nodename,
+			const char *servname,
+			const struct addrinfo *hints,
+			struct addrinfo **res);
 #endif
 
 #if !HAVE_DECL_FREEADDRINFO
@@ -137,9 +137,9 @@ extern const char *gai_strerror (int ecode);
 /* Convert socket address to printable node and service names.
    For more details, see the POSIX:2001 specification
    <http://www.opengroup.org/susv3xsh/getnameinfo.html>.  */
-extern int getnameinfo(const struct sockaddr *restrict sa, socklen_t salen,
-		       char *restrict node, socklen_t nodelen,
-		       char *restrict service, socklen_t servicelen,
+extern int getnameinfo(const struct sockaddr *sa, socklen_t salen,
+		       char *node, socklen_t nodelen,
+		       char *service, socklen_t servicelen,
 		       int flags);
 
 #endif

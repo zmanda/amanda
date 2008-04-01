@@ -64,8 +64,8 @@ to_uchar (char ch)
    possible.  If OUTLEN is larger than BASE64_LENGTH(INLEN), also zero
    terminate the output buffer. */
 void
-base64_encode (const char *restrict in, size_t inlen,
-	       char *restrict out, size_t outlen)
+base64_encode (const char *in, size_t inlen,
+	       char *out, size_t outlen)
 {
   static const char b64str[64] =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
@@ -310,8 +310,8 @@ isbase64 (char ch)
    that, when applicable, you must remove any line terminators that is
    part of the data stream before calling this function.  */
 bool
-base64_decode (const char *restrict in, size_t inlen,
-	       char *restrict out, size_t *outlen)
+base64_decode (const char *in, size_t inlen,
+	       char *out, size_t *outlen)
 {
   size_t outleft = *outlen;
 

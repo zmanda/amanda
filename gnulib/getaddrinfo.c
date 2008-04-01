@@ -123,10 +123,10 @@ validate_family (int family)
 /* Translate name of a service location and/or a service name to set of
    socket addresses. */
 int
-getaddrinfo (const char *restrict nodename,
-	     const char *restrict servname,
-	     const struct addrinfo *restrict hints,
-	     struct addrinfo **restrict res)
+getaddrinfo (const char *nodename,
+	     const char *servname,
+	     const struct addrinfo *hints,
+	     struct addrinfo **res)
 {
   struct addrinfo *tmp;
   int port = 0;
@@ -337,9 +337,9 @@ freeaddrinfo (struct addrinfo *ai)
     }
 }
 
-int getnameinfo(const struct sockaddr *restrict sa, socklen_t salen,
-		char *restrict node, socklen_t nodelen,
-		char *restrict service, socklen_t servicelen,
+int getnameinfo(const struct sockaddr *sa, socklen_t salen,
+		char *node, socklen_t nodelen,
+		char *service, socklen_t servicelen,
 		int flags)
 {
 #ifdef WIN32_NATIVE

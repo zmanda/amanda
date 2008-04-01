@@ -1,0 +1,217 @@
+Index: gnulib/inet_ntop.c
+===================================================================
+--- gnulib/inet_ntop.c	(revision 10693)
++++ gnulib/inet_ntop.c	(working copy)
+@@ -70,8 +70,8 @@
+  *	Paul Vixie, 1996.
+  */
+ const char *
+-inet_ntop (int af, const void *restrict src,
+-	   char *restrict dst, socklen_t cnt)
++inet_ntop (int af, const void *src,
++	   char *dst, socklen_t cnt)
+ {
+   switch (af)
+     {
+Index: gnulib/inet_ntop.h
+===================================================================
+--- gnulib/inet_ntop.h	(revision 10693)
++++ gnulib/inet_ntop.h	(working copy)
+@@ -37,6 +37,6 @@
+    <http://www.opengroup.org/susv3xsh/inet_ntop.html>.  */
+ 
+ #if !HAVE_DECL_INET_NTOP
+-extern const char *inet_ntop (int af, const void *restrict src,
+-			      char *restrict dst, socklen_t cnt);
++extern const char *inet_ntop (int af, const void *src,
++			      char *dst, socklen_t cnt);
+ #endif
+Index: gnulib/string.in.h
+===================================================================
+--- gnulib/string.in.h	(revision 10693)
++++ gnulib/string.in.h	(working copy)
+@@ -68,7 +68,7 @@
+    last written byte.  */
+ #if @GNULIB_MEMPCPY@
+ # if ! @HAVE_MEMPCPY@
+-extern void *mempcpy (void *restrict __dest, void const *restrict __src,
++extern void *mempcpy (void *__dest, void const *__src,
+ 		      size_t __n);
+ # endif
+ #elif defined GNULIB_POSIXCHECK
+@@ -96,7 +96,7 @@
+ /* Copy SRC to DST, returning the address of the terminating '\0' in DST.  */
+ #if @GNULIB_STPCPY@
+ # if ! @HAVE_STPCPY@
+-extern char *stpcpy (char *restrict __dst, char const *restrict __src);
++extern char *stpcpy (char *__dst, char const *__src);
+ # endif
+ #elif defined GNULIB_POSIXCHECK
+ # undef stpcpy
+@@ -111,7 +111,7 @@
+ #if @GNULIB_STPNCPY@
+ # if ! @HAVE_STPNCPY@
+ #  define stpncpy gnu_stpncpy
+-extern char *stpncpy (char *restrict __dst, char const *restrict __src,
++extern char *stpncpy (char *__dst, char const *__src,
+ 		      size_t __n);
+ # endif
+ #elif defined GNULIB_POSIXCHECK
+@@ -272,7 +272,7 @@
+    See also strtok_r().  */
+ #if @GNULIB_STRSEP@
+ # if ! @HAVE_STRSEP@
+-extern char *strsep (char **restrict __stringp, char const *restrict __delim);
++extern char *strsep (char **__stringp, char const *__delim);
+ # endif
+ # if defined GNULIB_POSIXCHECK
+ #  undef strsep
+@@ -359,8 +359,8 @@
+    See also strsep().  */
+ #if @GNULIB_STRTOK_R@
+ # if ! @HAVE_DECL_STRTOK_R@
+-extern char *strtok_r (char *restrict s, char const *restrict delim,
+-		       char **restrict save_ptr);
++extern char *strtok_r (char *s, char const *delim,
++		       char **save_ptr);
+ # endif
+ # if defined GNULIB_POSIXCHECK
+ #  undef strtok_r
+Index: gnulib/gettimeofday.c
+===================================================================
+--- gnulib/gettimeofday.c	(revision 10693)
++++ gnulib/gettimeofday.c	(working copy)
+@@ -98,7 +98,7 @@
+    causes problems.  */
+ 
+ int
+-rpl_gettimeofday (struct timeval *restrict tv, void *restrict tz)
++rpl_gettimeofday (struct timeval *tv, void *tz)
+ {
+ #undef gettimeofday
+ #if HAVE_GETTIMEOFDAY
+Index: gnulib/sys_time.in.h
+===================================================================
+--- gnulib/sys_time.in.h	(revision 10693)
++++ gnulib/sys_time.in.h	(working copy)
+@@ -46,7 +46,7 @@
+ # if @REPLACE_GETTIMEOFDAY@
+ #  undef gettimeofday
+ #  define gettimeofday rpl_gettimeofday
+-int gettimeofday (struct timeval *restrict, void *restrict);
++int gettimeofday (struct timeval *, void *);
+ # endif
+ 
+ #endif /* _GL_SYS_TIME_H */
+Index: gnulib/base64.c
+===================================================================
+--- gnulib/base64.c	(revision 10693)
++++ gnulib/base64.c	(working copy)
+@@ -64,8 +64,8 @@
+    possible.  If OUTLEN is larger than BASE64_LENGTH(INLEN), also zero
+    terminate the output buffer. */
+ void
+-base64_encode (const char *restrict in, size_t inlen,
+-	       char *restrict out, size_t outlen)
++base64_encode (const char *in, size_t inlen,
++	       char *out, size_t outlen)
+ {
+   static const char b64str[64] =
+     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+@@ -310,8 +310,8 @@
+    that, when applicable, you must remove any line terminators that is
+    part of the data stream before calling this function.  */
+ bool
+-base64_decode (const char *restrict in, size_t inlen,
+-	       char *restrict out, size_t *outlen)
++base64_decode (const char *in, size_t inlen,
++	       char *out, size_t *outlen)
+ {
+   size_t outleft = *outlen;
+ 
+Index: gnulib/getaddrinfo.c
+===================================================================
+--- gnulib/getaddrinfo.c	(revision 10693)
++++ gnulib/getaddrinfo.c	(working copy)
+@@ -123,10 +123,10 @@
+ /* Translate name of a service location and/or a service name to set of
+    socket addresses. */
+ int
+-getaddrinfo (const char *restrict nodename,
+-	     const char *restrict servname,
+-	     const struct addrinfo *restrict hints,
+-	     struct addrinfo **restrict res)
++getaddrinfo (const char *nodename,
++	     const char *servname,
++	     const struct addrinfo *hints,
++	     struct addrinfo **res)
+ {
+   struct addrinfo *tmp;
+   int port = 0;
+@@ -337,9 +337,9 @@
+     }
+ }
+ 
+-int getnameinfo(const struct sockaddr *restrict sa, socklen_t salen,
+-		char *restrict node, socklen_t nodelen,
+-		char *restrict service, socklen_t servicelen,
++int getnameinfo(const struct sockaddr *sa, socklen_t salen,
++		char *node, socklen_t nodelen,
++		char *service, socklen_t servicelen,
+ 		int flags)
+ {
+ #ifdef WIN32_NATIVE
+Index: gnulib/base64.h
+===================================================================
+--- gnulib/base64.h	(revision 10693)
++++ gnulib/base64.h	(working copy)
+@@ -31,13 +31,13 @@
+ 
+ extern bool isbase64 (char ch);
+ 
+-extern void base64_encode (const char *restrict in, size_t inlen,
+-			   char *restrict out, size_t outlen);
++extern void base64_encode (const char *in, size_t inlen,
++			   char *out, size_t outlen);
+ 
+ extern size_t base64_encode_alloc (const char *in, size_t inlen, char **out);
+ 
+-extern bool base64_decode (const char *restrict in, size_t inlen,
+-			   char *restrict out, size_t *outlen);
++extern bool base64_decode (const char *in, size_t inlen,
++			   char *out, size_t *outlen);
+ 
+ extern bool base64_decode_alloc (const char *in, size_t inlen,
+ 				 char **out, size_t *outlen);
+Index: gnulib/getaddrinfo.h
+===================================================================
+--- gnulib/getaddrinfo.h	(revision 10693)
++++ gnulib/getaddrinfo.h	(working copy)
+@@ -113,10 +113,10 @@
+    socket addresses.
+    For more details, see the POSIX:2001 specification
+    <http://www.opengroup.org/susv3xsh/getaddrinfo.html>.  */
+-extern int getaddrinfo (const char *restrict nodename,
+-			const char *restrict servname,
+-			const struct addrinfo *restrict hints,
+-			struct addrinfo **restrict res);
++extern int getaddrinfo (const char *nodename,
++			const char *servname,
++			const struct addrinfo *hints,
++			struct addrinfo **res);
+ #endif
+ 
+ #if !HAVE_DECL_FREEADDRINFO
+@@ -137,9 +137,9 @@
+ /* Convert socket address to printable node and service names.
+    For more details, see the POSIX:2001 specification
+    <http://www.opengroup.org/susv3xsh/getnameinfo.html>.  */
+-extern int getnameinfo(const struct sockaddr *restrict sa, socklen_t salen,
+-		       char *restrict node, socklen_t nodelen,
+-		       char *restrict service, socklen_t servicelen,
++extern int getnameinfo(const struct sockaddr *sa, socklen_t salen,
++		       char *node, socklen_t nodelen,
++		       char *service, socklen_t servicelen,
+ 		       int flags);
+ 
+ #endif

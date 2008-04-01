@@ -63,10 +63,11 @@ PATCH_DIR="`pwd`/gnulib/regenerate"
 # Patch Makefile.am to not error out on warnings
 patch -p0 < "${PATCH_DIR}/no-error.patch" || exit 1
 
-
 # Add John's patches to getaddrinfo.c for use in cygwin
 patch -p0 < "${PATCH_DIR}/getaddrinfo-cygwin.patch" || exit 1
 
+# Add John's patches to eliminate restrict attributes.
+patch -p0 < "${PATCH_DIR}/no-restrict.patch" || exit 1
 
 # Add info to the makefile to ensure all this stuff gets put in
 # the distribution tarball
