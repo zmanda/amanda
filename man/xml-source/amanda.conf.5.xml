@@ -2132,7 +2132,7 @@ At the moment, this is of little use.</para>
 <citerefentry><refentrytitle>amanda-client.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>amcrypt</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>aespipe</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>http://wiki.zmanda.com</refentrytitle></citerefentry>
+<ulink url="http://wiki.zmanda.com"/>
 </para>
 
 <para>

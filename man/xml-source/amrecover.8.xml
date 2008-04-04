@@ -590,7 +590,7 @@ but will be overridden by the -t switch.
 <citerefentry><refentrytitle>amrestore</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>amfetchdump</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>readline</refentrytitle><manvolnum>3</manvolnum></citerefentry>,
-  <citerefentry><refentrytitle>http://wiki.zmanda.com</refentrytitle></citerefentry>
+<ulink url="http://wiki.zmanda.com"/>
 </para>
 </refsect1>
 </refentry>

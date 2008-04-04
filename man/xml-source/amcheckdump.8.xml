@@ -48,6 +48,11 @@ remap='B'>CONFIGURATION OVERRIDE</emphasis>" section in
 <citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>
 for information on the <literal>-o</literal> option.</para>
 </refsect1>
+ <refsect1><title>SEE ALSO</title>
+ <para><citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+ <ulink url="http://wiki.zmanda.com"/>
+ </para>
+ </refsect1> 
 
 <refsect1><title>EXAMPLE</title>
 <para><programlisting>
