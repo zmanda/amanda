@@ -343,7 +343,7 @@ College Park: Original text</para>
 <citerefentry><refentrytitle>amflush</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>tar</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>restore</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-  <citerefentry><refentrytitle>http://wiki.zmanda.com</refentrytitle></citerefentry>
+<ulink url="http://wiki.zmanda.com"/>
 </para>
 </refsect1>
 </refentry>

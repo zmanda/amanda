@@ -292,7 +292,7 @@ AMANDA_DEBUG_DAYS
 <refsect1><title>SEE ALSO</title>
 <para>
   <citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-  <citerefentry><refentrytitle>http://wiki.zmanda.com</refentrytitle></citerefentry>
+  <ulink url="http://wiki.zmanda.com"/>
 </para>
 </refsect1>
 </refentry>

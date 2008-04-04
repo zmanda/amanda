@@ -160,7 +160,7 @@ after an
 <citerefentry><refentrytitle>amgetconf</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
 cron,
 perl,
-<citerefentry><refentrytitle>http://wiki.zmanda.com</refentrytitle></citerefentry>
+<ulink url="http://wiki.zmanda.com"/>
 </para>
 </refsect1>
 
