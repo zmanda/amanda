@@ -1739,6 +1739,7 @@ gboolean restore_holding_disk(FILE * prompt_out,
 
     if (last_header != NULL && !flags->amidxtaped &&
 	flags->pipe_to_fd == STDOUT_FILENO &&
+	last_header->type != F_UNKNOWN &&
         !headers_equal(last_header, source.header, 1)) {
         return FALSE;
     } else if (this_header != NULL) {
