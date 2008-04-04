@@ -1,4 +1,7 @@
- 2008-03-31  Dan Locks <dwlocks@zmanda.com>
+2008-04-04  Jean-Louis Martineau <martineau@zmanda.com>
+	* restore-src/restore.c: Check last_header->type != F_UNKNOWN.
+
+2008-03-31  Dan Locks <dwlocks@zmanda.com>
  	* packaging/deb/buildpkg
 	  packaging/rpm/buildpkg: added -p to cp to preserve file timestamps.
 
