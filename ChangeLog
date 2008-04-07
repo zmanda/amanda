@@ -1,4 +1,8 @@
 2008-04-07  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Makefile.am installcheck/Amanda_Device.pl: Add tests
+	  for Amanda::Device
+
+2008-04-07  Dustin J. Mitchell <dustin@zmanda.com>
 	* man/xml-source/amanda.conf.5.xml: fix typos
 
 2008-04-04  Jean-Louis Martineau <martineau@zmanda.com>
