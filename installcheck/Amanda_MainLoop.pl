@@ -16,12 +16,13 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 8;
+use Test::More tests => 11;
 use strict;
+use warnings;
 use POSIX qw(WIFEXITED WEXITSTATUS);
 
 use lib "@amperldir@";
-use Amanda::MainLoop;
+use Amanda::MainLoop qw( :GIOCondition );
 
 {
     my $global = 0;
@@ -151,52 +152,144 @@ use Amanda::MainLoop;
 
 {
     my $global = 0;
-    my ($readfh, $writefh);
-
-    pipe $readfh, $writefh;
+    my ($readinfd, $writeinfd) = POSIX::pipe();
+    my ($readoutfd, $writeoutfd) = POSIX::pipe();
 
     my $pid = fork();
     if ($pid == 0) {
 	## child
-	syswrite($writefh, "HELLO\n", 6);
-	sleep(1);
-	syswrite($writefh, "WORLD\n", 6);
-	sleep(1);
+
+	my $data;
+
+	POSIX::close($readinfd);
+	POSIX::close($writeoutfd);
+
+	# the read()s here are to synchronize with our parent; the
+	# results are ignored.
+	POSIX::read($readoutfd, $data, 1024);
+	POSIX::write($writeinfd, "HELLO\n", 6);
+	POSIX::read($readoutfd, $data, 1024);
+	POSIX::write($writeinfd, "WORLD\n", 6);
+	POSIX::read($readoutfd, $data, 1024);
 	exit(33);
     }
 
     ## parent
 
+    POSIX::close($writeinfd);
+    POSIX::close($readoutfd);
+
     my @events;
 
-    my $to = Amanda::MainLoop::timeout_source(700);
+    my $to = Amanda::MainLoop::timeout_source(200);
     $to->set_callback(sub {
 	push @events, "time";
+	POSIX::write($writeoutfd, "A", 1); # wake up the child
     });
 
     my $cw = Amanda::MainLoop::child_watch_source($pid);
     $cw->set_callback(sub {
 	my ($got_pid, $got_status) = @_;
+	$cw->remove();
 	Amanda::MainLoop::quit();
 
 	push @events, "died";
     });
 
-    my $fd = Amanda::MainLoop::fd_source(fileno($readfh), $Amanda::MainLoop::G_IO_IN);
+    my $fd = Amanda::MainLoop::fd_source($readinfd, $G_IO_IN | $G_IO_HUP);
     $fd->set_callback(sub {
-	my $str = <$readfh>;
+	my $str;
+	if (POSIX::read($readinfd, $str, 1024) == 0) {
+	    # EOF
+	    POSIX::close($readinfd);
+	    POSIX::close($writeoutfd);
+	    $fd->remove();
+	    return;
+	}
 	chomp $str;
 	push @events, "read $str";
     });
 
     Amanda::MainLoop::run();
-    $cw->remove();
     $to->remove();
-    $fd->remove();
 
     is_deeply([ @events ],
-	[ "read HELLO", "time", "read WORLD", "time", "died" ],
+	[ "time", "read HELLO", "time", "read WORLD", "time", "died" ],
 	"fd source works for reading from a file descriptor");
+}
+
+# see if a "looping" callback with some closure values works.  This test teased
+# out some memory corruption bugs once upon a time.
+
+{
+    my $completed = 0;
+    sub loop {
+	my ($finished_cb) = @_;
+	my $time = 700;
+	my $to;
+
+	my $cb;
+	$cb = sub {
+	    $time -= 300;
+	    $to->remove();
+	    if ($time <= 0) {
+		$finished_cb->();
+	    } else {
+		$to = Amanda::MainLoop::timeout_source($time);
+		$to->set_callback($cb);
+	    }
+	};
+	$to = Amanda::MainLoop::timeout_source($time);
+	$to->set_callback($cb);
+    };
+    loop(sub {
+	$completed = 1;
+	Amanda::MainLoop::quit();
+    });
+    Amanda::MainLoop::run();
+    is($completed, 1, "looping construct terminates with a callback");
+}
+
+# Make sure that a die() in a callback correctly kills the process.  Such
+# a die() skips the usual Perl handling, so an eval { } won't do -- we have
+# to fork a child.
+{
+    my $global = 0;
+    my ($readfd, $writefd) = POSIX::pipe();
+
+    my $pid = fork();
+    if ($pid == 0) {
+	## child
+
+	my $data;
+
+	# fix up the file descriptors to hook fd 2 (stderr) to
+	# the pipe
+	POSIX::close($readfd);
+	POSIX::dup2($writefd, 2);
+	POSIX::close($writefd);
+
+	# and now die in a callback, using an eval {} in case the
+	# exception propagates out of the MainLoop run()
+	my $src = Amanda::MainLoop::timeout_source(10);
+	$src->set_callback(sub { die("Oh, the humanity"); });
+	eval { Amanda::MainLoop::run(); };
+	exit(33);
+    }
+
+    ## parent
+
+    POSIX::close($writefd);
+
+    # read from the child and wait for it to die.  There's no
+    # need to use MainLoop here.
+    my $str;
+    POSIX::read($readfd, $str, 1024);
+    POSIX::close($readfd);
+    waitpid($pid, 0);
+
+    ok($? != 33 && $? != 0, "die() in a callback exits with an error condition");
+    like($str, qr/Oh, the humanity/, "..and displays die message on stderr");
 }
 
 # test misc. management of sources.  Ideally it won't crash :)
@@ -210,3 +303,4 @@ pass("Can call set_callback a few times on the same source");
 $src->remove();
 $src->remove();
 pass("Calling remove twice is ok");
+

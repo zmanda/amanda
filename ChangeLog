@@ -1,4 +1,11 @@
 2008-04-07  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/MainLoop.swg perl/amglue/source.c
+	  installcheck/Amanda_MainLoop.pl: wrap GMainLoop and the 
+	  GSources defined in event.c, using an extensible model
+	* common-src/event.c: check whether child_watch_source's signal
+	  handler has been replaced, and issue a warning if it has.
+
+2008-04-07  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/queueing.c: fix condition (thanks to Jean-Louis
 	  Martineau)
 

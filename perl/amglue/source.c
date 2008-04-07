@@ -42,7 +42,6 @@ amglue_source_free(
 	SvREFCNT_dec(self->callback_sv);
     if (self->state == AMGLUE_SOURCE_ATTACHED)
 	g_source_destroy(self->src);
-    g_source_unref(self->src);
     g_free(self);
 }
 
@@ -57,10 +56,18 @@ amglue_source_callback_simple(
     PUSHMARK(SP);
     call_sv(src->callback_sv, G_EVAL|G_DISCARD|G_NOARGS);
 
-    /* check for an uncaught 'die' */
+    /* 'src' may have been freed at this point! */
+    src = NULL;
+
+    /* check for an uncaught 'die'.  If we don't do this, then Perl will longjmp()
+     * over the GMainLoop mechanics, leaving GMainLoop in an inconsistent (locked)
+     * state. */
     if (SvTRUE(ERRSV)) {
-	g_critical("uncaught 'die' in MainLoop callback: %s", SvPV_nolen(ERRSV));
-	g_assert_not_reached();
+	/* We handle this just the way the default 'die' handler in Amanda::Debug 
+	 * does, but since Amanda's debug support may not yet be running, we back
+	 * it up with an exit() */
+	g_critical("%s", SvPV_nolen(ERRSV));
+	exit(1);
     }
 
     return TRUE;

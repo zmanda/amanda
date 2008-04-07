@@ -111,6 +111,10 @@ dies.  To avoid race conditions, it will issue an event even if the process
 dies before the source is created.  The callback is called with two arguments:
 the PID and the child's exit status.
 
+Note that this source is totally incompatible with any thing that would cause
+perl to change the SIGCHLD handler.  In particular, C<open .. "|-"> cannot be
+used in the same process as this source.
+
 =head3 File Descriptor
 
   my $src = Amanda::MainLoop::fd_source($fd, G_IO_IN);
@@ -186,6 +190,7 @@ typedef struct amglue_Source {
 	    } else if (self->state == AMGLUE_SOURCE_NEW) {
 		self->state = AMGLUE_SOURCE_ATTACHED;
 		g_source_attach(self->src, NULL);
+		g_source_unref(self->src);
 	    }
 
 	    /* whoever created this Source object conveniently left
@@ -265,17 +270,26 @@ child_watch_source_callback(
     XPUSHs(sv_2mortal(newSViv(status)));
     PUTBACK;
 
+    /* child watch sources automatically destroy themselves after the
+     * child dies, so we mark the amglue_Source as destroyed, too.  We
+     * do this now, in case src is destroyed later. */
+    src->state = AMGLUE_SOURCE_DESTROYED;
+
     call_sv(src->callback_sv, G_EVAL|G_DISCARD);
 
-    /* check for an uncaught 'die' */
-    if (SvTRUE(ERRSV)) {
-	g_critical("uncaught 'die' in MainLoop callback: %s", SvPV_nolen(ERRSV));
-	g_assert_not_reached();
-    }
+    /* 'src' may have been freed at this point! */
+    src = NULL;
 
-    /* child watch sources automatically destroy themselves after the
-     * child dies, so we mark the amglue_Source as destroyed, too.  */
-    src->state = AMGLUE_SOURCE_DESTROYED;
+    /* check for an uncaught 'die'.  If we don't do this, then Perl will longjmp()
+     * over the GMainLoop mechanics, leaving GMainLoop in an inconsistent (locked)
+     * state. */
+    if (SvTRUE(ERRSV)) {
+	/* We handle this just the way the default 'die' handler in Amanda::Debug 
+	 * does, but since Amanda's debug support may not yet be running, we back
+	 * it up with an exit() */
+	g_critical("%s", SvPV_nolen(ERRSV));
+	exit(1);
+    }
 
     return TRUE;
 }

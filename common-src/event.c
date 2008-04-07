@@ -564,6 +564,7 @@ new_child_watch_source(pid_t pid)
     static gboolean sig_handler_installed = FALSE;
     GSource *src;
     ChildWatchSource *cws;
+    struct sigaction act, oact;
 
     /* initialize these here to avoid a compiler warning */
     if (!child_watch_source_funcs) {
@@ -581,18 +582,25 @@ new_child_watch_source(pid_t pid)
     cws->last_checked = child_watch_counter - 1;
     cws->dead = FALSE;
 
-    /* install the SIGCHLD handler if necessary */
-    if (!sig_handler_installed) {
-	struct sigaction act, oact;
+    /* install the SIGCHLD handler every time, in case someone else 
+     * (like perl, for example) resets it. */
+    sigemptyset(&act.sa_mask);
+    act.sa_handler = child_watch_source_sigchld;
+    act.sa_flags = SA_NOCLDSTOP;
+    if(sigaction(SIGCHLD, &act, &oact) != 0){
+	g_critical("error setting SIGCHLD handler: %s", strerror(errno));
+	/*NOTREACHED*/
+    }
 
-	act.sa_handler = child_watch_source_sigchld;
-	sigemptyset(&act.sa_mask);
-	act.sa_flags = SA_NOCLDSTOP;
-	if(sigaction(SIGCHLD, &act, &oact) != 0){
-	    g_critical("error setting SIGCHLD handler: %s", strerror(errno));
-	    /*NOTREACHED*/
+    if (sig_handler_installed) {
+	/* if we've already installed it once, then oact should point
+	 * to our handler */
+	if (oact.sa_handler != child_watch_source_sigchld) {
+	    g_warning("BUG: child_watch_source's SIGCHLD handler was replaced; please report this!");
+	    /* increment the counter -- we may have missed a child's death */
+	    child_watch_counter++;
 	}
-
+    } else {
 	sig_handler_installed = TRUE;
     }
 
