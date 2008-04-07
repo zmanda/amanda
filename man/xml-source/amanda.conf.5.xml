@@ -1463,7 +1463,7 @@ server host as it goes from the network into the holding disk or to tape.</para>
       <para>PROG must not contain white space.</para>
       <para>Specify client_decrypt_option &quot;decryption-parameter&quot; Default: &quot;-d&quot;</para>
       <para>decryption-parameter must not contain white space.</para>
-      <para>(See dumptype server-encrypt-fast in example/amanda.conf for reference)</para>
+      <para>(See dumptype client-encrypt-nocomp in example/amanda.conf for reference)</para>
     </listitem>
   </varlistentry>
   <varlistentry>
@@ -1473,7 +1473,7 @@ server host as it goes from the network into the holding disk or to tape.</para>
       <para>PROG must not contain white space.</para>
       <para>Specify server_decrypt_option &quot;decryption-parameter&quot; Default: &quot;-d&quot;</para>
       <para>decryption-parameter must not contain white space.</para>
-      <para>(See dumptype client-encrypt-nocomp in example/amanda.conf for reference)</para>
+      <para>(See dumptype server-encrypt-fast in example/amanda.conf for reference)</para>
     </listitem>
   </varlistentry>
 </variablelist>
