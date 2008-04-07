@@ -1,4 +1,8 @@
 2008-04-07  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/queueing.c: fix condition (thanks to Jean-Louis
+	  Martineau)
+
+2008-04-07  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/Makefile.am common-src/queueing-test.c: new tests
 	* device-src/tests/queue_test.c device-src/tests/Makefile.am: remove
 	* common-src/queueing.c: fix two bugs:

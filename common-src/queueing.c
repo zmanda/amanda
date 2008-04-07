@@ -112,7 +112,7 @@ static void heatshrink_buffer(queue_buffer_t *buf) {
     if (buf == NULL)
         return;
 
-    if (G_UNLIKELY(buf->offset * 4 > buf->data_size)) {
+    if (G_UNLIKELY(buf->offset > buf->data_size * 4)) {
         /* Consolodate with memmove. We will reclaim the space in the next
          * step. */
         memmove(buf->data, buf->data + buf->offset, buf->data_size);
