@@ -112,7 +112,7 @@ static void heatshrink_buffer(queue_buffer_t *buf) {
     if (buf == NULL)
         return;
 
-    if (G_UNLIKELY(buf->data_size * 4 > buf->offset)) {
+    if (G_UNLIKELY(buf->offset * 4 > buf->data_size)) {
         /* Consolodate with memmove. We will reclaim the space in the next
          * step. */
         memmove(buf->data, buf->data + buf->offset, buf->data_size);
@@ -178,7 +178,7 @@ static gpointer do_producer_thread(gpointer datap) {
 
 static gpointer do_consumer_thread(gpointer datap) {
     queue_data_t* data = datap;
-    gboolean finished = FALSE;
+    gboolean got_eof = FALSE;
     queue_buffer_t *buf = NULL;
 
     if (data->streaming_mode != STREAMING_REQUIREMENT_NONE) {
@@ -188,11 +188,9 @@ static gpointer do_consumer_thread(gpointer datap) {
     for (;;) {
         gboolean result;
 
-        if (finished) {
-            return GINT_TO_POINTER(TRUE);
-        }
-
-        while (buf == NULL || buf->data_size < data->block_size) {
+	/* Pull in and merge buffers until we have at least data->block_size
+	 * bytes, or there are no more buffers */
+        while (!got_eof && (buf == NULL || buf->data_size < data->block_size)) {
             queue_buffer_t *next_buf;
             if (data->streaming_mode == STREAMING_REQUIREMENT_DESIRED) {
                 do {
@@ -207,22 +205,20 @@ static gpointer do_consumer_thread(gpointer datap) {
             }
 
             if (next_buf->data == NULL) {
-                /* Producer is finished, then so are we.*/
+                /* A buffer with NULL data is an EOF from the producer */
                 free_buffer(next_buf);
-                if (buf != NULL) {
-                    /* But we can't quit yet, we have a buffer to flush.*/
-                    finished = TRUE;
-                    break;
-                } else {
-                    /* We are so outta here. */
-                    return GINT_TO_POINTER(TRUE);
-                }            
+		got_eof = TRUE;
+		break;
             }
 
             semaphore_increment(data->free_memory, next_buf->alloc_size);
-            
+
             buf = merge_buffers(buf, next_buf);
         }
+
+	/* If we're out of data, then we are done. */
+	if (buf == NULL)
+	    break;
 
         result = data->consumer(data->consumer_user_data, buf);
 
@@ -238,6 +234,9 @@ static gpointer do_consumer_thread(gpointer datap) {
             return GINT_TO_POINTER(FALSE);
         }
     }
+
+    /* We are so outta here. */
+    return GINT_TO_POINTER(TRUE);
 }
 
 /* Empties a buffer queue and frees all the buffers associated with it.

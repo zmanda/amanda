@@ -208,7 +208,9 @@ libtestutils_la_SOURCES = \
 
 # automake-style tests
 
-TESTS = amflock-test event-test semaphore-test
+# automake-style tests
+
+TESTS = amflock-test event-test semaphore-test queueing-test
 noinst_PROGRAMS = $(TESTS)
 
 amflock_test_SOURCES = amflock-test.c
@@ -219,6 +221,9 @@ event_test_LDADD = libamanda.la libtestutils.la
 
 semaphore_test_SOURCES = semaphore-test.c
 semaphore_test_LDADD = libamanda.la libtestutils.la
+
+queueing_test_SOURCES = queueing-test.c
+queueing_test_LDADD = libamanda.la libtestutils.la
 
 # scripts
 

@@ -63,31 +63,30 @@ typedef enum {
     QUEUE_INTERNAL_ERROR = 1 << 2
 } queue_result_flags;
 
-/* The producer takes the given buffer (which is not itself NULL, but
- * may contain a NULL data segment), and fills it with data. The
- * producer should feel free to allocate or reallocate data as
- * necessary; the queueing system will free it when necessary. The
- * result of the production operation is specified in the return
- * value, but if the buffer is left without data, then that is
- * interpreted as PRODUCER_ERROR. It is preferred (but not required)
- * that the producer produce hint_size bytes of data, 
+/* The producer takes the given buffer (which is not itself NULL, but may contain
+ * a NULL data segment), and fills it with data. The producer can allocate or
+ * reallocate the buffer's 'data' element as necessary; the queueing system will
+ * free it when necessary. The result of the production operation is specified in
+ * the return value, but if the buffer is left without data, then that is
+ * interpreted as PRODUCER_ERROR. For optimal performance, the producer should
+ * supply exactly hint_size bytes of data in each call, but this is not required.
  *
- * The consumer takes the given buffer (which will not be NULL, nor
- * contain a NULL data segment) and processess it. If there is a
- * problem consuming data (such that no further data should be
- * consumed), the consumer may return -1. Otherwise, the consumer
- * should return the number of bytes actually consumed.
- * If an error occurs, return -1, regardless of the number of bytes consumed.
- * If the amount of data written is not a full block, then this is the
- * last (partial block) of data. The consumer should do whatever is
- * appropriate in that case.
+ * The consumer is given a buffer (which will not be NULL, nor contain a NULL data
+ * segment), and is expected to process some or all of the data in that buffer. If
+ * there is a problem consuming data (such that no further data can be consumed),
+ * the consumer may return -1. Otherwise, the consumer should return the number of
+ * bytes actually consumed.  If an error occurs, it should return -1, regardless
+ * of the number of bytes consumed.  The queueing framework will ensure that all
+ * blocks have at least hint_size bytes, except the last.  For optimal
+ * performance, the consumer should consume the entire buffer at each call, but
+ * this is not required.
  *
- * Note that the handling of the queue_buffer_t is different between
- * the two functions: The producer should update queue_buffer_t as
- * necessary to corespond to read data, while the consumer should
- * leave the queue_buffer_t unadjusted: The queueing framework will
- * invalidate data in the buffer according to the return value of the
- * consumer.*/
+ * Note that the handling of the queue_buffer_t is different between the two
+ * functions: The producer should update queue_buffer_t as necessary to corespond
+ * to read data, while the consumer should leave the queue_buffer_t unadjusted:
+ * The queueing framework will invalidate data in the buffer according to the
+ * return value of the consumer.*/
+
 typedef producer_result_t (* ProducerFunctor)(gpointer user_data,
                                               queue_buffer_t* buffer,
                                               size_t hint_size);

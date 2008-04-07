@@ -1,4 +1,14 @@
 2008-04-07  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/Makefile.am common-src/queueing-test.c: new tests
+	* device-src/tests/queue_test.c device-src/tests/Makefile.am: remove
+	* common-src/queueing.c: fix two bugs:
+	  - spurious in-place memmove on every buffer copy
+	  - silent discard of a final packet if the consumer does not
+	    completely consume it
+	* common-src/queueing.h: update comments
+	* common-src/testutils.h: add header-protection macros
+
+2008-04-07  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Makefile.am installcheck/Amanda_Device.pl: Add tests
 	  for Amanda::Device
 

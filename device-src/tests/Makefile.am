@@ -7,7 +7,7 @@ INCLUDES =	-I$(top_builddir)/common-src \
 
 # automake-style tests
 
-noinst_PROGRAMS = queue_test device_test $(TESTS)
+noinst_PROGRAMS = device_test $(TESTS)
 
 ###
 # Because libamanda includes routines (e.g. regex) provided by some system

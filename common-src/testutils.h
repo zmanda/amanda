@@ -18,6 +18,9 @@
  * Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
  */
 
+#ifndef TESTUTILS_H
+#define TESTUTILS_H
+
 /*
  * A library of utilities for writing 'make check'-based tests.
  *
@@ -77,3 +80,5 @@ int tu_debugging_enabled;
  */
 
 int testutils_run_tests(int argc, char **argv, TestUtilsTest *tests);
+
+#endif /* TESTUTILS_H */
