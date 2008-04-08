@@ -1,4 +1,8 @@
 2008-04-08  Dustin J. Mitchell <dustin@zmanda.com>
+	* server-src/diskfile.c: improve messages when client does not
+	  support required features
+
+2008-04-08  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Amanda_Config.pl common-src/conffile.c
 	  common-src/conffile.h: fix deprecation of keywords to
 	  actually issue a warning.  'netusage' is no longer

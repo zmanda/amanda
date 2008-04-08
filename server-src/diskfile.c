@@ -1026,14 +1026,14 @@ optionstr(
 	   }
 	   else if(fdout) {
 	    g_fprintf(fdout,
-		    _("WARNING: %s:%s does not support server decrypt option\n"),
+		    _("WARNING: %s:%s client version does not support server data decryption\n"),
 		    dp->host->hostname, qdpname);
 	   }
 	 }
       }
       else if(fdout) {
 	    g_fprintf(fdout,
-		    _("WARNING: %s:%s does not support server data encryption\n"),
+		    _("WARNING: %s:%s client version does not support server data encryption\n"),
 		    dp->host->hostname, qdpname);
       }
 	 break;
