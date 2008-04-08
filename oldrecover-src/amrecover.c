@@ -453,6 +453,13 @@ main(
 
     config_init(CONFIG_INIT_CLIENT, NULL);
 
+    if (config_errors(NULL) >= CFGERR_WARNINGS) {
+	config_print_errors();
+	if (config_errors(NULL) >= CFGERR_ERRORS) {
+	    g_critical(_("errors processing config file"));
+	}
+    }
+
     if (argc > 1 && argv[1][0] != '-')
     {
 	/*

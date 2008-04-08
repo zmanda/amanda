@@ -86,4 +86,14 @@ void check_dir(char *dirname, int mode);
 void check_suid(char *filename);
 double the_num(char * str, int pos);
 
+/* Convert a GSList returned from config_errors into an "ERROR "
+ * line suitable for inclusion in a NAK or REP packet.  Because we only
+ * get one ERROR line per packet, this includes only the first 
+ * error, with an indication that there are more to follow.
+ *
+ * @param errlist: the list of errors from config_errors
+ * @returns: newly allocated string containing the error messages
+ */
+char *config_errors_to_error_string(GSList *errlist);
+
 #endif

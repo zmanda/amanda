@@ -749,7 +749,14 @@ main(
   parse_args(argc,argv,&com);
 
   changer = alloc(SIZEOF(changer_t));
-  config_init(CONFIG_INIT_USE_CWD | CONFIG_INIT_FATAL, NULL);
+  config_init(CONFIG_INIT_USE_CWD, NULL);
+
+  if (config_errors(NULL) >= CFGERR_WARNINGS) {
+    config_print_errors();
+    if (config_errors(NULL) >= CFGERR_ERRORS) {
+      g_critical(_("errors processing config file"));
+    }
+  }
 
   changer_dev = getconf_str(CNF_CHANGERDEV);
   changer_file = getconf_str(CNF_CHANGERFILE);

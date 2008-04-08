@@ -233,6 +233,13 @@ main(
     config_init(CONFIG_INIT_CLIENT, NULL);
     apply_config_overwrites(cfg_ovr);
 
+    if (config_errors(NULL) >= CFGERR_WARNINGS) {
+	config_print_errors();
+	if (config_errors(NULL) >= CFGERR_ERRORS) {
+	    g_critical(_("errors processing config file"));
+	}
+    }
+
     if(rst_flags->compress && rst_flags->raw) {
 	g_fprintf(stderr,
 		_("Cannot specify both -r (raw) and -c (compressed) output.\n"));

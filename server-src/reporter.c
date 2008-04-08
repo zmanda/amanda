@@ -472,7 +472,11 @@ main(
 
     /* ignore any errors reading the config file (amreport can run without a config) */
     config_init(CONFIG_INIT_EXPLICIT_NAME | CONFIG_INIT_USE_CWD, cfg_opt);
-    if (cfg_ovr) apply_config_overwrites(cfg_ovr);
+    apply_config_overwrites(cfg_ovr);
+
+    if (config_errors(NULL) >= CFGERR_WARNINGS) {
+	config_print_errors();
+    }
 
     check_running_as(RUNNING_AS_DUMPUSER);
 

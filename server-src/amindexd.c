@@ -574,7 +574,8 @@ check_and_load_config(
     }
 
     /* (re-)initialize configuration with the new config name */
-    if (!config_init(CONFIG_INIT_EXPLICIT_NAME, config)) {
+    config_init(CONFIG_INIT_EXPLICIT_NAME, config);
+    if (config_errors(NULL) >= CFGERR_ERRORS) {
 	reply(501, _("Could not read config file for %s!"), config);
 	return -1;
     }

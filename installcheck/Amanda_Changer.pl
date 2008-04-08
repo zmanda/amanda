@@ -54,7 +54,8 @@ sub setup_changer {
 my $testconf = Installcheck::Config->new();
 $testconf->add_param('tpchanger', "\"$changer_filename\"");
 $testconf->write();
-config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF') or die("Could not load test config");
+config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF") == $CFGERR_OK
+    or die("Could not load config");
 
 # some variables we'll need
 my ($error, $slot, $device);

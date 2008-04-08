@@ -211,10 +211,16 @@ main(
     if(overwrite)
 	do_tapechk = 1;
 
-    config_init(CONFIG_INIT_EXPLICIT_NAME|CONFIG_INIT_FATAL,
-		argv[0]);
+    config_init(CONFIG_INIT_EXPLICIT_NAME, argv[0]);
     apply_config_overwrites(cfg_ovr);
     dbrename(get_config_name(), DBG_SUBDIR_SERVER);
+
+    if (config_errors(NULL) >= CFGERR_WARNINGS) {
+	config_print_errors();
+	if (config_errors(NULL) >= CFGERR_ERRORS) {
+	    g_critical(_("errors processing config file"));
+	}
+    }
 
     if(mailout && !mailto && 
        (getconf_seen(CNF_MAILTO)==0 || strlen(getconf_str(CNF_MAILTO)) == 0)) {

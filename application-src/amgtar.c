@@ -253,6 +253,10 @@ main(
 	dbrename(get_config_name(), DBG_SUBDIR_CLIENT);
     }
 
+    if (config_errors(NULL) >= CFGERR_ERRORS) {
+	g_critical(_("errors processing config file"));
+    }
+
     gnutar_listdir = getconf_str(CNF_GNUTAR_LIST_DIR);
     if (strlen(gnutar_listdir) == 0)
 	gnutar_listdir = NULL;

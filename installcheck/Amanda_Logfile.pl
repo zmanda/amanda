@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 28;
+use Test::More tests => 27;
 use File::Path;
 use strict;
 
@@ -161,7 +161,8 @@ $testconf->add_param("tapecycle", "20");
 $testconf->write();
 
 # load the config
-ok(config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF"), "config_init is OK");
+config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF") == $CFGERR_OK
+    or die("Could not load config");
 my $tapelist = config_dir_relative("tapelist");
 
 # set up and read the tapelist (we don't use Amanda::Tapelist to write this,

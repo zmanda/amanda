@@ -129,9 +129,15 @@ main(
 	slotcommand = 0;
     }
 
-    config_init(CONFIG_INIT_EXPLICIT_NAME | CONFIG_INIT_FATAL,
-		cfg_opt);
+    config_init(CONFIG_INIT_EXPLICIT_NAME, cfg_opt);
     apply_config_overwrites(cfg_ovr);
+
+    if (config_errors(NULL) >= CFGERR_WARNINGS) {
+	config_print_errors();
+	if (config_errors(NULL) >= CFGERR_ERRORS) {
+	    g_critical(_("errors processing config file"));
+	}
+    }
 
     check_running_as(RUNNING_AS_DUMPUSER);
 

@@ -89,6 +89,16 @@ sub new {
 	    'tapetype' => '"TEST-TAPE"',
 	],
 
+	# global client config
+	'client_params' => [
+	    'amandates' => "\"$AMANDA_TMPDIR/TESTCONF/amandates\"",
+	    'gnutar_list_dir' => "\"$AMANDA_TMPDIR/TESTCONF/gnutar_listdir\"",
+	],
+
+	# config-specific client config
+	'client_config_params' => [
+	],
+
 	# Subsections are stored as a hashref of arrayrefs, keyed by
 	# subsection name
 
@@ -126,6 +136,33 @@ sub add_param {
     my ($param, $value) = @_;
 
     push @{$self->{'params'}}, $param, $value;
+}
+
+=item C<add_client_param($param, $value)>, C<add_client_config_param($param, $value)>
+
+Add the given parameter to the client configuration file, overriding any
+previous value, as C<add_param> does for the server configuration file.
+C<add_client_param> addresses the global client configuration file, while
+C<add_client_config_param> inserts parmeters into
+C<TESTCONF/amanda-client.conf>.
+
+  $testconf->add_client_param('auth' => '"krb2"');
+  $testconf->add_client_config_param('client_username' => '"freddy"');
+
+=cut
+
+sub add_client_param {
+    my $self = shift;
+    my ($param, $value) = @_;
+
+    push @{$self->{'client_params'}}, $param, $value;
+}
+
+sub add_client_config_param {
+    my $self = shift;
+    my ($param, $value) = @_;
+
+    push @{$self->{'client_config_params'}}, $param, $value;
 }
 
 =item C<add_tapetype($name, $values_arrayref)>
@@ -220,7 +257,8 @@ sub write {
     $self->_write_disklist("$testconf_dir/disklist");
     $self->_write_amanda_conf("$testconf_dir/amanda.conf");
     $self->_write_amandates($amandates);
-    $self->_write_amanda_client_conf("$CONFIG_DIR/amanda-client.conf", $amandates, $gnutar_listdir);
+    $self->_write_amanda_client_conf("$CONFIG_DIR/amanda-client.conf");
+    $self->_write_amanda_client_config_conf("$testconf_dir/amanda-client.conf");
 }
 
 sub _write_tapelist {
@@ -313,9 +351,36 @@ sub _write_amanda_client_conf {
     my ($filename, $amandates, $gnutar_listdir) = @_;
 
     # just an empty file for now
-    open(my $amanda_client_conf, ">", $filename) or die("Could not write to '$filename'");
-    print $amanda_client_conf "amandates \"$amandates\"\n";
-    print $amanda_client_conf "gnutar_list_dir \"$gnutar_listdir\"\n";
+    open(my $amanda_client_conf, ">", $filename) 
+	or croak("Could not write to '$filename'");
+
+    # write key/value pairs
+    my @params = @{$self->{'client_params'}};
+    while (@params) {
+	$param = shift @params;
+	$value = shift @params;
+	print $amanda_client_conf "$param $value\n";
+    }
+
+    close($amanda_client_conf);
+}
+
+sub _write_amanda_client_config_conf {
+    my $self = shift;
+    my ($filename, $amandates, $gnutar_listdir) = @_;
+
+    # just an empty file for now
+    open(my $amanda_client_conf, ">", $filename) 
+	or croak("Could not write to '$filename'");
+
+    # write key/value pairs
+    my @params = @{$self->{'client_config_params'}};
+    while (@params) {
+	$param = shift @params;
+	$value = shift @params;
+	print $amanda_client_conf "$param $value\n";
+    }
+
     close($amanda_client_conf);
 }
 

@@ -1033,3 +1033,21 @@ the_num(
 }
 
 
+char *
+config_errors_to_error_string(
+    GSList *errlist)
+{
+    char *errmsg;
+    gboolean multiple_errors = FALSE;
+
+    if (errlist) {
+	errmsg = (char *)errlist->data;
+	if (errlist->next)
+	    multiple_errors = TRUE;
+    } else {
+	errmsg = _("(no error message)");
+    }
+
+    return vstrallocf("ERROR %s%s", errmsg,
+	multiple_errors? _(" (additional errors not displayed)"):"");
+}

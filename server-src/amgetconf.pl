@@ -235,8 +235,7 @@ if (@ARGV == 1) {
     usage();
 }
 
-## Now start looking at the parameter; we gradually initialize Amanda while
-## this is going on.
+## Now start looking at the parameter.
 
 if ($parameter =~ /^build(?:\..*)?/) {
     build_param($parameter, $opt_list);
@@ -248,19 +247,18 @@ if ($parameter =~ /^db(open|close)\./) {
     exit(0);
 }
 
+# finally, finish up the application startup procedure
 Amanda::Util::setup_application("amgetconf", "server", "cmdline");
-
-# try to load the configuration now, although a failure isn't recognized
-# until the end, when we try to look up configure parameters.
-my $cfg_ok = config_init($CONFIG_INIT_EXPLICIT_NAME | $CONFIG_INIT_USE_CWD, $config_name);
+config_init($CONFIG_INIT_EXPLICIT_NAME | $CONFIG_INIT_USE_CWD, $config_name);
 apply_config_overwrites($config_overwrites);
-
-# we don't become a "real" application until now..
-Amanda::Util::finish_setup($RUNNING_AS_ANY);
-
-# *now* we can check whether config_init was successful
-if (!$cfg_ok) {
-    critical("errors processing config file");
+my ($cfgerr_level, @cfgerr_errors) = config_errors();
+if ($cfgerr_level >= $CFGERR_WARNINGS) {
+    config_print_errors();
+    if ($cfgerr_level >= $CFGERR_ERRORS) {
+	die("errors processing config file");
+    }
 }
+
+Amanda::Util::finish_setup($RUNNING_AS_ANY);
 
 conf_param($parameter, $opt_list);

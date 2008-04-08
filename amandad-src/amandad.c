@@ -234,6 +234,7 @@ main(
     /* Don't die when child closes pipe */
     signal(SIGPIPE, SIG_IGN);
 
+    /* Parse the configuration; we'll handle errors later */
     config_init(CONFIG_INIT_CLIENT, NULL);
 
     check_running_as(RUNNING_AS_CLIENT_LOGIN);
@@ -507,6 +508,7 @@ protocol_accept(
     struct active_service *as;
     char *pktbody, *tok, *service, *arguments;
     char *service_path = NULL;
+    GSList *errlist = NULL;
     int i;
 
     pkt_out.body = NULL;
@@ -515,6 +517,32 @@ protocol_accept(
      * If handle is NULL, then the connection is closed.
      */
     if(handle == NULL) {
+	return;
+    }
+
+    /*
+     * If we have errors (not warnings) from the config file, let the server
+     * know immediately.  Unfortunately, we only get one ERROR line, so if there
+     * are multiple errors, we just show the first.
+     */
+    if (config_errors(&errlist) >= CFGERR_ERRORS) {
+	GSList *iter = errlist;
+	char *errmsg;
+	gboolean multiple_errors = FALSE;
+
+	if (iter) {
+	    errmsg = (char *)iter->data;
+	    if (iter->next)
+		multiple_errors = TRUE;
+	} else {
+	    errmsg = "(no error message)";
+	}
+
+	pkt_init(&pkt_out, P_NAK, "ERROR %s%s", errmsg,
+	    multiple_errors? _(" (additional errors not displayed)"):"");
+	do_sendpkt(handle, &pkt_out);
+	amfree(pkt_out.body);
+	security_close(handle);
 	return;
     }
 

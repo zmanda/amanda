@@ -101,6 +101,7 @@ main(
     int ch;
     FILE *toolin;
     int status;
+    GSList *errlist;
 
     /* initialize */
     /*
@@ -145,6 +146,7 @@ main(
     our_feature_string = am_feature_to_string(our_features);
 
     config_init(CONFIG_INIT_CLIENT, NULL);
+    /* (check for config errors comes later) */
 
     check_running_as(RUNNING_AS_CLIENT_LOGIN);
 
@@ -184,6 +186,14 @@ main(
 			    g_options->config);
 
 		dbrename(get_config_name(), DBG_SUBDIR_CLIENT);
+	    }
+
+	    /* check for any config errors now */
+	    if (config_errors(&errlist) >= CFGERR_ERRORS) {
+		char *errstr = config_errors_to_error_string(errlist);
+		g_printf("%s\n", errstr);
+		dbclose();
+		return 1;
 	    }
 
 	    if (am_has_feature(g_options->features, fe_req_xml)) {

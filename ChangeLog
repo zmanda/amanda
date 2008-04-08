@@ -1,4 +1,32 @@
 2008-04-08  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/conffile.c common-src/conffile.h 
+	  perl/Amanda/Config.swg installcheck/Amanda_Config.pl:
+	  new interface for config errors, re-introduce rawtapedev for
+	  deprectation purposes
+	* installcheck/Installcheck/Config.pm: support test
+	  amanda-client.conf files
+	* installcheck/Installcheck/Run.pm: add get_stdout, get_stderr
+	* client-src/client_util.c client-src/client_util.h: add
+	  config_errors_to_error_string
+	* server-src/dumper.c server-src/planner.c: handle ERRORs and NAKs
+	  better, so users see client-side config errors
+	* oldrecover-src/amrecover.c changer-src/chg-scsi-chio.c
+	  changer-src/chg-scsi.c client-src/sendbackup.c client-src/sendsize.c
+	  client-src/selfcheck.c amandad-src/amandad.c application-src/amstar.c
+	  application-src/amgtar.c recover-src/amrecover.c
+	  server-src/amlogroll.c server-src/amindexd.c server-src/amcheck.c
+	  server-src/amgetconf.pl server-src/chunker.c server-src/amadmin.c
+	  server-src/amtape.c server-src/amcheckdump.pl
+	  server-src/amcleanupdisk.c server-src/amflush.c server-src/amtrmlog.c
+	  server-src/driver.c server-src/reporter.c server-src/taper.c
+	  server-src/amdevcheck.pl server-src/amtrmidx.c server-src/diskfile.c
+	  server-src/amlabel.c installcheck/Amanda_Changer.pl
+	  installcheck/Amanda_Device.pl installcheck/Amanda_Logfile.pl
+	  installcheck/Amanda_Tapelist.pl restore-src/amidxtaped.c
+	  restore-src/amrestore.c restore-src/amfetchdump.c: adapt to new config
+	  error interface
+
+2008-04-08  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/diskfile.c: improve messages when client does not
 	  support required features
 

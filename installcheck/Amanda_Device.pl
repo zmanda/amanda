@@ -41,7 +41,8 @@ $dumpfile->{disk} = "/home";
 # get stuff set up
 $testconf = Installcheck::Run::setup();
 $testconf->write();
-config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF') or die("Could not load configuration");
+config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF') == $CFGERR_OK
+    or die("Could not load configuration");
 
 # put the debug messages somewhere
 Amanda::Debug::dbopen("installcheck");

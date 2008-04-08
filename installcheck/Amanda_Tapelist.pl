@@ -34,7 +34,8 @@ my @lines;
 my $testconf = Installcheck::Config->new();
 $testconf->write();
 
-config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF") or die("config_init failed");
+config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF") == $CFGERR_OK
+    or die("config_init failed");
 my $tapelist = config_dir_relative("tapelist");
 
 sub mktapelist {

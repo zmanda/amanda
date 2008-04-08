@@ -77,9 +77,6 @@ is loaded.
 =item If C<CONFIG_INIT_OVERLAY> is given, then any existing
 configuration is not reset.
 
-=item If C<CONFIG_INIT_FATAL> is given, then any errors are considered
-fatal, and C<config_init> does not return.
-
 =back
 
 See C<conffile.h> for more detailed information on these flags and
@@ -93,6 +90,19 @@ Once the configuration is loaded, the configuration name
 and filename (C</etc/amanda/DailySet1/amanda.conf>) are
 available from C<get_config_name()>, C<get_config_dir()>, and
 C<get_config_filename()>, respectively.
+
+=head3 CONFIG ERRORS
+
+This module collects configuration errors and warnings in a list, and also
+tracks the overall error level with an enumeration: C<$CFGERR_OK>,
+C<$CFGERR_WARNINGS>, and C<$CFGERR_ERRORS>.  C<config_init> and
+C<apply_config_overwrites> both return the current level.  The level and the
+list of error messages are available from C<config_errors>:
+
+  my ($cfgerr_level, @errors) = Amanda::Configconfig_errors();
+
+As a convenience, C<config_print_errors> will print all error messages to
+stderr.  The error state can be cleared with C<config_clear_errors>.
 
 =head2 CONFIG OVERWRITES
 
@@ -744,28 +754,17 @@ amglue_export_tag(getconf,
  * Initialization
  */
 
-config_overwrites_t *new_config_overwrites(int size_estimate);
-void free_config_overwrites(config_overwrites_t *co);
-void add_config_overwrite(config_overwrites_t *co,
-			 char *key,
-			 char *value);
-void add_config_overwrite_opt(config_overwrites_t *co,
-			      char *optarg);
-void apply_config_overwrites(config_overwrites_t *co);
-amglue_export_tag(init,
-    new_config_overwrites free_config_overwrites add_config_overwrite
-    add_config_overwrite_opt apply_config_overwrites
-);
-
-
-
+amglue_add_enum_tag_fns(cfgerr_level_t);
+amglue_add_constant(CFGERR_OK, cfgerr_level_t);
+amglue_add_constant(CFGERR_WARNINGS, cfgerr_level_t);
+amglue_add_constant(CFGERR_ERRORS, cfgerr_level_t);
+amglue_copy_to_tag(cfgerr_level_t, init);
 
 amglue_add_flag_tag_fns(config_init_flags);
 amglue_add_constant(CONFIG_INIT_EXPLICIT_NAME, config_init_flags);
 amglue_add_constant(CONFIG_INIT_USE_CWD, config_init_flags);
 amglue_add_constant(CONFIG_INIT_CLIENT, config_init_flags);
 amglue_add_constant(CONFIG_INIT_OVERLAY, config_init_flags);
-amglue_add_constant(CONFIG_INIT_FATAL, config_init_flags);
 amglue_copy_to_tag(config_init_flags, init);
 
 gboolean config_init(config_init_flags flags,
@@ -776,9 +775,43 @@ char *get_config_name(void);
 char *get_config_dir(void);
 char *get_config_filename(void);
 
+void config_print_errors(void);
+void config_clear_errors(void);
+
+/* Typemap for config_errors' result parameter; this is a GSList of strings
+ * which should *not* be freed. */
+%typemap(in, numinputs=0) GSList **ERRLIST (GSList *templist) {
+   templist = NULL;
+   $1 = &templist;
+}
+
+%typemap (argout) GSList **ERRLIST {
+    GSList *it = *$1;
+
+    while (it) {
+	$result = sv_2mortal(newSVpv(it->data, 0));
+	argvi++;
+	it = it->next;
+    }
+}
+cfgerr_level_t config_errors(GSList **ERRLIST);
+
+
+config_overwrites_t *new_config_overwrites(int size_estimate);
+void free_config_overwrites(config_overwrites_t *co);
+void add_config_overwrite(config_overwrites_t *co,
+			 char *key,
+			 char *value);
+void add_config_overwrite_opt(config_overwrites_t *co,
+			      char *optarg);
+cfgerr_level_t apply_config_overwrites(config_overwrites_t *co);
+
 amglue_export_tag(init,
     config_init config_uninit get_config_options
     get_config_name get_config_dir get_config_filename
+    config_print_errors config_clear_errors config_errors
+    new_config_overwrites free_config_overwrites add_config_overwrite
+    add_config_overwrite_opt apply_config_overwrites
 );
 
 /*

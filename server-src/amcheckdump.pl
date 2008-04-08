@@ -294,12 +294,15 @@ GetOptions(
 usage() if (@ARGV < 1);
 
 my $config_name = shift @ARGV;
-if (!config_init($CONFIG_INIT_EXPLICIT_NAME |
-                 $CONFIG_INIT_FATAL, $config_name)) {
-    die('errors processing config file "' . 
-               Amanda::Config::get_config_filename() . '"');
-}
+config_init($CONFIG_INIT_EXPLICIT_NAME, $config_name);
 apply_config_overwrites($config_overwrites);
+my ($cfgerr_level, @cfgerr_errors) = config_errors();
+if ($cfgerr_level >= $CFGERR_WARNINGS) {
+    config_print_errors();
+    if ($cfgerr_level >= $CFGERR_ERRORS) {
+	die("errors processing config file");
+    }
+}
 
 Amanda::Util::finish_setup($RUNNING_AS_DUMPUSER);
 

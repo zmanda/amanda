@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 87;
+use Test::More tests => 91;
 use strict;
 
 use lib "@amperldir@";
@@ -24,12 +24,46 @@ use Installcheck::Config;
 use Amanda::Paths;
 use Amanda::Tests;
 use Amanda::Config qw( :init :getconf );
+use Amanda::Debug;
 
 my $testconf;
 
+Amanda::Debug::dbopen("installcheck");
+
 ##
 # Try starting with no configuration at all
-ok(config_init(0, ''), "Initialize with no configuration");
+
+is(config_init(0, ''), $CFGERR_OK,
+    "Initialize with no configuration");
+
+##
+# Check out error handling
+
+$testconf = Installcheck::Config->new();
+$testconf->add_param('rawtapedev', '"/dev/medium-rare-please"'); # a deprecated keyword -> warning
+$testconf->write();
+
+{
+    is(config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF"), $CFGERR_WARNINGS,
+	"Deprecated keyword generates a warning");
+    my ($error_level, @errors) = Amanda::Config::config_errors();
+    like($errors[0], qr/is deprecated/, 
+	"config_get_errors returns the warning string");
+
+    Amanda::Config::config_clear_errors();
+    ($error_level, @errors) = Amanda::Config::config_errors();
+    is(scalar(@errors), 0, "config_clear_errors clears error list");
+}
+
+$testconf = Installcheck::Config->new();
+$testconf->add_param('invalid-param', 'random-value'); # a deprecated keyword -> warning
+$testconf->write();
+
+is(config_init($CONFIG_INIT_EXPLICIT_NAME, "NO-SUCH-CONFIGURATION"), $CFGERR_ERRORS,
+    "Non-existent config generates an error");
+
+is(config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF"), $CFGERR_ERRORS,
+    "Invalid keyword generates an error");
 
 ##
 # Parse up a basic configuration
@@ -81,11 +115,11 @@ $testconf->add_dumptype('mydumptype', [
     'property' => '"prop" "erty"',
     'property' => '"drop" "qwerty" "asdfg"',
 ]);
-$testconf->add_interface('inyoface', [
+$testconf->add_interface('ethernet', [
     'comment' => '"mine"',
     'use' => '100',
 ]);
-$testconf->add_interface('inherface', [
+$testconf->add_interface('nic', [
     'comment' => '"empty"',
 ]);
 $testconf->add_holdingdisk('hd1', [
@@ -111,11 +145,12 @@ $testconf->add_script('my_script', [
 
 $testconf->write();
 
-my $cfg_ok = config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');
-ok($cfg_ok, "Load test configuration");
+my $cfg_result = config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');
+is($cfg_result, $CFGERR_OK,
+    "Load test configuration");
 
 SKIP: {
-    skip "error loading config", unless $cfg_ok;
+    skip "error loading config", 3 unless $cfg_result == $CFGERR_OK;
 
     is(Amanda::Config::get_config_name(), "TESTCONF", 
 	"config_name set");
@@ -127,7 +162,7 @@ SKIP: {
 }
 
 SKIP: { # global parameters
-    skip "error loading config", unless $cfg_ok;
+    skip "error loading config", 11 unless $cfg_result == $CFGERR_OK;
 
     is(getconf($CNF_RESERVE), 75,
 	"integer global confparm");
@@ -155,7 +190,7 @@ SKIP: { # global parameters
 }
 
 SKIP: { # derived values
-    skip "error loading config", unless $cfg_ok;
+    skip "error loading config", 3 unless $cfg_result == $CFGERR_OK;
 
     is(Amanda::Config::getconf_unit_divisor(), 1024, 
 	"correct unit divisor (from displayunit -> KB)");
@@ -166,7 +201,7 @@ SKIP: { # derived values
 }
 
 SKIP: { # tapetypes
-    skip "error loading config", unless $cfg_ok;
+    skip "error loading config", 6 unless $cfg_result == $CFGERR_OK;
     my $ttyp = lookup_tapetype("mytapetype");
     ok($ttyp, "found mytapetype");
     is(tapetype_getconf($ttyp, $TAPETYPE_COMMENT), 'mine', 
@@ -185,7 +220,7 @@ SKIP: { # tapetypes
 }
 
 SKIP: { # dumptypes
-    skip "error loading config", unless $cfg_ok;
+    skip "error loading config", 17 unless $cfg_result == $CFGERR_OK;
 
     my $dtyp = lookup_dumptype("mydumptype");
     ok($dtyp, "found mydumptype");
@@ -239,30 +274,30 @@ SKIP: { # dumptypes
 }
 
 SKIP: { # interfaces
-    skip "error loading config" unless $cfg_ok;
-    my $iface = lookup_interface("inyoface");
-    ok($iface, "found inyoface");
-    is(interface_name($iface), "inyoface",
+    skip "error loading config", 8 unless $cfg_result == $CFGERR_OK;
+    my $iface = lookup_interface("ethernet");
+    ok($iface, "found ethernet");
+    is(interface_name($iface), "ethernet",
 	"interface knows its name");
     is(interface_getconf($iface, $INTER_COMMENT), 'mine', 
 	"interface comment");
     is(interface_getconf($iface, $INTER_MAXUSAGE), 100, 
 	"interface maxusage");
 
-    $iface = lookup_interface("inherface");
-    ok($iface, "found inherface");
+    $iface = lookup_interface("nic");
+    ok($iface, "found nic");
     ok(interface_seen($iface, $INTER_COMMENT),
 	"seen set for parameters that appeared");
     ok(!interface_seen($iface, $INTER_MAXUSAGE),
 	"seen not set for parameters that did not appear");
 
     is_deeply([ sort(getconf_list("interface")) ],
-	      [ sort('inyoface', 'inherface', 'default') ],
+	      [ sort('ethernet', 'nic', 'default') ],
 	"getconf_list lists all interfaces (in any order)");
 }
 
 SKIP: { # holdingdisks
-    skip "error loading config" unless $cfg_ok;
+    skip "error loading config", 13 unless $cfg_result == $CFGERR_OK;
     my $hdisk = lookup_holdingdisk("hd1");
     ok($hdisk, "found hd1");
     is(holdingdisk_name($hdisk), "hd1",
@@ -300,7 +335,7 @@ SKIP: { # holdingdisks
 }
 
 SKIP: { # application
-    skip "error loading config" unless $cfg_ok;
+    skip "error loading config", 5 unless $cfg_result == $CFGERR_OK;
     my $app = lookup_application("my_app");
     ok($app, "found my_app");
     is(application_name($app), "my_app",
@@ -316,7 +351,7 @@ SKIP: { # application
 }
 
 SKIP: { # script
-    skip "error loading config" unless $cfg_ok;
+    skip "error loading config", 7 unless $cfg_result == $CFGERR_OK;
     my $sc = lookup_pp_script("my_script");
     ok($sc, "found my_script");
     is(pp_script_name($sc), "my_script",
@@ -393,9 +428,10 @@ $testconf->add_dumptype('mydumptype', [
 ]);
 $testconf->write();
 
-$cfg_ok = config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
+$cfg_result = config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
+is($cfg_result, $CFGERR_OK, "first exinclude parsing config loaded");
 SKIP: {
-    skip "error loading config", unless $cfg_ok;
+    skip "error loading config", 2 unless $cfg_result == $CFGERR_OK;
 
     my $dtyp = lookup_dumptype("mydumptype");
     ok($dtyp, "found mydumptype");
@@ -410,16 +446,6 @@ $testconf->add_dumptype('mydumptype', [
     'exclude list append' => '"true" "star"',
 ]);
 $testconf->write();
-
-$cfg_ok = config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
-SKIP: {
-    skip "error loading config", unless $cfg_ok;
-
-    my $dtyp = lookup_dumptype("mydumptype");
-    ok($dtyp, "found mydumptype");
-    is(dumptype_getconf($dtyp, $DUMPTYPE_EXCLUDE)->{'optional'}, 0,
-	"'optional' has no effect when not on the last occurrence of 'file'");
-}
 
 # TODO:
 # overwrites

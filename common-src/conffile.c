@@ -313,17 +313,18 @@ static conf_var_t *parsetable = NULL;
  *
  * @param filename: configuration file to read
  * @param is_client: true if this is a client
- * @returns: false if an error occurred
+ * @param missing_ok: is it OK if the file is missing?
  */
-static gboolean read_conffile(char *filename,
-			      gboolean is_client);
+static void read_conffile(char *filename,
+			  gboolean is_client,
+			  gboolean missing_ok);
 
 /* Read and process a line of input from the current file, using the 
  * current keytable and parsetable.  For blocks, this recursively
  * reads the entire block.
  *
  * @param is_client: true if this is a client
- * @returns: true on success, false on EOF or error
+ * @returns: true on success, false on EOF
  */
 static gboolean read_confline(gboolean is_client);
 
@@ -633,8 +634,10 @@ static int parm_key_info(char *key, conf_var_t **parm, val_t **val);
 /* Have we seen a parse error yet?  Parsing continues after an error, so this
  * flag is checked after the parse is complete.
  */
-static gboolean got_parserror;
+static cfgerr_level_t cfgerr_level;
+static GSList *cfgerr_errors = NULL;
 
+static void add_config_error(const char * format, va_list argp);
 static void    conf_parserror(const char *format, ...)
                 __attribute__ ((format (printf, 1, 2)));
 
@@ -651,7 +654,6 @@ keytab_t client_keytab[] = {
     { "INDEX_SERVER", CONF_INDEX_SERVER },
     { "TAPE_SERVER", CONF_TAPE_SERVER },
     { "TAPEDEV", CONF_TAPEDEV },
-    { "RAWTAPEDEV", CONF_RAWTAPEDEV },
     { "DEVICE-PROPERTY", CONF_DEVICE_PROPERTY },
     { "AUTH", CONF_AUTH },
     { "SSH_KEYS", CONF_SSH_KEYS },
@@ -851,6 +853,7 @@ keytab_t server_keytab[] = {
     { "DEVICE_OUTPUT_BUFFER_SIZE", CONF_DEVICE_OUTPUT_BUFFER_SIZE },
     { "TAPECYCLE", CONF_TAPECYCLE },
     { "TAPEDEV", CONF_TAPEDEV },
+    { "RAWTAPEDEV", CONF_RAWTAPEDEV },
     { "TAPELIST", CONF_TAPELIST },
     { "TAPERALGO", CONF_TAPERALGO },
     { "FLUSH-THRESHOLD-DUMPED", CONF_FLUSH_THRESHOLD_DUMPED },
@@ -969,6 +972,7 @@ conf_var_t server_var [] = {
    { CONF_DUMPUSER             , CONFTYPE_STR      , read_str         , CNF_DUMPUSER             , NULL },
    { CONF_PRINTER              , CONFTYPE_STR      , read_str         , CNF_PRINTER              , NULL },
    { CONF_TAPEDEV              , CONFTYPE_STR      , read_str         , CNF_TAPEDEV              , NULL },
+   { CONF_RAWTAPEDEV           , CONFTYPE_STR      , read_str         , CNF_RAWTAPEDEV           , NULL },
    { CONF_DEVICE_PROPERTY      , CONFTYPE_PROPLIST , read_property    , CNF_DEVICE_PROPERTY      , NULL },
    { CONF_PROPERTY             , CONFTYPE_PROPLIST , read_property    , CNF_PROPERTY             , NULL },
    { CONF_TPCHANGER            , CONFTYPE_STR      , read_str         , CNF_TPCHANGER            , NULL },
@@ -1483,10 +1487,11 @@ conftoken_ungetc(
  * Parser Implementation
  */
 
-static gboolean
+static void
 read_conffile(
     char *filename,
-    gboolean is_client)
+    gboolean is_client,
+    gboolean missing_ok)
 {
     /* Save global locations. */
     FILE *save_file     = current_file;
@@ -1504,9 +1509,9 @@ read_conffile(
     current_filename = config_dir_relative(filename);
 
     if ((current_file = fopen(current_filename, "r")) == NULL) {
-	g_fprintf(stderr, _("could not open conf file \"%s\": %s\n"), current_filename,
-		strerror(errno));
-	got_parserror = TRUE;
+	if (!missing_ok)
+	    conf_parserror(_("could not open conf file \"%s\": %s"), 
+		    current_filename, strerror(errno));
 	goto finish;
     }
 
@@ -1526,8 +1531,6 @@ finish:
     current_line_num = save_line_num;
     current_file     = save_file;
     current_filename = save_filename;
-
-    return !got_parserror;
 }
 
 static gboolean
@@ -1543,8 +1546,7 @@ read_confline(
     switch(tok) {
     case CONF_INCLUDEFILE:
 	get_conftoken(CONF_STRING);
-	if (!read_conffile(tokenval.v.s, is_client))
-	    return 0;
+	read_conffile(tokenval.v.s, is_client, FALSE);
 	break;
 
     case CONF_HOLDING:
@@ -3490,7 +3492,7 @@ validate_unreserved_port_range(
  * Initialization Implementation
  */
 
-gboolean
+cfgerr_level_t
 config_init(
     config_init_flags flags,
     char *arg_config_name)
@@ -3551,23 +3553,16 @@ config_init(
 	    config_filename = newvstralloc(config_filename, config_dir, "/amanda.conf", NULL);
 	}
 
-	/* try to read the file, and handle parse errors */
-	if (!read_conffile(config_filename, flags & CONFIG_INIT_CLIENT)) {
-	    if (flags & CONFIG_INIT_FATAL) {
-		error(_("errors processing config file \"%s\""), config_filename);
-		/* NOTREACHED */
-	    } else {
-		g_warning(_("errors processing config file \"%s\" (non-fatal)"), config_filename);
-		return FALSE;
-	    }
-	}
+	read_conffile(config_filename,
+		flags & CONFIG_INIT_CLIENT,
+		flags & CONFIG_INIT_CLIENT);
     } else {
 	amfree(config_filename);
     }
 
     update_derived_values(flags & CONFIG_INIT_CLIENT);
 
-    return TRUE;
+    return cfgerr_level;
 }
 
 void
@@ -3634,6 +3629,7 @@ config_uninit(void)
 
     config_client = FALSE;
 
+    config_clear_errors();
     config_initialized = FALSE;
 }
 
@@ -3740,7 +3736,8 @@ init_defaults(
 #endif
 
     /* reset internal variables */
-    got_parserror = FALSE;
+    config_clear_errors();
+    cfgerr_level = CFGERR_OK;
     allow_overwrites = 0;
     token_pushed = 0;
 
@@ -4552,13 +4549,13 @@ extract_commandline_config_overwrites(
     return co;
 }
 
-void
+cfgerr_level_t
 apply_config_overwrites(
     config_overwrites_t *co)
 {
     int i;
 
-    if(!co) return;
+    if(!co) return cfgerr_level;
     assert(keytable != NULL);
     assert(parsetable != NULL);
 
@@ -4569,7 +4566,8 @@ apply_config_overwrites(
 	conf_var_t *key_parm;
 
 	if (!parm_key_info(key, &key_parm, &key_val)) {
-	    error(_("unknown parameter '%s'"), key);
+	    conf_parserror(_("unknown parameter '%s'"), key);
+	    continue;
 	}
 
 	/* now set up a fake line and use the relevant read_function to
@@ -4585,7 +4583,6 @@ apply_config_overwrites(
 	token_pushed = 0;
 	current_line_num = -2;
 	allow_overwrites = 1;
-	got_parserror = 0;
 
 	key_parm->read_function(key_parm, key_val);
 	if ((key_parm)->validate_function)
@@ -4593,11 +4590,6 @@ apply_config_overwrites(
 
 	amfree(current_line);
 	current_char = NULL;
-
-	if (got_parserror) {
-	    error(_("parse error in configuration overwrites"));
-	    /* NOTREACHED */
-	}
     }
 
     /* merge these overwrites with previous overwrites, if necessary */
@@ -4614,6 +4606,8 @@ apply_config_overwrites(
     }
 
     update_derived_values(config_client);
+
+    return cfgerr_level;
 }
 
 /*
@@ -5179,7 +5173,7 @@ dump_configuration(void)
 	    prefix = "#";
 	else
 	    prefix = "";
-	printf("\n%sDEFINE APPLICATION-TOOL %s {\n", prefix, ap->name);
+	g_printf("\n%sDEFINE APPLICATION-TOOL %s {\n", prefix, ap->name);
 	for(i=0; i < APPLICATION_APPLICATION; i++) {
 	    for(np=application_var; np->token != CONF_UNKNOWN; np++)
 		if(np->parm == i) break;
@@ -5201,7 +5195,7 @@ dump_configuration(void)
 	    prefix = "#";
 	else
 	    prefix = "";
-	printf("\n%sDEFINE SCRIPT-TOOL %s {\n", prefix, ps->name);
+	g_printf("\n%sDEFINE SCRIPT-TOOL %s {\n", prefix, ps->name);
 	for(i=0; i < PP_SCRIPT_PP_SCRIPT; i++) {
 	    for(np=pp_script_var; np->token != CONF_UNKNOWN; np++)
 		if(np->parm == i) break;
@@ -5915,18 +5909,25 @@ find_multiplier(
  * Error Handling Implementaiton
  */
 
-static void print_parse_problem(const char * format, va_list argp) {
-    const char *xlated_fmt = gettext(format);
+static void add_config_error(
+    const char * format, 
+    va_list argp)
+{
+    char *msg = g_strdup_vprintf(format, argp);
+    char *errstr = NULL;
 
     if(current_line)
-	g_fprintf(stderr, _("argument \"%s\": "), current_line);
+	errstr = g_strdup_printf(_("argument \"%s\": %s"),
+		    current_line, msg);
     else if (current_filename && current_line_num > 0)
-	g_fprintf(stderr, "\"%s\", line %d: ", current_filename, current_line_num);
+	errstr = g_strdup_printf(_("\"%s\", line %d: %s"),
+		    current_filename, current_line_num, msg);
     else
-	g_fprintf(stderr, _("parse error: "));
-    
-    g_vfprintf(stderr, xlated_fmt, argp);
-    fputc('\n', stderr);
+	errstr = g_strdup_printf(_("parse error: %s"), msg);
+    amfree(msg);
+
+    g_debug("%s", errstr);
+    cfgerr_errors = g_slist_append(cfgerr_errors, errstr);
 }
 
 printf_arglist_function(void conf_parserror, const char *, format)
@@ -5934,18 +5935,48 @@ printf_arglist_function(void conf_parserror, const char *, format)
     va_list argp;
     
     arglist_start(argp, format);
-    print_parse_problem(format, argp);
+    add_config_error(format, argp);
     arglist_end(argp);
 
-    got_parserror = TRUE;
+    cfgerr_level = max(cfgerr_level, CFGERR_ERRORS);
 }
 
 printf_arglist_function(void conf_parswarn, const char *, format) {
     va_list argp;
     
     arglist_start(argp, format);
-    print_parse_problem(format, argp);
+    add_config_error(format, argp);
     arglist_end(argp);
+
+    cfgerr_level = max(cfgerr_level, CFGERR_WARNINGS);
+}
+
+cfgerr_level_t
+config_errors(GSList **errstr)
+{
+    if (errstr)
+	*errstr = cfgerr_errors;
+    return cfgerr_level;
+}
+
+void
+config_clear_errors(void)
+{
+    g_slist_foreach_nodata(cfgerr_errors, free);
+    g_slist_free(cfgerr_errors);
+
+    cfgerr_errors = NULL;
+    cfgerr_level = CFGERR_OK;
+}
+
+void
+config_print_errors(void)
+{
+    GSList *iter;
+
+    for (iter = cfgerr_errors; iter; iter = g_slist_next(iter)) {
+	g_fprintf(stderr, "%s\n", (char *)iter->data);
+    }
 }
 
 /* Get the config name */
@@ -5965,5 +5996,3 @@ char *get_config_filename(void)
 {
     return config_filename;
 }
-
-

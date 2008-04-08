@@ -436,10 +436,14 @@ main(
     amfree(buf);
 
     if(re_config) {
-	config_init(CONFIG_INIT_EXPLICIT_NAME | CONFIG_INIT_FATAL, re_config);
+	config_init(CONFIG_INIT_EXPLICIT_NAME, re_config);
 	dbrename(re_config, DBG_SUBDIR_SERVER);
     } else {
 	config_init(0, NULL);
+    }
+
+    if (config_errors(NULL) >= CFGERR_ERRORS) {
+	g_critical(_("errors processing config file"));
     }
 
     check_running_as(RUNNING_AS_DUMPUSER_PREFERRED);

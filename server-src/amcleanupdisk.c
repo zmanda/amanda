@@ -128,8 +128,15 @@ main(
 	cfg_opt = argv[1];
     }
 
-    config_init(CONFIG_INIT_EXPLICIT_NAME | CONFIG_INIT_FATAL,
+    config_init(CONFIG_INIT_EXPLICIT_NAME,
 		cfg_opt);
+
+    if (config_errors(NULL) >= CFGERR_WARNINGS) {
+	config_print_errors();
+	if (config_errors(NULL) >= CFGERR_ERRORS) {
+	    g_critical(_("errors processing config file"));
+	}
+    }
 
     check_running_as(RUNNING_AS_DUMPUSER);
 

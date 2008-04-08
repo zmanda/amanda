@@ -154,9 +154,17 @@ main(
 	/*NOTREACHED*/
     }
 
-    config_init(CONFIG_INIT_EXPLICIT_NAME | CONFIG_INIT_FATAL,
+    config_init(CONFIG_INIT_EXPLICIT_NAME,
 		argv[0]);
     apply_config_overwrites(cfg_ovr);
+
+    if (config_errors(NULL) >= CFGERR_WARNINGS) {
+	config_print_errors();
+	if (config_errors(NULL) >= CFGERR_ERRORS) {
+	    g_critical(_("errors processing config file"));
+	}
+    }
+
     check_running_as(RUNNING_AS_DUMPUSER);
 
     dbrename(get_config_name(), DBG_SUBDIR_SERVER);

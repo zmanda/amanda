@@ -1971,10 +1971,18 @@ main(
   signal(SIGPIPE, SIG_IGN);
 
   if (argc>1) {
-    config_init(CONFIG_INIT_EXPLICIT_NAME|CONFIG_INIT_FATAL, argv[1]);
+    config_init(CONFIG_INIT_EXPLICIT_NAME, argv[1]);
   } else {
-    config_init(CONFIG_INIT_USE_CWD|CONFIG_INIT_FATAL, NULL)
+    config_init(CONFIG_INIT_USE_CWD, NULL)
   }
+
+  if (config_errors(NULL) >= CFGERR_WARNINGS) {
+    config_print_errors();
+    if (config_errors(NULL) >= CFGERR_ERRORS) {
+      g_critical(_("errors processing config file"));
+    }
+  }
+
   conf_diskfile = config_dir_relative(getconf_str(CNF_DISKFILE));
   result = read_diskfile(conf_diskfile, &lst);
   if(result == 0) {

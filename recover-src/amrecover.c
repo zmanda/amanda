@@ -346,6 +346,13 @@ main(
     /* load the base client configuration */
     config_init(CONFIG_INIT_CLIENT, NULL);
 
+    if (config_errors(NULL) >= CFGERR_WARNINGS) {
+	config_print_errors();
+	if (config_errors(NULL) >= CFGERR_ERRORS) {
+	    g_critical(_("errors processing config file"));
+	}
+    }
+
     /* treat amrecover-specific command line options as the equivalent
      * -o command-line options to set configuration values */
     cfg_ovr = new_config_overwrites(argc/2);

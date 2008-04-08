@@ -248,6 +248,10 @@ main(
 
     }
 
+    if (config_errors(NULL) >= CFGERR_ERRORS) {
+	g_critical(_("errors processing config file"));
+    }
+
     argument.argc = argc - optind;
     argument.argv = argv + optind;
 

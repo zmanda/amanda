@@ -64,9 +64,14 @@ Amanda::Util::setup_application("amdevcheck", "server", "cmdline");
 
 usage() if ( @ARGV < 1 || @ARGV > 2 );
 my $config_name = $ARGV[0];
-if (!config_init($CONFIG_INIT_EXPLICIT_NAME, $config_name)) {
-    die('errors processing config file "' .
-	       Amanda::Config::get_config_filename() . '"');
+
+config_init($CONFIG_INIT_EXPLICIT_NAME, $config_name);
+my ($cfgerr_level, @cfgerr_errors) = config_errors();
+if ($cfgerr_level >= $CFGERR_WARNINGS) {
+    config_print_errors();
+    if ($cfgerr_level >= $CFGERR_ERRORS) {
+	die("errors processing config file");
+    }
 }
 
 Amanda::Util::finish_setup($RUNNING_AS_DUMPUSER);

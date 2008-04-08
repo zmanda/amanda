@@ -336,9 +336,12 @@ main(
     cfg_ovr = extract_commandline_config_overwrites(&argc, &argv);
     if (argc > 1)
 	cfg_opt = argv[1];
-    config_init(CONFIG_INIT_EXPLICIT_NAME | CONFIG_INIT_USE_CWD | CONFIG_INIT_FATAL,
-		cfg_opt);
+    config_init(CONFIG_INIT_EXPLICIT_NAME | CONFIG_INIT_USE_CWD, cfg_opt);
     apply_config_overwrites(cfg_ovr);
+
+    if (config_errors(NULL) >= CFGERR_ERRORS) {
+	g_critical(_("errors processing config file"));
+    }
 
     safe_cd(); /* do this *after* config_init() */
 

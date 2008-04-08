@@ -61,11 +61,12 @@ appropriate path to get to $app, and returns true if the application
 exited with a status of zero.  The stdout and stderr of the application
 are left in C<Installcheck::Run::stdout> and C<stderr>, respectively.
 
-To check that a run is successful, and return its stdout (chomped),
-use C<run_get($app, $args, ...)>.  This function returns C<''> if
-the application returns a nonzero exit status.  Similarly, C<run_err>
-checks that a run returns a nonzero exit status, and then returns
-its stderr, chomped.
+To check that a run is successful, and return its stdout (chomped), use
+C<run_get($app, $args, ...)>.  This function returns C<''> if the application
+returns a nonzero exit status.  Similarly, C<run_err> checks that a run returns
+a nonzero exit status, and then returns its stderr, chomped.  If you need a
+different output file, use a bare C<run> followed by C<get_stderr> or
+C<get_stdout> as needed.
 
 C<run> and friends can be used whether or not this module's C<setup>
 was invoked.
@@ -254,6 +255,16 @@ sub run_err {
 	return '';
     }
 
+    chomp $stderr;
+    return $stderr;
+}
+
+sub get_stdout {
+    chomp $stdout;
+    return $stdout;
+}
+
+sub get_stderr {
     chomp $stderr;
     return $stderr;
 }
