@@ -551,10 +551,11 @@ static void
 child_watch_source_sigchld(
     int signal G_GNUC_UNUSED)
 {
-    /* just increment the counter to indicate something's happened;
-     * this assumes that the signal itself wakes any running poll()
-     * or select() call. */
+    /* just increment the counter to indicate something's happened,
+     * and wake the mainloop up */
     child_watch_counter++;
+
+    g_main_context_wakeup(NULL);
 }
 
 GSource *
@@ -586,7 +587,11 @@ new_child_watch_source(pid_t pid)
      * (like perl, for example) resets it. */
     sigemptyset(&act.sa_mask);
     act.sa_handler = child_watch_source_sigchld;
+#ifdef SA_RESTART
+    act.sa_flags = SA_NOCLDSTOP | SA_RESTART;
+#else
     act.sa_flags = SA_NOCLDSTOP;
+#endif
     if(sigaction(SIGCHLD, &act, &oact) != 0){
 	g_critical("error setting SIGCHLD handler: %s", strerror(errno));
 	/*NOTREACHED*/

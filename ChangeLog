@@ -1,3 +1,6 @@
+2008-04-08  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/event.c: use SA_RESTART for child_watch_source
+
 2008-04-07  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/MainLoop.swg perl/amglue/source.c
 	  installcheck/Amanda_MainLoop.pl: wrap GMainLoop and the 
