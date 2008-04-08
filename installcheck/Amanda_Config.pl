@@ -150,8 +150,8 @@ SKIP: { # global parameters
 	    "proplist global confparm");
     ok(getconf_seen($CNF_TAPEDEV),
 	"'tapedev' parm was seen");
-    ok(!getconf_seen($CNF_NETUSAGE),
-	"'netusage' parm was not seen");
+    ok(!getconf_seen($CNF_CHANGERFILE),
+	"'changerfile' parm was not seen");
 }
 
 SKIP: { # derived values

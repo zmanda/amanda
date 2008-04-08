@@ -1,4 +1,10 @@
 2008-04-08  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Amanda_Config.pl common-src/conffile.c
+	  common-src/conffile.h: fix deprecation of keywords to
+	  actually issue a warning.  'netusage' is no longer
+	  deprecated.
+
+2008-04-08  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/event.c: use SA_RESTART for child_watch_source
 
 2008-04-07  Dustin J. Mitchell <dustin@zmanda.com>

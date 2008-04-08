@@ -64,7 +64,7 @@ typedef enum {
     CONF_BUMPPERCENT,		CONF_BUMPSIZE,		CONF_BUMPDAYS,
     CONF_BUMPMULT,		CONF_ETIMEOUT,		CONF_DTIMEOUT,
     CONF_CTIMEOUT,		CONF_TAPEBUFS,		CONF_TAPELIST,
-    CONF_DEVICE_OUTPUT_BUFFER_SIZE,
+    CONF_DEVICE_OUTPUT_BUFFER_SIZE,			CONF_RAWTAPEDEV,
     CONF_DISKFILE,		CONF_INFOFILE,		CONF_LOGDIR,
     CONF_LOGFILE,		CONF_DISKDIR,		CONF_DISKSIZE,
     CONF_INDEXDIR,		CONF_NETUSAGE,		CONF_INPARALLEL,
@@ -327,12 +327,17 @@ static gboolean read_conffile(char *filename,
  */
 static gboolean read_confline(gboolean is_client);
 
-/* Handle an invalid token, by issuing a warning or an error, depending
- * on how long the token has been deprecated.
+/* Handle an invalid token, recognizing deprecated tokens as such,
+ * and producing an appropriate error message.
  *
  * @param token: the identifier
  */
 static void handle_invalid_keyword(const char * token);
+
+/* Check whether token is deprecated, and issue a warning if it
+ * is.  This consults the global variables 'tok' and 'tokenval'
+ */
+static void handle_deprecated_keyword(void);
 
 /* Read a brace-delimited block using the given parse table.  This
  * function is used to read brace-delimited subsections in the config
@@ -646,6 +651,7 @@ keytab_t client_keytab[] = {
     { "INDEX_SERVER", CONF_INDEX_SERVER },
     { "TAPE_SERVER", CONF_TAPE_SERVER },
     { "TAPEDEV", CONF_TAPEDEV },
+    { "RAWTAPEDEV", CONF_RAWTAPEDEV },
     { "DEVICE-PROPERTY", CONF_DEVICE_PROPERTY },
     { "AUTH", CONF_AUTH },
     { "SSH_KEYS", CONF_SSH_KEYS },
@@ -1532,6 +1538,8 @@ read_confline(
 
     current_line_num += 1;
     get_conftoken(CONF_ANY);
+    handle_deprecated_keyword();
+
     switch(tok) {
     case CONF_INCLUDEFILE:
 	get_conftoken(CONF_STRING);
@@ -1589,42 +1597,49 @@ read_confline(
 }
 
 static void
+handle_deprecated_keyword(void)
+{
+    tok_t *dep;
+    /* Procedure for deprecated keywords:
+     * 1) At time of deprecation, add to warning_deprecated below.
+     *    Note the date of deprecation.  The keyword will still be
+     *    parsed, and can still be used from other parts of Amanda,
+     *    during this time.
+     * 2) After two years, move the keyword (as a string) to
+     *    error_deprecated below. Remove the token (CONF_XXX) and
+     *    config parameter (CNF_XXX) from the rest of the module.
+     *    Note the date of the move.
+     */
+
+    static tok_t warning_deprecated[] = {
+        CONF_RAWTAPEDEV,  /* 2007-01-23 */
+        CONF_TAPEBUFS,    /* 2007-10-15 */
+        0
+    };
+
+    for (dep = warning_deprecated; *dep; dep++) {
+	if (tok == *dep) {
+            conf_parswarn(_("warning: Keyword %s is deprecated."),
+                           tokenval.v.s);
+	}
+    }
+}
+
+static void
 handle_invalid_keyword(
     const char * token)
 {
-    /* Procedure for deprecated keywords:
-     * 1) At time of deprecation, add to warning_deprecated below.
-     *    Note the date of deprecation.
-     * 2) After two years, move the keyword to error_deprecated below.
-     *    Note the date of the move.
-     * 3) After two more years, drop the token entirely. */
-
-    static const char * warning_deprecated[] = {
-        "rawtapedev",  /* 2007-01-23 */
-        "tapebufs",    /* 2007-10-15 */
-	"netusage",    /* historical since 1997-08-11, deprecated 2007-10-23 */
-        NULL
-    };
     static const char * error_deprecated[] = {
         NULL
     };
     const char ** s;
 
-    for (s = warning_deprecated; *s != NULL; s ++) {
-        if (strcmp(*s, token) == 0) {
-            conf_parswarn(_("warning: Keyword %s is deprecated."),
-                           token);
-            break;
-        }
-    }
-    if (*s == NULL) {
-        for (s = error_deprecated; *s != NULL; s ++) {
-            if (strcmp(*s, token) == 0) {
-                conf_parserror(_("error: Keyword %s is deprecated."),
-                               token);
-                return;
-            }
-        }
+    for (s = error_deprecated; *s != NULL; s ++) {
+	if (strcmp(*s, token) == 0) {
+	    conf_parserror(_("error: Keyword %s is deprecated."),
+			   token);
+	    return;
+	}
     }
     if (*s == NULL) {
         conf_parserror(_("configuration keyword expected"));
@@ -3642,6 +3657,7 @@ init_defaults(
     conf_init_str(&conf_data[CNF_MAILTO], "operators");
     conf_init_str(&conf_data[CNF_DUMPUSER], CLIENT_LOGIN);
     conf_init_str(&conf_data[CNF_TAPEDEV], DEFAULT_TAPE_DEVICE);
+    conf_init_str(&conf_data[CNF_RAWTAPEDEV], DEFAULT_TAPE_DEVICE);
     conf_init_proplist(&conf_data[CNF_DEVICE_PROPERTY]);
     conf_init_proplist(&conf_data[CNF_PROPERTY]);
     conf_init_str(&conf_data[CNF_CHANGERDEV], DEFAULT_CHANGER_DEVICE);
