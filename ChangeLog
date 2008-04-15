@@ -1,4 +1,8 @@
-2008-04-11  Jean-Louis Martineau <martineau@zmanda.com>
+2008-04-15  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/debug.c (debug_logging_handler, debug_printf): Don't print
+	  msg_timestamp() to stderr.
+
+2008-04-15  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/dumper.c: Call error() only after set_logerror is done.
 	* server-src/planner.c: Call error() only after set_logerror is done.
 	* server-src/chunker.c: Report a better error message.

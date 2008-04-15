@@ -155,7 +155,7 @@ debug_logging_handler(const gchar *log_domain G_GNUC_UNUSED,
 	}
 
 	if (erroutput_type & ERR_INTERACTIVE) {
-	    g_fprintf(stderr, "%s: %s: %s\n", get_pname(), msg_timestamp(), message);
+	    g_fprintf(stderr, "%s: %s\n", get_pname(), message);
 	    fflush(stderr);
 	}
 
@@ -648,7 +648,10 @@ printf_arglist_function(void debug_printf, const char *, format)
 	db_file = stderr;
     }
     if(db_file != NULL) {
-	g_fprintf(db_file, "%s: %s: ", msg_timestamp(), get_pname());
+	if (db_file != stderr)
+	    g_fprintf(db_file, "%s: %s: ", msg_timestamp(), get_pname());
+	else 
+	    g_fprintf(db_file, "%s: ", get_pname());
 	arglist_start(argp, format);
 	g_vfprintf(db_file, format, argp);
 	arglist_end(argp);
