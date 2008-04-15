@@ -1,3 +1,7 @@
+2008-04-15  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/file.c(mk1dir): fix reversed conditional to handle 
+	  a race condition
+
 2008-04-15  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/debug.c (debug_logging_handler, debug_printf): Don't print
 	  msg_timestamp() to stderr.
