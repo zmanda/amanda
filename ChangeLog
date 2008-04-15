@@ -1,3 +1,7 @@
+2008-04-15  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/util.c (connect_portrange, connect_port, bind_portrange):
+	  Return the latest errno reported.
+
 2008-04-04  Jean-Louis Martineau <martineau@zmanda.com>
 	* man/xml-source/*.xml: Use ulink tag to link to wiki.zmanda.com.
 

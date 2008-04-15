@@ -173,6 +173,7 @@ connect_portrange(
     static in_port_t	port_in_use[1024];
     static int		nb_port_in_use = 0;
     int			i;
+    int			save_errno = EAGAIN;
 
     assert(first_port <= last_port);
     /* Try a port already used */
@@ -184,6 +185,8 @@ connect_portrange(
 	    if(s > 0) {
 		return s;
 	    }
+	    if (errno != EAGAIN && errno != EBUSY)
+		save_errno = errno;
 	}
     }
 
@@ -195,12 +198,14 @@ connect_portrange(
 	    port_in_use[nb_port_in_use++] = port;
 	    return s;
 	}
+	if (errno != EAGAIN && errno != EBUSY)
+	    save_errno = errno;
     }
 
     dbprintf(_("connect_portrange: All ports between %d and %d are busy.\n"),
 	      first_port,
 	      last_port);
-    errno = EAGAIN;
+    errno = save_errno;
     return -1;
 }
 
@@ -227,6 +232,7 @@ connect_port(
     if (servPort != NULL && !strstr(servPort->s_name, "amanda")) {
 	dbprintf(_("connect_port: Skip port %d: owned by %s.\n"),
 		  port, servPort->s_name);
+	errno = EBUSY;
 	return -1;
     }
 
@@ -319,6 +325,7 @@ bind_portrange(
     socklen_t socklen;
     struct servent *servPort;
     const in_port_t num_ports = (in_port_t)(last_port - first_port + 1);
+    int save_errno = EAGAIN;
 
     assert(first_port <= last_port);
 
@@ -346,6 +353,8 @@ bind_portrange(
 		}
 		return 0;
 	    }
+	    if (errno != EAGAIN && errno != EBUSY)
+		save_errno = errno;
 	    if (servPort == NULL) {
 		dbprintf(_("bind_portrange2: Try  port %d: Available - %s\n"),
 			port, strerror(errno));
@@ -363,7 +372,7 @@ bind_portrange(
     dbprintf(_("bind_portrange: all ports between %d and %d busy\n"),
 		  first_port,
 		  last_port);
-    errno = EAGAIN;
+    errno = save_errno;
     return -1;
 }
 
