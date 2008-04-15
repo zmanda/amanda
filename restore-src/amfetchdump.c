@@ -56,7 +56,7 @@ typedef struct needed_tapes_s {
 
 /* local functions */
 
-tapelist_t *list_needed_tapes(GSList *dumpspecs);
+tapelist_t *list_needed_tapes(GSList *dumpspecs, int only_one);
 void usage(void);
 int main(int argc, char **argv);
 
@@ -98,12 +98,14 @@ usage(void)
  */
 tapelist_t *
 list_needed_tapes(
-    GSList *	dumpspecs)
+    GSList *	dumpspecs,
+    int		only_one)
 {
     needed_tape_t *needed_tapes = NULL, *curtape = NULL;
     disklist_t diskqp;
-    dumpspec_t *ds = NULL;
     find_result_t *alldumps = NULL;
+    find_result_t *curmatch = NULL;
+    find_result_t *matches = NULL;
     tapelist_t *tapes = NULL;
     int numtapes = 0;
     char *conf_diskfile, *conf_tapelist;
@@ -130,100 +132,104 @@ list_needed_tapes(
         g_fprintf(stderr, _("No dump records found\n"));
         exit(1);
     }
-
+    
     /* Compare all known dumps to our match list, note what we'll need */
-    while (dumpspecs) {
-	find_result_t *curmatch = NULL;	
-	find_result_t *matches = NULL;	
-	ds = (dumpspec_t *)dumpspecs->data;
+    matches = dumps_match_dumpspecs(alldumps, dumpspecs, 1);
+    sort_find_result("Dhklp", &matches);
+    for(curmatch = matches; curmatch; curmatch = curmatch->next) {
+	int havetape = 0;
+	int have_part = 0;
 
-	matches = dumps_match(alldumps, ds->host, ds->disk,
-	                         ds->datestamp, ds->level, 1);
-	sort_find_result("Dhklp", &matches);
-	for(curmatch = matches; curmatch; curmatch = curmatch->next){
-	    int havetape = 0;
-	    int have_part = 0;
-	    if(strcmp("OK", curmatch->status)){
-		g_fprintf(stderr,_("Dump %s %s %s %d had status '%s', skipping\n"),
-		                 curmatch->timestamp, curmatch->hostname,
-				 curmatch->diskname, curmatch->level,
-				 curmatch->status);
-		continue;
-	    }
-	    /* check if we already have that part */
-	    for(curtape = needed_tapes; curtape; curtape = curtape->next) {
-		find_result_t *rsttemp = NULL;
-		for(rsttemp = curtape->files;
-		    rsttemp;
-		    rsttemp=rsttemp->next) {
-		    if (strcmp(rsttemp->partnum, curmatch->partnum) == 0)
-			have_part = 1;
+	/* keep only first dump if only_one */
+	if (only_one &&
+	    curmatch != matches &&
+	    (strcmp(curmatch->hostname, matches->hostname) ||
+	     strcmp(curmatch->diskname, matches->diskname) ||
+	     strcmp(curmatch->timestamp, matches->timestamp) ||
+	     curmatch->level != matches->level)) {
+	    continue;
+	}
+	if(strcmp("OK", curmatch->status)){
+	    g_fprintf(stderr,_("Dump %s %s %s %d had status '%s', skipping\n"),
+		             curmatch->timestamp, curmatch->hostname,
+			     curmatch->diskname, curmatch->level,
+			     curmatch->status);
+	    continue;
+	}
+	/* check if we already have that part */
+	for(curtape = needed_tapes; curtape; curtape = curtape->next) {
+	    find_result_t *rsttemp = NULL;
+	    for(rsttemp = curtape->files;
+		rsttemp;
+		rsttemp=rsttemp->next) {
+		if (!strcmp(rsttemp->partnum, curmatch->partnum) &&
+		    !strcmp(rsttemp->hostname, curmatch->hostname) &&
+		    !strcmp(rsttemp->diskname, curmatch->diskname) &&
+		    !strcmp(rsttemp->timestamp, curmatch->timestamp) &&
+		    rsttemp->level == curmatch->level) {
+		    have_part = 1;
 		}
 	    }
-	    if (have_part)
-		continue;
-	    for(curtape = needed_tapes; curtape; curtape = curtape->next) {
-		if(!strcmp(curtape->label, curmatch->label)){
-		    find_result_t *rsttemp = NULL;
-		    find_result_t *rstfile = alloc(SIZEOF(find_result_t));
-		    int keep = 1;
+	}
+	if (have_part)
+	    continue;
 
-		    memcpy(rstfile, curmatch, SIZEOF(find_result_t));
+	for(curtape = needed_tapes; curtape; curtape = curtape->next) {
+	    if (!strcmp(curtape->label, curmatch->label)) {
+		find_result_t *rsttemp = NULL;
+		find_result_t *rstfile;
+		int keep = 1;
 
-		    havetape = 1;
+		havetape = 1;
 
-		    for(rsttemp = curtape->files;
+		for(rsttemp = curtape->files;
 			    rsttemp;
 			    rsttemp=rsttemp->next){
-			if(rstfile->filenum == rsttemp->filenum){
-			    g_fprintf(stderr, _("Seeing multiple entries for tape "
+		    if(curmatch->filenum == rsttemp->filenum){
+			g_fprintf(stderr, _("Seeing multiple entries for tape "
 				   "%s file %lld, using most recent\n"),
 				    curtape->label,
-				    (long long)rstfile->filenum);
-			    keep = 0;
-			}
+				    (long long)curmatch->filenum);
+			keep = 0;
 		    }
-		    if(!keep){
-			amfree(rstfile);
-			break;
-		    }
-		    rstfile->next = curtape->files;
-
-		    if(curmatch->filenum < 1) curtape->isafile = 1;
-		    else curtape->isafile = 0;
-		    curtape->files = rstfile;
+		}
+		if(!keep){
 		    break;
 		}
-	    }
-	    if(!havetape){
-		find_result_t *rstfile = alloc(SIZEOF(find_result_t));
-		needed_tape_t *newtape =
-		                          alloc(SIZEOF(needed_tape_t));
-		memcpy(rstfile, curmatch, SIZEOF(find_result_t));
-		rstfile->next = NULL;
-		newtape->files = rstfile;
-		if(curmatch->filenum < 1) newtape->isafile = 1;
-		else newtape->isafile = 0;
-		newtape->label = curmatch->label;
-		if(needed_tapes){
-		    needed_tapes->prev->next = newtape;
-		    newtape->prev = needed_tapes->prev;
-		    needed_tapes->prev = newtape;
-		}
-		else{
-		    needed_tapes = newtape;
-		    needed_tapes->prev = needed_tapes;
-		}
-		newtape->next = NULL;
-		numtapes++;
-#if 0
-//		free_find_result(rstfile);
-#endif
-	    } /* if(!havetape) */
 
-	} /* for(curmatch = matches ... */
-	dumpspecs = dumpspecs->next;
-    } /* while (dumpspecs) */
+		rstfile = alloc(SIZEOF(find_result_t));
+		memcpy(rstfile, curmatch, SIZEOF(find_result_t));
+		rstfile->next = curtape->files;
+
+		if (curmatch->filenum < 1)
+		    curtape->isafile = 1;
+		else curtape->isafile = 0;
+		curtape->files = rstfile;
+		break;
+	    }
+	}
+	if (!havetape) {
+	    find_result_t *rstfile = alloc(SIZEOF(find_result_t));
+	    needed_tape_t *newtape = alloc(SIZEOF(needed_tape_t));
+	    memcpy(rstfile, curmatch, SIZEOF(find_result_t));
+	    rstfile->next = NULL;
+	    newtape->files = rstfile;
+	    if(curmatch->filenum < 1) newtape->isafile = 1;
+	    else newtape->isafile = 0;
+	    newtape->label = curmatch->label;
+	    if (needed_tapes){
+		needed_tapes->prev->next = newtape;
+		newtape->prev = needed_tapes->prev;
+		needed_tapes->prev = newtape;
+	    } else {
+		needed_tapes = newtape;
+		needed_tapes->prev = needed_tapes;
+	    }
+	    newtape->next = NULL;
+	    numtapes++;
+	} /* if(!havetape) */
+
+    } /* for(curmatch = matches ... */
 
     if(numtapes == 0){
       g_fprintf(stderr, _("No matching dumps found\n"));
@@ -404,7 +410,8 @@ main(
 
 
     /* Decide what tapes we'll need */
-    needed_tapes = list_needed_tapes(dumpspecs);
+    needed_tapes = list_needed_tapes(dumpspecs,
+				     rst_flags->pipe_to_fd == STDOUT_FILENO);
 
     parent_pid = getpid();
     atexit(cleanup);

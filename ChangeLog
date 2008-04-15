@@ -1,4 +1,22 @@
 2008-04-15  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/find.c (dumps_match_dumpspecs): New function to only keep
+	  dumps that match a dumpspecs, using it simplify amfetchdump.
+	* server-src/find.h (dumps_match_dumpspecs): Prototype.
+	* restore-src/amrestore.c: Add a first_restored_file to
+	  search_a_tape(), to allow restore ot stop after the first image.
+	* restore-src/restore.c: Set first_restored_file, it was never set,
+	  it's needed to stop after the first image.
+	* restore-src/restore.c (restore_from_tapelist): break if piping to
+	  stdout.
+	* restore-src/amfetchdump.c: Use dumps_match_dumpspecs.
+	* restore-src/amfetchdump.c: If -p, the keep only one dump.
+	* perl/Amanda/Logfile.swg (dumps_match_dumpspecs): New prototype.
+	* perl/Amanda/Cmdline.swg: cmdline_parse_dumpspecs.
+	* perl/amglue/dumpspecs.swg: Map dumpspecs to perl.
+	* perl/Makefile.am (AMGLUE_SWG): Add amglue/dumpspecs.swg.
+	* installcheck/Amanda_Logfile.pl: Add many tests.
+
+2008-04-15  Jean-Louis Martineau <martineau@zmanda.com>
 	* tape-src/tapetype.c: Initialize an default config.
 
 2008-04-15  Jean-Louis Martineau <martineau@zmanda.com>

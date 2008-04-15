@@ -67,6 +67,7 @@ PERL_EXT_LDFLAGS += $(PERLEXTLIBS)
 AMGLUE_SWG = amglue/amglue.swg \
 	amglue/amglue.swg \
 	amglue/constants.swg \
+	amglue/dumpspecs.swg \
 	amglue/exports.swg \
 	amglue/glib.swg \
 	amglue/integers.swg

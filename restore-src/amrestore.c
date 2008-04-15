@@ -98,7 +98,11 @@ static void handle_tape_restore(char * device_name, rst_flags_t * flags,
     Device * device;
     ReadLabelStatusFlags read_label_status;
 
+    dumpfile_t first_restored_file;
+
     device_api_init();
+
+    fh_init(&first_restored_file);
     
     device = device_open(device_name);
     if (device == NULL) {
@@ -128,7 +132,7 @@ static void handle_tape_restore(char * device_name, rst_flags_t * flags,
     }
 
     search_a_tape(device, stderr, flags, NULL, NULL, dumpspecs,
-                  NULL, NULL, 0, NULL);
+                  NULL, &first_restored_file, 0, NULL);
 }
 
 /*

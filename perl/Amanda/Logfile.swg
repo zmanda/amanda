@@ -21,6 +21,8 @@
 %module "Amanda::Logfile"
 %include "amglue/amglue.swg"
 %include "exception.i"
+%include "amglue/dumpspecs.swg"
+%import "Amanda/Cmdline.swg"
 
 %{
 #include <glib.h>
@@ -362,3 +364,7 @@ find_result_t *search_logfile_wrap(char *label, char *datestamp,
 
 find_result_t *dumps_match(find_result_t *output_find, char *hostname,
 			   char *diskname, char *datestamp, char *level, int ok);
+
+find_result_t *dumps_match_dumpspecs(find_result_t *output_find,
+    amglue_dumpspec_list *dumpspecs,
+    gboolean ok);

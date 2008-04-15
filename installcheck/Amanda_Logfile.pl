@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 27;
+use Test::More tests => 30;
 use File::Path;
 use strict;
 
@@ -24,6 +24,7 @@ use lib "@amperldir@";
 use Installcheck::Config;
 use Amanda::Paths;
 use Amanda::Tapelist;
+use Amanda::Cmdline;
 use Amanda::Logfile qw(:logtype_t :program_t open_logfile get_logline close_logfile);
 use Amanda::Config qw( :init :getconf config_dir_relative );
 
@@ -168,8 +169,10 @@ my $tapelist = config_dir_relative("tapelist");
 # set up and read the tapelist (we don't use Amanda::Tapelist to write this,
 # in case it's broken)
 open my $tlf, ">", $tapelist or die("Could not write tapelist");
-print $tlf "20071111010002 TESTCONF004 reuse\n";
-print $tlf "20071110010002 TESTCONF003 reuse\n";
+print $tlf "20071111010002 TESTCONF006 reuse\n";
+print $tlf "20071110010002 TESTCONF005 reuse\n";
+print $tlf "20071109010002 TESTCONF004 reuse\n";
+print $tlf "20071109010002 TESTCONF003 reuse\n";
 print $tlf "20071109010002 TESTCONF002 reuse\n";
 print $tlf "20071108010001 TESTCONF001 reuse\n";
 close $tlf;
@@ -212,20 +215,28 @@ PART taper TESTCONF002 8 clihost /home 20071109010002 5/5 0 [multi-part dump]
 DONE taper clihost /home 20071109010002 5 0 [multi-part dump]
 PART taper TESTCONF002 9 thatbox /u_lose 20071109010002 1/4 2 [multi-part failure]
 PART taper TESTCONF002 10 thatbox /u_lose 20071109010002 2/4 2 [multi-part failure]
-PART taper TESTCONF002 11 thatbox /u_lose 20071109010002 3/4 2 [multi-part failure]
+PARTPARTIAL taper TESTCONF002 11 thatbox /u_lose 20071109010002  3/4 2 [multi-part retry]
+START taper datestamp 20071109010002 label TESTCONF003 tape 1
+PART taper TESTCONF003 1 thatbox /u_lose 20071109010002 3/4 2 [multi-part failure]
 FAIL taper thatbox /u_lose 20071109010002 2 "Oh no!"
-DONE taper thatbox /u_lose 20071109010002 4 2 [multi-part failure]
+PART taper TESTCONF003 2 thatbox /u_win 20071109010002 1/4 3 [multi-part retry]
+PART taper TESTCONF003 3 thatbox /u_win 20071109010002 2/4 3 [multi-part retry]
+PARTPARTIAL taper TESTCONF003 4 thatbox /u_win 20071109010002  3/4 3 [multi-part retry]
+START taper datestamp 20071109010002 label TESTCONF004 tape 1
+PART taper TESTCONF004 1 thatbox /u_win 20071109010002 3/4 3 [multi-part retry]
+PART taper TESTCONF004 2 thatbox /u_win 20071109010002 4/4 3 [multi-part retry]
+DONE taper thatbox /u_win 20071109010002 4 3 [multi-part retry]
 EOF
 close $logf;
 
 # "old-style amflush log"
 open $logf, ">", "$logdir/log.20071110010002.amflush" or die("Could not write logfile");
-print $logf "START taper datestamp 20071110010002 label TESTCONF003 tape 1\n";
+print $logf "START taper datestamp 20071110010002 label TESTCONF005 tape 1\n";
 close $logf;
 
 # "old-style main log"
 open $logf, ">", "$logdir/log.20071111010002" or die("Could not write logfile");
-print $logf "START taper datestamp 20071111010002 label TESTCONF004 tape 1\n";
+print $logf "START taper datestamp 20071111010002 label TESTCONF006 tape 1\n";
 close $logf;
 
 is_deeply([ Amanda::Logfile::find_log() ],
@@ -234,20 +245,31 @@ is_deeply([ Amanda::Logfile::find_log() ],
 	  "find_log returns correct logfiles in the correct order");
 
 my @results;
+my @results2;
+my @results3;
+my @results4;
 my @results_arr;
 
-@results = Amanda::Logfile::search_logfile("TESTCONF002", "20071109010002",
+@results2 = Amanda::Logfile::search_logfile("TESTCONF002", "20071109010002",
 					   "$logdir/log.20071109010002.0", 1);
-is($#results+1, 11, "search_logfile returned 11 results");
+@results3 = Amanda::Logfile::search_logfile("TESTCONF003", "20071109010002",
+					   "$logdir/log.20071109010002.0", 1);
+@results4 = Amanda::Logfile::search_logfile("TESTCONF004", "20071109010002",
+					   "$logdir/log.20071109010002.0", 1);
+@results = ();
+push @results, @results2, @results3, @results4;
+is($#results+1, 17, "search_logfile returned 15 results");
 
 # sort by filenum so we can compare each to what it should be
-@results = sort { $a->{'filenum'} <=> $b->{'filenum'} } @results;
+@results = sort { $a->{'label'} cmp $b->{'label'} ||
+		  $a->{'filenum'} <=> $b->{'filenum'} } @results;
 
 # and convert the hashes to arrays for easy comparison
 @results_arr = map { res2arr($_) } @results;
 
 is_deeply(\@results_arr,
-	[ [ '20071109010002', 'clihost', '/usr',	    0, 'TESTCONF002', 1,  'OK', '1'   ],
+	[
+	  [ '20071109010002', 'clihost', '/usr',	    0, 'TESTCONF002', 1,  'OK', '1'   ],
 	  [ '20071109010002', 'clihost', '/my documents',   0, 'TESTCONF002', 2,  'OK', '1'   ],
 	  [ '20071109010002', 'thatbox', '/var',	    1, 'TESTCONF002', 3,  'OK', '--'  ],
 	  [ '20071109010002', 'clihost', '/home',	    0, 'TESTCONF002', 4,  'OK', '1/5' ],
@@ -255,37 +277,97 @@ is_deeply(\@results_arr,
 	  [ '20071109010002', 'clihost', '/home',	    0, 'TESTCONF002', 6,  'OK', '3/5' ],
 	  [ '20071109010002', 'clihost', '/home',	    0, 'TESTCONF002', 7,  'OK', '4/5' ],
 	  [ '20071109010002', 'clihost', '/home',	    0, 'TESTCONF002', 8,  'OK', '5/5' ],
-	  [ '20071109010002', 'thatbox', '/u_lose',   2, 'TESTCONF002', 9,  '"Oh no!"', '1/4' ],
-	  [ '20071109010002', 'thatbox', '/u_lose',   2, 'TESTCONF002', 10, '"Oh no!"', '2/4' ],
-	  [ '20071109010002', 'thatbox', '/u_lose',   2, 'TESTCONF002', 11, '"Oh no!"', '3/4' ] ],
-	  "results are correct");
+	  [ '20071109010002', 'thatbox', '/u_lose',   2, 'TESTCONF002', 9,  'OK', '1/4' ],
+	  [ '20071109010002', 'thatbox', '/u_lose',   2, 'TESTCONF002', 10, 'OK', '2/4' ],
+	  [ '20071109010002', 'thatbox', '/u_lose',   2, 'TESTCONF002', 11, 'PARTIAL', '3/4' ],
+	  [ '20071109010002', 'thatbox', '/u_lose',   2, 'TESTCONF003', 1,  '"Oh no!"', '3/4' ],
+	  [ '20071109010002', 'thatbox', '/u_win',    3, 'TESTCONF003', 2, 'OK', '1/4' ],
+	  [ '20071109010002', 'thatbox', '/u_win',    3, 'TESTCONF003', 3, 'OK', '2/4' ],
+	  [ '20071109010002', 'thatbox', '/u_win',    3, 'TESTCONF003', 4, 'PARTIAL', '3/4' ],
+	  [ '20071109010002', 'thatbox', '/u_win',    3, 'TESTCONF004', 1, 'OK', '3/4' ],
+	  [ '20071109010002', 'thatbox', '/u_win',    3, 'TESTCONF004', 2, 'OK', '4/4' ],
+	], "results are correct");
 
 my @filtered;
 my @filtered_arr;
 
 @filtered = Amanda::Logfile::dumps_match([@results], "thatbox", undef, undef, undef, 0);
-is($#filtered+1, 4, "four results match 'thatbox'");
-@filtered = sort { $a->{'filenum'} <=> $b->{'filenum'} } @filtered;
+is($#filtered+1, 10, "ten results match 'thatbox'");
+@filtered = sort { $a->{'label'} cmp $b->{'label'} ||
+		   $a->{'filenum'} <=> $b->{'filenum'} } @filtered;
 
 @filtered_arr = map { res2arr($_) } @filtered;
 
 is_deeply(\@filtered_arr,
-	[ [ '20071109010002', 'thatbox', '/var',      1, 'TESTCONF002', 3,  'OK',       '--' ],
-	  [ '20071109010002', 'thatbox', '/u_lose',   2, 'TESTCONF002', 9,  '"Oh no!"', '1/4' ],
-	  [ '20071109010002', 'thatbox', '/u_lose',   2, 'TESTCONF002', 10, '"Oh no!"', '2/4' ],
-	  [ '20071109010002', 'thatbox', '/u_lose',   2, 'TESTCONF002', 11, '"Oh no!"', '3/4' ] ],
-	  "results are  correct");
+	[
+	  [ '20071109010002', 'thatbox', '/var',      1, 'TESTCONF002', 3,  'OK',       '--' ],
+	  [ '20071109010002', 'thatbox', '/u_lose',   2, 'TESTCONF002', 9,  'OK',       '1/4' ],
+	  [ '20071109010002', 'thatbox', '/u_lose',   2, 'TESTCONF002', 10, 'OK',       '2/4' ],
+	  [ '20071109010002', 'thatbox', '/u_lose',   2, 'TESTCONF002', 11, 'PARTIAL',  '3/4' ],
+	  [ '20071109010002', 'thatbox', '/u_lose',   2, 'TESTCONF003', 1,  '"Oh no!"', '3/4' ],
+	  [ '20071109010002', 'thatbox', '/u_win',    3, 'TESTCONF003', 2,  'OK',       '1/4' ],
+	  [ '20071109010002', 'thatbox', '/u_win',    3, 'TESTCONF003', 3,  'OK',       '2/4' ],
+	  [ '20071109010002', 'thatbox', '/u_win',    3, 'TESTCONF003', 4,  'PARTIAL',  '3/4' ],
+	  [ '20071109010002', 'thatbox', '/u_win',    3, 'TESTCONF004', 1,  'OK',       '3/4' ],
+	  [ '20071109010002', 'thatbox', '/u_win',    3, 'TESTCONF004', 2,  'OK',       '4/4' ],
+	], "results are correct");
 
 @filtered = Amanda::Logfile::dumps_match([@results], "thatbox", "/var", undef, undef, 0);
 is($#filtered+1, 1, "only one result matches 'thatbox:/var'");
 
 @filtered = Amanda::Logfile::dumps_match([@results], undef, undef, "20071109010002", undef, 0);
-is($#filtered+1, 11, "all 11 results match '20071109010002'");
+is($#filtered+1, 17, "all 17 results match '20071109010002'");
 
 @filtered = Amanda::Logfile::dumps_match([@results], undef, undef, "20071109010002", undef, 1);
-is($#filtered+1, 8, "of those, 8 results are 'OK'");
+is($#filtered+1, 14, "of those, 14 results are 'OK'");
 
 @filtered = Amanda::Logfile::dumps_match([@results], undef, undef, undef, "2", 0);
-is($#filtered+1, 3, "3 results are at level 2");
+is($#filtered+1, 4, "4 results are at level 2");
+
+# test dumps_match_dumpspecs
+
+my @dumpspecs;
+
+@dumpspecs = Amanda::Cmdline::parse_dumpspecs(["thatbox", "/var"], 0);
+@filtered = Amanda::Logfile::dumps_match_dumpspecs([@results], [@dumpspecs], 0);
+is_deeply([ map { res2arr($_) } @filtered ],
+	[
+	  [ '20071109010002', 'thatbox', '/var',	    1, 'TESTCONF002', 3,  'OK', '--'  ],
+	], "filter with dumpspecs 'thatbox /var'");
+
+@dumpspecs = Amanda::Cmdline::parse_dumpspecs(["thatbox", "/var", "clihost"], 0);
+@filtered = Amanda::Logfile::dumps_match_dumpspecs([@results], [@dumpspecs], 0);
+@filtered = sort { $a->{'label'} cmp $b->{'label'} ||
+		   $a->{'filenum'} <=> $b->{'filenum'} } @filtered;
+is_deeply([ map { res2arr($_) } @filtered ],
+	[
+	  [ '20071109010002', 'clihost', '/usr',	    0, 'TESTCONF002', 1,  'OK', '1'   ],
+	  [ '20071109010002', 'clihost', '/my documents',   0, 'TESTCONF002', 2,  'OK', '1'   ],
+	  [ '20071109010002', 'thatbox', '/var',	    1, 'TESTCONF002', 3,  'OK', '--'  ],
+	  [ '20071109010002', 'clihost', '/home',	    0, 'TESTCONF002', 4,  'OK', '1/5' ],
+	  [ '20071109010002', 'clihost', '/home',	    0, 'TESTCONF002', 5,  'OK', '2/5' ],
+	  [ '20071109010002', 'clihost', '/home',	    0, 'TESTCONF002', 6,  'OK', '3/5' ],
+	  [ '20071109010002', 'clihost', '/home',	    0, 'TESTCONF002', 7,  'OK', '4/5' ],
+	  [ '20071109010002', 'clihost', '/home',	    0, 'TESTCONF002', 8,  'OK', '5/5' ],
+	], "filter with dumpspecs 'thatbox /var clihost' (union of two disjoint sets)");
+
+# if multiple dumpspecs specify the same dump, it will be included in the output multiple times
+@dumpspecs = Amanda::Cmdline::parse_dumpspecs([".*", "/var", "thatbox"], 0);
+@filtered = Amanda::Logfile::dumps_match_dumpspecs([@results], [@dumpspecs], 0);
+@filtered = sort { $a->{'label'} cmp $b->{'label'} ||
+		   $a->{'filenum'} <=> $b->{'filenum'} } @filtered;
+is_deeply([ map { res2arr($_) } @filtered ],
+	[
+	  [ '20071109010002', 'thatbox', '/var',      1, 'TESTCONF002', 3,  'OK',       '--'  ],
+	  [ '20071109010002', 'thatbox', '/u_lose',   2, 'TESTCONF002', 9,  'OK',       '1/4' ],
+	  [ '20071109010002', 'thatbox', '/u_lose',   2, 'TESTCONF002', 10, 'OK',       '2/4' ],
+	  [ '20071109010002', 'thatbox', '/u_lose',   2, 'TESTCONF002', 11, 'PARTIAL',  '3/4' ],
+	  [ '20071109010002', 'thatbox', '/u_lose',   2, 'TESTCONF003', 1,  '"Oh no!"', '3/4' ],
+	  [ '20071109010002', 'thatbox', '/u_win',    3, 'TESTCONF003', 2,  'OK',       '1/4' ],
+	  [ '20071109010002', 'thatbox', '/u_win',    3, 'TESTCONF003', 3,  'OK',       '2/4' ],
+	  [ '20071109010002', 'thatbox', '/u_win',    3, 'TESTCONF003', 4,  'PARTIAL',  '3/4' ],
+	  [ '20071109010002', 'thatbox', '/u_win',    3, 'TESTCONF004', 1,  'OK',       '3/4' ],
+	  [ '20071109010002', 'thatbox', '/u_win',    3, 'TESTCONF004', 2,  'OK',       '4/4' ],
+	], "filter with dumpspecs '.* /var thatbox' (union of two overlapping sets includes dupes)");
 
 unlink_logfile();
