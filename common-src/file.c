@@ -53,13 +53,13 @@ mk1dir(
     int rc;	/* return code */
 
     rc = mkdir(dir, mode);
-    if(rc != 0) {	/* maybe someone beat us to it */
+    if(rc != 0) {
 	int serrno;
 
 	serrno = errno;
-	if(access(dir, F_OK) != 0)
-	    rc = -1;
-	errno = serrno;	/* pass back the real error */
+	if(access(dir, F_OK) == 0)
+	    rc = 0; /* someone just beat us to it, so it's OK */
+	errno = serrno;
     }
 
     /* mkdir is affected by umask, so set the mode bits manually */
