@@ -1,4 +1,7 @@
 2008-04-15  Jean-Louis Martineau <martineau@zmanda.com>
+	* tape-src/tapetype.c: Initialize an default config.
+
+2008-04-15  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/util.c (connect_portrange, connect_port, bind_portrange):
 	  Return the latest errno reported.
 

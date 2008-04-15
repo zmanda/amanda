@@ -30,6 +30,7 @@
  * tests a tape in a given tape unit and prints a tapetype entry for
  * it.  */
 #include "amanda.h"
+#include "conffile.h"
 
 #include "tapeio.h"
 
@@ -386,6 +387,8 @@ main(
    */  
   setlocale(LC_MESSAGES, "C");
   textdomain("amanda"); 
+
+  config_init(0, NULL);
 
   if ((sProgName = strrchr(*argv, '/')) == NULL) {
     sProgName = *argv;
