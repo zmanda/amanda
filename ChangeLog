@@ -1,3 +1,9 @@
+2008-04-11  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/dumper.c: Call error() only after set_logerror is done.
+	* server-src/planner.c: Call error() only after set_logerror is done.
+	* server-src/chunker.c: Report a better error message.
+	* common-src/stream.c: Set errno to ETIMEDOUT after a timeout.
+
 2008-04-15  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/find.c (dumps_match_dumpspecs): New function to only keep
 	  dumps that match a dumpspecs, using it simplify amfetchdump.

@@ -182,6 +182,7 @@ main(
     char  *errstr = NULL;
     config_overwrites_t *cfg_ovr = NULL;
     char *cfg_opt = NULL;
+    int    planner_setuid;
 
     /*
      * Configure program for internationalization:
@@ -193,9 +194,7 @@ main(
     textdomain("amanda"); 
 
     /* drop root privileges */
-    if (!set_root_privs(0)) {
-	error(_("planner must be run setuid root"));
-    }
+    planner_setuid = set_root_privs(0);
 
     safe_fd(-1, 0);
 
@@ -204,12 +203,23 @@ main(
     dbopen(DBG_SUBDIR_SERVER);
 
     cfg_ovr = extract_commandline_config_overwrites(&argc, &argv);
-
     if (argc > 1) 
 	cfg_opt = argv[1];
 
     config_init(CONFIG_INIT_EXPLICIT_NAME | CONFIG_INIT_USE_CWD, cfg_opt);
     apply_config_overwrites(cfg_ovr);
+
+    /* Don't die when child closes pipe */
+    signal(SIGPIPE, SIG_IGN);
+
+    setvbuf(stderr, (char *)NULL, (int)_IOLBF, 0);
+
+    erroutput_type = (ERR_AMANDALOG|ERR_INTERACTIVE);
+    set_logerror(logerror);
+
+    if (!planner_setuid) {
+	error(_("planner must be run setuid root"));
+    }
 
     if (config_errors(NULL) >= CFGERR_ERRORS) {
 	g_critical(_("errors processing config file"));
@@ -221,13 +231,6 @@ main(
 
     dbrename(get_config_name(), DBG_SUBDIR_SERVER);
 
-    /* Don't die when child closes pipe */
-    signal(SIGPIPE, SIG_IGN);
-
-    setvbuf(stderr, (char *)NULL, (int)_IOLBF, 0);
-
-    erroutput_type = (ERR_AMANDALOG|ERR_INTERACTIVE);
-    set_logerror(logerror);
     startclock();
     section_start = curclock();
 

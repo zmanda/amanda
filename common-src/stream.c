@@ -347,7 +347,7 @@ stream_accept(
 			        _("stream_accept: timeout after %d seconds\n"),
 			       timeout),
 			 timeout);
-		errno = ENOENT;			/* ??? */
+		errno = ETIMEDOUT;
 		return -1;
 	    } else if (!FD_ISSET(server_socket, &readset)) {
 		int i;

@@ -306,7 +306,7 @@ main(
     int res;
     config_overwrites_t *cfg_ovr = NULL;
     char *cfg_opt = NULL;
-
+    int dumper_setuid;
     /*
      * Configure program for internationalization:
      *   1) Only set the message locale for now.
@@ -317,9 +317,7 @@ main(
     textdomain("amanda"); 
 
     /* drop root privileges */
-    if (!set_root_privs(0)) {
-	error(_("dumper must be run setuid root"));
-    }
+    dumper_setuid = set_root_privs(0);
 
     safe_fd(-1, 0);
 
@@ -338,6 +336,10 @@ main(
 	cfg_opt = argv[1];
     config_init(CONFIG_INIT_EXPLICIT_NAME | CONFIG_INIT_USE_CWD, cfg_opt);
     apply_config_overwrites(cfg_ovr);
+
+    if (!dumper_setuid) {
+	error(_("dumper must be run setuid root"));
+    }
 
     if (config_errors(NULL) >= CFGERR_ERRORS) {
 	g_critical(_("errors processing config file"));

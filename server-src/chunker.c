@@ -299,7 +299,7 @@ main(
 	    if((infd = startup_chunker(filename, use, chunksize, &db)) < 0) {
 		q = squotef(_("[chunker startup failed: %s]"), errstr);
 		putresult(TRYAGAIN, "%s %s\n", handle, q);
-		error("startup_chunker failed");
+		error("startup_chunker failed: %s", errstr);
 	    }
 	    command_in_transit = -1;
 	    if(infd >= 0 && do_chunk(infd, &db)) {
