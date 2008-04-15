@@ -1,4 +1,8 @@
 2008-04-15  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/debug.c (debug_logging_handler, debug_printf): Don't print
+	  msg_timestamp() to stderr.
+
+2008-04-15  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/find.c (dumps_match_dumpspecs): New function to only keep
 	  dumps that match a dumpspecs, using it simplify amfetchdump.
 	* server-src/find.h (dumps_match_dumpspecs): Prototype.
