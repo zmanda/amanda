@@ -21,6 +21,7 @@
 %module "Amanda::Cmdline"
 %include "amglue/amglue.swg"
 %include "exception.i"
+%include "amglue/dumpspecs.swg"
 
 %{
 #include <glib.h>
@@ -126,29 +127,6 @@ typedef struct dumpspec_t {
 %rename(format_dumpspec_components) cmdline_format_dumpspec_components;
 char *cmdline_format_dumpspec_components(char *host, char *disk, char *datestamp, char *level);
 
-/* Typemap to convert the GSList that cmdline_parse_dumpspecs will
- * return into an array of dumpspec_t's.  This uses some SWIG trickery
- * to manage to convert the GSList itself to an array, while leaving the
- * dumpspecs as C objects.
- */
-%typemap(out) GSList * {
-    if ($1) {
-	GSList *iter;
-	EXTEND(SP, g_slist_length($1)); /* make room for return values */
-
-	iter = $1;
-	while (iter) {
-	    /* Let SWIG take ownership of the object; we'll free the GSList momentarily */
-	    $result = SWIG_NewPointerObj(iter->data, $descriptor(dumpspec_t*), SWIG_OWNER | SWIG_SHADOW);
-	    argvi++;
-	    iter = iter->next;
-	}
-
-	/* Now free the GSList, but *not* its contents (which are now "owned" by SWIG) */
-	g_slist_free($1);
-    }
-}
-
 /* Typemap to convert a perl list of strings to the strv that 
  * cmdline_parse_dumpspecs expects.
  */
@@ -183,11 +161,11 @@ amglue_add_constant(CMDLINE_PARSE_LEVEL, cmdline_parse_dumpspecs_flags);
 amglue_add_constant(CMDLINE_EMPTY_TO_WILDCARD, cmdline_parse_dumpspecs_flags);
 
 %rename(parse_dumpspecs) cmdline_parse_dumpspecs;
-GSList *cmdline_parse_dumpspecs(int argc, char **argv, int flags);
+amglue_dumpspec_list *cmdline_parse_dumpspecs(int argc, char **argv, int flags);
 
 /* TODO:
  * convert AV back to GSList as input, convert resulting GSList into an AV of strings
  * on output
  */
-/* GSList * cmdline_match_holding(GSList *dumpspec_list); */
+/* amglue_dumpspec_list * cmdline_match_holding(amglue_dumpspec_list *dumpspec_list); */
 

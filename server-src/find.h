@@ -40,6 +40,9 @@ find_result_t *dump_exist(find_result_t *output_find, char *hostname,
 find_result_t *dumps_match(find_result_t *output_find, char *hostname,
                            char *diskname, char *datestamp, char *level,
                            int ok);
+find_result_t *dumps_match_dumpspecs(find_result_t *output_find,
+				     GSList *dumpspecs,
+				     int ok);
 
 /* This function looks in a particular log.xxx file for dumps. Returns TRUE
  * if something was found. This function also skips dumps whose disklist

@@ -35,6 +35,7 @@
 #include "logfile.h"
 #include "holding.h"
 #include "find.h"
+#include "cmdline.h"
 
 int find_match(char *host, char *disk);
 void search_holding_disk(find_result_t **output_find);
@@ -941,6 +942,59 @@ dumps_match(
 
 	    curmatch->next = matches;
 	    matches = curmatch;
+	}
+    }
+
+    return(matches);
+}
+
+/*
+ * Return the set of dumps that match one or more of the given dumpspecs,
+ * If 'ok' is true, only dumps with a SUCCESS status will be matched.
+ * 
+ * Returns a newly allocated list of results, where all strings are also newly
+ * allocated.  Apparently some part of Amanda leaks under this condition.
+ */
+find_result_t *
+dumps_match_dumpspecs(
+    find_result_t *output_find,
+    GSList        *dumpspecs,
+    int ok)
+{
+    find_result_t *cur_result;
+    find_result_t *matches = NULL;
+    GSList        *dumpspec;
+    dumpspec_t    *ds;
+
+    for(cur_result=output_find;
+	cur_result;
+	cur_result=cur_result->next) {
+	char level_str[NUM_STR_SIZE];
+	g_snprintf(level_str, SIZEOF(level_str), "%d", cur_result->level);
+	for (dumpspec = dumpspecs; dumpspec; dumpspec = dumpspec->next) {
+	    ds = (dumpspec_t *)dumpspec->data;
+	    if((!ds->host || *ds->host == '\0' || match_host(ds->host, cur_result->hostname)) &&
+	       (!ds->disk || *ds->disk == '\0' || match_disk(ds->disk, cur_result->diskname)) &&
+	       (!ds->datestamp || *ds->datestamp== '\0' || match_datestamp(ds->datestamp, cur_result->timestamp)) &&
+	       (!ds->level || *ds->level== '\0' || match_level(ds->level, level_str)) &&
+	       (!ok || !strcmp(cur_result->status, "OK"))){
+
+		find_result_t *curmatch = alloc(SIZEOF(find_result_t));
+		memcpy(curmatch, cur_result, SIZEOF(find_result_t));
+
+		curmatch->timestamp = stralloc(cur_result->timestamp);
+		curmatch->hostname = stralloc(cur_result->hostname);
+		curmatch->diskname = stralloc(cur_result->diskname);
+		curmatch->level = cur_result->level;
+		curmatch->label = stralloc(cur_result->label);
+		curmatch->filenum = cur_result->filenum;
+		curmatch->status = stralloc(cur_result->status);
+		curmatch->partnum = stralloc(cur_result->partnum);
+
+		curmatch->next = matches;
+		matches = curmatch;
+		break;
+	    }
 	}
     }
 
