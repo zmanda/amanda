@@ -317,7 +317,6 @@ Amanda Documentation is available at: http://wiki.zmanda.com/
         --libdir=%{LIBDIR} \
         --includedir=%{INCLUDEDIR} \
         --with-gnuplot=/usr/bin/gnuplot \
-        --with-gnutar=/bin/tar \
         --with-gnutar-listdir=%{AMANDAHOMEDIR}/gnutar-lists \
         --with-index-server=localhost \
         --with-tape-server=localhost \

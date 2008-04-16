@@ -58,7 +58,6 @@ build-stamp: /sbin/dump /usr/bin/smbclient
 		--sysconfdir=$(SYSCONFDIR) \
 		--localstatedir=$(LOCALSTATEDIR)\
 		--with-star=/bin/star \
-		--with-gnutar=/bin/tar \
 		--with-gnutar-listdir=$(AMHOMEDIR)/gnutar-lists \
 		--with-index-server=localhost \
 		--with-tape-server=localhost \
