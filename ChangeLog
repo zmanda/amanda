@@ -1,3 +1,8 @@
+2008-04-16  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amadmin.c: Improve message.
+	* man/xml-source/amanda.conf.5.xml: Fix man page.
+	* server-src/planner.c: Fix DS_INCRONLY and FORCE_FULL
+
 2008-04-16  Dustin J. Mitchell <dustin@zmanda.com>
 	* config/amanda/dumpers.m4: continue searching for gnutar if we
 	  find a binary claiming to be gnu tar that is not.  This gets
