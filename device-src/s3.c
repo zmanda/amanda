@@ -70,12 +70,6 @@
  * (*excluding* null terminator) */
 #define S3_MAX_KEY_LENGTH 1024
 
-#if defined(LIBCURL_FEATURE_SSL) && defined(LIBCURL_PROTOCOL_HTTPS)
-# define S3_URL "https://s3.amazonaws.com"
-#else
-# define S3_URL "http://s3.amazonaws.com"
-#endif
-
 #define AMAZON_SECURITY_HEADER "x-amz-security-token"
 
 /* parameters for exponential backoff in the face of retriable errors */
@@ -158,6 +152,13 @@ s3_error_code_from_name(char *s3_error_name);
  */
 static const char *
 s3_error_name_from_code(s3_error_code_t s3_error_code);
+
+/* Does this install of curl support SSL?
+ *
+ * @returns: boolean
+ */
+static gboolean
+s3_curl_supports_ssl(void);
 
 /*
  * result handling */
@@ -318,6 +319,28 @@ s3_error_name_from_code(s3_error_code_t s3_error_code)
         return NULL;
 
     return s3_error_code_names[s3_error_code];
+}
+/* }}} */
+
+/* {{{ s3_curl_supports_ssl */
+static gboolean
+s3_curl_supports_ssl(void)
+{
+    static int supported = -1;
+
+    if (supported == -1) {
+#if defined(CURL_VERSION_SSL)
+	curl_version_info_data *info = curl_version_info(CURLVERSION_NOW);
+	if (info->features & CURL_VERSION_SSL)
+	    supported = 1;
+	else
+	    supported = 0;
+#else
+	supported = 0;
+#endif
+    }
+
+    return supported;
 }
 /* }}} */
 
@@ -660,6 +683,7 @@ perform_request(S3Handle *hdl,
                 guint preallocate_response_size,
                 const result_handling_t *result_handling)
 {
+    const char *baseurl;
     char *url = NULL;
     s3_result_t result = S3_RESULT_FAIL; /* assume the worst.. */
     CURLcode curl_code = CURLE_OK;
@@ -675,7 +699,8 @@ perform_request(S3Handle *hdl,
 
     s3_reset(hdl);
 
-    url = g_strconcat(S3_URL, uri, NULL);
+    baseurl = s3_curl_supports_ssl()? "https://s3.amazonaws.com":"http://s3.amazonaws.com";
+    url = g_strconcat(baseurl, uri, NULL);
     if (!url) goto cleanup;
 
     if (preallocate_response_size) {

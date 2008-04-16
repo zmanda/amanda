@@ -1,3 +1,8 @@
+2008-04-16  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/s3.c config/amanda/s3-device.m4: test curl features
+	  at runtime, instead of compile time, and always use SSL if it
+	  is available.
+
 2008-04-16  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amadmin.c: Improve message.
 	* man/xml-source/amanda.conf.5.xml: Fix man page.
