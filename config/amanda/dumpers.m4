@@ -33,23 +33,27 @@ AC_DEFUN([AMANDA_PROG_GNUTAR],
 	]
     )
 
-    if test "x$GNUTAR" != "xno"; then
-	# call ac_path_progs
-	AC_PATH_PROGS(GNUTAR,gtar gnutar tar,,$LOCSYSPATH)
-    else
+    if test "x$GNUTAR" = "xno"; then
 	GNUTAR=
-    fi
-
-    if test ! -z "$GNUTAR"; then
-      case "`\"$GNUTAR\" --version 2>&1`" in
-       *GNU*tar* | *Free*paxutils* ) : # OK, it is GNU tar
-		    ;;
-       *)
-		    # warning..
-		    AMANDA_MSG_WARN([$GNUTAR is not GNU tar, so it will not be used.])
-		    GNUTAR=''
-		    ;;
-      esac
+    else
+	for gnutar_name in gtar gnutar tar; do
+	    AC_PATH_PROGS(GNUTAR, $gnutar_name, , $LOCSYSPATH)
+	    if test -n "$GNUTAR"; then
+	      case "`\"$GNUTAR\" --version 2>&1`" in
+	       *GNU*tar* | *Free*paxutils* )
+			    # OK, it is GNU tar
+			    break
+			    ;;
+	       *)
+			    # warning..
+			    AMANDA_MSG_WARN([$GNUTAR is not GNU tar, so it will not be used.])
+			    # reset the cache for GNUTAR so AC_PATH_PROGS will search again
+			    GNUTAR=''
+			    unset ac_cv_path_GNUTAR
+			    ;;
+	      esac
+	    fi
+	done
     fi
 
     if test "x$GNUTAR" != "x"; then
