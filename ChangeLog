@@ -1,3 +1,9 @@
+2008-04-16  Dustin J. Mitchell <dustin@zmanda.com>
+	* config/amanda/dumpers.m4: continue searching for gnutar if we
+	  find a binary claiming to be gnu tar that is not.  This gets
+	  around serious breakage on Ubuntu, where star is installed as
+	  /bin/gnutar, but /bin/tar is actually GNU Tar.
+
 2008-04-15  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/file.c(mk1dir): fix reversed conditional to handle 
 	  a race condition
