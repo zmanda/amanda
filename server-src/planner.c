@@ -914,7 +914,7 @@ setup_estimate(
 
 	case DS_INCRONLY:
 	    if (ISSET(info.command, FORCE_FULL))
-		askfor(ep, i++, 0, &info);
+		ep->last_level = 0;
 	    break;
 	}
     }

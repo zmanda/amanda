@@ -352,8 +352,13 @@ force_one(
 	       get_pname(), hostname, diskname);
     }
     if(put_info(hostname, diskname, &info) == 0) {
-	g_printf(_("%s: %s:%s is set to a forced level 0 at next run.\n"),
-	       get_pname(), hostname, diskname);
+	if (dp->strategy == DS_INCRONLY) {
+	    g_printf(_("%s: %s:%s, full dump done offline, next dump will be at level 1.\n"),
+		     get_pname(), hostname, diskname);
+	} else {
+	    g_printf(_("%s: %s:%s is set to a forced level 0 at next run.\n"),
+		     get_pname(), hostname, diskname);
+	}
     } else {
 	g_fprintf(stderr, _("%s: %s:%s could not be forced.\n"),
 		get_pname(), hostname, diskname);

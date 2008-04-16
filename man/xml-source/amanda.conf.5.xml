@@ -1834,10 +1834,7 @@ The value should be hh*100+mm, e.g. 6:30PM (18:30) would be entered as
   <term><emphasis remap='B'>incronly</emphasis></term>
   <listitem>
   <para>Only do incremental dumps. <command>amadmin force</command> should be used to tell
-  &A; that a full dump has been performed off-line, so that it resets to level 1.
-  It is similar to skip-full, but with incronly full dumps may be scheduled manually.
-  Unfortunately, it appears that &A; will perform full backups with this configuration,
-  which is probably a bug.</para>
+  &A; that a full dump has been performed off-line, so that it resets to level 1.</para>
   </listitem>
   </varlistentry>
   </variablelist>
