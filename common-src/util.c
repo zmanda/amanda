@@ -897,19 +897,44 @@ void output_tool_proplist(
  * Process parameters
  */
 
-/* current process name */
-#define MAX_PNAME 128
-static char pname[MAX_PNAME] = "unknown";
+static char *pname = NULL;
+static char *ptype = NULL;
+static pcontext_t pcontext = CONTEXT_DEFAULT; 
 
 void
 set_pname(char *p)
 {
-    g_strlcpy(pname, p, sizeof(pname));
+    pname = newstralloc(pname, p);
 }
 
 char *
 get_pname(void)
 {
+    if (!pname) pname = stralloc("unknown");
     return pname;
 }
 
+void
+set_ptype(char *p)
+{
+    ptype = newstralloc(ptype, p);
+}
+
+char *
+get_ptype(void)
+{
+    if (!ptype) ptype = stralloc("unknown");
+    return ptype;
+}
+
+void
+set_pcontext(pcontext_t pc)
+{
+    pcontext = pc;
+}
+
+pcontext_t
+get_pcontext(void)
+{
+    return pcontext;
+}

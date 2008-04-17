@@ -22,7 +22,7 @@ use strict;
 use Amanda::Device qw( :constants );
 use Amanda::Config qw( :getconf :init );
 use Amanda::Debug qw( :logging );
-use Amanda::Util qw( :running_as_flags );
+use Amanda::Util qw( :constants );
 
 # try to open the device and read its label, returning the device_read_label
 # result (one or more of ReadLabelStatusFlags)
@@ -60,7 +60,7 @@ EOF
 
 ## Application initialization
 
-Amanda::Util::setup_application("amdevcheck", "server", "cmdline");
+Amanda::Util::setup_application("amdevcheck", "server", $CONTEXT_SCRIPTUTIL);
 
 usage() if ( @ARGV < 1 || @ARGV > 2 );
 my $config_name = $ARGV[0];

@@ -43,7 +43,7 @@ Amanda::Util - Runtime support for Amanda applications
 Application initialization generally looks like this:
 
   use Amanda::Config qw( :init );
-  use Amanda::Util qw( :check_running_as_flags );
+  use Amanda::Util qw( :constants );
   use Amanda::Debug;
 
   Amanda::Util::setup_application("myapp", "server", "cmdline");
@@ -62,11 +62,19 @@ any configuration.
 
 =item C<$name> is the name of the application, used in log messages, etc.
 
-=item C<$type> is one of "server" or "client".
+=item C<$type> is usualy one of "server" or "client".  It specifies the
+subdirectory in which debug logfiles will be created.
 
-=item C<$context> is one of "cmdline" for a user-invoked command-line
-utility (e.g., C<amadmin>) or "daemon" for a program started by
-C<amandad>.  (TODO: daemon is not supported yet)
+=item C<$context> is one of the following strings:
+
+=over
+
+=item C<"cmdline"> -- a user-invoked command-line utility (e.g., C<amadmin>)
+which should send human-readable error messages to stderr.
+
+=item C<"daemon"> --  a program started by C<amandad>, e.g., C<sendbackup>.
+
+=item C<"scriptutil"> --  a small program used from shell scripts, e.g., C<amgetconf>
 
 =back
 
@@ -110,19 +118,19 @@ sub setup_application {
     $_ptype = $type;
     $_pcontext = $context;
 
-    # and let the C side know about the pname
+    # and let the C side know about them too
     set_pname($name);
+    set_ptype($type);
+    set_pcontext($context);
 
     safe_cd(); # (also sets umask)
     check_std_fds();
 
-    # set up debugging for this application type
-    dbopen($type);
+    # set up debugging, now that we have a name, type, and context
+    debug_init();
 
     # ignore SIGPIPE
     $SIG{'PIPE'} = 'IGNORE';
-
-    set_erroutput_type($type, $context);
 }
 
 =item C<finish_setup($running_as_flags)>
@@ -187,36 +195,25 @@ amglue_add_constant(RUNNING_AS_DUMPUSER, running_as_flags);
 amglue_add_constant(RUNNING_AS_DUMPUSER_PREFERRED, running_as_flags);
 amglue_add_constant(RUNNING_AS_CLIENT_LOGIN, running_as_flags);
 amglue_add_constant(RUNNING_AS_UID_ONLY, running_as_flags);
+amglue_copy_to_tag(running_as_flags, constants);
+
+amglue_add_enum_tag_fns(pcontext_t);
+amglue_add_constant(CONTEXT_DEFAULT, pcontext_t);
+amglue_add_constant(CONTEXT_CMDLINE, pcontext_t);
+amglue_add_constant(CONTEXT_DAEMON, pcontext_t);
+amglue_add_constant(CONTEXT_SCRIPTUTIL, pcontext_t);
+amglue_copy_to_tag(pcontext_t, constants);
 
 /* -------------------------------------------------------------------------
  * Functions below this line are only meant to be called within this module;
  * do not call them externally. */
 
 void set_pname(char *name);
+void set_ptype(char *type);
+void set_pcontext(pcontext_t context);
 void safe_cd(void);
 
 void check_running_as(running_as_flags who);
-
-/* Set erroutput_type as appropriate for this process type and context.
- *
- * @param type: process type
- * @param context: process context
- */
-%inline %{
-void
-set_erroutput_type(char *type, char *context)
-{
-    if (strcmp(context, "cmdline") == 0) {
-	erroutput_type = ERR_INTERACTIVE;
-    } else if (strcmp(context, "daemon") == 0) {
-	if (strcmp(type, "server") == 0) {
-	    erroutput_type = ERR_INTERACTIVE|ERR_AMANDALOG;
-	} else if (strcmp(type, "client") == 0) {
-	    erroutput_type = ERR_INTERACTIVE|ERR_SYSLOG;
-	}
-    }
-}
-%}
 
 /* Check that fd's 0, 1, and 2 are open, calling critical() if not.
  */

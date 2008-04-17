@@ -60,7 +60,7 @@ static time_t open_time;
 static void (*logerror_fn)(char *) = NULL;
 
 /* storage for global variables */
-erroutput_type_t erroutput_type = ERR_INTERACTIVE;
+erroutput_type_t erroutput_type = ERR_FROM_CONTEXT;
 int error_exit_status = 1;
 
 /* static function prototypes */
@@ -122,29 +122,60 @@ debug_logging_handler(const gchar *log_domain G_GNUC_UNUSED,
 	    gpointer user_data G_GNUC_UNUSED)
 {
     char *maxlevel = NULL;
+    pcontext_t context = get_pcontext();
 
-    /* convert the highest level to a string and dbprintf it */
-    if (log_level & G_LOG_LEVEL_ERROR)
-	maxlevel = _("error (fatal): ");
-    else if (log_level & G_LOG_LEVEL_CRITICAL)
-	maxlevel = _("critical (fatal): ");
-    else if (log_level & G_LOG_LEVEL_WARNING)
-	maxlevel = _("warning: ");
-    else if (log_level & G_LOG_LEVEL_MESSAGE)
-	maxlevel = _("message: ");
-    else if (log_level & G_LOG_LEVEL_INFO)
-	maxlevel = _("info: ");
-    else
-	maxlevel = ""; /* no level displayed for debugging */
+    /* scriptutil context doesn't do any logging except for critical
+     * and error levels */
+    if (context != CONTEXT_SCRIPTUTIL) {
+	/* convert the highest level to a string and dbprintf it */
+	if (log_level & G_LOG_LEVEL_ERROR)
+	    maxlevel = _("error (fatal): ");
+	else if (log_level & G_LOG_LEVEL_CRITICAL)
+	    maxlevel = _("critical (fatal): ");
+	else if (log_level & G_LOG_LEVEL_WARNING)
+	    maxlevel = _("warning: ");
+	else if (log_level & G_LOG_LEVEL_MESSAGE)
+	    maxlevel = _("message: ");
+	else if (log_level & G_LOG_LEVEL_INFO)
+	    maxlevel = _("info: ");
+	else
+	    maxlevel = ""; /* no level displayed for debugging */
 
-    debug_printf("%s%s\n", maxlevel, message);
+	debug_printf("%s%s\n", maxlevel, message);
+    }
 
     /* error and critical levels have special handling */
     if (log_level & (G_LOG_LEVEL_ERROR|G_LOG_LEVEL_CRITICAL)) {
-	if (erroutput_type & ERR_AMANDALOG && logerror_fn != NULL)
+	erroutput_type_t local_erroutput;
+
+	/* Calculate a local version of erroutput_type, based on the
+	 * context if the process has not set erroutput_type explicitly */
+	if (!(erroutput_type & ERR_FROM_CONTEXT)) {
+	    local_erroutput = erroutput_type;
+	} else {
+	    switch (context) {
+		case CONTEXT_SCRIPTUTIL:
+		    local_erroutput = ERR_INTERACTIVE;
+		    break;
+
+		case CONTEXT_DAEMON:
+		    local_erroutput = ERR_INTERACTIVE
+				    | ERR_AMANDALOG
+				    | ERR_SYSLOG;
+		    break;
+
+		case CONTEXT_CMDLINE:
+		case CONTEXT_DEFAULT:
+		default:
+		    local_erroutput = ERR_INTERACTIVE;
+		    break;
+	    }
+	}
+
+	if (local_erroutput & ERR_AMANDALOG && logerror_fn != NULL)
 	    (*logerror_fn)((char *)message); /* discard 'const' */
 
-	if (erroutput_type & ERR_SYSLOG) {
+	if (local_erroutput & ERR_SYSLOG) {
 #ifdef LOG_AUTH
 	    openlog(get_pname(), LOG_PID, LOG_AUTH);
 #else
@@ -154,7 +185,7 @@ debug_logging_handler(const gchar *log_domain G_GNUC_UNUSED,
 	    closelog();
 	}
 
-	if (erroutput_type & ERR_INTERACTIVE) {
+	if (local_erroutput & ERR_INTERACTIVE) {
 	    g_fprintf(stderr, "%s: %s\n", get_pname(), message);
 	    fflush(stderr);
 	}
@@ -395,6 +426,19 @@ msg_timestamp(void)
 /*
  * ---- public functions
  */
+
+void
+debug_init(void)
+{
+    debug_setup_logging();
+
+    /* the scriptutil context does not create a debug log, since such
+     * processes are invoked many times.
+     */
+    if (get_pcontext() != CONTEXT_SCRIPTUTIL) {
+	debug_open(get_ptype());
+    }
+}
 
 void
 set_logerror(void (*f)(char *))

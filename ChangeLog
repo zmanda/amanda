@@ -1,4 +1,15 @@
- 2008-04-16  Dan Locks <dwlocks@zmanda.com>
+2008-04-16  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Util.swg common-src/util.c common-src/util.h: add
+	  process type and context process attributes
+	* perl/Amanda/Debug.swg common-src/debug.c common-src/debug.h: add
+	  debug_init to set up debugging according to the process context, and
+	  log nothing in CONTEXT_SCRIPTUTIL
+	* server-src/amgetconf.pl server-src/amdevcheck.pl:
+	  CONTEXT_SCRIPTUTIL
+	* server-src/amcheckdump.pl: use new $CONSTANT_CMDLINE variable
+	* installcheck/Amanda_Debug.pl: add comment
+
+2008-04-16  Dan Locks <dwlocks@zmanda.com>
 	* Fixes to debian package reported by daniel_P
 	* packaging/deb/preinst: remove spaces near ${amanda_group}
 	* packaging/deb/amanda-backup-server.dirs
@@ -10,15 +21,15 @@
 	* packaging/deb/amanda-backup-server.postinst: added check for correct
 	  permissions on /tmp/amanda
 
- 2008-04-16  Dan Locks <dwlocks@zmanda.com>
- 	* packaging/deb/rules packaging/rpm/amanda.spec: remove --with-gnutar=
+2008-04-16  Dan Locks <dwlocks@zmanda.com>
+	* packaging/deb/rules packaging/rpm/amanda.spec: remove --with-gnutar=
 	  from configure invocation.  no longer necessary.
 
 2008-04-16  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/s3.c config/amanda/s3-device.m4: test curl features
 	  at runtime, instead of compile time, and always use SSL if it
 	  is available.
- 	  
+
 2008-04-16  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amadmin.c: Improve message.
 	* man/xml-source/amanda.conf.5.xml: Fix man page.

@@ -194,6 +194,24 @@ int become_root(void);
  * Process parameters
  */
 
+/* The 'context' of a process gives a general description of how it is
+ * used.  This affects log output, among other things.
+ */
+typedef enum {
+    /* default context (logging to stderr, etc. -- not pretty) */
+    CONTEXT_DEFAULT = 0,
+
+    /* user-interfacing command-line utility like amadmin */
+    CONTEXT_CMDLINE,
+
+    /* daemon like amandad or sendbackup */
+    CONTEXT_DAEMON,
+
+    /* a utility used from shell scripts, and thus probably invoked
+     * quite often */
+    CONTEXT_SCRIPTUTIL,
+} pcontext_t;
+
 /* Set the name of the process.  The parameter is copied, and remains
  * the responsibility of the caller on return. This value is used in log
  * messages and other output throughout Amanda.
@@ -208,6 +226,33 @@ void set_pname(char *pname);
  * @returns: process name
  */
 char *get_pname(void);
+
+/* Set the type of the process.  The parameter is copied, and remains
+ * the responsibility of the caller on return.  This value dictates the
+ * directory in which debug logs are stored.
+ *
+ * @param pname: the new process type
+ */
+void set_ptype(char *ptype);
+
+/* Get the current process name; the result is in a static buffer, and
+ * should *not* be free()d by the caller.
+ *
+ * @returns: process name
+ */
+char *get_ptype(void);
+
+/* Set the process's context
+ *
+ * @param context: the new context
+ */
+void set_pcontext(pcontext_t context);
+
+/* Get the process's context
+ *
+ * @returns: the context
+ */
+pcontext_t get_pcontext(void);
 
 /*
  * Readline support

@@ -34,11 +34,9 @@ Amanda::Debug - support for debugging Amanda applications
 
 =head1 SYNOPSIS
 
-  use Amanda::Debug qw( :init :logging );
+  use Amanda::Util qw( :constants );
 
-  # (note: dbopen and such are usually handled by 
-  #  Amanda::Util::setup_applicaton)
-  dbopen("server");
+  Amanda::Util::application_setup("amcooltool", "server", $CONTEXT_CMDLINE);
 
   debug("this is a debug message");
   die("Unable to frobnicate the ergonator");
@@ -119,10 +117,11 @@ applications which may produce error output.
  */
 
 amglue_export_tag(init,
-    dbopen dbreopen dbrename dbclose
+    debug_init dbopen dbreopen dbrename dbclose
     $erroutput_type $error_exit_status
 );
 
+void	debug_init(void);
 void	dbopen(char *subdir);
 void	dbreopen(char *file, char *notation);
 void	dbrename(char *config, char *subdir);

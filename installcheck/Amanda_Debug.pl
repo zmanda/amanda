@@ -76,7 +76,7 @@ Amanda::Debug::dbreopen($debug_file, "I've still got more stuff to test");
 $pid = open($kid, "-|");
 die "Can't fork: $!" unless defined($pid);
 if (!$pid) {
-    $Amanda::Debug::erroutput_type = 0;
+    $Amanda::Debug::erroutput_type = 0; # don't spew to stderr, too, please
     Amanda::Debug::critical("morituri te salutamus");
     exit 1; # just in case
 }

@@ -4,7 +4,7 @@ use strict;
 use Amanda::Device qw( :constants );
 use Amanda::Config qw( :getconf :init );
 use Amanda::Debug qw( :logging );
-use Amanda::Util qw( :running_as_flags );
+use Amanda::Util qw( :constants );
 use Amanda::Paths;
 use Amanda::Constants;
 use Getopt::Long;
@@ -176,7 +176,7 @@ sub db_param {
     my ($parameter, $opt_list) = @_;
 
     if (my ($appname) = $parameter =~ /^dbopen\.(.*)/) {
-	Amanda::Util::setup_application($appname, "server", "cmdline");
+	Amanda::Util::setup_application($appname, "server", $CONTEXT_CMDLINE);
 	print Amanda::Debug::dbfn(), "\n";
     } elsif (my ($appname, $filename) = $parameter =~ /^dbclose\.([^:]*):(.*)/) {
 	fail("debug file $filename does not exist") unless (-f $filename);
@@ -248,7 +248,7 @@ if ($parameter =~ /^db(open|close)\./) {
 }
 
 # finally, finish up the application startup procedure
-Amanda::Util::setup_application("amgetconf", "server", "cmdline");
+Amanda::Util::setup_application("amgetconf", "server", $CONTEXT_SCRIPTUTIL);
 config_init($CONFIG_INIT_EXPLICIT_NAME | $CONFIG_INIT_USE_CWD, $config_name);
 apply_config_overwrites($config_overwrites);
 my ($cfgerr_level, @cfgerr_errors) = config_errors();

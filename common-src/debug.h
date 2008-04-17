@@ -53,8 +53,9 @@
  *  g_info -- helpful extra details, but not verbose
  *  g_debug -- debug messages
  *
- * g_error and g_critical will respect erroutput_type, potentially
- * sending the error to the Amanda logfile for this run (see logfile.c).
+ * g_error and g_critical will respect erroutput_type, or if that has not
+ * been set explicitly, the current process context (get_pcontext). This can
+ * mean sending the error to the Amanda logfile for this run (see logfile.c).
  */
 
 /* g_debug was introduced in glib 2.6, so define it here for systems where
@@ -70,6 +71,15 @@
 #define g_info(...) g_log (G_LOG_DOMAIN, G_LOG_LEVEL_INFO, __VA_ARGS__)
 #endif
 
+/* Initialize the debugging interface.  This is the "high-level"
+ * initialization function; older and lower-level applications can call
+ * dbopen() and friends directly.
+ *
+ * This function sets up debug logging and error-handling according to
+ * the current process name, type, and context, as defined in util.
+ */
+void debug_init(void);
+
 /*
  * FATAL ERROR HANDLING
  */
@@ -80,7 +90,8 @@
 #define errordump(...) do { g_error(__VA_ARGS__); abort(); } while (0)
 #define error(...) do { g_critical(__VA_ARGS__); exit(error_exit_status); } while (0)
 
-/* Additional handling for error and critical messages. */
+/* Additional handling for error and critical messages.  Leave this
+ * set to its default if you're using debug_init(). */
 typedef enum {
     /* send message to stderr (for interactive programs) */
     ERR_INTERACTIVE	= 1 << 0, /* (default) */
@@ -90,7 +101,12 @@ typedef enum {
 
     /* add an L_FATAL entry in the Amanda logfile for the 
      * current run */
-    ERR_AMANDALOG	= 1 << 2
+    ERR_AMANDALOG	= 1 << 2,
+
+    /* the default situation -- do whatever's appropriate for
+     * the current context.  If this is set, the other flags
+     * are ignored. */
+    ERR_FROM_CONTEXT	= 1 << 3,
 } erroutput_type_t;
 extern erroutput_type_t erroutput_type;
 
@@ -103,7 +119,7 @@ extern int error_exit_status;
  * ERR_AMANDALOG is set.
  *
  * This function is required because libamanda, which contains
- * debug.c, is not always linked with the logerror module 
+ * debug.c, is not always linked with the logerror module
  * (which only appears in server applications).
  *
  * @param logerror_fn: function pointer

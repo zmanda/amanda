@@ -27,7 +27,7 @@ use Amanda::Device qw( :constants );
 use Amanda::Debug qw( :logging );
 use Amanda::Config qw( :init :getconf config_dir_relative );
 use Amanda::Logfile;
-use Amanda::Util qw( :running_as_flags );
+use Amanda::Util qw( :constants );
 use Amanda::Tapelist;
 use Amanda::Changer;
 use Amanda::Constants;
@@ -279,7 +279,7 @@ sub find_validation_command {
 
 ## Application initialization
 
-Amanda::Util::setup_application("amcheckdump", "server", "cmdline");
+Amanda::Util::setup_application("amcheckdump", "server", $CONTEXT_CMDLINE);
 
 my $timestamp = undef;
 my $config_overwrites = new_config_overwrites($#ARGV+1);
