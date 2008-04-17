@@ -24,6 +24,10 @@ SYSCONFDIR=/etc
 LOCALSTATEDIR=/var
 AMHOMEDIR=$(LOCALSTATEDIR)/lib/amanda
 LOGDIR=$(LOCALSTATEDIR)/log/amanda
+# Extract the perl site_lib directory.  This is used to install amanda's perl 
+# libs. If configure finds a different install or you specify a different path using
+# --with-amperldir= make sure you change this variable as well.
+PERLSITELIB=$(shell perl -V:installsitelib|sed -e"s:installsitelib='/::;s:'\;::")
 AMANDAUSER=amandabackup
 AMANDAGROUP=disk
 WITHOUT_SERVER="False"
@@ -57,7 +61,6 @@ build-stamp: /sbin/dump /usr/bin/smbclient
 		--enable-shared \
 		--sysconfdir=$(SYSCONFDIR) \
 		--localstatedir=$(LOCALSTATEDIR)\
-		--with-star=/bin/star \
 		--with-gnutar-listdir=$(AMHOMEDIR)/gnutar-lists \
 		--with-index-server=localhost \
 		--with-tape-server=localhost \
@@ -118,26 +121,25 @@ binary-arch: build
 	dh_installchangelogs -v >> $(log) 2>&1
 	echo "---->dh_installdebconf: " >> $(log)
 	dh_installdebconf -v >> $(log) 2>&1
-	echo `pwd` >> $(log)
-	echo "---->dh_install -v: " >> $(log)
+	# Here's how we get the perl modules installed into sitelib
+	echo $(PERLSITELIB)/* >> debian/amanda-backup-server.install
+	echo "---->dh_install -v --fail-missing: " >> $(log)
 	dh_install -v --sourcedir=debian/amanda-common >> $(log) 2>&1
 	echo "---->dh_strip: " >> $(log)
 	dh_strip >> $(log) 2>&1
 	echo "---->dh_compress: " >> $(log)
 	dh_compress >> $(log) 2>&1
-	echo "---->dh_movefiles: " >> $(log)
-	dh_movefiles --sourcedir=debian/amanda-common >> $(log) 2>&1
 	echo "---->dh_fixperms: " >> $(log)
 	dh_fixperms -v >> $(log) 2>&1
 	# fix perms manually
 	chown -R $(AMANDAUSER):$(AMANDAGROUP) debian/*/var/lib/*
 	#chmod -R u=rwX,g=rwX,o-rwx debian/*/var/lib/*
-	chown -R $(AMANDAUSER):$(AMANDAGROUP) $(server)/$(LOGDIR)
+	chown -R $(AMANDAUSER):$(AMANDAGROUP) $(client)/$(LOGDIR) $(server)/$(LOGDIR)
 	#chmod -R u=rwX,g=rwX,o-rwx $(server)/$(LOGDIR)
-	chown -R $(AMANDAUSER):$(AMANDAGROUP) $(server)/$(SYSCONFDIR)/amanda
+	chown -R $(AMANDAUSER):$(AMANDAGROUP)  $(client)/$(SYSCONFDIR)/amanda $(server)/$(SYSCONFDIR)/amanda
 	#chmod -R u=rwX,g=rwX,o-rwx $(server)/$(SYSCONFDIR)/amanda
-	chown -R $(AMANDAUSER):$(AMANDAGROUP) $(client)/$(AMHOMEDIR)/gnutar-lists
-	chmod -R u=rwX,g=rwX,o-rwx $(client)/$(AMHOMEDIR)/gnutar-lists
+	chown -R $(AMANDAUSER):$(AMANDAGROUP) $(client)/$(AMHOMEDIR)/gnutar-lists $(server)/$(AMHOMEDIR)/gnutar-lists
+	chmod -R u=rwX,g=rwX,o-rwx  $(client)/$(AMHOMEDIR)/gnutar-lists $(server)/$(AMHOMEDIR)/gnutar-lists
 	# .. setuid
 	chown root:disk \
 		$(client)/$(AMLIBEXECDIR)/killpgrp \
@@ -173,6 +175,7 @@ binary-arch: build
 		$(server)/usr/share/lintian/overrides/amanda-backup-server
 	dh_makeshlibs  >> $(log) 2>&1
 	dh_installdeb >> $(log) 2>&1
+	dh_perl >> $(log) 2>&1
 	dh_shlibdeps -l"debian/$(r)/usr/lib:debian/$(client)/usr/lib:debian/$(server)/usr/lib" >> $(log) 2>&1
 	# strip out the non-versioned amanda-common references, we need
 	# the versioned ones in the control file and dupes are ugly...

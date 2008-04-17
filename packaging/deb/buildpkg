@@ -125,6 +125,5 @@ do_all() {
     do_package $1
 }
 
-do_build
 do_resources
 do_package

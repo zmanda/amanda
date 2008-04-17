@@ -68,14 +68,14 @@ else
 	echo "`date +'%b %e %Y %T'`:" >>${TMPFILE}
 	echo "`date +'%b %e %Y %T'`:  SHELL:          /bin/sh" >>${TMPFILE}
 	echo "`date +'%b %e %Y %T'`:  HOME:           /var/lib/amanda" >>${TMPFILE}
-	echo "`date +'%b %e %Y %T'`:  Default group:  ${amanda_group} " >>${TMPFILE}
+	echo "`date +'%b %e %Y %T'`:  Default group:  ${amanda_group}" >>${TMPFILE}
 	echo "`date +'%b %e %Y %T'`:  Verifying ${amanda_user} user parameters :" >>${TMPFILE}
 	
 
-        if [ "`id -gn ${amanda_user}`" != "${amanda_group} " ] ; then
+        if [ "`id -gn ${amanda_user}`" != "${amanda_group}" ] ; then
                 echo "`date +'%b %e %Y %T'`:  !!! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! !!!" >>${TMPFILE}
-                echo "`date +'%b %e %Y %T'`:  !!!  user '${amanda_user}' is not part of the ${amanda_group}  group,Pl !!!" >>${TMPFILE}
-                echo "`date +'%b %e %Y %T'`:  !!!  make sure it is corrected before start using amanda  !!!" >>${TMPFILE}
+                echo "`date +'%b %e %Y %T'`:  !!! user '${amanda_user}' is not part of the ${amanda_group} group, !!!" >>${TMPFILE}
+                echo "`date +'%b %e %Y %T'`:  !!! please make sure it is corrected before start using amanda  !!!" >>${TMPFILE}
                 echo "`date +'%b %e %Y %T'`:  !!! WARNING! WARNING! WARNING! WARNING! WARNING! WARNING! !!!" >>${TMPFILE}
         else
                 echo "`date +'%b %e %Y %T'`:  Verified group name of user '${amanda_user}'" >>${TMPFILE}
@@ -87,13 +87,13 @@ fi
 if [ -d /var/lib/amanda ] ; then
 	echo -n "`date +'%b %e %Y %T'`:  Checking ownership of '/var/lib/amanda'... " >>${TMPFILE}
 	if [ "`ls -dl /var/lib/amanda | awk '//{split($_,x); print x[3]}'`" = "${amanda_user}" ] && \
-	   [ "`ls -dl /var/lib/amanda | awk '//{split($_,x); print x[4]}'`" = "${amanda_group} " ] ; then
+	   [ "`ls -dl /var/lib/amanda | awk '//{split($_,x); print x[4]}'`" = "${amanda_group}" ] ; then
 		echo "correct." >>${TMPFILE}
 		VARLIB_OK=0
 	else
 		echo "incorrect!" >>${TMPFILE}
 		echo "`date +'%b %e %Y %T'`:  Please ensure that the directory '/var/lib/amanda' is owned by" >>${TMPFILE}
-		echo "`date +'%b %e %Y %T'`:  the user '${amanda_user}' and group '${amanda_group} '." >>${TMPFILE}
+		echo "`date +'%b %e %Y %T'`:  the user '${amanda_user}' and group '${amanda_group}'." >>${TMPFILE}
 		VARLIB_OK=1
 	fi
 else

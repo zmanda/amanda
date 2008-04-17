@@ -1,4 +1,16 @@
  2008-04-16  Dan Locks <dwlocks@zmanda.com>
+	* Fixes to debian package reported by daniel_P
+	* packaging/deb/preinst: remove spaces near ${amanda_group}
+	* packaging/deb/amanda-backup-server.dirs
+	  packaging/deb/amanda-backup-client.dirs: added var/amanda and
+	  usr/share/lintian/overrides
+	* packaging/deb/rules: added logic to find PERLSITELIB and append that
+	  to amanda-backup-server.install, removed broken brace expansion
+	* packaging/deb/buildpkg: removed extraneous configure step
+	* packaging/deb/amanda-backup-server.postinst: added check for correct
+	  permissions on /tmp/amanda
+
+ 2008-04-16  Dan Locks <dwlocks@zmanda.com>
  	* packaging/deb/rules packaging/rpm/amanda.spec: remove --with-gnutar=
 	  from configure invocation.  no longer necessary.
 
@@ -6,7 +18,7 @@
 	* device-src/s3.c config/amanda/s3-device.m4: test curl features
 	  at runtime, instead of compile time, and always use SSL if it
 	  is available.
-
+ 	  
 2008-04-16  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amadmin.c: Improve message.
 	* man/xml-source/amanda.conf.5.xml: Fix man page.
