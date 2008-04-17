@@ -5,6 +5,7 @@ LOGDIR="/var/log/amanda/"
 SYSCONFDIR="/etc"
 LOCALSTATEDIR="/var"
 AMHOMEDIR="${LOCALSTATEDIR}/lib/amanda"
+AMTMP="/tmp/amanda"
 amanda_user=amandabackup
 amanda_group=disk
 xinetd_reload="restart"
@@ -33,14 +34,20 @@ echo "`date +'%b %e %Y %T'`: Installing '${LOCALSTATEDIR}/amanda/amandates'."
 if [ ! -f ${LOCALSTATEDIR}/amanda/amandates ] ; then
 	touch ${LOCALSTATEDIR}/amanda/amandates || exit 1
 fi
-if [ ${ret_val} -eq 0 ]; then
-	echo "`date +'%b %e %Y %T'`: Ensuring correct permissions for '${LOCALSTATEDIR}/amanda/amandates'." 
-	chown ${amanda_user}:${amanda_group} ${LOCALSTATEDIR}/amanda/amandates || exit 1
-	chmod 0640 ${LOCALSTATEDIR}/amanda/amandates || exit 1
-	if [ -x /sbin/restorecon ] ; then
-	      /sbin/restorecon ${LOCALSTATEDIR}/amanda/amandates  || exit 1
-	fi
+echo "`date +'%b %e %Y %T'`: Ensuring correct permissions for '${LOCALSTATEDIR}/amanda/amandates'." 
+chown ${amanda_user}:${amanda_group} ${LOCALSTATEDIR}/amanda/amandates || exit 1
+chmod 0640 ${LOCALSTATEDIR}/amanda/amandates || exit 1
+if [ -x /sbin/restorecon ] ; then
+      /sbin/restorecon ${LOCALSTATEDIR}/amanda/amandates  || exit 1
 fi
+
+# Check for existence of and permissions on ${AMTMP}
+if [ ! -d ${AMTMP} ]; then
+       mkdir ${AMTMP} || exit 1
+fi
+echo "`date +'%b %e %Y %T'`: Ensuring correct permissions for '${AMTMP}'." 
+chown ${amanda_user}:${amanda_group} ${AMTMP} || exit 1
+chmod 0640 ${AMTMP} || exit 1
 
 # Install .gnupg directory
 echo "`date +'%b %e %Y %T'`: Installing '${AMHOMEDIR}/.gnupg'." 
