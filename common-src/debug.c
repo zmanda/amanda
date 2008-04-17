@@ -396,9 +396,10 @@ debug_setup_2(
 	/*
 	 * Make the first debug log file entry.
 	 */
-	debug_printf(_("pid %ld ruid %ld euid %ld: %s at %s"),
+	debug_printf(_("pid %ld ruid %ld euid %ld version %s: %s at %s"),
 		     (long)getpid(),
 		     (long)getuid(), (long)geteuid(),
+		     VERSION,
 		     annotation,
 		     ctime(&open_time));
     }

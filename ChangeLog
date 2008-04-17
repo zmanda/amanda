@@ -1,3 +1,6 @@
+2008-04-17  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/debug.c: add Amanda version to debug logs
+
 2008-04-16  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Util.swg common-src/util.c common-src/util.h: add
 	  process type and context process attributes
