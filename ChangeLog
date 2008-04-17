@@ -1,4 +1,8 @@
 2008-04-17  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Makefile.am: segregate installchecks that require
+	  both client and server components
+
+2008-04-17  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/debug.c: add Amanda version to debug logs
 
 2008-04-16  Dustin J. Mitchell <dustin@zmanda.com>

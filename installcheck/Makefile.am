@@ -19,14 +19,26 @@ server_tests = \
 	Amanda_Logfile \
 	Amanda_Tapelist \
 	bigint \
-	amcheckdump \
-	amdevcheck \
-	amdump \
 	amgetconf
 
+full_tests = \
+	amdevcheck \
+	amcheckdump \
+	amdump
+
+# tests requiring neither client nor server
 tests = $(common_tests)
+
+# tests requiring server
 if WANT_SERVER
 tests += $(server_tests)
+endif
+
+# tests requiring a client and a server (any tests that run amdump)
+if WANT_SERVER
+if WANT_CLIENT
+tests += $(full_tests)
+endif
 endif
 
 # Add any common files (that should not be run as tests) here:
