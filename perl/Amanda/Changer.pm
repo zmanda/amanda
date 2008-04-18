@@ -18,9 +18,12 @@
 
 package Amanda::Changer;
 
+use strict;
+use warnings;
 use Carp;
 use POSIX ();
 use Exporter;
+use vars qw( @ISA @EXPORT_OK );
 @ISA = qw( Exporter );
 
 @EXPORT_OK = qw(
@@ -30,8 +33,9 @@ use Exporter;
 
 use Amanda::Paths;
 use Amanda::Util;
+use Amanda::MainLoop qw( :GIOCondition );
+use Amanda::Config;
 use Amanda::Device qw( :constants );
-use Amanda::Config qw( :getconf );
 
 =head1 NAME
 
@@ -41,47 +45,71 @@ Amanda::Changer -- interface to changer scripts
 
   use Amanda::Changer;
 
+  TODO: REWRITE
+
   my ($error, $slot) = Amanda::Changer::reset();
 
-  my ($nslots, $curslot, $backwards, $searchable) = Amanda::Changer::query();
+  my ($error, $slot, $nslots, $backwards, $searchable) = Amanda::Changer::query();
 
-  my ($tpslot, $tpdevice) = Amanda::Changer::find("TAPE018");
+  my ($error, $tpslot, $tpdevice) = Amanda::Changer::find("TAPE018");
 
-  sub slot_callback {
-    my ($slot, $device, $error) = @_;
+  my $slot_callback = sub {
+    my ($slot, $device) = @_;
     if (!$error) print "Slot $slot: $device\n";
     return 0;
   }
-  Amanda::Changer::scan(\&slot_callback);
+  my $error = Amanda::Changer::scan($slot_callback);
 
 =head1 API STATUS
 
 Stable
 
-=head1 FUNCTIONS
+=head1 INTERFACE
 
-All of these functions return an array of values, beginning with
-C<$error>, and containing any other results appropriate to the
-operation.
+This module provides an object-oriented, event-based interface to changer
+scripts, unlike the C changer module.
 
-The functions C<croak()> in the event of a serious error (problems
-running the changer script, or an exit status of 2 or higher).
-"Benign" errors, corresponding to an exit status of 1 or a slot named
-"<error>", result in the return of a single-element array containing
-the error message.  Error-handling for calls can be written
+Objects correspond to an individual tape changer, so it is possible to control
+several changers independently using this module.  Objects are parameterized on
+the changer script, changer device, and changer file sa provided in the
+configuration file.
 
-C<$error> and C<$slot>.  The first is false unless a "benign"
-error, such as a positioning error, has occurred, in which case it
-contains the message from the changer script, and the other results
-are undefined.  C<$slot> is the first word returned from the changer
-script, and is usually a number, but occasionally a string such as
-"<none>".
+All operations in the module return immediately, and take as an argument a
+callback function which will indicate completion of the changer operation -- a
+kind of continuation.  The caller should run a main loop (see
+L<Amanda::MainLoop>) to allow the interactions with the changer script to
+continue.  Between the initiation of an operation and the subsequent completion
+callback, the changer object is considered "busy", and it is a programming
+error to initiate a new operation during that time.
+
+The completion callback functions' parameters vary depending on the operation,
+but the first parameter is always C<$error>.  This parameter contains an error
+string in the case of "benign" errors, corresponding to an exit status of 1 or
+a slot named "<error>".  In the normal case, it is zero.  All operations
+C<croak()> in the event of a serious error (problems running the changer
+script, or an exit status of 2 or higher). 
+
+Many callbacks also take a C<$slot> parameter.  This is the first word returned
+from the changer script, and is usually a number, but occasionally a string
+such as "<none>".
+
+A new object is created with the C<new> function as follows:
+
+  my $chg = Amanda::Changer->new($tpchanger);
+
+This is done in anticipation of the ability to control multiple tape changers
+simultaneously.  The current Changer API does not support this, as changer
+scripts access C<amanda.conf> directly to determine their changerdev and
+changerfile.  The following member functions are available.
 
 =over
 
 =item reset
 
-  my ($error, $slot) = reset();
+  $chg->reset(sub {
+    my ($error, $slot) = @_;
+    # ...
+  });
 
 Resets the tape changer, if supported, by calling
 
@@ -89,7 +117,10 @@ Resets the tape changer, if supported, by calling
 
 =item clean
 
-  my ($error, $slot) = clean();
+  $chg->clean(sub {
+    my ($error, $slot) = @_;
+    # ...
+  });
 
 Triggers a cleaning cycle, if supported, by calling
 
@@ -97,7 +128,10 @@ Triggers a cleaning cycle, if supported, by calling
 
 =item eject
 
-  my ($error, $slot) = eject();
+  $chg->eject(sub {
+    my ($error, $slot) = @_;
+    # ...
+  });
 
 Ejects the tape in the current slot, if supported, by calling
 
@@ -105,15 +139,22 @@ Ejects the tape in the current slot, if supported, by calling
 
 =item label
 
-  my ($error) = label($label);
+  $chg->label(sub {
+    my ($error) = @_;
+    # ...
+  });
 
-Inform the changer that the tape in the current slot is labeled C<$label>.  Calls
+Inform the changer that the tape in the current slot is labeled C<$label>.
+Calls
 
   $tpchanger -label $label
 
 =item query
 
-  my ($error, $slot, $nslots, $backwards, $searchable) = query();
+  $chg->query(sub {
+    my ($error, $slot, $nslots, $backwards, $searchable) = @_;
+    # ...
+  });
 
 Query the changer to determine the current slot (C<$slot>), the
 number of slots (C<$nslots>), whether it can move backward through tapes
@@ -127,17 +168,23 @@ This function runs
 
 =item loadslot
 
-  my ($error, $slot, $device) = loadslot($desired_slot);
+  $chg->loadslot($desired_slot, sub {
+    my ($error, $slot, $device) = @_;
+    # ...
+  });
 
-Load the tape in the given slot, returning its slot and device.
-C<$desired_slot> can be a numeric slot number or one of the symbolic
-names defined by the changer API, e.g., "next", "current", or "first".
+Load the tape in the given slot, calling back with its slot and device.
+C<$desired_slot> can be a numeric slot number or one of the symbolic names
+defined by the changer API, e.g., "next", "current", or "first".
 
   $tpchanger -slot $slot
 
 =item find
 
-  my ($error, $tpslot, $tpdevice) = Amanda::Changer::find($label);
+  $chg->find($label, sub {
+    my ($error, $tpslot, $tpdevice) = @_;
+    # ...
+  });
 
 Search the changer for a tape with the given label, returning with
 C<$tpslot = "<none>"> if the given label is not found.
@@ -153,148 +200,243 @@ found.
 
 =item scan
 
-  my ($error) = Amanda::Changer::scan(\&slot_callback);
+  my $each_slot_cb = sub {
+    my ($error, $slot, $device_name) = @_;
+    # ...
+  }
+  my $scan_done_cb = sub {
+    my ($error) = @_;
+    # ...
+  }
+  scan($each_slot_cb, $scan_done_cb);
 
-Call C<slot_callback> for all slots, beginning with the current slot,
-until C<slot_callback> returns a nonzero value or all slots are
-exhausted.  C<slot_callback> gets three arguments: a slot number, a
-device name for that slot, and a boolean value which is true if the
-changer successfully loaded the slot.
+Call C<each_slot_cb> for all slots, beginning with the current slot, until
+C<each_slot_cb> returns a true value or all slots are exhausted.
+C<each_slot_cb> gets three arguments: an error value, a slot number, and a
+device name for that slot.  Note that the callback may be called again after a
+call with a non-empty $error.  When all slots are scanned, or the
+C<each_slot_cb> returns true, C<scan_done_cb> is called to indicate completion
+of the operation.
 
 =cut
 
-sub reset {
-    my ($error, $slot, $rest) = run_tpchanger("-reset");
-    return ($error) if $error;
+sub new {
+    my $class = shift;
+    my ($tpchanger) = @_;
+    # extend the tape changer to a full path
+    if ($tpchanger !~ qr(^/)) {
+        $tpchanger = "$amlibexecdir/$tpchanger";
+    }
 
-    return (0, $slot);
+    my $self = {
+	tpchanger => $tpchanger,
+	busy => 0,
+    };
+    bless ($self, $class);
+    return $self;
+}
+
+sub reset {
+    my $self = shift;
+    my ($cb) = @_;
+
+    $self->run_tpchanger(
+	sub { $cb->(0, $_[0]); },
+	mk_fail_cb($cb),
+	"-reset");
 }
 
 sub clean {
-    my ($error, $slot, $rest) = run_tpchanger("-clean");
-    return ($error) if $error;
+    my $self = shift;
+    my ($cb) = @_;
 
-    return (0, $slot);
+    $self->run_tpchanger(
+	sub { $cb->(0, $_[0]); },
+	mk_fail_cb($cb),
+	"-clean");
 }
 
 sub eject {
-    my ($error, $slot, $rest) = run_tpchanger("-eject");
-    return ($error) if $error;
+    my $self = shift;
+    my ($cb) = @_;
 
-    return (0, $slot);
+    $self->run_tpchanger(
+	sub { $cb->(0, $_[0]); },
+	mk_fail_cb($cb),
+	"-eject");
 }
 
 sub label {
-    my ($label) = @_;
+    my $self = shift;
+    my ($label, $cb) = @_;
 
-    my ($error, $slot, $rest) = run_tpchanger("-label", $label);
-    return ($error) if $error;
-
-    return (0);
+    $self->run_tpchanger(
+	sub { $cb->(0); },
+	mk_fail_cb($cb),
+	"-label", $label);
 }
 
 sub query {
-    my ($error, $slot, $rest) = run_tpchanger("-info");
-    return ($error) if $error;
+    my $self = shift;
+    my ($cb) = @_;
 
-    # old, unsearchable changers don't return the third result, so it's optional in the regex
-    $rest =~ /(\d+) (\d+) ?(\d+)?/ or croak("Malformed response from changer -seek: $rest");
+    my $success_cb = sub {
+	my ($slot, $rest) = @_;
+	# old, unsearchable changers don't return the third result, so it's
+	# optional in the regex
+	$rest =~ /(\d+) (\d+) ?(\d+)?/ or 
+	    croak("Malformed response from changer -seek: $rest");
 
-    # return array: error, nslots, curslot, backwards, searchable
-    return (0, $slot, $1, $2, $3?1:0);
+	# callback params: error, nslots, curslot, backwards, searchable
+	$cb->(0, $slot, $1, $2, $3?1:0);
+    };
+    $self->run_tpchanger($success_cb, mk_fail_cb($cb), "-info");
 }
 
 sub loadslot {
-    my ($desired_slot) = @_;
+    my $self = shift;
+    my ($desired_slot, $cb) = @_;
 
-    my ($error, $slot, $rest) = run_tpchanger("-slot", $desired_slot);
-    return ($error) if $error;
-
-    return (0, $slot, $rest);
+    $self->run_tpchanger(
+	sub { $cb->(0, @_); },
+	mk_fail_cb($cb), 
+	"-slot", $desired_slot);
 }
 
 sub find {
-    my ($label) = @_;
+    my $self = shift;
+    my ($label, $cb) = @_;
 
-    my ($error, $curslot, $nslots, $backwards, $searchable) = query();
-    return ($error) if $error;
+    $self->query(sub {
+	my ($error, $curslot, $nslots, $backwards, $searchable) = @_;
+	if ($error) {
+	    $cb->($error);
+	    return;
+	}
 
-    if ($searchable) {
-        # search using the barcode reader, etc.
-        my ($error, $slot, $rest) = run_tpchanger("-search", $label);
-        return ($error) if $error;
-        return ($error, $slot, $rest);
-    } else {
-        # search manually, starting with "current"
-        my $slotstr = "current";
-        for (my $checked = 0; $checked < $nslots; $checked++) {
-            my ($error, $slot, $rest) = run_tpchanger("-slot", $slotstr);
-            $slotstr = "next";
+	if ($searchable) {
+	    # search using the barcode reader, etc.
+	    $self->run_tpchanger(
+		sub { $cb->(0, @_); },
+		mk_fail_cb($cb),
+		"-search", $label);
+	} else {
+	    # search manually, starting with "current".  This is complicated, because
+	    # it's an event-based loop.
+	    my $nchecked = 0;
+	    my $check_slot;
 
-            # ignore "benign" errors
-            next if $error;
+	    $check_slot = sub {
+		my ($error, $slot, $devname) = @_;
 
-            my $device = Amanda::Device->new($rest);
-            next if (!$device);
-            next if ($device->read_label() != $READ_LABEL_STATUS_SUCESS);
+		TRYSLOT: {
+		    # ignore "benign" errors
+		    next TRYSLOT if $error;
 
-            # we found it!
-            if ($device->{'volume_label'} eq $label) {
-                return (0, $slot, $rest);
-            }
-        }
+		    my $device = Amanda::Device->new($devname);
+		    next TRYSLOT unless $device;
+		    next TRYSLOT if ($device->read_label() != $READ_LABEL_STATUS_SUCCESS);
+		    next TRYSLOT unless ($device->{'volume_label'} eq $label);
 
-        croak("Label $label not found in any slot");
-    }
+		    # we found the correct slot
+		    $cb->(0, $slot, $devname);
+		    return;
+		}
+
+		# on to the next slot
+		if (++$nchecked >= $nslots) {
+		    croak("Label $label not found in any slot");
+		} else {
+		    # loop again with the next slot
+		    $self->loadslot("next", $check_slot);
+		}
+	    };
+	    # kick off the loop with the current slot
+	    $self->loadslot("current", $check_slot);
+	}
+    });
 }
 
 sub scan {
-    my ($slot_callback) = @_;
+    my $self = shift;
+    my ($each_slot_cb, $scan_done_cb) = @_;
 
-    my ($error, $curslot, $nslots, $backwards, $searchable) = query();
-    return ($error) if $error;
+    $self->query(sub {
+	my ($error, $curslot, $nslots, $backwards, $searchable) = @_;
+	if ($error) {
+	    # callback with an error
+	    $scan_done_cb->($error);
+	    return;
+	}
 
-    my $slotstr = "current";
-    my $done = 0;
-    for (my $checked = 0; $checked < $nslots; $checked++) {
-        my ($error, $slot, $rest) = run_tpchanger("-slot", $slotstr);
-        $slotstr = "next";
+	# set up an event-based loop to call the user's callback for
+	# each slot
+	my $loadslot_cb;
+	my $nchecked = 0;
 
-        if ($error) {
-            $done = $slot_callback->(undef, undef, $error);
-        } else {
-            $done = $slot_callback->($slot, $rest, 0);
-        }
+	$loadslot_cb = sub {
+	    my ($error, $slot, $devname) = @_;
+	    my $each_result = $each_slot_cb->($error, $slot, $devname);
 
-        last if $done;
+	    if (!$each_result and ++$nchecked < $nslots) {
+		# loop again with the next slot
+		$self->loadslot("next", $loadslot_cb);
+	    } else {
+		# finished
+		$scan_done_cb->(0);
+	    }
+	};
+	# kick off the loop with the current slot
+	$self->loadslot("current", $loadslot_cb);
+    });
+}
+
+# Internal-use function to create a failure sub that will croak on
+# a serious error and call the callback properly for benign errors
+sub mk_fail_cb {
+    my ($cb) = @_;
+    return sub {
+	my ($exitval, $message) = @_;
+	croak($message) if ($exitval > 1);
+	$cb->($message);
     }
-    
-    return (0);
 }
 
 # Internal-use function to actually invoke a changer script and parse 
-# its output.  If the script's exit status is neither 0 nor 1, or if an error
-# occurs running the script, then run_tpchanger croaks with the error message.
+# its output.  
 #
+# @param $success_cb: called with ($slot, $rest) on success
+# @param $failure_cb: called with ($exitval, $message) on any failure
 # @params @args: command-line arguments to follow the name of the changer
 # @returns: array ($error, $slot, $rest), where $error is an error message if
 #       a benign error occurred, or 0 if no error occurred
 sub run_tpchanger {
+    my $self = shift;
+    my $success_cb = shift;
+    my $failure_cb = shift;
     my @args = @_;
 
-    # get the tape changer and extend it to a full path
-    my $tapechanger = getconf($CNF_TPCHANGER);
-    if ($tapechanger !~ qr(^/)) {
-        $tapechanger = "$amlibexecdir/$tapechanger";
+    if ($self->{'busy'}) {
+	croak("Changer is already in use");
     }
 
-    my $pid = open(my $child, "-|");
-    if (!defined($pid)) {
+    my ($readfd, $writefd) = POSIX::pipe();
+    if (!defined($writefd)) {
+	croak("Error creating pipe to run changer script: $!");
+    }
+
+    my $pid = fork();
+    if (!defined($pid) or $pid < 0) {
         croak("Can't fork to run changer script: $!");
     }
 
     if (!$pid) {
-        # child
+        ## child
+
+	# get our file-handle house in order
+	POSIX::close($readfd);
+	POSIX::dup2($writefd, 1);
+	POSIX::close($writefd);
 
         # cd into the config dir, if one exists
         # TODO: construct a "fake" config dir including any "-o" overrides
@@ -308,40 +450,101 @@ sub run_tpchanger {
 
         %ENV = Amanda::Util::safe_env();
 
-        exec { $tapechanger } $tapechanger, @args or
-            print "<error> Could not exec $tapechanger: $!\n";
+	my $tpchanger = $self->{'tpchanger'};
+        { exec { $tpchanger } $tpchanger, @args; } # braces protect against warning
+
+	my $err = "<error> Could not exec $tpchanger: $!\n";
+	POSIX::write($writefd, $err, length($err));
         exit 2;
     }
 
-    # parent
-    my @child_output = <$child>;
+    ## parent
 
-    # close the child and get its exit status
-    my $child_exit = 0;
-    if (!close($child)) {
-        if ($!) {
-            croak("Error running changer script: $!");
-        } else {
-            $child_exit = $?;
-        }
-    }
+    # clean up file descriptors from the fork
+    POSIX::close($writefd);
 
-    # parse the response
-    croak("Malformed output from changer script -- no output")
-        if (@child_output < 1);
-    croak("Malformed output from changer script -- too many lines")
-        if (@child_output > 1);
-    croak("Malformed output from changer script: '$child_output[0]'")
-        if ($child_output[0] !~ /\s*([^\s]+)\s+(.+)?/);
-    my ($slot, $rest) = ($1, $2);
+    # mark this object as "busy", so we can't begin another operation
+    # until this one is finished.
+    $self->{'busy'} = 1;
 
-    if ($child_exit == 0) {
-        return (0, $slot, $rest);
-    } elsif (POSIX::WIFEXITED($child_exit) && POSIX::WEXITSTATUS($child_exit) == 1) {
-        return ($rest); # non-fatal error
-    } else {
-        croak("Fatal error from changer script: $rest");
-    }
+    # the callbacks that follow share these lexical variables
+    my $child_eof = 0;
+    my $child_output = '';
+    my $child_dead = 0;
+    my $child_exit_status = 0;
+    my ($fdsrc, $cwsrc);
+    my ($maybe_finished, $fd_source_cb, $child_watch_source_cb);
+
+    # Perl note: we have to use anonymous subs here, as they are instantiated
+    # at runtime, rather than at compile time.
+
+    $maybe_finished = sub {
+	return unless $child_eof;
+	return unless $child_dead;
+
+	# everything is finished -- process the results and invoke the callback
+	chomp $child_output;
+
+	# handle fatal errors
+	if (!POSIX::WIFEXITED($child_exit_status) || POSIX::WEXITSTATUS($child_exit_status) > 1) {
+	    $failure_cb->(POSIX::WEXITSTATUS($child_exit_status),
+		"Fatal error from changer script: ".$child_output);
+	}
+
+	# parse the child's output
+	my @child_output = split '\n', $child_output;
+	$failure_cb->(2, "Malformed output from changer script -- no output")
+	    if (@child_output < 1);
+	$failure_cb->(2, "Malformed output from changer script -- too many lines")
+	    if (@child_output > 1);
+	$failure_cb->(2, "Malformed output from changer script: '$child_output[0]'")
+	    if ($child_output[0] !~ /\s*([^\s]+)(?:\s+(.+))?/);
+	my ($slot, $rest) = ($1, $2);
+
+	# mark this object as no longer busy.  This frees the
+	# object up to begin the next operation, which may happen
+	# during the invocation of the callback
+	$self->{'busy'} = 0;
+
+	# let the callback take care of any further interpretation
+	my $exitval = POSIX::WEXITSTATUS($child_exit_status);
+	if ($exitval == 0) {
+	    $success_cb->($slot, $rest);
+	} else {
+	    $failure_cb->($exitval, $rest);
+	}
+    };
+
+    $fdsrc = Amanda::MainLoop::fd_source($readfd, $G_IO_IN | $G_IO_ERR | $G_IO_HUP);
+    $fd_source_cb = sub {
+	my ($len, $bytes);
+	$len = POSIX::read($readfd, $bytes, 1024);
+
+	# if we got an EOF, shut things down.
+	if ($len == 0) {
+	    $child_eof = 1;
+	    POSIX::close($readfd);
+	    $fdsrc->remove();
+	    $fdsrc = undef; # break a reference loop
+	    $maybe_finished->();
+	} else {
+	    # otherwise, just keep the bytes
+	    $child_output .= $bytes;
+	}
+    };
+    $fdsrc->set_callback($fd_source_cb);
+
+    $cwsrc = Amanda::MainLoop::child_watch_source($pid);
+    $child_watch_source_cb = sub {
+	my ($got_pid, $got_status) = @_;
+	$cwsrc->remove();
+	$cwsrc = undef; # break a reference loop
+	$child_dead = 1;
+	$child_exit_status = $got_status;
+
+	$maybe_finished->();
+    };
+    $cwsrc->set_callback($child_watch_source_cb);
 }
 
 1;

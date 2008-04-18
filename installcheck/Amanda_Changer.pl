@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 16;
+use Test::More tests => 20;
 use File::Path;
 use strict;
 
@@ -25,6 +25,7 @@ use Installcheck::Config;
 use Amanda::Paths;
 use Amanda::Device;
 use Amanda::Debug;
+use Amanda::MainLoop;
 use Amanda::Config qw( :init :getconf config_dir_relative );
 use Amanda::Changer;
 
@@ -50,16 +51,6 @@ sub setup_changer {
     chmod 0755, $changer_filename;
 }
 
-# set up and load a simple config with a tpchanger
-my $testconf = Installcheck::Config->new();
-$testconf->add_param('tpchanger', "\"$changer_filename\"");
-$testconf->write();
-config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF") == $CFGERR_OK
-    or die("Could not load config");
-
-# some variables we'll need
-my ($error, $slot, $device);
-
 # OK, let's get started with some simple stuff
 setup_changer <<'EOC';
 case "${1}" in
@@ -67,8 +58,7 @@ case "${1}" in
         case "${2}" in
             1) echo "1 fake:1"; exit 0;;
             2) echo "<ignored> slot 2 is empty"; exit 1;;
-            3) echo "<error> oh noes!"; exit 2;;
-            4) echo "1"; exit 0;; # test missing 'device' portion
+            3) echo "1"; exit 0;; # test missing 'device' portion
         esac;;
     -reset) echo "reset ignored";;
     -eject) echo "eject ignored";;
@@ -87,36 +77,63 @@ case "${1}" in
 esac
 EOC
 
-is_deeply([ Amanda::Changer::loadslot(1) ], [0, "1", "fake:1"],
+my $chg = Amanda::Changer->new($changer_filename);
+
+# a callback that just stores a ref to its arguments in $result.
+my $result;
+sub keep_result_cb { 
+    $result = [ @_ ]; 
+    Amanda::MainLoop::quit();
+}
+
+$chg->loadslot(1, \&keep_result_cb);
+Amanda::MainLoop::run();
+is_deeply($result, [0, "1", "fake:1"],
     "A successful loadslot() returns the right stuff");
 
-($error, $slot, $device) = Amanda::Changer::loadslot(2);
-is($error, "slot 2 is empty", "A loadslot() with a benign error returns the right stuff");
+$chg->loadslot(2, \&keep_result_cb);
+Amanda::MainLoop::run();
+is($result->[0], "slot 2 is empty",
+    "A loadslot() with a benign error returns the right stuff");
 
-eval { Amanda::Changer::loadslot(3); };
-like($@, qr/.*oh noes!.*/, "A loadslot() with a serious error croaks");
-
-is_deeply([ Amanda::Changer::loadslot(4) ], [0, "1", undef],
+$chg->loadslot(3, \&keep_result_cb);
+Amanda::MainLoop::run();
+is_deeply($result, [0, "1", undef],
     "a response without a device string returns undef");
 
-is_deeply([ Amanda::Changer::reset() ], [ 0, "reset" ],
+$chg->reset(\&keep_result_cb);
+Amanda::MainLoop::run();
+is_deeply($result, [ 0, "reset" ],
     "reset() calls tapechanger -reset");
-is_deeply([ Amanda::Changer::eject() ], [ 0, "eject" ],
+
+$chg->eject(\&keep_result_cb);
+Amanda::MainLoop::run();
+is_deeply($result, [ 0, "eject" ],
     "eject() calls tapechanger -eject");
-is_deeply([ Amanda::Changer::clean() ], [ 0, "clean" ],
+
+$chg->clean(\&keep_result_cb);
+Amanda::MainLoop::run();
+is_deeply($result, [ 0, "clean" ],
     "clean() calls tapechanger -clean");
 
-is_deeply([ Amanda::Changer::label("foo bar") ], [ 0 ],
+$chg->label("foo bar", \&keep_result_cb);
+Amanda::MainLoop::run();
+is_deeply($result, [ 0 ],
     "label('foo bar') calls tapechanger -label 'foo bar' (note spaces)");
 
-is_deeply([ Amanda::Changer::query() ], [ 0, 7, 10, 1, 1 ],
+$chg->query(\&keep_result_cb);
+Amanda::MainLoop::run();
+is_deeply($result, [ 0, 7, 10, 1, 1 ],
     "query() returns the correct values for a 4-value changer script");
 
-is_deeply([ Amanda::Changer::find("TAPE 01") ], [ 0, "5", "fakedev" ],
+$chg->find("TAPE 01", \&keep_result_cb);
+Amanda::MainLoop::run();
+is_deeply($result, [ 0, "5", "fakedev" ],
     "find on a searchable changer invokes -search");
 
-eval { Amanda::Changer::find("TAPE 02") };
-ok($@, "A searchable changer croaks when the label can't be found");
+# TODO
+#eval { Amanda::Changer::find("TAPE 02") };
+#ok($@, "A searchable changer croaks when the label can't be found");
 
 # Now a simple changer that returns three values for -info
 setup_changer <<'EOC';
@@ -125,7 +142,9 @@ case "${1}" in
 esac
 EOC
 
-is_deeply([ Amanda::Changer::query() ], [ 0, 11, 13, 0, 0 ],
+$chg->query(\&keep_result_cb);
+Amanda::MainLoop::run();
+is_deeply($result, [ 0, 11, 13, 0, 0 ],
     "query() returns the correct values for a 4-value changer script");
 
 # set up 5 vtapes
@@ -185,45 +204,71 @@ echo SLOT=$SLOT > $STATEFILE
 exit $EXIT
 EOC
 
-($error, $slot, $device) = Amanda::Changer::loadslot(0);
-if ($error) { die("Error loading slot 0: $error"); }
-is_deeply([ Amanda::Changer::find("TAPE3") ], [0, "3", "file:$AMANDA_TMPDIR/chg-test-tapes/3"],
+
+$chg->loadslot(0, sub {
+    my ($error, $slot, $device) = @_;
+    die("Error loading slot 0: $error") if $error;
+    $chg->find("TAPE3", \&keep_result_cb);
+});
+Amanda::MainLoop::run();
+is_deeply($result, [0, "3", "file:$AMANDA_TMPDIR/chg-test-tapes/3"],
     "Finds a tape after skipping an empty slot");
 
-($error, $slot, $device) = Amanda::Changer::loadslot(3);
-if ($error) { die("Error loading slot 3: $error"); }
-is_deeply([ Amanda::Changer::find("TAPE1") ], [0, "1", "file:$AMANDA_TMPDIR/chg-test-tapes/1"],
+$chg->loadslot(3, sub {
+    my ($error, $slot, $device) = @_;
+    die("Error loading slot 3: $error") if $error;
+    $chg->find("TAPE1", \&keep_result_cb);
+});
+Amanda::MainLoop::run();
+is_deeply($result, [0, "1", "file:$AMANDA_TMPDIR/chg-test-tapes/1"],
     "Finds a tape after skipping an unlabeled but filled slot");
 
 my @scanresults;
-sub cb {
-    fail("called too many times") if (!@scanresults);
+my $scan_cb;
+
+# scan the whole changer
+@scanresults = (
+    [ 0,            "0", "file:$AMANDA_TMPDIR/chg-test-tapes/0", 0, "scan starts with slot 0" ],
+    [ 0,            "1", "file:$AMANDA_TMPDIR/chg-test-tapes/1", 0, "next in slot 1" ],
+    [ "slot 2 is empty", undef, undef,                           0, "slot 2 is empty" ],
+    [ 0,            "3", "file:$AMANDA_TMPDIR/chg-test-tapes/3", 0, "next in slot 3" ],
+    [ 0,            "4", "file:$AMANDA_TMPDIR/chg-test-tapes/4", 0, "next in slot 4" ],
+);
+
+$scan_cb = sub {
+    die("Callback called too many times") if (!@scanresults);
     my $expected = shift @scanresults;
     my $descr = pop @$expected;
     my $done = pop @$expected;
     is_deeply([ @_ ], $expected, $descr);
-    return 1;
-}
+    return $done;
+};
 
-# scan the whole changer
-($error, $slot, $device) = Amanda::Changer::loadslot(0);
-if ($error) { die("Error loading slot 0: $error"); }
-@scanresults = (
-    [ "0", "file:$AMANDA_TMPDIR/chg-test-tapes/0", 0, 0, "scan starts with slot 0" ],
-    [ "1", "file:$AMANDA_TMPDIR/chg-test-tapes/1", 0, 0, "next in slot 1" ],
-    [ undef, undef, "slot 2 is empty",                0, "slot 2 is empty" ],
-    [ "3", "file:$AMANDA_TMPDIR/chg-test-tapes/3", 0, 0, "next in slot 3" ],
-    [ "4", "file:$AMANDA_TMPDIR/chg-test-tapes/4", 0, 0, "next in slot 4" ],
-);
-Amanda::Changer::scan(\&cb);
+my $scan_done_cb = sub {
+    my ($error) = @_;
+    die ($error) if ($error);
+    is_deeply([ @scanresults ], [], "scan_done_cb called when scan is done");
+    Amanda::MainLoop::quit();
+};
 
-# make sure it stops when "done"
-($error, $slot, $device) = Amanda::Changer::loadslot(0);
-if ($error) { die("Error loading slot 0: $error"); }
+$chg->loadslot(0, sub {
+    my ($error, $slot, $device) = @_;
+    die("Error loading slot 0: $error") if $error;
+    $chg->scan($scan_cb, $scan_done_cb);
+});
+Amanda::MainLoop::run();
+
+# make sure the scan stops when $scan_cb returns 1
+
 @scanresults = (
-    [ "0", "file:$AMANDA_TMPDIR/chg-test-tapes/0", 0, 1, "scan starts with slot 0" ],
+    [ 0, "0", "file:$AMANDA_TMPDIR/chg-test-tapes/0", 1, "scan starts with slot 0" ],
 );
-Amanda::Changer::scan(\&cb);
+$chg->loadslot(0, sub {
+    my ($error, $slot, $device) = @_;
+    die("Error loading slot 0: $error") if $error;
+    $chg->scan($scan_cb, $scan_done_cb);
+});
+Amanda::MainLoop::run();
 
 # cleanup
 unlink("$AMANDA_TMPDIR/chg-test");

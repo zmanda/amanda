@@ -85,23 +85,43 @@ sub find_logfile_name($) {
 
 ## Device management
 
-my $changer_init_done = 0;
+my $changer;
 my $current_device;
 my $current_device_label;
 
 sub find_next_device {
     my $label = shift;
     if (getconf_seen($CNF_TPCHANGER)) {
-	# We're using a changer script.
-	if (!$changer_init_done) {
-	    my $error = (Amanda::Changer::reset())[0];
+	my $reset_done_cb;
+	my $find_done_cb;
+	my ($slot, $tapedev);
+
+	$reset_done_cb = sub {
+	    my ($error) = @_;
 	    die($error) if $error;
-	    $changer_init_done = 1;
+
+	    $changer->find($label, $find_done_cb);
+	};
+
+	$find_done_cb = sub {
+	    (my $error, $slot, $tapedev) = @_;
+	    die($error) if $error;
+	    Amanda::MainLoop::quit();
+	};
+
+	# if the changer hasn't been created yet, set it up and reset it
+	if (!$changer) {
+	    $changer = Amanda::Changer->new(getconf($CNF_TPCHANGER));
+	    $changer->reset($reset_done_cb);
+	} else {
+	    $changer->find($label, $find_done_cb);
 	}
-	my ($error, $slot, $tapedev) = Amanda::Changer::find($label);
-	if ($error) {
-	    die("Error operating changer: $error.");
-	} elsif ($slot eq "<none>") {
+
+	# let the mainloop run until the find is done.  This is a temporary
+	# hack until all of amcheckdump is event-based.
+	Amanda::MainLoop::run();
+
+	if ($slot eq "<none>") {
 	    die("Could not find tape label $label in changer.");
 	} else {
 	    return $tapedev;

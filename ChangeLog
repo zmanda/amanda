@@ -1,4 +1,12 @@
 2008-04-18  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Changer.pm: rewrite Amanda::Changer to use
+	  Amanda::MainLoop, allowing asynchronous operation of 
+	  changers
+	* server-src/amcheckdump.pl: use new Amanda::Changer 
+	  interface (synchronously, until we have Amanda::Xfer)
+	* installcheck/Amanda_Changer.pl: test new interface
+
+2008-04-18  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Makefile.am: build $(full_tests) too
 
 2008-04-18  Cyrille Bollu <Cyrille.Bollu@fedasil.be>
