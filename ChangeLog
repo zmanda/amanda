@@ -1,3 +1,6 @@
+2008-04-18  Cyrille Bollu <Cyrille.Bollu@fedasil.be>
+	* client-src/sendsize.c: use --numeric-owner during 'sendsize'
+
 2008-04-17  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Makefile.am: segregate installchecks that require
 	  both client and server components

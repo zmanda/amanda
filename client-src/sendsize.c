@@ -1958,6 +1958,9 @@ getsize_gnutar(
     my_argv[i++] = "--create";
     my_argv[i++] = "--file";
     my_argv[i++] = "/dev/null";
+    /* use --numeric-owner for estimates, to reduce the number of user/group
+     * lookups required */
+    my_argv[i++] = "--numeric-owner";
     my_argv[i++] = "--directory";
     canonicalize_pathname(dirname, tmppath);
     my_argv[i++] = tmppath;
