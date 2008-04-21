@@ -1,3 +1,8 @@
+2008-04-21  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/amgetconf.pl: properly quote filenames in
+	  regex, to avoid spurious failures when e.g., '+' appears
+	  in the filename
+
 2008-04-18  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Changer.pm: rewrite Amanda::Changer to use
 	  Amanda::MainLoop, allowing asynchronous operation of 

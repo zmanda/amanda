@@ -99,7 +99,7 @@ is(run_get('amgetconf', "build.bindir"), $bindir, "build variables are available
 # dbopen, dbclose
 my $dbfile = run_get('amgetconf', 'TESTCONF', "dbopen.foo");
 chomp $dbfile;
-like($dbfile, qr(^$AMANDA_DBGDIR/server/foo.[0-9]*.debug$),
+like($dbfile, qr(^\Q$AMANDA_DBGDIR\E/server/foo.[0-9]*.debug$),
     "'amgetconf dbopen.foo' returns a proper debug filename");
 SKIP: {
     skip "dbopen didn't work, so I'll skip the rest", 2
