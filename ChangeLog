@@ -1,4 +1,9 @@
 2008-04-22  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/event.c: on glib <2.4.0, use a simple polling 
+	  child_watch_source; on more recent glib, use glib's own
+	  child_watch_source
+
+2008-04-22  Dustin J. Mitchell <dustin@zmanda.com>
 	* xfer-src/source-random.c xfer-src/xmsg.c xfer-src/xfer-element.h
 	  xfer-src/xfer-dest.c xfer-src/xfer-test.c xfer-src/xmsg.h
 	  xfer-src/xfer.c xfer-src/xfer-dest.h xfer-src/dest-null.c

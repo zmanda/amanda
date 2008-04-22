@@ -471,47 +471,44 @@ new_fdsource(gint fd, GIOCondition events)
  * optionally using that, protected by a GLIB_CHECK_VERSION condition.
  */
 
+/* Versions before glib-2.4.0 didn't include a child watch source, so we implement
+ * a "dumb" version of such for those versions.  This is dumb in the sense that it
+ * doesn't use SIGCHLD to detect a dead child, preferring to just poll at
+ * exponentially increasing interals.  Writing a smarter implementation runs into
+ * some tricky race conditions and extra machinery.  Since there are few, if any,
+ * users of a glib version this old, such machinery wouldn't get much testing.
+ */
+#if (GLIB_MAJOR_VERSION < 2 || (GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION < 4))
 typedef struct ChildWatchSource {
     GSource source; /* must be the first element in the struct */
 
     pid_t pid;
 
-    gint last_checked; /* value of child_watch_counter before last check */
-
     gint dead;
     gint status;
+
+    gint timeout;
 } ChildWatchSource;
 
-static gint child_watch_counter = 0;
-
-static gboolean
-child_watch_check(
-    ChildWatchSource *cws)
-{
-    if (cws->dead) return TRUE;
-
-    /* have we gotten a sigchld since we last checked? */
-    if (cws->last_checked != child_watch_counter) {
-	cws->last_checked = child_watch_counter;
-
-	/* is it dead? */
-	if (waitpid(cws->pid, &cws->status, WNOHANG) > 0) {
-	    cws->dead = TRUE;
-	}
-    }
-
-    return cws->dead;
-}
+/* this corresponds to rapid checks for about 10 seconds, after which the
+ * waitpid() check occurs every 2 seconds. */
+#define CWS_BASE_TIMEOUT 20
+#define CWS_MULT_TIMEOUT 1.1
+#define CWS_MAX_TIMEOUT 2000
 
 static gboolean
 child_watch_source_prepare(
-    GSource *source G_GNUC_UNUSED,
+    GSource *source,
     gint *timeout_)
 {
     ChildWatchSource *cws = (ChildWatchSource *)source;
 
-    *timeout_ = -1;
-    return child_watch_check(cws);
+    *timeout_ = cws->timeout;
+
+    cws->timeout *= CWS_MULT_TIMEOUT;
+    if (cws->timeout > CWS_MAX_TIMEOUT) cws->timeout = CWS_MAX_TIMEOUT;
+
+    return FALSE;
 }
 
 static gboolean
@@ -520,7 +517,12 @@ child_watch_source_check(
 {
     ChildWatchSource *cws = (ChildWatchSource *)source;
 
-    return child_watch_check(cws);
+    /* is it dead? */
+    if (!cws->dead && waitpid(cws->pid, &cws->status, WNOHANG) > 0) {
+	cws->dead = TRUE;
+    }
+
+    return cws->dead;
 }
 
 static gboolean
@@ -547,25 +549,12 @@ child_watch_source_dispatch(
     return TRUE;
 }
 
-static void
-child_watch_source_sigchld(
-    int signal G_GNUC_UNUSED)
-{
-    /* just increment the counter to indicate something's happened,
-     * and wake the mainloop up */
-    child_watch_counter++;
-
-    g_main_context_wakeup(NULL);
-}
-
 GSource *
 new_child_watch_source(pid_t pid)
 {
     static GSourceFuncs *child_watch_source_funcs = NULL;
-    static gboolean sig_handler_installed = FALSE;
     GSource *src;
     ChildWatchSource *cws;
-    struct sigaction act, oact;
 
     /* initialize these here to avoid a compiler warning */
     if (!child_watch_source_funcs) {
@@ -579,35 +568,16 @@ new_child_watch_source(pid_t pid)
     cws = (ChildWatchSource *)src;
 
     cws->pid = pid;
-    /* force a check in case child is already dead */
-    cws->last_checked = child_watch_counter - 1;
     cws->dead = FALSE;
-
-    /* install the SIGCHLD handler every time, in case someone else 
-     * (like perl, for example) resets it. */
-    sigemptyset(&act.sa_mask);
-    act.sa_handler = child_watch_source_sigchld;
-#ifdef SA_RESTART
-    act.sa_flags = SA_NOCLDSTOP | SA_RESTART;
-#else
-    act.sa_flags = SA_NOCLDSTOP;
-#endif
-    if(sigaction(SIGCHLD, &act, &oact) != 0){
-	g_critical("error setting SIGCHLD handler: %s", strerror(errno));
-	/*NOTREACHED*/
-    }
-
-    if (sig_handler_installed) {
-	/* if we've already installed it once, then oact should point
-	 * to our handler */
-	if (oact.sa_handler != child_watch_source_sigchld) {
-	    g_warning("BUG: child_watch_source's SIGCHLD handler was replaced; please report this!");
-	    /* increment the counter -- we may have missed a child's death */
-	    child_watch_counter++;
-	}
-    } else {
-	sig_handler_installed = TRUE;
-    }
+    cws->timeout = CWS_BASE_TIMEOUT;
 
     return src;
 }
+#else
+/* In more recent versions of glib, we just use the built-in glib source */
+GSource *
+new_child_watch_source(pid_t pid)
+{
+    return g_child_watch_source_new(pid);
+}
+#endif
