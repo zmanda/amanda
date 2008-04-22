@@ -1,3 +1,7 @@
+2008-04-21  Dan Locks <dwlocks@zmanda.com>
+	* packaging/deb/buildpkg: modified build script to create unsigned
+	  packages
+  
 2008-04-21  Jean-Louis Martineau <martineau@zmanda.com>
 	* changer-src/chg-lib.sh.in (amdevcheck_status):
 	  Set amdevcheck_message.
