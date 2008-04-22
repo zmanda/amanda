@@ -1,3 +1,9 @@
+2008-04-22  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/tape-posix.c: Don't return DEVICE_STATUS_VOLUME_MISSING
+				   on ioctl error.
+	* changer-src/chg-lib.sh.in (amdevcheck_status): return 1 only if the
+			 possible errors are VOLUME_MISSING or DEVICE_BUSY.
+
 2008-04-22  Kevin Zembower <kzembowe@jhuccp.org>
 	* man/xml-source/amflush.8.xml: add amflush example
 

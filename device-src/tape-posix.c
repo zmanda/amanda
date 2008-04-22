@@ -144,14 +144,7 @@ DeviceStatusFlags tape_is_tape_device(int fd) {
     } else {
 	dbprintf("tape_is_tape_device: ioctl(MTIOCTOP/MTNOP) failed: %s\n",
 		 strerror(errno));
-#ifdef ENOMEDIUM
-	/* the OS has ENOMEDIUM and didn't return it, so this is an error */
         return DEVICE_STATUS_DEVICE_ERROR;
-#else
-	/* the OS doesn't know how to tell us ENOMEDIUM, so this may be
-	 * a device error *or* a missing volume.  Best we can do. */
-        return DEVICE_STATUS_DEVICE_ERROR | DEVICE_STATUS_VOLUME_MISSING;
-#endif
     }
 }
 

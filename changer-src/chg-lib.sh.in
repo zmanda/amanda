@@ -108,10 +108,10 @@ amdevcheck_status() {
     amdevcheck_message=`echo "$amdevcheck_output" | sed '/^MESSAGE /{s/^MESSAGE //;p}; d'`
 
     # Return 1 if a tape offline or busy
-    if echo "$amdevcheck_output" | $EGREP "VOLUME_MISSING|DEVICE_BUSY" > /dev/null; then
-        return 1
-    else
+    if echo "$amdevcheck_output" | $EGREP -v "MESSAGE|VOLUME_MISSING|DEVICE_BUSY" > /dev/null; then
         return 0
+    else
+        return 1
     fi
 }
 
