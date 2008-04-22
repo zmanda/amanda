@@ -42,7 +42,7 @@ Amanda::Device - interact with Amanda data-storage devices
 
   my $dev = Amanda::Device->new($device_name);
   $dev->set_startup_properties_from_config();
-  if ($dev->read_label() == $READ_LABEL_STATUS_SUCCESS) {
+  if ($dev->read_label() == $DEVICE_STATUS_SUCCESS) {
       print "Label on $device_name is '$dev->volume_label'\n";
   }
   
@@ -74,6 +74,10 @@ Stable
 
 =item C<$volume_time>
 
+=item C<$errmsg>
+
+=item C<$tape_check>
+
 =back
 
 =head2 Methods
@@ -104,7 +108,7 @@ Note that Perl code is not expected to handle on-device data, so there
 is currently no way to provide data to this function from Perl.  This may
 change in future revisions.
 
-=item C<write_from_fd($fd)>
+=item C<write_from_fd($queue_fd)>
 
 where C<$fd> is an integer file descriptor, not a filehandle
 
@@ -116,7 +120,7 @@ where C<$fd> is an integer file descriptor, not a filehandle
 
 =item C<read_block($size)>
 
-=item C<read_to_fd($fd)>
+=item C<read_to_fd($queue_fd)>
 
 where C<$fd> is an integer file descriptor, not a filehandle
 
@@ -356,6 +360,29 @@ set_gvalue_from_sv(SV *sv, GValue *value)
  * Device struct, %extend-ed into a Perl class
  */
 
+typedef struct queue_fd_t {
+    /* Instance variables -- all readonly */
+    %immutable;
+    int fd;
+    char *errmsg;
+
+    %mutable;
+
+    /* methods */
+    %extend {
+	/* constructor */
+	queue_fd_t(int fd) {
+	    return queue_fd_new(fd, NULL);
+	}
+
+	/* destructor */
+	~queue_fd_t() {
+	    amfree(self->errmsg);
+	    g_free(self);
+	}
+    }
+} queue_fd_t;
+
 typedef struct Device {
     /* Instance variables -- all readonly */
     %immutable;
@@ -367,6 +394,8 @@ typedef struct Device {
     gboolean is_eof;
     char * volume_label;
     char * volume_time;
+    char * errmsg;
+    DeviceStatusFlags status; /* temporary access to private variable */
     %mutable;
 
     /* methods */
@@ -380,7 +409,22 @@ typedef struct Device {
 	    g_object_unref(self);
 	}
 
-	ReadLabelStatusFlags
+	char *
+	error() {
+	    return device_error(self);
+	}
+
+	char *
+	status_error() {
+	    return device_status_error(self);
+	}
+
+	char *
+	error_or_status() {
+	    return device_error_or_status(self);
+	}
+
+	DeviceStatusFlags
 	read_label() {
 	    return device_read_label(self);
 	}
@@ -421,8 +465,8 @@ typedef struct Device {
 	}
 
 	gboolean
-	write_from_fd(int fd) {
-	    return device_write_from_fd(self, fd);
+	write_from_fd(queue_fd_t *queue_fd) {
+	    return device_write_from_fd(self, queue_fd);
 	}
 
 	gboolean
@@ -445,8 +489,8 @@ typedef struct Device {
 	    return device_read_block(self, buffer, size);
 	}
 
-	gboolean read_to_fd(int fd) {
-	    return device_read_to_fd(self, fd);
+	gboolean read_to_fd(queue_fd_t *queue_fd) {
+	    return device_read_to_fd(self, queue_fd);
 	}
 
 	%typemap(out) const DeviceProperty * {
@@ -569,15 +613,15 @@ gboolean IS_WRITABLE_ACCESS_MODE(DeviceAccessMode mode);
 amglue_export_tag(DeviceAccessMode, IS_WRITABLE_ACCESS_MODE);
 amglue_copy_to_tag(DeviceAccessMode, constants);
 
-amglue_add_flag_tag_fns(ReadLabelStatusFlags);
-amglue_add_constant_short(READ_LABEL_STATUS_SUCCESS, "SUCCESS", ReadLabelStatusFlags);
-amglue_add_constant_short(READ_LABEL_STATUS_DEVICE_MISSING, "DEVICE_MISSING", ReadLabelStatusFlags);
-amglue_add_constant_short(READ_LABEL_STATUS_DEVICE_ERROR, "DEVICE_ERROR", ReadLabelStatusFlags);
-amglue_add_constant_short(READ_LABEL_STATUS_VOLUME_MISSING, "VOLUME_MISSING", ReadLabelStatusFlags);
-amglue_add_constant_short(READ_LABEL_STATUS_VOLUME_UNLABELED, "VOLUME_UNLABELED", ReadLabelStatusFlags);
-amglue_add_constant_short(READ_LABEL_STATUS_VOLUME_ERROR, "VOLUME_ERROR", ReadLabelStatusFlags);
-amglue_add_constant_noshort(READ_LABEL_STATUS_FLAGS_MAX, ReadLabelStatusFlags);
-amglue_copy_to_tag(ReadLabelStatusFlags, constants);
+amglue_add_flag_tag_fns(DeviceStatusFlags);
+amglue_add_constant_short(DEVICE_STATUS_SUCCESS, "SUCCESS", DeviceStatusFlags);
+amglue_add_constant_short(DEVICE_STATUS_DEVICE_ERROR, "DEVICE_ERROR", DeviceStatusFlags);
+amglue_add_constant_short(DEVICE_STATUS_DEVICE_BUSY, "DEVICE_BUSY", DeviceStatusFlags);
+amglue_add_constant_short(DEVICE_STATUS_VOLUME_MISSING, "VOLUME_MISSING", DeviceStatusFlags);
+amglue_add_constant_short(DEVICE_STATUS_VOLUME_UNLABELED, "VOLUME_UNLABELED", DeviceStatusFlags);
+amglue_add_constant_short(DEVICE_STATUS_VOLUME_ERROR, "VOLUME_ERROR", DeviceStatusFlags);
+amglue_add_constant_noshort(DEVICE_STATUS_FLAGS_MAX, DeviceStatusFlags);
+amglue_copy_to_tag(DeviceStatusFlags, constants);
 
 amglue_add_flag_tag_fns(PropertyPhaseFlags);
 amglue_add_constant_short(PROPERTY_PHASE_BEFORE_START, "BEFORE_START", PropertyPhaseFlags);

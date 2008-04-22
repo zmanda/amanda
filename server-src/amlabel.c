@@ -46,25 +46,6 @@ static void usage(void) {
     exit(1);
 }
 
-static void print_read_label_status_error(ReadLabelStatusFlags status) {
-    char ** status_strv;
-
-    if (status == READ_LABEL_STATUS_SUCCESS)
-        return;
-
-    status_strv = g_flags_nick_to_strv(status,
-                                       READ_LABEL_STATUS_FLAGS_TYPE);
-    g_assert(g_strv_length(status_strv) > 0);
-    if (g_strv_length(status_strv) == 1) {
-        g_printf("Error was %s.\n", *status_strv);
-    } else {
-        char * status_list = g_english_strjoinv(status_strv, "or");
-        g_printf("Error was one of %s.\n", status_list);
-        amfree(status_list);
-    }
-    g_strfreev(status_strv);
-}
-
 int
 main(
     int		argc,
@@ -81,7 +62,7 @@ main(
     size_t tt_blocksize_kb;
     int slotcommand;
     Device * device;
-    ReadLabelStatusFlags label_status;
+    DeviceStatusFlags device_status;
     char *cfg_opt = NULL;
     config_overwrites_t *cfg_ovr = NULL;
 
@@ -194,15 +175,19 @@ main(
     if (device == NULL) {
         error("Could not open device %s.\n", tapename);
     }
+    if (device->status != DEVICE_STATUS_SUCCESS) {
+        error("Could not open device %s: %s.\n", tapename,
+	      device_error(device));
+    }
     
     device_set_startup_properties_from_config(device);
-    label_status = device_read_label(device);
+    device_status = device_read_label(device);
 
-    if (label_status & READ_LABEL_STATUS_VOLUME_UNLABELED) {
+    if (device_status & DEVICE_STATUS_VOLUME_UNLABELED) {
         g_printf("Found an unlabeled tape.\n");
-    } else if (label_status != READ_LABEL_STATUS_SUCCESS) {
-        g_printf("Reading the tape label failed: \n  ");
-        print_read_label_status_error(label_status);
+    } else if (device_status != DEVICE_STATUS_SUCCESS) {
+        g_printf("Reading the tape label failed: %s.\n",
+		 device_error_or_status(device));
         tape_ok = 0;
     } else {
 	/* got an amanda tape */
@@ -229,20 +214,22 @@ main(
         
 	timestamp = get_undef_timestamp();
         if (!device_start(device, ACCESS_WRITE, label, timestamp)) {
-	    error(_("Error writing label.\n"));
+	    error(_("Error writing label: %s.\n"),
+		  device_error(device));
             g_assert_not_reached();
 	} else if (!device_finish(device)) {
-            error(_("Error closing device.\n"));
+            error(_("Error closing device: %s.\n"),
+		  device_error(device));
             g_assert_not_reached();
         }
 	amfree(timestamp);
 
         g_printf(_("Checking label...\n")); fflush(stdout);
 
-        label_status = device_read_label(device);
-        if (label_status != READ_LABEL_STATUS_SUCCESS) {
-            g_printf("Checking the tape label failed: \n  ");
-            print_read_label_status_error(label_status);
+        device_status = device_read_label(device);
+        if (device_status != DEVICE_STATUS_SUCCESS) {
+	    g_printf(_("Checking the tape label failed: %s.\n"),
+		     device_error_or_status(device));
             exit(EXIT_FAILURE);
         } else if (device->volume_label == NULL) {
             error(_("no label found.\n"));

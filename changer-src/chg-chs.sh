@@ -377,7 +377,7 @@ echo curloaded $curloaded			>> $ourstate
 # return slot info
 
 if [ $slotempty -eq 1 ]; then
-	answer=`_ '<none> %s: %s slot is empty' "$pname" "$newslot"`
+	answer=`_ '<none> %s: %s slot is empty: %s' "$pname" "$newslot" "$amdevcheck_message"`
 	echo `_ 'Exit ->'` $answer >> $logfile
 	echo $answer
 	exit 1

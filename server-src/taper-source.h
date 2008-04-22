@@ -60,6 +60,7 @@ struct _TaperSource {
     guint64 max_part_size; /* protected */
     dumpfile_t * first_header;
     char * driver_handle;
+    char * errmsg;
 };
 
 /*
@@ -75,6 +76,7 @@ struct _TaperSourceClass {
     gboolean (* get_end_of_data)(TaperSource * self);
     gboolean (* get_end_of_part)(TaperSource * self);
     dumpfile_t * (* get_first_header)(TaperSource * self);
+    char * (* get_errmsg)(TaperSource * self);
     int (* predict_parts)(TaperSource * self);
 };
 
@@ -89,6 +91,7 @@ ssize_t 	taper_source_read	(TaperSource * self,
 gboolean 	taper_source_get_end_of_data	(TaperSource * self);
 gboolean 	taper_source_get_end_of_part	(TaperSource * self);
 dumpfile_t *    taper_source_get_first_header   (TaperSource * self);
+char *          taper_source_get_errmsg         (TaperSource * self);
 /* Returns -1 for an unknown number of splits, or a positive integer if the
  * number of splits is exactly known. Should never return zero. */
 int             taper_source_predict_parts      (TaperSource * self);

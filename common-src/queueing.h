@@ -136,10 +136,21 @@ do_consumer_producer_queue_full(ProducerFunctor producer,
 /* Some commonly-useful producers and consumers.*/
 
 /* These functions will call read() or write() respectively. The user
-   data should be a file descriptor stored with GINT_TO_POINTER. */
-producer_result_t fd_read_producer(gpointer fd, queue_buffer_t *buffer,
+   data should be a pointer to an queue_fd_t, with fd set to the device
+   descriptor and errmsg set to NULL. */
+
+typedef struct {
+    int fd;
+    char *errmsg;
+} queue_fd_t;
+
+queue_fd_t *queue_fd_new(int fd, char *errmsg);
+int queue_fd_fd(queue_fd_t *queue_fd);
+char *queue_fd_errmsg(queue_fd_t *queue_fd);
+
+producer_result_t fd_read_producer(gpointer queue_fd, queue_buffer_t *buffer,
                                    size_t hint_size);
-ssize_t fd_write_consumer(gpointer fd, queue_buffer_t *buffer);
+ssize_t fd_write_consumer(gpointer queue_fd, queue_buffer_t *buffer);
 
 
 

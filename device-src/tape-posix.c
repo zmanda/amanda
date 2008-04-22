@@ -131,20 +131,22 @@ gboolean tape_setcompression(int fd G_GNUC_UNUSED,
 #endif
 }
 
-TapeCheckResult tape_is_tape_device(int fd) {
+DeviceStatusFlags tape_is_tape_device(int fd) {
     struct mtop mt;
     mt.mt_op = MTNOP;
     mt.mt_count = 1;
     if (0 == ioctl(fd, MTIOCTOP, &mt)) {
-        return TAPE_CHECK_SUCCESS;
+        return DEVICE_STATUS_SUCCESS;
+    } else if (errno == ENOMEDIUM) {
+	return DEVICE_STATUS_VOLUME_MISSING;
     } else {
-	dbprintf("tape_is_tape_device: ioctl(MTIOCTOP/MTNOP) failed: %s",
+	dbprintf("tape_is_tape_device: ioctl(MTIOCTOP/MTNOP) failed: %s\n",
 		 strerror(errno));
-        return TAPE_CHECK_FAILURE;
+        return DEVICE_STATUS_DEVICE_ERROR;
     }
 }
 
-TapeCheckResult tape_is_ready(int fd) {
+DeviceStatusFlags tape_is_ready(int fd) {
     struct mtget get;
     if (0 == ioctl(fd, MTIOCGET, &get)) {
 #if defined(GMT_ONLINE) || defined(GMT_DR_OPEN)
@@ -156,16 +158,15 @@ TapeCheckResult tape_is_ready(int fd) {
             && !GMT_DR_OPEN(get.mt_gstat)
 #endif
             ) {
-            return TAPE_CHECK_SUCCESS;
+            return DEVICE_STATUS_SUCCESS;
         } else {
-	    dbprintf("tape_is_read: ioctl(MTIOCGET) failed: %s", strerror(errno));
-            return TAPE_CHECK_FAILURE;
+            return DEVICE_STATUS_VOLUME_MISSING;
         }
 #else /* Neither macro is defined. */
-        return TAPE_CHECK_UNKNOWN;
+        return DEVICE_STATUS_SUCCESS;
 #endif
     } else {
-        return TAPE_CHECK_FAILURE;
+        return DEVICE_STATUS_VOLUME_ERROR;
     }
 }
 

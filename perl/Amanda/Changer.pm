@@ -335,7 +335,7 @@ sub find {
 
 		    my $device = Amanda::Device->new($devname);
 		    next TRYSLOT unless $device;
-		    next TRYSLOT if ($device->read_label() != $READ_LABEL_STATUS_SUCCESS);
+		    next TRYSLOT if ($device->read_label() != $DEVICE_STATUS_SUCCESS);
 		    next TRYSLOT unless ($device->{'volume_label'} eq $label);
 
 		    # we found the correct slot

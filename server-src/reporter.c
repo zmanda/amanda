@@ -2358,6 +2358,16 @@ handle_success(
 	    if(!isnormal(origkb))
 		origkb = 0.1;
 	}
+	if (curprog == P_TAPER && logtype == L_PARTIAL) {
+	    char *t = index(s-1,']');
+	    if (t) {
+		char *errmsg, *u;
+		errmsg = unquote_string(t+1);
+		u = vstrallocf("  %s: %s %s", program_str[curprog],
+			       logtype_str[logtype], errmsg);
+		addline(&errsum, u);
+	    }
+	}
     }
 
 

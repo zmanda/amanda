@@ -255,6 +255,8 @@ test_fd_consumer_producer(void)
     GThread *rth, *wth;
     int input_pipe[2];
     int output_pipe[2];
+    queue_fd_t queue_read = {0, NULL};
+    queue_fd_t queue_write = {0, NULL};
 
     /* create pipes and hook up threads to them */
     if (pipe(input_pipe) < 0) {
@@ -270,9 +272,11 @@ test_fd_consumer_producer(void)
     rth = g_thread_create(data_consumer_thread, GINT_TO_POINTER(output_pipe[0]), TRUE, NULL);
 
     /* run the queue */
+    queue_read.fd = input_pipe[0];
+    queue_write.fd = output_pipe[1];
     success = do_consumer_producer_queue(
-	fd_read_producer, GINT_TO_POINTER(input_pipe[0]),
-	fd_write_consumer, GINT_TO_POINTER(output_pipe[1]));
+	fd_read_producer, &queue_read,
+	fd_write_consumer, &queue_write);
     if (!success)
 	tu_dbg("do_consumer_producer_queue returned FALSE");
 

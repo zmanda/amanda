@@ -64,7 +64,7 @@ static gboolean rait_device_property_set (Device * self, DevicePropertyId id,
                                           GValue * val);
 static gboolean rait_device_recycle_file (Device * self, guint filenum);
 static gboolean rait_device_finish (Device * self);
-static ReadLabelStatusFlags rait_device_read_label(Device * dself);
+static DeviceStatusFlags rait_device_read_label(Device * dself);
 static void find_simple_params(RaitDevice * self, guint * num_children,
                                guint * data_children, int * blocksize);
 
@@ -629,11 +629,10 @@ static void read_label_do_op(gpointer data,
     op->result = GINT_TO_POINTER(device_read_label(op->child));
 }
 
-static ReadLabelStatusFlags rait_device_read_label(Device * dself) {
+static DeviceStatusFlags rait_device_read_label(Device * dself) {
     RaitDevice * self;
     GPtrArray * ops;
-    ReadLabelStatusFlags failed_result = 0;
-    ReadLabelStatusFlags rval;
+    DeviceStatusFlags failed_result = 0;
     GenericOp * failed_op = NULL; /* If this is non-null, we will isolate. */
     unsigned int i;
     Device * first_success = NULL;
@@ -649,8 +648,8 @@ static ReadLabelStatusFlags rait_device_read_label(Device * dself) {
     
     for (i = 0; i < ops->len; i ++) {
         GenericOp * op = g_ptr_array_index(ops, i);
-        ReadLabelStatusFlags result = GPOINTER_TO_INT(op->result);
-        if (op->result == READ_LABEL_STATUS_SUCCESS) {
+        DeviceStatusFlags result = GPOINTER_TO_INT(op->result);
+        if (op->result == DEVICE_STATUS_SUCCESS) {
             if (first_success == NULL) {
                 /* This is the first successful device. */
                 first_success = op->child;
@@ -662,7 +661,7 @@ static ReadLabelStatusFlags rait_device_read_label(Device * dself) {
                         first_success->volume_time, 
                         op->child->volume_label,
                         op->child->volume_time);
-                failed_result |= READ_LABEL_STATUS_VOLUME_ERROR;
+                failed_result |= DEVICE_STATUS_VOLUME_ERROR;
                 failed_op = NULL;
             }
         } else {
@@ -682,19 +681,19 @@ static ReadLabelStatusFlags rait_device_read_label(Device * dself) {
 
     if (failed_op != NULL) {
         /* We have a single device to isolate. */
-        failed_result = READ_LABEL_STATUS_SUCCESS; /* Recover later */
+        failed_result = DEVICE_STATUS_SUCCESS; /* Recover later */
         self->private->failed = failed_op->child_index;
         g_fprintf(stderr, "RAIT array %s Isolated device %s.\n",
                 dself->device_name,
                 failed_op->child->device_name);
     }
 
-    if (failed_result != READ_LABEL_STATUS_SUCCESS) {
+    if (failed_result != DEVICE_STATUS_SUCCESS) {
         /* We had multiple failures or an inconsistency. */
-        rval = failed_result;
+        dself->status = failed_result;
     } else {
         /* Everything peachy. */
-        rval = READ_LABEL_STATUS_SUCCESS;
+        dself->status = DEVICE_STATUS_SUCCESS;
         g_assert(first_success != NULL);
         if (first_success->volume_label != NULL) {
             dself->volume_label = g_strdup(first_success->volume_label);
@@ -706,7 +705,7 @@ static ReadLabelStatusFlags rait_device_read_label(Device * dself) {
     
     g_ptr_array_free_full(ops);
 
-    return rval;
+    return dself->status;
 }
 
 typedef struct {
@@ -1756,12 +1755,8 @@ rait_device_factory (char * type, char * name) {
     Device * rval;
     g_assert(0 == strcmp(type, "rait"));
     rval = DEVICE(g_object_new(TYPE_RAIT_DEVICE, NULL));
-    if (!device_open_device(rval, name)) {
-        g_object_unref(rval);
-        return NULL;
-    } else {
-        return rval;
-    }
+    device_open_device(rval, name);
+    return rval;
 }
 
 Device * rait_device_new_from_devices(Device ** devices) {

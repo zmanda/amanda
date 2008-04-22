@@ -89,33 +89,33 @@ static DeviceFactory lookup_device_factory(const char *device_name) {
     }
 }
 
-static const GFlagsValue read_label_status_flags_values[] = {
-    { READ_LABEL_STATUS_SUCCESS,
-      "READ_LABEL_STATUS_SUCCESS",
+static const GFlagsValue device_status_flags_values[] = {
+    { DEVICE_STATUS_SUCCESS,
+      "DEVICE_STATUS_SUCCESS",
       "Success" },
-    { READ_LABEL_STATUS_DEVICE_MISSING,
-      "READ_LABEL_STATUS_DEVICE_MISSING",
-      "Device not found" },
-    { READ_LABEL_STATUS_DEVICE_ERROR,
-      "READ_LABEL_STATUS_DEVICE_ERROR",
+    { DEVICE_STATUS_DEVICE_ERROR,
+      "DEVICE_STATUS_DEVICE_ERROR",
       "Device error" },
-    { READ_LABEL_STATUS_VOLUME_MISSING,
-      "READ_LABEL_STATUS_VOLUME_MISSING",
+    { DEVICE_STATUS_DEVICE_BUSY,
+      "DEVICE_STATUS_DEVICE_BUSY",
+      "Device busy" },
+    { DEVICE_STATUS_VOLUME_MISSING,
+      "DEVICE_STATUS_VOLUME_MISSING",
       "Volume not found" },
-    { READ_LABEL_STATUS_VOLUME_UNLABELED,
-      "READ_LABEL_STATUS_VOLUME_UNLABELED",
+    { DEVICE_STATUS_VOLUME_UNLABELED,
+      "DEVICE_STATUS_VOLUME_UNLABELED",
       "Volume not labeled" },
-    { READ_LABEL_STATUS_VOLUME_ERROR,
-      "READ_LABEL_STATUS_VOLUME_ERROR",
+    { DEVICE_STATUS_VOLUME_ERROR,
+      "DEVICE_STATUS_VOLUME_ERROR",
       "Volume error" },
     { 0, NULL, NULL }
 };
 
-GType read_label_status_flags_get_type(void) {
+GType device_status_flags_get_type(void) {
     static GType type = 0;
     if (G_UNLIKELY(type == 0)) {
-        type = g_flags_register_static("ReadLabelStatusFlags",
-                                       read_label_status_flags_values);
+        type = g_flags_register_static("DeviceStatusFlags",
+                                       device_status_flags_values);
     }
     return type;
 }
@@ -151,13 +151,14 @@ static gboolean default_device_start_file (Device * self,
                                            const dumpfile_t * jobinfo);
 static gboolean default_device_write_block (Device * self, guint size,
                                             gpointer data, gboolean last);
-static gboolean default_device_write_from_fd(Device *self, int fd);
+static gboolean default_device_write_from_fd(Device *self,
+					     queue_fd_t *queue_fd);
 static gboolean default_device_finish_file (Device * self);
 static dumpfile_t* default_device_seek_file (Device * self, guint file);
 static gboolean default_device_seek_block (Device * self, guint64 block);
 static int default_device_read_block (Device * self, gpointer buffer,
                                       int * size);
-static gboolean default_device_read_to_fd(Device *self, int fd);
+static gboolean default_device_read_to_fd(Device *self, queue_fd_t *queue_fd);
 static gboolean default_device_property_get(Device * self, DevicePropertyId ID,
                                             GValue * value);
 
@@ -168,7 +169,7 @@ GType
 device_get_type (void)
 {
     static GType type = 0;
-    
+
     if G_UNLIKELY(type == 0) {
         static const GTypeInfo info = {
             sizeof (DeviceClass),
@@ -204,6 +205,7 @@ static void device_finalize(GObject *obj_self) {
     amfree(self->device_name);
     amfree(self->volume_label);
     amfree(self->volume_time);
+    amfree(self->errmsg);
     g_array_free(selfp->property_list, TRUE);
     g_hash_table_destroy(selfp->property_response);
     amfree(self->private);
@@ -221,6 +223,8 @@ device_init (Device * self G_GNUC_UNUSED)
     self->in_file = FALSE;
     self->volume_label = NULL;
     self->volume_time = NULL;
+    self->errmsg = NULL;
+    self->status = DEVICE_STATUS_SUCCESS;
     selfp->property_list = g_array_new(TRUE, FALSE, sizeof(DeviceProperty));
     selfp->property_response =
         g_hash_table_new_full(g_direct_hash,
@@ -273,7 +277,7 @@ regex_message(int result, regex_t *regex) {
 
 static gboolean
 handle_device_regex(const char * user_name, char ** driver_name,
-                    char ** device) {
+                    char ** device, char **errmsg) {
     regex_t regex;
     int reg_result;
     regmatch_t pmatch[3];
@@ -284,28 +288,31 @@ handle_device_regex(const char * user_name, char ** driver_name,
     reg_result = regcomp(&regex, regex_string, REG_EXTENDED | REG_ICASE);
     if (reg_result != 0) {
         char * message = regex_message(reg_result, &regex);
-        g_fprintf(stderr, "Error compiling regular expression \"%s\": %s\n",
-               regex_string, message);
-        amfree(message);
+	*errmsg = newvstrallocf(*errmsg, "Error compiling regular expression \"%s\": %s\n",
+			      regex_string, message);
+	amfree(message);
         return FALSE;
     }
 
     reg_result = regexec(&regex, user_name, 3, pmatch, 0);
     if (reg_result != 0 && reg_result != REG_NOMATCH) {
         char * message = regex_message(reg_result, &regex);
-        g_fprintf(stderr, "Error applying regular expression \"%s\" to string \"%s\":\n"
-               "%s\n", user_name, regex_string, message);
+	*errmsg = newvstrallocf(*errmsg,
+			"Error applying regular expression \"%s\" to string \"%s\": %s\n",
+			user_name, regex_string, message);
+	amfree(message);
         regfree(&regex);
         return FALSE;
     } else if (reg_result == REG_NOMATCH) {
 #ifdef WANT_TAPE_DEVICE
-        g_fprintf(stderr, "\"%s\" uses deprecated device naming convention; \n"
+	g_warning(
+		"\"%s\" uses deprecated device naming convention; \n"
                 "using \"tape:%s\" instead.\n",
                 user_name, user_name);
         *driver_name = stralloc("tape");
         *device = stralloc(user_name);
 #else /* !WANT_TAPE_DEVICE */
-        g_fprintf(stderr, "\"%s\" is not a valid device name.\n", user_name);
+	errmsg = newvstrallocf(errmsg, "\"%s\" is not a valid device name.\n", user_name);
 	regfree(&regex);
 	return FALSE;
 #endif /* WANT_TAPE_DEVICE */
@@ -322,8 +329,10 @@ device_open (char * device_name)
 {
     char *device_driver_name = NULL;
     char *device_node_name = NULL;
+    char *errmsg = NULL;
     DeviceFactory factory;
     Device *device;
+
 
     g_return_val_if_fail (device_name != NULL, NULL);
 
@@ -333,20 +342,26 @@ device_open (char * device_name)
         g_assert_not_reached();
     }
 
-    if (!handle_device_regex(device_name, &device_driver_name, &device_node_name)) {
+    if (!handle_device_regex(device_name, &device_driver_name, &device_node_name,
+			     &errmsg)) {
         amfree(device_driver_name);
         amfree(device_node_name);
-        return NULL;
+	factory = lookup_device_factory("null");
+	device = factory("null", "/dev/null");
+	device->errmsg = errmsg;
+        return device;
     }
 
     factory = lookup_device_factory(device_driver_name);
 
     if (factory == NULL) {
-        g_fprintf(stderr, "Device driver %s is not known.\n",
+	factory = lookup_device_factory("null");
+	device = factory("null", "/dev/null");
+	device->errmsg = vstrallocf("Device driver %s is not known.\n",
                 device_driver_name);
         amfree(device_driver_name);
         amfree(device_node_name);
-        return NULL;
+        return device;
     }
 
     device = factory(device_driver_name, device_node_name);
@@ -355,6 +370,46 @@ device_open (char * device_name)
     return device;
 }
 
+char *
+device_error(Device * self)
+{
+    if (self->errmsg)
+	return self->errmsg;
+    return "Unknown Device error";
+}
+
+char *
+device_status_error(Device * self)
+{
+    char **status_strv;
+    // This is not thread safe, but do we have many thread that works
+    // on the same device?
+    static char *errmsg = NULL;
+
+    amfree(errmsg);
+
+    status_strv = g_flags_nick_to_strv(self->status, DEVICE_STATUS_FLAGS_TYPE);
+    g_assert(g_strv_length(status_strv) > 0);
+    if (g_strv_length(status_strv) == 1) {
+	errmsg = g_strdup_printf("Error was %s", *status_strv);
+    } else {
+	char * status_list = g_english_strjoinv(status_strv, "or");
+	errmsg = g_strdup_printf("Error was one of %s", status_list);
+	amfree(status_list);
+    }
+    g_strfreev(status_strv);
+
+    return errmsg;
+}
+
+char *
+device_error_or_status(Device * self)
+{
+    if (self->errmsg)
+	return self->errmsg;
+    else
+	return device_status_error(self);
+}
 void 
 device_add_property (Device * self, DeviceProperty * prop, GValue * response)
 {
@@ -657,8 +712,9 @@ void device_clear_volume_details(Device * device) {
 static gboolean
 default_device_start (Device * self, DeviceAccessMode mode, char * label,
                       char * timestamp) {
+    amfree(self->errmsg);
     if (mode != ACCESS_WRITE && self->volume_label == NULL) {
-        if (device_read_label(self) != READ_LABEL_STATUS_SUCCESS)
+        if (device_read_label(self) != DEVICE_STATUS_SUCCESS)
             return FALSE;
     } else if (mode == ACCESS_WRITE) {
         self->volume_label = newstralloc(self->volume_label, label);
@@ -779,17 +835,17 @@ default_device_property_get(Device * self, DevicePropertyId ID,
 }
 
 static gboolean
-default_device_read_to_fd(Device *self, int fd) {
+default_device_read_to_fd(Device *self, queue_fd_t *queue_fd) {
     return do_consumer_producer_queue(device_read_producer,
                                       self,
                                       fd_write_consumer,
-                                      GINT_TO_POINTER(fd));
+                                      queue_fd);
 }
 
 static gboolean
-default_device_write_from_fd(Device *self, int fd) {
+default_device_write_from_fd(Device *self, queue_fd_t *queue_fd) {
     return do_consumer_producer_queue(fd_read_producer,
-                                      GINT_TO_POINTER(fd),
+                                      queue_fd,
                                       device_write_consumer,
                                       self);
 }
@@ -815,8 +871,10 @@ device_open_device (Device * self, char * device_name)
 		return FALSE;
 }
 
-ReadLabelStatusFlags device_read_label(Device * self) {
+DeviceStatusFlags device_read_label(Device * self) {
     DeviceClass * klass;
+
+    amfree(self->errmsg);
     g_return_val_if_fail(self != NULL, FALSE);
     g_return_val_if_fail(IS_DEVICE(self), FALSE);
     g_return_val_if_fail(self->access_mode == ACCESS_NULL, FALSE);
@@ -825,13 +883,15 @@ ReadLabelStatusFlags device_read_label(Device * self) {
     if (klass->read_label) {
         return (klass->read_label)(self);
     } else {
-        return ~ READ_LABEL_STATUS_SUCCESS;
+        return ~ DEVICE_STATUS_SUCCESS;
     }
 }
 
 gboolean
 device_finish (Device * self) {
 	DeviceClass *klass;
+
+	amfree(self->errmsg);
 	g_return_val_if_fail (self != NULL, FALSE);
 	g_return_val_if_fail (IS_DEVICE (self), FALSE);
 
@@ -887,6 +947,8 @@ device_write_block (Device * self, guint size, gpointer block,
                     gboolean short_block)
 {
     DeviceClass *klass;
+
+    amfree(self->errmsg);
     g_return_val_if_fail (self != NULL, FALSE);
     g_return_val_if_fail (IS_DEVICE (self), FALSE);
     g_return_val_if_fail (size > 0, FALSE);
@@ -906,19 +968,21 @@ device_write_block (Device * self, guint size, gpointer block,
 }
 
 gboolean 
-device_write_from_fd (Device * self, int fd)
+device_write_from_fd (Device * self, queue_fd_t * queue_fd)
 {
 	DeviceClass *klass;
+
+	amfree(self->errmsg);
 	g_return_val_if_fail (self != NULL, FALSE);
 	g_return_val_if_fail (IS_DEVICE (self), FALSE);
-	g_return_val_if_fail (fd >= 0, FALSE);
+	g_return_val_if_fail (queue_fd->fd >= 0, FALSE);
         g_return_val_if_fail (IS_WRITABLE_ACCESS_MODE(self->access_mode),
                               FALSE);
 
 	klass = DEVICE_GET_CLASS(self);
 
 	if(klass->write_from_fd)
-		return (*klass->write_from_fd)(self,fd);
+		return (*klass->write_from_fd)(self,queue_fd);
 	else
 		return FALSE;
 }
@@ -926,6 +990,8 @@ device_write_from_fd (Device * self, int fd)
 gboolean
 device_start_file (Device * self, const dumpfile_t * jobInfo) {
     DeviceClass * klass;
+
+    amfree(self->errmsg);
     g_return_val_if_fail (self != NULL, FALSE);
     g_return_val_if_fail (IS_DEVICE (self), FALSE);
     g_return_val_if_fail (!(self->in_file), FALSE);
@@ -943,6 +1009,8 @@ gboolean
 device_finish_file (Device * self)
 {
 	DeviceClass *klass;
+
+	amfree(self->errmsg);
 	g_return_val_if_fail (self != NULL, FALSE);
 	g_return_val_if_fail (IS_DEVICE (self), FALSE);
         g_return_val_if_fail (IS_WRITABLE_ACCESS_MODE(self->access_mode),
@@ -961,6 +1029,8 @@ dumpfile_t*
 device_seek_file (Device * self, guint file)
 {
 	DeviceClass *klass;
+
+	amfree(self->errmsg);
 	g_return_val_if_fail (self != NULL, NULL);
 	g_return_val_if_fail (IS_DEVICE (self), NULL);
         g_return_val_if_fail (self->access_mode == ACCESS_READ,
@@ -978,6 +1048,8 @@ gboolean
 device_seek_block (Device * self, guint64 block)
 {
 	DeviceClass *klass;
+
+	amfree(self->errmsg);
 	g_return_val_if_fail (self != NULL, FALSE);
 	g_return_val_if_fail (IS_DEVICE (self), FALSE);
         g_return_val_if_fail (self->access_mode == ACCESS_READ,
@@ -996,10 +1068,13 @@ int
 device_read_block (Device * self, gpointer buffer, int * size)
 {
 	DeviceClass *klass;
+
+	amfree(self->errmsg);
 	g_return_val_if_fail (self != NULL, -1);
 	g_return_val_if_fail (IS_DEVICE (self), -1);
 	g_return_val_if_fail (size != NULL, -1);
         g_return_val_if_fail (self->access_mode == ACCESS_READ, -1);
+
         if (*size != 0) {
             g_return_val_if_fail (buffer != NULL, -1);
         }
@@ -1020,18 +1095,20 @@ device_read_block (Device * self, gpointer buffer, int * size)
 }
 
 gboolean 
-device_read_to_fd (Device * self, int fd)
+device_read_to_fd (Device * self, queue_fd_t *queue_fd)
 {
 	DeviceClass *klass;
+
+	amfree(self->errmsg);
 	g_return_val_if_fail (self != NULL, FALSE);
 	g_return_val_if_fail (IS_DEVICE (self), FALSE);
-	g_return_val_if_fail (fd >= 0, FALSE);
+	g_return_val_if_fail (queue_fd->fd >= 0, FALSE);
         g_return_val_if_fail (self->access_mode == ACCESS_READ, FALSE);
 
 	klass = DEVICE_GET_CLASS(self);
 
 	if(klass->read_to_fd)
-		return (*klass->read_to_fd)(self,fd);
+		return (*klass->read_to_fd)(self,queue_fd);
 	else
 		return FALSE;
 }
@@ -1041,6 +1118,8 @@ gboolean
 device_property_get (Device * self, DevicePropertyId id, GValue * val)
 {
 	DeviceClass *klass;
+
+	amfree(self->errmsg);
 	g_return_val_if_fail (self != NULL, FALSE);
 	g_return_val_if_fail (IS_DEVICE (self), FALSE);
         g_return_val_if_fail (device_property_get_by_id(id) != NULL, FALSE);
@@ -1059,6 +1138,8 @@ gboolean
 device_property_set (Device * self, DevicePropertyId id, GValue * val)
 {
 	DeviceClass *klass;
+
+	amfree(self->errmsg);
 	g_return_val_if_fail (self != NULL, FALSE);
 	g_return_val_if_fail (IS_DEVICE (self), FALSE);
 
@@ -1076,6 +1157,8 @@ gboolean
 device_recycle_file (Device * self, guint filenum)
 {
 	DeviceClass *klass;
+
+	amfree(self->errmsg);
 	g_return_val_if_fail (self != NULL, FALSE);
 	g_return_val_if_fail (IS_DEVICE (self), FALSE);
         g_return_val_if_fail (self->access_mode == ACCESS_APPEND, FALSE);

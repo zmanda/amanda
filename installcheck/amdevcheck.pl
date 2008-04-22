@@ -45,12 +45,10 @@ $testconf->add_param("tapedev", '"/dev/null"');
 $testconf->write();
 
 # test some defaults
-ok(run('amdevcheck', 'TESTCONF'), "run succeeds with a real configuration");
-is_deeply([ sort split "\n", $Installcheck::Run::stdout ],
-	  [ sort "DEVICE_MISSING", "DEVICE_ERROR" ],
-    "A bad tapedev described as DEVICE_MISSING, DEVICE_ERROR");
-like($Installcheck::Run::stderr, qr{File /dev/null is not a tape device},
-    "App uses tapedev by default");
+ok(run('amdevcheck', 'TESTCONF'), "run succeeds with a /dev/null tapedev");
+is_deeply([ sort split "\n", $Installcheck::Run::stdout],
+	  [ sort "MESSAGE File /dev/null is not a tape device", "DEVICE_ERROR"],
+	  "Fail with correct message for a /dev/null tapedev");
 
 ##
 # Now use a config with a vtape
@@ -60,15 +58,16 @@ $testconf = Installcheck::Run::setup();
 $testconf->add_param('label_new_tapes', '"TESTCONF%%"');
 $testconf->write();
 
-is_deeply([ sort split "\n", run_get('amdevcheck', 'TESTCONF') ],
-	  [ sort "VOLUME_UNLABELED", "VOLUME_ERROR", "DEVICE_ERROR" ],
-    "empty vtape described as VOLUME_UNLABELED, VOLUME_ERROR, DEVICE_ERROR");
+ok(run('amdevcheck', 'TESTCONF'), "run succeeds with an unlabeled tape");
+is_deeply([ sort split "\n", $Installcheck::Run::stdout],
+	  [ sort "MESSAGE unlabeled device", "VOLUME_UNLABELED", "DEVICE_ERROR", "VOLUME_ERROR"],
+	  "output is 'ERROR unlabeled device'");
 
 ok(run('amdevcheck', 'TESTCONF', "/dev/null"),
     "can override device on the command line");
-like($Installcheck::Run::stderr, qr{File /dev/null is not a tape device},
+is_deeply([ sort split "\n", $Installcheck::Run::stdout],
+	  [ sort "MESSAGE File /dev/null is not a tape device", "DEVICE_ERROR"],
     ".. and produce a corresponding error message");
-
 ok(my $dumpok = run('amdump', 'TESTCONF'), "a dump runs successfully");
 
 SKIP: {
@@ -77,5 +76,4 @@ SKIP: {
 	      [ sort "SUCCESS" ],
 	"used vtape described as SUCCESS");
 }
-
 Installcheck::Run::cleanup();

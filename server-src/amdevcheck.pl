@@ -18,6 +18,8 @@
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
 use lib '@amperldir@';
+use Getopt::Long;
+
 use strict;
 use Amanda::Device qw( :constants );
 use Amanda::Config qw( :getconf :init );
@@ -30,25 +32,35 @@ sub try_read_label {
     my ($device_name) = @_;
 
     if ( !$device_name ) {
-        return $READ_LABEL_STATUS_DEVICE_MISSING;
+	die("No device name specified.\n");
     }
+
+    my $result;
 
     my $device = Amanda::Device->new($device_name);
     if ( !$device ) {
-        return $READ_LABEL_STATUS_DEVICE_MISSING
-             | $READ_LABEL_STATUS_DEVICE_ERROR;
+	die("Error creating $device_name");
     }
 
-    $device->set_startup_properties_from_config();
+    if ($device->{status} == $DEVICE_STATUS_SUCCESS) {
+	$device->set_startup_properties_from_config();
+	$result = $device->read_label();
+    } else {
+	$result = $device->{status};
+    }
 
-    return $device->read_label();
+    print_result( $result, $device->error() );
+    return $result;
 }
 
 # print the results, one flag per line
 sub print_result {
-    my ($flags) = @_;
+    my ($flags, $errmsg) = @_;
 
-    print join( "\n", ReadLabelStatusFlags_to_strings($flags) ), "\n";
+    if ($flags != $DEVICE_STATUS_SUCCESS) {
+	print "MESSAGE $errmsg\n";
+    }
+    print join( "\n", DeviceStatusFlags_to_strings($flags) ), "\n";
 }
 
 sub usage {
@@ -62,6 +74,14 @@ EOF
 
 Amanda::Util::setup_application("amdevcheck", "server", $CONTEXT_SCRIPTUTIL);
 
+my $config_overwrites = new_config_overwrites($#ARGV+1);
+
+Getopt::Long::Configure(qw(bundling));
+GetOptions(
+    'help|usage|?' => \&usage,
+    'o=s' => sub { add_config_overwrite_opt($config_overwrites, $_[1]); },
+) or usage();
+
 usage() if ( @ARGV < 1 || @ARGV > 2 );
 my $config_name = $ARGV[0];
 
@@ -73,6 +93,7 @@ if ($cfgerr_level >= $CFGERR_WARNINGS) {
 	die("errors processing config file");
     }
 }
+apply_config_overwrites($config_overwrites);
 
 Amanda::Util::finish_setup($RUNNING_AS_DUMPUSER);
 
@@ -85,4 +106,5 @@ if ( $#ARGV == 1 ) {
     $device_name = getconf($CNF_TAPEDEV);
 }
 
-print_result( try_read_label($device_name) );
+try_read_label($device_name);
+exit 0;

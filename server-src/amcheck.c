@@ -606,7 +606,7 @@ static gboolean test_tape_status(FILE * outf) {
     GValue property_value;
     char * label = NULL;
     char * tapename = NULL;
-    ReadLabelStatusFlags label_status;
+    DeviceStatusFlags device_status;
 
     bzero(&property_value, sizeof(property_value));
     
@@ -643,24 +643,26 @@ static gboolean test_tape_status(FILE * outf) {
         return FALSE;
     }
     
+    if (device->status != DEVICE_STATUS_SUCCESS) {
+        g_fprintf(outf, "ERROR: Could not open tape device: %s.\n",
+		  device_error(device));
+        amfree(label);
+        return FALSE;
+    }
+    
     device_set_startup_properties_from_config(device);
-    label_status = device_read_label(device);
+    device_status = device_read_label(device);
 
     if (tape_status == 3 && 
-        !(label_status & READ_LABEL_STATUS_VOLUME_UNLABELED)) {
-        if (label_status == READ_LABEL_STATUS_SUCCESS) {
+        !(device_status & DEVICE_STATUS_VOLUME_UNLABELED)) {
+        if (device_status == DEVICE_STATUS_SUCCESS) {
             g_fprintf(outf, "WARNING: Volume was unlabeled, but now "
                     "is labeled \"%s\".\n", device->volume_label);
         }
-    } else if (label_status != READ_LABEL_STATUS_SUCCESS && tape_status != 3) {
-        char * errstr = 
-            g_english_strjoinv_and_free
-                (g_flags_nick_to_strv(label_status &
-                                       (~READ_LABEL_STATUS_VOLUME_UNLABELED),
-                                       READ_LABEL_STATUS_FLAGS_TYPE), "or");
-        g_fprintf(outf, "WARNING: Reading label the second time failed: "
-                "One of %s.\n", errstr);
-        g_free(errstr);
+    } else if (device_status != DEVICE_STATUS_SUCCESS && tape_status != 3) {
+        g_fprintf(outf,
+		  _("WARNING: Reading label the second time failed: %s.\n"),
+                  device_error_or_status(device));
     } else if (tape_status != 3 &&
                (device->volume_label == NULL || label == NULL ||
                 strcmp(device->volume_label, label) != 0)) {
@@ -684,12 +686,13 @@ static gboolean test_tape_status(FILE * outf) {
 	char *timestamp = get_undef_timestamp();
         if (!device_start(device, ACCESS_WRITE, label, timestamp)) {
             if (tape_status == 3) {
-                g_fprintf(outf, "ERROR: Could not label brand new tape.\n");
+                g_fprintf(outf, "ERROR: Could not label brand new tape");
             } else {
                 g_fprintf(outf,
-                        "ERROR: tape %s label ok, but is not writable.\n",
+                        "ERROR: tape %s label ok, but is not writable",
                         label);
             }
+	    g_fprintf(outf, ": %s.\n", device_error(device));
 	    amfree(timestamp);
             amfree(label);
             g_object_unref(device);

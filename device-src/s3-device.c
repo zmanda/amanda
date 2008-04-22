@@ -168,7 +168,7 @@ static gboolean
 s3_device_open_device(Device *pself, 
                       char *device_name);
 
-static ReadLabelStatusFlags s3_device_read_label(Device * self);
+static DeviceStatusFlags s3_device_read_label(Device * self);
 
 static gboolean 
 s3_device_start(Device * self, 
@@ -251,14 +251,15 @@ write_amanda_header(S3Device *self,
     int header_size;
     gboolean header_fits, result;
     dumpfile_t * dumpinfo = NULL;
+    Device *d_self = DEVICE(self);
 
     /* build the header */
     dumpinfo = make_tapestart_header(DEVICE(self), label, timestamp);
     amanda_header = device_build_amanda_header(DEVICE(self), dumpinfo, 
                                                &header_size, &header_fits);
     if (!header_fits) {
-        fprintf(stderr,
-                _("Amanda tapestart header won't fit in a single block!\n"));
+	d_self->errmsg = newstralloc(d_self->errmsg,
+                _("Amanda tapestart header won't fit in a single block!"));
 	g_free(amanda_header);
 	return FALSE;
     }
@@ -270,7 +271,8 @@ write_amanda_header(S3Device *self,
     g_free(key);
 
     if (!result) {
-        fprintf(stderr, _("While writing amanda header: %s\n"),
+	d_self->errmsg = newvstrallocf(d_self->errmsg,
+	        _("While writing amanda header: %s"),
                 s3_strerror(self->s3));
     }
     return result;
@@ -344,11 +346,13 @@ find_last_file(S3Device *self) {
     GSList *keys;
     unsigned int prefix_len = strlen(self->prefix);
     int last_file = 0;
+    Device *d_self = DEVICE(self);
 
     /* list all keys matching C{PREFIX*-*}, stripping the C{-*} */
     result = s3_list_keys(self->s3, self->bucket, self->prefix, "-", &keys);
     if (!result) {
-        fprintf(stderr, _("While listing S3 keys: %s\n"),
+	d_self->errmsg = newvstrallocf(d_self->errmsg,
+	        _("While listing S3 keys: %s"),
                 s3_strerror(self->s3));
         return -1;
     }
@@ -375,11 +379,13 @@ find_next_file(S3Device *self, int last_file) {
     GSList *keys;
     unsigned int prefix_len = strlen(self->prefix);
     int next_file = 0;
+    Device *d_self = DEVICE(self);
 
     /* list all keys matching C{PREFIX*-*}, stripping the C{-*} */
     result = s3_list_keys(self->s3, self->bucket, self->prefix, "-", &keys);
     if (!result) {
-        fprintf(stderr, _("While listing S3 keys: %s\n"),
+	d_self->errmsg = newvstrallocf(d_self->errmsg,
+	        _("While listing S3 keys: %s"),
                 s3_strerror(self->s3));
         return -1;
     }
@@ -413,10 +419,12 @@ delete_file(S3Device *self,
     gboolean result;
     GSList *keys;
     char *my_prefix = g_strdup_printf("%sf%08x-", self->prefix, file);
+    Device *d_self = DEVICE(self);
     
     result = s3_list_keys(self->s3, self->bucket, my_prefix, NULL, &keys);
     if (!result) {
-        fprintf(stderr, _("While listing S3 keys: %s\n"),
+	d_self->errmsg = newvstrallocf(d_self->errmsg,
+	        _("While listing S3 keys: %s"),
                 s3_strerror(self->s3));
         return FALSE;
     }
@@ -425,7 +433,8 @@ delete_file(S3Device *self,
     for (; keys; keys = g_slist_remove(keys, keys->data)) {
         if (self->verbose) g_debug(_("Deleting %s"), (char*)keys->data);
         if (!s3_delete(self->s3, self->bucket, keys->data)) {
-            fprintf(stderr, _("While deleting key '%s': %s\n"),
+	    d_self->errmsg = newvstrallocf(d_self->errmsg,
+	            _("While deleting key '%s': %s"),
                     (char*)keys->data, s3_strerror(self->s3));
             g_slist_free(keys);
             return FALSE;
@@ -595,14 +604,9 @@ s3_device_factory(char * device_type,
     rval = DEVICE(g_object_new(TYPE_S3_DEVICE, NULL));
     s3_rval = (S3Device*)rval;
 
-    if (!device_open_device(rval, device_name)) {
-        g_object_unref(rval);
-        return NULL;
-    } else {
-        s3_rval->initializing = FALSE;
-        return rval;
-    }
-    
+    device_open_device(rval, device_name);
+    s3_rval->initializing = FALSE;
+    return rval;
 }
 /* }}} */
 
@@ -632,7 +636,9 @@ s3_device_open_device(Device *pself,
     }
     
     if (self->bucket == NULL || self->bucket[0] == '\0') {
-        fprintf(stderr, _("Empty bucket name in device %s.\n"), device_name);
+	pself->errmsg = newvstrallocf(pself->errmsg,
+	        _("Empty bucket name in device %s"), device_name);
+	pself->status = DEVICE_STATUS_DEVICE_ERROR;
         amfree(self->bucket);
         amfree(self->prefix);
         return FALSE;
@@ -665,18 +671,22 @@ static void s3_device_finalize(GObject * obj_self) {
 /* }}} */
 
 static gboolean setup_handle(S3Device * self, G_GNUC_UNUSED gboolean silent) {
+    Device *d_self = DEVICE(self);
     if (self->s3 == NULL) {
         if (self->access_key == NULL) {
-	    if (!silent) fprintf(stderr, _("No S3 access key specified\n"));
+	    d_self->errmsg = newstralloc(d_self->errmsg,
+		    _("No S3 access key specified"));
             return FALSE;
 	}
 	if (self->secret_key == NULL) {
-	    if (!silent) fprintf(stderr, _("No S3 secret key specified\n"));
+	    d_self->errmsg = newstralloc(d_self->errmsg,
+		    _("No S3 secret key specified"));
             return FALSE;
 	}
 #ifdef WANT_DEVPAY
 	if (self->user_token == NULL) {
-	    if (!silent) fprintf(stderr, _("No S3 user token specified\n"));
+	    d_self->errmsg = newstralloc(d_self->errmsg,
+		    _("No S3 user token specified"));
             return FALSE;
 	}
 #endif
@@ -686,7 +696,8 @@ static gboolean setup_handle(S3Device * self, G_GNUC_UNUSED gboolean silent) {
 #endif
                            );
         if (self->s3 == NULL) {
-            fprintf(stderr, "Internal error creating S3 handle.\n");
+	    d_self->errmsg = newstralloc(d_self->errmsg,
+	            "Internal error creating S3 handle");
             return FALSE;
         }
     }
@@ -697,7 +708,7 @@ static gboolean setup_handle(S3Device * self, G_GNUC_UNUSED gboolean silent) {
 }
 
 /* {{{ s3_device_read_label */
-static ReadLabelStatusFlags
+static DeviceStatusFlags
 s3_device_read_label(Device *pself) {
     S3Device *self = S3_DEVICE(pself);
     char *key;
@@ -706,7 +717,7 @@ s3_device_read_label(Device *pself) {
     dumpfile_t amanda_header;
     
     if (!setup_handle(self, self->initializing))
-        return READ_LABEL_STATUS_DEVICE_ERROR;
+        return DEVICE_STATUS_DEVICE_ERROR;
 
     key = special_file_to_key(self, "tapestart", -1);
     if (!s3_read(self->s3, self->bucket, key, &buf, &buf_size, S3_DEVICE_MAX_BLOCK_SIZE)) {
@@ -718,13 +729,16 @@ s3_device_read_label(Device *pself) {
         if (response_code == 404 && 
              (s3_error_code == S3_ERROR_NoSuchKey || s3_error_code == S3_ERROR_NoSuchBucket)) {
             g_debug(_("Amanda header not found while reading tapestart header (this is expected for empty tapes)"));
-            return READ_LABEL_STATUS_VOLUME_UNLABELED;
+	    pself->status = DEVICE_STATUS_VOLUME_UNLABELED;
+            return pself->status;
         }
 
         /* otherwise, log it and return */
-        fprintf(stderr, _("While trying to read tapestart header: %s\n"),
+	pself->errmsg = newvstrallocf(pself->errmsg,
+	        _("While trying to read tapestart header: %s"),
                 s3_strerror(self->s3));
-        return READ_LABEL_STATUS_DEVICE_ERROR;
+	pself->status = DEVICE_STATUS_DEVICE_ERROR;
+        return pself->status;
     }
 
     g_assert(buf != NULL);
@@ -734,8 +748,10 @@ s3_device_read_label(Device *pself) {
     g_free(buf);
 
     if (amanda_header.type != F_TAPESTART) {
-        fprintf(stderr, _("Invalid amanda header\n"));
-        return READ_LABEL_STATUS_VOLUME_ERROR;
+	pself->errmsg = newstralloc(pself->errmsg,
+	        _("Invalid amanda header"));
+	pself->status = DEVICE_STATUS_VOLUME_ERROR;
+        return pself->status;
     }
 
     amfree(pself->volume_label);
@@ -743,7 +759,8 @@ s3_device_read_label(Device *pself) {
     amfree(pself->volume_time);
     pself->volume_time = g_strdup(amanda_header.datestamp);
 
-    return READ_LABEL_STATUS_SUCCESS;
+    pself->status = DEVICE_STATUS_SUCCESS;
+    return pself->status;
 }
 /* }}} */
 
@@ -770,7 +787,8 @@ s3_device_start (Device * pself, DeviceAccessMode mode,
          * return FALSE */
         if (response_code != 409 ||
             s3_error_code != S3_ERROR_BucketAlreadyExists) {
-            fprintf(stderr, _("While creating new S3 bucket: %s\n"),
+	    pself->errmsg = newvstrallocf(pself->errmsg,
+	            _("While creating new S3 bucket: %s"),
                     s3_strerror(self->s3));
             return FALSE;
         }
@@ -956,7 +974,8 @@ s3_device_start_file (Device *pself, const dumpfile_t *jobInfo) {
     g_free(amanda_header);
     g_free(key);
     if (!result) {
-        fprintf(stderr, _("While writing filestart header: %s\n"),
+	pself->errmsg = newvstrallocf(pself->errmsg,
+	        _("While writing filestart header: %s"),
                 s3_strerror(self->s3));
         return FALSE;
     }
@@ -981,7 +1000,8 @@ s3_device_write_block (Device * pself, guint size, gpointer data,
     result = s3_upload(self->s3, self->bucket, filename, data, size);
     g_free(filename);
     if (!result) {
-        fprintf(stderr, _("While writing data block to S3: %s\n"),
+	pself->errmsg = newvstrallocf(pself->errmsg,
+	        _("While writing data block to S3: %s"),
                 s3_strerror(self->s3));
         return FALSE;
     }
@@ -1083,8 +1103,8 @@ s3_device_seek_file(Device *pself, guint file) {
             return amanda_header;
 
         default:
-            fprintf(stderr,
-                    _("Invalid amanda header while reading file header\n"));
+	    pself->errmsg = newstralloc(pself->errmsg,
+                    _("Invalid amanda header while reading file header"));
             g_free(amanda_header);
             return NULL;
     }
@@ -1148,7 +1168,8 @@ s3_device_read_block (Device * pself, gpointer data, int *size_req) {
             }
 
             /* otherwise, log it and return FALSE */
-            fprintf(stderr, _("While reading data block from S3: %s\n"),
+	    pself->errmsg = newvstrallocf(pself->errmsg,
+	            _("While reading data block from S3: %s"),
                     s3_strerror(self->s3));
             return -1;
         }

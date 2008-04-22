@@ -1132,7 +1132,7 @@ loadslot() {
 		waittime=`expr $waittime + $poll_drive_ready`
 	done
 	if [ $ready -eq 0 ]; then
-		Exit 2 "$loadslot" `_ 'Drive not ready after %s seconds, rewind said "%s"' "$max_drive_wait" "$result"`
+		Exit 2 "$loadslot" `_ 'Drive not ready after %s seconds: %s' "$max_drive_wait" "$amdevcheck_message"`
 		return $?			# in case we are internal
 	fi
 

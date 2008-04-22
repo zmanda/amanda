@@ -186,6 +186,7 @@ static gboolean open_buffer_file(TaperDiskPortSource * self) {
     int fd;
     char * filename;
     mode_t old_umask;
+    TaperSource * pself = (TaperSource *)self;
 
     g_return_val_if_fail(self != NULL, FALSE);
     g_return_val_if_fail(self->buffer_dir_name != NULL, FALSE);
@@ -197,7 +198,8 @@ static gboolean open_buffer_file(TaperDiskPortSource * self) {
     fd = g_mkstemp(filename);
     umask(old_umask);
     if (fd < 0) {
-        g_fprintf(stderr, "Couldn't open temporary file with template %s: %s\n",
+	pself->errmsg = newvstrallocf(pself->errmsg,
+        	"Couldn't open temporary file with template %s: %s",
                 filename, strerror(errno));
         return FALSE;
     }
@@ -387,9 +389,11 @@ taper_disk_port_source_read (TaperSource * pself, void * buf, size_t count) {
    as having a disk problem. Returns FALSE in that case. */
 static gboolean try_rewind(TaperDiskPortSource * self) {
     gint64 result;
+    TaperSource * pself = (TaperSource *)self;
     result = lseek(selfp->buffer_fd, 0, SEEK_SET);
     if (result != 0) {
-        g_fprintf(stderr, "Couldn't seek split buffer: %s\n", strerror(errno));
+	pself->errmsg = newvstrallocf(pself->errmsg,
+        	"Couldn't seek split buffer: %s", strerror(errno));
         selfp->disk_problem = TRUE;
         return FALSE;
     } else {

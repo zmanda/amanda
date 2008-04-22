@@ -68,13 +68,13 @@ clobber_my_config_is_ok:
 	fi
 
 installcheck-local: clobber_my_config_is_ok $(SCRIPTS_PERL)
-	$(mkdir_p) $(AMANDA_TMPDIR)
-	if test -f "$(CONFIG_DIR)/amanda-client.conf" -a ! -f "$(CONFIG_DIR)/amanda-client.conf.install-backup"; then \
+	@$(mkdir_p) $(AMANDA_TMPDIR)
+	@if test -f "$(CONFIG_DIR)/amanda-client.conf" -a ! -f "$(CONFIG_DIR)/amanda-client.conf.install-backup"; then \
 	    cp "$(CONFIG_DIR)/amanda-client.conf" "$(CONFIG_DIR)/amanda-client.conf.install-backup"; \
 	fi 
 	$(PERL) -I$(srcdir) -I$(builddir) -e 'use Test::Harness qw(&runtests); runtests(@ARGV);' $(tests)
 	rm -rf "$(CONFIG_DIR)/TESTCONF"
-	if test -f "$(CONFIG_DIR)/amanda-client.conf.install-backup"; then \
+	@if test -f "$(CONFIG_DIR)/amanda-client.conf.install-backup"; then \
 	    mv -f "$(CONFIG_DIR)/amanda-client.conf.install-backup" "$(CONFIG_DIR)/amanda-client.conf"; \
 	fi
 	rm -rf "$(AMANDA_TMPDIR)/TESTCONF/amandates"

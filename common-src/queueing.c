@@ -411,11 +411,38 @@ do_consumer_producer_queue_full(ProducerFunctor producer,
 
 /* Commonly-useful producers and consumers below. */
 
-producer_result_t fd_read_producer(gpointer fdp, queue_buffer_t *buffer,
+queue_fd_t *
+queue_fd_new(
+    int fd,
+    char *errmsg)
+{
+    queue_fd_t *queue_fd;
+
+    queue_fd = malloc(sizeof(queue_fd_t));
+    queue_fd->fd = fd;
+    queue_fd->errmsg = errmsg;
+
+    return queue_fd;
+}
+
+int
+queue_fd_fd(
+    queue_fd_t *queue_fd)
+{
+    return queue_fd->fd;
+}
+
+char *queue_fd_errmsg(
+    queue_fd_t *queue_fd)
+{
+    return queue_fd->errmsg;
+}
+
+producer_result_t fd_read_producer(gpointer f_queue_fd, queue_buffer_t *buffer,
                                    size_t hint_size) {
     int fd;
-
-    fd = GPOINTER_TO_INT(fdp);
+    queue_fd_t *queue_fd = (queue_fd_t *)f_queue_fd;
+    fd = queue_fd->fd;
     g_assert(fd >= 0);
     g_assert(buffer->data_size == 0);
 
@@ -452,16 +479,18 @@ producer_result_t fd_read_producer(gpointer fdp, queue_buffer_t *buffer,
                 continue;
         } else {
             /* Error occured. */
-            g_fprintf(stderr, "Error reading fd %d: %s\n", fd, strerror(errno));
+	    queue_fd->errmsg = newvstrallocf(queue_fd->errmsg,
+            	"Error reading fd %d: %s\n", fd, strerror(errno));
             return PRODUCER_ERROR;
         }
     }
 }
 
-ssize_t fd_write_consumer(gpointer fdp, queue_buffer_t *buffer) {
+ssize_t fd_write_consumer(gpointer f_queue_fd, queue_buffer_t *buffer) {
     int fd;
+    queue_fd_t *queue_fd = (queue_fd_t *)f_queue_fd;
+    fd = queue_fd->fd;
 
-    fd = GPOINTER_TO_INT(fdp);
     g_assert(fd >= 0);
 
     g_return_val_if_fail(buffer->data_size > 0, 0);

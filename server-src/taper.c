@@ -428,6 +428,10 @@ static gboolean label_new_tape(taper_state_t * state, dump_info_t * dump_info) {
         amfree(state->next_tape_label);
         return FALSE;
     }
+    if (state->device->status != DEVICE_STATUS_SUCCESS) {
+        amfree(state->next_tape_label);
+        return FALSE;
+    }
     
     device_set_startup_properties_from_config(state->device);
     device_read_label(state->device);
@@ -439,8 +443,9 @@ static gboolean label_new_tape(taper_state_t * state, dump_info_t * dump_info) {
         gboolean tape_used;
         /* Something broke, see if we can tell if the volume was erased or
          * not. */
-        g_fprintf(stderr, "taper: Error writing label %s to device %s.\n",
-                state->next_tape_label, state->device->device_name);
+        g_fprintf(stderr, "taper: Error writing label %s to device %s: %s.\n",
+                state->next_tape_label, state->device->device_name,
+		device_error(state->device));
         device_finish(state->device);
         device_read_label(state->device);
         tape_used = check_volume_changed(state->device, old_volume_name, 
@@ -549,13 +554,14 @@ static void find_completion_tags(dump_info_t * dump_info, /* IN */
 
 /* Put an L_PARTIAL message to the logfile. */
 static void put_partial_log(dump_info_t * dump_info, double dump_time,
-                            guint64 dump_kbytes) {
+                            guint64 dump_kbytes, char *errstr) {
     char * qdiskname = quote_string(dump_info->diskname);
 
-    log_add(L_PARTIAL, "%s %s %s %d %d [sec %f kb %ju kps %f] \"\"",
+    log_add(L_PARTIAL, "%s %s %s %d %d [sec %f kb %ju kps %f] %s",
             dump_info->hostname, qdiskname, dump_info->timestamp,
             dump_info->current_part, dump_info->level, dump_time,
-            (uintmax_t)dump_kbytes, dump_kbytes / dump_time);
+            (uintmax_t)dump_kbytes, dump_kbytes / dump_time,
+	    errstr);
     amfree(qdiskname);
 }
 
@@ -624,6 +630,10 @@ static gboolean finish_part_attempt(taper_state_t * taper_state,
         int file_number = taper_state->device->file;
         double dump_time, dump_kbps;
         guint64 dump_kbytes;
+	char *producer_errstr = quote_string(
+				   taper_source_get_errmsg(dump_info->source));
+	char *consumer_errstr = quote_string(
+				   device_error(taper_state->device));
 
         /* A problem occured. */
         if (queue_result & QUEUE_CONSUMER_ERROR) {
@@ -634,11 +644,12 @@ static gboolean finish_part_attempt(taper_state_t * taper_state,
         }
         
         log_add(L_PARTPARTIAL,
-                "%s %d %s %s %s %d/%d %d [sec %f kb %ju kps %f] \"\"",
+                "%s %d %s %s %s %d/%d %d [sec %f kb %ju kps %f] %s",
                 volume_label, file_number, dump_info->hostname, qdiskname,
                 dump_info->timestamp, dump_info->current_part,
                 taper_source_predict_parts(dump_info->source),
-                dump_info->level, part_time, (uintmax_t)part_kbytes, part_kbps);
+                dump_info->level, part_time, (uintmax_t)part_kbytes, part_kbps,
+		consumer_errstr);
         amfree(volume_label);
         
         if ((queue_result & QUEUE_CONSUMER_ERROR) &&
@@ -661,12 +672,21 @@ static gboolean finish_part_attempt(taper_state_t * taper_state,
         
         putresult(PARTIAL,
                   "%s INPUT-%s TAPE-%s "
-                  "\"[sec %f kb %ju kps %f]\" \"\" \"\"\n",
+                  "\"[sec %f kb %ju kps %f]\" %s %s\n",
                   dump_info->handle,
                   (queue_result & QUEUE_PRODUCER_ERROR) ? "ERROR" : "GOOD",
                   (queue_result & QUEUE_CONSUMER_ERROR) ? "ERROR" : "GOOD",
-                  dump_time, (uintmax_t)dump_kbytes, dump_kbps);
-        put_partial_log(dump_info, dump_time, dump_kbytes);
+                  dump_time, (uintmax_t)dump_kbytes, dump_kbps,
+		  producer_errstr, consumer_errstr);
+	if (queue_result & QUEUE_CONSUMER_ERROR) {
+            put_partial_log(dump_info, dump_time, dump_kbytes,
+			    consumer_errstr);
+	} else {
+            put_partial_log(dump_info, dump_time, dump_kbytes,
+			    producer_errstr);
+	}
+	amfree(producer_errstr);
+	amfree(consumer_errstr);
     }
 
     amfree(qdiskname);
@@ -702,7 +722,15 @@ static dumpfile_t * munge_headers(dump_info_t * dump_info) {
    happen with the first (or only) part of a file, but it could also
    happen with an intermediate part of a split dump. dump_bytes
    is 0 if this is the first part of a dump. */
-static void bail_no_volume(dump_info_t * dump_info) {
+static void bail_no_volume(
+    dump_info_t *dump_info,
+    char *errmsg)
+{
+    char *errstr;
+    if (errmsg)
+	errstr = quote_string(errmsg);
+    else
+	errstr = quote_string("no new tape");
     if (dump_info->total_bytes > 0) {
         /* Second or later part of a split dump, so PARTIAL message. */
         double dump_time = g_timeval_to_double(dump_info->total_time);
@@ -710,20 +738,21 @@ static void bail_no_volume(dump_info_t * dump_info) {
         double dump_kbps = dump_kbytes / dump_time;
         putresult(PARTIAL,
                   "%s INPUT-GOOD TAPE-ERROR "
-                  "\"[sec %f kb %ju kps %f]\" \"\" \"no new tape\"\n",
+                  "\"[sec %f kb %ju kps %f]\" \"\" %s\n",
                   dump_info->handle, 
-                  dump_time, (uintmax_t)dump_kbytes, dump_kbps);
-        put_partial_log(dump_info, dump_time, dump_kbytes);
+                  dump_time, (uintmax_t)dump_kbytes, dump_kbps, errstr);
+        put_partial_log(dump_info, dump_time, dump_kbytes, errstr);
     } else {
         char * qdiskname = quote_string(dump_info->diskname);
         putresult(FAILED,
-                  "%s INPUT-GOOD TAPE-ERROR \"\" \"No new tape.\"\n",
-                  dump_info->handle);
-        log_add(L_FAIL, "%s %s %s %d \"No new tape.\"",
+                  "%s INPUT-GOOD TAPE-ERROR \"\" %s\n",
+                  dump_info->handle, errstr);
+        log_add(L_FAIL, "%s %s %s %d %s",
                 dump_info->hostname, qdiskname, dump_info->timestamp,
-                dump_info->level);
+                dump_info->level, errstr);
 	amfree(qdiskname);
     }
+    amfree(errstr);
 }
 
 /* Link up the TaperSource with the Device, including retries etc. */
@@ -747,24 +776,31 @@ static void run_device_output(taper_state_t * taper_state,
         this_header = munge_headers(dump_info);
         if (this_header == NULL) {
             char * qdiskname = quote_string(dump_info->diskname);
+	    char * errstr = taper_source_get_errmsg(dump_info->source);
+	    if (!errstr)
+		errstr = "Failed reading dump header.";
+	    errstr = quote_string(errstr);
             putresult(FAILED,
-             "%s INPUT-ERROR TAPE-GOOD \"Failed reading dump header.\" \"\"\n",
-                      dump_info->handle);
-            log_add(L_FAIL, "%s %s %s %d \"Failed reading dump header.\"",
+             "%s INPUT-ERROR TAPE-GOOD %s \"\"\n",
+                      dump_info->handle, errstr);
+            log_add(L_FAIL, "%s %s %s %d %s",
                     dump_info->hostname, qdiskname, dump_info->timestamp,
-                    dump_info->level);
+                    dump_info->level, errstr);
             amfree(qdiskname);
+	    amfree(errstr);
             return;
         }            
 
         if (!find_and_label_new_tape(taper_state, dump_info)) {
-            bail_no_volume(dump_info);
+            bail_no_volume(dump_info,
+			   device_error(taper_state->device));
 	    amfree(this_header);
             return;
         }
 
         if (!device_start_file(taper_state->device, this_header)) {
-            bail_no_volume(dump_info);
+            bail_no_volume(dump_info,
+			   device_error(taper_state->device));
 	    amfree(this_header);
             return;
         }

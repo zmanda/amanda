@@ -272,6 +272,10 @@ load_slot(
             g_fprintf(stderr,
                     _("%s: could not open device %s"), get_pname(),
                     devicename);
+        } else if (device->status != DEVICE_STATUS_SUCCESS) {
+            g_fprintf(stderr,
+                    _("%s: could not open device %s: %s"), get_pname(),
+                    devicename, device_error(device));
         } else {
             g_object_unref(device);
         }
@@ -327,7 +331,7 @@ loadlabel_slot(
 {
     LabelChangerStatus * status = ud;
     Device * device;
-    ReadLabelStatusFlags label_status;
+    DeviceStatusFlags device_status;
 
     if (rc > 1) {
 	error(_("could not load slot %s: %s"), slotstr, changer_resultstr);
@@ -344,17 +348,18 @@ loadlabel_slot(
                 get_pname(), slotstr);
         return 0;
     }
+    if (device->status != DEVICE_STATUS_SUCCESS) {
+        g_fprintf(stderr, _("%s: slot %3s: Could not open device: %s.\n"),
+                  get_pname(), slotstr, device_error(device));
+        return 0;
+    }
     
     device_set_startup_properties_from_config(device);
 
-    label_status = device_read_label(device);
-    if (label_status != READ_LABEL_STATUS_SUCCESS) {
-        char * errstr = 
-            g_english_strjoinv_and_free
-                (g_flags_nick_to_strv(label_status,
-                                      READ_LABEL_STATUS_FLAGS_TYPE), "or");
+    device_status = device_read_label(device);
+    if (device_status != DEVICE_STATUS_SUCCESS) {
         g_fprintf(stderr, _("%s: slot %3s: %s\n"),
-                get_pname(), slotstr, errstr);
+                  get_pname(), slotstr, device_error_or_status(device));
         g_object_unref(device);
         return 0;
     }
@@ -430,18 +435,17 @@ show_slots_slot(G_GNUC_UNUSED void * data, int rc, char * slotstr,
     if (device == NULL) {
         g_fprintf(stderr, _("%s: slot %3s: Could not open device.\n"),
                 get_pname(), slotstr);
+    } else if (device->status != DEVICE_STATUS_SUCCESS) {
+        g_fprintf(stderr, _("%s: slot %3s: Could not open device: %s.\n"),
+                  get_pname(), slotstr, device_error(device));
     } else {
-        ReadLabelStatusFlags label_status;
+        DeviceStatusFlags device_status;
         device_set_startup_properties_from_config(device);
-        label_status = device_read_label(device);
+        device_status = device_read_label(device);
 
-        if (label_status != READ_LABEL_STATUS_SUCCESS) {
-            char * errstr = 
-                g_english_strjoinv_and_free
-                (g_flags_nick_to_strv(label_status,
-                                      READ_LABEL_STATUS_FLAGS_TYPE), "or");
+        if (device_status != DEVICE_STATUS_SUCCESS) {
             g_fprintf(stderr, _("%s: slot %3s: %s\n"),
-                    get_pname(), slotstr, errstr);
+                      get_pname(), slotstr, device_error_or_status(device));
         } else {
             g_fprintf(stderr, _("slot %3s: time %-14s label %s\n"),
                     slotstr, device->volume_time, device->volume_label);

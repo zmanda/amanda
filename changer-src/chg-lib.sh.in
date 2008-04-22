@@ -89,21 +89,29 @@ tape_device_filename() {
              print $2 if ($1 || "tape") eq "tape"' "$1"
 }
 
-# Runs amdevcheck to find out if a particular device is usable. Finds the
-# config name based on pwd, so run it from the config directory. The sole
-# argument should be the device name to check. Note that amdevcheck can FP
-# on device status, since some devices can't differentiate between device
-# problems and an unlabeled volume.
+# Invoke amdevcheck to determine whether the device is ready for use.
+#
+# @return 0 if a tape is loaded or error
+# @return 1 if a tape is tape offline or busy
+#
+# @side-effect: $amdevcheck_message is the contents of all MESSAGE lines from
+#               amdevcheck, suitable for use in higher-level error messages
 amdevcheck_status() {
-    amdevcheck_config_dir=`pwd`
-    amdevcheck_config_name=`basename $amdevcheck_config_dir`
-    amdevcheck_output=`amdevcheck $amdevcheck_config_name $@`
+    amdevcheck_message=
+    local amdevcheck_config_dir=`pwd`
+    local amdevcheck_config_name=`basename $amdevcheck_config_dir`
+    local amdevcheck_output=`amdevcheck $amdevcheck_config_name $@`
 
-    if test $? -eq 0 || \
-        echo $amdevcheck_output | grep UNLABELED > /dev/null; then
-        return 0
-    else
+    test $? -ne 0 && return 0
+
+    # extract any messages
+    amdevcheck_message=`echo "$amdevcheck_output" | sed '/^MESSAGE /{s/^MESSAGE //;p}; d'`
+
+    # Return 1 if a tape offline or busy
+    if echo "$amdevcheck_output" | $EGREP "VOLUME_MISSING|DEVICE_BUSY" > /dev/null; then
         return 1
+    else
+        return 0
     fi
 }
 

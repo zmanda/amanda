@@ -40,7 +40,7 @@ if test -n "$GETTEXT"; then
     _() {
 	    fmt=`$GETTEXT -d amanda "$1"`
 	    shift
-	    printf "$fmt" $*
+	    printf "$fmt" "$@"
     }
 else
     _() {

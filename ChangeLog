@@ -1,3 +1,37 @@
+2008-04-21  Jean-Louis Martineau <martineau@zmanda.com>
+	* changer-src/chg-lib.sh.in (amdevcheck_status):
+	  Set amdevcheck_message.
+	* changer-src/chg-chs.sh, changer-src/chg-juke.sh,
+	  changer-src/chg-manual.sh, changer-src/chg-zd-mtx.sh,
+	  changer-src/chg-multi.sh: Output amdevcheck_message
+	* device-src/device.c: Set errmsg and status.
+	  device_open always return a device, the status and errmsg are set.
+	* device-src/device.h: Define DeviceStatusFlags.
+	* device-src/null-device.c, device-src/s3-device.c,
+	  device-src/tape-device.c, device-src/vfs-device.c,
+	  device-src/rait-device.c: Set errmsg and status.
+	* device-src/tape-posix.c: Return status for VOLUME_MISSING.
+	* device-src/tape-ops.h: Remove TapeCheckResult.
+	* server-src/taper-source.h (_TaperSource): Add errmsg.
+	* server-src/taper-source.c: Set errmsg
+	* server-src/amcheck.c, server-src/amtape.c, server-src/amlabel.c,
+	  server-src/taperscan.c, restore-src/amrestore.c,
+	  restore-src/restore.c: Use status and errmsg of a device.
+	* server-src/taper-disk-port-source.c: Set errmsg.
+	* server-src/reporter.c: Fix parsing of taper PARTIAL line.
+	* server-src/taper.c: Use errmsg for device and _TaperSource.
+	* server-src/taper-file-source.c: Set errmsg.
+	* server-src/amcheckdump.pl,
+	  server-src/amdevcheck.pl: Use status and errmsg from device.
+	* perl/Amanda/Changer.pm: Fix for DEVICE_STATUS_*.
+	* perl/Amanda/Device.swg: New interface.
+	* installcheck/Makefile.am: Don't print some commands.
+	* installcheck/Amanda_Device.pl: Check new device api.
+	* common-src/queueing.c: Use new queue_fd_t.
+	* common-src/queueing.h (queue_fd_t): new struct.
+	* common-src/amanda-sh-lib.sh.in: Fix bug.
+	* common-src/queueing-test.c: Use queue_fd_t.
+
 2008-04-21  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/amgetconf.pl: properly quote filenames in
 	  regex, to avoid spurious failures when e.g., '+' appears

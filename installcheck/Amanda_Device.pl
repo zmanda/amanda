@@ -64,7 +64,8 @@ is($dev->property_get("canonical_name"), "null:", "property_get");
 
 ok($dev->start_file($dumpfile), "start file");
 open($input, "<", Amanda::Config::get_config_filename()) or die("Could not open amanda.conf: $!");
-ok($dev->write_from_fd(fileno($input)), "write some data");
+my $queue_fd_1 = Amanda::Device::queue_fd_t->new(fileno($input));
+ok($dev->write_from_fd($queue_fd_1), "write some data");
 close($input) or die("Error closing amanda.conf");
 # ok($dev->finish_file(), "finish file");
 
@@ -84,7 +85,8 @@ for (my $i = 1; $i <= 3; $i++) {
 
     open($input, "<", Amanda::Config::get_config_filename())
 	or die("Could not open amanda.conf: $!");
-    ok($dev->write_from_fd(fileno($input)), "write some data for file $i");
+    my $queue_fd_2 = Amanda::Device::queue_fd_t->new(fileno($input));
+    ok($dev->write_from_fd($queue_fd_2), "write some data for file $i");
     close($input) or die("Error closing amanda.conf");
 
     # Device API automatically finishes the file when a write of < write_block_size
@@ -102,7 +104,8 @@ ok($dev->start_file($dumpfile), "start file 4");
 
 open($input, "<", Amanda::Config::get_config_filename())
     or die("Could not open amanda.conf: $!");
-ok($dev->write_from_fd(fileno($input)), "write some data for file 4");
+my $queue_fd_3 = Amanda::Device::queue_fd_t->new(fileno($input));
+ok($dev->write_from_fd($queue_fd_3), "write some data for file 4");
 close($input) or die("Error closing amanda.conf");
 
 # Device API automatically finishes the file when a write of < write_block_size
@@ -120,7 +123,8 @@ is($dumpfile->{name}, "localhost", "header looks familiar");
 
 open($output, ">", Amanda::Config::get_config_filename() . "~")
     or die("Could not open amanda.conf~: $!");
-ok($dev->read_to_fd(fileno($output)), "write data from file 3");
+my $queue_fd_4 = Amanda::Device::queue_fd_t->new(fileno($output));
+ok($dev->read_to_fd($queue_fd_4), "write data from file 3");
 close($output) or die("Error closing amanda.conf~");
 
 ok($dev->finish(), "finish device");

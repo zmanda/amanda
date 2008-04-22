@@ -161,13 +161,23 @@ sub try_open_device {
         return undef;
     }
 
+    if ($device->{errmsg} ) {
+	print "Could not open device $device_name: ",
+	      $device->{errmsg}, ".\n";
+	return undef;
+    }
     $device->set_startup_properties_from_config();
 
     my $label_status = $device->read_label();
-    if ($label_status != $READ_LABEL_STATUS_SUCCESS) {
-	print "Could not read device $device_name: one of ",
-	     join(", ", ReadLabelStatusFlags_to_strings($label_status)),
-	     "\n";
+    if ($label_status != $DEVICE_STATUS_SUCCESS) {
+	if ($device->{errmsg} ) {
+	    print "Could not read device $device_name: ",
+		  $device->{errmsg}, ".\n";
+	} else {
+	    print "Could not read device $device_name: one of ",
+	         join(", ", DevicestatusFlags_to_strings($label_status)),
+	         "\n";
+	}
 	return undef;
     }
 
@@ -178,7 +188,8 @@ sub try_open_device {
     }
 
     if (!$device->start($ACCESS_READ, undef, undef)) {
-	printf("Error reading device %s.\n", $device_name);
+	printf("Error reading device %s: %s.\n", $device_name,
+	       $device->error_message());
 	return undef;
     }
 
@@ -457,7 +468,8 @@ for my $image (@images) {
     my $pipeline = open_validation_app($image, $header);
 
     # send the datastream from the device straight to the application
-    if (!$device->read_to_fd(fileno($pipeline))) {
+    my $queue_fd = Amanda::Device::queue_fd_t->new(fileno($pipeline));
+    if (!$device->read_to_fd($queue_fd)) {
         print "Error reading device or writing data to validation command.\n";
 	$all_success = 0;
 	next IMAGE;

@@ -62,6 +62,42 @@ typedef enum {
 
 typedef struct DevicePrivate_s DevicePrivate;
 
+/* This structure is a Flags (bitwise OR of values). Zero indicates success;
+ * any other value indicates some kind of problem reading the label. If
+ * multiple bits are set, it does not necessarily indicate that /all/ of
+ * the specified issues occured, but rather that /at least one/ did. */
+typedef enum {
+    /* When changing, Also update device_status_flags_values in
+     * device-src/device.c and perl/Amanda/Device.swg */
+    DEVICE_STATUS_SUCCESS          = 0,
+
+    /* The device is in an unresolvable error state, and
+     * further retries are unlikely to change the status */
+    DEVICE_STATUS_DEVICE_ERROR     = (1 << 0),
+
+    /* The device is in use, and should be retried later */
+    DEVICE_STATUS_DEVICE_BUSY      = (1 << 1),
+
+    /* The device itself is OK, but has no media loaded.  This
+     * may change if media is loaded by the user or a changer */
+    DEVICE_STATUS_VOLUME_MISSING   = (1 << 2),
+
+    /* The device is OK and media is laoded, but there is
+     * no Amanda header or an invalid header on the media. */
+    DEVICE_STATUS_VOLUME_UNLABELED = (1 << 3),
+
+    /* The device is OK, but there was an unresolvable error
+     * loading the header from the media, so subsequent reads
+     * or writes will probably fail. */
+    DEVICE_STATUS_VOLUME_ERROR     = (1 << 4),
+
+    DEVICE_STATUS_FLAGS_MAX        = (1 << 5)
+} DeviceStatusFlags;
+
+#define DEVICE_STATUS_FLAGS_MASK (DEVICE_STATUS_MAX-1)
+#define DEVICE_STATUS_FLAGS_TYPE (device_status_flags_get_type())
+GType device_status_flags_get_type(void);
+
 /*
  * Main object structure
  */
@@ -90,6 +126,11 @@ typedef struct {
     char * volume_label;
     char * volume_time;
 
+    /* Holds an error message if the function returned an error. Private --
+     * use device_error and friends to access these */
+    char * errmsg;
+    DeviceStatusFlags status;
+
     DevicePrivate * private;
 } Device;
 
@@ -107,25 +148,6 @@ typedef Device* (*DeviceFactory)(char * device_type,
 extern void register_device(DeviceFactory factory,
                             const char ** device_prefix_list);
 
-/* This structure is a Flags (bitwise OR of values). Zero indicates success;
- * any other value indicates some kind of problem reading the label. If
- * multiple bits are set, it does not necessarily indicate that /all/ of
- * the specified issues occured, but rather that /at least one/ did. */
-typedef enum {
-    /* When changing, Also update read_label_status_flags_values in device.c */
-    READ_LABEL_STATUS_SUCCESS          = 0,
-    READ_LABEL_STATUS_DEVICE_MISSING   = (1 << 0),
-    READ_LABEL_STATUS_DEVICE_ERROR     = (1 << 1),
-    READ_LABEL_STATUS_VOLUME_MISSING   = (1 << 2),
-    READ_LABEL_STATUS_VOLUME_UNLABELED = (1 << 3),
-    READ_LABEL_STATUS_VOLUME_ERROR     = (1 << 4),
-    READ_LABEL_STATUS_FLAGS_MAX              = (1 << 5)
-} ReadLabelStatusFlags;
-
-#define READ_LABEL_STATUS_FLAGS_MASK (READ_LABEL_STATUS_MAX-1)
-#define READ_LABEL_STATUS_FLAGS_TYPE (read_label_status_flags_get_type())
-GType read_label_status_flags_get_type(void);
-
 /*
  * Class definition
  */
@@ -134,18 +156,18 @@ struct _DeviceClass {
     GObjectClass __parent__;
     gboolean (* open_device) (Device * self,
                               char * device_name); /* protected */
-    ReadLabelStatusFlags (* read_label)(Device * self);
+    DeviceStatusFlags (* read_label)(Device * self);
     gboolean (* start) (Device * self, DeviceAccessMode mode,
                         char * label, char * timestamp);
     gboolean (* start_file) (Device * self, const dumpfile_t * info);
     gboolean (* write_block) (Device * self, guint size, gpointer data,
                               gboolean last_block);
-    gboolean (* write_from_fd) (Device * self, int fd);
+    gboolean (* write_from_fd) (Device * self, queue_fd_t *queue_fd);
     gboolean (* finish_file) (Device * self);
     dumpfile_t* (* seek_file) (Device * self, guint file);
     gboolean (* seek_block) (Device * self, guint64 block);
     gboolean (* read_block) (Device * self, gpointer buf, int * size);
-    gboolean (* read_to_fd) (Device * self, int fd);
+    gboolean (* read_to_fd) (Device * self, queue_fd_t *queue_fd);
     gboolean (* property_get) (Device * self, DevicePropertyId id,
                                GValue * val);
     gboolean (* property_set) (Device * self, DevicePropertyId id,
@@ -169,18 +191,26 @@ struct _DeviceClass {
 GType	device_get_type	(void);
 
 /* This is how you get a new Device. Pass in a device name like
- * file:/path/to/storage, and (assuming everything goes OK) you will get
- * back a nice happy Device* that you can do operations on. Note that you
- * must device_start() it before you can do anything besides talk about
- * properties or read the label. device_name remains the responsibility
- * of the caller. */
+ * file:/path/to/storage, a Device is always returned, you must check
+ * the device->status to know if the device is valid to be used.
+ * If device->status is not DEVICE_STATUS_SUCCESS, then device->errmsg
+ * is a pointer to an error message. */
 Device* 	device_open	(char * device_name);
+
+/* return the error message or the string "Unkonwn Device error" */
+char *device_error(Device * self);
+
+/* return a string version of the status */
+char *device_status_error(Device * self);
+
+/* Return errmsg if it is set or a string version of the status */
+char *device_error_or_status(Device * self);
 
 /* This instructs the device to read the label on the current
  * volume. device->volume_label will not be initalized until after this
  * is called. You are encouraged to read the label only after setting any
  * properties that may affect the label-reading process. */
-ReadLabelStatusFlags        device_read_label (Device * self);
+DeviceStatusFlags        device_read_label (Device * self);
 
 /* This tells the Device that it's OK to start reading and writing
  * data. Before you call this, you can only call
@@ -235,7 +265,7 @@ gboolean 	device_write_block	(Device * self,
 /* This will drain the given fd (reading until EOF), and write the
  * resulting data out to the device using maximally-sized blocks. */
 gboolean 	device_write_from_fd	(Device * self,
-					int fd);
+					queue_fd_t *queue_fd);
 
 /* Call this when you are finished writing a file. This function will
  * write a filemark or the local equivalent, flush the buffers, and do
@@ -294,7 +324,7 @@ int 	device_read_block	(Device * self,
  * and drains the results out into the specified fd. Returns FALSE if
  * there is a problem writing to the fd. */
 gboolean 	device_read_to_fd	(Device * self,
-					int fd);
+					queue_fd_t *queue_fd);
 
 /* This function tells you what properties are supported by this
  * device, and when you are allowed to get and set them. The return

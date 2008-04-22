@@ -34,6 +34,7 @@ static gboolean default_taper_source_seek_to_part_start(TaperSource * self);
 static gboolean default_taper_source_get_end_of_data(TaperSource * self);
 static gboolean default_taper_source_get_end_of_part(TaperSource * self);
 static dumpfile_t * default_taper_source_get_first_header(TaperSource * self);
+static char* default_taper_source_get_errmsg(TaperSource * self);
 
 /* pointer to the class of our parent */
 static GObjectClass *parent_class = NULL;
@@ -83,6 +84,7 @@ taper_source_init (TaperSource * o) {
     o->end_of_part = FALSE;
     o->max_part_size = G_MAXUINT64;
     o->first_header = NULL;
+    o->errmsg = NULL;
 }
 
 static void 
@@ -98,6 +100,7 @@ taper_source_class_init (TaperSourceClass * c) {
     c->get_end_of_data = default_taper_source_get_end_of_data;
     c->get_end_of_part = default_taper_source_get_end_of_part;
     c->get_first_header = default_taper_source_get_first_header;
+    c->get_errmsg = default_taper_source_get_errmsg;
     c->predict_parts = NULL;
 
     g_object_class->finalize = taper_source_finalize;
@@ -212,6 +215,10 @@ static dumpfile_t* default_taper_source_get_first_header(TaperSource * self) {
     return dumpfile_copy(self->first_header);
 }
 
+static char* default_taper_source_get_errmsg(TaperSource * self) {
+    return self->errmsg;
+}
+
 /* The rest of these functions are vtable dispatch stubs. */
 
 ssize_t 
@@ -275,6 +282,20 @@ taper_source_get_first_header (TaperSource * self)
     g_return_val_if_fail(klass->get_first_header != NULL, NULL);
 
     return (*klass->get_first_header)(self);
+}
+
+char *
+taper_source_get_errmsg (TaperSource * self)
+{
+    TaperSourceClass *klass;
+    g_return_val_if_fail (self != NULL, NULL);
+    g_return_val_if_fail (TAPER_IS_SOURCE (self), NULL);
+
+    klass = TAPER_SOURCE_GET_CLASS(self);
+    
+    g_return_val_if_fail(klass->get_errmsg != NULL, NULL);
+
+    return (*klass->get_errmsg)(self);
 }
 
 int taper_source_predict_parts(TaperSource * self) {

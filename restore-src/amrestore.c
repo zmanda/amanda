@@ -96,7 +96,7 @@ static void handle_holding_disk_restore(char * filename, rst_flags_t * flags,
 static void handle_tape_restore(char * device_name, rst_flags_t * flags,
                                 GSList * dumpspecs, char * check_label) {
     Device * device;
-    ReadLabelStatusFlags read_label_status;
+    DeviceStatusFlags device_status;
 
     dumpfile_t first_restored_file;
 
@@ -108,21 +108,26 @@ static void handle_tape_restore(char * device_name, rst_flags_t * flags,
     if (device == NULL) {
         error("Could not open device.\n");
     }
+    if (device->status != DEVICE_STATUS_SUCCESS) {
+        error("Could not open device: %s.\n", device_error(device));
+    }
     
     device_set_startup_properties_from_config(device);
-    read_label_status = device_read_label(device);
-    if (read_label_status != READ_LABEL_STATUS_SUCCESS) {
-        char * errstr =
-            g_english_strjoinv_and_free
-                (g_flags_nick_to_strv(read_label_status,
-                                      READ_LABEL_STATUS_FLAGS_TYPE), "or");
+    device_status = device_read_label(device);
+    if (device_status != DEVICE_STATUS_SUCCESS) {
+        char * errstr = device->errmsg;
+	if (!errstr)
+            errstr = g_english_strjoinv_and_free
+                (g_flags_nick_to_strv(device_status,
+                                      DEVICE_STATUS_FLAGS_TYPE), "or");
         error("Error reading volume label: %s.\n", errstr);
     }
 
     g_assert(device->volume_label != NULL);
 
     if (!device_start(device, ACCESS_READ, NULL, NULL)) {
-        error("Could not open device %s for reading.\n", device_name);
+        error("Could not open device %s for reading: %s.\n", device_name,
+	      device_error(device));
     }
 
     if (check_label != NULL && strcmp(check_label,

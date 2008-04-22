@@ -33,7 +33,7 @@ else
 	logfile=/dev/null
 fi
 
-myname=$0
+myname=`basename $0`
 
 EGREP='@EGREP@'
 
@@ -83,6 +83,7 @@ slot=`cat $slotfile`
 
 request_tty() {
 	if > /dev/tty; then
+		echo "$amdevcheck_message" >> /dev/tty
 		echo -n `_ 'Insert tape into slot %s and press return' "$1"` > /dev/tty
 		read ANSWER < /dev/tty
 	else
@@ -105,11 +106,13 @@ request_email() {
 	gtimeout=$timeout_mail
 	while true;do
 	    if [ $gtimeout -le 0 ]; then
-		echo -n `_ 'timeout waiting for tape online'`
+		answer=`_ '%s %s: timeout waiting for tape online' "$load" "$myname"`
+		echo `_ 'Exit ->'` $answer >> $logfile
+		echo $answer
 		exit 1;
 	    fi
 	    if [ $timeout -le 0 ]; then
-		msg=`_ 'insert Amanda tape into slot %s (%s)' "$1" "$tape"`
+		msg=`_ '%s\nInsert Amanda tape into slot %s (%s)\n%s' "$amdevcheck_message" "$1" "$tape"`
 		subject=`_ '%s AMANDA TAPE MOUNT REQUEST FOR SLOT %s' "$ORG" "$1"`
 		echo "$msg" | $MAILER -s "$subject" $REPORTTO
 		timeout=$resend_mail
@@ -126,6 +129,8 @@ request_email() {
 
 request_tty_email() {
 	if > /dev/tty; then
+		echo "$amdevcheck_message" > /dev/tty
+		# message parsed by ZMC:
 		echo -n `_ 'Insert tape into slot %s and press return' "$1"` > /dev/tty
 		read ANSWER < /dev/tty
 	else
@@ -172,7 +177,7 @@ eject() {
 	    answer="$slot $tape"
 	    code=0
 	else
-	    answer=`_ '<none> %s: Drive was not loaded' "$myname"`
+	    answer=`_ '<none> %s: %s' "$myname" "$amdevcheck_message"`
 	    code=1
 	fi
 	echo `_ 'Exit ->'` $answer >> $logfile
@@ -187,7 +192,7 @@ reset() {
         if amdevcheck_status $tape; then
 		answer="$slot $tape"
 	else
-		answer="0 $tape"
+		answer="0 $tape $amdevcheck_message"
 	fi
 	echo `_ 'Exit ->'` $answer >> $logfile
 	echo $answer

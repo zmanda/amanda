@@ -153,7 +153,7 @@ load_drives() {
 	count=`expr $count + 1`
 	if [ $count -gt 24 ] 
 	then
-	    echo `_ '%s %s never came online' "$slot" "$tapedev"`
+	    echo `_ '%s %s never came online: %s' "$slot" "$tapedev" "$amdevcheck_message"`
 	    exit 1
 	fi
 	sleep 5

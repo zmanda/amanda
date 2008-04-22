@@ -80,7 +80,7 @@ int scan_read_label(
 {
     Device * device;
     char *labelstr;
-    ReadLabelStatusFlags label_status;
+    DeviceStatusFlags device_status;
 
     g_return_val_if_fail(dev != NULL, -1);
 
@@ -88,7 +88,6 @@ int scan_read_label(
 	*error_message = stralloc("");
 
     *label = *timestamp = NULL;
-
     device = device_open(dev);
     if (device == NULL ) {
         *error_message = newvstrallocf(*error_message,
@@ -99,16 +98,26 @@ int scan_read_label(
         return -1;
     }
 
+    if (device->status != DEVICE_STATUS_SUCCESS ) {
+        *error_message = newvstrallocf(*error_message,
+                                       _("%sError opening device %s: %s.\n"),
+                                       *error_message, dev,
+				       device_error_or_status(device));
+        amfree(*timestamp);
+        amfree(*label);
+        return -1;
+    }
+
     device_set_startup_properties_from_config(device);
 
-    label_status = device_read_label(device);
+    device_status = device_read_label(device);
     g_assert((device->volume_label != NULL) ==
-             (label_status == READ_LABEL_STATUS_SUCCESS));
+             (device_status == DEVICE_STATUS_SUCCESS));
     
     if (device->volume_label != NULL) { 
         *label = g_strdup(device->volume_label);
         *timestamp = strdup(device->volume_time);
-    } else if (label_status & READ_LABEL_STATUS_VOLUME_UNLABELED) {
+    } else if (device_status & DEVICE_STATUS_VOLUME_UNLABELED) {
         g_object_unref(device);
         if (!getconf_seen(CNF_LABEL_NEW_TAPES)) {
             *error_message = newvstrallocf(*error_message,
@@ -133,32 +142,8 @@ int scan_read_label(
         return -1;
     } else {
         char * label_errstr;
-        char ** label_strv =
-            g_flags_nick_to_strv(label_status, READ_LABEL_STATUS_FLAGS_TYPE);
-        
-        switch (g_strv_length(label_strv)) {
-        case 0:
-            label_errstr = g_strdup(_("Unknown error reading volume label.\n"));
-            break;
-
-        case 1:
-            label_errstr =
-                g_strdup_printf(_("Error reading volume label: %s\n"),
-                                *label_strv);
-	    break;
-
-        default:
-            {
-                char * tmp_str = g_english_strjoinv(label_strv, "or");
-                label_errstr =
-                    g_strdup_printf(_("Error reading label: One of %s\n"),
-                                    tmp_str);
-                g_free(tmp_str);
-            }
-        }
-        
-        g_strfreev(label_strv);
-
+	label_errstr = g_strdup_printf(_("Error reading label: %s.\n"),
+				       device_error_or_status(device));
         *error_message = newvstralloc(*error_message, *error_message,
                                       label_errstr, NULL);
         g_free(label_errstr);

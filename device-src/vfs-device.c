@@ -66,7 +66,7 @@ static gboolean vfs_device_property_set (Device * pself, DevicePropertyId ID,
 static gboolean vfs_device_recycle_file (Device * pself, guint filenum);
 static Device * vfs_device_factory(char * device_type,
                                    char * device_name);
-static ReadLabelStatusFlags vfs_device_read_label(Device * dself);
+static DeviceStatusFlags vfs_device_read_label(Device * dself);
 static gboolean vfs_device_write_block(Device * self, guint size,
                                        gpointer data, gboolean last_block);
 static int vfs_device_read_block(Device * self, gpointer data, int * size_req);
@@ -77,7 +77,7 @@ static IoResult vfs_device_robust_read(VfsDevice * self, char *buf,
 
 /* Various helper functions. */
 static void release_file(VfsDevice * self);
-static gboolean check_is_dir(const char * name, gboolean printmsg);
+static gboolean check_is_dir(Device * d_self, const char * name);
 static char* file_number_to_file_name(VfsDevice * self, guint file);
 static gboolean file_number_to_file_name_functor(const char * filename,
                                                  gpointer datap);
@@ -274,33 +274,29 @@ static Device * vfs_device_factory(char * device_type,
     Device * rval;
     g_assert(0 == strcmp(device_type, "file"));
     rval = DEVICE(g_object_new(TYPE_VFS_DEVICE, NULL));
-    if (!device_open_device(rval, device_name)) {
-        g_object_unref(rval);
-        return NULL;
-    } else {
-        return rval;
-    }
+    device_open_device(rval, device_name);
+    return rval;
 }
 
-static gboolean check_is_dir(const char * name, gboolean printmsg) {
+static gboolean check_is_dir(Device * d_self, const char * name) {
     struct stat dir_status;
     
     if (stat(name, &dir_status) < 0) {
 #ifdef EINTR
         if (errno == EINTR) {
-            return check_is_dir(name, printmsg);
+            return check_is_dir(d_self, name);
         }
 #endif /* EINTR */
-        if (printmsg) {
-            g_fprintf(stderr, "Error checking directory %s: %s\n",
-                    name, strerror(errno));
-        }
+	d_self->errmsg = newvstrallocf(d_self->errmsg,
+		_("Error checking directory %s: %s"),
+                name, strerror(errno));
+	d_self->status = DEVICE_STATUS_DEVICE_ERROR;
         return FALSE;
     } else if (!S_ISDIR(dir_status.st_mode)) {
-        if (printmsg) {
-            g_fprintf(stderr, "VFS Device path %s is not a directory.\n",
-                    name);
-        }
+	d_self->errmsg = newvstrallocf(d_self->errmsg,
+		_("VFS Device path %s is not a directory"),
+                name);
+	d_self->status = DEVICE_STATUS_DEVICE_ERROR;
         return FALSE;
     } else {
         return TRUE;
@@ -319,16 +315,19 @@ static gboolean file_number_to_file_name_functor(const char * filename,
     char * result_tmp;
     struct stat file_status;
     fnfn_data *data = (fnfn_data*)datap;
+    Device *d_self = DEVICE(data->self);
     
     result_tmp = vstralloc(data->self->dir_name, "/", filename, NULL);    
     
     /* Just to be thorough, let's check that it's a real
        file. */
     if (0 != stat(result_tmp, &file_status)) {
-        g_fprintf(stderr, "Cannot stat file %s (%s), ignoring it.\n", 
+	d_self->errmsg = newvstrallocf(d_self->errmsg,
+		_("Cannot stat file %s (%s), ignoring it"),
                 result_tmp, strerror(errno));
     } else if (!S_ISREG(file_status.st_mode)) {
-        g_fprintf(stderr, "%s is not a regular file, ignoring it.\n",
+	d_self->errmsg = newvstrallocf(d_self->errmsg,
+        	_("%s is not a regular file, ignoring it"),
                 result_tmp);
     } else {
         data->count ++;
@@ -348,6 +347,7 @@ static gboolean file_number_to_file_name_functor(const char * filename,
 static char * file_number_to_file_name(VfsDevice * self, guint device_file) {
     char * regex;
     fnfn_data data;
+    Device *d_self = DEVICE(self);
 
     g_return_val_if_fail(self != NULL, NULL);
     data.self = self;
@@ -363,10 +363,14 @@ static char * file_number_to_file_name(VfsDevice * self, guint device_file) {
 
     if (data.count == 0) {
         g_assert(data.result == NULL);
+	d_self->errmsg = newstralloc(d_self->errmsg, "unlabeled device");
+					// The keyword "unlabeled" is needed
+					// by amdevheck.
+					// That's why it is not translated.
         return NULL;
     } else if (data.count > 1) {
-        g_fprintf(stderr,
-                "Found multiple names for file number %d, choosing file %s.\n",
+	d_self->errmsg = newvstrallocf(d_self->errmsg,
+                _("Found multiple names for file number %d, choosing file %s"),
                 device_file, data.result);
         return data.result;
     } else {
@@ -401,6 +405,7 @@ static gboolean open_lock(G_GNUC_UNUSED VfsDevice * self,
 /*
     int fd;
     char * name;
+    Device *d_self = DEVICE(self);
     if (file < 0) {
         if (self->volume_lock_name == NULL) {
             self->volume_lock_name = lockfile_name(self, 0);
@@ -422,8 +427,10 @@ static gboolean open_lock(G_GNUC_UNUSED VfsDevice * self,
     fd = robust_open(name, O_CREAT | O_WRONLY, VFS_DEVICE_CREAT_MODE);
 
     if (fd < 0) {
-        g_fprintf(stderr, "Can't open lock file %s: %s\n",
+	d_self->errmsg = newvstrallocf(d_self->errmsg,
+	        _("Can't open lock file %s: %s"),
                 name, strerror(errno));
+	d_self->status = DEVICE_STATUS_DEVICE_ERROR;
         return FALSE;
     }
 
@@ -459,13 +466,16 @@ static gboolean update_volume_size_functor(const char * filename,
     char * full_filename;
     struct stat stat_buf;
     VfsDevice * self = user_data;
+    Device *d_self = DEVICE(self);
+
     g_return_val_if_fail(IS_VFS_DEVICE(self), FALSE);
     
     full_filename = vstralloc(self->dir_name, "/", filename, NULL);
 
     if (stat(full_filename, &stat_buf) < 0) {
         /* Log it and keep going. */
-        g_fprintf(stderr, "Couldn't stat file %s: %s\n",
+	d_self->errmsg = newvstrallocf(d_self->errmsg,
+        	_("Couldn't stat file %s: %s"),
                 full_filename, strerror(errno));
         amfree(full_filename);
         return TRUE;
@@ -496,24 +506,28 @@ vfs_device_open_device (Device * pself, char * device_name) {
     /* We don't have to free this ourselves; it will be freed by
      * vfs_device_finalize whether we succeed here or not. */
     self->dir_name = g_strconcat(device_name, "/data/", NULL);
-    if (!check_is_dir(self->dir_name, TRUE)) {
+    if (!check_is_dir(pself, self->dir_name)) {
         return FALSE;
     }
 
     /* Next open the directory itself. */
     self->dir_handle = opendir(self->dir_name);
     if (self->dir_handle == NULL) {
-        g_fprintf(stderr, "Couldn't open directory %s for reading: %s\n",
-                device_name, strerror(errno));
+	pself->errmsg = newvstrallocf(pself->errmsg,
+		_("Couldn't open device %s (directory %s) for reading: %s"),
+		device_name, self->dir_name, strerror(errno));
+	pself->status = DEVICE_STATUS_DEVICE_ERROR;
         return FALSE;
     }
 
-    if (!open_lock(self, -1, FALSE))
+    if (!open_lock(self, -1, FALSE)) {
         return FALSE;
+    }
 
     /* Not an error if this fails. Note that we ignore the class hierarchy.
      */
     rval = vfs_device_seek_file(pself, 0);
+    amfree(pself->errmsg);
     amfree(rval);
 
     if (parent_class->open_device) {
@@ -528,9 +542,11 @@ vfs_device_open_device (Device * pself, char * device_name) {
 static gboolean delete_vfs_files_functor(const char * filename,
                                          gpointer user_data) {
     VfsDevice * self;
+    Device * d_self;
     char * path_name;
 
     self = VFS_DEVICE(user_data);
+    d_self = DEVICE(self);
     g_return_val_if_fail(self != NULL, FALSE);
 
     /* Skip the volume lock. */
@@ -539,7 +555,8 @@ static gboolean delete_vfs_files_functor(const char * filename,
 
     path_name = vstralloc(self->dir_name, "/", filename, NULL);
     if (unlink(path_name) != 0) {
-        g_fprintf(stderr, "Error unlinking %s: %s\n", path_name,
+	d_self->errmsg = newvstrallocf(d_self->errmsg,
+        	_("Error unlinking %s: %s"), path_name,
                 strerror(errno));
     }
     amfree(path_name);
@@ -564,8 +581,10 @@ static gboolean check_dir_empty_functor(const char * filename,
                                         gpointer user_data) {
     VfsDevice * self;
     char * path_name;
+    Device *d_self;
 
     self = VFS_DEVICE(user_data);
+    d_self = DEVICE(self);
     g_return_val_if_fail(self != NULL, FALSE);
 
     if (strcmp(filename, VOLUME_LOCKFILE_NAME) == 0)
@@ -573,7 +592,8 @@ static gboolean check_dir_empty_functor(const char * filename,
 
     path_name = vstralloc(self->dir_name, "/", filename, NULL);
 
-    g_fprintf(stderr, "Found spurious storage file %s\n", path_name);
+    d_self->errmsg = newvstrallocf(d_self->errmsg,
+		_("Found spurious storage file %s"), path_name);
 
     amfree(path_name);
     return TRUE;
@@ -584,13 +604,15 @@ static gboolean write_amanda_header(VfsDevice * self,
                                     const dumpfile_t * header) {
     char * label_buffer;
     IoResult result;
+    Device *d_self = DEVICE(self);
     
     g_return_val_if_fail(header != NULL, FALSE);
     g_return_val_if_fail(self != NULL, FALSE);
     label_buffer = build_header(header, VFS_DEVICE_LABEL_SIZE);
     if (strlen(label_buffer)+1 > VFS_DEVICE_LABEL_SIZE) {
         amfree(label_buffer);
-        g_fprintf(stderr, "Amanda header header won't fit on VFS device!\n");
+	d_self->errmsg = newstralloc(d_self->errmsg,
+	        _("Amanda header header won't fit on VFS device!"));
         return FALSE;
     }
 
@@ -605,6 +627,7 @@ static gboolean write_amanda_header(VfsDevice * self,
 static gboolean clear_and_prepare_label(VfsDevice * self, char * label,
                                         char * timestamp) {
     dumpfile_t * label_header;
+    Device *d_self = DEVICE(self);
 
     release_file(self);
 
@@ -623,7 +646,8 @@ static gboolean clear_and_prepare_label(VfsDevice * self, char * label,
                                      O_CREAT | O_EXCL | O_WRONLY,
                                      VFS_DEVICE_CREAT_MODE);
     if (self->open_file_fd < 0) {
-        g_fprintf(stderr, "Can't open file %s: %s\n", self->file_name,
+	d_self->errmsg = newvstrallocf(d_self->errmsg,
+	        _("Can't open file %s: %s"), self->file_name,
                 strerror(errno));
         return FALSE;
     }
@@ -639,27 +663,30 @@ static gboolean clear_and_prepare_label(VfsDevice * self, char * label,
     }
 }
 
-static ReadLabelStatusFlags vfs_device_read_label(Device * dself) {
+static DeviceStatusFlags vfs_device_read_label(Device * dself) {
     dumpfile_t * amanda_header;
     VfsDevice * self;
 
     self = VFS_DEVICE(dself);
-    g_return_val_if_fail(self != NULL, ~READ_LABEL_STATUS_SUCCESS);
+    g_return_val_if_fail(self != NULL, ~DEVICE_STATUS_SUCCESS);
 
     amanda_header = vfs_device_seek_file(dself, 0);
     if (amanda_header == NULL) {
         /* This means an error occured getting locks or opening the header
          * file. */
-        return (READ_LABEL_STATUS_DEVICE_ERROR |
-                READ_LABEL_STATUS_VOLUME_ERROR |
-                READ_LABEL_STATUS_VOLUME_UNLABELED);
+	dself->status = (DEVICE_STATUS_DEVICE_ERROR |
+	                 DEVICE_STATUS_VOLUME_ERROR |
+	                 DEVICE_STATUS_VOLUME_UNLABELED);
+	return dself->status;
     }
 
     if (amanda_header->type != F_TAPESTART) {
         /* This is an error, and should not happen. */
-        g_fprintf(stderr, "Got a bad volume label\n");
+	dself->errmsg = newstralloc(dself->errmsg,
+        	_("Got a bad volume label"));
         amfree(amanda_header);
-        return READ_LABEL_STATUS_VOLUME_ERROR;
+	dself->status = DEVICE_STATUS_VOLUME_ERROR;
+        return dself->status;
     }
 
     dself->volume_label = g_strdup(amanda_header->name);
@@ -669,10 +696,11 @@ static ReadLabelStatusFlags vfs_device_read_label(Device * dself) {
     update_volume_size(self);
 
     if (parent_class->read_label) {
-        return (parent_class->read_label)(dself);
+        dself->status = (parent_class->read_label)(dself);
     } else {
-        return READ_LABEL_STATUS_SUCCESS;
+        dself->status = DEVICE_STATUS_SUCCESS;
     }
+    return dself->status;
 }
 
 static gboolean vfs_device_write_block(Device * pself, guint size,
@@ -770,10 +798,13 @@ static gboolean get_last_file_number_functor(const char * filename,
                                              gpointer datap) {
     guint64 file;
     glfn_data * data = (glfn_data*)datap;
+    Device *d_self = DEVICE(data->self);
+
     g_return_val_if_fail(IS_VFS_DEVICE(data->self), FALSE);
     file = g_ascii_strtoull(filename, NULL, 10); /* Guaranteed to work. */
     if (file > G_MAXINT) {
-        g_fprintf(stderr, "Super-large device file %s found, ignoring.\n",
+	d_self->errmsg = newvstrallocf(d_self->errmsg,
+        	_("Super-large device file %s found, ignoring"),
                filename);
         return TRUE;
     }
@@ -787,6 +818,7 @@ static gboolean get_last_file_number_functor(const char * filename,
 static gint get_last_file_number(VfsDevice * self) {
     glfn_data data;
     int count;
+    Device *d_self = DEVICE(self);
     data.self = self;
     data.rval = -1;
     
@@ -795,7 +827,8 @@ static gint get_last_file_number(VfsDevice * self) {
 
     if (count <= 0) {
         /* Somebody deleted something important while we weren't looking. */
-        g_fprintf(stderr, "Error identifying VFS device contents!\n");
+	d_self->errmsg = newstralloc(d_self->errmsg,
+        	_("Error identifying VFS device contents!"));
         return -1;
     } else {
         g_assert(data.rval >= 0);
@@ -815,11 +848,13 @@ static gboolean get_next_file_number_functor(const char * filename,
                                              gpointer datap) {
     guint file;
     gnfn_data * data = (gnfn_data*)datap;
+    Device *d_self = DEVICE(data->self);
     g_return_val_if_fail(IS_VFS_DEVICE(data->self), FALSE);
     file = g_ascii_strtoull(filename, NULL, 10); /* Guaranteed to work. */
     if (file > G_MAXINT) {
-        g_fprintf(stderr, "Super-large device file %s found, ignoring.\n",
-               filename);
+	d_self->errmsg = newvstrallocf(d_self->errmsg,
+		_("Super-large device file %s found, ignoring"),
+		filename);
         return TRUE;
     }
     /* This condition is needlessly complex due to sign issues. */
@@ -835,6 +870,7 @@ static gboolean get_next_file_number_functor(const char * filename,
 static gint get_next_file_number(VfsDevice * self, guint request) {
     gnfn_data data;
     int count;
+    Device *d_self = DEVICE(self);
     data.self = self;
     data.request = request;
     data.best_found = -1;
@@ -844,7 +880,8 @@ static gint get_next_file_number(VfsDevice * self, guint request) {
 
     if (count <= 0) {
         /* Somebody deleted something important while we weren't looking. */
-        g_fprintf(stderr, "Error identifying VFS device contents!\n");
+	d_self->errmsg = newstralloc(d_self->errmsg,
+        	_("Error identifying VFS device contents!"));
         return -1;
     }
     
@@ -909,7 +946,8 @@ vfs_device_start_file (Device * pself, const dumpfile_t * ji) {
                                      O_CREAT | O_EXCL | O_RDWR,
                                      VFS_DEVICE_CREAT_MODE);
     if (self->open_file_fd < 0) {
-        g_fprintf(stderr, "Can't create file %s: %s\n", self->file_name,
+	pself->errmsg = newvstrallocf(pself->errmsg,
+	        _("Can't create file %s: %s"), self->file_name,
                 strerror(errno));
         release_file(self);
         return FALSE;
@@ -995,7 +1033,8 @@ vfs_device_seek_file (Device * pself, guint requested_file) {
 
     self->open_file_fd = robust_open(self->file_name, O_RDONLY, 0);
     if (self->open_file_fd <= 0) {
-        g_fprintf(stderr, "Couldn't open file %s: %s\n", self->file_name,
+	pself->errmsg = newvstrallocf(pself->errmsg,
+		_("Couldn't open file %s: %s"), self->file_name,
                 strerror(errno));
         amfree(self->file_name);
         release_file(self);
@@ -1005,7 +1044,15 @@ vfs_device_seek_file (Device * pself, guint requested_file) {
     result = vfs_device_robust_read(self, header_buffer,
                                     &header_buffer_size);
     if (result != RESULT_SUCCESS) {
-        g_fprintf(stderr, "Problem reading Amanda header.\n");
+	char *errmsg;
+	if (pself->errmsg) {
+	    errmsg = stralloc2(_("Problem reading Amanda header: "),
+				 pself->errmsg);
+	    amfree(pself->errmsg);
+	} else {
+	    errmsg = stralloc(_("Problem reading Amanda header"));
+	}
+	pself->errmsg = errmsg;
         release_file(self);
         return NULL;
     }
@@ -1123,7 +1170,6 @@ vfs_device_property_set (Device * pself, DevicePropertyId ID, GValue * val) {
 
 static gboolean try_unlink(const char * file) {
     if (unlink(file) < 0) {
-        g_fprintf(stderr, "Can't unlink file %s: %s\n", file, strerror(errno));
         return FALSE;
     } else {
         return TRUE;
@@ -1157,14 +1203,25 @@ vfs_device_recycle_file (Device * pself, guint filenum) {
         return FALSE;
 
     if (0 != stat(self->file_name, &file_status)) {
-        fprintf(stderr, "Cannot stat file %s (%s), so not removing.\n",
+	pself->errmsg = newvstrallocf(pself->errmsg,
+	        _("Cannot stat file %s (%s), so not removing"),
                 self->file_name, strerror(errno));
         return FALSE;
     }
     file_size = file_status.st_size;
     
-    if (!try_unlink(self->file_name) ||
-        !try_unlink(self->file_lock_name)) {
+    if (!try_unlink(self->file_name)) {
+	pself->errmsg = newvstrallocf(pself->errmsg,
+		_("Unlink of %s failed: %s"),
+		self->file_name, strerror(errno));
+        release_file(self);
+        return FALSE;
+    }
+
+    if (!try_unlink(self->file_lock_name)) {
+	pself->errmsg = newvstrallocf(pself->errmsg,
+		_("Unlink of %s failed: %s"),
+		self->file_lock_name, strerror(errno));
         release_file(self);
         return FALSE;
     }
@@ -1177,6 +1234,7 @@ vfs_device_recycle_file (Device * pself, guint filenum) {
 static IoResult vfs_device_robust_read(VfsDevice * self, char *buf,
                                              int *count) {
     int fd = self->open_file_fd;
+    Device *d_self = DEVICE(self);
     int want = *count, got = 0;
 
     while (got < want) {
@@ -1207,9 +1265,10 @@ static IoResult vfs_device_robust_read(VfsDevice * self, char *buf,
             continue;
         } else {
             /* Error occured. */
-            g_fprintf(stderr, "Error reading fd %d: %s\n", fd, strerror(errno));
+	    d_self->errmsg = newvstrallocf(d_self->errmsg,
+	            _("Error reading fd %d: %s"), fd, strerror(errno));
             *count = got;
-            return -1;
+            return RESULT_ERROR;
         }
     }
 
@@ -1220,6 +1279,7 @@ static IoResult vfs_device_robust_read(VfsDevice * self, char *buf,
 static IoResult
 vfs_device_robust_write(VfsDevice * self,  char *buf, int count) {
     int fd = self->open_file_fd;
+    Device *d_self = DEVICE(self);
     int rval = 0;
 
     while (rval < count) {
@@ -1253,7 +1313,8 @@ vfs_device_robust_write(VfsDevice * self,  char *buf, int count) {
             return RESULT_NO_SPACE;
         } else {
             /* Error occured. Note that here we handle EIO as an error. */
-            g_fprintf(stderr, "Error writing device fd %d: %s\n",
+	    d_self->errmsg = newvstrallocf(d_self->errmsg,
+	            _("Error writing device fd %d: %s"),
                     fd, strerror(errno));
             
             return RESULT_ERROR;
