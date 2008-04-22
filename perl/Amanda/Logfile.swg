@@ -38,7 +38,7 @@ Amanda::Logfile - manage Amanda trace logs
 
 =head1 SYNOPSIS
 
-  use Amanda::Logfile qw(:logtype_t); # XXX change
+  use Amanda::Logfile qw(:logtype_t);
   use Amanda::Config qw( :getconf config_dir_relative );
 
   for my $logfile (Amanda::Logfile::find_log()) {
@@ -108,23 +108,32 @@ Instance variables are:
 
 =over
 
-=item C<$timestamp>
+=item C<timestamp>
 
-=item C<$hostname>
+=item C<hostname>
 
-=item C<$diskname>
+=item C<diskname>
 
-=item C<$level>
+=item C<level>
 
-=item C<$label>
+=item C<label>
 
-=item C<$filenum>
+=item C<filenum>
 
-=item C<$status>
+=item C<status>
 
-=item C<$partnum>
+=item C<partnum>
+
+=item C<sec>
+
+=item C<kb>
 
 =back
+
+Note that the format for these variables are based on that found in the
+logfiles.  In particular, C<partnum> is a string, usually with a slash (C</>)
+in it.  Also, C<timestamp> is the timestamp for the run in which the client
+dump took place, and not for the timestamp of the logfile.
 
 =head1 HIGHER-LEVEL FUNCTIONS
 
@@ -247,6 +256,8 @@ typedef struct {
     off_t filenum;
     char *status;
     char *partnum;
+    double sec;
+    size_t kb;
     %mutable;
 } find_result_t;
 

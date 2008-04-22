@@ -150,6 +150,14 @@ MAINTAINERCLEANFILES += Amanda/Tapelist.c Amanda/Tapelist.pm
 Amanda_DATA += Amanda/Changer.pm
 EXTRA_DIST += Amanda/Changer.pm
 
+# Amanda::DB::*
+Amanda_DBdir = $(Amandadir)/DB
+Amanda_DB_DATA =
+
+# PACKAGE: Amanda::DB::Catalog
+Amanda_DB_DATA += Amanda/DB/Catalog.pm
+EXTRA_DIST += Amanda/DB/Catalog.pm
+
 endif
 
 # PACKAGE: Amanda::Debug

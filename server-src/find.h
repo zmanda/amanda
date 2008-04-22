@@ -15,6 +15,8 @@ typedef struct find_result_s {
     off_t filenum;
     char *status;
     char *partnum;
+    double sec;		/* may be 0.0 for older log files or holding files */
+    size_t kb;		/* may be 0 for older log files or holding files */
     void *user_ptr;
 } find_result_t;
 

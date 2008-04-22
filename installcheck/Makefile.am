@@ -16,6 +16,7 @@ common_tests = \
 server_tests = \
 	Amanda_Changer \
 	Amanda_Cmdline \
+	Amanda_DB_Catalog \
 	Amanda_Device \
 	Amanda_Logfile \
 	Amanda_Tapelist \

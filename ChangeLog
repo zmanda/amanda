@@ -1,4 +1,11 @@
 2008-04-22  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Logfile.swg server-src/find.c server-src/find.h: add
+	  parsing of 'sec' and 'kb' from logfile messages
+	* perl/Amanda/DB/Catalog.pm perl/Makefile.am: new module
+	* installcheck/Amanda_DB_Catalog.pl installcheck/Makefile.am: checks
+	  for new module
+
+2008-04-22  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/event.c: on glib <2.4.0, use a simple polling 
 	  child_watch_source; on more recent glib, use glib's own
 	  child_watch_source
