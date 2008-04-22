@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 11;
+use Test::More tests => 12;
 use strict;
 use warnings;
 use POSIX qw(WIFEXITED WEXITSTATUS);
@@ -29,6 +29,7 @@ use Amanda::MainLoop qw( :GIOCondition );
 
     my $to = Amanda::MainLoop::timeout_source(200);
     $to->set_callback(sub { 
+	# ignore $src argument
 	if (++$global >= 3) {
 	    $to->remove();
 	    Amanda::MainLoop::quit();
@@ -36,7 +37,24 @@ use Amanda::MainLoop qw( :GIOCondition );
     });
 
     Amanda::MainLoop::run();
-    is($global, 3, "Timeout source works, calls back repeatedly");
+    is($global, 3, "Timeout source works, calls back repeatedly (using a closure)");
+}
+
+{
+    my $global = 0;
+
+    my $to = Amanda::MainLoop::timeout_source(200);
+    $to->set_callback(sub { 
+	my ($src) = @_;
+	if (++$global >= 3) {
+	    $src->remove();
+	    Amanda::MainLoop::quit();
+	}
+    });
+    $to = undef; # remove the lexical reference to the source
+
+    Amanda::MainLoop::run();
+    is($global, 3, "Timeout source works, calls back repeatedly (no external reference to the source)");
 }
 
 {
@@ -44,14 +62,16 @@ use Amanda::MainLoop qw( :GIOCondition );
 
     my $id = Amanda::MainLoop::idle_source(5);
     $id->set_callback(sub { 
+	my ($src) = @_;
 	if (++$global >= 30) {
-	    $id->remove();
+	    $src->remove();
 	    Amanda::MainLoop::quit();
 	}
     });
 
     Amanda::MainLoop::run();
     is($global, 30, "Idle source works, calls back repeatedly");
+    $id->remove();
 }
 
 {
@@ -68,6 +88,8 @@ use Amanda::MainLoop qw( :GIOCondition );
 
     Amanda::MainLoop::run();
     is($global, 0, "A remove()d source doesn't call back");
+
+    $to2->remove();
 }
 
 {
@@ -84,9 +106,9 @@ use Amanda::MainLoop qw( :GIOCondition );
 
     my $cw = Amanda::MainLoop::child_watch_source($pid);
     $cw->set_callback(sub {
-	my ($got_pid, $got_status) = @_;
+	my ($src, $got_pid, $got_status) = @_;
 	Amanda::MainLoop::quit();
-	$cw->remove();
+	$src->remove();
 
 	if ($got_pid != $pid) {
 	    diag("Got pid $got_pid, but expected $pid");
@@ -104,10 +126,19 @@ use Amanda::MainLoop qw( :GIOCondition );
     });
 
     my $to = Amanda::MainLoop::timeout_source(3000);
-    $to->set_callback(sub { $global = 7; Amanda::MainLoop::quit(); });
+    $to->set_callback(sub {
+	my ($src) = @_;
+	$global = 7;
+
+	$src->remove();
+	Amanda::MainLoop::quit();
+    });
 
     Amanda::MainLoop::run();
     is($global, 1, "Child watch detects a dead child");
+
+    $cw->remove();
+    $to->remove();
 }
 
 {
@@ -124,9 +155,9 @@ use Amanda::MainLoop qw( :GIOCondition );
     sleep(1);
     my $cw = Amanda::MainLoop::child_watch_source($pid);
     $cw->set_callback(sub {
-	my ($got_pid, $got_status) = @_;
+	my ($src, $got_pid, $got_status) = @_;
 	Amanda::MainLoop::quit();
-	$cw->remove();
+	$src->remove();
 
 	if ($got_pid != $pid) {
 	    diag("Got pid $got_pid, but expected $pid");
@@ -148,6 +179,9 @@ use Amanda::MainLoop qw( :GIOCondition );
 
     Amanda::MainLoop::run();
     is($global, 1, "Child watch detects a dead child that dies before the callback is set");
+
+    $cw->remove();
+    $to->remove();
 }
 
 {
@@ -189,7 +223,7 @@ use Amanda::MainLoop qw( :GIOCondition );
 
     my $cw = Amanda::MainLoop::child_watch_source($pid);
     $cw->set_callback(sub {
-	my ($got_pid, $got_status) = @_;
+	my ($src, $got_pid, $got_status) = @_;
 	$cw->remove();
 	Amanda::MainLoop::quit();
 
@@ -212,6 +246,8 @@ use Amanda::MainLoop qw( :GIOCondition );
 
     Amanda::MainLoop::run();
     $to->remove();
+    $cw->remove();
+    $fd->remove();
 
     is_deeply([ @events ],
 	[ "time", "read HELLO", "time", "read WORLD", "time", "died" ],

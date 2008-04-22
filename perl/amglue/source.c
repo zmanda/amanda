@@ -20,16 +20,119 @@
 
 #include "amglue.h"
 
-/* TODO: use a slice allocator */
+/* GSources are tricky to bind to perl for a few reasons:
+ *  - they have a one-way state machine: once attached and detached, they
+ *    cannot be re-attached
+ *  - different "kinds" of GSources require C-level callbacks with
+ *    different signatures
+ *  - an attached GSource should continue running, even if not referenced
+ *    from perl, while a detached GSource should free all its resources
+ *    when no longer referenced.
+ *
+ * To accomplish all of this, this file implements a "glue object" called
+ * amglue_Source.  There are zero or one amglue_Source objects for each
+ * GSource object, so they serve as a place to store "extra" data about a
+ * GSource.  In particular, they store:
+ *  - a pointer to a C callback function that can trigger a Perl callback
+ *  - a pointer to an SV representing the perl callback to run
+ *  - a reference count
+ * Any number of Perl SV's may reference the amglue_Source -- it tracks this
+ * via its reference count.
+ *
+ * Let's look at this arrangement as it follows a typical usage scenario.  The
+ * numbers in brackets are reference counts.
+ *
+ * -- my $src = Amanda::MainLoop::new_foo_source();
+ * GSrc[1] <----) amSrc[1] <---- $src[1] <--- perl-stack
+ *
+ * The lexical $src contains a reference to the amglue_Source object, which is
+ * referencing the underlying GSource object.  Pretty simple.  The amglue_Source
+ * only counts one reference because the GSource isn't yet attached.  Think of
+ * the ')' in the diagram as a weak reference.  If the perl scope were to end
+ * now, all of these objects would be freed immediately.
+ *
+ * -- $src->set_callback(\&cb);
+ *                              ,--> &cb[1]
+ * GMainLoop --> GSrc[2] <---> amSrc[2]
+ *                              ^--- $src[1] <--- perl-stack
+ *
+ * The GSource has been attached, so GMainLoop holds a reference to it.  The
+ * amglue_Source incremented its own reference count, making the previous weak
+ * reference a full reference, because the link from the GSource will be used
+ * when a callback occurs.  The amglue_Source object also keeps a reference to
+ * the callback coderef.
+ *
+ * -- return;
+ *                              ,--> &cb[1]
+ * GMainLoop --> GSrc[2] <---> amSrc[1]
+ *
+ * When the perl scope ends, the lexical $src is freed, reducing the reference
+ * count on the amglue_Source to 1.  At this point, the object is not accessible
+ * from perl, but it is still accessible from the GSource via a callback.
+ *
+ * -- # in callback
+ *                              ,--> &cb[1]
+ * GMainLoop --> GSrc[2] <---> amSrc[2] <--- $self[1] <--- perl-stack
+ *
+ * When the callback is invoked, a reference to the amglue_Source is placed on
+ * the perl stack, so it is once again referenced twice.
+ *
+ * -- $self->remove();
+ *               GSrc[1] <---) amSrc[1] <--- $self[1] <--- perl-stack
+ *
+ * Now the callback itself has called remove().  The amglue_Source object removes
+ * the GSource from the MainLoop and drops its reference to the perl callback, and
+ * decrements its refcount to again weaken the reference from the GSource.  The
+ * amglue_Source is now useless, but since it is still in scope, it remains
+ * allocated and accessible.
+ *
+ * -- return;
+ *
+ * When the callback returns, the last reference to SV is destroyed, reducing
+ * the reference count to the amglue_Source to zero, reducing the reference to
+ * the GSource to zero.  Everything is gone.
+ */
+
+/* We use a glib 'dataset' to attach an amglue_Source to each GSource
+ * object.  This requires a Quark to describe the kind of data being
+ * attached.
+ *
+ * We define a macro and corresponding global to support access
+ * to our quark.  The compiler will optimize out all but the first
+ * conditional in each function, which is just as we want it. */
+static GQuark _quark = 0;
+#define AMGLUE_SOURCE_QUARK \
+    ( _quark?_quark:(_quark = g_quark_from_static_string("amglue_Source")) )
+
 amglue_Source *
-amglue_new_source(
-    GSource *gsrc, 
+amglue_source_get(
+    GSource *gsrc,
+    GSourceFunc callback)
+{
+    amglue_Source *src;
+    g_assert(gsrc != NULL);
+
+    src = (amglue_Source *)g_dataset_id_get_data(gsrc, AMGLUE_SOURCE_QUARK);
+
+    if (!src)
+	src = amglue_source_new(gsrc, callback);
+    else
+	amglue_source_ref(src);
+
+    return src;
+}
+
+amglue_Source *
+amglue_source_new(
+    GSource *gsrc,
     GSourceFunc callback)
 {
     amglue_Source *src = g_new0(amglue_Source, 1);
     src->src = gsrc;
     src->callback = callback;
     src->state = AMGLUE_SOURCE_NEW;
+    src->refcount = 1;
+    g_dataset_id_set_data(gsrc, AMGLUE_SOURCE_QUARK, (gpointer)src);
 
     return src;
 }
@@ -38,37 +141,12 @@ void
 amglue_source_free(
     amglue_Source *self)
 {
-    if (self->callback_sv)
-	SvREFCNT_dec(self->callback_sv);
-    if (self->state == AMGLUE_SOURCE_ATTACHED)
-	g_source_destroy(self->src);
+    /* if we're attached, we hold a circular reference to ourselves,
+     * so we shouldn't be at refcount=0 */
+    g_assert(self->state != AMGLUE_SOURCE_ATTACHED);
+    g_assert(self->callback_sv == NULL);
+
+    g_dataset_id_remove_data(self->src, AMGLUE_SOURCE_QUARK);
+    g_source_unref(self->src);
     g_free(self);
-}
-
-gboolean
-amglue_source_callback_simple(
-    gpointer *data)
-{
-    dSP;
-    amglue_Source *src = (amglue_Source *)data;
-    g_assert(src->callback_sv != NULL);
-
-    PUSHMARK(SP);
-    call_sv(src->callback_sv, G_EVAL|G_DISCARD|G_NOARGS);
-
-    /* 'src' may have been freed at this point! */
-    src = NULL;
-
-    /* check for an uncaught 'die'.  If we don't do this, then Perl will longjmp()
-     * over the GMainLoop mechanics, leaving GMainLoop in an inconsistent (locked)
-     * state. */
-    if (SvTRUE(ERRSV)) {
-	/* We handle this just the way the default 'die' handler in Amanda::Debug 
-	 * does, but since Amanda's debug support may not yet be running, we back
-	 * it up with an exit() */
-	g_critical("%s", SvPV_nolen(ERRSV));
-	exit(1);
-    }
-
-    return TRUE;
 }

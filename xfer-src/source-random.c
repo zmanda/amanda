@@ -44,12 +44,14 @@ GType xfer_source_random_get_type(void);
 #define IS_XFER_SOURCE_RANDOM(obj) G_TYPE_CHECK_INSTANCE_TYPE((obj), xfer_source_random_get_type ())
 #define XFER_SOURCE_RANDOM_GET_CLASS(obj) G_TYPE_INSTANCE_GET_CLASS((obj), xfer_source_random_get_type(), XferSourceRandomClass)
 
+static GObjectClass *parent_class = NULL;
+
 /*
  * Main object structure
  */
 
 typedef struct XferSourceRandom {
-    XferSource __parent__;
+    XferElement __parent__;
 
     size_t length;
     gboolean text_only;
@@ -64,7 +66,7 @@ typedef struct XferSourceRandom {
  */
 
 typedef struct {
-    XferSourceClass __parent__;
+    XferElementClass __parent__;
 } XferSourceRandomClass;
 
 /*
@@ -189,7 +191,6 @@ static void
 finalize_impl(
     GObject * obj_self)
 {
-    GObjectClass *goc;
     XferSourceRandom *xsr = XFER_SOURCE_RANDOM(obj_self);
 
     /* close our pipes */
@@ -200,22 +201,25 @@ finalize_impl(
     /* TODO */
 
     /* chain up */
-    goc = G_OBJECT_CLASS(g_type_class_peek(G_TYPE_OBJECT));
-    if (goc->finalize) goc->finalize(obj_self);
+    G_OBJECT_CLASS(parent_class)->finalize(obj_self);
 }
 
 static void
 class_init(
-    XferSourceRandomClass * xsrc)
+    XferSourceRandomClass * klass)
 {
-    XferElementClass *xec = XFER_ELEMENT_CLASS(xsrc);
-    GObjectClass *goc = G_OBJECT_CLASS(xsrc);
+    XferElementClass *xec = XFER_ELEMENT_CLASS(klass);
+    GObjectClass *goc = G_OBJECT_CLASS(klass);
 
     xec->start = start_impl;
     xec->abort = abort_impl;
     xec->setup_output = setup_output_impl;
 
+    xec->perl_class = "Amanda::Xfer::Source::Random";
+
     goc->finalize = finalize_impl;
+
+    parent_class = g_type_class_peek_parent(klass);
 }
 
 GType
@@ -237,7 +241,7 @@ xfer_source_random_get_type (void)
             NULL
         };
 
-        type = g_type_register_static (XFER_SOURCE_TYPE, "XferSourceRandom", &info, 0);
+        type = g_type_register_static (XFER_ELEMENT_TYPE, "XferSourceRandom", &info, 0);
     }
 
     return type;
@@ -255,7 +259,10 @@ xfer_source_random(
 
     xsr->length = length;
     xsr->text_only = text_only;
-    elt->output_mech = mechanisms;
+
+    /* mechansims == 0 means 'default' */
+    if (mechanisms)
+	elt->output_mech = mechanisms;
 
     return elt;
 }

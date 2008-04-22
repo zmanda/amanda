@@ -79,11 +79,28 @@ multiple events over its lifetime.
 The method C<$src->set_callback(\&cb)> sets the function that will be called
 for a given source, and "attaches" the source to the main loop so that it will
 begin generating events.  The arguments to the callback depend on the event
-source.  Unless specified, no arguments are provided.
+source, but the first argument is always the source itself.  Unless specified,
+no other arguments are provided.
 
-Event sources persist until they are removed with C<$src->remove()>.  Although
-Glib supports it, there is no provision for "automatically" removing an event
-source.
+Event sources persist until they are removed with C<$src->remove()>, even if
+the source itself is no longer accessible from Perl.  Although Glib supports
+it, there is no provision for "automatically" removing an event source.  As an
+example:
+
+  sub start_timer { 
+    my ($loops) = @_;
+
+    Amanda::MainLoop::timeout_source(200)->set_callback(sub {
+      my ($src) = @_;
+      print "timer\n";
+      if (--$loops <= 0) {
+        $src->remove();
+        Amanda::MainLoop::quit();
+      }
+    });
+  }
+  start_timer(10);
+  Amanda::MainLoop::run();
 
 =head3 Timeout
 
@@ -108,12 +125,14 @@ the source is destroyed.
 
 A child watch source will issue an event when the process with the given PID
 dies.  To avoid race conditions, it will issue an event even if the process
-dies before the source is created.  The callback is called with two arguments:
-the PID and the child's exit status.
+dies before the source is created.  The callback is called with three
+arguments: the event source, the PID, and the child's exit status.
 
 Note that this source is totally incompatible with any thing that would cause
-perl to change the SIGCHLD handler.  In particular, C<open .. "|-"> cannot be
-used in the same process as this source.
+perl to change the SIGCHLD handler.  If SIGCHLD is changed, under some
+circumstances the module will recognize this circumstance, add a warning to the
+debug log, and continue operating.  However, it is impossible to catch all
+possible situations.
 
 =head3 File Descriptor
 
@@ -125,6 +144,10 @@ and are C<$G_IO_IN>, C<G_IO_OUT>, C<$G_IO_PRI>, C<$G_IO_ERR>, C<$G_IO_HUP>, and
 C<$G_IO_NVAL>.  These constants are available with the import tag
 C<:GIOCondition>.
 
+Generally, when reading from a file descriptor, use C<$G_IO_IN|$G_IO_HUP> to
+ensure that an EOF triggers an event as well.  Writing to a file descriptor can
+simply use C<$G_IO_OUT>.
+
 =head1 RELATION TO GLIB
 
 Glib's main event loop is described in the Glib manual:
@@ -132,10 +155,16 @@ L<http://library.gnome.org/devel/glib/stable/glib-The-Main-Event-Loop.html>.
 Note that Amanda depends only on the functionality available in Glib-2.2.0, so
 many functions described in that document are not available in Amanda.  This
 module provides a much-simplified interface to the glib library, and is not
-intended as a generally-useful wrapper for it.
+intended as a generic wrapper for it.  Specifically:
 
-Amanda's perl-accessible main loop only runs a single C<GMainContext>, and
+=over
+
+=item Amanda's perl-accessible main loop only runs a single C<GMainContext>, and
 always runs in the main thread.
+
+=item Besides idle sources, event priorities are not accessible from Perl.
+
+=back
 
 =cut
 %}
@@ -164,18 +193,19 @@ void quit(void) {
  * constructors for various event sources.
  */
 
+%{ static void amglue_source_remove(amglue_Source *self); %}
+
 %rename(Source) amglue_Source;
 typedef struct amglue_Source {
     %extend {
 	/* Constructor: use one of the package-level functions, below */
 	amglue_Source() {
-	    die("Cannot create event sources directly");
+	    die("Amanda::MainLoop::Source is an abstract base class");
 	}
 
-	/* Destructor: when Perl is no longer interested in this object,
-	 * then detach from the main loop and clean up. */
+	/* Destructor: just unref the object */
 	~amglue_Source() {
-	    amglue_source_free(self);
+	    amglue_source_unref(self);
 	}
 
 	/* a "cheater's typemap" to just pass the SV along */
@@ -189,8 +219,13 @@ typedef struct amglue_Source {
 		die("This source has already been removed");
 	    } else if (self->state == AMGLUE_SOURCE_NEW) {
 		self->state = AMGLUE_SOURCE_ATTACHED;
+
 		g_source_attach(self->src, NULL);
-		g_source_unref(self->src);
+
+		/* the link from the GSource to the amglue_Source is
+		 * now in use, so we increment the amglue_Source's 
+		 * refcount. */
+		amglue_source_ref(self);
 	    }
 
 	    /* whoever created this Source object conveniently left
@@ -212,13 +247,93 @@ typedef struct amglue_Source {
 	%typemap(in) SV *sv;
 
 	void remove(void) {
-	    if (self->state == AMGLUE_SOURCE_ATTACHED) {
-		self->state = AMGLUE_SOURCE_DESTROYED;
-		g_source_destroy(self->src);
-	    }
+	    amglue_source_remove(self);
 	}
     }
 } amglue_Source;
+
+%{
+/* Detach a source from the mainloop and remove it from play.  This is broken
+ * out as a separate function because it's also used from some callbacks */
+static void
+amglue_source_remove(
+    amglue_Source *self)
+{
+    /* protect against self being freed out from under us */
+    amglue_source_ref(self);
+
+    if (self->state == AMGLUE_SOURCE_ATTACHED) {
+	/* unref any perl callback */
+	if (self->callback_sv) {
+	    SvREFCNT_dec(self->callback_sv);
+	    self->callback_sv = NULL;
+	}
+
+	/* undo the ref made in set_callback() */
+	amglue_source_unref(self);
+
+	g_source_destroy(self->src);
+    }
+
+    self->state = AMGLUE_SOURCE_DESTROYED;
+
+    /* reverse the "protection" increment used above */
+    amglue_source_unref(self);
+}
+%}
+
+/* "Generic" callback function for a GSource that actually uses the GSourceFunc
+ * prototype.  The source of this function also serves as a prototype for other,
+ * more advanced callbacks.  Due to perl's heavy use of precompiler macros, it's
+ * not possible to break this down any further. */
+%{
+static gboolean
+amglue_source_callback_simple(
+    gpointer *data)
+{
+    dSP;
+    amglue_Source *src = (amglue_Source *)data;
+    SV *src_sv = NULL;
+
+    g_assert(src->callback_sv != NULL);
+
+    ENTER;
+    SAVETMPS;
+
+    /* create a new SV pointing to 'src', and increase our refcount
+     * accordingly.  The SV is mortal, so FREETMPS will decrease the 
+     * refcount, unless the callee keeps a copy of it somewhere */
+    amglue_source_ref(src);
+    src_sv = SWIG_NewPointerObj(src, SWIGTYPE_p_amglue_Source,
+				 SWIG_OWNER | SWIG_SHADOW);
+
+    PUSHMARK(SP);
+    XPUSHs(src_sv);
+    PUTBACK;
+
+    call_sv(src->callback_sv, G_EVAL|G_DISCARD);
+
+    FREETMPS;
+    LEAVE;
+
+    /* these may have been freed, so don't use them after this point */
+    src_sv = NULL;
+    src = NULL;
+
+    /* check for an uncaught 'die'.  If we don't do this, then Perl will longjmp()
+     * over the GMainLoop mechanics, leaving GMainLoop in an inconsistent (locked)
+     * state. */
+    if (SvTRUE(ERRSV)) {
+	/* We handle this just the way the default 'die' handler in Amanda::Debug 
+	 * does, but since Amanda's debug support may not yet be running, we back
+	 * it up with an exit() */
+	g_critical("%s", SvPV_nolen(ERRSV));
+	exit(1);
+    }
+
+    return TRUE;
+}
+%}
 
 /* Constructors for some general-purpose sources */
 
@@ -229,7 +344,7 @@ amglue_Source *
 timeout_source(
     guint interval)
 {
-    return amglue_new_source(g_timeout_source_new(interval), 
+    return amglue_source_new(g_timeout_source_new(interval), 
 	(GSourceFunc)amglue_source_callback_simple);
 }
 %}
@@ -243,16 +358,12 @@ idle_source(
 {
     GSource *idle_source = g_idle_source_new();
     g_source_set_priority(idle_source, priority);
-    return amglue_new_source(idle_source,
+    return amglue_source_new(idle_source,
 	(GSourceFunc)amglue_source_callback_simple);
 }
 %}
 
 /* child watch source */
-#if sizeof(gint) < sizeof(pid_t)
-#error 'gint' type is too small to hold a PID
-#endif
-
 %{
 static gboolean
 child_watch_source_callback(
@@ -261,23 +372,38 @@ child_watch_source_callback(
     gpointer data)
 {
     dSP;
-    amglue_Source *src = (SV *)data;
+    amglue_Source *src = (amglue_Source *)data;
+    SV *src_sv;
+
     g_assert(src->callback_sv != NULL);
 
-    /* push some arguments */
+    ENTER;
+    SAVETMPS;
+
+    /* create a new SV pointing to 'src', and increase our refcount
+     * accordingly.  The SV is mortal, so FREETMPS will decrease the 
+     * refcount, unless the callee keeps a copy of it somewhere */
+    amglue_source_ref(src);
+    src_sv = SWIG_NewPointerObj(src, SWIGTYPE_p_amglue_Source,
+				 SWIG_OWNER | SWIG_SHADOW);
+
     PUSHMARK(SP);
+    XPUSHs(src_sv);
     XPUSHs(sv_2mortal(newSViv(pid)));
     XPUSHs(sv_2mortal(newSViv(status)));
     PUTBACK;
 
-    /* child watch sources automatically destroy themselves after the
-     * child dies, so we mark the amglue_Source as destroyed, too.  We
-     * do this now, in case src is destroyed later. */
-    src->state = AMGLUE_SOURCE_DESTROYED;
-
     call_sv(src->callback_sv, G_EVAL|G_DISCARD);
 
-    /* 'src' may have been freed at this point! */
+    /* child watch sources automatically destroy themselves after the
+     * child dies, so we mark the amglue_Source as destroyed, too. */
+    amglue_source_remove(src);
+
+    FREETMPS;
+    LEAVE;
+
+    /* these may have been freed, so don't use them after this point */
+    src_sv = NULL;
     src = NULL;
 
     /* check for an uncaught 'die'.  If we don't do this, then Perl will longjmp()
@@ -301,7 +427,7 @@ child_watch_source(
     gint pid)
 {
     GSource *child_watch_source = new_child_watch_source(pid);
-    return amglue_new_source(child_watch_source,
+    return amglue_source_new(child_watch_source,
 	(GSourceFunc)child_watch_source_callback);
 }
 %}
@@ -325,7 +451,7 @@ fd_source(
     GIOCondition events)
 {
     GSource *fdsource = new_fdsource(fd, events);
-    return amglue_new_source(fdsource,
+    return amglue_source_new(fdsource,
 	(GSourceFunc)amglue_source_callback_simple);
 }
 %}

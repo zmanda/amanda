@@ -35,12 +35,14 @@ GType xfer_filter_xor_get_type(void);
 #define IS_XFER_FILTER_XOR(obj) G_TYPE_CHECK_INSTANCE_TYPE((obj), xfer_filter_xor_get_type ())
 #define XFER_FILTER_XOR_GET_CLASS(obj) G_TYPE_INSTANCE_GET_CLASS((obj), xfer_filter_xor_get_type(), XferFilterXorClass)
 
+static GObjectClass *parent_class = NULL;
+
 /*
  * Main object structure
  */
 
 typedef struct XferFilterXor {
-    XferFilter __parent__;
+    XferElement __parent__;
 
     char xor_key;
 
@@ -55,7 +57,7 @@ typedef struct XferFilterXor {
  */
 
 typedef struct {
-    XferFilterClass __parent__;
+    XferElementClass __parent__;
 } XferFilterXorClass;
 
 /*
@@ -217,7 +219,6 @@ static void
 finalize_impl(
     GObject * obj_self)
 {
-    GObjectClass *goc;
     XferFilterXor *xfx = XFER_FILTER_XOR(obj_self);
 
     /* close our pipes */
@@ -230,23 +231,26 @@ finalize_impl(
     /* TODO */
 
     /* chain up */
-    goc = G_OBJECT_CLASS(g_type_class_peek(G_TYPE_OBJECT));
-    if (goc->finalize) goc->finalize(obj_self);
+    G_OBJECT_CLASS(parent_class)->finalize(obj_self);
 }
 
 static void
 class_init(
-    XferFilterXorClass * xfxc)
+    XferFilterXorClass * klass)
 {
-    XferElementClass *xec = XFER_ELEMENT_CLASS(xfxc);
-    GObjectClass *goc = G_OBJECT_CLASS(xfxc);
+    XferElementClass *xec = XFER_ELEMENT_CLASS(klass);
+    GObjectClass *goc = G_OBJECT_CLASS(klass);
 
     xec->start = start_impl;
     xec->abort = abort_impl;
     xec->setup_input = setup_input_impl;
     xec->setup_output = setup_output_impl;
 
+    xec->perl_class = "Amanda::Xfer::Filter::Xor";
+
     goc->finalize = finalize_impl;
+
+    parent_class = g_type_class_peek_parent(klass);
 }
 
 GType
@@ -268,7 +272,7 @@ xfer_filter_xor_get_type (void)
             NULL
         };
 
-        type = g_type_register_static (XFER_FILTER_TYPE, "XferFilterXor", &info, 0);
+        type = g_type_register_static (XFER_ELEMENT_TYPE, "XferFilterXor", &info, 0);
     }
 
     return type;
@@ -277,15 +281,18 @@ xfer_filter_xor_get_type (void)
 /* create an element of this class; prototype is in xfer-element.h */
 XferElement *
 xfer_filter_xor(
+    unsigned char xor_key,
     xfer_input_mech input_mechanisms,
-    xfer_output_mech output_mechanisms,
-    char xor_key)
+    xfer_output_mech output_mechanisms)
 {
     XferFilterXor *xfx = (XferFilterXor *)g_object_new(XFER_FILTER_XOR_TYPE, NULL);
     XferElement *elt = XFER_ELEMENT(xfx);
 
-    elt->input_mech = input_mechanisms;
-    elt->output_mech = output_mechanisms;
+    /* mechansims == 0 means 'default' */
+    if (input_mechanisms)
+	elt->input_mech = input_mechanisms;
+    if (output_mechanisms)
+	elt->output_mech = output_mechanisms;
 
     xfx->xor_key = xor_key;
 

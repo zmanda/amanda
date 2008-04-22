@@ -37,18 +37,18 @@
 
 XMsg *
 xmsg_new(
-    XferElement *src,
+    XferElement *elt,
     xmsg_type type,
     int version)
 {
     XMsg *msg = g_new0(XMsg, 1);
-    msg->src = src;
+    msg->elt = elt;
     msg->type = type;
     msg->version = version;
 
     /* messages hold a reference to the XferElement, to avoid dangling
      * pointers. */
-    g_object_ref((GObject *)src);
+    g_object_ref((GObject *)elt);
 
     return msg;
 }
@@ -58,7 +58,7 @@ xmsg_free(
     XMsg *msg)
 {
     /* unreference the source */
-    g_object_unref((GObject *)msg->src);
+    g_object_unref((GObject *)msg->elt);
 
     /* and free any allocated attributes */
     if (msg->repr) g_free(msg->repr);
@@ -72,6 +72,8 @@ char *
 xmsg_repr(
     XMsg *msg)
 {
+    if (!msg) return "(nil)"; /* better safe than sorry */
+
     /* this just shows the "header" fields for now */
     if (!msg->repr) {
 	char *typ = NULL;
@@ -82,124 +84,9 @@ xmsg_repr(
 	    default: typ = "**UNKNOWN**"; break;
 	}
 
-	msg->repr = vstrallocf("<XMsg@%p type=XMSG_%s src=%s version=%d>",
-	    msg, typ, xfer_element_repr(msg->src), msg->version);
+	msg->repr = vstrallocf("<XMsg@%p type=XMSG_%s elt=%s version=%d>",
+	    msg, typ, xfer_element_repr(msg->elt), msg->version);
     }
 
     return msg->repr;
-}
-
-/*
- * XMsgSource
- */
-
-static gboolean
-xmsgsource_prepare(
-    GSource *source,
-    gint *timeout_)
-{
-    XMsgSource *xms = (XMsgSource *)source;
-
-    *timeout_ = -1;
-    return g_async_queue_length(xms->queue) > 0;
-}
-
-static gboolean
-xmsgsource_check(
-    GSource *source)
-{
-    XMsgSource *xms = (XMsgSource *)source;
-
-    return g_async_queue_length(xms->queue) > 0;
-}
-
-static gboolean
-xmsgsource_dispatch(
-    GSource *source G_GNUC_UNUSED,
-    GSourceFunc callback,
-    gpointer user_data)
-{
-    XMsgSource *xms = (XMsgSource *)source;
-    XMsgCallback my_cb = (XMsgCallback)callback;
-    XMsg *msg;
-
-    while ((msg = (XMsg *)g_async_queue_try_pop(xms->queue))) {
-	if (my_cb) {
-	    my_cb(user_data, msg);
-	} else {
-	    g_warning("Dropping XMsg from %s because no callback is set", 
-		xfer_element_repr(msg->src));
-	}
-	xmsg_free(msg);
-    }
-
-    /* Never automatically un-queue the event source */
-    return TRUE;
-}
-
-XMsgSource *
-xmsgsource_new(void)
-{
-    static GSourceFuncs *xmsgsource_funcs = NULL;
-    GSource *src;
-    XMsgSource *xms;
-
-    /* initialize these here to avoid a compiler warning */
-    if (!xmsgsource_funcs) {
-	xmsgsource_funcs = g_new0(GSourceFuncs, 1);
-	xmsgsource_funcs->prepare = xmsgsource_prepare;
-	xmsgsource_funcs->check = xmsgsource_check;
-	xmsgsource_funcs->dispatch = xmsgsource_dispatch;
-    }
-
-    src = g_source_new(xmsgsource_funcs, sizeof(XMsgSource));
-    xms = (XMsgSource *)src;
-
-    xms->queue = g_async_queue_new();
-
-    return xms;
-}
-
-void
-xmsgsource_destroy(
-    XMsgSource *xms)
-{
-    XMsg *msg;
-
-    /* First, try to empty the queue */
-    while ((msg = (XMsg *)g_async_queue_try_pop(xms->queue))) {
-	g_warning("Dropping XMsg from %s because the XMsgSource is being destroyed", 
-	    xfer_element_repr(msg->src));
-	xmsg_free(msg);
-    }
-
-    /* Now, unreference the queue.  */
-    g_async_queue_unref(xms->queue);
-
-    /* Finally, destroy the GSource itself, so that the callback is no longer
-     * called. */
-    g_source_destroy((GSource *)xms);
-}
-
-void
-xmsgsource_set_callback(
-    XMsgSource *xms,
-    XMsgCallback callback,
-    gpointer data)
-{
-    g_source_set_callback((GSource *)xms, (GSourceFunc)callback, data, NULL);
-}
-
-void
-xmsgsource_queue_message(
-    XMsgSource *xms,
-    XMsg *msg)
-{
-    g_assert(xms != NULL);
-    g_assert(msg != NULL);
-
-    g_async_queue_push(xms->queue, (gpointer)msg);
-
-    /* TODO: don't do this if we're in the main thread */
-    g_main_context_wakeup(NULL);
 }

@@ -52,9 +52,9 @@ typedef struct Xfer Xfer;
 
 /* Create a new Xfer object, which should later be freed with xfref_free.
  *
- * In the most common case, the given transfer elements were just created, and
- * thus have a reference count of one.  This function "steals" that reference,
- * so the caller must not g_object_unref the elements.
+ * This function adds a reference to each element.  The caller should
+ * unreference the elements if it does not intend to use them directly.
+ * The Xfer returned has a refcount of one.
  *
  * @param elements: array of pointers to transfer elements, in order from source
  *     to destination
@@ -63,24 +63,34 @@ typedef struct Xfer Xfer;
  */
 Xfer *xfer_new(struct XferElement **elements, unsigned int nelements);
 
-/* Free a transfer.  This is a fatal error if the transfer is not in state
- * XFER_INIT or XFER_DONE, as asynchronous operations may still be in progress.
- *
- * @param xfer: the Xfer object
- */
-void xfer_free(Xfer *xfer);
-
-/* Set the function to be called when messages arrive from elements of
- * this transfer.
+/* Increase the reference count of a transfer.
  *
  * @param xfer: the transfer
- * @param callback: function to call
- * @param data: data to be passed to callback
  */
-typedef void (*XferMsgCallback)(gpointer data, struct XMsg *msg, Xfer *xfer);
-void xfer_set_callback(Xfer *xfer, XferMsgCallback callback, gpointer data);
+void xfer_ref(Xfer *xfer);
 
-/* Queue a message for delivery via this transfer.
+/* Decrease the reference count of a transfer, possibly freeing it.  A running
+ * transfer (state neither XFER_INIT nor XFER_DONE) will not be freed.
+ *
+ * @param xfer: the transfer
+ */
+void xfer_unref(Xfer *xfer);
+
+/* Get a GSource which will produce events corresponding to messages from
+ * this transfer.  This is a "peek" operation, so the reference count for the
+ * GSource is not affected.  Note that the same GSource is returned on every
+ * call for a particular transfer.
+ *
+ * @returns: GSource object
+ */
+GSource *xfer_get_source(Xfer *xfer);
+
+/* Typedef for the callback to be set on the GSource returned from
+ * xfer_get_source.
+ */
+typedef void (*XMsgCallback)(gpointer data, struct XMsg *msg, Xfer *xfer);
+
+/* Queue a message for delivery via this transfer's GSource.
  *
  * @param xfer: the transfer
  * @param msg: the message to queue

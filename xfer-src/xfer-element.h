@@ -163,114 +163,23 @@ typedef struct {
      * @param fdp (input or result): the file descriptor
      */
     void (*setup_input)(XferElement *elt, xfer_input_mech mech, int *fdp);
+
+    /* This is used by the perl bindings -- it is a class variable giving the
+     * appropriate perl class to wrap this XferElement.  It should be set by
+     * each class's class_init.
+     */
+    const char *perl_class;
 } XferElementClass;
 
 /*
  * Method stubs
  */
 
+void xfer_element_unref(XferElement *elt);
 gboolean xfer_element_link_to(XferElement *elt, XferElement *successor);
 char *xfer_element_repr(XferElement *elt);
 void xfer_element_start(XferElement *elt);
 void xfer_element_abort(XferElement *elt);
-
-/***********************
- * XferSource
- *
- * Base class for transfer sources.
- */
-
-GType xfer_source_get_type(void);
-#define XFER_SOURCE_TYPE (xfer_source_get_type())
-#define XFER_SOURCE(obj) G_TYPE_CHECK_INSTANCE_CAST((obj), xfer_source_get_type(), XferSource)
-#define XFER_SOURCE_CONST(obj) G_TYPE_CHECK_INSTANCE_CAST((obj), xfer_source_get_type(), XferSource const)
-#define XFER_SOURCE_CLASS(klass) G_TYPE_CHECK_CLASS_CAST((klass), xfer_source_get_type(), XferSourceClass)
-#define IS_XFER_SOURCE(obj) G_TYPE_CHECK_INSTANCE_TYPE((obj), xfer_source_get_type ())
-#define XFER_SOURCE_GET_CLASS(obj) G_TYPE_INSTANCE_GET_CLASS((obj), xfer_source_get_type(), XferSourceClass)
-
-/*
- * Main object structure
- */
-
-typedef struct XferSource {
-    XferElement __parent__;
-} XferSource;
-
-/*
- * Class definition
- */
-
-typedef struct {
-    XferElementClass __parent__;
-} XferSourceClass;
-
-/*
- * Methods
- */
-
-/***********************
- * XferFilter
- *
- * Base class for transfer filters.
- */
-
-GType xfer_filter_get_type(void);
-#define XFER_FILTER_TYPE (xfer_filter_get_type())
-#define XFER_FILTER(obj) G_TYPE_CHECK_INSTANCE_CAST((obj), xfer_filter_get_type(), XferFilter)
-#define XFER_FILTER_CONST(obj) G_TYPE_CHECK_INSTANCE_CAST((obj), xfer_filter_get_type(), XferFilter const)
-#define XFER_FILTER_CLASS(klass) G_TYPE_CHECK_CLASS_CAST((klass), xfer_filter_get_type(), XferFilterClass)
-#define IS_XFER_FILTER(obj) G_TYPE_CHECK_INSTANCE_TYPE((obj), xfer_filter_get_type ())
-#define XFER_FILTER_GET_CLASS(obj) G_TYPE_INSTANCE_GET_CLASS((obj), xfer_filter_get_type(), XferFilterClass)
-
-/*
- * Main object structure
- */
-
-typedef struct XferFilter {
-    XferElement __parent__;
-} XferFilter;
-
-/*
- * Class definition
- */
-
-typedef struct {
-    XferElementClass __parent__;
-} XferFilterClass;
-
-/*
- * Methods
- */
-
-/***********************
- * XferDest
- *
- * Base class for transfer destinations.
- */
-
-GType xfer_dest_get_type(void);
-#define XFER_DEST_TYPE (xfer_dest_get_type())
-#define XFER_DEST(obj) G_TYPE_CHECK_INSTANCE_CAST((obj), xfer_dest_get_type(), XferDest)
-#define XFER_DEST_CONST(obj) G_TYPE_CHECK_INSTANCE_CAST((obj), xfer_dest_get_type(), XferDest const)
-#define XFER_DEST_CLASS(klass) G_TYPE_CHECK_CLASS_CAST((klass), xfer_dest_get_type(), XferDestClass)
-#define IS_XFER_DEST(obj) G_TYPE_CHECK_INSTANCE_TYPE((obj), xfer_dest_get_type ())
-#define XFER_DEST_GET_CLASS(obj) G_TYPE_INSTANCE_GET_CLASS((obj), xfer_dest_get_type(), XferDestClass)
-
-/*
- * Main object structure
- */
-
-typedef struct XferDest {
-    XferElement __parent__;
-} XferDest;
-
-/*
- * Class definition
- */
-
-typedef struct {
-    XferElementClass __parent__;
-} XferDestClass;
 
 /*
  * Methods
@@ -293,7 +202,7 @@ typedef struct {
  *
  * @param length: bytes to produce
  * @param text_only: output should be in short, textual lines (for debugging)
- * @param mechanisms: output mechanisms to advertize
+ * @param mechanisms: output mechanisms to advertize, or 0 for default
  * @return: new element
  */
 XferElement *xfer_source_random(
@@ -307,13 +216,13 @@ XferElement *xfer_source_random(
  *
  * Implemented in filter-xor.c
  *
- * @param mechanisms: input mechanisms to advertize
+ * @param mechanisms: input mechanisms to advertize, or 0 for default
  * @return: new element
  */
 XferElement *xfer_filter_xor(
+    unsigned char xor_key,
     xfer_input_mech input_mech,
-    xfer_output_mech output_mech,
-    char xor_key);
+    xfer_output_mech output_mech);
 
 /* A transfer destination that consumes all bytes it is given.  The class
  * supports all input mechanisms, but its advertized mechanisms can be set
@@ -321,12 +230,12 @@ XferElement *xfer_filter_xor(
  *
  * Implemented in dest-null.c
  *
- * @param mechanisms: input mechanisms to advertize
+ * @param mechanisms: input mechanisms to advertize, or 0 for default
  * @param debug_print: if TRUE, all data will be printed to stdout
  * @return: new element
  */
 XferElement *xfer_dest_null(
-    xfer_input_mech mechanisms,
-    gboolean debug_print);
+    gboolean debug_print,
+    xfer_input_mech mechanisms);
 
 #endif

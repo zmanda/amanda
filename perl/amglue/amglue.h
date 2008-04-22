@@ -133,38 +133,54 @@ typedef enum amglue_Source_state {
     AMGLUE_SOURCE_DESTROYED
 } amglue_Source_state;
 
+/* There is *one* amglue_Source object for each GSource; this
+ * allows us to attach amglue-related information to the 
+ * GSource.  See amglue/source.c for more detail. */
+
 typedef struct amglue_Source {
     GSource *src;
     GSourceFunc callback;
-    SV *callback_sv;
+    gint refcount;
     amglue_Source_state state;
+    SV *callback_sv;
 } amglue_Source;
 
-/* Create a new amglue_Source object with the given
- * attributes.  This function takes ownership
- * of the given GSource, so the caller should not call
- * g_source_unref().
+/* Get the amglue_Source object associated with this GSource, creating a
+ * new one if necessary, and increment its refcount.
  *
  * The 'callback' parameter should be a C function with the
  * appropriate signature for this GSource.  The callback will
- * be given an amglue_Source as its 'data' argument, and should
+ * be given the amglue_Source as its 'data' argument, and should
  * invoke its callback_sv as a Perl sub with the appropriate
  * parameters.  Simple GSources can use amglue_source_callback_simple,
  * below.
  *
+ * This amglue_Source object can be returned directly to perl via a
+ * SWIG binding; it will be bound as an Amanda::MainLoop::Source
+ * object, and its memory management will be handled correctly.
+ *
  * @param gsrc: the GSource object to wrap
  * @param callback: function to trigger a perl callback
+ * @returns: an amglue_Source with appropriate refcount
  */
-amglue_Source *amglue_new_source(GSource *gsrc, GSourceFunc callback);
+amglue_Source *amglue_source_get(GSource *gsrc, GSourceFunc callback);
 
-/* Free an amglue_Source object.  This removes the source from the
- * event loop, unref's the underlying GSource, and frees the object
- * itself.
+/* Create a new amglue_Source object for this GSource.  Use this when
+ * the GSource was just created and does not yet have a corresponding
+ * amglue_Source.
+ *
+ * @param gsrc: the GSource object to wrap
+ * @param callback: function to trigger a perl callback
+ * @returns: an amglue_Source with appropriate refcount
  */
+amglue_Source *amglue_source_new(GSource *gsrc, GSourceFunc callback);
+
+/* Increment the refcount on an amglue_Source */
+#define amglue_source_ref(aS) aS->refcount++
+
+/* Unref an amglue_Source object, freeing it if its refcount reaches
+ * zero.  */
+#define amglue_source_unref(aS) if (!--(aS)->refcount) amglue_source_free((aS))
 void amglue_source_free(amglue_Source *);
-
-/* a simple main loop callback exactly matching GSourceFunc, 
- * with no additional arguments */
-gboolean amglue_source_callback_simple(gpointer *data);
 
 #endif /* AMANDA_AMGLUE_H */

@@ -35,12 +35,14 @@ GType xfer_dest_null_get_type(void);
 #define IS_XFER_DEST_NULL(obj) G_TYPE_CHECK_INSTANCE_TYPE((obj), xfer_dest_null_get_type ())
 #define XFER_DEST_NULL_GET_CLASS(obj) G_TYPE_INSTANCE_GET_CLASS((obj), xfer_dest_null_get_type(), XferDestNullClass)
 
+static GObjectClass *parent_class = NULL;
+
 /*
  * Main object structure
  */
 
 typedef struct XferDestNull {
-    XferDest __parent__;
+    XferElement __parent__;
 
     gboolean debug_print;
 
@@ -54,7 +56,7 @@ typedef struct XferDestNull {
  */
 
 typedef struct {
-    XferDestClass __parent__;
+    XferElementClass __parent__;
 } XferDestNullClass;
 
 /*
@@ -111,11 +113,18 @@ start_impl(
 {
     XferDestNull *xs = (XferDestNull *)elt;
     GThread *th;
+    XMsg *msg;
 
     /* we'd better have a fd to read from. */
     g_assert(xs->pipe[0] != -1);
 
     th = g_thread_create(read_data_thread, (gpointer)xs, FALSE, NULL);
+
+    /* send a superfluous message (this is a testing XferElement,
+     * after all) */
+    msg = xmsg_new((XferElement *)xs, XMSG_INFO, 0);
+    msg->message = stralloc("Is this thing on?");
+    xfer_queue_message(XFER_ELEMENT(xs)->xfer, msg);
 }
 
 static void
@@ -170,7 +179,6 @@ static void
 finalize_impl(
     GObject * obj_self)
 {
-    GObjectClass *goc;
     XferDestNull *xdn = XFER_DEST_NULL(obj_self);
 
     /* close our pipes */
@@ -181,22 +189,25 @@ finalize_impl(
     /* TODO */
 
     /* chain up */
-    goc = G_OBJECT_CLASS(g_type_class_peek(G_TYPE_OBJECT));
-    if (goc->finalize) goc->finalize(obj_self);
+    G_OBJECT_CLASS(parent_class)->finalize(obj_self);
 }
 
 static void
 class_init(
-    XferDestNullClass * xdnc)
+    XferDestNullClass * klass)
 {
-    XferElementClass *xec = XFER_ELEMENT_CLASS(xdnc);
-    GObjectClass *goc = G_OBJECT_CLASS(xdnc);
+    XferElementClass *xec = XFER_ELEMENT_CLASS(klass);
+    GObjectClass *goc = G_OBJECT_CLASS(klass);
 
     xec->start = start_impl;
     xec->abort = abort_impl;
     xec->setup_input = setup_input_impl;
 
+    xec->perl_class = "Amanda::Xfer::Dest::Null";
+
     goc->finalize = finalize_impl;
+
+    parent_class = g_type_class_peek_parent(klass);
 }
 
 GType
@@ -218,7 +229,7 @@ xfer_dest_null_get_type (void)
             NULL
         };
 
-        type = g_type_register_static (XFER_DEST_TYPE, "XferDestNull", &info, 0);
+        type = g_type_register_static (XFER_ELEMENT_TYPE, "XferDestNull", &info, 0);
     }
 
     return type;
@@ -227,13 +238,15 @@ xfer_dest_null_get_type (void)
 /* create an element of this class; prototype is in xfer-element.h */
 XferElement *
 xfer_dest_null(
-    xfer_input_mech mechanisms,
-    gboolean debug_print)
+    gboolean debug_print,
+    xfer_input_mech mechanisms)
 {
     XferDestNull *xdn = (XferDestNull *)g_object_new(XFER_DEST_NULL_TYPE, NULL);
     XferElement *elt = XFER_ELEMENT(xdn);
 
-    elt->input_mech = mechanisms;
+    /* mechansims == 0 means 'default' */
+    if (mechanisms)
+	elt->input_mech = mechanisms;
 
     xdn->debug_print = debug_print;
 

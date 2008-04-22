@@ -10,7 +10,8 @@ common_tests = \
 	Amanda_Config \
 	Amanda_Debug \
 	Amanda_MainLoop \
-	Amanda_Types
+	Amanda_Types \
+	Amanda_Xfer
 
 server_tests = \
 	Amanda_Changer \

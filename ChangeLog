@@ -1,3 +1,25 @@
+2008-04-22  Dustin J. Mitchell <dustin@zmanda.com>
+	* xfer-src/source-random.c xfer-src/xmsg.c xfer-src/xfer-element.h
+	  xfer-src/xfer-dest.c xfer-src/xfer-test.c xfer-src/xmsg.h
+	  xfer-src/xfer.c xfer-src/xfer-dest.h xfer-src/dest-null.c
+	  xfer-src/xfer.h xfer-src/filter-xor.c xfer-src/xfer-element.c:
+	  - flatten XferElement hierarchy to one level
+	  - change test element argument order
+	  - rename XMsg.src to Xmsg.elt
+	  - Improve memory management (refcounting, perl interface)
+	* perl/Amanda/Changer.pm perl/Amanda/Xfer.swg
+	  perl/Amanda/MainLoop.swg perl/Makefile.am
+	  perl/amglue/amglue.h perl/amglue/source.c:
+	  - rewrite handling of amglue_Source for better refcounting
+	  - Amanda::MainLoop callbacks get the event source as 1st argument,
+	    and will be called even if the event source goes out of scope in
+	    perl
+	  - MainLoop.swg significantly rewritten to get refcounting right
+	* installcheck/Amanda_Xfer.pl: new checks (without excessive use of
+	  file descriptors)
+	* installcheck/Amanda_MainLoop.pl installcheck/Makefile.am: updated
+	   checks
+
 2008-04-22  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/tape-posix.c: Don't return DEVICE_STATUS_VOLUME_MISSING
 				   on ioctl error.

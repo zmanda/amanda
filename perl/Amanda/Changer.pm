@@ -515,8 +515,8 @@ sub run_tpchanger {
 	}
     };
 
-    $fdsrc = Amanda::MainLoop::fd_source($readfd, $G_IO_IN | $G_IO_ERR | $G_IO_HUP);
     $fd_source_cb = sub {
+	my ($fdsrc) = @_;
 	my ($len, $bytes);
 	$len = POSIX::read($readfd, $bytes, 1024);
 
@@ -532,11 +532,11 @@ sub run_tpchanger {
 	    $child_output .= $bytes;
 	}
     };
+    $fdsrc = Amanda::MainLoop::fd_source($readfd, $G_IO_IN | $G_IO_ERR | $G_IO_HUP);
     $fdsrc->set_callback($fd_source_cb);
 
-    $cwsrc = Amanda::MainLoop::child_watch_source($pid);
     $child_watch_source_cb = sub {
-	my ($got_pid, $got_status) = @_;
+	my ($cwsrc, $got_pid, $got_status) = @_;
 	$cwsrc->remove();
 	$cwsrc = undef; # break a reference loop
 	$child_dead = 1;
@@ -544,6 +544,7 @@ sub run_tpchanger {
 
 	$maybe_finished->();
     };
+    $cwsrc = Amanda::MainLoop::child_watch_source($pid);
     $cwsrc->set_callback($child_watch_source_cb);
 }
 

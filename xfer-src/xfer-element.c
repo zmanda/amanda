@@ -20,6 +20,12 @@
 #include "amxfer.h"
 #include "amanda.h"
 
+/* parent class for XferElement */
+static GObjectClass *parent_class = NULL;
+
+/* parent class for XferDest, XferFilter, and XferSource */
+static XferElementClass *xfer_element_class = NULL;
+
 /***********************
  * XferElement */
 
@@ -122,22 +128,9 @@ xfer_element_repr_impl(
 }
 
 static void
-xfer_element_dispose(
-    GObject * obj_self)
-{
-    GObjectClass *goc;
-    /* XferElement *elt = XFER_ELEMENT(obj_self); */
-
-    /* chain up */
-    goc = G_OBJECT_CLASS(g_type_class_peek(G_TYPE_OBJECT));
-    if (goc->dispose) goc->dispose(obj_self);
-}
-
-static void
 xfer_element_finalize(
     GObject * obj_self)
 {
-    GObjectClass *goc;
     XferElement *elt = XFER_ELEMENT(obj_self);
 
     /* close our pipe, if we've been using one */
@@ -148,25 +141,28 @@ xfer_element_finalize(
     if (elt->repr) g_free(elt->repr);
 
     /* chain up */
-    goc = G_OBJECT_CLASS(g_type_class_peek(G_TYPE_OBJECT));
-    if (goc->finalize) goc->finalize(obj_self);
+    G_OBJECT_CLASS(parent_class)->finalize(obj_self);
 }
 
 static void
 xfer_element_class_init(
-    XferElementClass * xec)
+    XferElementClass * klass)
 {
-    GObjectClass *goc = (GObjectClass*) xec;
+    GObjectClass *goc = (GObjectClass*) klass;
 
-    xec->link_to = xfer_element_link_to_impl;
-    xec->repr = xfer_element_repr_impl;
-    xec->start = NULL;
-    xec->abort = NULL;
-    xec->setup_output = NULL;
-    xec->setup_input = NULL;
+    klass->link_to = xfer_element_link_to_impl;
+    klass->repr = xfer_element_repr_impl;
+    klass->start = NULL;
+    klass->abort = NULL;
+    klass->setup_output = NULL;
+    klass->setup_input = NULL;
 
-    goc->dispose = xfer_element_dispose;
     goc->finalize = xfer_element_finalize;
+
+    klass->perl_class = NULL;
+
+    parent_class = g_type_class_peek_parent(klass);
+    xfer_element_class = klass;
 }
 
 GType
@@ -199,6 +195,13 @@ xfer_element_get_type(void)
  * Method stubs
  */
 
+void
+xfer_element_unref(
+    XferElement *elt)
+{
+    if (elt) g_object_unref(elt);
+}
+
 gboolean
 xfer_element_link_to(
     XferElement *elt,
@@ -227,222 +230,3 @@ xfer_element_abort(
 {
     XFER_ELEMENT_GET_CLASS(elt)->abort(elt);
 }
-
-/***********************
- * XferSource */
-
-/*
- * GObject boilerplate
- */
-
-static void
-xfer_source_dispose(
-    GObject * obj_self)
-{
-    GObjectClass *goc;
-    /* XferSource * self = XFER_SOURCE(obj_self); */
-
-    /* chain up */
-    goc = G_OBJECT_CLASS(g_type_class_peek(G_TYPE_OBJECT));
-    if (goc->dispose) goc->dispose(obj_self);
-}
-
-static void 
-xfer_source_finalize(
-    GObject * obj_self)
-{
-    GObjectClass *goc;
-    /* XferSource * self = XFER_SOURCE(obj_self); */
-
-    /* chain up */
-    goc = G_OBJECT_CLASS(g_type_class_peek(G_TYPE_OBJECT));
-    if (goc->finalize) goc->finalize(obj_self);
-}
-
-static void
-xfer_source_init (
-    XferSource *xs G_GNUC_UNUSED)
-{
-}
-
-static void
-xfer_source_class_init(
-    XferSourceClass * xsc)
-{
-    GObjectClass *goc = (GObjectClass*) xsc;
-
-    goc->dispose = xfer_source_dispose;
-    goc->finalize = xfer_source_finalize;
-}
-
-GType
-xfer_source_get_type(void)
-{
-    static GType type = 0;
-
-    if G_UNLIKELY(type == 0) {
-        static const GTypeInfo info = {
-            sizeof (XferSourceClass),
-            (GBaseInitFunc) NULL,
-            (GBaseFinalizeFunc) NULL,
-            (GClassInitFunc) xfer_source_class_init,
-            (GClassFinalizeFunc) NULL,
-            NULL /* class_data */,
-            sizeof (XferSource),
-            0 /* n_preallocs */,
-            (GInstanceInitFunc) xfer_source_init,
-            NULL
-        };
-
-        type = g_type_register_static (XFER_ELEMENT_TYPE, "XferSource", &info,
-                                       (GTypeFlags)G_TYPE_FLAG_ABSTRACT);
-    }
-
-    return type;
-}
-
-/***********************
- * XferFilter */
-
-/*
- * GObject boilerplate
- */
-
-static void
-xfer_filter_dispose(
-    GObject * obj_self)
-{
-    GObjectClass *goc;
-    /* XferFilter * self = XFER_FILTER(obj_self); */
-
-    /* chain up */
-    goc = G_OBJECT_CLASS(g_type_class_peek(G_TYPE_OBJECT));
-    if (goc->dispose) goc->dispose(obj_self);
-}
-
-static void
-xfer_filter_finalize(
-    GObject * obj_self)
-{
-    GObjectClass *goc;
-    /* XferFilter * self = XFER_FILTER(obj_self); */
-
-    /* chain up */
-    goc = G_OBJECT_CLASS(g_type_class_peek(G_TYPE_OBJECT));
-    if (goc->finalize) goc->finalize(obj_self);
-}
-
-static void
-xfer_filter_init (
-    XferFilter *xf G_GNUC_UNUSED)
-{
-}
-
-static void
-xfer_filter_class_init(
-    XferFilterClass * xfc)
-{
-    GObjectClass *goc = (GObjectClass*) xfc;
-
-    goc->dispose = xfer_filter_dispose;
-    goc->finalize = xfer_filter_finalize;
-}
-
-GType
-xfer_filter_get_type(void)
-{
-    static GType type = 0;
-
-    if G_UNLIKELY(type == 0) {
-        static const GTypeInfo info = {
-            sizeof (XferFilterClass),
-            (GBaseInitFunc) NULL,
-            (GBaseFinalizeFunc) NULL,
-            (GClassInitFunc) xfer_filter_class_init,
-            (GClassFinalizeFunc) NULL,
-            NULL /* class_data */,
-            sizeof (XferFilter),
-            0 /* n_preallocs */,
-            (GInstanceInitFunc) xfer_filter_init,
-            NULL
-        };
-
-        type = g_type_register_static (XFER_ELEMENT_TYPE, "XferFilter", &info,
-                                       (GTypeFlags)G_TYPE_FLAG_ABSTRACT);
-    }
-
-    return type;
-}
-
-/***********************
- * XferDest */
-
-/*
- * GObject boilerplate
- */
-
-static void
-xfer_dest_dispose(
-    GObject * obj_self)
-{
-    GObjectClass *goc;
-    /* XferDest * self = XFER_DEST(obj_self); */
-
-    /* chain up */
-    goc = G_OBJECT_CLASS(g_type_class_peek(G_TYPE_OBJECT));
-    if (goc->dispose) goc->dispose(obj_self);
-}
-
-static void
-xfer_dest_finalize(
-    GObject * obj_self)
-{
-    GObjectClass *goc;
-    /* XferDest * self = XFER_DEST(obj_self); */
-
-    /* chain up */
-    goc = G_OBJECT_CLASS(g_type_class_peek(G_TYPE_OBJECT));
-    if (goc->finalize) goc->finalize(obj_self);
-}
-
-static void
-xfer_dest_init(
-    XferDest *xd G_GNUC_UNUSED)
-{
-}
-
-static void
-xfer_dest_class_init (XferDestClass * xdc)
-{
-    GObjectClass *goc = (GObjectClass*) xdc;
-
-    goc->dispose = xfer_dest_dispose;
-    goc->finalize = xfer_dest_finalize;
-}
-
-GType
-xfer_dest_get_type(void)
-{
-    static GType type = 0;
-
-    if G_UNLIKELY(type == 0) {
-        static const GTypeInfo info = {
-            sizeof (XferDestClass),
-            (GBaseInitFunc) NULL,
-            (GBaseFinalizeFunc) NULL,
-            (GClassInitFunc) xfer_dest_class_init,
-            (GClassFinalizeFunc) NULL,
-            NULL /* class_data */,
-            sizeof (XferDest),
-            0 /* n_preallocs */,
-            (GInstanceInitFunc) xfer_dest_init,
-            NULL
-        };
-
-        type = g_type_register_static (XFER_ELEMENT_TYPE, "XferDest", &info,
-                                       (GTypeFlags)G_TYPE_FLAG_ABSTRACT);
-    }
-
-    return type;
-}
-

@@ -22,6 +22,7 @@
 #define XMSG_H
 
 #include <glib.h>
+#include "xfer-element.h"
 
 /* This module handles transmission of discrete messages from transfer
  * elements to the transfer master.  Messages have:
@@ -52,7 +53,7 @@
  */
 
 /* N.B. -- when adding new message types, add the corresponding case label
- * to xfer-src/xmsg.c:xmsg_repr() */
+ * to xfer-src/xmsg.c:xmsg_repr() and perl/Amanda/Xfer.swg */
 typedef enum {
     /* XMSG_INFO: informational messages suitable for display to user. Attributes:
      *  - message
@@ -80,7 +81,7 @@ typedef struct XMsg {
     /* General header information */
 
     /* the origin of the message */
-    struct XferElement *src;
+    struct XferElement *elt;
 
     /* the message's overall type */
     xmsg_type type;
@@ -97,7 +98,10 @@ typedef struct XMsg {
      *
      * Note that any pointer-based attributes (strings, etc.) become owned
      * by the XMsg object, and will be freed in xmsg_free.  The use of stralloc()
-     * is advised for strings. */
+     * is advised for strings.
+     *
+     * N.B. When adding new attributes, also edit perl/Amanda/Xfer.swg:xmsg_to_sv
+     * so that they will be accessible from Perl. */
 
     /* free-form string message for display to the users
      *
@@ -114,13 +118,13 @@ typedef struct XMsg {
 
 /* Create a new XMsg.
  *
- * @param src: element originating this message
+ * @param elt: element originating this message
  * @param type: message type
  * @param version: message version
  * @return: a new XMsg.
  */
 XMsg *xmsg_new(
-    XferElement *src,
+    XferElement *elt,
     xmsg_type type,
     int version);
 
@@ -138,58 +142,5 @@ void xmsg_free(XMsg *msg);
  * @return: string representation
  */
 char *xmsg_repr(XMsg *msg);
-
-/*
- * XMsgSource -- a GSource for receiving messages
- */
-
-/* XMsgSource objects are GSource "subclasses" which manage
- * a queue of messages, delivering those messages via callback
- * in the mainloop.  Messages can be *sent* from any thread without
- * any concern for locking, but must only be received in the main
- * thread, in the default GMainContext.
- *
- * An XMsgSource pointer can be cast to a GSource pointer as
- * necessary.
- */
-typedef void (*XMsgCallback)(gpointer data, XMsg *msg);
-typedef struct XMsgSource {
-    GSource source; /* must be the first element of the struct */
-    GAsyncQueue *queue;
-} XMsgSource;
-
-/* Create a new XMsgSource
- *
- * @return: new XMsgSource object
- */
-XMsgSource *xmsgsource_new(void);
-
-/* Destroy an XMsgSource.  All messages still in the queue are discarded,
- * and any subsequently queued messages will be leaked.
- *
- * @param xms: XMsgSource object
- */
-void xmsgsource_destroy(XMsgSource *xms);
-
-/* Set the callback for an XMsgSource
- *
- * @param xms: message source
- * @param callback: callback function
- * @param data: user data to be supplied to callback
- */
-void xmsgsource_set_callback(
-    XMsgSource *xms,
-    XMsgCallback callback,
-    gpointer data);
-
-/* Queue a message for delivery via an XMsgSource.  The caller
- * may not reference the message after calling this function.
- *
- * @param xms: message source
- * @param msg: the message
- */
-void xmsgsource_queue_message(
-    XMsgSource *xms,
-    XMsg *msg);
 
 #endif
