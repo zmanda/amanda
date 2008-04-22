@@ -1,3 +1,8 @@
+2008-04-22  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/tape-device.c (check_resetofs): Compilation fix if
+						     NEED_RESETOFS is defined.
+	* device-src/tape-posix.c: Handle no ENOMEDIUM.
+
 2008-04-21  Dan Locks <dwlocks@zmanda.com>
 	* packaging/deb/buildpkg: modified build script to create unsigned
 	  packages

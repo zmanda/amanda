@@ -1057,7 +1057,10 @@ tape_device_robust_read (TapeDevice * self, void * buf, int * count) {
 static void check_resetofs(TapeDevice * self G_GNUC_UNUSED,
                            int count G_GNUC_UNUSED) {
 #ifdef NEED_RESETOFS
+    Device * d_self;
     int result;
+
+    d_self = (Device*)self;
 
     self->private->write_count += count;
     if (self->private->write_count < RESETOFS_THRESHOLD) {
