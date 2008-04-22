@@ -151,7 +151,7 @@ a mail report similar to
 <citerefentry><refentrytitle>amdump</refentrytitle><manvolnum>8</manvolnum></citerefentry>.</para>
 
 <programlisting>
-% amflush daily
+% amflush MyConfig
 Scanning /amanda-hold...
   20001113: found &A; directory.
   20001114: found &A; directory.
@@ -168,6 +168,13 @@ Expecting tape DMP014 or a new tape.  (The last dumps were to tape DMP013)
 Are you sure you want to do this? yes
 Running in background, you can log off now.
 You'll get mail when amflush is finished.
+</programlisting>
+
+<para>The following example causes amflush to flush everything to tape, then
+ejects tape, using 'at' to run the task in the background.</para>
+
+<programlisting>
+% echo 'amflush -b -f MyConfig &amp;&amp; mt offline' | at now
 </programlisting>
 </refsect1>
 
