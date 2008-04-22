@@ -1,4 +1,11 @@
 2008-04-22  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/tape-device.c: Move all device access from
+	  tape_device_open_device to tape_device_read_label.
+	  tape_device_start read the label if it is not already read.
+	* device-src/vfs-device.c (vfs_device_open_device): remove read of the
+							    label.
+
+2008-04-22  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/tape-device.c (check_resetofs): Compilation fix if
 						     NEED_RESETOFS is defined.
 	* device-src/tape-posix.c: Handle no ENOMEDIUM.

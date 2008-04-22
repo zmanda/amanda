@@ -286,60 +286,7 @@ tape_device_open_device (Device * d_self, char * device_name) {
     g_return_val_if_fail (self != NULL, FALSE);
     g_return_val_if_fail (device_name != NULL, FALSE);
 
-    self->fd = try_open_tape_device(self, device_name);
-
-    if (self->fd < 0) {
-	if (errno == EBUSY)
-	    d_self->status = DEVICE_STATUS_DEVICE_BUSY;
-	else
-	    d_self->status = DEVICE_STATUS_DEVICE_ERROR;
-	d_self->errmsg = newvstrallocf(d_self->errmsg,
-		_("Can't open tape device %s: %s"),
-                device_name, strerror(errno));
-        return FALSE;
-    }
-
-    /* Check that this is actually a tape device. */
-    d_self->status = tape_is_tape_device(self->fd);
-    if (d_self->status == DEVICE_STATUS_DEVICE_ERROR) {
-	d_self->errmsg = newvstrallocf(d_self->errmsg,
-				       _("File %s is not a tape device"),
-				       device_name);
-        robust_close(self->fd);
-        return FALSE;
-    }
-    if (d_self->status == DEVICE_STATUS_VOLUME_MISSING) {
-	d_self->errmsg = newvstrallocf(d_self->errmsg,
-				 _("Tape device %s is not ready or is empty"),
-				       device_name);
-        robust_close(self->fd);
-        return FALSE;
-    }
-
-    d_self->status = tape_is_ready(self->fd);
-    if (d_self->status == DEVICE_STATUS_VOLUME_ERROR) {
-	d_self->errmsg = newvstrallocf(d_self->errmsg, 
-				 _("Tape device %s is not ready or is empty"),
-				 device_name);
-        robust_close(self->fd);
-        return FALSE;
-    }
-    if (d_self->status == DEVICE_STATUS_VOLUME_MISSING) {
-	d_self->errmsg = newvstrallocf(d_self->errmsg, 
-				 _("Tape device %s is not ready or is empty"),
-				 device_name);
-        robust_close(self->fd);
-        return FALSE;
-    }
-
-    /* Rewind it. */
-    if (!tape_rewind(self->fd)) {
-	d_self->errmsg = newvstrallocf(d_self->errmsg,
-				_("Error rewinding device %s"),
-			        device_name);
-        robust_close(self->fd);
-        return FALSE;
-    }
+    self->fd = -1;
 
     /* Get tape drive/OS info */
     tape_device_discover_capabilities(self);
@@ -374,6 +321,62 @@ static DeviceStatusFlags tape_device_read_label(Device * dself) {
 
     self = TAPE_DEVICE(dself);
     g_return_val_if_fail(self != NULL, FALSE);
+
+    if (self->fd == -1)
+        self->fd = try_open_tape_device(self, dself->device_name);
+
+    if (self->fd < 0) {
+	if (errno == EBUSY)
+	    dself->status = DEVICE_STATUS_DEVICE_BUSY;
+	else
+	    dself->status = DEVICE_STATUS_DEVICE_ERROR;
+	dself->errmsg = newvstrallocf(dself->errmsg,
+		_("Can't open tape device %s: %s"),
+                dself->device_name, strerror(errno));
+        return dself->status;
+    }
+
+    /* Check that this is actually a tape device. */
+    dself->status = tape_is_tape_device(self->fd);
+    if (dself->status == DEVICE_STATUS_DEVICE_ERROR) {
+	dself->errmsg = newvstrallocf(dself->errmsg,
+				      _("File %s is not a tape device"),
+				      dself->device_name);
+        robust_close(self->fd);
+        return dself->status;
+    }
+    if (dself->status == DEVICE_STATUS_VOLUME_MISSING) {
+	dself->errmsg = newvstrallocf(dself->errmsg,
+				 _("Tape device %s is not ready or is empty"),
+				 dself->device_name);
+        robust_close(self->fd);
+        return dself->status;
+    }
+
+    dself->status = tape_is_ready(self->fd);
+    if (dself->status == DEVICE_STATUS_VOLUME_ERROR) {
+	dself->errmsg = newvstrallocf(dself->errmsg, 
+				 _("Tape device %s is not ready or is empty"),
+				 dself->device_name);
+        robust_close(self->fd);
+        return dself->status;
+    }
+    if (dself->status == DEVICE_STATUS_VOLUME_MISSING) {
+	dself->errmsg = newvstrallocf(dself->errmsg, 
+				 _("Tape device %s is not ready or is empty"),
+				 dself->device_name);
+        robust_close(self->fd);
+        return dself->status;
+    }
+
+    /* Rewind it. */
+    if (!tape_rewind(self->fd)) {
+	dself->errmsg = newvstrallocf(dself->errmsg,
+				_("Error rewinding device %s"),
+			        dself->device_name);
+        robust_close(self->fd);
+        return FALSE;
+    }
 
     if (!tape_rewind(self->fd)) {
 	dself->errmsg = newvstrallocf(dself->errmsg,
@@ -546,6 +549,13 @@ tape_device_start (Device * d_self, DeviceAccessMode mode, char * label,
 
     self = TAPE_DEVICE(d_self);
     g_return_val_if_fail(self != NULL, FALSE);
+
+    /* label not yet read */
+    if (d_self->volume_label == NULL) {
+	tape_device_read_label(d_self);
+	if (d_self->status != DEVICE_STATUS_SUCCESS)
+	    return FALSE;
+    }
     
     if (IS_WRITABLE_ACCESS_MODE(mode)) {
         if (self->write_open_errno != 0) {
