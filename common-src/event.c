@@ -239,10 +239,11 @@ event_wakeup(
     /* fire them */
     for (iter = tofire; iter != NULL; iter = g_slist_next(iter)) {
 	event_handle_t *eh = (event_handle_t *)iter->data;
-
-	event_debug(1, _("event: wakeup triggering: %p id=%jd\n"), eh, id);
-	fire(eh);
-	nwaken++;
+	if (eh->type == EV_WAIT && eh->data == id && !eh->is_dead) {
+	    event_debug(1, _("A: event: wakeup triggering: %p id=%jd\n"), eh, id);
+	    fire(eh);
+	    nwaken++;
+	}
     }
 
     /* and free the temporary list */
