@@ -1,3 +1,6 @@
+2008-04-23  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/planner.c: Fix vstrextend use.
+
 2008-04-23  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/event.c: use internal child_watch_source
 	  for glib <2.6.0; versions 2.4.0 to 2.6.0 use unreliable

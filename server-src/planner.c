@@ -2662,7 +2662,7 @@ arglist_function1(
     }
     strappend(errstr, "]");
     qerrstr = quote_string(errstr);
-    vstrextend(&bi->errstr, " ", qerrstr);
+    vstrextend(&bi->errstr, " ", qerrstr, NULL);
     amfree(errstr);
     amfree(qerrstr);
     arglist_end(argp);
