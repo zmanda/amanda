@@ -1,4 +1,7 @@
 2008-04-23  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/driver.c: Always sent a FAILED to taper if dumper failed.
+
+2008-04-23  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/planner.c: Fix vstrextend use.
 
 2008-04-16  Dan Locks <dwlocks@zmanda.com>

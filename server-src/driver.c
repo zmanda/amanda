@@ -1382,7 +1382,11 @@ handle_taper_result(
 	    if (taper_dumper->result == LAST_TOK) {
 		taper_sendresult = 1;
 	    } else {
-		taper_cmd(taper_dumper->result, NULL, NULL, 0, NULL);
+		if( taper_dumper->result == DONE) {
+		    taper_cmd(DONE, NULL, NULL, 0, NULL);
+		} else {
+		    taper_cmd(FAILED, NULL, NULL, 0, NULL);
+		}
 	    }
 	    break;
 
