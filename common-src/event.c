@@ -471,14 +471,15 @@ new_fdsource(gint fd, GIOCondition events)
  * optionally using that, protected by a GLIB_CHECK_VERSION condition.
  */
 
-/* Versions before glib-2.4.0 didn't include a child watch source, so we implement
- * a "dumb" version of such for those versions.  This is dumb in the sense that it
+/* Versions before glib-2.4.0 didn't include a child watch source, and versions
+ * before 2.6.0 used unreliable signals.  On these versions, we implement
+ * a "dumb" version of our own invention.  This is dumb in the sense that it
  * doesn't use SIGCHLD to detect a dead child, preferring to just poll at
  * exponentially increasing interals.  Writing a smarter implementation runs into
  * some tricky race conditions and extra machinery.  Since there are few, if any,
  * users of a glib version this old, such machinery wouldn't get much testing.
  */
-#if (GLIB_MAJOR_VERSION < 2 || (GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION < 4))
+#if (GLIB_MAJOR_VERSION < 2 || (GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION < 6))
 typedef struct ChildWatchSource {
     GSource source; /* must be the first element in the struct */
 
