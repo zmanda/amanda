@@ -1,4 +1,7 @@
- 2008-04-16  Dan Locks <dwlocks@zmanda.com>
+2008-04-23  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/planner.c: Fix vstrextend use.
+
+2008-04-16  Dan Locks <dwlocks@zmanda.com>
 	* Fixes to debian package reported by daniel_P
 	* packaging/deb/preinst: remove spaces near ${amanda_group}
 	* packaging/deb/amanda-backup-server.dirs
