@@ -2543,7 +2543,7 @@ show_stat_info(
     if (getgrgid_r(sbuf.st_gid, &gr, buf, buflen, &grptr) != 0 ||
 	grptr == NULL) {
 	group = alloc(NUM_STR_SIZE + 1);
-	g_snprintf(owner, NUM_STR_SIZE, "%ld", (long)sbuf.st_gid);
+	g_snprintf(group, NUM_STR_SIZE, "%ld", (long)sbuf.st_gid);
     } else {
 	group = stralloc(grptr->gr_name);
     }
