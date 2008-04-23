@@ -1,4 +1,7 @@
 2008-04-23  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/security-util.c: Typo.
+
+2008-04-23  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/driver.c: Always sent a FAILED to taper if dumper failed.
 
 2008-04-23  Jean-Louis Martineau <martineau@zmanda.com>
