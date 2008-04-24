@@ -1431,9 +1431,14 @@ output_summary(void)
 	    qdevname = quote_string(devname);
 	    devlen = strlen(qdevname);
 	    if (devlen > (size_t)cd->Width) {
-	   	fputc('-', mailf); 
-		g_fprintf(mailf, cd->Format, cd->Width-1, cd->Precision-1,
-			qdevname+devlen - (cd->Width-1) );
+		int nb = 1;
+		if (strcmp(devname, qdevname)) {
+		    nb = 2;
+		    fputc('"', mailf); 
+		}
+		fputc('-', mailf); 
+		g_fprintf(mailf, cd->Format, cd->Width-nb, cd->Precision-nb,
+			qdevname+devlen - (cd->Width-nb) );
 	    }
 	    else
 		g_fprintf(mailf, cd->Format, cd->Width, cd->Width, qdevname);

@@ -1,3 +1,6 @@
+2008-04-24  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/reporter.c: Correctly print truncated quoted diskname.
+
 2008-04-23  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Amanda_MainLoop.pl common-src/event-test.c
 	  common-src/queueing-test.c: try to make tests more resilient
