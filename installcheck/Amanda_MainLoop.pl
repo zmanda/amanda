@@ -216,9 +216,13 @@ use Amanda::MainLoop qw( :GIOCondition );
     my @events;
 
     my $to = Amanda::MainLoop::timeout_source(200);
+    my $times = 3;
     $to->set_callback(sub {
 	push @events, "time";
 	POSIX::write($writeoutfd, "A", 1); # wake up the child
+	if (--$times == 0) {
+	    $to->remove();
+	}
     });
 
     my $cw = Amanda::MainLoop::child_watch_source($pid);

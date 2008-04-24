@@ -181,7 +181,7 @@ test_queue_simple_STREAMING_REQUIREMENT_REQUIRED(void)
  * Test fd_reader and fd_writer
  */
 
-#define TEST_FD_CONSUMER_PRODUCER_BLOCKS (10*1024)
+#define TEST_FD_CONSUMER_PRODUCER_BLOCKS (1024)
 
 static gpointer
 data_producer_thread(gpointer d)
@@ -304,7 +304,7 @@ main(int argc, char **argv)
 	TU_TEST(test_queue_simple_STREAMING_REQUIREMENT_NONE, 15),
 	TU_TEST(test_queue_simple_STREAMING_REQUIREMENT_DESIRED, 15),
 	TU_TEST(test_queue_simple_STREAMING_REQUIREMENT_REQUIRED, 15),
-	TU_TEST(test_fd_consumer_producer, 10),
+	TU_TEST(test_fd_consumer_producer, 60), /* runs slowly on old kernels */
 	TU_END()
     };
 

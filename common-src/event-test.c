@@ -306,7 +306,7 @@ test_ev_readfd_writer(int fd, size_t count)
     close(fd);
 }
 
-#define TEST_EV_READFD_SIZE (1024*1024*20)
+#define TEST_EV_READFD_SIZE (1024*1024)
 
 static int
 test_ev_readfd(void)
@@ -490,7 +490,7 @@ test_ev_writefd_consumer(int fd, size_t count)
     }
 }
 
-#define TEST_EV_WRITEFD_SIZE (1024*1024*40)
+#define TEST_EV_WRITEFD_SIZE (1024*1024)
 
 static int
 test_ev_writefd(void)
@@ -635,8 +635,8 @@ main(int argc, char **argv)
 	TU_TEST(test_ev_time, 10),
 	TU_TEST(test_ev_wait, 10),
 	TU_TEST(test_ev_wait_2, 10),
-	TU_TEST(test_ev_readfd, 20),    /* slightly longer timeout */
-	TU_TEST(test_ev_writefd, 10),
+	TU_TEST(test_ev_readfd, 60), /* runs slowly on old kernels */
+	TU_TEST(test_ev_writefd, 60),
 	TU_TEST(test_event_wait, 10),
 	TU_TEST(test_event_wait_2, 10),
 	TU_TEST(test_nonblock, 10),
