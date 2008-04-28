@@ -130,13 +130,14 @@ static void
 start_impl(
     XferElement *elt)
 {
-    XferSourceRandom *xs = (XferSourceRandom *)elt;
+    XferSourceRandom *self = (XferSourceRandom *)elt;
     GThread *th;
 
     /* we'd better have a fd to write to. */
-    g_assert(xs->pipe[1] != -1);
+    g_assert(self->pipe[1] != -1);
 
-    th = g_thread_create(random_write_thread, (gpointer)xs, FALSE, NULL);
+    xfer_will_send_xmsg_done(XFER_ELEMENT(self)->xfer);
+    th = g_thread_create(random_write_thread, (gpointer)self, FALSE, NULL);
 }
 
 static void

@@ -210,6 +210,17 @@ XferElement *xfer_source_random(
     gboolean text_only,
     xfer_output_mech mechanisms);
 
+/* A transfer source that provides bytes read from a file descriptor.
+ * Reading continues until EOF, but the file descriptor is not closed.
+ *
+ * Implemented in source-fd.c
+ *
+ * @param fd: the file descriptor from which to read
+ * @return: new element
+ */
+XferElement * xfer_source_fd(
+    int fd);
+
 /* A transfer filter that just applies a bytewise XOR transformation to the data
  * that passes through it.  It supports all input mechanisms, but its advertized
  * mechanisms can be set with the MECHANISMS parameter.
@@ -237,5 +248,16 @@ XferElement *xfer_filter_xor(
 XferElement *xfer_dest_null(
     gboolean debug_print,
     xfer_input_mech mechanisms);
+
+/* A transfer destination that writes bytes to a file descriptor.  The file
+ * descriptor is not closed when the transfer is complete.
+ *
+ * Implemented in dest-fd.c
+ *
+ * @param fd: file descriptor to which to write
+ * @return: new element
+ */
+XferElement *xfer_dest_fd(
+    int fd);
 
 #endif

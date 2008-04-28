@@ -43,8 +43,10 @@ struct Xfer {
     struct XMsgSource *msg_source;
     GAsyncQueue *queue;
 
-    /* Number of active elements */
-    gint num_active_elements;
+    /* Number of active processing activities going on (threads, processes,
+     * asynchronous callbacks, etc.).  When this reaches zero, the transfer
+     * is done. */
+    gint num_xmsg_done_remaining;
 };
 
 /* XMsgSource objects are GSource "subclasses" which manage
@@ -204,10 +206,12 @@ xfer_start(
     g_assert(xfer->status == XFER_INIT);
     g_assert(xfer->elements->len >= 2);
 
+    g_debug("Starting %s", xfer_repr(xfer));
     /* set the status to XFER_START and add a reference to our count, so that
      * we are not freed while still in operation.  We'll drop this reference
      * when the status becomes XFER_DONE. */
     xfer_ref(xfer);
+    xfer->num_xmsg_done_remaining = 0;
     xfer->status = XFER_START;
 
     /* check that the first element is an XferSource and the last is an XferDest.
@@ -237,8 +241,24 @@ xfer_start(
 	xfer_element_start(xe);
     }
 
-    xfer->num_active_elements = xfer->elements->len;
     xfer->status = XFER_RUNNING;
+
+    /* If this transfer involves no active processing, then we consider it to
+     * be done already.  We send a "fake" XMSG_DONE from the destination element,
+     * so that all of the usual processing will take place. */
+    if (xfer->num_xmsg_done_remaining == 0) {
+	g_debug("%s has no active processing elements; generating fake XMSG_DONE", xfer_repr(xfer));
+	xfer_queue_message(xfer,
+	    xmsg_new((XferElement *)g_ptr_array_index(xfer->elements, xfer->elements->len-1),
+		     XMSG_DONE, 0));
+    }
+}
+
+void
+xfer_will_send_xmsg_done(
+    Xfer *xfer)
+{
+    ++xfer->num_xmsg_done_remaining;
 }
 
 static gboolean
@@ -283,7 +303,7 @@ xmsgsource_dispatch(
 	    /* Intercept and count DONE messages so that we can determine when
 	     * the entire transfer is finished. */
 	    case XMSG_DONE:
-		if (--xms->xfer->num_active_elements <= 0) {
+		if (--xms->xfer->num_xmsg_done_remaining <= 0) {
 		    /* mark the transfer as done, and decrement the refcount
 		     * by one to balance the increment in xfer_start */
 		    xms->xfer->status = XFER_DONE;

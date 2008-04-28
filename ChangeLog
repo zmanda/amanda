@@ -1,3 +1,13 @@
+2008-04-28  Dustin J. Mitchell <dustin@zmanda.com>
+	* xfer-src/Makefile.am xfer-src/xfer-element.h xfer-src/dest-fd.c
+	  xfer-src/source-fd.c perl/Amanda/Xfer.swg: add new
+	  Amanda::Xfer::Source::Fd, Amanda::Xfer::Dest::Fd
+	* xfer-src/source-random.c xfer-src/xfer.c xfer-src/dest-null.c
+	  xfer-src/xfer.h xfer-src/filter-xor.c xfer-src/xfer-element.c:
+	  reorganize detection of transfer completion, to handle cases where
+	  elements don't do any active processing
+	* installcheck/Amanda_Xfer.pl: test it all
+
 2008-04-24  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/reporter.c: Correctly print truncated quoted diskname.
 
