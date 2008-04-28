@@ -280,7 +280,7 @@ loadlabel_slot(void *	datap,
                 get_pname(), slotstr);
         return 0;
     }
-    if (device->status == DEVICE_STATUS_SUCCESS) {
+    if (device->status != DEVICE_STATUS_SUCCESS) {
         g_fprintf(stderr, "%s: slot %s: Could not open device: %s.\n",
                 get_pname(), slotstr, device_error(device));
         return 0;
