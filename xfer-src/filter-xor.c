@@ -125,14 +125,15 @@ static void
 start_impl(
     XferElement *elt)
 {
-    XferFilterXor *xs = (XferFilterXor *)elt;
+    XferFilterXor *self = (XferFilterXor *)elt;
     GThread *th;
 
     /* we'd better have our fd's */
-    g_assert(xs->input_pipe[0] != -1);
-    g_assert(xs->output_pipe[1] != -1);
+    g_assert(self->input_pipe[0] != -1);
+    g_assert(self->output_pipe[1] != -1);
 
-    th = g_thread_create(filter_data_thread, (gpointer)xs, FALSE, NULL);
+    xfer_will_send_xmsg_done(XFER_ELEMENT(self)->xfer);
+    th = g_thread_create(filter_data_thread, (gpointer)self, FALSE, NULL);
 }
 
 static void

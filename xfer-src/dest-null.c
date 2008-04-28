@@ -111,20 +111,21 @@ static void
 start_impl(
     XferElement *elt)
 {
-    XferDestNull *xs = (XferDestNull *)elt;
+    XferDestNull *self = (XferDestNull *)elt;
     GThread *th;
     XMsg *msg;
 
     /* we'd better have a fd to read from. */
-    g_assert(xs->pipe[0] != -1);
+    g_assert(self->pipe[0] != -1);
 
-    th = g_thread_create(read_data_thread, (gpointer)xs, FALSE, NULL);
+    xfer_will_send_xmsg_done(XFER_ELEMENT(self)->xfer);
+    th = g_thread_create(read_data_thread, (gpointer)self, FALSE, NULL);
 
     /* send a superfluous message (this is a testing XferElement,
      * after all) */
-    msg = xmsg_new((XferElement *)xs, XMSG_INFO, 0);
+    msg = xmsg_new((XferElement *)self, XMSG_INFO, 0);
     msg->message = stralloc("Is this thing on?");
-    xfer_queue_message(XFER_ELEMENT(xs)->xfer, msg);
+    xfer_queue_message(XFER_ELEMENT(self)->xfer, msg);
 }
 
 static void

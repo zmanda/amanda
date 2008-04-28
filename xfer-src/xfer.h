@@ -121,4 +121,16 @@ char *xfer_repr(Xfer *xfer);
  */
 void xfer_start(Xfer *xfer);
 
+/* Register something that is actively processing the datastream, and will
+ * eventually send XMSG_DONE.  "Something" can be a thread, a process, or
+ * even an asynchronous event handler.  When all registered processing has
+ * sent XMSG_DONE, then the transfer itself is done.
+ *
+ * This function should be called in the main thread, usually from a transfer's
+ * start() method.
+ *
+ * @param xfer: the Xfer object
+ */
+void xfer_will_send_xmsg_done(Xfer *xfer);
+
 #endif /* XFER_H */

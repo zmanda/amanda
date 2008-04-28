@@ -113,6 +113,13 @@ xfer_element_link_to_impl(
     return TRUE;
 }
 
+/* empty method standing in for start() and abort() */
+static void
+xfer_element_empty_method(
+    XferElement *elt G_GNUC_UNUSED)
+{
+}
+
 static char *
 xfer_element_repr_impl(
     XferElement *elt)
@@ -152,8 +159,8 @@ xfer_element_class_init(
 
     klass->link_to = xfer_element_link_to_impl;
     klass->repr = xfer_element_repr_impl;
-    klass->start = NULL;
-    klass->abort = NULL;
+    klass->start = xfer_element_empty_method;
+    klass->abort = xfer_element_empty_method;
     klass->setup_output = NULL;
     klass->setup_input = NULL;
 

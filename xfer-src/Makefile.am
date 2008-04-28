@@ -17,9 +17,11 @@ LINT=$(AMLINT)
 LINTFLAGS=$(AMLINTFLAGS)
 
 libamxfer_la_SOURCES = \
+	dest-fd.c \
 	dest-null.c \
 	filter-xor.c \
 	source-random.c \
+	source-fd.c \
 	xfer-element.c \
 	xfer.c \
 	xmsg.c

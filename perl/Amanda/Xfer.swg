@@ -115,6 +115,13 @@ such abstract classes.
 
 =head2 Transfer Sources
 
+=head3 Amanda::Xfer::Source::Fd
+
+  Amanda::Xfer::Source::Fd->new(fileno($fh));
+
+This source reads data from a file descriptor.  It reads until EOF, but does
+not close the descriptor.  Be careful not to let Perl close the file for you!
+
 =head3 Amanda::Xfer::Source::Random
 
   Amanda::Xfer::Source::Random->new($length, $textonly, $mechs);
@@ -133,6 +140,14 @@ This filter applies a bytewise XOR operation to the data flowing through it.
 The I<mechs> arguments should be zero.
 
 =head2 Transfer Destinations
+
+=head3 Amanda::Xfer::Dest::Fd
+
+  Amanda::Xfer::Dest::Fd->new(fileno($fh));
+
+This destination writes data to a file descriptor.  The file is not closed
+after the transfer is completed.  Be careful not to let Perl close the file
+for you!
 
 =head3 Amanda::Xfer::Dest::Null
 
@@ -487,6 +502,10 @@ XferElement *xfer_source_random(
     gboolean text_only,
     int mechanisms);
 
+%newobject xfer_source_fd;
+XferElement *xfer_source_fd(
+    int fd);
+
 %newobject xfer_filter_xor;
 XferElement *xfer_filter_xor(
     unsigned char xor_key,
@@ -497,6 +516,10 @@ XferElement *xfer_filter_xor(
 XferElement *xfer_dest_null(
     gboolean debug_print,
     int mechanisms);
+
+%newobject xfer_dest_fd;
+XferElement *xfer_dest_fd(
+    int fd);
 
 /*
  * Callback handling
@@ -631,6 +654,12 @@ DECLARE_METHOD(repr, xfer_element_repr);
 
 /* ---- */
 
+PACKAGE(Amanda::Xfer::Source::Fd)
+XFER_ELEMENT_SUBCLASS()
+DECLARE_CONSTRUCTOR(xfer_source_fd)
+
+/* ---- */
+
 PACKAGE(Amanda::Xfer::Source::Random)
 XFER_ELEMENT_SUBCLASS()
 DECLARE_CONSTRUCTOR(xfer_source_random)
@@ -640,6 +669,12 @@ DECLARE_CONSTRUCTOR(xfer_source_random)
 PACKAGE(Amanda::Xfer::Filter::Xor)
 XFER_ELEMENT_SUBCLASS()
 DECLARE_CONSTRUCTOR(xfer_filter_xor)
+
+/* ---- */
+
+PACKAGE(Amanda::Xfer::Dest::Fd)
+XFER_ELEMENT_SUBCLASS()
+DECLARE_CONSTRUCTOR(xfer_dest_fd)
 
 /* ---- */
 
