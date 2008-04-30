@@ -1,3 +1,7 @@
+2008-04-29  Dustin J. Mitchell <dustin@zmanda.com>
+	* config/amanda/dirs.m4: note that --with-dumperdir is 
+	  deprecated in ./configure --help
+
 2008-04-24  Jean-Louis Martineau <martineau@zmanda.com>
 	* restore-src/restore.c: Fix test for DEVICE_STATUS_SUCCESS.
 

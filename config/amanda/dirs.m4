@@ -10,7 +10,7 @@ AC_DEFUN([AMANDA_WITH_APPLICATIONDIR],
 [
     AC_ARG_WITH(dumperdir,
 	AS_HELP_STRING([--with-dumperdir=DIR],
-	    [where we install the dumpers (default: exec_prefix/dumper)]),
+	    [where we install the dumpers (deprecated)]),
 	[
             AMANDA_MSG_WARN([--with-dumperdir is no longer used.])
 	]
