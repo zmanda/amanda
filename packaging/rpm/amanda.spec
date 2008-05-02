@@ -273,6 +273,7 @@ Amanda Documentation is available at: http://wiki.zmanda.com/
 %define DATADIR         %{PREFIX}/share
 %define SYSCONFDIR      /etc
 %define LOCALSTATEDIR   /var
+%define AMANDATES       %{AMANDAHOMEDIR}/amandates
 %define AMANDAHOMEDIR   %{LOCALSTATEDIR}/lib/amanda
 %ifarch x86_64
 %define LIBDIR          %{EPREFIX}/lib64
@@ -606,29 +607,29 @@ if [ -e /etc/xinetd.d ] && [ -d /etc/xinetd.d ] ; then
         fi
 fi
 
-echo "`date +'%b %e %Y %T'`: Installing '%{LOCALSTATEDIR}/amanda/amandates'." >${TMPFILE}
+echo "`date +'%b %e %Y %T'`: Installing '%{AMANDATES}'." >${TMPFILE}
 ret_val=0
-if [ ! -f %{LOCALSTATEDIR}/amanda/amandates ] ; then
-        touch %{LOCALSTATEDIR}/amanda/amandates >>${TMPFILE} 2>&1
+if [ ! -f %{AMANDATES} ] ; then
+        touch %{AMANDATES} >>${TMPFILE} 2>&1
         ret_val=$?
         if [ ${ret_val} -eq 0 ]; then
-                echo "`date +'%b %e %Y %T'`: The file '%{LOCALSTATEDIR}/amanda/amandates' has been created." >>${TMPFILE}
+                echo "`date +'%b %e %Y %T'`: The file '%{AMANDATES}' has been created." >>${TMPFILE}
         fi
 fi
 if [ ${ret_val} -eq 0 ]; then
-        echo "`date +'%b %e %Y %T'`: Ensuring correct permissions for '%{LOCALSTATEDIR}/amanda/amandates'." >>${TMPFILE}
-        chown %{amanda_user}:%{amanda_group} %{LOCALSTATEDIR}/amanda/amandates >>${TMPFILE} 2>&1
-        chmod 0640 %{LOCALSTATEDIR}/amanda/amandates >>${TMPFILE} 2>&1
+        echo "`date +'%b %e %Y %T'`: Ensuring correct permissions for '%{AMANDATES}'." >>${TMPFILE}
+        chown %{amanda_user}:%{amanda_group} %{AMANDATES} >>${TMPFILE} 2>&1
+        chmod 0640 %{AMANDATES} >>${TMPFILE} 2>&1
         if [ -x /sbin/restorecon ] ; then
-              /sbin/restorecon %{LOCALSTATEDIR}/amanda/amandates  >>${TMPFILE} 2>&1
+              /sbin/restorecon %{AMANDATES}  >>${TMPFILE} 2>&1
         fi
 fi
 if [ ${ret_val} -eq 0 ]; then
-        echo "`date +'%b %e %Y %T'`: '%{LOCALSTATEDIR}/amanda/amandates' Installation successful." >>${TMPFILE}
+        echo "`date +'%b %e %Y %T'`: '%{AMANDATES}' Installation successful." >>${TMPFILE}
         cat ${TMPFILE}
         cat ${TMPFILE} >>${INSTALL_LOG}
 else
-        echo "`date +'%b %e %Y %T'`: '%{LOCALSTATEDIR}/amanda/amandates' Installation failed." >>${TMPFILE}
+        echo "`date +'%b %e %Y %T'`: '%{AMANDATES}' Installation failed." >>${TMPFILE}
         cat ${TMPFILE}
         cat ${TMPFILE} >>${INSTALL_ERR}
 fi
@@ -971,26 +972,26 @@ if [ -e /etc/xinetd.d ] && [ -d /etc/xinetd.d ] ; then
         fi
 fi
 
-echo "`date +'%b %e %Y %T'`: Installing '%{LOCALSTATEDIR}/amanda/amandates'." >${TMPFILE}
+echo "`date +'%b %e %Y %T'`: Installing '%{AMANDATES}'." >${TMPFILE}
 ret_val=0
-if [ ! -f %{LOCALSTATEDIR}/amanda/amandates ] ; then
-        touch %{LOCALSTATEDIR}/amanda/amandates >>${TMPFILE} 2>&1
+if [ ! -f %{AMANDATES} ] ; then
+        touch %{AMANDATES} >>${TMPFILE} 2>&1
         ret_val=$?
         if [ ${ret_val} -eq 0 ]; then
-                echo "`date +'%b %e %Y %T'`: The file '%{LOCALSTATEDIR}/amanda/amandates' has been created." >>${TMPFILE}
+                echo "`date +'%b %e %Y %T'`: The file '%{AMANDATES}' has been created." >>${TMPFILE}
         fi
 fi
 if [ ${ret_val} -eq 0 ]; then
-        echo "`date +'%b %e %Y %T'`: Ensuring correct permissions for '%{LOCALSTATEDIR}/amanda/amandates'." >>${TMPFILE}
-        chown %{amanda_user}:%{amanda_group} %{LOCALSTATEDIR}/amanda/amandates >>${TMPFILE} 2>&1
-        chmod 0640 %{LOCALSTATEDIR}/amanda/amandates >>${TMPFILE} 2>&1
+        echo "`date +'%b %e %Y %T'`: Ensuring correct permissions for '%{AMANDATES}'." >>${TMPFILE}
+        chown %{amanda_user}:%{amanda_group} %{AMANDATES} >>${TMPFILE} 2>&1
+        chmod 0640 %{AMANDATES} >>${TMPFILE} 2>&1
 fi
 if [ ${ret_val} -eq 0 ]; then
-        echo "`date +'%b %e %Y %T'`: '%{LOCALSTATEDIR}/amanda/amandates' Installation successful." >>${TMPFILE}
+        echo "`date +'%b %e %Y %T'`: '%{AMANDATES}' Installation successful." >>${TMPFILE}
         cat ${TMPFILE}
         cat ${TMPFILE} >>${INSTALL_LOG}
 else
-        echo "`date +'%b %e %Y %T'`: '%{LOCALSTATEDIR}/amanda/amandates' Installation failed." >>${TMPFILE}
+        echo "`date +'%b %e %Y %T'`: '%{AMANDATES}' Installation failed." >>${TMPFILE}
         cat ${TMPFILE}
         cat ${TMPFILE} >>${INSTALL_ERR}
 fi
@@ -1028,7 +1029,7 @@ echo "`date +'%b %e %Y %T'`: Checking '%{AMANDAHOMEDIR}/.am_passphrase' file." >
 if [ ! -f %{AMANDAHOMEDIR}/.am_passphrase ] ; then
         echo "`date +'%b %e %Y %T'`: Create '%{AMANDAHOMEDIR}/.am_passphrase' file." >${TMPFILE}
         touch %{AMANDAHOMEDIR}/.am_passphrase >>${TMPFILE} 2>&1
-        phrase=`echo "amandabackup" | md5sum | awk '{print $1}'`
+        phrase=`echo $RANDOM | md5sum | awk '{print $1}'`
         echo ${phrase} >>%{AMANDAHOMEDIR}/.am_passphrase
 
         chown %{amanda_user}:%{amanda_group} %{AMANDAHOMEDIR}/.am_passphrase >>${TMPFILE} 2>&1
@@ -1355,26 +1356,26 @@ if [ -e /etc/xinetd.d ] && [ -d /etc/xinetd.d ] ; then
         fi
 fi
 
-echo "`date +'%b %e %Y %T'`: Installing '%{LOCALSTATEDIR}/amanda/amandates'." >${TMPFILE}
+echo "`date +'%b %e %Y %T'`: Installing '%{AMANDATES}'." >${TMPFILE}
 ret_val=0
-if [ ! -f %{LOCALSTATEDIR}/amanda/amandates ] ; then
-        touch %{LOCALSTATEDIR}/amanda/amandates >>${TMPFILE} 2>&1
+if [ ! -f %{AMANDATES} ] ; then
+        touch %{AMANDATES} >>${TMPFILE} 2>&1
         ret_val=$?
         if [ ${ret_val} -eq 0 ]; then
-                echo "`date +'%b %e %Y %T'`: The file '%{LOCALSTATEDIR}/amanda/amandates' has been created." >>${TMPFILE}
+                echo "`date +'%b %e %Y %T'`: The file '%{AMANDATES}' has been created." >>${TMPFILE}
         fi
 fi
 if [ ${ret_val} -eq 0 ]; then
-        echo "`date +'%b %e %Y %T'`: Ensuring correct permissions for '%{LOCALSTATEDIR}/amanda/amandates'." >>${TMPFILE}
-        chown %{amanda_user}:%{amanda_group} %{LOCALSTATEDIR}/amanda/amandates >>${TMPFILE} 2>&1
-        chmod 0640 %{LOCALSTATEDIR}/amanda/amandates >>${TMPFILE} 2>&1
+        echo "`date +'%b %e %Y %T'`: Ensuring correct permissions for '%{AMANDATES}'." >>${TMPFILE}
+        chown %{amanda_user}:%{amanda_group} %{AMANDATES} >>${TMPFILE} 2>&1
+        chmod 0640 %{AMANDATES} >>${TMPFILE} 2>&1
 fi
 if [ ${ret_val} -eq 0 ]; then
-        echo "`date +'%b %e %Y %T'`: '%{LOCALSTATEDIR}/amanda/amandates' Installation successful." >>${TMPFILE}
+        echo "`date +'%b %e %Y %T'`: '%{AMANDATES}' Installation successful." >>${TMPFILE}
         cat ${TMPFILE}
         cat ${TMPFILE} >>${INSTALL_LOG}
 else
-        echo "`date +'%b %e %Y %T'`: '%{LOCALSTATEDIR}/amanda/amandates' Installation failed." >>${TMPFILE}
+        echo "`date +'%b %e %Y %T'`: '%{AMANDATES}' Installation failed." >>${TMPFILE}
         cat ${TMPFILE}
         cat ${TMPFILE} >>${INSTALL_ERR}
 fi

@@ -49,6 +49,17 @@ echo "`date +'%b %e %Y %T'`: Ensuring correct permissions for '${AMTMP}'."
 chown ${amanda_user}:${amanda_group} ${AMTMP} || exit 1
 chmod 0640 ${AMTMP} || exit 1
 
+# install am_passphrase file to server
+echo "`date +'%b %e %Y %T'`: Checking '${AMANDAHOMEDIR}/.am_passphrase' file." 
+if [ ! -f ${AMANDAHOMEDIR}/.am_passphrase ] ; then
+        echo "`date +'%b %e %Y %T'`: Create '${AMANDAHOMEDIR}/.am_passphrase' file." 
+        touch ${AMANDAHOMEDIR}/.am_passphrase || exit 1
+        phrase=`echo $RANDOM | md5sum | awk '{print $1}'`
+        echo ${phrase} >>${AMANDAHOMEDIR}/.am_passphrase
+
+        chown ${amanda_user}:${amanda_group} ${AMANDAHOMEDIR}/.am_passphrase
+        chmod 0700 ${AMANDAHOMEDIR}/.am_passphrase 
+
 # Install .gnupg directory
 echo "`date +'%b %e %Y %T'`: Installing '${AMHOMEDIR}/.gnupg'." 
 if [ ! -d ${AMHOMEDIR}/.gnupg ] ; then
