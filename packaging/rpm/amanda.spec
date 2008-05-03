@@ -426,7 +426,7 @@ echo "`date +'%b %e %Y %T'`: Preparing to install: %{amanda_version_info}" >${TM
 # Check for the 'amanda' user
 echo "`date +'%b %e %Y %T'`: Checking for '%{amanda_user}' user..." >>${TMPFILE}
 if [ "`id -u %{amanda_user} > /dev/null 2>&1 && echo 0 || echo 1`" != "0" ] ; then
-        useradd -c "Amanda" -M -g ${amanda_group} -d %{AMANDAHOMEDIR} -s /bin/sh %{amanda_user}
+        useradd -c "Amanda" -M -g %{amanda_group} -d %{AMANDAHOMEDIR} -s /bin/sh %{amanda_user}
         if [ %{dist} = "SuSE" ]; then
                 PASSWD_EXIT=$?
         else
@@ -791,7 +791,7 @@ echo "`date +'%b %e %Y %T'`: Preparing to install: %{amanda_version_info}" >${TM
 # Check for the 'amanda' user
 echo "`date +'%b %e %Y %T'`: Checking for '%{amanda_user}' user..." >>${TMPFILE}
 if [ "`id -u %{amanda_user} > /dev/null 2>&1 && echo 0 || echo 1`" != "0" ] ; then
-        useradd -c "Amanda" -M -g ${amanda_group} -d %{AMANDAHOMEDIR} -s /bin/sh %{amanda_user}
+        useradd -c "Amanda" -M -g %{amanda_group} -d %{AMANDAHOMEDIR} -s /bin/sh %{amanda_user}
         if [ %{dist} = "SuSE" ]; then
                 PASSWD_EXIT=$?
         else
@@ -1177,7 +1177,7 @@ echo "`date +'%b %e %Y %T'`: Preparing to install: %{amanda_version_info}" >${TM
 # Check for the 'amanda' user
 echo "`date +'%b %e %Y %T'`: Checking for '%{amanda_user}' user..." >>${TMPFILE}
 if [ "`id -u %{amanda_user} > /dev/null 2>&1 && echo 0 || echo 1`" != "0" ] ; then
-        useradd -c "Amanda" -M -g ${amanda_group} -d %{AMANDAHOMEDIR} -s /bin/sh %{amanda_user} >>${TMPFILE} 2>&1
+        useradd -c "Amanda" -M -g %{amanda_group} -d %{AMANDAHOMEDIR} -s /bin/sh %{amanda_user} >>${TMPFILE} 2>&1
         if [ %{dist} = "SuSE" ]; then
                 PASSWD_EXIT=$?
         else
@@ -1631,6 +1631,8 @@ echo "Amanda installation log can be found in '${INSTALL_LOG}' and errors (if an
 # --- ChangeLog
 
 %changelog
+* Fri May 02 2008 Dan Locks <dwlocks at zmanda dot com>
+- Changed instances of ${ to %%{ where applicable
 * Tue Mar 11 2008 Dan Locks <dwlocks at zmanda dot com>
 - fixed many rpmlint complaints
 - added --quiet to configure statements

@@ -1,4 +1,7 @@
 2008-05-02 Dan Locks <dwlocks@zmanda.com>
+ 	* packaging/rpm/amanda.spec:  Replace ${ with %{ where applicable.
+ 
+2008-05-02 Dan Locks <dwlocks@zmanda.com>
 	*  packaging/deb/amanda-enterprise-backup-server.postinst
 	   packaging/rpm/amanda_enterprise.spec:  Change .am_passphrase to a
 	   semi-random number in both packages. 
