@@ -1,3 +1,6 @@
+2008-05-02 Dan Locks <dwlocks@zmanda.com>
+	* packaging/rpm/amanda.spec:  Replace ${ with %{ where applicable.
+
 2008-04-23  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/security-util.c: Typo.
 
