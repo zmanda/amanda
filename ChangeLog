@@ -1,3 +1,17 @@
+2008-05-06  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c: Add a 'mailer' config parameter.
+	* common-src/conffile.h: Add CNF_MAILER.
+	* changer-src/chg-scsi-chio.c, changer-src/chg-scsi.c
+	  changer-src/chg-manual.sh, application-src/script-email.pl
+	  server-src/amcheck.c server-src/amgetconf.pl
+	  server-src/reporter.c: Use mailer from config.
+	* perl/Amanda/Config.swg: amglue_add_constant(CNF_MAILER, confparm_key)
+	* config/amanda/progs.m4: Set DEFAULT_MAILER.
+	* common-src/amanda-sh-lib.sh.in: Don't set MAILER.
+	* man/xml-source/amanda-client.conf.5.xml,
+	  man/xml-source/amanda.conf.5.xml,
+	  man/xml-source/amgetconf.8.xml: Update man pages.
+
 2008-05-02 Dan Locks <dwlocks@zmanda.com>
  	* packaging/rpm/amanda.spec:  Replace ${ with %{ where applicable.
  
@@ -9,6 +23,7 @@
 2008-04-29  Dustin J. Mitchell <dustin@zmanda.com>
 	* config/amanda/dirs.m4: note that --with-dumperdir is 
 	  deprecated in ./configure --help
+
 
 2008-04-24  Jean-Louis Martineau <martineau@zmanda.com>
 	* restore-src/restore.c: Fix test for DEVICE_STATUS_SUCCESS.

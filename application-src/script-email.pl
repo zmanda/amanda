@@ -38,7 +38,7 @@ $myhost =~ s/\..*$//;
 $runtar="${libexecdir}/runtar${suf}";
 $gnulist = '@GNUTAR_LISTED_INCREMENTAL_DIR@';
 $gnutar = '@GNUTAR@';
-$mailer = '@MAILER@';
+$mailer = '@DEFAULT_MAILER@';
 
 
 $has_config   = 1;

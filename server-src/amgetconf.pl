@@ -98,7 +98,6 @@ my %build_info = (
     'samba_client' => $Amanda::Constants::SAMBA_CLIENT,
     'gnutar' => $Amanda::Constants::GNUTAR,
     'star' => $Amanda::Constants::STAR,
-    'mailer' => $Amanda::Constants::MAILER,
     'compress_path' => $Amanda::Constants::COMPRESS_PATH,
     'uncompress_path' => $Amanda::Constants::UNCOMPRESS_PATH,
     'aix_backup' => $Amanda::Constants::AIX_BACKUP,

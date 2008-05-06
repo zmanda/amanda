@@ -71,6 +71,7 @@ typedef enum {
     CONF_DUMPORDER,		CONF_TIMEOUT,		CONF_TPCHANGER,
     CONF_RUNTAPES,		CONF_DEFINE,		CONF_DUMPTYPE,
     CONF_TAPETYPE,		CONF_INTERFACE,		CONF_PRINTER,
+    CONF_MAILER,
     CONF_AUTOFLUSH,		CONF_RESERVE,		CONF_MAXDUMPSIZE,
     CONF_COLUMNSPEC,		CONF_AMRECOVER_DO_FSF,	CONF_AMRECOVER_CHECK_LABEL,
     CONF_AMRECOVER_CHANGER,	CONF_LABEL_NEW_TAPES,	CONF_USETIMESTAMPS,
@@ -688,6 +689,7 @@ keytab_t client_keytab[] = {
     { "UNRESERVED-TCP-PORT", CONF_UNRESERVED_TCP_PORT },
     { "DEFINE", CONF_DEFINE },
     { "COMMENT", CONF_COMMENT },
+    { "MAILER", CONF_MAILER },
     { "PLUGIN", CONF_PLUGIN },
     { "PROPERTY", CONF_PROPERTY },
     { "APPLICATION-TOOL", CONF_APPLICATION_TOOL },
@@ -794,6 +796,7 @@ keytab_t server_keytab[] = {
     { "LIST", CONF_LIST },
     { "LOGDIR", CONF_LOGDIR },
     { "LOW", CONF_LOW },
+    { "MAILER", CONF_MAILER },
     { "MAILTO", CONF_MAILTO },
     { "READBLOCKSIZE", CONF_READBLOCKSIZE },
     { "MAXDUMPS", CONF_MAXDUMPS },
@@ -939,6 +942,7 @@ conf_var_t client_var [] = {
    { CONF_CLIENT_USERNAME    , CONFTYPE_STR     , read_str     , CNF_CLIENT_USERNAME    , NULL },
    { CONF_GNUTAR_LIST_DIR    , CONFTYPE_STR     , read_str     , CNF_GNUTAR_LIST_DIR    , NULL },
    { CONF_AMANDATES          , CONFTYPE_STR     , read_str     , CNF_AMANDATES          , NULL },
+   { CONF_MAILER             , CONFTYPE_STR     , read_str     , CNF_MAILER             , NULL },
    { CONF_KRB5KEYTAB         , CONFTYPE_STR     , read_str     , CNF_KRB5KEYTAB         , NULL },
    { CONF_KRB5PRINCIPAL      , CONFTYPE_STR     , read_str     , CNF_KRB5PRINCIPAL      , NULL },
    { CONF_CONNECT_TRIES      , CONFTYPE_INT     , read_int     , CNF_CONNECT_TRIES      , validate_positive },
@@ -971,6 +975,7 @@ conf_var_t server_var [] = {
    { CONF_MAILTO               , CONFTYPE_STR      , read_str         , CNF_MAILTO               , NULL },
    { CONF_DUMPUSER             , CONFTYPE_STR      , read_str         , CNF_DUMPUSER             , NULL },
    { CONF_PRINTER              , CONFTYPE_STR      , read_str         , CNF_PRINTER              , NULL },
+   { CONF_MAILER               , CONFTYPE_STR      , read_str         , CNF_MAILER               , NULL },
    { CONF_TAPEDEV              , CONFTYPE_STR      , read_str         , CNF_TAPEDEV              , NULL },
    { CONF_RAWTAPEDEV           , CONFTYPE_STR      , read_str         , CNF_RAWTAPEDEV           , NULL },
    { CONF_DEVICE_PROPERTY      , CONFTYPE_PROPLIST , read_property    , CNF_DEVICE_PROPERTY      , NULL },
@@ -3684,6 +3689,7 @@ init_defaults(
     conf_init_int      (&conf_data[CNF_TAPEBUFS]             , 20);
     conf_init_size     (&conf_data[CNF_DEVICE_OUTPUT_BUFFER_SIZE], 40*32768);
     conf_init_str   (&conf_data[CNF_PRINTER]              , "");
+    conf_init_str   (&conf_data[CNF_MAILER]               , DEFAULT_MAILER);
     conf_init_bool     (&conf_data[CNF_AUTOFLUSH]            , 0);
     conf_init_int      (&conf_data[CNF_RESERVE]              , 100);
     conf_init_am64     (&conf_data[CNF_MAXDUMPSIZE]          , (off_t)-1);

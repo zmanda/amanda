@@ -110,6 +110,7 @@ main(
     uid_t uid_me;
     char *errstr;
     config_overwrites_t *cfg_ovr;
+    char *mailer;
 
     /*
      * Configure program for internationalization:
@@ -162,25 +163,11 @@ main(
 			}
 			/*FALLTHROUGH*/
 	case 'm':	
-#ifdef MAILER
 			mailout = 1;
-#else
-			g_printf(_("You can't use -%c because configure didn't "
-				 "find a mailer./usr/bin/mail not found\n"),
-				opt);
-			exit(1);
-#endif
 			break;
 	case 'a':	
-#ifdef MAILER
 			mailout = 1;
 			alwaysmail = 1;
-#else
-			g_printf(_("You can't use -%c because configure didn't "
-				 "find a mailer./usr/bin/mail not found\n"),
-				opt);
-			exit(1);
-#endif
 			break;
 	case 's':	do_localchk = do_tapechk = 1;
 			break;
@@ -222,6 +209,15 @@ main(
 	}
     }
 
+    mailer = getconf_str(CNF_MAILER);
+    if ((!mailer || *mailer == '\0') && mailout == 1) {
+	if (alwaysmail == 1) {
+	    g_printf(_("You can't use -a because a mailer is not defined\n"));
+	} else {
+	    g_printf(_("You can't use -m because a mailer is not defined\n"));
+	}
+	exit(1);
+    }
     if(mailout && !mailto && 
        (getconf_seen(CNF_MAILTO)==0 || strlen(getconf_str(CNF_MAILTO)) == 0)) {
 	g_printf(_("\nWARNING:No mail address configured in  amanda.conf.\n"));
@@ -399,7 +395,6 @@ main(
     our_features = NULL;
 
     /* send mail if requested, but only if there were problems */
-#ifdef MAILER
 
 #define	MAILTO_LIMIT	10
 
@@ -452,9 +447,9 @@ main(
 	    error("nullfd: /dev/null: %s", strerror(errno));
 	    /*NOTREACHED*/
 	}
-	pipespawn(MAILER, STDIN_PIPE | STDERR_PIPE, 0,
+	pipespawn(mailer, STDIN_PIPE | STDERR_PIPE, 0,
 			    &mailfd, &nullfd, &errfd,
-			    MAILER,
+			    mailer,
 			    "-s", subject,
 			          a[1], a[2], a[3], a[4],
 			    a[5], a[6], a[7], a[8], a[9],
@@ -510,11 +505,11 @@ main(
 		fputs(extra_info, stderr);
 		amfree(extra_info);
 	    }
-	    error(_("error running mailer %s: %s"), MAILER, err?err:"(unknown)");
+	    error(_("error running mailer %s: %s"), mailer, err?err:"(unknown)");
 	    /*NOTREACHED*/
 	}
     }
-#endif
+
     dbclose();
     return (server_probs || client_probs);
 }

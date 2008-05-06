@@ -283,10 +283,13 @@ AC_DEFUN([AMANDA_PROG_MAILER],
     AC_PATH_PROGS(MAILER,Mail mailx mail,NONE)
     if test x"$MAILER" = x"NONE"; then
         AMANDA_MSG_WARN([WARNING: Amanda cannot send mail reports without a mailer.])
+	DEFAULT_MAILER=""
     else
-        AC_DEFINE_UNQUOTED(MAILER,"$MAILER",
-                [A program that understands -s "subject" user < message_file])
+	DEFAULT_MAILER="$MAILER"
     fi
+    AC_DEFINE_UNQUOTED(DEFAULT_MAILER,"$DEFAULT_MAILER",
+                [A program that understands -s "subject" user < message_file])
+    AC_SUBST(DEFAULT_MAILER)
 ])
 
 # SYNOPSIS

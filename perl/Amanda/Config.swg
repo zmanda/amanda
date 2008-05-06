@@ -249,6 +249,7 @@ amglue_add_constant(CNF_AMANDAD_PATH, confparm_key);
 amglue_add_constant(CNF_CLIENT_USERNAME, confparm_key);
 amglue_add_constant(CNF_GNUTAR_LIST_DIR, confparm_key);
 amglue_add_constant(CNF_AMANDATES, confparm_key);
+amglue_add_constant(CNF_MAILER, confparm_key);
 amglue_add_constant(CNF_MAILTO, confparm_key);
 amglue_add_constant(CNF_DUMPUSER, confparm_key);
 amglue_add_constant(CNF_TAPEDEV, confparm_key);

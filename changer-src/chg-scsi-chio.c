@@ -634,10 +634,13 @@ clean_tape(
     char *	usagetime)
 {
   int counter;
+  char *mailer;
 
   if (cleancart == -1 ){
     return;
   }
+
+  mailer = getconf_str(CNF_MAILER);
 
   /* Now we should increment the counter */
   if (cnt_file != NULL){
@@ -648,29 +651,29 @@ clean_tape(
       char *mail_cmd;
       FILE *mailf;
       int mail_pipe_opened = 1;
-#ifdef MAILER
-      if(getconf_seen(CNF_MAILTO) && strlen(getconf_str(CNF_MAILTO)) > 0 && 
-         validate_mailto(getconf_str(CNF_MAILTO))) {
-      	 mail_cmd = vstralloc(MAILER,
-                           " -s", " \"", _("AMANDA PROBLEM: PLEASE FIX"), "\"",
-                           " ", getconf_str(CNF_MAILTO),
-                           NULL);
-      	 if((mailf = popen(mail_cmd, "w")) == NULL){
-        	g_printf(_("Mail failed\n"));
-        	error(_("could not open pipe to \"%s\": %s"),
-              	mail_cmd, strerror(errno));
-        	/*NOTREACHED*/
-      	}
+      if (mailer && *mailer != '\0') {
+        if (getconf_seen(CNF_MAILTO) && strlen(getconf_str(CNF_MAILTO)) > 0 && 
+           validate_mailto(getconf_str(CNF_MAILTO))) {
+      	   mail_cmd = vstralloc(mailer,
+                             " -s", " \"", _("AMANDA PROBLEM: PLEASE FIX"), "\"",
+                             " ", getconf_str(CNF_MAILTO),
+                             NULL);
+      	   if ((mailf = popen(mail_cmd, "w")) == NULL) {
+        	  g_printf(_("Mail failed\n"));
+        	  error(_("could not open pipe to \"%s\": %s"),
+                    	mail_cmd, strerror(errno));
+        	  /*NOTREACHED*/
+      	  }
+        } else {
+	   mail_pipe_opened = 0;
+	   mailf = stderr;
+           g_fprintf(mailf, _("\nNo mail recipient specified, output redirected to stderr"));
+        }
       } else {
-	 mail_pipe_opened = 0;
-	 mailf = stderr;
-         g_fprintf(mailf, _("\nNo mail recipient specified, output redirected to stderr"));
+        mail_pipe_opened = 0;
+        mailf = stderr;
+        g_fprintf(mailf, _("\nNo mailer specified; output redirected to stderr"));
       }
-#else
-      mail_pipe_opened = 0;
-      mailf = stderr;
-      g_fprintf(mailf, _("\nNo mailer specified; output redirected to stderr"));
-#endif
       g_fprintf(mailf, _("\nThe usage count of your cleaning tape in slot %d"),
              cleancart);
       g_fprintf(mailf,_("\nis more than %d. (cleanmax)"),maxclean);

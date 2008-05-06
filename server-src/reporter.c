@@ -344,6 +344,7 @@ main(
     char *lbl_templ = NULL;
     config_overwrites_t *cfg_ovr = NULL;
     char *cfg_opt = NULL;
+    char *mailer;
 
     /*
      * Configure program for internationalization:
@@ -460,14 +461,6 @@ main(
 
     amfree(cwd);
 
-#if !defined MAILER
-    if(!outfname) {
-	g_printf(_("You must run amreport with '-f <output file>' because configure\n"));
-	g_printf(_("didn't find a mailer.\n"));
-	exit (1);
-    }
-#endif
-
     /* read configuration files */
 
     /* ignore any errors reading the config file (amreport can run without a config) */
@@ -483,6 +476,14 @@ main(
     dbrename(get_config_name(), DBG_SUBDIR_SERVER);
 
     safe_cd(); /* must be called *after* config_init() */
+
+    mailer = getconf_str(CNF_MAILER);
+    if (mailer && *mailer == '\0')
+	mailer = NULL;
+    if (!mailer && !outfname) {
+	g_printf(_("You must run amreport with '-f <output file>' because a mailer is not defined\n"));
+	exit (1);
+    }
 
     conf_diskfile = config_dir_relative(getconf_str(CNF_DISKFILE));
     /* Ignore error from read_diskfile */
@@ -622,10 +623,9 @@ main(
 		g_fprintf(mailf, "Subject: %s\n\n", subj_str);
 	}
 
-    } else {
-#ifdef MAILER
+    } else if (mailer) {
     	if(mailto) {
-		mail_cmd = vstralloc(MAILER,
+		mail_cmd = vstralloc(mailer,
 			     " -s", " \"", subj_str, "\"",
 			     " ", mailto, NULL);
 		if((mailf = popen(mail_cmd, "w")) == NULL) {
@@ -641,7 +641,6 @@ main(
 		}
 		mailf = NULL;
 	}
-#endif
     }
 
     /* open pipe to print spooler if necessary) */

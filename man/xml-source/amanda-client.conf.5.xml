@@ -225,6 +225,13 @@ The directory where gnutar keep its state file.</para>
   </varlistentry>
 
   <varlistentry>
+  <term><emphasis remap='B'>mailer</emphasis> <emphasis remap='I'> string</emphasis></term>
+  <listitem>
+<para>Default found by configure. A mail program that can send mail with '<emphasis remap='I'>MAILER -s "subject" user &lt; message_file</emphasis>'.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
   <term><emphasis remap='B'>amandates</emphasis> <emphasis remap='I'> string</emphasis></term>
   <listitem>
 <para>Default: 

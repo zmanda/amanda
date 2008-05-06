@@ -42,9 +42,9 @@ if ! error=`try_find_mt`; then
     exit 2
 fi
 
-MAILER=@MAILER@
 ONLINEREGEX="ONLINE|READY|sense[_ ]key[(]0x0[)]|sense key error = 0|^er=0$|, mt_erreg: 0x0|^Current Driver State: at rest$"
 REPORTTO=`amgetconf mailto`
+MAILER=`amgetconf mailer`
 tape=`amgetconf tapedev`
 
 if [ -z "$tape" ]; then

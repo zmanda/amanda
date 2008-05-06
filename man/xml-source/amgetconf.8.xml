@@ -128,7 +128,6 @@ below (the difference is historical).</para>
                <term><literal>SAMBA_CLIENT</literal></term>
                <term><literal>GNUTAR</literal></term>
                <term><literal>STAR</literal></term>
-               <term><literal>MAILER</literal></term>
                <term><literal>COMPRESS_PATH</literal></term>
                <term><literal>UNCOMPRESS_PATH</literal></term>
   <listitem><para>Paths to various utility progarms (empty if they
