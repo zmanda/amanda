@@ -1,3 +1,12 @@
+2008-05-07  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/tape-device.c: Allow user to set "read_buffer_size"
+	                            property.
+	* restore-src/amrestore.c: Don't limit blocksize to
+	                           --with-maxtapeblocksize.
+	* common-src/conffile.c: Increase readblocksize to blocksize.
+	  blocksize and readblocksize can be bigger than
+	  --with-maxtapeblocksize.
+
 2008-05-02 Dan Locks <dwlocks@zmanda.com>
 	* packaging/rpm/amanda.spec:  Replace ${ with %{ where applicable.
 

@@ -1814,6 +1814,11 @@ get_tapetype(void)
 	       _("tapetype parameter expected"), 1, copy_tapetype);
     get_conftoken(CONF_NL);
 
+    if (tapetype_get_readblocksize(&tpcur) <
+	tapetype_get_blocksize(&tpcur)) {
+	conf_init_size(&tpcur.value[TAPETYPE_READBLOCKSIZE],
+		       tapetype_get_blocksize(&tpcur));
+    }
     save_tapetype();
 
     allow_overwrites = save_overwrites;
@@ -2918,9 +2923,6 @@ validate_blocksize(
     if(val_t__size(val) < DISK_BLOCK_KB) {
 	conf_parserror(_("Tape blocksize must be at least %d KBytes"),
 		  DISK_BLOCK_KB);
-    } else if(val_t__size(val) > MAX_TAPE_BLOCK_KB) {
-	conf_parserror(_("Tape blocksize must not be larger than %d KBytes"),
-		  MAX_TAPE_BLOCK_KB);
     }
 }
 

@@ -192,17 +192,11 @@ main(
 	    } else if(*e == 'm' || *e == 'M') {
 		rst_flags->blocksize *= 1024 * 1024;
 	    } else if(*e != '\0') {
-		error(_("invalid rst_flags->blocksize value \"%s\""), optarg);
+		error(_("invalid blocksize value \"%s\""), optarg);
 		/*NOTREACHED*/
 	    }
 	    if(rst_flags->blocksize < DISK_BLOCK_BYTES) {
 		error(_("minimum block size is %dk"), DISK_BLOCK_BYTES / 1024);
-		/*NOTREACHED*/
-	    }
-	    if(rst_flags->blocksize > MAX_TAPE_BLOCK_KB * 1024) {
-		g_fprintf(stderr,_("maximum block size is %dk, using it\n"),
-			MAX_TAPE_BLOCK_KB);
-		rst_flags->blocksize = MAX_TAPE_BLOCK_KB * 1024;
 		/*NOTREACHED*/
 	    }
 	    break;
