@@ -1,4 +1,7 @@
 2008-05-07  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c: Check the tapetype is defined.
+
+2008-05-07  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/tape-device.c: Allow user to set "read_buffer_size"
 	                            property.
 	* restore-src/amrestore.c: Don't limit blocksize to
