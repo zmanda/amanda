@@ -3892,6 +3892,12 @@ update_derived_values(
 	    val_t__int(v) = getconf_int(CNF_NETUSAGE);
 	    val_t__seen(v) = getconf_seen(CNF_NETUSAGE);
 	}
+
+	/* Check the tapetype is defined */
+	if (lookup_tapetype(getconf_str(CNF_TAPETYPE)) == NULL) {
+	    conf_parserror(_("tapetype %s is not defined"),
+			   getconf_str(CNF_TAPETYPE));
+	}
     }
 
     /* fill in the debug_* values */
