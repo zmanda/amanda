@@ -1,4 +1,7 @@
 2008-05-07  Jean-Louis Martineau <martineau@zmanda.com>
+	* man/xml-source/amdevcheck.8.xml: Add an OUTPUT section.
+
+2008-05-07  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.c: Check the tapetype is defined.
 
 2008-05-07  Jean-Louis Martineau <martineau@zmanda.com>

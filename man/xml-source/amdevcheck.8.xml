@@ -84,6 +84,44 @@
     </variablelist>
   </refsect1>
 
+  <refsect1><title>OUTPUT</title>
+    <emphasis remap='B'>Amdevcheck</emphasis> returns one or more of the following lines. If multiple lines appear, then at least one, but not necessarily all of
+the messages apply.  This situation can occur when working with hardware or
+operating systems which cannot distinguish, for example, between a
+malfunctioning drive and a functional but unloaded drive.
+<!-- .RS -->
+      <variablelist remap='TP'>
+        <varlistentry>
+   	  <term><emphasis remap='B'>SUCCESS</emphasis></term>
+	    <listitem><para>A tape is ready.</para></listitem>
+	</varlistentry>
+        <varlistentry>
+	  <term><emphasis remap='B'>DEVICE_ERROR</emphasis></term>
+	    <listitem><para>A device error has occurred.</para></listitem>
+	</varlistentry>
+        <varlistentry>
+          <term><emphasis remap='B'>DEVICE_BUSY</emphasis></term>
+	    <listitem><para>The device is busy.</para></listitem>
+	</varlistentry>
+        <varlistentry>
+          <term><emphasis remap='B'>VOLUME_MISSING</emphasis></term>
+	    <listitem><para>No tape is loaded in the drive.</para></listitem>
+	</varlistentry>
+        <varlistentry>
+          <term><emphasis remap='B'>VOLUME_UNLABELED</emphasis></term>
+	    <listitem><para>The tape in the drive is unlabeled.</para></listitem>
+	</varlistentry>
+        <varlistentry>
+	  <term><emphasis remap='B'>VOLUME_ERROR</emphasis></term>
+	    <listitem><para>A volume error has occurred.</para></listitem>
+	</varlistentry>
+        <varlistentry>
+	  <term><emphasis remap='B'>MESSAGE</emphasis> <emphasis remap='I'>text</emphasis></term>
+	    <listitem><para>Where text provides a human-readable description of the problem.</para></listitem>
+	</varlistentry>
+       </variablelist>
+  </refsect1>
+
   <refsect1><title>AUTHOR</title>
     <para>
       Ian Turner <email>ian@zmanda.com</email> and others. Authorship of this
