@@ -899,6 +899,12 @@ tape_device_property_set (Device * d_self, DevicePropertyId id, GValue * val) {
         self->fixed_block_size = g_value_get_int(val);
         device_clear_volume_details(d_self);
         return TRUE;
+    } else if (id == PROPERTY_READ_BUFFER_SIZE) {
+        if (d_self->access_mode != ACCESS_NULL)
+            return FALSE;
+        self->read_block_size = g_value_get_uint(val);
+        device_clear_volume_details(d_self);
+        return TRUE;
     } else if (id == PROPERTY_FSF) {
         return try_set_feature(d_self->access_mode,
                                feature_request_flags,

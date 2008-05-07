@@ -1,3 +1,12 @@
+2008-05-07  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/tape-device.c: Allow user to set "read_buffer_size"
+				    property.
+	* restore-src/amrestore.c: Don't limit blocksize to
+				   --with-maxtapeblocksize.
+	* common-src/conffile.c: Increase readblocksize to blocksize.
+	  blocksize and readblocksize can be bigger than
+	  --with-maxtapeblocksize.
+
 2008-05-06  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.c: Add a 'mailer' config parameter.
 	* common-src/conffile.h: Add CNF_MAILER.
