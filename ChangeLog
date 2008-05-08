@@ -1,4 +1,7 @@
 2008-05-08  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c: Define default tapetype.
+
+2008-05-08  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/tape-device.c (tape_validate_properties): New function to
 	  validate properties.
 

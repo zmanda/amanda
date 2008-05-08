@@ -3895,8 +3895,18 @@ update_derived_values(
 
 	/* Check the tapetype is defined */
 	if (lookup_tapetype(getconf_str(CNF_TAPETYPE)) == NULL) {
-	    conf_parserror(_("tapetype %s is not defined"),
-			   getconf_str(CNF_TAPETYPE));
+	    /* Create a default tapetype */
+	    if (!getconf_seen(CNF_TAPETYPE) &&
+		strcmp(getconf_str(CNF_TAPETYPE), "EXABYTE") == 0 &&
+		!lookup_tapetype("EXABYTE")) {
+		init_tapetype_defaults();
+		tpcur.name = stralloc("EXABYTE");
+		tpcur.seen = -1;
+		save_tapetype();
+	    } else {
+		conf_parserror(_("tapetype %s is not defined"),
+			       getconf_str(CNF_TAPETYPE));
+	    }
 	}
     }
 
@@ -5119,7 +5129,11 @@ dump_configuration(void)
     }
 
     for(tp = tapelist; tp != NULL; tp = tp->next) {
-	g_printf("\nDEFINE TAPETYPE %s {\n", tp->name);
+	if(tp->seen == -1)
+	    prefix = "#";
+	else
+	    prefix = "";
+	g_printf("\n%sDEFINE TAPETYPE %s {\n", prefix, tp->name);
 	for(i=0; i < TAPETYPE_TAPETYPE; i++) {
 	    for(np=tapetype_var; np->token != CONF_UNKNOWN; np++)
 		if(np->parm == i) break;
@@ -5131,9 +5145,9 @@ dump_configuration(void)
 	    if(kt->token == CONF_UNKNOWN)
 		error(_("tapetype bad token"));
 
-            val_t_print_token(stdout, NULL, "      %-9s ", kt, &tp->value[i]);
+            val_t_print_token(stdout, prefix, "      %-9s ", kt, &tp->value[i]);
 	}
-	g_printf("}\n");
+	g_printf("%s}\n", prefix);
     }
 
     for(dp = dumplist; dp != NULL; dp = dp->next) {
