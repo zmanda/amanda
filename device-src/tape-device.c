@@ -76,6 +76,7 @@ static gboolean tape_device_bsf (TapeDevice * self, guint count, guint file);
 static gboolean tape_device_fsr (TapeDevice * self, guint count);
 static gboolean tape_device_bsr (TapeDevice * self, guint count, guint file, guint block);
 static gboolean tape_device_eod (TapeDevice * self);
+static void tape_validate_properties (TapeDevice * self);
 
 /* pointer to the class of our parent */
 static DeviceClass *parent_class = NULL;
@@ -322,6 +323,8 @@ static DeviceStatusFlags tape_device_read_label(Device * dself) {
     self = TAPE_DEVICE(dself);
     g_return_val_if_fail(self != NULL, FALSE);
 
+    tape_validate_properties(self);
+
     if (self->fd == -1)
         self->fd = try_open_tape_device(self, dself->device_name);
 
@@ -549,6 +552,8 @@ tape_device_start (Device * d_self, DeviceAccessMode mode, char * label,
 
     self = TAPE_DEVICE(d_self);
     g_return_val_if_fail(self != NULL, FALSE);
+
+    tape_validate_properties(self);
 
     /* label not yet read */
     if (d_self->volume_label == NULL) {
@@ -1358,6 +1363,14 @@ tape_device_eod (TapeDevice * self) {
             }
         }
     }
+}
+
+static void
+tape_validate_properties(TapeDevice * self) {
+    if (self->read_block_size < self->fixed_block_size)
+	self->read_block_size = self->fixed_block_size;
+    if (self->read_block_size < self->max_block_size)
+	self->read_block_size = self->max_block_size;
 }
 
 Device *
