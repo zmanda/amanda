@@ -6,7 +6,7 @@ AC_CANONICAL_TARGET([])
 PACKAGE=amanda
 AC_SUBST(PACKAGE)
 
-AM_INIT_AUTOMAKE(amanda, "2.6.0")
+AM_INIT_AUTOMAKE(amanda, "2.6.0p1")
 AC_CONFIG_HEADERS([config/config.h])
 
 dnl Minimum Autoconf version required.

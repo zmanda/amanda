@@ -122,8 +122,8 @@
 # --- Definitions ---
 
 # Define amanda_version if it is not already defined.
-%{!?amanda_version: %define amanda_version 2.6.0}
-%{!?amanda_release: %define amanda_release 2}
+%{!?amanda_version: %define amanda_version 2.6.0p1}
+%{!?amanda_release: %define amanda_release 1}
 %define amanda_version_info "Amanda Community Edition - version %{amanda_version}"
 %define amanda_user amandabackup
 %define amanda_group disk

@@ -1,3 +1,12 @@
+Changes in release 2.6.0p1
+
+   * Bugs fix only:
+	 o amfetchdump -p
+	 o amtapetype crash
+	 o Fix DS_INCRONLY and FORCE_FULL
+	 o planner crash 
+	 o others small bugs
+
 Changes in release 2.6.0
 
    * configure --disable-shared doesn't work because perl modules require

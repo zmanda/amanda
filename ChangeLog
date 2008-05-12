@@ -1,4 +1,12 @@
 2008-05-08  Jean-Louis Martineau <martineau@zmanda.com>
+	* packaging/deb/buildpkg packaging/rpm/buildpkg: AMVER=amanda-2.6.0p1
+	* packaging/deb/changelog: amanda (2.6.0p1-1)
+	* packaging/deb/rules: AMVER=2.6.0p1
+	* packaging/rpm/amanda.spec: amanda_version 2.6.0p1, amanda_release 1
+	* NEWS: Update for 2.6.0p1
+	* configure.in: AM_INIT_AUTOMAKE(amanda, "2.6.0p1")
+
+2008-05-08  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.c: Define default tapetype.
 
 2008-05-07  Jean-Louis Martineau <martineau@zmanda.com>
