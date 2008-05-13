@@ -775,7 +775,7 @@ setup_estimate(
 	}
     }
 
-    /* for INCRONLY we're worried about level 1 */
+    /* warn if last level 1 will be overwritten */
     if (ep->last_level > 1 && strlen(info.inf[1].label) > 0) {
 	overwrite_runs = when_overwrite(info.inf[1].label);
 	if(overwrite_runs == 0) {
