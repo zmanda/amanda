@@ -3,6 +3,12 @@
 	* server-src/planner.c: Warn about overwrite of last level 1, and
 	  force backup of level 1 if overwrite on this run.
 
+2008-05-12  Dustin J. Mitchell <dustin@zmanda.com>
+	* server-src/dumper.c server-src/server_util.c
+	  server-src/infofile.c server-src/amtrmlog.c common-src/debug.c
+	  common-src/file.c: Always call mkpdir without the 02000 bit set,
+	  as it is not needed and causes problems on MacOS X.
+
 2008-05-08  Jean-Louis Martineau <martineau@zmanda.com>
 	* packaging/deb/buildpkg packaging/rpm/buildpkg: AMVER=amanda-2.6.0p1
 	* packaging/deb/changelog: amanda (2.6.0p1-1)

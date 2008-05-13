@@ -47,8 +47,8 @@ static int
 mk1dir(
     const char *dir, /* directory to create */
     mode_t	mode,	/* mode for new directory */
-    uid_t	G_GNUC_UNUSED uid,	/* uid for new directory */
-    gid_t	G_GNUC_UNUSED gid)	/* gid for new directory */
+    uid_t	uid,	/* uid for new directory */
+    gid_t	gid)	/* gid for new directory */
 {
     int rc;	/* return code */
 
@@ -203,11 +203,11 @@ safe_cd(void)
     if (client_uid != (uid_t) -1) {
 #if defined(AMANDA_DBGDIR)
 	d = stralloc2(AMANDA_DBGDIR, "/.");
-	(void) mkpdir(d, (mode_t)02700, client_uid, client_gid);
+	(void) mkpdir(d, (mode_t)0700, client_uid, client_gid);
 	amfree(d);
 #endif
 	d = stralloc2(AMANDA_TMPDIR, "/.");
-	(void) mkpdir(d, (mode_t)02700, client_uid, client_gid);
+	(void) mkpdir(d, (mode_t)0700, client_uid, client_gid);
 	amfree(d);
     }
 

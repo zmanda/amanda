@@ -230,7 +230,7 @@ debug_setup_1(char *config, char *subdir)
 	dbgdir = vstralloc(AMANDA_DBGDIR, "/", subdir, "/", NULL);
     else
 	dbgdir = stralloc2(AMANDA_DBGDIR, "/");
-    if(mkpdir(dbgdir, 02700, get_client_uid(), get_client_gid()) == -1) {
+    if(mkpdir(dbgdir, 0700, get_client_uid(), get_client_gid()) == -1) {
 	error(_("create debug directory \"%s\": %s"),
 	      dbgdir, strerror(errno));
 	/*NOTREACHED*/

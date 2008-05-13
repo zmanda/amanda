@@ -138,11 +138,11 @@ main(
 
     conf_logdir = config_dir_relative(getconf_str(CNF_LOGDIR));
     olddir = vstralloc(conf_logdir, "/oldlog", NULL);
-    if (mkpdir(olddir, 02700, (uid_t)-1, (gid_t)-1) != 0) {
+    if (mkpdir(olddir, 0700, (uid_t)-1, (gid_t)-1) != 0) {
 	error(_("could not create parents of %s: %s"), olddir, strerror(errno));
 	/*NOTREACHED*/
     }
-    if (mkdir(olddir, 02700) != 0 && errno != EEXIST) {
+    if (mkdir(olddir, 0700) != 0 && errno != EEXIST) {
 	error(_("could not create %s: %s"), olddir, strerror(errno));
 	/*NOTREACHED*/
     }
