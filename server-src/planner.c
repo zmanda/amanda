@@ -775,6 +775,23 @@ setup_estimate(
 	}
     }
 
+    /* for INCRONLY we're worried about level 1 */
+    if (ep->last_level > 1 && strlen(info.inf[1].label) > 0) {
+	overwrite_runs = when_overwrite(info.inf[1].label);
+	if(overwrite_runs == 0) {
+	    log_add(L_WARNING, _("Last level 1 dump of %s:%s "
+		    "on tape %s overwritten on this run, resetting to level 1"),
+		    dp->host->hostname, qname, info.inf[1].label);
+	    ep->last_level = 0;
+	} else if(overwrite_runs <= RUNS_REDZONE) {
+	    log_add(L_WARNING,
+		    plural(_("Last level 1 dump of %s:%s on tape %s overwritten in %d run."),
+			   _("Last level 1 dump of %s:%s on tape %s overwritten in %d runs."), overwrite_runs),
+		    dp->host->hostname, qname, info.inf[1].label,
+		    overwrite_runs);
+	}
+    }
+
     if(ep->next_level0 < 0) {
 	g_fprintf(stderr,plural(_("%s:%s overdue %d day for level 0\n"),
 			      _("%s:%s overdue %d days for level 0\n"),
