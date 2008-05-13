@@ -1,3 +1,8 @@
+2008-05-12  Jean-Louis Martineau <martineau@zmanda.com>
+	  Patch by Orion Poplawski
+	* server-src/planner.c: Warn about overwrite of last level 1, and
+	  force backup of level 1 if overwrite on this run.
+
 2008-05-08  Jean-Louis Martineau <martineau@zmanda.com>
 	* packaging/deb/buildpkg packaging/rpm/buildpkg: AMVER=amanda-2.6.0p1
 	* packaging/deb/changelog: amanda (2.6.0p1-1)
