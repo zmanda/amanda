@@ -45,11 +45,6 @@ typedef struct XferFilterXor {
     XferElement __parent__;
 
     char xor_key;
-
-    /* ordinarily an element wouldn't make its own pipes, but we want to support
-     * all mechanisms for testing purposes */
-    int input_pipe[2];
-    int output_pipe[2];
 } XferFilterXor;
 
 /*
@@ -60,198 +55,77 @@ typedef struct {
     XferElementClass __parent__;
 } XferFilterXorClass;
 
+
 /*
- * The actual data destination
+ * Utilities
  */
 
-static gpointer
-filter_data_thread(
-    gpointer data)
+static void
+apply_xor(
+    char *buf,
+    size_t len,
+    char xor_key)
 {
-    char buf[256];
-    char *p;
-    XMsg *msg;
+    size_t i;
 
-    XferFilterXor *xs = (XferFilterXor *)data;
-    int input_fd = xs->input_pipe[0];
-    int output_fd = xs->output_pipe[1];
-    char xor_key = xs->xor_key;
-
-    while (1) {
-	ssize_t len, written;
-	ssize_t i;
-
-	/* try to read some data */
-	if ((len = read(input_fd, buf, sizeof(buf))) < 0) {
-	    error("xor filter: error in read(): %s", strerror(errno));
-	} else if (len == 0) {
-	    break;
-	}
-
-	/* Apply XOR.  This is a pretty sophisticated encryption algorithm! */
-	for (i = 0; i < len; i++) {
-	    buf[i] ^= xor_key;
-	}
-
-	/* now we have to be sure we write *all* of that data */
-	p = buf;
-	while (len) {
-	    if ((written = write(output_fd, p, len)) < 0) {
-		error("xor filter: error in write(): %s", strerror(errno));
-	    }
-	    p += written;
-	    len -= written;
-	}
+    /* Apply XOR.  This is a pretty sophisticated encryption algorithm! */
+    for (i = 0; i < len; i++) {
+	buf[i] ^= xor_key;
     }
-
-    /* close our fd's */
-    close(xs->input_pipe[0]);
-    xs->input_pipe[0] = -1;
-    close(xs->output_pipe[1]);
-    xs->output_pipe[1] = -1;
-
-    /* and send an XMSG_DONE */
-    msg = xmsg_new((XferElement *)xs, XMSG_DONE, 0);
-    xfer_queue_message(XFER_ELEMENT(xs)->xfer, msg);
-
-    return NULL;
 }
 
 /*
  * Implementation
  */
 
-static void
-start_impl(
-    XferElement *elt)
+static gpointer
+pull_buffer_impl(
+    XferElement *elt,
+    size_t *size)
 {
     XferFilterXor *self = (XferFilterXor *)elt;
-    GThread *th;
+    char *buf;
 
-    /* we'd better have our fd's */
-    g_assert(self->input_pipe[0] != -1);
-    g_assert(self->output_pipe[1] != -1);
-
-    xfer_will_send_xmsg_done(XFER_ELEMENT(self)->xfer);
-    th = g_thread_create(filter_data_thread, (gpointer)self, FALSE, NULL);
+    /* get a buffer from upstream, xor it, and hand it back */
+    buf = xfer_element_pull_buffer(XFER_ELEMENT(self)->upstream, size);
+    if (buf)
+	apply_xor(buf, *size, self->xor_key);
+    return buf;
 }
 
 static void
-abort_impl(
-    XferElement *elt G_GNUC_UNUSED)
-{
-    /* TODO */
-}
-
-static void
-setup_input_impl(
+push_buffer_impl(
     XferElement *elt,
-    xfer_input_mech mech,
-    int *fdp)
+    gpointer buf,
+    size_t len)
 {
-    XferFilterXor *xfx = (XferFilterXor *)elt;
+    XferFilterXor *self = (XferFilterXor *)elt;
 
-    switch (mech) {
-	case MECH_INPUT_READ_GIVEN_FD:
-	    /* we've got an fd, so tuck it away; we won't need to close
-	     * anything later. */
-	    xfx->input_pipe[0] = *fdp;
-	    xfx->input_pipe[1] = -1; /* write end of the pipe isn't our problem */
-	    break;
+    /* xor the given buffer and pass it downstream */
+    if (buf)
+	apply_xor(buf, len, self->xor_key);
 
-	case MECH_INPUT_HAVE_WRITE_FD:
-	    if (pipe(xfx->input_pipe) != 0) {
-		error("could not create input_pipe: %s", strerror(errno));
-		/* NOTREACHED */
-	    }
-	    *fdp = xfx->input_pipe[1];
-	    break;
-
-	default:
-	    g_assert_not_reached();
-    }
-}
-
-static void
-setup_output_impl(
-    XferElement *elt,
-    xfer_output_mech mech,
-    int *fdp)
-{
-    XferFilterXor *xfx = (XferFilterXor *)elt;
-
-    switch (mech) {
-	case MECH_OUTPUT_WRITE_GIVEN_FD:
-	    /* we've got an fd, so tuck it away; we won't need to close
-	     * anything later. */
-	    xfx->output_pipe[0] = -1; /* read end of the pipe isn't our problem */
-	    xfx->output_pipe[1] = *fdp;
-	    break;
-
-	case MECH_OUTPUT_HAVE_READ_FD:
-	    if (pipe(xfx->output_pipe) != 0) {
-		error("could not create output_pipe: %s", strerror(errno));
-		/* NOTREACHED */
-	    }
-	    *fdp = xfx->output_pipe[0];
-	    break;
-
-	default:
-	    g_assert_not_reached();
-    }
-}
-
-static void
-instance_init(
-    XferFilterXor *xfx)
-{
-    XFER_ELEMENT(xfx)->input_mech =
-	  MECH_INPUT_READ_GIVEN_FD
-	| MECH_INPUT_HAVE_WRITE_FD;
-    XFER_ELEMENT(xfx)->output_mech =
-	  MECH_OUTPUT_WRITE_GIVEN_FD
-	| MECH_OUTPUT_HAVE_READ_FD;
-
-    xfx->input_pipe[0] = xfx->input_pipe[1] = -1;
-    xfx->output_pipe[0] = xfx->output_pipe[1] = -1;
-}
-
-static void
-finalize_impl(
-    GObject * obj_self)
-{
-    XferFilterXor *xfx = XFER_FILTER_XOR(obj_self);
-
-    /* close our pipes */
-    if (xfx->input_pipe[0] != -1) close(xfx->input_pipe[0]);
-    if (xfx->input_pipe[1] != -1) close(xfx->input_pipe[1]);
-    if (xfx->output_pipe[0] != -1) close(xfx->output_pipe[0]);
-    if (xfx->output_pipe[1] != -1) close(xfx->output_pipe[1]);
-
-    /* kill and wait for our child, if it's still around */
-    /* TODO */
-
-    /* chain up */
-    G_OBJECT_CLASS(parent_class)->finalize(obj_self);
+    xfer_element_push_buffer(XFER_ELEMENT(self)->downstream, buf, len);
 }
 
 static void
 class_init(
-    XferFilterXorClass * klass)
+    XferFilterXorClass * selfc)
 {
-    XferElementClass *xec = XFER_ELEMENT_CLASS(klass);
-    GObjectClass *goc = G_OBJECT_CLASS(klass);
+    XferElementClass *klass = XFER_ELEMENT_CLASS(selfc);
+    static xfer_element_mech_pair_t mech_pairs[] = {
+	{ XFER_MECH_PULL_BUFFER, XFER_MECH_PULL_BUFFER, 1, 0},
+	{ XFER_MECH_PUSH_BUFFER, XFER_MECH_PUSH_BUFFER, 1, 0},
+	{ XFER_MECH_NONE, XFER_MECH_NONE, 0, 0},
+    };
 
-    xec->start = start_impl;
-    xec->abort = abort_impl;
-    xec->setup_input = setup_input_impl;
-    xec->setup_output = setup_output_impl;
+    klass->push_buffer = push_buffer_impl;
+    klass->pull_buffer = pull_buffer_impl;
 
-    xec->perl_class = "Amanda::Xfer::Filter::Xor";
+    klass->perl_class = "Amanda::Xfer::Filter::Xor";
+    klass->mech_pairs = mech_pairs;
 
-    goc->finalize = finalize_impl;
-
-    parent_class = g_type_class_peek_parent(klass);
+    parent_class = g_type_class_peek_parent(selfc);
 }
 
 GType
@@ -269,7 +143,7 @@ xfer_filter_xor_get_type (void)
             NULL /* class_data */,
             sizeof (XferFilterXor),
             0 /* n_preallocs */,
-            (GInstanceInitFunc) instance_init,
+            (GInstanceInitFunc) NULL,
             NULL
         };
 
@@ -282,18 +156,10 @@ xfer_filter_xor_get_type (void)
 /* create an element of this class; prototype is in xfer-element.h */
 XferElement *
 xfer_filter_xor(
-    unsigned char xor_key,
-    xfer_input_mech input_mechanisms,
-    xfer_output_mech output_mechanisms)
+    unsigned char xor_key)
 {
     XferFilterXor *xfx = (XferFilterXor *)g_object_new(XFER_FILTER_XOR_TYPE, NULL);
     XferElement *elt = XFER_ELEMENT(xfx);
-
-    /* mechansims == 0 means 'default' */
-    if (input_mechanisms)
-	elt->input_mech = input_mechanisms;
-    if (output_mechanisms)
-	elt->output_mech = output_mechanisms;
 
     xfx->xor_key = xor_key;
 

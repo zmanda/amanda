@@ -34,89 +34,45 @@ xfer_element_init(
     XferElement *xe)
 {
     xe->xfer = NULL;
-    xe->output_mech = 0;
-    xe->input_mech = 0;
-
-    xe->pipe[0] = xe->pipe[1] = -1;
+    xe->output_mech = XFER_MECH_NONE;
+    xe->input_mech = XFER_MECH_NONE;
+    xe->upstream = xe->downstream = NULL;
+    xe->input_fd = xe->output_fd = -1;
     xe->repr = NULL;
 }
 
-static gboolean
-xfer_element_link_to_impl(
-    XferElement *elt, 
-    XferElement *downstream)
+static void
+xfer_element_setup_impl(
+    XferElement *elt G_GNUC_UNUSED)
 {
-    xfer_output_mech output = elt->output_mech;
-    xfer_input_mech input = downstream->input_mech;
-
-    g_debug("Linking %s to %s", xfer_element_repr(elt), xfer_element_repr(downstream));
-
-    /* check the possibilities for linking ELT to DOWNSTREAM, in order of 
-     * efficiency */
-
-    /* can we simply connect two fd's to one another? */
-    if (output & MECH_OUTPUT_HAVE_READ_FD && input & MECH_INPUT_READ_GIVEN_FD) {
-	int fd = 0;
-	XFER_ELEMENT_GET_CLASS(elt)->setup_output(elt, MECH_OUTPUT_HAVE_READ_FD, &fd);
-	XFER_ELEMENT_GET_CLASS(downstream)->setup_input(downstream, MECH_INPUT_READ_GIVEN_FD, &fd);
-	g_debug(".. %s provides fd %d to %s.",
-	    xfer_element_repr(elt), fd, xfer_element_repr(downstream));
-
-    } else if (output & MECH_OUTPUT_WRITE_GIVEN_FD && input & MECH_INPUT_HAVE_WRITE_FD) {
-	int fd = 0;
-	XFER_ELEMENT_GET_CLASS(downstream)->setup_input(downstream, MECH_INPUT_HAVE_WRITE_FD, &fd);
-	XFER_ELEMENT_GET_CLASS(elt)->setup_output(elt, MECH_OUTPUT_WRITE_GIVEN_FD, &fd);
-	g_debug(".. %s provides fd %d to %s.",
-	    xfer_element_repr(downstream), fd, xfer_element_repr(elt));
-
-    /* maybe we can use a pipe? */
-    } else if (output & MECH_OUTPUT_WRITE_GIVEN_FD && input & MECH_INPUT_READ_GIVEN_FD) {
-	if (pipe(elt->pipe) != 0) {
-	    g_critical("Cannot open pipe: %s", strerror(errno));
-	    /* NOTREACHED */
-	}
-	XFER_ELEMENT_GET_CLASS(elt)->setup_output(elt, 
-	    MECH_OUTPUT_WRITE_GIVEN_FD, &elt->pipe[1]);
-	XFER_ELEMENT_GET_CLASS(downstream)->setup_input(downstream, 
-	    MECH_INPUT_READ_GIVEN_FD, &elt->pipe[0]);
-	g_debug(".. new pipe created (r: %d, w: %d)", elt->pipe[0], elt->pipe[1]);
-
-    /* TODO:
-    try a consumer/producer queue
-    } else if (output & MECH_OUTPUT_PRODUCER && input & MECH_INPUT_CONSUMER) {
-	g_critical("not imp");
-
-    can we wrap the input with an fd_read_consumer? 
-    } else if (output & MECH_OUTPUT_PRODUCER && input & MECH_INPUT_READ_GIVEN_FD) {
-	g_critical("not imp");
-
-    } else if (output & MECH_OUTPUT_PRODUCER && input & MECH_INPUT_HAVE_WRITE_FD) {
-	g_critical("not imp");
-
-    can we wrap the output with an fd_write_producer?
-    } else if (output & MECH_OUTPUT_WRITE_GIVEN_FD && input & MECH_INPUT_CONSUMER) {
-	g_critical("not imp");
-
-    } else if (output & MECH_OUTPUT_HAVE_READ_FD && input & MECH_INPUT_CONSUMER) {
-	g_critical("not imp");
-
-    ok, let's try both an fd_read_consumer and an fd_write_producer; this is
-    the least efficient option.
-    } else if (output & MECH_OUTPUT_HAVE_READ_FD && input & MECH_INPUT_HAVE_WRITE_FD) {
-	g_critical("not imp");
-    */
-    } else {
-	g_debug(".. failed");
-	return FALSE;
-    }
-
-    return TRUE;
 }
 
-/* empty method standing in for start() and abort() */
-static void
-xfer_element_empty_method(
+static gboolean
+xfer_element_start_impl(
     XferElement *elt G_GNUC_UNUSED)
+{
+    return FALSE;
+}
+
+static void
+xfer_element_abort_impl(
+    XferElement *elt G_GNUC_UNUSED)
+{
+}
+
+static gpointer
+xfer_element_pull_buffer_impl(
+    XferElement *elt G_GNUC_UNUSED,
+    size_t *size G_GNUC_UNUSED)
+{
+    return NULL;
+}
+
+static void
+xfer_element_push_buffer_impl(
+    XferElement *elt G_GNUC_UNUSED,
+    gpointer buf G_GNUC_UNUSED,
+    size_t size G_GNUC_UNUSED)
 {
 }
 
@@ -140,10 +96,6 @@ xfer_element_finalize(
 {
     XferElement *elt = XFER_ELEMENT(obj_self);
 
-    /* close our pipe, if we've been using one */
-    if (elt->pipe[0] != -1) close(elt->pipe[0]);
-    if (elt->pipe[1] != -1) close(elt->pipe[1]);
-
     /* free the repr cache */
     if (elt->repr) g_free(elt->repr);
 
@@ -157,12 +109,12 @@ xfer_element_class_init(
 {
     GObjectClass *goc = (GObjectClass*) klass;
 
-    klass->link_to = xfer_element_link_to_impl;
     klass->repr = xfer_element_repr_impl;
-    klass->start = xfer_element_empty_method;
-    klass->abort = xfer_element_empty_method;
-    klass->setup_output = NULL;
-    klass->setup_input = NULL;
+    klass->setup = xfer_element_setup_impl;
+    klass->start = xfer_element_start_impl;
+    klass->abort = xfer_element_abort_impl;
+    klass->pull_buffer = xfer_element_pull_buffer_impl;
+    klass->push_buffer = xfer_element_push_buffer_impl;
 
     goc->finalize = xfer_element_finalize;
 
@@ -209,14 +161,6 @@ xfer_element_unref(
     if (elt) g_object_unref(elt);
 }
 
-gboolean
-xfer_element_link_to(
-    XferElement *elt,
-    XferElement *successor)
-{
-    return XFER_ELEMENT_GET_CLASS(elt)->link_to(elt, successor);
-}
-
 char *
 xfer_element_repr(
     XferElement *elt)
@@ -225,10 +169,17 @@ xfer_element_repr(
 }
 
 void
+xfer_element_setup(
+    XferElement *elt)
+{
+    XFER_ELEMENT_GET_CLASS(elt)->setup(elt);
+}
+
+gboolean
 xfer_element_start(
     XferElement *elt)
 {
-    XFER_ELEMENT_GET_CLASS(elt)->start(elt);
+    return XFER_ELEMENT_GET_CLASS(elt)->start(elt);
 }
 
 void
@@ -236,4 +187,21 @@ xfer_element_abort(
     XferElement *elt)
 {
     XFER_ELEMENT_GET_CLASS(elt)->abort(elt);
+}
+
+gpointer
+xfer_element_pull_buffer(
+    XferElement *elt,
+    size_t *size)
+{
+    return XFER_ELEMENT_GET_CLASS(elt)->pull_buffer(elt, size);
+}
+
+void
+xfer_element_push_buffer(
+    XferElement *elt,
+    gpointer buf,
+    size_t size)
+{
+    XFER_ELEMENT_GET_CLASS(elt)->push_buffer(elt, buf, size);
 }

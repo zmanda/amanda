@@ -43,8 +43,6 @@ static GObjectClass *parent_class = NULL;
 
 typedef struct XferDestFd {
     XferElement __parent__;
-
-    int fd;
 } XferDestFd;
 
 /*
@@ -60,43 +58,19 @@ typedef struct {
  */
 
 static void
-setup_input_impl(
-    XferElement *elt,
-    xfer_input_mech mech,
-    int *fdp)
-{
-    XferDestFd *self = (XferDestFd *)elt;
-
-    switch (mech) {
-	case MECH_INPUT_HAVE_WRITE_FD:
-	    *fdp = self->fd;
-	    break;
-
-	default:
-	    g_assert_not_reached();
-    }
-}
-
-static void
-instance_init(
-    XferDestFd *self)
-{
-    XFER_ELEMENT(self)->input_mech = MECH_INPUT_HAVE_WRITE_FD;
-
-    self->fd = -1;
-}
-
-static void
 class_init(
-    XferDestFdClass * klass)
+    XferDestFdClass * selfc)
 {
-    XferElementClass *xec = XFER_ELEMENT_CLASS(klass);
+    XferElementClass *klass = XFER_ELEMENT_CLASS(selfc);
+    static xfer_element_mech_pair_t mech_pairs[] = {
+	{ XFER_MECH_WRITEFD, XFER_MECH_NONE, 0, 0},
+	{ XFER_MECH_NONE, XFER_MECH_NONE, 0, 0},
+    };
 
-    xec->setup_input = setup_input_impl;
+    klass->perl_class = "Amanda::Xfer::Dest::Fd";
+    klass->mech_pairs = mech_pairs;
 
-    xec->perl_class = "Amanda::Xfer::Dest::Fd";
-
-    parent_class = g_type_class_peek_parent(klass);
+    parent_class = g_type_class_peek_parent(selfc);
 }
 
 GType
@@ -114,7 +88,7 @@ xfer_dest_fd_get_type (void)
             NULL /* class_data */,
             sizeof (XferDestFd),
             0 /* n_preallocs */,
-            (GInstanceInitFunc) instance_init,
+            (GInstanceInitFunc) NULL,
             NULL
         };
 
@@ -132,7 +106,11 @@ xfer_dest_fd(
     XferDestFd *self = (XferDestFd *)g_object_new(XFER_DEST_FD_TYPE, NULL);
     XferElement *elt = XFER_ELEMENT(self);
 
-    self->fd = fd;
+    g_assert(fd >= 0);
+
+    /* We keep a *copy* of this fd, because our caller will close it to indicate
+     * EOF */
+    elt->input_fd = dup(fd);
 
     return elt;
 }

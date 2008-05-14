@@ -63,7 +63,7 @@ void semaphore_increment(semaphore_t *sem, unsigned int incr);
 
 /* Shortcut to increment the semaphore by 1.
  */
-#define semaphore_up(semaphore) semphore_increment(semaphore,1)
+#define semaphore_up(semaphore) semaphore_increment(semaphore,1)
 
 /* Decrement the value of the semaphore by incr.  If this operation
  * would make the semaphore zero or less, block until the semaphore

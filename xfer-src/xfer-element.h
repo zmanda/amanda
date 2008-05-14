@@ -20,8 +20,7 @@
 /* Base classes and interfaces for transfer elements.  There are two interfaces
  * defined here: IXferProducer and IXferConsumer.  The former is for elements
  * which produce data, and the latter is for those which consume it.  There is
- * a top-level XferElement base class, and three base classes that are used for
- * actual implementations: XferSource, XferFilter, and XferDest.
+ * a top-level XferElement base class, which all implementations subclass.
  *
  * Unless you're well-acquainted with GType and GObject, this file will be a
  * difficult read.  It is really only of use to those implementing new subclasses.
@@ -34,29 +33,41 @@
 #include <glib-object.h>
 #include "xfer.h"
 
-/* The mechanisms by which a transfer element can communicate, both with its
- * upstream and downstream neighbors.  */
 typedef enum {
-    /* can be given a file descriptor to read from */
-    MECH_INPUT_READ_GIVEN_FD = 1 << 0,
+    /* sources have no input mechanisms and destinations have no output
+     * mechansisms. */
+    XFER_MECH_NONE,
 
-    /* can supply a file descriptor to write to */
-    MECH_INPUT_HAVE_WRITE_FD = 1 << 1,
+    /* downstream element will read() from elt->upstream->output_fd; EOF
+     * is indicated by the usual OS mechanism resulting in a zero-length
+     * read, in response to which the downstream element must close
+     * the fd. */
+    XFER_MECH_READFD,
 
-    /* can provide a consumer for a c/p queue */
-    /* TODO: MECH_INPUT_CONSUMER = 1 << 2, */
-} xfer_input_mech;
+    /* upstream element will write() to elt->downstream->input_fd.  EOF
+     * is indicated by closing the file descriptor. */
+    XFER_MECH_WRITEFD,
 
-typedef enum {
-    /* can be given a file descriptor to write to */
-    MECH_OUTPUT_WRITE_GIVEN_FD = 1 << 16,
+    /* downstream element will call elt->upstream->pull_buffer() to
+     * pull a buffer.  EOF is indicated by returning a NULL buffer */
+    XFER_MECH_PULL_BUFFER,
 
-    /* can supply a file descriptor to read from */
-    MECH_OUTPUT_HAVE_READ_FD = 1 << 17,
+    /* upstream element will call elt->downstream->push_buffer(buf) to push
+     * a buffer.  EOF is indicated by passing a NULL buffer. */
+    XFER_MECH_PUSH_BUFFER,
+} xfer_mech;
 
-    /* can provide a producer for a c/p queue */
-    /* TODO: MECH_OUTPUT_PRODUCER = 1 << 18, */
-} xfer_output_mech;
+/* Description of a pair (input, output) of xfer mechanisms that an
+ * element can support, along with the associated costs.  An array of these
+ * pairs is stored in the class-level variable 'mech_pairs', describing
+ * all of the mechanisms that an element supports.
+ */
+typedef struct {
+    xfer_mech input_mech;
+    xfer_mech output_mech;
+    guint8 ops_per_byte;	/* number of byte copies or other operations */
+    guint8 nthreads;		/* number of additional threads created */
+} xfer_element_mech_pair_t;
 
 /***********************
  * XferElement
@@ -82,12 +93,19 @@ typedef struct XferElement {
     /* The transfer to which this element is attached */
     Xfer *xfer; /* set by xfer_new */
 
-    /* The input and output mechanisms this element supports */
-    xfer_output_mech output_mech; /* read-only */
-    xfer_input_mech input_mech; /* read-only */
+    /* assigned input and output mechanisms */
+    xfer_mech input_mech;
+    xfer_mech output_mech;
 
-    /* fields for use by link_to */
-    int pipe[2];
+    /* neighboring xfer elements */
+    struct XferElement *upstream;
+    struct XferElement *downstream;
+
+    /* file descriptors for XFER_MECH_READFD and XFER_MECH_WRITEFD.  These should be set
+     * during setup(), and can be accessed by neighboring elements during start(). It is
+     * up to subclasses to handle closing these file descriptors, if required. */
+    gint input_fd;
+    gint output_fd;
 
     /* cache for repr() */
     char *repr;
@@ -111,64 +129,71 @@ typedef struct {
      */
     char *(*repr)(XferElement *elt);
 
-    /* Link this element to the downstream element, to which it will send data.  This
-     * function examines its own output_mech and its successor's input_mech in order
-     * to make an optimal link between the elements.  It should not need to be 
-     * overridden.
+    /* Set up this element.  This function is called for all elements in a transfer
+     * before start() is called for any elements.  For mechanisms where this element
+     * supplies a file descriptor, it should set its input_fd and/or output_fd
+     * appropriately; neighboring elements will use that value in start().
+     *
+     * elt->input_mech and elt->output_mech are already set when this function
+     * is called, but upstream and downstream are not.
      *
      * @param elt: the XferElement
-     * @param downstream: the XferElement to which ELT will send data
-     * @return: true if the link was successful
      */
-    gboolean (*link_to)(XferElement *elt, XferElement *downstream);
+    void (*setup)(XferElement *elt);
 
     /* Start transferring data.  The element downstream of this one will already be
      * started, while the upstream element will not, so data will not begin flowing
      * immediately.
      *
      * @param elt: the XferElement
+     * @return: TRUE if this element will send XMSG_DONE
      */
-    void (*start)(XferElement *elt);
+    gboolean (*start)(XferElement *elt);
 
-    /* Stop transferring data.  The upstream element's stop method will already have
+    /* Stop transferring data.  The upstream element's abort method will already have
      * been called, but due to OS buffering, data may yet arrive.  The element may
      * discard any such data, but must not fail.  This function is only called for
-     * abnormal terminations; elements should normally stop processing on receiving 
-     * an EOF indication from upstream.
+     * abnormal terminations; elements should normally stop processing on receiving
+     * an EOF indication from upstream.  This method should cause an EOF indication
+     * to be sent downstream.
      *
      * @param elt: the XferElement
      */
     void (*abort)(XferElement *elt);
 
-    /* Set up the output side of the element.  MECH will only have one bit set, and
-     * the expected behavior for each flag position is:
-     *   MECH_OUTPUT_HAVE_READ_FD: set *FDP to a readable file descriptor
-     *   MECH_OUTPUT_WRITE_GIVEN_FD: *FDP is an fd to which the element can write
-     * This function will be called before set_input.
+    /* Get a buffer full of data from this element.  This function is called by
+     * the downstream element under XFER_MECH_PULL_CALL.  It can block indefinitely,
+     * and must only return NULL on EOF.  Responsibility to free the buffer transfers
+     * to the caller.
      *
      * @param elt: the XferElement
-     * @param mech: the selected mechanism (only one bit is set)
-     * @param fdp (input or result): the file descriptor
+     * @param size (output): size of resulting buffer
      */
-    void (*setup_output)(XferElement *elt, xfer_output_mech mech, int *fdp);
+    gpointer (*pull_buffer)(XferElement *elt, size_t *size);
 
-    /* Set up the input side of the element.  MECH will only have one bit set, and
-     * the expected behavior for each flag position is:
-     *   MECH_OUTPUT_HAVE_WRITE_FD: set *FDP to a writable file descriptor
-     *   MECH_OUTPUT_READ_GIVEN_FD: *FDP is an fd from which the element can read
-     * This function will be called before set_input.
+    /* A buffer full of data is being sent to this element for processing; this
+     * function is called by the upstream element under XFER_MECH_PUSH_CALL.
+     * It can block indefinitely if the data cannot be processed immediately.
+     * An EOF condition is signaled by call with a NULL buffer.  Responsibility to
+     * free the buffer transfers to the callee.
      *
      * @param elt: the XferElement
-     * @param mech: the selected mechanism (only one bit is set)
-     * @param fdp (input or result): the file descriptor
+     * @param buf: buffer
+     * @param size: size of buffer
      */
-    void (*setup_input)(XferElement *elt, xfer_input_mech mech, int *fdp);
+    void (*push_buffer)(XferElement *elt, gpointer buf, size_t size);
+
+    /* class variables */
 
     /* This is used by the perl bindings -- it is a class variable giving the
      * appropriate perl class to wrap this XferElement.  It should be set by
      * each class's class_init.
      */
     const char *perl_class;
+
+    /* Statically allocated array of input/output mechanisms supported by this
+     * class (terminated by <XFER_MECH_NONE,XFER_MECH_NONE>) */
+    xfer_element_mech_pair_t *mech_pairs;
 } XferElementClass;
 
 /*
@@ -178,7 +203,10 @@ typedef struct {
 void xfer_element_unref(XferElement *elt);
 gboolean xfer_element_link_to(XferElement *elt, XferElement *successor);
 char *xfer_element_repr(XferElement *elt);
-void xfer_element_start(XferElement *elt);
+void xfer_element_setup(XferElement *elt);
+gboolean xfer_element_start(XferElement *elt);
+void xfer_element_push_buffer(XferElement *elt, gpointer buf, size_t size);
+gpointer xfer_element_pull_buffer(XferElement *elt, size_t *size);
 void xfer_element_abort(XferElement *elt);
 
 /*
@@ -195,20 +223,17 @@ void xfer_element_abort(XferElement *elt);
  */
 
 /* A transfer source that produces LENGTH bytes of random data, for testing
- * purposes.  The class supports all output mechanisms, but its advertized
- * mechanisms can be limited with the MECHANISMS parameter.
+ * purposes.
  *
  * Implemented in source-random.c
  *
  * @param length: bytes to produce
  * @param text_only: output should be in short, textual lines (for debugging)
- * @param mechanisms: output mechanisms to advertize, or 0 for default
  * @return: new element
  */
 XferElement *xfer_source_random(
     size_t length,
-    gboolean text_only,
-    xfer_output_mech mechanisms);
+    gboolean text_only);
 
 /* A transfer source that provides bytes read from a file descriptor.
  * Reading continues until EOF, but the file descriptor is not closed.
@@ -222,32 +247,25 @@ XferElement * xfer_source_fd(
     int fd);
 
 /* A transfer filter that just applies a bytewise XOR transformation to the data
- * that passes through it.  It supports all input mechanisms, but its advertized
- * mechanisms can be set with the MECHANISMS parameter.
+ * that passes through it.
  *
  * Implemented in filter-xor.c
  *
- * @param mechanisms: input mechanisms to advertize, or 0 for default
+ * @param xor_key: key for xor operations
  * @return: new element
  */
 XferElement *xfer_filter_xor(
-    unsigned char xor_key,
-    xfer_input_mech input_mech,
-    xfer_output_mech output_mech);
+    unsigned char xor_key);
 
-/* A transfer destination that consumes all bytes it is given.  The class
- * supports all input mechanisms, but its advertized mechanisms can be set
- * with the MECHANISMS parameter.
+/* A transfer destination that consumes all bytes it is given.
  *
  * Implemented in dest-null.c
  *
- * @param mechanisms: input mechanisms to advertize, or 0 for default
  * @param debug_print: if TRUE, all data will be printed to stdout
  * @return: new element
  */
 XferElement *xfer_dest_null(
-    gboolean debug_print,
-    xfer_input_mech mechanisms);
+    gboolean debug_print);
 
 /* A transfer destination that writes bytes to a file descriptor.  The file
  * descriptor is not closed when the transfer is complete.

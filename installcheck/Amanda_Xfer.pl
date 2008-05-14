@@ -33,20 +33,20 @@ Amanda::Debug::disable_die_override();
 
 {
     my $xfer = Amanda::Xfer->new([
-	Amanda::Xfer::Source::Random->new(1024*1024, 1, 0),
-	Amanda::Xfer::Filter::Xor->new(0xde, 0, 0),
-	Amanda::Xfer::Dest::Null->new(0, 0),
+	Amanda::Xfer::Source::Random->new(1024*1024, 1),
+	Amanda::Xfer::Filter::Xor->new(0xde),
+	Amanda::Xfer::Dest::Null->new(0),
     ]);
 
     pass("Creating a transfer doesn't crash"); # hey, it's a start..
 
+    my $got_msg = 0;
     $xfer->get_source()->set_callback(sub {
 	my ($src, $msg, $xfer) = @_;
-	if ($msg->{type} == $XMSG_INFO) {
-	    is($msg->{message}, "Is this thing on?",
-		"XMSG_INFO from Amanda::Xfer::Dest::Null has correct message");
+	if ($msg->{type} == $XMSG_INFO && $msg->{message} eq "Is this thing on?") {
+	    $got_msg = 1;
 	}
-	if ($xfer->get_status() == $Amanda::Xfer::XFER_DONE) {
+	elsif ($xfer->get_status() == $Amanda::Xfer::XFER_DONE) {
 	    $src->remove();
 	    Amanda::MainLoop::quit();
 	}
@@ -54,18 +54,20 @@ Amanda::Debug::disable_die_override();
     $xfer->start();
     Amanda::MainLoop::run();
     pass("A simple transfer runs to completion");
+    ok($got_msg,
+	"XMSG_INFO from Amanda::Xfer::Dest::Null has correct message");
 }
 
 
 {
     my $xfer1 = Amanda::Xfer->new([
-	Amanda::Xfer::Source::Random->new(1024*1024, 1, 0),
-	Amanda::Xfer::Dest::Null->new(0, 0),
+	Amanda::Xfer::Source::Random->new(1024*1024, 1),
+	Amanda::Xfer::Dest::Null->new(0),
     ]);
     my $xfer2 = Amanda::Xfer->new([
-	Amanda::Xfer::Source::Random->new(1024*1024*3, 1, 0),
-	Amanda::Xfer::Filter::Xor->new(0xde, 0, 0),
-	Amanda::Xfer::Dest::Null->new(0, 0),
+	Amanda::Xfer::Source::Random->new(1024*1024*3, 1),
+	Amanda::Xfer::Filter::Xor->new(0xde),
+	Amanda::Xfer::Dest::Null->new(0),
     ]);
 
     my $cb = sub {
@@ -84,8 +86,8 @@ Amanda::Debug::disable_die_override();
     $xfer1->start();
     $xfer2->start();
 }
-# let the transfers go out of scope before they complete, as
-# a memory management test..
+# let the already-started transfers go out of scope before they 
+# complete, as a memory management test..
 Amanda::MainLoop::run();
 pass("Two simultaneous transfers run to completion");
 
@@ -93,11 +95,16 @@ pass("Two simultaneous transfers run to completion");
 {
     my @elts;
 
-    push @elts, Amanda::Xfer::Source::Random->new(1024*1024, 1, 0);
-    for my $i (0 .. 10) {
-	push @elts, Amanda::Xfer::Filter::Xor->new($i, 0, 0);
+    # note that, because the Xor filter is flexible, assembling
+    # long pipelines can take an exponentially long time.  A 10-elt
+    # pipeline exercises the linking algorithm without wasting
+    # too many CPU cycles
+
+    push @elts, Amanda::Xfer::Source::Random->new(1024*1024, 1);
+    for my $i (1 .. 8) {
+	push @elts, Amanda::Xfer::Filter::Xor->new($i);
     }
-    push @elts, Amanda::Xfer::Dest::Null->new(0, 0);
+    push @elts, Amanda::Xfer::Dest::Null->new(0);
     my $xfer = Amanda::Xfer->new(\@elts);
 
     my $cb = sub {
@@ -112,7 +119,7 @@ pass("Two simultaneous transfers run to completion");
     $xfer->start();
 
     Amanda::MainLoop::run();
-    pass("One very long transfer runs to completion");
+    pass("One 10-element transfer runs to completion");
 }
 
 
@@ -134,8 +141,8 @@ pass("Two simultaneous transfers run to completion");
 	Amanda::Xfer::Source::Fd->new(fileno($rfh)),
 	# for the moment, XFA can't link Source::Fd to Dest::Fd, but it can link
 	# each to a filter
-	Amanda::Xfer::Filter::Xor->new(0xde, 0, 0),
-	Amanda::Xfer::Filter::Xor->new(0xde, 0, 0),
+	Amanda::Xfer::Filter::Xor->new(0xde),
+	Amanda::Xfer::Filter::Xor->new(0xde),
 	Amanda::Xfer::Dest::Fd->new(fileno($wfh)),
     ]);
 

@@ -43,8 +43,6 @@ static GObjectClass *parent_class = NULL;
 
 typedef struct XferSourceFd {
     XferElement __parent__;
-
-    int fd;
 } XferSourceFd;
 
 /*
@@ -60,42 +58,19 @@ typedef struct {
  */
 
 static void
-setup_output_impl(
-    XferElement *elt,
-    xfer_output_mech mech,
-    int *fdp)
-{
-    XferSourceFd *self = (XferSourceFd *)elt;
-
-    switch (mech) {
-	case MECH_OUTPUT_HAVE_READ_FD:
-	    *fdp = self->fd;
-	    break;
-
-	default:
-	    g_assert_not_reached();
-    }
-}
-
-static void
-instance_init(
-    XferSourceFd *self)
-{
-    XFER_ELEMENT(self)->output_mech = MECH_OUTPUT_HAVE_READ_FD;
-    self->fd = -1;
-}
-
-static void
 class_init(
     XferSourceFdClass * selfc)
 {
     XferElementClass *klass = XFER_ELEMENT_CLASS(selfc);
-
-    klass->setup_output = setup_output_impl;
+    static xfer_element_mech_pair_t mech_pairs[] = {
+	{ XFER_MECH_NONE, XFER_MECH_READFD, 0, 0},
+	{ XFER_MECH_NONE, XFER_MECH_NONE, 0, 0},
+    };
 
     klass->perl_class = "Amanda::Xfer::Source::Fd";
+    klass->mech_pairs = mech_pairs;
 
-    parent_class = g_type_class_peek_parent(klass);
+    parent_class = g_type_class_peek_parent(selfc);
 }
 
 GType
@@ -113,7 +88,7 @@ xfer_source_fd_get_type (void)
             NULL /* class_data */,
             sizeof (XferSourceFd),
             0 /* n_preallocs */,
-            (GInstanceInitFunc) instance_init,
+            (GInstanceInitFunc) NULL,
             NULL
         };
 
@@ -131,7 +106,11 @@ xfer_source_fd(
     XferSourceFd *self = (XferSourceFd *)g_object_new(XFER_SOURCE_FD_TYPE, NULL);
     XferElement *elt = XFER_ELEMENT(self);
 
-    self->fd = fd;
+    g_assert(fd >= 0);
+
+    /* we read from a *copy* of this file descriptor, as the downstream element
+     * will close output_fd on EOF */
+    elt->output_fd = dup(fd);
 
     return elt;
 }

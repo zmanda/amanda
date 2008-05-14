@@ -1,4 +1,18 @@
 2008-05-14  Dustin J. Mitchell <dustin@zmanda.com>
+	* xfer-src/xfer-element.h xfer-src/xfer.c xfer-src/dest-null.c
+	  xfer-src/source-random.c xfer-src/xfer-test.c
+	  xfer-src/element-glue.c xfer-src/xmsg.h xfer-src/dest-fd.c
+	  xfer-src/source-fd.c xfer-src/element-glue.h
+	  xfer-src/Makefile.am xfer-src/filter-xor.c
+	  xfer-src/xfer-element.c perl/Amanda/Xfer.swg: new organization
+	  of transfer mechansims and new algorithm for linking xfers, with
+	  expanded unit tests to exercise new glue elements
+	* installcheck/Amanda_Xfer.pl: updated installchecks
+	* common-src/semaphore.h: fix comment typo
+	* common-src/testutils.c common-src/testutils.h: optionally skip
+	  timeouts (-t), and only show g_debug messages if -d is given
+
+2008-05-14  Dustin J. Mitchell <dustin@zmanda.com>
 	* client-src/amhpfixdevs.sh client-src/Makefile.am
 	  client-src/amsinixfixdevs.sh config/amanda/devprefix.m4:
 	  permanently remove amsinixfixdevs and amhpfixdevs

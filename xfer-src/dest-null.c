@@ -45,10 +45,7 @@ typedef struct XferDestNull {
     XferElement __parent__;
 
     gboolean debug_print;
-
-    /* ordinarily an element wouldn't make its own pipe, but we want to support
-     * all mechanisms for testing purposes */
-    int pipe[2];
+    gboolean sent_info;
 } XferDestNull;
 
 /*
@@ -60,155 +57,66 @@ typedef struct {
 } XferDestNullClass;
 
 /*
- * The actual data destination
- */
-
-static gpointer
-read_data_thread(gpointer data)
-{
-    char buf[70];
-    XMsg *msg;
-
-    XferDestNull *xs = (XferDestNull *)data;
-    int fd = xs->pipe[0];
-    gboolean debug_print = xs->debug_print;
-
-    while (1) {
-	ssize_t len;
-
-	/* try to read some data */
-	if ((len = read(fd, buf, sizeof(buf))) < 0) {
-	    error("error in read(): %s", strerror(errno));
-	} else if (len == 0) {
-	    break;
-	}
-
-	if (debug_print) {
-	    ssize_t i;
-	    g_printf("data: ");
-	    for (i = 0; i < len; i++) {
-		if (isprint((int)buf[i]))
-		    g_printf("%c", buf[i]);
-		else
-		    g_printf("\\x%02x", (int)buf[i]);
-	    }
-	    g_printf("\n");
-	}
-    }
-
-    /* send an XMSG_DONE */
-    msg = xmsg_new((XferElement *)xs, XMSG_DONE, 0);
-    xfer_queue_message(XFER_ELEMENT(xs)->xfer, msg);
-
-    return NULL;
-}
-
-/*
  * Implementation
  */
 
 static void
-start_impl(
-    XferElement *elt)
+push_buffer_impl(
+    XferElement *elt,
+    gpointer bufp,
+    size_t len)
 {
     XferDestNull *self = (XferDestNull *)elt;
-    GThread *th;
-    XMsg *msg;
+    char *buf = bufp;
 
-    /* we'd better have a fd to read from. */
-    g_assert(self->pipe[0] != -1);
-
-    xfer_will_send_xmsg_done(XFER_ELEMENT(self)->xfer);
-    th = g_thread_create(read_data_thread, (gpointer)self, FALSE, NULL);
-
-    /* send a superfluous message (this is a testing XferElement,
-     * after all) */
-    msg = xmsg_new((XferElement *)self, XMSG_INFO, 0);
-    msg->message = stralloc("Is this thing on?");
-    xfer_queue_message(XFER_ELEMENT(self)->xfer, msg);
-}
-
-static void
-abort_impl(
-    XferElement *elt G_GNUC_UNUSED)
-{
-    /* TODO */
-}
-
-static void
-setup_input_impl(
-    XferElement *elt,
-    xfer_input_mech mech,
-    int *fdp)
-{
-    XferDestNull *xdn = (XferDestNull *)elt;
-
-    switch (mech) {
-	case MECH_INPUT_READ_GIVEN_FD:
-	    /* we've got an fd, so tuck it away; we won't need to close
-	     * anything later. */
-	    xdn->pipe[0] = *fdp;
-	    xdn->pipe[1] = -1; /* write end of the pipe isn't our problem */
-	    break;
-
-	case MECH_INPUT_HAVE_WRITE_FD:
-	    if (pipe(xdn->pipe) != 0) {
-		error("could not create pipe: %s", strerror(errno));
-		/* NOTREACHED */
-	    }
-	    *fdp = xdn->pipe[1];
-	    break;
-
-	default:
-	    g_assert_not_reached();
+    if (!buf) {
+	if (self->debug_print)
+	    g_printf("dest-null: EOF\n");
+	return;
     }
-}
 
-static void
-instance_init(
-    XferDestNull *xdn)
-{
-    XFER_ELEMENT(xdn)->input_mech =
-	  MECH_INPUT_READ_GIVEN_FD
-	| MECH_INPUT_HAVE_WRITE_FD;
-    XFER_ELEMENT(xdn)->output_mech = 0;
+    if (self->debug_print) {
+	size_t i;
+	g_printf("dest-null: ");
+	for (i = 0; i < len; i++) {
+	    if (i && (i % 70 == 0))
+		g_printf("\n         : ");
+	    if (isprint((int)buf[i]))
+		g_printf("%c", buf[i]);
+	    else
+		g_printf("\\x%02x", (int)buf[i]);
+	}
+	g_printf("\n");
+    }
 
-    xdn->pipe[0] = xdn->pipe[1] = -1;
-}
+    if (!self->sent_info) {
+	/* send a superfluous message (this is a testing XferElement,
+	 * after all) */
+	XMsg *msg = xmsg_new((XferElement *)self, XMSG_INFO, 0);
+	msg->message = stralloc("Is this thing on?");
+	xfer_queue_message(XFER_ELEMENT(self)->xfer, msg);
+	self->sent_info = TRUE;
+    }
 
-static void
-finalize_impl(
-    GObject * obj_self)
-{
-    XferDestNull *xdn = XFER_DEST_NULL(obj_self);
-
-    /* close our pipes */
-    if (xdn->pipe[0] != -1) close(xdn->pipe[0]);
-    if (xdn->pipe[1] != -1) close(xdn->pipe[1]);
-
-    /* kill and wait for our child, if it's still around */
-    /* TODO */
-
-    /* chain up */
-    G_OBJECT_CLASS(parent_class)->finalize(obj_self);
+    amfree(buf);
 }
 
 static void
 class_init(
-    XferDestNullClass * klass)
+    XferDestNullClass * selfc)
 {
-    XferElementClass *xec = XFER_ELEMENT_CLASS(klass);
-    GObjectClass *goc = G_OBJECT_CLASS(klass);
+    XferElementClass *klass = XFER_ELEMENT_CLASS(selfc);
+    static xfer_element_mech_pair_t mech_pairs[] = {
+	{ XFER_MECH_PUSH_BUFFER, XFER_MECH_NONE, 0, 0},
+	{ XFER_MECH_NONE, XFER_MECH_NONE, 0, 0},
+    };
 
-    xec->start = start_impl;
-    xec->abort = abort_impl;
-    xec->setup_input = setup_input_impl;
+    klass->push_buffer = push_buffer_impl;
 
-    xec->perl_class = "Amanda::Xfer::Dest::Null";
+    klass->perl_class = "Amanda::Xfer::Dest::Null";
+    klass->mech_pairs = mech_pairs;
 
-    goc->finalize = finalize_impl;
-
-    parent_class = g_type_class_peek_parent(klass);
+    parent_class = g_type_class_peek_parent(selfc);
 }
 
 GType
@@ -226,7 +134,7 @@ xfer_dest_null_get_type (void)
             NULL /* class_data */,
             sizeof (XferDestNull),
             0 /* n_preallocs */,
-            (GInstanceInitFunc) instance_init,
+            (GInstanceInitFunc) NULL,
             NULL
         };
 
@@ -239,17 +147,12 @@ xfer_dest_null_get_type (void)
 /* create an element of this class; prototype is in xfer-element.h */
 XferElement *
 xfer_dest_null(
-    gboolean debug_print,
-    xfer_input_mech mechanisms)
+    gboolean debug_print)
 {
-    XferDestNull *xdn = (XferDestNull *)g_object_new(XFER_DEST_NULL_TYPE, NULL);
-    XferElement *elt = XFER_ELEMENT(xdn);
+    XferDestNull *self = (XferDestNull *)g_object_new(XFER_DEST_NULL_TYPE, NULL);
+    XferElement *elt = XFER_ELEMENT(self);
 
-    /* mechansims == 0 means 'default' */
-    if (mechanisms)
-	elt->input_mech = mechanisms;
-
-    xdn->debug_print = debug_print;
+    self->debug_print = debug_print;
 
     return elt;
 }

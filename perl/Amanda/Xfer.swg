@@ -499,8 +499,7 @@ char *xfer_element_repr(XferElement *elt);
 %newobject xfer_source_random;
 XferElement *xfer_source_random(
     size_t length,
-    gboolean text_only,
-    int mechanisms);
+    gboolean text_only);
 
 %newobject xfer_source_fd;
 XferElement *xfer_source_fd(
@@ -508,14 +507,11 @@ XferElement *xfer_source_fd(
 
 %newobject xfer_filter_xor;
 XferElement *xfer_filter_xor(
-    unsigned char xor_key,
-    int input_mech,
-    int output_mech);
+    unsigned char xor_key);
 
 %newobject xfer_dest_null;
 XferElement *xfer_dest_null(
-    gboolean debug_print,
-    int mechanisms);
+    gboolean debug_print);
 
 %newobject xfer_dest_fd;
 XferElement *xfer_dest_fd(
@@ -651,6 +647,12 @@ PACKAGE(Amanda::Xfer::Element)
 DECLARE_METHOD(DESTROY, xfer_element_unref);
 OVERLOAD_REPR()
 DECLARE_METHOD(repr, xfer_element_repr);
+
+/* ---- */
+
+PACKAGE(Amanda::Xfer::Element::Glue)
+XFER_ELEMENT_SUBCLASS()
+/* no constructor -- internal use only */
 
 /* ---- */
 

@@ -53,12 +53,11 @@ static GObjectClass *parent_class = NULL;
 typedef struct XferSourceRandom {
     XferElement __parent__;
 
+    GThread *thread;
+    gboolean prolong;
+
     size_t length;
     gboolean text_only;
-
-    /* ordinarily an element wouldn't make its own pipe, but we want to support
-     * all mechanisms for testing purposes */
-    int pipe[2];
 } XferSourceRandom;
 
 /*
@@ -70,39 +69,65 @@ typedef struct {
 } XferSourceRandomClass;
 
 /*
- * The actual data source, as a GThreadFunc
+ * Utilities
  */
+
+static void
+kill_and_wait_for_thread(
+    XferSourceRandom *self)
+{
+    if (self->thread) {
+	self->prolong = FALSE;
+	g_thread_join(self->thread);
+	self->thread = NULL;
+    }
+}
+
+static void
+write_gibberish(
+    char *buf,
+    size_t len,
+    gboolean text_only)
+{
+    size_t i;
+
+    /* fill in some new random data.  This is less than "efficient". */
+    if (text_only) {
+	/* printable randomness */
+	for (i = 0; i < len; i++) {
+	    buf[i] = 'a' + (char)(random() % 26);
+	}
+    } else {
+	/* truly random binary data */
+	for (i = 0; i < len; i++) {
+	    buf[i] = (char)random();
+	}
+    }
+}
+
+/*
+ * The actual data source, as a GThreadFunc, used for XFER_MECH_WRITEFD output
+ */
+
 static gpointer
 random_write_thread(
     gpointer data)
 {
+    XferSourceRandom *self = (XferSourceRandom *)data;
     char buf[10240];
     size_t buf_used = 10240;
     XMsg *msg;
+    size_t length = self->length;
+    gboolean text_only = self->text_only;
+    int fd = XFER_ELEMENT(self)->downstream->input_fd;
 
-    XferSourceRandom *xs = (XferSourceRandom *)data;
-    size_t length = xs->length;
-    gboolean text_only = xs->text_only;
-    int fd = xs->pipe[1];
-
-    while (length) {
-	size_t i;
+    while (self->prolong && length) {
 	ssize_t written;
 
-	/* fill in some new random data.  This is less than "efficient". */
-	if (text_only) {
-	    /* printable randomness */
-	    for (i = 0; i < buf_used; i++) {
-		buf[i] = 'a' + (char)(random() % 26);
-	    }
-	} else {
-	    /* truly random binary data */
-	    for (i = 0; i < buf_used; i++) {
-		buf[i] = (char)random();
-	    }
-	}
+	/* overwrite any portion of the buffer that has already been written */
+	write_gibberish(buf, buf_used, text_only);
 
-	/* try to write some data */
+	/* and try to write it to the fd */
 	if ((written = write(fd, buf, min(sizeof(buf), length))) < 0) {
 	    error("error in write(): %s", strerror(errno));
 	}
@@ -112,12 +137,12 @@ random_write_thread(
     }
 
     /* close the write side of the pipe to propagate the EOF */
-    close(xs->pipe[1]);
-    xs->pipe[1] = -1;
+    close(fd);
+    XFER_ELEMENT(self)->downstream->input_fd = -1;
 
     /* and send an XMSG_DONE */
-    msg = xmsg_new((XferElement *)xs, XMSG_DONE, 0);
-    xfer_queue_message(XFER_ELEMENT(xs)->xfer, msg);
+    msg = xmsg_new(XFER_ELEMENT(self), XMSG_DONE, 0);
+    xfer_queue_message(XFER_ELEMENT(self)->xfer, msg);
 
     return NULL;
 }
@@ -126,80 +151,68 @@ random_write_thread(
  * Implementation
  */
 
-static void
+static gboolean
 start_impl(
     XferElement *elt)
 {
     XferSourceRandom *self = (XferSourceRandom *)elt;
-    GThread *th;
 
-    /* we'd better have a fd to write to. */
-    g_assert(self->pipe[1] != -1);
-
-    xfer_will_send_xmsg_done(XFER_ELEMENT(self)->xfer);
-    th = g_thread_create(random_write_thread, (gpointer)self, FALSE, NULL);
-}
-
-static void
-abort_impl(
-    XferElement *elt G_GNUC_UNUSED)
-{
-    /* TODO: set a 'prolong' flag to FALSE */
-}
-
-static void
-setup_output_impl(
-    XferElement *elt,
-    xfer_output_mech mech,
-    int *fdp)
-{
-    XferSourceRandom *xsr = (XferSourceRandom *)elt;
-
-    switch (mech) {
-	case MECH_OUTPUT_WRITE_GIVEN_FD:
-	    /* we've got an fd, so tuck it away; we won't need to close
-	     * anything later. */
-	    xsr->pipe[0] = -1; /* read end of the pipe isn't our problem */
-	    xsr->pipe[1] = *fdp;
-	    break;
-
-	case MECH_OUTPUT_HAVE_READ_FD:
-	    if (pipe(xsr->pipe) != 0) {
-		error("could not create pipe: %s", strerror(errno));
-		/* NOTREACHED */
-	    }
-	    *fdp = xsr->pipe[0];
-	    break;
-
-	default:
-	    g_assert_not_reached();
+    self->prolong = TRUE;
+    if (XFER_ELEMENT(self)->output_mech == XFER_MECH_WRITEFD) {
+	self->thread = g_thread_create(random_write_thread, (gpointer)self, TRUE, NULL);
+	return TRUE;
+    } else {
+	/* we'll generate random data on demand */
+	return FALSE;
     }
 }
 
 static void
-instance_init(
-    XferSourceRandom *xsr)
+abort_impl(
+    XferElement *elt)
 {
-    XFER_ELEMENT(xsr)->input_mech = 0;
-    XFER_ELEMENT(xsr)->output_mech =
-	  MECH_OUTPUT_WRITE_GIVEN_FD
-	| MECH_OUTPUT_HAVE_READ_FD;
+    XferSourceRandom *self = (XferSourceRandom *)elt;
 
-    xsr->pipe[0] = xsr->pipe[1] = -1;
+    kill_and_wait_for_thread(self);
+}
+
+static gpointer
+pull_buffer_impl(
+    XferElement *elt,
+    size_t *size)
+{
+    XferSourceRandom *self = (XferSourceRandom *)elt;
+    char *buf;
+
+    if (self->length == 0 || !self->prolong) {
+	*size = 0;
+	return NULL;
+    }
+
+    *size = MIN(10240, self->length);
+    buf = g_malloc(*size);
+    write_gibberish(buf, *size, self->text_only);
+
+    self->length -= *size;
+
+    return buf;
+}
+
+static void
+instance_init(
+    XferSourceRandom *self)
+{
+    self->thread = NULL;
 }
 
 static void
 finalize_impl(
     GObject * obj_self)
 {
-    XferSourceRandom *xsr = XFER_SOURCE_RANDOM(obj_self);
-
-    /* close our pipes */
-    if (xsr->pipe[0] != -1) close(xsr->pipe[0]);
-    if (xsr->pipe[1] != -1) close(xsr->pipe[1]);
+    XferSourceRandom *self = XFER_SOURCE_RANDOM(obj_self);
 
     /* kill and wait for our thread, if it's still around */
-    /* TODO */
+    kill_and_wait_for_thread(self);
 
     /* chain up */
     G_OBJECT_CLASS(parent_class)->finalize(obj_self);
@@ -211,12 +224,18 @@ class_init(
 {
     XferElementClass *xec = XFER_ELEMENT_CLASS(klass);
     GObjectClass *goc = G_OBJECT_CLASS(klass);
+    static xfer_element_mech_pair_t mech_pairs[] = {
+	{ XFER_MECH_NONE, XFER_MECH_WRITEFD, 1, 1},
+	{ XFER_MECH_NONE, XFER_MECH_PULL_BUFFER, 1, 0},
+	{ XFER_MECH_NONE, XFER_MECH_NONE, 0, 0},
+    };
 
     xec->start = start_impl;
     xec->abort = abort_impl;
-    xec->setup_output = setup_output_impl;
+    xec->pull_buffer = pull_buffer_impl;
 
     xec->perl_class = "Amanda::Xfer::Source::Random";
+    xec->mech_pairs = mech_pairs;
 
     goc->finalize = finalize_impl;
 
@@ -252,18 +271,13 @@ xfer_source_random_get_type (void)
 XferElement *
 xfer_source_random(
     size_t length, 
-    gboolean text_only,
-    xfer_output_mech mechanisms)
+    gboolean text_only)
 {
     XferSourceRandom *xsr = (XferSourceRandom *)g_object_new(XFER_SOURCE_RANDOM_TYPE, NULL);
     XferElement *elt = XFER_ELEMENT(xsr);
 
     xsr->length = length;
     xsr->text_only = text_only;
-
-    /* mechansims == 0 means 'default' */
-    if (mechanisms)
-	elt->output_mech = mechanisms;
 
     return elt;
 }

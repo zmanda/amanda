@@ -34,7 +34,7 @@ alarm_hdlr(int sig G_GNUC_UNUSED)
  * test failure, but allow the other tests to proceed.
  */
 static int
-callinfork(TestUtilsTest *test)
+callinfork(TestUtilsTest *test, int ignore_timeouts)
 {
     pid_t pid;
     int success;
@@ -44,7 +44,7 @@ callinfork(TestUtilsTest *test)
 	case 0:	/* child */
 	    /* kill the test after a bit */
 	    signal(SIGALRM, alarm_hdlr);
-	    alarm(test->timeout);
+	    if (!ignore_timeouts) alarm(test->timeout);
 
 	    success = test->fn();
 	    exit(success? 0:1);
@@ -72,6 +72,7 @@ usage(
 	"\n"
 	"\t-h: this message\n"
 	"\t-d: print debugging messages\n"
+	"\t-t: ignore timeouts\n"
 	"\n"
 	"If no test names are specified, all tests are run.  Available tests:\n"
 	"\n");
@@ -79,6 +80,15 @@ usage(
 	printf("\t%s\n", tests->name);
 	tests++;
     }
+}
+
+static void
+ignore_debug_messages(
+	    const gchar *log_domain G_GNUC_UNUSED,
+	    GLogLevelFlags log_level G_GNUC_UNUSED,
+	    const gchar *message G_GNUC_UNUSED,
+	    gpointer user_data G_GNUC_UNUSED)
+{
 }
 
 int
@@ -90,11 +100,14 @@ testutils_run_tests(
     TestUtilsTest *t;
     int run_all = 1;
     int success;
+    int ignore_timeouts = 0;
 
     /* first_parse the command line */
     while (argc > 1) {
 	if (strcmp(argv[1], "-d") == 0) {
 	    tu_debugging_enabled = TRUE;
+	} else if (strcmp(argv[1], "-t") == 0) {
+	    ignore_timeouts = TRUE;
 	} else if (strcmp(argv[1], "-h") == 0) {
 	    usage(tests);
 	    return 1;
@@ -120,11 +133,19 @@ testutils_run_tests(
 	argc--; argv++;
     }
 
+    /* Make sure g_critical and g_error will exit */
+    g_log_set_always_fatal(G_LOG_LEVEL_ERROR |  G_LOG_LEVEL_CRITICAL);
+
+    /* and silently drop debug messages unless we're debugging */
+    if (!tu_debugging_enabled) {
+	g_log_set_handler(NULL, G_LOG_LEVEL_DEBUG, ignore_debug_messages, NULL);
+    }
+
     /* Now actually run the tests */
     success = 1;
     for (t = tests; t->fn; t++) {
 	if (run_all || t->selected) {
-	    success = callinfork(t) && success;
+	    success = callinfork(t, ignore_timeouts) && success;
 	}
     }
 

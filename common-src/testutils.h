@@ -69,8 +69,8 @@ typedef struct TestUtilsTest {
  */
 
 /* Debugging macro taking printf arguments.  This is only enabled if the '-d' flag
- * is given on the commandline. */
-#define tu_dbg(...) if (tu_debugging_enabled) { fprintf(stderr, __VA_ARGS__); }
+ * is given on the commandline.  You can use g_debug, too, if you'd prefer. */
+#define tu_dbg(...) if (tu_debugging_enabled) { g_fprintf(stderr, __VA_ARGS__); }
 
 /* Is debugging enabled for this test run? (set internally) */
 int tu_debugging_enabled;

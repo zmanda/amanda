@@ -39,9 +39,6 @@
  * measures (such as amfeatures) should be employed in this case to ensure
  * backward compatibility.
  *
- * Note that all integer values provided in these enumerations are used in
- * the on-the-wire protocol, and should not be changed.
- *
  * The implementation of messages is intended to sacrifice memory consumption
  * for speed and serializability.  Relatively few messages will exist at any
  * one time, but over the course of a dump, many messages will be created,
@@ -66,7 +63,8 @@ typedef enum {
      */
     XMSG_ERROR = 2,
 
-    /* XMSG_DONE: the source element has finished transmitting data.
+    /* XMSG_DONE: the transfer is done.  Only one XMSG_DONE message will be
+     * delivered, when all elements are finished.
      * Attributes:
      *  (none)
      */
