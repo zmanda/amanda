@@ -1,3 +1,7 @@
+2008-05-13 Dan Locks <dwlocks@zmanda.com>
+	* packaging/deb/buildpkg: modified build script to create unsigned
+	  packages
+
 2008-05-12  Jean-Louis Martineau <martineau@zmanda.com>
 	  Patch by Orion Poplawski
 	* server-src/planner.c: Warn about overwrite of last level 1, and

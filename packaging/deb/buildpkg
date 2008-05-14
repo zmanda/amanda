@@ -113,9 +113,8 @@ do_package() {
 
     echo "Building package"
     cd $AMVER
-    # This assumes that you have loaded zmanda's GPG key into your keyring to
-    # sign the packages.
-    dpkg-buildpackage -rfakeroot -k3C5D1C92 -tc
+    # Create unsigned packages
+    dpkg-buildpackage -rfakeroot -uc -us
 }
 
 
