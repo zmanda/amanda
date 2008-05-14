@@ -1,3 +1,8 @@
+2008-05-14  Dustin J. Mitchell <dustin@zmanda.com>
+	* client-src/amhpfixdevs.sh client-src/Makefile.am
+	  client-src/amsinixfixdevs.sh config/amanda/devprefix.m4:
+	  permanently remove amsinixfixdevs and amhpfixdevs
+
 2008-05-12  Jean-Louis Martineau <martineau@zmanda.com>
 	  Patch by Orion Poplawski
 	* server-src/planner.c: Warn about overwrite of last level 1, and
