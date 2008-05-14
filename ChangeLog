@@ -1,4 +1,7 @@
 2008-05-14  Dustin J. Mitchell <dustin@zmanda.com>
+	* xfer-src/Makefile.am: add element-glue.h to the distribution
+
+2008-05-14  Dustin J. Mitchell <dustin@zmanda.com>
 	* xfer-src/xfer-element.h xfer-src/xfer.c xfer-src/dest-null.c
 	  xfer-src/source-random.c xfer-src/xfer-test.c
 	  xfer-src/element-glue.c xfer-src/xmsg.h xfer-src/dest-fd.c

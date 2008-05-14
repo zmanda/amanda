@@ -32,6 +32,7 @@ libamxfer_la_LIBADD = \
 
 noinst_HEADERS = \
 	amxfer.h \
+	element-glue.h \
 	xfer-element.h \
 	xfer.h \
 	xmsg.h
