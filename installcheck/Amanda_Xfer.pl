@@ -40,11 +40,11 @@ Amanda::Debug::disable_die_override();
 
     pass("Creating a transfer doesn't crash"); # hey, it's a start..
 
-    my $got_msg = 0;
+    my $got_msg = "(not received)";
     $xfer->get_source()->set_callback(sub {
 	my ($src, $msg, $xfer) = @_;
-	if ($msg->{type} == $XMSG_INFO && $msg->{message} eq "Is this thing on?") {
-	    $got_msg = 1;
+	if ($msg->{type} == $XMSG_INFO) {
+	    $got_msg = $msg->{message};
 	}
 	elsif ($xfer->get_status() == $Amanda::Xfer::XFER_DONE) {
 	    $src->remove();
@@ -54,7 +54,7 @@ Amanda::Debug::disable_die_override();
     $xfer->start();
     Amanda::MainLoop::run();
     pass("A simple transfer runs to completion");
-    ok($got_msg,
+    is($got_msg, "Is this thing on?",
 	"XMSG_INFO from Amanda::Xfer::Dest::Null has correct message");
 }
 

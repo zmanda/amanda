@@ -157,8 +157,8 @@ start_impl(
 {
     XferSourceRandom *self = (XferSourceRandom *)elt;
 
-    self->prolong = TRUE;
     if (XFER_ELEMENT(self)->output_mech == XFER_MECH_WRITEFD) {
+	self->prolong = TRUE;
 	self->thread = g_thread_create(random_write_thread, (gpointer)self, TRUE, NULL);
 	return TRUE;
     } else {
@@ -184,7 +184,7 @@ pull_buffer_impl(
     XferSourceRandom *self = (XferSourceRandom *)elt;
     char *buf;
 
-    if (self->length == 0 || !self->prolong) {
+    if (self->length == 0) {
 	*size = 0;
 	return NULL;
     }

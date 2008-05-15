@@ -73,6 +73,6 @@ XferElement * xfer_element_glue(void);
 
 /* the mech pairs supported by this object */
 
-xfer_element_mech_pair_t *xfer_element_glue_mech_pairs;
+extern xfer_element_mech_pair_t *xfer_element_glue_mech_pairs;
 
 #endif

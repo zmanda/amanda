@@ -89,8 +89,8 @@ source_readfd_thread(
     return NULL;
 }
 
-static gboolean
-source_readfd_start_impl(
+static void
+source_readfd_setup_impl(
     XferElement *elt)
 {
     XferSourceReadfd *self = (XferSourceReadfd *)elt;
@@ -101,7 +101,13 @@ source_readfd_start_impl(
 
     self->write_fd = p[1];
     XFER_ELEMENT(self)->output_fd = p[0];
+}
 
+static gboolean
+source_readfd_start_impl(
+    XferElement *elt)
+{
+    XferSourceReadfd *self = (XferSourceReadfd *)elt;
     self->thread = g_thread_create(source_readfd_thread, (gpointer)self, FALSE, NULL);
 
     return TRUE;
@@ -117,6 +123,7 @@ source_readfd_class_init(
 	{ XFER_MECH_NONE, XFER_MECH_NONE, 0, 0},
     };
 
+    xec->setup = source_readfd_setup_impl;
     xec->start = source_readfd_start_impl;
     xec->mech_pairs = mech_pairs;
 }
@@ -459,7 +466,7 @@ dest_readfd_thread(
     while (remaining) {
 	ssize_t nread;
 	if ((nread = read(fd, buf+sizeof(buf)-remaining, remaining)) <= 0) {
-	    error("error in write(): %s", strerror(errno));
+	    error("error in read(): %s", strerror(errno));
 	}
 	remaining -= nread;
     }
@@ -582,8 +589,8 @@ dest_writefd_thread(
     return NULL;
 }
 
-static gboolean
-dest_writefd_start_impl(
+static void
+dest_writefd_setup_impl(
     XferElement *elt)
 {
     XferDestWritefd *self = (XferDestWritefd *)elt;
@@ -594,7 +601,13 @@ dest_writefd_start_impl(
 
     self->read_fd = p[0];
     XFER_ELEMENT(self)->input_fd = p[1];
+}
 
+static gboolean
+dest_writefd_start_impl(
+    XferElement *elt)
+{
+    XferDestWritefd *self = (XferDestWritefd *)elt;
     self->thread = g_thread_create(dest_writefd_thread, (gpointer)self, FALSE, NULL);
 
     return TRUE;
@@ -610,6 +623,7 @@ dest_writefd_class_init(
 	{ XFER_MECH_NONE, XFER_MECH_NONE, 0, 0},
     };
 
+    xec->setup = dest_writefd_setup_impl;
     xec->start = dest_writefd_start_impl;
     xec->mech_pairs = mech_pairs;
 }
@@ -775,9 +789,7 @@ dest_pull_start_impl(
     XferElement *elt)
 {
     XferDestPull *self = (XferDestPull *)elt;
-    GThread *th;
-    th = g_thread_create(dest_pull_thread, (gpointer)self, FALSE, NULL);
-    self->thread = th;
+    self->thread = g_thread_create(dest_pull_thread, (gpointer)self, FALSE, NULL);
 
     return TRUE;
 }

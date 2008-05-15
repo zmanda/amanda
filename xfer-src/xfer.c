@@ -315,6 +315,9 @@ xfer_mech_name(
  */
 #define PAIR_COST(pair) (((pair).ops_per_byte << 8) + (pair).nthreads)
 
+/* maximum cost */
+#define MAX_COST 0xffffff
+
 /* Generate all possible linkages of elements [idx:nlinks], where
  * elements [0:idx-1] have cost 'cost' and end with mechanism
  * 'input_mech'. */
@@ -402,7 +405,7 @@ link_elements(
     st.nlinks = xfer->elements->len;
     st.cur = g_new0(linkage, st.nlinks);
     st.best = g_new0(linkage, st.nlinks);
-    st.best_cost = G_MAXINT32;
+    st.best_cost = MAX_COST;
     for (i = 0; i < st.nlinks; i++) {
 	st.cur[i].elt = (XferElement *)g_ptr_array_index(xfer->elements, i);
     }
@@ -411,7 +414,7 @@ link_elements(
     link_recurse(&st, 0, XFER_MECH_NONE, 0);
 
     /* check that we got *some* solution */
-    if (st.best_cost == G_MAXINT32) {
+    if (st.best_cost == MAX_COST) {
 	error(_("Xfer %s cannot be linked."), xfer_repr(xfer));
     }
 

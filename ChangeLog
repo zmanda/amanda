@@ -1,5 +1,13 @@
-2008-05-14  Dustin J. Mitchell <dustin@zmanda.com>
+2008-05-15  Dustin J. Mitchell <dustin@zmanda.com>
 	* xfer-src/Makefile.am: add element-glue.h to the distribution
+	* xfer-src/element-glue.h: add 'extern'
+	* xfer-src/xfer-test.c: fix test elements
+	* xfer-src/xfer.c: don't use the sometimes-undefined constant
+	  G_MAXINT32
+	* xfer-src/source-random.c: Only use 'prolong' for threads, not
+	  push/pull methods
+	* installcheck/Amanda_Xfer.pl: Check the content of $msg->{message} in
+	  XMSG_INFO
 
 2008-05-14  Dustin J. Mitchell <dustin@zmanda.com>
 	* xfer-src/xfer-element.h xfer-src/xfer.c xfer-src/dest-null.c
