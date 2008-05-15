@@ -86,7 +86,7 @@ typedef enum {
     CONF_DEVICE_PROPERTY,      CONF_PROPERTY,          CONF_PLUGIN,
     CONF_APPLICATION,          CONF_APPLICATION_TOOL,
     CONF_PP_SCRIPT,            CONF_PP_SCRIPT_TOOL,
-    CONF_EXECUTE_ON,           CONF_EXECUTE_WHERE,
+    CONF_EXECUTE_ON,           CONF_EXECUTE_WHERE,	CONF_SEND_AMREPORT_ON,
 
     /* execute on 5 */
     CONF_PRE_DLE_AMCHECK,    CONF_PRE_HOST_AMCHECK,
@@ -151,6 +151,9 @@ typedef enum {
 
     /* holdingdisk */
     CONF_NEVER,			CONF_AUTO,		CONF_REQUIRED,
+
+    /* send_amreport */
+    CONF_ALL,			CONF_STRANGE,		CONF_ERROR,
 
     /* priority */
     CONF_LOW,			CONF_MEDIUM,		CONF_HIGH,
@@ -429,6 +432,7 @@ static void read_holding(conf_var_t *, val_t *);
 static void read_estimate(conf_var_t *, val_t *);
 static void read_strategy(conf_var_t *, val_t *);
 static void read_taperalgo(conf_var_t *, val_t *);
+static void read_send_amreport_on(conf_var_t *, val_t *);
 static void read_priority(conf_var_t *, val_t *);
 static void read_rate(conf_var_t *, val_t *);
 static void read_exinclude(conf_var_t *, val_t *);
@@ -570,6 +574,7 @@ static void conf_init_holding(val_t *val, dump_holdingdisk_t i);
 static void conf_init_estimate(val_t *val, estimate_t i);
 static void conf_init_execute_on(val_t *, int);
 static void conf_init_execute_where(val_t *, int);
+static void conf_init_send_amreport(val_t *val, send_amreport_t i);
 static void conf_init_strategy(val_t *val, strategy_t);
 static void conf_init_taperalgo(val_t *val, taperalgo_t i);
 static void conf_init_priority(val_t *val, int i);
@@ -698,6 +703,7 @@ keytab_t client_keytab[] = {
 };
 
 keytab_t server_keytab[] = {
+    { "ALL", CONF_ALL },
     { "AMANDAD_PATH", CONF_AMANDAD_PATH },
     { "AMRECOVER_CHANGER", CONF_AMRECOVER_CHANGER },
     { "AMRECOVER_CHECK_LABEL", CONF_AMRECOVER_CHECK_LABEL },
@@ -757,6 +763,7 @@ keytab_t server_keytab[] = {
     { "DUMPTYPE", CONF_DUMPTYPE },
     { "DUMPUSER", CONF_DUMPUSER },
     { "ENCRYPT", CONF_ENCRYPT },
+    { "ERROR", CONF_ERROR },
     { "ESTIMATE", CONF_ESTIMATE },
     { "ETIMEOUT", CONF_ETIMEOUT },
     { "EXCLUDE", CONF_EXCLUDE },
@@ -838,6 +845,7 @@ keytab_t server_keytab[] = {
     { "RUNTAPES", CONF_RUNTAPES },
     { "SCRIPT", CONF_PP_SCRIPT },
     { "SCRIPT-TOOL", CONF_PP_SCRIPT_TOOL },
+    { "SEND-AMREPORT-ON", CONF_SEND_AMREPORT_ON },
     { "SERVER", CONF_SERVER },
     { "SERVER_CUSTOM_COMPRESS", CONF_SRVCOMPPROG },
     { "SERVER_DECRYPT_OPTION", CONF_SRV_DECRYPT_OPT },
@@ -851,6 +859,7 @@ keytab_t server_keytab[] = {
     { "SSH_KEYS", CONF_SSH_KEYS },
     { "STANDARD", CONF_STANDARD },
     { "STARTTIME", CONF_STARTTIME },
+    { "STRANGE", CONF_STRANGE },
     { "STRATEGY", CONF_STRATEGY },
     { "TAPEBUFS", CONF_TAPEBUFS },
     { "DEVICE_OUTPUT_BUFFER_SIZE", CONF_DEVICE_OUTPUT_BUFFER_SIZE },
@@ -1009,6 +1018,7 @@ conf_var_t server_var [] = {
    { CONF_DEVICE_OUTPUT_BUFFER_SIZE, CONFTYPE_SIZE , read_size        , CNF_DEVICE_OUTPUT_BUFFER_SIZE, validate_positive },
    { CONF_COLUMNSPEC           , CONFTYPE_STR      , read_str         , CNF_COLUMNSPEC           , NULL },
    { CONF_TAPERALGO            , CONFTYPE_TAPERALGO, read_taperalgo   , CNF_TAPERALGO            , NULL },
+   { CONF_SEND_AMREPORT_ON     , CONFTYPE_SEND_AMREPORT_ON, read_send_amreport_on, CNF_SEND_AMREPORT_ON       , NULL },
    { CONF_FLUSH_THRESHOLD_DUMPED, CONFTYPE_INT     , read_int         , CNF_FLUSH_THRESHOLD_DUMPED, validate_nonnegative },
    { CONF_FLUSH_THRESHOLD_SCHEDULED, CONFTYPE_INT  , read_int         , CNF_FLUSH_THRESHOLD_SCHEDULED, validate_nonnegative },
    { CONF_TAPERFLUSH           , CONFTYPE_INT      , read_int         , CNF_TAPERFLUSH           , validate_nonnegative },
@@ -2644,6 +2654,24 @@ read_taperalgo(
 }
 
 static void
+read_send_amreport_on(
+    conf_var_t *np G_GNUC_UNUSED,
+    val_t *val)
+{
+    ckseen(&val->seen);
+
+    get_conftoken(CONF_ANY);
+    switch(tok) {
+    case CONF_ALL:     val_t__send_amreport(val) = SEND_AMREPORT_ALL;     break;
+    case CONF_STRANGE: val_t__send_amreport(val) = SEND_AMREPORT_STRANGE; break;
+    case CONF_ERROR:   val_t__send_amreport(val) = SEND_AMREPORT_ERROR;   break;
+    case CONF_NEVER:   val_t__send_amreport(val) = SEND_AMREPORT_NEVER;   break;
+    default:
+	conf_parserror(_("ALL, STRANGE, ERROR or NEVER expected"));
+    }
+}
+
+static void
 read_priority(
     conf_var_t *np G_GNUC_UNUSED,
     val_t *val)
@@ -3742,6 +3770,7 @@ init_defaults(
 #else
     conf_init_intrange (&conf_data[CNF_UNRESERVED_TCP_PORT]  , IPPORT_RESERVED, 65535);
 #endif
+    conf_init_send_amreport (&conf_data[CNF_SEND_AMREPORT_ON], SEND_AMREPORT_ALL);
 
     /* reset internal variables */
     config_clear_errors();
@@ -4174,6 +4203,16 @@ conf_init_execute_where(
 {
     val->seen = 0;
     val->type = CONFTYPE_EXECUTE_WHERE;
+    val->v.i = i;
+}
+
+static void
+conf_init_send_amreport(
+    val_t *val,
+    send_amreport_t i)
+{
+    val->seen = 0;
+    val->type = CONFTYPE_SEND_AMREPORT_ON;
     val->v.i = i;
 }
 
@@ -4794,6 +4833,17 @@ val_t_to_taperalgo(
     return val_t__taperalgo(val);
 }
 
+send_amreport_t
+val_t_to_send_amreport(
+    val_t *val)
+{
+    if (val->type != CONFTYPE_SEND_AMREPORT_ON) {
+	error(_("val_t_to_send_amreport: val.type is not CONFTYPE_SEND_AMREPORT_ON"));
+	/*NOTREACHED*/
+    }
+    return val_t__send_amreport(val);
+}
+
 int
 val_t_to_priority(
     val_t *val)
@@ -4867,6 +4917,7 @@ copy_val_t(
 	case CONFTYPE_ESTIMATE:
 	case CONFTYPE_EXECUTE_ON:
 	case CONFTYPE_EXECUTE_WHERE:
+	case CONFTYPE_SEND_AMREPORT_ON:
 	case CONFTYPE_STRATEGY:
 	case CONFTYPE_TAPERALGO:
 	case CONFTYPE_PRIORITY:
@@ -4979,6 +5030,7 @@ free_val_t(
 	case CONFTYPE_ESTIMATE:
 	case CONFTYPE_EXECUTE_WHERE:
 	case CONFTYPE_EXECUTE_ON:
+	case CONFTYPE_SEND_AMREPORT_ON:
 	case CONFTYPE_STRATEGY:
 	case CONFTYPE_SIZE:
 	case CONFTYPE_TAPERALGO:
@@ -5439,6 +5491,23 @@ val_t_display_strs(
 
 	case ES_SERVER:
 	    buf[0] = vstrallocf("SERVER");
+	    break;
+	}
+	break;
+
+    case CONFTYPE_SEND_AMREPORT_ON:
+	switch(val->v.i) {
+	case SEND_AMREPORT_ALL:
+	    buf[0] = vstrallocf("ALL");
+	    break;
+	case SEND_AMREPORT_STRANGE:
+	    buf[0] = vstrallocf("STRANGE");
+	    break;
+	case SEND_AMREPORT_ERROR:
+	    buf[0] = vstrallocf("ERROR");
+	    break;
+	case SEND_AMREPORT_NEVER:
+	    buf[0] = vstrallocf("NEVER");
 	    break;
 	}
 	break;

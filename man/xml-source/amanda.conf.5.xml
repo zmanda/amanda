@@ -170,6 +170,41 @@ A space separated list of recipients for mail reports.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
+  <term><emphasis remap='B'>send-amreport-on</emphasis> [all|strange|error|never]</term>
+  <listitem>
+<para>Default:
+<emphasis remap='B'>all</emphasis>.
+Specify which types of messages will trigger an email from amreport. amreport is used by amdump and amflush.</para>
+  <!-- .RS -->
+    <variablelist remap='TP'>
+      <varlistentry>
+      <term><emphasis remap='B'>all</emphasis></term>
+      <listitem>
+<para>Send an email on any message.</para>
+      </listitem>
+      </varlistentry>
+      <varlistentry>
+      <term><emphasis remap='B'>strange</emphasis></term>
+      <listitem>
+<para>Send an email on strange or error message. A strange message occurs when the dump succeeded, but returned one or more errors unknown to &A;.</para>
+      </listitem>
+      </varlistentry>
+      <varlistentry>
+      <term><emphasis remap='B'>error</emphasis></term>
+      <listitem>
+<para>Send an email only on error messages.</para>
+      </listitem>
+      </varlistentry>
+      <varlistentry>
+      <term><emphasis remap='B'>never</emphasis></term>
+      <listitem>
+<para>Never send an email.</para>
+      </listitem>
+      </varlistentry>
+    </variablelist>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
   <term><emphasis remap='B'>dumpcycle</emphasis> <emphasis remap='I'> int</emphasis></term>
   <listitem>
 <para>Default:

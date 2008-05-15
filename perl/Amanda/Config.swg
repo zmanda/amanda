@@ -470,6 +470,14 @@ amglue_add_constant(EXECUTE_ON_PRE_HOST_BACKUP, execute_on_t);
 amglue_add_constant(EXECUTE_ON_POST_DLE_BACKUP, execute_on_t);
 amglue_add_constant(EXECUTE_ON_POST_HOST_BACKUP, execute_on_t);
 amglue_copy_to_tag(execute_on_t, getconf);
+
+amglue_add_enum_tag_fns(send_amreport_on_t);
+amglue_add_constant(SEND_AMREPORT_ALL, send_amreport_on_t);
+amglue_add_constant(SEND_AMREPORT_STRANGE, send_amreport_on_t);
+amglue_add_constant(SEND_AMREPORT_ERROR, send_amreport_on_t);
+amglue_add_constant(SEND_AMREPORT_NEVER, send_amreport_on_t);
+amglue_copy_to_tag(send_amreport_on_t, getconf);
+
 /*
  * val_t typemaps
  */

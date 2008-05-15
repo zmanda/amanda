@@ -1,4 +1,12 @@
 2008-05-15  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c: Parse send-amreport-on.
+	* common-src/conffile.h (send_amreport_t): New enum for possible value
+						   of send-amreport-on.
+	* server-src/reporter.c: Use send-amreport-on setting.
+	* perl/Amanda/Config.swg: Define send_amreport_on_t constants.
+	* man/xml-source/amanda.conf.5.xml: Document send-amreport-on.
+
+2008-05-15  Jean-Louis Martineau <martineau@zmanda.com>
 	* client-src/client_util.c (application_property_argv_size): New
 	  function to count the number of argument needed to store all
 	  properties of an application for + * a dle in an ARGV.

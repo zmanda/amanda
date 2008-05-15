@@ -154,6 +154,13 @@ typedef int execute_on_t;
 
 typedef int execute_where_t;
 
+typedef enum {
+    SEND_AMREPORT_ALL,
+    SEND_AMREPORT_STRANGE,
+    SEND_AMREPORT_ERROR,
+    SEND_AMREPORT_NEVER
+} send_amreport_t;
+
 typedef struct exinclude_s {
     sl_t *sl_list;
     sl_t *sl_file;
@@ -188,6 +195,7 @@ typedef enum {
     CONFTYPE_APPLICATION,
     CONFTYPE_EXECUTE_ON,
     CONFTYPE_EXECUTE_WHERE,
+    CONFTYPE_SEND_AMREPORT_ON,
     CONFTYPE_PP_SCRIPTLIST
 } conftype_t;
 
@@ -239,6 +247,7 @@ struct application_s *val_t_to_application(val_t *);
 pp_scriptlist_t       val_t_to_pp_scriptlist(val_t *);
 execute_on_t          val_t_to_execute_on(val_t *);
 execute_where_t       val_t_to_execute_where(val_t *);
+send_amreport_t       val_t_to_send_amreport(val_t *);
 
 /* Has the given val_t been seen in a configuration file or config overwrite?
  *
@@ -276,6 +285,7 @@ execute_where_t       val_t_to_execute_where(val_t *);
 #define val_t__estimate(val)      ((val)->v.i)
 #define val_t__strategy(val)      ((val)->v.i)
 #define val_t__taperalgo(val)     ((val)->v.i)
+#define val_t__send_amreport(val) ((val)->v.i)
 #define val_t__priority(val)      ((val)->v.i)
 #define val_t__rate(val)          ((val)->v.rate)
 #define val_t__exinclude(val)     ((val)->v.exinclude)
@@ -356,6 +366,7 @@ typedef enum {
     CNF_AMRECOVER_CHECK_LABEL,
     CNF_AMRECOVER_CHANGER,
     CNF_TAPERALGO,
+    CNF_SEND_AMREPORT_ON,
     CNF_FLUSH_THRESHOLD_DUMPED,
     CNF_FLUSH_THRESHOLD_SCHEDULED,
     CNF_TAPERFLUSH,
@@ -431,6 +442,7 @@ val_t *getconf(confparm_key key);
 #define getconf_exinclude(key)    (val_t_to_exinclude(getconf((key))))
 #define getconf_intrange(key)     (val_t_to_intrange(getconf((key))))
 #define getconf_proplist(key)     (val_t_to_proplist(getconf((key))))
+#define getconf_send_amreport(key) (val_t_to_send_amreport(getconf((key))))
 
 /* Get a list of names for subsections of the given type
  *

@@ -610,39 +610,6 @@ main(
     /* ignore SIGPIPE so if a child process dies we do not also go away */
     signal(SIGPIPE, SIG_IGN);
 
-    /* open pipe to mailer */
-
-    if(outfname) {
-	/* output to a file */
-	if((mailf = fopen(outfname,"w")) == NULL) {
-	    error(_("could not open output file: %s %s"), outfname, strerror(errno));
-	    /*NOTREACHED*/
-	}
-        if (mailto != NULL) {
-		g_fprintf(mailf, "To: %s\n", mailto);
-		g_fprintf(mailf, "Subject: %s\n\n", subj_str);
-	}
-
-    } else if (mailer) {
-    	if(mailto) {
-		mail_cmd = vstralloc(mailer,
-			     " -s", " \"", subj_str, "\"",
-			     " ", mailto, NULL);
-		if((mailf = popen(mail_cmd, "w")) == NULL) {
-	    	error(_("could not open pipe to \"%s\": %s"),
-		  	mail_cmd, strerror(errno));
-	    	/*NOTREACHED*/
-		}
-	}
-	else {
-		if(mailout) {
-                   g_printf(_("No mail sent! "));
-		   g_printf(_("No valid mail address has been specified in amanda.conf or on the commmand line\n"));
-		}
-		mailf = NULL;
-	}
-    }
-
     /* open pipe to print spooler if necessary) */
 
     if(psfname) {
@@ -697,9 +664,54 @@ main(
 	}
     }
 
-    amfree(subj_str);
-
     sort_disks();
+
+    /* open pipe to mailer */
+
+    if(outfname) {
+	/* output to a file */
+	if((mailf = fopen(outfname,"w")) == NULL) {
+	    error(_("could not open output file: %s %s"), outfname, strerror(errno));
+	    /*NOTREACHED*/
+	}
+        if (mailto != NULL) {
+		g_fprintf(mailf, "To: %s\n", mailto);
+		g_fprintf(mailf, "Subject: %s\n\n", subj_str);
+	}
+
+    } else if (mailer) {
+    	if(mailto) {
+	    send_amreport_t send_amreport;
+	    int             do_mail;
+
+	    send_amreport = getconf_send_amreport(CNF_SEND_AMREPORT_ON);
+	    do_mail = send_amreport == SEND_AMREPORT_ALL ||
+		      (send_amreport == SEND_AMREPORT_STRANGE &&
+		       (!got_finish || first_failed || errsum ||
+		        first_strange || errdet || strangedet)) ||
+		      (send_amreport == SEND_AMREPORT_ERROR &&
+		       (!got_finish || first_failed || errsum || errdet));
+	    if (do_mail) {
+		mail_cmd = vstralloc(mailer,
+			     " -s", " \"", subj_str, "\"",
+			     " ", mailto, NULL);
+		if((mailf = popen(mail_cmd, "w")) == NULL) {
+		    error(_("could not open pipe to \"%s\": %s"),
+			  mail_cmd, strerror(errno));
+		    /*NOTREACHED*/
+		}
+	    }
+	}
+	else {
+	    if (mailout) {
+                g_printf(_("No mail sent! "));
+		g_printf(_("No valid mail address has been specified in amanda.conf or on the commmand line\n"));
+	    }
+	    mailf = NULL;
+	}
+    }
+
+    amfree(subj_str);
 
     if(mailf) {
 
