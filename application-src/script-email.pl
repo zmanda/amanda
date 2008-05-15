@@ -6,6 +6,8 @@ eval '(exit $?0)' && eval 'exec @PERL@ -S $0 ${1+"$@"}'
 	& eval 'exec @PERL@ -S $0 $argv:q'
 		if 0;
 
+require "newgetopt.pl";
+
 delete @ENV{'IFS', 'CDPATH', 'ENV', 'BASH_ENV', 'PATH'};
 $ENV{'PATH'} = "/usr/bin:/usr/sbin:/sbin:/bin";
 
@@ -35,11 +37,7 @@ if ( $USE_VERSION_SUFFIXES =~ /^yes$/i ) {
 
 $myhost = hostname;
 $myhost =~ s/\..*$//;
-$runtar="${libexecdir}/runtar${suf}";
-$gnulist = '@GNUTAR_LISTED_INCREMENTAL_DIR@';
-$gnutar = '@GNUTAR@';
 $mailer = '@DEFAULT_MAILER@';
-
 
 $has_config   = 1;
 $has_host     = 1;
@@ -72,24 +70,24 @@ sub command_support {
    print "COLLECTION NO\n";
 }
 
-sub command_pre_dle_selfcheck {
+sub command_pre_dle_amcheck {
    my($config, $host, $disk, $device, $level) = @_;
-   sendmail("pre-dle-selfcheck", $config, $host, $disk, $device, $level);
+   sendmail("pre-dle-amcheck", $config, $host, $disk, $device, $level);
 }
 
-sub command_pre_host_selfcheck {
+sub command_pre_host_amcheck {
    my($config, $host, $disk, $device, $level) = @_;
-   sendmail("pre-host-selfcheck", $config, $host, $disk, $device, $level);
+   sendmail("pre-host-amcheck", $config, $host, $disk, $device, $level);
 }
 
-sub command_post_dle_selfcheck {
+sub command_post_dle_amcheck {
    my($config, $host, $disk, $device, $level) = @_;
-   sendmail("post-dle-selfcheck", $config, $host, $disk, $device, $level);
+   sendmail("post-dle-amcheck", $config, $host, $disk, $device, $level);
 }
 
-sub command_post_host_selfcheck {
+sub command_post_host_amcheck {
    my($config, $host, $disk, $device, $level) = @_;
-   sendmail("post-host-selfcheck", $config, $host, $disk, $device, $level);
+   sendmail("post-host-amcheck", $config, $host, $disk, $device, $level);
 }
 
 sub command_pre_dle_estimate {
@@ -134,8 +132,8 @@ sub command_post_host_backup {
 
 sub sendmail {
    my($function, $config, $host, $disk, $device, $level) = @_;
-   if (defined(@{$property{mailto}})) {
-      $destcheck = join ',', @{$property{mailto}};
+   if (defined(@opt_mailto)) {
+      $destcheck = join ',', @opt_mailto;
       $destcheck =~ /^([a-zA-Z,]*)$/;
       $dest = $1;
    } else {
@@ -147,5 +145,8 @@ sub sendmail {
    print MAIL "$config $function $host $disk $device\n";
    close MAIL;
 }
+
+$result = &NGetOpt ("config=s", "host=s", "disk=s", "device=s", "level=s", "index=s", "message=s", "collection", "record", "mailto=s@");
+$result = $result;
 
 require "$application_dir/generic-script"

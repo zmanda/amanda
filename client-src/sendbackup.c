@@ -436,9 +436,9 @@ main(
 
     if (dle->program_is_application_api==1) {
 	pid_t application_api_pid;
-	int i, j;
+	int i, j, k;
 	char *cmd=NULL;
-	char *argvchild[20];
+	char **argvchild;
 	char levelstr[20];
 	int property_pipe[2];
 	backup_support_option_t *bsu;
@@ -453,6 +453,8 @@ main(
 	switch(application_api_pid=fork()) {
 	case 0:
 	    cmd = vstralloc(APPLICATION_DIR, "/", dle->program, NULL);
+	    k = application_property_argv_size(dle);
+	    argvchild = malloc((20 + k) * sizeof(char *));
 	    i=0;
 	    argvchild[i++] = dle->program;
 	    argvchild[i++] = "backup";
@@ -486,6 +488,7 @@ main(
 	    if (dle->record && bsu->record == 1) {
 		argvchild[i++] = "--record";
 	    }
+	    i += application_property_add_to_argv(&argvchild[i], dle);
 	    argvchild[i] = NULL;
 	    dbprintf(_("%s: running \"%s\n"), get_pname(), cmd);
 	    for(j=1;j<i;j++) dbprintf(" %s\n",argvchild[j]);

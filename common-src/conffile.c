@@ -6024,3 +6024,25 @@ char *get_config_filename(void)
 {
     return config_filename;
 }
+
+int
+property_argv_size(proplist_t proplist) {
+    int nb;
+
+    nb = 0;
+    g_hash_table_foreach(proplist, &count_proplist, &nb);
+    return nb*2;
+}
+
+int
+property_add_to_argv(
+    char **argvchild,
+    proplist_t proplist)
+{
+    char **argv = argvchild;
+
+    g_hash_table_foreach(proplist, &proplist_add_to_argv, &argv);
+    return (argv - argvchild);
+}
+
+

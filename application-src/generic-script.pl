@@ -1,4 +1,4 @@
-require "newgetopt.pl";
+
 use Text::ParseWords;
 
 print DEBUG "FHOUT 6: ARGV[ 0]=" . $ARGV[0] . "\n" if ($debug == 1);
@@ -21,9 +21,6 @@ print DEBUG "FHOUT 6: ARGV[16]=" . $ARGV[16] . "\n" if ($debug == 1);
 print DEBUG "FHOUT 6: ARGV[17]=" . $ARGV[17] . "\n" if ($debug == 1);
 print DEBUG "FHOUT 6: ARGV[18]=" . $ARGV[18] . "\n" if ($debug == 1);
 print DEBUG "FHOUT 6: ARGV[19]=" . $ARGV[19] . "\n" if ($debug == 1);
-
-$result = &NGetOpt ("config=s", "host=s", "disk=s", "device=s", "level=s", "index=s", "message=s", "collection", "record");
-$result = $result;
 
 print DEBUG "FHOUT 6: config    =" . $opt_config . "\n" if ($debug == 1);
 print DEBUG "FHOUT 6: disk      =" . $opt_disk   . "\n" if ($debug == 1);
@@ -70,30 +67,12 @@ if (defined $opt_level) {
   $opt_level = $1;
 }
 
-# Read tool property
-
 $command = $ARGV[0];
 
-%property = ();
-
-  while($property_line = <STDIN>) {
-    chomp $property_line;
-    @prop_value = shellwords($property_line);
-    $prop_name = shift @prop_value;
-    push @{$property{$prop_name}}, @prop_value;
-  }
-
-  if ($debug == 1) {
-    foreach $prop_name (keys(%property)) {
-      print DEBUG "PROPERTY: $prop_name\n";
-      print DEBUG "    VALUE: ", join(',',@{$property{$prop_name}}) , "\n";
-    }
-  }
-
-sub wrapper_pre_dle_selfcheck();
-sub wrapper_pre_host_selfcheck();
-sub wrapper_post_dle_selfcheck();
-sub wrapper_post_host_selfcheck();
+sub wrapper_pre_dle_amcheck();
+sub wrapper_pre_host_amcheck();
+sub wrapper_post_dle_amcheck();
+sub wrapper_post_host_amcheck();
 sub wrapper_pre_dle_estimate();
 sub wrapper_pre_host_estimate();
 sub wrapper_post_dle_estimate();
@@ -103,17 +82,17 @@ sub wrapper_pre_host_backup();
 sub wrapper_post_dle_backup();
 sub wrapper_post_host_backup();
 
-if ($command eq "PRE-DLE-SELFCHECK") {
-   wrapper_pre_dle_selfcheck();
+if ($command eq "PRE-DLE-AMCHECK") {
+   wrapper_pre_dle_amcheck();
 }
-elsif ($command eq "PRE-HOST-SELFCHECK") {
-   wrapper_pre_host_selfcheck();
+elsif ($command eq "PRE-HOST-AMCHECK") {
+   wrapper_pre_host_amcheck();
 }
-elsif ($command eq "POST-DLE-SELFCHECK") {
-   wrapper_post_dle_selfcheck();
+elsif ($command eq "POST-DLE-AMCHECK") {
+   wrapper_post_dle_amcheck();
 }
-elsif ($command eq "POST-HOST-SELFCHECK") {
-   wrapper_post_host_selfcheck();
+elsif ($command eq "POST-HOST-AMCHECK") {
+   wrapper_post_host_amcheck();
 }
 elsif ($command eq "PRE-DLE-ESTIMATE") {
    wrapper_pre_dle_estimate();
@@ -145,36 +124,36 @@ else {
 }
 
 
-sub wrapper_pre_dle_selfcheck() {
-   if(defined(&command_pre_dle_selfcheck)) {
-      command_pre_dle_selfcheck($opt_config, $opt_host, $opt_disk, $opt_device, $opt_level);
+sub wrapper_pre_dle_amcheck() {
+   if(defined(&command_pre_dle_amcheck)) {
+      command_pre_dle_amcheck($opt_config, $opt_host, $opt_disk, $opt_device, $opt_level);
    }
    else {
       exit 1;
    }
 }
 
-sub wrapper_pre_host_selfcheck() {
-   if(defined(&command_pre_host_selfcheck)) {
-      command_pre_host_selfcheck($opt_config, $opt_host, $opt_disk, $opt_device, $opt_level);
+sub wrapper_pre_host_amcheck() {
+   if(defined(&command_pre_host_amcheck)) {
+      command_pre_host_amcheck($opt_config, $opt_host, $opt_disk, $opt_device, $opt_level);
    }
    else {
       exit 1;
    }
 }
 
-sub wrapper_post_dle_selfcheck() {
-   if(defined(&command_post_dle_selfcheck)) {
-      command_post_dle_selfcheck($opt_config, $opt_host, $opt_disk, $opt_device, $opt_level);
+sub wrapper_post_dle_amcheck() {
+   if(defined(&command_post_dle_amcheck)) {
+      command_post_dle_amcheck($opt_config, $opt_host, $opt_disk, $opt_device, $opt_level);
    }
    else {
       exit 1;
    }
 }
 
-sub wrapper_post_host_selfcheck() {
-   if(defined(&command_post_host_selfcheck)) {
-      command_post_host_selfcheck($opt_config, $opt_host, $opt_disk, $opt_device, $opt_level);
+sub wrapper_post_host_amcheck() {
+   if(defined(&command_post_host_amcheck)) {
+      command_post_host_amcheck($opt_config, $opt_host, $opt_disk, $opt_device, $opt_level);
    }
    else {
       exit 1;

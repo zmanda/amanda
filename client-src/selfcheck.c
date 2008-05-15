@@ -192,7 +192,7 @@ main(
 	s[-1] = '\0';				/* terminate the program name */
 
 	dle->program_is_application_api = 0;
-	if(strcmp(dle->program,"APPLICARTION")==0) {
+	if(strcmp(dle->program,"APPLICATION")==0) {
 	    dle->program_is_application_api = 1;
 	    skip_whitespace(s, ch);		/* find dumper name */
 	    if (ch == '\0') {
@@ -514,7 +514,6 @@ check_disk(
     char *qdisk = quote_string(dle->disk);
     char *qamdevice = quote_string(dle->device);
     char *qdevice = NULL;
-    FILE *toolin;
 
     dbprintf(_("checking disk %s\n"), qdisk);
     if (dle->calcsize == 1) {
@@ -692,15 +691,9 @@ check_disk(
     }
     else { /* program_is_application_api==1 */
 	pid_t  application_api_pid;
-	int    property_pipe[2];
 	backup_support_option_t *bsu;
 
 	bsu = backup_support_option(dle->program, g_options, dle->disk, dle->device);
-
-	if (pipe(property_pipe) < 0) {
-	    err = vstrallocf(_("pipe failed: %s"), strerror(errno));
-	    goto common_exit;
-	}
 	fflush(stdout);fflush(stderr);
 	
 	switch (application_api_pid = fork()) {
@@ -710,9 +703,13 @@ check_disk(
 
 	case 0: /* child */
 	    {
-		char *argvchild[17];
+		char **argvchild;
 		char *cmd = vstralloc(APPLICATION_DIR, "/", dle->program, NULL);
 		int j=0;
+		int k;
+
+		k = application_property_argv_size(dle);
+		argvchild = malloc((17 + k) * sizeof(char *));
 		argvchild[j++] = dle->program;
 		argvchild[j++] = "selfcheck";
 		if (bsu->message_line == 1) {
@@ -740,9 +737,8 @@ check_disk(
 		if (dle->record && bsu->record == 1) {
 		    argvchild[j++] = "--record";
 		}
+		j += application_property_add_to_argv(&argvchild[j], dle);
 		argvchild[j++] = NULL;
-		dup2(property_pipe[0], 0);
-		aclose(property_pipe[1]);
 		safe_fd(-1, 0);
 		execve(cmd, argvchild, safe_env());
 		g_printf(_("ERROR [Can't execute %s: %s]\n"), cmd, strerror(errno));
@@ -751,15 +747,6 @@ check_disk(
 	default: /* parent */
 	    {
 		int status;
-		aclose(property_pipe[0]);
-		toolin = fdopen(property_pipe[1],"w");
-		if (!toolin) {
-		    err = vstrallocf(_("Can't fdopen: %s"), strerror(errno));
-		    goto common_exit;
-		}
-		output_tool_property(toolin, dle);
-		fflush(toolin);
-		fclose(toolin);
 		if (waitpid(application_api_pid, &status, 0) < 0) {
 		    if (!WIFEXITED(status)) {
 			err = vstrallocf(_("Tool exited with signal %d"),

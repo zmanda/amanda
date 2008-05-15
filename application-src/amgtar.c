@@ -104,7 +104,6 @@ typedef struct application_argument_s {
     dle_t      dle;
     int        argc;
     char     **argv;
-    proplist_t property;
 } application_argument_t;
 
 enum { CMD_ESTIMATE, CMD_BACKUP };
@@ -114,8 +113,7 @@ static void amgtar_selfcheck(application_argument_t *argument);
 static void amgtar_estimate(application_argument_t *argument);
 static void amgtar_backup(application_argument_t *argument);
 static void amgtar_restore(application_argument_t *argument);
-static void amgtar_build_exinclude(application_argument_t *argument,
-				   dle_t *dle, int verbose,
+static void amgtar_build_exinclude(dle_t *dle, int verbose,
 				   int *nb_exclude, char **file_exclude,
 				   int *nb_include, char **file_include);
 static char *amgtar_get_incrname(application_argument_t *argument);
@@ -129,39 +127,44 @@ static int gnutar_checkdevice;
 static int gnutar_sparse;
 
 static struct option long_options[] = {
-    {"config"    , 1, NULL, 1},
-    {"host"      , 1, NULL, 2},
-    {"disk"      , 1, NULL, 3},
-    {"device"    , 1, NULL, 4},
-    {"level"     , 1, NULL, 5},
-    {"index"     , 1, NULL, 6},
-    {"message"   , 1, NULL, 7},
-    {"collection", 0, NULL, 8},
-    {"record"    , 0, NULL, 9}
+    {"config"          , 1, NULL,  1},
+    {"host"            , 1, NULL,  2},
+    {"disk"            , 1, NULL,  3},
+    {"device"          , 1, NULL,  4},
+    {"level"           , 1, NULL,  5},
+    {"index"           , 1, NULL,  6},
+    {"message"         , 1, NULL,  7},
+    {"collection"      , 0, NULL,  8},
+    {"record"          , 0, NULL,  9},
+    {"gnutar-path"     , 1, NULL, 10},
+    {"gnutar-listdir"  , 1, NULL, 11},
+    {"one-file-system" , 1, NULL, 12},
+    {"sparse"          , 1, NULL, 13},
+    {"atime-preserve"  , 1, NULL, 14},
+    {"check-device"    , 1, NULL, 15},
+    {"include-file"    , 1, NULL, 16},
+    {"include-list"    , 1, NULL, 17},
+    {"include-optional", 1, NULL, 18},
+    {"exclude-file"    , 1, NULL, 19},
+    {"exclude-list"    , 1, NULL, 20},
+    {"exclude-optional", 1, NULL, 21},
+    {NULL, 0, NULL, 0}
 };
-
 
 int
 main(
     int		argc,
     char **	argv)
 {
-    char *line = NULL;
     int c;
     char *command;
     application_argument_t argument;
-    char *s, *fp, ch;
-    char *prop_name;
-    char *prop_value;
-    GSList *property_values;
-    GSList *prop_values;
 
 #ifdef GNUTAR
     gnutar_path = GNUTAR;
 #else
     gnutar_path = NULL;
 #endif
-    gnutar_listdir = NULL;
     gnutar_onefilesystem = 1;
     gnutar_atimepreserve = 1;
     gnutar_checkdevice = 1;
@@ -213,15 +216,14 @@ main(
     argument.message    = 0;
     argument.collection = 0;
     argument.level      = 0;
-    argument.property   = NULL;
     init_dle(&argument.dle);
 
     while (1) {
 	int option_index = 0;
-    	c = getopt_long (argc-1, argv+1, "", long_options, &option_index);
-	if (c == -1)
+    	c = getopt_long (argc, argv, "", long_options, &option_index);
+	if (c == -1) {
 	    break;
-
+	}
 	switch (c) {
 	case 1: argument.config = stralloc(optarg);
 		break;
@@ -241,11 +243,50 @@ main(
 		break;
 	case 9: argument.dle.record = 1;
 		break;
+	case 10: gnutar_path = stralloc(optarg);
+		 break;
+	case 11: gnutar_listdir = stralloc(optarg);
+		 break;
+	case 12: if (optarg && strcasecmp(optarg, "YES") != 0)
+		     gnutar_onefilesystem = 0;
+		 break;
+	case 13: if (optarg && strcasecmp(optarg, "YES") != 0)
+		     gnutar_sparse = 0;
+		 break;
+	case 14: if (optarg && strcasecmp(optarg, "YES") != 0)
+		     gnutar_atimepreserve = 0;
+		 break;
+	case 15: if (optarg && strcasecmp(optarg, "YES") != 0)
+		     gnutar_checkdevice = 0;
+		 break;
+	case 16: if (optarg)
+		     argument.dle.include_file =
+			 append_sl(argument.dle.include_file, optarg);
+		 break;
+	case 17: if (optarg)
+		     argument.dle.include_list =
+			 append_sl(argument.dle.include_list, optarg);
+		 break;
+	case 18: argument.dle.include_optional = 1;
+		 break;
+	case 19: if (optarg)
+		     argument.dle.exclude_file =
+			 append_sl(argument.dle.exclude_file, optarg);
+		 break;
+	case 20: if (optarg)
+		     argument.dle.exclude_list =
+			 append_sl(argument.dle.exclude_list, optarg);
+		 break;
+	case 21: argument.dle.exclude_optional = 1;
+		 break;
 	case ':':
 	case '?':
 		break;
 	}
     }
+
+    argument.argc = argc - optind;
+    argument.argv = argv + optind;
 
     if (argument.config) {
 	config_init(CONFIG_INIT_CLIENT | CONFIG_INIT_EXPLICIT_NAME | CONFIG_INIT_OVERLAY,
@@ -257,89 +298,20 @@ main(
 	g_critical(_("errors processing config file"));
     }
 
-    gnutar_listdir = getconf_str(CNF_GNUTAR_LIST_DIR);
-    if (strlen(gnutar_listdir) == 0)
-	gnutar_listdir = NULL;
-
-    argument.argc = argc - optind;
-    argument.argv = argv + optind;
-
-    /* parse property */
-    argument.property = g_hash_table_new_full(g_str_hash, g_str_equal,
-					      NULL, NULL);
-    for(; (line = agets(stdin)) != NULL; free(line)) {
-dbprintf("line: %s\n", line);
-	s = line;
-	ch = *s++;
-	skip_whitespace(s, ch);
-	if (ch == '\0') {
-	    error(_("No property name\n"));
-	}
-	fp = s - 1;
-	skip_quoted_string(s, ch);
-	s[-1] = '\0';
-	prop_name = unquote_string(fp);
-	skip_whitespace(s, ch);
-	if (ch == '\0') {
-	    error(_("No property value for property '%s'\n"), prop_name);
-	}
-	property_values = NULL;
-	property_values = g_hash_table_lookup(argument.property, prop_name);
-	while (ch != '\0') {
-	    fp = s - 1;
-	    skip_quoted_string(s, ch);
-	    s[-1] = '\0';
-	    prop_value = unquote_string(fp);
-	    property_values = g_slist_append(property_values, prop_value);
-	    skip_whitespace(s, ch);
-	}
-	if (strcmp(command, "selfcheck") == 0 &&
-	    (strcmp(prop_name, "GNUTAR-PATH")      != 0 &&
-	     strcmp(prop_name, "GNUTAR-LISTDIR")   != 0 &&
-	     strcmp(prop_name, "ONE-FILE-SYSTEM")  != 0 &&
-	     strcmp(prop_name, "ATIME-PRESERVE")   != 0 &&
-	     strcmp(prop_name, "CHECK-DEVICE")     != 0 &&
-	     strcmp(prop_name, "SPARSE")           != 0 &&
-	     strcmp(prop_name, "INCLUDE-FILE")     != 0 &&
-	     strcmp(prop_name, "INCLUDE-LIST")     != 0 &&
-	     strcmp(prop_name, "INCLUDE-OPTIONAL") != 0 &&
-	     strcmp(prop_name, "EXCLUDE-FILE")     != 0 &&
-	     strcmp(prop_name, "EXCLUDE-LIST")     != 0 &&
-	     strcmp(prop_name, "EXCLUDE-OPTIONAL") != 0)) {
-	    printf(_("ERROR [amgtar: Unknown property '%s']\n"), prop_name);
-	}
-	g_hash_table_insert(argument.property, prop_name, property_values);
+    if (getconf_seen(CNF_GNUTAR_LIST_DIR)) {
+	gnutar_listdir = getconf_str(CNF_GNUTAR_LIST_DIR);
+	if (strlen(gnutar_listdir) == 0)
+	    gnutar_listdir = NULL;
     }
+
+    dbprintf("GNUTAR-PATH %s\n", gnutar_path);
+    dbprintf("GNUTAR-LISTDIR %s\n", gnutar_listdir);
+    dbprintf("ONE-FILE-SYSTEM %s\n", gnutar_onefilesystem? "yes":"no");
+    dbprintf("SPARSE %s\n", gnutar_sparse? "yes":"no");
+    dbprintf("ATIME-PRESERVE %s\n", gnutar_atimepreserve? "yes":"no");
+    dbprintf("CHECK-DEVICE %s\n", gnutar_checkdevice? "yes":"no");
+
     fclose(stdin);
-
-    if ((prop_values = g_hash_table_lookup(argument.property,
-					   "GNUTAR-PATH"))) {
-	gnutar_path = (char *)prop_values->data;
-    }
-    if ((prop_values = g_hash_table_lookup(argument.property,
-					   "GNUTAR-LISTDIR"))) {
-	gnutar_listdir = (char *)prop_values->data;
-    }
-    if ((prop_values = g_hash_table_lookup(argument.property,
-					   "ONE-FILE-SYSTEM"))) {
-	if (strcasecmp((char *)prop_values->data, "YES") != 0)
-	    gnutar_onefilesystem = 0;
-    }
-    if ((prop_values = g_hash_table_lookup(argument.property,
-					   "ATIME-PRESERVE"))) {
-	if (strcasecmp((char *)prop_values->data, "YES") != 0)
-	    gnutar_atimepreserve = 0;
-    }
-    if ((prop_values = g_hash_table_lookup(argument.property,
-					   "CHECK-DEVICE"))) {
-	if (strcasecmp((char *)prop_values->data, "YES") != 0)
-	    gnutar_checkdevice = 0;
-    }
-    if ((prop_values = g_hash_table_lookup(argument.property,
-					   "SPARSE"))) {
-	if (strcasecmp((char *)prop_values->data, "YES") != 0)
-	    gnutar_sparse = 0;
-    }
 
     if (strcmp(command, "support") == 0) {
 	amgtar_support(&argument);
@@ -352,6 +324,7 @@ dbprintf("line: %s\n", line);
     } else if (strcmp(command, "restore") == 0) {
 	amgtar_restore(&argument);
     } else {
+	dbprintf("Unknown command `%s'.\n", command);
 	fprintf(stderr, "Unknown command `%s'.\n", command);
 	exit (1);
     }
@@ -383,7 +356,7 @@ static void
 amgtar_selfcheck(
     application_argument_t *argument)
 {
-    amgtar_build_exinclude(argument, &argument->dle, 1, NULL, NULL, NULL, NULL);
+    amgtar_build_exinclude(&argument->dle, 1, NULL, NULL, NULL, NULL);
 
     if (gnutar_path) {
 	check_file(gnutar_path, X_OK);
@@ -634,15 +607,30 @@ amgtar_backup(
 
     dbprintf(_("amgtar: %s: pid %ld\n"), cmd, (long)tarpid);
 
+    if (incrname && strlen(incrname) > 4) {
+	char *nodotnew;
+	nodotnew = stralloc(incrname);
+	nodotnew[strlen(nodotnew)-4] = '\0';
+	if (rename(incrname, nodotnew)) {
+	    dbprintf(_("%s: warning [renaming %s to %s: %s]\n"),
+		     get_pname(), incrname, nodotnew, strerror(errno));
+	    g_fprintf(mesgstream, _("? warning [renaming %s to %s: %s]\n"),
+		      incrname, nodotnew, strerror(errno));
+	}
+	amfree(nodotnew);
+    }
+
     dbprintf("sendbackup: size %lld\n", (long long)dump_size);
     fprintf(mesgstream, "sendbackup: size %lld\n", (long long)dump_size);
     dbprintf("sendbackup: end\n");
     fprintf(mesgstream, "sendbackup: end\n");
 
-    fclose(mesgstream);
     if (argument->dle.create_index)
 	fclose(indexstream);
 
+    fclose(mesgstream);
+
+    amfree(incrname);
     amfree(qdisk);
     amfree(cmd);
 }
@@ -683,7 +671,6 @@ amgtar_restore(
 
 static void
 amgtar_build_exinclude(
-    application_argument_t *argument,
     dle_t  *dle,
     int     verbose,
     int    *nb_exclude,
@@ -695,45 +682,7 @@ amgtar_build_exinclude(
     int n_include = 0;
     char *exclude = NULL;
     char *include = NULL;
-    GSList *prop_values, *pv;
 
-
-    if ((prop_values = g_hash_table_lookup(argument->property,
-					  "EXCLUDE-OPTIONAL"))) {
-	if (strcmp((char *)prop_values->data, "YES") == 0) {
-	    dle->exclude_optional = 1;
-	}
-    }
-    if ((prop_values = g_hash_table_lookup(argument->property,
-					  "INCLUDE-OPTIONAL"))) {
-	if (strcmp((char *)prop_values->data, "YES") == 0) {
-	    dle->include_optional = 1;
-	}
-    }
-    if ((prop_values = g_hash_table_lookup(argument->property,
-					  "EXCLUDE-FILE"))) {
-	for (pv = prop_values; pv != NULL; pv = pv->next) {
-	    dle->exclude_file = append_sl(dle->exclude_file, pv->data);
-	}
-    }
-    if ((prop_values = g_hash_table_lookup(argument->property,
-					  "EXCLUDE-LIST"))) {
-	for (pv = prop_values; pv != NULL; pv = pv->next) {
-	    dle->exclude_list = append_sl(dle->exclude_list, pv->data);
-	}
-    }
-    if ((prop_values = g_hash_table_lookup(argument->property,
-					  "INCLUDE-FILE"))) {
-	for (pv = prop_values; pv != NULL; pv = pv->next) {
-	    dle->include_file = append_sl(dle->include_file, pv->data);
-	}
-    }
-    if ((prop_values = g_hash_table_lookup(argument->property,
-					  "INCLUDE-LIST"))) {
-	for (pv = prop_values; pv != NULL; pv = pv->next) {
-	    dle->include_list = append_sl(dle->include_list, pv->data);
-	}
-    }
     if (dle->exclude_file) n_exclude += dle->exclude_file->nb_element;
     if (dle->exclude_list) n_exclude += dle->exclude_list->nb_element;
     if (dle->include_file) n_include += dle->include_file->nb_element;
@@ -761,12 +710,12 @@ static char *
 amgtar_get_incrname(
     application_argument_t *argument)
 {
-    char *basename;
+    char *basename = NULL;
     char *incrname = NULL;
     int   infd, outfd;
     ssize_t   nb;
     char *inputname = NULL;
-    char **errmsg = NULL;
+    char *errmsg = NULL;
     char *buf;
 
     if (gnutar_listdir) {
@@ -802,13 +751,13 @@ amgtar_get_incrname(
 	    }
 	    if ((infd = open(inputname, O_RDONLY)) == -1) {
 
-		*errmsg = vstrallocf(_("gnutar: error opening %s: %s"),
+		errmsg = vstrallocf(_("amgtar: error opening %s: %s"),
 				     inputname, strerror(errno));
-		dbprintf("%s\n", *errmsg);
+		dbprintf("%s\n", errmsg);
 		if (baselevel < 0) {
 		    return NULL;
 		}
-		amfree(*errmsg);
+		amfree(errmsg);
 	    }
 	}
 
@@ -816,38 +765,38 @@ amgtar_get_incrname(
 	 * Copy the previous listed incremental file to the new one.
 	 */
 	if ((outfd = open(incrname, O_WRONLY|O_CREAT, 0600)) == -1) {
-	    *errmsg = vstrallocf(_("opening %s: %s"),
+	    errmsg = vstrallocf(_("opening %s: %s"),
 			         incrname, strerror(errno));
-	    dbprintf("%s\n", *errmsg);
+	    dbprintf("%s\n", errmsg);
 	    return NULL;
 	}
 
 	while ((nb = read(infd, &buf, SIZEOF(buf))) > 0) {
 	    if (full_write(outfd, &buf, (size_t)nb) < (size_t)nb) {
-		*errmsg = vstrallocf(_("writing to %s: %s"),
+		errmsg = vstrallocf(_("writing to %s: %s"),
 				     incrname, strerror(errno));
-		dbprintf("%s\n", *errmsg);
+		dbprintf("%s\n", errmsg);
 		return NULL;
 	    }
 	}
 
 	if (nb < 0) {
-	    *errmsg = vstrallocf(_("reading from %s: %s"),
+	    errmsg = vstrallocf(_("reading from %s: %s"),
 			         inputname, strerror(errno));
-	    dbprintf("%s\n", *errmsg);
+	    dbprintf("%s\n", errmsg);
 	    return NULL;
 	}
 
 	if (close(infd) != 0) {
-	    *errmsg = vstrallocf(_("closing %s: %s"),
+	    errmsg = vstrallocf(_("closing %s: %s"),
 			         inputname, strerror(errno));
-	    dbprintf("%s\n", *errmsg);
+	    dbprintf("%s\n", errmsg);
 	    return NULL;
 	}
 	if (close(outfd) != 0) {
-	    *errmsg = vstrallocf(_("closing %s: %s"),
+	    errmsg = vstrallocf(_("closing %s: %s"),
 			         incrname, strerror(errno));
-	    dbprintf("%s\n", *errmsg);
+	    dbprintf("%s\n", errmsg);
 	    return NULL;
 	}
 
@@ -871,11 +820,10 @@ char **amgtar_build_argv(
     char   tmppath[PATH_MAX];
     char **my_argv;
 
-    amgtar_build_exinclude(argument, &argument->dle, 1,
+    amgtar_build_exinclude(&argument->dle, 1,
 			   &nb_exclude, &file_exclude,
 			   &nb_include, &file_include);
 
-    incrname = amgtar_get_incrname(argument);
     dirname = amname_to_dirname(argument->dle.device);
 
     my_argv = alloc(SIZEOF(char *) * 23);

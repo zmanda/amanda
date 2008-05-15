@@ -103,7 +103,6 @@ typedef struct application_argument_s {
     dle_t      dle;
     int        argc;
     char     **argv;
-    proplist_t property;
 } application_argument_t;
 
 enum { CMD_ESTIMATE, CMD_BACKUP };
@@ -122,15 +121,21 @@ int   star_onefilesystem;
 int   star_sparse;
 
 static struct option long_options[] = {
-    {"config"    , 1, NULL, 1},
-    {"host"      , 1, NULL, 2},
-    {"disk"      , 1, NULL, 3},
-    {"device"    , 1, NULL, 4},
-    {"level"     , 1, NULL, 5},
-    {"index"     , 1, NULL, 6},
-    {"message"   , 1, NULL, 7},
-    {"collection", 0, NULL, 8},
-    {"record"    , 0, NULL, 9}
+    {"config"          , 1, NULL,  1},
+    {"host"            , 1, NULL,  2},
+    {"disk"            , 1, NULL,  3},
+    {"device"          , 1, NULL,  4},
+    {"level"           , 1, NULL,  5},
+    {"index"           , 1, NULL,  6},
+    {"message"         , 1, NULL,  7},
+    {"collection"      , 0, NULL,  8},
+    {"record"          , 0, NULL,  9},
+    {"star-path"       , 1, NULL, 10},
+    {"star-tardump"    , 1, NULL, 11},
+    {"star-dle-tardump", 1, NULL, 12},
+    {"one-file-system" , 1, NULL, 13},
+    {"sparse"          , 1, NULL, 14},
+    { NULL, 0, NULL, 0}
 };
 
 
@@ -139,15 +144,9 @@ main(
     int		argc,
     char **	argv)
 {
-    char *line = NULL;
     int c;
     char *command;
     application_argument_t argument;
-    char *s, *fp, ch;
-    char *prop_name;
-    char *prop_value;
-    GSList *property_values;
-    GSList *prop_values;
 
 #ifdef STAR
     star_path = STAR;
@@ -206,12 +205,12 @@ main(
     argument.message    = 0;
     argument.collection = 0;
     argument.level      = 0;
-    argument.property   = NULL;
     init_dle(&argument.dle);
 
+    opterr = 0;
     while (1) {
 	int option_index = 0;
-    	c = getopt_long (argc-1, argv+1, "", long_options, &option_index);
+    	c = getopt_long (argc, argv, "", long_options, &option_index);
 	if (c == -1)
 	    break;
 
@@ -234,11 +233,27 @@ main(
 		break;
 	case 9: argument.dle.record = 1;
 		break;
+	case 10: star_path = stralloc(optarg);
+		 break;
+	case 11: star_tardumps = stralloc(optarg);
+		 break;
+	case 12: if (optarg && strcasecmp(optarg, "YES") == 0)
+		     star_dle_tardumps = 1;
+		 break;
+	case 13: if (optarg && strcasecmp(optarg, "YES") != 0)
+		     star_onefilesystem = 0;
+		 break;
+	case 14: if (optarg && strcasecmp(optarg, "YES") != 0)
+		     star_sparse = 1;
+		 break;
 	case ':':
 	case '?':
 		break;
 	}
     }
+
+    argument.argc = argc - optind;
+    argument.argv = argv + optind;
 
     if (argument.config) {
 	/* overlay this configuration on the existing (nameless) configuration */
@@ -252,76 +267,7 @@ main(
 	g_critical(_("errors processing config file"));
     }
 
-    argument.argc = argc - optind;
-    argument.argv = argv + optind;
-
-    /* parse property */
-    argument.property = g_hash_table_new_full(g_str_hash, g_str_equal,
-					      NULL, NULL);
-    for(; (line = agets(stdin)) != NULL; free(line)) {
-	s = line;
-	ch = *s++;
-	skip_whitespace(s, ch);
-	if (ch == '\0') {
-	    error(_("No property name\n"));
-	}
-	fp = s - 1;
-	skip_quoted_string(s, ch);
-	s[-1] = '\0';
-	prop_name = unquote_string(fp);
-	skip_whitespace(s, ch);
-	if (ch == '\0') {
-	    error(_("No property value\n"));
-	}
-	property_values = NULL;
-	property_values = g_hash_table_lookup(argument.property, prop_name);
-	while (ch != '\0') {
-	    fp = s - 1;
-	    skip_quoted_string(s, ch);
-	    s[-1] = '\0';
-	    prop_value = unquote_string(fp);
-	    property_values = g_slist_append(property_values, prop_value);
-	    skip_whitespace(s, ch);
-	}
-	if (strcmp(command, "selfcheck") == 0 &&
-	    (strcmp(prop_name, "STAR-PATH")         != 0 &&
-	     strcmp(prop_name, "STAR-TARDUMPS")     != 0 &&
-	     strcmp(prop_name, "STAR-DLE-TARDUMPS") != 0 &&
-	     strcmp(prop_name, "ONE-FILE-SYSTEM")   != 0 &&
-	     strcmp(prop_name, "SPARSE")            != 0)) {
-	    printf(_("ERROR [amstar: Unknown property '%s']\n"), prop_name);
-	}
-
-	g_hash_table_insert(argument.property, prop_name, property_values);
-    }
     fclose(stdin);
-
-    if ((prop_values = g_hash_table_lookup(argument.property,
-					   "STAR-PATH"))) {
-	star_path = (char *)prop_values->data;
-    }
-    if ((prop_values = g_hash_table_lookup(argument.property,
-					   "STAR-TARDUMPS"))) {
-	star_tardumps = (char *)prop_values->data;
-    }
-
-    if ((prop_values = g_hash_table_lookup(argument.property,
-					   "STAR-DLE-TARDUMPS"))) {
-	if (strcasecmp((char *)prop_values->data, "yes") == 0)
-	    star_dle_tardumps = 1;
-    }
-
-    if ((prop_values = g_hash_table_lookup(argument.property,
-					   "ONE-FILE-SYSTEM"))) {
-	if (strcasecmp((char *)prop_values->data, "yes") != 0)
-	    star_onefilesystem = 0;
-    }
-
-    if ((prop_values = g_hash_table_lookup(argument.property,
-					   "SPARSE"))) {
-	if (strcasecmp((char *)prop_values->data, "yes") != 0)
-	    star_sparse = 0;
-    }
 
     if (strcmp(command, "support") == 0) {
 	amstar_support(&argument);
@@ -365,7 +311,6 @@ static void
 amstar_selfcheck(
     application_argument_t *argument)
 {
-    GSList *prop_values;
     char   *qdisk;
     char   *qdevice;
 
@@ -373,17 +318,6 @@ amstar_selfcheck(
     qdevice = quote_string(argument->dle.device);
     fprintf(stdout, "OK %s\n", qdisk);
     fprintf(stdout, "OK %s\n", qdevice);
-
-    if ((prop_values = g_hash_table_lookup(argument->property,
-					   "INCLUDE-FILE"))) {
-	fprintf(stdout, _("ERROR amstar: Invalid INCLUDE-FILE property for %s\n"),
-		qdisk);
-    }
-    if ((prop_values = g_hash_table_lookup(argument->property,
-					   "INCLUDE-LIST"))) {
-	fprintf(stdout, _("ERROR amstar: Invalid INCLUDE-LIST property for %s\n"),
-		qdisk);
-    }
 
     check_file(star_path, X_OK);
 

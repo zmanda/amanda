@@ -1,3 +1,31 @@
+2008-05-15  Jean-Louis Martineau <martineau@zmanda.com>
+	* client-src/client_util.c (application_property_argv_size): New
+	  function to count the number of argument needed to store all
+	  properties of an application for + * a dle in an ARGV.
+	* client-src/client_util.c (application_property_add_to_argv): New
+	  function to add all properties of an application for a dle to an ARGV.
+	* client-src/client_util.h (application_property_argv_size,
+				  application_property_add_to_argv): Prototype.
+	* client-src/sendbackup.c, client-src/sendsize.c,
+	  client-src/selfcheck.c: Use new functions to pass properties as
+				  argument to application plugin.
+	* application-src/script-email.pl, application-src/amstar.c,
+	  application-src/generic-script.pl,
+	  application-src/amgtar.c: Get properties from command line.
+	* server-src/server_util.c: Use new functions to pass properties as
+				    argument to pre/post script.
+	* common-src/util.c (count_proplist): Callback function to count the
+					      number of values of a property.
+	* common-src/util.c (proplist_add_to_argv): callback function to store a
+					property and it's value in an ARGV.
+	* common-src/util.h (count_proplist, proplist_add_to_argv): Prototype.
+	* common-src/conffile.c (property_argv_size): New function to count the
+						      number of properties.
+	* common-src/conffile.c (property_add_to_argv): New function to store a
+					property and it's value in an ARGV.
+	* common-src/conffile.h (property_argv_size,
+				 property_add_to_argv): Prototype.
+
 2008-05-15  Dustin J. Mitchell <dustin@zmanda.com>
 	* xfer-src/Makefile.am: add element-glue.h to the distribution
 	* xfer-src/element-glue.h: add 'extern'

@@ -2112,14 +2112,14 @@ getsize_application_api(
     int pipeinfd[2], pipeoutfd[2], nullfd;
     pid_t dumppid;
     off_t size = (off_t)-1;
-    FILE *dumpout, *toolin;
+    FILE *dumpout;
     char *line = NULL;
     char *cmd = NULL;
     char *cmdline;
     char dumptimestr[80];
     struct tm *gmtm;
-    int  i, j;
-    char *argvchild[17];
+    int  i, j, k;
+    char **argvchild;
     char *newoptstr = NULL;
     off_t size1, size2;
     times_t start_time;
@@ -2140,6 +2140,8 @@ getsize_application_api(
     bsu = backup_support_option(dle->program, g_options, dle->disk, dle->device);
 
     i=0;
+    k = application_property_argv_size(dle);
+    argvchild = malloc((17 + k) * sizeof(char *));
     argvchild[i++] = dle->program;
     argvchild[i++] = "estimate";
     if (bsu->message_line == 1) {
@@ -2165,6 +2167,7 @@ getsize_application_api(
 	g_snprintf(levelstr,SIZEOF(levelstr),"%d",level);
 	argvchild[i++] = levelstr;
     }
+    i += application_property_add_to_argv(&argvchild[i], dle);
 
     argvchild[i] = NULL;
 
@@ -2182,14 +2185,14 @@ getsize_application_api(
     }
 
     if (pipe(pipeinfd) < 0) {
-	*errmsg = vstrallocf(_("getsize_application_api could create data pipes: %s"),
+	*errmsg = vstrallocf(_("getsize_application_api could not create data pipes: %s"),
 			     strerror(errno));
 	dbprintf("%s\n", *errmsg);
 	goto common_exit;
     }
 
     if (pipe(pipeoutfd) < 0) {
-	*errmsg = vstrallocf(_("getsize_application_api could create data pipes: %s"),
+	*errmsg = vstrallocf(_("getsize_application_api could not create data pipes: %s"),
 			     strerror(errno));
 	dbprintf("%s\n", *errmsg);
 	goto common_exit;
@@ -2219,16 +2222,7 @@ getsize_application_api(
 
     aclose(pipeinfd[0]);
     aclose(pipeoutfd[1]);
-
-    toolin = fdopen(pipeinfd[1],"w");
-    if (!toolin) {
-	error("Can't fdopen: %s", strerror(errno));
-	/*NOTREACHED*/
-    }
-
-    output_tool_property(toolin, dle);
-    fflush(toolin);
-    fclose(toolin);
+    aclose(pipeinfd[1]);
 
     dumpout = fdopen(pipeoutfd[0],"r");
     if (!dumpout) {

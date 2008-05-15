@@ -705,6 +705,39 @@ output_tool_property(
 			 tool);
 }
 
+int
+application_property_argv_size(dle_t *dle) {
+    int nb;
+
+    nb = 0;
+    if (dle->include_list)
+	nb += dle->include_list->nb_element;
+    if (dle->include_file)
+	nb += dle->include_file->nb_element;
+    nb++;
+    if (dle->exclude_list)
+	nb += dle->exclude_list->nb_element;
+    if (dle->exclude_file)
+	nb += dle->exclude_file->nb_element;
+    nb++;
+    nb *= 2;  /*name + value */
+    nb += property_argv_size(dle->application_property);
+
+    return nb;
+}
+
+int
+application_property_add_to_argv(
+    char **argvchild,
+    dle_t *dle)
+{
+    char **argv = argvchild;
+
+    g_hash_table_foreach(dle->application_property,
+			&proplist_add_to_argv, &argv);
+    return (argv - argvchild);
+}
+
 backup_support_option_t *
 backup_support_option(
     char       *program,
@@ -820,8 +853,7 @@ run_client_script(
     int     scriptin, scriptout, scripterr;
     char   *cmd;
     char  **argvchild;
-    int     i;
-    FILE   *streamin;
+    int     i, k;
     FILE   *streamout;
     char   *line;
 
@@ -831,7 +863,8 @@ run_client_script(
 	return;
 
     cmd = vstralloc(APPLICATION_DIR, "/", script->plugin, NULL);
-    argvchild = malloc(12 * SIZEOF(char *));
+    k = property_argv_size(script->property);
+    argvchild = malloc((12+k) * SIZEOF(char *));
     i = 0;
     argvchild[i++] = script->plugin;
 
@@ -878,19 +911,14 @@ run_client_script(
 	argvchild[i++] = "--device";
 	argvchild[i++] = stralloc(dle->device);
     }
+    i += property_add_to_argv(&argvchild[i], script->property);
     argvchild[i++] = NULL;
 
     scripterr = fileno(stderr);
     scriptpid = pipespawnv(cmd, STDIN_PIPE|STDOUT_PIPE, 0, &scriptin,
 			   &scriptout, &scripterr, argvchild);
 
-    streamin = fdopen(scriptin, "w");
-    if (script->property) {
-	g_hash_table_foreach(script->property,
-			     &output_tool_proplist,
-			     streamin);
-    }
-    fclose(streamin);
+    close(scriptin);
 
     streamout = fdopen(scriptout, "r");
     if (streamout) {

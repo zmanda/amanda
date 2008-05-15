@@ -65,6 +65,24 @@ void parse_options(char *str,
 		   am_feature_t *features,
 		   int verbose);
 void output_tool_property(FILE *tool, dle_t *dle);
+
+/* Count the size of an ARGV to store all properties of an application for
+ * a dle. include/exclude options are converted to properties.
+ *
+ * @param dle: the dle
+ * @returns: size of an ARGV needed.
+ */
+int application_property_argv_size(dle_t *dle);
+
+/* Add all properties of an application for a dle to an ARGV.
+ * include/exclude options are converted to properties.
+ *
+ * @param argvchild: the ARGV where to store properties.
+ * @param dle: the dle.
+ * @returns: Number of argument added to ARGV.
+ */
+int application_property_add_to_argv(char **argvchild, dle_t *dle);
+
 char *fixup_relative(char *name, char *device);
 backup_support_option_t *backup_support_option(char *program,
 					       g_option_t *g_options,

@@ -288,4 +288,26 @@ void output_tool_proplist(gpointer key_p,
 			  gpointer value_p,
 			  gpointer user_data_p);
 
+/* A GHFunc (callback for g_hash_table_foreach),
+ * Count the number of properties.
+ *
+ * @param key_p: (char *) property name.
+ * @param value_p: (GSList *) property values list.
+ * @param user_data_p: (int *) count are added to that value.
+ */
+void count_proplist(gpointer key_p,
+		    gpointer value_p,
+		    gpointer user_data_p);
+
+/* A GHFunc (callback for g_hash_table_foreach),
+ * Store a property and it's value in an ARGV.
+ *
+ * @param key_p: (char *) property name.
+ * @param value_p: (GSList *) property values list.
+ * @param user_data_p: (char ***) pointer to ARGV.
+ */
+void proplist_add_to_argv(gpointer key_p,
+			  gpointer value_p,
+			  gpointer user_data_p);
+
 #endif	/* UTIL_H */

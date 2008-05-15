@@ -195,7 +195,6 @@ int check_infofile(
     return 0;
 }
 
-
 void
 run_server_script(
     pp_script_t  *pp_script,
@@ -207,7 +206,7 @@ run_server_script(
     int     scriptin, scriptout, scripterr;
     char   *cmd;
     char  **argvchild;
-    int     i;
+    int     i, k;
     FILE   *streamin;
     FILE   *streamout;
     char   *line;
@@ -220,8 +219,9 @@ run_server_script(
 	return;
 
     plugin = pp_script_get_plugin(pp_script);
+    k = property_argv_size(pp_script_get_property(pp_script));
+    argvchild = malloc((12+k) * SIZEOF(char *));
     cmd = vstralloc(APPLICATION_DIR, "/", plugin, NULL);
-    argvchild = malloc(12 * SIZEOF(char *));
     i = 0;
     argvchild[i++] = plugin;
 
@@ -268,6 +268,7 @@ run_server_script(
 	argvchild[i++] = "--device";
 	argvchild[i++] = dp->device;
     }
+    i += property_add_to_argv(&argvchild[i], pp_script_get_property(pp_script));
     argvchild[i++] = NULL;
 
     scripterr = fileno(stderr);

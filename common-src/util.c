@@ -892,6 +892,50 @@ void output_tool_proplist(
     g_fprintf(tool, "\n");
 }
 
+/* A GHFunc (callback for g_hash_table_foreach) */
+void count_proplist(
+    gpointer key_p G_GNUC_UNUSED,
+    gpointer value_p,
+    gpointer user_data_p)
+{
+    GSList  *value_s = value_p;
+    int    *nb = user_data_p;
+    GSList  *value;
+
+    for(value=value_s; value != NULL; value = value->next) {
+	(*nb)++;
+    }
+}
+
+/* A GHFunc (callback for g_hash_table_foreach) */
+void proplist_add_to_argv(
+    gpointer key_p,
+    gpointer value_p,
+    gpointer user_data_p)
+{
+    char     *property_s = key_p;
+    GSList   *value_s = value_p;
+    char   ***argv = user_data_p;
+    GSList   *value;
+    char     *q, *w, *qprop, *qvalue;
+
+    q = quote_string(property_s);
+    /* convert to lower case */
+    for (w=q; *w != '\0'; w++) {
+	*w = tolower(*w);
+    }
+    qprop = stralloc2("--", q);
+    amfree(q);
+    for(value=value_s; value != NULL; value = value->next) {
+	qvalue = quote_string((char *)value->data);
+	**argv = stralloc(qprop);
+	(*argv)++;
+	**argv = qvalue;
+	(*argv)++;
+    }
+    amfree(qprop);
+}
+
 
 /*
  * Process parameters

@@ -1177,4 +1177,18 @@ char *taperalgo2str(taperalgo_t taperalgo);
  */
 gint64 find_multiplier(char * casestr);
 
+/* Compute the size needed in an ARGV to pass all properties
+ *
+ * @param proplist: The property list
+ * @returns: The size required for an ARGV
+ */
+int property_argv_size(proplist_t proplist);
+
+/* Add all properties to an ARGV
+ *
+ * @param argvchild: Pointer to the ARGV.
+ * @param proplist: The property list
+ */
+int property_add_to_argv(char **argvchild, proplist_t proplist);
+
 #endif /* ! CONFFILE_H */
