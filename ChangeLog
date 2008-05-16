@@ -1,3 +1,6 @@
+2008-05-16  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c: Fix conf_parserror use.
+
 2008-05-13 Dan Locks <dwlocks@zmanda.com>
 	* packaging/deb/buildpkg: modified build script to create unsigned
 	  packages

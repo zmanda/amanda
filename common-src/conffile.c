@@ -1573,7 +1573,7 @@ read_block(
 		    if(np->token == tok) break;
 
 		if(np->token == CONF_UNKNOWN)
-		    conf_parserror(errormsg);
+		    conf_parserror("%s", errormsg);
 		else {
 		    np->read_function(np, &valarray[np->parm]);
 		    if(np->validate_function)
