@@ -1,3 +1,7 @@
+2008-05-15  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Makefile.am installcheck/Makefile.am Makefile.am: only build
+	  XFA in server builds
+
 2008-05-15  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.c: Parse send-amreport-on.
 	* common-src/conffile.h (send_amreport_t): New enum for possible value

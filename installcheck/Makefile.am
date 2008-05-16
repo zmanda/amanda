@@ -10,8 +10,7 @@ common_tests = \
 	Amanda_Config \
 	Amanda_Debug \
 	Amanda_MainLoop \
-	Amanda_Types \
-	Amanda_Xfer
+	Amanda_Types
 
 server_tests = \
 	Amanda_Changer \
@@ -20,6 +19,7 @@ server_tests = \
 	Amanda_Device \
 	Amanda_Logfile \
 	Amanda_Tapelist \
+	Amanda_Xfer \
 	bigint \
 	amgetconf
 

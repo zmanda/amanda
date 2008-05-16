@@ -13,7 +13,7 @@ if WANT_TAPE
 TAPE_SUBDIRS = tape-src
 endif
 if WANT_SERVER
-SERVER_SUBDIRS = device-src server-src changer-src
+SERVER_SUBDIRS = device-src server-src changer-src xfer-src
 endif
 if WANT_RESTORE
 RESTORE_SUBDIRS = restore-src
@@ -30,7 +30,6 @@ SUBDIRS = . \
 	config \
 	common-src \
 	amandad-src \
-	xfer-src \
 	$(TAPE_SUBDIRS) \
 	$(CLIENT_SUBDIRS) \
 	$(SERVER_SUBDIRS) \

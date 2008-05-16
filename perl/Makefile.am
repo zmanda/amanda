@@ -158,6 +158,18 @@ Amanda_DB_DATA =
 Amanda_DB_DATA += Amanda/DB/Catalog.pm
 EXTRA_DIST += Amanda/DB/Catalog.pm
 
+# PACKAGE: Amanda::Xfer
+libXferdir = $(amperldir)/auto/Amanda/Xfer
+libXfer_LTLIBRARIES = libXfer.la
+libXfer_la_SOURCES = Amanda/Xfer.c $(AMGLUE_SWG)
+libXfer_la_LDFLAGS = $(PERL_EXT_LDFLAGS)
+libXfer_la_LIBADD = libamglue.la \
+	$(top_builddir)/xfer-src/libamxfer.la \
+	$(top_builddir)/common-src/libamanda.la
+Amanda_DATA += Amanda/Xfer.pm
+EXTRA_DIST += Amanda/Xfer.swg Amanda/Xfer.pm
+MAINTAINERCLEANFILES += Amanda/Xfer.c Amanda/Xfer.pm
+
 endif
 
 # PACKAGE: Amanda::Debug
@@ -235,18 +247,6 @@ DISTCLEANFILES += Amanda/Paths.pm
 Amanda_DATA += Amanda/Constants.pm
 EXTRA_DIST += Amanda/Constants.pm.in
 DISTCLEANFILES += Amanda/Constants.pm
-
-# PACKAGE: Amanda::Xfer
-libXferdir = $(amperldir)/auto/Amanda/Xfer
-libXfer_LTLIBRARIES = libXfer.la
-libXfer_la_SOURCES = Amanda/Xfer.c $(AMGLUE_SWG)
-libXfer_la_LDFLAGS = $(PERL_EXT_LDFLAGS)
-libXfer_la_LIBADD = libamglue.la \
-	$(top_builddir)/xfer-src/libamxfer.la \
-	$(top_builddir)/common-src/libamanda.la
-Amanda_DATA += Amanda/Xfer.pm
-EXTRA_DIST += Amanda/Xfer.swg Amanda/Xfer.pm
-MAINTAINERCLEANFILES += Amanda/Xfer.c Amanda/Xfer.pm
 
 # perl doesn't use the cyg prefix and it doesn't search in the bin
 # directory, dll must be copied to their modules directories.
