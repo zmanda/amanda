@@ -1,3 +1,6 @@
+2008-05-16  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c: Fix conf_parserror use.
+
 2008-05-15  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Makefile.am installcheck/Makefile.am Makefile.am: only build
 	  XFA in server builds
