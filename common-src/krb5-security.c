@@ -332,7 +332,7 @@ krb5_accept(
     void       *datap)
 {
     struct sockaddr_storage sin;
-    socklen_t len;
+    socklen_t_equiv len;
     struct tcp_conn *rc;
     char hostname[NI_MAXHOST];
     int result;

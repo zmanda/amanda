@@ -1107,7 +1107,7 @@ main(
     char *s;
     int ch;
     char *cmd_undo, cmd_undo_ch;
-    socklen_t socklen;
+    socklen_t_equiv socklen;
     struct sockaddr_storage his_addr;
     char *arg = NULL;
     char *cmd;
