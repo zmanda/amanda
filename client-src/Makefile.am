@@ -20,9 +20,6 @@ amlib_LTLIBRARIES =	libamclient.la
 
 amlibexec_PROGRAMS =	noop calcsize killpgrp rundump runtar selfcheck sendbackup sendsize versionsuffix
 
-sbin_SCRIPTS = @CLIENT_SCRIPTS_OPT@
-EXTRA_SCRIPTS =	amhpfixdevs amsinixfixdevs
-
 amlibexec_SCRIPTS = patch-system
 
 CHECK_PERL = $(sbin_SCRIPTS)

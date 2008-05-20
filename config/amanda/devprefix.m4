@@ -4,11 +4,7 @@
 #
 # DESCRIPTION
 #
-#   Check for the prefixes used for particular devices.  If the prefixes
-#   are broken on this system (Sinix and HPUX), suggest how to fix them.
-#
-#   Substitutes CLIENT_SCRIPTS_OPT with the name of the script used to fix
-#   broken systems.
+#   Check for the prefixes used for particular devices.
 #
 #   Defines DEV_PREFIX and RDEV_PREFIX to the appropriate prefixes.
 #
