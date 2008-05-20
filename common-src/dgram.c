@@ -57,7 +57,7 @@ dgram_bind(
     in_port_t *	portp)
 {
     int s, retries;
-    socklen_t len;
+    socklen_t_equiv len;
     struct sockaddr_storage name;
     int save_errno;
     int *portrange;
@@ -117,7 +117,7 @@ dgram_bind(
 out:
     /* find out what name was actually used */
 
-    len = (socklen_t)sizeof(name);
+    len = (socklen_t_equiv)sizeof(name);
     if(getsockname(s, (struct sockaddr *)&name, &len) == -1) {
 	save_errno = errno;
 	dbprintf(_("dgram_bind: getsockname() failed: %s\n"), strerror(save_errno));
@@ -168,7 +168,7 @@ dgram_send_addr(
 	socket_opened = 1;
 #ifdef USE_REUSEADDR
 	r = setsockopt(s, SOL_SOCKET, SO_REUSEADDR,
-		(void *)&on, (socklen_t)sizeof(on));
+		(void *)&on, (socklen_t_equiv)sizeof(on));
 	if (r < 0) {
 	    dbprintf(_("dgram_send_addr: setsockopt(SO_REUSEADDR) failed: %s\n"),
 		      strerror(errno));
@@ -247,7 +247,7 @@ dgram_recv(
     struct timeval to;
     ssize_t size;
     int sock;
-    socklen_t addrlen;
+    socklen_t_equiv addrlen;
     ssize_t nfound;
     int save_errno;
 
@@ -287,7 +287,7 @@ dgram_recv(
 	return nfound;
     }
 
-    addrlen = (socklen_t)sizeof(struct sockaddr_storage);
+    addrlen = (socklen_t_equiv)sizeof(struct sockaddr_storage);
     size = recvfrom(sock, dgram->data, (size_t)MAX_DGRAM, 0,
 		    (struct sockaddr *)fromaddr, &addrlen);
     if(size == -1) {

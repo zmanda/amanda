@@ -224,8 +224,8 @@ connect_port(
 {
     int			save_errno;
     struct servent *	servPort;
-    socklen_t		len;
-    socklen_t		socklen;
+    socklen_t_equiv	len;
+    socklen_t_equiv	socklen;
     int			s;
 
     servPort = getservbyport((int)htons(port), proto);
@@ -322,7 +322,7 @@ bind_portrange(
 {
     in_port_t port;
     in_port_t cnt;
-    socklen_t socklen;
+    socklen_t_equiv socklen;
     struct servent *servPort;
     const in_port_t num_ports = (in_port_t)(last_port - first_port + 1);
     int save_errno = EAGAIN;

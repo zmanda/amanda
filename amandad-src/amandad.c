@@ -290,7 +290,7 @@ main(
 	    }
 #ifdef USE_REUSEADDR
 	    r = setsockopt(in, SOL_SOCKET, SO_REUSEADDR,
-		(void *)&on, (socklen_t)sizeof(on));
+		(void *)&on, (socklen_t_equiv)sizeof(on));
 	    if (r < 0) {
 		dbprintf(_("amandad: setsockopt(SO_REUSEADDR) failed: %s\n"),
 			  strerror(errno));
@@ -306,7 +306,7 @@ main(
 	    sin.sin_addr.s_addr = INADDR_ANY;
 	    sin.sin_port = (in_port_t)htons((in_port_t)atoi(argv[i]));
 #endif
-	    if (bind(in, (struct sockaddr *)&sin, (socklen_t)sizeof(sin)) < 0) {
+	    if (bind(in, (struct sockaddr *)&sin, (socklen_t_equiv)sizeof(sin)) < 0) {
 		error(_("can't bind to port %d: %s\n"), atoi(argv[i]),
 		    strerror(errno));
 		/*NOTREACHED*/
@@ -322,7 +322,7 @@ main(
 	    struct sockaddr_in sin;
 #endif
 	    int sock;
-	    socklen_t n;
+	    socklen_t_equiv n;
 
 	    argv[i] += strlen("-tcp=");
 #ifdef WORKING_IPV6
@@ -336,7 +336,7 @@ main(
 	    }
 #ifdef USE_REUSEADDR
 	    r = setsockopt(sock, SOL_SOCKET, SO_REUSEADDR,
-		(void *)&on, (socklen_t)sizeof(on));
+		(void *)&on, (socklen_t_equiv)sizeof(on));
 	    if (r < 0) {
 		dbprintf(_("amandad: setsockopt(SO_REUSEADDR) failed: %s\n"),
 			  strerror(errno));
@@ -351,13 +351,13 @@ main(
 	    sin.sin_addr.s_addr = INADDR_ANY;
 	    sin.sin_port = (in_port_t)htons((in_port_t)atoi(argv[i]));
 #endif
-	    if (bind(sock, (struct sockaddr *)&sin, (socklen_t)sizeof(sin)) < 0) {
+	    if (bind(sock, (struct sockaddr *)&sin, (socklen_t_equiv)sizeof(sin)) < 0) {
 		error(_("can't bind to port %d: %s\n"), atoi(argv[i]),
 		    strerror(errno));
 		/*NOTREACHED*/
 	    }
 	    listen(sock, 10);
-	    n = (socklen_t)sizeof(sin);
+	    n = (socklen_t_equiv)sizeof(sin);
 	    in = out = accept(sock, (struct sockaddr *)&sin, &n);
 	}
 	/*

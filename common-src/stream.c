@@ -52,7 +52,7 @@ stream_server(
     int    priv)
 {
     int server_socket, retries;
-    socklen_t len;
+    socklen_t_equiv len;
 #if defined(SO_KEEPALIVE) || defined(USE_REUSEADDR)
     const int on = 1;
     int r;
@@ -60,7 +60,7 @@ stream_server(
     struct sockaddr_storage server;
     int save_errno;
     int *portrange;
-    socklen_t socklen;
+    socklen_t_equiv socklen;
     int socket_family;
 
     *portp = USHRT_MAX;				/* in case we error exit */
@@ -100,7 +100,7 @@ stream_server(
 
 #ifdef USE_REUSEADDR
     r = setsockopt(server_socket, SOL_SOCKET, SO_REUSEADDR,
-	(void *)&on, (socklen_t)sizeof(on));
+	(void *)&on, (socklen_t_equiv)sizeof(on));
     if (r < 0) {
 	dbprintf(_("stream_server: setsockopt(SO_REUSEADDR) failed: %s\n"),
 		  strerror(errno));
@@ -174,7 +174,7 @@ out:
 
 #ifdef SO_KEEPALIVE
     r = setsockopt(server_socket, SOL_SOCKET, SO_KEEPALIVE,
-	(void *)&on, (socklen_t)sizeof(on));
+	(void *)&on, (socklen_t_equiv)sizeof(on));
     if(r == -1) {
 	save_errno = errno;
 	dbprintf(_("stream_server: setsockopt(SO_KEEPALIVE) failed: %s\n"),
@@ -311,7 +311,7 @@ stream_client(
 
 /* don't care about these values */
 static struct sockaddr_storage addr;
-static socklen_t addrlen;
+static socklen_t_equiv addrlen;
 
 int
 stream_accept(
@@ -369,7 +369,7 @@ stream_accept(
     } while (nfound <= 0);
 
     while(1) {
-	addrlen = (socklen_t)sizeof(struct sockaddr_storage);
+	addrlen = (socklen_t_equiv)sizeof(struct sockaddr_storage);
 	connected_socket = accept(server_socket,
 				  (struct sockaddr *)&addr,
 				  &addrlen);
@@ -436,7 +436,7 @@ try_socksize(
     /* keep trying, get as big a buffer as possible */
     while((isize > 1024) &&
 	  (setsockopt(sock, SOL_SOCKET,
-		      which, (void *) &isize, (socklen_t)sizeof(isize)) < 0)) {
+		      which, (void *) &isize, (socklen_t_equiv)sizeof(isize)) < 0)) {
 	isize -= 1024;
     }
     if(isize > 1024) {

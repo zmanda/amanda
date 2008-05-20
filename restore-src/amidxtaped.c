@@ -186,7 +186,7 @@ void
 check_security_buffer(
     char *	buffer)
 {
-    socklen_t i;
+    socklen_t_equiv i;
     struct sockaddr_in addr;
     char *s, *fp, ch;
     char *errstr = NULL;
@@ -236,7 +236,7 @@ main(
     char *buf = NULL;
     int data_sock = -1;
     in_port_t data_port = (in_port_t)-1;
-    socklen_t socklen;
+    socklen_t_equiv socklen;
     struct sockaddr_in addr;
     GSList *dumpspecs;
     tapelist_t *tapes = NULL;

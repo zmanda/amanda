@@ -1,3 +1,11 @@
+2008-05-20  Dustin J. Mitchell <dustin@zmanda.com>
+	* configure.in config/amanda/socklen_t_equiv.m4: detect the type (not
+	  necessarily socklen_t used by getpeername et al.
+	* amandad-src/amandad.c server-src/amindexd.c restore-src/amidxtaped.c
+	  common-src/util.c common-src/bsdtcp-security.c common-src/amanda.h
+	  common-src/krb5-security.c common-src/dgram.c common-src/stream.c:
+	  use the type instead of socklen_t
+
 2008-05-14  Dustin J. Mitchell <dustin@zmanda.com>
 	* client-src/amhpfixdevs.sh client-src/Makefile.am
 	  client-src/amsinixfixdevs.sh config/amanda/devprefix.m4:
