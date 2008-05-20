@@ -36,13 +36,13 @@ CHECK_PERL = \
 	    amaddclient \
 	    amoverview \
 	    amserverconfig \
-	    amstatus \
 	    amtoc
 SCRIPTS_PERL =  \
 	    $(CHECK_PERL) \
 	    amdevcheck \
 	    amcheckdump \
-	    amgetconf
+	    amgetconf \
+	    amstatus
 
 SCRIPTS_SHELL = \
 	    amcheckdb \

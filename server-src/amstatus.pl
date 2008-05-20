@@ -1,4 +1,4 @@
-#!@PERL@ -Tw
+#!@PERL@
 #
 
 # Run perl.
@@ -7,8 +7,10 @@ eval '(exit $?0)' && eval 'exec @PERL@ -S $0 ${1+"$@"}'
 		if 0;
 
 require "newgetopt.pl";
+use warnings;
 use Time::Local;
 use Text::ParseWords;
+use Amanda::Util;
 
 delete @ENV{'IFS', 'CDPATH', 'ENV', 'BASH_ENV', 'PATH'};
 $ENV{'PATH'} = "/bin:/usr/bin:/usr/sbin:/sbin";       # force known path
@@ -791,6 +793,7 @@ foreach $host (sort @hosts) {
 
 foreach $host (sort @hosts) {
 	foreach $partition (sort @$host) {
+	   $qpartition = Amanda::Util::quote_string($partition);
 	   foreach $datestamp (sort @datestamp) {
 			$hostpart=&make_hostpart($host,$partition,$datestamp);
 			next if(!defined $estimate{$hostpart} && !defined $flush{$hostpart});
@@ -805,7 +808,7 @@ foreach $host (sort @hosts) {
 					if($estimate{$hostpart} != 1) {
 						if( defined $opt_gestimate) {
 							printf "%8s ", $datestamp if defined $opt_date;
-							printf "%-${maxnamelength}s", "$host:$partition";
+							printf "%-${maxnamelength}s", "$host:$qpartition";
 							print "              getting estimate\n";
 						}
 					}
@@ -813,7 +816,7 @@ foreach $host (sort @hosts) {
 						if(defined $opt_estimate ||
 							(defined $opt_gestimate && $partialestimate{$hostpart} == 1)) {
 							printf "%8s ", $datestamp if defined $opt_date;
-							printf "%-${maxnamelength}s", "$host:$partition";
+							printf "%-${maxnamelength}s", "$host:$qpartition";
 							printf "%2d ",  $level{$hostpart};
 							printf "%9d$unit", $esize{$hostpart};
 							if($partialestimate{$hostpart} == 1) {
@@ -835,7 +838,7 @@ foreach $host (sort @hosts) {
 					elsif (!defined $dump_started{$hostpart} || $dump_started{$hostpart} == 0) {
 						if( defined $opt_failed) {
 							printf "%8s ", $datestamp if defined $opt_date;
-							printf "%-${maxnamelength}s%2d ", "$host:$partition", $level{$hostpart};
+							printf "%-${maxnamelength}s%2d ", "$host:$qpartition", $level{$hostpart};
 							printf "           no estimate\n";
 						}
 						$exit_status |= $STATUS_FAILED;
@@ -865,7 +868,7 @@ foreach $host (sort @hosts) {
 							$dump_finished{$hostpart} == -1) {
 						if(defined $opt_failed) {
 							printf "%8s ", $datestamp if defined $opt_date;
-							printf "%-${maxnamelength}s%2d ", "$host:$partition", $level{$hostpart};
+							printf "%-${maxnamelength}s%2d ", "$host:$qpartition", $level{$hostpart};
 							printf "%9d$unit", $esize{$hostpart};
 							print " dump to tape failed: " . $error{$hostpart};
 							print "\n";
@@ -879,7 +882,7 @@ foreach $host (sort @hosts) {
 							$taper_started{$hostpart} == 1) {
 						if( defined $opt_dumpingtape ) {
 							printf "%8s ", $datestamp if defined $opt_date;
-							printf "%-${maxnamelength}s%2d ", "$host:$partition", $level{$hostpart};
+							printf "%-${maxnamelength}s%2d ", "$host:$qpartition", $level{$hostpart};
 							printf "%9d$unit", $esize{$hostpart};
 							print " dumping to tape";
 							if( defined $starttime ) {
@@ -893,7 +896,7 @@ foreach $host (sort @hosts) {
 					elsif($taper_finished{$hostpart} == 0) {
 						if( defined $opt_writingtape ) {
 							printf "%8s ", $datestamp if defined $opt_date;
-							printf "%-${maxnamelength}s%2d ", "$host:$partition", $level{$hostpart};
+							printf "%-${maxnamelength}s%2d ", "$host:$qpartition", $level{$hostpart};
 							printf "%9d$unit", $size{$hostpart};
 							if($in_flush == 0) {
 								print " writing to tape";
@@ -942,7 +945,7 @@ foreach $host (sort @hosts) {
 						if( defined $opt_failed  ||
 							 (defined $opt_waittaper && ($taper_finished{$hostpart} == -1))) {
 							printf "%8s ", $datestamp if defined $opt_date;
-							printf "%-${maxnamelength}s%2d ", "$host:$partition", $level{$hostpart};
+							printf "%-${maxnamelength}s%2d ", "$host:$qpartition", $level{$hostpart};
 							printf "%9d$unit", $xsize;
 							if($in_flush == 0) {
 								print " failed to tape";
@@ -977,7 +980,7 @@ foreach $host (sort @hosts) {
 					elsif($taper_finished{$hostpart} == 1) {
 						if( defined $opt_finished ) {
 							printf "%8s ", $datestamp if defined $opt_date;
-							printf "%-${maxnamelength}s%2d ", "$host:$partition", $level{$hostpart};
+							printf "%-${maxnamelength}s%2d ", "$host:$qpartition", $level{$hostpart};
 							printf "%9d$unit", $size{$hostpart};
 							if($in_flush == 0) {
 								print " finished";
@@ -1005,7 +1008,7 @@ foreach $host (sort @hosts) {
 					}
 					else {
 						printf "%8s ", $datestamp if defined $opt_date;
-						printf "%-${maxnamelength}s%2d ", "$host:$partition", $level{$hostpart};
+						printf "%-${maxnamelength}s%2d ", "$host:$qpartition", $level{$hostpart};
 						print " unknown state TAPER\n";
 					}
 				}
@@ -1013,7 +1016,7 @@ foreach $host (sort @hosts) {
 					if($dump_started{$hostpart} == -1) {
 						if( defined $opt_failed ) {
 							printf "%8s ", $datestamp if defined $opt_date;
-							printf "%-${maxnamelength}s%2d ", "$host:$partition", $level{$hostpart};
+							printf "%-${maxnamelength}s%2d ", "$host:$qpartition", $level{$hostpart};
 							printf " " . $error{$hostpart} . "\n";
 						}
 						$exit_status |= $STATUS_FAILED;
@@ -1025,7 +1028,7 @@ foreach $host (sort @hosts) {
 						if($estimate{$hostpart} == 1) {
 							if( defined $opt_waitdumping ) {
 								printf "%8s ", $datestamp if defined $opt_date;
-								printf "%-${maxnamelength}s%2d ", "$host:$partition", $level{$hostpart};
+								printf "%-${maxnamelength}s%2d ", "$host:$qpartition", $level{$hostpart};
 								printf "%9d$unit", $esize{$hostpart};
 								print " wait for dumping $error{$hostpart}\n";
 							}
@@ -1040,7 +1043,7 @@ foreach $host (sort @hosts) {
 							$dump_finished{$hostpart} == -1) {
 						if( defined $opt_failed ) {
 							printf "%8s ", $datestamp if defined $opt_date;
-							printf "%-${maxnamelength}s%2d ", "$host:$partition", $level{$hostpart};
+							printf "%-${maxnamelength}s%2d ", "$host:$qpartition", $level{$hostpart};
 							print " ", $error{$hostpart};
 							if( defined $starttime ) {
 								print " (", &showtime($dump_time{$hostpart}), ")";
@@ -1055,7 +1058,7 @@ foreach $host (sort @hosts) {
 							$dump_finished{$hostpart} != 1) {
 						if( defined $opt_dumping ) {
 							printf "%8s ", $datestamp if defined $opt_date;
-							printf "%-${maxnamelength}s%2d ", "$host:$partition", $level{$hostpart};
+							printf "%-${maxnamelength}s%2d ", "$host:$qpartition", $level{$hostpart};
 							printf "%9d$unit", $esize{$hostpart};
 							printf " dumping %8d$unit", $size{$hostpart};
 							if($size{$hostpart} != 0) {
@@ -1077,7 +1080,7 @@ foreach $host (sort @hosts) {
 							$taper_started{$hostpart} != 1) {
 						if( defined $opt_waittaper ) {
 							printf "%8s ", $datestamp if defined $opt_date;
-							printf "%-${maxnamelength}s%2d ", "$host:$partition", $level{$hostpart};
+							printf "%-${maxnamelength}s%2d ", "$host:$qpartition", $level{$hostpart};
 							printf "%9d$unit", $size{$hostpart};
 							print " dump done";
 							if( defined $starttime ) {
@@ -1099,14 +1102,14 @@ foreach $host (sort @hosts) {
 					}
 					else {
 						printf "%8s ", $datestamp if defined $opt_date;
-						printf "%-${maxnamelength}s%2d ", "$host:$partition", $level{$hostpart};
+						printf "%-${maxnamelength}s%2d ", "$host:$qpartition", $level{$hostpart};
 						print " unknown state DUMPER\n";
 					}
 				}
 				elsif(defined $flush{$hostpart}) {
 					if( defined $opt_waittaper ) {
 						printf "%8s ", $datestamp if defined $opt_date;
-						printf "%-${maxnamelength}s%2d ", "$host:$partition", $level{$hostpart};
+						printf "%-${maxnamelength}s%2d ", "$host:$qpartition", $level{$hostpart};
 						printf "%9d$unit", $size{$hostpart};
 						print " waiting to flush";
 						if(defined $partial{$hostpart} && $partial{$hostpart} == 1) {
@@ -1120,7 +1123,7 @@ foreach $host (sort @hosts) {
 				}
 				elsif(defined $level{$hostpart}) {
 					printf "%8s ", $datestamp if defined $opt_date;
-					printf "%-${maxnamelength}s%2d ", "$host:$partition", $level{$hostpart};
+					printf "%-${maxnamelength}s%2d ", "$host:$qpartition", $level{$hostpart};
 					print " unknown state\n";
 				}
 			}

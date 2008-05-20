@@ -1,3 +1,12 @@
+2008-05-20  Jean-Louis Martineau <martineau@zmanda.com>
+	    Dustin J. Mitchell <dustin@zmanda.com>
+	    John Franks <jrfranks@zmanda.com>
+	* server-src/amstatus.pl: quote disknames in amstatus
+	* server-src/Makefile.am: don't check amstatus (since it
+	  uses Amanda::* libs)
+	* perl/Amanda/Util.swg: add (un)quote_string
+	* installcheck/Amanda_Util.pl installcheck/Makefile.am: test it
+
 2008-05-16  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.c: Fix conf_parserror use.
 

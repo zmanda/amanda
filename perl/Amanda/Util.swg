@@ -204,6 +204,29 @@ amglue_add_constant(CONTEXT_DAEMON, pcontext_t);
 amglue_add_constant(CONTEXT_SCRIPTUTIL, pcontext_t);
 amglue_copy_to_tag(pcontext_t, constants);
 
+%perlcode %{
+=item C<quote_string($str)>
+
+Quote a string using Amanda's quoting algorithm.  Strings with no whitespace,
+control, or quote characters are returned unchanged.  An empty string is
+represented as the two-character string C<"">.  Otherwise, tab, newline,
+carriage return, form-feed, backslash, and double-quote (C<">) characters are
+escaped with a backslash and the string is surrounded by double quotes.
+
+=item C<unquote_string($str)>
+
+Unquote a string as quoted with C<quote_string>.
+
+Both C<quote_string> and C<unquote_string> are available under the export tag
+C<:quoting>.
+
+=cut
+%}
+
+char *quote_string(char *);
+char *unquote_string(char *);
+amglue_export_tag(quoting, quote_string unquote_string);
+
 /* -------------------------------------------------------------------------
  * Functions below this line are only meant to be called within this module;
  * do not call them externally. */
