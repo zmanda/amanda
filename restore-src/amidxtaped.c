@@ -44,6 +44,7 @@
 #include "amfeatures.h"
 #include "stream.h"
 #include "amandad.h"
+#include "server_util.h"
 
 #define amidxtaped_debug(i,x) do {	\
 	if ((i) <= debug_amidxtaped) {	\
@@ -469,7 +470,6 @@ main(
     ds = NULL;
 
     if(!tapes && rst_flags->alt_tapedev){
-        sleep(10);
 	dbprintf(_("Looks like we're restoring from a holding file...\n"));
         tapes = unmarshal_tapelist_str(rst_flags->alt_tapedev);
 	tapes->isafile = 1;
@@ -488,6 +488,8 @@ main(
 	atexit(cleanup);
 	get_lock = lock_logfile();
     }
+    if (get_lock)
+	log_add(L_INFO, "%s pid %d", get_pname(), getpid());
 
     /* Init the tape changer */
     if(tapes && use_changer && changer_init() == 0) {
@@ -557,13 +559,14 @@ main(
        re_config && 
        (use_changer || (rst_flags->alt_tapedev && tapedev &&
                         strcmp(rst_flags->alt_tapedev, tapedev) == 0) ) ) {
+	char *process_name = get_master_process(rst_conf_logfile);
 	send_message(cmdout, rst_flags, their_features,
-		     _("%s exists: amdump or amflush is already running, "
+		     _("%s exists: %s is already running, "
 		     "or you must run amcleanup"), 
-		     rst_conf_logfile);
-	error(_("%s exists: amdump or amflush is already running, "
+		     rst_conf_logfile, process_name);
+	error(_("%s exists: %s is already running, "
 	      "or you must run amcleanup"),
-	      rst_conf_logfile);
+	      rst_conf_logfile, process_name);
     }
 
     /* make sure our restore flags aren't crazy */
@@ -597,7 +600,10 @@ main(
 static void
 cleanup(void)
 {
-    if(parent_pid == getpid()) {
-	if(get_lock) unlink(rst_conf_logfile);
+    if (parent_pid == getpid()) {
+	if (get_lock) {
+	    log_add(L_INFO, "pid-done %d\n", getpid());
+	    unlink(rst_conf_logfile);
+	}
     }
 }

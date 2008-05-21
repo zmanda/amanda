@@ -37,6 +37,9 @@
 #include "conffile.h"
 #include "diskfile.h"
 #include "pipespawn.h"
+#include "version.h"
+#include "conffile.h"
+#include "sys/wait.h"
 
 const char *cmdstr[] = {
     "BOGUS", "QUIT", "QUITTING", "DONE", "PARTIAL", 
@@ -307,4 +310,63 @@ run_server_scripts(
 	 pp_scriptlist = pp_scriptlist->next) {
 	run_server_script(pp_scriptlist->data, execute_on, config, dp);
     }
+}
+
+void
+run_amcleanup(
+    char *config_name)
+{
+    pid_t amcleanup_pid;
+    char *amcleanup_program;
+    char *amcleanup_options[4];
+
+    switch(amcleanup_pid = fork()) {
+	case -1:
+	    return;
+	    break;
+	case  0: /* child process */
+	    amcleanup_program = vstralloc(sbindir, "/", "amcleanup", versionsuffix(), NULL);
+	    amcleanup_options[0] = amcleanup_program;
+	    amcleanup_options[1] = "-p";
+	    amcleanup_options[2] = config_name;
+	    amcleanup_options[3] = NULL;
+	    execve(amcleanup_program, amcleanup_options, safe_env());
+	    error("exec %s: %s", amcleanup_program, strerror(errno));
+	    /*NOTREACHED*/
+	default:
+	    break;
+    }
+    waitpid(amcleanup_pid, NULL, 0);
+}
+
+char *
+get_master_process(
+    char *logfile)
+{
+    FILE *log;
+    char line[1024];
+    char *s, ch;
+    char *process_name;
+
+    log = fopen(logfile, "r");
+    if (!log)
+	return stralloc("UNKNOWN");
+
+    while(fgets(line, 1024, log)) {
+	if (strncmp_const(line, "INFO ") == 0) {
+	    s = line+5;
+	    ch = *s++;
+	    process_name = s-1;
+	    skip_non_whitespace(s, ch);
+	    s[-1] = '\0';
+	    skip_whitespace(s, ch);
+	    if (strncmp_const(s-1, "pid ") == 0) {
+		process_name = stralloc(process_name);
+		fclose(log);
+		return process_name;
+	    }
+	}
+    }
+    fclose(log);
+    return stralloc("UNKNOWN");
 }

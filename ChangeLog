@@ -1,4 +1,28 @@
 2008-05-21  Jean-Louis Martineau <martineau@zmanda.com>
+	* man/xml-source/amcleanup.8.xml: Document new -p option.
+	* server-src/logfile.c (program_str): Add many programs.
+	* server-src/logfile.h (program_e): Add many programs.
+	* server-src/dumper.c, server-src/planner.c,
+	  server-src/chunker.c, server-src/amflush.c,
+	  server-src/driver.c, server-src/taper.c,
+	  restore-src/amidxtaped.c, restore-src/restore.c,
+	  restore-src/amfetchdump.c,
+	  server-src/amdump.sh: Log pid and pid-done lines, call run_amclenup.
+	* server-src/server_util.c (run_amcleanup): New function to run
+						    amcleanup.
+	* server-src/server_util.c (get_master_process): New function get the
+				 name of the first pid line in a log file.
+	* server-src/server_util.h (run_amcleanup): Prototype.
+	* server-src/server_util.h (get_master_process): Prototype.
+	* server-src/reporter.c: Ignore pid and pid-done lines.
+	* server-src/amcleanup.pl: New amcleanup program written in perl.
+	* server-src/Makefile.am: Move amcleanup from SCRIPTS_SHELL to
+				  SCRIPTS_PERL.
+	* server-src/amcleanup.sh: Old program removed.
+	* perl/Amanda/Process.pm: New module to hanlde amanda process.
+	* perl/Makefile.am: Add Amanda/Process.pm to Amanda_DATA and EXTRA_DIST
+
+2008-05-21  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/driver.c: Fix quoting of diskname.
 
 2008-05-20  Dustin J. Mitchell <dustin@zmanda.com>

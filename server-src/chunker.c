@@ -169,6 +169,7 @@ main(
 
     dbrename(get_config_name(), DBG_SUBDIR_SERVER);
 
+    log_add(L_INFO, "%s pid %d", get_pname(), getpid());
     g_fprintf(stderr,
 	    _("%s: pid %ld executable %s version %s\n"),
 	    get_pname(), (long) getpid(),
@@ -187,6 +188,7 @@ main(
 	chunker_timestamp = newstralloc(chunker_timestamp, cmdargs.argv[2]);
     }
     else {
+	log_add(L_INFO, "%s pid %d", get_pname(), getpid());
 	error(_("Didn't get START command"));
     }
 
@@ -379,6 +381,8 @@ main(
 	}
 
 /*    } while(cmd != QUIT); */
+
+    log_add(L_INFO, "pid-done %d", getpid());
 
     amfree(errstr);
     amfree(chunker_timestamp);

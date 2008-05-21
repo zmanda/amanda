@@ -52,7 +52,7 @@ char *logtype_str[] = {
 
 char *program_str[] = {
     "UNKNOWN", "planner", "driver", "amreport", "dumper", "chunker",
-    "taper", "amflush"
+    "taper", "amflush", "amdump", "amidxtaped", "amfetchdump", "amcheckdump"
 };
 
 int curlinenum;

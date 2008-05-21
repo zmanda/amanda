@@ -354,6 +354,7 @@ main(
     our_features = am_init_feature_set();
     our_feature_string = am_feature_to_string(our_features);
 
+    log_add(L_INFO, "%s pid %d", get_pname(), getpid());
     g_fprintf(stderr,
 	    _("%s: pid %ld executable %s version %s\n"),
 	    get_pname(), (long) getpid(),
@@ -581,6 +582,8 @@ main(
 	if (outfd != -1)
 	    aclose(outfd);
     } while(cmd != QUIT);
+
+    log_add(L_INFO, "pid-done %d", getpid());
 
     am_release_feature_set(our_features);
     amfree(our_feature_string);
@@ -1221,6 +1224,7 @@ do_dump(
 
 	/*@i@*/ aclose(indexout);
 	waitpid(indexpid,&index_status,0);
+	log_add(L_INFO, "pid-done %d", indexpid);
 	if (rename(indexfile_tmp, indexfile_real) != 0) {
 	    log_add(L_WARNING, _("could not rename \"%s\" to \"%s\": %s"),
 		    indexfile_tmp, indexfile_real, strerror(errno));
@@ -1231,9 +1235,11 @@ do_dump(
 
     if(db->compresspid != -1) {
 	waitpid(db->compresspid,NULL,0);
+	log_add(L_INFO, "pid-done %d", db->compresspid);
     }
     if(db->encryptpid != -1) {
 	waitpid(db->encryptpid,NULL,0);
+	log_add(L_INFO, "pid-done %d", db->encryptpid);
     }
 
     amfree(errstr);
@@ -1250,36 +1256,48 @@ failed:
     if (db->compresspid != -1) {
 	g_fprintf(stderr,_("%s: kill compress command\n"),get_pname());
 	if (kill(db->compresspid, SIGTERM) < 0) {
-	    if (errno != ESRCH)
+	    if (errno != ESRCH) {
 		g_fprintf(stderr,_("%s: can't kill compress command: %s\n"), 
 		    get_pname(), strerror(errno));
+	    } else {
+		log_add(L_INFO, "pid-done %d", db->compresspid);
+	    }
 	}
 	else {
 	    waitpid(db->compresspid,NULL,0);
+	    log_add(L_INFO, "pid-done %d", db->compresspid);
 	}
     }
 
     if (db->encryptpid != -1) {
 	g_fprintf(stderr,_("%s: kill encrypt command\n"),get_pname());
 	if (kill(db->encryptpid, SIGTERM) < 0) {
-	    if (errno != ESRCH)
+	    if (errno != ESRCH) {
 		g_fprintf(stderr,_("%s: can't kill encrypt command: %s\n"), 
 		    get_pname(), strerror(errno));
+	    } else {
+		log_add(L_INFO, "pid-done %d", db->encryptpid);
+	    }
 	}
 	else {
 	    waitpid(db->encryptpid,NULL,0);
+	    log_add(L_INFO, "pid-done %d", db->encryptpid);
 	}
     }
 
     if (indexpid != -1) {
 	g_fprintf(stderr,_("%s: kill index command\n"),get_pname());
 	if (kill(indexpid, SIGTERM) < 0) {
-	    if (errno != ESRCH)
+	    if (errno != ESRCH) {
 		g_fprintf(stderr,_("%s: can't kill index command: %s\n"), 
 		    get_pname(),strerror(errno));
+	    } else {
+		log_add(L_INFO, "pid-done %d", indexpid);
+	    }
 	}
 	else {
 	    waitpid(indexpid,NULL,0);
+	    log_add(L_INFO, "pid-done %d", indexpid);
 	}
     }
 
@@ -1609,13 +1627,20 @@ runcompress(
 	    error(_("err dup2 out: %s"), strerror(errno));
 	    /*NOTREACHED*/
 	}
-	safe_fd(-1, 0);
 	if (comptype != COMP_SERVER_CUST) {
+	    char *base = stralloc(COMPRESS_PATH);
+	    log_add(L_INFO, "%s pid %d", basename(base), getpid());
+	    amfree(base);
+	    safe_fd(-1, 0);
 	    execlp(COMPRESS_PATH, COMPRESS_PATH, (  comptype == COMP_BEST ?
 		COMPRESS_BEST_OPT : COMPRESS_FAST_OPT), (char *)NULL);
 	    error(_("error: couldn't exec %s: %s"), COMPRESS_PATH, strerror(errno));
 	    /*NOTREACHED*/
 	} else if (*srvcompprog) {
+	    char *base = stralloc(srvcompprog);
+	    log_add(L_INFO, "%s pid %d", basename(base), getpid());
+	    amfree(base);
+	    safe_fd(-1, 0);
 	    execlp(srvcompprog, srvcompprog, (char *)0);
 	    error(_("error: couldn't exec server custom filter%s.\n"), srvcompprog);
 	    /*NOTREACHED*/
@@ -1661,7 +1686,8 @@ runencrypt(
 	aclose(outpipe[1]);
 	aclose(outpipe[0]);
 	return (rval);
-    case 0:
+    case 0: {
+	char *base;
 	if (dup2(outpipe[0], 0) < 0) {
 	    error(_("err dup2 in: %s"), strerror(errno));
 	    /*NOTREACHED*/
@@ -1670,11 +1696,15 @@ runencrypt(
 	    error(_("err dup2 out: %s"), strerror(errno));
 	    /*NOTREACHED*/
 	}
+	base = stralloc(srv_encrypt);
+	log_add(L_INFO, "%s pid %d", basename(base), getpid());
+	amfree(base);
 	safe_fd(-1, 0);
 	if ((encrypttype == ENCRYPT_SERV_CUST) && *srv_encrypt) {
 	    execlp(srv_encrypt, srv_encrypt, (char *)0);
 	    error(_("error: couldn't exec server encryption%s.\n"), srv_encrypt);
 	    /*NOTREACHED*/
+	}
 	}
     }
     /*NOTREACHED*/

@@ -23,6 +23,7 @@
 <cmdsynopsis>
   <command>amcleanup</command>    
     <arg choice='opt'><option>-k</option></arg>
+    <arg choice='opt'><option>-p</option></arg>
     <arg choice='opt'><option>-v</option></arg>
     <arg choice='plain'><replaceable>config</replaceable></arg>
 </cmdsynopsis>
@@ -52,7 +53,13 @@ man page for more details about &A;.</para>
   <varlistentry>
   <term><option>-k</option></term>
   <listitem>
-   <para>Kill all Amanda processes.</para>
+   <para>Kill all process listed in the log file are their child. if there is no log file, then kill all amdump and amflush process and their child.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-p</option></term>
+  <listitem>
+   <para>Do the cleanup only if all process listed in the log file are already terminated.</para>
   </listitem>
   </varlistentry>
   <varlistentry>

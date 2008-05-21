@@ -42,11 +42,11 @@ SCRIPTS_PERL =  \
 	    amdevcheck \
 	    amcheckdump \
 	    amgetconf \
+	    amcleanup \
 	    amstatus
 
 SCRIPTS_SHELL = \
 	    amcheckdb \
-	    amcleanup \
 	    amdump \
 	    amrmtape
 

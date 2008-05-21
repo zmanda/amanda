@@ -39,6 +39,7 @@
 #include "changer.h"
 #include "logfile.h"
 #include "cmdline.h"
+#include "server_util.h"
 
 #define CREAT_MODE	0640
 
@@ -417,8 +418,10 @@ main(
     atexit(cleanup);
     get_lock = lock_logfile(); /* config is loaded, should be ok here */
     if(get_lock == 0) {
-	error(_("%s exists: amdump or amflush is already running, or you must run amcleanup"), rst_conf_logfile);
+	char *process_name = get_master_process(rst_conf_logfile);
+	error(_("%s exists: %s is already running, or you must run amcleanup"), rst_conf_logfile, process_name);
     }
+    log_add(L_INFO, "%s pid %d", get_pname(), getpid());
     search_tapes(NULL, stdin, rst_flags->alt_tapedev == NULL,
                  needed_tapes, dumpspecs, rst_flags, NULL);
     cleanup();
@@ -437,7 +440,10 @@ main(
 static void
 cleanup(void)
 {
-    if(parent_pid == getpid()) {
-	if(get_lock) unlink(rst_conf_logfile);
+    if (parent_pid == getpid()) {
+	if (get_lock) {
+	    log_add(L_INFO, "pid-done %d\n", getpid());
+	    unlink(rst_conf_logfile);
+	}
     }
 }

@@ -237,6 +237,7 @@ main(
     our_features = am_init_feature_set();
     our_feature_string = am_feature_to_string(our_features);
 
+    log_add(L_INFO, "%s pid %d", get_pname(), getpid());
     g_fprintf(stderr, _("%s: pid %ld executable %s version %s\n"),
 	    get_pname(), (long) getpid(), argv[0], version());
     for (i = 0; version_info[i] != NULL; i++)
@@ -612,6 +613,7 @@ main(
 
     close_infofile();
     log_add(L_FINISH, _("date %s time %s"), planner_timestamp, walltime_str(curclock()));
+    log_add(L_INFO, "pid-done %d", getpid());
 
     clear_tapelist();
     amfree(planner_timestamp);

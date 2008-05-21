@@ -1953,9 +1953,13 @@ handle_note(void)
 {
     char *str = NULL;
 
-    str = vstrallocf("  %s: %s", program_str[curprog], curstr);
-    addline(&notes, str);
-    amfree(str);
+    /* Don't report the pid lines */
+    if (BSTRNCMP(curstr, "pid ") != 0 &&
+	BSTRNCMP(curstr, "pid-done ") != 0) {
+	str = vstrallocf("  %s: %s", program_str[curprog], curstr);
+	addline(&notes, str);
+	amfree(str);
+    }
 }
 
 

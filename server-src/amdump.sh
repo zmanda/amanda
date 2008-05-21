@@ -97,12 +97,18 @@ if test -f hold; then
 fi
 
 if test -f $errfile || test -f $logdir/log; then
-	echo `_ '%s: amdump or amflush is already running, or you must run amcleanup' "$0"` 1>&2
+	amcleanup$SUF -p $conf
+fi
+
+if test -f $errfile || test -f $logdir/log; then
+	process_name=`grep "^INFO .* .* pid " $logdir/log | head -n 1 | awk '{print $2}'`
+	echo `_ '%s: %s is already running, or you must run amcleanup' "$0" "${process_name}"` 1>&2
 	exit 1
 fi
 
 umask 077
 
+echo "INFO amdump amdump pid $$" > $logdir/log
 exit_code=0
 # Plan and drive the dumps.
 #exec </dev/null >$errfile 2>&1
@@ -170,7 +176,6 @@ while [ $days -ge 2 ]; do
 	ndays=`expr $days - 1`
 	mv $errfile.$ndays $errfile.$days
 	exit_code=$?
-	echo $exit_code
 	[ $exit_code -ne 0 ] && exit_status=$exit_code
 	days=$ndays
 done

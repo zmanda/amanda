@@ -38,6 +38,7 @@
 #include "fileheader.h"
 #include "arglist.h"
 #include "cmdline.h"
+#include "server_util.h"
 #include <signal.h>
 #include <timestamp.h>
 
@@ -125,7 +126,10 @@ handle_sigint(
     (void)sig;	/* Quiet unused parameter warning */
 
     flush_open_outputs(exitassemble, NULL);
-    if(rst_conf_logfile) unlink(rst_conf_logfile);
+    if (rst_conf_logfile) {
+	unlink(rst_conf_logfile);
+	log_add(L_INFO, "pid-done %d\n", getpid());
+    }
     exit(0);
 }
 
@@ -135,8 +139,14 @@ lock_logfile(void)
     rst_conf_logdir = config_dir_relative(getconf_str(CNF_LOGDIR));
     rst_conf_logfile = vstralloc(rst_conf_logdir, "/log", NULL);
     if (access(rst_conf_logfile, F_OK) == 0) {
-	dbprintf(_("%s exists: amdump or amflush is already running, "
-		  "or you must run amcleanup\n"), rst_conf_logfile);
+	run_amcleanup(get_config_name());
+    }
+    if (access(rst_conf_logfile, F_OK) == 0) {
+	char *process_name = get_master_process(rst_conf_logfile);
+	dbprintf(_("%s exists: %s is already running, "
+		  "or you must run amcleanup\n"), rst_conf_logfile,
+		 process_name);
+	amfree(process_name);
 	return 0;
     }
     log_add(L_INFO, get_pname());

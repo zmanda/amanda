@@ -81,4 +81,7 @@ void run_server_scripts(execute_on_t  execute_on,
 			char         *config,
 			disk_t       *dp);
 
+void run_amcleanup(char *config_name);
+char *get_master_process(char *logfile);
+
 #endif	/* SERVER_UTIL_H */

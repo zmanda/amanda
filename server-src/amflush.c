@@ -201,11 +201,16 @@ main(
     conf_logdir = config_dir_relative(getconf_str(CNF_LOGDIR));
     conf_logfile = vstralloc(conf_logdir, "/log", NULL);
     if (access(conf_logfile, F_OK) == 0) {
-	error(_("%s exists: amdump or amflush is already running, or you must run amcleanup"), conf_logfile);
+	run_amcleanup(get_config_name());
+    }
+    if (access(conf_logfile, F_OK) == 0) {
+	char *process_name = get_master_process(conf_logfile);
+	error(_("%s exists: %s is already running, or you must run amcleanup"), conf_logfile, process_name);
 	/*NOTREACHED*/
     }
     amfree(conf_logfile);
 
+    log_add(L_INFO, "%s pid %d", get_pname(), getpid());
     driver_program = vstralloc(amlibexecdir, "/", "driver", versionsuffix(),
 			       NULL);
     reporter_program = vstralloc(sbindir, "/", "amreport", versionsuffix(),
@@ -472,6 +477,8 @@ main(
 	    break;
 	}
     }
+
+    log_add(L_INFO, "pid-done %d", getpid());
 
     /*
      * Call amlogroll to rename the log file to its datestamped version.

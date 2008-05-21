@@ -56,9 +56,9 @@ typedef enum logtype_e {
 
 typedef enum program_e {
     P_UNKNOWN, P_PLANNER, P_DRIVER, P_REPORTER, P_DUMPER, P_CHUNKER,
-    P_TAPER, P_AMFLUSH
+    P_TAPER, P_AMFLUSH, P_AMDUMP, P_AMIDXTAPED, P_AMFETCHDUMP, P_AMCHECKDUMP,
 } program_t;
-#define P_LAST P_AMFLUSH
+#define P_LAST P_AMCHECKDUMP
 
 extern char *logtype_str[];
 
