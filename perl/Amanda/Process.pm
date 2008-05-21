@@ -55,9 +55,11 @@ Amanda::Process -- interface to process
 
   Amanda::Process::kill_process($signal);
 
-  my count = Amanda::Process::process_running();
+  my $count = Amanda::Process::process_running();
 
-  my count = Amanda::Process::count_process();
+  my $count = Amanda::Process::count_process();
+
+  my $alive = Amanda::Process::process_alive($pid, $pname);
 
 =head1 API STATUS
 
@@ -113,6 +115,13 @@ Return the number of amanda process alive.
   my $count = $Amanda_process->count_process();
 
 Return the number of amanda process in the table.
+
+=item process_alive
+
+  my $alive = Amanda::Process::process_alive($pid, $pname);
+
+Return 0 if the process is not alive.
+Return 1 if the process is still alive.
 
 =back
 
@@ -341,5 +350,28 @@ sub count_process() {
     return scalar keys( %{$self->{amprocess}} );
 }
 
+# return if a process is alive.  If $pname is provided,
+# only returns 1 if the name matches.
+#
+# Prerequisites:
+# - %pstable must be set (load_ps_table)
+#
+# @param $pid: the pid of the process
+# @param $pname: the name of the process (optional)
+#
+# @returns: 1 if process is alive
+#           0 if process is dead
+
+sub process_alive() {
+    my $self = shift;
+    my $pid = shift;
+    my $pname = shift;
+
+    if (defined $pname && defined $self->{pstable}->{$pid}) {
+	return $self->{pstable}->{$pid} eq $pname;
+    } else {
+	return defined $self->{pstable}->{$pid};
+    }
+}
 
 1;

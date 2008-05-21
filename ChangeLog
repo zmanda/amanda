@@ -1,4 +1,9 @@
 2008-05-21  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amstatus.pl: Add "failed: killed while" to some status if
+				  the driver process is dead.
+	* perl/Amanda/Process.pm: New process_alive function.
+
+2008-05-21  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/dumper.c server-src/planner.c, server-src/chunker.c,
 	  server-src/amflush.c, server-src/driver.c, server-src/taper.c,
 	  restore-src/amidxtaped.c, restore-src/restore.c,
