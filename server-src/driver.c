@@ -232,7 +232,7 @@ main(
 	}
     }
 
-    log_add(L_INFO, "%s pid %d", get_pname(), getpid());
+    log_add(L_INFO, "%s pid %ld", get_pname(), (long)getpid());
     g_printf(_("%s: pid %ld executable %s version %s\n"),
 	   get_pname(), (long) getpid(), argv[0], version());
 
@@ -545,7 +545,7 @@ main(
     g_printf(_("driver: FINISHED time %s\n"), walltime_str(curclock()));
     fflush(stdout);
     log_add(L_FINISH,_("date %s time %s"), driver_timestamp, walltime_str(curclock()));
-    log_add(L_INFO, "pid-done %d", getpid());
+    log_add(L_INFO, "pid-done %ld", (long)getpid());
     amfree(driver_timestamp);
 
     amfree(dumper_program);

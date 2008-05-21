@@ -421,7 +421,7 @@ main(
 	char *process_name = get_master_process(rst_conf_logfile);
 	error(_("%s exists: %s is already running, or you must run amcleanup"), rst_conf_logfile, process_name);
     }
-    log_add(L_INFO, "%s pid %d", get_pname(), getpid());
+    log_add(L_INFO, "%s pid %ld", get_pname(), (long)getpid());
     search_tapes(NULL, stdin, rst_flags->alt_tapedev == NULL,
                  needed_tapes, dumpspecs, rst_flags, NULL);
     cleanup();
@@ -442,7 +442,7 @@ cleanup(void)
 {
     if (parent_pid == getpid()) {
 	if (get_lock) {
-	    log_add(L_INFO, "pid-done %d\n", getpid());
+	    log_add(L_INFO, "pid-done %ld\n", (long)getpid());
 	    unlink(rst_conf_logfile);
 	}
     }

@@ -128,7 +128,7 @@ handle_sigint(
     flush_open_outputs(exitassemble, NULL);
     if (rst_conf_logfile) {
 	unlink(rst_conf_logfile);
-	log_add(L_INFO, "pid-done %d\n", getpid());
+	log_add(L_INFO, "pid-done %ld\n", (long)getpid());
     }
     exit(0);
 }

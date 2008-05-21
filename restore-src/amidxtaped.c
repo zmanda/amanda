@@ -489,7 +489,7 @@ main(
 	get_lock = lock_logfile();
     }
     if (get_lock)
-	log_add(L_INFO, "%s pid %d", get_pname(), getpid());
+	log_add(L_INFO, "%s pid %ld", get_pname(), (long)getpid());
 
     /* Init the tape changer */
     if(tapes && use_changer && changer_init() == 0) {
@@ -602,7 +602,7 @@ cleanup(void)
 {
     if (parent_pid == getpid()) {
 	if (get_lock) {
-	    log_add(L_INFO, "pid-done %d\n", getpid());
+	    log_add(L_INFO, "pid-done %ld\n", (long)getpid());
 	    unlink(rst_conf_logfile);
 	}
     }

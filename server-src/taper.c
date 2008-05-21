@@ -1187,12 +1187,12 @@ int main(int argc, char ** argv) {
 
     dbrename(get_config_name(), DBG_SUBDIR_SERVER);
 
-    log_add(L_INFO, "%s pid %d", get_pname(), getpid());
+    log_add(L_INFO, "%s pid %ld", get_pname(), (long)getpid());
 
     tapelist_name = config_dir_relative(getconf_str(CNF_TAPELIST));
 
     if (read_tapelist(tapelist_name) != 0) {
-	log_add(L_INFO, "pid-done %d", getpid());
+	log_add(L_INFO, "pid-done %ld", (long)getpid());
         error("could not load tapelist \"%s\"", tapelist_name);
         g_assert_not_reached();
     }
@@ -1200,7 +1200,7 @@ int main(int argc, char ** argv) {
 
     have_changer = changer_init();
     if (have_changer < 0) {
-	log_add(L_INFO, "pid-done %d", getpid());
+	log_add(L_INFO, "pid-done %ld", (long)getpid());
         error("changer initialization failed: %s", strerror(errno));
         g_assert_not_reached();
     }
@@ -1210,11 +1210,11 @@ int main(int argc, char ** argv) {
     state.cur_tape = 0;
     
     if (!find_first_tape(&state)) {
-	log_add(L_INFO, "pid-done %d", getpid());
+	log_add(L_INFO, "pid-done %ld", (long)getpid());
         return EXIT_SUCCESS;
     }
 
     while (process_driver_command(&state));
-    log_add(L_INFO, "pid-done %d", getpid());
+    log_add(L_INFO, "pid-done %ld", (long)getpid());
     return EXIT_SUCCESS;
 }

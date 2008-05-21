@@ -1,4 +1,10 @@
 2008-05-21  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/dumper.c server-src/planner.c, server-src/chunker.c,
+	  server-src/amflush.c, server-src/driver.c, server-src/taper.c,
+	  restore-src/amidxtaped.c, restore-src/restore.c,
+	  restore-src/amfetchdump.c: Convert all pid_t to long before printing.
+
+2008-05-21  Jean-Louis Martineau <martineau@zmanda.com>
 	* man/xml-source/amcleanup.8.xml: Document new -p option.
 	* server-src/logfile.c (program_str): Add many programs.
 	* server-src/logfile.h (program_e): Add many programs.

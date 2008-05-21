@@ -354,7 +354,7 @@ main(
     our_features = am_init_feature_set();
     our_feature_string = am_feature_to_string(our_features);
 
-    log_add(L_INFO, "%s pid %d", get_pname(), getpid());
+    log_add(L_INFO, "%s pid %ld", get_pname(), (long)getpid());
     g_fprintf(stderr,
 	    _("%s: pid %ld executable %s version %s\n"),
 	    get_pname(), (long) getpid(),
@@ -583,7 +583,7 @@ main(
 	    aclose(outfd);
     } while(cmd != QUIT);
 
-    log_add(L_INFO, "pid-done %d", getpid());
+    log_add(L_INFO, "pid-done %ld", (long)getpid());
 
     am_release_feature_set(our_features);
     amfree(our_feature_string);
@@ -1224,7 +1224,7 @@ do_dump(
 
 	/*@i@*/ aclose(indexout);
 	waitpid(indexpid,&index_status,0);
-	log_add(L_INFO, "pid-done %d", indexpid);
+	log_add(L_INFO, "pid-done %ld", (long)indexpid);
 	if (rename(indexfile_tmp, indexfile_real) != 0) {
 	    log_add(L_WARNING, _("could not rename \"%s\" to \"%s\": %s"),
 		    indexfile_tmp, indexfile_real, strerror(errno));
@@ -1235,11 +1235,11 @@ do_dump(
 
     if(db->compresspid != -1) {
 	waitpid(db->compresspid,NULL,0);
-	log_add(L_INFO, "pid-done %d", db->compresspid);
+	log_add(L_INFO, "pid-done %ld", (long)db->compresspid);
     }
     if(db->encryptpid != -1) {
 	waitpid(db->encryptpid,NULL,0);
-	log_add(L_INFO, "pid-done %d", db->encryptpid);
+	log_add(L_INFO, "pid-done %ld", (long)db->encryptpid);
     }
 
     amfree(errstr);
@@ -1260,12 +1260,12 @@ failed:
 		g_fprintf(stderr,_("%s: can't kill compress command: %s\n"), 
 		    get_pname(), strerror(errno));
 	    } else {
-		log_add(L_INFO, "pid-done %d", db->compresspid);
+		log_add(L_INFO, "pid-done %ld", (long)db->compresspid);
 	    }
 	}
 	else {
 	    waitpid(db->compresspid,NULL,0);
-	    log_add(L_INFO, "pid-done %d", db->compresspid);
+	    log_add(L_INFO, "pid-done %ld", (long)db->compresspid);
 	}
     }
 
@@ -1276,12 +1276,12 @@ failed:
 		g_fprintf(stderr,_("%s: can't kill encrypt command: %s\n"), 
 		    get_pname(), strerror(errno));
 	    } else {
-		log_add(L_INFO, "pid-done %d", db->encryptpid);
+		log_add(L_INFO, "pid-done %ld", (long)db->encryptpid);
 	    }
 	}
 	else {
 	    waitpid(db->encryptpid,NULL,0);
-	    log_add(L_INFO, "pid-done %d", db->encryptpid);
+	    log_add(L_INFO, "pid-done %ld", (long)db->encryptpid);
 	}
     }
 
@@ -1292,12 +1292,12 @@ failed:
 		g_fprintf(stderr,_("%s: can't kill index command: %s\n"), 
 		    get_pname(),strerror(errno));
 	    } else {
-		log_add(L_INFO, "pid-done %d", indexpid);
+		log_add(L_INFO, "pid-done %ld", (long)indexpid);
 	    }
 	}
 	else {
 	    waitpid(indexpid,NULL,0);
-	    log_add(L_INFO, "pid-done %d", indexpid);
+	    log_add(L_INFO, "pid-done %ld", (long)indexpid);
 	}
     }
 
@@ -1629,7 +1629,7 @@ runcompress(
 	}
 	if (comptype != COMP_SERVER_CUST) {
 	    char *base = stralloc(COMPRESS_PATH);
-	    log_add(L_INFO, "%s pid %d", basename(base), getpid());
+	    log_add(L_INFO, "%s pid %ld", basename(base), (long)getpid());
 	    amfree(base);
 	    safe_fd(-1, 0);
 	    execlp(COMPRESS_PATH, COMPRESS_PATH, (  comptype == COMP_BEST ?
@@ -1638,7 +1638,7 @@ runcompress(
 	    /*NOTREACHED*/
 	} else if (*srvcompprog) {
 	    char *base = stralloc(srvcompprog);
-	    log_add(L_INFO, "%s pid %d", basename(base), getpid());
+	    log_add(L_INFO, "%s pid %ld", basename(base), (long)getpid());
 	    amfree(base);
 	    safe_fd(-1, 0);
 	    execlp(srvcompprog, srvcompprog, (char *)0);
@@ -1697,7 +1697,7 @@ runencrypt(
 	    /*NOTREACHED*/
 	}
 	base = stralloc(srv_encrypt);
-	log_add(L_INFO, "%s pid %d", basename(base), getpid());
+	log_add(L_INFO, "%s pid %ld", basename(base), (long)getpid());
 	amfree(base);
 	safe_fd(-1, 0);
 	if ((encrypttype == ENCRYPT_SERV_CUST) && *srv_encrypt) {

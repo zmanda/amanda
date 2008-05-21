@@ -210,7 +210,7 @@ main(
     }
     amfree(conf_logfile);
 
-    log_add(L_INFO, "%s pid %d", get_pname(), getpid());
+    log_add(L_INFO, "%s pid %ld", get_pname(), (long)getpid());
     driver_program = vstralloc(amlibexecdir, "/", "driver", versionsuffix(),
 			       NULL);
     reporter_program = vstralloc(sbindir, "/", "amreport", versionsuffix(),
@@ -478,7 +478,7 @@ main(
 	}
     }
 
-    log_add(L_INFO, "pid-done %d", getpid());
+    log_add(L_INFO, "pid-done %ld", (long)getpid());
 
     /*
      * Call amlogroll to rename the log file to its datestamped version.
