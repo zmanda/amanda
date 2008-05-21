@@ -1,0 +1,345 @@
+# Copyright (c) 2005-2008 Zmanda, Inc.  All Rights Reserved.
+# 
+# This library is free software; you can redistribute it and/or modify it
+# under the terms of the GNU Lesser General Public License version 2.1 as 
+# published by the Free Software Foundation.
+# 
+# This library is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+# or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
+# License for more details.
+# 
+# You should have received a copy of the GNU Lesser General Public License
+# along with this library; if not, write to the Free Software Foundation,
+# Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA.
+# 
+# Contact information: Zmanda Inc., 465 S Mathlida Ave, Suite 300
+# Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
+
+package Amanda::Process;
+
+use strict;
+use warnings;
+use Carp;
+use POSIX ();
+use Exporter;
+use vars qw( @ISA @EXPORT_OK );
+@ISA = qw( Exporter );
+
+@EXPORT_OK = qw(
+    reset clean eject label
+    query loadslot find scan
+);
+
+use Amanda::Paths;
+use Amanda::Util;
+use Amanda::MainLoop qw( :GIOCondition );
+use Amanda::Config;
+use Amanda::Device qw( :constants );
+
+=head1 NAME
+
+Amanda::Process -- interface to process
+
+=head1 SYNOPSIS
+
+  use Amanda::Process;
+
+  Amanda::Process::load_ps_table();
+
+  Amanda::Process::scan_log($logfile);
+
+  Amanda::Process::add_child();
+
+  Amanda::Process::set_master($pname, $pid);
+
+  Amanda::Process::kill_process($signal);
+
+  my count = Amanda::Process::process_running();
+
+  my count = Amanda::Process::count_process();
+
+=head1 API STATUS
+
+Stable
+
+=head1 INTERFACE
+
+This module provides an object-oriented interface to track process used by
+amanda.
+
+my $Amanda_process = Amanda::Process->new($verbose);
+
+=over
+
+=item load_ps_table
+
+  $Amanda_process->load_ps_table();
+
+Load a table of all processes in the system.
+
+=item scan_log
+
+  $Amanda_process->scan_log($logfile);
+
+Parse all 'pid' and 'pid-done' lines of the logfile.
+
+=item add_child
+
+  $Amanda_process->add_child();
+
+Add all children of already known amanda processes.
+
+=item set_master
+
+  $Amanda_process->set_master($pname, $pid);
+
+Set $Amanda_process->{master_pname} and $Amanda_process->{master_pid}.
+
+=item kill_process
+
+  $Amanda_process->kill_process($signal);
+
+Send the $signal to all amanda processes.
+
+=item process_running
+
+  my $count = $Amanda_process->process_running();
+
+Return the number of amanda process alive.
+
+=item count_process
+
+  my $count = $Amanda_process->count_process();
+
+Return the number of amanda process in the table.
+
+=back
+
+=cut
+
+sub new {
+    my $class = shift;
+    my ($verbose) = shift;
+
+    my $self = {
+	verbose => $verbose,
+	master_name => "",
+	master_pid => "",
+	pids => {},
+	pstable => {},
+	ppid => {},
+    };
+    bless ($self, $class);
+    return $self;
+}
+
+# Get information about the current set of processes, using ps -e
+# and ps -ef.
+#
+# Side effects:
+# - sets %pstable to a map (pid => process name) of all running
+#   processes
+# - sets %ppid to a map (pid -> parent pid) of all running
+#   processes' parent pids
+#
+sub load_ps_table() {
+    my $self = shift;
+    $self->{pstable} = {};
+    open(PSTABLE, "-|", "ps -e") || die("ps -e: $!");
+    my $psline = <PSTABLE>; #header line
+    while($psline = <PSTABLE>) {
+	$psline =~ /^ *(\d+) .+ \d\d:\d\d:\d\d (.+)$/;
+	my ($pid, $pname) = ($1, $2);
+	$self->{pstable}->{$pid} = $pname;
+    }
+    close(PSTABLE);
+
+    $self->{ppid} = ();
+    open(PSTABLE, "-|", "ps -ef") || die("ps -ef: $!");
+    $psline = <PSTABLE>; #header line
+    while($psline = <PSTABLE>) {
+	chomp $psline;
+	if ($psline =~ /^[^ ]+ +(\d+) (\d+) /) {
+	    my ($pid, $ppid) = ($1, $2);
+	    $self->{ppid}->{$pid} = $ppid;
+	}
+    }
+    close(PSTABLE);
+}
+
+# Scan a logfile for processes that should still be running: processes
+# having an "INFO foo bar pid 1234" line in the log, but no corresponding
+# "INFO pid-done 1234", and only if pid 1234 has the correct process
+# name.
+#
+# Prerequisites:
+#  %pstable must be set up (use load_ps_table)
+#
+# Side effects:
+# - sets %pids to a map (pid => process name) of all still-running
+#   Amanda processes
+# - sets $master_pname to the top-level process for this run (e.g.,
+#   amdump, amflush)
+# - sets $master_pid to the pid of $master_pname
+#
+# @param $logfile: the logfile to scan
+#
+sub scan_log($) {
+    my $self = shift;
+    my $logfile = shift;
+    my $first = 1;
+    my($line);
+
+    open(LOGFILE, "<", $logfile) || die("$logfile: $!");
+    while($line = <LOGFILE>) {
+	if ($line =~ /^INFO .* (.*) pid (\d*)$/) {
+	    my ($pname, $pid) = ($1, $2);
+	    if ($first == 1) {
+		$self->{master_pname} = $pname;
+		$self->{master_pid} = $pid;
+		$first = 0;
+	    }
+	    if (defined $self->{pstable}->{$pid} && $pname eq $self->{pstable}->{$pid}) {
+		$self->{pids}->{$pid} = $pname;
+	    } elsif (defined $self->{pstable}->{$pid}) {
+		print "pid $pid doesn't match: ", $pname, " != ", $self->{pstable}->{$pid}, "\n" if $self->{verbose};
+	    }
+	} elsif ($line =~ /^INFO .* pid-done (\d*)$/) {
+	    my $pid = $1;
+	    print "pid $pid is done\n" if $self->{verbose};
+	    delete $self->{pids}->{$pid};
+	}
+    }
+    close(LOGFILE);
+
+    # log unexpected dead process
+    if ($self->{verbose}) {
+	for my $pid (keys %{$self->{pids}}) {
+	    if (!defined $self->{pstable}->{$pid}) {
+		print "pid $pid is dead\n";
+	    }
+	}
+    }
+}
+
+# Recursive function to add all child processes of $pid to %amprocess.
+#
+# Prerequisites:
+# - %ppid must be set (load_ps_table)
+#
+# Side-effects:
+# - adds all child processes of $pid to %amprocess
+#
+# @param $pid: the process to start at
+#
+sub add_child_pid($);
+sub add_child_pid($) {
+    my $self = shift;
+    my $pid = shift;
+    foreach my $cpid (keys %{$self->{ppid}}) {
+	my $ppid = $self->{ppid}->{$cpid};
+	if ($pid == $ppid) {
+	    if (!defined $self->{amprocess}->{$cpid}) {
+		$self->{amprocess}->{$cpid} = $cpid;
+		$self->add_child_pid($cpid);
+	    }
+	}
+    }
+}
+
+# Find all children of all amanda processes, as determined by traversing
+# the process graph (via %ppid).
+#
+# Prerequisites:
+# - %ppid must be set (load_ps_table)
+# - %pids must be set (scan_log)
+#
+# Side-effects:
+# - sets %amprocess to a map (pid => pid) of all amanda processes, including
+#   children
+#
+sub add_child() {
+    my $self = shift;
+    foreach my $pid (keys %{$self->{pids}}) {
+	if (defined $pid) {
+	    $self->{amprocess}->{$pid} = $pid;
+	}
+    }
+
+    foreach my $pid (keys %{$self->{pids}}) {
+	$self->add_child_pid($pid);
+    }
+}
+
+# Set master_pname and master_pid.
+#
+# Side-effects:
+# - sets $master_pname and $master_pid.
+#
+sub set_master($$) {
+    my $self = shift;
+    my $pname = shift;
+    my $pid = shift;
+
+    $self->{master_pname} = $pname;
+    $self->{master_pid} = $pid;
+    $self->{pids}->{$pid} = $pname;
+}
+
+# Send a signal to all amanda process
+#
+# Side-effects:
+# - All amanda process receive the signal.
+#
+# Prerequisites:
+# - %amprocess must be set (add_child)
+#
+# @param $signal: the signal to send
+#
+sub kill_process($) {
+    my $self = shift;
+    my $signal = shift;
+
+    foreach my $pid (keys %{$self->{amprocess}}) {
+	print "Sendding $signal signal to pid $pid\n" if $self->{verbose};
+	kill $signal, $pid;
+    }
+}
+
+# Count the number of processes in %amprocess that are still running.  This
+# re-runs 'ps -e' every time, so calling it repeatedly may result in a
+# decreasing count.
+#
+# Prerequisites:
+# - %amprocess must be set (add_child)
+#
+# @returns: number of pids in %amprocess that are still alive
+sub process_running() {
+    my $self = shift;
+
+    $self->load_ps_table();
+    my $count = 0;
+    foreach my $pid (keys %{$self->{amprocess}}) {
+	if (defined $self->{pstable}->{$pid}) {
+	    $count++;
+	}
+    }
+
+    return $count;
+}
+
+# Count the number of processes in %amprocess.
+#
+# Prerequisites:
+# - %amprocess must be set (add_child)
+#
+# @returns: number of pids in %amprocess.
+sub count_process() {
+    my $self = shift;
+
+    return scalar keys( %{$self->{amprocess}} );
+}
+
+
+1;
