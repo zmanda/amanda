@@ -1,3 +1,6 @@
+2008-05-21  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/driver.c: Fix quoting of diskname.
+
 2008-05-20  Dustin J. Mitchell <dustin@zmanda.com>
 	* configure.in config/amanda/socklen_t_equiv.m4: detect the type (not
 	  necessarily socklen_t used by getpeername et al.
