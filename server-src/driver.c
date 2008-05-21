@@ -486,10 +486,12 @@ main(
     while(!empty(directq) && taper > 0) {
 	diskp = dequeue_disk(&directq);
 	if (diskp->to_holdingdisk == HOLD_REQUIRED) {
+	    char *qname = quote_string(diskp->name);
 	    log_add(L_FAIL, _("%s %s %s %d [%s]"),
-		diskp->host->hostname, diskp->name, sched(diskp)->datestamp,
+		diskp->host->hostname, qname, sched(diskp)->datestamp,
 		sched(diskp)->level,
 		_("can't dump required holdingdisk"));
+	    amfree(qname);
 	}
 	else if (!degraded_mode) {
 	    taper_state |= TAPER_STATE_DUMP_TO_TAPE;
@@ -497,13 +499,16 @@ main(
 	    event_loop(0);
 	    taper_state &= !TAPER_STATE_DUMP_TO_TAPE;
 	}
-	else
+	else {
+	    char *qname = quote_string(diskp->name);
 	    log_add(L_FAIL, _("%s %s %s %d [%s]"),
-		diskp->host->hostname, diskp->name, sched(diskp)->datestamp,
+		diskp->host->hostname, qname, sched(diskp)->datestamp,
 		sched(diskp)->level,
 		diskp->to_holdingdisk == HOLD_AUTO ?
 		    _("no more holding disk space") :
 		    _("can't dump no-hold disk in degraded mode"));
+	    amfree(qname);
+	}
     }
 
     /* fill up the tape or start new one for taperflush */
@@ -1036,9 +1041,11 @@ start_some_dumps(
 	    if(cmd != PORT) {
 		assignedhd_t **h=NULL;
 		int activehd;
+		char *qname = quote_string(diskp->name);
 
 		g_printf(_("driver: did not get PORT from %s for %s:%s\n"),
-		       chunker->name, diskp->host->hostname, diskp->name);
+		       chunker->name, diskp->host->hostname, qname);
+		amfree(qname);
 		fflush(stdout);
 
 		deallocate_bandwidth(diskp->host->netif, sched(diskp)->est_kps);
@@ -1307,8 +1314,10 @@ handle_taper_result(
             if (!taper_dumper)
                 free_serial(result_argv[2]);
 
+	    qname = quote_string(dp->name);
 	    g_printf(_("driver: finished-cmd time %s taper wrote %s:%s\n"),
-		   walltime_str(curclock()), dp->host->hostname, dp->name);
+		   walltime_str(curclock()), dp->host->hostname, qname);
+	    amfree(qname);
 	    fflush(stdout);
 
 	    if (strcmp(result_argv[3], "INPUT-ERROR") == 0) {
@@ -1410,8 +1419,10 @@ handle_taper_result(
             dp = serial2disk(result_argv[2]);
 	    if (!taper_dumper)
 		free_serial(result_argv[2]);
+	    qname = quote_string(dp->name);
             g_printf(_("driver: finished-cmd time %s taper wrote %s:%s\n"),
-                   walltime_str(curclock()), dp->host->hostname, dp->name);
+                   walltime_str(curclock()), dp->host->hostname, qname);
+	    amfree(qname);
             fflush(stdout);
             log_add(L_WARNING, _("Taper  error: %s"), result_argv[3]);
 	    taper_tape_error = stralloc(result_argv[3]);
@@ -1471,6 +1482,8 @@ static void
 file_taper_result(
     disk_t *dp)
 {
+    char *qname = quote_string(dp->name);
+
     if (taper_result == DONE) {
 	update_info_taper(dp, taper_first_label, taper_first_fileno,
 			  sched(dp)->level);
@@ -1480,14 +1493,14 @@ file_taper_result(
 
     if (taper_input_error) {
 	g_printf("driver: taper failed %s %s: %s\n",
-		   dp->host->hostname, dp->name, taper_input_error);
+		   dp->host->hostname, qname, taper_input_error);
 	if (strcmp(sched(dp)->datestamp, driver_timestamp) == 0) {
 	    if(sched(dp)->taper_attempted >= 2) {
 		log_add(L_FAIL, _("%s %s %s %d [too many taper retries after holding disk error: %s]"),
-		    dp->host->hostname, dp->name, sched(dp)->datestamp,
+		    dp->host->hostname, qname, sched(dp)->datestamp,
 		    sched(dp)->level, taper_input_error);
 		g_printf("driver: taper failed %s %s, too many taper retry after holding disk error\n",
-		   dp->host->hostname, dp->name);
+		   dp->host->hostname, qname);
 		amfree(sched(dp)->destname);
 		amfree(sched(dp)->dumpdate);
 		amfree(sched(dp)->degr_dumpdate);
@@ -1495,10 +1508,10 @@ file_taper_result(
 		amfree(dp->up);
 	    } else {
 		log_add(L_INFO, _("%s %s %s %d [Will retry dump because of holding disk error: %s]"),
-			dp->host->hostname, dp->name, sched(dp)->datestamp,
+			dp->host->hostname, qname, sched(dp)->datestamp,
 			sched(dp)->level, taper_input_error);
 		g_printf("driver: taper will retry %s %s because of holding disk error\n",
-			dp->host->hostname, dp->name);
+			dp->host->hostname, qname);
 		if (dp->to_holdingdisk != HOLD_REQUIRED) {
 		    dp->to_holdingdisk = HOLD_NEVER;
 		    sched(dp)->dump_attempted -= 1;
@@ -1521,10 +1534,10 @@ file_taper_result(
     } else if (taper_tape_error) {
 	if(sched(dp)->taper_attempted >= 2) {
 	    log_add(L_FAIL, _("%s %s %s %d [too many taper retries]"),
-		    dp->host->hostname, dp->name, sched(dp)->datestamp,
+		    dp->host->hostname, qname, sched(dp)->datestamp,
 		    sched(dp)->level);
 	    g_printf("driver: taper failed %s %s, too many taper retry\n",
-		   dp->host->hostname, dp->name);
+		   dp->host->hostname, qname);
 	    amfree(sched(dp)->destname);
 	    amfree(sched(dp)->dumpdate);
 	    amfree(sched(dp)->degr_dumpdate);
@@ -1532,7 +1545,7 @@ file_taper_result(
 	    amfree(dp->up);
 	} else {
 	    g_printf("driver: taper will retry %s %s\n",
-		   dp->host->hostname, dp->name);
+		   dp->host->hostname, qname);
 	    /* Re-insert into taper queue. */
 	    headqueue_disk(&tapeq, dp);
 	}
@@ -1544,6 +1557,8 @@ file_taper_result(
 	amfree(sched(dp)->datestamp);
 	amfree(dp->up);
     }
+
+    amfree(qname);
 
     taper_busy = 0;
     taper_input_error = NULL;
@@ -1773,12 +1788,14 @@ handle_dumper_result(
 	     * case for cleanup.
 	     */
 	    if(sched(dp)->dump_attempted) {
+		char *qname = quote_string(dp->name);
 		log_add(L_FAIL, _("%s %s %s %d [too many dumper retry: %s]"),
-	    	    dp->host->hostname, dp->name, sched(dp)->datestamp,
+	    	    dp->host->hostname, qname, sched(dp)->datestamp,
 	    	    sched(dp)->level, result_argv[3]);
 		g_printf(_("driver: dump failed %s %s %s, too many dumper retry: %s\n"),
-		        result_argv[2], dp->host->hostname, dp->name,
+		        result_argv[2], dp->host->hostname, qname,
 		        result_argv[3]);
+		amfree(qname);
 	    }
 	    /* FALLTHROUGH */
 	case FAILED: /* FAILED <handle> <errstr> */
