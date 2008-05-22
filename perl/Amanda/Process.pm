@@ -24,12 +24,8 @@ use Carp;
 use POSIX ();
 use Exporter;
 use vars qw( @ISA @EXPORT_OK );
+use File::Basename;
 @ISA = qw( Exporter );
-
-@EXPORT_OK = qw(
-    reset clean eject label
-    query loadslot find scan
-);
 
 use Amanda::Paths;
 use Amanda::Util;
@@ -155,24 +151,16 @@ sub new {
 sub load_ps_table() {
     my $self = shift;
     $self->{pstable} = {};
-    open(PSTABLE, "-|", "ps -e") || die("ps -e: $!");
+    $self->{ppid} = ();
+    my $ps_argument = $Amanda::Constants::PS_ARGUMENT;
+    open(PSTABLE, "-|", "ps $ps_argument") || die("ps $ps_argument: $!");
     my $psline = <PSTABLE>; #header line
     while($psline = <PSTABLE>) {
-	$psline =~ /^ *(\d+) .+ \d\d:\d\d:\d\d (.+)$/;
-	my ($pid, $pname) = ($1, $2);
-	$self->{pstable}->{$pid} = $pname;
-    }
-    close(PSTABLE);
-
-    $self->{ppid} = ();
-    open(PSTABLE, "-|", "ps -ef") || die("ps -ef: $!");
-    $psline = <PSTABLE>; #header line
-    while($psline = <PSTABLE>) {
 	chomp $psline;
-	if ($psline =~ /^[^ ]+ +(\d+) (\d+) /) {
-	    my ($pid, $ppid) = ($1, $2);
-	    $self->{ppid}->{$pid} = $ppid;
-	}
+	my ($pid, $ppid, $pname) = split / +/, $psline;
+	$pname = basename($pname);
+	$self->{pstable}->{$pid} = $pname;
+	$self->{ppid}->{$pid} = $ppid;
     }
     close(PSTABLE);
 }
