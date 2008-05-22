@@ -37,7 +37,7 @@ my $Amanda_process = Amanda::Process->new(0);
 
 $Amanda_process->load_ps_table();
 
-is($Amanda_process->{pstable}->{$$}, "perl",
+like($Amanda_process->{pstable}->{$$}, qr/perl/,
    "installcheck is a perl program");
 is($Amanda_process->{ppid}->{$$}, getppid,
    "load_ps_table get correct ppid for installcheck");
