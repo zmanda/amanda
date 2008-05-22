@@ -1,3 +1,9 @@
+2008-05-22  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Process.pm: process_alive return '' if the process is
+				  dead.
+	* installcheck/Amanda_Process.pl: New module to check Amanda::Process.
+	* installcheck/Makefile.am (server_tests): Add Amanda_Process.
+
 2008-05-21  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amstatus.pl: Add "failed: killed while" to some status if
 				  the driver process is dead.

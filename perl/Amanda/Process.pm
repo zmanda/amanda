@@ -360,7 +360,7 @@ sub count_process() {
 # @param $pname: the name of the process (optional)
 #
 # @returns: 1 if process is alive
-#           0 if process is dead
+#           '' if process is dead
 
 sub process_alive() {
     my $self = shift;

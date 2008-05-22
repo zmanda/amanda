@@ -20,6 +20,7 @@ server_tests = \
 	Amanda_Device \
 	Amanda_Logfile \
 	Amanda_Tapelist \
+	Amanda_Process \
 	Amanda_Xfer \
 	bigint \
 	amgetconf
