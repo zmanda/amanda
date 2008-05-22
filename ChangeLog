@@ -1,4 +1,7 @@
 2008-05-22  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Process.pm (load_ps_table): Fix split.
+
+2008-05-22  Jean-Louis Martineau <martineau@zmanda.com>
 	* configure.in: Call AMANDA_PS_ARGUMENT
 	* config/amanda/ps.m4 (AMANDA_PS_ARGUMENT): New macro to find ps
 						    argument.
