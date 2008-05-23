@@ -910,7 +910,7 @@ test_xfer_files(gboolean add_filters)
     unsigned int elts;
     GSource *src;
     char *in_filename = __FILE__;
-    char *out_filename = __FILE__ ".tmp";
+    char *out_filename = "xfer-test.tmp"; /* current directory is writeable */
     int rfd, wfd;
     Xfer *xfer;
     XferElement *elements[4];
@@ -950,6 +950,8 @@ test_xfer_files(gboolean add_filters)
     g_assert(xfer_get_status(xfer) == XFER_DONE);
 
     xfer_unref(xfer);
+
+    unlink(out_filename); /* ignore any errors */
 
     return 1;
 }
