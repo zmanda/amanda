@@ -19,7 +19,7 @@
 use Test::More tests => 12;
 use strict;
 use warnings;
-use POSIX qw(WIFEXITED WEXITSTATUS);
+use POSIX qw(WIFEXITED WEXITSTATUS EINTR);
 
 use lib "@amperldir@";
 use Amanda::MainLoop qw( :GIOCondition );
@@ -324,7 +324,11 @@ use Amanda::MainLoop qw( :GIOCondition );
     # read from the child and wait for it to die.  There's no
     # need to use MainLoop here.
     my $str;
-    POSIX::read($readfd, $str, 1024);
+    while (!defined(POSIX::read($readfd, $str, 1024))) {
+	# we may be interrupted by a SIGCHLD; keep going
+	next if ($! == EINTR);
+	die ("POSIX::read failed: $!");
+    }
     POSIX::close($readfd);
     waitpid($pid, 0);
 

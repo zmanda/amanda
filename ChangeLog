@@ -1,3 +1,7 @@
+2008-05-23  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Amanda_MainLooop.pl: handle SIGCHILD while
+	  reading from dying child
+
 2008-05-22  Dustin J. Mitchell <dustin@zmanda.com>
 	* xfer-src/xfer-test.c: don't try to write to a file in the
 	  source directory
