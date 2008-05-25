@@ -228,12 +228,12 @@ void xfer_element_abort(XferElement *elt);
  * Implemented in source-random.c
  *
  * @param length: bytes to produce
- * @param text_only: output should be in short, textual lines (for debugging)
+ * @param prng_seed: initial value for random number generator
  * @return: new element
  */
 XferElement *xfer_source_random(
     size_t length,
-    gboolean text_only);
+    guint32 prng_seed);
 
 /* A transfer source that provides bytes read from a file descriptor.
  * Reading continues until EOF, but the file descriptor is not closed.
@@ -257,15 +257,18 @@ XferElement * xfer_source_fd(
 XferElement *xfer_filter_xor(
     unsigned char xor_key);
 
-/* A transfer destination that consumes all bytes it is given.
+/* A transfer destination that consumes all bytes it is given, optionally
+ * validating that they match those produced by source_random
  *
  * Implemented in dest-null.c
  *
- * @param debug_print: if TRUE, all data will be printed to stdout
+ * @param prng_seed: if nonzero, validate that the datastream matches
+ *	that produced by a random source with this random seed.  If zero,
+ *	no validation is performed.
  * @return: new element
  */
 XferElement *xfer_dest_null(
-    gboolean debug_print);
+    guint32 prng_seed);
 
 /* A transfer destination that writes bytes to a file descriptor.  The file
  * descriptor is not closed when the transfer is complete.

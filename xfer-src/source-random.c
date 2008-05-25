@@ -19,15 +19,7 @@
 
 #include "amxfer.h"
 #include "amanda.h"
-
-#if USE_RAND
-/* If the C library does not define random(), try to use rand() by
-   defining USE_RAND, but then make sure you are not using hardware
-   compression, because the low-order bits of rand() may not be that
-   random... :-( */
-#define random() rand()
-#define srandom(seed) srand(seed)
-#endif
+#include "simpleprng.h"
 
 /*
  * Class declaration
@@ -57,7 +49,7 @@ typedef struct XferSourceRandom {
     gboolean prolong;
 
     size_t length;
-    gboolean text_only;
+    simpleprng_state_t prng;
 } XferSourceRandom;
 
 /*
@@ -83,28 +75,6 @@ kill_and_wait_for_thread(
     }
 }
 
-static void
-write_gibberish(
-    char *buf,
-    size_t len,
-    gboolean text_only)
-{
-    size_t i;
-
-    /* fill in some new random data.  This is less than "efficient". */
-    if (text_only) {
-	/* printable randomness */
-	for (i = 0; i < len; i++) {
-	    buf[i] = 'a' + (char)(random() % 26);
-	}
-    } else {
-	/* truly random binary data */
-	for (i = 0; i < len; i++) {
-	    buf[i] = (char)random();
-	}
-    }
-}
-
 /*
  * The actual data source, as a GThreadFunc, used for XFER_MECH_WRITEFD output
  */
@@ -115,25 +85,20 @@ random_write_thread(
 {
     XferSourceRandom *self = (XferSourceRandom *)data;
     char buf[10240];
-    size_t buf_used = 10240;
     XMsg *msg;
     size_t length = self->length;
-    gboolean text_only = self->text_only;
     int fd = XFER_ELEMENT(self)->downstream->input_fd;
 
     while (self->prolong && length) {
-	ssize_t written;
+	size_t to_write = MIN(sizeof(buf), length);
+	size_t written;
 
-	/* overwrite any portion of the buffer that has already been written */
-	write_gibberish(buf, buf_used, text_only);
-
-	/* and try to write it to the fd */
-	if ((written = write(fd, buf, min(sizeof(buf), length))) < 0) {
+	simpleprng_fill_buffer(&self->prng, buf, to_write);
+	if ((written = full_write(fd, buf, to_write)) < to_write) {
 	    error("error in write(): %s", strerror(errno));
 	}
 
 	length -= written;
-	buf_used = written;
     }
 
     /* close the write side of the pipe to propagate the EOF */
@@ -189,9 +154,10 @@ pull_buffer_impl(
 	return NULL;
     }
 
+    /* TODO: vary the buffer size here, to exercise handling downstream */
     *size = MIN(10240, self->length);
     buf = g_malloc(*size);
-    write_gibberish(buf, *size, self->text_only);
+    simpleprng_fill_buffer(&self->prng, buf, *size);
 
     self->length -= *size;
 
@@ -271,13 +237,13 @@ xfer_source_random_get_type (void)
 XferElement *
 xfer_source_random(
     size_t length, 
-    gboolean text_only)
+    guint32 prng_seed)
 {
     XferSourceRandom *xsr = (XferSourceRandom *)g_object_new(XFER_SOURCE_RANDOM_TYPE, NULL);
     XferElement *elt = XFER_ELEMENT(xsr);
 
     xsr->length = length;
-    xsr->text_only = text_only;
+    simpleprng_seed(&xsr->prng, prng_seed);
 
     return elt;
 }

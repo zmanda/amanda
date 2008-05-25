@@ -19,6 +19,7 @@
 
 #include "amxfer.h"
 #include "amanda.h"
+#include "simpleprng.h"
 
 /*
  * Class declaration
@@ -44,8 +45,10 @@ static GObjectClass *parent_class = NULL;
 typedef struct XferDestNull {
     XferElement __parent__;
 
-    gboolean debug_print;
     gboolean sent_info;
+
+    gboolean do_verify;
+    simpleprng_state_t prng;
 } XferDestNull;
 
 /*
@@ -63,30 +66,17 @@ typedef struct {
 static void
 push_buffer_impl(
     XferElement *elt,
-    gpointer bufp,
+    gpointer buf,
     size_t len)
 {
     XferDestNull *self = (XferDestNull *)elt;
-    char *buf = bufp;
 
-    if (!buf) {
-	if (self->debug_print)
-	    g_printf("dest-null: EOF\n");
+    if (!buf)
 	return;
-    }
 
-    if (self->debug_print) {
-	size_t i;
-	g_printf("dest-null: ");
-	for (i = 0; i < len; i++) {
-	    if (i && (i % 70 == 0))
-		g_printf("\n         : ");
-	    if (isprint((int)buf[i]))
-		g_printf("%c", buf[i]);
-	    else
-		g_printf("\\x%02x", (int)buf[i]);
-	}
-	g_printf("\n");
+    if (self->do_verify) {
+	if (!simpleprng_verify_buffer(&self->prng, buf, len))
+	    g_critical("XferDestNull verification of incoming bytestream failed");
     }
 
     if (!self->sent_info) {
@@ -147,12 +137,18 @@ xfer_dest_null_get_type (void)
 /* create an element of this class; prototype is in xfer-element.h */
 XferElement *
 xfer_dest_null(
-    gboolean debug_print)
+    guint32 prng_seed)
 {
     XferDestNull *self = (XferDestNull *)g_object_new(XFER_DEST_NULL_TYPE, NULL);
     XferElement *elt = XFER_ELEMENT(self);
 
-    self->debug_print = debug_print;
+    if (prng_seed) {
+	self->do_verify = TRUE;
+	simpleprng_seed(&self->prng, prng_seed);
+    } else {
+	g_assert(0);
+	self->do_verify = FALSE;
+    }
 
     return elt;
 }

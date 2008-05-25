@@ -124,11 +124,11 @@ not close the descriptor.  Be careful not to let Perl close the file for you!
 
 =head3 Amanda::Xfer::Source::Random
 
-  Amanda::Xfer::Source::Random->new($length, $textonly, $mechs);
+  Amanda::Xfer::Source::Random->new($length, $seed);
 
-This source provides I<length> bytes of random data.  If I<textonly> is true,
-then the randomness is limited to printable characters, with regular newlines.
-The I<mechs> parameter should be zero in most cases.
+This source provides I<length> bytes of random data.  C<$seed> is the seed used
+to generate the random numbers; this seed can be used in a destination to
+check for correct output.
 
 =head2 Transfer Filters
 
@@ -151,10 +151,12 @@ for you!
 
 =head3 Amanda::Xfer::Dest::Null
 
-  Amanda::Xfer::Dest::Null->new($debug_print, $mechs);
+  Amanda::Xfer::Dest::Null->new($seed);
 
-This destination discards the data it receives, optionally printing it if
-I<debug_print> is true.  I<mechs> should be zero.
+This destination discards the data it receives.  If C<$seed> is nonzero, then
+the element will validate that it receives the data that
+C<Amanda::Xfer::Source::Random> produced with the same seed.  No validation is
+performed if C<$seed> is zero.
 
 =head1 Amanda::Xfer::Msg objects
 
@@ -499,7 +501,7 @@ char *xfer_element_repr(XferElement *elt);
 %newobject xfer_source_random;
 XferElement *xfer_source_random(
     size_t length,
-    gboolean text_only);
+    guint32 seed);
 
 %newobject xfer_source_fd;
 XferElement *xfer_source_fd(
@@ -511,7 +513,7 @@ XferElement *xfer_filter_xor(
 
 %newobject xfer_dest_null;
 XferElement *xfer_dest_null(
-    gboolean debug_print);
+    guint32 prng_seed);
 
 %newobject xfer_dest_fd;
 XferElement *xfer_dest_fd(

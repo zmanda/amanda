@@ -37,6 +37,7 @@ libamanda_la_SOURCES =		\
 	semaphore.c		\
 	security.c		\
 	security-util.c		\
+	simpleprng.c		\
 	sl.c			\
 	sockaddr-util.c		\
 	stream.c		\
@@ -117,6 +118,7 @@ noinst_HEADERS =		\
 	semaphore.h		\
 	security.h		\
 	security-util.h		\
+	simpleprng.h		\
 	sl.h			\
 	sockaddr-util.h		\
 	stream.h		\

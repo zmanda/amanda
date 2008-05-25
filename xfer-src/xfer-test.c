@@ -25,6 +25,11 @@
 #include "testutils.h"
 #include "amanda.h"
 #include "event.h"
+#include "simpleprng.h"
+
+/* Having tests repeat exactly is an advantage, so we use a hard-coded
+ * random seed. */
+#define RANDOM_SEED 0xf00d
 
 /*
  * XferElement subclasses
@@ -56,6 +61,7 @@ typedef struct XferSourceReadfd {
 
     int write_fd;
     GThread *thread;
+    simpleprng_state_t prng;
 } XferSourceReadfd;
 
 typedef struct {
@@ -68,18 +74,12 @@ source_readfd_thread(
 {
     XferSourceReadfd *self = (XferSourceReadfd *)data;
     char buf[TEST_XFER_SIZE];
-    size_t remaining, j;
     int fd = self->write_fd;
 
-    for (j = 0; j < sizeof(buf); j++) buf[j] = (char)j;
+    simpleprng_fill_buffer(&self->prng, buf, sizeof(buf));
 
-    remaining = sizeof(buf);
-    while (remaining) {
-	ssize_t written;
-	if ((written = write(fd, buf+sizeof(buf)-remaining, remaining)) < 0) {
-	    error("error in write(): %s", strerror(errno));
-	}
-	remaining -= written;
+    if (full_write(fd, buf, sizeof(buf)) < sizeof(buf)) {
+	error("error in full_write(): %s", strerror(errno));
     }
 
     close(fd);
@@ -95,6 +95,8 @@ source_readfd_setup_impl(
 {
     XferSourceReadfd *self = (XferSourceReadfd *)elt;
     int p[2];
+
+    simpleprng_seed(&self->prng, RANDOM_SEED);
 
     if (pipe(p) < 0)
 	g_critical("Error from pipe(): %s", strerror(errno));
@@ -167,6 +169,7 @@ typedef struct XferSourceWritefd {
     XferElement __parent__;
 
     GThread *thread;
+    simpleprng_state_t prng;
 } XferSourceWritefd;
 
 typedef struct {
@@ -179,18 +182,12 @@ source_writefd_thread(
 {
     XferSourceWritefd *self = (XferSourceWritefd *)data;
     char buf[TEST_XFER_SIZE];
-    size_t remaining, j;
     int fd = XFER_ELEMENT(self)->downstream->input_fd;
 
-    for (j = 0; j < sizeof(buf); j++) buf[j] = (char)j;
+    simpleprng_fill_buffer(&self->prng, buf, sizeof(buf));
 
-    remaining = sizeof(buf);
-    while (remaining) {
-	ssize_t written;
-	if ((written = write(fd, buf+sizeof(buf)-remaining, remaining)) < 0) {
-	    error("error in write(): %s", strerror(errno));
-	}
-	remaining -= written;
+    if (full_write(fd, buf, sizeof(buf)) < sizeof(buf)) {
+	error("error in full_write(): %s", strerror(errno));
     }
 
     close(fd);
@@ -206,6 +203,9 @@ source_writefd_start_impl(
     XferElement *elt)
 {
     XferSourceWritefd *self = (XferSourceWritefd *)elt;
+
+    simpleprng_seed(&self->prng, RANDOM_SEED);
+
     self->thread = g_thread_create(source_writefd_thread, (gpointer)self, FALSE, NULL);
 
     return TRUE;
@@ -264,6 +264,7 @@ typedef struct XferSourcePush {
     XferElement __parent__;
 
     GThread *thread;
+    simpleprng_state_t prng;
 } XferSourcePush;
 
 typedef struct {
@@ -277,18 +278,17 @@ source_push_thread(
     XferSourcePush *self = (XferSourcePush *)data;
     char *buf;
     int i;
-    size_t j;
 
     for (i = 0; i < TEST_BLOCK_COUNT; i++) {
 	buf = g_malloc(TEST_BLOCK_SIZE);
-	for (j = 0; j < TEST_BLOCK_SIZE; j++) buf[j] = (char)j;
+	simpleprng_fill_buffer(&self->prng, buf, TEST_BLOCK_SIZE);
 	xfer_element_push_buffer(XFER_ELEMENT(self)->downstream, buf, TEST_BLOCK_SIZE);
 	buf = NULL;
     }
 
     /* send a smaller block */
     buf = g_malloc(TEST_BLOCK_EXTRA);
-    for (j = 0; j < TEST_BLOCK_EXTRA; j++) buf[j] = (char)j;
+    simpleprng_fill_buffer(&self->prng, buf, TEST_BLOCK_EXTRA);
     xfer_element_push_buffer(XFER_ELEMENT(self)->downstream, buf, TEST_BLOCK_EXTRA);
     buf = NULL;
 
@@ -305,6 +305,9 @@ source_push_start_impl(
     XferElement *elt)
 {
     XferSourcePush *self = (XferSourcePush *)elt;
+
+    simpleprng_seed(&self->prng, RANDOM_SEED);
+
     self->thread = g_thread_create(source_push_thread, (gpointer)self, FALSE, NULL);
 
     return TRUE;
@@ -364,6 +367,7 @@ typedef struct XferSourcePull {
 
     gint nbuffers;
     GThread *thread;
+    simpleprng_state_t prng;
 } XferSourcePull;
 
 typedef struct {
@@ -377,7 +381,6 @@ source_pull_pull_buffer_impl(
 {
     XferSourcePull *self = (XferSourcePull *)elt;
     char *buf;
-    size_t j;
     size_t bufsiz;
 
     if (self->nbuffers > TEST_BLOCK_COUNT) {
@@ -389,9 +392,18 @@ source_pull_pull_buffer_impl(
     self->nbuffers++;
 
     buf = g_malloc(bufsiz);
-    for (j = 0; j < bufsiz; j++) buf[j] = (char)j;
+    simpleprng_fill_buffer(&self->prng, buf, bufsiz);
     *size = bufsiz;
     return buf;
+}
+
+static void
+source_pull_setup_impl(
+    XferElement *elt)
+{
+    XferSourcePull *self = (XferSourcePull *)elt;
+
+    simpleprng_seed(&self->prng, RANDOM_SEED);
 }
 
 static void
@@ -405,6 +417,7 @@ source_pull_class_init(
     };
 
     xec->pull_buffer = source_pull_pull_buffer_impl;
+    xec->setup = source_pull_setup_impl;
     xec->mech_pairs = mech_pairs;
 }
 
@@ -447,6 +460,7 @@ typedef struct XferDestReadfd {
     XferElement __parent__;
 
     GThread *thread;
+    simpleprng_state_t prng;
 } XferDestReadfd;
 
 typedef struct {
@@ -459,7 +473,7 @@ dest_readfd_thread(
 {
     XferDestReadfd *self = (XferDestReadfd *)data;
     char buf[TEST_XFER_SIZE];
-    size_t remaining, j;
+    size_t remaining;
     int fd = XFER_ELEMENT(self)->upstream->output_fd;
 
     remaining = sizeof(buf);
@@ -475,8 +489,8 @@ dest_readfd_thread(
     if (read(fd, buf, 10) != 0)
 	g_critical("too much data entering XferDestReadfd");
 
-    for (j = 0; j < sizeof(buf); j++)
-	g_assert(buf[j] == (char)j);
+    if (!simpleprng_verify_buffer(&self->prng, buf, TEST_XFER_SIZE))
+	g_critical("data entering XferDestReadfd does not match");
 
     close(fd);
     XFER_ELEMENT(self)->upstream->output_fd = -1;
@@ -491,6 +505,9 @@ dest_readfd_start_impl(
     XferElement *elt)
 {
     XferDestReadfd *self = (XferDestReadfd *)elt;
+
+    simpleprng_seed(&self->prng, RANDOM_SEED);
+
     self->thread = g_thread_create(dest_readfd_thread, (gpointer)self, FALSE, NULL);
 
     return TRUE;
@@ -550,6 +567,7 @@ typedef struct XferDestWritefd {
 
     int read_fd;
     GThread *thread;
+    simpleprng_state_t prng;
 } XferDestWritefd;
 
 typedef struct {
@@ -562,7 +580,7 @@ dest_writefd_thread(
 {
     XferDestWritefd *self = (XferDestWritefd *)data;
     char buf[TEST_XFER_SIZE];
-    size_t remaining, j;
+    size_t remaining;
     int fd = self->read_fd;
 
     remaining = sizeof(buf);
@@ -578,8 +596,8 @@ dest_writefd_thread(
     if (read(fd, buf, 10) != 0)
 	g_critical("too much data entering XferDestWritefd");
 
-    for (j = 0; j < sizeof(buf); j++)
-	g_assert(buf[j] == (char)j);
+    if (!simpleprng_verify_buffer(&self->prng, buf, TEST_XFER_SIZE))
+	g_critical("data entering XferDestWritefd does not match");
 
     close(fd);
     XFER_ELEMENT(self)->upstream->output_fd = -1;
@@ -595,6 +613,8 @@ dest_writefd_setup_impl(
 {
     XferDestWritefd *self = (XferDestWritefd *)elt;
     int p[2];
+
+    simpleprng_seed(&self->prng, RANDOM_SEED);
 
     if (pipe(p) < 0)
 	g_critical("Error from pipe(): %s", strerror(errno));
@@ -670,6 +690,7 @@ typedef struct XferDestPush {
     size_t bufpos;
 
     GThread *thread;
+    simpleprng_state_t prng;
 } XferDestPush;
 
 typedef struct {
@@ -683,19 +704,27 @@ dest_push_push_buffer_impl(
     size_t size)
 {
     XferDestPush *self = (XferDestPush *)elt;
-    size_t j;
 
     if (buf == NULL) {
 	/* if we're at EOF, verify we got the right bytes */
 	g_assert(self->bufpos == TEST_XFER_SIZE);
-	for (j = 0; j < TEST_XFER_SIZE; j++)
-	    g_assert(self->buf[j] == (char)j);
+	if (!simpleprng_verify_buffer(&self->prng, self->buf, TEST_XFER_SIZE))
+	    g_critical("data entering XferDestPush does not match");
 	return;
     }
 
     g_assert(self->bufpos + size <= TEST_XFER_SIZE);
     memcpy(self->buf + self->bufpos, buf, size);
     self->bufpos += size;
+}
+
+static void
+dest_push_setup_impl(
+    XferElement *elt)
+{
+    XferDestPush *self = (XferDestPush *)elt;
+
+    simpleprng_seed(&self->prng, RANDOM_SEED);
 }
 
 static void
@@ -709,6 +738,7 @@ dest_push_class_init(
     };
 
     xec->push_buffer = dest_push_push_buffer_impl;
+    xec->setup = dest_push_setup_impl;
     xec->mech_pairs = mech_pairs;
 }
 
@@ -751,6 +781,7 @@ typedef struct XferDestPull {
     XferElement __parent__;
 
     GThread *thread;
+    simpleprng_state_t prng;
 } XferDestPull;
 
 typedef struct {
@@ -765,7 +796,6 @@ dest_pull_thread(
     char fullbuf[TEST_XFER_SIZE];
     char *buf;
     size_t bufpos = 0;
-    size_t j;
     size_t size;
 
     while ((buf = xfer_element_pull_buffer(XFER_ELEMENT(self)->upstream, &size))) {
@@ -776,8 +806,8 @@ dest_pull_thread(
 
     /* we're at EOF, so verify we got the right bytes */
     g_assert(bufpos == TEST_XFER_SIZE);
-    for (j = 0; j < TEST_XFER_SIZE; j++)
-	g_assert(fullbuf[j] == (char)j);
+    if (!simpleprng_verify_buffer(&self->prng, fullbuf, TEST_XFER_SIZE))
+	g_critical("data entering XferDestPull does not match");
 
     xfer_queue_message(XFER_ELEMENT(self)->xfer, xmsg_new(XFER_ELEMENT(self), XMSG_DONE, 0));
 
@@ -789,6 +819,9 @@ dest_pull_start_impl(
     XferElement *elt)
 {
     XferDestPull *self = (XferDestPull *)elt;
+
+    simpleprng_seed(&self->prng, RANDOM_SEED);
+
     self->thread = g_thread_create(dest_pull_thread, (gpointer)self, FALSE, NULL);
 
     return TRUE;
@@ -870,10 +903,10 @@ test_xfer_simple(void)
     unsigned int i;
     GSource *src;
     XferElement *elements[] = {
-	xfer_source_random(100*1024, TRUE),
+	xfer_source_random(100*1024, RANDOM_SEED),
 	xfer_filter_xor('d'),
 	xfer_filter_xor('d'),
-	xfer_dest_null(tu_debugging_enabled),
+	xfer_dest_null(RANDOM_SEED),
     };
 
     Xfer *xfer = xfer_new(elements, sizeof(elements)/sizeof(*elements));

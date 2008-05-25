@@ -32,10 +32,12 @@ Amanda::Debug::dbopen("installcheck");
 Amanda::Debug::disable_die_override();
 
 {
+    my $RANDOM_SEED = 0xD00D;
+
     my $xfer = Amanda::Xfer->new([
-	Amanda::Xfer::Source::Random->new(1024*1024, 1),
-	Amanda::Xfer::Filter::Xor->new(0xde),
-	Amanda::Xfer::Dest::Null->new(0),
+	Amanda::Xfer::Source::Random->new(1024*1024, $RANDOM_SEED),
+	Amanda::Xfer::Filter::Xor->new(0), # key of 0 -> no change, so random seeds match
+	Amanda::Xfer::Dest::Null->new($RANDOM_SEED),
     ]);
 
     pass("Creating a transfer doesn't crash"); # hey, it's a start..
@@ -58,16 +60,18 @@ Amanda::Debug::disable_die_override();
 	"XMSG_INFO from Amanda::Xfer::Dest::Null has correct message");
 }
 
-
 {
+    my $RANDOM_SEED = 0xDEADBEEF;
+
     my $xfer1 = Amanda::Xfer->new([
-	Amanda::Xfer::Source::Random->new(1024*1024, 1),
-	Amanda::Xfer::Dest::Null->new(0),
+	Amanda::Xfer::Source::Random->new(1024*1024, $RANDOM_SEED),
+	Amanda::Xfer::Dest::Null->new($RANDOM_SEED),
     ]);
     my $xfer2 = Amanda::Xfer->new([
-	Amanda::Xfer::Source::Random->new(1024*1024*3, 1),
-	Amanda::Xfer::Filter::Xor->new(0xde),
-	Amanda::Xfer::Dest::Null->new(0),
+	Amanda::Xfer::Source::Random->new(1024*1024*3, $RANDOM_SEED),
+	Amanda::Xfer::Filter::Xor->new(0xf0),
+	Amanda::Xfer::Filter::Xor->new(0xf0),
+	Amanda::Xfer::Dest::Null->new($RANDOM_SEED),
     ]);
 
     my $cb = sub {
@@ -91,8 +95,8 @@ Amanda::Debug::disable_die_override();
 Amanda::MainLoop::run();
 pass("Two simultaneous transfers run to completion");
 
-
 {
+    my $RANDOM_SEED = 0xD0DEEDAA;
     my @elts;
 
     # note that, because the Xor filter is flexible, assembling
@@ -100,11 +104,12 @@ pass("Two simultaneous transfers run to completion");
     # pipeline exercises the linking algorithm without wasting
     # too many CPU cycles
 
-    push @elts, Amanda::Xfer::Source::Random->new(1024*1024, 1);
-    for my $i (1 .. 8) {
+    push @elts, Amanda::Xfer::Source::Random->new(1024*1024, $RANDOM_SEED);
+    for my $i (1 .. 4) {
+	push @elts, Amanda::Xfer::Filter::Xor->new($i);
 	push @elts, Amanda::Xfer::Filter::Xor->new($i);
     }
-    push @elts, Amanda::Xfer::Dest::Null->new(0);
+    push @elts, Amanda::Xfer::Dest::Null->new($RANDOM_SEED);
     my $xfer = Amanda::Xfer->new(\@elts);
 
     my $cb = sub {

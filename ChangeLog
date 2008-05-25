@@ -1,3 +1,14 @@
+2008-05-25  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/Makefile.am common-src/simpleprng.c
+	  common-src/simpleprng.h: new simple PRNG module for
+	  reproducible use in tests (bitlength bug fixed).
+	* xfer-src/dest-null.c: verify stream against PRNG
+	* xfer-src/source-random.c: use PRNG to create stream
+	* installcheck/Amanda_Xfer.pl: verify streams in xfers
+	* perl/Amanda/Xfer.swg: use PRNG
+	* xfer-src/xfer-element.h xfer-src/xfer-test.c: use
+	  PRNG to test glue elements
+
 2008-05-23  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Amanda_MainLooop.pl: handle SIGCHILD while
 	  reading from dying child
