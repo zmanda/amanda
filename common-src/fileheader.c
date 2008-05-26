@@ -36,7 +36,7 @@ static const char *	filetype2str(filetype_t);
 static filetype_t	str2filetype(const char *);
 static void		strange_header(dumpfile_t *, const char *,
 				size_t, const char *, const char *);
-static char *		strquotedstr(void);
+static char *		strquotedstr(char **);
 static ssize_t 		hexdump(const char *buffer, size_t len);
 
 void
@@ -80,6 +80,7 @@ parse_file_header(
     size_t lsize;
     char *uqname;
     int in_quotes;
+    char *saveptr;
 
     /* put the buffer into a writable chunk of memory and nul-term it */
     buf = alloc(buflen + 1);
@@ -87,6 +88,7 @@ parse_file_header(
     buf[buflen] = '\0';
     fh_init(file); 
 
+    /* extract the first unquoted line */
     in_quotes = 0;
     for (line = buf, lsize = 0; lsize < buflen; line++) {
 	if ((*line == '\n') && !in_quotes)
@@ -106,7 +108,7 @@ parse_file_header(
     line1[lsize] = '\0';
     *line = '\n';
 
-    tok = strtok(line1, " ");
+    tok = strtok_r(line1, " ", &saveptr);
     if (tok == NULL) {
         g_fprintf(stderr, _("%s: Empty amanda header: buflen=%zu lsize=%zu\n"), get_pname(),
 	    buflen, 
@@ -123,7 +125,7 @@ parse_file_header(
 	return;
     }
 
-    tok = strtok(NULL, " ");
+    tok = strtok_r(NULL, " ", &saveptr);
     if (tok == NULL) {
 	strange_header(file, buffer, buflen, _("<file type>"), tok);
 	goto out;
@@ -132,26 +134,26 @@ parse_file_header(
     
     switch (file->type) {
     case F_TAPESTART:
-	tok = strtok(NULL, " ");
+	tok = strtok_r(NULL, " ", &saveptr);
 	if ((tok == NULL) || (strcmp(tok, "DATE") != 0)) {
 	    strange_header(file, buffer, buflen, "DATE", tok);
 	    goto out;
 	}
 
-	tok = strtok(NULL, " ");
+	tok = strtok_r(NULL, " ", &saveptr);
 	if (tok == NULL) {
 	    strange_header(file, buffer, buflen, _("<date stamp>"), tok);
 	    goto out;
 	}
 	strncpy(file->datestamp, tok, SIZEOF(file->datestamp) - 1);
 
-	tok = strtok(NULL, " ");
+	tok = strtok_r(NULL, " ", &saveptr);
 	if ((tok == NULL) || (strcmp(tok, "TAPE") != 0)) {
 	    strange_header(file, buffer, buflen, "TAPE", tok);
 	    goto out;
 	}
 
-	tok = strtok(NULL, " ");
+	tok = strtok_r(NULL, " ", &saveptr);
 	if (tok == NULL) {
 	    strange_header(file, buffer, buflen, _("<file type>"), tok);
 	    goto out;
@@ -162,21 +164,21 @@ parse_file_header(
     case F_DUMPFILE:
     case F_CONT_DUMPFILE:
     case F_SPLIT_DUMPFILE:
-	tok = strtok(NULL, " ");
+	tok = strtok_r(NULL, " ", &saveptr);
 	if (tok == NULL) {
 	    strange_header(file, buffer, buflen, _("<date stamp>"), tok);
 	    goto out;
 	}
 	strncpy(file->datestamp, tok, SIZEOF(file->datestamp) - 1);
 
-	tok = strtok(NULL, " ");
+	tok = strtok_r(NULL, " ", &saveptr);
 	if (tok == NULL) {
 	    strange_header(file, buffer, buflen, _("<file name>"), tok);
 	    goto out;
 	}
 	strncpy(file->name, tok, SIZEOF(file->name) - 1);
 
-	tok = strquotedstr();
+	tok = strquotedstr(&saveptr);
 	if (tok == NULL) {
 	    strange_header(file, buffer, buflen, _("<disk name>"), tok);
 	    goto out;
@@ -186,13 +188,13 @@ parse_file_header(
  	amfree(uqname);
 	
 	if(file->type == F_SPLIT_DUMPFILE) {
-	    tok = strtok(NULL, " ");
+	    tok = strtok_r(NULL, " ", &saveptr);
 	    if (tok == NULL || strcmp(tok, "part") != 0) {
 		strange_header(file, buffer, buflen, "part", tok);
 		goto out;
 	    }
 
-	    tok = strtok(NULL, "/");
+	    tok = strtok_r(NULL, "/", &saveptr);
 	    if ((tok == NULL) || (sscanf(tok, "%d", &file->partnum) != 1)) {
 		strange_header(file, buffer, buflen, _("<part num param>"), tok);
 		goto out;
@@ -201,32 +203,32 @@ parse_file_header(
 	    /* If totalparts == -1, then the original dump was done in 
  	       streaming mode (no holding disk), thus we don't know how 
                many parts there are. */
-	    tok = strtok(NULL, " ");
+	    tok = strtok_r(NULL, " ", &saveptr);
             if((tok == NULL) || (sscanf(tok, "%d", &file->totalparts) != 1)) {
 		strange_header(file, buffer, buflen, _("<total parts param>"), tok);
 		goto out;
 	    }
 	}
 
-	tok = strtok(NULL, " ");
+	tok = strtok_r(NULL, " ", &saveptr);
 	if ((tok == NULL) || (strcmp(tok, "lev") != 0)) {
 	    strange_header(file, buffer, buflen, "lev", tok);
 	    goto out;
 	}
 
-	tok = strtok(NULL, " ");
+	tok = strtok_r(NULL, " ", &saveptr);
 	if ((tok == NULL) || (sscanf(tok, "%d", &file->dumplevel) != 1)) {
 	    strange_header(file, buffer, buflen, _("<dump level param>"), tok);
 	    goto out;
 	}
 
-	tok = strtok(NULL, " ");
+	tok = strtok_r(NULL, " ", &saveptr);
 	if ((tok == NULL) || (strcmp(tok, "comp") != 0)) {
 	    strange_header(file, buffer, buflen, "comp", tok);
 	    goto out;
 	}
 
-	tok = strtok(NULL, " ");
+	tok = strtok_r(NULL, " ", &saveptr);
 	if (tok == NULL) {
 	    strange_header(file, buffer, buflen, _("<comp param>"), tok);
 	    goto out;
@@ -238,7 +240,7 @@ parse_file_header(
 	if (strcmp(file->comp_suffix, "C") == 0)
 	    strncpy(file->comp_suffix, ".Z", SIZEOF(file->comp_suffix) - 1);
 	       
-	tok = strtok(NULL, " ");
+	tok = strtok_r(NULL, " ", &saveptr);
         /* "program" is optional */
         if (tok == NULL || strcmp(tok, "program") != 0) {
 	    amfree(buf);
@@ -246,7 +248,7 @@ parse_file_header(
             return;
 	}
 
-        tok = strtok(NULL, " ");
+        tok = strtok_r(NULL, " ", &saveptr);
         if (tok == NULL) {
 	    strange_header(file, buffer, buflen, _("<program name>"), tok);
 	    goto out;
@@ -255,12 +257,12 @@ parse_file_header(
         if (file->program[0] == '\0')
             strncpy(file->program, "RESTORE", SIZEOF(file->program) - 1);
 
-	if ((tok = strtok(NULL, " ")) == NULL)
+	if ((tok = strtok_r(NULL, " ", &saveptr)) == NULL)
              break;          /* reached the end of the buffer */
 
 	/* "encryption" is optional */
 	if (BSTRNCMP(tok, "crypt") == 0) {
-	    tok = strtok(NULL, " ");
+	    tok = strtok_r(NULL, " ", &saveptr);
 	    if (tok == NULL) {
 		strange_header(file, buffer, buflen, _("<crypt param>"), tok);
 		goto out;
@@ -268,65 +270,65 @@ parse_file_header(
 	    strncpy(file->encrypt_suffix, tok,
 		    SIZEOF(file->encrypt_suffix) - 1);
 	    file->encrypted = BSTRNCMP(file->encrypt_suffix, "N");
-	    if ((tok = strtok(NULL, " ")) == NULL)
+	    if ((tok = strtok_r(NULL, " ", &saveptr)) == NULL)
 		break;
 	}
 
 	/* "srvcompprog" is optional */
 	if (BSTRNCMP(tok, "server_custom_compress") == 0) {
-	    tok = strtok(NULL, " ");
+	    tok = strtok_r(NULL, " ", &saveptr);
 	    if (tok == NULL) {
 		strange_header(file, buffer, buflen,
 				_("<server custom compress param>"), tok);
 		goto out;
 	    }
 	    strncpy(file->srvcompprog, tok, SIZEOF(file->srvcompprog) - 1);
-	    if ((tok = strtok(NULL, " ")) == NULL)
+	    if ((tok = strtok_r(NULL, " ", &saveptr)) == NULL)
 		break;      
 	}
 
 	/* "clntcompprog" is optional */
 	if (BSTRNCMP(tok, "client_custom_compress") == 0) {
-	    tok = strtok(NULL, " ");
+	    tok = strtok_r(NULL, " ", &saveptr);
 	    if (tok == NULL) {
 		strange_header(file, buffer, buflen,
 				_("<client custom compress param>"), tok);
 		goto out;
 	    }
 	    strncpy(file->clntcompprog, tok, SIZEOF(file->clntcompprog) - 1);
-	    if ((tok = strtok(NULL, " ")) == NULL)
+	    if ((tok = strtok_r(NULL, " ", &saveptr)) == NULL)
 		break;
 	}
 
 	/* "srv_encrypt" is optional */
 	if (BSTRNCMP(tok, "server_encrypt") == 0) {
-	    tok = strtok(NULL, " ");
+	    tok = strtok_r(NULL, " ", &saveptr);
 	    if (tok == NULL) {
 		strange_header(file, buffer, buflen,
 				_("<server encrypt param>"), tok);
 		goto out;
 	    }
 	    strncpy(file->srv_encrypt, tok, SIZEOF(file->srv_encrypt) - 1);
-	    if ((tok = strtok(NULL, " ")) == NULL) 
+	    if ((tok = strtok_r(NULL, " ", &saveptr)) == NULL) 
 		break;
 	}
 
 	/* "clnt_encrypt" is optional */
 	if (BSTRNCMP(tok, "client_encrypt") == 0) {
-	    tok = strtok(NULL, " ");
+	    tok = strtok_r(NULL, " ", &saveptr);
 	    if (tok == NULL) {
 		strange_header(file, buffer, buflen,
 				_("<client encrypt param>"), tok);
 		goto out;
 	    }
 	    strncpy(file->clnt_encrypt, tok, SIZEOF(file->clnt_encrypt) - 1);
-	    if ((tok = strtok(NULL, " ")) == NULL) 
+	    if ((tok = strtok_r(NULL, " ", &saveptr)) == NULL) 
 		break;
 	}
 
 	/* "srv_decrypt_opt" is optional */
 	if (BSTRNCMP(tok, "server_decrypt_option") == 0) {
-	    tok = strtok(NULL, " ");
+	    tok = strtok_r(NULL, " ", &saveptr);
 	    if (tok == NULL) {
 		strange_header(file, buffer, buflen,
 				_("<server decrypt param>"), tok);
@@ -334,13 +336,13 @@ parse_file_header(
 	    }
 	    strncpy(file->srv_decrypt_opt, tok,
 		    SIZEOF(file->srv_decrypt_opt) - 1);
-	    if ((tok = strtok(NULL, " ")) == NULL) 
+	    if ((tok = strtok_r(NULL, " ", &saveptr)) == NULL) 
 		break;
 	}
 
 	/* "clnt_decrypt_opt" is optional */
 	if (BSTRNCMP(tok, "client_decrypt_option") == 0) {
-	    tok = strtok(NULL, " ");
+	    tok = strtok_r(NULL, " ", &saveptr);
 	    if (tok == NULL) {
 		strange_header(file, buffer, buflen,
 				_("<client decrypt param>"), tok);
@@ -348,18 +350,18 @@ parse_file_header(
 	    }
 	    strncpy(file->clnt_decrypt_opt, tok,
 		    SIZEOF(file->clnt_decrypt_opt) - 1);
-	    if ((tok = strtok(NULL, " ")) == NULL) 
+	    if ((tok = strtok_r(NULL, " ", &saveptr)) == NULL) 
 		break;
 	}
       break;
       
 
     case F_TAPEEND:
-	tok = strtok(NULL, " ");
+	tok = strtok_r(NULL, " ", &saveptr);
 	/* DATE is optional */
 	if (tok != NULL) {
 	    if (strcmp(tok, "DATE") == 0) {
-		tok = strtok(NULL, " ");
+		tok = strtok_r(NULL, " ", &saveptr);
 		if(tok == NULL)
 		    file->datestamp[0] = '\0';
 		else
@@ -378,9 +380,9 @@ parse_file_header(
 	goto out;
     }
 
-    (void)strtok(buf, "\n"); /* this is the first line */
+    (void)strtok_r(buf, "\n", &saveptr); /* this is the first line */
     /* iterate through the rest of the lines */
-    while ((line = strtok(NULL, "\n")) != NULL) {
+    while ((line = strtok_r(NULL, "\n", &saveptr)) != NULL) {
 #define SC "CONT_FILENAME="
 	if (strncmp(line, SC, SIZEOF(SC) - 1) == 0) {
 	    line += SIZEOF(SC) - 1;
@@ -836,13 +838,10 @@ dumpfile_t * dumpfile_copy(dumpfile_t* source) {
     return rval;
 }
 
-/*
- * This function modify strtok context.
- */
 static char *
-strquotedstr(void)
+strquotedstr(char **saveptr)
 {
-    char *  tok = strtok(NULL, " ");
+    char *  tok = strtok_r(NULL, " ", saveptr);
     size_t	len;
 
     len = strlen(tok);
@@ -851,7 +850,7 @@ strquotedstr(void)
 	char *	t;
 
 	do {
-	    t = strtok(NULL, " ");
+	    t = strtok_r(NULL, " ", saveptr);
 	    tok[len] = ' ';
 	    len = strlen(tok);
 	} while ((t != NULL) &&

@@ -1,3 +1,11 @@
+2008-05-26  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/rait-device.c: temporarily remove the call to set the
+	  BLOCK_SIZE property on all RAIT children, as it fails with VFS
+	  devices
+	* device-src/rait-device.c: rewrite g_ptr_array_union_robust to
+	  correctly detect and handle child device failures
+	* common-src/fileheader.c: fix parse_file_header to be threadsafe
+
 2008-05-25  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/tape-aix.c, device-src/tape-xenix.c
 	  device-src/tape-posix.c: tape_is_ready take a (TapeDevice *) argument
