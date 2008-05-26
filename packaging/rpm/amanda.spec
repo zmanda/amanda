@@ -649,7 +649,7 @@ if [ ! -d %{AMANDAHOMEDIR}/.gnupg ] ; then
         fi
 fi
 if [ ${ret_val} -eq 0 ]; then
-        echo "`date +'%b %e %Y %T'`: Ensuring correct permissions for '%{SYSCONFDIR}/.gnupg'." >>${TMPFILE}
+        echo "`date +'%b %e %Y %T'`: Ensuring correct permissions for '%{AMANDAHOMEDIR}/.gnupg'." >>${TMPFILE}
         chown %{amanda_user}:%{amanda_group} %{AMANDAHOMEDIR}/.gnupg >>${TMPFILE} 2>&1
         ret_val=$?
         if [ ${ret_val} -eq 0 ]; then
@@ -1052,7 +1052,7 @@ if [ ! -d %{AMANDAHOMEDIR}/.gnupg ] ; then
         fi
 fi
 if [ ${ret_val} -eq 0 ]; then
-        echo "`date +'%b %e %Y %T'`: Ensuring correct permissions for '%{SYSCONFDIR}/.gnupg'." >>${TMPFILE}
+        echo "`date +'%b %e %Y %T'`: Ensuring correct permissions for '%{AMANDAHOMEDIR}/.gnupg'." >>${TMPFILE}
         chown %{amanda_user}:%{amanda_group} %{AMANDAHOMEDIR}/.gnupg >>${TMPFILE} 2>&1
         ret_val=$?
         if [ ${ret_val} -eq 0 ]; then
@@ -1419,7 +1419,7 @@ if [ ! -d %{AMANDAHOMEDIR}/.gnupg ] ; then
         fi
 fi
 if [ ${ret_val} -eq 0 ]; then
-        echo "`date +'%b %e %Y %T'`: Ensuring correct permissions for '%{SYSCONFDIR}/.gnupg'." >>${TMPFILE}
+        echo "`date +'%b %e %Y %T'`: Ensuring correct permissions for '%{AMANDAHOMEDIR}/.gnupg'." >>${TMPFILE}
         chown %{amanda_user}:%{amanda_group} %{AMANDAHOMEDIR}/.gnupg >>${TMPFILE} 2>&1
         ret_val=$?
         if [ ${ret_val} -eq 0 ]; then

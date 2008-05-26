@@ -1,3 +1,6 @@
+2008-05-25  Jean-Louis Martineau <martineau@zmanda.com>
+        * packaging/rpm/amanda.spec: Fix output message.
+
 2008-05-21  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/driver.c: Fix quoting of diskname.
 
