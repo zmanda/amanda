@@ -25,6 +25,7 @@ use POSIX ();
 use Exporter;
 use vars qw( @ISA @EXPORT_OK );
 use File::Basename;
+use Amanda::Constants;
 @ISA = qw( Exporter );
 
 use Amanda::Paths;

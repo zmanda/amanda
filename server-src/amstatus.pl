@@ -8,6 +8,7 @@ eval '(exit $?0)' && eval 'exec @PERL@ -S $0 ${1+"$@"}'
 
 require "newgetopt.pl";
 use warnings;
+use lib '@amperldir@';
 use Time::Local;
 use Text::ParseWords;
 use Amanda::Util;
