@@ -267,6 +267,9 @@ void device_property_init(void) {
     device_property_fill_and_register(&device_property_max_volume_usage,
                                       G_TYPE_UINT64, "max_volume_usage",
       "Artificial limit to data written to volume.");
+    device_property_fill_and_register(&device_property_broken_gmt_online,
+                                      G_TYPE_BOOLEAN, "broken_gmt_online",
+      "Does this drive support the GMT_ONLINE macro?");
     device_property_fill_and_register(&device_property_fsf,
                                       FEATURE_SUPPORT_FLAGS_TYPE, "fsf",
       "Does this drive support the MTFSF command?");
@@ -322,6 +325,7 @@ DevicePropertyBase device_property_medium_access_type;
 DevicePropertyBase device_property_partial_deletion;
 DevicePropertyBase device_property_free_space;
 DevicePropertyBase device_property_max_volume_usage;
+DevicePropertyBase device_property_broken_gmt_online;
 DevicePropertyBase device_property_fsf;
 DevicePropertyBase device_property_bsf;
 DevicePropertyBase device_property_fsr;

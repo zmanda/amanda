@@ -1,4 +1,14 @@
 2008-05-25  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/tape-aix.c, device-src/tape-xenix.c
+	  device-src/tape-posix.c: tape_is_ready take a (TapeDevice *) argument
+	* device-src/tape-posix.c (tape_is_ready): Check for broken_gmt_online.
+	* device-src/property.c: Add broken_gmt_online property.
+	* device-src/property.h: Add PROPERTY_BROKEN_GMT_ONLINE.
+	* device-src/tape-device.c: Use broken_gmt_online property.
+	* device-src/tape-device.h (TapeDevice): Add broken_gmt_online field.
+	* device-src/tape-ops.h (tape_is_ready): Change prototype.
+
+2008-05-25  Jean-Louis Martineau <martineau@zmanda.com>
 	* changer-src/chg-zd-mtx.sh: Fix logging.
 
 2008-05-25  Jean-Louis Martineau <martineau@zmanda.com>

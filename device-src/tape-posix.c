@@ -148,13 +148,13 @@ DeviceStatusFlags tape_is_tape_device(int fd) {
     }
 }
 
-DeviceStatusFlags tape_is_ready(int fd) {
+DeviceStatusFlags tape_is_ready(TapeDevice *t_self) {
     struct mtget get;
-    if (0 == ioctl(fd, MTIOCGET, &get)) {
+    if (0 == ioctl(t_self->fd, MTIOCGET, &get)) {
 #if defined(GMT_ONLINE) || defined(GMT_DR_OPEN)
         if (1
 #ifdef GMT_ONLINE
-            && GMT_ONLINE(get.mt_gstat)
+            && (t_self->broken_gmt_online || GMT_ONLINE(get.mt_gstat))
 #endif
 #ifdef GMT_DR_OPEN
             && !GMT_DR_OPEN(get.mt_gstat)

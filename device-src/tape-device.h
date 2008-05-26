@@ -46,7 +46,7 @@ typedef struct _TapeDevice {
     guint min_block_size, max_block_size, fixed_block_size, read_block_size;
     FeatureSupportFlags fsf, bsf, fsr, bsr, eom, bsf_after_eom;
     int final_filemarks;
-    gboolean compression;
+    gboolean compression, broken_gmt_online;
     /* 0 if we opened with O_RDWR; error otherwise. */
     gboolean write_open_errno;
     gboolean first_file; /* Is this the first file in append mode? */

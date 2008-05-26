@@ -96,7 +96,7 @@ TapeCheckResult tape_is_tape_device(int fd) {
     return TAPE_CHECK_UNKNOWN;
 }
 
-TapeCheckResult tape_is_ready(int fd) {
+TapeCheckResult tape_is_ready(TapeDevice *t_self) {
     return TAPE_CHECK_UNKNOWN;
 }
 

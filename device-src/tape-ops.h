@@ -49,7 +49,7 @@ gboolean tape_weof(int fd, guint8 count);
 gboolean tape_setcompression(int fd, gboolean on);
 
 DeviceStatusFlags tape_is_tape_device(int fd);
-DeviceStatusFlags tape_is_ready(int fd);
+DeviceStatusFlags tape_is_ready(TapeDevice *t_self);
 
 /* Also implemented in above files. Sets properties on the device. */
 void tape_device_discover_capabilities(TapeDevice * self);

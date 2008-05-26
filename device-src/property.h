@@ -230,6 +230,10 @@ extern DevicePropertyBase device_property_free_space;
 extern DevicePropertyBase device_property_max_volume_usage;
 #define PROPERTY_MAX_VOLUME_USAGE (device_property_max_volume_usage.ID)
 
+/* If GMT_ONLINE is broken for the drive */
+extern DevicePropertyBase device_property_broken_gmt_online;
+#define PROPERTY_BROKEN_GMT_ONLINE (device_property_broken_gmt_online.ID)
+
 /* Tape device properties. These properties do not exist on non-linear
    devices. All of them have a value type of FeatureSupportFlags. */
 extern DevicePropertyBase device_property_fsf;
