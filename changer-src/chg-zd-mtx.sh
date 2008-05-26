@@ -385,7 +385,7 @@ Exit() {
 ###
 
 Run() {
-	Log `_ 'Running: %s' "$@"`
+	Log `_ 'Running: %s' "$*"`
 	rm -f $stdout $stderr
 	"$@" > $stdout 2> $stderr
 	exitcode=$?
