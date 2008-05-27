@@ -154,16 +154,37 @@ sub load_ps_table() {
     $self->{pstable} = {};
     $self->{ppid} = ();
     my $ps_argument = $Amanda::Constants::PS_ARGUMENT;
-    open(PSTABLE, "-|", "ps $ps_argument") || die("ps $ps_argument: $!");
-    my $psline = <PSTABLE>; #header line
-    while($psline = <PSTABLE>) {
-	chomp $psline;
-	my ($pid, $ppid, $pname) = split " ", $psline;
-	$pname = basename($pname);
-	$self->{pstable}->{$pid} = $pname;
-	$self->{ppid}->{$pid} = $ppid;
+    if ($ps_argument eq "CYGWIN") {
+	open(PSTABLE, "-|", "ps -ef") || die("ps -ef: $!");
+	my $psline = <PSTABLE>; #header line
+	while($psline = <PSTABLE>) {
+	    chomp $psline;
+	    my @psline = split " ", $psline;
+	    my $pid = $psline[1];
+	    my $ppid = $psline[2];
+	    my $stime = $psline[4];
+	    my $pname;
+	    if ($stime =~ /:/) {  # 10:32:44
+		$pname = basename($psline[5])
+	    } else {              # May 22
+		$pname = basename($psline[6])
+	    }
+	    $self->{pstable}->{$pid} = $pname;
+	    $self->{ppid}->{$pid} = $ppid;
+	}
+	close(PSTABLE);
+    } else {
+	open(PSTABLE, "-|", "ps $ps_argument") || die("ps $ps_argument: $!");
+	my $psline = <PSTABLE>; #header line
+	while($psline = <PSTABLE>) {
+	    chomp $psline;
+	    my ($pid, $ppid, $pname) = split " ", $psline;
+	    $pname = basename($pname);
+	    $self->{pstable}->{$pid} = $pname;
+	    $self->{ppid}->{$pid} = $ppid;
+	}
+	close(PSTABLE);
     }
-    close(PSTABLE);
 }
 
 # Scan a logfile for processes that should still be running: processes

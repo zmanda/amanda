@@ -12,7 +12,14 @@ AC_DEFUN([AMANDA_PS_ARGUMENT],
 	if test $? -eq 0; then
 	    PS_ARGUMENT="-aAco pid,ppid,command"
 	else
-	    AC_MSG_ERROR([Can't find ps argument to use.])
+	    case "$target" in
+		*-pc-cygwin)
+		   PS_ARGUMENT=CYGWIN
+		   ;;
+		*) 
+		   AC_MSG_ERROR([Can't find ps argument to use.])
+		   ;;
+	    esac
 	fi
     fi
     AC_MSG_RESULT(PS_ARGUMENT)
