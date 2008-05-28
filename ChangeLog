@@ -1,3 +1,7 @@
+2008-05-28  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/rait-device.c: rait-device returns correct size when
+	  blocksize is too small
+
 2008-05-28  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/reporter.c: Fix ignoring pid line.
 

@@ -1183,7 +1183,7 @@ static int g_ptr_array_count(GPtrArray * array, BooleanExtractor filter) {
 }
 
 static gboolean raid_block_reconstruction(RaitDevice * self, GPtrArray * ops,
-                                      gpointer buf) {
+                                      gpointer buf, size_t bufsize) {
     guint num_children, data_children;
     int blocksize, child_blocksize;
     guint i;
@@ -1207,6 +1207,7 @@ static gboolean raid_block_reconstruction(RaitDevice * self, GPtrArray * ops,
         if ((int)(op->base.child_index) == parity_child) {
             parity_block = op->buffer;
         } else {
+	    g_assert(child_blocksize * (op->base.child_index+1) <= bufsize);
             memcpy((char *)buf + child_blocksize * op->base.child_index, op->buffer,
                    child_blocksize);
         }
@@ -1282,6 +1283,7 @@ rait_device_read_block (Device * dself, gpointer buf, int * size) {
     gboolean success;
     guint num_children, data_children;
     int blocksize;
+    gsize child_blocksize;
 
     RaitDevice * self = RAIT_DEVICE(dself);
     g_return_val_if_fail(self != NULL, -1);
@@ -1289,9 +1291,16 @@ rait_device_read_block (Device * dself, gpointer buf, int * size) {
     find_simple_params(self, &num_children, &data_children,
                        &blocksize);
 
-    g_return_val_if_fail(*size >= (int)device_write_min_size(dself), -1);
-    g_assert(blocksize % data_children == 0); /* If not we are screwed */
+    /* tell caller they haven't given us a big enough buffer */
+    if (blocksize < *size) {
+	*size = blocksize;
+	return 0;
+    }
 
+    g_return_val_if_fail(*size >= (int)device_write_min_size(dself), -1);
+
+    g_assert(blocksize % data_children == 0); /* If not we are screwed */
+    child_blocksize = blocksize / data_children;
 
     ops = g_ptr_array_sized_new(num_children);
     for (i = 0; i < num_children; i ++) {
@@ -1301,7 +1310,7 @@ rait_device_read_block (Device * dself, gpointer buf, int * size) {
         op = malloc(sizeof(*op));
         op->base.child = g_ptr_array_index(self->private->children, i);
         op->base.child_index = i;
-        op->buffer = malloc(blocksize / data_children);
+        op->buffer = malloc(child_blocksize);
         op->desired_read_size = op->read_size = blocksize / data_children;
         g_ptr_array_add(ops, op);
     }
@@ -1314,7 +1323,7 @@ rait_device_read_block (Device * dself, gpointer buf, int * size) {
                                      ops,
                                      extract_boolean_read_block_op_data) &&
             raid_block_reconstruction(RAIT_DEVICE(self),
-                                      ops, buf);
+                                      ops, buf, (size_t)*size);
     } else {
         success = FALSE;
         if (g_ptr_array_union_robust(RAIT_DEVICE(self),
@@ -1334,6 +1343,7 @@ rait_device_read_block (Device * dself, gpointer buf, int * size) {
     if (success) {
         if (parent_class->read_block)
             parent_class->read_block(dself, buf, size);
+	*size = blocksize;
         return blocksize;
     } else {
         return -1;
