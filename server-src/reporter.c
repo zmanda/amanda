@@ -1952,9 +1952,14 @@ static void
 handle_note(void)
 {
     char *str = NULL;
+    char *pidstr;
 
+    pidstr = index(curstr,' ');
+    if (pidstr) {
+	pidstr++;
+    }
     /* Don't report the pid lines */
-    if (BSTRNCMP(curstr, "pid ") != 0 &&
+    if ((!pidstr || BSTRNCMP(pidstr, "pid ") != 0) &&
 	BSTRNCMP(curstr, "pid-done ") != 0) {
 	str = vstrallocf("  %s: %s", program_str[curprog], curstr);
 	addline(&notes, str);
