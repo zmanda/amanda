@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 54;
+use Test::More tests => 56;
 
 use lib "@amperldir@";
 use Installcheck::Config;
@@ -137,6 +137,8 @@ is(run_get('amgetconf', 'TESTCONF', "reserve"), "27",
     "correctly returns integer parameters from the file");
 is(run_get('amgetconf', 'TESTCONF', "rEsErVe"), "27", 
     "is case-insensitive");
+is(run_get('amgetconf', 'TESTCONF', "reserved_udp_port"), "100,200", 
+    "treats _ and - identically");
 
 # check runs without a config
 my $olddir = getcwd();
@@ -213,6 +215,8 @@ is_deeply([sort(split(/\n/, run_get('amgetconf', 'TESTCONF', '--list', 'script-t
 
 is(run_get('amgetconf', 'TESTCONF', 'script-tool:my_script:plugin'), 'script-email',
     "returns script-tool parameter correctly");
+is(run_get('amgetconf', 'TESTCONF', 'script_tOOl:my-sCRipt:plUGin'), 'script-email',
+    "insensitive to case and -/_");
 
 # non-existent subsection types, names, and parameters
 like(run_err('amgetconf', 'TESTCONF', 'NOSUCHTYPE:testiface:comment'), qr/no such parameter/, 

@@ -688,15 +688,15 @@ keytab_t client_keytab[] = {
     { "DEBUG_SELFCHECK", CONF_DEBUG_SELFCHECK },
     { "DEBUG_SENDSIZE", CONF_DEBUG_SENDSIZE },
     { "DEBUG_SENDBACKUP", CONF_DEBUG_SENDBACKUP },
-    { "RESERVED-UDP-PORT", CONF_RESERVED_UDP_PORT },
-    { "RESERVED-TCP-PORT", CONF_RESERVED_TCP_PORT },
-    { "UNRESERVED-TCP-PORT", CONF_UNRESERVED_TCP_PORT },
+    { "RESERVED_UDP_PORT", CONF_RESERVED_UDP_PORT },
+    { "RESERVED_TCP_PORT", CONF_RESERVED_TCP_PORT },
+    { "UNRESERVED_TCP_PORT", CONF_UNRESERVED_TCP_PORT },
     { "DEFINE", CONF_DEFINE },
     { "COMMENT", CONF_COMMENT },
     { "MAILER", CONF_MAILER },
     { "PLUGIN", CONF_PLUGIN },
     { "PROPERTY", CONF_PROPERTY },
-    { "APPLICATION-TOOL", CONF_APPLICATION_TOOL },
+    { "APPLICATION_TOOL", CONF_APPLICATION_TOOL },
     { NULL, CONF_IDENT },
     { NULL, CONF_UNKNOWN }
 };
@@ -712,7 +712,7 @@ keytab_t server_keytab[] = {
     { "AUTO", CONF_AUTO },
     { "AUTOFLUSH", CONF_AUTOFLUSH },
     { "APPLICATION", CONF_APPLICATION },
-    { "APPLICATION-TOOL", CONF_APPLICATION_TOOL },
+    { "APPLICATION_TOOL", CONF_APPLICATION_TOOL },
     { "BEST", CONF_BEST },
     { "BLOCKSIZE", CONF_BLOCKSIZE },
     { "BUMPDAYS", CONF_BUMPDAYS },
@@ -766,14 +766,14 @@ keytab_t server_keytab[] = {
     { "ESTIMATE", CONF_ESTIMATE },
     { "ETIMEOUT", CONF_ETIMEOUT },
     { "EXCLUDE", CONF_EXCLUDE },
-    { "EXCLUDE-FILE", CONF_EXCLUDE_FILE },
-    { "EXCLUDE-LIST", CONF_EXCLUDE_LIST },
-    { "EXECUTE-ON", CONF_EXECUTE_ON },
-    { "EXECUTE-WHERE", CONF_EXECUTE_WHERE },
+    { "EXCLUDE_FILE", CONF_EXCLUDE_FILE },
+    { "EXCLUDE_LIST", CONF_EXCLUDE_LIST },
+    { "EXECUTE_ON", CONF_EXECUTE_ON },
+    { "EXECUTE_WHERE", CONF_EXECUTE_WHERE },
     { "FALLBACK_SPLITSIZE", CONF_FALLBACK_SPLITSIZE },
     { "FAST", CONF_FAST },
     { "FILE", CONF_EFILE },
-    { "FILE-PAD", CONF_FILE_PAD },
+    { "FILE_PAD", CONF_FILE_PAD },
     { "FILEMARK", CONF_FILEMARK },
     { "FIRST", CONF_FIRST },
     { "FIRSTFIT", CONF_FIRSTFIT },
@@ -797,7 +797,7 @@ keytab_t server_keytab[] = {
     { "LARGEST", CONF_LARGEST },
     { "LARGESTFIT", CONF_LARGESTFIT },
     { "LAST", CONF_LAST },
-    { "LBL-TEMPL", CONF_LBL_TEMPL },
+    { "LBL_TEMPL", CONF_LBL_TEMPL },
     { "LENGTH", CONF_LENGTH },
     { "LIST", CONF_LIST },
     { "LOGDIR", CONF_LOGDIR },
@@ -817,18 +817,18 @@ keytab_t server_keytab[] = {
     { "OPTIONAL", CONF_OPTIONAL },
     { "ORG", CONF_ORG },
     { "PLUGIN", CONF_PLUGIN },
-    { "PRE-DLE-AMCHECK", CONF_PRE_DLE_AMCHECK },
-    { "PRE-HOST-AMCHECK", CONF_PRE_HOST_AMCHECK },
-    { "POST-DLE-AMCHECK", CONF_POST_DLE_AMCHECK },
-    { "POST-HOST-AMCHECK", CONF_POST_HOST_AMCHECK },
-    { "PRE-DLE-ESTIMATE", CONF_PRE_DLE_ESTIMATE },
-    { "PRE-HOST-ESTIMATE", CONF_PRE_HOST_ESTIMATE },
-    { "POST-DLE-ESTIMATE", CONF_POST_DLE_ESTIMATE },
-    { "POST-HOST-ESTIMATE", CONF_POST_HOST_ESTIMATE },
-    { "POST-DLE-BACKUP", CONF_POST_DLE_BACKUP },
-    { "POST-HOST-BACKUP", CONF_POST_HOST_BACKUP },
-    { "PRE-DLE-BACKUP", CONF_PRE_DLE_BACKUP },
-    { "PRE-HOST-BACKUP", CONF_PRE_HOST_BACKUP },
+    { "PRE_DLE_AMCHECK", CONF_PRE_DLE_AMCHECK },
+    { "PRE_HOST_AMCHECK", CONF_PRE_HOST_AMCHECK },
+    { "POST_DLE_AMCHECK", CONF_POST_DLE_AMCHECK },
+    { "POST_HOST_AMCHECK", CONF_POST_HOST_AMCHECK },
+    { "PRE_DLE_ESTIMATE", CONF_PRE_DLE_ESTIMATE },
+    { "PRE_HOST_ESTIMATE", CONF_PRE_HOST_ESTIMATE },
+    { "POST_DLE_ESTIMATE", CONF_POST_DLE_ESTIMATE },
+    { "POST_HOST_ESTIMATE", CONF_POST_HOST_ESTIMATE },
+    { "POST_DLE_BACKUP", CONF_POST_DLE_BACKUP },
+    { "POST_HOST_BACKUP", CONF_POST_HOST_BACKUP },
+    { "PRE_DLE_BACKUP", CONF_PRE_DLE_BACKUP },
+    { "PRE_HOST_BACKUP", CONF_PRE_HOST_BACKUP },
     { "PRINTER", CONF_PRINTER },
     { "PRIORITY", CONF_PRIORITY },
     { "PROGRAM", CONF_PROGRAM },
@@ -838,20 +838,20 @@ keytab_t server_keytab[] = {
     { "REQ_TRIES", CONF_REQ_TRIES },
     { "REQUIRED", CONF_REQUIRED },
     { "RESERVE", CONF_RESERVE },
-    { "RESERVED-UDP-PORT", CONF_RESERVED_UDP_PORT },
-    { "RESERVED-TCP-PORT", CONF_RESERVED_TCP_PORT },
+    { "RESERVED_UDP_PORT", CONF_RESERVED_UDP_PORT },
+    { "RESERVED_TCP_PORT", CONF_RESERVED_TCP_PORT },
     { "RUNSPERCYCLE", CONF_RUNSPERCYCLE },
     { "RUNTAPES", CONF_RUNTAPES },
     { "SCRIPT", CONF_PP_SCRIPT },
-    { "SCRIPT-TOOL", CONF_PP_SCRIPT_TOOL },
-    { "SEND-AMREPORT-ON", CONF_SEND_AMREPORT_ON },
+    { "SCRIPT_TOOL", CONF_PP_SCRIPT_TOOL },
+    { "SEND_AMREPORT_ON", CONF_SEND_AMREPORT_ON },
     { "SERVER", CONF_SERVER },
     { "SERVER_CUSTOM_COMPRESS", CONF_SRVCOMPPROG },
     { "SERVER_DECRYPT_OPTION", CONF_SRV_DECRYPT_OPT },
     { "SERVER_ENCRYPT", CONF_SRV_ENCRYPT },
     { "SKIP", CONF_SKIP },
-    { "SKIP-FULL", CONF_SKIP_FULL },
-    { "SKIP-INCR", CONF_SKIP_INCR },
+    { "SKIP_FULL", CONF_SKIP_FULL },
+    { "SKIP_INCR", CONF_SKIP_INCR },
     { "SMALLEST", CONF_SMALLEST },
     { "SPEED", CONF_SPEED },
     { "SPLIT_DISKBUFFER", CONF_SPLIT_DISKBUFFER },
@@ -867,13 +867,13 @@ keytab_t server_keytab[] = {
     { "RAWTAPEDEV", CONF_RAWTAPEDEV },
     { "TAPELIST", CONF_TAPELIST },
     { "TAPERALGO", CONF_TAPERALGO },
-    { "FLUSH-THRESHOLD-DUMPED", CONF_FLUSH_THRESHOLD_DUMPED },
-    { "FLUSH-THRESHOLD-SCHEDULED", CONF_FLUSH_THRESHOLD_SCHEDULED },
+    { "FLUSH_THRESHOLD_DUMPED", CONF_FLUSH_THRESHOLD_DUMPED },
+    { "FLUSH_THRESHOLD_SCHEDULED", CONF_FLUSH_THRESHOLD_SCHEDULED },
     { "TAPERFLUSH", CONF_TAPERFLUSH },
     { "TAPETYPE", CONF_TAPETYPE },
     { "TAPE_SPLITSIZE", CONF_TAPE_SPLITSIZE },
     { "TPCHANGER", CONF_TPCHANGER },
-    { "UNRESERVED-TCP-PORT", CONF_UNRESERVED_TCP_PORT },
+    { "UNRESERVED_TCP_PORT", CONF_UNRESERVED_TCP_PORT },
     { "USE", CONF_USE },
     { "USETIMESTAMPS", CONF_USETIMESTAMPS },
     { NULL, CONF_IDENT },
@@ -1173,10 +1173,19 @@ lookup_keyword(
     char *	str)
 {
     keytab_t *kwp;
+    char *p = str;
+
+    /* Fold '-' to '_' in the token.  Note that this modifies str 
+     * in place. */
+    while (*p) {
+	if (*p == '-') *p = '_';
+	p++;
+    }
 
     for(kwp = keytable; kwp->keyword != NULL; kwp++) {
 	if (strcasecmp(kwp->keyword, str) == 0) break;
     }
+
     return kwp->token;
 }
 
@@ -4267,11 +4276,13 @@ getconf_list(
 	for(ip = interface_list; ip != NULL; ip=ip->next) {
 	    rv = g_slist_append(rv, ip->name);
 	}
-    } else if (strcasecmp(listname,"application-tool") == 0) {
+    } else if (strcasecmp(listname,"application_tool") == 0
+	    || strcasecmp(listname,"application-tool") == 0) {
 	for(ap = application_list; ap != NULL; ap=ap->next) {
 	    rv = g_slist_append(rv, ap->name);
 	}
-    } else if (strcasecmp(listname,"script-tool") == 0) {
+    } else if (strcasecmp(listname,"script_tool") == 0
+	    || strcasecmp(listname,"script-tool") == 0) {
 	for(pp = pp_script_list; pp != NULL; pp=pp->next) {
 	    rv = g_slist_append(rv, pp->name);
 	}
@@ -5828,10 +5839,11 @@ parm_key_info(
     /* make a copy we can stomp on */
     key = stralloc(key);
 
-    /* uppercase the key */
+    /* uppercase the key and convert '-' to '_' */
     s = key;
     for (s = key; (ch = *s) != 0; s++) {
-	if(islower((int)ch))
+	if (*s == '-') *s = '_';
+	else if (islower((int)ch))
 	    *s = (char)toupper(ch);
     }
 
@@ -5906,7 +5918,7 @@ parm_key_info(
 	    if (val) *val = &ip->value[np->parm];
 	    if (parm) *parm = np;
 	    success = TRUE;
-	} else if (strcmp(subsec_type, "APPLICATION-TOOL") == 0) {
+	} else if (strcmp(subsec_type, "APPLICATION_TOOL") == 0) {
 	    ap = lookup_application(subsec_name);
 	    if (!ap) goto out;
 	    for(np = application_var; np->token != CONF_UNKNOWN; np++) {
@@ -5918,7 +5930,7 @@ parm_key_info(
 	    if (val) *val = &ap->value[np->parm];
 	    if (parm) *parm = np;
 	    success = TRUE;
-	} else if (strcmp(subsec_type, "SCRIPT-TOOL") == 0) {
+	} else if (strcmp(subsec_type, "SCRIPT_TOOL") == 0) {
 	    pp = lookup_pp_script(subsec_name);
 	    if (!pp) goto out;
 	    for(np = pp_script_var; np->token != CONF_UNKNOWN; np++) {

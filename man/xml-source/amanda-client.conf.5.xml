@@ -40,10 +40,19 @@ the comment with a #.
 The remainder of the line is ignored.</para>
 
 <para>Keywords are case insensitive, i.e.
-<emphasis remap='B'>auth</emphasis>
+<emphasis remap='B'>mailto</emphasis>
 and
-<emphasis remap='B'>Auth</emphasis>
-are treated the same.</para>
+<emphasis remap='B'>MailTo</emphasis>
+are treated the same.  Also, the characters
+<emphasis remap='B'>'-'</emphasis>
+and
+<emphasis remap='B'>'_'</emphasis>
+are interchangeable: 
+<emphasis remap='B'>device_property</emphasis>
+and
+<emphasis remap='B'>device-property</emphasis>
+have the same meaning.
+</para>
 
 <para>Integer arguments may have one of the following (case insensitive) suffixes,
 some of which have a multiplier effect:</para>

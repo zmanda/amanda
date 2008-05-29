@@ -1,3 +1,12 @@
+2008-05-29  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/conffile.c: make config insensitive to
+	  differences between '-' and '_'
+	* man/xml-source/amanda-client.conf.5.xml
+	  man/xml-source/amanda.conf.5.xml 
+	  man/xml-source/amgetconf.8.xml: document it
+	* installcheck/Amanda_Config.pl installcheck/amgetconf.pl: update
+	  tests
+
 2008-05-29  Orion Poplawski <orion@cora.nwra.com>
 	* server-src/chunker.c: fix buffer overrun
 

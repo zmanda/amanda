@@ -42,7 +42,8 @@ specified, <command>amgetconf</command> assumes it is
 being run from the configuration directory and that <emphasis
 remap='I'>amanda.conf</emphasis> is present. The order of options and
 arguments does not matter.  <emphasis remap='I'>parameter</emphasis>
-is always case-insensitive.</para>
+is always case-insensitive, and '-' and '_' are treated as identical, just
+as in <citerefentry><refentrytitle>amanda.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
 
 <para>See the "<emphasis
 remap='B'>CONFIGURATION OVERRIDE</emphasis>" section in

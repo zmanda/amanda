@@ -84,7 +84,7 @@ $testconf->add_param('autoflush', 'yes');
 $testconf->add_param('tapedev', '"/dev/foo"');
 $testconf->add_param('bumpsize', $am64_num);
 $testconf->add_param('bumpmult', '1.4');
-$testconf->add_param('reserved-udp-port', '100,200');
+$testconf->add_param('reserved_udp-port', '100,200'); # note use of '-' and '_'
 $testconf->add_param('device_output_buffer_size', $size_t_num);
 $testconf->add_param('taperalgo', 'last');
 $testconf->add_param('device_property', '"foo" "bar"');
