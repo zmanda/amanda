@@ -20,6 +20,7 @@
 
 #include "semaphore.h"
 #include "amanda.h"
+#include "util.h"
 
 /*
  * test that decrement waits properly
@@ -254,7 +255,7 @@ main(void)
     gboolean pass = TRUE;
 
 #if defined(G_THREADS_ENABLED) && !defined(G_THREADS_IMPL_NONE)
-    amanda_thread_init(NULL);
+    amanda_thread_init();
 
     pass = test_decr_wait() && pass;
     pass = test_wait_empty() && pass;

@@ -1,3 +1,8 @@
+2008-05-29  Orion Poplawski <orion@cora.nwra.com>
+	* device-src/tests/semaphore-test.c: fix call to amanda_thread_init
+	* device-src/tests/vfs_test.c: fix call to amanda_thread_init
+	* server-src/chunker.c: fix buffer overrun
+
 2008-05-29  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.c (client_keytab): Remove "DEVICE-PROPERTY".
 

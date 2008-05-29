@@ -20,6 +20,7 @@
 
 #include <device.h>
 #include <amanda.h>
+#include "util.h"
 
 /* global so the 'atexit' handler can access it */
 
@@ -118,7 +119,7 @@ main(int argc G_GNUC_UNUSED, char **argv G_GNUC_UNUSED)
     pid_t pid;
     amwait_t status;
 
-    amanda_thread_init(NULL);
+    amanda_thread_init();
 
     device_path = setup_vtape_dir();
 
