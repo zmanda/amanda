@@ -1,3 +1,6 @@
+2008-05-29  Orion Poplawski <orion@cora.nwra.com>
+	* server-src/chunker.c: fix buffer overrun
+
 2008-05-29  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.c (client_keytab): Remove "DEVICE-PROPERTY".
 

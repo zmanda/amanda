@@ -766,7 +766,7 @@ databuf_flush(
 
 	file.type = save_type;
 	strncpy(file.cont_filename, new_filename, SIZEOF(file.cont_filename));
-	file.cont_filename[SIZEOF(file.cont_filename)] = '\0';
+	file.cont_filename[SIZEOF(file.cont_filename)-1] = '\0';
 	if(write_tapeheader(db->fd, &file)) {
 	    errstr = squotef(_("write_tapeheader file \"%s\": %s"),
 			     db->filename,
