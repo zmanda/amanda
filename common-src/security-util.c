@@ -2166,11 +2166,11 @@ check_user_amandahosts(
 	     strcasecmp(filehost, "localhost.localdomain")== 0)) {
 #ifdef WORKING_IPV6
 	    if (SU_GET_FAMILY(addr) == (sa_family_t)AF_INET6)
-		inet_ntop(AF_INET6, &((struct sockaddr_in6 *)addr)->sin6_addr,
+		inet_ntop(AF_INET6, &addr->sin6.sin6_addr,
 			  ipstr, sizeof(ipstr));
 	    else
 #endif
-		inet_ntop(AF_INET, &((struct sockaddr_in *)addr)->sin_addr,
+		inet_ntop(AF_INET, &addr->sin.sin_addr,
 			  ipstr, sizeof(ipstr));
 	    if (strcmp(ipstr, "127.0.0.1") == 0 ||
 		strcmp(ipstr, "::1") == 0)

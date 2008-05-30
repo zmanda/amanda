@@ -405,7 +405,7 @@ stream_accept(
 #else
 	    dbprintf(_("family is %d instead of %d(AF_INET)"
 		      ": ignored\n"),
-		      SU_GET_FAMILY(addr),
+		      SU_GET_FAMILY(&addr),
 		      AF_INET);
 #endif
 	}
