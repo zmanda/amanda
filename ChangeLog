@@ -1,4 +1,11 @@
 2008-05-30  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c (lookup_keyword): Use temporary variable.
+	* installcheck/Amanda_Config.pl:  Check insentivity of -/_ in amanda
+					  keyword.
+	* installcheck/Installcheck/Config.pm: Adjust to make the subsection
+					       inheritance work.
+
+2008-05-30  Jean-Louis Martineau <martineau@zmanda.com>
 	* recover-src/extract_list.c: Send properties from dump_dle to
 				      application plugin.
 

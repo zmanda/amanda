@@ -102,22 +102,21 @@ sub new {
 	# Subsections are stored as a hashref of arrayrefs, keyed by
 	# subsection name
 
-	'tapetypes' => {
-	    'TEST-TAPE' => [
-		'length' => '50 mbytes',
-		'filemark' => '4 kbytes'
-	    ],
-	},
-
-	'dumptypes' => { },
-
-	'interfaces' => { },
-
-	'holdingdisks' => { },
+	'tapetypes' => [ ],
+	'dumptypes' => [ ],
+	'interfaces' => [ ],
+	'holdingdisks' => [ ],
+	'application-tool' => [ ],
+	'script-tool' => [ ],
 
 	'dles' => [ ],
     };
     bless($self, $class);
+
+    $self->add_tapetype('TEST-TAPE', [
+	'length' => '50 mbytes',
+	'filemark' => '4 kbytes'
+    ]);
     return $self;
 }
 
@@ -181,37 +180,37 @@ key/value pairs.
 sub add_tapetype {
     my $self = shift;
     my ($name, $values_arrayref) = @_;
-    $self->{'tapetypes'}{$name} = $values_arrayref;
+    push @{$self->{'tapetypes'}}, [$name, @$values_arrayref];
 }
 
 sub add_dumptype {
     my $self = shift;
     my ($name, $values_arrayref) = @_;
-    $self->{'dumptypes'}{$name} = $values_arrayref;
+    push @{$self->{'dumptypes'}}, [$name, @$values_arrayref];
 }
 
 sub add_holdingdisk {
     my $self = shift;
     my ($name, $values_arrayref) = @_;
-    $self->{'holdingdisks'}{$name} = $values_arrayref;
+    push @{$self->{'holdingdisks'}}, [$name, @$values_arrayref];
 }
 
 sub add_interface {
     my $self = shift;
     my ($name, $values_arrayref) = @_;
-    $self->{'interfaces'}{$name} = $values_arrayref;
+    push @{$self->{'interfaces'}}, [$name, @$values_arrayref];
 }
 
 sub add_application {
     my $self = shift;
     my ($name, $values_arrayref) = @_;
-    $self->{'application-tool'}{$name} = $values_arrayref;
+    push @{$self->{'application-tool'}}, [$name, @$values_arrayref];
 }
 
 sub add_script {
     my $self = shift;
     my ($name, $values_arrayref) = @_;
-    $self->{'script-tool'}{$name} = $values_arrayref;
+    push @{$self->{'script-tool'}}, [$name, @$values_arrayref];
 }
 
 =item C<add_dle($line)>
@@ -316,8 +315,8 @@ sub _write_amanda_conf_subsection {
     my $self = shift;
     my ($amanda_conf, $subsec_type, $subsec_ref) = @_;
 
-    for my $subsec_name (keys %$subsec_ref) {
-	my @values = @{$subsec_ref->{$subsec_name}};
+    for my $subsec_info (@$subsec_ref) {
+	my ($subsec_name, @values) = @$subsec_info;
 	
 	if ($subsec_type eq "holdingdisk") {
 	    print $amanda_conf "\nholdingdisk $subsec_name {\n";

@@ -30,11 +30,21 @@ my $testconf;
 
 Amanda::Debug::dbopen("installcheck");
 
+# utility function
+
+sub diag_config_errors {
+    my ($level, @errors) = Amanda::Config::config_errors();
+    for my $errmsg (@errors) {
+	diag $errmsg;
+    }
+}
+
 ##
 # Try starting with no configuration at all
 
 is(config_init(0, ''), $CFGERR_OK,
-    "Initialize with no configuration");
+    "Initialize with no configuration")
+    or diag_config_errors();
 
 ##
 # Check out error handling
@@ -95,7 +105,7 @@ $testconf->add_tapetype('mytapetype', [
     'comment' => '"mine"',
     'length' => '128 M',
 ]);
-$testconf->add_dumptype('mydumptype', [
+$testconf->add_dumptype('mydump-type', [    # note dash
     'comment' => '"mine"',
     'priority' => 'high',  # == 2
     'bumpsize' => $am64_num,
@@ -114,6 +124,14 @@ $testconf->add_dumptype('mydumptype', [
     'include file optional' => '"rhyme"',
     'property' => '"prop" "erty"',
     'property' => '"drop" "qwerty" "asdfg"',
+]);
+$testconf->add_dumptype('second_dumptype', [ # note underscore
+    '' => 'mydump-type',
+    'comment' => '"refers to mydump-type with a dash"',
+]);
+$testconf->add_dumptype('third_dumptype', [
+    '' => 'second_dumptype',
+    'comment' => '"refers to second_dumptype with an underscore"',
 ]);
 $testconf->add_interface('ethernet', [
     'comment' => '"mine"',
@@ -147,7 +165,8 @@ $testconf->write();
 
 my $cfg_result = config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');
 is($cfg_result, $CFGERR_OK,
-    "Load test configuration");
+    "Load test configuration")
+    or diag_config_errors();
 
 SKIP: {
     skip "error loading config", 3 unless $cfg_result == $CFGERR_OK;
@@ -222,8 +241,8 @@ SKIP: { # tapetypes
 SKIP: { # dumptypes
     skip "error loading config", 17 unless $cfg_result == $CFGERR_OK;
 
-    my $dtyp = lookup_dumptype("mydumptype");
-    ok($dtyp, "found mydumptype");
+    my $dtyp = lookup_dumptype("mydump-type");
+    ok($dtyp, "found mydump-type");
     is(dumptype_getconf($dtyp, $DUMPTYPE_COMMENT), 'mine', 
 	"dumptype string");
     is(dumptype_getconf($dtyp, $DUMPTYPE_PRIORITY), 2, 
@@ -265,7 +284,7 @@ SKIP: { # dumptypes
 
     is_deeply([ sort(getconf_list("dumptype")) ],
 	      [ sort(qw(
-	        mydumptype
+	        mydump-type second_dumptype third_dumptype 
 	        NO-COMPRESS COMPRESS-FAST COMPRESS-BEST COMPRESS-CUST
 		SRVCOMPRESS BSD-AUTH KRB4-AUTH NO-RECORD NO-HOLD
 		NO-FULL
@@ -421,7 +440,7 @@ like($dump, qr/INCLUDE\s+FILE OPTIONAL "rhyme"/i,
 # This is also tested by the 'amgetconf' installcheck.
 
 $testconf = Installcheck::Config->new();
-$testconf->add_dumptype('mydumptype', [
+$testconf->add_dumptype('mydump-type', [
     'exclude list' => '"foo" "bar"',
     'exclude list optional append' => '"true" "star"',
     'exclude list append' => '"true" "star"',
@@ -429,23 +448,17 @@ $testconf->add_dumptype('mydumptype', [
 $testconf->write();
 
 $cfg_result = config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
-is($cfg_result, $CFGERR_OK, "first exinclude parsing config loaded");
+is($cfg_result, $CFGERR_OK, 
+    "first exinclude parsing config loaded")
+    or diag_config_errors();
 SKIP: {
     skip "error loading config", 2 unless $cfg_result == $CFGERR_OK;
 
-    my $dtyp = lookup_dumptype("mydumptype");
-    ok($dtyp, "found mydumptype");
+    my $dtyp = lookup_dumptype("mydump-type");
+    ok($dtyp, "found mydump-type");
     is(dumptype_getconf($dtyp, $DUMPTYPE_EXCLUDE)->{'optional'}, 0,
 	"'optional' has no effect when not on the last occurrence");
 }
-
-$testconf = Installcheck::Config->new();
-$testconf->add_dumptype('mydumptype', [
-    'exclude file' => '"foo" "bar"',
-    'exclude file optional append' => '"true" "star"',
-    'exclude list append' => '"true" "star"',
-]);
-$testconf->write();
 
 # TODO:
 # overwrites

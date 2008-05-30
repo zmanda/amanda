@@ -1181,9 +1181,10 @@ lookup_keyword(
     char *	str)
 {
     keytab_t *kwp;
-    char *p = str;
+    char *str1 = stralloc(str);
+    char *p = str1;
 
-    /* Fold '-' to '_' in the token.  Note that this modifies str 
+    /* Fold '-' to '_' in the token.  Note that this modifies str1
      * in place. */
     while (*p) {
 	if (*p == '-') *p = '_';
@@ -1191,9 +1192,10 @@ lookup_keyword(
     }
 
     for(kwp = keytable; kwp->keyword != NULL; kwp++) {
-	if (strcasecmp(kwp->keyword, str) == 0) break;
+	if (strcasecmp(kwp->keyword, str1) == 0) break;
     }
 
+    amfree(str1);
     return kwp->token;
 }
 
