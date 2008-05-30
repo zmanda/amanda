@@ -1809,7 +1809,10 @@ extract_files_child(
 #endif
     	break;
     case IS_APPLICATION_API:
-	extra_params = 5;
+	extra_params = 10;
+	if (dump_dle) {
+	    extra_params += application_property_argv_size(dump_dle);
+	}
 	break;
     }
     restore_args = (char **)alloc((size_t)((extra_params + files_off_tape + 1)
@@ -1880,6 +1883,12 @@ extract_files_child(
 	restore_args[j++] = stralloc(get_config_name());
 	restore_args[j++] = stralloc("--disk");
 	restore_args[j++] = stralloc(file.disk);
+	if (dump_dle && dump_dle->device) {
+	    restore_args[j++] = stralloc("--device");
+	    restore_args[j++] = stralloc(dump_dle->device);
+	}
+	if (dump_dle)
+	    j += application_property_add_to_argv(&restore_args[j], dump_dle);
 	break;
     }
   

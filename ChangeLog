@@ -1,4 +1,8 @@
 2008-05-30  Jean-Louis Martineau <martineau@zmanda.com>
+	* recover-src/extract_list.c: Send properties from dump_dle to
+				      application plugin.
+
+2008-05-30  Jean-Louis Martineau <martineau@zmanda.com>
 	* client-src/client_util.c: New *-RECOVER scripts.
 	* application-src/script-email.pl: Add new *-RECOVER scripts.
 	* application-src/generic-script.pl: Add new *-RECOVER scripts.
