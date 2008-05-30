@@ -407,13 +407,6 @@ parse_file_header(
 	    continue;
 	}
 #undef SC
-#define SC "DLE="
-	if (strncmp(line, SC, SIZEOF(SC) - 1) == 0) {
-	    line += SIZEOF(SC) - 1;
-	    file->dle_str = stralloc(line);
-	    continue;
-	}
-#undef SC
 
 #define SC _("To restore, position tape at start of file and run:")
 	if (strncmp(line, SC, SIZEOF(SC) - 1) == 0)
@@ -506,7 +499,6 @@ dump_dumpfile_t(
 	dbprintf(_("    srv_decrypt_opt  = '%s'\n"), file->srv_decrypt_opt);
 	dbprintf(_("    clnt_decrypt_opt = '%s'\n"), file->clnt_decrypt_opt);
 	dbprintf(_("    cont_filename    = '%s'\n"), file->cont_filename);
-	dbprintf(_("    dle_str          = %s\n"), file->dle_str);
 	dbprintf(_("    is_partial       = %d\n"), file->is_partial);
 	dbprintf(_("    partnum          = %d\n"), file->partnum);
 	dbprintf(_("    totalparts       = %d\n"), file->totalparts);
@@ -647,11 +639,6 @@ build_header(const dumpfile_t * file, size_t size)
 	}
 	if (file->is_partial != 0) {
             g_string_append_printf(rval, "PARTIAL=YES\n");
-	}
-	if (file->dle_str) {
-	    g_string_append_printf(rval, "DLE=%s\n", file->dle_str);
-	} else {
-	    g_string_append_printf(rval, "DLE=%s\n", "NODLE");
 	}
         
         g_string_append_printf(rval,
@@ -846,9 +833,8 @@ gboolean headers_are_equal(dumpfile_t * a, dumpfile_t * b) {
 }
 
 dumpfile_t * dumpfile_copy(dumpfile_t* source) {
-    dumpfile_t* rval = malloc(sizeof(dumpfile_t));
+    gpointer rval = malloc(sizeof(dumpfile_t));
     memcpy(rval, source, sizeof(dumpfile_t));
-    rval->dle_str = stralloc(source->dle_str);
     return rval;
 }
 

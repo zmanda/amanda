@@ -65,7 +65,6 @@ typedef struct file_s {
     string_t srv_decrypt_opt;
     string_t clnt_decrypt_opt;
     string_t cont_filename;
-    char     *dle_str;
     int is_partial;
     int partnum;
     int totalparts; /* -1 == UNKNOWN */
