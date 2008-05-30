@@ -37,6 +37,7 @@
 #include "packet.h"
 #include "security.h"
 #include "security-util.h"
+#include "sockaddr-util.h"
 #include "stream.h"
 #include "version.h"
 
@@ -277,7 +278,7 @@ bsd_connect(
     handle=alloc(15);
     g_snprintf(handle, 14, "000-%08x",  (unsigned)newhandle++);
     if (udp_inithandle(bh->udp, bh, canonname,
-	(struct sockaddr_storage *)res_addr->ai_addr, port, handle, sequence) < 0) {
+	(sockaddr_union *)res_addr->ai_addr, port, handle, sequence) < 0) {
 	(*fn)(arg, &bh->sech, S_ERROR);
 	amfree(bh->hostname);
 	amfree(bh);
@@ -387,7 +388,7 @@ bsd_stream_server(
 
     bs = alloc(SIZEOF(*bs));
     security_streaminit(&bs->secstr, &bsd_security_driver);
-    bs->socket = stream_server(bh->udp->peer.ss_family, &bs->port,
+    bs->socket = stream_server(SU_GET_FAMILY(&bh->udp->peer), &bs->port,
 			       (size_t)STREAM_BUFSIZE, (size_t)STREAM_BUFSIZE,
 			       0);
     if (bs->socket < 0) {

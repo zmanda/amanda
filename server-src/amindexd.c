@@ -1109,7 +1109,7 @@ main(
     int ch;
     char *cmd_undo, cmd_undo_ch;
     socklen_t_equiv socklen;
-    struct sockaddr_storage his_addr;
+    sockaddr_union his_addr;
     char *arg = NULL;
     char *cmd;
     size_t len;
@@ -1366,7 +1366,7 @@ main(
 	if (!user_validated && strcmp(cmd, "SECURITY") == 0 && arg) {
 	    user_validated = amindexd_debug ||
 				check_security(
-					(struct sockaddr_storage *)&his_addr,
+					(sockaddr_union *)&his_addr,
 					arg, 0, &errstr);
 	    if(user_validated) {
 		reply(200, _("Access OK"));

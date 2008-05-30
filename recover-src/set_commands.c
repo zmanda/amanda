@@ -263,7 +263,7 @@ set_disk(
     amfree(uqmtpt);
     amfree(uqdsk);
 
-    if (am_has_feature(indexsrv_features, fe_amrecover_dle)) {
+    if (am_has_feature(indexsrv_features, fe_amindexd_DLE)) {
 	char *dle_str;
 	char *errmsg = NULL;
 

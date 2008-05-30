@@ -764,7 +764,7 @@ tcp1_stream_server(
 	rh->rc = sec_tcp_conn_get(rh->hostname, 1);
 	rh->rc->driver = rh->sech.driver;
 	rs->rc = rh->rc;
-	rs->socket = stream_server(rh->udp->peer.ss_family, &rs->port,
+	rs->socket = stream_server(SU_GET_FAMILY(&rh->udp->peer), &rs->port,
 				   STREAM_BUFSIZE, STREAM_BUFSIZE, 0);
 	if (rs->socket < 0) {
 	    security_seterror(&rh->sech,
@@ -963,7 +963,7 @@ bsd_recv_security_ok(
 	/*
 	 * Request packets must come from a reserved port
 	 */
-    port = SS_GET_PORT(&rh->peer);
+    port = SU_GET_PORT(&rh->peer);
 	if (port >= IPPORT_RESERVED) {
 	    security_seterror(&rh->sech,
 		_("host %s: port %u not secure"), rh->hostname,
@@ -1274,7 +1274,7 @@ udp_inithandle(
     udp_handle_t *	udp,
     struct sec_handle *	rh,
     char *              hostname,
-    struct sockaddr_storage *addr,
+    sockaddr_union *addr,
     in_port_t		port,
     char *		handle,
     int			sequence)
@@ -1288,7 +1288,7 @@ udp_inithandle(
 
     rh->hostname = stralloc(hostname);
     copy_sockaddr(&rh->peer, addr);
-    SS_SET_PORT(&rh->peer, port);
+    SU_SET_PORT(&rh->peer, port);
 
 
     rh->prev = udp->bh_last;
@@ -1395,7 +1395,7 @@ udp_netfd_read_callback(
 	return;
     }
 
-    port = SS_GET_PORT(&udp->peer);
+    port = SU_GET_PORT(&udp->peer);
     a = udp_inithandle(udp, rh,
 		   hostname,
 		   &udp->peer,
@@ -2082,7 +2082,7 @@ check_user_ruserok(
 char *
 check_user_amandahosts(
     const char *	host,
-    struct sockaddr_storage *addr,
+    sockaddr_union *addr,
     struct passwd *	pwd,
     const char *	remoteuser,
     const char *	service)
@@ -2165,7 +2165,7 @@ check_user_amandahosts(
 	    (strcasecmp(filehost, "localhost")== 0 ||
 	     strcasecmp(filehost, "localhost.localdomain")== 0)) {
 #ifdef WORKING_IPV6
-	    if (addr->ss_family == (sa_family_t)AF_INET6)
+	    if (SU_GET_FAMILY(addr) == (sa_family_t)AF_INET6)
 		inet_ntop(AF_INET6, &((struct sockaddr_in6 *)addr)->sin6_addr,
 			  ipstr, sizeof(ipstr));
 	    else
@@ -2265,7 +2265,7 @@ common_exit:
 /* return 1 on success, 0 on failure */
 int
 check_security(
-    struct sockaddr_storage *addr,
+    sockaddr_union *addr,
     char *		str,
     unsigned long	cksum,
     char **		errstr)
@@ -2309,7 +2309,7 @@ check_security(
 
 
     /* next, make sure the remote port is a "reserved" one */
-    port = SS_GET_PORT(addr);
+    port = SU_GET_PORT(addr);
     if (port >= IPPORT_RESERVED) {
 	*errstr = vstrallocf(_("[host %s: port %u not secure]"),
 			remotehost, (unsigned int)port);
@@ -2593,7 +2593,7 @@ check_name_give_sockaddr(
     }
 
     for(res1=res; res1 != NULL; res1 = res1->ai_next) {
-	if (cmp_sockaddr((struct sockaddr_storage *)res1->ai_addr, (struct sockaddr_storage *)addr, 1) == 0) {
+	if (cmp_sockaddr((sockaddr_union *)res1->ai_addr, (sockaddr_union *)addr, 1) == 0) {
 	    freeaddrinfo(res);
 	    amfree(canonname);
 	    return 0;
@@ -2601,10 +2601,10 @@ check_name_give_sockaddr(
     }
 
     dbprintf(_("%s doesn't resolve to %s"),
-	    hostname, str_sockaddr((struct sockaddr_storage *)addr));
+	    hostname, str_sockaddr((sockaddr_union *)addr));
     *errstr = newvstrallocf(*errstr,
 			   "%s doesn't resolve to %s",
-			   hostname, str_sockaddr((struct sockaddr_storage *)addr));
+			   hostname, str_sockaddr((sockaddr_union *)addr));
 error:
     if (res) freeaddrinfo(res);
     amfree(canonname);

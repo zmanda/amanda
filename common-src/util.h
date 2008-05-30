@@ -45,9 +45,9 @@
 /* internal types and variables */
 
 
-int	connect_portrange(struct sockaddr_storage *, in_port_t, in_port_t, char *,
-			  struct sockaddr_storage *, int);
-int	bind_portrange(int, struct sockaddr_storage *, in_port_t, in_port_t,
+int	connect_portrange(sockaddr_union *, in_port_t, in_port_t, char *,
+			  sockaddr_union *, int);
+int	bind_portrange(int, sockaddr_union *, in_port_t, in_port_t,
 		       char *);
 
 char *	construct_datestamp(time_t *t);

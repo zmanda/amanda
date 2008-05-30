@@ -27,7 +27,7 @@
 
 void
 dump_sockaddr(
-    struct sockaddr_storage *sa)
+    sockaddr_union *sa)
 {
 #ifdef WORKING_IPV6
     char ipstr[INET6_ADDRSTRLEN];
@@ -36,24 +36,22 @@ dump_sockaddr(
 #endif
     int port;
 
-    port = SS_GET_PORT(sa);
+    port = SU_GET_PORT(sa);
 #ifdef WORKING_IPV6
-    if (sa->ss_family == (sa_family_t)AF_INET6) {
-	inet_ntop(AF_INET6, &((struct sockaddr_in6 *)sa)->sin6_addr,
-		  ipstr, sizeof(ipstr));
+    if (SU_GET_FAMILY(sa) == AF_INET6) {
+	inet_ntop(AF_INET6, &sa->sin6.sin6_addr, ipstr, sizeof(ipstr));
 	dbprintf("(sockaddr_in6 *)%p = { %d, %d, %s }\n",
 		 sa,
-		 ((struct sockaddr_in6 *)sa)->sin6_family,
+		 SU_GET_FAMILY(sa),
 		 port,
 		 ipstr);
     } else
 #endif
     {
-	inet_ntop(AF_INET, &((struct sockaddr_in *)sa)->sin_addr, ipstr,
-		  sizeof(ipstr));
+	inet_ntop(AF_INET, &sa->sin.sin_addr.s_addr, ipstr, sizeof(ipstr));
 	dbprintf("(sockaddr_in *)%p = { %d, %d, %s }\n",
 		 sa,
-		 ((struct sockaddr_in *)sa)->sin_family,
+		 SU_GET_FAMILY(sa),
 		 port,
 		 ipstr);
     }
@@ -68,7 +66,7 @@ static char mystr_sockaddr[INET_ADDRSTRLEN + 20];
 
 char *
 str_sockaddr(
-    struct sockaddr_storage *sa)
+    sockaddr_union *sa)
 {
 #ifdef WORKING_IPV6
     char ipstr[INET6_ADDRSTRLEN];
@@ -77,77 +75,80 @@ str_sockaddr(
 #endif
     int port;
 
-    port = SS_GET_PORT(sa);
+    port = SU_GET_PORT(sa);
 #ifdef WORKING_IPV6
-    if ( sa->ss_family == (sa_family_t)AF_INET6) {
-	inet_ntop(AF_INET6, &((struct sockaddr_in6 *)sa)->sin6_addr,
-		  ipstr, sizeof(ipstr));
+    if ( SU_GET_FAMILY(sa) == AF_INET6) {
+	inet_ntop(AF_INET6, &sa->sin6.sin6_addr, ipstr, sizeof(ipstr));
     } else
 #endif
     {
-	inet_ntop(AF_INET, &((struct sockaddr_in *)sa)->sin_addr, ipstr,
-		  sizeof(ipstr));
+	inet_ntop(AF_INET, &sa->sin.sin_addr.s_addr, ipstr, sizeof(ipstr));
     }
     g_snprintf(mystr_sockaddr,sizeof(mystr_sockaddr),"%s.%d", ipstr, port);
+    mystr_sockaddr[sizeof(mystr_sockaddr)-1] = '\0';
+
     return mystr_sockaddr;
 }
 
+/* Unmap a V4MAPPED IPv6 address into its equivalent IPv4 address.  The location
+ * TMP is used to store the rewritten address, if necessary.  Returns a pointer
+ * to the unmapped address.
+ */
+#if defined(WORKING_IPV6) && defined(IN6_IS_ADDR_V4MAPPED)
+static sockaddr_union *
+unmap_v4mapped(
+    sockaddr_union *sa,
+    sockaddr_union *tmp)
+{
+    if (SU_GET_FAMILY(sa) == AF_INET6 && IN6_IS_ADDR_V4MAPPED(&sa->sin6.sin6_addr)) {
+	SU_INIT(tmp, AF_INET);
+	SU_SET_PORT(tmp, SU_GET_PORT(sa));
+	/* extract the v4 address from byte 12 of the v6 address */
+	memcpy(&tmp->sin.sin_addr.s_addr,
+	       &sa->sin6.sin6_addr.s6_addr[12],
+	       sizeof(struct in_addr));
+	return tmp;
+    }
+
+    return sa;
+}
+#else
+/* nothing to do if no IPv6 */
+#define unmap_v4mapped(sa, tmp) ((void)tmp, sa)
+#endif
+
 int
 cmp_sockaddr(
-    struct sockaddr_storage *ss1,
-    struct sockaddr_storage *ss2,
+    sockaddr_union *ss1,
+    sockaddr_union *ss2,
     int addr_only)
 {
+    sockaddr_union tmp1, tmp2;
+
     /* if addresses are v4mapped, "unmap" them */
-#ifdef WORKING_IPV6
-#ifdef IN6_IS_ADDR_V4MAPPED
-    struct sockaddr_in ss1_v4;
-    struct sockaddr_in ss2_v4;
+    ss1 = unmap_v4mapped(ss1, &tmp1);
+    ss2 = unmap_v4mapped(ss2, &tmp2);
 
-    if (ss1->ss_family == AF_INET6 &&
-        IN6_IS_ADDR_V4MAPPED(&((struct sockaddr_in6 *)ss1)->sin6_addr)) {
-	memset(&ss1_v4, 0, sizeof(struct sockaddr_in));
-	memcpy(&ss1_v4.sin_addr.s_addr,
-	       &(((struct sockaddr_in6 *)ss1)->sin6_addr.s6_addr[12]),
-	       sizeof(struct in_addr));
-	ss1_v4.sin_family = AF_INET;
-	SS_SET_PORT((struct sockaddr_storage *)&ss1_v4, SS_GET_PORT(ss1));
-	ss1 = (struct sockaddr_storage *)&ss1_v4;
-    }
-
-    if (ss2->ss_family == AF_INET6 &&
-        IN6_IS_ADDR_V4MAPPED(&((struct sockaddr_in6 *)ss2)->sin6_addr)) {
-	memset(&ss2_v4, 0, sizeof(struct sockaddr_in));
-	memcpy(&ss2_v4.sin_addr.s_addr,
-	       &(((struct sockaddr_in6 *)ss2)->sin6_addr.s6_addr[12]),
-	       sizeof(struct in_addr));
-	ss2_v4.sin_family = AF_INET;
-	SS_SET_PORT((struct sockaddr_storage *)&ss2_v4, SS_GET_PORT(ss2));
-	ss2 = (struct sockaddr_storage *)&ss2_v4;
-    }
-#endif
-#endif
-
-    if (ss1->ss_family == ss2->ss_family) {
+    if (SU_GET_FAMILY(ss1) == SU_GET_FAMILY(ss2)) {
         if (addr_only) {
 #ifdef WORKING_IPV6
-            if(ss1->ss_family == (sa_family_t)AF_INET6)
+            if(SU_GET_FAMILY(ss1) == AF_INET6)
                 return memcmp(
-                    &((struct sockaddr_in6 *)ss1)->sin6_addr,
-                    &((struct sockaddr_in6 *)ss2)->sin6_addr,
-                    sizeof(((struct sockaddr_in6 *)ss1)->sin6_addr));
+                    &ss1->sin6.sin6_addr,
+                    &ss2->sin6.sin6_addr,
+                    sizeof(ss1->sin6.sin6_addr));
             else
 #endif
                 return memcmp(
-                    &((struct sockaddr_in *)ss1)->sin_addr,
-                    &((struct sockaddr_in *)ss2)->sin_addr,
-                    sizeof(((struct sockaddr_in *)ss1)->sin_addr));
+                    &ss1->sin.sin_addr,
+                    &ss2->sin.sin_addr,
+                    sizeof(ss1->sin.sin_addr));
         } else {
             return memcmp(ss1, ss2, SS_LEN(ss1));
         }
     } else {
         /* compare families to give a total order */
-        if (ss1->ss_family < ss2->ss_family)
+        if (SU_GET_FAMILY(ss1) < SU_GET_FAMILY(ss2))
             return -1;
         else
             return 1;

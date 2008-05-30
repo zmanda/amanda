@@ -302,12 +302,6 @@ struct iovec {
 #include <arpa/inet.h>
 #endif
 
-/* Support for missing IPv6 components */
-#ifndef HAVE_SOCKADDR_STORAGE
-#  define sockaddr_storage sockaddr_in
-#  define ss_family sin_family
-#endif
-
 #ifdef WORKING_IPV6
 #define INET6
 #endif
@@ -419,6 +413,21 @@ extern int errno;
 #define MAX_TAPE_LABEL_LEN (10240)
 #define MAX_TAPE_LABEL_BUF (MAX_TAPE_LABEL_LEN+1)
 #define MAX_TAPE_LABEL_FMT "%10240s"
+
+/* Unfortunately, the system-level sockaddr_storage definition can lead to
+ * C aliasing errors (where the optimizer doesn't notice that two operations
+ * affect the same datum).  We define our own similar type as a union.
+ */
+typedef union sockaddr_union {
+    struct sockaddr         sa;
+    struct sockaddr_in      sin;
+#ifdef WORKING_IPV6
+    struct sockaddr_in6     sin6;
+#endif
+#ifdef HAVE_SOCKADDR_STORAGE
+    struct sockaddr_storage ss;	/* not used; just here to make the union full-size */
+#endif
+} sockaddr_union;
 
 #include "debug.h"
 #include "file.h"
@@ -712,7 +721,7 @@ time_t	unctime(char *timestr);
 
 /* from old bsd-security.c */
 extern int debug;
-extern int check_security(struct sockaddr_storage *, char *, unsigned long, char **);
+extern int check_security(sockaddr_union *, char *, unsigned long, char **);
 
 /*
  * Handle functions which are not always declared on all systems.  This

@@ -37,8 +37,8 @@
 #include "base64.h"
 
 static int make_socket(sa_family_t family);
-static int connect_port(struct sockaddr_storage *addrp, in_port_t port, char *proto,
-			struct sockaddr_storage *svaddr, int nonblock);
+static int connect_port(sockaddr_union *addrp, in_port_t port, char *proto,
+			sockaddr_union *svaddr, int nonblock);
 
 static int
 make_socket(
@@ -96,11 +96,11 @@ make_socket(
 /* return -1     on failure */
 int
 connect_portrange(
-    struct sockaddr_storage *addrp,
+    sockaddr_union *addrp,
     in_port_t		first_port,
     in_port_t		last_port,
     char *		proto,
-    struct sockaddr_storage *svaddr,
+    sockaddr_union *svaddr,
     int			nonblock)
 {
     int			s;
@@ -151,10 +151,10 @@ connect_portrange(
 /* return >0: this is the connected socket */
 int
 connect_port(
-    struct sockaddr_storage *addrp,
+    sockaddr_union *addrp,
     in_port_t  		port,
     char *		proto,
-    struct sockaddr_storage *svaddr,
+    sockaddr_union *svaddr,
     int			nonblock)
 {
     int			save_errno;
@@ -171,9 +171,9 @@ connect_port(
 	return -1;
     }
 
-    if ((s = make_socket(addrp->ss_family)) == -1) return -2;
+    if ((s = make_socket(SU_GET_FAMILY(addrp))) == -1) return -2;
 
-    SS_SET_PORT(addrp, port);
+    SU_SET_PORT(addrp, port);
     socklen = SS_LEN(addrp);
     if (bind(s, (struct sockaddr *)addrp, socklen) != 0) {
 	save_errno = errno;
@@ -250,7 +250,7 @@ connect_port(
 int
 bind_portrange(
     int			s,
-    struct sockaddr_storage *addrp,
+    sockaddr_union *addrp,
     in_port_t		first_port,
     in_port_t		last_port,
     char *		proto)
@@ -278,7 +278,7 @@ bind_portrange(
     for (cnt = 0; cnt < num_ports; cnt++) {
 	servPort = getservbyport((int)htons(port), proto);
 	if ((servPort == NULL) || strstr(servPort->s_name, "amanda")) {
-	    SS_SET_PORT(addrp, port);
+	    SU_SET_PORT(addrp, port);
 	    socklen = SS_LEN(addrp);
 	    if (bind(s, (struct sockaddr *)addrp, socklen) >= 0) {
 		if (servPort == NULL) {

@@ -223,7 +223,7 @@ check_security_buffer(
 	/*NOTREACHED*/
     }
     skip_whitespace(s, ch);
-    if (!check_security((struct sockaddr_storage *)&addr, s-1, 0, &errstr)) {
+    if (!check_security((sockaddr_union *)&addr, s-1, 0, &errstr)) {
 	error(_("security check failed: %s"), errstr);
 	/*NOTREACHED*/
     }

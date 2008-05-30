@@ -77,7 +77,7 @@ struct tcp_conn {
     int			handle;			/* last proto handle read */
     int			event_id;		/* event ID fired when token read */
     void		(*accept_fn)(security_handle_t *, pkt_t *);
-    struct sockaddr_storage	peer;
+    sockaddr_union	peer;
     TAILQ_ENTRY(tcp_conn) tq;			/* queue handle */
     int			(*recv_security_ok)(struct sec_handle *, pkt_t *);
     char *		(*prefix_packet)(void *, pkt_t *);
@@ -110,7 +110,7 @@ struct sec_handle {
     } fn;
     void *		arg;		/* argument to pass function */
     event_handle_t *	ev_timeout;	/* timeout handle for recv */
-    struct sockaddr_storage	peer;
+    sockaddr_union	peer;
     int			sequence;
     event_id_t		event_id;
     char *		proto_handle;
@@ -166,7 +166,7 @@ extern struct connq_s connq;
 typedef struct udp_handle {
     const struct security_driver *driver;	/* MUST be first */
     dgram_t dgram;		/* datagram to read/write from */
-    struct sockaddr_storage peer;	/* who sent it to us */
+    sockaddr_union peer;	/* who sent it to us */
     pkt_t pkt;			/* parsed form of dgram */
     char *handle;		/* handle from recvd packet */
     int sequence;		/* seq no of packet */
@@ -256,7 +256,7 @@ void	udp_recvpkt_cancel(void *);
 void	udp_recvpkt_callback(void *);
 void	udp_recvpkt_timeout(void *);
 int	udp_inithandle(udp_handle_t *, struct sec_handle *, char *hostname,
-		       struct sockaddr_storage *, in_port_t, char *, int);
+		       sockaddr_union *, in_port_t, char *, int);
 void	udp_netfd_read_callback(void *);
 
 struct tcp_conn *sec_tcp_conn_get(const char *, int);
@@ -271,7 +271,7 @@ char *	check_user_ruserok    (const char *host,
 				struct passwd *pwd,
 				const char *user);
 char *	check_user_amandahosts(const char *host,
-			        struct sockaddr_storage *addr,
+			        sockaddr_union *addr,
 				struct passwd *pwd,
 				const char *user,
 				const char *service);

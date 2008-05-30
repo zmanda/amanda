@@ -1,3 +1,13 @@
+2008-05-30  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/amanda.h, common-src/bsd-security.c,
+	  common-src/bsdtcp-security.c, common-src/bsdudp-security.c,
+	  common-src/dgram.c, common-src/dgram.h, common-src/krb5-security.c,
+	  common-src/security-util.c, common-src/security-util.h,
+	  common-src/sockaddr-util.c, common-src/sockaddr-util.h,
+	  common-src/stream.c, common-src/util.c, common-src/util.h,
+	  restore-src/amidxtaped.c, server-src/amindexd.c: add sockaddr_union,
+	  change all relevant functions to use it, to avoid aliasing violations
+
 2008-05-30  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.c (lookup_keyword): Use temporary variable.
 	* installcheck/Amanda_Config.pl:  Check insentivity of -/_ in amanda
