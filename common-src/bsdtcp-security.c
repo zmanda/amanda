@@ -197,7 +197,7 @@ bsdtcp_accept(
     void	(*fn)(security_handle_t *, pkt_t *),
     void       *datap)
 {
-    struct sockaddr_storage sin;
+    sockaddr_union sin;
     socklen_t_equiv len;
     struct tcp_conn *rc;
     char hostname[NI_MAXHOST];

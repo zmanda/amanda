@@ -261,7 +261,7 @@ bsdudp_connect(
     handle=alloc(15);
     g_snprintf(handle,14,"000-%08x", newhandle++);
     if (udp_inithandle(bh->udp, bh, canonname,
-		       (struct sockaddr_storage *)res_addr->ai_addr, port,
+		       (sockaddr_union *)res_addr->ai_addr, port,
 		       handle, sequence) < 0) {
 	(*fn)(arg, &bh->sech, S_ERROR);
 	amfree(bh->hostname);

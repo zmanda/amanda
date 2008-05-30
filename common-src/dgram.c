@@ -58,7 +58,7 @@ dgram_bind(
 {
     int s, retries;
     socklen_t_equiv len;
-    struct sockaddr_storage name;
+    sockaddr_union name;
     int save_errno;
     int *portrange;
 
@@ -79,8 +79,8 @@ dgram_bind(
 	return -1;
     }
 
-    SS_INIT(&name, family);
-    SS_SET_INADDR_ANY(&name);
+    SU_INIT(&name, family);
+    SU_SET_INADDR_ANY(&name);
 
     /*
      * If a port range was specified, we try to get a port in that
@@ -125,7 +125,7 @@ out:
 	aclose(s);
 	return -1;
     }
-    *portp = SS_GET_PORT(&name);
+    *portp = SU_GET_PORT(&name);
     dgram->socket = s;
 
     dbprintf(_("dgram_bind: socket %d bound to %s\n"),
@@ -136,7 +136,7 @@ out:
 
 int
 dgram_send_addr(
-    struct sockaddr_storage	*addr,
+    sockaddr_union	*addr,
     dgram_t *		dgram)
 {
     int s, rc;
@@ -158,7 +158,7 @@ dgram_send_addr(
 	s = dgram->socket;
 	socket_opened = 0;
     } else {
-	if((s = socket(addr->ss_family, SOCK_DGRAM, 0)) == -1) {
+	if((s = socket(SU_GET_FAMILY(addr), SOCK_DGRAM, 0)) == -1) {
 	    save_errno = errno;
 	    dbprintf(_("dgram_send_addr: socket() failed: %s\n"),
 		      strerror(save_errno));
@@ -241,7 +241,7 @@ ssize_t
 dgram_recv(
     dgram_t *		dgram,
     int			timeout,
-    struct sockaddr_storage *fromaddr)
+    sockaddr_union *fromaddr)
 {
     SELECT_ARG_TYPE ready;
     struct timeval to;
@@ -287,7 +287,7 @@ dgram_recv(
 	return nfound;
     }
 
-    addrlen = (socklen_t_equiv)sizeof(struct sockaddr_storage);
+    addrlen = (socklen_t_equiv)sizeof(sockaddr_union);
     size = recvfrom(sock, dgram->data, (size_t)MAX_DGRAM, 0,
 		    (struct sockaddr *)fromaddr, &addrlen);
     if(size == -1) {

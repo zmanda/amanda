@@ -23,36 +23,36 @@
  * Utility routines for handling sockaddrs
  */
 
-#ifndef SOCKADDR_H
-#define	SOCKADDR_H
+#ifndef SOCKADDR_UTIL_H
+#define	SOCKADDR_UTIL_H
 
 #include "amanda.h"
 
-/* Dump a sockaddr_storage using dbprintf
+/* Dump a sockaddr_union using dbprintf
  *
  * @param sa: the sockaddr to dump
  */
-void	dump_sockaddr(struct sockaddr_storage *	sa);
+void	dump_sockaddr(sockaddr_union *	sa);
 
-/* Convert a sockaddr_storage to a string.
+/* Convert a sockaddr_union to a string.
  *
  * NOTE: this function is not threadsafe!
  *
- * @param sa: the sockaddr_storage to dump
+ * @param sa: the sockaddr_union to dump
  * @returns: pointer to statically allocated string
  */
-char *  str_sockaddr(struct sockaddr_storage *sa);
+char *  str_sockaddr(sockaddr_union *sa);
 
-/* Compare two sockaddr_storage objects, optionally comparing
+/* Compare two sockaddr_union objects, optionally comparing
  * only the address (and thus ignoring port, flow info, etc.).
  *
- * @param ss1: one sockaddr_storage to compare
- * @param ss2: the other sockaddr_storage to compare
+ * @param su1: one sockaddr_union to compare
+ * @param su2: the other sockaddr_union to compare
  * @param addr_only: if true, ignore port, flow info, etc.
  * @returns: -1, 0, or 1 for <, ==, >, respectively
  */
-int     cmp_sockaddr(struct sockaddr_storage *ss1,
-		     struct sockaddr_storage *ss2,
+int     cmp_sockaddr(sockaddr_union *su1,
+		     sockaddr_union *su2,
 		     int addr_only);
 
 /* Copy a sockaddr object.
@@ -61,18 +61,6 @@ int     cmp_sockaddr(struct sockaddr_storage *ss1,
  * @param src: source
  */
 #define copy_sockaddr(dest, src) memcpy((dest), (src), SS_LEN((src)))
-
-/* Calculate the length of the data in a struct sockaddr_storage.
- *
- * @param ss: the sockaddr_storage to examine
- * @returns: length of the data in the object
- */
-/* SS_LEN(ss) */
-#ifdef WORKING_IPV6
-# define SS_LEN(ss) (((struct sockaddr *)(ss))->sa_family==AF_INET6?sizeof(struct sockaddr_in6):sizeof(struct sockaddr_in))
-#else
-# define SS_LEN(ss) (sizeof(struct sockaddr_in))
-#endif
 
 /* The "best" address family we support.
  */
@@ -83,79 +71,92 @@ int     cmp_sockaddr(struct sockaddr_storage *ss1,
 #define AF_NATIVE AF_INET
 #endif
 
-/* Initialize a sockaddr_storage to all zeroes (as directed by RFC),
- * and set its ss_family as specified
+/* Get the family for a sockaddr_union.
  *
- * @param ss: sockaddr_storage object to initialize
+ * @param su: the sockaddr_union to examine
+ */
+#define SU_GET_FAMILY(su) ((su)->sa.sa_family)
+/* Calculate the length of the data in a sockaddr_union.
+ *
+ * @param su: the sockaddr_union to examine
+ * @returns: length of the data in the object
+ */
+/* SS_LEN(su) */
+#ifdef WORKING_IPV6
+# define SS_LEN(su) (SU_GET_FAMILY(su)==AF_INET6? sizeof(struct sockaddr_in6):sizeof(struct sockaddr_in))
+#else
+# define SS_LEN(su) (sizeof(struct sockaddr_in))
+#endif
+
+/* Initialize a sockaddr_union to all zeroes (as directed by RFC),
+ * and set its address family as specified
+ *
+ * @param su: sockaddr_union object to initialize
  * @param family: an AF_* constant
  */
-/* SS_INIT(ss, family) */
-#define SS_INIT(ss, family) do { \
-    memset((ss), 0, sizeof(*(ss))); \
-    (ss)->ss_family = (family); \
+/* SU_INIT(su, family) */
+#define SU_INIT(su, family) do { \
+    memset((su), 0, sizeof(*(su))); \
+    (su)->sa.sa_family = (family); \
 } while (0);
 
-/* set a sockaddr_storage to the family-appropriate equivalent of
- * INADDR_ANY -- a wildcard address and port.  Call SS_INIT(ss)
+/* set a sockaddr_union to the family-appropriate equivalent of
+ * INADDR_ANY -- a wildcard address and port.  Call SU_INIT(su)
  * first to initialize the object and set the family.
  *
- * @param ss: the sockaddr_storage to set
+ * @param su: the sockaddr_union to set
  */
-/* SS_SET_INADDR_ANY(ss) */
+/* SU_SET_INADDR_ANY(su) */
 #ifdef WORKING_IPV6
-#define SS_SET_INADDR_ANY(ss) do { \
-    switch ((ss)->ss_family) { \
+#define SU_SET_INADDR_ANY(su) do { \
+    switch (SU_GET_FAMILY(su)) { \
         case AF_INET6: \
-            ((struct sockaddr_in6 *)(ss))->sin6_flowinfo = 0; \
-            ((struct sockaddr_in6 *)(ss))->sin6_addr = in6addr_any; \
+            (su)->sin6.sin6_flowinfo = 0; \
+            (su)->sin6.sin6_addr = in6addr_any; \
             break; \
         case AF_INET: \
-            ((struct sockaddr_in *)(ss))->sin_addr.s_addr = INADDR_ANY; \
+            (su)->sin.sin_addr.s_addr = INADDR_ANY; \
             break; \
     } \
 } while (0);
 #else
-#define SS_SET_INADDR_ANY(ss) do { \
-    ((struct sockaddr_in *)(ss))->sin_addr.s_addr = INADDR_ANY; \
+#define SU_SET_INADDR_ANY(su) do { \
+    (su)->sin.sin_addr.s_addr = INADDR_ANY; \
 } while (0);
 #endif
 
-/* Set the port in a sockaddr_storage that already has an family
+/* Set the port in a sockaddr_union that already has an family
  *
- * @param ss: the sockaddr_storage to manipulate
- * @param port: the port to insert
+ * @param su: the sockaddr_union to manipulate
+ * @param port: the port to insert (in host byte order)
  */
-/* SS_SET_PORT(ss, port) */
+/* SU_SET_PORT(su, port) */
 #ifdef WORKING_IPV6
-#define SS_SET_PORT(ss, port) \
-switch ((ss)->ss_family) { \
+#define SU_SET_PORT(su, port) \
+switch (SU_GET_FAMILY(su)) { \
     case AF_INET: \
-        ((struct sockaddr_in *)(ss))->sin_port = (in_port_t)htons((port)); \
+        (su)->sin.sin_port = (in_port_t)htons((port)); \
         break; \
     case AF_INET6: \
-        ((struct sockaddr_in6 *)(ss))->sin6_port = (in_port_t)htons((port)); \
+        (su)->sin6.sin6_port = (in_port_t)htons((port)); \
         break; \
     default: assert(0); \
 }
 #else
-#define SS_SET_PORT(ss, port) \
-        ((struct sockaddr_in *)(ss))->sin_port = (in_port_t)htons((port));
+#define SU_SET_PORT(su, port) \
+        (su)->sin.sin_port = (in_port_t)htons((port));
 #endif
 
-/* Get the port in a sockaddr_storage object
+/* Get the port in a sockaddr_union object
  *
- * @param ss: the sockaddr_storage to manipulate
+ * @param su: the sockaddr_union to manipulate
+ * @return: the port, in host byte horder
  */
-/* SS_GET_PORT(ss) */
+/* SU_GET_PORT(su) */
 #ifdef WORKING_IPV6
-#define SS_GET_PORT(ss) (ntohs( \
-       (ss)->ss_family == AF_INET6? \
-        ((struct sockaddr_in6 *)(ss))->sin6_port \
-       :((struct sockaddr_in *)(ss))->sin_port))
+#define SU_GET_PORT(su) (ntohs(SU_GET_FAMILY(su) == AF_INET6? (su)->sin6.sin6_port:(su)->sin.sin_port))
 #else
-#define SS_GET_PORT(ss) (ntohs( \
-        ((struct sockaddr_in *)(ss))->sin_port))
+#define SU_GET_PORT(su) (ntohs((su)->sin.sin_port))
 #endif
 
-#endif	/* SOCKADDR_H */
-
+#endif	/* SOCKADDR_UTIL_H */
