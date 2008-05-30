@@ -1,3 +1,24 @@
+2008-05-30  Jean-Louis Martineau <martineau@zmanda.com>
+	* client-src/client_util.c: New *-RECOVER scripts.
+	* application-src/script-email.pl: Add new *-RECOVER scripts.
+	* application-src/generic-script.pl: Add new *-RECOVER scripts.
+	* application-src/amstar.c: Fix.
+	* application-src/amgtar.c: Fix.
+	* recover-src/amrecover.c: Add a global dump_dle variable.
+	* recover-src/extract_list.c: Call run_client_scripts for *-RECOVER
+				      scripts.
+	* recover-src/amrecover.h: Add an extern dump_dle variable.
+	* recover-src/set_commands.c: Send to amindexd the DLE command.
+	* server-src/amindexd.c: Handle the DLE command.
+	* server-src/server_util.c: Add *-RECOVER scripts, they can't be
+				    executed on server.
+	* server-src/diskfile.c (xml_scripts): Add *-RECOVER scripts.
+	* common-src/amfeatures.h: New fe_amrecover_dle amfeature.
+	* common-src/amfeatures.c (am_init_feature_set): Add fe_amrecover_dle.
+	* common-src/amxml.c: Add *-RECOVER scripts.
+	* common-src/conffile.c: Add *-RECOVER scripts.
+	* common-src/conffile.h: Add *-RECOVER scripts.
+
 2008-05-29  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/conffile.c: make config insensitive to
 	  differences between '-' and '_'

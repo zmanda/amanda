@@ -62,6 +62,7 @@ char *server_line = NULL;
 char *dump_datestamp = NULL;		/* date we are restoring */
 char *dump_hostname;			/* which machine we are restoring */
 char *disk_name = NULL;			/* disk we are restoring */
+dle_t *dump_dle = NULL;
 char *mount_point = NULL;		/* where disk was mounted */
 char *disk_path = NULL;			/* path relative to mount point */
 char dump_date[STR_SIZE];		/* date on which we are restoring */
@@ -135,6 +136,7 @@ get_line(void)
     server_line = newstralloc(server_line, mesg_buffer);
     amfree(mesg_buffer);
     mesg_buffer = newbuf;
+    amrecover_debug(1, "get: %s\n", mesg_buffer);
     return 0;
 }
 

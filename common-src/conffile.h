@@ -150,6 +150,11 @@ typedef enum {
 #define EXECUTE_ON_PRE_HOST_BACKUP     1<<9
 #define EXECUTE_ON_POST_DLE_BACKUP     1<<10
 #define EXECUTE_ON_POST_HOST_BACKUP    1<<11
+#define EXECUTE_ON_PRE_RECOVER         1<<12
+#define EXECUTE_ON_POST_RECOVER        1<<13
+#define EXECUTE_ON_PRE_LEVEL_RECOVER   1<<14
+#define EXECUTE_ON_POST_LEVEL_RECOVER  1<<15
+#define EXECUTE_ON_INTER_LEVEL_RECOVER 1<<16
 typedef int execute_on_t;
 
 typedef int execute_where_t;

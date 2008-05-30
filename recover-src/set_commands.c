@@ -32,6 +32,7 @@
 #include "amanda.h"
 #include "util.h"
 #include "amrecover.h"
+#include "amxml.h"
 
 #ifdef SAMBA_CLIENT
 extern unsigned short samba_extract_method;
@@ -261,6 +262,27 @@ set_disk(
     }
     amfree(uqmtpt);
     amfree(uqdsk);
+
+    if (am_has_feature(indexsrv_features, fe_amrecover_dle)) {
+	char *dle_str;
+	char *errmsg = NULL;
+
+	cmd = stralloc("DLE");
+	if (exchange(cmd) == -1)
+	    exit(1);
+	amfree(cmd);
+
+	if (!server_happy())
+	    return;
+
+	dle_str = reply_line();
+	if (BSTRNCMP(dle_str+4, "NODLE") == 0) {
+	    dump_dle = NULL;
+	} else {
+	    dle_str = unquote_string(dle_str+4);
+	    dump_dle = amxml_parse_node_CHAR(dle_str, &errmsg);
+	}
+    }
 }
 
 void

@@ -89,12 +89,15 @@ typedef enum {
     CONF_EXECUTE_ON,           CONF_EXECUTE_WHERE,	CONF_SEND_AMREPORT_ON,
 
     /* execute on 5 */
-    CONF_PRE_DLE_AMCHECK,    CONF_PRE_HOST_AMCHECK,
-    CONF_POST_DLE_AMCHECK,   CONF_POST_HOST_AMCHECK,
+    CONF_PRE_DLE_AMCHECK,      CONF_PRE_HOST_AMCHECK,
+    CONF_POST_DLE_AMCHECK,     CONF_POST_HOST_AMCHECK,
     CONF_PRE_DLE_ESTIMATE,     CONF_PRE_HOST_ESTIMATE,
     CONF_POST_DLE_ESTIMATE,    CONF_POST_HOST_ESTIMATE,
     CONF_PRE_DLE_BACKUP,       CONF_PRE_HOST_BACKUP,
     CONF_POST_DLE_BACKUP,      CONF_POST_HOST_BACKUP,
+    CONF_PRE_RECOVER,	       CONF_POST_RECOVER,
+    CONF_PRE_LEVEL_RECOVER,    CONF_POST_LEVEL_RECOVER,
+    CONF_INTER_LEVEL_RECOVER,
 
     /* kerberos 5 */
     CONF_KRB5KEYTAB,		CONF_KRB5PRINCIPAL,
@@ -829,6 +832,11 @@ keytab_t server_keytab[] = {
     { "POST_HOST_BACKUP", CONF_POST_HOST_BACKUP },
     { "PRE_DLE_BACKUP", CONF_PRE_DLE_BACKUP },
     { "PRE_HOST_BACKUP", CONF_PRE_HOST_BACKUP },
+    { "PRE_RECOVER", CONF_PRE_RECOVER },
+    { "POST_RECOVER", CONF_POST_RECOVER },
+    { "PRE_LEVEL_RECOVER", CONF_PRE_LEVEL_RECOVER },
+    { "POST_LEVEL_RECOVER", CONF_POST_LEVEL_RECOVER },
+    { "INTER_LEVEL_RECOVER", CONF_INTER_LEVEL_RECOVER },
     { "PRINTER", CONF_PRINTER },
     { "PRIORITY", CONF_PRIORITY },
     { "PROGRAM", CONF_PROGRAM },
@@ -2923,10 +2931,10 @@ read_execute_on(
     val->v.i = 0;
     do {
 	switch(tok) {
-	case CONF_PRE_DLE_AMCHECK:   val->v.i |= EXECUTE_ON_PRE_DLE_AMCHECK;   break;
-	case CONF_PRE_HOST_AMCHECK:  val->v.i |= EXECUTE_ON_PRE_HOST_AMCHECK;  break;
-	case CONF_POST_DLE_AMCHECK:  val->v.i |= EXECUTE_ON_POST_DLE_AMCHECK;  break;
-	case CONF_POST_HOST_AMCHECK: val->v.i |= EXECUTE_ON_POST_HOST_AMCHECK; break;
+	case CONF_PRE_DLE_AMCHECK:     val->v.i |= EXECUTE_ON_PRE_DLE_AMCHECK;     break;
+	case CONF_PRE_HOST_AMCHECK:    val->v.i |= EXECUTE_ON_PRE_HOST_AMCHECK;    break;
+	case CONF_POST_DLE_AMCHECK:    val->v.i |= EXECUTE_ON_POST_DLE_AMCHECK;    break;
+	case CONF_POST_HOST_AMCHECK:   val->v.i |= EXECUTE_ON_POST_HOST_AMCHECK;   break;
 	case CONF_PRE_DLE_ESTIMATE:    val->v.i |= EXECUTE_ON_PRE_DLE_ESTIMATE;    break;
 	case CONF_PRE_HOST_ESTIMATE:   val->v.i |= EXECUTE_ON_PRE_HOST_ESTIMATE;   break;
 	case CONF_POST_DLE_ESTIMATE:   val->v.i |= EXECUTE_ON_POST_DLE_ESTIMATE;   break;
@@ -2935,6 +2943,11 @@ read_execute_on(
 	case CONF_PRE_HOST_BACKUP:     val->v.i |= EXECUTE_ON_PRE_HOST_BACKUP;     break;
 	case CONF_POST_DLE_BACKUP:     val->v.i |= EXECUTE_ON_POST_DLE_BACKUP;     break;
 	case CONF_POST_HOST_BACKUP:    val->v.i |= EXECUTE_ON_POST_HOST_BACKUP;    break;
+	case CONF_PRE_RECOVER:         val->v.i |= EXECUTE_ON_PRE_RECOVER;         break;
+	case CONF_POST_RECOVER:        val->v.i |= EXECUTE_ON_POST_RECOVER;        break;
+	case CONF_PRE_LEVEL_RECOVER:   val->v.i |= EXECUTE_ON_PRE_LEVEL_RECOVER;   break;
+	case CONF_POST_LEVEL_RECOVER:  val->v.i |= EXECUTE_ON_POST_LEVEL_RECOVER;  break;
+	case CONF_INTER_LEVEL_RECOVER: val->v.i |= EXECUTE_ON_INTER_LEVEL_RECOVER; break;
 	default:
 	conf_parserror(_("Execute_on expected"));
 	}
@@ -5663,6 +5676,26 @@ val_t_display_strs(
 	    }
 	    if (val->v.i & EXECUTE_ON_POST_HOST_BACKUP) {
 		buf[0] = vstrextend(&buf[0], sep, "POST-HOST-BACKUP", NULL);
+		sep = ", ";
+	    }
+	    if (val->v.i & EXECUTE_ON_PRE_RECOVER) {
+		buf[0] = vstrextend(&buf[0], sep, "PRE-RECOVER", NULL);
+		sep = ", ";
+	    }
+	    if (val->v.i & EXECUTE_ON_POST_RECOVER) {
+		buf[0] = vstrextend(&buf[0], sep, "POST-RECOVER", NULL);
+		sep = ", ";
+	    }
+	    if (val->v.i & EXECUTE_ON_PRE_LEVEL_RECOVER) {
+		buf[0] = vstrextend(&buf[0], sep, "PRE-LEVEL-RECOVER", NULL);
+		sep = ", ";
+	    }
+	    if (val->v.i & EXECUTE_ON_POST_LEVEL_RECOVER) {
+		buf[0] = vstrextend(&buf[0], sep, "POST-LEVEL-RECOVER", NULL);
+		sep = ", ";
+	    }
+	    if (val->v.i & EXECUTE_ON_INTER_LEVEL_RECOVER) {
+		buf[0] = vstrextend(&buf[0], sep, "INTER-LEVEL-RECOVER", NULL);
 		sep = ", ";
 	    }
 	}

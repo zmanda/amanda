@@ -174,6 +174,7 @@ typedef enum {
     fe_rep_sendsize_quoted_error,
     fe_req_xml,
     fe_pp_script,	// only in XML
+    fe_amrecover_dle,
 
     /*
      * All new features must be inserted immediately *before* this entry.

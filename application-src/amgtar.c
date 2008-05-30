@@ -298,11 +298,9 @@ main(
 	g_critical(_("errors processing config file"));
     }
 
-    if (getconf_seen(CNF_GNUTAR_LIST_DIR)) {
-	gnutar_listdir = getconf_str(CNF_GNUTAR_LIST_DIR);
-	if (strlen(gnutar_listdir) == 0)
-	    gnutar_listdir = NULL;
-    }
+    gnutar_listdir = getconf_str(CNF_GNUTAR_LIST_DIR);
+    if (strlen(gnutar_listdir) == 0)
+	gnutar_listdir = NULL;
 
     dbprintf("GNUTAR-PATH %s\n", gnutar_path);
     dbprintf("GNUTAR-LISTDIR %s\n", gnutar_listdir);
@@ -310,8 +308,6 @@ main(
     dbprintf("SPARSE %s\n", gnutar_sparse? "yes":"no");
     dbprintf("ATIME-PRESERVE %s\n", gnutar_atimepreserve? "yes":"no");
     dbprintf("CHECK-DEVICE %s\n", gnutar_checkdevice? "yes":"no");
-
-    fclose(stdin);
 
     if (strcmp(command, "support") == 0) {
 	amgtar_support(&argument);
@@ -657,11 +653,11 @@ amgtar_restore(
     my_argv[i++] = stralloc("-xpGvf");
     my_argv[i++] = stralloc("-");
 
-    for (j=1; j< argument->argc; j++)
+    for (j=1; j< argument->argc; j++) {
 	my_argv[i++] = stralloc(argument->argv[j]);
+    }
+    my_argv[i++] = NULL;
 
-    dup2(1,0);
-    dup2(2,1);
     env = safe_env();
     become_root();
     execve(cmd, my_argv, env);

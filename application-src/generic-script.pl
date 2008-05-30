@@ -26,7 +26,7 @@ print DEBUG "FHOUT 6: config    =" . $opt_config . "\n" if ($debug == 1);
 print DEBUG "FHOUT 6: disk      =" . $opt_disk   . "\n" if ($debug == 1);
 print DEBUG "FHOUT 6: host      =" . $opt_host   . "\n" if ($debug == 1);
 print DEBUG "FHOUT 6: device    =" . $opt_device . "\n" if ($debug == 1);
-print DEBUG "FHOUT 6: level     =" . $opt_level  . "\n" if ($debug == 1);
+print DEBUG "FHOUT 6: level     =" . join(" ", @opt_level)  . "\n" if ($debug == 1);
 print DEBUG "FHOUT 6: index     =" . $opt_index  . "\n" if ($debug == 1);
 print DEBUG "FHOUT 6: message   =" . $opt_message. "\n" if ($debug == 1);
 print DEBUG "FHOUT 6: collection=" . $opt_collection. "\n" if ($debug == 1);
@@ -62,9 +62,14 @@ if (defined $opt_disk) {
   $opt_disk = $opt_device;
 }
 
-if (defined $opt_level) {
-  $opt_level =~ /^(\d)$/;
-  $opt_level = $1;
+if (defined @opt_level) {
+  my @level = ();
+  while (defined($level = shift(@opt_level))) {
+    $level =~ /^(\d)$/;
+    $level = $1;
+    push @level, $level;
+  }
+  @opt_level = @level;
 }
 
 $command = $ARGV[0];
@@ -118,6 +123,21 @@ elsif ($command eq "POST-DLE-BACKUP") {
 elsif ($command eq "POST-HOST-BACKUP") {
    wrapper_post_host_backup();
 }
+elsif ($command eq "PRE-RECOVER") {
+   wrapper_pre_recover();
+}
+elsif ($command eq "POST-RECOVER") {
+   wrapper_post_recover();
+}
+elsif ($command eq "PRE-LEVEL-RECOVER") {
+   wrapper_pre_level_recover();
+}
+elsif ($command eq "POST-LEVEL-RECOVER") {
+   wrapper_post_level_recover();
+}
+elsif ($command eq "INTER-LEVEL-RECOVER") {
+   wrapper_inter_level_recover();
+}
 else {
    printf STDERR "Unknown command `$command'.\n";
    exit 1;
@@ -126,7 +146,7 @@ else {
 
 sub wrapper_pre_dle_amcheck() {
    if(defined(&command_pre_dle_amcheck)) {
-      command_pre_dle_amcheck($opt_config, $opt_host, $opt_disk, $opt_device, $opt_level);
+      command_pre_dle_amcheck($opt_config, $opt_host, $opt_disk, $opt_device, @opt_level);
    }
    else {
       exit 1;
@@ -135,7 +155,7 @@ sub wrapper_pre_dle_amcheck() {
 
 sub wrapper_pre_host_amcheck() {
    if(defined(&command_pre_host_amcheck)) {
-      command_pre_host_amcheck($opt_config, $opt_host, $opt_disk, $opt_device, $opt_level);
+      command_pre_host_amcheck($opt_config, $opt_host, $opt_disk, $opt_device, @opt_level);
    }
    else {
       exit 1;
@@ -144,7 +164,7 @@ sub wrapper_pre_host_amcheck() {
 
 sub wrapper_post_dle_amcheck() {
    if(defined(&command_post_dle_amcheck)) {
-      command_post_dle_amcheck($opt_config, $opt_host, $opt_disk, $opt_device, $opt_level);
+      command_post_dle_amcheck($opt_config, $opt_host, $opt_disk, $opt_device, @opt_level);
    }
    else {
       exit 1;
@@ -153,7 +173,7 @@ sub wrapper_post_dle_amcheck() {
 
 sub wrapper_post_host_amcheck() {
    if(defined(&command_post_host_amcheck)) {
-      command_post_host_amcheck($opt_config, $opt_host, $opt_disk, $opt_device, $opt_level);
+      command_post_host_amcheck($opt_config, $opt_host, $opt_disk, $opt_device, @opt_level);
    }
    else {
       exit 1;
@@ -162,7 +182,7 @@ sub wrapper_post_host_amcheck() {
 
 sub wrapper_pre_dle_estimate() {
    if(defined(&command_pre_dle_estimate)) {
-      command_pre_dle_estimate($opt_config, $opt_host, $opt_disk, $opt_device, $opt_level);
+      command_pre_dle_estimate($opt_config, $opt_host, $opt_disk, $opt_device, @opt_level);
    }
    else {
       exit 1;
@@ -171,7 +191,7 @@ sub wrapper_pre_dle_estimate() {
 
 sub wrapper_pre_host_estimate() {
    if(defined(&command_pre_host_estimate)) {
-      command_pre_host_estimate($opt_config, $opt_host, $opt_disk, $opt_device, $opt_level);
+      command_pre_host_estimate($opt_config, $opt_host, $opt_disk, $opt_device, @opt_level);
    }
    else {
       exit 1;
@@ -180,7 +200,7 @@ sub wrapper_pre_host_estimate() {
 
 sub wrapper_post_dle_estimate() {
    if(defined(&command_post_dle_estimate)) {
-      command_post_dle_estimate($opt_config, $opt_host, $opt_disk, $opt_device, $opt_level);
+      command_post_dle_estimate($opt_config, $opt_host, $opt_disk, $opt_device, @opt_level);
    }
    else {
       exit 1;
@@ -189,7 +209,7 @@ sub wrapper_post_dle_estimate() {
 
 sub wrapper_post_host_estimate() {
    if(defined(&command_post_host_estimate)) {
-      command_post_host_estimate($opt_config, $opt_host, $opt_disk, $opt_device, $opt_level);
+      command_post_host_estimate($opt_config, $opt_host, $opt_disk, $opt_device, @opt_level);
    }
    else {
       exit 1;
@@ -198,7 +218,7 @@ sub wrapper_post_host_estimate() {
 
 sub wrapper_pre_dle_backup() {
    if(defined(&command_pre_dle_backup)) {
-      command_pre_dle_backup($opt_config, $opt_host, $opt_disk, $opt_device, $opt_level);
+      command_pre_dle_backup($opt_config, $opt_host, $opt_disk, $opt_device, @opt_level);
    }
    else {
       exit 1;
@@ -207,7 +227,7 @@ sub wrapper_pre_dle_backup() {
 
 sub wrapper_pre_host_backup() {
    if(defined(&command_pre_host_backup)) {
-      command_pre_host_backup($opt_config, $opt_host, $opt_disk, $opt_device, $opt_level);
+      command_pre_host_backup($opt_config, $opt_host, $opt_disk, $opt_device, @opt_level);
    }
    else {
       exit 1;
@@ -216,7 +236,7 @@ sub wrapper_pre_host_backup() {
 
 sub wrapper_post_dle_backup() {
    if(defined(&command_post_dle_backup)) {
-      command_post_dle_backup($opt_config, $opt_host, $opt_disk, $opt_device, $opt_level);
+      command_post_dle_backup($opt_config, $opt_host, $opt_disk, $opt_device, @opt_level);
    }
    else {
       exit 1;
@@ -225,7 +245,53 @@ sub wrapper_post_dle_backup() {
 
 sub wrapper_post_host_backup() {
    if(defined(&command_post_host_backup)) {
-      command_post_host_backup($opt_config, $opt_host, $opt_disk, $opt_device, $opt_level);
+      command_post_host_backup($opt_config, $opt_host, $opt_disk, $opt_device, @opt_level);
+   }
+   else {
+      exit 1;
+   }
+}
+
+sub wrapper_pre_recover() {
+   if(defined(&command_pre_recover)) {
+print DEBUG "level: ", join(" ", @opt_level), "\n" if ($debug == 1);
+      command_pre_recover($opt_config, $opt_host, $opt_disk, $opt_device, @opt_level);
+   }
+   else {
+      exit 1;
+   }
+}
+
+sub wrapper_post_recover() {
+   if(defined(&command_post_recover)) {
+      command_post_recover($opt_config, $opt_host, $opt_disk, $opt_device, @opt_level);
+   }
+   else {
+      exit 1;
+   }
+}
+
+sub wrapper_pre_level_recover() {
+   if(defined(&command_pre_level_recover)) {
+      command_pre_level_recover($opt_config, $opt_host, $opt_disk, $opt_device, @opt_level);
+   }
+   else {
+      exit 1;
+   }
+}
+
+sub wrapper_post_level_recover() {
+   if(defined(&command_post_level_recover)) {
+      command_post_level_recover($opt_config, $opt_host, $opt_disk, $opt_device, @opt_level);
+   }
+   else {
+      exit 1;
+   }
+}
+
+sub wrapper_inter_level_recover() {
+   if(defined(&command_inter_level_recover)) {
+      command_inter_level_recover($opt_config, $opt_host, $opt_disk, $opt_device, @opt_level);
    }
    else {
       exit 1;

@@ -267,8 +267,6 @@ main(
 	g_critical(_("errors processing config file"));
     }
 
-    fclose(stdin);
-
     if (strcmp(command, "support") == 0) {
 	amstar_support(&argument);
     } else if (strcmp(command, "selfcheck") == 0) {
@@ -618,9 +616,8 @@ amstar_restore(
 
     for (j=1; j< argument->argc; j++)
 	my_argv[i++] = stralloc(argument->argv[j]+2); /* remove ./ */
+    my_argv[i++] = NULL;
 
-    dup2(1,0);
-    dup2(2,1);
     env = safe_env();
     become_root();
     execve(cmd, my_argv, env);

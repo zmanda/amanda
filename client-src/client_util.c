@@ -853,9 +853,10 @@ run_client_script(
     int     scriptin, scriptout, scripterr;
     char   *cmd;
     char  **argvchild;
-    int     i, k;
+    int     i;
     FILE   *streamout;
     char   *line;
+    int     argv_size;
 
     if ((script->execute_on & execute_on) == 0)
 	return;
@@ -863,8 +864,10 @@ run_client_script(
 	return;
 
     cmd = vstralloc(APPLICATION_DIR, "/", script->plugin, NULL);
-    k = property_argv_size(script->property);
-    argvchild = malloc((12+k) * SIZEOF(char *));
+    argv_size = 12 + property_argv_size(script->property);
+    if (dle->level)
+	argv_size += 2 * g_slist_length(dle->level);
+    argvchild = malloc(argv_size * SIZEOF(char *));
     i = 0;
     argvchild[i++] = script->plugin;
 
@@ -893,6 +896,16 @@ run_client_script(
 	argvchild[i++] = "POST-DLE-BACKUP"; break;
     case EXECUTE_ON_POST_HOST_BACKUP:
 	argvchild[i++] = "POST-HOST-BACKUP"; break;
+    case EXECUTE_ON_PRE_RECOVER:
+	argvchild[i++] = "PRE-RECOVER"; break;
+    case EXECUTE_ON_POST_RECOVER:
+	argvchild[i++] = "POST-RECOVER"; break;
+    case EXECUTE_ON_PRE_LEVEL_RECOVER:
+	argvchild[i++] = "PRE-LEVEL-RECOVER"; break;
+    case EXECUTE_ON_POST_LEVEL_RECOVER:
+	argvchild[i++] = "POST-LEVEL-RECOVER"; break;
+    case EXECUTE_ON_INTER_LEVEL_RECOVER:
+	argvchild[i++] = "INTER-LEVEL-RECOVER"; break;
     }
 
     if (g_options->config) {
@@ -910,6 +923,15 @@ run_client_script(
     if (dle->device) {
 	argvchild[i++] = "--device";
 	argvchild[i++] = stralloc(dle->device);
+    }
+    if (dle->level) {
+	GSList *level;
+	char number[NUM_STR_SIZE];
+	for (level=dle->level; level; level=level->next) {
+	    argvchild[i++] = "--level";
+	    g_snprintf(number, SIZEOF(number), "%d", GPOINTER_TO_INT(level->data));
+	    argvchild[i++] = stralloc(number);
+	}
     }
     i += property_add_to_argv(&argvchild[i], script->property);
     argvchild[i++] = NULL;

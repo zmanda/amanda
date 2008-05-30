@@ -253,6 +253,15 @@ run_server_script(
 	argvchild[i++] = "POST-DLE-BACKUP"; break;
     case EXECUTE_ON_POST_HOST_BACKUP:
 	argvchild[i++] = "POST-HOST-BACKUP"; break;
+    case EXECUTE_ON_PRE_RECOVER:
+    case EXECUTE_ON_POST_RECOVER:
+    case EXECUTE_ON_PRE_LEVEL_RECOVER:
+    case EXECUTE_ON_POST_LEVEL_RECOVER:
+    case EXECUTE_ON_INTER_LEVEL_RECOVER:
+	{
+	     // ERROR these script can't be executed on server.
+	     return;
+	}
     }
 
     if (config) {

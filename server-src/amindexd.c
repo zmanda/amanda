@@ -57,6 +57,7 @@
 #include "amandad.h"
 #include "pipespawn.h"
 #include "sockaddr-util.h"
+#include "amxml.h"
 
 #include <grp.h>
 
@@ -1438,6 +1439,39 @@ main(
 		}
 	    }
 	    s[-1] = (char)ch;
+	} else if (strcmp(cmd, "DLE") == 0) {
+	    disk_t *dp;
+	    char *optionstr;
+	    char *b64disk;
+	    char *l, *ql;
+
+	    dp = lookup_disk(dump_hostname, disk_name);
+	    if (dp->line == 0) {
+		reply(200, "NODLE");
+	    } else {
+		b64disk = amxml_format_tag("disk", dp->name);
+		optionstr = xml_optionstr(dp, their_features, NULL);
+		l = vstralloc("<dle>\n",
+			      "  <program>", dp->program, "</program>\n", NULL);
+		if (dp->application) {
+		    char *xml_app = xml_application(dp->application);
+		    vstrextend(&l, xml_app, NULL);
+		    amfree(xml_app);
+		}
+		vstrextend(&l, "  ", b64disk, "\n", NULL);
+		if (dp->device) {
+		    char *b64device = amxml_format_tag("diskdevice", dp->device);
+		    vstrextend(&l, "  ", b64device, "\n", NULL);
+		    amfree(b64device);
+		}
+		vstrextend(&l, optionstr, "</dle>\n", NULL);
+		ql = quote_string(l);
+		reply(200, "%s", ql);
+		amfree(optionstr);
+		amfree(l);
+		amfree(ql);
+		amfree(b64disk);
+	    }
 	} else if (strcmp(cmd, "LISTDISK") == 0) {
 	    char *qname;
 	    disk_t *disk;

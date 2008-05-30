@@ -2112,6 +2112,9 @@ extract_files(void)
     int first;
     int otc;
     tapelist_t *tlist = NULL, *a_tlist;
+    g_option_t g_options;
+    GSList *all_level = NULL;
+    int last_level;
 
     if (!is_extract_list_nonempty())
     {
@@ -2212,6 +2215,19 @@ extract_files(void)
     }
     free_unlink_list();
 
+    g_options.config = get_config_name();
+    g_options.hostname = dump_hostname;
+    for (elist = first_tape_list(); elist != NULL;
+	 elist = next_tape_list(elist)) {
+	all_level = g_slist_append(all_level, GINT_TO_POINTER(elist->level));
+    }
+    if (dump_dle) {
+	g_slist_free(dump_dle->level);
+	dump_dle->level = all_level;
+	run_client_scripts(EXECUTE_ON_PRE_RECOVER, &g_options, dump_dle);
+	dump_dle->level = NULL;
+    }
+    last_level = -1;
     while ((elist = first_tape_list()) != NULL)
     {
 	if(elist->tape[0]=='/') {
@@ -2241,6 +2257,17 @@ extract_files(void)
 	}
 	dump_datestamp = newstralloc(dump_datestamp, elist->date);
 
+	if (last_level != -1 && dump_dle) {
+	    dump_dle->level = g_slist_append(dump_dle->level,
+					     GINT_TO_POINTER(last_level));
+	    dump_dle->level = g_slist_append(dump_dle->level,
+					     GINT_TO_POINTER(elist->level));
+	    run_client_scripts(EXECUTE_ON_INTER_LEVEL_RECOVER, &g_options,
+			       dump_dle);
+	    g_slist_free(dump_dle->level);
+	    dump_dle->level = NULL;
+	}
+
 	/* connect to the tape handler daemon on the tape drive server */
 	if ((extract_files_setup(elist->tape, elist->fileno)) == -1)
 	{
@@ -2248,6 +2275,13 @@ extract_files(void)
 		    errstr);
 	    return;
 	}
+	if (dump_dle) {
+	    dump_dle->level = g_slist_append(dump_dle->level,
+					     GINT_TO_POINTER(elist->level));
+	    run_client_scripts(EXECUTE_ON_PRE_LEVEL_RECOVER, &g_options,
+			       dump_dle);
+	}
+	last_level = elist->level;
 
 	/* if the server have fe_amrecover_feedme_tape, it has asked for
 	 * the tape itself, even if the restore didn't succeed, we should
@@ -2258,6 +2292,20 @@ extract_files(void)
 	    delete_tape_list(elist);	/* tape done so delete from list */
 
 	stop_amidxtaped();
+
+	if (dump_dle) {
+	    run_client_scripts(EXECUTE_ON_POST_LEVEL_RECOVER, &g_options,
+			       dump_dle);
+	    g_slist_free(dump_dle->level);
+	    dump_dle->level = NULL;
+	}
+    }
+    if (dump_dle) {
+	dump_dle->level = all_level;
+	run_client_scripts(EXECUTE_ON_POST_RECOVER, &g_options, dump_dle);
+	g_slist_free(dump_dle->level);
+	all_level = NULL;
+	dump_dle->level = NULL;
     }
 }
 

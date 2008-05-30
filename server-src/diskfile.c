@@ -188,6 +188,7 @@ add_disk(
     am_host_t *host;
 
     disk = alloc(SIZEOF(disk_t));
+    bzero(disk, SIZEOF(disk_t));
     disk->line = 0;
     disk->tape_splitsize = (off_t)0;
     disk->split_diskbuffer = NULL;
@@ -1780,6 +1781,26 @@ xml_scripts(
 	}
 	if (execute_on & EXECUTE_ON_POST_HOST_BACKUP) {
 	    eo_str = vstrextend(&eo_str, sep, "POST-HOST-BACKUP", NULL);
+	    sep = ",";
+	}
+	if (execute_on & EXECUTE_ON_PRE_RECOVER) {
+	    eo_str = vstrextend(&eo_str, sep, "PRE-RECOVER", NULL);
+	    sep = ",";
+	}
+	if (execute_on & EXECUTE_ON_POST_RECOVER) {
+	    eo_str = vstrextend(&eo_str, sep, "POST-RECOVER", NULL);
+	    sep = ",";
+	}
+	if (execute_on & EXECUTE_ON_PRE_LEVEL_RECOVER) {
+	    eo_str = vstrextend(&eo_str, sep, "PRE-LEVEL-RECOVER", NULL);
+	    sep = ",";
+	}
+	if (execute_on & EXECUTE_ON_POST_LEVEL_RECOVER) {
+	    eo_str = vstrextend(&eo_str, sep, "POST-LEVEL-RECOVER", NULL);
+	    sep = ",";
+	}
+	if (execute_on & EXECUTE_ON_INTER_LEVEL_RECOVER) {
+	    eo_str = vstrextend(&eo_str, sep, "INTER-LEVEL-RECOVER", NULL);
 	    sep = ",";
 	}
 	if (execute_on != 0)

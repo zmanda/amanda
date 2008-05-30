@@ -44,7 +44,7 @@ $has_host     = 1;
 $has_disk     = 1;
 
 sub command_support {
-   my($config, $host, $disk, $device, $level) = @_;
+   my($config, $host, $disk, $device, @level) = @_;
    print "CONFIG YES\n";
    print DEBUG "STDOUT: CONFIG YES\n" if ($debug == 1);
    print "HOST YES\n";
@@ -53,85 +53,99 @@ sub command_support {
    print DEBUG "STDOUT: DISK YES\n" if ($debug == 1);
    print "MAX-LEVEL 9\n";
    print DEBUG "STDOUT: MAX-LEVEL 9\n" if ($debug == 1);
-   print "INDEX-LINE YES\n";
-   print DEBUG "STDOUT: INDEX-LINE YES\n" if ($debug == 1);
-   print "INDEX-XML NO\n";
-   print DEBUG "STDOUT: INDEX-XML NO\n" if ($debug == 1);
    print "MESSAGE-LINE YES\n";
    print DEBUG "STDOUT: MESSAGE-LINE YES\n" if ($debug == 1);
    print "MESSAGE-XML NO\n";
    print DEBUG "STDOUT: MESSAGE-XML NO\n" if ($debug == 1);
-   print "RECORD YES\n";
-   print DEBUG "STDOUT: RECORD YES\n" if ($debug == 1);
-   print "INCLUDE-FILE YES\n";
-   print "INCLUDE-LIST YES\n";
-   print "EXCLUDE-FILE YES\n";
-   print "EXCLUDE-LIST YES\n";
-   print "COLLECTION NO\n";
 }
 
 sub command_pre_dle_amcheck {
-   my($config, $host, $disk, $device, $level) = @_;
-   sendmail("pre-dle-amcheck", $config, $host, $disk, $device, $level);
+   my($config, $host, $disk, $device, @level) = @_;
+   sendmail("pre-dle-amcheck", $config, $host, $disk, $device, @level);
 }
 
 sub command_pre_host_amcheck {
-   my($config, $host, $disk, $device, $level) = @_;
-   sendmail("pre-host-amcheck", $config, $host, $disk, $device, $level);
+   my($config, $host, $disk, $device, @level) = @_;
+   sendmail("pre-host-amcheck", $config, $host, $disk, $device, @level);
 }
 
 sub command_post_dle_amcheck {
-   my($config, $host, $disk, $device, $level) = @_;
-   sendmail("post-dle-amcheck", $config, $host, $disk, $device, $level);
+   my($config, $host, $disk, $device, @level) = @_;
+   sendmail("post-dle-amcheck", $config, $host, $disk, $device, @level);
 }
 
 sub command_post_host_amcheck {
-   my($config, $host, $disk, $device, $level) = @_;
-   sendmail("post-host-amcheck", $config, $host, $disk, $device, $level);
+   my($config, $host, $disk, $device, @level) = @_;
+   sendmail("post-host-amcheck", $config, $host, $disk, $device, @level);
 }
 
 sub command_pre_dle_estimate {
-   my($config, $host, $disk, $device, $level) = @_;
-   sendmail("pre-dle-estimate", $config, $host, $disk, $device, $level);
+   my($config, $host, $disk, $device, @level) = @_;
+   sendmail("pre-dle-estimate", $config, $host, $disk, $device, @level);
 }
 
 sub command_pre_host_estimate {
-   my($config, $host, $disk, $device, $level) = @_;
-   sendmail("pre-host-estimate", $config, $host, $disk, $device, $level);
+   my($config, $host, $disk, $device, @level) = @_;
+   sendmail("pre-host-estimate", $config, $host, $disk, $device, @level);
 }
 
 sub command_post_dle_estimate {
-   my($config, $host, $disk, $device, $level) = @_;
-   sendmail("post-dle-estimate", $config, $host, $disk, $device, $level);
+   my($config, $host, $disk, $device, @level) = @_;
+   sendmail("post-dle-estimate", $config, $host, $disk, $device, @level);
 }
 
 sub command_post_host_estimate {
-   my($config, $host, $disk, $device, $level) = @_;
-   sendmail("post-host-estimate", $config, $host, $disk, $device, $level);
+   my($config, $host, $disk, $device, @level) = @_;
+   sendmail("post-host-estimate", $config, $host, $disk, $device, @level);
 }
 
 sub command_pre_dle_backup {
-   my($config, $host, $disk, $device, $level) = @_;
-   sendmail("pre-dle-backup", $config, $host, $disk, $device, $level);
+   my($config, $host, $disk, $device, @level) = @_;
+   sendmail("pre-dle-backup", $config, $host, $disk, $device, @level);
 }
 
 sub command_pre_host_backup {
-   my($config, $host, $disk, $device, $level) = @_;
-   sendmail("pre-host-backup", $config, $host, $disk, $device, $level);
+   my($config, $host, $disk, $device, @level) = @_;
+   sendmail("pre-host-backup", $config, $host, $disk, $device, @level);
 }
 
 sub command_post_dle_backup {
-   my($config, $host, $disk, $device, $level) = @_;
-   sendmail("post-dle-backup", $config, $host, $disk, $device, $level);
+   my($config, $host, $disk, $device, @level) = @_;
+   sendmail("post-dle-backup", $config, $host, $disk, $device, @level);
 }
 
 sub command_post_host_backup {
-   my($config, $host, $disk, $device, $level) = @_;
-   sendmail("post-host-backup", $config, $host, $disk, $device, $level);
+   my($config, $host, $disk, $device, @level) = @_;
+   sendmail("post-host-backup", $config, $host, $disk, $device, @level);
+}
+
+sub command_pre_recover {
+   my($config, $host, $disk, $device, @level) = @_;
+   sendmail("pre-recover", $config, $host, $disk, $device, @level);
+}
+
+sub command_post_recover {
+   my($config, $host, $disk, $device, @level) = @_;
+   sendmail("post-recover", $config, $host, $disk, $device, @level);
+}
+
+sub command_pre_level_recover {
+   my($config, $host, $disk, $device, @level) = @_;
+   sendmail("pre-level-recover", $config, $host, $disk, $device, @level);
+}
+
+sub command_post_level_recover {
+   my($config, $host, $disk, $device, @level) = @_;
+   sendmail("post-level-recover", $config, $host, $disk, $device, @level);
+}
+
+sub command_inter_level_recover {
+   my($config, $host, $disk, $device, @level) = @_;
+   sendmail("inter-level-recover", $config, $host, $disk, $device, @level);
 }
 
 sub sendmail {
-   my($function, $config, $host, $disk, $device, $level) = @_;
+   my($function, $config, $host, $disk, $device, @level) = @_;
    if (defined(@opt_mailto)) {
       $destcheck = join ',', @opt_mailto;
       $destcheck =~ /^([a-zA-Z,]*)$/;
@@ -139,14 +153,14 @@ sub sendmail {
    } else {
       $dest = "root";
    }
-   $cmd = "$mailer -s \"$config $function $host $disk $device\" $dest";
+   $cmd = "$mailer -s \"$config $function $host $disk $device " . join (" ", @level) ." \" $dest";
    print DEBUG "cmd: $cmd\n" if ($debug == 1);
    open(MAIL,"|$cmd");
-   print MAIL "$config $function $host $disk $device\n";
+   print MAIL "$config $function $host $disk $device ", join (" ", @level), "\n";
    close MAIL;
 }
 
-$result = &NGetOpt ("config=s", "host=s", "disk=s", "device=s", "level=s", "index=s", "message=s", "collection", "record", "mailto=s@");
+$result = &NGetOpt ("config=s", "host=s", "disk=s", "device=s", "level=s@", "index=s", "message=s", "collection", "record", "mailto=s@");
 $result = $result;
 
 require "$application_dir/generic-script"

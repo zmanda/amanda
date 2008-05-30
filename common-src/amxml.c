@@ -714,6 +714,16 @@ amtext(
 		data_user->script->execute_on |= EXECUTE_ON_POST_DLE_BACKUP;
 	    else if (strcmp(tt1,"POST-HOST-BACKUP") == 0)
 		data_user->script->execute_on |= EXECUTE_ON_POST_HOST_BACKUP;
+	    else if (strcmp(tt1,"PRE-RECOVER") == 0)
+		data_user->script->execute_on |= EXECUTE_ON_PRE_RECOVER;
+	    else if (strcmp(tt1,"POST-RECOVER") == 0)
+		data_user->script->execute_on |= EXECUTE_ON_POST_RECOVER;
+	    else if (strcmp(tt1,"PRE-LEVEL-RECOVER") == 0)
+		data_user->script->execute_on |= EXECUTE_ON_PRE_LEVEL_RECOVER;
+	    else if (strcmp(tt1,"POST-LEVEL-RECOVER") == 0)
+		data_user->script->execute_on |= EXECUTE_ON_POST_LEVEL_RECOVER;
+	    else if (strcmp(tt1,"INTER-LEVEL-RECOVER") == 0)
+		data_user->script->execute_on |= EXECUTE_ON_INTER_LEVEL_RECOVER;
 	    else 
 		dbprintf("BAD EXECUTE_ON: %s\n", tt1);
 	    if (sep)
