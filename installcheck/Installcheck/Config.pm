@@ -177,40 +177,45 @@ key/value pairs.
 
 =cut
 
+sub _add_subsec {
+    my $self = shift;
+    my ($subsec, $name, $values_arrayref) = @_;
+
+    # first delete any existing subsections with that name
+    @{$self->{$subsec}} = grep { $_->[0] ne $name } @{$self->{$subsec}};
+    
+    # and now push the new subsection definition on the end
+    push @{$self->{$subsec}}, [$name, @$values_arrayref];
+}
+
 sub add_tapetype {
     my $self = shift;
-    my ($name, $values_arrayref) = @_;
-    push @{$self->{'tapetypes'}}, [$name, @$values_arrayref];
+    $self->_add_subsec("tapetypes", @_);
 }
 
 sub add_dumptype {
     my $self = shift;
-    my ($name, $values_arrayref) = @_;
-    push @{$self->{'dumptypes'}}, [$name, @$values_arrayref];
+    $self->_add_subsec("dumptypes", @_);
 }
 
 sub add_holdingdisk {
     my $self = shift;
-    my ($name, $values_arrayref) = @_;
-    push @{$self->{'holdingdisks'}}, [$name, @$values_arrayref];
+    $self->_add_subsec("holdingdisks", @_);
 }
 
 sub add_interface {
     my $self = shift;
-    my ($name, $values_arrayref) = @_;
-    push @{$self->{'interfaces'}}, [$name, @$values_arrayref];
+    $self->_add_subsec("interfaces", @_);
 }
 
 sub add_application {
     my $self = shift;
-    my ($name, $values_arrayref) = @_;
-    push @{$self->{'application-tool'}}, [$name, @$values_arrayref];
+    $self->_add_subsec("application-tool", @_);
 }
 
 sub add_script {
     my $self = shift;
-    my ($name, $values_arrayref) = @_;
-    push @{$self->{'script-tool'}}, [$name, @$values_arrayref];
+    $self->_add_subsec("script-tool", @_);
 }
 
 =item C<add_dle($line)>

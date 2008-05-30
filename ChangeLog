@@ -1,4 +1,7 @@
 2008-05-30  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Installcheck/Config.pm: fix subsection inheritance
+
+2008-05-30  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/amanda.h, common-src/bsd-security.c,
 	  common-src/bsdtcp-security.c, common-src/bsdudp-security.c,
 	  common-src/dgram.c, common-src/dgram.h, common-src/krb5-security.c,
