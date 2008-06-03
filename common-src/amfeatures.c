@@ -149,7 +149,8 @@ am_init_feature_set(void)
 	am_add_feature(f, fe_rep_sendsize_quoted_error);
 	am_add_feature(f, fe_req_xml);
 	am_add_feature(f, fe_pp_script);
-	am_add_feature(f, fe_amrecover_dle);
+	am_add_feature(f, fe_amindexd_DLE);
+	am_add_feature(f, fe_amrecover_dle_in_header);
     }
     return f;
 }

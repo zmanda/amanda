@@ -1546,6 +1546,9 @@ try_restore_single_file(Device * device, int file_num, int* next_file,
             file_num = device->file;
         }
     }
+    if (!am_has_feature(their_features, fe_amrecover_dle_in_header)) {
+	source.header->dle_str = NULL;
+    }
 
     if (next_file != NULL) {
         *next_file = file_num + 1;

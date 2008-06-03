@@ -1,4 +1,15 @@
 2008-06-03  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/amfeatures.h: Rename fe_amrecover_dle to fe_amindexd_DLE,
+				   add fe_amrecover_dle_in_header.
+	* common-src/amfeatures.c: Set fe_amrecover_dle_in_header.
+	* recover-src/set_commands.c: Use fe_amindexd_DLE.
+	* server-src/dumper.c: Set dle_str and add it to the header.
+	* restore-src/restore.c: Remove dle_str is client doesn't have
+				 fe_amrecover_dle_in_header.
+	* common-src/fileheader.c: Parse and set dle_str from header.
+	* common-src/fileheader.h: Add dle_str in dumpfile_t.
+
+2008-06-03  Jean-Louis Martineau <martineau@zmanda.com>
 	* man/xml-source/amdump.8.xml, man/xml-source/amreport.8.xml,
 	  man/xml-source/amcheck.8.xml, man/xml-source/amflush.8.xml,
 	  man/xml-source/amstatus.8.xml: Add "EXIT CODE" section".

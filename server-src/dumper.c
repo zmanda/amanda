@@ -110,6 +110,7 @@ static char *dumper_timestamp = NULL;
 static time_t conf_dtimeout;
 static int indexfderror;
 static int set_datafd;
+static char *dle_str = NULL;
 
 static dumpfile_t file;
 
@@ -1046,6 +1047,7 @@ finish_tapeheader(
 	file->encrypted= 1;
       }
     }
+    file->dle_str = dle_str;
 }
 
 /*
@@ -2014,24 +2016,28 @@ startup_dump(
 		    "\n",
 		    NULL);
 
+    amfree(dle_str);
     if (am_has_feature(their_features, fe_req_xml)) {
-	char *o;
+	char *o, *p = NULL;
 	o = unquote_string(options+1);
-	vstrextend(&req, "<dle>\n", NULL);
+	vstrextend(&p, "<dle>\n", NULL);
 	if (*application_api != '\0') {
-	    vstrextend(&req, "  <program>APPLICATION</program>\n", NULL);
+	    vstrextend(&p, "  <program>APPLICATION</program>\n", NULL);
 	} else {
-	    vstrextend(&req, "  <program>", progname, "</program>\n", NULL);
+	    vstrextend(&p, "  <program>", progname, "</program>\n", NULL);
 	}
-	vstrextend(&req, "  ", b64disk, "\n", NULL);
+	vstrextend(&p, "  ", b64disk, "\n", NULL);
 	if (device && has_device) {
-	    vstrextend(&req, "  ", b64device, "\n",
+	    vstrextend(&p, "  ", b64device, "\n",
 		       NULL);
 	}
-	vstrextend(&req, "  <level>", level_string, "</level>\n", NULL);
-	vstrextend(&req, "  <dumpdate>", dumpdate, "</dumpdate>\n", NULL);
-	vstrextend(&req, o, "</dle>\n", NULL);
+	vstrextend(&p, "  <level>", level_string, "</level>\n", NULL);
+	vstrextend(&p, "  <dumpdate>", dumpdate, "</dumpdate>\n", NULL);
+	vstrextend(&p, o, "</dle>\n", NULL);
 	amfree(o);
+	vstrextend(&req, p, NULL);
+	dle_str = quote_string(p);
+	amfree(p);
     } else {
 	authopt = strstr(options, "auth=");
 	if (auth == NULL) {
