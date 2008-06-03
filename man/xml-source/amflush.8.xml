@@ -171,6 +171,17 @@ You'll get mail when amflush is finished.
 </programlisting>
 </refsect1>
 
+<refsect1><title>EXIT CODE</title>
+The exit code of <command>amflush</command> is the ORed value of:
+<programlisting>
+ 0  = success
+ 1  = error
+ 4  = a dle failed
+ 8  = Don't know the status of a dle (RESULT_MISSING in the report)
+ 16 = tape error or no more tape
+</programlisting>
+</refsect1>
+
 <refsect1><title>AUTHOR</title>
 <para>James da Silva, &email.jds; : Original text</para>
 <para>&maintainer.sgw;: XML-conversion</para>

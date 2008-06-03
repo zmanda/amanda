@@ -1,3 +1,8 @@
+2008-06-03  Jean-Louis Martineau <martineau@zmanda.com>
+	* man/xml-source/amdump.8.xml, man/xml-source/amreport.8.xml,
+	  man/xml-source/amcheck.8.xml, man/xml-source/amflush.8.xml,
+	  man/xml-source/amstatus.8.xml: Add "EXIT CODE" section".
+
 2008-05-30  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/security-util.c: Remove unneeded pointer cast.
 	* common-src/stream.c: Fix compiler error.

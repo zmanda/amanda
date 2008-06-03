@@ -152,6 +152,17 @@ Works only during the estimate phase.</para>
 </variablelist>
 </refsect1>
 
+<refsect1><title>EXIT CODE</title>
+The exit code of <command>amstatus</command> is the ORed value of:
+<programlisting>
+ 0  = success
+ 1  = error
+ 4  = a dle failed
+ 8  = Don't know the status of a dle (RESULT_MISSING in the report)
+ 16 = tape error or no more tape
+</programlisting>
+</refsect1>
+
 <refsect1><title>SEE ALSO</title>
 <para><citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>amcheck</refentrytitle><manvolnum>8</manvolnum></citerefentry>,

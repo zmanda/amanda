@@ -862,6 +862,14 @@ was reported by the status check on
 </variablelist>
 </refsect1>
 
+<refsect1><title>EXIT CODE</title>
+The exit code of <command>amcheck</command> is one of:
+<programlisting>
+ 0  = success
+ 1  = error
+</programlisting>
+</refsect1>
+
 <refsect1><title>AUTHOR</title>
 <para>James da Silva, &email.jds; : Original text</para>
 <para>&maintainer.sgw;: XML-conversion</para>
