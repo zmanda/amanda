@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 56;
+use Test::More tests => 59;
 
 use lib "@amperldir@";
 use Installcheck::Config;
@@ -171,7 +171,7 @@ $testconf->add_interface("testiface", [ use => '10' ]);
 $testconf->add_holdingdisk("hd17", [ chunksize => '128' ]);
 $testconf->add_application('app_amgtar', [ plugin => '"amgtar"' ]);
 $testconf->add_application('app_amstar', [ plugin => '"amstar"' ]);
-$testconf->add_script('my_script', [ plugin => '"script-email"' ]);
+$testconf->add_script('my_script', [ "execute-on" => 'pre-dle-amcheck' ]);
 $testconf->write();
 
 is_deeply([sort(split(/\n/, run_get('amgetconf', 'TESTCONF', '--list', 'tapetype')))],
@@ -213,10 +213,16 @@ is_deeply([sort(split(/\n/, run_get('amgetconf', 'TESTCONF', '--list', 'script-t
           [sort("my_script")],
         "--list returns correct set of script-tool");
 
-is(run_get('amgetconf', 'TESTCONF', 'script-tool:my_script:plugin'), 'script-email',
+is(run_get('amgetconf', 'TESTCONF', 'script-tool:my_script:execute-on'), 'PRE-DLE-AMCHECK',
     "returns script-tool parameter correctly");
-is(run_get('amgetconf', 'TESTCONF', 'script_tOOl:my-sCRipt:plUGin'), 'script-email',
-    "insensitive to case and -/_");
+is(run_get('amgetconf', 'TESTCONF', 'script_tOOl:my_script:execute-on'), 'PRE-DLE-AMCHECK',
+    "insensitive to case in subsec_type");
+is(run_get('amgetconf', 'TESTCONF', 'script-tool:my_script:execute-on'), 'PRE-DLE-AMCHECK',
+    "insensitive to -/_ in subsec_type");
+is(run_get('amgetconf', 'TESTCONF', 'script_tOOl:my_script:eXECute-on'), 'PRE-DLE-AMCHECK',
+    "insensitive to case in subsec_key");
+is(run_get('amgetconf', 'TESTCONF', 'script-tool:my_script:execute_on'), 'PRE-DLE-AMCHECK',
+    "insensitive to -/_ in subsec_key");
 
 # non-existent subsection types, names, and parameters
 like(run_err('amgetconf', 'TESTCONF', 'NOSUCHTYPE:testiface:comment'), qr/no such parameter/, 

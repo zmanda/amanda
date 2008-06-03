@@ -5874,11 +5874,9 @@ parm_key_info(
     /* make a copy we can stomp on */
     key = stralloc(key);
 
-    /* uppercase the key and convert '-' to '_' */
-    s = key;
+    /* uppercase the key */
     for (s = key; (ch = *s) != 0; s++) {
-	if (*s == '-') *s = '_';
-	else if (islower((int)ch))
+	if (islower((int)ch))
 	    *s = (char)toupper(ch);
     }
 
@@ -5889,11 +5887,21 @@ parm_key_info(
 	*subsec_name = '\0';
 	subsec_name++;
 
+	/* convert subsec_type '-' to '_' */
+	for (s = subsec_type; (ch = *s) != 0; s++) {
+	    if (*s == '-') *s = '_';
+	}
+
 	subsec_key = strchr(subsec_name,':');
 	if(!subsec_key) goto out; /* failure */
 
 	*subsec_key = '\0';
 	subsec_key++;
+
+	/* convert subsec_key '-' to '_' */
+	for (s = subsec_key; (ch = *s) != 0; s++) {
+	    if (*s == '-') *s = '_';
+	}
 
 	/* If the keyword doesn't exist, there's no need to look up the
 	 * subsection -- we know it's invalid */
@@ -5981,6 +5989,11 @@ parm_key_info(
 
     /* No delimiters -- we're referencing a global config parameter */
     } else {
+	/* convert key '-' to '_' */
+	for (s = key; (ch = *s) != 0; s++) {
+	    if (*s == '-') *s = '_';
+	}
+
 	/* look up the keyword */
 	for(kt = keytable; kt->token != CONF_UNKNOWN; kt++) {
 	    if(kt->keyword && strcmp(kt->keyword, key) == 0)

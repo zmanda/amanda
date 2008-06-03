@@ -1,3 +1,8 @@
+2008-06-03  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c (parm_key_info): Don't fold '-' to '_' in
+						 subsec_name.
+	* installcheck/amgetconf.pl: Fix and add more tests.
+
 2008-06-03  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/amxml.c: give parse error on an empty "disk" element
 	* server-src/diskfile.c: give parse error on an empty "disk" element
