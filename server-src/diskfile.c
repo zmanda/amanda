@@ -439,7 +439,11 @@ parse_diskline(
     skip_quoted_string(s, ch);
     s[-1] = '\0';
     diskname = unquote_string(fp);
-
+    if (strlen(diskname) == 0) {
+	disk_parserror(filename, line_num, _("invalid empty diskname"));
+	amfree(hostname);
+	return (-1);
+    }
     skip_whitespace(s, ch);
     if(ch == '\0' || ch == '#') {
 	disk_parserror(filename, line_num, _("disk dumptype expected"));
@@ -456,6 +460,11 @@ parse_diskline(
     diskdevice = NULL;
     if(fp[0] != '{') {
 	dumptype = unquote_string(fp);
+	if (strlen(dumptype) == 0) {
+	    disk_parserror(filename, line_num, _("invalid empty diskdevice"));
+	    amfree(hostname);
+	    return (-1);
+	}
 	if ((dtype = lookup_dumptype(dumptype)) == NULL) {
 	    diskdevice = dumptype;
 	    skip_whitespace(s, ch);

@@ -391,6 +391,11 @@ amend_element(
 	data_user->property_name = NULL;
 	data_user->property_values = NULL;
     } else if (strcmp(element_name, "dle") == 0) {
+	if (dle->disk == NULL) {
+	    g_set_error(gerror, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
+		    "XML: No disk provided in DLE element");
+	    return;
+	}
 	if (dle->device == NULL && dle->disk)
 	    dle->device = stralloc(dle->disk);
 /* Add check of required field */

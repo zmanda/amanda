@@ -1,3 +1,7 @@
+2008-06-03  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/amxml.c: give parse error on an empty "disk" element
+	* server-src/diskfile.c: give parse error on an empty "disk" element
+
 2008-05-30  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/security-util.c: Remove unneeded pointer cast.
 	* common-src/stream.c: Fix compiler error.
