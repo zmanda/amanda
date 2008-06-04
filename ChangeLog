@@ -1,3 +1,9 @@
+2008-06-04  Jean-Louis Martineau <martineau@zmanda.com>
+	And Dustin J. Mitchell <dustin@zmanda.com>
+	* man/xml-source/amanda-client.conf.5.xml: Document property.
+	* installcheck/Amanda_Config.pl: Add test for client property.
+	* common-src/conffile.c (client_var): Add CONF_PROPERTY.
+
 2008-06-03  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Types.swg: Add dle_str to dumpfile_t.
 	* common-src/fileheader.c: Don't print NULL dle_str.

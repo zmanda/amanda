@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 91;
+use Test::More tests => 93;
 use strict;
 
 use lib "@amperldir@";
@@ -74,6 +74,21 @@ is(config_init($CONFIG_INIT_EXPLICIT_NAME, "NO-SUCH-CONFIGURATION"), $CFGERR_ERR
 
 is(config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF"), $CFGERR_ERRORS,
     "Invalid keyword generates an error");
+
+##
+# try a client configuration
+
+$testconf = Installcheck::Config->new();
+$testconf->add_client_param('property', '"client-prop" "yep"');
+$testconf->write();
+
+my $cfg_result = config_init($CONFIG_INIT_CLIENT, undef);
+is($cfg_result, $CFGERR_OK,
+    "Load test client configuration")
+    or diag_config_errors();
+
+is_deeply(getconf($CNF_PROPERTY), { "client-prop" => [ "yep" ] },
+    "Client PROPERTY parameter parsed correctly");
 
 ##
 # Parse up a basic configuration
@@ -163,7 +178,7 @@ $testconf->add_script('my_script', [
 
 $testconf->write();
 
-my $cfg_result = config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');
+$cfg_result = config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');
 is($cfg_result, $CFGERR_OK,
     "Load test configuration")
     or diag_config_errors();

@@ -983,6 +983,7 @@ conf_var_t client_var [] = {
    { CONF_RESERVED_UDP_PORT  , CONFTYPE_INTRANGE, read_intrange, CNF_RESERVED_UDP_PORT  , validate_reserved_port_range },
    { CONF_RESERVED_TCP_PORT  , CONFTYPE_INTRANGE, read_intrange, CNF_RESERVED_TCP_PORT  , validate_reserved_port_range },
    { CONF_UNRESERVED_TCP_PORT, CONFTYPE_INTRANGE, read_intrange, CNF_UNRESERVED_TCP_PORT, validate_unreserved_port_range },
+   { CONF_PROPERTY           , CONFTYPE_PROPLIST, read_property, CNF_PROPERTY           , NULL },
    { CONF_UNKNOWN            , CONFTYPE_INT     , NULL         , CNF_CNF                , NULL }
 };
 

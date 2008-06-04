@@ -393,6 +393,13 @@ Unreserved tcp port that will be used (bsd, bsdudp)</para>
   </listitem>
   </varlistentry>
 
+  <varlistentry>
+  <term><emphasis remap='B'>property</emphasis> "name" "value"</term>
+  <listitem>
+<para>Adds a global property for this client host, useful for e.g., Application API plugins.</para>
+  </listitem>
+  </varlistentry>
+
 </variablelist>
 </refsect2>
 </refsect1>
