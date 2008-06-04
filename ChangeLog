@@ -1,4 +1,8 @@
 2008-06-03  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Types.swg: Add dle_str to dumpfile_t.
+	* common-src/fileheader.c: Don't print NULL dle_str.
+
+2008-06-03  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/amfeatures.h: Rename fe_amrecover_dle to fe_amindexd_DLE,
 				   add fe_amrecover_dle_in_header.
 	* common-src/amfeatures.c: Set fe_amrecover_dle_in_header.

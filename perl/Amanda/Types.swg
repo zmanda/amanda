@@ -66,6 +66,7 @@ An in-memory representation of an Amanda header, with keys
 =item C<srv_decrypt_opt>;
 =item C<clnt_decrypt_opt>;
 =item C<cont_filename>;
+=itme C<dle_str>;
 =item C<is_partial>;
 =item C<partnum>;
 =item C<totalparts> (-1 == UNKNOWN); and
@@ -132,6 +133,7 @@ typedef struct {
     string_t srv_decrypt_opt;
     string_t clnt_decrypt_opt;
     string_t cont_filename;
+    char *dle_str;
     int is_partial;
     int partnum;
     int totalparts; /* -1 == UNKNOWN */

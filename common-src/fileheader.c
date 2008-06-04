@@ -506,7 +506,10 @@ dump_dumpfile_t(
 	dbprintf(_("    srv_decrypt_opt  = '%s'\n"), file->srv_decrypt_opt);
 	dbprintf(_("    clnt_decrypt_opt = '%s'\n"), file->clnt_decrypt_opt);
 	dbprintf(_("    cont_filename    = '%s'\n"), file->cont_filename);
-	dbprintf(_("    dle_str          = %s\n"), file->dle_str);
+	if (file->dle_str)
+	    dbprintf(_("    dle_str          = %s\n"), file->dle_str);
+	else
+	    dbprintf(_("    dle_str          = (null)\n"));
 	dbprintf(_("    is_partial       = %d\n"), file->is_partial);
 	dbprintf(_("    partnum          = %d\n"), file->partnum);
 	dbprintf(_("    totalparts       = %d\n"), file->totalparts);
