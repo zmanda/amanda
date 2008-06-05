@@ -57,7 +57,7 @@ typedef struct needed_tapes_s {
 
 /* local functions */
 
-tapelist_t *list_needed_tapes(GSList *dumpspecs, int only_one);
+tapelist_t *list_needed_tapes(GSList *dumpspecs, int only_one, disklist_t *diskqp);
 void usage(void);
 int main(int argc, char **argv);
 
@@ -100,25 +100,18 @@ usage(void)
 tapelist_t *
 list_needed_tapes(
     GSList *	dumpspecs,
-    int		only_one)
+    int		only_one,
+    disklist_t	*diskqp)
 {
     needed_tape_t *needed_tapes = NULL, *curtape = NULL;
-    disklist_t diskqp;
     find_result_t *alldumps = NULL;
     find_result_t *curmatch = NULL;
     find_result_t *matches = NULL;
     tapelist_t *tapes = NULL;
     int numtapes = 0;
-    char *conf_diskfile, *conf_tapelist;
+    char *conf_tapelist;
 
-    /* For disks and tape lists */
-    conf_diskfile = config_dir_relative(getconf_str(CNF_DISKFILE));
-    if(read_diskfile(conf_diskfile, &diskqp) != 0) {
-        error(_("could not load disklist \"%s\""), conf_diskfile);
-	/*NOTREACHED*/
-    }
-    amfree(conf_diskfile);
-
+    /* Load the tape list */
     conf_tapelist = config_dir_relative(getconf_str(CNF_TAPELIST));
     if(read_tapelist(conf_tapelist)) {
         error(_("could not load tapelist \"%s\""), conf_tapelist);
@@ -127,8 +120,7 @@ list_needed_tapes(
     amfree(conf_tapelist);
 
     /* Grab a find_output_t of all logged dumps */
-    alldumps = find_dump(&diskqp);
-    free_disklist(&diskqp);
+    alldumps = find_dump(diskqp);
     if(alldumps == NULL){
         g_fprintf(stderr, _("No dump records found\n"));
         exit(1);
@@ -271,6 +263,8 @@ main(
     rst_flags_t *rst_flags;
     int minimum_arguments;
     config_overwrites_t *cfg_ovr = NULL;
+    disklist_t diskq;
+    char * conf_diskfile = NULL;
 
     /*
      * Configure program for internationalization:
@@ -382,6 +376,10 @@ main(
     config_init(CONFIG_INIT_EXPLICIT_NAME, argv[optind++]);
     apply_config_overwrites(cfg_ovr);
 
+    conf_diskfile = config_dir_relative(getconf_str(CNF_DISKFILE));
+    read_diskfile(conf_diskfile, &diskq);
+    amfree(conf_diskfile);
+
     if (config_errors(NULL) >= CFGERR_WARNINGS) {
 	config_print_errors();
 	if (config_errors(NULL) >= CFGERR_ERRORS) {
@@ -412,7 +410,8 @@ main(
 
     /* Decide what tapes we'll need */
     needed_tapes = list_needed_tapes(dumpspecs,
-				     rst_flags->pipe_to_fd == STDOUT_FILENO);
+				     rst_flags->pipe_to_fd == STDOUT_FILENO,
+				     &diskq);
 
     parent_pid = getpid();
     atexit(cleanup);
@@ -432,6 +431,7 @@ main(
 	flush_open_outputs(1, NULL);
     else flush_open_outputs(0, NULL);
 
+    free_disklist(&diskq);
     free_rst_flags(rst_flags);
 
     return(0);

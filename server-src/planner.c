@@ -209,6 +209,10 @@ main(
     config_init(CONFIG_INIT_EXPLICIT_NAME | CONFIG_INIT_USE_CWD, cfg_opt);
     apply_config_overwrites(cfg_ovr);
 
+    /* conf_diskfile is freed later, as it may be used in an error message */
+    conf_diskfile = config_dir_relative(getconf_str(CNF_DISKFILE));
+    read_diskfile(conf_diskfile, &origq);
+
     /* Don't die when child closes pipe */
     signal(SIGPIPE, SIG_IGN);
 
@@ -265,11 +269,6 @@ main(
 
     g_fprintf(stderr,_("READING CONF INFO...\n"));
 
-    conf_diskfile = config_dir_relative(getconf_str(CNF_DISKFILE));
-    if (read_diskfile(conf_diskfile, &origq) < 0) {
-	error(_("could not load disklist \"%s\""), conf_diskfile);
-	/*NOTREACHED*/
-    }
     if(origq.head == NULL) {
 	error(_("empty disklist \"%s\""), conf_diskfile);
 	/*NOTREACHED*/

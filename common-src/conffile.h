@@ -975,6 +975,16 @@ void config_clear_errors(void);
  */
 void config_print_errors(void);
 
+/* Add an error message to the list of errors, and make sure tha the
+ * error level is at least LEVEL.  This is used by the diskfile module
+ * to insert its errors into this module's error list.
+ *
+ * @param level: level for this error
+ * @param errmsg: error message; conffile takes responsibility for freeing
+ *   this string.
+ */
+void config_add_error(cfgerr_level_t level, char *errmsg);
+
 /*
  * Command-line handling
  */

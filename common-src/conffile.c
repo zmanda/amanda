@@ -646,7 +646,7 @@ static int parm_key_info(char *key, conf_var_t **parm, val_t **val);
 static cfgerr_level_t cfgerr_level;
 static GSList *cfgerr_errors = NULL;
 
-static void add_config_error(const char * format, va_list argp);
+static void conf_error_common(cfgerr_level_t level, const char * format, va_list argp);
 static void    conf_parserror(const char *format, ...)
                 __attribute__ ((format (printf, 1, 2)));
 
@@ -6066,8 +6066,19 @@ find_multiplier(
  * Error Handling Implementaiton
  */
 
-static void add_config_error(
-    const char * format, 
+void config_add_error(
+    cfgerr_level_t level,
+    char * errmsg)
+{
+    cfgerr_level = max(cfgerr_level, level);
+
+    g_debug("%s", errmsg);
+    cfgerr_errors = g_slist_append(cfgerr_errors, errmsg);
+}
+
+static void conf_error_common(
+    cfgerr_level_t level,
+    const char * format,
     va_list argp)
 {
     char *msg = g_strdup_vprintf(format, argp);
@@ -6083,8 +6094,7 @@ static void add_config_error(
 	errstr = g_strdup_printf(_("parse error: %s"), msg);
     amfree(msg);
 
-    g_debug("%s", errstr);
-    cfgerr_errors = g_slist_append(cfgerr_errors, errstr);
+    config_add_error(level, errstr);
 }
 
 printf_arglist_function(void conf_parserror, const char *, format)
@@ -6092,20 +6102,16 @@ printf_arglist_function(void conf_parserror, const char *, format)
     va_list argp;
     
     arglist_start(argp, format);
-    add_config_error(format, argp);
+    conf_error_common(CFGERR_ERRORS, format, argp);
     arglist_end(argp);
-
-    cfgerr_level = max(cfgerr_level, CFGERR_ERRORS);
 }
 
 printf_arglist_function(void conf_parswarn, const char *, format) {
     va_list argp;
     
     arglist_start(argp, format);
-    add_config_error(format, argp);
+    conf_error_common(CFGERR_WARNINGS, format, argp);
     arglist_end(argp);
-
-    cfgerr_level = max(cfgerr_level, CFGERR_WARNINGS);
 }
 
 cfgerr_level_t

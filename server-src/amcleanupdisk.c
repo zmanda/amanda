@@ -38,21 +38,6 @@
 
 /* Utility funcitons */
 
-/* Call open_diskfile() with the diskfile from the configuration
- */
-static void
-init_diskfile(void)
-{
-    char *conf_diskfile = config_dir_relative(getconf_str(CNF_DISKFILE));
-    disklist_t diskq; /* never used, but required by read_diskfile */
-
-    if (read_diskfile(conf_diskfile, &diskq) < 0) {
-	error(_("could not load disklist %s"), conf_diskfile);
-	/*NOTREACHED*/
-    }
-    amfree(conf_diskfile);
-}
-
 /* Call open_infofile() with the infofile from the configuration
  */
 static void
@@ -98,6 +83,8 @@ main(
 {
     FILE *verbose_output = NULL;
     char *cfg_opt = NULL;
+    char *conf_diskfile;
+    disklist_t diskq;
 
     /*
      * Configure program for internationalization:
@@ -131,6 +118,11 @@ main(
     config_init(CONFIG_INIT_EXPLICIT_NAME,
 		cfg_opt);
 
+    conf_diskfile = config_dir_relative(getconf_str(CNF_DISKFILE));
+    read_diskfile(conf_diskfile, &diskq);
+    /* diskq also ends up in a global, used by holding_cleanup */
+    amfree(conf_diskfile);
+
     if (config_errors(NULL) >= CFGERR_WARNINGS) {
 	config_print_errors();
 	if (config_errors(NULL) >= CFGERR_ERRORS) {
@@ -142,7 +134,6 @@ main(
 
     dbrename(get_config_name(), DBG_SUBDIR_SERVER);
 
-    init_diskfile();
     init_infofile();
 
     /* actually perform the cleanup */

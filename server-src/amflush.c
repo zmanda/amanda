@@ -158,6 +158,10 @@ main(
 		argv[0]);
     apply_config_overwrites(cfg_ovr);
 
+    conf_diskfile = config_dir_relative(getconf_str(CNF_DISKFILE));
+    read_diskfile(conf_diskfile, &diskq);
+    amfree(conf_diskfile);
+
     if (config_errors(NULL) >= CFGERR_WARNINGS) {
 	config_print_errors();
 	if (config_errors(NULL) >= CFGERR_ERRORS) {
@@ -169,17 +173,11 @@ main(
 
     dbrename(get_config_name(), DBG_SUBDIR_SERVER);
 
-    conf_diskfile = config_dir_relative(getconf_str(CNF_DISKFILE));
-    if (read_diskfile(conf_diskfile, &diskq) < 0) {
-	error(_("could not read disklist file \"%s\""), conf_diskfile);
-	/*NOTREACHED*/
-    }
     errstr = match_disklist(&diskq, argc-1, argv+1);
     if (errstr) {
 	g_printf(_("%s"),errstr);
 	amfree(errstr);
     }
-    amfree(conf_diskfile);
 
     conf_tapelist = config_dir_relative(getconf_str(CNF_TAPELIST));
     if(read_tapelist(conf_tapelist)) {

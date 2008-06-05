@@ -175,6 +175,10 @@ main(
     config_init(CONFIG_INIT_EXPLICIT_NAME, argv[1]);
     apply_config_overwrites(cfg_ovr);
 
+    conf_diskfile = config_dir_relative(getconf_str(CNF_DISKFILE));
+    read_diskfile(conf_diskfile, &diskq);
+    amfree(conf_diskfile);
+
     if (config_errors(NULL) >= CFGERR_WARNINGS) {
 	config_print_errors();
 	if (config_errors(NULL) >= CFGERR_ERRORS) {
@@ -185,13 +189,6 @@ main(
     dbrename(get_config_name(), DBG_SUBDIR_SERVER);
 
     check_running_as(RUNNING_AS_DUMPUSER);
-
-    conf_diskfile = config_dir_relative(getconf_str(CNF_DISKFILE));
-    if (read_diskfile(conf_diskfile, &diskq) < 0) {
-	error(_("could not load disklist \"%s\""), conf_diskfile);
-	/*NOTREACHED*/
-    }
-    amfree(conf_diskfile);
 
     conf_tapelist = config_dir_relative(getconf_str(CNF_TAPELIST));
     if(read_tapelist(conf_tapelist)) {

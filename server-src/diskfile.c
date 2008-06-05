@@ -46,22 +46,29 @@ static void disk_parserror(const char *, int, const char *, ...)
 			    G_GNUC_PRINTF(3, 4);
 
 
-int
+cfgerr_level_t
 read_diskfile(
     const char *filename,
     disklist_t *lst)
 {
     FILE *diskf;
     int line_num;
-    char *line;
+    char *line = NULL;
 
     /* initialize */
     hostlist = NULL;
     lst->head = lst->tail = NULL;
     line_num = 0;
 
+    /* if we already have config errors, then don't bother */
+    if (config_errors(NULL) >= CFGERR_ERRORS) {
+	return config_errors(NULL);
+    }
+
     if ((diskf = fopen(filename, "r")) == NULL) {
-	return -1;
+	config_add_error(CFGERR_ERRORS,
+	    vstrallocf(_("Could not open '%s': %s"), filename, strerror(errno)));
+	goto end;
         /*NOTREACHED*/
     }
 
@@ -69,16 +76,16 @@ read_diskfile(
 	line_num++;
 	if (line[0] != '\0') {
 	    if (parse_diskline(lst, filename, diskf, &line_num, &line) < 0) {
-		amfree(line);
-		afclose(diskf);
-		return (-1);
+		goto end;
 	    }
 	}
 	amfree(line);
     }
 
+end:
+    amfree(line);
     afclose(diskf);
-    return (0);
+    return config_errors(NULL);
 }
 
 am_host_t *
@@ -614,6 +621,8 @@ parse_diskline(
     }
 
     if (dup) {
+	/* disk_parserror already called, above */
+	g_assert(config_errors(NULL) != CFGERR_OK);
 	amfree(hostname);
 	amfree(diskdevice);
 	amfree(diskname);
@@ -796,15 +805,18 @@ printf_arglist_function2(void disk_parserror, const char *, filename,
     int, line_num, const char *, format)
 {
     va_list argp;
-    const char *xlated_fmt = gettext(format);
+    char * msg;
+    char * errstr;
 
-    /* print error message */
+    /* format the error message and hand it off to conffile */
 
-    g_fprintf(stderr, "\"%s\", line %d: ", filename, line_num);
     arglist_start(argp, format);
-    g_vfprintf(stderr, xlated_fmt, argp);
+    msg = g_strdup_vprintf(format, argp);
+    errstr = g_strdup_printf("\"%s\", line %d: %s", filename, line_num, msg);
+    amfree(msg);
     arglist_end(argp);
-    fputc('\n', stderr);
+
+    config_add_error(CFGERR_ERRORS, errstr);
 }
 
 
@@ -2015,8 +2027,10 @@ main(
 
   conf_diskfile = config_dir_relative(getconf_str(CNF_DISKFILE));
   result = read_diskfile(conf_diskfile, &lst);
-  if(result == 0) {
+  if(result == CFGERR_OK) {
     dump_disklist(&lst);
+  } else {
+    config_print_errors();
   }
   amfree(conf_diskfile);
   amfree(conffile);

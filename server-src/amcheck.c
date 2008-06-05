@@ -202,6 +202,10 @@ main(
     apply_config_overwrites(cfg_ovr);
     dbrename(get_config_name(), DBG_SUBDIR_SERVER);
 
+    conf_diskfile = config_dir_relative(getconf_str(CNF_DISKFILE));
+    read_diskfile(conf_diskfile, &origq);
+    amfree(conf_diskfile);
+
     if (config_errors(NULL) >= CFGERR_WARNINGS) {
 	config_print_errors();
 	if (config_errors(NULL) >= CFGERR_ERRORS) {
@@ -251,17 +255,11 @@ main(
 
     conf_ctimeout = (time_t)getconf_int(CNF_CTIMEOUT);
 
-    conf_diskfile = config_dir_relative(getconf_str(CNF_DISKFILE));
-    if(read_diskfile(conf_diskfile, &origq) < 0) {
-	error(_("could not load disklist %s. Make sure it exists and has correct permissions"), conf_diskfile);
-	/*NOTREACHED*/
-    }
     errstr = match_disklist(&origq, argc-1, argv+1);
     if (errstr) {
 	g_printf(_("%s"),errstr);
 	amfree(errstr);
     }
-    amfree(conf_diskfile);
 
     /*
      * Make sure we are running as the dump user.  Don't use

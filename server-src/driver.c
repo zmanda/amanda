@@ -225,6 +225,10 @@ main(
     config_init(CONFIG_INIT_EXPLICIT_NAME | CONFIG_INIT_USE_CWD, cfg_opt);
     apply_config_overwrites(cfg_ovr);
 
+    conf_diskfile = config_dir_relative(getconf_str(CNF_DISKFILE));
+    read_diskfile(conf_diskfile, &origq);
+    amfree(conf_diskfile);
+
     if (config_errors(NULL) >= CFGERR_WARNINGS) {
 	config_print_errors();
 	if (config_errors(NULL) >= CFGERR_ERRORS) {
@@ -310,15 +314,6 @@ main(
     driver_debug(1, _("flush_threshold_dumped: %lld\n"), (long long)flush_threshold_dumped);
     driver_debug(1, _("flush_threshold_scheduled: %lld\n"), (long long)flush_threshold_scheduled);
     driver_debug(1, _("taperflush: %lld\n"), (long long)taperflush);
-
-    /* start initializing: read in databases */
-
-    conf_diskfile = config_dir_relative(getconf_str(CNF_DISKFILE));
-    if (read_diskfile(conf_diskfile, &origq) < 0) {
-	error(_("could not load disklist \"%s\""), conf_diskfile);
-	/*NOTREACHED*/
-    }
-    amfree(conf_diskfile);
 
     /* set up any configuration-dependent variables */
 

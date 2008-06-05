@@ -1,3 +1,12 @@
+2008-06-05  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/conffile.c common-src/conffile.h: expose config_add_error
+	* server-src/diskfile.c server-src/diskfile.h: use config_add_error
+	  to send diskfile errors to conffile's error-handling mechanism
+	* restore-src/amfetchdump.c server-src/amadmin.c server-src/amcheck.c
+	  server-src/amcleanupdisk.c server-src/amflush.c server-src/amindexd.c
+	  server-src/amtrmidx.c server-src/amtrmlog.c server-src/driver.c
+	  server-src/planner.c: parse disklist along with config
+
 2008-06-04  Jean-Louis Martineau <martineau@zmanda.com>
 	And Dustin J. Mitchell <dustin@zmanda.com>
 	* man/xml-source/amanda-client.conf.5.xml: Document property.

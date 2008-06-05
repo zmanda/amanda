@@ -584,12 +584,12 @@ check_and_load_config(
     check_running_as(RUNNING_AS_DUMPUSER_PREFERRED);
 
     conf_diskfile = config_dir_relative(getconf_str(CNF_DISKFILE));
-    if (read_diskfile(conf_diskfile, &disk_list) < 0) {
+    read_diskfile(conf_diskfile, &disk_list);
+    amfree(conf_diskfile);
+    if (config_errors(NULL) >= CFGERR_ERRORS) {
 	reply(501, _("Could not read disk file %s!"), conf_diskfile);
-	amfree(conf_diskfile);
 	return -1;
     }
-    amfree(conf_diskfile);
 
     conf_tapelist = config_dir_relative(getconf_str(CNF_TAPELIST));
     if(read_tapelist(conf_tapelist)) {
