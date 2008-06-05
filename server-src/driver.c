@@ -1393,6 +1393,7 @@ handle_taper_result(
                       result_argc);
 		/*NOTREACHED*/
             }
+	    start_degraded_mode(&runq);
 	    break;
 
 	case DUMPER_STATUS:  /* DUMPER-STATUS <handle> */
