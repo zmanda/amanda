@@ -2388,8 +2388,9 @@ handle_success(
 	    if (t) {
 		char *errmsg, *u;
 		errmsg = unquote_string(t+1);
-		u = vstrallocf("  %s: %s %s", program_str[curprog],
-			       logtype_str[logtype], errmsg);
+		u = vstrallocf("  %s: partial %s: %s",
+			       prefix(hostname, diskname, level),
+			       program_str[curprog], errmsg);
 		addline(&errsum, u);
 	    }
 	}

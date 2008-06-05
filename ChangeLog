@@ -1,4 +1,7 @@
 2008-06-05  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/reporter.c: Improve formating.
+
+2008-06-05  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/driver.c: start the degraded mode if it receive
 			       NO-NEW-TAPE from taper.
 
