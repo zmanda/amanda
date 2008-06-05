@@ -122,7 +122,8 @@ sub find_next_device {
 	Amanda::MainLoop::run();
 
 	if ($slot eq "<none>") {
-	    die("Could not find tape label $label in changer.");
+	    print STDERR "Could not find tape label $label in changer.";
+	    exit 1;
 	} else {
 	    return $tapedev;
 	}
@@ -286,8 +287,8 @@ sub find_validation_command {
 
     $validation_program = $validation_programs{$program};
     if (!defined $validation_program) {
-        warn("Could not determine validation for dumper $program; ".
-             "Will send dumps to /dev/null instead.");
+        print STDERR "Could not determine validation for dumper $program; ".
+	             "Will send dumps to /dev/null instead.";
         $validation_program = "cat > /dev/null";
     } else {
         # This is to clean up any extra output the program doesn't read.
@@ -324,6 +325,9 @@ GetOptions(
 
 usage() if (@ARGV < 1);
 
+my $timestamp_argument = 0;
+if (defined $timestamp) { $timestamp_argument = 1; }
+
 my $config_name = shift @ARGV;
 config_init($CONFIG_INIT_EXPLICIT_NAME, $config_name);
 apply_config_overwrites($config_overwrites);
@@ -354,7 +358,7 @@ if (!defined $timestamp) {
     } elsif (-f $amflush_log) {
          $logfile=$amflush_log;
     } else {
-	print "Could not find any dump log file.\n";
+	print "Could not find amdump.1 or amflush.1 files.\n";
 	exit;
     }
 
@@ -375,18 +379,32 @@ if (!defined $timestamp) {
 }
 
 # Find all logfiles matching our timestamp
+my $logfile_dir = config_dir_relative(getconf($CNF_LOGDIR));
 my @logfiles =
     grep { $_ =~ /^log\.$timestamp(?:\.[0-9]+|\.amflush)?$/ }
     Amanda::Logfile::find_log();
 
+# Check log file directory if find_log didn't find tape written
+# on that tapestamp
 if (!@logfiles) {
-    die("Can't find any logfiles with timestamp $timestamp.");
+    opendir(DIR, $logfile_dir) || die "can't opendir $logfile_dir: $!";
+    @logfiles = grep { /^log.$timestamp\..*/ } readdir(DIR);
+    closedir DIR;
+
+    if (!@logfiles) {
+	if ($timestamp_argument) {
+	    print STDERR "Can't find any logfiles with timestamp $timestamp.\n";
+	} else {
+	    print STDERR "Can't find the logfile for last run.\n";
+	}
+	exit 1;
+    }
 }
 
 # compile a list of *all* dumps in those logfiles
-my $logfile_dir = config_dir_relative(getconf($CNF_LOGDIR));
 my @images;
 for my $logfile (@logfiles) {
+    chomp $logfile;
     push @images, Amanda::Logfile::search_logfile(undef, $timestamp,
                                                   "$logfile_dir/$logfile", 1);
 }
@@ -396,7 +414,12 @@ for my $logfile (@logfiles) {
 	undef, undef, undef, undef, 1);
 
 if (!@images) {
-    die("Could not find any matching dumps");
+    if ($timestamp_argument) {
+	print STDERR "No backup written on timestamp $timestamp.\n";
+    } else {
+	print STDERR "No backup written on latest run.\n";
+    }
+    exit 1;
 }
 
 # Find unique tapelist, using a hash to filter duplicate tapes
@@ -404,7 +427,8 @@ my %tapes = map { ($_->{label}, undef) } @images;
 my @tapes = sort { $a cmp $b } keys %tapes;
 
 if (!@tapes) {
-    die("Could not find any matching dumps");
+    print STDERR "Could not find any matching dumps.\n";
+    exit 1;
 }
 
 printf("You will need the following tape%s: %s\n", (@tapes > 1) ? "s" : "",
