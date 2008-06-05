@@ -365,6 +365,7 @@ static gboolean find_new_tape(taper_state_t * state, dump_info_t * dump) {
         } else {
             putresult(NO_NEW_TAPE, "%s\n", dump->handle);
             log_taper_scan_errmsg(search_request.errmsg);
+	    log_add(L_ERROR, "no-tape [%s]", "No more writable valid tape found");
             return FALSE;
         }
     }
@@ -373,6 +374,7 @@ static gboolean find_new_tape(taper_state_t * state, dump_info_t * dump) {
         if (use_threads) {
             g_thread_join(tape_search);
         }
+	log_add(L_ERROR, "no-tape [%s]", "runtapes tapes already written");
         return FALSE;
     }
 }
@@ -493,6 +495,7 @@ static gboolean label_new_tape(taper_state_t * state, dump_info_t * dump_info) {
                 /* Problem finding a new tape! */
                 log_taper_scan_errmsg(request.errmsg);
                 putresult(NO_NEW_TAPE, "%s\n", dump_info->handle);
+		log_add(L_ERROR, "no-tape [%s]", "No more writable valid tape found");
                 return FALSE;
             }
         }
