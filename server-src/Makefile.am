@@ -22,7 +22,8 @@ amlib_LTLIBRARIES = 	libamserver.la
 
 sbin_PROGRAMS =		amadmin		amcheck		\
 			amflush		amlabel		\
-			amtape		amreport
+			amservice	amtape		\
+			amreport
 
 noinst_PROGRAMS = taper_source_test
 
@@ -56,7 +57,7 @@ INSTALLPERMS_exec = \
 	dest=$(sbindir) chown=amanda chmod= \
 		$(sbin_PROGRAMS) \
 	chown=root chmod=04750 \
-		amcheck \
+		amcheck amservice \
 	dest=$(amlibexecdir) chown=amanda chmod= \
 		$(amlibexec_PROGRAMS) \
 	chown=root chmod=04750 \

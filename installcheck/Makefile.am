@@ -23,7 +23,8 @@ server_tests = \
 	Amanda_Process \
 	Amanda_Xfer \
 	bigint \
-	amgetconf
+	amgetconf \
+	amservice
 
 full_tests = \
 	amdevcheck \

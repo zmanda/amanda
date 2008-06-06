@@ -1,4 +1,13 @@
 2008-06-06  Jean-Louis Martineau <martineau@zmanda.com>
+	* man/Makefile.am: Add amservice.8.
+	* man/xml-source/amservice.8.xml: New man page for amservice.
+	* server-src/amservice.c: New program to execute an amanda service
+	                          on a client.
+	* server-src/Makefile.am: Add amservice
+	* installcheck/amservice.pl: New check for amservice program.
+	* installcheck/Makefile.am: Add amservice
+
+2008-06-06  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/dumper.c: Don't quote dle_str.
 	* common-src/fileheader.c: DLE= in header is like heredoc.
 
