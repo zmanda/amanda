@@ -1,3 +1,7 @@
+2008-06-06  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/dumper.c: Don't quote dle_str.
+	* common-src/fileheader.c: DLE= in header is like heredoc.
+
 2008-06-06  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/*: major overhaul:
 	  - add device_set_error to set error status and message for Device

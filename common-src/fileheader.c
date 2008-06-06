@@ -38,6 +38,8 @@ static void		strange_header(dumpfile_t *, const char *,
 				size_t, const char *, const char *);
 static char *		strquotedstr(char **);
 static ssize_t 		hexdump(const char *buffer, size_t len);
+static char            *quote_heredoc(char *text, char *delimiter_prefix);
+static char            *parse_heredoc(char *line, char **saveptr);
 
 void
 fh_init(
@@ -407,11 +409,11 @@ parse_file_header(
 	    continue;
 	}
 #undef SC
+
 #define SC "DLE="
 	if (strncmp(line, SC, SIZEOF(SC) - 1) == 0) {
 	    line += SIZEOF(SC) - 1;
-	    file->dle_str = stralloc(line);
-	    continue;
+	    file->dle_str = parse_heredoc(line, &saveptr);
 	}
 #undef SC
 
@@ -651,10 +653,10 @@ build_header(const dumpfile_t * file, size_t size)
 	if (file->is_partial != 0) {
             g_string_append_printf(rval, "PARTIAL=YES\n");
 	}
-	if (file->dle_str) {
-	    g_string_append_printf(rval, "DLE=%s\n", file->dle_str);
-	} else {
-	    g_string_append_printf(rval, "DLE=%s\n", "NODLE");
+	if (file->dle_str && strlen(file->dle_str) < size-2048) {
+	    char *heredoc = quote_heredoc(file->dle_str, "ENDDLE");
+	    g_string_append_printf(rval, "DLE=%s\n", heredoc);
+	    amfree(heredoc);
 	}
         
         g_string_append_printf(rval,
@@ -895,3 +897,66 @@ hexdump(
     return rc;
 }
 
+static char *quote_heredoc(
+    char  *text,
+    char  *delimiter_prefix)
+{
+    char *delimiter = stralloc(delimiter_prefix);
+    int delimiter_n = 0;
+    int delimiter_len = strlen(delimiter);
+    char *quoted;
+
+    /* keep picking delimiters until we find one that's not a line in TEXT */
+    while (1) {
+	char *line = text;
+	char *c = text;
+	gboolean found_delimiter = FALSE;
+
+	while (1) {
+	    if (*c == '\n' || *c == '\0') {
+		int linelen = c - line;
+		if (linelen == delimiter_len && 0 == strncmp(line, delimiter, linelen)) {
+		    found_delimiter = TRUE;
+		    break;
+		}
+		line = c+1;
+	    }
+	    if (!*c) break;
+	    c++;
+	}
+
+	if (!found_delimiter)
+	    break;
+
+	delimiter = newvstrallocf(delimiter, "%s%d", delimiter_prefix, ++delimiter_n);
+	delimiter_len = strlen(delimiter);
+    }
+
+    /* we have a delimiter .. now use it */
+    quoted = vstrallocf("<<%s\n%s\n%s", delimiter, text, delimiter);
+    amfree(delimiter);
+    return quoted;
+}
+
+static char *parse_heredoc(
+    char  *line,
+    char **saveptr)
+{
+    char *result = NULL;
+
+    if (strncmp(line, "<<", 2) == 0) {
+	char *keyword = line+2;
+	char *new_line;
+
+	while((new_line = strtok_r(NULL, "\n", saveptr)) != NULL &&
+	      strcmp(new_line, keyword) != 0) {
+	    result = vstrextend(&result, new_line, "\n", NULL);
+	}
+	/* remove latest '\n' */
+	if (strlen(result) > 0)
+	    result[strlen(result)-1] = '\0';
+    } else {
+	result = stralloc(line);
+    }
+    return result;
+}

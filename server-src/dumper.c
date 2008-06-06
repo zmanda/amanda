@@ -2032,12 +2032,10 @@ startup_dump(
 		       NULL);
 	}
 	vstrextend(&p, "  <level>", level_string, "</level>\n", NULL);
-	vstrextend(&p, "  <dumpdate>", dumpdate, "</dumpdate>\n", NULL);
 	vstrextend(&p, o, "</dle>\n", NULL);
 	amfree(o);
 	vstrextend(&req, p, NULL);
-	dle_str = quote_string(p);
-	amfree(p);
+	dle_str = p;
     } else {
 	authopt = strstr(options, "auth=");
 	if (auth == NULL) {
