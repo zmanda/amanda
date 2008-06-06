@@ -148,7 +148,7 @@ DeviceStatusFlags tape_is_tape_device(int fd) {
     }
 }
 
-DeviceStatusFlags tape_is_ready(int fd, TapeDevice *t_self) {
+DeviceStatusFlags tape_is_ready(int fd, TapeDevice *t_self G_GNUC_UNUSED) {
     struct mtget get;
     if (0 == ioctl(fd, MTIOCGET, &get)) {
 #if defined(GMT_ONLINE) || defined(GMT_DR_OPEN)

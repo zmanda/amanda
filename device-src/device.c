@@ -432,9 +432,18 @@ device_set_error(Device *self, char *errmsg, DeviceStatusFlags new_flags)
 {
     char **flags_strv;
     char *flags_str;
+    char *device_name;
+
+    if (!self) {
+	g_warning("device_set_error called with a NULL device: '%s'", errmsg? errmsg:"(NULL)");
+	amfree(errmsg);
+	return;
+    }
+
+    device_name = self->device_name? self->device_name : "(unknown device)";
 
     if (errmsg && (!selfp->errmsg || strcmp(errmsg, selfp->errmsg) != 0))
-	g_debug("Device %s error = '%s'", self->device_name, errmsg);
+	g_debug("Device %s error = '%s'", device_name, errmsg);
 
     amfree(selfp->errmsg);
     selfp->errmsg = errmsg;
@@ -442,7 +451,7 @@ device_set_error(Device *self, char *errmsg, DeviceStatusFlags new_flags)
     flags_strv = g_flags_name_to_strv(new_flags, DEVICE_STATUS_FLAGS_TYPE);
     g_assert(g_strv_length(flags_strv) > 0);
     flags_str = g_english_strjoinv(flags_strv, "and");
-    g_debug("Device %s setting status flag(s): %s", self->device_name, flags_str);
+    g_debug("Device %s setting status flag(s): %s", device_name, flags_str);
     amfree(flags_str);
     g_strfreev(flags_strv);
 

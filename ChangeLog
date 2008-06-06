@@ -1,3 +1,8 @@
+2008-06-06  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/device.c: make device_set_error bulletproof to NULLs
+	* device-src/tape-posix.c: fix compilation error when GMT_ONLINE is
+	  not defined
+
 2008-06-06  Jean-Louis Martineau <martineau@zmanda.com>
 	* man/Makefile.am: Add amservice.8.
 	* man/xml-source/amservice.8.xml: New man page for amservice.
