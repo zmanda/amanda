@@ -37,11 +37,11 @@
 /*
  * Type checking and casting macros
  */
-#define TAPER_TYPE_SOURCE	(taper_source_get_type())
+#define TAPER_SOURCE_TYPE	(taper_source_get_type())
 #define TAPER_SOURCE(obj)	G_TYPE_CHECK_INSTANCE_CAST((obj), taper_source_get_type(), TaperSource)
 #define TAPER_SOURCE_CONST(obj)	G_TYPE_CHECK_INSTANCE_CAST((obj), taper_source_get_type(), TaperSource const)
 #define TAPER_SOURCE_CLASS(klass)	G_TYPE_CHECK_CLASS_CAST((klass), taper_source_get_type(), TaperSourceClass)
-#define TAPER_IS_SOURCE(obj)	G_TYPE_CHECK_INSTANCE_TYPE((obj), taper_source_get_type ())
+#define IS_TAPER_SOURCE(obj)	G_TYPE_CHECK_INSTANCE_TYPE((obj), taper_source_get_type ())
 
 #define TAPER_SOURCE_GET_CLASS(obj)	G_TYPE_INSTANCE_GET_CLASS((obj), taper_source_get_type(), TaperSourceClass)
 

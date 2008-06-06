@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005-2008 Zmanda Inc.  All Rights Reserved.
+ * Copyright (c) 2005 Zmanda, Inc.  All Rights Reserved.
  *
  * This library is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License version 2.1 as
@@ -18,10 +18,17 @@
  * Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
  */
 
-#include <device.h>
-#include <amanda.h>
+#include "glib-util.h"
+#include "amanda.h"
+#include "device.h"
+#include "testutils.h"
 
-/* global so the 'atexit' handler can access it */
+/* Global state set up for the tests */
+static char *device_path = NULL;
+
+/*
+ * Utilities
+ */
 
 static void
 cleanup_vtape_dir(char *device_path)
@@ -66,30 +73,39 @@ setup_vtape_dir(void)
 }
 
 static Device *
-setup_device(char *device_path)
+setup_device(void)
 {
     Device *device;
     char *device_name = NULL;
 
     device_name = vstralloc("file:", device_path, NULL);
     device = device_open(device_name);
-    if (!device) {
-	fprintf(stderr, "Could not open device %s\n", device_name);
+    if (device->status != DEVICE_STATUS_SUCCESS) {
+	g_critical("Could not open device %s: %s\n", device_name, device_error(device));
     }
 
     amfree(device_name);
     return device;
 }
 
-static gboolean
-check_free_space(Device *device)
+/*
+ * Tests
+ */
+
+static int
+test_vfs_free_space(void)
 {
+    Device *device = NULL;
     GValue value;
     QualifiedSize qsize;
 
+    device = setup_device();
+    if (!device)
+	return FALSE;
+
     bzero(&value, sizeof(value));
     if (!device_property_get(device, PROPERTY_FREE_SPACE, &value)) {
-	fprintf(stderr, "Could not get property_free_space\n");
+	g_debug("Could not get property_free_space\n");
 	return FALSE;
     }
 
@@ -97,70 +113,44 @@ check_free_space(Device *device)
     g_value_unset(&value);
 
     if (qsize.accuracy != SIZE_ACCURACY_REAL) {
-	fprintf(stderr, "property_free_space accuracy is not SIZE_ACCURACY_REAL\n");
+	g_debug("property_free_space accuracy is not SIZE_ACCURACY_REAL\n");
 	return FALSE;
     }
 
     if (qsize.bytes == 0) {
-	fprintf(stderr, "property_free_space returned bytes=0\n");
+	g_debug("property_free_space returned bytes=0\n");
 	return FALSE;
     }
+
+    g_object_unref(device);
 
     return TRUE;
 }
 
+/*
+ * Main driver
+ */
+
 int
-main(int argc G_GNUC_UNUSED, char **argv G_GNUC_UNUSED)
+main(int argc, char **argv)
 {
-    Device *device = NULL;
-    gboolean ok = TRUE;
-    char *device_path = NULL;
-    pid_t pid;
-    amwait_t status;
+    int result;
+    static TestUtilsTest tests[] = {
+        TU_TEST(test_vfs_free_space, 5),
+	TU_END()
+    };
 
     glib_init();
+    device_api_init();
 
+    /* TODO: if more tests are added, we'll need a setup/cleanup hook
+     * for testutils */
     device_path = setup_vtape_dir();
 
-    /* run the tests in a subprocess so we can clean up even if they fail */
-    switch (pid = fork()) {
-	case -1: /* error */
-	    perror("fork");
-	    g_assert_not_reached();
+    result = testutils_run_tests(argc, argv, tests);
 
-	case 0: /* child */
-	    device_api_init();
+    cleanup_vtape_dir(device_path);
+    amfree(device_path);
 
-	    device = setup_device(device_path);
-	    if (!device)
-		return 1;
-
-	    ok = ok && check_free_space(device);
-
-	    g_object_unref(device);
-
-	    if (!ok) exit(1);
-	    exit(0);
-	    g_assert_not_reached();
-
-	default: /* parent */
-	    if (waitpid(pid, &status, 0) == -1)
-		perror("waitpid");
-
-	    /* cleanup */
-	    cleanup_vtape_dir(device_path);
-	    amfree(device_path);
-
-	    /* figure our own return status */
-	    if (WIFEXITED(status))
-		return WEXITSTATUS(status);
-	    else if (WIFSIGNALED(status)) {
-		fprintf(stderr, "Test failed with signal %d\n", (int)WTERMSIG(status));
-		return 1;
-	    } else {
-		/* weird.. */
-		return 1;
-	    }
-	    g_assert_not_reached();
-    }
+    return result;
 }

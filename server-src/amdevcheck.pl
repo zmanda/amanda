@@ -42,11 +42,11 @@ sub try_read_label {
 	die("Error creating $device_name");
     }
 
-    if ($device->{status} == $DEVICE_STATUS_SUCCESS) {
+    if ($device->status() == $DEVICE_STATUS_SUCCESS) {
 	$device->set_startup_properties_from_config();
 	$result = $device->read_label();
     } else {
-	$result = $device->{status};
+	$result = $device->status();
     }
 
     print_result( $result, $device->error() );

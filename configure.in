@@ -364,7 +364,6 @@ AC_CONFIG_FILES([
     common-src/versuff.c
     config/Makefile
     device-src/Makefile
-    device-src/tests/Makefile
     application-src/Makefile
     example/Makefile
     example/amanda-client.conf

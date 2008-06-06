@@ -90,6 +90,15 @@ typedef struct {
  * of its argument; it must not be freed later. */
 extern DevicePropertyId device_property_register(DevicePropertyBase*);
 
+/* Does the same thing, but fills in a new DevicePropertyBase with the given
+ * values first, and does not return the ID.  This is more convenient for
+ * device-specific properties. */
+extern void device_property_fill_and_register(
+    DevicePropertyBase * base,
+    GType type,
+    const char * name,
+    const char * desc);
+
 /* This should be called exactly once from device_api_init(). */
 extern void device_property_init(void);
 
@@ -230,10 +239,6 @@ extern DevicePropertyBase device_property_free_space;
 extern DevicePropertyBase device_property_max_volume_usage;
 #define PROPERTY_MAX_VOLUME_USAGE (device_property_max_volume_usage.ID)
 
-/* If GMT_ONLINE is broken for the drive */
-extern DevicePropertyBase device_property_broken_gmt_online;
-#define PROPERTY_BROKEN_GMT_ONLINE (device_property_broken_gmt_online.ID)
-
 /* Tape device properties. These properties do not exist on non-linear
    devices. All of them have a value type of FeatureSupportFlags. */
 extern DevicePropertyBase device_property_fsf;
@@ -265,19 +270,6 @@ extern DevicePropertyBase device_property_final_filemarks;
 /* What buffer size is used for reading? */
 extern DevicePropertyBase device_property_read_buffer_size;
 #define PROPERTY_READ_BUFFER_SIZE (device_property_read_buffer_size.ID)
-
-/* Authentication information for Amazon S3. Both of these are strings. */
-extern DevicePropertyBase device_property_s3_secret_key;
-extern DevicePropertyBase device_property_s3_access_key;
-#define PROPERTY_S3_SECRET_KEY (device_property_s3_secret_key.ID)
-#define PROPERTY_S3_ACCESS_KEY (device_property_s3_access_key.ID)
-
-#ifdef WANT_DEVPAY
-/* Same, but for S3 with DevPay. This directory can be relative to the
- * config director, or absolute. */
-extern DevicePropertyBase device_property_s3_user_token;
-#define PROPERTY_S3_USER_TOKEN (device_property_s3_user_token.ID)
-#endif
 
 /* Should the device produce verbose output?  Value is a gboolean.  Not
  * recognized by all devices. */

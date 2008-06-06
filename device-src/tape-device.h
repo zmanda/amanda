@@ -23,16 +23,21 @@
 
 #include <device.h>
 
+/* Unlike other Device classes, this class is implemented across multiple source
+ * files, so its class declaration is placed in a header file.
+ */
+
 /*
  * Type checking and casting macros
  */
+
 #define TYPE_TAPE_DEVICE	(tape_device_get_type())
 #define TAPE_DEVICE(obj)	G_TYPE_CHECK_INSTANCE_CAST((obj), tape_device_get_type(), TapeDevice)
 #define TAPE_DEVICE_CONST(obj)	G_TYPE_CHECK_INSTANCE_CAST((obj), tape_device_get_type(), TapeDevice const)
 #define TAPE_DEVICE_CLASS(klass)	G_TYPE_CHECK_CLASS_CAST((klass), tape_device_get_type(), TapeDeviceClass)
 #define IS_TAPE_DEVICE(obj)	G_TYPE_CHECK_INSTANCE_TYPE((obj), tape_device_get_type ())
-
 #define TAPE_DEVICE_GET_CLASS(obj)	G_TYPE_INSTANCE_GET_CLASS((obj), tape_device_get_type(), TapeDeviceClass)
+GType	tape_device_get_type	(void);
 
 /*
  * Main object structure
@@ -62,14 +67,5 @@ typedef struct _TapeDeviceClass TapeDeviceClass;
 struct _TapeDeviceClass {
 	DeviceClass __parent__;
 };
-
-
-/*
- * Public methods
- */
-GType	tape_device_get_type	(void);
-Device*	tape_device_factory	(char * type,
-                                 char * name);
-void    tape_device_register    (void);
 
 #endif

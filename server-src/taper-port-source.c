@@ -53,7 +53,7 @@ taper_port_source_get_type (void)
             NULL
         };
         
-        type = g_type_register_static (TAPER_TYPE_SOURCE, "TaperPortSource",
+        type = g_type_register_static (TAPER_SOURCE_TYPE, "TaperPortSource",
                                        &info, (GTypeFlags)0);
     }
     
@@ -73,7 +73,7 @@ static void taper_port_source_class_init (TaperPortSourceClass * c) {
     TaperSourceClass *taper_source_class = (TaperSourceClass *)c;
     GObjectClass *g_object_class = (GObjectClass*)c;
     
-    parent_class = g_type_class_ref (TAPER_TYPE_SOURCE);
+    parent_class = g_type_class_ref (TAPER_SOURCE_TYPE);
 
     taper_source_class->read = taper_port_source_read;
     taper_source_class->is_partial = taper_port_source_is_partial;

@@ -285,11 +285,7 @@ loadlabel_slot(void *	datap,
     } 
     
     device = device_open(device_name);
-    if (device == NULL) {
-        g_fprintf(stderr, "%s: slot %s: Could not open device.\n",
-                get_pname(), slotstr);
-        return 0;
-    }
+    g_assert(device != NULL);
     if (device->status != DEVICE_STATUS_SUCCESS) {
         g_fprintf(stderr, "%s: slot %s: Could not open device: %s.\n",
                 get_pname(), slotstr, device_error(device));
@@ -299,14 +295,9 @@ loadlabel_slot(void *	datap,
     device_set_startup_properties_from_config(device);
     device_status = device_read_label(device);
     if (device_status != DEVICE_STATUS_SUCCESS) {
-        char * errstr = device->errmsg;
-	if (!errstr)
-            g_english_strjoinv_and_free
-                (g_flags_nick_to_strv(device_status,
-                                      DEVICE_STATUS_FLAGS_TYPE), "or");
         g_fprintf(stderr, "%s: slot %s: Error reading tape label:\n"
                 "%s: slot %s: %s\n",
-                get_pname(), slotstr, get_pname(), slotstr, errstr);
+                get_pname(), slotstr, get_pname(), slotstr, device_error_or_status(device));
         g_object_unref(device);
         return 0;
     }
@@ -1233,12 +1224,7 @@ conditional_device_open(char         *tapedev,
     }
 
     rval = device_open(tapedev);
-    if (rval == NULL) {
-	send_message(prompt_out, flags, their_features, 
-		     "Error opening device '%s'.",
-		     tapedev);
-        return NULL;
-    }
+    g_assert(rval != NULL);
     if (rval->status != DEVICE_STATUS_SUCCESS) {
 	send_message(prompt_out, flags, their_features, 
 		     "Error opening device '%s': %s.",

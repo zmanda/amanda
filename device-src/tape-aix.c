@@ -96,11 +96,11 @@ TapeCheckResult tape_is_tape_device(int fd) {
     return TAPE_CHECK_UNKNOWN;
 }
 
-TapeCheckResult tape_is_ready(TapeDevice *t_self) {
+TapeCheckResult tape_is_ready(int fd G_GNUC_UNUSED, TapeDevice *t_self G_GNUC_UNUSED) {
     return TAPE_CHECK_UNKNOWN;
 }
 
-void tape_device_discover_capabilities(TapeDevice * t_self) {
+void tape_device_set_capabilities(TapeDevice * t_self) {
     Device * self;
     GValue val;
 

@@ -629,13 +629,8 @@ static gboolean test_tape_status(FILE * outf) {
     }
 
     device = device_open(tapename);
+    g_assert(device != NULL);
 
-    if (device == NULL) {
-        g_fprintf(outf, "ERROR: Could not open tape device.\n");
-        amfree(label);
-        return FALSE;
-    }
-    
     if (device->status != DEVICE_STATUS_SUCCESS) {
         g_fprintf(outf, "ERROR: Could not open tape device: %s.\n",
 		  device_error(device));

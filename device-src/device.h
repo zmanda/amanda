@@ -52,12 +52,12 @@ typedef enum {
 /*
  * Type checking and casting macros
  */
+GType	device_get_type	(void);
 #define TYPE_DEVICE	(device_get_type())
 #define DEVICE(obj)	G_TYPE_CHECK_INSTANCE_CAST((obj), device_get_type(), Device)
 #define DEVICE_CONST(obj)	G_TYPE_CHECK_INSTANCE_CAST((obj), device_get_type(), Device const)
 #define DEVICE_CLASS(klass)	G_TYPE_CHECK_CLASS_CAST((klass), device_get_type(), DeviceClass)
 #define IS_DEVICE(obj)	G_TYPE_CHECK_INSTANCE_TYPE((obj), device_get_type ())
-
 #define DEVICE_GET_CLASS(obj)	G_TYPE_INSTANCE_GET_CLASS((obj), device_get_type(), DeviceClass)
 
 typedef struct DevicePrivate_s DevicePrivate;
@@ -107,44 +107,51 @@ typedef struct {
     /* You can peek at the stuff below, but only subclasses should
        change these values.*/
 
-    /* What file, block are we at? (and are we in the middle of a
-     * file?) This is automatically updated by
-     * the default implementations of start_file, finish_file,
-     * write_block, read_block, seek_file, and seek_block. */
+    /* What file, block are we at? (and are we in the middle of a * file?) */
     int file;
     guint64 block;
     gboolean in_file;
-    /* Holds the user-specified device name. */
+
+    /* Holds the user-specified device name, including the prefix. */
     char * device_name;
-    /* Holds the user-specified access-mode. */
+
+    /* Holds the user-specified access-mode, or ACCESS_NULL if the device
+     * has not yet been started*/
     DeviceAccessMode access_mode;
+
     /* In reading mode, FALSE unless all the data from the current file
-     * was successfully read. */
+     * was successfully read.  In writing mode, TRUE if the end of tape
+     * has been reached. */
     gboolean is_eof;
+
     /* Holds the label and time of the currently-inserted volume,
      * or NULL if it has not been read/written yet. */
     char * volume_label;
     char * volume_time;
 
-    /* Holds an error message if the function returned an error. Private --
-     * use device_error and friends to access these */
-    char * errmsg;
+    /* The latest status for the device */
     DeviceStatusFlags status;
 
     DevicePrivate * private;
 } Device;
 
-/* Pointer to factory function for device types. The factory functions
-   take control of their arguments, which should be dynamically
-   allocated. The factory should call open_device() with this
-   device_name. */
-typedef Device* (*DeviceFactory)(char * device_type,
-                                 char * device_name);
+/* Pointer to factory function for device types.
+ *
+ * device_name is the full name ("tape:/dev/nst0")
+ * device_prefix is the prefix ("tape")
+ * device_node is what follows the prefix ("/dev/nst0")
+ *
+ * The caller retains responsibility to free or otherwise handle
+ * the passed strings.
+ */
+typedef Device* (*DeviceFactory)(char *device_name,
+				 char * device_prefix,
+				 char * device_node);
 
 /* This function registers a new device with the allocation system.
  * Call it after you register your type with the GLib type system.
- * This function takes ownership of the strings inside device_prefix_list,
- * but not the device_prefix_list itself. */
+ * This function assumes that the strings in device_prefix_list are
+ * statically allocated. */
 extern void register_device(DeviceFactory factory,
                             const char ** device_prefix_list);
 
@@ -154,8 +161,8 @@ extern void register_device(DeviceFactory factory,
 typedef struct _DeviceClass DeviceClass;
 struct _DeviceClass {
     GObjectClass __parent__;
-    gboolean (* open_device) (Device * self,
-                              char * device_name); /* protected */
+    void (* open_device) (Device * self, char * device_name,
+		    char * device_prefix, char * device_node);
     DeviceStatusFlags (* read_label)(Device * self);
     gboolean (* start) (Device * self, DeviceAccessMode mode,
                         char * label, char * timestamp);
@@ -166,7 +173,7 @@ struct _DeviceClass {
     gboolean (* finish_file) (Device * self);
     dumpfile_t* (* seek_file) (Device * self, guint file);
     gboolean (* seek_block) (Device * self, guint64 block);
-    gboolean (* read_block) (Device * self, gpointer buf, int * size);
+    int (* read_block) (Device * self, gpointer buf, int * size);
     gboolean (* read_to_fd) (Device * self, queue_fd_t *queue_fd);
     gboolean (* property_get) (Device * self, DevicePropertyId id,
                                GValue * val);
@@ -176,40 +183,64 @@ struct _DeviceClass {
     gboolean (* finish) (Device * self);
 };
 
+/*
+ * Device Instantiation
+ */
+
+/* This is how you get a new Device. Pass in a device name like
+ * "file:/path/to/storage".  This is parsed into the prefix ("file") and
+ * node ("/path/to/storage").
+ *
+ * A Device is *always* returned, even for an invalid device name. You
+ * must check the resulting device->status to know if the device is valid
+ * to be used. If device->status is not DEVICE_STATUS_SUCCESS, then there
+ * was an error opening the device. */
+Device*		device_open	(char * device_name);
+
+/*
+ * Error Handling
+ */
+
+/* return the error message or the string "Unknown Device error".  The
+ * string remains the responsibility of the Device, and should not
+ * be freed by the caller. */
+char *device_error(Device * self);
+
+/* return a string version of the status.  The string remains the
+ * responsibility of the Device, and should not be freed by the
+ * caller. */
+char *device_status_error(Device * self);
+
+/* Return errmsg if it is set or a string version of the status.  The
+ * string remains the responsibility of the Device, and should not
+ * be freed by the caller. */
+char *device_error_or_status(Device * self);
+
+/* Set the error message for this device; for use internally to the
+ * API.  The string becomes the responsibility of the Device.  If
+ * ERRMSG is NULL, the message is cleared.  Note that the given flags
+ * are OR'd with any existing status flags. */
+void device_set_error(Device * self, char *errmsg, DeviceStatusFlags new_flags);
+
+/* Mostly for internal use, this is a boolean check to see whether a given
+ * device is in an error state.  If this is TRUE, most operations on the
+ * device will fail.
+ *
+ * The check is for DEVICE_STATUS_DEVICE_ERROR *alone*; if any other bits
+ * (e.g., VOLUME_UNLABELED) are set, then the device may not actually be in
+ * an error state.
+ */
+#define device_in_error(dev) \
+    ((DEVICE(dev))->status == DEVICE_STATUS_DEVICE_ERROR)
 
 /*
  * Public methods
- *
- * Note to implementors: The default implementation of many of these
- * methods does not follow the documentation. For example, the default
- * implementation of device_read_block will always return -1, but
- * nonetheless update the block index in the Device structure. In
- * general, it is OK to chain up to the default implmentation after
- * successfully implementing whatever appears below. The particulars
- * of what the default implementations do is documented in device.c.
  */
-GType	device_get_type	(void);
 
-/* This is how you get a new Device. Pass in a device name like
- * file:/path/to/storage, a Device is always returned, you must check
- * the device->status to know if the device is valid to be used.
- * If device->status is not DEVICE_STATUS_SUCCESS, then device->errmsg
- * is a pointer to an error message. */
-Device* 	device_open	(char * device_name);
-
-/* return the error message or the string "Unkonwn Device error" */
-char *device_error(Device * self);
-
-/* return a string version of the status */
-char *device_status_error(Device * self);
-
-/* Return errmsg if it is set or a string version of the status */
-char *device_error_or_status(Device * self);
-
-/* This instructs the device to read the label on the current
- * volume. device->volume_label will not be initalized until after this
- * is called. You are encouraged to read the label only after setting any
- * properties that may affect the label-reading process. */
+/* This instructs the device to read the label on the current volume.
+ * device->volume_label will not be initalized until read_label or start is
+ * called. You are encouraged to read the label only after setting any properties
+ * that may affect the label-reading process.  */
 DeviceStatusFlags        device_read_label (Device * self);
 
 /* This tells the Device that it's OK to start reading and writing
@@ -220,15 +251,18 @@ DeviceStatusFlags        device_read_label (Device * self);
  * You should pass a label and timestamp if and only if you are
  * opening in WRITE mode (not READ or APPEND). The label and timestamp
  * remain the caller's responsibility in terms of memory management. The
- * passed timestamp may be NULL, in which case it will be filled in with 
- * the current time. */
+ * passed timestamp may be NULL, in which case it will be filled in with
+ * the current time.
+ *
+ * Note that implementations need not calculate a the current time: the
+ * dispatch function does it for you. */
 gboolean 	device_start	(Device * self,
                                  DeviceAccessMode mode, char * label,
                                  char * timestamp);
 
 /* This undoes device_start, returning you to the NULL state. Do this
  * if you want to (for example) change access mode.
- * 
+ *
  * Note to subclass implementors: Call this function first from your
  * finalization function. */
 gboolean 	device_finish	(Device * self);
@@ -239,9 +273,12 @@ gboolean 	device_finish	(Device * self);
 gboolean        device_start_file       (Device * self,
                                          const dumpfile_t * jobInfo);
 
-guint           device_write_min_size   (Device * self);
-guint           device_write_max_size   (Device * self);
-guint           device_read_max_size   (Device * self);
+/* These accessor functions determine the minimum and maximum size for
+ * a write_block call, and the maximum size that a read_block call will
+ * return.  */
+size_t           device_write_min_size   (Device * self);
+size_t           device_write_max_size   (Device * self);
+size_t           device_read_max_size   (Device * self);
 
 /* Does what you expect. size had better be inside the block size
  * range, or this function will write nothing.
@@ -250,10 +287,12 @@ guint           device_read_max_size   (Device * self);
  * short_block is set to TRUE, then this function will accept a write
  * smaller than the minimum block size, subject to the following
  * caveats:
+ *
  * % The block may be padded with NULL bytes, which will be present on
  *   restore.
  * % device_write_block will automatically call device_finish_file()
- *   after writing this short block.
+ *   after writing this short block (autofinishing).
+ *
  * It is permitted to use short_block with a block that is not short;
  * in this case, it is equivalent to calling device_write() and then
  * calling device_finish_file(). */
@@ -263,13 +302,19 @@ gboolean 	device_write_block	(Device * self,
                                          gboolean short_block);
 
 /* This will drain the given fd (reading until EOF), and write the
- * resulting data out to the device using maximally-sized blocks. */
+ * resulting data out to the device using maximally-sized blocks.
+ * The file will only autofinish if the contents of the fd are not
+ * an even multiple of the blocksize.  When this function returns,
+ * use:
+ *   if (device->in_file) device_finish_file(device);
+ */
 gboolean 	device_write_from_fd	(Device * self,
 					queue_fd_t *queue_fd);
 
-/* Call this when you are finished writing a file. This function will
- * write a filemark or the local equivalent, flush the buffers, and do
- * whatever dirty work needs to be done at such a point in time. */
+/* Call this when you are finished writing a file, unless it has
+ * autofinished. This function will write a filemark or the local
+ * equivalent, flush the buffers, and do whatever dirty work needs
+ * to be done at such a point in time. */
 gboolean 	device_finish_file	(Device * self);
 
 /* For reading only: Seeks to the beginning of a particular
@@ -277,10 +322,11 @@ gboolean 	device_finish_file	(Device * self);
  * ACCESS_WRITE will start you out at the first file, and opening in
  * ACCESS_APPEND will automatically seek to the end of the medium.
  * 
- * If the requested file doesn't exist, this function will seek to the
- * next-numbered valid file. You can check where this function seeked to
- * by examining the file field of the Device structure. If the requested
- * file number is exactly one more than the last valid file, this
+ * If the requested file doesn't exist, as might happen when a volume has
+ * had files recycled, then this function will seek to the next file that
+ * does exist. You can check which file this function selected by
+ * examining the file field of the Device structure. If the requested
+ * file number is *exactly* one more than the last valid file, this
  * function returns a TAPEEND header.
  *
  * If an error occurs or if the requested file is two or more beyond the
@@ -382,8 +428,7 @@ void            device_add_property(Device * self, DeviceProperty * prop,
  * factories. It is provided here as a virtual method (instead of
  * a static function) because some devices may want to chain
  * initilization to their parents. */
-gboolean device_open_device (Device * self,
-                             char * device_name);
+void device_open_device (Device * self, char *device_name, char *device_type, char *device_node);
 
 /* Builds a proper header based on device block size possibilities.
  * If non-null, size is filled in with the number of bytes that should

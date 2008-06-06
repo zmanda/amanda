@@ -21,10 +21,42 @@
 /* The RAIT device encapsulates some number of other devices into a single
  * redundant device. */
 
-#include "rait-device.h"
 #include <amanda.h>
 #include "property.h"
-#include <util.h>
+#include "util.h"
+#include <glib.h>
+#include "glib-util.h"
+#include "device.h"
+
+/*
+ * Type checking and casting macros
+ */
+#define TYPE_RAIT_DEVICE	(rait_device_get_type())
+#define RAIT_DEVICE(obj)	G_TYPE_CHECK_INSTANCE_CAST((obj), rait_device_get_type(), RaitDevice)
+#define RAIT_DEVICE_CONST(obj)	G_TYPE_CHECK_INSTANCE_CAST((obj), rait_device_get_type(), RaitDevice const)
+#define RAIT_DEVICE_CLASS(klass)	G_TYPE_CHECK_CLASS_CAST((klass), rait_device_get_type(), RaitDeviceClass)
+#define IS_RAIT_DEVICE(obj)	G_TYPE_CHECK_INSTANCE_TYPE((obj), rait_device_get_type ())
+
+#define RAIT_DEVICE_GET_CLASS(obj)	G_TYPE_INSTANCE_GET_CLASS((obj), rait_device_get_type(), RaitDeviceClass)
+static GType	rait_device_get_type	(void);
+
+/*
+ * Main object structure
+ */
+typedef struct RaitDevicePrivate_s RaitDevicePrivate;
+typedef struct RaitDevice_s {
+    Device __parent__;
+
+    RaitDevicePrivate * private;
+} RaitDevice;
+
+/*
+ * Class definition
+ */
+typedef struct _RaitDeviceClass RaitDeviceClass;
+struct _RaitDeviceClass {
+    DeviceClass __parent__;
+};
 
 typedef enum {
     RAIT_STATUS_COMPLETE, /* All subdevices OK. */
@@ -44,10 +76,15 @@ struct RaitDevicePrivate_s {
 
 #define PRIVATE(o) (o->private)
 
+#define rait_device_in_error(dev) \
+    (device_in_error((dev)) || PRIVATE(RAIT_DEVICE((dev)))->status == RAIT_STATUS_FAILED)
+
+void rait_device_register (void);
+
 /* here are local prototypes */
 static void rait_device_init (RaitDevice * o);
 static void rait_device_class_init (RaitDeviceClass * c);
-static gboolean rait_device_open_device (Device * self, char * device_name);
+static void rait_device_open_device (Device * self, char * device_name, char * device_type, char * device_node);
 static gboolean rait_device_start (Device * self, DeviceAccessMode mode,
                                    char * label, char * timestamp);
 static gboolean rait_device_start_file(Device * self, const dumpfile_t * info);
@@ -88,7 +125,7 @@ g_ptr_array_foreach (GPtrArray *array,
 }
 #endif
 
-GType
+static GType
 rait_device_get_type (void)
 {
     static GType type = 0;
@@ -256,7 +293,7 @@ static char ** parse_device_name(char * user_name) {
 
         case '\0':
             /* Unexpected NULL; abort. */
-            g_fprintf(stderr, "Invalid RAIT device name %s\n", user_name);
+            g_warning("Invalid RAIT device name '%s'", user_name);
             g_ptr_array_free_full(rval);
             return NULL;
 
@@ -269,7 +306,7 @@ static char ** parse_device_name(char * user_name) {
  OUTER_END:
     
     if (cur_end[1] != '\0') {
-        g_fprintf(stderr, "Invalid RAIT device name %s\n", user_name);
+        g_warning("Invalid RAIT device name '%s'", user_name);
         g_ptr_array_free_full(rval);
         return NULL;
     }
@@ -296,13 +333,14 @@ static gboolean find_block_size(RaitDevice * self) {
                                  PROPERTY_MIN_BLOCK_SIZE, &property_result))
             return FALSE;
         child_min = g_value_get_uint(&property_result);
-        g_return_val_if_fail(child_min > 0, FALSE);
+        if (child_min <= 0)
+	    return FALSE;
         if (!device_property_get(g_ptr_array_index(self->private->children, i),
                                  PROPERTY_MAX_BLOCK_SIZE, &property_result))
             return FALSE;
         child_max = g_value_get_uint(&property_result);
-        g_return_val_if_fail(child_max > 0, FALSE);
-        
+        if (child_max <= 0)
+	    return FALSE;
         if (child_min > max || child_max < min || child_min == 0) {
             return FALSE;
         } else {
@@ -505,7 +543,7 @@ static gboolean g_ptr_array_union_robust(RaitDevice * self, GPtrArray * ops,
 	GenericOp * op = g_ptr_array_index(ops, i);
 	if (!extractor(op)) {
 	    self->private->failed = op->child_index;
-	    g_fprintf(stderr, "RAIT array %s isolated device %s: %s\n",
+	    g_warning("RAIT array %s isolated device %s: %s",
 		    DEVICE(self)->device_name,
 		    op->child->device_name,
 		    device_error(op->child));
@@ -520,11 +558,11 @@ static gboolean g_ptr_array_union_robust(RaitDevice * self, GPtrArray * ops,
     /* a single failure in COMPLETE just puts us in DEGRADED mode */
     if (self->private->status == RAIT_STATUS_COMPLETE && nfailed == 1) {
 	self->private->status = RAIT_STATUS_DEGRADED;
-	g_fprintf(stderr, "RAIT array %s DEGRADED\n", DEVICE(self)->device_name);
+	g_warning("RAIT array %s DEGRADED", DEVICE(self)->device_name);
 	return TRUE;
     } else {
 	self->private->status = RAIT_STATUS_FAILED;
-	g_fprintf(stderr, "RAIT array %s FAILED\n", DEVICE(self)->device_name);
+	g_warning("RAIT array %s FAILED", DEVICE(self)->device_name);
 	return FALSE;
     }
 }
@@ -535,7 +573,7 @@ typedef struct {
 } OpenDeviceOp;
 
 /* A GFunc. */
-static void open_device_do_op(gpointer data,
+static void device_open_do_op(gpointer data,
                               gpointer user_data G_GNUC_UNUSED) {
     OpenDeviceOp * op = data;
 
@@ -545,34 +583,34 @@ static void open_device_do_op(gpointer data,
 
 /* Returns TRUE if and only if the volume label and time are equal. */
 static gboolean compare_volume_results(Device * a, Device * b) {
-    if (a->volume_time != b->volume_time)
-        return FALSE;
-    if (a->volume_label == NULL && b->volume_label == NULL)
-        return TRUE;
-    if (a->volume_label == NULL || b->volume_label == NULL)
-        return FALSE;
-    return 0 == strcmp(a->volume_label, b->volume_label);
+    return (0 == compare_possibly_null_strings(a->volume_time, b->volume_time)
+	 && 0 == compare_possibly_null_strings(a->volume_label, b->volume_label));
 }
 
-static gboolean 
-rait_device_open_device (Device * dself, char * device_name) {
+static void
+rait_device_open_device (Device * dself, char * device_name G_GNUC_UNUSED,
+	    char * device_type G_GNUC_UNUSED, char * device_node) {
     char ** device_names;
-    GPtrArray * open_device_ops;
+    GPtrArray * device_open_ops;
     guint i;
     gboolean failure;
+    char *failure_errmsgs;
+    DeviceStatusFlags failure_flags;
     RaitDevice * self;
 
     self = RAIT_DEVICE(dself);
-    g_return_val_if_fail(self != NULL, FALSE);
-    g_return_val_if_fail (device_name != NULL, FALSE);
 
-    device_names = parse_device_name(device_name);
-    
-    if (device_names == NULL)
-        return FALSE;
+    device_names = parse_device_name(device_node);
+
+    if (device_names == NULL) {
+	device_set_error(dself,
+	    vstrallocf(_("Invalid RAIT device name '%s'"), device_name),
+	    DEVICE_STATUS_DEVICE_ERROR);
+        return;
+    }
 
     /* Open devices in a separate thread, in case they have to rewind etc. */
-    open_device_ops = g_ptr_array_new();
+    device_open_ops = g_ptr_array_new();
 
     for (i = 0; device_names[i] != NULL; i ++) {
         OpenDeviceOp *op;
@@ -580,38 +618,56 @@ rait_device_open_device (Device * dself, char * device_name) {
         op = malloc(sizeof(*op));
         op->device_name = device_names[i];
         op->result = NULL;
-        g_ptr_array_add(open_device_ops, op);
+        g_ptr_array_add(device_open_ops, op);
     }
 
     free(device_names);
-    do_rait_child_ops(open_device_do_op, open_device_ops, NULL);
+    do_rait_child_ops(device_open_do_op, device_open_ops, NULL);
 
     failure = FALSE;
+    failure_errmsgs = NULL;
+    failure_flags = 0;
+
     /* Check results of opening devices. */
-    for (i = 0; i < open_device_ops->len; i ++) {
-        OpenDeviceOp *op = g_ptr_array_index(open_device_ops, i);
-        
-        if (op->result != NULL) {
-            g_ptr_array_add(self->private->children, op->result);
+    for (i = 0; i < device_open_ops->len; i ++) {
+        OpenDeviceOp *op = g_ptr_array_index(device_open_ops, i);
+
+        if (op->result != NULL && DEVICE(op->result)->status == DEVICE_STATUS_SUCCESS) {
+	    g_ptr_array_add(self->private->children, op->result);
         } else {
+	    /* record the error message and throw away the failed child */
+	    failure_errmsgs = newvstrallocf(failure_errmsgs,
+		"%s%s%s: %s",
+		failure_errmsgs? failure_errmsgs:"",
+		failure_errmsgs? failure_errmsgs:"; ",
+		op->device_name, device_error_or_status(op->result));
+	    failure_flags |= DEVICE(op->result)->status;
+	    g_object_unref(G_OBJECT(op->result));
             failure = TRUE;
         }
     }
 
-    g_ptr_array_free_full(open_device_ops);
+    g_ptr_array_free_full(device_open_ops);
 
-    failure = failure || !find_block_size(self);
-    if (failure)
-        return FALSE; /* This will clean up any created children. */
+    if (failure) {
+	device_set_error(dself, failure_errmsgs, failure_flags);
+        return;
+    }
+
+    if (!find_block_size(self)) {
+	device_set_error(dself,
+	    vstrallocf(_("could not find consistent block size")),
+	    DEVICE_STATUS_DEVICE_ERROR);
+        return;
+    }
 
     register_properties(self);
 
     /* Chain up. */
     if (parent_class->open_device) {
-        return parent_class->open_device(dself, device_name);
-    } else {
-        return TRUE;
+        parent_class->open_device(dself, device_name, device_type, device_node);
     }
+    return;
 }
 
 /* A GFunc. */
@@ -625,13 +681,16 @@ static DeviceStatusFlags rait_device_read_label(Device * dself) {
     RaitDevice * self;
     GPtrArray * ops;
     DeviceStatusFlags failed_result = 0;
+    char *failed_errmsg = NULL;
     GenericOp * failed_op = NULL; /* If this is non-null, we will isolate. */
     unsigned int i;
     Device * first_success = NULL;
 
     self = RAIT_DEVICE(dself);
-    g_return_val_if_fail(self != NULL, FALSE);
 
+    if (rait_device_in_error(self)) return dself->status | DEVICE_STATUS_DEVICE_ERROR;
+
+    amfree(dself->volume_time);
     amfree(dself->volume_label);
 
     ops = make_generic_boolean_op_array(self);
@@ -647,12 +706,15 @@ static DeviceStatusFlags rait_device_read_label(Device * dself) {
                 first_success = op->child;
             } else if (!compare_volume_results(first_success, op->child)) {
                 /* Doesn't match. :-( */
-                g_fprintf(stderr, "Inconsistant volume labels: "
-                        "Got %s/%s against %s/%s.\n",
+		failed_errmsg = vstrallocf("Inconsistant volume labels/datestamps: "
+                        "Got %s/%s on %s against %s/%s on %s.",
                         first_success->volume_label,
-                        first_success->volume_time, 
+                        first_success->volume_time,
+			first_success->device_name,
                         op->child->volume_label,
-                        op->child->volume_time);
+                        op->child->volume_time,
+			op->child->device_name);
+		g_warning("%s", failed_errmsg);
                 failed_result |= DEVICE_STATUS_VOLUME_ERROR;
                 failed_op = NULL;
             }
@@ -675,17 +737,19 @@ static DeviceStatusFlags rait_device_read_label(Device * dself) {
         /* We have a single device to isolate. */
         failed_result = DEVICE_STATUS_SUCCESS; /* Recover later */
         self->private->failed = failed_op->child_index;
-        g_fprintf(stderr, "RAIT array %s Isolated device %s.\n",
+        g_warning("RAIT array %s isolated device %s: %s",
                 dself->device_name,
-                failed_op->child->device_name);
+                failed_op->child->device_name,
+		device_error(failed_op->child));
     }
 
     if (failed_result != DEVICE_STATUS_SUCCESS) {
         /* We had multiple failures or an inconsistency. */
-        dself->status = failed_result;
+	device_set_error(dself, failed_errmsg, failed_result);
     } else {
         /* Everything peachy. */
-        dself->status = DEVICE_STATUS_SUCCESS;
+	amfree(failed_errmsg);
+
         g_assert(first_success != NULL);
         if (first_success->volume_label != NULL) {
             dself->volume_label = g_strdup(first_success->volume_label);
@@ -730,9 +794,15 @@ rait_device_start (Device * dself, DeviceAccessMode mode, char * label,
     guint i;
     gboolean success;
     RaitDevice * self;
+    DeviceStatusFlags total_status;
+    char *failure_errmsgs = NULL;
 
     self = RAIT_DEVICE(dself);
-    g_return_val_if_fail(self != NULL, FALSE);
+
+    if (rait_device_in_error(self)) return FALSE;
+
+    dself->access_mode = mode;
+    dself->in_file = FALSE;
 
     ops = g_ptr_array_sized_new(self->private->children->len);
     for (i = 0; i < self->private->children->len; i ++) {
@@ -749,15 +819,43 @@ rait_device_start (Device * dself, DeviceAccessMode mode, char * label,
 
     success = g_ptr_array_and(ops, extract_boolean_generic_op);
 
+    /* Check results of starting devices; this is mostly about the
+     * VOLUME_UNLABELED flag. */
+    total_status = 0;
+    for (i = 0; i < self->private->children->len; i ++) {
+        Device *child = g_ptr_array_index(self->private->children, i);
+
+        total_status |= child->status;
+	if (child->status != DEVICE_STATUS_SUCCESS) {
+	    /* record the error message and throw away the failed child */
+	    failure_errmsgs = newvstrallocf(failure_errmsgs,
+		"%s%s%s: %s",
+		failure_errmsgs? failure_errmsgs:"",
+		failure_errmsgs? failure_errmsgs:"; ",
+		child->device_name, device_error_or_status(child));
+        } else {
+	    /* TODO: check that volume label and time match for each child device */
+	    if (child->volume_label)
+		dself->volume_label = newstralloc(dself->volume_label, child->volume_label);
+	    if (child->volume_time)
+		dself->volume_time = newstralloc(dself->volume_time, child->volume_time);
+	}
+    }
+
     g_ptr_array_free_full(ops);
 
+    /* reflect the VOLUME_UNLABELED flag into our own flags, regardless of success */
+    dself->status =
+	    (dself->status & ~DEVICE_STATUS_VOLUME_UNLABELED)
+	    | (total_status & DEVICE_STATUS_VOLUME_UNLABELED);
+
     if (!success) {
+	device_set_error(dself, failure_errmsgs, total_status);
         return FALSE;
-    } else if (parent_class->start) {
-        return parent_class->start(dself, mode, label, timestamp);
-    } else {
-        return TRUE;
     }
+
+    amfree(failure_errmsgs);
+    return TRUE;
 }
 
 typedef struct {
@@ -780,7 +878,8 @@ rait_device_start_file (Device * dself, const dumpfile_t * info) {
     RaitDevice * self;
 
     self = RAIT_DEVICE(dself);
-    g_return_val_if_fail(self != NULL, FALSE);
+
+    if (rait_device_in_error(self)) return FALSE;
 
     ops = g_ptr_array_sized_new(self->private->children->len);
     for (i = 0; i < self->private->children->len; i ++) {
@@ -797,13 +896,20 @@ rait_device_start_file (Device * dself, const dumpfile_t * info) {
 
     g_ptr_array_free_full(ops);
 
+    dself->in_file = TRUE;
+
     if (!success) {
+	/* TODO: be more specific here */
+	/* TODO: degrade if only one failed */
+	device_set_error(dself,
+	    stralloc("One or more devices failed to start_file"),
+	    DEVICE_STATUS_DEVICE_ERROR);
         return FALSE;
-    } else if (parent_class->start_file) {
-        return parent_class->start_file(dself, info);
-    } else {
-        return TRUE;
     }
+
+    dself->in_file = TRUE;
+
+    return TRUE;
 }
 
 static void find_simple_params(RaitDevice * self,
@@ -887,9 +993,9 @@ static char * extract_data_block(char * data, guint size,
     char * rval;
     guint chunk_size;
 
-    g_return_val_if_fail(chunks > 0 && chunk > 0 && chunk <= chunks, NULL);
-    g_return_val_if_fail(data != NULL, NULL);
-    g_return_val_if_fail(size > 0 && size % (chunks - 1) == 0, NULL);
+    g_assert(chunks > 0 && chunk > 0 && chunk <= chunks);
+    g_assert(data != NULL);
+    g_assert(size > 0 && size % (chunks - 1) == 0);
 
     chunk_size = size / (chunks - 1);
     rval = malloc(chunk_size);
@@ -914,7 +1020,8 @@ rait_device_write_block (Device * dself, guint size, gpointer data,
     RaitDevice * self;
 
     self = RAIT_DEVICE(dself);
-    g_return_val_if_fail(self != NULL, FALSE);
+
+    if (rait_device_in_error(self)) return FALSE;
 
     find_simple_params(RAIT_DEVICE(self), &num_children, &data_children,
                        &blocksize);
@@ -924,8 +1031,10 @@ rait_device_write_block (Device * dself, guint size, gpointer data,
     else
         data_children = num_children;
     
-    g_return_val_if_fail(size % data_children == 0 || last_block, FALSE);
+    g_assert(size % data_children == 0 || last_block);
 
+    /* zero out to the end of a short block -- tape devices only write
+     * whole blocks. */
     if (last_block) {
         char *new_data;
 
@@ -971,6 +1080,15 @@ rait_device_write_block (Device * dself, guint size, gpointer data,
     g_ptr_array_free_full(ops);
 
     if (!success) {
+	/* TODO be more specific here */
+	/* TODO: handle EOF here -- if one or more (or two or more??)
+	 * children have is_eof* set, then reflect that in our error
+	 * status, and finish_file all of the non-EOF children. What's
+	 * more fun is when one device fails and must be isolated at
+	 * the same time another hits EOF. */
+	device_set_error(dself,
+	    stralloc("One or more devices failed to start_file"),
+	    DEVICE_STATUS_DEVICE_ERROR);
         return FALSE;
     } else {
         /* We don't chain up here because we must handle finish_file
@@ -997,6 +1115,8 @@ rait_device_finish_file (Device * self) {
     GPtrArray * ops;
     gboolean success;
 
+    if (rait_device_in_error(self)) return FALSE;
+
     ops = make_generic_boolean_op_array(RAIT_DEVICE(self));
     
     do_rait_child_ops(finish_file_do_op, ops, NULL);
@@ -1006,12 +1126,15 @@ rait_device_finish_file (Device * self) {
     g_ptr_array_free_full(ops);
 
     if (!success) {
+	/* TODO: be more specific here */
+	device_set_error(self,
+	    stralloc("One or more devices failed to finish_file"),
+	    DEVICE_STATUS_DEVICE_ERROR);
         return FALSE;
-    } else if (parent_class->finish_file) {
-        return parent_class->finish_file(self);
-    } else {
-        return TRUE;
     }
+
+    self->in_file = FALSE;
+    return TRUE;
 }
 
 typedef struct {
@@ -1035,7 +1158,13 @@ rait_device_seek_file (Device * dself, guint file) {
     dumpfile_t * rval;
     RaitDevice * self = RAIT_DEVICE(dself);
     guint actual_file = 0;
-    g_return_val_if_fail(self != NULL, FALSE);
+    gboolean in_file = FALSE;
+
+    if (rait_device_in_error(self)) return NULL;
+
+    dself->in_file = FALSE;
+    dself->is_eof = FALSE;
+    dself->block = 0;
 
     ops = g_ptr_array_sized_new(self->private->children->len);
     for (i = 0; i < self->private->children->len; i ++) {
@@ -1061,19 +1190,23 @@ rait_device_seek_file (Device * dself, guint file) {
         SeekFileOp * this_op;
         dumpfile_t * this_result;
         guint this_actual_file;
+	gboolean this_in_file;
         if ((int)i == self->private->failed)
             continue;
         
         this_op = (SeekFileOp*)g_ptr_array_index(ops, i);
         this_result = this_op->base.result;
         this_actual_file = this_op->actual_file;
+	this_in_file = this_op->base.child->in_file;
 
         if (rval == NULL) {
             rval = this_result;
             actual_file = this_actual_file;
+	    in_file = this_in_file;
         } else {
             if (headers_are_equal(rval, this_result) &&
-                actual_file == this_actual_file) {
+                actual_file == this_actual_file &&
+		in_file == this_in_file) {
                 /* Do nothing. */
             } else {
                 success = FALSE;
@@ -1086,10 +1219,16 @@ rait_device_seek_file (Device * dself, guint file) {
 
     if (!success) {
         amfree(rval);
+	/* TODO: be more specific here */
+	device_set_error(dself,
+	    stralloc("One or more devices failed to finish_file"),
+	    DEVICE_STATUS_DEVICE_ERROR);
         return NULL;
-    } else if (parent_class->seek_file) {
-        parent_class->seek_file(dself, file);
     }
+
+    /* update our state */
+    dself->in_file = in_file;
+    dself->file = actual_file;
 
     return rval;
 }
@@ -1113,7 +1252,8 @@ rait_device_seek_block (Device * dself, guint64 block) {
     gboolean success;
 
     RaitDevice * self = RAIT_DEVICE(dself);
-    g_return_val_if_fail(self != NULL, FALSE);
+
+    if (rait_device_in_error(self)) return FALSE;
 
     ops = g_ptr_array_sized_new(self->private->children->len);
     for (i = 0; i < self->private->children->len; i ++) {
@@ -1135,12 +1275,15 @@ rait_device_seek_block (Device * dself, guint64 block) {
     g_ptr_array_free_full(ops);
 
     if (!success) {
+	/* TODO: be more specific here */
+	device_set_error(dself,
+	    stralloc("One or more devices failed to seek_block"),
+	    DEVICE_STATUS_DEVICE_ERROR);
         return FALSE;
-    } else if (parent_class->seek_block) {
-        return parent_class->seek_block(dself, block);
-    } else {
-        return success;
     }
+
+    dself->block = block;
+    return TRUE;
 }
 
 typedef struct {
@@ -1234,8 +1377,10 @@ static gboolean raid_block_reconstruction(RaitDevice * self, GPtrArray * ops,
             
             if (0 != memcmp(parity_block, constructed_parity,
                             child_blocksize)) {
-                g_fprintf(stderr, "RAIT is inconsistant: "
-                        "Parity block did not match data blocks.\n");
+                device_set_error(DEVICE(self),
+		    stralloc(_("RAIT is inconsistent: Parity block did not match data blocks.")),
+		    DEVICE_STATUS_DEVICE_ERROR);
+		/* TODO: can't we just isolate the device in this case? */
                 success = FALSE;
             }
             g_ptr_array_free(data_extents, TRUE);
@@ -1271,6 +1416,7 @@ static gboolean raid_block_reconstruction(RaitDevice * self, GPtrArray * ops,
             g_assert_not_reached();
         }
     } else {
+	/* device is already in FAILED state -- we shouldn't even be here */
         success = FALSE;
     }
     return success;
@@ -1286,18 +1432,17 @@ rait_device_read_block (Device * dself, gpointer buf, int * size) {
     gsize child_blocksize;
 
     RaitDevice * self = RAIT_DEVICE(dself);
-    g_return_val_if_fail(self != NULL, -1);
+
+    if (rait_device_in_error(self)) return -1;
 
     find_simple_params(self, &num_children, &data_children,
                        &blocksize);
 
     /* tell caller they haven't given us a big enough buffer */
-    if (blocksize < *size) {
+    if (blocksize > *size) {
 	*size = blocksize;
 	return 0;
     }
-
-    g_return_val_if_fail(*size >= (int)device_write_min_size(dself), -1);
 
     g_assert(blocksize % data_children == 0); /* If not we are screwed */
     child_blocksize = blocksize / data_children;
@@ -1318,20 +1463,34 @@ rait_device_read_block (Device * dself, gpointer buf, int * size) {
     do_rait_child_ops(read_block_do_op, ops, NULL);
 
     if (g_ptr_array_count(ops, extract_boolean_read_block_op_data)) {
-        success =
-            g_ptr_array_union_robust(RAIT_DEVICE(self),
+        if (!g_ptr_array_union_robust(RAIT_DEVICE(self),
                                      ops,
-                                     extract_boolean_read_block_op_data) &&
-            raid_block_reconstruction(RAIT_DEVICE(self),
-                                      ops, buf, (size_t)*size);
+                                     extract_boolean_read_block_op_data)) {
+	    /* TODO: be more specific */
+	    device_set_error(dself,
+		stralloc(_("Error occurred combining blocks from child devices")),
+		DEVICE_STATUS_DEVICE_ERROR);
+	    success = FALSE;
+	} else {
+	    /* raid_block_reconstruction sets the error status if necessary */
+	    success = raid_block_reconstruction(RAIT_DEVICE(self),
+					    ops, buf, (size_t)*size);
+	}
     } else {
         success = FALSE;
         if (g_ptr_array_union_robust(RAIT_DEVICE(self),
                                      ops,
                                      extract_boolean_read_block_op_eof)) {
-            /* We hit EOF. */
+	    device_set_error(dself,
+		stralloc(_("EOF")),
+		DEVICE_STATUS_SUCCESS);
             dself->is_eof = TRUE;
-        }
+	    dself->in_file = FALSE;
+        } else {
+	    device_set_error(dself,
+		stralloc(_("All child devices failed to read, but not all are at eof")),
+		DEVICE_STATUS_DEVICE_ERROR);
+	}
     }
 
     for (i = 0; i < ops->len; i ++) {
@@ -1341,8 +1500,7 @@ rait_device_read_block (Device * dself, gpointer buf, int * size) {
     g_ptr_array_free_full(ops);
 
     if (success) {
-        if (parent_class->read_block)
-            parent_class->read_block(dself, buf, size);
+	dself->block++;
 	*size = blocksize;
         return blocksize;
     } else {
@@ -1398,8 +1556,8 @@ static gboolean property_get_concurrency(GPtrArray * ops, GValue * val) {
     for (i = 0; i < ops->len; i ++) {
         ConcurrencyParadigm cur;
         PropertyOp * op = g_ptr_array_index(ops, i);
-        g_return_val_if_fail(G_VALUE_TYPE(&(op->value)) ==
-                             CONCURRENCY_PARADIGM_TYPE, FALSE);
+        if (G_VALUE_TYPE(&(op->value)) != CONCURRENCY_PARADIGM_TYPE)
+	    return FALSE;
         cur = g_value_get_enum(&(op->value));
         if (result == CONCURRENCY_PARADIGM_EXCLUSIVE ||
             cur == CONCURRENCY_PARADIGM_EXCLUSIVE) {
@@ -1411,7 +1569,7 @@ static gboolean property_get_concurrency(GPtrArray * ops, GValue * val) {
                    cur == CONCURRENCY_PARADIGM_RANDOM_ACCESS) {
             result = CONCURRENCY_PARADIGM_RANDOM_ACCESS;
         } else {
-            g_return_val_if_fail(FALSE, FALSE);
+            return FALSE;
         }
     }
 
@@ -1428,8 +1586,8 @@ static gboolean property_get_streaming(GPtrArray * ops, GValue * val) {
     for (i = 0; i < ops->len; i ++) {
         StreamingRequirement cur;
         PropertyOp * op = g_ptr_array_index(ops, i);
-        g_return_val_if_fail(G_VALUE_TYPE(&(op->value)) ==
-                             STREAMING_REQUIREMENT_TYPE, FALSE);
+        if (G_VALUE_TYPE(&(op->value)) != STREAMING_REQUIREMENT_TYPE)
+	    return FALSE;
         cur = g_value_get_enum(&(op->value));
         if (result == STREAMING_REQUIREMENT_REQUIRED ||
             cur == STREAMING_REQUIREMENT_REQUIRED) {
@@ -1441,7 +1599,7 @@ static gboolean property_get_streaming(GPtrArray * ops, GValue * val) {
                    cur == STREAMING_REQUIREMENT_NONE) {
             result = STREAMING_REQUIREMENT_NONE;
         } else {
-            g_return_val_if_fail(FALSE, FALSE);
+            return FALSE;
         }
     }
 
@@ -1458,8 +1616,8 @@ static gboolean property_get_medium_type(GPtrArray * ops, GValue * val) {
     for (i = 0; i < ops->len; i ++) {
         MediaAccessMode cur;
         PropertyOp * op = g_ptr_array_index(ops, i);
-        g_return_val_if_fail(G_VALUE_TYPE(&(op->value)) ==
-                             MEDIA_ACCESS_MODE_TYPE, FALSE);
+        if(G_VALUE_TYPE(&(op->value)) != MEDIA_ACCESS_MODE_TYPE)
+	    return FALSE;
         cur = g_value_get_enum(&(op->value));
         
         if (i == 0) {
@@ -1484,7 +1642,7 @@ static gboolean property_get_medium_type(GPtrArray * ops, GValue * val) {
                    cur == MEDIA_ACCESS_MODE_READ_WRITE) {
             result = MEDIA_ACCESS_MODE_READ_WRITE;
         } else {
-            g_return_val_if_fail(FALSE, FALSE);
+            return FALSE;
         }
     }
     
@@ -1501,8 +1659,8 @@ static gboolean property_get_free_space(GPtrArray * ops, GValue * val) {
     for (i = 0; i < ops->len; i ++) {
         QualifiedSize cur;
         PropertyOp * op = g_ptr_array_index(ops, i);
-        g_return_val_if_fail(G_VALUE_TYPE(&(op->value)) ==
-                             QUALIFIED_SIZE_TYPE, FALSE);
+        if (G_VALUE_TYPE(&(op->value)) != QUALIFIED_SIZE_TYPE)
+	    return FALSE;
         cur = *(QualifiedSize*)(g_value_get_boxed(&(op->value)));
 
         if (result.accuracy != cur.accuracy) {
@@ -1533,7 +1691,8 @@ static gboolean property_get_boolean_and(GPtrArray * ops, GValue * val) {
     for (i = 0; i < ops->len; i ++) {
         gboolean cur;
         PropertyOp * op = g_ptr_array_index(ops, i);
-        g_return_val_if_fail(G_VALUE_HOLDS_BOOLEAN(&(op->value)), FALSE);
+        if (!G_VALUE_HOLDS_BOOLEAN(&(op->value)))
+	    return FALSE;
         cur = g_value_get_boolean(&(op->value));
 
         result = result && cur;
@@ -1553,7 +1712,11 @@ rait_device_property_get (Device * dself, DevicePropertyId id, GValue * val) {
     GValue result;
     GValue * first_value;
     RaitDevice * self = RAIT_DEVICE(dself);
-    g_return_val_if_fail(self != NULL, FALSE);
+
+    if (rait_device_in_error(dself)) return FALSE;
+
+    /* clear error status in case we return FALSE */
+    device_set_error(dself, NULL, DEVICE_STATUS_SUCCESS);
 
     /* Some properties are handled completely differently. */
     if (id == PROPERTY_BLOCK_SIZE) {
@@ -1609,7 +1772,9 @@ rait_device_property_get (Device * dself, DevicePropertyId id, GValue * val) {
                 !g_value_compare(&result, &(op->value))) {
                 success = FALSE;
             }
-            g_value_unset(&(op->value));
+	    /* free the GValue if the child call succeeded */
+	    if (GPOINTER_TO_INT(op->base.result))
+		g_value_unset(&(op->value));
         }
 
         if (success) {
@@ -1656,7 +1821,8 @@ rait_device_property_set (Device * d_self, DevicePropertyId id, GValue * val) {
     gboolean label_changed;
 
     self = RAIT_DEVICE(d_self);
-    g_return_val_if_fail(self != NULL, FALSE);
+
+    if (rait_device_in_error(self)) return FALSE;
 
     ops = make_property_op_array(self, id, val);
     
@@ -1675,6 +1841,9 @@ rait_device_property_set (Device * d_self, DevicePropertyId id, GValue * val) {
         do_rait_child_ops(clear_volume_details_do_op, ops, NULL);
         g_ptr_array_free_full(ops);
     }
+
+    /* TODO: distinguish properties on the RAIT device from properties
+     * on child devices .. when config is available for subdevices */
 
     return success;
 }
@@ -1699,7 +1868,8 @@ rait_device_recycle_file (Device * dself, guint filenum) {
     gboolean success;
 
     RaitDevice * self = RAIT_DEVICE(dself);
-    g_return_val_if_fail(self != NULL, FALSE);
+
+    if (rait_device_in_error(self)) return FALSE;
 
     ops = g_ptr_array_sized_new(self->private->children->len);
     for (i = 0; i < self->private->children->len; i ++) {
@@ -1717,12 +1887,13 @@ rait_device_recycle_file (Device * dself, guint filenum) {
     g_ptr_array_free_full(ops);
 
     if (!success) {
+	/* TODO: be more specific here */
+	device_set_error(dself,
+	    stralloc(_("One or more devices failed to recycle_file")),
+	    DEVICE_STATUS_DEVICE_ERROR);
         return FALSE;
-    } else if (parent_class->recycle_file) {
-        return parent_class->recycle_file(dself, filenum);
-    } else {
-        return TRUE;
     }
+    return TRUE;
 }
 
 /* GFunc */
@@ -1736,6 +1907,8 @@ rait_device_finish (Device * self) {
     GPtrArray * ops;
     gboolean success;
 
+    if (rait_device_in_error(self)) return FALSE;
+
     ops = make_generic_boolean_op_array(RAIT_DEVICE(self));
     
     do_rait_child_ops(finish_do_op, ops, NULL);
@@ -1744,53 +1917,21 @@ rait_device_finish (Device * self) {
 
     g_ptr_array_free_full(ops);
 
-    if (!success) {
+    self->access_mode = ACCESS_NULL;
+
+    if (!success)
         return FALSE;
-    } else if (parent_class->finish) {
-        return parent_class->finish(self);
-    } else {
-        return TRUE;
-    }
+
+    return TRUE;
 }
 
-Device *
-rait_device_factory (char * type, char * name) {
+static Device *
+rait_device_factory (char * device_name, char * device_type, char * device_node) {
     Device * rval;
-    g_assert(0 == strcmp(type, "rait"));
+    g_assert(0 == strcmp(device_type, "rait"));
     rval = DEVICE(g_object_new(TYPE_RAIT_DEVICE, NULL));
-    device_open_device(rval, name);
+    device_open_device(rval, device_name, device_type, device_node);
     return rval;
-}
-
-Device * rait_device_new_from_devices(Device ** devices) {
-    RaitDevice * rval;
-    int i;
-    gboolean success = TRUE;
-
-    g_return_val_if_fail(devices != NULL && *devices != NULL, NULL);
-
-    rval = RAIT_DEVICE(g_object_new(TYPE_RAIT_DEVICE, NULL));
-
-    for (i = 0; devices[i] != NULL; i ++) {
-        g_assert(IS_DEVICE(devices[i]));
-        if (devices[i]->access_mode != ACCESS_NULL) {
-            success = FALSE;
-            break;
-        }
-        g_object_ref(devices[i]);
-        g_ptr_array_add(PRIVATE(rval)->children, devices[i]);
-    }
-
-    success = success && find_block_size(rval);
-
-    if (!success) {
-        g_ptr_array_free(PRIVATE(rval)->children, TRUE);
-        return NULL;
-    } else {
-        register_properties(rval);
-
-        return DEVICE(rval);
-    }
 }
 
 void 

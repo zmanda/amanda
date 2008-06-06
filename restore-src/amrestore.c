@@ -105,22 +105,15 @@ static void handle_tape_restore(char * device_name, rst_flags_t * flags,
     fh_init(&first_restored_file);
     
     device = device_open(device_name);
-    if (device == NULL) {
-        error("Could not open device.\n");
-    }
+    g_assert(device != NULL);
     if (device->status != DEVICE_STATUS_SUCCESS) {
-        error("Could not open device: %s.\n", device_error(device));
+        error("Could not open device %s: %s.\n", device_name, device_error(device));
     }
     
     device_set_startup_properties_from_config(device);
     device_status = device_read_label(device);
     if (device_status != DEVICE_STATUS_SUCCESS) {
-        char * errstr = device->errmsg;
-	if (!errstr)
-            errstr = g_english_strjoinv_and_free
-                (g_flags_nick_to_strv(device_status,
-                                      DEVICE_STATUS_FLAGS_TYPE), "or");
-        error("Error reading volume label: %s.\n", errstr);
+        error("Error reading volume label: %s.\n", device_error_or_status(device));
     }
 
     g_assert(device->volume_label != NULL);

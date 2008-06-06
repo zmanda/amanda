@@ -54,35 +54,8 @@ Stable
 
 =head1 Amanda::Device Objects
 
-=head2 Instance Variables
-
-=over
-
-=item C<$file>
-
-=item C<$block>
-
-=item C<$in_file>
-
-=item C<$device_name>
-
-=item C<$access_mode>
-
-=item C<$is_eof>
-
-=item C<$volume_label>
-
-=item C<$volume_time>
-
-=item C<$errmsg>
-
-=item C<$tape_check>
-
-=back
-
-=head2 Methods
-
-See the wiki for descriptions of these functions
+See the wiki for descriptions of these functions.  Note that C instance variables
+are represented by accessor functions of the same name.
 
 =over
 
@@ -94,7 +67,7 @@ See the wiki for descriptions of these functions
 
 =item C<start_file($jobinfo)>
 
-where C<$jobinfo> is a C<dumpfile_t> (see L<Amanda::Datatypes)
+where C<$jobinfo> is a C<dumpfile_t> (see L<Amanda::Types>)
 
 =item C<write_min_size()>
 
@@ -143,6 +116,22 @@ where $value is of an appropriate type for the given property
 =item C<recycle_file($filenum)>
 
 =item C<set_startup_properties_from_config()>
+
+=item C<file()> (accessor function)
+
+=item C<block()> (accessor function)
+
+=item C<in_file()> (accessor function)
+
+=item C<device_name()> (accessor function)
+
+=item C<access_mode()> (accessor function)
+
+=item C<is_eof()> (accessor function)
+
+=item C<volume_label()> (accessor function)
+
+=item C<volume_time()> (accessor function)
 
 =back
 
@@ -384,19 +373,6 @@ typedef struct queue_fd_t {
 } queue_fd_t;
 
 typedef struct Device {
-    /* Instance variables -- all readonly */
-    %immutable;
-    int file;
-    guint64 block;
-    gboolean in_file;
-    char * device_name;
-    DeviceAccessMode access_mode;
-    gboolean is_eof;
-    char * volume_label;
-    char * volume_time;
-    char * errmsg;
-    DeviceStatusFlags status; /* temporary access to private variable */
-    %mutable;
 
     /* methods */
     %extend {
@@ -444,17 +420,17 @@ typedef struct Device {
 	    return device_start_file(self, jobInfo);
 	}
 
-	guint
+	size_t
 	write_min_size() {
 	    return device_write_min_size(self);
 	}
 
-	guint
+	size_t
 	write_max_size() {
 	    return device_write_max_size(self);
 	}
 
-	guint
+	size_t
 	read_max_size() {
 	    return device_read_max_size(self);
 	}
@@ -595,7 +571,20 @@ typedef struct Device {
 	void set_startup_properties_from_config(void) {
 	    device_set_startup_properties_from_config(self);
 	}
+
+	/* accessor functions */
+
+	int file(void) { return self->file; }
+	guint64 block(void) { return self->block; }
+	gboolean in_file(void) { return self->in_file; }
+	char * device_name(void) { return self->device_name; }
+	DeviceAccessMode access_mode(void) { return self->access_mode; }
+	gboolean is_eof(void) { return self->is_eof; }
+	char * volume_label(void) { return self->volume_label; }
+	char * volume_time(void) { return self->volume_time; }
+	DeviceStatusFlags status(void) { return self->status; }
     };
+
 } Device;
 
 /*

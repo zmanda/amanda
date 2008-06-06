@@ -16,30 +16,132 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 28;
-use File::Path;
+use Test::More tests => 180;
+use File::Path qw( mkpath rmtree );
+use Sys::Hostname;
 use strict;
 
 use lib "@amperldir@";
-use Installcheck::Run;
+use Installcheck::Config;
 use Amanda::Debug;
 use Amanda::Device qw( :constants );
 use Amanda::Config qw( :getconf :init );
 use Amanda::Types;
+use Amanda::Paths;
+use Amanda::Tests;
 
 my $dev;
-my ($input, $output);
+my $dev_name;
+my ($vtape1, $vtape2);
+my ($input_filename, $output_filename) =
+    ( "$AMANDA_TMPDIR/input.tmp", "$AMANDA_TMPDIR/output.tmp" );
+my $taperoot = "$AMANDA_TMPDIR/Amanda_Device_test_tapes";
 my $testconf;
+my $queue_fd;
+
+# we'll need some vtapes..
+sub mkvtape {
+    my ($num) = @_;
+
+    my $mytape = "$taperoot/$num";
+    if (-d $mytape) { rmtree($mytape); }
+    mkpath("$mytape/data");
+    return $mytape;
+}
+
 
 # make up a fake dumpfile_t to write with
 my $dumpfile = Amanda::Types::dumpfile_t->new();
 $dumpfile->{type} = $Amanda::Types::F_DUMPFILE;
 $dumpfile->{datestamp} = "20070102030405";
+$dumpfile->{dumplevel} = 0;
+$dumpfile->{compressed} = 1;
 $dumpfile->{name} = "localhost";
 $dumpfile->{disk} = "/home";
+$dumpfile->{program} = "INSTALLCHECK";
 
-# get stuff set up
-$testconf = Installcheck::Run::setup();
+# function to set up a queue_fd for a filename
+sub make_queue_fd {
+    my ($filename, $mode) = @_;
+
+    open(my $fd, $mode, $filename) or die("Could not open $filename: $!");
+    return $fd, Amanda::Device::queue_fd_t->new(fileno($fd));
+}
+
+sub write_file {
+    my ($seed, $length, $filenum, $autoclose) = @_;
+
+    Amanda::Tests::write_random_file($seed, $length, $input_filename);
+
+    ok($dev->start_file($dumpfile),
+	"start file $filenum")
+	or diag($dev->error_or_status());
+
+    TODO: {
+	local $TODO = "RAIT device gets filenum wrong"
+	    if ($dev_name =~ /^rait:/);
+	is($dev->file(), $filenum,
+	    "Device has correct filenum");
+    }
+
+    my ($input, $queue_fd) = make_queue_fd($input_filename, "<");
+    ok($dev->write_from_fd($queue_fd),
+	"write some data")
+	or diag($dev->error_or_status());
+    close($input) or die("Error closing $input_filename");
+
+    if (defined $autoclose) {
+	if ($autoclose) {
+	    ok(!$dev->in_file(),
+		"file autofinished, as expected")
+		or diag $dev->error_or_status();
+	} else {
+	    ok($dev->in_file(),
+		"file did not autofinish, as expected")
+		or diag $dev->error_or_status();
+	}
+
+	# make sure to finish it either way
+	if ($dev->in_file()) {
+	    ok($dev->finish_file(),
+		"finish_file 'manually'")
+		or diag($dev->error_or_status());
+	} else {
+	    pass("(no need to finish file)");
+	}
+    }
+}
+
+sub verify_file {
+    my ($seed, $length, $filenum) = @_;
+
+    ok(my $read_dumpfile = $dev->seek_file($filenum),
+	"seek to file $filenum")
+	or diag($dev->error_or_status());
+    is($dev->file(), $filenum,
+	"device is really at file $filenum");
+    is($read_dumpfile->{name}, "localhost",
+	"header looks vaguely familiar")
+	or diag($dev->error_or_status());
+
+    my ($output, $queue_fd) = make_queue_fd($output_filename, ">");
+    ok($dev->read_to_fd($queue_fd),
+	"read data from file $filenum")
+	or diag($dev->error_or_status());
+    close($output) or die("Error closing $output_filename");
+
+    TODO: {
+	todo_skip "RAIT device corrupts data sporadically", 1
+	    if ($dev_name =~ /^rait:/);
+	ok(Amanda::Tests::verify_random_file($seed, $length, $output_filename, 0),
+	    "verified file contents");
+    }
+}
+
+####
+## get stuff set up
+
+$testconf = Installcheck::Config->new();
 $testconf->write();
 config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF') == $CFGERR_OK
     or die("Could not load configuration");
@@ -47,84 +149,356 @@ config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF') == $CFGERR_OK
 # put the debug messages somewhere
 Amanda::Debug::dbopen("installcheck");
 
+####
+## Test errors a little bit
+
+$dev = Amanda::Device->new("foobar:");
+isnt($dev->status(), $DEVICE_STATUS_SUCCESS,
+    "creation of a bogus 'foobar:' device fails");
+
+$dev = Amanda::Device->new("rait:{{");
+isnt($dev->status(), $DEVICE_STATUS_SUCCESS,
+    "creation of a bogus 'rait:{{' device fails");
+
+####
 ## first, test out the 'null' device.
 
-ok($dev = Amanda::Device->new("null:"), "create null device");
-ok($dev->start($ACCESS_WRITE, "NULL1", "19780615010203"), "start in write mode");
+$dev_name = "null:";
+
+$dev = Amanda::Device->new($dev_name);
+is($dev->status(), $DEVICE_STATUS_SUCCESS,
+    "create null device")
+    or diag $dev->error_or_status();
+ok($dev->start($ACCESS_WRITE, "NULL1", "19780615010203"),
+    "start null device in write mode")
+    or diag $dev->error_or_status();
 
 # check some info methods
-isnt($dev->write_min_size(), 0, "write_min_size > 0");
-isnt($dev->write_max_size(), 0, "write_max_size > 0");
-isnt($dev->read_max_size(), 0, "read_max_size > 0");
+isnt($dev->write_min_size(), 0,
+    "write_min_size > 0 on null device");
+isnt($dev->write_max_size(), 0,
+    "write_max_size > 0 on null device");
+isnt($dev->read_max_size(), 0,
+    "read_max_size > 0 on null device");
 
-# and properties
+# try properties
 my $plist = $dev->property_list();
-ok($plist, "got some properties");
-is($dev->property_get("canonical_name"), "null:", "property_get");
+ok($plist,
+    "got some properties on null device");
+is($dev->property_get("canonical_name"), $dev_name,
+    "property_get on null device");
 
-ok($dev->start_file($dumpfile), "start file");
-open($input, "<", Amanda::Config::get_config_filename()) or die("Could not open amanda.conf: $!");
-my $queue_fd_1 = Amanda::Device::queue_fd_t->new(fileno($input));
-ok($dev->write_from_fd($queue_fd_1), "write some data");
-close($input) or die("Error closing amanda.conf");
-# ok($dev->finish_file(), "finish file");
+# and write a file to it
+write_file(0xabcde, 1024*256, 1, 0);
 
-ok($dev->finish(), "finish device");
+# (don't finish the device, testing the finalize method's cleanup)
 
-## now let's try a vfs device -- the one Installcheck::Run set it up
+####
+## Now some full device tests
 
-ok($dev = Amanda::Device->new(getconf($CNF_TAPEDEV)), "create vfs device");
-$dev->set_startup_properties_from_config();
+## VFS device
 
-## write a copy of the config file to the tape, three times
+$vtape1 = mkvtape(1);
+$dev_name = "file:$vtape1";
 
-ok($dev->start($ACCESS_WRITE, "TESTCONF13", "19780602010203"), "start in write mode");
+$dev = Amanda::Device->new($dev_name);
+is($dev->status(), $DEVICE_STATUS_SUCCESS,
+    "$dev_name: create successful")
+    or diag($dev->error_or_status());
+
+$dev->read_label();
+ok($dev->status() & $DEVICE_STATUS_VOLUME_UNLABELED,
+    "initially unlabeled")
+    or diag($dev->error_or_status());
+
+ok($dev->start($ACCESS_WRITE, "TESTCONF13", undef),
+    "start in write mode")
+    or diag($dev->error_or_status());
+
+ok(!($dev->status() & $DEVICE_STATUS_VOLUME_UNLABELED),
+    "not unlabeled anymore")
+    or diag($dev->error_or_status());
 
 for (my $i = 1; $i <= 3; $i++) {
-    ok($dev->start_file($dumpfile), "start file $i");
-
-    open($input, "<", Amanda::Config::get_config_filename())
-	or die("Could not open amanda.conf: $!");
-    my $queue_fd_2 = Amanda::Device::queue_fd_t->new(fileno($input));
-    ok($dev->write_from_fd($queue_fd_2), "write some data for file $i");
-    close($input) or die("Error closing amanda.conf");
-
-    # Device API automatically finishes the file when a write of < write_block_size
-    # is made, so don't do it ourselves. TODO: change this
-    # ok($dev->finish_file(), "finish file $i");
+    write_file(0x2FACE, $dev->write_min_size()*10+17, $i, 1);
 }
 
-ok($dev->finish(), "finish device");
+ok($dev->finish(),
+    "finish device after write")
+    or diag($dev->error_or_status());
 
-## append one more copy
+$dev->read_label();
+ok(!($dev->status()),
+    "no error, at all, from read_label")
+    or diag($dev->error_or_status());
 
-ok($dev->start($ACCESS_APPEND, undef, undef), "start in append mode");
+# append one more copy, to test ACCESS_APPEND
 
-ok($dev->start_file($dumpfile), "start file 4");
+ok($dev->start($ACCESS_APPEND, undef, undef),
+    "start in append mode")
+    or diag($dev->error_or_status());
 
-open($input, "<", Amanda::Config::get_config_filename())
-    or die("Could not open amanda.conf: $!");
-my $queue_fd_3 = Amanda::Device::queue_fd_t->new(fileno($input));
-ok($dev->write_from_fd($queue_fd_3), "write some data for file 4");
-close($input) or die("Error closing amanda.conf");
+# (make it an even multiple of blocksize, so it doesn't autofinish)
+write_file(0xD0ED0E, $dev->write_min_size()*4, 4, 0);
 
-# Device API automatically finishes the file when a write of < write_block_size
-# is made, so don't do it ourselves. TODO: change this
-# ok($dev->finish_file(), "finish file $i");
+ok($dev->finish(),
+    "finish device after append")
+    or diag($dev->error_or_status());
 
-ok($dev->finish(), "finish device");
+# try reading the third file back
 
-## try reading that back
+ok($dev->start($ACCESS_READ, undef, undef),
+    "start in read mode")
+    or diag($dev->error_or_status());
 
-ok($dev->start($ACCESS_READ, undef, undef), "start in read mode");
+verify_file(0x2FACE, $dev->write_min_size()*10+17, 3);
 
-ok($dumpfile = $dev->seek_file(3), "seek to file 3");
-is($dumpfile->{name}, "localhost", "header looks familiar");
+ok($dev->finish(),
+    "finish device after read")
+    or diag($dev->error_or_status());
 
-open($output, ">", Amanda::Config::get_config_filename() . "~")
-    or die("Could not open amanda.conf~: $!");
-my $queue_fd_4 = Amanda::Device::queue_fd_t->new(fileno($output));
-ok($dev->read_to_fd($queue_fd_4), "write data from file 3");
-close($output) or die("Error closing amanda.conf~");
+####
+## Test a RAIT device of two vfs devices.
 
-ok($dev->finish(), "finish device");
+($vtape1, $vtape2) = (mkvtape(1), mkvtape(2));
+$dev_name = "rait:{file:$vtape1,file:$vtape2}";
+
+$dev = Amanda::Device->new($dev_name);
+is($dev->status(), $DEVICE_STATUS_SUCCESS,
+    "$dev_name: create successful")
+    or diag($dev->error_or_status());
+
+$dev->read_label();
+ok($dev->status() & $DEVICE_STATUS_VOLUME_UNLABELED,
+    "initially unlabeled")
+    or diag($dev->error_or_status());
+
+ok($dev->start($ACCESS_WRITE, "TESTCONF13", undef),
+    "start in write mode")
+    or diag($dev->error_or_status());
+
+ok(!($dev->status() & $DEVICE_STATUS_VOLUME_UNLABELED),
+    "not unlabeled anymore")
+    or diag($dev->error_or_status());
+
+for (my $i = 1; $i <= 3; $i++) {
+    write_file(0x2FACE, $dev->write_max_size()*10+17, $i, 1);
+}
+
+ok($dev->finish(),
+    "finish device after write")
+    or diag($dev->error_or_status());
+
+$dev->read_label();
+ok(!($dev->status()),
+    "no error, at all, from read_label")
+    or diag($dev->error_or_status());
+
+# append one more copy, to test ACCESS_APPEND
+
+ok($dev->start($ACCESS_APPEND, undef, undef),
+    "start in append mode")
+    or diag($dev->error_or_status());
+
+# (make it an even multiple of blocksize, so it doesn't autofinish)
+write_file(0xD0ED0E, $dev->write_max_size()*4, 4, 0);
+
+ok($dev->finish(),
+    "finish device after append")
+    or diag($dev->error_or_status());
+
+# try reading the third file back
+
+ok($dev->start($ACCESS_READ, undef, undef),
+    "start in read mode")
+    or diag($dev->error_or_status());
+
+verify_file(0x2FACE, $dev->write_max_size()*10+17, 3);
+
+ok($dev->finish(),
+    "finish device after read")
+    or diag($dev->error_or_status());
+
+# corrupt the device somehow and hope it keeps working
+mkvtape(2);
+
+TODO: {
+    todo_skip "RAIT device doesn't actually support this yet", 23;
+
+    ok($dev->start($ACCESS_READ, undef, undef),
+	"start in read mode after device corruption")
+	or diag($dev->error_or_status());
+
+    verify_file(0x2FACE, $dev->write_max_size()*10+17, 3);
+    verify_file(0xD0ED0E, $dev->write_max_size()*4, 4);
+    verify_file(0x2FACE, $dev->write_max_size()*10+17, 2);
+
+    ok($dev->finish(),
+	"finish device read after device corruption")
+	or diag($dev->error_or_status());
+
+    ok($dev->start($ACCESS_WRITE, "TESTCONF29", undef),
+	"start in write mode after device corruption")
+	or diag($dev->error_or_status());
+
+    write_file(0x2FACE, $dev->write_max_size()*20+17, 1, 1);
+
+    ok($dev->finish(),
+	"finish device write after device corruption")
+	or diag($dev->error_or_status());
+}
+
+# Test an S3 device if the proper environment variables are set
+my $S3_SECRET_KEY = $ENV{'INSTALLCHECK_S3_SECRET_KEY'};
+my $S3_ACCESS_KEY = $ENV{'INSTALLCHECK_S3_ACCESS_KEY'};
+my $run_s3_tests = defined $S3_SECRET_KEY && defined $S3_ACCESS_KEY;
+SKIP: {
+    skip "define \$INSTALLCHECK_S3_{SECRET,ACCESS}_KEY to run S3 tests", 37
+	unless $run_s3_tests;
+
+    # XXX for best results, the bucket should already exist (Amazon doesn't create
+    # buckets quickly enough to pass subsequent tests), but should be empty (so that
+    # the device appears unlabeled)
+    my $hostname = hostname();
+    $dev_name = "s3:$S3_ACCESS_KEY-installcheck-$hostname";
+
+    # (note: we don't use write_max_size here, as the maximum for S3 is very large)
+
+    $dev = Amanda::Device->new($dev_name);
+    is($dev->status(), $DEVICE_STATUS_SUCCESS,
+	"$dev_name: create successful")
+	or diag($dev->error_or_status());
+
+    ok($dev->property_set('S3_ACCESS_KEY', $S3_ACCESS_KEY),
+	"set S3 access key")
+
+	or diag($dev->error_or_status());
+    ok($dev->property_set('S3_SECRET_KEY', $S3_SECRET_KEY),
+	"set S3 secret key")
+	or diag($dev->error_or_status());
+
+    $dev->read_label();
+    is($dev->status() & ~$DEVICE_STATUS_VOLUME_UNLABELED, 0,
+	"read_label OK, possibly already labeled")
+	or diag($dev->error_or_status());
+
+    ok($dev->start($ACCESS_WRITE, "TESTCONF13", undef),
+	"start in write mode")
+	or diag($dev->error_or_status());
+
+    ok(!($dev->status() & $DEVICE_STATUS_VOLUME_UNLABELED),
+	"it's labeled now")
+	or diag($dev->error_or_status());
+
+    for (my $i = 1; $i <= 3; $i++) {
+	write_file(0x2FACE, 32768*10, $i, 0);
+    }
+
+    ok($dev->finish(),
+	"finish device after write")
+	or diag($dev->error_or_status());
+
+    $dev->read_label();
+    ok(!($dev->status()),
+	"no error, at all, from read_label")
+	or diag($dev->error_or_status());
+
+    # append one more copy, to test ACCESS_APPEND
+
+    ok($dev->start($ACCESS_APPEND, undef, undef),
+	"start in append mode")
+	or diag($dev->error_or_status());
+
+    # (make it an even multiple of blocksize, so it doesn't autofinish)
+    write_file(0xD0ED0E, 32768*10, 4, 0);
+
+    ok($dev->finish(),
+	"finish device after append")
+	or diag($dev->error_or_status());
+
+    # try reading the third file back
+
+    ok($dev->start($ACCESS_READ, undef, undef),
+	"start in read mode")
+	or diag($dev->error_or_status());
+
+    verify_file(0x2FACE, 32768*10, 3);
+
+    ok($dev->finish(),
+	"finish device after read")
+	or diag($dev->error_or_status());
+}
+
+# Test a tape device if the proper environment variables are set
+my $TAPE_DEVICE = $ENV{'INSTALLCHECK_TAPE_DEVICE'};
+my $run_tape_tests = defined $TAPE_DEVICE;
+SKIP: {
+    skip "define \$INSTALLCHECK_TAPE_DEVICE to run tape tests", 36
+	unless $run_tape_tests;
+
+    $dev_name = "tape:$TAPE_DEVICE";
+    $dev = Amanda::Device->new($dev_name);
+    is($dev->status(), $DEVICE_STATUS_SUCCESS,
+	"$dev_name: create successful")
+	or diag($dev->error_or_status());
+
+    $dev->read_label();
+    ok(!($dev->status() & ~$DEVICE_STATUS_VOLUME_UNLABELED),
+	"no error, except possibly unlabeled, from read_label")
+	or diag($dev->error_or_status());
+
+    ok($dev->start($ACCESS_WRITE, "TESTCONF13", undef),
+	"start in write mode")
+	or diag($dev->error_or_status());
+
+    ok(!($dev->status() & $DEVICE_STATUS_VOLUME_UNLABELED),
+	"not unlabeled anymore")
+	or diag($dev->error_or_status());
+
+    for (my $i = 1; $i <= 3; $i++) {
+	write_file(0x2FACE, $dev->write_min_size()*10+17, $i, 1);
+    }
+
+    ok($dev->finish(),
+	"finish device after write")
+	or diag($dev->error_or_status());
+
+    $dev->read_label();
+    ok(!($dev->status()),
+	"no error, at all, from read_label")
+	or diag($dev->error_or_status());
+
+    is($dev->volume_label(), "TESTCONF13",
+	"read_label reads the correct label")
+	or diag($dev->error_or_status());
+
+    # append one more copy, to test ACCESS_APPEND
+
+    ok($dev->start($ACCESS_APPEND, undef, undef),
+	"start in append mode")
+	or diag($dev->error_or_status());
+
+    # (make it an even multiple of blocksize, so it doesn't autofinish)
+    write_file(0xD0ED0E, $dev->write_min_size()*4, 4, 0);
+
+    ok($dev->finish(),
+	"finish device after append")
+	or diag($dev->error_or_status());
+
+    # try reading the third file back
+
+    ok($dev->start($ACCESS_READ, undef, undef),
+	"start in read mode")
+	or diag($dev->error_or_status());
+
+    verify_file(0x2FACE, $dev->write_min_size()*10+17, 3);
+
+    ok($dev->finish(),
+	"finish device after read")
+	or diag($dev->error_or_status());
+
+}
+
+unlink($input_filename);
+unlink($output_filename);
+rmtree($taperoot);

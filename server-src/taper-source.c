@@ -226,7 +226,7 @@ taper_source_read (TaperSource * self, void * buf, size_t count)
 {
     TaperSourceClass *klass;
     g_return_val_if_fail (self != NULL, (ssize_t )-1);
-    g_return_val_if_fail (TAPER_IS_SOURCE (self), (ssize_t )-1);
+    g_return_val_if_fail (IS_TAPER_SOURCE (self), (ssize_t )-1);
     g_return_val_if_fail (buf != NULL, (ssize_t )-1);
     g_return_val_if_fail (count > 0, (ssize_t )-1);
 
@@ -247,7 +247,7 @@ taper_source_get_end_of_data (TaperSource * self)
 {
     TaperSourceClass *klass;
     g_return_val_if_fail (self != NULL, TRUE);
-    g_return_val_if_fail (TAPER_IS_SOURCE (self), TRUE);
+    g_return_val_if_fail (IS_TAPER_SOURCE (self), TRUE);
 
     klass = TAPER_SOURCE_GET_CLASS(self);
     
@@ -261,7 +261,7 @@ taper_source_get_end_of_part (TaperSource * self)
 {
     TaperSourceClass *klass;
     g_return_val_if_fail (self != NULL, TRUE);
-    g_return_val_if_fail (TAPER_IS_SOURCE (self), TRUE);
+    g_return_val_if_fail (IS_TAPER_SOURCE (self), TRUE);
 
     klass = TAPER_SOURCE_GET_CLASS(self);
     
@@ -275,7 +275,7 @@ taper_source_get_first_header (TaperSource * self)
 {
     TaperSourceClass *klass;
     g_return_val_if_fail (self != NULL, NULL);
-    g_return_val_if_fail (TAPER_IS_SOURCE (self), NULL);
+    g_return_val_if_fail (IS_TAPER_SOURCE (self), NULL);
 
     klass = TAPER_SOURCE_GET_CLASS(self);
     
@@ -289,7 +289,7 @@ taper_source_get_errmsg (TaperSource * self)
 {
     TaperSourceClass *klass;
     g_return_val_if_fail (self != NULL, NULL);
-    g_return_val_if_fail (TAPER_IS_SOURCE (self), NULL);
+    g_return_val_if_fail (IS_TAPER_SOURCE (self), NULL);
 
     klass = TAPER_SOURCE_GET_CLASS(self);
     
@@ -301,7 +301,7 @@ taper_source_get_errmsg (TaperSource * self)
 int taper_source_predict_parts(TaperSource * self) {
     TaperSourceClass *klass;
     g_return_val_if_fail (self != NULL, -1);
-    g_return_val_if_fail (TAPER_IS_SOURCE (self), -1);
+    g_return_val_if_fail (IS_TAPER_SOURCE (self), -1);
 
     klass = TAPER_SOURCE_GET_CLASS(self);
     
@@ -317,7 +317,7 @@ taper_source_seek_to_part_start (TaperSource * self)
 {
     TaperSourceClass *klass;
     g_return_val_if_fail (self != NULL, (gboolean )0);
-    g_return_val_if_fail (TAPER_IS_SOURCE (self), (gboolean )0);
+    g_return_val_if_fail (IS_TAPER_SOURCE (self), (gboolean )0);
     klass = TAPER_SOURCE_GET_CLASS(self);
     
     if(klass->seek_to_part_start)
@@ -331,7 +331,7 @@ taper_source_start_new_part (TaperSource * self)
 {
     TaperSourceClass *klass;
     g_return_if_fail (self != NULL);
-    g_return_if_fail (TAPER_IS_SOURCE (self));
+    g_return_if_fail (IS_TAPER_SOURCE (self));
     klass = TAPER_SOURCE_GET_CLASS(self);
     
     if(klass->start_new_part)
@@ -343,7 +343,7 @@ taper_source_is_partial (TaperSource * self)
 {
     TaperSourceClass *klass;
     g_return_val_if_fail (self != NULL, FALSE);
-    g_return_val_if_fail (TAPER_IS_SOURCE (self), FALSE);
+    g_return_val_if_fail (IS_TAPER_SOURCE (self), FALSE);
     g_return_val_if_fail (taper_source_get_end_of_data(self), FALSE);
     klass = TAPER_SOURCE_GET_CLASS(self);
     
@@ -360,7 +360,7 @@ producer_result_t taper_source_producer(gpointer data,
     ssize_t result;
 
     source = data;
-    g_assert(TAPER_IS_SOURCE(source));
+    g_assert(IS_TAPER_SOURCE(source));
 
     buffer->offset = 0;
     if (buffer->data == NULL) {

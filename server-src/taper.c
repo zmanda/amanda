@@ -425,11 +425,9 @@ static gboolean label_new_tape(taper_state_t * state, dump_info_t * dump_info) {
      * say NEW-TAPE if one doesn't. */
 
     state->device = device_open(state->next_tape_device);
+    g_assert(state->device != NULL);
     amfree(state->next_tape_device);
-    if (state->device == NULL) {
-        amfree(state->next_tape_label);
-        return FALSE;
-    }
+
     if (state->device->status != DEVICE_STATUS_SUCCESS) {
         amfree(state->next_tape_label);
         return FALSE;
@@ -640,6 +638,11 @@ static gboolean finish_part_attempt(taper_state_t * taper_state,
 
         /* A problem occured. */
         if (queue_result & QUEUE_CONSUMER_ERROR) {
+	    /* Make a note if this was EOM (we treat EOM the same as any other error,
+	     * so it's just for debugging purposes */
+	    if (taper_state->device->is_eof)
+		g_debug("device %s ran out of space", taper_state->device->device_name);
+
             /* Close the device. */
             device_finish(taper_state->device);
             g_object_unref(taper_state->device);

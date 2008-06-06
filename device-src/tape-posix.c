@@ -148,9 +148,9 @@ DeviceStatusFlags tape_is_tape_device(int fd) {
     }
 }
 
-DeviceStatusFlags tape_is_ready(TapeDevice *t_self) {
+DeviceStatusFlags tape_is_ready(int fd, TapeDevice *t_self) {
     struct mtget get;
-    if (0 == ioctl(t_self->fd, MTIOCGET, &get)) {
+    if (0 == ioctl(fd, MTIOCGET, &get)) {
 #if defined(GMT_ONLINE) || defined(GMT_DR_OPEN)
         if (1
 #ifdef GMT_ONLINE
@@ -172,7 +172,7 @@ DeviceStatusFlags tape_is_ready(TapeDevice *t_self) {
     }
 }
 
-void tape_device_discover_capabilities(TapeDevice * t_self) {
+void tape_device_set_capabilities(TapeDevice * t_self) {
     Device * self;
     GValue val;
 

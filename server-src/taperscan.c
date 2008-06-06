@@ -89,14 +89,7 @@ int scan_read_label(
 
     *label = *timestamp = NULL;
     device = device_open(dev);
-    if (device == NULL ) {
-        *error_message = newvstrallocf(*error_message,
-                                       _("%sError opening device %s.\n"),
-                                       *error_message, dev);
-        amfree(*timestamp);
-        amfree(*label);
-        return -1;
-    }
+    g_assert(device != NULL);
 
     if (device->status != DEVICE_STATUS_SUCCESS ) {
         *error_message = newvstrallocf(*error_message,
@@ -111,10 +104,8 @@ int scan_read_label(
     device_set_startup_properties_from_config(device);
 
     device_status = device_read_label(device);
-    g_assert((device->volume_label != NULL) ==
-             (device_status == DEVICE_STATUS_SUCCESS));
     
-    if (device->volume_label != NULL) { 
+    if (device_status == DEVICE_STATUS_SUCCESS && device->volume_label != NULL) {
         *label = g_strdup(device->volume_label);
         *timestamp = strdup(device->volume_time);
     } else if (device_status & DEVICE_STATUS_VOLUME_UNLABELED) {

@@ -1,3 +1,43 @@
+2008-06-06  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/*: major overhaul:
+	  - add device_set_error to set error status and message for Device
+	  - every error return from a device API method sets error status
+	  - device_status_error is now threadsave
+	  - a device in an error state will not perform further operations
+	  - ensure Device attributes are set correctly by member functions
+	  - device_open never returns NULL, but may return a null device with
+	    error status set
+	  - clearly define $device_name="$device_type:$device_node"
+	  - send RAIT logging to the debug log
+	  - vfs, tape devices don't touch the device until read_label or start
+	  - on out-of-space in write, set is_eof, finish the file, and return
+	    FALSE
+	  - use accessor functions in Amanda::Device
+	  - move device-specific properties to live with their devices
+	  - change g_return_val_if_fail to g_assert or explicit checks
+	  - remove most default Device methods, as they were more confusing
+	    than helpful
+	  - misc. other cleanup
+	* device-src/null-device.h device-src/rait-device.h
+	  device-src/s3-device.h device-src/vfs-device.h: removed to make most
+	  device class declarations local to the source file
+	* perl/Amanda/Device.swg: new error handling
+	* perl/Amanda/Changer.pm restore-src/amrestore.c restore-src/restore.c
+	  server-src/amcheck.c server-src/amcheckdump.pl
+	  server-src/amdevcheck.pl server-src/amlabel.c server-src/amtape.c
+	  server-src/taperscan.c: use new device error-handling
+	* server-src/taper-file-source.c server-src/taper-port-source.c
+	  server-src/taper-source.c: rename GObject constants (typo)
+	* server-src/taper-source.h:
+	* server-src/taper.c: handle opening devices better, log on EOM
+	* common-src/glib-util.c: g_english_strjoinv: handle one-element lists
+	  correctly
+	* installcheck/amdevcheck.pl: volume-unlabeled message has changed
+	* installcheck/Amanda_Device.pl perl/Amanda/Tests.swg: test all device
+	  classes
+	* configure.in device-src/tests/: removed
+	* device-src/vfs-test.c: moved from device-src/tests/
+
 2008-06-06  Jean-Louis Martineau <martineau@zmanda.com>
 	* client-src/sendbackup.c: Don't write the uncompression program if
 				   it is not client compressed.

@@ -172,9 +172,7 @@ main(
     tape_ok=1;
     g_printf("Reading label...\n");fflush(stdout);
     device = device_open(tapename);
-    if (device == NULL) {
-        error("Could not open device %s.\n", tapename);
-    }
+    g_assert(device != NULL);
     if (device->status != DEVICE_STATUS_SUCCESS) {
         error("Could not open device %s: %s.\n", tapename,
 	      device_error(device));

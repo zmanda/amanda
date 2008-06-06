@@ -157,23 +157,18 @@ sub try_open_device {
     }
 
     my $device = Amanda::Device->new($device_name);
-    if ( !$device ) {
-	print "Could not open '$device_name'.\n";
-        return undef;
-    }
-
-    if ($device->{errmsg} ) {
+    if ($device->status() != $DEVICE_STATUS_SUCCESS) {
 	print "Could not open device $device_name: ",
-	      $device->{errmsg}, ".\n";
+	      $device->error(), ".\n";
 	return undef;
     }
     $device->set_startup_properties_from_config();
 
     my $label_status = $device->read_label();
     if ($label_status != $DEVICE_STATUS_SUCCESS) {
-	if ($device->{errmsg} ) {
+	if ($device->error() ) {
 	    print "Could not read device $device_name: ",
-		  $device->{errmsg}, ".\n";
+		  $device->error(), ".\n";
 	} else {
 	    print "Could not read device $device_name: one of ",
 	         join(", ", DevicestatusFlags_to_strings($label_status)),
@@ -182,9 +177,9 @@ sub try_open_device {
 	return undef;
     }
 
-    if ($device->{volume_label} ne $label) {
+    if ($device->volume_label() ne $label) {
 	printf("Labels do not match: Expected '%s', but the device contains '%s'.\n",
-		     $label, $device->{volume_label});
+		     $label, $device->volume_label());
 	return undef;
     }
 
@@ -195,7 +190,7 @@ sub try_open_device {
     }
 
     $current_device = $device;
-    $current_device_label = $device->{volume_label};
+    $current_device_label = $device->volume_label();
 
     return $device;
 }

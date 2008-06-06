@@ -268,11 +268,8 @@ load_slot(
     
     if (!is_advance) {
         device = device_open(devicename);
-        if (device == NULL) {
-            g_fprintf(stderr,
-                    _("%s: could not open device %s"), get_pname(),
-                    devicename);
-        } else if (device->status != DEVICE_STATUS_SUCCESS) {
+	g_assert(device != NULL);
+        if (device->status != DEVICE_STATUS_SUCCESS) {
             g_fprintf(stderr,
                     _("%s: could not open device %s: %s"), get_pname(),
                     devicename, device_error(device));
@@ -343,11 +340,7 @@ loadlabel_slot(
     }
 
     device = device_open(device_name);
-    if (device == NULL) {
-        g_fprintf(stderr, _("%s: slot %3s: Could not open device.\n"),
-                get_pname(), slotstr);
-        return 0;
-    }
+    g_assert(device != NULL);
     if (device->status != DEVICE_STATUS_SUCCESS) {
         g_fprintf(stderr, _("%s: slot %3s: Could not open device: %s.\n"),
                   get_pname(), slotstr, device_error(device));
@@ -432,10 +425,8 @@ show_slots_slot(G_GNUC_UNUSED void * data, int rc, char * slotstr,
     }
 
     device = device_open(device_name);
-    if (device == NULL) {
-        g_fprintf(stderr, _("%s: slot %3s: Could not open device.\n"),
-                get_pname(), slotstr);
-    } else if (device->status != DEVICE_STATUS_SUCCESS) {
+    g_assert(device != NULL);
+    if (device->status != DEVICE_STATUS_SUCCESS) {
         g_fprintf(stderr, _("%s: slot %3s: Could not open device: %s.\n"),
                   get_pname(), slotstr, device_error(device));
     } else {

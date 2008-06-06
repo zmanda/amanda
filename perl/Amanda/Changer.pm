@@ -334,9 +334,11 @@ sub find {
 		    next TRYSLOT if $error;
 
 		    my $device = Amanda::Device->new($devname);
-		    next TRYSLOT unless $device;
-		    next TRYSLOT if ($device->read_label() != $DEVICE_STATUS_SUCCESS);
-		    next TRYSLOT unless ($device->{'volume_label'} eq $label);
+		    next TRYSLOT unless ($device->status() == $DEVICE_STATUS_SUCCESS);
+		    next TRYSLOT unless ($device->read_label() == $DEVICE_STATUS_SUCCESS);
+		    my $volume_label = $device->volume_label();
+		    next TRYSLOT unless (defined $volume_label);
+		    next TRYSLOT unless ($volume_label eq $label);
 
 		    # we found the correct slot
 		    $cb->(0, $slot, $devname);
@@ -345,7 +347,7 @@ sub find {
 
 		# on to the next slot
 		if (++$nchecked >= $nslots) {
-		    croak("Label $label not found in any slot");
+		    die("Label $label not found in any slot");
 		} else {
 		    # loop again with the next slot
 		    $self->loadslot("next", $check_slot);

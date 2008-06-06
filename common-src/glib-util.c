@@ -433,6 +433,10 @@ char * g_english_strjoinv(char ** strv, const char * conjunction) {
     strv = g_strdupv(strv);
 
     length = g_strv_length(strv);
+
+    if (length == 1)
+	return stralloc(strv[0]);
+
     last = strv[length - 1];
     strv[length - 1] = NULL;
     

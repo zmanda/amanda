@@ -22,6 +22,10 @@
 %include "amglue/amglue.swg"
 %include "exception.i"
 
+%{
+#include "simpleprng.h"
+%}
+
 /* import dumptype_t, among others */
 %import "Amanda/Types.swg";
 
@@ -150,6 +154,98 @@ gint8 give_gint8(char *input) {
 
 int sizeof_size_t(void) {
     return sizeof(size_t);
+}
+
+%}
+
+/*
+ * simpleprng interface
+ */
+
+%inline %{
+
+/* write LENGTH bytes of random data to FILENAME, seeded with SEED */
+void
+write_random_file(guint32 seed, size_t length, char *filename) {
+    simpleprng_state_t prng;
+    int fd;
+    char buf[10240];
+
+    simpleprng_seed(&prng, seed);
+
+    fd = open(filename, O_CREAT|O_WRONLY|O_TRUNC, 0666);
+    if (fd < 0)
+	g_critical(_("Could not open test file '%s': %s"), filename, strerror(errno));
+
+    while (length) {
+	size_t to_write = min(sizeof(buf), length);
+	size_t written;
+
+	simpleprng_fill_buffer(&prng, buf, to_write);
+
+	written = full_write(fd, buf, to_write);
+	if (written < to_write)
+	    g_critical(_("Error writing test file: %s"), strerror(errno));
+
+	length -= written;
+    }
+
+    close(fd);
+}
+
+/* read LENGTH bytes of random data from FILENAME verifying it against
+ * a PRNG seeded with SEED.  Sends any error messages to stderr.
+ *
+ * If check_eof is true, then check that the file is exactly LENGTH bytes long;
+ * otherwise, trailing bytes (such as zero padding from a Device) are ignored.
+ */
+gboolean
+verify_random_file(guint32 seed, size_t length, char *filename, gboolean check_eof) {
+    simpleprng_state_t prng;
+    int fd;
+    char buf[10240];
+
+    simpleprng_seed(&prng, seed);
+
+    fd = open(filename, O_RDONLY, 0666);
+    if (fd < 0)
+	g_critical(_("Could not open test file '%s': %s"), filename, strerror(errno));
+
+    while (length) {
+	size_t to_read = min(sizeof(buf), length);
+	size_t bytes_read;
+
+	bytes_read = full_read(fd, buf, to_read);
+	if (bytes_read < to_read) {
+	    if (errno) {
+		g_critical(_("Error reading test file: %s"), strerror(errno));
+	    } else {
+		g_fprintf(stderr, _("Verify of '%s' failed: early EOF with %zd bytes left\n"),
+			filename, length - bytes_read);
+		goto error;
+	    }
+	}
+
+	if (!simpleprng_verify_buffer(&prng, buf, bytes_read))
+	    goto error;
+
+	length -= bytes_read;
+    }
+
+    /* verify that the file contains no extra bytes */
+    if (check_eof) {
+	if (read(fd, buf, 1)) {
+	    g_fprintf(stderr, _("Verify of '%s' failed: file is too long\n"), filename);
+	    goto error;
+	}
+    }
+
+    close(fd);
+    return TRUE;
+
+error:
+    close(fd);
+    return FALSE;
 }
 
 %}

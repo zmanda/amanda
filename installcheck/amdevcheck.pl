@@ -60,8 +60,8 @@ $testconf->write();
 
 ok(run('amdevcheck', 'TESTCONF'), "run succeeds with an unlabeled tape");
 is_deeply([ sort split "\n", $Installcheck::Run::stdout],
-	  [ sort "MESSAGE unlabeled device", "VOLUME_UNLABELED", "DEVICE_ERROR", "VOLUME_ERROR"],
-	  "output is 'ERROR unlabeled device'");
+	  [ sort "MESSAGE Error loading device header -- unlabeled volume?", "VOLUME_UNLABELED", "DEVICE_ERROR", "VOLUME_ERROR"],
+	  "..and output is correct");
 
 ok(run('amdevcheck', 'TESTCONF', "/dev/null"),
     "can override device on the command line");

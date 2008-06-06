@@ -290,7 +290,6 @@ perform_request(S3Handle *hdl,
  * Static function implementations
  */
 
-/* {{{ s3_error_code_from_name */
 static s3_error_code_t
 s3_error_code_from_name(char *s3_error_name)
 {
@@ -306,9 +305,7 @@ s3_error_code_from_name(char *s3_error_name)
 
     return S3_ERROR_Unknown;
 }
-/* }}} */
 
-/* {{{ s3_error_name_from_code */
 static const char *
 s3_error_name_from_code(s3_error_code_t s3_error_code)
 {
@@ -320,9 +317,7 @@ s3_error_name_from_code(s3_error_code_t s3_error_code)
 
     return s3_error_code_names[s3_error_code];
 }
-/* }}} */
 
-/* {{{ s3_curl_supports_ssl */
 static gboolean
 s3_curl_supports_ssl(void)
 {
@@ -342,17 +337,13 @@ s3_curl_supports_ssl(void)
 
     return supported;
 }
-/* }}} */
 
-/* {{{ lookup_result */
 static s3_result_t
 lookup_result(const result_handling_t *result_handling,
               guint response_code,
               s3_error_code_t s3_error_code,
               CURLcode curl_code)
 {
-    g_return_val_if_fail(result_handling != NULL, S3_RESULT_FAIL);
-
     while (result_handling->response_code
         || result_handling->s3_error_code 
         || result_handling->curl_code) {
@@ -369,9 +360,7 @@ lookup_result(const result_handling_t *result_handling,
     /* return the result for the terminator, as the default */
     return result_handling->result;
 }
-/* }}} */
 
-/* {{{ build_resource */
 static char *
 build_resource(const char *bucket,
                const char *key)
@@ -402,9 +391,7 @@ cleanup:
 
     return resource;
 }
-/* }}} */
 
-/* {{{ authenticate_request */
 static struct curl_slist *
 authenticate_request(S3Handle *hdl,
                      const char *verb,
@@ -467,9 +454,7 @@ authenticate_request(S3Handle *hdl,
 
     return headers;
 }
-/* }}} */
 
-/* {{{ interpret_response */
 static void
 regex_error(regex_t *regex, int reg_result)
 {
@@ -579,9 +564,7 @@ cleanup:
 
     return FALSE;
 }
-/* }}} */
 
-/* {{{ perform_request */
 size_t buffer_readfunction(void *ptr, size_t size,
                            size_t nmemb, void * stream) {
     CurlBuffer *data = stream;
@@ -618,7 +601,8 @@ buffer_writefunction(void *ptr, size_t size, size_t nmemb, void *stream)
         data->buffer = g_realloc(data->buffer, new_size);
         data->buffer_len = new_size;
     }
-    g_return_val_if_fail(data->buffer, 0); /* returning zero signals an error to libcurl */
+    if (!data->buffer)
+	return 0; /* returning zero signals an error to libcurl */
 
     /* actually copy the data to the buffer */
     memcpy(data->buffer + data->buffer_pos, ptr, new_bytes);
@@ -695,7 +679,7 @@ perform_request(S3Handle *hdl,
     guint retries = 0;
     gulong backoff = EXPONENTIAL_BACKOFF_START_USEC;
 
-    g_return_val_if_fail(hdl != NULL && hdl->curl != NULL, S3_RESULT_FAIL);
+    g_assert(hdl != NULL && hdl->curl != NULL);
 
     s3_reset(hdl);
 
@@ -708,6 +692,9 @@ perform_request(S3Handle *hdl,
         if (!writedata.buffer) goto cleanup;
         writedata.buffer_len = preallocate_response_size;
     }
+
+    if (!request_body)
+	request_body_size = 0;
 
     while (1) {
         /* reset things */
@@ -758,16 +745,17 @@ perform_request(S3Handle *hdl,
 #endif
 	}
 
-        if (request_body) {
-            if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_UPLOAD, 1))) 
-                goto curl_error;
 #ifdef CURLOPT_INFILESIZE_LARGE
-	    if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_INFILESIZE_LARGE, (curl_off_t)request_body_size))) 
-                goto curl_error;
+	if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_INFILESIZE_LARGE, (curl_off_t)request_body_size)))
+	    goto curl_error;
 #else
-	    if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_INFILESIZE, (long)request_body_size))) 
-                goto curl_error;
+	if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_INFILESIZE, (long)request_body_size)))
+	    goto curl_error;
 #endif
+
+        if (request_body) {
+            if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_UPLOAD, 1)))
+                goto curl_error;
             if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_READFUNCTION, buffer_readfunction))) 
                 goto curl_error;
             if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_READDATA, &readdata))) 
@@ -835,13 +823,11 @@ cleanup:
 
     return result;
 }
-/* }}} */
 
 /*
  * Public function implementations
  */
 
-/* {{{ s3_init */
 gboolean
 s3_init(void)
 {
@@ -865,9 +851,7 @@ s3_init(void)
 
     return TRUE;
 }
-/* }}} */
 
-/* {{{ s3_open */
 S3Handle *
 s3_open(const char *access_key,
         const char *secret_key
@@ -903,9 +887,7 @@ error:
     s3_free(hdl);
     return NULL;
 }
-/* }}} */
 
-/* {{{ s3_free */
 void
 s3_free(S3Handle *hdl)
 {
@@ -922,9 +904,7 @@ s3_free(S3Handle *hdl)
         g_free(hdl);
     }
 }
-/* }}} */
 
-/* {{{ s3_reset */
 void
 s3_reset(S3Handle *hdl)
 {
@@ -950,9 +930,7 @@ s3_reset(S3Handle *hdl)
         hdl->last_response_body_size = 0;
     }
 }
-/* }}} */
 
-/* {{{ s3_error */
 void
 s3_error(S3Handle *hdl,
          const char **message,
@@ -979,17 +957,13 @@ s3_error(S3Handle *hdl,
         if (num_retries) *num_retries = 0;
     }
 }
-/* }}} */
 
-/* {{{ s3_verbose */
 void
 s3_verbose(S3Handle *hdl, gboolean verbose)
 {
     hdl->verbose = verbose;
 }
-/* }}} */
 
-/* {{{ s3_sterror */
 char *
 s3_strerror(S3Handle *hdl)
 {
@@ -1019,9 +993,7 @@ s3_strerror(S3Handle *hdl)
 
     return g_strdup_printf("%s%s%s%s%s", message, s3_info, curl_info, response_info, retries_info);
 }
-/* }}} */
 
-/* {{{ s3_upload */
 /* Perform an upload. When this function returns, KEY and
  * BUFFER remain the responsibility of the caller.
  *
@@ -1046,7 +1018,7 @@ s3_upload(S3Handle *hdl,
         { 0, 0,    0,                /* default: */ S3_RESULT_FAIL }
         };
 
-    g_return_val_if_fail(hdl != NULL, FALSE);
+    g_assert(hdl != NULL);
 
     resource = build_resource(bucket, key);
     if (resource) {
@@ -1058,9 +1030,7 @@ s3_upload(S3Handle *hdl,
 
     return result == S3_RESULT_OK;
 }
-/* }}} */
 
-/* {{{ s3_list_keys */
 
 /* Private structure for our "thunk", which tracks where the user is in the list
  * of keys. */
@@ -1296,9 +1266,7 @@ cleanup:
         return TRUE;
     }
 }
-/* }}} */
 
-/* {{{ s3_read */
 gboolean
 s3_read(S3Handle *hdl,
         const char *bucket,
@@ -1315,7 +1283,7 @@ s3_read(S3Handle *hdl,
         { 0, 0,    0,                /* default: */ S3_RESULT_FAIL  }
         };
 
-    g_return_val_if_fail(hdl != NULL, FALSE);
+    g_assert(hdl != NULL);
     g_assert(buf_ptr != NULL);
     g_assert(buf_size != NULL);
 
@@ -1341,9 +1309,7 @@ s3_read(S3Handle *hdl,
 
     return result == S3_RESULT_OK;
 }
-/* }}} */
 
-/* {{{ s3_delete */
 gboolean
 s3_delete(S3Handle *hdl,
           const char *bucket,
@@ -1357,7 +1323,7 @@ s3_delete(S3Handle *hdl,
         { 0, 0,    0,                /* default: */ S3_RESULT_FAIL  }
         };
 
-    g_return_val_if_fail(hdl != NULL, FALSE);
+    g_assert(hdl != NULL);
 
     resource = build_resource(bucket, key);
     if (resource) {
@@ -1368,9 +1334,7 @@ s3_delete(S3Handle *hdl,
 
     return result == S3_RESULT_OK;
 }
-/* }}} */
 
-/* {{{ s3_make_bucket */
 gboolean
 s3_make_bucket(S3Handle *hdl,
                const char *bucket)
@@ -1383,7 +1347,7 @@ s3_make_bucket(S3Handle *hdl,
         { 0, 0,    0,                /* default: */ S3_RESULT_FAIL  }
         };
 
-    g_return_val_if_fail(hdl != NULL, FALSE);
+    g_assert(hdl != NULL);
 
     resource = build_resource(bucket, NULL);
     if (resource) {
@@ -1394,4 +1358,3 @@ s3_make_bucket(S3Handle *hdl,
 
     return result == S3_RESULT_OK;
 }
-/* }}} */

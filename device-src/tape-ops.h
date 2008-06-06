@@ -43,16 +43,18 @@ gboolean tape_fsf(int fd, guint count);
 gboolean tape_bsf(int fd, guint count);
 gboolean tape_fsr(int fd, guint count);
 gboolean tape_bsr(int fd, guint count);
+
+/* Sets attributes of the device to indicate which of the above operations
+ * are available in this device. */
+void tape_device_set_capabilities(TapeDevice * self);
+
 /* Returns tape position file number, or one of the return codes above. */
 gint tape_eod(int fd);
 gboolean tape_weof(int fd, guint8 count);
 gboolean tape_setcompression(int fd, gboolean on);
 
 DeviceStatusFlags tape_is_tape_device(int fd);
-DeviceStatusFlags tape_is_ready(TapeDevice *t_self);
-
-/* Also implemented in above files. Sets properties on the device. */
-void tape_device_discover_capabilities(TapeDevice * self);
+DeviceStatusFlags tape_is_ready(int fd, TapeDevice *t_self);
 
 #endif
 

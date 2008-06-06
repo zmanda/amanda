@@ -20,20 +20,52 @@
 
 #include "amanda.h"
 #include "device.h"
-#include "null-device.h"
 
 #define NULL_DEVICE_MIN_BLOCK_SIZE (1)
 #define NULL_DEVICE_MAX_BLOCK_SIZE SHRT_MAX
 
+/*
+ * Type checking and casting macros
+ */
+#define TYPE_NULL_DEVICE	(null_device_get_type())
+#define NULL_DEVICE(obj)	G_TYPE_CHECK_INSTANCE_CAST((obj), null_device_get_type(), NullDevice)
+#define NULL_DEVICE_CONST(obj)	G_TYPE_CHECK_INSTANCE_CAST((obj), null_device_get_type(), NullDevice const)
+#define NULL_DEVICE_CLASS(klass)	G_TYPE_CHECK_CLASS_CAST((klass), null_device_get_type(), NullDeviceClass)
+#define IS_NULL_DEVICE(obj)	G_TYPE_CHECK_INSTANCE_TYPE((obj), null_device_get_type ())
+#define NULL_DEVICE_GET_CLASS(obj)	G_TYPE_INSTANCE_GET_CLASS((obj), null_device_get_type(), NullDeviceClass)
+static GType null_device_get_type (void);
+
+/*
+ * Main object structure
+ */
+typedef struct _NullDevice NullDevice;
+struct _NullDevice {
+	Device __parent__;
+};
+
+/*
+ * Class definition
+ */
+typedef struct _NullDeviceClass NullDeviceClass;
+struct _NullDeviceClass {
+    DeviceClass __parent__;
+    gboolean in_file;
+};
+
+void null_device_register(void);
+
 /* here are local prototypes */
 static void null_device_init (NullDevice * o);
 static void null_device_class_init (NullDeviceClass * c);
+static DeviceStatusFlags null_device_read_label(Device * dself);
 static gboolean null_device_start (Device * self, DeviceAccessMode mode,
                                    char * label, char * timestamp);
+static gboolean null_device_finish (Device * pself);
+static gboolean null_device_start_file(Device * self, const dumpfile_t * jobInfo);
 static gboolean null_device_write_block (Device * self, guint size,
                                          gpointer data, gboolean last);
-static Device* null_device_factory(char * device_type,
-                                   char * device_name);
+static gboolean null_device_finish_file(Device * self);
+static Device* null_device_factory(char * device_name, char * device_type, char * device_node);
 
 /* pointer to the class of our parent */
 static DeviceClass *parent_class = NULL;
@@ -43,7 +75,7 @@ void null_device_register(void) {
     register_device(null_device_factory, device_prefix_list);
 }
 
-GType
+static GType
 null_device_get_type (void)
 {
     static GType type = 0;
@@ -139,58 +171,107 @@ null_device_class_init (NullDeviceClass * c G_GNUC_UNUSED)
 
     parent_class = g_type_class_ref (TYPE_DEVICE);
 
+    device_class->read_label = null_device_read_label;
     device_class->start = null_device_start;
+    device_class->finish = null_device_finish;
+    device_class->start_file = null_device_start_file;
     device_class->write_block = null_device_write_block;
+    device_class->finish_file = null_device_finish_file;
 }
 
 
-static Device* null_device_factory(char * device_type,
-                                   char * device_name G_GNUC_UNUSED) {
+static Device* null_device_factory(char * device_name, char * device_type, char * device_node) {
+    Device * device;
     g_assert(0 == strcmp(device_type, "null"));
-    return DEVICE(g_object_new(TYPE_NULL_DEVICE, NULL));
-    
+    device = DEVICE(g_object_new(TYPE_NULL_DEVICE, NULL));
+    device_open_device(device, device_name, device_type, device_node);
+    return device;
 }
 
 /* Begin virtual function overrides */
 
-static gboolean 
+static DeviceStatusFlags
+null_device_read_label(Device * dself) {
+    if (device_in_error(dself)) return FALSE;
+
+    device_set_error(dself,
+	stralloc(_("Can't open NULL device for reading or appending.")),
+	DEVICE_STATUS_DEVICE_ERROR);
+    return FALSE;
+}
+
+static gboolean
 null_device_start (Device * pself, DeviceAccessMode mode,
                    char * label, char * timestamp) {
     NullDevice * self;
     self = NULL_DEVICE(pself);
-    g_return_val_if_fail (self != NULL, FALSE);
+
+    if (device_in_error(self)) return FALSE;
+
+    pself->access_mode = mode;
+    pself->in_file = FALSE;
 
     if (mode == ACCESS_WRITE) {
-        if (parent_class->start) {
-            return parent_class->start((Device*)self, mode, label, timestamp);
-        } else {
-            return TRUE;
-        }
+        pself->volume_label = newstralloc(pself->volume_label, label);
+        pself->volume_time = newstralloc(pself->volume_time, timestamp);
+	return TRUE;
     } else {
-	pself->errmsg = newstralloc(pself->errmsg,
-	        "Can't open NULL device for reading or appending.");
+	device_set_error(pself,
+	    stralloc(_("Can't open NULL device for reading or appending.")),
+	    DEVICE_STATUS_DEVICE_ERROR);
         return FALSE;
     }
 }
 
+/* This default implementation does very little. */
 static gboolean
-null_device_write_block (Device * pself, guint size, gpointer data,
-                         gboolean last_block) {
+null_device_finish (Device * pself) {
+    if (device_in_error(pself)) return FALSE;
+
+    pself->access_mode = ACCESS_NULL;
+    return TRUE;
+}
+
+static gboolean
+null_device_start_file(Device * d_self,
+		    const dumpfile_t * jobInfo G_GNUC_UNUSED)
+{
+    d_self->in_file = TRUE;
+    d_self->block = 0;
+    if (d_self->file <= 0)
+        d_self->file = 1;
+    else
+        d_self->file ++;
+
+    return TRUE;
+}
+
+static gboolean
+null_device_write_block (Device * pself, guint size,
+	    gpointer data G_GNUC_UNUSED, gboolean last_block) {
     NullDevice * self;
     self = NULL_DEVICE(pself);
-    g_return_val_if_fail (self != NULL, FALSE);
-    g_return_val_if_fail (data != NULL, FALSE);
+
+    if (device_in_error(self)) return FALSE;
     
     if ((size < NULL_DEVICE_MIN_BLOCK_SIZE && !last_block) ||
         size > NULL_DEVICE_MAX_BLOCK_SIZE) {
         return FALSE;
-    } else {
-        if (parent_class->write_block) {
-            /* Calls device_finish_file(). */
-            parent_class->write_block((Device*)self, size, data, last_block);
-        }
-        return TRUE;
     }
 
-    g_assert_not_reached();
+    pself->block++;
+
+    /* if this is the last block, finish the file */
+    if (last_block)
+	return device_finish_file(pself);
+
+    return TRUE;
+}
+
+static gboolean
+null_device_finish_file(Device * pself) {
+    if (device_in_error(pself)) return FALSE;
+
+    pself->in_file = FALSE;
+    return TRUE;
 }
