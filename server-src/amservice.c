@@ -40,6 +40,7 @@
 static time_t conf_ctimeout;
 static am_feature_t *our_features = NULL;
 static char *our_feature_string = NULL;
+static int remote_errors = 0;
 
 /* local functions */
 
@@ -143,7 +144,7 @@ main(
     our_features = NULL;
 
     dbclose();
-    return(0);
+    return(remote_errors != 0);
 }
 
 /* --------------------------------------------------- */
@@ -209,6 +210,7 @@ handle_result(
     if (pkt == NULL) {
 	g_fprintf(stdout,
 		  _("Request failed: %s\n"), security_geterror(sech));
+	remote_errors++;
 	return;
     }
 

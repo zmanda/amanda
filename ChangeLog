@@ -1,3 +1,7 @@
+2008-06-06  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amservice.c: Exit with 1 if the connection fail.
+	* man/xml-source/amservice.8.xml: Document exit code.
+
 2008-06-06  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/device.c: make device_set_error bulletproof to NULLs
 	* device-src/tape-posix.c: fix compilation error when GMT_ONLINE is

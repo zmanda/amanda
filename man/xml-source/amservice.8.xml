@@ -92,6 +92,19 @@ It print an OPTIONS line upon success.</para>
 <para>It is more difficult to execute the selfcheck or sendsize service, as these require a valid REQ packet. If you have already uccessfully run amanda, you can find valid REQ packets in the amandad.*.debug files.</para>
 </refsect1>
 
+<refsect1><title>EXIT CODE</title>
+The exit code of <command>amservice</command> is one of:
+<programlisting>
+ 0  = success
+ 1  = error executing amandad on the client.
+</programlisting>
+<para>As <command>amservice</command> doesn't parse the REP packet,
+it can only detect failure in executing amandad on the client.
+<command>amservice</command> can exit with value 0 even if the user
+is not authorized to execute the service, An error message will be printed.
+</para>
+</refsect1>
+
 <refsect1><title>SEE ALSO</title>
 <para><citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>amcheck</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
