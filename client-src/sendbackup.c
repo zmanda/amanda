@@ -771,7 +771,7 @@ application_api_info_tapeheader(
 	return;
     }
 
-    if (dle->compress) {
+    if (dle->compress == COMP_FAST || dle->compress == COMP_BEST) {
 	g_snprintf(line, 1024, "%s %s |", UNCOMPRESS_PATH,
 #ifdef UNCOMPRESS_OPT
 		 UNCOMPRESS_OPT

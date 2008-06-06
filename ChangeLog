@@ -1,3 +1,7 @@
+2008-06-06  Jean-Louis Martineau <martineau@zmanda.com>
+	* client-src/sendbackup.c: Don't write the uncompression program if
+				   it is not client compressed.
+
 2008-06-05  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/taper.c: Log no-tape line.
 
