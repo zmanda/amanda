@@ -1,3 +1,14 @@
+2008-06-06  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/*: bugfixes backported from trunk r1087
+	  - device_read_block returns an int, not a gboolean, and sets in_file
+	    = FALSE on EOF
+	  - tape device only requires a label in READ and APPEND modes
+	  - tape device isn't opened until start or read_label
+	  - rait sets self->file correctly in start
+	  - rait compares child devices' labels and times correctly
+	  - vfs correctly chains up in property_get
+	  - vfs sets self->file correctly in start with ACCESS_APPEND
+
 2008-06-03  Jean-Louis Martineau <martineau@zmanda.com>
 	* man/xml-source/amdump.8.xml, man/xml-source/amreport.8.xml,
 	  man/xml-source/amcheck.8.xml, man/xml-source/amflush.8.xml,

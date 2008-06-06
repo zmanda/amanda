@@ -24,7 +24,7 @@
 #include "rait-device.h"
 #include <amanda.h>
 #include "property.h"
-#include <util.h>
+#include "util.h"
 
 typedef enum {
     RAIT_STATUS_COMPLETE, /* All subdevices OK. */
@@ -553,13 +553,8 @@ static void open_device_do_op(gpointer data,
 
 /* Returns TRUE if and only if the volume label and time are equal. */
 static gboolean compare_volume_results(Device * a, Device * b) {
-    if (a->volume_time != b->volume_time)
-        return FALSE;
-    if (a->volume_label == NULL && b->volume_label == NULL)
-        return TRUE;
-    if (a->volume_label == NULL || b->volume_label == NULL)
-        return FALSE;
-    return 0 == strcmp(a->volume_label, b->volume_label);
+    return (0 == compare_possibly_null_strings(a->volume_time, b->volume_time)
+	 && 0 == compare_possibly_null_strings(a->volume_label, b->volume_label));
 }
 
 static gboolean 
@@ -806,7 +801,10 @@ rait_device_start_file (Device * dself, const dumpfile_t * info) {
 
     g_ptr_array_free_full(ops);
 
+    dself->in_file = TRUE;
+
     if (!success) {
+	g_fprintf(stderr, _("One or more devices failed to start_file"));
         return FALSE;
     } else if (parent_class->start_file) {
         return parent_class->start_file(dself, info);
@@ -1339,7 +1337,10 @@ rait_device_read_block (Device * dself, gpointer buf, int * size) {
                                      extract_boolean_read_block_op_eof)) {
             /* We hit EOF. */
             dself->is_eof = TRUE;
-        }
+	    dself->in_file = FALSE;
+        } else {
+	    g_fprintf(stderr, _("All child devices failed to read, but not all are at eof"));
+	}
     }
 
     for (i = 0; i < ops->len; i ++) {
@@ -1617,7 +1618,9 @@ rait_device_property_get (Device * dself, DevicePropertyId id, GValue * val) {
                 !g_value_compare(&result, &(op->value))) {
                 success = FALSE;
             }
-            g_value_unset(&(op->value));
+	    /* free the GValue if the child call succeeded */
+	    if (GPOINTER_TO_INT(op->base.result))
+		g_value_unset(&(op->value));
         }
 
         if (success) {

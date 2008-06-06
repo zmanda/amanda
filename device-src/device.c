@@ -773,18 +773,52 @@ default_device_property_get(Device * self, DevicePropertyId ID,
 
 static gboolean
 default_device_read_to_fd(Device *self, int fd) {
-    return do_consumer_producer_queue(device_read_producer,
-                                      self,
-                                      fd_write_consumer,
-                                      GINT_TO_POINTER(fd));
+    GValue val;
+    StreamingRequirement streaming_mode;
+
+    /* Get the device's parameters */
+    bzero(&val, sizeof(val));
+    if (!device_property_get(self, PROPERTY_STREAMING, &val)
+	|| !G_VALUE_HOLDS(&val, STREAMING_REQUIREMENT_TYPE)) {
+	streaming_mode = STREAMING_REQUIREMENT_REQUIRED;
+    } else {
+	streaming_mode = g_value_get_enum(&val);
+    }
+
+    return QUEUE_SUCCESS ==
+	do_consumer_producer_queue_full(
+	    device_read_producer,
+	    self,
+	    fd_write_consumer,
+	    GINT_TO_POINTER(fd),
+	    device_read_max_size(self),
+	    DEFAULT_MAX_BUFFER_MEMORY,
+	    streaming_mode);
 }
 
 static gboolean
 default_device_write_from_fd(Device *self, int fd) {
-    return do_consumer_producer_queue(fd_read_producer,
-                                      GINT_TO_POINTER(fd),
-                                      device_write_consumer,
-                                      self);
+    GValue val;
+    StreamingRequirement streaming_mode;
+
+    /* Get the device's parameters */
+    bzero(&val, sizeof(val));
+    if (!device_property_get(self, PROPERTY_STREAMING, &val)
+	|| !G_VALUE_HOLDS(&val, STREAMING_REQUIREMENT_TYPE)) {
+	streaming_mode = STREAMING_REQUIREMENT_REQUIRED;
+    } else {
+	streaming_mode = g_value_get_enum(&val);
+    }
+
+    return QUEUE_SUCCESS ==
+	do_consumer_producer_queue_full(
+	    fd_read_producer,
+	    GINT_TO_POINTER(fd),
+	    device_write_consumer,
+	    self,
+	    device_write_max_size(self),
+	    DEFAULT_MAX_BUFFER_MEMORY,
+	    streaming_mode);
 }
 
 /* XXX WARNING XXX

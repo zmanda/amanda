@@ -726,7 +726,8 @@ vfs_device_read_block(Device * pself, gpointer data, int * size_req) {
         return size;
     case RESULT_NO_DATA:
         pself->is_eof = TRUE;
-        /* FALLTHROUGH */
+        pself->in_file = FALSE;
+        return -1;
     default:
         return -1;
     }
@@ -871,6 +872,9 @@ char * make_new_file_name(VfsDevice * self, const dumpfile_t * ji) {
         }
     }
 
+    /* record that we're at this filenum now */
+    DEVICE(self)->file = fileno;
+
     base = g_strdup_printf("%05d.%s.%s.%d", fileno, ji->name, ji->disk,
                            ji->dumplevel);
     sanitary_base = sanitise_filename(base);
@@ -922,6 +926,8 @@ vfs_device_start_file (Device * pself, const dumpfile_t * ji) {
     }
 
     self->volume_bytes += VFS_DEVICE_LABEL_SIZE;
+    /* make_new_file_name set pself->file for us, but the parent class will increment it, so decrement it now */
+    pself->file--;
 
     if (parent_class->start_file) {
         parent_class->start_file(pself, ji);
@@ -1112,8 +1118,8 @@ vfs_device_property_set (Device * pself, DevicePropertyId ID, GValue * val) {
         self->volume_limit = g_value_get_uint64(val);
         return TRUE;
     } else {
-        if (parent_class->property_get) {
-            return parent_class->property_get(pself, ID, val);
+        if (parent_class->property_set) {
+            return parent_class->property_set(pself, ID, val);
         } else {
             return FALSE;
         }

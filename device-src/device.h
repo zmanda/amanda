@@ -144,7 +144,7 @@ struct _DeviceClass {
     gboolean (* finish_file) (Device * self);
     dumpfile_t* (* seek_file) (Device * self, guint file);
     gboolean (* seek_block) (Device * self, guint64 block);
-    gboolean (* read_block) (Device * self, gpointer buf, int * size);
+    int (* read_block) (Device * self, gpointer buf, int * size);
     gboolean (* read_to_fd) (Device * self, int fd);
     gboolean (* property_get) (Device * self, DevicePropertyId id,
                                GValue * val);

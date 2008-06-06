@@ -197,7 +197,7 @@ static gboolean
 s3_device_seek_block(Device *pself, 
                      guint64 block);
 
-static gboolean 
+static int
 s3_device_read_block(Device * pself, 
                      gpointer data, 
                      int *size_req);
@@ -1144,6 +1144,7 @@ s3_device_read_block (Device * pself, gpointer data, int *size_req) {
             /* if it's an expected error (not found), just return -1 */
             if (response_code == 404 && s3_error_code == S3_ERROR_NoSuchKey) {
                 pself->is_eof = TRUE;
+                pself->in_file = FALSE;
                 return -1;
             }
 
