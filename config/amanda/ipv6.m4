@@ -112,31 +112,6 @@ main()
     fi
 ])
 
-#
-# Checks to see if there's a sockaddr_storage structure
-#
-# usage:
-#
-#	AC_SOCKADDR_STORAGE
-#
-# results:
-#
-#	HAVE_SOCKADDR_STORAGE (defined)
-#
-AC_DEFUN([AC_SOCKADDR_STORAGE],
-    [AC_MSG_CHECKING(if sockaddr_storage struct exists)
-    AC_CACHE_VAL(ac_cv_has_sockaddr_storage,
-	AC_TRY_COMPILE([
-#	include <sys/types.h>
-#	include <sys/socket.h>],
-	[u_int i = sizeof (struct sockaddr_storage)],
-	ac_cv_has_sockaddr_storage=yes,
-	ac_cv_has_sockaddr_storage=no))
-    AC_MSG_RESULT($ac_cv_has_sockaddr_storage)
-    if test $ac_cv_has_sockaddr_storage = yes ; then
-	    AC_DEFINE(HAVE_SOCKADDR_STORAGE,1,[if struct sockaddr_storage exists])
-    fi])
-
 # SYNOPSIS
 #
 #   AMANDA_SHOW_IPV6_SUMMARY

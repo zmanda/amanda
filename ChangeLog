@@ -1,3 +1,24 @@
+2008-06-07  Dustin J. Mitchell <dustin@zmanda.com>
+	* config/amanda/ipv6.m4: remove redundant AC_SOCKADDR_STORAGE
+	* configure.in: don't call AC_SOCKADDR_STORAGE
+
+2008-06-07  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Amanda_Xfer.pl: make AMANDA_TMPDIR if it doesn't exist
+
+2008-06-07  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Installcheck/Run.pm: fix Installcheck::Run vtape
+	  handling so that checks can load/unload vtapes "manually"
+
+2008-06-07  Dustin J. Mitchell <dustin@zmanda.com>
+	* server-src/amdevcheck.pl: apply config_overwrites before printing
+	  config errors
+
+2008-06-07  Dustin J. Mitchell <dustin@zmanda.com>
+	* application-src/amgtar_perl.pl application-src/amstar_perl.pl
+	  application-src/generic-dumper.pl application-src/generic-script.pl
+	  application-src/script-email.pl server-src/amgetconf.pl: add GPL
+	  notice
+
 2008-06-06  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amservice.c: Exit with 1 if the connection fail.
 	* man/xml-source/amservice.8.xml: Document exit code.

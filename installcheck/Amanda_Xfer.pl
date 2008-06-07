@@ -17,6 +17,7 @@
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
 use Test::More tests => 6;
+use File::Path;
 use strict;
 
 use lib "@amperldir@";
@@ -133,6 +134,8 @@ pass("Two simultaneous transfers run to completion");
     my $write_filename = "$Amanda::Paths::AMANDA_TMPDIR/xfer-junk-dest.tmp";
     my ($rfh, $wfh);
 
+    mkdir($Amanda::Paths::AMANDA_TMPDIR) unless (-e $Amanda::Paths::AMANDA_TMPDIR);
+
     # fill the file with some stuff
     open($wfh, ">", $read_filename) or die("Could not open '$read_filename' for writing");
     for my $i (1 .. 100) { print $wfh "line $i\n"; }
@@ -144,8 +147,6 @@ pass("Two simultaneous transfers run to completion");
     # now run a transfer out of it
     my $xfer = Amanda::Xfer->new([
 	Amanda::Xfer::Source::Fd->new(fileno($rfh)),
-	# for the moment, XFA can't link Source::Fd to Dest::Fd, but it can link
-	# each to a filter
 	Amanda::Xfer::Filter::Xor->new(0xde),
 	Amanda::Xfer::Filter::Xor->new(0xde),
 	Amanda::Xfer::Dest::Fd->new(fileno($wfh)),

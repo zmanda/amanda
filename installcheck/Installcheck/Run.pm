@@ -84,6 +84,8 @@ default, although C<labelstr> is set to C<TESTCONF[0-9][0-9]>.
 
 The vtapes are created in a subdirectory of C<AMANDA_TMPDIR> for ease of later
 deletion.  The subdirectory is available from C<vtape_dir($slot)>.
+C<load_vtape($slot)> will "load" the indicated slot just like chg-disk would,
+and return the resulting path.
 
 =head2 HOLDING
 
@@ -155,10 +157,8 @@ sub setup_vtapes {
 	mkpath("$tapepath");
     }
 
-    # make the data symlink
-    symlink("$taperoot/slot1", "$taperoot/data") 
-	or die("Could not create 'data' symlink: $!");
-    
+    load_vtape(1);
+
     # set up the appropriate configuration
     $testconf->add_param("tapedev", "\"file:$taperoot\"");
     $testconf->add_param("tpchanger", "\"chg-disk\"");
@@ -202,6 +202,17 @@ sub setup_disklist {
 sub vtape_dir {
     my ($slot) = @_;
     my $tapepath = "$taperoot/slot$slot";
+}
+
+sub load_vtape {
+    my ($slot) = @_;
+
+    # make the data/ symlink from our taperoot
+    unlink("$taperoot/data");
+    symlink(vtape_dir($slot), "$taperoot/data")
+	or die("Could not create 'data' symlink: $!");
+
+    return $taperoot;
 }
 
 sub run {
