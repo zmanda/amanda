@@ -1,4 +1,8 @@
 2008-06-09 Dan Locks <dwlocks@zmanda.com>
+	* packaging/rpm/buildpkg: added "|| exit 1" to any command which should
+	  cause the script to fail.
+
+2008-06-09 Dan Locks <dwlocks@zmanda.com>
 	* packaging/rpm/amanda.spec: Changed individual SBINDIR/am... entries to
 	  use a single SBINDIR/am* entry in %files
 

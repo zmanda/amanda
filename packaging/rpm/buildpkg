@@ -39,7 +39,7 @@ fi
 if [ ! -f ${AMTARBALL} ]; then
     mkdir ${AMVER}
     cp -Rfp * ${AMVER}/
-    tar -cf ${AMTARBALL} -z ${AMVER}
+    tar -cf ${AMTARBALL} -z ${AMVER} || exit 1
     rm -rf ${AMVER}
 fi
 
@@ -48,25 +48,27 @@ if [ -z $AMPKGDIR ]; then
     AMPKGDIR=${PWD}
 fi
 if [ ! -d ${AMPKGDIR} ]; then
-    mkdir ${AMPKGDIR}
+    mkdir ${AMPKGDIR} || exit 1
 fi
 cd ${AMPKGDIR}
 
 if [ -d rpm ]; then
-    rm -rf rpm
+    rm -rf rpm || exit 1
 fi
 mkdir rpm
 mkdir rpm/SOURCES
 mkdir rpm/SRPMS
 mkdir rpm/SPECS
 mkdir rpm/BUILD
-mkdir rpm/RPMS
+mkdir rpm/RPMS || exit 1
 
 # Make a copy of the tarball with the name that rpmbuild expects
-cp ${AMTARBALL} rpm/SOURCES/${AMVER}.tar.gz
-cp packaging/rpm/amanda.spec rpm/SPECS
+cp ${AMTARBALL} rpm/SOURCES/${AMVER}.tar.gz || exit 1
+cp packaging/rpm/amanda.spec rpm/SPECS || exit 1
 # Rpmbuild requires absolute paths.  annoying.  If you need to change the 
 # default value of some rpm.spec variable, just pass extra --define options.
 # this is useful for changing %amanda_release or %amanda_version
 rpmbuild -ba --define "_topdir ${AMPKGDIR}/rpm" \
-             ${AMPKGDIR}/rpm/SPECS/amanda.spec 
+             ${AMPKGDIR}/rpm/SPECS/amanda.spec || exit 1
+cp rpm/RPMS/*/*.rpm . || exit 1
+cp rpm/SRPMS/*.rpm . || exit 1
