@@ -23,13 +23,13 @@ server_tests = \
 	Amanda_Process \
 	Amanda_Xfer \
 	bigint \
-	amgetconf \
-	amservice
+	amgetconf
 
 full_tests = \
 	amdevcheck \
 	amcheckdump \
-	amdump
+	amdump \
+	amservice
 
 # tests requiring neither client nor server
 tests = $(common_tests)

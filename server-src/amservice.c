@@ -101,12 +101,19 @@ main(
     /* process arguments */
 
     cfg_ovr = new_config_overwrites(argc/2);
-    input_file = stdout;
+    input_file = stdin;
     while((opt = getopt(argc, argv, "o:f:")) != EOF) {
 	switch(opt) {
 	case 'o':	add_config_overwrite_opt(cfg_ovr, optarg);
 			break;
-	case 'f':	input_file = fopen(optarg, "w");
+	case 'f':	if (*optarg == '/') {
+			    input_file = fopen(optarg, "r");
+			} else {
+			    char *name = vstralloc(get_original_cwd(), "/",
+						   optarg, NULL);
+			    input_file = fopen(name, "r");
+			    amfree(name);
+			}
 			if (!input_file)
 			    g_critical("Cannot open output file '%s': %s",
 				optarg, strerror(errno));
