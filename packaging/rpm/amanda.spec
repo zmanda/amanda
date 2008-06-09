@@ -1542,29 +1542,7 @@ echo "Amanda installation log can be found in '${INSTALL_LOG}' and errors (if an
 %{PERLSITELIB}/auto/Amanda
 %{AMANDAHOMEDIR}
 %{LOCALSTATEDIR}/amanda
-%{SBINDIR}/amaddclient
-%{SBINDIR}/amadmin
-%{SBINDIR}/amcheckdb
-%{SBINDIR}/amcheckdump
-%{SBINDIR}/amcleanup
-%{SBINDIR}/amdd
-%{SBINDIR}/amdevcheck
-%{SBINDIR}/amdump
-%{SBINDIR}/amfetchdump
-%{SBINDIR}/amflush
-%{SBINDIR}/amgetconf
-%{SBINDIR}/amlabel
-%{SBINDIR}/ammt
-%{SBINDIR}/amoverview
-%{SBINDIR}/amplot
-%{SBINDIR}/amreport
-%{SBINDIR}/amrestore
-%{SBINDIR}/amrmtape
-%{SBINDIR}/amserverconfig
-%{SBINDIR}/amstatus
-%{SBINDIR}/amtape
-%{SBINDIR}/amtapetype
-%{SBINDIR}/amtoc
+%{SBINDIR}/am*
 %{AMLIBEXECDIR}/amanda-sh-lib.sh
 %defattr(4750,root,disk)
 %{AMLIBEXECDIR}/calcsize
@@ -1631,6 +1609,8 @@ echo "Amanda installation log can be found in '${INSTALL_LOG}' and errors (if an
 # --- ChangeLog
 
 %changelog
+* Mon Jun 09 2008 Dan Locks <dwlocks at zmanda dot com> 2.6.1alpha
+- Replaced individual SBINDIR/am... entries with SBINDIR/am* in %%files
 * Fri May 02 2008 Dan Locks <dwlocks at zmanda dot com>
 - Changed instances of ${ to %%{ where applicable
 * Tue Mar 11 2008 Dan Locks <dwlocks at zmanda dot com>
