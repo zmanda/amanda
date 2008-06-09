@@ -1387,8 +1387,14 @@ read_conffile(
     current_filename = config_dir_relative(filename);
 
     if ((current_file = fopen(current_filename, "r")) == NULL) {
-	g_fprintf(stderr, _("could not open conf file \"%s\": %s\n"), current_filename,
+	/* client conf files are optional, and this fprintf ends up sending this message back
+	 * to the server without proper auth encapsulation, leading to "invalid size: could not
+	 * open .."  This is fixed in TRUNK by completely rewriting this module's error-handling
+	 * code. */
+	if (!is_client) {
+	    g_fprintf(stderr, _("could not open conf file \"%s\": %s\n"), current_filename,
 		strerror(errno));
+	}
 	got_parserror = TRUE;
 	goto finish;
     }

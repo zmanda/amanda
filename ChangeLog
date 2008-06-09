@@ -1,3 +1,8 @@
+2008-06-09  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/conffile.c: don't complain about a missing client conf
+	  file, as the complaint interferes with the network communication
+	  ("invalid size: could not open conf file")
+
 2008-06-06  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/*: bugfixes backported from trunk r1087
 	  - device_read_block returns an int, not a gboolean, and sets in_file
