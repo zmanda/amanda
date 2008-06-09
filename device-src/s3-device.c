@@ -776,12 +776,16 @@ s3_device_read_label(Device *pself) {
     char *key;
     gpointer buf;
     guint buf_size;
-    dumpfile_t amanda_header;
+    dumpfile_t *amanda_header;
 
     if (device_in_error(self)) return pself->status;
 
     amfree(pself->volume_label);
     amfree(pself->volume_time);
+
+    amfree(pself->volume_header);
+    amanda_header = pself->volume_header = g_new(dumpfile_t, 1);
+    fh_init(amanda_header);
 
     if (!setup_handle(self)) {
 	device_set_error(pself, stralloc(_("Error setting up S3 interface")), DEVICE_STATUS_DEVICE_ERROR);
@@ -814,18 +818,19 @@ s3_device_read_label(Device *pself) {
     }
 
     g_assert(buf != NULL);
-    fh_init(&amanda_header);
-    parse_file_header(buf, &amanda_header, buf_size);
+    parse_file_header(buf, amanda_header, buf_size);
 
     g_free(buf);
 
-    if (amanda_header.type != F_TAPESTART) {
+    if (amanda_header->type != F_TAPESTART) {
 	device_set_error(pself, stralloc(_("Invalid amanda header")), DEVICE_STATUS_VOLUME_ERROR);
         return pself->status;
     }
 
-    pself->volume_label = g_strdup(amanda_header.name);
-    pself->volume_time = g_strdup(amanda_header.datestamp);
+    pself->volume_label = g_strdup(amanda_header->name);
+    pself->volume_time = g_strdup(amanda_header->datestamp);
+    /* pself->volume_header is already set */
+
     device_set_error(pself, NULL, DEVICE_STATUS_SUCCESS);
 
     return pself->status;

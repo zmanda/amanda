@@ -704,11 +704,12 @@ static DeviceStatusFlags vfs_device_read_label(Device * dself) {
 
     amfree(dself->volume_label);
     amfree(dself->volume_time);
+    amfree(dself->volume_header);
 
     if (!open_dir_handle(dself))
-	return FALSE; /* open_dir_handle sets status/error message */
+	return dself->status; /* open_dir_handle sets status/error message */
 
-    amanda_header = vfs_device_seek_file(dself, 0);
+    amanda_header = dself->volume_header = vfs_device_seek_file(dself, 0);
     if (amanda_header == NULL) {
         /* This means an error occured getting locks or opening the header
          * file. */
@@ -731,15 +732,12 @@ static DeviceStatusFlags vfs_device_read_label(Device * dself) {
 
     dself->volume_label = g_strdup(amanda_header->name);
     dself->volume_time = g_strdup(amanda_header->datestamp);
-    device_set_error(dself, NULL, DEVICE_STATUS_SUCCESS);
+    /* dself->volume_header is already set */
 
-    amfree(amanda_header);
+    device_set_error(dself, NULL, DEVICE_STATUS_SUCCESS);
 
     update_volume_size(self);
 
-    if (parent_class->read_label) {
-        parent_class->read_label(dself);
-    }
     return dself->status;
 }
 

@@ -853,7 +853,7 @@ gboolean headers_are_equal(dumpfile_t * a, dumpfile_t * b) {
 dumpfile_t * dumpfile_copy(dumpfile_t* source) {
     dumpfile_t* rval = malloc(sizeof(dumpfile_t));
     memcpy(rval, source, sizeof(dumpfile_t));
-    rval->dle_str = stralloc(source->dle_str);
+    if (rval->dle_str) rval->dle_str = stralloc(rval->dle_str);
     return rval;
 }
 

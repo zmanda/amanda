@@ -109,25 +109,36 @@ int scan_read_label(
         *label = g_strdup(device->volume_label);
         *timestamp = strdup(device->volume_time);
     } else if (device_status & DEVICE_STATUS_VOLUME_UNLABELED) {
-        g_object_unref(device);
         if (!getconf_seen(CNF_LABEL_NEW_TAPES)) {
             *error_message = newvstrallocf(*error_message,
-                                           _("%sFound a non-amanda tape.\n"),
+                                           _("%sFound an empty or non-amanda tape.\n"),
                                            *error_message);
-
+	    g_object_unref(device);
             return -1;
         }
+
+	/* If we got a header, but the Device doesn't think it's labeled, then this
+	 * tape probably has some data on it, so refuse to automatically label it */
+	if (device->volume_header) {
+            *error_message = newvstrallocf(*error_message,
+		       _("%sFound a non-amanda tape; check and relabel it with 'amlabel -f'\n"),
+		       *error_message);
+	    g_object_unref(device);
+            return -1;
+	}
+	g_object_unref(device);
+
         *label = find_brand_new_tape_label();
         if (*label != NULL) {
             *timestamp = stralloc("X");
             *error_message = newvstrallocf(*error_message,
-                     _("%sFound a non-amanda tape, will label it `%s'.\n"),
+                     _("%sFound an empty tape, will label it `%s'.\n"),
                                            *error_message, *label);
 
             return 3;
         }
         *error_message = newvstrallocf(*error_message,
-                 _("%sFound a non-amanda tape, but have no labels left.\n"),
+                 _("%sFound an empty tape, but have no labels left.\n"),
                                        *error_message);
 
         return -1;

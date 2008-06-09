@@ -692,6 +692,7 @@ static DeviceStatusFlags rait_device_read_label(Device * dself) {
 
     amfree(dself->volume_time);
     amfree(dself->volume_label);
+    amfree(dself->volume_header);
 
     ops = make_generic_boolean_op_array(self);
     
@@ -756,6 +757,9 @@ static DeviceStatusFlags rait_device_read_label(Device * dself) {
         }
         if (first_success->volume_time != NULL) {
             dself->volume_time = g_strdup(first_success->volume_time);
+        }
+        if (first_success->volume_header != NULL) {
+            dself->volume_header = dumpfile_copy(first_success->volume_header);
         }
     }
     

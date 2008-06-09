@@ -384,7 +384,7 @@ static DeviceStatusFlags tape_device_read_label(Device * dself) {
     char * header_buffer;
     int buffer_len;
     IoResult result;
-    dumpfile_t header;
+    dumpfile_t *header;
     DeviceStatusFlags new_status;
 
     self = TAPE_DEVICE(dself);
@@ -393,6 +393,10 @@ static DeviceStatusFlags tape_device_read_label(Device * dself) {
 
     amfree(dself->volume_label);
     amfree(dself->volume_time);
+    amfree(dself->volume_header);
+
+    header = dself->volume_header = g_new(dumpfile_t, 1);
+    fh_init(header);
 
     tape_validate_properties(self);
 
@@ -411,7 +415,7 @@ static DeviceStatusFlags tape_device_read_label(Device * dself) {
 	      DEVICE_STATUS_DEVICE_ERROR
 	    | DEVICE_STATUS_VOLUME_ERROR);
         robust_close(self->fd);
-        return FALSE;
+        return dself->status;
     }
 
     buffer_len = self->read_block_size;
@@ -434,24 +438,21 @@ static DeviceStatusFlags tape_device_read_label(Device * dself) {
 	return dself->status;
     }
 
-    parse_file_header(header_buffer, &header, buffer_len);
+    parse_file_header(header_buffer, header, buffer_len);
     amfree(header_buffer);
-    if (header.type != F_TAPESTART) {
+    if (header->type != F_TAPESTART) {
 	device_set_error(dself,
 		stralloc(_("No tapestart header -- unlabeled device?")),
 		DEVICE_STATUS_VOLUME_UNLABELED);
         return dself->status;
     }
 
-    dself->volume_label = g_strdup(header.name);
-    dself->volume_time = g_strdup(header.datestamp);
+    dself->volume_label = g_strdup(header->name);
+    dself->volume_time = g_strdup(header->datestamp);
+    /* dself->volume_header is already set */
+
     device_set_error(dself, NULL, DEVICE_STATUS_SUCCESS);
 
-    if (parent_class->read_label) {
-        dself->status = parent_class->read_label(dself);
-    } else {
-        dself->status = DEVICE_STATUS_SUCCESS;
-    }
     return dself->status;
 }
 

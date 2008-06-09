@@ -182,7 +182,15 @@ main(
     device_status = device_read_label(device);
 
     if (device_status & DEVICE_STATUS_VOLUME_UNLABELED) {
-        g_printf("Found an unlabeled tape.\n");
+	/* if there's no header, then the tape was truly empty; otherwise, there
+	 * was *something* on the tape, so let's be careful and require a force */
+	if (!device->volume_header) {
+	    g_printf("Found an empty tape.\n");
+	} else {
+	    g_printf("Found a non-Amanda tape.\n");
+	    if(!force)
+		tape_ok=0;
+	}
     } else if (device_status != DEVICE_STATUS_SUCCESS) {
         g_printf("Reading the tape label failed: %s.\n",
 		 device_error_or_status(device));

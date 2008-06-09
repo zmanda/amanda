@@ -1,3 +1,17 @@
+2008-06-09  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/fileheader.c: correctly free dle_str
+	* device-src/device.c device-src/device.h: add volume_header Device
+	  attributes
+	* device-src/rait-device.c device-src/s3-device.c
+	  device-src/tape-device.c device-src/vfs-device.c: populate
+	  volume_header
+	* server-src/amlabel.c: use volume_header to detect a non-empty tape
+	  and require a force (-f) to overwrite it
+	* server-src/taperscan.c: use volume_header to detect a non-empty tape
+	  and require 'amlabel -f' to overwrite it
+	* device-src/tape-device.c device-src/vfs-device.c: fix read_label
+	  return values and remove useless chain-up calls
+
 2008-06-09  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amservice.c: Open input file in read mode, prepend
 				  get_original_cwd() to relative path.

@@ -129,6 +129,11 @@ typedef struct {
     char * volume_label;
     char * volume_time;
 
+    /* The most recently read volume header, or NULL if no header was
+     * read from this device.  Callers can use this to glean information
+     * about the volume beyond volume_label and volume_time.  */
+    dumpfile_t *volume_header;
+
     /* The latest status for the device */
     DeviceStatusFlags status;
 

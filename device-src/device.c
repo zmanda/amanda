@@ -210,6 +210,7 @@ static void device_finalize(GObject *obj_self) {
     amfree(self->device_name);
     amfree(self->volume_label);
     amfree(self->volume_time);
+    amfree(self->volume_header);
     amfree(selfp->errmsg);
     amfree(selfp->statusmsg);
     g_array_free(selfp->property_list, TRUE);
