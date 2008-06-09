@@ -1,4 +1,7 @@
 2008-06-09  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Amanda_Device.pl: skip all RAIT tests temporarily
+
+2008-06-09  Dustin J. Mitchell <dustin@zmanda.com>
 	* man/xml-source/amanda.8.xml: add links to amservice
 
 2008-06-07  Dustin J. Mitchell <dustin@zmanda.com>
