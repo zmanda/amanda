@@ -149,6 +149,16 @@
 </cmdsynopsis>
 
 <cmdsynopsis>
+    <command>amservice</command>
+    <arg choice='plain'><replaceable>hostname</replaceable></arg>
+    <arg choice='plain'><replaceable>auth</replaceable></arg>
+    <arg choice='plain'><replaceable>service</replaceable></arg>
+    <arg choice='opt'><arg choice='plain'>-f</arg><arg choice='plain'><replaceable>input_file</replaceable></arg></arg>
+    <arg choice='plain' rep='repeat'><group><arg choice='plain'>-o </arg><replaceable>configoption</replaceable></group></arg>
+    <sbr/>
+</cmdsynopsis>
+
+<cmdsynopsis>
     <command>amstatus</command>
     <arg choice='plain'><replaceable>config</replaceable></arg>
     <arg choice='opt'><replaceable>options</replaceable></arg>
@@ -350,6 +360,12 @@ ejecting tapes and scanning the tape storage slots.</para>
   <term><emphasis remap='B'>amrmtape</emphasis></term>
   <listitem>
 <para>Delete a tape from the &A; databases.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>amservice</emphasis></term>
+  <listitem>
+<para>run an amanda service on a client</para>
   </listitem>
   </varlistentry>
   <varlistentry>

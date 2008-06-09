@@ -1,3 +1,6 @@
+2008-06-09  Dustin J. Mitchell <dustin@zmanda.com>
+	* man/xml-source/amanda.8.xml: add links to amservice
+
 2008-06-07  Dustin J. Mitchell <dustin@zmanda.com>
 	* config/amanda/ipv6.m4: remove redundant AC_SOCKADDR_STORAGE
 	* configure.in: don't call AC_SOCKADDR_STORAGE
