@@ -276,4 +276,4 @@ listlibsrc:
 	echo '#include "$<"' >>$@
 
 distclean-local:
-	if test "$(srcdir)" != "$(builddir)"; then rm -f svn-info.h; fi
+	if test `cd $(srcdir) && pwd` != `pwd`; then rm -f svn-info.h; fi

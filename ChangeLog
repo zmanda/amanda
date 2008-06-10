@@ -1,3 +1,7 @@
+2008-06-10  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/Makefile.am: don't use $(builddir), fix comparison
+	* installcheck/Makefile.am: don't use $(builddir)
+
 2008-06-10  Ian Turner <ian@zmanda.com>
 	* common-src/fileheader.c: Silence a compiler warning.
 	* device-src/rait-device.c: ditto.
