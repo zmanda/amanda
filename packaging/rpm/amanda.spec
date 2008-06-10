@@ -1504,10 +1504,9 @@ echo "Amanda installation log can be found in '${INSTALL_LOG}' and errors (if an
 %files backup_client
 %defattr(0755,%{amanda_user},%{amanda_group})
 %{SYSCONFDIR}/amanda
-%{AMANDAHOMEDIR}
+%{AMANDAHOMEDIR}/gnutar-lists
 %{AMLIBEXECDIR}
 %{AMLIBDIR}
-%{AMLIBEXECDIR}/amanda-sh-lib.sh
 %{LOCALSTATEDIR}/amanda
 %defattr(4750,root,disk)
 %{AMLIBEXECDIR}/calcsize
@@ -1525,13 +1524,19 @@ echo "Amanda installation log can be found in '${INSTALL_LOG}' and errors (if an
 %docdir %{MANDIR}
 %{MANDIR}/man5/amanda.conf.5.gz
 %{MANDIR}/man5/amanda-client.conf.5.gz
+%{MANDIR}/man8/amaespipe.8.gz
 %{MANDIR}/man8/amanda.8.gz
 %{MANDIR}/man8/amcheckdump.8.gz
+%{MANDIR}/man8/amcrypt*
+%{MANDIR}/man8/amgpgcrypt.8.gz
 %{MANDIR}/man8/amrecover.8.gz
 %{AMLIBEXECDIR}/amcat.awk
-%{AMANDAHOMEDIR}/amanda-release
-%{AMANDAHOMEDIR}/example/xinetd.amandaclient
-%{AMANDAHOMEDIR}/example/amanda-client.conf
+%doc %{AMANDAHOMEDIR}/amanda-release
+%doc %{AMANDAHOMEDIR}/example/xinetd.amandaclient
+%doc %{AMANDAHOMEDIR}/example/xinetd.amandaserver
+%doc %{AMANDAHOMEDIR}/example/amanda-client.conf
+%doc %{AMANDAHOMEDIR}/template.d/README
+%doc %{AMANDAHOMEDIR}/template.d/dumptypes
 
 %files backup_server
 %defattr(0755,%{amanda_user},%{amanda_group})
@@ -1543,7 +1548,6 @@ echo "Amanda installation log can be found in '${INSTALL_LOG}' and errors (if an
 %{AMANDAHOMEDIR}
 %{LOCALSTATEDIR}/amanda
 %{SBINDIR}/am*
-%{AMLIBEXECDIR}/amanda-sh-lib.sh
 %defattr(4750,root,disk)
 %{AMLIBEXECDIR}/calcsize
 %{AMLIBEXECDIR}/killpgrp
@@ -1555,10 +1559,7 @@ echo "Amanda installation log can be found in '${INSTALL_LOG}' and errors (if an
 %defattr(0750,%{amanda_user},%{amanda_group})
 %{LOGDIR}
 %{SBINDIR}/amaespipe
-%{SBINDIR}/amcrypt
-%{SBINDIR}/amcrypt-ossl
-%{SBINDIR}/amcrypt-ossl-asym
-%{SBINDIR}/amcryptsimple
+%{SBINDIR}/amcrypt*
 %{SBINDIR}/amgpgcrypt
 %{SBINDIR}/amoldrecover
 %{SBINDIR}/amrecover
@@ -1568,43 +1569,11 @@ echo "Amanda installation log can be found in '${INSTALL_LOG}' and errors (if an
 %{AMLIBEXECDIR}/amplot.g
 %{AMLIBEXECDIR}/amplot.gp
 %docdir %{MANDIR}
-%{MANDIR}/man5/amanda.conf.5.gz
-%{MANDIR}/man5/amanda-client.conf.5.gz
-%{MANDIR}/man8/amaddclient.8.gz
-%{MANDIR}/man8/amadmin.8.gz
-%{MANDIR}/man8/amanda.8.gz
-%{MANDIR}/man8/amcheck.8.gz
-%{MANDIR}/man8/amcheckdb.8.gz
-%{MANDIR}/man8/amcheckdump.8.gz
-%{MANDIR}/man8/amcleanup.8.gz
-%{MANDIR}/man8/amdd.8.gz
-%{MANDIR}/man8/amdump.8.gz
-%{MANDIR}/man8/amfetchdump.8.gz
-%{MANDIR}/man8/amflush.8.gz
-%{MANDIR}/man8/amgetconf.8.gz
-%{MANDIR}/man8/amlabel.8.gz
-%{MANDIR}/man8/ammt.8.gz
-%{MANDIR}/man8/amoverview.8.gz
-%{MANDIR}/man8/amplot.8.gz
-%{MANDIR}/man8/amrecover.8.gz
-%{MANDIR}/man8/amreport.8.gz
-%{MANDIR}/man8/amrestore.8.gz
-%{MANDIR}/man8/amrmtape.8.gz
-%{MANDIR}/man8/amserverconfig.8.gz
-%{MANDIR}/man8/amstatus.8.gz
-%{MANDIR}/man8/amtape.8.gz
-%{MANDIR}/man8/amtapetype.8.gz
-%{MANDIR}/man8/amtoc.8.gz
-%{MANDIR}/man8/amcrypt.8.gz
-%{MANDIR}/man8/amcrypt-ossl.8.gz
-%{MANDIR}/man8/amcrypt-ossl-asym.8.gz
-%{MANDIR}/man8/amcryptsimple.8.gz
-%{MANDIR}/man8/amgpgcrypt.8.gz
-%{MANDIR}/man8/amaespipe.8.gz
-%{MANDIR}/man8/amdevcheck.8.gz
-%{AMANDAHOMEDIR}/amanda-release
-%{AMANDAHOMEDIR}/example/amanda-client.conf
-%{AMANDAHOMEDIR}/example/xinetd.amandaserver
+%{MANDIR}/man5
+%{MANDIR}/man8
+%doc %{AMANDAHOMEDIR}/amanda-release
+%docdir %{AMANDAHOMEDIR}/example
+%docdir %{AMANDAHOMEDIR}/template.d
 
 # --- ChangeLog
 

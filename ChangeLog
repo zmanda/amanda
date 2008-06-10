@@ -1,3 +1,7 @@
+2008-06-10 Dan Locks <dwlocks@zmanda.com>
+	* packaging/rpm/amanda.spec:  Replaced individual SBINDIR/am... entries 
+	  with SBINDIR/am* in %%files
+
 2008-06-10  Jean-Louis Martineau <martineau@zmanda.com>
 	* man/xml-source/amanda.conf.5.xml: Add pre&post recover scripts.
 
