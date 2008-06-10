@@ -1,3 +1,6 @@
+2008-06-10  Jean-Louis Martineau <martineau@zmanda.com>
+	* man/xml-source/amanda.conf.5.xml: Add pre&post recover scripts.
+
 2008-06-09 Dan Locks <dwlocks@zmanda.com>
 	* packaging/rpm/buildpkg: added "|| exit 1" to any command which should
 	  cause the script to fail.

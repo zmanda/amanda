@@ -2378,7 +2378,49 @@ A comment string describing this script.</para>
 <para>Execute after the backup command for all dle for the client.</para>
       </listitem>
       </varlistentry>
+      <varlistentry>
+      <term><emphasis remap='B'>pre-recover</emphasis></term>
+      <listitem>
+<para>Execute before any level is recovered.</para>
+      </listitem>
+      </varlistentry>
+      <varlistentry>
+      <term><emphasis remap='B'>post-recover</emphasis></term>
+      <listitem>
+<para>Execute after all levels are recovered.</para>
+      </listitem>
+      </varlistentry>
+      <varlistentry>
+      <term><emphasis remap='B'>pre-level-recover</emphasis></term>
+      <listitem>
+<para>Execute before each level recovery.</para>
+      </listitem>
+      </varlistentry>
+      <varlistentry>
+      <term><emphasis remap='B'>post-level-recover</emphasis></term>
+      <listitem>
+<para>Execute after each level recovery.</para>
+      </listitem>
+      </varlistentry>
+      <varlistentry>
+      <term><emphasis remap='B'>inter-level-recover</emphasis></term>
+      <listitem>
+<para>Execute between two levels of recovery.</para>
+      </listitem>
+      </varlistentry>
     </variablelist>
+    <para>If you recover level 0 and 2 of the disk /usr with amrecover, it will execute:</para>
+    <programlisting>
+script --pre-recover
+script --pre-level-recover --level 0
+#recovering level 0
+script --post-level-recover --level 0
+script --inter-level-recover --level 0 --level 2
+script --pre-level-recover --level 2
+#recovering level 2
+script --post-level-recover --level 2
+script --post-recover
+    </programlisting>
   </listitem>
   </varlistentry>
   <varlistentry>
