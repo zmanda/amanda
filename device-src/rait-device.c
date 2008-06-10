@@ -210,11 +210,12 @@ rait_device_class_init (RaitDeviceClass * c G_GNUC_UNUSED)
      * invocation of g_thread_pool_new.  So we make up a thread pool, but don't
      * start any threads in it, and free it */
 
-    if (!glib_check_version(2,10,2))
+#if !GLIB_CHECK_VERSION(2,10,2)
     {
 	GThreadPool *pool = g_thread_pool_new((GFunc)-1, NULL, -1, FALSE, NULL);
 	g_thread_pool_free(pool, TRUE, FALSE);
     }
+#endif
 
     g_thread_pool_set_max_unused_threads(-1);
 }
@@ -398,7 +399,7 @@ static void register_rait_properties(RaitDevice * self) {
 }
 
 static void property_hash_union(GHashTable * properties,
-                                DeviceProperty * prop) {
+                                const DeviceProperty * prop) {
     PropertyAccessFlags before, after;
     gpointer tmp;
     gboolean found;
@@ -455,7 +456,7 @@ static void register_properties(RaitDevice * self) {
 
         device_property_list = device_property_get_list(child);
         for (i = 0; device_property_list[i].base != NULL; i ++) {
-            property_hash_union(properties, (gpointer)&(device_property_list[i]));
+            property_hash_union(properties, &(device_property_list[i]));
         }
     }
 

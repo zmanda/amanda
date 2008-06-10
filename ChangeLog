@@ -1,5 +1,11 @@
+2008-06-10  Ian Turner <ian@zmanda.com>
+	* common-src/fileheader.c: Silence a compiler warning.
+	* device-src/rait-device.c: ditto.
+
 2008-06-10  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/rait-device.c: hack around glib bug in versions <2.10.2
+	  using the precompiler macro instead of glib_check_version, which
+	  doesn't exist in every version of glib
 
 2008-06-10 Dan Locks <dwlocks@zmanda.com>
 	* packaging/rpm/amanda.spec:  Replaced individual SBINDIR/am... entries 

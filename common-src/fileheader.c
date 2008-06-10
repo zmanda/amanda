@@ -82,7 +82,7 @@ parse_file_header(
     size_t lsize;
     char *uqname;
     int in_quotes;
-    char *saveptr;
+    char *saveptr = NULL;
 
     /* put the buffer into a writable chunk of memory and nul-term it */
     buf = alloc(buflen + 1);
