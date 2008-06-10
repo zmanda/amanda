@@ -205,6 +205,17 @@ rait_device_class_init (RaitDeviceClass * c G_GNUC_UNUSED)
 
     g_object_class->finalize = rait_device_finalize;
 
+    /* Versions of glib before 2.10.2 crash if
+     * g_thread_pool_set_max_unused_threads is called before the first
+     * invocation of g_thread_pool_new.  So we make up a thread pool, but don't
+     * start any threads in it, and free it */
+
+    if (!glib_check_version(2,10,2))
+    {
+	GThreadPool *pool = g_thread_pool_new((GFunc)-1, NULL, -1, FALSE, NULL);
+	g_thread_pool_free(pool, TRUE, FALSE);
+    }
+
     g_thread_pool_set_max_unused_threads(-1);
 }
 
