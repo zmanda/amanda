@@ -19,14 +19,17 @@ LIB_EXTENSION = la
 AM_CFLAGS = $(AMANDA_WARNING_CFLAGS)
 AM_LDFLAGS = $(AMANDA_STATIC_LDFLAGS)
 
+SCRIPTS_INCLUDE = \
+	    generic-dumper \
+	    generic-script
+
 SCRIPTS_PERL = \
 	    amstar_perl \
 	    amgtar_perl \
 	    script-email
 
-SCRIPTS_INCLUDE = \
-	    generic-dumper \
-	    generic-script
+SCRIPTS_SHELL = $(amlibexec_SCRIPTS)
+
 EXTRA_DIST += generic-dumper.pl generic-script.pl
 
 CHECK_PERL = $(SCRIPTS_PERL) $(SCRIPTS_INCLUDE)

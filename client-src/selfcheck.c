@@ -703,8 +703,9 @@ check_disk(
 
 	case 0: /* child */
 	    {
-		char **argvchild;
+		char **argvchild, **arg;
 		char *cmd = vstralloc(APPLICATION_DIR, "/", dle->program, NULL);
+		char *cmdline;
 		int j=0;
 		int k;
 
@@ -739,6 +740,15 @@ check_disk(
 		}
 		j += application_property_add_to_argv(&argvchild[j], dle);
 		argvchild[j++] = NULL;
+		cmdline = stralloc(cmd);
+		for(arg = argvchild; *arg != NULL; arg++) {
+		    char *quoted = quote_string(*arg);
+		    cmdline = vstrextend(&cmdline, " ", quoted, NULL);
+		    amfree(quoted);
+		}
+		dbprintf(_("Spawning \"%s\" in pipeline\n"), cmdline);
+		amfree(cmdline);
+
 		safe_fd(-1, 0);
 		execve(cmd, argvchild, safe_env());
 		g_printf(_("ERROR [Can't execute %s: %s]\n"), cmd, strerror(errno));

@@ -1,4 +1,4 @@
-#!@PERL@ -T
+#!@PERL@
 # Copyright (c) 2005-2008 Zmanda Inc.  All Rights Reserved.
 #
 # This program is free software; you can redistribute it and/or modify it
@@ -17,166 +17,150 @@
 # Contact information: Zmanda Inc., 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-# Run perl.
-eval '(exit $?0)' && eval 'exec @PERL@ -S $0 ${1+"$@"}'
-	& eval 'exec @PERL@ -S $0 $argv:q'
-		if 0;
+use lib '@amperldir@';
+use strict;
+use Amanda::Device qw( :constants );
+use Amanda::Config qw( :getconf :init );
+use Amanda::Debug qw( :logging );
+use Amanda::Util qw( :constants );
+use Amanda::Paths;
+use Amanda::Constants;
+use Getopt::Long;
+require $APPLICATION_DIR . "/generic-script";
 
-require "newgetopt.pl";
+Amanda::Util::setup_application("script-email", "client", $CONTEXT_DAEMON);
 
-delete @ENV{'IFS', 'CDPATH', 'ENV', 'BASH_ENV', 'PATH'};
-$ENV{'PATH'} = "/usr/bin:/usr/sbin:/sbin:/bin";
+Amanda::Util::finish_setup($RUNNING_AS_ANY);
 
-$debug=1;
-push(@INC, "@APPLICATION_DIR@");
+debug("program: $0");
 
-use File::Copy;
-use IPC::Open3;
-use Sys::Hostname;
+my $opt_config;
+my $opt_host;
+my $opt_disk;
+my $opt_device;
+my @opt_level;
+my $opt_index;
+my $opt_message;
+my $opt_collection;
+my $opt_record;
+my @opt_mailto;
 
-open(DEBUG,">>@AMANDA_DBGDIR@/script-email.$$.debug") if ($debug==1);
-print DEBUG "program: $0\n" if ($debug==1);
-
-$prefix='@prefix@';
-$prefix = $prefix;
-$exec_prefix="@exec_prefix@";
-$exec_prefix=$exec_prefix;
-$libexecdir="@libexecdir@";
-$libexecdir=$libexecdir;
-$application_dir = '@APPLICATION_DIR@';
-
-$USE_VERSION_SUFFIXES='@USE_VERSION_SUFFIXES@';
-$suf = '';
-if ( $USE_VERSION_SUFFIXES =~ /^yes$/i ) {
-   $suf='-@VERSION@';
-}
-
-$myhost = hostname;
-$myhost =~ s/\..*$//;
-$mailer = '@DEFAULT_MAILER@';
-
-$has_config   = 1;
-$has_host     = 1;
-$has_disk     = 1;
+Getopt::Long::Configure(qw{bundling});
+GetOptions(
+    'config=s'     => \$opt_config,
+    'host=s'       => \$opt_host,
+    'disk=s'       => \$opt_disk,
+    'device=s'     => \$opt_device,
+    'level=s'      => \@opt_level,
+    'index=s'      => \$opt_index,
+    'message=s'    => \$opt_message,
+    'collection=s' => \$opt_collection,
+    'record=s'     => \$opt_record,
+    'mailto=s'     => \@opt_mailto
+) or usage();
 
 sub command_support {
-   my($config, $host, $disk, $device, @level) = @_;
    print "CONFIG YES\n";
-   print DEBUG "STDOUT: CONFIG YES\n" if ($debug == 1);
    print "HOST YES\n";
-   print DEBUG "STDOUT: HOST YES\n" if ($debug == 1);
    print "DISK YES\n";
-   print DEBUG "STDOUT: DISK YES\n" if ($debug == 1);
-   print "MAX-LEVEL 9\n";
-   print DEBUG "STDOUT: MAX-LEVEL 9\n" if ($debug == 1);
    print "MESSAGE-LINE YES\n";
-   print DEBUG "STDOUT: MESSAGE-LINE YES\n" if ($debug == 1);
    print "MESSAGE-XML NO\n";
-   print DEBUG "STDOUT: MESSAGE-XML NO\n" if ($debug == 1);
 }
 
+#define a execute_on_* function for every execute_on you want the script to do
+#something
 sub command_pre_dle_amcheck {
-   my($config, $host, $disk, $device, @level) = @_;
-   sendmail("pre-dle-amcheck", $config, $host, $disk, $device, @level);
+   sendmail("pre-dle-amcheck");
 }
 
 sub command_pre_host_amcheck {
-   my($config, $host, $disk, $device, @level) = @_;
-   sendmail("pre-host-amcheck", $config, $host, $disk, $device, @level);
+   sendmail("pre-host-amcheck");
 }
 
 sub command_post_dle_amcheck {
-   my($config, $host, $disk, $device, @level) = @_;
-   sendmail("post-dle-amcheck", $config, $host, $disk, $device, @level);
+   sendmail("post-dle-amcheck");
 }
 
 sub command_post_host_amcheck {
-   my($config, $host, $disk, $device, @level) = @_;
-   sendmail("post-host-amcheck", $config, $host, $disk, $device, @level);
+   sendmail("post-host-amcheck");
 }
 
 sub command_pre_dle_estimate {
-   my($config, $host, $disk, $device, @level) = @_;
-   sendmail("pre-dle-estimate", $config, $host, $disk, $device, @level);
+   sendmail("pre-dle-estimate");
 }
 
 sub command_pre_host_estimate {
-   my($config, $host, $disk, $device, @level) = @_;
-   sendmail("pre-host-estimate", $config, $host, $disk, $device, @level);
+   sendmail("pre-host-estimate");
 }
 
 sub command_post_dle_estimate {
-   my($config, $host, $disk, $device, @level) = @_;
-   sendmail("post-dle-estimate", $config, $host, $disk, $device, @level);
+   sendmail("post-dle-estimate");
 }
 
 sub command_post_host_estimate {
-   my($config, $host, $disk, $device, @level) = @_;
-   sendmail("post-host-estimate", $config, $host, $disk, $device, @level);
+   sendmail("post-host-estimate");
 }
 
 sub command_pre_dle_backup {
-   my($config, $host, $disk, $device, @level) = @_;
-   sendmail("pre-dle-backup", $config, $host, $disk, $device, @level);
+   sendmail("pre-dle-backup");
 }
 
 sub command_pre_host_backup {
-   my($config, $host, $disk, $device, @level) = @_;
-   sendmail("pre-host-backup", $config, $host, $disk, $device, @level);
+   sendmail("pre-host-backup");
 }
 
 sub command_post_dle_backup {
-   my($config, $host, $disk, $device, @level) = @_;
-   sendmail("post-dle-backup", $config, $host, $disk, $device, @level);
+   sendmail("post-dle-backup");
 }
 
 sub command_post_host_backup {
-   my($config, $host, $disk, $device, @level) = @_;
-   sendmail("post-host-backup", $config, $host, $disk, $device, @level);
+   sendmail("post-host-backup");
 }
 
 sub command_pre_recover {
-   my($config, $host, $disk, $device, @level) = @_;
-   sendmail("pre-recover", $config, $host, $disk, $device, @level);
+   sendmail("pre-recover");
 }
 
 sub command_post_recover {
-   my($config, $host, $disk, $device, @level) = @_;
-   sendmail("post-recover", $config, $host, $disk, $device, @level);
+   sendmail("post-recover");
 }
 
 sub command_pre_level_recover {
-   my($config, $host, $disk, $device, @level) = @_;
-   sendmail("pre-level-recover", $config, $host, $disk, $device, @level);
+   sendmail("pre-level-recover");
 }
 
 sub command_post_level_recover {
-   my($config, $host, $disk, $device, @level) = @_;
-   sendmail("post-level-recover", $config, $host, $disk, $device, @level);
+   sendmail("post-level-recover");
 }
 
 sub command_inter_level_recover {
-   my($config, $host, $disk, $device, @level) = @_;
-   sendmail("inter-level-recover", $config, $host, $disk, $device, @level);
+   sendmail("inter-level-recover");
 }
 
 sub sendmail {
-   my($function, $config, $host, $disk, $device, @level) = @_;
+   my($function) = @_;
+   my $dest;
    if (defined(@opt_mailto)) {
-      $destcheck = join ',', @opt_mailto;
+      my $destcheck = join ',', @opt_mailto;
       $destcheck =~ /^([a-zA-Z,]*)$/;
       $dest = $1;
    } else {
       $dest = "root";
    }
-   $cmd = "$mailer -s \"$config $function $host $disk $device " . join (" ", @level) ." \" $dest";
-   print DEBUG "cmd: $cmd\n" if ($debug == 1);
-   open(MAIL,"|$cmd");
-   print MAIL "$config $function $host $disk $device ", join (" ", @level), "\n";
-   close MAIL;
+   my @args = ( "-s", "$opt_config $function $opt_host $opt_disk $opt_device " . join (" ", @opt_level), $dest );
+   my $args = join(" ", @args);
+   debug("cmd: $Amanda::Constants::MAILER $args\n");
+   my $mail;
+   open $mail, '|-', $Amanda::Constants::MAILER, @args;
+   print $mail "$opt_config $function $opt_host $opt_disk $opt_device ", join (" ", @opt_level), "\n";
+   close $mail;
 }
 
-$result = &NGetOpt ("config=s", "host=s", "disk=s", "device=s", "level=s@", "index=s", "message=s", "collection", "record", "mailto=s@");
-$result = $result;
+sub usage {
+    print <<EOF;
+Usage: script-email <command> --config=<config> --host=<host> --disk=<disk> --device=<device> --level=<level> --index=<yes|no> --message=<text> --collection=<no> --record=<yes|no> --mailto=<email>.
+EOF
+    exit(1);
+}
 
-require "$application_dir/generic-script"
+do_script($ARGV[0]);

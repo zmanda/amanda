@@ -36,7 +36,7 @@ Amanda::Debug - support for debugging Amanda applications
 
   use Amanda::Util qw( :constants );
 
-  Amanda::Util::application_setup("amcooltool", "server", $CONTEXT_CMDLINE);
+  Amanda::Util::setup_application("amcooltool", "server", $CONTEXT_CMDLINE);
 
   debug("this is a debug message");
   die("Unable to frobnicate the ergonator");

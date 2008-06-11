@@ -1,3 +1,13 @@
+2008-06-11  Jean-Louis Martineau <martineau@zmanda.com>
+	* client-src/selfcheck.c: Print cmdline before execing the application.
+	* application-src/generic-dumper.pl: Cleanup.
+	* application-src/script-oracle.pl: Cleanup.
+	* application-src/script-email.pl: Cleanup.
+	* application-src/amgtar_perl.pl: Cleanup.
+	* application-src/generic-script.pl: Cleanup.
+	* application-src/Makefile.am: Remove all scripts from CHECK_PERL.
+	* perl/Amanda/Debug.swg: Typo.
+
 2008-06-10  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/Makefile.am: don't use $(builddir), fix comparison
 	* installcheck/Makefile.am: don't use $(builddir)
