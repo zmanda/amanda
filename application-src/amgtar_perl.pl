@@ -17,7 +17,7 @@
 # Contact information: Zmanda Inc., 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use lib '/usr/lib/amanda/perl';
+use lib '@amperldir@';
 use strict;
 
 use File::Copy;
