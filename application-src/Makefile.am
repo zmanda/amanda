@@ -32,8 +32,6 @@ SCRIPTS_SHELL = $(amlibexec_SCRIPTS)
 
 EXTRA_DIST += generic-dumper.pl generic-script.pl
 
-CHECK_PERL = $(SCRIPTS_PERL) $(SCRIPTS_INCLUDE)
-
 #We use two variables, applicationdir applicationexecdir, to segregate the
 #platform-independent (applicationdir) files installed by install-data from the
 #platform-dependent files (applicationexecdir) installed by install-exec. 
