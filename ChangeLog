@@ -1,4 +1,7 @@
 2008-06-11  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/Makefile.am: Install amgtar and amstar suid root.
+
+2008-06-11  Jean-Louis Martineau <martineau@zmanda.com>
 	* client-src/selfcheck.c: Print cmdline before execing the application.
 	* application-src/generic-dumper.pl: Cleanup.
 	* application-src/script-oracle.pl: Cleanup.
