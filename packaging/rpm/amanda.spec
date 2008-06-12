@@ -1509,6 +1509,8 @@ echo "Amanda installation log can be found in '${INSTALL_LOG}' and errors (if an
 %{AMLIBDIR}
 %{LOCALSTATEDIR}/amanda
 %defattr(4750,root,disk)
+%{AMLIBEXECDIR}/application/amgtar
+%{AMLIBEXECDIR}/application/amstar
 %{AMLIBEXECDIR}/calcsize
 %{AMLIBEXECDIR}/killpgrp
 %{AMLIBEXECDIR}/rundump
@@ -1578,6 +1580,8 @@ echo "Amanda installation log can be found in '${INSTALL_LOG}' and errors (if an
 # --- ChangeLog
 
 %changelog
+* Thu Jun 12 2008 Dan Locks <dwlocks at zmanda dot com> 2.6.1alpha
+- install amgtar and amstar suid root
 * Mon Jun 09 2008 Dan Locks <dwlocks at zmanda dot com> 2.6.1alpha
 - Replaced individual SBINDIR/am... entries with SBINDIR/am* in %%files
 * Fri May 02 2008 Dan Locks <dwlocks at zmanda dot com>

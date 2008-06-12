@@ -1,3 +1,8 @@
+2008-06-12 Dan Locks <dwlocks@zmanda.com>
+	* packaging/rpm/amanda_enterprise.spec,
+	  packaging/rpm/amanda_enterprise_client.spec,
+	  packaging/deb/rules: install amgtar and amstar suid root
+
 2008-06-12  Jean-Louis Martineau <martineau@zmanda.com>
 	* client-src/selfcheck.c: Typo.
 

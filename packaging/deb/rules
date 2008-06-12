@@ -142,10 +142,14 @@ binary-arch: build
 	chmod -R u=rwX,g=rwX,o-rwx  $(client)/$(AMHOMEDIR)/gnutar-lists $(server)/$(AMHOMEDIR)/gnutar-lists
 	# .. setuid
 	chown root:disk \
+ 		$(client)/$(AMLIBEXECDIR)/application/amgtar \
+ 		$(client)/$(AMLIBEXECDIR)/application/amstar \
 		$(client)/$(AMLIBEXECDIR)/killpgrp \
 		$(client)/$(AMLIBEXECDIR)/rundump \
 		$(client)/$(AMLIBEXECDIR)/runtar \
 		$(client)/$(AMLIBEXECDIR)/calcsize \
+ 		$(server)/$(AMLIBEXECDIR)/application/amgtar \
+ 		$(server)/$(AMLIBEXECDIR)/application/amstar \
 		$(server)/$(AMLIBEXECDIR)/killpgrp \
 		$(server)/$(AMLIBEXECDIR)/rundump \
 		$(server)/$(AMLIBEXECDIR)/runtar \
@@ -154,10 +158,14 @@ binary-arch: build
 		$(server)/$(AMLIBEXECDIR)/planner \
 		$(server)/usr/sbin/amcheck
 	chmod u=srwx,g=rx,o=r \
+ 		$(client)/$(AMLIBEXECDIR)/application/amgtar \
+ 		$(client)/$(AMLIBEXECDIR)/application/amstar \
 		$(client)$(AMLIBEXECDIR)/killpgrp \
 		$(client)$(AMLIBEXECDIR)/rundump \
 		$(client)$(AMLIBEXECDIR)/runtar \
 		$(client)$(AMLIBEXECDIR)/calcsize \
+ 		$(server)/$(AMLIBEXECDIR)/application/amgtar \
+ 		$(server)/$(AMLIBEXECDIR)/application/amstar \
 		$(server)$(AMLIBEXECDIR)/killpgrp \
 		$(server)$(AMLIBEXECDIR)/rundump \
 		$(server)$(AMLIBEXECDIR)/runtar \
