@@ -343,8 +343,10 @@ amgtar_support(
     fprintf(stdout, "RECORD YES\n");
     fprintf(stdout, "INCLUDE-FILE YES\n");
     fprintf(stdout, "INCLUDE-LIST YES\n");
+    fprintf(stdout, "INCLUDE-OPTIONAL YES\n");
     fprintf(stdout, "EXCLUDE-FILE YES\n");
     fprintf(stdout, "EXCLUDE-LIST YES\n");
+    fprintf(stdout, "EXCLUDE-OPTIONAL YES\n");
     fprintf(stdout, "COLLECTION NO\n");
 }
 

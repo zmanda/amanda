@@ -245,6 +245,8 @@ amstart_element(
 	if (strcmp(element_name, "kencrypt"       ) == 0) data_user->has_kencrypt        = 1;
 	if (strcmp(element_name, "exclude"       ) == 0) data_user->has_exclude        = 1;
 	if (strcmp(element_name, "include"       ) == 0) data_user->has_include        = 1;
+	if (strcmp(element_name, "exclude") == 0 || strcmp(element_name, "include") == 0)
+	   data_user->has_optional = 0;
     } else if(strcmp(element_name, "custom-compress-program") == 0) {
 	if (strcmp(last_element_name, "compress") != 0) {
 	    g_set_error(gerror, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
@@ -322,7 +324,7 @@ amstart_element(
 			"XML: Invalid %s element", element_name);
 	    return;
 	}
-	if (strcmp(element_name, "optional") && data_user->has_optional) {
+	if (strcmp(element_name, "optional") == 0 && data_user->has_optional) {
 	    g_set_error(gerror, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
 			"XML: Duplicate %s element", element_name);
 	    return;

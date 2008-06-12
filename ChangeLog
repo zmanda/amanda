@@ -1,4 +1,18 @@
 2008-06-11  Jean-Louis Martineau <martineau@zmanda.com>
+	* client-src/client_util.c (application_property_add_to_argv):
+	                           Add include and exclude.
+	* client-src/client_util.h (application_property_add_to_argv):
+	                           New prototype.
+	* client-src/sendbackup.c, client-src/sendsize.c,
+	  client-src/selfcheck.c, recover-src/extract_list.c:
+	  Add bsu param to application_property_add_to_argv.
+	* client-src/selfcheck.c: Check if application support includ/exclude.
+	* application-src/amgtar_perl.pl: Don't support include/exclude.
+	* application-src/amgtar.c: Support include-optional and
+	                            exclude-optional.
+	* common-src/amxml.c: Fix include/exclude parsing.
+
+2008-06-11  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/Makefile.am: Install amgtar and amstar suid root.
 
 2008-06-11  Jean-Louis Martineau <martineau@zmanda.com>

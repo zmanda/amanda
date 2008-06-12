@@ -91,10 +91,6 @@ sub command_support {
    print "MESSAGE-LINE YES\n";
    print "MESSAGE-XML NO\n";
    print "RECORD YES\n";
-   print "INCLUDE-FILE YES\n";
-   print "INCLUDE-LIST YES\n";
-   print "EXCLUDE-FILE YES\n";
-   print "EXCLUDE-LIST YES\n";
    print "COLLECTION NO\n";
 }
 

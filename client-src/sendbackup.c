@@ -488,7 +488,7 @@ main(
 	    if (dle->record && bsu->record == 1) {
 		argvchild[i++] = "--record";
 	    }
-	    i += application_property_add_to_argv(&argvchild[i], dle);
+	    i += application_property_add_to_argv(&argvchild[i], dle, bsu);
 	    argvchild[i] = NULL;
 	    dbprintf(_("%s: running \"%s\n"), get_pname(), cmd);
 	    for(j=1;j<i;j++) dbprintf(" %s\n",argvchild[j]);

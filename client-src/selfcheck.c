@@ -348,22 +348,6 @@ check_options(
     dle_t *dle)
 {
     if (dle->calcsize == 1) {
-	int nb_exclude = 0;
-	int nb_include = 0;
-	char *file_exclude = NULL;
-	char *file_include = NULL;
-
-	if (dle->exclude_file) nb_exclude += dle->exclude_file->nb_element;
-	if (dle->exclude_list) nb_exclude += dle->exclude_list->nb_element;
-	if (dle->include_file) nb_include += dle->include_file->nb_element;
-	if (dle->include_list) nb_include += dle->include_list->nb_element;
-
-	if (nb_exclude > 0) file_exclude = build_exclude(dle, 1);
-	if (nb_include > 0) file_include = build_include(dle, 1);
-
-	amfree(file_exclude);
-	amfree(file_include);
-
 	need_calcsize=1;
     }
 
@@ -694,6 +678,34 @@ check_disk(
 	backup_support_option_t *bsu;
 
 	bsu = backup_support_option(dle->program, g_options, dle->disk, dle->device);
+	if (dle->include_file && dle->include_file->nb_element > 0 &&
+	    !bsu->include_file) {
+	    g_printf("ERROR application %s doesn't support include-file\n",
+		   dle->program);
+	}
+	if (dle->include_file && dle->include_list->nb_element > 0 &&
+	    !bsu->include_list) {
+	    g_printf("ERROR application %s doesn't support include-list\n",
+		   dle->program);
+	}
+	if (dle->include_optional && !bsu->include_optional) {
+	    g_printf("ERROR application %s doesn't support optional include\n",
+		   dle->program);
+	}
+	if (dle->exclude_file && dle->exclude_file->nb_element > 0 &&
+	    !bsu->exclude_file) {
+	    g_printf("ERROR application %s doesn't support exclude-file\n",
+		   dle->program);
+	}
+	if (dle->exclude_file && dle->exclude_list->nb_element > 0 &&
+	    !bsu->exclude_list) {
+	    g_printf("ERROR application %s doesn't support exclude-list\n",
+		   dle->program);
+	}
+	if (dle->exclude_optional && !bsu->exclude_optional) {
+	    g_printf("ERROR application %s doesn't support optional exclude\n",
+		   dle->program);
+	}
 	fflush(stdout);fflush(stderr);
 	
 	switch (application_api_pid = fork()) {
@@ -738,7 +750,7 @@ check_disk(
 		if (dle->record && bsu->record == 1) {
 		    argvchild[j++] = "--record";
 		}
-		j += application_property_add_to_argv(&argvchild[j], dle);
+		j += application_property_add_to_argv(&argvchild[j], dle, bsu);
 		argvchild[j++] = NULL;
 		cmdline = stralloc(cmd);
 		for(arg = argvchild; *arg != NULL; arg++) {

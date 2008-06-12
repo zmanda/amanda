@@ -2167,7 +2167,7 @@ getsize_application_api(
 	g_snprintf(levelstr,SIZEOF(levelstr),"%d",level);
 	argvchild[i++] = levelstr;
     }
-    i += application_property_add_to_argv(&argvchild[i], dle);
+    i += application_property_add_to_argv(&argvchild[i], dle, bsu);
 
     argvchild[i] = NULL;
 

@@ -714,12 +714,12 @@ application_property_argv_size(dle_t *dle) {
 	nb += dle->include_list->nb_element;
     if (dle->include_file)
 	nb += dle->include_file->nb_element;
-    nb++;
+    nb++; /* include optional */
     if (dle->exclude_list)
 	nb += dle->exclude_list->nb_element;
     if (dle->exclude_file)
 	nb += dle->exclude_file->nb_element;
-    nb++;
+    nb++; /* exclude optional */
     nb *= 2;  /*name + value */
     nb += property_argv_size(dle->application_property);
 
@@ -729,9 +729,63 @@ application_property_argv_size(dle_t *dle) {
 int
 application_property_add_to_argv(
     char **argvchild,
-    dle_t *dle)
+    dle_t *dle,
+    backup_support_option_t *bsu)
 {
     char **argv = argvchild;
+    sle_t *incl, *excl;
+
+    if (bsu) {
+	if (bsu->include_file && dle->include_file) {
+	    for (incl = dle->include_file->first; incl != NULL;
+		 incl = incl->next) {
+		*argv = stralloc("--include-file");
+		argv++;
+		*argv = stralloc(incl->name);
+		argv++;
+	    }
+	}
+	if (bsu->include_list && dle->include_list) {
+	    for (incl = dle->include_list->first; incl != NULL;
+		 incl = incl->next) {
+		*argv = stralloc("--include-list");
+		argv++;
+		*argv = stralloc(incl->name);
+		argv++;
+	    }
+	}
+	if (bsu->include_optional && dle->include_optional) {
+	    *argv = stralloc("--include-optional");
+	    argv++;
+	    *argv = stralloc("yes");
+	    argv++;
+	}
+
+	if (bsu->exclude_file && dle->exclude_file) {
+	    for (excl = dle->exclude_file->first; excl != NULL;
+	 	 excl = excl->next) {
+		*argv = stralloc("--exclude-file");
+		argv++;
+		*argv = stralloc(excl->name);
+		argv++;
+	    }
+	}
+	if (bsu->exclude_list && dle->exclude_list) {
+	    for (excl = dle->exclude_list->first; excl != NULL;
+		excl = excl->next) {
+		*argv = stralloc("--exclude-list");
+		argv++;
+		*argv = stralloc(excl->name);
+		argv++;
+	    }
+	}
+	if (bsu->exclude_optional && dle->exclude_optional) {
+	    *argv = stralloc("--exclude-optional");
+	    argv++;
+	    *argv = stralloc("yes");
+	    argv++;
+	}
+    }
 
     g_hash_table_foreach(dle->application_property,
 			&proplist_add_to_argv, &argv);
@@ -821,12 +875,18 @@ backup_support_option(
 	} else if (strncmp(line,"INCLUDE-LIST ", 13) == 0) {
 	    if (strcmp(line+13, "YES") == 0)
 		bsu->include_list = 1;
+	} else if (strncmp(line,"INCLUDE-OPTIONAL ", 17) == 0) {
+	    if (strcmp(line+17, "YES") == 0)
+		bsu->include_optional = 1;
 	} else if (strncmp(line,"EXCLUDE-FILE ", 13) == 0) {
 	    if (strcmp(line+13, "YES") == 0)
 		bsu->exclude_file = 1;
 	} else if (strncmp(line,"EXCLUDE-LIST ", 13) == 0) {
 	    if (strcmp(line+13, "YES") == 0)
 		bsu->exclude_list = 1;
+	} else if (strncmp(line,"EXCLUDE-OPTIONAL ", 17) == 0) {
+	    if (strcmp(line+17, "YES") == 0)
+		bsu->exclude_optional = 1;
 	} else if (strncmp(line,"COLLECTION ", 11) == 0) {
 	    if (strcmp(line+11, "YES") == 0)
 		bsu->collection = 1;

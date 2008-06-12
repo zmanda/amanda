@@ -1888,7 +1888,7 @@ extract_files_child(
 	    restore_args[j++] = stralloc(dump_dle->device);
 	}
 	if (dump_dle)
-	    j += application_property_add_to_argv(&restore_args[j], dump_dle);
+	    j += application_property_add_to_argv(&restore_args[j], dump_dle, NULL);
 	break;
     }
   
