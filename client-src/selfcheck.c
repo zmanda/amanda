@@ -683,7 +683,7 @@ check_disk(
 	    g_printf("ERROR application %s doesn't support include-file\n",
 		   dle->program);
 	}
-	if (dle->include_file && dle->include_list->nb_element > 0 &&
+	if (dle->include_list && dle->include_list->nb_element > 0 &&
 	    !bsu->include_list) {
 	    g_printf("ERROR application %s doesn't support include-list\n",
 		   dle->program);
@@ -697,7 +697,7 @@ check_disk(
 	    g_printf("ERROR application %s doesn't support exclude-file\n",
 		   dle->program);
 	}
-	if (dle->exclude_file && dle->exclude_list->nb_element > 0 &&
+	if (dle->exclude_list && dle->exclude_list->nb_element > 0 &&
 	    !bsu->exclude_list) {
 	    g_printf("ERROR application %s doesn't support exclude-list\n",
 		   dle->program);

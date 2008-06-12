@@ -1,3 +1,6 @@
+2008-06-12  Jean-Louis Martineau <martineau@zmanda.com>
+	* client-src/selfcheck.c: Typo.
+
 2008-06-11  Jean-Louis Martineau <martineau@zmanda.com>
 	* client-src/sendsize.c: Check MAX-LEVEL from application.
 	* server-src/planner.c: Ask for estimate even if SERVER, estimate is
