@@ -50,6 +50,7 @@ typedef struct a_dle_s {
     int     program_is_application_api;
     char   *program;
     int     calcsize;
+    estimate_t     estimate;
     int     spindle;
     int     compress;
     int     encrypt;

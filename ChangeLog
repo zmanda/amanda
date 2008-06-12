@@ -1,4 +1,13 @@
 2008-06-11  Jean-Louis Martineau <martineau@zmanda.com>
+	* client-src/sendsize.c: Check MAX-LEVEL from application.
+	* server-src/planner.c: Ask for estimate even if SERVER, estimate is
+	  valid if client return -1 and invelid if client return -2.
+	* common-src/amfeatures.h: New fe_xml_estimate amfeature.
+	* common-src/amxml.c: Parse <estimate> tag.
+	* common-src/amxml.h (dle_t): New estimate field.
+	* common-src/amfeatures.c: Set fe_xml_estimate.
+
+2008-06-11  Jean-Louis Martineau <martineau@zmanda.com>
 	* client-src/client_util.c (application_property_add_to_argv):
 	                           Add include and exclude.
 	* client-src/client_util.h (application_property_add_to_argv):

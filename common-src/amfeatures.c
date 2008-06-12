@@ -151,6 +151,7 @@ am_init_feature_set(void)
 	am_add_feature(f, fe_pp_script);
 	am_add_feature(f, fe_amindexd_DLE);
 	am_add_feature(f, fe_amrecover_dle_in_header);
+	am_add_feature(f, fe_xml_estimate);
     }
     return f;
 }

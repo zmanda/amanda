@@ -42,6 +42,7 @@ typedef struct amgxml_s {
     dle_t   *dle;
     GSList  *element_names;
     int      has_calcsize;
+    int      has_estimate;
     int      has_record;
     int      has_spindle;
     int      has_compress;
@@ -82,6 +83,7 @@ init_dle(
     dle->program_is_application_api = 0;
     dle->program = NULL;
     dle->calcsize = 0;
+    dle->estimate = 0;
     dle->record = 1;
     dle->spindle = 0;
     dle->compress = COMP_NONE;
@@ -185,6 +187,7 @@ amstart_element(
 	    adle->next = data_user->dle;
 	}
 	data_user->has_calcsize = 0;
+	data_user->has_estimate = 0;
 	data_user->has_record = 0;
 	data_user->has_spindle = 0;
 	data_user->has_compress = 0;
@@ -201,6 +204,7 @@ amstart_element(
     } else if(strcmp(element_name, "disk"          ) == 0 ||
 	      strcmp(element_name, "diskdevice"    ) == 0 ||
 	      strcmp(element_name, "calcsize"      ) == 0 ||
+	      strcmp(element_name, "estimate"      ) == 0 ||
 	      strcmp(element_name, "program"       ) == 0 ||
 	      strcmp(element_name, "auth"          ) == 0 ||
 	      strcmp(element_name, "index"         ) == 0 ||
@@ -221,6 +225,7 @@ amstart_element(
 	if ((strcmp(element_name, "disk"          ) == 0 && dle->disk) ||
 	    (strcmp(element_name, "diskdevice"    ) == 0 && dle->device) ||
 	    (strcmp(element_name, "calcsize"      ) == 0 && data_user->has_calcsize) ||
+	    (strcmp(element_name, "estimate"      ) == 0 && data_user->has_estimate) ||
 	    (strcmp(element_name, "record"        ) == 0 && data_user->has_record) ||
 	    (strcmp(element_name, "spindle"       ) == 0 && data_user->has_spindle) ||
 	    (strcmp(element_name, "program"       ) == 0 && dle->program) ||
@@ -237,6 +242,7 @@ amstart_element(
 	    return;
 	}
 	if (strcmp(element_name, "calcsize"      ) == 0) data_user->has_calcsize       = 1;
+	if (strcmp(element_name, "estimate"      ) == 0) data_user->has_estimate       = 1;
 	if (strcmp(element_name, "record"        ) == 0) data_user->has_record         = 1;
 	if (strcmp(element_name, "spindle"       ) == 0) data_user->has_spindle        = 1;
 	if (strcmp(element_name, "index"         ) == 0) data_user->has_index          = 1;
@@ -487,6 +493,16 @@ amtext(
     } else if(strcmp(last_element_name, "calcsize") == 0) {
 	if (strcasecmp(tt,"yes") == 0) {
 	    dle->calcsize = 1;
+	}
+	amfree(tt);
+    } else if(strcmp(last_element_name, "estimate") == 0) {
+	if (strcasecmp(tt,"client") == 0) {
+	    dle->estimate = ES_CLIENT;
+	} else if (strcasecmp(tt,"calcsize") == 0) {
+	    dle->estimate = ES_CALCSIZE;
+	    dle->calcsize = 1;
+	} else if (strcasecmp(tt,"server") == 0) {
+	    dle->estimate = ES_SERVER;
 	}
 	amfree(tt);
     } else if(strcmp(last_element_name, "program") == 0) {
@@ -755,7 +771,7 @@ amxml_parse_node_CHAR(
     char *txt,
     char **errmsg)
 {
-    amgxml_t             amgxml = {NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL};
+    amgxml_t             amgxml = {NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL};
     GMarkupParser        parser = {&amstart_element, &amend_element, &amtext,
 				   NULL, NULL};
     GMarkupParseFlags    flags = 0;
@@ -784,7 +800,7 @@ amxml_parse_node_FILE(
     FILE *file,
     char **errmsg)
 {
-    amgxml_t             amgxml = {NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL};
+    amgxml_t             amgxml = {NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL};
     GMarkupParser        parser = {&amstart_element, &amend_element, &amtext,
 				   NULL, NULL};
     GMarkupParseFlags    flags = 0;

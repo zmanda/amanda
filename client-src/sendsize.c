@@ -1145,6 +1145,12 @@ getsize_dump(
     int is_rundump = 1;
 #endif
 
+    if (level > 9)
+	return -2; /* planner will not even consider this level */
+    if (dle->estimate == ES_SERVER)
+	return -1; /* planner will consider this level, */
+		   /* but use a server-side estimate    */
+
     g_snprintf(level_str, SIZEOF(level_str), "%d", level);
 
     device = amname_to_devname(dle->device);
@@ -1591,6 +1597,12 @@ getsize_smbtar(
 
     error_pn = stralloc2(get_pname(), "-smbclient");
 
+    if (level > 1)
+	return -2; /* planner will not even consider this level */
+    if (dle->estimate == ES_SERVER)
+	return -1; /* planner will consider this level, */
+		   /* but use a server-side estimate    */
+
     parsesharename(dle->device, &share, &subdir);
     if (!share) {
 	amfree(share);
@@ -1834,6 +1846,12 @@ getsize_gnutar(
     char *gnutar_list_dir;
     amwait_t wait_status;
     char tmppath[PATH_MAX];
+
+    if (level > 9)
+	return -2; /* planner will not even consider this level */
+    if (dle->estimate == ES_SERVER)
+	return -1; /* planner will consider this level, */
+		   /* but use a server-side estimate    */
 
     if(dle->exclude_file) nb_exclude += dle->exclude_file->nb_element;
     if(dle->exclude_list) nb_exclude += dle->exclude_list->nb_element;
@@ -2138,6 +2156,12 @@ getsize_application_api(
     cmd = vstralloc(APPLICATION_DIR, "/", dle->program, NULL);
 
     bsu = backup_support_option(dle->program, g_options, dle->disk, dle->device);
+
+    if (level > bsu->max_level)
+	return -2; /* planner will not even consider this level */
+    if (dle->estimate == ES_SERVER)
+	return -1; /* planner will consider this level, */
+		   /* but use a server-side estimate    */
 
     i=0;
     k = application_property_argv_size(dle);

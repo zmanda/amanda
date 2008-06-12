@@ -1378,8 +1378,10 @@ static void getsize(
 	    qdevice = quote_string(dp->device);
 	    if (dp->device)
 		b64device = amxml_format_tag("diskdevice", dp->device);
-	    if(dp->estimate == ES_CLIENT ||
-	       dp->estimate == ES_CALCSIZE) {
+	    if (dp->estimate == ES_CLIENT ||
+	        dp->estimate == ES_CALCSIZE ||
+		(am_has_feature(hostp->features, fe_req_xml) &&
+		 am_has_feature(hostp->features, fe_xml_estimate))) {
 		nb_client++;
 
 		if (am_has_feature(hostp->features, fe_req_xml)) {
@@ -1424,6 +1426,18 @@ static void getsize(
 			}
 		    }
 
+		    if (am_has_feature(hostp->features, fe_xml_estimate)) {
+			if (dp->estimate == ES_CLIENT) {
+			    vstrextend(&l, "  <estimate>CLIENT</estimate>\n",
+				       NULL);
+			} else if (dp->estimate == ES_SERVER) {
+			    vstrextend(&l, "  <estimate>SERVER</estimate>\n",
+				       NULL);
+			} else if (dp->estimate == ES_CALCSIZE) {
+			    vstrextend(&l, "  <estimate>CALCSIZE</estimate>\n",
+				       NULL);
+			}
+		    }
 		    if (dp->estimate == ES_CALCSIZE) {
 			if (!am_has_feature(hostp->features,
 					    fe_calcsize_estimate)) {
@@ -1547,7 +1561,8 @@ static void getsize(
 		}
 		est(dp)->state = DISK_ACTIVE;
 		remove_disk(&startq, dp);
-	    } else if (dp->estimate == ES_SERVER) {
+	    }
+	    if (dp->estimate == ES_SERVER) {
 		info_t info;
 		nb_server++;
 		get_info(dp->host->hostname, dp->name, &info);
@@ -1647,9 +1662,11 @@ static void getsize(
 			est(dp)->level[0], (long long)est(dp)->est_size[0],
 			est(dp)->level[1], (long long)est(dp)->est_size[1],
 			est(dp)->level[2], (long long)est(dp)->est_size[2]);
-		est(dp)->state = DISK_DONE;
-		remove_disk(&startq, dp);
-		enqueue_disk(&estq, dp);
+		if (!am_has_feature(hostp->features, fe_xml_estimate)) {
+		    est(dp)->state = DISK_DONE;
+		    remove_disk(&startq, dp);
+		    enqueue_disk(&estq, dp);
+		}
 	    }
 	    amfree(qname);
 	    amfree(qdevice);
@@ -1864,7 +1881,21 @@ static void handle_result(
 
 	amfree(disk);
 
-	if (size > (off_t)-1) {
+	if (dp->estimate == ES_SERVER) {
+	    if (size == (off_t)-2) {
+		for(i = 0; i < MAX_LEVELS; i++) {
+		    if (est(dp)->level[i] == level) {
+			est(dp)->est_size[i] = -1; /* remove estimate */
+			break;
+		    }
+		}
+		if(i == MAX_LEVELS) {
+		    goto bad_msg;		/* this est wasn't requested */
+		}
+
+	    }
+	    est(dp)->got_estimate++;
+	} else if (size > (off_t)-1) {
 	    for(i = 0; i < MAX_LEVELS; i++) {
 		if(est(dp)->level[i] == level) {
 		    est(dp)->est_size[i] = size;
