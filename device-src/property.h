@@ -239,34 +239,6 @@ extern DevicePropertyBase device_property_free_space;
 extern DevicePropertyBase device_property_max_volume_usage;
 #define PROPERTY_MAX_VOLUME_USAGE (device_property_max_volume_usage.ID)
 
-/* Tape device properties. These properties do not exist on non-linear
-   devices. All of them have a value type of FeatureSupportFlags. */
-extern DevicePropertyBase device_property_fsf;
-#define PROPERTY_FSF (device_property_fsf.ID)
-
-extern DevicePropertyBase device_property_bsf;
-#define PROPERTY_BSF (device_property_bsf.ID)
-
-extern DevicePropertyBase device_property_fsr;
-#define PROPERTY_FSR (device_property_fsr.ID)
-
-extern DevicePropertyBase device_property_bsr;
-#define PROPERTY_BSR (device_property_bsr.ID)
-
-/* Is EOM supported? Must be able to read file number afterwards as
-   well. */
-extern DevicePropertyBase device_property_eom;
-#define PROPERTY_EOM (device_property_eom.ID)
-
-/* Is it necessary to perform a BSF after EOM? */
-extern DevicePropertyBase device_property_bsf_after_eom;
-#define PROPERTY_BSF_AFTER_EOM (device_property_bsf_after_eom.ID)
-
-/* How many filemarks to write at EOD? (Default is 2).
- * This property is a G_TYPE_UINT, but can only really be set to 1 or 2. */
-extern DevicePropertyBase device_property_final_filemarks;
-#define PROPERTY_FINAL_FILEMARKS (device_property_final_filemarks.ID)
-
 /* What buffer size is used for reading? */
 extern DevicePropertyBase device_property_read_buffer_size;
 #define PROPERTY_READ_BUFFER_SIZE (device_property_read_buffer_size.ID)

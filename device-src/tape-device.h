@@ -68,4 +68,35 @@ struct _TapeDeviceClass {
 	DeviceClass __parent__;
 };
 
+/* Tape device properties. These properties do not exist on non-linear
+   devices. */
+extern DevicePropertyBase device_property_broken_gmt_online;
+#define PROPERTY_BROKEN_GMT_ONLINE (device_property_broken_gmt_online.ID)
+
+extern DevicePropertyBase device_property_fsf;
+#define PROPERTY_FSF (device_property_fsf.ID)
+
+extern DevicePropertyBase device_property_bsf;
+#define PROPERTY_BSF (device_property_bsf.ID)
+
+extern DevicePropertyBase device_property_fsr;
+#define PROPERTY_FSR (device_property_fsr.ID)
+
+extern DevicePropertyBase device_property_bsr;
+#define PROPERTY_BSR (device_property_bsr.ID)
+
+/* Is EOM supported? Must be able to read file number afterwards as
+   well. */
+extern DevicePropertyBase device_property_eom;
+#define PROPERTY_EOM (device_property_eom.ID)
+
+/* Is it necessary to perform a BSF after EOM? */
+extern DevicePropertyBase device_property_bsf_after_eom;
+#define PROPERTY_BSF_AFTER_EOM (device_property_bsf_after_eom.ID)
+
+/* How many filemarks to write at EOD? (Default is 2).
+ * This property is a G_TYPE_UINT, but can only really be set to 1 or 2. */
+extern DevicePropertyBase device_property_final_filemarks;
+#define PROPERTY_FINAL_FILEMARKS (device_property_final_filemarks.ID)
+
 #endif

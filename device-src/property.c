@@ -266,29 +266,6 @@ void device_property_init(void) {
     device_property_fill_and_register(&device_property_max_volume_usage,
                                       G_TYPE_UINT64, "max_volume_usage",
       "Artificial limit to data written to volume.");
-    device_property_fill_and_register(&device_property_fsf,
-                                      FEATURE_SUPPORT_FLAGS_TYPE, "fsf",
-      "Does this drive support the MTFSF command?");
-    device_property_fill_and_register(&device_property_bsf,
-                                      FEATURE_SUPPORT_FLAGS_TYPE, "bsf",
-      "Does this drive support the MTBSF command?" );
-    device_property_fill_and_register(&device_property_fsr,
-                                      FEATURE_SUPPORT_FLAGS_TYPE, "fsr",
-      "Does this drive support the MTFSR command?");
-    device_property_fill_and_register(&device_property_bsr,
-                                      FEATURE_SUPPORT_FLAGS_TYPE, "bsr",
-      "Does this drive support the MTBSR command?");
-    /* FIXME: Is this feature even useful? */
-    device_property_fill_and_register(&device_property_eom,
-                                      FEATURE_SUPPORT_FLAGS_TYPE, "eom",
-      "Does this drive support the MTEOM command?");
-    device_property_fill_and_register(&device_property_bsf_after_eom,
-                                      FEATURE_SUPPORT_FLAGS_TYPE,
-                                      "bsf_after_eom",
-      "Does this drive require an MTBSF after MTEOM in order to append?" );
-    device_property_fill_and_register(&device_property_final_filemarks,
-                                      G_TYPE_UINT, "final_filemarks",
-      "How many filemarks to write after the last tape file?" );
     device_property_fill_and_register(&device_property_read_buffer_size,
                                       G_TYPE_UINT, "read_buffer_size",
       "What buffer size should be used for reading?");
@@ -310,12 +287,5 @@ DevicePropertyBase device_property_medium_access_type;
 DevicePropertyBase device_property_partial_deletion;
 DevicePropertyBase device_property_free_space;
 DevicePropertyBase device_property_max_volume_usage;
-DevicePropertyBase device_property_fsf;
-DevicePropertyBase device_property_bsf;
-DevicePropertyBase device_property_fsr;
-DevicePropertyBase device_property_bsr;
-DevicePropertyBase device_property_eom;
-DevicePropertyBase device_property_bsf_after_eom;
-DevicePropertyBase device_property_final_filemarks;
 DevicePropertyBase device_property_read_buffer_size;
 DevicePropertyBase device_property_verbose;

@@ -1,3 +1,8 @@
+2008-06-13  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/property.c device-src/property.h: remove tape properties
+	* device-src/tape-device.c device-src/tape-device.h: add tape
+	  properties
+
 2008-06-12 Dan Locks <dwlocks@zmanda.com>
 	* packaging/rpm/amanda_enterprise.spec,
 	  packaging/rpm/amanda_enterprise_client.spec,
