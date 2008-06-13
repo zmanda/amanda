@@ -1,3 +1,11 @@
+2008-06-13  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Util.swg: Expose get_original_cwd.
+	* application-src/amgtar_perl.pl, application-src/amoracle.pl:
+	  chdir(get_original_cwd()) before restore.
+
+2008-06-13 K. K. George <kk.george@zmanda.com>
+        * amoracle application
+
 2008-06-13  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/property.c device-src/property.h: remove tape properties
 	* device-src/tape-device.c device-src/tape-device.h: add tape

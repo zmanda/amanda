@@ -25,6 +25,7 @@ use File::Path;
 use IPC::Open3;
 use Sys::Hostname;
 use Symbol;
+use Amanda::Constants;
 use Amanda::Config qw( :init :getconf  config_dir_relative );
 use Amanda::Debug qw( :logging );
 use Amanda::Paths;
@@ -272,6 +273,7 @@ sub command_index_from_image {
 }
 
 sub command_restore {
+   chdir(Amanda::Util::get_original_cwd());
    my(@cmd) = ($gnutar, "--numeric-owner", "-xpGvf", "-");
    for(my $i=1;defined $ARGV[$i]; $i++) {
       my $param = $ARGV[$i];
@@ -280,7 +282,7 @@ sub command_restore {
    }
    debug("cmd:" . join(" ", @cmd));
    exec { $cmd[0] } @cmd;
-   die("Can't exec");
+   die("Can't exec '", $cmd[0], "'");
 }
 
 sub command_print_command {

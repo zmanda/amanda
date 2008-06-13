@@ -166,6 +166,16 @@ sub finish_setup {
     check_running_as($running_as);
 }
 
+=item C<get_original_cwd()>
+
+Return the original current directory with C<get_original_cwd>.
+
+=cut
+%}
+char *get_original_cwd(void);
+amglue_export_tag(util, get_original_cwd);
+
+%perlcode %{
 =item safe_env
 
 Return a "safe" environment hash.  For non-setuid programs, this means filtering out any
