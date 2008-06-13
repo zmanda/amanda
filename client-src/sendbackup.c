@@ -76,6 +76,7 @@ int check_status(pid_t pid, amwait_t w);
 
 pid_t pipefork(void (*func)(void), char *fname, int *stdinfd,
 		int stdoutfd, int stderrfd);
+int check_result(void);
 void parse_backup_messages(dle_t *dle, int mesgin);
 static void process_dumpline(char *str);
 static void save_fd(int *, int);
@@ -99,7 +100,6 @@ main(
     char *s;
     int i;
     int ch;
-    FILE *toolin;
     int status;
     GSList *errlist;
 
@@ -440,13 +440,58 @@ main(
 	char *cmd=NULL;
 	char **argvchild;
 	char levelstr[20];
-	int property_pipe[2];
 	backup_support_option_t *bsu;
+	char *compopt = NULL;
+	char *encryptopt = skip_argument;
+	int compout, dumpout;
 
-	if (pipe(property_pipe) < 0) {
-	    error(_("Can't create pipe: %s"),strerror(errno));
-	    /*NOTREACHED*/
+	/*  apply client-side encryption here */
+	if ( dle->encrypt == ENCRYPT_CUST ) {
+	    encpid = pipespawn(dle->clnt_encrypt, STDIN_PIPE, 0,
+			       &compout, &datafd, &mesgfd,
+			       dle->clnt_encrypt, encryptopt, NULL);
+	    dbprintf(_("encrypt: pid %ld: %s\n"), (long)encpid, dle->clnt_encrypt);
+	} else {
+	    compout = datafd;
+	    encpid = -1;
 	}
+
+	/*  now do the client-side compression */
+	if(dle->compress == COMP_FAST || dle->compress == COMP_BEST) {
+	    compopt = skip_argument;
+#if defined(COMPRESS_BEST_OPT) && defined(COMPRESS_FAST_OPT)
+	    if(dle->compress == COMP_BEST) {
+		compopt = COMPRESS_BEST_OPT;
+	    } else {
+		compopt = COMPRESS_FAST_OPT;
+	    }
+#endif
+	    comppid = pipespawn(COMPRESS_PATH, STDIN_PIPE, 0,
+				&dumpout, &compout, &mesgfd,
+				COMPRESS_PATH, compopt, NULL);
+	    dbprintf(_("gnutar: pid %ld: %s"), (long)comppid, COMPRESS_PATH);
+	    if(compopt != skip_argument) {
+		dbprintf(_("pid %ld: %s %s\n"),
+			 (long)comppid, COMPRESS_PATH, compopt);
+	    } else {
+		dbprintf(_("pid %ld: %s\n"), (long)comppid, COMPRESS_PATH);
+	    }
+	} else if (dle->compress == COMP_CUST) {
+	    compopt = skip_argument;
+	    comppid = pipespawn(dle->compprog, STDIN_PIPE, 0,
+				&dumpout, &compout, &mesgfd,
+				dle->compprog, compopt, NULL);
+	    if(compopt != skip_argument) {
+		dbprintf(_("pid %ld: %s %s\n"),
+			 (long)comppid, dle->compprog, compopt);
+	    } else {
+		dbprintf(_("pid %ld: %s\n"), (long)comppid, dle->compprog);
+	    }
+	} else {
+	    dumpout = compout;
+	    comppid = -1;
+	}
+
 	bsu = backup_support_option(dle->program, g_options, dle->disk,
 				    dle->device);
 
@@ -493,12 +538,7 @@ main(
 	    dbprintf(_("%s: running \"%s\n"), get_pname(), cmd);
 	    for(j=1;j<i;j++) dbprintf(" %s\n",argvchild[j]);
 	    dbprintf(_("\"\n"));
-	    aclose(property_pipe[1]);
-	    if(dup2(property_pipe[0], 0) == -1) {
-		error(_("Can't dup2: %s"),strerror(errno));
-		/*NOTREACHED*/
-	    }
-	    if(dup2(datafd, 1) == -1) {
+	    if(dup2(dumpout, 1) == -1) {
 		error(_("Can't dup2: %s"),strerror(errno));
 		/*NOTREACHED*/
 	    }
@@ -525,19 +565,11 @@ main(
 	    break;
  
 	default:
-	    aclose(property_pipe[0]);
-	    toolin = fdopen(property_pipe[1],"w");
-	    if (!toolin) {
-		error(_("Can't fdopen: %s"), strerror(errno));
-		/*NOTREACHED*/
-	    }
-	    output_tool_property(toolin, dle);
-	    fflush(toolin);
-	    fclose(toolin);
 	    break;
 	case -1:
 	    error(_("%s: fork returned: %s"), get_pname(), strerror(errno));
 	}
+	check_result();
 	amfree(bsu);
 	if (waitpid(application_api_pid, &status, 0) < 0) {
 	    if (!WIFEXITED(status)) {
@@ -858,27 +890,15 @@ pipefork(
     return pid;
 }
 
-void
-parse_backup_messages(
-    dle_t      *dle,
-    int		mesgin)
+int
+check_result(void)
 {
     int goterror;
     pid_t wpid;
     amwait_t retstat;
-    char *line;
 
     goterror = 0;
-    amfree(errorstr);
 
-    for(; (line = areads(mesgin)) != NULL; free(line)) {
-	process_dumpline(line);
-    }
-
-    if(errno) {
-	error(_("error [read mesg pipe: %s]"), strerror(errno));
-	/*NOTREACHED*/
-    }
 
     while((wpid = waitpid((pid_t)-1, &retstat, WNOHANG)) > 0) {
 	if(check_status(wpid, retstat)) goterror = 1;
@@ -920,6 +940,30 @@ parse_backup_messages(
 	    if(check_status(wpid, retstat)) goterror = 1;
 	}
     }
+
+    return goterror;
+}
+
+void
+parse_backup_messages(
+    dle_t      *dle,
+    int		mesgin)
+{
+    int goterror;
+    char *line;
+
+    amfree(errorstr);
+
+    for(; (line = areads(mesgin)) != NULL; free(line)) {
+	process_dumpline(line);
+    }
+
+    if(errno) {
+	error(_("error [read mesg pipe: %s]"), strerror(errno));
+	/*NOTREACHED*/
+    }
+
+    goterror = check_result();
 
     if(errorstr) {
 	error(_("error [%s]"), errorstr);

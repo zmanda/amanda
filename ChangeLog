@@ -1,4 +1,8 @@
 2008-06-13  Jean-Louis Martineau <martineau@zmanda.com>
+	* client-src/sendbackup.c: Run compression and encryption for
+				   application-api.
+
+2008-06-13  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Util.swg: Expose get_original_cwd.
 	* application-src/amgtar_perl.pl, application-src/amoracle.pl:
 	  chdir(get_original_cwd()) before restore.
