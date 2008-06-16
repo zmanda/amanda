@@ -16,17 +16,92 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 1;
+use Test::More tests => 3;
 
 use lib "@amperldir@";
 use Installcheck::Run qw( run run_get );
 use Amanda::Paths;
+use Amanda::Constants;
 
+my $input_filename = "$AMANDA_TMPDIR/amservice_input.txt";
 my $testconf = Installcheck::Run::setup();
+my $input;
+
+sub write_input_file {
+    my ($contents) = @_;
+    open my $fh, ">", $input_filename
+	or die("Could not write to $input_filename");
+    print $fh $contents;
+    close $fh;
+}
+
+sub all_lines_ok {
+    my ($output) = @_;
+    my $ok = 1;
+
+    return 0 if not $output;
+
+    for (split /\n/, $output) {
+	next if /^OPTIONS /;
+	next if /^OK /;
+	diag "Got unexpected line: $_";
+	$ok = 0;
+    }
+
+    return $ok;
+}
 
 # a simple run of amservice to begin with
 like(run_get('amservice', 'localhost', 'local', 'noop', '-f', '/dev/null'),
     qr/^OPTIONS features=/,
     "amservice runs noop successfully");
 
+$input = <<EOF;
+<dle>
+  <program>GNUTAR</program>
+  <disk>$AMANDA_TMPDIR</disk>
+</dle>
+EOF
+
+SKIP: {
+    skip "GNUTAR not installed", 1 unless $Amanda::Constants::GNUTAR;
+    write_input_file($input);
+    ok(all_lines_ok(
+	run_get('amservice', 'localhost', 'local',
+		'selfcheck', '-f', $input_filename)),
+	"GNUTAR program selfchecks successfully");
+}
+
+# (can't test DUMP, since we don't have a device)
+
+$input = <<EOF;
+<dle>
+  <program>APPLICATION</program>
+  <backup-program>
+    <plugin>amgtar</plugin>
+  </backup-program>
+  <disk>$AMANDA_TMPDIR</disk>
+</dle>
+EOF
+
+SKIP: {
+    skip "GNUTAR not installed", 1 unless $Amanda::Constants::GNUTAR;
+    write_input_file($input);
+    ok(all_lines_ok(
+	run_get('amservice', 'localhost', 'local',
+		'selfcheck', '-f', $input_filename)),
+	"amgtar application selfchecks successfully");
+}
+
+$input = <<EOF;
+<dle>
+  <program>APPLICATION</program>
+  <backup-program>
+    <plugin>amstar</plugin>
+  </backup-program>
+  <disk>$AMANDA_TMPDIR</disk>
+</dle>
+EOF
+
 Installcheck::Run::cleanup();
+unlink($input_filename);
