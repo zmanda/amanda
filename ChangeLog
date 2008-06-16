@@ -1,6 +1,7 @@
 2008-06-16  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/amservice.pl: add invocations of selfcheck for GNUTAR
 	  and amgtar
+	* installcheck/amservice.pl: put -f switches first
 
 2008-06-15  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Amanda_Config.pl: test config overwrites

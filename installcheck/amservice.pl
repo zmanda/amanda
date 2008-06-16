@@ -52,7 +52,7 @@ sub all_lines_ok {
 }
 
 # a simple run of amservice to begin with
-like(run_get('amservice', 'localhost', 'local', 'noop', '-f', '/dev/null'),
+like(run_get('amservice', '-f', '/dev/null', 'localhost', 'local', 'noop'),
     qr/^OPTIONS features=/,
     "amservice runs noop successfully");
 
@@ -67,8 +67,7 @@ SKIP: {
     skip "GNUTAR not installed", 1 unless $Amanda::Constants::GNUTAR;
     write_input_file($input);
     ok(all_lines_ok(
-	run_get('amservice', 'localhost', 'local',
-		'selfcheck', '-f', $input_filename)),
+	run_get('amservice', '-f', $input_filename, 'localhost', 'local', 'selfcheck')),
 	"GNUTAR program selfchecks successfully");
 }
 
@@ -88,8 +87,7 @@ SKIP: {
     skip "GNUTAR not installed", 1 unless $Amanda::Constants::GNUTAR;
     write_input_file($input);
     ok(all_lines_ok(
-	run_get('amservice', 'localhost', 'local',
-		'selfcheck', '-f', $input_filename)),
+	run_get('amservice', '-f', $input_filename, 'localhost', 'local', 'selfcheck')),
 	"amgtar application selfchecks successfully");
 }
 
