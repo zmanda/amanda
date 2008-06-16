@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 93;
+use Test::More tests => 98;
 use strict;
 
 use lib "@amperldir@";
@@ -27,6 +27,7 @@ use Amanda::Config qw( :init :getconf );
 use Amanda::Debug;
 
 my $testconf;
+my $config_overwrites;
 
 Amanda::Debug::dbopen("installcheck");
 
@@ -45,6 +46,17 @@ sub diag_config_errors {
 is(config_init(0, ''), $CFGERR_OK,
     "Initialize with no configuration")
     or diag_config_errors();
+
+is(config_init(0, undef), $CFGERR_OK,
+    "Initialize with no configuration, passing a NULL config name")
+    or diag_config_errors();
+
+$config_overwrites = new_config_overwrites(1);
+add_config_overwrite($config_overwrites, "tapedev", "null:TEST");
+apply_config_overwrites($config_overwrites);
+
+is(getconf($CNF_TAPEDEV), "null:TEST",
+    "config overwrites work with null config");
 
 ##
 # Check out error handling
@@ -406,6 +418,28 @@ SKIP: { # script
 }
 
 ##
+# Test config overwrites (using the config from above)
+
+$config_overwrites = new_config_overwrites(1); # note estimate is too small
+add_config_overwrite($config_overwrites, "tapedev", "null:TEST");
+add_config_overwrite($config_overwrites, "tpchanger", "chg-test");
+add_config_overwrite_opt($config_overwrites, "org=KAOS");
+apply_config_overwrites($config_overwrites);
+
+is(getconf($CNF_TAPEDEV), "null:TEST",
+    "config overwrites work with real config");
+is(getconf($CNF_ORG), "KAOS",
+    "add_config_overwrite_opt parsed correctly");
+
+# introduce an error
+$config_overwrites = new_config_overwrites(1);
+add_config_overwrite($config_overwrites, "bogusparam", "foo");
+apply_config_overwrites($config_overwrites);
+
+my ($error_level, @errors) = Amanda::Config::config_errors();
+is($error_level, $CFGERR_ERRORS, "bogus config overwrite flagged as an error");
+
+##
 # Test configuration dumping
 
 # (uses the config from the previous section)
@@ -476,6 +510,5 @@ SKIP: {
 }
 
 # TODO:
-# overwrites
 # inheritance
 # more init

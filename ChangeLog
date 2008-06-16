@@ -1,3 +1,8 @@
+2008-06-15  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Amanda_Config.pl: test config overwrites
+	* common-src/conffile.c: don't segfault applying config overwrites
+	  after config_init(0, NULL)
+
 2008-06-13  Jean-Louis Martineau <martineau@zmanda.com>
 	* client-src/sendbackup.c: Run compression and encryption for
 				   application-api.
@@ -6,9 +11,6 @@
 	* perl/Amanda/Util.swg: Expose get_original_cwd.
 	* application-src/amgtar_perl.pl, application-src/amoracle.pl:
 	  chdir(get_original_cwd()) before restore.
-
-2008-06-13 K. K. George <kk.george@zmanda.com>
-        * amoracle application
 
 2008-06-13  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/property.c device-src/property.h: remove tape properties

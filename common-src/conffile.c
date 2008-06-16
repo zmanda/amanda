@@ -3599,9 +3599,12 @@ config_init(
 	amfree(config_name);
 	config_dir = newstralloc(config_dir, CONFIG_DIR);
     } else {
-	/* ok, then, we won't read anything (for e.g., amrestore) */
+	/* ok, then, we won't read anything (for e.g., amrestore), but
+	 * will set up for server-side config_overwrites */
 	amfree(config_name);
 	amfree(config_dir);
+	keytable = server_keytab;
+	parsetable = server_var;
     }
 
     /* If we have a config_dir, we can try reading something */
@@ -4541,6 +4544,9 @@ new_config_overwrites(
     int size_estimate)
 {
     config_overwrites_t *co;
+
+    if (size_estimate <= 0)
+	size_estimate = 10;
 
     co = alloc(sizeof(*co));
     co->ovr = alloc(sizeof(*co->ovr) * size_estimate);
