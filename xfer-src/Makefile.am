@@ -6,6 +6,7 @@ include $(top_srcdir)/config/automake/installperms.am
 include $(top_srcdir)/config/automake/precompile.am
 
 INCLUDES =      -I$(top_srcdir)/gnulib \
+		-I$(top_srcdir)/device-src \
 		-I$(top_srcdir)/common-src
 
 AM_CFLAGS = $(AMANDA_WARNING_CFLAGS)
@@ -17,10 +18,12 @@ LINT=$(AMLINT)
 LINTFLAGS=$(AMLINTFLAGS)
 
 libamxfer_la_SOURCES = \
+	dest-device.c \
 	dest-fd.c \
 	dest-null.c \
 	element-glue.c \
 	filter-xor.c \
+	source-device.c \
 	source-random.c \
 	source-fd.c \
 	xfer-element.c \
@@ -28,6 +31,7 @@ libamxfer_la_SOURCES = \
 	xmsg.c
 
 libamxfer_la_LIBADD = \
+	../device-src/libamdevice.la \
 	../common-src/libamanda.la
 
 noinst_HEADERS = \
@@ -44,7 +48,6 @@ noinst_PROGRAMS = $(TESTS)
 
 xfer_test_SOURCES = xfer-test.c
 xfer_test_LDADD = \
-	../common-src/libamanda.la \
 	../common-src/libtestutils.la \
 	libamxfer.la
 

@@ -1,4 +1,11 @@
 2008-06-16  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Xfer.swg xfer-src/Makefile.am xfer-src/xfer-element.h
+	  xfer-src/dest-device.c xfer-src/source-device.c: new elements
+	  Amanda::Xfer:{Dest,Source}::Device
+	* perl/Amanda/Xfer.swg: POD fix for Amanda::Xfer:Filter::Xor
+	* installcheck/Amanda_Xfer.pl: tests for new elements
+
+2008-06-16  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/amservice.pl: add invocations of selfcheck for GNUTAR
 	  and amgtar
 	* installcheck/amservice.pl: put -f switches first

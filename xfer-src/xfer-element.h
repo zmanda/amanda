@@ -32,6 +32,8 @@
 #include <glib.h>
 #include <glib-object.h>
 #include "xfer.h"
+#include "device.h"
+#include "queueing.h"
 
 typedef enum {
     /* sources have no input mechanisms and destinations have no output
@@ -222,6 +224,18 @@ void xfer_element_abort(XferElement *elt);
  * can also provide a good prototype for new elements.
  */
 
+/* A transfer source that reads from a Device. The device must be positioned
+ * at the start of a file before the transfer is started.  The transfer will
+ * continue until the end of the file.
+ *
+ * Implemented in source-device.c
+ *
+ * @param device: Device object to read from
+ * @return: new element
+ */
+XferElement *xfer_source_device(
+    Device *device);
+
 /* A transfer source that produces LENGTH bytes of random data, for testing
  * purposes.
  *
@@ -256,6 +270,21 @@ XferElement * xfer_source_fd(
  */
 XferElement *xfer_filter_xor(
     unsigned char xor_key);
+
+/* A transfer destination that writes bytes to a Device.
+ *
+ * Implemented in dest-device.c
+ *
+ * @param device: the Device to write to.  This device should be ready for
+ *	a device_write_block call.
+ * @param max_memory: total amount of memory to use for buffers
+ * @return: new element
+ */
+XferElement *
+xfer_dest_device(
+    Device *device,
+    size_t max_memory);
+
 
 /* A transfer destination that consumes all bytes it is given, optionally
  * validating that they match those produced by source_random

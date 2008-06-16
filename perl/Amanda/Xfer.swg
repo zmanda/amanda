@@ -22,6 +22,7 @@
 %include "amglue/amglue.swg"
 %include "exception.i"
 %import "Amanda/MainLoop.swg"
+%import "Amanda/Device.swg"
 
 %{
 #include "amxfer.h"
@@ -115,6 +116,14 @@ such abstract classes.
 
 =head2 Transfer Sources
 
+=head3 Amanda::Xfer::Source::Device
+
+  Amanda::Xfer::Source::Device->new($device);
+
+This source reads data from a device.  The device should already be queued up
+for reading (C<$device->seek_file(..)>).  The element will read until the end
+of the device file.
+
 =head3 Amanda::Xfer::Source::Fd
 
   Amanda::Xfer::Source::Fd->new(fileno($fh));
@@ -134,12 +143,19 @@ check for correct output.
 
 =head3 Amanda::Xfer::Filter:Xor
 
-  Amanda::Xfer::Filter::Xor->new($key, $input_mechs, $output_mechs);
+  Amanda::Xfer::Filter::Xor->new($key);
 
 This filter applies a bytewise XOR operation to the data flowing through it.
-The I<mechs> arguments should be zero.
 
 =head2 Transfer Destinations
+
+=head3 Amanda::Xfer::Dest::Device
+
+  Amanda::Xfer::Dest::Device->new($device, $max_memory);
+
+This source writes data to a device.  The device should already be queued up
+for writing (C<$device->start_file(..)>).  No more than C<$max_memory> will
+be used for buffers.
 
 =head3 Amanda::Xfer::Dest::Fd
 
@@ -498,6 +514,10 @@ char *xfer_element_repr(XferElement *elt);
 /* N.B. When adding new classes, ensure that the class_init function
  * sets perl_class to the appropriate value. */
 
+%newobject xfer_source_device;
+XferElement *xfer_source_device(
+    Device *device);
+
 %newobject xfer_source_random;
 XferElement *xfer_source_random(
     size_t length,
@@ -510,6 +530,11 @@ XferElement *xfer_source_fd(
 %newobject xfer_filter_xor;
 XferElement *xfer_filter_xor(
     unsigned char xor_key);
+
+%newobject xfer_dest_device;
+XferElement *xfer_dest_device(
+    Device *device,
+    size_t max_memory);
 
 %newobject xfer_dest_null;
 XferElement *xfer_dest_null(
@@ -658,6 +683,12 @@ XFER_ELEMENT_SUBCLASS()
 
 /* ---- */
 
+PACKAGE(Amanda::Xfer::Source::Device)
+XFER_ELEMENT_SUBCLASS()
+DECLARE_CONSTRUCTOR(xfer_source_device)
+
+/* ---- */
+
 PACKAGE(Amanda::Xfer::Source::Fd)
 XFER_ELEMENT_SUBCLASS()
 DECLARE_CONSTRUCTOR(xfer_source_fd)
@@ -673,6 +704,12 @@ DECLARE_CONSTRUCTOR(xfer_source_random)
 PACKAGE(Amanda::Xfer::Filter::Xor)
 XFER_ELEMENT_SUBCLASS()
 DECLARE_CONSTRUCTOR(xfer_filter_xor)
+
+/* ---- */
+
+PACKAGE(Amanda::Xfer::Dest::Device)
+XFER_ELEMENT_SUBCLASS()
+DECLARE_CONSTRUCTOR(xfer_dest_device)
 
 /* ---- */
 

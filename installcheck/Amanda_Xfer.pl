@@ -16,12 +16,15 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 6;
+use Test::More tests => 8;
 use File::Path;
 use strict;
 
 use lib "@amperldir@";
+use Installcheck::Run;
 use Amanda::Xfer qw( :constants );
+use Amanda::Device qw( :constants );
+use Amanda::Types;
 use Amanda::Debug;
 use Amanda::MainLoop;
 use Amanda::Paths;
@@ -179,4 +182,64 @@ pass("Two simultaneous transfers run to completion");
 
     unlink($read_filename);
     unlink($write_filename);
+}
+
+# exercise device source and destination
+{
+    my $RANDOM_SEED = 0xFACADE;
+    my $xfer;
+
+    my $quit_cb = sub {
+	my ($src, $msg, $xfer) = @_;
+	if ($xfer->get_status() == $Amanda::Xfer::XFER_DONE) {
+	    $xfer->get_source()->remove();
+	    Amanda::MainLoop::quit();
+	}
+    };
+
+    # set up vtapes
+    my $testconf = Installcheck::Run::setup();
+    $testconf->write();
+
+    # set up a device for slot 1
+    my $device = Amanda::Device->new("file:" . Installcheck::Run::load_vtape(1));
+    die("Could not open VFS device: " . $device->error())
+	unless ($device->status() == $DEVICE_STATUS_SUCCESS);
+
+    # write to it
+    my $hdr = Amanda::Types::dumpfile_t->new();
+    $hdr->{type} = $Amanda::Types::F_DUMPFILE;
+    $hdr->{name} = "installcheck";
+    $hdr->{disk} = "/";
+    $hdr->{datestamp} = "20080102030405";
+
+    $device->finish();
+    $device->start($ACCESS_WRITE, "TESTCONF01", "20080102030405");
+    $device->start_file($hdr);
+
+    $xfer = Amanda::Xfer->new([
+	Amanda::Xfer::Source::Random->new(1024*1024, $RANDOM_SEED),
+	Amanda::Xfer::Dest::Device->new($device, $device->write_max_size() * 10),
+    ]);
+
+    $xfer->get_source()->set_callback($quit_cb);
+    $xfer->start();
+
+    Amanda::MainLoop::run();
+    pass("write to a device (completed succesfully; data may not be correct)");
+
+    # now turn around and read from it
+    $device->start($ACCESS_READ, undef, undef);
+    $device->seek_file(1);
+
+    $xfer = Amanda::Xfer->new([
+	Amanda::Xfer::Source::Device->new($device),
+	Amanda::Xfer::Dest::Null->new($RANDOM_SEED),
+    ]);
+
+    $xfer->get_source()->set_callback($quit_cb);
+    $xfer->start();
+
+    Amanda::MainLoop::run();
+    pass("read from a device succeeded, too, and data was correct");
 }
