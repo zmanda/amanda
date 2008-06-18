@@ -1,4 +1,7 @@
 2008-06-18  Jean-Louis Martineau <martineau@zmanda.com>
+	* changer-src/chg-manual.sh: Make it interruptible.
+
+2008-06-18  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/amgtar.c: Remove check for amandates file.
 
 2008-06-18  Jean-Louis Martineau <martineau@zmanda.com>

@@ -26,7 +26,6 @@ amlibexecdir=@amlibexecdir@
 #
 #
 
-
 if [ -d "@AMANDA_DBGDIR@" ]; then
 	logfile=@AMANDA_DBGDIR@/changer.debug
 else
@@ -58,6 +57,8 @@ firstslot=1
 lastslot=99
 resend_mail=900		# 15 minutes
 timeout_mail=604800 	# 7 days
+abort_file="chg-manual.abort"
+abort_dir=`pwd`
 
 changerfile=`amgetconf changerfile`
 
@@ -84,11 +85,22 @@ slot=`cat $slotfile`
 request_tty() {
 	if > /dev/tty; then
 		echo "$amdevcheck_message" >> /dev/tty
-		echo -n `_ 'Insert tape into slot %s and press return' "$1"` > /dev/tty
+		# message parsed by ZMC:
+		echo `_ 'Insert tape into slot %s and press return' "$1"` > /dev/tty
+		echo `_ ' or type "NONE" to abort'` > /dev/tty
 		read ANSWER < /dev/tty
+		if [ X"$ANSWER" = X"NONE" ]; then
+			echo `_ 'Aborting request'` > /dev/tty
+			answer=`_ '<none> Aborting request'`
+			echo `_ 'Exit ->'` $answer >> $logfile
+			echo $answer
+			exit 2
+		fi
 	else
-		echo -n `_ 'no /dev/tty to ask to change tape'`
-		exit 1
+		answer=`_ '<none> no /dev/tty to ask to change tape'`
+		echo `_ 'Exit ->'` $answer >> $logfile
+		echo $answer
+		exit 2
 	fi
 }
 
@@ -104,15 +116,23 @@ request_email() {
 	# the E-mail once an hour in case it gets lost.
 	timeout=0
 	gtimeout=$timeout_mail
+	rm -f $abort_filename
 	while true;do
 	    if [ $gtimeout -le 0 ]; then
 		answer=`_ '%s %s: timeout waiting for tape online' "$load" "$myname"`
 		echo `_ 'Exit ->'` $answer >> $logfile
 		echo $answer
-		exit 1;
+		exit 2;
+	    fi
+	    if [ -f $abort_filename ]; then
+		rm -f $abort_filename
+		answer=`_ '<none> Aborting request'`
+		echo `_ 'Exit ->'` $answer >> $logfile
+		echo $answer
+		exit 2
 	    fi
 	    if [ $timeout -le 0 ]; then
-		msg=`_ '%s\nInsert Amanda tape into slot %s (%s)\n%s' "$amdevcheck_message" "$1" "$tape"`
+		msg=`_ '%s\nInsert Amanda tape into slot %s (%s)\nor \`touch %s\` to abort.' "$amdevcheck_message" "$1" "$tape" "$abort_filename"` 
 		subject=`_ '%s AMANDA TAPE MOUNT REQUEST FOR SLOT %s' "$ORG" "$1"`
 		echo "$msg" | $MAILER -s "$subject" $REPORTTO
 		timeout=$resend_mail
@@ -129,10 +149,7 @@ request_email() {
 
 request_tty_email() {
 	if > /dev/tty; then
-		echo "$amdevcheck_message" > /dev/tty
-		# message parsed by ZMC:
-		echo -n `_ 'Insert tape into slot %s and press return' "$1"` > /dev/tty
-		read ANSWER < /dev/tty
+		reques_tty "$1"
 	else
 		request_email "$1"
 	fi
@@ -163,7 +180,7 @@ if test -z "$MAILER"; then
 	answer=`_ "<none> %s: Can't send email because MAILER is not defined" "$myname"`
 	echo `_ 'Exit ->'` $answer >> $logfile
 	echo $answer
-	exit 1
+	exit 2
     fi
 fi
 
@@ -184,6 +201,8 @@ eject() {
 	echo $answer
 	exit $code
 }
+
+abort_filename="$abort_dir/$abort_file"
 
 #
 
@@ -211,9 +230,6 @@ loadslot() {
 	case $whichslot in
 	current)
 		load=$slot
-		[ $load -eq 0 ] && load=$firstslot
-		[ $load -gt $lastslot ] && load=$firstslot
-		[ $load -lt $firstslot ] && load=$lastslot
 		;;
 	next|advance)
 		load=`expr $slot + 1`
@@ -252,6 +268,13 @@ loadslot() {
 		echo `_ 'Exit ->'` $answer >> $logfile
 		echo $answer
 		exit 0
+	fi
+
+	if [ X"$whichslot" = X"current" ]; then
+		answer="<none> Current slot not loaded"
+		echo `_ 'Exit ->'` $answer>> $logfile
+		echo $answer
+		exit 1
 	fi
 
 	expr $accesscount + 1 > $accessfile
@@ -318,7 +341,7 @@ while [ $# -ge 1 ];do
 		eject
 		;;
 	*)
-		fmt`gettext "<none> %s: Unknown option %s\n"`
+		fmt=`gettext "<none> %s: Unknown option %s\n"`
 		printf $fmt $myname $1
 		exit 2
 		;;
