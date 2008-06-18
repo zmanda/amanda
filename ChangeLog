@@ -1,4 +1,7 @@
 2008-06-18  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amstatus.pl: Report size of PART taped on 'dump to tape'.
+
+2008-06-18  Jean-Louis Martineau <martineau@zmanda.com>
 	* client-src/sendsize.c: Report error from application to server.
 	* application-src/amgtar.c: Report exit status of tar.
 

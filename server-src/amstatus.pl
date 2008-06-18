@@ -914,6 +914,9 @@ foreach $host (sort @hosts) {
 								$exit_status |= $STATUS_FAILED;
 							}
 							print " dumping to tape";
+							if(defined($tapedsize{$hostpart})) {
+								printf " (%d$unit done)", $tapedsize{$hostpart};
+							}
 							if( defined $starttime ) {
 								print " (", &showtime($taper_time{$hostpart}), ")";
 							}
