@@ -1,4 +1,8 @@
 2008-06-18  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/amanda.h: Fix skip_quoted_string for "\\".
+	* common-src/file.c: Fix debug_agets for "\\".
+
+2008-06-18  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amstatus.pl: Report size of PART taped on 'dump to tape'.
 
 2008-06-18  Jean-Louis Martineau <martineau@zmanda.com>

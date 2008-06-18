@@ -473,7 +473,7 @@ debug_agets(
 	}
 
 	if (ch == '\\') {
-	    escape = 1;
+	    escape = !escape;
 	} else {
 	    if (ch == '"') {
 		if (!escape) 

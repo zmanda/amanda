@@ -650,8 +650,9 @@ time_t	unctime(char *timestr);
     while (((c) != '\0') && !((iq == 0) && isspace((int)c))) {		\
 	if ((c) == '"') {						\
 	    iq = !iq;							\
-	} else if (((c) == '\\') && (*(ptr) == '"')) {			\
-	    (ptr)++;							\
+	} else if ((c) == '\\') {					\
+	    if (*ptr)	/* not last character */			\
+		(ptr)++;						\
 	}								\
 	(c) = *(ptr)++;							\
     }									\
