@@ -48,7 +48,6 @@
 #include "amanda.h"
 #include "pipespawn.h"
 #include "amfeatures.h"
-#include "amandates.h"
 #include "clock.h"
 #include "util.h"
 #include "getfsent.h"
@@ -368,12 +367,6 @@ amgtar_selfcheck(
 	check_dir(gnutar_listdir, R_OK|W_OK);
     } else {
 	printf(_("ERROR [No GNUTAR-LISTDIR]\n"));
-    }
-
-    {
-	char *amandates_file;
-	amandates_file = getconf_str(CNF_AMANDATES);
-	check_file(amandates_file, R_OK|W_OK);
     }
 
     fprintf(stdout, "OK %s\n", argument->dle.disk);
