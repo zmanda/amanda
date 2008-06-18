@@ -392,7 +392,7 @@ amgtar_estimate(
     FILE  *dumpout = NULL;
     off_t  size = -1;
     char  *line;
-    char  *errmsg;
+    char  *errmsg = NULL;
     char  *qdisk;
     amwait_t wait_status;
     int tarpid;
@@ -402,13 +402,11 @@ amgtar_estimate(
 
     if (!gnutar_path) {
 	errmsg = vstrallocf(_("GNUTAR-PATH not defined"));
-	dbprintf("%s\n", errmsg);
 	goto common_exit;
     }
 
     if (!gnutar_listdir) {
 	errmsg = vstrallocf(_("GNUTAR-LISTDIR not defined"));
-	dbprintf("%s\n", errmsg);
 	goto common_exit;
     }
 
@@ -421,7 +419,6 @@ amgtar_estimate(
     if ((nullfd = open("/dev/null", O_RDWR)) == -1) {
 	errmsg = vstrallocf(_("Cannot access /dev/null : %s"),
 			     strerror(errno));
-	dbprintf("%s\n", errmsg);
 	goto common_exit;
     }
 
@@ -487,7 +484,7 @@ amgtar_estimate(
 	errmsg = vstrallocf(_("%s terminated with signal %d: see %s"),
 			     cmd, WTERMSIG(wait_status), dbfn());
     } else if (WIFEXITED(wait_status)) {
-	if (WEXITSTATUS(wait_status) != 0) {
+	if (WEXITSTATUS(wait_status) != 0 && WEXITSTATUS(wait_status) != 2) {
 	    errmsg = vstrallocf(_("%s exited with status %d: see %s"),
 			         cmd, WEXITSTATUS(wait_status), dbfn());
 	} else {
@@ -500,6 +497,10 @@ amgtar_estimate(
     dbprintf(_("after %s %s wait\n"), my_argv[0], qdisk);
 
 common_exit:
+    if (errmsg) {
+	dbprintf("%s", errmsg);
+	fprintf(stdout, "ERROR %s\n", errmsg);
+    }
 
     if (incrname) {
 	unlink(incrname);
@@ -535,6 +536,8 @@ amgtar_backup(
     FILE *mesgstream;
     FILE *indexstream;
     FILE *outstream;
+    char *errmsg = NULL;
+    amwait_t wait_status;
 
     char **my_argv;
     int tarpid;
@@ -603,7 +606,27 @@ amgtar_backup(
         }
     }
 
+    waitpid(tarpid, &wait_status, 0);
+    if (WIFSIGNALED(wait_status)) {
+	errmsg = vstrallocf(_("%s terminated with signal %d: see %s"),
+			    cmd, WTERMSIG(wait_status), dbfn());
+    } else if (WIFEXITED(wait_status)) {
+	if (WEXITSTATUS(wait_status) != 0) {
+	    errmsg = vstrallocf(_("%s exited with status %d: see %s"),
+				cmd, WEXITSTATUS(wait_status), dbfn());
+	} else {
+	    /* Normal exit */
+	}
+    } else {
+	errmsg = vstrallocf(_("%s got bad exit: see %s"),
+			    cmd, dbfn());
+    }
+    dbprintf(_("after %s %s wait\n"), my_argv[0], qdisk);
     dbprintf(_("amgtar: %s: pid %ld\n"), cmd, (long)tarpid);
+    if (errmsg) {
+	dbprintf("%s", errmsg);
+	g_fprintf(mesgstream, "sendbackup: error [%s]\n", errmsg);
+    }
 
     if (incrname && strlen(incrname) > 4) {
 	char *nodotnew;

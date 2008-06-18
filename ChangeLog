@@ -1,3 +1,7 @@
+2008-06-18  Jean-Louis Martineau <martineau@zmanda.com>
+	* client-src/sendsize.c: Report error from application to server.
+	* application-src/amgtar.c: Report exit status of tar.
+
 2008-06-16  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Xfer.swg xfer-src/Makefile.am xfer-src/xfer-element.h
 	  xfer-src/dest-device.c xfer-src/source-device.c: new elements

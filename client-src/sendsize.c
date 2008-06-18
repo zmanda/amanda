@@ -749,9 +749,10 @@ application_api_calc_estimate(
 
 	    amflock(1, "size");
 
-	    g_printf(_("%s %d SIZE %lld\n"), est->qamname, level,
-		   (long long)size);
-	    if (errmsg && errmsg[0] != '\0') {
+	    if (size >= 0) {
+		g_printf(_("%s %d SIZE %lld\n"), est->qamname, level,
+			 (long long)size);
+	    } else if (errmsg && errmsg[0] != '\0') {
 		if(am_has_feature(g_options->features,
 				  fe_rep_sendsize_quoted_error)) {
 		    qerrmsg = quote_string(errmsg);
@@ -760,6 +761,10 @@ application_api_calc_estimate(
 			   est->qamname, level, qerrmsg);
 		    amfree(qerrmsg);
 		}
+	    } else {
+		dbprintf(_("Unknown error\n"));
+		g_printf(_("%s %d ERROR Unknown error"),
+			 est->qamname, level);
 	    }
 	    amfree(errmsg);
 	    fflush(stdout);
@@ -2260,11 +2265,17 @@ getsize_application_api(
 	if (line[0] == '\0')
 	    continue;
 	dbprintf("%s\n", line);
+	if (strncmp(line,"ERROR ", 6) == 0) {
+	    *errmsg = stralloc(line+6);
+	    size = -3;
+	    continue;
+	}
 	i = sscanf(line, "%lld %lld", &size1_, &size2_);
 	size1 = (off_t)size1_;
 	size2 = (off_t)size2_;
 	if(i == 2) {
-	    size = size1 * size2;
+	    if (size1 * size2 > 0)
+		size = size1 * size2;
 	}
 	if(size > -1) {
 	    amfree(line);
