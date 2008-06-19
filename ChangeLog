@@ -1,4 +1,11 @@
 2008-06-19  Dustin J. Mitchell <dustin@zmanda.com>
+	* example/template.d/amanda-single-tape.conf.in
+	  example/template.d/amanda-harddisk.conf.in
+	  example/template.d/amanda-tape-changer.conf.in
+	  example/template.d/dumptypes example/template.d/amanda-S3.conf.in:
+	  use application amgtar instead of program GNUTAR
+
+2008-06-19  Dustin J. Mitchell <dustin@zmanda.com>
 	* config/amanda/net.m4: AC_SUBST port ranges; update comments
 
 2008-06-19  Satya Ganga <gsat@zmanda.com>

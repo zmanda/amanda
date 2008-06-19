@@ -419,4 +419,3 @@ define dumptype gui-encrypt-compress {
    encrypt server 
    server_encrypt "/usr/sbin/amcryptsimple"
 }
-

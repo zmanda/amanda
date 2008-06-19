@@ -33,9 +33,18 @@ define dumptype global {
         auth "bsdtcp"
 }
 
+#define application-tool and dumptype for the amgtar application
+define application-tool app_amgtar {
+    comment "amgtar"
+    plugin  "amgtar"
+    #property "GNUTAR-PATH" "/path/to/gtar"
+    #property "GNUTAR-LISTDIR" "/path/to/gnutar_list_dir"
+}
+
 define dumptype gui-base {
         global
-        program "GNUTAR"
+        program "APPLICATION"
+        application "app_amgtar"
         comment "gui base dumptype dumped with tar"
         compress none
         index yes
