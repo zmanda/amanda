@@ -1,4 +1,10 @@
 2008-06-19  Dustin J. Mitchell <dustin@zmanda.com>
+	* server-src/amgetconf.pl: fail on bad parameters or subsections, but
+	  not empty values or subsection lists
+	* perl/Amanda/Config.swg: publish a list of subsections
+	* installcheck/amgetconf.pl: test it
+
+2008-06-19  Dustin J. Mitchell <dustin@zmanda.com>
 	* example/template.d/amanda-single-tape.conf.in
 	  example/template.d/amanda-harddisk.conf.in
 	  example/template.d/amanda-tape-changer.conf.in

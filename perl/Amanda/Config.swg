@@ -186,6 +186,10 @@ The subsections are:
 
 =item C<holdingdisk>, with constants beginning with C<$HOLDING_>.
 
+=item C<application>, with constants beginning with C<$APPLICATION_>.
+
+=item C<script>, with constants beginning with C<$PP_SCRIPT_>.
+
 =back
 
 See C<conffile.h> for the names of the constants themselves.
@@ -198,7 +202,8 @@ a string suitable for use in C<amanda.conf>, including quotes around strings if
 C<$str_needs_quotes> is true.
 
 C<getconf_list($typ)> returns a list of the names of all subsections of the
-given type.
+given type.  C<%subsection_names> is a hash whose keys are allowed subsection
+names.
 
 The C<$CNF_DISPLAYUNIT> implies a certain divisor to convert from
 kilobytes to the desired unit.  This divisor is available from
@@ -491,7 +496,7 @@ amglue_copy_to_tag(send_amreport_on_t, getconf);
  *  - CONFTYPE_TIME -> IV (epoch timestamp)
  *  - CONFTYPE_COMPRESS, CONFTYPE_ENCRYPT, CONFTYPE_ESTIMATE, CONFTYPE_STRATEGY,
  *    CONFTYPE_TAPERALGO, CONFTYPE_PRIORITY, CONFTYPE_HOLDING, CONFTYPE_EXECUTE_ON,
- *    CONFTYPE_EXECUTE_WHERE -> IV (enums)
+ *    CONFTYPE_EXECUTE_WHERE, SEND_AMREPORT_ON -> IV (enums)
  *  - CONFTYPE_RATE -> list of two NVs
  *  - CONFTYPE_INTRANGE -> list of two IVs
  *  - CONFTYPE_EXINCLUDE -> hashref with keys 'list' (listref), 'file' (listref), 
@@ -595,6 +600,7 @@ amglue_copy_to_tag(send_amreport_on_t, getconf);
 	    case CONFTYPE_HOLDING:
 	    case CONFTYPE_EXECUTE_ON:
 	    case CONFTYPE_EXECUTE_WHERE:
+	    case CONFTYPE_SEND_AMREPORT_ON:
 	    case CONFTYPE_INT:
 		$result = sv_2mortal(amglue_newSVi64(val_t__int($1)));
 		argvi++;
@@ -731,6 +737,18 @@ amglue_export_tag(getconf,
     lookup_pp_script pp_script_getconf pp_script_name
     pp_script_seen pp_script_seen
 );
+
+%perlcode %{
+our %subsection_names = (
+    "tapetype" => 1,
+    "dumptype" => 1,
+    "interface" => 1,
+    "holdingdisk" => 1,
+    "application-tool" => 1,
+    "script-tool" => 1,
+);
+%}
+amglue_export_tag(getconf, %subsection_names);
 
 long int getconf_unit_divisor(void);
 

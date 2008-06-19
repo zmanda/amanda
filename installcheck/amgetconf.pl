@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 59;
+use Test::More tests => 64;
 
 use lib "@amperldir@";
 use Installcheck::Config;
@@ -50,6 +50,12 @@ is(run_get('amgetconf', 'TESTCONF', "tapelist"), "tapelist",
     "tapelist defaults to 'tapelist'");
 is(run_get('amgetconf', 'TESTCONF', "usetimestamps"), "yes", 
     "usetimestamps defaults to 'yes'");
+is(run_get('amgetconf', 'TESTCONF', "send_amreport_on"), "ALL",
+    "send_amreport_on defaults to 'ALL'"); # (enum value is 0)
+is(run_get('amgetconf', 'TESTCONF', "taperalgo"), "FIRST",
+    "taperalgo defaults to 'ALL'"); # (enum value is 0)
+is(run_get('amgetconf', 'TESTCONF', "printer"), "",
+    "printer defaults to empty string, which is not an error");
 
 # test command-line parsing
 is(run_get('amgetconf', 'TESTCONF', '-o', 'reserve=50', 'reserve'), "50",
@@ -65,7 +71,7 @@ is(run_get('amgetconf', 'TESTCONF', 'reserve', 'a', 'table', 'for', 'two', '-o',
 like(run_err('amgetconf', 'TESTCONF', "foos_per_bar"), qr/no such parameter/, 
     "handles nonexistent parameters as an error");
 like(run_err('amgetconf', 'TESTCONF', "build.foos_per_bar"), qr/no such parameter/, 
-    "handles nonexistent build parameters");
+    "handles nonexistent build parameters as an error");
 
 # Test build parameters that we can determine easily.  Testing all parameters
 # would be more of a maintenance bother than a help.
@@ -95,6 +101,10 @@ is(run_get('amgetconf', 'TESTCONF', "build.config_dir"), $CONFIG_DIR,
     "build parameters are case-insensitive");
 
 is(run_get('amgetconf', "build.bindir"), $bindir, "build variables are available without a config");
+
+# empty --list should return nothing
+is_deeply([sort(split(/\n/, run_get('amgetconf', 'TESTCONF', '--list', 'holdingdisk')))], [ ],
+	"--list returns an empty list when there's nothing to return");
 
 # dbopen, dbclose
 my $dbfile = run_get('amgetconf', 'TESTCONF', "dbopen.foo");
@@ -235,6 +245,9 @@ like(run_err('amgetconf', 'TESTCONF', 'application-tool:app_amgtar:NOSUCHPARAM')
     "handles bad application-tool parameter name");
 like(run_err('amgetconf', 'TESTCONF', 'script-tool:my-script:NOSUCHPARAM'), qr/no such parameter/, 
     "handles bad script-tool parameter name");
+
+like(run_err('amgetconf', 'TESTCONF', '--list', 'frogs'), qr/no such parameter/,
+        "--list fails given an invalid subsection name");
 
 ##
 # exclude lists are a bit funny, too

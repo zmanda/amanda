@@ -50,15 +50,11 @@ For all but Amanda configuration parameters, the <config> option is
 ignored, but must be present.  For Amanda configuration parameters,
 values in subsections are specified in the form TYPE:NAME:PARAMETER.
 
-With --list, <paramname> can be one of
-  build
-  tapetype
-  dumptype
-  interface
-  holdingdisk
-  application-tool
-  script-tool
+With --list, PARAM can be one of
 EOF
+    for my $name (keys %Amanda::Config::subsection_names) {
+	print "    $name\n";
+    }
     exit(1);
 }
 
@@ -211,15 +207,19 @@ sub conf_param {
     my ($parameter, $opt_list) = @_;
 
     if ($opt_list) {
+	# getconf_list will return an empty list for any unrecognized name,
+	# so first check that the user has supplied a real subsection
+	no_such_param($parameter)
+	    unless defined($Amanda::Config::subsection_names{$parameter});
 	my @list = getconf_list($parameter);
-	no_such_param($parameter) unless (@list);
 
 	for my $subsec (@list) {
 	    print "$subsec\n";
 	}
     } else {
+	no_such_param($parameter)
+	    unless defined(getconf_byname($parameter));
 	my @strs = getconf_byname_strs($parameter, 0);
-	no_such_param($parameter) unless (@strs);
 	
 	for my $str (@strs) {
 	    print "$str\n";
