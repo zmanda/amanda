@@ -665,8 +665,8 @@ static gboolean test_tape_status(FILE * outf) {
         g_assert(G_VALUE_TYPE(&property_value) == MEDIA_ACCESS_MODE_TYPE);
         if (g_value_get_enum(&property_value) ==
             MEDIA_ACCESS_MODE_WRITE_ONLY) {
-            g_fprintf(outf, "WARNING: Media access mode is WRITE_ONLY, "
-                    "dumps will be thrown away.\n");
+            g_fprintf(outf, "WARNING: Media access mode is WRITE_ONLY; "
+                    "dumps may not be recoverable.\n");
         }
     }
     

@@ -339,12 +339,9 @@ option.</para>
   <listitem>
 <para>Default:
 <filename>null:</filename>.
-The path name of the non-rewinding tape device.
-Non-rewinding tape device names often have an 'n' in the name,
-e.g.
-<filename>/dev/rmt/0mn</filename>,
-however this is operating system specific and you should consult
-that documentation for detailed naming information.</para>
+The device name.  See
+<citerefentry><refentrytitle>amanda-devices</refentrytitle><manvolnum>7</manvolnum></citerefentry>
+for more information on device names.</para>
 
 <para>If a tape changer is configured
 (see the
@@ -371,22 +368,14 @@ option set to
   <varlistentry>
   <term><emphasis remap='B'>device_property</emphasis> string string</term>
   <listitem>
-<para>These options can set various device properties, including block size,
-maximum volume usage, authentication information, hardware feature support,
-and more.Specifics of how properties are used are device-dependent, though
-some common properties are supported across multiple device drivers.</para>
+<para>These options can set various device properties.  See
+<citerefentry><refentrytitle>amanda-devices</refentrytitle><manvolnum>7</manvolnum></citerefentry>
+for more information on device properties.</para>
 
-<para> Both strings are quoted; the first string contains the name of
+<para>Both strings are quoted; the first string contains the name of
 the property to set, and the second contains its value. For example, to set
-a fixed block size of 128k, do:</para><programlisting>device_property "BLOCK_SIZE" "131072"</programlisting>
-<para></para>
-<para>The order in which device properties are set is as follows:
-<orderedlist><listitem><para>Tapetype parameters, including length, blocksize,
-readblocksize, file-pad, are translated into device properties and set
-accordingly.</para></listitem>
-<listitem><para>Device properties from any device_property configuration directives
-are set, in the order they appear in the configuration file.</para></listitem>
-</orderedlist></para>
+a fixed block size of 128k, write:</para>
+<programlisting>device_property "BLOCK_SIZE" "131072"</programlisting>
   </listitem>
   </varlistentry>
 

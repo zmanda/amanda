@@ -1,6 +1,8 @@
 <!-- Global Entities File -->
 
 <!ENTITY email.sgw '<email>sgw@amanda.org</email>'>
+<!ENTITY email.dustin '<email>dustin@zmanda.com</email>'>
+<!ENTITY email.ian '<email>ian@zmanda.com</email>'>
 <!ENTITY maintainer.sgw 'Stefan G. Weichinger, &email.sgw;, maintainer of the
 &A;-documentation'>
 <!ENTITY email.jds '<email>jds@amanda.org</email>'>

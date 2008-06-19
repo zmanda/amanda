@@ -9,6 +9,7 @@ COMMON_MAN_PAGES =  amanda.8 \
 		    amanda-client.conf.5
 
 SERVER_MAN_PAGES =  \
+    amanda-devices.7 \
     amaddclient.8    \
     amadmin.8 \
     amaespipe.8 \

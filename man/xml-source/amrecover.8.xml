@@ -213,8 +213,7 @@ If the tape device is omitted, the default is used.</para>
 <emphasis remap='I'>tapedev</emphasis>
 must be equal to the amrecover_changer setting on the server.</para>
 
-<para>If you need to change the protocol (tape:, rait:, file:, null:) then you
-must specify the hostname.</para>
+<para>Since device names contain colons, you must always specify the hostname.</para>
 
 <programlisting>
 settape 192.168.0.10:file:/file1

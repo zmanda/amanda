@@ -1,0 +1,371 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"
+[
+  <!-- entities files to use -->
+  <!ENTITY % global_entities SYSTEM '../entities/global.entities'>
+  %global_entities;
+]>
+
+<refentry id='amanda-devices.7'>
+
+<refmeta>
+<refentrytitle>amanda-devices</refentrytitle>
+<manvolnum>7</manvolnum>
+</refmeta>
+<refnamediv>
+<refname>amanda-devices</refname>
+<refpurpose>Configuring and Using of Amanda Devices</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+
+<refsect1><title>DESCRIPTION</title>
+
+<para>The Device API specifies a generic interface between Amanda and storage
+devices such as tapes or disks.  This manual page describes the device
+drivers included with Amanda.</para>
+
+<para>This is a <emphasis>user-level</emphasis> description of the API, and
+does not address details that are only of concern to developers.  For that
+purpose, consult the Amanda source code and http://wiki.zmanda.com.</para>
+
+<para>The term "device driver" describes the software that can communicate with
+some kind of backend storage, e.g., a tape driver.  A "device" is the
+  storage element itself, usually a piece of hardware. When discussing
+  a device and its driver as a unit, the term  "device" is sometimes
+  also used to refer to the combination of device and driver.</para>
+
+
+</refsect1>
+
+<refsect1><title>DEVICES</title>
+
+<para>This section lists the device drivers included with Amanda, and basic instructions for using them.  For complete How-To information, consult the Amanda wiki at http://wiki.zmanda.com.</para>
+
+<refsect2><title>Null Device</title>
+<programlisting>
+tapedev "null:"
+</programlisting>
+
+<para>The null device driver only supports writing, and discards all data.  It is
+generally only useful for testing purposes.</para>
+
+</refsect2>
+
+<refsect2><title>RAIT Device</title>
+<programlisting>
+tapedev "rait:tape:/dev/rmt/tps0d{4,5,6}n"
+</programlisting>
+
+<para>The RAIT device driver mirrors or stripes data over multiple "child" devices.
+The child devices are specified using a shell-like syntax, where alternatives
+are enclosed in braces and separated by commas.</para>
+
+<para>With two child devices, the RAIT device driver mirrors data such that the
+two devices contain identical data and can be used singly for
+  recovery.  With more than two devices, the RAIT device "stripes"
+  data across all but one device and writes a parity block to the
+  final device, usable for data recovery in the event of a device or
+  volume failure.  The RAIT device scales its blocksize as necessary
+  to match the number of children that will be used to store data.</para>
+
+<para>The RAIT device driver depends on its child devices having similar
+characteristics.  Combining devices with different block sizes may not work as
+desired.</para>
+
+</refsect2>
+
+<refsect2><title>S3 Device</title>
+<programlisting>
+tapedev "s3:foocorp-backups/DailySet1-"
+device_property "S3_ACCESS_KEY" "MYACCESSKEY"
+device_property "S3_SECRET_KEY" "MYSECRETKEY"
+</programlisting>
+
+<para>The S3 device driver uploads data to the Amazon S3 "storage cloud".  Its
+device name is a slash-sparated combination of bucket name and prefix:
+"s3:BUCKET/PREFIX".  Since buckets must be unique across all Amazon S3 users,
+and since the number of buckets allowed to each user is limited, the driver can
+store multiple Amanda volumes in a single S3 bucket, distinguished by prefix.
+The prefix and slash can be omitted if they are not needed: "s3:BUCKET".</para>
+
+<para>The access and secret keys used to authenticate to Amazon S3 are provided
+as properties.</para>
+
+<para>The S3 device driver stores each block in a distinct S3 object.  Due to
+high HTTP overhead for each request, use of larger than normal block
+  sizes (&gt; 1 megabyte) is reccomended with the S3 device.</para>
+
+</refsect2>
+
+<refsect2><title>Tape Device</title>
+<programlisting>
+tapedev "tape:/dev/nst0"
+</programlisting>
+
+<para>The tape device driver interacts with a tape drive.  The device uses the
+operating system's built-in tape support, which is generally similar to that
+available via the command-line utilities dd(1) and mt(1).</para>
+
+<para>The tape device name should specify a path to the operating system's
+device file.</para>
+
+</refsect2>
+
+<refsect2><title>VFS Device</title>
+<programlisting>
+tapedev "file:/path/to/vtape"
+</programlisting>
+
+<para>The VFS device driver stores data on a UNIX filesystem. Note
+  that although one typically uses the VFS device driver to store data
+  on hard disks, the driver does not interface with any hardware on a
+  block level.</para>
+
+<para>The device name specifies a path to a directory which must exist and
+contain a "data/" subdirectory.  Each tape file is stored as a distinct file in
+this directory, the name of which reflects the Amanda header in the tape file.
+Block boundaries are not maintained: the driver supports reads of arbitrary
+size, regardless of the blocksize used to write the data.</para>
+
+</refsect2>
+
+</refsect1>
+
+<refsect1><title>PROPERTIES</title>
+
+<para>Device drivers use <emphasis>properties</emphasis> as a generic means to
+interact with other parts of Amanda.  Some properties are set by the device
+driver and used by Amanda to determine how its devices should be used.  Other
+properties can be set by Amanda or by the user to influence the driver's
+behavior. Properties are set for a particular device, so that if you have two
+tape devices, they will not share property values.</para>
+
+<para>Properties are specified in <emphasis>amanda.conf</emphasis> with the
+<emphasis>device-property</emphasis> parameter, e.g.,
+<programlisting>
+device_property "BLOCK_SIZE" "131072"
+</programlisting>
+See <citerefentry><refentrytitle>amanda.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+for more information on this parameter.</para>
+
+<para>Some properties are set based on other configuration values, such as
+tapetype parameters.  These special cases are detailed under the appropriate
+property, below.</para>
+
+<para>The order in which device properties are set is as follows:
+<orderedlist>
+<listitem><para>Tapetype parameters (including length, blocksize,
+    readblocksize and file-pad) are translated into device properties
+    and set accordingly.</para></listitem>
+<listitem><para>Device properties from any device_property
+    configuration parameters are set, in the order they appear in the
+    configuration file.</para>
+</listitem>
+</orderedlist></para>
+
+<para>Properties described as read-only are not accessible to users.  They are
+listed here for completeness.</para>
+
+<refsect2><title>COMMON PROPERTIES</title>
+
+<para>Note that some of these properties are currently unused, and present only
+for future expansion.</para>
+
+<!-- PLEASE KEEP THIS LIST IN ALPHABETICAL ORDER -->
+
+<variablelist>
+ <!-- ==== -->
+ <varlistentry><term>BLOCK_SIZE</term><listitem>
+ (read-write) This property gives the block size, in bytes.  The usual suffixes ("kbytes", etc.) are allowed.  Specify "-1" for variable block size, on devices that support it; see BLOCK SIZES, below.  The tapetype parameter <emphasis>blocksize</emphasis> sets this property, if MAX_BLOCK_SIZE is not supported.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>APPENDABLE</term><listitem>
+ (read-only) This property indicates whether this device supports appending data to volumes.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>CANONICAL_NAME</term><listitem>
+ (read-only) This property contains the full canonical name for this device.  This name may not be the same as the user-supplied name, but is a valid name by which to access this device.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>COMPRESSION</term><listitem>
+ (read-write) This property represents the compression status of the device, and can be used to enable and disable such compression.  This applies mostly to tape devices, although many tape devices do not support setting compression from software.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>COMPRESSION_RATE</term><listitem>
+ (read-only) This property gives the compression rate, as a decimal ratio.  It may be a measured value over some unspecified period or a simple estimate.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>CONCURRENCY</term><listitem>
+ (read-only) This property indicates the level of concurrent access that this device supports.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>FREE_SPACE</term><listitem>
+ (read-only) This property gives the amount of free space available on the current volume, if known.  This is often an estimate; for example, tape devices can only estimate the amount of tape left on a spool.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>MIN_BLOCK_SIZE</term><listitem>
+ (read-write) This property gives the minimum block size when operating in variable-block-size mode.  See BLOCK SIZES, below.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>MEDIUM_TYPE</term><listitem>
+ (read-only) This property gives the type of the media in the device: read only, WORM (Write Once, Read Many), read/write, or write only.  Write-only devices do not support recovery, but the data are not necessarily thrown out.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>MAX_BLOCK_SIZE</term><listitem>
+ (read-write) This property gives the maximum block size when operating in variable-block-size mode.  See BLOCK SIZES, below.  The tapetype parameter <emphasis>blocksize</emphasis> sets this property, if supported.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>MAX_VOLUME_USAGE</term><listitem>
+ (read-write) On devices that support it, this property will limit the total amount of data written to a volume; attempts to write beyond this point will cause the device to simulate "out of space."  Zero means no limit.  The tapetype parameter <emphasis>length</emphasis> sets this property.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>PARTIAL_DELETION</term><listitem>
+ (read-only) This property indicates whether the device supports deletion of specific files.  Aside from linear tapes, most devices can support this feature.  It is currently unused by Amanda.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>READ_BUFFER_SIZE</term><listitem>
+ (read-write) This property specifies the buffer size that will be used for reads; this should be large enough to contain any block that may be read from the device.  The tapetype parameter <emphasis>READBLOCKSIZE</emphasis> sets this property.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>STREAMING</term><listitem>
+ (read-only) This property gives the streaming requirement for this device.  For example, tape drives often require a steady supply of data to avoid shoe-shining, while disk devices have no such requirement.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>VERBOSE</term><listitem>
+ (read-write) If set, then the device will produce verbose debugging output.  This property is not recognized by all devices.
+</listitem></varlistentry>
+ <!-- ==== -->
+</variablelist>
+
+<refsect3><title>BLOCK SIZES</title>
+
+<para>Amanda writes device data in blocks, and on most devices the block
+boundaries are embedded in the media along with the data itself, so subsequent
+reads must use the same block sizes.  On tape devices, the block size is
+dictated by the capabilities of the hardware -- buffer sizes, physical format,
+and so on.</para>
+
+<para>Amanda has historically supported a single, fixed block size -- usually
+32k.  The Device API adds the ability to specify a block size at runtime.  In
+most cases, the optimal configuration is a fixed block size appropriate to the
+hardware.  However, some Amanda devices also support "variable" block sizes,
+where a device can write in a range of block sizes.  In this case, the device
+accepts any write in the size range as a "block".  Variable block size is
+enabled by specifying a BLOCK_SIZE of -1 and setting MIN_BLOCK_SIZE and
+MAX_BLOCK_SIZE.</para>
+
+<para>READ_BUFFER_SIZE specifies the maximum buffer size that will be allocated
+for reading.</para>
+
+<para>Most devices will not support reading a volume using a different block
+size than that with which it was written.  Adjusting the block size of an
+Amanda configuration that has existing dumps on volumes may render those dumps
+unreadable.</para>
+
+</refsect3>
+
+</refsect2>
+
+<refsect2><title>DRIVER-SPECIFIC PROPERTIES</title>
+
+<refsect3><title>S3 Device</title>
+
+<!-- PLEASE KEEP THIS LIST IN ALPHABETICAL ORDER -->
+<variablelist>
+ <!-- ==== -->
+ <varlistentry><term>S3_ACCESS_KEY</term><listitem>
+ (read-write) This property gives the Amazon S3 access key used to access the service.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>S3_SECRET_KEY</term><listitem>
+ (read-write) This property gives the Amazon S3 secret key used to access the service.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>S3_USER_TOKEN</term><listitem>
+ (read-write) This property specifies the user token for Amanda Enterprise Edition customers.
+</listitem></varlistentry>
+ <!-- ==== -->
+</variablelist>
+
+</refsect3>
+
+<refsect3><title>Tape Device</title>
+
+<para>Most of these properties are automatically detected, but can be
+overridden in the configuration file if the autodetection fails. Note that tape
+drives are required to at least support the MTREW (rewind) operation; all other
+operations can be emulated with the MTREW and read data operations.</para>
+
+<para>The feature properties must be specified with a status, surety, and
+source.  The status is either "enabled" or "disabled", while the surety and
+source are always "good" and "user", respectively.  Examples:
+<programlisting>
+device_property "FSF" "disabled|good|user"
+device_property "BSF" "enabled|good|user"
+</programlisting>
+</para>
+
+<!-- PLEASE KEEP THIS LIST IN ALPHABETICAL ORDER -->
+<variablelist>
+ <!-- ==== -->
+ <varlistentry><term>BROKEN_GMT_ONLINE</term><listitem>
+ (read-write) Set this boolean property if the system's GMT_ONLINE macro gives incorrect results.  This is currently true for the Linux IDE-TAPE driver.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>BSF</term><listitem>
+ (read-write) This feature property specifies whether the device
+ driver may execute the MTBSF operation (backward seek file).
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>BSF_AFTER_EOM</term><listitem>
+ (read-write) This feature property specifies whether the device
+ driver should execute an MTBSF (backward seek file) operation after
+ MTEOM (seek to end of recorded data) in order to append.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>BSR</term><listitem>
+ (read-write) This feature property specifies whether the device
+ driver may use the MTBSR operation (backward seek record).
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>EOM</term><listitem>
+ (read-write) This feature property specifies whether the device
+ driver may use the MTEOM command (seek to end of recorded data).
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>FINAL_FILEMARKS</term><listitem>
+ (read-write) This property gives the number of filemarks that should be written at EOD.  It is usually 1 or 2.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>FSF</term><listitem>
+ (read-write) This feature property specifies whether the device driver may use the MTFSF operation (forward seek file).
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>FSR</term><listitem>
+ (read-write) This feature property specifies whether the device driver may use the MTFSR operation (forward seek record).
+</listitem></varlistentry>
+ <!-- ==== -->
+</variablelist>
+
+</refsect3>
+
+</refsect2>
+
+</refsect1>
+
+<refsect1><title>AUTHORS</title>
+
+<para>Dustin J. Mitchell &email.dustin; and Ian Turner &email.ian;: Original text</para>
+</refsect1>
+
+<refsect1><title>SEE ALSO</title>
+<para>
+<citerefentry><refentrytitle>amanda.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
+</para>
+
+<para>
+An updated version of this man page may be available at http://wiki.zmanda.com/index.php/Amanda-devices.
+</para>
+</refsect1>
+</refentry>
