@@ -812,6 +812,7 @@ rait_device_start (Device * dself, DeviceAccessMode mode, char * label,
     RaitDevice * self;
     DeviceStatusFlags total_status;
     char *failure_errmsgs = NULL;
+    char * label_from_device = NULL;
 
     self = RAIT_DEVICE(dself);
 
@@ -850,17 +851,52 @@ rait_device_start (Device * dself, DeviceAccessMode mode, char * label,
 		failure_errmsgs? failure_errmsgs:"; ",
 		child->device_name, device_error_or_status(child));
         } else {
-	    /* TODO: check that volume label and time match for each child device */
-	    if (child->volume_label)
-		dself->volume_label = newstralloc(dself->volume_label, child->volume_label);
-	    if (child->volume_time)
-		dself->volume_time = newstralloc(dself->volume_time, child->volume_time);
+	    if (child->volume_label != NULL && child->volume_time != NULL) {
+                if (dself->volume_label != NULL && dself->volume_time != NULL) {
+                    if (strcmp(child->volume_label, dself->volume_label) != 0 ||
+                        strcmp(child->volume_time, dself->volume_time) != 0) {
+                        /* Mismatch! (Two devices provided different labels) */
+                        failure_errmsgs =
+                            newvstrallocf(failure_errmsgs,
+                                          "%s%s%s: Label (%s/%s) is different "
+                                          "from label (%s/%s) found at "
+                                          "device %s",
+                                          failure_errmsgs? failure_errmsgs:"",
+                                          failure_errmsgs? failure_errmsgs:"; ",
+                                          child->device_name,
+                                          child->volume_label,
+                                          child->volume_time,
+                                          dself->volume_label,
+                                          dself->volume_time,
+                                          label_from_device);
+                        total_status |= DEVICE_STATUS_DEVICE_ERROR;
+                    }
+                } else {
+                    /* First device with a volume. */
+                    dself->volume_label = g_strdup(child->volume_label);
+                    dself->volume_time = g_strdup(child->volume_time);
+                    label_from_device = g_strdup(child->device_name);
+                }
+            } else {
+                /* Device problem, it says it succeeded but sets no label? */
+                failure_errmsgs =
+                    newvstrallocf(failure_errmsgs,
+                                  "%s%s%s: %s",
+                                  failure_errmsgs? failure_errmsgs:"",
+                                  failure_errmsgs? failure_errmsgs:"; ",
+                                  child->device_name,
+                                  "Says label read, but device->volume_label "
+                                  " is NULL.");
+                total_status |= DEVICE_STATUS_DEVICE_ERROR;
+            }
 	}
     }
 
+    amfree(label_from_device);
     g_ptr_array_free_full(ops);
 
-    /* reflect the VOLUME_UNLABELED flag into our own flags, regardless of success */
+    /* reflect the VOLUME_UNLABELED flag into our own flags, regardless of
+       success */
     dself->status =
 	    (dself->status & ~DEVICE_STATUS_VOLUME_UNLABELED)
 	    | (total_status & DEVICE_STATUS_VOLUME_UNLABELED);
@@ -1330,6 +1366,7 @@ static gboolean extract_boolean_read_block_op_eof(gpointer data) {
     return op->base.child->is_eof;
 }
 
+/* Counts the number of elements in an array matching a given proposition. */
 static int g_ptr_array_count(GPtrArray * array, BooleanExtractor filter) {
     int rval;
     unsigned int i;
@@ -1490,7 +1527,7 @@ rait_device_read_block (Device * dself, gpointer buf, int * size) {
 	} else {
 	    /* raid_block_reconstruction sets the error status if necessary */
 	    success = raid_block_reconstruction(RAIT_DEVICE(self),
-					    ops, buf, (size_t)*size);
+                                                ops, buf, (size_t)*size);
 	}
     } else {
         success = FALSE;

@@ -1,3 +1,9 @@
+2008-06-19  Ian Turner <ian@zmanda.com>
+	* device-src/rait-device.c (rait_device_start): Check for consistent
+	  volume label on all child devices, fail with
+	  DEVICE_STATUS_DEVICE_ERROR otherwise.
+	* installcheck/Amanda_Device.pl: Test for foregoing.
+
 2008-06-19  Paddy Sreenivasan <paddy@zmanda.com>
 	* device-src/s3.h: use "https://ls.amazonaws.com/" as STS endpoint
 

@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 180;
+use Test::More tests => 184;
 use File::Path qw( mkpath rmtree );
 use Sys::Hostname;
 use strict;
@@ -344,6 +344,38 @@ TODO: {
 	"finish device write after device corruption")
 	or diag($dev->error_or_status());
 }
+
+undef $dev;
+
+# Make two devices with different labels, should get a
+# message accordingly.
+($vtape1, $vtape2) = (mkvtape(1), mkvtape(2));
+my $rait_name = "rait:{file:$vtape1,file:$vtape2}";
+
+my $dev1 = Amanda::Device->new($vtape1);
+is($dev1->status(), $DEVICE_STATUS_SUCCESS,
+   "$vtape1: Open successful")
+    or diag($dev->error_or_status());
+$dev1->start($ACCESS_WRITE, "TESTCONF13", undef);
+$dev1->finish();
+my $dev2 = Amanda::Device->new($vtape2);
+is($dev2->status(), $DEVICE_STATUS_SUCCESS,
+   "$vtape2: Open successful")
+    or diag($dev->error_or_status());
+$dev2->start($ACCESS_WRITE, "TESTCONF14", undef);
+$dev2->finish();
+
+$dev1 = $dev2 = undef;
+
+$dev = Amanda::Device->new($rait_name);
+is($dev->status(), $DEVICE_STATUS_SUCCESS,
+   "$rait_name: Open successful")
+    or diag($dev->error_or_status());
+
+$dev->read_label();
+ok($dev->status() & $DEVICE_STATUS_DEVICE_ERROR,
+   "Label mismatch error")
+    or diag($dev->error_or_status());
 
 # Test an S3 device if the proper environment variables are set
 my $S3_SECRET_KEY = $ENV{'INSTALLCHECK_S3_SECRET_KEY'};
