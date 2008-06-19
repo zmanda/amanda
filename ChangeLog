@@ -1,3 +1,7 @@
+2008-06-19  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Makefile.am: remove test_utils from SCRIPTS_PERL
+	* config/automake/scripts.am: explain why
+
 2008-06-18  Jean-Louis Martineau <martineau@zmanda.com>
 	* changer-src/chg-manual.sh: Make it interruptible.
 

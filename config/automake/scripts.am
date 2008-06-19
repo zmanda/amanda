@@ -26,7 +26,11 @@
 # Files which support it are syntax-checked when the user invokes 'make check'.
 #
 # All *target* filenames must be listed in SCRIPTS_SHELL, SCRIPTS_PERL, and 
-# SCRIPTS_AWK to support 'make check', 'make dist', and 'make distclean'.
+# SCRIPTS_AWK to support 'make check', 'make dist', and 'make distclean'. No
+# files which are not substituted by config.status should be included in
+# SCRIPTS_PERL, SCRIPTS_SHELL, or SCRIPTS_AWK.  If non-generated files are listed
+# for installation, then Automake will figure out that they should be distributed;
+# otherwise, include them in EXTRA_DIST.
 #
 # USAGE:
 #
@@ -36,12 +40,15 @@
 #   SCRIPTS_PERL = fooscript barscript perl-lib.pl perlmod.pm
 #   SCRIPTS_SHELL = shell1 shell2 sh-lib.sh
 #   SCRIPTS_AWK = talk balk chalk awk-lib.awk
+#   sbin_SCRIPTS = not-subbed
+#   EXTRA_DIST = util-script.pl
 #
 # with the corresponding files in the repository:
 #
 #   fooscript.pl barscript.pl perl-lib.pl.in perlmod.pm.in
 #   shell1.sh shell2.sh sh-lib.sh.in
 #   talk.awk balk.awk chalk.awk awk-lib.awk.in
+#   not-subbed util-script.pl
 #
 # by default, all shell and perl scripts are syntax checked.  If this is
 # a problem (for example, perl scripts depending on Amanda extension 

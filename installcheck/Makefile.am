@@ -46,11 +46,12 @@ tests += $(full_tests)
 endif
 endif
 
-# Add any common files (that should not be run as tests) here:
+# Add any common files (that should not be run as tests, and that do not
+# require configure-variable substitution) here:
 test_utils = Installcheck/Config.pm Installcheck/Run.pm
 EXTRA_DIST += $(test_utils)
 
-SCRIPTS_PERL = $(common_tests) $(server_tests) $(full_tests) $(test_utils)
+SCRIPTS_PERL = $(common_tests) $(server_tests) $(full_tests)
 
 # we don't need to syntax check the test scripts..
 CHECK_PERL =
