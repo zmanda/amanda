@@ -11,7 +11,6 @@ tapecycle 10 tapes	# the number of tapes in rotation
 			# cycle
 
 runtapes 1		# number of tapes to be used in a single run of amdump
-tpchanger "chg-manual"	# the tape-changer glue script
 tapedev "tape:/dev/nst0"	# the no-rewind tape device to be used
 changerfile "@CONFIG_DIR@/@DEFAULT_CONFIG@/chg-manual.conf"
 changerdev "/dev/null"

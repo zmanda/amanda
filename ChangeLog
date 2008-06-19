@@ -1,3 +1,8 @@
+2008-06-19  Satya Ganga <gsat@zmanda.com>
+	* example/template.d/amanda-single-tape.conf.in
+	  example/template.d/advanced.conf.in: update displayunit to "g" and
+	  remove chg-manual for single tape configurations.
+
 2008-06-19  Ian Turner <ian@zmanda.com>
 	* device-src/rait-device.c (rait_device_start): Check for consistent
 	  volume label on all child devices, fail with

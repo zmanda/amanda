@@ -25,7 +25,7 @@ taperalgo first		# The algorithm used to choose which dump image to send
 			# largestfit 	The largest dump image that will fit on the current tape.
 			# smallest 	The smallest dump image.
 			# last 		Last in - first out.
-displayunit "m"		# Possible values: "k|m|g|t"
+displayunit "g"		# Possible values: "k|m|g|t"
 			# Default: k. 
 			# The unit used to print many numbers.
 			# k=kilo, m=mega, g=giga, t=tera
