@@ -59,8 +59,8 @@ AC_DEFUN([AMANDA_WITH_REUSEPORTS], [
 # OVERVIEW
 #
 #   Implement --with-low-tcpportrange, --with-tcpportrange, and --with-udpportrange.
-#   Results are DEFINED in LOW_TCPPORTRANGE, TCPPORTRANGE, and UDPPORTRANGE, 
-#   respectively.
+#   Results are DEFINED and substituted in LOW_TCPPORTRANGE, TCPPORTRANGE, and 
+#   UDPPORTRANGE, respectively.
 #
 AC_DEFUN([AMANDA_WITH_PORTRANGES], [
     AC_ARG_WITH(low-tcpportrange,
@@ -139,6 +139,9 @@ AC_DEFUN([AMANDA_WITH_PORTRANGES], [
   [A comma-separated list of two integers, determining the minimum and
  * maximum reserved UDP port numbers sockets should be bound to. ])
     fi
+    AC_SUBST(UDPPORTRANGE)
+    AC_SUBST(TCPPORTRANGE)
+    AC_SUBST(LOW_TCPPORTRANGE)
 ])
 
 # SYNOPSIS
