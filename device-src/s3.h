@@ -38,7 +38,7 @@ typedef struct S3Handle S3Handle;
 
 #ifdef WANT_DEVPAY
 /* These are assumed to be already URL-escaped. */
-# define STS_BASE_URL "https://sts.amazonaws.com/"
+# define STS_BASE_URL "https://ls.amazonaws.com/"
 # define STS_PRODUCT_TOKEN "{ProductToken}AAAGQXBwVGtu4geoGybuwuk8VEEPzJ9ZANpu0yzbf9g4Gs5Iarzff9B7qaDBEEaWcAzWpcN7zmdMO765jOtEFc4DWTRNkpPSzUnTdkHbdYUamath73OreaZtB86jy/JF0gsHZfhxeKc/3aLr8HNT//DsX3r272zYHLDPWWUbFguOwqNjllnt6BshYREx59l8RrWABLSa37dyJeN+faGvz3uQxiDakZRn3LfInOE6d9+fTFl50LPoP08LCqI/SJfpouzWix7D/cep3Jq8yYNyM1rgAOTF7/wh7r8OuPDLJ/xZUDLfykePIAM="
 #endif
 
