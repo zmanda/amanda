@@ -1526,6 +1526,7 @@ echo "Amanda installation log can be found in '${INSTALL_LOG}' and errors (if an
 %docdir %{MANDIR}
 %{MANDIR}/man5/amanda.conf.5.gz
 %{MANDIR}/man5/amanda-client.conf.5.gz
+%{MANDIR}/man7/amanda-device.7.gz
 %{MANDIR}/man8/amaespipe.8.gz
 %{MANDIR}/man8/amanda.8.gz
 %{MANDIR}/man8/amcheckdump.8.gz
