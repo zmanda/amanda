@@ -1,4 +1,7 @@
 2008-06-20 Dan Locks <dwlocks@zmanda.com>
+	* packaging/rpm/amanda.spec: typo amanda-devices.7.gz
+
+2008-06-20 Dan Locks <dwlocks@zmanda.com>
 	* packaging/rpm/amanda.spec: added %{MANDIR}/man7/amanda-device.7.gz
 
 2008-06-20  Jean-Louis Martineau <martineau@zmanda.com>
