@@ -361,6 +361,7 @@ amgtar_selfcheck(
 	printf(_("ERROR [GNUTAR program not available]\n"));
     }
 
+    set_root_privs(1);
     if (gnutar_listdir && strlen(gnutar_listdir) == 0)
 	gnutar_listdir = NULL;
     if (gnutar_listdir) {
@@ -370,7 +371,8 @@ amgtar_selfcheck(
     }
 
     fprintf(stdout, "OK %s\n", argument->dle.disk);
-    fprintf(stdout, "OK %s\n", argument->dle.device);
+    check_dir(argument->dle.device, R_OK);
+    set_root_privs(0);
 }
 
 static void

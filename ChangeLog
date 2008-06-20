@@ -1,3 +1,8 @@
+2008-06-20  Jean-Louis Martineau <martineau@zmanda.com>
+	* client-src/client_util.c: Call check_access() only
+				    if getuid() == geteuid().
+	* application-src/amgtar.c: check_dir(argument->dle.device, R_OK)
+
 2008-06-19  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amcleanup.pl: Correctly rename amdump files.
 

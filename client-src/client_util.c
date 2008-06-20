@@ -1065,7 +1065,9 @@ check_file(
 	    amfree(quoted);
 	}
     }
-    check_access(filename, mode);
+    if (getuid() == geteuid()) {
+	check_access(filename, mode);
+    }
 }
 
 void
@@ -1083,10 +1085,16 @@ check_dir(
 	    g_printf(_("ERROR [%s is not a directory]\n"), quoted);
 	    amfree(quoted);
 	}
+    } else {
+	quoted = quote_string(dirname);
+	g_printf(_("ERROR [%s: %s]\n"), quoted, strerror(errno));
+	amfree(quoted);
     }
-    dir = stralloc2(dirname, "/.");
-    check_access(dir, mode);
-    amfree(dir);
+    if (getuid() == geteuid()) {
+	dir = stralloc2(dirname, "/.");
+	check_access(dir, mode);
+	amfree(dir);
+    }
 }
 
 void
