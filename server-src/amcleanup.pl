@@ -168,10 +168,10 @@ foreach my $pname ("amdump", "amflush") {
 	# Now, renumber the existing log files
 	while ($days >= 2) {
 	    my $ndays = $days - 1;
-	    rename($errfile.$ndays, $errfile.$days);
+	    rename("$errfile.$ndays", "$errfile.$days");
 	    $days=$ndays;
 	}
-	rename($errfile, $errfile.1);
+	rename($errfile, "$errfile.1");
     }
 }
 

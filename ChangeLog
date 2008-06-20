@@ -1,3 +1,6 @@
+2008-06-19  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amcleanup.pl: Correctly rename amdump files.
+
 2008-06-19  Dustin J. Mitchell <dustin@zmanda.com>, Ian Turner <ian@zmanda.com>
 	* man/Makefile.am man/xml-source/amanda-devices.7.xml: new manpage
 	* man/entities/global.entities: emails for dustin and ian
