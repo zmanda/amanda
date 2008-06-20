@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 1;
+use Test::More tests => 2;
 
 use lib "@amperldir@";
 use Installcheck::Config;
@@ -32,5 +32,10 @@ $testconf->add_param('label_new_tapes', '"TESTCONF%%"');
 $testconf->write();
 
 ok(run('amdump', 'TESTCONF'), "amdump runs successfully");
+
+# Add a nonexistant client, and see amdump fail.
+$testconf->add_dle('does-not-exist.example.com / installcheck-test');
+
+ok(!run('amdump', 'TESTCONF'), "amdump fails with nonexistant client");
 
 Installcheck::Run::cleanup();

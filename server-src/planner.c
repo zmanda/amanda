@@ -183,6 +183,7 @@ main(
     config_overwrites_t *cfg_ovr = NULL;
     char *cfg_opt = NULL;
     int    planner_setuid;
+    int exit_status = EXIT_SUCCESS;
 
     /*
      * Configure program for internationalization:
@@ -279,6 +280,7 @@ main(
     if (errstr) {
 	g_fprintf(stderr,"%s",errstr);
 	amfree(errstr);
+        exit_status = EXIT_FAILURE;
     }
     nb_disk = 0;
     for(dp = origq.head; dp != NULL; dp = dp->next) {
@@ -491,6 +493,9 @@ main(
     dump_queue("FAILED", failq, 15, stderr);
     dump_queue("DONE", estq, 15, stderr);
 
+    if (!empty(failq)) {
+        exit_status = EXIT_FAILURE;
+    }
 
     /*
      * 6. Analyze Dump Estimates
@@ -606,8 +611,12 @@ main(
      */
 
     g_fprintf(stderr,_("\nGENERATING SCHEDULE:\n--------\n"));
-
-    while(!empty(schedq)) output_scheduleline(dequeue_disk(&schedq));
+    if (empty(schedq)) {
+        exit_status = EXIT_FAILURE;
+        g_fprintf(stderr, _("--> Generated empty schedule! <--\n"));
+    } else {
+        while(!empty(schedq)) output_scheduleline(dequeue_disk(&schedq));
+    }
     g_fprintf(stderr, _("--------\n"));
 
     close_infofile();
@@ -622,7 +631,7 @@ main(
 
     dbclose();
 
-    return 0;
+    return exit_status;
 }
 
 

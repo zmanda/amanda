@@ -138,7 +138,28 @@ printf '%s: datestamp %s\n' "amdump" "$date_datestamp"
 printf '%s: starttime %s\n' "amdump" "$date_starttime"
 printf '%s: starttime-locale-independent %s\n' "amdump" "$date_locale_independent"
 
-$amlibexecdir/planner$SUF $conf --starttime $date_starttime "$@" | $amlibexecdir/driver$SUF $conf "$@"
+# shells don't do well with handling exit values from pipelines, so we emulate
+# a pipeline in perl, in such a way that we can combine both exit statuses in a
+# kind of logical "OR".
+@PERL@ - $amlibexecdir/planner$SUF $amlibexecdir/driver$SUF $conf $date_starttime "$@" <<'EOPERL'
+use IPC::Open3;
+use POSIX qw(WIFEXITED WEXITSTATUS);
+my ($planner, $driver, $conf, $date_starttime, @args) = @ARGV;
+
+open3(STDIN, \*PIPE, ">&STDERR", $planner, $conf, '--starttime', $date_starttime, @args)
+    or die "Could not exec $planner: $!";
+open3("<&PIPE", ">&STDOUT", ">&STDERR", $driver, $conf, @args)
+    or die "Could not exec $driver: $!";
+
+my $first_bad_exit = 0;
+for (my $i = 0; $i < 2; $i++) {
+    my $dead = wait();
+    die("Error waiting: $!") if ($dead <= 0);
+    my $exit = WIFEXITED($?)? WEXITSTATUS($?) : 1;
+    $first_bad_exit = $exit if ($exit && !$first_bad_exit)
+}
+exit $first_bad_exit;
+EOPERL
 exit_code=$?
 [ $exit_code -ne 0 ] && exit_status=$exit_code
 printf '%s: end at %s\n' "amdump" "`date`"
