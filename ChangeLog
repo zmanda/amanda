@@ -1,3 +1,6 @@
+2008-06-20  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/amdump.pl: fix checks to refresh the test configuration
+
 2008-06-20  Dustin J. Mitchell <dustin@zmanda.com>, Ian Turner <ian@zmanda.com>
 	* server-src/amdump.sh: correctly handle error exits from planner
 	* server-src/planner.c: fail if planning fails

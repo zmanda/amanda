@@ -34,7 +34,9 @@ $testconf->write();
 ok(run('amdump', 'TESTCONF'), "amdump runs successfully");
 
 # Add a nonexistant client, and see amdump fail.
+$testconf = Installcheck::Run::setup();
 $testconf->add_dle('does-not-exist.example.com / installcheck-test');
+$testconf->write();
 
 ok(!run('amdump', 'TESTCONF'), "amdump fails with nonexistant client");
 
