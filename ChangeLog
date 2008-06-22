@@ -1,3 +1,7 @@
+2008-06-22  Dustin J. Mitchell <dustin@zmanda.com>
+	* application-src/amgtar.c: change --atime-preserve=system to
+	  --atime-preserve
+
 2008-06-20  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/amdump.pl: fix checks to refresh the test configuration
 
