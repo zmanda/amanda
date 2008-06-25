@@ -1,3 +1,7 @@
+2008-06-25  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/diskfile.c: Don't send encryption in xml req packet for
+				 server encryption.
+
 2008-06-25  Dustin J. Mitchell <dustin@zmanda.com>
 	* application-src/amgtar.c: revert --atime-preserve change
 

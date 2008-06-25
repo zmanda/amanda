@@ -1353,7 +1353,7 @@ xml_optionstr(
 	compress_opt = "  <compress>SERVER-BEST</compress>\n";
 	break;
     case COMP_SERVER_CUST:
-	compress_opt = "  <compress>SERVER_CUSTOM</compress>\n";
+	compress_opt = "  <compress>SERVER-CUSTOM</compress>\n";
 	if (dp->srvcompprog == NULL) {
 	    if(fdout) {
 		fprintf(fdout,
@@ -1420,13 +1420,6 @@ xml_optionstr(
 	}
 	break;
     case ENCRYPT_SERV_CUST:
-	if (dp->srv_decrypt_opt) {
-	    decrypt_opt = newvstralloc(decrypt_opt,
-				       "    <decrypt-option>",
-				       dp->clnt_decrypt_opt,
-				       "</decrypt-option>\n", NULL);
-	}
-	encrypt_opt = newstralloc(encrypt_opt,"  <encrypt>SERVER</encrypt>\n");
 	if (dp->srv_encrypt == NULL) {
 	    if(fdout) {
 		fprintf(fdout,
@@ -1437,14 +1430,6 @@ xml_optionstr(
 			"the encryption program to use in the dumptypes file"));
 	    }
 	    err++;
-	} else {
-	    encrypt_opt = newvstralloc(encrypt_opt,
-				       "  <encrypt>SERVER-CUSTOM\n"
-				       "    <custom-encrypt-program>",
-				       dp->srv_encrypt,
-				       "</custom-encrypt-program>\n",
-				       decrypt_opt,
-				       "  </encrypt>\n", NULL);
 	}
 	break;
     }
@@ -1639,7 +1624,6 @@ xml_optionstr(
 		       kencrypt_opt,
 		       compress_opt,
 		       encrypt_opt,
-		       decrypt_opt,
 		       record_opt,
 		       index_opt,
 		       exclude,
