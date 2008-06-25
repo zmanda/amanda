@@ -862,7 +862,7 @@ char **amgtar_build_argv(
     if (gnutar_onefilesystem)
 	my_argv[i++] = "--one-file-system";
     if (gnutar_atimepreserve)
-	my_argv[i++] = "--atime-preserve";
+	my_argv[i++] = "--atime-preserve=system";
     if (!gnutar_checkdevice)
 	my_argv[i++] = "--no-check-device";
     my_argv[i++] = "--listed-incremental";
