@@ -392,6 +392,7 @@ amgtar_estimate(
     amwait_t wait_status;
     int tarpid;
     amregex_t *rp;
+    times_t start_time;
 
     qdisk = quote_string(argument->dle.disk);
 

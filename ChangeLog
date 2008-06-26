@@ -1,3 +1,9 @@
+2008-06-26  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amstar.c: Use local start_time variable.
+	* application-src/amgtar.c: Use local start_time variable.
+	* common-src/clock.h: Remove times_zero and start_time extern.
+	* common-src/clock.c: Remove times_zero.
+
 2008-06-25  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/diskfile.c: Don't send encryption in xml req packet for
 				 server encryption.

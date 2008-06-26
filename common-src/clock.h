@@ -36,8 +36,6 @@
 
 typedef GTimeVal times_t;
 
-extern times_t times_zero, start_time;
-
 /* NOT THREAD SAFE */
 void startclock(void);
 times_t stopclock(void);

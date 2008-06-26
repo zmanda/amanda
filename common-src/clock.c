@@ -34,7 +34,6 @@
 #include "clock.h"
 
 /* local functions */
-times_t times_zero;
 times_t start_time;
 static int clock_running = 0;
 
