@@ -144,7 +144,12 @@ DeviceStatusFlags tape_is_tape_device(int fd) {
     } else {
 	dbprintf("tape_is_tape_device: ioctl(MTIOCTOP/MTNOP) failed: %s\n",
 		 strerror(errno));
-        return DEVICE_STATUS_DEVICE_ERROR;
+	if (errno == EIO) {
+	    /* some devices return EIO while the drive is busy loading */
+	    return DEVICE_STATUS_DEVICE_ERROR|DEVICE_STATUS_DEVICE_BUSY;
+	} else {
+	    return DEVICE_STATUS_DEVICE_ERROR;
+	}
     }
 }
 
