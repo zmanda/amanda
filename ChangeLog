@@ -1,4 +1,8 @@
 2008-06-27  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/s3-device.c (s3_device_read_label): Don't set
+	  volume_header if nothing is read.
+
+2008-06-27  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/device.c: Don't log is flag is DEVICE_STATUS_SUCCESS.
 
 2008-06-27  Dustin J. Mitchell <dustin@zmanda.com>

@@ -784,8 +784,6 @@ s3_device_read_label(Device *pself) {
     amfree(pself->volume_time);
 
     amfree(pself->volume_header);
-    amanda_header = pself->volume_header = g_new(dumpfile_t, 1);
-    fh_init(amanda_header);
 
     if (!setup_handle(self)) {
 	device_set_error(pself, stralloc(_("Error setting up S3 interface")), DEVICE_STATUS_DEVICE_ERROR);
@@ -818,7 +816,9 @@ s3_device_read_label(Device *pself) {
     }
 
     g_assert(buf != NULL);
+    amanda_header = g_new(dumpfile_t, 1);
     parse_file_header(buf, amanda_header, buf_size);
+    pself->volume_header = amanda_header;
 
     g_free(buf);
 
