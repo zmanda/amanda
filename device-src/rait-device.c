@@ -746,9 +746,13 @@ rait_device_start (Device * dself, DeviceAccessMode mode, char * label,
     guint i;
     gboolean success;
     RaitDevice * self;
+    char * label_from_device = NULL;
 
     self = RAIT_DEVICE(dself);
     g_return_val_if_fail(self != NULL, FALSE);
+
+    amfree(dself->volume_label);
+    amfree(dself->volume_time);
 
     ops = g_ptr_array_sized_new(self->private->children->len);
     for (i = 0; i < self->private->children->len; i ++) {
@@ -765,6 +769,45 @@ rait_device_start (Device * dself, DeviceAccessMode mode, char * label,
 
     success = g_ptr_array_and(ops, extract_boolean_generic_op);
 
+    /* check that all of the volume labels agree */
+    if (success) {
+	for (i = 0; i < self->private->children->len; i ++) {
+	    Device *child = g_ptr_array_index(self->private->children, i);
+
+	    if (child->volume_label != NULL && child->volume_time != NULL) {
+                if (dself->volume_label != NULL && dself->volume_time != NULL) {
+                    if (strcmp(child->volume_label, dself->volume_label) != 0 ||
+                        strcmp(child->volume_time, dself->volume_time) != 0) {
+                        /* Mismatch! (Two devices provided different labels) */
+			g_fprintf(stderr, "%s: Label (%s/%s) is different "
+                                          "from label (%s/%s) found at "
+                                          "device %s",
+                                          child->device_name,
+                                          child->volume_label,
+                                          child->volume_time,
+                                          dself->volume_label,
+                                          dself->volume_time,
+                                          label_from_device);
+			success = FALSE;
+                    }
+                } else {
+                    /* First device with a volume. */
+                    dself->volume_label = g_strdup(child->volume_label);
+                    dself->volume_time = g_strdup(child->volume_time);
+                    label_from_device = g_strdup(child->device_name);
+                }
+            } else {
+                /* Device problem, it says it succeeded but sets no label? */
+		g_fprintf(stderr, "%s: %s",
+                                  child->device_name,
+                                  "Says label read, but device->volume_label "
+                                  " is NULL.");
+		success = FALSE;
+            }
+	}
+    }
+
+    amfree(label_from_device);
     g_ptr_array_free_full(ops);
 
     if (!success) {
@@ -1190,6 +1233,7 @@ static gboolean extract_boolean_read_block_op_eof(gpointer data) {
     return op->base.child->is_eof;
 }
 
+/* Counts the number of elements in an array matching a given proposition. */
 static int g_ptr_array_count(GPtrArray * array, BooleanExtractor filter) {
     int rval;
     unsigned int i;
@@ -1336,12 +1380,14 @@ rait_device_read_block (Device * dself, gpointer buf, int * size) {
     do_rait_child_ops(read_block_do_op, ops, NULL);
 
     if (g_ptr_array_count(ops, extract_boolean_read_block_op_data)) {
-        success =
-            g_ptr_array_union_robust(RAIT_DEVICE(self),
+        if (!g_ptr_array_union_robust(RAIT_DEVICE(self),
                                      ops,
-                                     extract_boolean_read_block_op_data) &&
-            raid_block_reconstruction(RAIT_DEVICE(self),
-                                      ops, buf, (size_t)*size);
+                                     extract_boolean_read_block_op_data)) {
+	    success = FALSE;
+	} else {
+	    success = raid_block_reconstruction(RAIT_DEVICE(self),
+                                                ops, buf, (size_t)*size);
+	}
     } else {
         success = FALSE;
         if (g_ptr_array_union_robust(RAIT_DEVICE(self),
