@@ -913,6 +913,7 @@ rait_device_start (Device * dself, DeviceAccessMode mode, char * label,
 typedef struct {
     GenericOp base;
     const dumpfile_t * info; /* IN */
+    int fileno;
 } StartFileOp;
 
 /* a GFunc */
@@ -920,6 +921,10 @@ static void start_file_do_op(gpointer data, gpointer user_data G_GNUC_UNUSED) {
     StartFileOp * op = data;
     op->base.result = GINT_TO_POINTER(device_start_file(op->base.child,
                                                         op->info));
+    op->fileno = op->base.child->file;
+    if (op->fileno < 1) {
+        op->base.result = FALSE;
+    }
 }
 
 static gboolean
@@ -928,6 +933,7 @@ rait_device_start_file (Device * dself, const dumpfile_t * info) {
     guint i;
     gboolean success;
     RaitDevice * self;
+    int actual_file = -1;
 
     self = RAIT_DEVICE(dself);
 
@@ -945,21 +951,47 @@ rait_device_start_file (Device * dself, const dumpfile_t * info) {
     do_rait_child_ops(start_file_do_op, ops, NULL);
 
     success = g_ptr_array_and(ops, extract_boolean_generic_op);
+    
+    for (i = 0; i < self->private->children->len && success; i ++) {
+        StartFileOp * op = g_ptr_array_index(ops, i);
+        if (!op->base.result)
+            continue;
+        g_assert(op->fileno >= 1);
+        if (actual_file < 1) {
+            actual_file = op->fileno;
+        }
+        if (actual_file != op->fileno) {
+            /* File number mismatch! Aah, my hair is on fire! */
+            device_set_error(dself,
+                             g_strdup_printf("File number mismatch in "
+                                             "rait_device_start_file(): "
+                                             "Child %s reported file number "
+                                             "%d, another child reported "
+                                             "file number %d.",
+                                             op->base.child->device_name,
+                                             op->fileno, actual_file),
+                             DEVICE_STATUS_DEVICE_ERROR);
+            success = FALSE;
+            op->base.result = FALSE;
+        }
+    }
 
     g_ptr_array_free_full(ops);
-
-    dself->in_file = TRUE;
 
     if (!success) {
 	/* TODO: be more specific here */
 	/* TODO: degrade if only one failed */
-	device_set_error(dself,
-	    stralloc("One or more devices failed to start_file"),
-	    DEVICE_STATUS_DEVICE_ERROR);
+        if (!device_in_error(dself)) {
+            device_set_error(dself, stralloc("One or more devices "
+                                             "failed to start_file"),
+                             DEVICE_STATUS_DEVICE_ERROR);
+        }
         return FALSE;
     }
 
     dself->in_file = TRUE;
+    g_assert(actual_file >= 1);
+    dself->file = actual_file;
 
     return TRUE;
 }
@@ -1115,10 +1147,6 @@ rait_device_write_block (Device * dself, guint size, gpointer data,
         g_ptr_array_add(ops, op);
     }
 
-    if (last_block) {
-        amfree(data);
-    }
-    
     do_rait_child_ops(write_block_do_op, ops, NULL);
 
     success = g_ptr_array_and(ops, extract_boolean_generic_op);
@@ -1129,6 +1157,10 @@ rait_device_write_block (Device * dself, guint size, gpointer data,
             free(op->data);
     }
 
+    if (last_block) {
+        amfree(data);
+    }
+    
     g_ptr_array_free_full(ops);
 
     if (!success) {
@@ -1139,7 +1171,7 @@ rait_device_write_block (Device * dself, guint size, gpointer data,
 	 * more fun is when one device fails and must be isolated at
 	 * the same time another hits EOF. */
 	device_set_error(dself,
-	    stralloc("One or more devices failed to start_file"),
+	    stralloc("One or more devices failed to write_block"),
 	    DEVICE_STATUS_DEVICE_ERROR);
         return FALSE;
     } else {

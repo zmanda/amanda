@@ -252,69 +252,64 @@ ok($dev->finish(),
 ####
 ## Test a RAIT device of two vfs devices.
 
-TODO: {
-    # uncomment this to run the RAIT tests
-    todo_skip "RAIT device gets filenum wrong", 35;
+($vtape1, $vtape2) = (mkvtape(1), mkvtape(2));
+$dev_name = "rait:{file:$vtape1,file:$vtape2}";
 
-    ($vtape1, $vtape2) = (mkvtape(1), mkvtape(2));
-    $dev_name = "rait:{file:$vtape1,file:$vtape2}";
+$dev = Amanda::Device->new($dev_name);
+is($dev->status(), $DEVICE_STATUS_SUCCESS,
+   "$dev_name: create successful")
+    or diag($dev->error_or_status());
 
-    $dev = Amanda::Device->new($dev_name);
-    is($dev->status(), $DEVICE_STATUS_SUCCESS,
-	"$dev_name: create successful")
-	or diag($dev->error_or_status());
+$dev->read_label();
+ok($dev->status() & $DEVICE_STATUS_VOLUME_UNLABELED,
+   "initially unlabeled")
+    or diag($dev->error_or_status());
 
-    $dev->read_label();
-    ok($dev->status() & $DEVICE_STATUS_VOLUME_UNLABELED,
-	"initially unlabeled")
-	or diag($dev->error_or_status());
+ok($dev->start($ACCESS_WRITE, "TESTCONF13", undef),
+   "start in write mode")
+    or diag($dev->error_or_status());
 
-    ok($dev->start($ACCESS_WRITE, "TESTCONF13", undef),
-	"start in write mode")
-	or diag($dev->error_or_status());
+ok(!($dev->status() & $DEVICE_STATUS_VOLUME_UNLABELED),
+   "not unlabeled anymore")
+    or diag($dev->error_or_status());
 
-    ok(!($dev->status() & $DEVICE_STATUS_VOLUME_UNLABELED),
-	"not unlabeled anymore")
-	or diag($dev->error_or_status());
-
-    for (my $i = 1; $i <= 3; $i++) {
-	write_file(0x2FACE, $dev->write_max_size()*10+17, $i, 1);
-    }
-
-    ok($dev->finish(),
-	"finish device after write")
-	or diag($dev->error_or_status());
-
-    $dev->read_label();
-    ok(!($dev->status()),
-	"no error, at all, from read_label")
-	or diag($dev->error_or_status());
-
-    # append one more copy, to test ACCESS_APPEND
-
-    ok($dev->start($ACCESS_APPEND, undef, undef),
-	"start in append mode")
-	or diag($dev->error_or_status());
-
-    # (make it an even multiple of blocksize, so it doesn't autofinish)
-    write_file(0xD0ED0E, $dev->write_max_size()*4, 4, 0);
-
-    ok($dev->finish(),
-	"finish device after append")
-	or diag($dev->error_or_status());
-
-    # try reading the third file back
-
-    ok($dev->start($ACCESS_READ, undef, undef),
-	"start in read mode")
-	or diag($dev->error_or_status());
-
-    verify_file(0x2FACE, $dev->write_max_size()*10+17, 3);
-
-    ok($dev->finish(),
-	"finish device after read")
-	or diag($dev->error_or_status());
+for (my $i = 1; $i <= 3; $i++) {
+    write_file(0x2FACE, $dev->write_max_size()*10+17, $i, 1);
 }
+
+ok($dev->finish(),
+   "finish device after write")
+    or diag($dev->error_or_status());
+
+$dev->read_label();
+ok(!($dev->status()),
+   "no error, at all, from read_label")
+    or diag($dev->error_or_status());
+
+# append one more copy, to test ACCESS_APPEND
+
+ok($dev->start($ACCESS_APPEND, undef, undef),
+   "start in append mode")
+    or diag($dev->error_or_status());
+
+# (make it an even multiple of blocksize, so it doesn't autofinish)
+write_file(0xD0ED0E, $dev->write_max_size()*4, 4, 0);
+
+ok($dev->finish(),
+   "finish device after append")
+    or diag($dev->error_or_status());
+
+# try reading the third file back
+
+ok($dev->start($ACCESS_READ, undef, undef),
+   "start in read mode")
+    or diag($dev->error_or_status());
+
+verify_file(0x2FACE, $dev->write_max_size()*10+17, 3);
+
+ok($dev->finish(),
+   "finish device after read")
+    or diag($dev->error_or_status());
 
 TODO: {
     todo_skip "RAIT device doesn't actually support this yet", 23;

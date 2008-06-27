@@ -1,3 +1,13 @@
+2008-06-27  Ian Turner <ian@zmanda.com>
+	* device-src/rait-device.c: Fix a memory corruption issue on the last
+	  block of a file.
+
+2008-06-27  Ian Turner <ian@zmanda.com>
+	* device-src/rait-device.c: Track file numbers properly when child
+	  devices change them (that is, in rait_device_start_file() and
+	  rait_device_seek_file()).
+	* installcheck/Amanda_Device.pl: Enable primary set of RAIT tests.
+
 2008-06-27  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/s3-device.c (s3_device_read_label): Don't set
 	  volume_header if nothing is read.
