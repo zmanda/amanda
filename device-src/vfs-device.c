@@ -742,7 +742,7 @@ static DeviceStatusFlags vfs_device_read_label(Device * dself) {
 }
 
 static gboolean vfs_device_write_block(Device * pself, guint size,
-                                       gpointer data, gboolean last_block) {
+                                       gpointer data, gboolean last_block G_GNUC_UNUSED) {
     VfsDevice * self = VFS_DEVICE(pself);
     IoResult result;
 
@@ -769,10 +769,6 @@ static gboolean vfs_device_write_block(Device * pself, guint size,
 
     self->volume_bytes += size;
     pself->block ++;
-
-    /* if this is the last block, finish the file */
-    if (last_block)
-        device_finish_file(pself);
 
     return TRUE;
 }

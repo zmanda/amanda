@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 184;
+use Test::More tests => 224;
 use File::Path qw( mkpath rmtree );
 use Sys::Hostname;
 use strict;
@@ -69,7 +69,7 @@ sub make_queue_fd {
 }
 
 sub write_file {
-    my ($seed, $length, $filenum, $autoclose) = @_;
+    my ($seed, $length, $filenum) = @_;
 
     Amanda::Tests::write_random_file($seed, $length, $input_filename);
 
@@ -86,25 +86,13 @@ sub write_file {
 	or diag($dev->error_or_status());
     close($input) or die("Error closing $input_filename");
 
-    if (defined $autoclose) {
-	if ($autoclose) {
-	    ok(!$dev->in_file(),
-		"file autofinished, as expected")
-		or diag $dev->error_or_status();
-	} else {
-	    ok($dev->in_file(),
-		"file did not autofinish, as expected")
-		or diag $dev->error_or_status();
-	}
-
-	# make sure to finish it either way
-	if ($dev->in_file()) {
-	    ok($dev->finish_file(),
-		"finish_file 'manually'")
-		or diag($dev->error_or_status());
-	} else {
-	    pass("(no need to finish file)");
-	}
+    if(ok($dev->in_file(),
+	"still in_file")) {
+	ok($dev->finish_file(),
+	    "finish_file")
+	    or diag($dev->error_or_status());
+    } else {
+	pass("not in file, so not calling finish_file");
     }
 }
 
@@ -181,7 +169,7 @@ is($dev->property_get("canonical_name"), $dev_name,
     "property_get on null device");
 
 # and write a file to it
-write_file(0xabcde, 1024*256, 1, 0);
+write_file(0xabcde, 1024*256, 1);
 
 # (don't finish the device, testing the finalize method's cleanup)
 
@@ -212,7 +200,7 @@ ok(!($dev->status() & $DEVICE_STATUS_VOLUME_UNLABELED),
     or diag($dev->error_or_status());
 
 for (my $i = 1; $i <= 3; $i++) {
-    write_file(0x2FACE, $dev->write_min_size()*10+17, $i, 1);
+    write_file(0x2FACE, $dev->write_min_size()*10+17, $i);
 }
 
 ok($dev->finish(),
@@ -230,8 +218,7 @@ ok($dev->start($ACCESS_APPEND, undef, undef),
     "start in append mode")
     or diag($dev->error_or_status());
 
-# (make it an even multiple of blocksize, so it doesn't autofinish)
-write_file(0xD0ED0E, $dev->write_min_size()*4, 4, 0);
+write_file(0xD0ED0E, $dev->write_min_size()*4, 4);
 
 ok($dev->finish(),
     "finish device after append")
@@ -274,7 +261,7 @@ ok(!($dev->status() & $DEVICE_STATUS_VOLUME_UNLABELED),
     or diag($dev->error_or_status());
 
 for (my $i = 1; $i <= 3; $i++) {
-    write_file(0x2FACE, $dev->write_max_size()*10+17, $i, 1);
+    write_file(0x2FACE, $dev->write_max_size()*10+17, $i);
 }
 
 ok($dev->finish(),
@@ -292,8 +279,7 @@ ok($dev->start($ACCESS_APPEND, undef, undef),
    "start in append mode")
     or diag($dev->error_or_status());
 
-# (make it an even multiple of blocksize, so it doesn't autofinish)
-write_file(0xD0ED0E, $dev->write_max_size()*4, 4, 0);
+write_file(0xD0ED0E, $dev->write_max_size()*4, 4);
 
 ok($dev->finish(),
    "finish device after append")
@@ -333,7 +319,7 @@ TODO: {
 	"start in write mode after device corruption")
 	or diag($dev->error_or_status());
 
-    write_file(0x2FACE, $dev->write_max_size()*20+17, 1, 1);
+    write_file(0x2FACE, $dev->write_max_size()*20+17, 1);
 
     ok($dev->finish(),
 	"finish device write after device corruption")
@@ -377,7 +363,7 @@ my $S3_SECRET_KEY = $ENV{'INSTALLCHECK_S3_SECRET_KEY'};
 my $S3_ACCESS_KEY = $ENV{'INSTALLCHECK_S3_ACCESS_KEY'};
 my $run_s3_tests = defined $S3_SECRET_KEY && defined $S3_ACCESS_KEY;
 SKIP: {
-    skip "define \$INSTALLCHECK_S3_{SECRET,ACCESS}_KEY to run S3 tests", 37
+    skip "define \$INSTALLCHECK_S3_{SECRET,ACCESS}_KEY to run S3 tests", 77
 	unless $run_s3_tests;
 
     # XXX for best results, the bucket should already exist (Amazon doesn't create
@@ -387,70 +373,89 @@ SKIP: {
     $dev_name = "s3:$S3_ACCESS_KEY-installcheck-$hostname";
 
     # (note: we don't use write_max_size here, as the maximum for S3 is very large)
+    # run once with an unconstrained bucket, then again with a constrained one
+    for my $s3_loc (undef, "EU") {
+        $dev_name = lc($dev_name) if $s3_loc;
+        $dev = Amanda::Device->new($dev_name);
+        is($dev->status(), $DEVICE_STATUS_SUCCESS,
+           "$dev_name: create successful")
+            or diag($dev->error_or_status());
 
-    $dev = Amanda::Device->new($dev_name);
-    is($dev->status(), $DEVICE_STATUS_SUCCESS,
-	"$dev_name: create successful")
+        ok($dev->property_set('S3_ACCESS_KEY', $S3_ACCESS_KEY),
+           "set S3 access key")
+            or diag($dev->error_or_status());
+
+        ok($dev->property_set('S3_SECRET_KEY', $S3_SECRET_KEY),
+           "set S3 secret key")
+            or diag($dev->error_or_status());
+
+        ok($dev->property_set('S3_BUCKET_LOCATION', $s3_loc),
+           "set S3 bucket location")
+            or diag($dev->error_or_status()) if $s3_loc;
+
+
+        $dev->read_label();
+        is($dev->status() & ~$DEVICE_STATUS_VOLUME_UNLABELED, 0,
+           "read_label OK, possibly already labeled")
+            or diag($dev->error_or_status());
+
+        ok($dev->start($ACCESS_WRITE, "TESTCONF13", undef),
+           "start in write mode")
+            or diag($dev->error_or_status());
+
+        ok(!($dev->status() & $DEVICE_STATUS_VOLUME_UNLABELED),
+           "it's labeled now")
+            or diag($dev->error_or_status());
+
+        for (my $i = 1; $i <= 3; $i++) {
+            write_file(0x2FACE, 32768*10, $i);
+        }
+
+        ok($dev->finish(),
+           "finish device after write")
+            or diag($dev->error_or_status());
+
+        $dev->read_label();
+        ok(!($dev->status()),
+           "no error, at all, from read_label")
 	or diag($dev->error_or_status());
 
-    ok($dev->property_set('S3_ACCESS_KEY', $S3_ACCESS_KEY),
-	"set S3 access key")
+        # append one more copy, to test ACCESS_APPEND
 
-	or diag($dev->error_or_status());
-    ok($dev->property_set('S3_SECRET_KEY', $S3_SECRET_KEY),
-	"set S3 secret key")
-	or diag($dev->error_or_status());
+        ok($dev->start($ACCESS_APPEND, undef, undef),
+           "start in append mode")
+            or diag($dev->error_or_status());
 
-    $dev->read_label();
-    is($dev->status() & ~$DEVICE_STATUS_VOLUME_UNLABELED, 0,
-	"read_label OK, possibly already labeled")
-	or diag($dev->error_or_status());
+        write_file(0xD0ED0E, 32768*10, 4);
 
-    ok($dev->start($ACCESS_WRITE, "TESTCONF13", undef),
-	"start in write mode")
-	or diag($dev->error_or_status());
+        ok($dev->finish(),
+           "finish device after append")
+            or diag($dev->error_or_status());
 
-    ok(!($dev->status() & $DEVICE_STATUS_VOLUME_UNLABELED),
-	"it's labeled now")
-	or diag($dev->error_or_status());
+        # try reading the third file back
 
-    for (my $i = 1; $i <= 3; $i++) {
-	write_file(0x2FACE, 32768*10, $i, 0);
+        ok($dev->start($ACCESS_READ, undef, undef),
+           "start in read mode")
+            or diag($dev->error_or_status());
+
+        verify_file(0x2FACE, 32768*10, 3);
+
+        ok($dev->finish(),
+           "finish device after read")
+            or diag($dev->error_or_status());
     }
 
-    ok($dev->finish(),
-	"finish device after write")
-	or diag($dev->error_or_status());
+    $dev_name = "-$dev_name";
+    $dev = Amanda::Device->new($dev_name);
 
-    $dev->read_label();
-    ok(!($dev->status()),
-	"no error, at all, from read_label")
-	or diag($dev->error_or_status());
+    is($dev->status(), $DEVICE_STATUS_SUCCESS,
+       "$dev_name: create successful")
+        or diag($dev->error_or_status());
 
-    # append one more copy, to test ACCESS_APPEND
+    ok(!$dev->property_set('S3_BUCKET_LOCATION', $dev_name),
+       "should not be able to set S3 bucket location with an incompatible name")
+        or diag($dev->error_or_status());
 
-    ok($dev->start($ACCESS_APPEND, undef, undef),
-	"start in append mode")
-	or diag($dev->error_or_status());
-
-    # (make it an even multiple of blocksize, so it doesn't autofinish)
-    write_file(0xD0ED0E, 32768*10, 4, 0);
-
-    ok($dev->finish(),
-	"finish device after append")
-	or diag($dev->error_or_status());
-
-    # try reading the third file back
-
-    ok($dev->start($ACCESS_READ, undef, undef),
-	"start in read mode")
-	or diag($dev->error_or_status());
-
-    verify_file(0x2FACE, 32768*10, 3);
-
-    ok($dev->finish(),
-	"finish device after read")
-	or diag($dev->error_or_status());
 }
 
 # Test a tape device if the proper environment variables are set
@@ -480,7 +485,7 @@ SKIP: {
 	or diag($dev->error_or_status());
 
     for (my $i = 1; $i <= 3; $i++) {
-	write_file(0x2FACE, $dev->write_min_size()*10+17, $i, 1);
+	write_file(0x2FACE, $dev->write_min_size()*10+17, $i);
     }
 
     ok($dev->finish(),
@@ -502,8 +507,7 @@ SKIP: {
 	"start in append mode")
 	or diag($dev->error_or_status());
 
-    # (make it an even multiple of blocksize, so it doesn't autofinish)
-    write_file(0xD0ED0E, $dev->write_min_size()*4, 4, 0);
+    write_file(0xD0ED0E, $dev->write_min_size()*4, 4);
 
     ok($dev->finish(),
 	"finish device after append")

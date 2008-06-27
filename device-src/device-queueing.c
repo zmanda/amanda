@@ -59,10 +59,11 @@ ssize_t device_write_consumer(gpointer devicep, queue_buffer_t *buffer) {
     write_size = MIN(buffer->data_size,
                      device_write_max_size(device));
 
+    /* we assume that the queueing module is providing us with
+     * appropriately-sized blocks until the last block. */
     if (device_write_block(device, write_size,
                            buffer->data + buffer->offset,
-                           buffer->data_size <
-                               device_write_min_size(device))) {
+                           write_size < device_write_min_size(device))) {
         /* Success! */
         return write_size;
     } else {

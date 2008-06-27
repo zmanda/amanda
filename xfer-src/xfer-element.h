@@ -271,12 +271,13 @@ XferElement * xfer_source_fd(
 XferElement *xfer_filter_xor(
     unsigned char xor_key);
 
-/* A transfer destination that writes bytes to a Device.
+/* A transfer destination that writes bytes to a Device.  The device should have a
+ * file started, ready for a device_write_block call.  On completion of the transfer,
+ * the file will be finished.
  *
  * Implemented in dest-device.c
  *
- * @param device: the Device to write to.  This device should be ready for
- *	a device_write_block call.
+ * @param device: the Device to write to, with a file started
  * @param max_memory: total amount of memory to use for buffers
  * @return: new element
  */

@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 8;
+use Test::More tests => 10;
 use File::Path;
 use strict;
 
@@ -227,6 +227,10 @@ pass("Two simultaneous transfers run to completion");
 
     Amanda::MainLoop::run();
     pass("write to a device (completed succesfully; data may not be correct)");
+
+    # finish up the file and device
+    ok(!$device->in_file(), "not in_file");
+    ok($device->finish(), "finish");
 
     # now turn around and read from it
     $device->start($ACCESS_READ, undef, undef);

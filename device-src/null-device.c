@@ -247,23 +247,14 @@ null_device_start_file(Device * d_self,
 }
 
 static gboolean
-null_device_write_block (Device * pself, guint size,
-	    gpointer data G_GNUC_UNUSED, gboolean last_block) {
+null_device_write_block (Device * pself, guint size G_GNUC_UNUSED,
+	    gpointer data G_GNUC_UNUSED, gboolean last_block G_GNUC_UNUSED) {
     NullDevice * self;
     self = NULL_DEVICE(pself);
 
     if (device_in_error(self)) return FALSE;
-    
-    if ((size < NULL_DEVICE_MIN_BLOCK_SIZE && !last_block) ||
-        size > NULL_DEVICE_MAX_BLOCK_SIZE) {
-        return FALSE;
-    }
 
     pself->block++;
-
-    /* if this is the last block, finish the file */
-    if (last_block)
-	return device_finish_file(pself);
 
     return TRUE;
 }

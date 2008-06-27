@@ -856,10 +856,8 @@ static void run_device_output(taper_state_t * taper_state,
         g_get_current_time(&end_time);
         run_time = timesub(end_time, start_time);
 
-        /* The device_write_consumer may have closed the file with a short
-         * write, so we only finish here if it needs it. */
-        if (taper_state->device->in_file &&
-            !device_finish_file(taper_state->device)) {
+        /* The device_write_consumer leaves the file open, so close it now. */
+        if (!device_finish_file(taper_state->device)) {
             queue_result = queue_result | QUEUE_CONSUMER_ERROR;
         }
 

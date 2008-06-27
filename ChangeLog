@@ -1,3 +1,31 @@
+2008-06-27  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/device.c: check for and fail on multiple
+	  short writes to the same file
+	* device-src/null-device.c device-src/rait-device.c
+	  device-src/s3-device.c device-src/tape-device.c
+	  device-src/vfs-device.c: do not autofinish files
+	* installcheck/Amanda_Device.pl installcheck/Amanda_Xfer.pl: don't
+	  expect devices to autofinish anymore
+	* server-src/taper.c xfer-src/dest-device.c: finish files explicitly
+	* device-src/device-queueing.c: comments
+	* xfer-src/xfer-element.h: comments
+
+2008-06-27  Nikolas Coukouma <atrus@zmanda.com>
+	* device-src/s3.c device-src/s3.h device-src/s3-device.c installcheck/Amanda_Device.pl:
+	  Add support for bucket location constraints
+	* device-src/s3-device.c: Add S3_BUCKET_LOCATION device property
+	* device-src/s3.c device-src/s3.h device-src/s3-device.c:
+	  Checks for libcurl and bucket name compatability with location constraints
+	* device-src/s3.c: make s3_init() threadsafe,
+	  refactor regex compilation and calling,
+	  refactor perform_request() functions to construct URL later,
+	  use GString to tidy string generation
+	* installcheck/Amanda_Device.pl: Add tests for location constraints
+
+2008-06-27  Ian Turner <ian@zmanda.com>
+	* device-src/rait-device.c: Fix a memory corruption issue on the last
+	  block of a file.
+
 2008-06-27  Ian Turner <ian@zmanda.com>
 	* device-src/rait-device.c: Fix a memory corruption issue on the last
 	  block of a file.

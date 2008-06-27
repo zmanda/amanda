@@ -56,6 +56,7 @@ typedef struct S3Handle S3Handle;
     S3_ERROR(OperationAborted), \
     S3_ERROR(BadDigest), \
     S3_ERROR(BucketAlreadyExists), \
+    S3_ERROR(BucketAlreadyOwnedByYou), \
     S3_ERROR(BucketNotEmpty), \
     S3_ERROR(CredentialsNotSupported), \
     S3_ERROR(EntityTooLarge), \
@@ -106,6 +107,29 @@ typedef enum {
  * Functions
  */
 
+/* Checks if the version of libcurl being used supports and checks
+ * wildcard certificates correctly (used for the subdomains required
+ * by location constraints).
+ *
+ * @returns: true if the version of libcurl is new enough
+ */
+gboolean
+s3_curl_location_compat(void);
+
+/* Checks if a bucket name is compatible with setting a location
+ * constraint.
+ *
+ * @note This doesn't guarantee that bucket name is entirely valid,
+ * just that using it as one (or more) subdomain(s) of s3.amazonaws.com
+ * won't fail; that would prevent the reporting of useful messages from 
+ * the service.
+ *
+ * @param bucket: the bucket name
+ * @returns: true if the bucket name is compatible
+ */
+gboolean
+s3_bucket_location_compat(const char *bucket);
+
 /* Initialize S3 operation
  *
  * As a requirement of C{curl_global_init}, which this function calls,
@@ -120,12 +144,22 @@ gboolean
 s3_init(void);
 
 /* Set up an S3Handle.
+ *
+ * The concept of a bucket is defined by the Amazon S3 API.
+ * See: "Components of Amazon S3" - API Version 2006-03-01 pg. 8
+ *
+ * @param access_key: the secret key for Amazon Web Services
+ * @param secret_key: the secret key for Amazon Web Services
+ * @param user_token: the user token for Amazon DevPay
+ * @param bucket_location: the location constraint for buckets
+ * @returns: the new S3Handle
  */
 S3Handle *
 s3_open(const char * access_key, const char *secret_key
 #ifdef WANT_DEVPAY
         , const char * user_token
 #endif
+        , const char * bucket_location
         );
 
 /* Deallocate an S3Handle

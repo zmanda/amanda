@@ -137,6 +137,11 @@ struct DevicePrivate_s {
     GArray *property_list;
     GHashTable * property_response;
 
+    /* In writing mode, after a short block is written, no additional blocks
+     * are allowed the file is finished and a new file started. This is only
+     * used for assertions. */
+    gboolean wrote_short_block;
+
     /* Holds an error message if the function returned an error. */
     char * errmsg;
 
@@ -968,10 +973,14 @@ device_write_block (Device * self, guint size, gpointer block,
     /* these are all things that the caller should take care to
      * guarantee, so we just assert them here */
     g_assert(short_block || size >= device_write_min_size(self));
+    g_assert(!selfp->wrote_short_block);
     g_assert(size <= device_write_max_size(self));
     g_assert(block != NULL);
     g_assert(IS_WRITABLE_ACCESS_MODE(self->access_mode));
     g_assert(self->in_file);
+
+    if (short_block)
+	selfp->wrote_short_block = TRUE;
 
     klass = DEVICE_GET_CLASS(self);
     if(klass->write_block) {
@@ -1011,6 +1020,8 @@ device_start_file (Device * self, const dumpfile_t * jobInfo) {
     g_assert(IS_DEVICE (self));
     g_assert(!(self->in_file));
     g_assert(jobInfo != NULL);
+
+    selfp->wrote_short_block = FALSE;
 
     klass = DEVICE_GET_CLASS(self);
     if(klass->start_file) {

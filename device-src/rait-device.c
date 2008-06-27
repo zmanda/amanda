@@ -1175,13 +1175,7 @@ rait_device_write_block (Device * dself, guint size, gpointer data,
 	    DEVICE_STATUS_DEVICE_ERROR);
         return FALSE;
     } else {
-        /* We don't chain up here because we must handle finish_file
-           differently. If we were called with last_block, then the
-           children have already called finish_file themselves. So we
-           update the device block numbers manually. */
         dself->block ++;
-        if (last_block)
-            dself->in_file = FALSE;
 
         return TRUE;
     }

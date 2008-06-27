@@ -83,6 +83,7 @@ struct _S3Device {
 #ifdef WANT_DEVPAY
     char *user_token;
 #endif
+    char *bucket_location;
 
     /* a cache for unsuccessful reads (where we get the file but the caller
      * doesn't have space for it or doesn't want it), where we expect the
@@ -137,6 +138,10 @@ static DevicePropertyBase device_property_s3_secret_key;
 static DevicePropertyBase device_property_s3_user_token;
 #define PROPERTY_S3_USER_TOKEN (device_property_s3_user_token.ID)
 #endif
+
+/* Location constraint for new buckets created on Amazon S3. */
+static DevicePropertyBase device_property_s3_bucket_location;
+#define PROPERTY_S3_BUCKET_LOCATION (device_property_s3_bucket_location.ID)
 
 
 /*
@@ -532,6 +537,9 @@ s3_device_register(void)
                                       G_TYPE_STRING, "s3_user_token",
        "User token for authentication Amazon devpay requests");
 #endif
+    device_property_fill_and_register(&device_property_s3_bucket_location,
+                                      G_TYPE_STRING, "s3_bucket_location",
+       "Location constraint for new buckets created on Amazon S3");
 
     /* register the device itself */
     register_device(s3_device_factory, device_prefix_list);
@@ -634,6 +642,8 @@ s3_device_init(S3Device * self)
     prop.base = &device_property_s3_user_token;
     device_add_property(o, &prop, NULL);
 #endif
+    prop.base = &device_property_s3_bucket_location;
+    device_add_property(o, &prop, NULL);
 }
 
 static void 
@@ -756,6 +766,7 @@ static gboolean setup_handle(S3Device * self) {
 #ifdef WANT_DEVPAY
                            , self->user_token
 #endif
+                           , self->bucket_location
                            );
         if (self->s3 == NULL) {
 	    device_set_error(d_self,
@@ -969,6 +980,14 @@ static gboolean s3_device_property_get(Device * p_self, DevicePropertyId id,
         }
     }
 #endif /* WANT_DEVPAY */
+    else if (id == PROPERTY_S3_BUCKET_LOCATION) {
+        if (self->bucket_location != NULL) {
+            g_value_set_string(val, self->bucket_location);
+            return TRUE;
+        } else {
+            return FALSE;
+        }
+    }
     else if (id == PROPERTY_VERBOSE) {
         g_value_set_boolean(val, self->verbose);
         return TRUE;
@@ -1021,6 +1040,33 @@ static gboolean s3_device_property_set(Device * p_self, DevicePropertyId id,
         return TRUE;
     }
 #endif /* WANT_DEVPAY */
+    else if (id == PROPERTY_S3_BUCKET_LOCATION) {
+
+        if (p_self->access_mode != ACCESS_NULL)
+            return FALSE;
+
+        if (!s3_curl_location_compat()) {
+            device_set_error(p_self, stralloc(_(
+                    "Location constraint given for Amazon S3 bucket, "
+                    "but libcurl is too old support wildcard certificates.")),
+                DEVICE_STATUS_DEVICE_ERROR);
+           return FALSE;
+        }
+
+        if (!s3_bucket_location_compat(self->bucket)) {
+            device_set_error(p_self, g_strdup_printf(_(
+                    "Location constraint given for Amazon S3 bucket, "
+                    "but the bucket name (%s) is not usable as a subdomain."),
+                    self->bucket), 
+                DEVICE_STATUS_DEVICE_ERROR);
+           return FALSE;
+        }
+
+        amfree(self->bucket_location);
+        self->bucket_location = g_value_dup_string(val);
+        device_clear_volume_details(p_self);
+        return TRUE;
+    }
     else if (id == PROPERTY_VERBOSE) {
         self->verbose = g_value_get_boolean(val);
 	/* Our S3 handle may not yet have been instantiated; if so, it will
@@ -1084,7 +1130,7 @@ s3_device_start_file (Device *pself, const dumpfile_t *jobInfo) {
 
 static gboolean
 s3_device_write_block (Device * pself, guint size, gpointer data,
-                         gboolean last_block) {
+                         gboolean last_block G_GNUC_UNUSED) {
     gboolean result;
     char *filename;
     S3Device * self = S3_DEVICE(pself);;
@@ -1105,10 +1151,6 @@ s3_device_write_block (Device * pself, guint size, gpointer data,
     }
 
     pself->block++;
-
-    /* if this is the last block, finish the file */
-    if (last_block)
-        return device_finish_file(pself);
 
     return TRUE;
 }

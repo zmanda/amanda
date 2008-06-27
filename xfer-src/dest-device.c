@@ -118,6 +118,9 @@ queueing_thread(
 		block_size, self->max_memory,
 		streaming_mode);
 
+    /* finish the file explicitly */
+    device_finish_file(self->device);
+
     /* TODO: handle this better */
     if (result != QUEUE_SUCCESS)
 	error("Oh, noes!");

@@ -502,14 +502,14 @@ tape_device_write_block(Device * pself, guint size,
 
     g_assert(self->fd >= 0);
     if (device_in_error(self)) return FALSE;
-   
+
     /* zero out to the end of a short block -- tape devices only write
      * whole blocks. */
     if (short_block && self->min_block_size > size) {
         replacement_buffer = malloc(self->min_block_size);
         memcpy(replacement_buffer, data, size);
         bzero(replacement_buffer+size, self->min_block_size-size);
-        
+
         data = replacement_buffer;
         size = self->min_block_size;
     }
