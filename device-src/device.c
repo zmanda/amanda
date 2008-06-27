@@ -449,12 +449,14 @@ device_set_error(Device *self, char *errmsg, DeviceStatusFlags new_flags)
     amfree(selfp->errmsg);
     selfp->errmsg = errmsg;
 
-    flags_strv = g_flags_name_to_strv(new_flags, DEVICE_STATUS_FLAGS_TYPE);
-    g_assert(g_strv_length(flags_strv) > 0);
-    flags_str = g_english_strjoinv(flags_strv, "and");
-    g_debug("Device %s setting status flag(s): %s", device_name, flags_str);
-    amfree(flags_str);
-    g_strfreev(flags_strv);
+    if (new_flags != DEVICE_STATUS_SUCCESS) {
+	flags_strv = g_flags_name_to_strv(new_flags, DEVICE_STATUS_FLAGS_TYPE);
+	g_assert(g_strv_length(flags_strv) > 0);
+	flags_str = g_english_strjoinv(flags_strv, "and");
+	g_debug("Device %s setting status flag(s): %s", device_name, flags_str);
+	amfree(flags_str);
+	g_strfreev(flags_strv);
+    }
 
     self->status = new_flags;
 }
