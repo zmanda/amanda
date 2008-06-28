@@ -452,12 +452,11 @@ static gboolean label_new_tape(taper_state_t * state, dump_info_t * dump_info) {
                                          old_volume_time);
         g_object_unref(state->device);
         state->device = NULL;
-        amfree(state->next_tape_label);
         /* If the volume was written, we tell the driver and then immediately
          * try again. */
         if (tape_used) {
             putresult(NEW_TAPE, "%s %s\n", dump_info->handle,
-		      state->device->volume_label);
+                      state->next_tape_label);
             if (old_volume_name) {
                 log_add(L_WARNING, "Problem writing label to volume %s, "
                         "volume may be erased.\n", old_volume_name);
@@ -467,6 +466,7 @@ static gboolean label_new_tape(taper_state_t * state, dump_info_t * dump_info) {
             }
             amfree(old_volume_name);
             amfree(old_volume_time);
+            amfree(state->next_tape_label);
             return find_and_label_new_tape(state, dump_info);
         } else {
             /* Otherwise, we grab a new tape without talking to the driver
@@ -482,6 +482,7 @@ static gboolean label_new_tape(taper_state_t * state, dump_info_t * dump_info) {
             }
             amfree(old_volume_name);
             amfree(old_volume_time);
+            amfree(state->next_tape_label);
             request.state = state;
             request.prolong = TRUE;
             request.errmsg = NULL;
@@ -500,9 +501,8 @@ static gboolean label_new_tape(taper_state_t * state, dump_info_t * dump_info) {
     } else {
 	amfree(old_volume_name);
 	amfree(old_volume_time);
+        amfree(state->next_tape_label);
     }
-
-    amfree(state->next_tape_label);
 
     tapelist_name = config_dir_relative(getconf_str(CNF_TAPELIST));
     if (state->cur_tape == 0) {

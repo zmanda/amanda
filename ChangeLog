@@ -1,3 +1,6 @@
+2008-06-27  Ian Turner <ian@zmanda.com>
+	* server-src/taper.c: fix printing a NULL pointer in the error path
+
 2008-06-27  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/device.c: check for and fail on multiple
 	  short writes to the same file
