@@ -1,3 +1,6 @@
+2008-06-29  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Makefile.am installcheck/amstatus.pl: new check
+
 2008-06-27  Ian Turner <ian@zmanda.com>
 	* server-src/taper.c: fix printing a NULL pointer in the error path
 

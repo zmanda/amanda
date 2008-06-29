@@ -29,7 +29,8 @@ full_tests = \
 	amdevcheck \
 	amcheckdump \
 	amdump \
-	amservice
+	amservice \
+	amstatus
 
 # tests requiring neither client nor server
 tests = $(common_tests)
