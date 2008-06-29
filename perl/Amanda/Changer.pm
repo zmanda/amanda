@@ -218,6 +218,8 @@ call with a non-empty $error.  When all slots are scanned, or the
 C<each_slot_cb> returns true, C<scan_done_cb> is called to indicate completion
 of the operation.
 
+=back
+
 =cut
 
 sub new {

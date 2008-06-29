@@ -41,7 +41,7 @@ Amanda::DB::Catalog - access to the Amanda catalog: where is that dump?
 		" level ", $dumpfile->{level}, "\n";
       }
   }
-    
+
 =head1 DESCRIPTION
 
 =head2 MODEL
@@ -57,25 +57,45 @@ Each row has the following values:
 
 =over
 
-=item label (string) -- volume label
+=item label
 
-=item filenum (integer) -- file on that volume
+(string) -- volume label
 
-=item dump_timestamp (string) -- timestamp of the run in which the dump was created
+=item filenum
 
-=item write_timestamp (string) -- timestamp of the run in which the dump was written to this volume
+(integer) -- file on that volume
 
-=item hostname (string) -- dump hostname
+=item dump_timestamp
 
-=item diskname (string) -- dump diskname
+(string) -- timestamp of the run in which the dump was created
 
-=item level (integer) -- dump level
+=item write_timestamp
 
-=item status (string) -- "OK", "PARTIAL" or some other descriptor
+(string) -- timestamp of the run in which the dump was written to this volume
 
-=item partnum (integer) -- part number of a split dump (1-based)
+=item hostname
 
-=item nparts (integer) -- number of parts in this dump (estimated)
+(string) -- dump hostname
+
+=item diskname
+
+(string) -- dump diskname
+
+=item level
+
+(integer) -- dump level
+
+=item status
+
+(string) -- "OK", "PARTIAL" or some other descriptor
+
+=item partnum
+
+(integer) -- part number of a split dump (1-based)
+
+=item nparts
+
+(integer) -- number of parts in this dump (estimated)
 
 =back
 
@@ -135,37 +155,69 @@ returned.  The hash can have any of the following keys:
 
 =over
 
-=item write_timestamp -- restrict to dumpfiles written at this timestamp
+=item write_timestamp
 
-=item write_timestamps -- (arrayref) restrict to dumpfiles written at any of these timestamps
+restrict to dumpfiles written at this timestamp
 
-=item dump_timestamp -- restrict to dumpfiles with exactly this timestamp
+=item write_timestamps
 
-=item dump_timestamps -- (arrayref) restrict to dumpfiles with any of these timestamps
+(arrayref) restrict to dumpfiles written at any of these timestamps
 
-=item dump_timestamp_match -- restrict to dumpfiles with timestamps matching this expression
+=item dump_timestamp
 
-=item hostname -- restrict to dumpfiles with exactly this hostname
+restrict to dumpfiles with exactly this timestamp
 
-=item hostnames -- (arrayref) restrict to dumpfiles with any of these hostnames
+=item dump_timestamps
 
-=item hostname_match -- restrict to dumpfiles with hostnames matching this expression
+(arrayref) restrict to dumpfiles with any of these timestamps
 
-=item diskname -- restrict to dumpfiles with exactly this diskname
+=item dump_timestamp_match
 
-=item disknames -- (arrayref) restrict to dumpfiles with any of these disknames
+restrict to dumpfiles with timestamps matching this expression
 
-=item diskname_match -- restrict to dumpfiles with disknames matching this expression
+=item hostname
 
-=item label -- restrict to dumpfiles with exactly this label
+restrict to dumpfiles with exactly this hostname
 
-=item labels -- (arrayref) restrict to dumpfiles with any of these labels
+=item hostnames
 
-=item level -- restrict to dumpfiles with exactly this level
+(arrayref) restrict to dumpfiles with any of these hostnames
 
-=item levels -- (arrayref) restrict to dumpfiles with any of these levels
+=item hostname_match
 
-=item status -- restrict to dumpfiles with this status
+restrict to dumpfiles with hostnames matching this expression
+
+=item diskname
+
+restrict to dumpfiles with exactly this diskname
+
+=item disknames
+
+(arrayref) restrict to dumpfiles with any of these disknames
+
+=item diskname_match
+
+restrict to dumpfiles with disknames matching this expression
+
+=item label
+
+restrict to dumpfiles with exactly this label
+
+=item labels
+
+(arrayref) restrict to dumpfiles with any of these labels
+
+=item level
+
+restrict to dumpfiles with exactly this level
+
+=item levels
+
+(arrayref) restrict to dumpfiles with any of these levels
+
+=item status
+
+restrict to dumpfiles with this status
 
 =back
 

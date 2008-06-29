@@ -46,7 +46,7 @@ Amanda::Device - interact with Amanda data-storage devices
       print "Label on $device_name is '$dev->volume_label'\n";
   }
   
-See L<http://wiki.zmanda.com/index.php/Device_API> for details on how Devices are used.
+See http://wiki.zmanda.com/index.php/Device_API for details on how Devices are used.
 
 =head1 API STATUS
 

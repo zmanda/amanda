@@ -1,4 +1,13 @@
 2008-06-29  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Changer.pm perl/Amanda/Cmdline.swg
+	  perl/Amanda/Config.swg perl/Amanda/DB/Catalog.pm
+	  perl/Amanda/Device.swg perl/Amanda/Logfile.swg 
+	  perl/Amanda/Util.swg: POD cleanup
+	* perl/Makefile.am: new files, rules to make HTML
+	* perl/amperl.css: CSS file for online POD
+	* perl/make_html.pl: make online POD
+
+2008-06-29  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Makefile.am installcheck/amstatus.pl: new check
 
 2008-06-27  Ian Turner <ian@zmanda.com>
