@@ -530,6 +530,17 @@ match_disk(
     return match_word(glob, disk, '/');
 }
 
+static int
+alldigits(
+    const char *str)
+{
+    while (*str) {
+	if (!isdigit((int)*(str++)))
+	    return 0;
+    }
+    return 1;
+}
+
 int
 match_datestamp(
     const char *	dateexp,
@@ -543,45 +554,56 @@ match_datestamp(
     int match_exact;
 
     if(strlen(dateexp) >= 100 || strlen(dateexp) < 1) {
-	error(_("Illegal datestamp expression %s"),dateexp);
-	/*NOTREACHED*/
+	goto illegal;
     }
    
+    /* strip and ignore an initial "^" */
     if(dateexp[0] == '^') {
-	strncpy(mydateexp, dateexp+1, strlen(dateexp)-1); 
-	mydateexp[strlen(dateexp)-1] = '\0';
+	strncpy(mydateexp, dateexp+1, sizeof(mydateexp)-1);
+	mydateexp[sizeof(mydateexp)-1] = '\0';
     }
     else {
-	strncpy(mydateexp, dateexp, strlen(dateexp));
-	mydateexp[strlen(dateexp)] = '\0';
+	strncpy(mydateexp, dateexp, sizeof(mydateexp)-1);
+	mydateexp[sizeof(mydateexp)] = '\0';
     }
 
-    if(mydateexp[strlen(mydateexp)] == '$') {
+    if(mydateexp[strlen(mydateexp)-1] == '$') {
 	match_exact = 1;
-	mydateexp[strlen(mydateexp)] = '\0';
+	mydateexp[strlen(mydateexp)-1] = '\0';	/* strip the trailing $ */
     }
     else
 	match_exact = 0;
 
+    /* a single dash represents a date range */
     if((dash = strchr(mydateexp,'-'))) {
-	if(match_exact == 1) {
-	    error(_("Illegal datestamp expression %s"),dateexp);
-	    /*NOTREACHED*/
+	if(match_exact == 1 || strchr(dash+1, '-')) {
+	    goto illegal;
 	}
-	len = (size_t)(dash - mydateexp);
-	len_suffix = strlen(dash) - 1;
-	len_prefix = len - len_suffix;
+
+	/* format: XXXYYYY-ZZZZ, indicating dates XXXYYYY to XXXZZZZ */
+
+	len = (size_t)(dash - mydateexp);   /* length of XXXYYYY */
+	len_suffix = strlen(dash) - 1;	/* length of ZZZZ */
+	if (len_suffix > len) goto illegal;
+	len_prefix = len - len_suffix; /* length of XXX */
 
 	dash++;
+
 	strncpy(firstdate, mydateexp, len);
 	firstdate[len] = '\0';
 	strncpy(lastdate, mydateexp, len_prefix);
 	strncpy(&(lastdate[len_prefix]), dash, len_suffix);
 	lastdate[len] = '\0';
+	if (!alldigits(firstdate) || !alldigits(lastdate))
+	    goto illegal;
+	if (strncmp(firstdate, lastdate, strlen(firstdate)) > 0)
+	    goto illegal;
 	return ((strncmp(datestamp, firstdate, strlen(firstdate)) >= 0) &&
 		(strncmp(datestamp, lastdate , strlen(lastdate))  <= 0));
     }
     else {
+	if (!alldigits(mydateexp))
+	    goto illegal;
 	if(match_exact == 1) {
 	    return (strcmp(datestamp, mydateexp) == 0);
 	}
@@ -589,6 +611,9 @@ match_datestamp(
 	    return (strncmp(datestamp, mydateexp, strlen(mydateexp)) == 0);
 	}
     }
+illegal:
+	error(_("Illegal datestamp expression %s"),dateexp);
+	/*NOTREACHED*/
 }
 
 

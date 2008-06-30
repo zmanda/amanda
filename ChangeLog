@@ -1,3 +1,6 @@
+2008-06-30  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/match.c: fix multiple bugs in match_datestamp
+
 2008-06-29  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Changer.pm perl/Amanda/Cmdline.swg
 	  perl/Amanda/Config.swg perl/Amanda/DB/Catalog.pm
