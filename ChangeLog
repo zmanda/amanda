@@ -1,3 +1,10 @@
+2008-06-30  Ian Turner <ian@zmanda.com>
+	* device-src/rait-device.c: Fix a memory corruption issue on the last
+	  block of a file.
+	* device-src/rait-device.c: Track file numbers properly when child
+	  devices change them (that is, in rait_device_start_file() and
+	  rait_device_seek_file()).
+
 2008-06-27  Ian Turner <ian@zmanda.com>
 	* device-src/rait-device.c (rait_device_start): Check for consistent
 	  volume label on all child devices, otherwise fail
