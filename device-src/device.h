@@ -295,8 +295,6 @@ size_t           device_read_max_size   (Device * self);
  *
  * % The block may be padded with NULL bytes, which will be present on
  *   restore.
- * % device_write_block will automatically call device_finish_file()
- *   after writing this short block (autofinishing).
  *
  * It is permitted to use short_block with a block that is not short;
  * in this case, it is equivalent to calling device_write() and then
@@ -308,16 +306,13 @@ gboolean 	device_write_block	(Device * self,
 
 /* This will drain the given fd (reading until EOF), and write the
  * resulting data out to the device using maximally-sized blocks.
- * The file will only autofinish if the contents of the fd are not
- * an even multiple of the blocksize.  When this function returns,
- * use:
- *   if (device->in_file) device_finish_file(device);
+ * This function does not call device_finish_file automatically.
  */
 gboolean 	device_write_from_fd	(Device * self,
 					queue_fd_t *queue_fd);
 
-/* Call this when you are finished writing a file, unless it has
- * autofinished. This function will write a filemark or the local
+/* Call this when you are finished writing a file.
+ * This function will write a filemark or the local
  * equivalent, flush the buffers, and do whatever dirty work needs
  * to be done at such a point in time. */
 gboolean 	device_finish_file	(Device * self);

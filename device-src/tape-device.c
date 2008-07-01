@@ -539,10 +539,6 @@ tape_device_write_block(Device * pself, guint size,
 
     pself->block++;
 
-    /* if this is the last block, finish the file */
-    if (short_block)
-	device_finish_file(pself);
-
     return TRUE;
 }
 

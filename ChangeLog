@@ -1,4 +1,9 @@
 2008-07-01  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/device.h: fix comments to reflect removal of
+	  autofinishing
+	* device-src/tape-device.c: remove autofinishing
+
+2008-07-01  Dustin J. Mitchell <dustin@zmanda.com>
 	* changer-src/chg-lib.sh.in: also handle bare tape dev names
 
 2008-07-01  Dustin J. Mitchell <dustin@zmanda.com>
