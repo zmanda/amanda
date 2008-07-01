@@ -86,6 +86,10 @@ try_find_mt() {
 tape_device_filename() {
     if echo "$1"|grep '^tape:' >/dev/null; then
 	echo "$1" | sed 's/^tape://'
+    else
+	if echo "$1"|grep '^/' >/dev/null; then
+	    echo "$1"
+	fi
     fi
 }
 

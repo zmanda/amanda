@@ -1,4 +1,7 @@
 2008-07-01  Dustin J. Mitchell <dustin@zmanda.com>
+	* changer-src/chg-lib.sh.in: also handle bare tape dev names
+
+2008-07-01  Dustin J. Mitchell <dustin@zmanda.com>
 	* changer-src/chg-lib.sh.in: fix tape_device_filename to not use perl
 	* changer-src/chg-zd-mtx.sh: always use the unqualified hostname to
 	  open the debug file
