@@ -84,9 +84,9 @@ try_find_mt() {
 # This function strips the tape: from the front of device names.
 # Capture its output with ``.
 tape_device_filename() {
-    # Easy (?) to express this in Perl.
-    perl -e '$ARGV[0] =~ /^(?:([^:]+):)?(.*)$/;
-             print $2 if ($1 || "tape") eq "tape"' "$1"
+    if echo "$1"|grep '^tape:' >/dev/null; then
+	echo "$1" | sed 's/^tape://'
+    fi
 }
 
 # Invoke amdevcheck to determine whether the device is ready for use.

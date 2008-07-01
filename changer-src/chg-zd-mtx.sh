@@ -376,7 +376,7 @@ Exit() {
 	if [ $call_type = Return ]; then
 		return $code
 	fi
-	amgetconf dbclose.$argv0:$DBGFILE > /dev/null 2>&1
+	amgetconf dbclose.$myname:$DBGFILE > /dev/null 2>&1
 	exit $code
 }
 
@@ -628,7 +628,7 @@ get_slot_list() {
 	slot_list="$amanda_slot_list"
 }
 
-DBGFILE=`amgetconf dbopen.$argv0 2>/dev/null`
+DBGFILE=`amgetconf dbopen.$myname 2>/dev/null`
 if [ -z "$DBGFILE" ]
 then
 	DBGFILE=/dev/null			# will try this again below
