@@ -1043,6 +1043,15 @@ tape_device_property_set (Device * d_self, DevicePropertyId id, GValue * val) {
 
     if (base->type == FEATURE_SUPPORT_FLAGS_TYPE) {
         feature_request_flags = g_value_get_flags(val);
+
+	/* assume the user is sure if not specified */
+	if ((feature_request_flags & FEATURE_SUPPORT_FLAGS_SURETY_MASK) == 0)
+	    feature_request_flags |= FEATURE_SURETY_GOOD;
+
+	/* assume the user is the source if not specified */
+	if ((feature_request_flags & FEATURE_SUPPORT_FLAGS_SOURCE_MASK) == 0)
+	    feature_request_flags |= FEATURE_SOURCE_USER;
+
         if (!feature_support_flags_is_valid(feature_request_flags)) {
 	    device_set_error(d_self,
 		stralloc(_("Invalid feature support flags")),

@@ -297,13 +297,14 @@ overridden in the configuration file if the autodetection fails. Note that tape
 drives are required to at least support the MTREW (rewind) operation; all other
 operations can be emulated with the MTREW and read data operations.</para>
 
-<para>The feature properties must be specified with a status, surety, and
-source.  The status is either "enabled" or "disabled", while the surety and
-source are always "good" and "user", respectively.  Examples:
+<para>The feature properties must be specified with a status, surety, and source.  The status is either "enabled" or "disabled", while the surety is "good" or "bad" and the source is "user", "detected", or "default".  In most cases device_property parameters omit the surety and source, which default to "good" and "user," respectively.
 <programlisting>
-device_property "FSF" "disabled|good|user"
-device_property "BSF" "enabled|good|user"
+device_property "FSF" "disabled"
+device_property "BSF" "enabled"
+# specify surety and source explicitly, if you're so inclined
+device_property "BSR" "disabled|bad|detected"
 </programlisting>
+note that case and whitespace are significant.
 </para>
 
 <!-- PLEASE KEEP THIS LIST IN ALPHABETICAL ORDER -->
