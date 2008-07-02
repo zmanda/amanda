@@ -1,4 +1,10 @@
 2008-07-02  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/diskfile.c: Check an application is set if
+	                         program == "APPLICATION".
+	* common-src/amxml.c: Check plugin is set for application and script.
+	* common-src/conffile.c: Check plugin is set for application and script
+
+2008-07-02  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amstatus.pl: Fix printing of config path on error.
 
 2008-07-02  Dustin J. Mitchell <dustin@zmanda.com>

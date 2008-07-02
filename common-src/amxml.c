@@ -404,14 +404,30 @@ amend_element(
 		    "XML: No disk provided in DLE element");
 	    return;
 	}
+	if (dle->program_is_application_api &&
+	    !dle->program) {
+	    g_set_error(gerror, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
+		    "XML: program set to APPLICATION but no application set");
+	    return;
+	}
 	if (dle->device == NULL && dle->disk)
 	    dle->device = stralloc(dle->disk);
 /* Add check of required field */
 	data_user->dle = NULL;
     } else if (strcmp(element_name, "backup-program") == 0) {
+	if (dle->program == NULL) {
+	    g_set_error(gerror, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
+		    "XML: No plugin set for application");
+	    return;
+	}
 	dle->application_property = data_user->property;
 	data_user->property = NULL;
     } else if (strcmp(element_name, "script") == 0) {
+	if (data_user->script->plugin == NULL) {
+	    g_set_error(gerror, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
+		    "XML: No plugin set for script");
+	    return;
+	}
 	data_user->script->property = data_user->property;
 	data_user->property = NULL;
 	dle->scriptlist = g_slist_append(dle->scriptlist, data_user->script);
@@ -514,6 +530,7 @@ amtext(
 	dle->program = tt;
 	if (strcmp(tt, "APPLICATION") == 0) {
 	    dle->program_is_application_api = 1;
+	    dle->program = NULL;
 	}
     } else if(strcmp(last_element_name, "plugin") == 0) {
 	last_element2 = g_slist_nth(data_user->element_names, 1);

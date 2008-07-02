@@ -2174,6 +2174,11 @@ read_application(
     if(!name)
 	get_conftoken(CONF_NL);
 
+    if (!application_get_plugin(&apcur) ||
+	strlen(application_get_plugin(&apcur)) == 0) {
+	conf_parserror("plugin not set for application");
+    }
+
     save_application();
 
     allow_overwrites = save_overwrites;
@@ -2298,6 +2303,11 @@ read_pp_script(
 	       (name == NULL), *copy_pp_script);
     if(!name)
 	get_conftoken(CONF_NL);
+
+    if (!pp_script_get_plugin(&pscur) ||
+	strlen(pp_script_get_plugin(&pscur)) == 0) {
+	conf_parserror("plugin not set for script");
+    }
 
     save_pp_script();
 

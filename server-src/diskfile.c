@@ -762,6 +762,13 @@ parse_diskline(
 	disk_parserror(filename, line_num,
 		       _("Both program and application set"));
     }
+
+    if (disk->program && strcmp(disk->program,"APPLICATION")==0 &&
+	!disk->application) {
+	disk_parserror(filename, line_num,
+		       _("program set to APPLICATION but no application set"));
+    }
+
     if(dumptype_get_ignore(dtype) || dumptype_get_strategy(dtype) == DS_SKIP) {
 	disk->todo = 0;
     }
