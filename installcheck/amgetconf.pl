@@ -181,7 +181,7 @@ $testconf->add_interface("testiface", [ use => '10' ]);
 $testconf->add_holdingdisk("hd17", [ chunksize => '128' ]);
 $testconf->add_application('app_amgtar', [ plugin => '"amgtar"' ]);
 $testconf->add_application('app_amstar', [ plugin => '"amstar"' ]);
-$testconf->add_script('my_script', [ "execute-on" => 'pre-dle-amcheck' ]);
+$testconf->add_script('my_script', [ "execute-on" => 'pre-dle-amcheck', 'plugin' => '"foo"' ]);
 $testconf->write();
 
 is_deeply([sort(split(/\n/, run_get('amgetconf', 'TESTCONF', '--list', 'tapetype')))],

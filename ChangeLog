@@ -1,3 +1,6 @@
+2008-07-02  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/amgetconf.pl: supply a plugin for scripts
+
 2008-07-02  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/diskfile.c: Check an application is set if
 	                         program == "APPLICATION".
