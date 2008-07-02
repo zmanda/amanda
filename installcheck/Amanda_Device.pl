@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 224;
+use Test::More tests => 247;
 use File::Path qw( mkpath rmtree );
 use Sys::Hostname;
 use strict;
@@ -224,7 +224,14 @@ ok($dev->finish(),
     "finish device after append")
     or diag($dev->error_or_status());
 
-# try reading the third file back
+# try reading the third file back, creating a new device
+# object first, and skipping the read-label step.
+
+$dev = undef;
+$dev = Amanda::Device->new($dev_name);
+is($dev->status(), $DEVICE_STATUS_SUCCESS,
+    "$dev_name: re-create successful")
+    or diag($dev->error_or_status());
 
 ok($dev->start($ACCESS_READ, undef, undef),
     "start in read mode")
@@ -285,7 +292,14 @@ ok($dev->finish(),
    "finish device after append")
     or diag($dev->error_or_status());
 
-# try reading the third file back
+# try reading the third file back, creating a new device
+# object first, and skipping the read-label step.
+
+$dev = undef;
+$dev = Amanda::Device->new($dev_name);
+is($dev->status(), $DEVICE_STATUS_SUCCESS,
+    "$dev_name: re-create successful")
+    or diag($dev->error_or_status());
 
 ok($dev->start($ACCESS_READ, undef, undef),
    "start in read mode")
@@ -297,34 +311,45 @@ ok($dev->finish(),
    "finish device after read")
     or diag($dev->error_or_status());
 
-TODO: {
-    todo_skip "RAIT device doesn't actually support this yet", 23;
+# corrupt the device somehow and hope it keeps working
+rmtree("$taperoot/1");
 
-    # corrupt the device somehow and hope it keeps working
-    mkvtape(2);
+ok($dev->start($ACCESS_READ, undef, undef),
+   "start in read mode after missing volume")
+    or diag($dev->error_or_status());
 
-    ok($dev->start($ACCESS_READ, undef, undef),
-	"start in read mode after device corruption")
-	or diag($dev->error_or_status());
+verify_file(0x2FACE, $dev->write_max_size()*10+17, 3);
+verify_file(0xD0ED0E, $dev->write_max_size()*4, 4);
+verify_file(0x2FACE, $dev->write_max_size()*10+17, 2);
 
-    verify_file(0x2FACE, $dev->write_max_size()*10+17, 3);
-    verify_file(0xD0ED0E, $dev->write_max_size()*4, 4);
-    verify_file(0x2FACE, $dev->write_max_size()*10+17, 2);
+ok($dev->finish(),
+   "finish device read after missing volume")
+    or diag($dev->error_or_status());
 
-    ok($dev->finish(),
-	"finish device read after device corruption")
-	or diag($dev->error_or_status());
+ok(!($dev->start($ACCESS_WRITE, "TESTCONF29", undef)),
+   "start in write mode fails with missing volume")
+    or diag($dev->error_or_status());
 
-    ok($dev->start($ACCESS_WRITE, "TESTCONF29", undef),
-	"start in write mode after device corruption")
-	or diag($dev->error_or_status());
+undef $dev;
 
-    write_file(0x2FACE, $dev->write_max_size()*20+17, 1);
+$dev_name = "rait:{MISSING,file:$vtape2}";
+$dev = Amanda::Device->new($dev_name);
 
-    ok($dev->finish(),
-	"finish device write after device corruption")
-	or diag($dev->error_or_status());
-}
+ok($dev->start($ACCESS_READ, undef, undef),
+   "start in read mode with MISSING")
+    or diag($dev->error_or_status());
+
+verify_file(0x2FACE, $dev->write_max_size()*10+17, 3);
+verify_file(0xD0ED0E, $dev->write_max_size()*4, 4);
+verify_file(0x2FACE, $dev->write_max_size()*10+17, 2);
+
+ok($dev->finish(),
+   "finish device read with MISSING")
+    or diag($dev->error_or_status());
+
+ok(!($dev->start($ACCESS_WRITE, "TESTCONF29", undef)),
+   "start in write mode fails with MISSING")
+    or diag($dev->error_or_status());
 
 undef $dev;
 
@@ -363,7 +388,7 @@ my $S3_SECRET_KEY = $ENV{'INSTALLCHECK_S3_SECRET_KEY'};
 my $S3_ACCESS_KEY = $ENV{'INSTALLCHECK_S3_ACCESS_KEY'};
 my $run_s3_tests = defined $S3_SECRET_KEY && defined $S3_ACCESS_KEY;
 SKIP: {
-    skip "define \$INSTALLCHECK_S3_{SECRET,ACCESS}_KEY to run S3 tests", 77
+    skip "define \$INSTALLCHECK_S3_{SECRET,ACCESS}_KEY to run S3 tests", 84
 	unless $run_s3_tests;
 
     # XXX for best results, the bucket should already exist (Amazon doesn't create
@@ -432,7 +457,26 @@ SKIP: {
            "finish device after append")
             or diag($dev->error_or_status());
 
-        # try reading the third file back
+	# try reading the third file back, creating a new device
+	# object first, and skipping the read-label step.
+
+	$dev = undef;
+	$dev = Amanda::Device->new($dev_name);
+	is($dev->status(), $DEVICE_STATUS_SUCCESS,
+	    "$dev_name: re-create successful")
+	    or diag($dev->error_or_status());
+
+        ok($dev->property_set('S3_ACCESS_KEY', $S3_ACCESS_KEY),
+           "set S3 access key")
+            or diag($dev->error_or_status());
+
+        ok($dev->property_set('S3_SECRET_KEY', $S3_SECRET_KEY),
+           "set S3 secret key")
+            or diag($dev->error_or_status());
+
+        ok($dev->property_set('S3_BUCKET_LOCATION', $s3_loc),
+           "set S3 bucket location")
+            or diag($dev->error_or_status()) if $s3_loc;
 
         ok($dev->start($ACCESS_READ, undef, undef),
            "start in read mode")
@@ -462,7 +506,7 @@ SKIP: {
 my $TAPE_DEVICE = $ENV{'INSTALLCHECK_TAPE_DEVICE'};
 my $run_tape_tests = defined $TAPE_DEVICE;
 SKIP: {
-    skip "define \$INSTALLCHECK_TAPE_DEVICE to run tape tests", 36
+    skip "define \$INSTALLCHECK_TAPE_DEVICE to run tape tests", 37
 	unless $run_tape_tests;
 
     $dev_name = "tape:$TAPE_DEVICE";
@@ -513,7 +557,14 @@ SKIP: {
 	"finish device after append")
 	or diag($dev->error_or_status());
 
-    # try reading the third file back
+    # try reading the third file back, creating a new device
+    # object first, and skipping the read-label step.
+
+    $dev = undef;
+    $dev = Amanda::Device->new($dev_name);
+    is($dev->status(), $DEVICE_STATUS_SUCCESS,
+	"$dev_name: re-create successful")
+	or diag($dev->error_or_status());
 
     ok($dev->start($ACCESS_READ, undef, undef),
 	"start in read mode")

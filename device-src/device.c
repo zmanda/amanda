@@ -391,9 +391,13 @@ device_open (char * device_name)
 char *
 device_error(Device * self)
 {
-    if (selfp->errmsg)
+    if (self == NULL) {
+        return device_error_or_status(self);
+    } else if (selfp->errmsg) {
 	return selfp->errmsg;
-    return "Unknown Device error";
+    } else {
+        return "Unknown Device error";
+    }
 }
 
 char *
@@ -401,6 +405,10 @@ device_status_error(Device * self)
 {
     char **status_strv;
     char *statusmsg;
+
+    if (self == NULL) {
+        return device_error_or_status(self);
+    }
 
     /* reuse a previous statusmsg, if it was for the same status */
     if (selfp->statusmsg && selfp->last_status == self->status)
@@ -427,10 +435,13 @@ device_status_error(Device * self)
 char *
 device_error_or_status(Device * self)
 {
-    if (selfp->errmsg)
+    if (self == NULL) {
+        return "Device is NULL";
+    } else if (selfp->errmsg) {
 	return selfp->errmsg;
-    else
+    } else {
 	return device_status_error(self);
+    }
 }
 
 void

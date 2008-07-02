@@ -789,6 +789,9 @@ s3_device_read_label(Device *pself) {
     guint buf_size;
     dumpfile_t *amanda_header;
 
+    /* note that this may be called from s3_device_start, when
+     * self->access_mode is not ACCESS_NULL */
+
     if (device_in_error(self)) return pself->status;
 
     amfree(pself->volume_label);
@@ -887,8 +890,8 @@ s3_device_start (Device * pself, DeviceAccessMode mode,
     /* take care of any dirty work for this mode */
     switch (mode) {
         case ACCESS_READ:
-	    if (pself->volume_label == NULL && device_read_label(pself) != DEVICE_STATUS_SUCCESS) {
-		/* device_read_label already set our error message */
+	    if (pself->volume_label == NULL && s3_device_read_label(pself) != DEVICE_STATUS_SUCCESS) {
+		/* s3_device_read_label already set our error message */
 		return FALSE;
 	    }
             break;
@@ -916,8 +919,8 @@ s3_device_start (Device * pself, DeviceAccessMode mode,
             break;
 
         case ACCESS_APPEND:
-	    if (pself->volume_label == NULL && device_read_label(pself) != DEVICE_STATUS_SUCCESS) {
-		/* device_read_label already set our error message */
+	    if (pself->volume_label == NULL && s3_device_read_label(pself) != DEVICE_STATUS_SUCCESS) {
+		/* s3_device_read_label already set our error message */
 		return FALSE;
 	    }
             return seek_to_end(self);

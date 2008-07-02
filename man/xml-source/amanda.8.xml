@@ -1283,6 +1283,13 @@ amdump -o INTERFACE:local:use="2000 kbps"
 </programlisting>
 </para>
 
+<para>When overriding device properties, one must carefully quote the
+  command line to simulate the syntax of real configuration files. The
+  following example should serve as a guide:
+<programlisting>
+amdump -o 'device-property="PROPERTY_MAX_VOLUME_USAGE" "100000"'
+</programlisting></para>
+
 <para>Note that configuration overrides are not effective for tape
 changers, which supply a tapedev based on their own configuration.  In order to
 override <emphasis remap="I">tapedev</emphasis>, you must also disable any changer:

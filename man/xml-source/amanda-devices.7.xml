@@ -73,6 +73,21 @@ two devices contain identical data and can be used singly for
 characteristics.  Combining devices with different block sizes may not work as
 desired.</para>
 
+<para>When a child device is known to have failed, the RAIT device should be reconfigured to replace that device with the text "ERROR", e.g.,
+<programlisting>
+tapedev "rait:{tape:/dev/st0,ERROR,tape:/dev/st2}"
+</programlisting>
+This will cause the RAIT device to start up in degraded mode, reconstructing the data from the missing device.
+</para>
+
+<para>Like ordinary RAID drivers, the RAIT device driver can automatically
+enter degraded mode when one of its child devices fails.  However, the RAIT
+device cannot automatically recover from any write error nor write any data in
+degraded mode.  When reading, certain errors may be fatal (rather than causing
+degraded mode).  And in any case, labels on all volumes must initially match
+(labeled or otherwise).  If you have lost one volume from a set, explicitly
+start the device in degraded mode as described above.</para>
+
 </refsect2>
 
 <refsect2><title>S3 Device</title>

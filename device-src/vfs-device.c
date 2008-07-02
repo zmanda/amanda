@@ -822,7 +822,6 @@ static gboolean	vfs_device_start(Device * pself,
     if (!open_dir_handle(pself))
 	return FALSE; /* open_dir_handle sets status/error message */
 
-    pself->access_mode = mode;
     pself->in_file = FALSE;
 
     if (mode == ACCESS_WRITE) {
@@ -840,11 +839,14 @@ static gboolean	vfs_device_start(Device * pself,
 	device_set_error(pself, NULL, DEVICE_STATUS_SUCCESS);
 
         demote_volume_lock(self);
+        pself->access_mode = mode;
     } else {
 	if (pself->volume_label == NULL && device_read_label(pself) != DEVICE_STATUS_SUCCESS) {
 	    /* device_read_label already set our error message */
             return FALSE;
-	}
+	} else {
+            pself->access_mode = mode;
+        }
     }
 
     release_file(self);

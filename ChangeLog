@@ -1,4 +1,25 @@
 2008-07-02  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Amanda_Device.pl: test that start(READ) without first
+	  reading the label doesn't cause errors 
+	* device-src/s3-device.c: call s3_device_read_label directly
+
+2008-07-02  Ian Turner <ian@zmanda.com>
+	* man/xml-source/amanda.8.xml: Document how to override device
+	  properties.
+
+2008-07-02  Ian Turner <ian@zmanda.com>
+	Dustin J. Mitchell <dustin@zmanda.com> contributed code and thoughts
+	to this patch.
+	* man/xml-source/amanda-devices.7.xml: Document new ERROR flag
+	  to start RAIT device in degraded mode.
+	* device/device.c: Be a little more forgiving of NULL devices.
+	* device-src/vfs-device.c: Fix a bug where vfs_device_start()
+	  would sometimes throw an erroneous assertion.
+	* device-src/rait-device.c: Be much more robust in error handling;
+	  new feature to start a RAIT device in degraded mode.
+	* installcheck/Amanda_Device.pl: Enable more RAIT device tests.
+
+2008-07-02  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/amanda.h: remove unused #include <alloca.h>
 
 2008-07-02  Dustin J. Mitchell <dustin@zmanda.com>
