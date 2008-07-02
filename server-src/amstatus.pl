@@ -80,11 +80,11 @@ if ($conf =~ /^([\w.-]+)$/) {          # $1 is untainted
 }
 
 if ( ! -e "$confdir/$conf" ) {
-    print "Configuration directory '" . $confdir/$conf . "' doesn't exist\n";
+    print "Configuration directory '$confdir/$conf' doesn't exist\n";
     exit 1;
 }
 if ( ! -d "$confdir/$conf" ) {
-    print "Configuration directory '" . $confdir/$conf . "' is not a directory\n";
+    print "Configuration directory '$confdir/$conf' is not a directory\n";
     exit 1;
  }
 

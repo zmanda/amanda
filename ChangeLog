@@ -1,3 +1,6 @@
+2008-07-02  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amstatus.pl: Fix printing of config path on error.
+
 2008-07-02  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Amanda_Device.pl: test that start(READ) without first
 	  reading the label doesn't cause errors 
