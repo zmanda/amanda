@@ -71,9 +71,6 @@
  * Also, some systems put key files in different places, so by including 
  * everything here the rest of the system is isolated from such things.
  */
-#ifdef HAVE_ALLOCA_H
-#  include <alloca.h>
-#endif
 
 /* from the autoconf documentation */
 #ifdef HAVE_DIRENT_H

@@ -1,4 +1,7 @@
 2008-07-02  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/amanda.h: remove unused #include <alloca.h>
+
+2008-07-02  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/tape-device.c: add "user" and "good" to feature flags
 	* man/xml-source/amanda-devices.7.xml: document it
 
