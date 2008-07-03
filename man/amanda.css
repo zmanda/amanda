@@ -1,0 +1,48 @@
+/* Taken from the Zmanda wiki, for at least a little bit of visual continuity */
+body {
+    font: small sans-serif;
+    background: #82B1C8 0 0 no-repeat;
+    color: black;
+}
+
+div.refentry {
+    background: white;
+    margin-left: 11em;
+    margin-top: 2em;
+    padding: .6em;
+    padding-top: 0;
+    border: thin gray ridge;
+}
+
+pre {
+    padding: 1em;
+    border: 1px dashed #2f6fab;
+    color: black;
+    background-color: #f9f9f9;
+    line-height: 1.1em;
+}
+
+/* browsers override this for some reason */
+table {
+    font-size: small;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    color: black;
+    background: none;
+    font-weight: normal;
+    margin: 0;
+    padding-top: .5em;
+    padding-bottom: .17em;
+    border-bottom: 1px solid #5C706D;
+}
+h1 { font-size: 188%; }
+h2 { font-size: 150%; }
+h3, h4, h5, h6 {
+    border-bottom: none;
+    font-weight: bold;
+}
+h3 { font-size: 132%; }
+h4 { font-size: 116%; }
+h5 { font-size: 100%; }
+h6 { font-size: 80%;  }
