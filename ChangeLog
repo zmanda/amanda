@@ -1,3 +1,6 @@
+2008-07-03  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Xfer.swg: #include "glib-util.h"
+
 2008-07-02  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/rait-device.c: don't use self->device_name in open_device
 

@@ -25,6 +25,7 @@
 %import "Amanda/Device.swg"
 
 %{
+#include "glib-util.h"
 #include "amxfer.h"
 %}
 
