@@ -1,4 +1,7 @@
 2008-07-02  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/rait-device.c: don't use self->device_name in open_device
+
+2008-07-02  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/amgetconf.pl: supply a plugin for scripts
 
 2008-07-02  Jean-Louis Martineau <martineau@zmanda.com>

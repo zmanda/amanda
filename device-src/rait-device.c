@@ -619,8 +619,9 @@ static gboolean g_ptr_array_union_robust(RaitDevice * self, GPtrArray * ops,
 
 typedef struct {
     RaitDevice * self;
-    Device * result;    /* IN */
-    char * device_name; /* OUT */
+    char *rait_name;
+    char * device_name; /* IN */
+    Device * result;    /* OUT */
 } OpenDeviceOp;
 
 /* A GFunc. */
@@ -632,7 +633,7 @@ static void device_open_do_op(gpointer data,
         strcmp(op->device_name, "MISSING") == 0 ||
         strcmp(op->device_name, "DEGRADED") == 0) {
         g_warning("RAIT device %s contains a missing element, attempting "
-                  "degraded mode.\n", DEVICE(op->self)->device_name);
+                  "degraded mode.\n", op->rait_name);
         op->result = NULL;
     } else {
         op->result = device_open(op->device_name);
@@ -660,7 +661,7 @@ static void append_message(char ** old_message, char * new_message) {
 }
 
 static void
-rait_device_open_device (Device * dself, char * device_name G_GNUC_UNUSED,
+rait_device_open_device (Device * dself, char * device_name,
 	    char * device_type G_GNUC_UNUSED, char * device_node) {
     char ** device_names;
     GPtrArray * device_open_ops;
@@ -691,6 +692,7 @@ rait_device_open_device (Device * dself, char * device_name G_GNUC_UNUSED,
         op->device_name = device_names[i];
         op->result = NULL;
         op->self = self;
+	op->rait_name = device_name;
         g_ptr_array_add(device_open_ops, op);
     }
 
@@ -721,8 +723,8 @@ rait_device_open_device (Device * dself, char * device_name G_GNUC_UNUSED,
             if (self->private->status == RAIT_STATUS_COMPLETE) {
                 /* The first failure just puts us in degraded mode. */
                 g_warning("%s: %s\n%s: %s failed, entering degraded mode.\n",
-                          dself->device_name, this_failure_errmsg,
-                          dself->device_name, op->device_name);
+                          device_name, this_failure_errmsg,
+                          device_name, op->device_name);
                 g_ptr_array_add(self->private->children, op->result);
                 self->private->status = RAIT_STATUS_DEGRADED;
                 self->private->failed = i;
