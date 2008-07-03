@@ -362,20 +362,17 @@ main(
     prstr("HAVE_SYSVSHM");
 #endif
 
-#ifdef USE_POSIX_FCNTL
-    prstr("LOCKING=POSIX_FCNTL");
+#ifdef WANT_AMFLOCK_POSIX
+    prstr("AMFLOCK_POSIX");
 #endif
-#ifdef USE_FLOCK
-    prstr("LOCKING=FLOCK");
+#ifdef WANT_AMFLOCK_FLOCK
+    prstr("AMFLOCK_FLOCK");
 #endif
-#ifdef USE_LOCKF
-    prstr("LOCKING=LOCKF");
+#ifdef WANT_AMFLOCK_LOCKF
+    prstr("AMFLOCK_LOCKF");
 #endif
-#ifdef USE_LNLOCK
-    prstr("LOCKING=LNLOCK");
-#endif
-#if !defined(USE_POSIX_FCNTL) && !defined(USE_FLOCK) && !defined(USE_LOCK) && !defined(USE_LNLOCK)
-    prstr("LOCKING=**NONE**");
+#ifdef WANT_AMFLOCK_LNLOCK
+    prstr("AMFLOCK_LNLOCK");
 #endif
 
 #ifdef STATFS_BSD

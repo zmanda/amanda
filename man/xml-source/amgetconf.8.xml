@@ -228,53 +228,53 @@ returned.</para>
 <refsect1><title>EXAMPLES</title>
 <para>Find out the path to the log file directory:</para>
 
-<literallayout remap='.nf'>
+<programlisting remap='.nf'>
 % amgetconf daily logdir
 /usr/local/etc/amanda/daily/logs
-</literallayout>
+</programlisting>
 
 <para>Find out the current tape type:</para>
-<literallayout remap='.nf'>
+<programlisting remap='.nf'>
 % amgetconf daily tapetype
 DLT4000-IV
-</literallayout>
+</programlisting>
 
 <para>Find out that tape type's length:</para>
-<literallayout remap='.nf'>
+<programlisting remap='.nf'>
 % amgetconf daily tapetype:DLT4000-IV:length
 1024000
-</literallayout>
+</programlisting>
 
 <para>List the other available tapetype:</para>
-<literallayout remap='.nf'>
+<programlisting remap='.nf'>
 % amgetconf daily --list tapetype
 DISK
 QIC-60
 DEC-DLT2000
 ...
-</literallayout>
+</programlisting>
 
 <para>Find out the configuration directory:</para>
-<literallayout remap='.nf'>
+<programlisting remap='.nf'>
 % amgetconf build.CONFIG_DIR
 /usr/local/etc/amanda/
-</literallayout>
+</programlisting>
 
 <para>List all build-time parameters</para>
-<literallayout remap='.nf'>
+<programlisting remap='.nf'>
 % amgetconf --list build
 AIX_BACKUP
 AMANDA_DBGDIR
 AMANDA_DEBUG_DAYS
 ...
-</literallayout>
+</programlisting>
 
 <para>Create, use and close a debug file in a script:</para>
-<literallayout remap='.nf'>
+<programlisting remap='.nf'>
 % debug_file=`amgetconf daily dbopen.myscript`
 % echo debug information &gt;&gt; $debug_file
 % amgetconf daily dbclose.myscript:$debug_file
-</literallayout> 
+</programlisting>
 </refsect1>
 
 <refsect1><title>MESSAGES</title>

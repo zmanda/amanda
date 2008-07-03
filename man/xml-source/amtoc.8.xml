@@ -108,8 +108,7 @@ option is equivalent to
 <refsect1><title>OUTPUT FORMAT</title>
 <para>The standard output has five fields separated by two spaces:</para>
 
-<!-- .RS -->
-<literallayout remap='.nf'>
+<programlisting>
 #  Server:/partition  date  level  size[Kb]
 0  daily-05:  19991005  -  -
 1  cuisun15:/cuisun15/home  19991005  1  96
@@ -117,12 +116,10 @@ option is equivalent to
   ...
 103  cuisg11:/  19991005  0  4139136
 103  total:  -  -  16716288
-<!-- .RE -->
+</programlisting>
+<para>In tabular format (-t), this would look like:</para>
 
-</literallayout><para>In tabular format (-t), this would look like:</para>
-
-<!-- .RS -->
-<literallayout remap='.nf'>
+<programlisting>
   #  Server:/partition           date      lev  size[Kb]
   0  daily-05:                   19991005    -         -
   1  cuisun15:/cuisun15/home     19991005    1        96
@@ -130,8 +127,7 @@ option is equivalent to
   ...
 103  cuisg11:/                   19991005    0   4139136
 103  total:                      -           -  16716288
-<!-- .RE -->
-</literallayout></refsect1>
+</programlisting></refsect1>
 
 <refsect1><title>USAGE</title>
 <para>The easiest way to use it is to run
@@ -142,9 +138,9 @@ in the
 <emphasis remap='I'>cron job:</emphasis></para>
 
 <!-- .RS -->
-<literallayout remap='.nf'>
+<programlisting>
 amdump daily ; logdir=`amgetconf daily logdir` ; log=`ls -1t $logdir/log.*.[0-9] | head -1` ; amtoc -a $log
-</literallayout> <!-- .fi -->
+</programlisting>
 
 <para>which will generate /usr/local/etc/amanda//daily/<emphasis remap='I'>tape_label</emphasis>.toc.
 You may also want to call

@@ -16,420 +16,62 @@
 </refmeta>
 <refnamediv>
 <refname>amanda</refname>
-<refpurpose>Advanced Maryland Automatic Network Disk Archiver</refpurpose>
+<refpurpose>The Open Source Backup Platform</refpurpose>
 </refnamediv>
 <!-- body begins here -->
-<refsynopsisdiv>
-
-<cmdsynopsis>
-    <command>amadmin</command>
-    <arg choice='plain'><replaceable>config</replaceable></arg>
-    <arg choice='plain'><replaceable>command</replaceable></arg>
-    <arg choice='opt'><replaceable>options</replaceable></arg>
-    <sbr/>
-</cmdsynopsis>
-
-<cmdsynopsis>
-    <command>amcheck</command>
-    <arg choice='opt'><replaceable>options</replaceable></arg>
-    <arg choice='plain'><replaceable>config</replaceable></arg>
-    <sbr/>
-</cmdsynopsis>
-
-<cmdsynopsis>
-    <command>amcheckdb</command>
-    <arg choice='plain'><replaceable>config</replaceable></arg>
-    <sbr/>
-</cmdsynopsis>
-
-
-<cmdsynopsis>
-    <command>amcleanup</command>
-    <arg choice='plain'><replaceable>config</replaceable></arg>
-    <sbr/>
-</cmdsynopsis>
-
-<cmdsynopsis>
-    <command>amcrypt</command>
-    <sbr/>
-</cmdsynopsis>
-
-<cmdsynopsis>
-  <command>amdd</command>    
-    <arg choice='opt'><replaceable>options</replaceable></arg>
-</cmdsynopsis>
-
-<cmdsynopsis>
-  <command>amdump</command>    
-    <arg choice='plain'><replaceable>config</replaceable></arg>
-    <sbr/>
-</cmdsynopsis>
-
-<cmdsynopsis>
-    <command>amaespipe</command>
-    <sbr/>
-</cmdsynopsis>
-
-<cmdsynopsis>
-  <command>amflush</command>    
-    <arg choice='opt'>-f </arg>
-    <arg choice='plain'><replaceable>config</replaceable></arg>
-    <sbr/>
-</cmdsynopsis>
-
-<cmdsynopsis>
-    <command>amgetconf</command>
-    <arg choice='opt'><replaceable>config</replaceable></arg>
-    <arg choice='plain'><replaceable>parameter</replaceable></arg>
-    <sbr/>
-</cmdsynopsis>
-
-<cmdsynopsis>
-    <command>amlabel</command>
-    <arg choice='plain'><replaceable>config</replaceable></arg>
-    <arg choice='plain'><replaceable>label</replaceable></arg>
-    <arg choice='opt'><arg choice='plain'><replaceable>slot</replaceable></arg><arg choice='plain'><replaceable>slot</replaceable></arg></arg>
-    <sbr/>
-</cmdsynopsis>
-
-<cmdsynopsis>
-  <command>ammt</command>    
-    <arg choice='opt'><replaceable>options</replaceable></arg>
-</cmdsynopsis>
-
-<cmdsynopsis>
-    <command>amoverview</command>
-    <arg choice='plain'><replaceable>config</replaceable></arg>
-    <arg choice='opt'><replaceable>options</replaceable></arg>
-    <sbr/>
-</cmdsynopsis>
-
-<cmdsynopsis>
-    <command>amplot</command>
-    <arg choice='opt'><replaceable>options</replaceable></arg>
-    <arg choice='plain'><replaceable>amdump-files</replaceable></arg>
-    <sbr/>
-</cmdsynopsis>
-
-<cmdsynopsis>
-    <command>amrecover</command>
-    <arg choice='opt'><replaceable>config</replaceable></arg>
-    <arg choice='opt'><replaceable>options</replaceable></arg>
-    <sbr/>
-</cmdsynopsis>
-
-<cmdsynopsis>
-    <command>amreport</command>
-    <arg choice='opt'><replaceable>config</replaceable></arg>
-    <arg choice='opt'><replaceable>options</replaceable></arg>
-    <sbr/>
-</cmdsynopsis>
-
-<cmdsynopsis>
-    <command>amrestore</command>
-    <arg choice='opt'><replaceable>options</replaceable></arg>
-    <arg choice='plain'><replaceable>tapedevice</replaceable></arg>
-    <arg choice='opt'><arg choice='plain'><replaceable>hostname</replaceable></arg><arg choice='opt'><replaceable>diskname</replaceable></arg></arg>
-    <sbr/>
-</cmdsynopsis>
-
-<cmdsynopsis>
-    <command>amfetchdump</command>
-    <arg choice='opt'><replaceable>options</replaceable></arg>
-    <arg choice='plain'><replaceable>config</replaceable></arg>
-    <arg choice='opt'><arg choice='plain'><replaceable>hostname</replaceable></arg><arg choice='opt'><arg choice='plain'><replaceable>diskname</replaceable></arg><arg choice='opt'><arg choice='plain'><replaceable>date</replaceable></arg><arg choice='opt'>level</arg></arg></arg></arg>
-</cmdsynopsis>
-
-<cmdsynopsis>
-    <command>amrmtape</command>
-    <arg choice='opt'><replaceable>options</replaceable></arg>
-    <arg choice='plain'><replaceable>config</replaceable></arg>
-    <arg choice='plain'><replaceable>label</replaceable></arg>
-    <sbr/>
-</cmdsynopsis>
-
-<cmdsynopsis>
-    <command>amservice</command>
-    <arg choice='plain'><replaceable>hostname</replaceable></arg>
-    <arg choice='plain'><replaceable>auth</replaceable></arg>
-    <arg choice='plain'><replaceable>service</replaceable></arg>
-    <arg choice='opt'><arg choice='plain'>-f</arg><arg choice='plain'><replaceable>input_file</replaceable></arg></arg>
-    <arg choice='plain' rep='repeat'><group><arg choice='plain'>-o </arg><replaceable>configoption</replaceable></group></arg>
-    <sbr/>
-</cmdsynopsis>
-
-<cmdsynopsis>
-    <command>amstatus</command>
-    <arg choice='plain'><replaceable>config</replaceable></arg>
-    <arg choice='opt'><replaceable>options</replaceable></arg>
-    <sbr/>
-</cmdsynopsis>
-
-<cmdsynopsis>
-    <command>amtape</command>
-    <arg choice='plain'><replaceable>config</replaceable></arg>
-    <arg choice='plain'><replaceable>command</replaceable></arg>
-    <arg choice='opt'><replaceable>options</replaceable></arg>
-    <sbr/>
-</cmdsynopsis>
-
-<cmdsynopsis>
-  <command>amtapetype</command>    
-    <arg choice='opt'><replaceable>options</replaceable></arg>
-</cmdsynopsis>
-
-<cmdsynopsis>
-    <command>amtoc</command>
-    <arg choice='opt'><replaceable>options</replaceable></arg>
-    <arg choice='plain'><replaceable>logfile</replaceable></arg>
-    <sbr/>
-</cmdsynopsis>
-
-<cmdsynopsis>
-    <command>amcheckdump</command>
-    <arg choice='opt'><replaceable>options</replaceable></arg>
-    <arg choice='plain'><replaceable>config</replaceable></arg>
-    <sbr/>
-</cmdsynopsis>
-
-<cmdsynopsis>
-    <command>amserverconfig</command>
-    <arg choice='opt'><replaceable>options</replaceable></arg>
-    <arg choice='plain'><replaceable>config</replaceable></arg>
-    <sbr/>
-</cmdsynopsis>
-
-<cmdsynopsis>
-    <command>amaddclient</command>
-    <arg choice='plain'><replaceable>config</replaceable></arg>
-    <arg choice='opt'><replaceable>options</replaceable></arg>
-    <sbr/>
-</cmdsynopsis>
-</refsynopsisdiv>
-
 
 <refsect1><title>DESCRIPTION</title>
-<para>&A; is the 
-&quot;Advanced Maryland Automatic Network Disk Archiver&quot;.
-This manual page gives an overview of the &A; commands and
+<para>This manual page gives an overview of the &A; commands and
 configuration files for quick reference.</para>
 
-<para>Here are all the &A; commands.
-Each one has its own manual page.
-See them for all the gory details.</para>
-<variablelist remap='TP'>
-  <varlistentry>
-  <term><emphasis remap='B'>amdump</emphasis></term>
-  <listitem>
-<para>Take care of automatic &A; backups.
-This is normally executed by
-<emphasis remap='B'>cron</emphasis>
-on a computer called the
-<emphasis remap='I'>tape server host</emphasis>
-and requests backups of file systems located on
-<emphasis remap='I'>backup</emphasis>
-<emphasis remap='I'>clients</emphasis>.
-<emphasis remap='B'>Amdump</emphasis>
-backs up all disks in the
-<emphasis remap='I'>disklist</emphasis>
-file (discussed below) to tape or, if there is a problem, to a special
-<emphasis remap='I'>holding</emphasis>
-<emphasis remap='I'>disk</emphasis>.
-After all backups are done,
-<command>amdump</command>
-sends mail reporting failures and successes.</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
-  <term><emphasis remap='B'>amflush</emphasis></term>
-  <listitem>
-<para>Flush backups from the holding disk to tape.
-<emphasis remap='B'>Amflush</emphasis>
-is used after
-<command>amdump</command>
-has reported it could not write backups to tape for some reason.
-When this happens, backups stay in the holding disk.
-Run <emphasis remap='B'>amflush</emphasis> after the tape problem is corrected
-to write backups from the holding disk to tape.</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
-  <term><emphasis remap='B'>amcleanup</emphasis></term>
-  <listitem>
-<para>Clean up after an interrupted
-<command>amdump</command>.
-This command is only needed if
-<command>amdump</command>
-was unable to complete for some reason, usually because the
-tape server host crashed while
-<command>amdump</command>
-was running.</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
-  <term><emphasis remap='B'>amrecover</emphasis></term>
-  <listitem>
-<para>Provides an interactive interface to browse the &A; index files
-(backup image catalogues)
-and select which tapes to recover files from.
-It can also run
-<emphasis remap='B'>amrestore</emphasis>
-and a restore program (e.g.
-<emphasis remap='B'>tar</emphasis>)
-to actually recover the files.</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
-  <term><emphasis remap='B'>amrestore</emphasis></term>
-  <listitem>
-<para>Read an &A; tape, searching for requested backups.
-<emphasis remap='B'>Amrestore</emphasis>
-is suitable for everything from interactive restores of single files
-to a full restore of all partitions on a failed disk.</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
-  <term><emphasis remap='B'>amfetchdump</emphasis></term>
-  <listitem>
-<para>Performs &A; tape restoration, similar to <emphasis
-  remap='B'>amrestore</emphasis>. Additional capabilities include
-  "hands-off" searching of multiple tapes, automatic
-  retrieval of specific dump files based on dump logs, and assembly of
-  tape-spanning split dump files.</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
-  <term><emphasis remap='B'>amlabel</emphasis></term>
-  <listitem>
-<para>Write an &A; format label onto a tape.
-All &A; tapes must be labeled with
-<emphasis remap='B'>amlabel</emphasis>.
-<emphasis remap='B'>Amdump</emphasis>
-and
-<emphasis remap='B'>amflush</emphasis>
-will not write to an unlabeled tape (see TAPE MANAGEMENT below).</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
-  <term><emphasis remap='B'>amcheck</emphasis></term>
-  <listitem>
-<para>Verify the correct tape is mounted and all file systems on all backup client systems
-are ready to be backed up. Often run by
-<emphasis remap='B'>cron</emphasis>
-before
-<command>amdump</command>
-to generate a mail warning that backups might fail
-unless corrective action is taken.</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
-  <term><emphasis remap='B'>amadmin</emphasis></term>
-  <listitem>
-<para>Take care of administrative tasks like finding out which
-tapes are needed to restore a filesystem,
-forcing hosts to do full backups of selected disks
-and looking at schedule balance information.</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
-  <term><emphasis remap='B'>amtape</emphasis></term>
-  <listitem>
-<para>Take care of tape changer control operations like loading particular tapes,
-ejecting tapes and scanning the tape storage slots.</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
-  <term><emphasis remap='B'>amcheckdump</emphasis></term>
-  <listitem>
-<para>Check the results of an &A; dump.</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
-  <term><emphasis remap='B'>amserverconfig</emphasis></term>
-  <listitem>
-<para>Program to setup initial &A; configuration.</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
-  <term><emphasis remap='B'>amaddclient</emphasis></term>
-  <listitem>
-<para>Program to add client to an existing &A; configuration.</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
-  <term><emphasis remap='B'>amrmtape</emphasis></term>
-  <listitem>
-<para>Delete a tape from the &A; databases.</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
-  <term><emphasis remap='B'>amservice</emphasis></term>
-  <listitem>
-<para>run an amanda service on a client</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
-  <term><emphasis remap='B'>amstatus</emphasis></term>
-  <listitem>
-<para>Report the status of a running or completed
-<command>amdump</command>.</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
-  <term><emphasis remap='B'>amoverview</emphasis></term>
-  <listitem>
-<para>Display a chart of hosts and file systems backed up every run.</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
-  <term><emphasis remap='B'>amplot</emphasis></term>
-  <listitem>
-<para>Generate utilization plots of &A; runs for performance tuning.</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
-  <term><emphasis remap='B'>amreport</emphasis></term>
-  <listitem>
-<para>Generate an &A; summary E-mail report.</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
-  <term><emphasis remap='B'>amtoc</emphasis></term>
-  <listitem>
-<para>Generate table of content files for &A; tapes.</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
-  <term><emphasis remap='B'>amcheckdb</emphasis></term>
-  <listitem>
-<para>Verify every tape &A; knows about is consistent in the database.</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
-  <term><emphasis remap='B'>amgetconf</emphasis></term>
-  <listitem>
-<para>Look up parameters in the &A; configuration file.</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
-  <term><emphasis remap='B'>amtapetype</emphasis></term>
-  <listitem>
-<para>Generate a tapetype definition.</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
-  <term><emphasis remap='B'>amaespipe</emphasis></term>
-  <listitem>
-<para>Wrapper program from aespipe (data encryption utility)</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
-  <term><emphasis remap='B'>amcrypt</emphasis></term>
-  <listitem>
-<para>Reference encryption program for Amanda symmetric data encryption</para>
-  </listitem>
-  </varlistentry>
-</variablelist>
+<refsect2><title>COMMANDS</title> <!-- a.k.a. any section 8 manpage -->
+<para>Here are all the &A; commands.  Each one has its own manual page.  See them for all the gory details.</para>
+<itemizedlist>
+  <listitem><citerefentry><refentrytitle>amaddclient</refentrytitle><manvolnum>8</manvolnum></citerefentry></listitem>
+  <listitem><citerefentry><refentrytitle>amadmin</refentrytitle><manvolnum>8</manvolnum></citerefentry></listitem>
+  <listitem><citerefentry><refentrytitle>amaespipe</refentrytitle><manvolnum>8</manvolnum></citerefentry></listitem>
+  <listitem><citerefentry><refentrytitle>amcheck</refentrytitle><manvolnum>8</manvolnum></citerefentry></listitem>
+  <listitem><citerefentry><refentrytitle>amcheckdb</refentrytitle><manvolnum>8</manvolnum></citerefentry></listitem>
+  <listitem><citerefentry><refentrytitle>amcheckdump</refentrytitle><manvolnum>8</manvolnum></citerefentry></listitem>
+  <listitem><citerefentry><refentrytitle>amcleanup</refentrytitle><manvolnum>8</manvolnum></citerefentry></listitem>
+  <listitem><citerefentry><refentrytitle>amcrypt-ossl-asym</refentrytitle><manvolnum>8</manvolnum></citerefentry></listitem>
+  <listitem><citerefentry><refentrytitle>amcrypt-ossl</refentrytitle><manvolnum>8</manvolnum></citerefentry></listitem>
+  <listitem><citerefentry><refentrytitle>amcrypt</refentrytitle><manvolnum>8</manvolnum></citerefentry></listitem>
+  <listitem><citerefentry><refentrytitle>amcryptsimple</refentrytitle><manvolnum>8</manvolnum></citerefentry></listitem>
+  <listitem><citerefentry><refentrytitle>amdd</refentrytitle><manvolnum>8</manvolnum></citerefentry></listitem>
+  <listitem><citerefentry><refentrytitle>amdevcheck</refentrytitle><manvolnum>8</manvolnum></citerefentry></listitem>
+  <listitem><citerefentry><refentrytitle>amdump</refentrytitle><manvolnum>8</manvolnum></citerefentry></listitem>
+  <listitem><citerefentry><refentrytitle>amfetchdump</refentrytitle><manvolnum>8</manvolnum></citerefentry></listitem>
+  <listitem><citerefentry><refentrytitle>amflush</refentrytitle><manvolnum>8</manvolnum></citerefentry></listitem>
+  <listitem><citerefentry><refentrytitle>amgetconf</refentrytitle><manvolnum>8</manvolnum></citerefentry></listitem>
+  <listitem><citerefentry><refentrytitle>amgpgcrypt</refentrytitle><manvolnum>8</manvolnum></citerefentry></listitem>
+  <listitem><citerefentry><refentrytitle>amlabel</refentrytitle><manvolnum>8</manvolnum></citerefentry></listitem>
+  <listitem><citerefentry><refentrytitle>ammt</refentrytitle><manvolnum>8</manvolnum></citerefentry></listitem>
+  <listitem><citerefentry><refentrytitle>amoverview</refentrytitle><manvolnum>8</manvolnum></citerefentry></listitem>
+  <listitem><citerefentry><refentrytitle>amplot</refentrytitle><manvolnum>8</manvolnum></citerefentry></listitem>
+  <listitem><citerefentry><refentrytitle>amrecover</refentrytitle><manvolnum>8</manvolnum></citerefentry></listitem>
+  <listitem><citerefentry><refentrytitle>amreport</refentrytitle><manvolnum>8</manvolnum></citerefentry></listitem>
+  <listitem><citerefentry><refentrytitle>amrestore</refentrytitle><manvolnum>8</manvolnum></citerefentry></listitem>
+  <listitem><citerefentry><refentrytitle>amrmtape</refentrytitle><manvolnum>8</manvolnum></citerefentry></listitem>
+  <listitem><citerefentry><refentrytitle>amserverconfig</refentrytitle><manvolnum>8</manvolnum></citerefentry></listitem>
+  <listitem><citerefentry><refentrytitle>amservice</refentrytitle><manvolnum>8</manvolnum></citerefentry></listitem>
+  <listitem><citerefentry><refentrytitle>amstatus</refentrytitle><manvolnum>8</manvolnum></citerefentry></listitem>
+  <listitem><citerefentry><refentrytitle>amtape</refentrytitle><manvolnum>8</manvolnum></citerefentry></listitem>
+  <listitem><citerefentry><refentrytitle>amtapetype</refentrytitle><manvolnum>8</manvolnum></citerefentry></listitem>
+  <listitem><citerefentry><refentrytitle>amtoc</refentrytitle><manvolnum>8</manvolnum></citerefentry></listitem>
+</itemizedlist>
+</refsect2>
+<refsect2><title>CONFIGURATION FILES</title> <!-- a.k.a. any section 5 manpage -->
+<itemizedlist>
+  <listitem><citerefentry><refentrytitle>amanda.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry></listitem>
+  <listitem><citerefentry><refentrytitle>amanda-client.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry></listitem>
+</itemizedlist>
+</refsect2>
+<refsect2><title>CONCEPTS</title> <!-- a.k.a. any section 7 manpage -->
+<itemizedlist>
+  <listitem><citerefentry><refentrytitle>amanda-devices</refentrytitle><manvolnum>7</manvolnum></citerefentry></listitem>
+</itemizedlist>
+</refsect2>
 </refsect1>
 
 <refsect1><title>CONFIGURATION</title>
@@ -456,7 +98,7 @@ file, which lists tapes that are currently active.
 These files are described in more detail in the following sections.</para>
 
 <para>All files are stored in individual configuration
-directories under <filename>/usr/local/etc/amanda/</filename>.
+directories, usually under <filename>/etc/amanda/</filename>.
 A site will often have more than
 one configuration.
 For example, it might have a
@@ -465,8 +107,8 @@ configuration for everyday backups and an
 <emphasis remap='I'>archive</emphasis>
 configuration for infrequent full archival backups.
 The configuration files would be stored under directories
-<filename>/usr/local/etc/amanda/normal/</filename> and
-<filename>/usr/local/etc/amanda/archive/</filename>, respectively.
+<filename>/etc/amanda/normal/</filename> and
+<filename>/etc/amanda/archive/</filename>, respectively.
 Part of the job of an &A; administrator is to create,
 populate and maintain these directories.</para>
 
@@ -485,7 +127,7 @@ For the above example, the files might go in
 
 <para>Detailed information about
 <command>amdump</command>
-runs are stored in files named
+runs are stored in dump logs -- files named
 <emphasis remap='B'>amdump.</emphasis><emphasis remap='I'>NN</emphasis>
 where
 <emphasis remap='I'>NN</emphasis>
@@ -498,12 +140,13 @@ worth of them.</para>
 
 <para>The file used by
 <emphasis remap='B'>amreport</emphasis>
-to generate the mail summary is named
-<emphasis remap='B'>log.</emphasis><emphasis remap='I'>YYYYMMDD.NN</emphasis>
+to generate the mail summary is the trace log.  This file constitutes the "catalog"
+describing the data on the tapes written in a run.  It is named
+<emphasis remap='B'>log.</emphasis><emphasis remap='I'>YYYYMMDDHHMMSS.NN</emphasis>
 where
-<emphasis remap='I'>YYYYMMDD</emphasis>
+<emphasis remap='I'>YYYYMMDDHHMMSS</emphasis>
 is the datestamp of the start of the
-<command>amdump</command>
+<command>amdump</command> or <command>amflush</command>
 run and
 <emphasis remap='I'>NN</emphasis>
 is a sequence number started at 0.
@@ -1305,37 +948,5 @@ amdump -otapedev=/dev/nst1 -otpchanger=''
 <para>&maintainer.sgw;: XML-conversion, major update</para>
 </refsect1>
 
-<refsect1><title>SEE ALSO</title>
-<para>
-<citerefentry><refentrytitle>amadmin</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>amanda.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>amanda-client.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>amanda-devices</refentrytitle><manvolnum>7</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>amcheck</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>amcheckdb</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>amcleanup</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>amdd</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>amdump</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>amfetchdump</refentrytitle><manvolnum>8</manvolnum></citerefentry>
-<citerefentry><refentrytitle>amflush</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>amgetconf</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>amlabel</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>ammt</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>amoverview</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>amplot</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>amrecover</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>amreport</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>amrestore</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>amrmtape</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>amstatus</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>amtape</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>amtapetype</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>amtoc</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>amcheckdump</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>amserverconfig</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>amaddclient</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-<ulink url="http://wiki.zmanda.com"/>
-</para>
-</refsect1>
 </refentry>
 

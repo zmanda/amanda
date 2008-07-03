@@ -70,24 +70,34 @@ SRCMANPAGEDIR  = $(srcdir)/xml-source
 MAN_XML = $(ALL_MAN_PAGES:%=xml-source/%.xml)
 
 EXTRA_XML = xslt/expand-sambadoc.xsl \
-            xslt/man.xsl \
+            xslt/man.xsl.in \
+            xslt/html.xsl.in \
             xslt/settings.xsl \
 	    entities/global.entities \
 	    entities/xinclude.dtd
 
-EXTRA_DIST = $(ALL_MAN_PAGES) $(MAN_XML) $(EXTRA_XML)
+EXTRA_DIST = $(ALL_MAN_PAGES) $(MAN_XML) $(EXTRA_HTML) $(EXTRA_XML)
 
 GEN_XML = $(ALL_MAN_PAGES:%=xml-source/%.proc.xml)
 
 MOSTLYCLEANFILES = $(GEN_XML)
 MAINTAINERCLEANFILES = $(ALL_MAN_PAGES)
 
+# some of the XSL needs to know what docbook-xsl version we've selected
+%.xsl: %.xsl.in $(top_builddir)/config.status
+	$(top_builddir)/config.status --file=$@:$<
+
 if   ENABLE_MANPAGE_BUILD
+# phase one of the documentation build expands some macros.
 xml-source/%.proc.xml: $(SRCMANPAGEDIR)/%.xml $(srcdir)/xslt/expand-sambadoc.xsl
 	$(XSLTPROC) $(XSLTPROC_FLAGS) --path $(srcdir)/xslt/ --xinclude --stringparam latex.imagebasedir "$*/" --stringparam noreference 1 --output $@ $(srcdir)/xslt/expand-sambadoc.xsl $<
 
+# phase two generates a manpage from the resulting "expanded" docbook XML
 %: xml-source/%.proc.xml $(srcdir)/xslt/man.xsl
-	$(XSLTPROC) $(XSLTPROC_FLAGS) --path $(srcdir)/xslt/ --output $@ http://docbook.sourceforge.net/release/xsl/$(XSLREL)/manpages/docbook.xsl $<
+	$(XSLTPROC) $(XSLTPROC_FLAGS) --path $(srcdir)/xslt/ --output $@ xslt/man.xsl $<
+
+%.html: xml-source/%.proc.xml $(srcdir)/xslt/html.xsl
+	$(XSLTPROC) $(XSLTPROC_FLAGS) --path $(srcdir)/xslt/ --output $@ xslt/html.xsl $<
 
 else	!ENABLE_MANPAGE_BUILD
 
@@ -95,7 +105,23 @@ else	!ENABLE_MANPAGE_BUILD
 	@echo WARNING: Not building needed $@ because building manpages is disabled.
 	@echo 'DUMMY' > $@
 
+# (no rule to build HTML without ENABLE_MANPAGE_BUILD)
+
 endif
+
+##
+## HTML Generation
+##
+
+EXTRA_DIST += \
+	index.php \
+	amanda.css
+
+ALL_MAN_HTMLS = $(ALL_MAN_PAGES:%=%.html)
+
+# toplevel rule to build HTML manpages and tar them up
+html: amanda.css index.php $(ALL_MAN_HTMLS)
+	tar -zcf html.tar.gz $(ALL_MAN_HTMLS) amanda.css index.php
 
 # double-check that we don't ship dummy manpages
 dist-hook:

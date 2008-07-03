@@ -15,7 +15,7 @@
 </refmeta>
 <refnamediv>
 <refname>amanda-devices</refname>
-<refpurpose>Configuring and Using of Amanda Devices</refpurpose>
+<refpurpose>Configuring and Using Amanda Devices</refpurpose>
 </refnamediv>
 <!-- body begins here -->
 
@@ -380,8 +380,5 @@ note that case and whitespace are significant.
 <citerefentry><refentrytitle>amanda.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
 </para>
 
-<para>
-An updated version of this man page may be available at http://wiki.zmanda.com/index.php/Amanda-devices.
-</para>
 </refsect1>
 </refentry>
