@@ -1,3 +1,6 @@
+2008-07-04 Dan Locks <dwlocks@zmanda.com>
+	* packaging/rpm/buildpkg: add lines to copy rpms to root of the build dir.
+
 2008-06-30  Ian Turner <ian@zmanda.com>
 	* device-src/rait-device.c: Fix a memory corruption issue on the last
 	  block of a file.

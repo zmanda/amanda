@@ -48,3 +48,5 @@ cp packaging/rpm/amanda.spec rpm/SPECS/amanda.spec
 # this is useful for changing %amanda_release or %amanda_version
 rpmbuild -ba --define "_topdir ${AMPKGDIR}/rpm" \
              ${AMPKGDIR}/rpm/SPECS/amanda.spec 
+cp rpm/RPMS/*/*.rpm . || exit 1
+cp rpm/SRPMS/*.rpm . || exit 1
