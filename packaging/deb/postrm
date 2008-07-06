@@ -21,7 +21,7 @@ case "$1" in
 			   awk -F: '{ print $4 }' |
 			   awk -F, '{ for (i=1; i <= NF; i++ ) print $i }' |
 			   grep '^amandabackup$' > /dev/null; then
-				deluser "amandabackup$group" || true
+				deluser "amandabackup $group" || true
 			fi
 		done
 	fi
