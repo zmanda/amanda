@@ -81,6 +81,13 @@ build-stamp: /sbin/dump /usr/bin/smbclient
 		--enable-s3-device \
 		--disable-installperms
 	touch missing
+	# There's probably a better way to do this.  Preinst and postrm are the
+	# same for client and server, but we leave room for differences by just
+	# appending here.
+	cat $(shell pwd)/debian/preinst >> $(shell pwd)/debian/amanda-backup-client.preinst
+	cat $(shell pwd)/debian/preinst >> $(shell pwd)/debian/amanda-backup-server.preinst
+	cat $(shell pwd)/debian/postrm >> $(shell pwd)/debian/amanda-backup-client.postrm
+	cat $(shell pwd)/debian/postrm >> $(shell pwd)/debian/amanda-backup-server.postrm
 	make 
 	touch build-stamp
 

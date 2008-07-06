@@ -1,3 +1,11 @@
+2008-07-06 Dan Locks <dwlocks@zmanda.com>
+	* packaging/deb/amanda-backup-server.postrm
+	  packaging/deb/amanda-backup-client.postrm: removed unused
+	  code
+	* packaging/deb/postrm: fixed typo in deluser command
+	* packaging/deb/rules: added specific preinst and postrm scripts for
+	  client and server.
+
 2008-07-03  Dustin J. Mitchell <dustin@zmanda.com>
 	* man/Makefile.am man/amanda.css man/index.php man/xslt/html.xsl.in:
 	  new files for HTML output
