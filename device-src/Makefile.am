@@ -58,8 +58,10 @@ vfs_test_LDADD = \
 
 ## activate-devpay
 
+if WANT_S3_DEVICE
 sbin_PROGRAMS += activate-devpay
 activate_devpay_SOURCES = activate-devpay.c
+endif
 
 ## headers
 

@@ -1,3 +1,7 @@
+2008-07-07 Nikolas Coukouma <nikolas@zmanda.com>
+	* device-src/Makefile.am: conditionalize activate-devpay on
+	  WANT_S3_DEVICE
+
 2007-07-06 Nikolas Coukouma <nikolas@zmanda.com>
 	* device-src/s3-device.c, device-src/s3.c, device-src/s3.h,
 	  device-src/activate-devpay.c, device-src/Makefile.am:
