@@ -78,11 +78,11 @@
 /* parameters for exponential backoff in the face of retriable errors */
 
 /* start at 0.01s */
-#define EXPONENTIAL_BACKOFF_START_USEC 10000
+#define EXPONENTIAL_BACKOFF_START_USEC G_USEC_PER_SEC/100
 /* double at each retry */
 #define EXPONENTIAL_BACKOFF_BASE 2
-/* retry 15 times (for a total of about 5 minutes spent waiting) */
-#define EXPONENTIAL_BACKOFF_MAX_RETRIES 5
+/* retry 14 times (for a total of about 3 minutes spent waiting) */
+#define EXPONENTIAL_BACKOFF_MAX_RETRIES 14
 
 /* general "reasonable size" parameters */
 #define MAX_ERROR_RESPONSE_LEN (100*1024)
@@ -90,6 +90,7 @@
 /* Results which should always be retried */
 #define RESULT_HANDLING_ALWAYS_RETRY \
         { 400,  S3_ERROR_RequestTimeout,     0,                         S3_RESULT_RETRY }, \
+        { 404,  S3_ERROR_NoSuchBucket,       0,                         S3_RESULT_RETRY }, \
         { 409,  S3_ERROR_OperationAborted,   0,                         S3_RESULT_RETRY }, \
         { 412,  S3_ERROR_PreconditionFailed, 0,                         S3_RESULT_RETRY }, \
         { 500,  S3_ERROR_InternalError,      0,                         S3_RESULT_RETRY }, \
@@ -109,9 +110,8 @@ struct S3Handle {
 
     char *access_key;
     char *secret_key;
-#ifdef WANT_DEVPAY
     char *user_token;
-#endif
+
     char *bucket_location;
 
     CURL *curl;
@@ -497,14 +497,14 @@ authenticate_request(S3Handle *hdl,
     g_string_append(auth_string, date);
     g_string_append(auth_string, "\n");
 
-#ifdef WANT_DEVPAY
-    g_string_append(auth_string, AMAZON_SECURITY_HEADER);
-    g_string_append(auth_string, ":");
-    g_string_append(auth_string, hdl->user_token);
-    g_string_append(auth_string, ",");
-    g_string_append(auth_string, STS_PRODUCT_TOKEN);
-    g_string_append(auth_string, "\n");
-#endif
+    if (hdl->user_token) {
+        g_string_append(auth_string, AMAZON_SECURITY_HEADER);
+        g_string_append(auth_string, ":");
+        g_string_append(auth_string, hdl->user_token);
+        g_string_append(auth_string, ",");
+        g_string_append(auth_string, STS_PRODUCT_TOKEN);
+        g_string_append(auth_string, "\n");
+    }
 
     /* CanonicalizedResource */
     g_string_append(auth_string, "/");
@@ -542,16 +542,16 @@ authenticate_request(S3Handle *hdl,
     base64_encode(md_value, md_len, auth_base64, sizeof(auth_base64));
 
     /* append the new headers */
-#ifdef WANT_DEVPAY
-    /* Devpay headers are included in hash. */
-    buf = g_strdup_printf(AMAZON_SECURITY_HEADER ": %s", hdl->user_token);
-    headers = curl_slist_append(headers, buf);
-    amfree(buf);
+    if (hdl->user_token) {
+        /* Devpay headers are included in hash. */
+        buf = g_strdup_printf(AMAZON_SECURITY_HEADER ": %s", hdl->user_token);
+        headers = curl_slist_append(headers, buf);
+        amfree(buf);
 
-    buf = g_strdup_printf(AMAZON_SECURITY_HEADER ": %s", STS_PRODUCT_TOKEN);
-    headers = curl_slist_append(headers, buf);
-    amfree(buf);
-#endif
+        buf = g_strdup_printf(AMAZON_SECURITY_HEADER ": %s", STS_PRODUCT_TOKEN);
+        headers = curl_slist_append(headers, buf);
+        amfree(buf);
+    }
 
     buf = g_strdup_printf("Authorization: AWS %s:%s",
                           hdl->access_key, auth_base64);
@@ -799,6 +799,10 @@ perform_request(S3Handle *hdl,
 	request_body_size = 0;
 
     while (1) {
+        /* corresponds to PUT, HEAD, GET, and POST */
+        int curlopt_upload = 0, curlopt_nobody = 0, curlopt_httpget = 0, curlopt_post = 0;
+        const char *curlopt_customrequest = NULL;
+
         /* reset things */
         if (headers) {
             curl_slist_free_all(headers);
@@ -811,6 +815,19 @@ perform_request(S3Handle *hdl,
         headers = authenticate_request(hdl, verb, bucket, key, subresource,
             hdl->bucket_location? TRUE : FALSE);
 
+        /* libcurl may behave strangely if these are not set correctly */
+        if (!strncmp(verb, "PUT", 4)) {
+            curlopt_upload = 1;
+        } else if (!strncmp(verb, "GET", 4)) {
+            curlopt_httpget = 1;
+        } else if (!strncmp(verb, "POST", 5)) {
+            curlopt_post = 1;
+        } else if (!strncmp(verb, "HEAD", 5)) {
+            curlopt_nobody = 1;
+        } else {
+            curlopt_customrequest = verb;
+        }
+
         if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_VERBOSE, hdl->verbose)))
             goto curl_error;
 	if (hdl->verbose)
@@ -822,13 +839,12 @@ perform_request(S3Handle *hdl,
             goto curl_error;
         if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_NOPROGRESS, 1)))
             goto curl_error;
+        if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_FOLLOWLOCATION, 1)))
+            goto curl_error;
         if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_URL, url)))
             goto curl_error;
         if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_HTTPHEADER,
                                           headers)))
-            goto curl_error;
-        if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_CUSTOMREQUEST,
-                                          verb)))
             goto curl_error;
         if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_WRITEFUNCTION, buffer_writefunction))) 
             goto curl_error;
@@ -856,17 +872,26 @@ perform_request(S3Handle *hdl,
 	    goto curl_error;
 #endif
 
-        if (request_body) {
-            if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_UPLOAD, 1)))
-                goto curl_error;
+        if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_HTTPGET, curlopt_httpget)))
+            goto curl_error;
+        if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_UPLOAD, curlopt_upload)))
+            goto curl_error;
+        if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_POST, curlopt_post)))
+            goto curl_error;
+        if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_NOBODY, curlopt_nobody)))
+            goto curl_error;
+        if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_CUSTOMREQUEST,
+                                          curlopt_customrequest)))
+            goto curl_error;
+
+
+        if (curlopt_upload) {
             if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_READFUNCTION, buffer_readfunction))) 
                 goto curl_error;
             if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_READDATA, &readdata))) 
                 goto curl_error;
         } else {
             /* Clear request_body options. */
-            if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_UPLOAD, 0))) 
-                goto curl_error;
             if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_READFUNCTION,
                                               NULL)))
                 goto curl_error;
@@ -962,6 +987,8 @@ s3_init(void)
 {
     static GStaticMutex mutex = G_STATIC_MUTEX_INIT;
     static gboolean init = FALSE, ret;
+    
+    /* n.b. curl_global_init is called in common-src/glib-util.c:glib_init() */
 
     g_static_mutex_lock (&mutex);
     if (!init) {
@@ -990,12 +1017,8 @@ s3_bucket_location_compat(const char *bucket)
 
 S3Handle *
 s3_open(const char *access_key,
-        const char *secret_key
-#ifdef WANT_DEVPAY
-        ,
-        const char *user_token
-#endif
-        ,
+        const char *secret_key,
+        const char *user_token,
         const char *bucket_location
         ) {
     S3Handle *hdl;
@@ -1005,21 +1028,15 @@ s3_open(const char *access_key,
 
     hdl->verbose = FALSE;
 
+    g_assert(access_key);
     hdl->access_key = g_strdup(access_key);
-    if (!hdl->access_key) goto error;
-
+    g_assert(secret_key);
     hdl->secret_key = g_strdup(secret_key);
-    if (!hdl->secret_key) goto error;
-
-#ifdef WANT_DEVPAY
+    /* NULL is okay */
     hdl->user_token = g_strdup(user_token);
-    if (!hdl->user_token) goto error;
-#endif
-    
-    if (bucket_location) {
-      hdl->bucket_location = g_strdup(bucket_location);
-      if (!hdl->bucket_location) goto error;
-    }
+
+    /* NULL is okay */
+    hdl->bucket_location = g_strdup(bucket_location);
 
     hdl->curl = curl_easy_init();
     if (!hdl->curl) goto error;
@@ -1037,11 +1054,9 @@ s3_free(S3Handle *hdl)
     s3_reset(hdl);
 
     if (hdl) {
-        if (hdl->access_key) g_free(hdl->access_key);
-        if (hdl->secret_key) g_free(hdl->secret_key);
-#ifdef WANT_DEVPAY
+        g_free(hdl->access_key);
+        g_free(hdl->secret_key);
         if (hdl->user_token) g_free(hdl->user_token);
-#endif
         if (hdl->bucket_location) g_free(hdl->bucket_location);
         if (hdl->curl) curl_easy_cleanup(hdl->curl);
 
@@ -1468,11 +1483,15 @@ s3_make_bucket(S3Handle *hdl,
     result = perform_request(hdl, "PUT", bucket, NULL, NULL, NULL, body, body_len, 
 			     MAX_ERROR_RESPONSE_LEN, 0, result_handling);
 
-    /* verify the that the location constraint on the existing bucket matches
-     * the one that's configured.
-     */
-    if (hdl->bucket_location && result != S3_RESULT_OK 
+    if (result == S3_RESULT_OK) {
+        /* wait for the bucket to appear before returning */
+        result = perform_request(hdl, "HEAD", bucket, NULL, NULL, NULL, body, body_len, 
+                                 MAX_ERROR_RESPONSE_LEN, 0, result_handling);
+    } else if (hdl->bucket_location && result != S3_RESULT_OK 
         && hdl->last_s3_error_code == S3_ERROR_BucketAlreadyOwnedByYou) {
+        /* verify the that the location constraint on the existing bucket matches
+         * the one that's configured.
+         */
         result = perform_request(hdl, "GET", bucket, NULL, "location", NULL, 
             NULL, 0, MAX_ERROR_RESPONSE_LEN, 0, result_handling);
 

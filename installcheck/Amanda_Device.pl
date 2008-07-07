@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 247;
+use Test::More tests => 237;
 use File::Path qw( mkpath rmtree );
 use Sys::Hostname;
 use strict;
@@ -386,120 +386,170 @@ ok($dev->status() & $DEVICE_STATUS_DEVICE_ERROR,
 # Test an S3 device if the proper environment variables are set
 my $S3_SECRET_KEY = $ENV{'INSTALLCHECK_S3_SECRET_KEY'};
 my $S3_ACCESS_KEY = $ENV{'INSTALLCHECK_S3_ACCESS_KEY'};
+my $DEVPAY_SECRET_KEY = $ENV{'INSTALLCHECK_DEVPAY_SECRET_KEY'};
+my $DEVPAY_ACCESS_KEY = $ENV{'INSTALLCHECK_DEVPAY_ACCESS_KEY'};
+my $DEVPAY_USER_TOKEN = $ENV{'INSTALLCHECK_DEVPAY_USER_TOKEN'};
+
 my $run_s3_tests = defined $S3_SECRET_KEY && defined $S3_ACCESS_KEY;
+my $run_devpay_tests = defined $DEVPAY_SECRET_KEY && 
+    defined $DEVPAY_ACCESS_KEY && $DEVPAY_USER_TOKEN;
+
+my $dev_base_name;
+my $hostname  = hostname();
+
+sub s3_make_device($) {
+    my $dev_name = shift @_;
+    $dev = Amanda::Device->new($dev_name);
+    is($dev->status(), $DEVICE_STATUS_SUCCESS,
+       "$dev_name: create successful")
+        or diag($dev->error_or_status());
+
+    if ($dev_name =~ /^s3:/) {
+        # use regular S3 credentials
+        ok($dev->property_set('S3_ACCESS_KEY', $S3_ACCESS_KEY),
+           "set S3 access key")
+        or diag($dev->error_or_status());
+
+        ok($dev->property_set('S3_SECRET_KEY', $S3_SECRET_KEY),
+           "set S3 secret key")
+            or diag($dev->error_or_status());
+    } elsif ($dev_name =~ /^s3zmanda:/) {
+        # use S3+DevPay credentials
+        ok($dev->property_set('S3_ACCESS_KEY', $DEVPAY_ACCESS_KEY),
+           "set S3+DevPay access key")
+        or diag($dev->error_or_status());
+
+        ok($dev->property_set('S3_SECRET_KEY', $DEVPAY_SECRET_KEY),
+           "set S3+DevPay secret key")
+            or diag($dev->error_or_status());
+
+        ok($dev->property_set('S3_USER_TOKEN', $DEVPAY_USER_TOKEN),
+           "set S3+DevPay user token")
+            or diag($dev->error_or_status());
+    } else {
+        diag("didn't recognize the device scheme, so no credentials were set");
+    }
+    return $dev;
+}
+
+sub s3_run_main_tests($$) {
+    my ($dev_scheme, $base_name) = @_;
+    $dev_name = "$dev_scheme:$base_name-$dev_scheme";
+    $dev = s3_make_device($dev_name);
+    $dev->read_label();
+    is($dev->status() & ~$DEVICE_STATUS_VOLUME_UNLABELED, 0,
+       "read_label OK, possibly already labeled")
+        or diag($dev->error_or_status());
+
+    ok($dev->start($ACCESS_WRITE, "TESTCONF13", undef),
+       "start in write mode")
+        or diag($dev->error_or_status());
+
+    ok(!($dev->status() & $DEVICE_STATUS_VOLUME_UNLABELED),
+       "it's labeled now")
+        or diag($dev->error_or_status());
+
+    for (my $i = 1; $i <= 3; $i++) {
+        write_file(0x2FACE, 32768*10, $i);
+    }
+
+    ok($dev->finish(),
+       "finish device after write")
+        or diag($dev->error_or_status());
+
+    $dev->read_label();
+    ok(!($dev->status()),
+       "no error, at all, from read_label")
+	or diag($dev->error_or_status());
+
+    # append one more copy, to test ACCESS_APPEND
+
+    ok($dev->start($ACCESS_APPEND, undef, undef),
+       "start in append mode")
+        or diag($dev->error_or_status());
+
+    write_file(0xD0ED0E, 32768*10, 4);
+
+    ok($dev->finish(),
+       "finish device after append")
+        or diag($dev->error_or_status());
+
+    # try reading the third file back
+
+    ok($dev->start($ACCESS_READ, undef, undef),
+       "start in read mode")
+        or diag($dev->error_or_status());
+
+    verify_file(0x2FACE, 32768*10, 3);
+
+    ok($dev->finish(),
+       "finish device after read")
+        or diag($dev->error_or_status());    # (note: we don't use write_max_size here, as the maximum for S3 is very large)
+
+    # try a constrained bucket
+    $dev_name = lc("$dev_scheme:$base_name-$dev_scheme-eu");
+    $dev = s3_make_device($dev_name);
+    ok($dev->property_set('S3_BUCKET_LOCATION', 'EU'),
+       "set S3 bucket location")
+        or diag($dev->error_or_status());
+
+    $dev->read_label();
+    is($dev->status() & ~$DEVICE_STATUS_VOLUME_UNLABELED, 0,
+       "read_label OK, possibly already labeled")
+        or diag($dev->error_or_status());
+
+    # bucket name incompatible with location constraint
+    $dev_name = "$dev_scheme:-$base_name-$dev_scheme-eu";
+    $dev = s3_make_device($dev_name);
+
+    ok(!$dev->property_set('S3_BUCKET_LOCATION', 'EU'),
+       "should not be able to set S3 bucket location with an incompatible name")
+        or diag($dev->error_or_status());
+}
+
 SKIP: {
-    skip "define \$INSTALLCHECK_S3_{SECRET,ACCESS}_KEY to run S3 tests", 84
+    skip "define \$INSTALLCHECK_S3_{SECRET,ACCESS}_KEY to run S3 tests", 25
 	unless $run_s3_tests;
 
     # XXX for best results, the bucket should already exist (Amazon doesn't create
     # buckets quickly enough to pass subsequent tests), but should be empty (so that
     # the device appears unlabeled)
-    my $hostname = hostname();
-    $dev_name = "s3:$S3_ACCESS_KEY-installcheck-$hostname";
+    $dev_base_name = "$S3_ACCESS_KEY-installcheck-$hostname";
 
-    # (note: we don't use write_max_size here, as the maximum for S3 is very large)
-    # run once with an unconstrained bucket, then again with a constrained one
-    for my $s3_loc (undef, "EU") {
-        $dev_name = lc($dev_name) if $s3_loc;
-        $dev = Amanda::Device->new($dev_name);
-        is($dev->status(), $DEVICE_STATUS_SUCCESS,
-           "$dev_name: create successful")
-            or diag($dev->error_or_status());
+    s3_run_main_tests('s3', $dev_base_name);
 
-        ok($dev->property_set('S3_ACCESS_KEY', $S3_ACCESS_KEY),
-           "set S3 access key")
-            or diag($dev->error_or_status());
+    # can't set user token without devpay
+    $dev_name = "s3:$dev_base_name";
+    $dev = s3_make_device($dev_name);
+    ok(!$dev->property_set('S3_USER_TOKEN', '123'),
+       "set user token, but that shouldn't be possible (not using DevPay)")
+        or diag($dev->error_or_status());
 
-        ok($dev->property_set('S3_SECRET_KEY', $S3_SECRET_KEY),
-           "set S3 secret key")
-            or diag($dev->error_or_status());
+}
 
-        ok($dev->property_set('S3_BUCKET_LOCATION', $s3_loc),
-           "set S3 bucket location")
-            or diag($dev->error_or_status()) if $s3_loc;
+SKIP: {
+    my $test_count = $run_s3_tests ? 5 : 49;
+    skip "define \$INSTALLCHECK_DEVPAY_{SECRET_KEY,ACCESS_KEY,USER_TOKEN} to run S3+DevPay tests", $test_count
+	unless $run_devpay_tests;
+    $dev_base_name = "$DEVPAY_ACCESS_KEY-installcheck-$hostname";
 
-
+    if ($run_s3_tests) {
+        # in this case, most of our code has already been exercised
+        # just make sure that authentication works as a basic sanity check
+        $dev_name = "s3zmanda:$dev_base_name";
+        $dev = s3_make_device($dev_name);
         $dev->read_label();
         is($dev->status() & ~$DEVICE_STATUS_VOLUME_UNLABELED, 0,
            "read_label OK, possibly already labeled")
             or diag($dev->error_or_status());
-
-        ok($dev->start($ACCESS_WRITE, "TESTCONF13", undef),
-           "start in write mode")
-            or diag($dev->error_or_status());
-
-        ok(!($dev->status() & $DEVICE_STATUS_VOLUME_UNLABELED),
-           "it's labeled now")
-            or diag($dev->error_or_status());
-
-        for (my $i = 1; $i <= 3; $i++) {
-            write_file(0x2FACE, 32768*10, $i);
-        }
-
-        ok($dev->finish(),
-           "finish device after write")
-            or diag($dev->error_or_status());
-
-        $dev->read_label();
-        ok(!($dev->status()),
-           "no error, at all, from read_label")
-	or diag($dev->error_or_status());
-
-        # append one more copy, to test ACCESS_APPEND
-
-        ok($dev->start($ACCESS_APPEND, undef, undef),
-           "start in append mode")
-            or diag($dev->error_or_status());
-
-        write_file(0xD0ED0E, 32768*10, 4);
-
-        ok($dev->finish(),
-           "finish device after append")
-            or diag($dev->error_or_status());
-
-	# try reading the third file back, creating a new device
-	# object first, and skipping the read-label step.
-
-	$dev = undef;
-	$dev = Amanda::Device->new($dev_name);
-	is($dev->status(), $DEVICE_STATUS_SUCCESS,
-	    "$dev_name: re-create successful")
-	    or diag($dev->error_or_status());
-
-        ok($dev->property_set('S3_ACCESS_KEY', $S3_ACCESS_KEY),
-           "set S3 access key")
-            or diag($dev->error_or_status());
-
-        ok($dev->property_set('S3_SECRET_KEY', $S3_SECRET_KEY),
-           "set S3 secret key")
-            or diag($dev->error_or_status());
-
-        ok($dev->property_set('S3_BUCKET_LOCATION', $s3_loc),
-           "set S3 bucket location")
-            or diag($dev->error_or_status()) if $s3_loc;
-
-        ok($dev->start($ACCESS_READ, undef, undef),
-           "start in read mode")
-            or diag($dev->error_or_status());
-
-        verify_file(0x2FACE, 32768*10, 3);
-
-        ok($dev->finish(),
-           "finish device after read")
-            or diag($dev->error_or_status());
+    } else {
+        s3_run_main_tests('s3zmanda', $dev_base_name);
     }
+}
 
-    $dev_name = "-$dev_name";
-    $dev = Amanda::Device->new($dev_name);
-
-    is($dev->status(), $DEVICE_STATUS_SUCCESS,
-       "$dev_name: create successful")
-        or diag($dev->error_or_status());
-
-    ok(!$dev->property_set('S3_BUCKET_LOCATION', $dev_name),
-       "should not be able to set S3 bucket location with an incompatible name")
-        or diag($dev->error_or_status());
-
+SKIP: {
+    skip "excercised S3 driver in S3 checks, not repeating with S3+DevPay", 19
+	if $run_s3_tests;
 }
 
 # Test a tape device if the proper environment variables are set

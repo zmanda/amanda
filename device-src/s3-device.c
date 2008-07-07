@@ -80,9 +80,9 @@ struct _S3Device {
     /* The S3 access information. */
     char *secret_key;
     char *access_key;
-#ifdef WANT_DEVPAY
     char *user_token;
-#endif
+    gboolean is_devpay;
+
     char *bucket_location;
 
     /* a cache for unsuccessful reads (where we get the file but the caller
@@ -110,6 +110,9 @@ struct _S3DeviceClass {
  * Constants and static data
  */
 
+#define S3_DEVICE_NAME "s3"
+#define DEVPAY_DEVICE_NAME "s3zmanda"
+
 /* Maximum key length as specified in the S3 documentation
  * (*excluding* null terminator) */
 #define S3_MAX_KEY_LENGTH 1024
@@ -133,11 +136,9 @@ static DevicePropertyBase device_property_s3_secret_key;
 #define PROPERTY_S3_SECRET_KEY (device_property_s3_secret_key.ID)
 #define PROPERTY_S3_ACCESS_KEY (device_property_s3_access_key.ID)
 
-#ifdef WANT_DEVPAY
 /* Same, but for S3 with DevPay. */
 static DevicePropertyBase device_property_s3_user_token;
 #define PROPERTY_S3_USER_TOKEN (device_property_s3_user_token.ID)
-#endif
 
 /* Location constraint for new buckets created on Amazon S3. */
 static DevicePropertyBase device_property_s3_bucket_location;
@@ -522,7 +523,7 @@ delete_file(S3Device *self,
 void 
 s3_device_register(void)
 {
-    static const char * device_prefix_list[] = { "s3", NULL };
+    static const char * device_prefix_list[] = { S3_DEVICE_NAME, DEVPAY_DEVICE_NAME, NULL };
     g_assert(s3_init());
 
     /* set up our properties */
@@ -532,14 +533,13 @@ s3_device_register(void)
     device_property_fill_and_register(&device_property_s3_access_key,
                                       G_TYPE_STRING, "s3_access_key",
        "Access key ID to authenticate with Amazon S3");
-#ifdef WANT_DEVPAY
     device_property_fill_and_register(&device_property_s3_user_token,
                                       G_TYPE_STRING, "s3_user_token",
        "User token for authentication Amazon devpay requests");
-#endif
     device_property_fill_and_register(&device_property_s3_bucket_location,
                                       G_TYPE_STRING, "s3_bucket_location",
        "Location constraint for new buckets created on Amazon S3");
+
 
     /* register the device itself */
     register_device(s3_device_factory, device_prefix_list);
@@ -578,7 +578,9 @@ s3_device_init(S3Device * self)
     DeviceProperty prop;
     GValue response;
 
-    /* Register property values */
+    /* Register property values
+     * Note: Some aren't added until s3_device_open_device()
+     */
     o = (Device*)(self);
     bzero(&response, sizeof(response));
 
@@ -621,27 +623,20 @@ s3_device_init(S3Device * self)
     device_add_property(o, &prop, &response);
     g_value_unset(&response);
 
-    prop.base = &device_property_canonical_name;
-    g_value_init(&response, G_TYPE_STRING);
-    g_value_set_static_string(&response, "s3:");
-    device_add_property(o, &prop, &response);
-    g_value_unset(&response);
-
     prop.base = &device_property_medium_access_type;
     g_value_init(&response, MEDIA_ACCESS_MODE_TYPE);
     g_value_set_enum(&response, MEDIA_ACCESS_MODE_READ_WRITE);
     device_add_property(o, &prop, &response);
     g_value_unset(&response);
-    
+
     prop.access = PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START;
     prop.base = &device_property_s3_secret_key;
     device_add_property(o, &prop, NULL);
     prop.base = &device_property_s3_access_key;
     device_add_property(o, &prop, NULL);
-#ifdef WANT_DEVPAY
     prop.base = &device_property_s3_user_token;
     device_add_property(o, &prop, NULL);
-#endif
+
     prop.base = &device_property_s3_bucket_location;
     device_add_property(o, &prop, NULL);
 }
@@ -679,7 +674,8 @@ s3_device_factory(char * device_name, char * device_type, char * device_node)
 {
     Device *rval;
     S3Device * s3_rval;
-    g_assert(0 == strcmp(device_type, "s3"));
+    g_assert(0 == strcmp(device_type, S3_DEVICE_NAME) ||
+             0 == strcmp(device_type, DEVPAY_DEVICE_NAME));
     rval = DEVICE(g_object_new(TYPE_S3_DEVICE, NULL));
     s3_rval = (S3Device*)rval;
 
@@ -709,6 +705,8 @@ s3_device_open_device(Device *pself, char *device_name,
         self->prefix = g_strdup(name_colon + 1);
     }
     
+    self->is_devpay = !strcmp(device_type, DEVPAY_DEVICE_NAME);
+
     if (self->bucket == NULL || self->bucket[0] == '\0') {
 	device_set_error(pself,
 	    vstrallocf(_("Empty bucket name in device %s"), device_name),
@@ -742,32 +740,15 @@ static void s3_device_finalize(GObject * obj_self) {
 static gboolean setup_handle(S3Device * self) {
     Device *d_self = DEVICE(self);
     if (self->s3 == NULL) {
-        if (self->access_key == NULL) {
-	    device_set_error(d_self,
-		stralloc(_("No S3 access key specified")),
-		DEVICE_STATUS_DEVICE_ERROR);
+        if (self->access_key == NULL)
             return FALSE;
-	}
-	if (self->secret_key == NULL) {
-	    device_set_error(d_self,
-		stralloc(_("No S3 secret key specified")),
-		DEVICE_STATUS_DEVICE_ERROR);
+	if (self->secret_key == NULL)
             return FALSE;
-	}
-#ifdef WANT_DEVPAY
-	if (self->user_token == NULL) {
-	    device_set_error(d_self,
-		stralloc(_("No S3 user token specified")),
-		DEVICE_STATUS_DEVICE_ERROR);
+	if (self->is_devpay && self->user_token == NULL)
             return FALSE;
-	}
-#endif
-        self->s3 = s3_open(self->access_key, self->secret_key
-#ifdef WANT_DEVPAY
-                           , self->user_token
-#endif
-                           , self->bucket_location
-                           );
+
+        self->s3 = s3_open(self->access_key, self->secret_key, self->user_token,
+            self->bucket_location);
         if (self->s3 == NULL) {
 	    device_set_error(d_self,
 		stralloc(_("Internal error creating S3 handle")),
@@ -972,18 +953,19 @@ static gboolean s3_device_property_get(Device * p_self, DevicePropertyId id,
         } else {
             return FALSE;
         }
-    }
-#ifdef WANT_DEVPAY
-    else if (id == PROPERTY_S3_USER_TOKEN) {
-        if (self->user_token != NULL) {
+    } else if (id == PROPERTY_S3_USER_TOKEN) {
+        if (self->is_devpay && self->user_token != NULL) {
             g_value_set_string(val, self->user_token);
             return TRUE;
         } else {
+            if (!self->is_devpay) {
+                device_set_error(p_self, stralloc(_(
+                           "Device doesn't have a user token unless DevPay is in use")),
+                    DEVICE_STATUS_DEVICE_ERROR);
+            }
             return FALSE;
         }
-    }
-#endif /* WANT_DEVPAY */
-    else if (id == PROPERTY_S3_BUCKET_LOCATION) {
+    } else if (id == PROPERTY_S3_BUCKET_LOCATION) {
         if (self->bucket_location != NULL) {
             g_value_set_string(val, self->bucket_location);
             return TRUE;
@@ -1032,19 +1014,22 @@ static gboolean s3_device_property_set(Device * p_self, DevicePropertyId id,
         self->access_key = g_value_dup_string(val);
         device_clear_volume_details(p_self);
         return TRUE;
-    }
-#ifdef WANT_DEVPAY
-    else if (id == PROPERTY_S3_USER_TOKEN) {
+    } else if (id == PROPERTY_S3_USER_TOKEN) {
         if (p_self->access_mode != ACCESS_NULL)
             return FALSE;
+
+        if (!self->is_devpay) {
+            device_set_error(p_self, stralloc(_(
+                       "Can't set a user token unless DevPay is in use")),
+                DEVICE_STATUS_DEVICE_ERROR);
+            return FALSE;
+        }
+
         amfree(self->user_token);
         self->user_token = g_value_dup_string(val);
         device_clear_volume_details(p_self);
         return TRUE;
-    }
-#endif /* WANT_DEVPAY */
-    else if (id == PROPERTY_S3_BUCKET_LOCATION) {
-
+    } else if (id == PROPERTY_S3_BUCKET_LOCATION) {
         if (p_self->access_mode != ACCESS_NULL)
             return FALSE;
 

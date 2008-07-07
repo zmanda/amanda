@@ -1,3 +1,24 @@
+2007-07-06 Nikolas Coukouma <nikolas@zmanda.com>
+	* device-src/s3-device.c, device-src/s3.c, device-src/s3.h,
+	  device-src/activate-devpay.c, device-src/Makefile.am:
+	  Allow both regular S3 and S3-with-DevPay to be used in
+	  the same installation. Remove WANT_DEVPAY macro.
+	* device-src/s3-device.c: Added a flag, is_devpay, to the device
+	  and handled divergent cases. Removed useless device_error_set calls.
+	* device-src/s3.c: Use DevPay authentication iff user_token is set.
+	  Replaced some if statements about non-NULL pointers with assertions.
+	* config/amanda/s3-device.m4, device-src/Makefile.am:
+	  remove devpay flag and WANT_DEVPAY definition.
+	* installcheck/Amanda_Device.pl: add tests for DevPay, refactor
+	  other S3 tests.
+
+2007-07-06 Nikolas Coukouma <nikolas@zmanda.com>
+	* device-src/s3.c: wait for bucket to appear after creation, treat
+	  missing bucket as temporary error, increase retries from 5 to 14
+	  (about 3min), explicitly handle HTTP verbs as libcurl expects.
+	* installcheck/Amanda_Device.pl: remove (now-irrelvant) note about
+	  buckets taking too long to appear.
+
 2008-07-06 Dan Locks <dwlocks@zmanda.com>
 	* packaging/deb/amanda-backup-server.postrm
 	  packaging/deb/amanda-backup-client.postrm: removed unused

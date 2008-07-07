@@ -7,9 +7,6 @@
 #   Perform the necessary checks for the S3 Device.  If the S3 device should be built,
 #   WANT_S3_DEVICE is DEFINEd and set up as an AM_CONDITIONAL.
 #
-#   The subsidiary DevPay support, if enabled, defines and AM_CONDITIONALizes
-#   WANT_DEVPAY.
-#
 AC_DEFUN([AMANDA_S3_DEVICE], [
     AC_REQUIRE([AMANDA_CHECK_LIBCURL])
     AC_REQUIRE([AMANDA_CHECK_HMAC])
@@ -43,23 +40,4 @@ AC_DEFUN([AMANDA_S3_DEVICE], [
     if test x"$WANT_S3_DEVICE" = x"yes"; then
 	AC_DEFINE(WANT_S3_DEVICE, [], [Compile Amazon S3 driver])
     fi
-			  
-
-    AC_ARG_ENABLE([devpay],
-		  AS_HELP_STRING([--enable-devpay],
-				 [Use devpay authentication for Amazon S3 driver]),
-		  [WANT_DEVPAY=$enableval], [WANT_DEVPAY=no])
-
-    AC_MSG_CHECKING([whether to include the Amazon S3 device's DevPay support])
-    if test x"$WANT_DEVPAY" = x"yes"; then
-	if test x"$WANT_S3_DEVICE" != x"yes"; then
-	    AC_MSG_RESULT(no)
-	    AC_MSG_ERROR([DevPay support requires the S3 device (--enable-s3-device)])
-	fi
-
-	AC_DEFINE([WANT_DEVPAY], [], [Compile Amazon DevPay support])
-    fi
-    AC_MSG_RESULT($WANT_DEVPAY)
-
-    AM_CONDITIONAL([WANT_DEVPAY], [test "$WANT_DEVPAY" = "yes"])
 ])

@@ -36,11 +36,9 @@ typedef struct S3Handle S3Handle;
  * Constants
  */
 
-#ifdef WANT_DEVPAY
 /* These are assumed to be already URL-escaped. */
 # define STS_BASE_URL "https://ls.amazonaws.com/"
 # define STS_PRODUCT_TOKEN "{ProductToken}AAAGQXBwVGtu4geoGybuwuk8VEEPzJ9ZANpu0yzbf9g4Gs5Iarzff9B7qaDBEEaWcAzWpcN7zmdMO765jOtEFc4DWTRNkpPSzUnTdkHbdYUamath73OreaZtB86jy/JF0gsHZfhxeKc/3aLr8HNT//DsX3r272zYHLDPWWUbFguOwqNjllnt6BshYREx59l8RrWABLSa37dyJeN+faGvz3uQxiDakZRn3LfInOE6d9+fTFl50LPoP08LCqI/SJfpouzWix7D/cep3Jq8yYNyM1rgAOTF7/wh7r8OuPDLJ/xZUDLfykePIAM="
-#endif
 
 /* This preprocessor magic will enumerate constants named S3_ERROR_XxxYyy for
  * each of the errors in parentheses.
@@ -132,9 +130,6 @@ s3_bucket_location_compat(const char *bucket);
 
 /* Initialize S3 operation
  *
- * As a requirement of C{curl_global_init}, which this function calls,
- * s3_init I{must} be called before any other threads are started.
- *
  * If an error occurs in this function, diagnostic information is 
  * printed to stderr.
  *
@@ -155,12 +150,8 @@ s3_init(void);
  * @returns: the new S3Handle
  */
 S3Handle *
-s3_open(const char * access_key, const char *secret_key
-#ifdef WANT_DEVPAY
-        , const char * user_token
-#endif
-        , const char * bucket_location
-        );
+s3_open(const char * access_key, const char *secret_key, const char * user_token, 
+        const char * bucket_location);
 
 /* Deallocate an S3Handle
  *

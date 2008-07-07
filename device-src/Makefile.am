@@ -58,10 +58,8 @@ vfs_test_LDADD = \
 
 ## activate-devpay
 
-if WANT_DEVPAY
 sbin_PROGRAMS += activate-devpay
 activate_devpay_SOURCES = activate-devpay.c
-endif
 
 ## headers
 

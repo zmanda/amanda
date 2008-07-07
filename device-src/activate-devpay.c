@@ -13,10 +13,6 @@
 #include "base64.h"
 #include "s3.h"
 
-#ifndef WANT_DEVPAY
-# error activate_devpay only works if devpay is enabled.
-#endif
-
 #define MAX_RESPONSE_SIZE (1024*1024)
 
 typedef struct {
