@@ -526,7 +526,6 @@ tape_device_write_block(Device * pself, guint size,
 		stralloc(_("No space left on device")),
 		DEVICE_STATUS_VOLUME_ERROR);
 	    pself->is_eof = TRUE;
-	    device_finish_file(pself);
 	    return FALSE;
 
 	default:

@@ -757,7 +757,6 @@ static gboolean vfs_device_write_block(Device * pself, guint size,
 	device_set_error(pself,
 	    stralloc(_("No space left on device")),
 	    DEVICE_STATUS_VOLUME_ERROR);
-	device_finish_file(pself);
         return FALSE;
     }
 

@@ -1,3 +1,7 @@
+2008-07-08  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/vfs-device.c device-src/tape-device.c: do not autofinish
+	  when EOF occurs on writing
+
 2008-07-08  Dustin J. Mitchell <dustin@zmanda.com>, 
 	    Nikolas Coukouma <nikolas@zmanda.com>,
 	    Ian Turner <ian@zmanda.com>,
