@@ -39,7 +39,7 @@ typedef struct {
 
 static queue_buffer_t *invent_buffer(void) {
     queue_buffer_t *rval;
-    rval = malloc(sizeof(*rval));
+    rval = g_new(queue_buffer_t, 1);
 
     rval->data = NULL;
     rval->alloc_size = 0;

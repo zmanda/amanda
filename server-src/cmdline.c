@@ -39,8 +39,7 @@ dumpspec_new(
 {
     dumpspec_t *rv;
 
-    rv = calloc(1, sizeof(*rv));
-    if (!rv) return NULL;
+    rv = g_new0(dumpspec_t, 1);
     if (host) rv->host = stralloc(host);
     if (disk) rv->disk = stralloc(disk);
     if (datestamp) rv->datestamp = stralloc(datestamp);

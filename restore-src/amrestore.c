@@ -218,6 +218,9 @@ main(
 	    /*@end@*/
 	    break;
 	case 'l':
+            if (label) {
+                error(_("Cannot specify multiple labels.\n"));
+            }
 	    label = stralloc(optarg);
 	    break;
 	default:

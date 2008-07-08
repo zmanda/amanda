@@ -544,6 +544,9 @@ main(
 	g_printf(_("ERROR FORMAT ERROR IN REQUEST PACKET\n"));
 	dbprintf(_("REQ packet is bogus\n"));
     }
+
+    free_g_options(g_options);
+
     dbclose();
     return 1;
 }
@@ -2170,7 +2173,7 @@ getsize_application_api(
 
     i=0;
     k = application_property_argv_size(dle);
-    argvchild = malloc((17 + k) * sizeof(char *));
+    argvchild = g_new0(char *, 17 + k);
     argvchild[i++] = dle->program;
     argvchild[i++] = "estimate";
     if (bsu->message_line == 1) {

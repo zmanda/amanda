@@ -1,3 +1,29 @@
+2008-07-08  Dustin J. Mitchell <dustin@zmanda.com>, 
+	    Nikolas Coukouma <nikolas@zmanda.com>,
+	    Ian Turner <ian@zmanda.com>,
+	    Jean-Louis Martineau <martineau@zmanda.com>
+	Amanda has been analyzed with Klocwork source code analysis, the most
+	accurate and comprehensive tool for finding critical programming
+	errors and security vulnerabilities.
+	* amandad-src/amandad.c changer-src/chg-scsi.c
+	  client-src/client_util.c client-src/selfcheck.c
+	  client-src/sendbackup.c client-src/sendsize.c common-src/amfeatures.c
+	  common-src/bsd-security.c common-src/fileheader.c
+	  common-src/local-security.c common-src/queueing.c
+	  common-src/security-util.c device-src/property.c
+	  device-src/rait-device.c device-src/tape-device.c
+	  device-src/vfs-device.c recover-src/set_commands.c
+	  restore-src/amidxtaped.c restore-src/amrestore.c restore-src/restore.c
+	  server-src/amadmin.c server-src/amcheck.c server-src/amindexd.c
+	  server-src/changer.c server-src/chunker.c server-src/cmdline.c
+	  server-src/driver.c server-src/holding.c server-src/logfile.c
+	  server-src/reporter.c server-src/server_util.c
+	  server-src/taper-file-source.c: fix many issues identified
+	  by Klockwork, ranging in severity from stylistic to minor.
+	   - many memory leaks in error paths and application shutdown
+	   - better handling of incorrect commandline arguments
+	   - better resource management (file descriptors, etc.)
+
 2008-07-07 Nikolas Coukouma <nikolas@zmanda.com>
 	* device-src/Makefile.am: conditionalize activate-devpay on
 	  WANT_S3_DEVICE

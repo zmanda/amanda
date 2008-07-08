@@ -886,7 +886,7 @@ bsd_prefix_packet(
 	security_seterror(&rh->sech,
 			  _("can't get login name for my uid %ld"),
 			  (long)getuid());
-	return(NULL);
+	return "";
     }
     buf = alloc(16+strlen(pwd->pw_name));
     strncpy(buf, "SECURITY USER ", (16 + strlen(pwd->pw_name)));
@@ -1016,6 +1016,7 @@ bsd_recv_security_ok(
 	if ((tok = strtok(NULL, "")) == NULL) {
 	    security_seterror(&rh->sech,
 		_("SECURITY line: %s"), security_line);
+	    amfree(service);
 	    amfree(security_line);
 	    return (-1);	/* default errmsg */
 	}

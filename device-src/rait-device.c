@@ -196,7 +196,7 @@ rait_device_finalize(GObject *obj_self)
 static void 
 rait_device_init (RaitDevice * o G_GNUC_UNUSED)
 {
-    PRIVATE(o) = malloc(sizeof(RaitDevicePrivate));
+    PRIVATE(o) = g_new(RaitDevicePrivate, 1);
     PRIVATE(o)->children = g_ptr_array_new();
     PRIVATE(o)->status = RAIT_STATUS_COMPLETE;
     PRIVATE(o)->failed = -1;
@@ -566,7 +566,7 @@ static GPtrArray * make_generic_boolean_op_array(RaitDevice* self) {
             continue;
         }
 
-        op = malloc(sizeof(*op));
+        op = g_new(GenericOp, 1);
         op->child = g_ptr_array_index(self->private->children, i);
         op->child_index = i;
         g_ptr_array_add(rval, op);
@@ -688,7 +688,7 @@ rait_device_open_device (Device * dself, char * device_name,
     for (i = 0; device_names[i] != NULL; i ++) {
         OpenDeviceOp *op;
 
-        op = malloc(sizeof(*op));
+        op = g_new(OpenDeviceOp, 1);
         op->device_name = device_names[i];
         op->result = NULL;
         op->self = self;
@@ -897,7 +897,7 @@ rait_device_start (Device * dself, DeviceAccessMode mode, char * label,
             continue;
         }
 
-        op = malloc(sizeof(*op));
+        op = g_new(StartOp, 1);
         op->base.child = g_ptr_array_index(self->private->children, i);
         op->mode = mode;
         op->label = g_strdup(label);
@@ -1010,7 +1010,7 @@ rait_device_start_file (Device * dself, const dumpfile_t * info) {
     ops = g_ptr_array_sized_new(self->private->children->len);
     for (i = 0; i < self->private->children->len; i ++) {
         StartFileOp * op;
-        op = malloc(sizeof(*op));
+        op = g_new(StartFileOp, 1);
         op->base.child = g_ptr_array_index(self->private->children, i);
         op->info = info;
         g_ptr_array_add(ops, op);
@@ -1148,7 +1148,7 @@ static char * extract_data_block(char * data, guint size,
     g_assert(size > 0 && size % (chunks - 1) == 0);
 
     chunk_size = size / (chunks - 1);
-    rval = malloc(chunk_size);
+    rval = g_malloc(chunk_size);
     if (chunks != chunk) {
         /* data block. */
         memcpy(rval, data + chunk_size * (chunk - 1), chunk_size);
@@ -1189,7 +1189,7 @@ rait_device_write_block (Device * dself, guint size, gpointer data,
     if (last_block) {
         char *new_data;
 
-        new_data = malloc(blocksize);
+        new_data = g_malloc(blocksize);
         memcpy(new_data, data, size);
         bzero(new_data + size, blocksize - size);
 
@@ -1200,7 +1200,7 @@ rait_device_write_block (Device * dself, guint size, gpointer data,
     ops = g_ptr_array_sized_new(num_children);
     for (i = 0; i < self->private->children->len; i ++) {
         WriteBlockOp * op;
-        op = malloc(sizeof(*op));
+        op = g_malloc(sizeof(*op));
         op->base.child = g_ptr_array_index(self->private->children, i);
         op->short_block = last_block;
         op->size = size / data_children;
@@ -1323,7 +1323,7 @@ rait_device_seek_file (Device * dself, guint file) {
         SeekFileOp * op;
         if ((int)i == self->private->failed)
             continue; /* This device is broken. */
-        op = malloc(sizeof(*op));
+        op = g_new(SeekFileOp, 1);
         op->base.child = g_ptr_array_index(self->private->children, i);
         op->base.child_index = i;
         op->requested_file = file;
@@ -1414,7 +1414,7 @@ rait_device_seek_block (Device * dself, guint64 block) {
         SeekBlockOp * op;
         if ((int)i == self->private->failed)
             continue; /* This device is broken. */
-        op = malloc(sizeof(*op));
+        op = g_new(SeekBlockOp, 1);
         op->base.child = g_ptr_array_index(self->private->children, i);
         op->base.child_index = i;
         op->block = block;
@@ -1510,6 +1510,7 @@ static gboolean raid_block_reconstruction(RaitDevice * self, GPtrArray * ops,
                    child_blocksize);
         }
     }
+    g_assert(parity_block != NULL); /* should have found parity_child */
 
     if (self->private->status == RAIT_STATUS_COMPLETE) {
         if (num_children >= 2) {
@@ -1518,7 +1519,7 @@ static gboolean raid_block_reconstruction(RaitDevice * self, GPtrArray * ops,
             gpointer constructed_parity;
             GPtrArray * data_extents;
             
-            constructed_parity = malloc(child_blocksize);
+            constructed_parity = g_malloc(child_blocksize);
             data_extents = g_ptr_array_sized_new(data_children);
             for (i = 0; i < data_children; i ++) {
                 ReadBlockOp * op = g_ptr_array_index(ops, i);
@@ -1607,10 +1608,10 @@ rait_device_read_block (Device * dself, gpointer buf, int * size) {
         ReadBlockOp * op;
         if ((int)i == self->private->failed)
             continue; /* This device is broken. */
-        op = malloc(sizeof(*op));
+        op = g_new(ReadBlockOp, 1);
         op->base.child = g_ptr_array_index(self->private->children, i);
         op->base.child_index = i;
-        op->buffer = malloc(child_blocksize);
+        op->buffer = g_malloc(child_blocksize);
         op->desired_read_size = op->read_size = blocksize / data_children;
         g_ptr_array_add(ops, op);
     }
@@ -1684,7 +1685,7 @@ static GPtrArray * make_property_op_array(RaitDevice * self,
             continue;
         }
 
-        op = malloc(sizeof(*op));
+        op = g_new(PropertyOp, 1);
         op->base.child = g_ptr_array_index(self->private->children, i);
         op->id = id;
         bzero(&(op->value), sizeof(op->value));
@@ -1816,6 +1817,8 @@ static gboolean property_get_free_space(GPtrArray * ops, GValue * val) {
     QualifiedSize result;
     guint i = 0;
 
+    result.accuracy = SIZE_ACCURACY_UNKNOWN;
+    result.bytes = 0;
     for (i = 0; i < ops->len; i ++) {
         QualifiedSize cur;
         PropertyOp * op = g_ptr_array_index(ops, i);
@@ -2034,7 +2037,7 @@ rait_device_recycle_file (Device * dself, guint filenum) {
     ops = g_ptr_array_sized_new(self->private->children->len);
     for (i = 0; i < self->private->children->len; i ++) {
         RecycleFileOp * op;
-        op = malloc(sizeof(*op));
+        op = g_new(RecycleFileOp, 1);
         op->base.child = g_ptr_array_index(self->private->children, i);
         op->filenum = filenum;
         g_ptr_array_add(ops, op);

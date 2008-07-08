@@ -427,6 +427,7 @@ startup_chunker(
     }
     data_socket = stream_server(res->ai_family, &data_port, 0,
 				STREAM_BUFSIZE, 0);
+    if (res) freeaddrinfo(res);
 
     if(data_socket < 0) {
 	errstr = vstrallocf(_("error creating stream server: %s"), strerror(errno));
@@ -436,6 +437,7 @@ startup_chunker(
     putresult(PORT, "%d\n", data_port);
 
     infd = stream_accept(data_socket, CONNECT_TIMEOUT, 0, STREAM_BUFSIZE);
+    aclose(data_socket);
     if(infd == -1) {
 	errstr = vstrallocf(_("error accepting stream: %s"), strerror(errno));
 	return -1;
@@ -443,6 +445,7 @@ startup_chunker(
 
     tmp_filename = vstralloc(filename, ".tmp", NULL);
     pc = strrchr(tmp_filename, '/');
+    g_assert(pc != NULL);
     *pc = '\0';
     mkholdingdir(tmp_filename);
     *pc = '/';
@@ -709,6 +712,7 @@ databuf_flush(
 				    ".tmp",
 				    NULL);
 	pc = strrchr(tmp_filename, '/');
+        g_assert(pc != NULL); /* Only a problem if db->filename has no /. */
 	*pc = '\0';
 	mkholdingdir(tmp_filename);
 	*pc = '/';

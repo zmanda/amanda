@@ -1251,7 +1251,7 @@ continue_port_dumps(void)
 
 static void
 handle_taper_result(
-    void *cookie)
+	void *cookie G_GNUC_UNUSED)
 {
     disk_t *dp;
     cmd_t cmd;
@@ -1259,9 +1259,9 @@ handle_taper_result(
     char *result_argv[MAX_ARGS+1];
     char *qname;
 
-    (void)cookie;	/* Quiet unused parameter warning */
-
     assert(cookie == NULL);
+    amfree(taper_input_error);
+    amfree(taper_tape_error);
     
     do {
         
@@ -1730,9 +1730,9 @@ dumper_chunker_result(
 
 static void
 handle_dumper_result(
-    void *	cookie)
+	void * cookie)
 {
-    /*static int pending_aborts = 0;*/
+    /* uses global pending_aborts */
     dumper_t *dumper = cookie;
     disk_t *dp, *sdp, *dp1;
     cmd_t cmd;
@@ -1824,19 +1824,17 @@ handle_dumper_result(
 	    aclose(dumper->fd);
 	    dumper->busy = 0;
 	    dumper->down = 1;	/* mark it down so it isn't used again */
-	    if(dp) {
-		/* if it was dumping something, zap it and try again */
-		if(sched(dp)->dump_attempted) {
+
+            /* if it was dumping something, zap it and try again */
+            if(sched(dp)->dump_attempted) {
 	    	log_add(L_FAIL, _("%s %s %s %d [%s died]"),
 	    		dp->host->hostname, qname, sched(dp)->datestamp,
 	    		sched(dp)->level, dumper->name);
-		}
-		else {
+            } else {
 	    	log_add(L_WARNING, _("%s died while dumping %s:%s lev %d."),
 	    		dumper->name, dp->host->hostname, qname,
 	    		sched(dp)->level);
-		}
-	    }
+            }
 	    dumper->result = cmd;
 	    break;
 
@@ -1898,7 +1896,6 @@ static void
 handle_chunker_result(
     void *	cookie)
 {
-    /*static int pending_aborts = 0;*/
     chunker_t *chunker = cookie;
     assignedhd_t **h=NULL;
     dumper_t *dumper;
@@ -1919,13 +1916,12 @@ handle_chunker_result(
     assert(sched(dp)->destname != NULL);
     assert(dp != NULL && sched(dp) != NULL && sched(dp)->destname);
 
-    if(dp && sched(dp) && sched(dp)->holdp) {
+    if(sched(dp)->holdp) {
 	h = sched(dp)->holdp;
 	activehd = sched(dp)->activehd;
     }
 
     do {
-
 	short_dump_state();
 
 	cmd = getresult(chunker->fd, 1, &result_argc, result_argv, MAX_ARGS+1);
@@ -2047,26 +2043,20 @@ handle_chunker_result(
 	    log_add(L_WARNING, _("%s pid %ld is messed up, ignoring it.\n"),
 		    chunker->name, (long)chunker->pid);
 
-	    if(dp) {
-		/* if it was dumping something, zap it and try again */
-		if (!h || activehd < 0) { /* should never happen */
-		    error(_("!h || activehd < 0"));
-		    /*NOTREACHED*/
-		}
-		qname = quote_string(dp->name);
-		if(sched(dp)->dump_attempted) {
-		    log_add(L_FAIL, _("%s %s %s %d [%s died]"),
-	    		    dp->host->hostname, qname, sched(dp)->datestamp,
-	    		    sched(dp)->level, chunker->name);
-		}
-		else {
-	    	    log_add(L_WARNING, _("%s died while dumping %s:%s lev %d."),
-	    		    chunker->name, dp->host->hostname, qname,
-	    		    sched(dp)->level);
-		}
-        	amfree(qname);
-		dp = NULL;
-	    }
+            /* if it was dumping something, zap it and try again */
+            g_assert(h && activehd >= 0);
+            qname = quote_string(dp->name);
+            if(sched(dp)->dump_attempted) {
+                log_add(L_FAIL, _("%s %s %s %d [%s died]"),
+                        dp->host->hostname, qname, sched(dp)->datestamp,
+                        sched(dp)->level, chunker->name);
+            } else {
+                log_add(L_WARNING, _("%s died while dumping %s:%s lev %d."),
+                        chunker->name, dp->host->hostname, qname,
+                        sched(dp)->level);
+            }
+            amfree(qname);
+            dp = NULL;
 
 	    event_release(chunker->ev_read);
 
@@ -2912,9 +2902,20 @@ build_diskspace(
 	strncpy(dirname, filename, 999);
 	dirname[999]='\0';
 	ch = strrchr(dirname,'/');
-        *ch = '\0';
-	ch = strrchr(dirname,'/');
-        *ch = '\0';
+	if (ch) {
+	    *ch = '\0';
+	    ch = strrchr(dirname,'/');
+	    if (ch) {
+		*ch = '\0';
+	    }
+	}
+
+	if (!ch) {
+	    g_fprintf(stderr,_("build_diskspace: bogus filename '%s'\n"), filename);
+	    amfree(used);
+	    amfree(result);
+	    return NULL;
+	}
 
 	for(j = 0, ha = holdalloc; ha != NULL; ha = ha->next, j++ ) {
 	    if(strcmp(dirname, holdingdisk_get_diskdir(ha->hdisk))==0) {
@@ -2930,6 +2931,8 @@ build_diskspace(
 	if((fd = open(filename,O_RDONLY)) == -1) {
 	    g_fprintf(stderr,_("build_diskspace: open of %s failed: %s\n"),
 		    filename, strerror(errno));
+	    amfree(used);
+	    amfree(result);
 	    return NULL;
 	}
 	if ((buflen = full_read(fd, buffer, SIZEOF(buffer))) > 0) {;

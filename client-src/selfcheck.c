@@ -722,7 +722,7 @@ check_disk(
 		int k;
 
 		k = application_property_argv_size(dle);
-		argvchild = malloc((17 + k) * sizeof(char *));
+		argvchild = g_new0(char *, 17 + k);
 		argvchild[j++] = dle->program;
 		argvchild[j++] = "selfcheck";
 		if (bsu->message_line == 1) {

@@ -223,7 +223,7 @@ run_server_script(
 
     plugin = pp_script_get_plugin(pp_script);
     k = property_argv_size(pp_script_get_property(pp_script));
-    argvchild = malloc((12+k) * SIZEOF(char *));
+    argvchild = g_new0(char *, 12+k);
     cmd = vstralloc(APPLICATION_DIR, "/", plugin, NULL);
     i = 0;
     argvchild[i++] = plugin;

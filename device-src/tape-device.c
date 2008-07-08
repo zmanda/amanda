@@ -133,7 +133,7 @@ tape_device_init (TapeDevice * self) {
     device_self = (Device*)self;
     bzero(&response, sizeof(response));
 
-    self->private = malloc(sizeof(TapeDevicePrivate));
+    self->private = g_new0(TapeDevicePrivate, 1);
 
     /* Clear all fields. */
     self->min_block_size = self->fixed_block_size = 32768;
@@ -868,7 +868,7 @@ tape_device_seek_file (Device * d_self, guint file) {
         return NULL;
     }
         
-    rval = malloc(sizeof(*rval));
+    rval = g_new(dumpfile_t, 1);
     parse_file_header(header_buffer, rval, buffer_len);
     amfree(header_buffer);
     switch (rval->type) {
@@ -1379,7 +1379,7 @@ static int drain_tape_blocks(TapeDevice * self, int count) {
             i ++;
             continue;
         } else if (result == 0) {
-            free(buffer);
+            amfree(buffer);
             return i;
         } else {
             /* First check for interrupted system call. */
@@ -1413,7 +1413,7 @@ static int drain_tape_blocks(TapeDevice * self, int count) {
                 buffer_size *= 2;
 
                 if (buffer_size > 32*1024*1024) {
-                    free(buffer);
+                    amfree(buffer);
                     return -1;
                 } else {
                     buffer = realloc(buffer, buffer_size);
@@ -1423,6 +1423,7 @@ static int drain_tape_blocks(TapeDevice * self, int count) {
         }
     }
     
+    amfree(buffer);
     return count;
 }
 

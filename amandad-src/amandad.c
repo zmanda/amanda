@@ -891,6 +891,7 @@ s_repwait(
 		}
 		strcpy(as->repbuf + as->repbufsize, msg);
 		as->repbufsize += strlen(msg);
+                amfree(msg);
 	    }
 	}
     }

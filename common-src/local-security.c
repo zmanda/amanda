@@ -178,6 +178,7 @@ local_connect(
 
 error:
     (*fn)(arg, &rh->sech, S_ERROR);
+    amfree(rh->hostname);
 }
 
 /*

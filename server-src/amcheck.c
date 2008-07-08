@@ -156,7 +156,11 @@ main(
     cfg_ovr = new_config_overwrites(argc/2);
     while((opt = getopt(argc, argv, "M:mawsclto:")) != EOF) {
 	switch(opt) {
-	case 'M':	mailto=stralloc(optarg);
+	case 'M':	if (mailto) {
+			    g_printf(_("Multiple -M options\n"));
+			    exit(1);
+			}
+			mailto=stralloc(optarg);
 			if(!validate_mailto(mailto)){
 			   g_printf(_("Invalid characters in mail address\n"));
 			   exit(1);
@@ -453,6 +457,8 @@ main(
 			    a[5], a[6], a[7], a[8], a[9],
 			    NULL);
 	amfree(subject);
+	amfree(mailto);
+	amfree(a);
 	/*
 	 * There is the potential for a deadlock here since we are writing
 	 * to the process and then reading stderr, but in the normal case,

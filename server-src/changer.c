@@ -258,6 +258,7 @@ changer_find(
     if (rc != 0) {
         /* Problem with the changer script. Bail. */
         g_fprintf(stderr, _("Changer problem: %s\n"), changer_resultstr);
+        amfree(curslotstr);
         return;
     }
 
@@ -330,7 +331,7 @@ changer_command(
 {
     int fd[2];
     amwait_t wait_exitcode = 1;
-    int exitcode;
+    int exitcode = 0;
     char *cmdstr;
     pid_t pid, changer_pid = 0;
     int fd_to_close[4], *pfd_to_close = fd_to_close;
@@ -439,25 +440,21 @@ changer_command(
 			_("<error> could not read result from \"%s\": %s"),
 			tapechanger, strerror(errno));
 	}
+	exitcode = 2;
+	/* fall through and perform the waitpid() anyway */
     }
 
     while(1) {
-	if ((pid = wait(&wait_exitcode)) == -1) {
+	if ((pid = waitpid(changer_pid, &wait_exitcode, 0)) == -1) {
 	    if(errno == EINTR) {
 		continue;
 	    } else {
-		changer_resultstr = vstrallocf(
+		changer_resultstr = newvstrallocf(changer_resultstr,
 			_("<error> wait for \"%s\" failed: %s"),
 			tapechanger, strerror(errno));
 		exitcode = 2;
 		goto done;
 	    }
-	} else if (pid != changer_pid) {
-	    changer_resultstr = vstrallocf(
-			_("<error> wait for \"%s\" returned unexpected pid %ld"),
-			tapechanger, (long)pid);
-	    exitcode = 2;
-	    goto done;
 	} else {
 	    break;
 	}
@@ -470,7 +467,8 @@ changer_command(
 			changer_resultstr, WTERMSIG(wait_exitcode));
 	exitcode = 2;
     } else {
-	exitcode = WEXITSTATUS(wait_exitcode);
+	if (!exitcode)
+	    exitcode = WEXITSTATUS(wait_exitcode);
     }
 
 done:

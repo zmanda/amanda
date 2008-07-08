@@ -499,7 +499,7 @@ main(
 	case 0:
 	    cmd = vstralloc(APPLICATION_DIR, "/", dle->program, NULL);
 	    k = application_property_argv_size(dle);
-	    argvchild = malloc((20 + k) * sizeof(char *));
+	    argvchild = g_new0(char *, 20 + k);
 	    i=0;
 	    argvchild[i++] = dle->program;
 	    argvchild[i++] = "backup";
@@ -627,6 +627,12 @@ main(
 	g_printf(_("ERROR FORMAT ERROR IN REQUEST PACKET\n"));
 	dbprintf(_("REQ packet is bogus\n"));
     }
+
+    amfree(qdisk);
+    amfree(qamdevice);
+    amfree(dumpdate);
+    amfree(stroptions);
+    amfree(our_feature_string);
 
     dbclose();
     return 1;

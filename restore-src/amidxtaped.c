@@ -344,6 +344,8 @@ main(
 	/* read the REQ packet */
 	for(; (line = agets(stdin)) != NULL; free(line)) {
 	    if(strncmp_const(line, "OPTIONS ") == 0) {
+                if (g_options)
+                    error(_("ERROR recover program sent multiple OPTIONS"));
 		g_options = parse_g_options(line+8, 1);
 		if(!g_options->hostname) {
 		    g_options->hostname = alloc(MAX_HOSTNAME_LENGTH+1);
@@ -414,12 +416,24 @@ main(
 	    rst_flags->alt_tapedev= stralloc(s);
 	}
 	else if(strncmp_const_skip(buf, "HOST=", s, ch) == 0) {
-	    ds->host = stralloc(s);
+            if (ds->host) {
+                dbprintf(_("WARNING: HOST appeared twice in client request.\n"));
+                amfree(ds->host);
+            }
+            ds->host = stralloc(s);
 	}
 	else if(strncmp_const_skip(buf, "DISK=", s, ch) == 0) {
+            if (ds->disk) {
+                dbprintf(_("WARNING: DISK appeared twice in client request.\n"));
+                amfree(ds->disk);
+            }
 	    ds->disk = stralloc(s);
 	}
 	else if(strncmp_const_skip(buf, "DATESTAMP=", s, ch) == 0) {
+            if (ds->datestamp) {
+                dbprintf(_("WARNING: DATESTAMP appeared twice in client request.\n"));
+                amfree(ds->datestamp);
+            }
 	    ds->datestamp = stralloc(s);
 	}
 	else if(strncmp_const(buf, "END") == 0) {

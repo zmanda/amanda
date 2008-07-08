@@ -809,7 +809,7 @@ backup_support_option(
     backup_support_option_t *bsu;
 
     cmd = vstralloc(APPLICATION_DIR, "/", program, NULL);
-    argvchild = malloc(12 * SIZEOF(char *));
+    argvchild = g_new0(char *, 12);
     i = 0;
     argvchild[i++] = program;
     argvchild[i++] = "support";
@@ -837,12 +837,15 @@ backup_support_option(
 
     aclose(supportin);
 
-    bsu = malloc(SIZEOF(*bsu));
-    memset(bsu, '\0', SIZEOF(*bsu));
+    bsu = g_new0(backup_support_option_t, 1);
     bsu->config = 1;
     bsu->host = 1;
     bsu->disk = 1;
     streamout = fdopen(supportout, "r");
+    if (!streamout) {
+	error(_("Error opening pipe to child: %s"), strerror(errno));
+	/* NOTREACHED */
+    }
     while((line = agets(streamout)) != NULL) {
 	dbprintf(_("support line: %s\n"), line);
 	if (strncmp(line,"CONFIG ", 7) == 0) {
@@ -927,7 +930,7 @@ run_client_script(
     argv_size = 12 + property_argv_size(script->property);
     if (dle->level)
 	argv_size += 2 * g_slist_length(dle->level);
-    argvchild = malloc(argv_size * SIZEOF(char *));
+    argvchild = g_new0(char *, argv_size);
     i = 0;
     argvchild[i++] = script->plugin;
 

@@ -863,7 +863,7 @@ strquotedstr(char **saveptr)
     char *  tok = strtok_r(NULL, " ", saveptr);
     size_t	len;
 
-    len = strlen(tok);
+    if (tok) len = strlen(tok);
     if ((tok != NULL) && (tok[0] == '"') &&
 	(len > 1 && (tok[len - 1] != '"') && (tok[len - 2] != '\\'))) {
 	char *	t;

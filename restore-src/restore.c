@@ -686,7 +686,7 @@ void restore(RestoreSource * source,
     int check_for_aborted = 0;
     char *tmp_filename = NULL, *final_filename = NULL;
     struct stat statinfo;
-    open_output_t *myout = NULL, *oldout = NULL;
+    open_output_t *free_myout = NULL, *myout = NULL, *oldout = NULL;
     dumplist_t *tempdump = NULL, *fileentry = NULL;
     char *buffer;
     int need_compress=0, need_uncompress=0, need_decrypt=0;
@@ -736,12 +736,12 @@ void restore(RestoreSource * source,
 	    flags->leave_comp = 1;
 	}
 	if(myout == NULL){
-	    myout = alloc(SIZEOF(open_output_t));
+	    free_myout = myout = alloc(SIZEOF(open_output_t));
 	    memset(myout, 0, SIZEOF(open_output_t));
 	}
     }
     else{
-      myout = alloc(SIZEOF(open_output_t));
+      free_myout = myout = alloc(SIZEOF(open_output_t));
       memset(myout, 0, SIZEOF(open_output_t));
     }
 
@@ -1103,6 +1103,7 @@ void restore(RestoreSource * source,
 	/* TODO: Check error */
     }
 
+    amfree(free_myout);
     if(!flags->inline_assemble) {
         if(out != dest)
 	    aclose(out);
@@ -1601,6 +1602,10 @@ search_a_tape(Device      * device,
     int         i;
     RestoreFileStatus restore_status = RESTORE_STATUS_NEXT_TAPE;
 
+    /* if we're doing an inventory (logstream != NULL), then we need
+     * somewhere to keep track of our seen tapes */
+    g_assert(tape_seen != NULL || logstream == NULL);
+
     source.restore_mode = DEVICE_MODE;
     source.u.device = device;
 
@@ -1936,16 +1941,16 @@ restore_without_tapelist(FILE * prompt_out,
             }
             if (cur_slot >= slot_count)
                 break;
-            
-            g_fprintf(stderr, "Scanning %s (slot %s)\n", device->volume_label,
-                    curslot);
         } else {
             device = manual_find_tape(&cur_tapedev, NULL, prompt_out,
                                       prompt_in, flags, features);
         }
         
         if (device == NULL)
-            break;;
+            break;
+
+	g_fprintf(stderr, "Scanning %s (slot %s)\n", device->volume_label,
+		curslot);
         
         if (!search_a_tape(device, prompt_out, flags, features,
                            NULL, dumpspecs, &seentapes, &first_restored_file,

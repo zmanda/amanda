@@ -1017,7 +1017,7 @@ output_stats(void)
 static void
 output_tapeinfo(void)
 {
-    tape_t *tp, *lasttp;
+    tape_t *tp, *lasttp, *iter;
     int run_tapes;
     int skip = 0;
 
@@ -1107,12 +1107,13 @@ output_tapeinfo(void)
     run_tapes = getconf_int(CNF_RUNTAPES);
     if(lasttp && run_tapes > 0 && strcmp(lasttp->datestamp,"0") == 0) {
 	int c = 0;
-	while(lasttp && run_tapes > 0 && strcmp(lasttp->datestamp,"0") == 0) {
+	iter = lasttp;
+	/* count the number of tapes we *actually* used */
+	while(iter && run_tapes > 0 && strcmp(iter->datestamp,"0") == 0) {
 	    c++;
-	    lasttp = lasttp->prev;
+	    iter = iter->prev;
 	    run_tapes--;
 	}
-	lasttp = lookup_tapepos(lookup_nb_tape());
 	if(c == 1) {
 	    g_fprintf(mailf, _("The next new tape already labelled is: %s.\n"),
 		    lasttp->label);
@@ -1120,11 +1121,11 @@ output_tapeinfo(void)
 	else {
 	    g_fprintf(mailf, _("The next %d new tapes already labelled are: %s"), c,
 		    lasttp->label);
-	    lasttp = lasttp->prev;
+	    iter = lasttp->prev;
 	    c--;
-	    while(lasttp && c > 0 && strcmp(lasttp->datestamp,"0") == 0) {
-		g_fprintf(mailf, ", %s", lasttp->label);
-		lasttp = lasttp->prev;
+	    while(iter && c > 0 && strcmp(iter->datestamp,"0") == 0) {
+		g_fprintf(mailf, ", %s", iter->label);
+		iter = iter->prev;
 		c--;
 	    }
 	    g_fprintf(mailf, ".\n");

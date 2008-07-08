@@ -370,6 +370,11 @@ read_config(
           chg->emubarcode = 1;
           break;
         case DEBUGLEVEL:
+          if (chg->debuglevel != NULL) {
+              g_fprintf(stderr,_("Error: debuglevel is specified twice "
+                                 "(%s then %s).\n"), chg->debuglevel, value);
+              amfree(chg->debuglevel);
+          }
           chg->debuglevel = stralloc(value);
           break;
         case EJECT:
@@ -382,9 +387,19 @@ read_config(
           chg->sleep = (unsigned)atoi(value);
           break;
         case LABELFILE:
+          if (chg->labelfile != NULL) {
+              g_fprintf(stderr,_("Error: labelfile is specified twice "
+                                 "(%s then %s).\n"), chg->labelfile, value);
+              amfree(chg->labelfile);
+          }
           chg->labelfile = stralloc(value);
           break;
         case CHANGERDEV:
+          if (chg->device != NULL) {
+              g_fprintf(stderr,_("Error: changerdev is specified twice "
+                                 "(%s then %s).\n"), chg->device, value);
+              amfree(chg->device);
+          }
           chg->device = stralloc(value);
           break;
         case SCSITAPEDEV:

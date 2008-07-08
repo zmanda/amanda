@@ -1143,7 +1143,7 @@ vfs_device_seek_file (Device * pself, guint requested_file) {
         return NULL;
     }
 
-    rval = malloc(sizeof(*rval));
+    rval = g_new(dumpfile_t, 1);
     parse_file_header(header_buffer, rval, header_buffer_size);
     switch (rval->type) {
         case F_DUMPFILE:

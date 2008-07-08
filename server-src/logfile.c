@@ -129,7 +129,8 @@ printf_arglist_function1(void log_add, logtype_t, typ, char *, format)
     }
 
     arglist_start(argp, format);
-    g_vsnprintf(linebuf, SIZEOF(linebuf)-1, xlated_fmt, argp);
+    /* use sizeof(linebuf)-2 to save space for a trailing newline */
+    g_vsnprintf(linebuf, SIZEOF(linebuf)-2, xlated_fmt, argp);
 						/* -1 to allow for '\n' */
     arglist_end(argp);
 
@@ -149,6 +150,7 @@ printf_arglist_function1(void log_add, logtype_t, typ, char *, format)
 
     amfree(leader);
 
+    /* add a newline if necessary */
     n = strlen(linebuf);
     if(n == 0 || linebuf[n-1] != '\n') linebuf[n++] = '\n';
     linebuf[n] = '\0';

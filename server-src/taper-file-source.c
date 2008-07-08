@@ -212,6 +212,7 @@ static gboolean open_holding_file(char * filename, int * fd_pointer,
 		    filename);
 	}
         aclose(fd);
+	amfree(header_buffer);
         return FALSE;
     }
     

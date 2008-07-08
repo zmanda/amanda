@@ -91,6 +91,7 @@ set_host(
     if (is_extract_list_nonempty())
     {
 	g_printf(_("Must clear extract list before changing host\n"));
+	amfree(uqhost);
 	return;
     }
 
@@ -217,8 +218,11 @@ set_disk(
 	exit(1);
     amfree(cmd);
 
-    if (!server_happy())
+    if (!server_happy()) {
+	amfree(uqmtpt);
+	amfree(uqdsk);
 	return;
+    }
 
     disk_name = newstralloc(disk_name, uqdsk);
     if (mtpt == NULL)
@@ -344,6 +348,7 @@ cd_glob(
         g_printf(_("\"%s\" is not a valid shell wildcard pattern: "), glob);
         puts(s);
 	amfree(regex);
+	amfree(uqglob);
         return;
     }
     /*
@@ -408,6 +413,7 @@ cd_regex(
     if ((s = validate_regexp(uqregex)) != NULL) {
 	g_printf(_("\"%s\" is not a valid regular expression: "), uq_orig_regex);
 	amfree(uqregex);
+	amfree(uq_orig_regex);
 	puts(s);
 	return;
     }

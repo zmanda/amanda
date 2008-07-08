@@ -431,7 +431,7 @@ am_string_to_feature(
 		ch2 -= 'a';
 		ch2 += 10;
 	    } else {
-		amfree(f);				/* bad conversion */
+		am_release_feature_set(f); /* bad conversion */
 		break;
 	    }
 	    f->bytes[i] = (unsigned char)((ch1 << 4) | ch2);

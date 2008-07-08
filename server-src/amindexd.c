@@ -204,6 +204,7 @@ uncompress_file(
 				 filename, strerror(errno));
 	    dbprintf("%s\n",*emsg);
 	    amfree(filename);
+	    aclose(nullfd);
 	    return NULL;
 	}
 
@@ -226,6 +227,7 @@ uncompress_file(
 				 strerror(errno));
 	    dbprintf("%s\n",*emsg);
 	    amfree(filename);
+	    aclose(indexfd);
 	    return NULL;
 	}
 
@@ -323,7 +325,8 @@ process_ls_dump(
 	amfree(filename_gz);
 	return -1;
     }
-    if((filename = uncompress_file(filename_gz, emsg)) == NULL) {
+    filename = uncompress_file(filename_gz, emsg);
+    if(filename == NULL) {
 	amfree(filename_gz);
 	amfree(dir_slash);
 	return -1;
@@ -334,6 +337,7 @@ process_ls_dump(
 	amfree(*emsg);
 	*emsg = vstrallocf("%s", strerror(errno));
 	amfree(dir_slash);
+        amfree(filename);
 	return -1;
     }
 
@@ -1235,6 +1239,10 @@ main(
 	/* read the REQ packet */
 	for(; (line = agets(stdin)) != NULL; free(line)) {
 	    if(strncmp_const(line, "OPTIONS ") == 0) {
+                if (g_options != NULL) {
+		    dbprintf(_("REQ packet specified multiple OPTIONS.\n"));
+                    free_g_options(g_options);
+                }
 		g_options = parse_g_options(line+8, 1);
 		if(!g_options->hostname) {
 		    g_options->hostname = alloc(MAX_HOSTNAME_LENGTH+1);

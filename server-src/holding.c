@@ -605,7 +605,8 @@ holding_file_size(
         /* stat the file for its size */
         if (stat(filename, &finfo) == -1) {
 	    dbprintf(_("stat %s: %s\n"), filename, strerror(errno));
-            return (off_t)-1;
+            size = -1;
+	    break;
         }
         size += (finfo.st_size+(off_t)1023)/(off_t)1024;
         if (strip_headers)
@@ -614,8 +615,8 @@ holding_file_size(
         /* get the header to look for cont_filename */
         if (!holding_file_get_dumpfile(filename, &file)) {
 	    dbprintf(_("holding_file_size: open of %s failed.\n"), filename);
-            amfree(filename);
-            return (off_t)-1;
+            size = -1;
+	    break;
         }
 
         /* on to the next chunk */

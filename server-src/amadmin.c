@@ -1257,7 +1257,7 @@ remove_holding_file_from_catalog(
     matching_hist = info.history[matching_hist_idx];
 
     /* Remove the history element itself before doing the stats */
-    for (i = matching_hist_idx; i <= NB_HISTORY; i++) {
+    for (i = matching_hist_idx; i < NB_HISTORY; i++) {
         info.history[i] = info.history[i+1];
     }
     info.history[NB_HISTORY].level = -1;
