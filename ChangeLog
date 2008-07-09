@@ -1,4 +1,8 @@
 2008-07-09  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/rait-device.c: rewrite g_ptr_array_union_robust to
+	  correctly detect and handle child device failures
+
+2008-07-09  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Logfile.swg: POD tweaks
 
 2008-07-06 Dan Locks <dwlocks@zmanda.com>

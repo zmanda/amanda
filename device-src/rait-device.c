@@ -516,37 +516,37 @@ static GPtrArray * make_generic_boolean_op_array(RaitDevice* self) {
    occured. */
 static gboolean g_ptr_array_union_robust(RaitDevice * self, GPtrArray * ops,
                                          BooleanExtractor extractor) {
-    gboolean success;
-    gpointer isolated_op = NULL;
+    int nfailed;
+    guint i;
 
-    for (;;) {
-        success = g_ptr_array_and(ops, extractor);
-        
-        if (success || self->private->status != RAIT_STATUS_COMPLETE) {
-            break;
-        } else {
-            guint i;
-            /* First device failure, note the device and march on. */
-            self->private->status = RAIT_STATUS_DEGRADED;
-            for (i = 0; i < ops->len; i ++) {
-                GenericOp * op = g_ptr_array_index(ops, i);
-                if (!(op->result)) {
-                    isolated_op = g_ptr_array_remove_index_fast(ops, i);
-                    self->private->failed = op->child_index;
-                    g_fprintf(stderr, "RAIT array %s Isolated device %s.\n",
-                            DEVICE(self)->device_name,
-                            op->child->device_name);
-                    break;
-                }
-            }
-        }
+    /* We found one or more failed elements.  See which elements failed, and
+     * isolate them*/
+    nfailed = 0;
+    for (i = 0; i < ops->len; i ++) {
+	GenericOp * op = g_ptr_array_index(ops, i);
+	if (!extractor(op)) {
+	    self->private->failed = op->child_index;
+	    g_fprintf(stderr, "RAIT array %s isolated device %s\n",
+		    DEVICE(self)->device_name,
+		    op->child->device_name);
+	    nfailed++;
+	}
     }
 
-    /* Return isolated op so any data members can be freed. */
-    if (isolated_op != NULL) {
-        g_ptr_array_add(ops, isolated_op);
+    /* no failures? great! */
+    if (nfailed == 0)
+	return TRUE;
+
+    /* a single failure in COMPLETE just puts us in DEGRADED mode */
+    if (self->private->status == RAIT_STATUS_COMPLETE && nfailed == 1) {
+	self->private->status = RAIT_STATUS_DEGRADED;
+	g_fprintf(stderr, "RAIT array %s DEGRADED\n", DEVICE(self)->device_name);
+	return TRUE;
+    } else {
+	self->private->status = RAIT_STATUS_FAILED;
+	g_fprintf(stderr, "RAIT array %s FAILED\n", DEVICE(self)->device_name);
+	return FALSE;
     }
-    return success;
 }
 
 typedef struct {
@@ -1342,6 +1342,7 @@ static gboolean raid_block_reconstruction(RaitDevice * self, GPtrArray * ops,
             amfree(constructed_parity);
         } else { /* do nothing. */ }
     } else if (self->private->status == RAIT_STATUS_DEGRADED) {
+	g_assert(self->private->failed >= 0 && self->private->failed < (int)num_children);
         /* We are in degraded mode. What's missing? */
         if (self->private->failed == parity_child) {
             /* do nothing. */
