@@ -1,3 +1,7 @@
+2007-07-09 Nikolas Coukouma <nikolas@zmanda.com>
+	* man/xml-source/amanda-devices.7.xml: Document the S3_BUCKET_LOCATION
+	  property (for setting location constraints).
+
 2008-07-08  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/vfs-device.c device-src/tape-device.c: do not autofinish
 	  when EOF occurs on writing

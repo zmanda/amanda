@@ -111,6 +111,18 @@ as properties.</para>
 high HTTP overhead for each request, use of larger than normal block
   sizes (&gt; 1 megabyte) is reccomended with the S3 device.</para>
 
+<para>You can control where your data is physically stored by Amazon S3 using 
+a location constraint. Setting this affects can affect both billing and legal 
+concerns, so you are encouraged to consult Amazon's documentation for details.
+</para>
+
+<para>
+To control location constraints, set the S3_BUCKET_LOCATION property.
+Currently, there are two valid settings: "" (any location) and "EU" (Europe).
+If the S3_BUCKET_LOCATION is set, Amanda will check to make sure that the 
+setting agrees with the constraint currently on the bucket.
+</para>
+
 </refsect2>
 
 <refsect2><title>Tape Device</title>
