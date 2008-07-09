@@ -1,3 +1,11 @@
+2008-07-09  Ian Turner <ian@zmanda.com>
+	* device-src/device.h: Clarify documentation of device_read_label().
+	* device-src/s3-device.c, device-src/tape-device.c,
+	  device-src/vfs-device.c (device_read_label): Always clear volume
+	  labels, even if device is in error.
+	* device-src/rait-device.c: Ditto; also properly handle properties
+	  that change device labels.
+
 2007-07-09 Nikolas Coukouma <nikolas@zmanda.com>
 	* man/xml-source/amanda-devices.7.xml: Document the S3_BUCKET_LOCATION
 	  property (for setting location constraints).

@@ -773,12 +773,11 @@ s3_device_read_label(Device *pself) {
     /* note that this may be called from s3_device_start, when
      * self->access_mode is not ACCESS_NULL */
 
-    if (device_in_error(self)) return pself->status;
-
     amfree(pself->volume_label);
     amfree(pself->volume_time);
-
     amfree(pself->volume_header);
+
+    if (device_in_error(self)) return pself->status;
 
     if (!setup_handle(self)) {
 	device_set_error(pself, stralloc(_("Error setting up S3 interface")), DEVICE_STATUS_DEVICE_ERROR);

@@ -699,12 +699,13 @@ static DeviceStatusFlags vfs_device_read_label(Device * dself) {
     VfsDevice * self;
 
     self = VFS_DEVICE(dself);
-
-    if (device_in_error(self)) return dself->status;
+    g_assert(self != NULL);
 
     amfree(dself->volume_label);
     amfree(dself->volume_time);
     amfree(dself->volume_header);
+
+    if (device_in_error(self)) return dself->status;
 
     if (!open_dir_handle(dself))
 	return dself->status; /* open_dir_handle sets status/error message */

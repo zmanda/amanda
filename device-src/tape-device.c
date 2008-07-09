@@ -424,11 +424,11 @@ static DeviceStatusFlags tape_device_read_label(Device * dself) {
 
     self = TAPE_DEVICE(dself);
 
-    if (device_in_error(self)) return dself->status;
-
     amfree(dself->volume_label);
     amfree(dself->volume_time);
     amfree(dself->volume_header);
+
+    if (device_in_error(self)) return dself->status;
 
     header = dself->volume_header = g_new(dumpfile_t, 1);
     fh_init(header);

@@ -777,11 +777,12 @@ static DeviceStatusFlags rait_device_read_label(Device * dself) {
 
     self = RAIT_DEVICE(dself);
 
-    if (rait_device_in_error(self)) return dself->status | DEVICE_STATUS_DEVICE_ERROR;
-
     amfree(dself->volume_time);
     amfree(dself->volume_label);
     amfree(dself->volume_header);
+
+    if (rait_device_in_error(self))
+        return dself->status | DEVICE_STATUS_DEVICE_ERROR;
 
     ops = make_generic_boolean_op_array(self);
     
@@ -1963,17 +1964,11 @@ static void property_set_do_op(gpointer data,
     op->label_changed = (label_set != (op->base.child->volume_label != NULL));
 }
 
-/* A BooleanExtractor */
+/* A BooleanExtractor. Confusingly, this returns TRUE if the label didn't
+ * change. */
 static gboolean extract_label_changed_property_op(gpointer data) {
     PropertyOp * op = data;
-    return op->label_changed;
-}
-
-/* A GFunc. */
-static void clear_volume_details_do_op(gpointer data,
-                                       gpointer user_data G_GNUC_UNUSED) {
-    GenericOp * op = data;
-    device_clear_volume_details(op->child);
+    return !op->label_changed;
 }
 
 static gboolean 
@@ -1993,16 +1988,15 @@ rait_device_property_set (Device * d_self, DevicePropertyId id, GValue * val) {
 
     success = g_ptr_array_union_robust(self, ops, extract_boolean_generic_op);
     label_changed =
-        g_ptr_array_union_robust(self, ops,
-                                 extract_label_changed_property_op);
+        !g_ptr_array_and(ops, extract_label_changed_property_op);
     g_ptr_array_free_full(ops);
 
     if (label_changed) {
         /* At least one device considered this property set a label-changing
          * operation, so now we clear labels on all devices. */
-        ops = make_generic_boolean_op_array(self);
-        do_rait_child_ops(clear_volume_details_do_op, ops, NULL);
-        g_ptr_array_free_full(ops);
+        DeviceStatusFlags read_label_success = 
+            rait_device_read_label(d_self);
+        success = success && (read_label_success == DEVICE_STATUS_SUCCESS);
     }
 
     /* TODO: distinguish properties on the RAIT device from properties

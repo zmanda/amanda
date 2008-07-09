@@ -244,8 +244,11 @@ void device_set_error(Device * self, char *errmsg, DeviceStatusFlags new_flags);
 
 /* This instructs the device to read the label on the current volume.
  * device->volume_label will not be initalized until read_label or start is
- * called. You are encouraged to read the label only after setting any properties
- * that may affect the label-reading process.  */
+ * called. You are encouraged to read the label only after setting any
+ * properties that may affect the label-reading process. Also, after
+ * calling this function, device->volume_label and device->volume_time
+ * will be non-NULL if and only if this function returns
+ * DEVICE_STATUS_SUCCESS. */
 DeviceStatusFlags        device_read_label (Device * self);
 
 /* This tells the Device that it's OK to start reading and writing
