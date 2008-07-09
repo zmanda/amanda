@@ -135,7 +135,8 @@ Functions in this section extract information from logfiles.
 =item C<find_log()>
 
 Return a list of logfiles for active tapes.  The tapelist must be loaded before
-this function is called (see L<Amanda::Tapelist>).
+this function is called (see L<Amanda::Tapefile>, and note that this module will be
+renamed to L<Amanda::Tapelist> in Amanda-2.6.1).
 
 =item C<search_logfile($label, $datestamp, $logfile, $add_missing_disks)>
 
