@@ -1,3 +1,7 @@
+2008-07-11  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Changer.pm: set device properties when testing device
+	  labels in the changer
+
 2008-07-11  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/amgtar.c: Add a DIRECTORY property.
 	* man/xml-source/amgtar.8.xml: Document DIRECTORY property.

@@ -337,6 +337,7 @@ sub find {
 
 		    my $device = Amanda::Device->new($devname);
 		    next TRYSLOT unless ($device->status() == $DEVICE_STATUS_SUCCESS);
+		    $device->set_startup_properties_from_config();
 		    next TRYSLOT unless ($device->read_label() == $DEVICE_STATUS_SUCCESS);
 		    my $volume_label = $device->volume_label();
 		    next TRYSLOT unless (defined $volume_label);
