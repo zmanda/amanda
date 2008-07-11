@@ -1,4 +1,10 @@
 2008-07-11  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/rait-device.c: fix RAIT file numbers; don't pass
+	  block-size-related properties down to child devices (we set the block
+	  size in find_block_size); don't use union_robust for checking whether
+	  labels changed, as it causes spurious failures
+
+2008-07-11  Dustin J. Mitchell <dustin@zmanda.com>
 	Thanks to Stefan G. Weichinger <sgw@amanda.org>
 	* device-src/tape-*.c: return DEVICE_ERROR|VOLUME_MISSING on EIO while
 	  checking tape_is_tape_device

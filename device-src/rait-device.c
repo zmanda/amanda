@@ -493,6 +493,23 @@ static gboolean g_ptr_array_and(GPtrArray * array,
     return TRUE;
 }
 
+/* Calls extractor on each element of the array, and returns
+   TRUE if at least one of the calls to extractor return TRUE.
+*/
+static gboolean g_ptr_array_or(GPtrArray * array,
+                                BooleanExtractor extractor) {
+    guint i;
+    if (array == NULL || array->len <= 0)
+        return FALSE;
+
+    for (i = 0; i < array->len; i ++) {
+        if (extractor(g_ptr_array_index(array, i)))
+            return TRUE;
+    }
+
+    return FALSE;
+}
+
 /* Takes a RaitDevice, and makes a GPtrArray of GenericOp. */
 static GPtrArray * make_generic_boolean_op_array(RaitDevice* self) {
     GPtrArray * rval;
@@ -885,7 +902,7 @@ rait_device_start_file (Device * dself, const dumpfile_t * info) {
     g_ptr_array_free_full(ops);
 
     g_assert(actual_file >= 1);
-    dself->file = actual_file;
+    dself->file = actual_file - 1; /* chain-up, below, will re-increment this */
     dself->in_file = TRUE;
 
     if (!success) {
@@ -1765,14 +1782,21 @@ rait_device_property_set (Device * d_self, DevicePropertyId id, GValue * val) {
     self = RAIT_DEVICE(d_self);
     g_return_val_if_fail(self != NULL, FALSE);
 
+    /* it doesn't make sense to hand these properties down to our child devices,
+     * so we'll just pretend we set them.  This is a 2.6.0 hack -- the device gets
+     * this right in 2.6.1.  */
+    if (id == PROPERTY_BLOCK_SIZE
+	|| id == PROPERTY_MIN_BLOCK_SIZE
+	|| id == PROPERTY_MAX_BLOCK_SIZE) {
+	return TRUE; /* lies! */
+    }
+
     ops = make_property_op_array(self, id, val);
     
     do_rait_child_ops(property_set_do_op, ops, NULL);
 
     success = g_ptr_array_union_robust(self, ops, extract_boolean_generic_op);
-    label_changed =
-        g_ptr_array_union_robust(self, ops,
-                                 extract_label_changed_property_op);
+    label_changed = g_ptr_array_or(ops, extract_label_changed_property_op);
     g_ptr_array_free_full(ops);
 
     if (label_changed) {
