@@ -1,4 +1,7 @@
 2008-07-11  Dustin J. Mitchell <dustin@zmanda.com>
+	* changer-src/chg-lib.sh.in: remove bogus Log() invocations
+
+2008-07-11  Dustin J. Mitchell <dustin@zmanda.com>
 	* man/xml-source/amanda.8.xml: fix amanda(8) formatting and add links
 	  to new manpages
 

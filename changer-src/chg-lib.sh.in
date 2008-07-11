@@ -107,9 +107,6 @@ amdevcheck_status() {
     local amdevcheck_output=`amdevcheck $amdevcheck_config_name $@`
     local amdevcheck_status=$?
 
-    Log `_ 'Output from amdevcheck: (status %s)' "$amdevcheck_status"`
-    Log $amdevcheck_output
-
     test "$amdevcheck_status" -ne 0 && return 0
 
     # extract any messages
