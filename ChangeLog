@@ -1,4 +1,8 @@
 2008-07-11  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Amanda_Changer.pl: set up and parse a config, now that
+	  Amanda::Changer needs one
+
+2008-07-11  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Changer.pm: set device properties when testing device
 	  labels in the changer
 

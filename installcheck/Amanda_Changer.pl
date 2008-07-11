@@ -35,6 +35,18 @@ Amanda::Debug::dbopen("installcheck");
 # and disable Debug's die() and warn() overrides
 Amanda::Debug::disable_die_override();
 
+# work against a basically empty config; Amanda::Changer uses the current config
+# when it opens devices to check their labels
+my $testconf;
+$testconf = Installcheck::Config->new();
+$testconf->write();
+
+my $cfg_result = config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');
+if ($cfg_result != $CFGERR_OK) {
+    my ($level, @errors) = Amanda::Config::config_errors();
+    die(join "\n", @errors);
+}
+
 my $changer_filename = "$AMANDA_TMPDIR/chg-test";
 
 sub setup_changer {
