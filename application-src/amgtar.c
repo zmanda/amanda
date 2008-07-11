@@ -33,6 +33,8 @@
  *
  * GNUTAR-PATH     (default GNUTAR)
  * GNUTAR-LISTDIR  (default CNF_GNUTAR_LIST_DIR)
+ * DIRECTORY       (no default, if set, the backup will be from that directory
+ *		    instead of from the --device)
  * ONE-FILE-SYSTEM (default YES)
  * SPARSE          (default YES)
  * ATIME-PRESERVE  (default YES)
@@ -120,6 +122,7 @@ static char **amgtar_build_argv(application_argument_t *argument,
 				char *incrname, int command);
 static char *gnutar_path;
 static char *gnutar_listdir;
+static char *gnutar_directory;
 static int gnutar_onefilesystem;
 static int gnutar_atimepreserve;
 static int gnutar_checkdevice;
@@ -147,6 +150,7 @@ static struct option long_options[] = {
     {"exclude-file"    , 1, NULL, 19},
     {"exclude-list"    , 1, NULL, 20},
     {"exclude-optional", 1, NULL, 21},
+    {"directory"       , 1, NULL, 22},
     {NULL, 0, NULL, 0}
 };
 
@@ -164,6 +168,7 @@ main(
 #else
     gnutar_path = NULL;
 #endif
+    gnutar_directory = NULL;
     gnutar_onefilesystem = 1;
     gnutar_atimepreserve = 1;
     gnutar_checkdevice = 1;
@@ -278,6 +283,8 @@ main(
 		 break;
 	case 21: argument.dle.exclude_optional = 1;
 		 break;
+	case 22: gnutar_directory = stralloc(optarg);
+		 break;
 	case ':':
 	case '?':
 		break;
@@ -303,6 +310,9 @@ main(
 
     dbprintf("GNUTAR-PATH %s\n", gnutar_path);
     dbprintf("GNUTAR-LISTDIR %s\n", gnutar_listdir);
+    if (gnutar_directory) {
+	dbprintf("DIRECTORY %s\n", gnutar_directory);
+    }
     dbprintf("ONE-FILE-SYSTEM %s\n", gnutar_onefilesystem? "yes":"no");
     dbprintf("SPARSE %s\n", gnutar_sparse? "yes":"no");
     dbprintf("ATIME-PRESERVE %s\n", gnutar_atimepreserve? "yes":"no");
@@ -371,7 +381,11 @@ amgtar_selfcheck(
     }
 
     fprintf(stdout, "OK %s\n", argument->dle.disk);
-    check_dir(argument->dle.device, R_OK);
+    if (gnutar_directory) {
+	check_dir(gnutar_directory, R_OK);
+    } else {
+	check_dir(argument->dle.device, R_OK);
+    }
     set_root_privs(0);
 }
 
@@ -841,7 +855,11 @@ char **amgtar_build_argv(
 			   &nb_exclude, &file_exclude,
 			   &nb_include, &file_include);
 
-    dirname = amname_to_dirname(argument->dle.device);
+    if (gnutar_directory) {
+	dirname = gnutar_directory;
+    } else {
+	dirname = amname_to_dirname(argument->dle.device);
+    }
 
     my_argv = alloc(SIZEOF(char *) * 23);
     i = 0;

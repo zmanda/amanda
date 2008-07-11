@@ -43,6 +43,10 @@ If "NO" (the default), amgtar updates the atime for all files accessed; if "YES"
 If "YES" (the default), amgtar checks that the device number doesn't change for each file. If "NO", changes in device number are ignored.  To ignore device numbers, tar must support the <emphasis>--no-check-device</emphasis> option (gnutar 1.19.90 and newer). This option is needed for some filesystems and devices on which device numbers change frequently, such as LVM or FiberChannel.
 </listitem></varlistentry>
  <!-- ==== -->
+ <varlistentry><term>DIRECTORY</term><listitem>
+If set, gnutar will backup from that directory instead of the <emphasis>diskdevice</emphasis> set by the DLE.
+</listitem></varlistentry>
+ <!-- ==== -->
  <varlistentry><term>GNUTAR-LISTDIR</term><listitem>
 The directory where gnutar stores the database it uses to generate incremental dumps.  The default is set when &A; is built.
 </listitem></varlistentry>
