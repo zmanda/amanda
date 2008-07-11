@@ -131,16 +131,21 @@ gboolean tape_setcompression(int fd G_GNUC_UNUSED,
 #endif
 }
 
-TapeCheckResult tape_is_tape_device(int fd) {
+ReadLabelStatusFlags tape_is_tape_device(int fd) {
     struct mtop mt;
     mt.mt_op = MTNOP;
     mt.mt_count = 1;
     if (0 == ioctl(fd, MTIOCTOP, &mt)) {
-        return TAPE_CHECK_SUCCESS;
+        return READ_LABEL_STATUS_SUCCESS;
     } else {
 	dbprintf("tape_is_tape_device: ioctl(MTIOCTOP/MTNOP) failed: %s",
 		 strerror(errno));
-        return TAPE_CHECK_FAILURE;
+	if (errno == EIO) {
+	    /* some devices return EIO while the drive is busy loading */
+	    return READ_LABEL_STATUS_DEVICE_ERROR|READ_LABEL_STATUS_VOLUME_MISSING;
+	} else {
+	    return READ_LABEL_STATUS_DEVICE_ERROR;
+	}
     }
 }
 

@@ -229,11 +229,14 @@ void tape_device_register(void) {
 }
 
 /* Open the tape device, trying various combinations of O_RDWR and
-   O_NONBLOCK.  Returns -1 and calls device_set_error for errors */
-static int try_open_tape_device(TapeDevice * self, char * device_filename) {
+   O_NONBLOCK.  Returns -1 and sets status_result for errors */
+static int try_open_tape_device(TapeDevice * self, char * device_filename,
+	ReadLabelStatusFlags *status_result) {
     int fd;
     int save_errno;
     ReadLabelStatusFlags new_status;
+    TapeCheckResult tcr;
+    *status_result = READ_LABEL_STATUS_SUCCESS;
 
 #ifdef O_NONBLOCK
     fd  = robust_open(device_filename, O_RDWR | O_NONBLOCK, 0);
@@ -278,6 +281,7 @@ static int try_open_tape_device(TapeDevice * self, char * device_filename) {
     if (fd < 0) {
 	g_fprintf(stderr, _("Can't open tape device %s: %s\n"),
 	    DEVICE(self)->device_name, strerror(errno));
+	*status_result = READ_LABEL_STATUS_DEVICE_ERROR;
         return -1;
     }
 
@@ -287,14 +291,16 @@ static int try_open_tape_device(TapeDevice * self, char * device_filename) {
 	g_fprintf(stderr, _("File %s is not a tape device\n"),
 	    DEVICE(self)->device_name);
         robust_close(fd);
+	*status_result = new_status;
         return -1;
     }
 
-    new_status = tape_is_ready(fd);
-    if (new_status != READ_LABEL_STATUS_SUCCESS) {
+    tcr = tape_is_ready(fd);
+    if (new_status == TAPE_CHECK_FAILURE) {
 	g_fprintf(stderr, _("Tape device %s is not ready or is empty\n"),
 	    DEVICE(self)->device_name);
         robust_close(fd);
+	*status_result = READ_LABEL_STATUS_DEVICE_ERROR;
         return -1;
     }
 
@@ -347,10 +353,10 @@ static ReadLabelStatusFlags tape_device_read_label(Device * dself) {
     amfree(dself->volume_time);
 
     if (self->fd == -1) {
-        self->fd = try_open_tape_device(self, dself->device_name);
+	ReadLabelStatusFlags status;
+        self->fd = try_open_tape_device(self, dself->device_name, &status);
 	if (self->fd == -1)
-	    return (READ_LABEL_STATUS_DEVICE_ERROR |
-		    READ_LABEL_STATUS_VOLUME_ERROR);
+	    return status;
     }
 
     /* Rewind it. */
@@ -522,9 +528,10 @@ tape_device_start (Device * d_self, DeviceAccessMode mode, char * label,
     g_return_val_if_fail(self != NULL, FALSE);
 
     if (self->fd == -1) {
-        self->fd = try_open_tape_device(self, d_self->device_name);
+	ReadLabelStatusFlags status;
+        self->fd = try_open_tape_device(self, d_self->device_name, &status);
 	if (self->fd == -1)
-	    return FALSE;
+	    return FALSE;   /* can't do anything with status here */
     }
 
     if (mode != ACCESS_WRITE && d_self->volume_label == NULL) {

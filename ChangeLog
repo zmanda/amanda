@@ -1,3 +1,10 @@
+2008-07-11  Dustin J. Mitchell <dustin@zmanda.com>
+	Thanks to Stefan G. Weichinger <sgw@amanda.org>
+	* device-src/tape-*.c: return DEVICE_ERROR|VOLUME_MISSING on EIO while
+	  checking tape_is_tape_device
+	* changer-src/chg-lib.sh.in: keep waiting for a device if it *might*
+	  be busy or offline
+
 2008-07-09  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/rait-device.c: rewrite g_ptr_array_union_robust to
 	  correctly detect and handle child device failures

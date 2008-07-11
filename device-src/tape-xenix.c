@@ -81,12 +81,14 @@ gboolean tape_setcompression(int fd, gboolean on) {
     return FALSE;
 }
 
-TapeCheckResult tape_is_tape_device(int fd) {
+ReadLabelStatusFlags tape_is_tape_device(int fd) {
     struct tape_info result;
     if (0 == ioctl(fd, MT_STATUS, &result)) {
-        return TAPE_CHECK_SUCCESS;
+        return READ_LABEL_STATUS_SUCCESS;
     } else {
-        return TAPE_CHECK_FAILURE;
+	dbprintf("tape_is_tape_device: ioctl(MTIOCTOP/MTNOP) failed: %s",
+		 strerror(errno));
+	return READ_LABEL_STATUS_DEVICE_ERROR;
     }
 }
 

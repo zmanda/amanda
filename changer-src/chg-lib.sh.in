@@ -95,15 +95,24 @@ tape_device_filename() {
 # on device status, since some devices can't differentiate between device
 # problems and an unlabeled volume.
 amdevcheck_status() {
-    amdevcheck_config_dir=`pwd`
-    amdevcheck_config_name=`basename $amdevcheck_config_dir`
-    amdevcheck_output=`amdevcheck $amdevcheck_config_name $@`
+    amdevcheck_message=
+    local amdevcheck_config_dir=`pwd`
+    local amdevcheck_config_name=`basename $amdevcheck_config_dir`
+    local amdevcheck_output=`amdevcheck $amdevcheck_config_name $@`
+    local amdevcheck_status=$?
 
-    if test $? -eq 0 || \
-        echo $amdevcheck_output | grep UNLABELED > /dev/null; then
-        return 0
+    test "$amdevcheck_status" -ne 0 && return 0
+
+    # extract any messages
+    amdevcheck_message=`echo "$amdevcheck_output" | sed '/^MESSAGE /{s/^MESSAGE //;p}; d'`
+
+    # Return 1 if it's possible that the device is offline or busy; if the device cannot
+    # distinguish this state from an error condition, then our caller will just have to
+    # time out
+    if echo "$amdevcheck_output" | $EGREP "VOLUME_MISSING" > /dev/null; then
+	return 1
     else
-        return 1
+	return 0
     fi
 }
 

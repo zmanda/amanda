@@ -53,7 +53,7 @@ typedef enum {
     TAPE_CHECK_UNKNOWN,
     TAPE_CHECK_FAILURE
 } TapeCheckResult;
-TapeCheckResult tape_is_tape_device(int fd);
+ReadLabelStatusFlags tape_is_tape_device(int fd);
 TapeCheckResult tape_is_ready(int fd);
 
 /* Also implemented in above files. Sets properties on the device. */

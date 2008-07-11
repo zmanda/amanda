@@ -91,9 +91,9 @@ gboolean tape_setcompression(int fd, gboolean on) {
     return FALSE;
 }
 
-TapeCheckResult tape_is_tape_device(int fd) {
+ReadLabelStatusFlags tape_is_tape_device(int fd) {
     /* AIX doesn't have a no-op. */
-    return TAPE_CHECK_UNKNOWN;
+    return READ_LABEL_STATUS_SUCCESS;
 }
 
 TapeCheckResult tape_is_ready(int fd) {
