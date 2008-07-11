@@ -64,7 +64,6 @@ void parse_options(char *str,
 		   dle_t *dle,
 		   am_feature_t *features,
 		   int verbose);
-void output_tool_property(FILE *tool, dle_t *dle);
 
 /* Count the size of an ARGV to store all properties of an application for
  * a dle. include/exclude options are converted to properties.

@@ -88,7 +88,7 @@ typedef enum {
     CONF_PP_SCRIPT,            CONF_PP_SCRIPT_TOOL,
     CONF_EXECUTE_ON,           CONF_EXECUTE_WHERE,	CONF_SEND_AMREPORT_ON,
 
-    /* execute on 5 */
+    /* execute on */
     CONF_PRE_DLE_AMCHECK,      CONF_PRE_HOST_AMCHECK,
     CONF_POST_DLE_AMCHECK,     CONF_POST_HOST_AMCHECK,
     CONF_PRE_DLE_ESTIMATE,     CONF_PRE_HOST_ESTIMATE,
@@ -675,6 +675,7 @@ keytab_t client_keytab[] = {
     { "CONNECT_TRIES", CONF_CONNECT_TRIES },
     { "REP_TRIES", CONF_REP_TRIES },
     { "REQ_TRIES", CONF_REQ_TRIES },
+    { "CLIENT", CONF_CLIENT },
     { "DEBUG_AMANDAD", CONF_DEBUG_AMANDAD },
     { "DEBUG_AMIDXTAPED", CONF_DEBUG_AMIDXTAPED },
     { "DEBUG_AMINDEXD", CONF_DEBUG_AMINDEXD },
@@ -691,15 +692,40 @@ keytab_t client_keytab[] = {
     { "DEBUG_SELFCHECK", CONF_DEBUG_SELFCHECK },
     { "DEBUG_SENDSIZE", CONF_DEBUG_SENDSIZE },
     { "DEBUG_SENDBACKUP", CONF_DEBUG_SENDBACKUP },
+    { "EXECUTE_ON", CONF_EXECUTE_ON },
+    { "EXECUTE_WHERE", CONF_EXECUTE_WHERE },
     { "RESERVED_UDP_PORT", CONF_RESERVED_UDP_PORT },
     { "RESERVED_TCP_PORT", CONF_RESERVED_TCP_PORT },
     { "UNRESERVED_TCP_PORT", CONF_UNRESERVED_TCP_PORT },
     { "DEFINE", CONF_DEFINE },
     { "COMMENT", CONF_COMMENT },
     { "MAILER", CONF_MAILER },
+    { "SCRIPT", CONF_PP_SCRIPT },
+    { "SCRIPT_TOOL", CONF_PP_SCRIPT_TOOL },
     { "PLUGIN", CONF_PLUGIN },
+    { "PRE_DLE_AMCHECK", CONF_PRE_DLE_AMCHECK },
+    { "PRE_HOST_AMCHECK", CONF_PRE_HOST_AMCHECK },
+    { "POST_DLE_AMCHECK", CONF_POST_DLE_AMCHECK },
+    { "POST_HOST_AMCHECK", CONF_POST_HOST_AMCHECK },
+    { "PRE_DLE_ESTIMATE", CONF_PRE_DLE_ESTIMATE },
+    { "PRE_HOST_ESTIMATE", CONF_PRE_HOST_ESTIMATE },
+    { "POST_DLE_ESTIMATE", CONF_POST_DLE_ESTIMATE },
+    { "POST_HOST_ESTIMATE", CONF_POST_HOST_ESTIMATE },
+    { "POST_DLE_BACKUP", CONF_POST_DLE_BACKUP },
+    { "POST_HOST_BACKUP", CONF_POST_HOST_BACKUP },
+    { "PRE_DLE_BACKUP", CONF_PRE_DLE_BACKUP },
+    { "PRE_HOST_BACKUP", CONF_PRE_HOST_BACKUP },
+    { "PRE_RECOVER", CONF_PRE_RECOVER },
+    { "POST_RECOVER", CONF_POST_RECOVER },
+    { "PRE_LEVEL_RECOVER", CONF_PRE_LEVEL_RECOVER },
+    { "POST_LEVEL_RECOVER", CONF_POST_LEVEL_RECOVER },
+    { "INTER_LEVEL_RECOVER", CONF_INTER_LEVEL_RECOVER },
+    { "PRIORITY", CONF_PRIORITY },
     { "PROPERTY", CONF_PROPERTY },
+    { "APPLICATION", CONF_APPLICATION },
     { "APPLICATION_TOOL", CONF_APPLICATION_TOOL },
+    { "SERVER", CONF_SERVER },
+    { "APPEND", CONF_APPEND },
     { NULL, CONF_IDENT },
     { NULL, CONF_UNKNOWN }
 };
@@ -984,6 +1010,8 @@ conf_var_t client_var [] = {
    { CONF_RESERVED_TCP_PORT  , CONFTYPE_INTRANGE, read_intrange, CNF_RESERVED_TCP_PORT  , validate_reserved_port_range },
    { CONF_UNRESERVED_TCP_PORT, CONFTYPE_INTRANGE, read_intrange, CNF_UNRESERVED_TCP_PORT, validate_unreserved_port_range },
    { CONF_PROPERTY           , CONFTYPE_PROPLIST, read_property, CNF_PROPERTY           , NULL },
+   { CONF_APPLICATION        , CONFTYPE_STR     , read_dapplication, DUMPTYPE_APPLICATION, NULL },
+   { CONF_PP_SCRIPT          , CONFTYPE_STR     , read_dpp_script, DUMPTYPE_PP_SCRIPTLIST, NULL },
    { CONF_UNKNOWN            , CONFTYPE_INT     , NULL         , CNF_CNF                , NULL }
 };
 
@@ -1593,7 +1621,10 @@ read_confline(
 
     case CONF_DEFINE:
 	if (is_client) {
-	    handle_invalid_keyword(tokenval.v.s);
+	    get_conftoken(CONF_ANY);
+	    if(tok == CONF_APPLICATION_TOOL) get_application();
+	    else if(tok == CONF_PP_SCRIPT_TOOL) get_pp_script();
+	    else conf_parserror(_("APPLICATION-TOOL or SCRIPT-TOOL expected"));
 	} else {
 	    get_conftoken(CONF_ANY);
 	    if(tok == CONF_DUMPTYPE) get_dumptype();
@@ -2843,12 +2874,19 @@ read_property(
     val_t      *val)
 {
     char *key;
-    GSList *values;
-    int append = 0;
+    property_t *property = malloc(sizeof(property_t));
+    property_t *old_property;
+    property->append = 0; 
+    property->priority = 0; 
+    property->values = NULL;
 
     get_conftoken(CONF_ANY);
+    if (tok == CONF_PRIORITY) {
+	property->priority = 1;
+	get_conftoken(CONF_ANY);
+    }
     if (tok == CONF_APPEND) {
-	append = 1;
+	property->append = 1;
 	get_conftoken(CONF_ANY);
     }
     if (tok != CONF_STRING) {
@@ -2871,20 +2909,28 @@ read_property(
     if(val->seen == 0)
 	val->seen = current_line_num;
 
-    if (append) {
-	values = g_hash_table_lookup(val->v.proplist, key);
+    old_property = g_hash_table_lookup(val->v.proplist, key);
+    if (property->append) {
+	if (old_property) {
+	    if (old_property->priority)
+		property->priority = 1;
+	    property->values = old_property->values;
+	}
     } else {
-	values = g_hash_table_lookup(val->v.proplist, key);
-	if (values)
-	    g_slist_free(values);
-	values = NULL;
+	property->values = g_hash_table_lookup(val->v.proplist, key);
+	if (old_property) {
+	    g_slist_free(old_property->values);
+	    amfree(old_property);
+	}
+	property->values = NULL;
     }
     while(tok == CONF_STRING) {
-	values = g_slist_append(values, strdup(tokenval.v.s));
+	property->values = g_slist_append(property->values,
+					  strdup(tokenval.v.s));
 	get_conftoken(CONF_ANY);
     }
     unget_conftoken();
-    g_hash_table_insert(val->v.proplist, key, values);
+    g_hash_table_insert(val->v.proplist, key, property);
 }
 
 
@@ -2985,7 +3031,7 @@ read_execute_where(
     case CONF_CLIENT:      val->v.i = ES_CLIENT;   break;
     case CONF_SERVER:      val->v.i = ES_SERVER;   break;
     default:
-	conf_parserror(_("CLIENT or  SERVER expected"));
+	conf_parserror(_("CLIENT or SERVER expected"));
     }
 }
 
@@ -5038,14 +5084,19 @@ copy_proplist(
     gpointer user_data_p)
 {
     char *property_s = key_p;
-    GSList *value_s   = value_p;
+    property_t *property = value_p;
     proplist_t proplist = user_data_p;
-    GSList *elem, *list = NULL;
+    GSList *elem = NULL;
+    property_t *new_property = malloc(sizeof(property_t));
+    new_property->append = property->append;
+    new_property->priority = property->priority;
+    new_property->values = NULL;
 
-    for(elem = value_s;elem != NULL; elem=elem->next) {
-	list = g_slist_append(list, stralloc(elem->data));
+    for(elem = property->values;elem != NULL; elem=elem->next) {
+	new_property->values = g_slist_append(new_property->values,
+					      stralloc(elem->data));
     }
-    g_hash_table_insert(proplist, property_s, list);
+    g_hash_table_insert(proplist, property_s, new_property);
 }
 
 static void
@@ -5776,13 +5827,18 @@ proplist_display_str_foreach_fn(
     gpointer value_p,
     gpointer user_data_p)
 {
-    char   *property_s = key_p;
-    GSList *value_s    = value_p;
-    GSList *value;
-    char ***msg      = (char ***)user_data_p;
+    char         *property_s = key_p;
+    property_t   *property   = value_p;
+    GSList       *value;
+    char       ***msg        = (char ***)user_data_p;
 
-    **msg = vstralloc("\"", property_s, "\"", NULL);
-    for(value=value_s; value != NULL; value = value->next) {
+    /* What to do with property->append? it should be printed only on client */
+    if (property->priority) {
+	**msg = vstralloc("priority \"", property_s, "\"", NULL);
+    } else {
+	**msg = vstralloc("\"", property_s, "\"", NULL);
+    }
+    for(value=property->values; value != NULL; value = value->next) {
 	**msg = vstrextend(*msg, " \"", value->data, "\"", NULL);
     }
     (*msg)++;

@@ -431,7 +431,8 @@ dumper_cmd(
 	    if (am_has_feature(dp->host->features, fe_req_xml)) {
 		o = xml_optionstr(dp, dp->host->features, NULL);
 		if (dp->application) {
-		    char *app = xml_application(dp->application);
+		    char *app = xml_application(dp->application,
+						dp->host->features);
 		    vstrextend(&o, app, NULL);
 		    amfree(app);
 		}

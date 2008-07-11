@@ -84,6 +84,14 @@ SV *g_hash_table_to_hashref(GHashTable *hash);
  */
 SV *g_hash_table_to_hashref_gslist(GHashTable *hash);
 
+/* Turn a GLib hash table (mapping strings to property_t) into a reference
+ * to a Perl hash table.
+ *
+ * @param hash: GLib hash table
+ * @returns: Perl hashref
+ */
+SV *g_hash_table_to_hashref_property(GHashTable *hash);
+
 /*
  * prototypes for bigint.c
  */

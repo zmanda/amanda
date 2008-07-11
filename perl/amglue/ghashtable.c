@@ -19,6 +19,7 @@
  */
 
 #include "amglue.h"
+#include "conffile.c"
 
 static void 
 foreach_fn(gpointer key_p, gpointer value_p, gpointer user_data_p)
@@ -64,3 +65,34 @@ g_hash_table_to_hashref_gslist(GHashTable *hash)
 
     return newRV((SV *)hv);
 }
+
+static void 
+foreach_fn_property(gpointer key_p, gpointer value_p, gpointer user_data_p)
+{
+    char       *key = key_p;
+    property_t *property = value_p;
+    GSList     *value;
+    HV         *hv = user_data_p;
+    AV         *list = newAV();
+    HV         *property_hv = newHV();
+
+    hv_store(property_hv, "append", strlen("append"), newSViv(property->append), 0);
+    hv_store(property_hv, "priority", strlen("priority"), newSViv(property->priority), 0);
+    for(value=property->values; value != NULL; value = value->next) {
+	av_push(list, newSVpv(value->data, 0));
+    }
+    hv_store(property_hv, "values", strlen("values"), newRV_noinc((SV*)list), 0);
+
+    hv_store(hv, key, strlen(key), newRV_noinc((SV*)property_hv), 0);
+}
+
+SV *
+g_hash_table_to_hashref_property(GHashTable *hash)
+{
+    HV *hv = (HV *)sv_2mortal((SV *)newHV());
+
+    g_hash_table_foreach(hash, foreach_fn_property, hv);
+
+    return newRV((SV *)hv);
+}
+

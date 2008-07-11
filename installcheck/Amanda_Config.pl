@@ -92,6 +92,8 @@ is(config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF"), $CFGERR_ERRORS,
 
 $testconf = Installcheck::Config->new();
 $testconf->add_client_param('property', '"client-prop" "yep"');
+$testconf->add_client_param('property', 'priority "client-prop1" "foo"');
+$testconf->add_client_param('property', 'append "client-prop" "bar"');
 $testconf->write();
 
 my $cfg_result = config_init($CONFIG_INIT_CLIENT, undef);
@@ -99,7 +101,12 @@ is($cfg_result, $CFGERR_OK,
     "Load test client configuration")
     or diag_config_errors();
 
-is_deeply(getconf($CNF_PROPERTY), { "client-prop" => [ "yep" ] },
+is_deeply(getconf($CNF_PROPERTY), { "client-prop1" => { priority => 1,
+							append   => 0,
+							values => [ "foo" ]},
+				    "client-prop" => { priority => 0,
+						       append   => 1,
+						       values => [ "yep", "bar" ] }},
     "Client PROPERTY parameter parsed correctly");
 
 ##
@@ -227,7 +234,9 @@ SKIP: { # global parameters
     is(getconf($CNF_DISPLAYUNIT), "M",
 	"displayunit is correctly uppercased");
     is_deeply(getconf($CNF_DEVICE_PROPERTY),
-	      { "foo" => ["bar"], "blue" => ["car", "tar"] },
+	      { "foo" => { priority => 0, append => 0, values => ["bar"]},
+		"blue" => { priority => 0, append => 0,
+			    values => ["car", "tar"]} },
 	    "proplist global confparm");
     ok(getconf_seen($CNF_TAPEDEV),
 	"'tapedev' parm was seen");
@@ -301,7 +310,9 @@ SKIP: { # dumptypes
 	  'optional' => 0 },
 	"dumptype exclude list");
     is_deeply(dumptype_getconf($dtyp, $DUMPTYPE_PROPERTY),
-	      { "prop" => ["erty"], "drop" => ["qwerty", "asdfg"] },
+	      { "prop" => { priority => 0, append => 0, values => ["erty"]},
+		"drop" => { priority => 0, append => 0,
+			    values => ["qwerty", "asdfg"] }},
 	    "dumptype proplist");
 
     ok(dumptype_seen($dtyp, $DUMPTYPE_EXCLUDE),

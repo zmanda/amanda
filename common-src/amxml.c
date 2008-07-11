@@ -55,7 +55,7 @@ typedef struct amgxml_s {
     int      has_plugin;
     int      has_optional;
     char    *property_name;
-    GSList  *property_values;
+    property_t *property_data;
     proplist_t  property;
     script_t   *script;
     char       *encoding;
@@ -200,7 +200,7 @@ amstart_element(
 	data_user->has_plugin = 0;
 	data_user->has_optional = 0;
 	data_user->property_name = NULL;
-	data_user->property_values = NULL;
+	data_user->property_data = NULL;
     } else if(strcmp(element_name, "disk"          ) == 0 ||
 	      strcmp(element_name, "diskdevice"    ) == 0 ||
 	      strcmp(element_name, "calcsize"      ) == 0 ||
@@ -303,6 +303,10 @@ amstart_element(
 			"XML: Invalid %s element", element_name);
 	    return;
 	}
+	data_user->property_data = malloc(sizeof(property_t));
+	data_user->property_data->append = 0;
+	data_user->property_data->priority = 0;
+	data_user->property_data->values = NULL;
     } else if(strcmp(element_name, "name") == 0) {
 	if (strcmp(last_element_name, "property") != 0) {
 	    g_set_error(gerror, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
@@ -313,6 +317,12 @@ amstart_element(
 	    g_set_error(gerror, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
 			"XML: Duplicate %s element in '%s'", element_name,
 			last_element_name);
+	    return;
+	}
+    } else if(strcmp(element_name, "priority") == 0) {
+	if (strcmp(last_element_name, "property") != 0) {
+	    g_set_error(gerror, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
+			"XML: Invalid %s element", element_name);
 	    return;
 	}
     } else if(strcmp(element_name, "value") == 0) {
@@ -395,9 +405,9 @@ amend_element(
     if (strcmp(element_name, "property") == 0) {
 	g_hash_table_insert(data_user->property,
 			    data_user->property_name,
-			    data_user->property_values);
+			    data_user->property_data);
 	data_user->property_name = NULL;
-	data_user->property_values = NULL;
+	data_user->property_data = NULL;
     } else if (strcmp(element_name, "dle") == 0) {
 	if (dle->disk == NULL) {
 	    g_set_error(gerror, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
@@ -557,6 +567,19 @@ amtext(
 	} else {
 	    error("name outside of property");
 	}
+    } else if(strcmp(last_element_name, "priority") == 0) {
+	last_element2 = g_slist_nth(data_user->element_names, 1);
+	if (!last_element2) {
+	    error("Invalid priority text");
+	}
+	last_element2_name = last_element2->data;
+	if (strcmp(last_element2_name, "property") == 0) {
+	    if (strcasecmp(tt,"yes") == 0) {
+		data_user->property_data->priority = 1;
+	    }
+	} else {
+	    error("priority outside of property");
+	}
     } else if(strcmp(last_element_name, "value") == 0) {
 	last_element2 = g_slist_nth(data_user->element_names, 1);
 	if (!last_element2) {
@@ -564,8 +587,8 @@ amtext(
 	}
 	last_element2_name = last_element2->data;
 	if (strcmp(last_element2_name, "property") == 0) {
-	    data_user->property_values =
-			g_slist_append(data_user->property_values, tt);
+	    data_user->property_data->values =
+			g_slist_append(data_user->property_data->values, tt);
 	} else {
 	    error("value outside of property");
 	}

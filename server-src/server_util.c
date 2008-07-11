@@ -210,11 +210,9 @@ run_server_script(
     char   *cmd;
     char  **argvchild;
     int     i, k;
-    FILE   *streamin;
     FILE   *streamout;
     char   *line;
     char   *plugin;
-    proplist_t property;
 
     if ((pp_script_get_execute_on(pp_script) & execute_on) == 0)
 	return;
@@ -286,15 +284,7 @@ run_server_script(
     scripterr = fileno(stderr);
     scriptpid = pipespawnv(cmd, STDIN_PIPE|STDOUT_PIPE, 0, &scriptin,
 			   &scriptout, &scripterr, argvchild);
-
-    streamin = fdopen(scriptin, "w");
-    property = pp_script_get_property(pp_script);
-    if (property) {
-	g_hash_table_foreach(property,
-			     &output_tool_proplist,
-			     streamin);
-    }
-    fclose(streamin);
+    close(scriptin);
 
     streamout = fdopen(scriptout, "r");
     if (streamout) {

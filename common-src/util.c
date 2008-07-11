@@ -870,39 +870,16 @@ base64_decode_alloc_string(
 
 
 /* A GHFunc (callback for g_hash_table_foreach) */
-void output_tool_proplist(
-    gpointer key_p,
-    gpointer value_p,
-    gpointer user_data_p)
-{
-    char   *property_s = key_p;
-    GSList *value_s = value_p;
-    FILE   *tool = user_data_p;
-    GSList *value;
-    char   *q;
-
-    q = quote_string(property_s);
-    g_fprintf(tool, "%s", q);
-    amfree(q);
-    for(value=value_s; value != NULL; value = value->next) {
-	q = quote_string((char *)value->data);
-	g_fprintf(tool, " %s", q);
-	amfree(q);
-    }
-    g_fprintf(tool, "\n");
-}
-
-/* A GHFunc (callback for g_hash_table_foreach) */
 void count_proplist(
     gpointer key_p G_GNUC_UNUSED,
     gpointer value_p,
     gpointer user_data_p)
 {
-    GSList  *value_s = value_p;
+    property_t *value_s = value_p;
     int    *nb = user_data_p;
     GSList  *value;
 
-    for(value=value_s; value != NULL; value = value->next) {
+    for(value=value_s->values; value != NULL; value = value->next) {
 	(*nb)++;
     }
 }
@@ -913,11 +890,11 @@ void proplist_add_to_argv(
     gpointer value_p,
     gpointer user_data_p)
 {
-    char     *property_s = key_p;
-    GSList   *value_s = value_p;
-    char   ***argv = user_data_p;
-    GSList   *value;
-    char     *q, *w, *qprop, *qvalue;
+    char         *property_s = key_p;
+    property_t   *value_s = value_p;
+    char       ***argv = user_data_p;
+    GSList       *value;
+    char         *q, *w, *qprop, *qvalue;
 
     q = quote_string(property_s);
     /* convert to lower case */
@@ -926,7 +903,7 @@ void proplist_add_to_argv(
     }
     qprop = stralloc2("--", q);
     amfree(q);
-    for(value=value_s; value != NULL; value = value->next) {
+    for(value=value_s->values; value != NULL; value = value->next) {
 	qvalue = quote_string((char *)value->data);
 	**argv = stralloc(qprop);
 	(*argv)++;

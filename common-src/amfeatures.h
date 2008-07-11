@@ -177,6 +177,7 @@ typedef enum {
     fe_amindexd_DLE,
     fe_amrecover_dle_in_header,
     fe_xml_estimate,
+    fe_xml_property_priority,
 
     /*
      * All new features must be inserted immediately *before* this entry.

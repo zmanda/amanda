@@ -1,4 +1,36 @@
 2008-07-11  Jean-Louis Martineau <martineau@zmanda.com>
+	* client-src/client_util.c: Remove unused output_tool_property function.
+	* client-src/client_util.h: Remove output_tool_property prototype.
+	* man/xml-source/amanda-client.conf.5.xml: Add application and script
+						   sections.
+	* man/xml-source/amanda.conf.5.xml: Improve application and script
+					    sections.
+	* device-src/device.c: Fix for new property_t.
+	* server-src/diskfile.h: Change prototype for xml_application and
+				 xml_scripts.
+	* server-src/diskfile.c: Add <priority> tag if client support it.
+	* server-src/amindexd.c: Fix call to xml_application.
+	* server-src/amcheck.c: Fix call to xml_application.
+	* server-src/planner.c: Fix call to xml_application.
+	* server-src/driverio.c: Fix call to xml_application.
+	* server-src/server_util.c: Remove code to write property to stdin of
+				    script.
+	* perl/Amanda/Config.swg: Fix for new property_t.
+	* perl/amglue/amglue.h: Prototype for g_hash_table_to_hashref_property.
+	* perl/amglue/ghashtable.c: New g_hash_table_to_hashref_property
+				    function.
+	* installcheck/Amanda_Config.pl: Fix for new property_t.
+	* common-src/util.c: Remove unused output_tool_proplist fucntion,
+			     Fix for new property_t.
+	* common-src/util.h: Remove output_tool_proplist prototype.
+	* common-src/amxml.c:Fix for new property_t, parse priority of property.
+	* common-src/conffile.c: Parse priority of a property,
+			  Add application and script to amanda-client.conf.
+	* common-src/conffile.h: New property_t struct.
+	* common-src/amfeatures.h: New fe_xml_property_priority amfeature.
+	* common-src/amfeatures.c: New fe_xml_property_priority amfeature.
+
+2008-07-11  Jean-Louis Martineau <martineau@zmanda.com>
 	* man/entities/global.entities: Add ENTITY email.jlm.
 	* man/Makefile.am (CLIENT_MAN_PAGES): Set to amanda-applications.7,
 	  amgtar.8 and amstar.8.

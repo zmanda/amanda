@@ -1429,7 +1429,8 @@ static void getsize(
 				      "  <program>APPLICATION</program>\n",
 				      NULL);
 			if (dp->application) {
-			    char *xml_app = xml_application(dp->application);
+			    char *xml_app = xml_application(dp->application,
+							    hostp->features);
 			    vstrextend(&l, xml_app, NULL);
 			    amfree(xml_app);
 			}

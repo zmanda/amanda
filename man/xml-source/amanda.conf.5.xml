@@ -370,9 +370,8 @@ option set to
   <listitem>
 <para>These options can set various device properties.  See
 <citerefentry><refentrytitle>amanda-devices</refentrytitle><manvolnum>7</manvolnum></citerefentry>
-for more information on device properties.</para>
-
-<para>Both strings are quoted; the first string contains the name of
+for more information on device properties.
+Both strings are quoted; the first string contains the name of
 the property to set, and the second contains its value. For example, to set
 a fixed block size of 128k, write:</para>
 <programlisting>
@@ -382,12 +381,14 @@ device_property "BLOCK_SIZE" "131072"
   </varlistentry>
 
   <varlistentry>
-  <term><emphasis remap='B'>property</emphasis> string string</term>
+  <term><emphasis remap='B'>property</emphasis> [append] string string+</term>
   <listitem>
 <para>These options can set various properties, they can be used by third
- party software to store information in the configuration file.</para>
-<para>Both strings are quoted; the first string contains the name of
-the property to set, and the second contains its value.</para>
+ party software to store information in the configuration file.
+Both strings are quoted; the first string contains the name of
+the property to set, and the others contains its values.
+<emphasis remap='B'>append</emphasis> keyword append the values to the list of values for that property.
+</para>
   </listitem>
   </varlistentry>
 
@@ -1793,12 +1794,14 @@ The type of backup to perform. Valid values are:</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>property</emphasis> string string</term>
+  <term><emphasis remap='B'>property</emphasis> [append] <emphasis remap='I'>string</emphasis> <emphasis remap='I'>string</emphasis>+</term>
   <listitem>
 <para>These options can set various properties, they can be used by third
- party software to store information in the configuration file.</para>
-<para>Both strings are quoted; the first string contains the name of
-the property to set, and the second contains its value.</para>
+ party software to store information in the configuration file.
+Both strings are quoted; the first string contains the name of
+the property to set, and the others contains its values.
+<emphasis remap='B'>append</emphasis> keyword append the values to the list of values for that property.
+</para>
   </listitem>
   </varlistentry>
 
@@ -2243,9 +2246,13 @@ A comment string describing this application.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>property</emphasis> <emphasis remap='I'>string</emphasis> <emphasis remap='I'>string</emphasis></term>
+  <term><emphasis remap='B'>property</emphasis> [append] [priority] <emphasis remap='I'>string</emphasis> <emphasis remap='I'>string</emphasis>+</term>
   <listitem>
-<para>No default. You can set property for the application, each application have a different set of property.</para>
+<para>No default. You can set property for the application, each application have a different set of property. Both strings are quoted; the first string contains the name of
+the property to set, and the others contains its values.
+<emphasis remap='B'>append</emphasis> keyword append the values to the list of values for that property.
+<emphasis remap='B'>priority</emphasis> keyword disallow the setting of that property on the client.
+</para>
   </listitem>
   </varlistentry>
 </variablelist>
@@ -2415,9 +2422,13 @@ script --post-recover
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>property</emphasis> <emphasis remap='I'>string</emphasis> <emphasis remap='I'>string</emphasis></term>
+  <term><emphasis remap='B'>property</emphasis> [append] [priority] <emphasis remap='I'>string</emphasis> <emphasis remap='I'>string</emphasis>+</term>
   <listitem>
-<para>No default. You can set property for the script, each script have a different set of property.</para>
+<para>No default. You can set property for the script, each script have a different set of property. Both strings are quoted; the first string contains the name of
+the property to set, and the others contains its values.
+<emphasis remap='B'>append</emphasis> keyword append the values to the list of values for that property.
+<emphasis remap='B'>priority</emphasis> keyword disallow the setting of that property on the client.
+</para>
   </listitem>
   </varlistentry>
 </variablelist>

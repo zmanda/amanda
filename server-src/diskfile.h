@@ -146,8 +146,8 @@ void dump_queue(char *str, disklist_t q, int npr, FILE *f);
 
 char *optionstr(disk_t *dp, am_feature_t *their_features, FILE *fdout);
 char *xml_optionstr(disk_t *dp, am_feature_t *their_features, FILE *fdout);
-char *xml_application(application_t *);
-char *xml_scripts(pp_scriptlist_t pp_scriptlist);
+char *xml_application(application_t *, am_feature_t *their_features);
+char *xml_scripts(pp_scriptlist_t pp_scriptlist, am_feature_t *their_features);
 
 char *match_disklist(disklist_t *origqp, int sargc, char **sargv);
 void free_disklist(disklist_t *dl);

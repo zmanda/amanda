@@ -519,7 +519,8 @@ amglue_copy_to_tag(send_amreport_on_t, getconf);
  *  - CONFTYPE_INTRANGE -> list of two IVs
  *  - CONFTYPE_EXINCLUDE -> hashref with keys 'list' (listref), 'file' (listref), 
  *    and 'optional' (int)
- *  - CONFTYPE_PROPLIST -> hashref
+ *  - CONFTYPE_PROPLIST -> hashref of hashref with keys 'append' (IV), 'priority' (IV),
+ *							'values' (listref)
  */
 %typemap (out) val_t * {
     if (!$1) {
@@ -594,7 +595,7 @@ amglue_copy_to_tag(send_amreport_on_t, getconf);
 	    }
 
 	    case CONFTYPE_PROPLIST:
-		$result = sv_2mortal(g_hash_table_to_hashref_gslist(val_t__proplist($1)));
+		$result = sv_2mortal(g_hash_table_to_hashref_property(val_t__proplist($1)));
 		argvi++;
 		break;
 

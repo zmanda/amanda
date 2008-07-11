@@ -172,6 +172,12 @@ typedef struct exinclude_s {
     int  optional;
 } exinclude_t;
 
+typedef struct {
+    int append;
+    int priority;
+    GSList* values;
+} property_t;
+
 typedef GHashTable* proplist_t;
 typedef GSList* pp_scriptlist_t;
 

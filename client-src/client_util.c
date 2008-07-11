@@ -644,67 +644,6 @@ parse_options(
     amfree(p);
 }
 
-void
-output_tool_property(
-    FILE  *tool,
-    dle_t *dle)
-{
-    sle_t *sle;
-    char *q;
-
-    if (!is_empty_sl(dle->exclude_file)) {
-	for(sle = dle->exclude_file->first ; sle != NULL; sle=sle->next) {
-	    q = quote_string(sle->name);
-	    g_fprintf(tool, "EXCLUDE-FILE %s\n", q);
-	    amfree(q);
-	}
-    }
-
-    if (!is_empty_sl(dle->exclude_list)) {
-	for(sle = dle->exclude_list->first ; sle != NULL; sle=sle->next) {
-	    q = quote_string(sle->name);
-	    g_fprintf(tool, "EXCLUDE-LIST %s\n", q);
-	    amfree(q);
-	}
-    }
-
-    if (!is_empty_sl(dle->include_file)) {
-	for(sle = dle->include_file->first ; sle != NULL; sle=sle->next) {
-	    q = quote_string(sle->name);
-	    g_fprintf(tool, "INCLUDE-FILE %s\n", q);
-	    amfree(q);
-	}
-    }
-
-    if (!is_empty_sl(dle->include_list)) {
-	for(sle = dle->include_list->first ; sle != NULL; sle=sle->next) {
-	    q = quote_string(sle->name);
-	    g_fprintf(tool, "INCLUDE-LIST %s\n", q);
-	    amfree(q);
-	}
-    }
-
-    if (!is_empty_sl(dle->exclude_file) ||
-	!is_empty_sl(dle->exclude_list)) {
-	if (dle->exclude_optional)
-	    g_fprintf(tool, "EXCLUDE-OPTIONAL YES\n");
-	else
-	    g_fprintf(tool, "EXCLUDE-OPTIONAL NO\n");
-    }
-
-    if (!is_empty_sl(dle->include_file) ||
-	!is_empty_sl(dle->include_list)) {
-	if (dle->include_optional)
-	    g_fprintf(tool, "INCLUDE-OPTIONAL YES\n");
-	else
-	    g_fprintf(tool, "INCLUDE-OPTIONAL NO\n");
-    }
-
-    g_hash_table_foreach(dle->application_property,
-			 &output_tool_proplist,
-			 tool);
-}
-
 int
 application_property_argv_size(dle_t *dle) {
     int nb;

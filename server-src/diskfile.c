@@ -1626,7 +1626,7 @@ xml_optionstr(
 			       include_list,
 			       incl_opt,
 			       "  </include>\n", NULL);
-    script_opt = xml_scripts(dp->pp_scriptlist);
+    script_opt = xml_scripts(dp->pp_scriptlist, their_features);
     result = vstralloc(auth_opt,
 		       kencrypt_opt,
 		       compress_opt,
@@ -1659,59 +1659,73 @@ xml_optionstr(
     }
 }
 
+typedef struct {
+    am_feature_t  *features;
+    char          *result;
+} xml_app_t;
+
 /* A GHFunc (callback for g_hash_table_foreach) */
 static void xml_property(
     gpointer key_p,
     gpointer value_p,
     gpointer user_data_p)
 {
-    char   *property_s = key_p;
-    char   *b64property;
-    GSList *value_s = value_p;
-    char   *b64value_data;
-    char   **xml_app = user_data_p;
-    GSList *value;
+    char       *property_s = key_p;
+    char       *b64property;
+    property_t *property = value_p;
+    char       *b64value_data;
+    xml_app_t  *xml_app = user_data_p;
+    GSList     *value;
 
     b64property = amxml_format_tag("name", property_s);
-    vstrextend(xml_app, "    <property>\n",
-			 "      ", b64property, "\n", NULL);
-    for(value = value_s; value != NULL; value = value->next) {
+    vstrextend(&xml_app->result, "    <property>\n",
+				"      ", b64property, "\n", NULL);
+    // TODO if client have fe_xml_property_priority
+    if (property->priority &&
+	am_has_feature(xml_app->features, fe_xml_property_priority)) {
+	vstrextend(&xml_app->result, "      <priority>yes</priority>\n", NULL);
+    }
+    for(value = property->values; value != NULL; value = value->next) {
 	b64value_data = amxml_format_tag("value", value->data);
-	vstrextend(xml_app, "      ", b64value_data, "\n", NULL);
+	vstrextend(&xml_app->result, "      ", b64value_data, "\n", NULL);
 	amfree(b64value_data);
     }
-    vstrextend(xml_app, "    </property>\n", NULL);
+    vstrextend(&xml_app->result, "    </property>\n", NULL);
 
     amfree(b64property);
 }
 
 char *
 xml_application(
-    application_t *application)
+    application_t *application,
+    am_feature_t  *their_features)
 {
     char       *plugin;
     char       *b64plugin;
-    char       *xml_app;
+    xml_app_t   xml_app;
     proplist_t  proplist;
 
+    xml_app.features = their_features;
+    xml_app.result   = NULL;
     plugin = application_get_plugin(application);
     b64plugin = amxml_format_tag("plugin", plugin);
-    xml_app = vstralloc("  <backup-program>\n",
+    xml_app.result = vstralloc("  <backup-program>\n",
 		        "    ", b64plugin, "\n",
 			NULL);
     proplist = application_get_property(application);
     g_hash_table_foreach(proplist, xml_property, &xml_app);
-    vstrextend(&xml_app, "  </backup-program>\n", NULL);
+    vstrextend(&xml_app.result, "  </backup-program>\n", NULL);
 
     amfree(b64plugin);
 
-    return xml_app;
+    return xml_app.result;
 }
 
  
 char *
 xml_scripts(
-    pp_scriptlist_t pp_scriptlist)
+    pp_scriptlist_t pp_scriptlist,
+    am_feature_t  *their_features)
 {
     char       *plugin;
     char       *b64plugin;
@@ -1725,6 +1739,10 @@ xml_scripts(
     proplist_t  proplist;
     pp_scriptlist_t pp_scriptlist1;
     pp_script_t *pp_script;
+    xml_app_t   xml_app;
+
+    xml_app.features = their_features;
+    xml_app.result   = NULL;
 
     xml_scr = stralloc("");
     for (pp_scriptlist1=pp_scriptlist; pp_scriptlist1 != NULL;
@@ -1821,10 +1839,10 @@ xml_scripts(
 				  "</execute_on>\n");
 	amfree(eo_str);
 	proplist = pp_script_get_property(pp_script);
-	g_hash_table_foreach(proplist, xml_property, &xml_scr1);
-	xml_scr1 = vstrextend(&xml_scr1, "  </script>\n", NULL);
-	xml_scr = vstrextend(&xml_scr, xml_scr1, NULL);
+	g_hash_table_foreach(proplist, xml_property, &xml_app);
+	xml_scr = vstrextend(&xml_scr, xml_scr1, xml_app.result, "  </script>\n", NULL);
 	amfree(b64plugin);
+	amfree(xml_app.result);
     }
     return xml_scr;
 }

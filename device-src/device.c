@@ -666,7 +666,7 @@ static void try_set_blocksize(Device * device, guint blocksize,
 static void set_device_property(gpointer key_p, gpointer value_p,
                                    gpointer user_data_p) {
     char   * property_s = key_p;
-    GSList * value_s = value_p;
+    property_t * property = value_p;
     Device * device = user_data_p;
     const DevicePropertyBase* property_base;
     GValue property_value;
@@ -674,7 +674,8 @@ static void set_device_property(gpointer key_p, gpointer value_p,
 
     g_return_if_fail(IS_DEVICE(device));
     g_return_if_fail(property_s != NULL);
-    g_return_if_fail(value_s != NULL);
+    g_return_if_fail(property != NULL);
+    g_return_if_fail(property->values != NULL);
 
     property_base = device_property_get_by_name(property_s);
     if (property_base == NULL) {
@@ -682,7 +683,7 @@ static void set_device_property(gpointer key_p, gpointer value_p,
         g_fprintf(stderr, _("Unknown device property name %s.\n"), property_s);
         return;
     }
-    if (g_slist_length(value_s) > 1) {
+    if (g_slist_length(property->values) > 1) {
 	g_fprintf(stderr,
 		  _("Multiple value for property name %s.\n"), property_s);
 	return;
@@ -690,7 +691,7 @@ static void set_device_property(gpointer key_p, gpointer value_p,
     
     bzero(&property_value, sizeof(property_value));
     g_value_init(&property_value, property_base->type);
-    value = value_s->data;
+    value = property->values->data;
     if (!g_value_set_from_string(&property_value, value)) {
         /* Value type could not be interpreted. */
         g_fprintf(stderr,

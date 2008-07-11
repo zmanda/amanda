@@ -284,10 +284,6 @@ void	add_history(const char *line);
 
 char *base64_decode_alloc_string(char *);
 
-void output_tool_proplist(gpointer key_p,
-			  gpointer value_p,
-			  gpointer user_data_p);
-
 /* A GHFunc (callback for g_hash_table_foreach),
  * Count the number of properties.
  *
