@@ -437,8 +437,11 @@ sub s3_run_main_tests($$) {
     $dev_name = "$dev_scheme:$base_name-$dev_scheme";
     $dev = s3_make_device($dev_name);
     $dev->read_label();
-    is($dev->status() & ~$DEVICE_STATUS_VOLUME_UNLABELED, 0,
-       "read_label OK, possibly already labeled")
+    my $status = $dev->status();
+    # this test appears very liberal, but catches the case where setup_handle fails without
+    # giving false positives
+    ok(($status == $DEVICE_STATUS_SUCCESS) || (($status & $DEVICE_STATUS_VOLUME_UNLABELED) != 0),
+       "status is either OK or possibly already labeled")
         or diag($dev->error_or_status());
 
     ok($dev->start($ACCESS_WRITE, "TESTCONF13", undef),
@@ -494,8 +497,9 @@ sub s3_run_main_tests($$) {
         or diag($dev->error_or_status());
 
     $dev->read_label();
-    is($dev->status() & ~$DEVICE_STATUS_VOLUME_UNLABELED, 0,
-       "read_label OK, possibly already labeled")
+    $status = $dev->status();
+    ok(($status == $DEVICE_STATUS_SUCCESS) || (($status & $DEVICE_STATUS_VOLUME_UNLABELED) != 0),
+       "status is either OK or possibly already labeled")
         or diag($dev->error_or_status());
 
     # bucket name incompatible with location constraint
@@ -539,8 +543,11 @@ SKIP: {
         $dev_name = "s3zmanda:$dev_base_name";
         $dev = s3_make_device($dev_name);
         $dev->read_label();
-        is($dev->status() & ~$DEVICE_STATUS_VOLUME_UNLABELED, 0,
-           "read_label OK, possibly already labeled")
+	my $status = $dev->status();
+	# this test appears very liberal, but catches the case where setup_handle fails without
+	# giving false positives
+	ok(($status == $DEVICE_STATUS_SUCCESS) || (($status & $DEVICE_STATUS_VOLUME_UNLABELED) != 0),
+	   "status is either OK or possibly already labeled")
             or diag($dev->error_or_status());
     } else {
         s3_run_main_tests('s3zmanda', $dev_base_name);

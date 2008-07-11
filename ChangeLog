@@ -1,3 +1,11 @@
+2008-07-11  Dustin J. Mitchell <dustin@zmanda.com>
+	* man/xml-source/amanda.8.xml: fix amanda(8) formatting and add links
+	  to new manpages
+
+2008-07-11  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Amanda_Device.pl: be more liberal in the flags that are
+	  accepted from S3's read_label; this will reduce false failures
+
 2008-07-11  Jean-Louis Martineau <martineau@zmanda.com>
 	* client-src/client_util.c: Remove unused output_tool_property function.
 	* client-src/client_util.h: Remove output_tool_property prototype.

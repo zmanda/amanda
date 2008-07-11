@@ -24,52 +24,135 @@
 <para>This manual page gives an overview of the &A; commands and
 configuration files for quick reference.</para>
 
+<!--
+ - NOTE: the &nbsp; after each citerefentry works around a bug in the docbook-to-man conversion
+-->
+
 <refsect2><title>COMMANDS</title> <!-- a.k.a. any section 8 manpage -->
 <para>Here are all the &A; commands.  Each one has its own manual page.  See them for all the gory details.</para>
 <itemizedlist>
-  <listitem><citerefentry><refentrytitle>amaddclient</refentrytitle><manvolnum>8</manvolnum></citerefentry></listitem>
-  <listitem><citerefentry><refentrytitle>amadmin</refentrytitle><manvolnum>8</manvolnum></citerefentry></listitem>
-  <listitem><citerefentry><refentrytitle>amaespipe</refentrytitle><manvolnum>8</manvolnum></citerefentry></listitem>
-  <listitem><citerefentry><refentrytitle>amcheck</refentrytitle><manvolnum>8</manvolnum></citerefentry></listitem>
-  <listitem><citerefentry><refentrytitle>amcheckdb</refentrytitle><manvolnum>8</manvolnum></citerefentry></listitem>
-  <listitem><citerefentry><refentrytitle>amcheckdump</refentrytitle><manvolnum>8</manvolnum></citerefentry></listitem>
-  <listitem><citerefentry><refentrytitle>amcleanup</refentrytitle><manvolnum>8</manvolnum></citerefentry></listitem>
-  <listitem><citerefentry><refentrytitle>amcrypt-ossl-asym</refentrytitle><manvolnum>8</manvolnum></citerefentry></listitem>
-  <listitem><citerefentry><refentrytitle>amcrypt-ossl</refentrytitle><manvolnum>8</manvolnum></citerefentry></listitem>
-  <listitem><citerefentry><refentrytitle>amcrypt</refentrytitle><manvolnum>8</manvolnum></citerefentry></listitem>
-  <listitem><citerefentry><refentrytitle>amcryptsimple</refentrytitle><manvolnum>8</manvolnum></citerefentry></listitem>
-  <listitem><citerefentry><refentrytitle>amdd</refentrytitle><manvolnum>8</manvolnum></citerefentry></listitem>
-  <listitem><citerefentry><refentrytitle>amdevcheck</refentrytitle><manvolnum>8</manvolnum></citerefentry></listitem>
-  <listitem><citerefentry><refentrytitle>amdump</refentrytitle><manvolnum>8</manvolnum></citerefentry></listitem>
-  <listitem><citerefentry><refentrytitle>amfetchdump</refentrytitle><manvolnum>8</manvolnum></citerefentry></listitem>
-  <listitem><citerefentry><refentrytitle>amflush</refentrytitle><manvolnum>8</manvolnum></citerefentry></listitem>
-  <listitem><citerefentry><refentrytitle>amgetconf</refentrytitle><manvolnum>8</manvolnum></citerefentry></listitem>
-  <listitem><citerefentry><refentrytitle>amgpgcrypt</refentrytitle><manvolnum>8</manvolnum></citerefentry></listitem>
-  <listitem><citerefentry><refentrytitle>amlabel</refentrytitle><manvolnum>8</manvolnum></citerefentry></listitem>
-  <listitem><citerefentry><refentrytitle>ammt</refentrytitle><manvolnum>8</manvolnum></citerefentry></listitem>
-  <listitem><citerefentry><refentrytitle>amoverview</refentrytitle><manvolnum>8</manvolnum></citerefentry></listitem>
-  <listitem><citerefentry><refentrytitle>amplot</refentrytitle><manvolnum>8</manvolnum></citerefentry></listitem>
-  <listitem><citerefentry><refentrytitle>amrecover</refentrytitle><manvolnum>8</manvolnum></citerefentry></listitem>
-  <listitem><citerefentry><refentrytitle>amreport</refentrytitle><manvolnum>8</manvolnum></citerefentry></listitem>
-  <listitem><citerefentry><refentrytitle>amrestore</refentrytitle><manvolnum>8</manvolnum></citerefentry></listitem>
-  <listitem><citerefentry><refentrytitle>amrmtape</refentrytitle><manvolnum>8</manvolnum></citerefentry></listitem>
-  <listitem><citerefentry><refentrytitle>amserverconfig</refentrytitle><manvolnum>8</manvolnum></citerefentry></listitem>
-  <listitem><citerefentry><refentrytitle>amservice</refentrytitle><manvolnum>8</manvolnum></citerefentry></listitem>
-  <listitem><citerefentry><refentrytitle>amstatus</refentrytitle><manvolnum>8</manvolnum></citerefentry></listitem>
-  <listitem><citerefentry><refentrytitle>amtape</refentrytitle><manvolnum>8</manvolnum></citerefentry></listitem>
-  <listitem><citerefentry><refentrytitle>amtapetype</refentrytitle><manvolnum>8</manvolnum></citerefentry></listitem>
-  <listitem><citerefentry><refentrytitle>amtoc</refentrytitle><manvolnum>8</manvolnum></citerefentry></listitem>
+<listitem>
+<citerefentry><refentrytitle>amaddclient</refentrytitle><manvolnum>8</manvolnum></citerefentry>&nbsp;
+</listitem>
+<listitem>
+<citerefentry><refentrytitle>amadmin</refentrytitle><manvolnum>8</manvolnum></citerefentry>&nbsp;
+</listitem>
+<listitem>
+<citerefentry><refentrytitle>amaespipe</refentrytitle><manvolnum>8</manvolnum></citerefentry>&nbsp;
+</listitem>
+<listitem>
+<citerefentry><refentrytitle>amcheck</refentrytitle><manvolnum>8</manvolnum></citerefentry>&nbsp;
+</listitem>
+<listitem>
+<citerefentry><refentrytitle>amcheckdb</refentrytitle><manvolnum>8</manvolnum></citerefentry>&nbsp;
+</listitem>
+<listitem>
+<citerefentry><refentrytitle>amcheckdump</refentrytitle><manvolnum>8</manvolnum></citerefentry>&nbsp;
+</listitem>
+<listitem>
+<citerefentry><refentrytitle>amcleanup</refentrytitle><manvolnum>8</manvolnum></citerefentry>&nbsp;
+</listitem>
+<listitem>
+<citerefentry><refentrytitle>amcrypt-ossl-asym</refentrytitle><manvolnum>8</manvolnum></citerefentry>&nbsp;
+</listitem>
+<listitem>
+<citerefentry><refentrytitle>amcrypt-ossl</refentrytitle><manvolnum>8</manvolnum></citerefentry>&nbsp;
+</listitem>
+<listitem>
+<citerefentry><refentrytitle>amcrypt</refentrytitle><manvolnum>8</manvolnum></citerefentry>&nbsp;
+</listitem>
+<listitem>
+<citerefentry><refentrytitle>amcryptsimple</refentrytitle><manvolnum>8</manvolnum></citerefentry>&nbsp;
+</listitem>
+<listitem>
+<citerefentry><refentrytitle>amdd</refentrytitle><manvolnum>8</manvolnum></citerefentry>&nbsp;
+</listitem>
+<listitem>
+<citerefentry><refentrytitle>amdevcheck</refentrytitle><manvolnum>8</manvolnum></citerefentry>&nbsp;
+</listitem>
+<listitem>
+<citerefentry><refentrytitle>amdump</refentrytitle><manvolnum>8</manvolnum></citerefentry>&nbsp;
+</listitem>
+<listitem>
+<citerefentry><refentrytitle>amfetchdump</refentrytitle><manvolnum>8</manvolnum></citerefentry>&nbsp;
+</listitem>
+<listitem>
+<citerefentry><refentrytitle>amflush</refentrytitle><manvolnum>8</manvolnum></citerefentry>&nbsp;
+</listitem>
+<listitem>
+<citerefentry><refentrytitle>amgetconf</refentrytitle><manvolnum>8</manvolnum></citerefentry>&nbsp;
+</listitem>
+<listitem>
+<citerefentry><refentrytitle>amgpgcrypt</refentrytitle><manvolnum>8</manvolnum></citerefentry>&nbsp;
+</listitem>
+<listitem>
+<citerefentry><refentrytitle>amgtar</refentrytitle><manvolnum>8</manvolnum></citerefentry>&nbsp;
+</listitem>
+<listitem>
+<citerefentry><refentrytitle>amlabel</refentrytitle><manvolnum>8</manvolnum></citerefentry>&nbsp;
+</listitem>
+<listitem>
+<citerefentry><refentrytitle>ammt</refentrytitle><manvolnum>8</manvolnum></citerefentry>&nbsp;
+</listitem>
+<listitem>
+<citerefentry><refentrytitle>amoverview</refentrytitle><manvolnum>8</manvolnum></citerefentry>&nbsp;
+</listitem>
+<listitem>
+<citerefentry><refentrytitle>amplot</refentrytitle><manvolnum>8</manvolnum></citerefentry>&nbsp;
+</listitem>
+<listitem>
+<citerefentry><refentrytitle>amrecover</refentrytitle><manvolnum>8</manvolnum></citerefentry>&nbsp;
+</listitem>
+<listitem>
+<citerefentry><refentrytitle>amreport</refentrytitle><manvolnum>8</manvolnum></citerefentry>&nbsp;
+</listitem>
+<listitem>
+<citerefentry><refentrytitle>amrestore</refentrytitle><manvolnum>8</manvolnum></citerefentry>&nbsp;
+</listitem>
+<listitem>
+<citerefentry><refentrytitle>amrmtape</refentrytitle><manvolnum>8</manvolnum></citerefentry>&nbsp;
+</listitem>
+<listitem>
+<citerefentry><refentrytitle>amserverconfig</refentrytitle><manvolnum>8</manvolnum></citerefentry>&nbsp;
+</listitem>
+<listitem>
+<citerefentry><refentrytitle>amservice</refentrytitle><manvolnum>8</manvolnum></citerefentry>&nbsp;
+</listitem>
+<listitem>
+<citerefentry><refentrytitle>amstar</refentrytitle><manvolnum>8</manvolnum></citerefentry>&nbsp;
+</listitem>
+<listitem>
+<citerefentry><refentrytitle>amstatus</refentrytitle><manvolnum>8</manvolnum></citerefentry>&nbsp;
+</listitem>
+<listitem>
+<citerefentry><refentrytitle>amtape</refentrytitle><manvolnum>8</manvolnum></citerefentry>&nbsp;
+</listitem>
+<listitem>
+<citerefentry><refentrytitle>amtapetype</refentrytitle><manvolnum>8</manvolnum></citerefentry>&nbsp;
+</listitem>
+<listitem>
+<citerefentry><refentrytitle>amtoc</refentrytitle><manvolnum>8</manvolnum></citerefentry>&nbsp;
+</listitem>
 </itemizedlist>
 </refsect2>
 <refsect2><title>CONFIGURATION FILES</title> <!-- a.k.a. any section 5 manpage -->
 <itemizedlist>
-  <listitem><citerefentry><refentrytitle>amanda.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry></listitem>
-  <listitem><citerefentry><refentrytitle>amanda-client.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry></listitem>
+<listitem>
+<citerefentry><refentrytitle>amanda.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>&nbsp;
+</listitem>
+<listitem>
+<citerefentry><refentrytitle>amanda-client.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>&nbsp;
+</listitem>
 </itemizedlist>
 </refsect2>
 <refsect2><title>CONCEPTS</title> <!-- a.k.a. any section 7 manpage -->
 <itemizedlist>
-  <listitem><citerefentry><refentrytitle>amanda-devices</refentrytitle><manvolnum>7</manvolnum></citerefentry></listitem>
+<listitem>
+<citerefentry><refentrytitle>amanda-applications</refentrytitle><manvolnum>7</manvolnum></citerefentry>&nbsp;
+</listitem>
+<listitem>
+<citerefentry><refentrytitle>amanda-devices</refentrytitle><manvolnum>7</manvolnum></citerefentry>&nbsp;
+</listitem>
 </itemizedlist>
 </refsect2>
 </refsect1>
@@ -527,27 +610,27 @@ depending on how it was compiled and on options it is passed:</para>
 
 <variablelist remap='IP'>
   <varlistentry>
-  <term>.rhosts</term>
+  <term>~/.rhosts</term>
   <listitem>
 <para>Even though &A; does not use
 <emphasis remap='B'>rsh</emphasis>,
 it can use
-<markup>.rhosts</markup>-style
+<markup>~/.rhosts</markup>-style
 authentication and a
-<markup>.rhosts</markup>
+<markup>~/.rhosts</markup>
 file.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term>.amandahosts</term>
+  <term>~/.amandahosts</term>
   <listitem>
 <para>This is essentially the same as
-<markup>.rhosts</markup>
+<markup>~/.rhosts</markup>
 authentication except a different file, with almost the same format, is used.
 This is the default mechanism built into &A;.</para>
 
 <para>The format of the
-<filename>.amandahosts</filename>
+<filename>~/.amandahosts</filename>
 file is:</para>
 
 <para><emphasis remap='I'>hostname</emphasis>
