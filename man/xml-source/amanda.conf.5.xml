@@ -375,7 +375,9 @@ for more information on device properties.</para>
 <para>Both strings are quoted; the first string contains the name of
 the property to set, and the second contains its value. For example, to set
 a fixed block size of 128k, write:</para>
-<programlisting>device_property "BLOCK_SIZE" "131072"</programlisting>
+<programlisting>
+device_property "BLOCK_SIZE" "131072"
+</programlisting>
   </listitem>
   </varlistentry>
 

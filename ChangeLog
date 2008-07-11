@@ -1,3 +1,13 @@
+2008-07-11  Jean-Louis Martineau <martineau@zmanda.com>
+	* man/entities/global.entities: Add ENTITY email.jlm.
+	* man/Makefile.am (CLIENT_MAN_PAGES): Set to amanda-applications.7,
+	  amgtar.8 and amstar.8.
+	* man/xml-source/amanda.conf.5.xml: Fix </programlisting>, it must be
+					    at the begining of a line.
+	* man/xml-source/amanda-applications.7.xml: New page.
+	* man/xml-source/amgtar.8.xml: New page.
+	* man/xml-source/amstar.8.xml: New page.
+
 2008-07-09  Ian Turner <ian@zmanda.com>
 	* device-src/device.h: Clarify documentation of device_read_label().
 	* device-src/s3-device.c, device-src/tape-device.c,

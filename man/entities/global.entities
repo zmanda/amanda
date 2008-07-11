@@ -6,6 +6,7 @@
 <!ENTITY maintainer.sgw 'Stefan G. Weichinger, &email.sgw;, maintainer of the
 &A;-documentation'>
 <!ENTITY email.jds '<email>jds@amanda.org</email>'>
+<!ENTITY email.jlm '<email>martineau@zmanda.com</email>'>
 <!ENTITY email.itt '<email>ian@zmanda.com</email>'>
 <!ENTITY email.jstange '<email>building@nap.edu</email>'>
 <!ENTITY A '<application><emphasis>Amanda</emphasis></application>'>

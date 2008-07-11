@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"
+[
+  <!-- entities files to use -->
+  <!ENTITY % global_entities SYSTEM '../entities/global.entities'>
+  %global_entities;
+]>
+
+<refentry id='amstar.8'>
+
+<refmeta>
+<refentrytitle>amstar</refentrytitle>
+<manvolnum>8</manvolnum>
+</refmeta>
+<refnamediv>
+<refname>amstar</refname>
+<refpurpose>Amanda Application to interface with star</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+
+<refsect1><title>DESCRIPTION</title>
+
+<para>Amgtar is an &A; Application API script.  It should not be run
+by users directly.  It uses star to backup and restore data.</para>
+
+</refsect1>
+
+<refsect1><title>PROPERTIES</title>
+
+<para>This section lists the properties that control amgtar's functionality.
+See <citerefentry><refentrytitle>amanda-applications</refentrytitle><manvolnum>7</manvolnum></citerefentry>
+for information on application properties and how they are configured.</para>
+
+<!-- PLEASE KEEP THIS LIST IN ALPHABETICAL ORDER -->
+<variablelist>
+ <!-- ==== -->
+ <varlistentry><term>ONE-FILE-SYSTEM</term><listitem>
+If "YES" (the default), do not allow gnutar to cross filesystem boundaries. If "NO", star will cross filesystem boundaries.  This corresponds to the <emphasis>-xdev</emphasis> option of star.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>SPARSE</term><listitem>
+If "YES" (the default), gnutar will store sparse files efficiently. If "NO", then the <emphasis>-sparse</emphasis> option is not given to star, and it will not try to detect sparse files.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>STAR-DLE-TARDUMP</term><listitem>
+If "YES", amstar will use a different tardump file for each DLE. The default is "NO".  This property is needed with older versions of star doing many dumps in parallel, because of a race condition in updating the tardump file.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>STAR-PATH</term><listitem>
+The path to the star binary.  The default is set when &A; is built.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>STAR-TARDUMP</term><listitem>
+The directory where star stores the database it uses to generate incremental dumps.  The default is set when &A; is built.
+</listitem></varlistentry>
+</variablelist>
+
+</refsect1>
+
+<refsect1><title>AUTHORS</title>
+
+<para>Jean-Louis Martineau &email.jlm; and Dustin Mitchell &email.dustin;: Original text</para>
+</refsect1>
+
+<refsect1><title>SEE ALSO</title>
+<para>
+<citerefentry><refentrytitle>amanda.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>amanda-applications</refentrytitle><manvolnum>7</manvolnum></citerefentry>
+</para>
+
+</refsect1>
+</refentry>

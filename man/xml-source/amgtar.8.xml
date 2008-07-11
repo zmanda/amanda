@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"
+[
+  <!-- entities files to use -->
+  <!ENTITY % global_entities SYSTEM '../entities/global.entities'>
+  %global_entities;
+]>
+
+<refentry id='amgtar.8'>
+
+<refmeta>
+<refentrytitle>amgtar</refentrytitle>
+<manvolnum>8</manvolnum>
+</refmeta>
+<refnamediv>
+<refname>amgtar</refname>
+<refpurpose>Amanda Application to interface with GNU Tar</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+
+<refsect1><title>DESCRIPTION</title>
+
+<para>Amgtar is an &A; Application API script.  It should not be run
+by users directly.  It uses GNU Tar to backup and restore data.</para>
+
+</refsect1>
+
+<refsect1><title>PROPERTIES</title>
+
+<para>This section lists the properties that control amgtar's functionality.
+See <citerefentry><refentrytitle>amanda-applications</refentrytitle><manvolnum>7</manvolnum></citerefentry>
+for information on application properties and how they are configured.</para>
+
+<!-- PLEASE KEEP THIS LIST IN ALPHABETICAL ORDER -->
+<variablelist>
+ <!-- ==== -->
+ <varlistentry><term>ATIME_PRESERVE</term><listitem>
+If "NO" (the default), amgtar updates the atime for all files accessed; if "YES", atimes are preserved.  To preserve atimes, tar must support the <emphasis>--atime-preserve=system</emphasis> option (gnutar 1.15.90 and newer).
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>CHECK-DEVICE</term><listitem>
+If "YES" (the default), amgtar checks that the device number doesn't change for each file. If "NO", changes in device number are ignored.  To ignore device numbers, tar must support the <emphasis>--no-check-device</emphasis> option (gnutar 1.19.90 and newer). This option is needed for some filesystems and devices on which device numbers change frequently, such as LVM or FiberChannel.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>GNUTAR-LISTDIR</term><listitem>
+The directory where gnutar stores the database it uses to generate incremental dumps.  The default is set when &A; is built.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>GNUTAR-PATH</term><listitem>
+The path to the gnutar binary.  The default is set when &A; is built.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>ONE-FILE-SYSTEM</term><listitem>
+If "YES" (the default), do not allow gnutar to cross filesystem boundaries. If "NO", gnutar will cross filesystem boundaries.  This corresponds to the <emphasis>--one-filesystem</emphasis> option of gnutar.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>SPARSE</term><listitem>
+If "YES" (the default), gnutar will store sparse files efficiently. If "NO", then the <emphasis>--sparse</emphasis> option is not given to gnutar, and it will not try to detect sparse files.
+</listitem></varlistentry>
+</variablelist>
+
+</refsect1>
+
+<refsect1><title>AUTHORS</title>
+
+<para>Jean-Louis Martineau &email.jlm; and Dustin Mitchell &email.dustin;: Original text</para>
+</refsect1>
+
+<refsect1><title>SEE ALSO</title>
+<para>
+<citerefentry><refentrytitle>amanda.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>amanda-applications</refentrytitle><manvolnum>7</manvolnum></citerefentry>
+</para>
+
+</refsect1>
+</refentry>

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"
+[
+  <!-- entities files to use -->
+  <!ENTITY % global_entities SYSTEM '../entities/global.entities'>
+  %global_entities;
+]>
+
+<refentry id='amanda-applications.7'>
+
+<refmeta>
+<refentrytitle>amanda-applications</refentrytitle>
+<manvolnum>7</manvolnum>
+</refmeta>
+<refnamediv>
+<refname>amanda-applications</refname>
+<refpurpose>Application-api for amanda</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+
+<refsect1><title>DESCRIPTION</title>
+
+<para>Describe how to use application with &A;</para>
+</refsect1>
+
+<refsect1><title>APPLICATIONS</title>
+
+<para>This section lists the applications included with &A;, see their man page for instructions on using them.  For complete How-To information, consult the Amanda wiki at http://wiki.zmanda.com.</para>
+
+<refsect2><title>amgtar</title>
+
+<para>The amgtar application use GNU Tar to backup and restore data.</para>
+
+</refsect2>
+
+<refsect2><title>amstar</title>
+
+<para>The amstar application use star to backup and restore data.</para>
+
+</refsect2>
+
+</refsect1>
+
+<refsect1><title>AUTHORS</title>
+
+<para>Jean-Louis Martineau &email.jlm; and Dustin J. Mitchell &email.dustin;: Original text</para>
+</refsect1>
+
+<refsect1><title>SEE ALSO</title>
+<para>
+<citerefentry><refentrytitle>amanda.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>amgtar</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>amstar</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+</para>
+
+</refsect1>
+</refentry>

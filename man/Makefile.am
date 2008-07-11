@@ -8,6 +8,11 @@ COMMON_MAN_PAGES =  amanda.8 \
 		    amanda.conf.5 \
 		    amanda-client.conf.5
 
+CLIENT_MAN_PAGES = \
+    amanda-applications.7 \
+    amgtar.8 \
+    amstar.8
+
 SERVER_MAN_PAGES =  \
     amanda-devices.7 \
     amaddclient.8    \
@@ -45,7 +50,7 @@ RESTORE_MAN_PAGES =  amrestore.8 \
 		     amfetchdump.8
 
 ALL_MAN_PAGES = $(AMPLOT_MAN_PAGES) \
-	   $(COMMON_MAN_PAGES) \
+	   $(CLIENT_MAN_PAGES) \
 	   $(COMMON_MAN_PAGES) \
 	   $(SERVER_MAN_PAGES) \
 	   $(RECOVER_MAN_PAGES) \
@@ -54,6 +59,9 @@ ALL_MAN_PAGES = $(AMPLOT_MAN_PAGES) \
 WANTED_MAN_PAGES = $(COMMON_MAN_PAGES)
 if WANT_AMPLOT
   WANTED_MAN_PAGES += $(AMPLOT_MAN_PAGES)
+endif
+if WANT_CLIENT
+  WANTED_MAN_PAGES += $(CLIENT_MAN_PAGES)
 endif
 if WANT_SERVER
   WANTED_MAN_PAGES += $(SERVER_MAN_PAGES)
