@@ -1,3 +1,7 @@
+2008-07-14 Dan Locks <dwlocks@zmanda.com>
+	* packaging/rpm/amanda.spec: fix distribution detection, add
+	activate-devpay to server files list
+
 2008-07-11  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/rait-device.c: fix RAIT file numbers; don't pass
 	  block-size-related properties down to child devices (we set the block
