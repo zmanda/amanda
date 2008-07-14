@@ -37,32 +37,32 @@
     # Fedora symlinks /etc/fedora-release to /etc/redhat-release for at least
     # fc3-7.  So RHEL and Fedora look at the same file.  The awk trickery here
     # forces the field to be numeric so that the spec comparison works
-    %if %(awk '{print $1}' /etc/redhat-release) == "Fedora" && %(awk '{print $4+0}' /etc/redhat-release) == 3
+    %if %(awk '$1 == "Fedora" && $7 ~ /3.*/ { exit 1; }' /etc/redhat-release; echo $?)
         %define dist fedora
         %define disttag fc
         %define distver 3
     %endif
-    %if %(awk '{print $1}' /etc/redhat-release) == "Fedora" && %(awk '{print$4+0}' /etc/redhat-release) == 4
+    %if %(awk '$1 == "Fedora" && $7 ~ /4.*/ { exit 1; }' /etc/redhat-release; echo $?)
         %define dist fedora
         %define disttag fc
         %define distver 4
     %endif
-    %if %(awk '{print $1}' /etc/redhat-release) == "Fedora" && %(awk '{print $4+0}' /etc/redhat-release) == 5
+    %if %(awk '$1 == "Fedora" && $7 ~ /5.*/ { exit 1; }' /etc/redhat-release; echo $?)
         %define dist fedora
         %define disttag fc
         %define distver 5
     %endif
-    %if %(awk '{print $1}' /etc/redhat-release) == "Fedora" && %(awk '{print $4+0}' /etc/redhat-release) == 6
+    %if %(awk '$1 == "Fedora" && $7 ~ /6.*/ { exit 1; }' /etc/redhat-release; echo $?)
         %define dist fedora
         %define disttag fc
         %define distver 6
     %endif
-    %if %(awk '{print $1}' /etc/redhat-release) == "Fedora" && %(awk '{print $3+0}' /etc/redhat-release) == 7
+    %if %(awk '$1 == "Fedora" && $7 ~ /7.*/ { exit 1; }' /etc/redhat-release; echo $?)
         %define dist fedora
         %define disttag fc
         %define distver 7
     %endif
-    %if %(awk '{print $1}' /etc/redhat-release) == "Fedora" && %(awk '{print $3+0}' /etc/redhat-release) == 8
+    %if %(awk '$1 == "Fedora" && $7 ~ /8.*/ { exit 1; }' /etc/redhat-release; echo $?)
         %define dist fedora
         %define disttag fc
         %define distver 8
@@ -72,17 +72,17 @@
                 %{!?PKG_CONFIG_PATH: %define PKG_CONFIG_PATH /usr/lib/pkgconfig}
         %endif
     %endif
-    %if %(awk '{print $1}' /etc/redhat-release) == "Red" && %(awk '{print $7+0}' /etc/redhat-release) == 3
+    %if %(awk '$1 == "Red" && $7 ~ /3.*/ { exit 1; }' /etc/redhat-release; echo $?)
         %define dist redhat
         %define disttag rhel
         %define distver 3
     %endif
-    %if %(awk '{print $1}' /etc/redhat-release) == "Red" && %(awk '{print $7+0}' /etc/redhat-release) == 4
+    %if %(awk '$1 == "Red" && $7 ~ /4.*/ { exit 1; }' /etc/redhat-release; echo $?)
         %define dist redhat
         %define disttag rhel
         %define distver 4
     %endif
-    %if %(awk '{print $1}' /etc/redhat-release) == "Red" && %(awk '{print $7+0}' /etc/redhat-release) == 5
+    %if %(awk '$1 == "Red" && $7 ~ /5.*/ { exit 1; }' /etc/redhat-release; echo $?)
         %define dist redhat
         %define disttag rhel
         %define distver 5
@@ -1500,7 +1500,8 @@ echo "Amanda installation log can be found in '${INSTALL_LOG}' and errors (if an
 /sbin/ldconfig
 
 # --- Files to install ---
-
+# Notes:  Do not use wildcards on directories not wholly owned by amanda.  An
+# uninstall of the software will attempt to delete whatever matches here.
 %files backup_client
 %defattr(0755,%{amanda_user},%{amanda_group})
 %{SYSCONFDIR}/amanda
@@ -1561,6 +1562,7 @@ echo "Amanda installation log can be found in '${INSTALL_LOG}' and errors (if an
 %{SBINDIR}/amcheck
 %defattr(0750,%{amanda_user},%{amanda_group})
 %{LOGDIR}
+%{SBINDIR}/activate-devpay
 %{SBINDIR}/amaespipe
 %{SBINDIR}/amcrypt*
 %{SBINDIR}/amgpgcrypt
