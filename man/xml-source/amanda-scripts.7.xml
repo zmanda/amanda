@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"
+[
+  <!-- entities files to use -->
+  <!ENTITY % global_entities SYSTEM '../entities/global.entities'>
+  %global_entities;
+]>
+
+<refentry id='amanda-scripts.7'>
+
+<refmeta>
+<refentrytitle>amanda-scripts</refentrytitle>
+<manvolnum>7</manvolnum>
+</refmeta>
+<refnamediv>
+<refname>amanda-scripts</refname>
+<refpurpose>Configuring and using the Script API</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+
+<refsect1><title>DESCRIPTION</title>
+
+<para>The Script API is a flexible system for invoking user-supplied scripts at
+various points in the execution of Amanda.  This manual page describes the
+operation and configuration of the API.  For help writing Script API scripts,
+see http://wiki.zmanda.com/index.php/Script_API.</para>
+
+</refsect1>
+
+<refsect1><title>INCLUDED SCRIPTS</title>
+
+<para>This section lists the scripts included with &A;, see their man page for instructions on using them.  For complete How-To information, consult the Amanda wiki at http://wiki.zmanda.com.</para>
+
+<refsect2><title>script-email</title>
+
+<para>script-email is a simple script that sends one or more emails every time it is invoked.</para>
+
+</refsect2>
+
+</refsect1>
+
+<refsect1><title>AUTHORS</title>
+
+<para>Jean-Louis Martineau &email.jlm; and Dustin J. Mitchell &email.dustin;: Original text</para>
+</refsect1>
+
+<refsect1><title>SEE ALSO</title>
+<para>
+<citerefentry><refentrytitle>amanda.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>script-email</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+</para>
+
+</refsect1>
+</refentry>

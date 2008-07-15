@@ -1,3 +1,9 @@
+2008-07-15  Jean-Louis Martineau <martineau@zmanda.com>
+	* man/Makefile.am: Add new man pages.
+	* man/xml-source/script-email.8.xml: New man page.
+	* man/xml-source/amanda.8.xml: List new man pages.
+	* man/xml-source/amanda-scripts.7.xml: New man page.
+
 2008-07-15  Dustin J. Mitchell <dustin@zmanda.com>
 	* configure.in: generate (x)inetd files
 	* example/inetd.conf.amandaclient.in example/xinetd.amandaclient.in

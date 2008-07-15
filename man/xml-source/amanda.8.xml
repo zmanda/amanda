@@ -133,6 +133,9 @@ configuration files for quick reference.</para>
 <listitem>
 <citerefentry><refentrytitle>amtoc</refentrytitle><manvolnum>8</manvolnum></citerefentry>&nbsp;
 </listitem>
+<listitem>
+<citerefentry><refentrytitle>script-email</refentrytitle><manvolnum>8</manvolnum></citerefentry>&nbsp;
+</listitem>
 </itemizedlist>
 </refsect2>
 <refsect2><title>CONFIGURATION FILES</title> <!-- a.k.a. any section 5 manpage -->
@@ -152,6 +155,9 @@ configuration files for quick reference.</para>
 </listitem>
 <listitem>
 <citerefentry><refentrytitle>amanda-devices</refentrytitle><manvolnum>7</manvolnum></citerefentry>&nbsp;
+</listitem>
+<listitem>
+<citerefentry><refentrytitle>amanda-scripts</refentrytitle><manvolnum>7</manvolnum></citerefentry>&nbsp;
 </listitem>
 </itemizedlist>
 </refsect2>
