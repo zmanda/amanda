@@ -37,32 +37,32 @@
     # Fedora symlinks /etc/fedora-release to /etc/redhat-release for at least
     # fc3-7.  So RHEL and Fedora look at the same file.  The awk trickery here
     # forces the field to be numeric so that the spec comparison works
-    %if %(awk '$1 == "Fedora" && $7 ~ /3.*/ { exit 1; }' /etc/redhat-release; echo $?)
+    %if %(awk '$1 == "Fedora" && $3 ~ /3.*/ { exit 1; }' /etc/redhat-release; echo $?)
         %define dist fedora
         %define disttag fc
         %define distver 3
     %endif
-    %if %(awk '$1 == "Fedora" && $7 ~ /4.*/ { exit 1; }' /etc/redhat-release; echo $?)
+    %if %(awk '$1 == "Fedora" && $3 ~ /4.*/ { exit 1; }' /etc/redhat-release; echo $?)
         %define dist fedora
         %define disttag fc
         %define distver 4
     %endif
-    %if %(awk '$1 == "Fedora" && $7 ~ /5.*/ { exit 1; }' /etc/redhat-release; echo $?)
+    %if %(awk '$1 == "Fedora" && $3 ~ /5.*/ { exit 1; }' /etc/redhat-release; echo $?)
         %define dist fedora
         %define disttag fc
         %define distver 5
     %endif
-    %if %(awk '$1 == "Fedora" && $7 ~ /6.*/ { exit 1; }' /etc/redhat-release; echo $?)
+    %if %(awk '$1 == "Fedora" && $3 ~ /6.*/ { exit 1; }' /etc/redhat-release; echo $?)
         %define dist fedora
         %define disttag fc
         %define distver 6
     %endif
-    %if %(awk '$1 == "Fedora" && $7 ~ /7.*/ { exit 1; }' /etc/redhat-release; echo $?)
+    %if %(awk '$1 == "Fedora" && $3 ~ /7.*/ { exit 1; }' /etc/redhat-release; echo $?)
         %define dist fedora
         %define disttag fc
         %define distver 7
     %endif
-    %if %(awk '$1 == "Fedora" && $7 ~ /8.*/ { exit 1; }' /etc/redhat-release; echo $?)
+    %if %(awk '$1 == "Fedora" && $3 ~ /8.*/ { exit 1; }' /etc/redhat-release; echo $?)
         %define dist fedora
         %define disttag fc
         %define distver 8
