@@ -468,5 +468,19 @@ guint g_strv_length(gchar ** strv) {
     }
     return rval;
 }
-
 #endif /* GLIB_CHECK_VERSION(2.6.0) */
+
+#if !GLIB_CHECK_VERSION(2,4,0)
+void
+g_ptr_array_foreach (GPtrArray *array,
+                     GFunc      func,
+                     gpointer   user_data)
+{
+  guint i;
+
+  g_return_if_fail (array);
+
+  for (i = 0; i < array->len; i++)
+    (*func) (array->pdata[i], user_data);
+}
+#endif

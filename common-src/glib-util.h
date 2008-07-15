@@ -114,5 +114,10 @@ char * g_english_strjoinv_and_free(char ** strv, const char * conjunction);
 guint g_strv_length(gchar ** strv);
 #endif
 
+#if !GLIB_CHECK_VERSION(2,4,0)
+void g_ptr_array_foreach (GPtrArray *array,
+			  GFunc func,
+                          gpointer user_data);
 #endif
 
+#endif

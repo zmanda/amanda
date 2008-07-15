@@ -128,23 +128,6 @@ static void find_simple_params(RaitDevice * self, guint * num_children,
 /* pointer to the class of our parent */
 static DeviceClass *parent_class = NULL;
 
-/* This function is replicated here in case we have GLib from before 2.4.
- * It should probably go eventually. */
-#if !GLIB_CHECK_VERSION(2,4,0)
-static void
-g_ptr_array_foreach (GPtrArray *array,
-                     GFunc      func,
-                     gpointer   user_data)
-{
-  guint i;
-
-  g_return_if_fail (array);
-
-  for (i = 0; i < array->len; i++)
-    (*func) (array->pdata[i], user_data);
-}
-#endif
-
 static GType
 rait_device_get_type (void)
 {

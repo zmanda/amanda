@@ -33,6 +33,7 @@
 #include "client_util.h"
 #include "getfsent.h"
 #include "util.h"
+#include "glib-util.h"
 #include "timestamp.h"
 #include "pipespawn.h"
 #include "amxml.h"
