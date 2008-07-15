@@ -931,7 +931,8 @@ run_client_script(
 	char number[NUM_STR_SIZE];
 	for (level=dle->level; level; level=level->next) {
 	    argvchild[i++] = "--level";
-	    g_snprintf(number, SIZEOF(number), "%d", GPOINTER_TO_INT(level->data));
+	    g_snprintf(number, SIZEOF(number), "%d",
+		       GPOINTER_TO_INT(level->data));
 	    argvchild[i++] = stralloc(number);
 	}
     }
@@ -944,27 +945,86 @@ run_client_script(
 
     close(scriptin);
 
+    script->result = g_new0(client_script_result_t, 1);
+    script->result->proplist =
+		    g_hash_table_new_full(g_str_hash, g_str_equal, NULL, NULL);
+    script->result->output = g_ptr_array_new();
+
     streamout = fdopen(scriptout, "r");
     if (streamout) {
-	while((line = agets(streamout)) != NULL) {
-	    dbprintf("script: %s\n", line);
-	}
+        while((line = agets(streamout)) != NULL) {
+            dbprintf("script: %s\n", line);
+            if (BSTRNCMP(line, "PROPERTY ") == 0) {
+		char *property_name, *property_value;
+		property_name = line + 9;
+		property_value = index(property_name,' ');
+		if (property_value == NULL) {
+		    char *msg = g_strdup_printf(
+					"ERROR %s: Bad output property: %s",
+					script->plugin, line);
+		    g_ptr_array_add(script->result->output, msg);
+		} else {
+		    property_t *property;
+
+		    *property_value++ = '\0';
+		    property_name = stralloc(property_name);
+		    property_value = stralloc(property_value);
+		    property = g_hash_table_lookup(script->result->proplist,
+						   property_name);
+		    if (!property) {
+			property = g_new0(property_t, 1);
+			g_hash_table_insert(script->result->proplist,
+					    property_name, property);
+		    }
+		    property->values = g_slist_append(property->values,
+						      property_value);
+		}
+		amfree(line);
+            } else {
+                g_ptr_array_add(script->result->output, line);
+            }
+        }
     }
     fclose(streamout);
     waitpid(scriptpid, NULL, 0);
+}
+
+void run_client_script_output(gpointer data, gpointer user_data);
+
+void
+run_client_script_output(
+    gpointer data,
+    gpointer user_data)
+{
+    char *line      = data;
+    FILE *streamout = user_data;
+
+    if (line && streamout) {
+	g_fprintf(streamout, "%s\n", line);
+    }
 }
 
 void
 run_client_scripts(
     execute_on_t  execute_on,
     g_option_t   *g_options,
-    dle_t	 *dle)
+    dle_t	 *dle,
+    FILE         *streamout)
 {
     GSList   *scriptlist;
+    script_t  *script;
 
     for (scriptlist = dle->scriptlist; scriptlist != NULL;
 	 scriptlist = scriptlist->next) {
-	run_client_script(scriptlist->data, execute_on, g_options, dle);
+	script = (script_t *)scriptlist->data;
+	run_client_script(script, execute_on, g_options, dle);
+	if (script->result && script->result->output) {
+	    g_ptr_array_foreach(script->result->output,
+				run_client_script_output,
+				streamout);
+	    g_ptr_array_free(script->result->output, TRUE);
+	    script->result->output = NULL;
+	}
     }
 }
 

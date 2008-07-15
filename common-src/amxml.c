@@ -365,6 +365,7 @@ amstart_element(
 	data_user->script->execute_on = 0;
 	data_user->script->execute_where = ES_CLIENT;
 	data_user->script->property = NULL;
+	data_user->script->result = NULL;
 	data_user->has_plugin = 0;
     } else if (strcmp(element_name, "execute_on") == 0) {
     } else if (strcmp(element_name, "execute_where") == 0) {

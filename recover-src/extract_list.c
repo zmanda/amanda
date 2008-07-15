@@ -1811,7 +1811,14 @@ extract_files_child(
     case IS_APPLICATION_API:
 	extra_params = 10;
 	if (dump_dle) {
+	    GSList   *scriptlist;
+	    script_t *script;
 	    extra_params += application_property_argv_size(dump_dle);
+	    for (scriptlist = dump_dle->scriptlist; scriptlist != NULL;
+		 scriptlist = scriptlist->next) {
+		script = (script_t *)scriptlist->data;
+		extra_params += property_argv_size(script->result->proplist);
+	    }
 	}
 	break;
     }
@@ -1887,8 +1894,19 @@ extract_files_child(
 	    restore_args[j++] = stralloc("--device");
 	    restore_args[j++] = stralloc(dump_dle->device);
 	}
-	if (dump_dle)
+	if (dump_dle) {
+	    GSList   *scriptlist;
+	    script_t *script;
+
 	    j += application_property_add_to_argv(&restore_args[j], dump_dle, NULL);
+	    for (scriptlist = dump_dle->scriptlist; scriptlist != NULL;
+		 scriptlist = scriptlist->next) {
+		script = (script_t *)scriptlist->data;
+		j += property_add_to_argv(&restore_args[j],
+					  script->result->proplist);
+	    }
+
+	}
 	break;
     }
   
@@ -2233,7 +2251,8 @@ extract_files(void)
     if (dump_dle) {
 	g_slist_free(dump_dle->level);
 	dump_dle->level = all_level;
-	run_client_scripts(EXECUTE_ON_PRE_RECOVER, &g_options, dump_dle);
+	run_client_scripts(EXECUTE_ON_PRE_RECOVER, &g_options, dump_dle,
+			   stderr);
 	dump_dle->level = NULL;
     }
     last_level = -1;
@@ -2272,7 +2291,7 @@ extract_files(void)
 	    dump_dle->level = g_slist_append(dump_dle->level,
 					     GINT_TO_POINTER(elist->level));
 	    run_client_scripts(EXECUTE_ON_INTER_LEVEL_RECOVER, &g_options,
-			       dump_dle);
+			       dump_dle, stderr);
 	    g_slist_free(dump_dle->level);
 	    dump_dle->level = NULL;
 	}
@@ -2288,7 +2307,7 @@ extract_files(void)
 	    dump_dle->level = g_slist_append(dump_dle->level,
 					     GINT_TO_POINTER(elist->level));
 	    run_client_scripts(EXECUTE_ON_PRE_LEVEL_RECOVER, &g_options,
-			       dump_dle);
+			       dump_dle, stderr);
 	}
 	last_level = elist->level;
 
@@ -2304,14 +2323,15 @@ extract_files(void)
 
 	if (dump_dle) {
 	    run_client_scripts(EXECUTE_ON_POST_LEVEL_RECOVER, &g_options,
-			       dump_dle);
+			       dump_dle, stderr);
 	    g_slist_free(dump_dle->level);
 	    dump_dle->level = NULL;
 	}
     }
     if (dump_dle) {
 	dump_dle->level = all_level;
-	run_client_scripts(EXECUTE_ON_POST_RECOVER, &g_options, dump_dle);
+	run_client_scripts(EXECUTE_ON_POST_RECOVER, &g_options, dump_dle,
+			   stderr);
 	g_slist_free(dump_dle->level);
 	all_level = NULL;
 	dump_dle->level = NULL;

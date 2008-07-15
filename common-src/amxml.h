@@ -36,10 +36,11 @@
 #include "conffile.h"
 
 typedef struct script_s {
-    char         *plugin;
-    execute_on_t  execute_on;
-    int           execute_where;
-    proplist_t    property;
+    char                          *plugin;
+    execute_on_t                   execute_on;
+    int                            execute_where;
+    proplist_t                     property;
+    struct client_script_result_s *result;
 } script_t;
 
 typedef GSList *scriptlist_t;

@@ -407,7 +407,8 @@ main(
     }
 
     for(est = est_list; est != NULL; est = est->next) {
-	run_client_scripts(EXECUTE_ON_PRE_HOST_ESTIMATE, g_options, est->dle);
+	run_client_scripts(EXECUTE_ON_PRE_HOST_ESTIMATE, g_options, est->dle,
+			   stdout);
     }
 
     dumpsrunning = 0;
@@ -454,7 +455,8 @@ main(
 		est->done = 1;
 		est->child = 0;
 		dumpsrunning--;
-		run_client_scripts(EXECUTE_ON_POST_DLE_ESTIMATE, g_options, est->dle);
+		run_client_scripts(EXECUTE_ON_POST_DLE_ESTIMATE, g_options,
+				   est->dle, stdout);
 	    }
 	}
 	/*
@@ -504,7 +506,8 @@ main(
 	    }
 	} else {
 	    done = 0;
-	    run_client_scripts(EXECUTE_ON_PRE_DLE_ESTIMATE, g_options, est->dle);
+	    run_client_scripts(EXECUTE_ON_PRE_DLE_ESTIMATE, g_options,
+			       est->dle, stdout);
 
 	    if((est->child = fork()) == 0) {
 		calc_estimates(est);		/* child does the estimate */
@@ -518,7 +521,8 @@ main(
     }
 
     for(est = est_list; est != NULL; est = est->next) {
-	run_client_scripts(EXECUTE_ON_POST_HOST_ESTIMATE, g_options, est->dle);
+	run_client_scripts(EXECUTE_ON_POST_HOST_ESTIMATE, g_options, est->dle,
+			   stdout);
     }
 
     est_prev = NULL;
@@ -2154,6 +2158,8 @@ getsize_application_api(
     amwait_t wait_status;
     char levelstr[NUM_STR_SIZE];
     backup_support_option_t *bsu;
+    GSList   *scriptlist;
+    script_t *script;
 
     gmtm = gmtime(&dumpsince);
     g_snprintf(dumptimestr, SIZEOF(dumptimestr),
@@ -2173,6 +2179,11 @@ getsize_application_api(
 
     i=0;
     k = application_property_argv_size(dle);
+    for (scriptlist = dle->scriptlist; scriptlist != NULL;
+	 scriptlist = scriptlist->next) {
+	script = (script_t *)scriptlist->data;
+	k += property_argv_size(script->result->proplist);
+    }
     argvchild = g_new0(char *, 17 + k);
     argvchild[i++] = dle->program;
     argvchild[i++] = "estimate";
@@ -2200,6 +2211,13 @@ getsize_application_api(
 	argvchild[i++] = levelstr;
     }
     i += application_property_add_to_argv(&argvchild[i], dle, bsu);
+
+    for (scriptlist = dle->scriptlist; scriptlist != NULL;
+	 scriptlist = scriptlist->next) {
+	script = (script_t *)scriptlist->data;
+	i += property_add_to_argv(&argvchild[i],
+				  script->result->proplist);
+    }
 
     argvchild[i] = NULL;
 

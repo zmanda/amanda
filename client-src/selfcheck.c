@@ -306,16 +306,20 @@ main(
 	    goto err;
 	}
 	for (dle = dles; dle != NULL; dle = dle->next) {
-	    run_client_scripts(EXECUTE_ON_PRE_HOST_AMCHECK, g_options, dle);
+	    run_client_scripts(EXECUTE_ON_PRE_HOST_AMCHECK, g_options, dle,
+			       stdout);
 	}
 	for (dle = dles; dle != NULL; dle = dle->next) {
 	    check_options(dle);
-	    run_client_scripts(EXECUTE_ON_PRE_DLE_AMCHECK, g_options, dle);
+	    run_client_scripts(EXECUTE_ON_PRE_DLE_AMCHECK, g_options, dle,
+			       stdout);
 	    check_disk(dle);
-	    run_client_scripts(EXECUTE_ON_POST_DLE_AMCHECK, g_options, dle);
+	    run_client_scripts(EXECUTE_ON_POST_DLE_AMCHECK, g_options, dle,
+			       stdout);
 	}
 	for (dle = dles; dle != NULL; dle = dle->next) {
-	    run_client_scripts(EXECUTE_ON_POST_HOST_AMCHECK, g_options, dle);
+	    run_client_scripts(EXECUTE_ON_POST_HOST_AMCHECK, g_options, dle,
+			       stdout);
 	}
     }
 
@@ -717,11 +721,18 @@ check_disk(
 	    {
 		char **argvchild, **arg;
 		char *cmd = vstralloc(APPLICATION_DIR, "/", dle->program, NULL);
+		GSList   *scriptlist;
+		script_t *script;
 		char *cmdline;
 		int j=0;
 		int k;
 
 		k = application_property_argv_size(dle);
+		for (scriptlist = dle->scriptlist; scriptlist != NULL;
+		     scriptlist = scriptlist->next) {
+		    script = (script_t *)scriptlist->data;
+		    k += property_argv_size(script->result->proplist);
+		}
 		argvchild = g_new0(char *, 17 + k);
 		argvchild[j++] = dle->program;
 		argvchild[j++] = "selfcheck";
@@ -751,7 +762,16 @@ check_disk(
 		    argvchild[j++] = "--record";
 		}
 		j += application_property_add_to_argv(&argvchild[j], dle, bsu);
+
+		for (scriptlist = dle->scriptlist; scriptlist != NULL;
+		     scriptlist = scriptlist->next) {
+		    script = (script_t *)scriptlist->data;
+		    j += property_add_to_argv(&argvchild[j],
+					      script->result->proplist);
+		}
+
 		argvchild[j++] = NULL;
+
 		cmdline = stralloc(cmd);
 		for(arg = argvchild; *arg != NULL; arg++) {
 		    char *quoted = quote_string(*arg);

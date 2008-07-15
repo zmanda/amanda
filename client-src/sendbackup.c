@@ -432,7 +432,7 @@ main(
       }
     }
 
-    run_client_scripts(EXECUTE_ON_PRE_DLE_BACKUP, g_options, dle);
+    run_client_scripts(EXECUTE_ON_PRE_DLE_BACKUP, g_options, dle, stderr);
 
     if (dle->program_is_application_api==1) {
 	pid_t application_api_pid;
@@ -444,6 +444,8 @@ main(
 	char *compopt = NULL;
 	char *encryptopt = skip_argument;
 	int compout, dumpout;
+	GSList   *scriptlist;
+	script_t *script;
 
 	/*  apply client-side encryption here */
 	if ( dle->encrypt == ENCRYPT_CUST ) {
@@ -499,6 +501,11 @@ main(
 	case 0:
 	    cmd = vstralloc(APPLICATION_DIR, "/", dle->program, NULL);
 	    k = application_property_argv_size(dle);
+	    for (scriptlist = dle->scriptlist; scriptlist != NULL;
+		 scriptlist = scriptlist->next) {
+		script = (script_t *)scriptlist->data;
+		k += property_argv_size(script->result->proplist);
+	    }
 	    argvchild = g_new0(char *, 20 + k);
 	    i=0;
 	    argvchild[i++] = dle->program;
@@ -534,6 +541,14 @@ main(
 		argvchild[i++] = "--record";
 	    }
 	    i += application_property_add_to_argv(&argvchild[i], dle, bsu);
+
+	    for (scriptlist = dle->scriptlist; scriptlist != NULL;
+		 scriptlist = scriptlist->next) {
+		script = (script_t *)scriptlist->data;
+		i += property_add_to_argv(&argvchild[i],
+					  script->result->proplist);
+	    }
+
 	    argvchild[i] = NULL;
 	    dbprintf(_("%s: running \"%s\n"), get_pname(), cmd);
 	    for(j=1;j<i;j++) dbprintf(" %s\n",argvchild[j]);
@@ -604,7 +619,7 @@ main(
 	dbprintf(_("Parsed backup messages\n"));
     }
 
-    run_client_scripts(EXECUTE_ON_POST_DLE_BACKUP, g_options, dle);
+    run_client_scripts(EXECUTE_ON_POST_DLE_BACKUP, g_options, dle, stderr);
 
     amfree(qdisk);
     amfree(qamdevice);

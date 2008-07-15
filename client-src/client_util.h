@@ -58,6 +58,12 @@ typedef struct backup_support_option_s {
     int collection;
 } backup_support_option_t;
 
+typedef struct client_script_result_s {
+    int exit_code;
+    proplist_t proplist;
+    GPtrArray *output;
+} client_script_result_t;
+
 char *build_exclude(dle_t *dle, int verbose);
 char *build_include(dle_t *dle, int verbose);
 void parse_options(char *str,
@@ -97,7 +103,8 @@ void run_client_script(script_t     *script,
 
 void run_client_scripts(execute_on_t  execute_on,
 			g_option_t   *g_options,
-			dle_t        *dle);
+			dle_t        *dle,
+			FILE         *streamout);
 
 void check_access(char *filename, int mode);
 void check_file(char *filename, int mode);
