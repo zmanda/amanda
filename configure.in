@@ -367,6 +367,9 @@ AC_CONFIG_FILES([
     example/Makefile
     example/amanda-client.conf
     example/amanda.conf
+    example/xinetd.amandaclient
+    example/xinetd.amandaserver
+    example/inetd.conf.amandaclient
     example/chg-mcutil.conf
     example/template.d/advanced.conf
     example/template.d/amanda-S3.conf

@@ -1,0 +1,2 @@
+#amanda stream tcp nowait amandabackup @amlibexecdir@/amandad -auth=bsdtcp amdump
+amanda stream tcp nowait amandabackup @amlibexecdir@/amandad amandad -auth=bsdtcp amdump

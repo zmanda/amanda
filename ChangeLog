@@ -1,4 +1,10 @@
 2008-07-15  Dustin J. Mitchell <dustin@zmanda.com>
+	* configure.in: generate (x)inetd files
+	* example/inetd.conf.amandaclient.in example/xinetd.amandaclient.in
+	  example/xinetd.amandaserver.in: give appropriate path for amandad,
+	  from configure (fixes builds on 64-bit machines)
+
+2008-07-15  Dustin J. Mitchell <dustin@zmanda.com>
 	* client-src/client_util.c: #include "glib-util.h"
 	* common-src/glib-util.c: New g_ptr_array_foreach fucntion.
 	* common-src/glib-util.h: Prototype of g_ptr_array_foreach.

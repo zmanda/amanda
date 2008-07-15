@@ -1,19 +1,18 @@
 # default: on
 #
 # description: Amanda services for Amanda server and client.
-#              
+#
 
 service amanda
 {
         disable         = no
-	flags           = IPv4
-        flags		= IPv6
+        flags           = IPv4 IPv6
         socket_type     = stream
         protocol        = tcp
         wait            = no
         user            = amandabackup
         group           = disk
         groups          = yes
-        server          = /usr/libexec/amanda/amandad
+        server          = @amlibexecdir@/amandad
         server_args     = -auth=bsdtcp amdump amindexd amidxtaped
 }
