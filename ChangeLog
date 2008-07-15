@@ -1,3 +1,7 @@
+2008-07-15  Dustin J. Mitchell <dustin@zmanda.com>
+	* example/xinetd.amandaserver.in example/xinetd.amandaclient.in:
+	  specifying both IPv{4,6} does not work; remove IPv4
+
 2008-07-15  Jean-Louis Martineau <martineau@zmanda.com>
 	* man/Makefile.am: Add new man pages.
 	* man/xml-source/script-email.8.xml: New man page.
