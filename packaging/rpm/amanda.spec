@@ -155,6 +155,9 @@ BuildRequires: gcc
 BuildRequires: glibc >= 2.2.0
 BuildRequires: readline
 BuildRequires: curl >= 7.10.0
+BuildRequires: curl-devel >= 7.10.0
+BuildRequires: openssl
+BuildRequires: openssl-devel
 Requires: /bin/awk
 Requires: /bin/date
 Requires: /usr/bin/id
@@ -169,6 +172,7 @@ Requires: libc.so.6
 Requires: libm.so.6
 Requires: libnsl.so.1
 Requires: curl >= 7.10.0
+Requires: openssl
 Requires: xinetd
 Requires: perl >= 5.6.0
 Requires: tar >= 1.15

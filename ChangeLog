@@ -1,3 +1,8 @@
+2008-07-16 Dan Locks <dwlocks@zmanda.com>
+	* packaging/deb/control,
+	  packaging/rpm/amanda.spec: added explicit dependency on openssl, and a 
+	  build dependency for openssl and curl development files.
+
 2008-07-15  Dustin J. Mitchell <dustin@zmanda.com>
 	* example/xinetd.amandaserver.in example/xinetd.amandaclient.in:
 	  specifying both IPv{4,6} does not work; remove IPv4
