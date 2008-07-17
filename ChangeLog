@@ -1,3 +1,7 @@
+2008-07-16  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/driver.c: Improve message in failure to dump in degraded
+			       mode.
+
 2008-07-16 Dan Locks <dwlocks@zmanda.com>
 	* packaging/deb/control,
 	  packaging/rpm/amanda.spec: added explicit dependency on openssl, and a 

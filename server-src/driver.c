@@ -500,9 +500,11 @@ main(
 	    log_add(L_FAIL, _("%s %s %s %d [%s]"),
 		diskp->host->hostname, qname, sched(diskp)->datestamp,
 		sched(diskp)->level,
-		diskp->to_holdingdisk == HOLD_AUTO ?
-		    _("no more holding disk space") :
-		    _("can't dump no-hold disk in degraded mode"));
+		num_holdalloc == 0 ?
+		    _("can't do degraded dump without holding disk") :
+		diskp->to_holdingdisk != HOLD_NEVER ?
+		    _("out of holding space in degraded mode") :
+	 	    _("can't dump 'holdingdisk never' dle in degraded mode"));
 	    amfree(qname);
 	}
     }
