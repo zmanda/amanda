@@ -1,3 +1,6 @@
+2008-07-17  Jean-Louis Martineau <martineau@zmanda.com>
+	* amandad-src/amandad.c: amandad must be run by root for krb5 auth.
+
 2008-07-16  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/driver.c: Improve message in failure to dump in degraded
 			       mode.

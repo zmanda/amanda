@@ -237,7 +237,15 @@ main(
     /* Parse the configuration; we'll handle errors later */
     config_init(CONFIG_INIT_CLIENT, NULL);
 
-    check_running_as(RUNNING_AS_CLIENT_LOGIN);
+    if (geteuid() == 0) {
+	check_running_as(RUNNING_AS_ROOT);
+	initgroups(CLIENT_LOGIN, get_client_gid());
+	setgid(get_client_gid());
+	setegid(get_client_gid());
+	seteuid(get_client_uid());
+    } else {
+	check_running_as(RUNNING_AS_CLIENT_LOGIN);
+    }
 
     erroutput_type = (ERR_INTERACTIVE|ERR_SYSLOG);
 
@@ -428,6 +436,18 @@ main(
 	exit_on_qlength = 1;
     }
 
+    if (getuid() == 0) {
+	if (strcasecmp(auth, "krb5") != 0) {
+	    error(_("Amanda must be run as user '%s' when using '%s' authetication"),
+		  CLIENT_LOGIN, auth);
+	}
+    } else {
+	if (strcasecmp(auth, "krb5") == 0) {
+	    error(_("Amanda must be run as user 'root' when using 'krb5' authetication"));
+	}
+    }
+
+
     /* initialize */
 
     startclock();
@@ -439,6 +459,11 @@ main(
 
     if (! (argc >= 1 && argv != NULL && argv[0] != NULL)) {
 	dbprintf(_("WARNING: argv[0] not defined: check inetd.conf\n"));
+    }
+
+    /* krb5 require the euid to be 0 */
+    if (strcasecmp(auth, "krb5") == 0) {
+	seteuid((uid_t)0);
     }
 
     /*
