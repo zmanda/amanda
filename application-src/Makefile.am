@@ -26,7 +26,8 @@ SCRIPTS_INCLUDE = \
 SCRIPTS_PERL = \
 	    amstar_perl \
 	    amgtar_perl \
-	    script-email
+	    script-email \
+	    amzfs-snapshot
 
 SCRIPTS_SHELL = $(amlibexec_SCRIPTS)
 

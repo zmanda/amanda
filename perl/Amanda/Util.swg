@@ -236,9 +236,10 @@ C<:quoting>.
 =cut
 %}
 
+char *sanitise_filename(char *inp);
 char *quote_string(char *);
 char *unquote_string(char *);
-amglue_export_tag(quoting, quote_string unquote_string);
+amglue_export_tag(quoting, quote_string unquote_string  sanitise_filename);
 
 /* -------------------------------------------------------------------------
  * Functions below this line are only meant to be called within this module;

@@ -1,4 +1,13 @@
 2008-07-17  Jean-Louis Martineau <martineau@zmanda.com>
+	* man/Makefile.am: Add amzfs-snapshot.8
+	* man/xml-source/amzfs-snapshot.8.xml: New man page.
+	* man/xml-source/amanda.8.xml: Add amzfs-snapshot.8
+	* man/xml-source/amanda-scripts.7.xml: Add amzfs-snapshot.8
+	* application-src/amzfs-snapshot.pl: New script
+	* application-src/Makefile.am: Add amzfs-snapshot
+	* perl/Amanda/Util.swg: Add sanitise_filename.
+
+2008-07-17  Jean-Louis Martineau <martineau@zmanda.com>
 	* amandad-src/amandad.c: amandad must be run by root for krb5 auth.
 
 2008-07-16  Jean-Louis Martineau <martineau@zmanda.com>

@@ -134,6 +134,9 @@ configuration files for quick reference.</para>
 <citerefentry><refentrytitle>amtoc</refentrytitle><manvolnum>8</manvolnum></citerefentry>&nbsp;
 </listitem>
 <listitem>
+<citerefentry><refentrytitle>amzfs-snapshot</refentrytitle><manvolnum>8</manvolnum></citerefentry>&nbsp;
+</listitem>
+<listitem>
 <citerefentry><refentrytitle>script-email</refentrytitle><manvolnum>8</manvolnum></citerefentry>&nbsp;
 </listitem>
 </itemizedlist>

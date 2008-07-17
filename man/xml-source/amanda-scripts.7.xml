@@ -32,6 +32,12 @@ see http://wiki.zmanda.com/index.php/Script_API.</para>
 
 <para>This section lists the scripts included with &A;, see their man page for instructions on using them.  For complete How-To information, consult the Amanda wiki at http://wiki.zmanda.com.</para>
 
+<refsect2><title>amzfs-snapshot</title>
+
+<para>amzfs-snapshot create snapshot of zfs filesystem, the snapshot can be used to backup a read-only filesystem.</para>
+
+</refsect2>
+
 <refsect2><title>script-email</title>
 
 <para>script-email is a simple script that sends one or more emails every time it is invoked.</para>
@@ -48,6 +54,7 @@ see http://wiki.zmanda.com/index.php/Script_API.</para>
 <refsect1><title>SEE ALSO</title>
 <para>
 <citerefentry><refentrytitle>amanda.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>amzfs-snapshot</refentrytitle><manvolnum>8</manvolnum></citerefentry>
 <citerefentry><refentrytitle>script-email</refentrytitle><manvolnum>8</manvolnum></citerefentry>
 </para>
 

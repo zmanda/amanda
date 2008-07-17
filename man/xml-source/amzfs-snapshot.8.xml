@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"
+[
+  <!-- entities files to use -->
+  <!ENTITY % global_entities SYSTEM '../entities/global.entities'>
+  %global_entities;
+]>
+
+<refentry id='amzfs-snapshot.8'>
+
+<refmeta>
+<refentrytitle>amzfs-snapshot</refentrytitle>
+<manvolnum>8</manvolnum>
+</refmeta>
+<refnamediv>
+<refname>amzfs-snapshot</refname>
+<refpurpose>Amanda script to create zfs snapshot</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+
+<refsect1><title>DESCRIPTION</title>
+
+<para>amzfs-snapshot is an &A; script implementing the Script API.  It should
+not be run by users directly.  It create a zfs snapshot of the filesystem
+where the path specified is mounted.</para>
+
+<para>PRE-DLE-* create a snapshot and the POST_DLE_* destroy the snapshot,
+*-DLE-AMCHECK, *-DLE-ESTIMATE and *-DLE-BACKUP must be set to be executed on the client:
+<programlisting>
+    execute-on  pre-dle-amcheck, post-dle-amcheck, pre-dle-estimate, post-dle-estimate, pre-dle-backup, post-dle-backup
+    execute-where client
+</programlisting></para>
+<para>The PRE_DLE_* script output a DIRECTORY property telling where the directory is located in the snapshot. The application must be able to use the DIRECTORY property, amgtar can do it.</para>
+
+<para>The script is run as the amanda user, it must have the priviledge to create and destroy snapshot:
+<programlisting>
+    zfs allow -ldu AMANDA_USER mount,snapshot,destroy FILESYSTEM
+</programlisting></para>
+
+</refsect1>
+
+<refsect1><title>PROPERTIES</title>
+
+<para>This section lists the properties that control amzfs-snapshot's functionality.
+See <citerefentry><refentrytitle>amanda-scripts</refentrytitle><manvolnum>7</manvolnum></citerefentry>
+for information on the Script API, script configuration.</para>
+
+<!-- PLEASE KEEP THIS LIST IN ALPHABETICAL ORDER -->
+<variablelist>
+ <!-- ==== -->
+ <varlistentry><term>DF-PATH</term><listitem>
+Path to the 'df' binary, search in $PATH by default.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>ZFS-PATH</term><listitem>
+Path to the 'zfs' binary, search in $PATH by default.
+</listitem></varlistentry>
+</variablelist>
+
+</refsect1>
+
+<refsect1><title>EXAMPLE</title>
+
+In this example, a dumptype is defined to use amzfs-snapshot script to create a snapshot and use amgtar to backup the snapshot.
+
+<programlisting>
+ define script-tool amzfs_snapshot {
+   comment "backup of zfs snapshot"
+   plugin  "amzfs-snapshot"
+   execute-on  pre-dle-amcheck, post-dle-amcheck, pre-dle-estimate, post-dle-estimate, pre-dle-backup, post-dle-backup
+   execute-where client
+   #property "DF-PATH" "/usr/sbin/df"
+   #property "ZFS-PATH" "/usr/sbin/df"
+ }
+
+ define dumptype user-zfs-amgtar {
+   dt_amgtar
+   script "amzfs_snapshot"
+ }
+</programlisting>
+</refsect1>
+
+<refsect1><title>AUTHORS</title>
+
+<para>Jean-Louis Martineau &email.jlm; and Dustin Mitchell &email.dustin;: Original text</para>
+</refsect1>
+
+<refsect1><title>SEE ALSO</title>
+<para>
+<citerefentry><refentrytitle>amanda.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>amanda-client.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>amanda-scripts</refentrytitle><manvolnum>7</manvolnum></citerefentry>
+</para>
+
+</refsect1>
+</refentry>
