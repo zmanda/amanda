@@ -1532,6 +1532,8 @@ echo "Amanda installation log can be found in '${INSTALL_LOG}' and errors (if an
 %{MANDIR}/man5/amanda.conf.5.gz
 %{MANDIR}/man5/amanda-client.conf.5.gz
 %{MANDIR}/man7/amanda-devices.7.gz
+%{MANDIR}/man7/amanda-applications.7.gz
+%{MANDIR}/man7/amanda-scripts.7.gz
 %{MANDIR}/man8/amaespipe.8.gz
 %{MANDIR}/man8/amanda.8.gz
 %{MANDIR}/man8/amcheckdump.8.gz
@@ -1578,8 +1580,10 @@ echo "Amanda installation log can be found in '${INSTALL_LOG}' and errors (if an
 %{AMLIBEXECDIR}/amplot.g
 %{AMLIBEXECDIR}/amplot.gp
 %docdir %{MANDIR}
-%{MANDIR}/man5
-%{MANDIR}/man8
+%{MANDIR}/man5/am*
+%{MANDIR}/man7/am*
+%{MANDIR}/man8/am*
+%{MANDIR}/man8/script-email.8.gz
 %doc %{AMANDAHOMEDIR}/amanda-release
 %docdir %{AMANDAHOMEDIR}/example
 %docdir %{AMANDAHOMEDIR}/template.d

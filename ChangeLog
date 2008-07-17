@@ -1,3 +1,7 @@
+2008-07-17 Dan Locks <dwlocks@zmanda.com>
+	* packaging/debian/amanda-enterprise-backup-*.install: added entries for
+	  applications and devices man pages.
+	  
 2008-07-17  Jean-Louis Martineau <martineau@zmanda.com>
 	* man/Makefile.am: Add amzfs-snapshot.8
 	* man/xml-source/amzfs-snapshot.8.xml: New man page.
