@@ -1036,21 +1036,21 @@ tapedev_is(void)
     if ((result = getconf_str(CNF_AMRECOVER_CHANGER)) != NULL  &&
         *result != '\0') {
 	dbprintf(_("tapedev_is amrecover_changer: %s\n"), result);
-	reply(200, result);
+	reply(200, "%s", result);
 	return 0;
     }
 
     /* use changer if possible */
     if ((result = getconf_str(CNF_TPCHANGER)) != NULL  &&  *result != '\0') {
 	dbprintf(_("tapedev_is tpchanger: %s\n"), result);
-	reply(200, result);
+	reply(200, "%s", result);
 	return 0;
     }
 
     /* get tapedev value */
     if ((result = getconf_str(CNF_TAPEDEV)) != NULL  &&  *result != '\0') {
 	dbprintf(_("tapedev_is tapedev: %s\n"), result);
-	reply(200, result);
+	reply(200, "%s", result);
 	return 0;
     }
 

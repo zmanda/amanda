@@ -1,3 +1,14 @@
+2008-07-18 Dan Locks <dwlocks@zmanda.com>
+	*  configure.in:  add format-security to gcc compile flags
+	*  server-src/amindexd.c,
+	   server-src/dumper.c,
+	   server-src/reporter.c,
+	   restore-src/restore.c,
+	   common-src/security-util.c,
+	   common-src/bsd-security.c:  replacemented unquoted strings in
+	   function arguments with "%s", arg.  jrfranks's suggestion, dustin provided
+	   syntax for the fix.
+
 2008-07-17 Dan Locks <dwlocks@zmanda.com>
 	* packaging/debian/amanda-enterprise-backup-*.install: added entries for
 	  applications and devices man pages.

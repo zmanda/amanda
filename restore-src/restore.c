@@ -149,7 +149,7 @@ lock_logfile(void)
 	amfree(process_name);
 	return 0;
     }
-    log_add(L_INFO, get_pname());
+    log_add(L_INFO, "%s", get_pname());
     return 1;
 }
 
@@ -1240,7 +1240,7 @@ conditional_device_open(char         *tapedev,
     if (rval->volume_label == NULL) {
 	char *errstr = stralloc2("Not an amanda tape: ",
 				 device_error(rval));
-        send_message(prompt_out, flags, their_features, errstr);
+        send_message(prompt_out, flags, their_features, "%s", errstr);
 	amfree(errstr);
         g_object_unref(rval);
         return NULL;

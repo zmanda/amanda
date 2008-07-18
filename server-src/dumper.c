@@ -506,7 +506,7 @@ main(
 		errstr = newvstrallocf(errstr,
 				     _("could not resolve localhost: %s"),
 				     gai_strerror(res));
-		q = squotef(errstr);
+		q = squotef("%s", errstr);
 		putresult(FAILED, "%s %s\n", handle, q);
 		log_add(L_FAIL, "%s %s %s %d [%s]", hostname, qdiskname,
 			dumper_timestamp, level, errstr);
@@ -522,7 +522,7 @@ main(
 		
 		errstr = newvstrallocf(errstr, _("port open: %s"),
 				      strerror(errno));
-		q = squotef(errstr);
+		q = squotef("%s", errstr);
 		putresult(FAILED, "%s %s\n", handle, q);
 		log_add(L_FAIL, "%s %s %s %d [%s]", hostname, qdiskname,
 			dumper_timestamp, level, errstr);

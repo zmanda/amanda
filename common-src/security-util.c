@@ -229,7 +229,7 @@ stream_sendpkt(
       pkt_type2str(pkt->type), pkt->type, strlen(pkt->body), pkt->body);
 
     if (security_stream_write(&rh->rs->secstr, buf, len) < 0) {
-	security_seterror(&rh->sech, security_stream_geterror(&rh->rs->secstr));
+	security_seterror(&rh->sech, "%s", security_stream_geterror(&rh->rs->secstr));
 	return (-1);
     }
     amfree(buf);
@@ -330,7 +330,7 @@ tcpm_stream_write(
 
     if (tcpm_send_token(rs->rc, rs->rc->write, rs->handle, &rs->rc->errmsg,
 			     buf, size)) {
-	security_stream_seterror(&rs->secstr, rs->rc->errmsg);
+	security_stream_seterror(&rs->secstr, "%s", rs->rc->errmsg);
 	return (-1);
     }
     return (0);
@@ -1064,7 +1064,7 @@ udpbsd_sendpkt(
      * Initialize this datagram, and add the header
      */
     dgram_zero(&rh->udp->dgram);
-    dgram_cat(&rh->udp->dgram, pkthdr2str(rh, pkt));
+    dgram_cat(&rh->udp->dgram, "%s", pkthdr2str(rh, pkt));
 
     /*
      * Add the security info.  This depends on which kind of packet we're
@@ -1090,7 +1090,7 @@ udpbsd_sendpkt(
     /*
      * Add the body, and send it
      */
-    dgram_cat(&rh->udp->dgram, pkt->body);
+    dgram_cat(&rh->udp->dgram, "%s", pkt->body);
 
     auth_debug(1,
      _("sec: udpbsd_sendpkt: %s (%d) pkt_t (len %zu) contains:\n\n\"%s\"\n\n"),
@@ -1585,7 +1585,7 @@ recvpkt_callback(
 	(*rh->fn.recvpkt)(rh->arg, NULL, S_ERROR);
 	return;
     case -1:
-	security_seterror(&rh->sech, security_stream_geterror(&rh->rs->secstr));
+	security_seterror(&rh->sech, "%s", security_stream_geterror(&rh->rs->secstr));
 	(*rh->fn.recvpkt)(rh->arg, NULL, S_ERROR);
 	return;
     default:
@@ -1639,7 +1639,7 @@ stream_read_sync_callback(
 
     if (rs->rc->pktlen <= 0) {
 	auth_debug(1, _("sec: stream_read_sync_callback: %s\n"), rs->rc->errmsg);
-	security_stream_seterror(&rs->secstr, rs->rc->errmsg);
+	security_stream_seterror(&rs->secstr, "%s", rs->rc->errmsg);
 	if(rs->closed_by_me == 0 && rs->closed_by_network == 0)
 	    sec_tcp_conn_put(rs->rc);
 	rs->closed_by_network = 1;
@@ -1685,7 +1685,7 @@ stream_read_callback(
 
     if (rs->rc->pktlen <= 0) {
 	auth_debug(1, _("sec: stream_read_callback: %s\n"), rs->rc->errmsg);
-	security_stream_seterror(&rs->secstr, rs->rc->errmsg);
+	security_stream_seterror(&rs->secstr, "%s", rs->rc->errmsg);
 	if(rs->closed_by_me == 0 && rs->closed_by_network == 0)
 	    sec_tcp_conn_put(rs->rc);
 	rs->closed_by_network = 1;

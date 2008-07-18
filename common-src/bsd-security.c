@@ -577,7 +577,7 @@ stream_read_sync_callback(
 	n = read(bs->fd, bs->databuf, sizeof(bs->databuf));
     } while ((n < 0) && ((errno == EINTR) || (errno == EAGAIN)));
     if (n < 0)
-        security_stream_seterror(&bs->secstr, strerror(errno));
+        security_stream_seterror(&bs->secstr, "%s", strerror(errno));
     bs->len = n;
 }
 
@@ -619,7 +619,7 @@ stream_read_callback(
     } while ((n < 0) && ((errno == EINTR) || (errno == EAGAIN)));
 
     if (n < 0)
-	security_stream_seterror(&bs->secstr, strerror(errno));
+	security_stream_seterror(&bs->secstr, "%s", strerror(errno));
 
     (*bs->fn)(bs->arg, bs->databuf, n);
 }

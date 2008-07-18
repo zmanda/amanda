@@ -791,7 +791,7 @@ main(
 	int exitcode;
         if((exitcode = pclose(mailf)) != 0) {
 	    char *exitstr = str_exit_status("mail command", exitcode);
-            error(exitstr);
+            error("%s", exitstr);
 	    /*NOTREACHED*/
 	}
         mailf = NULL;
