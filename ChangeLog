@@ -1,3 +1,7 @@
+2008-07-23  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/conffile.c: fix handling for config overwrites of
+	  non-string parameters
+
 2008-07-17  Jean-Louis Martineau <martineau@zmanda.com>
 	* amandad-src/amandad.c: amandad must be run by root for krb5 auth.
 

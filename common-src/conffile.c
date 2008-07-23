@@ -3967,7 +3967,7 @@ apply_config_overwrites(
 	if (key_parm->type == CONFTYPE_STR) {
 	    current_line = vstralloc("\"", value, "\"", NULL);
 	} else {
-	    current_line = stralloc("");
+	    current_line = stralloc(value);
 	}
 
 	current_char = current_line;
