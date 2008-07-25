@@ -1,3 +1,9 @@
+2008-07-25 Dan Locks <dwlocks@zmanda.com>
+	* packaging/deb/control: added alternative dependency of libssl0.9.8 for
+	  Ubuntu 8.x builds.  Added build dependencies for debhelper, fakeroot,
+	  libcurl-dev, libssl-dev.  Updated server and client dependency for curl
+	  to libcurl3
+
 2008-07-23  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/conffile.c: fix handling for config overwrites of
 	  non-string parameters
