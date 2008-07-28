@@ -508,50 +508,62 @@ unless ( $host ) {
 }
 
 
-&create_conf_dir;
-
+my $need_changer = 0;
 if ( defined $template ) {
-# validate user input to template
+
+    # validate user input to template
     chomp($template);
     my $found = 0;
-    @valid_templates = ( "harddisk", "single-tape", "tape-changer", "s3");
+    @valid_templates = ( "harddisk", "single-tape", "tape-changer", "s3" );
     foreach $elt (@valid_templates) {
-	if ($elt eq lc($template)) {
-	    $found = 1;
-	    last;
-	}
+        if ( $elt eq lc($template) ) {
+            $found = 1;
+            last;
+        }
     }
-    unless ( $found ) {
-	print STDERR "valid inputs to --templates are harddisk, single-tape, tape-changer or S3\n";
-	&usage;
-	exit 1;
+    unless ($found) {
+        print STDERR
+            "valid inputs to --templates are harddisk, single-tape, tape-changer or S3\n";
+        &usage;
+        exit 1;
+    }
+
+    # if tape-changer is chosen, check if mtx is installed
+    if ( $template eq "tape-changer" ) {
+        my $ok = 0;
+        for $dir ( "/usr/sbin", "/usr/local/sbin", "/usr/local/bin",
+            "/usr/bin", "/bin", "/opt/csw/sbin", split( ":", $oldPATH ) )
+        {
+            if ( -e "$dir/mtx" ) {
+                $ok = 1;
+                last;
+            }
+        }
+        unless ($ok) {
+            &mprint(
+                "ERROR: mtx binary not found, tape-changer template will not work and is not installed.\n"
+            );
+            &log_and_die(
+                "ERROR: Please install mtx and rerun the same command.\n",
+                0 );
+        }
+	$need_changer = 1;
+    }
+    elsif ( $template eq "S3" ) {
+	$need_changer = 1;
+    }
+
 }
-# if tape-changer is chosen, check if mtx is installed
-    if ($template eq "tape-changer") {
-      my $ok = 0;
-      for $dir ("/usr/sbin", "/usr/local/sbin", "/usr/local/bin", "/usr/bin", "/bin","/opt/csw/sbin",split(":",$oldPATH)) {
-	if ( -e "$dir/mtx" ) {
-	  $ok = 1;
-	  last;
-	}
-      }
-      unless ($ok) {
-	&mprint      ("ERROR: mtx binary not found, tape-changer template will not work and is not installed.\n");
-	&log_and_die ("ERROR: Please install mtx and rerun the same command.\n", 0);
-      }
-      unless ($changerfile) {$changerfile="$confdir/$config/changer.conf";}
-      open (CCONF, ">$changerfile")
-	|| &log_and_die ("ERROR: Cannot create $changerfile: $!\n", 1);
-      close (CCONF);
-  } elsif ($template eq "S3" ) {
 
-      unless ($changerfile) {$changerfile="$confdir/$config/changer.conf";}
-      open (CCONF, ">$changerfile")
-    || &log_and_die ("ERROR: Cannot create $changerfile: $!\n", 1);
-      close (CCONF);
+&create_conf_dir;
 
-  }
-
+if ($need_changer) {
+    unless ($changerfile) {
+	$changerfile = "$confdir/$config/changer.conf";
+    }
+    open( CCONF, ">$changerfile" )
+	|| &log_and_die( "ERROR: Cannot create $changerfile: $!\n", 1 );
+    close(CCONF);
 }
 
 &check_gnutarlist_dir;

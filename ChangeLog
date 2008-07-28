@@ -1,4 +1,9 @@
 2008-07-28  Dustin J. Mitchell <dustin@zmanda.com>
+	* server-src/amserverconfig.pl: apply perltidy, factor some common
+	  code, and create the config dir and changer conf only after the check
+	  for mtx is performed
+
+2008-07-28  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/tests/semaphore-test.c: move function call out of
 	  variable initialization
 
