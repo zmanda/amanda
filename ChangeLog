@@ -1,4 +1,7 @@
 2008-07-28  Dustin J. Mitchell <dustin@zmanda.com>
+	* client-src/sendsize.c: remove cruft causing compile errors on HP/UX
+
+2008-07-28  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/tests/semaphore-test.c: move function call out of
 	  variable initialization
 

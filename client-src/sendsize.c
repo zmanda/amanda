@@ -1087,7 +1087,7 @@ getsize_dump(
     char       *disk,
     char       *amdevice,
     int		level,
-    option_t   *options,
+    option_t   *options G_GNUC_UNUSED,
     char      **errmsg)
 {
     int pipefd[2], nullfd, stdoutfd, killctl[2];
@@ -1111,10 +1111,6 @@ getsize_dump(
 #if defined(DUMP) || defined(VDUMP) || defined(VXDUMP) || defined(XFSDUMP)
     int is_rundump = 1;
 #endif
-
-    (void)options;	/* Quiet unused parameter warning */
-
-    (void)getsize_smbtar;	/* Quiet unused parameter warning */
 
     g_snprintf(level_str, SIZEOF(level_str), "%d", level);
 
