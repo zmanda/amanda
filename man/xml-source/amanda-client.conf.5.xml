@@ -25,132 +25,15 @@ relevant sections and parameters of this file for quick reference.</para>
 <para> The files <emphasis remap='B'>&lt;CONFIG_DIR&gt;/amanda-client.conf</emphasis> and <emphasis remap='B'>&lt;CONFIG_DIR&gt;/&lt;config&gt;/amanda-client.conf</emphasis> are loaded.</para>
 </refsect1>
 
-<refsect1><title>PARAMETERS</title>
+<refsect1><title>SYNTAX</title>
 
-<para>There are a number of configuration parameters that control the
-behavior of the &A; programs.
-All have default values,
-so you need not specify the parameter in
-<emphasis remap='B'>amanda-client.conf</emphasis>
-if the default is suitable.</para>
+The syntax of &amclientconf; is identical to that for
+<citerefentry><refentrytitle>amanda.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>.
 
-<para>Lines starting with # are ignored, as are blank lines.
-Comments may be placed on a line with a directive by starting
-the comment with a #.
-The remainder of the line is ignored.</para>
+</refsect1>
 
-<para>Keywords are case insensitive, i.e.
-<emphasis remap='B'>mailto</emphasis>
-and
-<emphasis remap='B'>MailTo</emphasis>
-are treated the same.  Also, the characters
-<emphasis remap='B'>'-'</emphasis>
-and
-<emphasis remap='B'>'_'</emphasis>
-are interchangeable: 
-<emphasis remap='B'>device_property</emphasis>
-and
-<emphasis remap='B'>device-property</emphasis>
-have the same meaning.
-</para>
-
-<para>Integer arguments may have one of the following (case insensitive) suffixes,
-some of which have a multiplier effect:</para>
-
-<refsect2><title>POSSIBLE SUFFIXES</title>
-
-<variablelist remap='TP'>
-  <varlistentry>
-  <term><emphasis remap='B'>b byte bytes</emphasis></term>
-  <listitem>
-<para>Some number of bytes.</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
-  <term><emphasis remap='B'>bps</emphasis></term>
-  <listitem>
-<para>Some number of bytes per second.</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
-  <term><emphasis remap='B'>k kb kbyte kbytes kilobyte kilobytes</emphasis></term>
-  <listitem>
-<para>Some number of kilobytes (bytes*1024).</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
-  <term><emphasis remap='B'>kps kbps</emphasis></term>
-  <listitem>
-<para>Some number of kilobytes per second (bytes*1024).</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
-  <term><emphasis remap='B'>m mb meg mbyte mbytes megabyte megabytes</emphasis></term>
-  <listitem>
-<para>Some number of megabytes (bytes*1024*1024).</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
-  <term><emphasis remap='B'>mps mbps</emphasis></term>
-  <listitem>
-<para>Some number of megabytes per second (bytes*1024*1024).</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
-  <term><emphasis remap='B'>g gb gbyte gbytes gigabyte gigabytes</emphasis></term>
-  <listitem>
-<para>Some number of gigabytes (bytes*1024*1024*1024).</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
-  <term><emphasis remap='B'>tape tapes</emphasis></term>
-  <listitem>
-<para>Some number of tapes.</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
-  <term><emphasis remap='B'>day days</emphasis></term>
-  <listitem>
-<para>Some number of days.</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
-  <term><emphasis remap='B'>week weeks</emphasis></term>
-  <listitem>
-<para>Some number of weeks (days*7).</para>
-
-<note><para>The value
-<emphasis remap='B'>inf</emphasis>
-may be used in most places where an integer is expected
-to mean an infinite amount.</para>
-
-<para>Boolean arguments may have any of the values
-<emphasis remap='B'>y</emphasis>,
-<emphasis remap='B'>yes</emphasis>,
-<emphasis remap='B'>t</emphasis>,
-<emphasis remap='B'>true</emphasis>
-or
-<emphasis remap='B'>on</emphasis>
-to indicate a true state, or
-<emphasis remap='B'>n</emphasis>,
-<emphasis remap='B'>no</emphasis>,
-<emphasis remap='B'>f</emphasis>,
-<emphasis remap='B'>false</emphasis>
-or
-<emphasis remap='B'>off</emphasis>
-to indicate a false state.
-If no argument is given,
-<emphasis remap='B'>true</emphasis>
-is assumed.
-</para>
-</note>
-  </listitem>
-  </varlistentry>
-</variablelist>
-</refsect2>
-
-<refsect2>
-<title>PARAMETERS</title>
+<refsect1>
+<title>GLOBAL PARAMETERS</title>
 
 <variablelist remap='TP'>
   <varlistentry>
@@ -401,7 +284,6 @@ Unreserved tcp port that will be used (bsd, bsdudp)</para>
   </varlistentry>
 
 </variablelist>
-</refsect2>
 </refsect1>
 
 <refsect1><title>APPLICATION SECTION</title>
@@ -412,7 +294,7 @@ The information is entered in a <emphasis remap='B'>application-tool</emphasis>
 section, which looks like this:</para>
 
 <programlisting>
-define application-tool <emphasis remap='I'>name</emphasis> {
+define application-tool "<emphasis remap='I'>name</emphasis>" {
     <emphasis remap='I'>application-option</emphasis> <emphasis remap='I'>appli
 cation-value</emphasis>
     <literal>...</literal>
@@ -462,7 +344,7 @@ The information is entered in a <emphasis remap='B'>script-tool</emphasis>
 section, which looks like this:</para>
 
 <programlisting>
-define script-tool <emphasis remap='I'>name</emphasis> {
+define script-tool "<emphasis remap='I'>name</emphasis>" {
     <emphasis remap='I'>script-option</emphasis> <emphasis remap='I'>script-value</emphasis>
     <literal>...</literal>
 }

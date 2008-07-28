@@ -86,7 +86,9 @@ sub new {
 	    'logdir' => "\"$logdir\"",
 	    'indexdir' => "\"$indexdir\"",
 
-	    'tapetype' => '"TEST-TAPE"',
+	    # (this is actually added while writing the config file, if not
+	    # overridden by the caller)
+	    # 'tapetype' => '"TEST-TAPE"',
 	],
 
 	# global client config
@@ -166,7 +168,7 @@ sub add_client_config_param {
 
 =item C<add_tapetype($name, $values_arrayref)>
 =item C<add_dumptype($name, $values_arrayref)>
-=item C<addholdingdisk($name, $values_arrayref)>
+=item C<add_holdingdisk($name, $values_arrayref)>
 =item C<add_interface($name, $values_arrayref)>
 =item C<add_application($name, $values_arrayref)>
 =item C<add_script($name, $values_arrayref)>
@@ -299,10 +301,17 @@ sub _write_amanda_conf {
 
     # write key/value pairs
     my @params = @{$self->{'params'}};
+    my $saw_tapetype = 0;
     while (@params) {
 	$param = shift @params;
 	$value = shift @params;
 	print $amanda_conf "$param $value\n";
+	$saw_tapetype = 1 if ($param eq "tapetype");
+    }
+
+    # tapetype is special-cased: if the user has not specified a tapetype, use "TEST-TAPE".
+    if (!$saw_tapetype) {
+	print $amanda_conf "tapetype \"TEST-TAPE\"\n";
     }
 
     # write out subsections

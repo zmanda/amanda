@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 98;
+use Test::More tests => 102;
 use strict;
 
 use lib "@amperldir@";
@@ -520,6 +520,42 @@ SKIP: {
 	"'optional' has no effect when not on the last occurrence");
 }
 
-# TODO:
-# inheritance
-# more init
+##
+# Check out where quoting is and is not required.
+
+$testconf = Installcheck::Config->new();
+
+# make sure an unquoted tapetype is OK
+$testconf->add_param('tapetype', 'TEST-TAPE'); # unquoted (Installcheck::Config uses quoted)
+
+# strings can optionally be quoted
+$testconf->add_param('org', '"MyOrg"');
+
+# enumerations (e.g., taperalgo) must not be quoted; implicitly tested above
+
+# definitions
+$testconf->add_dumptype('"parent"', [ # note quotes
+    'bumpsize' => '10240',
+]);
+$testconf->add_dumptype('child', [
+    '' => '"parent"', # note quotes
+]);
+$testconf->add_dumptype('child2', [
+    '' => 'parent',
+]);
+$testconf->write();
+
+$cfg_result = config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
+is($cfg_result, $CFGERR_OK,
+    "parsed config to test strings vs. identifiers")
+    or diag_config_errors();
+SKIP: {
+    skip "error loading config", 3 unless $cfg_result == $CFGERR_OK;
+
+    my $dtyp = lookup_dumptype("parent");
+    ok($dtyp, "found parent");
+    $dtyp = lookup_dumptype("child");
+    ok($dtyp, "found child");
+    is(dumptype_getconf($dtyp, $DUMPTYPE_BUMPSIZE), 10240,
+	"child dumptype correctly inherited bumpsize");
+}

@@ -25,7 +25,7 @@ relevant sections and parameters of this file for quick reference.</para>
 <para> The file <emphasis remap='B'>&lt;CONFIG_DIR&gt;/&lt;config&gt;/amanda.conf</emphasis> is loaded.</para>
 </refsect1>
 
-<refsect1><title>PARAMETERS</title>
+<refsect1><title>SYNTAX</title>
 
 <para>There are a number of configuration parameters that control the
 behavior of the &A; programs.
@@ -34,10 +34,15 @@ so you need not specify the parameter in
 <emphasis remap='B'>amanda.conf</emphasis>
 if the default is suitable.</para>
 
+<refsect2><title>COMMENTS</title>
+
 <para>Lines starting with # are ignored, as are blank lines.
 Comments may be placed on a line with a directive by starting
 the comment with a #.
 The remainder of the line is ignored.</para>
+</refsect2>
+
+<refsect2><title>KEYWORDS AND IDENTIFIERS</title>
 
 <para>Keywords are case insensitive, i.e.
 <emphasis remap='B'>mailto</emphasis>
@@ -47,17 +52,49 @@ are treated the same.  Also, the characters
 <emphasis remap='B'>'-'</emphasis>
 and
 <emphasis remap='B'>'_'</emphasis>
-are interchangeable: 
+are interchangeable in all predefined &A; keywords:
 <emphasis remap='B'>device_property</emphasis>
 and
 <emphasis remap='B'>device-property</emphasis>
-have the same meaning.
+have the same meaning.</para>
+
+<para>Identifiers are names which are defined in the configuration itself, such
+as dumptypes or interfaces.  Identifiers are are case-insensitive, but
+sensitive to
+<emphasis remap='B'>'-'</emphasis>
+vs.
+<emphasis remap='B'>'_'</emphasis>.
+Identifiers should be quoted in the configuration file, although For historical
+reasons, the quotes are optional.</para>
+
+<para>Strings are always quoted with double quotes ("), and any double quotes
+or backslashes within the string are escaped with a backslash:
+<programlisting>
+tapelist "/path/to/tapelist"
+property "escaped-string" "escaping: \\ (backslash) and \" (double-quote)"
+</programlisting>
 </para>
+
+<para>To summarize, then:
+<programlisting>
+                          # QUOTES        CASE            -/_
+logdir "logs"             # required      sensitive       sensitive
+send-amreport-on strange  # prohibited    insensitive     insensitive
+tapetype "EXABYTE"        # optional      insensitive     sensitive
+
+define dumptype "dt" {    # optional      insensitive     sensitive
+  "dumptype-common"       # optional      insensitive     sensitive
+  strategy noincr         # prohibited    insensitive     insensitive
+}
+</programlisting>
+</para>
+
+</refsect2>
+
+<refsect2><title>VALUE SUFFIXES</title>
 
 <para>Integer arguments may have one of the following (case insensitive) suffixes,
 some of which have a multiplier effect:</para>
-
-<refsect2><title>POSSIBLE SUFFIXES</title>
 
 <variablelist remap='TP'>
   <varlistentry>
@@ -149,8 +186,19 @@ is assumed.
 </variablelist>
 </refsect2>
 
-<refsect2>
-<title>PARAMETERS</title>
+<refsect2><title>PARAMETER ORDER</title>
+
+<para>In general, the order in which parameters occur in the configuration file
+does not matter, with the exception of subsection inheritance.  For example, if
+dumptype "normal-encrypt" which inherits from dumptype "normal", then "normal"
+must appear first in the configuration file.</para>
+
+</refsect2>
+
+</refsect1>
+
+<refsect1>
+<title>GLOBAL PARAMETERS</title>
 
 <variablelist remap='TP'>
   <varlistentry>
@@ -519,10 +567,10 @@ to avoid overwriting each other's tapes.</para>
 </listitem>
 </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>tapetype</emphasis> <emphasis remap='I'> string</emphasis></term>
+  <term><emphasis remap='B'>tapetype</emphasis> <emphasis remap='I'> identifier</emphasis></term>
   <listitem>
 <para>Default:
-<emphasis remap='I'>EXABYTE</emphasis>.
+<emphasis remap='I'>"EXABYTE"</emphasis>.
 The type of tape drive associated with
 <emphasis remap='B'>tapedev</emphasis>
 or
@@ -535,8 +583,6 @@ like the
 size, and
 <emphasis remap='B'>speed</emphasis>
 of the tape media and device.</para>
-<para>First character of a <emphasis remap='B'>tapetype</emphasis> string must
-be an alphabetic character</para>
   </listitem>
   </varlistentry>
   <varlistentry>
@@ -1149,7 +1195,6 @@ Range is inclusive.</para>
   </varlistentry>
 
 </variablelist>
-</refsect2>
 </refsect1>
 
 <refsect1><title>HOLDINGDISK SECTION</title>
@@ -1241,7 +1286,7 @@ another set for file systems that should always get a full backup and so on.</pa
 section, which looks like this:</para>
 
 <programlisting>
-define dumptype <emphasis remap='I'>name</emphasis> {
+define dumptype "<emphasis remap='I'>name</emphasis>" {
     <emphasis remap='I'>dumptype-option</emphasis> <emphasis remap='I'>dumptype-value</emphasis>
     <literal>...</literal>
 }
@@ -1932,31 +1977,31 @@ the dump server may reasonably consume.
 <para>The following <emphasis remap='B'>dumptype</emphasis> entries are predefined by &A;:</para>
 
 <programlisting remap='.nf'>
-define dumptype no-compress {
+define dumptype "no-compress" {
     compress none
 }
-define dumptype compress-fast {
+define dumptype "compress-fast" {
     compress client fast
 }
-define dumptype compress-best {
+define dumptype "compress-best" {
     compress client best
 }
-define dumptype srvcompress {
+define dumptype "srvcompress" {
     compress server fast
 }
-define dumptype bsd-auth {
+define dumptype "bsd-auth" {
     auth bsd
 }
-define dumptype krb4-auth {
+define dumptype "krb4-auth" {
     auth krb4
 }
-define dumptype no-record {
+define dumptype "no-record" {
     record no
 }
-define dumptype no-hold {
+define dumptype "no-hold" {
     holdingdisk no
 }
-define dumptype no-full {
+define dumptype "no-full" {
     skip-full yes
 } 
 </programlisting>
@@ -1965,7 +2010,7 @@ define dumptype no-full {
 <emphasis remap='B'>dumptype</emphasis>
 section, one or more other
 <emphasis remap='B'>dumptype</emphasis>
-names may be entered, which make this
+names may be supplied as identifiers, which make this
 <emphasis remap='B'>dumptype</emphasis>
 inherit options from other previously defined
 <emphasis remap='B'>dumptype</emphasis>s.
@@ -1973,15 +2018,15 @@ For instance, two sections might be the same except for the
 <emphasis remap='B'>record</emphasis> option:</para>
 
 <programlisting remap='.nf'>
-define dumptype normal {
+define dumptype "normal" {
     comment &quot;Normal backup, no compression, do indexing&quot;
     no-compress
     index yes
     maxdumps 2
 }
-define dumptype testing {
+define dumptype "testing" {
     comment &quot;Test backup, no compression, do indexing, no recording&quot;
-    normal
+    "normal"
     record no
 }
 </programlisting>
@@ -2007,7 +2052,7 @@ The information is entered in a
 section, which looks like this in the config file:</para>
 
 <programlisting>
-define tapetype <emphasis remap='I'>name</emphasis> {
+define tapetype "<emphasis remap='I'>name</emphasis>" {
     <emphasis remap='I'>tapetype-option</emphasis> <emphasis remap='I'>tapetype-value</emphasis>
     <literal>...</literal>
 }
@@ -2126,7 +2171,7 @@ man page for more information.</para>
 
 <para>In addition to options, another
 <emphasis remap='B'>tapetype</emphasis>
-name may be entered, which makes this
+name may be supplie as an identifier, which makes this
 <emphasis remap='B'>tapetype</emphasis>
 inherit options from another
 <emphasis remap='B'>tapetype</emphasis>.
@@ -2135,14 +2180,14 @@ Compact-III tapes and one using Compact-IV tapes is the length of the tape.
 So they could be entered as:</para>
 
 <programlisting remap='.nf'>
-define tapetype DLT4000-III {
+define tapetype "DLT4000-III" {
     comment &quot;DLT4000 tape drives with Compact-III tapes&quot;
     length 12500 mbytes         # 10 Gig tapes with some compression
     filemark 2000 kbytes
     speed 1536 kps
 }
-define tapetype DLT4000-IV {
-    DLT4000-III
+define tapetype "DLT4000-IV" {
+    "DLT4000-III"
     comment &quot;DLT4000 tape drives with Compact-IV tapes&quot;
     length 25000 mbytes         # 20 Gig tapes with some compression
 }
@@ -2163,7 +2208,7 @@ The information is entered in an <emphasis remap='B'>interface</emphasis>
 section, which looks like this:</para>
 
 <programlisting>
-define interface <emphasis remap='I'>name</emphasis> {
+define interface "<emphasis remap='I'>name</emphasis>" {
     <emphasis remap='I'>interface-option</emphasis> <emphasis remap='I'>interface-value</emphasis>
     <literal>...</literal>
 }
@@ -2204,7 +2249,7 @@ The speed of the interface in Kbytes per second.</para>
 
 <para>In addition to options, another
 <emphasis remap='B'>interface</emphasis>
-name may be entered, which makes this
+name may be supplied as an identifier, which makes this
 <emphasis remap='B'>interface</emphasis>
 inherit options from another
 <emphasis remap='B'>interface</emphasis>.
@@ -2219,7 +2264,7 @@ The information is entered in a <emphasis remap='B'>application-tool</emphasis>
 section, which looks like this:</para>
 
 <programlisting>
-define application-tool <emphasis remap='I'>name</emphasis> {
+define application-tool "<emphasis remap='I'>name</emphasis>" {
     <emphasis remap='I'>application-option</emphasis> <emphasis remap='I'>application-value</emphasis>
     <literal>...</literal>
 }
@@ -2266,7 +2311,7 @@ The information is entered in a <emphasis remap='B'>script-tool</emphasis>
 section, which looks like this:</para>
 
 <programlisting>
-define script-tool <emphasis remap='I'>name</emphasis> {
+define script-tool "<emphasis remap='I'>name</emphasis>" {
     <emphasis remap='I'>script-option</emphasis> <emphasis remap='I'>script-value</emphasis>
     <literal>...</literal>
 }

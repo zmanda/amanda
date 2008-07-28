@@ -1,4 +1,12 @@
 2008-07-28  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Installcheck/Config.pm: don't set default tapetype
+	  unless not set explicitly.
+	* installcheck/Amanda_Config.pl: test changes
+	* man/xml-source/amanda-client.conf.5.xml
+	  man/xml-source/amanda.conf.5.xml: encourage, but don't require,
+	  quoted identifiers
+
+2008-07-28  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/amserverconfig.pl: apply perltidy, factor some common
 	  code, and create the config dir and changer conf only after the check
 	  for mtx is performed
