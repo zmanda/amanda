@@ -1,3 +1,7 @@
+2008-07-28  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/tests/semaphore-test.c: move function call out of
+	  variable initialization
+
 2008-07-25 Dan Locks <dwlocks@zmanda.com>
 	* packaging/deb/control: added alternative dependency of libssl0.9.8 for
 	  Ubuntu 8.x builds.  Added build dependencies for debhelper, fakeroot,
@@ -55,7 +59,6 @@
 	* example/inetd.conf.amandaclient.in example/xinetd.amandaclient.in
 	  example/xinetd.amandaserver.in: give appropriate path for amandad,
 	  from configure (fixes builds on 64-bit machines)
-
 2008-07-15  Dustin J. Mitchell <dustin@zmanda.com>
 	* client-src/client_util.c: #include "glib-util.h"
 	* common-src/glib-util.c: New g_ptr_array_foreach fucntion.
