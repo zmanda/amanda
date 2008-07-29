@@ -1,3 +1,14 @@
+2007-07-28 Nikolas Coukouma <atrus@zmanda.com>
+	* device-src/s3.c: Calculate and send the MD5 hash when uploading data.
+	  Also check the returned ETag to make sure it matches the sent MD5 hash.
+	  Use simpler s3_base64_encode() instead of base64_encode().
+	  Correct the use of character classes in several regular expressions.
+	* device-src/s3-util.h, device-src/s3-util.c: Add utility functions
+	  s3_base64_encode(), s3_hex_encode(), and s3_compute_md5_hash() as well
+	  as some constants. Move regexec_wrap() into this and rename it to
+	  s3_regexec_wrap().
+	* device-src/Makefile.am: add s3-util.c and s3-util.h
+
 2008-07-28  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Installcheck/Config.pm: don't set default tapetype
 	  unless not set explicitly.

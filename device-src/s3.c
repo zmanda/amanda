@@ -19,7 +19,6 @@
  */
 
 /* TODO
- * - Compute and send Content-MD5 header
  * - collect speed statistics
  * - debugging mode
  */
@@ -34,7 +33,7 @@
 #include "util.h"
 #include "amanda.h"
 #include "s3.h"
-#include "base64.h"
+#include "s3-util.h"
 #include <curl/curl.h>
 
 /* Constant renamed after version 7.10.7 */
@@ -60,10 +59,6 @@
 
 #include <openssl/err.h>
 #include <openssl/ssl.h>
-
-/*
- * Constants / definitions
- */
 
 /* Maximum key length as specified in the S3 documentation
  * (*excluding* null terminator) */
@@ -164,17 +159,6 @@ s3_error_name_from_code(s3_error_code_t s3_error_code);
 static gboolean
 s3_curl_supports_ssl(void);
 
-/* Wrapper around regexec to handle programmer errors.
- * Only returns if the regexec returns 0 (match) or REG_NOSUB.
- * See regexec documentation for the rest.
- */
-static int
-regexec_wrap(regex_t *regex,
-           const char *str,
-           size_t nmatch,
-           regmatch_t pmatch[],
-           int eflags);
-
 
 /*
  * result handling */
@@ -217,7 +201,8 @@ lookup_result(const result_handling_t *result_handling,
 
 /*
  * Precompiled regular expressions */
-static regex_t error_name_regex, message_regex, subdomain_regex, location_con_regex;
+static regex_t etag_regex, error_name_regex, message_regex, subdomain_regex,
+    location_con_regex;
 
 /*
  * Utility functions
@@ -255,6 +240,7 @@ build_url(const char *bucket,
  * @param bucket: the bucket being accessed, or NULL for none
  * @param key: the key being accessed, or NULL for none
  * @param subresource: the sub-resource being accessed (e.g. "acl"), or NULL for none
+ * @param md5_hash: the MD5 hash of the request body, or NULL for none
  * @param use_subdomain: if TRUE, a subdomain of s3.amazonaws.com will be used
  */
 static struct curl_slist *
@@ -263,7 +249,10 @@ authenticate_request(S3Handle *hdl,
                      const char *bucket,
                      const char *key,
                      const char *subresource,
+                     const char *md5_hash,
 		     gboolean use_subdomain);
+
+
 
 /* Interpret the response to an S3 operation, assuming CURL completed its request
  * successfully.  This function fills in the relevant C{hdl->last*} members.
@@ -271,6 +260,10 @@ authenticate_request(S3Handle *hdl,
  * @param hdl: The S3Handle object
  * @param body: the response body
  * @param body_len: the length of the response body
+ * @param content_md5: The hex-encoded MD5 hash of the request body, 
+ *     which will be checked against the response's ETag header.
+ *     If NULL, the header is not checked.
+ *     If non-NULL, then the body should have the response headers at its beginnning.
  * @returns: TRUE if the response should be retried (e.g., network error)
  */
 static gboolean
@@ -278,7 +271,8 @@ interpret_response(S3Handle *hdl,
                    CURLcode curl_code,
                    char *curl_error_buffer,
                    void *body,
-                   guint body_len);
+                   guint body_len,
+                   const char *content_md5);
 
 /* Perform an S3 operation.  This function handles all of the details
  * of retryig requests and so on.
@@ -359,7 +353,6 @@ static gboolean
 s3_curl_supports_ssl(void)
 {
     static int supported = -1;
-
     if (supported == -1) {
 #if defined(CURL_VERSION_SSL)
 	curl_version_info_data *info = curl_version_info(CURLVERSION_NOW);
@@ -462,6 +455,7 @@ authenticate_request(S3Handle *hdl,
                      const char *bucket,
                      const char *key,
                      const char *subresource,
+                     const char *md5_hash,
 		     gboolean use_subdomain) 
 {
     time_t t;
@@ -469,9 +463,8 @@ authenticate_request(S3Handle *hdl,
     char date[100];
     char *buf = NULL;
     HMAC_CTX ctx;
-    char md_value[EVP_MAX_MD_SIZE+1];
-    char auth_base64[40];
-    unsigned int md_len;
+    GByteArray *md = NULL;
+    char *auth_base64 = NULL;
     struct curl_slist *headers = NULL;
     char *esc_bucket = NULL, *esc_key = NULL;
     GString *auth_string = NULL;
@@ -484,8 +477,13 @@ authenticate_request(S3Handle *hdl,
     auth_string = g_string_new(verb);
     g_string_append(auth_string, "\n");
     
-    /* Content-MD5 and Content-Type are both empty*/
-    g_string_append(auth_string, "\n\n");
+    /* Content-MD5 header */
+    if (md5_hash)
+        g_string_append(auth_string, md5_hash);
+    g_string_append(auth_string, "\n");
+
+    /* Content-Type is empty*/
+    g_string_append(auth_string, "\n");
 
 
     /* calculate the date */
@@ -533,13 +531,13 @@ authenticate_request(S3Handle *hdl,
     }
 
     /* run HMAC-SHA1 on the canonicalized string */
+    md = g_byte_array_sized_new(EVP_MAX_MD_SIZE+1);
     HMAC_CTX_init(&ctx);
     HMAC_Init_ex(&ctx, hdl->secret_key, strlen(hdl->secret_key), EVP_sha1(), NULL);
     HMAC_Update(&ctx, (unsigned char*) auth_string->str, auth_string->len);
-    md_len = EVP_MAX_MD_SIZE;
-    HMAC_Final(&ctx, (unsigned char*)md_value, &md_len);
+    HMAC_Final(&ctx, md->data, &md->len);
     HMAC_CTX_cleanup(&ctx);
-    base64_encode(md_value, md_len, auth_base64, sizeof(auth_base64));
+    auth_base64 = s3_base64_encode(md);
 
     /* append the new headers */
     if (hdl->user_token) {
@@ -558,40 +556,23 @@ authenticate_request(S3Handle *hdl,
     headers = curl_slist_append(headers, buf);
     amfree(buf);
     
+    if (md5_hash && '\0' != md5_hash[0]) {
+        buf = g_strdup_printf("Content-MD5: %s", md5_hash);
+        headers = curl_slist_append(headers, buf);
+        amfree(buf);
+    }
+
     buf = g_strdup_printf("Date: %s", date);
     headers = curl_slist_append(headers, buf);
+    amfree(buf);
 cleanup:
     g_free(esc_bucket);
     g_free(esc_key);
+    g_byte_array_free(md, TRUE);
+    g_free(auth_base64);
     g_string_free(auth_string, TRUE);
 
     return headers;
-}
-
-static int
-regexec_wrap(regex_t *regex,
-           const char *str,
-           size_t nmatch,
-           regmatch_t pmatch[],
-           int eflags)
-{
-    char *message;
-    int size;
-    int reg_result;
-
-    reg_result = regexec(regex, str, nmatch, pmatch, eflags);
-    if (reg_result != 0 && reg_result != REG_NOMATCH) {
-        size = regerror(reg_result, regex, NULL, 0);
-        message = g_malloc(size);
-        regerror(reg_result, regex, message, size);
-
-        /* this is programmer error (bad regexp), so just log
-         * and abort().  There's no good way to signal a
-         * permanaent error from interpret_response. */
-        g_critical(_("Regex error: %s"), message);
-    }
-
-    return reg_result;
 }
 
 static gboolean
@@ -599,12 +580,16 @@ interpret_response(S3Handle *hdl,
                    CURLcode curl_code,
                    char *curl_error_buffer,
                    void *body,
-                   guint body_len)
+                   guint body_len,
+                   const char *content_md5)
 {
     long response_code = 0;
     regmatch_t pmatch[2];
     char *error_name = NULL, *message = NULL;
     char *body_copy = NULL;
+    long header_len;
+    gchar *headers = NULL, *etag = NULL;
+    gboolean ret = TRUE;
 
     if (!hdl) return FALSE;
 
@@ -622,8 +607,33 @@ interpret_response(S3Handle *hdl,
     curl_easy_getinfo(hdl->curl, CURLINFO_RESPONSE_CODE, &response_code);
     hdl->last_response_code = response_code;
 
-    /* 2xx and 3xx codes won't have a response body*/
+    if (content_md5) {
+        /* seperate and null-terminate headers */
+        curl_easy_getinfo(hdl->curl, CURLINFO_HEADER_SIZE, &header_len);
+        headers = g_strndup(body, header_len);
+        /* fix up the body */
+        body_len -= header_len;
+        memmove(body, body+header_len, body_len);
+        bzero(body+body_len, header_len);
+    }
+
+    if (content_md5 && 200 == response_code) {
+        /* check ETag, if present */
+        if (!s3_regexec_wrap(&etag_regex, headers, 2, pmatch, 0))
+            etag = find_regex_substring(headers, pmatch[1]);
+        if (etag && strcasecmp(etag, content_md5))
+            hdl->last_message = g_strdup("S3 Error: Possible data corruption (ETag returned by Amazon did not match the MD5 hash of the data sent)");
+        else
+            ret = FALSE;
+
+        g_free(etag);
+        g_free(headers);
+        return ret;
+    }
+    g_free(headers);
+
     if (200 <= response_code && response_code < 400) {
+        /* 2xx and 3xx codes won't have a response body we care about */
         hdl->last_s3_error_code = S3_ERROR_None;
         return FALSE;
     }
@@ -644,10 +654,10 @@ interpret_response(S3Handle *hdl,
     body_copy = g_strndup(body, body_len);
     if (!body_copy) goto cleanup;
 
-    if (!regexec_wrap(&error_name_regex, body_copy, 2, pmatch, 0))
+    if (!s3_regexec_wrap(&error_name_regex, body_copy, 2, pmatch, 0))
         error_name = find_regex_substring(body_copy, pmatch[1]);
 
-    if (!regexec_wrap(&message_regex, body_copy, 2, pmatch, 0))
+    if (!s3_regexec_wrap(&message_regex, body_copy, 2, pmatch, 0))
         message = find_regex_substring(body_copy, pmatch[1]);
 
     if (error_name) {
@@ -660,9 +670,9 @@ interpret_response(S3Handle *hdl,
     }
 
 cleanup:
-    if (body_copy) g_free(body_copy);
-    if (message) g_free(message);
-    if (error_name) g_free(error_name);
+    g_free(body_copy);
+    g_free(message);
+    g_free(error_name);
 
     return FALSE;
 }
@@ -781,6 +791,14 @@ perform_request(S3Handle *hdl,
     gboolean should_retry;
     guint retries = 0;
     gulong backoff = EXPONENTIAL_BACKOFF_START_USEC;
+    /* corresponds to PUT, HEAD, GET, and POST */
+    int curlopt_upload = 0, curlopt_nobody = 0, curlopt_httpget = 0, curlopt_post = 0;
+    /* do we want to examine the headers */
+    int curlopt_header = 0;
+    const char *curlopt_customrequest = NULL;
+    /* for MD5 calculation */
+    GByteArray *md5_hash = NULL;
+    gchar *md5_hash_hex = NULL, *md5_hash_b64 = NULL;
 
     g_assert(hdl != NULL && hdl->curl != NULL);
 
@@ -795,14 +813,31 @@ perform_request(S3Handle *hdl,
         writedata.buffer_len = preallocate_response_size;
     }
 
-    if (!request_body)
+    /* libcurl may behave strangely if these are not set correctly */
+    if (!strncmp(verb, "PUT", 4)) {
+        curlopt_upload = 1;
+    } else if (!strncmp(verb, "GET", 4)) {
+        curlopt_httpget = 1;
+    } else if (!strncmp(verb, "POST", 5)) {
+        curlopt_post = 1;
+    } else if (!strncmp(verb, "HEAD", 5)) {
+        curlopt_nobody = 1;
+    } else {
+        curlopt_customrequest = verb;
+    }
+
+    if (curlopt_upload && request_body) {
+        GByteArray req_body_gba = {(guint8 *)request_body, request_body_size};
+        curlopt_header = 1;
+
+        md5_hash = s3_compute_md5_hash(&req_body_gba);
+        md5_hash_b64 = s3_base64_encode(md5_hash);
+        md5_hash_hex = s3_hex_encode(md5_hash);
+    } else {
 	request_body_size = 0;
+    }
 
     while (1) {
-        /* corresponds to PUT, HEAD, GET, and POST */
-        int curlopt_upload = 0, curlopt_nobody = 0, curlopt_httpget = 0, curlopt_post = 0;
-        const char *curlopt_customrequest = NULL;
-
         /* reset things */
         if (headers) {
             curl_slist_free_all(headers);
@@ -813,20 +848,7 @@ perform_request(S3Handle *hdl,
 
         /* set up the request */
         headers = authenticate_request(hdl, verb, bucket, key, subresource,
-            hdl->bucket_location? TRUE : FALSE);
-
-        /* libcurl may behave strangely if these are not set correctly */
-        if (!strncmp(verb, "PUT", 4)) {
-            curlopt_upload = 1;
-        } else if (!strncmp(verb, "GET", 4)) {
-            curlopt_httpget = 1;
-        } else if (!strncmp(verb, "POST", 5)) {
-            curlopt_post = 1;
-        } else if (!strncmp(verb, "HEAD", 5)) {
-            curlopt_nobody = 1;
-        } else {
-            curlopt_customrequest = verb;
-        }
+            md5_hash_b64, hdl->bucket_location? TRUE : FALSE);
 
         if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_VERBOSE, hdl->verbose)))
             goto curl_error;
@@ -883,6 +905,8 @@ perform_request(S3Handle *hdl,
         if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_CUSTOMREQUEST,
                                           curlopt_customrequest)))
             goto curl_error;
+        if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_HEADER, curlopt_header)))
+            goto curl_error;
 
 
         if (curlopt_upload) {
@@ -907,7 +931,7 @@ perform_request(S3Handle *hdl,
         /* interpret the response into hdl->last* */
     curl_error: /* (label for short-circuiting the curl_easy_perform call) */
         should_retry = interpret_response(hdl, curl_code, curl_error_buffer, 
-                            writedata.buffer, writedata.buffer_pos);
+            writedata.buffer, writedata.buffer_pos, md5_hash_hex);
         
         /* and, unless we know we need to retry, see what we're to do now */
         if (!should_retry) {
@@ -941,8 +965,11 @@ perform_request(S3Handle *hdl,
     }
 
 cleanup:
-    if (url) g_free(url);
+    g_free(url);
     if (headers) curl_slist_free_all(headers);
+    if (md5_hash) g_byte_array_free(md5_hash, TRUE);
+    g_free(md5_hash_b64);
+    g_free(md5_hash_hex);
     
     /* we don't deallocate the response body -- we keep it for later */
     hdl->last_response_body = writedata.buffer;
@@ -956,8 +983,9 @@ static gboolean
 compile_regexes(void)
 {
   struct {const char * str; int flags; regex_t *regex;} regexes[] = {
-        {"<Code>[:space:]*([^<]*)[:space:]*</Code>", REG_EXTENDED | REG_ICASE, &error_name_regex},
-        {"<Message>[:space:]*([^<]*)[:space:]*</Message>", REG_EXTENDED | REG_ICASE, &message_regex},
+        {"<Code>[[:space:]]*([^<]*)[[:space:]]*</Code>", REG_EXTENDED | REG_ICASE, &error_name_regex},
+        {"^ETag:[[:space:]]*\"([^\"]+)\"[[:space:]]*$", REG_EXTENDED | REG_ICASE | REG_NEWLINE, &etag_regex},
+        {"<Message>[[:space:]]*([^<]*)[[:space:]]*</Message>", REG_EXTENDED | REG_ICASE, &message_regex},
         {"^[a-z0-9]((-*[a-z0-9])|(\\.[a-z0-9])){2,62}$", REG_EXTENDED | REG_NOSUB, &subdomain_regex},
         {"(/>)|(>([^<]*)</LocationConstraint>)", REG_EXTENDED | REG_ICASE, &location_con_regex},
         {NULL, 0, NULL}
@@ -982,8 +1010,7 @@ compile_regexes(void)
  * Public function implementations
  */
 
-gboolean
-s3_init(void)
+gboolean s3_init(void)
 {
     static GStaticMutex mutex = G_STATIC_MUTEX_INIT;
     static gboolean init = FALSE, ret;
@@ -1012,7 +1039,7 @@ s3_curl_location_compat(void)
 gboolean
 s3_bucket_location_compat(const char *bucket)
 {
-    return !regexec_wrap(&subdomain_regex, bucket, 0, NULL, 0);
+    return !s3_regexec_wrap(&subdomain_regex, bucket, 0, NULL, 0);
 }
 
 S3Handle *
@@ -1504,7 +1531,7 @@ s3_make_bucket(S3Handle *hdl,
             body = g_strndup(hdl->last_response_body, hdl->last_response_body_size);
             if (!body) goto cleanup;
             
-            if (!regexec_wrap(&location_con_regex, body, 4, pmatch, 0)) {
+            if (!s3_regexec_wrap(&location_con_regex, body, 4, pmatch, 0)) {
                 loc_end_open = find_regex_substring(body, pmatch[1]);
                 loc_content = find_regex_substring(body, pmatch[3]);
 

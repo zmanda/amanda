@@ -43,7 +43,7 @@ endif
 endif
 
 if WANT_S3_DEVICE
-libamdevice_la_SOURCES += s3-device.c s3.c
+libamdevice_la_SOURCES += s3-device.c s3.c s3-util.c
 endif
 
 ## automake-style tests
@@ -70,6 +70,7 @@ noinst_HEADERS = \
 	device.h \
 	property.h \
 	s3.h \
+	s3-util.h \
 	tape-device.h \
 	tape-ops.h
 	

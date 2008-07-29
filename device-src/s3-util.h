@@ -1,0 +1,86 @@
+/*
+ * Copyright (c) 2005-2008 Zmanda Inc.  All Rights Reserved.
+ * 
+ * This library is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License version 2.1 as 
+ * published by the Free Software Foundation.
+ * 
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
+ * License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this library; if not, write to the Free Software Foundation,
+ * Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA.
+ * 
+ * Contact information: Zmanda Inc., 465 S Mathlida Ave, Suite 300
+ * Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
+ */
+
+#ifndef __S3_UTIL_H__
+#define __S3_UTIL_H__
+#include <sys/types.h>
+#include <regex.h>
+#include <glib.h>
+
+/*
+ * Constants
+ */
+
+/* number of raw bytes in MD5 hash */
+#define S3_MD5_HASH_BYTE_LEN 16
+/* length of an MD5 hash encoded as base64 (not including terminating NULL) */
+#define S3_MD5_HASH_B64_LEN 25
+/* length of an MD5 hash encoded as hexadecimal (not including terminating NULL) */
+#define S3_MD5_HASH_HEX_LEN 32
+
+/*
+ * Functions
+ */
+
+/*
+ * Wrapper around regexec to handle programmer errors.
+ * Only returns if the regexec returns 0 (match) or REG_NOSUB.
+ * See regexec(3) documentation for the rest.
+ */
+int
+s3_regexec_wrap(regex_t *regex,
+           const char *str,
+           size_t nmatch,
+           regmatch_t pmatch[],
+           int eflags);
+
+/* 
+ * Encode bytes using Base-64
+ *
+ * @note: GLib 2.12+ has a function for this (g_base64_encode) 
+ *     but we support much older versions. gnulib does as well, but its
+ *     hard to use correctly (see its notes).
+ *
+ * @param to_enc: The data to encode.
+ * @returns:  A new, null-terminated string or NULL if to_enc is NULL.
+ */
+gchar*
+s3_base64_encode(const GByteArray *to_enc);
+
+/* 
+ * Encode bytes using hexadecimal
+ *
+ * @param to_enc: The data to encode.
+ * @returns:  A new, null-terminated string or NULL if to_enc is NULL.
+ */
+gchar*
+s3_hex_encode(const GByteArray *to_enc);
+
+/* 
+ * Compute the MD5 hash of a blob of data.
+ *
+ * @param to_hash: The data to compute the hash for.
+ * @returns:  A new GByteArray containing the MD5 hash of data or 
+ * NULL if to_hash is NULL.
+ */
+GByteArray*
+s3_compute_md5_hash(const GByteArray *to_hash);
+
+#endif
