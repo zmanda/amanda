@@ -1,4 +1,7 @@
 2007-07-28 Nikolas Coukouma <atrus@zmanda.com>
+	* config/amanda/flags.m4: Add proper detection of flags for GCC 4.3+
+
+2007-07-28 Nikolas Coukouma <atrus@zmanda.com>
 	* device-src/s3.c: Calculate and send the MD5 hash when uploading data.
 	  Also check the returned ETag to make sure it matches the sent MD5 hash.
 	  Use simpler s3_base64_encode() instead of base64_encode().

@@ -262,7 +262,9 @@ AC_DEFUN([AMANDA_TEST_GCC_WARNING_FLAG],
     AC_MSG_CHECKING(for gcc flag $1)
     if test "x$GCC" = "xyes"; then
 	changequote(,)dnl
-	$CC -v --help 2>&1 | $EGREP -- '[^[:alnum:]]$1[^[:alnum:]-]' 2>&1 > /dev/null
+	(gcc --help={target,optimizers,warnings,undocumented,params,c} 2>&1 || 
+           $CC -v --help 2>&1) | 
+         $EGREP -- '[^[:alnum:]]$1[^[:alnum:]-]' 2>&1 > /dev/null
 	changequote([,])dnl
 	if test $? -eq 0; then
 	    found_warning=yes
