@@ -1,3 +1,7 @@
+2008-07-29 Dan Locks <dwlocks@zmanda.com>
+	* packaging/rpm/amanda.spec:  Merged fixes from enterprise .spec for
+	  parsing redhat-release for fedora versions correctly.
+
 2007-07-28 Nikolas Coukouma <atrus@zmanda.com>
 	* config/amanda/flags.m4: Add proper detection of flags for GCC 4.3+
 
