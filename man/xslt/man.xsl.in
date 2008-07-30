@@ -4,15 +4,17 @@
                 version='1.0'>
 
 
-<xsl:import href="http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl"/>
+<!-- the @..@ is substituted by config.status to contain the XSL release selected
+     at configure time -->
+<xsl:import href="http://docbook.sourceforge.net/release/xsl/@XSLREL@/manpages/docbook.xsl"/>
 
 <xsl:import href="settings.xsl"/>
 
 <xsl:param name="chunk.section.depth" select="0"/>
 <xsl:param name="chunk.first.sections" select="1"/>
-<xsl:param name="use.id.as.filename" select="1"/>
+<xsl:param name="use.id.as.filename" select="0"/>
 
-<!-- 
+<!--
     Our ulink stylesheet omits @url part if content was specified
 -->
 <xsl:template match="ulink">
@@ -68,4 +70,3 @@
 
 
 </xsl:stylesheet>
-
