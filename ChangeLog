@@ -1,4 +1,7 @@
 2008-07-30 Dan Locks <dwlocks@zmanda.com>
+	* packaging/rpm/amanda.spec: removed activate-devpay from %files section
+
+2008-07-30 Dan Locks <dwlocks@zmanda.com>
 	* device-src/s3.c: Merged changes from 968 to work around a libcurl bug.
 	* config/amanda/s3-device.m4: Same
 

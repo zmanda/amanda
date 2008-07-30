@@ -1579,7 +1579,6 @@ echo "Amanda installation log can be found in '${INSTALL_LOG}' and errors (if an
 %{SBINDIR}/amcheck
 %defattr(0750,%{amanda_user},%{amanda_group})
 %{LOGDIR}
-%{SBINDIR}/activate-devpay
 %{SBINDIR}/amaespipe
 %{SBINDIR}/amcrypt
 %{SBINDIR}/amcrypt-ossl
