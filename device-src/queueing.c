@@ -440,6 +440,12 @@ producer_result_t device_read_producer(gpointer devicep,
 int device_write_consumer(gpointer devicep, queue_buffer_t *buffer) {
     Device* device;
     unsigned int write_size;
+    static gboolean wrote_blocksize = FALSE;
+
+    if (!wrote_blocksize) {
+	wrote_blocksize = TRUE;
+	dbprintf("USING BLCOKSIZE %d bytes\n", write_size);
+    }
 
     device = (Device*) devicep;
     g_assert(IS_DEVICE(device));

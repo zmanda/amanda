@@ -1,3 +1,13 @@
+2008-07-30  Dustin J. Mitchell <dustin@zmanda.com>
+	* man/Makefile.am man/amanda.css man/index.php man/xslt/html.xsl.in:
+	  new files for HTML output
+	* man/xslt/man.xsl.in: substitute XSLT_VERS
+	* man/xml-source/amanda-devices.7.xml: tweaks
+	* man/xml-source/amanda.8.xml: tweaks
+	* man/xml-source/amanda.conf.5.xml: tweaks
+	* man/xml-source/amgetconf.8.xml: tweaks
+	* man/xml-source/amtoc.8.xml: tweaks
+
 2008-07-30 Dan Locks <dwlocks@zmanda.com>
 	* packaging/rpm/amanda.spec: removed activate-devpay from %files section
 
