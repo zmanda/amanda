@@ -269,7 +269,7 @@ SKIP: { # tapetypes
     ok(!tapetype_seen($ttyp, $TAPETYPE_LBL_TEMPL),
 	"tapetype lbl_templ was not seen");
 
-    is_deeply([ sort(getconf_list("tapetype")) ],
+    is_deeply([ sort(+getconf_list("tapetype")) ],
 	      [ sort("mytapetype", "TEST-TAPE") ],
 	"getconf_list lists all tapetypes");
 }
@@ -320,7 +320,7 @@ SKIP: { # dumptypes
     ok(!dumptype_seen($dtyp, $DUMPTYPE_RECORD),
 	"'record' parm was not seen");
 
-    is_deeply([ sort(getconf_list("dumptype")) ],
+    is_deeply([ sort(+getconf_list("dumptype")) ],
 	      [ sort(qw(
 	        mydump-type second_dumptype third_dumptype 
 	        NO-COMPRESS COMPRESS-FAST COMPRESS-BEST COMPRESS-CUST
@@ -348,7 +348,7 @@ SKIP: { # interfaces
     ok(!interface_seen($iface, $INTER_MAXUSAGE),
 	"seen not set for parameters that did not appear");
 
-    is_deeply([ sort(getconf_list("interface")) ],
+    is_deeply([ sort(+getconf_list("interface")) ],
 	      [ sort('ethernet', 'nic', 'default') ],
 	"getconf_list lists all interfaces (in any order)");
 }
@@ -386,7 +386,7 @@ SKIP: { # holdingdisks
     ok(!holdingdisk_next($hdisk),
 	"no third holding disk");
 
-    is_deeply([ sort(getconf_list("holdingdisk")) ],
+    is_deeply([ sort(+getconf_list("holdingdisk")) ],
 	      [ sort('hd1', 'hd2') ],
 	"getconf_list lists all holdingdisks (in any order)");
 }
@@ -402,7 +402,7 @@ SKIP: { # application
     is(application_getconf($app, $APPLICATION_PLUGIN), 'amgtar',
 	"application plugin (amgtar)");
 
-    is_deeply([ sort(getconf_list("application-tool")) ],
+    is_deeply([ sort(+getconf_list("application-tool")) ],
 	      [ sort("my_app") ],
 	"getconf_list lists all application-tool");
 }
@@ -423,7 +423,7 @@ SKIP: { # script
 	$EXECUTE_ON_PRE_HOST_BACKUP|$EXECUTE_ON_POST_HOST_BACKUP,
 	"script execute_on");
 
-    is_deeply([ sort(getconf_list("script-tool")) ],
+    is_deeply([ sort(+getconf_list("script-tool")) ],
 	      [ sort("my_script") ],
 	"getconf_list lists all script-tool");
 }

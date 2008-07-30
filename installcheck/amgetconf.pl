@@ -103,7 +103,7 @@ is(run_get('amgetconf', 'TESTCONF', "build.config_dir"), $CONFIG_DIR,
 is(run_get('amgetconf', "build.bindir"), $bindir, "build variables are available without a config");
 
 # empty --list should return nothing
-is_deeply([sort(split(/\n/, run_get('amgetconf', 'TESTCONF', '--list', 'holdingdisk')))], [ ],
+is_deeply([sort(+split(/\n/, run_get('amgetconf', 'TESTCONF', '--list', 'holdingdisk')))], [ ],
 	"--list returns an empty list when there's nothing to return");
 
 # dbopen, dbclose
@@ -165,7 +165,7 @@ $testconf->add_param("device_property", '"power" "on"');
 $testconf->add_param("device_property", '"turbo" "engaged"');
 $testconf->write();
 
-is_deeply([sort(split(qr/\n/, run_get('amgetconf', 'TESTCONF', 'device_property')))],
+is_deeply([sort(+split(qr/\n/, run_get('amgetconf', 'TESTCONF', 'device_property')))],
 	  [sort('"power" "on"', '"turbo" "engaged"')],
     "device_property can have multiple values");
 
@@ -184,7 +184,7 @@ $testconf->add_application('app_amstar', [ plugin => '"amstar"' ]);
 $testconf->add_script('my_script', [ "execute-on" => 'pre-dle-amcheck', 'plugin' => '"foo"' ]);
 $testconf->write();
 
-is_deeply([sort(split(/\n/, run_get('amgetconf', 'TESTCONF', '--list', 'tapetype')))],
+is_deeply([sort(+split(/\n/, run_get('amgetconf', 'TESTCONF', '--list', 'tapetype')))],
 	  [sort("cassette", "reel2reel", "scotch", "TEST-TAPE")],
 	"--list returns correct set of tapetypes");
 is(run_get('amgetconf', 'TESTCONF', 'tapetype:scotch:length'), '500', 
@@ -197,13 +197,13 @@ ok(scalar(grep { $_ eq 'testdump' }
 is(run_get('amgetconf', 'TESTCONF', 'dumptype:testdump:comment'), 'testdump-dumptype', 
     "returns dumptype parameter correctly");
 
-is_deeply([sort(split(/\n/, run_get('amgetconf', 'TESTCONF', '--list', 'interface')))], 
+is_deeply([sort(+split(/\n/, run_get('amgetconf', 'TESTCONF', '--list', 'interface')))], 
           [sort("testiface", "default")],
 	"--list returns correct set of interfaces");
 is(run_get('amgetconf', 'TESTCONF', 'interface:testiface:use'), '10', 
     "returns interface parameter correctly");
 
-is_deeply([sort(split(/\n/, run_get('amgetconf', 'TESTCONF', '--list', 'holdingdisk')))], 
+is_deeply([sort(+split(/\n/, run_get('amgetconf', 'TESTCONF', '--list', 'holdingdisk')))], 
 	  [sort("hd17")], 
 	"--list returns correct set of holdingdisks");
 is(run_get('amgetconf', 'TESTCONF', 'holdingdisk:hd17:chunksize'), '128',
@@ -212,14 +212,14 @@ is(run_get('amgetconf', 'TESTCONF', 'holdingdisk:hd17:chunksize'), '128',
 like(run_get('amgetconf', 'TESTCONF', '--list', 'build'), qr(.*version.*),
 	"'--list build' lists build variables");
 
-is_deeply([sort(split(/\n/, run_get('amgetconf', 'TESTCONF', '--list', 'application-tool')))],
+is_deeply([sort(+split(/\n/, run_get('amgetconf', 'TESTCONF', '--list', 'application-tool')))],
           [sort("app_amgtar", "app_amstar")],
         "--list returns correct set of application-tool");
 
 is(run_get('amgetconf', 'TESTCONF', 'application-tool:app_amgtar:plugin'), 'amgtar',
     "returns application-tool parameter correctly");
 
-is_deeply([sort(split(/\n/, run_get('amgetconf', 'TESTCONF', '--list', 'script-tool')))],
+is_deeply([sort(+split(/\n/, run_get('amgetconf', 'TESTCONF', '--list', 'script-tool')))],
           [sort("my_script")],
         "--list returns correct set of script-tool");
 
@@ -263,12 +263,12 @@ $testconf->add_dumptype("testdump", [
     ]);
 $testconf->write();
 
-is_deeply([sort(split(qr/\n/, run_get('amgetconf', 'TESTCONF', 'dumptype:testdump:exclude')))],
+is_deeply([sort(+split(qr/\n/, run_get('amgetconf', 'TESTCONF', 'dumptype:testdump:exclude')))],
 	  [sort('FILE "f1" "f2"',
 	        'LIST "l1" "l2"')],
     "exclude files and lists displayed correctly; a non-final optional is ignored");
 
-is_deeply([sort(split(qr/\n/, run_get('amgetconf', 'TESTCONF', 'dumptype:testdump:include')))],
+is_deeply([sort(+split(qr/\n/, run_get('amgetconf', 'TESTCONF', 'dumptype:testdump:include')))],
 	  [sort('FILE OPTIONAL "ifo"',
 	        'LIST OPTIONAL "ilo"')],
     "a final 'OPTIONAL' makes the whole include/exclude optional")
