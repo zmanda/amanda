@@ -161,6 +161,8 @@ exhausted.  C<slot_callback> gets three arguments: a slot number, a
 device name for that slot, and a boolean value which is true if the
 changer successfully loaded the slot.
 
+=back
+
 =cut
 
 sub reset {

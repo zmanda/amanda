@@ -42,7 +42,7 @@ Amanda::Cmdline - utilities for handling command lines
 
   my @specs = Amanda::Cmdline::parse_dumpspecs(["host", "disk", "date"],
 			    $Amanda::Cmdline::CMDLINE_PARSE_DATESTAMP);
-  
+
 =head1 API STATUS
 
 Will change.

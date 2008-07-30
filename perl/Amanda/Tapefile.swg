@@ -27,6 +27,18 @@
 #include "tapefile.h"
 %}
 
+%perlcode %{
+=head1 NAME
+
+Amanda::Tapefile - temporary hack
+
+=head1 HACK?
+
+Yeah, this is just here to make Amanda::Logfile usable.  This module
+wil become Amanda::Tapelist in the next release.
+
+=cut
+%}
 /* This is just a hack to get Amanda::Logfile working! */
 
 int read_tapelist(char *tapefile);

@@ -55,38 +55,49 @@ Application initialization generally looks like this:
 
 =item C<setup_application($name, $type, $context)>
 
-Set up the operating environment for an application, without requiring
-any configuration.
+Set up the operating environment for an application, without requiring any
+configuration.
 
-=over
-
-=item C<$name> is the name of the application, used in log messages, etc.
-
-=item C<$type> is one of "server" or "client".
-
-=item C<$context> is one of "cmdline" for a user-invoked command-line
-utility (e.g., C<amadmin>) or "daemon" for a program started by
-C<amandad>.  (TODO: daemon is not supported yet)
-
-=back
+C<$name> is the name of the application, used in log messages, etc.  C<$type>
+is usualy one of "server" or "client".  It specifies the subdirectory in which
+debug logfiles will be created.  C<$context> indicates the usual manner in
+which this application is invoked; one of C<"cmdline"> for a user-invoked
+command-line utility (e.g., C<amadmin>) which should send human-readable error
+messages to stderr; C<"daemon"> for a program started by C<amandad>, e.g.,
+C<sendbackup>; or C<"scriptutil"> for a small program used from shell scripts,
+e.g., C<amgetconf>
 
 Based on C<$type> and C<$context>, this function does the following:
 
 =over
 
-=item sets up debug logging;
+=item *
 
-=item configures internationalization
+sets up debug logging;
 
-=item sets the umask;
+=item *
 
-=item sets the current working directory to the debug or temporary directory;
+configures internationalization
 
-=item closes any unnecessary file descriptors as a security meaasure;
+=item *
 
-=item ignores C<SIGPIPE>; and
+sets the umask;
 
-=item sets the appropriate target for error messages.
+=item *
+
+sets the current working directory to the debug or temporary directory;
+
+=item *
+
+closes any unnecessary file descriptors as a security meaasure;
+
+=item *
+
+ignores C<SIGPIPE>; and
+
+=item *
+
+sets the appropriate target for error messages.
 
 =back
 
@@ -157,7 +168,7 @@ sub finish_setup {
     check_running_as($running_as);
 }
 
-=item safe_env
+=item C<safe_env()>
 
 Return a "safe" environment hash.  For non-setuid programs, this means filtering out any
 localization variables.
@@ -224,4 +235,8 @@ sub check_std_fds {
     fcntl(STDOUT, F_GETFD, 0) or critical("Standard output is not open");
     fcntl(STDERR, F_GETFD, 0) or critical("Standard error is not open");
 }
+
+=back
+
+=cut
 %}

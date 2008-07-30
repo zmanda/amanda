@@ -51,6 +51,25 @@ libamglue_la_LDFLAGS = $(PERL_EXT_LDFLAGS)
 EXTRA_DIST += $(libamglue_la_SOURCES)
 
 ##
+## HTML Generation
+##
+
+# This isn't a very robust implementation, as it's only meant to make the HTML
+# available online as part of the automated compilation process.  It assumes
+# that all perl modules were built (not just server or client), and that the
+# build directory does not contain any "junk".
+
+# HTML_SOURCE_FILES should contain the .pm files from which the HTML should
+# be geneated.  This is just the concatenation of foo_DATA for all $(foodir)
+# into which perl modules are installed.
+HTML_SOURCE_FILES=
+html: make_html amperl.css $(HTML_SOURCE_FILES)
+	rm -rf html-tmp/ && mkdir html-tmp/
+	cp amperl.css html-tmp/
+	$(PERL) make_html html-tmp/ $(HTML_SOURCE_FILES)
+	cd html-tmp/ && tar -zcf $(abs_builddir)/html.tar.gz .
+	rm -rf html-tmp/
+##
 ## SWIG-generated packages
 ##
 
@@ -94,6 +113,7 @@ SWIG_OPTIONS=-perl5 -proxy -DSWIG_TYPE_TABLE=SWIG_TYPES_Amanda -I$(srcdir)
 
 Amandadir=$(amperldir)/Amanda
 Amanda_DATA =
+HTML_SOURCE_FILES += $(Amanda_DATA)
 
 if WANT_SERVER
 # PACKAGE: Amanda::Device

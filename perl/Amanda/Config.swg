@@ -40,7 +40,7 @@ Amanda::Config - access to Amanda configuration parameters
 
   print "tape device is ", getconf($CNF_TAPEDEV), "\n";
 
-This API closely parallels the C API.  See L<conffile.h> for details
+This API closely parallels the C API.  See F<conffile.h> for details
 on the functions and constants available here.
 
 =head1 API STATUS
@@ -98,7 +98,7 @@ C<get_config_filename()>, respectively.
 
 Most Amanda applications accept the command-line option C<-o>
 to "overwrite" configuration values in C<amanda.conf>.  In Perl
-applications, these options should be parsed with L<Getopt::Long>, with
+applications, these options should be parsed with L<Getopt::Long|Getopt::Long>, with
 the action being a call to C<add_config_overwrite_opt>.  For example:
 
   my $config_overwrites = new_config_overwrites($#ARGV+1);
@@ -150,17 +150,23 @@ Each subsection type has the following functions:
 
 =over
 
-=item C<lookup_TYP($subsec_name)>, which returns an opaque object
+=item C<lookup_TYP($subsec_name)>
+
+which returns an opaque object
 (C<$ss>) representing the subsection, or C<undef> if no subsection
 with that name exists;
 
-=item C<TYP_name($ss)>, returning the name of the subsection;
+=item C<TYP_name($ss)>
 
-=item C<TYP_getconf($ss, $cnf)>, which fetches a parameter value from
-C<$ss>; and
+returning the name of the subsection;
 
-=item C<TYP_seen($ss, $cnf)>, which returns a true value if <$cnf>
-was seen in the subsection.
+=item C<TYP_getconf($ss, $cnf)>
+
+which fetches a parameter value from C<$ss>; and
+
+=item C<TYP_seen($ss, $cnf)>
+
+which returns a true value if <$cnf> was seen in the subsection.
 
 =back
 
@@ -168,13 +174,25 @@ The subsections are:
 
 =over
 
-=item C<tapetype>, with constants beginning with C<$TAPETYPE_>,
+=item C<tapetype>
 
-=item C<dumptype>, with constants beginning with C<$DUMPTYPE_>,
+with constants beginning with C<$TAPETYPE_>
 
-=item C<interface>, with constants beginning with C<$INTER_>, and
+=item C<dumptype>
 
-=item C<holdingdisk>, with constants beginning with C<$HOLDING_>.
+with constants beginning with C<$DUMPTYPE_>
+
+=item C<holdingdisk>
+
+with constants beginning with C<$HOLDING_>
+
+=item C<application>
+
+with constants beginning with C<$APPLICATION_>
+
+=item C<script>
+
+with constants beginning with C<$PP_SCRIPT_>
 
 =back
 

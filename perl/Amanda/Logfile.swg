@@ -153,6 +153,8 @@ C<$level> is given as a string, since it is a match expression.
 
 All of these functions can be imported by name.
 
+=back
+
 =cut
 %}
 

@@ -46,7 +46,7 @@ Amanda::Device - interact with Amanda data-storage devices
       print "Label on $device_name is '$dev->volume_label'\n";
   }
   
-See L<http://wiki.zmanda.com/index.php/Device_API> for details on how Devices are used.
+See http://wiki.zmanda.com/index.php/Device_API for details on how Devices are used.
 
 =head1 API STATUS
 
@@ -90,7 +90,7 @@ See the wiki for descriptions of these functions
 
 =item C<start_file($jobinfo)>
 
-where C<$jobinfo> is a C<dumpfile_t> (see L<Amanda::Datatypes)
+where C<$jobinfo> is a C<dumpfile_t> (see L<Amanda::Datatypes>)
 
 =item C<write_min_size()>
 
