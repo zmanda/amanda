@@ -116,7 +116,7 @@ $testconf->add_param("device_property", '"power" "on"');
 $testconf->add_param("device_property", '"turbo" "engaged"');
 $testconf->write();
 
-is_deeply([sort(split(qr/\n/, amgetconf('TESTCONF', 'device_property')))],
+is_deeply([sort(+split(qr/\n/, amgetconf('TESTCONF', 'device_property')))],
 	  [sort('"power" "on"', '"turbo" "engaged"')],
     "device_property can have multiple values");
 
@@ -132,7 +132,7 @@ $testconf->add_interface("testiface", [ use => '10' ]);
 $testconf->add_holdingdisk("hd17", [ chunksize => '128' ]);
 $testconf->write();
 
-is_deeply([sort(split(/\n/, amgetconf('TESTCONF', '--list', 'tapetype')))],
+is_deeply([sort(+split(/\n/, amgetconf('TESTCONF', '--list', 'tapetype')))],
 	  [sort("cassette", "reel2reel", "scotch", "TEST-TAPE")],
 	"--list returns correct set of tapetypes");
 is(amgetconf('TESTCONF', 'tapetype:scotch:length'), '500', 
@@ -143,14 +143,14 @@ ok(grep { $_ eq 'testdump' } split(/\n/, amgetconf('TESTCONF', '--list', 'dumpty
 is(amgetconf('TESTCONF', 'dumptype:testdump:comment'), 'testdump-dumptype', 
     "returns dumptype parameter correctly");
 
-is_deeply([sort(split(/\n/, amgetconf('TESTCONF', '--list', 'interface')))], 
+is_deeply([sort(+split(/\n/, amgetconf('TESTCONF', '--list', 'interface')))],
           [sort("testiface", "default")],
 	"--list returns correct set of interfaces");
 is(amgetconf('TESTCONF', 'interface:testiface:use'), '10', 
     "returns interface parameter correctly");
 
-is_deeply([sort(split(/\n/, amgetconf('TESTCONF', '--list', 'holdingdisk')))], 
-	  [sort("hd17")], 
+is_deeply([sort(+split(/\n/, amgetconf('TESTCONF', '--list', 'holdingdisk')))],
+	  [sort("hd17")],
 	"--list returns correct set of holdingdisks");
 is(amgetconf('TESTCONF', 'holdingdisk:hd17:chunksize'), '128',
     "returns holdingdisk parameter correctly");
@@ -177,12 +177,12 @@ $testconf->add_dumptype("testdump", [
     ]);
 $testconf->write();
 
-is_deeply([sort(split(qr/\n/, amgetconf('TESTCONF', 'dumptype:testdump:exclude')))],
+is_deeply([sort(+split(qr/\n/, amgetconf('TESTCONF', 'dumptype:testdump:exclude')))],
 	  [sort('FILE "f1" "f2"',
 	        'LIST "l1" "l2"')],
     "exclude files and lists displayed correctly; a non-final optional is ignored");
 
-is_deeply([sort(split(qr/\n/, amgetconf('TESTCONF', 'dumptype:testdump:include')))],
+is_deeply([sort(+split(qr/\n/, amgetconf('TESTCONF', 'dumptype:testdump:include')))],
 	  [sort('FILE OPTIONAL "ifo"',
 	        'LIST OPTIONAL "ilo"')],
     "a final 'OPTIONAL' makes the whole include/exclude optional")
