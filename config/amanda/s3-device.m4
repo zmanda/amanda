@@ -14,13 +14,6 @@ AC_DEFUN([AMANDA_S3_DEVICE], [
     AC_REQUIRE([AMANDA_CHECK_LIBCURL])
     AC_REQUIRE([AMANDA_CHECK_HMAC])
 
-    if test "$libcurl_feature_SSL" != "yes" ||
-       test "$libcurl_protocol_HTTPS" != "yes"; then
-        s3_ssl=no
-    else
-	s3_ssl=yes
-    fi
-
     AC_ARG_ENABLE([s3-device],
 	AS_HELP_STRING([--disable-s3-device],
 		       [disable the S3 device]),
@@ -49,9 +42,6 @@ AC_DEFUN([AMANDA_S3_DEVICE], [
     # Now handle any setup for S3, if we want it.
     if test x"$WANT_S3_DEVICE" = x"yes"; then
 	AC_DEFINE(WANT_S3_DEVICE, [], [Compile Amazon S3 driver])
-	if test x"$s3_ssl" = x"no"; then
-	  AMANDA_MSG_WARN([Encryption support is not available for S3; requests will be sent in plaintext.])
-	fi
     fi
 			  
 
@@ -65,11 +55,6 @@ AC_DEFUN([AMANDA_S3_DEVICE], [
 	if test x"$WANT_S3_DEVICE" != x"yes"; then
 	    AC_MSG_RESULT(no)
 	    AC_MSG_ERROR([DevPay support requires the S3 device (--enable-s3-device)])
-	fi
-
-	if test "$s3_ssl" != "yes"; then
-	    AC_MSG_RESULT(no)
-	    AC_MSG_ERROR([Cannot use devpay without HTTPS/SSL support in libcurl.])
 	fi
 
 	AC_DEFINE([WANT_DEVPAY], [], [Compile Amazon DevPay support])
