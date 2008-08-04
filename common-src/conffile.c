@@ -54,7 +54,7 @@ typedef enum {
     CONF_UNKNOWN,		CONF_ANY,		CONF_COMMA,
     CONF_LBRACE,		CONF_RBRACE,		CONF_NL,
     CONF_END,			CONF_IDENT,		CONF_INT,
-    CONF_AM64,			CONF_BOOL,		CONF_REAL,
+    CONF_INT64,			CONF_BOOL,		CONF_REAL,
     CONF_STRING,		CONF_TIME,		CONF_SIZE,
 
     /* config parameters */
@@ -422,7 +422,7 @@ static void copy_pp_script(void);
  * result.  The first argument is a copy of the parser table entry, if
  * needed. */
 static void read_int(conf_var_t *, val_t *);
-static void read_am64(conf_var_t *, val_t *);
+static void read_int64(conf_var_t *, val_t *);
 static void read_real(conf_var_t *, val_t *);
 static void read_str(conf_var_t *, val_t *);
 static void read_ident(conf_var_t *, val_t *);
@@ -454,7 +454,7 @@ static void read_execute_where(conf_var_t *, val_t *);
 static time_t  get_time(void);
 static int     get_int(void);
 static ssize_t get_size(void);
-static off_t   get_am64_t(void);
+static gint64  get_int64(void);
 static int     get_bool(void);
 
 /* Check the given 'seen', flagging an error if this value has already
@@ -564,7 +564,7 @@ static void update_derived_values(gboolean is_client);
  * the relevant value into the 'v' field.
  */
 static void conf_init_int(val_t *val, int i);
-static void conf_init_am64(val_t *val, off_t l);
+static void conf_init_int64(val_t *val, gint64 l);
 static void conf_init_real(val_t *val, float r);
 static void conf_init_str(val_t *val, char *s);
 static void conf_init_ident(val_t *val, char *s);
@@ -1040,7 +1040,7 @@ conf_var_t server_var [] = {
    { CONF_RUNTAPES             , CONFTYPE_INT      , read_int         , CNF_RUNTAPES             , validate_nonnegative },
    { CONF_TAPECYCLE            , CONFTYPE_INT      , read_int         , CNF_TAPECYCLE            , validate_positive },
    { CONF_BUMPDAYS             , CONFTYPE_INT      , read_int         , CNF_BUMPDAYS             , validate_positive },
-   { CONF_BUMPSIZE             , CONFTYPE_AM64     , read_am64        , CNF_BUMPSIZE             , validate_positive },
+   { CONF_BUMPSIZE             , CONFTYPE_INT64    , read_int64       , CNF_BUMPSIZE             , validate_positive },
    { CONF_BUMPPERCENT          , CONFTYPE_INT      , read_int         , CNF_BUMPPERCENT          , validate_bumppercent },
    { CONF_BUMPMULT             , CONFTYPE_REAL     , read_real        , CNF_BUMPMULT             , validate_bumpmult },
    { CONF_NETUSAGE             , CONFTYPE_INT      , read_int         , CNF_NETUSAGE             , validate_positive },
@@ -1061,7 +1061,7 @@ conf_var_t server_var [] = {
    { CONF_DISPLAYUNIT          , CONFTYPE_STR      , read_str         , CNF_DISPLAYUNIT          , validate_displayunit },
    { CONF_AUTOFLUSH            , CONFTYPE_BOOLEAN  , read_bool        , CNF_AUTOFLUSH            , NULL },
    { CONF_RESERVE              , CONFTYPE_INT      , read_int         , CNF_RESERVE              , validate_reserve },
-   { CONF_MAXDUMPSIZE          , CONFTYPE_AM64     , read_am64        , CNF_MAXDUMPSIZE          , NULL },
+   { CONF_MAXDUMPSIZE          , CONFTYPE_INT64    , read_int64       , CNF_MAXDUMPSIZE          , NULL },
    { CONF_KRB5KEYTAB           , CONFTYPE_STR      , read_str         , CNF_KRB5KEYTAB           , NULL },
    { CONF_KRB5PRINCIPAL        , CONFTYPE_STR      , read_str         , CNF_KRB5PRINCIPAL        , NULL },
    { CONF_LABEL_NEW_TAPES      , CONFTYPE_STR      , read_str         , CNF_LABEL_NEW_TAPES      , NULL },
@@ -1099,8 +1099,8 @@ conf_var_t tapetype_var [] = {
    { CONF_LBL_TEMPL     , CONFTYPE_STR     , read_str   , TAPETYPE_LBL_TEMPL    , NULL },
    { CONF_BLOCKSIZE     , CONFTYPE_SIZE    , read_size  , TAPETYPE_BLOCKSIZE    , validate_blocksize },
    { CONF_READBLOCKSIZE , CONFTYPE_SIZE    , read_size  , TAPETYPE_READBLOCKSIZE, validate_blocksize },
-   { CONF_LENGTH        , CONFTYPE_AM64    , read_am64  , TAPETYPE_LENGTH       , validate_nonnegative },
-   { CONF_FILEMARK      , CONFTYPE_AM64    , read_am64  , TAPETYPE_FILEMARK     , NULL },
+   { CONF_LENGTH        , CONFTYPE_INT64   , read_int64 , TAPETYPE_LENGTH       , validate_nonnegative },
+   { CONF_FILEMARK      , CONFTYPE_INT64   , read_int64 , TAPETYPE_FILEMARK     , NULL },
    { CONF_SPEED         , CONFTYPE_INT     , read_int   , TAPETYPE_SPEED        , validate_nonnegative },
    { CONF_FILE_PAD      , CONFTYPE_BOOLEAN , read_bool  , TAPETYPE_FILE_PAD     , NULL },
    { CONF_UNKNOWN       , CONFTYPE_INT     , NULL       , TAPETYPE_TAPETYPE     , NULL }
@@ -1111,7 +1111,7 @@ conf_var_t dumptype_var [] = {
    { CONF_AUTH              , CONFTYPE_STR      , read_str      , DUMPTYPE_SECURITY_DRIVER   , NULL },
    { CONF_BUMPDAYS          , CONFTYPE_INT      , read_int      , DUMPTYPE_BUMPDAYS          , NULL },
    { CONF_BUMPMULT          , CONFTYPE_REAL     , read_real     , DUMPTYPE_BUMPMULT          , NULL },
-   { CONF_BUMPSIZE          , CONFTYPE_AM64     , read_am64     , DUMPTYPE_BUMPSIZE          , NULL },
+   { CONF_BUMPSIZE          , CONFTYPE_INT64    , read_int64    , DUMPTYPE_BUMPSIZE          , NULL },
    { CONF_BUMPPERCENT       , CONFTYPE_INT      , read_int      , DUMPTYPE_BUMPPERCENT       , NULL },
    { CONF_COMPRATE          , CONFTYPE_REAL     , read_rate     , DUMPTYPE_COMPRATE          , NULL },
    { CONF_COMPRESS          , CONFTYPE_INT      , read_compress , DUMPTYPE_COMPRESS          , NULL },
@@ -1133,7 +1133,7 @@ conf_var_t dumptype_var [] = {
    { CONF_SKIP_INCR         , CONFTYPE_BOOLEAN  , read_bool     , DUMPTYPE_SKIP_INCR         , NULL },
    { CONF_STARTTIME         , CONFTYPE_TIME     , read_time     , DUMPTYPE_STARTTIME         , NULL },
    { CONF_STRATEGY          , CONFTYPE_INT      , read_strategy , DUMPTYPE_STRATEGY          , NULL },
-   { CONF_TAPE_SPLITSIZE    , CONFTYPE_AM64     , read_am64     , DUMPTYPE_TAPE_SPLITSIZE    , validate_nonnegative },
+   { CONF_TAPE_SPLITSIZE    , CONFTYPE_INT64    , read_int64    , DUMPTYPE_TAPE_SPLITSIZE    , validate_nonnegative },
    { CONF_SPLIT_DISKBUFFER  , CONFTYPE_STR      , read_str      , DUMPTYPE_SPLIT_DISKBUFFER  , NULL },
    { CONF_ESTIMATE          , CONFTYPE_INT      , read_estimate , DUMPTYPE_ESTIMATE          , NULL },
    { CONF_SRV_ENCRYPT       , CONFTYPE_STR      , read_str      , DUMPTYPE_SRV_ENCRYPT       , NULL },
@@ -1143,7 +1143,7 @@ conf_var_t dumptype_var [] = {
    { CONF_SSH_KEYS          , CONFTYPE_STR      , read_str      , DUMPTYPE_SSH_KEYS          , NULL },
    { CONF_SRVCOMPPROG       , CONFTYPE_STR      , read_str      , DUMPTYPE_SRVCOMPPROG       , NULL },
    { CONF_CLNTCOMPPROG      , CONFTYPE_STR      , read_str      , DUMPTYPE_CLNTCOMPPROG      , NULL },
-   { CONF_FALLBACK_SPLITSIZE, CONFTYPE_AM64     , read_am64     , DUMPTYPE_FALLBACK_SPLITSIZE, NULL },
+   { CONF_FALLBACK_SPLITSIZE, CONFTYPE_INT64    , read_int64    , DUMPTYPE_FALLBACK_SPLITSIZE, NULL },
    { CONF_SRV_DECRYPT_OPT   , CONFTYPE_STR      , read_str      , DUMPTYPE_SRV_DECRYPT_OPT   , NULL },
    { CONF_CLNT_DECRYPT_OPT  , CONFTYPE_STR      , read_str      , DUMPTYPE_CLNT_DECRYPT_OPT  , NULL },
    { CONF_APPLICATION       , CONFTYPE_STR      , read_dapplication, DUMPTYPE_APPLICATION    , NULL },
@@ -1154,8 +1154,8 @@ conf_var_t dumptype_var [] = {
 conf_var_t holding_var [] = {
    { CONF_DIRECTORY, CONFTYPE_STR   , read_str   , HOLDING_DISKDIR  , NULL },
    { CONF_COMMENT  , CONFTYPE_STR   , read_str   , HOLDING_COMMENT  , NULL },
-   { CONF_USE      , CONFTYPE_AM64  , read_am64  , HOLDING_DISKSIZE , validate_use },
-   { CONF_CHUNKSIZE, CONFTYPE_AM64  , read_am64  , HOLDING_CHUNKSIZE, validate_chunksize },
+   { CONF_USE      , CONFTYPE_INT64 , read_int64 , HOLDING_DISKSIZE , validate_use },
+   { CONF_CHUNKSIZE, CONFTYPE_INT64 , read_int64 , HOLDING_CHUNKSIZE, validate_chunksize },
    { CONF_UNKNOWN  , CONFTYPE_INT   , NULL       , HOLDING_HOLDING  , NULL }
 };
 
@@ -1233,7 +1233,7 @@ get_conftoken(
     tok_t	exp)
 {
     int ch, d;
-    off_t am64;
+    gint64 int64;
     char *buf;
     char *tmps;
     int token_overflow;
@@ -1250,7 +1250,7 @@ get_conftoken(
 	** up again in the current keyword table.
 	*/
 	switch(tok) {
-	case CONF_AM64:    case CONF_SIZE:
+	case CONF_INT64:   case CONF_SIZE:
 	case CONF_INT:     case CONF_REAL:    case CONF_STRING:
 	case CONF_LBRACE:  case CONF_RBRACE:  case CONF_COMMA:
 	case CONF_NL:      case CONF_END:     case CONF_UNKNOWN:
@@ -1312,36 +1312,36 @@ get_conftoken(
 	    sign = 1;
 
 negative_number: /* look for goto negative_number below sign is set there */
-	    am64 = 0;
+	    int64 = 0;
 	    do {
-		am64 = am64 * 10 + (ch - '0');
+		int64 = int64 * 10 + (ch - '0');
 		ch = conftoken_getc();
 	    } while (isdigit(ch));
 
 	    if (ch != '.') {
 		if (exp == CONF_INT) {
 		    tok = CONF_INT;
-		    tokenval.v.i = sign * (int)am64;
+		    tokenval.v.i = sign * (int)int64;
 		} else if (exp != CONF_REAL) {
-		    tok = CONF_AM64;
-		    tokenval.v.am64 = (off_t)sign * am64;
+		    tok = CONF_INT64;
+		    tokenval.v.int64 = (gint64)sign * int64;
 		} else {
 		    /* automatically convert to real when expected */
-		    tokenval.v.r = (double)sign * (double)am64;
+		    tokenval.v.r = (double)sign * (double)int64;
 		    tok = CONF_REAL;
 		}
 	    } else {
 		/* got a real number, not an int */
-		tokenval.v.r = sign * (double) am64;
-		am64 = 0;
+		tokenval.v.r = sign * (double) int64;
+		int64 = 0;
 		d = 1;
 		ch = conftoken_getc();
 		while (isdigit(ch)) {
-		    am64 = am64 * 10 + (ch - '0');
+		    int64 = int64 * 10 + (ch - '0');
 		    d = d * 10;
 		    ch = conftoken_getc();
 		}
-		tokenval.v.r += sign * ((double)am64) / d;
+		tokenval.v.r += sign * ((double)int64) / d;
 		tok = CONF_REAL;
 	    }
 
@@ -1809,9 +1809,9 @@ init_holdingdisk_defaults(
 {
     conf_init_str(&hdcur.value[HOLDING_COMMENT]  , "");
     conf_init_str(&hdcur.value[HOLDING_DISKDIR]  , "");
-    conf_init_am64(&hdcur.value[HOLDING_DISKSIZE] , (off_t)0);
+    conf_init_int64(&hdcur.value[HOLDING_DISKSIZE] , (gint64)0);
                     /* 1 Gb = 1M counted in 1Kb blocks */
-    conf_init_am64(&hdcur.value[HOLDING_CHUNKSIZE], (off_t)1024*1024);
+    conf_init_int64(&hdcur.value[HOLDING_CHUNKSIZE], (gint64)1024*1024);
 }
 
 static void
@@ -1919,7 +1919,7 @@ init_dumptype_defaults(void)
     conf_init_int      (&dpcur.value[DUMPTYPE_MAXDUMPS]          , conf_data[CNF_MAXDUMPS].v.i);
     conf_init_int      (&dpcur.value[DUMPTYPE_MAXPROMOTEDAY]     , 10000);
     conf_init_int      (&dpcur.value[DUMPTYPE_BUMPPERCENT]       , conf_data[CNF_BUMPPERCENT].v.i);
-    conf_init_am64     (&dpcur.value[DUMPTYPE_BUMPSIZE]          , conf_data[CNF_BUMPSIZE].v.am64);
+    conf_init_int64    (&dpcur.value[DUMPTYPE_BUMPSIZE]          , conf_data[CNF_BUMPSIZE].v.int64);
     conf_init_int      (&dpcur.value[DUMPTYPE_BUMPDAYS]          , conf_data[CNF_BUMPDAYS].v.i);
     conf_init_real     (&dpcur.value[DUMPTYPE_BUMPMULT]          , conf_data[CNF_BUMPMULT].v.r);
     conf_init_time     (&dpcur.value[DUMPTYPE_STARTTIME]         , (time_t)0);
@@ -1930,8 +1930,8 @@ init_dumptype_defaults(void)
     conf_init_str   (&dpcur.value[DUMPTYPE_SRV_DECRYPT_OPT]   , "-d");
     conf_init_str   (&dpcur.value[DUMPTYPE_CLNT_DECRYPT_OPT]  , "-d");
     conf_init_rate     (&dpcur.value[DUMPTYPE_COMPRATE]          , 0.50, 0.50);
-    conf_init_am64     (&dpcur.value[DUMPTYPE_TAPE_SPLITSIZE]    , (off_t)0);
-    conf_init_am64     (&dpcur.value[DUMPTYPE_FALLBACK_SPLITSIZE], (off_t)10 * 1024);
+    conf_init_int64    (&dpcur.value[DUMPTYPE_TAPE_SPLITSIZE]    , (gint64)0);
+    conf_init_int64    (&dpcur.value[DUMPTYPE_FALLBACK_SPLITSIZE], (gint64)10 * 1024);
     conf_init_str   (&dpcur.value[DUMPTYPE_SPLIT_DISKBUFFER]  , NULL);
     conf_init_bool     (&dpcur.value[DUMPTYPE_RECORD]            , 1);
     conf_init_bool     (&dpcur.value[DUMPTYPE_SKIP_INCR]         , 0);
@@ -2028,8 +2028,8 @@ init_tapetype_defaults(void)
     conf_init_str(&tpcur.value[TAPETYPE_LBL_TEMPL]    , "");
     conf_init_size  (&tpcur.value[TAPETYPE_BLOCKSIZE]    , DISK_BLOCK_KB);
     conf_init_size  (&tpcur.value[TAPETYPE_READBLOCKSIZE], MAX_TAPE_BLOCK_KB);
-    conf_init_am64  (&tpcur.value[TAPETYPE_LENGTH]       , ((off_t)2000 * 1024));
-    conf_init_am64  (&tpcur.value[TAPETYPE_FILEMARK]     , (off_t)1000);
+    conf_init_int64 (&tpcur.value[TAPETYPE_LENGTH]       , ((gint64)2000 * 1024));
+    conf_init_int64 (&tpcur.value[TAPETYPE_FILEMARK]     , (gint64)1000);
     conf_init_int   (&tpcur.value[TAPETYPE_SPEED]        , 200);
     conf_init_bool  (&tpcur.value[TAPETYPE_FILE_PAD]     , 1);
 }
@@ -2437,12 +2437,12 @@ read_int(
 }
 
 static void
-read_am64(
+read_int64(
     conf_var_t *np G_GNUC_UNUSED,
     val_t *val)
 {
     ckseen(&val->seen);
-    val_t__am64(val) = get_am64_t();
+    val_t__int64(val) = get_int64();
 }
 
 static void
@@ -3045,27 +3045,27 @@ get_time(void)
     get_conftoken(CONF_ANY);
     switch(tok) {
     case CONF_INT:
-#if SIZEOF_TIME_T < SIZEOF_INT
-	if ((off_t)tokenval.v.i >= (off_t)TIME_MAX)
+#if TIME_MAX < INT_MAX
+	if ((gint64)tokenval.v.i >= (gint64)TIME_MAX)
 	    conf_parserror(_("value too large"));
 #endif
 	hhmm = (time_t)tokenval.v.i;
 	break;
 
     case CONF_SIZE:
-#if SIZEOF_TIME_T < SIZEOF_SSIZE_T
-	if ((off_t)tokenval.v.size >= (off_t)TIME_MAX)
+#if TIME_MAX < SSIZE_MAX
+	if ((gint64)tokenval.v.size >= (gint64)TIME_MAX)
 	    conf_parserror(_("value too large"));
 #endif
 	hhmm = (time_t)tokenval.v.size;
 	break;
 
-    case CONF_AM64:
-#if SIZEOF_TIME_T < SIZEOF_LONG_LONG
-	if ((off_t)tokenval.v.am64 >= (off_t)TIME_MAX)
+    case CONF_INT64:
+#if TIME_MAX < GINT64_MAX
+	if ((gint64)tokenval.v.int64 >= (gint64)TIME_MAX)
 	    conf_parserror(_("value too large"));
 #endif
-	hhmm = (time_t)tokenval.v.am64;
+	hhmm = (time_t)tokenval.v.int64;
 	break;
 
     case CONF_AMINFINITY:
@@ -3096,23 +3096,23 @@ get_int(void)
 	break;
 
     case CONF_SIZE:
-#if SIZEOF_INT < SIZEOF_SSIZE_T
-	if ((off_t)tokenval.v.size > (off_t)INT_MAX)
+#if INT_MAX < SSIZE_MAX
+	if ((gint64)tokenval.v.size > (gint64)INT_MAX)
 	    conf_parserror(_("value too large"));
-	if ((off_t)tokenval.v.size < (off_t)INT_MIN)
+	if ((gint64)tokenval.v.size < (gint64)INT_MIN)
 	    conf_parserror(_("value too small"));
 #endif
 	val = (int)tokenval.v.size;
 	break;
 
-    case CONF_AM64:
-#if SIZEOF_INT < SIZEOF_LONG_LONG
-	if (tokenval.v.am64 > (off_t)INT_MAX)
+    case CONF_INT64:
+#if INT_MAX < G_MAXINT64
+	if (tokenval.v.int64 > (gint64)INT_MAX)
 	    conf_parserror(_("value too large"));
-	if (tokenval.v.am64 < (off_t)INT_MIN)
+	if (tokenval.v.int64 < (gint64)INT_MIN)
 	    conf_parserror(_("value too small"));
 #endif
-	val = (int)tokenval.v.am64;
+	val = (int)tokenval.v.int64;
 	break;
 
     case CONF_AMINFINITY:
@@ -3184,23 +3184,23 @@ get_size(void)
 	break;
 
     case CONF_INT:
-#if SIZEOF_SIZE_T < SIZEOF_INT
-	if ((off_t)tokenval.v.i > (off_t)SSIZE_MAX)
+#if SSIZE_MAX < INT_MAX
+	if ((gint64)tokenval.v.i > (gint64)SSIZE_MAX)
 	    conf_parserror(_("value too large"));
-	if ((off_t)tokenval.v.i < (off_t)SSIZE_MIN)
+	if ((gint64)tokenval.v.i < (gint64)SSIZE_MIN)
 	    conf_parserror(_("value too small"));
 #endif
 	val = (ssize_t)tokenval.v.i;
 	break;
 
-    case CONF_AM64:
-#if SIZEOF_SIZE_T < SIZEOF_LONG_LONG
-	if (tokenval.v.am64 > (off_t)SSIZE_MAX)
+    case CONF_INT64:
+#if SSIZE_MAX < GINT64_MAX
+	if (tokenval.v.int64 > (gint64)SSIZE_MAX)
 	    conf_parserror(_("value too large"));
-	if (tokenval.v.am64 < (off_t)SSIZE_MIN)
+	if (tokenval.v.int64 < (gint64)SSIZE_MIN)
 	    conf_parserror(_("value too small"));
 #endif
-	val = (ssize_t)tokenval.v.am64;
+	val = (ssize_t)tokenval.v.int64;
 	break;
 
     case CONF_AMINFINITY:
@@ -3255,10 +3255,10 @@ get_size(void)
     return val;
 }
 
-static off_t
-get_am64_t(void)
+static gint64
+get_int64(void)
 {
-    off_t val;
+    gint64 val;
     keytab_t *save_kt;
 
     save_kt = keytable;
@@ -3268,19 +3268,19 @@ get_am64_t(void)
 
     switch(tok) {
     case CONF_INT:
-	val = (off_t)tokenval.v.i;
+	val = (gint64)tokenval.v.i;
 	break;
 
     case CONF_SIZE:
-	val = (off_t)tokenval.v.size;
+	val = (gint64)tokenval.v.size;
 	break;
 
-    case CONF_AM64:
-	val = tokenval.v.am64;
+    case CONF_INT64:
+	val = tokenval.v.int64;
 	break;
 
     case CONF_AMINFINITY:
-	val = AM64_MAX;
+	val = G_MAXINT64;
 	break;
 
     default:
@@ -3299,19 +3299,19 @@ get_am64_t(void)
 	break;
 
     case CONF_MULT7:
-	if (val > AM64_MAX/7 || val < AM64_MIN/7)
+	if (val > G_MAXINT64/7 || val < G_MININT64/7)
 	    conf_parserror(_("value too large"));
 	val *= 7;
 	break;
 
     case CONF_MULT1M:
-	if (val > AM64_MAX/1024 || val < AM64_MIN/1024)
+	if (val > G_MAXINT64/1024 || val < G_MININT64/1024)
 	    conf_parserror(_("value too large"));
 	val *= 1024;
 	break;
 
     case CONF_MULT1G:
-	if (val > AM64_MAX/(1024*1024) || val < AM64_MIN/(1024*1024))
+	if (val > G_MAXINT64/(1024*1024) || val < G_MININT64/(1024*1024))
 	    conf_parserror(_("value too large"));
 	val *= 1024*1024;
 	break;
@@ -3352,8 +3352,8 @@ get_bool(void)
 	    val = 0;
 	break;
 
-    case CONF_AM64:
-	if (tokenval.v.am64 != (off_t)0)
+    case CONF_INT64:
+	if (tokenval.v.int64 != (gint64)0)
 	    val = 1;
 	else
 	    val = 0;
@@ -3404,8 +3404,8 @@ validate_nonnegative(
 	if(val_t__int(val) < 0)
 	    conf_parserror(_("%s must be nonnegative"), get_token_name(np->token));
 	break;
-    case CONFTYPE_AM64:
-	if(val_t__am64(val) < 0)
+    case CONFTYPE_INT64:
+	if(val_t__int64(val) < 0)
 	    conf_parserror(_("%s must be nonnegative"), get_token_name(np->token));
 	break;
     case CONFTYPE_SIZE:
@@ -3427,8 +3427,8 @@ validate_positive(
 	if(val_t__int(val) < 1)
 	    conf_parserror(_("%s must be positive"), get_token_name(np->token));
 	break;
-    case CONFTYPE_AM64:
-	if(val_t__am64(val) < 1)
+    case CONFTYPE_INT64:
+	if(val_t__int64(val) < 1)
 	    conf_parserror(_("%s must be positive"), get_token_name(np->token));
 	break;
     case CONFTYPE_TIME:
@@ -3525,7 +3525,7 @@ validate_use(
     struct conf_var_s *np G_GNUC_UNUSED,
     val_t        *val)
 {
-    val_t__am64(val) = am_floor(val_t__am64(val), DISK_BLOCK_KB);
+    val_t__int64(val) = am_floor(val_t__int64(val), DISK_BLOCK_KB);
 }
 
 static void
@@ -3534,14 +3534,14 @@ validate_chunksize(
     val_t        *val)
 {
     /* NOTE: this function modifies the target value (rounding) */
-    if(val_t__am64(val) == 0) {
-	val_t__am64(val) = ((AM64_MAX / 1024) - (2 * DISK_BLOCK_KB));
+    if(val_t__int64(val) == 0) {
+	val_t__int64(val) = ((G_MAXINT64 / 1024) - (2 * DISK_BLOCK_KB));
     }
-    else if(val_t__am64(val) < 0) {
-	conf_parserror(_("Negative chunksize (%lld) is no longer supported"), (long long)val_t__am64(val));
+    else if(val_t__int64(val) < 0) {
+	conf_parserror(_("Negative chunksize (%lld) is no longer supported"), (long long)val_t__int64(val));
     }
-    val_t__am64(val) = am_floor(val_t__am64(val), (off_t)DISK_BLOCK_KB);
-    if (val_t__am64(val) < 2*DISK_BLOCK_KB) {
+    val_t__int64(val) = am_floor(val_t__int64(val), (gint64)DISK_BLOCK_KB);
+    if (val_t__int64(val) < 2*DISK_BLOCK_KB) {
 	conf_parserror("chunksize must be at least %dkb", 2*DISK_BLOCK_KB);
     }
 }
@@ -3790,7 +3790,7 @@ init_defaults(
     conf_init_int      (&conf_data[CNF_INPARALLEL]           , 10);
     conf_init_str   (&conf_data[CNF_DUMPORDER]            , "ttt");
     conf_init_int      (&conf_data[CNF_BUMPPERCENT]          , 0);
-    conf_init_am64     (&conf_data[CNF_BUMPSIZE]             , (off_t)10*1024);
+    conf_init_int64    (&conf_data[CNF_BUMPSIZE]             , (gint64)10*1024);
     conf_init_real     (&conf_data[CNF_BUMPMULT]             , 1.5);
     conf_init_int      (&conf_data[CNF_BUMPDAYS]             , 2);
     conf_init_str   (&conf_data[CNF_TPCHANGER]            , "");
@@ -3805,7 +3805,7 @@ init_defaults(
     conf_init_str   (&conf_data[CNF_MAILER]               , DEFAULT_MAILER);
     conf_init_bool     (&conf_data[CNF_AUTOFLUSH]            , 0);
     conf_init_int      (&conf_data[CNF_RESERVE]              , 100);
-    conf_init_am64     (&conf_data[CNF_MAXDUMPSIZE]          , (off_t)-1);
+    conf_init_int64    (&conf_data[CNF_MAXDUMPSIZE]          , (gint64)-1);
     conf_init_str   (&conf_data[CNF_COLUMNSPEC]           , "");
     conf_init_bool     (&conf_data[CNF_AMRECOVER_DO_FSF]     , 1);
     conf_init_str   (&conf_data[CNF_AMRECOVER_CHANGER]    , "");
@@ -4079,13 +4079,13 @@ conf_init_int(
 }
 
 static void
-conf_init_am64(
+conf_init_int64(
     val_t *val,
-    off_t   l)
+    gint64   l)
 {
     val->seen = 0;
-    val->type = CONFTYPE_AM64;
-    val_t__am64(val) = l;
+    val->type = CONFTYPE_INT64;
+    val_t__int64(val) = l;
 }
 
 static void
@@ -4776,15 +4776,15 @@ val_t_to_int(
     return val_t__int(val);
 }
 
-off_t
-val_t_to_am64(
+gint64
+val_t_to_int64(
     val_t *val)
 {
-    if (val->type != CONFTYPE_AM64) {
-	error(_("val_t_to_am64: val.type is not CONFTYPE_AM64"));
+    if (val->type != CONFTYPE_INT64) {
+	error(_("val_t_to_int64: val.type is not CONFTYPE_INT64"));
 	/*NOTREACHED*/
     }
-    return val_t__am64(val);
+    return val_t__int64(val);
 }
 
 float
@@ -5016,8 +5016,8 @@ copy_val_t(
 	    valdst->v.size = valsrc->v.size;
 	    break;
 
-	case CONFTYPE_AM64:
-	    valdst->v.am64 = valsrc->v.am64;
+	case CONFTYPE_INT64:
+	    valdst->v.int64 = valsrc->v.int64;
 	    break;
 
 	case CONFTYPE_REAL:
@@ -5128,7 +5128,7 @@ free_val_t(
 	case CONFTYPE_SIZE:
 	case CONFTYPE_TAPERALGO:
 	case CONFTYPE_PRIORITY:
-	case CONFTYPE_AM64:
+	case CONFTYPE_INT64:
 	case CONFTYPE_REAL:
 	case CONFTYPE_RATE:
 	case CONFTYPE_INTRANGE:
@@ -5442,8 +5442,8 @@ val_t_display_strs(
 	buf[0] = vstrallocf("%zd", (ssize_t)val_t__size(val));
 	break;
 
-    case CONFTYPE_AM64:
-	buf[0] = vstrallocf("%lld", (long long)val_t__am64(val));
+    case CONFTYPE_INT64:
+	buf[0] = vstrallocf("%lld", (long long)val_t__int64(val));
 	break;
 
     case CONFTYPE_REAL:

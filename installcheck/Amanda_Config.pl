@@ -114,10 +114,10 @@ is_deeply(getconf($CNF_PROPERTY), { "client-prop1" => { priority => 1,
 
 # invent a "large" unsigned number, and make $size_t_num 
 # depend on the length of size_t
-my $am64_num = '171801575472'; # 0xA000B000C000 / 1024
+my $int64_num = '171801575472'; # 0xA000B000C000 / 1024
 my $size_t_num;
 if (Amanda::Tests::sizeof_size_t() > 4) {
-    $size_t_num = $am64_num;
+    $size_t_num = $int64_num;
 } else {
     $size_t_num = '2147483647'; # 0x7fffffff
 }
@@ -126,7 +126,7 @@ $testconf = Installcheck::Config->new();
 $testconf->add_param('reserve', '75');
 $testconf->add_param('autoflush', 'yes');
 $testconf->add_param('tapedev', '"/dev/foo"');
-$testconf->add_param('bumpsize', $am64_num);
+$testconf->add_param('bumpsize', $int64_num);
 $testconf->add_param('bumpmult', '1.4');
 $testconf->add_param('reserved_udp-port', '100,200'); # note use of '-' and '_'
 $testconf->add_param('device_output_buffer_size', $size_t_num);
@@ -142,7 +142,7 @@ $testconf->add_tapetype('mytapetype', [
 $testconf->add_dumptype('mydump-type', [    # note dash
     'comment' => '"mine"',
     'priority' => 'high',  # == 2
-    'bumpsize' => $am64_num,
+    'bumpsize' => $int64_num,
     'bumpmult' => 1.75,
     'starttime' => 1829,
     'holdingdisk' => 'required',
@@ -219,8 +219,8 @@ SKIP: { # global parameters
 
     is(getconf($CNF_RESERVE), 75,
 	"integer global confparm");
-    is(getconf($CNF_BUMPSIZE), $am64_num+0,
-	"am64 global confparm");
+    is(getconf($CNF_BUMPSIZE), $int64_num+0,
+	"int64 global confparm");
     is(getconf($CNF_TAPEDEV), "/dev/foo",
 	"string global confparm");
     is(getconf($CNF_DEVICE_OUTPUT_BUFFER_SIZE), $size_t_num+0,
@@ -283,7 +283,7 @@ SKIP: { # dumptypes
 	"dumptype string");
     is(dumptype_getconf($dtyp, $DUMPTYPE_PRIORITY), 2, 
 	"dumptype priority");
-    is(dumptype_getconf($dtyp, $DUMPTYPE_BUMPSIZE), $am64_num+0,
+    is(dumptype_getconf($dtyp, $DUMPTYPE_BUMPSIZE), $int64_num+0,
 	"dumptype size");
     is(dumptype_getconf($dtyp, $DUMPTYPE_BUMPMULT), 1.75,
 	"dumptype real");

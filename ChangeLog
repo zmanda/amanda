@@ -1,3 +1,9 @@
+2008-08-03  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/amanda.h common-src/conffile.c common-src/conffile.h
+	  installcheck/Amanda_Config.pl perl/Amanda/Config.swg
+	  server-src/planner.c: replace am64 type with gint64; also replace
+	  some uses of off_t
+
 2008-08-01 Nikolas Coukouma <atrus@zmanda.com>
 	* perl/Amanda/BigIntCompat.pm: Add a module to make 'Math::BigInt's
 	  stringify consistently (no '+' prefixing positive numbers).

@@ -185,7 +185,7 @@ typedef GSList* pp_scriptlist_t;
  * for wrapping val_t's, too. */
 typedef enum {
     CONFTYPE_INT,
-    CONFTYPE_AM64,
+    CONFTYPE_INT64,
     CONFTYPE_REAL,
     CONFTYPE_STR,
     CONFTYPE_IDENT,
@@ -216,7 +216,7 @@ typedef enum {
 typedef struct val_s {
     union {
         int		i;
-        off_t		am64;
+        gint64		int64;
         double		r;
         char		*s;
         ssize_t		size;
@@ -236,7 +236,7 @@ typedef struct val_s {
  * value from a val_t.  All call error() if the type is incorrect,
  * as this is a programming error.  */
 int                   val_t_to_int      (val_t *);
-off_t                 val_t_to_am64     (val_t *);
+gint64                val_t_to_int64    (val_t *);
 float                 val_t_to_real     (val_t *);
 char                 *val_t_to_str      (val_t *); /* (also converts CONFTYPE_IDENT) */
 char                 *val_t_to_ident    (val_t *); /* (also converts CONFTYPE_STR) */
@@ -283,7 +283,7 @@ send_amreport_t       val_t_to_send_amreport(val_t *);
  */
 #define val_t__seen(val)          ((val)->seen)
 #define val_t__int(val)           ((val)->v.i)
-#define val_t__am64(val)          ((val)->v.am64)
+#define val_t__int64(val)         ((val)->v.int64)
 #define val_t__real(val)          ((val)->v.r)
 #define val_t__str(val)           ((val)->v.s)
 #define val_t__ident(val)         ((val)->v.s)
@@ -435,7 +435,7 @@ val_t *getconf(confparm_key key);
  * @returns: various
  */
 #define getconf_int(key)          (val_t_to_int(getconf((key))))
-#define getconf_am64(key)         (val_t_to_am64(getconf((key))))
+#define getconf_int64(key)        (val_t_to_int64(getconf((key))))
 #define getconf_real(key)         (val_t_to_real(getconf((key))))
 #define getconf_str(key)	  (val_t_to_str(getconf((key))))
 #define getconf_ident(key)        (val_t_to_ident(getconf((key))))
@@ -564,8 +564,8 @@ char *tapetype_name(tapetype_t *ttyp);
 #define tapetype_get_lbl_templ(ttyp)       (val_t_to_str(tapetype_getconf((ttyp), TAPETYPE_LBL_TEMPL)))
 #define tapetype_get_blocksize(ttyp)       (val_t_to_size(tapetype_getconf((ttyp), TAPETYPE_BLOCKSIZE)))
 #define tapetype_get_readblocksize(ttyp)   (val_t_to_size(tapetype_getconf((ttyp), TAPETYPE_READBLOCKSIZE)))
-#define tapetype_get_length(ttyp)          (val_t_to_am64(tapetype_getconf((ttyp), TAPETYPE_LENGTH)))
-#define tapetype_get_filemark(ttyp)        (val_t_to_am64(tapetype_getconf((ttyp), TAPETYPE_FILEMARK)))
+#define tapetype_get_length(ttyp)          (val_t_to_int64(tapetype_getconf((ttyp), TAPETYPE_LENGTH)))
+#define tapetype_get_filemark(ttyp)        (val_t_to_int64(tapetype_getconf((ttyp), TAPETYPE_FILEMARK)))
 #define tapetype_get_speed(ttyp)           (val_t_to_int(tapetype_getconf((ttyp), TAPETYPE_SPEED)))
 #define tapetype_get_file_pad(ttyp)        (val_t_to_boolean(tapetype_getconf((ttyp), TAPETYPE_FILE_PAD)))
 
@@ -677,7 +677,7 @@ char *dumptype_name(dumptype_t *dtyp);
 #define dumptype_get_maxdumps(dtyp)            (val_t_to_int(dumptype_getconf((dtyp), DUMPTYPE_MAXDUMPS)))
 #define dumptype_get_maxpromoteday(dtyp)       (val_t_to_int(dumptype_getconf((dtyp), DUMPTYPE_MAXPROMOTEDAY)))
 #define dumptype_get_bumppercent(dtyp)         (val_t_to_int(dumptype_getconf((dtyp), DUMPTYPE_BUMPPERCENT)))
-#define dumptype_get_bumpsize(dtyp)            (val_t_to_am64(dumptype_getconf((dtyp), DUMPTYPE_BUMPSIZE)))
+#define dumptype_get_bumpsize(dtyp)            (val_t_to_int64(dumptype_getconf((dtyp), DUMPTYPE_BUMPSIZE)))
 #define dumptype_get_bumpdays(dtyp)            (val_t_to_int(dumptype_getconf((dtyp), DUMPTYPE_BUMPDAYS)))
 #define dumptype_get_bumpmult(dtyp)            (val_t_to_real(dumptype_getconf((dtyp), DUMPTYPE_BUMPMULT)))
 #define dumptype_get_starttime(dtyp)           (val_t_to_time(dumptype_getconf((dtyp), DUMPTYPE_STARTTIME)))
@@ -688,8 +688,8 @@ char *dumptype_name(dumptype_t *dtyp);
 #define dumptype_get_srv_decrypt_opt(dtyp)     (val_t_to_str(dumptype_getconf((dtyp), DUMPTYPE_SRV_DECRYPT_OPT)))
 #define dumptype_get_clnt_decrypt_opt(dtyp)    (val_t_to_str(dumptype_getconf((dtyp), DUMPTYPE_CLNT_DECRYPT_OPT)))
 #define dumptype_get_comprate(dtyp)            (val_t_to_rate(dumptype_getconf((dtyp), DUMPTYPE_COMPRATE)))
-#define dumptype_get_tape_splitsize(dtyp)      (val_t_to_am64(dumptype_getconf((dtyp), DUMPTYPE_TAPE_SPLITSIZE)))
-#define dumptype_get_fallback_splitsize(dtyp)  (val_t_to_am64(dumptype_getconf((dtyp), DUMPTYPE_FALLBACK_SPLITSIZE)))
+#define dumptype_get_tape_splitsize(dtyp)      (val_t_to_int64(dumptype_getconf((dtyp), DUMPTYPE_TAPE_SPLITSIZE)))
+#define dumptype_get_fallback_splitsize(dtyp)  (val_t_to_int64(dumptype_getconf((dtyp), DUMPTYPE_FALLBACK_SPLITSIZE)))
 #define dumptype_get_split_diskbuffer(dtyp)    (val_t_to_str(dumptype_getconf((dtyp), DUMPTYPE_SPLIT_DISKBUFFER)))
 #define dumptype_get_record(dtyp)              (val_t_to_boolean(dumptype_getconf((dtyp), DUMPTYPE_RECORD)))
 #define dumptype_get_skip_incr(dtyp)           (val_t_to_boolean(dumptype_getconf((dtyp), DUMPTYPE_SKIP_INCR)))
@@ -824,8 +824,8 @@ char *holdingdisk_name(holdingdisk_t *hdisk);
  */
 #define holdingdisk_get_comment(hdisk)   (val_t_to_str(holdingdisk_getconf((hdisk), HOLDING_COMMENT)))
 #define holdingdisk_get_diskdir(hdisk)   (val_t_to_str(holdingdisk_getconf((hdisk), HOLDING_DISKDIR)))
-#define holdingdisk_get_disksize(hdisk)  (val_t_to_am64(holdingdisk_getconf((hdisk), HOLDING_DISKSIZE)))
-#define holdingdisk_get_chunksize(hdisk) (val_t_to_am64(holdingdisk_getconf((hdisk), HOLDING_CHUNKSIZE)))
+#define holdingdisk_get_disksize(hdisk)  (val_t_to_int64(holdingdisk_getconf((hdisk), HOLDING_DISKSIZE)))
+#define holdingdisk_get_chunksize(hdisk) (val_t_to_int64(holdingdisk_getconf((hdisk), HOLDING_CHUNKSIZE)))
 
 /* A application-tool interface */
 typedef enum application_e  {

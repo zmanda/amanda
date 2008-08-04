@@ -31,15 +31,15 @@
 #ifndef AMANDA_H
 #define AMANDA_H
 
-#include <glib.h>
-#include <glib/gprintf.h>
-
-#include "amflock.h"
-
 #ifdef HAVE_CONFIG_H
 /* use a relative path here to avoid conflicting with Perl's config.h. */
 #include "../config/config.h"
 #endif
+
+#include <glib.h>
+#include <glib/gprintf.h>
+
+#include "amflock.h"
 
 /*
  * Force large file source even if configure guesses wrong.
@@ -1181,68 +1181,6 @@ extern ssize_t writev(int fd, const struct iovec *iov, int iovcnt);
 #  endif
 #endif
 
-#if SIZEOF_OFF_T == 8
-#  ifdef OFF_MAX
-#    define AM64_MAX (off_t)(OFF_MAX)
-#  else
-#    define AM64_MAX (off_t)(9223372036854775807LL)
-#  endif
-#  ifdef OFF_MIN
-#    define AM64_MIN (off_t)(OFF_MIN)
-#  else
-#    define AM64_MIN (off_t)(-9223372036854775807LL -1LL)
-#  endif
-#else
-#if SIZEOF_LONG == 8
-#  ifdef LONG_MAX
-#    define AM64_MAX (off_t)(LONG_MAX)
-#  else
-#    define AM64_MAX (off_t)9223372036854775807L
-#  endif
-#  ifdef LONG_MIN
-#    define AM64_MIN (off_t)(LONG_MIN)
-#  else
-#    define AM64_MIN (off_t)(-9223372036854775807L -1L)
-#  endif
-#else
-#if SIZEOF_LONG_LONG == 8
-#  ifdef LONG_LONG_MAX
-#    define AM64_MAX (off_t)(LONG_LONG_MAX)
-#  else
-#    define AM64_MAX (off_t)9223372036854775807LL
-#  endif
-#  ifdef LONG_LONG_MIN
-#    define AM64_MIN (off_t)(LONG_LONG_MIN)
-#  else
-#    define AM64_MIN (off_t)(-9223372036854775807LL -1LL)
-#  endif
-#else
-#if SIZEOF_INTMAX_T == 8
-#  ifdef INTMAX_MAX
-#    define AM64_MAX (off_t)(INTMAX_MAX)
-#  else
-#    define AM64_MAX (off_t)9223372036854775807LL
-#  endif
-#  ifdef INTMAX_MIN
-#    define AM64_MIN (off_t)(INTMAX_MIN)
-#  else
-#    define AM64_MIN (off_t)(-9223372036854775807LL -1LL)
-#  endif
-#else  /* no 64 bits type found, use long. */
-#  ifdef LONG_MAX
-#    define AM64_MAX (off_t)(LONG_MAX)
-#  else
-#    define AM64_MAX (off_t)2147483647
-#  endif
-#  ifdef LONG_MIN
-#    define AM64_MIN (off_t)(LONG_MIN)
-#  else
-#    define AM64_MIN (off_t)(-2147483647 -1)
-#  endif
-#endif
-#endif
-#endif
-#endif
 
 #define BIND_CYCLE_RETRIES	120		/* Total of 30 minutes */
 

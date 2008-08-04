@@ -507,7 +507,7 @@ amglue_copy_to_tag(send_amreport_on_t, getconf);
 
 /* Typemap to convert a val_t, the union in which config values are
  * stored, to a Perl value of the appropriate type.  This converts:
- *  - CONFTYPE_SIZE, CONFTYPE_INT, CONFTYPE_AM64,
+ *  - CONFTYPE_SIZE, CONFTYPE_INT, CONFTYPE_INT64,
  *    CONFTYPE_BOOLEAN -> IV
  *  - CONFTYPE_REAL -> NV
  *  - CONFTYPE_STR, CONFTYPE_IDENT -> PV
@@ -604,8 +604,8 @@ amglue_copy_to_tag(send_amreport_on_t, getconf);
 		argvi++;
 		break;
 
-	    case CONFTYPE_AM64:
-		$result = sv_2mortal(amglue_newSVi64(val_t__am64($1)));
+	    case CONFTYPE_INT64:
+		$result = sv_2mortal(amglue_newSVi64(val_t__int64($1)));
 		argvi++;
 		break;
 
