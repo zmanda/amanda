@@ -3037,6 +3037,12 @@ read_execute_where(
 
 /* get_* functions */
 
+/* these functions use precompiler conditionals to skip useless size checks
+ * when casting from one type to another.  SIZEOF_GINT64 is pretty simple to
+ * calculate; the others are calculated by configure. */
+
+#define SIZEOF_GINT64 8
+
 static time_t
 get_time(void)
 {
@@ -3045,7 +3051,7 @@ get_time(void)
     get_conftoken(CONF_ANY);
     switch(tok) {
     case CONF_INT:
-#if TIME_MAX < INT_MAX
+#if SIZEOF_TIME_T < SIZEOF_INT
 	if ((gint64)tokenval.v.i >= (gint64)TIME_MAX)
 	    conf_parserror(_("value too large"));
 #endif
@@ -3053,7 +3059,7 @@ get_time(void)
 	break;
 
     case CONF_SIZE:
-#if TIME_MAX < SSIZE_MAX
+#if SIZEOF_TIME_T < SIZEOF_SSIZE_T
 	if ((gint64)tokenval.v.size >= (gint64)TIME_MAX)
 	    conf_parserror(_("value too large"));
 #endif
@@ -3061,7 +3067,7 @@ get_time(void)
 	break;
 
     case CONF_INT64:
-#if TIME_MAX < GINT64_MAX
+#if SIZEOF_TIME_T < SIZEOF_GINT64
 	if ((gint64)tokenval.v.int64 >= (gint64)TIME_MAX)
 	    conf_parserror(_("value too large"));
 #endif
@@ -3096,7 +3102,7 @@ get_int(void)
 	break;
 
     case CONF_SIZE:
-#if INT_MAX < SSIZE_MAX
+#if SIZEOF_INT < SIZEOF_SSIZE_T
 	if ((gint64)tokenval.v.size > (gint64)INT_MAX)
 	    conf_parserror(_("value too large"));
 	if ((gint64)tokenval.v.size < (gint64)INT_MIN)
@@ -3106,7 +3112,7 @@ get_int(void)
 	break;
 
     case CONF_INT64:
-#if INT_MAX < G_MAXINT64
+#if SIZEOF_INT < SIZEOF_GINT64
 	if (tokenval.v.int64 > (gint64)INT_MAX)
 	    conf_parserror(_("value too large"));
 	if (tokenval.v.int64 < (gint64)INT_MIN)
@@ -3184,7 +3190,7 @@ get_size(void)
 	break;
 
     case CONF_INT:
-#if SSIZE_MAX < INT_MAX
+#if SIZEOF_SIZE_T < SIZEOF_INT
 	if ((gint64)tokenval.v.i > (gint64)SSIZE_MAX)
 	    conf_parserror(_("value too large"));
 	if ((gint64)tokenval.v.i < (gint64)SSIZE_MIN)
@@ -3194,7 +3200,7 @@ get_size(void)
 	break;
 
     case CONF_INT64:
-#if SSIZE_MAX < GINT64_MAX
+#if SIZEOF_SIZE_T < SIZEOF_GINT64
 	if (tokenval.v.int64 > (gint64)SSIZE_MAX)
 	    conf_parserror(_("value too large"));
 	if (tokenval.v.int64 < (gint64)SSIZE_MIN)
@@ -3298,20 +3304,25 @@ get_int64(void)
     case CONF_MULT1K:
 	break;
 
+    /* older versions of gcc don't deal well with dividing large negative
+     * constants, so we pre-compute these */
+#define MIN_MULT7 -1317624576693539402LL
     case CONF_MULT7:
-	if (val > G_MAXINT64/7 || val < G_MININT64/7)
+	if (val > G_MAXINT64/7 || val < MIN_MULT7)
 	    conf_parserror(_("value too large"));
 	val *= 7;
 	break;
 
+#define MIN_MULT1M -9007199254740992LL
     case CONF_MULT1M:
-	if (val > G_MAXINT64/1024 || val < G_MININT64/1024)
+	if (val > G_MAXINT64/1024 || val < MIN_MULT1M)
 	    conf_parserror(_("value too large"));
 	val *= 1024;
 	break;
 
+#define MIN_MULT1G -8796093022208LL
     case CONF_MULT1G:
-	if (val > G_MAXINT64/(1024*1024) || val < G_MININT64/(1024*1024))
+	if (val > G_MAXINT64/(1024*1024) || val < MIN_MULT1G)
 	    conf_parserror(_("value too large"));
 	val *= 1024*1024;
 	break;
