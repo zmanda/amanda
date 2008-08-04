@@ -76,11 +76,13 @@
         %define dist redhat
         %define disttag rhel
         %define distver 3
+        %define tarver 1.14
     %endif
     %if %(awk '$1 == "Red" && $7 ~ /4.*/ { exit 1; }' /etc/redhat-release; echo $?)
         %define dist redhat
         %define disttag rhel
         %define distver 4
+        %define tarver 1.14
     %endif
     %if %(awk '$1 == "Red" && $7 ~ /5.*/ { exit 1; }' /etc/redhat-release; echo $?)
         %define dist redhat
@@ -116,6 +118,9 @@
     %define rpm_group Productivity/Archiving/Backup
     %define xinetd_reload restart
 %endif
+
+# Set minimum tar version if it wasn't set in the per-distro section
+%{!?tarver: %define tarver 1.15}
 
 %define packer %(%{__id_u} -n)
 
@@ -175,7 +180,7 @@ Requires: curl >= 7.10.0
 Requires: openssl
 Requires: xinetd
 Requires: perl >= 5.6.0
-Requires: tar >= 1.15
+Requires: tar >= %{tarver}
 %if  %{dist} == redhat || %{dist}== fedora
 Requires: libtermcap.so.2
 Requires: initscripts
