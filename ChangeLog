@@ -1,4 +1,9 @@
 2008-08-03  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/util.c: if !WORKING_IPV6, request AF_INET, not AF_NATIVE
+	* common-src/dgram.c: address family debugging
+	* common-src/stream.c: address family debugging
+
+2008-08-03  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/amanda.h common-src/conffile.c common-src/conffile.h
 	  installcheck/Amanda_Config.pl perl/Amanda/Config.swg
 	  server-src/planner.c: replace am64 type with gint64; also replace

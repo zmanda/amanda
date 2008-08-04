@@ -51,6 +51,7 @@ make_socket(
     int r;
 #endif
 
+    g_debug("make_socket opening socket with family %d", family);
     s = socket(family, SOCK_STREAM, 0);
     if (s == -1) {
         save_errno = errno;
@@ -669,7 +670,14 @@ resolve_hostname(const char *hostname,
 #endif
 
     memset(&hints, 0, sizeof(hints));
+#ifdef WORKING_IPV6
+    /* get any kind of addresss */
     hints.ai_family = AF_UNSPEC;
+#else
+    /* even if getaddrinfo supports IPv6, don't let it return
+     * such an address */
+    hints.ai_family = AF_INET;
+#endif
     hints.ai_flags = flags;
     hints.ai_socktype = socktype;
     result = getaddrinfo(hostname, NULL, &hints, &myres);

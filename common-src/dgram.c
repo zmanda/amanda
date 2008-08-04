@@ -64,6 +64,7 @@ dgram_bind(
 
     portrange = getconf_intrange(CNF_RESERVED_UDP_PORT);
     *portp = (in_port_t)0;
+    g_debug("dgram_bind: setting up a socket with family %d", family);
     if((s = socket(family, SOCK_DGRAM, 0)) == -1) {
 	save_errno = errno;
 	dbprintf(_("dgram_bind: socket() failed: %s\n"),
@@ -158,6 +159,7 @@ dgram_send_addr(
 	s = dgram->socket;
 	socket_opened = 0;
     } else {
+	g_debug("dgram_send_addr: setting up a socket with family %d", SU_GET_FAMILY(addr));
 	if((s = socket(SU_GET_FAMILY(addr), SOCK_DGRAM, 0)) == -1) {
 	    save_errno = errno;
 	    dbprintf(_("dgram_send_addr: socket() failed: %s\n"),

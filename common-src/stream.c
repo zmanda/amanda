@@ -69,11 +69,13 @@ stream_server(
     } else {
 	socket_family = family;
     }
+    g_debug("stream_server opening socket with family %d (requested family was %d)", socket_family, family);
     server_socket = socket(socket_family, SOCK_STREAM, 0);
-    
+
 #ifdef WORKING_IPV6
     /* if that address family actually isn't supported, just try AF_INET */
     if (server_socket == -1 && errno == EAFNOSUPPORT) {
+	g_debug("stream_server retrying socket with AF_INET");
 	socket_family = AF_INET;
 	server_socket = socket(AF_INET, SOCK_STREAM, 0);
     }
