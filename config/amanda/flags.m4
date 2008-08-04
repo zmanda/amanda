@@ -92,16 +92,17 @@ AC_DEFUN([AMANDA_INIT_FLAGS],
 	    done
 	])
 
+    # Disable strict-aliasing optimizations
+    AMANDA_DISABLE_GCC_FEATURE(strict-aliasing)
+
     # Warn for just about everything
-    AMANDA_TEST_GCC_WARNING_FLAG(-Wall, [
-	AMANDA_ADD_WARNING_CFLAG(-Wall)
-    ])
+    AMANDA_ENABLE_GCC_WARNING(all)
     
     # And add any extra warnings too
-    AMANDA_TEST_GCC_WARNING_FLAG(-Wextra, [
+    AMANDA_TEST_GCC_FLAG(-Wextra, [
 	AMANDA_ADD_WARNING_CFLAG(-Wextra)
     ], [
-	AMANDA_TEST_GCC_WARNING_FLAG(-W, [
+	AMANDA_TEST_GCC_FLAG(-W, [
 	    AMANDA_ADD_WARNING_CFLAG(-W)
 	])
     ])
@@ -199,6 +200,25 @@ AC_DEFUN([AMANDA_ADD_LIBS],
 
 # SYNOPSIS
 #
+#   AMANDA_DISABLE_GCC_FEATURE(feature)
+#
+# OVERVIEW
+#
+#   Disable feature 'feature' by adding flag -Wno-'feature' to 
+#   AMANDA_FEATURE_CFLAGS.
+#
+AC_DEFUN([AMANDA_DISABLE_GCC_FEATURE],
+[
+    # test for -W'feature', then add the 'no-' version.
+    AMANDA_TEST_GCC_FLAG(-f$1,
+    [
+	AMANDA_ADD_CFLAGS(-fno-$1)
+	AMANDA_ADD_CPPFLAGS(-fno-$1)
+    ])
+])
+
+# SYNOPSIS
+#
 #   AMANDA_ADD_WARNING_CFLAG(flag)
 #
 # DESCRIPTION
@@ -220,7 +240,7 @@ AC_DEFUN([AMANDA_ADD_WARNING_CFLAG],
 #
 AC_DEFUN([AMANDA_ENABLE_GCC_WARNING],
 [
-    AMANDA_TEST_GCC_WARNING_FLAG(-W$1,
+    AMANDA_TEST_GCC_FLAG(-W$1,
     [
 	AMANDA_ADD_WARNING_CFLAG(-W$1)
     ])
@@ -238,7 +258,7 @@ AC_DEFUN([AMANDA_ENABLE_GCC_WARNING],
 AC_DEFUN([AMANDA_DISABLE_GCC_WARNING],
 [
     # test for -W'warning', then add the 'no-' version.
-    AMANDA_TEST_GCC_WARNING_FLAG(-W$1,
+    AMANDA_TEST_GCC_FLAG(-W$1,
     [
 	AMANDA_ADD_WARNING_CFLAG(-Wno-$1)
     ])
@@ -246,7 +266,7 @@ AC_DEFUN([AMANDA_DISABLE_GCC_WARNING],
 
 # SYNOPSIS
 #
-#   AMANDA_TEST_GCC_WARNING_FLAG(flag, action-if-found, action-if-not-found)
+#   AMANDA_TEST_GCC_FLAG(flag, action-if-found, action-if-not-found)
 #
 # OVERVIEW
 #
@@ -255,7 +275,7 @@ AC_DEFUN([AMANDA_DISABLE_GCC_WARNING],
 #
 #   Intended for internal use in this file.
 #
-AC_DEFUN([AMANDA_TEST_GCC_WARNING_FLAG],
+AC_DEFUN([AMANDA_TEST_GCC_FLAG],
 [
     AC_REQUIRE([AC_PROG_CC])
     AC_REQUIRE([AC_PROG_EGREP])

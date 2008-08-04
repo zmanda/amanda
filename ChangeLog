@@ -1,3 +1,19 @@
+2008-08-01 Nikolas Coukouma <atrus@zmanda.com>
+	* perl/Amanda/BigIntCompat.pm: Add a module to make 'Math::BigInt's
+	  stringify consistently (no '+' prefixing positive numbers).
+	* perl/Makefile.am: Add Amanda/BigIntCompat.pm for installation, etc.
+	* installcheck/bigint.pl, perl/amglue/bigint.c:
+	  Use Amanda::BigIntCompat everywhere we use bigint.
+
+2008-08-01 Nikolas Coukouma <atrus@zmanda.com>
+	* common-src/match.c: Correct array index to be within bounds
+
+2008-08-01 Nikolas Coukouma <atrus@zmanda.com>
+	* config/amanda/flags.m4: Rename AMANDA_TEST_GCC_WARNING_FLAG to
+	  AMANDA_TEST_GCC_FLAG and use AMANDA_ENABLE_GCC_WARNING where
+	  appropriate. Add AMANDA_DISABLE_GCC_FEATURE. Disable strict-aliasing
+	  (which causes errors).
+
 2008-07-30  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Amanda_Config.pl: add + to avoid perl-5.6.0 parsing bug
 	* installcheck/amgetconf.pl: ditto

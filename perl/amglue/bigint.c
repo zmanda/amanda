@@ -34,7 +34,7 @@ load_Math_BigInt(void)
 
     if (loaded) return;
 
-    eval_pv("use Math::BigInt;", 1);
+    eval_pv("use Math::BigInt; use Amanda::BigIntCompat;", 1);
     loaded = 1;
 }
 

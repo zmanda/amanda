@@ -21,6 +21,7 @@ use Test::More tests => 74;
 use lib "@amperldir@";
 use Amanda::Tests;
 use Math::BigInt;
+use Amanda::BigIntCompat;
 
 # define some constants; Perl doesn't have native 64-bit numbers, so
 # none are tested 

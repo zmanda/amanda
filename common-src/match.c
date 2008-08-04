@@ -564,7 +564,7 @@ match_datestamp(
     }
     else {
 	strncpy(mydateexp, dateexp, sizeof(mydateexp)-1);
-	mydateexp[sizeof(mydateexp)] = '\0';
+	mydateexp[sizeof(mydateexp)-1] = '\0';
     }
 
     if(mydateexp[strlen(mydateexp)-1] == '$') {

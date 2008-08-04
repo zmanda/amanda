@@ -197,6 +197,10 @@ MAINTAINERCLEANFILES += Amanda/Xfer.c Amanda/Xfer.pm
 
 endif
 
+# PACKAGE: Amanda::BigIntCompat
+Amanda_DATA += Amanda/BigIntCompat.pm
+EXTRA_DIST += Amanda/BigIntCompat.pm
+
 # PACKAGE: Amanda::Debug
 libDebugdir = $(amperldir)/auto/Amanda/Debug
 libDebug_LTLIBRARIES = libDebug.la
