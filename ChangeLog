@@ -1,4 +1,7 @@
 2008-08-03  Dustin J. Mitchell <dustin@zmanda.com>
+	* server-src/amrmtape.sh: use shell redirection with shell functions
+
+2008-08-03  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/util.c: if !WORKING_IPV6, request AF_INET, not AF_NATIVE
 	* common-src/dgram.c: address family debugging
 	* common-src/stream.c: address family debugging

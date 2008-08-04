@@ -143,18 +143,7 @@ CleanTapelist () {
 }
 
 
-CleanCurinfo () {
-  [ "xyes" = "x${DebugMode}" ] && set -x
-  (cd ${VarDir} >/dev/null 2>&1) || return $?
-  cd ${VarDir}
-  InfoFileBase=`echo $InfoFile | sed -e 's%.*/%%g'`
-
-  TmpSrc=$InfoFileBase.orig.$$
-  TmpDest=$InfoFileBase.new.$$
-  rm -f ${TmpSrc} ${TmpDest}
-  amadmin${SUF} ${Config} export > ${TmpSrc} || return $?
-  log `_ '%s: preserving original database in %s (exported).' "$0" "${TmpSrc}"`
-  exec < ${TmpSrc} > ${TmpDest} || return $?
+CleanCurinfo_internal() {
   DeadLevel=10
   while read Line; do
     case ${Line} in
@@ -202,7 +191,20 @@ CleanCurinfo () {
 	return 1
     esac
   done
-  exec < /dev/tty > /dev/tty
+}
+
+CleanCurinfo () {
+  [ "xyes" = "x${DebugMode}" ] && set -x
+  (cd ${VarDir} >/dev/null 2>&1) || return $?
+  cd ${VarDir}
+  InfoFileBase=`echo $InfoFile | sed -e 's%.*/%%g'`
+
+  TmpSrc=$InfoFileBase.orig.$$
+  TmpDest=$InfoFileBase.new.$$
+  rm -f ${TmpSrc} ${TmpDest}
+  amadmin${SUF} ${Config} export > ${TmpSrc} || return $?
+  log `_ '%s: preserving original database in %s (exported).' "$0" "${TmpSrc}"`
+  CleanCurinfo_internal < ${TmpSrc} > ${TmpDest} || return $?
 
   if [ "xno" = "x${DoNothing}" ]; then
     [ -s ${TmpDest} ] && 
