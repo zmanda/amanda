@@ -35,24 +35,24 @@
 # Try to detect the distribution we are building:
 %if %{_vendor} == redhat 
     # Fedora symlinks /etc/fedora-release to /etc/redhat-release for at least
-    # fc3-7.  So RHEL and Fedora look at the same file.  The awk trickery here
-    # forces the field to be numeric so that the spec comparison works
-    %if %(awk '$1 == "Fedora" && $3 ~ /3.*/ { exit 1; }' /etc/redhat-release; echo $?)
+    # fc3-8.  So RHEL and Fedora look at the same file.  Different versions have
+    # different numbers of spaces; hence the use if $3 vs. $4..
+    %if %(awk '$1 == "Fedora" && $4 ~ /3.*/ { exit 1; }' /etc/redhat-release; echo $?)
         %define dist fedora
         %define disttag fc
         %define distver 3
     %endif
-    %if %(awk '$1 == "Fedora" && $3 ~ /4.*/ { exit 1; }' /etc/redhat-release; echo $?)
+    %if %(awk '$1 == "Fedora" && $4 ~ /4.*/ { exit 1; }' /etc/redhat-release; echo $?)
         %define dist fedora
         %define disttag fc
         %define distver 4
     %endif
-    %if %(awk '$1 == "Fedora" && $3 ~ /5.*/ { exit 1; }' /etc/redhat-release; echo $?)
+    %if %(awk '$1 == "Fedora" && $4 ~ /5.*/ { exit 1; }' /etc/redhat-release; echo $?)
         %define dist fedora
         %define disttag fc
         %define distver 5
     %endif
-    %if %(awk '$1 == "Fedora" && $3 ~ /6.*/ { exit 1; }' /etc/redhat-release; echo $?)
+    %if %(awk '$1 == "Fedora" && $4 ~ /6.*/ { exit 1; }' /etc/redhat-release; echo $?)
         %define dist fedora
         %define disttag fc
         %define distver 6

@@ -1,3 +1,7 @@
+2008-08-05 Dan Locks <dwlocks@zmanda.com>
+	* packaging/rpm/amanda.spec:  Merged fixes from trunk .spec for
+	  parsing redhat-release for fedora versions correctly.
+
 2008-08-04 Dan Locks <dwlocks@zmanda.com>
 	* packaging/rpm/amanda.spec:  add %{tarver} macro and set the correct
 	  minimum version per distro (Thanks to Jesse Angell for the rhel4 tip)
