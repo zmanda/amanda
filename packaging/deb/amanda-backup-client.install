@@ -7,6 +7,7 @@ usr/sbin/amcryp*
 usr/sbin/amgpgcrypt
 usr/sbin/amoldrecover
 usr/sbin/amrecover
+usr/sbin/amgetconf
 usr/share/man/man5/amanda.conf.5
 usr/share/man/man5/amanda-client.conf.5
 usr/share/man/man7/amanda-devices.7
@@ -14,6 +15,7 @@ usr/share/man/man7/amanda-applications.7
 usr/share/man/man8/amanda.8
 usr/share/man/man8/amcheckdump.8
 usr/share/man/man8/amrecover.8
+usr/share/man/man8/amgetconf.8
 var/lib/amanda/*
 var/lib/amanda/gnutar-lists/*
 var/lib/amanda/example/xinetd.amandaclient

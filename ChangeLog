@@ -1,3 +1,27 @@
+2008-08-07 Nikolas Coukouma <atrus@zmanda.com>
+    	* common-src/conffile.c: cleaner fix for signed compared to unsigned
+    	  errors on older versions of GCC.
+
+2008-08-06  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/Makefile.am: second fix
+
+2008-08-06  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/Makefile.am: don't syntax-check amgetconf, since
+	  it uses Amanda::* modules
+
+2008-08-06 Nikolas Coukouma <atrus@zmanda.com>
+    	* server-src/amgetconf.pl, common-src/amgetconf.pl:
+    	  Add --execute-where=client|server and --client options
+    	  to make amgetconf query the client configuration
+    	  instead. Move from server-src to common-src.
+    	* man/xml-source/amgetconf.8.xml: Document the new options.
+    	* installcheck/amgetconf.pl: Test the new options.
+    	* server-src/Makefile.am, common-src/Makefile.am:
+    	  Updated Makefiles for move.
+    	* packaging/deb/amanda-enterprise-backup-client.install,
+    	  packaging/sun-pkg/i386/client/prototype:
+    	  Add amgetconf to client packages.
+
 2008-08-04 Dan Locks <dwlocks@zmanda.com>
 	* packaging/rpm/amanda.spec:  add %{tarver} macro and set the correct
 	  minimum version per distro (Thanks to Jesse Angell for the rhel4 tip)

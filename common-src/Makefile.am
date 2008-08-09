@@ -229,10 +229,19 @@ queueing_test_LDADD = libamanda.la libtestutils.la
 
 # scripts
 
-# divide scripts up both by language and by destination directory.
-sbin_SCRIPTS_PERL = \
+# divide scripts up both by language, by destination directory, and by whether they
+# should get checked (stuff in *_SCRIPTS_* isn't syntax checked; this is necessary
+# for perl scripts that use Amanda::* packages)
+sbin_CHECK_PERL = \
 	    amgpgcrypt \
 	    amcryptsimple
+sbin_SCRIPTS_PERL = \
+	    $(sbin_CHECK_PERL) \
+	    amgetconf
+
+amlibexec_CHECK_PERL =
+amlibexec_SCRIPTS_PERL = \
+	    $(amlibexec_CHECK_PERL)
 
 sbin_SCRIPTS_SHELL = \
 	    amcrypt \
@@ -240,16 +249,17 @@ sbin_SCRIPTS_SHELL = \
 	    amcrypt-ossl \
 	    amcrypt-ossl-asym
 
-amlibexec_SCRIPTS_PERL = 
+amlibexec_SCRIPTS_SHELL = 
 
 SCRIPTS_INCLUDE = \
 	    amanda-sh-lib.sh
 
 EXTRA_DIST += amanda-sh-lib.sh.in
 
-CHECK_PERL = $(sbin_SCRIPTS_PERL) $(amlibexec_SCRIPTS_PERL)
-SCRIPTS_PERL = $(CHECK_PERL)
+CHECK_PERL = $(sbin_CHECK_PERL) $(amlibexec_CHECK_PERL)
+SCRIPTS_PERL = $(sbin_SCRIPTS_PERL) $(amlibexec_SCRIPTS_PERL)
 SCRIPTS_SHELL = $(sbin_SCRIPTS_SHELL) $(amlibexec_SCRIPTS_SHELL)
+
 amlibexec_DATA = $(SCRIPTS_INCLUDE)
 amlibexec_SCRIPTS = $(amlibexec_SCRIPTS_PERL) $(amlibexec_SCRIPTS_SHELL)
 sbin_SCRIPTS = $(sbin_SCRIPTS_PERL) $(sbin_SCRIPTS_SHELL)

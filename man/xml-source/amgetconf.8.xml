@@ -24,6 +24,8 @@
   <command>amgetconf</command>    
     <arg choice='opt'><replaceable>-l|--list</replaceable></arg>
     <arg choice='plain' rep='repeat'><group><arg choice='plain'>-o </arg><replaceable>configoption</replaceable></group></arg>
+    <arg choice='opt'><replaceable>--client</replaceable></arg>
+    <arg choice='opt'><replaceable>--execute-where client|server</replaceable></arg>
     <arg choice='opt'><replaceable>config</replaceable></arg>
     <arg choice='plain'><replaceable>parameter</replaceable></arg>
 </cmdsynopsis>
@@ -70,6 +72,12 @@ the name of the disired parameter within that subsection.</para>
 
 <para>The <literal>--list</literal> option lists the subsections of
 a certain type, where the type is givein as the parameter.</para>
+
+<para>The <literal>--client</literal> option is equivalent to 
+<literal>--execute-where server</literal> (below).</para>
+
+<para>The <literal>--execute-where</literal> option tells amgetconf whether
+to operate on the client or the server; the server is the default.</para>
 
 </refsect2>
 

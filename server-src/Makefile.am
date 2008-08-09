@@ -42,7 +42,6 @@ SCRIPTS_PERL =  \
 	    $(CHECK_PERL) \
 	    amdevcheck \
 	    amcheckdump \
-	    amgetconf \
 	    amcleanup \
 	    amstatus
 

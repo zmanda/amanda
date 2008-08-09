@@ -38,8 +38,14 @@ use Getopt::Long;
 
 sub usage {
     print <<EOF;
-Usage: amgetconf [-l|--list] [-o configoption]* <config> <paramname>
+Usage: amgetconf [--client] [--execute-where client|server] [-l|--list] [-o configoption]* <config> <paramname>
   (any ordering of options and arguments is acceptable)
+
+--client is equivalent to --execute-where client
+
+--execute-where tells amgetconf whether to operate on the client or the 
+server; the server is the default.
+
 paramname can be one of
   dbopen.APPNAME -- open a debug file
   dbclose.APPNAME:FILENAME -- close debug file FILENAME
@@ -231,11 +237,27 @@ sub conf_param {
 
 my $opt_list = '';
 my $config_overwrites = new_config_overwrites($#ARGV+1);
+my $execute_where = undef;
 
 Getopt::Long::Configure(qw{bundling});
 GetOptions(
     'list|l' => \$opt_list,
     'o=s' => sub { add_config_overwrite_opt($config_overwrites, $_[1]); },
+    'execute-where=s' => sub {
+        my $where = lc($_[1]);
+        fail("Invalid value ($_[1]) for --execute-where. Must be client or server.") 
+            unless $where eq 'client' or $where eq 'server';
+        fail("--execute-where=server conflicts with --execute-where=client or --client.")
+            unless !defined($execute_where) || (
+                ($where eq 'client' && $execute_where) ||
+                ($where eq 'server' && !$execute_where));
+        $execute_where = ($where eq 'client')? $CONFIG_INIT_CLIENT : 0;
+    },
+    'client' => sub {
+        fail("--execute-where=server conflicts with --execute-where=client or --client.")
+            unless !defined($execute_where) || $execute_where;
+        $execute_where = $CONFIG_INIT_CLIENT;
+    }
 ) or usage();
 
 my $config_name;
@@ -266,7 +288,7 @@ if ($parameter =~ /^db(open|close)\./) {
 
 # finally, finish up the application startup procedure
 Amanda::Util::setup_application("amgetconf", "server", $CONTEXT_SCRIPTUTIL);
-config_init($CONFIG_INIT_EXPLICIT_NAME | $CONFIG_INIT_USE_CWD, $config_name);
+config_init($CONFIG_INIT_EXPLICIT_NAME | $CONFIG_INIT_USE_CWD | $execute_where, $config_name);
 apply_config_overwrites($config_overwrites);
 my ($cfgerr_level, @cfgerr_errors) = config_errors();
 if ($cfgerr_level >= $CFGERR_WARNINGS) {

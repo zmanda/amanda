@@ -3304,25 +3304,20 @@ get_int64(void)
     case CONF_MULT1K:
 	break;
 
-    /* older versions of gcc don't deal well with dividing large negative
-     * constants, so we pre-compute these */
-#define MIN_MULT7 -1317624576693539402LL
     case CONF_MULT7:
-	if (val > G_MAXINT64/7 || val < MIN_MULT7)
+	if (val > G_MAXINT64/7 || val < ((gint64)G_MININT64)/7)
 	    conf_parserror(_("value too large"));
 	val *= 7;
 	break;
 
-#define MIN_MULT1M -9007199254740992LL
     case CONF_MULT1M:
-	if (val > G_MAXINT64/1024 || val < MIN_MULT1M)
+	if (val > G_MAXINT64/1024 || val < ((gint64)G_MININT64)/1024)
 	    conf_parserror(_("value too large"));
 	val *= 1024;
 	break;
 
-#define MIN_MULT1G -8796093022208LL
     case CONF_MULT1G:
-	if (val > G_MAXINT64/(1024*1024) || val < MIN_MULT1G)
+	if (val > G_MAXINT64/(1024*1024) || val < ((gint64)G_MININT64)/(1024*1024))
 	    conf_parserror(_("value too large"));
 	val *= 1024*1024;
 	break;

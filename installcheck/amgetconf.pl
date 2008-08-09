@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 64;
+use Test::More tests => 75;
 
 use lib "@amperldir@";
 use Installcheck::Config;
@@ -58,6 +58,39 @@ is(run_get('amgetconf', 'TESTCONF', "printer"), "",
     "printer defaults to empty string, which is not an error");
 
 # test command-line parsing
+is(run_get('amgetconf', 'TESTCONF', '--execute-where', 'client', 'amandates'),
+   $Amanda::Constants::DEFAULT_AMANDATES_FILE,
+    "--execute-where client");
+is(run_get('amgetconf', 'TESTCONF', '--execute-where=client', 'amandates'),
+   $Amanda::Constants::DEFAULT_AMANDATES_FILE,
+    "--execute-where=client");
+is(run_get('amgetconf', 'TESTCONF', '--client', 'amandates'),
+   $Amanda::Constants::DEFAULT_AMANDATES_FILE,
+    "--client");
+
+is(run_get('amgetconf', 'TESTCONF', '--execute-where', 'server', 'reserve'), "100",
+    "--execute-where server");
+is(run_get('amgetconf', 'TESTCONF', '--execute-where=server', 'reserve'), "100",
+    "--execute-where=server");
+is(run_get('amgetconf', 'TESTCONF', '--execute-where=server', '--execute-where=server', 'reserve'), "100",
+    "--execute-where=server --execute-where=server");
+is(run_get('amgetconf', 'TESTCONF', '--execute-where=client', '--execute-where=client', 'amandates'),
+   $Amanda::Constants::DEFAULT_AMANDATES_FILE,
+    "--execute-where=client --execute-where=client");
+
+like(run_err('amgetconf', 'TESTCONF', '--execute-where=server', '--execute-where=client'),
+    qr/conflicts with/,
+    "handles conflict --execute-where=server --execute-where=client");
+like(run_err('amgetconf', 'TESTCONF', '--execute-where=client', '--execute-where=server'),
+    qr/conflicts with/,
+    "handles conflict --execute-where=client --execute-where=server");
+like(run_err('amgetconf', 'TESTCONF', '--execute-where=server', '--client'),
+     qr/conflicts with/,
+    "handles conflict --execute-where=server --client");
+like(run_err('amgetconf', 'TESTCONF', '--client', '--execute-where=server'),
+    qr/conflicts with/, 
+    "handles conflict --client --execute-where=server");
+
 is(run_get('amgetconf', 'TESTCONF', '-o', 'reserve=50', 'reserve'), "50",
     "-o reserve=50");
 is(run_get('amgetconf', 'TESTCONF', '-oreserve=50', 'reserve'), "50",
