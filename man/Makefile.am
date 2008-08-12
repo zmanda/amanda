@@ -97,6 +97,7 @@ MAINTAINERCLEANFILES = $(ALL_MAN_PAGES)
 # some of the XSL needs to know what docbook-xsl version we've selected
 %.xsl: %.xsl.in $(top_builddir)/config.status
 	$(top_builddir)/config.status --file=$@:$<
+	rm -f config.log
 
 if   ENABLE_MANPAGE_BUILD
 # phase one of the documentation build expands some macros.

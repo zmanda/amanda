@@ -287,3 +287,4 @@ listlibsrc:
 
 distclean-local:
 	if test `cd $(srcdir) && pwd` != `pwd`; then rm -f svn-info.h; fi
+MAINTAINERCLEANFILES=svn-info.h

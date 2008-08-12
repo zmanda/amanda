@@ -1,3 +1,7 @@
+2008-08-12  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/Makefile.am: clean up svn-info.h on maintainer-clean
+	* man/Makefile.am: remove config.log after running config.status
+
 2008-08-07 Nikolas Coukouma <atrus@zmanda.com>
     	* common-src/conffile.c: cleaner fix for signed compared to unsigned
     	  errors on older versions of GCC.
