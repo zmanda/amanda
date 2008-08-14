@@ -55,8 +55,6 @@ typedef struct XferElementGlue {
 
     GThread *thread;
     GThreadFunc threadfunc;
-
-    gboolean prolong;
 } XferElementGlue;
 
 /*

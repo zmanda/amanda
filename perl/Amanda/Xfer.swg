@@ -136,9 +136,18 @@ not close the descriptor.  Be careful not to let Perl close the file for you!
 
   Amanda::Xfer::Source::Random->new($length, $seed);
 
-This source provides I<length> bytes of random data.  C<$seed> is the seed used
+This source provides I<length> bytes of random data (or an unlimited amount
+of data if I<length> is zero).  C<$seed> is the seed used
 to generate the random numbers; this seed can be used in a destination to
 check for correct output.
+
+=head3 Amanda::Xfer::Source::Pattern
+
+  Amanda::Xfer::Source::Pattern->new($length, $pattern);
+
+This source provides I<length> bytes containing copies of
+I<pattern>. If I<length> is zero, the source provides an unlimited
+number of bytes.
 
 =head2 Transfer Filters
 
@@ -258,6 +267,7 @@ amglue_add_enum_tag_fns(xmsg_type);
 amglue_add_constant(XMSG_INFO, xmsg_type);
 amglue_add_constant(XMSG_ERROR, xmsg_type);
 amglue_add_constant(XMSG_DONE, xmsg_type);
+amglue_add_constant(XMSG_CANCEL, xmsg_type);
 amglue_copy_to_tag(xmsg_type, constants);
 
 /*
@@ -495,7 +505,13 @@ void xfer_unref(Xfer *);
 xfer_status xfer_get_status(Xfer *xfer);
 char *xfer_repr(Xfer *xfer);
 void xfer_start(Xfer *xfer);
+void xfer_cancel(Xfer *xfer);
 /* xfer_get_source is implemented below */
+
+%inline %{
+/* SWIG wants to treat this as a function */
+#define xfer_get_status(xfer) ((xfer)->status)
+%}
 
 /*
  * XferElement functions
@@ -508,7 +524,7 @@ void xfer_element_unref(XferElement *elt); /* (wrap the macro, above) */
 /* xfer_element_link_to -- private */
 char *xfer_element_repr(XferElement *elt);
 /* xfer_element_start -- private */
-/* xfer_element_abort -- private */
+/* xfer_element_cancel -- private */
 
 /* subclass constructors */
 
@@ -521,8 +537,23 @@ XferElement *xfer_source_device(
 
 %newobject xfer_source_random;
 XferElement *xfer_source_random(
-    size_t length,
+    guint64 length,
     guint32 seed);
+
+%typemap(in) (void * pattern, size_t pattern_length) {
+ size_t len;
+ char * pat;
+
+ pat = SvPV($input, len);
+ $1 = g_memdup(pat, len);
+ $2 = len;
+}
+
+%newobject xfer_source_random;
+XferElement *xfer_source_pattern(
+    guint64 length,
+    void * pattern,
+    size_t pattern_length);
 
 %newobject xfer_source_fd;
 XferElement *xfer_source_fd(
@@ -668,6 +699,7 @@ DECLARE_METHOD(repr, xfer_repr);
 DECLARE_METHOD(get_status, xfer_get_status);
 DECLARE_METHOD(get_source, xfer_get_amglue_source);
 DECLARE_METHOD(start, xfer_start);
+DECLARE_METHOD(cancel, xfer_cancel);
 
 /* ---- */
 
@@ -699,6 +731,12 @@ DECLARE_CONSTRUCTOR(xfer_source_fd)
 PACKAGE(Amanda::Xfer::Source::Random)
 XFER_ELEMENT_SUBCLASS()
 DECLARE_CONSTRUCTOR(xfer_source_random)
+
+/* ---- */
+
+PACKAGE(Amanda::Xfer::Source::Pattern)
+XFER_ELEMENT_SUBCLASS()
+DECLARE_CONSTRUCTOR(xfer_source_pattern)
 
 /* ---- */
 

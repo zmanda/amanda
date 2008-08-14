@@ -103,6 +103,13 @@ typedef struct XferElement {
     struct XferElement *upstream;
     struct XferElement *downstream;
 
+    /* Information regarding cancellation.  Cancelled and expect_eof are set by
+     * the default cancel() method.  Can_generate_eof should be set during
+     * initialization, and is returned by the default cancel implementation */
+    gboolean cancelled;
+    gboolean expect_eof;
+    gboolean can_generate_eof;
+
     /* file descriptors for XFER_MECH_READFD and XFER_MECH_WRITEFD.  These should be set
      * during setup(), and can be accessed by neighboring elements during start(). It is
      * up to subclasses to handle closing these file descriptors, if required. */
@@ -152,16 +159,36 @@ typedef struct {
      */
     gboolean (*start)(XferElement *elt);
 
-    /* Stop transferring data.  The upstream element's abort method will already have
-     * been called, but due to OS buffering, data may yet arrive.  The element may
-     * discard any such data, but must not fail.  This function is only called for
-     * abnormal terminations; elements should normally stop processing on receiving
-     * an EOF indication from upstream.  This method should cause an EOF indication
-     * to be sent downstream.
+    /* Stop transferring data.  The upstream element's cancel method will
+     * already have been called, but due to buffering and synchronization
+     * issues, data may yet arrive.  The element may discard any such data, but
+     * must not fail.  This method is only called for abnormal terminations;
+     * elements should normally stop processing on receiving an EOF indication
+     * from upstream.
+     *
+     * If expect_eof is TRUE, then this element should expect an EOF from its
+     * upstream element, and should drain any remaining data until that EOF
+     * arrives and generate an EOF to the downstream element.  The utility
+     * functions xfer_element_drain_by_reading and xfer_element_drain_by_pulling may be useful for this
+     * purpose. This draining is important in order to avoid hung threads or
+     * unexpected SIGPIPEs.
+     *
+     * If expect_eof is FALSE, then the upstream elements are unable to
+     * generate an early EOF, so this element should *not* attempt to drain any
+     * remaining data.  As an example, an FdSource is not active and thus
+     * cannot generate an EOF on request.
+     *
+     * If this element can generate an EOF, it should return TRUE, otherwise
+     * FALSE.
+     *
+     * The default implementation sets self->expect_eof and self->cancelled
+     * appropriately and returns self->can_generate_eof.
+     *
+     * This method is always called from the main thread.  It must not block.
      *
      * @param elt: the XferElement
      */
-    void (*abort)(XferElement *elt);
+    gboolean (*cancel)(XferElement *elt, gboolean generate_eof);
 
     /* Get a buffer full of data from this element.  This function is called by
      * the downstream element under XFER_MECH_PULL_CALL.  It can block indefinitely,
@@ -209,11 +236,49 @@ void xfer_element_setup(XferElement *elt);
 gboolean xfer_element_start(XferElement *elt);
 void xfer_element_push_buffer(XferElement *elt, gpointer buf, size_t size);
 gpointer xfer_element_pull_buffer(XferElement *elt, size_t *size);
-void xfer_element_abort(XferElement *elt);
+gboolean xfer_element_cancel(XferElement *elt, gboolean expect_eof);
 
-/*
- * Methods
+/****
+ * Subclass utilities
+ *
+ * These are utilities for subclasses
  */
+
+/* Drain UPSTREAM by pulling buffers until EOF
+ *
+ * @param upstream: the element to drain
+ */
+void xfer_element_drain_by_pulling(XferElement *upstream);
+
+/* Drain UPSTREAM by reading until EOF.  This does not close
+ * the file descriptor.
+ *
+ * @param fd: the file descriptor to drain
+ */
+void xfer_element_drain_by_reading(int fd);
+
+/* Wait for the xfer's state to become CANCELLED or DONE; this is useful to
+ * wait until a cancelletion is in progress before returning an EOF or
+ * otherwise handling a failure.  If you call this in the main thread, you'll
+ * be waiting for a while.
+ *
+ * @param xfer: the transfer object
+ * @returns: the new status (XFER_CANCELLED or XFER_DONE)
+ */
+xfer_status wait_until_xfer_cancelled(Xfer *xfer);
+
+/* Send an XMSG_ERROR constructed with the given format and arguments, then
+ * cancel the transfer, then wait until the transfer is completely cancelled.
+ * This is the most common error-handling process for transfer elements.  All
+ * that remains to be done on return is to branch to the appropriate point in
+ * the cancellation-handling portion of the transfer.
+ *
+ * @param elt: the transfer element producing the error
+ * @param fmt: the format for the error message
+ * @param ...: arguments corresponding to the format
+ */
+void xfer_element_handle_error(XferElement *elt, const char *fmt, ...)
+	G_GNUC_PRINTF(2,3);
 
 /***********************
  * XferElement subclasses
@@ -241,13 +306,24 @@ XferElement *xfer_source_device(
  *
  * Implemented in source-random.c
  *
- * @param length: bytes to produce
+ * @param length: bytes to produce, or zero for no limit
  * @param prng_seed: initial value for random number generator
  * @return: new element
  */
-XferElement *xfer_source_random(
-    size_t length,
-    guint32 prng_seed);
+XferElement *xfer_source_random(guint64 length, guint32 prng_seed);
+
+/* A transfer source that produces LENGTH bytes containing repeated
+ * copies of the provided pattern, for testing purposes.
+ *
+ * Implemented in source-pattern.c
+ *
+ * @param length: bytes to produce, or zero for no limit
+ * @param pattern: Pointer to memory containing the desired byte pattern.
+ * @param pattern_length: Size of pattern to repeat.
+ * @return: new element
+ */
+XferElement *xfer_source_pattern(guint64 length, void * pattern,
+                                 size_t pattern_length);
 
 /* A transfer source that provides bytes read from a file descriptor.
  * Reading continues until EOF, but the file descriptor is not closed.
@@ -278,7 +354,8 @@ XferElement *xfer_filter_xor(
  * Implemented in dest-device.c
  *
  * @param device: the Device to write to, with a file started
- * @param max_memory: total amount of memory to use for buffers
+ * @param max_memory: total amount of memory to use for buffers, or zero
+ *                    for a reasonable default.
  * @return: new element
  */
 XferElement *

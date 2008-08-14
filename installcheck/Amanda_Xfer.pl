@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 10;
+use Test::More tests => 12;
 use File::Path;
 use strict;
 
@@ -49,6 +49,9 @@ Amanda::Debug::disable_die_override();
     my $got_msg = "(not received)";
     $xfer->get_source()->set_callback(sub {
 	my ($src, $msg, $xfer) = @_;
+	if ($msg->{type} == $XMSG_ERROR) {
+	    die $msg->{elt} . " failed: " . $msg->{message};
+	}
 	if ($msg->{type} == $XMSG_INFO) {
 	    $got_msg = $msg->{message};
 	}
@@ -80,6 +83,9 @@ Amanda::Debug::disable_die_override();
 
     my $cb = sub {
 	my ($src, $msg, $xfer) = @_;
+	if ($msg->{type} == $XMSG_ERROR) {
+	    die $msg->{elt} . " failed: " . $msg->{message};
+	}
 	if  ($xfer1->get_status() == $Amanda::Xfer::XFER_DONE
 	 and $xfer2->get_status() == $Amanda::Xfer::XFER_DONE) {
 	    $xfer1->get_source()->remove();
@@ -118,6 +124,9 @@ pass("Two simultaneous transfers run to completion");
 
     my $cb = sub {
 	my ($src, $msg, $xfer) = @_;
+	if ($msg->{type} == $XMSG_ERROR) {
+	    die $msg->{elt} . " failed: " . $msg->{message};
+	}
 	if ($xfer->get_status() == $Amanda::Xfer::XFER_DONE) {
 	    $xfer->get_source()->remove();
 	    Amanda::MainLoop::quit();
@@ -157,6 +166,9 @@ pass("Two simultaneous transfers run to completion");
 
     my $cb = sub {
 	my ($src, $msg, $xfer) = @_;
+	if ($msg->{type} == $XMSG_ERROR) {
+	    die $msg->{elt} . " failed: " . $msg->{message};
+	}
 	if ($xfer->get_status() == $Amanda::Xfer::XFER_DONE) {
 	    $xfer->get_source()->remove();
 	    Amanda::MainLoop::quit();
@@ -191,6 +203,9 @@ pass("Two simultaneous transfers run to completion");
 
     my $quit_cb = sub {
 	my ($src, $msg, $xfer) = @_;
+	if ($msg->{type} == $XMSG_ERROR) {
+	    die $msg->{elt} . " failed: " . $msg->{message};
+	}
 	if ($xfer->get_status() == $Amanda::Xfer::XFER_DONE) {
 	    $xfer->get_source()->remove();
 	    Amanda::MainLoop::quit();
@@ -246,4 +261,70 @@ pass("Two simultaneous transfers run to completion");
 
     Amanda::MainLoop::run();
     pass("read from a device succeeded, too, and data was correct");
+}
+
+{
+    my $RANDOM_SEED = 0x5EAF00D;
+
+    # build a transfer that will keep going forever
+    my $xfer = Amanda::Xfer->new([
+	Amanda::Xfer::Source::Random->new(0, $RANDOM_SEED),
+	Amanda::Xfer::Filter::Xor->new(14),
+	Amanda::Xfer::Filter::Xor->new(14),
+	Amanda::Xfer::Dest::Null->new($RANDOM_SEED),
+    ]);
+
+    my $got_timeout = 0;
+    Amanda::MainLoop::timeout_source(200)->set_callback(sub {
+	my ($src) = @_;
+	$got_timeout = 1;
+	$src->remove();
+	$xfer->cancel();
+    });
+    $xfer->get_source()->set_callback(sub {
+	my ($src, $msg, $xfer) = @_;
+	if ($msg->{type} == $XMSG_ERROR) {
+	    die $msg->{elt} . " failed: " . $msg->{message};
+	}
+	if ($xfer->get_status() == $Amanda::Xfer::XFER_DONE) {
+	    $src->remove();
+	    Amanda::MainLoop::quit();
+	}
+    });
+    $xfer->start();
+    Amanda::MainLoop::run();
+    ok($got_timeout, "A neverending transfer finishes after being cancelled");
+    # (note that this does not test all of the cancellation possibilities)
+}
+
+{
+    # build a transfer that will write to a read-only fd
+    my $read_filename = "$Amanda::Paths::AMANDA_TMPDIR/xfer-junk-src.tmp";
+    my $rfh;
+
+    # create the file
+    open($rfh, ">", $read_filename) or die("Could not open '$read_filename' for writing");
+
+    # open it for reading
+    open($rfh, "<", $read_filename) or die("Could not open '$read_filename' for reading");;
+
+    my $xfer = Amanda::Xfer->new([
+	Amanda::Xfer::Source::Random->new(0, 1),
+	Amanda::Xfer::Dest::Fd->new(fileno($rfh)),
+    ]);
+
+    my $got_error = 0;
+    $xfer->get_source()->set_callback(sub {
+	my ($src, $msg, $xfer) = @_;
+	if ($msg->{type} == $XMSG_ERROR) {
+	    $got_error = 1;
+	}
+	if ($xfer->get_status() == $Amanda::Xfer::XFER_DONE) {
+	    $src->remove();
+	    Amanda::MainLoop::quit();
+	}
+    });
+    $xfer->start();
+    Amanda::MainLoop::run();
+    ok($got_error, "A transfer with an error cancels itself after sending an error");
 }

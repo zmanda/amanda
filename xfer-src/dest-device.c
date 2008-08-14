@@ -70,8 +70,18 @@ pull_buffer_producer(gpointer data,
     size_t hint_size G_GNUC_UNUSED)
 {
     XferDestDevice *self = (XferDestDevice *)data;
+    XferElement *elt = XFER_ELEMENT(self);
     gpointer buf;
     size_t size;
+
+    if (elt->cancelled) {
+	/* drain our upstream only if we're expecting an EOF */
+	if (elt->expect_eof) {
+	    xfer_element_drain_by_pulling(XFER_ELEMENT(self)->upstream);
+	}
+
+	return PRODUCER_FINISHED;
+    }
 
     buf = xfer_element_pull_buffer(XFER_ELEMENT(self)->upstream, &size);
     if (!buf) {
@@ -92,6 +102,7 @@ queueing_thread(
     gpointer data)
 {
     XferDestDevice *self = (XferDestDevice *)data;
+    XferElement *elt = (XferElement *)self;
     queue_result_flags result;
     GValue val;
     StreamingRequirement streaming_mode;
@@ -119,11 +130,25 @@ queueing_thread(
 		streaming_mode);
 
     /* finish the file explicitly */
-    device_finish_file(self->device);
+    if (!(self->device->status & DEVICE_STATUS_DEVICE_ERROR))
+	device_finish_file(self->device);
 
-    /* TODO: handle this better */
-    if (result != QUEUE_SUCCESS)
-	error("Oh, noes!");
+    if (result != QUEUE_SUCCESS) {
+	/* note that our producer never returns an error */
+
+	if ((result & QUEUE_CONSUMER_ERROR)
+		&& (self->device->status != DEVICE_STATUS_SUCCESS)) {
+	    xfer_element_handle_error(elt, "%s: %s",
+		    self->device->device_name, device_error_or_status(self->device));
+	} else {
+	    xfer_element_handle_error(elt, _("%s: internal error"),
+		    xfer_element_repr(elt));
+	}
+
+	/* and drain our upstream, since the queueing loop is done */
+	if (elt->expect_eof)
+	    xfer_element_drain_by_pulling(elt->upstream);
+    }
 
     xfer_queue_message(XFER_ELEMENT(self)->xfer, xmsg_new(XFER_ELEMENT(self), XMSG_DONE, 0));
 
@@ -140,17 +165,24 @@ start_impl(
 }
 
 static void
+instance_init(
+    XferElement *elt)
+{
+    elt->can_generate_eof = TRUE;
+}
+
+static void
 class_init(
     XferDestDeviceClass * selfc)
 {
     XferElementClass *klass = XFER_ELEMENT_CLASS(selfc);
     static xfer_element_mech_pair_t mech_pairs[] = {
 	{ XFER_MECH_PULL_BUFFER, XFER_MECH_NONE, 0, 0},
-	/*{ XFER_MECH_READFD, XFER_MECH_NONE, 0, 0}, TODO */
 	{ XFER_MECH_NONE, XFER_MECH_NONE, 0, 0},
     };
 
     klass->start = start_impl;
+
     klass->perl_class = "Amanda::Xfer::Dest::Device";
     klass->mech_pairs = mech_pairs;
 
@@ -172,7 +204,7 @@ xfer_dest_device_get_type (void)
             NULL /* class_data */,
             sizeof (XferDestDevice),
             0 /* n_preallocs */,
-            (GInstanceInitFunc) NULL,
+            (GInstanceInitFunc) instance_init,
             NULL
         };
 

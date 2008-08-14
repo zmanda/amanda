@@ -86,6 +86,17 @@ pull_buffer_impl(
     XferFilterXor *self = (XferFilterXor *)elt;
     char *buf;
 
+    if (elt->cancelled) {
+	/* drain our upstream only if we're expecting an EOF */
+	if (elt->expect_eof) {
+	    xfer_element_drain_by_pulling(XFER_ELEMENT(self)->upstream);
+	}
+
+	/* return an EOF */
+	*size = 0;
+	return NULL;
+    }
+
     /* get a buffer from upstream, xor it, and hand it back */
     buf = xfer_element_pull_buffer(XFER_ELEMENT(self)->upstream, size);
     if (buf)
@@ -101,11 +112,24 @@ push_buffer_impl(
 {
     XferFilterXor *self = (XferFilterXor *)elt;
 
+    /* drop the buffer if we've been cancelled */
+    if (elt->cancelled) {
+	amfree(buf);
+	return;
+    }
+
     /* xor the given buffer and pass it downstream */
     if (buf)
 	apply_xor(buf, len, self->xor_key);
 
     xfer_element_push_buffer(XFER_ELEMENT(self)->downstream, buf, len);
+}
+
+static void
+instance_init(
+    XferElement *elt)
+{
+    elt->can_generate_eof = TRUE;
 }
 
 static void
@@ -143,7 +167,7 @@ xfer_filter_xor_get_type (void)
             NULL /* class_data */,
             sizeof (XferFilterXor),
             0 /* n_preallocs */,
-            (GInstanceInitFunc) NULL,
+            (GInstanceInitFunc) instance_init,
             NULL
         };
 

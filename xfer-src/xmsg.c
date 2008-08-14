@@ -81,6 +81,7 @@ xmsg_repr(
 	    case XMSG_INFO: typ = "INFO"; break;
 	    case XMSG_ERROR: typ = "ERROR"; break;
 	    case XMSG_DONE: typ = "DONE"; break;
+	    case XMSG_CANCEL: typ = "CANCEL"; break;
 	    default: typ = "**UNKNOWN**"; break;
 	}
 

@@ -43,17 +43,6 @@ send_xfer_done(
 	    xmsg_new((XferElement *)self, XMSG_DONE, 0));
 }
 
-static void
-kill_and_wait_for_thread(
-    XferElementGlue *self)
-{
-    if (self->thread) {
-	self->prolong = FALSE;
-	g_thread_join(self->thread);
-	self->thread = NULL;
-    }
-}
-
 #define GLUE_BUFFER_SIZE 32768
 #define GLUE_RING_BUFFER_SIZE 32
 
@@ -67,24 +56,33 @@ static gpointer
 call_and_write_thread(
     gpointer data)
 {
-    XferElementGlue *self = (XferElementGlue *)data;
-    int *fdp = (self->pipe[1] == -1)? &XFER_ELEMENT(self)->downstream->input_fd : &self->pipe[1];
+    XferElement *elt = XFER_ELEMENT(data);
+    XferElementGlue *self = XFER_ELEMENT_GLUE(data);
+    int *fdp = (self->pipe[1] == -1)? &elt->downstream->input_fd : &self->pipe[1];
     int fd = *fdp;
 
-    while (self->prolong) {
+    while (!elt->cancelled) {
 	size_t len;
 	char *buf;
 
 	/* get a buffer from upstream */
-	buf = xfer_element_pull_buffer(XFER_ELEMENT(self)->upstream, &len);
+	buf = xfer_element_pull_buffer(elt->upstream, &len);
 	if (!buf)
 	    break;
 
 	/* write it */
 	if (full_write(fd, buf, len) < len) {
-	    g_critical(_("Could not write to fd %d: %s"), fd, strerror(errno));
+	    xfer_element_handle_error(elt,
+		_("Error writing to fd %d: %s"), fd, strerror(errno));
+	    amfree(buf);
+	    break;
 	}
+
+	amfree(buf);
     }
+
+    if (elt->cancelled && elt->expect_eof)
+	xfer_element_drain_by_pulling(elt->upstream);
 
     /* close the fd we've been writing, as an EOF signal to downstream, and
      * set it to -1 to avoid accidental re-use */
@@ -100,41 +98,52 @@ static gpointer
 read_and_write_thread(
     gpointer data)
 {
-    XferElementGlue *self = (XferElementGlue *)data;
-    int rfd = XFER_ELEMENT(self)->upstream->output_fd;
-    int wfd = XFER_ELEMENT(self)->downstream->input_fd;
+    XferElement *elt = XFER_ELEMENT(data);
+    XferElementGlue *self = XFER_ELEMENT_GLUE(data);
+    int rfd = elt->upstream->output_fd;
+    int wfd = elt->downstream->input_fd;
 
     /* dynamically allocate a buffer, in case this thread has
      * a limited amount of stack allocated */
     char *buf = g_malloc(GLUE_BUFFER_SIZE);
 
-    while (self->prolong) {
+    while (!elt->cancelled) {
 	size_t len;
 
 	/* read from upstream */
 	len = full_read(rfd, buf, GLUE_BUFFER_SIZE);
 	if (len < GLUE_BUFFER_SIZE) {
 	    if (errno) {
-		g_critical(_("Error reading from fd %d: %s"), rfd, strerror(errno));
+		xfer_element_handle_error(elt,
+		    _("Error reading from fd %d: %s"), rfd, strerror(errno));
+		break;
 	    } else if (len == 0) { /* we only count a zero-length read as EOF */
 		break;
 	    }
 	}
 
 	/* write the buffer fully */
-	if (full_write(wfd, buf, len) < len)
-	    g_critical(_("Could not write to fd %d: %s"), wfd, strerror(errno));
+	if (full_write(wfd, buf, len) < len) {
+	    xfer_element_handle_error(elt,
+		_("Could not write to fd %d: %s"), wfd, strerror(errno));
+	    break;
+	}
     }
 
-    /* close the read fd, since it's at EOF, and set it to -1 to avoid accidental
+    if (elt->cancelled && elt->expect_eof)
+	xfer_element_drain_by_pulling(elt->upstream);
+
+    /* close the read fd, if it's at EOF, and set it to -1 to avoid accidental
      * re-use */
-    close(rfd);
-    XFER_ELEMENT(self)->upstream->output_fd = -1;
+    if (!elt->cancelled || elt->expect_eof) {
+	close(rfd);
+	elt->upstream->output_fd = -1;
+    }
 
     /* close the fd we've been writing, as an EOF signal to downstream, and
      * set it to -1 to avoid accidental re-use */
     close(wfd);
-    XFER_ELEMENT(self)->downstream->input_fd = -1;
+    elt->downstream->input_fd = -1;
 
     send_xfer_done(self);
 
@@ -146,11 +155,12 @@ static gpointer
 read_and_call_thread(
     gpointer data)
 {
-    XferElementGlue *self = (XferElementGlue *)data;
-    int *fdp = (self->pipe[0] == -1)? &XFER_ELEMENT(self)->upstream->output_fd : &self->pipe[0];
+    XferElement *elt = XFER_ELEMENT(data);
+    XferElementGlue *self = XFER_ELEMENT_GLUE(data);
+    int *fdp = (self->pipe[0] == -1)? &elt->upstream->output_fd : &self->pipe[0];
     int fd = *fdp;
 
-    while (self->prolong) {
+    while (!elt->cancelled) {
 	char *buf = g_malloc(GLUE_BUFFER_SIZE);
 	size_t len;
 
@@ -158,18 +168,23 @@ read_and_call_thread(
 	len = full_read(fd, buf, GLUE_BUFFER_SIZE);
 	if (len < GLUE_BUFFER_SIZE) {
 	    if (errno) {
-		g_critical(_("Error reading from fd %d: %s"), fd, strerror(errno));
+		xfer_element_handle_error(elt,
+		    _("Error reading from fd %d: %s"), fd, strerror(errno));
+		break;
 	    } else if (len == 0) { /* we only count a zero-length read as EOF */
 		amfree(buf);
 		break;
 	    }
 	}
 
-	xfer_element_push_buffer(XFER_ELEMENT(self)->downstream, buf, len);
+	xfer_element_push_buffer(elt->downstream, buf, len);
     }
 
+    if (elt->cancelled && elt->expect_eof)
+	xfer_element_drain_by_reading(fd);
+
     /* send an EOF indication downstream */
-    xfer_element_push_buffer(XFER_ELEMENT(self)->downstream, NULL, 0);
+    xfer_element_push_buffer(elt->downstream, NULL, 0);
 
     /* close the read fd, since it's at EOF, and set it to -1 to avoid accidental
      * re-use */
@@ -185,24 +200,35 @@ static gpointer
 call_and_call_thread(
     gpointer data)
 {
-    XferElementGlue *self = (XferElementGlue *)data;
+    XferElement *elt = XFER_ELEMENT(data);
+    XferElementGlue *self = XFER_ELEMENT_GLUE(data);
+    gboolean eof_sent = FALSE;
 
     /* TODO: consider breaking this into two cooperating threads: one to pull
      * buffers from upstream and one to push them downstream.  This would gain
      * parallelism at the cost of a lot of synchronization operations. */
 
-    while (self->prolong) {
+    while (!elt->cancelled) {
 	char *buf;
 	size_t len;
 
 	/* get a buffer from upstream */
-	buf = xfer_element_pull_buffer(XFER_ELEMENT(self)->upstream, &len);
+	buf = xfer_element_pull_buffer(elt->upstream, &len);
 
 	/* and push it downstream */
-	xfer_element_push_buffer(XFER_ELEMENT(self)->downstream, buf, len);
+	xfer_element_push_buffer(elt->downstream, buf, len);
 
-	if (!buf) break;
+	if (!buf) {
+	    eof_sent = TRUE;
+	    break;
+	}
     }
+
+    if (elt->cancelled && elt->expect_eof)
+	xfer_element_drain_by_pulling(elt->upstream);
+
+    if (!eof_sent)
+	xfer_element_push_buffer(elt->downstream, NULL, 0);
 
     send_xfer_done(self);
 
@@ -219,9 +245,9 @@ setup_impl(
 {
     XferElementGlue *self = (XferElementGlue *)elt;
 
-    switch (XFER_ELEMENT(self)->input_mech) {
+    switch (elt->input_mech) {
     case XFER_MECH_READFD:
-	switch (XFER_ELEMENT(self)->output_mech) {
+	switch (elt->output_mech) {
 	case XFER_MECH_READFD:
 	    g_assert_not_reached(); /* no glue needed */
 	    break;
@@ -235,7 +261,6 @@ setup_impl(
 	    break;
 
 	case XFER_MECH_PULL_BUFFER:
-	    /* nothing to set up */
 	    break;
 
 	case XFER_MECH_NONE:
@@ -246,12 +271,12 @@ setup_impl(
 
     case XFER_MECH_WRITEFD:
 	make_pipe(self);
-	XFER_ELEMENT(self)->input_fd = self->pipe[1];
+	elt->input_fd = self->pipe[1];
 	self->pipe[1] = -1; /* upstream will close this for us */
 
-	switch (XFER_ELEMENT(self)->output_mech) {
+	switch (elt->output_mech) {
 	case XFER_MECH_READFD:
-	    XFER_ELEMENT(self)->output_fd = self->pipe[0];
+	    elt->output_fd = self->pipe[0];
 	    self->pipe[0] = -1; /* downstream will close this for us */
 	    break;
 
@@ -264,7 +289,6 @@ setup_impl(
 	    break;
 
 	case XFER_MECH_PULL_BUFFER:
-	    /* nothing to set up */
 	    break;
 
 	case XFER_MECH_NONE:
@@ -274,15 +298,14 @@ setup_impl(
 	break;
 
     case XFER_MECH_PUSH_BUFFER:
-	switch (XFER_ELEMENT(self)->output_mech) {
+	switch (elt->output_mech) {
 	case XFER_MECH_READFD:
 	    make_pipe(self);
-	    XFER_ELEMENT(self)->output_fd = self->pipe[0];
+	    elt->output_fd = self->pipe[0];
 	    self->pipe[0] = -1; /* downstream will close this for us */
 	    break;
 
 	case XFER_MECH_WRITEFD:
-	    /* nothing to set up */
 	    break;
 
 	case XFER_MECH_PUSH_BUFFER:
@@ -302,10 +325,10 @@ setup_impl(
 	break;
 
     case XFER_MECH_PULL_BUFFER:
-	switch (XFER_ELEMENT(self)->output_mech) {
+	switch (elt->output_mech) {
 	case XFER_MECH_READFD:
 	    make_pipe(self);
-	    XFER_ELEMENT(self)->output_fd = self->pipe[0];
+	    elt->output_fd = self->pipe[0];
 	    self->pipe[0] = -1; /* downstream will close this for us */
 	    self->threadfunc = call_and_write_thread;
 	    break;
@@ -341,22 +364,11 @@ start_impl(
     XferElementGlue *self = (XferElementGlue *)elt;
 
     if (self->threadfunc) {
-	self->prolong = TRUE;
-	self->thread = g_thread_create(self->threadfunc, (gpointer)self, TRUE, NULL);
+	self->thread = g_thread_create(self->threadfunc, (gpointer)self, FALSE, NULL);
     }
 
     /* we're active if we have a thread that will eventually die */
     return self->threadfunc? TRUE : FALSE;
-}
-
-static void
-abort_impl(
-    XferElement *elt)
-{
-    XferElementGlue *self = (XferElementGlue *)elt;
-
-    /* kill and wait for our child thread, if it's still around */
-    kill_and_wait_for_thread(self);
 }
 
 static gpointer
@@ -364,10 +376,16 @@ pull_buffer_impl(
     XferElement *elt,
     size_t *size)
 {
-    XferElementGlue *self = (XferElementGlue *)elt;
+    XferElementGlue *self = XFER_ELEMENT_GLUE(elt);
 
     if (self->ring) {
 	gpointer buf;
+
+	if (elt->cancelled) {
+	    /* The finalize method will empty the ring buffer */
+	    *size = 0;
+	    return NULL;
+	}
 
 	/* make sure there's at least one element available */
 	semaphore_down(self->ring_used_sem);
@@ -382,20 +400,44 @@ pull_buffer_impl(
 
 	return buf;
     } else {
-	int *fdp = (self->pipe[0] == -1)? &XFER_ELEMENT(self)->upstream->output_fd : &self->pipe[0];
+	int *fdp = (self->pipe[0] == -1)? &elt->upstream->output_fd : &self->pipe[0];
 	int fd = *fdp;
 	char *buf = g_malloc(GLUE_BUFFER_SIZE);
 	ssize_t len;
+
+	if (elt->cancelled) {
+	    if (elt->expect_eof)
+		xfer_element_drain_by_reading(fd);
+
+	    close(fd);
+	    *fdp = -1;
+
+	    *size = 0;
+	    return NULL;
+	}
 
 	/* read from upstream */
 	len = full_read(fd, buf, GLUE_BUFFER_SIZE);
 	if (len < GLUE_BUFFER_SIZE) {
 	    if (errno) {
-		g_critical(_("Error reading from fd %d: %s"), fd, strerror(errno));
+		xfer_element_handle_error(elt,
+		    _("Error reading from fd %d: %s"), fd, strerror(errno));
+
+		/* return an EOF */
+		amfree(buf);
+		len = 0;
+
+		/* and finish off the upstream */
+		if (elt->expect_eof) {
+		    xfer_element_drain_by_reading(fd);
+		}
+		close(fd);
+		*fdp = -1;
 	    } else if (len == 0) {
 		/* EOF */
 		g_free(buf);
 		buf = NULL;
+		*size = 0;
 
 		/* signal EOF to downstream */
 		close(fd);
@@ -417,6 +459,12 @@ push_buffer_impl(
     XferElementGlue *self = (XferElementGlue *)elt;
 
     if (self->ring) {
+	/* just drop packets if the transfer has been cancelled */
+	if (elt->cancelled) {
+	    amfree(buf);
+	    return;
+	}
+
 	/* make sure there's at least one element free */
 	semaphore_down(self->ring_free_sem);
 
@@ -430,14 +478,31 @@ push_buffer_impl(
 
 	return;
     } else {
-	int *fdp = (self->pipe[1] == -1)? &XFER_ELEMENT(self)->downstream->input_fd : &self->pipe[1];
+	int *fdp = (self->pipe[1] == -1)? &elt->downstream->input_fd : &self->pipe[1];
 	int fd = *fdp;
+
+	if (elt->cancelled) {
+	    if (!elt->expect_eof || !buf) {
+		close(fd);
+		*fdp = -1;
+
+		/* hack to ensure we won't close the fd again, if we get another push */
+		elt->expect_eof = TRUE;
+	    }
+
+	    amfree(buf);
+
+	    return;
+	}
 
 	/* write the full buffer to the fd, or close on EOF */
 	if (buf) {
 	    if (full_write(fd, buf, len) < len) {
-		g_critical(_("Could not write to fd %d: %s"), fd, strerror(errno));
+		xfer_element_handle_error(elt,
+		    _("Error writing to fd %d: %s"), fd, strerror(errno));
+		/* nothing special to do to handle the cancellation */
 	    }
+	    amfree(buf);
 	} else {
 	    close(fd);
 	    *fdp = -1;
@@ -451,6 +516,8 @@ static void
 instance_init(
     XferElementGlue *self)
 {
+    XferElement *elt = (XferElement *)self;
+    elt->can_generate_eof = TRUE;
     self->pipe[0] = self->pipe[1] = -1;
 }
 
@@ -464,16 +531,12 @@ finalize_impl(
     if (self->pipe[0] != -1) close(self->pipe[0]);
     if (self->pipe[1] != -1) close(self->pipe[1]);
 
-    /* kill and wait for our child thread, if it's still around */
-    kill_and_wait_for_thread(self);
-
     if (self->ring) {
 	/* empty the ring buffer, ignoring syncronization issues */
 	while (self->ring_used_sem->value) {
 	    if (self->ring[self->ring_tail].buf)
 		amfree(self->ring[self->ring_tail].buf);
 	    self->ring_tail = (self->ring_tail + 1) % GLUE_RING_BUFFER_SIZE;
-	    semaphore_down(self->ring_used_sem);
 	}
 
 	amfree(self->ring);
@@ -516,7 +579,6 @@ class_init(
 
     klass->setup = setup_impl;
     klass->start = start_impl;
-    klass->abort = abort_impl;
     klass->push_buffer = push_buffer_impl;
     klass->pull_buffer = pull_buffer_impl;
 

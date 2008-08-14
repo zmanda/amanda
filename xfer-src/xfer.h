@@ -40,15 +40,58 @@ typedef enum {
     XFER_INIT = 1,	/* initializing */
     XFER_START = 2,	/* starting */
     XFER_RUNNING = 3,	/* data flowing */
-    XFER_DONE = 4,	/* data no longer flowing */
+    XFER_CANCELLING = 4,/* cancellation begun */
+    XFER_CANCELLED = 5, /* all elements cancelled; draining data */
+    XFER_DONE = 6,	/* data no longer flowing */
 } xfer_status;
 
 /* forward declarations */
 struct XferElement;
+struct XMsgSource;
 struct XMsg;
 
-/* Opaque type for an Xfer */
+/*
+ * "Class" declaration
+ */
+
+struct Xfer {
+    /* The current status of this transfer.  This is read-only, and 
+     * must only be accessed from the main thread or with status_mutex
+     * held. */
+    xfer_status status;
+
+    /* lock this while checking status in a thread
+     * other than the main thread */
+    GMutex *status_mutex;
+
+    /* and wait on this for status changes */
+    GCond *status_cond;
+
+    /* -- remaining fields are private -- */
+
+    gint refcount;
+
+    /* All transfer elements for this transfer, in order from
+     * source to destination.  This is initialized when the Xfer is
+     * created. */
+    GPtrArray *elements;
+
+    /* temporary string for a representation of this transfer */
+    char *repr;
+
+    /* GSource and queue for incoming messages */
+    struct XMsgSource *msg_source;
+    GAsyncQueue *queue;
+
+    /* Number of active elements remaining (a.k.a. the number of
+     * XMSG_DONE messages to expect) */
+    gint num_active_elements;
+};
+
 typedef struct Xfer Xfer;
+
+/* Note that all functions must be called from the main thread unless
+ * otherwise noted */
 
 /* Create a new Xfer object, which should later be freed with xfref_free.
  *
@@ -90,20 +133,13 @@ GSource *xfer_get_source(Xfer *xfer);
  */
 typedef void (*XMsgCallback)(gpointer data, struct XMsg *msg, Xfer *xfer);
 
-/* Queue a message for delivery via this transfer's GSource.
+/* Queue a message for delivery via this transfer's GSource.  This can
+ * be called in any thread.
  *
  * @param xfer: the transfer
  * @param msg: the message to queue
  */
 void xfer_queue_message(Xfer *xfer, struct XMsg *msg);
-
-/* Get the transfer's status.  The easiest way to determine that a transfer
- * has finished is to call this function for every XMSG_DONE message; when the
- * status is XFER_DONE, then all elements have finished.
- *
- * @return: transfer status
- */
-xfer_status xfer_get_status(Xfer *xfer);
 
 /* Get a representation of this transfer.  The string belongs to the transfer, and
  * will be freed when the transfer is freed.
@@ -121,16 +157,25 @@ char *xfer_repr(Xfer *xfer);
  */
 void xfer_start(Xfer *xfer);
 
-/* Register something that is actively processing the datastream, and will
- * eventually send XMSG_DONE.  "Something" can be a thread, a process, or
- * even an asynchronous event handler.  When all registered processing has
- * sent XMSG_DONE, then the transfer itself is done.
+/* Abort a running transfer.  This essentially tells the source to stop
+ * producing data and allows the remainder of the transfer to "drain".  Thus
+ * the transfer will signal its completion "normally" some time after
+ * xfer_cancel returns.  In particular, the state transitions will occur
+ * as follows:
  *
- * This function should be called in the main thread, usually from a transfer's
- * start() method.
+ * - XFER_RUNNING
+ * - xfer_cancel()  (note state may still be XFER_RUNNING on return)
+ * - XFER_CANCELLING
+ * - (individual elements' cancel() methods are invoked)
+ * - XFER_CANCELLED
+ * - (data drains from the transfer)
+ * - XFER_DONE
+ *
+ * This function can be called from any thread at any time.  It will return
+ * without blocking.
  *
  * @param xfer: the Xfer object
  */
-void xfer_will_send_xmsg_done(Xfer *xfer);
+void xfer_cancel(Xfer *xfer);
 
 #endif /* XFER_H */

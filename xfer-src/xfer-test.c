@@ -882,7 +882,7 @@ test_xfer_generic_callback(
     switch (msg->type) {
 	case XMSG_DONE:
 	    /* are we done? */
-	    if (xfer_get_status(xfer) == XFER_DONE) {
+	    if (xfer->status == XFER_DONE) {
 		tu_dbg("all elements are done!\n");
 		g_main_loop_quit(default_main_loop());
 	    }
@@ -925,7 +925,7 @@ test_xfer_simple(void)
     xfer_start(xfer);
 
     g_main_loop_run(default_main_loop());
-    g_assert(xfer_get_status(xfer) == XFER_DONE);
+    g_assert(xfer->status == XFER_DONE);
 
     xfer_unref(xfer);
 
@@ -980,7 +980,7 @@ test_xfer_files(gboolean add_filters)
     xfer_start(xfer);
 
     g_main_loop_run(default_main_loop());
-    g_assert(xfer_get_status(xfer) == XFER_DONE);
+    g_assert(xfer->status == XFER_DONE);
 
     xfer_unref(xfer);
 
@@ -1029,7 +1029,7 @@ test_glue_combo(
     xfer_start(xfer);
 
     g_main_loop_run(default_main_loop());
-    g_assert(xfer_get_status(xfer) == XFER_DONE);
+    g_assert(xfer->status == XFER_DONE);
 
     xfer_unref(xfer);
 

@@ -22,33 +22,6 @@
 #include "element-glue.h"
 #include "amanda.h"
 
-/*
- * "Class" declaration
- */
-
-struct Xfer {
-    gint refcount;
-
-    /* All transfer elements for this transfer, in order from
-     * source to destination.  This is initialized when the Xfer is
-     * created. */
-    GPtrArray *elements;
-
-    /* The current status of this transfer */
-    xfer_status status;
-
-    /* temporary string for a representation of this transfer */
-    char *repr;
-
-    /* GSource and queue for incoming messages */
-    struct XMsgSource *msg_source;
-    GAsyncQueue *queue;
-
-    /* Number of active elements remaining (a.k.a. the number of
-     * XMSG_DONE messages to expect) */
-    gint num_active_elements;
-};
-
 /* XMsgSource objects are GSource "subclasses" which manage
  * a queue of messages, delivering those messages via callback
  * in the mainloop.  Messages can be *sent* from any thread without
@@ -64,6 +37,7 @@ typedef struct XMsgSource {
 } XMsgSource;
 
 /* forward prototypes */
+static void xfer_set_status(Xfer *xfer, xfer_status status);
 static XMsgSource *xmsgsource_new(Xfer *xfer);
 static void link_elements(Xfer *xfer);
 
@@ -78,8 +52,11 @@ xfer_new(
     g_assert(elements);
     g_assert(nelements >= 2);
 
-    xfer->refcount = 1;
     xfer->status = XFER_INIT;
+    xfer->status_mutex = g_mutex_new();
+    xfer->status_cond = g_cond_new();
+
+    xfer->refcount = 1;
     xfer->repr = NULL;
 
     /* Create our message source and corresponding queue */
@@ -137,6 +114,9 @@ xfer_unref(
     }
     g_async_queue_unref(xfer->queue);
 
+    g_mutex_free(xfer->status_mutex);
+    g_cond_free(xfer->status_cond);
+
     /* Free our references to the elements, and also set the 'xfer'
      * attribute of each to NULL, making them "unattached" (although 
      * subsequent reuse of elements is untested). */
@@ -169,12 +149,6 @@ xfer_queue_message(
 
     /* TODO: don't do this if we're in the main thread */
     g_main_context_wakeup(NULL);
-}
-
-xfer_status
-xfer_get_status(Xfer *xfer)
-{
-    return xfer->status;
 }
 
 char *
@@ -214,7 +188,7 @@ xfer_start(
      * when the status becomes XFER_DONE. */
     xfer_ref(xfer);
     xfer->num_active_elements = 0;
-    xfer->status = XFER_START;
+    xfer_set_status(xfer, XFER_START);
 
     /* check that the first element is an XferSource and the last is an XferDest.
      * A source is identified by having no input mechanisms. */
@@ -257,7 +231,10 @@ xfer_start(
 	    xfer->num_active_elements++;
     }
 
-    xfer->status = XFER_RUNNING;
+    /* (note that status can only change in the main thread, so we can be
+     * certain that the status is still XFER_START and we have not yet been
+     * cancelled.  We may have an XMSG_CANCEL already queued up for us, though) */
+    xfer_set_status(xfer, XFER_RUNNING);
 
     /* If this transfer involves no active processing, then we consider it to
      * be done already.  We send a "fake" XMSG_DONE from the destination element,
@@ -269,6 +246,52 @@ xfer_start(
 	    xmsg_new((XferElement *)g_ptr_array_index(xfer->elements, xfer->elements->len-1),
 		     XMSG_DONE, 0));
     }
+}
+
+void
+xfer_cancel(
+    Xfer *xfer)
+{
+    /* Since xfer_cancel can be called from any thread, we just send a message.
+     * The action takes place when the message is received. */
+    XferElement *src = g_ptr_array_index(xfer->elements, 0);
+    xfer_queue_message(xfer, xmsg_new(src, XMSG_CANCEL, 0));
+}
+
+static void
+xfer_set_status(
+    Xfer *xfer,
+    xfer_status status)
+{
+    if (xfer->status == status) return;
+
+    g_mutex_lock(xfer->status_mutex);
+
+    /* check that this state transition is valid */
+    switch (status) {
+    case XFER_START:
+        g_assert(xfer->status == XFER_INIT);
+        break;
+    case XFER_RUNNING:
+        g_assert(xfer->status == XFER_START);
+        break;
+    case XFER_CANCELLING:
+        g_assert(xfer->status == XFER_RUNNING);
+        break;
+    case XFER_CANCELLED:
+        g_assert(xfer->status == XFER_CANCELLING);
+        break;
+    case XFER_DONE:
+        g_assert(xfer->status == XFER_CANCELLED || xfer->status == XFER_RUNNING);
+        break;
+    case XFER_INIT:
+    default:
+        g_assert_not_reached();
+    }
+
+    xfer->status = status;
+    g_cond_broadcast(xfer->status_cond);
+    g_mutex_unlock(xfer->status_mutex);
 }
 
 /*
@@ -493,31 +516,65 @@ xmsgsource_dispatch(
     gpointer user_data)
 {
     XMsgSource *xms = (XMsgSource *)source;
+    Xfer *xfer = xms->xfer;
     XMsgCallback my_cb = (XMsgCallback)callback;
     XMsg *msg;
     gboolean deliver_to_caller;
+    guint i;
+    gboolean xfer_done = FALSE;
 
-    /* we're calling perl within this loop, so we have to check that everything is
-     * ok on each iteration of the loop. */
-    while (xms->xfer
-        && xms->xfer->status == XFER_RUNNING
-        && (msg = (XMsg *)g_async_queue_try_pop(xms->xfer->queue))) {
+    /* we're potentially calling Perl code within this loop, so we have to
+     * check that everything is ok on each iteration of the loop. */
+    while (xfer
+        && xfer->status != XFER_DONE
+        && (msg = (XMsg *)g_async_queue_try_pop(xfer->queue))) {
+
 	/* We get first crack at interpreting messages, before calling the
 	 * designated callback. */
-
 	deliver_to_caller = TRUE;
 	switch (msg->type) {
 	    /* Intercept and count DONE messages so that we can determine when
 	     * the entire transfer is finished. */
 	    case XMSG_DONE:
-		if (--xms->xfer->num_active_elements <= 0) {
-		    /* mark the transfer as done, and decrement the refcount
-		     * by one to balance the increment in xfer_start */
-		    xms->xfer->status = XFER_DONE;
-		    xfer_unref(xms->xfer);
+		if (--xfer->num_active_elements <= 0) {
+		    /* mark the transfer as done, and take a note to break out
+		     * of this loop after delivering the message to the user */
+		    xfer_set_status(xfer, XFER_DONE);
+		    xfer_done = TRUE;
 		} else {
 		    /* eat this XMSG_DONE, since we expect more */
 		    deliver_to_caller = FALSE;
+		}
+		break;
+
+	    case XMSG_CANCEL:
+		if (xfer->status == XFER_CANCELLING || xfer->status == XFER_CANCELLED) {
+		    /* ignore duplicate cancel messages */
+		    deliver_to_caller = FALSE;
+		} else {
+		    /* call cancel() on each child element */
+		    gboolean expect_eof;
+
+		    g_debug("Cancelling %s", xfer_repr(xfer));
+		    xfer_set_status(xfer, XFER_CANCELLING);
+
+		    expect_eof = FALSE;
+		    for (i = 0; i < xfer->elements->len; i++) {
+			XferElement *elt = (XferElement *)
+				g_ptr_array_index(xfer->elements, i);
+			expect_eof = xfer_element_cancel(elt, expect_eof) || expect_eof;
+		    }
+
+		    /* if nothing in the transfer can generate an EOF, then we
+		     * can't cancel this transfer, and we'll just have to wait
+		     * until it's finished.  This may happen, for example, if
+		     * the operating system is copying data for us
+		     * asynchronously */
+		    if (!expect_eof)
+			g_warning("Transfer %s cannot be cancelled.", xfer_repr(xfer));
+
+		    /* and now we're done cancelling */
+		    xfer_set_status(xfer, XFER_CANCELLED);
 		}
 		break;
 
@@ -527,13 +584,20 @@ xmsgsource_dispatch(
 
 	if (deliver_to_caller) {
 	    if (my_cb) {
-		my_cb(user_data, msg, xms->xfer);
+		my_cb(user_data, msg, xfer);
 	    } else {
 		g_warning("Dropping %s because no callback is set", xmsg_repr(msg));
 	    }
 	}
 
 	xmsg_free(msg);
+
+	/* This transfer is done, so kill it and exit the loop */
+	if (xfer_done) {
+	    xfer_unref(xfer);
+	    xfer = NULL;
+	    break;
+	}
     }
 
     /* Never automatically un-queue the event source */

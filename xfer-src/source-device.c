@@ -47,6 +47,7 @@ typedef struct XferSourceDevice {
 
     Device *device;
     size_t block_size;
+    gboolean cancelled;
 } XferSourceDevice;
 
 /*
@@ -71,13 +72,23 @@ pull_buffer_impl(
     int result;
     int devsize;
 
+    /* indicate EOF on an cancel */
+    if (elt->cancelled) {
+	*size = 0;
+	return NULL;
+    }
+
     /* get the device block size */
     if (self->block_size == 0) {
 	int read_size = 0;
 	result = device_read_block(self->device, NULL, &read_size);
 	if (result < 0) {
-	    /* TODO: figure out how to handle errors */
-	    error(_("Oh, noes"));
+	    xfer_element_handle_error(elt,
+		_("error getting block size from %s: %s"),
+		self->device->device_name,
+		device_error_or_status(self->device));
+	    *size = 0;
+	    return NULL;
 	} else {
 	    self->block_size = read_size;
 	}
@@ -87,18 +98,28 @@ pull_buffer_impl(
     devsize = (int)self->block_size;
     result = device_read_block(self->device, buf, &devsize);
     *size = devsize;
+
     if (result < 0) {
-	/* if we're at EOF, we're done */
-	if (self->device->is_eof) {
-	    *size = 0;
-	    return NULL;
+	/* if we're not at EOF, it's an error */
+	if (!self->device->is_eof) {
+	    xfer_element_handle_error(elt,
+		_("error reading from %s: %s"),
+		self->device->device_name,
+		device_error_or_status(self->device));
 	}
 
-	/* TODO: figure out how to handle errors */
-	error(_("Oh, noes"));
+	*size = 0;
+	return NULL;
     }
 
     return buf;
+}
+
+static void
+instance_init(
+    XferElement *elt)
+{
+    elt->can_generate_eof = TRUE;
 }
 
 static void
@@ -134,7 +155,7 @@ xfer_source_device_get_type (void)
             NULL /* class_data */,
             sizeof (XferSourceDevice),
             0 /* n_preallocs */,
-            (GInstanceInitFunc) NULL,
+            (GInstanceInitFunc) instance_init,
             NULL
         };
 

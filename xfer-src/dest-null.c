@@ -74,9 +74,13 @@ push_buffer_impl(
     if (!buf)
 	return;
 
-    if (self->do_verify) {
-	if (!simpleprng_verify_buffer(&self->prng, buf, len))
-	    g_critical("XferDestNull verification of incoming bytestream failed");
+    if (self->do_verify && !elt->cancelled) {
+	if (!simpleprng_verify_buffer(&self->prng, buf, len)) {
+	    xfer_element_handle_error(elt,
+		_("verification of incoming bytestream failed"));
+	    amfree(buf);
+	    return;
+	}
     }
 
     if (!self->sent_info) {

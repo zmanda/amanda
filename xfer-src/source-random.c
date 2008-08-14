@@ -45,10 +45,8 @@ static GObjectClass *parent_class = NULL;
 typedef struct XferSourceRandom {
     XferElement __parent__;
 
-    GThread *thread;
-    gboolean prolong;
-
-    size_t length;
+    gboolean limited_length;
+    guint64 length;
     simpleprng_state_t prng;
 } XferSourceRandom;
 
@@ -61,85 +59,8 @@ typedef struct {
 } XferSourceRandomClass;
 
 /*
- * Utilities
- */
-
-static void
-kill_and_wait_for_thread(
-    XferSourceRandom *self)
-{
-    if (self->thread) {
-	self->prolong = FALSE;
-	g_thread_join(self->thread);
-	self->thread = NULL;
-    }
-}
-
-/*
- * The actual data source, as a GThreadFunc, used for XFER_MECH_WRITEFD output
- */
-
-static gpointer
-random_write_thread(
-    gpointer data)
-{
-    XferSourceRandom *self = (XferSourceRandom *)data;
-    char buf[10240];
-    XMsg *msg;
-    size_t length = self->length;
-    int fd = XFER_ELEMENT(self)->downstream->input_fd;
-
-    while (self->prolong && length) {
-	size_t to_write = MIN(sizeof(buf), length);
-	size_t written;
-
-	simpleprng_fill_buffer(&self->prng, buf, to_write);
-	if ((written = full_write(fd, buf, to_write)) < to_write) {
-	    error("error in write(): %s", strerror(errno));
-	}
-
-	length -= written;
-    }
-
-    /* close the write side of the pipe to propagate the EOF */
-    close(fd);
-    XFER_ELEMENT(self)->downstream->input_fd = -1;
-
-    /* and send an XMSG_DONE */
-    msg = xmsg_new(XFER_ELEMENT(self), XMSG_DONE, 0);
-    xfer_queue_message(XFER_ELEMENT(self)->xfer, msg);
-
-    return NULL;
-}
-
-/*
  * Implementation
  */
-
-static gboolean
-start_impl(
-    XferElement *elt)
-{
-    XferSourceRandom *self = (XferSourceRandom *)elt;
-
-    if (XFER_ELEMENT(self)->output_mech == XFER_MECH_WRITEFD) {
-	self->prolong = TRUE;
-	self->thread = g_thread_create(random_write_thread, (gpointer)self, TRUE, NULL);
-	return TRUE;
-    } else {
-	/* we'll generate random data on demand */
-	return FALSE;
-    }
-}
-
-static void
-abort_impl(
-    XferElement *elt)
-{
-    XferSourceRandom *self = (XferSourceRandom *)elt;
-
-    kill_and_wait_for_thread(self);
-}
 
 static gpointer
 pull_buffer_impl(
@@ -149,63 +70,53 @@ pull_buffer_impl(
     XferSourceRandom *self = (XferSourceRandom *)elt;
     char *buf;
 
-    if (self->length == 0) {
+    if (elt->cancelled || (self->limited_length && self->length == 0)) {
 	*size = 0;
 	return NULL;
     }
 
-    /* TODO: vary the buffer size here, to exercise handling downstream */
-    *size = MIN(10240, self->length);
+    if (self->limited_length) {
+        if (self->length == 0) {
+            *size = 0;
+            return NULL;
+        }
+
+        /* TODO: vary the buffer size here, to exercise handling downstream */
+        *size = MIN(10240, self->length);
+        self->length -= *size;
+    } else {
+	*size = 10240;
+    }
+
     buf = g_malloc(*size);
     simpleprng_fill_buffer(&self->prng, buf, *size);
-
-    self->length -= *size;
 
     return buf;
 }
 
 static void
 instance_init(
-    XferSourceRandom *self)
+    XferElement *elt)
 {
-    self->thread = NULL;
-}
-
-static void
-finalize_impl(
-    GObject * obj_self)
-{
-    XferSourceRandom *self = XFER_SOURCE_RANDOM(obj_self);
-
-    /* kill and wait for our thread, if it's still around */
-    kill_and_wait_for_thread(self);
-
-    /* chain up */
-    G_OBJECT_CLASS(parent_class)->finalize(obj_self);
+    elt->can_generate_eof = TRUE;
 }
 
 static void
 class_init(
-    XferSourceRandomClass * klass)
+    XferSourceRandomClass * selfc)
 {
-    XferElementClass *xec = XFER_ELEMENT_CLASS(klass);
-    GObjectClass *goc = G_OBJECT_CLASS(klass);
+    XferElementClass *klass = XFER_ELEMENT_CLASS(selfc);
     static xfer_element_mech_pair_t mech_pairs[] = {
-	{ XFER_MECH_NONE, XFER_MECH_WRITEFD, 1, 1},
 	{ XFER_MECH_NONE, XFER_MECH_PULL_BUFFER, 1, 0},
 	{ XFER_MECH_NONE, XFER_MECH_NONE, 0, 0},
     };
 
-    xec->start = start_impl;
-    xec->abort = abort_impl;
-    xec->pull_buffer = pull_buffer_impl;
+    klass->pull_buffer = pull_buffer_impl;
 
-    xec->perl_class = "Amanda::Xfer::Source::Random";
-    xec->mech_pairs = mech_pairs;
+    klass->perl_class = "Amanda::Xfer::Source::Random";
+    klass->mech_pairs = mech_pairs;
 
-    goc->finalize = finalize_impl;
-
-    parent_class = g_type_class_peek_parent(klass);
+    parent_class = g_type_class_peek_parent(selfc);
 }
 
 GType
@@ -236,13 +147,14 @@ xfer_source_random_get_type (void)
 /* create an element of this class; prototype is in xfer-element.h */
 XferElement *
 xfer_source_random(
-    size_t length, 
+    guint64 length,
     guint32 prng_seed)
 {
     XferSourceRandom *xsr = (XferSourceRandom *)g_object_new(XFER_SOURCE_RANDOM_TYPE, NULL);
     XferElement *elt = XFER_ELEMENT(xsr);
 
     xsr->length = length;
+    xsr->limited_length = (length != 0);
     simpleprng_seed(&xsr->prng, prng_seed);
 
     return elt;

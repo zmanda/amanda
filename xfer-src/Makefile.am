@@ -26,6 +26,7 @@ libamxfer_la_SOURCES = \
 	source-device.c \
 	source-random.c \
 	source-fd.c \
+	source-pattern.c \
 	xfer-element.c \
 	xfer.c \
 	xmsg.c

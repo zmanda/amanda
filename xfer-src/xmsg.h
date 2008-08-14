@@ -57,8 +57,7 @@ typedef enum {
      */
     XMSG_INFO = 1,
 
-    /* XMSG_ERROR: error message from the source element.  This indicates that the
-     * transfer as a whole has failed and should be aborted.  Attributes:
+    /* XMSG_ERROR: error message from an element.  Attributes:
      *  - message
      */
     XMSG_ERROR = 2,
@@ -69,6 +68,13 @@ typedef enum {
      *  (none)
      */
     XMSG_DONE = 3,
+
+    /* XMSG_CANCEL: this transfer is being cancelled, but data may still be
+     * "draining" from buffers.  A subsequent XMSG_DONE indicates that the
+     * transfer has actually completed.
+     */
+    XMSG_CANCEL = 4,
+
 } xmsg_type;
 
 /*

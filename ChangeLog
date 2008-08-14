@@ -1,3 +1,10 @@
+2008-08-14  Dustin J. Mitchell <dustin@zmanda.com>
+	    Nikolas Coukouma <atrus@zmanda.com>
+	* xfer-src/*: add support for asynchronous cancellation of transfers
+	  and use it for error-handling
+	* perl/Amanda/Xfer.swg: reflect into perl
+	* installcheck/Amanda_Xfer.pl: test cancellation
+
 2008-08-12  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/Makefile.am: clean up svn-info.h on maintainer-clean
 	* man/Makefile.am: remove config.log after running config.status
