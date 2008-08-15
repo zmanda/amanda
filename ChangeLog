@@ -1,3 +1,8 @@
+2008-08-15  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/debug.c: include backtraces on fatal errors
+	* config/amanda/debugging.m4: look for glibc's backtrace support
+	* configure.in: ditto
+
 2008-08-14  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/tape-aix.c device-src/tape-ops.h device-src/tape-uware.c
 	  device-src/tape-xenix.c: bring non-POSIX tape-ops implementations up

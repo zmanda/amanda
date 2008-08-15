@@ -37,6 +37,10 @@
 #include "timestamp.h"
 #include "conffile.h"
 
+#ifdef HAVE_GLIBC_BACKTRACE
+#include <execinfo.h>
+#endif
+
 /* Minimum file descriptor on which to keep the debug file.  This is intended
  * to keep the descriptor "out of the way" of other processing.  It's not clear
  * that this is required any longer, but it doesn't hurt anything.
@@ -189,6 +193,16 @@ debug_logging_handler(const gchar *log_domain G_GNUC_UNUSED,
 	    g_fprintf(stderr, "%s: %s\n", get_pname(), message);
 	    fflush(stderr);
 	}
+
+#ifdef HAVE_GLIBC_BACKTRACE
+	/* try logging a traceback to the debug log */
+	if (db_fd != -1) {
+	    void *stack[32];
+	    int naddrs;
+	    naddrs = backtrace(stack, sizeof(stack)/sizeof(*stack));
+	    backtrace_symbols_fd(stack, naddrs, db_fd);
+	}
+#endif
 
 	/* we're done */
 	if (log_level & G_LOG_LEVEL_CRITICAL)
