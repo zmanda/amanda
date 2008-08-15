@@ -31,13 +31,10 @@
 # include <sys/mtio.h>
 #endif
 
-/* Return codes for tape_eod */
-#define TAPE_OP_ERROR -1
-#define TAPE_POSITION_UNKNOWN -2
+/* This file declares functions which are implemented in each of tape-*.c. The
+ * appropriate C file is selected at configure time. */
 
-/* Real Operations (always return FALSE if not implemented). These are
- * implemented in one of tape-{uware,aix,xenix,posix}.c, depending on
- * the platform. */
+/* Real Operations (always return FALSE if not implemented) */
 gboolean tape_rewind(int fd);
 gboolean tape_fsf(int fd, guint count);
 gboolean tape_bsf(int fd, guint count);
@@ -48,8 +45,11 @@ gboolean tape_bsr(int fd, guint count);
  * are available in this device. */
 void tape_device_set_capabilities(TapeDevice * self);
 
-/* Returns tape position file number, or one of the return codes above. */
+/* Returns tape position file number, or one of these: */
+#define TAPE_OP_ERROR -1
+#define TAPE_POSITION_UNKNOWN -2
 gint tape_eod(int fd);
+
 gboolean tape_weof(int fd, guint8 count);
 gboolean tape_setcompression(int fd, gboolean on);
 

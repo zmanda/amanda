@@ -25,6 +25,7 @@
 
 #include <amanda.h>
 #include <tape-ops.h>
+#include "glib-util.h"
 
 /* Uncomment to test compilation on non-XENIX systems. */
 /* --- 
@@ -41,35 +42,35 @@ gboolean tape_rewind(int fd) {
 }
 
 gboolean tape_fsf(int fd, guint count) {
-    while (--count >= 0) {
+    while (count-- > 0) {
         if (0 != ioctl(fd, T_RFM))
             return FALSE;
     }
     return TRUE;
 }
 
-gboolean tape_bsf(int fd, guint count) {
+gboolean tape_bsf(int fd G_GNUC_UNUSED, guint count G_GNUC_UNUSED) {
     g_assert_not_reached();
     return FALSE;
 }
 
-gboolean tape_fsr(int fd, guint count) {
+gboolean tape_fsr(int fd G_GNUC_UNUSED, guint count G_GNUC_UNUSED) {
     g_assert_not_reached();
     return FALSE;
 }
 
-gboolean tape_bsr(int fd, guint count) {
+gboolean tape_bsr(int fd G_GNUC_UNUSED, guint count G_GNUC_UNUSED) {
     g_assert_not_reached();
     return FALSE;
 }
 
-gint tape_eod(int fd) {
+gint tape_eod(int fd G_GNUC_UNUSED) {
     g_assert_not_reached();
     return TAPE_OP_ERROR;
 }
 
 gboolean tape_weof(int fd, guint8 count) {
-    while (count -- > 0) {
+    while (count-- > 0) {
         if (0 != ioctl(fd, T_WFM))
             return FALSE;
     } 
@@ -77,22 +78,22 @@ gboolean tape_weof(int fd, guint8 count) {
     return TRUE;
 }
 
-gboolean tape_setcompression(int fd, gboolean on) {
+gboolean tape_setcompression(int fd G_GNUC_UNUSED, gboolean on G_GNUC_UNUSED) {
     return FALSE;
 }
 
-TapeCheckResult tape_is_tape_device(int fd) {
+DeviceStatusFlags tape_is_tape_device(int fd) {
     struct tape_info result;
     if (0 == ioctl(fd, MT_STATUS, &result)) {
-        return TAPE_CHECK_SUCCESS;
+        return DEVICE_STATUS_SUCCESS;
     } else {
-        return TAPE_CHECK_FAILURE;
+        return DEVICE_STATUS_DEVICE_ERROR;
     }
 }
 
-TapeCheckResult tape_is_ready(int fd G_GNUC_UNUSED, TapeDevice *t_self G_GNUC_UNUSED) {
+DeviceStatusFlags tape_is_ready(int fd G_GNUC_UNUSED, TapeDevice *t_self G_GNUC_UNUSED) {
     /* We can probably do better. */
-    return TAPE_CHECK_UNKNOWN;
+    return DEVICE_STATUS_SUCCESS;
 }
 
 void tape_device_set_capabilities(TapeDevice * t_self) {

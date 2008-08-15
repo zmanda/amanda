@@ -23,6 +23,7 @@
 
 #include <amanda.h>
 #include <tape-ops.h>
+#include "glib-util.h"
 
 /* Uncomment to test on non-SYSV4 systems. */
 /* ---
@@ -63,7 +64,7 @@ gboolean tape_bsr(int fd, guint count) {
     return 0 == ioctl(fd, T_SBB, count);
 }
 
-int tape_eod(int fd) {
+gint tape_eod(int fd G_GNUC_UNUSED) {
     g_assert_not_reached();
     return TAPE_OP_ERROR;
 }
@@ -83,18 +84,19 @@ gboolean tape_setcompression(int fd, gboolean on) {
     return 0 == ioctl(fd, T_SETCOMP, cmd);
 }
 
-TapeCheckResult tape_is_tape_device(int fd) {
+DeviceStatusFlags tape_is_tape_device(int fd) {
     /* If we can read block information, it's probably a tape device. */
     struct blklen result;
     if (0 == ioctl(fd, T_RDBLKLEN, &result)) {
-        return TAPE_CHECK_SUCCESS;
+        return DEVICE_STATUS_SUCCESS;
     } else {
-        return TAPE_CHECK_FAILURE;
+        return DEVICE_STATUS_DEVICE_ERROR;
     }
 }
 
-TapeCheckResult tape_is_ready(int fd G_GNUC_UNUSED, TapeDevice *t_self G_GNUC_UNUSED) {
-    return TAPE_CHECK_UNKNOWN;
+DeviceStatusFlags tape_is_ready(int fd G_GNUC_UNUSED, TapeDevice *t_self G_GNUC_UNUSED) {
+    /* No good way to determine this, so assume it's ready */
+    return DEVICE_STATUS_SUCCESS;
 }
 
 void tape_device_set_capabilities(TapeDevice * t_self) {

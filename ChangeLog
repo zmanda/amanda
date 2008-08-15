@@ -1,4 +1,9 @@
 2008-08-14  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/tape-aix.c device-src/tape-ops.h device-src/tape-uware.c
+	  device-src/tape-xenix.c: bring non-POSIX tape-ops implementations up
+	  to date with function signatures
+
+2008-08-14  Dustin J. Mitchell <dustin@zmanda.com>,
 	    Nikolas Coukouma <atrus@zmanda.com>
 	* xfer-src/*: add support for asynchronous cancellation of transfers
 	  and use it for error-handling

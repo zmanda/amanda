@@ -19,6 +19,7 @@
  */
 
 #include <amanda.h>
+#include "glib-util.h"
 #include "tape-ops.h"
 
 /* Tape operations for AIX systems. Most of this stuff is based on
@@ -75,7 +76,7 @@ gboolean tape_bsr(int fd, guint count) {
     return 0 == ioctl(fd, STIOCTOP, &st);
 }
 
-gint tape_eod(int fd) {
+gint tape_eod(int fd G_GNUC_UNUSED) {
     g_assert_not_reached();
     return TAPE_OP_ERROR;
 }
@@ -87,17 +88,17 @@ gboolean tape_weof(int fd, guint8 count) {
     return 0 == ioctl(fd, STIOCTOP, &st);
 }
 
-gboolean tape_setcompression(int fd, gboolean on) {
+gboolean tape_setcompression(int fd G_GNUC_UNUSED, gboolean on G_GNUC_UNUSED) {
     return FALSE;
 }
 
-TapeCheckResult tape_is_tape_device(int fd) {
-    /* AIX doesn't have a no-op. */
-    return TAPE_CHECK_UNKNOWN;
+DeviceStatusFlags tape_is_tape_device(int fd G_GNUC_UNUSED) {
+    /* AIX doesn't have a no-op, so we'll just assume this is a tape device */
+    return DEVICE_STATUS_SUCCESS;
 }
 
-TapeCheckResult tape_is_ready(int fd G_GNUC_UNUSED, TapeDevice *t_self G_GNUC_UNUSED) {
-    return TAPE_CHECK_UNKNOWN;
+DeviceStatusFlags tape_is_ready(int fd G_GNUC_UNUSED, TapeDevice *t_self G_GNUC_UNUSED) {
+    return DEVICE_STATUS_SUCCESS;
 }
 
 void tape_device_set_capabilities(TapeDevice * t_self) {
