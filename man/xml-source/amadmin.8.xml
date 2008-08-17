@@ -43,10 +43,10 @@ man page for more details about &A;.</para>
 
 <refsect1><title>COMMANDS</title>
 <para>Commands that take a <emphasis remap='I'>hostname</emphasis> [ <emphasis remap='I'>disks</emphasis> ]
-parameter pair operate on all disks in the <emphasis remap='I'>disklist</emphasis> for that
+parameter pair operate on all disks in the &disklist; for that
 <emphasis remap='I'>hostname</emphasis> if no disks are specified.  Where
 <emphasis remap='I'>hostname</emphasis> is also marked as being optional,
-the command operates on all hosts and disks in the <emphasis remap='I'>disklist</emphasis>.
+the command operates on all hosts and disks in the &disklist;.
 Both <emphasis remap='I'>hostname</emphasis> and <emphasis remap='I'>disks</emphasis>
 are special expressions; see the &quot;HOST &amp; DISK EXPRESSION&quot; section
 of <citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>
@@ -204,8 +204,7 @@ The default sort order is <emphasis remap='B'>hkdlpb</emphasis>.</para>
 on
 <emphasis remap='I'>hostname</emphasis>
 from the &A; database.</para>
-<note><para>If you do not also remove the disk from the
-<emphasis remap='I'>disklist</emphasis>
+<note><para>If you do not also remove the disk from the &disklist;
 file, &A; will treat it as a new disk during the next run.</para>
 </note>
   </listitem>
@@ -252,8 +251,7 @@ and insert them into the database on this machine.</para>
   <varlistentry>
   <term><emphasis remap='B'>disklist</emphasis> [ <emphasis remap='I'>hostname</emphasis> [ <emphasis remap='I'>disks</emphasis> ]* ]*</term>
   <listitem>
-<para>Display the
-<emphasis remap='I'>disklist</emphasis>
+<para>Display the &disklist;
 information for each of the
 <emphasis remap='I'>disks</emphasis>
 on
@@ -361,14 +359,13 @@ date        host      disk lv tape or file                 file part  status
 <filename>/workspace</filename>
 disk on
 <emphasis remap='I'>machine-d</emphasis>.
-If you do not also remove the disk from the
-<emphasis remap='I'>disklist</emphasis>
+If you do not also remove the disk from the &disklist;
 file, &A; will treat it as a new disk during the next run.</para>
 
 <programlisting remap='.nf'>
 $ amadmin daily delete machine-d /workspace
 amadmin: machine-d:/workspace deleted from database.
-amadmin: NOTE: you'll have to remove these from the disklist yourself.
+amadmin: NOTE: you'll have to remove these from the &disklist; yourself.
 </programlisting>
 
 <para>Find the next tape &A; will use (in this case, <literal>123456</literal>).</para>

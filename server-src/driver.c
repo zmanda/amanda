@@ -454,8 +454,8 @@ main(
 
     tape_left = tape_length;
     taper_busy = 0;
-    taper_input_error = NULL;
-    taper_tape_error = NULL;
+    amfree(taper_input_error);
+    amfree(taper_tape_error);
     taper_disk = NULL;
     taper_ev_read = NULL;
 
@@ -786,8 +786,8 @@ startaflush(void)
 	if (dp) {
 	    taper_disk = dp;
 	    taper_busy = 1;
-	    taper_input_error = NULL;
-	    taper_tape_error = NULL;
+	    amfree(taper_input_error);
+	    amfree(taper_tape_error);
 	    taper_result = LAST_TOK;
 	    taper_sendresult = 0;
 	    taper_first_label = NULL;
@@ -1291,10 +1291,10 @@ handle_taper_result(
             amfree(qname);
 
 	    if (strcmp(result_argv[3], "INPUT-ERROR") == 0) {
-		taper_input_error = stralloc(result_argv[5]);
+		taper_input_error = newstralloc(taper_input_error, result_argv[5]);
 	    }
 	    if (strcmp(result_argv[4], "TAPE-ERROR") == 0) {
-		taper_tape_error = stralloc(result_argv[6]);
+		taper_tape_error = newstralloc(taper_tape_error, result_argv[6]);
 	    }
 
 	    taper_result = cmd;
@@ -1320,10 +1320,10 @@ handle_taper_result(
 	    fflush(stdout);
 
 	    if (strcmp(result_argv[3], "INPUT-ERROR") == 0) {
-		taper_input_error = stralloc(result_argv[5]);
+		taper_input_error = newstralloc(taper_input_error, result_argv[5]);
 	    }
 	    if (strcmp(result_argv[4], "TAPE-ERROR") == 0) {
-		taper_tape_error = stralloc(result_argv[6]);
+		taper_tape_error = newstralloc(taper_tape_error, result_argv[6]);
 	    }
 
 	    taper_result = cmd;
@@ -1424,14 +1424,14 @@ handle_taper_result(
                    walltime_str(curclock()), dp->host->hostname, qname);
 	    amfree(qname);
             fflush(stdout);
-            log_add(L_WARNING, _("Taper  error: %s"), result_argv[3]);
-	    taper_tape_error = stralloc(result_argv[3]);
+            log_add(L_WARNING, _("Taper error: %s"), result_argv[3]);
+	    taper_tape_error = newstralloc(taper_tape_error, result_argv[3]);
             /*FALLTHROUGH*/
 
         case BOGUS:
             if (cmd == BOGUS) {
         	log_add(L_WARNING, _("Taper protocol error"));
-		taper_tape_error = stralloc("BOGUS");
+		taper_tape_error = newstralloc(taper_tape_error, "BOGUS");
             }
             /*
              * Since we received a taper error, we can't send anything more
@@ -1532,6 +1532,8 @@ file_taper_result(
 	    amfree(dp->up);
 	}
     } else if (taper_tape_error) {
+	g_printf("driver: taper failed %s %s with tape error: %s\n",
+		   dp->host->hostname, qname, taper_tape_error);
 	if(sched(dp)->taper_attempted >= 2) {
 	    log_add(L_FAIL, _("%s %s %s %d [too many taper retries]"),
 		    dp->host->hostname, qname, sched(dp)->datestamp,
@@ -1561,8 +1563,8 @@ file_taper_result(
     amfree(qname);
 
     taper_busy = 0;
-    taper_input_error = NULL;
-    taper_tape_error = NULL;
+    amfree(taper_input_error);
+    amfree(taper_tape_error);
     taper_disk = NULL;
             
     /* continue with those dumps waiting for diskspace */
@@ -1620,8 +1622,8 @@ dumper_taper_result(
 	taper_ev_read = NULL;
     }
     taper_busy = 0;
-    taper_input_error = NULL;
-    taper_tape_error = NULL;
+    amfree(taper_input_error);
+    amfree(taper_tape_error);
     dumper->busy = 0;
     dp->host->inprogress -= 1;
     dp->inprogress = 0;
@@ -3067,12 +3069,10 @@ dump_to_tape(
     /* update statistics & print state */
 
     taper_busy = dumper->busy = 1;
-    taper_input_error = NULL;
-    taper_tape_error = NULL;
+    amfree(taper_input_error);
+    amfree(taper_tape_error);
     taper_dumper = dumper;
     taper_disk = dp;
-    taper_input_error = NULL;
-    taper_tape_error = NULL;
     taper_first_label = NULL;
     taper_written = 0;
     taper_state |= TAPER_STATE_DUMP_TO_TAPE;

@@ -197,7 +197,7 @@ int scan_read_label(
             *error_message = 
                 newvstrallocf(*error_message,
                               _("%sTape with label %s is still active" 
-                                " and cannot be overwriten.\n"),
+                                " and cannot be overwritten.\n"),
                               *error_message, *label);
             return -1;
         }

@@ -267,7 +267,7 @@ static gboolean simple_taper_scan(taper_state_t * state,
                 state->driver_start_time);
         if (result == 3) {
             log_add(L_INFO,
-            _("Will write new label `%s' to new (previously non-amanda) tape"),
+            _("Will write new label `%s' to new tape"),
                     *label);
         }
 

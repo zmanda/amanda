@@ -39,7 +39,7 @@
 <refsect1><title>DESCRIPTION</title>
 <para><emphasis remap='B'>Amflush</emphasis>
 writes &A; backups from the holding disks to tape,
-and updates the &A; info database and tapelist accordingly.
+and updates the &A; info database and &tapelist; accordingly.
 Backups may stay in a holding disk when something is wrong with the tape
 at the time
 <emphasis remap='B'>amdump</emphasis>

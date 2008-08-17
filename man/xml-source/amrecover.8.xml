@@ -178,9 +178,7 @@ It can only be set after the host is set with
 <emphasis remap='I'>Diskname</emphasis>
 is the device name specified in the
 <emphasis remap='I'>amanda.conf</emphasis>
-or
-<emphasis remap='I'>disklist</emphasis>
-configuration file.
+or &disklist;.
 The disk must be local to the host.
 If
 <emphasis remap='I'>mountpoint</emphasis>

@@ -140,7 +140,7 @@ where $value is of an appropriate type for the given property
 This module defines a large number of constants.  Again, consult the
 wiki or C<device.h> for the details on their meaning.  These constants
 are available from the package namespace (e.g.,
-C<Amanda::Device::ACCESS_WRITE>), of imported with the C<:constant>
+C<Amanda::Device::ACCESS_WRITE>), or imported with the C<:constant>
 import tag.
 
 =cut

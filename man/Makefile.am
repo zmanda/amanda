@@ -45,7 +45,9 @@ SERVER_MAN_PAGES =  \
     amstatus.8 \
     amtape.8 \
     amtapetype.8 \
-    amtoc.8
+    amtoc.8 \
+    disklist.5 \
+    tapelist.5
 
 RECOVER_MAN_PAGES =  amrecover.8
 

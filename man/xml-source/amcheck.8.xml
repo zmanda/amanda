@@ -418,10 +418,7 @@ in
       <varlistentry>
       <term>tapelist</term>
       <listitem>
-<para>for the &A; tapelist directory (see
-<emphasis remap='B'>tapelist</emphasis>
-in
-<emphasis remap='B'>amanda.conf</emphasis>)</para>
+<para>for the &tapelist;</para>
       </listitem>
       </varlistentry>
     </variablelist>
@@ -507,27 +504,13 @@ does not allow search permission.</para>
   <varlistentry>
   <term>ERROR: tape list <emphasis remap='I'>tapelist</emphasis>: not writable</term>
   <listitem>
-<para>(error)
-&A; tape list file
-<emphasis remap='I'>tapelist</emphasis>
-(see
-<emphasis remap='B'>tapelist</emphasis>
-in
-<emphasis remap='B'>amanda.conf</emphasis>)
-is not writable or was not found.</para>
+<para>(error) &tapelist; is not writable or was not found.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
   <term>ERROR: tape list <emphasis remap='I'>tapelist</emphasis>: parse error</term>
   <listitem>
-<para>(error)
-&A; tape list file
-<emphasis remap='I'>tapelist</emphasis>
-(see
-<emphasis remap='B'>tapelist</emphasis>
-in
-<emphasis remap='B'>amanda.conf</emphasis>)
-could not be read or parsed.</para>
+<para>(error) &tapelist; could not be read or parsed.</para>
   </listitem>
   </varlistentry>
   <varlistentry>

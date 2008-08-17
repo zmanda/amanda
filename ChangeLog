@@ -1,3 +1,51 @@
+2008-08-16  Dustin J. Mitchell <dustin@zmanda.com>
+	* server-src/driver.c: handle taper_{input,tape}_error memory
+	  correctly, and add taper_tape_error to the trace log
+
+2008-08-16  Dustin J. Mitchell <dustin@zmanda.com>
+	* application-src/amzfs-snapshot.pl application-src/script-email.pl:
+	  remove unnecessary 'use Amanda::Device'
+
+2008-08-16  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/amgetconf.pl: use filename-safe characters for $appname
+	* installcheck/amgetconf.pl: test it
+
+2008-08-16  Dustin J. Mitchell <dustin@zmanda.com>
+	* man/entities/global.entities: add manpage refs
+	* packaging/rpm/amanda_enterprise.spec
+	  packaging/rpm/amanda_enterprise_client.spec
+	  man/xml-source/disklist.5.xml man/xml-source/tapelist.5.xml
+	  man/Makefile.am: add disklist(5), tapelist(5)
+	* man/xml-source/amaddclient.8.xml man/xml-source/amadmin.8.xml
+	  man/xml-source/amanda-client.conf.5.xml man/xml-source/amanda.8.xml
+	  man/xml-source/amanda.conf.5.xml man/xml-source/amcheck.8.xml
+	  man/xml-source/amcheckdb.8.xml man/xml-source/amdevcheck.8.xml
+	  man/xml-source/amflush.8.xml man/xml-source/amlabel.8.xml
+	  man/xml-source/amrecover.8.xml man/xml-source/amrmtape.8.xml:
+	  - remove references to "output drivers" in favor of "device drivers"
+	  - add more inter-page references
+	  - fix typos
+	  - add client_login to amanda-client.conf(5)
+	  - reformat informaltables, which don't render well in HTML or nroff,
+	    into variablelists, with fixes for bad xml->man conversion
+	  - fix funky replacement entities in HTML output
+	* perl/Amanda/DB/Catalog.pm: mention $dump->{kb} and ->{sec}
+	* perl/Amanda/Device.swg: fix typo
+	* perl/Amanda/MainLoop.swg: add hints for writing async functions
+	* perl/Amanda/Types.swg: fix bad POD
+	* perl/Amanda/Util.swg: POD fix: use $CONTEXT_* rather than strings
+	* perl/Amanda/Xfer.swg: tweaks
+	* server-src/taper.c: fix typo
+	* server-src/taperscan.c: remove "(previously non-amanda)", as Amanda
+	  will no longer overwrite such tapes
+
+2008-08-16  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/debug.c: lock debug logging on a per-line basis
+
+2008-08-16  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/rait-device.c: parse RAIT names with internal {..}
+	* installcheck/Amanda_Device.pl: light testing
+
 2008-08-15  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/debug.c: include backtraces on fatal errors
 	* config/amanda/debugging.m4: look for glibc's backtrace support

@@ -293,9 +293,7 @@ The number of amdump runs in
 days.
 A value of 0 means the same value as 
 <emphasis remap='B'>dumpcycle</emphasis>.
-A value of -1 means guess the number of runs from the
-<emphasis remap='I'>tapelist</emphasis>
-file, 
+A value of -1 means guess the number of runs from the &tapelist; file,
 which is the number of tapes used in the last 
 <emphasis remap='B'>dumpcycle</emphasis>
 days / 
@@ -396,12 +394,8 @@ for more information on device names.</para>
 <emphasis remap='B'>tpchanger</emphasis>
 option), this option might not be used.</para>
 
-<para>If the
-<emphasis remap='B'>null</emphasis>
-output driver is selected
-(see the section OUTPUT DRIVERS in the 
-<citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry> 
-manpage for more information),
+<para>If <emphasis remap='B'>tapedev</emphasis> is
+<emphasis remap='B'>null:</emphasis>,
 programs such as
 &amdump;
 will run normally but all images will be thrown away.
@@ -865,9 +859,7 @@ option enabled.</para>
   <listitem>
 <para>Default:
 <emphasis remap='I'>tapelist</emphasis>.
-The file name for the active
-<emphasis remap='I'>tapelist</emphasis>
-file.
+The file name for the active &tapelist;.
 &A; maintains this file with information about the active set of tapes.</para>
   </listitem>
   </varlistentry>

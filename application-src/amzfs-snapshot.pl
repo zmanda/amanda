@@ -26,7 +26,6 @@ use lib '@amperldir@';
 use strict;
 use Symbol;
 use IPC::Open3;
-use Amanda::Device qw( :constants );
 use Amanda::Config qw( :getconf :init );
 use Amanda::Debug qw( :logging );
 use Amanda::Util qw( :constants );

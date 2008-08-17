@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 237;
+use Test::More tests => 238;
 use File::Path qw( mkpath rmtree );
 use Sys::Hostname;
 use strict;
@@ -140,6 +140,10 @@ $dev = Amanda::Device->new("rait:{{");
 isnt($dev->status(), $DEVICE_STATUS_SUCCESS,
     "creation of a bogus 'rait:{{' device fails");
 
+$dev = Amanda::Device->new("rait:{a,b");
+isnt($dev->status(), $DEVICE_STATUS_SUCCESS,
+    "creation of a bogus 'rait:{a,b' device fails");
+
 ####
 ## first, test out the 'null' device.
 
@@ -247,7 +251,7 @@ ok($dev->finish(),
 ## Test a RAIT device of two vfs devices.
 
 ($vtape1, $vtape2) = (mkvtape(1), mkvtape(2));
-$dev_name = "rait:{file:$vtape1,file:$vtape2}";
+$dev_name = "rait:file:{$vtape1,$vtape2}";
 
 $dev = Amanda::Device->new($dev_name);
 is($dev->status(), $DEVICE_STATUS_SUCCESS,

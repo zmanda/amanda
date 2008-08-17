@@ -97,6 +97,14 @@ Each row has the following values:
 
 (integer) -- number of parts in this dump (estimated)
 
+=item kb
+
+(integer) -- size (in kb) of this dumpfile
+
+=item sec
+
+(integer) -- time (in seconds) spent writing this dumpfile
+
 =back
 
 A dumpfile is represented as a hashref with these keys.
@@ -245,6 +253,10 @@ The following keys are available:
 =item label
 
 =item partnum
+
+=item kb
+
+=item sec
 
 =back
 

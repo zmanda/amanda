@@ -195,6 +195,7 @@ sub db_param {
     my ($parameter, $opt_list) = @_;
 
     if (my ($appname) = $parameter =~ /^dbopen\.(.*)/) {
+	$appname =~ s/[^[:alnum:]]/_/g;
 	Amanda::Util::setup_application($appname, "server", $CONTEXT_CMDLINE);
 	print Amanda::Debug::dbfn(), "\n";
     } elsif (my ($appname, $filename) = $parameter =~ /^dbclose\.([^:]*):(.*)/) {

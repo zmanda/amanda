@@ -38,8 +38,8 @@ Amanda::MainLoop - Perl interface to the Glib MainLoop
     my $to = Amanda::MainLoop::timeout_source(2000);
     $to->set_callback(sub { 
 	print "Time's Up!\n";
-	Amanda::MainLoop::destroy_source($to);
-	Amanda::MainLoop::quit();
+	$to->remove();		    # dont' re-queue this timeout
+	Amanda::MainLoop::quit();   # return from Amanda::MainLoop::run
     });
     $to->attach();
 
@@ -165,6 +165,57 @@ always runs in the main thread.
 =item Besides idle sources, event priorities are not accessible from Perl.
 
 =back
+
+=head1 PROGRAMMING HINTS
+
+Most often, callbacks are short, and can be specified as anonymous subs:
+
+    $src->set_callback(sub {
+	my ($src) = @_;
+	# ...
+    });
+
+There is currently no means in place to specify extra arguments for a callback
+when it is set.  If the callback needs access to other data, it should use a
+Perl closure in the form of lexically scoped variables and a (possibly
+anonymous) sub:
+
+    {
+	my $total_results = 0;
+
+	$src->set_callback(sub {
+	    my ($src, $result) = @_;
+	    $total_results += $result;
+	});
+    }
+
+Event sources are often set up in groups, e.g., a long-term operation and a
+timeout.  When this is the case, be careful that all sources are removed when
+the operation is complete.  The easiest way to accomplish this is to include all
+sources in a lexical scope and remove them at the appropriate times:
+
+    {
+	my $op_src = long_operation_src();
+	my $timeout_src = Amanda::MainLoop::timeout_source($timeout);
+
+	sub finish {
+	    $op_src->remove();
+	    $timeout_src->remove();
+	}
+
+	$op_src->set_callback(sub {
+	    print "Operation complete\n";
+	    finish();
+	});
+
+	$timeout_src->set_callback(sub {
+	    print "Operation timed out\n";
+	    finish();
+	});
+    }
+
+Both of these limitations may be lifted in future revisions of
+L<Amanda::MainLoop>.
 
 =cut
 %}

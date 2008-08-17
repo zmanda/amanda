@@ -43,8 +43,8 @@ Amanda::Xfer - the transfer architecture
   my $infd = POSIX::open("input", POSIX::O_RDONLY, 0);
   my $outfd = POSIX::open("output", POSIX::O_CREAT|POSIX::O_WRONLY, 0640);
   my $xfer = Amanda::Xfer->new([
-    Amanda::Xfer::Source::FileDescriptor->new($infd),
-    Amanda::Xfer::Dest::FileDescriptor->new($outfd)
+    Amanda::Xfer::Source::Fd->new($infd),
+    Amanda::Xfer::Dest::Fd->new($outfd)
   ]);
   $xfer->get_source()->set_callback(sub {
       my ($src, $xmsg, $xfer) = @_;

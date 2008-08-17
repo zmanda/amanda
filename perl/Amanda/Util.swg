@@ -46,7 +46,7 @@ Application initialization generally looks like this:
   use Amanda::Util qw( :constants );
   use Amanda::Debug;
 
-  Amanda::Util::setup_application("myapp", "server", "cmdline");
+  Amanda::Util::setup_application("myapp", "server", $CONTEXT_CMDLINE);
   # .. command-line processing ..
   Amanda::Config::config_init(...);
   Amanda::Util::finish_setup($RUNNING_AS_DUMPUSER);
@@ -61,11 +61,11 @@ configuration.
 C<$name> is the name of the application, used in log messages, etc.  C<$type>
 is usualy one of "server" or "client".  It specifies the subdirectory in which
 debug logfiles will be created.  C<$context> indicates the usual manner in
-which this application is invoked; one of C<"cmdline"> for a user-invoked
-command-line utility (e.g., C<amadmin>) which should send human-readable error
-messages to stderr; C<"daemon"> for a program started by C<amandad>, e.g.,
-C<sendbackup>; or C<"scriptutil"> for a small program used from shell scripts,
-e.g., C<amgetconf>
+which this application is invoked; one of C<$CONTEXT_CMDLINE> for a
+user-invoked command-line utility (e.g., C<amadmin>) which should send
+human-readable error messages to stderr; C<$CONTEXT_DAEMON> for a program
+started by C<amandad>, e.g., C<sendbackup>; or C<$CONTEXT_SCRIPTUTIL> for a
+small program used from shell scripts, e.g., C<amgetconf>
 
 Based on C<$type> and C<$context>, this function does the following:
 

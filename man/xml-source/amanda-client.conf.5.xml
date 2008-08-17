@@ -46,6 +46,17 @@ The conf use by amrecover.</para>
   </varlistentry>
 
   <varlistentry>
+  <term><emphasis remap='B'>client_username</emphasis> <emphasis remap='I'> string</emphasis></term>
+  <listitem>
+<para>Default:
+<emphasis remap='I'>CLIENT_LOGIN</emphasis>.
+Similar to the parameter of the same name in &amconf;, this specifies the username that
+&amrecover; should send when connecting to the server.  It should match the username
+specified in &amandahosts; on the server.</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
   <term><emphasis remap='B'>index_server</emphasis> <emphasis remap='I'> string</emphasis></term>
   <listitem>
 <para>Default:

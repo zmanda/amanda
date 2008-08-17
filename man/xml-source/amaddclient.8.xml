@@ -46,7 +46,8 @@
 <para>After Amanda rpms are successfully installed and
 &amserverconfig; is run,
 	  &amaddclient; will add client to the  &A; configuration.
-&amaddclient; create or update &A; disklist file and create or update
+&amaddclient; create or update &A;  &disklist;
+file and create or update
 /var/lib/amanda/.amandahosts file on the server.</para>
 <para> If --no-client-update is not specified,
 &amaddclient; will attempt to update or create /var/lib/amanda/.amandahost,
@@ -94,8 +95,8 @@ Example: --conf=v253, --client client8.zmanda.com
   <varlistentry>
   <term><option>--m</option></term>
   <listitem>
-<para>Modify existing entry in the disklist file.</para>
-<para>Note: if disklist file has been modified manually, this option might not work.</para>
+<para>Modify existing entry in the &disklist; file.</para>
+<para>Note: if &disklist; file has been modified manually, this option might not work.</para>
   </listitem>
   </varlistentry>
 
@@ -162,7 +163,7 @@ set, this program will attempt to create the directory on the client. </para>
   </varlistentry>
 
 <varlistentry> 
-If any of the following four options are used, &amaddclient; will extend the dumptype definition to an in-line definition in the disklist file. See <citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry> DISKLIST FILE section for detail.
+If any of the following four options are used, &amaddclient; will extend the dumptype definition to an in-line definition in the &disklist; file.
 </varlistentry>
 
   <varlistentry>

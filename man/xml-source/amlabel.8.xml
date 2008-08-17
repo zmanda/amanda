@@ -51,8 +51,7 @@ regular expression option.
 It is up to the system administrator to define a naming convention.</para>
 
 <para><emphasis remap='B'>Amlabel</emphasis>
-appends the new tape to the
-<emphasis remap='I'>tapelist</emphasis>
+appends the new tape to the &tapelist;
 file so it will be used by &A; before it reuses any other tapes.
 When you
 <command>amlabel</command>

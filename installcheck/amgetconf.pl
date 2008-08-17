@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 75;
+use Test::More tests => 76;
 
 use lib "@amperldir@";
 use Installcheck::Config;
@@ -145,12 +145,17 @@ chomp $dbfile;
 like($dbfile, qr(^\Q$AMANDA_DBGDIR\E/server/foo.[0-9]*.debug$),
     "'amgetconf dbopen.foo' returns a proper debug filename");
 SKIP: {
-    skip "dbopen didn't work, so I'll skip the rest", 2
+    skip "dbopen didn't work, so I'll skip the rest", 3
 	unless (-f $dbfile);
     ok(!run('amgetconf', 'TESTCONF', "dbclose.foo"),
 	"dbclose without filename fails");
     is(run_get('amgetconf', 'TESTCONF', "dbclose.foo:$dbfile"), $dbfile, 
 	"'amgetconf dbclose.foo:<filename>' returns the debug filename");
+
+    # sometimes shell scripts pass a full path as appname..
+    $dbfile = run_get('amgetconf', 'TESTCONF', 'dbopen./sbin/foo');
+    like($dbfile, qr(^\Q$AMANDA_DBGDIR\E/server/_sbin_foo.[0-9]*.debug$),
+	"'amgetconf dbopen./sbin/foo' doesn't get confused by the slashes");
 }
 
 ##

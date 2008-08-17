@@ -30,9 +30,7 @@
 <refsect1><title>DESCRIPTION</title>
 <para><emphasis remap='B'>Amcheckdb</emphasis>
 verifies that every tape mentioned in the &A; database
-is still valid in the
-<emphasis remap='I'>tapelist</emphasis>
-file.</para>
+is still valid in the &tapelist;.</para>
 
 <para>See the
 <citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>
@@ -49,9 +47,7 @@ Ready.
 
 <para>This shows tape
 <emphasis remap='I'>DMP014</emphasis>
-is still listed in the database but is no longer listed in the
-<emphasis remap='I'>tapelist</emphasis>
-file:</para>
+is still listed in the database but is no longer listed in the &tapelist;:</para>
 
 <programlisting>
 # amcheckdb daily

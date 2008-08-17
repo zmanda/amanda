@@ -25,167 +25,167 @@
 configuration files for quick reference.</para>
 
 <!--
- - NOTE: the &nbsp; after each citerefentry works around a bug in the docbook-to-man conversion
+ - NOTE: the comma after each citerefentry works around a bug in the docbook-to-man conversion; using &nbsp;
+ - causes problems in the docbook-to-html conversion.
 -->
 
 <refsect2><title>COMMANDS</title> <!-- a.k.a. any section 8 manpage -->
 <para>Here are all the &A; commands.  Each one has its own manual page.  See them for all the gory details.</para>
 <itemizedlist>
 <listitem>
-<citerefentry><refentrytitle>amaddclient</refentrytitle><manvolnum>8</manvolnum></citerefentry>&nbsp;
+<citerefentry><refentrytitle>amaddclient</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
 </listitem>
 <listitem>
-<citerefentry><refentrytitle>amadmin</refentrytitle><manvolnum>8</manvolnum></citerefentry>&nbsp;
+<citerefentry><refentrytitle>amadmin</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
 </listitem>
 <listitem>
-<citerefentry><refentrytitle>amaespipe</refentrytitle><manvolnum>8</manvolnum></citerefentry>&nbsp;
+<citerefentry><refentrytitle>amaespipe</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
 </listitem>
 <listitem>
-<citerefentry><refentrytitle>amcheck</refentrytitle><manvolnum>8</manvolnum></citerefentry>&nbsp;
+<citerefentry><refentrytitle>amcheck</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
 </listitem>
 <listitem>
-<citerefentry><refentrytitle>amcheckdb</refentrytitle><manvolnum>8</manvolnum></citerefentry>&nbsp;
+<citerefentry><refentrytitle>amcheckdb</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
 </listitem>
 <listitem>
-<citerefentry><refentrytitle>amcheckdump</refentrytitle><manvolnum>8</manvolnum></citerefentry>&nbsp;
+<citerefentry><refentrytitle>amcheckdump</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
 </listitem>
 <listitem>
-<citerefentry><refentrytitle>amcleanup</refentrytitle><manvolnum>8</manvolnum></citerefentry>&nbsp;
+<citerefentry><refentrytitle>amcleanup</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
 </listitem>
 <listitem>
-<citerefentry><refentrytitle>amcrypt-ossl-asym</refentrytitle><manvolnum>8</manvolnum></citerefentry>&nbsp;
+<citerefentry><refentrytitle>amcrypt-ossl-asym</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
 </listitem>
 <listitem>
-<citerefentry><refentrytitle>amcrypt-ossl</refentrytitle><manvolnum>8</manvolnum></citerefentry>&nbsp;
+<citerefentry><refentrytitle>amcrypt-ossl</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
 </listitem>
 <listitem>
-<citerefentry><refentrytitle>amcrypt</refentrytitle><manvolnum>8</manvolnum></citerefentry>&nbsp;
+<citerefentry><refentrytitle>amcrypt</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
 </listitem>
 <listitem>
-<citerefentry><refentrytitle>amcryptsimple</refentrytitle><manvolnum>8</manvolnum></citerefentry>&nbsp;
+<citerefentry><refentrytitle>amcryptsimple</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
 </listitem>
 <listitem>
-<citerefentry><refentrytitle>amdd</refentrytitle><manvolnum>8</manvolnum></citerefentry>&nbsp;
+<citerefentry><refentrytitle>amdd</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
 </listitem>
 <listitem>
-<citerefentry><refentrytitle>amdevcheck</refentrytitle><manvolnum>8</manvolnum></citerefentry>&nbsp;
+<citerefentry><refentrytitle>amdevcheck</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
 </listitem>
 <listitem>
-<citerefentry><refentrytitle>amdump</refentrytitle><manvolnum>8</manvolnum></citerefentry>&nbsp;
+<citerefentry><refentrytitle>amdump</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
 </listitem>
 <listitem>
-<citerefentry><refentrytitle>amfetchdump</refentrytitle><manvolnum>8</manvolnum></citerefentry>&nbsp;
+<citerefentry><refentrytitle>amfetchdump</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
 </listitem>
 <listitem>
-<citerefentry><refentrytitle>amflush</refentrytitle><manvolnum>8</manvolnum></citerefentry>&nbsp;
+<citerefentry><refentrytitle>amflush</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
 </listitem>
 <listitem>
-<citerefentry><refentrytitle>amgetconf</refentrytitle><manvolnum>8</manvolnum></citerefentry>&nbsp;
+<citerefentry><refentrytitle>amgetconf</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
 </listitem>
 <listitem>
-<citerefentry><refentrytitle>amgpgcrypt</refentrytitle><manvolnum>8</manvolnum></citerefentry>&nbsp;
+<citerefentry><refentrytitle>amgpgcrypt</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
 </listitem>
 <listitem>
-<citerefentry><refentrytitle>amgtar</refentrytitle><manvolnum>8</manvolnum></citerefentry>&nbsp;
+<citerefentry><refentrytitle>amgtar</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
 </listitem>
 <listitem>
-<citerefentry><refentrytitle>amlabel</refentrytitle><manvolnum>8</manvolnum></citerefentry>&nbsp;
+<citerefentry><refentrytitle>amlabel</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
 </listitem>
 <listitem>
-<citerefentry><refentrytitle>ammt</refentrytitle><manvolnum>8</manvolnum></citerefentry>&nbsp;
+<citerefentry><refentrytitle>ammt</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
 </listitem>
 <listitem>
-<citerefentry><refentrytitle>amoverview</refentrytitle><manvolnum>8</manvolnum></citerefentry>&nbsp;
+<citerefentry><refentrytitle>amoverview</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
 </listitem>
 <listitem>
-<citerefentry><refentrytitle>amplot</refentrytitle><manvolnum>8</manvolnum></citerefentry>&nbsp;
+<citerefentry><refentrytitle>amplot</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
 </listitem>
 <listitem>
-<citerefentry><refentrytitle>amrecover</refentrytitle><manvolnum>8</manvolnum></citerefentry>&nbsp;
+<citerefentry><refentrytitle>amrecover</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
 </listitem>
 <listitem>
-<citerefentry><refentrytitle>amreport</refentrytitle><manvolnum>8</manvolnum></citerefentry>&nbsp;
+<citerefentry><refentrytitle>amreport</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
 </listitem>
 <listitem>
-<citerefentry><refentrytitle>amrestore</refentrytitle><manvolnum>8</manvolnum></citerefentry>&nbsp;
+<citerefentry><refentrytitle>amrestore</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
 </listitem>
 <listitem>
-<citerefentry><refentrytitle>amrmtape</refentrytitle><manvolnum>8</manvolnum></citerefentry>&nbsp;
+<citerefentry><refentrytitle>amrmtape</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
 </listitem>
 <listitem>
-<citerefentry><refentrytitle>amserverconfig</refentrytitle><manvolnum>8</manvolnum></citerefentry>&nbsp;
+<citerefentry><refentrytitle>amserverconfig</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
 </listitem>
 <listitem>
-<citerefentry><refentrytitle>amservice</refentrytitle><manvolnum>8</manvolnum></citerefentry>&nbsp;
+<citerefentry><refentrytitle>amservice</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
 </listitem>
 <listitem>
-<citerefentry><refentrytitle>amstar</refentrytitle><manvolnum>8</manvolnum></citerefentry>&nbsp;
+<citerefentry><refentrytitle>amstar</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
 </listitem>
 <listitem>
-<citerefentry><refentrytitle>amstatus</refentrytitle><manvolnum>8</manvolnum></citerefentry>&nbsp;
+<citerefentry><refentrytitle>amstatus</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
 </listitem>
 <listitem>
-<citerefentry><refentrytitle>amtape</refentrytitle><manvolnum>8</manvolnum></citerefentry>&nbsp;
+<citerefentry><refentrytitle>amtape</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
 </listitem>
 <listitem>
-<citerefentry><refentrytitle>amtapetype</refentrytitle><manvolnum>8</manvolnum></citerefentry>&nbsp;
+<citerefentry><refentrytitle>amtapetype</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
 </listitem>
 <listitem>
-<citerefentry><refentrytitle>amtoc</refentrytitle><manvolnum>8</manvolnum></citerefentry>&nbsp;
+<citerefentry><refentrytitle>amtoc</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
 </listitem>
 <listitem>
-<citerefentry><refentrytitle>amzfs-snapshot</refentrytitle><manvolnum>8</manvolnum></citerefentry>&nbsp;
+<citerefentry><refentrytitle>amzfs-snapshot</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
 </listitem>
 <listitem>
-<citerefentry><refentrytitle>script-email</refentrytitle><manvolnum>8</manvolnum></citerefentry>&nbsp;
+<citerefentry><refentrytitle>script-email</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
 </listitem>
 </itemizedlist>
 </refsect2>
 <refsect2><title>CONFIGURATION FILES</title> <!-- a.k.a. any section 5 manpage -->
 <itemizedlist>
 <listitem>
-<citerefentry><refentrytitle>amanda.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>&nbsp;
+<citerefentry><refentrytitle>amanda.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
 </listitem>
 <listitem>
-<citerefentry><refentrytitle>amanda-client.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>&nbsp;
+<citerefentry><refentrytitle>amanda-client.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
+</listitem>
+<listitem>
+<citerefentry><refentrytitle>disklist</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
+</listitem>
+<listitem>
+<citerefentry><refentrytitle>tapelist</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
 </listitem>
 </itemizedlist>
 </refsect2>
 <refsect2><title>CONCEPTS</title> <!-- a.k.a. any section 7 manpage -->
 <itemizedlist>
 <listitem>
-<citerefentry><refentrytitle>amanda-applications</refentrytitle><manvolnum>7</manvolnum></citerefentry>&nbsp;
+<citerefentry><refentrytitle>amanda-applications</refentrytitle><manvolnum>7</manvolnum></citerefentry>,
 </listitem>
 <listitem>
-<citerefentry><refentrytitle>amanda-devices</refentrytitle><manvolnum>7</manvolnum></citerefentry>&nbsp;
+<citerefentry><refentrytitle>amanda-devices</refentrytitle><manvolnum>7</manvolnum></citerefentry>,
 </listitem>
 <listitem>
-<citerefentry><refentrytitle>amanda-scripts</refentrytitle><manvolnum>7</manvolnum></citerefentry>&nbsp;
+<citerefentry><refentrytitle>amanda-scripts</refentrytitle><manvolnum>7</manvolnum></citerefentry>,
 </listitem>
 </itemizedlist>
 </refsect2>
 </refsect1>
 
 <refsect1><title>CONFIGURATION</title>
-<para>There are three user-editable files that control the behavior of &A;.
+<para>There are four user-editable files that control the behavior of &A;.
 </para>
 <para>
-The first is
-<emphasis remap='B'>amanda.conf</emphasis>,
-the main configuration file.
-It contains parameters to customize &A; for the site.
-Refer to the 
-<citerefentry><refentrytitle>amanda.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
-manpage for details on &A; configuration parameters.
+The first two are &amconf; and &amclientconf;,
+the main configuration files for the server and client, respectively.
+They contain parameters to customize &A; for the site.
 </para>
 <para>
-Second is the
-<emphasis remap='I'>disklist</emphasis>
-file, which lists hosts and disk partitions to back up.
+Next is the &disklist; file, which lists hosts and disk partitions to back up.
 </para>
 <para>
-Third is the
-<emphasis remap='I'>tapelist</emphasis>
+Last is the seldom-edited &tapelist;
 file, which lists tapes that are currently active.
 These files are described in more detail in the following sections.</para>
 
@@ -203,11 +203,13 @@ The configuration files would be stored under directories
 <filename>/etc/amanda/archive/</filename>, respectively.
 Part of the job of an &A; administrator is to create,
 populate and maintain these directories.</para>
+</refsect1>
 
+<refsect1><title>LOG FILES</title>
 <para>All log and database files generated by &A; go in corresponding
 directories somewhere.
 The exact location is controlled by entries in
-<emphasis remap='B'>amanda.conf</emphasis>.
+<citerefentry><refentrytitle>amanda.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>.
 A typical location would be under <filename>/var/adm/amanda</filename>.
 For the above example, the files might go in
 <filename>/var/adm/amanda/normal/</filename> and
@@ -259,345 +261,6 @@ matching the oldest backup image for a given client and disk
 are removed by
 <command>amdump</command>
 at the end of each run.</para>
-</refsect1>
-
-<refsect1><title>DISKLIST FILE</title>
-<para>The
-<emphasis remap='I'>disklist</emphasis>
-file determines which disks will be backed up by &A;.
-The file usually contains one line per disk:</para>
-
-<programlisting>
-<emphasis>hostname diskname</emphasis> [<emphasis>diskdevice</emphasis>] <emphasis>dumptype</emphasis> [<emphasis>spindle</emphasis> [<emphasis>interface</emphasis>] ]
-</programlisting>
-
-<para>All pairs [ <emphasis>hostname diskname</emphasis> ] must be unique.</para>
-
-<para>Lines starting with # are ignored, as are blank lines.
-The fields have the following meanings:</para>
-<variablelist remap='TP'>
-  <varlistentry>
-  <term><emphasis remap='I'>hostname</emphasis></term>
-  <listitem>
-<para>The name of the host to be backed up.
-If
-<emphasis remap='B'>diskdevice</emphasis>
-refers to a PC share, this is the host &A; will run the Samba
-<emphasis remap='B'>smbclient</emphasis> program on to back up the share.</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
-  <term><emphasis remap='I'>diskname</emphasis></term>
-  <listitem>
-<para>The name of the disk (a label).
-In most case, you set your
-<emphasis remap='B'>diskname</emphasis>
-to the
-<emphasis remap='B'>diskdevice</emphasis>
-and you don't set the
-<emphasis remap='B'>diskdevice.</emphasis>
-If you want multiple entries with the same
-<emphasis remap='B'>diskdevice</emphasis>,
-you must set a different
-<emphasis remap='B'>diskname</emphasis>
-for each entry. It's the
-<emphasis remap='B'>diskname</emphasis>
-that you use on the commandline for any &A; command.
-Look at the example/disklist file for example.</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
-  <term><emphasis remap='I'>diskdevice</emphasis></term>
-  <listitem>
-<para>Default: same as diskname.
-The name of the disk device to be backed up. It may be a full device name,
-a device name without the
-<filename>/dev/</filename>
-prefix, e.g.
-<emphasis remap='I'>sd0a</emphasis>,
-or a mount point such as
-<filename>/usr</filename>.</para>
-
-<para>It may also refer to a PC share by starting the name with two (forward) slashes, e.g.
-<filename>//some-pc/home</filename>.
-In this case, the
-<emphasis remap='B'>program</emphasis>
-option in the associated
-<emphasis remap='B'>dumptype</emphasis>
-must be entered as
-<emphasis remap='B'>GNUTAR</emphasis>.
-It is the combination of the double slash disk name and
-<emphasis remap='B'>program GNUTAR</emphasis>
-in the
-<emphasis remap='B'>dumptype</emphasis>
-that triggers the use of Samba.</para>
-</listitem>
-</varlistentry>
-  
-  <varlistentry>
-  <term><emphasis remap='I'>dumptype</emphasis></term>
-  <listitem>
-<para>Refers to a
-<emphasis remap='B'>dumptype</emphasis>
-defined in the
-<emphasis remap='B'>amanda.conf</emphasis>
-file.
-<emphasis remap='I'>Dumptype</emphasis>s
-specify backup related parameters,
-such as whether to compress the backups,
-whether to record backup results in
-<filename>/etc/dumpdates</filename>, the disk's relative priority, etc.</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
-  <term><emphasis remap='I'>spindle</emphasis></term>
-  <listitem>
-<para>Default:
-<option>-1</option>.
-A number used to balance backup load on a host.
-&A; will not run multiple backups at the same time
-on the same spindle, unless the spindle number is -1,
-which means there is no spindle restriction.</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
-  <term><emphasis remap='I'>interface</emphasis></term>
-  <listitem>
-<para>Default:
-<emphasis remap='I'>local</emphasis>.
-The name of a network interface definition in the
-<emphasis remap='B'>amanda.conf</emphasis>
-file, used to balance network load.</para>
-  </listitem>
-  </varlistentry>
-</variablelist>
-
-<para>Instead of naming a
-<emphasis remap='B'>dumptype</emphasis>,
-it is possible to define one in-line, enclosing
-<emphasis remap='B'>dumptype</emphasis>
-options within curly braces, one per line, just like a
-<emphasis remap='B'>dumptype</emphasis>
-definition in
-<emphasis remap='B'>amanda.conf</emphasis>.
-Since pre-existing
-<emphasis remap='B'>dumptype</emphasis>s
-are valid option names, this syntax may be used to customize
-<emphasis remap='B'>dumptype</emphasis>s
-for particular disks.</para>
-
-<para>A line break
-<emphasis remap='B'>must</emphasis>
-follow the left curly bracket.</para>
-
-<para>For instance, if a
-<emphasis remap='B'>dumptype</emphasis>
-named
-<emphasis remap='I'>normal</emphasis>
-is used for most disks, but use of the holding disk needs to be disabled
-for the file system that holds it, this would work instead of defining
-a new dumptype:</para>
-
-<programlisting>
-<emphasis remap='I'>hostname diskname</emphasis> [ <emphasis remap='I'>diskdevice</emphasis> ] {
-  normal
-  holdingdisk never
-} [ <emphasis remap='I'>spindle</emphasis> [ <emphasis remap='I'>interface</emphasis> ] ]
-</programlisting>
-
-</refsect1>
-
-<refsect1><title>TAPE MANAGEMENT</title>
-<para>The
-<emphasis remap='I'>tapelist</emphasis>
-file contains the list of tapes in active use.
-This file is maintained entirely by &A; and should not be created
-or edited during normal operation.
-It contains lines of the form:</para>
-
-<para><programlisting>YYYYMMDD label flags
-</programlisting></para>
-
-<para>Where
-<emphasis remap='I'>YYYYMMDD</emphasis>
-is the date the tape was written,
-<emphasis remap='I'>label</emphasis>
-is a label for the tape as written by
-<emphasis remap='B'>amlabel</emphasis>
-and
-<emphasis remap='I'>flags</emphasis>
-tell &A; whether the tape may be reused, etc (see the
-<emphasis remap='B'>reuse</emphasis>
-options of
-<emphasis remap='B'>amadmin</emphasis>).</para>
-
-<para><emphasis remap='B'>Amdump</emphasis>
-and
-<emphasis remap='B'>amflush</emphasis>
-will refuse to write to an unlabeled tape, or to a labeled tape that is considered active.
-There must be more tapes in active rotation (see the
-<emphasis remap='B'>tapecycle</emphasis>
-option) than there are runs in the backup cycle (see the
-<emphasis remap='B'>dumpcycle</emphasis>
-option) to prevent overwriting a backup image that would be needed to do a full recovery.</para>
-</refsect1>
-
-<refsect1 id='output_drivers'><title>OUTPUT DRIVERS</title>
-<para>The normal value for the
-<emphasis remap='B'>tapedev</emphasis>
-parameter, or for what a tape changer returns,
-is a full path name to a non-rewinding tape device, such as
-<filename>/dev/nst0</filename>
-or
-<filename>/dev/rmt/0mn</filename>
-or
-<filename>/dev/nst0.1</filename>
-or whatever conventions the operating system uses. &A; provides additional application level drivers that
-support non-traditional tape-simulations or features. To access a specific output driver, set
-<emphasis remap='B'>tapedev</emphasis>
-(or configure your changer to return) a string of the form
-<emphasis remap='I'>driver</emphasis>:<emphasis remap='I'>driver-info</emphasis>
-where
-<emphasis remap='I'>driver</emphasis>
-is one of the supported drivers and
-<emphasis remap='I'>driver-info</emphasis>
-is optional additional information needed by the driver.</para>
-
-<para>The supported drivers are:</para>
-<variablelist remap='TP'>
-  <varlistentry>
-  <term><emphasis remap='I'>tape</emphasis></term>
-  <listitem>
-<para>This is the default driver.
-The
-<emphasis remap='I'>driver-info</emphasis>
-is the tape device name.
-Entering
-<programlisting>tapedev /dev/rmt/0mn
-</programlisting>
-is really a short hand for
-<programlisting>tapedev tape:/dev/rmt/0mn
-</programlisting></para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
-  <term><emphasis remap='I'>null</emphasis></term>
-  <listitem>
-<para>This driver throws away anything written to it and returns EOF
-for any reads except a special case is made for reading a label,
-in which case a &quot;fake&quot; value is returned that &A; checks for
-and allows through regardless of what you have set in
-<emphasis remap='B'>labelstr</emphasis>.
-The
-<emphasis remap='I'>driver-info</emphasis>
-field is not used and may be left blank:</para>
-
-<para><programlisting>tapedev null:
-</programlisting></para>
-
-<para>The <emphasis remap='I'>length</emphasis>
-value from the associated
-<emphasis remap='B'>tapetype</emphasis>
-is used to limit the amount of data written. When the limit is reached, the driver will simulate end of tape.</para>
-
-<note><para>This driver should only be used for debugging and testing,
-and probably only with the
-<emphasis remap='B'>record</emphasis>
-option set to
-<emphasis remap='I'>no</emphasis>.
-</para>
-</note>
-  </listitem>
-  </varlistentry>
-
-  <varlistentry>
-  <term><emphasis remap='I'>rait</emphasis></term>
-  <listitem>
-<para><emphasis remap='I'>R</emphasis>edundant
-<emphasis remap='I'>A</emphasis>rray
-of
-<emphasis remap='I'>I</emphasis>nexpensive (?)
-<emphasis remap='I'>T</emphasis>apes.
-Reads and writes tapes mounted on multiple drives by spreading
-the data across N-1 drives and using the last drive for a checksum.
-See docs/RAIT for more information.</para>
-
-<para>The
-<emphasis remap='I'>driver-info</emphasis>
-field describes the devices to use. Curly braces indicate multiple replacements in the string.
-For instance:</para>
-
-<para><programlisting>tapedev rait:/dev/rmt/tps0d{4,5,6}n
-</programlisting></para>
-
-<para>would use the following devices:</para>
-
-<para><filename>/dev/rmt/tps0d4n</filename>
-<filename>/dev/rmt/tps0d5n</filename>
-<filename>/dev/rmt/tps0d6n</filename>
-</para>
-  </listitem>
-  </varlistentry>
-</variablelist>
-<variablelist remap='TP'>
-  <varlistentry>
-  <term><emphasis remap='I'>file</emphasis></term>
-  <listitem>
-<para>This driver emulates a tape device with a set of files in a directory.
-The
-<emphasis remap='I'>driver-info</emphasis>
-field must be the name of an existing directory.
-The driver will test for a subdirectory of that named
-<emphasis remap='I'>data</emphasis>
-and return
-<emphasis remap='B'>offline</emphasis>
-until it is present.
-When present, the driver uses two files in the
-<emphasis remap='I'>data</emphasis>
-subdirectory for each tape file. One contains the actual data.
-The other contains record length information.</para>
-
-<para>The driver uses a file named
-<emphasis remap='I'>status</emphasis>
-in the
-<emphasis remap='B'>file</emphasis>
-device directory to hold driver status information, such as tape position.
-If not present, the driver will create it as though the device is rewound.</para>
-
-<para>The
-<emphasis remap='I'>length</emphasis>
-value from the associated
-<emphasis remap='B'>tapetype</emphasis>
-is used to limit the amount of data written.
-When the limit is reached, the driver will simulate end of tape.</para>
-
-<para>One way to use this driver with a real device such as a CD-writer is to
-create a directory for the
-<emphasis remap='B'>file</emphasis>
-device and one or more other directories for the actual data.
-Create a symlink named
-<emphasis remap='I'>data</emphasis>
-in the
-<emphasis remap='B'>file</emphasis>
-directory to one of the data directories.
-Set the
-<emphasis remap='B'>tapetype</emphasis>
-length to whatever the medium will hold.</para>
-
-<para>When &A; fills the
-<emphasis remap='B'>file</emphasis>
-device, remove the symlink and (optionally) create a new symlink to another
-data area.
-Use a CD writer software package to burn the image from the first data area.</para>
-
-<para>To read the CD, mount it and create the
-<emphasis remap='I'>data</emphasis>
-symlink in the
-<emphasis remap='B'>file</emphasis>
-device directory.</para>
-</listitem>
-</varlistentry>
-</variablelist>
 </refsect1>
 
 <refsect1><title>AUTHORIZATION</title>
@@ -720,172 +383,144 @@ succeeds if all words in your expression match contiguous words in
 the host or disk.</para>
 
 
-<informaltable frame="none">
-<tgroup cols="2" align="left">
-<tbody>
+<variablelist remap='TP'>
 
-<row>
-<entry>.  </entry>
-<entry>word separator for a host</entry>
-</row>
+    <varlistentry>
+    <term>dot (.)</term> <!-- troff gets confused by a plain dot -->
+    <listitem><para>word separator for a host</para></listitem>
+    </varlistentry>
 
-<row>
-<entry>/</entry>
-<entry>word separator for a disk</entry>
-</row>
+    <varlistentry>
+    <term>/</term>
+    <listitem><para>word separator for a disk</para></listitem>
+    </varlistentry>
 
-<row>
-<entry>^</entry>
-<entry>anchor at left</entry>
-</row>
+    <varlistentry>
+    <term>^</term>
+    <listitem><para>anchor at left</para></listitem>
+    </varlistentry>
 
-<row>
-<entry>$</entry>
-<entry>anchor at right</entry>
-</row>
+    <varlistentry>
+    <term>$</term>
+    <listitem><para>anchor at right</para></listitem>
+    </varlistentry>
 
-<row>
-<entry>?</entry>
-<entry>match exactly one character except the separator</entry>
-</row>
+    <varlistentry>
+    <term>?</term>
+    <listitem><para>match exactly one character except the separator</para></listitem>
+    </varlistentry>
 
-<row>
-<entry>*</entry>
-<entry>match zero or more characters except the separator</entry>
-</row>
+    <varlistentry>
+    <term>*</term>
+    <listitem><para>match zero or more characters except the separator</para></listitem>
+    </varlistentry>
 
-<row>
-<entry>**</entry>
-<entry>match zero or more characters including the separator</entry>
-</row>
+    <varlistentry>
+    <term>**</term>
+    <listitem><para>match zero or more characters including the separator</para></listitem>
+    </varlistentry>
 
-</tbody>
-</tgroup>
-</informaltable>
+</variablelist>
 
 <para>Some examples:</para>
 
-<informaltable frame="none">
-<tgroup cols="3" align="left">
-<tbody>
+<variablelist remap='TP'>
+    <varlistentry>
+    <term>hosta</term>
+    <listitem><para>
+    Will match <filename>hosta</filename>, <filename>foo.hosta.org</filename>, and
+    <filename>hoSTA.dOMAIna.ORG</filename> but not <filename>hostb</filename>.
+    </para></listitem>
+    </varlistentry>
 
-<row>
-<entry>EXPRESSION  </entry>
-<entry>WILL MATCH</entry>
-<entry>WILL NOT MATCH</entry>
-</row>
+    <varlistentry>
+    <term>host</term>
+    <listitem><para>
+    Will match <filename>host</filename> but not <filename>hosta</filename>.
+    </para></listitem>
+    </varlistentry>
 
-<row>
-<entry>hosta</entry>
-<entry>hosta</entry>
-<entry>hostb</entry>
-</row>
+    <varlistentry>
+    <term>host?</term>
+    <listitem><para>
+    Will match <filename>hosta</filename> and <filename>hostb</filename>, but
+    not <filename>host</filename>.
+    </para></listitem>
+    </varlistentry>
 
-<row>
-<entry></entry>
-<entry>hoSTA.dOMAIna.ORG</entry>
-<entry></entry>
-</row>
+    <varlistentry>
+    <term>ho*na</term>
+    <listitem><para>
+    Will match <filename>hoina</filename>
+    but not <filename>ho.aina.org</filename>.
+    </para></listitem>
+    </varlistentry>
 
-<row>
-<entry></entry>
-<entry>foo.hosta.org</entry>
-<entry></entry>
-</row>
+    <varlistentry>
+    <term>ho**na</term>
+    <listitem><para>
+    Will match <filename>hoina</filename>
+    and <filename>ho.aina.org</filename>.
+    </para></listitem>
+    </varlistentry>
 
-<row>
-<entry>host</entry>
-<entry>host</entry>
-<entry>hosta</entry>
-</row>
+    <varlistentry>
+    <term>^hosta</term>
+    <listitem><para>
+    Will match <filename>hosta</filename>
+    but not <filename>foo.hosta.org</filename>.
+    </para></listitem>
+    </varlistentry>
 
-<row>
-<entry>host?</entry>
-<entry>hosta</entry>
-<entry>host</entry>
-</row>
+    <varlistentry>
+    <term>sda*</term>
+    <listitem><para>
+    Will match <filename>/dev/sda1</filename>
+    and <filename>/dev/sda12</filename>.
+    </para></listitem>
+    </varlistentry>
 
-<row>
-<entry></entry>
-<entry>hostb</entry>
-<entry></entry>
-</row>
+    <varlistentry>
+    <term>/opt</term>
+    <listitem><para>
+    Will match the disk <filename>opt</filename>
+    but not the host <filename>opt</filename>.
+    </para></listitem>
+    </varlistentry>
 
-<row>
-<entry>ho*na</entry>
-<entry>hoina</entry>
-<entry>ho.aina.org</entry>
-</row>
+    <varlistentry>
+    <term>(note dots:) .opt.</term> <!-- nroff gets confused by dots -->
+    <listitem><para>
+    Will match the host <filename>opt</filename>
+    but not the disk <filename>opt</filename>.
+    </para></listitem>
+    </varlistentry>
 
-<row>
-<entry>ho**na</entry>
-<entry>hoina</entry>
-<entry></entry>
-</row>
+    <varlistentry>
+    <term>/</term>
+    <listitem><para>
+    Will match the disk <filename>/</filename>
+    but no other disk.
+    </para></listitem>
+    </varlistentry>
 
-<row>
-<entry></entry>
-<entry>ho.aina.org</entry>
-<entry></entry>
-</row>
+    <varlistentry>
+    <term>/usr</term>
+    <listitem><para>
+    Will match the disks <filename>/usr</filename>
+    and <filename>/usr/local</filename>.
+    </para></listitem>
+    </varlistentry>
 
-<row>
-<entry>^hosta</entry>
-<entry>hosta</entry>
-<entry>foo.hosta.org</entry>
-</row>
+    <varlistentry>
+    <term>/usr$</term>
+    <listitem><para>
+    Will match the disks <filename>/usr</filename>
+    but not <filename>/usr/local</filename>.
+    </para></listitem>
+    </varlistentry>
 
-<row>
-<entry>sda*</entry>
-<entry>/dev/sda1</entry>
-<entry></entry>
-</row>
-
-<row>
-<entry></entry>
-<entry>/dev/sda12</entry>
-<entry></entry>
-</row>
-
-<row>
-<entry>/opt</entry>
-<entry>opt (disk)</entry>
-<entry>opt (host)</entry>
-</row>
-
-<row>
-<entry>.opt.</entry>
-<entry>opt (host)</entry>
-<entry>opt (disk)</entry>
-</row>
-
-<row>
-<entry>/</entry>
-<entry>/</entry>
-<entry>any other disk</entry>
-</row>
-
-<row>
-<entry>/usr</entry>
-<entry>/usr</entry>
-<entry></entry>
-</row>
-
-<row>
-<entry></entry>
-<entry>/usr/opt</entry>
-<entry></entry>
-</row>
-
-<row>
-<entry>/usr$</entry>
-<entry>/usr</entry>
-<entry>/usr/opt</entry>
-</row>
-
-</tbody>
-</tgroup>
-</informaltable>
+</variablelist>
 
 
 </refsect1>
@@ -896,49 +531,44 @@ the host or disk.</para>
 expression is a range expression where we only match the prefix.
 Leading ^ is removed. Trailing $ forces an exact match.</para>
 
-<informaltable frame="all">
-<tgroup cols="2" align="left">
-<tbody>
+<variablelist remap="TP">
 
-<row>
-<entry>20001212-14</entry>
-<entry>match all dates beginning with 20001212, 20001213 or 20001214</entry>
-</row>
+    <varlistentry>
+    <term>20001212-14</term>
+    <listitem><para>match all dates beginning with 20001212, 20001213 or 20001214</para></listitem>
+    </varlistentry>
 
-<row>
-<entry>20001212-4</entry>
-<entry>same as previous</entry>
-</row>
+    <varlistentry>
+    <term>20001212-4</term>
+    <listitem><para>same as previous</para></listitem>
+    </varlistentry>
 
-<row>
-<entry>20001212-24</entry>
-<entry>match all dates between 20001212 and 20001224</entry>
-</row>
+    <varlistentry>
+    <term>20001212-24</term>
+    <listitem><para>match all dates between 20001212 and 20001224</para></listitem>
+    </varlistentry>
 
-<row>
-<entry>2000121</entry>
-<entry>match all dates that start with 2000121 (20001210-20001219)</entry>
-</row>
+    <varlistentry>
+    <term>2000121</term>
+    <listitem><para>match all dates that start with 2000121 (20001210-20001219)</para></listitem>
+    </varlistentry>
 
-<row>
-<entry>2</entry>
-<entry>match all dates that start with 2 (20000101-29991231)</entry>
-</row>
+    <varlistentry>
+    <term>2</term>
+    <listitem><para>match all dates that start with 2 (20000101-29991231)</para></listitem>
+    </varlistentry>
 
-<row>
-<entry>2000-10</entry>
-<entry>match all dates between 20000101-20101231</entry>
-</row>
+    <varlistentry>
+    <term>2000-10</term>
+    <listitem><para>match all dates between 20000101-20101231</para></listitem>
+    </varlistentry>
 
-<row>
-<entry>200010$</entry>
-<entry>match only 200010</entry>
-</row>
+    <varlistentry>
+    <term>200010$</term>
+    <listitem><para>match only 200010</para></listitem>
+    </varlistentry>
 
-</tbody>
-</tgroup>
-</informaltable>
-<para/>
+</variablelist>
 
 </refsect1>
 
@@ -951,43 +581,32 @@ escaped within any component by preceding them with a '\'.</para>
 
 <para>Some examples:</para>
 
-<informaltable frame="none">
-<tgroup cols="2" align="left">
-<tbody>
+<variablelist remap='TP'>
+    <varlistentry>
+    <term>client17</term>
+    <listitem><para>all dumps of client17</para></listitem>
+    </varlistentry>
 
-<row>
-<entry>DUMPSPEC</entry>
-<entry>DESCRIPTION</entry>
-</row>
+    <varlistentry>
+    <term>@20080615</term>
+    <listitem><para>All dumps on with datestamps matching 20080615</para></listitem>
+    </varlistentry>
 
-<row>
-<entry>client17</entry>
-<entry>all dumps of client17</entry>
-</row>
+    <varlistentry>
+    <term>webserver:/var/www</term>
+    <listitem><para>All dumps of /var/www on host webserver</para></listitem>
+    </varlistentry>
 
-<row>
-<entry>@20080615</entry>
-<entry>All dumps on with datestamps matching 20080615</entry>
-</row>
+    <varlistentry>
+    <term>webserver:/var/www@200806150317</term>
+    <listitem><para>The dump of webserver with datestamp 200806150317</para></listitem>
+    </varlistentry>
 
-<row>
-<entry>webserver:/var/www</entry>
-<entry>All dumps of /var/www on host webserver</entry>
-</row>
-
-<row>
-<entry>webserver:/var/www@200806150317</entry>
-<entry>The dump of webserver with datestamp 200806150317</entry>
-</row>
-
-<row>
-<entry>:/var/www</entry>
-<entry>All dumps of /var/www on any host</entry>
-</row>
-
-</tbody>
-</tgroup>
-</informaltable>
+    <varlistentry>
+    <term>:/var/www</term>
+    <listitem><para>All dumps of /var/www on any host</para></listitem>
+    </varlistentry>
+</variablelist>
 
 
 </refsect1>

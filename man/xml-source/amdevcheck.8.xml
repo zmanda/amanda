@@ -42,12 +42,9 @@
     
     <para>See the
       <citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>
-      man page for more details about &A;.
-      See the
-      <emphasis remap='B'>OUTPUT DRIVERS</emphasis>
-      section of
-      <emphasis remap='I'>amanda(8)</emphasis>
-      for more information on the &A; output drivers.
+      man page for more details about &A;.  See
+      <citerefentry><refentrytitle>amanda-devices</refentrytitle><manvolnum>7</manvolnum></citerefentry>
+      for more information on devices.
   </para>
   </refsect1>
 

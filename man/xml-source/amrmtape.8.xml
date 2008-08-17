@@ -50,9 +50,7 @@ man page for more details about &A;.</para>
   <varlistentry>
   <term><option>-n</option></term>
   <listitem>
-<para>Generate new
-<emphasis remap='I'>tapelist</emphasis>
-and database files with
+<para>Generate new &tapelist; and database files with
 <emphasis remap='I'>label</emphasis>
 removed, but leave them in
 <filename>/tmp</filename>

@@ -13,13 +13,13 @@
 
 <!-- IDs for AMANDA files-->
 <!ENTITY amandaddebug ' <filename>amandad.debug</filename>'>
-<!ENTITY amconf '<filename>amanda.conf</filename>'>
-<!ENTITY amclientconf '<filename>amanda-client.conf</filename>'>
+<!ENTITY amconf '<citerefentry><refentrytitle>amanda.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>'>
+<!ENTITY amclientconf '<citerefentry><refentrytitle>amanda-client.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>'>
 <!ENTITY amandahosts '<filename>.amandahosts</filename>'>
-<!ENTITY disklist '<filename>disklist</filename>'>
+<!ENTITY disklist '<citerefentry><refentrytitle>disklist</refentrytitle><manvolnum>5</manvolnum></citerefentry>'>
 <!ENTITY amandapass '<filename>/etc/amandapass</filename>'>
 <!ENTITY inetdconf '<filename>/etc/inetd.conf</filename>'>
-<!ENTITY tapelist '<filename>tapelist</filename>'>
+<!ENTITY tapelist '<citerefentry><refentrytitle>tapelist</refentrytitle><manvolnum>5</manvolnum></citerefentry>'>
 
 <!-- IDs for files used by AMANDA-->
 <!ENTITY dumpdates '<filename>/etc/dumpdates</filename>'>

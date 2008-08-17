@@ -269,67 +269,124 @@ static void do_rait_child_ops(GFunc func, GPtrArray * ops, gpointer data) {
     }
 }
 
+/* Helper for parse_device_name; returns a list of un-escaped strings for
+ * the first "component" of str, where a component is a plain string or a
+ * brace-enclosed set of alternatives.  str is pointing to the first character
+ * of the next component on return. */
+static GPtrArray *
+parse_device_name_component(char **str)
+{
+    GPtrArray *result = g_ptr_array_new();
+
+    if (**str == '{') {
+	char *p = (*str)+1;
+	char *local = g_malloc(strlen(*str)+1);
+	char *current = local;
+	char *c = current;
+
+	while (1) {
+	    if (*p == '\0' || *p == '{') {
+		/* unterminated { .. } or extra '{' */
+		amfree(local);
+		g_ptr_array_free(result, TRUE);
+		return NULL;
+	    }
+
+	    if (*p == '}' || *p == ',') {
+		*c = '\0';
+		g_ptr_array_add(result, g_strdup(current));
+		current = ++c;
+
+		if (*p == '}')
+		    break;
+		else
+		    p++;
+	    }
+
+	    if (*p == '\\') {
+		if (*(p+1) == '{' || *(p+1) == '}' || *(p+1) == '\\' || *(p+1) == ',')
+		    p++;
+	    }
+	    *(c++) = *(p++);
+	}
+
+	amfree(local);
+
+	if (*p)
+	    *str = p+1;
+	else
+	    *str = p;
+    } else {
+	/* no braces -- just un-escape a plain string */
+	char *local = g_malloc(strlen(*str)+1);
+	char *r = local;
+	char *p = *str;
+
+	while (*p && *p != '{') {
+	    if (*p == '\\') {
+		if (*(p+1) == '{' || *(p+1) == '}' || *(p+1) == '\\' || *(p+1) == ',')
+		    p++;
+	    }
+	    *(r++) = *(p++);
+	}
+	*r = '\0';
+	g_ptr_array_add(result, local);
+	*str = p;
+    }
+
+    return result;
+}
+
 /* Take a text string user_name, and break it out into an argv-style
-   array of strings. For example, {foo,{bar,baz},bat} would return the
-   strings "foo", "{bar,baz}", "bat", and NULL. Returns NULL on
-   error. */
-static char ** parse_device_name(char * user_name) {
-    GPtrArray * rval;
-    char * cur_end = user_name;
-    char * cur_begin = user_name;
-    
-    rval = g_ptr_array_new();
-    
-    /* Check opening brace. */
-    if (*cur_begin != '{')
-        return NULL;
-    cur_begin ++;
-    
-    cur_end = cur_begin;
-    for (;;) {
-        switch (*cur_end) {
-        case ',': {
-            g_ptr_array_add(rval, g_strndup(cur_begin, cur_end - cur_begin));
-            cur_end ++;
-            cur_begin = cur_end;
-            continue;
-        }
+   array of strings, using a {..,..} syntax similar to shell brace expansion.
+   For example:
 
-        case '{':
-            /* We read until the matching closing brace. */
-            while (*cur_end != '}' && *cur_end != '\0')
-                cur_end ++;
-            if (*cur_end == '}')
-                cur_end ++;
-            continue;
-            
-        case '}':
-            g_ptr_array_add(rval, g_strndup(cur_begin, cur_end - cur_begin));
-            goto OUTER_END; /* break loop, not switch */
+     "{foo,bar,bat}" -> [ "foo", "bar", "bat" ]
+     "foo{1,2}bar" -> [ "foo1bar", "foo2bar" ]
+     "foo{1\,2,3}bar" -> [ "foo1,2bar", "foo3bar" ]
+     "{a,b}-{1,2}" -> [ "a-1", "a-2", "b-1", "b-2" ]
 
-        case '\0':
-            /* Unexpected NULL; abort. */
-            g_warning("Invalid RAIT device name '%s'", user_name);
-            g_ptr_array_free_full(rval);
-            return NULL;
+   Note that nested braces are not processed.  Braces, commas, and backslashes
+   may be escaped with backslashes.  Returns NULL on invalid strings.
+   */
 
-        default:
-            cur_end ++;
-            continue;
-        }
-        g_assert_not_reached();
-    }
- OUTER_END:
-    
-    if (cur_end[1] != '\0') {
-        g_warning("Invalid RAIT device name '%s'", user_name);
-        g_ptr_array_free_full(rval);
-        return NULL;
+static GPtrArray *
+parse_device_name(char * user_name)
+{
+    GPtrArray *rval = g_ptr_array_new();
+
+    g_ptr_array_add(rval, g_strdup(""));
+
+    while (*user_name) {
+	GPtrArray *new_components;
+	GPtrArray *new_rval;
+	guint i, j;
+
+	new_components = parse_device_name_component(&user_name);
+	if (!new_components) {
+	    /* parse error */
+	    g_ptr_array_free(rval, TRUE);
+	    return NULL;
+	}
+
+	new_rval = g_ptr_array_new();
+
+	/* do a cartesian join of rval and new_components */
+	for (i = 0; i < rval->len; i++) {
+	    for (j = 0; j < new_components->len; j++) {
+		g_ptr_array_add(new_rval, g_strconcat(
+		    g_ptr_array_index(rval, i),
+		    g_ptr_array_index(new_components, j),
+		    NULL));
+	    }
+	}
+
+	g_ptr_array_free(rval, TRUE);
+	g_ptr_array_free(new_components, TRUE);
+	rval = new_rval;
     }
 
-    g_ptr_array_add(rval, NULL);
-
-    return (char**) g_ptr_array_free(rval, FALSE);
+    return rval;
 }
 
 /* Find a workable block size. */
@@ -646,7 +703,7 @@ static void append_message(char ** old_message, char * new_message) {
 static void
 rait_device_open_device (Device * dself, char * device_name,
 	    char * device_type G_GNUC_UNUSED, char * device_node) {
-    char ** device_names;
+    GPtrArray *device_names;
     GPtrArray * device_open_ops;
     guint i;
     gboolean failure;
@@ -668,18 +725,20 @@ rait_device_open_device (Device * dself, char * device_name,
     /* Open devices in a separate thread, in case they have to rewind etc. */
     device_open_ops = g_ptr_array_new();
 
-    for (i = 0; device_names[i] != NULL; i ++) {
+    for (i = 0; i < device_names->len; i++) {
         OpenDeviceOp *op;
+	char *name = g_ptr_array_index(device_names, i);
 
+	printf("device: %s\n", name);
         op = g_new(OpenDeviceOp, 1);
-        op->device_name = device_names[i];
+        op->device_name = name;
         op->result = NULL;
         op->self = self;
 	op->rait_name = device_name;
         g_ptr_array_add(device_open_ops, op);
     }
 
-    free(device_names);
+    g_ptr_array_free(device_names, TRUE);
     do_rait_child_ops(device_open_do_op, device_open_ops, NULL);
 
     failure = FALSE;

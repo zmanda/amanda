@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"
+[
+  <!-- entities files to use -->
+  <!ENTITY % global_entities SYSTEM '../entities/global.entities'>
+  %global_entities;
+]>
+
+<refentry id='tapelist.5'>
+
+<refmeta>
+<refentrytitle>tapelist</refentrytitle>
+<manvolnum>5</manvolnum>
+</refmeta>
+<refnamediv>
+<refname>tapelist</refname>
+<refpurpose>The list of &A; volumes in use</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+
+<refsect1><title>DESCRIPTION</title>
+
+<para>The <emphasis remap='I'>tapelist</emphasis> file contains the list of
+tapes in active use.  This file must be created before &A; is invoked, but is
+maintained entirely by &A; and is not ordinarily ordinarily edited or examined
+manually.  Its format may change, or it may be removed altogether, in future
+versions of &A;.  It contains lines of the form:</para>
+
+<para><programlisting>YYYYMMDD label flags
+</programlisting></para>
+
+<para>Where
+<emphasis remap='I'>YYYYMMDD</emphasis>
+is the date the tape was written,
+<emphasis remap='I'>label</emphasis>
+is a label for the tape as written by
+<emphasis remap='B'>amlabel</emphasis>
+and
+<emphasis remap='I'>flags</emphasis>
+is one of "reuse" or "no-reuse" and tells &A; whether the tape may be reused.
+A non-reusable tape will not be overwritten, even if it is older than <emphasis
+remap='B'>dumpcycle</emphasis> dumps.  See the
+<emphasis remap='B'>reuse</emphasis>
+options of
+<citerefentry><refentrytitle>amadmin</refentrytitle><manvolnum>8</manvolnum></citerefentry>.</para>
+
+<para><emphasis remap='B'>Amdump</emphasis>
+and
+<emphasis remap='B'>amflush</emphasis>
+will by default refuse to write to an unlabeled tape, or to a labeled tape that
+is considered active or marked "no-reuse".  There must be more tapes in active
+rotation (see the
+<emphasis remap='B'>tapecycle</emphasis>
+option) than there are runs in the backup cycle (see the
+<emphasis remap='B'>dumpcycle</emphasis>
+option) to prevent overwriting a backup image that would be needed to do a full recovery.</para>
+</refsect1>
+
+<refsect1><title>AUTHOR</title>
+<para>James da Silva, &email.jds; : Original text</para>
+<para>&maintainer.sgw;: XML-conversion, major update</para>
+<para>&email.dustin;: Separation into distinct manpage</para>
+</refsect1>
+
+</refentry>
