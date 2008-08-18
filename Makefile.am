@@ -9,9 +9,6 @@ ACLOCAL_AMFLAGS = --force -I . -I config -I config/gettext-macros -I config/gnul
 if WANT_CLIENT
 CLIENT_SUBDIRS = client-src application-src
 endif
-if WANT_TAPE
-TAPE_SUBDIRS = tape-src
-endif
 if WANT_SERVER
 SERVER_SUBDIRS = device-src server-src changer-src xfer-src
 endif
@@ -96,7 +93,6 @@ lint:
 	(cd recover-src; make lint)
 	(cd restore-src; make lint)
 	(cd server-src; make lint)
-	(cd tape-src; make lint)
 	(cd xfer-src; make lint)
 
 ## Do not release the *.test.c sources.  They get built on the fly and

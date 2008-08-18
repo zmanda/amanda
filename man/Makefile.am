@@ -29,14 +29,12 @@ SERVER_MAN_PAGES =  \
     amcrypt-ossl.8   \
     amcrypt.8 \
     amcryptsimple.8  \
-    amdd.8 \
     amdevcheck.8 \
     amdump.8 \
     amflush.8 \
     amgetconf.8 \
     amgpgcrypt.8 \
     amlabel.8 \
-    ammt.8 \
     amoverview.8 \
     amreport.8 \
     amrmtape.8 \

@@ -388,7 +388,6 @@ AC_CONFIG_FILES([
     recover-src/Makefile
     restore-src/Makefile
     server-src/Makefile
-    tape-src/Makefile
     xfer-src/Makefile
 ])
 

@@ -1,4 +1,17 @@
 2008-08-18  Dustin J. Mitchell <dustin@zmanda.com>
+	* configure.in Makefile.am tape-src/*: remove tape-src
+	* changer-src/Makefile.am: don't link with libamtape
+	* changer-src/chg-scsi.c: don't use libamtape
+	* changer-src/scsi-changer-driver.c: don't use libamtape
+	* config/amanda/tape.m4: fix comment
+	* example/amanda.conf.in example/template.d/tapetypes: fix outdated
+	  comments
+	* man/Makefile.am man/xml-source/amdd.8.xml man/xml-source/ammt.8.xml:
+	  remove amdd and ammt manpages
+	* restore-src/Makefile.am: remove refs to tape-src/
+	* server-src/Makefile.am: remove refs to tape-src/
+
+2008-08-18  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/krb4-security.c common-src/krb5-security.c
 	  config/amanda/tape.m4 common-src/amanda.h: remove
 	  --with-maxtapeblocksize

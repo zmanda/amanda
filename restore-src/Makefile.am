@@ -62,8 +62,6 @@ lint:
 		f="$$f "`cat ../common-src/listlibsrc.output`;			\
 		(cd ../server-src; make listlibsrc);				\
 		f="$$f "`cat ../server-src/listlibsrc.output`;			\
-		(cd ../tape-src; make listlibsrc);				\
-		f="$$f "`cat ../tape-src/listlibsrc.output`;			\
 		echo $(LINT) $$f;						\
 		$(LINT) $(LINTFLAGS) $(CPPFLAGS) $(DEFS) -I. -I$(top_builddir)/config	\
 		    $(INCLUDES) $$f;						\

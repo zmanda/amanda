@@ -27,9 +27,6 @@ AC_DEFUN([AMANDA_WITH_MAXTAPEBLOCKSIZE], [
 #   If 'struct mtget' fields mt_flags, mt_fileno, mt_blkno, mt_dsreg, and 
 #   mt_erreg, the corresponding HAVE_MT_* is DEFINEd.
 #
-#   Not that most of the checks in this section correspond to the older
-#   tapeio (in tape-src/), rather than the new tape device.
-#
 AC_DEFUN([AMANDA_TAPE_DEVICE], [
     AC_CHECK_HEADERS( \
 	linux/zftape.h \

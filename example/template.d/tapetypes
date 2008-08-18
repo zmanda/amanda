@@ -6,11 +6,7 @@
 # are, and how fast the tape device is.
 
 # A filemark is the amount of wasted space every time a tape section
-# ends.  If you run `make tapetype' in tape-src, you'll get a program
-# that generates tapetype entries, but it is slow as hell, use it only
-# if you really must and, if you do, make sure you post the data to
-# the amanda mailing list, so that others can use what you found out
-# by searching the archives.
+# ends.
 
 # For completeness Amanda should calculate the inter-record gaps too,
 # but it doesn't.  For EXABYTE and DAT tapes this is ok.  Anyone using

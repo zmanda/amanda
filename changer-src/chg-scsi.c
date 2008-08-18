@@ -69,7 +69,6 @@ static char rcsid[] = "$Id: chg-scsi.c,v 1.52 2006/07/25 18:18:46 martinea Exp $
 #include "conffile.h"
 #include "libscsi.h"
 #include "scsi-defs.h"
-#include "tapeio.h"
 
 char *tapestatfile = NULL;
 FILE *debug_file = NULL;

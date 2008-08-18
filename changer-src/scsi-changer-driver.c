@@ -11,7 +11,7 @@ static char rcsid[] = "$Id: scsi-changer-driver.c,v 1.52 2006/07/21 00:25:50 mar
 
 #include "scsi-defs.h"
 
-#include "tapeio.h"
+#include "device.h"
 
 extern FILE *debug_file;
 extern changer_t *changer;    /* Needed for the infos about emubarcode and labelfile */
@@ -451,6 +451,38 @@ size_t DTE = 0;
 char *chgscsi_datestamp = NULL;       /* Result pointer for tape_rdlabel */
 char *chgscsi_label = NULL;           /* Result pointer for tape_rdlabel */
 char *chgscsi_result = NULL;          /* Needed for the result string of MapBarCode */
+
+/*
+ * This used to be in tape-src/tapeio.c; this is the Device API version.
+ */
+
+static char *
+tape_rdlabel(
+    char *devname,
+    char **datestamp,
+    char **label)
+{
+    Device *dev;
+    char *r = NULL;
+
+    dev = device_open(devname);
+    if (dev->status != DEVICE_STATUS_SUCCESS) {
+	r = g_strdup(device_error_or_status(dev));
+	g_object_unref(dev);
+	return r;
+    }
+
+    if (!device_read_label(dev)) {
+	r = g_strdup(device_error_or_status(dev));
+	g_object_unref(dev);
+	return r;
+    }
+
+    *datestamp = g_strdup(dev->volume_time);
+    *label = g_strdup(dev->volume_label);
+
+    return NULL;
+}
 
 /*
  * First all functions which are called from extern
@@ -2592,7 +2624,6 @@ GenericRewind(
   CDB_T CDB;
   extern OpenFiles_T *pDev;
   RequestSense_T *pRequestSense;
-  char *errstr;                    /* Used by tape_rewind */
   int ret;
   int cnt = 0;
   int done;
@@ -2790,15 +2821,7 @@ GenericRewind(
 	  DebugPrint(DEBUG_INFO, SECTION_TAPE,_("Close Device\n"));
 	  SCSI_CloseDevice(DeviceFD);
 	}
-      /* We don't retry if it fails; that is left to the vtape driver. */
-      if ((errstr = tape_rewind(pDev[DeviceFD].dev)) == NULL) {
-          DebugPrint(DEBUG_INFO, SECTION_TAPE,_("Rewind OK,\n"), cnt);
-      } else {
-          DebugPrint(DEBUG_ERROR, SECTION_TAPE,_("Rewind failed %s\n"),errstr);
-          DebugPrint(DEBUG_INFO, SECTION_TAPE,_("##### STOP GenericRewind (-1)\n"));
-          return(-1);
-	  /*NOTREACHED*/
-      }
+      /* no actual rewind operation here -- the device itself will handle that */
       DebugPrint(DEBUG_INFO, SECTION_TAPE,_("##### STOP GenericRewind (0)\n"));
     }
 
