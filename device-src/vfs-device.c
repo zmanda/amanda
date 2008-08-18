@@ -20,9 +20,9 @@
 
 #include <string.h> /* memset() */
 
+#include "amanda.h"
 #include "vfs-device.h"
 #include "fsusage.h"
-#include "amanda.h"
 #include "util.h"
 #include <regex.h>
 

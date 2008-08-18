@@ -1,3 +1,7 @@
+2008-08-18  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/version.h: remove #include of config.h
+	* device-src/vfs-device.c: #include amanda.h first
+
 2008-08-15  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/debug.c: include backtraces on fatal errors
 	* config/amanda/debugging.m4: look for glibc's backtrace support
