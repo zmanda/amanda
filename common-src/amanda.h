@@ -401,11 +401,6 @@ extern int errno;
 #define DISK_BLOCK_KB		32
 #define DISK_BLOCK_BYTES	(DISK_BLOCK_KB * 1024)
 
-/* Maximum size of a tape block */
-/* MAX_TAPE_BLOCK_KB is defined in config.h */
-/* by configure --with-maxtapeblocksize     */
-#define MAX_TAPE_BLOCK_BYTES (MAX_TAPE_BLOCK_KB*1024)
-
 /* Maximum length of tape label, plus one for null-terminator. */
 #define MAX_TAPE_LABEL_LEN (10240)
 #define MAX_TAPE_LABEL_BUF (MAX_TAPE_LABEL_LEN+1)

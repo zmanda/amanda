@@ -240,13 +240,16 @@ void device_property_init(void) {
           "averaged for some (currently undefined) period of time)");
     device_property_fill_and_register(&device_property_block_size,
                                       G_TYPE_INT, "block_size",
-                                      "Device blocking factor in bytes.");
+                                      "Block size to use while writing.");
     device_property_fill_and_register(&device_property_min_block_size,
                                       G_TYPE_UINT, "min_block_size",
       "Minimum supported blocking factor.");
     device_property_fill_and_register(&device_property_max_block_size,
                                       G_TYPE_UINT, "max_block_size",
       "Maximum supported blocking factor.");
+    device_property_fill_and_register(&device_property_read_buffer_size,
+                                      G_TYPE_UINT, "read_buffer_size",
+      "Minimum size of a read for this device (maximum expected block size)");
     device_property_fill_and_register(&device_property_appendable,
                                       G_TYPE_BOOLEAN, "appendable",
       "Does device support appending to previously-written media?");
@@ -266,9 +269,6 @@ void device_property_init(void) {
     device_property_fill_and_register(&device_property_max_volume_usage,
                                       G_TYPE_UINT64, "max_volume_usage",
       "Artificial limit to data written to volume.");
-    device_property_fill_and_register(&device_property_read_buffer_size,
-                                      G_TYPE_UINT, "read_buffer_size",
-      "What buffer size should be used for reading?");
     device_property_fill_and_register(&device_property_verbose,
                                      G_TYPE_BOOLEAN, "verbose",
        "Should the device produce verbose output?");
@@ -281,11 +281,11 @@ DevicePropertyBase device_property_compression_rate;
 DevicePropertyBase device_property_block_size;
 DevicePropertyBase device_property_min_block_size;
 DevicePropertyBase device_property_max_block_size;
+DevicePropertyBase device_property_read_buffer_size;
 DevicePropertyBase device_property_appendable;
 DevicePropertyBase device_property_canonical_name;
 DevicePropertyBase device_property_medium_access_type;
 DevicePropertyBase device_property_partial_deletion;
 DevicePropertyBase device_property_free_space;
 DevicePropertyBase device_property_max_volume_usage;
-DevicePropertyBase device_property_read_buffer_size;
 DevicePropertyBase device_property_verbose;

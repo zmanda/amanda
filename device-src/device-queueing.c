@@ -39,6 +39,11 @@ producer_result_t device_read_producer(gpointer devicep,
             buffer->data_size = read_size;
             return PRODUCER_MORE;
         } else if (result == 0) {
+	    /* unfortunately, the best "memory" we have of needing a larger
+	     * block size is the next time this buffer comes around, and even
+	     * this is incomplete as buffers may be resized periodically.  So
+	     * we'll end up calling read_block with small buffers more often
+	     * than strictly necessary. */
             buffer->data = realloc(buffer->data, read_size);
             buffer->alloc_size = read_size;
         } else if (device->is_eof) {
@@ -53,17 +58,17 @@ producer_result_t device_read_producer(gpointer devicep,
 ssize_t device_write_consumer(gpointer devicep, queue_buffer_t *buffer) {
     Device* device;
     size_t write_size;
+    gsize block_size;
 
-    device = (Device*) devicep;
-    g_assert(IS_DEVICE(device));
-    write_size = MIN(buffer->data_size,
-                     device_write_max_size(device));
+    device = DEVICE(devicep);
+
+    block_size = device->block_size;
+    write_size = MIN(buffer->data_size, block_size);
 
     /* we assume that the queueing module is providing us with
      * appropriately-sized blocks until the last block. */
     if (device_write_block(device, write_size,
-                           buffer->data + buffer->offset,
-                           write_size < device_write_min_size(device))) {
+                           buffer->data + buffer->offset)) {
         /* Success! */
         return write_size;
     } else {

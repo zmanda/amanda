@@ -55,7 +55,6 @@ typedef struct {
     int open_file_fd;
 
     /* Properties */
-    int block_size;
     guint64 volume_bytes;
     guint64 volume_limit;
 } VfsDevice;
@@ -79,7 +78,7 @@ typedef struct {
 
 #define VFS_DEVICE_MIN_BLOCK_SIZE (1)
 #define VFS_DEVICE_MAX_BLOCK_SIZE (INT_MAX)
-#define VFS_DEVICE_DEFAULT_BLOCK_SIZE (MAX_TAPE_BLOCK_BYTES)
+#define VFS_DEVICE_DEFAULT_BLOCK_SIZE (DISK_BLOCK_BYTES)
 #define VFS_DEVICE_LABEL_SIZE (32768)
 
 /* This looks dangerous, but is actually modified by the umask. */
@@ -119,8 +118,7 @@ static gboolean vfs_device_property_set (Device * pself, DevicePropertyId ID,
 static gboolean vfs_device_recycle_file (Device * pself, guint filenum);
 static Device * vfs_device_factory(char * device_name, char * device_type, char * device_node);
 static DeviceStatusFlags vfs_device_read_label(Device * dself);
-static gboolean vfs_device_write_block(Device * self, guint size,
-                                       gpointer data, gboolean last_block);
+static gboolean vfs_device_write_block(Device * self, guint size, gpointer data);
 static int vfs_device_read_block(Device * self, gpointer data, int * size_req);
 static IoResult vfs_device_robust_write(VfsDevice * self,  char *buf,
                                               int count);
@@ -194,7 +192,6 @@ vfs_device_init (VfsDevice * self) {
     self->dir_name = self->file_name = NULL;
     self->file_lock_name = self->volume_lock_name = NULL;
     self->file_lock_fd = self->volume_lock_fd = self->open_file_fd = -1;
-    self->block_size = VFS_DEVICE_DEFAULT_BLOCK_SIZE;
     self->volume_bytes = 0; 
     self->volume_limit = 0;
 
@@ -214,16 +211,6 @@ vfs_device_init (VfsDevice * self) {
     device_add_property(o, &prop, &response);
     g_value_unset(&response);
 
-    prop.base = &device_property_min_block_size;
-    g_value_init(&response, G_TYPE_UINT);
-    g_value_set_uint(&response, VFS_DEVICE_MIN_BLOCK_SIZE);
-    device_add_property(o, &prop, &response);
-
-    prop.base = &device_property_max_block_size;
-    g_value_set_uint(&response, VFS_DEVICE_MAX_BLOCK_SIZE);
-    device_add_property(o, &prop, &response);
-    g_value_unset(&response);
-
     prop.base = &device_property_appendable;
     g_value_init(&response, G_TYPE_BOOLEAN);
     g_value_set_boolean(&response, TRUE);
@@ -233,20 +220,11 @@ vfs_device_init (VfsDevice * self) {
     device_add_property(o, &prop, &response);
     g_value_unset(&response);
 
-    /* This one is handled by Device's get_property handler. */
-    prop.base = &device_property_canonical_name;
-    device_add_property(o, &prop, NULL);
-
     prop.base = &device_property_medium_access_type;
     g_value_init(&response, MEDIA_ACCESS_MODE_TYPE);
     g_value_set_enum(&response, MEDIA_ACCESS_MODE_READ_WRITE);
     device_add_property(o, &prop, &response);
     g_value_unset(&response);
-
-    /* These are dynamic, handled in vfs_device_property_xxx */
-    prop.base = &device_property_block_size;
-    prop.access = PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START;
-    device_add_property(o, &prop, NULL);
 
     prop.base = &device_property_max_volume_usage;
     prop.access =
@@ -531,6 +509,10 @@ vfs_device_open_device (Device * pself, char * device_name, char * device_type, 
     VfsDevice * self;
     self = VFS_DEVICE(pself);
 
+    pself->min_block_size = VFS_DEVICE_MIN_BLOCK_SIZE;
+    pself->max_block_size = VFS_DEVICE_MAX_BLOCK_SIZE;
+    pself->block_size = VFS_DEVICE_DEFAULT_BLOCK_SIZE;
+
     /* We don't have to free this ourselves; it will be freed by
      * vfs_device_finalize whether we succeed here or not. */
     self->dir_name = g_strconcat(device_node, "/data/", NULL);
@@ -742,8 +724,7 @@ static DeviceStatusFlags vfs_device_read_label(Device * dself) {
     return dself->status;
 }
 
-static gboolean vfs_device_write_block(Device * pself, guint size,
-                                       gpointer data, gboolean last_block G_GNUC_UNUSED) {
+static gboolean vfs_device_write_block(Device * pself, guint size, gpointer data) {
     VfsDevice * self = VFS_DEVICE(pself);
     IoResult result;
 
@@ -783,13 +764,14 @@ vfs_device_read_block(Device * pself, gpointer data, int * size_req) {
 
     if (device_in_error(self)) return -1;
 
-    if (data == NULL || *size_req < self->block_size) {
+    if (data == NULL || (gsize)*size_req < pself->block_size) {
         /* Just a size query. */
-        *size_req = self->block_size;
+	g_assert(pself->block_size < INT_MAX);
+        *size_req = (int)pself->block_size;
         return 0;
     }
 
-    size = self->block_size;
+    size = pself->block_size;
     result = vfs_device_robust_read(self, data, &size);
     switch (result) {
     case RESULT_SUCCESS:
@@ -1187,7 +1169,7 @@ vfs_device_seek_block (Device * pself, guint64 block) {
 
     /* Pretty simple. We figure out the blocksize and use that. */
     result = lseek(self->open_file_fd,
-                   (block) * self->block_size + VFS_DEVICE_LABEL_SIZE,
+                   (block) * pself->block_size + VFS_DEVICE_LABEL_SIZE,
                    SEEK_SET);
 
     pself->block = block;
@@ -1212,11 +1194,7 @@ vfs_device_property_get (Device * pself, DevicePropertyId ID, GValue * val) {
     /* clear error status in case we return FALSE */
     device_set_error(pself, NULL, DEVICE_STATUS_SUCCESS);
 
-    if (ID == PROPERTY_BLOCK_SIZE) {
-        g_value_unset_init(val, G_TYPE_INT);
-        g_value_set_int(val, self->block_size);
-        return TRUE;
-    } else if (ID == PROPERTY_MAX_VOLUME_USAGE) {
+    if (ID == PROPERTY_MAX_VOLUME_USAGE) {
         g_value_unset_init(val, G_TYPE_UINT64);
         g_value_set_uint64(val, self->volume_limit);
         return TRUE;
@@ -1259,13 +1237,7 @@ vfs_device_property_set (Device * pself, DevicePropertyId ID, GValue * val) {
     self = VFS_DEVICE(pself);
     if (device_in_error(self)) return FALSE;
 
-    if (ID == PROPERTY_BLOCK_SIZE) {
-        int block_size = g_value_get_int(val);
-        if(block_size <= 0)
-	    return FALSE;
-        self->block_size = block_size;
-        return TRUE;
-    } else if (ID == PROPERTY_MAX_VOLUME_USAGE) {
+    if (ID == PROPERTY_MAX_VOLUME_USAGE) {
         self->volume_limit = g_value_get_uint64(val);
         return TRUE;
     } else {

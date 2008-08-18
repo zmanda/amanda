@@ -253,6 +253,7 @@ scan_init(G_GNUC_UNUSED void *	ud, int	rc, G_GNUC_UNUSED int ns,
 typedef struct {
     char ** cur_tapedev;
     char * searchlabel;
+    rst_flags_t *flags;
 } loadlabel_data;
 
 /* DANGER WILL ROBINSON: This function references globals:
@@ -293,6 +294,13 @@ loadlabel_slot(void *	datap,
     }
 
     device_set_startup_properties_from_config(device);
+    if (!set_restore_device_read_buffer_size(device, data->flags)) {
+        g_fprintf(stderr, "%s: slot %s: Error setting read block size:\n"
+                "%s: slot %s: %s\n",
+                get_pname(), slotstr, get_pname(), slotstr, device_error_or_status(device));
+        g_object_unref(device);
+        return 0;
+    }
     device_status = device_read_label(device);
     if (device_status != DEVICE_STATUS_SUCCESS) {
         g_fprintf(stderr, "%s: slot %s: Error reading tape label:\n"
@@ -1206,6 +1214,30 @@ void restore(RestoreSource * source,
     }
 }
 
+gboolean
+set_restore_device_read_buffer_size(
+    Device *device,
+    rst_flags_t *flags)
+{
+    /* if the user specified a blocksize, use it */
+    if (flags->blocksize) {
+	GValue val;
+	gboolean success;
+
+	bzero(&val, sizeof(GValue));
+
+	g_value_init(&val, G_TYPE_UINT);
+	g_value_set_uint(&val, flags->blocksize);
+	success = device_property_set(device, PROPERTY_READ_BUFFER_SIZE, &val);
+	g_value_unset(&val);
+	if (!success) {
+	    return FALSE;
+	}
+    }
+
+    return TRUE;
+}
+
 /* return NULL if the label is not the expected one                     */
 /* returns a Device handle if it is the expected one. */
 /* FIXME: Was label_of_current_slot */
@@ -1235,6 +1267,13 @@ conditional_device_open(char         *tapedev,
     }
 
     device_set_startup_properties_from_config(rval);
+    if (!set_restore_device_read_buffer_size(rval, flags)) {
+	send_message(prompt_out, flags, their_features,
+		     "Error setting read block size on '%s': %s.",
+		     tapedev, device_error(rval));
+        g_object_unref(rval);
+        return NULL;
+    }
     device_read_label(rval);
 
     if (rval->volume_label == NULL) {
@@ -1284,6 +1323,7 @@ load_next_tape(
             loadlabel_data data;
             data.cur_tapedev = cur_tapedev;
             data.searchlabel = desired_tape->label;
+	    data.flags = flags;
 	    changer_find(&data, scan_init, loadlabel_slot,
 			 desired_tape->label);
             return LOAD_CHANGER;

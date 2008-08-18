@@ -69,12 +69,6 @@ are represented by accessor functions of the same name.
 
 where C<$jobinfo> is a C<dumpfile_t> (see L<Amanda::Types>)
 
-=item C<write_min_size()>
-
-=item C<write_max_size()>
-
-=item C<read_max_size()>
-
 =item C<write_block($size, $data, $short_block)>
 
 Note that Perl code is not expected to handle on-device data, so there
@@ -132,6 +126,12 @@ where $value is of an appropriate type for the given property
 =item C<volume_label()> (accessor function)
 
 =item C<volume_time()> (accessor function)
+
+=item C<min_block_size()> (accessor function)
+
+=item C<max_block_size()> (accessor function)
+
+=item C<block_size()> (accessor function)
 
 =back
 
@@ -420,24 +420,9 @@ typedef struct Device {
 	    return device_start_file(self, jobInfo);
 	}
 
-	size_t
-	write_min_size() {
-	    return device_write_min_size(self);
-	}
-
-	size_t
-	write_max_size() {
-	    return device_write_max_size(self);
-	}
-
-	size_t
-	read_max_size() {
-	    return device_read_max_size(self);
-	}
-
 	gboolean
-	write_block(guint size, gpointer data, gboolean short_block) {
-	    return device_write_block(self, size, data, short_block);
+	write_block(guint size, gpointer data) {
+	    return device_write_block(self, size, data);
 	}
 
 	gboolean
@@ -583,6 +568,9 @@ typedef struct Device {
 	char * volume_label(void) { return self->volume_label; }
 	char * volume_time(void) { return self->volume_time; }
 	DeviceStatusFlags status(void) { return self->status; }
+	gsize min_block_size(void) { return self->min_block_size; }
+	gsize max_block_size(void) { return self->max_block_size; }
+	gsize block_size(void) { return self->block_size; }
     };
 
 } Device;

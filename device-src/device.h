@@ -137,6 +137,14 @@ typedef struct {
     /* The latest status for the device */
     DeviceStatusFlags status;
 
+    /* device block-size ranges.  These are also available as properties,
+     * and by default users can set block_size via property BLOCK_SIZE.
+     * Writers should use block_size, and readers should initially use
+     * block_size, and expand buffers as directed by read_block. */
+    gsize min_block_size;
+    gsize max_block_size;
+    gsize block_size;
+
     DevicePrivate * private;
 } Device;
 
@@ -172,8 +180,7 @@ struct _DeviceClass {
     gboolean (* start) (Device * self, DeviceAccessMode mode,
                         char * label, char * timestamp);
     gboolean (* start_file) (Device * self, const dumpfile_t * info);
-    gboolean (* write_block) (Device * self, guint size, gpointer data,
-                              gboolean last_block);
+    gboolean (* write_block) (Device * self, guint size, gpointer data);
     gboolean (* write_from_fd) (Device * self, queue_fd_t *queue_fd);
     gboolean (* finish_file) (Device * self);
     dumpfile_t* (* seek_file) (Device * self, guint file);
@@ -281,31 +288,12 @@ gboolean 	device_finish	(Device * self);
 gboolean        device_start_file       (Device * self,
                                          const dumpfile_t * jobInfo);
 
-/* These accessor functions determine the minimum and maximum size for
- * a write_block call, and the maximum size that a read_block call will
- * return.  */
-size_t           device_write_min_size   (Device * self);
-size_t           device_write_max_size   (Device * self);
-size_t           device_read_max_size   (Device * self);
-
-/* Does what you expect. size had better be inside the block size
- * range, or this function will write nothing.
- *
- * The short_block parameter needs some additional explanation: If
- * short_block is set to TRUE, then this function will accept a write
- * smaller than the minimum block size, subject to the following
- * caveats:
- *
- * % The block may be padded with NULL bytes, which will be present on
- *   restore.
- *
- * It is permitted to use short_block with a block that is not short;
- * in this case, it is equivalent to calling device_write() and then
- * calling device_finish_file(). */
+/* Does what you expect. Size must be device->block_size or less.
+ * If less, then this is the final block in the file, and no more blocks
+ * may be written until finish_file and start_file have been called. */
 gboolean 	device_write_block	(Device * self,
                                          guint size,
-                                         gpointer data,
-                                         gboolean short_block);
+                                         gpointer data);
 
 /* This will drain the given fd (reading until EOF), and write the
  * resulting data out to the device using maximally-sized blocks.
@@ -361,12 +349,14 @@ gboolean 	device_seek_block	(Device * self,
  * no read is performed, the function returns 0, and *size is set
  * to the minimum buffer size required to read the next block. If an
  * error occurs, the function returns -1  and *size is left unchanged.
- * 
- * It is not an error if buffer == NULL and *size == 0. This should be
- * treated as a query as to the possible size of the next block. */
-int 	device_read_block	(Device * self,
-                                 gpointer buffer,
-                                 int * size);
+ *
+ * Note that this function may request a block size bigger than
+ * dev->block_size, if it discovers an oversized block.  This allows Amanda to
+ * read from volumes regardless of the block size used to write them. It is not
+ * an error if buffer == NULL and *size == 0. This should be treated as a query
+ * as to the possible size of the next block, although it is not an error for
+ * the next read to request an even larger block size.  */
+int 	device_read_block	(Device * self, gpointer buffer, int * size);
 
 /* This is the reading equivalent of device_write_from_fd(). It will
  * read from the device from the current location until end of file,

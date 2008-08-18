@@ -60,6 +60,13 @@
 #endif	/* HAVE_ON_EXIT */
 #endif	/* ! HAVE_ATEXIT */
 
+/*
+ * This is the tcp stream buffer size
+ */
+#ifndef STREAM_BUFSIZE
+#define	STREAM_BUFSIZE	(32768*2)
+#endif
+
 int krb_set_lifetime(int);
 int kuserok(AUTH_DAT *, char *);
 
@@ -98,18 +105,11 @@ struct krb4_stream {
     in_port_t port;			/* local port this is bound to */
     int socket;				/* fd for server-side accepts */
     event_handle_t *ev_read;		/* read event handle */
-    char databuf[MAX_TAPE_BLOCK_BYTES];	/* read buffer */
+    char databuf[STREAM_BUFSIZE];	/* read buffer */
     int len;				/* */
     void (*fn)(void *, void *, ssize_t);/* read event fn */
     void *arg;				/* arg for previous */
 };
-
-/*
- * This is the tcp stream buffer size
- */
-#ifndef STREAM_BUFSIZE
-#define	STREAM_BUFSIZE	(MAX_TAPE_BLOCK_BYTES * 2)
-#endif
 
 /*
  * Interface functions

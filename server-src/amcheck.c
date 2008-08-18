@@ -667,7 +667,7 @@ static gboolean test_tape_status(FILE * outf) {
     /* If we can't get this property, it's not an error. Maybe the device
      * doesn't support this property, or needs an actual volume to know
      * for sure. */
-    if (device_property_get(device, PROPERTY_MEDIUM_TYPE, &property_value)) {
+    if (device_property_get(device, PROPERTY_MEDIUM_ACCESS_TYPE, &property_value)) {
         g_assert(G_VALUE_TYPE(&property_value) == MEDIA_ACCESS_MODE_TYPE);
         if (g_value_get_enum(&property_value) ==
             MEDIA_ACCESS_MODE_WRITE_ONLY) {

@@ -111,6 +111,9 @@ static void handle_tape_restore(char * device_name, rst_flags_t * flags,
     }
     
     device_set_startup_properties_from_config(device);
+    if (!set_restore_device_read_buffer_size(device, flags)) {
+        error("Error setting read block size: %s.\n", device_error_or_status(device));
+    }
     device_status = device_read_label(device);
     if (device_status != DEVICE_STATUS_SUCCESS) {
         error("Error reading volume label: %s.\n", device_error_or_status(device));
@@ -191,10 +194,6 @@ main(
 		rst_flags->blocksize *= 1024 * 1024;
 	    } else if(*e != '\0') {
 		error(_("invalid blocksize value \"%s\""), optarg);
-		/*NOTREACHED*/
-	    }
-	    if(rst_flags->blocksize < DISK_BLOCK_BYTES) {
-		error(_("minimum block size is %dk"), DISK_BLOCK_BYTES / 1024);
 		/*NOTREACHED*/
 	    }
 	    break;

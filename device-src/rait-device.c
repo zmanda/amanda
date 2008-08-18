@@ -91,7 +91,12 @@ struct RaitDevicePrivate_s {
     /* If status == RAIT_STATUS_DEGRADED, this holds the index of the
        failed node. It holds a negative number otherwise. */
     int failed;
-    guint block_size;
+
+    /* TRUE if this device's blocksize was set explicitly */
+    gboolean block_size_explicit;
+
+    /* the child block size */
+    gsize child_block_size;
 };
 
 #define PRIVATE(o) (o->private)
@@ -108,8 +113,7 @@ static void rait_device_open_device (Device * self, char * device_name, char * d
 static gboolean rait_device_start (Device * self, DeviceAccessMode mode,
                                    char * label, char * timestamp);
 static gboolean rait_device_start_file(Device * self, const dumpfile_t * info);
-static gboolean rait_device_write_block (Device * self, guint size,
-                                         gpointer data, gboolean last_block);
+static gboolean rait_device_write_block (Device * self, guint size, gpointer data);
 static gboolean rait_device_finish_file (Device * self);
 static dumpfile_t * rait_device_seek_file (Device * self, guint file);
 static gboolean rait_device_seek_block (Device * self, guint64 block);
@@ -123,7 +127,7 @@ static gboolean rait_device_recycle_file (Device * self, guint filenum);
 static gboolean rait_device_finish (Device * self);
 static DeviceStatusFlags rait_device_read_label(Device * dself);
 static void find_simple_params(RaitDevice * self, guint * num_children,
-                               guint * data_children, int * blocksize);
+                               guint * data_children);
 
 /* pointer to the class of our parent */
 static DeviceClass *parent_class = NULL;
@@ -183,6 +187,7 @@ rait_device_init (RaitDevice * o G_GNUC_UNUSED)
     PRIVATE(o)->children = g_ptr_array_new();
     PRIVATE(o)->status = RAIT_STATUS_COMPLETE;
     PRIVATE(o)->failed = -1;
+    PRIVATE(o)->block_size_explicit = FALSE;
 }
 
 static void 
@@ -389,78 +394,147 @@ parse_device_name(char * user_name)
     return rval;
 }
 
-/* Find a workable block size. */
-static gboolean find_block_size(RaitDevice * self) {
-    uint min = 0;
-    uint max = G_MAXUINT;
-    uint result;
+/* Find a workable child block size, based on the block size ranges of our
+ * child devices.
+ *
+ * The algorithm is to construct the intersection of all child devices'
+ * [min,max] block size ranges, and then pick the block size closest to 32k
+ * that is in the resulting range.  This avoids picking ridiculously small (1
+ * byte) or large (INT_MAX) block sizes when using devices with wide-open block
+ * size ranges.
+
+ * This function returns the calculated child block size directly, and the RAIT
+ * device's blocksize via rait_size, if not NULL.  It is resilient to errors in
+ * a single child device, but sets the device's error status and returns 0 if
+ * it cannot determine an agreeable block size.
+ */
+static gsize
+calculate_block_size_from_children(RaitDevice * self, gsize *rait_size)
+{
+    gsize min = 0;
+    gsize max = SIZE_MAX;
+    gboolean found_one = FALSE;
+    gsize result;
     guint i;
-    guint data_children;
-    
+
     for (i = 0; i < self->private->children->len; i ++) {
-        uint child_min, child_max;
+        gsize child_min = SIZE_MAX, child_max = 0;
+	Device *child;
         GValue property_result;
         bzero(&property_result, sizeof(property_result));
-        
-        if ((signed)i == self->private->failed) {
+
+	if ((signed)i == self->private->failed)
+	    continue;
+
+	child = g_ptr_array_index(self->private->children, i);
+        if (!device_property_get(child, PROPERTY_MIN_BLOCK_SIZE,
+				 &property_result)) {
+	    g_warning("Error getting MIN_BLOCK_SIZE from %s: %s",
+		    child->device_name, device_error_or_status(child));
             continue;
+	}
+        child_min = g_value_get_uint(&property_result);
+
+        if (!device_property_get(child, PROPERTY_MAX_BLOCK_SIZE,
+				 &property_result)) {
+	    g_warning("Error getting MAX_BLOCK_SIZE from %s: %s",
+		    child->device_name, device_error_or_status(child));
+            continue;
+	}
+        child_max = g_value_get_uint(&property_result);
+
+        if (child_min == 0 || child_max == 0 || (child_min > child_max)) {
+	    g_warning("Invalid min, max block sizes from %s", child->device_name);
+	    continue;
         }
 
-        if (!device_property_get(g_ptr_array_index(self->private->children, i),
-                                 PROPERTY_MIN_BLOCK_SIZE, &property_result))
-            return FALSE;
-        child_min = g_value_get_uint(&property_result);
-        if (child_min <= 0)
-	    return FALSE;
-        if (!device_property_get(g_ptr_array_index(self->private->children, i),
-                                 PROPERTY_MAX_BLOCK_SIZE, &property_result))
-            return FALSE;
-        child_max = g_value_get_uint(&property_result);
-        if (child_max <= 0)
-	    return FALSE;
-        if (child_min > max || child_max < min || child_min == 0) {
-            return FALSE;
-        } else {
-            min = MAX(min, child_min);
-            max = MIN(max, child_max);
-        }
+	found_one = TRUE;
+	min = MAX(min, child_min);
+	max = MIN(max, child_max);
     }
 
-    /* Now pick a number. */
-    g_assert(min <= max);
-    if (max < MAX_TAPE_BLOCK_BYTES)
-        result = max;
-    else if (min > MAX_TAPE_BLOCK_BYTES)
-        result = min;
-    else
-        result = MAX_TAPE_BLOCK_BYTES;
+    if (!found_one) {
+	device_set_error((Device*)self,
+	    stralloc(_("Could not find any child devices' block size ranges")),
+	    DEVICE_STATUS_DEVICE_ERROR);
+	return 0;
+    }
 
-    /* User reads and writes bigger blocks. */
-    find_simple_params(self, NULL, &data_children, NULL);
-    self->private->block_size = result * data_children;
+    if (min > max) {
+	device_set_error((Device*)self,
+	    stralloc(_("No block size is acceptable to all child devices")),
+	    DEVICE_STATUS_DEVICE_ERROR);
+	return 0;
+    }
+
+    /* Now pick a number.  If 32k is in range, we use that; otherwise, we use
+     * the nearest acceptable size. */
+    result = CLAMP(32768, min, max);
+
+    if (rait_size) {
+	guint data_children;
+	find_simple_params(self, NULL, &data_children);
+	*rait_size = result * data_children;
+    }
+
+    return result;
+}
+
+/* Set BLOCK_SIZE on all children */
+static gboolean
+set_block_size_on_children(RaitDevice *self, gsize child_block_size)
+{
+    GValue val;
+    guint i;
+    bzero(&val, sizeof(val));
+
+    g_assert(child_block_size < INT_MAX);
+    g_value_init(&val, G_TYPE_INT);
+    g_value_set_int(&val, (gint)child_block_size);
+
+    for (i = 0; i < self->private->children->len; i ++) {
+	Device *child;
+
+	if ((signed)i == self->private->failed)
+	    continue;
+
+	child = g_ptr_array_index(self->private->children, i);
+	if (!device_property_set(child, PROPERTY_BLOCK_SIZE, &val)) {
+	    device_set_error((Device *)self,
+		vstrallocf(_("Error setting block size on %s"), child->device_name),
+		DEVICE_STATUS_DEVICE_ERROR);
+	    return FALSE;
+	}
+    }
 
     return TRUE;
 }
 
-/* Register properties that belong to the RAIT device proper, and not
-   to subdevices. */
-static void register_rait_properties(RaitDevice * self) {
-    Device * o = DEVICE(self);
-    DeviceProperty prop;
+/* The time for users to specify block sizes has ended; set this device's
+ * block-size attributes for easy access by other RAIT functions.  Returns
+ * FALSE on error, with the device's error status already set. */
+static gboolean
+fix_block_size(RaitDevice *self)
+{
+    Device *dself = (Device *)self;
+    gsize my_block_size, child_block_size;
 
-    prop.access = PROPERTY_ACCESS_GET_MASK;
+    if (!self->private->block_size_explicit) {
+	child_block_size = calculate_block_size_from_children(self, &my_block_size);
+	if (child_block_size == 0)
+	    return FALSE;
 
-    prop.base = &device_property_min_block_size;
-    device_add_property(o, &prop, NULL);
+	self->private->child_block_size = child_block_size;
+	dself->block_size = my_block_size;
 
-    prop.base = &device_property_max_block_size;
-    device_add_property(o, &prop, NULL);
-  
-    prop.base = &device_property_block_size;
-    device_add_property(o, &prop, NULL);
+	/* now tell the children we mean it */
+	if (!set_block_size_on_children(self, child_block_size))
+	    return FALSE;
 
-    prop.base = &device_property_canonical_name;
-    device_add_property(o, &prop, NULL);
+	/* and consider this block size to be explicit now */
+	self->private->block_size_explicit = TRUE;
+    }
+    return TRUE;
 }
 
 static void property_hash_union(GHashTable * properties,
@@ -531,18 +605,11 @@ static void register_properties(RaitDevice * self) {
 
     /* Then toss properties that can't be accessed. */
     g_hash_table_foreach_remove(properties, zero_value, NULL);
-    g_hash_table_remove(properties, GINT_TO_POINTER(PROPERTY_BLOCK_SIZE));
-    g_hash_table_remove(properties, GINT_TO_POINTER(PROPERTY_MIN_BLOCK_SIZE));
-    g_hash_table_remove(properties, GINT_TO_POINTER(PROPERTY_MAX_BLOCK_SIZE));
-    g_hash_table_remove(properties, GINT_TO_POINTER(PROPERTY_CANONICAL_NAME));
 
     /* Finally, register the lot. */
     g_hash_table_foreach(properties, register_property_hash, self);
 
     g_hash_table_destroy(properties);
-
-    /* Then we have some of our own properties to register. */
-    register_rait_properties(self);
 }
 
 /* This structure contains common fields for many operations. Not all
@@ -764,8 +831,9 @@ rait_device_open_device (Device * dself, char * device_name,
 	    failure_flags |= status;
             if (self->private->status == RAIT_STATUS_COMPLETE) {
                 /* The first failure just puts us in degraded mode. */
-                g_warning("%s: %s\n%s: %s failed, entering degraded mode.\n",
-                          device_name, this_failure_errmsg,
+                g_warning("%s: %s",
+                          device_name, this_failure_errmsg);
+		g_warning("%s: %s failed, entering degraded mode.",
                           device_name, op->device_name);
                 g_ptr_array_add(self->private->children, op->result);
                 self->private->status = RAIT_STATUS_DEGRADED;
@@ -783,13 +851,6 @@ rait_device_open_device (Device * dself, char * device_name,
     if (failure) {
         self->private->status = RAIT_STATUS_FAILED;
 	device_set_error(dself, failure_errmsgs, failure_flags);
-        return;
-    }
-
-    if (!find_block_size(self)) {
-	device_set_error(dself,
-	    vstrallocf(_("could not find consistent block size")),
-	    DEVICE_STATUS_DEVICE_ERROR);
         return;
     }
 
@@ -825,6 +886,10 @@ static DeviceStatusFlags rait_device_read_label(Device * dself) {
 
     if (rait_device_in_error(self))
         return dself->status | DEVICE_STATUS_DEVICE_ERROR;
+
+    /* nail down our block size, if we haven't already */
+    if (!fix_block_size(self))
+	return FALSE;
 
     ops = make_generic_boolean_op_array(self);
     
@@ -927,7 +992,10 @@ rait_device_start (Device * dself, DeviceAccessMode mode, char * label,
                          DEVICE_STATUS_DEVICE_ERROR);
         return FALSE;
     }
-        
+
+    /* nail down our block size, if we haven't already */
+    if (!fix_block_size(self))
+	return FALSE;
 
     dself->access_mode = mode;
     dself->in_file = FALSE;
@@ -1107,8 +1175,7 @@ rait_device_start_file (Device * dself, const dumpfile_t * info) {
 
 static void find_simple_params(RaitDevice * self,
                                guint * num_children,
-                               guint * data_children,
-                               int * blocksize) {
+                               guint * data_children) {
     int num, data;
     
     num = self->private->children->len;
@@ -1120,17 +1187,12 @@ static void find_simple_params(RaitDevice * self,
         *num_children = num;
     if (data_children != NULL)
         *data_children = data;
-
-    if (blocksize != NULL) {
-        *blocksize = device_write_min_size(DEVICE(self));
-    }
 }
 
 typedef struct {
     GenericOp base;
     guint size;           /* IN */
     gpointer data;        /* IN */
-    gboolean short_block; /* IN */
     gboolean data_needs_free; /* bookkeeping */
 } WriteBlockOp;
 
@@ -1140,8 +1202,7 @@ static void write_block_do_op(gpointer data,
     WriteBlockOp * op = data;
 
     op->base.result =
-        GINT_TO_POINTER(device_write_block(op->base.child, op->size, op->data,
-                                           op->short_block));
+        GINT_TO_POINTER(device_write_block(op->base.child, op->size, op->data));
 }
 
 /* Parity block generation. Performance of this function can be improved
@@ -1203,22 +1264,21 @@ static char * extract_data_block(char * data, guint size,
 }
 
 static gboolean 
-rait_device_write_block (Device * dself, guint size, gpointer data,
-                         gboolean last_block) {
+rait_device_write_block (Device * dself, guint size, gpointer data) {
     GPtrArray * ops;
     guint i;
     gboolean success;
     guint data_children, num_children;
-    int blocksize;
+    gsize blocksize = dself->block_size;
     RaitDevice * self;
+    gboolean last_block = (size < blocksize);
 
     self = RAIT_DEVICE(dself);
 
     if (rait_device_in_error(self)) return FALSE;
     if (self->private->status != RAIT_STATUS_COMPLETE) return FALSE;
 
-    find_simple_params(RAIT_DEVICE(self), &num_children, &data_children,
-                       &blocksize);
+    find_simple_params(RAIT_DEVICE(self), &num_children, &data_children);
     num_children = self->private->children->len;
     if (num_children != 1)
         data_children = num_children - 1;
@@ -1245,7 +1305,6 @@ rait_device_write_block (Device * dself, guint size, gpointer data,
         WriteBlockOp * op;
         op = g_malloc(sizeof(*op));
         op->base.child = g_ptr_array_index(self->private->children, i);
-        op->short_block = last_block;
         op->size = size / data_children;
         if (num_children <= 2) {
             op->data = data;
@@ -1497,6 +1556,10 @@ static void read_block_do_op(gpointer data,
     op->base.result =
         GINT_TO_POINTER(device_read_block(op->base.child, op->buffer,
                                           &(op->read_size)));
+    if (op->read_size > op->desired_read_size) {
+	g_warning("child device %s tried to return an oversized block, which the RAIT device does not support",
+		  op->base.child->device_name);
+    }
 }
 
 /* A BooleanExtractor. This one checks for a successful read. */
@@ -1526,14 +1589,18 @@ static int g_ptr_array_count(GPtrArray * array, BooleanExtractor filter) {
 static gboolean raid_block_reconstruction(RaitDevice * self, GPtrArray * ops,
                                       gpointer buf, size_t bufsize) {
     guint num_children, data_children;
-    int blocksize, child_blocksize;
+    gsize blocksize;
+    gsize child_blocksize;
     guint i;
     int parity_child;
     gpointer parity_block = NULL;
     gboolean success;
 
     success = TRUE;
-    find_simple_params(self, &num_children, &data_children, &blocksize);
+
+    blocksize = DEVICE(self)->block_size;
+    find_simple_params(self, &num_children, &data_children);
+
     if (num_children > 1)
         parity_child = num_children - 1;
     else
@@ -1627,23 +1694,23 @@ rait_device_read_block (Device * dself, gpointer buf, int * size) {
     guint i;
     gboolean success;
     guint num_children, data_children;
-    int blocksize;
+    gsize blocksize = dself->block_size;
     gsize child_blocksize;
 
     RaitDevice * self = RAIT_DEVICE(dself);
 
     if (rait_device_in_error(self)) return -1;
 
-    find_simple_params(self, &num_children, &data_children,
-                       &blocksize);
+    find_simple_params(self, &num_children, &data_children);
 
     /* tell caller they haven't given us a big enough buffer */
-    if (blocksize > *size) {
-	*size = blocksize;
+    if (blocksize > (gsize)*size) {
+	g_assert(blocksize < INT_MAX);
+	*size = (int)blocksize;
 	return 0;
     }
 
-    g_assert(blocksize % data_children == 0); /* If not we are screwed */
+    g_assert(blocksize % data_children == 0); /* see find_block_size */
     child_blocksize = blocksize / data_children;
 
     ops = g_ptr_array_sized_new(num_children);
@@ -1655,7 +1722,7 @@ rait_device_read_block (Device * dself, gpointer buf, int * size) {
         op->base.child = g_ptr_array_index(self->private->children, i);
         op->base.child_index = i;
         op->buffer = g_malloc(child_blocksize);
-        op->desired_read_size = op->read_size = blocksize / data_children;
+        op->desired_read_size = op->read_size = child_blocksize;
         g_ptr_array_add(ops, op);
     }
     
@@ -1924,28 +1991,42 @@ rait_device_property_get (Device * dself, DevicePropertyId id, GValue * val) {
     /* clear error status in case we return FALSE */
     device_set_error(dself, NULL, DEVICE_STATUS_SUCCESS);
 
-    /* Some properties are handled completely differently. */
-    if (id == PROPERTY_BLOCK_SIZE) {
-        g_value_unset_init(val, G_TYPE_INT);
-        g_value_set_int(val, self->private->block_size);
-        return TRUE;
-    } else if (id == PROPERTY_MIN_BLOCK_SIZE ||
-        id == PROPERTY_MAX_BLOCK_SIZE) {
-        g_value_unset_init(val, G_TYPE_UINT);
-        g_value_set_uint(val, self->private->block_size);
-        return TRUE;
-    } else if (id == PROPERTY_CANONICAL_NAME) {
+    /* some properties are handled by our parent class */
+    if (id == PROPERTY_CANONICAL_NAME
+	|| id == PROPERTY_MIN_BLOCK_SIZE
+	|| id == PROPERTY_MAX_BLOCK_SIZE) {
         if (parent_class->property_get != NULL) {
             return parent_class->property_get(dself, id, val);
         } else {
             return FALSE;
         }
+
+    /* Some properties are handled without sending them to
+     * the children. */
+    } else if (id == PROPERTY_BLOCK_SIZE) {
+	gsize block_size;
+	if (self->private->block_size_explicit) {
+	    block_size = dself->block_size;
+	} else {
+	    gsize child_block_size;
+	    child_block_size = calculate_block_size_from_children(self,
+							&block_size);
+	    if (child_block_size == 0)
+		return FALSE;
+	}
+
+	g_value_unset_init(val, G_TYPE_INT);
+	g_assert(block_size < G_MAXINT); /* gsize -> gint */
+	g_value_set_int(val, (gint)block_size);
+	return TRUE;
     }
 
     ops = make_property_op_array(self, id, NULL);
     
     do_rait_child_ops(property_get_do_op, ops, NULL);
 
+    /* Other properties are handled by combining results from the
+     * children in particular ways */
     if (id == PROPERTY_CONCURRENCY) {
         success = property_get_concurrency(ops, val);
     } else if (id == PROPERTY_STREAMING) { 
@@ -1953,13 +2034,14 @@ rait_device_property_get (Device * dself, DevicePropertyId id, GValue * val) {
     } else if (id == PROPERTY_APPENDABLE ||
                id == PROPERTY_PARTIAL_DELETION) {
         success = property_get_boolean_and(ops, val);
-    } else if (id == PROPERTY_MEDIUM_TYPE) {
+    } else if (id == PROPERTY_MEDIUM_ACCESS_TYPE) {
         success = property_get_medium_type(ops, val);
     } else if (id == PROPERTY_FREE_SPACE) {
         success = property_get_free_space(ops, val);
+
+    /* Generic handling; if all results are the same, we succeed
+       and return that result. If not, we fail. */
     } else {
-        /* Generic handling; if all results are the same, we succeed
-           and return that result. If not, we fail. */
         success = TRUE;
         
         /* Set up comparison value. */
@@ -2023,6 +2105,34 @@ rait_device_property_set (Device * d_self, DevicePropertyId id, GValue * val) {
     self = RAIT_DEVICE(d_self);
 
     if (rait_device_in_error(self)) return FALSE;
+
+    /* First try to handle some properties of our own */
+    if (id == PROPERTY_BLOCK_SIZE) {
+        gint my_block_size = g_value_get_int(val);
+	gsize child_block_size;
+	guint data_children;
+
+        if (d_self->access_mode != ACCESS_NULL)
+            return FALSE;
+
+	find_simple_params(self, NULL, &data_children);
+	if ((my_block_size % data_children) != 0) {
+	    device_set_error(d_self,
+		vstrallocf(_("Block size must be a multiple of %d"), data_children),
+		DEVICE_STATUS_DEVICE_ERROR);
+	    return FALSE;
+	}
+
+	child_block_size = my_block_size / data_children;
+
+	if (!set_block_size_on_children(self, child_block_size))
+	    return FALSE;
+
+	d_self->block_size = my_block_size;
+	self->private->block_size_explicit = TRUE;
+
+	return TRUE;
+    }
 
     ops = make_property_op_array(self, id, val);
     

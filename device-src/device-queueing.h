@@ -29,9 +29,13 @@
  * respectively. The user data should be a Device*.
  *
  * device_write_consumer assumes that the block_size passed to
- * do_consumer_producer_queue_full is at least device_write_min_size();
+ * do_consumer_producer_queue_full is at least device->block_size();
  * do_consumer_thread() will not pass a buffer of less than block_size
  * to the consumer unless it has received EOF from the producer thread.
+ *
+ * Similarly, device_read_producer works similarly, but will expand its
+ * buffers if the device encounters larger blocks - this is Amanda's
+ * ability to read volumes written with larger block sizes.
  */
 producer_result_t device_read_producer(gpointer device,
                                        queue_buffer_t *buffer,

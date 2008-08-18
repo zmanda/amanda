@@ -16,9 +16,10 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 238;
+use Test::More tests => 290;
 use File::Path qw( mkpath rmtree );
 use Sys::Hostname;
+use Carp;
 use strict;
 
 use lib "@amperldir@";
@@ -68,9 +69,12 @@ sub make_queue_fd {
     return $fd, Amanda::Device::queue_fd_t->new(fileno($fd));
 }
 
+my $write_file_count = 5;
 sub write_file {
     my ($seed, $length, $filenum) = @_;
 
+    croak ("selected file size $length is *way* too big")
+	unless ($length < 1024*1024*10);
     Amanda::Tests::write_random_file($seed, $length, $input_filename);
 
     ok($dev->start_file($dumpfile),
@@ -96,6 +100,7 @@ sub write_file {
     }
 }
 
+my $verify_file_count = 5;
 sub verify_file {
     my ($seed, $length, $filenum) = @_;
 
@@ -116,6 +121,34 @@ sub verify_file {
 
     ok(Amanda::Tests::verify_random_file($seed, $length, $output_filename, 0),
 	"verified file contents");
+}
+
+# properties test
+
+my @common_properties = (
+    'appendable',
+    'block_size',
+    'canonical_name',
+    'concurrency',
+    'max_block_size',
+    'medium_access_type',
+    'min_block_size',
+    'partial_deletion',
+    'streaming',
+);
+
+sub properties_include {
+    my ($got, $should_include, $msg) = @_;
+    my %got = map { $_, 1 } @$got;
+    my @missing = grep { !defined($got{$_}) } @$should_include;
+    if (@missing) {
+	fail($msg);
+	diag(" Expected properties: " . join(", ", @$should_include));
+	diag("      Got properties: " . join(", ", @$got));
+	diag("  Missing properties: " . join(", ", @missing));
+    } else {
+	pass($msg);
+    }
 }
 
 ####
@@ -157,20 +190,11 @@ ok($dev->start($ACCESS_WRITE, "NULL1", "19780615010203"),
     "start null device in write mode")
     or diag $dev->error_or_status();
 
-# check some info methods
-isnt($dev->write_min_size(), 0,
-    "write_min_size > 0 on null device");
-isnt($dev->write_max_size(), 0,
-    "write_max_size > 0 on null device");
-isnt($dev->read_max_size(), 0,
-    "read_max_size > 0 on null device");
-
 # try properties
-my $plist = $dev->property_list();
-ok($plist,
-    "got some properties on null device");
+properties_include([ $dev->property_list() ], [ @common_properties ],
+    "necessary properties listed on null device");
 is($dev->property_get("canonical_name"), $dev_name,
-    "property_get on null device");
+    "property_get(canonical_name) on null device");
 
 # and write a file to it
 write_file(0xabcde, 1024*256, 1);
@@ -190,6 +214,10 @@ is($dev->status(), $DEVICE_STATUS_SUCCESS,
     "$dev_name: create successful")
     or diag($dev->error_or_status());
 
+properties_include([ $dev->property_list() ],
+    [ @common_properties, 'max_volume_usage' ],
+    "necessary properties listed on vfs device");
+
 $dev->read_label();
 ok($dev->status() & $DEVICE_STATUS_VOLUME_UNLABELED,
     "initially unlabeled")
@@ -204,7 +232,7 @@ ok(!($dev->status() & $DEVICE_STATUS_VOLUME_UNLABELED),
     or diag($dev->error_or_status());
 
 for (my $i = 1; $i <= 3; $i++) {
-    write_file(0x2FACE, $dev->write_min_size()*10+17, $i);
+    write_file(0x2FACE, $dev->block_size()*10+17, $i);
 }
 
 ok($dev->finish(),
@@ -222,7 +250,7 @@ ok($dev->start($ACCESS_APPEND, undef, undef),
     "start in append mode")
     or diag($dev->error_or_status());
 
-write_file(0xD0ED0E, $dev->write_min_size()*4, 4);
+write_file(0xD0ED0E, $dev->block_size()*4, 4);
 
 ok($dev->finish(),
     "finish device after append")
@@ -241,7 +269,7 @@ ok($dev->start($ACCESS_READ, undef, undef),
     "start in read mode")
     or diag($dev->error_or_status());
 
-verify_file(0x2FACE, $dev->write_min_size()*10+17, 3);
+verify_file(0x2FACE, $dev->block_size()*10+17, 3);
 
 ok($dev->finish(),
     "finish device after read")
@@ -258,6 +286,18 @@ is($dev->status(), $DEVICE_STATUS_SUCCESS,
    "$dev_name: create successful")
     or diag($dev->error_or_status());
 
+properties_include([ $dev->property_list() ], [ @common_properties ],
+    "necessary properties listed on rait device");
+
+is($dev->property_get("block_size"), 32768, # (RAIT default)
+    "rait device calculates a block size correctly");
+
+ok($dev->property_set("block_size", 32768*16),
+    "rait device accepts an explicit block size");
+
+is($dev->property_get("block_size"), 32768*16,
+    "..and remembers it");
+
 $dev->read_label();
 ok($dev->status() & $DEVICE_STATUS_VOLUME_UNLABELED,
    "initially unlabeled")
@@ -272,7 +312,7 @@ ok(!($dev->status() & $DEVICE_STATUS_VOLUME_UNLABELED),
     or diag($dev->error_or_status());
 
 for (my $i = 1; $i <= 3; $i++) {
-    write_file(0x2FACE, $dev->write_max_size()*10+17, $i);
+    write_file(0x2FACE, $dev->block_size()*10+17, $i);
 }
 
 ok($dev->finish(),
@@ -290,7 +330,7 @@ ok($dev->start($ACCESS_APPEND, undef, undef),
    "start in append mode")
     or diag($dev->error_or_status());
 
-write_file(0xD0ED0E, $dev->write_max_size()*4, 4);
+write_file(0xD0ED0E, $dev->block_size()*4, 4);
 
 ok($dev->finish(),
    "finish device after append")
@@ -309,7 +349,7 @@ ok($dev->start($ACCESS_READ, undef, undef),
    "start in read mode")
     or diag($dev->error_or_status());
 
-verify_file(0x2FACE, $dev->write_max_size()*10+17, 3);
+verify_file(0x2FACE, $dev->block_size()*10+17, 3);
 
 ok($dev->finish(),
    "finish device after read")
@@ -322,9 +362,9 @@ ok($dev->start($ACCESS_READ, undef, undef),
    "start in read mode after missing volume")
     or diag($dev->error_or_status());
 
-verify_file(0x2FACE, $dev->write_max_size()*10+17, 3);
-verify_file(0xD0ED0E, $dev->write_max_size()*4, 4);
-verify_file(0x2FACE, $dev->write_max_size()*10+17, 2);
+verify_file(0x2FACE, $dev->block_size()*10+17, 3);
+verify_file(0xD0ED0E, $dev->block_size()*4, 4);
+verify_file(0x2FACE, $dev->block_size()*10+17, 2);
 
 ok($dev->finish(),
    "finish device read after missing volume")
@@ -343,9 +383,9 @@ ok($dev->start($ACCESS_READ, undef, undef),
    "start in read mode with MISSING")
     or diag($dev->error_or_status());
 
-verify_file(0x2FACE, $dev->write_max_size()*10+17, 3);
-verify_file(0xD0ED0E, $dev->write_max_size()*4, 4);
-verify_file(0x2FACE, $dev->write_max_size()*10+17, 2);
+verify_file(0x2FACE, $dev->block_size()*10+17, 3);
+verify_file(0xD0ED0E, $dev->block_size()*4, 4);
+verify_file(0x2FACE, $dev->block_size()*10+17, 2);
 
 ok($dev->finish(),
    "finish device read with MISSING")
@@ -401,12 +441,22 @@ my $run_devpay_tests = defined $DEVPAY_SECRET_KEY &&
 my $dev_base_name;
 my $hostname  = hostname();
 
+my $s3_make_device_count = 6;
 sub s3_make_device($) {
     my $dev_name = shift @_;
     $dev = Amanda::Device->new($dev_name);
     is($dev->status(), $DEVICE_STATUS_SUCCESS,
        "$dev_name: create successful")
         or diag($dev->error_or_status());
+
+    my @s3_props = ( 's3_access_key', 's3_secret_key' );
+    push @s3_props, 's3_user_token' if ($dev_name =~ /^s3zmanda:/);
+    properties_include([ $dev->property_list() ], [ @common_properties, @s3_props ],
+	"necessary properties listed on s3 device");
+
+    ok($dev->property_set('BLOCK_SIZE', 32768*2),
+	"set block size")
+	or diag($dev->error_or_status());
 
     if ($dev_name =~ /^s3:/) {
         # use regular S3 credentials
@@ -417,25 +467,31 @@ sub s3_make_device($) {
         ok($dev->property_set('S3_SECRET_KEY', $S3_SECRET_KEY),
            "set S3 secret key")
             or diag($dev->error_or_status());
+
+	pass("(placeholder)");
     } elsif ($dev_name =~ /^s3zmanda:/) {
-        # use S3+DevPay credentials
+        # use s3zmanda credentials
         ok($dev->property_set('S3_ACCESS_KEY', $DEVPAY_ACCESS_KEY),
-           "set S3+DevPay access key")
+           "set s3zmanda access key")
         or diag($dev->error_or_status());
 
         ok($dev->property_set('S3_SECRET_KEY', $DEVPAY_SECRET_KEY),
-           "set S3+DevPay secret key")
+           "set s3zmanda secret key")
             or diag($dev->error_or_status());
 
         ok($dev->property_set('S3_USER_TOKEN', $DEVPAY_USER_TOKEN),
-           "set S3+DevPay user token")
+           "set s3zmanda user token")
             or diag($dev->error_or_status());
     } else {
-        diag("didn't recognize the device scheme, so no credentials were set");
+        croak("didn't recognize the device scheme, so no credentials were set");
     }
     return $dev;
 }
 
+my $s3_run_main_tests_count = 12
+	+ 4 * $write_file_count
+	+ 1 * $verify_file_count
+	+ 3 * $s3_make_device_count;
 sub s3_run_main_tests($$) {
     my ($dev_scheme, $base_name) = @_;
     $dev_name = "$dev_scheme:$base_name-$dev_scheme";
@@ -457,7 +513,7 @@ sub s3_run_main_tests($$) {
         or diag($dev->error_or_status());
 
     for (my $i = 1; $i <= 3; $i++) {
-        write_file(0x2FACE, 32768*10, $i);
+        write_file(0x2FACE, $dev->block_size()*10, $i);
     }
 
     ok($dev->finish(),
@@ -475,7 +531,7 @@ sub s3_run_main_tests($$) {
        "start in append mode")
         or diag($dev->error_or_status());
 
-    write_file(0xD0ED0E, 32768*10, 4);
+    write_file(0xD0ED0E, $dev->block_size()*10, 4);
 
     ok($dev->finish(),
        "finish device after append")
@@ -487,7 +543,7 @@ sub s3_run_main_tests($$) {
        "start in read mode")
         or diag($dev->error_or_status());
 
-    verify_file(0x2FACE, 32768*10, 3);
+    verify_file(0x2FACE, $dev->block_size()*10, 3);
 
     ok($dev->finish(),
        "finish device after read")
@@ -516,7 +572,8 @@ sub s3_run_main_tests($$) {
 }
 
 SKIP: {
-    skip "define \$INSTALLCHECK_S3_{SECRET,ACCESS}_KEY to run S3 tests", 25
+    skip "define \$INSTALLCHECK_S3_{SECRET,ACCESS}_KEY to run S3 tests",
+		    1 + $s3_run_main_tests_count + $s3_make_device_count
 	unless $run_s3_tests;
 
     # XXX for best results, the bucket should already exist (Amazon doesn't create
@@ -536,31 +593,26 @@ SKIP: {
 }
 
 SKIP: {
-    my $test_count = $run_s3_tests ? 5 : 49;
-    skip "define \$INSTALLCHECK_DEVPAY_{SECRET_KEY,ACCESS_KEY,USER_TOKEN} to run S3+DevPay tests", $test_count
-	unless $run_devpay_tests;
-    $dev_base_name = "$DEVPAY_ACCESS_KEY-installcheck-$hostname";
-
-    if ($run_s3_tests) {
-        # in this case, most of our code has already been exercised
-        # just make sure that authentication works as a basic sanity check
-        $dev_name = "s3zmanda:$dev_base_name";
-        $dev = s3_make_device($dev_name);
-        $dev->read_label();
-	my $status = $dev->status();
-	# this test appears very liberal, but catches the case where setup_handle fails without
-	# giving false positives
-	ok(($status == $DEVICE_STATUS_SUCCESS) || (($status & $DEVICE_STATUS_VOLUME_UNLABELED) != 0),
-	   "status is either OK or possibly already labeled")
-            or diag($dev->error_or_status());
-    } else {
-        s3_run_main_tests('s3zmanda', $dev_base_name);
-    }
+    # in this case, most of our code has already been exercised
+    # just make sure that authentication works as a basic sanity check
+    skip "skipping abbreviated s3zmanda tests", $s3_make_device_count + 1
+	unless ($run_s3_tests and $run_devpay_tests);
+    $dev_name = "s3zmanda:$dev_base_name";
+    $dev = s3_make_device($dev_name);
+    $dev->read_label();
+    my $status = $dev->status();
+    # this test appears very liberal, but catches the case where setup_handle fails without
+    # giving false positives
+    ok(($status == 0) || (($status & $DEVICE_STATUS_VOLUME_UNLABELED) != 0),
+       "status is either OK or possibly already labeled")
+	or diag($dev->error_or_status());
 }
 
 SKIP: {
-    skip "excercised S3 driver in S3 checks, not repeating with S3+DevPay", 19
-	if $run_s3_tests;
+    # if we're running devpay tests and not S3 tests, then we do the whole suite with devpay
+    skip "define \$INSTALLCHECK_DEVPAY_{SECRET_KEY,ACCESS_KEY,USER_TOKEN} to run full s3zmanda tests", $s3_run_main_tests_count
+	unless (!$run_s3_tests and $run_devpay_tests);
+    s3_run_main_tests('s3zmanda', $dev_base_name);
 }
 
 # Test a tape device if the proper environment variables are set
@@ -590,7 +642,7 @@ SKIP: {
 	or diag($dev->error_or_status());
 
     for (my $i = 1; $i <= 3; $i++) {
-	write_file(0x2FACE, $dev->write_min_size()*10+17, $i);
+	write_file(0x2FACE, $dev->block_size()*10+17, $i);
     }
 
     ok($dev->finish(),
@@ -612,7 +664,7 @@ SKIP: {
 	"start in append mode")
 	or diag($dev->error_or_status());
 
-    write_file(0xD0ED0E, $dev->write_min_size()*4, 4);
+    write_file(0xD0ED0E, $dev->block_size()*4, 4);
 
     ok($dev->finish(),
 	"finish device after append")
@@ -631,7 +683,7 @@ SKIP: {
 	"start in read mode")
 	or diag($dev->error_or_status());
 
-    verify_file(0x2FACE, $dev->write_min_size()*10+17, 3);
+    verify_file(0x2FACE, $dev->block_size()*10+17, 3);
 
     ok($dev->finish(),
 	"finish device after read")

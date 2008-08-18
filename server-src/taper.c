@@ -839,7 +839,7 @@ static void run_device_output(taper_state_t * taper_state,
             }
         } else if (getconf_seen(CNF_TAPEBUFS)) {
             max_memory = getconf_int(CNF_TAPEBUFS) *
-                device_write_max_size(taper_state->device);
+                taper_state->device->block_size;
         } else {
             /* Use default. */
             max_memory = getconf_size(CNF_DEVICE_OUTPUT_BUFFER_SIZE);
@@ -850,7 +850,7 @@ static void run_device_output(taper_state_t * taper_state,
              dump_info->source,
              counting_consumer,
              &consumer_data,
-             device_write_max_size(taper_state->device), max_memory,
+             taper_state->device->block_size, max_memory,
              streaming_mode);
 
         g_get_current_time(&end_time);

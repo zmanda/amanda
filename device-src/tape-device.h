@@ -48,7 +48,6 @@ typedef struct _TapeDevice {
 
     /* It should go without saying that all this stuff is
      * look-but-don't-touch. */
-    guint min_block_size, max_block_size, fixed_block_size, read_block_size;
     FeatureSupportFlags fsf, bsf, fsr, bsr, eom, bsf_after_eom;
     int final_filemarks;
     gboolean compression, broken_gmt_online;

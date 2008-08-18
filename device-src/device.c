@@ -171,6 +171,8 @@ static gboolean default_device_write_from_fd(Device *self,
 static gboolean default_device_read_to_fd(Device *self, queue_fd_t *queue_fd);
 static gboolean default_device_property_get(Device * self, DevicePropertyId ID,
                                             GValue * value);
+static gboolean default_device_property_set (Device * pself, DevicePropertyId ID,
+                                             GValue * value);
 
 /* pointer to the class of our parent */
 static GObjectClass *parent_class = NULL;
@@ -224,8 +226,10 @@ static void device_finalize(GObject *obj_self) {
 }
 
 static void 
-device_init (Device * self G_GNUC_UNUSED)
+device_init (Device * self)
 {
+    DeviceProperty prop;
+
     self->private = malloc(sizeof(DevicePrivate));
     self->device_name = NULL;
     self->access_mode = ACCESS_NULL;
@@ -236,6 +240,9 @@ device_init (Device * self G_GNUC_UNUSED)
     self->volume_label = NULL;
     self->volume_time = NULL;
     self->status = DEVICE_STATUS_SUCCESS;
+    self->min_block_size = 1;
+    self->max_block_size = SIZE_MAX; /* subclasses *really* should choose something smaller */
+    self->block_size = DISK_BLOCK_BYTES;
     selfp->errmsg = NULL;
     selfp->statusmsg = NULL;
     selfp->last_status = 0;
@@ -245,6 +252,24 @@ device_init (Device * self G_GNUC_UNUSED)
                               g_direct_equal,
                               NULL,
                               (GDestroyNotify) property_response_free);
+
+    /* register common properties that this class handles */
+
+    prop.access = PROPERTY_ACCESS_GET_MASK;
+    prop.base = &device_property_canonical_name;
+    device_add_property(self, &prop, NULL);
+
+    prop.access = PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START;
+    prop.base = &device_property_block_size;
+    device_add_property(self, &prop, NULL);
+
+    prop.access = PROPERTY_ACCESS_GET_MASK;
+    prop.base = &device_property_min_block_size;
+    device_add_property(self, &prop, NULL);
+
+    prop.access = PROPERTY_ACCESS_GET_MASK;
+    prop.base = &device_property_max_block_size;
+    device_add_property(self, &prop, NULL);
 }
 
 static void 
@@ -258,6 +283,7 @@ device_class_init (DeviceClass * c G_GNUC_UNUSED)
     c->write_from_fd = default_device_write_from_fd;
     c->read_to_fd = default_device_read_to_fd;
     c->property_get = default_device_property_get;
+    c->property_set = default_device_property_set;
     g_object_class->finalize = device_finalize;
 }
 
@@ -524,70 +550,19 @@ device_property_get_list (Device * self)
         return (const DeviceProperty*) selfp->property_list->data;
 }
 
-size_t device_write_min_size(Device * self) {
-    GValue g_tmp;
-    int block_size, min_block_size;
-    
-    bzero(&g_tmp, sizeof(g_tmp));
-    device_property_get(self, PROPERTY_BLOCK_SIZE, &g_tmp);
-    block_size = g_value_get_int(&g_tmp);
-    g_value_unset(&g_tmp);
-    if (block_size > 0) {
-        return block_size;
-    }
-
-    /* variable block size */
-    device_property_get(self, PROPERTY_MIN_BLOCK_SIZE, &g_tmp);
-    min_block_size = g_value_get_uint(&g_tmp);
-    g_value_unset(&g_tmp);
-    return min_block_size;
-}
-
-size_t device_write_max_size(Device * self) {
-    GValue g_tmp;
-    int block_size, max_block_size;
-    
-    bzero(&g_tmp, sizeof(g_tmp));
-    device_property_get(self, PROPERTY_BLOCK_SIZE, &g_tmp);
-    block_size = g_value_get_int(&g_tmp);
-    g_value_unset(&g_tmp);
-    if (block_size > 0) {
-        return block_size;
-    }
-
-    /* variable block size */
-    device_property_get(self, PROPERTY_MAX_BLOCK_SIZE, &g_tmp);
-    max_block_size = g_value_get_uint(&g_tmp);
-    g_value_unset(&g_tmp);
-    return max_block_size;
-}
-
-size_t device_read_max_size(Device * self) {
-    GValue g_tmp;
-    
-    bzero(&g_tmp, sizeof(g_tmp));
-    if (device_property_get(self, PROPERTY_READ_BUFFER_SIZE, &g_tmp)) {
-        guint rval = g_value_get_uint(&g_tmp);
-        g_value_unset(&g_tmp);
-        return rval;
-    } else {
-        return device_write_max_size(self);
-    }
-}
-
 char * device_build_amanda_header(Device * self, const dumpfile_t * info,
                                   int * size, gboolean * oneblock) {
     char *amanda_header;
     size_t min_header_length;
     size_t header_buffer_size;
 
-    min_header_length = device_write_min_size(self);
+    min_header_length = self->block_size;
     amanda_header = build_header(info, min_header_length);
     header_buffer_size = MAX(min_header_length, strlen(amanda_header)+1);
     if (size != NULL)
         *size = header_buffer_size;
     if (oneblock != NULL)
-        *oneblock = (header_buffer_size <=  device_write_max_size(self));
+        *oneblock = (header_buffer_size <= self->block_size);
     return amanda_header;
 }
 
@@ -624,29 +599,13 @@ dumpfile_t * make_tapeend_header(void) {
     return rval;
 }
 
-/* Try setting max/fixed blocksize on a device. Check results, fallback, and
- * print messages for problems. */
-static void try_set_blocksize(Device * device, guint blocksize,
-                              gboolean try_max_first) {
+/* Try setting the blocksize on a device. Check results, fallback, and
+ * set error status for problems. */
+static gboolean
+try_set_blocksize(Device * device, guint blocksize) {
     GValue val;
     gboolean success;
     bzero(&val, sizeof(val));
-    g_value_init(&val, G_TYPE_UINT);
-    g_value_set_uint(&val, blocksize);
-    if (try_max_first) {
-        success = device_property_set(device,
-                                      PROPERTY_MAX_BLOCK_SIZE,
-                                      &val);
-        if (!success) {
-            g_fprintf(stderr, "Setting MAX_BLOCK_SIZE to %u "
-                    "not supported for device %s.\n"
-                    "trying BLOCK_SIZE instead.\n",
-                    blocksize, device->device_name);
-        } else {
-            g_value_unset(&val);
-            return;
-        }
-    }
 
     g_value_unset(&val);
     g_value_init(&val, G_TYPE_INT);
@@ -654,12 +613,17 @@ static void try_set_blocksize(Device * device, guint blocksize,
     success = device_property_set(device,
                                   PROPERTY_BLOCK_SIZE,
                                   &val);
-    if (!success) {
-        g_fprintf(stderr, "Setting BLOCK_SIZE to %u "
-                "not supported for device %s.\n",
-                blocksize, device->device_name);
-    }
     g_value_unset(&val);
+
+    if (!success) {
+	device_set_error(device,
+	    vstrallocf(_("Setting BLOCK_SIZE to %u "
+		    "not supported for device %s.\n"),
+		    blocksize, device->device_name),
+	    DEVICE_STATUS_DEVICE_ERROR);
+    }
+
+    return success;
 }
 
 /* A GHFunc (callback for g_hash_table_foreach) */
@@ -742,17 +706,20 @@ void device_set_startup_properties_from_config(Device * device) {
                                               &val);
                 g_value_unset(&val);
                 if (!success) {
-                    g_fprintf(stderr, "Setting READ_BUFFER_SIZE to %llu "
-                            "not supported for device %s.\n",
-                            1024*(long long unsigned int)blocksize_kb,
-			    device->device_name);
+		    device_set_error(device,
+			vstrallocf(_("Setting READ_BUFFER_SIZE to %llu "
+				    "not supported for device %s.\n"),
+				    1024*(long long unsigned int)blocksize_kb,
+				    device->device_name),
+			DEVICE_STATUS_DEVICE_ERROR);
+		    /* TODO: handle errors */
                 }
             }
 
             if (tapetype_seen(tapetype, TAPETYPE_BLOCKSIZE)) {
 		blocksize_kb = tapetype_get_blocksize(tapetype);
-                try_set_blocksize(device, blocksize_kb * 1024,
-                                  !tapetype_get_file_pad(tapetype));
+		/* TODO: handle errors */
+                (void)try_set_blocksize(device, blocksize_kb * 1024);
             }
         }
     }
@@ -818,6 +785,21 @@ default_device_property_get(Device * self, DevicePropertyId ID,
             g_value_unset_init(value, G_TYPE_STRING);
             g_value_set_string(value, self->device_name);
 	    return TRUE;
+        } else if (ID == PROPERTY_MIN_BLOCK_SIZE) {
+            g_value_unset_init(value, G_TYPE_UINT);
+	    g_assert(self->block_size < G_MAXUINT); /* gsize -> guint */
+            g_value_set_uint(value, (guint)self->min_block_size);
+	    return TRUE;
+        } else if (ID == PROPERTY_MAX_BLOCK_SIZE) {
+            g_value_unset_init(value, G_TYPE_UINT);
+	    g_assert(self->block_size < G_MAXUINT); /* gsize -> guint */
+            g_value_set_uint(value, (guint)self->max_block_size);
+	    return TRUE;
+        } else if (ID == PROPERTY_BLOCK_SIZE) {
+            g_value_unset_init(value, G_TYPE_INT);
+	    g_assert(self->block_size < G_MAXINT); /* gsize -> gint */
+            g_value_set_int(value, (gint)self->block_size);
+	    return TRUE;
         } else {
             return FALSE;
         }
@@ -826,6 +808,24 @@ default_device_property_get(Device * self, DevicePropertyId ID,
     g_value_unset_copy(&resp->response, value);
 
     return TRUE;
+}
+
+static gboolean
+default_device_property_set (Device *self, DevicePropertyId ID, GValue * val) {
+    if (device_in_error(self)) return FALSE;
+
+    if (ID == PROPERTY_BLOCK_SIZE) {
+        gint block_size = g_value_get_int(val);
+        if (self->access_mode != ACCESS_NULL)
+            return FALSE;
+	g_assert(block_size >= 0); /* int -> gsize (unsigned) */
+	if ((gsize)block_size < self->min_block_size || (gsize)block_size > self->max_block_size)
+	    return FALSE;
+	self->block_size = block_size;
+	return TRUE;
+    } else {
+	return FALSE;
+    }
 }
 
 static gboolean
@@ -850,7 +850,7 @@ default_device_read_to_fd(Device *self, queue_fd_t *queue_fd) {
 	    self,
 	    fd_write_consumer,
 	    queue_fd,
-	    device_read_max_size(self),
+	    self->block_size,
 	    DEFAULT_MAX_BUFFER_MEMORY,
 	    streaming_mode);
 }
@@ -877,7 +877,7 @@ default_device_write_from_fd(Device *self, queue_fd_t *queue_fd) {
 	    queue_fd,
 	    device_write_consumer,
 	    self,
-	    device_write_max_size(self),
+	    self->block_size,
 	    DEFAULT_MAX_BUFFER_MEMORY,
 	    streaming_mode);
 }
@@ -974,8 +974,7 @@ device_start (Device * self, DeviceAccessMode mode,
 }
 
 gboolean
-device_write_block (Device * self, guint size, gpointer block,
-                    gboolean short_block)
+device_write_block (Device * self, guint size, gpointer block)
 {
     DeviceClass *klass;
 
@@ -984,19 +983,18 @@ device_write_block (Device * self, guint size, gpointer block,
 
     /* these are all things that the caller should take care to
      * guarantee, so we just assert them here */
-    g_assert(short_block || size >= device_write_min_size(self));
+    g_assert(size <= self->block_size);
     g_assert(!selfp->wrote_short_block);
-    g_assert(size <= device_write_max_size(self));
     g_assert(block != NULL);
     g_assert(IS_WRITABLE_ACCESS_MODE(self->access_mode));
     g_assert(self->in_file);
 
-    if (short_block)
+    if (size < self->block_size)
 	selfp->wrote_short_block = TRUE;
 
     klass = DEVICE_GET_CLASS(self);
     if(klass->write_block) {
-        return (*klass->write_block)(self,size, block, short_block);
+        return (*klass->write_block)(self,size, block);
     } else {
 	device_set_error(self,
 	    stralloc(_("Unimplemented method")),

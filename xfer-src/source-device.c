@@ -80,24 +80,22 @@ pull_buffer_impl(
 
     /* get the device block size */
     if (self->block_size == 0) {
-	int read_size = 0;
-	result = device_read_block(self->device, NULL, &read_size);
-	if (result < 0) {
-	    xfer_element_handle_error(elt,
-		_("error getting block size from %s: %s"),
-		self->device->device_name,
-		device_error_or_status(self->device));
-	    *size = 0;
-	    return NULL;
-	} else {
-	    self->block_size = read_size;
-	}
+	self->block_size = self->device->block_size;
     }
 
-    buf = g_malloc(self->block_size);
-    devsize = (int)self->block_size;
-    result = device_read_block(self->device, buf, &devsize);
-    *size = devsize;
+    do {
+	buf = g_malloc(self->block_size);
+	devsize = (int)self->block_size;
+	result = device_read_block(self->device, buf, &devsize);
+	*size = devsize;
+
+	/* if the buffer was too small, loop around again */
+	if (result == 0) {
+	    g_assert(*size > self->block_size);
+	    self->block_size = devsize;
+	    amfree(buf);
+	}
+    } while (result == 0);
 
     if (result < 0) {
 	/* if we're not at EOF, it's an error */

@@ -4,20 +4,12 @@
 #
 # OVERVIEW
 #
-#   Implement the --with-maxtapeblocksize option, and DEFINE and SUBST the
-#   result in MAX_TAPE_BLOCk_KB and MAXTAPEBLOCKSIZE, respectively.
+#   Implement the deprecated --with-maxtapeblocksize option.
 #
 AC_DEFUN([AMANDA_WITH_MAXTAPEBLOCKSIZE], [
-    AC_ARG_WITH(maxtapeblocksize,
-	AS_HELP_STRING([--with-maxtapeblocksize=kb],
-	    [Maximum size of a tape block (default: 32)]),
-	[ MAXTAPEBLOCKSIZE="$withval" ],
-	[ MAXTAPEBLOCKSIZE=32 ]
+    AC_ARG_WITH(maxtapeblocksize, [(deprecated)],
+	[ AMANDA_MSG_WARN([--with-maxtapeblocksize is no longer needed]) ]
     )
-
-    AC_DEFINE_UNQUOTED(MAX_TAPE_BLOCK_KB,($MAXTAPEBLOCKSIZE),
-	[Maximum size of a tape block in KBytes.])
-    AC_SUBST(MAXTAPEBLOCKSIZE)
 ])
 
 # SYNOPSIS

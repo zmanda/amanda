@@ -1681,6 +1681,7 @@ handle_deprecated_keyword(void)
     static tok_t warning_deprecated[] = {
         CONF_RAWTAPEDEV,  /* 2007-01-23 */
         CONF_TAPEBUFS,    /* 2007-10-15 */
+	CONF_FILE_PAD,	  /* 2008-07-01 */
         0
     };
 
@@ -2027,7 +2028,7 @@ init_tapetype_defaults(void)
     conf_init_str(&tpcur.value[TAPETYPE_COMMENT]      , "");
     conf_init_str(&tpcur.value[TAPETYPE_LBL_TEMPL]    , "");
     conf_init_size  (&tpcur.value[TAPETYPE_BLOCKSIZE]    , DISK_BLOCK_KB);
-    conf_init_size  (&tpcur.value[TAPETYPE_READBLOCKSIZE], MAX_TAPE_BLOCK_KB);
+    conf_init_size  (&tpcur.value[TAPETYPE_READBLOCKSIZE], DISK_BLOCK_KB);
     conf_init_int64 (&tpcur.value[TAPETYPE_LENGTH]       , ((gint64)2000 * 1024));
     conf_init_int64 (&tpcur.value[TAPETYPE_FILEMARK]     , (gint64)1000);
     conf_init_int   (&tpcur.value[TAPETYPE_SPEED]        , 200);

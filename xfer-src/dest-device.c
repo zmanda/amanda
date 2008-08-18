@@ -118,7 +118,7 @@ queueing_thread(
 	streaming_mode = g_value_get_enum(&val);
     }
 
-    block_size = device_write_max_size(self->device);
+    block_size = self->device->block_size;
 
     /* this thread creates two other threads (consumer and producer) and
      * blocks waiting for them to finish.  TODO: when taper no longer uses

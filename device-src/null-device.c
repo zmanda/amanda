@@ -22,7 +22,8 @@
 #include "device.h"
 
 #define NULL_DEVICE_MIN_BLOCK_SIZE (1)
-#define NULL_DEVICE_MAX_BLOCK_SIZE SHRT_MAX
+#define NULL_DEVICE_MAX_BLOCK_SIZE (INT_MAX)
+#define NULL_DEVICE_DEFAULT_BLOCK_SIZE DISK_BLOCK_BYTES
 
 /*
  * Type checking and casting macros
@@ -58,12 +59,13 @@ void null_device_register(void);
 static void null_device_init (NullDevice * o);
 static void null_device_class_init (NullDeviceClass * c);
 static DeviceStatusFlags null_device_read_label(Device * dself);
+static void null_device_open_device(Device * self, char *device_name,
+		                    char * device_type, char * device_node);
 static gboolean null_device_start (Device * self, DeviceAccessMode mode,
                                    char * label, char * timestamp);
 static gboolean null_device_finish (Device * pself);
 static gboolean null_device_start_file(Device * self, const dumpfile_t * jobInfo);
-static gboolean null_device_write_block (Device * self, guint size,
-                                         gpointer data, gboolean last);
+static gboolean null_device_write_block (Device * self, guint size, gpointer data);
 static gboolean null_device_finish_file(Device * self);
 static Device* null_device_factory(char * device_name, char * device_type, char * device_node);
 
@@ -126,22 +128,6 @@ null_device_init (NullDevice * self)
     device_add_property(o, &prop, &response);
     g_value_unset(&response);
     
-    prop.base = &device_property_block_size;
-    g_value_init(&response, G_TYPE_INT);
-    g_value_set_int(&response, -1);
-    device_add_property(o, &prop, &response);
-    g_value_unset(&response);
-    
-    prop.base = &device_property_min_block_size;
-    g_value_init(&response, G_TYPE_UINT);
-    g_value_set_uint(&response, NULL_DEVICE_MIN_BLOCK_SIZE);
-    device_add_property(o, &prop, &response);
-
-    prop.base = &device_property_max_block_size;
-    g_value_set_uint(&response, NULL_DEVICE_MAX_BLOCK_SIZE);
-    device_add_property(o, &prop, &response);
-    g_value_unset(&response);
-
     prop.base = &device_property_appendable;
     g_value_init(&response, G_TYPE_BOOLEAN);
     g_value_set_boolean(&response, FALSE);
@@ -151,6 +137,8 @@ null_device_init (NullDevice * self)
     device_add_property(o, &prop, &response);
     g_value_unset(&response);
 
+    /* this device's canonical name is always "null:", regardless of
+     * the name the user supplies */
     prop.base = &device_property_canonical_name;
     g_value_init(&response, G_TYPE_STRING);
     g_value_set_static_string(&response, "null:");
@@ -172,6 +160,7 @@ null_device_class_init (NullDeviceClass * c G_GNUC_UNUSED)
     parent_class = g_type_class_ref (TYPE_DEVICE);
 
     device_class->read_label = null_device_read_label;
+    device_class->open_device = null_device_open_device;
     device_class->start = null_device_start;
     device_class->finish = null_device_finish;
     device_class->start_file = null_device_start_file;
@@ -198,6 +187,19 @@ null_device_read_label(Device * dself) {
 	stralloc(_("Can't open NULL device for reading or appending.")),
 	DEVICE_STATUS_DEVICE_ERROR);
     return FALSE;
+}
+
+static void
+null_device_open_device(Device * pself, char *device_name,
+			char * device_type, char * device_node)
+{
+    pself->min_block_size = NULL_DEVICE_MIN_BLOCK_SIZE;
+    pself->max_block_size = NULL_DEVICE_MAX_BLOCK_SIZE;
+    pself->block_size = NULL_DEVICE_DEFAULT_BLOCK_SIZE;
+
+    if (parent_class->open_device) {
+        parent_class->open_device(pself, device_name, device_type, device_node);
+    }
 }
 
 static gboolean
@@ -248,7 +250,7 @@ null_device_start_file(Device * d_self,
 
 static gboolean
 null_device_write_block (Device * pself, guint size G_GNUC_UNUSED,
-	    gpointer data G_GNUC_UNUSED, gboolean last_block G_GNUC_UNUSED) {
+	    gpointer data G_GNUC_UNUSED) {
     NullDevice * self;
     self = NULL_DEVICE(pself);
 

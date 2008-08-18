@@ -118,7 +118,8 @@ struct _S3DeviceClass {
 #define S3_MAX_KEY_LENGTH 1024
 
 #define S3_DEVICE_MIN_BLOCK_SIZE 1024
-#define S3_DEVICE_MAX_BLOCK_SIZE (10*1024*1024)
+#define S3_DEVICE_MAX_BLOCK_SIZE (100*1024*1024)
+#define S3_DEVICE_DEFAULT_BLOCK_SIZE (10*1024*1024)
 
 /* This goes in lieu of file number for metadata. */
 #define SPECIAL_INFIX "special-"
@@ -264,8 +265,7 @@ s3_device_start_file(Device * self,
 static gboolean 
 s3_device_write_block(Device * self, 
                       guint size, 
-                      gpointer data, 
-                      gboolean last);
+                      gpointer data);
 
 static gboolean 
 s3_device_finish_file(Device * self);
@@ -597,22 +597,6 @@ s3_device_init(S3Device * self)
     device_add_property(o, &prop, &response);
     g_value_unset(&response);
     
-    prop.base = &device_property_block_size;
-    g_value_init(&response, G_TYPE_INT);
-    g_value_set_int(&response, -1); /* indicates a variable block size; see below */
-    device_add_property(o, &prop, &response);
-    g_value_unset(&response);
-    
-    prop.base = &device_property_min_block_size;
-    g_value_init(&response, G_TYPE_UINT);
-    g_value_set_uint(&response, S3_DEVICE_MIN_BLOCK_SIZE);
-    device_add_property(o, &prop, &response);
-
-    prop.base = &device_property_max_block_size;
-    g_value_set_uint(&response, S3_DEVICE_MAX_BLOCK_SIZE);
-    device_add_property(o, &prop, &response);
-    g_value_unset(&response);
-
     prop.base = &device_property_appendable;
     g_value_init(&response, G_TYPE_BOOLEAN);
     g_value_set_boolean(&response, TRUE);
@@ -693,6 +677,10 @@ s3_device_open_device(Device *pself, char *device_name,
 {
     S3Device *self = S3_DEVICE(pself);
     char * name_colon;
+
+    pself->min_block_size = S3_DEVICE_MIN_BLOCK_SIZE;
+    pself->max_block_size = S3_DEVICE_MAX_BLOCK_SIZE;
+    pself->block_size = S3_DEVICE_DEFAULT_BLOCK_SIZE;
 
     /* Device name may be bucket/prefix, to support multiple volumes in a
      * single bucket. */
@@ -1116,8 +1104,7 @@ s3_device_start_file (Device *pself, const dumpfile_t *jobInfo) {
 }
 
 static gboolean
-s3_device_write_block (Device * pself, guint size, gpointer data,
-                         gboolean last_block G_GNUC_UNUSED) {
+s3_device_write_block (Device * pself, guint size, gpointer data) {
     gboolean result;
     char *filename;
     S3Device * self = S3_DEVICE(pself);;

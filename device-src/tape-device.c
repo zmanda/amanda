@@ -35,6 +35,7 @@ struct TapeDevicePrivate_s {
        modulus RESETOFS_THRESHOLD. */
     int write_count;
     char * device_filename;
+    gsize read_buffer_size;
 };
 
 /* Possible (abstracted) results from a system I/O operation. */
@@ -65,14 +66,16 @@ DevicePropertyBase device_property_final_filemarks;
 
 void tape_device_register(void);
 
+#define tape_device_read_size(self) \
+    (((TapeDevice *)(self))->private->read_buffer_size || ((Device *)(self))->block_size)
+
 /* here are local prototypes */
 static void tape_device_init (TapeDevice * o);
 static void tape_device_class_init (TapeDeviceClass * c);
 static void tape_device_open_device (Device * self, char * device_name, char * device_type, char * device_node);
 static Device * tape_device_factory (char * device_name, char * device_type, char * device_node);
 static DeviceStatusFlags tape_device_read_label(Device * self);
-static gboolean tape_device_write_block(Device * self, guint size,
-                                        gpointer data, gboolean short_block);
+static gboolean tape_device_write_block(Device * self, guint size, gpointer data);
 static int tape_device_read_block(Device * self,  gpointer buf,
                                        int * size_req);
 static gboolean tape_device_start (Device * self, DeviceAccessMode mode,
@@ -94,7 +97,6 @@ static gboolean tape_device_bsf (TapeDevice * self, guint count, guint file);
 static gboolean tape_device_fsr (TapeDevice * self, guint count);
 static gboolean tape_device_bsr (TapeDevice * self, guint count, guint file, guint block);
 static gboolean tape_device_eod (TapeDevice * self);
-static void tape_validate_properties (TapeDevice * self);
 
 /* pointer to the class of our parent */
 static DeviceClass *parent_class = NULL;
@@ -126,18 +128,19 @@ GType tape_device_get_type (void)
 
 static void 
 tape_device_init (TapeDevice * self) {
-    Device * device_self;
+    Device * d_self;
     DeviceProperty prop;
     GValue response;
 
-    device_self = (Device*)self;
+    d_self = DEVICE(self);
     bzero(&response, sizeof(response));
 
     self->private = g_new0(TapeDevicePrivate, 1);
 
     /* Clear all fields. */
-    self->min_block_size = self->fixed_block_size = 32768;
-    self->max_block_size = self->read_block_size = MAX_TAPE_BLOCK_BYTES;
+    d_self->block_size = 32768;
+    d_self->min_block_size = 32768;
+    d_self->max_block_size = LARGEST_BLOCK_ESTIMATE;
     self->broken_gmt_online = FALSE;
 
     self->fd = -1;
@@ -148,68 +151,63 @@ tape_device_init (TapeDevice * self) {
 
     self->private->write_count = 0;
     self->private->device_filename = NULL;
+    self->private->read_buffer_size = 0;
 
     /* Register properites */
     prop.base = &device_property_concurrency;
     prop.access = PROPERTY_ACCESS_GET_MASK;
     g_value_init(&response, CONCURRENCY_PARADIGM_TYPE);
     g_value_set_enum(&response, CONCURRENCY_PARADIGM_EXCLUSIVE);
-    device_add_property(device_self, &prop, &response);
+    device_add_property(d_self, &prop, &response);
     g_value_unset(&response);
 
     prop.base = &device_property_streaming;
     g_value_init(&response, STREAMING_REQUIREMENT_TYPE);
     g_value_set_enum(&response, STREAMING_REQUIREMENT_DESIRED);
-    device_add_property(device_self, &prop, &response);
+    device_add_property(d_self, &prop, &response);
     g_value_unset(&response);
 
     prop.base = &device_property_appendable;
     g_value_init(&response, G_TYPE_BOOLEAN);
     g_value_set_boolean(&response, TRUE);
-    device_add_property(device_self, &prop, &response);
+    device_add_property(d_self, &prop, &response);
 
     prop.base = &device_property_partial_deletion;
     g_value_set_boolean(&response, FALSE);
-    device_add_property(device_self, &prop, &response);
+    device_add_property(d_self, &prop, &response);
     g_value_unset(&response);
 
     prop.base = &device_property_medium_access_type;
     g_value_init(&response, MEDIA_ACCESS_MODE_TYPE);
     g_value_set_enum(&response, MEDIA_ACCESS_MODE_READ_WRITE);
-    device_add_property(device_self, &prop, &response);
+    device_add_property(d_self, &prop, &response);
     g_value_unset(&response);
 
     prop.access = PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_MASK;
     prop.base = &device_property_compression;
-    device_add_property(device_self, &prop, NULL);
+    device_add_property(d_self, &prop, NULL);
 
     prop.access = PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START;
-    prop.base = &device_property_min_block_size;
-    device_add_property(device_self, &prop, NULL);
-    prop.base = &device_property_max_block_size;
-    device_add_property(device_self, &prop, NULL);
-    prop.base = &device_property_block_size;
-    device_add_property(device_self, &prop, NULL);
     prop.base = &device_property_broken_gmt_online;
-    device_add_property(device_self, &prop, NULL);
+    device_add_property(d_self, &prop, NULL);
     prop.base = &device_property_fsf;
-    device_add_property(device_self, &prop, NULL);
+    device_add_property(d_self, &prop, NULL);
     prop.base = &device_property_bsf;
-    device_add_property(device_self, &prop, NULL);
+    device_add_property(d_self, &prop, NULL);
     prop.base = &device_property_fsr;
-    device_add_property(device_self, &prop, NULL);
+    device_add_property(d_self, &prop, NULL);
     prop.base = &device_property_bsr;
-    device_add_property(device_self, &prop, NULL);
+    device_add_property(d_self, &prop, NULL);
     prop.base = &device_property_eom;
-    device_add_property(device_self, &prop, NULL);
+    device_add_property(d_self, &prop, NULL);
     prop.base = &device_property_bsf_after_eom;
-    device_add_property(device_self, &prop, NULL);
+    device_add_property(d_self, &prop, NULL);
     prop.base = &device_property_final_filemarks;
-    device_add_property(device_self, &prop, NULL);
-    
-    prop.access = PROPERTY_ACCESS_GET_MASK;
-    prop.base = &device_property_canonical_name;
-    device_add_property(device_self, &prop, NULL);
+    device_add_property(d_self, &prop, NULL);
+
+    prop.access = PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START;
+    prop.base = &device_property_read_buffer_size;
+    device_add_property(d_self, &prop, NULL);
 }
 
 static void tape_device_finalize(GObject * obj_self) {
@@ -433,8 +431,6 @@ static DeviceStatusFlags tape_device_read_label(Device * dself) {
     header = dself->volume_header = g_new(dumpfile_t, 1);
     fh_init(header);
 
-    tape_validate_properties(self);
-
     if (self->fd == -1) {
         self->fd = try_open_tape_device(self, self->private->device_filename);
 	/* if the open failed, then try_open_tape_device already set the
@@ -453,7 +449,7 @@ static DeviceStatusFlags tape_device_read_label(Device * dself) {
         return dself->status;
     }
 
-    buffer_len = self->read_block_size;
+    buffer_len = tape_device_read_size(self);
     header_buffer = malloc(buffer_len);
     result = tape_device_robust_read(self, header_buffer, &buffer_len);
 
@@ -492,8 +488,7 @@ static DeviceStatusFlags tape_device_read_label(Device * dself) {
 }
 
 static gboolean
-tape_device_write_block(Device * pself, guint size,
-                        gpointer data, gboolean short_block) {
+tape_device_write_block(Device * pself, guint size, gpointer data) {
     TapeDevice * self;
     char *replacement_buffer = NULL;
     IoResult result;
@@ -505,13 +500,13 @@ tape_device_write_block(Device * pself, guint size,
 
     /* zero out to the end of a short block -- tape devices only write
      * whole blocks. */
-    if (short_block && self->min_block_size > size) {
-        replacement_buffer = malloc(self->min_block_size);
+    if (size < pself->block_size) {
+        replacement_buffer = malloc(pself->block_size);
         memcpy(replacement_buffer, data, size);
-        bzero(replacement_buffer+size, self->min_block_size-size);
+        bzero(replacement_buffer+size, pself->block_size-size);
 
         data = replacement_buffer;
-        size = self->min_block_size;
+        size = pself->block_size;
     }
 
     result = tape_device_robust_write(self, data, size);
@@ -546,15 +541,17 @@ static int tape_device_read_block (Device * pself, gpointer buf,
     TapeDevice * self;
     int size;
     IoResult result;
+    gssize read_block_size = tape_device_read_size(pself);
     
     self = TAPE_DEVICE(pself);
 
     g_assert(self->fd >= 0);
     if (device_in_error(self)) return -1;
 
-    if (buf == NULL || *size_req < (int)self->read_block_size) {
+    g_assert(read_block_size < INT_MAX); /* data type mismatch */
+    if (buf == NULL || *size_req < (int)read_block_size) {
         /* Just a size query. */
-        *size_req = self->read_block_size;
+        *size_req = (int)read_block_size;
         return 0;
     }
 
@@ -566,19 +563,25 @@ static int tape_device_read_block (Device * pself, gpointer buf,
         pself->block++;
         return size;
     case RESULT_SMALL_BUFFER: {
-        int new_size;
+        gsize new_size;
         /* If this happens, it means that we have:
          *     (next block size) > (buffer size) >= (read_block_size)
          * The solution is to ask for an even bigger buffer. We also play
          * some games to refrain from reading above the SCSI limit or from
-         * integer overflow. */
+         * integer overflow.  Note that not all devices will tell us about
+	 * this problem -- some will just discard the "extra" data. */
         new_size = MIN(INT_MAX/2 - 1, *size_req) * 2;
         if (new_size > LARGEST_BLOCK_ESTIMATE &&
             *size_req < LARGEST_BLOCK_ESTIMATE) {
             new_size = LARGEST_BLOCK_ESTIMATE;
         }
-        g_assert (new_size > *size_req);
-	*size_req = new_size;
+        g_assert (new_size > (gsize)*size_req);
+
+	g_warning("Device %s indicated blocksize %zd was too small; using %zd.",
+	    pself->device_name, (gsize)*size_req, new_size);
+	*size_req = (int)new_size;
+	self->private->read_buffer_size = new_size;
+
 	return 0;
     }
     case RESULT_NO_DATA:
@@ -625,7 +628,7 @@ static gboolean write_tapestart_header(TapeDevice * self, char * label,
          return FALSE;
      }
 
-     g_assert(header_size >= (int)self->min_block_size);
+     g_assert(header_size >= (int)d_self->min_block_size);
      result = tape_device_robust_write(self, header_buf, header_size);
      if (result == RESULT_SUCCESS) {
 	amfree(header_buf);
@@ -647,8 +650,6 @@ tape_device_start (Device * d_self, DeviceAccessMode mode, char * label,
     self = TAPE_DEVICE(d_self);
 
     if (device_in_error(self)) return FALSE;
-
-    tape_validate_properties(self);
 
     if (self->fd == -1) {
         self->fd = try_open_tape_device(self, self->private->device_filename);
@@ -844,7 +845,7 @@ tape_device_seek_file (Device * d_self, guint file) {
         }
     }
 
-    buffer_len = self->read_block_size;
+    buffer_len = tape_device_read_size(d_self);
     header_buffer = malloc(buffer_len);
     d_self->is_eof = FALSE;
     result = tape_device_robust_read(self, header_buffer, &buffer_len);
@@ -951,19 +952,6 @@ tape_device_property_get (Device * d_self, DevicePropertyId id, GValue * val) {
     if (id == PROPERTY_COMPRESSION) {
         g_value_set_boolean(val, self->compression);
         return TRUE;
-    } else if (id == PROPERTY_MIN_BLOCK_SIZE) {
-        g_value_set_uint(val, self->min_block_size);
-        return TRUE;
-    } else if (id == PROPERTY_MAX_BLOCK_SIZE) {
-        g_value_set_uint(val, self->max_block_size);
-        return TRUE;
-    } else if (id == PROPERTY_BLOCK_SIZE) {
-        if (self->fixed_block_size == 0) {
-            g_value_set_int(val, -1);
-        } else {
-            g_value_set_int(val, self->fixed_block_size);
-        }
-        return TRUE;
     } else if (id == PROPERTY_BROKEN_GMT_ONLINE) {
         g_value_set_boolean(val, self->broken_gmt_online);
 	return TRUE;
@@ -982,6 +970,12 @@ tape_device_property_get (Device * d_self, DevicePropertyId id, GValue * val) {
     } else if (id == PROPERTY_FINAL_FILEMARKS) {
         g_value_set_uint(val, self->final_filemarks);
         return TRUE;
+    } else if (id == PROPERTY_READ_BUFFER_SIZE) {
+	gsize bs = self->private->read_buffer_size;
+	g_value_unset_init(val, G_TYPE_UINT);
+	g_assert(bs < G_MAXUINT); /* gsize -> guint */
+	g_value_set_uint(val, (guint)bs);
+	return TRUE;
     } else {
         /* Chain up */
         if (parent_class->property_get) {
@@ -1075,31 +1069,6 @@ tape_device_property_set (Device * d_self, DevicePropertyId id, GValue * val) {
         } else {
             return FALSE;
         }
-    } else if (id == PROPERTY_MIN_BLOCK_SIZE) {
-        if (d_self->access_mode != ACCESS_NULL)
-            return FALSE;
-        self->min_block_size = g_value_get_uint(val);
-        device_clear_volume_details(d_self);
-        return TRUE;
-    } else if (id == PROPERTY_MAX_BLOCK_SIZE) {
-        if (d_self->access_mode != ACCESS_NULL)
-            return FALSE;
-        self->max_block_size = g_value_get_uint(val);
-        device_clear_volume_details(d_self);
-        return TRUE;
-    } else if (id == PROPERTY_BLOCK_SIZE) {
-        if (d_self->access_mode != ACCESS_NULL)
-            return FALSE;
-
-        self->fixed_block_size = g_value_get_int(val);
-        device_clear_volume_details(d_self);
-        return TRUE;
-    } else if (id == PROPERTY_READ_BUFFER_SIZE) {
-        if (d_self->access_mode != ACCESS_NULL)
-            return FALSE;
-        self->read_block_size = g_value_get_uint(val);
-        device_clear_volume_details(d_self);
-        return TRUE;
     } else if (id == PROPERTY_BROKEN_GMT_ONLINE) {
 	self->broken_gmt_online = g_value_get_boolean(val);
 	return TRUE;
@@ -1147,6 +1116,16 @@ tape_device_property_set (Device * d_self, DevicePropertyId id, GValue * val) {
         } else {
             return FALSE;
         }
+    } else if (id == PROPERTY_READ_BUFFER_SIZE) {
+        guint buffer_size = g_value_get_uint(val);
+        if (d_self->access_mode != ACCESS_NULL)
+            return FALSE;
+	if (buffer_size != 0 &&
+		((gsize)buffer_size < d_self->block_size ||
+		 (gsize)buffer_size > d_self->max_block_size))
+	    return FALSE;
+	self->private->read_buffer_size = buffer_size;
+	return TRUE;
     } else {
         /* Chain up */
         if (parent_class->property_set) {
@@ -1214,7 +1193,6 @@ tape_device_robust_read (TapeDevice * self, void * buf, int * count) {
 
     /* Callers should ensure this. */
     g_assert(*count >= 0);
-    g_assert((guint)(*count) <= self->read_block_size);
 
     for (;;) {
         result = read(self->fd, buf, *count);
@@ -1238,8 +1216,7 @@ tape_device_robust_read (TapeDevice * self, void * buf, int * count) {
                 ) {
                 /* Interrupted system call */
                 continue;
-            } else if ((self->fixed_block_size == 0) &&
-                       (0
+            } else if ((0
 #ifdef ENOMEM
                         || errno == ENOMEM /* bad user-space buffer */
 #endif
@@ -1363,10 +1340,10 @@ tape_device_robust_write (TapeDevice * self, void * buf, int count) {
    actually read. */
 static int drain_tape_blocks(TapeDevice * self, int count) {
     char * buffer;
-    int buffer_size;
+    gsize buffer_size;
     int i;
 
-    buffer_size = self->read_block_size;
+    buffer_size = tape_device_read_size(self);
 
     buffer = malloc(sizeof(buffer_size));
 
@@ -1540,14 +1517,6 @@ tape_device_eod (TapeDevice * self) {
             }
         }
     }
-}
-
-static void
-tape_validate_properties(TapeDevice * self) {
-    if (self->read_block_size < self->fixed_block_size)
-	self->read_block_size = self->fixed_block_size;
-    if (self->read_block_size < self->max_block_size)
-	self->read_block_size = self->max_block_size;
 }
 
 static Device *

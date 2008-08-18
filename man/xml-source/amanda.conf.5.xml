@@ -2096,45 +2096,20 @@ manpage for exceptions).
 <listitem>
 <para>Default:
 <emphasis remap='I'>32 kbytes</emphasis>.
-How much data will be written in each tape record expressed in KiloBytes.
-The tape record size (= blocksize) can not be reduced below the default 32 KBytes.
-The parameter blocksize can only be raised if &A; was compiled with the configure option
---with-maxtapeblocksize=N set with &quot;N&quot; greater than 32 during
-&configure;.
+How much data will be written in each tape record.  This is equivalent to the <emphasis remap="I">BLOCK_SIZE</emphasis> device property.
 </para>
   </listitem>
   </varlistentry>
 <varlistentry>
 <term><emphasis remap='B'>readblocksize</emphasis> <emphasis remap='I'> int</emphasis></term>
 <listitem>
-<para>Default:
-(<emphasis remap='I'>from configure --with-maxtapeblocksize</emphasis>).
-How much data will be read in each tape record expressed in KiloBytes.
-Some hardware require a value not too large, and some require it to be equal to the blocksize.
-It is useful if you configured amanda with a big --with-maxtapeblocksize and your 
-hardware don't work with a value that big.
+<para>Default: <emphasis remap="I">32 kytes</emphasis>
+How much data will be read in each tape record.  This can be used to override a
+device's block size for reads only.  This may be useful, for example, in
+reading a tape written with a 256k block size when Amanda is configured to use
+128k blocks.  This unusual feature is not supported by all operating systems and
+tape devices.
 </para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
-  <term><emphasis remap='B'>file-pad</emphasis> <emphasis remap='I'> boolean</emphasis></term>
-  <listitem>
-<para>Default:
-<emphasis remap='I'>true</emphasis>.
-If true, every record, including the last one in the file, will have the same length.
-This matches the way &A; wrote tapes prior to the availability of this parameter.
-It may also be useful on devices that only support a fixed blocksize.</para>
-
-<para>Note that the last record on the tape probably includes trailing
-null byte padding, which will be passed back to
-<emphasis remap='B'>gzip</emphasis>,
-<emphasis remap='B'>compress</emphasis>
-or the restore program. Most programs just ignore this (although possibly with a warning).</para>
-
-<para>If this parameter is false, the last record in a file may be shorter
-than the block size. The file will contain the same amount of data the dump program generated,
-without trailing null byte padding. When read, the same amount of data that was written 
-will be returned.</para>
   </listitem>
   </varlistentry>
   

@@ -1,3 +1,29 @@
+2008-08-18  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/krb4-security.c common-src/krb5-security.c
+	  config/amanda/tape.m4 common-src/amanda.h: remove
+	  --with-maxtapeblocksize
+	* common-src/conffile.c: deprecate file-pad
+	* device-src/device-queueing.c device-src/device-queueing.h
+	  device-src/device.c device-src/device.h device-src/null-device.c
+	  device-src/property.c device-src/property.h device-src/rait-device.c
+	  device-src/s3-device.c device-src/tape-device.c
+	  device-src/tape-device.h device-src/vfs-device.c server-src/amcheck.c
+	  server-src/taper.c tape-src/tapeio.c xfer-src/dest-device.c
+	  xfer-src/source-device.c perl/Amanda/Device.swg: devices have
+	  {min,max,current} block sizes; remove the short_block parameter from
+	  device_write_block; fix property initialization; rename
+	  PROPERTY_MEDIUM_TYPE to PROPERTY_MEDIUM_ACCESS_TYPE
+	* device-src/rait-device.c: set child block sizes explicitly
+	* installcheck/Amanda_Device.pl: tests; better S3 test count
+	  calculations
+	* installcheck/Amanda_Xfer.pl: tests
+	* man/xml-source/amanda-devices.7.xml: update block sizes
+	  documentation
+	* man/xml-source/amanda.conf.5.xml: refer to block size properties
+	* restore-src/amrestore.c: use set_restore_device_read_buffer_size
+	* restore-src/restore.h restore-src/restore.c: add
+	  set_restore_device_read_buffer_size
+
 2008-08-16  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/driver.c: handle taper_{input,tape}_error memory
 	  correctly, and add taper_tape_error to the trace log

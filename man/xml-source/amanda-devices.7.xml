@@ -69,10 +69,6 @@ two devices contain identical data and can be used singly for
   volume failure.  The RAIT device scales its blocksize as necessary
   to match the number of children that will be used to store data.</para>
 
-<para>The RAIT device driver depends on its child devices having similar
-characteristics.  Combining devices with different block sizes may not work as
-desired.</para>
-
 <para>When a child device is known to have failed, the RAIT device should be reconfigured to replace that device with the text "ERROR", e.g.,
 <programlisting>
 tapedev "rait:{tape:/dev/st0,ERROR,tape:/dev/st2}"
@@ -87,6 +83,20 @@ degraded mode.  When reading, certain errors may be fatal (rather than causing
 degraded mode).  And in any case, labels on all volumes must initially match
 (labeled or otherwise).  If you have lost one volume from a set, explicitly
 start the device in degraded mode as described above.</para>
+
+<refsect3><title>Child Device Block Sizes</title>
+
+<para>The RAIT device driver requires that all of its child devices use the
+same block size.  If no block sizes are specified, the driver selects the block
+size closest to 32k that is within the MIN_BLOCK_SIZE - MAX_BLOCK_SIZE range of
+all child devices, and calculates its own blocksize according to the formula
+<emphasis>rait_blocksize = child_blocksize * (num_children - 1)</emphasis>.  If
+a block size is specified for the RAIT device, then it calculates its child
+block sizes according to the formula <emphasis>child_blocksize = rait_blocksize
+/ (num_children - 1)</emphasis>.  Either way, it sets the BLOCK_SIZE property
+of each child device accordingly.</para>
+
+</refsect3>
 
 </refsect2>
 
@@ -182,9 +192,7 @@ property, below.</para>
 
 <para>The order in which device properties are set is as follows:
 <orderedlist>
-<listitem><para>Tapetype parameters (including length, blocksize,
-    readblocksize and file-pad) are translated into device properties
-    and set accordingly.</para></listitem>
+<listitem><para>Tapetype parameters (including length, blocksize, and readblocksize) are translated into device properties and set accordingly.</para></listitem>
 <listitem><para>Device properties from any device_property
     configuration parameters are set, in the order they appear in the
     configuration file.</para>
@@ -203,12 +211,12 @@ for future expansion.</para>
 
 <variablelist>
  <!-- ==== -->
- <varlistentry><term>BLOCK_SIZE</term><listitem>
- (read-write) This property gives the block size, in bytes.  The usual suffixes ("kbytes", etc.) are allowed.  Specify "-1" for variable block size, on devices that support it; see BLOCK SIZES, below.  The tapetype parameter <emphasis>blocksize</emphasis> sets this property, if MAX_BLOCK_SIZE is not supported.
-</listitem></varlistentry>
- <!-- ==== -->
  <varlistentry><term>APPENDABLE</term><listitem>
  (read-only) This property indicates whether this device supports appending data to volumes.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>BLOCK_SIZE</term><listitem>
+ (read-write) This property gives the block size, in bytes, that will be used to write to the device.  The usual suffixes ("kbytes", etc.) are allowed.  The tapetype parameter <emphasis>blocksize</emphasis> sets this property.
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>CANONICAL_NAME</term><listitem>
@@ -231,16 +239,16 @@ for future expansion.</para>
  (read-only) This property gives the amount of free space available on the current volume, if known.  This is often an estimate; for example, tape devices can only estimate the amount of tape left on a spool.
 </listitem></varlistentry>
  <!-- ==== -->
- <varlistentry><term>MIN_BLOCK_SIZE</term><listitem>
- (read-write) This property gives the minimum block size when operating in variable-block-size mode.  See BLOCK SIZES, below.
+ <varlistentry><term>MAX_BLOCK_SIZE</term><listitem>
+ (read-only) This property gives the maximum block size this device can support.  See BLOCK SIZES, below.
 </listitem></varlistentry>
  <!-- ==== -->
- <varlistentry><term>MEDIUM_TYPE</term><listitem>
+ <varlistentry><term>MEDIUM_ACCESS_TYPE</term><listitem>
  (read-only) This property gives the type of the media in the device: read only, WORM (Write Once, Read Many), read/write, or write only.  Write-only devices do not support recovery, but the data are not necessarily thrown out.
 </listitem></varlistentry>
  <!-- ==== -->
- <varlistentry><term>MAX_BLOCK_SIZE</term><listitem>
- (read-write) This property gives the maximum block size when operating in variable-block-size mode.  See BLOCK SIZES, below.  The tapetype parameter <emphasis>blocksize</emphasis> sets this property, if supported.
+ <varlistentry><term>MIN_BLOCK_SIZE</term><listitem>
+ (read-write) This property gives the minimum block size this device can support.  See BLOCK SIZES, below.
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>MAX_VOLUME_USAGE</term><listitem>
@@ -249,10 +257,6 @@ for future expansion.</para>
  <!-- ==== -->
  <varlistentry><term>PARTIAL_DELETION</term><listitem>
  (read-only) This property indicates whether the device supports deletion of specific files.  Aside from linear tapes, most devices can support this feature.  It is currently unused by Amanda.
-</listitem></varlistentry>
- <!-- ==== -->
- <varlistentry><term>READ_BUFFER_SIZE</term><listitem>
- (read-write) This property specifies the buffer size that will be used for reads; this should be large enough to contain any block that may be read from the device.  The tapetype parameter <emphasis>READBLOCKSIZE</emphasis> sets this property.
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>STREAMING</term><listitem>
@@ -267,28 +271,35 @@ for future expansion.</para>
 
 <refsect3><title>BLOCK SIZES</title>
 
-<para>Amanda writes device data in blocks, and on most devices the block
+<para>Amanda writes device data in blocks. On most devices the block
 boundaries are embedded in the media along with the data itself, so subsequent
 reads must use the same block sizes.  On tape devices, the block size is
 dictated by the capabilities of the hardware -- buffer sizes, physical format,
 and so on.</para>
 
 <para>Amanda has historically supported a single, fixed block size -- usually
-32k.  The Device API adds the ability to specify a block size at runtime.  In
-most cases, the optimal configuration is a fixed block size appropriate to the
-hardware.  However, some Amanda devices also support "variable" block sizes,
-where a device can write in a range of block sizes.  In this case, the device
-accepts any write in the size range as a "block".  Variable block size is
-enabled by specifying a BLOCK_SIZE of -1 and setting MIN_BLOCK_SIZE and
-MAX_BLOCK_SIZE.</para>
+32k.  The Device API adds the ability to specify a block size at runtime, using
+the BLOCK_SIZE property.  Devices provide MIN_BLOCK_SIZE and MAX_BLOCK_SIZE as
+a guide to the range of acceptable block sizes. Note that this does not imply
+that all sizes in the range MIN_BLOCK_SIZE - MAX_BLOCK_SIZE are available --
+the device may require that block sizes are even multiples of some power of
+two, for example.  Consult the documentation for your hardware and operating
+system for more information.</para>
 
-<para>READ_BUFFER_SIZE specifies the maximum buffer size that will be allocated
-for reading.</para>
+<para>Most devices are flexible enough to read a volume using a different block
+size than that with which it was written.  This can be useful when handling old
+volumes written with a smaller blocksize, or volumes of unknown blocksize.
+Unfortunately, some tape devices do not detect oversized blocks correctly, and
+may lose data if the configured block size is smaller than the volume's block
+size.  The tape device driver has a READ_BUFFER_SIZE property which specifies
+the minimum buffer size that will be allocated for reads from tape.  If the
+hardware supports it, setting this property allows Amanda to correctly read
+from tapes written with any blocksize less than or equal to READ_BUFFER
+SIZE.</para>
 
-<para>Most devices will not support reading a volume using a different block
-size than that with which it was written.  Adjusting the block size of an
-Amanda configuration that has existing dumps on volumes may render those dumps
-unreadable.</para>
+<note><para>The RAIT device does not support flexible block sizes, as its
+parity algorithm requires that all child devices have the same, fixed block
+size.</para></note>
 
 </refsect3>
 
@@ -372,6 +383,10 @@ note that case and whitespace are significant.
  <!-- ==== -->
  <varlistentry><term>FSR</term><listitem>
  (read-write) This feature property specifies whether the device driver may use the MTFSR operation (forward seek record).
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>READ_BUFFER_SIZE</term><listitem>
+ (read-write) This property specifies the minimum buffer size that will be used for reads; this should be large enough to contain any block that may be read from the device, and must be larger than BLOCK_SIZE.  This property exists for tape devices which cannot determine the size of on-tape blocks, or which may discard data which overflows a small buffer.  The tapetype parameter <emphasis>READBLOCKSIZE</emphasis> sets this property.  See BLOCK SIZES, above.
 </listitem></varlistentry>
  <!-- ==== -->
 </variablelist>

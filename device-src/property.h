@@ -202,15 +202,21 @@ extern DevicePropertyBase device_property_compression;
 extern DevicePropertyBase device_property_compression_rate;
 #define PROPERTY_COMPRESSION_RATE (device_property_compression_rate.ID)
 
-/* Value is a gint, where a negative number indicates variable block size. */
+/* Value is a gint; gives the write block size. */
 extern DevicePropertyBase device_property_block_size;
 #define PROPERTY_BLOCK_SIZE (device_property_block_size.ID)
 
-/* Value is a guint. */
+/* Read-only.  Value is a guint. */
 extern DevicePropertyBase device_property_min_block_size;
 extern DevicePropertyBase device_property_max_block_size;
 #define PROPERTY_MIN_BLOCK_SIZE (device_property_min_block_size.ID)
 #define PROPERTY_MAX_BLOCK_SIZE (device_property_max_block_size.ID)
+
+/* Value is a guint; gives the minimum buffer size for reads. Only
+ * the tape device implements this, but it corresponds to the tapetype
+ * readblocksize parameter, so it's a global property*/
+extern DevicePropertyBase device_property_read_buffer_size;
+#define PROPERTY_READ_BUFFER_SIZE (device_property_read_buffer_size.ID)
 
 /* Value is a gboolean. */
 extern DevicePropertyBase device_property_appendable;
@@ -222,7 +228,7 @@ extern DevicePropertyBase device_property_canonical_name;
 
 /* Value is MediaAccessMode. */
 extern DevicePropertyBase device_property_medium_access_type;
-#define PROPERTY_MEDIUM_TYPE (device_property_medium_access_type.ID)
+#define PROPERTY_MEDIUM_ACCESS_TYPE (device_property_medium_access_type.ID)
 
 /* Value is a gboolean. */
 extern DevicePropertyBase device_property_partial_deletion;
@@ -238,10 +244,6 @@ extern DevicePropertyBase device_property_free_space;
    space". Zero means no limit. */
 extern DevicePropertyBase device_property_max_volume_usage;
 #define PROPERTY_MAX_VOLUME_USAGE (device_property_max_volume_usage.ID)
-
-/* What buffer size is used for reading? */
-extern DevicePropertyBase device_property_read_buffer_size;
-#define PROPERTY_READ_BUFFER_SIZE (device_property_read_buffer_size.ID)
 
 /* Should the device produce verbose output?  Value is a gboolean.  Not
  * recognized by all devices. */

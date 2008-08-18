@@ -234,7 +234,7 @@ pass("Two simultaneous transfers run to completion");
 
     $xfer = Amanda::Xfer->new([
 	Amanda::Xfer::Source::Random->new(1024*1024, $RANDOM_SEED),
-	Amanda::Xfer::Dest::Device->new($device, $device->write_max_size() * 10),
+	Amanda::Xfer::Dest::Device->new($device, $device->block_size() * 10),
     ]);
 
     $xfer->get_source()->set_callback($quit_cb);

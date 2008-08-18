@@ -117,14 +117,9 @@
 #define GSS_TIMEOUT                     30
 
 /*
- * The largest buffer we can send/receive.
- */
-#define AMANDA_MAX_TOK_SIZE             (MAX_TAPE_BLOCK_BYTES * 4)
-
-/*
  * This is the tcp stream buffer size
  */
-#define KRB5_STREAM_BUFSIZE     (MAX_TAPE_BLOCK_BYTES * 2)
+#define KRB5_STREAM_BUFSIZE     (32768 * 2)
 
 /*
  * This is the max number of outgoing connections we can have at once.
