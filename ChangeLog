@@ -1,4 +1,16 @@
 2008-08-18  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/conffile.c: make find_multiplier case-insensitive
+	* device-src/device.c: reorder assertions
+	* device-src/tape-device.c: don't set access_mode twice, but
+	  set in_file = FALSE in start
+	* device-src/s3-device.c: fix property registration
+	* perl/Amanda/MainLoop.swg: remove attach() from example
+	* perl/Amanda/Xfer.swg: more detail in POD
+	* xfer-src/source-pattern.c: operate byte-for-byte, like the random
+	  source, instead of using lots of memcpys and reallocs
+	* xfer-src/source-random.c: remove redundant check
+
+2008-08-18  Dustin J. Mitchell <dustin@zmanda.com>
 	* configure.in Makefile.am tape-src/*: remove tape-src
 	* changer-src/Makefile.am: don't link with libamtape
 	* changer-src/chg-scsi.c: don't use libamtape

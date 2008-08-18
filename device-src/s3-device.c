@@ -590,19 +590,21 @@ s3_device_init(S3Device * self)
     g_value_set_enum(&response, CONCURRENCY_PARADIGM_SHARED_READ);
     device_add_property(o, &prop, &response);
     g_value_unset(&response);
-    
+
     prop.base = &device_property_streaming;
     g_value_init(&response, STREAMING_REQUIREMENT_TYPE);
     g_value_set_enum(&response, STREAMING_REQUIREMENT_NONE);
     device_add_property(o, &prop, &response);
     g_value_unset(&response);
-    
+
     prop.base = &device_property_appendable;
     g_value_init(&response, G_TYPE_BOOLEAN);
     g_value_set_boolean(&response, TRUE);
     device_add_property(o, &prop, &response);
+    g_value_unset(&response);
 
     prop.base = &device_property_partial_deletion;
+    g_value_init(&response, G_TYPE_BOOLEAN);
     g_value_set_boolean(&response, TRUE);
     device_add_property(o, &prop, &response);
     g_value_unset(&response);

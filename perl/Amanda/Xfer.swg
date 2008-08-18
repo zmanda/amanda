@@ -164,8 +164,9 @@ This filter applies a bytewise XOR operation to the data flowing through it.
   Amanda::Xfer::Dest::Device->new($device, $max_memory);
 
 This source writes data to a device.  The device should already be queued up
-for writing (C<$device->start_file(..)>).  No more than C<$max_memory> will
-be used for buffers.
+for writing (C<$device->start_file(..)>).  No more than C<$max_memory> will be
+used for buffers.  Use zero for the default buffer size.  On completion of the
+transfer, the file will be finished.
 
 =head3 Amanda::Xfer::Dest::Fd
 

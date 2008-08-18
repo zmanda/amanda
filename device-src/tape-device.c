@@ -684,8 +684,6 @@ tape_device_start (Device * d_self, DeviceAccessMode mode, char * label,
         }
     }
 
-    d_self->access_mode = mode;
-
     /* Position the tape */
     switch (mode) {
     case ACCESS_APPEND:
@@ -730,6 +728,7 @@ tape_device_start (Device * d_self, DeviceAccessMode mode, char * label,
 
 	/* unset the VOLUME_UNLABELED flag, if it was set */
 	device_set_error(d_self, NULL, DEVICE_STATUS_SUCCESS);
+        d_self->file = 0;
         break;
 
     default:

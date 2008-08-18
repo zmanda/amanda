@@ -47,7 +47,6 @@ typedef struct XferSourcePattern {
 
     gboolean limited_length;
     guint64 length;
-    size_t pattern_orig_length;
     size_t pattern_buffer_length;
     size_t current_offset;
     char * pattern;
@@ -65,38 +64,6 @@ typedef struct {
  * Implementation
  */
 
-static void resize_pattern_buffer(XferSourcePattern * self,
-                                  size_t min_new_length) {
-    size_t new_length;
-    g_assert(self->pattern_buffer_length % self->pattern_orig_length == 0);
-
-    new_length = min_new_length;
-    if (new_length % self->pattern_orig_length != 0) {
-        /* Extend also to include full pattern. */
-        new_length = new_length * (new_length % self->pattern_orig_length)
-            + self->pattern_orig_length;
-    }
-
-    self->pattern = realloc(self->pattern, new_length);
-    while (self->pattern_buffer_length < new_length) {
-        /* memcpy is really fast, so rather than copy things ourself,
-         * we play games with calls to memcpy of exponentially greater
-         * length. */
-        size_t data_to_copy;
-        if (self->pattern_buffer_length * 2 > new_length) {
-            data_to_copy = new_length - self->pattern_buffer_length;
-        } else {
-            data_to_copy = self->pattern_buffer_length;
-        }
-        memcpy(self->pattern, self->pattern + self->pattern_buffer_length,
-               data_to_copy);
-        self->pattern_buffer_length += data_to_copy;
-    }
-
-    g_assert(self->pattern_buffer_length == new_length);
-    g_assert(self->pattern_buffer_length % self->pattern_orig_length == 0);
-}
-
 static gpointer
 pull_buffer_impl(
     XferElement *elt,
@@ -104,9 +71,12 @@ pull_buffer_impl(
 {
     XferSourcePattern *self = (XferSourcePattern *)elt;
     char *rval;
+    char *s, *d;
+    size_t l;
+    size_t offset;
 
     /* indicate EOF on an cancel */
-    if (elt->cancelled) {
+    if (elt->cancelled || (self->limited_length && self->length == 0)) {
 	*size = 0;
 	return NULL;
     }
@@ -119,15 +89,23 @@ pull_buffer_impl(
 
         *size = MIN(10240, self->length);
         self->length -= *size;
+    } else {
+	*size = 10240;
     }
 
     rval = malloc(*size);
-    resize_pattern_buffer(self, *size);
 
-    memcpy(rval, self->pattern, *size);
-
-    self->current_offset =
-        (*size + self->current_offset) % self->pattern_orig_length;
+    /* fill the buffer "manually", instead of using fancy memcpy techniques, so
+     * that this runs at about the same speed as the random source */
+    l = *size;
+    s = self->pattern;
+    offset = self->current_offset;
+    d = rval;
+    while (l--) {
+	*(d++) = *(s + offset++);
+	if (offset > self->pattern_buffer_length) offset = 0;
+    }
+    self->current_offset = offset;
 
     return rval;
 }
@@ -190,8 +168,10 @@ XferElement * xfer_source_pattern(guint64 length, void * pattern,
     XferElement *elt = XFER_ELEMENT(xsp);
 
     xsp->length = length;
+    xsp->limited_length = (length > 0);
     xsp->pattern = g_memdup(pattern, pattern_length);
-    xsp->pattern_buffer_length = xsp->pattern_orig_length = pattern_length;
+    xsp->pattern_buffer_length = pattern_length;
+    xsp->current_offset = 0;
 
     return elt;
 }

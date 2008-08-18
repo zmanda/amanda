@@ -6100,20 +6100,21 @@ out:
 
 gint64 
 find_multiplier(
-    char * casestr)
+    char * str)
 {
     keytab_t * table_entry;
-    char * str = g_utf8_strup(casestr, -1);
+
+    str = g_strdup(str);
     g_strstrip(str);
 
     if (*str == '\0') {
         g_free(str);
         return 1;
     }
-    
+
     for (table_entry = numb_keytable; table_entry->keyword != NULL;
          table_entry ++) {
-        if (strcmp(casestr, table_entry->keyword) == 0) {
+        if (strcasecmp(str, table_entry->keyword) == 0) {
             g_free(str);
             switch (table_entry->token) {
             case CONF_MULT1K:

@@ -41,7 +41,6 @@ Amanda::MainLoop - Perl interface to the Glib MainLoop
 	$to->remove();		    # dont' re-queue this timeout
 	Amanda::MainLoop::quit();   # return from Amanda::MainLoop::run
     });
-    $to->attach();
 
     Amanda::MainLoop::run();
 

@@ -76,12 +76,6 @@ pull_buffer_impl(
     }
 
     if (self->limited_length) {
-        if (self->length == 0) {
-            *size = 0;
-            return NULL;
-        }
-
-        /* TODO: vary the buffer size here, to exercise handling downstream */
         *size = MIN(10240, self->length);
         self->length -= *size;
     } else {

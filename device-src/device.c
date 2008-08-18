@@ -984,10 +984,10 @@ device_write_block (Device * self, guint size, gpointer block)
     /* these are all things that the caller should take care to
      * guarantee, so we just assert them here */
     g_assert(size <= self->block_size);
+    g_assert(self->in_file);
     g_assert(!selfp->wrote_short_block);
     g_assert(block != NULL);
     g_assert(IS_WRITABLE_ACCESS_MODE(self->access_mode));
-    g_assert(self->in_file);
 
     if (size < self->block_size)
 	selfp->wrote_short_block = TRUE;
