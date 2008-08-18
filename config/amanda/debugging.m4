@@ -58,6 +58,23 @@ AC_DEFUN([AMANDA_WITH_DEBUGGING],
 
 # SYNOPSIS
 #
+#   AMANDA_GLIBC_BACKTRACE
+#
+# OVERVIEW
+#
+#   Check for glibc's backtrace support, and define HAVE_GLIBC_BACKTRACE if it is present.
+AC_DEFUN([AMANDA_GLIBC_BACKTRACE],
+[
+    AC_CHECK_HEADER([execinfo.h], [
+	AC_CHECK_FUNC([backtrace_symbols_fd], [
+	    AC_DEFINE(HAVE_GLIBC_BACKTRACE, 1,
+		[Define this if glibc's backtrace functionality (execinfo.h) is present])
+	])
+    ])
+])
+
+# SYNOPSIS
+#
 #   AMANDA_WITH_DEBUG_DAYS
 #
 # OVERVIEW
