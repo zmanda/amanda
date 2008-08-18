@@ -89,6 +89,11 @@ C<Amanda::Xfer::Msg>, below, for details.
 Start this transfer.  Processing takes place asynchronously, and messages will
 begin queueing up immediately.
 
+=item cancel()
+
+Stop transferring data.  The transfer will send an C<XMSG_CANCEL>, "drain" any
+buffered data as best it can, and then complete normally with an C<XMSG_DONE>.
+
 =item get_status()
 
 Get the transfer's status.  The result will be one of C<$XFER_INIT>,

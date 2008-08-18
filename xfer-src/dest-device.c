@@ -107,6 +107,7 @@ queueing_thread(
     GValue val;
     StreamingRequirement streaming_mode;
     size_t block_size;
+    size_t max_memory;
 
     /* Get the device's parameters */
     bzero(&val, sizeof(val));
@@ -120,14 +121,16 @@ queueing_thread(
 
     block_size = self->device->block_size;
 
+    max_memory = self->max_memory || DEFAULT_MAX_BUFFER_MEMORY;
+
     /* this thread creates two other threads (consumer and producer) and
      * blocks waiting for them to finish.  TODO: when taper no longer uses
      * queueing, merge the queueing functionality here */
-    result = do_consumer_producer_queue_full(
-		pull_buffer_producer, data,
-		device_write_consumer, self->device,
-		block_size, self->max_memory,
-		streaming_mode);
+    result =
+        do_consumer_producer_queue_full(pull_buffer_producer, data,
+                                        device_write_consumer, self->device,
+                                        block_size, max_memory,
+                                        streaming_mode);
 
     /* finish the file explicitly */
     if (!(self->device->status & DEVICE_STATUS_DEVICE_ERROR))

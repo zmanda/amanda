@@ -1,4 +1,14 @@
 2008-08-18  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/Makefile.am device-src/amtapetype.pl: new perl amtapetype
+	* installcheck/Installcheck/Run.pm: report exit status
+	* installcheck/Makefile.am installcheck/amtapetype.pl: new test
+	* man/xml-source/amtapetype.8.xml: updated manpage
+	* device-src/s3-device.c device-src/vfs-device.c
+	  device-src/tape-device.c: add compression property
+	* perl/Amanda/Xfer.swg: add POD for the cancel() method
+	* xfer-src/dest-device.c: add a default for max_memory
+
+2008-08-18  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/conffile.c: make find_multiplier case-insensitive
 	* device-src/device.c: reorder assertions
 	* device-src/tape-device.c: don't set access_mode twice, but

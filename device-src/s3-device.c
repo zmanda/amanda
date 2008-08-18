@@ -609,6 +609,12 @@ s3_device_init(S3Device * self)
     device_add_property(o, &prop, &response);
     g_value_unset(&response);
 
+    prop.base = &device_property_compression;
+    g_value_init(&response, G_TYPE_BOOLEAN);
+    g_value_set_boolean(&response, FALSE);
+    device_add_property(o, &prop, &response);
+    g_value_unset(&response);
+
     prop.base = &device_property_medium_access_type;
     g_value_init(&response, MEDIA_ACCESS_MODE_TYPE);
     g_value_set_enum(&response, MEDIA_ACCESS_MODE_READ_WRITE);

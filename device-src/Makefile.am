@@ -1,6 +1,7 @@
 # Makefile for Amanda tape library.
 
 include $(top_srcdir)/config/automake/vars.am
+include $(top_srcdir)/config/automake/scripts.am
 include $(top_srcdir)/config/automake/precompile.am
 
 INCLUDES =	-I$(top_builddir)/common-src \
@@ -11,6 +12,9 @@ AM_CFLAGS = $(AMANDA_WARNING_CFLAGS)
 AM_LDFLAGS = $(AMANDA_STATIC_LDFLAGS)
 
 sbin_PROGRAMS =
+
+SCRIPTS_PERL = amtapetype
+sbin_SCRIPTS = amtapetype
 
 ## libamdevice.la
 

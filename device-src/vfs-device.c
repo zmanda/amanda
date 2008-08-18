@@ -218,6 +218,10 @@ vfs_device_init (VfsDevice * self) {
 
     prop.base = &device_property_partial_deletion;
     device_add_property(o, &prop, &response);
+
+    prop.base = &device_property_compression;
+    g_value_set_boolean(&response, FALSE);
+    device_add_property(o, &prop, &response);
     g_value_unset(&response);
 
     prop.base = &device_property_medium_access_type;

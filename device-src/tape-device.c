@@ -183,7 +183,9 @@ tape_device_init (TapeDevice * self) {
     device_add_property(d_self, &prop, &response);
     g_value_unset(&response);
 
-    prop.access = PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_MASK;
+    /* We don't (yet?) support reading the device's compression state, so not
+     * gettable. */
+    prop.access = PROPERTY_ACCESS_SET_MASK;
     prop.base = &device_property_compression;
     device_add_property(d_self, &prop, NULL);
 

@@ -150,9 +150,7 @@ now we just report it as zero.</para>
 </refsect1>
 
 <refsect1><title>SEE ALSO</title>
-<para><citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-<ulink url="http://wiki.zmanda.com"/>
-</para>
+<para><citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry></para>
 </refsect1>
 </refentry>
 
