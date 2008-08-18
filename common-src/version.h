@@ -40,10 +40,6 @@
 #ifndef VERSION_H
 #define VERSION_H
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 extern const int   VERSION_MAJOR;
 extern const int   VERSION_MINOR;
 extern const int   VERSION_PATCH;

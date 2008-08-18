@@ -1,4 +1,8 @@
 2008-08-18  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/version.h: remove #include of config.h
+	* device-src/vfs-device.c: #include amanda.h first
+
+2008-08-18  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/Makefile.am device-src/amtapetype.pl: new perl amtapetype
 	* installcheck/Installcheck/Run.pm: report exit status
 	* installcheck/Makefile.am installcheck/amtapetype.pl: new test

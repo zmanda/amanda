@@ -18,10 +18,9 @@
  * Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
  */
 
-#include <string.h> /* memset() */
-
-#include "fsusage.h"
 #include "amanda.h"
+#include <string.h> /* memset() */
+#include "fsusage.h"
 #include "util.h"
 #include "device.h"
 #include <regex.h>
