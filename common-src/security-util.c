@@ -2510,14 +2510,14 @@ show_stat_info(
 {
     char *name = vstralloc(a, b, NULL);
     struct stat sbuf;
-    struct passwd *pwptr;
-    struct passwd pw;
+    struct passwd *pwptr G_GNUC_UNUSED;
+    struct passwd pw G_GNUC_UNUSED;
     char *owner;
-    struct group *grptr;
-    struct group gr;
+    struct group *grptr G_GNUC_UNUSED;
+    struct group gr G_GNUC_UNUSED;
     char *group;
-    int buflen;
-    char *buf;
+    int buflen G_GNUC_UNUSED;
+    char *buf G_GNUC_UNUSED;
 
     if (stat(name, &sbuf) != 0) {
 	auth_debug(1, _("bsd: cannot stat %s: %s\n"), name, strerror(errno));
@@ -2534,20 +2534,27 @@ show_stat_info(
 #endif
     buf = malloc(buflen);
 
-    if (getpwuid_r(sbuf.st_uid, &pw, buf, buflen, &pwptr) != 0 ||
-	pwptr == NULL) {
+#ifdef HAVE_GETPWUID_R
+    if (getpwuid_r(sbuf.st_uid, &pw, buf, buflen, &pwptr) == 0 &&
+	pwptr != NULL) {
+	owner = stralloc(pwptr->pw_name);
+    } else
+#endif
+    {
 	owner = alloc(NUM_STR_SIZE + 1);
 	g_snprintf(owner, NUM_STR_SIZE, "%ld", (long)sbuf.st_uid);
-    } else {
-	owner = stralloc(pwptr->pw_name);
     }
-    if (getgrgid_r(sbuf.st_gid, &gr, buf, buflen, &grptr) != 0 ||
-	grptr == NULL) {
+#ifdef HAVE_GETGRGID_R
+    if (getgrgid_r(sbuf.st_gid, &gr, buf, buflen, &grptr) == 0 &&
+	grptr != NULL) {
+	group = stralloc(grptr->gr_name);
+    } else
+#endif
+    {
 	group = alloc(NUM_STR_SIZE + 1);
 	g_snprintf(group, NUM_STR_SIZE, "%ld", (long)sbuf.st_gid);
-    } else {
-	group = stralloc(grptr->gr_name);
     }
+
     auth_debug(1, _("bsd: processing file: %s\n"), name);
     auth_debug(1, _("bsd:                  owner=%s group=%s mode=%03o\n"),
 		   owner, group,

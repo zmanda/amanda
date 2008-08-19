@@ -1,3 +1,7 @@
+2008-08-19  Dustin J. Mitchell <dustin@zmanda.com>
+	* configure.in: check for getgrgid_r and getpwuid_r
+	* common-src/security-util.c: conditionalize on checks
+
 2008-08-18  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/version.h: remove #include of config.h
 	* device-src/vfs-device.c: #include amanda.h first
