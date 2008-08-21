@@ -1,4 +1,7 @@
 2008-08-21  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/krb5-security.c: Fix security_seterror use.
+
+2008-08-21  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/queueing.c: Fix compiler warning.
 
 2008-08-19  Dustin J. Mitchell <dustin@zmanda.com>
