@@ -1,3 +1,6 @@
+2008-08-21  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/queueing.c: Fix compiler warning.
+
 2008-08-19  Dustin J. Mitchell <dustin@zmanda.com>
 	* configure.in: check for getgrgid_r and getpwuid_r
 	* common-src/security-util.c: conditionalize on checks

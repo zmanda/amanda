@@ -442,15 +442,15 @@ int device_write_consumer(gpointer devicep, queue_buffer_t *buffer) {
     unsigned int write_size;
     static gboolean wrote_blocksize = FALSE;
 
-    if (!wrote_blocksize) {
-	wrote_blocksize = TRUE;
-	dbprintf("USING BLCOKSIZE %d bytes\n", write_size);
-    }
-
     device = (Device*) devicep;
     g_assert(IS_DEVICE(device));
     write_size = MIN(buffer->data_size,
                      device_write_max_size(device));
+
+    if (!wrote_blocksize) {
+	wrote_blocksize = TRUE;
+	dbprintf("USING BLOCKSIZE %d bytes\n", write_size);
+    }
 
     if (device_write_block(device, write_size,
                            buffer->data + buffer->offset,
