@@ -1,4 +1,7 @@
 2008-08-22  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/reporter.c: Fix computation of compression ratio.
+
+2008-08-22  Jean-Louis Martineau <martineau@zmanda.com>
 	* client-src/sendbackup.h: Add DMP_IGNORE and AM_IGNORE_RE.
 	* application-src/amgtar.c, application-src/amgtar_perl.pl:
 	  Ignore "Directory is new" and "Directory has been renamed".

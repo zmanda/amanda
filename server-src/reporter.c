@@ -2427,7 +2427,12 @@ handle_success(
 
     i = level > 0;
 
-    if(origkb < 0.0) {
+    if (origkb < 0.0 && (curprog == P_CHUNKER || curprog == P_TAPER) &&
+	isnormal(repdata->dumper.outsize)) {
+	/* take origkb from DUMPER line */
+	origkb = repdata->dumper.outsize;
+    } else if (origkb < 0.0) {
+	/* take origkb from infofile, needed for amflush */
 	info_t inf;
 	struct tm *tm;
 	int Idatestamp;
@@ -2482,6 +2487,8 @@ handle_success(
 	if(!isnormal(repdata->chunker.outsize) && isnormal(repdata->dumper.outsize)) { /* dump to tape */
 	    stats[i].outsize += kbytes;
 	    if (abs(kbytes - origkb) >= 32) {
+		/* server compressed */
+		stats[i].corigsize += origkb;
 		stats[i].coutsize += kbytes;
 	    }
 	}
@@ -2491,10 +2498,13 @@ handle_success(
     if(curprog == P_DUMPER) {
 	stats[i].dumper_time += sec;
 	if (abs(kbytes - origkb) < 32) {
+	    /* not client compressed */
 	    sp->origsize = kbytes;
 	}
 	else {
+	    /* client compressed */
 	    stats[i].corigsize += sp->origsize;
+	    stats[i].coutsize += kbytes;
 	}
 	dumpdisks[level] +=1;
 	stats[i].dumpdisks +=1;
@@ -2505,6 +2515,8 @@ handle_success(
 	sp->outsize = kbytes;
 	stats[i].outsize += kbytes;
 	if (abs(kbytes - origkb) >= 32) {
+	    /* server compressed */
+	    stats[i].corigsize += origkb;
 	    stats[i].coutsize += kbytes;
 	}
     }
