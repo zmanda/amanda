@@ -1,3 +1,6 @@
+2008-08-22  Olivier Nicole <on@cs.ait.ac.th>
+	* changer-src/chg-disk.sh: replace == with =
+
 2008-08-22  Dustin J. Mitchell <dustin@zmanda.com>
 	* changer-src/chg-lib.sh.in: fix sed invocation for BSD's sed
 
