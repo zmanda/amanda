@@ -1,3 +1,6 @@
+2008-08-22  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/amglue/bigint.c: add #include "stdint.h"
+
 2008-08-22  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amadmin.c (tape): Correctly print next tape to use.
 	* server-src/tapefile.c (print_new_tapes): New function to print new
@@ -26,6 +29,7 @@
 2008-08-21  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/queueing.c: Fix compiler warning.
 
+>>>>>>> .r1263
 2008-08-19  Dustin J. Mitchell <dustin@zmanda.com>
 	* configure.in: check for getgrgid_r and getpwuid_r
 	* common-src/security-util.c: conditionalize on checks

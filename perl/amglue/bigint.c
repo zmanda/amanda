@@ -19,6 +19,7 @@
  */
 
 #include "amglue.h"
+#include "stdint.h"
 
 /*
  * C -> Perl
