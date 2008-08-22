@@ -1,4 +1,7 @@
 2008-08-22  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/amglue/bigint.c: add #include "stdint.h"
+
+2008-08-22  Dustin J. Mitchell <dustin@zmanda.com>
 	* config/amanda/ps.m4: search multiple ps invocations; thanks
 	  to John Hein <jhein@timing.com>
 
