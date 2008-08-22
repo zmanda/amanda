@@ -57,7 +57,7 @@ void start_index(int createindex, int input, int mesg,
  */
 
 typedef enum { 
-    DMP_NORMAL, DMP_STRANGE, DMP_SIZE, DMP_ERROR
+    DMP_NORMAL, DMP_IGNORE, DMP_STRANGE, DMP_SIZE, DMP_ERROR
 } dmpline_t;
 
 typedef struct regex_s {
@@ -69,6 +69,7 @@ typedef struct regex_s {
 } amregex_t;
 
 #define AM_NORMAL_RE(re)	{(re), __LINE__, 0, 0, DMP_NORMAL}
+#define AM_IGNORE_RE(re)	{(re), __LINE__, 0, 0, DMP_IGNORE}
 #define AM_STRANGE_RE(re)	{(re), __LINE__, 0, 0, DMP_STRANGE}
 #define AM_SIZE_RE(re,s,f)	{(re), __LINE__, (s), (f), DMP_SIZE}
 #define AM_ERROR_RE(re)		{(re), __LINE__, 0, 0, DMP_ERROR}

@@ -73,7 +73,8 @@ static amregex_t re_table[] = {
   AM_NORMAL_RE("^could not open conf file"),
   AM_NORMAL_RE("^Elapsed time:"),
   AM_NORMAL_RE("^Throughput"),
-  AM_NORMAL_RE(": Directory is new$"),
+  AM_IGNORE_RE(": Directory is new$"),
+  AM_IGNORE_RE(": Directory has been renamed from"),
 
   /* GNU tar 1.13.17 will print this warning when (not) backing up a
      Unix named socket.  */
@@ -594,6 +595,8 @@ amgtar_backup(
 		type = "normal";
 		startchr = '|';
 		break;
+	    case DMP_IGNORE:
+		continue;
 	    case DMP_STRANGE:
 		type = "strange";
 		startchr = '?';

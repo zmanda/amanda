@@ -234,8 +234,12 @@ sub parse_backup {
 	       $ksize = int ($size / 1024);
             }
             elsif(defined($fhout)) {
-               next if /: Directory is new$/;
-               print $fhout $_;
+	       if (/: Directory is new$/ ||
+		   /: Directory has been renamed/) {) {
+		  /* ignore */
+	       } else { /* STRANGE */
+                  print $fhout "? $_";
+	       }
             }
       }
    }
