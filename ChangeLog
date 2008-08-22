@@ -1,3 +1,9 @@
+2008-08-22  Jean-Louis Martineau <martineau@zmanda.com>
+	* configure.in, packaging/deb/rules,
+	  packaging/deb/buildpkg, packaging/rpm/buildpkg,
+	  packaging/rpm/amanda.spec: Change release to 2.6.0p2
+	* NEWS: News in 2.6.0p2
+
 2008-08-22  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/amglue/bigint.c: add #include "stdint.h"
 

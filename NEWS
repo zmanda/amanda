@@ -1,3 +1,10 @@
+Changes in release 2.6.0p2
+
+   * Bugs fix only:
+         o Various device-api fix
+         o Compilation on various platform
+         o others small fixes.
+
 Changes in release 2.6.0p1
 
    * Bugs fix only:
