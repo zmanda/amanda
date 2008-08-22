@@ -1,3 +1,6 @@
+2008-08-22  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/reporter.c: Fix computation of compression ratio.
+
 2008-08-21  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/krb5-security.c: Fix security_seterror use.
 
