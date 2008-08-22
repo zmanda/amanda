@@ -836,7 +836,7 @@ static gboolean	vfs_device_start(Device * pself,
 
     release_file(self);
  
-    return TRUE;
+    return FALSE;
 }
 
 static gboolean

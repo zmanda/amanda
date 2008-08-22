@@ -1,3 +1,7 @@
+2008-08-22  Dustin J. Mitchell <dustin@zmanda.com>
+	* changer-src/chg-disk.sh: replace == with =
+	* changer-src/chg-lib.sh.in: fix sed invocation for BSD's sed
+
 2008-08-22  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/reporter.c: Fix computation of compression ratio.
 

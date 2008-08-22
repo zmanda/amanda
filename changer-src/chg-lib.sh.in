@@ -110,7 +110,7 @@ amdevcheck_status() {
     test "$amdevcheck_status" -ne 0 && return 0
 
     # extract any messages
-    amdevcheck_message=`echo "$amdevcheck_output" | sed '/^MESSAGE /{s/^MESSAGE //;p}; d'`
+    amdevcheck_message=`echo "$amdevcheck_output" | sed '/^MESSAGE /{s/^MESSAGE //;p;}; d'`
 
     # Return 1 if it's possible that the device is offline or busy; if the device cannot
     # distinguish this state from an error condition, then our caller will just have to

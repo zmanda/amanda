@@ -928,7 +928,7 @@ device_finish (Device * self) {
 
     klass = DEVICE_GET_CLASS(self);
     if (klass->finish) {
-	return (klass->finish)(self);
+	return (klass->finish)(self) && FALSE;
     } else {
 	device_set_error(self,
 	    stralloc(_("Unimplemented method")),

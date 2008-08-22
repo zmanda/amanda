@@ -83,7 +83,7 @@ fi
 MYNAME=$0
 
 TAPE=`amgetconf$SUF tapedev`
-if test X"$TAPE" == X""; then
+if test X"$TAPE" = X""; then
     echo `_ '<none> tapedev not specified in amanda.conf.'`
     exit 2
 fi
