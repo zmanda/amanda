@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 76;
+use Test::More tests => 78;
 
 use lib "@amperldir@";
 use Installcheck::Config;
@@ -220,6 +220,7 @@ $testconf->add_holdingdisk("hd17", [ chunksize => '128' ]);
 $testconf->add_application('app_amgtar', [ plugin => '"amgtar"' ]);
 $testconf->add_application('app_amstar', [ plugin => '"amstar"' ]);
 $testconf->add_script('my_script', [ "execute-on" => 'pre-dle-amcheck', 'plugin' => '"foo"' ]);
+$testconf->add_device('my_device', [ "tapedev" => '"foo:/bar"' ]);
 $testconf->write();
 
 is_deeply([sort(+split(/\n/, run_get('amgetconf', 'TESTCONF', '--list', 'tapetype')))],
@@ -271,6 +272,13 @@ is(run_get('amgetconf', 'TESTCONF', 'script_tOOl:my_script:eXECute-on'), 'PRE-DL
     "insensitive to case in subsec_key");
 is(run_get('amgetconf', 'TESTCONF', 'script-tool:my_script:execute_on'), 'PRE-DLE-AMCHECK',
     "insensitive to -/_ in subsec_key");
+
+is_deeply([sort(split(/\n/, run_get('amgetconf', 'TESTCONF', '--list', 'device')))],
+          [sort("my_device")],
+        "--list returns correct set of devices");
+
+is(run_get('amgetconf', 'TESTCONF', 'device:my_device:tapedev'), 'foo:/bar',
+    "returns device parameter correctly");
 
 # non-existent subsection types, names, and parameters
 like(run_err('amgetconf', 'TESTCONF', 'NOSUCHTYPE:testiface:comment'), qr/no such parameter/, 

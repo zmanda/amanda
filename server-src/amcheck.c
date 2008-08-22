@@ -644,7 +644,6 @@ static gboolean test_tape_status(FILE * outf) {
         return FALSE;
     }
     
-    device_set_startup_properties_from_config(device);
     device_status = device_read_label(device);
 
     if (tape_status == 3 && 

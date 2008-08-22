@@ -87,6 +87,7 @@ typedef enum {
     CONF_APPLICATION,          CONF_APPLICATION_TOOL,
     CONF_PP_SCRIPT,            CONF_PP_SCRIPT_TOOL,
     CONF_EXECUTE_ON,           CONF_EXECUTE_WHERE,	CONF_SEND_AMREPORT_ON,
+    CONF_DEVICE,
 
     /* execute on */
     CONF_PRE_DLE_AMCHECK,      CONF_PRE_HOST_AMCHECK,
@@ -311,6 +312,14 @@ struct pp_script_s {
     val_t value[PP_SCRIPT_PP_SCRIPT];
 };
 
+struct device_config_s {
+    struct device_config_s *next;
+    int seen;
+    char *name;
+
+    val_t value[DEVICE_CONFIG_DEVICE_CONFIG];
+};
+
 /* The current parser table */
 static conf_var_t *parsetable = NULL;
 
@@ -415,6 +424,12 @@ static void get_pp_script(void);
 static void init_pp_script_defaults(void);
 static void save_pp_script(void);
 static void copy_pp_script(void);
+
+static device_config_t dccur;
+static void get_device_config(void);
+static void init_device_config_defaults(void);
+static void save_device_config(void);
+static void copy_device_config(void);
 
 /* read_functions -- these fit into the read_function slot in a parser
  * table entry, and are responsible for calling getconf_token as necessary
@@ -524,6 +539,7 @@ static tapetype_t *tapelist = NULL;
 static interface_t *interface_list = NULL;
 static application_t *application_list = NULL;
 static pp_script_t *pp_script_list = NULL;
+static device_config_t *device_config_list = NULL;
 
 /* storage for derived values */
 static long int unit_divisor = 1;
@@ -781,6 +797,7 @@ keytab_t server_keytab[] = {
     { "DEBUG_SENDSIZE"   , CONF_DEBUG_SENDSIZE },
     { "DEBUG_SENDBACKUP" , CONF_DEBUG_SENDBACKUP },
     { "DEFINE", CONF_DEFINE },
+    { "DEVICE", CONF_DEVICE },
     { "DEVICE_PROPERTY", CONF_DEVICE_PROPERTY },
     { "DIRECTORY", CONF_DIRECTORY },
     { "DISKFILE", CONF_DISKFILE },
@@ -1180,6 +1197,13 @@ conf_var_t pp_script_var [] = {
    { CONF_EXECUTE_ON   , CONFTYPE_EXECUTE_ON  , read_execute_on  , PP_SCRIPT_EXECUTE_ON   , NULL },
    { CONF_EXECUTE_WHERE, CONFTYPE_EXECUTE_WHERE  , read_execute_where  , PP_SCRIPT_EXECUTE_WHERE, NULL },
    { CONF_UNKNOWN      , CONFTYPE_INT     , NULL         , PP_SCRIPT_PP_SCRIPT    , NULL }
+};
+
+conf_var_t device_config_var [] = {
+   { CONF_COMMENT         , CONFTYPE_STR      , read_str      , DEVICE_CONFIG_COMMENT        , NULL },
+   { CONF_DEVICE_PROPERTY , CONFTYPE_PROPLIST , read_property , DEVICE_CONFIG_DEVICE_PROPERTY, NULL },
+   { CONF_TAPEDEV         , CONFTYPE_STR      , read_str      , DEVICE_CONFIG_TAPEDEV        , NULL },
+   { CONF_UNKNOWN         , CONFTYPE_INT      , NULL          , DEVICE_CONFIG_DEVICE_CONFIG  , NULL }
 };
 
 /*
@@ -1632,7 +1656,8 @@ read_confline(
 	    else if(tok == CONF_INTERFACE) get_interface();
 	    else if(tok == CONF_APPLICATION_TOOL) get_application();
 	    else if(tok == CONF_PP_SCRIPT_TOOL) get_pp_script();
-	    else conf_parserror(_("DUMPTYPE, INTERFACE, TAPETYPE, APPLICATION-TOOL or SCRIPT-TOOL expected"));
+	    else if(tok == CONF_DEVICE) get_device_config();
+	    else conf_parserror(_("DUMPTYPE, INTERFACE, TAPETYPE, APPLICATION-TOOL, SCRIPT-TOOL, or DEVICE expected"));
 	}
 	break;
 
@@ -2422,6 +2447,131 @@ copy_pp_script(void)
 	if(ps->value[i].seen) {
 	    free_val_t(&pscur.value[i]);
 	    copy_val_t(&pscur.value[i], &ps->value[i]);
+	}
+    }
+}
+
+device_config_t *
+read_device_config(
+    char *name,
+    FILE *from,
+    char *fname,
+    int *linenum)
+{
+    int save_overwrites;
+    FILE *saved_conf = NULL;
+    char *saved_fname = NULL;
+
+    if (from) {
+	saved_conf = current_file;
+	current_file = from;
+    }
+
+    if (fname) {
+	saved_fname = current_filename;
+	current_filename = fname;
+    }
+
+    if (linenum)
+	current_line_num = *linenum;
+
+    save_overwrites = allow_overwrites;
+    allow_overwrites = 1;
+
+    init_device_config_defaults();
+    if (name) {
+	dccur.name = name;
+    } else {
+	get_conftoken(CONF_IDENT);
+	dccur.name = stralloc(tokenval.v.s);
+    }
+    dccur.seen = current_line_num;
+
+    read_block(device_config_var, dccur.value,
+	       _("device parameter expected"),
+	       (name == NULL), *copy_device_config);
+    if(!name)
+	get_conftoken(CONF_NL);
+
+    save_device_config();
+
+    allow_overwrites = save_overwrites;
+
+    if (linenum)
+	*linenum = current_line_num;
+
+    if (fname)
+	current_filename = saved_fname;
+
+    if (from)
+	current_file = saved_conf;
+
+    return lookup_device_config(dccur.name);
+}
+
+static void
+get_device_config(
+    void)
+{
+    read_device_config(NULL, NULL, NULL, NULL);
+}
+
+static void
+init_device_config_defaults(
+    void)
+{
+    dccur.name = NULL;
+    conf_init_str(&dccur.value[DEVICE_CONFIG_COMMENT] , "");
+    conf_init_str(&dccur.value[DEVICE_CONFIG_TAPEDEV]  , "");
+    conf_init_proplist(&dccur.value[DEVICE_CONFIG_DEVICE_PROPERTY]);
+}
+
+static void
+save_device_config(
+    void)
+{
+    device_config_t *dc, *dc1;
+
+    dc = lookup_device_config(dccur.name);
+
+    if(dc != (device_config_t *)0) {
+	conf_parserror(_("device %s already defined on line %d"),
+		       dc->name, dc->seen);
+	return;
+    }
+
+    dc = alloc(sizeof(device_config_t));
+    *dc = dccur;
+    dc->next = NULL;
+    /* add at end of list */
+    if (!device_config_list)
+	device_config_list = dc;
+    else {
+	dc1 = device_config_list;
+	while (dc1->next != NULL) {
+	    dc1 = dc1->next;
+	}
+	dc1->next = dc;
+    }
+}
+
+static void
+copy_device_config(void)
+{
+    device_config_t *dc;
+    int i;
+
+    dc = lookup_device_config(tokenval.v.s);
+
+    if(dc == NULL) {
+	conf_parserror(_("device parameter expected"));
+	return;
+    }
+
+    for(i=0; i < DEVICE_CONFIG_DEVICE_CONFIG; i++) {
+	if(dc->value[i].seen) {
+	    free_val_t(&dccur.value[i]);
+	    copy_val_t(&dccur.value[i], &dc->value[i]);
 	}
     }
 }
@@ -4340,6 +4490,7 @@ getconf_list(
     holdingdisk_t *hp;
     application_t *ap;
     pp_script_t   *pp;
+    device_config_t *dc;
     GSList *rv = NULL;
 
     if (strcasecmp(listname,"tapetype") == 0) {
@@ -4367,6 +4518,10 @@ getconf_list(
 	    || strcasecmp(listname,"script-tool") == 0) {
 	for(pp = pp_script_list; pp != NULL; pp=pp->next) {
 	    rv = g_slist_append(rv, pp->name);
+	}
+    } else if (strcasecmp(listname,"device") == 0) {
+	for(dc = device_config_list; dc != NULL; dc=dc->next) {
+	    rv = g_slist_append(rv, dc->name);
 	}
     }
     return rv;
@@ -4590,6 +4745,36 @@ pp_script_name(
 {
     assert(pps != NULL);
     return pps->name;
+}
+
+device_config_t *
+lookup_device_config(
+    char *str)
+{
+    device_config_t *devconf;
+
+    for(devconf = device_config_list; devconf != NULL; devconf = devconf->next) {
+	if(strcasecmp(devconf->name, str) == 0) return devconf;
+    }
+    return NULL;
+}
+
+val_t *
+device_config_getconf(
+    device_config_t *devconf,
+    device_config_key key)
+{
+    assert(devconf != NULL);
+    assert(key < DEVICE_CONFIG_DEVICE_CONFIG);
+    return &devconf->value[key];
+}
+
+char *
+device_config_name(
+    device_config_t *devconf)
+{
+    assert(devconf != NULL);
+    return devconf->name;
 }
 
 long int
@@ -5236,6 +5421,7 @@ dump_configuration(void)
     holdingdisk_t *hp;
     application_t *ap;
     pp_script_t *ps;
+    device_config_t *dc;
     int i;
     conf_var_t *np;
     keytab_t *kt;
@@ -5388,6 +5574,25 @@ dump_configuration(void)
 		error(_("script bad token"));
 
 	    val_t_print_token(stdout, prefix, "      %-19s ", kt, &ps->value[i]);
+	}
+	g_printf("%s}\n",prefix);
+    }
+
+    for(dc = device_config_list; dc != NULL; dc = dc->next) {
+	prefix = "";
+	g_printf("\n%sDEFINE DEVICE %s {\n", prefix, dc->name);
+	for(i=0; i < DEVICE_CONFIG_DEVICE_CONFIG; i++) {
+	    for(np=device_config_var; np->token != CONF_UNKNOWN; np++)
+		if(np->parm == i) break;
+	    if(np->token == CONF_UNKNOWN)
+		error(_("device bad value"));
+
+	    for(kt = server_keytab; kt->token != CONF_UNKNOWN; kt++)
+		if(kt->token == np->token) break;
+	    if(kt->token == CONF_UNKNOWN)
+		error(_("device bad token"));
+
+	    val_t_print_token(stdout, prefix, "      %-19s ", kt, &dc->value[i]);
 	}
 	g_printf("%s}\n",prefix);
     }
@@ -5945,6 +6150,7 @@ parm_key_info(
     holdingdisk_t *hp;
     application_t *ap;
     pp_script_t   *pp;
+    device_config_t   *dc;
     int success = FALSE;
 
     /* WARNING: assumes globals keytable and parsetable are set correctly. */
@@ -6063,6 +6269,18 @@ parm_key_info(
 	    if (np->token == CONF_UNKNOWN) goto out;
 
 	    if (val) *val = &pp->value[np->parm];
+	    if (parm) *parm = np;
+	    success = TRUE;
+	} else if (strcmp(subsec_type, "DEVICE") == 0) {
+	    dc = lookup_device_config(subsec_name);
+	    if (!dc) goto out;
+	    for(np = device_config_var; np->token != CONF_UNKNOWN; np++) {
+		if(np->token == kt->token)
+		   break;
+	    }
+	    if (np->token == CONF_UNKNOWN) goto out;
+
+	    if (val) *val = &dc->value[np->parm];
 	    if (parm) *parm = np;
 	    success = TRUE;
 	} 

@@ -385,7 +385,7 @@ option.</para>
   <listitem>
 <para>Default:
 <filename>null:</filename>.
-The device name.  See
+The device name, referencing the name of a "device" section in the configuration file.  See
 <citerefentry><refentrytitle>amanda-devices</refentrytitle><manvolnum>7</manvolnum></citerefentry>
 for more information on device names.</para>
 
@@ -2444,6 +2444,36 @@ the property to set, and the others contains its values.
   </listitem>
   </varlistentry>
 </variablelist>
+</refsect1>
+
+<refsect1><title>DEVICE SECTION</title>
+<para>Backend storage devices are specified in
+<emphasis remap='B'>amanda.conf</emphasis>
+in the form of "device" sections, which looks like this:</para>
+
+<programlisting>
+define device <emphasis remap='I'>name</emphasis> {
+    commend "<emphasis remap='I'>comment (optional)</emphasis>"
+    tapedev "<emphasis remap='I'>device-specifier</emphasis>"
+    device_property "<emphasis remap='I'>prop-name</emphasis>" "<emphasis remap='I'>prop-value</emphasis>"
+    <literal>...</literal>
+}
+</programlisting>
+
+<para><emphasis remap='I'>name</emphasis> is the user-specified name of
+this device. It is referenced from the global <emphasis
+remap='I'>tapedev</emphasis> parameter.  The <emphasis
+remap='I'>device-specifier</emphasis> specifies the device name to use;
+see <citerefentry><refentrytitle>amanda-devices</refentrytitle><manvolnum>7</manvolnum></citerefentry>.
+As with most sections, the <emphasis remap='I'>comment</emphasis>
+parmeter is optional and only for the user's convenience.</para>
+
+<para>An arbitrary number of <emphasis
+remap='I'>device_property</emphasis> parameters can be specified.
+Again, see
+<citerefentry><refentrytitle>amanda-devices</refentrytitle><manvolnum>7</manvolnum></citerefentry>
+for information on device properties.</para>
+
 </refsect1>
 
 <refsect1><title>AUTHOR</title>

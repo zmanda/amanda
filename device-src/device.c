@@ -173,6 +173,8 @@ static gboolean default_device_property_get(Device * self, DevicePropertyId ID,
                                             GValue * value);
 static gboolean default_device_property_set (Device * pself, DevicePropertyId ID,
                                              GValue * value);
+static void set_properties_from_global_config(Device * device);
+static void set_properties_from_device_config(Device * device, device_config_t *dc);
 
 /* pointer to the class of our parent */
 static GObjectClass *parent_class = NULL;
@@ -375,9 +377,10 @@ device_open (char * device_name)
     char *device_type = NULL;
     char *device_node = NULL;
     char *errmsg = NULL;
+    char *unaliased_name = NULL;
     DeviceFactory factory;
     Device *device;
-
+    device_config_t *dc;
 
     g_assert(device_name != NULL);
 
@@ -389,10 +392,22 @@ device_open (char * device_name)
     if (device_name == NULL)
 	return make_null_error(stralloc(_("No device name specified")), DEVICE_STATUS_DEVICE_ERROR);
 
-    if (!handle_device_regex(device_name, &device_type, &device_node,
+    /* look up the unaliased device name in the configuration */
+    if ((dc = lookup_device_config(device_name))) {
+	if (!(unaliased_name = device_config_get_tapedev(dc))
+	    || unaliased_name[0] == '\0') {
+	    return make_null_error(
+		vstrallocf(_("Device '%s' has no tapedev"), device_name),
+		DEVICE_STATUS_DEVICE_ERROR);
+	}
+    } else {
+	unaliased_name = device_name;
+    }
+
+    if (!handle_device_regex(unaliased_name, &device_type, &device_node,
 			     &errmsg)) {
-        amfree(device_type);
-        amfree(device_node);
+	amfree(device_type);
+	amfree(device_node);
 	return make_null_error(errmsg, DEVICE_STATUS_DEVICE_ERROR);
     }
 
@@ -411,6 +426,12 @@ device_open (char * device_name)
 
     amfree(device_type);
     amfree(device_node);
+
+    /* configure the device based on the configuration */
+    set_properties_from_global_config(device);
+    if (!device_in_error(device) && dc)
+	set_properties_from_device_config(device, dc);
+
     return device;
 }
 
@@ -641,15 +662,21 @@ static void set_device_property(gpointer key_p, gpointer value_p,
     g_return_if_fail(property != NULL);
     g_return_if_fail(property->values != NULL);
 
+    /* don't continue beating on a device that's already erroring */
+    if (device_in_error(device)) return;
+
     property_base = device_property_get_by_name(property_s);
     if (property_base == NULL) {
         /* Nonexistant property name. */
-        g_fprintf(stderr, _("Unknown device property name %s.\n"), property_s);
+	device_set_error(device,
+	    vstrallocf(_("unknown device property name '%s'"), property_s),
+	    DEVICE_STATUS_DEVICE_ERROR);
         return;
     }
     if (g_slist_length(property->values) > 1) {
-	g_fprintf(stderr,
-		  _("Multiple value for property name %s.\n"), property_s);
+	device_set_error(device,
+	    vstrallocf(_("multiple values for device property '%s'"), property_s),
+	    DEVICE_STATUS_DEVICE_ERROR);
 	return;
     }
     
@@ -658,9 +685,10 @@ static void set_device_property(gpointer key_p, gpointer value_p,
     value = property->values->data;
     if (!g_value_set_from_string(&property_value, value)) {
         /* Value type could not be interpreted. */
-        g_fprintf(stderr,
-                _("Could not parse property value %s for property type %s.\n"),
-                value, g_type_name(property_base->type));
+	device_set_error(device,
+	    vstrallocf(_("Could not parse property value '%s' for property '%s'"),
+			value, g_type_name(property_base->type)),
+	    DEVICE_STATUS_DEVICE_ERROR);
         return;
     } else {
         g_assert (G_VALUE_HOLDS(&property_value, property_base->type));
@@ -668,15 +696,21 @@ static void set_device_property(gpointer key_p, gpointer value_p,
 
     if (!device_property_set(device, property_base->ID, &property_value)) {
         /* Device rejects property. */
-        g_fprintf(stderr, _("Could not set property %s to %s on device %s.\n"),
-                property_base->name, value, device->device_name);
+        if (!device_in_error(device)) {
+	    device_set_error(device,
+		vstrallocf(_("Could not set property '%s' to '%s' on %s"),
+			property_base->name, value, device->device_name),
+		DEVICE_STATUS_DEVICE_ERROR);
+	}
         return;
     }
 }
 
-/* Set up first-run properties, including DEVICE_MAX_VOLUME_USAGE property
- * based on the tapetype. */
-void device_set_startup_properties_from_config(Device * device) {
+/* Set up properties based on various taper-related configuration parameters
+ * and from the tapetype.
+ */
+static void
+set_properties_from_global_config(Device * device) {
     char * tapetype_name = getconf_str(CNF_TAPETYPE);
     if (tapetype_name != NULL) {
         tapetype_t * tapetype = lookup_tapetype(tapetype_name);
@@ -706,13 +740,9 @@ void device_set_startup_properties_from_config(Device * device) {
                                               &val);
                 g_value_unset(&val);
                 if (!success) {
-		    device_set_error(device,
-			vstrallocf(_("Setting READ_BUFFER_SIZE to %llu "
-				    "not supported for device %s.\n"),
-				    1024*(long long unsigned int)blocksize_kb,
-				    device->device_name),
-			DEVICE_STATUS_DEVICE_ERROR);
-		    /* TODO: handle errors */
+		    /* a non-fatal error */
+                    g_warning("Setting READ_BUFFER_SIZE to %ju not supported for device %s.",
+                            1024*(uintmax_t)blocksize_kb, device->device_name);
                 }
             }
 
@@ -725,6 +755,13 @@ void device_set_startup_properties_from_config(Device * device) {
     }
 
     g_hash_table_foreach(getconf_proplist(CNF_DEVICE_PROPERTY),
+                         set_device_property, device);
+}
+
+/* Set properties specified within a device definition */
+static void
+set_properties_from_device_config(Device * device, device_config_t *dc) {
+    g_hash_table_foreach(device_config_get_property(dc),
                          set_device_property, device);
 }
 
@@ -760,9 +797,18 @@ static void default_device_open_device(Device * self, char * device_name,
             break;
         }
     }
-    if (i >= selfp->property_list->len)
-	/* not found, so add it */
-	device_add_property(self, &prop, NULL);
+    /* not found, so add it, constructing the name from the type and node */
+    if (i >= selfp->property_list->len) {
+	char *canonical = g_strdup_printf("%s:%s", device_type, device_node);
+	GValue response;
+	bzero(&response, sizeof(response));
+
+	g_value_init(&response, G_TYPE_STRING);
+	g_value_set_string(&response, canonical);
+	device_add_property(self, &prop, &response);
+	g_value_unset(&response);
+	g_free(canonical);
+    }
 }
 
 /* This default implementation serves up static responses, and

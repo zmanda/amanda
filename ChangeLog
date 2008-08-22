@@ -1,4 +1,28 @@
 2008-08-22  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/conffile.c common-src/conffile.h perl/Amanda/Config.swg:
+	  add new 'define device' config section
+	* perl/Makefile.am perl/Amanda/Config/Server.pm
+	  perl/Amanda/Config/Server/Devices.pm
+	  perl/Amanda/Config/Server/Grammar: ditto
+	* device-src/device.c device-src/device.h: configure devices from
+	  device definitions, with better error handling
+	* device-src/rait-device.c: handle child devices better
+	* installcheck/Amanda_Config.pl installcheck/Amanda_Config_Server.pl
+	  installcheck/Amanda_Xfer.pl installcheck/Installcheck/Config.pm
+	  installcheck/amgetconf.pl: new tests, modifications to work with the
+	  new system
+	* man/xml-source/amanda-devices.7.xml
+	  man/xml-source/amanda.conf.5.xml: corresponding documentation updates
+	* perl/Amanda/Changer.pm perl/Amanda/Device.swg
+	  restore-src/amrestore.c restore-src/restore.c server-src/amcheck.c
+	  server-src/amcheckdump.pl server-src/amdevcheck.pl
+	  server-src/amlabel.c server-src/amtape.c server-src/taper.c
+	  server-src/taperscan.c: remove calls to
+	  set_startup_properties_from_config
+	* device-src/vfs-test.c: load config before trying to use a device
+	* common-src/conffile.c: fix use of uninitialized variable
+
+2008-08-22  Dustin J. Mitchell <dustin@zmanda.com>
 	* changer-src/chg-disk.sh: replace == with =
 	* changer-src/chg-lib.sh.in: fix sed invocation for BSD's sed
 

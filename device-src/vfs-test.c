@@ -21,6 +21,7 @@
 #include "glib-util.h"
 #include "amanda.h"
 #include "device.h"
+#include "conffile.h"
 #include "testutils.h"
 
 /* Global state set up for the tests */
@@ -141,6 +142,7 @@ main(int argc, char **argv)
     };
 
     glib_init();
+    config_init(0, NULL);
     device_api_init();
 
     /* TODO: if more tests are added, we'll need a setup/cleanup hook

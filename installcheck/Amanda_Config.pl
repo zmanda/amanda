@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 102;
+use Test::More tests => 108;
 use strict;
 
 use lib "@amperldir@";
@@ -193,6 +193,11 @@ $testconf->add_script('my_script', [
   'execute-on' => 'pre-host-backup, post-host-backup',
   'execute-where' => 'client',
   'property' => '"mailto" "amandabackup" "amanda"',
+]);
+$testconf->add_device('my_device', [
+  'comment' => '"my device is mine, not yours"',
+  'tapedev' => '"tape:/dev/nst0"',
+  'device_property' => '"BLOCK_SIZE" "128k"',
 ]);
 
 $testconf->write();
@@ -426,6 +431,26 @@ SKIP: { # script
     is_deeply([ sort(+getconf_list("script-tool")) ],
 	      [ sort("my_script") ],
 	"getconf_list lists all script-tool");
+}
+
+SKIP: { # device
+    skip "error loading config", 7 unless $cfg_result == $CFGERR_OK;
+    my $dc = lookup_device_config("my_device");
+    ok($dc, "found my_device");
+    is(device_config_name($dc), "my_device",
+	"my_device knows its name");
+    is(device_config_getconf($dc, $DEVICE_CONFIG_COMMENT), 'my device is mine, not yours',
+	"device comment");
+    is(device_config_getconf($dc, $DEVICE_CONFIG_TAPEDEV), 'tape:/dev/nst0',
+	"device tapedev");
+    # TODO do we really need all of this equipment for device properties?
+    is_deeply(device_config_getconf($dc, $DEVICE_CONFIG_DEVICE_PROPERTY),
+          { "BLOCK_SIZE" => { 'priority' => 0, 'values' => ["128k"], 'append' => 0 }, },
+        "device config proplist");
+
+    is_deeply([ sort(getconf_list("device")) ],
+	      [ sort("my_device") ],
+	"getconf_list lists all devices");
 }
 
 ##

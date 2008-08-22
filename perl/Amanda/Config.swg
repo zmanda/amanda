@@ -208,6 +208,8 @@ with constants beginning with C<$APPLICATION_>
 
 with constants beginning with C<$PP_SCRIPT_>
 
+=item C<device>, with constants beginning with C<$DEVIE_CONFIG_>.
+
 =back
 
 See C<conffile.h> for the names of the constants themselves.
@@ -426,6 +428,12 @@ amglue_add_constant(PP_SCRIPT_PROPERTY, pp_script_key);
 amglue_add_constant(PP_SCRIPT_EXECUTE_ON, pp_script_key);
 amglue_add_constant(PP_SCRIPT_EXECUTE_WHERE, pp_script_key);
 amglue_copy_to_tag(pp_script_key, getconf);
+
+amglue_add_enum_tag_fns(device_config_key);
+amglue_add_constant(DEVICE_CONFIG_COMMENT, device_config_key);
+amglue_add_constant(DEVICE_CONFIG_TAPEDEV, device_config_key);
+amglue_add_constant(DEVICE_CONFIG_DEVICE_PROPERTY, device_config_key);
+amglue_copy_to_tag(device_config_key, getconf);
 
 /*
  * Various enumerated conftypes
@@ -757,6 +765,15 @@ amglue_export_tag(getconf,
     pp_script_seen pp_script_seen
 );
 
+device_config_t *lookup_device_config(char *identifier);
+val_t *device_config_getconf(device_config_t *pps, device_config_key key);
+char *device_config_name(device_config_t *pps);
+gboolean device_config_seen(device_config_t *app, device_config_key key);
+amglue_export_tag(getconf,
+    lookup_device_config device_config_getconf device_config_name
+    device_config_seen device_config_seen
+);
+
 %perlcode %{
 our %subsection_names = (
     "tapetype" => 1,
@@ -765,6 +782,7 @@ our %subsection_names = (
     "holdingdisk" => 1,
     "application-tool" => 1,
     "script-tool" => 1,
+    "device" => 1,
 );
 %}
 amglue_export_tag(getconf, %subsection_names);

@@ -433,7 +433,6 @@ static gboolean label_new_tape(taper_state_t * state, dump_info_t * dump_info) {
         return FALSE;
     }
     
-    device_set_startup_properties_from_config(state->device);
     device_read_label(state->device);
     old_volume_name = g_strdup(state->device->volume_label);
     old_volume_time = g_strdup(state->device->volume_time);

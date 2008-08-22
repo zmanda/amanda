@@ -43,7 +43,6 @@ sub try_read_label {
     }
 
     if ($device->status() == $DEVICE_STATUS_SUCCESS) {
-	$device->set_startup_properties_from_config();
 	$result = $device->read_label();
     } else {
 	$result = $device->status();

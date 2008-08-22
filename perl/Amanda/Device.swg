@@ -41,7 +41,6 @@ Amanda::Device - interact with Amanda data-storage devices
   use Amanda::Device qw( :constants );
 
   my $dev = Amanda::Device->new($device_name);
-  $dev->set_startup_properties_from_config();
   if ($dev->read_label() == $DEVICE_STATUS_SUCCESS) {
       print "Label on $device_name is '$dev->volume_label'\n";
   }
@@ -108,8 +107,6 @@ returns the property as the appropriate Perl type.
 where $value is of an appropriate type for the given property
 
 =item C<recycle_file($filenum)>
-
-=item C<set_startup_properties_from_config()>
 
 =item C<file()> (accessor function)
 
@@ -553,10 +550,6 @@ typedef struct Device {
 	    return device_recycle_file(self, filenum);
 	}
 	
-	void set_startup_properties_from_config(void) {
-	    device_set_startup_properties_from_config(self);
-	}
-
 	/* accessor functions */
 
 	int file(void) { return self->file; }

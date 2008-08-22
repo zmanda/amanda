@@ -347,8 +347,6 @@ loadlabel_slot(
         return 0;
     }
     
-    device_set_startup_properties_from_config(device);
-
     device_status = device_read_label(device);
     if (device_status != DEVICE_STATUS_SUCCESS) {
         g_fprintf(stderr, _("%s: slot %3s: %s\n"),
@@ -431,7 +429,6 @@ show_slots_slot(G_GNUC_UNUSED void * data, int rc, char * slotstr,
                   get_pname(), slotstr, device_error(device));
     } else {
         DeviceStatusFlags device_status;
-        device_set_startup_properties_from_config(device);
         device_status = device_read_label(device);
 
         if (device_status != DEVICE_STATUS_SUCCESS) {

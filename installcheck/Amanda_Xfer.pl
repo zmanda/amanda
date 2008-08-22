@@ -28,12 +28,16 @@ use Amanda::Types;
 use Amanda::Debug;
 use Amanda::MainLoop;
 use Amanda::Paths;
+use Amanda::Config;
 
 # set up debugging so debug output doesn't interfere with test results
 Amanda::Debug::dbopen("installcheck");
 
 # and disable Debug's die() and warn() overrides
 Amanda::Debug::disable_die_override();
+
+# initialize configuration for the device API
+Amanda::Config::config_init(0, undef);
 
 {
     my $RANDOM_SEED = 0xD00D;

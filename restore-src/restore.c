@@ -293,7 +293,6 @@ loadlabel_slot(void *	datap,
         return 0;
     }
 
-    device_set_startup_properties_from_config(device);
     if (!set_restore_device_read_buffer_size(device, data->flags)) {
         g_fprintf(stderr, "%s: slot %s: Error setting read block size:\n"
                 "%s: slot %s: %s\n",
@@ -1266,7 +1265,6 @@ conditional_device_open(char         *tapedev,
         return NULL;
     }
 
-    device_set_startup_properties_from_config(rval);
     if (!set_restore_device_read_buffer_size(rval, flags)) {
 	send_message(prompt_out, flags, their_features,
 		     "Error setting read block size on '%s': %s.",

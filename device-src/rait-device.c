@@ -394,6 +394,42 @@ parse_device_name(char * user_name)
     return rval;
 }
 
+static char *
+child_device_names_to_rait_name(RaitDevice * self) {
+    GString *rait_name = NULL;
+    guint i;
+
+    rait_name = g_string_new("rait:{");
+
+    for (i = 0; i < self->private->children->len; i ++) {
+	Device *child = g_ptr_array_index(self->private->children, i);
+	const char *child_name = NULL;
+        GValue val;
+	gboolean got_prop = FALSE;
+
+        bzero(&val, sizeof(val));
+
+        if ((signed)i != self->private->failed) {
+	    if (device_property_get(child, PROPERTY_CANONICAL_NAME, &val)) {
+		child_name = g_value_get_string(&val);
+		got_prop = TRUE;
+	    }
+	}
+
+	if (!got_prop)
+            child_name = "MISSING";
+
+	g_string_append_printf(rait_name, "%s%s", child_name,
+		(i < self->private->children->len-1)? "," : "");
+
+	if (got_prop)
+	    g_value_unset(&val);
+    }
+
+    g_string_append(rait_name, "}");
+    return g_string_free(rait_name, FALSE);
+}
+
 /* Find a workable child block size, based on the block size ranges of our
  * child devices.
  *
@@ -510,6 +546,42 @@ set_block_size_on_children(RaitDevice *self, gsize child_block_size)
     return TRUE;
 }
 
+/* Register properties for which we can reply. */
+static void register_rait_properties(RaitDevice * self) {
+    Device * o = DEVICE(self);
+    DeviceProperty prop;
+
+    /* writable before start, readable any time */
+    prop.access = PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START;
+
+    prop.base = &device_property_max_block_size;
+    device_add_property(o, &prop, NULL);
+
+    prop.base = &device_property_block_size;
+    device_add_property(o, &prop, NULL);
+
+    prop.base = &device_property_concurrency;
+    device_add_property(o, &prop, NULL);
+
+    /* read-only properties */
+    prop.access = PROPERTY_ACCESS_GET_MASK;
+
+    prop.base = &device_property_appendable;
+    device_add_property(o, &prop, NULL);
+
+    prop.base = &device_property_partial_deletion;
+    device_add_property(o, &prop, NULL);
+
+    prop.base = &device_property_medium_access_type;
+    device_add_property(o, &prop, NULL);
+
+    prop.base = &device_property_free_space;
+    device_add_property(o, &prop, NULL);
+
+    prop.base = &device_property_streaming;
+    device_add_property(o, &prop, NULL);
+}
+
 /* The time for users to specify block sizes has ended; set this device's
  * block-size attributes for easy access by other RAIT functions.  Returns
  * FALSE on error, with the device's error status already set. */
@@ -535,81 +607,6 @@ fix_block_size(RaitDevice *self)
 	self->private->block_size_explicit = TRUE;
     }
     return TRUE;
-}
-
-static void property_hash_union(GHashTable * properties,
-                                const DeviceProperty * prop) {
-    PropertyAccessFlags before, after;
-    gpointer tmp;
-    gboolean found;
-    
-    found = g_hash_table_lookup_extended(properties,
-                                         GUINT_TO_POINTER(prop->base->ID),
-                                         NULL, &tmp);
-    before = GPOINTER_TO_UINT(tmp);
-    
-    if (!found) {
-        after = prop->access;
-    } else {
-        after = before & prop->access;
-    }
-    
-    g_hash_table_insert(properties, GUINT_TO_POINTER(prop->base->ID),
-                        GUINT_TO_POINTER(after));
-}
-
-/* A GHRFunc. */
-static gboolean zero_value(gpointer key G_GNUC_UNUSED, gpointer value,
-                           gpointer user_data G_GNUC_UNUSED) {
-    return (0 == GPOINTER_TO_UINT(value));
-}
-
-/* A GHFunc */
-static void register_property_hash(gpointer key, gpointer value,
-                                   gpointer user_data) {
-    DevicePropertyId id = GPOINTER_TO_UINT(key);
-    DeviceProperty prop;
-    Device * device = (Device*)user_data;
-
-    g_assert(IS_DEVICE(device));
-
-    prop.access = GPOINTER_TO_UINT(value);
-    prop.base = device_property_get_by_id(id);
-
-    device_add_property(device, &prop, NULL);
-}
-
-/* This function figures out which properties exist for all children, and 
- * exports the unioned access mask. */
-static void register_properties(RaitDevice * self) {
-    GHashTable * properties; /* PropertyID => PropertyAccessFlags */
-    guint j;
-    
-    properties = g_hash_table_new(g_direct_hash, g_direct_equal);
-
-    /* Iterate the device list, find all properties. */
-    for (j = 0; j < self->private->children->len; j ++) {
-        int i;
-        Device * child = g_ptr_array_index(self->private->children, j);
-        const DeviceProperty* device_property_list;
-
-        if ((signed)j == self->private->failed) {
-            continue;
-        }
-
-        device_property_list = device_property_get_list(child);
-        for (i = 0; device_property_list[i].base != NULL; i ++) {
-            property_hash_union(properties, &(device_property_list[i]));
-        }
-    }
-
-    /* Then toss properties that can't be accessed. */
-    g_hash_table_foreach_remove(properties, zero_value, NULL);
-
-    /* Finally, register the lot. */
-    g_hash_table_foreach(properties, register_property_hash, self);
-
-    g_hash_table_destroy(properties);
 }
 
 /* This structure contains common fields for many operations. Not all
@@ -854,7 +851,7 @@ rait_device_open_device (Device * dself, char * device_name,
         return;
     }
 
-    register_properties(self);
+    register_rait_properties(self);
 
     /* Chain up. */
     if (parent_class->open_device) {
@@ -1819,7 +1816,10 @@ static void property_get_do_op(gpointer data,
                                             &(op->value)));
 }
 
-/* Merge ConcurrencyParadigm results. */
+/* type for property_get_* */
+typedef gboolean (*PropertyGetter)(GPtrArray * ops, GValue * val);
+
+/* Merge ConcurrencyParadigm results (a PropertyGetter). */
 static gboolean property_get_concurrency(GPtrArray * ops, GValue * val) {
     ConcurrencyParadigm result = CONCURRENCY_PARADIGM_RANDOM_ACCESS;
     guint i = 0;
@@ -1849,7 +1849,7 @@ static gboolean property_get_concurrency(GPtrArray * ops, GValue * val) {
     return TRUE;
 }
 
-/* Merge StreamingRequirement results. */
+/* Merge StreamingRequirement results (a PropertyGetter). */
 static gboolean property_get_streaming(GPtrArray * ops, GValue * val) {
     StreamingRequirement result = STREAMING_REQUIREMENT_NONE;
     guint i = 0;
@@ -1879,7 +1879,7 @@ static gboolean property_get_streaming(GPtrArray * ops, GValue * val) {
     return TRUE;
 }
     
-/* Merge MediaAccessMode results. */
+/* Merge MediaAccessMode results (a PropertyGetter). */
 static gboolean property_get_medium_type(GPtrArray * ops, GValue * val) {
     MediaAccessMode result = 0;
     guint i = 0;
@@ -1922,7 +1922,7 @@ static gboolean property_get_medium_type(GPtrArray * ops, GValue * val) {
     return TRUE;
 }
     
-/* Merge QualifiedSize results. */
+/* Merge QualifiedSize results (a PropertyGetter). */
 static gboolean property_get_free_space(GPtrArray * ops, GValue * val) {
     QualifiedSize result;
     guint i = 0;
@@ -1956,7 +1956,7 @@ static gboolean property_get_free_space(GPtrArray * ops, GValue * val) {
     return TRUE;
 }
     
-/* Merge boolean results by ANDing them together. */
+/* Merge boolean results by ANDing them together (a PropertyGetter). */
 static gboolean property_get_boolean_and(GPtrArray * ops, GValue * val) {
     gboolean result = FALSE;
     guint i = 0;
@@ -1979,12 +1979,8 @@ static gboolean property_get_boolean_and(GPtrArray * ops, GValue * val) {
 
 static gboolean 
 rait_device_property_get (Device * dself, DevicePropertyId id, GValue * val) {
-    GPtrArray * ops;
-    guint i;
-    gboolean success;
-    GValue result;
-    GValue * first_value;
     RaitDevice * self = RAIT_DEVICE(dself);
+    PropertyGetter extractor = NULL;
 
     if (rait_device_in_error(dself)) return FALSE;
 
@@ -1992,8 +1988,7 @@ rait_device_property_get (Device * dself, DevicePropertyId id, GValue * val) {
     device_set_error(dself, NULL, DEVICE_STATUS_SUCCESS);
 
     /* some properties are handled by our parent class */
-    if (id == PROPERTY_CANONICAL_NAME
-	|| id == PROPERTY_MIN_BLOCK_SIZE
+    if (id == PROPERTY_MIN_BLOCK_SIZE
 	|| id == PROPERTY_MAX_BLOCK_SIZE) {
         if (parent_class->property_get != NULL) {
             return parent_class->property_get(dself, id, val);
@@ -2001,8 +1996,7 @@ rait_device_property_get (Device * dself, DevicePropertyId id, GValue * val) {
             return FALSE;
         }
 
-    /* Some properties are handled without sending them to
-     * the children. */
+    /* Block size is handled specially. */
     } else if (id == PROPERTY_BLOCK_SIZE) {
 	gsize block_size;
 	if (self->private->block_size_explicit) {
@@ -2019,94 +2013,55 @@ rait_device_property_get (Device * dself, DevicePropertyId id, GValue * val) {
 	g_assert(block_size < G_MAXINT); /* gsize -> gint */
 	g_value_set_int(val, (gint)block_size);
 	return TRUE;
+
+    /* And we invent canonical names on demand */
+    } else if (id == PROPERTY_CANONICAL_NAME) {
+	char *canonical = child_device_names_to_rait_name(self);
+	g_value_unset_init(val, G_TYPE_STRING);
+	g_value_set_string(val, canonical);
+	g_free(canonical);
+	return TRUE;
     }
 
-    ops = make_property_op_array(self, id, NULL);
-    
-    do_rait_child_ops(property_get_do_op, ops, NULL);
-
-    /* Other properties are handled by combining results from the
-     * children in particular ways */
+    /* Some properties are handled by querying the children and calculating
+     * the result. */
     if (id == PROPERTY_CONCURRENCY) {
-        success = property_get_concurrency(ops, val);
-    } else if (id == PROPERTY_STREAMING) { 
-        success = property_get_streaming(ops, val);
-    } else if (id == PROPERTY_APPENDABLE ||
-               id == PROPERTY_PARTIAL_DELETION) {
-        success = property_get_boolean_and(ops, val);
+        extractor = property_get_concurrency;
+    } else if (id == PROPERTY_STREAMING) {
+        extractor = property_get_streaming;
+    } else if (id == PROPERTY_APPENDABLE) {
+        extractor = property_get_boolean_and;
+    } else if (id == PROPERTY_PARTIAL_DELETION) {
+        extractor = property_get_boolean_and;
     } else if (id == PROPERTY_MEDIUM_ACCESS_TYPE) {
-        success = property_get_medium_type(ops, val);
+        extractor = property_get_medium_type;
     } else if (id == PROPERTY_FREE_SPACE) {
-        success = property_get_free_space(ops, val);
-
-    /* Generic handling; if all results are the same, we succeed
-       and return that result. If not, we fail. */
-    } else {
-        success = TRUE;
-        
-        /* Set up comparison value. */
-        bzero(&result, sizeof(result));
-        first_value = &(((PropertyOp*)g_ptr_array_index(ops,0))->value);
-        if (G_IS_VALUE(first_value)) {
-            g_value_unset_copy(first_value, &result);
-        } else {
-            success = FALSE;
-        }
-        
-        for (i = 0; i < ops->len; i ++) {
-            PropertyOp * op = g_ptr_array_index(ops, i);
-            if (!GPOINTER_TO_INT(op->base.result) ||
-                !G_IS_VALUE(first_value) ||
-                !g_value_compare(&result, &(op->value))) {
-                success = FALSE;
-            }
-	    /* free the GValue if the child call succeeded */
-	    if (GPOINTER_TO_INT(op->base.result))
-		g_value_unset(&(op->value));
-        }
-
-        if (success) {
-            memcpy(val, &result, sizeof(result));
-        } else if (G_IS_VALUE(&result)) {
-            g_value_unset(&result);
-        }
+        extractor = property_get_free_space;
     }
 
-    g_ptr_array_free_full(ops);
+    if (extractor) {
+	GPtrArray * ops;
+	gboolean success;
 
-    return success;
-}
+	ops = make_property_op_array(self, id, NULL);
+	do_rait_child_ops(property_get_do_op, ops, NULL);
+	success = extractor(ops, val);
+	g_ptr_array_free_full(ops);
 
-/* A GFunc. */
-static void property_set_do_op(gpointer data,
-                               gpointer user_data G_GNUC_UNUSED) {
-    PropertyOp * op = data;
-    gboolean label_set = (op->base.child->volume_label != NULL);
-    op->base.result =
-        GINT_TO_POINTER(device_property_set(op->base.child, op->id,
-                                            &(op->value)));
-    op->label_changed = (label_set != (op->base.child->volume_label != NULL));
-}
-
-/* A BooleanExtractor. Confusingly, this returns TRUE if the label didn't
- * change. */
-static gboolean extract_label_changed_property_op(gpointer data) {
-    PropertyOp * op = data;
-    return !op->label_changed;
+	return success;
+    } else {
+	/* Any other properties are inaccessible */
+        return FALSE;
+    }
 }
 
 static gboolean 
 rait_device_property_set (Device * d_self, DevicePropertyId id, GValue * val) {
-    RaitDevice * self;
-    GPtrArray * ops;
-    gboolean success;
-    gboolean label_changed;
-
-    self = RAIT_DEVICE(d_self);
+    RaitDevice * self = RAIT_DEVICE(d_self);
 
     if (rait_device_in_error(self)) return FALSE;
 
-    /* First try to handle some properties of our own */
+    /* We only support setting the BLOCK_SIZE property */
     if (id == PROPERTY_BLOCK_SIZE) {
         gint my_block_size = g_value_get_int(val);
 	gsize child_block_size;
@@ -2132,29 +2087,9 @@ rait_device_property_set (Device * d_self, DevicePropertyId id, GValue * val) {
 	self->private->block_size_explicit = TRUE;
 
 	return TRUE;
+    } else {
+	return FALSE;
     }
-
-    ops = make_property_op_array(self, id, val);
-    
-    do_rait_child_ops(property_set_do_op, ops, NULL);
-
-    success = g_ptr_array_union_robust(self, ops, extract_boolean_generic_op);
-    label_changed =
-        !g_ptr_array_and(ops, extract_label_changed_property_op);
-    g_ptr_array_free_full(ops);
-
-    if (label_changed) {
-        /* At least one device considered this property set a label-changing
-         * operation, so now we clear labels on all devices. */
-        DeviceStatusFlags read_label_success = 
-            rait_device_read_label(d_self);
-        success = success && (read_label_success == DEVICE_STATUS_SUCCESS);
-    }
-
-    /* TODO: distinguish properties on the RAIT device from properties
-     * on child devices .. when config is available for subdevices */
-
-    return success;
 }
 
 typedef struct {

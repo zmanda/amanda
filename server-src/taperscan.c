@@ -101,8 +101,6 @@ int scan_read_label(
         return -1;
     }
 
-    device_set_startup_properties_from_config(device);
-
     device_status = device_read_label(device);
     
     if (device_status == DEVICE_STATUS_SUCCESS && device->volume_label != NULL) {

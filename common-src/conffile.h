@@ -943,6 +943,63 @@ char *pp_script_name(pp_script_t *pps);
 pp_script_t *read_pp_script(char *name, FILE *from, char *fname, int *linenum);
 pp_script_t *lookup_pp_script(char *identifier);
 
+/* A device interface */
+typedef enum {
+    DEVICE_CONFIG_COMMENT,
+    DEVICE_CONFIG_TAPEDEV,
+    DEVICE_CONFIG_DEVICE_PROPERTY,
+    DEVICE_CONFIG_DEVICE_CONFIG
+} device_config_key;
+
+/* opaque object */
+typedef struct device_config_s device_config_t;
+
+/* Given the name of the device, return a device_config_t object.  Returns NULL
+ * if no matching device exists.  Note that the match is case-insensitive.
+ *
+ * @param identifier: name of the desired device
+ * @returns: object or NULL
+ */
+
+device_config_t *lookup_device_config(char *identifier);
+
+/* Given a device_config and a key, return a pointer to the corresponding val_t.
+ *
+ * @param ttyp: the device_config to examine
+ * @param key: device_config (one of the DEVICE_CONFIG_* constants)
+ * @returns: pointer to value
+ */
+val_t *device_config_getconf(device_config_t *devconf, device_config_key key);
+
+/* Get the name of this device_config.
+ *
+ * @param ttyp: the device_config to examine
+ * @returns: name of the device_config
+ */
+char *device_config_name(device_config_t *devconf);
+
+/* (convenience macro) has this parameter been seen in this device_config?  This
+ * applies to the specific parameter *within* the device_config.
+ *
+ * @param key: device_config_key
+ * @returns: boolean
+ */
+#define device_config_seen(devconf, key)       (val_t_seen(device_config_getconf((devconf), (key))))
+
+/* (convenience macros)
+ * fetch a particular parameter; caller must know the correct type.
+ *
+ * @param devconf: the device_config to examine
+ * @returns: various
+ */
+
+#define device_config_get_comment(devconf)   (val_t_to_str(device_config_getconf((devconf), DEVICE_CONFIG_COMMENT)))
+#define device_config_get_tapedev(devconf)   (val_t_to_str(device_config_getconf((devconf), DEVICE_CONFIG_TAPEDEV)))
+#define device_config_get_property(devconf)   (val_t_to_proplist(device_config_getconf((devconf), DEVICE_CONFIG_DEVICE_PROPERTY)))
+
+device_config_t *read_device_config(char *name, FILE *from, char *fname, int *linenum);
+device_config_t *lookup_device_config(char *identifier);
+
 /*
  * Error Handling
  */

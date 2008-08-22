@@ -112,7 +112,7 @@ typedef struct {
     guint64 block;
     gboolean in_file;
 
-    /* Holds the user-specified device name, including the prefix. */
+    /* Holds the user-specified device name, which may be an alias */
     char * device_name;
 
     /* Holds the user-specified access-mode, or ACCESS_NULL if the device
@@ -199,14 +199,16 @@ struct _DeviceClass {
  * Device Instantiation
  */
 
-/* This is how you get a new Device. Pass in a device name like
- * "file:/path/to/storage".  This is parsed into the prefix ("file") and
- * node ("/path/to/storage").
+/* This is how you get a new Device. Pass in a device name or alias.
  *
  * A Device is *always* returned, even for an invalid device name. You
  * must check the resulting device->status to know if the device is valid
  * to be used. If device->status is not DEVICE_STATUS_SUCCESS, then there
- * was an error opening the device. */
+ * was an error opening the device.
+ *
+ * Note that the Amanda configuration must be initialized, as this function
+ * looks for device definitions and other configuration information.
+ */
 Device*		device_open	(char * device_name);
 
 /*
@@ -438,10 +440,6 @@ dumpfile_t * make_tapestart_header(Device * self, char * label,
 
 /* Does what you expect. Uses the current time. */
 dumpfile_t * make_tapeend_header(void);
-
-/* Set up first-run properties from loaded configuration file, including
- * DEVICE_MAX_VOLUME_USAGE property based on the tapetype. */
-void device_set_startup_properties_from_config(Device * device);
 
 /* Erase any stored volume information. Use this if something happens (e.g.,
  * a property is set) that voids previously-read volume details.

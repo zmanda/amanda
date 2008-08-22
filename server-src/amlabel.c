@@ -178,7 +178,6 @@ main(
 	      device_error(device));
     }
     
-    device_set_startup_properties_from_config(device);
     device_status = device_read_label(device);
 
     if (device_status & DEVICE_STATUS_VOLUME_UNLABELED) {

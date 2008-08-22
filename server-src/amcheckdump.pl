@@ -162,7 +162,6 @@ sub try_open_device {
 	      $device->error(), ".\n";
 	return undef;
     }
-    $device->set_startup_properties_from_config();
 
     my $label_status = $device->read_label();
     if ($label_status != $DEVICE_STATUS_SUCCESS) {
