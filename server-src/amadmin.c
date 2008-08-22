@@ -120,9 +120,9 @@ static const struct {
     { "due", due,
 	T_(" [<hostname> [<disks>]* ]*\t # Show due date.") },
     { "balance", balance,
-	T_(" [-days <num>]\t\t # Show nightly dump size balance.") },
+	T_(" [--days <num>]\t\t # Show nightly dump size balance.") },
     { "tape", tape,
-	T_(" [-days <num>]\t\t # Show which tape is due next.") },
+	T_(" [--days <num>]\t\t # Show which tape is due next.") },
     { "bumpsize", bumpsize,
 	T_("\t\t\t # Show current bump thresholds.") },
     { "export", export_db,
@@ -765,9 +765,12 @@ tape(
     int		argc,
     char **	argv)
 {
-    tape_t *tp, *lasttp;
-    int runtapes, i, j;
-    int nb_days = 1;
+    int     nb_days = 1;
+    int     runtapes;
+    tape_t *tp;
+    int     i, j;
+    int     skip;
+    int     nb_new_tape;
 
     if(argc > 4 && strcmp(argv[3],"--days") == 0) {
 	nb_days = atoi(argv[4]);
@@ -781,54 +784,41 @@ tape(
 
     runtapes = getconf_int(CNF_RUNTAPES);
     tp = lookup_last_reusable_tape(0);
+    skip = 0;
 
     for ( j=0 ; j < nb_days ; j++ ) {
+	nb_new_tape=0;
 	for ( i=0 ; i < runtapes ; i++ ) {
 	    if(i==0)
-		g_printf(_("The next Amanda run should go onto "));
-	    else
-		g_printf("                                   ");
+		g_fprintf(stdout, _("The next Amanda run should go onto "));
 	    if(tp != NULL) {
-		g_printf(_("tape %s or a new tape.\n"), tp->label);
+		if (nb_new_tape > 0) {
+		    if (nb_new_tape == 1)
+			g_fprintf(stdout, _("1 new tape.\n"));
+		    else
+			g_fprintf(stdout, _("%d new tapes.\n"), nb_new_tape);
+		    g_fprintf(stdout, "                                   ");
+		    nb_new_tape = 0;
+		}
+		g_fprintf(stdout, _("tape %s or a new tape.\n"), tp->label);
+		if (i < runtapes-1)
+		    g_fprintf(stdout, "                                   ");
 	    } else {
-		if (runtapes - i == 1)
-		    g_printf(_("1 new tape.\n"));
-		else
-		    g_printf(_("%d new tapes.\n"), runtapes - i);
-		i = runtapes;
+		nb_new_tape++;
 	    }
-	
-	    tp = lookup_last_reusable_tape(i + 1);
+	    skip++;
+
+	    tp = lookup_last_reusable_tape(skip);
+	}
+	if (nb_new_tape > 0) {
+	    if (nb_new_tape == 1)
+		g_fprintf(stdout, _("1 new tape.\n"));
+	    else
+		g_fprintf(stdout, _("%d new tapes.\n"), nb_new_tape);
 	}
     }
-    lasttp = lookup_tapepos(lookup_nb_tape());
-    i = runtapes;
-    if(lasttp && i > 0 && strcmp(lasttp->datestamp,"0") == 0) {
-	int c = 0;
-	while(lasttp && i > 0 && strcmp(lasttp->datestamp,"0") == 0) {
-	    c++;
-	    lasttp = lasttp->prev;
-	    i--;
-	}
-	lasttp = lookup_tapepos(lookup_nb_tape());
-	i = runtapes;
-	if(c == 1) {
-	    g_printf(_("The next new tape already labelled is: %s.\n"),
-		   lasttp->label);
-	}
-	else {
-	    g_printf(_("The next %d new tapes already labelled are: %s"), c,
-		   lasttp->label);
-	    lasttp = lasttp->prev;
-	    c--;
-	    while(lasttp && c > 0 && strcmp(lasttp->datestamp,"0") == 0) {
-		g_printf(", %s", lasttp->label);
-		lasttp = lasttp->prev;
-		c--;
-	    }
-	    g_printf(".\n");
-	}
-    }
+
+    print_new_tapes(stdout, nb_days * runtapes);
 }
 
 /* ----------------------------------------------- */

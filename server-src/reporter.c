@@ -1002,9 +1002,10 @@ output_stats(void)
 static void
 output_tapeinfo(void)
 {
-    tape_t *tp, *lasttp;
+    tape_t *tp;
     int run_tapes;
     int skip = 0;
+    int i, nb_new_tape;
 
     if (last_run_tapes > 0) {
 	if(amflush_run)
@@ -1068,53 +1069,36 @@ output_tapeinfo(void)
     else if(run_tapes > 1)
 	g_fprintf(mailf, _("The next %d tapes Amanda expects to use are: "),
 		run_tapes);
-    
-    while(run_tapes > 0) {
+
+    nb_new_tape = 0;
+    for (i=0 ; i < run_tapes ; i++) {
 	if(tp != NULL) {
+	    if (nb_new_tape > 0) {
+		if (nb_new_tape == 1)
+		    g_fprintf(mailf, _("1 new tape, "));
+		else
+		    g_fprintf(mailf, _("%d new tapes, "), nb_new_tape);
+		nb_new_tape = 0;
+	    }
 	    g_fprintf(mailf, "%s", tp->label);
+	    if (i < run_tapes-1) fputs(", ", mailf);
 	} else {
-	    if (run_tapes == 1)
-		g_fprintf(mailf, _("a new tape"));
-	    else
-		g_fprintf(mailf, _("%d new tapes"), run_tapes);
-	    run_tapes = 1;
+	    nb_new_tape++;
 	}
-
-	if(run_tapes > 1) fputs(", ", mailf);
-
-	run_tapes -= 1;
 	skip++;
+
 	tp = lookup_last_reusable_tape(skip);
+    }
+    if (nb_new_tape > 0) {
+	if (nb_new_tape == 1)
+	    g_fprintf(mailf, _("1 new tape"));
+	else
+	    g_fprintf(mailf, _("%d new tapes"), nb_new_tape);
     }
     fputs(".\n", mailf);
 
-    lasttp = lookup_tapepos(lookup_nb_tape());
     run_tapes = getconf_int(CNF_RUNTAPES);
-    if(lasttp && run_tapes > 0 && strcmp(lasttp->datestamp,"0") == 0) {
-	int c = 0;
-	while(lasttp && run_tapes > 0 && strcmp(lasttp->datestamp,"0") == 0) {
-	    c++;
-	    lasttp = lasttp->prev;
-	    run_tapes--;
-	}
-	lasttp = lookup_tapepos(lookup_nb_tape());
-	if(c == 1) {
-	    g_fprintf(mailf, _("The next new tape already labelled is: %s.\n"),
-		    lasttp->label);
-	}
-	else {
-	    g_fprintf(mailf, _("The next %d new tapes already labelled are: %s"), c,
-		    lasttp->label);
-	    lasttp = lasttp->prev;
-	    c--;
-	    while(lasttp && c > 0 && strcmp(lasttp->datestamp,"0") == 0) {
-		g_fprintf(mailf, ", %s", lasttp->label);
-		lasttp = lasttp->prev;
-		c--;
-	    }
-	    g_fprintf(mailf, ".\n");
-	}
-    }
+    print_new_tapes(mailf, run_tapes);
 }
 
 /* ----- */
