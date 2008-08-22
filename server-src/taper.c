@@ -394,107 +394,12 @@ static gboolean check_volume_changed(Device * device,
     return FALSE;
 }
 
-/* Find and label a new tape, if one is not already open. Returns TRUE
- * if a tape could be written. */
-static gboolean find_and_label_new_tape(taper_state_t * state,
-                                        dump_info_t * dump_info) {
-    if (state->device != NULL) {
-        return TRUE;
-    }
-    
-    if (!find_new_tape(state, dump_info)) {
-        return FALSE;
-    }
-
-    return label_new_tape(state, dump_info);
-}
-
-static gboolean label_new_tape(taper_state_t * state, dump_info_t * dump_info) {
-    char *tapelist_name;
-    char *tapelist_name_old;
-    char * old_volume_name;
-    char * old_volume_time;
-
-    /* If we got here, it means that we have found a tape to label and
-     * have gotten permission from the driver to write it. But we
-     * still can say NO-NEW-TAPE if a problem shows up, and must still
-     * say NEW-TAPE if one doesn't. */
-
-    state->device = device_open(state->next_tape_device);
-    amfree(state->next_tape_device);
-    if (state->device == NULL) {
-        amfree(state->next_tape_label);
-        return FALSE;
-    }
-    
-    device_set_startup_properties_from_config(state->device);
-    device_read_label(state->device);
-    old_volume_name = g_strdup(state->device->volume_label);
-    old_volume_time = g_strdup(state->device->volume_time);
-    
-    if (!device_start(state->device, ACCESS_WRITE, state->next_tape_label,
-                      state->driver_start_time)) {
-        gboolean tape_used;
-        /* Something broke, see if we can tell if the volume was erased or
-         * not. */
-        g_fprintf(stderr, "taper: Error writing label %s to device %s.\n",
-                state->next_tape_label, state->device->device_name);
-        device_finish(state->device);
-        device_read_label(state->device);
-        tape_used = check_volume_changed(state->device, old_volume_name, 
-                                         old_volume_time);
-        g_object_unref(state->device);
-        state->device = NULL;
-        amfree(state->next_tape_label);
-        /* If the volume was written, we tell the driver and then immediately
-         * try again. */
-        if (tape_used) {
-            putresult(NEW_TAPE, "%s %s\n", dump_info->handle,
-		      state->device->volume_label);
-            if (old_volume_name) {
-                log_add(L_WARNING, "Problem writing label to volume %s, "
-                        "volume may be erased.\n", old_volume_name);
-            } else {
-                log_add(L_WARNING, "Problem writing label %s to new volume, "
-                        "volume may be erased.\n", state->next_tape_label);
-            }
-            amfree(old_volume_name);
-            amfree(old_volume_time);
-            return find_and_label_new_tape(state, dump_info);
-        } else {
-            /* Otherwise, we grab a new tape without talking to the driver
-             * again. */
-            tape_search_request_t request;
-            gboolean search_result;
-            if (old_volume_name) {
-                log_add(L_WARNING, "Problem writing label to volume %s, "
-                        "old volume data intact\n", old_volume_name);
-            } else {
-                log_add(L_WARNING, "Problem writing label %s to new volume, "
-                        "old volume data intact\n", state->next_tape_label);
-            }
-            amfree(old_volume_name);
-            amfree(old_volume_time);
-            request.state = state;
-            request.prolong = TRUE;
-            request.errmsg = NULL;
-            search_result = GPOINTER_TO_INT(tape_search_thread(&request));
-            if (search_result) {
-                amfree(request.errmsg);
-                return label_new_tape(state, dump_info);
-            } else {
-                /* Problem finding a new tape! */
-                log_taper_scan_errmsg(request.errmsg);
-                putresult(NO_NEW_TAPE, "%s\n", dump_info->handle);
-                return FALSE;
-            }
-        }
-    } else {
-	amfree(old_volume_name);
-	amfree(old_volume_time);
-    }
-
-    amfree(state->next_tape_label);
+static void
+update_tapelist(
+    taper_state_t *state)
+{
+    char *tapelist_name = NULL;
+    char *tapelist_name_old = NULL;
 
     tapelist_name = config_dir_relative(getconf_str(CNF_TAPELIST));
     if (state->cur_tape == 0) {
@@ -520,6 +425,85 @@ static gboolean label_new_tape(taper_state_t * state, dump_info_t * dump_info) {
 	/*NOTREACHED*/
     }
     amfree(tapelist_name);
+}
+
+/* Find and label a new tape, if one is not already open. Returns TRUE
+ * if a tape could be written. */
+static gboolean find_and_label_new_tape(taper_state_t * state,
+                                        dump_info_t * dump_info) {
+    if (state->device != NULL) {
+        return TRUE;
+    }
+    
+    if (!find_new_tape(state, dump_info)) {
+        return FALSE;
+    }
+
+    return label_new_tape(state, dump_info);
+}
+
+static gboolean label_new_tape(taper_state_t * state, dump_info_t * dump_info) {
+    char *old_volume_name = NULL;
+    char *old_volume_time = NULL;
+    tape_search_request_t request;
+    gboolean search_result;
+    ReadLabelStatusFlags status;
+
+    /* If we got here, it means that we have found a tape to label and
+     * have gotten permission from the driver to write it. But we
+     * still can say NO-NEW-TAPE if a problem shows up, and must still
+     * say NEW-TAPE if one doesn't. */
+
+    state->device = device_open(state->next_tape_device);
+    amfree(state->next_tape_device);
+    if (state->device == NULL)
+	goto skip_volume;
+
+    device_set_startup_properties_from_config(state->device);
+
+    /* if we have an error, and are sure it isn't just an unlabeled volume,
+     * then skip this volume */
+    status = device_read_label(state->device);
+    if ((status & ~READ_LABEL_STATUS_VOLUME_UNLABELED) &&
+	!(status & READ_LABEL_STATUS_VOLUME_UNLABELED))
+	goto skip_volume;
+
+    old_volume_name = g_strdup(state->device->volume_label);
+    old_volume_time = g_strdup(state->device->volume_time);
+
+    if (!device_start(state->device, ACCESS_WRITE, state->next_tape_label,
+                      state->driver_start_time)) {
+        gboolean tape_used;
+
+        /* Something broke, see if we can tell if the volume was erased or
+         * not. */
+        g_fprintf(stderr, "taper: Error writing label %s to device %s.\n",
+                state->next_tape_label, state->device->device_name);
+
+        if (!device_finish(state->device))
+	    goto request_new_volume;
+
+	/* This time, if we can't read the label, assume we've overwritten
+	 * the volume or otherwise corrupted it */
+	status = device_read_label(state->device);
+	if ((status & ~READ_LABEL_STATUS_VOLUME_UNLABELED) &&
+	    !(status & READ_LABEL_STATUS_VOLUME_UNLABELED))
+	    goto request_new_volume;
+
+        tape_used = check_volume_changed(state->device, old_volume_name, 
+                                         old_volume_time);
+        if (tape_used) {
+	    goto request_new_volume;
+        } else {
+	    goto skip_volume;
+        }
+    }
+
+    amfree(old_volume_name);
+    amfree(old_volume_time);
+    amfree(state->next_tape_label);
+
+    update_tapelist(state);
     state->cur_tape++;
 
     log_add(L_START, "datestamp %s label %s tape %d",
@@ -529,6 +513,66 @@ static gboolean label_new_tape(taper_state_t * state, dump_info_t * dump_info) {
 	      state->device->volume_label);
 
     return TRUE;
+
+request_new_volume:
+    /* Tell the driver we overwrote this volume, even if it was empty, and request
+     * a new volume. */
+    if (state->device) {
+        g_object_unref(state->device);
+        state->device = NULL;
+    }
+
+    putresult(NEW_TAPE, "%s %s\n", dump_info->handle,
+	      state->next_tape_label);
+    if (old_volume_name) {
+	log_add(L_WARNING, "Problem writing label '%s' to volume %s, "
+		"volume may be erased.\n",
+		state->next_tape_label, old_volume_name);
+    } else {
+	log_add(L_WARNING, "Problem writing label '%s' to new volume, "
+		"volume may be erased.\n", state->next_tape_label);
+    }
+
+    amfree(state->next_tape_label);
+    amfree(old_volume_name);
+    amfree(old_volume_time);
+
+    return find_and_label_new_tape(state, dump_info);
+
+skip_volume:
+    /* grab a new volume without talking to the driver again -- we do this if we're
+     * confident we didn't overwrite the last tape we got. */
+    if (state->device) {
+        g_object_unref(state->device);
+        state->device = NULL;
+    }
+
+    if (old_volume_name) {
+	log_add(L_WARNING, "Problem writing label '%s' to volume '%s', "
+		"old volume data intact\n",
+		state->next_tape_label, old_volume_name);
+    } else {
+	log_add(L_WARNING, "Problem writing label '%s' to new volume, "
+		"old volume data intact\n", state->next_tape_label);
+    }
+
+    amfree(state->next_tape_label);
+    amfree(old_volume_name);
+    amfree(old_volume_time);
+
+    request.state = state;
+    request.prolong = TRUE;
+    request.errmsg = NULL;
+    search_result = GPOINTER_TO_INT(tape_search_thread(&request));
+    if (search_result) {
+	amfree(request.errmsg);
+	return label_new_tape(state, dump_info);
+    } else {
+	/* Problem finding a new tape! */
+	log_taper_scan_errmsg(request.errmsg);
+	putresult(NO_NEW_TAPE, "%s\n", dump_info->handle);
+	return FALSE;
+    }
 }
 
 /* Find out if the dump is PARTIAL or not, and set the proper driver

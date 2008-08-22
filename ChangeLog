@@ -1,3 +1,9 @@
+2008-08-22  Dustin J. Mitchell <dustin@zmanda.com>
+	Thanks to Stefan G. Weichinger <sgw@amanda.org>
+	* server-src/taper.c: check errors from device, and handle them by
+	  either requesting a new tape or just using the next tape in the
+	  changer
+
 2008-08-22  Olivier Nicole <on@cs.ait.ac.th>
 	* changer-src/chg-disk.sh: replace == with =
 
