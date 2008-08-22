@@ -1,3 +1,7 @@
+2008-08-22  Dustin J. Mitchell <dustin@zmanda.com>
+	* config/amanda/ps.m4: search multiple ps invocations; thanks
+	  to John Hein <jhein@timing.com>
+
 2008-08-22  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amadmin.ci (tape): Correctly print next tape to use.
 	* server-src/tapefile.c (print_new_tapes): New function to print new
