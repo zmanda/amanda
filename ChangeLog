@@ -1,3 +1,10 @@
+2008-08-22  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amadmin.ci (tape): Correctly print next tape to use.
+	* server-src/tapefile.c (print_new_tapes): New function to print new
+						   tapes.
+	* server-src/tapefile.h (print_new_tapes): Prototype.
+	* server-src/reporter.c: Correctly print next tape to use.
+
 2008-08-22  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/conffile.c common-src/conffile.h perl/Amanda/Config.swg:
 	  add new 'define device' config section

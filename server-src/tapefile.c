@@ -443,3 +443,49 @@ stamp2time(
 
     return mktime(tm);
 }
+
+void
+print_new_tapes(
+    FILE *output,
+    int   nb)
+{
+    tape_t *lasttp, *iter;
+
+    /* Find latest reusable new tape */
+    lasttp = lookup_tapepos(lookup_nb_tape());
+    while (lasttp && lasttp->reuse == 0)
+	lasttp = lasttp->prev;
+
+    if(lasttp && nb > 0 && strcmp(lasttp->datestamp,"0") == 0) {
+	int c = 0;
+	iter = lasttp;
+	/* count the number of tapes we *actually* used */
+	while(iter && nb > 0 && strcmp(iter->datestamp,"0") == 0) {
+	    if (iter->reuse) {
+		c++;
+		nb--;
+	    }
+	    iter = iter->prev;
+	}
+
+	if(c == 1) {
+	    g_fprintf(output,
+		      _("The next new tape already labelled is: %s.\n"),
+		      lasttp->label);
+	} else {
+	    g_fprintf(output,
+		      _("The next %d new tapes already labelled are: %s"),
+		      c, lasttp->label);
+	    iter = lasttp->prev;
+	    c--;
+	    while(iter && c > 0 && strcmp(iter->datestamp,"0") == 0) {
+		if (iter->reuse) {
+		    g_fprintf(output, ", %s", iter->label);
+		    c--;
+		}
+		iter = iter->prev;
+	    }
+	    g_fprintf(output, ".\n");
+	}
+    }
+}

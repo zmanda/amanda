@@ -55,5 +55,6 @@ tape_t *add_tapelabel(char *datestamp, char *label);
 int reusable_tape(tape_t *tp);
 
 int guess_runs_from_tapelist(void);
+void print_new_tapes(FILE *output, int nb);
 
 #endif /* !TAPEFILE_H */
