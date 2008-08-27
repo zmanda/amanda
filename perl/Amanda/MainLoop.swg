@@ -23,6 +23,7 @@
 %include "exception.i"
 
 %{
+#include "amanda.h"
 #include "event.h"
 %}
 

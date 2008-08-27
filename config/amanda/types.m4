@@ -14,6 +14,9 @@ AC_DEFUN([AMANDA_CHECK_TYPE], [
     AC_CHECK_TYPE($1, [], [
 	AC_DEFINE($1, $2, [Type for $1, if it is not defined by the system])
     ], ifelse($3, [], [], [
+#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
 #ifdef STDC_HEADERS
 #include <stdlib.h>
 #include <stddef.h>

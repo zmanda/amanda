@@ -1,3 +1,10 @@
+2008-08-27  Dustin J. Mitchell <dustin@zmanda.com>
+	* config/amanda/types.m4: always include sys/types.h, if it exists,
+	  before trying other headers (fixes builds of FreeBSD-4.x); thanks
+	  to John Hein <jhein@timing.com>
+	* perl/Amanda/MainLoop.swg server-src/driverio.h: include amanda.h
+	  before event.h
+
 2008-08-22  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/amglue/bigint.c: add #include "stdint.h"
 

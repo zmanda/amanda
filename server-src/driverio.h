@@ -32,9 +32,8 @@
 #ifndef DRIVERIO_H
 #define DRIVERIO_H
 
-#include "event.h"
-
 #include "amanda.h"
+#include "event.h"
 #include "holding.h"
 #include "server_util.h"
 
