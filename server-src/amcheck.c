@@ -909,14 +909,17 @@ start_server_check(
 	    amfree(quoted);
 	}
 	else if(stat(tapefile, &statbuf) == -1) {
-	    quoted = quote_string(tape_dir);
-	    g_fprintf(outf, _("ERROR: tapelist %s (%s), "
-		    "you must create an empty file.\n"),
-		    quoted, strerror(errno));
-	    tapebad = 1;
-	    amfree(quoted);
-	}
-	else {
+	    if (errno != ENOENT) {
+		quoted = quote_string(tape_dir);
+		g_fprintf(outf, _("ERROR: tapelist %s (%s), "
+			"you must create an empty file.\n"),
+			quoted, strerror(errno));
+		tapebad = 1;
+		amfree(quoted);
+	    } else {
+		g_fprintf(outf, _("NOTE: tapelist will be created on the next run.\n"));
+	    }
+	} else {
 	    tapebad |= check_tapefile(outf, tapefile);
 	    if (tapebad == 0 && read_tapelist(tapefile)) {
 		quoted = quote_string(tapefile);

@@ -51,7 +51,13 @@ read_tapelist(
 
     tape_list = NULL;
     if((tapef = fopen(tapefile,"r")) == NULL) {
-	return 1;
+	if (errno == ENOENT) {
+	    /* no tapelist is equivalent to an empty tapelist */
+	    return 0;
+	} else {
+	    g_debug("Error opening '%s': %s", tapefile, strerror(errno));
+	    return 1;
+	}
     }
 
     while((line = agets(tapef)) != NULL) {

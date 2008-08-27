@@ -1,4 +1,10 @@
 2008-08-27  Dustin J. Mitchell <dustin@zmanda.com>
+	* server-src/amcheck.c: make the check for tapelist result in a NOTE,
+	  not a failure
+	* server-src/tapefile.c: make a missing tapelist equivalent to an
+	  empty one
+
+2008-08-27  Dustin J. Mitchell <dustin@zmanda.com>
 	* config/amanda/types.m4: always include sys/types.h, if it exists,
 	  before trying other headers (fixes builds of FreeBSD-4.x); thanks
 	  to John Hein <jhein@timing.com>
