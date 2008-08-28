@@ -127,6 +127,13 @@ static struct {
 static am_feature_t *our_features = NULL;
 static char *our_feature_string = NULL;
 
+/* buffer to keep partial line from the MESG stream */
+static struct {
+    char *buf;		/* buffer holding msg data */
+    size_t size;	/* size of alloced buffer */
+} msg = { NULL, 0 };
+
+
 /* local functions */
 int		main(int, char **);
 static int	do_dump(struct databuf *);
@@ -785,10 +792,6 @@ add_msg_data(
     const char *	str,
     size_t		len)
 {
-    static struct {
-	char *buf;	/* buffer holding msg data */
-	size_t size;	/* size of alloced buffer */
-    } msg = { NULL, 0 };
     char *line, *ch;
     size_t buflen;
 
@@ -1019,6 +1022,7 @@ do_dump(
 
     startclock();
 
+    if (msg.buf) msg.buf[0] = '\0';	/* reset msg buffer */
     status = 0;
     dump_result = 0;
     dumpbytes = dumpsize = headersize = origsize = (off_t)0;

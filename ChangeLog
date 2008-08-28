@@ -1,3 +1,6 @@
+2008-08-28  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/dumper.c: Reset the MESG buffer for a new dump.
+
 2008-08-25 Dan Locks <dwlocks@zmanda.com>
 	* packaging/deb/changelog: Update debian package changelog and version
 	  to 2.6.0p2.  Dpkg picks up the package version number from this file.
