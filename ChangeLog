@@ -1,3 +1,6 @@
+2008-08-28  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/dumper.c: Reset the MESG buffer for a new dump.
+
 2008-08-27  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/amcheck.c: make the check for tapelist result in a NOTE,
 	  not a failure
