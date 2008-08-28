@@ -67,7 +67,8 @@ DevicePropertyBase device_property_final_filemarks;
 void tape_device_register(void);
 
 #define tape_device_read_size(self) \
-    (((TapeDevice *)(self))->private->read_buffer_size || ((Device *)(self))->block_size)
+    (((TapeDevice *)(self))->private->read_buffer_size? \
+	((TapeDevice *)(self))->private->read_buffer_size : ((Device *)(self))->block_size)
 
 /* here are local prototypes */
 static void tape_device_init (TapeDevice * o);

@@ -901,7 +901,7 @@ static DeviceStatusFlags rait_device_read_label(Device * dself) {
                 first_success = op->child;
             } else if (!compare_volume_results(first_success, op->child)) {
                 /* Doesn't match. :-( */
-		failed_errmsg = vstrallocf("Inconsistant volume labels/datestamps: "
+		failed_errmsg = vstrallocf("Inconsistent volume labels/datestamps: "
                         "Got %s/%s on %s against %s/%s on %s.",
                         first_success->volume_label,
                         first_success->volume_time,

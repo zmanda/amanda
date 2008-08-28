@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 290;
+use Test::More tests => 294;
 use File::Path qw( mkpath rmtree );
 use Sys::Hostname;
 use Carp;
@@ -400,31 +400,28 @@ undef $dev;
 # Make two devices with different labels, should get a
 # message accordingly.
 ($vtape1, $vtape2) = (mkvtape(1), mkvtape(2));
-my $rait_name = "rait:{file:$vtape1,file:$vtape2}";
 
-my $dev1 = Amanda::Device->new($vtape1);
-is($dev1->status(), $DEVICE_STATUS_SUCCESS,
-   "$vtape1: Open successful")
-    or diag($dev->error_or_status());
-$dev1->start($ACCESS_WRITE, "TESTCONF13", undef);
-$dev1->finish();
-my $dev2 = Amanda::Device->new($vtape2);
-is($dev2->status(), $DEVICE_STATUS_SUCCESS,
-   "$vtape2: Open successful")
-    or diag($dev->error_or_status());
-$dev2->start($ACCESS_WRITE, "TESTCONF14", undef);
-$dev2->finish();
+my $n = 13;
+for $dev_name ("file:$vtape1", "file:$vtape2") {
+    my $dev = Amanda::Device->new($dev_name);
+    is($dev->status(), $DEVICE_STATUS_SUCCESS,
+       "$dev_name: Open successful")
+	or diag($dev->error_or_status());
+    ok($dev->start($ACCESS_WRITE, "TESTCONF$n", undef),
+	"wrote label 'TESTCONF$n'");
+    ok($dev->finish(), "finished device");
+    $n++;
+}
 
-$dev1 = $dev2 = undef;
-
-$dev = Amanda::Device->new($rait_name);
+$dev_name = "rait:{file:$vtape1,file:$vtape2}";
+$dev = Amanda::Device->new($dev_name);
 is($dev->status(), $DEVICE_STATUS_SUCCESS,
-   "$rait_name: Open successful")
+   "$dev_name: Open successful")
     or diag($dev->error_or_status());
 
 $dev->read_label();
-ok($dev->status() & $DEVICE_STATUS_DEVICE_ERROR,
-   "Label mismatch error")
+ok($dev->status() & $DEVICE_STATUS_VOLUME_ERROR,
+   "Label mismatch error handled correctly")
     or diag($dev->error_or_status());
 
 # Test an S3 device if the proper environment variables are set
