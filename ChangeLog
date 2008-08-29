@@ -1,3 +1,7 @@
+2008-08-29  Dustin J. Mitchell <dustin@zmanda.com>
+	* autogen: revert glib's configure-time requirement for
+	  pkg-config-0.16
+
 2008-08-28  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/tape-device.c: use the correct blocksize while reading
 	* device-src/rait-device.c: fix typo
