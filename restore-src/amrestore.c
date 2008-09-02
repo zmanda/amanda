@@ -227,7 +227,7 @@ main(
     }
 
     /* initialize a generic configuration without reading anything */
-    config_init(CONFIG_INIT_CLIENT, NULL);
+    config_init(0, NULL);
     apply_config_overwrites(cfg_ovr);
 
     if (config_errors(NULL) >= CFGERR_WARNINGS) {
