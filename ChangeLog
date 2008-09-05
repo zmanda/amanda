@@ -1,3 +1,6 @@
+2008-09-05  Dustin J. Mitchell <dustin@zmanda.com>
+	* server-src/taper.c: improve handling of device errors in taper
+
 2008-09-02  Jean-Louis Martineau <martineau@zmanda.com>
 	* restore-src/amrestore.c: Load a default server config.
 
