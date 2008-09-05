@@ -1,4 +1,8 @@
 2008-09-05  Dustin J. Mitchell <dustin@zmanda.com>
+	* man/xml-source/amanda.conf.5.xml: fix inequalities; thanks to
+	  Mike McConnell for spotting these
+
+2008-09-05  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/taper.c: improve handling of device errors in taper
 
 2008-09-02  Jean-Louis Martineau <martineau@zmanda.com>

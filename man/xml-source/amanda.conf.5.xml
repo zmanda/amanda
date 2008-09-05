@@ -1082,7 +1082,7 @@ Debug level of the taper process</para>
   &A; will not begin writing data to a new volume until the amount of
   data on the holding disk is at least this percentage of the volume
   size. In other words, &A; will not begin until the
-  inequality <inlineequation><mathphrase>h &lt; t &#215;
+  inequality <inlineequation><mathphrase>h &gt; t &#215;
   d</mathphrase></inlineequation> is satisfied,
   where <mathphrase>h</mathphrase> is the amount of data on the
   holding disk, <mathphrase>t</mathphrase> is the capacity of a
@@ -1109,7 +1109,7 @@ Debug level of the taper process</para>
   amount of data on the holding disk and the estimated amount of data
   remaining to be dumped during this run is at least this percentage
   of the volume size. In other words, &A; will not begin until the
-  inequality <inlineequation><mathphrase>h + s &lt; t &#215;
+  inequality <inlineequation><mathphrase>h + s &gt; t &#215;
   d</mathphrase></inlineequation> is satisfied,
   where <mathphrase>h</mathphrase> is the amount of data on the
   holding disk, <mathphrase>s</mathphrase> is the total amount of
@@ -1142,7 +1142,7 @@ Debug level of the taper process</para>
   the capacity of a single
   volume. In other words, at the end of a run, &A; will begin
   a new tape if the 
-  inequality <inlineequation><mathphrase>h &lt; t &#215;
+  inequality <inlineequation><mathphrase>h &gt; t &#215;
   f</mathphrase></inlineequation> is satisfied,
   where <mathphrase>h</mathphrase> is the amount of data remaining on the
   holding disk from this or previous runs, <mathphrase>t</mathphrase>
