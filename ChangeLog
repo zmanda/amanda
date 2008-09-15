@@ -1,5 +1,7 @@
-2008-09-14  Dustin J. Mitchell <dustin@zmanda.com>,
-	    Jean-Louis Martineau <martineau@zmanda.com>
+2008-09-15  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/conffile.c: uninit apps, pp_scripts, and device_configs
+
+2008-09-14  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/tapefile.c server-src/tapefile.h: add comments to
 	  tapelist
 	* perl/Amanda/Tapelist.swg: perl tapelist parser, too

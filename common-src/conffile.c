@@ -3847,6 +3847,9 @@ config_uninit(void)
     dumptype_t       *dp, *dpnext;
     tapetype_t       *tp, *tpnext;
     interface_t      *ip, *ipnext;
+    application_t *ap, *apnext;
+    pp_script_t   *pp, *ppnext;
+    device_config_t *dc, *dcnext;
     int               i;
 
     if (!config_initialized) return;
@@ -3890,6 +3893,36 @@ config_uninit(void)
 	amfree(ip);
     }
     interface_list = NULL;
+
+    for(ap=application_list; ap != NULL; ap = apnext) {
+	amfree(ap->name);
+	for(i=0; i<INTER_INTER-1; i++) {
+	   free_val_t(&ap->value[i]);
+	}
+	apnext = ap->next;
+	amfree(ap);
+    }
+    application_list = NULL;
+
+    for(pp=pp_script_list; pp != NULL; pp = ppnext) {
+	amfree(pp->name);
+	for(i=0; i<INTER_INTER-1; i++) {
+	   free_val_t(&pp->value[i]);
+	}
+	ppnext = pp->next;
+	amfree(pp);
+    }
+    pp_script_list = NULL;
+
+    for(dc=device_config_list; dc != NULL; dc = dcnext) {
+	amfree(dc->name);
+	for(i=0; i<INTER_INTER-1; i++) {
+	   free_val_t(&dc->value[i]);
+	}
+	dcnext = dc->next;
+	amfree(dc);
+    }
+    device_config_list = NULL;
 
     for(i=0; i<CNF_CNF-1; i++)
 	free_val_t(&conf_data[i]);
