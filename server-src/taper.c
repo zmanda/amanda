@@ -407,6 +407,8 @@ update_tapelist(
 {
     char *tapelist_name = NULL;
     char *tapelist_name_old = NULL;
+    tape_t *tp;
+    char *comment = NULL;
 
     tapelist_name = config_dir_relative(getconf_str(CNF_TAPELIST));
     if (state->cur_tape == 0) {
@@ -418,20 +420,36 @@ update_tapelist(
 				      ".today.", cur_str, NULL);
     }
 
+   if (read_tapelist(tapelist_name) != 0) {
+        log_add(L_INFO, "pid-done %ld", (long)getpid());
+        error("could not load tapelist \"%s\"", tapelist_name);
+        /*NOTREACHED*/
+    }
+
+    /* make a copy of the tapelist file */
     if (write_tapelist(tapelist_name_old)) {
+        log_add(L_INFO, "pid-done %ld", (long)getpid());
 	error("could not write tapelist: %s", strerror(errno));
 	/*NOTREACHED*/
     }
     amfree(tapelist_name_old);
 
+    /* get a copy of the comment, before freeing the old record */
+    tp = lookup_tapelabel(state->device->volume_label);
+    if (tp && tp->comment)
+	comment = stralloc(tp->comment);
+
+    /* edit the tapelist and rewrite it */
     remove_tapelabel(state->device->volume_label);
     add_tapelabel(state->driver_start_time,
-                  state->device->volume_label);
+                  state->device->volume_label,
+		  comment);
     if (write_tapelist(tapelist_name)) {
 	error("could not write tapelist: %s", strerror(errno));
 	/*NOTREACHED*/
     }
     amfree(tapelist_name);
+    amfree(comment);
 }
 
 /* Find and label a new tape, if one is not already open. Returns TRUE

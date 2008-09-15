@@ -1,3 +1,13 @@
+2008-09-14  Dustin J. Mitchell <dustin@zmanda.com>,
+	    Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/tapefile.c server-src/tapefile.h: add comments to
+	  tapelist
+	* perl/Amanda/Tapelist.swg: perl tapelist parser, too
+	* installcheck/Amanda_Tapelist.pl: tests
+	* man/xml-source/tapelist.5.xml: docs
+	* server-src/amlabel.c: no initial comments when labeling
+	* server-src/taper.c: maintain comment when relabeling
+
 2008-09-12  Jean-Louis Martineau <martineau@zmanda.com>
 	* amandad-src/amandad.c: Fix typo: authetication -> authentication.
 

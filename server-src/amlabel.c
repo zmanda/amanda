@@ -262,7 +262,7 @@ main(
         
         /* XXX add cur_tape number to tape list structure */
         remove_tapelabel(label);
-        add_tapelabel("0", label);
+        add_tapelabel("0", label, NULL);
         if(write_tapelist(conf_tapelist)) {
             error(_("couldn't write tapelist: %s"), strerror(errno));
             /*NOTREACHED*/

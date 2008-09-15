@@ -39,6 +39,7 @@ Amanda::Tapelist - manipulate the Amanda tapelist
 
     my $tl = Amanda::Tapelist::read_tapelist("/path/to/tapefile");
     $tl->add_tapelabel($datestamp, $label);
+    $tl->add_tapelabel($datestamp2, $label2, $comment);
     $tl->write("/path/to/tapefile");
 
 =head1 API STATUS
@@ -66,6 +67,8 @@ unused tape
 
 =item C<label> -- tape label
 
+=item C<comment> -- the comment for this tape, or undef if no comment was given
+
 =back
 
 The following methods are available on a tapelist object C<$tl>:
@@ -83,8 +86,8 @@ with the given datestamp
 
 =item C<remove_tapelabel($lbl)> -- remove the tape with the given label
 
-=item C<add_tapelabel($date, $lbl)> -- add a tape with the given date and label
-to the end of the disklist, marking it reusable.
+=item C<add_tapelabel($date, $lbl, $comment)> -- add a tape with the given date,
+label, and comment to the end of the tapelist, marking it reusable.
 
 =item C<write($filename)> -- write the tapelist out to C<$filename>.
 
@@ -113,13 +116,14 @@ sub read_tapelist {
     open(my $fh, "<", $filename) or return undef;
     my @tles;
     while (my $line = <$fh>) {
-	my ($datestamp, $label, $reuse)
-	    = $line =~ m/^([0-9]*)\s([^\s]*)\s(reuse|no-reuse)$/mx;
-	next if !defined $datestamp;
+	my ($datestamp, $label, $reuse, $comment)
+	    = $line =~ m/^([0-9]*)\s([^\s]*)\s(reuse|no-reuse)\s*(?:\#(.*))?$/mx;
+	next if !defined $datestamp; # silently filter out bogus lines
 	push @tles, {
 	    'datestamp' => $datestamp,
 	    'label' => $label,
 	    'reuse' => ($reuse eq 'reuse'),
+	    'comment' => $comment,
 	};
     }
     close($fh);
@@ -188,12 +192,13 @@ sub remove_tapelabel {
 
 sub add_tapelabel {
     my $self = shift;
-    my ($datestamp, $label) = @_;
+    my ($datestamp, $label, $comment) = @_;
 
     push @$self, { 
 	'datestamp' => $datestamp,
 	'label' => $label,
 	'reuse' => 1,
+	'comment' => $comment,
     };
     $self->update_positions();
 }
@@ -207,7 +212,8 @@ sub write {
 	my $datestamp = $tle->{'datestamp'};
 	my $label = $tle->{'label'};
 	my $reuse = $tle->{'reuse'} ? 'reuse' : 'no-reuse';
-	print $fh "$datestamp $label $reuse\n";
+	my $comment = (defined $tle->{'comment'})? (" #" . $tle->{'comment'}) : '';
+	print $fh "$datestamp $label $reuse$comment\n";
     }
     close($fh);
 }

@@ -22,12 +22,11 @@
 <refsect1><title>DESCRIPTION</title>
 
 <para>The <emphasis remap='I'>tapelist</emphasis> file contains the list of
-tapes in active use.  This file must be created before &A; is invoked, but is
-maintained entirely by &A; and is not ordinarily ordinarily edited or examined
+tapes in active use.  This file is not ordinarily ordinarily edited or examined
 manually.  Its format may change, or it may be removed altogether, in future
 versions of &A;.  It contains lines of the form:</para>
 
-<para><programlisting>YYYYMMDD label flags
+<para><programlisting>YYYYMMDD label flags [#comment]
 </programlisting></para>
 
 <para>Where
@@ -43,7 +42,10 @@ A non-reusable tape will not be overwritten, even if it is older than <emphasis
 remap='B'>dumpcycle</emphasis> dumps.  See the
 <emphasis remap='B'>reuse</emphasis>
 options of
-<citerefentry><refentrytitle>amadmin</refentrytitle><manvolnum>8</manvolnum></citerefentry>.</para>
+<citerefentry><refentrytitle>amadmin</refentrytitle><manvolnum>8</manvolnum></citerefentry>.
+The optional comment is prefixed with a '#' and continues to the end of the line.  Amanda
+will maintain this comment until the tape is overwritten.  Note that comments are not
+allowed on blank lines.</para>
 
 <para><emphasis remap='B'>Amdump</emphasis>
 and

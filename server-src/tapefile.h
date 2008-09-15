@@ -40,6 +40,7 @@ typedef struct tape_s {
     char * datestamp;
     int reuse;
     char *label;
+    char *comment;
 } tape_t;
 
 int read_tapelist(char *tapefile);
@@ -51,7 +52,7 @@ tape_t *lookup_tapedate(char *datestamp);
 int lookup_nb_tape(void);
 tape_t *lookup_last_reusable_tape(int skip);
 void remove_tapelabel(char *label);
-tape_t *add_tapelabel(char *datestamp, char *label);
+tape_t *add_tapelabel(char *datestamp, char *label, char *comment);
 int reusable_tape(tape_t *tp);
 
 int guess_runs_from_tapelist(void);
