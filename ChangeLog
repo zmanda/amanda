@@ -1,3 +1,8 @@
+2008-09-16 Dan Locks <dwlocks@zmanda.com>
+	* packaging/rpm/amanda.spec:  Added detection of CentOS 4 and 5 as 
+	  suggested by dswartz.  added graceful failure when Distro/version is 
+	  not detected correctly
+
 2008-09-15  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/conffile.c: uninit apps, pp_scripts, and device_configs
 

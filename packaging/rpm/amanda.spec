@@ -84,11 +84,25 @@
         %define distver 4
         %define tarver 1.14
     %endif
+    %if %(awk '$1 == "CentOS" && $3 ~ /4.*/ { exit 1; }' /etc/redhat-release; echo $?)
+	%define dist redhat
+	%define disttag rhel
+	%define distver 4
+	%define tarver 1.14
+    %endif
     %if %(awk '$1 == "Red" && $7 ~ /5.*/ { exit 1; }' /etc/redhat-release; echo $?)
         %define dist redhat
         %define disttag rhel
         %define distver 5
     %endif
+    %if %(awk '$1 == "CentOS" && $3 ~ /5.*/ { exit 1; }' /etc/redhat-release; echo $?)
+        %define dist redhat
+        %define disttag rhel
+        %define distver 5
+    %endif
+    
+    # If we get here, we didn't detect.
+    %define dist unknown
 %endif
 # Detect Suse variants.  Suse gives us some nice macros in their rpms
 %if %{_vendor} == "suse"
@@ -107,6 +121,9 @@
         %define disttag suse
         %define distver 10
     %endif
+   
+    # If we get here, we didn't detect.
+    %define dist unknown
 %endif
 
 # Set options per distribution
@@ -118,6 +135,9 @@
     %define rpm_group Productivity/Archiving/Backup
     %define xinetd_reload restart
 %endif
+
+# Let's die if we haven't detected the distro.  This might save some frustration.
+%{!?distver: %{error:"Your distribution and its version were not detected."}}
 
 # Set minimum tar version if it wasn't set in the per-distro section
 %{!?tarver: %define tarver 1.15}
@@ -1598,6 +1618,9 @@ echo "Amanda installation log can be found in '${INSTALL_LOG}' and errors (if an
 # --- ChangeLog
 
 %changelog
+* Mon Sep 15 2008 Dan Locks <dwlocks at zmanda dot com> 2.6.1alpha
+- Added detection of CentOS 4 and 5 as suggested by dswartz
+- graceful failure when Distro/version is not detected correctly
 * Thu Jun 12 2008 Dan Locks <dwlocks at zmanda dot com> 2.6.1alpha
 - install amgtar and amstar suid root
 * Mon Jun 09 2008 Dan Locks <dwlocks at zmanda dot com> 2.6.1alpha
