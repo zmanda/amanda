@@ -1,4 +1,8 @@
 2008-09-18  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/dumper.c: Call security_close_connection before
+			       checking if pkt == NULL.
+
+2008-09-18  Jean-Louis Martineau <martineau@zmanda.com>
 	Patch by Nick Smith
 	* server-src/diskfile.c: Fix vstrextend use, Patch by Nick Smith.
 	* server-src/diskfile.c: Init xml_app.result to stralloc("").
