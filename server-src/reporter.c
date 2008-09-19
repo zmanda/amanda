@@ -63,7 +63,7 @@
 #define STATUS_TAPE     16
 
 typedef struct line_s {
-    struct line_s *next;
+    struct line_s *next, *last;
     char *str;
 } line_t;
 
@@ -302,6 +302,7 @@ addline(
     /* allocate new line node */
     new = (line_t *) alloc(SIZEOF(line_t));
     new->next = NULL;
+    new->last = NULL;
     new->str = stralloc(str);
 
     /* add to end of list */
@@ -309,9 +310,12 @@ addline(
     if (p == NULL) {
 	*lp = new;
     } else {
-	while (p->next != NULL)
-	    p = p->next;
-	p->next = new;	
+	if (p->last) {
+	    p->last->next = new;
+	} else {
+ 	    p->next = new;
+	}
+ 	p->last = new;
     }
 }
 
