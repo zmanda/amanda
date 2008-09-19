@@ -175,22 +175,25 @@ static ssize_t taper_port_source_read (TaperSource * pself, void * buf,
 
 static gboolean
 taper_port_source_is_partial(TaperSource * pself) {
-    cmd_t cmd;
-    struct cmdargs cmdargs;
+    struct cmdargs *cmdargs;
+    gboolean result;
     TaperPortSource * self = (TaperPortSource*)pself;
 
     g_return_val_if_fail(self->socket_fd < 0, FALSE);
 
     /* Query DRIVER about partial dump. */
     putresult(DUMPER_STATUS, "%s\n", pself->driver_handle);
-    cmd = getcmd(&cmdargs);
-    if (cmd == FAILED) {
-        return TRUE;
-    } else if (cmd == DONE) {
-        return FALSE;
+    cmdargs = getcmd();
+    if (cmdargs->cmd == FAILED) {
+        result = TRUE;
+    } else if (cmdargs->cmd == DONE) {
+        result = FALSE;
     } else {
         error("Driver gave invalid response "
               "to query DUMPER-STATUS.\n");
         g_assert_not_reached();
     }
+
+    free_cmdargs(cmdargs);
+    return result;
 }

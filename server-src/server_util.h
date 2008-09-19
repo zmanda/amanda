@@ -54,12 +54,13 @@ enum {
 extern const char *cmdstr[];
 
 struct cmdargs {
+    cmd_t cmd;
     int argc;
-    char *argv[MAX_ARGS + 1];
+    char **argv;
 };
 
-cmd_t getcmd(struct cmdargs *cmdargs);
-cmd_t getresult(int fd, int show, int *result_argc, char **result_argv, int max_arg);
+struct cmdargs *getcmd(void);
+void free_cmdargs(struct cmdargs *cmdargs);
 void putresult(cmd_t result, const char *, ...) G_GNUC_PRINTF(2, 3);
 int taper_cmd(cmd_t cmd, void *ptr, char *destname, int level, char *datestamp);
 

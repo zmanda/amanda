@@ -37,7 +37,6 @@
 #include "diskfile.h"
 #include "infofile.h"
 #include "logfile.h"
-#include "token.h"
 
 #define GLOBAL		/* the global variables defined here */
 #include "driverio.h"
@@ -241,10 +240,8 @@ getresult(
     int fd,
     int show,
     int *result_argc,
-    char **result_argv,
-    int max_arg)
+    char ***result_argv)
 {
-    int arg;
     cmd_t t;
     char *line;
 
@@ -255,7 +252,8 @@ getresult(
 	}
 	*result_argc = 0;				/* EOF */
     } else {
-	*result_argc = split(line, result_argv, max_arg, " ");
+	*result_argv = split_quoted_strings(line);
+	*result_argc = g_strv_length(*result_argv);
     }
 
     if(show) {
@@ -263,9 +261,7 @@ getresult(
 	       walltime_str(curclock()),
 	       childstr(fd));
 	if(line) {
-	    for(arg = 1; arg <= *result_argc; arg++) {
-		g_printf(" %s", result_argv[arg]);
-	    }
+	    g_printf(" %s", line);
 	    putchar('\n');
 	} else {
 	    g_printf(" (eof)\n");
@@ -274,16 +270,10 @@ getresult(
     }
     amfree(line);
 
-#ifdef DEBUG
-    g_printf("argc = %d\n", *result_argc);
-    for(arg = 0; arg < *result_argc; arg++)
-	g_printf("argv[%d] = \"%s\"\n", arg, result_argv[arg]);
-#endif
-
     if(*result_argc < 1) return BOGUS;
 
     for(t = (cmd_t)(BOGUS+1); t < LAST_TOK; t++)
-	if(strcmp(result_argv[1], cmdstr[t]) == 0) return t;
+	if(strcmp((*result_argv)[0], cmdstr[t]) == 0) return t;
 
     return BOGUS;
 }

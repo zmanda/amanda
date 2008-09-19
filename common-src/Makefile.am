@@ -43,7 +43,6 @@ libamanda_la_SOURCES =		\
 	stream.c		\
 	tapelist.c		\
 	timestamp.c		\
-	token.c			\
 	util.c			\
 	versuff.c
 # version.c is generated; see below
@@ -124,7 +123,6 @@ noinst_HEADERS =		\
 	stream.h		\
 	tapelist.h		\
 	timestamp.h		\
-	token.h			\
 	util.h			\
 	version.h
 
@@ -158,7 +156,7 @@ version.c: genversion$(EXEEXT)
 BUILT_SOURCES += genversion.h version.c
 
 # these are used for testing only:
-TEST_PROGS = token file bsdsecurity amfeatures
+TEST_PROGS = file bsdsecurity amfeatures
 
 CLEANFILES += *.test.c
 DISTCLEANFILES += version.c genversion genversion.h
@@ -176,9 +174,6 @@ STANDARD_COMMON_STUFF_NOT_FILE = \
 STANDARD_COMMON_STUFF = \
 	$(STANDARD_COMMON_STUFF_NOT_FILE) \
 	file.lo
-
-token_SOURCES = token.test.c
-token_LDADD = $(libamanda_la_LIBADD) $(STANDARD_COMMON_STUFF)
 
 file_SOURCES = file.test.c
 file_LDADD = $(libamanda_la_LIBADD) $(STANDARD_COMMON_STUFF_NOT_FILE)
@@ -212,7 +207,7 @@ libtestutils_la_SOURCES = \
 
 # automake-style tests
 
-TESTS = amflock-test event-test semaphore-test queueing-test
+TESTS = amflock-test event-test semaphore-test queueing-test quoting-test
 noinst_PROGRAMS = $(TESTS)
 
 amflock_test_SOURCES = amflock-test.c
@@ -226,6 +221,9 @@ semaphore_test_LDADD = libamanda.la libtestutils.la
 
 queueing_test_SOURCES = queueing-test.c
 queueing_test_LDADD = libamanda.la libtestutils.la
+
+quoting_test_SOURCES = quoting-test.c
+quoting_test_LDADD = libamanda.la libtestutils.la
 
 # scripts
 

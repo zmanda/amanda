@@ -57,6 +57,18 @@ char *	construct_timestamp(time_t *t);
 /*@only@*//*@null@*/char *unquote_string(const char *str);
 int	needs_quotes(const char * str);
 
+/* Split a string into space-delimited words, obeying quoting as created by
+ * quote_string.  To keep compatibility with the old split(), this has the
+ * characteristic that multiple consecutive spaces are not collapsed into
+ * a single space: "x  y" parses as [ "x", "", "y", NULL ].  The strings are
+ * unquoted before they are returned, unlike split().  An empty string is
+ * split into [ "", NULL ].
+ *
+ * Returns a NULL-terminated array of strings, which should be freed with
+ * g_strfreev.
+ */
+gchar ** split_quoted_strings(const gchar *string);
+
 char *	sanitize_string(const char *str);
 int     copy_file(char *dst, char *src, char **errmsg);
 

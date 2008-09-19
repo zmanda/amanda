@@ -42,7 +42,6 @@
 #include "clock.h"
 #include "version.h"
 #include "amindex.h"
-#include "token.h"
 #include "taperscan.h"
 #include "server_util.h"
 #include "pipespawn.h"
@@ -398,15 +397,14 @@ main(
 
     /* send mail if requested, but only if there were problems */
 
-#define	MAILTO_LIMIT	10
-
     if((server_probs || client_probs || alwaysmail) && mailout) {
 	int mailfd;
 	int nullfd;
 	int errfd;
 	FILE *ferr;
 	char *subject;
-	char **a;
+	char **a, **b;
+	GPtrArray *pipeargs;
 	amwait_t retstat;
 	size_t r;
 	size_t w;
@@ -428,37 +426,38 @@ main(
 			_("%s AMANDA PROBLEM: FIX BEFORE RUN, IF POSSIBLE"),
 			getconf_str(CNF_ORG));
 	}
-	/*
-	 * Variable arg lists are hard to deal with when we do not know
-	 * ourself how many args are involved.  Split the address list
-	 * and hope there are not more than 9 entries.
-	 *
-	 * Remember that split() returns the original input string in
-	 * argv[0], so we have to skip over that.
-	 */
-	a = (char **) alloc((MAILTO_LIMIT + 1) * SIZEOF(char *));
-	memset(a, 0, (MAILTO_LIMIT + 1) * SIZEOF(char *));
 	if(mailto) {
-	    a[1] = mailto;
+	    a = (char **) g_new0(char *, 2);
+	    a[1] = stralloc(mailto);
 	    a[2] = NULL;
 	} else {
-	    r = (ssize_t)split(getconf_str(CNF_MAILTO), a, MAILTO_LIMIT, " ");
-	    a[r + 1] = NULL;
+	    /* (note that validate_mailto doesn't allow any quotes, so this
+	     * is really just splitting regular old strings) */
+	    a = split_quoted_strings(getconf_str(CNF_MAILTO));
 	}
 	if((nullfd = open("/dev/null", O_RDWR)) < 0) {
 	    error("nullfd: /dev/null: %s", strerror(errno));
 	    /*NOTREACHED*/
 	}
-	pipespawn(mailer, STDIN_PIPE | STDERR_PIPE, 0,
-			    &mailfd, &nullfd, &errfd,
-			    mailer,
-			    "-s", subject,
-			          a[1], a[2], a[3], a[4],
-			    a[5], a[6], a[7], a[8], a[9],
-			    NULL);
+
+	/* assemble the command line for the mailer */
+	pipeargs = g_ptr_array_sized_new(4);
+	g_ptr_array_add(pipeargs, mailer);
+	g_ptr_array_add(pipeargs, "-s");
+	g_ptr_array_add(pipeargs, subject);
+	for (b = a; *b; b++)
+	    g_ptr_array_add(pipeargs, *b);
+	g_ptr_array_add(pipeargs, NULL);
+
+	pipespawnv(mailer, STDIN_PIPE | STDERR_PIPE, 0,
+		   &mailfd, &nullfd, &errfd,
+		   (char **)pipeargs->pdata);
+
+	g_ptr_array_free(pipeargs, FALSE);
 	amfree(subject);
 	amfree(mailto);
-	amfree(a);
+	g_strfreev(a);
+
 	/*
 	 * There is the potential for a deadlock here since we are writing
 	 * to the process and then reading stderr, but in the normal case,

@@ -31,7 +31,6 @@
 #include "amanda.h"
 #include "server_util.h"
 #include "arglist.h"
-#include "token.h"
 #include "logfile.h"
 #include "util.h"
 #include "conffile.h"
@@ -56,14 +55,12 @@ const char *cmdstr[] = {
 };
 
 
-cmd_t
-getcmd(
-    struct cmdargs *	cmdargs)
+struct cmdargs *
+getcmd(void)
 {
     char *line;
     cmd_t cmd_i;
-
-    assert(cmdargs != NULL);
+    struct cmdargs *cmdargs = g_new0(struct cmdargs, 1);
 
     if (isatty(0)) {
 	g_printf("%s> ", get_pname());
@@ -76,29 +73,36 @@ getcmd(
 	line = stralloc("QUIT");
     }
 
-    cmdargs->argc = split(line, cmdargs->argv,
-	(int)(sizeof(cmdargs->argv) / sizeof(cmdargs->argv[0])), " ");
     dbprintf(_("getcmd: %s\n"), line);
+
+    cmdargs->argv = split_quoted_strings(line);
+    cmdargs->argc = g_strv_length(cmdargs->argv);
+    cmdargs->cmd = BOGUS;
+
     amfree(line);
 
-#if DEBUG
-    {
-	int i;
-	g_fprintf(stderr,_("argc = %d\n"), cmdargs->argc);
-	for (i = 0; i < cmdargs->argc+1; i++)
-	    g_fprintf(stderr,_("argv[%d] = \"%s\"\n"), i, cmdargs->argv[i]);
+    if (cmdargs->argc < 1) {
+	return cmdargs;
     }
-#endif
-
-    if (cmdargs->argc < 1)
-	return (BOGUS);
 
     for(cmd_i=BOGUS; cmdstr[cmd_i] != NULL; cmd_i++)
-	if(strcmp(cmdargs->argv[1], cmdstr[cmd_i]) == 0)
-	    return (cmd_i);
-    return (BOGUS);
+	if(strcmp(cmdargs->argv[0], cmdstr[cmd_i]) == 0) {
+	    cmdargs->cmd = cmd_i;
+	    return cmdargs;
+	}
+    return cmdargs;
 }
 
+void
+free_cmdargs(
+    struct cmdargs *cmdargs)
+{
+    if (!cmdargs)
+	return;
+    if (cmdargs->argv)
+	g_strfreev(cmdargs->argv);
+    g_free(cmdargs);
+}
 
 printf_arglist_function1(void putresult, cmd_t, result, const char *, format)
 {

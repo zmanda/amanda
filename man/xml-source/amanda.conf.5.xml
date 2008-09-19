@@ -195,6 +195,33 @@ must appear first in the configuration file.</para>
 
 </refsect2>
 
+<refsect2><title>STRINGS</title>
+<para>Quoted strings in Amanda follow a common, C-like syntax.  Printable
+characters and whitespace are kept as-is, except that the backslash character
+(\) is used as an escape character, and a double-quote ends the string.  The allowed
+escape sequences are
+<programlisting>
+    ESCAPE SEQUENCE     BECOMES
+    \\                  \
+    \"                  "
+    \n                  (newline)
+    \t                  (tab)
+    \r                  (carriage return)
+    \f                  (form-feed)
+    \1 - \7
+    \01 - \77
+    \001 - \377         (character specified in octal)
+</programlisting>
+Illegally quoted strings are handled on a "best-effort" basis, which may lead to
+unexpected results.
+</para>
+<para>Examples:
+<programlisting>
+finserver "/data/finance/XYZ Corp's \"real\" finances" finance-high eth0 -1
+property "syspath" "C:\\WINDOWS\\SYSTEM"
+</programlisting>
+</para>
+</refsect2>
 </refsect1>
 
 <refsect1>

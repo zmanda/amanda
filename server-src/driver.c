@@ -179,7 +179,7 @@ main(
     char *conf_diskfile;
     cmd_t cmd;
     int result_argc;
-    char *result_argv[MAX_ARGS+1];
+    char **result_argv;
     char *taper_program;
     char *conf_tapetype;
     tapetype_t *tape;
@@ -443,7 +443,7 @@ main(
     /* ok, planner is done, now lets see if the tape is ready */
 
     if (conf_runtapes > 0) {
-	cmd = getresult(taper, 1, &result_argc, result_argv, MAX_ARGS+1);
+	cmd = getresult(taper, 1, &result_argc, &result_argv);
 	if (cmd != TAPER_OK) {
 	    /* no tape, go into degraded mode: dump to holding disk */
 	    need_degraded = 1;
@@ -547,6 +547,8 @@ main(
 
     amfree(dumper_program);
     amfree(taper_program);
+    if (result_argv)
+	g_strfreev(result_argv);
 
     dbclose();
 
@@ -853,7 +855,7 @@ start_some_dumps(
     const time_t now = time(NULL);
     cmd_t cmd;
     int result_argc;
-    char *result_argv[MAX_ARGS+1];
+    char **result_argv;
     chunker_t *chunker;
     dumper_t *dumper;
     char dumptype;
@@ -1036,7 +1038,7 @@ start_some_dumps(
 	    chunker_cmd(chunker, START, (void *)driver_timestamp);
 	    chunker->dumper = dumper;
 	    chunker_cmd(chunker, PORT_WRITE, diskp);
-	    cmd = getresult(chunker->fd, 1, &result_argc, result_argv, MAX_ARGS+1);
+	    cmd = getresult(chunker->fd, 1, &result_argc, &result_argv);
 	    if(cmd != PORT) {
 		assignedhd_t **h=NULL;
 		int activehd;
@@ -1069,7 +1071,7 @@ start_some_dumps(
 						 handle_dumper_result, dumper);
 		chunker->ev_read = event_register((event_id_t)chunker->fd, EV_READFD,
 						   handle_chunker_result, chunker);
-		dumper->output_port = atoi(result_argv[2]);
+		dumper->output_port = atoi(result_argv[1]);
 
 		if (diskp->host->pre_script == 0) {
 		    for (dp=diskp->host->disks; dp != NULL; dp = dp->hostnext) {
@@ -1083,6 +1085,9 @@ start_some_dumps(
 		dumper_cmd(dumper, PORT_DUMP, diskp);
 	    }
 	    diskp->host->start_t = now + 15;
+
+	    if (result_argv)
+		g_strfreev(result_argv);
 	}
     }
 }
@@ -1258,8 +1263,8 @@ handle_taper_result(
     disk_t *dp;
     cmd_t cmd;
     int result_argc;
-    char *result_argv[MAX_ARGS+1];
-    char *qname;
+    char **result_argv;
+    char *qname, *q;
 
     assert(cookie == NULL);
     amfree(taper_input_error);
@@ -1269,7 +1274,7 @@ handle_taper_result(
         
 	short_dump_state();
         
-	cmd = getresult(taper, 1, &result_argc, result_argv, MAX_ARGS+1);
+	cmd = getresult(taper, 1, &result_argc, &result_argv);
         
 	switch(cmd) {
             
@@ -1279,10 +1284,10 @@ handle_taper_result(
 		/*NOTREACHED*/
 	    }
             
-	    dp = serial2disk(result_argv[2]);
+	    dp = serial2disk(result_argv[1]);
 	    assert(dp == taper_disk);
 	    if (!taper_dumper)
-		free_serial(result_argv[2]);
+		free_serial(result_argv[1]);
             
 	    qname = quote_string(dp->name);
 	    g_printf(_("driver: finished-cmd time %s taper wrote %s:%s\n"),
@@ -1308,10 +1313,10 @@ handle_taper_result(
 		/*NOTREACHED*/
 	    }
             
-	    dp = serial2disk(result_argv[2]);
+	    dp = serial2disk(result_argv[1]);
 	    assert(dp == taper_disk);
             if (!taper_dumper)
-                free_serial(result_argv[2]);
+                free_serial(result_argv[1]);
 
 	    qname = quote_string(dp->name);
 	    g_printf(_("driver: finished-cmd time %s taper wrote %s:%s\n"),
@@ -1330,25 +1335,25 @@ handle_taper_result(
 
 	    break;
             
-        case PARTDONE:  /* PARTDONE <handle> <label> <fileno> <stat> */
-	    dp = serial2disk(result_argv[2]);
+        case PARTDONE:  /* PARTDONE <handle> <label> <fileno> <kbytes> <stat> */
+	    dp = serial2disk(result_argv[1]);
 	    assert(dp == taper_disk);
             if (result_argc != 6) {
-                error(_("error [taper PARTDONE result_argc != 5: %d]"),
+                error(_("error [taper PARTDONE result_argc != 6: %d]"),
                       result_argc);
 		/*NOTREACHED*/
             }
 	    if (!taper_first_label) {
-		taper_first_label = stralloc(result_argv[3]);
-		taper_first_fileno = OFF_T_ATOI(result_argv[4]);
+		taper_first_label = stralloc(result_argv[2]);
+		taper_first_fileno = OFF_T_ATOI(result_argv[3]);
 	    }
-	    taper_written = OFF_T_ATOI(result_argv[5]);
+	    taper_written = OFF_T_ATOI(result_argv[4]);
 	    if (taper_written > sched(taper_disk)->act_size)
 		sched(taper_disk)->act_size = taper_written;
             
             break;
 
-        case REQUEST_NEW_TAPE:  /* REQUEST-NEW-TAPE */
+        case REQUEST_NEW_TAPE:  /* REQUEST-NEW-TAPE <handle> */
             if (result_argc != 2) {
                 error(_("error [taper REQUEST_NEW_TAPE result_argc != 2: %d]"),
                       result_argc);
@@ -1416,15 +1421,17 @@ handle_taper_result(
 	    break;
 
         case TAPE_ERROR: /* TAPE-ERROR <handle> <err mess> */
-            dp = serial2disk(result_argv[2]);
+            dp = serial2disk(result_argv[1]);
 	    if (!taper_dumper)
-		free_serial(result_argv[2]);
+		free_serial(result_argv[1]);
 	    qname = quote_string(dp->name);
             g_printf(_("driver: finished-cmd time %s taper wrote %s:%s\n"),
                    walltime_str(curclock()), dp->host->hostname, qname);
 	    amfree(qname);
             fflush(stdout);
-            log_add(L_WARNING, _("Taper error: %s"), result_argv[3]);
+	    q = quote_string(result_argv[3]);
+            log_add(L_WARNING, _("Taper error: %s"), q);
+	    amfree(q);
 	    taper_tape_error = newstralloc(taper_tape_error, result_argv[3]);
             /*FALLTHROUGH*/
 
@@ -1462,6 +1469,8 @@ handle_taper_result(
                   cmdstr[cmd]);
 	    /*NOTREACHED*/
 	}
+
+	g_strfreev(result_argv);
 
 	if (taper_result != LAST_TOK) {
 	    if(taper_dumper) {
@@ -1742,7 +1751,7 @@ handle_dumper_result(
     cmd_t cmd;
     int result_argc;
     char *qname;
-    char *result_argv[MAX_ARGS+1];
+    char **result_argv;
 
     assert(dumper != NULL);
     dp = dumper->dp;
@@ -1752,13 +1761,13 @@ handle_dumper_result(
 
 	short_dump_state();
 
-	cmd = getresult(dumper->fd, 1, &result_argc, result_argv, MAX_ARGS+1);
+	cmd = getresult(dumper->fd, 1, &result_argc, &result_argv);
 
 	if(cmd != BOGUS) {
-	    /* result_argv[2] always contains the serial number */
-	    sdp = serial2disk(result_argv[2]);
+	    /* result_argv[1] always contains the serial number */
+	    sdp = serial2disk(result_argv[1]);
 	    if (sdp != dp) {
-		error(_("Invalid serial number %s"), result_argv[2]);
+		error(_("Invalid serial number %s"), result_argv[1]);
                 g_assert_not_reached();
 	    }
 	}
@@ -1772,8 +1781,8 @@ handle_dumper_result(
 		/*NOTREACHED*/
 	    }
 
-	    sched(dp)->origsize = OFF_T_ATOI(result_argv[3]);
-	    sched(dp)->dumptime = TIME_T_ATOI(result_argv[5]);
+	    sched(dp)->origsize = OFF_T_ATOI(result_argv[2]);
+	    sched(dp)->dumptime = TIME_T_ATOI(result_argv[4]);
 
 	    g_printf(_("driver: finished-cmd time %s %s dumped %s:%s\n"),
 		   walltime_str(curclock()), dumper->name,
@@ -1791,17 +1800,18 @@ handle_dumper_result(
 	     */
 	    if(sched(dp)->dump_attempted) {
 		char *qname = quote_string(dp->name);
+		char *qerr = quote_string(result_argv[2]);
 		log_add(L_FAIL, _("%s %s %s %d [too many dumper retry: %s]"),
 	    	    dp->host->hostname, qname, sched(dp)->datestamp,
-	    	    sched(dp)->level, result_argv[3]);
+		    sched(dp)->level, qerr);
 		g_printf(_("driver: dump failed %s %s %s, too many dumper retry: %s\n"),
-		        result_argv[2], dp->host->hostname, qname,
-		        result_argv[3]);
+		        result_argv[1], dp->host->hostname, qname, qerr);
 		amfree(qname);
+		amfree(qerr);
 	    }
 	    /* FALLTHROUGH */
 	case FAILED: /* FAILED <handle> <errstr> */
-	    /*free_serial(result_argv[2]);*/
+	    /*free_serial(result_argv[1]);*/
 	    dumper->result = cmd;
 	    break;
 
@@ -1813,7 +1823,7 @@ handle_dumper_result(
 	     * other dumps that are waiting on disk space.
 	     */
 	    assert(pending_aborts);
-	    /*free_serial(result_argv[2]);*/
+	    /*free_serial(result_argv[1]);*/
 	    dumper->result = cmd;
 	    break;
 
@@ -1846,6 +1856,7 @@ handle_dumper_result(
 	    assert(0);
 	}
         amfree(qname);
+	g_strfreev(result_argv);
 
 	if (cmd != BOGUS) {
 	    int last_dump = 1;
@@ -1906,7 +1917,7 @@ handle_chunker_result(
     disk_t *dp, *sdp;
     cmd_t cmd;
     int result_argc;
-    char *result_argv[MAX_ARGS+1];
+    char **result_argv;
     int dummy;
     int activehd = -1;
     char *qname;
@@ -1928,13 +1939,13 @@ handle_chunker_result(
     do {
 	short_dump_state();
 
-	cmd = getresult(chunker->fd, 1, &result_argc, result_argv, MAX_ARGS+1);
+	cmd = getresult(chunker->fd, 1, &result_argc, &result_argv);
 
 	if(cmd != BOGUS) {
-	    /* result_argv[2] always contains the serial number */
-	    sdp = serial2disk(result_argv[2]);
+	    /* result_argv[1] always contains the serial number */
+	    sdp = serial2disk(result_argv[1]);
 	    if (sdp != dp) {
-		error(_("Invalid serial number %s"), result_argv[2]);
+		error(_("Invalid serial number %s"), result_argv[1]);
                 g_assert_not_reached();
 	    }
 	}
@@ -1948,9 +1959,9 @@ handle_chunker_result(
 		      result_argc);
 	        /*NOTREACHED*/
 	    }
-	    /*free_serial(result_argv[2]);*/
+	    /*free_serial(result_argv[1]);*/
 
-	    sched(dp)->dumpsize = (off_t)atof(result_argv[3]);
+	    sched(dp)->dumpsize = (off_t)atof(result_argv[2]);
 
 	    qname = quote_string(dp->name);
 	    g_printf(_("driver: finished-cmd time %s %s chunked %s:%s\n"),
@@ -1972,7 +1983,7 @@ handle_chunker_result(
 
 	    break;
 	case FAILED: /* FAILED <handle> <errstr> */
-	    /*free_serial(result_argv[2]);*/
+	    /*free_serial(result_argv[1]);*/
 
 	    event_release(chunker->ev_read);
 
@@ -1985,10 +1996,10 @@ handle_chunker_result(
 		error(_("!h || activehd < 0"));
 		/*NOTREACHED*/
 	    }
-	    h[activehd]->used -= OFF_T_ATOI(result_argv[3]);
-	    h[activehd]->reserved -= OFF_T_ATOI(result_argv[3]);
-	    h[activehd]->disk->allocated_space -= OFF_T_ATOI(result_argv[3]);
-	    h[activehd]->disk->disksize -= OFF_T_ATOI(result_argv[3]);
+	    h[activehd]->used -= OFF_T_ATOI(result_argv[2]);
+	    h[activehd]->reserved -= OFF_T_ATOI(result_argv[2]);
+	    h[activehd]->disk->allocated_space -= OFF_T_ATOI(result_argv[2]);
+	    h[activehd]->disk->disksize -= OFF_T_ATOI(result_argv[2]);
 	    break;
 
 	case RQ_MORE_DISK: /* RQ-MORE-DISK <handle> */
@@ -2034,7 +2045,7 @@ handle_chunker_result(
 	     */
 	    /*assert(pending_aborts);*/
 
-	    /*free_serial(result_argv[2]);*/
+	    /*free_serial(result_argv[1]);*/
 
 	    event_release(chunker->ev_read);
 
@@ -2071,6 +2082,7 @@ handle_chunker_result(
 	default:
 	    assert(0);
 	}
+	g_strfreev(result_argv);
 
 	if(chunker->result != LAST_TOK && chunker->dumper->result != LAST_TOK)
 	    dumper_chunker_result(dp);
@@ -3007,7 +3019,7 @@ dump_to_tape(
     dumper_t *dumper;
     cmd_t cmd;
     int result_argc;
-    char *result_argv[MAX_ARGS+1];
+    char **result_argv;
     char *qname;
     disk_t *dp1;
 
@@ -3032,7 +3044,7 @@ dump_to_tape(
     /* tell the taper to read from a port number of its choice */
 
     taper_cmd(PORT_WRITE, dp, NULL, sched(dp)->level, sched(dp)->datestamp);
-    cmd = getresult(taper, 1, &result_argc, result_argv, MAX_ARGS+1);
+    cmd = getresult(taper, 1, &result_argc, &result_argv);
     if(cmd != PORT) {
 	g_printf(_("driver: did not get PORT from taper for %s:%s\n"),
 		dp->host->hostname, qname);
@@ -3045,7 +3057,7 @@ dump_to_tape(
     amfree(qname);
 
     /* copy port number */
-    dumper->output_port = atoi(result_argv[2]);
+    dumper->output_port = atoi(result_argv[1]);
 
     dumper->dp = dp;
     dumper->chunker = NULL;
@@ -3069,8 +3081,8 @@ dump_to_tape(
     /* update statistics & print state */
 
     taper_busy = dumper->busy = 1;
-    amfree(taper_input_error);
-    amfree(taper_tape_error);
+    taper_input_error = NULL;
+    taper_tape_error = NULL;
     taper_dumper = dumper;
     taper_disk = dp;
     taper_first_label = NULL;
@@ -3089,6 +3101,8 @@ dump_to_tape(
 				     handle_dumper_result, dumper);
     taper_ev_read = event_register(taper, EV_READFD,
 				   handle_taper_result, NULL);
+
+    g_strfreev(result_argv);
 }
 
 static int

@@ -44,7 +44,7 @@
 #include "taperscan.h"
 #include "taper-source.h"
 #include "timestamp.h"
-#include "token.h"
+#include "util.h"
 #include "version.h"
 #include "queueing.h"
 #include "device-queueing.h"
@@ -112,19 +112,18 @@ static void free_dump_info(dump_info_t * info) {
 /* Validate that a command has the proper number of arguments, and
    print a meaningful error message if not. It returns only if the
    check is successful. */
-static void validate_args(cmd_t cmd, struct cmdargs * args,
+static void validate_args(struct cmdargs * cmdargs,
                           char ** argnames) {
-    int i;
-    
-    for (i = 0; argnames[i] != NULL; i ++) {
-        if (i > args->argc) {
-            error("error [taper %s: not enough args: %s]",
-                  cmdstr[cmd], argnames[i]);
-        }
+    int len = g_strv_length(argnames);
+
+    if (len > cmdargs->argc) {
+	error("error [taper %s: not enough args; first missing arg is %s]",
+	      cmdstr[cmdargs->cmd], argnames[cmdargs->argc]);
     }
-    if (i < args->argc) {
+
+    if (len < cmdargs->argc) {
         error("error [taper %s: Too many args: Got %d, expected %d.]",
-              cmdstr[cmd], args->argc, i);
+              cmdstr[cmdargs->cmd], cmdargs->argc, len);
     }
 }
 
@@ -148,7 +147,7 @@ static gboolean open_read_socket(dump_info_t * info, char * split_diskbuffer,
                       strerror(save_errno),
                       "]",
                       NULL);
-        q = squote(m);
+        q = quote_string(m);
         putresult(TAPE_ERROR, "%s %s\n", info->handle, q);
         log_add(L_FAIL, "%s %s %s %d %s",
                 info->hostname, qdiskname, info->timestamp,
@@ -172,7 +171,7 @@ static gboolean open_read_socket(dump_info_t * info, char * split_diskbuffer,
                       strerror(save_errno),
                       "]",
                       NULL);
-        q = squote(m);
+        q = quote_string(m);
         putresult(TAPE_ERROR, "%s %s\n", info->handle, q);
         log_add(L_FAIL, "%s %s %s %d %s",
                 info->hostname, qdiskname, info->timestamp,
@@ -195,7 +194,7 @@ static gboolean open_read_socket(dump_info_t * info, char * split_diskbuffer,
                       strerror(save_errno),
                       "]",
                       NULL);
-        q = squote(m);
+        q = quote_string(m);
         putresult(TAPE_ERROR, "%s %s\n", info->handle, q);
         log_add(L_FAIL, "%s %s %s %d %s",
                 info->hostname, qdiskname, info->timestamp,
@@ -329,8 +328,8 @@ static gboolean find_new_tape(taper_state_t * state, dump_info_t * dump) {
     GThread * tape_search = NULL;
     tape_search_request_t search_request;
     gboolean use_threads;
+    struct cmdargs *cmdargs;
     cmd_t cmd;
-    struct cmdargs args;
 
     if (state->device != NULL) {
         return TRUE;
@@ -348,7 +347,10 @@ static gboolean find_new_tape(taper_state_t * state, dump_info_t * dump) {
     }
     
     putresult(REQUEST_NEW_TAPE, "%s\n", dump->handle);
-    cmd = getcmd(&args);
+    cmdargs = getcmd();
+    cmd = cmdargs->cmd;
+    free_cmdargs(cmdargs);
+
     switch (cmd) {
     default:
         g_fprintf(stderr, "taper: Got odd message from driver, expected NEW-TAPE or NO-NEW-TAPE.\n");
@@ -949,52 +951,52 @@ static void process_port_write(taper_state_t * state,
     guint64 splitsize;
     guint64 fallback_splitsize;
     char * split_diskbuffer;
-    char * argnames[] = {"command",               /* 1 */
-			 "handle",                /* 2 */
-                         "hostname",              /* 3 */
-                         "diskname",              /* 4 */
-                         "level",                 /* 5 */
-                         "datestamp",             /* 6 */
-                         "splitsize",             /* 7 */
-                         "split_diskbuffer",      /* 8 */
-                         "fallback_splitsize",    /* 9 */
+    char * argnames[] = {"command",               /* 0 */
+			 "handle",                /* 1 */
+                         "hostname",              /* 2 */
+                         "diskname",              /* 3 */
+                         "level",                 /* 4 */
+                         "datestamp",             /* 5 */
+                         "splitsize",             /* 6 */
+                         "split_diskbuffer",      /* 7 */
+                         "fallback_splitsize",    /* 8 */
                           NULL };
 
-    validate_args(PORT_WRITE, cmdargs, argnames);
+    validate_args(cmdargs, argnames);
 
-    dump_state.handle = g_strdup(cmdargs->argv[2]);
-    dump_state.hostname = g_strdup(cmdargs->argv[3]);
-    dump_state.diskname = unquote_string(cmdargs->argv[4]);
+    dump_state.handle = g_strdup(cmdargs->argv[1]);
+    dump_state.hostname = g_strdup(cmdargs->argv[2]);
+    dump_state.diskname = g_strdup(cmdargs->argv[3]);
     
     errno = 0;
-    dump_state.level = strtol(cmdargs->argv[5], NULL, 10);
+    dump_state.level = strtol(cmdargs->argv[4], NULL, 10);
     if (errno != 0) {
         error("error [taper PORT-WRITE: Invalid dump level %s]",
-              cmdargs->argv[5]);
+              cmdargs->argv[4]);
         g_assert_not_reached();
     }
     
-    dump_state.timestamp = strdup(cmdargs->argv[6]);
+    dump_state.timestamp = strdup(cmdargs->argv[5]);
 
     errno = 0;
-    splitsize = g_ascii_strtoull(cmdargs->argv[7], NULL, 10);
+    splitsize = g_ascii_strtoull(cmdargs->argv[6], NULL, 10);
     if (errno != 0) {
         error("error [taper PORT-WRITE: Invalid splitsize %s]",
-              cmdargs->argv[7]);
+              cmdargs->argv[6]);
         g_assert_not_reached();
     }
     
-    if (strcmp(cmdargs->argv[8], "NULL") == 0) {
+    if (strcmp(cmdargs->argv[7], "NULL") == 0) {
         split_diskbuffer = NULL;
     } else {
-        split_diskbuffer = g_strdup(cmdargs->argv[8]);
+        split_diskbuffer = g_strdup(cmdargs->argv[7]);
     }
     
     errno = 0;
-    fallback_splitsize = g_ascii_strtoull(cmdargs->argv[9], NULL, 10);
+    fallback_splitsize = g_ascii_strtoull(cmdargs->argv[8], NULL, 10);
     if (errno != 0) {
         error("error [taper PORT-WRITE: Invalid fallback_splitsize %s]",
-              cmdargs->argv[9]);
+              cmdargs->argv[8]);
         g_assert_not_reached();
     }
 
@@ -1020,38 +1022,38 @@ static void process_file_write(taper_state_t * state,
     dump_info_t dump_state;
     char * holding_disk_file;
     guint64 splitsize;
-    char * argnames[] = {"command",               /* 1 */
-			 "handle",                /* 2 */
-                         "filename",              /* 3 */
-                         "hostname",              /* 4 */
-                         "diskname",              /* 5 */
-                         "level",                 /* 6 */
-                         "datestamp",             /* 7 */
-                         "splitsize",             /* 8 */
+    char * argnames[] = {"command",               /* 0 */
+			 "handle",                /* 1 */
+                         "filename",              /* 2 */
+                         "hostname",              /* 3 */
+                         "diskname",              /* 4 */
+                         "level",                 /* 5 */
+                         "datestamp",             /* 6 */
+                         "splitsize",             /* 7 */
                           NULL };
 
-    validate_args(FILE_WRITE, cmdargs, argnames);
+    validate_args(cmdargs, argnames);
 
-    dump_state.handle = g_strdup(cmdargs->argv[2]);
-    holding_disk_file = unquote_string(cmdargs->argv[3]);
-    dump_state.hostname = g_strdup(cmdargs->argv[4]);
-    dump_state.diskname = unquote_string(cmdargs->argv[5]);
+    dump_state.handle = g_strdup(cmdargs->argv[1]);
+    holding_disk_file = g_strdup(cmdargs->argv[2]);
+    dump_state.hostname = g_strdup(cmdargs->argv[3]);
+    dump_state.diskname = g_strdup(cmdargs->argv[4]);
     
     errno = 0;
-    dump_state.level = strtol(cmdargs->argv[6], NULL, 10);
+    dump_state.level = strtol(cmdargs->argv[5], NULL, 10);
     if (errno != 0) {
         error("error [taper FILE-WRITE: Invalid dump level %s]",
               cmdargs->argv[5]);
         g_assert_not_reached();
     }
     
-    dump_state.timestamp = strdup(cmdargs->argv[7]);
+    dump_state.timestamp = strdup(cmdargs->argv[6]);
 
     errno = 0;
-    splitsize = g_ascii_strtoull(cmdargs->argv[8], NULL, 10);
+    splitsize = g_ascii_strtoull(cmdargs->argv[7], NULL, 10);
     if (errno != 0) {
         error("error [taper FILE-WRITE: Invalid splitsize %s]",
-              cmdargs->argv[8]);
+              cmdargs->argv[7]);
         g_assert_not_reached();
     }
 
@@ -1083,9 +1085,7 @@ static gboolean send_quitting(taper_state_t * state) {
 /* This function recieves the START_TAPER command from driver, and
    returns the attached timestamp. */
 static gboolean find_first_tape(taper_state_t * state) {
-    cmd_t cmd;
-    /* Note: cmdargs.argv is never freed. In the entire Amanda codebase. */
-    struct cmdargs cmdargs;
+    struct cmdargs *cmdargs;
     tape_search_request_t search_request;
     GThread * tape_search = NULL;
     gboolean use_threads;
@@ -1102,12 +1102,12 @@ static gboolean find_first_tape(taper_state_t * state) {
                                       &search_request, TRUE, NULL);
     }
 
-    cmd = getcmd(&cmdargs);
+    cmdargs = getcmd();
 
-    switch (cmd) {
+    switch (cmdargs->cmd) {
     case START_TAPER: {
         gboolean search_result;
-        state->driver_start_time = strdup(cmdargs.argv[2]);
+        state->driver_start_time = strdup(cmdargs->argv[1]);
         if (use_threads) {
             search_result = GPOINTER_TO_INT(g_thread_join(tape_search));
         } else {
@@ -1135,6 +1135,7 @@ static gboolean find_first_tape(taper_state_t * state) {
 	    }
         }
 	amfree(search_request.errmsg);
+	free_cmdargs(cmdargs);
         return TRUE;
     }
     case QUIT:
@@ -1142,9 +1143,10 @@ static gboolean find_first_tape(taper_state_t * state) {
         if (use_threads) {
             g_thread_join(tape_search);
         }
+	free_cmdargs(cmdargs);
         return send_quitting(state);
     default:
-        error("error [file_reader_side cmd %d argc %d]", cmd, cmdargs.argc);
+        error("error [file_reader_side cmd %d argc %d]", cmdargs->cmd, cmdargs->argc);
     }
 
     g_assert_not_reached();
@@ -1153,13 +1155,12 @@ static gboolean find_first_tape(taper_state_t * state) {
 /* In running mode (not startup mode), get a command from driver and
    deal with it. */
 static gboolean process_driver_command(taper_state_t * state) {
-    cmd_t cmd;
-    struct cmdargs cmdargs;
+    struct cmdargs *cmdargs;
     char * q;
 
     /* This will return QUIT if driver has died. */
-    cmd = getcmd(&cmdargs);
-    switch (cmd) {
+    cmdargs = getcmd();
+    switch (cmdargs->cmd) {
     case PORT_WRITE:
         /*
          * PORT-WRITE
@@ -1172,7 +1173,7 @@ static gboolean process_driver_command(taper_state_t * state) {
          *   splitsize
          *   split_diskbuffer
          */
-        process_port_write(state, &cmdargs);
+        process_port_write(state, cmdargs);
         break;
         
     case FILE_WRITE:
@@ -1187,16 +1188,15 @@ static gboolean process_driver_command(taper_state_t * state) {
          *   datestamp
          *   splitsize
          */
-        process_file_write(state, &cmdargs);
+        process_file_write(state, cmdargs);
         break;
         
     case QUIT:
+	free_cmdargs(cmdargs);
         return send_quitting(state);
     default:
-        if (cmdargs.argc >= 1) {
-            q = squote(cmdargs.argv[1]);
-        } else if (cmdargs.argc >= 0) {
-            q = squote(cmdargs.argv[0]);
+        if (cmdargs->argc >= 1) {
+            q = quote_string(cmdargs->argv[0]);
         } else {
             q = stralloc("(no input?)");
         }
@@ -1204,6 +1204,7 @@ static gboolean process_driver_command(taper_state_t * state) {
         amfree(q);
         break;
     }
+    free_cmdargs(cmdargs);
 
     return TRUE;
 }

@@ -324,7 +324,6 @@ ICE_CHECK_DECL(setegid,unistd.h)
 ICE_CHECK_DECL(seteuid,unistd.h)
 ICE_CHECK_DECL(setresgid,unistd.h)
 ICE_CHECK_DECL(setresuid,unistd.h)
-AC_CHECK_FUNCS(shquote)
 ICE_CHECK_DECL(snprintf,stdio.h)
 ICE_CHECK_DECL(vsnprintf,stdio.h)
 AMANDA_FUNC_SETPGID

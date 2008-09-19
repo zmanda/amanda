@@ -50,7 +50,6 @@
 #include "disk_history.h"
 #include "list_dir.h"
 #include "logfile.h"
-#include "token.h"
 #include "find.h"
 #include "tapefile.h"
 #include "util.h"

@@ -32,7 +32,7 @@
 #include "amanda.h"
 #include "conffile.h"
 #include "infofile.h"
-#include "token.h"
+#include "util.h"
 
 static void zero_info(info_t *);
 

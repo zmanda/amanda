@@ -194,7 +194,7 @@ static gboolean open_holding_file(char * filename, int * fd_pointer,
     fd = robust_open(filename, O_NOCTTY | O_RDONLY, 0);
     if (fd < 0) {
 	*errmsg = newvstrallocf(*errmsg,
-        	"Could not open holding disk file %s: %s",
+		"Could not open holding disk file \"%s\": %s",
                 filename, strerror(errno));
         return FALSE;
     }

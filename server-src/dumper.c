@@ -38,7 +38,6 @@
 #include "protocol.h"
 #include "security.h"
 #include "stream.h"
-#include "token.h"
 #include "version.h"
 #include "fileheader.h"
 #include "amfeatures.h"
@@ -304,8 +303,7 @@ main(
     char **	argv)
 {
     static struct databuf db;
-    struct cmdargs cmdargs;
-    cmd_t cmd;
+    struct cmdargs *cmdargs = NULL;
     int outfd = -1;
     int rc;
     in_port_t taper_port;
@@ -315,6 +313,7 @@ main(
     config_overwrites_t *cfg_ovr = NULL;
     char *cfg_opt = NULL;
     int dumper_setuid;
+
     /*
      * Configure program for internationalization:
      *   1) Only set the message locale for now.
@@ -378,13 +377,15 @@ main(
     protocol_init();
 
     do {
-	cmd = getcmd(&cmdargs);
+	if (cmdargs)
+	    free_cmdargs(cmdargs);
+	cmdargs = getcmd();
 
-	switch(cmd) {
+	switch(cmdargs->cmd) {
 	case START:
-	    if(cmdargs.argc <  2)
+	    if(cmdargs->argc <  2)
 		error(_("error [dumper START: not enough args: timestamp]"));
-	    dumper_timestamp = newstralloc(dumper_timestamp, cmdargs.argv[2]);
+	    dumper_timestamp = newstralloc(dumper_timestamp, cmdargs->argv[1]);
 	    break;
 
 	case ABORT:
@@ -411,100 +412,99 @@ main(
 	     *   security_driver
 	     *   options
 	     */
-	    cmdargs.argc++;			/* true count of args */
-	    a = 2;
+	    a = 1; /* skip "PORT-DUMP" */
 
-	    if(a >= cmdargs.argc) {
+	    if(a >= cmdargs->argc) {
 		error(_("error [dumper PORT-DUMP: not enough args: handle]"));
 		/*NOTREACHED*/
 	    }
-	    handle = newstralloc(handle, cmdargs.argv[a++]);
+	    handle = newstralloc(handle, cmdargs->argv[a++]);
 
-	    if(a >= cmdargs.argc) {
+	    if(a >= cmdargs->argc) {
 		error(_("error [dumper PORT-DUMP: not enough args: port]"));
 		/*NOTREACHED*/
 	    }
-	    taper_port = (in_port_t)atoi(cmdargs.argv[a++]);
+	    taper_port = (in_port_t)atoi(cmdargs->argv[a++]);
 
-	    if(a >= cmdargs.argc) {
+	    if(a >= cmdargs->argc) {
 		error(_("error [dumper PORT-DUMP: not enough args: hostname]"));
 		/*NOTREACHED*/
 	    }
-	    hostname = newstralloc(hostname, cmdargs.argv[a++]);
+	    hostname = newstralloc(hostname, cmdargs->argv[a++]);
 
-	    if(a >= cmdargs.argc) {
+	    if(a >= cmdargs->argc) {
 		error(_("error [dumper PORT-DUMP: not enough args: features]"));
 		/*NOTREACHED*/
 	    }
 	    am_release_feature_set(their_features);
-	    their_features = am_string_to_feature(cmdargs.argv[a++]);
+	    their_features = am_string_to_feature(cmdargs->argv[a++]);
 
-	    if(a >= cmdargs.argc) {
+	    if(a >= cmdargs->argc) {
 		error(_("error [dumper PORT-DUMP: not enough args: diskname]"));
 		/*NOTREACHED*/
 	    }
-	    qdiskname = newstralloc(qdiskname, cmdargs.argv[a++]);
-	    if (diskname != NULL)
-		amfree(diskname);
-	    diskname = unquote_string(qdiskname);
+	    diskname = newstralloc(diskname, cmdargs->argv[a++]);
+	    if (qdiskname != NULL)
+		amfree(qdiskname);
+	    qdiskname = quote_string(diskname);
 	    b64disk = amxml_format_tag("disk", diskname);
 
-	    if(a >= cmdargs.argc) {
+	    if(a >= cmdargs->argc) {
 		error(_("error [dumper PORT-DUMP: not enough args: device]"));
 		/*NOTREACHED*/
 	    }
-	    device = newstralloc(device, cmdargs.argv[a++]);
+	    device = newstralloc(device, cmdargs->argv[a++]);
 	    b64device = amxml_format_tag("diskdevice", device);
 	    if(strcmp(device,"NODEVICE") == 0)
 		amfree(device);
 
-	    if(a >= cmdargs.argc) {
+	    if(a >= cmdargs->argc) {
 		error(_("error [dumper PORT-DUMP: not enough args: level]"));
 		/*NOTREACHED*/
 	    }
-	    level = atoi(cmdargs.argv[a++]);
+	    level = atoi(cmdargs->argv[a++]);
 
-	    if(a >= cmdargs.argc) {
+	    if(a >= cmdargs->argc) {
 		error(_("error [dumper PORT-DUMP: not enough args: dumpdate]"));
 		/*NOTREACHED*/
 	    }
-	    dumpdate = newstralloc(dumpdate, cmdargs.argv[a++]);
+	    dumpdate = newstralloc(dumpdate, cmdargs->argv[a++]);
 
-	    if(a >= cmdargs.argc) {
+	    if(a >= cmdargs->argc) {
 		error(_("error [dumper PORT-DUMP: not enough args: program]"));
 		/*NOTREACHED*/
 	    }
-	    progname = newstralloc(progname, cmdargs.argv[a++]);
+	    progname = newstralloc(progname, cmdargs->argv[a++]);
 
-	    if(a >= cmdargs.argc) {
+	    if(a >= cmdargs->argc) {
 		error(_("error [dumper PORT-DUMP: not enough args: amandad_path]"));
 		/*NOTREACHED*/
 	    }
-	    amandad_path = newstralloc(amandad_path, cmdargs.argv[a++]);
+	    amandad_path = newstralloc(amandad_path, cmdargs->argv[a++]);
 
-	    if(a >= cmdargs.argc) {
+	    if(a >= cmdargs->argc) {
 		error(_("error [dumper PORT-DUMP: not enough args: client_username]"));
 	    }
-	    client_username = newstralloc(client_username, cmdargs.argv[a++]);
+	    client_username = newstralloc(client_username, cmdargs->argv[a++]);
 
-	    if(a >= cmdargs.argc) {
+	    if(a >= cmdargs->argc) {
 		error(_("error [dumper PORT-DUMP: not enough args: ssh_keys]"));
 	    }
-	    ssh_keys = newstralloc(ssh_keys, cmdargs.argv[a++]);
+	    ssh_keys = newstralloc(ssh_keys, cmdargs->argv[a++]);
 
-	    if(a >= cmdargs.argc) {
+	    if(a >= cmdargs->argc) {
 		error(_("error [dumper PORT-DUMP: not enough args: auth]"));
 	    }
-	    auth = newstralloc(auth, cmdargs.argv[a++]);
+	    auth = newstralloc(auth, cmdargs->argv[a++]);
 
-	    if(a >= cmdargs.argc) {
+	    if(a >= cmdargs->argc) {
 		error(_("error [dumper PORT-DUMP: not enough args: options]"));
 	    }
-	    options = newstralloc(options, cmdargs.argv[a++]);
+	    options = newstralloc(options, cmdargs->argv[a++]);
 
-	    if(a != cmdargs.argc) {
+	    if(a != cmdargs->argc) {
 		error(_("error [dumper PORT-DUMP: too many args: %d != %d]"),
-		      cmdargs.argc, a);
+		      cmdargs->argc, a);
 	        /*NOTREACHED*/
 	    }
 
@@ -513,7 +513,7 @@ main(
 		errstr = newvstrallocf(errstr,
 				     _("could not resolve localhost: %s"),
 				     gai_strerror(res));
-		q = squotef("%s", errstr);
+		q = quote_string(errstr);
 		putresult(FAILED, "%s %s\n", handle, q);
 		log_add(L_FAIL, "%s %s %s %d [%s]", hostname, qdiskname,
 			dumper_timestamp, level, errstr);
@@ -529,7 +529,7 @@ main(
 		
 		errstr = newvstrallocf(errstr, _("port open: %s"),
 				      strerror(errno));
-		q = squotef("%s", errstr);
+		q = quote_string(errstr);
 		putresult(FAILED, "%s %s\n", handle, q);
 		log_add(L_FAIL, "%s %s %s %d [%s]", hostname, qdiskname,
 			dumper_timestamp, level, errstr);
@@ -555,7 +555,7 @@ main(
 			      auth,
 			      options);
 	    if (rc != 0) {
-		q = squote(errstr);
+		q = quote_string(errstr);
 		putresult(rc == 2? FAILED : TRYAGAIN, "%s %s\n",
 		    handle, q);
 		if (rc == 2)
@@ -575,10 +575,8 @@ main(
 	    break;
 
 	default:
-	    if(cmdargs.argc >= 1) {
-		q = squote(cmdargs.argv[1]);
-	    } else if(cmdargs.argc >= 0) {
-		q = squote(cmdargs.argv[0]);
+	    if(cmdargs->argc >= 1) {
+		q = quote_string(cmdargs->argv[0]);
 	    } else {
 		q = stralloc(_("(no input?)"));
 	    }
@@ -589,7 +587,8 @@ main(
 
 	if (outfd != -1)
 	    aclose(outfd);
-    } while(cmd != QUIT);
+    } while(cmdargs->cmd != QUIT);
+    free_cmdargs(cmdargs);
 
     log_add(L_INFO, "pid-done %ld", (long)getpid());
 
@@ -659,6 +658,7 @@ databuf_flush(
     struct databuf *	db)
 {
     size_t written;
+    char *m;
 
     /*
      * If there's no data, do nothing.
@@ -681,7 +681,9 @@ databuf_flush(
 	dumpbytes %= (off_t)1024;
     }
     if (written == 0) {
-	errstr = squotef(_("data write: %s"), strerror(errno));
+	m = vstrallocf(_("data write: %s"), strerror(errno));
+	errstr = quote_string(m);
+	amfree(m);
 	return -1;
     }
     db->datain = db->dataout = db->buf;
@@ -1088,6 +1090,7 @@ do_dump(
     char *errfname = NULL;
     int indexout;
     pid_t indexpid = -1;
+    char *m;
 
     startclock();
 
@@ -1200,7 +1203,9 @@ do_dump(
 	(long long)dumpsize,
 	(isnormal(dumptime) ? ((double)dumpsize / (double)dumptime) : 0.0),
 	(long long)origsize);
-    q = squotef("[%s]", errstr);
+    m = vstrallocf("[%s]", errstr);
+    q = quote_string(m);
+    amfree(m);
     putresult(DONE, _("%s %lld %lld %lu %s\n"), handle,
     		(long long)origsize,
 		(long long)dumpsize,
@@ -1253,9 +1258,11 @@ do_dump(
     return 1;
 
 failed:
-    q = squotef("[%s]", errstr);
+    m = vstrallocf("[%s]", errstr);
+    q = quote_string(m);
     putresult(FAILED, "%s %s\n", handle, q);
     amfree(q);
+    amfree(m);
 
     aclose(db->fd);
     /* kill all child process */

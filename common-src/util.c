@@ -423,6 +423,16 @@ unquote_string(
 		    in++;
 		    *(out++) = '\f';
 		    continue;
+		} else if (*in >= '0' && *in <= '7') {
+		    char c = 0;
+		    int i = 0;
+
+		    while (i < 3 && *in >= '0' && *in <= '7') {
+			c = (c << 3) + *(in++) - '0';
+			i++;
+		    }
+		    if (c)
+			*(out++) = c;
 		}
 	    }
 	    *(out++) = *(in++);
@@ -430,6 +440,47 @@ unquote_string(
         *out = '\0';
     }
     return (ret);
+}
+
+gchar **
+split_quoted_strings(
+    const gchar *string)
+{
+    char *local = g_strdup(string);
+    char *start = local;
+    char *p = local;
+    char **result;
+    GPtrArray *strs = g_ptr_array_new();
+    int iq = 0;
+
+    while (*p) {
+	if (!iq && *p == ' ') {
+	    *p = '\0';
+	    g_ptr_array_add(strs, unquote_string(start));
+	    start = p+1;
+	} else if (*p == '\\') {
+	    /* next character is taken literally; if it's a multicharacter
+	     * escape (e.g., \171), that doesn't bother us here */
+	    p++;
+	    if (!*p) break;
+	} else if (*p == '\"') {
+	    iq = ! iq;
+	}
+
+	p++;
+    }
+    if (start != string)
+	g_ptr_array_add(strs, unquote_string(start));
+
+    /* now convert strs into a strv, by stealing its references to the underlying
+     * strings */
+    result = g_new0(char *, strs->len + 1);
+    memmove(result, strs->pdata, sizeof(char *) * strs->len);
+
+    g_ptr_array_free(strs, FALSE); /* FALSE => don't free strings */
+    g_free(local);
+
+    return result;
 }
 
 char *

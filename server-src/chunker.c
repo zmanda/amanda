@@ -37,7 +37,6 @@
 #include "protocol.h"
 #include "security.h"
 #include "stream.h"
-#include "token.h"
 #include "version.h"
 #include "fileheader.h"
 #include "amfeatures.h"
@@ -93,7 +92,7 @@ static char *options = NULL;
 static char *progname = NULL;
 static int level;
 static char *dumpdate = NULL;
-static int command_in_transit;
+static struct cmdargs *command_in_transit = NULL;
 static char *chunker_timestamp = NULL;
 
 static dumpfile_t file;
@@ -114,18 +113,17 @@ main(
     char **	argv)
 {
     static struct databuf db;
-    struct cmdargs cmdargs;
-    cmd_t cmd;
+    struct cmdargs *cmdargs;
     int infd;
     char *q = NULL;
     char *filename = NULL;
-    char *qfilename = NULL;
     off_t chunksize, use;
     times_t runtime;
     am_feature_t *their_features = NULL;
     int a;
     config_overwrites_t *cfg_ovr = NULL;
     char *cfg_opt = NULL;
+    char *m;
 
     /*
      * Configure program for internationalization:
@@ -181,11 +179,11 @@ main(
     signal(SIGPIPE, SIG_IGN);
     signal(SIGCHLD, SIG_IGN);
 
-    cmd = getcmd(&cmdargs);
-    if(cmd == START) {
-	if(cmdargs.argc <= 1)
+    cmdargs = getcmd();
+    if(cmdargs->cmd == START) {
+	if(cmdargs->argc <= 1)
 	    error(_("error [dumper START: not enough args: timestamp]"));
-	chunker_timestamp = newstralloc(chunker_timestamp, cmdargs.argv[2]);
+	chunker_timestamp = newstralloc(chunker_timestamp, cmdargs->argv[1]);
     }
     else {
 	log_add(L_INFO, "%s pid %ld", get_pname(), (long)getpid());
@@ -193,9 +191,9 @@ main(
     }
 
 /*    do {*/
-	cmd = getcmd(&cmdargs);
+	cmdargs = getcmd();
 
-	switch(cmd) {
+	switch(cmdargs->cmd) {
 	case QUIT:
 	    break;
 
@@ -214,96 +212,91 @@ main(
 	     *   use
 	     *   options
 	     */
-	    cmdargs.argc++;			/* true count of args */
-	    a = 2;
+	    a = 1;
 
-	    if(a >= cmdargs.argc) {
+	    if(a >= cmdargs->argc) {
 		error(_("error [chunker PORT-WRITE: not enough args: handle]"));
 		/*NOTREACHED*/
 	    }
-	    handle = newstralloc(handle, cmdargs.argv[a++]);
+	    handle = newstralloc(handle, cmdargs->argv[a++]);
 
-	    if(a >= cmdargs.argc) {
+	    if(a >= cmdargs->argc) {
 		error(_("error [chunker PORT-WRITE: not enough args: filename]"));
 		/*NOTREACHED*/
 	    }
-	    qfilename = newstralloc(qfilename, cmdargs.argv[a++]);
-	    if (filename != NULL)
-		amfree(filename);
-	    filename = unquote_string(qfilename);
-	    amfree(qfilename);
+	    filename = newstralloc(filename, cmdargs->argv[a++]);
 
-	    if(a >= cmdargs.argc) {
+	    if(a >= cmdargs->argc) {
 		error(_("error [chunker PORT-WRITE: not enough args: hostname]"));
 		/*NOTREACHED*/
 	    }
-	    hostname = newstralloc(hostname, cmdargs.argv[a++]);
+	    hostname = newstralloc(hostname, cmdargs->argv[a++]);
 
-	    if(a >= cmdargs.argc) {
+	    if(a >= cmdargs->argc) {
 		error(_("error [chunker PORT-WRITE: not enough args: features]"));
 		/*NOTREACHED*/
 	    }
 	    am_release_feature_set(their_features);
-	    their_features = am_string_to_feature(cmdargs.argv[a++]);
+	    their_features = am_string_to_feature(cmdargs->argv[a++]);
 
-	    if(a >= cmdargs.argc) {
+	    if(a >= cmdargs->argc) {
 		error(_("error [chunker PORT-WRITE: not enough args: diskname]"));
 		/*NOTREACHED*/
 	    }
-	    qdiskname = newstralloc(qdiskname, cmdargs.argv[a++]);
-	    if (diskname != NULL)
-		amfree(diskname);
-	    diskname = unquote_string(qdiskname);
+	    diskname = newstralloc(diskname, cmdargs->argv[a++]);
+	    if (qdiskname)
+		amfree(qdiskname);
+	    qdiskname = quote_string(diskname); /* qdiskname is a global */
 
-	    if(a >= cmdargs.argc) {
+	    if(a >= cmdargs->argc) {
 		error(_("error [chunker PORT-WRITE: not enough args: level]"));
 		/*NOTREACHED*/
 	    }
-	    level = atoi(cmdargs.argv[a++]);
+	    level = atoi(cmdargs->argv[a++]);
 
-	    if(a >= cmdargs.argc) {
+	    if(a >= cmdargs->argc) {
 		error(_("error [chunker PORT-WRITE: not enough args: dumpdate]"));
 		/*NOTREACHED*/
 	    }
-	    dumpdate = newstralloc(dumpdate, cmdargs.argv[a++]);
+	    dumpdate = newstralloc(dumpdate, cmdargs->argv[a++]);
 
-	    if(a >= cmdargs.argc) {
+	    if(a >= cmdargs->argc) {
 		error(_("error [chunker PORT-WRITE: not enough args: chunksize]"));
 		/*NOTREACHED*/
 	    }
-	    chunksize = OFF_T_ATOI(cmdargs.argv[a++]);
+	    chunksize = OFF_T_ATOI(cmdargs->argv[a++]);
 	    chunksize = am_floor(chunksize, (off_t)DISK_BLOCK_KB);
 
-	    if(a >= cmdargs.argc) {
+	    if(a >= cmdargs->argc) {
 		error(_("error [chunker PORT-WRITE: not enough args: progname]"));
 		/*NOTREACHED*/
 	    }
-	    progname = newstralloc(progname, cmdargs.argv[a++]);
+	    progname = newstralloc(progname, cmdargs->argv[a++]);
 
-	    if(a >= cmdargs.argc) {
+	    if(a >= cmdargs->argc) {
 		error(_("error [chunker PORT-WRITE: not enough args: use]"));
 		/*NOTREACHED*/
 	    }
-	    use = am_floor(OFF_T_ATOI(cmdargs.argv[a++]), DISK_BLOCK_KB);
+	    use = am_floor(OFF_T_ATOI(cmdargs->argv[a++]), DISK_BLOCK_KB);
 
-	    if(a >= cmdargs.argc) {
+	    if(a >= cmdargs->argc) {
 		error(_("error [chunker PORT-WRITE: not enough args: options]"));
 		/*NOTREACHED*/
 	    }
-	    options = newstralloc(options, cmdargs.argv[a++]);
+	    options = newstralloc(options, cmdargs->argv[a++]);
 
-	    if(a != cmdargs.argc) {
+	    if(a != cmdargs->argc) {
 		error(_("error [chunker PORT-WRITE: too many args: %d != %d]"),
-		      cmdargs.argc, a);
+		      cmdargs->argc, a);
 	        /*NOTREACHED*/
 	    }
 
 	    if((infd = startup_chunker(filename, use, chunksize, &db)) < 0) {
-		q = squotef(_("[chunker startup failed: %s]"), errstr);
+		q = quote_string(vstrallocf(_("[chunker startup failed: %s]"), errstr));
 		putresult(TRYAGAIN, "%s %s\n", handle, q);
 		error("startup_chunker failed: %s", errstr);
 	    }
-	    command_in_transit = -1;
+	    command_in_transit = NULL;
 	    if(infd >= 0 && do_chunk(infd, &db)) {
 		char kb_str[NUM_STR_SIZE];
 		char kps_str[NUM_STR_SIZE];
@@ -317,12 +310,16 @@ main(
 				isnormal(rt) ? (double)dumpsize / rt : 0.0);
 		errstr = newvstrallocf(errstr, "sec %s kb %s kps %s",
 				walltime_str(runtime), kb_str, kps_str);
-		q = squotef("[%s]", errstr);
-		if(command_in_transit != -1)
-		    cmd = command_in_transit;
-		else
-		    cmd = getcmd(&cmdargs);
-		switch(cmd) {
+		m = vstrallocf("[%s]", errstr);
+		q = quote_string(m);
+		amfree(m);
+		if(command_in_transit != NULL) {
+		    cmdargs = command_in_transit;
+		    command_in_transit = NULL;
+		} else {
+		    cmdargs = getcmd();
+		}
+		switch(cmdargs->cmd) {
 		case DONE:
 		    putresult(DONE, "%s %lld %s\n", handle,
 			     (long long)(dumpsize - (off_t)headersize), q);
@@ -342,9 +339,11 @@ main(
 		    }
 		    else {
 			errstr = newvstrallocf(errstr,
-					_("dumper returned %s"), cmdstr[cmd]);
+					_("dumper returned %s"), cmdstr[cmdargs->cmd]);
 			amfree(q);
-			q = squotef("[%s]",errstr);
+			m = vstrallocf("[%s]",errstr);
+			q = quote_string(m);
+			amfree(m);
 			putresult(FAILED, "%s %s\n", handle, q);
 			log_add(L_FAIL, "%s %s %s %d [%s]",
 				hostname, qdiskname, chunker_timestamp, level, errstr);
@@ -355,7 +354,9 @@ main(
 	    } else if(infd != -2) {
 		if(!abort_pending) {
 		    if(q == NULL) {
-			q = squotef("[%s]", errstr);
+			m = vstrallocf("[%s]", errstr);
+			q = quote_string(m);
+			amfree(m);
 		    }
 		    putresult(FAILED, "%s %s\n", handle, q);
 		    log_add(L_FAIL, "%s %s %s %d [%s]",
@@ -368,10 +369,8 @@ main(
 	    break;
 
 	default:
-	    if(cmdargs.argc >= 1) {
-		q = squote(cmdargs.argv[1]);
-	    } else if(cmdargs.argc >= 0) {
-		q = squote(cmdargs.argv[0]);
+	    if(cmdargs->argc >= 1) {
+		q = quote_string(cmdargs->argv[0]);
 	    } else {
 		q = stralloc(_("(no input?)"));
 	    }
@@ -380,7 +379,7 @@ main(
 	    break;
 	}
 
-/*    } while(cmd != QUIT); */
+/*    } while(cmdargs->cmd != QUIT); */
 
     log_add(L_INFO, "pid-done %ld", (long)getpid());
 
@@ -393,6 +392,9 @@ main(
     amfree(dumpdate);
     amfree(progname);
     amfree(options);
+    free_cmdargs(cmdargs);
+    if (command_in_transit)
+	free_cmdargs(command_in_transit);
     am_release_feature_set(their_features);
     their_features = NULL;
 
@@ -451,10 +453,12 @@ startup_chunker(
     *pc = '/';
     if ((outfd = open(tmp_filename, O_RDWR|O_CREAT|O_TRUNC, 0600)) < 0) {
 	int save_errno = errno;
-
-	errstr = squotef(_("holding file \"%s\": %s"),
+	char *m = vstrallocf(_("holding file \"%s\": %s"),
 			 tmp_filename,
 			 strerror(errno));
+
+	errstr = quote_string(m);
+	amfree(m);
 	amfree(tmp_filename);
 	aclose(infd);
 	if(save_errno == ENOSPC) {
@@ -503,9 +507,10 @@ do_chunk(
     parse_file_header(header_buf, &file, (size_t)nread);
     if(write_tapeheader(db->fd, &file)) {
 	int save_errno = errno;
-
-	errstr = squotef(_("write_tapeheader file %s: %s"),
+	char *m = vstrallocf(_("write_tapeheader file %s: %s"),
 			 db->filename, strerror(errno));
+	errstr = quote_string(m);
+	amfree(m);
 	if(save_errno == ENOSPC) {
 	    putresult(NO_ROOM, "%s %lld\n", handle, 
 		      (long long)(db->use+db->split_size-dumpsize));
@@ -570,12 +575,11 @@ static int
 databuf_flush(
     struct databuf *	db)
 {
-    struct cmdargs cmdargs;
+    struct cmdargs *cmdargs = NULL;
     int rc = 1;
     size_t written;
     off_t left_in_chunk;
     char *arg_filename = NULL;
-    char *qarg_filename = NULL;
     char *new_filename = NULL;
     char *tmp_filename = NULL;
     char sequence[NUM_STR_SIZE];
@@ -600,16 +604,14 @@ databuf_flush(
 	    /*
 	     * Probably no more space on this disk.  Request some more.
 	     */
-	    cmd_t cmd;
-
 	    putresult(RQ_MORE_DISK, "%s\n", handle);
-	    cmd = getcmd(&cmdargs);
-	    if(command_in_transit == -1 &&
-	       (cmd == DONE || cmd == TRYAGAIN || cmd == FAILED)) {
-		command_in_transit = cmd;
-		cmd = getcmd(&cmdargs);
+	    cmdargs = getcmd();
+	    if(command_in_transit == NULL &&
+	       (cmdargs->cmd == DONE || cmdargs->cmd == TRYAGAIN || cmdargs->cmd == FAILED)) {
+		command_in_transit = cmdargs;
+		cmdargs = getcmd();
 	    }
-	    if(cmd == CONTINUE) {
+	    if(cmdargs->cmd == CONTINUE) {
 		/*
 		 * CONTINUE
 		 *   serial
@@ -617,34 +619,30 @@ databuf_flush(
 		 *   chunksize
 		 *   use
 		 */
-		cmdargs.argc++;			/* true count of args */
-		a = 3;
+		a = 2; /* skip CONTINUE and serial */
 
-		if(a >= cmdargs.argc) {
+		if(a >= cmdargs->argc) {
 		    error(_("error [chunker CONTINUE: not enough args: filename]"));
 		    /*NOTREACHED*/
 		}
-		qarg_filename = newstralloc(qarg_filename, cmdargs.argv[a++]);
-		if (arg_filename != NULL)
-		    amfree(arg_filename);
-		arg_filename = unquote_string(qarg_filename);
+		arg_filename = newstralloc(arg_filename, cmdargs->argv[a++]);
 
-		if(a >= cmdargs.argc) {
+		if(a >= cmdargs->argc) {
 		    error(_("error [chunker CONTINUE: not enough args: chunksize]"));
 		    /*NOTREACHED*/
 		}
-		db->chunk_size = OFF_T_ATOI(cmdargs.argv[a++]);
+		db->chunk_size = OFF_T_ATOI(cmdargs->argv[a++]);
 		db->chunk_size = am_floor(db->chunk_size, (off_t)DISK_BLOCK_KB);
 
-		if(a >= cmdargs.argc) {
+		if(a >= cmdargs->argc) {
 		    error(_("error [chunker CONTINUE: not enough args: use]"));
 		    /*NOTREACHED*/
 		}
-		db->use = OFF_T_ATOI(cmdargs.argv[a++]);
+		db->use = OFF_T_ATOI(cmdargs->argv[a++]);
 
-		if(a != cmdargs.argc) {
+		if(a != cmdargs->argc) {
 		    error(_("error [chunker CONTINUE: too many args: %d != %d]"),
-			  cmdargs.argc, a);
+			  cmdargs->argc, a);
 		    /*NOTREACHED*/
 		}
 
@@ -674,17 +672,15 @@ databuf_flush(
 		     */
 		    db->filename = newstralloc(db->filename, arg_filename);
 		}
-	    } else if(cmd == ABORT) {
+	    } else if(cmdargs->cmd == ABORT) {
 		abort_pending = 1;
 		errstr = newstralloc(errstr, "ERROR");
 		putresult(ABORT_FINISHED, "%s\n", handle);
 		rc = 0;
 		goto common_exit;
 	    } else {
-		if(cmdargs.argc >= 1) {
-		    q = squote(cmdargs.argv[1]);
-		} else if(cmdargs.argc >= 0) {
-		    q = squote(cmdargs.argv[0]);
+		if(cmdargs->argc >= 1) {
+		    q = quote_string(cmdargs->argv[0]);
 		} else {
 		    q = stralloc(_("(no input?)"));
 		}
@@ -719,6 +715,7 @@ databuf_flush(
 	newfd = open(tmp_filename, O_RDWR|O_CREAT|O_TRUNC, 0600);
 	if (newfd == -1) {
 	    int save_errno = errno;
+	    char *m;
 
 	    if(save_errno == ENOSPC) {
 		putresult(NO_ROOM, "%s %lld\n", handle, 
@@ -727,9 +724,11 @@ databuf_flush(
 		db->split_size = dumpsize;
 		continue;
 	    }
-	    errstr = squotef(_("creating chunk holding file \"%s\": %s"),
+	    m = vstrallocf(_("creating chunk holding file \"%s\": %s"),
 			     tmp_filename,
 			     strerror(errno));
+	    errstr = quote_string(m);
+	    amfree(m);
 	    aclose(db->fd);
 	    rc = 0;
 	    goto common_exit;
@@ -739,6 +738,7 @@ databuf_flush(
 	file.cont_filename[0] = '\0';
 	if(write_tapeheader(newfd, &file)) {
 	    int save_errno = errno;
+	    char *m;
 
 	    aclose(newfd);
 	    if(save_errno == ENOSPC) {
@@ -748,9 +748,11 @@ databuf_flush(
 		db->split_size = dumpsize;
 		continue;
 	    }
-	    errstr = squotef(_("write_tapeheader file %s: %s"),
+	    m = vstrallocf(_("write_tapeheader file %s: %s"),
 			     tmp_filename,
 			     strerror(errno));
+	    errstr = quote_string(m);
+	    amfree(m);
 	    rc = 0;
 	    goto common_exit;
 	}
@@ -760,9 +762,11 @@ databuf_flush(
 	 * to the next chunk, and then close it.
 	 */
 	if (lseek(db->fd, (off_t)0, SEEK_SET) < (off_t)0) {
-	    errstr = squotef(_("lseek holding file %s: %s"),
+	    char *m = vstrallocf(_("lseek holding file %s: %s"),
 			     db->filename,
 			     strerror(errno));
+	    errstr = quote_string(m);
+	    amfree(m);
 	    aclose(newfd);
 	    rc = 0;
 	    goto common_exit;
@@ -772,9 +776,11 @@ databuf_flush(
 	strncpy(file.cont_filename, new_filename, SIZEOF(file.cont_filename));
 	file.cont_filename[SIZEOF(file.cont_filename)-1] = '\0';
 	if(write_tapeheader(db->fd, &file)) {
-	    errstr = squotef(_("write_tapeheader file \"%s\": %s"),
+	    char * m = vstrallocf(_("write_tapeheader file \"%s\": %s"),
 			     db->filename,
 			     strerror(errno));
+	    errstr = quote_string(m);
+	    amfree(m);
 	    aclose(newfd);
 	    unlink(tmp_filename);
 	    rc = 0;
@@ -830,7 +836,9 @@ databuf_flush(
     dumpbytes %= 1024;
     if (written == 0) {
 	if (errno != ENOSPC) {
-	    errstr = squotef(_("data write: %s"), strerror(errno));
+	    char *m = vstrallocf(_("data write: %s"), strerror(errno));
+	    errstr = quote_string(m);
+	    amfree(m);
 	    rc = 0;
 	    goto common_exit;
 	}
@@ -854,10 +862,11 @@ databuf_flush(
 
 common_exit:
 
+    if (cmdargs)
+	free_cmdargs(cmdargs);
     amfree(new_filename);
     /*@i@*/ amfree(tmp_filename);
     amfree(arg_filename);
-    amfree(qarg_filename);
     return rc;
 }
 

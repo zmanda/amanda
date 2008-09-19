@@ -1,3 +1,17 @@
+2008-09-19  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/Makefile.am common-src/quoting-test.c: new tests
+	* common-src/token.c common-src/token.h: removed
+	* common-src/util.c common-src/util.h: new home for quoting functions
+	* configure.in: don't check for shquote
+	* man/xml-source/amanda.conf.5.xml: info on quoting
+	* perl/Amanda/Config/Server.pm: note about incompatibility
+	* server-src/amcheck.c server-src/amindexd.c server-src/chunker.c
+	  server-src/driver.c server-src/driverio.c server-src/driverio.h
+	  server-src/dumper.c server-src/infofile.c server-src/server_util.c
+	  server-src/server_util.h server-src/taper-file-source.c
+	  server-src/taper-port-source.c server-src/taper.c: use new/updated
+	  quoting functions
+
 2008-09-19  Nick Smith <nick.smith@techop.ch>
 	* example/amanda.conf.in: fix incorrect execute_on examples
 
