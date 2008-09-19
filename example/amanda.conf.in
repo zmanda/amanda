@@ -755,7 +755,7 @@ define dumptype dt_amstar {
 define script-tool sc-email {
   comment "script-email"
   plugin  "script-email"
-  execute_on pre-dle-selfcheck, pre-host-selfcheck, post-dle-selfcheck, post-host-selfcheck, pre-dle-estimate, pre-host-estimate, post-dle-estimate, post-host-estimate, pre-dle-backup, pre-host-backup, post-dle-backup, post-host-backup
+  execute_on pre-dle-amcheck, pre-host-amcheck, post-dle-amcheck, post-host-amcheck, pre-dle-estimate, pre-host-estimate, post-dle-estimate, post-host-estimate, pre-dle-backup, pre-host-backup, post-dle-backup, post-host-backup
   execute_where server			# or client
   property "mailto" "martinea"
 }
