@@ -174,7 +174,8 @@ sub load_ps_table() {
 	}
 	close(PSTABLE);
     } else {
-	open(PSTABLE, "-|", "ps $ps_argument") || die("ps $ps_argument: $!");
+	open(PSTABLE, "-|", "$Amanda::Constants::PS $ps_argument")
+	    or die("$Amanda::Constants::PS $ps_argument: $!");
 	my $psline = <PSTABLE>; #header line
 	while($psline = <PSTABLE>) {
 	    chomp $psline;

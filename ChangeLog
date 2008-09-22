@@ -1,3 +1,9 @@
+2008-09-22  Dustin J. Mitchell <dustin@zmanda.com>
+	* config/amanda/ps.m4: give up on runtime detection and just special-
+	  case the 'ps' arguments for various systems
+	* perl/Amanda/Constants.pm.in: add $PS
+	* perl/Amanda/Process.pm: use $PS
+
 2008-09-19  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/reporter.c (addline): Done it constant time.
 
