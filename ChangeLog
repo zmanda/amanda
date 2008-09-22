@@ -1,4 +1,7 @@
 2008-09-22  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/device.c: Don't g_value_unset a bzero value.
+
+2008-09-22  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/driver.c: Set result_argv=NULL, Fix typo.
 
 2008-09-22  Dustin J. Mitchell <dustin@zmanda.com>

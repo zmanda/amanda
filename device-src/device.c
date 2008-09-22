@@ -628,7 +628,6 @@ try_set_blocksize(Device * device, guint blocksize) {
     gboolean success;
     bzero(&val, sizeof(val));
 
-    g_value_unset(&val);
     g_value_init(&val, G_TYPE_INT);
     g_value_set_int(&val, blocksize);
     success = device_property_set(device,
