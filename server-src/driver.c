@@ -179,7 +179,7 @@ main(
     char *conf_diskfile;
     cmd_t cmd;
     int result_argc;
-    char **result_argv;
+    char **result_argv = NULL;
     char *taper_program;
     char *conf_tapetype;
     tapetype_t *tape;
@@ -648,11 +648,12 @@ kill_children(int signal)
         }
     }
 
-    if(taper_pid > 1)
+    if(taper_pid > 1) {
 	g_printf(_("driver: sending signal %d to %s pid %u\n"), signal,
 	       "taper", (unsigned)taper_pid);
 	if (kill(taper_pid, signal) == -1 && errno == ESRCH)
 	    taper_pid = 0;
+    }
 }
 
 static void
