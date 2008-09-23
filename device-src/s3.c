@@ -700,8 +700,10 @@ buffer_writefunction(void *ptr, size_t size, size_t nmemb, void *stream)
     guint bytes_needed = data->buffer_pos + new_bytes;
 
     /* error out if the new size is greater than the maximum allowed */
-    if (data->max_buffer_size && bytes_needed > data->max_buffer_size)
-        return 0;
+    if (data->max_buffer_size && bytes_needed > data->max_buffer_size) {
+	g_warning("S3 request exceeded %d bytes; CURL error follows.", data->max_buffer_size);
+        return 0; /* returning zero signals an error to libcurl */
+    }
 
     /* reallocate if necessary. We use exponential sizing to make this
      * happen less often. */
@@ -714,7 +716,7 @@ buffer_writefunction(void *ptr, size_t size, size_t nmemb, void *stream)
         data->buffer_len = new_size;
     }
     if (!data->buffer)
-	return 0; /* returning zero signals an error to libcurl */
+	return 0;
 
     /* actually copy the data to the buffer */
     memcpy(data->buffer + data->buffer_pos, ptr, new_bytes);
@@ -1309,8 +1311,7 @@ list_fetch(S3Handle *hdl,
            const char *bucket,
            const char *prefix, 
            const char *delimiter, 
-           const char *marker,
-           const char *max_keys)
+           const char *marker)
 {
     s3_result_t result = S3_RESULT_FAIL;    
     static result_handling_t result_handling[] = {
@@ -1322,7 +1323,7 @@ list_fetch(S3Handle *hdl,
         {"prefix", prefix},
         {"delimiter", delimiter},
         {"marker", marker},
-        {"make-keys", max_keys},
+        {"make-keys", "1024"}, /* arbitrary default */
         {NULL, NULL}
         };
     char *esc_value;
@@ -1346,7 +1347,7 @@ list_fetch(S3Handle *hdl,
 
     /* and perform the request on that URI */
     result = perform_request(hdl, "GET", bucket, NULL, NULL, query->str, NULL,
-                             0, MAX_ERROR_RESPONSE_LEN, 0, result_handling);
+                             0, 0, 0, result_handling);
 
     if (query) g_string_free(query, TRUE);
 
@@ -1375,7 +1376,7 @@ s3_list_keys(S3Handle *hdl,
     /* Loop until S3 has given us the entire picture */
     do {
         /* get some data from S3 */
-        result = list_fetch(hdl, bucket, prefix, delimiter, thunk.next_marker, NULL);
+        result = list_fetch(hdl, bucket, prefix, delimiter, thunk.next_marker);
         if (result != S3_RESULT_OK) goto cleanup;
 
         /* run the parser over it */

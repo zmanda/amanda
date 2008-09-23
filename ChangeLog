@@ -1,3 +1,7 @@
+2008-09-23  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/s3.c: use max_keys, instead of maximum body size (which
+	  doesn't work) to limit the number of keys listed
+
 2008-09-22  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/fileheader.c (fh_init): Set default type to F_EMPTY.
 	* changer-src/chg-zd-mtx.sh: Allow to remove barcode from barcode file.
