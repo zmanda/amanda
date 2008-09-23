@@ -535,6 +535,11 @@ static gboolean label_new_tape(taper_state_t * state, dump_info_t * dump_info) {
     update_tapelist(state);
     state->cur_tape++;
 
+    if (changer_label("UNKNOWN", state->device->volume_label) != 0) {
+	error(_("couldn't update barcode database"));
+	/*NOTREACHED*/
+    }
+
     log_add(L_START, "datestamp %s label %s tape %d",
             state->driver_start_time, state->device->volume_label,
             state->cur_tape);

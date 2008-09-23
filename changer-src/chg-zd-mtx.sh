@@ -1218,6 +1218,55 @@ read_labelfile() {
 	done
 }
 
+remove_from_labelfile() {
+	labelfile=$1
+	lbl_search=$2
+	bc_search=$3
+
+	internal_remove_from_labelfile "$lbl_search" "$bc_search" < $labelfile >$labelfile.new
+	if [ $labelfile_entry_found -ne 0 ]; then
+		mv -f $labelfile.new $labelfile
+		LogAppend `_ 'Removed Entry "%s %s" from barcode database' "$labelfile_label" "$labelfile_barcode"`
+	fi
+}
+
+internal_remove_from_labelfile() {
+	labelfile_entry_found=0
+	labelfile_label=
+	labelfile_barcode=
+
+	lbl_search=$1
+	bc_search=$2
+
+	line=0
+	while read lbl bc junk; do
+		line=`expr $line + 1`
+		if [ -z "$lbl" -o -z "$bc" -o -n "$junk" ]; then
+			Log       `_ 'ERROR    -> Line %s malformed: %s %s %s' "$line" "$lbl" "$bc" "$junk"`
+			LogAppend `_ '         -> Remove %s and run "%s %s update"' "$labelfile" "$sbindir/amtape" "$config"`
+			Exit 2 \
+			     `_ '<none>'` \
+			     `_ 'Line %s malformed in %s: %s %s %s' "$line" "$labelfile" "$lbl" "$bc" "$junk"`
+			return $?		# in case we are internal
+		fi
+		if [ $lbl = "$lbl_search" -o $bc = "$bc_search" ]; then
+			if [ $labelfile_entry_found -ne 0 ]; then
+				Log       `_ 'ERROR    -> Duplicate entries: %s line %s' "$labelfile" "$line"`
+				LogAppend `_ '         -> Remove %s and run "%s %s update"' "$labelfile" "$sbindir/amtape" "$config"`
+				Exit 2 \
+				     `_ '<none>'` \
+				     `_ 'Duplicate entries: %s line %s' "$labelfile" "$line"`
+				return $?	# in case we are internal
+			fi
+			labelfile_entry_found=1
+			labelfile_label=$lbl
+			labelfile_barcode=$bc
+		else
+			echo $lbl $bc
+		fi
+	done
+}
+
 ###
 # Adds the label and barcode for the currently loaded tape to the
 # barcode file.  Return an error if the database is messed up.
@@ -1261,14 +1310,16 @@ addlabel() {
 			new_val=$tapelabel
 		fi
 		if [ -n "$lf_val" ]; then
-			LogAppend `_ 'ERROR    -> !!! Label database corrupted !!!'`
-			LogAppend `_ '         -> "%s" conflicts with new %s "%s" for %s "%s"' "$old_val" "$val_type" "$new_val" "$lf_type" "$lf_val"`
-			Exit 2 \
-			     `_ '<none>'` \
-			     `_ '%s: "%s" conflicts with new %s "%s" for %s "%s"' "$tapelabel" "$old_val" "$val_type" "$new_val" "$lf_type" "$lf_val"`
-			return $?		# in case we are internal
+			if [ "$val_type" = "barcode" ]; then
+				remove_from_labelfile $labelfile "" "$old_val"
+			else
+				remove_from_labelfile $labelfile "$old_val" ""
+			fi
+			echo "$tapelabel $loadedbarcode" >> $labelfile
+			LogAppend `_ '         -> appended %s entry: %s %s' "$labelfile" "$tapelabel" "$loadedbarcode"`
+		else
+			LogAppend `_ "         -> already synced"`
 		fi
-		LogAppend `_ "         -> already synced"`
 	else
 		echo "$tapelabel $loadedbarcode" >> $labelfile
 		LogAppend `_ '         -> appended %s entry: %s %s' "$labelfile" "$tapelabel" "$loadedbarcode"`

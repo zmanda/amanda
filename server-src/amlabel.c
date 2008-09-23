@@ -183,7 +183,7 @@ main(
     if (device_status & DEVICE_STATUS_VOLUME_UNLABELED) {
 	/* if there's no header, then the tape was truly empty; otherwise, there
 	 * was *something* on the tape, so let's be careful and require a force */
-	if (!device->volume_header) {
+	if (!device->volume_header || device->volume_header->type == F_EMPTY) {
 	    g_printf("Found an empty tape.\n");
 	} else {
 	    g_printf("Found a non-Amanda tape.\n");
@@ -267,7 +267,12 @@ main(
             error(_("couldn't write tapelist: %s"), strerror(errno));
             /*NOTREACHED*/
         }
-        
+
+        if (have_changer && changer_label(outslot, label) != 0) {
+	    error(_("couldn't update barcode database for slot %s, label %s\n"), outslot, label);
+	    /*NOTREACHED*/
+	}
+
         g_printf(_("Success!\n"));
     } else {
 	g_printf(_("\ntape not labeled\n"));

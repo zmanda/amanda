@@ -117,7 +117,7 @@ int scan_read_label(
 
 	/* If we got a header, but the Device doesn't think it's labeled, then this
 	 * tape probably has some data on it, so refuse to automatically label it */
-	if (device->volume_header) {
+	if (device->volume_header && device->volume_header->type != F_EMPTY) {
             *error_message = newvstrallocf(*error_message,
 		       _("%sFound a non-amanda tape; check and relabel it with 'amlabel -f'\n"),
 		       *error_message);

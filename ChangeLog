@@ -1,4 +1,11 @@
 2008-09-22  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/fileheader.c (fh_init): Set default type to F_EMPTY.
+	* changer-src/chg-zd-mtx.sh: Allow to remove barcode from barcode file.
+	* server-src/taperscan.c: Check type != F_EMPTY.
+	* server-src/taper.c: Call changer_label().
+	* server-src/amlabel.c: iCheck type != F_EMPTY. Call changer_label().
+
+2008-09-22  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/device.c: Don't g_value_unset a bzero value.
 
 2008-09-22  Jean-Louis Martineau <martineau@zmanda.com>

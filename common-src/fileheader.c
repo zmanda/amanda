@@ -46,6 +46,7 @@ fh_init(
     dumpfile_t *file)
 {
     memset(file, '\0', SIZEOF(*file));
+    file->type = F_EMPTY;
     file->blocksize = DISK_BLOCK_BYTES;
 }
 
