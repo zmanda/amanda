@@ -943,8 +943,8 @@ device_open_device (Device * self, char * device_name,
     g_assert(device_name != NULL);
 
     klass = DEVICE_GET_CLASS(self);
-    if (klass->open_device)
-	(klass->open_device)(self, device_name, device_type, device_node);
+    g_assert(klass->open_device);
+    (klass->open_device)(self, device_name, device_type, device_node);
 }
 
 DeviceStatusFlags device_read_label(Device * self) {
@@ -955,14 +955,8 @@ DeviceStatusFlags device_read_label(Device * self) {
     g_assert(self->access_mode == ACCESS_NULL);
 
     klass = DEVICE_GET_CLASS(self);
-    if (klass->read_label) {
-        return (klass->read_label)(self);
-    } else {
-	device_set_error(self,
-	    stralloc(_("Unimplemented method")),
-	    DEVICE_STATUS_DEVICE_ERROR);
-        return ~ DEVICE_STATUS_SUCCESS;
-    }
+    g_assert(klass->read_label);
+    return (klass->read_label)(self);
 }
 
 gboolean
@@ -972,14 +966,8 @@ device_finish (Device * self) {
     g_assert(IS_DEVICE (self));
 
     klass = DEVICE_GET_CLASS(self);
-    if (klass->finish) {
-	return (klass->finish)(self);
-    } else {
-	device_set_error(self,
-	    stralloc(_("Unimplemented method")),
-	    DEVICE_STATUS_DEVICE_ERROR);
-	return FALSE;
-    }
+    g_assert(klass->finish);
+    return (klass->finish)(self);
 }
 
 gboolean 
@@ -987,35 +975,29 @@ device_start (Device * self, DeviceAccessMode mode,
               char * label, char * timestamp)
 {
     DeviceClass *klass;
+    char * local_timestamp = NULL;
+    gboolean rv;
 
     g_assert(IS_DEVICE (self));
     g_assert(mode != ACCESS_NULL);
     g_assert(mode != ACCESS_WRITE || label != NULL);
 
     klass = DEVICE_GET_CLASS(self);
-    if(klass->start) {
-	char * local_timestamp = NULL;
-	gboolean rv;
+    g_assert(klass->start);
 
-	/* For a good combination of synchronization and public simplicity,
-	   this stub function does not require a timestamp, but the actual
-	   implementation function does. We generate the timestamp here with
-	   time(). */
-	if (mode == ACCESS_WRITE &&
-	    get_timestamp_state(timestamp) == TIME_STATE_REPLACE) {
-	    local_timestamp = timestamp =
-		get_proper_stamp_from_time(time(NULL));
-	}
-
-	rv = (klass->start)(self, mode, label, timestamp);
-	amfree(local_timestamp);
-	return rv;
-    } else {
-	device_set_error(self,
-	    stralloc(_("Unimplemented method")),
-	    DEVICE_STATUS_DEVICE_ERROR);
-	return FALSE;
+    /* For a good combination of synchronization and public simplicity,
+       this stub function does not require a timestamp, but the actual
+       implementation function does. We generate the timestamp here with
+       time(). */
+    if (mode == ACCESS_WRITE &&
+	get_timestamp_state(timestamp) == TIME_STATE_REPLACE) {
+	local_timestamp = timestamp =
+	    get_proper_stamp_from_time(time(NULL));
     }
+
+    rv = (klass->start)(self, mode, label, timestamp);
+    amfree(local_timestamp);
+    return rv;
 }
 
 gboolean
@@ -1038,14 +1020,8 @@ device_write_block (Device * self, guint size, gpointer block)
 	selfp->wrote_short_block = TRUE;
 
     klass = DEVICE_GET_CLASS(self);
-    if(klass->write_block) {
-        return (*klass->write_block)(self,size, block);
-    } else {
-	device_set_error(self,
-	    stralloc(_("Unimplemented method")),
-	    DEVICE_STATUS_DEVICE_ERROR);
-	return FALSE;
-    }
+    g_assert(klass->write_block);
+    return (*klass->write_block)(self,size, block);
 }
 
 gboolean 
@@ -1058,14 +1034,8 @@ device_write_from_fd (Device * self, queue_fd_t * queue_fd)
     g_assert(IS_WRITABLE_ACCESS_MODE(self->access_mode));
 
     klass = DEVICE_GET_CLASS(self);
-    if(klass->write_from_fd) {
-	return (klass->write_from_fd)(self,queue_fd);
-    } else {
-	device_set_error(self,
-	    stralloc(_("Unimplemented method")),
-	    DEVICE_STATUS_DEVICE_ERROR);
-	return FALSE;
-    }
+    g_assert(klass->write_from_fd);
+    return (klass->write_from_fd)(self,queue_fd);
 }
 
 gboolean
@@ -1079,14 +1049,8 @@ device_start_file (Device * self, const dumpfile_t * jobInfo) {
     selfp->wrote_short_block = FALSE;
 
     klass = DEVICE_GET_CLASS(self);
-    if(klass->start_file) {
-        return (klass->start_file)(self, jobInfo );
-    } else {
-	device_set_error(self,
-	    stralloc(_("Unimplemented method")),
-	    DEVICE_STATUS_DEVICE_ERROR);
-	return FALSE;
-    }
+    g_assert(klass->start_file);
+    return (klass->start_file)(self, jobInfo );
 }
 
 gboolean 
@@ -1099,14 +1063,8 @@ device_finish_file (Device * self)
     g_assert(self->in_file);
 
     klass = DEVICE_GET_CLASS(self);
-    if(klass->finish_file) {
-	return (klass->finish_file)(self);
-    } else {
-	device_set_error(self,
-	    stralloc(_("Unimplemented method")),
-	    DEVICE_STATUS_DEVICE_ERROR);
-	return FALSE;
-    }
+    g_assert(klass->finish_file);
+    return (klass->finish_file)(self);
 }
 
 dumpfile_t*
@@ -1118,14 +1076,8 @@ device_seek_file (Device * self, guint file)
     g_assert(self->access_mode == ACCESS_READ);
 
     klass = DEVICE_GET_CLASS(self);
-    if(klass->seek_file) {
-	return (klass->seek_file)(self,file);
-    } else {
-	device_set_error(self,
-	    stralloc(_("Unimplemented method")),
-	    DEVICE_STATUS_DEVICE_ERROR);
-	return FALSE;
-    }
+    g_assert(klass->seek_file);
+    return (klass->seek_file)(self,file);
 }
 
 gboolean 
@@ -1138,14 +1090,8 @@ device_seek_block (Device * self, guint64 block)
     g_assert(self->in_file);
 
     klass = DEVICE_GET_CLASS(self);
-    if(klass->seek_block) {
-	return (klass->seek_block)(self,block);
-    } else {
-	device_set_error(self,
-	    stralloc(_("Unimplemented method")),
-	    DEVICE_STATUS_DEVICE_ERROR);
-	return FALSE;
-    }
+    g_assert(klass->seek_block);
+    return (klass->seek_block)(self,block);
 }
 
 int
@@ -1162,14 +1108,8 @@ device_read_block (Device * self, gpointer buffer, int * size)
     }
 
     klass = DEVICE_GET_CLASS(self);
-    if(klass->read_block) {
-	return (klass->read_block)(self,buffer,size);
-    } else {
-	device_set_error(self,
-	    stralloc(_("Unimplemented method")),
-	    DEVICE_STATUS_DEVICE_ERROR);
-	return -1;
-    }
+    g_assert(klass->read_block);
+    return (klass->read_block)(self,buffer,size);
 }
 
 gboolean 
@@ -1182,14 +1122,8 @@ device_read_to_fd (Device * self, queue_fd_t *queue_fd)
     g_assert(self->access_mode == ACCESS_READ);
 
     klass = DEVICE_GET_CLASS(self);
-    if(klass->read_to_fd) {
-	return (klass->read_to_fd)(self,queue_fd);
-    } else {
-	device_set_error(self,
-	    stralloc(_("Unimplemented method")),
-	    DEVICE_STATUS_DEVICE_ERROR);
-	return FALSE;
-    }
+    g_assert(klass->read_to_fd);
+    return (klass->read_to_fd)(self,queue_fd);
 }
 
 
@@ -1203,14 +1137,8 @@ device_property_get (Device * self, DevicePropertyId id, GValue * val)
 
     klass = DEVICE_GET_CLASS(self);
 
-    if(klass->property_get) {
-	return (klass->property_get)(self,id,val);
-    } else {
-	device_set_error(self,
-	    stralloc(_("Unimplemented method")),
-	    DEVICE_STATUS_DEVICE_ERROR);
-	return FALSE;
-    }
+    g_assert(klass->property_get);
+    return (klass->property_get)(self,id,val);
 }
 
 gboolean 
@@ -1222,14 +1150,8 @@ device_property_set (Device * self, DevicePropertyId id, GValue * val)
 
     klass = DEVICE_GET_CLASS(self);
 
-    if(klass->property_set) {
-	return (klass->property_set)(self,id,val);
-    } else {
-	device_set_error(self,
-	    stralloc(_("Unimplemented method")),
-	    DEVICE_STATUS_DEVICE_ERROR);
-	return FALSE;
-    }
+    g_assert(klass->property_set);
+    return (klass->property_set)(self,id,val);
 }
 
 gboolean 
@@ -1244,13 +1166,7 @@ device_recycle_file (Device * self, guint filenum)
 
     klass = DEVICE_GET_CLASS(self);
 
-    if(klass->recycle_file) {
-	return (klass->recycle_file)(self,filenum);
-    } else {
-	device_set_error(self,
-	    stralloc(_("Unimplemented method")),
-	    DEVICE_STATUS_DEVICE_ERROR);
-	return FALSE;
-    }
+    g_assert(klass->recycle_file);
+    return (klass->recycle_file)(self,filenum);
 }
 
