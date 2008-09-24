@@ -252,6 +252,13 @@ typedef struct conf_var_s {
     void	(*validate_function) (struct conf_var_s *, val_t *);
 } conf_var_t;
 
+/* This is a list of filenames that are used in 'seen_t' structs. */
+static GSList *seen_filenames = NULL;
+
+/* get a copy of filename that's stored in seen_filenames so that it won't go
+ * away until config_uninit. */
+static char *get_seen_filename(char *filename);
+
 /* If allow_overwrites is true, the a parameter which has already been
  * seen will simply overwrite the old value, rather than triggering an 
  * error.  Note that this does not apply to all parameters, e.g., 
@@ -266,7 +273,7 @@ static int allow_overwrites;
  */
 struct tapetype_s {
     struct tapetype_s *next;
-    int seen;
+    seen_t seen;
     char *name;
 
     val_t value[TAPETYPE_TAPETYPE];
@@ -274,7 +281,7 @@ struct tapetype_s {
 
 struct dumptype_s {
     struct dumptype_s *next;
-    int seen;
+    seen_t seen;
     char *name;
 
     val_t value[DUMPTYPE_DUMPTYPE];
@@ -282,7 +289,7 @@ struct dumptype_s {
 
 struct interface_s {
     struct interface_s *next;
-    int seen;
+    seen_t seen;
     char *name;
 
     val_t value[INTER_INTER];
@@ -290,7 +297,7 @@ struct interface_s {
 
 struct holdingdisk_s {
     struct holdingdisk_s *next;
-    int seen;
+    seen_t seen;
     char *name;
 
     val_t value[HOLDING_HOLDING];
@@ -298,7 +305,7 @@ struct holdingdisk_s {
 
 struct application_s {
     struct application_s *next;
-    int seen;
+    seen_t seen;
     char *name;
 
     val_t value[APPLICATION_APPLICATION];
@@ -306,7 +313,7 @@ struct application_s {
 
 struct pp_script_s {
     struct pp_script_s *next;
-    int seen;
+    seen_t seen;
     char *name;
 
     val_t value[PP_SCRIPT_PP_SCRIPT];
@@ -314,7 +321,7 @@ struct pp_script_s {
 
 struct device_config_s {
     struct device_config_s *next;
-    int seen;
+    seen_t seen;
     char *name;
 
     val_t value[DEVICE_CONFIG_DEVICE_CONFIG];
@@ -478,7 +485,7 @@ static int     get_bool(void);
  *
  * @param seen: (in/out) seen value to adjust
  */
-static void ckseen(int *seen);
+static void ckseen(seen_t *seen);
 
 /* validate_functions -- these fit into the validate_function solt in
  * a parser table entry.  They call conf_parserror if the value in their
@@ -1592,7 +1599,9 @@ read_conffile(
 	keytable = server_keytab;
 	parsetable = server_var;
     }
-    current_filename = config_dir_relative(filename);
+    filename = config_dir_relative(filename);
+    current_filename = get_seen_filename(filename);
+    amfree(filename);
 
     if ((current_file = fopen(current_filename, "r")) == NULL) {
 	if (!missing_ok)
@@ -1611,7 +1620,6 @@ read_conffile(
     afclose(current_file);
 
 finish:
-    amfree(current_filename);
 
     /* Restore servers */
     current_line_num = save_line_num;
@@ -1749,6 +1757,24 @@ handle_invalid_keyword(
     g_assert_not_reached();
 }
 
+static char *
+get_seen_filename(
+    char *filename)
+{
+    GSList *iter;
+    char *istr;
+
+    for (iter = seen_filenames; iter; iter = iter->next) {
+	istr = iter->data;
+	if (istr == filename || 0 == strcmp(istr, filename))
+	    return istr;
+    }
+
+    istr = stralloc(filename);
+    seen_filenames = g_slist_prepend(seen_filenames, istr);
+    return istr;
+}
+
 static void
 read_block(
     conf_var_t    *read_var,
@@ -1819,7 +1845,8 @@ get_holdingdisk(
 
     get_conftoken(CONF_IDENT);
     hdcur.name = stralloc(tokenval.v.s);
-    hdcur.seen = current_line_num;
+    hdcur.seen.filename = current_filename;
+    hdcur.seen.linenum = current_line_num;
 
     read_block(holding_var, hdcur.value,
 	       _("holding disk parameter expected"), 1, NULL);
@@ -1874,7 +1901,7 @@ read_dumptype(
 
     if (fname) {
 	saved_fname = current_filename;
-	current_filename = fname;
+	current_filename = get_seen_filename(fname);
     }
 
     if (linenum)
@@ -1890,7 +1917,8 @@ read_dumptype(
 	get_conftoken(CONF_IDENT);
 	dpcur.name = stralloc(tokenval.v.s);
     }
-    dpcur.seen = current_line_num;
+    dpcur.seen.filename = current_filename;
+    dpcur.seen.linenum = current_line_num;
 
     read_block(dumptype_var, dpcur.value,
 	       _("dumptype parameter expected"),
@@ -1979,7 +2007,12 @@ save_dumptype(void)
     dp = lookup_dumptype(dpcur.name);
 
     if(dp != (dumptype_t *)0) {
-	conf_parserror(_("dumptype %s already defined on line %d"), dp->name, dp->seen);
+	if (dp->seen.linenum == -1) {
+	    conf_parserror(_("dumptype %s is defined by default and cannot be redefined"), dp->name);
+	} else {
+	    conf_parserror(_("dumptype %s already defined at %s:%d"), dp->name,
+			   dp->seen.filename, dp->seen.linenum);
+	}
 	return;
     }
 
@@ -2012,7 +2045,7 @@ copy_dumptype(void)
     }
 
     for(i=0; i < DUMPTYPE_DUMPTYPE; i++) {
-	if(dt->value[i].seen) {
+	if(dt->value[i].seen.linenum) {
 	    free_val_t(&dpcur.value[i]);
 	    copy_val_t(&dpcur.value[i], &dt->value[i]);
 	}
@@ -2031,7 +2064,8 @@ get_tapetype(void)
 
     get_conftoken(CONF_IDENT);
     tpcur.name = stralloc(tokenval.v.s);
-    tpcur.seen = current_line_num;
+    tpcur.seen.filename = current_filename;
+    tpcur.seen.linenum = current_line_num;
 
     read_block(tapetype_var, tpcur.value,
 	       _("tapetype parameter expected"), 1, copy_tapetype);
@@ -2069,7 +2103,8 @@ save_tapetype(void)
 
     if(tp != (tapetype_t *)0) {
 	amfree(tpcur.name);
-	conf_parserror(_("tapetype %s already defined on line %d"), tp->name, tp->seen);
+	conf_parserror(_("tapetype %s already defined at %s:%d"),
+		tp->name, tp->seen.filename, tp->seen.linenum);
 	return;
     }
 
@@ -2101,7 +2136,7 @@ copy_tapetype(void)
     }
 
     for(i=0; i < TAPETYPE_TAPETYPE; i++) {
-	if(tp->value[i].seen) {
+	if(tp->value[i].seen.linenum) {
 	    free_val_t(&tpcur.value[i]);
 	    copy_val_t(&tpcur.value[i], &tp->value[i]);
 	}
@@ -2120,7 +2155,8 @@ get_interface(void)
 
     get_conftoken(CONF_IDENT);
     ifcur.name = stralloc(tokenval.v.s);
-    ifcur.seen = current_line_num;
+    ifcur.seen.filename = current_filename;
+    ifcur.seen.linenum = current_line_num;
 
     read_block(interface_var, ifcur.value,
 	       _("interface parameter expected"), 1, copy_interface);
@@ -2148,8 +2184,8 @@ save_interface(void)
     ip = lookup_interface(ifcur.name);
 
     if(ip != (interface_t *)0) {
-	conf_parserror(_("interface %s already defined on line %d"), ip->name,
-		       ip->seen);
+	conf_parserror(_("interface %s already defined at %s:%d"),
+		ip->name, ip->seen.filename, ip->seen.linenum);
 	return;
     }
 
@@ -2181,7 +2217,7 @@ copy_interface(void)
     }
 
     for(i=0; i < INTER_INTER; i++) {
-	if(ip->value[i].seen) {
+	if(ip->value[i].seen.linenum) {
 	    free_val_t(&ifcur.value[i]);
 	    copy_val_t(&ifcur.value[i], &ip->value[i]);
 	}
@@ -2207,7 +2243,7 @@ read_application(
 
     if (fname) {
 	saved_fname = current_filename;
-	current_filename = fname;
+	current_filename = get_seen_filename(fname);
     }
 
     if (linenum)
@@ -2223,7 +2259,8 @@ read_application(
 	get_conftoken(CONF_IDENT);
 	apcur.name = stralloc(tokenval.v.s);
     }
-    apcur.seen = current_line_num;
+    apcur.seen.filename = current_filename;
+    apcur.seen.linenum = current_line_num;
 
     read_block(application_var, apcur.value,
 	       _("application-tool parameter expected"),
@@ -2278,8 +2315,8 @@ save_application(
     ap = lookup_application(apcur.name);
 
     if(ap != (application_t *)0) {
-	conf_parserror(_("application-tool %s already defined on line %d"),
-		       ap->name, ap->seen);
+	conf_parserror(_("application-tool %s already defined at %s:%d"),
+		       ap->name, ap->seen.filename, ap->seen.linenum);
 	return;
     }
 
@@ -2312,7 +2349,7 @@ copy_application(void)
     }
 
     for(i=0; i < APPLICATION_APPLICATION; i++) {
-	if(ap->value[i].seen) {
+	if(ap->value[i].seen.linenum) {
 	    free_val_t(&apcur.value[i]);
 	copy_val_t(&apcur.value[i], &ap->value[i]);
 	}
@@ -2337,7 +2374,7 @@ read_pp_script(
 
     if (fname) {
 	saved_fname = current_filename;
-	current_filename = fname;
+	current_filename = get_seen_filename(fname);
     }
 
     if (linenum)
@@ -2353,7 +2390,8 @@ read_pp_script(
 	get_conftoken(CONF_IDENT);
 	pscur.name = stralloc(tokenval.v.s);
     }
-    pscur.seen = current_line_num;
+    pscur.seen.filename = current_filename;
+    pscur.seen.linenum = current_line_num;
 
     read_block(pp_script_var, pscur.value,
 	       _("script-tool parameter expected"),
@@ -2410,8 +2448,8 @@ save_pp_script(
     ps = lookup_pp_script(pscur.name);
 
     if(ps != (pp_script_t *)0) {
-	conf_parserror(_("script-tool %s already defined on line %d"),
-		       ps->name, ps->seen);
+	conf_parserror(_("script-tool %s already defined at %s:%d"),
+		       ps->name, ps->seen.filename, ps->seen.linenum);
 	return;
     }
 
@@ -2444,7 +2482,7 @@ copy_pp_script(void)
     }
 
     for(i=0; i < PP_SCRIPT_PP_SCRIPT; i++) {
-	if(ps->value[i].seen) {
+	if(ps->value[i].seen.linenum) {
 	    free_val_t(&pscur.value[i]);
 	    copy_val_t(&pscur.value[i], &ps->value[i]);
 	}
@@ -2469,7 +2507,7 @@ read_device_config(
 
     if (fname) {
 	saved_fname = current_filename;
-	current_filename = fname;
+	current_filename = get_seen_filename(fname);
     }
 
     if (linenum)
@@ -2485,7 +2523,8 @@ read_device_config(
 	get_conftoken(CONF_IDENT);
 	dccur.name = stralloc(tokenval.v.s);
     }
-    dccur.seen = current_line_num;
+    dccur.seen.filename = current_filename;
+    dccur.seen.linenum = current_line_num;
 
     read_block(device_config_var, dccur.value,
 	       _("device parameter expected"),
@@ -2535,8 +2574,8 @@ save_device_config(
     dc = lookup_device_config(dccur.name);
 
     if(dc != (device_config_t *)0) {
-	conf_parserror(_("device %s already defined on line %d"),
-		       dc->name, dc->seen);
+	conf_parserror(_("device %s already defined at %s:%d"),
+		       dc->name, dc->seen.filename, dc->seen.linenum);
 	return;
     }
 
@@ -2569,7 +2608,7 @@ copy_device_config(void)
     }
 
     for(i=0; i < DEVICE_CONFIG_DEVICE_CONFIG; i++) {
-	if(dc->value[i].seen) {
+	if(dc->value[i].seen.linenum) {
 	    free_val_t(&dccur.value[i]);
 	    copy_val_t(&dccur.value[i], &dc->value[i]);
 	}
@@ -3057,8 +3096,10 @@ read_property(
 	return;
     }
 
-    if(val->seen == 0)
-	val->seen = current_line_num;
+    if(val->seen.linenum == 0) {
+	val->seen.filename = current_filename;
+	val->seen.linenum = current_line_num;
+    }
 
     old_property = g_hash_table_lookup(val->v.proplist, key);
     if (property->append) {
@@ -3541,12 +3582,14 @@ get_bool(void)
 
 void
 ckseen(
-    int *seen)
+    seen_t *seen)
 {
-    if (*seen && !allow_overwrites && current_line_num != -2) {
-	conf_parserror(_("duplicate parameter, prev def on line %d"), *seen);
+    if (seen->linenum && !allow_overwrites && current_line_num != -2) {
+	conf_parserror(_("duplicate parameter; previous definition %s:%d"),
+		seen->filename, seen->linenum);
     }
-    *seen = current_line_num;
+    seen->filename = current_filename;
+    seen->linenum = current_line_num;
 }
 
 /* Validation functions */
@@ -3935,6 +3978,9 @@ config_uninit(void)
     amfree(config_name);
     amfree(config_dir);
 
+    g_slist_free_full(seen_filenames);
+    seen_filenames = NULL;
+
     config_client = FALSE;
 
     config_clear_errors();
@@ -4054,82 +4100,82 @@ init_defaults(
     /* create some predefined dumptypes for backwards compatability */
     init_dumptype_defaults();
     dpcur.name = stralloc("NO-COMPRESS");
-    dpcur.seen = -1;
+    dpcur.seen.linenum = -1;
     free_val_t(&dpcur.value[DUMPTYPE_COMPRESS]);
     val_t__compress(&dpcur.value[DUMPTYPE_COMPRESS]) = COMP_NONE;
-    val_t__seen(&dpcur.value[DUMPTYPE_COMPRESS]) = -1;
+    val_t__seen(&dpcur.value[DUMPTYPE_COMPRESS]).linenum = -1;
     save_dumptype();
 
     init_dumptype_defaults();
     dpcur.name = stralloc("COMPRESS-FAST");
-    dpcur.seen = -1;
+    dpcur.seen.linenum = -1;
     free_val_t(&dpcur.value[DUMPTYPE_COMPRESS]);
     val_t__compress(&dpcur.value[DUMPTYPE_COMPRESS]) = COMP_FAST;
-    val_t__seen(&dpcur.value[DUMPTYPE_COMPRESS]) = -1;
+    val_t__seen(&dpcur.value[DUMPTYPE_COMPRESS]).linenum = -1;
     save_dumptype();
 
     init_dumptype_defaults();
     dpcur.name = stralloc("COMPRESS-BEST");
-    dpcur.seen = -1;
+    dpcur.seen.linenum = -1;
     free_val_t(&dpcur.value[DUMPTYPE_COMPRESS]);
     val_t__compress(&dpcur.value[DUMPTYPE_COMPRESS]) = COMP_BEST;
-    val_t__seen(&dpcur.value[DUMPTYPE_COMPRESS]) = -1;
+    val_t__seen(&dpcur.value[DUMPTYPE_COMPRESS]).linenum = -1;
     save_dumptype();
 
     init_dumptype_defaults();
     dpcur.name = stralloc("COMPRESS-CUST");
-    dpcur.seen = -1;
+    dpcur.seen.linenum = -1;
     free_val_t(&dpcur.value[DUMPTYPE_COMPRESS]);
     val_t__compress(&dpcur.value[DUMPTYPE_COMPRESS]) = COMP_CUST;
-    val_t__seen(&dpcur.value[DUMPTYPE_COMPRESS]) = -1;
+    val_t__seen(&dpcur.value[DUMPTYPE_COMPRESS]).linenum = -1;
     save_dumptype();
 
     init_dumptype_defaults();
     dpcur.name = stralloc("SRVCOMPRESS");
-    dpcur.seen = -1;
+    dpcur.seen.linenum = -1;
     free_val_t(&dpcur.value[DUMPTYPE_COMPRESS]);
     val_t__compress(&dpcur.value[DUMPTYPE_COMPRESS]) = COMP_SERVER_FAST;
-    val_t__seen(&dpcur.value[DUMPTYPE_COMPRESS]) = -1;
+    val_t__seen(&dpcur.value[DUMPTYPE_COMPRESS]).linenum = -1;
     save_dumptype();
 
     init_dumptype_defaults();
     dpcur.name = stralloc("BSD-AUTH");
-    dpcur.seen = -1;
+    dpcur.seen.linenum = -1;
     free_val_t(&dpcur.value[DUMPTYPE_SECURITY_DRIVER]);
     val_t__str(&dpcur.value[DUMPTYPE_SECURITY_DRIVER]) = stralloc("BSD");
-    val_t__seen(&dpcur.value[DUMPTYPE_SECURITY_DRIVER]) = -1;
+    val_t__seen(&dpcur.value[DUMPTYPE_SECURITY_DRIVER]).linenum = -1;
     save_dumptype();
 
     init_dumptype_defaults();
     dpcur.name = stralloc("KRB4-AUTH");
-    dpcur.seen = -1;
+    dpcur.seen.linenum = -1;
     free_val_t(&dpcur.value[DUMPTYPE_SECURITY_DRIVER]);
     val_t__str(&dpcur.value[DUMPTYPE_SECURITY_DRIVER]) = stralloc("KRB4");
-    val_t__seen(&dpcur.value[DUMPTYPE_SECURITY_DRIVER]) = -1;
+    val_t__seen(&dpcur.value[DUMPTYPE_SECURITY_DRIVER]).linenum = -1;
     save_dumptype();
 
     init_dumptype_defaults();
     dpcur.name = stralloc("NO-RECORD");
-    dpcur.seen = -1;
+    dpcur.seen.linenum = -1;
     free_val_t(&dpcur.value[DUMPTYPE_RECORD]);
     val_t__int(&dpcur.value[DUMPTYPE_RECORD]) = 0;
-    val_t__seen(&dpcur.value[DUMPTYPE_RECORD]) = -1;
+    val_t__seen(&dpcur.value[DUMPTYPE_RECORD]).linenum = -1;
     save_dumptype();
 
     init_dumptype_defaults();
     dpcur.name = stralloc("NO-HOLD");
-    dpcur.seen = -1;
+    dpcur.seen.linenum = -1;
     free_val_t(&dpcur.value[DUMPTYPE_HOLDINGDISK]);
     val_t__holding(&dpcur.value[DUMPTYPE_HOLDINGDISK]) = HOLD_NEVER;
-    val_t__seen(&dpcur.value[DUMPTYPE_HOLDINGDISK]) = -1;
+    val_t__seen(&dpcur.value[DUMPTYPE_HOLDINGDISK]).linenum = -1;
     save_dumptype();
 
     init_dumptype_defaults();
     dpcur.name = stralloc("NO-FULL");
-    dpcur.seen = -1;
+    dpcur.seen.linenum = -1;
     free_val_t(&dpcur.value[DUMPTYPE_STRATEGY]);
     val_t__strategy(&dpcur.value[DUMPTYPE_STRATEGY]) = DS_NOFULL;
-    val_t__seen(&dpcur.value[DUMPTYPE_STRATEGY]) = -1;
+    val_t__seen(&dpcur.value[DUMPTYPE_STRATEGY]).linenum = -1;
     save_dumptype();
 
     /* And we're initialized! */
@@ -4174,7 +4220,7 @@ update_derived_values(
 	if (!(ip = lookup_interface("default"))) {
 	    init_interface_defaults();
 	    ifcur.name = stralloc("default");
-	    ifcur.seen = getconf_seen(CNF_NETUSAGE);
+	    ifcur.seen = val_t__seen(getconf(CNF_NETUSAGE));
 	    save_interface();
 
 	    ip = lookup_interface("default");
@@ -4187,12 +4233,12 @@ update_derived_values(
 	    v = interface_getconf(ip, INTER_COMMENT);
 	    free_val_t(v);
 	    val_t__str(v) = stralloc(_("implicit from NETUSAGE"));
-	    val_t__seen(v) = getconf_seen(CNF_NETUSAGE);
+	    val_t__seen(v) = val_t__seen(getconf(CNF_NETUSAGE));
 
 	    v = interface_getconf(ip, INTER_MAXUSAGE);
 	    free_val_t(v);
 	    val_t__int(v) = getconf_int(CNF_NETUSAGE);
-	    val_t__seen(v) = getconf_seen(CNF_NETUSAGE);
+	    val_t__seen(v) = val_t__seen(getconf(CNF_NETUSAGE));
 	}
 
 	/* Check the tapetype is defined */
@@ -4203,7 +4249,7 @@ update_derived_values(
 		!lookup_tapetype("EXABYTE")) {
 		init_tapetype_defaults();
 		tpcur.name = stralloc("EXABYTE");
-		tpcur.seen = -1;
+		tpcur.seen = val_t__seen(getconf(CNF_TAPETYPE));
 		save_tapetype();
 	    } else {
 		conf_parserror(_("tapetype %s is not defined"),
@@ -4263,7 +4309,8 @@ conf_init_int(
     val_t *val,
     int    i)
 {
-    val->seen = 0;
+    val->seen.linenum = 0;
+    val->seen.filename = NULL;
     val->type = CONFTYPE_INT;
     val_t__int(val) = i;
 }
@@ -4273,7 +4320,8 @@ conf_init_int64(
     val_t *val,
     gint64   l)
 {
-    val->seen = 0;
+    val->seen.linenum = 0;
+    val->seen.filename = NULL;
     val->type = CONFTYPE_INT64;
     val_t__int64(val) = l;
 }
@@ -4283,7 +4331,8 @@ conf_init_real(
     val_t  *val,
     float r)
 {
-    val->seen = 0;
+    val->seen.linenum = 0;
+    val->seen.filename = NULL;
     val->type = CONFTYPE_REAL;
     val_t__real(val) = r;
 }
@@ -4293,7 +4342,8 @@ conf_init_str(
     val_t *val,
     char  *s)
 {
-    val->seen = 0;
+    val->seen.linenum = 0;
+    val->seen.filename = NULL;
     val->type = CONFTYPE_STR;
     if(s)
 	val->v.s = stralloc(s);
@@ -4306,7 +4356,8 @@ conf_init_ident(
     val_t *val,
     char  *s)
 {
-    val->seen = 0;
+    val->seen.linenum = 0;
+    val->seen.filename = NULL;
     val->type = CONFTYPE_IDENT;
     if(s)
 	val->v.s = stralloc(s);
@@ -4319,7 +4370,8 @@ conf_init_time(
     val_t *val,
     time_t   t)
 {
-    val->seen = 0;
+    val->seen.linenum = 0;
+    val->seen.filename = NULL;
     val->type = CONFTYPE_TIME;
     val_t__time(val) = t;
 }
@@ -4329,7 +4381,8 @@ conf_init_size(
     val_t *val,
     ssize_t   sz)
 {
-    val->seen = 0;
+    val->seen.linenum = 0;
+    val->seen.filename = NULL;
     val->type = CONFTYPE_SIZE;
     val_t__size(val) = sz;
 }
@@ -4339,7 +4392,8 @@ conf_init_bool(
     val_t *val,
     int    i)
 {
-    val->seen = 0;
+    val->seen.linenum = 0;
+    val->seen.filename = NULL;
     val->type = CONFTYPE_BOOLEAN;
     val_t__boolean(val) = i;
 }
@@ -4349,7 +4403,8 @@ conf_init_compress(
     val_t *val,
     comp_t    i)
 {
-    val->seen = 0;
+    val->seen.linenum = 0;
+    val->seen.filename = NULL;
     val->type = CONFTYPE_COMPRESS;
     val_t__compress(val) = (int)i;
 }
@@ -4359,7 +4414,8 @@ conf_init_encrypt(
     val_t *val,
     encrypt_t    i)
 {
-    val->seen = 0;
+    val->seen.linenum = 0;
+    val->seen.filename = NULL;
     val->type = CONFTYPE_ENCRYPT;
     val_t__encrypt(val) = (int)i;
 }
@@ -4369,7 +4425,8 @@ conf_init_holding(
     val_t              *val,
     dump_holdingdisk_t  i)
 {
-    val->seen = 0;
+    val->seen.linenum = 0;
+    val->seen.filename = NULL;
     val->type = CONFTYPE_HOLDING;
     val_t__holding(val) = (int)i;
 }
@@ -4379,7 +4436,8 @@ conf_init_estimate(
     val_t *val,
     estimate_t    i)
 {
-    val->seen = 0;
+    val->seen.linenum = 0;
+    val->seen.filename = NULL;
     val->type = CONFTYPE_ESTIMATE;
     val_t__estimate(val) = i;
 }
@@ -4389,7 +4447,8 @@ conf_init_strategy(
     val_t *val,
     strategy_t    i)
 {
-    val->seen = 0;
+    val->seen.linenum = 0;
+    val->seen.filename = NULL;
     val->type = CONFTYPE_STRATEGY;
     val_t__strategy(val) = i;
 }
@@ -4399,7 +4458,8 @@ conf_init_taperalgo(
     val_t *val,
     taperalgo_t    i)
 {
-    val->seen = 0;
+    val->seen.linenum = 0;
+    val->seen.filename = NULL;
     val->type = CONFTYPE_TAPERALGO;
     val_t__taperalgo(val) = i;
 }
@@ -4409,7 +4469,8 @@ conf_init_priority(
     val_t *val,
     int    i)
 {
-    val->seen = 0;
+    val->seen.linenum = 0;
+    val->seen.filename = NULL;
     val->type = CONFTYPE_PRIORITY;
     val_t__priority(val) = i;
 }
@@ -4420,7 +4481,8 @@ conf_init_rate(
     float r1,
     float r2)
 {
-    val->seen = 0;
+    val->seen.linenum = 0;
+    val->seen.filename = NULL;
     val->type = CONFTYPE_RATE;
     val_t__rate(val)[0] = r1;
     val_t__rate(val)[1] = r2;
@@ -4430,7 +4492,8 @@ static void
 conf_init_exinclude(
     val_t *val)
 {
-    val->seen = 0;
+    val->seen.linenum = 0;
+    val->seen.filename = NULL;
     val->type = CONFTYPE_EXINCLUDE;
     val_t__exinclude(val).optional = 0;
     val_t__exinclude(val).sl_list = NULL;
@@ -4443,7 +4506,8 @@ conf_init_intrange(
     int    i1,
     int    i2)
 {
-    val->seen = 0;
+    val->seen.linenum = 0;
+    val->seen.filename = NULL;
     val->type = CONFTYPE_INTRANGE;
     val_t__intrange(val)[0] = i1;
     val_t__intrange(val)[1] = i2;
@@ -4453,7 +4517,8 @@ static void
 conf_init_proplist(
     val_t *val)
 {
-    val->seen = 0;
+    val->seen.linenum = 0;
+    val->seen.filename = NULL;
     val->type = CONFTYPE_PROPLIST;
     val_t__proplist(val) =
         g_hash_table_new_full(g_str_hash, g_str_equal, NULL, NULL);
@@ -4464,7 +4529,8 @@ conf_init_execute_on(
     val_t *val,
     int    i)
 {
-    val->seen = 0;
+    val->seen.linenum = 0;
+    val->seen.filename = NULL;
     val->type = CONFTYPE_EXECUTE_ON;
     val->v.i = i;
 }
@@ -4474,7 +4540,8 @@ conf_init_execute_where(
     val_t *val,
     int    i)
 {
-    val->seen = 0;
+    val->seen.linenum = 0;
+    val->seen.filename = NULL;
     val->type = CONFTYPE_EXECUTE_WHERE;
     val->v.i = i;
 }
@@ -4484,19 +4551,22 @@ conf_init_send_amreport(
     val_t *val,
     send_amreport_t i)
 {
-    val->seen = 0;
+    val->seen.linenum = 0;
+    val->seen.filename = NULL;
     val->type = CONFTYPE_SEND_AMREPORT_ON;
     val->v.i = i;
 }
 
 static void conf_init_pp_scriptlist(val_t *val) {
-    val->seen = 0;
+    val->seen.linenum = 0;
+    val->seen.filename = NULL;
     val->type = CONFTYPE_PP_SCRIPTLIST;
     val->v.proplist = NULL;
 }
 
 static void conf_init_application(val_t *val) {
-    val->seen = 0;
+    val->seen.linenum = 0;
+    val->seen.filename = NULL;
     val->type = CONFTYPE_APPLICATION;
     val->v.application = NULL;
 }
@@ -5218,7 +5288,7 @@ copy_val_t(
     val_t *valdst,
     val_t *valsrc)
 {
-    if(valsrc->seen) {
+    if(valsrc->seen.linenum) {
 	valdst->type = valsrc->type;
 	valdst->seen = valsrc->seen;
 	switch(valsrc->type) {
@@ -5383,7 +5453,8 @@ free_val_t(
 	case CONFTYPE_APPLICATION:
 	    break;
     }
-    val->seen = 0;
+    val->seen.linenum = 0;
+    val->seen.filename = NULL;
 }
 
 /*
@@ -5500,7 +5571,7 @@ dump_configuration(void)
     }
 
     for(tp = tapelist; tp != NULL; tp = tp->next) {
-	if(tp->seen == -1)
+	if(tp->seen.linenum == -1)
 	    prefix = "#";
 	else
 	    prefix = "";
@@ -5523,7 +5594,7 @@ dump_configuration(void)
 
     for(dp = dumplist; dp != NULL; dp = dp->next) {
 	if (strncmp_const(dp->name, "custom(") != 0) { /* don't dump disklist-derived dumptypes */
-	    if(dp->seen == -1)
+	    if(dp->seen.linenum == -1)
 		prefix = "#";
 	    else
 		prefix = "";
@@ -5546,7 +5617,10 @@ dump_configuration(void)
     }
 
     for(ip = interface_list; ip != NULL; ip = ip->next) {
-	if(strcmp(ip->name,"default") == 0)
+	seen_t *netusage_seen = &val_t__seen(getconf(CNF_NETUSAGE));
+	if (ip->seen.linenum == netusage_seen->linenum &&
+	    ip->seen.filename && netusage_seen->filename &&
+	    0 == strcmp(ip->seen.filename, netusage_seen->filename))
 	    prefix = "#";
 	else
 	    prefix = "";
@@ -6456,8 +6530,7 @@ config_errors(GSList **errstr)
 void
 config_clear_errors(void)
 {
-    g_slist_foreach_nodata(cfgerr_errors, free);
-    g_slist_free(cfgerr_errors);
+    g_slist_free_full(cfgerr_errors);
 
     cfgerr_errors = NULL;
     cfgerr_level = CFGERR_OK;

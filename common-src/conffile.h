@@ -210,6 +210,14 @@ typedef enum {
     CONFTYPE_PP_SCRIPTLIST
 } conftype_t;
 
+/* A "seen" struct.  Rather than allocate strings all over the place, this
+ * string is in the "parsed_filenames" GSList and will be freed when that
+ * GSList is freed.  This struct should be opaque to other modules. */
+typedef struct seen_s {
+    char *filename;
+    int linenum;
+} seen_t;
+
 /* This should be considered an opaque type for any other modules.  The complete
  * struct is included here to allow quick access via macros. Access it *only* through
  * those macros. */
@@ -228,7 +236,7 @@ typedef struct val_s {
 	struct application_s  *application;
 	pp_scriptlist_t pp_scriptlist;
     } v;
-    int seen;
+    seen_t seen;
     conftype_t type;
 } val_t;
 
@@ -265,7 +273,7 @@ send_amreport_t       val_t_to_send_amreport(val_t *);
  * @param val: val_t* to examine
  * @returns: boolean
  */
-#define val_t_seen(val) ((val)->seen)
+#define val_t_seen(val) ((val)->seen.linenum)
 
 /* What is the underlying type of this val_t?
  *

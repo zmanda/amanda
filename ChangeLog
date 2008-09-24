@@ -1,4 +1,9 @@
 2008-09-23  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/conffile.c common-src/conffile.h: store a struct
+	  containing both filename and line number for each parameter, and use
+	  it when reporting errors and warnings
+
+2008-09-23  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/device.c: make 'unimplemented method' an assertion
 
 2008-09-23  Dustin J. Mitchell <dustin@zmanda.com>
