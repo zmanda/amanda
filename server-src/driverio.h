@@ -107,6 +107,7 @@ typedef struct sched_s {
     char *datestamp;
     int activehd;
     int no_space;
+    char *degr_mesg;
 } sched_t;
 
 #define sched(dp)	((sched_t *) (dp)->up)

@@ -1,3 +1,8 @@
+2008-09-24  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/planner.c: Set degr_mesg and send it to driver.
+	* server-src/driverio.h (sched_t): Add degr_mesg field.
+	* server-src/driver.c: Parse message if no degraded estimate.
+
 2008-09-23  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/conffile.c common-src/conffile.h: store a struct
 	  containing both filename and line number for each parameter, and use

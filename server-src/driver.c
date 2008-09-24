@@ -483,7 +483,7 @@ main(
 	diskp = dequeue_disk(&directq);
 	if (diskp->to_holdingdisk == HOLD_REQUIRED) {
 	    char *qname = quote_string(diskp->name);
-	    log_add(L_FAIL, _("%s %s %s %d [%s]"),
+	    log_add(L_FAIL, "%s %s %s %d [%s]",
 		diskp->host->hostname, qname, sched(diskp)->datestamp,
 		sched(diskp)->level,
 		_("can't dump required holdingdisk"));
@@ -497,7 +497,7 @@ main(
 	}
 	else {
 	    char *qname = quote_string(diskp->name);
-	    log_add(L_FAIL, _("%s %s %s %d [%s]"),
+	    log_add(L_FAIL, "%s %s %s %d [%s]",
 		diskp->host->hostname, qname, sched(diskp)->datestamp,
 		sched(diskp)->level,
 		num_holdalloc == 0 ?
@@ -1167,9 +1167,9 @@ start_degraded_mode(
 		enqueue_disk(&newq, dp);
 	    }
 	    else {
-		log_add(L_FAIL,_("%s %s %s %d [can't switch to incremental dump]"),
+		log_add(L_FAIL, "%s %s %s %d [%s]",
 		        dp->host->hostname, qname, sched(dp)->datestamp,
-			sched(dp)->level);
+			sched(dp)->level, sched(dp)->degr_mesg);
 	    }
 	}
         amfree(qname);
@@ -1514,6 +1514,7 @@ file_taper_result(
 		amfree(sched(dp)->destname);
 		amfree(sched(dp)->dumpdate);
 		amfree(sched(dp)->degr_dumpdate);
+		amfree(sched(dp)->degr_mesg);
 		amfree(sched(dp)->datestamp);
 		amfree(dp->up);
 	    } else {
@@ -1530,6 +1531,7 @@ file_taper_result(
 		    amfree(sched(dp)->destname);
 		    amfree(sched(dp)->dumpdate);
 		    amfree(sched(dp)->degr_dumpdate);
+		    amfree(sched(dp)->degr_mesg);
 		    amfree(sched(dp)->datestamp);
 		    amfree(dp->up);
 		}
@@ -1538,6 +1540,7 @@ file_taper_result(
 	    amfree(sched(dp)->destname);
 	    amfree(sched(dp)->dumpdate);
 	    amfree(sched(dp)->degr_dumpdate);
+	    amfree(sched(dp)->degr_mesg);
 	    amfree(sched(dp)->datestamp);
 	    amfree(dp->up);
 	}
@@ -1553,6 +1556,7 @@ file_taper_result(
 	    amfree(sched(dp)->destname);
 	    amfree(sched(dp)->dumpdate);
 	    amfree(sched(dp)->degr_dumpdate);
+	    amfree(sched(dp)->degr_mesg);
 	    amfree(sched(dp)->datestamp);
 	    amfree(dp->up);
 	} else {
@@ -1566,6 +1570,7 @@ file_taper_result(
 	amfree(sched(dp)->destname);
 	amfree(sched(dp)->dumpdate);
 	amfree(sched(dp)->degr_dumpdate);
+	amfree(sched(dp)->degr_mesg);
 	amfree(sched(dp)->datestamp);
 	amfree(dp->up);
     }
@@ -2247,6 +2252,7 @@ read_flush(void)
 	sp->level = file.dumplevel;
 	sp->dumpdate = NULL;
 	sp->degr_dumpdate = NULL;
+	sp->degr_mesg = NULL;
 	sp->datestamp = stralloc(file.datestamp);
 	sp->est_nsize = (off_t)0;
 	sp->est_csize = (off_t)0;
@@ -2278,7 +2284,7 @@ read_schedule(
     sched_t *sp;
     disk_t *dp;
     int level, line, priority;
-    char *dumpdate, *degr_dumpdate;
+    char *dumpdate, *degr_dumpdate, *degr_mesg;
     int degr_level;
     time_t time, degr_time;
     time_t *time_p = &time;
@@ -2420,7 +2426,18 @@ read_schedule(
 
 	degr_dumpdate = NULL;			/* flag if degr fields found */
 	skip_whitespace(s, ch);			/* find the degr level number */
-	if(ch != '\0') {
+	degr_mesg = NULL;
+	if (ch == '"') {
+	    qname = s - 1;
+	    skip_quoted_string(s, ch);
+	    s[-1] = '\0';			/* terminate degr mesg */
+	    degr_mesg = unquote_string(qname);
+	    degr_level = -1;
+	    degr_nsize = (off_t)0;
+	    degr_csize = (off_t)0;
+	    degr_time = (time_t)0;
+	    degr_kps = 0;
+	} else if (ch != '\0') {
 	    if(sscanf(s - 1, "%d", &degr_level) != 1) {
 		error(_("schedule line %d: syntax error (bad degr level)"), line);
 		/*NOTREACHED*/
@@ -2469,11 +2486,7 @@ read_schedule(
 	    }
 	    skip_integer(s, ch);
 	} else {
-	    degr_level = -1;
-	    degr_nsize = (off_t)0;
-	    degr_csize = (off_t)0;
-	    degr_time = (time_t)0;
-	    degr_kps = 0;
+	    error(_("schedule line %d: no degraded estimate or message"), line);
 	}
 
 	dp = lookup_disk(hostname, diskname);
@@ -2511,6 +2524,7 @@ read_schedule(
 	} else {
 	    sp->degr_level = -1;
 	    sp->degr_dumpdate = NULL;
+	    sp->degr_mesg = degr_mesg;
 	}
 	/*@end@*/
 
