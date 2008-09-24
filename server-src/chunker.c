@@ -352,17 +352,17 @@ main(
 		}
 		amfree(q);
 	    } else if(infd != -2) {
-		if(!abort_pending) {
-		    if(q == NULL) {
-			m = vstrallocf("[%s]", errstr);
-			q = quote_string(m);
-			amfree(m);
-		    }
-		    putresult(FAILED, "%s %s\n", handle, q);
-		    log_add(L_FAIL, "%s %s %s %d [%s]",
-			    hostname, qdiskname, chunker_timestamp, level, errstr);
-		    amfree(q);
+		if(q == NULL) {
+		    m = vstrallocf("[%s]", errstr);
+		    q = quote_string(m);
+		    amfree(m);
 		}
+		if(!abort_pending) {
+		    putresult(FAILED, "%s %s\n", handle, q);
+		}
+		log_add(L_FAIL, "%s %s %s %d [%s]",
+			hostname, qdiskname, chunker_timestamp, level, errstr);
+		amfree(q);
 	    }
 	    amfree(filename);
 	    amfree(db.filename);
@@ -674,7 +674,7 @@ databuf_flush(
 		}
 	    } else if(cmdargs->cmd == ABORT) {
 		abort_pending = 1;
-		errstr = newstralloc(errstr, "ERROR");
+		errstr = newstralloc(errstr, cmdargs->argv[1]);
 		putresult(ABORT_FINISHED, "%s\n", handle);
 		rc = 0;
 		goto common_exit;

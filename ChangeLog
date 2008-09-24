@@ -1,4 +1,11 @@
 2008-09-24  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/driverio.c (dumper_cmd, chunker_cmd): Take new mesg								   argument.
+	* server-src/server_util.h (dumper_cmd, chunker_cmd): New prototype.
+	* server-src/chunker.c: Get mesg from ABORT cmd and log it.
+	* server-src/driver.c: Add the mesg argument to all dumper_cmd and
+			       chunker_cmd.
+
+2008-09-24  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/planner.c: Set degr_mesg and send it to driver.
 	* server-src/driverio.h (sched_t): Add degr_mesg field.
 	* server-src/driver.c: Parse message if no degraded estimate.

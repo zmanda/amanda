@@ -187,7 +187,7 @@ startup_dump_processes(
 	chktable[i].fd = -1;
 
 	startup_dump_process(dumper, dumper_program);
-	dumper_cmd(dumper, START, (void *)timestamp);
+	dumper_cmd(dumper, START, NULL, (void *)timestamp);
     }
 }
 
@@ -389,7 +389,8 @@ int
 dumper_cmd(
     dumper_t *dumper,
     cmd_t cmd,
-    disk_t *dp)
+    disk_t *dp,
+    char   *mesg)
 {
     char *cmdline = NULL;
     char number[NUM_STR_SIZE];
@@ -402,7 +403,7 @@ dumper_cmd(
 
     switch(cmd) {
     case START:
-	cmdline = vstralloc(cmdstr[cmd], " ", (char *)dp, "\n", NULL);
+	cmdline = vstralloc(cmdstr[cmd], " ", mesg, "\n", NULL);
 	break;
     case PORT_DUMP:
 	if(dp && dp->device) {
@@ -503,7 +504,8 @@ int
 chunker_cmd(
     chunker_t *chunker,
     cmd_t cmd,
-    disk_t *dp)
+    disk_t *dp,
+    char   *mesg)
 {
     char *cmdline = NULL;
     char number[NUM_STR_SIZE];
@@ -518,7 +520,7 @@ chunker_cmd(
 
     switch(cmd) {
     case START:
-	cmdline = vstralloc(cmdstr[cmd], " ", (char *)dp, "\n", NULL);
+	cmdline = vstralloc(cmdstr[cmd], " ", mesg, "\n", NULL);
 	break;
     case PORT_WRITE:
 	if(dp && sched(dp) && sched(dp)->holdp) {
@@ -591,7 +593,11 @@ chunker_cmd(
 	break;
     case QUIT:
     case ABORT:
-	cmdline = stralloc2(cmdstr[cmd], "\n");
+	{
+	    char *q = quote_string(mesg);
+	    cmdline = vstralloc(cmdstr[cmd], " ", q, "\n", NULL);
+	    amfree(q);
+	}
 	break;
     case DONE:
     case FAILED:

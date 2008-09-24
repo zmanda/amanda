@@ -522,7 +522,7 @@ main(
     if(!nodump) {
 	for(dumper = dmptable; dumper < dmptable + inparallel; dumper++) {
 	    if(dumper->fd >= 0)
-		dumper_cmd(dumper, QUIT, NULL);
+		dumper_cmd(dumper, QUIT, NULL, NULL);
 	}
     }
 
@@ -664,10 +664,10 @@ wait_for_children(void)
     if(!nodump) {
 	for(dumper = dmptable; dumper < dmptable + inparallel; dumper++) {
 	    if (dumper->pid > 1 && dumper->fd >= 0) {
-		dumper_cmd(dumper, QUIT, NULL);
+		dumper_cmd(dumper, QUIT, NULL, NULL);
 		if (dumper->chunker && dumper->chunker->pid > 1 &&
 		    dumper->chunker->fd >= 0)
-		    chunker_cmd(dumper->chunker, QUIT, NULL);
+		    chunker_cmd(dumper->chunker, QUIT, NULL, NULL);
 	    }
 	}
     }
@@ -1036,9 +1036,9 @@ start_some_dumps(
 	    chunker->result = LAST_TOK;
 	    dumper->result = LAST_TOK;
 	    startup_chunk_process(chunker,chunker_program);
-	    chunker_cmd(chunker, START, (void *)driver_timestamp);
+	    chunker_cmd(chunker, START, NULL, driver_timestamp);
 	    chunker->dumper = dumper;
-	    chunker_cmd(chunker, PORT_WRITE, diskp);
+	    chunker_cmd(chunker, PORT_WRITE, diskp, NULL);
 	    cmd = getresult(chunker->fd, 1, &result_argc, &result_argv);
 	    if(cmd != PORT) {
 		assignedhd_t **h=NULL;
@@ -1083,7 +1083,7 @@ start_some_dumps(
 		}
 		run_server_scripts(EXECUTE_ON_PRE_DLE_BACKUP,
 				   get_config_name(), diskp);
-		dumper_cmd(dumper, PORT_DUMP, diskp);
+		dumper_cmd(dumper, PORT_DUMP, diskp, NULL);
 	    }
 	    diskp->host->start_t = now + 15;
 
@@ -1207,7 +1207,7 @@ continue_port_dumps(void)
 	    }
 	    assert( dumper < dmptable + inparallel );
 	    sched(dp)->activehd = assign_holdingdisk( h, dp );
-	    chunker_cmd( dumper->chunker, CONTINUE, dp );
+	    chunker_cmd( dumper->chunker, CONTINUE, dp, NULL );
 	    amfree(h);
 	    remove_disk( &roomq, dp );
 	}
@@ -1250,8 +1250,8 @@ continue_port_dumps(void)
 	 * We abort that dump, hopefully not wasting too much time retrying it.
 	 */
 	remove_disk( &roomq, dp );
-	chunker_cmd( sched(dp)->dumper->chunker, ABORT, NULL);
-	dumper_cmd( sched(dp)->dumper, ABORT, NULL );
+	chunker_cmd(sched(dp)->dumper->chunker, ABORT, NULL, _("Not enough holding disk space"));
+	dumper_cmd( sched(dp)->dumper, ABORT, NULL, NULL );
 	pending_aborts++;
     }
 }
@@ -1887,10 +1887,10 @@ handle_dumper_result(
 	    if (dumper->chunker->down == 0 && dumper->chunker->fd != -1 &&
 		dumper->chunker->result == LAST_TOK) {
 		if (cmd == DONE) {
-		    chunker_cmd(dumper->chunker, DONE, dp);
+		    chunker_cmd(dumper->chunker, DONE, dp, NULL);
 		}
 		else {
-		    chunker_cmd(dumper->chunker, FAILED, dp);
+		    chunker_cmd(dumper->chunker, FAILED, dp, NULL);
 		}
 	    }
 	    if( dumper->result != LAST_TOK &&
@@ -2018,7 +2018,7 @@ handle_chunker_result(
 	    if( h[++activehd] ) { /* There's still some allocated space left.
 				   * Tell the dumper about it. */
 		sched(dp)->activehd++;
-		chunker_cmd( chunker, CONTINUE, dp );
+		chunker_cmd( chunker, CONTINUE, dp, NULL );
 	    } else { /* !h[++activehd] - must allocate more space */
 		sched(dp)->act_size = sched(dp)->est_size; /* not quite true */
 		sched(dp)->est_size = (sched(dp)->act_size/(off_t)20) * (off_t)21; /* +5% */
@@ -2036,7 +2036,7 @@ handle_chunker_result(
 		} else {
 		    /* OK, allocate space for disk and have chunker continue */
 		    sched(dp)->activehd = assign_holdingdisk( h, dp );
-		    chunker_cmd( chunker, CONTINUE, dp );
+		    chunker_cmd( chunker, CONTINUE, dp, NULL );
 		    amfree(h);
 		}
 	    }
@@ -3090,7 +3090,7 @@ dump_to_tape(
     run_server_scripts(EXECUTE_ON_PRE_DLE_BACKUP, get_config_name(), dp);
 
     /* tell the dumper to dump to a port */
-    dumper_cmd(dumper, PORT_DUMP, dp);
+    dumper_cmd(dumper, PORT_DUMP, dp, NULL);
     dp->host->start_t = time(NULL) + 15;
 
     /* update statistics & print state */

@@ -66,10 +66,12 @@ int taper_cmd(cmd_t cmd, void *ptr, char *destname, int level, char *datestamp);
 
 struct disk_s;
 struct chunker_s;
-int chunker_cmd(struct chunker_s *chunker, cmd_t cmd, struct disk_s *dp);
+int chunker_cmd(struct chunker_s *chunker, cmd_t cmd, struct disk_s *dp,
+		char *mesg);
 
 struct dumper_s;
-int dumper_cmd(struct dumper_s *dumper, cmd_t cmd, struct disk_s *dp);
+int dumper_cmd(struct dumper_s *dumper, cmd_t cmd, struct disk_s *dp,
+	       char *mesg);
 
 char *amhost_get_security_conf(char *string, void *arg);
 int check_infofile(char *infodir, disklist_t *dl, char **errmsg);
