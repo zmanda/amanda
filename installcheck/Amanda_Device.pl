@@ -657,15 +657,19 @@ SKIP: {
 
     # append one more copy, to test ACCESS_APPEND
 
-    ok($dev->start($ACCESS_APPEND, undef, undef),
-	"start in append mode")
-	or diag($dev->error_or_status());
+    SKIP: {
+        skip "APPEND not supported", $write_file_count + 2
+            unless $dev->property_get("APPENDABLE");
+        ok($dev->start($ACCESS_APPEND, undef, undef),
+            "start in append mode")
+            or diag($dev->error_or_status());
 
-    write_file(0xD0ED0E, $dev->block_size()*4, 4);
+        write_file(0xD0ED0E, $dev->block_size()*4, 4);
 
-    ok($dev->finish(),
-	"finish device after append")
-	or diag($dev->error_or_status());
+        ok($dev->finish(),
+            "finish device after append")
+            or diag($dev->error_or_status());
+    }
 
     # try reading the third file back, creating a new device
     # object first, and skipping the read-label step.

@@ -93,4 +93,7 @@ gboolean headers_are_equal(dumpfile_t * a, dumpfile_t * b);
 /* Returns an allocated duplicate header. */
 dumpfile_t * dumpfile_copy(dumpfile_t* from);
 
+/* Frees the header and associated storage */
+void dumpfile_free(dumpfile_t* info);
+
 #endif /* !FILEHEADER_H */

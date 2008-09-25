@@ -47,7 +47,7 @@ fh_init(
 {
     memset(file, '\0', SIZEOF(*file));
     file->type = F_EMPTY;
-    file->blocksize = DISK_BLOCK_BYTES;
+    file->blocksize = 0;
 }
 
 static void
@@ -423,7 +423,7 @@ parse_file_header(
 	    continue;
 #undef SC
 
-#define SC "\tdd if=<tape> bs="
+#define SC "\tdd if=<tape> "
 	if (strncmp(line, SC, SIZEOF(SC) - 1) == 0) {
 	    char *cmd1, *cmd2, *cmd3=NULL;
 
@@ -516,7 +516,8 @@ dump_dumpfile_t(
 	dbprintf(_("    is_partial       = %d\n"), file->is_partial);
 	dbprintf(_("    partnum          = %d\n"), file->partnum);
 	dbprintf(_("    totalparts       = %d\n"), file->totalparts);
-	dbprintf(_("    blocksize        = %zu\n"), file->blocksize);
+	if (file->blocksize)
+	    dbprintf(_("    blocksize        = %zu\n"), file->blocksize);
 }
 
 static void
@@ -583,7 +584,7 @@ build_header(const dumpfile_t * file, size_t size)
 	validate_name(file->name);
 	validate_datestamp(file->datestamp);
         g_string_printf(rval, 
-                        "AMANDA: TAPESTART DATE %s TAPE %s\n014\n",
+                        "AMANDA: TAPESTART DATE %s TAPE %s\n\014\n",
                         file->datestamp, file->name);
 	break;
         
@@ -664,9 +665,11 @@ build_header(const dumpfile_t * file, size_t size)
 	    _("To restore, position tape at start of file and run:\n"));
 
 	/* \014 == ^L == form feed */
-        g_string_append_printf(rval,
-                               "\tdd if=<tape> bs=%zuk skip=1 |%s %s %s\n\014\n",
-                               file->blocksize / 1024,
+        g_string_append_printf(rval, "\tdd if=<tape> ");
+	if (file->blocksize)
+	    g_string_append_printf(rval, "bs=%zuk ",
+				   file->blocksize / 1024);
+	g_string_append_printf(rval, "skip=1 |%s %s %s\n\014\n",
                                file->decrypt_cmd, file->uncompress_cmd,
                                file->recover_cmd);
 	break;
@@ -848,7 +851,36 @@ gboolean headers_are_equal(dumpfile_t * a, dumpfile_t * b) {
     if (a == NULL || b == NULL)
         return FALSE;
 
-    return 0 == memcmp(a, b, sizeof(*a));
+    if (a->type != b->type) return FALSE;
+    if (strcmp(a->datestamp, b->datestamp)) return FALSE;
+    if (a->dumplevel != b->dumplevel) return FALSE;
+    if (a->compressed != b->compressed) return FALSE;
+    if (a->encrypted != b->encrypted) return FALSE;
+    if (strcmp(a->comp_suffix, b->comp_suffix)) return FALSE;
+    if (strcmp(a->encrypt_suffix, b->encrypt_suffix)) return FALSE;
+    if (strcmp(a->name, b->name)) return FALSE;
+    if (strcmp(a->disk, b->disk)) return FALSE;
+    if (strcmp(a->program, b->program)) return FALSE;
+    if (strcmp(a->application, b->application)) return FALSE;
+    if (strcmp(a->srvcompprog, b->srvcompprog)) return FALSE;
+    if (strcmp(a->clntcompprog, b->clntcompprog)) return FALSE;
+    if (strcmp(a->srv_encrypt, b->srv_encrypt)) return FALSE;
+    if (strcmp(a->clnt_encrypt, b->clnt_encrypt)) return FALSE;
+    if (strcmp(a->recover_cmd, b->recover_cmd)) return FALSE;
+    if (strcmp(a->uncompress_cmd, b->uncompress_cmd)) return FALSE;
+    if (strcmp(a->encrypt_cmd, b->encrypt_cmd)) return FALSE;
+    if (strcmp(a->decrypt_cmd, b->decrypt_cmd)) return FALSE;
+    if (strcmp(a->srv_decrypt_opt, b->srv_decrypt_opt)) return FALSE;
+    if (strcmp(a->clnt_decrypt_opt, b->clnt_decrypt_opt)) return FALSE;
+    if (strcmp(a->cont_filename, b->cont_filename)) return FALSE;
+    if (a->dle_str != b->dle_str && a->dle_str && b->dle_str
+	&& strcmp(a->dle_str, b->dle_str)) return FALSE;
+    if (a->is_partial != b->is_partial) return FALSE;
+    if (a->partnum != b->partnum) return FALSE;
+    if (a->totalparts != b->totalparts) return FALSE;
+    if (a->blocksize != b->blocksize) return FALSE;
+
+    return TRUE; /* ok, they're the same */
 }
 
 dumpfile_t * dumpfile_copy(dumpfile_t* source) {
@@ -856,6 +888,11 @@ dumpfile_t * dumpfile_copy(dumpfile_t* source) {
     memcpy(rval, source, sizeof(dumpfile_t));
     if (rval->dle_str) rval->dle_str = stralloc(rval->dle_str);
     return rval;
+}
+
+void dumpfile_free(dumpfile_t* info) {
+    amfree(info->dle_str);
+    amfree(info);
 }
 
 static char *

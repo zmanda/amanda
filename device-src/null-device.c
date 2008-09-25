@@ -64,7 +64,7 @@ static void null_device_open_device(Device * self, char *device_name,
 static gboolean null_device_start (Device * self, DeviceAccessMode mode,
                                    char * label, char * timestamp);
 static gboolean null_device_finish (Device * pself);
-static gboolean null_device_start_file(Device * self, const dumpfile_t * jobInfo);
+static gboolean null_device_start_file(Device * self, dumpfile_t * jobInfo);
 static gboolean null_device_write_block (Device * self, guint size, gpointer data);
 static gboolean null_device_finish_file(Device * self);
 static Device* null_device_factory(char * device_name, char * device_type, char * device_node);
@@ -236,7 +236,7 @@ null_device_finish (Device * pself) {
 
 static gboolean
 null_device_start_file(Device * d_self,
-		    const dumpfile_t * jobInfo G_GNUC_UNUSED)
+		    dumpfile_t * jobInfo G_GNUC_UNUSED)
 {
     d_self->in_file = TRUE;
     d_self->block = 0;

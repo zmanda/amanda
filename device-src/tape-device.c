@@ -81,7 +81,7 @@ static int tape_device_read_block(Device * self,  gpointer buf,
                                        int * size_req);
 static gboolean tape_device_start (Device * self, DeviceAccessMode mode,
                                    char * label, char * timestamp);
-static gboolean tape_device_start_file (Device * self, const dumpfile_t * ji);
+static gboolean tape_device_start_file (Device * self, dumpfile_t * ji);
 static gboolean tape_device_finish_file (Device * self);
 static dumpfile_t * tape_device_seek_file (Device * self, guint file);
 static gboolean tape_device_seek_block (Device * self, guint64 block);
@@ -170,7 +170,10 @@ tape_device_init (TapeDevice * self) {
 
     prop.base = &device_property_appendable;
     g_value_init(&response, G_TYPE_BOOLEAN);
-    g_value_set_boolean(&response, TRUE);
+    /* Some tape devices cannot determine the file number after
+     * an EOM operation.  Until this is fixed, the device is not
+     * appendable. */
+    g_value_set_boolean(&response, FALSE);
     device_add_property(d_self, &prop, &response);
 
     prop.base = &device_property_partial_deletion;
@@ -742,7 +745,7 @@ tape_device_start (Device * d_self, DeviceAccessMode mode, char * label,
 }
 
 static gboolean tape_device_start_file(Device * d_self,
-                                       const dumpfile_t * info) {
+                                       dumpfile_t * info) {
     TapeDevice * self;
     IoResult result;
     char * amanda_header;
@@ -753,6 +756,9 @@ static gboolean tape_device_start_file(Device * d_self,
 
     g_assert(self->fd >= 0);
     if (device_in_error(self)) return FALSE;
+
+    /* set the blocksize in the header properly */
+    info->blocksize = d_self->block_size;
 
     if (!(d_self->access_mode == ACCESS_APPEND && self->first_file)) {
         if (!tape_weof(self->fd, 1)) {
@@ -788,9 +794,7 @@ static gboolean tape_device_start_file(Device * d_self,
     /* arrange the file numbers correctly */
     d_self->in_file = TRUE;
     d_self->block = 0;
-    if (d_self->file <= 0)
-        d_self->file = 1;
-    else
+    if (d_self->file >= 0)
         d_self->file ++;
     return TRUE;
 }

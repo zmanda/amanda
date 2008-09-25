@@ -179,7 +179,7 @@ struct _DeviceClass {
     DeviceStatusFlags (* read_label)(Device * self);
     gboolean (* start) (Device * self, DeviceAccessMode mode,
                         char * label, char * timestamp);
-    gboolean (* start_file) (Device * self, const dumpfile_t * info);
+    gboolean (* start_file) (Device * self, dumpfile_t * info);
     gboolean (* write_block) (Device * self, guint size, gpointer data);
     gboolean (* write_from_fd) (Device * self, queue_fd_t *queue_fd);
     gboolean (* finish_file) (Device * self);
@@ -284,11 +284,12 @@ gboolean 	device_start	(Device * self,
  * finalization function. */
 gboolean 	device_finish	(Device * self);
 
-/* But you can't write any data until you call this function, too.
- * This function does not take ownership of the passed dumpfile_t; you must
- * free it yourself. */
+/* But you can't write any data until you call this function, too.  This
+ * function does not take ownership of the passed dumpfile_t; you must free it
+ * yourself.  Note that this function *does* set the blocksize field of the
+ * header properly, based on the size of the header block.  */
 gboolean        device_start_file       (Device * self,
-                                         const dumpfile_t * jobInfo);
+                                         dumpfile_t * jobInfo);
 
 /* Does what you expect. Size must be device->block_size or less.
  * If less, then this is the final block in the file, and no more blocks

@@ -590,12 +590,19 @@ char * device_build_amanda_header(Device * self, const dumpfile_t * info,
 dumpfile_t * make_tapestart_header(Device * self, char * label,
                                    char * timestamp) {
     dumpfile_t * rval;
+    GValue val;
+    bzero(&val, sizeof(val));
 
     g_assert(label != NULL);
 
     rval = malloc(sizeof(*rval));
     fh_init(rval);
     rval->type = F_TAPESTART;
+    if (device_property_get(self, PROPERTY_BLOCK_SIZE, &val)) {
+	rval->blocksize = g_value_get_int(&val);
+	g_value_unset(&val);
+    }
+
     amfree(self->volume_time);
     if (get_timestamp_state(timestamp) == TIME_STATE_REPLACE) {
         self->volume_time = get_proper_stamp_from_time(time(NULL));
@@ -1039,7 +1046,7 @@ device_write_from_fd (Device * self, queue_fd_t * queue_fd)
 }
 
 gboolean
-device_start_file (Device * self, const dumpfile_t * jobInfo) {
+device_start_file (Device * self, dumpfile_t * jobInfo) {
     DeviceClass * klass;
 
     g_assert(IS_DEVICE (self));

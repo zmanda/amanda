@@ -27,6 +27,7 @@
 #include <glib.h>
 #include "glib-util.h"
 #include "device.h"
+#include "fileheader.h"
 
 /* Just a note about the failure mode of different operations:
    - Recovers from a failure (enters degraded mode)
@@ -112,7 +113,7 @@ static void rait_device_class_init (RaitDeviceClass * c);
 static void rait_device_open_device (Device * self, char * device_name, char * device_type, char * device_node);
 static gboolean rait_device_start (Device * self, DeviceAccessMode mode,
                                    char * label, char * timestamp);
-static gboolean rait_device_start_file(Device * self, const dumpfile_t * info);
+static gboolean rait_device_start_file(Device * self, dumpfile_t * info);
 static gboolean rait_device_write_block (Device * self, guint size, gpointer data);
 static gboolean rait_device_finish_file (Device * self);
 static dumpfile_t * rait_device_seek_file (Device * self, guint file);
@@ -1087,7 +1088,7 @@ rait_device_start (Device * dself, DeviceAccessMode mode, char * label,
 
 typedef struct {
     GenericOp base;
-    const dumpfile_t * info; /* IN */
+    dumpfile_t * info; /* IN */
     int fileno;
 } StartFileOp;
 
@@ -1103,7 +1104,7 @@ static void start_file_do_op(gpointer data, gpointer user_data G_GNUC_UNUSED) {
 }
 
 static gboolean
-rait_device_start_file (Device * dself, const dumpfile_t * info) {
+rait_device_start_file (Device * dself, dumpfile_t * info) {
     GPtrArray * ops;
     guint i;
     gboolean success;
@@ -1120,7 +1121,9 @@ rait_device_start_file (Device * dself, const dumpfile_t * info) {
         StartFileOp * op;
         op = g_new(StartFileOp, 1);
         op->base.child = g_ptr_array_index(self->private->children, i);
-        op->info = info;
+	/* each child gets its own copy of the header, to munge as it
+	 * likes (setting blocksize, at least) */
+        op->info = dumpfile_copy(info);
         g_ptr_array_add(ops, op);
     }
     
@@ -1152,6 +1155,10 @@ rait_device_start_file (Device * dself, const dumpfile_t * info) {
         }
     }
 
+    for (i = 0; i < ops->len && success; i ++) {
+        StartFileOp * op = g_ptr_array_index(ops, i);
+	if (op->info) dumpfile_free(op->info);
+    }
     g_ptr_array_free_full(ops);
 
     if (!success) {

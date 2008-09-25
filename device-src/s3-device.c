@@ -260,7 +260,7 @@ s3_device_finish(Device * self);
 
 static gboolean 
 s3_device_start_file(Device * self,
-                     const dumpfile_t * jobInfo);
+                     dumpfile_t * jobInfo);
 
 static gboolean 
 s3_device_write_block(Device * self, 
@@ -1072,7 +1072,7 @@ static gboolean s3_device_property_set(Device * p_self, DevicePropertyId id,
 
 
 static gboolean
-s3_device_start_file (Device *pself, const dumpfile_t *jobInfo) {
+s3_device_start_file (Device *pself, dumpfile_t *jobInfo) {
     S3Device *self = S3_DEVICE(pself);
     char *amanda_header;
     int header_size;
@@ -1080,6 +1080,10 @@ s3_device_start_file (Device *pself, const dumpfile_t *jobInfo) {
     char *key;
 
     if (device_in_error(self)) return FALSE;
+
+    /* Set the blocksize to zero, since there's no header to skip (it's stored
+     * in a distinct file, rather than block zero) */
+    jobInfo->blocksize = 0;
 
     /* Build the amanda header. */
     amanda_header = device_build_amanda_header(pself, jobInfo,

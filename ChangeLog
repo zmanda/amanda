@@ -1,5 +1,26 @@
+2008-09-25  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/fileheader.c: fix headers_are_equal
+
+2008-09-25  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/fileheader.c common-src/fileheader.h: allow blocksize=0
+	* device-src/device.c device-src/device.h: set blocksize in tape
+	  header
+	* device-src/null-device.c device-src/s3-device.c
+	  device-src/tape-device.c device-src/vfs-device.c: set blocksize
+	  in headers when starting files
+	* device-src/rait-device.c: duplicate headers for child devices, since
+	  they are no longer const
+	* server-src/dumper.c: set blocksize on holding-disk files to
+	  DISK_BLOCK_BYTES
+
+2008-09-25  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/tape-device.c: mark device as non-appendable temporarily,
+	  since file numbers are incorrect when appending
+	* installcheck/Amanda_Device.pl: handle non-appendable devices
+
 2008-09-24  Jean-Louis Martineau <martineau@zmanda.com>
-	* server-src/driverio.c (dumper_cmd, chunker_cmd): Take new mesg								   argument.
+	* server-src/driverio.c (dumper_cmd, chunker_cmd): Take new mesg
+	  argument.
 	* server-src/server_util.h (dumper_cmd, chunker_cmd): New prototype.
 	* server-src/chunker.c: Get mesg from ABORT cmd and log it.
 	* server-src/driver.c: Add the mesg argument to all dumper_cmd and

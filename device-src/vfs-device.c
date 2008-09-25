@@ -106,7 +106,7 @@ static gboolean vfs_device_start(Device * pself, DeviceAccessMode mode,
 static gboolean vfs_device_finish (Device * pself);
 static void vfs_device_open_device (Device * pself, char * device_name,
 				char * device_type, char * device_node);
-static gboolean vfs_device_start_file (Device * pself, const dumpfile_t * ji);
+static gboolean vfs_device_start_file (Device * pself, dumpfile_t * ji);
 static gboolean vfs_device_finish_file (Device * pself);
 static dumpfile_t * vfs_device_seek_file (Device * self, guint file);
 static gboolean vfs_device_seek_block (Device * self, guint64 block);
@@ -978,11 +978,15 @@ char * make_new_file_name(VfsDevice * self, const dumpfile_t * ji) {
 }
 
 static gboolean 
-vfs_device_start_file (Device * pself, const dumpfile_t * ji) {
+vfs_device_start_file (Device * pself, dumpfile_t * ji) {
     VfsDevice * self;
     self = VFS_DEVICE(pself);
 
     if (device_in_error(self)) return FALSE;
+
+    /* set the blocksize in the header to 32k, since the VFS header is always
+     * 32k regardless of the block_size setting */
+    ji->blocksize = 32768;
 
     if (self->volume_limit > 0 &&
         self->volume_bytes + VFS_DEVICE_LABEL_SIZE > self->volume_limit) {

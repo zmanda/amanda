@@ -980,6 +980,7 @@ finish_tapeheader(
     strncpy(file->name, hostname, SIZEOF(file->name) - 1);
     strncpy(file->disk, diskname, SIZEOF(file->disk) - 1);
     file->dumplevel = level;
+    file->blocksize = DISK_BLOCK_BYTES;
 
     /*
      * If we're doing the compression here, we need to override what
