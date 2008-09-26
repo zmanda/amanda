@@ -1266,6 +1266,7 @@ handle_taper_result(
     int result_argc;
     char **result_argv;
     char *qname, *q;
+    char *s;
 
     assert(cookie == NULL);
     amfree(taper_input_error);
@@ -1325,11 +1326,17 @@ handle_taper_result(
 	    amfree(qname);
 	    fflush(stdout);
 
-	    if (strcmp(result_argv[3], "INPUT-ERROR") == 0) {
+	    if (strcmp(result_argv[2], "INPUT-ERROR") == 0) {
 		taper_input_error = newstralloc(taper_input_error, result_argv[5]);
 	    }
-	    if (strcmp(result_argv[4], "TAPE-ERROR") == 0) {
+	    if (strcmp(result_argv[3], "TAPE-ERROR") == 0) {
 		taper_tape_error = newstralloc(taper_tape_error, result_argv[6]);
+	    }
+
+	    s = strstr(result_argv[4], " kb ");
+	    if (s) {
+		s += 4;
+		sched(dp)->dumpsize = atol(s);
 	    }
 
 	    taper_result = cmd;
