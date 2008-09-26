@@ -1,4 +1,7 @@
 2008-09-26  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/driver.c: Parse dumpsize from taper result.
+
+2008-09-26  Jean-Louis Martineau <martineau@zmanda.com>
 	* client-src/selfcheck.c: Set qdevice on common_exit path.
 
 2008-09-16 Dan Locks <dwlocks@zmanda.com>

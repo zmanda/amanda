@@ -1245,6 +1245,7 @@ handle_taper_result(
     int result_argc;
     char *result_argv[MAX_ARGS+1];
     char *qname;
+    char *s;
 
     (void)cookie;	/* Quiet unused parameter warning */
 
@@ -1305,10 +1306,16 @@ handle_taper_result(
 	    fflush(stdout);
 
 	    if (strcmp(result_argv[3], "INPUT-ERROR") == 0) {
-		taper_input_error = stralloc(result_argv[5]);
+		taper_input_error = stralloc(result_argv[6]);
 	    }
 	    if (strcmp(result_argv[4], "TAPE-ERROR") == 0) {
-		taper_tape_error = stralloc(result_argv[6]);
+		taper_tape_error = stralloc(result_argv[7]);
+	    }
+
+	    s = strstr(result_argv[5], " kb ");
+	    if (s) {
+		s += 4;
+		sched(dp)->dumpsize = atol(s);
 	    }
 
 	    taper_result = cmd;
