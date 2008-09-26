@@ -1,3 +1,6 @@
+2008-09-26  Jean-Louis Martineau <martineau@zmanda.com>
+	* client-src/selfcheck.c: Set qdevice on common_exit path.
+
 2008-09-16 Dan Locks <dwlocks@zmanda.com>
 	* packaging/rpm/amanda.spec:  Added detection of CentOS 4 and 5 as 
 	  suggested by dswartz.  added graceful failure when Distro/version is 

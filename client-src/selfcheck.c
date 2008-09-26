@@ -801,6 +801,9 @@ check_disk(
 
 common_exit:
 
+    if (!qdevice)
+	qdevice = quote_string(device);
+
     amfree(share);
     amfree(subdir);
     if(user_and_password) {
