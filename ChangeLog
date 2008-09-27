@@ -1,3 +1,6 @@
+2008-09-26  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/amglue/ghashtable.c: #include conffile.h, not conffile.c (!)
+
 2008-09-26  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/driver.c: Parse dumpsize from taper result.
 

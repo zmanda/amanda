@@ -19,7 +19,7 @@
  */
 
 #include "amglue.h"
-#include "conffile.c"
+#include "conffile.h"
 
 static void 
 foreach_fn(gpointer key_p, gpointer value_p, gpointer user_data_p)
