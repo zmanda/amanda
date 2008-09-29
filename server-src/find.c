@@ -873,7 +873,11 @@ search_logfile(
 			found_something = TRUE;
 		    }
 		}
-		else if(curlog == L_FAIL) {	/* print other failures too */
+		else if(curlog == L_FAIL) {
+		    /* print other failures too -- this is a hack to ensure that failures which
+		     * did not make it to tape are also listed in the output of 'amadmin x find';
+		     * users that do not want this information (e.g., Amanda::DB::Catalog) should
+		     * filter dumps with a NULL label. */
 		    find_result_t *new_output_find = g_new0(find_result_t, 1);
 		    new_output_find->next=*output_find;
 		    new_output_find->timestamp = stralloc(date);
@@ -973,7 +977,7 @@ dumps_match(
 	    curmatch->hostname = stralloc(cur_result->hostname);
 	    curmatch->diskname = stralloc(cur_result->diskname);
 	    curmatch->level = cur_result->level;
-	    curmatch->label = stralloc(cur_result->label);
+	    curmatch->label = cur_result->label? stralloc(cur_result->label) : NULL;
 	    curmatch->filenum = cur_result->filenum;
 	    curmatch->sec = cur_result->sec;
 	    curmatch->kb = cur_result->kb;
@@ -1026,7 +1030,7 @@ dumps_match_dumpspecs(
 		curmatch->hostname = stralloc(cur_result->hostname);
 		curmatch->diskname = stralloc(cur_result->diskname);
 		curmatch->level = cur_result->level;
-		curmatch->label = stralloc(cur_result->label);
+		curmatch->label = cur_result->label? stralloc(cur_result->label) : NULL;
 		curmatch->filenum = cur_result->filenum;
 		curmatch->status = stralloc(cur_result->status);
 		curmatch->partnum = stralloc(cur_result->partnum);

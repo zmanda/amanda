@@ -1,3 +1,7 @@
+2008-09-29  Dustin J. Mitchell <dustin@zmanda.com>
+	* server-src/find.c: handle find_result->label == NULL
+	* perl/Amanda/DB/Catalog.pm: filter out bogus results with NULL label
+
 2008-09-26  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/amglue/ghashtable.c: #include conffile.h, not conffile.c (!)
 

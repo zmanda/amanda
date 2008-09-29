@@ -388,6 +388,10 @@ sub get_dumps {
 
 	# loop over each entry in the logfile.
 	for my $find_result (@find_results) {
+
+	    # filter out the non-dump error messages that find.c produces
+	    next unless (defined $find_result->{'label'});
+
 	    # bail out on this result early, if possible
 	    next if (%dump_timestamps_hash 
 		and !exists($dump_timestamps_hash{zeropad($find_result->{'timestamp'})}));
