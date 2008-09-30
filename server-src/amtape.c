@@ -273,9 +273,8 @@ load_slot(
             g_fprintf(stderr,
                     _("%s: could not open device %s: %s"), get_pname(),
                     devicename, device_error(device));
-        } else {
-            g_object_unref(device);
         }
+	g_object_unref(device);
     }
 
     g_fprintf(stderr, _("%s: changed to slot %s"), get_pname(), slotstr);
@@ -346,7 +345,13 @@ loadlabel_slot(
                   get_pname(), slotstr, device_error(device));
         return 0;
     }
-    
+
+    if (!device_configure(device, TRUE)) {
+        g_fprintf(stderr, _("%s: slot %3s: Could not configure device: %s.\n"),
+                  get_pname(), slotstr, device_error(device));
+        return 0;
+    }
+
     device_status = device_read_label(device);
     if (device_status != DEVICE_STATUS_SUCCESS) {
         g_fprintf(stderr, _("%s: slot %3s: %s\n"),
@@ -429,7 +434,13 @@ show_slots_slot(G_GNUC_UNUSED void * data, int rc, char * slotstr,
                   get_pname(), slotstr, device_error(device));
     } else {
         DeviceStatusFlags device_status;
-        device_status = device_read_label(device);
+
+	if (!device_configure(device, TRUE)) {
+            g_fprintf(stderr, _("%s: slot %3s: %s\n"),
+                      get_pname(), slotstr, device_error_or_status(device));
+	}
+
+	device_status = device_read_label(device);
 
         if (device_status != DEVICE_STATUS_SUCCESS) {
             g_fprintf(stderr, _("%s: slot %3s: %s\n"),

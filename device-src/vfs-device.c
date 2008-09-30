@@ -99,6 +99,7 @@ void vfs_device_register(void);
 /* here are local prototypes */
 static void vfs_device_init (VfsDevice * o);
 static void vfs_device_class_init (VfsDeviceClass * c);
+static void vfs_device_base_init (VfsDeviceClass * c);
 static void vfs_device_finalize (GObject * o);
 
 static gboolean vfs_device_start(Device * pself, DeviceAccessMode mode,
@@ -110,10 +111,6 @@ static gboolean vfs_device_start_file (Device * pself, dumpfile_t * ji);
 static gboolean vfs_device_finish_file (Device * pself);
 static dumpfile_t * vfs_device_seek_file (Device * self, guint file);
 static gboolean vfs_device_seek_block (Device * self, guint64 block);
-static gboolean vfs_device_property_get (Device * pself, DevicePropertyId ID,
-                                         GValue * val);
-static gboolean vfs_device_property_set (Device * pself, DevicePropertyId ID,
-                                         GValue * val);
 static gboolean vfs_device_recycle_file (Device * pself, guint filenum);
 static Device * vfs_device_factory(char * device_name, char * device_type, char * device_node);
 static DeviceStatusFlags vfs_device_read_label(Device * dself);
@@ -130,6 +127,12 @@ static gboolean check_is_dir(Device * d_self, const char * name);
 static char* file_number_to_file_name(VfsDevice * self, guint file);
 static gboolean file_number_to_file_name_functor(const char * filename,
                                                  gpointer datap);
+static gboolean vfs_device_set_max_volume_usage_fn(Device *p_self,
+			    DevicePropertyBase *base, GValue *val,
+			    PropertySurety surety, PropertySource source);
+gboolean vfs_device_get_free_space_fn(struct Device *p_self,
+			    DevicePropertyBase *base, GValue *val,
+			    PropertySurety *surety, PropertySource *source);
 //static char* lockfile_name(VfsDevice * self, guint file);
 static gboolean open_lock(VfsDevice * self, int file, gboolean exclusive);
 static void promote_volume_lock(VfsDevice * self);
@@ -163,7 +166,7 @@ vfs_device_get_type (void)
     if G_UNLIKELY(type == 0) {
         static const GTypeInfo info = {
             sizeof (VfsDeviceClass),
-            (GBaseInitFunc) NULL,
+            (GBaseInitFunc) vfs_device_base_init,
             (GBaseFinalizeFunc) NULL,
             (GClassInitFunc) vfs_device_class_init,
             (GClassFinalizeFunc) NULL,
@@ -183,8 +186,7 @@ vfs_device_get_type (void)
 
 static void 
 vfs_device_init (VfsDevice * self) {
-    Device * o;
-    DeviceProperty prop;
+    Device * dself = DEVICE(self);
     GValue response;
 
     self->dir_handle = NULL;
@@ -195,49 +197,47 @@ vfs_device_init (VfsDevice * self) {
     self->volume_limit = 0;
 
     /* Register Properties */
-    o = DEVICE(self);
     bzero(&response, sizeof(response));
-    prop.base = &device_property_concurrency;
-    prop.access = PROPERTY_ACCESS_GET_MASK;
+
     g_value_init(&response, CONCURRENCY_PARADIGM_TYPE);
     g_value_set_enum(&response, CONCURRENCY_PARADIGM_RANDOM_ACCESS);
-    device_add_property(o, &prop, &response);
+    device_set_simple_property(dself, PROPERTY_CONCURRENCY,
+	    &response, PROPERTY_SURETY_GOOD, PROPERTY_SOURCE_DETECTED);
     g_value_unset(&response);
 
-    prop.base = &device_property_streaming;
     g_value_init(&response, STREAMING_REQUIREMENT_TYPE);
     g_value_set_enum(&response, STREAMING_REQUIREMENT_NONE);
-    device_add_property(o, &prop, &response);
+    device_set_simple_property(dself, PROPERTY_STREAMING,
+	    &response, PROPERTY_SURETY_GOOD, PROPERTY_SOURCE_DETECTED);
     g_value_unset(&response);
 
-    prop.base = &device_property_appendable;
     g_value_init(&response, G_TYPE_BOOLEAN);
     g_value_set_boolean(&response, TRUE);
-    device_add_property(o, &prop, &response);
-
-    prop.base = &device_property_partial_deletion;
-    device_add_property(o, &prop, &response);
-
-    prop.base = &device_property_compression;
-    g_value_set_boolean(&response, FALSE);
-    device_add_property(o, &prop, &response);
+    device_set_simple_property(dself, PROPERTY_APPENDABLE,
+	    &response, PROPERTY_SURETY_GOOD, PROPERTY_SOURCE_DETECTED);
     g_value_unset(&response);
 
-    prop.base = &device_property_medium_access_type;
+    g_value_init(&response, G_TYPE_BOOLEAN);
+    g_value_set_boolean(&response, TRUE);
+    device_set_simple_property(dself, PROPERTY_PARTIAL_DELETION,
+	    &response, PROPERTY_SURETY_GOOD, PROPERTY_SOURCE_DETECTED);
+    g_value_unset(&response);
+
+    g_value_init(&response, G_TYPE_BOOLEAN);
+    g_value_set_boolean(&response, FALSE);
+    device_set_simple_property(dself, PROPERTY_COMPRESSION,
+	    &response, PROPERTY_SURETY_GOOD, PROPERTY_SOURCE_DETECTED);
+    g_value_unset(&response);
+
     g_value_init(&response, MEDIA_ACCESS_MODE_TYPE);
     g_value_set_enum(&response, MEDIA_ACCESS_MODE_READ_WRITE);
-    device_add_property(o, &prop, &response);
+    device_set_simple_property(dself, PROPERTY_MEDIUM_ACCESS_TYPE,
+	    &response, PROPERTY_SURETY_GOOD, PROPERTY_SOURCE_DETECTED);
     g_value_unset(&response);
-
-    prop.base = &device_property_max_volume_usage;
-    prop.access =
-        (PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_MASK) &
-        (~ PROPERTY_ACCESS_SET_INSIDE_FILE_WRITE);
-    device_add_property(o, &prop, NULL);
 }
 
 static void 
-vfs_device_class_init (VfsDeviceClass * c G_GNUC_UNUSED)
+vfs_device_class_init (VfsDeviceClass * c)
 {
     GObjectClass *g_object_class = (GObjectClass*) c;
     DeviceClass *device_class = (DeviceClass *)c;
@@ -253,11 +253,82 @@ vfs_device_class_init (VfsDeviceClass * c G_GNUC_UNUSED)
     device_class->finish_file = vfs_device_finish_file;
     device_class->seek_file = vfs_device_seek_file;
     device_class->seek_block = vfs_device_seek_block;
-    device_class->property_get = vfs_device_property_get;
-    device_class->property_set = vfs_device_property_set;
     device_class->recycle_file = vfs_device_recycle_file;
     device_class->finish = vfs_device_finish;
     g_object_class->finalize = vfs_device_finalize;
+}
+
+static void
+vfs_device_base_init (VfsDeviceClass * c)
+{
+    DeviceClass *device_class = (DeviceClass *)c;
+
+    device_class_register_property(device_class, PROPERTY_FREE_SPACE,
+	    PROPERTY_ACCESS_GET_MASK,
+	    vfs_device_get_free_space_fn,
+	    NULL);
+
+    device_class_register_property(device_class, PROPERTY_MAX_VOLUME_USAGE,
+	    (PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_MASK) &
+			(~ PROPERTY_ACCESS_SET_INSIDE_FILE_WRITE),
+	    device_simple_property_get_fn,
+	    vfs_device_set_max_volume_usage_fn);
+
+    device_class_register_property(device_class, PROPERTY_COMPRESSION,
+	    PROPERTY_ACCESS_GET_MASK,
+	    device_simple_property_get_fn,
+	    NULL);
+}
+
+gboolean
+vfs_device_set_max_volume_usage_fn(Device *p_self,
+    DevicePropertyBase *base, GValue *val,
+    PropertySurety surety, PropertySource source)
+{
+    VfsDevice *self = VFS_DEVICE(p_self);
+
+    self->volume_limit = g_value_get_uint64(val);
+
+    return device_simple_property_set_fn(p_self, base, val, surety, source);
+}
+
+gboolean
+vfs_device_get_free_space_fn(struct Device *p_self,
+    DevicePropertyBase *base G_GNUC_UNUSED, GValue *val,
+    PropertySurety *surety, PropertySource *source)
+{
+    VfsDevice *self = VFS_DEVICE(p_self);
+    QualifiedSize qsize;
+    struct fs_usage fsusage;
+    guint64 bytes_avail;
+
+    if (get_fs_usage(self->dir_name, NULL, &fsusage) == 0) {
+	if (fsusage.fsu_bavail_top_bit_set)
+	    bytes_avail = 0;
+	else
+	    bytes_avail = fsusage.fsu_bavail * fsusage.fsu_blocksize;
+	if (self->volume_limit && (guint64)self->volume_limit < bytes_avail / 1024)
+	    bytes_avail = (guint64)self->volume_limit * 1024;
+
+	qsize.accuracy = SIZE_ACCURACY_REAL;
+	qsize.bytes = bytes_avail;
+	if (surety)
+	    *surety = PROPERTY_SURETY_GOOD;
+    } else {
+	g_warning(_("get_fs_usage('%s') failed: %s"), self->dir_name, strerror(errno));
+	qsize.accuracy = SIZE_ACCURACY_UNKNOWN;
+	qsize.bytes = 0;
+	if (surety)
+	    *surety = PROPERTY_SURETY_BAD;
+    }
+
+    g_value_unset_init(val, QUALIFIED_SIZE_TYPE);
+    g_value_set_boxed(val, &qsize);
+
+    if (source)
+	*source = PROPERTY_SOURCE_DETECTED;
+
+    return TRUE;
 }
 
 /* Drops everything associated with the volume file: Its name and fd,
@@ -1189,72 +1260,6 @@ vfs_device_seek_block (Device * pself, guint64 block) {
     }
 
     return TRUE;
-}
-
-static gboolean
-vfs_device_property_get (Device * pself, DevicePropertyId ID, GValue * val) {
-    VfsDevice * self;
-    self = VFS_DEVICE(pself);
-
-    if (device_in_error(pself)) return FALSE;
-
-    /* clear error status in case we return FALSE */
-    device_set_error(pself, NULL, DEVICE_STATUS_SUCCESS);
-
-    if (ID == PROPERTY_MAX_VOLUME_USAGE) {
-        g_value_unset_init(val, G_TYPE_UINT64);
-        g_value_set_uint64(val, self->volume_limit);
-        return TRUE;
-    } else if (ID == PROPERTY_FREE_SPACE) {
-	QualifiedSize qsize;
-	struct fs_usage fsusage;
-	guint64 bytes_avail;
-
-	if (get_fs_usage(self->dir_name, NULL, &fsusage) == 0) {
-	    if (fsusage.fsu_bavail_top_bit_set)
-		bytes_avail = 0;
-	    else
-		bytes_avail = fsusage.fsu_bavail * fsusage.fsu_blocksize;
-	    if (self->volume_limit && (guint64)self->volume_limit < bytes_avail / 1024)
-		bytes_avail = (guint64)self->volume_limit * 1024;
-
-	    qsize.accuracy = SIZE_ACCURACY_REAL;
-	    qsize.bytes = bytes_avail;
-	} else {
-	    g_warning(_("get_fs_usage('%s') failed: %s"), self->dir_name, strerror(errno));
-	    qsize.accuracy = SIZE_ACCURACY_UNKNOWN;
-	    qsize.bytes = 0;
-	}
-	g_value_unset_init(val, QUALIFIED_SIZE_TYPE);
-	g_value_set_boxed(val, &qsize);
-	return TRUE;
-    } else {
-        if (parent_class->property_get) {
-            return parent_class->property_get(pself, ID, val);
-        } else {
-            return FALSE;
-        }
-    }
-    g_assert_not_reached();
-}
-
-static gboolean 
-vfs_device_property_set (Device * pself, DevicePropertyId ID, GValue * val) {
-    VfsDevice * self;
-    self = VFS_DEVICE(pself);
-    if (device_in_error(self)) return FALSE;
-
-    if (ID == PROPERTY_MAX_VOLUME_USAGE) {
-        self->volume_limit = g_value_get_uint64(val);
-        return TRUE;
-    } else {
-        if (parent_class->property_set) {
-            return parent_class->property_set(pself, ID, val);
-        } else {
-            return FALSE;
-        }
-    }
-    g_assert_not_reached();
 }
 
 static gboolean try_unlink(const char * file) {

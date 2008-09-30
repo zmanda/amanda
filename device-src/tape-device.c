@@ -73,6 +73,15 @@ void tape_device_register(void);
 /* here are local prototypes */
 static void tape_device_init (TapeDevice * o);
 static void tape_device_class_init (TapeDeviceClass * c);
+static void tape_device_base_init (TapeDeviceClass * c);
+static gboolean tape_device_set_feature_property_fn(Device *p_self, DevicePropertyBase *base,
+				    GValue *val, PropertySurety surety, PropertySource source);
+static gboolean tape_device_set_final_filemarks_fn(Device *p_self, DevicePropertyBase *base,
+				    GValue *val, PropertySurety surety, PropertySource source);
+static gboolean tape_device_set_compression_fn(Device *p_self, DevicePropertyBase *base,
+				    GValue *val, PropertySurety surety, PropertySource source);
+static gboolean tape_device_set_read_buffer_size_fn(Device *p_self, DevicePropertyBase *base,
+				    GValue *val, PropertySurety surety, PropertySource source);
 static void tape_device_open_device (Device * self, char * device_name, char * device_type, char * device_node);
 static Device * tape_device_factory (char * device_name, char * device_type, char * device_node);
 static DeviceStatusFlags tape_device_read_label(Device * self);
@@ -85,10 +94,6 @@ static gboolean tape_device_start_file (Device * self, dumpfile_t * ji);
 static gboolean tape_device_finish_file (Device * self);
 static dumpfile_t * tape_device_seek_file (Device * self, guint file);
 static gboolean tape_device_seek_block (Device * self, guint64 block);
-static gboolean tape_device_property_get (Device * self, DevicePropertyId id,
-                                          GValue * val);
-static gboolean tape_device_property_set (Device * self, DevicePropertyId id,
-                                          GValue * val);
 static gboolean tape_device_finish (Device * self);
 static IoResult tape_device_robust_read (TapeDevice * self, void * buf,
                                                int * count);
@@ -109,7 +114,7 @@ GType tape_device_get_type (void)
     if G_UNLIKELY(type == 0) {
         static const GTypeInfo info = {
             sizeof (TapeDeviceClass),
-            (GBaseInitFunc) NULL,
+            (GBaseInitFunc) tape_device_base_init,
             (GBaseFinalizeFunc) NULL,
             (GClassInitFunc) tape_device_class_init,
             (GClassFinalizeFunc) NULL,
@@ -130,7 +135,6 @@ GType tape_device_get_type (void)
 static void 
 tape_device_init (TapeDevice * self) {
     Device * d_self;
-    DeviceProperty prop;
     GValue response;
 
     d_self = DEVICE(self);
@@ -145,75 +149,82 @@ tape_device_init (TapeDevice * self) {
     self->broken_gmt_online = FALSE;
 
     self->fd = -1;
-    
-    self->fsf = self->bsf = self->fsr = self->bsr = self->eom =
-        self->bsf_after_eom = self->compression = self->first_file = 0;
+    self->first_file = 0;
+
+    /* set all of the feature properties to an unsure default of FALSE */
+    self->broken_gmt_online = FALSE;
+    self->fsf = FALSE;
+    self->bsf = FALSE;
+    self->fsr = FALSE;
+    self->bsr = FALSE;
+    self->eom = FALSE;
+    self->bsf_after_eom = FALSE;
+
+    g_value_init(&response, G_TYPE_BOOLEAN);
+    g_value_set_boolean(&response, FALSE);
+    device_set_simple_property(d_self, PROPERTY_BROKEN_GMT_ONLINE,
+	    &response, PROPERTY_SURETY_BAD, PROPERTY_SOURCE_DEFAULT);
+    device_set_simple_property(d_self, PROPERTY_FSF,
+	    &response, PROPERTY_SURETY_BAD, PROPERTY_SOURCE_DEFAULT);
+    device_set_simple_property(d_self, PROPERTY_BSF,
+	    &response, PROPERTY_SURETY_BAD, PROPERTY_SOURCE_DEFAULT);
+    device_set_simple_property(d_self, PROPERTY_FSR,
+	    &response, PROPERTY_SURETY_BAD, PROPERTY_SOURCE_DEFAULT);
+    device_set_simple_property(d_self, PROPERTY_BSR,
+	    &response, PROPERTY_SURETY_BAD, PROPERTY_SOURCE_DEFAULT);
+    device_set_simple_property(d_self, PROPERTY_EOM,
+	    &response, PROPERTY_SURETY_BAD, PROPERTY_SOURCE_DEFAULT);
+    device_set_simple_property(d_self, PROPERTY_BSF_AFTER_EOM,
+	    &response, PROPERTY_SURETY_BAD, PROPERTY_SOURCE_DEFAULT);
+    g_value_unset(&response);
+
     self->final_filemarks = 2;
+    g_value_init(&response, G_TYPE_UINT);
+    g_value_set_uint(&response, self->final_filemarks);
+    device_set_simple_property(d_self, PROPERTY_FINAL_FILEMARKS,
+	    &response, PROPERTY_SURETY_BAD, PROPERTY_SOURCE_DEFAULT);
+    g_value_unset(&response);
+
+    self->private->read_buffer_size = 0;
+    g_value_init(&response, G_TYPE_UINT);
+    g_value_set_uint(&response, self->private->read_buffer_size);
+    device_set_simple_property(d_self, PROPERTY_READ_BUFFER_SIZE,
+	    &response, PROPERTY_SURETY_GOOD, PROPERTY_SOURCE_DEFAULT);
+    g_value_unset(&response);
 
     self->private->write_count = 0;
     self->private->device_filename = NULL;
-    self->private->read_buffer_size = 0;
 
-    /* Register properites */
-    prop.base = &device_property_concurrency;
-    prop.access = PROPERTY_ACCESS_GET_MASK;
+    /* Static properites */
     g_value_init(&response, CONCURRENCY_PARADIGM_TYPE);
     g_value_set_enum(&response, CONCURRENCY_PARADIGM_EXCLUSIVE);
-    device_add_property(d_self, &prop, &response);
+    device_set_simple_property(d_self, PROPERTY_CONCURRENCY,
+	    &response, PROPERTY_SURETY_GOOD, PROPERTY_SOURCE_DETECTED);
     g_value_unset(&response);
 
-    prop.base = &device_property_streaming;
     g_value_init(&response, STREAMING_REQUIREMENT_TYPE);
     g_value_set_enum(&response, STREAMING_REQUIREMENT_DESIRED);
-    device_add_property(d_self, &prop, &response);
+    device_set_simple_property(d_self, PROPERTY_STREAMING,
+	    &response, PROPERTY_SURETY_GOOD, PROPERTY_SOURCE_DETECTED);
     g_value_unset(&response);
 
-    prop.base = &device_property_appendable;
     g_value_init(&response, G_TYPE_BOOLEAN);
-    /* Some tape devices cannot determine the file number after
-     * an EOM operation.  Until this is fixed, the device is not
-     * appendable. */
     g_value_set_boolean(&response, FALSE);
-    device_add_property(d_self, &prop, &response);
-
-    prop.base = &device_property_partial_deletion;
-    g_value_set_boolean(&response, FALSE);
-    device_add_property(d_self, &prop, &response);
+    device_set_simple_property(d_self, PROPERTY_APPENDABLE,
+	    &response, PROPERTY_SURETY_GOOD, PROPERTY_SOURCE_DETECTED);
     g_value_unset(&response);
 
-    prop.base = &device_property_medium_access_type;
+    g_value_init(&response, G_TYPE_BOOLEAN);
+    g_value_set_boolean(&response, FALSE);
+    device_set_simple_property(d_self, PROPERTY_PARTIAL_DELETION,
+	    &response, PROPERTY_SURETY_GOOD, PROPERTY_SOURCE_DETECTED);
+    g_value_unset(&response);
+
     g_value_init(&response, MEDIA_ACCESS_MODE_TYPE);
     g_value_set_enum(&response, MEDIA_ACCESS_MODE_READ_WRITE);
-    device_add_property(d_self, &prop, &response);
+    device_set_simple_property(d_self, PROPERTY_MEDIUM_ACCESS_TYPE,
+	    &response, PROPERTY_SURETY_GOOD, PROPERTY_SOURCE_DETECTED);
     g_value_unset(&response);
-
-    /* We don't (yet?) support reading the device's compression state, so not
-     * gettable. */
-    prop.access = PROPERTY_ACCESS_SET_MASK;
-    prop.base = &device_property_compression;
-    device_add_property(d_self, &prop, NULL);
-
-    prop.access = PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START;
-    prop.base = &device_property_broken_gmt_online;
-    device_add_property(d_self, &prop, NULL);
-    prop.base = &device_property_fsf;
-    device_add_property(d_self, &prop, NULL);
-    prop.base = &device_property_bsf;
-    device_add_property(d_self, &prop, NULL);
-    prop.base = &device_property_fsr;
-    device_add_property(d_self, &prop, NULL);
-    prop.base = &device_property_bsr;
-    device_add_property(d_self, &prop, NULL);
-    prop.base = &device_property_eom;
-    device_add_property(d_self, &prop, NULL);
-    prop.base = &device_property_bsf_after_eom;
-    device_add_property(d_self, &prop, NULL);
-    prop.base = &device_property_final_filemarks;
-    device_add_property(d_self, &prop, NULL);
-
-    prop.access = PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START;
-    prop.base = &device_property_read_buffer_size;
-    device_add_property(d_self, &prop, NULL);
 }
 
 static void tape_device_finalize(GObject * obj_self) {
@@ -245,11 +256,196 @@ tape_device_class_init (TapeDeviceClass * c)
     device_class->finish_file = tape_device_finish_file;
     device_class->seek_file = tape_device_seek_file;
     device_class->seek_block = tape_device_seek_block;
-    device_class->property_get = tape_device_property_get;
-    device_class->property_set = tape_device_property_set;
     device_class->finish = tape_device_finish;
     
     g_object_class->finalize = tape_device_finalize;
+}
+
+static void
+tape_device_base_init (TapeDeviceClass * c)
+{
+    DeviceClass *device_class = (DeviceClass *)c;
+
+    device_class_register_property(device_class, PROPERTY_BROKEN_GMT_ONLINE,
+	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
+	    device_simple_property_get_fn,
+	    tape_device_set_feature_property_fn);
+
+    device_class_register_property(device_class, PROPERTY_FSF,
+	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
+	    device_simple_property_get_fn,
+	    tape_device_set_feature_property_fn);
+
+    device_class_register_property(device_class, PROPERTY_BSF,
+	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
+	    device_simple_property_get_fn,
+	    tape_device_set_feature_property_fn);
+
+    device_class_register_property(device_class, PROPERTY_FSR,
+	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
+	    device_simple_property_get_fn,
+	    tape_device_set_feature_property_fn);
+
+    device_class_register_property(device_class, PROPERTY_BSR,
+	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
+	    device_simple_property_get_fn,
+	    tape_device_set_feature_property_fn);
+
+    device_class_register_property(device_class, PROPERTY_EOM,
+	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
+	    device_simple_property_get_fn,
+	    tape_device_set_feature_property_fn);
+
+    device_class_register_property(device_class, PROPERTY_BSF_AFTER_EOM,
+	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
+	    device_simple_property_get_fn,
+	    tape_device_set_feature_property_fn);
+
+    device_class_register_property(device_class, PROPERTY_FINAL_FILEMARKS,
+	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
+	    device_simple_property_get_fn,
+	    tape_device_set_final_filemarks_fn);
+
+    /* We don't (yet?) support reading the device's compression state, so not
+     * gettable. */
+    device_class_register_property(device_class, PROPERTY_COMPRESSION,
+	    PROPERTY_ACCESS_SET_MASK,
+	    NULL,
+	    tape_device_set_compression_fn);
+
+    device_class_register_property(device_class, PROPERTY_READ_BUFFER_SIZE,
+	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
+	    device_simple_property_get_fn,
+	    tape_device_set_read_buffer_size_fn);
+}
+
+static gboolean
+tape_device_set_feature_property_fn(Device *p_self, DevicePropertyBase *base,
+    GValue *val, PropertySurety surety, PropertySource source)
+{
+    TapeDevice *self = TAPE_DEVICE(p_self);
+    GValue old_val;
+    gboolean old_bool, new_bool;
+    PropertySurety old_surety;
+    PropertySource old_source;
+
+    new_bool = g_value_get_boolean(val);
+
+    /* get the old source and surety and see if we're willing to make this change */
+    bzero(&old_val, sizeof(old_val));
+    if (device_get_simple_property(p_self, base->ID, &old_val, &old_surety, &old_source)) {
+	old_bool = g_value_get_boolean(&old_val);
+
+	if (old_surety == PROPERTY_SURETY_GOOD && old_source == PROPERTY_SOURCE_DETECTED) {
+	    if (new_bool != old_bool) {
+		device_set_error(p_self, vstrallocf(_(
+			   "Value for property '%s' was autodetected and cannot be changed"),
+			   base->name),
+		    DEVICE_STATUS_DEVICE_ERROR);
+		return FALSE;
+	    } else {
+		/* pretend we set it, but don't change surety/source */
+		return TRUE;
+	    }
+	}
+    }
+
+    /* (note: PROPERTY_* are not constants, so we can't use switch) */
+    if (base->ID == PROPERTY_BROKEN_GMT_ONLINE)
+	self->broken_gmt_online = new_bool;
+    else if (base->ID == PROPERTY_FSF)
+	self->fsf = new_bool;
+    else if (base->ID == PROPERTY_BSF)
+	self->bsf = new_bool;
+    else if (base->ID == PROPERTY_FSR)
+	self->fsr = new_bool;
+    else if (base->ID == PROPERTY_BSR)
+	self->bsr = new_bool;
+    else if (base->ID == PROPERTY_EOM)
+	self->eom = new_bool;
+    else if (base->ID == PROPERTY_BSF_AFTER_EOM)
+	self->bsf_after_eom = new_bool;
+    else
+	return FALSE; /* shouldn't happen */
+
+    return device_simple_property_set_fn(p_self, base, val, surety, source);
+}
+
+static gboolean
+tape_device_set_final_filemarks_fn(Device *p_self, DevicePropertyBase *base,
+    GValue *val, PropertySurety surety, PropertySource source)
+{
+    TapeDevice *self = TAPE_DEVICE(p_self);
+    GValue old_val;
+    gboolean old_int, new_int;
+    PropertySurety old_surety;
+    PropertySource old_source;
+
+    new_int = g_value_get_uint(val);
+
+    /* get the old source and surety and see if we're willing to make this change */
+    bzero(&old_val, sizeof(old_val));
+    if (device_get_simple_property(p_self, base->ID, &old_val, &old_surety, &old_source)) {
+	old_int = g_value_get_uint(&old_val);
+
+	if (old_surety == PROPERTY_SURETY_GOOD && old_source == PROPERTY_SOURCE_DETECTED) {
+	    if (new_int != old_int) {
+		device_set_error(p_self, vstrallocf(_(
+			   "Value for property '%s' was autodetected and cannot be changed"),
+			   base->name),
+		    DEVICE_STATUS_DEVICE_ERROR);
+		return FALSE;
+	    } else {
+		/* pretend we set it, but don't change surety/source */
+		return TRUE;
+	    }
+	}
+    }
+
+    self->final_filemarks = new_int;
+
+    return device_simple_property_set_fn(p_self, base, val, surety, source);
+}
+
+static gboolean
+tape_device_set_compression_fn(Device *p_self, DevicePropertyBase *base,
+    GValue *val, PropertySurety surety, PropertySource source)
+{
+    TapeDevice *self = TAPE_DEVICE(p_self);
+    gboolean request = g_value_get_boolean(val);
+
+    /* We allow this property to be set at any time. This is mostly
+     * because setting compression is a hit-and-miss proposition
+     * at any time; some drives accept the mode setting but don't
+     * actually support compression, while others do support
+     * compression but do it via density settings or some other
+     * way. Set this property whenever you want, but all we'll do
+     * is report whether or not the ioctl succeeded. */
+    if (tape_setcompression(self->fd, request)) {
+	/* looks good .. let's start the device over, though */
+	device_clear_volume_details(p_self);
+    } else {
+	return FALSE;
+    }
+
+    return device_simple_property_set_fn(p_self, base, val, surety, source);
+}
+
+static gboolean
+tape_device_set_read_buffer_size_fn(Device *p_self, DevicePropertyBase *base,
+    GValue *val, PropertySurety surety, PropertySource source)
+{
+    TapeDevice *self = TAPE_DEVICE(p_self);
+    guint buffer_size = g_value_get_uint(val);
+
+    if (buffer_size != 0 &&
+	    ((gsize)buffer_size < p_self->block_size ||
+	     (gsize)buffer_size > p_self->max_block_size))
+	return FALSE;
+
+    self->private->read_buffer_size = buffer_size;
+
+    return device_simple_property_set_fn(p_self, base, val, surety, source);
 }
 
 void tape_device_register(void) {
@@ -261,28 +457,28 @@ void tape_device_register(void) {
       "Does this drive support the GMT_ONLINE macro?");
 
     device_property_fill_and_register(&device_property_fsf,
-                                      FEATURE_SUPPORT_FLAGS_TYPE, "fsf",
+                                      G_TYPE_BOOLEAN, "fsf",
       "Does this drive support the MTFSF command?");
 
     device_property_fill_and_register(&device_property_bsf,
-                                      FEATURE_SUPPORT_FLAGS_TYPE, "bsf",
+                                      G_TYPE_BOOLEAN, "bsf",
       "Does this drive support the MTBSF command?" );
 
     device_property_fill_and_register(&device_property_fsr,
-                                      FEATURE_SUPPORT_FLAGS_TYPE, "fsr",
+                                      G_TYPE_BOOLEAN, "fsr",
       "Does this drive support the MTFSR command?");
 
     device_property_fill_and_register(&device_property_bsr,
-                                      FEATURE_SUPPORT_FLAGS_TYPE, "bsr",
+                                      G_TYPE_BOOLEAN, "bsr",
       "Does this drive support the MTBSR command?");
 
     /* FIXME: Is this feature even useful? */
     device_property_fill_and_register(&device_property_eom,
-                                      FEATURE_SUPPORT_FLAGS_TYPE, "eom",
+                                      G_TYPE_BOOLEAN, "eom",
       "Does this drive support the MTEOM command?");
 
     device_property_fill_and_register(&device_property_bsf_after_eom,
-                                      FEATURE_SUPPORT_FLAGS_TYPE,
+                                      G_TYPE_BOOLEAN,
                                       "bsf_after_eom",
       "Does this drive require an MTBSF after MTEOM in order to append?" );
 
@@ -400,22 +596,67 @@ tape_device_open_device (Device * d_self, char * device_name G_GNUC_UNUSED,
     self->private->device_filename = stralloc(device_node);
 
     /* Get tape drive/OS info */
-    tape_device_set_capabilities(self);
-
-    /* And verify the above. */
-    g_assert(feature_support_flags_is_valid(self->fsf));
-    g_assert(feature_support_flags_is_valid(self->bsf));
-    g_assert(feature_support_flags_is_valid(self->fsr));
-    g_assert(feature_support_flags_is_valid(self->bsr));
-    g_assert(feature_support_flags_is_valid(self->eom));
-    g_assert(feature_support_flags_is_valid(self->bsf_after_eom));
-    g_assert(self->final_filemarks == 1 ||
-             self->final_filemarks == 2);
+    tape_device_detect_capabilities(self);
 
     /* Chain up */
     if (parent_class->open_device) {
         parent_class->open_device(d_self, device_node, device_type, device_node);
     }
+}
+
+void
+tape_device_set_capabilities(TapeDevice *self,
+	gboolean fsf, PropertySurety fsf_surety, PropertySource fsf_source,
+	gboolean bsf, PropertySurety bsf_surety, PropertySource bsf_source,
+	gboolean fsr, PropertySurety fsr_surety, PropertySource fsr_source,
+	gboolean bsr, PropertySurety bsr_surety, PropertySource bsr_source,
+	gboolean eom, PropertySurety eom_surety, PropertySource eom_source,
+	gboolean bsf_after_eom, PropertySurety bae_surety, PropertySource bae_source,
+	guint final_filemarks, PropertySurety ff_surety, PropertySource ff_source)
+{
+    Device *dself = DEVICE(self);
+    GValue val;
+
+    /* this function is called by tape_device_detect_capabilities, and basically
+     * exists to take care of the GValue mechanics in one place */
+
+    g_assert(final_filemarks == 1 || final_filemarks == 2);
+
+    bzero(&val, sizeof(val));
+    g_value_init(&val, G_TYPE_BOOLEAN);
+
+    self->fsf = fsf;
+    g_value_set_boolean(&val, fsf);
+    device_set_simple_property(dself, PROPERTY_FSF, &val, fsf_surety, fsf_source);
+
+    self->bsf = bsf;
+    g_value_set_boolean(&val, bsf);
+    device_set_simple_property(dself, PROPERTY_BSF, &val, bsf_surety, bsf_source);
+
+    self->fsr = fsr;
+    g_value_set_boolean(&val, fsr);
+    device_set_simple_property(dself, PROPERTY_FSR, &val, fsr_surety, fsr_source);
+
+    self->bsr = bsr;
+    g_value_set_boolean(&val, bsr);
+    device_set_simple_property(dself, PROPERTY_BSR, &val, bsr_surety, bsr_source);
+
+    self->eom = eom;
+    g_value_set_boolean(&val, eom);
+    device_set_simple_property(dself, PROPERTY_EOM, &val, eom_surety, eom_source);
+
+    self->bsf_after_eom = bsf_after_eom;
+    g_value_set_boolean(&val, bsf_after_eom);
+    device_set_simple_property(dself, PROPERTY_BSF_AFTER_EOM, &val, bae_surety, bae_source);
+
+    g_value_unset(&val);
+    g_value_init(&val, G_TYPE_UINT);
+
+    self->final_filemarks = final_filemarks;
+    g_value_set_uint(&val, final_filemarks);
+    device_set_simple_property(dself, PROPERTY_FINAL_FILEMARKS, &val, ff_surety, ff_source);
+
+    g_value_unset(&val);
 }
 
 static DeviceStatusFlags tape_device_read_label(Device * dself) {
@@ -570,6 +811,8 @@ static int tape_device_read_block (Device * pself, gpointer buf,
         return size;
     case RESULT_SMALL_BUFFER: {
         gsize new_size;
+	GValue newval;
+
         /* If this happens, it means that we have:
          *     (next block size) > (buffer size) >= (read_block_size)
          * The solution is to ask for an even bigger buffer. We also play
@@ -587,6 +830,13 @@ static int tape_device_read_block (Device * pself, gpointer buf,
 	    pself->device_name, (gsize)*size_req, new_size);
 	*size_req = (int)new_size;
 	self->private->read_buffer_size = new_size;
+
+	bzero(&newval, sizeof(newval));
+	g_value_init(&newval, G_TYPE_UINT);
+	g_value_set_uint(&newval, self->private->read_buffer_size);
+	device_set_simple_property(pself, PROPERTY_READ_BUFFER_SIZE,
+		&newval, PROPERTY_SURETY_GOOD, PROPERTY_SOURCE_DETECTED);
+	g_value_unset(&newval);
 
 	return 0;
     }
@@ -929,221 +1179,6 @@ tape_device_seek_block (Device * d_self, guint64 block) {
     return TRUE;
 }
 
-/* Just checks that the flag is valid before setting it. */
-static gboolean get_feature_flag(GValue * val, FeatureSupportFlags f) {
-    if (feature_support_flags_is_valid(f)) {
-        g_value_set_flags(val, f);
-        return TRUE;
-    } else {
-        return FALSE;
-    }
-}
-
-static gboolean 
-tape_device_property_get (Device * d_self, DevicePropertyId id, GValue * val) {
-    TapeDevice * self;
-    const DevicePropertyBase * base;
-
-    self = TAPE_DEVICE(d_self);
-
-    if (device_in_error(d_self)) return FALSE;
-
-    /* clear error status in case we return FALSE */
-    device_set_error(d_self, NULL, DEVICE_STATUS_SUCCESS);
-
-    base = device_property_get_by_id(id);
-
-    g_value_unset_init(val, base->type);
-
-    if (id == PROPERTY_COMPRESSION) {
-        g_value_set_boolean(val, self->compression);
-        return TRUE;
-    } else if (id == PROPERTY_BROKEN_GMT_ONLINE) {
-        g_value_set_boolean(val, self->broken_gmt_online);
-	return TRUE;
-    } else if (id == PROPERTY_FSF) {
-        return get_feature_flag(val, self->fsf);
-    } else if (id == PROPERTY_BSF) {
-        return get_feature_flag(val, self->bsf);
-    } else if (id == PROPERTY_FSR) {
-        return get_feature_flag(val, self->fsr);
-    } else if (id == PROPERTY_BSR) {
-        return get_feature_flag(val, self->bsr);
-    } else if (id == PROPERTY_EOM) {
-        return get_feature_flag(val, self->eom);
-    } else if (id == PROPERTY_BSF_AFTER_EOM) {
-        return get_feature_flag(val, self->bsf_after_eom);
-    } else if (id == PROPERTY_FINAL_FILEMARKS) {
-        g_value_set_uint(val, self->final_filemarks);
-        return TRUE;
-    } else if (id == PROPERTY_READ_BUFFER_SIZE) {
-	gsize bs = self->private->read_buffer_size;
-	g_value_unset_init(val, G_TYPE_UINT);
-	g_assert(bs < G_MAXUINT); /* gsize -> guint */
-	g_value_set_uint(val, (guint)bs);
-	return TRUE;
-    } else {
-        /* Chain up */
-        if (parent_class->property_get) {
-            return (parent_class->property_get)(d_self, id, val);
-        } else {
-            return FALSE;
-        }
-    }
-
-    g_assert_not_reached();
-}
-
-/* We don't allow overriding of flags with _GOOD surety. That way, if
-   e.g., a feature has no matching IOCTL on a given platform, we don't
-   ever try to set it. */
-static gboolean flags_settable(FeatureSupportFlags request,
-                               FeatureSupportFlags existing) {
-    if (!feature_support_flags_is_valid(request))
-        return FALSE;
-    else if (!feature_support_flags_is_valid(existing))
-        return TRUE;
-    else if (request == existing)
-        return TRUE;
-    else if (existing & FEATURE_SURETY_GOOD)
-        return FALSE;
-    else
-        return TRUE;
-}
-
-/* If the access listed is NULL, and the provided flags can override the
-   existing ones, then do it and return TRUE. */
-static gboolean try_set_feature(DeviceAccessMode mode,
-                                FeatureSupportFlags request,
-                                FeatureSupportFlags * existing) {
-    if (mode != ACCESS_NULL) {
-        return FALSE;
-    } else if (flags_settable(request, *existing)) {
-        *existing = request;
-        return TRUE;
-    } else {
-        return FALSE;
-    }
-}
- 
-static gboolean 
-tape_device_property_set (Device * d_self, DevicePropertyId id, GValue * val) {
-    TapeDevice * self;
-    FeatureSupportFlags feature_request_flags = 0;
-    const DevicePropertyBase * base;
-
-    self = TAPE_DEVICE(d_self);
-
-    if (device_in_error(self)) return FALSE;
-
-    base = device_property_get_by_id(id);
-
-    g_assert(G_VALUE_HOLDS(val, base->type));
-
-    if (base->type == FEATURE_SUPPORT_FLAGS_TYPE) {
-        feature_request_flags = g_value_get_flags(val);
-
-	/* assume the user is sure if not specified */
-	if ((feature_request_flags & FEATURE_SUPPORT_FLAGS_SURETY_MASK) == 0)
-	    feature_request_flags |= FEATURE_SURETY_GOOD;
-
-	/* assume the user is the source if not specified */
-	if ((feature_request_flags & FEATURE_SUPPORT_FLAGS_SOURCE_MASK) == 0)
-	    feature_request_flags |= FEATURE_SOURCE_USER;
-
-        if (!feature_support_flags_is_valid(feature_request_flags)) {
-	    device_set_error(d_self,
-		stralloc(_("Invalid feature support flags")),
-		DEVICE_STATUS_DEVICE_ERROR);
-	    return FALSE;
-	}
-    }
-
-    if (id == PROPERTY_COMPRESSION) {
-        /* We allow this property to be set at any time. This is mostly
-         * because setting compression is a hit-and-miss proposition
-         * at any time; some drives accept the mode setting but don't
-         * actually support compression, while others do support
-         * compression but do it via density settings or some other
-         * way. Set this property whenever you want, but all we'll do
-         * is report whether or not the ioctl succeeded. */
-        gboolean request = g_value_get_boolean(val);
-        if (tape_setcompression(self->fd, request)) {
-            self->compression = request;
-            device_clear_volume_details(d_self);
-            return TRUE;
-        } else {
-            return FALSE;
-        }
-    } else if (id == PROPERTY_BROKEN_GMT_ONLINE) {
-	self->broken_gmt_online = g_value_get_boolean(val);
-	return TRUE;
-    } else if (id == PROPERTY_FSF) {
-        return try_set_feature(d_self->access_mode,
-                               feature_request_flags,
-                               &(self->fsf));
-    } else if (id == PROPERTY_BSF) {
-        return try_set_feature(d_self->access_mode,
-                               feature_request_flags,
-                               &(self->bsf));
-    } else if (id == PROPERTY_FSR) {
-        return try_set_feature(d_self->access_mode,
-                               feature_request_flags,
-                               &(self->fsr));
-    } else if (id == PROPERTY_BSR) {
-        return try_set_feature(d_self->access_mode,
-                               feature_request_flags,
-                               &(self->bsr));
-    } else if (id == PROPERTY_EOM) {
-        /* Setting this to disabled also clears BSF after EOM. */
-        if (try_set_feature(d_self->access_mode,
-                            feature_request_flags,
-                            &(self->eom))) {
-            feature_request_flags &= ~FEATURE_SUPPORT_FLAGS_STATUS_MASK;
-            feature_request_flags |= FEATURE_STATUS_DISABLED;
-            self->bsf_after_eom = feature_request_flags;
-            return TRUE;
-        } else {
-            return FALSE;
-        }
-    } else if (id == PROPERTY_BSF_AFTER_EOM) {
-        /* You can only set this if EOM is enabled. */
-        if (self->bsf | FEATURE_STATUS_DISABLED)
-            return FALSE;
-        else
-            return try_set_feature(d_self->access_mode,
-                                   feature_request_flags,
-                                   &(self->bsf_after_eom));
-    } else if (id == PROPERTY_FINAL_FILEMARKS) {
-        guint request = g_value_get_uint(val);
-        if (request == 1 || request == 2) {
-            self->final_filemarks = request;
-            return TRUE;
-        } else {
-            return FALSE;
-        }
-    } else if (id == PROPERTY_READ_BUFFER_SIZE) {
-        guint buffer_size = g_value_get_uint(val);
-        if (d_self->access_mode != ACCESS_NULL)
-            return FALSE;
-	if (buffer_size != 0 &&
-		((gsize)buffer_size < d_self->block_size ||
-		 (gsize)buffer_size > d_self->max_block_size))
-	    return FALSE;
-	self->private->read_buffer_size = buffer_size;
-	return TRUE;
-    } else {
-        /* Chain up */
-        if (parent_class->property_set) {
-            return (parent_class->property_set)(d_self, id, val);
-        } else {
-            return FALSE;
-        }
-    }
-
-    g_assert_not_reached();
-}
-
 static gboolean 
 tape_device_finish (Device * d_self) {
     TapeDevice * self;
@@ -1414,7 +1449,7 @@ static int drain_tape_blocks(TapeDevice * self, int count) {
 
 static gboolean 
 tape_device_fsf (TapeDevice * self, guint count) {
-    if (self->fsf & FEATURE_STATUS_ENABLED) {
+    if (self->fsf) {
         return tape_fsf(self->fd, count);
     } else {
         guint i;
@@ -1429,7 +1464,7 @@ tape_device_fsf (TapeDevice * self, guint count) {
 /* Seek back over count + 1 filemarks to the start of the given file. */
 static gboolean 
 tape_device_bsf (TapeDevice * self, guint count, guint file) {
-    if (self->bsf & FEATURE_STATUS_ENABLED) {
+    if (self->bsf) {
         /* The BSF operation is not very smart; it includes the
            filemark of the present file as part of the count, and seeks
            to the wrong (BOT) side of the filemark. We compensate for
@@ -1454,7 +1489,7 @@ tape_device_bsf (TapeDevice * self, guint count, guint file) {
 
 static gboolean 
 tape_device_fsr (TapeDevice * self, guint count) {
-    if (self->fsr & FEATURE_STATUS_ENABLED) {
+    if (self->fsr) {
         return tape_fsr(self->fd, count);
     } else {
         int result = drain_tape_blocks(self, count);
@@ -1467,7 +1502,7 @@ tape_device_fsr (TapeDevice * self, guint count) {
 
 static gboolean 
 tape_device_bsr (TapeDevice * self, guint count, guint file, guint block) {
-    if (self->bsr & FEATURE_STATUS_ENABLED) {
+    if (self->bsr) {
         return tape_bsr(self->fd, count);
     } else {
         /* We BSF, then FSR. */
@@ -1486,7 +1521,7 @@ tape_device_eod (TapeDevice * self) {
     Device * d_self;
     d_self = (Device*)self;
 
-    if (self->eom & FEATURE_STATUS_ENABLED) {
+    if (self->eom) {
         int result;
         result = tape_eod(self->fd); 
         if (result == TAPE_OP_ERROR) {

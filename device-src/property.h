@@ -38,7 +38,7 @@ typedef enum {
 } PropertyPhaseFlags;
 
 #define PROPERTY_PHASE_MASK (PROPERTY_PHASE_MAX-1)
-#define PROPERTY_PHASE_SHIFT (PROPERTY_PHASE_MASK/2)
+#define PROPERTY_PHASE_SHIFT 8
 
 typedef enum {
     PROPERTY_ACCESS_GET_BEFORE_START = (PROPERTY_PHASE_BEFORE_START),
@@ -64,13 +64,37 @@ typedef enum {
 #define PROPERTY_ACCESS_GET_MASK (PROPERTY_PHASE_MASK)
 #define PROPERTY_ACCESS_SET_MASK (PROPERTY_PHASE_MASK << PROPERTY_PHASE_SHIFT)
 
+/* Some properties can only be occasionally (or unreliably) detected, so
+ * this enum allows the user to override the detected or default
+ * setting.  Surety indicates a level of confidence in the value, while
+ * source describes how we found out about it. */
+typedef enum {
+    /* Support is not based on conclusive evidence. */
+    PROPERTY_SURETY_BAD,
+    /* Support is based on conclusive evidence. */
+    PROPERTY_SURETY_GOOD,
+} PropertySurety;
 
-/* This structure is usually statically allocated.
- * It holds information about a property that is common to all devices of
- * a given type. */
+typedef enum {
+    /* property is from default setting. */
+    PROPERTY_SOURCE_DEFAULT,
+    /* property is from device query. */
+    PROPERTY_SOURCE_DETECTED,
+    /* property is from user override (configuration). */
+    PROPERTY_SOURCE_USER,
+} PropertySource;
 
-typedef int DevicePropertyId;
+/*****
+ * Initialization
+ */
 
+/* This should be called exactly once from device_api_init(). */
+extern void device_property_init(void);
+
+/* This structure is usually statically allocated.  It holds information about
+ * a property that is common across all devices.
+ */
+typedef guint DevicePropertyId;
 typedef struct {
     DevicePropertyId ID; /* Set by device_property_register() */
     GType type;
@@ -78,16 +102,9 @@ typedef struct {
     const char *description;
 } DevicePropertyBase;
 
-/* This structure is usually held inside a Device object. It holds
- * information about a property that is specific to the device/medium
- * in question. */
-typedef struct {
-    const DevicePropertyBase *base;
-    PropertyAccessFlags access;
-} DeviceProperty;
-
 /* Registers a new property and returns its ID. This function takes ownership
- * of its argument; it must not be freed later. */
+ * of its argument; it must not be freed later.  It should be called from a
+ * device driver's registration function. */
 extern DevicePropertyId device_property_register(DevicePropertyBase*);
 
 /* Does the same thing, but fills in a new DevicePropertyBase with the given
@@ -99,12 +116,41 @@ extern void device_property_fill_and_register(
     const char * name,
     const char * desc);
 
-/* This should be called exactly once from device_api_init(). */
-extern void device_property_init(void);
-
 /* Gets a DevicePropertyBase from its ID. */
-extern const DevicePropertyBase* device_property_get_by_id(DevicePropertyId);
-extern const DevicePropertyBase* device_property_get_by_name(const char*);
+DevicePropertyBase* device_property_get_by_id(DevicePropertyId);
+DevicePropertyBase* device_property_get_by_name(const char*);
+
+/*****
+ * Class-level Property Information
+ */
+
+/* This structure is held inside a Device object. It holds information about a
+ * property that is specific to the device driver, but not to a specific
+ * instance of the driver. */
+struct Device; /* forward declaration */
+typedef gboolean (*PropertySetFn)(
+    struct Device *self,
+    DevicePropertyBase *base,
+    GValue *val,
+    PropertySurety surety,
+    PropertySource source);
+typedef gboolean (*PropertyGetFn)(
+    struct Device *self,
+    DevicePropertyBase *base,
+    GValue *val,
+    PropertySurety *surety,
+    PropertySource *source);
+
+typedef struct {
+    DevicePropertyBase *base;
+    PropertyAccessFlags access;
+    PropertySetFn setter;
+    PropertyGetFn getter;
+} DeviceProperty;
+
+/*****
+ * Property-specific Types, etc.
+ */
 
 /* Standard property value types here.
  * Important: see property.c for the other half of type declarations.*/
@@ -142,46 +188,6 @@ typedef struct {
 } QualifiedSize;
 #define QUALIFIED_SIZE_TYPE qualified_size_get_type()
 GType qualified_size_get_type (void);
-
-/* Some features can only be occasionally (or unreliably) detected, so
-   this enum allows the user to override the detected or default
-   setting. */
-typedef enum {
-    /* Feature support status. (exactly one of these is set) */
-        /* Feature is supported & will be used */
-        FEATURE_STATUS_ENABLED   = (1 << 0),
-        /* Features will not be used. */
-        FEATURE_STATUS_DISABLED  = (1 << 1),
-
-    /* Feature support confidence. (exactly one of these is set). */
-        /* Support is not based on conclusive evidence. */
-        FEATURE_SURETY_BAD       = (1 << 2),
-        /* Support is based on conclusive evidence. */
-        FEATURE_SURETY_GOOD      = (1 << 3),
-
-   /* Source of this information. (exactly one of these is set). */
-        /* Source of status is from default setting. */
-        FEATURE_SOURCE_DEFAULT   = (1 << 4),
-        /* Source of status is from device query. */
-        FEATURE_SOURCE_DETECTED  = (1 << 5),
-        /* Source of status is from user override. */
-        FEATURE_SOURCE_USER      = (1 << 6),
-
-    FEATURE_SUPPORT_FLAGS_MAX = (1 << 7)
-} FeatureSupportFlags;
-
-#define FEATURE_SUPPORT_FLAGS_MASK (FEATURE_SUPPORT_FLAGS_MAX-1)
-#define FEATURE_SUPPORT_FLAGS_STATUS_MASK (FEATURE_STATUS_ENABLED |  \
-                                           FEATURE_STATUS_DISABLED)
-#define FEATURE_SUPPORT_FLAGS_SURETY_MASK (FEATURE_SURETY_BAD |      \
-                                           FEATURE_SURETY_GOOD)
-#define FEATURE_SUPPORT_FLAGS_SOURCE_MASK (FEATURE_SOURCE_DEFAULT |  \
-                                           FEATURE_SOURCE_DETECTED | \
-                                           FEATURE_SOURCE_USER)
-/* Checks that mutually exclusive flags are not set. */
-gboolean feature_support_flags_is_valid(FeatureSupportFlags);
-#define FEATURE_SUPPORT_FLAGS_TYPE feature_support_get_type()
-GType feature_support_get_type (void);    
 
 /* Standard property definitions follow. See also property.c. */
 
@@ -246,7 +252,7 @@ extern DevicePropertyBase device_property_max_volume_usage;
 #define PROPERTY_MAX_VOLUME_USAGE (device_property_max_volume_usage.ID)
 
 /* Should the device produce verbose output?  Value is a gboolean.  Not
- * recognized by all devices. */
+ * present in all devices. */
 extern DevicePropertyBase device_property_verbose;
 #define PROPERTY_VERBOSE (device_property_verbose.ID)
 

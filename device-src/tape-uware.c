@@ -99,42 +99,14 @@ DeviceStatusFlags tape_is_ready(int fd G_GNUC_UNUSED, TapeDevice *t_self G_GNUC_
     return DEVICE_STATUS_SUCCESS;
 }
 
-void tape_device_set_capabilities(TapeDevice * t_self) {
-    Device * self;
-    GValue val;
-
-    self = DEVICE(t_self);
-    g_return_if_fail(self != NULL);
-
-    bzero(&val, sizeof(val));
-    g_value_init(&val, FEATURE_SUPPORT_FLAGS_TYPE);
-
-    g_value_set_flags(&val,
-                      FEATURE_STATUS_ENABLED | FEATURE_SURETY_BAD |
-                      FEATURE_SOURCE_DEFAULT);
-    device_property_set(self, PROPERTY_FSF, &val);
-    
-    g_value_set_flags(&val,
-                      FEATURE_STATUS_ENABLED | FEATURE_SURETY_BAD |
-                      FEATURE_SOURCE_DEFAULT);
-    device_property_set(self, PROPERTY_BSF, &val);
-    
-    g_value_set_flags(&val,
-                      FEATURE_STATUS_ENABLED | FEATURE_SURETY_BAD |
-                      FEATURE_SOURCE_DEFAULT);
-    device_property_set(self, PROPERTY_FSR, &val);
-    
-    g_value_set_flags(&val,
-                      FEATURE_STATUS_ENABLED | FEATURE_SURETY_BAD |
-                      FEATURE_SOURCE_DEFAULT);
-    device_property_set(self, PROPERTY_BSR, &val);
-    
-    g_value_set_flags(&val,
-                      FEATURE_STATUS_DISABLED | FEATURE_SURETY_GOOD |
-                      FEATURE_SOURCE_DEFAULT);
-    device_property_set(self, PROPERTY_EOM, &val);
-
-    g_value_unset_init(&val, G_TYPE_UINT);
-    g_value_set_uint(&val, 2);
-    device_property_set(self, PROPERTY_FINAL_FILEMARKS, &val);
+void tape_device_detect_capabilities(TapeDevice * t_self) {
+    tape_device_set_capabilities(t_self,
+	TRUE,  PROPERTY_SURETY_BAD,  PROPERTY_SOURCE_DEFAULT, /* fsf*/
+	TRUE,  PROPERTY_SURETY_BAD,  PROPERTY_SOURCE_DEFAULT, /* bsf*/
+	TRUE,  PROPERTY_SURETY_BAD,  PROPERTY_SOURCE_DEFAULT, /* fsr*/
+	TRUE,  PROPERTY_SURETY_BAD,  PROPERTY_SOURCE_DEFAULT, /* bsr*/
+	FALSE, PROPERTY_SURETY_GOOD, PROPERTY_SOURCE_DEFAULT, /* eom*/
+	FALSE, PROPERTY_SURETY_GOOD, PROPERTY_SOURCE_DEFAULT, /* bsf_after_eom*/
+	2,     PROPERTY_SURETY_BAD,  PROPERTY_SOURCE_DEFAULT  /* final_filemarks*/
+	);
 }

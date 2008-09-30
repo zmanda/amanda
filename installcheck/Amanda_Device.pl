@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 294;
+use Test::More tests => 300;
 use File::Path qw( mkpath rmtree );
 use Sys::Hostname;
 use Carp;
@@ -139,7 +139,7 @@ my @common_properties = (
 
 sub properties_include {
     my ($got, $should_include, $msg) = @_;
-    my %got = map { $_, 1 } @$got;
+    my %got = map { $_->{'name'}, 1 } @$got;
     my @missing = grep { !defined($got{$_}) } @$should_include;
     if (@missing) {
 	fail($msg);
@@ -193,8 +193,17 @@ ok($dev->start($ACCESS_WRITE, "NULL1", "19780615010203"),
 # try properties
 properties_include([ $dev->property_list() ], [ @common_properties ],
     "necessary properties listed on null device");
-is($dev->property_get("canonical_name"), $dev_name,
+is($dev->property_get("canonical_name"), "null:",
     "property_get(canonical_name) on null device");
+is_deeply([ $dev->property_get("canonical_name") ],
+    [ "null:", $PROPERTY_SURETY_GOOD, $PROPERTY_SOURCE_DEFAULT ],
+    "extended property_get returns correct surety/source");
+for my $prop ($dev->property_list()) {
+    next unless $prop->{'name'} eq 'canonical_name';
+    is($prop->{'description'},
+	"The most reliable device name to use to refer to this device.",
+	"property info for canonical name is correct");
+}
 
 # and write a file to it
 write_file(0xabcde, 1024*256, 1);
@@ -286,11 +295,13 @@ is($dev->status(), $DEVICE_STATUS_SUCCESS,
    "$dev_name: create successful")
     or diag($dev->error_or_status());
 
+ok($dev->configure(1), "configure device");
+
 properties_include([ $dev->property_list() ], [ @common_properties ],
     "necessary properties listed on rait device");
 
 is($dev->property_get("block_size"), 32768, # (RAIT default)
-    "rait device calculates a block size correctly");
+    "rait device calculates a default block size correctly");
 
 ok($dev->property_set("block_size", 32768*16),
     "rait device accepts an explicit block size");
@@ -424,6 +435,29 @@ ok($dev->status() & $DEVICE_STATUS_VOLUME_ERROR,
    "Label mismatch error handled correctly")
     or diag($dev->error_or_status());
 
+# Use some config to set a block size on a child device
+($vtape1, $vtape2) = (mkvtape(1), mkvtape(2));
+$dev_name = "rait:{file:$vtape1,mytape2}";
+
+$testconf = Installcheck::Config->new();
+$testconf->add_device("mytape2", [
+    "tapedev" => "\"file:$vtape2\"",
+    "device_property" => "\"BLOCK_SIZE\" \"64k\""
+]);
+$testconf->write();
+config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF') == $CFGERR_OK
+    or die("Could not load configuration");
+
+$dev = Amanda::Device->new($dev_name);
+is($dev->status(), $DEVICE_STATUS_SUCCESS,
+   "$dev_name: create successful")
+    or diag($dev->error_or_status());
+
+ok($dev->configure(1), "configure device");
+
+is($dev->property_get("block_size"), 65536,
+    "rait device calculates a block size from its children correctly");
+
 # Test an S3 device if the proper environment variables are set
 my $S3_SECRET_KEY = $ENV{'INSTALLCHECK_S3_SECRET_KEY'};
 my $S3_ACCESS_KEY = $ENV{'INSTALLCHECK_S3_ACCESS_KEY'};
@@ -498,7 +532,7 @@ sub s3_run_main_tests($$) {
     # this test appears very liberal, but catches the case where setup_handle fails without
     # giving false positives
     ok(($status == $DEVICE_STATUS_SUCCESS) || (($status & $DEVICE_STATUS_VOLUME_UNLABELED) != 0),
-       "status is either OK or possibly already labeled")
+       "status is either OK or possibly unlabeled")
         or diag($dev->error_or_status());
 
     ok($dev->start($ACCESS_WRITE, "TESTCONF13", undef),
@@ -556,7 +590,7 @@ sub s3_run_main_tests($$) {
     $dev->read_label();
     $status = $dev->status();
     ok(($status == $DEVICE_STATUS_SUCCESS) || (($status & $DEVICE_STATUS_VOLUME_UNLABELED) != 0),
-       "status is either OK or possibly already labeled")
+       "status is either OK or possibly unlabeled")
         or diag($dev->error_or_status());
 
     # bucket name incompatible with location constraint
@@ -601,7 +635,7 @@ SKIP: {
     # this test appears very liberal, but catches the case where setup_handle fails without
     # giving false positives
     ok(($status == 0) || (($status & $DEVICE_STATUS_VOLUME_UNLABELED) != 0),
-       "status is either OK or possibly already labeled")
+       "status is either OK or possibly unlabeled")
 	or diag($dev->error_or_status());
 }
 
@@ -625,10 +659,10 @@ SKIP: {
 	"$dev_name: create successful")
 	or diag($dev->error_or_status());
 
-    $dev->read_label();
-    ok(!($dev->status() & ~$DEVICE_STATUS_VOLUME_UNLABELED),
-	"no error, except possibly unlabeled, from read_label")
-	or diag($dev->error_or_status());
+    my $status = $dev->read_label();
+    ok(($status == $DEVICE_STATUS_SUCCESS) || (($status & $DEVICE_STATUS_VOLUME_UNLABELED) != 0),
+       "status is either OK or possibly unlabeled")
+        or diag($dev->error_or_status());
 
     ok($dev->start($ACCESS_WRITE, "TESTCONF13", undef),
 	"start in write mode")

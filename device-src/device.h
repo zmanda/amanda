@@ -101,7 +101,7 @@ GType device_status_flags_get_type(void);
 /*
  * Main object structure
  */
-typedef struct {
+typedef struct Device {
     GObject __parent__;
 
     /* You can peek at the stuff below, but only subclasses should
@@ -145,6 +145,11 @@ typedef struct {
     gsize max_block_size;
     gsize block_size;
 
+    /* surety and source for the block size; if you set block_size directly,
+     * set these, too! */
+    PropertySurety block_size_surety;
+    PropertySource block_size_source;
+
     DevicePrivate * private;
 } Device;
 
@@ -176,6 +181,7 @@ struct _DeviceClass {
     GObjectClass __parent__;
     void (* open_device) (Device * self, char * device_name,
 		    char * device_prefix, char * device_node);
+    gboolean (* configure) (Device * self, gboolean use_global_config);
     DeviceStatusFlags (* read_label)(Device * self);
     gboolean (* start) (Device * self, DeviceAccessMode mode,
                         char * label, char * timestamp);
@@ -187,12 +193,23 @@ struct _DeviceClass {
     gboolean (* seek_block) (Device * self, guint64 block);
     int (* read_block) (Device * self, gpointer buf, int * size);
     gboolean (* read_to_fd) (Device * self, queue_fd_t *queue_fd);
-    gboolean (* property_get) (Device * self, DevicePropertyId id,
-                               GValue * val);
-    gboolean (* property_set) (Device * self, DevicePropertyId id,
-                               GValue * val);
+    gboolean (* property_get_ex) (Device * self, DevicePropertyId id,
+				  GValue * val,
+				  PropertySurety *surety,
+				  PropertySource *source);
+    gboolean (* property_set_ex) (Device * self,
+				  DevicePropertyId id,
+				  GValue * val,
+				  PropertySurety surety,
+				  PropertySource source);
     gboolean (* recycle_file) (Device * self, guint filenum);
     gboolean (* finish) (Device * self);
+
+    /* array of DeviceProperty objects for this class, keyed by ID */
+    GArray *class_properties;
+
+    /* The return value of device_property_get_list */
+    GSList * class_properties_list;
 };
 
 /*
@@ -210,6 +227,13 @@ struct _DeviceClass {
  * looks for device definitions and other configuration information.
  */
 Device*		device_open	(char * device_name);
+
+/* Once you have a new device, you should configure it.  This sets properties
+ * on the device based on the user's configuation.  If USE_GLOBAL_CONFIG is
+ * true, then any global device_property parameters are processed, along with
+ * tapetype and othe relevant parameters.
+ */
+gboolean device_configure(Device *self, gboolean use_global_config);
 
 /*
  * Error Handling
@@ -368,25 +392,37 @@ int 	device_read_block	(Device * self, gpointer buffer, int * size);
 gboolean 	device_read_to_fd	(Device * self,
 					queue_fd_t *queue_fd);
 
-/* This function tells you what properties are supported by this
- * device, and when you are allowed to get and set them. The return
- * value is an array of DeviceProperty structs. The last struct in
- * the array is zeroed, so you know when the end is (check the
- * pointer element "base"). The return value from this function on any
- * given object (or physical device) should be invariant. */
-const DeviceProperty * 	device_property_get_list	(Device * self);
+/* This function tells you what properties are supported by this device, and
+ * when you are allowed to get and set them. The return value is an list of
+ * DeviceProperty structs.  Do not free the resulting list. */
+const GSList *	device_property_get_list	(Device * self);
 
 /* These functions get or set a particular property. The val should be
  * compatible with the DevicePropertyBase associated with the given
- * DevicePropertyId, and this function should only be called when
- * DeviceProperty.access says it is OK. Otherwise you will get an
- * error and not the tasty property action you wanted. */
-gboolean 	device_property_get	(Device * self,
+ * DevicePropertyId, and these functions should only be called when
+ * DeviceProperty.access says it is OK. Otherwise you will get an error and not
+ * the tasty property action you wanted.
+ *
+ * All device_property_get_ex parameters but the first two are output
+ * parameters, and can be left NULL if you are not interested in their value.
+ * If you only need the value, use the simpler device_property_get macro. */
+
+gboolean 	device_property_get_ex	(Device * self,
                                          DevicePropertyId id,
-                                         GValue * val);
-gboolean 	device_property_set	(Device * self,
+                                         GValue * val,
+					 PropertySurety *surety,
+					 PropertySource *source);
+#define		device_property_get(self, id, val) \
+    device_property_get_ex((self), (id), (val), NULL, NULL)
+
+gboolean 	device_property_set_ex	(Device * self,
                                          DevicePropertyId id,
-                                         GValue * val);
+                                         GValue * val,
+					 PropertySurety surety,
+					 PropertySource source);
+#define		device_property_set(self, id, val) \
+    device_property_set_ex((self), (id), (val), \
+	    PROPERTY_SURETY_GOOD, PROPERTY_SOURCE_USER)
 
 /* On devices that support it (check PROPERTY_PARTIAL_DELETION),
  * this will free only the space associated with a particular file. 
@@ -403,21 +439,6 @@ gboolean 	device_recycle_file	(Device * self,
 					guint filenum);
 
 /* Protected methods. Don't call these except in subclass implementations. */
-
-/* Registers a new device / property pair. Every superclass of Device
- * should call this in its init() function. At the moment, any
- * particular property Id can only be registered once per object.
- *
- * If you want to register a standard response to a property (e.g.,
- * whether or not the device supports compression), you can pass a
- * non-NULL response. Then the default implementation of
- * device_get_property (which you may override) will return this
- * response.
- * The contents of prop and response are copied into a private array, so the
- * calling function retains ownership of all arguments.
- */
-void            device_add_property(Device * self, DeviceProperty * prop,
-                                    GValue * response);
 
 /* This method provides post-construction initalization once the
  * device name is known. It should only be used by Device
@@ -446,5 +467,50 @@ dumpfile_t * make_tapeend_header(void);
  * a property is set) that voids previously-read volume details.
  * This function is a NOOP unless the device is in the NULL state. */
 void device_clear_volume_details(Device * device);
+
+/* Property Handling */
+
+/* Registers a property for a new device class; device drivers' GClassInitFunc
+ * should call this function for each device-specific property of the class.
+ * If either getter or setter is NULL, then the corresponding operation will
+ * return FALSE.
+ *
+ * Note that this will replace any existing registration (e.g., from a parent
+ * class).
+ */
+void device_class_register_property(DeviceClass *klass, DevicePropertyId id,
+				    PropertyAccessFlags access,
+				    PropertyGetFn getter,
+				    PropertySetFn setter);
+
+/* Set a 'simple' property on the device.  This tucks the value away in the
+ * object, to be retrieved by device_simple_property_get_fn.  This is most
+ * often used in GInstanceInit functions, but can be used at any time to set or
+ * change the value of a simple property */
+gboolean device_set_simple_property(Device *self, DevicePropertyId id,
+				GValue *val, PropertySurety surety,
+				PropertySource source);
+
+/* Get a simple property set with device_set_simple_property.  This is a little
+ * bit quicker than calling device_property_get_ex(), and does not affect the
+ * device's error state.  Returns FALSE if the property has not been set.
+ * Surety and source are output parameters and will be ignored if they are
+ * NULL. */
+gboolean device_get_simple_property(Device *self, DevicePropertyId id,
+				    GValue *val, PropertySurety *surety,
+				    PropertySource *source);
+
+/* A useful PropertySetFn.  If your subclass also needs to intercept sets, for
+ * example to flush a cache or update a member variable, then write a stub
+ * function which "calls up" to this function. */
+gboolean device_simple_property_set_fn(Device *self, DevicePropertyBase *base,
+				       GValue *val, PropertySurety surety,
+				       PropertySource source);
+
+/* A useful PropertyGetFn -- returns the value, source, and surety set with
+ * device_set_simple_property */
+gboolean device_simple_property_get_fn(Device *self, DevicePropertyBase *base,
+				       GValue *val, PropertySurety *surety,
+				       PropertySource *source);
 
 #endif /* DEVICE_H */

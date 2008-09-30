@@ -43,7 +43,7 @@ gboolean tape_bsr(int fd, guint count);
 
 /* Sets attributes of the device to indicate which of the above operations
  * are available in this device. */
-void tape_device_set_capabilities(TapeDevice * self);
+void tape_device_detect_capabilities(TapeDevice * self);
 
 /* Returns tape position file number, or one of these: */
 #define TAPE_OP_ERROR -1

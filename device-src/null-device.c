@@ -58,6 +58,7 @@ void null_device_register(void);
 /* here are local prototypes */
 static void null_device_init (NullDevice * o);
 static void null_device_class_init (NullDeviceClass * c);
+static void null_device_base_init (NullDeviceClass * c);
 static DeviceStatusFlags null_device_read_label(Device * dself);
 static void null_device_open_device(Device * self, char *device_name,
 		                    char * device_type, char * device_node);
@@ -85,7 +86,7 @@ null_device_get_type (void)
     if G_UNLIKELY(type == 0) {
         static const GTypeInfo info = {
             sizeof (NullDeviceClass),
-            (GBaseInitFunc) NULL,
+            (GBaseInitFunc) null_device_base_init,
             (GBaseFinalizeFunc) NULL,
             (GClassInitFunc) null_device_class_init,
             (GClassFinalizeFunc) NULL,
@@ -106,54 +107,55 @@ null_device_get_type (void)
 static void 
 null_device_init (NullDevice * self)
 {
-    Device * o;
-    DeviceProperty prop;
+    Device * dself;
     GValue response;
 
-    o = (Device*)(self);
+    dself = (Device*)(self);
     bzero(&response, sizeof(response));
 
     /* Register properties */
-    prop.base = &device_property_concurrency;
-    prop.access = PROPERTY_ACCESS_GET_MASK;
     g_value_init(&response, CONCURRENCY_PARADIGM_TYPE);
     g_value_set_enum(&response, CONCURRENCY_PARADIGM_RANDOM_ACCESS);
-    device_add_property(o, &prop, &response);
+    device_set_simple_property(dself, PROPERTY_CONCURRENCY,
+	    &response, PROPERTY_SURETY_GOOD, PROPERTY_SOURCE_DETECTED);
     g_value_unset(&response);
-    
 
-    prop.base = &device_property_streaming;
     g_value_init(&response, STREAMING_REQUIREMENT_TYPE);
     g_value_set_enum(&response, STREAMING_REQUIREMENT_NONE);
-    device_add_property(o, &prop, &response);
+    device_set_simple_property(dself, PROPERTY_STREAMING,
+	    &response, PROPERTY_SURETY_GOOD, PROPERTY_SOURCE_DETECTED);
     g_value_unset(&response);
-    
-    prop.base = &device_property_appendable;
+
     g_value_init(&response, G_TYPE_BOOLEAN);
     g_value_set_boolean(&response, FALSE);
-    device_add_property(o, &prop, &response);
+    device_set_simple_property(dself, PROPERTY_APPENDABLE,
+	    &response, PROPERTY_SURETY_GOOD, PROPERTY_SOURCE_DETECTED);
+    g_value_unset(&response);
 
-    prop.base = &device_property_partial_deletion;
-    device_add_property(o, &prop, &response);
+    g_value_init(&response, G_TYPE_BOOLEAN);
+    g_value_set_boolean(&response, FALSE);
+    device_set_simple_property(dself, PROPERTY_PARTIAL_DELETION,
+	    &response, PROPERTY_SURETY_GOOD, PROPERTY_SOURCE_DETECTED);
     g_value_unset(&response);
 
     /* this device's canonical name is always "null:", regardless of
-     * the name the user supplies */
-    prop.base = &device_property_canonical_name;
+     * the name the user supplies; note that we install the simple
+     * getter in null_device_class_init. */
     g_value_init(&response, G_TYPE_STRING);
     g_value_set_static_string(&response, "null:");
-    device_add_property(o, &prop, &response);
+    device_set_simple_property(dself, PROPERTY_CANONICAL_NAME,
+	    &response, PROPERTY_SURETY_GOOD, PROPERTY_SOURCE_DEFAULT);
     g_value_unset(&response);
 
-    prop.base = &device_property_medium_access_type;
     g_value_init(&response, MEDIA_ACCESS_MODE_TYPE);
     g_value_set_enum(&response, MEDIA_ACCESS_MODE_WRITE_ONLY);
-    device_add_property(o, &prop, &response);
+    device_set_simple_property(dself, PROPERTY_MEDIUM_ACCESS_TYPE,
+	    &response, PROPERTY_SURETY_GOOD, PROPERTY_SOURCE_DETECTED);
     g_value_unset(&response);
 }
 
 static void 
-null_device_class_init (NullDeviceClass * c G_GNUC_UNUSED)
+null_device_class_init (NullDeviceClass * c)
 {
     DeviceClass *device_class = (DeviceClass *)c;
 
@@ -166,6 +168,18 @@ null_device_class_init (NullDeviceClass * c G_GNUC_UNUSED)
     device_class->start_file = null_device_start_file;
     device_class->write_block = null_device_write_block;
     device_class->finish_file = null_device_finish_file;
+}
+
+static void
+null_device_base_init (NullDeviceClass * c)
+{
+    DeviceClass *device_class = (DeviceClass *)c;
+
+    /* Our canonical name is simpler than most devices' */
+    device_class_register_property(device_class, PROPERTY_CANONICAL_NAME,
+	    PROPERTY_ACCESS_GET_MASK,
+	    device_simple_property_get_fn,
+	    device_simple_property_set_fn);
 }
 
 

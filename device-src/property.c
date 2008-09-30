@@ -21,6 +21,11 @@
 #include "amanda.h"
 
 #include "property.h"
+#include "glib-util.h"
+
+/*****
+ * Property-specific Types, etc.
+ */
 
 static const GEnumValue _concurrency_paradigm_values[] = {
         { CONCURRENCY_PARADIGM_EXCLUSIVE,
@@ -108,121 +113,63 @@ GType qualified_size_get_type (void) {
     return type;
 }
 
-static const GFlagsValue _feature_support_flags_values[] = {
-    { FEATURE_STATUS_ENABLED,
-      "FEATURE_STATUS_ENABLED",
-      "enabled" },
-    { FEATURE_STATUS_DISABLED,
-      "FEATURE_STATUS_DISABLED",
-      "disabled" },
-    { FEATURE_SURETY_BAD,
-      "FEATURE_SURETY_BAD",
-      "bad" },
-    { FEATURE_SURETY_GOOD,
-      "FEATURE_SURETY_GOOD",
-      "good" },
-    { FEATURE_SOURCE_DEFAULT,
-      "FEATURE_SOURCE_DEFAULT",
-      "default" },
-    { FEATURE_SOURCE_DETECTED,
-      "FEATURE_SOURCE_DETECTED",
-      "detected" },
-    { FEATURE_SOURCE_USER,
-      "FEATURE_SOURCE_USER",
-      "user"},
-    { 0, NULL, NULL }
-};
+/******
+ * Property registration and lookup
+ */
 
-GType feature_support_get_type (void) {
-    static GType type = 0;
-    if (G_UNLIKELY(type == 0)) {
-        type = g_flags_register_static ("FeatureSupportFlags",
-                                        _feature_support_flags_values);
-    }
-    return type;
+static GPtrArray *device_property_bases = NULL;
+static GHashTable *device_property_bases_by_name = NULL;
+
+DevicePropertyBase* device_property_get_by_id(DevicePropertyId id) {
+    if (!device_property_bases || id >= device_property_bases->len)
+	return NULL;
+
+    return g_ptr_array_index(device_property_bases, id);
 }
 
-gboolean feature_support_flags_is_valid(FeatureSupportFlags f) {
-    int status = 0, surety = 0, source = 0;
+DevicePropertyBase* device_property_get_by_name(const char *name) {
+    gpointer rv;
 
-    if (f & FEATURE_STATUS_ENABLED)
-        status ++;
-    if (f & FEATURE_STATUS_DISABLED)
-        status ++;
-    if (f & FEATURE_SURETY_BAD)
-        surety ++;
-    if (f & FEATURE_SURETY_GOOD)
-        surety ++;
-    if (f & FEATURE_SOURCE_DEFAULT)
-        source ++;
-    if (f & FEATURE_SOURCE_DETECTED)
-        source ++;
-    if (f & FEATURE_SOURCE_USER)
-        source ++;
+    if (!device_property_bases_by_name)
+	return NULL;
 
-    return (!(f & ~FEATURE_SUPPORT_FLAGS_MASK) &&
-            status == 1  &&  surety == 1  &&  source == 1);
-}
-
-static GSList* device_property_base_list = NULL;
-
-const DevicePropertyBase* device_property_get_by_id(DevicePropertyId id) {
-    GSList *iter;
-
-    iter = device_property_base_list;
-    while (iter != NULL) {
-        DevicePropertyBase* rval = (DevicePropertyBase*)(iter->data);
-        if (rval->ID == id) {
-            return rval;
-        }
-        iter = g_slist_next(iter);
-    }
+    rv = g_hash_table_lookup(device_property_bases_by_name, name);
+    if (rv)
+	return (DevicePropertyBase *)rv;
 
     return NULL;
-}
-
-const DevicePropertyBase* device_property_get_by_name(const char *name) {
-    GSList *iter = device_property_base_list;
-
-    g_assert(name != NULL);
-
-    while (iter != NULL) {
-        DevicePropertyBase* rval = (DevicePropertyBase*)(iter->data);
-        if (strcasecmp(rval->name, name) == 0) {
-            return rval;
-        }
-        iter = g_slist_next(iter);
-    }
-
-    return NULL;
-}
-
-DevicePropertyId device_property_register(DevicePropertyBase* base) {
-    static guint id = 0;
-    g_assert(base != NULL);
-    g_assert(base->ID == -1);
-    g_assert(base->name != NULL);
-    g_assert(base->description != NULL);
-    
-    base->ID = id++;
-
-    device_property_base_list = g_slist_prepend(device_property_base_list,
-                                                base);
-    return id;
 }
 
 void
-device_property_fill_and_register(DevicePropertyBase * base,
-                                  GType type,
-                                  const char * name,
-                                  const char * desc) {
+device_property_fill_and_register(DevicePropertyBase *base,
+		    GType type, const char * name, const char * desc) {
+
+    /* create the hash table and array if necessary */
+    if (!device_property_bases) {
+	device_property_bases = g_ptr_array_new();
+	device_property_bases_by_name = g_hash_table_new(g_str_case_hash, g_str_case_equal);
+    }
+
+    /* check for a duplicate */
+    if (device_property_get_by_name(name)) {
+	g_critical("A property named '%s' already exists!", name);
+    }
+
+    /* allocate space for this DPB and fill it in */
+    base->ID = device_property_bases->len;
     base->type = type;
-    base->name = name;
-    base->description = desc;
-    base->ID = -1;
-    device_property_register(base);
+    base->name = name; /* no strdup -- it's statically allocated */
+    base->description = desc; /* ditto */
+
+    /* add it to the array and hash table; note that its array index and its
+     * ID are the same. */
+    g_ptr_array_add(device_property_bases, base);
+    g_hash_table_insert(device_property_bases_by_name, (gpointer)name, (gpointer)base);
 }
 
+/******
+ * Initialization
+ */
 
 void device_property_init(void) {
     device_property_fill_and_register(&device_property_concurrency,

@@ -1,4 +1,25 @@
 2008-09-29  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/device.c device-src/device.h device-src/null-device.c
+	  device-src/property.c device-src/property.h device-src/rait-device.c
+	  device-src/s3-device.c device-src/tape-aix.c device-src/tape-device.c
+	  device-src/tape-device.h device-src/tape-ops.h device-src/tape-posix.c
+	  device-src/tape-uware.c device-src/tape-xenix.c
+	  device-src/vfs-device.c: add a 'configure' method to the Device API;
+	  revamp device property handling to add source and surety and make
+	  implementation easier
+	* device-src/rait-device.h device-src/rait-device.c: make RAIT device
+	  calculate block sized based on child devices, if they were configured
+	  explicitly.
+	* man/xml-source/amanda-devices.7.xml: note that common properties are
+	  not implemented on all devices
+	* common-src/glib-util.c common-src/glib-util.h: add helpers for
+	  case-insensitive hashes
+	* changer-src/scsi-changer-driver.c installcheck/Amanda_Device.pl
+	  perl/Amanda/Device.swg restore-src/restore.c server-src/amcheck.c
+	  server-src/amlabel.c server-src/amtape.c server-src/taper.c
+	  server-src/taperscan.c: use new API
+
+2008-09-29  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/find.c: handle find_result->label == NULL
 	* perl/Amanda/DB/Catalog.pm: filter out bogus results with NULL label
 

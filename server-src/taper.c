@@ -489,6 +489,9 @@ static gboolean label_new_tape(taper_state_t * state, dump_info_t * dump_info) {
     if (state->device->status != DEVICE_STATUS_SUCCESS)
 	goto skip_volume;
 
+    if (!device_configure(state->device, TRUE))
+	goto skip_volume;
+
     /* if we have an error, and are sure it isn't just an unlabeled volume,
      * then skip this volume */
     status = device_read_label(state->device);

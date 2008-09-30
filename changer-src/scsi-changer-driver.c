@@ -472,7 +472,7 @@ tape_rdlabel(
 	return r;
     }
 
-    if (!device_read_label(dev)) {
+    if (!device_configure(dev, TRUE) || !device_read_label(dev)) {
 	r = g_strdup(device_error_or_status(dev));
 	g_object_unref(dev);
 	return r;

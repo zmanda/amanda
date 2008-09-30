@@ -58,6 +58,8 @@ are represented by accessor functions of the same name.
 
 =over
 
+=item C<configure($use_global_config)>
+
 =item C<read_label()>
 
 =item C<start($mode, $label, $timestamp)>
@@ -96,15 +98,24 @@ change in future revisions.
 
 =item C<property_list()>
 
-returns a list of property names.
+returns a list of properties, each represented as a hash:
+
+  { 'access' => $access_flags,
+    'name' => $property_name,
+    'description' => $property_description }
 
 =item C<property_get($property_name)>
 
-returns the property as the appropriate Perl type.
+returns the property, with the appropriate Perl type, or undef.  In array
+context, returns the list C<($value, $surety, $source)>.
 
 =item C<property_set($property_name, $value)>
 
-where $value is of an appropriate type for the given property
+=item C<property_set_ex($property_name, $value, $surety, $source)>
+
+where C<$value> is of an appropriate type for the given property, C<$surety> is
+a C<$PROPERTY_SURETY_*> constant, and C<$source> is a C<$PROPERTY_SOURCE_*>
+constant.
 
 =item C<recycle_file($filenum)>
 
@@ -382,6 +393,11 @@ typedef struct Device {
 	    g_object_unref(self);
 	}
 
+	gboolean
+	configure(gboolean use_global_config) {
+	    return device_configure(self, use_global_config);
+	}
+
 	char *
 	error() {
 	    return device_error(self);
@@ -451,30 +467,37 @@ typedef struct Device {
 	    return device_read_to_fd(self, queue_fd);
 	}
 
-	%typemap(out) const DeviceProperty * {
-	    int i = 0;
-	    int len = 0;
+	%typemap(out) const GSList * {
+	    GSList *iter;
 
 	    /* Count the DeviceProperties */
-	    while ($1[len].base) len++;
-	    EXTEND(SP, len); /* make room for return values */
+	    EXTEND(SP, g_slist_length($1)); /* make room for return values */
 
 	    /* Note that we set $result several times. the nature of
 	     * SWIG's wrapping is such that incrementing argvi points
 	     * $result to the next location in perl's argument stack.
              */
 
-	    for (i = 0; i < len ; i++) { 
-		$result = sv_newmortal(); 
-		sv_setpv($result, $1[i].base->name); 
+	    for (iter = $1; iter; iter = g_slist_next(iter)) {
+		DeviceProperty *prop = iter->data;
+		HV *hash = newHV();
+		SV *rv = newRV_noinc((SV *)hash);
+
+		hv_store(hash, "name", 4,
+			newSVpv(prop->base->name, 0), 0);
+		hv_store(hash, "description", 11,
+			newSVpv(prop->base->description, 0), 0);
+		hv_store(hash, "access", 6,
+			newSViv(prop->access), 0);
+		$result = sv_2mortal(rv);
 		argvi++;
-	    }; 
+	    }
 	}
-	const DeviceProperty * property_list(void) {
+	const GSList * property_list(void) {
 	    return device_property_get_list(self);
 	}
 
-	%typemap(out) const DeviceProperty *; /* remove typemap */
+	%typemap(out) const GSList *; /* remove typemap */
 
 	/* A typemap to convert a property name to a DevicePropertyBase. */
 	%typemap(in) DevicePropertyBase * {
@@ -492,31 +515,45 @@ typedef struct Device {
 	/* A typemap to convert the GValue in property_get to a return value.  The
 	 * (in) typemap sets up storage for the parameters, while the (argout) converts
 	 * them to a perl SV. */
-	%typemap(in,numinputs=0) (GValue *out_val, gboolean *val_found)
-			    (GValue val, gboolean found) {
+	%typemap(in,numinputs=0) (GValue *out_val, PropertySurety *surety,
+				  PropertySource *source, gboolean *val_found)
+			    (GValue val,
+			     PropertySurety surety,
+			     PropertySource source,
+			     gboolean found) {
 	    memset(&val, 0, sizeof(val));
 	    $1 = &val;
-	    $2 = &found;
+	    if (GIMME_V == G_ARRAY) {
+		$2 = &surety;
+		$3 = &source;
+	    }
+	    $4 = &found;
 	}
-	%typemap(argout) (GValue *out_val, gboolean *val_found) {
+	%typemap(argout) (GValue *out_val, PropertySurety *surety,
+			  PropertySource *source, gboolean *val_found) {
 	    /* if the result is valid */
-	    if (*$2) {
+	    if (*$4) {
 		/* move data from $1 to $result, somehow */
 		$result = set_sv_from_gvalue($1);
+		argvi++;
 
 		/* free any memory for the GValue */
 		g_value_unset($1);
-	    } else {
-		/* silently return 'undef', the sentinel for "undefined" */
-		$result = sv_newmortal();
-		sv_setsv($result, &PL_sv_undef);
+
+		if (GIMME_V == G_ARRAY) {
+		    $result = newSViv(*$2);
+		    argvi++;
+		    $result = newSViv(*$3);
+		    argvi++;
+		}
 	    }
-	    argvi++;
+	    /* otherwise, return nothing */
 	}
 
 	void
-	property_get(DevicePropertyBase *pbase, GValue *out_val, gboolean *val_found) {
-	    *val_found = device_property_get(self, pbase->ID, out_val);
+	property_get(DevicePropertyBase *pbase, GValue *out_val, PropertySurety *surety,
+		     PropertySource *source, gboolean *val_found) {
+	    *val_found = device_property_get_ex(self, pbase->ID, out_val, surety, source);
 	}
 
 	/* delete typemaps */
@@ -537,6 +574,25 @@ typedef struct Device {
 		goto fail;
 
 	    if (!device_property_set(self, pbase->ID, &gval))
+		goto fail;
+
+	    g_value_unset(&gval);
+	    return TRUE;
+	fail:
+	    g_value_unset(&gval);
+	    return FALSE;
+	}
+
+	gboolean
+	property_set_ex(DevicePropertyBase *pbase, SV *sv,
+			PropertySurety surety, PropertySource source) {
+	    GValue gval;
+	    memset(&gval, 0, sizeof(gval));
+	    g_value_init(&gval, pbase->type);
+	    if (!set_gvalue_from_sv(sv, &gval))
+		goto fail;
+
+	    if (!device_property_set_ex(self, pbase->ID, &gval, surety, source))
 		goto fail;
 
 	    g_value_unset(&gval);
@@ -654,23 +710,16 @@ amglue_add_constant_short(SIZE_ACCURACY_ESTIMATE, "ESTIMATE", SizeAccuracy);
 amglue_add_constant_short(SIZE_ACCURACY_REAL, "REAL", SizeAccuracy);
 amglue_copy_to_tag(SizeAccuracy, constants);
 
-amglue_add_flag_tag_fns(FeatureSupportFlags);
-amglue_add_constant_short(FEATURE_STATUS_ENABLED, "STATUS_ENABLED", FeatureSupportFlags);
-amglue_add_constant_short(FEATURE_STATUS_DISABLED, "STATUS_DISABLED", FeatureSupportFlags);
-amglue_add_constant_short(FEATURE_SURETY_BAD, "SURETY_BAD", FeatureSupportFlags);
-amglue_add_constant_short(FEATURE_SURETY_GOOD, "SURETY_GOOD", FeatureSupportFlags);
-amglue_add_constant_short(FEATURE_SOURCE_DEFAULT, "SOURCE_DEFAULT", FeatureSupportFlags);
-amglue_add_constant_short(FEATURE_SOURCE_DETECTED, "SOURCE_DETECTED", FeatureSupportFlags);
-amglue_add_constant_short(FEATURE_SOURCE_USER, "SOURCE_USER", FeatureSupportFlags);
-amglue_add_constant_noshort(FEATURE_SUPPORT_FLAGS_MAX, FeatureSupportFlags);
-amglue_add_constant_noshort(FEATURE_SUPPORT_FLAGS_MASK, FeatureSupportFlags);
-amglue_add_constant_noshort(FEATURE_SUPPORT_FLAGS_STATUS_MASK, FeatureSupportFlags);
-amglue_add_constant_noshort(FEATURE_SUPPORT_FLAGS_SURETY_MASK, FeatureSupportFlags);
-amglue_add_constant_noshort(FEATURE_SUPPORT_FLAGS_SOURCE_MASK, FeatureSupportFlags);
+amglue_add_flag_tag_fns(PropertySurety);
+amglue_add_constant_short(PROPERTY_SURETY_BAD, "SURETY_BAD", PropertySurety);
+amglue_add_constant_short(PROPERTY_SURETY_GOOD, "SURETY_GOOD", PropertySurety);
+amglue_copy_to_tag(PropertySurety, constants);
 
-gboolean feature_support_flags_is_valid(FeatureSupportFlags);
-amglue_export_tag(FeatureSupportFlags, feature_support_flags_is_valid);
-amglue_copy_to_tag(FeatureSupportFlags, constants);
+amglue_add_flag_tag_fns(PropertySource);
+amglue_add_constant_short(PROPERTY_SOURCE_DEFAULT, "SOURCE_DEFAULT", PropertySource);
+amglue_add_constant_short(PROPERTY_SOURCE_DETECTED, "SOURCE_DETECTED", PropertySource);
+amglue_add_constant_short(PROPERTY_SOURCE_USER, "SOURCE_USER", PropertySource);
+amglue_copy_to_tag(PropertySource, constants);
 
 %perlcode %{
 

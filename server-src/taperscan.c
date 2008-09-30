@@ -96,6 +96,18 @@ int scan_read_label(
                                        _("%sError opening device %s: %s.\n"),
                                        *error_message, dev,
 				       device_error_or_status(device));
+	g_object_unref(device);
+        amfree(*timestamp);
+        amfree(*label);
+        return -1;
+    }
+
+    if (!device_configure(device, TRUE)) {
+        *error_message = newvstrallocf(*error_message,
+                                       _("%sError configuring device %s: %s.\n"),
+                                       *error_message, dev,
+				       device_error_or_status(device));
+	g_object_unref(device);
         amfree(*timestamp);
         amfree(*label);
         return -1;

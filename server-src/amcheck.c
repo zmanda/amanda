@@ -642,7 +642,14 @@ static gboolean test_tape_status(FILE * outf) {
         amfree(label);
         return FALSE;
     }
-    
+
+    if (!device_configure(device, TRUE)) {
+        g_fprintf(outf, "ERROR: Could not configure device: %s.\n",
+		  device_error_or_status(device));
+        amfree(label);
+        return FALSE;
+    }
+
     device_status = device_read_label(device);
 
     if (tape_status == 3 && 

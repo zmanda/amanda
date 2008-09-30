@@ -240,6 +240,29 @@ s3_device_finalize(GObject * o);
 static Device*
 s3_device_factory(char * device_name, char * device_type, char * device_node);
 
+/*
+ * Property{Get,Set}Fns */
+
+static gboolean s3_device_set_access_key_fn(Device *self,
+    DevicePropertyBase *base, GValue *val,
+    PropertySurety surety, PropertySource source);
+
+static gboolean s3_device_set_secret_key_fn(Device *self,
+    DevicePropertyBase *base, GValue *val,
+    PropertySurety surety, PropertySource source);
+
+static gboolean s3_device_set_user_token_fn(Device *self,
+    DevicePropertyBase *base, GValue *val,
+    PropertySurety surety, PropertySource source);
+
+static gboolean s3_device_set_bucket_location_fn(Device *self,
+    DevicePropertyBase *base, GValue *val,
+    PropertySurety surety, PropertySource source);
+
+static gboolean s3_device_set_verbose_fn(Device *self,
+    DevicePropertyBase *base, GValue *val,
+    PropertySurety surety, PropertySource source);
+
 /* 
  * virtual functions */
 
@@ -287,10 +310,6 @@ static gboolean
 s3_device_recycle_file(Device *pself, 
                        guint file);
 
-static gboolean s3_device_property_set(Device * p_self, DevicePropertyId id,
-                                       GValue * val);
-static gboolean s3_device_property_get(Device * p_self, DevicePropertyId id,
-                                       GValue * val);
 /*
  * Private functions
  */
@@ -574,63 +593,50 @@ s3_device_get_type(void)
 static void 
 s3_device_init(S3Device * self)
 {
-    Device * o;
-    DeviceProperty prop;
+    Device * dself = DEVICE(self);
     GValue response;
 
     /* Register property values
      * Note: Some aren't added until s3_device_open_device()
      */
-    o = (Device*)(self);
     bzero(&response, sizeof(response));
 
-    prop.base = &device_property_concurrency;
-    prop.access = PROPERTY_ACCESS_GET_MASK;
     g_value_init(&response, CONCURRENCY_PARADIGM_TYPE);
     g_value_set_enum(&response, CONCURRENCY_PARADIGM_SHARED_READ);
-    device_add_property(o, &prop, &response);
+    device_set_simple_property(dself, PROPERTY_CONCURRENCY,
+	    &response, PROPERTY_SURETY_GOOD, PROPERTY_SOURCE_DETECTED);
     g_value_unset(&response);
 
-    prop.base = &device_property_streaming;
     g_value_init(&response, STREAMING_REQUIREMENT_TYPE);
     g_value_set_enum(&response, STREAMING_REQUIREMENT_NONE);
-    device_add_property(o, &prop, &response);
+    device_set_simple_property(dself, PROPERTY_STREAMING,
+	    &response, PROPERTY_SURETY_GOOD, PROPERTY_SOURCE_DETECTED);
     g_value_unset(&response);
 
-    prop.base = &device_property_appendable;
     g_value_init(&response, G_TYPE_BOOLEAN);
     g_value_set_boolean(&response, TRUE);
-    device_add_property(o, &prop, &response);
+    device_set_simple_property(dself, PROPERTY_APPENDABLE,
+	    &response, PROPERTY_SURETY_GOOD, PROPERTY_SOURCE_DETECTED);
     g_value_unset(&response);
 
-    prop.base = &device_property_partial_deletion;
     g_value_init(&response, G_TYPE_BOOLEAN);
     g_value_set_boolean(&response, TRUE);
-    device_add_property(o, &prop, &response);
+    device_set_simple_property(dself, PROPERTY_PARTIAL_DELETION,
+	    &response, PROPERTY_SURETY_GOOD, PROPERTY_SOURCE_DETECTED);
     g_value_unset(&response);
 
-    prop.base = &device_property_compression;
     g_value_init(&response, G_TYPE_BOOLEAN);
     g_value_set_boolean(&response, FALSE);
-    device_add_property(o, &prop, &response);
+    device_set_simple_property(dself, PROPERTY_COMPRESSION,
+	    &response, PROPERTY_SURETY_GOOD, PROPERTY_SOURCE_DETECTED);
     g_value_unset(&response);
 
-    prop.base = &device_property_medium_access_type;
     g_value_init(&response, MEDIA_ACCESS_MODE_TYPE);
     g_value_set_enum(&response, MEDIA_ACCESS_MODE_READ_WRITE);
-    device_add_property(o, &prop, &response);
+    device_set_simple_property(dself, PROPERTY_MEDIUM_ACCESS_TYPE,
+	    &response, PROPERTY_SURETY_GOOD, PROPERTY_SOURCE_DETECTED);
     g_value_unset(&response);
 
-    prop.access = PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START;
-    prop.base = &device_property_s3_secret_key;
-    device_add_property(o, &prop, NULL);
-    prop.base = &device_property_s3_access_key;
-    device_add_property(o, &prop, NULL);
-    prop.base = &device_property_s3_user_token;
-    device_add_property(o, &prop, NULL);
-
-    prop.base = &device_property_s3_bucket_location;
-    device_add_property(o, &prop, NULL);
 }
 
 static void 
@@ -655,10 +661,128 @@ s3_device_class_init(S3DeviceClass * c G_GNUC_UNUSED)
     device_class->read_block = s3_device_read_block;
     device_class->recycle_file = s3_device_recycle_file;
 
-    device_class->property_set = s3_device_property_set;
-    device_class->property_get = s3_device_property_get;
-
     g_object_class->finalize = s3_device_finalize;
+
+    device_class_register_property(device_class, PROPERTY_S3_ACCESS_KEY,
+	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
+	    device_simple_property_get_fn,
+	    s3_device_set_access_key_fn);
+
+    device_class_register_property(device_class, PROPERTY_S3_SECRET_KEY,
+	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
+	    device_simple_property_get_fn,
+	    s3_device_set_secret_key_fn);
+
+    device_class_register_property(device_class, PROPERTY_S3_USER_TOKEN,
+	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
+	    device_simple_property_get_fn,
+	    s3_device_set_user_token_fn);
+
+    device_class_register_property(device_class, PROPERTY_S3_BUCKET_LOCATION,
+	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
+	    device_simple_property_get_fn,
+	    s3_device_set_bucket_location_fn);
+
+    device_class_register_property(device_class, PROPERTY_VERBOSE,
+	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
+	    device_simple_property_get_fn,
+	    s3_device_set_verbose_fn);
+
+    device_class_register_property(device_class, PROPERTY_COMPRESSION,
+	    PROPERTY_ACCESS_GET_MASK,
+	    device_simple_property_get_fn,
+	    NULL);
+}
+
+static gboolean
+s3_device_set_access_key_fn(Device *p_self, DevicePropertyBase *base,
+    GValue *val, PropertySurety surety, PropertySource source)
+{
+    S3Device *self = S3_DEVICE(p_self);
+
+    amfree(self->access_key);
+    self->access_key = g_value_dup_string(val);
+    device_clear_volume_details(p_self);
+
+    return device_simple_property_set_fn(p_self, base, val, surety, source);
+}
+
+static gboolean
+s3_device_set_secret_key_fn(Device *p_self, DevicePropertyBase *base,
+    GValue *val, PropertySurety surety, PropertySource source)
+{
+    S3Device *self = S3_DEVICE(p_self);
+
+    amfree(self->secret_key);
+    self->secret_key = g_value_dup_string(val);
+    device_clear_volume_details(p_self);
+
+    return device_simple_property_set_fn(p_self, base, val, surety, source);
+}
+
+static gboolean
+s3_device_set_user_token_fn(Device *p_self, DevicePropertyBase *base,
+    GValue *val, PropertySurety surety, PropertySource source)
+{
+    S3Device *self = S3_DEVICE(p_self);
+
+    if (!self->is_devpay) {
+	device_set_error(p_self, stralloc(_(
+		   "Can't set a user token unless DevPay is in use")),
+	    DEVICE_STATUS_DEVICE_ERROR);
+	return FALSE;
+    }
+
+    amfree(self->user_token);
+    self->user_token = g_value_dup_string(val);
+    device_clear_volume_details(p_self);
+
+    return device_simple_property_set_fn(p_self, base, val, surety, source);
+}
+
+static gboolean
+s3_device_set_bucket_location_fn(Device *p_self, DevicePropertyBase *base,
+    GValue *val, PropertySurety surety, PropertySource source)
+{
+    S3Device *self = S3_DEVICE(p_self);
+
+    if (!s3_curl_location_compat()) {
+	device_set_error(p_self, stralloc(_(
+		"Location constraint given for Amazon S3 bucket, "
+		"but libcurl is too old support wildcard certificates.")),
+	    DEVICE_STATUS_DEVICE_ERROR);
+       return FALSE;
+    }
+
+    if (!s3_bucket_location_compat(self->bucket)) {
+	device_set_error(p_self, g_strdup_printf(_(
+		"Location constraint given for Amazon S3 bucket, "
+		"but the bucket name (%s) is not usable as a subdomain."),
+		self->bucket),
+	    DEVICE_STATUS_DEVICE_ERROR);
+       return FALSE;
+    }
+
+    amfree(self->bucket_location);
+    self->bucket_location = g_value_dup_string(val);
+    device_clear_volume_details(p_self);
+
+    return device_simple_property_set_fn(p_self, base, val, surety, source);
+}
+
+static gboolean
+s3_device_set_verbose_fn(Device *p_self, DevicePropertyBase *base,
+    GValue *val, PropertySurety surety, PropertySource source)
+{
+    S3Device *self = S3_DEVICE(p_self);
+
+    self->verbose = g_value_get_boolean(val);
+    /* Our S3 handle may not yet have been instantiated; if so, it will
+     * get the proper verbose setting when it is created */
+    if (self->s3)
+	s3_verbose(self->s3, self->verbose);
+
+    return device_simple_property_set_fn(p_self, base, val, surety, source);
 }
 
 static Device* 
@@ -731,6 +855,10 @@ static void s3_device_finalize(GObject * obj_self) {
     if(self->s3) s3_free(self->s3);
     if(self->bucket) g_free(self->bucket);
     if(self->prefix) g_free(self->prefix);
+    if(self->access_key) g_free(self->access_key);
+    if(self->secret_key) g_free(self->secret_key);
+    if(self->user_token) g_free(self->user_token);
+    if(self->bucket_location) g_free(self->bucket_location);
 }
 
 static gboolean setup_handle(S3Device * self) {
@@ -917,155 +1045,6 @@ s3_device_finish (Device * pself) {
     pself->access_mode = ACCESS_NULL;
 
     return TRUE;
-}
-
-static gboolean s3_device_property_get(Device * p_self, DevicePropertyId id,
-                                       GValue * val) {
-    S3Device * self;
-    const DevicePropertyBase * base;
-
-    self = S3_DEVICE(p_self);
-
-    if (device_in_error(p_self)) return FALSE;
-
-    base = device_property_get_by_id(id);
-
-    /* clear error status in case we return FALSE */
-    device_set_error(p_self, NULL, DEVICE_STATUS_SUCCESS);
-    g_value_unset_init(val, base->type);
-    
-    if (id == PROPERTY_S3_SECRET_KEY) {
-        if (self->secret_key != NULL) {
-            g_value_set_string(val, self->secret_key);
-            return TRUE;
-        } else {
-            return FALSE;
-        }
-    } else if (id == PROPERTY_S3_ACCESS_KEY) {
-        if (self->access_key != NULL) {
-            g_value_set_string(val, self->access_key);
-            return TRUE;
-        } else {
-            return FALSE;
-        }
-    } else if (id == PROPERTY_S3_USER_TOKEN) {
-        if (self->is_devpay && self->user_token != NULL) {
-            g_value_set_string(val, self->user_token);
-            return TRUE;
-        } else {
-            if (!self->is_devpay) {
-                device_set_error(p_self, stralloc(_(
-                           "Device doesn't have a user token unless DevPay is in use")),
-                    DEVICE_STATUS_DEVICE_ERROR);
-            }
-            return FALSE;
-        }
-    } else if (id == PROPERTY_S3_BUCKET_LOCATION) {
-        if (self->bucket_location != NULL) {
-            g_value_set_string(val, self->bucket_location);
-            return TRUE;
-        } else {
-            return FALSE;
-        }
-    }
-    else if (id == PROPERTY_VERBOSE) {
-        g_value_set_boolean(val, self->verbose);
-        return TRUE;
-    } else {
-        /* chain up */
-        if (parent_class->property_get) {
-            return (parent_class->property_get)(p_self, id, val);
-        } else {
-            return FALSE;
-        }
-    }
-
-    g_assert_not_reached();
-}
-
-static gboolean s3_device_property_set(Device * p_self, DevicePropertyId id,
-                                       GValue * val) {
-    S3Device * self;
-    const DevicePropertyBase * base;
-
-    self = S3_DEVICE(p_self);
-    if (device_in_error(self)) return FALSE;
-
-    base = device_property_get_by_id(id);
-
-    g_assert(G_VALUE_HOLDS(val, base->type));
-
-    if (id == PROPERTY_S3_SECRET_KEY) {
-        if (p_self->access_mode != ACCESS_NULL)
-            return FALSE;
-        amfree(self->secret_key);
-        self->secret_key = g_value_dup_string(val);
-        device_clear_volume_details(p_self);
-        return TRUE;
-    } else if (id == PROPERTY_S3_ACCESS_KEY) {
-        if (p_self->access_mode != ACCESS_NULL)
-            return FALSE;
-        amfree(self->access_key);
-        self->access_key = g_value_dup_string(val);
-        device_clear_volume_details(p_self);
-        return TRUE;
-    } else if (id == PROPERTY_S3_USER_TOKEN) {
-        if (p_self->access_mode != ACCESS_NULL)
-            return FALSE;
-
-        if (!self->is_devpay) {
-            device_set_error(p_self, stralloc(_(
-                       "Can't set a user token unless DevPay is in use")),
-                DEVICE_STATUS_DEVICE_ERROR);
-            return FALSE;
-        }
-
-        amfree(self->user_token);
-        self->user_token = g_value_dup_string(val);
-        device_clear_volume_details(p_self);
-        return TRUE;
-    } else if (id == PROPERTY_S3_BUCKET_LOCATION) {
-        if (p_self->access_mode != ACCESS_NULL)
-            return FALSE;
-
-        if (!s3_curl_location_compat()) {
-            device_set_error(p_self, stralloc(_(
-                    "Location constraint given for Amazon S3 bucket, "
-                    "but libcurl is too old support wildcard certificates.")),
-                DEVICE_STATUS_DEVICE_ERROR);
-           return FALSE;
-        }
-
-        if (!s3_bucket_location_compat(self->bucket)) {
-            device_set_error(p_self, g_strdup_printf(_(
-                    "Location constraint given for Amazon S3 bucket, "
-                    "but the bucket name (%s) is not usable as a subdomain."),
-                    self->bucket), 
-                DEVICE_STATUS_DEVICE_ERROR);
-           return FALSE;
-        }
-
-        amfree(self->bucket_location);
-        self->bucket_location = g_value_dup_string(val);
-        device_clear_volume_details(p_self);
-        return TRUE;
-    }
-    else if (id == PROPERTY_VERBOSE) {
-        self->verbose = g_value_get_boolean(val);
-	/* Our S3 handle may not yet have been instantiated; if so, it will
-	 * get the proper verbose setting when it is created */
-	if (self->s3)
-	    s3_verbose(self->s3, self->verbose);
-	return TRUE;
-    } else {
-        if (parent_class->property_set) {
-            return (parent_class->property_set)(p_self, id, val);
-        } else {
-            return FALSE;
-        }
-    }
-
-    g_assert_not_reached();
 }
 
 /* functions for writing */

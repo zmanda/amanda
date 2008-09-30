@@ -177,7 +177,12 @@ main(
         error("Could not open device %s: %s.\n", tapename,
 	      device_error(device));
     }
-    
+
+    if (!device_configure(device, TRUE)) {
+        error("Could not configure device %s: %s.\n", tapename,
+	      device_error(device));
+    }
+
     device_status = device_read_label(device);
 
     if (device_status & DEVICE_STATUS_VOLUME_UNLABELED) {

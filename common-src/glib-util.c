@@ -484,3 +484,27 @@ g_ptr_array_foreach (GPtrArray *array,
     (*func) (array->pdata[i], user_data);
 }
 #endif
+
+guint
+g_str_case_hash(
+	gconstpointer key)
+{
+    /* modified version of glib's hash function, copyright
+     * GLib Team and others 1997-2000. */
+    const char *p = key;
+    guint h = g_ascii_toupper(*p);
+
+    if (h)
+	for (p += 1; *p != '\0'; p++)
+	    h = (h << 5) - h + g_ascii_toupper(*p);
+
+    return h;
+}
+
+gboolean
+g_str_case_equal(
+	gconstpointer v1,
+	gconstpointer v2)
+{
+    return (0 == g_ascii_strcasecmp((char *)v1, (char *)v2));
+}

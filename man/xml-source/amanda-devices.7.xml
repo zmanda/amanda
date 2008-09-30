@@ -240,7 +240,7 @@ listed here for completeness.</para>
 <refsect2><title>COMMON PROPERTIES</title>
 
 <para>Note that some of these properties are currently unused, and present only
-for future expansion.</para>
+for future expansion.  Not all devices implement all of these properties.</para>
 
 <!-- PLEASE KEEP THIS LIST IN ALPHABETICAL ORDER -->
 

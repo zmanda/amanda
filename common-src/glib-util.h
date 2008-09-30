@@ -120,4 +120,8 @@ void g_ptr_array_foreach (GPtrArray *array,
                           gpointer user_data);
 #endif
 
+/* functions for g_hash_table_new to hash and compare case-insensitive strings */
+guint g_str_case_hash(gconstpointer v);
+gboolean g_str_case_equal(gconstpointer v1, gconstpointer v2);
+
 #endif

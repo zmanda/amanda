@@ -48,9 +48,11 @@ typedef struct _TapeDevice {
 
     /* It should go without saying that all this stuff is
      * look-but-don't-touch. */
-    FeatureSupportFlags fsf, bsf, fsr, bsr, eom, bsf_after_eom;
+
+    /* characteristics of the device */
+    gboolean fsf, bsf, fsr, bsr, eom, bsf_after_eom, broken_gmt_online;
     int final_filemarks;
-    gboolean compression, broken_gmt_online;
+
     /* 0 if we opened with O_RDWR; error otherwise. */
     gboolean write_open_errno;
     gboolean first_file; /* Is this the first file in append mode? */
@@ -97,5 +99,15 @@ extern DevicePropertyBase device_property_bsf_after_eom;
  * This property is a G_TYPE_UINT, but can only really be set to 1 or 2. */
 extern DevicePropertyBase device_property_final_filemarks;
 #define PROPERTY_FINAL_FILEMARKS (device_property_final_filemarks.ID)
+
+/* useful callback for tape ops */
+void tape_device_set_capabilities(TapeDevice *self,
+	gboolean fsf, PropertySurety fsf_surety, PropertySource fsf_source,
+	gboolean bsf, PropertySurety bsf_surety, PropertySource bsf_source,
+	gboolean fsr, PropertySurety fsr_surety, PropertySource fsr_source,
+	gboolean bsr, PropertySurety bsr_surety, PropertySource bsr_source,
+	gboolean eom, PropertySurety eom_surety, PropertySource eom_source,
+	gboolean bsf_after_eom, PropertySurety bae_surety, PropertySource bae_source,
+	guint final_filemarks, PropertySurety ff_surety, PropertySource ff_source);
 
 #endif

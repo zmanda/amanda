@@ -293,6 +293,14 @@ loadlabel_slot(void *	datap,
         return 0;
     }
 
+    if (!device_configure(device, TRUE)) {
+        g_fprintf(stderr, "%s: slot %s: Error configuring device:\n"
+                "%s: slot %s: %s\n",
+                get_pname(), slotstr, get_pname(), slotstr, device_error_or_status(device));
+        g_object_unref(device);
+        return 0;
+    }
+
     if (!set_restore_device_read_buffer_size(device, data->flags)) {
         g_fprintf(stderr, "%s: slot %s: Error setting read block size:\n"
                 "%s: slot %s: %s\n",
@@ -1261,6 +1269,12 @@ conditional_device_open(char         *tapedev,
 	send_message(prompt_out, flags, their_features, 
 		     "Error opening device '%s': %s.",
 		     tapedev, device_error(rval));
+        g_object_unref(rval);
+        return NULL;
+    }
+
+    if (!device_configure(rval, TRUE)) {
+        g_fprintf(stderr, "Error configuring device: %s\n", device_error_or_status(rval));
         g_object_unref(rval);
         return NULL;
     }
