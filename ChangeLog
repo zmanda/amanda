@@ -1,4 +1,7 @@
 2008-09-30  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/rait-device.c: fix typos
+
+2008-09-30  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/semaphore.h: fix typo
 	* device-src/rait-device.c: add a private threadpool-like
 	  implementation for old glibs, where GThreadPool is susceptible to

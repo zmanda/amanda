@@ -68,7 +68,7 @@ static GType	rait_device_get_type	(void);
 typedef struct RaitDevice_s {
     Device __parent__;
 
-    struct RaitDevicePrivate * private;
+    struct RaitDevicePrivate_s * private;
 } RaitDevice;
 
 /*
@@ -98,7 +98,7 @@ typedef enum {
 #define USE_INTERNAL_THREADPOOL
 #endif
 
-typedef struct RaitDevicePrivate {
+typedef struct RaitDevicePrivate_s {
     GPtrArray * children;
     /* These flags are only relevant for reading. */
     RaitStatus status;
