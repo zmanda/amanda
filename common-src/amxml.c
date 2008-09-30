@@ -480,7 +480,7 @@ amtext(
     tt[text_len] = '\0';
 
     //check if it is only space
-    if (match("^[ \f\n\r\t\v]*$", tt)) {
+    if (match_no_newline("^[ \f\n\r\t\v]*$", tt)) {
 	amfree(tt);
 	return;
     }
@@ -491,7 +491,7 @@ amtext(
     }
 
     //check if it is only space
-    if (match("^[ \f\n\r\t\v]*$", tt)) {
+    if (match_no_newline("^[ \f\n\r\t\v]*$", tt)) {
 	amfree(tt);
 	return;
     }
@@ -640,13 +640,13 @@ amtext(
 	    dle->compress = COMP_FAST;
 	} else if (strcmp(tt, "BEST") == 0) {
 	    dle->compress = COMP_BEST;
-	} else if (strcmp(tt, "CUSTOM") == 0) {
+	} else if (BSTRNCMP(tt, "CUSTOM") == 0) {
 	    dle->compress = COMP_CUST;
 	} else if (strcmp(tt, "SERVER-FAST") == 0) {
 	    dle->compress = COMP_SERVER_FAST;
 	} else if (strcmp(tt, "SERVER-BEST") == 0) {
 	    dle->compress = COMP_SERVER_BEST;
-	} else if (strcmp(tt, "SERVER-CUSTOM") == 0) {
+	} else if (BSTRNCMP(tt, "SERVER-CUSTOM") == 0) {
 	    dle->compress = COMP_SERVER_CUST;
 	} else {
 	    g_set_error(gerror, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
@@ -664,10 +664,12 @@ amtext(
 	}
 	dle->compprog = tt;
     } else if(strcmp(last_element_name, "encrypt") == 0) {
-	if (strcmp(tt,"NO") == 0) {
+	if (BSTRNCMP(tt,"NO") == 0) {
 	    dle->encrypt = ENCRYPT_NONE;
-	} else if (strcmp(tt, "CUSTOM") == 0) {
+	} else if (BSTRNCMP(tt, "CUSTOM") == 0) {
 	    dle->encrypt = ENCRYPT_CUST;
+	} else if (BSTRNCMP(tt, "SERVER-CUSTOM") == 0) {
+	    dle->encrypt = ENCRYPT_SERV_CUST;
 	} else {
 	    g_set_error(gerror, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
 			"XML: Invalid %s (%s)", last_element_name, tt);

@@ -145,8 +145,17 @@ void remove_disk(disklist_t *list, disk_t *disk);
 void dump_queue(char *str, disklist_t q, int npr, FILE *f);
 
 char *optionstr(disk_t *dp, am_feature_t *their_features, FILE *fdout);
-char *xml_optionstr(disk_t *dp, am_feature_t *their_features, FILE *fdout);
-char *xml_application(application_t *, am_feature_t *their_features);
+
+/* xml_optionstr()
+ * to_server must be set to 1 if the result is sent to another server
+ *           application, eg. driver to dumper.
+ *           It must be set to 0 if the result is sent to the client.
+ */
+char *xml_optionstr(disk_t *dp, am_feature_t *their_features, FILE *fdout,
+		    int to_server);
+char *clean_dle_str_for_client(char *dle_str);
+char *xml_application(application_t *application,
+		      am_feature_t *their_features);
 char *xml_scripts(pp_scriptlist_t pp_scriptlist, am_feature_t *their_features);
 
 char *match_disklist(disklist_t *origqp, int sargc, char **sargv);

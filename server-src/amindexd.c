@@ -1457,7 +1457,7 @@ main(
 		reply(200, "NODLE");
 	    } else {
 		b64disk = amxml_format_tag("disk", dp->name);
-		optionstr = xml_optionstr(dp, their_features, NULL);
+		optionstr = xml_optionstr(dp, their_features, NULL, 0);
 		l = vstralloc("<dle>\n",
 			      "  <program>", dp->program, "</program>\n", NULL);
 		if (dp->application) {

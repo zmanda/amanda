@@ -1575,7 +1575,7 @@ start_host(
 		continue;
 	    }
 	    if (am_has_feature(hostp->features, fe_req_xml))
-		o = xml_optionstr(dp, hostp->features, outf);
+		o = xml_optionstr(dp, hostp->features, outf, 0);
 	    else
 		o = optionstr(dp, hostp->features, outf);
 	    if (o == NULL) {

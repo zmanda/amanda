@@ -420,7 +420,7 @@ dumper_cmd(
 	    g_snprintf(numberport, SIZEOF(numberport), "%d", dumper->output_port);
 	    features = am_feature_to_string(dp->host->features);
 	    if (am_has_feature(dp->host->features, fe_req_xml)) {
-		o = xml_optionstr(dp, dp->host->features, NULL);
+		o = xml_optionstr(dp, dp->host->features, NULL, 1);
 		if (dp->application) {
 		    char *app = xml_application(dp->application,
 						dp->host->features);

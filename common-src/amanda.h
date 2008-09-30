@@ -486,6 +486,7 @@ char *	validate_regexp(const char *regex);
 char *	validate_glob(const char *glob);
 char *	clean_regex(const char *regex);
 int	match(const char *regex, const char *str);
+int	match_no_newline(const char *regex, const char *str);
 int	match_glob(const char *glob, const char *str);
 char *	glob_to_regex(const char *glob);
 int	match_tar(const char *glob, const char *str);

@@ -1420,7 +1420,7 @@ static void getsize(
 		    spindlestr = vstralloc("  <spindle>",
 					   spindle,
 					   "</spindle>\n", NULL);
-		    o = xml_optionstr(dp, hostp->features, NULL);
+		    o = xml_optionstr(dp, hostp->features, NULL, 0);
 		    if (o == NULL) {
 			error(_("problem with option string, check the dumptype definition.\n"));
 		    }

@@ -99,6 +99,34 @@ match(
     return result == 0;
 }
 
+int
+match_no_newline(
+    const char *	regex,
+    const char *	str)
+{
+    regex_t regc;
+    int result;
+    char errmsg[STR_SIZE];
+
+    if((result = regcomp(&regc, regex,
+			 REG_EXTENDED|REG_NOSUB)) != 0) {
+        regerror(result, &regc, errmsg, SIZEOF(errmsg));
+	error(_("regex \"%s\": %s"), regex, errmsg);
+	/*NOTREACHED*/
+    }
+
+    if((result = regexec(&regc, str, 0, 0, 0)) != 0
+       && result != REG_NOMATCH) {
+        regerror(result, &regc, errmsg, SIZEOF(errmsg));
+	error(_("regex \"%s\": %s"), regex, errmsg);
+	/*NOTREACHED*/
+    }
+
+    regfree(&regc);
+
+    return result == 0;
+}
+
 char *
 validate_glob(
     const char *	glob)

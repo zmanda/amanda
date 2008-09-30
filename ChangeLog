@@ -1,3 +1,18 @@
+2008-09-30  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/diskfile.h (xml_optionstr): New prototype.
+	* server-src/diskfile.h (clean_dle_str_for_client): Prototype.
+	* server-src/amindexd.c: Pass 0 to new argument of xml_optionstr.
+	* server-src/amcheck.c: Pass 0 to new argument of xml_optionstr.
+	* server-src/planner.c: Pass 0 to new argument of xml_optionstr.
+	* server-src/driverio.c: Pass 1 to new argument of xml_optionstr.
+	* server-src/dumper.c: Call clean_dle_str_for_client.
+	* server-src/diskfile.c (xml_optionstr): Work for ENCRYPT_SERV_CUST.
+	* server-src/diskfile.c (clean_dle_str_for_client): New function.
+	* restore-src/restore.c: Call clean_dle_str_for_client.
+	* common-src/amxml.c: Fix parsing.
+	* common-src/amanda.h (match_no_newline): Prototype.
+	* common-src/match.c (match_no_newline): New function.
+
 2008-09-30  Dustin J. Mitchell <dustin@zmanda.com>
 	* restore-src/restore.c: set data.flags for use by the changer_find
 	  callback

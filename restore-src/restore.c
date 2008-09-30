@@ -827,8 +827,9 @@ void restore(RestoreSource * source,
      * it has a fixed size.
      */
     if(flags->raw || (flags->headers && !is_continuation)) {
-	ssize_t w;
-	dumpfile_t tmp_hdr;
+	ssize_t     w;
+	dumpfile_t  tmp_hdr;
+	char       *dle_str;
 
 	if(flags->compress && !file_is_compressed) {
 	    source->header->compressed = 1;
@@ -853,6 +854,8 @@ void restore(RestoreSource * source,
 	/* remove CONT_FILENAME from header */
 	memset(source->header->cont_filename, '\0',
                SIZEOF(source->header->cont_filename));
+	dle_str = clean_dle_str_for_client(source->header->dle_str);
+	source->header->dle_str = dle_str;
 	source->header->blocksize = DISK_BLOCK_BYTES;
 
 	/*

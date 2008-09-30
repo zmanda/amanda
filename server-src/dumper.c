@@ -263,7 +263,6 @@ xml_check_options(
     char *uoptionstr = unquote_string(optionstr);
     o = oo = vstralloc("<dle>", strchr(uoptionstr,'<'), "</dle>", NULL);
   
-
     dle = amxml_parse_node_CHAR(o, &errmsg);
     if (dle == NULL) {
 	error("amxml_parse_node_CHAR failed: %s\n", errmsg);
@@ -278,7 +277,7 @@ xml_check_options(
 	srvcompprog = dle->compprog;
     } else if (dle->compress == COMP_CUST) {
 	srvcompress = COMP_CUST;
-	srvcompprog = dle->compprog;
+	clntcompprog = dle->compprog;
     } else {
 	srvcompress = COMP_NONE;
     }
@@ -289,8 +288,8 @@ xml_check_options(
 	clnt_decrypt_opt = dle->clnt_decrypt_opt;
     } else if (dle->encrypt == ENCRYPT_SERV_CUST) {
 	srvencrypt = ENCRYPT_SERV_CUST;
-	srv_encrypt = dle->srv_encrypt;
-	srv_decrypt_opt = dle->srv_decrypt_opt;
+	srv_encrypt = dle->clnt_encrypt;
+	srv_decrypt_opt = dle->clnt_decrypt_opt;
     } else {
 	srvencrypt = ENCRYPT_NONE;
     }
@@ -2031,6 +2030,7 @@ startup_dump(
     amfree(dle_str);
     if (am_has_feature(their_features, fe_req_xml)) {
 	char *o, *p = NULL;
+	char *pclean;
 	o = unquote_string(options+1);
 	vstrextend(&p, "<dle>\n", NULL);
 	if (*application_api != '\0') {
@@ -2046,7 +2046,9 @@ startup_dump(
 	vstrextend(&p, "  <level>", level_string, "</level>\n", NULL);
 	vstrextend(&p, o, "</dle>\n", NULL);
 	amfree(o);
-	vstrextend(&req, p, NULL);
+	pclean = clean_dle_str_for_client(p);
+	vstrextend(&req, pclean, NULL);
+	amfree(pclean);
 	dle_str = p;
     } else {
 	authopt = strstr(options, "auth=");

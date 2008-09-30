@@ -1043,7 +1043,7 @@ optionstr(
 		      _("ERROR: %s:%s No encryption program specified in dumptypes\n"),
 		      dp->host->hostname, qdpname);
 	      g_fprintf(fdout, _("Change the dumptype in the disklist or mention "
-			       "the ecnryption program to use in the dumptypes file"));
+			       "the ecnryption program to use in the dumptypes file\n"));
 
 	    }
 	    err++;
@@ -1269,7 +1269,8 @@ char *
 xml_optionstr(
     disk_t *		dp,
     am_feature_t *	their_features,
-    FILE *		fdout)
+    FILE *		fdout,
+    int                 to_server)
 {
     char *auth_opt = stralloc("");
     char *kencrypt_opt = stralloc("");
@@ -1340,8 +1341,8 @@ xml_optionstr(
 		err++;
 	    } else {
 
-		compress_opt = vstralloc("  <compress>CUSTOM\n"
-					 "    <custom-compress-program>",
+		compress_opt = vstralloc("  <compress>CUSTOM"
+					 "<custom-compress-program>",
 					 dp->clntcompprog,
 					 "</custom-compress-program>\n"
 					 "  </compress>\n", NULL);
@@ -1369,8 +1370,8 @@ xml_optionstr(
 	    }
 	    err++;
 	} else {
-	    compress_opt = vstralloc("  <compress>SERVER-CUSTOM\n"
-				     "    <custom-compress-program>",
+	    compress_opt = vstralloc("  <compress>SERVER-CUSTOM"
+				     "<custom-compress-program>",
 				     dp->srvcompprog,
 				     "</custom-compress-program>\n"
 				     "  </compress>\n", NULL);
@@ -1400,10 +1401,10 @@ xml_optionstr(
 			    dp->host->hostname, qdpname);
 		}
 		err++;
-	    } else {
+	    } else if (decrypt_opt) {
 		 encrypt_opt = newvstralloc(encrypt_opt,
-					    "  <encrypt>CUSTOM\n"
-					    "    <custom-encrypt-program>",
+					    "  <encrypt>CUSTOM"
+					    "<custom-encrypt-program>",
 					    dp->clnt_encrypt,
 					    "</custom-encrypt-program>\n",
 					    decrypt_opt,
@@ -1427,14 +1428,26 @@ xml_optionstr(
 	}
 	break;
     case ENCRYPT_SERV_CUST:
-	if (dp->srv_encrypt == NULL) {
+	if (dp->srv_encrypt != NULL && to_server) {
+	    decrypt_opt =  newvstralloc(decrypt_opt,
+					"    <decrypt-option>",
+					dp->srv_decrypt_opt, 
+					"</decrypt-option>\n", NULL);
+	    encrypt_opt = newvstralloc(encrypt_opt,
+				       "  <encrypt>SERVER-CUSTOM"
+				       "<custom-encrypt-program>",
+				       dp->srv_encrypt,
+				       "</custom-encrypt-program>\n",
+				       decrypt_opt,
+				       "  </encrypt>\n", NULL);
+	} else if (dp->srv_encrypt == NULL) {
 	    if(fdout) {
 		fprintf(fdout,
 			_("ERROR: %s:%s No encryption program specified in dumptypes\n"),
 			dp->host->hostname, qdpname);
 		fprintf(fdout,
 			 _("Change the dumptype in the disklist or mention "
-			"the encryption program to use in the dumptypes file"));
+			"the encryption program to use in the dumptypes file\n"));
 	    }
 	    err++;
 	}
@@ -1657,6 +1670,29 @@ xml_optionstr(
     } else {
 	return result;
     }
+}
+
+char *
+clean_dle_str_for_client(
+    char *dle_str)
+{
+    char *rval_dle_str = stralloc(dle_str);
+    char *hack1, *hack2;
+
+    /* Remove everything between "  <encrypt>SERVER-CUSTOM" and "</encrypt>\n"
+     */
+#define SC "</encrypt>\n"
+#define SC_LEN strlen(SC)
+    hack1 = strstr(rval_dle_str, "  <encrypt>SERVER-CUSTOM");
+    if (hack1) {
+	hack2 = strstr(hack1, SC);
+	/* +1 is to also move the trailing '\0' */
+	memmove(hack1, hack2 + SC_LEN, strlen(hack2 + SC_LEN) + 1);
+    }
+#undef SC
+#undef SC_LEN
+
+    return rval_dle_str;
 }
 
 typedef struct {
