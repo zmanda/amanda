@@ -1918,6 +1918,7 @@ restore_from_tapelist(FILE * prompt_out,
                 loadlabel_data data;
                 data.cur_tapedev = &tapedev;
                 data.searchlabel =  cur_volume->label;
+		data.flags = flags;
                 changer_find(&data, scan_init, loadlabel_slot,
                              cur_volume->label);
                 device = conditional_device_open(tapedev, prompt_out,
