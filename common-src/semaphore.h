@@ -66,7 +66,7 @@ void semaphore_increment(semaphore_t *sem, unsigned int incr);
 #define semaphore_up(semaphore) semaphore_increment(semaphore,1)
 
 /* Decrement the value of the semaphore by incr.  If this operation
- * would make the semaphore zero or less, block until the semaphore
+ * would make the semaphore negative, block until the semaphore
  * value is large enough, then perform the decerement operation. Threads
  * waiting on semaphore_wait_empty() may be awakened if the value
  * reaches 0.

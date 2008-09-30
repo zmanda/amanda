@@ -28,6 +28,7 @@
 #include "glib-util.h"
 #include "device.h"
 #include "fileheader.h"
+#include "semaphore.h"
 
 /* Just a note about the failure mode of different operations:
    - Recovers from a failure (enters degraded mode)
@@ -64,11 +65,10 @@ static GType	rait_device_get_type	(void);
 /*
  * Main object structure
  */
-typedef struct RaitDevicePrivate_s RaitDevicePrivate;
 typedef struct RaitDevice_s {
     Device __parent__;
 
-    RaitDevicePrivate * private;
+    struct RaitDevicePrivate * private;
 } RaitDevice;
 
 /*
@@ -85,7 +85,20 @@ typedef enum {
     RAIT_STATUS_FAILED    /* Two or more subdevices failed. */
 } RaitStatus;
 
-struct RaitDevicePrivate_s {
+/* Older versions of glib have a deadlock in their thread pool implementations,
+ * so we include a simple thread-pool implementation here to replace it.
+ *
+ * This implementation assumes that threads are used for paralellizing a single
+ * operation, so all threads run a function to completion before the main thread
+ * continues.  This simplifies some of the locking semantics, and in particular
+ * there is no need to wait for stray threads to finish an operation when
+ * finalizing the RaitDevice object or when beginning a new operation.
+ */
+#if !(GLIB_CHECK_VERSION(2,10,0))
+#define USE_INTERNAL_THREADPOOL
+#endif
+
+typedef struct RaitDevicePrivate {
     GPtrArray * children;
     /* These flags are only relevant for reading. */
     RaitStatus status;
@@ -95,7 +108,34 @@ struct RaitDevicePrivate_s {
 
     /* the child block size */
     gsize child_block_size;
-};
+
+#ifdef USE_INTERNAL_THREADPOOL
+    /* array of ThreadInfo for performing parallel operations */
+    GArray *threads;
+
+    /* value of this semaphore is the number of threaded operations
+     * in progress */
+    semaphore_t *threads_sem;
+#endif
+} RaitDevicePrivate;
+
+#ifdef USE_INTERNAL_THREADPOOL
+typedef struct ThreadInfo {
+    GThread *thread;
+
+    /* struct fields below are protected by this mutex and condition variable */
+    GMutex *mutex;
+    GCond *cond;
+
+    gboolean die;
+    GFunc func;
+    gpointer data;
+
+    /* give threads access to active_threads and its mutex/cond */
+    struct RaitDevicePrivate_s *private;
+} ThreadInfo;
+#endif
+
 
 #define PRIVATE(o) (o->private)
 
@@ -207,7 +247,7 @@ static void g_object_unref_foreach(gpointer data,
 static void
 rait_device_finalize(GObject *obj_self)
 {
-    RaitDevice *self G_GNUC_UNUSED = RAIT_DEVICE (obj_self);
+    RaitDevice *self = RAIT_DEVICE (obj_self);
     if(G_OBJECT_CLASS(parent_class)->finalize) \
            (* G_OBJECT_CLASS(parent_class)->finalize)(obj_self);
     if(self->private->children) {
@@ -216,6 +256,38 @@ rait_device_finalize(GObject *obj_self)
         g_ptr_array_free (self->private->children, TRUE);
         self->private->children = NULL;
     }
+#ifdef USE_INTERNAL_THREADPOOL
+    g_assert(PRIVATE(self)->threads_sem == NULL || PRIVATE(self)->threads_sem->value == 0);
+
+    if (PRIVATE(self)->threads) {
+	guint i;
+
+	for (i = 0; i < PRIVATE(self)->threads->len; i++) {
+	    ThreadInfo *inf = &g_array_index(PRIVATE(self)->threads, ThreadInfo, i);
+	    if (inf->thread) {
+		/* NOTE: the thread is waiting on this condition right now, not
+		 * executing an operation. */
+
+		/* ask the thread to die */
+		g_mutex_lock(inf->mutex);
+		inf->die = TRUE;
+		g_cond_signal(inf->cond);
+		g_mutex_unlock(inf->mutex);
+
+		/* and wait for it to die, which should happen soon */
+		g_thread_join(inf->thread);
+	    }
+
+	    if (inf->mutex)
+		g_mutex_free(inf->mutex);
+	    if (inf->cond)
+		g_cond_free(inf->cond);
+	}
+    }
+
+    if (PRIVATE(self)->threads_sem)
+	semaphore_free(PRIVATE(self)->threads_sem);
+#endif
     amfree(self->private);
 }
 
@@ -226,6 +298,10 @@ rait_device_init (RaitDevice * o G_GNUC_UNUSED)
     PRIVATE(o)->children = g_ptr_array_new();
     PRIVATE(o)->status = RAIT_STATUS_COMPLETE;
     PRIVATE(o)->failed = -1;
+#ifdef USE_INTERNAL_THREADPOOL
+    PRIVATE(o)->threads = NULL;
+    PRIVATE(o)->threads_sem = NULL;
+#endif
 }
 
 static void 
@@ -251,12 +327,12 @@ rait_device_class_init (RaitDeviceClass * c)
 
     g_object_class->finalize = rait_device_finalize;
 
+#ifndef USE_INTERNAL_THREADPOOL
+#if !GLIB_CHECK_VERSION(2,10,2)
     /* Versions of glib before 2.10.2 crash if
      * g_thread_pool_set_max_unused_threads is called before the first
      * invocation of g_thread_pool_new.  So we make up a thread pool, but don't
      * start any threads in it, and free it */
-
-#if !GLIB_CHECK_VERSION(2,10,2)
     {
 	GThreadPool *pool = g_thread_pool_new((GFunc)-1, NULL, -1, FALSE, NULL);
 	g_thread_pool_free(pool, TRUE, FALSE);
@@ -264,6 +340,7 @@ rait_device_class_init (RaitDeviceClass * c)
 #endif
 
     g_thread_pool_set_max_unused_threads(-1);
+#endif
 }
 
 static void
@@ -323,12 +400,81 @@ rait_device_base_init (RaitDeviceClass * c)
  * 
  * When it returns, all the operations have been successfully
  * executed. If you want results from your operations, do it yourself
- * through the array. */
-static void do_thread_pool_op(GFunc func, GPtrArray * ops, gpointer data) {
+ * through the array.
+ */
+
+#ifdef USE_INTERNAL_THREADPOOL
+static gpointer rait_thread_pool_func(gpointer data) {
+    ThreadInfo *inf = data;
+
+    g_mutex_lock(inf->mutex);
+    while (TRUE) {
+	while (!inf->die && !inf->func)
+	    g_cond_wait(inf->cond, inf->mutex);
+
+	if (inf->die)
+	    break;
+
+	if (inf->func) {
+	    /* invoke the function */
+	    inf->func(inf->data, NULL);
+	    inf->func = NULL;
+	    inf->data = NULL;
+
+            /* indicate that we're finished; will not block */
+	    semaphore_down(inf->private->threads_sem);
+	}
+    }
+    g_mutex_unlock(inf->mutex);
+    return NULL;
+}
+
+static void do_thread_pool_op(RaitDevice *self, GFunc func, GPtrArray * ops) {
+    guint i;
+
+    if (PRIVATE(self)->threads_sem == NULL)
+	PRIVATE(self)->threads_sem = semaphore_new_with_value(0);
+
+    if (PRIVATE(self)->threads == NULL)
+	PRIVATE(self)->threads = g_array_sized_new(FALSE, TRUE,
+					    sizeof(ThreadInfo), ops->len);
+
+    g_assert(PRIVATE(self)->threads_sem->value == 0);
+
+    if (PRIVATE(self)->threads->len < ops->len)
+	g_array_set_size(PRIVATE(self)->threads, ops->len);
+
+    /* the semaphore will hit zero when each thread has decremented it */
+    semaphore_force_set(PRIVATE(self)->threads_sem, ops->len);
+
+    for (i = 0; i < ops->len; i++) {
+	ThreadInfo *inf = &g_array_index(PRIVATE(self)->threads, ThreadInfo, i);
+	if (!inf->thread) {
+	    inf->mutex = g_mutex_new();
+	    inf->cond = g_cond_new();
+	    inf->private = PRIVATE(self);
+	    inf->thread = g_thread_create(rait_thread_pool_func, inf, TRUE, NULL);
+	}
+
+	/* set up the info the thread needs and trigger it to start */
+	g_mutex_lock(inf->mutex);
+	inf->data = g_ptr_array_index(ops, i);
+	inf->func = func;
+	g_cond_signal(inf->cond);
+	g_mutex_unlock(inf->mutex);
+    }
+
+    /* wait until semaphore hits zero */
+    semaphore_wait_empty(PRIVATE(self)->threads_sem);
+}
+
+#else /* USE_INTERNAL_THREADPOOL */
+
+static void do_thread_pool_op(RaitDevice *self G_GNUC_UNUSED, GFunc func, GPtrArray * ops) {
     GThreadPool * pool;
     guint i;
 
-    pool = g_thread_pool_new(func, data, -1, FALSE, NULL);
+    pool = g_thread_pool_new(func, NULL, -1, FALSE, NULL);
     for (i = 0; i < ops->len; i ++) {
         g_thread_pool_push(pool, g_ptr_array_index(ops, i), NULL);
     }
@@ -336,9 +482,10 @@ static void do_thread_pool_op(GFunc func, GPtrArray * ops, gpointer data) {
     g_thread_pool_free(pool, FALSE, TRUE);
 }
 
+#endif /* USE_INTERNAL_THREADPOOL */
+
 /* This does the above, in a serial fashion (and without using threads) */
-static void do_unthreaded_ops(GFunc func, GPtrArray * ops,
-                              gpointer data G_GNUC_UNUSED) {
+static void do_unthreaded_ops(RaitDevice *self G_GNUC_UNUSED, GFunc func, GPtrArray * ops) {
     guint i;
 
     for (i = 0; i < ops->len; i ++) {
@@ -349,11 +496,11 @@ static void do_unthreaded_ops(GFunc func, GPtrArray * ops,
 /* This is the one that code below should call. It switches
    automatically between do_thread_pool_op and do_unthreaded_ops,
    depending on g_thread_supported(). */
-static void do_rait_child_ops(GFunc func, GPtrArray * ops, gpointer data) {
+static void do_rait_child_ops(RaitDevice *self, GFunc func, GPtrArray * ops) {
     if (g_thread_supported()) {
-        do_thread_pool_op(func, ops, data);
+        do_thread_pool_op(self, func, ops);
     } else {
-        do_unthreaded_ops(func, ops, data);
+        do_unthreaded_ops(self, func, ops);
     }
 }
 
@@ -896,7 +1043,7 @@ rait_device_open_device (Device * dself, char * device_name,
     }
 
     g_ptr_array_free(device_names, TRUE);
-    do_rait_child_ops(device_open_do_op, device_open_ops, NULL);
+    do_rait_child_ops(self, device_open_do_op, device_open_ops);
 
     failure = FALSE;
     failure_errmsgs = NULL;
@@ -981,7 +1128,7 @@ static DeviceStatusFlags rait_device_read_label(Device * dself) {
 
     ops = make_generic_boolean_op_array(self);
     
-    do_rait_child_ops(read_label_do_op, ops, NULL);
+    do_rait_child_ops(self, read_label_do_op, ops);
     
     for (i = 0; i < ops->len; i ++) {
         GenericOp * op = g_ptr_array_index(ops, i);
@@ -1130,7 +1277,7 @@ rait_device_start (Device * dself, DeviceAccessMode mode, char * label,
         g_ptr_array_add(ops, op);
     }
     
-    do_rait_child_ops(start_do_op, ops, NULL);
+    do_rait_child_ops(self, start_do_op, ops);
 
     success = g_ptr_array_and(ops, extract_boolean_generic_op);
 
@@ -1239,7 +1386,7 @@ rait_device_start_file (Device * dself, dumpfile_t * info) {
         g_ptr_array_add(ops, op);
     }
     
-    do_rait_child_ops(start_file_do_op, ops, NULL);
+    do_rait_child_ops(self, start_file_do_op, ops);
 
     success = g_ptr_array_and(ops, extract_boolean_generic_op);
     
@@ -1432,7 +1579,7 @@ rait_device_write_block (Device * dself, guint size, gpointer data) {
         g_ptr_array_add(ops, op);
     }
 
-    do_rait_child_ops(write_block_do_op, ops, NULL);
+    do_rait_child_ops(self, write_block_do_op, ops);
 
     success = g_ptr_array_and(ops, extract_boolean_generic_op);
 
@@ -1489,7 +1636,7 @@ rait_device_finish_file (Device * dself) {
 
     ops = make_generic_boolean_op_array(self);
     
-    do_rait_child_ops(finish_file_do_op, ops, NULL);
+    do_rait_child_ops(self, finish_file_do_op, ops);
 
     success = g_ptr_array_and(ops, extract_boolean_generic_op);
 
@@ -1548,7 +1695,7 @@ rait_device_seek_file (Device * dself, guint file) {
         g_ptr_array_add(ops, op);
     }
     
-    do_rait_child_ops(seek_file_do_op, ops, NULL);
+    do_rait_child_ops(self, seek_file_do_op, ops);
 
     /* This checks for NULL values, but we still have to check for
        consistant headers. */
@@ -1639,7 +1786,7 @@ rait_device_seek_block (Device * dself, guint64 block) {
         g_ptr_array_add(ops, op);
     }
     
-    do_rait_child_ops(seek_block_do_op, ops, NULL);
+    do_rait_child_ops(self, seek_block_do_op, ops);
 
     success = g_ptr_array_union_robust(RAIT_DEVICE(self),
                                        ops, extract_boolean_generic_op);
@@ -1842,7 +1989,7 @@ rait_device_read_block (Device * dself, gpointer buf, int * size) {
         g_ptr_array_add(ops, op);
     }
     
-    do_rait_child_ops(read_block_do_op, ops, NULL);
+    do_rait_child_ops(self, read_block_do_op, ops);
 
     if (g_ptr_array_count(ops, extract_boolean_read_block_op_data)) {
         if (!g_ptr_array_union_robust(RAIT_DEVICE(self),
@@ -2054,7 +2201,7 @@ property_get_concurrency_fn(Device *dself,
     gboolean success;
 
     ops = make_property_op_array(self, PROPERTY_CONCURRENCY, NULL, 0, 0);
-    do_rait_child_ops(property_get_do_op, ops, NULL);
+    do_rait_child_ops(self, property_get_do_op, ops);
 
     /* find the most restrictive paradigm acceptable to all
      * child devices */
@@ -2116,7 +2263,7 @@ property_get_streaming_fn(Device *dself,
     gboolean success;
 
     ops = make_property_op_array(self, PROPERTY_STREAMING, NULL, 0, 0);
-    do_rait_child_ops(property_get_do_op, ops, NULL);
+    do_rait_child_ops(self, property_get_do_op, ops);
 
     /* combine the child streaming requirements, selecting the strongest
      * requirement of the bunch. */
@@ -2178,7 +2325,7 @@ property_get_boolean_and_fn(Device *dself,
     gboolean success;
 
     ops = make_property_op_array(self, base->ID, NULL, 0, 0);
-    do_rait_child_ops(property_get_do_op, ops, NULL);
+    do_rait_child_ops(self, property_get_do_op, ops);
 
     /* combine the child values, applying a simple AND */
     result = TRUE;
@@ -2227,7 +2374,7 @@ property_get_medium_access_type_fn(Device *dself,
     gboolean success;
 
     ops = make_property_op_array(self, PROPERTY_MEDIUM_ACCESS_TYPE, NULL, 0, 0);
-    do_rait_child_ops(property_get_do_op, ops, NULL);
+    do_rait_child_ops(self, property_get_do_op, ops);
 
     /* combine the modes as best we can */
     result = 0;
@@ -2301,7 +2448,7 @@ property_get_free_space_fn(Device *dself,
     guint data_children;
 
     ops = make_property_op_array(self, PROPERTY_MEDIUM_ACCESS_TYPE, NULL, 0, 0);
-    do_rait_child_ops(property_get_do_op, ops, NULL);
+    do_rait_child_ops(self, property_get_do_op, ops);
 
     /* Find the minimal available space of any child, with some funny business
      * to deal with varying degrees of accuracy. */
@@ -2371,7 +2518,7 @@ property_get_max_volume_usage_fn(Device *dself,
     guint data_children;
 
     ops = make_property_op_array(self, PROPERTY_MAX_VOLUME_USAGE, NULL, 0, 0);
-    do_rait_child_ops(property_get_do_op, ops, NULL);
+    do_rait_child_ops(self, property_get_do_op, ops);
 
     /* look for the smallest value that is set */
     result = 0;
@@ -2439,7 +2586,7 @@ property_set_max_volume_usage_fn(Device *dself,
 
     ops = make_property_op_array(self, PROPERTY_MAX_VOLUME_USAGE,
 				&child_val, surety, source);
-    do_rait_child_ops(property_set_do_op, ops, NULL);
+    do_rait_child_ops(self, property_set_do_op, ops);
 
     /* if any of the kids succeeded, then we did too */
     success = FALSE;
@@ -2489,7 +2636,7 @@ rait_device_recycle_file (Device * dself, guint filenum) {
         g_ptr_array_add(ops, op);
     }
     
-    do_rait_child_ops(recycle_file_do_op, ops, NULL);
+    do_rait_child_ops(self, recycle_file_do_op, ops);
 
     success = g_ptr_array_and(ops, extract_boolean_generic_op);
 
@@ -2520,7 +2667,7 @@ rait_device_finish (Device * self) {
 
     ops = make_generic_boolean_op_array(RAIT_DEVICE(self));
     
-    do_rait_child_ops(finish_do_op, ops, NULL);
+    do_rait_child_ops(RAIT_DEVICE(self), finish_do_op, ops);
 
     success = g_ptr_array_and(ops, extract_boolean_generic_op);
 
