@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 12;
+use Test::More tests => 17;
 use strict;
 use warnings;
 use POSIX qw(WIFEXITED WEXITSTATUS EINTR);
@@ -348,3 +348,48 @@ $src->remove();
 $src->remove();
 pass("Calling remove twice is ok");
 
+{
+    my ($cb1, $cb2);
+    my $gothere = 0;
+
+    $cb1 = sub {
+	my ($a, $b) = @_;
+	ok(Amanda::MainLoop::is_running(),
+	    "call_later waits until mainloop runs");
+	is($a+$b, 10,
+	    "call_later passes arguments correctly");
+	Amanda::MainLoop::call_later($cb2);
+	Amanda::MainLoop::quit();
+    };
+
+    $cb2 = sub {
+	$gothere = 1;
+    };
+
+    ok(!Amanda::MainLoop::is_running(), "main loop is correctly recognized as not running");
+    Amanda::MainLoop::call_later($cb1, 7, 3);
+    Amanda::MainLoop::run();
+    ok($gothere, "call_later while already running calls immediately");
+
+    my @actions = ();
+
+    $cb1 = sub {
+        push @actions, "cb1 start";
+	Amanda::MainLoop::call_later($cb2, "hello");
+        push @actions, "cb1 end";
+    };
+
+    $cb2 = sub {
+	my ($greeting) = @_;
+
+        push @actions, "cb2 start $greeting";
+	Amanda::MainLoop::quit();
+        push @actions, "cb2 end";
+    };
+
+    Amanda::MainLoop::call_later($cb1);
+    Amanda::MainLoop::run();
+    is_deeply([ @actions ],
+              [ "cb1 start", "cb1 end", "cb2 start hello", "cb2 end" ],
+              "call_later doesn't call its argument immediately");
+}

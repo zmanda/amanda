@@ -1,4 +1,8 @@
 2008-09-30  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/MainLoop.swg: add call_later()
+	* installcheck/Amanda_MainLoop.pl: test it
+
+2008-09-30  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/rait-device.c: fix typos
 
 2008-09-30  Dustin J. Mitchell <dustin@zmanda.com>

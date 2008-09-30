@@ -69,7 +69,37 @@ application cleans up and exits.
 
 The actual event loop takes place within a call to C<Amanda::MainLoop::run()>.
 This function executes until a call to C<Amanda::MainLoop::quit()> occurs, at
-which point C<run()> returns.
+which point C<run()> returns.  You can check whether the loop is running with
+C<Amanda::MainLoop::is_running()>.
+
+In some cases, a sub should only run after the loop has started.  The
+most common case is when a callback may call C<Amanda::MainLoop::quit>
+immediately.  In this circumstance, use C<call_later>, which takes a
+subref and an arbitrary number of arguments for that sub:
+
+    my $cb = sub {
+	my ($letters, $digits) = @_;
+	# ..
+	Amanda::MainLoop::quit();
+    };
+    Amanda::MainLoop::call_later($cb, "abc", 123);
+    # ..
+    Amanda::MainLoop::run();
+
+Similarly, a tight loop of callbacks with no blocking operations can
+lead to excessive stack consumption.  In this case, C<call_later()> is
+useful, too. It queues the callback to run at the next cycle of the
+MainLoop:
+
+    sub might_delay {
+        my ($cb) = @_;
+        if (can_do_it_now()) {
+            my $result = do_it();
+            Amanda::MainLoop::call_later($cb, $result)
+        } else {
+            # ..
+        }
+    }
 
 =head2 EVENT SOURCES
 
@@ -224,8 +254,44 @@ L<Amanda::MainLoop>.
  * Looping
  */
 
+%perlcode %{
+# glib's g_is_main_loop_running() seems inaccurate, so we just
+# track that information locally..
+my $mainloop_running = 0;
+
+my @waiting_to_call_later;
+sub call_later {
+    my ($sub, @args) = @_;
+
+    # add the callback if nothing is waiting right now
+    if (!@waiting_to_call_later) {
+        timeout_source(0)->set_callback(sub {
+            my ($src) = @_;
+            $src->remove();
+
+            while (@waiting_to_call_later) {
+                my ($sub, @args) = @{pop @waiting_to_call_later};
+                $sub->(@args);
+            }
+        });
+    }
+
+    push @waiting_to_call_later, [ $sub, @args ];
+}
+
+sub run {
+    $mainloop_running = 1;
+    run_c();
+    $mainloop_running = 0;
+}
+
+sub is_running {
+    return $mainloop_running;
+}
+%}
+
 %inline %{
-void run(void) {
+void run_c(void) {
     g_main_loop_run(default_main_loop());
 }
 
