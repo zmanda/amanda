@@ -618,15 +618,15 @@ time_t	unctime(char *timestr);
 #define	NUM_STR_SIZE	128		/* a generic number buffer size */
 
 #define	skip_whitespace(ptr,c) do {					\
-    while((c) != '\n' && isspace((int)c)) (c) = *(ptr)++;		\
+    while((c) != '\n' && g_ascii_isspace((int)c)) (c) = *(ptr)++;		\
 } while(0)
 
 #define	skip_non_whitespace(ptr,c) do {					\
-    while((c) != '\0' && !isspace((int)c)) (c) = *(ptr)++;		\
+    while((c) != '\0' && !g_ascii_isspace((int)c)) (c) = *(ptr)++;		\
 } while(0)
 
 #define	skip_non_whitespace_cs(ptr,c) do {				\
-    while((c) != '\0' && (c) != '#' && !isspace((int)c)) (c) = *(ptr)++;\
+    while((c) != '\0' && (c) != '#' && !g_ascii_isspace((int)c)) (c) = *(ptr)++;\
 } while(0)
 
 #define	skip_non_integer(ptr,c) do {					\
@@ -640,7 +640,7 @@ time_t	unctime(char *timestr);
 
 #define skip_quoted_string(ptr, c) do {					\
     int	iq = 0;								\
-    while (((c) != '\0') && !((iq == 0) && isspace((int)c))) {		\
+    while (((c) != '\0') && !((iq == 0) && g_ascii_isspace((int)c))) {		\
 	if ((c) == '"') {						\
 	    iq = !iq;							\
 	} else if ((c) == '\\') {					\
@@ -671,7 +671,7 @@ time_t	unctime(char *timestr);
 
 #define	copy_string(ptr,c,f,l,fp) do {					\
     (fp) = (f);								\
-    while((c) != '\0' && !isspace((int)c)) {				\
+    while((c) != '\0' && !g_ascii_isspace((int)c)) {				\
 	if((fp) >= (f) + (l) - 1) {					\
 	    *(fp) = '\0';						\
 	    (fp) = NULL;						\
@@ -687,7 +687,7 @@ time_t	unctime(char *timestr);
 
 #define	copy_string_cs(ptr,c,f,l,fp) do {				\
     (fp) = (f);								\
-    while((c) != '\0' && (c) != '#' && !isspace((int)c)) {		\
+    while((c) != '\0' && (c) != '#' && !g_ascii_isspace((int)c)) {		\
 	if((fp) >= (f) + (l) - 1) {					\
 	    *(fp) = '\0';						\
 	    (fp) = NULL;						\

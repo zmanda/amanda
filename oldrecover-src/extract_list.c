@@ -1254,7 +1254,7 @@ okay_to_continue(
 	    break;
 	}
 	s = line;
-	while ((ch = *s++) != '\0' && isspace(ch)) {
+	while ((ch = *s++) != '\0' && g_ascii_isspace(ch)) {
 	    (void)ch;  /* Quiet empty loop body warning */
 	}
 	if (ch == '?') {

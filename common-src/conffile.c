@@ -1299,7 +1299,9 @@ get_conftoken(
     else {
 	ch = conftoken_getc();
 
-	while(ch != EOF && ch != '\n' && isspace(ch))
+	/* note that we're explicitly assuming this file is ASCII.  Someday
+	 * maybe we'll support UTF-8? */
+	while(ch != EOF && ch != '\n' && g_ascii_isspace(ch))
 	    ch = conftoken_getc();
 	if (ch == '#') {	/* comment - eat everything but eol/eof */
 	    while((ch = conftoken_getc()) != EOF && ch != '\n') {

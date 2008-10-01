@@ -1425,7 +1425,7 @@ okay_to_continue(
 	dbprintf("User prompt: '%s'; response: '%s'\n", prompt, line);
 
 	s = line;
-	while ((ch = *s++) != '\0' && isspace(ch)) {
+	while ((ch = *s++) != '\0' && g_ascii_isspace(ch)) {
 	    (void)ch;	/* Quiet empty loop compiler warning */
 	}
 	if (ch == '?') {

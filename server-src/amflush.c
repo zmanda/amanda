@@ -499,7 +499,7 @@ get_letter_from_user(void)
     int r, ch;
 
     fflush(stdout); fflush(stderr);
-    while((ch = getchar()) != EOF && ch != '\n' && isspace(ch)) {
+    while((ch = getchar()) != EOF && ch != '\n' && g_ascii_isspace(ch)) {
 	(void)ch; /* Quite lint */
     }
     if(ch == '\n') {
@@ -569,14 +569,14 @@ pick_datestamp(void)
 
 	    a = answer;
 	    while ((ch = *a++) != '\0') {
-		if (!isspace(ch))
+		if (!g_ascii_isspace(ch))
 		    break;
 	    }
 
 	    /* rewrite the selected list into r_datestamp_list, then copy it over
 	     * to datestamp_list */
 	    do {
-		if (isspace(ch) || ch == ',') {
+		if (g_ascii_isspace(ch) || ch == ',') {
 		    continue;
 		}
 		chupper = (char)toupper(ch);

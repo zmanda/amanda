@@ -1811,7 +1811,7 @@ static void handle_result(
 
 	if(strncmp_const(line, "OPTIONS ") == 0) {
 	    t = strstr(line, "features=");
-	    if(t != NULL && (isspace((int)t[-1]) || t[-1] == ';')) {
+	    if(t != NULL && (g_ascii_isspace((int)t[-1]) || t[-1] == ';')) {
 		t += SIZEOF("features=")-1;
 		am_release_feature_set(hostp->features);
 		if((hostp->features = am_string_to_feature(t)) == NULL) {

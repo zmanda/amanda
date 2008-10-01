@@ -1,3 +1,11 @@
+2008-10-01  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/amanda.h common-src/conffile.c
+	  oldrecover-src/extract_list.c recover-src/extract_list.c
+	  server-src/amcheck.c server-src/amflush.c server-src/planner.c:
+	  use g_ascii_isspace, as we assume ASCII (for now) and isspace()
+	  is affected by locale and encoding settings.  Thanks to Michael
+	  Reuland for helping track this down.
+
 2008-09-30  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/diskfile.h (xml_optionstr): New prototype.
 	* server-src/diskfile.h (clean_dle_str_for_client): Prototype.
