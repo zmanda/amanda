@@ -1,3 +1,8 @@
+2008-10-02  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/DB/Catalog.pm: add rudimentary ability to read logfiles
+	* installcheck/Amanda_DB_Catalog.pl: test it
+	* perl/Amanda/Logfile.swg: fix typo
+
 2008-10-01  Nikolas Coukouma <atrus@zmanda.com>
 	* device-src/s3-device.c, device-src/s3.c, device-src/s3.h:
 	  Add new property, S3_SSL, to control the use of SSL/TLS when

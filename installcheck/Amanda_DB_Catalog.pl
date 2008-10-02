@@ -18,7 +18,7 @@
 
 # TODO: check large values of 'kb'
 
-use Test::More tests => 31;
+use Test::More tests => 35;
 use File::Path;
 use strict;
 
@@ -245,6 +245,118 @@ is_deeply([ Amanda::DB::Catalog::sort_dumps(['hostname', '-diskname', 'write_tim
 		    'somebox_lib_20080313133333_p4',
 	            } ],
     "multi-key sort");
+
+## add log entries
+
+# one to an existing logfile, same tape
+Amanda::DB::Catalog::add_dump({
+    'write_timestamp' => '20080111',
+    'dump_timestamp' => '20080707070707',
+    'hostname' => 'newbox',
+    'diskname' => '/newdisk',
+    'level' => 3,
+    'label' => 'Conf-001',
+    'filenum' => 2,
+    'partnum' => 1,
+    'nparts' => 1,
+    'status' => 'OK',
+    'sec' => 13.0,
+    'kb' => 12380,
+});
+
+is_deeply([ sortdumps Amanda::DB::Catalog::get_dumps(hostname => 'newbox') ],
+    [ {
+	'write_timestamp' => '20080111000000',
+	'dump_timestamp' => '20080707070707',
+	'hostname' => 'newbox',
+	'diskname' => '/newdisk',
+	'level' => 3,
+	'label' => 'Conf-001',
+	'filenum' => 2,
+	'partnum' => 1,
+	'nparts' => 1,
+	'status' => 'OK',
+	'sec' => 13.0,
+	'kb' => 12380,
+    } ],
+    "successfully re-read an added dump in an existing logfile");
+
+# and again, to test the last-logfile cache in Amanda::DB::Catalog
+Amanda::DB::Catalog::add_dump({
+    'write_timestamp' => '20080111',
+    'dump_timestamp' => '20080707070707',
+    'hostname' => 'newbox',
+    'diskname' => '/newdisk2',
+    'level' => 0,
+    'label' => 'Conf-001',
+    'filenum' => 3,
+    'partnum' => 1,
+    'nparts' => 1,
+    'status' => 'OK',
+    'sec' => 27.0,
+    'kb' => 32380,
+});
+
+is(scalar Amanda::DB::Catalog::get_dumps(hostname => 'newbox'), 2,
+    "adding another dump to that logfile and re-reading gives 2 dumps");
+
+# and another in a new file, as well as a tapelist entry
+Amanda::DB::Catalog::add_dump({
+    'write_timestamp' => '20080707070707',
+    'dump_timestamp' => '20080707070707',
+    'hostname' => 'newlog',
+    'diskname' => '/newdisk',
+    'level' => 3,
+    'label' => 'Conf-009',
+    'filenum' => 1,
+    'partnum' => 1,
+    'nparts' => 1,
+    'status' => 'OK',
+    'sec' => 13.0,
+    'kb' => 12380,
+});
+my $tl = Amanda::Tapelist::read_tapelist($tapelist_fn);
+$tl->add_tapelabel('20080707070707', 'Conf-009');
+$tl->write($tapelist_fn);
+$tl = Amanda::Tapelist::read_tapelist($tapelist_fn);
+
+is_deeply([ sortdumps Amanda::DB::Catalog::get_dumps(hostname => 'newlog') ],
+    [ {
+	'write_timestamp' => '20080707070707',
+	'dump_timestamp' => '20080707070707',
+	'hostname' => 'newlog',
+	'diskname' => '/newdisk',
+	'level' => 3,
+	'label' => 'Conf-009',
+	'filenum' => 1,
+	'partnum' => 1,
+	'nparts' => 1,
+	'status' => 'OK',
+	'sec' => 13.0,
+	'kb' => 12380,
+    } ],
+    "successfully re-read an added dump in a new logfile");
+
+# and add a multipart dump to that same logfile
+for (my $i = 1; $i <= 5; $i++) {
+    Amanda::DB::Catalog::add_dump({
+	'write_timestamp' => '20080707070707',
+	'dump_timestamp' => '20080707070707',
+	'hostname' => 'newlog',
+	'diskname' => '/bigdisk',
+	'level' => 1,
+	'label' => 'Conf-009',
+	'filenum' => $i+1,
+	'partnum' => $i,
+	'nparts' => 5,
+	'status' => 'OK',
+	'sec' => 13.0,
+	'kb' => 12380,
+    });
+}
+
+is(scalar Amanda::DB::Catalog::get_dumps(diskname => '/bigdisk'), 5,
+    "multi-part dump added and re-read successfully");
 
 __DATA__
 # a short-datestamp logfile with only a single, single-part file in it

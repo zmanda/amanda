@@ -53,7 +53,7 @@ Amanda::Logfile - manage Amanda trace logs
     }
     Amanda::Logfile::close_logfile($log);
 
-    my @dumps = Amanda::Logfile::search_logfile("TapeLabel-001", "19780615", $logfile);
+    my @dumps = Amanda::Logfile::search_logfile("TapeLabel-001", "19780615", $logfile, 1);
 
     my @matching = Amanda::Logfile::dumps_match([@dumps], "myhost", "/usr", undef, undef, 0);
     for my $dump (@matching) {
