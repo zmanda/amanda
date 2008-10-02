@@ -90,23 +90,20 @@ s3_base64_encode(const GByteArray *to_enc) {
 
 gchar*
 s3_hex_encode(const GByteArray *to_enc)  {
-    BIGNUM *bn = NULL;
-    char *hex_bn = NULL, *hex_ret = NULL;
+    guint i;
+    gchar *ret = NULL, table[] = "0123456789abcdef";
     if (!to_enc) return NULL;
 
-    bn = BN_new();
-    g_assert(bn);
-    BN_bin2bn(to_enc->data, to_enc->len, bn);
-    /* Note: this uses uses uppercase letters,
-     * we chould use strncasecmp for compare */
-    hex_bn = BN_bn2hex(bn);
-    g_assert(hex_bn);
-    /* copy to a glib-managed string */
-    hex_ret = g_strdup(hex_bn);
-    
-    BN_free(bn);
-    OPENSSL_free(hex_bn);
-    return hex_ret;
+    ret = g_new(gchar, to_enc->len*2 + 1);
+    for (i = 0; i < to_enc->len; i++) {
+        /* most significant 4 bits */
+        ret[i*2] = table[to_enc->data[i] >> 4];
+        /* least significant 4 bits */
+        ret[i*2 + 1] = table[to_enc->data[i] & 0xf];
+    }
+    ret[to_enc->len*2] = '\0';
+
+    return ret;
 }
 
 GByteArray*

@@ -1,3 +1,6 @@
+2008-10-01  Nikolas Coukouma <atrus@zmanda.com>
+	* device-src/s3-util.c: Re-implement s3_hex_encode() to avoid OpenSSL weirdness.
+
 2008-10-01  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/amanda.h common-src/conffile.c
 	  oldrecover-src/extract_list.c recover-src/extract_list.c
