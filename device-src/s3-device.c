@@ -95,6 +95,9 @@ struct _S3Device {
 
     /* Produce verbose output? */
     gboolean verbose;
+
+    /* Use SSL? */
+    gboolean use_ssl;
 };
 
 /*
@@ -144,6 +147,10 @@ static DevicePropertyBase device_property_s3_user_token;
 /* Location constraint for new buckets created on Amazon S3. */
 static DevicePropertyBase device_property_s3_bucket_location;
 #define PROPERTY_S3_BUCKET_LOCATION (device_property_s3_bucket_location.ID)
+
+/* Whether to use SSL with Amazon S3. */
+static DevicePropertyBase device_property_s3_ssl;
+#define PROPERTY_S3_SSL (device_property_s3_ssl.ID)
 
 
 /*
@@ -260,6 +267,10 @@ static gboolean s3_device_set_bucket_location_fn(Device *self,
     PropertySurety surety, PropertySource source);
 
 static gboolean s3_device_set_verbose_fn(Device *self,
+    DevicePropertyBase *base, GValue *val,
+    PropertySurety surety, PropertySource source);
+
+static gboolean s3_device_set_ssl_fn(Device *self,
     DevicePropertyBase *base, GValue *val,
     PropertySurety surety, PropertySource source);
 
@@ -557,7 +568,10 @@ s3_device_register(void)
        "User token for authentication Amazon devpay requests");
     device_property_fill_and_register(&device_property_s3_bucket_location,
                                       G_TYPE_STRING, "s3_bucket_location",
-       "Location constraint for new buckets created on Amazon S3");
+       "Location constraint for buckets on Amazon S3");
+    device_property_fill_and_register(&device_property_s3_ssl,
+                                      G_TYPE_BOOLEAN, "s3_ssl",
+       "Whether to use SSL with Amazon S3");
 
 
     /* register the device itself */
@@ -688,6 +702,11 @@ s3_device_class_init(S3DeviceClass * c G_GNUC_UNUSED)
 	    device_simple_property_get_fn,
 	    s3_device_set_verbose_fn);
 
+    device_class_register_property(device_class, PROPERTY_S3_SSL,
+	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
+	    device_simple_property_get_fn,
+	    s3_device_set_ssl_fn);
+
     device_class_register_property(device_class, PROPERTY_COMPRESSION,
 	    PROPERTY_ACCESS_GET_MASK,
 	    device_simple_property_get_fn,
@@ -746,7 +765,7 @@ s3_device_set_bucket_location_fn(Device *p_self, DevicePropertyBase *base,
 {
     S3Device *self = S3_DEVICE(p_self);
 
-    if (!s3_curl_location_compat()) {
+    if (self->use_ssl && !s3_curl_location_compat()) {
 	device_set_error(p_self, stralloc(_(
 		"Location constraint given for Amazon S3 bucket, "
 		"but libcurl is too old support wildcard certificates.")),
@@ -785,6 +804,28 @@ s3_device_set_verbose_fn(Device *p_self, DevicePropertyBase *base,
     return device_simple_property_set_fn(p_self, base, val, surety, source);
 }
 
+static gboolean
+s3_device_set_ssl_fn(Device *p_self, DevicePropertyBase *base,
+    GValue *val, PropertySurety surety, PropertySource source)
+{
+    S3Device *self = S3_DEVICE(p_self);
+    gboolean new_val;
+
+    new_val = g_value_get_boolean(val);
+    /* Our S3 handle may not yet have been instantiated; if so, it will
+     * get the proper use_ssl setting when it is created */
+    if (self->s3 && !s3_use_ssl(self->s3, new_val)) {
+	device_set_error(p_self, g_strdup_printf(_(
+                "Error setting S3 SSL/TLS use "
+                "(tried to enable SSL/TLS for S3, but curl doesn't support it?)")),
+	    DEVICE_STATUS_DEVICE_ERROR);
+        return FALSE;
+    }
+    self->use_ssl = new_val;
+
+    return device_simple_property_set_fn(p_self, base, val, surety, source);
+}
+
 static Device* 
 s3_device_factory(char * device_name, char * device_type, char * device_node)
 {
@@ -809,6 +850,7 @@ s3_device_open_device(Device *pself, char *device_name,
 {
     S3Device *self = S3_DEVICE(pself);
     char * name_colon;
+    GValue tmp_value;
 
     pself->min_block_size = S3_DEVICE_MIN_BLOCK_SIZE;
     pself->max_block_size = S3_DEVICE_MAX_BLOCK_SIZE;
@@ -838,8 +880,16 @@ s3_device_open_device(Device *pself, char *device_name,
 
     g_debug(_("S3 driver using bucket '%s', prefix '%s'"), self->bucket, self->prefix);
 
-    /* default value */
+    /* default values */
     self->verbose = FALSE;
+
+    /* use SSL if available */
+    self->use_ssl = s3_curl_supports_ssl();
+    bzero(&tmp_value, sizeof(GValue));
+    g_value_init(&tmp_value, G_TYPE_BOOLEAN);
+    g_value_set_boolean(&tmp_value, self->use_ssl);
+    device_set_simple_property(pself, device_property_s3_ssl.ID,
+	&tmp_value, PROPERTY_SURETY_GOOD, PROPERTY_SOURCE_DEFAULT);
 
     if (parent_class->open_device) {
         parent_class->open_device(pself, device_name, device_type, device_node);
@@ -882,6 +932,14 @@ static gboolean setup_handle(S3Device * self) {
     }
 
     s3_verbose(self->s3, self->verbose);
+
+    if (!s3_use_ssl(self->s3, self->use_ssl)) {
+	device_set_error(d_self, g_strdup_printf(_(
+                "Error setting S3 SSL/TLS use "
+                "(tried to enable SSL/TLS for S3, but curl doesn't support it?)")),
+	    DEVICE_STATUS_DEVICE_ERROR);
+        return FALSE;
+    }
 
     return TRUE;
 }

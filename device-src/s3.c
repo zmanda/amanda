@@ -112,6 +112,7 @@ struct S3Handle {
     CURL *curl;
 
     gboolean verbose;
+    gboolean use_ssl;
 
     /* information from the last request */
     char *last_message;
@@ -151,13 +152,6 @@ s3_error_code_from_name(char *s3_error_name);
  */
 static const char *
 s3_error_name_from_code(s3_error_code_t s3_error_code);
-
-/* Does this install of curl support SSL?
- *
- * @returns: boolean
- */
-static gboolean
-s3_curl_supports_ssl(void);
 
 
 /*
@@ -224,7 +218,8 @@ build_url(const char *bucket,
 	  const char *key,
 	  const char *subresource,
 	  const char *query,
-	  gboolean use_subdomain);
+	  gboolean use_subdomain,
+	  gboolean use_ssl);
 
 /* Create proper authorization headers for an Amazon S3 REST
  * request to C{headers}.
@@ -349,7 +344,7 @@ s3_error_name_from_code(s3_error_code_t s3_error_code)
     return s3_error_code_names[s3_error_code];
 }
 
-static gboolean
+gboolean
 s3_curl_supports_ssl(void)
 {
     static int supported = -1;
@@ -396,14 +391,15 @@ build_url(const char *bucket,
 	  const char *key,
 	  const char *subresource,
 	  const char *query,
-	  gboolean use_subdomain)
+	  gboolean use_subdomain,
+	  gboolean use_ssl)
 {
     GString *url = NULL;
     char *esc_bucket = NULL, *esc_key = NULL;
 
     /* scheme */
     url = g_string_new("http");
-    if (s3_curl_supports_ssl())
+    if (use_ssl)
         g_string_append(url, "s");
 
     g_string_append(url, "://");
@@ -783,6 +779,7 @@ perform_request(S3Handle *hdl,
                 guint preallocate_response_size,
                 const result_handling_t *result_handling)
 {
+    gboolean use_subdomain;
     char *url = NULL;
     s3_result_t result = S3_RESULT_FAIL; /* assume the worst.. */
     CURLcode curl_code = CURLE_OK;
@@ -806,7 +803,8 @@ perform_request(S3Handle *hdl,
 
     s3_reset(hdl);
 
-    url = build_url(bucket, key, subresource, query, hdl->bucket_location? TRUE : FALSE);
+    use_subdomain = hdl->bucket_location? TRUE : FALSE;
+    url = build_url(bucket, key, subresource, query, use_subdomain, hdl->use_ssl);
     if (!url) goto cleanup;
 
     if (preallocate_response_size) {
@@ -1032,7 +1030,6 @@ gboolean
 s3_curl_location_compat(void)
 {
     curl_version_info_data *info;
-    if (!s3_curl_supports_ssl()) return TRUE;
 
     info = curl_version_info(CURLVERSION_NOW);
     return info->version_num > 0x070a02;
@@ -1056,6 +1053,7 @@ s3_open(const char *access_key,
     if (!hdl) goto error;
 
     hdl->verbose = FALSE;
+    hdl->use_ssl = s3_curl_supports_ssl();
 
     g_assert(access_key);
     hdl->access_key = g_strdup(access_key);
@@ -1150,6 +1148,18 @@ void
 s3_verbose(S3Handle *hdl, gboolean verbose)
 {
     hdl->verbose = verbose;
+}
+
+gboolean
+s3_use_ssl(S3Handle *hdl, gboolean use_ssl)
+{
+    gboolean ret = TRUE;
+    if (use_ssl & !s3_curl_supports_ssl()) {
+        ret = FALSE;
+    } else {
+        hdl->use_ssl = use_ssl;
+    }
+    return ret;
 }
 
 char *

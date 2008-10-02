@@ -105,6 +105,13 @@ typedef enum {
  * Functions
  */
 
+/* Does this install of curl support SSL?
+ *
+ * @returns: boolean
+ */
+gboolean
+s3_curl_supports_ssl(void);
+
 /* Checks if the version of libcurl being used supports and checks
  * wildcard certificates correctly (used for the subdomains required
  * by location constraints).
@@ -204,6 +211,15 @@ s3_error(S3Handle *hdl,
 void
 s3_verbose(S3Handle *hdl,
 	   gboolean verbose);
+
+/* Control the use of SSL with HTTP transactions.
+ *
+ * @param hdl: the S3Handle object
+ * @param use_ssl: if true, use SSL (if curl supports it)
+ * @returns: true if the setting is valid
+ */
+gboolean
+s3_use_ssl(S3Handle *hdl, gboolean use_ssl);
 
 /* Get the error information from the last operation on this handle,
  * formatted as a string.

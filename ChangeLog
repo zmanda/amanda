@@ -1,4 +1,11 @@
 2008-10-01  Nikolas Coukouma <atrus@zmanda.com>
+	* device-src/s3-device.c, device-src/s3.c, device-src/s3.h:
+	  Add new property, S3_SSL, to control the use of SSL/TLS when
+	  connecting to Amazon S3
+	* man/xml-source/amanda-devices.7.xml:
+	  document S3_SSL and S3_BUCKET_LOCATION
+
+2008-10-01  Nikolas Coukouma <atrus@zmanda.com>
 	* device-src/s3-util.c: Re-implement s3_hex_encode() to avoid OpenSSL weirdness.
 
 2008-10-01  Dustin J. Mitchell <dustin@zmanda.com>

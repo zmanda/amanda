@@ -351,8 +351,19 @@ size.</para></note>
  (read-write) This property gives the Amazon S3 access key used to access the service.
 </listitem></varlistentry>
  <!-- ==== -->
+ <varlistentry><term>S3_BUCKET_LOCATION</term><listitem>
+ (read-write) Location constraint for buckets on Amazon S3.
+Currently, it can be set to "", for no constraint (i.e. store data in the US), 
+or "EU" (i.e. store data in the EU).
+See Amazon's documentation for details and latest information
+</listitem></varlistentry>
+ <!-- ==== -->
  <varlistentry><term>S3_SECRET_KEY</term><listitem>
  (read-write) This property gives the Amazon S3 secret key used to access the service.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>S3_SSL</term><listitem>
+ (read-write) Whether or not to use SSL/TLS to secure communications with Amazon S3.
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>S3_USER_TOKEN</term><listitem>
