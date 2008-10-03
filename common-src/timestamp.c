@@ -60,6 +60,7 @@ char * get_timestamp_from_time(time_t when) {
 }
 
 char * get_proper_stamp_from_time(time_t when) {
+    /* note that this is reimplemented in perl in perl/Amanda/Util.swg */
     if (getconf_boolean(CNF_USETIMESTAMPS)) {
         return get_timestamp_from_time(when);
     } else {

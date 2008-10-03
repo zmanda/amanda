@@ -31,8 +31,9 @@
 
 %perlcode %{
 use Amanda::Debug qw(:init);
+use Amanda::Config qw(:getconf);
 use Carp;
-use POSIX qw(:fcntl_h);
+use POSIX qw( :fcntl_h strftime );
 
 =head1 NAME
 
@@ -179,6 +180,8 @@ char *get_original_cwd(void);
 amglue_export_tag(util, get_original_cwd);
 
 %perlcode %{
+=head1 Miscellaneous Utilities
+
 =item C<safe_env()>
 
 Return a "safe" environment hash.  For non-setuid programs, this means filtering out any
@@ -240,6 +243,24 @@ char *sanitise_filename(char *inp);
 char *quote_string(char *);
 char *unquote_string(char *);
 amglue_export_tag(quoting, quote_string unquote_string  sanitise_filename);
+
+%perlcode %{
+=item C<generate_timestamp()>
+
+Generate a timestamp from the current time, obeying the 'USETIMESTAMPS'
+config parameter.  The Amanda configuration must already be loaded.
+
+=cut
+
+sub generate_timestamp {
+    # this corresponds to common-src/timestamp.c's get_proper_stamp_from_time
+    if (getconf($CNF_USETIMESTAMPS)) {
+	return strftime "%Y%m%d%H%M%S", localtime;
+    } else {
+	return strftime "%Y%m%d", localtime;
+    }
+}
+%}
 
 /* -------------------------------------------------------------------------
  * Functions below this line are only meant to be called within this module;
