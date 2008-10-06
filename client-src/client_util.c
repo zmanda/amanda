@@ -867,7 +867,7 @@ run_client_script(
 	return;
 
     cmd = vstralloc(APPLICATION_DIR, "/", script->plugin, NULL);
-    argv_size = 12 + property_argv_size(script->property);
+    argv_size = 14 + property_argv_size(script->property);
     if (dle->level)
 	argv_size += 2 * g_slist_length(dle->level);
     argvchild = g_new0(char *, argv_size);
@@ -910,6 +910,9 @@ run_client_script(
     case EXECUTE_ON_INTER_LEVEL_RECOVER:
 	argvchild[i++] = "INTER-LEVEL-RECOVER"; break;
     }
+
+    argvchild[i++] = "--execute-where";
+    argvchild[i++] = "client";
 
     if (g_options->config) {
 	argvchild[i++] = "--config";

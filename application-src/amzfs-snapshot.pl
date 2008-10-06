@@ -42,6 +42,7 @@ Amanda::Util::finish_setup($RUNNING_AS_ANY);
 
 debug("program: $0");
 
+my $execute_where;
 my $opt_config;
 my $opt_host;
 my $opt_disk;
@@ -59,6 +60,7 @@ my $pfexec_cmd;
 
 Getopt::Long::Configure(qw{bundling});
 GetOptions(
+    'execute-where=s'  => \$opt_execute_where,
     'config=s'         => \$opt_config,
     'host=s'           => \$opt_host,
     'disk=s'           => \$opt_disk,
@@ -80,6 +82,7 @@ sub command_support {
    print "DISK YES\n";
    print "MESSAGE-LINE YES\n";
    print "MESSAGE-XML NO\n";
+   print "EXECUTE-WHERE YES\n";
 }
 
 my $status_good  = 0;
@@ -131,16 +134,19 @@ sub print_to_server_and_die {
 sub set_value($) {
     my $action = $_[0];
 
+    if ($opt_execute_where != "client") {
+	print_to_server_and_die($action, "amzfs-snapshot must be run on the client 'execute_where client', $status_error);
+    }
     if (!defined $opt_device) {
 	print_to_server_and_die($action, "'--device' is not provided",
 			$status_error);
     }
     if ($df_path ne "df" && !-e $df_path) {
-	print_to_server_and_die($action, "Can't execute '$df_path' command",
+	print_to_server_and_die($action, "Can't execute DF-PATH '$df_path' command",
 			$status_error);
     }
     if ($zfs_path ne "zfs" && !-e $zfs_path) {
-	print_to_server_and_die($action, "Can't execute '$zfs_path' command",
+	print_to_server_and_die($action, "Can't execute ZFS-PATH '$zfs_path' command",
 			$status_error);
     }
 
@@ -148,7 +154,7 @@ sub set_value($) {
 	$pfexec_cmd = $pfexec_path;
     }
     if (defined $pfexec_cmd && $pfexec_cmd ne "pfexec" && !-e $pfexec_cmd) {
-	print_to_server_and_die($action, "Can't execute '$zfs_path' command",
+	print_to_server_and_die($action, "Can't execute PFEXEC-PATH '$pfexec_cmd' command",
 			$status_error);
     }
     if (!defined $pfexec_cmd) {
@@ -322,7 +328,7 @@ sub command_post_dle_backup {
 
 sub usage {
     print <<EOF;
-Usage: amzfs-snapshot <command> --config=<config> --host=<host> --disk=<disk> --device=<device> --level=<level> --index=<yes|no> --message=<text> --collection=<no> --record=<yes|no> --df-path=<path/to/df> --zfs-path=<path/to/zfs> --pfexec-path=<path/to/pfexec> --pfexec=<yes|no>.
+Usage: amzfs-snapshot <command> --execute-where=client --config=<config> --host=<host> --disk=<disk> --device=<device> --level=<level> --index=<yes|no> --message=<text> --collection=<no> --record=<yes|no> --df-path=<path/to/df> --zfs-path=<path/to/zfs> --pfexec-path=<path/to/pfexec> --pfexec=<yes|no>.
 EOF
     exit(1);
 }

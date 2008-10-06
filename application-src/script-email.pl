@@ -33,6 +33,7 @@ Amanda::Util::finish_setup($RUNNING_AS_ANY);
 
 debug("program: $0");
 
+my $opt_execute_where;
 my $opt_config;
 my $opt_host;
 my $opt_disk;
@@ -46,16 +47,17 @@ my @opt_mailto;
 
 Getopt::Long::Configure(qw{bundling});
 GetOptions(
-    'config=s'     => \$opt_config,
-    'host=s'       => \$opt_host,
-    'disk=s'       => \$opt_disk,
-    'device=s'     => \$opt_device,
-    'level=s'      => \@opt_level,
-    'index=s'      => \$opt_index,
-    'message=s'    => \$opt_message,
-    'collection=s' => \$opt_collection,
-    'record=s'     => \$opt_record,
-    'mailto=s'     => \@opt_mailto
+    'execute-where=s' => \$opt_execute_where,
+    'config=s'        => \$opt_config,
+    'host=s'          => \$opt_host,
+    'disk=s'          => \$opt_disk,
+    'device=s'        => \$opt_device,
+    'level=s'         => \@opt_level,
+    'index=s'         => \$opt_index,
+    'message=s'       => \$opt_message,
+    'collection=s'    => \$opt_collection,
+    'record=s'        => \$opt_record,
+    'mailto=s'        => \@opt_mailto
 ) or usage();
 
 sub command_support {
@@ -64,6 +66,7 @@ sub command_support {
    print "DISK YES\n";
    print "MESSAGE-LINE YES\n";
    print "MESSAGE-XML NO\n";
+   print "EXECUTE-WHERE YES\n";
 }
 
 #define a execute_on_* function for every execute_on you want the script to do
@@ -157,7 +160,7 @@ sub sendmail {
 
 sub usage {
     print <<EOF;
-Usage: script-email <command> --config=<config> --host=<host> --disk=<disk> --device=<device> --level=<level> --index=<yes|no> --message=<text> --collection=<no> --record=<yes|no> --mailto=<email>.
+Usage: script-email <command> --execute-where=<client|server> --config=<config> --host=<host> --disk=<disk> --device=<device> --level=<level> --index=<yes|no> --message=<text> --collection=<no> --record=<yes|no> --mailto=<email>.
 EOF
     exit(1);
 }

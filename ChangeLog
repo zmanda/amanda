@@ -1,4 +1,10 @@
 2008-10-06  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amzfs-snapshot.pl: Accept execute-where argument.
+	* application-src/script-email.pl: Accept execute-where argument.
+	* client-src/client_util.c: Send execute-where argument to script.
+	* server-src/server_util.c: Send execute-where argument to script.
+
+2008-10-06  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/amzfs-snapshot.pl: Add PFEXEC-PATH and PFEXEC
 					     properties.
 	* man/xml-source/amzfs-snapshot.8.xml: Document new properties.

@@ -225,7 +225,7 @@ run_server_script(
 
     plugin = pp_script_get_plugin(pp_script);
     k = property_argv_size(pp_script_get_property(pp_script));
-    argvchild = g_new0(char *, 12+k);
+    argvchild = g_new0(char *, 14+k);
     cmd = vstralloc(APPLICATION_DIR, "/", plugin, NULL);
     i = 0;
     argvchild[i++] = plugin;
@@ -265,6 +265,9 @@ run_server_script(
 	     return;
 	}
     }
+
+    argvchild[i++] = "--execute-where";
+    argvchild[i++] = "server";
 
     if (config) {
 	argvchild[i++] = "--config";
