@@ -38,6 +38,12 @@ where the path specified is mounted.</para>
     zfs allow -ldu AMANDA_USER mount,snapshot,destroy FILESYSTEM
 </programlisting></para>
 
+<para>Some system doesn't have "zfs allow", but you can give the Amanda backup user the rights to manipulate ZFS filesystems by using the following command:
+<programlisting>
+usermod -P "ZFS File System Management,ZFS Storage Management" AMANDA_USER
+</programlisting>
+This will require that your run zfs under pfexec, set the PFEXEC property to YES.</para>
+
 </refsect1>
 
 <refsect1><title>PROPERTIES</title>
@@ -56,6 +62,14 @@ Path to the 'df' binary, search in $PATH by default.
  <varlistentry><term>ZFS-PATH</term><listitem>
 Path to the 'zfs' binary, search in $PATH by default.
 </listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>PFEXEC-PATH</term><listitem>
+Path to the 'pfexec' binary, search in $PATH by default.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>PFEXEC</term><listitem>
+If "NO" (the default), pfexec is not used, if set to "YES" then pfexec is used.
+</listitem></varlistentry>
 </variablelist>
 
 </refsect1>
@@ -71,7 +85,9 @@ In this example, a dumptype is defined to use amzfs-snapshot script to create a 
    execute-on  pre-dle-amcheck, post-dle-amcheck, pre-dle-estimate, post-dle-estimate, pre-dle-backup, post-dle-backup
    execute-where client
    #property "DF-PATH" "/usr/sbin/df"
-   #property "ZFS-PATH" "/usr/sbin/df"
+   #property "ZFS-PATH" "/usr/sbin/zfs"
+   #property "PFEXEC-PATH" "/usr/sbin/pfexec"
+   #property "PFEXEC" "NO"
  }
 
  define dumptype user-zfs-amgtar {

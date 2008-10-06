@@ -19,8 +19,10 @@
 
 # PROPERTY:
 #
-#    DF-PATH	(Default from PATH): Path to the 'df' binary
-#    ZFS-PATH	(Default from PATH): Path to the 'zfs' binary
+#    DF-PATH	 (Default from PATH): Path to the 'df' binary
+#    ZFS-PATH	 (Default from PATH): Path to the 'zfs' binary
+#    PFEXEC-PATH (Default from PATH): Path to the 'pfexec' binary
+#    PFEXEC	 (Default NO): Set to "YES" if you want to use pfexec
 #
 use lib '@amperldir@';
 use strict;
@@ -51,6 +53,9 @@ my $opt_collection;
 my $opt_record;
 my $df_path  = 'df';
 my $zfs_path = 'zfs';
+my $pfexec_path = 'pfexec';
+my $pfexec = "NO";
+my $pfexec_cmd;
 
 Getopt::Long::Configure(qw{bundling});
 GetOptions(
@@ -65,6 +70,8 @@ GetOptions(
     'record=s'         => \$opt_record,
     'df-path=s'        => \$df_path,
     'zfs-path=s'       => \$zfs_path,
+    'pfexec-path=s'    => \$pfexec_path,
+    'pfexec=s'         => \$pfexec
 ) or usage();
 
 sub command_support {
@@ -137,6 +144,17 @@ sub set_value($) {
 			$status_error);
     }
 
+    if ($pfexec =~ /^YES$/i) {
+	$pfexec_cmd = $pfexec_path;
+    }
+    if (defined $pfexec_cmd && $pfexec_cmd ne "pfexec" && !-e $pfexec_cmd) {
+	print_to_server_and_die($action, "Can't execute '$zfs_path' command",
+			$status_error);
+    }
+    if (!defined $pfexec_cmd) {
+	$pfexec_cmd = "";
+    }
+
     debug "running: $df_path $opt_device";
     my @ret = `$df_path $opt_device`;
     if( $? != 0 ) {
@@ -159,7 +177,7 @@ sub set_value($) {
 		$status_error);
     }
 
-    my $cmd = "$zfs_path get -H mountpoint $filesystem";
+    my $cmd = "$pfexec_cmd $zfs_path get -H mountpoint $filesystem";
     debug "running: $cmd|";
     my $zfs;
     open $zfs, "$cmd|";
@@ -199,7 +217,7 @@ sub set_value($) {
 
 sub create_snapshot {
     my ($filesystem, $snapshot, $action) = @_;
-    my $cmd = "$zfs_path snapshot $filesystem\@$snapshot";
+    my $cmd = "$pfexec_cmd $zfs_path snapshot $filesystem\@$snapshot";
     debug "running: $cmd";
     my($wtr, $rdr, $err, $pid);
     my($msg, $errmsg);
@@ -226,7 +244,7 @@ sub create_snapshot {
 
 sub destroy_snaphot {
     my ($filesystem, $snapshot, $action) = @_;
-    my $cmd = "$zfs_path destroy $filesystem\@$snapshot";
+    my $cmd = "$pfexec_cmd $zfs_path destroy $filesystem\@$snapshot";
     debug "running: $cmd|";
     my($wtr, $rdr, $err, $pid);
     my($msg, $errmsg);
@@ -304,7 +322,7 @@ sub command_post_dle_backup {
 
 sub usage {
     print <<EOF;
-Usage: amzfs-snapshot <command> --config=<config> --host=<host> --disk=<disk> --device=<device> --level=<level> --index=<yes|no> --message=<text> --collection=<no> --record=<yes|no> --df-path=<path/to/df> --zfs-path=<path/to/zfs>.
+Usage: amzfs-snapshot <command> --config=<config> --host=<host> --disk=<disk> --device=<device> --level=<level> --index=<yes|no> --message=<text> --collection=<no> --record=<yes|no> --df-path=<path/to/df> --zfs-path=<path/to/zfs> --pfexec-path=<path/to/pfexec> --pfexec=<yes|no>.
 EOF
     exit(1);
 }

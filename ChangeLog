@@ -1,3 +1,8 @@
+2008-10-06  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amzfs-snapshot.pl: Add PFEXEC-PATH and PFEXEC
+					     properties.
+	* man/xml-source/amzfs-snapshot.8.xml: Document new properties.
+
 2008-10-03  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Util.swg: add Amanda::Util::generate_timestamp
 	* common-src/timestamp.c: add comment
