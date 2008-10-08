@@ -2528,6 +2528,7 @@ read_schedule(
 	    sp->degr_csize = am_round(sp->degr_csize, DISK_BLOCK_KB);
 	    sp->degr_time = degr_time;
 	    sp->degr_kps = degr_kps;
+	    sp->degr_mesg = NULL;
 	} else {
 	    sp->degr_level = -1;
 	    sp->degr_dumpdate = NULL;

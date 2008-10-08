@@ -1,3 +1,6 @@
+2008-10-08  Nick Smith <nick.smith@techop.ch>
+	* server-src/driver.c: set degr_mesg to NULL when not degraded
+
 2008-10-06  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/amzfs-snapshot.pl: Accept execute-where argument.
 	* application-src/script-email.pl: Accept execute-where argument.
