@@ -25,7 +25,6 @@ use strict;
 use lib "@amperldir@";
 use Installcheck::Config;
 use Amanda::Config qw( :init :getconf config_dir_relative );
-use Amanda::Tapelist;
 use Amanda::DB::Catalog;
 
 # set up and load a simple config
@@ -35,7 +34,6 @@ config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF') == $CFGERR_OK
     or die("Could not load test config");
 
 # test functions against an empty set of logfiles
-# NOTE: this assumes that there's no cachin going on within the Amanda::DB::Catalog module!
 
 is_deeply([ Amanda::DB::Catalog::get_write_timestamps() ], [],
     "No write_timestamps in an empty catalog");
@@ -94,9 +92,7 @@ while (<DATA>) {
 }
 close($output);
 close($tapelist);
-
-# and set up a simple tapelist
-Amanda::Tapelist::read_tapelist($tapelist_fn);
+Amanda::DB::Catalog::_clear_cache();
 
 ##
 # Test the timestamps
@@ -315,10 +311,6 @@ Amanda::DB::Catalog::add_dump({
     'sec' => 13.0,
     'kb' => 12380,
 });
-my $tl = Amanda::Tapelist::read_tapelist($tapelist_fn);
-$tl->add_tapelabel('20080707070707', 'Conf-009');
-$tl->write($tapelist_fn);
-$tl = Amanda::Tapelist::read_tapelist($tapelist_fn);
 
 is_deeply([ sortdumps Amanda::DB::Catalog::get_dumps(hostname => 'newlog') ],
     [ {

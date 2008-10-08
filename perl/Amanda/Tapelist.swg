@@ -207,7 +207,7 @@ sub write {
     my $self = shift;
     my ($filename) = @_;
 
-    open(my $fh, ">", $filename) or critial("Could not open '$filename' for writing");
+    open(my $fh, ">", $filename) or die("Could not open '$filename' for writing: $!");
     for my $tle (@$self) {
 	my $datestamp = $tle->{'datestamp'};
 	my $label = $tle->{'label'};
@@ -216,6 +216,9 @@ sub write {
 	print $fh "$datestamp $label $reuse$comment\n";
     }
     close($fh);
+
+    # re-read from the C side to synchronize
+    C_read_tapelist($filename);
 }
 
 ## TODO -- implement this when it's needed

@@ -28,7 +28,6 @@ use Amanda::Debug qw( :logging );
 use Amanda::Config qw( :init :getconf config_dir_relative );
 use Amanda::Logfile;
 use Amanda::Util qw( :constants );
-use Amanda::Tapelist;
 use Amanda::Changer;
 use Amanda::Constants;
 
@@ -334,9 +333,6 @@ if ($cfgerr_level >= $CFGERR_WARNINGS) {
 }
 
 Amanda::Util::finish_setup($RUNNING_AS_DUMPUSER);
-
-# Read the tape list.
-my $tl = Amanda::Tapelist::read_tapelist(config_dir_relative(getconf($CNF_TAPELIST)));
 
 # If we weren't given a timestamp, find the newer of
 # amdump.1 or amflush.1 and extract the datestamp from it.

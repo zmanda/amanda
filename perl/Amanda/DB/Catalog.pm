@@ -136,9 +136,6 @@ relevant to that dump.
 
 =head2 QUERIES
 
-NOTE: the tapelist must be loaded before using this module (see
-L<Amanda::Tapelist>).
-
 This API is read-only at the moment.  The following functions are available:
 
 =over
@@ -293,6 +290,10 @@ use Amanda::Util qw( quote_string );
 use warnings;
 use strict;
 
+# tapelist cache
+my $tapelist = undef;
+my $tapelist_filename = undef;
+
 # utility function
 sub zeropad {
     my ($timestamp) = @_;
@@ -304,6 +305,9 @@ sub zeropad {
 
 sub get_write_timestamps {
     my @rv;
+
+    # find_log assumes that the tapelist has been loaded, so load it now
+    _load_tapelist();
 
     for (Amanda::Logfile::find_log()) {
 	next unless (my ($timestamp) = /^log\.([0-9]+)(?:\.[0-9]+|\.amflush)?$/);
@@ -327,6 +331,9 @@ sub get_latest_write_timestamp {
 sub get_dumps {
     my %params = @_;
     my $logfile_dir = config_dir_relative(getconf($CNF_LOGDIR));
+
+    # find_log assumes that the tapelist has been loaded, so load it now
+    _load_tapelist();
 
     # pre-process params by appending all of the "singular" parameters to the "plurals"
     push @{$params{'write_timestamps'}}, map { zeropad($_) } $params{'write_timestamp'} 
@@ -576,6 +583,20 @@ sub add_dump {
 	print $logfh
 	    "START taper datestamp $write_timestamp label $dump->{label} tape $i\n";
 
+	if (!defined $tapelist_filename) {
+	    $tapelist_filename = config_dir_relative(getconf($CNF_TAPELIST));
+	}
+
+	# reload the tapelist immediately, in case it's been modified
+	$tapelist = Amanda::Tapelist::read_tapelist($tapelist_filename);
+
+	# see if we need to add an entry to the tapelist for this dump
+	if (!grep { $_->{'label'} eq $dump->{'label'}
+		    and zeropad($_->{'datestamp'}) eq zeropad($dump->{'write_timestamp'})
+		} @$tapelist) {
+	    $tapelist->add_tapelabel($write_timestamp, $dump->{'label'});
+	    $tapelist->write($tapelist_filename);
+	}
     }
 
     if ($last_filenum >= 0 && $last_filenum+1 != $dump->{'filenum'}) {
@@ -615,6 +636,17 @@ sub add_dump {
     }
 
     close($logfh);
+}
+
+sub _load_tapelist {
+    if (!defined $tapelist) {
+	$tapelist_filename = config_dir_relative(getconf($CNF_TAPELIST));
+	$tapelist = Amanda::Tapelist::read_tapelist($tapelist_filename);
+    }
+}
+
+sub _clear_cache { # (used by installcheck)
+    $tapelist = $tapelist_filename = undef;
 }
 
 1;
