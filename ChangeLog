@@ -1,3 +1,8 @@
+2008-10-10  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amzfs-snapshot.pl, application-src/amoracle.pl
+	  application-src/script-email.pl, application-src/amgtar_perl.pl:
+	    fix typos.
+
 2008-10-10  Nick Smith <nick.smith@techop.ch>
 	* application-src/amzfs-snapshot.pl: fix typos
 

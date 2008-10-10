@@ -226,7 +226,6 @@ sub create_snapshot {
     my $cmd = "$pfexec_cmd $zfs_path snapshot $filesystem\@$snapshot";
     debug "running: $cmd";
     my($wtr, $rdr, $err, $pid);
-    my($msg, $errmsg);
     $err = Symbol::gensym;
     $pid = open3($wtr, $rdr, $err, $cmd);
     close $wtr;

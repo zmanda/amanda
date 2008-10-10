@@ -235,9 +235,9 @@ sub parse_backup {
             }
             elsif(defined($fhout)) {
 	       if (/: Directory is new$/ ||
-		   /: Directory has been renamed/) {) {
-		  /* ignore */
-	       } else { /* STRANGE */
+		   /: Directory has been renamed/) {
+		  # ignore
+	       } else { # strange
                   print $fhout "? $_";
 	       }
             }

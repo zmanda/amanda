@@ -142,7 +142,7 @@ sub command_inter_level_recover {
 sub sendmail {
    my($function) = @_;
    my $dest;
-   if (defined(@opt_mailto)) {
+   if (@opt_mailto) {
       my $destcheck = join ',', @opt_mailto;
       $destcheck =~ /^([a-zA-Z,]*)$/;
       $dest = $1;
