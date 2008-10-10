@@ -290,9 +290,11 @@ endif
 
 check-local:
 	@CHECK_PERL="$(Amanda_DATA) $(Amanda_DB_DATA) $(AmandaConfigServer_DATA) $(AmandaLocalParse_DATA) $(AmandaLocalText_DATA) $(AmandaLocalData_DATA) $(AmandaConfig_DATA)"; \
-	if test -n "$(PERL)"; then \
-		for perlobj in $$CHECK_PERL; do \
-			$(PERL) $(CHECK_PERL_FLAGS) -I$(top_builddir)/perl -I$(top_builddir)/perl/.libs -I$(top_srcdir)/perl -c -T $$perlobj || exit 1; \
-		done; \
+	if test -f $(top_builddir)/perl/.libs/libConfig.so -o -f $(top_builddir)/perl/libConfig.so; then \
+		if test -n "$(PERL)"; then \
+			for perlobj in $$CHECK_PERL; do \
+				$(PERL) $(CHECK_PERL_FLAGS) -I$(top_builddir)/perl -I$(top_builddir)/perl/.libs -I$(top_srcdir)/perl -c -T $$perlobj || exit 1; \
+			done; \
+		fi \
         fi
 

@@ -1,4 +1,7 @@
 2008-10-10  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Makefile.am: test for libConfig.so before doing check.
+
+2008-10-10  Jean-Louis Martineau <martineau@zmanda.com>
 	* config/automake/scripts.am: Check perl scripts on compilation.
 	  Add -I... to 'make check' to access perl module in build tree.
 	  Add installcheck rules to check perl scripts with installed perl
