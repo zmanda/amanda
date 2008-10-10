@@ -19,7 +19,6 @@
 
 use lib '@amperldir@';
 use strict;
-use Amanda::Device qw( :constants );
 use Amanda::Config qw( :getconf :init );
 use Amanda::Debug qw( :logging );
 use Amanda::Util qw( :constants );

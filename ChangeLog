@@ -1,4 +1,7 @@
 2008-10-10  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/amgetconf.pl: remove 'use Amanda::Device qw( :constants);'
+
+2008-10-10  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Makefile.am: test for libConfig.so before doing check.
 
 2008-10-10  Jean-Louis Martineau <martineau@zmanda.com>
