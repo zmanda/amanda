@@ -232,10 +232,10 @@ quoting_test_LDADD = libamanda.la libtestutils.la
 # for perl scripts that use Amanda::* packages)
 sbin_CHECK_PERL = \
 	    amgpgcrypt \
-	    amcryptsimple
-sbin_SCRIPTS_PERL = \
-	    $(sbin_CHECK_PERL) \
+	    amcryptsimple \
 	    amgetconf
+sbin_SCRIPTS_PERL = \
+	    $(sbin_CHECK_PERL)
 
 amlibexec_CHECK_PERL =
 amlibexec_SCRIPTS_PERL = \
@@ -285,4 +285,4 @@ listlibsrc:
 
 distclean-local:
 	if test `cd $(srcdir) && pwd` != `pwd`; then rm -f svn-info.h; fi
-MAINTAINERCLEANFILES=svn-info.h
+MAINTAINERCLEANFILES+=svn-info.h

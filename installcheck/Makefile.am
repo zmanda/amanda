@@ -53,6 +53,8 @@ endif
 test_utils = Installcheck/Config.pm Installcheck/Run.pm
 EXTRA_DIST += $(test_utils)
 
+CHECK_PERL_FLAGS=-I$(top_srcdir)/installcheck
+
 SCRIPTS_PERL = $(common_tests) $(server_tests) $(full_tests)
 
 # we don't need to syntax check the test scripts..

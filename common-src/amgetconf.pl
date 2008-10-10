@@ -193,13 +193,14 @@ sub build_param {
 
 sub db_param {
     my ($parameter, $opt_list) = @_;
-
-    if (my ($appname) = $parameter =~ /^dbopen\.(.*)/) {
+    my ($appname, $filename);
+    if (($appname) = $parameter =~ /^dbopen\.(.*)/) {
 	$appname =~ s/[^[:alnum:]]/_/g;
 	Amanda::Util::setup_application($appname, "server", $CONTEXT_CMDLINE);
 	print Amanda::Debug::dbfn(), "\n";
-    } elsif (my ($appname, $filename) = $parameter =~ /^dbclose\.([^:]*):(.*)/) {
+    } elsif (($appname, $filename) = $parameter =~ /^dbclose\.([^:]*):(.*)/) {
 	fail("debug file $filename does not exist") unless (-f $filename);
+	Amanda::Util::setup_application($appname, "server", $CONTEXT_CMDLINE);
 	Amanda::Debug::dbreopen($filename, '');
 	Amanda::Debug::dbclose();
 	print "$filename\n";

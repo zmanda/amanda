@@ -69,6 +69,9 @@
 %: %.pl $(top_builddir)/config.status
 	$(top_builddir)/config.status --file=$@:$<
 	chmod a+x $@
+	@if test -f $(top_builddir)/perl/.libs/libConfig.so -o -f $(top_builddir)/perl/libConfig.so; then \
+		$(PERL) $(CHECK_PERL_FLAGS) -I$(top_builddir)/perl -I$(top_builddir)/perl/.libs -I$(top_srcdir)/perl -c -w -T $@ || exit 1; \
+	fi
 
 %.pl: %.pl.in $(top_builddir)/config.status
 	$(top_builddir)/config.status --file=$@:$<
@@ -101,12 +104,24 @@ DISTCLEANFILES += $(SCRIPTS_SHELL) $(SCRIPTS_PERL) $(SCRIPTS_AWK) $(SCRIPTS_INCL
 # syntax-check perl scripts on 'make check'
 check-perl: $(CHECK_PERL)
 	@CHECK_PERL="$(CHECK_PERL)"; \
+	if test -f $(top_builddir)/perl/.libs/libConfig.so -o -f $(top_builddir)/perl/libConfig.so; then \
+		if test -n "$(PERL)"; then \
+			for perlobj in $$CHECK_PERL; do \
+				$(PERL) $(CHECK_PERL_FLAGS) -I$(top_builddir)/perl -I$(top_builddir)/perl/.libs -I$(top_srcdir)/perl -c -w -T $$perlobj || exit 1; \
+			done; \
+		fi \
+	fi
+check-local: check-perl
+
+# syntax-check perl scripts on 'make installcheck'
+installcheck-perl: $(CHECK_PERL)
+	@CHECK_PERL="$(CHECK_PERL)"; \
 	if test -n "$(PERL)"; then \
 		for perlobj in $$CHECK_PERL; do \
 			$(PERL) $(CHECK_PERL_FLAGS) -c -w -T $$perlobj || exit 1; \
 		done; \
 	fi
-check-local: check-perl
+installcheck-local: installcheck-perl
 
 # syntax-check shell scripts on 'make check'
 CHECK_SHELL = $(SCRIPTS_SHELL)

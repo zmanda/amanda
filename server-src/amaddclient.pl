@@ -476,7 +476,7 @@ if ( $exit_value !=0 ) {
 }
 
 #create gnutar_list_dir
-if ( defined $tarlist && !defined $no_update_client ) {
+if ( defined $tarlist && !defined $no_client_update ) {
  system "$ssh", "$ssh_opt", "$amanda_user\@$client", "$mkdir", "$gnutar_list_dir";
  $exit_value  = $? >> 8;
 if ( $exit_value !=0 ) {

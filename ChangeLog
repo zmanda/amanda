@@ -1,4 +1,19 @@
 2008-10-10  Jean-Louis Martineau <martineau@zmanda.com>
+	* config/automake/scripts.am: Check perl scripts on compilation.
+	  Add -I... to 'make check' to access perl module in build tree.
+	  Add installcheck rules to check perl scripts with installed perl
+	  modules.
+	* application-src/amstar_perl.pl: Remove file.
+	* device-src/Makefile.am, application-src/Makefile.am,
+	  server-src/Makefile.am, installcheck/Makefile.am,
+	  common-src/Makefile.am: Move most perl scripts to CHECK_PERL.
+	* installcheck/Makefile.am:
+	  Add "CHECK_PERL_FLAGS=-I$(top_srcdir)/installcheck".
+	* perl/Makefile.am: Add rules to check all .pm files for check-local.
+	* device-src/amtapetype.pl, server-src/amaddclient.pl,
+	  common-src/amgetconf.pl: Fix syntax errors.
+
+2008-10-10  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/amzfs-snapshot.pl, application-src/amoracle.pl
 	  application-src/script-email.pl, application-src/amgtar_perl.pl:
 	    fix typos.

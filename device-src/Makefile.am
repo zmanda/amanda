@@ -13,8 +13,9 @@ AM_LDFLAGS = $(AMANDA_STATIC_LDFLAGS)
 
 sbin_PROGRAMS =
 
-SCRIPTS_PERL = amtapetype
-sbin_SCRIPTS = amtapetype
+CHECK_PERL = amtapetype
+SCRIPTS_PERL = $(CHECK_PERL)
+sbin_SCRIPTS = $(SCRIPTS_PERL)
 
 ## libamdevice.la
 

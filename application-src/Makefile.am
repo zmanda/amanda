@@ -23,11 +23,11 @@ SCRIPTS_INCLUDE = \
 	    generic-dumper \
 	    generic-script
 
-SCRIPTS_PERL = \
-	    amstar_perl \
-	    amgtar_perl \
-	    script-email \
-	    amzfs-snapshot
+CHECK_PERL = amgtar_perl \
+	     script-email \
+	     amzfs-snapshot
+
+SCRIPTS_PERL = $(CHECK_PERL)
 
 SCRIPTS_SHELL = $(amlibexec_SCRIPTS)
 

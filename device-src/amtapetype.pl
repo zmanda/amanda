@@ -247,7 +247,7 @@ sub check_compression {
     # restart the device to rewind it
     start_device($device);
 
-    my $err = write_one_file(
+    $err = write_one_file(
 		    DEVICE => $device,
 		    STATS => $stats,
 		    MAX_BYTES => $stats->{'RANDOM'}->{'BYTES'},
@@ -291,7 +291,7 @@ sub make_tapetype {
     my $volume_size_estimate = $stats->{RANDOM}->{BYTES};
     my $speed_estimate = (($stats->{RANDOM}->{BYTES}."") / 1024)
 			/ $stats->{RANDOM}->{TIME};
-    my $speed_estimate = int $speed_estimate;
+    $speed_estimate = int $speed_estimate;
     print STDERR "Wrote $volume_size_estimate bytes at $speed_estimate kb/sec\n";
 
     # now we want to write about 100 filemarks; round down to the blocksize
