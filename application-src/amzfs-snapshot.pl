@@ -42,7 +42,7 @@ Amanda::Util::finish_setup($RUNNING_AS_ANY);
 
 debug("program: $0");
 
-my $execute_where;
+my $opt_execute_where;
 my $opt_config;
 my $opt_host;
 my $opt_disk;
@@ -135,7 +135,7 @@ sub set_value($) {
     my $action = $_[0];
 
     if ($opt_execute_where != "client") {
-	print_to_server_and_die($action, "amzfs-snapshot must be run on the client 'execute_where client', $status_error);
+	print_to_server_and_die($action, "amzfs-snapshot must be run on the client 'execute_where client'", $status_error);
     }
     if (!defined $opt_device) {
 	print_to_server_and_die($action, "'--device' is not provided",
