@@ -1,4 +1,7 @@
 2008-10-11  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Makefile.am: Don't check Amanda/Config files.
+
+2008-10-11  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Makefile.am: Check file in top_srcdir if they are not
 			    in top_builddir.
 
