@@ -1,4 +1,7 @@
-2008-10-11  Jean-Louis Martineau <martineau@zmanda.com>
+2008-10-13  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/Makefile.am: SCRIPTS_PERL = $(tests).
+
+2008-10-13  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Makefile.am: Don't check Amanda/Config files.
 
 2008-10-11  Jean-Louis Martineau <martineau@zmanda.com>
