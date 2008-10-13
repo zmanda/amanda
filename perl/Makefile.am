@@ -127,9 +127,11 @@ libDevice_la_LIBADD = libamglue.la \
 	$(top_builddir)/device-src/libamdevice.la \
 	$(top_builddir)/common-src/libamanda.la
 Amanda_DATA += Amanda/Device.pm
-EXTRA_DIST += Amanda/Device.swg Amanda/Device.pm
 MAINTAINERCLEANFILES += Amanda/Device.c Amanda/Device.pm
+endif
+EXTRA_DIST += Amanda/Device.swg Amanda/Device.pm
 
+if WANT_SERVER
 # PACKAGE: Amanda::Logfile
 libLogfiledir = $(amperldir)/auto/Amanda/Logfile
 libLogfile_LTLIBRARIES = libLogfile.la
@@ -139,9 +141,11 @@ libLogfile_la_LIBADD = libamglue.la \
 	$(top_builddir)/server-src/libamserver.la \
 	$(top_builddir)/common-src/libamanda.la
 Amanda_DATA += Amanda/Logfile.pm
-EXTRA_DIST += Amanda/Logfile.swg Amanda/Logfile.pm
 MAINTAINERCLEANFILES += Amanda/Logfile.c Amanda/Logfile.pm
+endif
+EXTRA_DIST += Amanda/Logfile.swg Amanda/Logfile.pm
 
+if WANT_SERVER
 # PACKAGE: Amanda::Cmdline
 libCmdlinedir = $(amperldir)/auto/Amanda/Cmdline
 libCmdline_LTLIBRARIES = libCmdline.la
@@ -151,9 +155,11 @@ libCmdline_la_LIBADD = libamglue.la \
 	$(top_builddir)/server-src/libamserver.la \
 	$(top_builddir)/common-src/libamanda.la
 Amanda_DATA += Amanda/Cmdline.pm
-EXTRA_DIST += Amanda/Cmdline.swg Amanda/Cmdline.pm
 MAINTAINERCLEANFILES += Amanda/Cmdline.c Amanda/Cmdline.pm
+endif
+EXTRA_DIST += Amanda/Cmdline.swg Amanda/Cmdline.pm
 
+if WANT_SERVER
 # PACKAGE: Amanda::Tapelist
 libTapelistdir = $(amperldir)/auto/Amanda/Tapelist
 libTapelist_LTLIBRARIES = libTapelist.la
@@ -163,26 +169,36 @@ libTapelist_la_LIBADD = libamglue.la \
 	$(top_builddir)/server-src/libamserver.la \
 	$(top_builddir)/common-src/libamanda.la
 Amanda_DATA += Amanda/Tapelist.pm
-EXTRA_DIST += Amanda/Tapelist.swg Amanda/Tapelist.pm
 MAINTAINERCLEANFILES += Amanda/Tapelist.c Amanda/Tapelist.pm
+endif
+EXTRA_DIST += Amanda/Tapelist.swg Amanda/Tapelist.pm
 
+if WANT_SERVER
 # PACKAGE: Amanda::Changer
 Amanda_DATA += Amanda/Changer.pm
+endif
 EXTRA_DIST += Amanda/Changer.pm
 
+if WANT_SERVER
 # PACKAGE: Amanda::Process
 Amanda_DATA += Amanda/Process.pm
+endif
 EXTRA_DIST += Amanda/Process.pm
 
+if WANT_SERVER
 # Amanda::DB::*
 Amanda_DBdir = $(Amandadir)/DB
 Amanda_DB_DATA =
 HTML_SOURCE_FILES += $(Amanda_DB_DATA)
+endif
 
+if WANT_SERVER
 # PACKAGE: Amanda::DB::Catalog
 Amanda_DB_DATA += Amanda/DB/Catalog.pm
+endif
 EXTRA_DIST += Amanda/DB/Catalog.pm
 
+if WANT_SERVER
 # PACKAGE: Amanda::Xfer
 libXferdir = $(amperldir)/auto/Amanda/Xfer
 libXfer_LTLIBRARIES = libXfer.la
@@ -192,10 +208,9 @@ libXfer_la_LIBADD = libamglue.la \
 	$(top_builddir)/xfer-src/libamxfer.la \
 	$(top_builddir)/common-src/libamanda.la
 Amanda_DATA += Amanda/Xfer.pm
-EXTRA_DIST += Amanda/Xfer.swg Amanda/Xfer.pm
 MAINTAINERCLEANFILES += Amanda/Xfer.c Amanda/Xfer.pm
-
 endif
+EXTRA_DIST += Amanda/Xfer.swg Amanda/Xfer.pm
 
 # PACKAGE: Amanda::BigIntCompat
 Amanda_DATA += Amanda/BigIntCompat.pm
