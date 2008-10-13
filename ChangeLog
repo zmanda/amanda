@@ -1,4 +1,8 @@
 2008-10-13  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/Makefile.am: revert previous commit.
+	* config/automake/scripts.am: Check for a server perl module.
+
+2008-10-13  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/Makefile.am: SCRIPTS_PERL = $(tests).
 
 2008-10-13  Jean-Louis Martineau <martineau@zmanda.com>

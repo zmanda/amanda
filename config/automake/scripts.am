@@ -69,7 +69,7 @@
 %: %.pl $(top_builddir)/config.status
 	$(top_builddir)/config.status --file=$@:$<
 	chmod a+x $@
-	@if test -f $(top_builddir)/perl/.libs/libConfig.so -o -f $(top_builddir)/perl/libConfig.so; then \
+	@if test -f $(top_builddir)/perl/.libs/libCmdline.so -o -f $(top_builddir)/perl/libCmdline.so; then \
 		$(PERL) $(CHECK_PERL_FLAGS) -I$(top_builddir)/perl -I$(top_builddir)/perl/.libs -I$(top_srcdir)/perl -c -w -T $@ || exit 1; \
 	fi
 
@@ -104,7 +104,7 @@ DISTCLEANFILES += $(SCRIPTS_SHELL) $(SCRIPTS_PERL) $(SCRIPTS_AWK) $(SCRIPTS_INCL
 # syntax-check perl scripts on 'make check'
 check-perl: $(CHECK_PERL)
 	@CHECK_PERL="$(CHECK_PERL)"; \
-	if test -f $(top_builddir)/perl/.libs/libConfig.so -o -f $(top_builddir)/perl/libConfig.so; then \
+	if test -f $(top_builddir)/perl/.libs/libCmdline.so -o -f $(top_builddir)/perl/libCmdline.so; then \
 		if test -n "$(PERL)"; then \
 			for perlobj in $$CHECK_PERL; do \
 				$(PERL) $(CHECK_PERL_FLAGS) -I$(top_builddir)/perl -I$(top_builddir)/perl/.libs -I$(top_srcdir)/perl -c -w -T $$perlobj || exit 1; \
