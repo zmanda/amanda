@@ -366,12 +366,12 @@ ok($dev->finish(),
    "finish device after read")
     or diag($dev->error_or_status());
 
-# corrupt the device somehow and hope it keeps working
-rmtree("$taperoot/1");
-
 ok($dev->start($ACCESS_READ, undef, undef),
    "start in read mode after missing volume")
     or diag($dev->error_or_status());
+
+# corrupt the device somehow and hope it keeps working
+rmtree("$taperoot/1");
 
 verify_file(0x2FACE, $dev->block_size()*10+17, 3);
 verify_file(0xD0ED0E, $dev->block_size()*4, 4);

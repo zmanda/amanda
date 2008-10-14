@@ -1,3 +1,9 @@
+2008-10-13  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/vfs-device.c: re-open the dir handle on every
+	  device start or read label
+	* installcheck/Amanda_Device.pl: adjust tests to degrade the
+	  VFS device *after* it is started
+
 2008-10-13  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Makefile.am: Moce EXTRA_DIST out of conditionals.
 

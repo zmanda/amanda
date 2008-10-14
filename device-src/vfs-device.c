@@ -721,9 +721,13 @@ open_dir_handle(
 {
     VfsDevice *self = VFS_DEVICE(dself);
 
-    /* don't open it if it's already open */
-    if (self->dir_handle)
-	return TRUE;
+    /* close it if it's already open; this is required on some operating systems
+     * in order to see newly added files. */
+    if (self->dir_handle) {
+        closedir (self->dir_handle);
+        self->dir_handle = NULL;
+	/* TODO: unlock */
+    }
 
     if (!check_is_dir(dself, self->dir_name)) {
 	/* error message set by check_is_dir */
@@ -739,7 +743,8 @@ open_dir_handle(
         return FALSE;
     }
 
-    /* TODO: is this the right moment to acquire a lock?? */
+    /* TODO: is this the right moment to acquire a lock?? It will be acquired
+     * too often, right? */
     if (!open_lock(self, -1, FALSE)) {
 	device_set_error(dself,
 	    stralloc(_("could not acquire lock")),
