@@ -1301,7 +1301,7 @@ CalcMaxWidth(void)
 				"%3d:%02d", mnsc(repdata->dumper.sec));
 		else
 		    g_snprintf(TimeRateBuffer, SIZEOF(TimeRateBuffer),
-				"N/A ");
+				" ");
 		CheckStringMax(&ColumnData[DumpTime], TimeRateBuffer);
 
 		CheckFloatMax(&ColumnData[DumpRate], repdata->dumper.kps); 
@@ -1317,14 +1317,14 @@ CalcMaxWidth(void)
 		  "%3d:%02d", mnsc(repdata->taper.sec));
 	    else
 		g_snprintf(TimeRateBuffer, SIZEOF(TimeRateBuffer),
-		  "N/A ");
+		  " ");
 	    CheckStringMax(&ColumnData[TapeTime], TimeRateBuffer);
 
 	    if(repdata->taper.result == L_SUCCESS ||
 		    repdata->taper.result == L_CHUNKSUCCESS)
 		CheckFloatMax(&ColumnData[TapeRate], repdata->taper.kps);
 	    else
-		CheckStringMax(&ColumnData[TapeRate], "N/A ");
+		CheckStringMax(&ColumnData[TapeRate], " ");
 	}
       }
     }
@@ -1342,6 +1342,7 @@ output_summary(void)
     int i, h, w1, wDump, wTape;
     double outsize, origsize;
     double f;
+    int cdWidth;
 
     HostName = StringToColumn("HostName");
     Disk = StringToColumn("Disk");
@@ -1500,7 +1501,7 @@ output_summary(void)
 	    if(isnormal(origsize))
 		g_fprintf(mailf, cd->Format, cd->Width, cd->Precision, du(origsize));
 	    else
-		g_fprintf(mailf, "%*.*s", cd->Width, cd->Width, "N/A");
+		g_fprintf(mailf, "%*.*s", cd->Width, cd->Width, "");
 
 	    cd= &ColumnData[OutKB];
 	    g_fprintf(mailf, "%*s", cd->PrefixSpace, "");
@@ -1520,23 +1521,30 @@ output_summary(void)
 	    fputs(sDivZero(pct(outsize), f, Compress), mailf);
 
 	    cd= &ColumnData[DumpTime];
+	    cdWidth = 0;
 	    g_fprintf(mailf, "%*s", cd->PrefixSpace, "");
 	    if(repdata->dumper.result == L_SUCCESS ||
-	       repdata->dumper.result == L_CHUNKSUCCESS)
+	       repdata->dumper.result == L_CHUNKSUCCESS) {
 		g_snprintf(TimeRateBuffer, SIZEOF(TimeRateBuffer),
-		  "%3d:%02d", mnsc(repdata->dumper.sec));
-	    else
-		g_snprintf(TimeRateBuffer, SIZEOF(TimeRateBuffer),
-		  "N/A ");
-	    g_fprintf(mailf, cd->Format, cd->Width, cd->Width, TimeRateBuffer);
+		  "%3d:%02d", mnsc(repdata->dumper.sec)); 
+		g_fprintf(mailf, cd->Format, cd->Width, cd->Width,
+			  TimeRateBuffer);
+	    } else {
+		cdWidth = cd->Width;
+	    }
 
 	    cd= &ColumnData[DumpRate];
 	    g_fprintf(mailf, "%*s", cd->PrefixSpace, "");
 	    if(repdata->dumper.result == L_SUCCESS ||
-		    repdata->dumper.result == L_CHUNKSUCCESS)
-		g_fprintf(mailf, cd->Format, cd->Width, cd->Precision, repdata->dumper.kps);
-	    else
-		g_fprintf(mailf, "%*s", cd->Width, "N/A ");
+		    repdata->dumper.result == L_CHUNKSUCCESS) {
+		g_fprintf(mailf, cd->Format, cd->Width, cd->Precision,
+			  repdata->dumper.kps);
+	    } else {
+		int i;
+		cdWidth += cd->Width;
+		i = (cdWidth - strlen("FLUSH")) / 2;
+		g_fprintf(mailf, "%*s%*s", cdWidth-i, "FLUSH", i, "");
+	    }
 
 	    cd= &ColumnData[TapeTime];
 	    g_fprintf(mailf, "%*s", cd->PrefixSpace, "");
@@ -1554,7 +1562,7 @@ output_summary(void)
 		  "%3d:%02d", mnsc(repdata->taper.sec));
 	    else
 		g_snprintf(TimeRateBuffer, SIZEOF(TimeRateBuffer),
-		  "N/A ");
+		  " ");
 	    g_fprintf(mailf, cd->Format, cd->Width, cd->Width, TimeRateBuffer);
 
 	    cd= &ColumnData[TapeRate];
@@ -1564,7 +1572,7 @@ output_summary(void)
 	       repdata->taper.result == L_CHUNKSUCCESS)
 		g_fprintf(mailf, cd->Format, cd->Width, cd->Precision, repdata->taper.kps);
 	    else
-		g_fprintf(mailf, "%*s", cd->Width, "N/A ");
+		g_fprintf(mailf, "%*s", cd->Width, " ");
 
 	    if (repdata->chunker.result == L_PARTIAL)
 		g_fprintf(mailf, " PARTIAL");
@@ -3022,7 +3030,7 @@ do_postscript_output(void)
 		    else {
 			g_fprintf(postscript,"(%s) (%s) (%d) (%3.0d) (%8s) (%8.0lf) DrawHost\n",
 			    dp->host->hostname, dp->name, repdata->level,
-			    repdata->taper.filenum, "N/A", 
+			    repdata->taper.filenum, "", 
 			    outsize);
 		    }
 		}

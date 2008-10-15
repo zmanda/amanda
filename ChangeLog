@@ -1,3 +1,7 @@
+2008-10-15  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/reporter.c: print space instead of N/A, dumper stats are
+				 set to "FLUSH" if it is a flush.
+
 2008-10-13  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/vfs-device.c: re-open the dir handle on every
 	  device start or read label
