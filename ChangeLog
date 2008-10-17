@@ -1,4 +1,7 @@
 2008-10-17  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/planner.c: Set i to 0.
+
+2008-10-17  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amcheck.c, server-src/dumper.c
 	  server-src/planner.c: Don't send appliaciton-api request if the
 				client doesn't use the xml protocol.

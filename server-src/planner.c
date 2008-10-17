@@ -1398,6 +1398,7 @@ static void getsize(
 		(am_has_feature(hostp->features, fe_req_xml) &&
 		 am_has_feature(hostp->features, fe_xml_estimate))) {
 		nb_client++;
+		i = 0;
 
 		if (am_has_feature(hostp->features, fe_req_xml)) {
 		    char *levelstr = NULL;
