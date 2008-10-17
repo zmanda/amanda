@@ -2050,13 +2050,18 @@ startup_dump(
 	vstrextend(&req, pclean, NULL);
 	amfree(pclean);
 	dle_str = p;
+    } else if (*application_api != '\0') {
+	errstr = newvstrallocf(errstr,
+		_("[does not support application-api]"));
+	amfree(req);
+	return 2;
     } else {
 	authopt = strstr(options, "auth=");
 	if (auth == NULL) {
 	    auth = "BSD";
 	}
 	vstrextend(&req,
-		   application_api, progname,
+		   progname,
 		   " ", qdiskname,
 		   " ", device && has_device ? device : "",
 		   " ", level_string,

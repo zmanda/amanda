@@ -1324,7 +1324,6 @@ static void getsize(
     time_t	estimates, timeout;
     size_t	req_len;
     const	security_driver_t *secdrv;
-    char *	application_api;
     char *	calcsize;
     char *	qname, *b64disk = NULL;
     char *	qdevice, *b64device = NULL;
@@ -1474,6 +1473,10 @@ static void getsize(
 		    strappend(s, l);
 		    s_len += strlen(l);
 		    amfree(l);
+		} else if (strcmp(dp->program,"DUMP") != 0 &&
+			   strcmp(dp->program,"GNUTAR") != 0) {
+		    est(dp)->errstr = newvstrallocf(est(dp)->errstr,
+					_("does not support application-api"));
 		} else {
 		    for(i = 0; i < MAX_LEVELS; i++) {
 			char *l;
@@ -1544,14 +1547,7 @@ static void getsize(
 			else
 			    calcsize = "CALCSIZE ";
 
-			if (strcmp(dp->program,"DUMP") == 0 || 
-			    strcmp(dp->program,"GNUTAR") == 0) {
-			    application_api = "";
-			} else {
-			    application_api = "BACKUP ";
-			}
 			l = vstralloc(calcsize,
-				      application_api,
 				      dp->program,
 				      " ", qname,
 				      " ", dp->device ? qdevice : "",
@@ -1570,14 +1566,21 @@ static void getsize(
 			amfree(excludefree);
 		    }
 		}
+		remove_disk(&startq, dp);
 		if (s != NULL) {
 		    estimates += i;
 		    strappend(req, s);
 		    req_len += s_len;
 		    amfree(s);
+		    est(dp)->state = DISK_ACTIVE;
+		} else {
+		    est(dp)->state = DISK_DONE;
+		    if (est(dp)->errstr == NULL) {
+			est(dp)->errstr = vstrallocf(
+	                                        _("Can't request estimate"));
+		    }
+		    enqueue_disk(&failq, dp);
 		}
-		est(dp)->state = DISK_ACTIVE;
-		remove_disk(&startq, dp);
 	    }
 	    if (dp->estimate == ES_SERVER) {
 		info_t info;

@@ -1716,13 +1716,13 @@ start_host(
 		    }
 		}
 	    } else {
-		if (!am_has_feature(hostp->features, fe_program_application_api)) {
+		if (!am_has_feature(hostp->features, fe_program_application_api) ||
+		    !am_has_feature(hostp->features, fe_req_xml)) {
 		    g_fprintf(outf, _("ERROR: %s:%s does not support APPLICATION-API.\n"),
 			    hostp->hostname, qname);
 		    g_fprintf(outf, _("Dumptype configuration is not GNUTAR or DUMP."
 				    " It is case sensitive\n"));
-		}
-		if (am_has_feature(hostp->features, fe_req_xml)) {
+		} else {
 		    l = vstralloc("<dle>\n"
 				  "  <program>APPLICATION</program>\n", NULL);
 		    if (dp->application) {
@@ -1742,28 +1742,6 @@ start_host(
 		    if (dp->device)
 			vstrextend(&l, "  ", b64device, "\n", NULL);
 		    vstrextend(&l, o, "</dle>\n", NULL);
-		} else {
-		    if (dp->device) {
-			l = vstralloc("APPLICATION ",
-				      dp->program, 
-				      " ",
-				      qname,
-				      " ",
-				      qdevice,
-				      " 0 OPTIONS |",
-				      o,
-				      "\n",
-				      NULL);
-		    } else {
-			l = vstralloc("APPLICATION ",
-				      dp->program, 
-				      " ",
-				      qname,
-				      " 0 OPTIONS |",
-				      o,
-				      "\n",
-				      NULL);
-		    }
 		}
 	    }
 	    amfree(qname);

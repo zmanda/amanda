@@ -1,3 +1,8 @@
+2008-10-17  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amcheck.c, server-src/dumper.c
+	  server-src/planner.c: Don't send appliaciton-api request if the
+				client doesn't use the xml protocol.
+
 2008-10-15  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/reporter.c: print space instead of N/A, dumper stats are
 				 set to "FLUSH" if it is a flush.
