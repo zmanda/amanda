@@ -1,4 +1,8 @@
 2008-10-17  Jean-Louis Martineau <martineau@zmanda.com>
+	* changer-src/chg-multi.sh: Check permission on the statefile and its
+				    directory.
+
+2008-10-17  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/planner.c: Set i to 0.
 
 2008-10-17  Jean-Louis Martineau <martineau@zmanda.com>

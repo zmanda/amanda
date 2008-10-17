@@ -125,6 +125,42 @@ if [ -z "$ourstate" ]; then
 	exit 2
 fi
 
+if [ -f "$ourstate" -a ! -r "$ourstate" ]; then
+	answer=`_ "<none> %s: Can't read the statefile %s" "$pname" "$ourstate"`
+	echo `_ 'Exit ->'` $answer >> $logfile
+	echo $answer
+	exit 2
+fi
+
+if [ -f "$ourstate" -a ! -w "$ourstate" ]; then
+	answer=`_ "<none> %s: Can't write the statefile %s" "$pname" "$ourstate"`
+	echo `_ 'Exit ->'` $answer >> $logfile
+	echo $answer
+	exit 2
+fi
+
+dirstate=`dirname $ourstate`
+if [ ! -e "$dirstate" ]; then
+	answer=`_ "<none> %s: Directory %s doesn't exist" "$pname" "$dirstate"`
+	echo `_ 'Exit ->'` $answer >> $logfile
+	echo $answer
+	exit 2
+fi
+
+if [ ! -d "$dirstate" ]; then
+	answer=`_ '<none> %s: %s must be a directory' "$pname" "$dirstate"`
+	echo `_ 'Exit ->'` $answer >> $logfile
+	echo $answer
+	exit 2
+fi
+
+if [ ! -w "$dirstate" ]; then
+	answer=`_ "<none> %s: Can't write to %s directory" "$pname" "$dirstate"`
+	echo `_ 'Exit ->'` $answer >> $logfile
+	echo $answer
+	exit 2
+fi
+
 # needeject and multieject are incompatible
 if [ $needeject -eq 1 ] && [ $multieject -eq 1 ] ; then
 	answer=`_ '<none> %s: needeject and multieject cannot be both enabled in %s' "$pname" "$ourconf"`
