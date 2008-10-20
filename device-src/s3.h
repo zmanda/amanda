@@ -32,6 +32,69 @@
  * in different threads simultaneously. */
 typedef struct S3Handle S3Handle;
 
+/* Callback function to read data to upload
+ * 
+ * @note this is the same as CURLOPT_READFUNCTION
+ *
+ * @param data: The pointer to write data to
+ * @param size: The size of each "element" of the data buffer in bytes
+ * @param nmemb: The number of elements in the data buffer.
+ * So, the buffer's size is size*nmemb bytes.
+ * @param stream: The read_data (an opaque pointer)
+ *
+ * @return The number of bytes written to the buffer,
+ * CURL_READFUNC_PAUSE to pause, or CURL_READFUNC_ABORT to abort.
+ * Return 0 only if there's no more data to be uploaded.
+ */
+typedef size_t (*s3_read_func)(void *data, size_t size, size_t nmemb, void *stream);
+
+/* This function is called to get size of the upload data
+ *
+ * @param data: The write_data (opaque pointer)
+ *
+ * @return The number of bytes of data, negative for error
+ */
+typedef size_t (*s3_size_func)(void *data);
+
+/* This function is called to get MD5 hash of the upload data
+ *
+ * @param data: The write_data (opaque pointer)
+ *
+ * @return The MD5 hash, NULL on error
+ */
+typedef GByteArray* (*s3_md5_func)(void *data);
+
+/* Callback function to write data that's been downloaded
+ * 
+ * @note this is the same as CURLOPT_WRITEFUNCTION
+ *
+ * @param data: The pointer to read data from
+ * @param size: The size of each "element" of the data buffer in bytes
+ * @param nmemb: The number of elements in the data buffer.
+ * So, the buffer's size is size*nmemb bytes.
+ * @param stream: the write_data (an opaque pointer)
+ *
+ * @return The number of bytes written to the buffer or
+ * CURL_WRITEFUNC_PAUSE to pause.
+ * If it's the number of bytes written, it should match the buffer size
+ */
+typedef size_t (*s3_write_func)(void *data, size_t size, size_t nmemb, void *stream);
+
+/**
+ * Callback function to track progress
+ *
+ * @note this is the same as CURLOPT_PROGRESSFUNCTION
+ *
+ * @param data: The progress_data
+ * @param dltotal: The total number of bytes to downloaded
+ * @param dlnow: The current number of bytes downloaded
+ * @param ultotal: The total number of bytes to downloaded
+ * @param ulnow: The current number of bytes downloaded
+ *
+ * @return 0 to continue, non-zero to abort.
+ */
+typedef curl_progress_callback s3_progress_func;
+
 /*
  * Constants
  */
@@ -210,7 +273,7 @@ s3_error(S3Handle *hdl,
  */
 void
 s3_verbose(S3Handle *hdl,
-	   gboolean verbose);
+       gboolean verbose);
 
 /* Control the use of SSL with HTTP transactions.
  *
@@ -240,16 +303,25 @@ s3_strerror(S3Handle *hdl);
  * @param hdl: the S3Handle object
  * @param bucket: the bucket to which the upload should be made
  * @param key: the key to which the upload should be made
- * @param buffer: the data to be uploaded
- * @param buffer_len: the length of the data to upload
+ * @param read_func: the callback for reading data
+ * @param size_func: the callback to get the number of bytes to upload
+ * @param md5_func: the callback to get the MD5 hash of the data to upload
+ * @param read_data: pointer to pass to the above functions
+ * @param progress_func: the callback for progress information
+ * @param progress_data: pointer to pass to C{progress_func}
+ *
  * @returns: false if an error ocurred
  */
 gboolean
 s3_upload(S3Handle *hdl,
           const char *bucket,
           const char *key, 
-          gpointer buffer,
-          guint buffer_len);
+          s3_read_func read_func,
+          s3_size_func size_func,
+          s3_md5_func md5_func,
+          gpointer read_data,
+          s3_progress_func progress_func,
+          gpointer progress_data);
 
 /* List all of the files matching the pseudo-glob C{PREFIX*DELIMITER*}, 
  * returning only that portion which matches C{PREFIX*DELIMITER}.  S3 supports
@@ -276,20 +348,20 @@ s3_list_keys(S3Handle *hdl,
  * @param hdl: the S3Handle object
  * @param bucket: the bucket to read from
  * @param key: the key to read from
- * @param buf_ptr: (result) a pointer to a C{gpointer} which will contain a pointer to
- * the block read
- * @param buf_size: (result) a pointer to a C{guint} which will contain the size of the
- * block read
- * @param max_size: maximum size of the file
+ * @param write_func: the callback for writing data
+ * @param write_data: pointer to pass to C{write_func}
+ * @param progress_func: the callback for progress information
+ * @param progress_data: pointer to pass to C{progress_func}
  * @returns: FALSE if an error occurs
  */
 gboolean
 s3_read(S3Handle *hdl,
         const char *bucket,
         const char *key,
-        gpointer *buf_ptr,
-        guint *buf_size,
-        guint max_size);
+        s3_write_func write_func,
+        gpointer write_data,
+        s3_progress_func progress_func,
+        gpointer progress_data);
 
 /* Delete a file.
  *
@@ -328,12 +400,34 @@ typedef struct {
 } CurlBuffer;
 
 /* a CURLOPT_READFUNCTION to read data from a buffer. */
-size_t buffer_readfunction(void *ptr, size_t size,
-                           size_t nmemb, void * stream);
+size_t
+s3_buffer_read_func(void *ptr, size_t size, size_t nmemb, void * stream);
+
+size_t
+s3_buffer_size_func(void *stream);
+
+GByteArray*
+s3_buffer_md5_func(void *stream);
 
 /* a CURLOPT_WRITEFUNCTION to write data to a buffer. */
 size_t
-buffer_writefunction(void *ptr, size_t size, size_t nmemb, void *stream);
+s3_buffer_write_func(void *ptr, size_t size, size_t nmemb, void *stream);
+
+#ifdef _WIN32
+/* a CURLOPT_READFUNCTION to read data from a file. */
+size_t
+s3_file_read_func(void *ptr, size_t size, size_t nmemb, void * stream);
+
+size_t
+s3_file_size_func(void *stream);
+
+GByteArray*
+s3_file_md5_func(void *stream);
+
+/* a CURLOPT_WRITEFUNCTION to write data to a file. */
+size_t
+s3_file_write_func(void *ptr, size_t size, size_t nmemb, void *stream);
+#endif
 
 /* Adds a null termination to a buffer. */
 void terminate_buffer(CurlBuffer *);

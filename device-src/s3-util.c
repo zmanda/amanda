@@ -18,16 +18,27 @@
  * Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
  */
 
+
+#ifdef HAVE_CONFIG_H
+/* use a relative path here to avoid conflicting with Perl's config.h. */
+#include "../config/config.h"
+#endif
+#ifdef HAVE_REGEX_H
 #include <sys/types.h>
 #include <regex.h>
+#endif
+#ifdef HAVE_AMANDA_H
+#include "amanda.h"
+#endif
+
 #include <glib.h>
 #include <openssl/md5.h>
 #include <openssl/bio.h>
 #include <openssl/evp.h>
 #include <openssl/bn.h>
-#include "amanda.h"
 #include "s3-util.h"
 
+#ifdef HAVE_REGEX_H
 int
 s3_regexec_wrap(regex_t *regex,
            const char *str,
@@ -53,6 +64,43 @@ s3_regexec_wrap(regex_t *regex,
 
     return reg_result;
 }
+#else
+
+int
+s3_regexec_wrap(regex_t *regex,
+           const char *str,
+           size_t nmatch,
+           regmatch_t pmatch[],
+           int eflags)
+{
+    GMatchInfo *match_info;
+    int ret = REG_NOERROR;
+    guint i;
+
+    g_assert(regex && *regex);
+    g_regex_match(*regex, str, eflags, &match_info);
+    if (g_match_info_matches(match_info)) {
+        g_assert(g_match_info_get_match_count(match_info) <= (glong) nmatch);
+        for (i = 0; i < nmatch; i++) {
+            pmatch[i].rm_eo = pmatch[i].rm_so = -1;
+            g_match_info_fetch_pos(match_info, i, &pmatch[i].rm_so, &pmatch[i].rm_eo);
+        }
+    } else {
+        ret = REG_NOMATCH;
+    }
+    g_match_info_free(match_info);
+    return ret;
+}
+#endif
+
+#ifndef HAVE_AMANDA_H
+char*
+find_regex_substring(const char* base_string, const regmatch_t match)
+{
+    g_assert(match.rm_eo >= match.rm_so);
+    return g_strndup(base_string+match.rm_so, match.rm_eo - match.rm_so);
+}
+#endif
 
 gchar*
 s3_base64_encode(const GByteArray *to_enc) {

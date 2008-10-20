@@ -23,17 +23,38 @@
  * - debugging mode
  */
 
+#ifdef HAVE_CONFIG_H
+/* use a relative path here to avoid conflicting with Perl's config.h. */
+#include "../config/config.h"
+#endif
 #include <string.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
-#include <dirent.h>
-#include <regex.h>
-#include <time.h>
-#include "util.h"
-#include "amanda.h"
 #include "s3.h"
 #include "s3-util.h"
+#ifdef HAVE_REGEX_H
+#include <regex.h>
+#endif
+#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_STAT_H
+#include <sys/stat.h>
+#endif
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+#ifdef HAVE_DIRENT_H
+#include <dirent.h>
+#endif
+#ifdef HAVE_TIME_H
+#include <time.h>
+#endif
+#ifdef HAVE_UTIL_H
+#include "util.h"
+#endif
+#ifdef HAVE_AMANDA_H
+#include "amanda.h"
+#endif
+
 #include <curl/curl.h>
 
 /* Constant renamed after version 7.10.7 */
@@ -59,6 +80,7 @@
 
 #include <openssl/err.h>
 #include <openssl/ssl.h>
+#include <openssl/md5.h>
 
 /* Maximum key length as specified in the S3 documentation
  * (*excluding* null terminator) */
@@ -123,6 +145,32 @@ struct S3Handle {
     void *last_response_body;
     guint last_response_body_size;
 };
+
+typedef struct {
+    CurlBuffer resp_buf;
+    s3_write_func write_func;
+    gpointer write_data;
+
+    gboolean headers_done;
+    char *etag;
+} S3InternalData;
+
+/* Callback function to examine headers one-at-a-time
+ * 
+ * @note this is the same as CURLOPT_HEADERFUNCTION
+ *
+ * @param data: The pointer to read data from
+ * @param size: The size of each "element" of the data buffer in bytes
+ * @param nmemb: The number of elements in the data buffer.
+ * So, the buffer's size is size*nmemb bytes.
+ * @param stream: the header_data (an opaque pointer)
+ *
+ * @return The number of bytes written to the buffer or
+ * CURL_WRITEFUNC_PAUSE to pause.
+ * If it's the number of bytes written, it should match the buffer size
+ */
+typedef size_t (*s3_header_func)(void *data, size_t size, size_t nmemb, void *stream);
+
 
 /*
  * S3 errors */
@@ -215,11 +263,11 @@ static regex_t etag_regex, error_name_regex, message_regex, subdomain_regex,
  */
 static char *
 build_url(const char *bucket,
-	  const char *key,
-	  const char *subresource,
-	  const char *query,
-	  gboolean use_subdomain,
-	  gboolean use_ssl);
+      const char *key,
+      const char *subresource,
+      const char *query,
+      gboolean use_subdomain,
+      gboolean use_ssl);
 
 /* Create proper authorization headers for an Amazon S3 REST
  * request to C{headers}.
@@ -245,7 +293,7 @@ authenticate_request(S3Handle *hdl,
                      const char *key,
                      const char *subresource,
                      const char *md5_hash,
-		     gboolean use_subdomain);
+                     gboolean use_subdomain);
 
 
 
@@ -255,6 +303,7 @@ authenticate_request(S3Handle *hdl,
  * @param hdl: The S3Handle object
  * @param body: the response body
  * @param body_len: the length of the response body
+ * @param etag: The response's ETag header
  * @param content_md5: The hex-encoded MD5 hash of the request body, 
  *     which will be checked against the response's ETag header.
  *     If NULL, the header is not checked.
@@ -265,8 +314,9 @@ static gboolean
 interpret_response(S3Handle *hdl,
                    CURLcode curl_code,
                    char *curl_error_buffer,
-                   void *body,
+                   gchar *body,
                    guint body_len,
+                   const char *etag,
                    const char *content_md5);
 
 /* Perform an S3 operation.  This function handles all of the details
@@ -286,13 +336,14 @@ interpret_response(S3Handle *hdl,
  * @param subresource: the "sub-resource" to request (e.g. "acl") or NULL for none
  * @param query: the query string to send (not including th initial '?'),
  * or NULL for none
- * @param request_body: the request body, or NULL if none should be sent
- * @param request_body_size: the length of the request body
- * @param max_response_size: the maximum number of bytes to accept in the
- * response, or 0 for no limit.
- * @param preallocate_response_size: for more efficient operation, preallocate
- * a buffer of this size for the response body.  Addition space will be allocated
- * if the response exceeds this size.
+ * @param read_func: the callback for reading data
+ * @param size_func: the callback to get the number of bytes to upload
+ * @param md5_func: the callback to get the MD5 hash of the data to upload
+ * @param read_data: pointer to pass to the above functions
+ * @param write_func: the callback for writing data
+ * @param write_data: pointer to pass to C{write_func}
+ * @param progress_func: the callback for progress information
+ * @param progress_data: pointer to pass to C{progress_func}
  * @param result_handling: instructions for handling the results; see above.
  * @returns: the result specified by result_handling; details of the response
  * are then available in C{hdl->last*}
@@ -304,11 +355,28 @@ perform_request(S3Handle *hdl,
                 const char *key,
                 const char *subresource,
                 const char *query,
-                const void *request_body,
-                guint request_body_size,
-                guint max_response_size,
-                guint preallocate_response_size,
+                s3_read_func read_func,
+                s3_size_func size_func,
+                s3_md5_func md5_func,
+                gpointer read_data,
+                s3_write_func write_func,
+                gpointer write_data,
+                s3_progress_func progress_func,
+                gpointer progress_data,
                 const result_handling_t *result_handling);
+
+/*
+ * a CURLOPT_WRITEFUNCTION to save part of the response in memory and 
+ * call an external function if one was provided.
+ */
+static size_t
+s3_internal_write_func(void *ptr, size_t size, size_t nmemb, void * stream);
+
+/*
+ * a CURLOPT_HEADERFUNCTION to save the ETag header only.
+ */
+static size_t
+s3_internal_header_func(void *ptr, size_t size, size_t nmemb, void * stream);
 
 static gboolean
 compile_regexes(void);
@@ -325,7 +393,7 @@ s3_error_code_from_name(char *s3_error_name)
 
     /* do a brute-force search through the list, since it's not sorted */
     for (i = 0; i < S3_ERROR_END; i++) {
-        if (strcasecmp(s3_error_name, s3_error_code_names[i]) == 0)
+        if (g_strcasecmp(s3_error_name, s3_error_code_names[i]) == 0)
             return i;
     }
 
@@ -350,13 +418,13 @@ s3_curl_supports_ssl(void)
     static int supported = -1;
     if (supported == -1) {
 #if defined(CURL_VERSION_SSL)
-	curl_version_info_data *info = curl_version_info(CURLVERSION_NOW);
-	if (info->features & CURL_VERSION_SSL)
-	    supported = 1;
-	else
-	    supported = 0;
+    curl_version_info_data *info = curl_version_info(CURLVERSION_NOW);
+    if (info->features & CURL_VERSION_SSL)
+        supported = 1;
+    else
+        supported = 0;
 #else
-	supported = 0;
+    supported = 0;
 #endif
     }
 
@@ -388,11 +456,11 @@ lookup_result(const result_handling_t *result_handling,
 
 static char *
 build_url(const char *bucket,
-	  const char *key,
-	  const char *subresource,
-	  const char *query,
-	  gboolean use_subdomain,
-	  gboolean use_ssl)
+      const char *key,
+      const char *subresource,
+      const char *query,
+      gboolean use_subdomain,
+      gboolean use_ssl)
 {
     GString *url = NULL;
     char *esc_bucket = NULL, *esc_key = NULL;
@@ -413,7 +481,7 @@ build_url(const char *bucket,
     /* path */
     if (!use_subdomain && bucket) {
         esc_bucket = curl_escape(bucket, 0);
-	if (!esc_bucket) goto cleanup;
+    if (!esc_bucket) goto cleanup;
         g_string_append_printf(url, "%s", esc_bucket);
         if (key)
             g_string_append(url, "/");
@@ -421,7 +489,7 @@ build_url(const char *bucket,
 
     if (key) {
         esc_key = curl_escape(key, 0);
-	if (!esc_key) goto cleanup;
+    if (!esc_key) goto cleanup;
         g_string_append_printf(url, "%s", esc_key);
     }
 
@@ -452,7 +520,7 @@ authenticate_request(S3Handle *hdl,
                      const char *key,
                      const char *subresource,
                      const char *md5_hash,
-		     gboolean use_subdomain) 
+             gboolean use_subdomain) 
 {
     time_t t;
     struct tm tmp;
@@ -484,7 +552,11 @@ authenticate_request(S3Handle *hdl,
 
     /* calculate the date */
     t = time(NULL);
+#ifdef _WIN32
+    if (!localtime_s(&tmp, &t)) g_debug("localtime error");
+#else
     if (!localtime_r(&t, &tmp)) perror("localtime");
+#endif
     if (!strftime(date, sizeof(date), "%a, %d %b %Y %H:%M:%S %Z", &tmp)) 
         perror("strftime");
 
@@ -529,7 +601,7 @@ authenticate_request(S3Handle *hdl,
     /* run HMAC-SHA1 on the canonicalized string */
     md = g_byte_array_sized_new(EVP_MAX_MD_SIZE+1);
     HMAC_CTX_init(&ctx);
-    HMAC_Init_ex(&ctx, hdl->secret_key, strlen(hdl->secret_key), EVP_sha1(), NULL);
+    HMAC_Init_ex(&ctx, hdl->secret_key, (int) strlen(hdl->secret_key), EVP_sha1(), NULL);
     HMAC_Update(&ctx, (unsigned char*) auth_string->str, auth_string->len);
     HMAC_Final(&ctx, md->data, &md->len);
     HMAC_CTX_cleanup(&ctx);
@@ -540,27 +612,27 @@ authenticate_request(S3Handle *hdl,
         /* Devpay headers are included in hash. */
         buf = g_strdup_printf(AMAZON_SECURITY_HEADER ": %s", hdl->user_token);
         headers = curl_slist_append(headers, buf);
-        amfree(buf);
+        g_free(buf);
 
         buf = g_strdup_printf(AMAZON_SECURITY_HEADER ": %s", STS_PRODUCT_TOKEN);
         headers = curl_slist_append(headers, buf);
-        amfree(buf);
+        g_free(buf);
     }
 
     buf = g_strdup_printf("Authorization: AWS %s:%s",
                           hdl->access_key, auth_base64);
     headers = curl_slist_append(headers, buf);
-    amfree(buf);
+    g_free(buf);
     
     if (md5_hash && '\0' != md5_hash[0]) {
         buf = g_strdup_printf("Content-MD5: %s", md5_hash);
         headers = curl_slist_append(headers, buf);
-        amfree(buf);
+        g_free(buf);
     }
 
     buf = g_strdup_printf("Date: %s", date);
     headers = curl_slist_append(headers, buf);
-    amfree(buf);
+    g_free(buf);
 cleanup:
     g_free(esc_bucket);
     g_free(esc_key);
@@ -575,16 +647,15 @@ static gboolean
 interpret_response(S3Handle *hdl,
                    CURLcode curl_code,
                    char *curl_error_buffer,
-                   void *body,
+                   gchar *body,
                    guint body_len,
+                   const char *etag,
                    const char *content_md5)
 {
     long response_code = 0;
     regmatch_t pmatch[2];
     char *error_name = NULL, *message = NULL;
     char *body_copy = NULL;
-    long header_len;
-    gchar *headers = NULL, *etag = NULL;
     gboolean ret = TRUE;
 
     if (!hdl) return FALSE;
@@ -603,30 +674,14 @@ interpret_response(S3Handle *hdl,
     curl_easy_getinfo(hdl->curl, CURLINFO_RESPONSE_CODE, &response_code);
     hdl->last_response_code = response_code;
 
-    if (content_md5) {
-        /* seperate and null-terminate headers */
-        curl_easy_getinfo(hdl->curl, CURLINFO_HEADER_SIZE, &header_len);
-        headers = g_strndup(body, header_len);
-        /* fix up the body */
-        body_len -= header_len;
-        memmove(body, body+header_len, body_len);
-        bzero(body+body_len, header_len);
-    }
-
-    if (content_md5 && 200 == response_code) {
-        /* check ETag, if present */
-        if (!s3_regexec_wrap(&etag_regex, headers, 2, pmatch, 0))
-            etag = find_regex_substring(headers, pmatch[1]);
-        if (etag && strcasecmp(etag, content_md5))
+    /* check ETag, if present */
+    if (etag && content_md5 && 200 == response_code) {
+        if (etag && g_strcasecmp(etag, content_md5))
             hdl->last_message = g_strdup("S3 Error: Possible data corruption (ETag returned by Amazon did not match the MD5 hash of the data sent)");
         else
             ret = FALSE;
-
-        g_free(etag);
-        g_free(headers);
         return ret;
     }
-    g_free(headers);
 
     if (200 <= response_code && response_code < 400) {
         /* 2xx and 3xx codes won't have a response body we care about */
@@ -673,10 +728,12 @@ cleanup:
     return FALSE;
 }
 
-size_t buffer_readfunction(void *ptr, size_t size,
-                           size_t nmemb, void * stream) {
+/* a CURLOPT_READFUNCTION to read data from a buffer. */
+size_t
+s3_buffer_read_func(void *ptr, size_t size, size_t nmemb, void * stream)
+{
     CurlBuffer *data = stream;
-    guint bytes_desired = size * nmemb;
+    guint bytes_desired = (guint) size * nmemb;
 
     /* check the number of bytes remaining, just to be safe */
     if (bytes_desired > data->buffer_len - data->buffer_pos)
@@ -689,17 +746,32 @@ size_t buffer_readfunction(void *ptr, size_t size,
 }
 
 size_t
-buffer_writefunction(void *ptr, size_t size, size_t nmemb, void *stream)
+s3_buffer_size_func(void *stream)
+{
+    CurlBuffer *data = stream;
+    return data->buffer_len;
+}
+
+GByteArray*
+s3_buffer_md5_func(void *stream)
+{
+    CurlBuffer *data = stream;
+    GByteArray req_body_gba = {(guint8 *)data->buffer, data->buffer_len};
+
+    return s3_compute_md5_hash(&req_body_gba);
+}
+
+/* a CURLOPT_WRITEFUNCTION to write data to a buffer. */
+size_t
+s3_buffer_write_func(void *ptr, size_t size, size_t nmemb, void *stream)
 {
     CurlBuffer * data = stream;
-    guint new_bytes = size * nmemb;
+    guint new_bytes = (guint) size * nmemb;
     guint bytes_needed = data->buffer_pos + new_bytes;
 
     /* error out if the new size is greater than the maximum allowed */
-    if (data->max_buffer_size && bytes_needed > data->max_buffer_size) {
-	g_warning("S3 request exceeded %d bytes; CURL error follows.", data->max_buffer_size);
-        return 0; /* returning zero signals an error to libcurl */
-    }
+    if (data->max_buffer_size && bytes_needed > data->max_buffer_size)
+        return 0;
 
     /* reallocate if necessary. We use exponential sizing to make this
      * happen less often. */
@@ -712,7 +784,7 @@ buffer_writefunction(void *ptr, size_t size, size_t nmemb, void *stream)
         data->buffer_len = new_size;
     }
     if (!data->buffer)
-	return 0;
+        return 0; /* returning zero signals an error to libcurl */
 
     /* actually copy the data to the buffer */
     memcpy(data->buffer + data->buffer_pos, ptr, new_bytes);
@@ -722,44 +794,112 @@ buffer_writefunction(void *ptr, size_t size, size_t nmemb, void *stream)
     return new_bytes;
 }
 
+#ifdef _WIN32
+/* a CURLOPT_READFUNCTION to read data from a file. */
+size_t
+s3_file_read_func(void *ptr, size_t size, size_t nmemb, void * stream)
+{
+    HANDLE *hFile = (HANDLE *) stream;
+    DWORD bytes_read;
+
+    ReadFile(hFile, ptr, (DWORD) size*nmemb, &bytes_read, NULL);
+    return bytes_read;
+}
+
+size_t
+s3_file_size_func(void *stream)
+{
+    HANDLE *hFile = (HANDLE *) stream;
+    DWORD size = GetFileSize(hFile, NULL);
+
+    if (INVALID_FILE_SIZE == size) {
+        return -1;
+    } else {
+        return size;
+    }
+}
+
+GByteArray*
+s3_file_md5_func(void *stream)
+{
+#define S3_MD5_BUF_SIZE (10*1024)
+    HANDLE *hFile = (HANDLE *) stream;
+    guint8 buf[S3_MD5_BUF_SIZE];
+    DWORD bytes_read;
+    MD5_CTX md5_ctx;
+    GByteArray *ret = NULL;
+
+    if (INVALID_SET_FILE_POINTER == SetFilePointer(hFile, 0, NULL, FILE_BEGIN)) {
+        return NULL;
+    }
+    
+    ret = g_byte_array_sized_new(S3_MD5_HASH_BYTE_LEN);
+    g_byte_array_set_size(ret, S3_MD5_HASH_BYTE_LEN);    
+    MD5_Init(&md5_ctx);
+
+    while (ReadFile(hFile, buf, S3_MD5_BUF_SIZE, &bytes_read, NULL)) {
+        MD5_Update(&md5_ctx, buf, bytes_read);
+    }
+    MD5_Final(ret->data, &md5_ctx);
+
+    if (INVALID_SET_FILE_POINTER == SetFilePointer(hFile, 0, NULL, FILE_BEGIN)) {
+        g_byte_array_free(ret, TRUE);
+        ret = NULL;
+    }
+    return ret;
+#undef S3_MD5_BUF_SIZE
+}
+
+/* a CURLOPT_WRITEFUNCTION to write data to a file. */
+size_t
+s3_file_write_func(void *ptr, size_t size, size_t nmemb, void *stream)
+{
+    HANDLE *hFile = (HANDLE *) stream;
+    DWORD bytes_written;
+
+    WriteFile(hFile, ptr, (DWORD) size*nmemb, &bytes_written, NULL);
+    return bytes_written;
+}
+#endif
+
 static int 
 curl_debug_message(CURL *curl G_GNUC_UNUSED, 
-		   curl_infotype type, 
-		   char *s, 
-		   size_t len, 
-		   void *unused G_GNUC_UNUSED)
+           curl_infotype type, 
+           char *s, 
+           size_t len, 
+           void *unused G_GNUC_UNUSED)
 {
     char *lineprefix;
     char *message;
     char **lines, **line;
 
     switch (type) {
-	case CURLINFO_TEXT:
-	    lineprefix="";
-	    break;
+    case CURLINFO_TEXT:
+        lineprefix="";
+        break;
 
-	case CURLINFO_HEADER_IN:
-	    lineprefix="Hdr In: ";
-	    break;
+    case CURLINFO_HEADER_IN:
+        lineprefix="Hdr In: ";
+        break;
 
-	case CURLINFO_HEADER_OUT:
-	    lineprefix="Hdr Out: ";
-	    break;
+    case CURLINFO_HEADER_OUT:
+        lineprefix="Hdr Out: ";
+        break;
 
-	default:
-	    /* ignore data in/out -- nobody wants to see that in the
-	     * debug logs! */
-	    return 0;
+    default:
+        /* ignore data in/out -- nobody wants to see that in the
+         * debug logs! */
+        return 0;
     }
 
     /* split the input into lines */
-    message = g_strndup(s, len);
+    message = g_strndup(s, (gsize) len);
     lines = g_strsplit(message, "\n", -1);
     g_free(message);
 
     for (line = lines; *line; line++) {
-	if (**line == '\0') continue; /* skip blank lines */
-	g_debug("%s%s", lineprefix, *line);
+    if (**line == '\0') continue; /* skip blank lines */
+    g_debug("%s%s", lineprefix, *line);
     }
     g_strfreev(lines);
 
@@ -773,10 +913,14 @@ perform_request(S3Handle *hdl,
                 const char *key,
                 const char *subresource,
                 const char *query,
-                const void *request_body,
-                guint request_body_size,
-                guint max_response_size,
-                guint preallocate_response_size,
+                s3_read_func read_func,
+                s3_size_func size_func,
+                s3_md5_func md5_func,
+                gpointer read_data,
+                s3_write_func write_func,
+                gpointer write_data,
+                s3_progress_func progress_func,
+                gpointer progress_data,
                 const result_handling_t *result_handling)
 {
     gboolean use_subdomain;
@@ -785,19 +929,18 @@ perform_request(S3Handle *hdl,
     CURLcode curl_code = CURLE_OK;
     char curl_error_buffer[CURL_ERROR_SIZE] = "";
     struct curl_slist *headers = NULL;
-    CurlBuffer readdata = { (void*)request_body, request_body_size, 0, 0 };
-    CurlBuffer writedata = { NULL, 0, 0, max_response_size };
+    S3InternalData int_writedata = {{NULL, 0, 0, MAX_ERROR_RESPONSE_LEN}, NULL, NULL, FALSE, NULL};
     gboolean should_retry;
     guint retries = 0;
     gulong backoff = EXPONENTIAL_BACKOFF_START_USEC;
     /* corresponds to PUT, HEAD, GET, and POST */
     int curlopt_upload = 0, curlopt_nobody = 0, curlopt_httpget = 0, curlopt_post = 0;
     /* do we want to examine the headers */
-    int curlopt_header = 0;
     const char *curlopt_customrequest = NULL;
     /* for MD5 calculation */
     GByteArray *md5_hash = NULL;
     gchar *md5_hash_hex = NULL, *md5_hash_b64 = NULL;
+    size_t request_body_size = 0;
 
     g_assert(hdl != NULL && hdl->curl != NULL);
 
@@ -806,12 +949,6 @@ perform_request(S3Handle *hdl,
     use_subdomain = hdl->bucket_location? TRUE : FALSE;
     url = build_url(bucket, key, subresource, query, use_subdomain, hdl->use_ssl);
     if (!url) goto cleanup;
-
-    if (preallocate_response_size) {
-        writedata.buffer = g_malloc(preallocate_response_size);
-        if (!writedata.buffer) goto cleanup;
-        writedata.buffer_len = preallocate_response_size;
-    }
 
     /* libcurl may behave strangely if these are not set correctly */
     if (!strncmp(verb, "PUT", 4)) {
@@ -826,15 +963,21 @@ perform_request(S3Handle *hdl,
         curlopt_customrequest = verb;
     }
 
-    if (curlopt_upload && request_body) {
-        GByteArray req_body_gba = {(guint8 *)request_body, request_body_size};
-        curlopt_header = 1;
+    if (size_func) {
+        request_body_size = size_func(read_data);
+    }
+    if (md5_func) {
 
-        md5_hash = s3_compute_md5_hash(&req_body_gba);
-        md5_hash_b64 = s3_base64_encode(md5_hash);
-        md5_hash_hex = s3_hex_encode(md5_hash);
-    } else {
-	request_body_size = 0;
+        md5_hash = md5_func(read_data);
+        if (md5_hash) {
+            md5_hash_b64 = s3_base64_encode(md5_hash);
+            md5_hash_hex = s3_hex_encode(md5_hash);
+            g_byte_array_free(md5_hash, TRUE);
+        }
+    }
+    if (write_func) {
+        int_writedata.write_func = write_func;
+        int_writedata.write_data = write_data;
     }
 
     while (1) {
@@ -842,9 +985,10 @@ perform_request(S3Handle *hdl,
         if (headers) {
             curl_slist_free_all(headers);
         }
-        readdata.buffer_pos = 0;
-        writedata.buffer_pos = 0;
-	curl_error_buffer[0] = '\0';
+        int_writedata.resp_buf.buffer_pos = 0;
+        int_writedata.headers_done = FALSE;
+        int_writedata.etag = NULL;
+        curl_error_buffer[0] = '\0';
 
         /* set up the request */
         headers = authenticate_request(hdl, verb, bucket, key, subresource,
@@ -852,10 +996,11 @@ perform_request(S3Handle *hdl,
 
         if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_VERBOSE, hdl->verbose)))
             goto curl_error;
-	if (hdl->verbose)
-	    if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_DEBUGFUNCTION, 
-					      curl_debug_message)))
-		goto curl_error;
+        if (hdl->verbose) {
+            if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_DEBUGFUNCTION, 
+                              curl_debug_message)))
+                goto curl_error;
+        }
         if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_ERRORBUFFER,
                                           curl_error_buffer)))
             goto curl_error;
@@ -868,30 +1013,27 @@ perform_request(S3Handle *hdl,
         if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_HTTPHEADER,
                                           headers)))
             goto curl_error;
-        if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_WRITEFUNCTION, buffer_writefunction))) 
+        if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_WRITEFUNCTION, s3_internal_write_func))) 
             goto curl_error;
-        if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_WRITEDATA, &writedata))) 
+        if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_WRITEDATA, &int_writedata))) 
             goto curl_error;
-        if (max_response_size) {
-#ifdef CURLOPT_MAXFILESIZE_LARGE
-            if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_MAXFILESIZE_LARGE, (curl_off_t)max_response_size))) 
-                goto curl_error;
-#else
-# ifdef CURLOPT_MAXFILESIZE
-            if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_MAXFILESIZE, (long)max_response_size))) 
-                goto curl_error;
-# else
-	    /* no MAXFILESIZE option -- that's OK */
-# endif
-#endif
-	}
+        /* Note: we always have to set this apparently, for consistent "end of header" detection */
+        if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_HEADERFUNCTION, s3_internal_header_func))) 
+            goto curl_error;
+        /* Note: if set, CURLOPT_HEADERDATA seems to also be used for CURLOPT_WRITEDATA ? */
+        if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_HEADERDATA, &int_writedata))) 
+            goto curl_error;
+        if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_PROGRESSFUNCTION, progress_func))) 
+            goto curl_error;
+        if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_PROGRESSDATA, progress_data))) 
+            goto curl_error;
 
 #ifdef CURLOPT_INFILESIZE_LARGE
-	if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_INFILESIZE_LARGE, (curl_off_t)request_body_size)))
-	    goto curl_error;
+        if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_INFILESIZE_LARGE, (curl_off_t)request_body_size)))
+            goto curl_error;
 #else
-	if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_INFILESIZE, (long)request_body_size)))
-	    goto curl_error;
+        if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_INFILESIZE, (long)request_body_size)))
+            goto curl_error;
 #endif
 
         if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_HTTPGET, curlopt_httpget)))
@@ -905,14 +1047,12 @@ perform_request(S3Handle *hdl,
         if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_CUSTOMREQUEST,
                                           curlopt_customrequest)))
             goto curl_error;
-        if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_HEADER, curlopt_header)))
-            goto curl_error;
 
 
         if (curlopt_upload) {
-            if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_READFUNCTION, buffer_readfunction))) 
+            if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_READFUNCTION, read_func))) 
                 goto curl_error;
-            if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_READDATA, &readdata))) 
+            if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_READDATA, read_data))) 
                 goto curl_error;
         } else {
             /* Clear request_body options. */
@@ -931,7 +1071,7 @@ perform_request(S3Handle *hdl,
         /* interpret the response into hdl->last* */
     curl_error: /* (label for short-circuiting the curl_easy_perform call) */
         should_retry = interpret_response(hdl, curl_code, curl_error_buffer, 
-            writedata.buffer, writedata.buffer_pos, md5_hash_hex);
+            int_writedata.resp_buf.buffer, int_writedata.resp_buf.buffer_pos, int_writedata.etag, md5_hash_hex);
         
         /* and, unless we know we need to retry, see what we're to do now */
         if (!should_retry) {
@@ -967,21 +1107,58 @@ perform_request(S3Handle *hdl,
 cleanup:
     g_free(url);
     if (headers) curl_slist_free_all(headers);
-    if (md5_hash) g_byte_array_free(md5_hash, TRUE);
     g_free(md5_hash_b64);
     g_free(md5_hash_hex);
     
     /* we don't deallocate the response body -- we keep it for later */
-    hdl->last_response_body = writedata.buffer;
-    hdl->last_response_body_size = writedata.buffer_pos;
+    hdl->last_response_body = int_writedata.resp_buf.buffer;
+    hdl->last_response_body_size = int_writedata.resp_buf.buffer_pos;
     hdl->last_num_retries = retries;
 
     return result;
 }
 
+
+static size_t
+s3_internal_write_func(void *ptr, size_t size, size_t nmemb, void * stream)
+{
+    S3InternalData *data = (S3InternalData *) stream;
+    size_t bytes_saved;
+
+    if (!data->headers_done)
+        return size*nmemb;
+
+    bytes_saved = s3_buffer_write_func(ptr, size, nmemb, &data->resp_buf);
+    if (data->write_func) {
+        return data->write_func(ptr, size, nmemb, data->write_data);
+    } else {
+        return bytes_saved;
+    }
+}
+
+static size_t
+s3_internal_header_func(void *ptr, size_t size, size_t nmemb, void * stream)
+{
+    static const char *final_header = "\r\n";
+    char *header;
+    regmatch_t pmatch[2];
+    S3InternalData *data = (S3InternalData *) stream;
+
+    header = g_strndup((gchar *) ptr, (gsize) size*nmemb);
+    if (!s3_regexec_wrap(&etag_regex, header, 2, pmatch, 0))
+            data->etag = find_regex_substring(header, pmatch[1]);
+    if (!strcmp(final_header, header))
+        data->headers_done = TRUE;
+
+    return size*nmemb;
+}
+
 static gboolean
 compile_regexes(void)
 {
+#ifdef HAVE_REGEX_H
+
+  /* using POSIX regular expressions */
   struct {const char * str; int flags; regex_t *regex;} regexes[] = {
         {"<Code>[[:space:]]*([^<]*)[[:space:]]*</Code>", REG_EXTENDED | REG_ICASE, &error_name_regex},
         {"^ETag:[[:space:]]*\"([^\"]+)\"[[:space:]]*$", REG_EXTENDED | REG_ICASE | REG_NEWLINE, &etag_regex},
@@ -1002,7 +1179,38 @@ compile_regexes(void)
             return FALSE;
         }
     }
+#else /* ! HAVE_REGEX_H */
+  /* using PCRE via GLib */
+  struct {const char * str; int flags; regex_t *regex;} regexes[] = {
+        {"<Code>\\s*([^<]*)\\s*</Code>",
+         G_REGEX_OPTIMIZE | G_REGEX_CASELESS,
+         &error_name_regex},
+        {"^ETag:\\s*\"([^\"]+)\"\\s*$",
+         G_REGEX_OPTIMIZE | G_REGEX_CASELESS,
+         &etag_regex},
+        {"<Message>\\s*([^<]*)\\s*</Message>",
+         G_REGEX_OPTIMIZE | G_REGEX_CASELESS,
+         &message_regex},
+        {"^[a-z0-9]((-*[a-z0-9])|(\\.[a-z0-9])){2,62}$",
+         G_REGEX_OPTIMIZE | G_REGEX_NO_AUTO_CAPTURE,
+         &subdomain_regex},
+        {"(/>)|(>([^<]*)</LocationConstraint>)",
+         G_REGEX_CASELESS,
+         &location_con_regex},
+        {NULL, 0, NULL}
+  };
+  int i;
+  GError *err = NULL;
 
+  for (i = 0; regexes[i].str; i++) {
+      *(regexes[i].regex) = g_regex_new(regexes[i].str, regexes[i].flags, 0, &err);
+      if (err) {
+          g_error(_("Regex error: %s"), err->message);
+          g_error_free(err);
+          return FALSE;
+      }
+  }
+#endif
     return TRUE;
 }
 
@@ -1206,8 +1414,12 @@ gboolean
 s3_upload(S3Handle *hdl,
           const char *bucket,
           const char *key, 
-          gpointer buffer,
-          guint buffer_len)
+          s3_read_func read_func,
+          s3_size_func size_func,
+          s3_md5_func md5_func,
+          gpointer read_data,
+          s3_progress_func progress_func,
+          gpointer progress_data)
 {
     s3_result_t result = S3_RESULT_FAIL;
     static result_handling_t result_handling[] = {
@@ -1219,8 +1431,9 @@ s3_upload(S3Handle *hdl,
     g_assert(hdl != NULL);
 
     result = perform_request(hdl, "PUT", bucket, key, NULL, NULL,
-			     buffer, buffer_len, MAX_ERROR_RESPONSE_LEN, 0,
-			     result_handling);
+                 read_func, size_func, md5_func, read_data,
+                 NULL, NULL, progress_func, progress_data,
+                 result_handling);
 
     return result == S3_RESULT_OK;
 }
@@ -1256,17 +1469,17 @@ list_start_element(GMarkupParseContext *context G_GNUC_UNUSED,
     struct list_keys_thunk *thunk = (struct list_keys_thunk *)user_data;
 
     thunk->want_text = 0;
-    if (strcasecmp(element_name, "contents") == 0) {
+    if (g_strcasecmp(element_name, "contents") == 0) {
         thunk->in_contents = 1;
-    } else if (strcasecmp(element_name, "commonprefixes") == 0) {
+    } else if (g_strcasecmp(element_name, "commonprefixes") == 0) {
         thunk->in_common_prefixes = 1;
-    } else if (strcasecmp(element_name, "prefix") == 0 && thunk->in_common_prefixes) {
+    } else if (g_strcasecmp(element_name, "prefix") == 0 && thunk->in_common_prefixes) {
         thunk->want_text = 1;
-    } else if (strcasecmp(element_name, "key") == 0 && thunk->in_contents) {
+    } else if (g_strcasecmp(element_name, "key") == 0 && thunk->in_contents) {
         thunk->want_text = 1;
-    } else if (strcasecmp(element_name, "istruncated")) {
+    } else if (g_strcasecmp(element_name, "istruncated")) {
         thunk->want_text = 1;
-    } else if (strcasecmp(element_name, "nextmarker")) {
+    } else if (g_strcasecmp(element_name, "nextmarker")) {
         thunk->want_text = 1;
     }
 }
@@ -1279,20 +1492,20 @@ list_end_element(GMarkupParseContext *context G_GNUC_UNUSED,
 {
     struct list_keys_thunk *thunk = (struct list_keys_thunk *)user_data;
 
-    if (strcasecmp(element_name, "contents") == 0) {
+    if (g_strcasecmp(element_name, "contents") == 0) {
         thunk->in_contents = 0;
-    } else if (strcasecmp(element_name, "commonprefixes") == 0) {
+    } else if (g_strcasecmp(element_name, "commonprefixes") == 0) {
         thunk->in_common_prefixes = 0;
-    } else if (strcasecmp(element_name, "key") == 0 && thunk->in_contents) {
+    } else if (g_strcasecmp(element_name, "key") == 0 && thunk->in_contents) {
         thunk->filename_list = g_slist_prepend(thunk->filename_list, thunk->text);
         thunk->text = NULL;
-    } else if (strcasecmp(element_name, "prefix") == 0 && thunk->in_common_prefixes) {
+    } else if (g_strcasecmp(element_name, "prefix") == 0 && thunk->in_common_prefixes) {
         thunk->filename_list = g_slist_prepend(thunk->filename_list, thunk->text);
         thunk->text = NULL;
-    } else if (strcasecmp(element_name, "istruncated") == 0) {
-        if (thunk->text && strncasecmp(thunk->text, "false", 5) != 0)
+    } else if (g_strcasecmp(element_name, "istruncated") == 0) {
+        if (thunk->text && g_strncasecmp(thunk->text, "false", 5) != 0)
             thunk->is_truncated = TRUE;
-    } else if (strcasecmp(element_name, "nextmarker") == 0) {
+    } else if (g_strcasecmp(element_name, "nextmarker") == 0) {
         if (thunk->next_marker) g_free(thunk->next_marker);
         thunk->next_marker = thunk->text;
         thunk->text = NULL;
@@ -1321,7 +1534,8 @@ list_fetch(S3Handle *hdl,
            const char *bucket,
            const char *prefix, 
            const char *delimiter, 
-           const char *marker)
+           const char *marker,
+           const char *max_keys)
 {
     s3_result_t result = S3_RESULT_FAIL;    
     static result_handling_t result_handling[] = {
@@ -1333,7 +1547,7 @@ list_fetch(S3Handle *hdl,
         {"prefix", prefix},
         {"delimiter", delimiter},
         {"marker", marker},
-        {"make-keys", "1024"}, /* arbitrary default */
+        {"make-keys", max_keys},
         {NULL, NULL}
         };
     char *esc_value;
@@ -1356,8 +1570,9 @@ list_fetch(S3Handle *hdl,
     }
 
     /* and perform the request on that URI */
-    result = perform_request(hdl, "GET", bucket, NULL, NULL, query->str, NULL,
-                             0, 0, 0, result_handling);
+    result = perform_request(hdl, "GET", bucket, NULL, NULL, query->str,
+                             NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+                             result_handling);
 
     if (query) g_string_free(query, TRUE);
 
@@ -1386,7 +1601,7 @@ s3_list_keys(S3Handle *hdl,
     /* Loop until S3 has given us the entire picture */
     do {
         /* get some data from S3 */
-        result = list_fetch(hdl, bucket, prefix, delimiter, thunk.next_marker);
+        result = list_fetch(hdl, bucket, prefix, delimiter, thunk.next_marker, NULL);
         if (result != S3_RESULT_OK) goto cleanup;
 
         /* run the parser over it */
@@ -1435,9 +1650,10 @@ gboolean
 s3_read(S3Handle *hdl,
         const char *bucket,
         const char *key,
-        gpointer *buf_ptr,
-        guint *buf_size,
-        guint max_size)
+        s3_write_func write_func,
+        gpointer write_data,
+        s3_progress_func progress_func,
+        gpointer progress_data)
 {
     s3_result_t result = S3_RESULT_FAIL;
     static result_handling_t result_handling[] = {
@@ -1447,24 +1663,11 @@ s3_read(S3Handle *hdl,
         };
 
     g_assert(hdl != NULL);
-    g_assert(buf_ptr != NULL);
-    g_assert(buf_size != NULL);
-
-    *buf_ptr = NULL;
-    *buf_size = 0;
+    g_assert(write_func != NULL);
 
     result = perform_request(hdl, "GET", bucket, key, NULL, NULL,
-        NULL, 0, max_size, 0, result_handling);
-
-    /* copy the pointer to the result parameters and remove
-     * our reference to it */
-    if (result == S3_RESULT_OK) {
-        *buf_ptr = hdl->last_response_body;
-        *buf_size = hdl->last_response_body_size;
-
-	hdl->last_response_body = NULL;
-	hdl->last_response_body_size = 0;
-    }
+        NULL, NULL, NULL, NULL, write_func, write_data, 
+        progress_func, progress_data, result_handling);
 
     return result == S3_RESULT_OK;
 }
@@ -1483,8 +1686,9 @@ s3_delete(S3Handle *hdl,
 
     g_assert(hdl != NULL);
 
-    result = perform_request(hdl, "DELETE", bucket, key, NULL, NULL, NULL, 0,
-			     MAX_ERROR_RESPONSE_LEN, 0, result_handling);
+    result = perform_request(hdl, "DELETE", bucket, key, NULL, NULL,
+                 NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 
+                 result_handling);
 
     return result == S3_RESULT_OK;
 }
@@ -1494,7 +1698,6 @@ s3_make_bucket(S3Handle *hdl,
                const char *bucket)
 {
     char *body = NULL;
-    guint body_len = 0;
     s3_result_t result = S3_RESULT_FAIL;
     static result_handling_t result_handling[] = {
         { 200,  0,          0,                   S3_RESULT_OK },
@@ -1503,35 +1706,48 @@ s3_make_bucket(S3Handle *hdl,
         };
     regmatch_t pmatch[4];
     char *loc_end_open, *loc_content;
+    CurlBuffer buf = {NULL, 0, 0, 0}, *ptr = NULL;
+    s3_read_func read_func = NULL;
+    s3_md5_func md5_func = NULL;
+    s3_size_func size_func = NULL;
 
     g_assert(hdl != NULL);
     
     if (hdl->bucket_location) {
         if (s3_bucket_location_compat(bucket)) {
-            body = g_strdup_printf(AMAZON_BUCKET_CONF_TEMPLATE, hdl->bucket_location);
-            if (!body) goto cleanup;
-            body_len = strlen(body);
+            ptr = &buf;
+            buf.buffer = g_strdup_printf(AMAZON_BUCKET_CONF_TEMPLATE, hdl->bucket_location);
+            buf.buffer_len = (guint) strlen(body);
+            buf.buffer_pos = 0;
+            buf.max_buffer_size = buf.buffer_len;
+            read_func = s3_buffer_read_func;
+            size_func = s3_buffer_size_func;
+            md5_func = s3_buffer_md5_func;
         } else {
             hdl->last_message = g_strdup_printf(_(
                 "Location constraint given for Amazon S3 bucket, "
                 "but the bucket name (%s) is not usable as a subdomain."), bucket);
+            return FALSE;
         }
     }
 
-    result = perform_request(hdl, "PUT", bucket, NULL, NULL, NULL, body, body_len, 
-			     MAX_ERROR_RESPONSE_LEN, 0, result_handling);
+    result = perform_request(hdl, "PUT", bucket, NULL, NULL, NULL, 
+                 read_func, size_func, md5_func, ptr, NULL, NULL, NULL, NULL, 
+                 result_handling);
 
     if (result == S3_RESULT_OK) {
         /* wait for the bucket to appear before returning */
-        result = perform_request(hdl, "HEAD", bucket, NULL, NULL, NULL, body, body_len, 
-                                 MAX_ERROR_RESPONSE_LEN, 0, result_handling);
+        result = perform_request(hdl, "HEAD", bucket, NULL, NULL, NULL, 
+                                 NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,  
+                                 result_handling);
     } else if (hdl->bucket_location && result != S3_RESULT_OK 
         && hdl->last_s3_error_code == S3_ERROR_BucketAlreadyOwnedByYou) {
         /* verify the that the location constraint on the existing bucket matches
          * the one that's configured.
          */
         result = perform_request(hdl, "GET", bucket, NULL, "location", NULL, 
-            NULL, 0, MAX_ERROR_RESPONSE_LEN, 0, result_handling);
+                                 NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 
+                                 result_handling);
 
         if (result == S3_RESULT_OK) {
             /* return to the default state of failure */
@@ -1558,7 +1774,7 @@ s3_make_bucket(S3Handle *hdl,
                         "does not match the constraint currently on the bucket");
                 else
                     result = S3_RESULT_OK;
-	  } else {
+      } else {
               hdl->last_message = _("Unexpected location response from Amazon S3");
           }
       }

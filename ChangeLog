@@ -1,3 +1,14 @@
+2008-10-20 Nikolas Coukouma <atrus@zmanda.com>
+	* configure.in: add tests for more headers, plus some defines
+	  for the presence of Amanda's headers
+	* device-src/s3-util.c, device-src/s3-util.h: Use defines to switch between
+	  POSIX regex API and a GRegex (PCRE) call-compatability layer.
+	* device-src/s3.c, device-src/s3.h: Add a curl progress callback.
+	  Use callbacks to write and read data. Provide callbacks for
+	  memory buffers and files. The callbacks for files are currently
+	  Windows-specific.
+	* device-src/s3-device.c: update to use new API
+
 2008-10-20  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Makefile.am: remove spurious variables
 

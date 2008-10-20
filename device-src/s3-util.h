@@ -20,8 +20,13 @@
 
 #ifndef __S3_UTIL_H__
 #define __S3_UTIL_H__
-#include <sys/types.h>
+
+#ifdef HAVE_REGEX_H
+#  ifdef HAVE_SYS_TYPES_H
+#  include <sys/types.h>
+#  endif
 #include <regex.h>
+#endif
 #include <glib.h>
 
 /*
@@ -36,12 +41,38 @@
 #define S3_MD5_HASH_HEX_LEN 32
 
 /*
+ * Types
+ */
+
+#ifndef HAVE_REGEX_H
+typedef GRegex* regex_t;
+
+typedef gint regoff_t;
+typedef struct
+{
+    regoff_t rm_so;  /* Byte offset from string's start to substring's start.  */
+    regoff_t rm_eo;  /* Byte offset from string's start to substring's end.  */
+} regmatch_t;
+
+typedef enum
+{
+    REG_NOERROR = 0,      /* Success.  */
+    REG_NOMATCH          /* Didn't find a match (for regexec).  */
+} reg_errcode_t;
+#endif
+
+/*
  * Functions
  */
 
+#ifndef USE_GETTEXT
+/* we don't use gettextize, so hack around this ... */
+#define _(str) (str)
+#endif
+
 /*
  * Wrapper around regexec to handle programmer errors.
- * Only returns if the regexec returns 0 (match) or REG_NOSUB.
+ * Only returns if the regexec returns 0 (match) or REG_NOMATCH.
  * See regexec(3) documentation for the rest.
  */
 int
@@ -50,6 +81,13 @@ s3_regexec_wrap(regex_t *regex,
            size_t nmatch,
            regmatch_t pmatch[],
            int eflags);
+
+
+#ifndef HAVE_AMANDA_H
+char*
+find_regex_substring(const char* base_string,
+           const regmatch_t match);
+#endif
 
 /* 
  * Encode bytes using Base-64

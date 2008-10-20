@@ -187,6 +187,7 @@ AMANDA_STATIC_FLAGS
 #
 # headers
 #
+AC_HEADER_DIRENT
 AC_HEADER_STDC
 AC_HEADER_TIME
 AC_CHECK_HEADERS(
@@ -198,9 +199,9 @@ AC_CHECK_HEADERS(
 	math.h \
 	netdb.h \
 	netinet/in.h \
+	regex.h \
 	stdarg.h \
 	stdlib.h \
-	string.h \
 	strings.h \
 	sys/file.h \
 	sys/ioctl.h \
@@ -214,8 +215,13 @@ AC_CHECK_HEADERS(
 	sys/types.h \
 	sys/uio.h \
 	syslog.h \
+	time.h \
 	unistd.h \
 )
+AC_DEFINE([HAVE_AMANDA_H], 1, [Define to 1 if you have the "amanda.h" header file.])
+AC_DEFINE([HAVE_UTIL_H], 1, [Define to 1 if you have the "util.h" header file.])
+
+AC_DEFINE([USE_GETTEXT], 1, [Define to 1 if files will be processed with gettextize])
 
 #
 # Types

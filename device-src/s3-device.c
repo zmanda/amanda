@@ -120,6 +120,7 @@ struct _S3DeviceClass {
  * (*excluding* null terminator) */
 #define S3_MAX_KEY_LENGTH 1024
 
+/* Note: for compatability, min can only be decreased and max increased */
 #define S3_DEVICE_MIN_BLOCK_SIZE 1024
 #define S3_DEVICE_MAX_BLOCK_SIZE (100*1024*1024)
 #define S3_DEVICE_DEFAULT_BLOCK_SIZE (10*1024*1024)
@@ -352,29 +353,31 @@ write_amanda_header(S3Device *self,
                     char *label, 
                     char * timestamp)
 {
-    char * amanda_header = NULL;
+    CurlBuffer amanda_header = {NULL, 0, 0, 0};
     char * key = NULL;
-    int header_size;
     gboolean header_fits, result;
     dumpfile_t * dumpinfo = NULL;
     Device *d_self = DEVICE(self);
 
     /* build the header */
     dumpinfo = make_tapestart_header(DEVICE(self), label, timestamp);
-    amanda_header = device_build_amanda_header(DEVICE(self), dumpinfo, 
-                                               &header_size, &header_fits);
+    amanda_header.buffer = device_build_amanda_header(DEVICE(self), dumpinfo, 
+        /* casting guint* to int* */
+        (int*) &amanda_header.buffer_len, &header_fits);
     if (!header_fits) {
 	device_set_error(d_self,
 	    stralloc(_("Amanda tapestart header won't fit in a single block!")),
 	    DEVICE_STATUS_DEVICE_ERROR);
-	g_free(amanda_header);
+	g_free(amanda_header.buffer);
 	return FALSE;
     }
 
     /* write out the header and flush the uploads. */
     key = special_file_to_key(self, "tapestart", -1);
-    result = s3_upload(self->s3, self->bucket, key, amanda_header, header_size);
-    g_free(amanda_header);
+    result = s3_upload(self->s3, self->bucket, key, s3_buffer_read_func,
+                       s3_buffer_size_func, s3_buffer_md5_func,
+                       &amanda_header, NULL, NULL);
+    g_free(amanda_header.buffer);
     g_free(key);
 
     if (!result) {
@@ -948,8 +951,7 @@ static DeviceStatusFlags
 s3_device_read_label(Device *pself) {
     S3Device *self = S3_DEVICE(pself);
     char *key;
-    gpointer buf;
-    guint buf_size;
+    CurlBuffer buf = {NULL, 0, 0, S3_DEVICE_MAX_BLOCK_SIZE};
     dumpfile_t *amanda_header;
 
     /* note that this may be called from s3_device_start, when
@@ -967,7 +969,7 @@ s3_device_read_label(Device *pself) {
     }
 
     key = special_file_to_key(self, "tapestart", -1);
-    if (!s3_read(self->s3, self->bucket, key, &buf, &buf_size, S3_DEVICE_MAX_BLOCK_SIZE)) {
+    if (!s3_read(self->s3, self->bucket, key, s3_buffer_write_func, &buf, NULL, NULL)) {
         guint response_code;
         s3_error_code_t s3_error_code;
         s3_error(self->s3, NULL, &response_code, &s3_error_code, NULL, NULL, NULL);
@@ -991,12 +993,12 @@ s3_device_read_label(Device *pself) {
         return pself->status;
     }
 
-    g_assert(buf != NULL);
+    g_assert(buf.buffer != NULL);
     amanda_header = g_new(dumpfile_t, 1);
-    parse_file_header(buf, amanda_header, buf_size);
+    parse_file_header(buf.buffer, amanda_header, buf.buffer_pos);
     pself->volume_header = amanda_header;
 
-    g_free(buf);
+    g_free(buf.buffer);
 
     if (amanda_header->type != F_TAPESTART) {
 	device_set_error(pself, stralloc(_("Invalid amanda header")), DEVICE_STATUS_VOLUME_ERROR);
@@ -1111,8 +1113,7 @@ s3_device_finish (Device * pself) {
 static gboolean
 s3_device_start_file (Device *pself, dumpfile_t *jobInfo) {
     S3Device *self = S3_DEVICE(pself);
-    char *amanda_header;
-    int header_size;
+    CurlBuffer amanda_header = {NULL, 0, 0, 0};
     gboolean header_fits, result;
     char *key;
 
@@ -1123,8 +1124,8 @@ s3_device_start_file (Device *pself, dumpfile_t *jobInfo) {
     jobInfo->blocksize = 0;
 
     /* Build the amanda header. */
-    amanda_header = device_build_amanda_header(pself, jobInfo,
-                                               &header_size, &header_fits);
+    amanda_header.buffer = device_build_amanda_header(pself, jobInfo,
+        (int *) &amanda_header.buffer_len, &header_fits);
     if (!header_fits) {
 	device_set_error(pself,
 	    stralloc(_("Amanda file header won't fit in a single block!")),
@@ -1139,8 +1140,10 @@ s3_device_start_file (Device *pself, dumpfile_t *jobInfo) {
 
     /* write it out as a special block (not the 0th) */
     key = special_file_to_key(self, "filestart", pself->file);
-    result = s3_upload(self->s3, self->bucket, key, amanda_header, header_size);
-    g_free(amanda_header);
+    result = s3_upload(self->s3, self->bucket, key, s3_buffer_read_func,
+                       s3_buffer_size_func, s3_buffer_md5_func,
+                       &amanda_header, NULL, NULL);
+    g_free(amanda_header.buffer);
     g_free(key);
     if (!result) {
 	device_set_error(pself,
@@ -1156,7 +1159,8 @@ static gboolean
 s3_device_write_block (Device * pself, guint size, gpointer data) {
     gboolean result;
     char *filename;
-    S3Device * self = S3_DEVICE(pself);;
+    S3Device * self = S3_DEVICE(pself);
+    CurlBuffer to_write = {data, size, 0, 0};
 
     g_assert (self != NULL);
     g_assert (data != NULL);
@@ -1164,7 +1168,8 @@ s3_device_write_block (Device * pself, guint size, gpointer data) {
     
     filename = file_and_block_to_key(self, pself->file, pself->block);
 
-    result = s3_upload(self->s3, self->bucket, filename, data, size);
+    result = s3_upload(self->s3, self->bucket, filename, s3_buffer_read_func,
+                       s3_buffer_size_func, s3_buffer_md5_func, &to_write, NULL, NULL);
     g_free(filename);
     if (!result) {
 	device_set_error(pself,
@@ -1204,8 +1209,7 @@ s3_device_seek_file(Device *pself, guint file) {
     S3Device *self = S3_DEVICE(pself);
     gboolean result;
     char *key;
-    gpointer buf;
-    guint buf_size;
+    CurlBuffer buf = {NULL, 0, 0, S3_DEVICE_MAX_BLOCK_SIZE};
     dumpfile_t *amanda_header;
     const char *errmsg = NULL;
 
@@ -1218,7 +1222,7 @@ s3_device_seek_file(Device *pself, guint file) {
 
     /* read it in */
     key = special_file_to_key(self, "filestart", pself->file);
-    result = s3_read(self->s3, self->bucket, key, &buf, &buf_size, S3_DEVICE_MAX_BLOCK_SIZE);
+    result = s3_read(self->s3, self->bucket, key, s3_buffer_write_func, &buf, NULL, NULL);
     g_free(key);
  
     if (!result) {
@@ -1236,8 +1240,8 @@ s3_device_seek_file(Device *pself, guint file) {
             } else if (next_file == 0) {
                 /* No next file. Check if we are one past the end. */
                 key = special_file_to_key(self, "filestart", pself->file - 1);
-                result = s3_read(self->s3, self->bucket, key, &buf, &buf_size,
-                                 S3_DEVICE_MAX_BLOCK_SIZE);
+                result = s3_read(self->s3, self->bucket, key,
+                                 s3_buffer_write_func, &buf, NULL, NULL);
                 g_free(key);
                 if (result) {
 		    /* pself->file, etc. are already correct */
@@ -1259,11 +1263,11 @@ s3_device_seek_file(Device *pself, guint file) {
     }
    
     /* and make a dumpfile_t out of it */
-    g_assert(buf != NULL);
+    g_assert(buf.buffer != NULL);
     amanda_header = g_new(dumpfile_t, 1);
     fh_init(amanda_header);
-    parse_file_header(buf, amanda_header, buf_size);
-    g_free(buf);
+    parse_file_header(buf.buffer, amanda_header, buf.buffer_pos);
+    g_free(buf.buffer);
 
     switch (amanda_header->type) {
         case F_DUMPFILE:
@@ -1295,9 +1299,8 @@ static int
 s3_device_read_block (Device * pself, gpointer data, int *size_req) {
     S3Device * self = S3_DEVICE(pself);
     char *key;
-    gpointer buf;
+    CurlBuffer buf = {NULL, 0, 0, S3_DEVICE_MAX_BLOCK_SIZE};
     gboolean result;
-    guint buf_size;
 
     g_assert (self != NULL);
     if (device_in_error(self)) return -1;
@@ -1307,8 +1310,9 @@ s3_device_read_block (Device * pself, gpointer data, int *size_req) {
     g_assert(key != NULL);
     if (self->cached_key && (0 == strcmp(key, self->cached_key))) {
         /* use the cached copy and clear the cache */
-        buf = self->cached_buf;
-        buf_size = self->cached_size;
+        buf.buffer = self->cached_buf;
+        buf.buffer_pos = self->cached_size;
+        buf.buffer_len = self->cached_size;
 
         self->cached_buf = NULL;
         g_free(self->cached_key);
@@ -1324,7 +1328,7 @@ s3_device_read_block (Device * pself, gpointer data, int *size_req) {
             self->cached_key = NULL;
         }
 
-        result = s3_read(self->s3, self->bucket, key, &buf, &buf_size, S3_DEVICE_MAX_BLOCK_SIZE);
+        result = s3_read(self->s3, self->bucket, key, s3_buffer_write_func, &buf, NULL, NULL);
         if (!result) {
             guint response_code;
             s3_error_code_t s3_error_code;
@@ -1356,24 +1360,24 @@ s3_device_read_block (Device * pself, gpointer data, int *size_req) {
     g_assert(self->cached_key == NULL);
 
     /* now see how the caller wants to deal with that */
-    if (data == NULL || *size_req < 0 || buf_size > (guint)*size_req) {
+    if (data == NULL || *size_req < 0 || buf.buffer_pos > (guint)*size_req) {
         /* A size query or short buffer -- load the cache and return the size*/
-        self->cached_buf = buf;
+        self->cached_buf = buf.buffer;
         self->cached_key = key;
-        self->cached_size = buf_size;
+        self->cached_size = buf.buffer_pos;
 
-        *size_req = buf_size;
+        *size_req = buf.buffer_pos;
         return 0;
     } else {
         /* ok, all checks are passed -- copy the data */
-        *size_req = buf_size;
-        g_memmove(data, buf, buf_size);
+        *size_req = buf.buffer_pos;
+        g_memmove(data, buf.buffer, buf.buffer_pos);
         g_free(key);
-        g_free(buf);
+        g_free(buf.buffer);
 
         /* move on to the next block */
         pself->block++;
 
-        return buf_size;
+        return buf.buffer_pos;
     }
 }
