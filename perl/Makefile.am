@@ -304,7 +304,7 @@ install-data-hook:
 endif
 
 check-local:
-	@CHECK_PERL="$(Amanda_DATA) $(Amanda_DB_DATA) $(AmandaLocalParse_DATA) $(AmandaLocalText_DATA) $(AmandaLocalData_DATA)"; \
+	@CHECK_PERL="$(Amanda_DATA) $(Amanda_DB_DATA)"; \
 	if test -f $(top_builddir)/perl/.libs/libConfig.so -o -f $(top_builddir)/perl/libConfig.so; then \
 		if test -n "$(PERL)"; then \
 			for perlobj in $$CHECK_PERL; do \

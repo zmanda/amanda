@@ -1,3 +1,6 @@
+2008-10-20  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Makefile.am: remove spurious variables
+
 2008-10-17  Jean-Louis Martineau <martineau@zmanda.com>
 	* changer-src/chg-multi.sh: Check permission on the statefile and its
 				    directory.
