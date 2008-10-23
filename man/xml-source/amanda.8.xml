@@ -142,7 +142,7 @@ configuration files for quick reference.</para>
 </listitem>
 </itemizedlist>
 </refsect2>
-<refsect2><title>CONFIGURATION FILES</title> <!-- a.k.a. any section 5 manpage -->
+<refsect2><title>CONFIGURATION FILES</title> <!-- a.k.a. most section 5 manpages -->
 <itemizedlist>
 <listitem>
 <citerefentry><refentrytitle>amanda.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
@@ -155,6 +155,13 @@ configuration files for quick reference.</para>
 </listitem>
 <listitem>
 <citerefentry><refentrytitle>tapelist</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
+</listitem>
+</itemizedlist>
+</refsect2>
+<refsect2><title>DATA FORMATS</title> <!-- a.k.a. section 5 manpages about internal data formats -->
+<itemizedlist>
+<listitem>
+<citerefentry><refentrytitle>amanda-archive-format</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
 </listitem>
 </itemizedlist>
 </refsect2>

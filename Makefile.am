@@ -26,6 +26,7 @@ SUBDIRS = . \
 	gnulib \
 	config \
 	common-src \
+	amar-src \
 	amandad-src \
 	$(TAPE_SUBDIRS) \
 	$(CLIENT_SUBDIRS) \

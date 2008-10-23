@@ -466,7 +466,7 @@ tcpm_send_token(
         nb_iov = 3;
     }
 
-    rval = net_writev(fd, iov, nb_iov);
+    rval = full_writev(fd, iov, nb_iov);
     if (len != 0 && rc->driver->data_encrypt != NULL && buf != encbuf) {
 	amfree(encbuf);
     }
@@ -2369,57 +2369,6 @@ check_security(
     amfree(remotehost);
     amfree(remoteuser);
     return *errstr == NULL;
-}
-
-/*
- * Writes out the entire iovec
- */
-ssize_t
-net_writev(
-    int			fd,
-    struct iovec *	iov,
-    int			iovcnt)
-{
-    ssize_t delta, n, total;
-
-    assert(iov != NULL);
-
-    total = 0;
-    while (iovcnt > 0) {
-	/*
-	 * Write the iovec
-	 */
-	n = writev(fd, iov, iovcnt);
-	if (n < 0) {
-	    if (errno != EINTR)
-		return (-1);
-	    auth_debug(1, _("net_writev got EINTR\n"));
-	}
-	else if (n == 0) {
-	    errno = EIO;
-	    return (-1);
-	} else {
-	    total += n;
-	    /*
-	     * Iterate through each iov.  Figure out what we still need
-	     * to write out.
-	     */
-	    for (; n > 0; iovcnt--, iov++) {
-		/* 'delta' is the bytes written from this iovec */
-		delta = ((size_t)n < (size_t)iov->iov_len) ? n : (ssize_t)iov->iov_len;
-		/* subtract from the total num bytes written */
-		n -= delta;
-		assert(n >= 0);
-		/* subtract from this iovec */
-		iov->iov_len -= delta;
-		iov->iov_base = (char *)iov->iov_base + delta;
-		/* if this iovec isn't empty, run the writev again */
-		if (iov->iov_len > 0)
-		    break;
-	    }
-	}
-    }
-    return (total);
 }
 
 /*

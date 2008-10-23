@@ -365,6 +365,7 @@ dnl
 AC_CONFIG_FILES([
     Makefile
     amandad-src/Makefile
+    amar-src/Makefile
     amplot/Makefile
     changer-src/Makefile
     client-src/Makefile

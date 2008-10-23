@@ -8,6 +8,7 @@ COMMON_MAN_PAGES =  amanda.8 \
 		    amanda.conf.5 \
 		    amanda-client.conf.5 \
 		    amanda-scripts.7 \
+		    amanda-archive-format.7 \
 		    script-email.8
 
 CLIENT_MAN_PAGES = \

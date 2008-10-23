@@ -1,3 +1,13 @@
+2008-10-23  Dustin J. Mitchell <dustin@zmanda.com>
+	* configure.in Makefile.am amar-src/Makefile.am: new directory
+	* amar-src/amar.c amar-src/amar.h: amanda archive library
+	* amar-src/amar-test.c: tests for library
+	* common-src/security-util.c common-src/security-util.h
+	  common-src/util.c common-src/util.h: move net_writev to
+	  util.c, rename to full_writev
+	* man/Makefile.am man/xml-source/amanda-archive-format.7.xml
+	  man/xml-source/amanda.8.xml: new manpage to describe the format
+
 2008-10-20 Nikolas Coukouma <atrus@zmanda.com>
 	* configure.in: add tests for more headers, plus some defines
 	  for the presence of Amanda's headers

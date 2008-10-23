@@ -276,7 +276,6 @@ char *	check_user_amandahosts(const char *host,
 				const char *user,
 				const char *service);
 
-ssize_t	net_writev(int, struct iovec *, int);
 ssize_t	net_read(int, void *, size_t, int);
 ssize_t net_read_fillbuf(int, int, void *, size_t);
 void	show_stat_info(char *a, char *b);

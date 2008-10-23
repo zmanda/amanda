@@ -50,6 +50,8 @@ int	connect_portrange(sockaddr_union *, in_port_t, in_port_t, char *,
 int	bind_portrange(int, sockaddr_union *, in_port_t, in_port_t,
 		       char *);
 
+ssize_t	full_writev(int, struct iovec *, int);
+
 char *	construct_datestamp(time_t *t);
 char *	construct_timestamp(time_t *t);
 
