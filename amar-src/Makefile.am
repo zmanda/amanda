@@ -21,6 +21,9 @@ libamar_la_SOURCES = amar.c
 libamar_la_LDFLAGS =  -release $(VERSION)
 libamar_la_LIBADD = ../common-src/libamanda.la
 
+noinst_HEADERS = \
+	amar.h
+
 # automake-style tests
 
 TESTS = amar-test

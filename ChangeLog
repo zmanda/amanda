@@ -5,6 +5,9 @@
 	* config/amanda/libs.m4: put GLIB_CFLAGS in AMANDA_CPPFLAGS
 
 2008-10-23  Dustin J. Mitchell <dustin@zmanda.com>
+	* amar-src/Makefile.am: add amar.h to noinst_HEADERS
+
+2008-10-23  Dustin J. Mitchell <dustin@zmanda.com>
 	* configure.in Makefile.am amar-src/Makefile.am: new directory
 	* amar-src/amar.c amar-src/amar.h: amanda archive library
 	* amar-src/amar-test.c: tests for library
