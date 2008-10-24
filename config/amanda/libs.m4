@@ -120,8 +120,8 @@ AC_DEFUN([AMANDA_CHECK_GLIB], [
     AM_PATH_GLIB_2_0(2.2.0,,[
 	AC_MSG_ERROR(glib not found or too old; See http://wiki.zmanda.com/index.php/Installation for help)
     ], gmodule gobject gthread)
-    AMANDA_ADD_CFLAGS($GLIB_CFLAGS)
-    AMANDA_ADD_CPPFLAGS($GLIB_CPPFLAGS)
+    # GLIB_CPPFLAGS is not set by autoconf, yet GLIB_CFLAGS contains what GLIB_CPPFLAGS should contain.
+    AMANDA_ADD_CPPFLAGS($GLIB_CFLAGS)
     AMANDA_ADD_LIBS($GLIB_LIBS)
 ])
 

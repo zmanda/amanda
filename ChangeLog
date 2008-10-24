@@ -1,3 +1,9 @@
+2008-10-24  Dustin J. Mitchell <dustin@zmanda.com>
+	* */Makefile.am: change @AMLINT@ to $(AMLINT), similarly for
+	  $(AMLINTFLAGS), and strip $(EXEEXT) from program names when running
+	  lint
+	* config/amanda/libs.m4: put GLIB_CFLAGS in AMANDA_CPPFLAGS
+
 2008-10-23  Dustin J. Mitchell <dustin@zmanda.com>
 	* configure.in Makefile.am amar-src/Makefile.am: new directory
 	* amar-src/amar.c amar-src/amar.h: amanda archive library

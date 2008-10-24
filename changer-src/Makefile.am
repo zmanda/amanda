@@ -114,6 +114,7 @@ INSTALLPERMS_data = \
 
 lint:
 	@ for p in $(amlibexec_PROGRAMS) $(EXTRA_PROGRAMS); do			\
+		p=`basename $$p $(EXEEXT)`;					\
 		f="$$p.c $(libamandad_la_SOURCES)";				\
 		(cd ../common-src; make listlibsrc);				\
 		f="$$f "`cat ../common-src/listlibsrc.output`;			\

@@ -134,6 +134,7 @@ noinst_HEADERS = 	amindex.h	changer.h	cmdline.h	\
 
 lint:
 	@ for p in $(amlibexec_PROGRAMS) $(sbin_PROGRAMS); do			\
+		p=`basename $$p $(EXEEXT)`;					\
 		if [ $$p = "amindexd" ]; then					\
 			s="$(amindexd_CSRC)";					\
 		elif [ $$p = "amreport" ]; then					\

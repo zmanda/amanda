@@ -111,10 +111,11 @@ AC_DEFUN([AMANDA_PROG_LINT],
       AC_PATH_PROG(AMLINT,splint,,$SYSLOCPATH)
       if test ! -z "$AMLINT"; then
 	AMLINT="splint"
+        AMLINTFLAGS='+show-scan +unixlib -weak -globs +usedef +usereleased +impouts -paramimptemp -varuse -warnposix -redef -preproc -fixedformalarray -retval -unrecog -usevarargs -formatcode'
       else
 	AMLINT='echo "Error: LINT is not installed" ; false'
+        AMLINTFLAGS=''
       fi
-      AMLINTFLAGS='+show-scan +unixlib -weak -globs +usedef +usereleased +impouts -paramimptemp -varuse -warnposix -redef -preproc -fixedformalarray -retval -unrecog -usevarargs -formatcode'
     fi
     AC_SUBST(AMLINTFLAGS)
 ])

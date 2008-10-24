@@ -76,6 +76,7 @@ endif
 
 lint:
 	@ for p in $(amlibexec_PROGRAMS); do					\
+		p=`basename $$p $(EXEEXT)`;					\
 		f="$$p.c $(libamclient_la_SOURCES)";				\
 		(cd ../common-src; make listlibsrc);				\
 		f="$$f "`cat ../common-src/listlibsrc.output`;			\

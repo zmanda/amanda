@@ -11,8 +11,8 @@ INCLUDES =	-I$(top_builddir)/common-src \
 		-I$(top_srcdir)/amandad-src \
 		-I$(top_srcdir)/gnulib
 
-LINT=@AMLINT@
-LINTFLAGS=@AMLINTFLAGS@
+LINT=$(AMLINT)
+LINTFLAGS=$(AMLINTFLAGS)
 
 LIB_EXTENSION = la
 

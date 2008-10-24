@@ -11,8 +11,8 @@ INCLUDES =	-I$(top_builddir)/common-src \
 AM_CFLAGS = $(AMANDA_WARNING_CFLAGS)
 AM_LDFLAGS = $(AMANDA_STATIC_LDFLAGS)
 
-LINT=@AMLINT@
-LINTFLAGS=@AMLINTFLAGS@
+LINT=$(AMLINT)
+LINTFLAGS=$(AMLINTFLAGS)
 
 amlib_LTLIBRARIES =       libamandad.la
 LIB_EXTENSION = la
@@ -47,6 +47,7 @@ INSTALLPERMS_data = \
 
 lint:
 	@ for p in $(amlibexec_PROGRAMS); do					\
+		p=`basename $$p $(EXEEXT)`;					\
 		f="$$p.c $(libamandad_la_SOURCES)";				\
 		(cd ../common-src; make listlibsrc);				\
 		f="$$f "`cat ../common-src/listlibsrc.output`;			\
