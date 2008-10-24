@@ -19,10 +19,6 @@ LIB_EXTENSION = la
 AM_CFLAGS = $(AMANDA_WARNING_CFLAGS)
 AM_LDFLAGS = $(AMANDA_STATIC_LDFLAGS)
 
-SCRIPTS_INCLUDE = \
-	    generic-dumper \
-	    generic-script
-
 CHECK_PERL = amgtar_perl \
 	     script-email \
 	     amzfs-snapshot
@@ -30,8 +26,6 @@ CHECK_PERL = amgtar_perl \
 SCRIPTS_PERL = $(CHECK_PERL)
 
 SCRIPTS_SHELL = $(amlibexec_SCRIPTS)
-
-EXTRA_DIST += generic-dumper.pl generic-script.pl
 
 #We use two variables, applicationdir applicationexecdir, to segregate the
 #platform-independent (applicationdir) files installed by install-data from the
@@ -44,7 +38,6 @@ applicationexecdir = $(APPLICATION_DIR)
 applicationdir = $(APPLICATION_DIR)
 applicationexec_PROGRAMS = amgtar amstar
 applicationexec_SCRIPTS = $(SCRIPTS_PERL)
-application_DATA = $(SCRIPTS_INCLUDE)
 
 LDADD = ../common-src/libamanda.$(LIB_EXTENSION) \
 	../client-src/libamclient.$(LIB_EXTENSION) \
@@ -55,8 +48,7 @@ LDADD = ../common-src/libamanda.$(LIB_EXTENSION) \
 INSTALLPERMS_exec = dest=$(applicationdir) chown=amanda $(applicationexec_PROGRAMS) \
 		    dest=$(applicationdir) chown=amanda $(applicationexec_SCRIPTS)
 
-INSTALLPERMS_data = dest=$(applicationdir) chown=amanda $(application_DATA) \
-		    dest=$(amlibexecdir) $(amlibexec_SCRIPTS)
+INSTALLPERMS_data = dest=$(amlibexecdir) chown=amanda $(amlibexec_SCRIPTS) \
 
 if WANT_SETUID_CLIENT
 INSTALLPERMS_exec += dest=$(applicationdir) chown=root chmod=04750 \

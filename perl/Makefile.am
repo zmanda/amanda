@@ -305,6 +305,21 @@ Amanda_DATA += Amanda/Constants.pm
 EXTRA_DIST += Amanda/Constants.pm.in
 DISTCLEANFILES += Amanda/Constants.pm
 
+# PACKAGE: Amanda::Script_App
+Amanda_DATA += Amanda/Script_App.pm
+EXTRA_DIST += Amanda/Script_App.pm
+DISTCLEANFILES += Amanda/Script_App.pm
+
+# PACKAGE: Amanda::Application
+Amanda_DATA += Amanda/Application.pm
+EXTRA_DIST += Amanda/Application.pm
+DISTCLEANFILES += Amanda/Application.pm
+
+# PACKAGE: Amanda::Script
+Amanda_DATA += Amanda/Script.pm
+EXTRA_DIST += Amanda/Script.pm
+DISTCLEANFILES += Amanda/Script.pm
+
 # perl doesn't use the cyg prefix and it doesn't search in the bin
 # directory, dll must be copied to their modules directories.
 if WANT_CYGWIN_COPY_PERL_DLL

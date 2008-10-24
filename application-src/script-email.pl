@@ -19,19 +19,163 @@
 
 use lib '@amperldir@';
 use strict;
+use Getopt::Long;
+
+package Amanda::Script::Script_email;
+use base qw(Amanda::Script);
 use Amanda::Config qw( :getconf :init );
 use Amanda::Debug qw( :logging );
 use Amanda::Util qw( :constants );
 use Amanda::Paths;
 use Amanda::Constants;
-use Getopt::Long;
-require $APPLICATION_DIR . "/generic-script";
 
-Amanda::Util::setup_application("script-email", "client", $CONTEXT_DAEMON);
 
-Amanda::Util::finish_setup($RUNNING_AS_ANY);
+sub new {
+    my $class = shift;
+    my ($execute_where, $config, $host, $disk, $device, $level, $index, $message, $collection, $record, $mailto) = @_;
+    my $self = $class->SUPER::new($execute_where);
 
-debug("program: $0");
+    $self->{execute_where} = $execute_where;
+    $self->{config}        = $config;
+    $self->{host}          = $host;
+    $self->{disk}          = $disk;
+    $self->{device}        = $device;
+    $self->{level}         = [ @{$level} ]; # Copy the array
+    $self->{index}         = $index;
+    $self->{message}       = $message;
+    $self->{collection}    = $collection;
+    $self->{record}        = $record;
+    $self->{mailto}        = [ @{$mailto} ]; # Copy the array
+
+    return $self;
+}
+
+sub command_support {
+   my $self = shift;
+
+   print "CONFIG YES\n";
+   print "HOST YES\n";
+   print "DISK YES\n";
+   print "MESSAGE-LINE YES\n";
+   print "MESSAGE-XML NO\n";
+   print "EXECUTE-WHERE YES\n";
+}
+
+#define a execute_on_* function for every execute_on you want the script to do
+#something
+sub command_pre_dle_amcheck {
+   my $self = shift;
+   $self->sendmail("pre-dle-amcheck");
+}
+
+sub command_pre_host_amcheck {
+   my $self = shift;
+   $self->sendmail("pre-host-amcheck");
+}
+
+sub command_post_dle_amcheck {
+   my $self = shift;
+   $self->sendmail("post-dle-amcheck");
+}
+
+sub command_post_host_amcheck {
+   my $self = shift;
+   $self->sendmail("post-host-amcheck");
+}
+
+sub command_pre_dle_estimate {
+   my $self = shift;
+   $self->sendmail("pre-dle-estimate");
+}
+
+sub command_pre_host_estimate {
+   my $self = shift;
+   $self->sendmail("pre-host-estimate");
+}
+
+sub command_post_dle_estimate {
+   my $self = shift;
+   $self->sendmail("post-dle-estimate");
+}
+
+sub command_post_host_estimate {
+   my $self = shift;
+   $self->sendmail("post-host-estimate");
+}
+
+sub command_pre_dle_backup {
+   my $self = shift;
+   $self->sendmail("pre-dle-backup");
+}
+
+sub command_pre_host_backup {
+   my $self = shift;
+   $self->sendmail("pre-host-backup");
+}
+
+sub command_post_dle_backup {
+   my $self = shift;
+   $self->sendmail("post-dle-backup");
+}
+
+sub command_post_host_backup {
+   my $self = shift;
+   $self->sendmail("post-host-backup");
+}
+
+sub command_pre_recover {
+   my $self = shift;
+   $self->sendmail("pre-recover");
+}
+
+sub command_post_recover {
+   my $self = shift;
+   $self->sendmail("post-recover");
+}
+
+sub command_pre_level_recover {
+   my $self = shift;
+   $self->sendmail("pre-level-recover");
+}
+
+sub command_post_level_recover {
+   my $self = shift;
+   $self->sendmail("post-level-recover");
+}
+
+sub command_inter_level_recover {
+   my $self = shift;
+   $self->sendmail("inter-level-recover");
+}
+
+sub sendmail {
+   my $self = shift;
+   my($function) = @_;
+   my $dest;
+   if ($self->{mailto}) {
+      my $destcheck = join ',', @{$self->{mailto}};
+      $destcheck =~ /^([a-zA-Z,]*)$/;
+      $dest = $1;
+   } else {
+      $dest = "root";
+   }
+   my @args = ( "-s", "$self->{config} $function $self->{host} $self->{disk} $self->{device} " . join (" ", @{$self->{level}}), $dest );
+   my $args = join(" ", @args);
+   debug("cmd: $Amanda::Constants::MAILER $args\n");
+   my $mail;
+   open $mail, '|-', $Amanda::Constants::MAILER, @args;
+   print $mail "$self->{config} $function $self->{host} $self->{disk} $self->{device} ", join (" ", @{$self->{level}}), "\n";
+   close $mail;
+}
+
+package main;
+
+sub usage {
+    print <<EOF;
+Usage: script-email <command> --execute-where=<client|server> --config=<config> --host=<host> --disk=<disk> --device=<device> --level=<level> --index=<yes|no> --message=<text> --collection=<no> --record=<yes|no> --mailto=<email>.
+EOF
+    exit(1);
+}
 
 my $opt_execute_where;
 my $opt_config;
@@ -60,109 +204,7 @@ GetOptions(
     'mailto=s'        => \@opt_mailto
 ) or usage();
 
-sub command_support {
-   print "CONFIG YES\n";
-   print "HOST YES\n";
-   print "DISK YES\n";
-   print "MESSAGE-LINE YES\n";
-   print "MESSAGE-XML NO\n";
-   print "EXECUTE-WHERE YES\n";
-}
+my $script = Amanda::Script::Script_email->new($opt_execute_where, $opt_config, $opt_host, $opt_disk, $opt_device, \@opt_level, $opt_index, $opt_message, $opt_collection, $opt_record, \@opt_mailto);
 
-#define a execute_on_* function for every execute_on you want the script to do
-#something
-sub command_pre_dle_amcheck {
-   sendmail("pre-dle-amcheck");
-}
+$script->do($ARGV[0]);
 
-sub command_pre_host_amcheck {
-   sendmail("pre-host-amcheck");
-}
-
-sub command_post_dle_amcheck {
-   sendmail("post-dle-amcheck");
-}
-
-sub command_post_host_amcheck {
-   sendmail("post-host-amcheck");
-}
-
-sub command_pre_dle_estimate {
-   sendmail("pre-dle-estimate");
-}
-
-sub command_pre_host_estimate {
-   sendmail("pre-host-estimate");
-}
-
-sub command_post_dle_estimate {
-   sendmail("post-dle-estimate");
-}
-
-sub command_post_host_estimate {
-   sendmail("post-host-estimate");
-}
-
-sub command_pre_dle_backup {
-   sendmail("pre-dle-backup");
-}
-
-sub command_pre_host_backup {
-   sendmail("pre-host-backup");
-}
-
-sub command_post_dle_backup {
-   sendmail("post-dle-backup");
-}
-
-sub command_post_host_backup {
-   sendmail("post-host-backup");
-}
-
-sub command_pre_recover {
-   sendmail("pre-recover");
-}
-
-sub command_post_recover {
-   sendmail("post-recover");
-}
-
-sub command_pre_level_recover {
-   sendmail("pre-level-recover");
-}
-
-sub command_post_level_recover {
-   sendmail("post-level-recover");
-}
-
-sub command_inter_level_recover {
-   sendmail("inter-level-recover");
-}
-
-sub sendmail {
-   my($function) = @_;
-   my $dest;
-   if (@opt_mailto) {
-      my $destcheck = join ',', @opt_mailto;
-      $destcheck =~ /^([a-zA-Z,]*)$/;
-      $dest = $1;
-   } else {
-      $dest = "root";
-   }
-   my @args = ( "-s", "$opt_config $function $opt_host $opt_disk $opt_device " . join (" ", @opt_level), $dest );
-   my $args = join(" ", @args);
-   debug("cmd: $Amanda::Constants::MAILER $args\n");
-   my $mail;
-   open $mail, '|-', $Amanda::Constants::MAILER, @args;
-   print $mail "$opt_config $function $opt_host $opt_disk $opt_device ", join (" ", @opt_level), "\n";
-   close $mail;
-}
-
-sub usage {
-    print <<EOF;
-Usage: script-email <command> --execute-where=<client|server> --config=<config> --host=<host> --disk=<disk> --device=<device> --level=<level> --index=<yes|no> --message=<text> --collection=<no> --record=<yes|no> --mailto=<email>.
-EOF
-    exit(1);
-}
-
-do_script($ARGV[0]);

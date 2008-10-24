@@ -19,7 +19,10 @@
 
 use lib '@amperldir@';
 use strict;
+use Getopt::Long;
 
+package Amanda::Application::amgtar_perl;
+use base qw(Amanda::Application);
 use File::Copy;
 use File::Path;
 use IPC::Open3;
@@ -30,59 +33,33 @@ use Amanda::Config qw( :init :getconf  config_dir_relative );
 use Amanda::Debug qw( :logging );
 use Amanda::Paths;
 use Amanda::Util qw( :constants );
-use Getopt::Long;
 
-require $APPLICATION_DIR . "/generic-dumper";
+sub new {
+    my $class = shift;
+    my ($config, $host, $disk, $device, $level, $index, $message, $collection, $record) = @_;
+    my $self = $class->SUPER::new();
 
-Amanda::Util::setup_application("amgtar_perl", "client", $CONTEXT_DAEMON);
+    $self->{runtar}  = ${Amanda::Paths::amlibexecdir} ."/runtar" .
+		       $self->{'suf'};
+    $self->{gnulist} = $Amanda::Paths::GNUTAR_LISTED_INCREMENTAL_DIR;
+    $self->{gnutar}  = $Amanda::Constants::GNUTAR;
 
-#initialize config client to get values from amanda-client.conf
-config_init($CONFIG_INIT_CLIENT, undef);
-my ($cfgerr_level, @cfgerr_errors) = config_errors();
-if ($cfgerr_level >= $CFGERR_WARNINGS) {
-    config_print_errors();
-    if ($cfgerr_level >= $CFGERR_ERRORS) {
-        die("errors processing config file");
-    }
+    $self->{config}     = $config;
+    $self->{host}       = $host;
+    $self->{disk}       = $disk;
+    $self->{device}     = $device;
+    $self->{level}      = [ @{$level} ];
+    $self->{index}      = $index;
+    $self->{message}    = $message;
+    $self->{collection} = $collection;
+    $self->{record}     = $record;
+
+    return $self;
 }
-
-Amanda::Util::finish_setup($RUNNING_AS_ANY);
-
-my $suf = '';
-if ( $Amanda::Constants::USE_VERSION_SUFFIXES =~ /^yes$/i ) {
-        $suf="-$Amanda::Constants::VERSION";
-}
-
-debug("program: $0\n");
-
-my $runtar="${Amanda::Paths::amlibexecdir}/runtar${suf}";
-my $gnulist = $Amanda::Paths::GNUTAR_LISTED_INCREMENTAL_DIR;
-my $gnutar = $Amanda::Constants::GNUTAR;
-
-my $opt_config;
-my $opt_host;
-my $opt_disk;
-my $opt_device;
-my @opt_level;
-my $opt_index;
-my $opt_message;
-my $opt_collection;
-my $opt_record;
-
-Getopt::Long::Configure(qw{bundling});
-GetOptions(
-    'config=s'     => \$opt_config,
-    'host=s'       => \$opt_host,
-    'disk=s'       => \$opt_disk,
-    'device=s'     => \$opt_device,
-    'level=s'      => \@opt_level,
-    'index=s'      => \$opt_index,
-    'message=s'    => \$opt_message,
-    'collection=s' => \$opt_collection,
-    'record'       => \$opt_record,
-) or usage();
 
 sub command_support {
+   my $self = shift;
+
    print "CONFIG YES\n";
    print "HOST YES\n";
    print "DISK YES\n";
@@ -96,8 +73,10 @@ sub command_support {
 }
 
 sub command_selfcheck {
-   print "OK $opt_disk\n";
-   print "OK $opt_device\n";
+   my $self = shift;
+
+   print "OK " . $self->{disk} . "\n";
+   print "OK " . $self->{device} . "\n";
    #check binary
    #check statefile
    #check amdevice
@@ -105,26 +84,28 @@ sub command_selfcheck {
 }
 
 sub command_estimate {
-   my($listdir) = "$opt_host$opt_disk";
+   my $self = shift;
+
+   my($listdir) = $self->{'host'} . $self->{'disk'};
    $listdir     =~ s/\//_/g;
    my $gnufile;
-   my $level = $opt_level[0];
+   my $level = $self->{level}[0];
    if($level == 0) {
-      open($gnufile, ">${gnulist}/${listdir}_${level}.new") || die();
+      open($gnufile, ">$self->{gnulist}/${listdir}_${level}.new") || die();
       close($gnufile) || die();
    }
    else {
       my($prev_level) = $level - 1;
-      if (-f "${gnulist}/${listdir}_${prev_level}") {
-        copy("${gnulist}/${listdir}_${prev_level}", "${gnulist}/${listdir}_${level}.new");
+      if (-f "$self->{gnulist}/${listdir}_${prev_level}") {
+        copy("$self->{gnulist}/${listdir}_${prev_level}", "$self->{gnulist}/${listdir}_${level}.new");
       } else {
-        open($gnufile, ">${gnulist}/${listdir}_${level}.new") || die();
+        open($gnufile, ">$self->{gnulist}/${listdir}_${level}.new") || die();
         close($gnufile) || die();
-	#print "ERROR file ${gnulist}/${listdir}_${level}.new doesn't exist\n";
+	#print "ERROR file $self->{gnulist}/${listdir}_${level}.new doesn't exist\n";
       }
    }
    my($size) = -1;
-   my(@cmd) = ($runtar, $opt_config, $gnutar, "--create", "--directory", $opt_device, "--listed-incremental", "${gnulist}/${listdir}_${level}.new", "--sparse", "--one-file-system", "--ignore-failed-read", "--totals", "--file", "/dev/null", ".");
+   my(@cmd) = ($self->{runtar}, $self->{'config'}, $self->{'gnutar'}, "--create", "--directory", $self->{'device'}, "--listed-incremental", "$self->{gnulist}/${listdir}_${level}.new", "--sparse", "--one-file-system", "--ignore-failed-read", "--totals", "--file", "/dev/null", ".");
    debug("cmd:" . join(" ", @cmd));
    my $wtrfh;
    my $estimate_fd = Symbol::gensym;
@@ -134,7 +115,7 @@ sub command_estimate {
    $size = parse_estimate($estimate_fd);
    close($estimate_fd);
    output_size($size);
-   unlink "${gnulist}/${listdir}_${level}.new";
+   unlink "$self->{gnulist}/${listdir}_${level}.new";
    waitpid $pid, 0;
    exit 0;
 }
@@ -165,24 +146,26 @@ sub output_size {
 }
 
 sub command_backup {
-   my($listdir) = "$opt_host$opt_disk";
+   my $self = shift;
+
+   my($listdir) = $self->{'host'} . $self->{'disk'};
    my($verbose) = "";
    $listdir     =~ s/\//_/g;
-   my($level) = $opt_level[0];
+   my($level) = $self->{level}[0];
    if($level == 0) {
-      open(GNULIST, ">${gnulist}/${listdir}_${level}.new") || die();
+      open(GNULIST, ">$self->{gnulist}/${listdir}_${level}.new") || die();
       close(GNULIST) || die();
    }
    else {
       my($prev_level) = $level - 1;
-      copy("${gnulist}/${listdir}_${prev_level}", 
-           "${gnulist}/${listdir}_${level}.new");
+      copy("$self->{gnulist}/${listdir}_${prev_level}", 
+           "$self->{gnulist}/${listdir}_${level}.new");
    }
 
-   if(defined($opt_index)) {
+   if(defined($self->{index})) {
       $verbose = "--verbose";
    }
-   my(@cmd) = ($runtar, $opt_config, $gnutar, "--create", $verbose, "--directory", $opt_device, "--listed-incremental", "${gnulist}/${listdir}_${level}.new", "--sparse", "--one-file-system", "--ignore-failed-read", "--totals", "--file", "-", ".");
+   my(@cmd) = ($self->{runtar}, $self->{config}, $self->{gnutar}, "--create", $verbose, "--directory", $self->{device}, "--listed-incremental", "$self->{gnulist}/${listdir}_${level}.new", "--sparse", "--one-file-system", "--ignore-failed-read", "--totals", "--file", "-", ".");
 
    debug("cmd:" . join(" ", @cmd));
 
@@ -191,38 +174,43 @@ sub command_backup {
    my $pid = open3($wtrfh, '>&STDOUT', $index_fd, @cmd) || die();
    close($wtrfh);
 
-   if(defined($opt_index)) {
+   if(defined($self->{index})) {
       my $indexout_fd;
       open($indexout_fd, '>&=3') || die();
-      parse_backup($index_fd, \*STDERR, $indexout_fd);
+      $self->parse_backup($index_fd, \*STDERR, $indexout_fd);
       close($indexout_fd);
    }
    else {
-      parse_backup($index_fd, \*STDERR, undef);
+      $self->parse_backup($index_fd, \*STDERR, undef);
    }
    close($index_fd);
 
-   if(defined($opt_record)) {
-      debug("rename ${gnulist}/${listdir}_${level}.new ${gnulist}/${listdir}_${level}");
-      rename "${gnulist}/${listdir}_${level}.new", 
-             "${gnulist}/${listdir}_${level}";
+   if(defined($self->{record})) {
+      debug("rename $self->{gnulist}/${listdir}_${level}.new $self->{gnulist}/${listdir}_${level}");
+      rename "$self->{gnulist}/${listdir}_${level}.new", 
+             "$self->{gnulist}/${listdir}_${level}";
    }
    else {
-      debug("unlink ${gnulist}/${listdir}_${level}.new");
-      unlink "${gnulist}/${listdir}_${level}.new";
+      debug("unlink $self->{gnulist}/${listdir}_${level}.new");
+      unlink "$self->{gnulist}/${listdir}_${level}.new";
    }
    waitpid $pid, 0;
+   if( $? != 0 ){
+       print STDERR "? $self->{gnutar} returned error\n";
+       die();
+   }
    exit 0;
 }
 
 sub parse_backup {
+   my $self = shift;
    my($fhin, $fhout, $indexout) = @_;
    my $size  = -1;
    my $ksize = -1;
    while(<$fhin>) {
       if ( /^\.\//) {
          if(defined($indexout)) {
-	    if(defined($opt_index)) {
+	    if(defined($self->{index})) {
                s/^\.//;
                print $indexout $_;
 	    }
@@ -271,14 +259,17 @@ sub index_from_output {
 }
 
 sub command_index_from_image {
+   my $self = shift;
    my $index_fd;
-   open($index_fd, "$gnutar --list --file - |") || die();
+   open($index_fd, "$self->{gnutar} --list --file - |") || die();
    index_from_output($index_fd, 1);
 }
 
 sub command_restore {
+   my $self = shift;
+
    chdir(Amanda::Util::get_original_cwd());
-   my(@cmd) = ($gnutar, "--numeric-owner", "-xpGvf", "-");
+   my(@cmd) = ($self->{gnutar}, "--numeric-owner", "-xpGvf", "-");
    for(my $i=1;defined $ARGV[$i]; $i++) {
       my $param = $ARGV[$i];
       $param =~ /^(.*)$/;
@@ -292,6 +283,8 @@ sub command_restore {
 sub command_print_command {
 }
 
+package main;
+
 sub usage {
     print <<EOF;
 Usage: amgtar_perl <command> --config=<config> --host=<host> --disk=<disk> --device=<device> --level=<level> --index=<yes|no> --message=<text> --collection=<no> --record=<yes|no>.
@@ -299,4 +292,30 @@ EOF
     exit(1);
 }
 
-do_application($ARGV[0]);
+my $opt_config;
+my $opt_host;
+my $opt_disk;
+my $opt_device;
+my @opt_level;
+my $opt_index;
+my $opt_message;
+my $opt_collection;
+my $opt_record;
+
+Getopt::Long::Configure(qw{bundling});
+GetOptions(
+    'config=s'     => \$opt_config,
+    'host=s'       => \$opt_host,
+    'disk=s'       => \$opt_disk,
+    'device=s'     => \$opt_device,
+    'level=s'      => \@opt_level,
+    'index=s'      => \$opt_index,
+    'message=s'    => \$opt_message,
+    'collection=s' => \$opt_collection,
+    'record'       => \$opt_record,
+) or usage();
+
+my $application = Amanda::Application::amgtar_perl->new($opt_config, $opt_host, $opt_disk, $opt_device, \@opt_level, $opt_index, $opt_message, $opt_collection, $opt_record);
+
+$application->do($ARGV[0]);
+

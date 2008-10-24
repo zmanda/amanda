@@ -1,3 +1,16 @@
+2008-10-24  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Script_App.pm: New base module for script and application.
+	* perl/Amanda/Script.pm: New base module for script.
+	* perl/Amanda/Application.pm: New base module for application.
+	* perl/Makefile.am: Add Amanda::Script_app, Amanda::Script And
+				Amanda::Application.
+	* application-src/generic-dumper.pl: Remove file.
+	* application-src/generic-script.pl: Remove file.
+	* application-src/script-email.pl: Use Amanda::Script.
+	* application-src/amgtar_perl.pl: Use Amanda::Application.
+	* application-src/amzfs-snapshot.pl: Use Amanda::Script.
+	* application-src/Makefile.am: Remove generic-*.pl files.
+
 2008-10-24  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Archive.swg perl/Makefile.am: add a Perl interface to
 	  libamar
