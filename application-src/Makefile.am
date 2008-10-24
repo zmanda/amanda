@@ -48,7 +48,7 @@ LDADD = ../common-src/libamanda.$(LIB_EXTENSION) \
 INSTALLPERMS_exec = dest=$(applicationdir) chown=amanda $(applicationexec_PROGRAMS) \
 		    dest=$(applicationdir) chown=amanda $(applicationexec_SCRIPTS)
 
-INSTALLPERMS_data = dest=$(amlibexecdir) chown=amanda $(amlibexec_SCRIPTS) \
+INSTALLPERMS_data = dest=$(amlibexecdir) chown=amanda $(amlibexec_SCRIPTS)
 
 if WANT_SETUID_CLIENT
 INSTALLPERMS_exec += dest=$(applicationdir) chown=root chmod=04750 \
