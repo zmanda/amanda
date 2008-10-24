@@ -47,26 +47,28 @@ typedef struct record_s {
 #define MAX_RECORD_DATA_SIZE (4*1024*1024)
 
 #define MKRECORD(ptr, f, a, s, eoa) do { \
-    record_t *r = ptr; \
+    record_t r; \
     uint32_t size = s; \
     if (eoa) size |= EOA_BIT; \
-    r->filenum = htons(f); \
-    r->attrid = htons(a); \
-    r->size = htonl(size); \
+    r.filenum = htons(f); \
+    r.attrid = htons(a); \
+    r.size = htonl(size); \
+    memcpy(ptr, &r, sizeof(record_t)); \
 } while(0)
 
 /* N.B. - f, a, s, and eoa must be simple lvalues */
 #define GETRECORD(ptr, f, a, s, eoa) do { \
-    record_t *r = ptr; \
-    s = ntohl(r->size); \
+    record_t r; \
+    memcpy(&r, ptr, sizeof(record_t)); \
+    s = ntohl(r.size); \
     if (s & EOA_BIT) { \
 	eoa = TRUE; \
 	s &= ~EOA_BIT; \
     } else { \
 	eoa = FALSE; \
     } \
-    f = ntohs(r->filenum); \
-    a = ntohs(r->attrid); \
+    f = ntohs(r.filenum); \
+    a = ntohs(r.attrid); \
 } while(0)
 
 /* performance knob: how much data will we buffer before just

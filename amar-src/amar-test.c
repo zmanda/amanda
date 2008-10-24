@@ -343,17 +343,16 @@ check_gerror_matches_(
     check_gerror_matches_((ok)!=0, (error), (match), (fn))
 
 static void
-try_reading(
+try_reading_fd(
 	expected_step_t *steps,
-	amar_attr_handling_t *handling)
+	amar_attr_handling_t *handling,
+        int fd)
 {
     amar_t *ar;
     expected_state_t state = { steps, 0 };
-    int fd;
     GError *error = NULL;
     gboolean ok;
 
-    fd = open_temp(0);
     ar = amar_new(fd, O_RDONLY, &error);
     check_gerror(ar, error, "amar_new");
     ok = amar_read(ar, &state, handling, file_start_cb, file_finish_cb, &error);
@@ -363,6 +362,17 @@ try_reading(
 	EXPECT_FAILURE("Stopped reading early at step %d", state.curstep);
     ok = amar_close(ar, &error);
     check_gerror(ok, error, "amar_close");
+}
+
+static void
+try_reading(
+	expected_step_t *steps,
+	amar_attr_handling_t *handling)
+{
+    int fd;
+
+    fd = open_temp(0);
+    try_reading_fd(steps, handling, fd);
     close(fd);
 }
 
@@ -979,7 +989,15 @@ test_pipe(void)
 		EXPECT_FINISH_FILE(1, 0),
 		EXPECT_END(),
 	    };
-	    try_reading(steps, handling);
+            int status;
+	    close(p[1]);
+	    try_reading_fd(steps, handling, p[0]);
+	    close(p[0]);
+            wait(&status);
+            if(WIFSIGNALED(status)) {
+                printf("child was terminated by signal %d\n", WTERMSIG(status));
+                exit(1);
+            }
 	}
     }
 
