@@ -1,8 +1,11 @@
+2008-10-24  Dustin J. Mitchell <dustin@zmanda.com>
+	* amar-src/amar-test.c: don't ignore the return value of write()
+
 2008-08-14  Nikolas Coukouma <atrus@zmanda.com>
             Jean-Louis Martineau <martineau@zmanda.com>
 	* amar-src/amar.c: fix mis-aligned memory accesses
 	* amar-src/amar-test.c: fix test_pipe
- 
+
 2008-10-24  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Script_App.pm: New base module for script and application.
 	* perl/Amanda/Script.pm: New base module for script.

@@ -1067,7 +1067,10 @@ test_header_vers(void)
     strcpy(hdr, "AMANDA ARCHIVE FORMAT 2");
 
     fd = open_temp(1);
-    write(fd, hdr, sizeof(hdr));
+    if (full_write(fd, hdr, sizeof(hdr)) < sizeof(hdr)) {
+	perror("full_write");
+	exit(1);
+    }
     close(fd);
 
     {
