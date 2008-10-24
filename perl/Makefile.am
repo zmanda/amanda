@@ -15,6 +15,7 @@ AM_CFLAGS = -DSWIG
 INCLUDES =  \
             -I$(top_builddir)/common-src \
             -I$(top_srcdir)/common-src \
+            -I$(top_srcdir)/amar-src \
             -I$(top_srcdir)/xfer-src \
             -I$(top_srcdir)/perl/amglue \
             -I$(top_srcdir)/gnulib \
@@ -116,6 +117,18 @@ SWIG_OPTIONS=-perl5 -proxy -DSWIG_TYPE_TABLE=SWIG_TYPES_Amanda -I$(srcdir)
 Amandadir=$(amperldir)/Amanda
 Amanda_DATA =
 HTML_SOURCE_FILES += $(Amanda_DATA)
+
+# PACKAGE: Amanda::Archive
+libArchivedir = $(amperldir)/auto/Amanda/Archive
+libArchive_LTLIBRARIES = libArchive.la
+libArchive_la_SOURCES = Amanda/Archive.c $(AMGLUE_SWG)
+libArchive_la_LDFLAGS = $(PERL_EXT_LDFLAGS)
+libArchive_la_LIBADD = libamglue.la \
+	$(top_builddir)/amar-src/libamar.la \
+	$(top_builddir)/common-src/libamanda.la
+Amanda_DATA += Amanda/Archive.pm
+EXTRA_DIST += Amanda/Archive.swg Amanda/Archive.pm
+MAINTAINERCLEANFILES += Amanda/Archive.c Amanda/Archive.pm
 
 if WANT_SERVER
 # PACKAGE: Amanda::Device

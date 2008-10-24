@@ -7,6 +7,7 @@ include $(top_srcdir)/config/automake/scripts.am
 # Add your tests here.
 
 common_tests = \
+	Amanda_Archive \
 	Amanda_Config \
 	Amanda_Debug \
 	Amanda_MainLoop \

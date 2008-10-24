@@ -1,4 +1,9 @@
 2008-10-24  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Archive.swg perl/Makefile.am: add a Perl interface to
+	  libamar
+	* installcheck/Amanda_Archive.pl installcheck/Makefile.am: test it.
+
+2008-10-24  Dustin J. Mitchell <dustin@zmanda.com>
 	* */Makefile.am: change @AMLINT@ to $(AMLINT), similarly for
 	  $(AMLINTFLAGS), and strip $(EXEEXT) from program names when running
 	  lint
