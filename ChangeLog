@@ -1,4 +1,8 @@
 2008-10-24  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Amanda_Archive.pl: fix to also test for identity of
+	  $user_data on perls that recognize such things
+
+2008-10-24  Dustin J. Mitchell <dustin@zmanda.com>
 	* amar-src/amar-test.c: don't ignore the return value of write()
 
 2008-08-14  Nikolas Coukouma <atrus@zmanda.com>

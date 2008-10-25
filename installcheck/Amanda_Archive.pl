@@ -32,6 +32,11 @@ my $arch_filename = "$AMANDA_TMPDIR/amanda_archive.bin";
 my $data_filename = "$AMANDA_TMPDIR/some_data.bin";
 my ($fh, $dfh, $ar, $f1, $f2, $a1, $a2, @res, $posn);
 
+# some versions of Test::More will fail tests if the identity
+# relationships of the two objects passed to is_deeply do not
+# match, so we use the same object for $user_data throughout.
+my $user_data = [ "x", "y", "z" ];
+
 # set up a large file full of data
 
 open($dfh, ">", $data_filename);
@@ -145,15 +150,15 @@ $ar->read(
 	push @res, [ "frag", @_ ];
 	return "ants";
     },
-    user_data => [ "mydata" ],
+    user_data => $user_data,
 );
 is_deeply([@res], [
-	[ 'file_start', [ "mydata" ], 16, '/etc/passwd' ],
-        [ 'frag', [ "mydata" ], 16, "cows", 20, undef, 'root:foo', 1, 0 ],
-        [ 'frag', [ "mydata" ], 16, "cows", 21, undef, 'boot:foot', 0, 0 ],
-        [ 'frag', [ "mydata" ], 16, "cows", 22, undef, 'dustin:snazzy', 1, 0 ],
-        [ 'frag', [ "mydata" ], 16, "cows", 21, "ants", '..more-boot:foot', 1, 0 ],
-        [ 'file_finish', [ "mydata" ], "cows", 16, 0 ]
+	[ 'file_start', $user_data, 16, '/etc/passwd' ],
+        [ 'frag', $user_data, 16, "cows", 20, undef, 'root:foo', 1, 0 ],
+        [ 'frag', $user_data, 16, "cows", 21, undef, 'boot:foot', 0, 0 ],
+        [ 'frag', $user_data, 16, "cows", 22, undef, 'dustin:snazzy', 1, 0 ],
+        [ 'frag', $user_data, 16, "cows", 21, "ants", '..more-boot:foot', 1, 0 ],
+        [ 'file_finish', $user_data, "cows", 16, 0 ]
 ], "simple read callbacks called in the right order")
     or diag(Dumper(\@res));
 $ar->close();
@@ -177,10 +182,10 @@ $ar->read(
 	push @res, [ "frag", @_ ];
 	return "ants";
     },
-    user_data => [ "mydata" ],
+    user_data => $user_data,
 );
 is_deeply([@res], [
-	[ 'file_start', [ "mydata" ], 16, '/etc/passwd' ],
+	[ 'file_start', $user_data, 16, '/etc/passwd' ],
 ], "'IGNORE' handled correctly")
     or diag(Dumper(\@res));
 # TODO: check that file data gets dumped appropriately?
@@ -206,14 +211,14 @@ $ar->read(
 	push @res, [ "frag", @_ ];
 	return "ants";
     },
-    user_data => [ "mydata" ],
+    user_data => $user_data,
 );
 is_deeply([@res], [
-	[ 'file_start', [ "mydata" ], 16, '/etc/passwd' ],
-        [ 'frag', [ "mydata" ], 16, "dogs", 20, undef, 'root:foo', 1, 0 ],
-        [ 'frag', [ "mydata" ], 16, "dogs", 22, undef, 'dustin:snazzy', 1, 0 ],
-        [ 'fragbuf', [ "mydata" ], 16, "dogs", 21, undef, 'boot:foot..more-boot:foot', 1, 0 ],
-        [ 'file_finish', [ "mydata" ], "dogs", 16, 0 ]
+	[ 'file_start', $user_data, 16, '/etc/passwd' ],
+        [ 'frag', $user_data, 16, "dogs", 20, undef, 'root:foo', 1, 0 ],
+        [ 'frag', $user_data, 16, "dogs", 22, undef, 'dustin:snazzy', 1, 0 ],
+        [ 'fragbuf', $user_data, 16, "dogs", 21, undef, 'boot:foot..more-boot:foot', 1, 0 ],
+        [ 'file_finish', $user_data, "dogs", 16, 0 ]
 ], "buffering parameters parsed correctly")
     or diag(Dumper(\@res));
 
@@ -228,12 +233,12 @@ eval {
 	    push @res, [ "file_start", @_ ];
 	    die "uh oh";
 	},
-	user_data => [ "mydata" ],
+	user_data => $user_data,
     );
 };
 like($@, qr/uh oh at .*/, "exception propagated correctly");
 is_deeply([@res], [
-	[ 'file_start', [ "mydata" ], 16, '/etc/passwd' ],
+	[ 'file_start', $user_data, 16, '/etc/passwd' ],
 ], "file_start called before exception was rasied")
     or diag(Dumper(\@res));
 $ar->close();
