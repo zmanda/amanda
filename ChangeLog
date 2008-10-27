@@ -1,3 +1,6 @@
+2008-10-27  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/glib-util.c: check library version at runtime
+
 2008-10-27  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Device.swg (start_file): Remove const for jobInfo.
 

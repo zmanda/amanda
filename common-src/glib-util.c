@@ -57,6 +57,20 @@ glib_init(void) {
     }
     g_thread_init(NULL);
 #endif
+
+    /* do a version check */
+#if GLIB_CHECK_VERSION(2,6,0)
+    {
+	const char *glib_err = glib_check_version(GLIB_MAJOR_VERSION,
+						  GLIB_MINOR_VERSION,
+						  GLIB_MICRO_VERSION);
+	if (glib_err) {
+	    error(_("%s: Amanda was compiled with glib-%d.%d.%d"), glib_err,
+		    GLIB_MAJOR_VERSION, GLIB_MINOR_VERSION, GLIB_MICRO_VERSION);
+	    exit(1); /* glib_init may be called before error handling is set up */
+	}
+    }
+#endif
 }
 
 typedef enum {
