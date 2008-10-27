@@ -1,3 +1,13 @@
+2008-10-27  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/fileheader.c (dumpfile_free_data): New function.
+	* common-src/fileheader.h (dumpfile_free_data): New prototype.
+	* server-src/cmdline.c, server-src/dumper.c,
+	  server-src/planner.c, server-src/amadmin.c,
+	  server-src/amflush.c, server-src/holding.c,
+	  server-src/driver.c, server-src/find.c,
+	  server-src/taper-source.c, server-src/taper-file-source.c
+	  server-src/taper.c: Call dumpfile_free or dumpfile_free_data.
+
 2008-10-27  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/glib-util.c: check library version at runtime
 

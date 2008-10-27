@@ -1052,7 +1052,7 @@ finish_tapeheader(
 	file->encrypted= 1;
       }
     }
-    file->dle_str = dle_str;
+    file->dle_str = stralloc(dle_str);
 }
 
 /*
@@ -1254,6 +1254,7 @@ do_dump(
     }
 
     amfree(errstr);
+    dumpfile_free_data(&file);
 
     return 1;
 

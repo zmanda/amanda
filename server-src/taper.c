@@ -885,16 +885,16 @@ static void run_device_output(taper_state_t * taper_state,
 
         if (!find_and_label_new_tape(taper_state, dump_info)) {
             bail_no_volume(dump_info, taper_state->last_errmsg);
-	    amfree(this_header);
+	    dumpfile_free(this_header);
             return;
         }
 
         if (!device_start_file(taper_state->device, this_header)) {
             bail_no_volume(dump_info, taper_state->last_errmsg);
-	    amfree(this_header);
+	    dumpfile_free(this_header);
             return;
         }
-	amfree(this_header);
+	dumpfile_free(this_header);
 
         bzero(&val, sizeof(val));
         if (!device_property_get(taper_state->device, PROPERTY_STREAMING, &val)

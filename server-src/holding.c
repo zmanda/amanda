@@ -208,6 +208,7 @@ static void holding_walk_file(
         /* and go on to the next chunk if this wasn't cruft */
 	if (!is_cruft)
 	    filename = stralloc(file.cont_filename);
+	dumpfile_free_data(&file);
     }
 
     amfree(filename);
@@ -287,6 +288,7 @@ static void holding_walk_dir(
 	    holding_walk_file(hfile,
 		    datap,
 		    per_chunk_fn);
+	dumpfile_free_data(&dumpf);
     }
 
     closedir(dir);
@@ -523,8 +525,10 @@ holding_get_files_for_flush(
 	if (!holding_file_get_dumpfile((char *)file_elt->data, &file))
 	    continue;
 
-        if (file.type != F_DUMPFILE)
+        if (file.type != F_DUMPFILE) {
+	    dumpfile_free_data(&file);
             continue;
+	}
 
 	if (dateargs) {
 	    date_matches = 0;
@@ -539,14 +543,17 @@ holding_get_files_for_flush(
 	    /* if no date list was provided, then all dates match */
 	    date_matches = 1;
 	}
-        if (!date_matches)
+        if (!date_matches) {
+	    dumpfile_free_data(&file);
             continue;
+	}
 
         /* check that the hostname and disk are in the disklist */
         dp = lookup_disk(file.name, file.disk);
         if (dp == NULL) {
 	    dbprintf(_("%s: disk %s:%s not in database, skipping it."),
                         (char *)file_elt->data, file.name, file.disk);
+	    dumpfile_free_data(&file);
             continue;
         }
 
@@ -554,6 +561,7 @@ holding_get_files_for_flush(
         result_list = g_slist_insert_sorted(result_list, 
 	    stralloc(file_elt->data), 
 	    g_compare_strings);
+	dumpfile_free_data(&file);
     }
 
     if (file_list) g_slist_free_full(file_list);
@@ -579,6 +587,7 @@ holding_get_all_datestamps(void)
 					       stralloc(dfile.datestamp), 
 					       g_compare_strings);
 	}
+	dumpfile_free_data(&dfile);
     }
 
     g_slist_free_full(all_files);
@@ -621,6 +630,7 @@ holding_file_size(
 
         /* on to the next chunk */
         filename = newstralloc(filename, file.cont_filename);
+	dumpfile_free_data(&file);
     }
     amfree(filename);
     return size;
@@ -765,6 +775,7 @@ holding_cleanup_file(
 	if (data->verbose_output)
 	    g_fprintf(data->verbose_output, 
 		_("Could not read read header from '%s'\n"), element);
+	dumpfile_free_data(&file);
 	return 0;
     }
 
@@ -772,6 +783,7 @@ holding_cleanup_file(
 	if (data->verbose_output)
 	    g_fprintf(data->verbose_output, 
 		_("File '%s' is not a dump file\n"), element);
+	dumpfile_free_data(&file);
 	return 0;
     }
 
@@ -779,6 +791,7 @@ holding_cleanup_file(
 	if (data->verbose_output)
 	    g_fprintf(data->verbose_output, 
 		_("File '%s' has invalid level %d\n"), element, file.dumplevel);
+	dumpfile_free_data(&file);
 	return 0;
     }
 
@@ -789,6 +802,7 @@ holding_cleanup_file(
 	    g_fprintf(data->verbose_output, 
 		_("File '%s' is for '%s:%s', which is not in the disklist\n"), 
 		    element, file.name, file.disk);
+	dumpfile_free_data(&file);
 	return 0;
     }
 
@@ -818,6 +832,7 @@ holding_cleanup_file(
 	amfree(destname);
     }
 
+    dumpfile_free_data(&file);
     return 1;
 }
 
@@ -884,6 +899,7 @@ rename_tmp_holding(
 	    if((fd = robust_open(filename, O_RDWR, 0)) == -1) {
 		dbprintf(_("rename_tmp_holdingX: open of %s failed: %s\n"),
 			filename, strerror(errno));
+		dumpfile_free_data(&file);
 		amfree(filename);
 		amfree(filename_tmp);
 		return 0;
@@ -894,6 +910,7 @@ rename_tmp_holding(
 	    if (full_write(fd, header, DISK_BLOCK_BYTES) != DISK_BLOCK_BYTES) {
 		dbprintf(_("rename_tmp_holding: writing new header failed: %s"),
 			strerror(errno));
+		dumpfile_free_data(&file);
 		amfree(filename);
 		amfree(filename_tmp);
 		close(fd);
@@ -902,6 +919,7 @@ rename_tmp_holding(
 	    close(fd);
 	}
 	filename = newstralloc(filename, file.cont_filename);
+	dumpfile_free_data(&file);
     }
     amfree(filename);
     amfree(filename_tmp);

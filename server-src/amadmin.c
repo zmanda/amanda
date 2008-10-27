@@ -1232,14 +1232,16 @@ remove_holding_file_from_catalog(
     }
 
     if (get_info(file.name, file.disk, &info) == -1) {
-	    g_printf(_("WARNING: No curinfo record for %s:%s\n"), file.name, file.disk);
-	    return 1; /* not an error */
+	g_printf(_("WARNING: No curinfo record for %s:%s\n"), file.name, file.disk);
+	dumpfile_free_data(&file);
+	return 1; /* not an error */
     }
 
     matching_hist_idx = holding_file_find_history(&info, &file);
 
     if (matching_hist_idx == -1) {
         g_printf(_("WARNING: No dump matching %s found in curinfo.\n"), filename);
+	dumpfile_free_data(&file);
 	return 1; /* not an error */
     }
 
@@ -1321,10 +1323,12 @@ remove_holding_file_from_catalog(
 
     /* write out the changes */
     if (put_info(file.name, file.disk, &info) == -1) {
-	    g_printf(_("Could not write curinfo record for %s:%s\n"), file.name, file.disk);
-	    return 0;
+	g_printf(_("Could not write curinfo record for %s:%s\n"), file.name, file.disk);
+	dumpfile_free_data(&file);
+	return 0;
     }
 
+    dumpfile_free_data(&file);
     return 1;
 }
 
@@ -1406,6 +1410,7 @@ holding(
 		    }
 		}
                 amfree(dumpstr);
+		dumpfile_free_data(&file);
             }
             g_slist_free_full(file_list);
             break;

@@ -240,7 +240,10 @@ cmdline_match_holding(
     for (hi = holding_files; hi != NULL; hi = hi->next) {
 	/* TODO add level */
 	if (!holding_file_get_dumpfile((char *)hi->data, &file)) continue;
-        if (file.type != F_DUMPFILE) continue;
+        if (file.type != F_DUMPFILE) {
+	    dumpfile_free_data(&file);
+	    continue;
+	}
         for (li = dumpspec_list; li != NULL; li = li->next) {
 	    de = (dumpspec_t *)(li->data);
             if (de->host && de->host[0] && !match_host(de->host, file.name)) continue;
@@ -249,6 +252,7 @@ cmdline_match_holding(
             matching_files = g_slist_append(matching_files, g_strdup((char *)hi->data));
             break;
         }
+	dumpfile_free_data(&file);
     }
 
     g_slist_free_full(holding_files);

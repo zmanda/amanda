@@ -890,8 +890,23 @@ dumpfile_t * dumpfile_copy(dumpfile_t* source) {
     return rval;
 }
 
+void
+dumpfile_copy_in_place(
+    dumpfile_t *dest,
+    dumpfile_t* source)
+{
+    memcpy(dest, source, sizeof(dumpfile_t));
+    if (dest->dle_str) dest->dle_str = stralloc(dest->dle_str);
+}
+
+void dumpfile_free_data(dumpfile_t* info) {
+    if (info) {
+	amfree(info->dle_str);
+    }
+}
+
 void dumpfile_free(dumpfile_t* info) {
-    amfree(info->dle_str);
+    dumpfile_free_data(info);
     amfree(info);
 }
 

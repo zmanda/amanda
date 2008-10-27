@@ -208,18 +208,21 @@ search_holding_disk(
     GSList *e;
     char *holding_file;
     disk_t *dp;
-    dumpfile_t file;
 
     holding_file_list = holding_get_files(NULL, 1);
 
     for(e = holding_file_list; e != NULL; e = e->next) {
+	dumpfile_t file;
+
 	holding_file = (char *)e->data;
 
 	if (!holding_file_get_dumpfile(holding_file, &file))
 	    continue;
 
-	if (file.dumplevel < 0 || file.dumplevel > 9)
+	if (file.dumplevel < 0 || file.dumplevel > 9) {
+	    dumpfile_free_data(&file);
 	    continue;
+	}
 
 	dp = NULL;
 	for(;;) {
@@ -231,6 +234,7 @@ search_holding_disk(
 	    *s = '\0';
 	}
 	if ( dp == NULL ) {
+	    dumpfile_free_data(&file);
 	    continue;
 	}
 
@@ -247,6 +251,7 @@ search_holding_disk(
 	    new_output_find->status=stralloc("OK");
 	    *output_find=new_output_find;
 	}
+	dumpfile_free_data(&file);
     }
 
     g_slist_free_full(holding_file_list);

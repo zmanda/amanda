@@ -79,7 +79,6 @@ main(
     pid_t driver_pid, reporter_pid;
     amwait_t exitcode;
     int opt;
-    dumpfile_t file;
     GSList *holding_list=NULL, *holding_file;
     int driver_pipe[2];
     char date_string[100];
@@ -335,12 +334,14 @@ main(
     g_fprintf(driver_stream, "DATE %s\n", amflush_timestamp);
     for(holding_file=holding_list; holding_file != NULL;
 				   holding_file = holding_file->next) {
+	dumpfile_t file;
 	holding_file_get_dumpfile((char *)holding_file->data, &file);
 
 	if (holding_file_size((char *)holding_file->data, 1) <= 0) {
 	    log_add(L_INFO, "%s: removing file with no data.",
 		    (char *)holding_file->data);
 	    holding_file_unlink((char *)holding_file->data);
+	    dumpfile_free_data(&file);
 	    continue;
 	}
 
@@ -369,6 +370,7 @@ main(
 		qhname);
 	amfree(qdisk);
 	amfree(qhname);
+	dumpfile_free_data(&file);
     }
     g_fprintf(stderr, "ENDFLUSH\n"); fflush(stderr);
     g_fprintf(driver_stream, "ENDFLUSH\n"); fflush(driver_stream);

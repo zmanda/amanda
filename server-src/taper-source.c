@@ -71,11 +71,9 @@ static void taper_source_finalize(GObject * obj_self) {
     if (G_OBJECT_CLASS(parent_class)->finalize)
         G_OBJECT_CLASS(parent_class)->finalize(obj_self);
 
-    if (self->first_header)
-        amfree(self->first_header);
-
-    if (self->driver_handle)
-        amfree(self->driver_handle);
+    dumpfile_free(self->first_header);
+    amfree(self->driver_handle);
+    amfree(self->errmsg);
 }
 
 static void 

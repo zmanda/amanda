@@ -94,6 +94,9 @@ taper_file_source_finalize(GObject *obj_self)
     if(self->_priv->current_chunk_fd >= 0) {
         close (self->_priv->current_chunk_fd);
     }
+    dumpfile_free_data(&(self->_priv->part_start_chunk_header));
+    dumpfile_free_data(&(self->_priv->current_chunk_header));
+    amfree(self->_priv);
 }
 
 static void 
@@ -103,6 +106,8 @@ taper_file_source_init (TaperFileSource * o G_GNUC_UNUSED)
     o->_priv->part_start_chunk_fd = -1;
     o->_priv->current_chunk_fd = -1;
     o->_priv->predicted_splits = -1;
+    fh_init(&o->_priv->part_start_chunk_header);
+    fh_init(&o->_priv->current_chunk_header);
     o->holding_disk_file = NULL;
 }
 
@@ -215,7 +220,8 @@ static gboolean open_holding_file(char * filename, int * fd_pointer,
 	amfree(header_buffer);
         return FALSE;
     }
-    
+
+    dumpfile_free_data(header_pointer);
     parse_file_header(header_buffer, header_pointer, DISK_BLOCK_BYTES);
     amfree(header_buffer);
     
@@ -250,7 +256,8 @@ static gboolean copy_chunk_data(int * from_fd, int* to_fd,
         return FALSE;
     }
 
-    memcpy(to_header, from_header, sizeof(*to_header));
+    dumpfile_free_data(to_header);
+    dumpfile_copy_in_place(to_header, from_header);
 
     return TRUE;
 }
@@ -283,8 +290,8 @@ static gboolean first_time_setup(TaperFileSource * self) {
         return FALSE;
     }
 
-    pself->first_header = g_memdup(&(selfp->part_start_chunk_header),
-                                   sizeof(dumpfile_t));
+    dumpfile_free(pself->first_header);
+    pself->first_header = dumpfile_copy(&(selfp->part_start_chunk_header));
 
     /* Should not be necessary. You never know! */
     selfp->current_part_pos = selfp->part_start_chunk_offset =
@@ -332,6 +339,7 @@ static gboolean get_next_chunk(TaperFileSource * self) {
     } else {
         /* No more data. */
         aclose(selfp->current_chunk_fd);
+	dumpfile_free_data(&(selfp->current_chunk_header));
         bzero(&(selfp->current_chunk_header),
               sizeof(selfp->current_chunk_header));
         return TRUE;
@@ -346,6 +354,7 @@ static gboolean get_next_chunk(TaperFileSource * self) {
                            &(selfp->current_chunk_header),
 			   &(pself->errmsg))) {
         amfree(cont_filename);
+	dumpfile_free_data(&(selfp->current_chunk_header));
         bzero(&(selfp->current_chunk_header),
               sizeof(selfp->current_chunk_header));
         aclose(selfp->current_chunk_fd);

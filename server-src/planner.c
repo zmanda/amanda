@@ -406,6 +406,7 @@ main(
 		log_add(L_INFO, "%s: removing file with no data.",
 			(char *)holding_file->data);
 		holding_file_unlink((char *)holding_file->data);
+		dumpfile_free_data(&file);
 		continue;
 	    }
 
@@ -428,6 +429,7 @@ main(
 		    qhname);
 	    amfree(qdisk);
 	    amfree(qhname);
+	    dumpfile_free_data(&file);
 	}
 	g_slist_free_full(holding_list);
 	holding_list = NULL;

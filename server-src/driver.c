@@ -2110,7 +2110,6 @@ read_flush(void)
     sched_t *sp;
     disk_t *dp;
     int line;
-    dumpfile_t file;
     char *hostname, *diskname, *datestamp;
     int level;
     char *destname;
@@ -2126,6 +2125,8 @@ read_flush(void)
     tq.head = tq.tail = NULL;
 
     for(line = 0; (inpline = agets(stdin)) != NULL; free(inpline)) {
+	dumpfile_t file;
+
 	line++;
 	if (inpline[0] == '\0')
 	    continue;
@@ -2202,6 +2203,7 @@ read_flush(void)
 		log_add(L_INFO, _("%s: ignoring cruft file."), destname);
 	    amfree(diskname);
 	    amfree(destname);
+	    dumpfile_free_data(&file);
 	    continue;
 	}
 
@@ -2212,6 +2214,7 @@ read_flush(void)
 		    hostname, diskname, destname);
 	    amfree(diskname);
 	    amfree(destname);
+	    dumpfile_free_data(&file);
 	    continue;
 	}
 	amfree(diskname);
@@ -2222,6 +2225,7 @@ read_flush(void)
 	    log_add(L_INFO, _("%s: disk %s:%s not in database, skipping it."),
 		    destname, file.name, file.disk);
 	    amfree(destname);
+	    dumpfile_free_data(&file);
 	    continue;
 	}
 
@@ -2229,6 +2233,7 @@ read_flush(void)
 	    log_add(L_INFO, _("%s: ignoring file with bogus dump level %d."),
 		    destname, file.dumplevel);
 	    amfree(destname);
+	    dumpfile_free_data(&file);
 	    continue;
 	}
 
@@ -2236,6 +2241,7 @@ read_flush(void)
 	    log_add(L_INFO, "%s: removing file with no data.", destname);
 	    holding_file_unlink(destname);
 	    amfree(destname);
+	    dumpfile_free_data(&file);
 	    continue;
 	}
 
@@ -2278,6 +2284,7 @@ read_flush(void)
 	dp1->up = (char *)sp;
 
 	enqueue_disk(&tq, dp1);
+	dumpfile_free_data(&file);
     }
     amfree(inpline);
 
