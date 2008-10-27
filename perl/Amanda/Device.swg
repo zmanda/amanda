@@ -429,7 +429,7 @@ typedef struct Device {
 	}
 
 	gboolean
-	start_file(const dumpfile_t *jobInfo) {
+	start_file(dumpfile_t *jobInfo) {
 	    return device_start_file(self, jobInfo);
 	}
 
