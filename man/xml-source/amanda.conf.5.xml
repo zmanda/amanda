@@ -439,13 +439,14 @@ option set to
   <listitem>
 <para>These options can set various device properties.  See
 <citerefentry><refentrytitle>amanda-devices</refentrytitle><manvolnum>7</manvolnum></citerefentry>
-for more information on device properties.
-Both strings are quoted; the first string contains the name of
+for more information on device properties and their syntax.
+Both strings are always quoted; the first string contains the name of
 the property to set, and the second contains its value. For example, to set
 a fixed block size of 128k, write:</para>
 <programlisting>
-device_property "BLOCK_SIZE" "131072"
+device_property "BLOCK_SIZE" "128k"
 </programlisting>
+
   </listitem>
   </varlistentry>
 
@@ -1114,7 +1115,8 @@ Debug level of the taper process</para>
   where <mathphrase>h</mathphrase> is the amount of data on the
   holding disk, <mathphrase>t</mathphrase> is the capacity of a
   volume, and <mathphrase>d</mathphrase> is this parameter, expressed as a
-  percentage.</para>
+  percentage.  This parameter may be larger than 100%, for example to keep
+  more recent dumps on the holding disk for faster recovery.</para>
 <para> Needless to say, your holding disk must be big enough
   that this criterion could be satisfied. If the holding disk cannot
   be used for a particular dump (because, for example, there is no
@@ -1143,7 +1145,7 @@ Debug level of the taper process</para>
   data scheduled for this run but not dumped
   yet, <mathphrase>t</mathphrase> is the capacity of a volume,
   and <mathphrase>d</mathphrase> is this parameter, expressed as a
-  percentage.</para>
+  percentage.  This parameter may be larger than 100%.</para>
 <para>  Needless to say, your holding disk must be big enough
   that this criterion could be satisfied. If the holding disk cannot
   be used for a particular dump (because, for example, there is no
@@ -1175,7 +1177,7 @@ Debug level of the taper process</para>
   holding disk from this or previous runs, <mathphrase>t</mathphrase>
   is the capacity of a volume,
   and <mathphrase>f</mathphrase> is this parameter, expressed as a
-  percentage.</para>
+  percentage.  This parameter may be greater than 100%.</para>
 <para> The value of this parameter may not exceed that of
   the <emphasis remap='B'>flush-threshold-scheduled</emphasis>
   parameter.; <emphasis remap='B'>autoflush</emphasis> must be set to 'yes' if

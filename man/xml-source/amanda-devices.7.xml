@@ -214,12 +214,20 @@ behavior. Properties are set for a particular device, so that if you have two
 tape devices, they will not share property values.</para>
 
 <para>Properties are specified in <emphasis>amanda.conf</emphasis> with the
-<emphasis>device-property</emphasis> parameter, e.g.,
+<emphasis>device-property</emphasis> parameter.  The syntax looks like this:
 <programlisting>
-device_property "BLOCK_SIZE" "131072"
-</programlisting>
-See <citerefentry><refentrytitle>amanda.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>
-for more information on this parameter.</para>
+device_property "FROBNICATOR_PATH" "/var/frobd/state"
+device_property "BYTES_PER_FORTNIGHT" "128k"
+device_property "USE_QUBITS" "no"
+</programlisting></para>
+
+<para>Both the property name and the property value are always quoted.  String
+values are given as simple strings, like FROBNICATOR_PATH in the example above.
+Integer values can be specified with any of the suffixes given in the "VALUE
+SUFFIXES" section of &amconf;, like BYTES_PER_FORTNIGHT, above.  Boolean values
+can be specified as any of "true", "yes", "1", "0", "no", "false", like
+USE_QUBITS, above.  Some properties have special formats, as described
+below.</para>
 
 <para>Some properties are set based on other configuration values, such as
 tapetype parameters.  These special cases are detailed under the appropriate
@@ -247,7 +255,7 @@ for future expansion.  Not all devices implement all of these properties.</para>
 <variablelist>
  <!-- ==== -->
  <varlistentry><term>APPENDABLE</term><listitem>
- (read-only) This property indicates whether this device supports appending data to volumes.
+ (read-only) This boolean property indicates whether this device supports appending data to volumes.
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>BLOCK_SIZE</term><listitem>
@@ -259,7 +267,7 @@ for future expansion.  Not all devices implement all of these properties.</para>
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>COMPRESSION</term><listitem>
- (read-write) This property represents the compression status of the device, and can be used to enable and disable such compression.  This applies mostly to tape devices, although many tape devices do not support setting compression from software.
+ (read-write) This boolean property represents the compression status of the device, and can be used to enable and disable such compression.  This applies mostly to tape devices, although many tape devices do not support setting compression from software.
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>COMPRESSION_RATE</term><listitem>
@@ -299,7 +307,7 @@ for future expansion.  Not all devices implement all of these properties.</para>
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>VERBOSE</term><listitem>
- (read-write) If set, then the device will produce verbose debugging output.  This property is not recognized by all devices.
+ (read-write) If this boolean property is set, then the device will produce verbose debugging output.  This property is not recognized by all devices.
 </listitem></varlistentry>
  <!-- ==== -->
 </variablelist>
@@ -372,6 +380,15 @@ See Amazon's documentation for details and latest information
  <!-- ==== -->
 </variablelist>
 
+<para>Most Amanda devices work just fine without any properties, but not the S3
+device.  A typical S3 configuration will have an access key and secret key
+specified:
+
+<programlisting>
+device_property "S3_ACCESS_KEY" "27D3B8C6C4E7AA423C2B37C72A0D22C8"
+device_property "S3_SECRET_KEY" "agphc2Q7Zmxragphc2RmO2xragpzZGY7a2xqCgr"
+</programlisting></para>
+
 </refsect3>
 
 <refsect3><title>Tape Device</title>
@@ -381,16 +398,6 @@ overridden in the configuration file if the autodetection fails. Note that tape
 drives are required to at least support the MTREW (rewind) operation; all other
 operations can be emulated with the MTREW and read data operations.</para>
 
-<para>The feature properties must be specified with a status, surety, and source.  The status is either "enabled" or "disabled", while the surety is "good" or "bad" and the source is "user", "detected", or "default".  In most cases device_property parameters omit the surety and source, which default to "good" and "user," respectively.
-<programlisting>
-device_property "FSF" "disabled"
-device_property "BSF" "enabled"
-# specify surety and source explicitly, if you're so inclined
-device_property "BSR" "disabled|bad|detected"
-</programlisting>
-note that case and whitespace are significant.
-</para>
-
 <!-- PLEASE KEEP THIS LIST IN ALPHABETICAL ORDER -->
 <variablelist>
  <!-- ==== -->
@@ -399,36 +406,36 @@ note that case and whitespace are significant.
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>BSF</term><listitem>
- (read-write) This feature property specifies whether the device
+ (read-write) This boolean property specifies whether the device
  driver may execute the MTBSF operation (backward seek file).
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>BSF_AFTER_EOM</term><listitem>
- (read-write) This feature property specifies whether the device
+ (read-write) This boolean property specifies whether the device
  driver should execute an MTBSF (backward seek file) operation after
  MTEOM (seek to end of recorded data) in order to append.
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>BSR</term><listitem>
- (read-write) This feature property specifies whether the device
+ (read-write) This boolean property specifies whether the device
  driver may use the MTBSR operation (backward seek record).
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>EOM</term><listitem>
- (read-write) This feature property specifies whether the device
+ (read-write) This boolean property specifies whether the device
  driver may use the MTEOM command (seek to end of recorded data).
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>FINAL_FILEMARKS</term><listitem>
- (read-write) This property gives the number of filemarks that should be written at EOD.  It is usually 1 or 2.
+ (read-write) This integer property gives the number of filemarks that should be written at EOD.  It is usually 1 or 2.
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>FSF</term><listitem>
- (read-write) This feature property specifies whether the device driver may use the MTFSF operation (forward seek file).
+ (read-write) This boolean property specifies whether the device driver may use the MTFSF operation (forward seek file).
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>FSR</term><listitem>
- (read-write) This feature property specifies whether the device driver may use the MTFSR operation (forward seek record).
+ (read-write) This boolean property specifies whether the device driver may use the MTFSR operation (forward seek record).
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>READ_BUFFER_SIZE</term><listitem>
