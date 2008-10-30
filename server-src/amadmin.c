@@ -1040,7 +1040,7 @@ find(
 
     if(argc < 3) {
 	g_fprintf(stderr,
-		_("%s: expecting \"find [--sort <hkdlpbf>] [hostname [<disk>]]*\"\n"),
+		_("%s: expecting \"find [--sort <hkdlpbfw>] [hostname [<disk>]]*\"\n"),
 		get_pname());
 	usage();
     }
@@ -1066,6 +1066,8 @@ find(
 	    case 'P':
 	    case 'b':
 	    case 'B':
+	    case 'w':
+	    case 'W':
 		    break;
 	    default: valid_sort=0;
 	    }

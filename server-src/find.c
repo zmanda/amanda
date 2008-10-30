@@ -257,6 +257,17 @@ search_holding_disk(
     g_slist_free_full(holding_file_list);
 }
 
+static char *
+get_write_timestamp(char *tapelabel)
+{
+    tape_t *tp;
+
+    if (!tapelabel || !(tp = lookup_tapelabel(tapelabel)))
+	return "0";
+
+    return tp->datestamp;
+}
+
 static int
 find_compare(
     const void *i1,
@@ -295,6 +306,9 @@ find_compare(
 	case 'b' : compare=compare_possibly_null_strings(i->label,
                                                          j->label);
                    break;
+	case 'w': compare=strcmp(get_write_timestamp(i->label),
+				 get_write_timestamp(j->label));
+		   break;
 	case 'p' :
 		   if(strcmp(i->partnum, "--") != 0 &&
 		      strcmp(j->partnum, "--") != 0){

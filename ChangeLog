@@ -1,3 +1,10 @@
+2008-10-30  Dustin J. Mitchell <dustin@zmanda.com>
+	* server-src/find.c server-src/find.h man/xml-source/amadmin.8.xml:
+	  add new sort key, 'w', for write_timestamp
+	* server-src/amadmin.c: use it
+	* server-src/amindexd.c restore-src/amfetchdump.c: use 'w' to prefer
+	  the oldest-written copy of a dump
+
 2008-10-30  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/amgtar_perl.pl, application-src/amstar.c,
 	  application-src/amgtar.c: Implement validate command.

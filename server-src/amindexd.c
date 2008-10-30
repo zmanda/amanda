@@ -605,7 +605,10 @@ check_and_load_config(
     dbrename(get_config_name(), DBG_SUBDIR_SERVER);
 
     output_find = find_dump(&disk_list);
-    sort_find_result("DLKHpB", &output_find);
+    /* the 'w' here sorts by write timestamp, so that the first instance of
+     * any particular datestamp/host/disk/level/part that we see is the one
+     * written earlier */
+    sort_find_result("DLKHpwB", &output_find);
 
     conf_indexdir = config_dir_relative(getconf_str(CNF_INDEXDIR));
     if (stat (conf_indexdir, &dir_stat) != 0 || !S_ISDIR(dir_stat.st_mode)) {

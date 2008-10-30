@@ -50,9 +50,7 @@ int get_lock = 0;
 typedef struct needed_tapes_s {
     char *label;
     int isafile;
-    find_result_t *files;
-    struct needed_tapes_s *next;
-    struct needed_tapes_s *prev;
+    GSList *files;
 } needed_tape_t;
 
 /* local functions */
@@ -92,6 +90,21 @@ usage(void)
     exit(1);
 }
 
+static gint
+sort_needed_tapes_by_write_timestamp(
+	gconstpointer a,
+	gconstpointer b)
+{
+    needed_tape_t *a_nt = (needed_tape_t *)a;
+    needed_tape_t *b_nt = (needed_tape_t *)b;
+    tape_t *a_t = a_nt->isafile? NULL : lookup_tapelabel(a_nt->label);
+    tape_t *b_t = b_nt->isafile? NULL : lookup_tapelabel(b_nt->label);
+    char *a_ds = a_t? a_t->datestamp : "none";
+    char *b_ds = b_t? b_t->datestamp : "none";
+
+    return strcmp(a_ds, b_ds);
+}
+
 /*
  * Build the list of tapes we'll be wanting, and include data about the
  * files we want from said tapes while we're at it (the whole find_result
@@ -103,12 +116,13 @@ list_needed_tapes(
     int		only_one,
     disklist_t	*diskqp)
 {
-    needed_tape_t *needed_tapes = NULL, *curtape = NULL;
+    GSList *needed_tapes = NULL;
+    GSList *seen_dumps = NULL;
+    GSList *iter, *iter2;
     find_result_t *alldumps = NULL;
     find_result_t *curmatch = NULL;
     find_result_t *matches = NULL;
     tapelist_t *tapes = NULL;
-    int numtapes = 0;
     char *conf_tapelist;
 
     /* Load the tape list */
@@ -125,14 +139,14 @@ list_needed_tapes(
         g_fprintf(stderr, _("No dump records found\n"));
         exit(1);
     }
-    
+
     /* Compare all known dumps to our match list, note what we'll need */
     matches = dumps_match_dumpspecs(alldumps, dumpspecs, 1);
-    sort_find_result("Dhklp", &matches);
+    sort_find_result("Dhklpw", &matches);
     for(curmatch = matches; curmatch; curmatch = curmatch->next) {
 	int havetape = 0;
-	int have_part = 0;
 
+	printf("Examining %s %s on %s\n", curmatch->hostname, curmatch->diskname, curmatch->label);
 	/* keep only first dump if only_one */
 	if (only_one &&
 	    curmatch != matches &&
@@ -140,6 +154,7 @@ list_needed_tapes(
 	     strcmp(curmatch->diskname, matches->diskname) ||
 	     strcmp(curmatch->timestamp, matches->timestamp) ||
 	     curmatch->level != matches->level)) {
+	    printf("only_one matched\n");
 	    continue;
 	}
 	if(strcmp("OK", curmatch->status)){
@@ -147,37 +162,19 @@ list_needed_tapes(
 		             curmatch->timestamp, curmatch->hostname,
 			     curmatch->diskname, curmatch->level,
 			     curmatch->status);
+	    printf("!OK\n");
 	    continue;
 	}
-	/* check if we already have that part */
-	for(curtape = needed_tapes; curtape; curtape = curtape->next) {
-	    find_result_t *rsttemp = NULL;
-	    for(rsttemp = curtape->files;
-		rsttemp;
-		rsttemp=rsttemp->next) {
-		if (!strcmp(rsttemp->partnum, curmatch->partnum) &&
-		    !strcmp(rsttemp->hostname, curmatch->hostname) &&
-		    !strcmp(rsttemp->diskname, curmatch->diskname) &&
-		    !strcmp(rsttemp->timestamp, curmatch->timestamp) &&
-		    rsttemp->level == curmatch->level) {
-		    have_part = 1;
-		}
-	    }
-	}
-	if (have_part)
-	    continue;
 
-	for(curtape = needed_tapes; curtape; curtape = curtape->next) {
+	for(iter = needed_tapes; iter; iter = iter->next) {
+	    needed_tape_t *curtape = iter->data;
 	    if (!strcmp(curtape->label, curmatch->label)) {
-		find_result_t *rsttemp = NULL;
-		find_result_t *rstfile;
 		int keep = 1;
 
 		havetape = 1;
 
-		for(rsttemp = curtape->files;
-			    rsttemp;
-			    rsttemp=rsttemp->next){
+		for(iter2 = curtape->files; iter2; iter2 = iter2->next){
+		    find_result_t *rsttemp = iter2->data;
 		    if(curmatch->filenum == rsttemp->filenum){
 			g_fprintf(stderr, _("Seeing multiple entries for tape "
 				   "%s file %lld, using most recent\n"),
@@ -190,56 +187,77 @@ list_needed_tapes(
 		    break;
 		}
 
-		rstfile = alloc(SIZEOF(find_result_t));
-		memcpy(rstfile, curmatch, SIZEOF(find_result_t));
-		rstfile->next = curtape->files;
-
-		if (curmatch->filenum < 1)
-		    curtape->isafile = 1;
-		else curtape->isafile = 0;
-		curtape->files = rstfile;
+		curtape->isafile = (curmatch->filenum < 1);
+		curtape->files = g_slist_prepend(curtape->files, curmatch);
 		break;
 	    }
 	}
 	if (!havetape) {
-	    find_result_t *rstfile = alloc(SIZEOF(find_result_t));
-	    needed_tape_t *newtape = alloc(SIZEOF(needed_tape_t));
-	    memcpy(rstfile, curmatch, SIZEOF(find_result_t));
-	    rstfile->next = NULL;
-	    newtape->files = rstfile;
-	    if(curmatch->filenum < 1) newtape->isafile = 1;
-	    else newtape->isafile = 0;
+	    needed_tape_t *newtape = g_new0(needed_tape_t, 1);
+	    newtape->files = g_slist_prepend(newtape->files, curmatch);
+	    newtape->isafile = (curmatch->filenum < 1);
 	    newtape->label = curmatch->label;
-	    if (needed_tapes){
-		needed_tapes->prev->next = newtape;
-		newtape->prev = needed_tapes->prev;
-		needed_tapes->prev = newtape;
-	    } else {
-		needed_tapes = newtape;
-		needed_tapes->prev = needed_tapes;
-	    }
-	    newtape->next = NULL;
-	    numtapes++;
+	    needed_tapes = g_slist_prepend(needed_tapes, newtape);
 	} /* if(!havetape) */
 
     } /* for(curmatch = matches ... */
 
-    if(numtapes == 0){
+    if(g_slist_length(needed_tapes) == 0){
       g_fprintf(stderr, _("No matching dumps found\n"));
       exit(1);
       /* NOTREACHED */
     }
 
-    /* stick that list in a structure that librestore will understand */
-    for(curtape = needed_tapes; curtape; curtape = curtape->next) {
-	find_result_t *curfind = NULL;
-	for(curfind = curtape->files; curfind; curfind = curfind->next) {
-	    tapes = append_to_tapelist(tapes, curtape->label,
-				       curfind->filenum, -1, curtape->isafile);
+    /* sort the tapelist by tape write_timestamp */
+    needed_tapes = g_slist_sort(needed_tapes, sort_needed_tapes_by_write_timestamp);
+
+    /* stick that list in a structure that librestore will understand, removing
+     * files we have already seen in the process; this prefers the earliest written
+     * copy of any dumps which are available on multiple tapes */
+    seen_dumps = NULL;
+    for(iter = needed_tapes; iter; iter = iter->next) {
+	needed_tape_t *curtape = iter->data;
+	for(iter2 = curtape->files; iter2; iter2 = iter2->next) {
+	    find_result_t *curfind = iter2->data;
+	    find_result_t *prev;
+	    GSList *iter;
+	    int have_part;
+
+	    /* have we already seen this? */
+	    have_part = 0;
+	    for (iter = seen_dumps; iter; iter = iter->next) {
+		prev = iter->data;
+
+		if (!strcmp(prev->partnum, curfind->partnum) &&
+		    !strcmp(prev->hostname, curfind->hostname) &&
+		    !strcmp(prev->diskname, curfind->diskname) &&
+		    !strcmp(prev->timestamp, curfind->timestamp) &&
+		    prev->level == curfind->level) {
+		    have_part = 1;
+		    break;
+		}
+	    }
+
+	    if (!have_part) {
+		seen_dumps = g_slist_prepend(seen_dumps, curfind);
+		tapes = append_to_tapelist(tapes, curtape->label,
+					   curfind->filenum, -1, curtape->isafile);
+	    }
 	}
     }
 
-    g_fprintf(stderr, _("%d tape(s) needed for restoration\n"), numtapes);
+    /* free our resources */
+    for (iter = needed_tapes; iter; iter = iter->next) {
+	needed_tape_t *curtape = iter->data;
+	g_slist_free(curtape->files);
+	g_free(curtape);
+    }
+    g_slist_free(seen_dumps);
+    g_slist_free(needed_tapes);
+    free_find_result(&matches);
+
+    /* and we're done */
+    g_fprintf(stderr, _("%d tape(s) needed for restoration\n"), num_entries(tapes));
     return(tapes);
 }
 
