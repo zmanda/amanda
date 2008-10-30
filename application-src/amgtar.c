@@ -115,6 +115,7 @@ static void amgtar_selfcheck(application_argument_t *argument);
 static void amgtar_estimate(application_argument_t *argument);
 static void amgtar_backup(application_argument_t *argument);
 static void amgtar_restore(application_argument_t *argument);
+static void amgtar_validate(application_argument_t *argument);
 static void amgtar_build_exinclude(dle_t *dle, int verbose,
 				   int *nb_exclude, char **file_exclude,
 				   int *nb_include, char **file_include);
@@ -329,6 +330,8 @@ main(
 	amgtar_backup(&argument);
     } else if (strcmp(command, "restore") == 0) {
 	amgtar_restore(&argument);
+    } else if (strcmp(command, "validate") == 0) {
+	amgtar_validate(&argument);
     } else {
 	dbprintf("Unknown command `%s'.\n", command);
 	fprintf(stderr, "Unknown command `%s'.\n", command);
@@ -698,6 +701,34 @@ amgtar_restore(
 
     env = safe_env();
     become_root();
+    execve(cmd, my_argv, env);
+    e = strerror(errno);
+    error(_("error [exec %s: %s]"), cmd, e);
+}
+
+static void
+amgtar_validate(
+    application_argument_t *argument G_GNUC_UNUSED)
+{
+    char  *cmd;
+    char **my_argv;
+    char **env;
+    int    i;
+    char  *e;
+
+    if (!gnutar_path) {
+	error(_("GNUTAR-PATH not defined"));
+    }
+
+    cmd = stralloc(gnutar_path);
+    my_argv = alloc(SIZEOF(char *) * 4);
+    i = 0;
+    my_argv[i++] = stralloc(gnutar_path);
+    my_argv[i++] = stralloc("-tf");
+    my_argv[i++] = stralloc("-");
+    my_argv[i++] = NULL;
+
+    env = safe_env();
     execve(cmd, my_argv, env);
     e = strerror(errno);
     error(_("error [exec %s: %s]"), cmd, e);

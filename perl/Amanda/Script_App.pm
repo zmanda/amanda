@@ -114,6 +114,8 @@ sub print_to_server {
 	}
     } elsif ($action eq "restore") {
         print STDOUT "$msg\n";
+    } elsif ($action eq "validate") {
+        print STDERR "$msg\n";
     } else {
         print STDERR "$msg\n";
     }

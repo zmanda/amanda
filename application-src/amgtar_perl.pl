@@ -280,6 +280,19 @@ sub command_restore {
    die("Can't exec '", $cmd[0], "'");
 }
 
+sub command_validate {
+   my $self = shift;
+
+   my(@cmd) = ($self->{gnutar}, "-tf", "-");
+   debug("cmd:" . join(" ", @cmd));
+   my $pid = open3('>&STDIN', '>&STDOUT', '>&STDERR', @cmd) || die("validate", "Unable to run @cmd");
+   waitpid $pid, 0;
+   if( $? != 0 ){
+       die("validate", "$self->{gnutar} returned error");
+   }
+   exit(0);
+}
+
 sub command_print_command {
 }
 
@@ -318,4 +331,3 @@ GetOptions(
 my $application = Amanda::Application::amgtar_perl->new($opt_config, $opt_host, $opt_disk, $opt_device, \@opt_level, $opt_index, $opt_message, $opt_collection, $opt_record);
 
 $application->do($ARGV[0]);
-

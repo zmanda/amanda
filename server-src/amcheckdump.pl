@@ -264,21 +264,40 @@ sub find_validation_command {
     # We base the actual archiver on our own table, but just trust
     # whatever is listed as the decrypt/uncompress commands.
     my $program = uc(basename($header->{program}));
-    
-    my $validation_program;
-    my %validation_programs = (
-        "STAR" => "$Amanda::Constants::STAR -t -f -",
-        "DUMP" => "$Amanda::Constants::RESTORE tbf 2 -",
-        "VDUMP" => "$Amanda::Constants::VRESTORE tf -",
-        "VXDUMP" => "$Amanda::Constants::VXRESTORE tbf 2 -",
-        "XFSDUMP" => "$Amanda::Constants::XFSRESTORE -t -v silent -",
-        "TAR" => "$Amanda::Constants::GNUTAR tf -",
-        "GTAR" => "$Amanda::Constants::GNUTAR tf -",
-        "GNUTAR" => "$Amanda::Constants::GNUTAR tf -",
-        "SMBCLIENT" => "$Amanda::Constants::SAMBA_CLIENT tf -",
-    );
 
-    $validation_program = $validation_programs{$program};
+    my $validation_program;
+
+    if ($program ne "APPLICATION") {
+        my %validation_programs = (
+            "STAR" => "$Amanda::Constants::STAR -t -f -",
+            "DUMP" => "$Amanda::Constants::RESTORE tbf 2 -",
+            "VDUMP" => "$Amanda::Constants::VRESTORE tf -",
+            "VXDUMP" => "$Amanda::Constants::VXRESTORE tbf 2 -",
+            "XFSDUMP" => "$Amanda::Constants::XFSRESTORE -t -v silent -",
+            "TAR" => "$Amanda::Constants::GNUTAR tf -",
+            "GTAR" => "$Amanda::Constants::GNUTAR tf -",
+            "GNUTAR" => "$Amanda::Constants::GNUTAR tf -",
+            "SMBCLIENT" => "$Amanda::Constants::SAMBA_CLIENT tf -",
+        );
+        $validation_program = $validation_programs{$program};
+    } else {
+	if (!defined $header->{application}) {
+            print STDERR "Application not set; ".
+	                 "Will send dumps to /dev/null instead.";
+            $validation_program = "cat > /dev/null";
+	} else {
+	    my $program_path = $Amanda::Paths::APPLICATION_DIR . "/" .
+                               $header->{application};
+            if (!-x $program_path) {
+                print STDERR "Application '" , $header->{application},
+			     "($program_path)' not available on the server; ".
+	                     "Will send dumps to /dev/null instead.";
+                $validation_program = "cat > /dev/null";
+	    } else {
+	        $validation_program = $program_path . " validate";
+	    }
+	}
+    }
     if (!defined $validation_program) {
         print STDERR "Could not determine validation for dumper $program; ".
 	             "Will send dumps to /dev/null instead.";

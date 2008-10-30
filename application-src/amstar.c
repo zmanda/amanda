@@ -112,6 +112,7 @@ static void amstar_selfcheck(application_argument_t *argument);
 static void amstar_estimate(application_argument_t *argument);
 static void amstar_backup(application_argument_t *argument);
 static void amstar_restore(application_argument_t *argument);
+static void amstar_validate(application_argument_t *argument);
 static char **amstar_build_argv(application_argument_t *argument,
 				int command);
 char *star_path;
@@ -277,6 +278,8 @@ main(
 	amstar_backup(&argument);
     } else if (strcmp(command, "restore") == 0) {
 	amstar_restore(&argument);
+    } else if (strcmp(command, "validate") == 0) {
+	amstar_validate(&argument);
     } else {
 	fprintf(stderr, "Unknown command `%s'.\n", command);
 	exit (1);
@@ -621,6 +624,36 @@ amstar_restore(
 
     env = safe_env();
     become_root();
+    execve(cmd, my_argv, env);
+    e = strerror(errno);
+    error(_("error [exec %s: %s]"), cmd, e);
+
+}
+
+static void
+amstar_validate(
+    application_argument_t *argument G_GNUC_UNUSED)
+{
+    char  *cmd;
+    char **my_argv;
+    char **env;
+    int    i;
+    char  *e;
+
+    if (!star_path) {
+	error(_("STAR-PATH not defined"));
+    }
+
+    cmd = stralloc(star_path);
+    my_argv = alloc(SIZEOF(char *) * 5);
+    i = 0;
+    my_argv[i++] = stralloc(star_path);
+    my_argv[i++] = stralloc("-t");
+    my_argv[i++] = stralloc("-f");
+    my_argv[i++] = stralloc("-");
+    my_argv[i++] = NULL;
+
+    env = safe_env();
     execve(cmd, my_argv, env);
     e = strerror(errno);
     error(_("error [exec %s: %s]"), cmd, e);

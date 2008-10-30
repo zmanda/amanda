@@ -1,3 +1,12 @@
+2008-10-30  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amgtar_perl.pl, application-src/amstar.c,
+	  application-src/amgtar.c: Implement validate command.
+	* server-src/amcheckdump.pl: Execute the validate command of an
+				     application.
+	* perl/Amanda/Script_App.pm (print_to_server): Add validate.
+	* perl/Amanda/Application.pm (known_commands): Add validate.
+	* common-src/security-util.c: Fix typo.
+
 2008-10-29  Dustin J. Mitchell <dustin@zmanda.com>
 	* man/xml-source/amanda.conf.5.xml
 	  man/xml-source/amanda-devices.7.xml: improve device property

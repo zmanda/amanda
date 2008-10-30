@@ -2243,7 +2243,7 @@ check_user_amandahosts(
     if (! found) {
 	if (strcmp(service, "amindexd") == 0 ||
 	    strcmp(service, "amidxtaped") == 0) {
-	    result = vstrallocf(_("Please add the line \"%s %s amindexd amidxtaped\" to %s on the client"), host, remoteuser, ptmp);
+	    result = vstrallocf(_("Please add the line \"%s %s amindexd amidxtaped\" to %s on the server"), host, remoteuser, ptmp);
 	} else if (strcmp(service, "amdump") == 0 ||
 		   strcmp(service, "noop") == 0 ||
 		   strcmp(service, "selfcheck") == 0 ||
