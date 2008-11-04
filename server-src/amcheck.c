@@ -736,6 +736,7 @@ start_server_check(
     char *quoted;
     int res;
     intmax_t kb_avail;
+    off_t tape_size;
 
     switch(pid = fork()) {
     case -1:
@@ -1415,6 +1416,20 @@ start_server_check(
 		  }
 		}
 
+		/* check tape_splitsize */
+		tape_size = tapetype_get_length(tp);
+		if (dp->tape_splitsize > tape_size) {
+		    g_fprintf(outf,
+			      _("ERROR: %s %s: tape_splitsize > tape size\n"),
+			      hostp->hostname, dp->name);
+		    pgmbad = 1;
+		}
+		if (dp->fallback_splitsize > tape_size) {
+		    g_fprintf(outf,
+			      _("ERROR: %s %s: fallback_splitsize > tape size\n"),
+			      hostp->hostname, dp->name);
+		    pgmbad = 1;
+		}
 		amfree(disk);
 		remove_disk(&origq, dp);
 	    }

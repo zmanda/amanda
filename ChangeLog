@@ -1,3 +1,6 @@
+2008-11-04  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amcheck.c: Check tape_splitsize < tape length.
+
 2008-10-30  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/find.c server-src/find.h man/xml-source/amadmin.8.xml:
 	  add new sort key, 'w', for write_timestamp
