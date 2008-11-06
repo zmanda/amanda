@@ -88,11 +88,9 @@ static amregex_t init_re_table[] = {
      removed while it is running.  They may cause data to be lost, but
      then they may not.  We shouldn't consider them NORMAL until
      further investigation.  */
-#ifdef IGNORE_TAR_ERRORS
   AM_NORMAL_RE(": File .* shrunk by [0-9][0-9]* bytes, padding with zeros"),
   AM_NORMAL_RE(": Cannot add file .*: No such file or directory$"),
   AM_NORMAL_RE(": Error exit delayed from previous errors"),
-#endif
   
   /* catch-all: DMP_STRANGE is returned for all other lines */
   AM_STRANGE_RE(NULL)

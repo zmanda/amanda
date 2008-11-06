@@ -1,4 +1,8 @@
 2008-11-06  Jean-Louis Martineau <martineau@zmanda.com>
+	* man/xml-source/amgtar.8.xml: Document new properties.
+	* application-src/amgtar.c: Remove ifdef IGNORE_TAR_ERRORS.
+
+2008-11-06  Jean-Louis Martineau <martineau@zmanda.com>
 	* changer-src/chg-zd-mtx.sh: Return first line of mtx output if mtx
 				     exit with a status != 0.
 	* server-src/amtape.c: Display changer error.

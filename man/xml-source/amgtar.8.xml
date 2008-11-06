@@ -62,6 +62,37 @@ If "YES" (the default), do not allow gnutar to cross filesystem boundaries. If "
  <varlistentry><term>SPARSE</term><listitem>
 If "YES" (the default), gnutar will store sparse files efficiently. If "NO", then the <emphasis>--sparse</emphasis> option is not given to gnutar, and it will not try to detect sparse files.
 </listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>EXIT-HANDLING</term><listitem>
+List which exit status of gtar are good or bad. eg. "1=GOOD 2=BAD", exit status of 1 will produce a good backup, exit status of 2 will give an error.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>NORMAL</term><listitem>
+List all regex that are normal output from gtar. These output are in the "FAILED DUMP DETAILS" section of the email report if the dump result is STRANGE or FAILED. Default values:
+<programlisting>
+"^could not open conf file"
+"^Elapsed time:"
+"^Throughput"
+": Directory is new$"
+": Directory has been renamed"
+": socket ignored$"
+": File .* shrunk by [0-9][0-9]* bytes, padding with zeros"
+": Cannot add file .*: No such file or directory$"
+": Error exit delayed from previous errors"
+</programlisting>
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>IGNORE</term><listitem>
+List all regex that amanda ignore. These output are never in the email report. Default values:
+<programlisting>
+": Directory is new$"
+": Directory has been renamed"
+</programlisting>
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>STRANGE</term><listitem>
+List all regex that are strange output from gtar. All gtar output that doesn't match a normal or ignore regex are strange by default. The result of the dump is STRANGE if gtar produce a strange output. These output are in the "FAILED DUMP DETAILS" section of the email report.
+</listitem></varlistentry>
 </variablelist>
 
 </refsect1>
