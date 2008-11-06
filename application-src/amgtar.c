@@ -48,6 +48,7 @@
  * NORMAL
  * IGNORE
  * STRANGE
+ * EXIT-HANDLING   (1=GOOD 2=BAD)
  */
 
 #include "amanda.h"
@@ -146,6 +147,8 @@ static int gnutar_sparse;
 static GSList *normal_message = NULL;
 static GSList *ignore_message = NULL;
 static GSList *strange_message = NULL;
+static char   *exit_handling;
+static int    exit_value[256];
 
 static struct option long_options[] = {
     {"config"          , 1, NULL,  1},
@@ -173,6 +176,7 @@ static struct option long_options[] = {
     {"normal"          , 1, NULL, 23},
     {"ignore"          , 1, NULL, 24},
     {"strange"         , 1, NULL, 25},
+    {"exit-handling"   , 1, NULL, 26},
     {NULL, 0, NULL, 0}
 };
 
@@ -300,6 +304,7 @@ main(
     int c;
     char *command;
     application_argument_t argument;
+    int i;
 
 #ifdef GNUTAR
     gnutar_path = GNUTAR;
@@ -311,6 +316,7 @@ main(
     gnutar_atimepreserve = 1;
     gnutar_checkdevice = 1;
     gnutar_sparse = 1;
+    exit_handling = NULL;
 
     /* initialize */
 
@@ -435,6 +441,9 @@ main(
 		     strange_message = 
 			 g_slist_append(strange_message, optarg);
 		 break;
+	case 26: if (optarg)
+		     exit_handling = stralloc(optarg);
+		 break;
 	case ':':
 	case '?':
 		break;
@@ -456,6 +465,27 @@ main(
 
     re_table = build_re_table(init_re_table, normal_message, ignore_message,
 			      strange_message);
+
+    for(i=0;i<256;i++)
+	exit_value[i] = 1; /* BAD  */
+    exit_value[0] = 0;     /* GOOD */
+    exit_value[1] = 0;     /* GOOD */
+    if (exit_handling) {
+	char *s = exit_handling;
+	while (s) {
+	    char *r = index(s, '=');
+	    if (r) {
+		int j = atoi(s);
+		if (j >= 0 && j < 256) {
+		    r++;
+		    if (strncasecmp(r, "GOOD", 4) == 0) {
+			exit_value[j] = 0;
+		    }
+		    s = index(s, ' ');
+		}
+	    }
+	}
+    }
 
     gnutar_listdir = getconf_str(CNF_GNUTAR_LIST_DIR);
     if (strlen(gnutar_listdir) == 0)
@@ -661,7 +691,7 @@ amgtar_estimate(
 	errmsg = vstrallocf(_("%s terminated with signal %d: see %s"),
 			     cmd, WTERMSIG(wait_status), dbfn());
     } else if (WIFEXITED(wait_status)) {
-	if (WEXITSTATUS(wait_status) != 0 && WEXITSTATUS(wait_status) != 2) {
+	if (exit_value[WEXITSTATUS(wait_status)] == 1) {
 	    errmsg = vstrallocf(_("%s exited with status %d: see %s"),
 			         cmd, WEXITSTATUS(wait_status), dbfn());
 	} else {
@@ -790,7 +820,7 @@ amgtar_backup(
 	errmsg = vstrallocf(_("%s terminated with signal %d: see %s"),
 			    cmd, WTERMSIG(wait_status), dbfn());
     } else if (WIFEXITED(wait_status)) {
-	if (WEXITSTATUS(wait_status) != 0) {
+	if (exit_value[WEXITSTATUS(wait_status)] == 1) {
 	    errmsg = vstrallocf(_("%s exited with status %d: see %s"),
 				cmd, WEXITSTATUS(wait_status), dbfn());
 	} else {
