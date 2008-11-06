@@ -1,3 +1,6 @@
+2008-11-06  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amgtar.c: Add normal, ignore and strange property.
+
 2008-11-04  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amcheck.c: Check tape_splitsize < tape length.
 

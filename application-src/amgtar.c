@@ -45,6 +45,9 @@
  * EXCLUDE-FILE
  * EXCLUDE-LIST
  * EXCLUDE-OPTIONAL
+ * NORMAL
+ * IGNORE
+ * STRANGE
  */
 
 #include "amanda.h"
@@ -67,14 +70,14 @@ int debug_application = 1;
 	}				\
 } while (0)
 
-static amregex_t re_table[] = {
+static amregex_t init_re_table[] = {
   /* tar prints the size in bytes */
   AM_SIZE_RE("^ *Total bytes written: [0-9][0-9]*", 1, 1),
   AM_NORMAL_RE("^could not open conf file"),
   AM_NORMAL_RE("^Elapsed time:"),
   AM_NORMAL_RE("^Throughput"),
   AM_IGNORE_RE(": Directory is new$"),
-  AM_IGNORE_RE(": Directory has been renamed from"),
+  AM_IGNORE_RE(": Directory has been renamed"),
 
   /* GNU tar 1.13.17 will print this warning when (not) backing up a
      Unix named socket.  */
@@ -93,6 +96,7 @@ static amregex_t re_table[] = {
   /* catch-all: DMP_STRANGE is returned for all other lines */
   AM_STRANGE_RE(NULL)
 };
+static amregex_t *re_table;
 
 /* local functions */
 int main(int argc, char **argv);
@@ -122,6 +126,16 @@ static void amgtar_build_exinclude(dle_t *dle, int verbose,
 static char *amgtar_get_incrname(application_argument_t *argument);
 static char **amgtar_build_argv(application_argument_t *argument,
 				char *incrname, int command);
+static amregex_t *build_re_table(amregex_t *orig_re_table,
+				 GSList *normal_message,
+				 GSList *ignore_message,
+				 GSList *strange_message);
+static void add_type_table(dmpline_t typ,
+			   amregex_t **re_table, amregex_t *orig_re_table,
+			   GSList *normal_message, GSList *ignore_message,
+			   GSList *strange_message);
+static void add_list_table(dmpline_t typ, amregex_t **re_table,
+			  GSList *message);
 static char *gnutar_path;
 static char *gnutar_listdir;
 static char *gnutar_directory;
@@ -129,6 +143,9 @@ static int gnutar_onefilesystem;
 static int gnutar_atimepreserve;
 static int gnutar_checkdevice;
 static int gnutar_sparse;
+static GSList *normal_message = NULL;
+static GSList *ignore_message = NULL;
+static GSList *strange_message = NULL;
 
 static struct option long_options[] = {
     {"config"          , 1, NULL,  1},
@@ -153,8 +170,126 @@ static struct option long_options[] = {
     {"exclude-list"    , 1, NULL, 20},
     {"exclude-optional", 1, NULL, 21},
     {"directory"       , 1, NULL, 22},
+    {"normal"          , 1, NULL, 23},
+    {"ignore"          , 1, NULL, 24},
+    {"strange"         , 1, NULL, 25},
     {NULL, 0, NULL, 0}
 };
+
+
+void
+add_type_table(
+    dmpline_t   typ,
+    amregex_t **re_table,
+    amregex_t  *orig_re_table,
+    GSList     *normal_message,
+    GSList     *ignore_message,
+    GSList     *strange_message)
+{
+    amregex_t *rp;
+
+    for(rp = orig_re_table; rp->regex != NULL; rp++) {
+	if (rp->typ == typ) {
+	    int     found = 0;
+	    GSList *mes;
+
+	    for (mes = normal_message; mes != NULL; mes = mes->next) {
+		if (strcmp(rp->regex, (char *)mes->data) == 0)
+		    found = 1;
+	    }
+	    for (mes = ignore_message; mes != NULL; mes = mes->next) {
+		if (strcmp(rp->regex, (char *)mes->data) == 0)
+		    found = 1;
+	    }
+	    for (mes = strange_message; mes != NULL; mes = mes->next) {
+		if (strcmp(rp->regex, (char *)mes->data) == 0)
+		    found = 1;
+	    }
+	    if (found == 0) {
+		(*re_table)->regex   = rp->regex;
+		(*re_table)->srcline = rp->srcline;
+		(*re_table)->scale   = rp->scale;
+		(*re_table)->field   = rp->field;
+		(*re_table)->typ     = rp->typ;
+		(*re_table)++;
+	    }
+	}
+    }
+}
+
+void
+add_list_table(
+    dmpline_t   typ,
+    amregex_t **re_table,
+    GSList     *message)
+{
+    GSList *mes;
+
+    for (mes = message; mes != NULL; mes = mes->next) {
+	(*re_table)->regex = (char *)mes->data;
+	(*re_table)->srcline = 0;
+	(*re_table)->scale   = 0;
+	(*re_table)->field   = 0;
+	(*re_table)->typ     = typ;
+	(*re_table)++;
+    }
+}
+
+amregex_t *
+build_re_table(
+    amregex_t *orig_re_table,
+    GSList    *normal_message,
+    GSList    *ignore_message,
+    GSList    *strange_message)
+{
+    int        nb = 0;
+    amregex_t *rp;
+    amregex_t *re_table, *new_re_table;
+
+    for(rp = orig_re_table; rp->regex != NULL; rp++) {
+	nb++;
+    }
+    nb += g_slist_length(normal_message);
+    nb += g_slist_length(ignore_message);
+    nb += g_slist_length(strange_message);
+
+    re_table =  new_re_table = malloc(nb * sizeof(amregex_t));
+    
+    /* add SIZE from orig_re_table */
+    add_type_table(DMP_SIZE, &re_table, orig_re_table,
+		   normal_message, ignore_message, strange_message);
+
+    /* add ignore_message */
+    add_list_table(DMP_IGNORE, &re_table, ignore_message);
+
+    /* add IGNORE from orig_re_table */
+    add_type_table(DMP_IGNORE, &re_table, orig_re_table,
+		   normal_message, ignore_message, strange_message);
+
+    /* add normal_message */
+    add_list_table(DMP_NORMAL, &re_table, normal_message);
+
+    /* add NORMAL from orig_re_table */
+    add_type_table(DMP_NORMAL, &re_table, orig_re_table,
+		   normal_message, ignore_message, strange_message);
+
+    /* add strange_message */
+    add_list_table(DMP_STRANGE, &re_table, strange_message);
+
+    /* add STRANGE from orig_re_table */
+    add_type_table(DMP_STRANGE, &re_table, orig_re_table,
+		   normal_message, ignore_message, strange_message);
+
+    /* Add DMP_STRANGE with NULL regex,       */
+    /* it is not copied by previous statement */
+    re_table->regex = NULL;
+    re_table->srcline = 0;
+    re_table->scale = 0;
+    re_table->field = 0;
+    re_table->typ = DMP_STRANGE;
+
+    return new_re_table;
+}
 
 int
 main(
@@ -287,6 +422,18 @@ main(
 		 break;
 	case 22: gnutar_directory = stralloc(optarg);
 		 break;
+	case 23: if (optarg)
+		     normal_message = 
+			 g_slist_append(normal_message, optarg);
+		 break;
+	case 24: if (optarg)
+		     ignore_message = 
+			 g_slist_append(ignore_message, optarg);
+		 break;
+	case 25: if (optarg)
+		     strange_message = 
+			 g_slist_append(strange_message, optarg);
+		 break;
 	case ':':
 	case '?':
 		break;
@@ -306,6 +453,9 @@ main(
 	g_critical(_("errors processing config file"));
     }
 
+    re_table = build_re_table(init_re_table, normal_message, ignore_message,
+			      strange_message);
+
     gnutar_listdir = getconf_str(CNF_GNUTAR_LIST_DIR);
     if (strlen(gnutar_listdir) == 0)
 	gnutar_listdir = NULL;
@@ -319,6 +469,18 @@ main(
     dbprintf("SPARSE %s\n", gnutar_sparse? "yes":"no");
     dbprintf("ATIME-PRESERVE %s\n", gnutar_atimepreserve? "yes":"no");
     dbprintf("CHECK-DEVICE %s\n", gnutar_checkdevice? "yes":"no");
+    {
+	amregex_t *rp;
+	for (rp = re_table; rp->regex != NULL; rp++) {
+	    switch (rp->typ) {
+		case DMP_NORMAL : dbprintf("NORMAL %s\n", rp->regex); break;
+		case DMP_IGNORE : dbprintf("IGNORE %s\n", rp->regex); break;
+		case DMP_STRANGE: dbprintf("STRANGE %s\n", rp->regex); break;
+		case DMP_SIZE   : dbprintf("SIZE %s\n", rp->regex); break;
+		case DMP_ERROR  : dbprintf("ERROR %s\n", rp->regex); break;
+	    }
+	}
+    }
 
     if (strcmp(command, "support") == 0) {
 	amgtar_support(&argument);
