@@ -252,6 +252,7 @@ build_re_table(
     nb += g_slist_length(normal_message);
     nb += g_slist_length(ignore_message);
     nb += g_slist_length(strange_message);
+    nb ++;
 
     re_table =  new_re_table = malloc(nb * sizeof(amregex_t));
     
