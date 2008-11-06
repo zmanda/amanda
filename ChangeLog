@@ -1,4 +1,9 @@
 2008-11-06  Jean-Louis Martineau <martineau@zmanda.com>
+	* changer-src/chg-zd-mtx.sh: Return first line of mtx output if mtx
+				     exit with a status != 0.
+	* server-src/amtape.c: Display changer error.
+
+2008-11-06  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/amgtar.c: Add exit-handling property.
 
 2008-11-06  Jean-Louis Martineau <martineau@zmanda.com>

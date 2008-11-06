@@ -443,6 +443,12 @@ get_mtx_status() {
 get_loaded_info() {
 	test -n "$DEBUG" && set -x
 	get_mtx_status
+	if [ $mtx_status_valid -eq 0 ]; then
+		Exit 2 \
+		     `_ '<none>'` \
+		     `head -1 $mtx_status`
+		return $?
+	fi
 
 	set x `sed -n '
 /^Data Transfer Element:Empty/                          {
@@ -560,6 +566,12 @@ get_slot_list() {
 		return
 	fi
 	get_mtx_status
+	if [ $mtx_status_valid -eq 0 ]; then
+		Exit 2 \
+		     `_ '<none>'` \
+		     `head -1 $mtx_status`
+		return $?
+	fi
 	slot_list=`sed -n '
 /^Data Transfer Element:Full (Storage Element \([0-9][0-9]*\) Loaded)/ {
     s/.*(Storage Element \([0-9][0-9]*\) Loaded).*/\1/p
@@ -1356,6 +1368,12 @@ searchtape() {
 	fi
 	LogAppend `_ '         -> barcode is "%s"' "$labelfile_barcode"`
 	get_mtx_status
+	if [ $mtx_status_valid -eq 0 ]; then
+		Exit 2 \
+		     `_ '<none>'` \
+		     `head -1 $mtx_status`
+		return $?
+	fi
 	foundslot=`sed -n '
 /VolumeTag *= *'$labelfile_barcode' *$/			{
 	s/.*Storage Element \([0-9][0-9]*\).*/\1/p

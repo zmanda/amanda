@@ -535,7 +535,7 @@ show_device(G_GNUC_UNUSED int	argc,
     char *slot = NULL, *device = NULL;
     
     if(changer_loadslot(_("current"), &slot, &device)) {
-	error(_("Could not load current slot.\n"));
+	error(_("could not load current slot: %s\n"), changer_resultstr);
 	/*NOTREACHED*/
     }
 
