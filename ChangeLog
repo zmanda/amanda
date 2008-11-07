@@ -1,4 +1,7 @@
 2008-11-07  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Application.swg: Remove %init.
+
+2008-11-07  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/amgtar.c, application-src/amgtar_perl.pl,
 	  application-src/amstar.c: Write backup image to fd3 and index to fd4.
 	* perl/Amanda/Script_App.pm: Use $self->{mesgout}.

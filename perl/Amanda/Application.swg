@@ -92,7 +92,7 @@ sub run_calcsize {
 
 /* C interfaces used by the above */
 
-%init %{
+%{
 #include "amanda.h"
 #include "client_util.h"
 %}
