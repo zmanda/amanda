@@ -463,13 +463,13 @@ common_exit:
 
 	amfree(my_argv);
 	amfree(qdisk);
-	amfree(cmd);
 
 	aclose(nullfd);
 	afclose(dumpout);
 
 	fprintf(stdout, "%d %lld 1\n", level, (long long)size);
     }
+    amfree(cmd);
 }
 
 static void

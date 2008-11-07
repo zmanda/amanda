@@ -1,4 +1,7 @@
 2008-11-07  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amstar.c: fix.
+
+2008-11-07  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Application.swg: Remove %init.
 
 2008-11-07  Jean-Louis Martineau <martineau@zmanda.com>
