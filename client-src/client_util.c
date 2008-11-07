@@ -740,7 +740,8 @@ backup_support_option(
     char       *program,
     g_option_t *g_options,
     char       *disk,
-    char       *amdevice)
+    char       *amdevice,
+    GPtrArray **errarray)
 {
     pid_t   supportpid;
     int     supportin, supportout, supporterr;
@@ -748,9 +749,13 @@ backup_support_option(
     char  **argvchild;
     int     i;
     FILE   *streamout;
+    FILE   *streamerr;
     char   *line;
+    int     status;
+    char   *err = NULL;
     backup_support_option_t *bsu;
 
+    *errarray = g_ptr_array_new();
     cmd = vstralloc(APPLICATION_DIR, "/", program, NULL);
     argvchild = g_new0(char *, 12);
     i = 0;
@@ -775,8 +780,8 @@ backup_support_option(
     argvchild[i++] = NULL;
 
     supporterr = fileno(stderr);
-    supportpid = pipespawnv(cmd, STDIN_PIPE|STDOUT_PIPE, 0, &supportin,
-			    &supportout, &supporterr, argvchild);
+    supportpid = pipespawnv(cmd, STDIN_PIPE|STDOUT_PIPE|STDERR_PIPE, 0,
+			    &supportin, &supportout, &supporterr, argvchild);
 
     aclose(supportin);
 
@@ -850,7 +855,33 @@ backup_support_option(
 	amfree(line);
     }
     aclose(supportout);
+    streamerr = fdopen(supporterr, "r");
+    if (!streamerr) {
+	error(_("Error opening pipe to child: %s"), strerror(errno));
+	/* NOTREACHED */
+    }
+    while((line = agets(streamerr)) != NULL) {
+	if (strlen(line) > 0) {
+	    g_ptr_array_add(*errarray, line);
+	    dbprintf("Application '%s': %s\n", program, line);
+	}
+	amfree(bsu);
+    }
+    aclose(supporterr);
 
+    if (waitpid(supportpid, &status, 0) < 0) {
+	err = vstrallocf(_("waitpid failed: %s"), strerror(errno));
+    } else if (!WIFEXITED(status)) {
+	err = vstrallocf(_("exited with signal %d"), WTERMSIG(status));
+    } else if (WEXITSTATUS(status) != 0) {
+	err = vstrallocf(_("exited with status %d"), WEXITSTATUS(status));
+    }
+
+    if (err) {
+	g_ptr_array_add(*errarray, err);
+	dbprintf("Application '%s': %s\n", program, err);
+	amfree(bsu);
+    }
     return bsu;
 }
 

@@ -1,4 +1,19 @@
 2008-11-07  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amgtar.c, application-src/amgtar_perl.pl,
+	  application-src/amstar.c: Write backup image to fd3 and index to fd4.
+	* perl/Amanda/Script_App.pm: Use $self->{mesgout}.
+	* recover-src/extract_list.c: Add more check.
+	* client-src/client_util.c (backup_support_option): Get stderr of
+	  application and put it in errarray,
+	* client-src/client_util.h (backup_support_option): New prototype.
+	* client-src/selfcheck.c, client-src/sendbackup.c,
+	  client-src/sendsize.c: Get stderr of application and send it to
+				 server.
+	* server-src/dumper.c: Log the first error message.
+	* server-src/planner.c: Log the first error message.
+	* server-src/reporter.c: Don't print some error in report.
+
+2008-11-07  Jean-Louis Martineau <martineau@zmanda.com>
 	* client-src/client_util.c: Parse CALCSIZE and MULTI-ESTIMATE.
 	* client-src/client_util.c (run_calcsize): New function.
 	* client-src/client_util.h (run_calcsize): Prototype.

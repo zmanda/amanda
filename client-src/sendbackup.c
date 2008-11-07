@@ -54,6 +54,7 @@ pid_t dumppid = (pid_t)-1;
 pid_t tarpid = (pid_t)-1;
 pid_t encpid = (pid_t)-1;
 pid_t indexpid = (pid_t)-1;
+pid_t application_api_pid = (pid_t)-1;
 char *errorstr = NULL;
 
 int datafd;
@@ -65,6 +66,7 @@ g_option_t *g_options = NULL;
 long dump_size = -1;
 
 backup_program_t *program = NULL;
+dle_t *gdle = NULL;
 
 static am_feature_t *our_features = NULL;
 static char *our_feature_string = NULL;
@@ -73,16 +75,36 @@ static char *amandad_auth = NULL;
 /* local functions */
 int main(int argc, char **argv);
 char *childstr(pid_t pid);
-int check_status(pid_t pid, amwait_t w);
+int check_status(pid_t pid, amwait_t w, int mesgfd);
 
 pid_t pipefork(void (*func)(void), char *fname, int *stdinfd,
 		int stdoutfd, int stderrfd);
-int check_result(void);
+int check_result(int mesgfd);
 void parse_backup_messages(dle_t *dle, int mesgin);
 static void process_dumpline(char *str);
 static void save_fd(int *, int);
 void application_api_info_tapeheader(int mesgfd, char *prog, dle_t *dle);
 
+int fdprintf(int fd, char *format, ...) G_GNUC_PRINTF(2, 3);
+
+int
+fdprintf(
+    int   fd,
+    char *format,
+    ...)
+{
+    va_list  argp;
+    char    *s;
+    int      r;
+
+    arglist_start(argp, format);
+    s = g_strdup_vprintf(format, argp);
+    arglist_end(argp);
+
+    r = full_write(fd, s, strlen(s));
+    amfree(s);
+    return r;
+}
 
 int
 main(
@@ -101,7 +123,6 @@ main(
     char *s;
     int i;
     int ch;
-    int status;
     GSList *errlist;
 
     /* initialize */
@@ -337,6 +358,7 @@ main(
     } else {
 	parse_options(stroptions, dle, g_options->features, 0);
     }
+    gdle = dle;
 
     if (dle->program == NULL ||
 	dle->disk    == NULL ||
@@ -436,7 +458,6 @@ main(
     run_client_scripts(EXECUTE_ON_PRE_DLE_BACKUP, g_options, dle, stderr);
 
     if (dle->program_is_application_api==1) {
-	pid_t application_api_pid;
 	int i, j, k;
 	char *cmd=NULL;
 	char **argvchild;
@@ -445,10 +466,13 @@ main(
 	char *compopt = NULL;
 	char *encryptopt = skip_argument;
 	int compout, dumpout;
-	GSList   *scriptlist;
-	script_t *script;
-	time_t cur_dumptime;
-	int result;
+	GSList    *scriptlist;
+	script_t  *script;
+	time_t     cur_dumptime;
+	int        result;
+	GPtrArray *errarray;
+	int        errfd[2];
+	FILE      *dumperr;
 
 	/*  apply client-side encryption here */
 	if ( dle->encrypt == ENCRYPT_CUST ) {
@@ -499,8 +523,33 @@ main(
 
 	cur_dumptime = time(0);
 	bsu = backup_support_option(dle->program, g_options, dle->disk,
-				    dle->device);
+				    dle->device, &errarray);
+	if (!bsu) {
+	    char  *errmsg;
+	    char  *qerrmsg;
+	    guint  i;
+	    for (i=0; i < errarray->len; i++) {
+		errmsg = g_ptr_array_index(errarray, i);
+		qerrmsg = quote_string(errmsg);
+		fdprintf(mesgfd,
+			  _("sendbackup: error [Application '%s': %s]\n"),
+			  dle->program, errmsg);
+		dbprintf("aa: %s\n",qerrmsg);
+		amfree(qerrmsg);
+	    }
+	    if (i == 0) { /* no errarray */
+		errmsg = vstrallocf(_("Can't execute application '%s'"),
+				    dle->program);
+		qerrmsg = quote_string(errmsg);
+		fdprintf(mesgfd, _("sendbackup: error [%s]\n"), errmsg);
+		dbprintf(_("ERROR %s\n"), qerrmsg);
+		amfree(qerrmsg);
+		amfree(errmsg);
+	    }
+	    return 0;
+	}
 
+	pipe(errfd);
 	switch(application_api_pid=fork()) {
 	case 0:
 	    cmd = vstralloc(APPLICATION_DIR, "/", dle->program, NULL);
@@ -565,23 +614,26 @@ main(
 		error(_("Can't dup2: %s"),strerror(errno));
 		/*NOTREACHED*/
 	    }
-	    if(dup2(mesgfd, 2) == -1) {
+	    if (dup2(errfd[1], 2) == -1) {
+		error(_("Can't dup2: %s"),strerror(errno));
+		/*NOTREACHED*/
+	    }
+	    if(dup2(mesgfd, 3) == -1) {
 		error(_("Can't dup2: %s"),strerror(errno));
 		/*NOTREACHED*/
 	    }
 	    if(indexfd != 0) {
-		if(dup2(indexfd, 3) == -1) {
+		if(dup2(indexfd, 4) == -1) {
 		    error(_("Can't dup2: %s"),strerror(errno));
 		    /*NOTREACHED*/
 		}
 		fcntl(indexfd, F_SETFD, 0);
-		fcntl(3, F_SETFD, 0);
 	    }
 	    application_api_info_tapeheader(mesgfd, dle->program, dle);
 	    if (indexfd != 0) {
-		safe_fd(3, 1);
+		safe_fd(3, 2);
 	    } else {
-		safe_fd(-1, 0);
+		safe_fd(3, 1);
 	    }
 	    execve(cmd, argvchild, safe_env());
 	    exit(1);
@@ -592,7 +644,23 @@ main(
 	case -1:
 	    error(_("%s: fork returned: %s"), get_pname(), strerror(errno));
 	}
-	result = check_result();
+
+	close(errfd[1]);
+	dumperr = fdopen(errfd[0],"r");
+	if (!dumperr) {
+	    error(_("Can't fdopen: %s"), strerror(errno));
+	    /*NOTREACHED*/
+	}
+
+	while ((line = agets(dumperr)) != NULL) {
+	    if (strlen(line) > 0) {
+		fdprintf(mesgfd, "sendbackup: error [%s]\n", line);
+		dbprintf("error: %s\n", line);
+	    }
+	    amfree(line);
+	}
+
+	result = check_result(mesgfd);
 	if (result == 0) {
 	    char *amandates_file;
 
@@ -612,15 +680,6 @@ main(
 	    }
 	}
 	amfree(bsu);
-	if (waitpid(application_api_pid, &status, 0) < 0) {
-	    if (!WIFEXITED(status)) {
-		dbprintf(_("Tool exited with signal %d"), WTERMSIG(status));
-	    } else if (WEXITSTATUS(status) != 0) {
-		dbprintf(_("Tool exited with status %d"), WEXITSTATUS(status));
-	    } else {
-		dbprintf(_("waitpid returned negative value"));
-	    }
-	}
      } else {
 	if(!interactive) {
 	    /* redirect stderr */
@@ -693,6 +752,13 @@ childstr(
     if(pid == comppid) return "compress";
     if(pid == encpid) return "encrypt";
     if(pid == indexpid) return "index";
+    if(pid == application_api_pid) {
+	if (!gdle) {
+	    dbprintf("gdle == NULL\n");
+	    return "gdle == NULL";
+	}
+	return gdle->program;
+    }
     return "unknown";
 }
 
@@ -706,7 +772,8 @@ childstr(
 int
 check_status(
     pid_t	pid,
-    amwait_t	w)
+    amwait_t	w,
+    int		mesgfd)
 {
     char *thiserr = NULL;
     char *str, *strX;
@@ -729,11 +796,11 @@ check_status(
 	 * but the failure is noted.
 	 */
 	if(ret != 0) {
-	    g_fprintf(stderr, _("? index %s returned %d\n"), str, ret);
+	    fdprintf(mesgfd, _("? index %s returned %d\n"), str, ret);
 	    rc = 0;
 	}
 	indexpid = -1;
-	strX = "index ";
+	strX = "index";
     } else if(pid == comppid) {
 	/*
 	 * compress returns 2 sometimes, but it is ok.
@@ -744,7 +811,7 @@ check_status(
 	}
 #endif
 	comppid = -1;
-	strX = "compress ";
+	strX = "compress";
     } else if(pid == dumppid && tarpid == -1) {
         /*
 	 * Ultrix dump returns 1 sometimes, but it is ok.
@@ -755,7 +822,7 @@ check_status(
 	}
 #endif
 	dumppid = -1;
-	strX = "dump ";
+	strX = "dump";
     } else if(pid == tarpid) {
 	if (ret == 1) {
 	    rc = 0;
@@ -769,9 +836,11 @@ check_status(
 	}
 #endif
 	dumppid = tarpid = -1;
-	strX = "dump ";
+	strX = "dump";
+    } else if(pid == application_api_pid) {
+	strX = "Application";
     } else {
-	strX = "unknown ";
+	strX = "unknown";
     }
 
     if(rc == 0) {
@@ -784,6 +853,8 @@ check_status(
     } else {
 	thiserr = vstrallocf(_("%s (%d) %s returned %d"), strX, (int)pid, str, ret);
     }
+
+    fdprintf(mesgfd, "? %s\n", thiserr);
 
     if(errorstr) {
 	errorstr =  newvstrallocf(errorstr, "%s, %s", errorstr, thiserr);
@@ -938,7 +1009,8 @@ pipefork(
 }
 
 int
-check_result(void)
+check_result(
+    int mesgfd)
 {
     int goterror;
     pid_t wpid;
@@ -948,13 +1020,13 @@ check_result(void)
 
 
     while((wpid = waitpid((pid_t)-1, &retstat, WNOHANG)) > 0) {
-	if(check_status(wpid, retstat)) goterror = 1;
+	if(check_status(wpid, retstat, mesgfd)) goterror = 1;
     }
 
     if (dumppid != -1) {
 	sleep(5);
 	while((wpid = waitpid((pid_t)-1, &retstat, WNOHANG)) > 0) {
-	    if(check_status(wpid, retstat)) goterror = 1;
+	    if(check_status(wpid, retstat, mesgfd)) goterror = 1;
 	}
     }
     if (dumppid != -1) {
@@ -969,7 +1041,7 @@ check_result(void)
 	}
 	sleep(5);
 	while((wpid = waitpid((pid_t)-1, &retstat, WNOHANG)) > 0) {
-	    if(check_status(wpid, retstat)) goterror = 1;
+	    if(check_status(wpid, retstat, mesgfd)) goterror = 1;
 	}
     }
     if (dumppid != -1) {
@@ -984,7 +1056,7 @@ check_result(void)
 	}
 	sleep(5);
 	while((wpid = waitpid((pid_t)-1, &retstat, WNOHANG)) > 0) {
-	    if(check_status(wpid, retstat)) goterror = 1;
+	    if(check_status(wpid, retstat, mesgfd)) goterror = 1;
 	}
     }
 
@@ -1010,7 +1082,7 @@ parse_backup_messages(
 	/*NOTREACHED*/
     }
 
-    goterror = check_result();
+    goterror = check_result(mesgfd);
 
     if(errorstr) {
 	error(_("error [%s]"), errorstr);
@@ -1022,8 +1094,8 @@ parse_backup_messages(
 
     program->end_backup(dle, goterror);
 
-    g_fprintf(stderr, _("%s: size %ld\n"), get_pname(), dump_size);
-    g_fprintf(stderr, _("%s: end\n"), get_pname());
+    fdprintf(mesgfd, _("%s: size %ld\n"), get_pname(), dump_size);
+    fdprintf(mesgfd, _("%s: end\n"), get_pname());
 }
 
 
@@ -1073,7 +1145,7 @@ process_dumpline(
 	      type,
 	      startchr,
 	      str);
-    g_fprintf(stderr, "%c %s\n", startchr, str);
+    fdprintf(mesgfd, "%c %s\n", startchr, str);
 }
 
 

@@ -179,7 +179,7 @@ main(
 	error(_("amstar must be run setuid root"));
     }
 
-    safe_fd(3, 1);
+    safe_fd(3, 2);
 
     set_pname("amstar");
 
@@ -487,8 +487,8 @@ amstar_backup(
     char **my_argv;
     int starpid;
     int dataf = 1;
-    int mesgf = 2;
-    int indexf = 3;
+    int mesgf = 3;
+    int indexf = 4;
     int outf;
     FILE *mesgstream;
     FILE *indexstream;
@@ -508,8 +508,17 @@ amstar_backup(
     aclose(dumpin);
     aclose(dataf);
     indexstream = fdopen(indexf, "w");
+    if (!indexstream) {
+	error(_("error indexstream(%d): %s\n"), indexf, strerror(errno));
+    }
     mesgstream = fdopen(mesgf, "w");
+    if (!mesgstream) {
+	error(_("error mesgstream(%d): %s\n"), mesgf, strerror(errno));
+    }
     outstream = fdopen(outf, "r");
+    if (!outstream) {
+	error(_("error outstream(%d): %s\n"), outf, strerror(errno));
+    }
 
     while ((line = agets(outstream)) != NULL) {
 	regmatch_t regmatch[3];

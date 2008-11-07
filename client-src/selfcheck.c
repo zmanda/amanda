@@ -678,10 +678,28 @@ check_disk(
 	}
     }
     else { /* program_is_application_api==1 */
-	pid_t  application_api_pid;
+	pid_t                    application_api_pid;
 	backup_support_option_t *bsu;
+	int                      app_err[2];
+	GPtrArray               *errarray;
 
-	bsu = backup_support_option(dle->program, g_options, dle->disk, dle->device);
+	bsu = backup_support_option(dle->program, g_options, dle->disk,
+				    dle->device, &errarray);
+
+	if (!bsu) {
+	    char  *line;
+	    guint  i;
+	    for (i=0; i < errarray->len; i++) {
+		line = g_ptr_array_index(errarray, i);
+		fprintf(stdout, _("ERROR Application '%s': %s\n"),
+			dle->program, line);
+		amfree(line);
+	    }
+	    err = vstrallocf(_("Application '%s': can't run support command"),
+			     dle->program);
+	    goto common_exit;
+	}
+
 	if (dle->calcsize && !bsu->calcsize) {
 	    g_printf("ERROR application %s doesn't support calcsize estimate\n",
 		     dle->program);
@@ -715,7 +733,8 @@ check_disk(
 		   dle->program);
 	}
 	fflush(stdout);fflush(stderr);
-	
+
+	pipe(app_err);	
 	switch (application_api_pid = fork()) {
 	case -1:
 	    err = vstrallocf(_("fork failed: %s"), strerror(errno));
@@ -730,6 +749,9 @@ check_disk(
 		char *cmdline;
 		int j=0;
 		int k;
+
+		aclose(app_err[0]);
+		dup2(app_err[1], 2);
 
 		k = application_property_argv_size(dle);
 		for (scriptlist = dle->scriptlist; scriptlist != NULL;
@@ -799,17 +821,31 @@ check_disk(
 	    }
 	default: /* parent */
 	    {
-		int status;
-		if (waitpid(application_api_pid, &status, 0) < 0) {
-		    if (!WIFEXITED(status)) {
-			err = vstrallocf(_("Tool exited with signal %d"),
-					 WTERMSIG(status));
-		    } else if (WEXITSTATUS(status) != 0) {
-			err = vstrallocf(_("Tool exited with status %d"),
-					 WEXITSTATUS(status));
-		    } else {
-			err = vstrallocf(_("waitpid returned negative value"));
+		int   status;
+		FILE *app_stderr;
+		char *line;
+
+		aclose(app_err[1]);
+		app_stderr = fdopen(app_err[0], "r");
+		while((line = agets(app_stderr)) != NULL) {
+		    if (strlen(line) > 0) {
+			fprintf(stdout, "ERROR Application '%s': %s\n",
+				dle->program, line);
+			dbprintf("ERROR %s\n", line);
 		    }
+		    amfree(line);
+		}
+		if (waitpid(application_api_pid, &status, 0) < 0) {
+		    err = vstrallocf(_("waitpid failed: %s"),
+					 strerror(errno));
+		    goto common_exit;
+		} else if (!WIFEXITED(status)) {
+		    err = vstrallocf(_("Application '%s': exited with signal %d"),
+				     dle->program, WTERMSIG(status));
+		    goto common_exit;
+		} else if (WEXITSTATUS(status) != 0) {
+		    err = vstrallocf(_("Application '%s': exited with status %d"),
+				     dle->program, WEXITSTATUS(status));
 		    goto common_exit;
 		}
 	    }
@@ -857,7 +893,7 @@ common_exit:
     amfree(domain);
 
     if(err) {
-	g_printf(_("ERROR [%s]\n"), err);
+	g_printf(_("ERROR %s\n"), err);
 	dbprintf(_("%s\n"), err);
 	amfree(err);
     } else {

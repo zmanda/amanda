@@ -96,7 +96,8 @@ char *fixup_relative(char *name, char *device);
 backup_support_option_t *backup_support_option(char *program,
 					       g_option_t *g_options,
 					       char *disk,
-					       char *amdevice);
+					       char *amdevice,
+					       GPtrArray **errarray);
 
 void run_client_script(script_t     *script,
 		       execute_on_t  execute_on,

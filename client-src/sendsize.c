@@ -749,9 +749,57 @@ application_api_calc_estimate(
     int    levels[DUMP_LEVELS];
     int    nb_level = 0;
     backup_support_option_t *bsu;
+    GPtrArray               *errarray;
 
     bsu = backup_support_option(est->dle->program, g_options, est->dle->disk,
-				est->dle->device);
+				est->dle->device, &errarray);
+    if (!bsu) {
+	guint  i;
+	for (i=0; i < errarray->len; i++) {
+	    char  *line;
+	    char  *errmsg;
+	    char  *qerrmsg;
+	    line = g_ptr_array_index(errarray, i);
+	    if(am_has_feature(g_options->features,
+			      fe_rep_sendsize_quoted_error)) {
+		errmsg = g_strdup_printf(_("Application '%s': %s"),
+				     est->dle->program, line);
+		qerrmsg = quote_string(errmsg);
+		for (level = 0; level < DUMP_LEVELS; level++) {
+		    if (est->est[level].needestimate) {
+			g_printf(_("%s %d ERROR %s\n"),
+				 est->dle->disk, level, qerrmsg);
+			dbprintf(_("%s %d ERROR A %s\n"),
+				 est->qamname, level, qerrmsg);
+		    }
+		}
+		amfree(errmsg);
+		amfree(qerrmsg);
+	    }
+	}
+	if (i == 0) { /* nothing in errarray */
+	    char  *errmsg;
+	    char  *qerrmsg;
+	    errmsg = g_strdup_printf(
+		_("Application '%s': cannon execute support command"),
+		est->dle->program);
+	    qerrmsg = quote_string(errmsg);
+	    for (level = 0; level < DUMP_LEVELS; level++) {
+		if (est->est[level].needestimate) {
+		    g_printf(_("%s %d ERROR %s\n"),
+			     est->dle->disk, level, qerrmsg);
+		    dbprintf(_("%s %d ERROR %s\n"),
+			     est->qamname, level, qerrmsg);
+		}
+	    }
+	    amfree(errmsg);
+	    amfree(qerrmsg);
+	}
+	for (level = 0; level < DUMP_LEVELS; level++) {
+	    est->est[level].needestimate = 0;
+	}
+	g_ptr_array_free(errarray, TRUE);
+    }
 
     for(level = 0; level < DUMP_LEVELS; level++) {
 	if (est->est[level].needestimate) {
@@ -771,6 +819,10 @@ application_api_calc_estimate(
 	    }
 	}
     }
+
+    if (nb_level == 0)
+	return;
+
     if (bsu->multi_estimate) {
 	for (i=0;i<nb_level;i++) {
 	    dbprintf(_("getting size via application API for %s %s level %d\n"),
@@ -2150,10 +2202,11 @@ getsize_application_api(
     backup_support_option_t  *bsu)
 {
     dle_t *dle = est->dle;
-    int pipeinfd[2], pipeoutfd[2], nullfd;
+    int pipeinfd[2], pipeoutfd[2], pipeerrfd[2];
     pid_t dumppid;
     off_t size = (off_t)-1;
     FILE *dumpout;
+    FILE *dumperr;
     char *line = NULL;
     char *cmd = NULL;
     char *cmdline;
@@ -2228,8 +2281,8 @@ getsize_application_api(
     dbprintf("running: \"%s\"\n", cmdline);
     amfree(cmdline);
 
-    if ((nullfd = open("/dev/null", O_RDWR)) == -1) {
-	errmsg = vstrallocf(_("Cannot access /dev/null : %s"),
+    if (pipe(pipeerrfd) < 0) {
+	errmsg = vstrallocf(_("getsize_application_api could not create data pipes: %s"),
 			    strerror(errno));
 	goto common_exit;
     }
@@ -2257,9 +2310,10 @@ getsize_application_api(
     case 0:
       dup2(pipeinfd[0], 0);
       dup2(pipeoutfd[1], 1);
-      dup2(nullfd, 2);
+      dup2(pipeerrfd[1], 2);
       aclose(pipeinfd[1]);
       aclose(pipeoutfd[0]);
+      aclose(pipeerrfd[0]);
       safe_fd(-1, 0);
 
       execve(cmd, argvchild, safe_env());
@@ -2270,6 +2324,7 @@ getsize_application_api(
 
     aclose(pipeinfd[0]);
     aclose(pipeoutfd[1]);
+    aclose(pipeerrfd[1]);
     aclose(pipeinfd[1]);
 
     dumpout = fdopen(pipeoutfd[0],"r");
@@ -2322,6 +2377,28 @@ getsize_application_api(
     }
     amfree(line);
 
+    dumperr = fdopen(pipeerrfd[0],"r");
+    if (!dumperr) {
+	error(_("Can't fdopen: %s"), strerror(errno));
+	/*NOTREACHED*/
+    }
+
+    while ((line = agets(dumperr)) != NULL) {
+	    if (strlen(line) > 0) {
+	    char *err =  g_strdup_printf(_("Application '%s': %s"),
+					 dle->program, line);
+	    char *qerr = quote_string(err);
+	    for (j=0; j < nb_level; j++) {
+		fprintf(stdout, "%s %d ERROR %s\n",
+			est->qamname, levels[j], qerr);
+	    }
+	    dbprintf("ERROR %s", qerr);
+	    amfree(err);
+	    amfree(qerr);
+	}
+	amfree(line);
+    }
+
     dbprintf(".....\n");
     if (nb_level == 1) {
 	dbprintf(_("estimate time for %s level %d: %s\n"), qamdevice,
@@ -2351,8 +2428,8 @@ getsize_application_api(
     }
     dbprintf(_("after %s %s wait\n"), cmd, qdisk);
 
-    aclose(nullfd);
     afclose(dumpout);
+    afclose(dumperr);
 
 common_exit:
 

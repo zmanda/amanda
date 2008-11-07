@@ -108,9 +108,9 @@ sub print_to_server {
 	}
     } elsif ($action eq "backup") {
 	if ($status == $Amanda::Script_App::GOOD) {
-            print STDERR "| $msg\n";
+            print {$self->{mesgout}} "| $msg\n";
 	} else {
-            print STDERR "? $msg\n";
+            print {$self->{mesgout}} "? $msg\n";
 	}
     } elsif ($action eq "restore") {
         print STDOUT "$msg\n";

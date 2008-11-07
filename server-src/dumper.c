@@ -380,6 +380,7 @@ main(
 	    free_cmdargs(cmdargs);
 	cmdargs = getcmd();
 
+	amfree(errstr);
 	switch(cmdargs->cmd) {
 	case START:
 	    if(cmdargs->argc <  2)
@@ -827,15 +828,18 @@ process_dumpline(
 	    dump_result = max(dump_result, 2);
 
 	    tok = strtok(NULL, "");
-	    if (tok == NULL || *tok != '[') {
-		errstr = newvstrallocf(errstr, _("bad remote error: %s"), str);
-	    } else {
-		char *enderr;
+	    if (!errstr) { /* report first error line */
+		if (tok == NULL || *tok != '[') {
+		    errstr = newvstrallocf(errstr, _("bad remote error: %s"),
+					   str);
+		} else {
+		    char *enderr;
 
-		tok++;	/* skip over '[' */
-		if ((enderr = strchr(tok, ']')) != NULL)
-		    *enderr = '\0';
-		errstr = newstralloc(errstr, tok);
+		    tok++;	/* skip over '[' */
+		    if ((enderr = strchr(tok, ']')) != NULL)
+			*enderr = '\0';
+		    errstr = newstralloc(errstr, tok);
+		}
 	    }
 	    break;
 	}

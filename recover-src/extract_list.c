@@ -1817,7 +1817,9 @@ extract_files_child(
 	    for (scriptlist = dump_dle->scriptlist; scriptlist != NULL;
 		 scriptlist = scriptlist->next) {
 		script = (script_t *)scriptlist->data;
-		extra_params += property_argv_size(script->result->proplist);
+		if (script->result && script->result->proplist) {
+		    extra_params += property_argv_size(script->result->proplist);
+		}
 	    }
 	}
 	break;
@@ -1902,8 +1904,10 @@ extract_files_child(
 	    for (scriptlist = dump_dle->scriptlist; scriptlist != NULL;
 		 scriptlist = scriptlist->next) {
 		script = (script_t *)scriptlist->data;
-		j += property_add_to_argv(&restore_args[j],
-					  script->result->proplist);
+		if (script->result && script->result->proplist) {
+		    j += property_add_to_argv(&restore_args[j],
+					      script->result->proplist);
+		}
 	    }
 
 	}

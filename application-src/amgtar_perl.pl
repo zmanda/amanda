@@ -173,6 +173,10 @@ sub command_backup {
            "$self->{gnulist}/${listdir}_${level}.new");
    }
 
+   my $mesgout_fd;
+   open($mesgout_fd, '>&=3') || die();
+   $self->{mesgout} = $mesgout_fd;
+
    if(defined($self->{index})) {
       $verbose = "--verbose";
    }
@@ -187,12 +191,12 @@ sub command_backup {
 
    if(defined($self->{index})) {
       my $indexout_fd;
-      open($indexout_fd, '>&=3') || die();
-      $self->parse_backup($index_fd, \*STDERR, $indexout_fd);
+      open($indexout_fd, '>&=4') || die();
+      $self->parse_backup($index_fd, $mesgout_fd, $indexout_fd);
       close($indexout_fd);
    }
    else {
-      $self->parse_backup($index_fd, \*STDERR, undef);
+      $self->parse_backup($index_fd, $mesgout_fd, undef);
    }
    close($index_fd);
 
@@ -207,7 +211,7 @@ sub command_backup {
    }
    waitpid $pid, 0;
    if( $? != 0 ){
-       print STDERR "? $self->{gnutar} returned error\n";
+       print $mesgout_fd "? $self->{gnutar} returned error\n";
        die();
    }
    exit 0;

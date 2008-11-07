@@ -1894,7 +1894,7 @@ static void handle_result(
 	    skip_quoted_string(t,tch);
 	    msg_undo = t[-1];
 	    t[-1] = '\0';
-	    if (pkt->type == P_REP) {
+	    if (pkt->type == P_REP && !est(dp)->errstr) {
 		est(dp)->errstr = unquote_string(msg);
 	    }
 	    t[-1] = msg_undo;
