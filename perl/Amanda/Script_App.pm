@@ -140,6 +140,11 @@ sub do {
     my $self = shift;
     my $command  = shift;
 
+    if (!defined $command) {
+	$self->print_to_server_and_die("check", "no command",
+				       $Amanda::Script_App::ERROR);
+	return;
+    }
     $command =~ tr/A-Z-/a-z_/;
     debug("command: $command");
 

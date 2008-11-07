@@ -1,3 +1,18 @@
+2008-11-07  Jean-Louis Martineau <martineau@zmanda.com>
+	* client-src/client_util.c: Parse CALCSIZE and MULTI-ESTIMATE.
+	* client-src/client_util.c (run_calcsize): New function.
+	* client-src/client_util.h (run_calcsize): Prototype.
+	* client-src/sendbackup.c: Update amandates.
+	* client-src/sendsize.c: Handling of calcsize and multi-estimate.
+	* client-src/selfcheck.c: Check calcsize for application.
+	* application-src/amgtar_perl.pl, application-src/amstar.c,
+	* application-src/amgtar.c: handling of calcsize and multi-estimate.
+	* perl/Amanda/Script_App.pm: Add a check.
+	* perl/Amanda/Application.swg: Add run_calcsize.
+	* perl/Amanda/Application.pm: Delete
+	* perl/Makefile.am: Built from Application.swg
+	* client-src/calcsize.c: Handling of STAR program.
+
 2008-11-06  Jean-Louis Martineau <martineau@zmanda.com>
 	* man/xml-source/amgtar.8.xml: Document new properties.
 	* application-src/amgtar.c: Remove ifdef IGNORE_TAR_ERRORS.

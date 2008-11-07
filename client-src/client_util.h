@@ -56,6 +56,8 @@ typedef struct backup_support_option_s {
     int exclude_list;
     int exclude_optional;
     int collection;
+    int calcsize;
+    int multi_estimate;
 } backup_support_option_t;
 
 typedef struct client_script_result_s {
@@ -105,6 +107,10 @@ void run_client_scripts(execute_on_t  execute_on,
 			g_option_t   *g_options,
 			dle_t        *dle,
 			FILE         *streamout);
+
+void run_calcsize(char *config, char *program, char *disk,
+                  char *dirname, GSList *levels,
+                  char *file_exclude, char *file_include);
 
 void check_access(char *filename, int mode);
 void check_file(char *filename, int mode);

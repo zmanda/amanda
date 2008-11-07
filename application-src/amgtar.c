@@ -105,7 +105,8 @@ typedef struct application_argument_s {
     char      *host;
     int        message;
     int        collection;
-    int        level;
+    int        calcsize;
+    GSList    *level;
     dle_t      dle;
     int        argc;
     char     **argv;
@@ -122,7 +123,7 @@ static void amgtar_validate(application_argument_t *argument);
 static void amgtar_build_exinclude(dle_t *dle, int verbose,
 				   int *nb_exclude, char **file_exclude,
 				   int *nb_include, char **file_include);
-static char *amgtar_get_incrname(application_argument_t *argument);
+static char *amgtar_get_incrname(application_argument_t *argument, int level);
 static char **amgtar_build_argv(application_argument_t *argument,
 				char *incrname, int command);
 static amregex_t *build_re_table(amregex_t *orig_re_table,
@@ -175,6 +176,7 @@ static struct option long_options[] = {
     {"ignore"          , 1, NULL, 24},
     {"strange"         , 1, NULL, 25},
     {"exit-handling"   , 1, NULL, 26},
+    {"calcsize"        , 0, NULL, 27},
     {NULL, 0, NULL, 0}
 };
 
@@ -361,7 +363,8 @@ main(
     argument.host       = NULL;
     argument.message    = 0;
     argument.collection = 0;
-    argument.level      = 0;
+    argument.calcsize   = 0;
+    argument.level      = NULL;
     init_dle(&argument.dle);
 
     while (1) {
@@ -379,7 +382,8 @@ main(
 		break;
 	case 4: argument.dle.device = stralloc(optarg);
 		break;
-	case 5: argument.level = atoi(optarg);
+	case 5: argument.level = g_slist_append(argument.level,
+					        GINT_TO_POINTER(atoi(optarg)));
 		break;
 	case 6: argument.dle.create_index = 1;
 		break;
@@ -441,6 +445,8 @@ main(
 		 break;
 	case 26: if (optarg)
 		     exit_handling = stralloc(optarg);
+		 break;
+	case 27: argument.calcsize = 1;
 		 break;
 	case ':':
 	case '?':
@@ -541,9 +547,9 @@ amgtar_support(
     fprintf(stdout, "DISK YES\n");
     fprintf(stdout, "MAX-LEVEL 9\n");
     fprintf(stdout, "INDEX-LINE YES\n");
-    fprintf(stdout, "INDEX-XML YES\n");
+    fprintf(stdout, "INDEX-XML NO\n");
     fprintf(stdout, "MESSAGE-LINE YES\n");
-    fprintf(stdout, "MESSAGE-XML YES\n");
+    fprintf(stdout, "MESSAGE-XML NO\n");
     fprintf(stdout, "RECORD YES\n");
     fprintf(stdout, "INCLUDE-FILE YES\n");
     fprintf(stdout, "INCLUDE-LIST YES\n");
@@ -552,6 +558,8 @@ amgtar_support(
     fprintf(stdout, "EXCLUDE-LIST YES\n");
     fprintf(stdout, "EXCLUDE-OPTIONAL YES\n");
     fprintf(stdout, "COLLECTION NO\n");
+    fprintf(stdout, "MULTI-ESTIMATE YES\n");
+    fprintf(stdout, "CALCSIZE YES\n");
 }
 
 static void
@@ -597,127 +605,165 @@ amgtar_estimate(
     off_t  size = -1;
     char  *line;
     char  *errmsg = NULL;
+    char  *qerrmsg = NULL;
     char  *qdisk;
     amwait_t wait_status;
     int tarpid;
     amregex_t *rp;
     times_t start_time;
+    int     level;
+    GSList *levels;
 
     qdisk = quote_string(argument->dle.disk);
 
+    if (argument->calcsize) {
+	char *dirname;
+	char *file_exclude;
+	char *file_include;
+	int   nb_exclude;
+	int   nb_include;
+
+	if (gnutar_directory) {
+	    dirname = gnutar_directory;
+	} else {
+	    dirname = amname_to_dirname(argument->dle.device);
+	}
+	amgtar_build_exinclude(&argument->dle, 1,
+			       &nb_exclude, &file_exclude,
+			       &nb_include, &file_include);
+
+	run_calcsize(argument->config, "GNUTAR", argument->dle.disk, dirname,
+		     argument->level, file_exclude, file_include);
+	return;
+    }
+
     if (!gnutar_path) {
 	errmsg = vstrallocf(_("GNUTAR-PATH not defined"));
-	goto common_exit;
+	goto common_error;
     }
 
     if (!gnutar_listdir) {
 	errmsg = vstrallocf(_("GNUTAR-LISTDIR not defined"));
-	goto common_exit;
+	goto common_error;
     }
 
-    incrname = amgtar_get_incrname(argument);
-    cmd = stralloc(gnutar_path);
-    my_argv = amgtar_build_argv(argument, incrname, CMD_ESTIMATE);
+    for (levels = argument->level; levels != NULL; levels = levels->next) {
+	level = GPOINTER_TO_INT(levels->data);
+	incrname = amgtar_get_incrname(argument, level);
+	cmd = stralloc(gnutar_path);
+	my_argv = amgtar_build_argv(argument, incrname, CMD_ESTIMATE);
 
-    start_time = curclock();
+	start_time = curclock();
 
-    if ((nullfd = open("/dev/null", O_RDWR)) == -1) {
-	errmsg = vstrallocf(_("Cannot access /dev/null : %s"),
-			     strerror(errno));
-	goto common_exit;
-    }
+	if ((nullfd = open("/dev/null", O_RDWR)) == -1) {
+	    errmsg = vstrallocf(_("Cannot access /dev/null : %s"),
+				strerror(errno));
+	    goto common_exit;
+	}
 
-    tarpid = pipespawnv(cmd, STDERR_PIPE, 1,
-			&nullfd, &nullfd, &pipefd, my_argv);
+	tarpid = pipespawnv(cmd, STDERR_PIPE, 1,
+			    &nullfd, &nullfd, &pipefd, my_argv);
 
-    dumpout = fdopen(pipefd,"r");
-    if (!dumpout) {
-	error(_("Can't fdopen: %s"), strerror(errno));
-	/*NOTREACHED*/
-    }
+	dumpout = fdopen(pipefd,"r");
+	if (!dumpout) {
+	    error(_("Can't fdopen: %s"), strerror(errno));
+	    /*NOTREACHED*/
+	}
 
-    size = (off_t)-1;
-    while (size < 0 && (line = agets(dumpout)) != NULL) {
-	if (line[0] == '\0')
-	    continue;
-	dbprintf("%s\n", line);
-	/* check for size match */
-	/*@ignore@*/
-	for(rp = re_table; rp->regex != NULL; rp++) {
-	    if(match(rp->regex, line)) {
-		if (rp->typ == DMP_SIZE) {
-		    size = ((the_num(line, rp->field)*rp->scale+1023.0)/1024.0);
-		    if(size < 0.0)
-			size = 1.0;             /* found on NeXT -- sigh */
+	size = (off_t)-1;
+	while (size < 0 && (line = agets(dumpout)) != NULL) {
+	    if (line[0] == '\0')
+		continue;
+	    dbprintf("%s\n", line);
+	    /* check for size match */
+	    /*@ignore@*/
+	    for(rp = re_table; rp->regex != NULL; rp++) {
+		if(match(rp->regex, line)) {
+		    if (rp->typ == DMP_SIZE) {
+			size = ((the_num(line, rp->field)*rp->scale+1023.0)/1024.0);
+			if(size < 0.0)
+			    size = 1.0;             /* found on NeXT -- sigh */
+		    }
+		    break;
 		}
-		break;
 	    }
+	    /*@end@*/
+	    amfree(line);
 	}
-	/*@end@*/
-	amfree(line);
-    }
 
-    while ((line = agets(dumpout)) != NULL) {
-	dbprintf("%s\n", line);
-	amfree(line);
-    }
+	while ((line = agets(dumpout)) != NULL) {
+	    dbprintf("%s\n", line);
+	    amfree(line);
+	}
 
-    dbprintf(".....\n");
-    dbprintf(_("estimate time for %s level %d: %s\n"),
-	      qdisk,
-	      argument->level,
-	      walltime_str(timessub(curclock(), start_time)));
-    if(size == (off_t)-1) {
-	errmsg = vstrallocf(_("no size line match in %s output"), my_argv[0]);
-	dbprintf(_("%s for %s\n"), errmsg, qdisk);
 	dbprintf(".....\n");
-    } else if(size == (off_t)0 && argument->level == 0) {
-	dbprintf(_("possible %s problem -- is \"%s\" really empty?\n"),
-		  my_argv[0], argument->dle.disk);
-	dbprintf(".....\n");
-    }
-    dbprintf(_("estimate size for %s level %d: %lld KB\n"),
-	      qdisk,
-	      argument->level,
-	      (long long)size);
+	dbprintf(_("estimate time for %s level %d: %s\n"),
+		 qdisk,
+		 level,
+		 walltime_str(timessub(curclock(), start_time)));
+	if(size == (off_t)-1) {
+	    errmsg = vstrallocf(_("no size line match in %s output"),
+				my_argv[0]);
+	    dbprintf(_("%s for %s\n"), errmsg, qdisk);
+	    dbprintf(".....\n");
+	} else if(size == (off_t)0 && argument->level == 0) {
+	    dbprintf(_("possible %s problem -- is \"%s\" really empty?\n"),
+		      my_argv[0], argument->dle.disk);
+	    dbprintf(".....\n");
+	}
+	dbprintf(_("estimate size for %s level %d: %lld KB\n"),
+		 qdisk,
+		 level,
+		 (long long)size);
 
-    kill(-tarpid, SIGTERM);
+	kill(-tarpid, SIGTERM);
 
-    dbprintf(_("waiting for %s \"%s\" child\n"), my_argv[0], qdisk);
-    waitpid(tarpid, &wait_status, 0);
-    if (WIFSIGNALED(wait_status)) {
-	errmsg = vstrallocf(_("%s terminated with signal %d: see %s"),
-			     cmd, WTERMSIG(wait_status), dbfn());
-    } else if (WIFEXITED(wait_status)) {
-	if (exit_value[WEXITSTATUS(wait_status)] == 1) {
-	    errmsg = vstrallocf(_("%s exited with status %d: see %s"),
-			         cmd, WEXITSTATUS(wait_status), dbfn());
+	dbprintf(_("waiting for %s \"%s\" child\n"), my_argv[0], qdisk);
+	waitpid(tarpid, &wait_status, 0);
+	if (WIFSIGNALED(wait_status)) {
+	    errmsg = vstrallocf(_("%s terminated with signal %d: see %s"),
+				cmd, WTERMSIG(wait_status), dbfn());
+	} else if (WIFEXITED(wait_status)) {
+	    if (exit_value[WEXITSTATUS(wait_status)] == 1) {
+		errmsg = vstrallocf(_("%s exited with status %d: see %s"),
+				    cmd, WEXITSTATUS(wait_status), dbfn());
+	    } else {
+		/* Normal exit */
+	    }
 	} else {
-	    /* Normal exit */
+	    errmsg = vstrallocf(_("%s got bad exit: see %s"),
+				cmd, dbfn());
 	}
-    } else {
-	errmsg = vstrallocf(_("%s got bad exit: see %s"),
-			     cmd, dbfn());
-    }
-    dbprintf(_("after %s %s wait\n"), my_argv[0], qdisk);
+	dbprintf(_("after %s %s wait\n"), my_argv[0], qdisk);
 
 common_exit:
-    if (errmsg) {
-	dbprintf("%s", errmsg);
-	fprintf(stdout, "ERROR %s\n", errmsg);
-    }
+	if (errmsg) {
+	    dbprintf("%s", errmsg);
+	    fprintf(stdout, "ERROR %s\n", errmsg);
+	}
 
-    if (incrname) {
-	unlink(incrname);
+	if (incrname) {
+	    unlink(incrname);
+	}
+	amfree(my_argv);
+	amfree(qdisk);
+	amfree(cmd);
+
+	aclose(nullfd);
+	afclose(dumpout);
+
+	fprintf(stdout, "%d %lld 1\n", level, (long long)size);
     }
-    amfree(my_argv);
+    return;
+
+common_error:
+    qerrmsg = quote_string(errmsg);
     amfree(qdisk);
-    amfree(cmd);
-
-    aclose(nullfd);
-    afclose(dumpout);
-
-    fprintf(stdout, "%lld 1\n", (long long)size);
+    dbprintf("%s", errmsg);
+    fprintf(stdout, "ERROR %s\n", qerrmsg);
+    amfree(errmsg);
+    amfree(qerrmsg);
+    return;
 }
 
 static void
@@ -756,7 +802,8 @@ amgtar_backup(
 
     qdisk = quote_string(argument->dle.disk);
 
-    incrname = amgtar_get_incrname(argument);
+    incrname = amgtar_get_incrname(argument,
+				   GPOINTER_TO_INT(argument->level->data));
     cmd = stralloc(gnutar_path);
     my_argv = amgtar_build_argv(argument, incrname, CMD_BACKUP);
 
@@ -964,7 +1011,8 @@ amgtar_build_exinclude(
 
 static char *
 amgtar_get_incrname(
-    application_argument_t *argument)
+    application_argument_t *argument,
+    int                     level)
 {
     char *basename = NULL;
     char *incrname = NULL;
@@ -986,7 +1034,7 @@ amgtar_get_incrname(
 			     NULL);
 	amfree(sdisk);
 
-	snprintf(number, SIZEOF(number), "%d", argument->level);
+	snprintf(number, SIZEOF(number), "%d", level);
 	incrname = vstralloc(basename, "_", number, ".new", NULL);
 	unlink(incrname);
 
@@ -995,7 +1043,7 @@ amgtar_get_incrname(
 	 * backward until one is found.  If none are found (which will also
 	 * be true for a level 0), arrange to read from /dev/null.
 	 */
-	baselevel = argument->level;
+	baselevel = level;
 	infd = -1;
 	while (infd == -1) {
 	    if (--baselevel >= 0) {

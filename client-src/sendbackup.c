@@ -39,6 +39,7 @@
 #include "getfsent.h"
 #include "version.h"
 #include "conffile.h"
+#include "amandates.h"
 
 #define sendbackup_debug(i, ...) do {	\
 	if ((i) <= debug_sendbackup) {	\
@@ -446,6 +447,8 @@ main(
 	int compout, dumpout;
 	GSList   *scriptlist;
 	script_t *script;
+	time_t cur_dumptime;
+	int result;
 
 	/*  apply client-side encryption here */
 	if ( dle->encrypt == ENCRYPT_CUST ) {
@@ -494,6 +497,7 @@ main(
 	    comppid = -1;
 	}
 
+	cur_dumptime = time(0);
 	bsu = backup_support_option(dle->program, g_options, dle->disk,
 				    dle->device);
 
@@ -504,7 +508,9 @@ main(
 	    for (scriptlist = dle->scriptlist; scriptlist != NULL;
 		 scriptlist = scriptlist->next) {
 		script = (script_t *)scriptlist->data;
-		k += property_argv_size(script->result->proplist);
+		if (script->result && script->result->proplist) {
+		    k += property_argv_size(script->result->proplist);
+		}
 	    }
 	    argvchild = g_new0(char *, 20 + k);
 	    i=0;
@@ -545,8 +551,10 @@ main(
 	    for (scriptlist = dle->scriptlist; scriptlist != NULL;
 		 scriptlist = scriptlist->next) {
 		script = (script_t *)scriptlist->data;
-		i += property_add_to_argv(&argvchild[i],
-					  script->result->proplist);
+		if (script->result && script->result->proplist) {
+		    i += property_add_to_argv(&argvchild[i],
+					      script->result->proplist);
+		}
 	    }
 
 	    argvchild[i] = NULL;
@@ -584,7 +592,25 @@ main(
 	case -1:
 	    error(_("%s: fork returned: %s"), get_pname(), strerror(errno));
 	}
-	check_result();
+	result = check_result();
+	if (result == 0) {
+	    char *amandates_file;
+
+	    amandates_file = getconf_str(CNF_AMANDATES);
+	    if(start_amandates(amandates_file, 1)) {
+		amandates_updateone(dle->disk, level, cur_dumptime);
+		finish_amandates();
+		free_amandates();
+	    } else {
+		if (dle->calcsize && bsu->calcsize) {
+		    error(_("error [opening %s for writing: %s]"),
+			  amandates_file, strerror(errno));
+		} else {
+		    g_debug(_("non-fatal error opening '%s' for writing: %s]"),
+			    amandates_file, strerror(errno));
+		}
+	    }
+	}
 	amfree(bsu);
 	if (waitpid(application_api_pid, &status, 0) < 0) {
 	    if (!WIFEXITED(status)) {

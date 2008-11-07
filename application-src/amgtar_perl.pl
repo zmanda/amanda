@@ -36,7 +36,7 @@ use Amanda::Util qw( :constants );
 
 sub new {
     my $class = shift;
-    my ($config, $host, $disk, $device, $level, $index, $message, $collection, $record) = @_;
+    my ($config, $host, $disk, $device, $level, $index, $message, $collection, $record, $calcsize) = @_;
     my $self = $class->SUPER::new();
 
     $self->{runtar}  = ${Amanda::Paths::amlibexecdir} ."/runtar" .
@@ -53,6 +53,7 @@ sub new {
     $self->{message}    = $message;
     $self->{collection} = $collection;
     $self->{record}     = $record;
+    $self->{calcsize}   = $calcsize;
 
     return $self;
 }
@@ -70,6 +71,8 @@ sub command_support {
    print "MESSAGE-XML NO\n";
    print "RECORD YES\n";
    print "COLLECTION NO\n";
+   print "MULTI-ESTIMATE YES\n";
+   print "CALCSIZE YES\n";
 }
 
 sub command_selfcheck {
@@ -86,37 +89,44 @@ sub command_selfcheck {
 sub command_estimate {
    my $self = shift;
 
+   if (defined $self->{calcsize}) {
+      $self->run_calcsize("GNUTAR", undef);
+      return;
+   }
+
    my($listdir) = $self->{'host'} . $self->{'disk'};
    $listdir     =~ s/\//_/g;
    my $gnufile;
-   my $level = $self->{level}[0];
-   if($level == 0) {
-      open($gnufile, ">$self->{gnulist}/${listdir}_${level}.new") || die();
-      close($gnufile) || die();
-   }
-   else {
-      my($prev_level) = $level - 1;
-      if (-f "$self->{gnulist}/${listdir}_${prev_level}") {
-        copy("$self->{gnulist}/${listdir}_${prev_level}", "$self->{gnulist}/${listdir}_${level}.new");
-      } else {
-        open($gnufile, ">$self->{gnulist}/${listdir}_${level}.new") || die();
-        close($gnufile) || die();
-	#print "ERROR file $self->{gnulist}/${listdir}_${level}.new doesn't exist\n";
+   my $level;
+   while (defined ($level = shift @{$self->{level}})) {
+      if($level == 0) {
+         open($gnufile, ">$self->{gnulist}/${listdir}_${level}.new") || die();
+         close($gnufile) || die();
       }
-   }
-   my($size) = -1;
-   my(@cmd) = ($self->{runtar}, $self->{'config'}, $self->{'gnutar'}, "--create", "--directory", $self->{'device'}, "--listed-incremental", "$self->{gnulist}/${listdir}_${level}.new", "--sparse", "--one-file-system", "--ignore-failed-read", "--totals", "--file", "/dev/null", ".");
-   debug("cmd:" . join(" ", @cmd));
-   my $wtrfh;
-   my $estimate_fd = Symbol::gensym;
-   my $pid = open3($wtrfh, '>&STDOUT', $estimate_fd, @cmd);
-   close($wtrfh);
+      else {
+         my($prev_level) = $level - 1;
+         if (-f "$self->{gnulist}/${listdir}_${prev_level}") {
+           copy("$self->{gnulist}/${listdir}_${prev_level}", "$self->{gnulist}/${listdir}_${level}.new");
+         } else {
+           open($gnufile, ">$self->{gnulist}/${listdir}_${level}.new") || die();
+           close($gnufile) || die();
+	#print "ERROR file $self->{gnulist}/${listdir}_${level}.new doesn't exist\n";
+         }
+      }
+      my($size) = -1;
+      my(@cmd) = ($self->{runtar}, $self->{'config'}, $self->{'gnutar'}, "--create", "--directory", $self->{'device'}, "--listed-incremental", "$self->{gnulist}/${listdir}_${level}.new", "--sparse", "--one-file-system", "--ignore-failed-read", "--totals", "--file", "/dev/null", ".");
+      debug("cmd:" . join(" ", @cmd));
+      my $wtrfh;
+      my $estimate_fd = Symbol::gensym;
+      my $pid = open3($wtrfh, '>&STDOUT', $estimate_fd, @cmd);
+      close($wtrfh);
 
-   $size = parse_estimate($estimate_fd);
-   close($estimate_fd);
-   output_size($size);
-   unlink "$self->{gnulist}/${listdir}_${level}.new";
-   waitpid $pid, 0;
+      $size = parse_estimate($estimate_fd);
+      close($estimate_fd);
+      output_size($level, $size);
+      unlink "$self->{gnulist}/${listdir}_${level}.new";
+      waitpid $pid, 0;
+   }
    exit 0;
 }
 
@@ -133,15 +143,16 @@ sub parse_estimate {
 }
 
 sub output_size {
-   my($size) = @_;
+   my($level) = shift;
+   my($size) = shift;
    if($size == -1) {
-      print "-1 -1\n";
-      exit 2;
+      print "$level -1 -1\n";
+      #exit 2;
    }
    else {
       my($ksize) = int $size / (1024);
       $ksize=32 if ($ksize<32);
-      print "$ksize 1\n";
+      print "$level $ksize 1\n";
    }
 }
 
@@ -300,7 +311,7 @@ package main;
 
 sub usage {
     print <<EOF;
-Usage: amgtar_perl <command> --config=<config> --host=<host> --disk=<disk> --device=<device> --level=<level> --index=<yes|no> --message=<text> --collection=<no> --record=<yes|no>.
+Usage: amgtar_perl <command> --config=<config> --host=<host> --disk=<disk> --device=<device> --level=<level> --index=<yes|no> --message=<text> --collection=<no> --record=<yes|no> --calcsize.
 EOF
     exit(1);
 }
@@ -314,6 +325,7 @@ my $opt_index;
 my $opt_message;
 my $opt_collection;
 my $opt_record;
+my $opt_calcsize;
 
 Getopt::Long::Configure(qw{bundling});
 GetOptions(
@@ -326,8 +338,9 @@ GetOptions(
     'message=s'    => \$opt_message,
     'collection=s' => \$opt_collection,
     'record'       => \$opt_record,
+    'calcsize'     => \$opt_calcsize,
 ) or usage();
 
-my $application = Amanda::Application::amgtar_perl->new($opt_config, $opt_host, $opt_disk, $opt_device, \@opt_level, $opt_index, $opt_message, $opt_collection, $opt_record);
+my $application = Amanda::Application::amgtar_perl->new($opt_config, $opt_host, $opt_disk, $opt_device, \@opt_level, $opt_index, $opt_message, $opt_collection, $opt_record, $opt_calcsize);
 
 $application->do($ARGV[0]);

@@ -99,7 +99,8 @@ typedef struct application_argument_s {
     char      *host;
     int        message;
     int        collection;
-    int        level;
+    int        calcsize;
+    GSList    *level;
     dle_t      dle;
     int        argc;
     char     **argv;
@@ -114,6 +115,7 @@ static void amstar_backup(application_argument_t *argument);
 static void amstar_restore(application_argument_t *argument);
 static void amstar_validate(application_argument_t *argument);
 static char **amstar_build_argv(application_argument_t *argument,
+				int level,
 				int command);
 char *star_path;
 char *star_tardumps;
@@ -136,6 +138,7 @@ static struct option long_options[] = {
     {"star-dle-tardump", 1, NULL, 12},
     {"one-file-system" , 1, NULL, 13},
     {"sparse"          , 1, NULL, 14},
+    {"calcsize"        , 0, NULL, 15},
     { NULL, 0, NULL, 0}
 };
 
@@ -205,7 +208,8 @@ main(
     argument.host       = NULL;
     argument.message    = 0;
     argument.collection = 0;
-    argument.level      = 0;
+    argument.calcsize   = 0;
+    argument.level      = NULL;
     init_dle(&argument.dle);
 
     opterr = 0;
@@ -224,7 +228,8 @@ main(
 		break;
 	case 4: argument.dle.device = stralloc(optarg);
 		break;
-	case 5: argument.level = atoi(optarg);
+	case 5: argument.level = g_slist_append(argument.level,
+						GINT_TO_POINTER(atoi(optarg)));
 		break;
 	case 6: argument.dle.create_index = 1;
 		break;
@@ -246,6 +251,8 @@ main(
 		 break;
 	case 14: if (optarg && strcasecmp(optarg, "YES") != 0)
 		     star_sparse = 1;
+		 break;
+	case 15: argument.calcsize = 1;
 		 break;
 	case ':':
 	case '?':
@@ -297,15 +304,17 @@ amstar_support(
     fprintf(stdout, "DISK YES\n");
     fprintf(stdout, "MAX-LEVEL 9\n");
     fprintf(stdout, "INDEX-LINE YES\n");
-    fprintf(stdout, "INDEX-XML YES\n");
+    fprintf(stdout, "INDEX-XML NO\n");
     fprintf(stdout, "MESSAGE-LINE YES\n");
-    fprintf(stdout, "MESSAGE-XML YES\n");
+    fprintf(stdout, "MESSAGE-XML NO\n");
     fprintf(stdout, "RECORD YES\n");
     fprintf(stdout, "INCLUDE-FILE NO\n");
     fprintf(stdout, "INCLUDE-LIST NO\n");
     fprintf(stdout, "EXCLUDE-FILE YES\n");
     fprintf(stdout, "EXCLUDE-LIST YES\n");
     fprintf(stdout, "COLLECTION NO\n");
+    fprintf(stdout, "MULTI-ESTIMATE YES\n");
+    fprintf(stdout, "CALCSIZE YES\n");
 }
 
 static void
@@ -341,112 +350,126 @@ amstar_estimate(
     FILE  *dumpout = NULL;
     off_t  size = -1;
     char  *line;
-    char  *errmsg;
+    char  *errmsg = NULL;
     char  *qdisk;
     amwait_t wait_status;
     int    starpid;
     amregex_t *rp;
     times_t start_time;
+    int     level;
+    GSList *levels;
 
     qdisk = quote_string(argument->dle.disk);
 
-    my_argv = amstar_build_argv(argument, CMD_ESTIMATE);
+    if (argument->calcsize) {
+	char *dirname;
+
+	dirname = amname_to_dirname(argument->dle.device);
+	run_calcsize(argument->config, "STAR", argument->dle.disk, dirname,
+		     argument->level, NULL, NULL);
+	return;
+    }
 
     cmd = stralloc(star_path);
 
     start_time = curclock();
 
-    if ((nullfd = open("/dev/null", O_RDWR)) == -1) {
-	errmsg = vstrallocf(_("Cannot access /dev/null : %s"),
-			     strerror(errno));
-	dbprintf("%s\n", errmsg);
-	goto common_exit;
-    }
+    for (levels = argument->level; levels != NULL; levels = levels->next) {
+	level = GPOINTER_TO_INT(levels->data);
+	my_argv = amstar_build_argv(argument, level, CMD_ESTIMATE);
 
-    starpid = pipespawnv(cmd, STDERR_PIPE, 1,
-			 &nullfd, &nullfd, &pipefd, my_argv);
+	if ((nullfd = open("/dev/null", O_RDWR)) == -1) {
+	    errmsg = vstrallocf(_("Cannot access /dev/null : %s"),
+				strerror(errno));
+	    dbprintf("%s\n", errmsg);
+	    goto common_exit;
+	}
 
-    dumpout = fdopen(pipefd,"r");
-    if (!dumpout) {
-	error(_("Can't fdopen: %s"), strerror(errno));
-	/*NOTREACHED*/
-    }
+	starpid = pipespawnv(cmd, STDERR_PIPE, 1,
+			     &nullfd, &nullfd, &pipefd, my_argv);
 
-    size = (off_t)-1;
-    while (size < 0 && (line = agets(dumpout)) != NULL) {
-	if (line[0] == '\0')
-	    continue;
-	dbprintf("%s\n", line);
-	/* check for size match */
-	/*@ignore@*/
-	for(rp = re_table; rp->regex != NULL; rp++) {
-	    if(match(rp->regex, line)) {
-		if (rp->typ == DMP_SIZE) {
-		    size = ((the_num(line, rp->field)*rp->scale+1023.0)/1024.0);
-		    if(size < 0.0)
-			size = 1.0;             /* found on NeXT -- sigh */
+	dumpout = fdopen(pipefd,"r");
+	if (!dumpout) {
+	    error(_("Can't fdopen: %s"), strerror(errno));
+	    /*NOTREACHED*/
+	}
+
+	size = (off_t)-1;
+	while (size < 0 && (line = agets(dumpout)) != NULL) {
+	    if (line[0] == '\0')
+		continue;
+	    dbprintf("%s\n", line);
+	    /* check for size match */
+	    /*@ignore@*/
+	    for(rp = re_table; rp->regex != NULL; rp++) {
+		if(match(rp->regex, line)) {
+		    if (rp->typ == DMP_SIZE) {
+			size = ((the_num(line, rp->field)*rp->scale+1023.0)/1024.0);
+			if(size < 0.0)
+			    size = 1.0;             /* found on NeXT -- sigh */
+		    }
+		    break;
 		}
-		break;
 	    }
+	    /*@end@*/
+	    amfree(line);
 	}
-	/*@end@*/
-	amfree(line);
-    }
 
-    while ((line = agets(dumpout)) != NULL) {
-	dbprintf("%s\n", line);
-	amfree(line);
-    }
+	while ((line = agets(dumpout)) != NULL) {
+	    dbprintf("%s\n", line);
+	    amfree(line);
+	}
 
-    dbprintf(".....\n");
-    dbprintf(_("estimate time for %s level %d: %s\n"),
-	      qdisk,
-	      argument->level,
-	      walltime_str(timessub(curclock(), start_time)));
-    if(size == (off_t)-1) {
-	errmsg = vstrallocf(_("no size line match in %s output"), my_argv[0]);
-	dbprintf(_("%s for %s\n"), errmsg, qdisk);
 	dbprintf(".....\n");
-    } else if(size == (off_t)0 && argument->level == 0) {
-	dbprintf(_("possible %s problem -- is \"%s\" really empty?\n"),
-		  my_argv[0], argument->dle.disk);
-	dbprintf(".....\n");
-    }
-    dbprintf(_("estimate size for %s level %d: %lld KB\n"),
-	      qdisk,
-	      argument->level,
-	      (long long)size);
+	dbprintf(_("estimate time for %s level %d: %s\n"),
+		 qdisk,
+		 level,
+		 walltime_str(timessub(curclock(), start_time)));
+	if(size == (off_t)-1) {
+	    errmsg = vstrallocf(_("no size line match in %s output"),
+				my_argv[0]);
+	    dbprintf(_("%s for %s\n"), errmsg, qdisk);
+	    dbprintf(".....\n");
+	} else if(size == (off_t)0 && argument->level == 0) {
+	    dbprintf(_("possible %s problem -- is \"%s\" really empty?\n"),
+		      my_argv[0], argument->dle.disk);
+	    dbprintf(".....\n");
+	}
+	dbprintf(_("estimate size for %s level %d: %lld KB\n"),
+		 qdisk,
+		 level,
+		 (long long)size);
 
-    kill(-starpid, SIGTERM);
+	kill(-starpid, SIGTERM);
 
-    dbprintf(_("waiting for %s \"%s\" child\n"), my_argv[0], qdisk);
-    waitpid(starpid, &wait_status, 0);
-    if (WIFSIGNALED(wait_status)) {
-	errmsg = vstrallocf(_("%s terminated with signal %d: see %s"),
-			    cmd, WTERMSIG(wait_status), dbfn());
-    } else if (WIFEXITED(wait_status)) {
-	if (WEXITSTATUS(wait_status) != 0) {
-	    errmsg = vstrallocf(_("%s exited with status %d: see %s"),
-			        cmd, WEXITSTATUS(wait_status), dbfn());
+	dbprintf(_("waiting for %s \"%s\" child\n"), my_argv[0], qdisk);
+	waitpid(starpid, &wait_status, 0);
+	if (WIFSIGNALED(wait_status)) {
+	    errmsg = vstrallocf(_("%s terminated with signal %d: see %s"),
+				cmd, WTERMSIG(wait_status), dbfn());
+	} else if (WIFEXITED(wait_status)) {
+	    if (WEXITSTATUS(wait_status) != 0) {
+		errmsg = vstrallocf(_("%s exited with status %d: see %s"),
+				    cmd, WEXITSTATUS(wait_status), dbfn());
+	    } else {
+		/* Normal exit */
+	    }
 	} else {
-	    /* Normal exit */
+	    errmsg = vstrallocf(_("%s got bad exit: see %s"), cmd, dbfn());
 	}
-    } else {
-	errmsg = vstrallocf(_("%s got bad exit: see %s"),
-			    cmd, dbfn());
-    }
-    dbprintf(_("after %s %s wait\n"), my_argv[0], qdisk);
+	dbprintf(_("after %s %s wait\n"), my_argv[0], qdisk);
 
 common_exit:
 
-    amfree(my_argv);
-    amfree(qdisk);
-    amfree(cmd);
+	amfree(my_argv);
+	amfree(qdisk);
+	amfree(cmd);
 
-    aclose(nullfd);
-    afclose(dumpout);
+	aclose(nullfd);
+	afclose(dumpout);
 
-    fprintf(stdout, "%lld 1\n", (long long)size);
+	fprintf(stdout, "%d %lld 1\n", level, (long long)size);
+    }
 }
 
 static void
@@ -470,10 +493,11 @@ amstar_backup(
     FILE *mesgstream;
     FILE *indexstream;
     FILE *outstream;
+    int level = GPOINTER_TO_INT(argument->level->data);
 
     qdisk = quote_string(argument->dle.disk);
 
-    my_argv = amstar_build_argv(argument, CMD_BACKUP);
+    my_argv = amstar_build_argv(argument, level, CMD_BACKUP);
 
     cmd = stralloc(star_path);
 
@@ -662,6 +686,7 @@ amstar_validate(
 
 char **amstar_build_argv(
     application_argument_t *argument,
+    int   level,
     int   command)
 {
     int    i;
@@ -678,7 +703,7 @@ char **amstar_build_argv(
 	if (iscntrl((int)*s))
 	    *s = '-';
     }
-    snprintf(levelstr, SIZEOF(levelstr), "-level=%d", argument->level);
+    snprintf(levelstr, SIZEOF(levelstr), "-level=%d", level);
 
     if (star_dle_tardumps) {
 	char *sdisk = sanitise_filename(argument->dle.disk);

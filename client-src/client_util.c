@@ -38,6 +38,9 @@
 #include "pipespawn.h"
 #include "amxml.h"
 #include "glob.h"
+#include "clock.h"
+#include "amandates.h"
+#include "version.h"
 
 #define MAXMAXDUMPS 16
 
@@ -833,6 +836,12 @@ backup_support_option(
 	} else if (strncmp(line,"COLLECTION ", 11) == 0) {
 	    if (strcmp(line+11, "YES") == 0)
 		bsu->collection = 1;
+	} else if (strncmp(line,"CALCSIZE ", 9) == 0) {
+	    if (strcmp(line+9, "YES") == 0)
+		bsu->calcsize = 1;
+	} else if (strncmp(line,"MULTI-ESTIMATE ", 15) == 0) {
+	    if (strcmp(line+15, "YES") == 0)
+		bsu->multi_estimate = 1;
 	} else if (strncmp(line,"MAX-LEVEL ", 10) == 0) {
 	    bsu->max_level  = atoi(line+10);
 	} else {
@@ -1031,6 +1040,188 @@ run_client_scripts(
 	}
     }
 }
+
+
+void
+run_calcsize(
+    char   *config,
+    char   *program,
+    char   *disk,
+    char   *dirname,
+    GSList *levels,
+    char   *file_exclude,
+    char   *file_include)
+{
+    char        *cmd, *cmdline;
+    char        *my_argv[DUMP_LEVELS*2+22];
+    int          my_argc;
+    char         tmppath[PATH_MAX];
+    char         number[NUM_STR_SIZE];
+    GSList      *alevel;
+    int          level;
+    int          i;
+    char        *match_expr;
+    int          pipefd = -1, nullfd = -1;
+    pid_t        calcpid;
+    times_t      start_time;
+    FILE        *dumpout = NULL;
+    int          dumpsince;
+    char        *errmsg = NULL;
+    off_t        size = (off_t)1;
+    char        *line = NULL;
+    amwait_t     wait_status;
+    int          len;
+    char        *qdisk;
+    amandates_t *amdp;
+    char        *amandates_file;
+
+    qdisk = quote_string(disk);
+
+    amandates_file = getconf_str(CNF_AMANDATES);
+    if(!start_amandates(amandates_file, 0)) {
+	char *errstr = strerror(errno);
+	char *errmsg = vstrallocf(_("could not open %s: %s"), amandates_file, errstr);
+	char *qerrmsg = quote_string(errmsg);
+	g_printf(_("ERROR %s\n"), qerrmsg);
+	amfree(qdisk);
+	amfree(errmsg);
+	amfree(qerrmsg);
+	return;
+    }
+
+    startclock();
+    cmd = vstralloc(amlibexecdir, "/", "calcsize", versionsuffix(), NULL);
+
+    my_argc = 0;
+
+    my_argv[my_argc++] = stralloc("calcsize");
+    if (config)
+	my_argv[my_argc++] = stralloc(config);
+    else
+	my_argv[my_argc++] = stralloc("NOCONFIG");
+
+    my_argv[my_argc++] = stralloc(program);
+
+    canonicalize_pathname(disk, tmppath);
+    my_argv[my_argc++] = stralloc(tmppath);
+    canonicalize_pathname(dirname, tmppath);
+    my_argv[my_argc++] = stralloc(tmppath);
+
+    if (file_exclude) {
+	my_argv[my_argc++] = stralloc("-X");
+	my_argv[my_argc++] = file_exclude;
+    }
+
+    if (file_include) {
+	my_argv[my_argc++] = stralloc("-I");
+	my_argv[my_argc++] = file_include;
+    }
+
+    for (alevel = levels; alevel != NULL; alevel = alevel->next) {
+	amdp = amandates_lookup(disk);
+	level = GPOINTER_TO_INT(alevel->data);
+	dbprintf("level: %d\n", level);
+	dumpsince = 0;
+	for (i=0; i < level; i++) {
+	    if (dumpsince < amdp->dates[i])
+		dumpsince = amdp->dates[i];
+	}
+	g_snprintf(number, SIZEOF(number), "%d", level);
+	my_argv[my_argc++] = stralloc(number);
+	g_snprintf(number, SIZEOF(number), "%d", dumpsince);
+	my_argv[my_argc++] = stralloc(number);
+    }
+
+    my_argv[my_argc] = NULL;
+    cmdline = stralloc(my_argv[0]);
+    for(i = 1; i < my_argc; i++)
+	cmdline = vstrextend(&cmdline, " ", my_argv[i], NULL);
+    dbprintf(_("running: \"%s\"\n"), cmdline);
+    amfree(cmdline);
+
+    start_time = curclock();
+
+    fflush(stderr); fflush(stdout);
+
+    if ((nullfd = open("/dev/null", O_RDWR)) == -1) {
+	errmsg = vstrallocf(_("Cannot access /dev/null : %s"),
+			    strerror(errno));
+	dbprintf("%s\n", errmsg);
+	goto common_exit;
+    }
+
+    calcpid = pipespawnv(cmd, STDERR_PIPE, 0,
+			 &nullfd, &nullfd, &pipefd, my_argv);
+    amfree(cmd);
+
+    dumpout = fdopen(pipefd,"r");
+    if (!dumpout) {
+	error(_("Can't fdopen: %s"), strerror(errno));
+	/*NOTREACHED*/
+    }
+
+    match_expr = vstralloc(" %d SIZE %lld", NULL);
+    len = strlen(qdisk);
+    for(size = (off_t)-1; (line = agets(dumpout)) != NULL; free(line)) {
+	long long size_ = (long long)0;
+	if (line[0] == '\0' || (int)strlen(line) <= len)
+	    continue;
+	/* Don't use sscanf for qdisk because it can have a '%'. */
+	if (strncmp(line, qdisk, len) == 0 &&
+	    sscanf(line+len, match_expr, &level, &size_) == 2) {
+	    g_printf("%d %lld %d\n", level, size_, 1); /* write to sendsize */
+	    dbprintf(_("estimate size for %s level %d: %lld KB\n"),
+		     qdisk, level, size_);
+	}
+	size = (off_t)size_;
+    }
+    amfree(match_expr);
+
+    dbprintf(_("waiting for %s %s child (pid=%d)\n"),
+	     my_argv[0], qdisk, (int)calcpid);
+    waitpid(calcpid, &wait_status, 0);
+    if (WIFSIGNALED(wait_status)) {
+	errmsg = vstrallocf(_("%s terminated with signal %d: see %s"),
+			    "calcsize", WTERMSIG(wait_status),
+			    dbfn());
+    } else if (WIFEXITED(wait_status)) {
+	if (WEXITSTATUS(wait_status) != 0) {
+	    errmsg = vstrallocf(_("%s exited with status %d: see %s"),
+				"calcsize", WEXITSTATUS(wait_status),
+				dbfn());
+	} else {
+	    /* Normal exit */
+	}
+    } else {
+	errmsg = vstrallocf(_("%s got bad exit: see %s"),
+			    "calcsize", dbfn());
+    }
+
+    dbprintf(_("after %s %s wait: child pid=%d status=%d\n"),
+	     my_argv[0], qdisk,
+	     (int)calcpid, WEXITSTATUS(wait_status));
+
+    dbprintf(_(".....\n"));
+    dbprintf(_("estimate time for %s: %s\n"),
+	     qdisk,
+	     walltime_str(timessub(curclock(), start_time)));
+
+common_exit:
+    if (errmsg && errmsg[0] != '\0') {
+	char *qerrmsg = quote_string(errmsg);
+	dbprintf(_("errmsg is %s\n"), errmsg);
+	g_printf("ERROR %s\n", qerrmsg);
+	amfree(qerrmsg);
+    }
+    amfree(qdisk);
+    amfree(errmsg);
+    for(i = 0; i < my_argc; i++) {
+        amfree(my_argv[i]);
+    }
+    amfree(cmd);
+
+}
+
 
 void
 check_access(

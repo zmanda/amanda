@@ -682,6 +682,10 @@ check_disk(
 	backup_support_option_t *bsu;
 
 	bsu = backup_support_option(dle->program, g_options, dle->disk, dle->device);
+	if (dle->calcsize && !bsu->calcsize) {
+	    g_printf("ERROR application %s doesn't support calcsize estimate\n",
+		     dle->program);
+	}
 	if (dle->include_file && dle->include_file->nb_element > 0 &&
 	    !bsu->include_file) {
 	    g_printf("ERROR application %s doesn't support include-file\n",
@@ -731,9 +735,11 @@ check_disk(
 		for (scriptlist = dle->scriptlist; scriptlist != NULL;
 		     scriptlist = scriptlist->next) {
 		    script = (script_t *)scriptlist->data;
-		    k += property_argv_size(script->result->proplist);
+		    if (script->result && script->result->proplist) {
+			k += property_argv_size(script->result->proplist);
+		    }
 		}
-		argvchild = g_new0(char *, 17 + k);
+		argvchild = g_new0(char *, 18 + k);
 		argvchild[j++] = dle->program;
 		argvchild[j++] = "selfcheck";
 		if (bsu->message_line == 1) {
@@ -761,13 +767,18 @@ check_disk(
 		if (dle->record && bsu->record == 1) {
 		    argvchild[j++] = "--record";
 		}
+		if (dle->calcsize && bsu->calcsize == 1) {
+		    argvchild[j++] = "--calcsize";
+		}
 		j += application_property_add_to_argv(&argvchild[j], dle, bsu);
 
 		for (scriptlist = dle->scriptlist; scriptlist != NULL;
 		     scriptlist = scriptlist->next) {
 		    script = (script_t *)scriptlist->data;
-		    j += property_add_to_argv(&argvchild[j],
-					      script->result->proplist);
+		    if (script->result && script->result->proplist) {
+			j += property_add_to_argv(&argvchild[j],
+						  script->result->proplist);
+		    }
 		}
 
 		argvchild[j++] = NULL;
