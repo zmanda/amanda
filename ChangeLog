@@ -1,3 +1,16 @@
+2008-11-08  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Changer.pm perl/Amanda/Changer/compat.pm
+	  perl/Amanda/Changer/disk.pm perl/Amanda/Changer/single.pm
+	  perl/Makefile.am: entirely new perl-based changer API
+	* perl/Amanda/Config.swg common-src/conffile.c common-src/conffile.h:
+	  add changer subsections
+	* man/xml-source/amanda.conf.5.xml: document them
+	* server-src/amcheckdump.pl: use the new changer API
+	* installcheck/Amanda_Changer.pl installcheck/Amanda_Changer_Compat.pl
+	  installcheck/Amanda_Changer_Single.pl installcheck/Amanda_Config.pl
+	  installcheck/Installcheck/Config.pm installcheck/Makefile.am
+	  installcheck/Amanda_Changer_Disk.pl: new/updated tests
+
 2008-11-07  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/amstar.c: fix.
 

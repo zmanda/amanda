@@ -194,13 +194,24 @@ endif
 EXTRA_DIST += Amanda/Changer.pm
 
 if WANT_SERVER
+# PACKAGE: Amanda::Changer::*
+AmandaChangerdir = $(amperldir)/Amanda/Changer
+AmandaChanger_DATA = \
+	Amanda/Changer/disk.pm \
+	Amanda/Changer/compat.pm \
+	Amanda/Changer/single.pm
+HTML_SOURCE_FILES += $(AmandaChanger_DATA)
+endif
+EXTRA_DIST += $(AmandaChanger_DATA)
+
 # PACKAGE: Amanda::Process
+if WANT_SERVER
 Amanda_DATA += Amanda/Process.pm
 endif
 EXTRA_DIST += Amanda/Process.pm
 
 if WANT_SERVER
-# Amanda::DB::*
+# PACKAGE: Amanda::DB::*
 Amanda_DBdir = $(Amandadir)/DB
 Amanda_DB_DATA =
 HTML_SOURCE_FILES += $(Amanda_DB_DATA)
@@ -339,10 +350,10 @@ install-data-hook:
 endif
 
 check-local:
-	@CHECK_PERL="$(Amanda_DATA) $(Amanda_DB_DATA)"; \
+	@MODULES_TO_CHECK="$(Amanda_DATA) $(Amanda_DB_DATA) $(AmandaChanger_DATA)"; \
 	if test -f $(top_builddir)/perl/.libs/libConfig.so -o -f $(top_builddir)/perl/libConfig.so; then \
 		if test -n "$(PERL)"; then \
-			for perlobj in $$CHECK_PERL; do \
+			for perlobj in $$MODULES_TO_CHECK; do \
 				if test -f $$perlobj; then \
 					$(PERL) $(CHECK_PERL_FLAGS) -I$(top_builddir)/perl -I$(top_builddir)/perl/.libs -I$(top_srcdir)/perl -c -T $$perlobj || exit 1; \
 				else \

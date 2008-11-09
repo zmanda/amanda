@@ -75,6 +75,7 @@ typedef enum {
     CONF_AUTOFLUSH,		CONF_RESERVE,		CONF_MAXDUMPSIZE,
     CONF_COLUMNSPEC,		CONF_AMRECOVER_DO_FSF,	CONF_AMRECOVER_CHECK_LABEL,
     CONF_AMRECOVER_CHANGER,	CONF_LABEL_NEW_TAPES,	CONF_USETIMESTAMPS,
+    CONF_CHANGER,
 
     CONF_TAPERALGO,		CONF_FIRST,		CONF_FIRSTFIT,
     CONF_LARGEST,		CONF_LARGESTFIT,	CONF_SMALLEST,
@@ -327,6 +328,14 @@ struct device_config_s {
     val_t value[DEVICE_CONFIG_DEVICE_CONFIG];
 };
 
+struct changer_config_s {
+    struct changer_config_s *next;
+    int seen;
+    char *name;
+
+    val_t value[CHANGER_CONFIG_CHANGER_CONFIG];
+};
+
 /* The current parser table */
 static conf_var_t *parsetable = NULL;
 
@@ -438,6 +447,12 @@ static void init_device_config_defaults(void);
 static void save_device_config(void);
 static void copy_device_config(void);
 
+static changer_config_t cccur;
+static void get_changer_config(void);
+static void init_changer_config_defaults(void);
+static void save_changer_config(void);
+static void copy_changer_config(void);
+
 /* read_functions -- these fit into the read_function slot in a parser
  * table entry, and are responsible for calling getconf_token as necessary
  * to consume their arguments, and setting their second argument with the
@@ -547,6 +562,7 @@ static interface_t *interface_list = NULL;
 static application_t *application_list = NULL;
 static pp_script_t *pp_script_list = NULL;
 static device_config_t *device_config_list = NULL;
+static changer_config_t *changer_config_list = NULL;
 
 /* storage for derived values */
 static long int unit_divisor = 1;
@@ -772,6 +788,7 @@ keytab_t server_keytab[] = {
     { "BUMPPERCENT", CONF_BUMPPERCENT },
     { "BUMPSIZE", CONF_BUMPSIZE },
     { "CALCSIZE", CONF_CALCSIZE },
+    { "CHANGER", CONF_CHANGER },
     { "CHANGERDEV", CONF_CHANGERDEV },
     { "CHANGERFILE", CONF_CHANGERFILE },
     { "CHUNKSIZE", CONF_CHUNKSIZE },
@@ -1211,6 +1228,15 @@ conf_var_t device_config_var [] = {
    { CONF_DEVICE_PROPERTY , CONFTYPE_PROPLIST , read_property , DEVICE_CONFIG_DEVICE_PROPERTY, NULL },
    { CONF_TAPEDEV         , CONFTYPE_STR      , read_str      , DEVICE_CONFIG_TAPEDEV        , NULL },
    { CONF_UNKNOWN         , CONFTYPE_INT      , NULL          , DEVICE_CONFIG_DEVICE_CONFIG  , NULL }
+};
+
+conf_var_t changer_config_var [] = {
+   { CONF_COMMENT         , CONFTYPE_STR      , read_str      , CHANGER_CONFIG_COMMENT        , NULL },
+   { CONF_TAPEDEV         , CONFTYPE_STR      , read_str      , CHANGER_CONFIG_TAPEDEV        , NULL },
+   { CONF_TPCHANGER       , CONFTYPE_STR      , read_str      , CHANGER_CONFIG_TPCHANGER      , NULL },
+   { CONF_CHANGERDEV      , CONFTYPE_STR      , read_str      , CHANGER_CONFIG_CHANGERDEV     , NULL },
+   { CONF_CHANGERFILE     , CONFTYPE_STR      , read_str      , CHANGER_CONFIG_CHANGERFILE    , NULL },
+   { CONF_UNKNOWN         , CONFTYPE_INT      , NULL          , CHANGER_CONFIG_CHANGER_CONFIG , NULL }
 };
 
 /*
@@ -1667,7 +1693,8 @@ read_confline(
 	    else if(tok == CONF_APPLICATION_TOOL) get_application();
 	    else if(tok == CONF_PP_SCRIPT_TOOL) get_pp_script();
 	    else if(tok == CONF_DEVICE) get_device_config();
-	    else conf_parserror(_("DUMPTYPE, INTERFACE, TAPETYPE, APPLICATION-TOOL, SCRIPT-TOOL, or DEVICE expected"));
+	    else if(tok == CONF_CHANGER) get_changer_config();
+	    else conf_parserror(_("DUMPTYPE, INTERFACE, TAPETYPE, APPLICATION-TOOL, SCRIPT-TOOL, DEVICE, or CHANGER expected"));
 	}
 	break;
 
@@ -2613,6 +2640,133 @@ copy_device_config(void)
 	if(dc->value[i].seen.linenum) {
 	    free_val_t(&dccur.value[i]);
 	    copy_val_t(&dccur.value[i], &dc->value[i]);
+	}
+    }
+}
+
+changer_config_t *
+read_changer_config(
+    char *name,
+    FILE *from,
+    char *fname,
+    int *linenum)
+{
+    int save_overwrites;
+    FILE *saved_conf = NULL;
+    char *saved_fname = NULL;
+
+    if (from) {
+	saved_conf = current_file;
+	current_file = from;
+    }
+
+    if (fname) {
+	saved_fname = current_filename;
+	current_filename = fname;
+    }
+
+    if (linenum)
+	current_line_num = *linenum;
+
+    save_overwrites = allow_overwrites;
+    allow_overwrites = 1;
+
+    init_changer_config_defaults();
+    if (name) {
+	cccur.name = name;
+    } else {
+	get_conftoken(CONF_IDENT);
+	cccur.name = stralloc(tokenval.v.s);
+    }
+    cccur.seen = current_line_num;
+
+    read_block(changer_config_var, cccur.value,
+	       _("changer parameter expected"),
+	       (name == NULL), *copy_changer_config);
+    if(!name)
+	get_conftoken(CONF_NL);
+
+    save_changer_config();
+
+    allow_overwrites = save_overwrites;
+
+    if (linenum)
+	*linenum = current_line_num;
+
+    if (fname)
+	current_filename = saved_fname;
+
+    if (from)
+	current_file = saved_conf;
+
+    return lookup_changer_config(cccur.name);
+}
+
+static void
+get_changer_config(
+    void)
+{
+    read_changer_config(NULL, NULL, NULL, NULL);
+}
+
+static void
+init_changer_config_defaults(
+    void)
+{
+    cccur.name = NULL;
+    conf_init_str(&cccur.value[CHANGER_CONFIG_COMMENT] , "");
+    conf_init_str(&cccur.value[CHANGER_CONFIG_TAPEDEV]  , "");
+    conf_init_str(&cccur.value[CHANGER_CONFIG_TPCHANGER]  , "");
+    conf_init_str(&cccur.value[CHANGER_CONFIG_CHANGERDEV]  , "");
+    conf_init_str(&cccur.value[CHANGER_CONFIG_CHANGERFILE]  , "");
+}
+
+static void
+save_changer_config(
+    void)
+{
+    changer_config_t *dc, *dc1;
+
+    dc = lookup_changer_config(cccur.name);
+
+    if(dc != (changer_config_t *)0) {
+	conf_parserror(_("changer %s already defined on line %d"),
+		       dc->name, dc->seen);
+	return;
+    }
+
+    dc = alloc(sizeof(changer_config_t));
+    *dc = cccur;
+    dc->next = NULL;
+    /* add at end of list */
+    if (!changer_config_list)
+	changer_config_list = dc;
+    else {
+	dc1 = changer_config_list;
+	while (dc1->next != NULL) {
+	    dc1 = dc1->next;
+	}
+	dc1->next = dc;
+    }
+}
+
+static void
+copy_changer_config(void)
+{
+    changer_config_t *dc;
+    int i;
+
+    dc = lookup_changer_config(tokenval.v.s);
+
+    if(dc == NULL) {
+	conf_parserror(_("changer parameter expected"));
+	return;
+    }
+
+    for(i=0; i < CHANGER_CONFIG_CHANGER_CONFIG; i++) {
+	if(dc->value[i].seen.linenum) {
+	    free_val_t(&cccur.value[i]);
+	    copy_val_t(&cccur.value[i], &dc->value[i]);
 	}
     }
 }
@@ -3895,6 +4049,7 @@ config_uninit(void)
     application_t *ap, *apnext;
     pp_script_t   *pp, *ppnext;
     device_config_t *dc, *dcnext;
+    changer_config_t *cc, *ccnext;
     int               i;
 
     if (!config_initialized) return;
@@ -3968,6 +4123,17 @@ config_uninit(void)
 	amfree(dc);
     }
     device_config_list = NULL;
+
+    for(cc=changer_config_list; cc != NULL; cc = ccnext) {
+	amfree(cc->name);
+	for(i=0; i<INTER_INTER-1; i++) {
+	   free_val_t(&cc->value[i]);
+	}
+	ccnext = cc->next;
+	amfree(cc);
+    }
+
+    changer_config_list = NULL;
 
     for(i=0; i<CNF_CNF-1; i++)
 	free_val_t(&conf_data[i]);
@@ -4596,6 +4762,7 @@ getconf_list(
     application_t *ap;
     pp_script_t   *pp;
     device_config_t *dc;
+    changer_config_t *cc;
     GSList *rv = NULL;
 
     if (strcasecmp(listname,"tapetype") == 0) {
@@ -4627,6 +4794,10 @@ getconf_list(
     } else if (strcasecmp(listname,"device") == 0) {
 	for(dc = device_config_list; dc != NULL; dc=dc->next) {
 	    rv = g_slist_append(rv, dc->name);
+	}
+    } else if (strcasecmp(listname,"changer") == 0) {
+	for(cc = changer_config_list; cc != NULL; cc=cc->next) {
+	    rv = g_slist_append(rv, cc->name);
 	}
     }
     return rv;
@@ -4877,6 +5048,36 @@ device_config_getconf(
 char *
 device_config_name(
     device_config_t *devconf)
+{
+    assert(devconf != NULL);
+    return devconf->name;
+}
+
+changer_config_t *
+lookup_changer_config(
+    char *str)
+{
+    changer_config_t *devconf;
+
+    for(devconf = changer_config_list; devconf != NULL; devconf = devconf->next) {
+	if(strcasecmp(devconf->name, str) == 0) return devconf;
+    }
+    return NULL;
+}
+
+val_t *
+changer_config_getconf(
+    changer_config_t *devconf,
+    changer_config_key key)
+{
+    assert(devconf != NULL);
+    assert(key < CHANGER_CONFIG_CHANGER_CONFIG);
+    return &devconf->value[key];
+}
+
+char *
+changer_config_name(
+    changer_config_t *devconf)
 {
     assert(devconf != NULL);
     return devconf->name;
@@ -5528,6 +5729,7 @@ dump_configuration(void)
     application_t *ap;
     pp_script_t *ps;
     device_config_t *dc;
+    changer_config_t *cc;
     int i;
     conf_var_t *np;
     keytab_t *kt;
@@ -5702,6 +5904,25 @@ dump_configuration(void)
 		error(_("device bad token"));
 
 	    val_t_print_token(stdout, prefix, "      %-19s ", kt, &dc->value[i]);
+	}
+	g_printf("%s}\n",prefix);
+    }
+
+    for(cc = changer_config_list; cc != NULL; cc = cc->next) {
+	prefix = "";
+	g_printf("\n%sDEFINE CHANGER %s {\n", prefix, cc->name);
+	for(i=0; i < CHANGER_CONFIG_CHANGER_CONFIG; i++) {
+	    for(np=changer_config_var; np->token != CONF_UNKNOWN; np++)
+		if(np->parm == i) break;
+	    if(np->token == CONF_UNKNOWN)
+		error(_("changer bad value"));
+
+	    for(kt = server_keytab; kt->token != CONF_UNKNOWN; kt++)
+		if(kt->token == np->token) break;
+	    if(kt->token == CONF_UNKNOWN)
+		error(_("changer bad token"));
+
+	    val_t_print_token(stdout, prefix, "      %-19s ", kt, &cc->value[i]);
 	}
 	g_printf("%s}\n",prefix);
     }
@@ -6260,6 +6481,7 @@ parm_key_info(
     application_t *ap;
     pp_script_t   *pp;
     device_config_t   *dc;
+    changer_config_t   *cc;
     int success = FALSE;
 
     /* WARNING: assumes globals keytable and parsetable are set correctly. */
@@ -6392,7 +6614,19 @@ parm_key_info(
 	    if (val) *val = &dc->value[np->parm];
 	    if (parm) *parm = np;
 	    success = TRUE;
-	} 
+	} else if (strcmp(subsec_type, "CHANGER") == 0) {
+	    cc = lookup_changer_config(subsec_name);
+	    if (!cc) goto out;
+	    for(np = changer_config_var; np->token != CONF_UNKNOWN; np++) {
+		if(np->token == kt->token)
+		   break;
+	    }
+	    if (np->token == CONF_UNKNOWN) goto out;
+
+	    if (val) *val = &cc->value[np->parm];
+	    if (parm) *parm = np;
+	    success = TRUE;
+	}
 
     /* No delimiters -- we're referencing a global config parameter */
     } else {

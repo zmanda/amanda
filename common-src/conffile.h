@@ -38,12 +38,12 @@
 /* Getting Configuration Values
  * ============================
  *
- * Amanda configurations consist of a number of "global" parameters, as well as named
- * subsections of four types: dumptypes, interfaces, holdingdisks, and tapetypes.  The
- * global parameters are fetched with the getconf_CONFTYPE functions, keyed by a
- * confparam_t constant (with prefix CNF_).  The subsection parameters are fetched with
- * SUBSEC_get_PARAM() macros, e.g., tapetype_get_blocksize(ttyp), where the argument
- * comes from lookup_SUBSEC(), in this case lookup_tapetype(name).
+ * Amanda configurations consist of a number of "global" parameters, as well as
+ * named subsections of several types.  The global parameters are fetched with
+ * the getconf_CONFTYPE functions, keyed by a confparam_t constant (with prefix
+ * CNF_).  The subsection parameters are fetched with SUBSEC_get_PARAM()
+ * macros, e.g., tapetype_get_blocksize(ttyp), where the argument comes from
+ * lookup_SUBSEC(), in this case lookup_tapetype(name).
  *
  * Types
  * =====
@@ -951,7 +951,7 @@ char *pp_script_name(pp_script_t *pps);
 pp_script_t *read_pp_script(char *name, FILE *from, char *fname, int *linenum);
 pp_script_t *lookup_pp_script(char *identifier);
 
-/* A device interface */
+/* A device definition */
 typedef enum {
     DEVICE_CONFIG_COMMENT,
     DEVICE_CONFIG_TAPEDEV,
@@ -1007,6 +1007,67 @@ char *device_config_name(device_config_t *devconf);
 
 device_config_t *read_device_config(char *name, FILE *from, char *fname, int *linenum);
 device_config_t *lookup_device_config(char *identifier);
+
+/* A changer definition */
+typedef enum {
+    CHANGER_CONFIG_COMMENT,
+    CHANGER_CONFIG_TAPEDEV,
+    CHANGER_CONFIG_TPCHANGER,
+    CHANGER_CONFIG_CHANGERDEV,
+    CHANGER_CONFIG_CHANGERFILE,
+    CHANGER_CONFIG_CHANGER_CONFIG
+} changer_config_key;
+
+/* opaque object */
+typedef struct changer_config_s changer_config_t;
+
+/* Given the name of the changer, return a changer_config_t object.  Returns NULL
+ * if no matching changer exists.  Note that the match is case-insensitive.
+ *
+ * @param identifier: name of the desired changer
+ * @returns: object or NULL
+ */
+
+changer_config_t *lookup_changer_config(char *identifier);
+
+/* Given a changer_config and a key, return a pointer to the corresponding val_t.
+ *
+ * @param ttyp: the changer_config to examine
+ * @param key: changer_config (one of the DEVICE_CONFIG_* constants)
+ * @returns: pointer to value
+ */
+val_t *changer_config_getconf(changer_config_t *devconf, changer_config_key key);
+
+/* Get the name of this changer_config.
+ *
+ * @param ttyp: the changer_config to examine
+ * @returns: name of the changer_config
+ */
+char *changer_config_name(changer_config_t *devconf);
+
+/* (convenience macro) has this parameter been seen in this changer_config?  This
+ * applies to the specific parameter *within* the changer_config.
+ *
+ * @param key: changer_config_key
+ * @returns: boolean
+ */
+#define changer_config_seen(devconf, key)       (val_t_seen(changer_config_getconf((devconf), (key))))
+
+/* (convenience macros)
+ * fetch a particular parameter; caller must know the correct type.
+ *
+ * @param devconf: the changer_config to examine
+ * @returns: various
+ */
+
+#define changer_config_get_comment(devconf)   (val_t_to_str(changer_config_getconf((devconf), DEVICE_CONFIG_COMMENT)))
+#define changer_config_get_tapedev(devconf)   (val_t_to_str(changer_config_getconf((devconf), DEVICE_CONFIG_TAPEDEV)))
+#define changer_config_get_tpchanger(devconf)   (val_t_to_str(changer_config_getconf((devconf), DEVICE_CONFIG_TPCHANGER)))
+#define changer_config_get_changerdev(devconf)   (val_t_to_str(changer_config_getconf((devconf), DEVICE_CONFIG_CHANGERDEV)))
+#define changer_config_get_changerfile(devconf)   (val_t_to_str(changer_config_getconf((devconf), DEVICE_CONFIG_CHANGERFILE)))
+
+changer_config_t *read_changer_config(char *name, FILE *from, char *fname, int *linenum);
+changer_config_t *lookup_changer_config(char *identifier);
 
 /*
  * Error Handling

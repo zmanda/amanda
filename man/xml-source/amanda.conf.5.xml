@@ -2478,7 +2478,7 @@ the property to set, and the others contains its values.
 <refsect1><title>DEVICE SECTION</title>
 <para>Backend storage devices are specified in
 <emphasis remap='B'>amanda.conf</emphasis>
-in the form of "device" sections, which looks like this:</para>
+in the form of "device" sections, which look like this:</para>
 
 <programlisting>
 define device <emphasis remap='I'>name</emphasis> {
@@ -2502,6 +2502,32 @@ remap='I'>device_property</emphasis> parameters can be specified.
 Again, see
 <citerefentry><refentrytitle>amanda-devices</refentrytitle><manvolnum>7</manvolnum></citerefentry>
 for information on device properties.</para>
+
+</refsect1>
+
+<refsect1><title>CHANGER SECTION</title>
+<para>Changers are described in
+<emphasis remap='B'>amanda.conf</emphasis>
+in the form of "changer" sections, which look like this:</para>
+
+<programlisting>
+define changer <emphasis remap='I'>name</emphasis> {
+    commend "<emphasis remap='I'>comment (optional)</emphasis>"
+    tapedev "<emphasis remap='I'>tape-device</emphasis>"
+    tpchanger "<emphasis remap='I'>changer-type</emphasis>"
+    changerdev "<emphasis remap='I'>device-name</emphasis>"
+    changerfile "<emphasis remap='I'>state-file</emphasis>"
+    <literal>...</literal>
+}
+</programlisting>
+
+<para><emphasis remap='I'>name</emphasis> is the user-specified name of this
+device. The remaining parameters are specific to the changer type selected.
+</para>
+
+<para>
+TODO: more detail here once it's known
+</para>
 
 </refsect1>
 

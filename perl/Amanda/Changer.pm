@@ -22,19 +22,11 @@ use strict;
 use warnings;
 use Carp;
 use POSIX ();
-use Exporter;
-use vars qw( @ISA @EXPORT_OK );
-@ISA = qw( Exporter );
-
-@EXPORT_OK = qw(
-    reset clean eject label
-    query loadslot find scan
-);
+use vars qw( @ISA );
 
 use Amanda::Paths;
 use Amanda::Util;
-use Amanda::MainLoop qw( :GIOCondition );
-use Amanda::Config;
+use Amanda::Config qw( :getconf );
 use Amanda::Device qw( :constants );
 
 =head1 NAME
@@ -43,513 +35,480 @@ Amanda::Changer -- interface to changer scripts
 
 =head1 SYNOPSIS
 
-  use Amanda::Changer;
+    use Amanda::Changer;
 
-  TODO: REWRITE
+    my $chg = Amanda::Changer->new(); # loads the default changer; OR
+    $chg = Amanda::Changer->new("somechanger"); # references a defined changer in amanda.conf
 
-  my ($error, $slot) = Amanda::Changer::reset();
+    $chg->load(
+	label => "TAPE-012",
+	res_cb => sub {
+	    my ($err, $reservation) = @_;
+	    if ($err) {
+		die $err->{message};
+	    }
+	    $dev = Amanda::Device->new($reservation->{device_name});
+	    # use device..
+	});
 
-  my ($error, $slot, $nslots, $backwards, $searchable) = Amanda::Changer::query();
+    # later..
+    $reservation->release(finished_cb => $start_next_volume);
 
-  my ($error, $tpslot, $tpdevice) = Amanda::Changer::find("TAPE018");
-
-  my $slot_callback = sub {
-    my ($slot, $device) = @_;
-    if (!$error) print "Slot $slot: $device\n";
-    return 0;
-  }
-  my $error = Amanda::Changer::scan($slot_callback);
-
-=head1 API STATUS
-
-Stable
+    # only certain devices support things like..
+    $chg->eject( .. );
+    $chg->move_media( .. );
+    $chg->get_slot_info( .. );
+    $chg->clean( .. );
 
 =head1 INTERFACE
-
-This module provides an object-oriented, event-based interface to changer
-scripts, unlike the C changer module.
-
-Objects correspond to an individual tape changer, so it is possible to control
-several changers independently using this module.  Objects are parameterized on
-the changer script, changer device, and changer file sa provided in the
-configuration file.
 
 All operations in the module return immediately, and take as an argument a
 callback function which will indicate completion of the changer operation -- a
 kind of continuation.  The caller should run a main loop (see
 L<Amanda::MainLoop>) to allow the interactions with the changer script to
-continue.  Between the initiation of an operation and the subsequent completion
-callback, the changer object is considered "busy", and it is a programming
-error to initiate a new operation during that time.
-
-The completion callback functions' parameters vary depending on the operation,
-but the first parameter is always C<$error>.  This parameter contains an error
-string in the case of "benign" errors, corresponding to an exit status of 1 or
-a slot named "<error>".  In the normal case, it is zero.  All operations
-C<croak()> in the event of a serious error (problems running the changer
-script, or an exit status of 2 or higher). 
-
-Many callbacks also take a C<$slot> parameter.  This is the first word returned
-from the changer script, and is usually a number, but occasionally a string
-such as "<none>".
+continue.
 
 A new object is created with the C<new> function as follows:
 
-  my $chg = Amanda::Changer->new($tpchanger);
+  my $chg = Amanda::Changer->new($changer);
 
-This is done in anticipation of the ability to control multiple tape changers
-simultaneously.  The current Changer API does not support this, as changer
-scripts access C<amanda.conf> directly to determine their changerdev and
-changerfile.  The following member functions are available.
+to create a named changer (a name provided by the user, either specifying a
+changer directly or specifying a changer definition), or
 
-=over
+  my $chg = Amanda::Changer->new();
 
-=item reset
+to run the default changer.  This function handles the many ways a user can
+configure a changer.
 
-  $chg->reset(sub {
-    my ($error, $slot) = @_;
-    # ...
-  });
+=head2 CALLBACKS
 
-Resets the tape changer, if supported, by calling
+A res_cb C<$cb> is called back as:
 
-  $tpchanger -reset
+ $cb->($error, undef);
 
-=item clean
+in the event of an error, or
 
-  $chg->clean(sub {
-    my ($error, $slot) = @_;
-    # ...
-  });
+ $cb->(undef, $reservation);
 
-Triggers a cleaning cycle, if supported, by calling
+with a successful reservation. res_cb must always be specified.  A finished_cb
+C<$cb> is called back as
 
-  $tpchanger -clean
+ $cb->($error);
 
-=item eject
+in the event of an error, or
 
-  $chg->eject(sub {
-    my ($error, $slot) = @_;
-    # ...
-  });
+ $cb->(undef);
 
-Ejects the tape in the current slot, if supported, by calling
+on success. A finished_cb may be omitted if no notification of completion is
+required.
 
-  $tpchanger -eject
+=head2 CHANGER OBJECTS
 
-=item label
+=head3 $chg->load(res_cb => $cb, label => $label, set_current => $sc)
 
-  $chg->label(sub {
-    my ($error) = @_;
-    # ...
-  });
+Load a volume with the given label. This may leverage any barcodes or other
+indices that the changer has created, or may resort to a sequential scan of
+media. If set_current is specified and true, then the changer's current slot
+should be updated to correspond to $slot. If not, then the changer should not
+update its current slot (but some changers will anyway - specifically,
+chg-compat).
 
-Inform the changer that the tape in the current slot is labeled C<$label>.
-Calls
+Note that the changer I<tries> to load the requested volume, but it's a mean
+world out there, and you may not get what you want.
 
-  $tpchanger -label $label
+=head3 $chg->load(res_cb => $cb, slot => "current")
 
-=item query
+Reserve the volume in the "current" slot. This is used by the sequential
+taperscan algorithm to begin its search.
 
-  $chg->query(sub {
-    my ($error, $slot, $nslots, $backwards, $searchable) = @_;
-    # ...
-  });
+=head3 $chg->load(res_cb => $cb, slot => $slot, set_current => $sc)
 
-Query the changer to determine the current slot (C<$slot>), the
-number of slots (C<$nslots>), whether it can move backward through tapes
-(C<$backwards>), and whether it is searchable (that is, has a barcode
-reader; C<$searchable>).  A changer which cannot move backward through
-tapes is also known as a gravity feeder.
+Reserve the volume in the given slot. $slot must be a string that appeared in a
+reservation's 'next_slot' field at some point, or a string from the user (e.g.,
+an argument to amtape).
 
-This function runs
+=head3 $chg->reset(finished_cb => $cb)
 
-  $tpchanger -info
+Reset the changer to a "base" state. This will generally reset the "current"
+slot to something the user would think of as the "first" tape, unload any
+loaded drives, etc. It is an error to call this while any reservations are
+outstanding.
 
-=item loadslot
+=head3 $chg->clean(finished_cb => $cb, drive => $drivename)
 
-  $chg->loadslot($desired_slot, sub {
-    my ($error, $slot, $device) = @_;
-    # ...
-  });
+Clean a drive, if the changer supports it. Drivename can be an empty string for
+devices with only one drive, or can be an arbitrary string from the user (e.g.,
+an amtape argument). Note that some changers cannot detect the completion of a
+cleaning cycle; in this case, the user will just need to delay further Amanda
+activities until the cleaning is complete.
 
-Load the tape in the given slot, calling back with its slot and device.
-C<$desired_slot> can be a numeric slot number or one of the symbolic names
-defined by the changer API, e.g., "next", "current", or "first".
+=head3 $chg->update(finished_cb => $cb, changed => $changed)
 
-  $tpchanger -slot $slot
+The user has changed something -- loading or unloading tapes, reconfiguring the
+changer, etc. -- that may have invalidated the database.
 
-=item find
+=head3 $chg->import(finished_cb => $cb, slots => $slots)
 
-  $chg->find($label, sub {
-    my ($error, $tpslot, $tpdevice) = @_;
-    # ...
-  });
+The user has placed volumes in the import/export slots, and would like the
+changer to place them in storage slots. This is a very changer-specific
+operation, and $slots should be supplied by the user for verbatim transmission
+to the changer, and may specify which import/export slots, for example, contain
+the new volumes.
 
-Search the changer for a tape with the given label, returning with
-C<$tpslot = "<none>"> if the given label is not found.
+=head3 $chg->import(finished_cb => $cb, slot => $slot)
 
-If the changer is searchable, this function calls
+=head3 $chg->export(finished_cb => $cb, label => $label)
 
-  $tpchanger -search $label
+Place the indicated volume (by $label, or in $slot) into an available
+import/export slot. This, too, is a very changer-specific operation.
 
-Otherwise it scans all slots in order, beginning with the current slot,
-until it finds one with a label equal to C<$label> or exhausts all
-slots.  Note that it is considered a fatal error if the label is not
-found.
+=head3 $chg->move(finished_cb => $cb, from_slot => $from, to_slot => $to)
 
-=item scan
+Move a volume between two slots in the changer. These slots are provided by the
+user, and have meaning for the changer.
 
-  my $each_slot_cb = sub {
-    my ($error, $slot, $device_name) = @_;
-    # ...
-  }
-  my $scan_done_cb = sub {
-    my ($error) = @_;
-    # ...
-  }
-  scan($each_slot_cb, $scan_done_cb);
+=head2 RESERVATION OBJECTS
 
-Call C<each_slot_cb> for all slots, beginning with the current slot, until
-C<each_slot_cb> returns a true value or all slots are exhausted.
-C<each_slot_cb> gets three arguments: an error value, a slot number, and a
-device name for that slot.  Note that the callback may be called again after a
-call with a non-empty $error.  When all slots are scanned, or the
-C<each_slot_cb> returns true, C<scan_done_cb> is called to indicate completion
-of the operation.
+=head3 $res->{'device_name'}
+
+This is the name of the device reserved by a reservation object.
+
+=head3 $res->{'next_slot'}
+
+This is the "next" slot after this one. It is an arbitrary string which will
+have some meaning to the changer's C<load()> method. It is safe to access this
+field after the reservation has been released (and, in changers with only one
+"drive", this is the only way you will get to the next volume!)
+
+=head3 $res->release(finished_cb => $cb, eject => $eject)
+
+This is how an Amanda application indicates that it no longer needs the
+reserved volume. The callback is called after any related operations are
+complete -- possibly immediately. Some drives and changers have a notion of
+"ejecting" a volume, and some don't. In particular, a manual changer can cause
+the tape drive to eject the tape, while a tape robot can move a tape back to
+storage, leaving the drive empty. If the eject parameter is given and true, it
+indicates that Amanda is done with the volume and has reason to believe the
+user is done with the volume, too -- for example, when a tape has been written
+completely.
+
+A reservation will be released automatically when the object is destroyed, but
+in this case no finished_cb is given, so the release operation may not complete
+before the process exists. Wherever possible, reservations should be explicitly
+released.
+
+=head3 $res->set_label(finished_cb => $cb, label => $label)
+
+This is how Amanda indicates to the changer that the volume in the device has
+been (re-)labeled. Changers can keep a database of volume labels by slot or by
+barcode, or just ignore this function and call $cb immediately. Note that the
+reservation must still be held when this function is called.
+
+=head1 SEE ALSO
+
+See the other changer packages, including:
+
+=over 2
+
+=item L<Amanda::Changer::Disk>
+
+=item L<Amanda::Changer::Compat>
 
 =back
 
+=head1 TODO
+
+ - support loading by barcode, showing barcodes in reservations
+ - support deadlock avoidance by returning more information in load errors
+ - Amanda::Changer::Single
+
 =cut
 
+# this is a "virtual" constructor which instantiates objects of different
+# classes based on its argument.  Subclasses should not try to chain up!
 sub new {
-    my $class = shift;
-    my ($tpchanger) = @_;
-    # extend the tape changer to a full path
-    if ($tpchanger !~ qr(^/)) {
-        $tpchanger = "$amlibexecdir/$tpchanger";
+    shift eq 'Amanda::Changer'
+	or die("Do not call the Amanda::Changer constructor from subclasses");
+    my ($name) = @_;
+    my ($uri, $cc);
+
+    # creating a named changer is a bit easier
+    if (defined($name)) {
+	# first, is it a changer alias?
+	if (($uri,$cc) = _changer_alias_to_uri($name)) {
+	    return _new_from_uri($uri, $cc, $name);
+	}
+
+	# maybe a straight-up changer URI?
+	if (_uri_to_pkgname($name)) {
+	    return _new_from_uri($name, undef, $name);
+	}
+
+	# assume it's a device name or alias, and invoke the single-changer
+	return _new_from_uri("chg-single:$name", undef, $name);
+    } else { # !defined($name)
+	if (getconf_seen($CNF_TPCHANGER)) {
+	    my $tpchanger = getconf($CNF_TPCHANGER);
+
+	    # first, is it an old changer script?
+	    if ($uri = _old_script_to_uri($tpchanger)) {
+		return _new_from_uri($uri, undef, $name);
+	    }
+
+	    # if not, then there had better be no tapdev
+	    if (getconf_seen($CNF_TAPEDEV)) {
+		die "Cannot specify both 'tapedev' and 'tpchanger' unless using an old-style changer script";
+	    }
+
+	    # maybe a changer alias?
+	    if (($uri,$cc) = _changer_alias_to_uri($tpchanger)) {
+		return _new_from_uri($uri, $cc, $name);
+	    }
+
+	    # maybe a straight-up changer URI?
+	    if (_uri_to_pkgname($tpchanger)) {
+		return _new_from_uri($tpchanger, undef, $name);
+	    }
+
+	    # assume it's a device name or alias, and invoke the single-changer
+	    return _new_from_uri("chg-single:$tpchanger", undef, $name);
+	} elsif (getconf_seen($CNF_TAPEDEV)) {
+	    my $tapedev = getconf($CNF_TAPEDEV);
+
+	    # first, is it a changer alias?
+	    if (($uri,$cc) = _changer_alias_to_uri($tapedev)) {
+		return _new_from_uri($uri, $cc, $name);
+	    }
+
+	    # maybe a straight-up changer URI?
+	    if (_uri_to_pkgname($tapedev)) {
+		return _new_from_uri($tapedev, undef, $name);
+	    }
+
+	    # assume it's a device name or alias, and invoke the single-changer
+	    return _new_from_uri("chg-single:$tapedev", undef, $name);
+	} else {
+	    die "Must specify one of 'tapedev' or 'tpchanger'";
+	}
+    }
+}
+
+# helper functions for new
+
+sub _changer_alias_to_uri {
+    my ($name) = @_;
+
+    my $cc = Amanda::Config::lookup_changer_config($name);
+    if ($cc) {
+	my $tpchanger = changer_config_getconf($cc, $CHANGER_CONFIG_TPCHANGER);
+	if (my $uri = _old_script_to_uri($tpchanger)) {
+	    return ($uri, $cc);
+	} elsif (_uri_to_pkgname($tpchanger)) {
+	    return ($tpchanger, $cc);
+	} else {
+	    die "Changer '$name' specifies invalid tpchanger '$tpchanger'";
+	}
     }
 
-    my $self = {
-	tpchanger => $tpchanger,
-	busy => 0,
-    };
-    bless ($self, $class);
-    return $self;
+    # not an alias
+    return;
+}
+
+sub _old_script_to_uri {
+    my ($name) = @_;
+
+    if ((-x "$amlibexecdir/$name") or (($name =~ qr{^/}) and (-x $name))) {
+	return "chg-compat:$name"
+    }
+
+    # not an old script
+    return;
+}
+
+# try to load the package for the given URI.  $@ is set properly
+# if this function returns a false value.
+sub _uri_to_pkgname {
+    my ($name) = @_;
+
+    my ($type) = ($name =~ /^chg-([A-Za-z_]+):/);
+    if (!defined $type) {
+	$@ = "'$name' is not a changer URI";
+	return 0;
+    }
+
+    $type =~ tr/A-Z-/a-z_/;
+
+    # create a package name to see if it's already imported
+    my $pkgname = "Amanda::Changer::$type";
+    my $filename = $pkgname;
+    $filename =~ s|::|/|g;
+    $filename .= '.pm';
+    return 1 if (grep { $_ eq $filename } @INC);
+
+    # try loading it
+    eval "use $pkgname;";
+    return 0 if ($@);
+
+    return $pkgname;
+}
+
+# already-instsantiated changer objects (using 'our' so that the installcheck
+# and reset this list as necessary)
+our %changers_by_uri_cc = ();
+
+sub _new_from_uri { # (note: this sub is patched by the installcheck)
+    my ($uri, $cc, $name) = @_;
+
+    # make up a key for our hash of already-instantiated objects,
+    # using a newline as a separator, since perl can't use tuples
+    # as keys
+    my $uri_cc = "$uri\n";
+    if (defined $cc) {
+	$uri_cc = $uri_cc . changer_config_name($cc);
+    }
+
+    # return a pre-existing changer, if possible
+
+    if (exists($changers_by_uri_cc{$uri_cc})) {
+	return $changers_by_uri_cc{$uri_cc};
+    }
+
+    # look up the type and load the class
+    my $pkgname = _uri_to_pkgname($uri);
+    if (!$pkgname) {
+	die $@;
+    }
+
+    my $rv = $pkgname->new($cc, $uri);
+    die "$pkgname->new did not return an Amanda::Changer object"
+	unless ($rv->isa("Amanda::Changer"));
+
+    # store this in our cache for next time
+    $changers_by_uri_cc{$uri_cc} = $rv;
+
+    return $rv;
+}
+
+# parent-class methods; mostly "unimplemented method"
+
+sub load {
+    my $self = shift;
+    my %params = @_;
+
+    my $class = ref($self);
+    $params{'res_cb'}->("$class does not support load()", undef);
 }
 
 sub reset {
     my $self = shift;
-    my ($cb) = @_;
+    my %params = @_;
 
-    $self->run_tpchanger(
-	sub { $cb->(0, $_[0]); },
-	mk_fail_cb($cb),
-	"-reset");
+    my $class = ref($self);
+    if (exists $params{'finished_cb'}) {
+	$params{'finished_cb'}->("$class does not support reset()");
+    }
 }
 
 sub clean {
     my $self = shift;
-    my ($cb) = @_;
+    my %params = @_;
 
-    $self->run_tpchanger(
-	sub { $cb->(0, $_[0]); },
-	mk_fail_cb($cb),
-	"-clean");
+    my $class = ref($self);
+    if (exists $params{'finished_cb'}) {
+	$params{'finished_cb'}->("$class does not support clean()");
+    }
 }
 
-sub eject {
+sub update {
     my $self = shift;
-    my ($cb) = @_;
+    my %params = @_;
 
-    $self->run_tpchanger(
-	sub { $cb->(0, $_[0]); },
-	mk_fail_cb($cb),
-	"-eject");
+    my $class = ref($self);
+    if (exists $params{'finished_cb'}) {
+	$params{'finished_cb'}->("$class does not support update()");
+    }
 }
 
-sub label {
+sub import {
     my $self = shift;
-    my ($label, $cb) = @_;
+    my %params = @_;
 
-    $self->run_tpchanger(
-	sub { $cb->(0); },
-	mk_fail_cb($cb),
-	"-label", $label);
+    my $class = ref($self);
+    if (exists $params{'finished_cb'}) {
+	$params{'finished_cb'}->("$class does not support import()");
+    }
 }
 
-sub query {
+sub export {
     my $self = shift;
-    my ($cb) = @_;
+    my %params = @_;
 
-    my $success_cb = sub {
-	my ($slot, $rest) = @_;
-	# old, unsearchable changers don't return the third result, so it's
-	# optional in the regex
-	$rest =~ /(\d+) (\d+) ?(\d+)?/ or 
-	    croak("Malformed response from changer -seek: $rest");
+    my $class = ref($self);
+    if (exists $params{'finished_cb'}) {
+	$params{'finished_cb'}->("$class does not support export()");
+    }
+}
 
-	# callback params: error, nslots, curslot, backwards, searchable
-	$cb->(0, $slot, $1, $2, $3?1:0);
+sub move {
+    my $self = shift;
+    my %params = @_;
+
+    my $class = ref($self);
+    if (exists $params{'finished_cb'}) {
+	$params{'finished_cb'}->("$class does not support move()");
+    }
+}
+
+package Amanda::Changer::Reservation;
+
+# this is a simple base class with stub method or two.
+
+sub new {
+    my $class = shift;
+    my $self = {
+	released => 0,
     };
-    $self->run_tpchanger($success_cb, mk_fail_cb($cb), "-info");
+    return bless ($self, $class)
 }
 
-sub loadslot {
-    my $self = shift;
-    my ($desired_slot, $cb) = @_;
-
-    $self->run_tpchanger(
-	sub { $cb->(0, @_); },
-	mk_fail_cb($cb), 
-	"-slot", $desired_slot);
-}
-
-sub find {
-    my $self = shift;
-    my ($label, $cb) = @_;
-
-    $self->query(sub {
-	my ($error, $curslot, $nslots, $backwards, $searchable) = @_;
-	if ($error) {
-	    $cb->($error);
-	    return;
-	}
-
-	if ($searchable) {
-	    # search using the barcode reader, etc.
-	    $self->run_tpchanger(
-		sub { $cb->(0, @_); },
-		mk_fail_cb($cb),
-		"-search", $label);
-	} else {
-	    # search manually, starting with "current".  This is complicated, because
-	    # it's an event-based loop.
-	    my $nchecked = 0;
-	    my $check_slot;
-
-	    $check_slot = sub {
-		my ($error, $slot, $devname) = @_;
-
-		TRYSLOT: {
-		    # ignore "benign" errors
-		    next TRYSLOT if $error;
-
-		    my $device = Amanda::Device->new($devname);
-		    next TRYSLOT unless ($device->status() == $DEVICE_STATUS_SUCCESS);
-		    next TRYSLOT unless ($device->read_label() == $DEVICE_STATUS_SUCCESS);
-		    my $volume_label = $device->volume_label();
-		    next TRYSLOT unless (defined $volume_label);
-		    next TRYSLOT unless ($volume_label eq $label);
-
-		    # we found the correct slot
-		    $cb->(0, $slot, $devname);
-		    return;
-		}
-
-		# on to the next slot
-		if (++$nchecked >= $nslots) {
-		    die("Label $label not found in any slot");
-		} else {
-		    # loop again with the next slot
-		    $self->loadslot("next", $check_slot);
-		}
-	    };
-	    # kick off the loop with the current slot
-	    $self->loadslot("current", $check_slot);
-	}
-    });
-}
-
-sub scan {
-    my $self = shift;
-    my ($each_slot_cb, $scan_done_cb) = @_;
-
-    $self->query(sub {
-	my ($error, $curslot, $nslots, $backwards, $searchable) = @_;
-	if ($error) {
-	    # callback with an error
-	    $scan_done_cb->($error);
-	    return;
-	}
-
-	# set up an event-based loop to call the user's callback for
-	# each slot
-	my $loadslot_cb;
-	my $nchecked = 0;
-
-	$loadslot_cb = sub {
-	    my ($error, $slot, $devname) = @_;
-	    my $each_result = $each_slot_cb->($error, $slot, $devname);
-
-	    if (!$each_result and ++$nchecked < $nslots) {
-		# loop again with the next slot
-		$self->loadslot("next", $loadslot_cb);
-	    } else {
-		# finished
-		$scan_done_cb->(0);
+sub DESTROY {
+    my ($self) = @_;
+    if (!$self->{'released'}) {
+	$self->release(finished_cb => sub {
+	    my ($err) = @_;
+	    if (defined $err) {
+		warn "While releasing reservation: $err";
 	    }
-	};
-	# kick off the loop with the current slot
-	$self->loadslot("current", $loadslot_cb);
-    });
-}
-
-# Internal-use function to create a failure sub that will croak on
-# a serious error and call the callback properly for benign errors
-sub mk_fail_cb {
-    my ($cb) = @_;
-    return sub {
-	my ($exitval, $message) = @_;
-	croak($message) if ($exitval > 1);
-	$cb->($message);
+	});
     }
 }
 
-# Internal-use function to actually invoke a changer script and parse 
-# its output.  
-#
-# @param $success_cb: called with ($slot, $rest) on success
-# @param $failure_cb: called with ($exitval, $message) on any failure
-# @params @args: command-line arguments to follow the name of the changer
-# @returns: array ($error, $slot, $rest), where $error is an error message if
-#       a benign error occurred, or 0 if no error occurred
-sub run_tpchanger {
+sub set_label {
     my $self = shift;
-    my $success_cb = shift;
-    my $failure_cb = shift;
-    my @args = @_;
+    my %params = @_;
 
-    if ($self->{'busy'}) {
-	croak("Changer is already in use");
+    # nothing to do: just call the finished callback
+    if (exists $params{'finished_cb'}) {
+	Amanda::MainLoop::call_later($params{'finished_cb'}, undef);
     }
+}
 
-    my ($readfd, $writefd) = POSIX::pipe();
-    if (!defined($writefd)) {
-	croak("Error creating pipe to run changer script: $!");
+sub release {
+    my $self = shift;
+    my %params = @_;
+
+    return if $self->{'released'};
+
+    $self->{'released'} = 1;
+    $self->do_release(%params);
+
+    if (exists $params{'finished_cb'}) {
+	Amanda::MainLoop::call_later($params{'finished_cb'}, undef);
     }
+}
 
-    my $pid = fork();
-    if (!defined($pid) or $pid < 0) {
-        croak("Can't fork to run changer script: $!");
-    }
-
-    if (!$pid) {
-        ## child
-
-	# get our file-handle house in order
-	POSIX::close($readfd);
-	POSIX::dup2($writefd, 1);
-	POSIX::close($writefd);
-
-        # cd into the config dir, if one exists
-        # TODO: construct a "fake" config dir including any "-o" overrides
-        my $config_dir = Amanda::Config::get_config_dir();
-        if ($config_dir) {
-            if (!chdir($config_dir)) {
-                print "<error> Could not chdir to '$config_dir'\n";
-                exit(2);
-            }
-        }
-
-        %ENV = Amanda::Util::safe_env();
-
-	my $tpchanger = $self->{'tpchanger'};
-        { exec { $tpchanger } $tpchanger, @args; } # braces protect against warning
-
-	my $err = "<error> Could not exec $tpchanger: $!\n";
-	POSIX::write($writefd, $err, length($err));
-        exit 2;
-    }
-
-    ## parent
-
-    # clean up file descriptors from the fork
-    POSIX::close($writefd);
-
-    # mark this object as "busy", so we can't begin another operation
-    # until this one is finished.
-    $self->{'busy'} = 1;
-
-    # the callbacks that follow share these lexical variables
-    my $child_eof = 0;
-    my $child_output = '';
-    my $child_dead = 0;
-    my $child_exit_status = 0;
-    my ($fdsrc, $cwsrc);
-    my ($maybe_finished, $fd_source_cb, $child_watch_source_cb);
-
-    # Perl note: we have to use anonymous subs here, as they are instantiated
-    # at runtime, rather than at compile time.
-
-    $maybe_finished = sub {
-	return unless $child_eof;
-	return unless $child_dead;
-
-	# everything is finished -- process the results and invoke the callback
-	chomp $child_output;
-
-	# handle fatal errors
-	if (!POSIX::WIFEXITED($child_exit_status) || POSIX::WEXITSTATUS($child_exit_status) > 1) {
-	    $failure_cb->(POSIX::WEXITSTATUS($child_exit_status),
-		"Fatal error from changer script: ".$child_output);
-	}
-
-	# parse the child's output
-	my @child_output = split '\n', $child_output;
-	$failure_cb->(2, "Malformed output from changer script -- no output")
-	    if (@child_output < 1);
-	$failure_cb->(2, "Malformed output from changer script -- too many lines")
-	    if (@child_output > 1);
-	$failure_cb->(2, "Malformed output from changer script: '$child_output[0]'")
-	    if ($child_output[0] !~ /\s*([^\s]+)(?:\s+(.+))?/);
-	my ($slot, $rest) = ($1, $2);
-
-	# mark this object as no longer busy.  This frees the
-	# object up to begin the next operation, which may happen
-	# during the invocation of the callback
-	$self->{'busy'} = 0;
-
-	# let the callback take care of any further interpretation
-	my $exitval = POSIX::WEXITSTATUS($child_exit_status);
-	if ($exitval == 0) {
-	    $success_cb->($slot, $rest);
-	} else {
-	    $failure_cb->($exitval, $rest);
-	}
-    };
-
-    $fd_source_cb = sub {
-	my ($fdsrc) = @_;
-	my ($len, $bytes);
-	$len = POSIX::read($readfd, $bytes, 1024);
-
-	# if we got an EOF, shut things down.
-	if ($len == 0) {
-	    $child_eof = 1;
-	    POSIX::close($readfd);
-	    $fdsrc->remove();
-	    $fdsrc = undef; # break a reference loop
-	    $maybe_finished->();
-	} else {
-	    # otherwise, just keep the bytes
-	    $child_output .= $bytes;
-	}
-    };
-    $fdsrc = Amanda::MainLoop::fd_source($readfd, $G_IO_IN | $G_IO_ERR | $G_IO_HUP);
-    $fdsrc->set_callback($fd_source_cb);
-
-    $child_watch_source_cb = sub {
-	my ($cwsrc, $got_pid, $got_status) = @_;
-	$cwsrc->remove();
-	$cwsrc = undef; # break a reference loop
-	$child_dead = 1;
-	$child_exit_status = $got_status;
-
-	$maybe_finished->();
-    };
-    $cwsrc = Amanda::MainLoop::child_watch_source($pid);
-    $cwsrc->set_callback($child_watch_source_cb);
+sub do_release {
+    # this is the one subclasses should override
 }
 
 1;

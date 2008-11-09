@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 108;
+use Test::More tests => 113;
 use strict;
 
 use lib "@amperldir@";
@@ -198,6 +198,12 @@ $testconf->add_device('my_device', [
   'comment' => '"my device is mine, not yours"',
   'tapedev' => '"tape:/dev/nst0"',
   'device_property' => '"BLOCK_SIZE" "128k"',
+]);
+$testconf->add_changer('my_changer', [
+  'comment' => '"my changer is mine, not yours"',
+  'tpchanger' => '"chg-foo"',
+  'changerdev' => '"/dev/sg0"',
+  'changerfile' => '"chg.state"',
 ]);
 
 $testconf->write();
@@ -451,6 +457,22 @@ SKIP: { # device
     is_deeply([ sort(getconf_list("device")) ],
 	      [ sort("my_device") ],
 	"getconf_list lists all devices");
+}
+
+SKIP: { # changer
+    skip "error loading config", 7 unless $cfg_result == $CFGERR_OK;
+    my $dc = lookup_changer_config("my_changer");
+    ok($dc, "found my_changer");
+    is(changer_config_name($dc), "my_changer",
+	"my_changer knows its name");
+    is(changer_config_getconf($dc, $CHANGER_CONFIG_COMMENT), 'my changer is mine, not yours',
+	"changer comment");
+    is(changer_config_getconf($dc, $CHANGER_CONFIG_CHANGERDEV), '/dev/sg0',
+	"changer tapedev");
+
+    is_deeply([ sort(getconf_list("changer")) ],
+	      [ sort("my_changer") ],
+	"getconf_list lists all changers");
 }
 
 ##

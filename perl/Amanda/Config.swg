@@ -208,7 +208,13 @@ with constants beginning with C<$APPLICATION_>
 
 with constants beginning with C<$PP_SCRIPT_>
 
-=item C<device>, with constants beginning with C<$DEVIE_CONFIG_>.
+=item C<device>
+
+with constants beginning with C<$DEVICE_CONFIG_>.
+
+=item C<changer>
+
+with constants beginning with C<$CHANGER_CONFIG_>.
 
 =back
 
@@ -434,6 +440,14 @@ amglue_add_constant(DEVICE_CONFIG_COMMENT, device_config_key);
 amglue_add_constant(DEVICE_CONFIG_TAPEDEV, device_config_key);
 amglue_add_constant(DEVICE_CONFIG_DEVICE_PROPERTY, device_config_key);
 amglue_copy_to_tag(device_config_key, getconf);
+
+amglue_add_enum_tag_fns(changer_config_key);
+amglue_add_constant(CHANGER_CONFIG_COMMENT, changer_config_key);
+amglue_add_constant(CHANGER_CONFIG_TAPEDEV, changer_config_key);
+amglue_add_constant(CHANGER_CONFIG_TPCHANGER, changer_config_key);
+amglue_add_constant(CHANGER_CONFIG_CHANGERDEV, changer_config_key);
+amglue_add_constant(CHANGER_CONFIG_CHANGERFILE, changer_config_key);
+amglue_copy_to_tag(changer_config_key, getconf);
 
 /*
  * Various enumerated conftypes
@@ -774,6 +788,15 @@ amglue_export_tag(getconf,
     device_config_seen device_config_seen
 );
 
+changer_config_t *lookup_changer_config(char *identifier);
+val_t *changer_config_getconf(changer_config_t *pps, changer_config_key key);
+char *changer_config_name(changer_config_t *pps);
+gboolean changer_config_seen(changer_config_t *app, changer_config_key key);
+amglue_export_tag(getconf,
+    lookup_changer_config changer_config_getconf changer_config_name
+    changer_config_seen changer_config_seen
+);
+
 %perlcode %{
 our %subsection_names = (
     "tapetype" => 1,
@@ -783,6 +806,7 @@ our %subsection_names = (
     "application-tool" => 1,
     "script-tool" => 1,
     "device" => 1,
+    "changer" => 1,
 );
 %}
 amglue_export_tag(getconf, %subsection_names);

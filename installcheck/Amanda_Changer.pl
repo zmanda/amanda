@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 20;
+use Test::More tests => 34;
 use File::Path;
 use strict;
 
@@ -35,10 +35,172 @@ Amanda::Debug::dbopen("installcheck");
 # and disable Debug's die() and warn() overrides
 Amanda::Debug::disable_die_override();
 
-# work against a basically empty config; Amanda::Changer uses the current config
+# --------
+# define a "test" changer for purposes of this installcheck
+
+package Amanda::Changer::test;
+use vars qw( @ISA );
+@ISA = qw( Amanda::Changer );
+
+# monkey-patch our test changer into Amanda::Changer, and indicate that
+# the module has already been required by adding a key to %INC
+$INC{'Amanda/Changer/test.pm'} = "Amanda_Changer";
+
+sub new {
+    my $class = shift;
+    my ($cc, $tpchanger) = @_;
+
+    my $self = {
+	curslot => 0,
+	slots => [ 'TAPE-00', 'TAPE-01', 'TAPE-02', 'TAPE-03' ],
+	reserved_slots => [],
+        clean => 0,
+    };
+    bless ($self, $class);
+    return $self;
+}
+
+sub load {
+    my $self = shift;
+    my %params = @_;
+
+    my $cb = $params{'res_cb'};
+
+    if (exists $params{'label'}) {
+	# search by label
+	my $slot = -1;
+	my $label = $params{'label'};
+
+	for my $i (0 .. $#{$self->{'slots'}}) {
+	    if ($self->{'slots'}->[$i] eq $label) {
+		$slot = $i;
+		last;
+	    }
+	}
+	if ($slot == -1) {
+	    $cb->("No such label '$label'", undef);
+	    return;
+	}
+
+	# check that it's not in use
+	for my $used_slot (@{$self->{'reserved_slots'}}) {
+	    if ($used_slot == $slot) {
+		$cb->("Volume with label '$label' is already in use", undef);
+		return;
+	    }
+	}
+
+	# ok, let's use it.
+	push @{$self->{'reserved_slots'}}, $slot;
+
+        if (exists $params{'set_current'} && $params{'set_current'}) {
+            $self->{'curslot'} = $slot;
+        }
+
+	$cb->(undef, Amanda::Changer::test::Reservation->new($self, $slot, $label));
+    } elsif (exists $params{'slot'}) {
+	my $slot = $params{'slot'};
+	$slot = $self->{'curslot'}
+	    if ($slot eq "current");
+
+	if (grep { $_ == $slot } @{$self->{'reserved_slots'}}) {
+	    $cb->("Slot $slot is already in use", undef);
+            return;
+	}
+        my $label = $self->{'slots'}->[$slot];
+        push @{$self->{'reserved_slots'}}, $slot;
+
+        if (exists $params{'set_current'} && $params{'set_current'}) {
+            $self->{'curslot'} = $slot;
+        }
+
+        $cb->(undef, Amanda::Changer::test::Reservation->new($self, $slot, $label));
+    } else {
+	die "No label or slot parameter given";
+    }
+}
+
+sub reset {
+    my $self = shift;
+    my %params = @_;
+
+    $self->{'curslot'} = 0;
+
+    if (exists $params{'finished_cb'}) {
+	Amanda::MainLoop::call_later($params{'finished_cb'}, undef);
+    }
+}
+
+sub clean {
+    my $self = shift;
+    my %params = @_;
+
+    $self->{'clean'} = 1;
+
+    if (exists $params{'finished_cb'}) {
+	Amanda::MainLoop::call_later($params{'finished_cb'}, undef);
+    }
+}
+
+
+package Amanda::Changer::test::Reservation;
+use vars qw( @ISA );
+@ISA = qw( Amanda::Changer::Reservation );
+
+sub new {
+    my $class = shift;
+    my ($chg, $slot, $label) = @_;
+    my $self = Amanda::Changer::Reservation::new($class);
+
+    $self->{'chg'} = $chg;
+    $self->{'slot'} = $slot;
+    $self->{'label'} = $label;
+
+    $self->{'device_name'} = "test:slot-$slot";
+    $self->{'next_slot'} = ($slot + 1) % (scalar @{$chg->{'slots'}});
+
+    return $self;
+}
+
+sub release {
+    my $self = shift;
+    my %params = @_;
+    my $slot = $self->{'slot'};
+    my $chg = $self->{'chg'};
+
+    $chg->{'reserved_slots'} = [ grep { $_ != $slot } @{$chg->{'reserved_slots'}} ];
+
+    if (exists $params{'finished_cb'}) {
+	Amanda::MainLoop::call_later($params{'finished_cb'}, undef);
+    }
+}
+
+sub set_label {
+    my $self = shift;
+    my %params = @_;
+    my $slot = $self->{'slot'};
+    my $chg = $self->{'chg'};
+
+    $self->{'chg'}->{'slots'}->[$self->{'slot'}] = $params{'label'};
+    $self->{'label'} = $params{'label'};
+
+    if (exists $params{'finished_cb'}) {
+	Amanda::MainLoop::call_later($params{'finished_cb'}, undef);
+    }
+}
+
+# --------
+# back to the perl tests..
+
+package main;
+
+# work against a config specifying our test changer, to work out the kinks
 # when it opens devices to check their labels
 my $testconf;
 $testconf = Installcheck::Config->new();
+$testconf->add_changer("mychanger", [
+    'tpchanger' => '"chg-test:/foo"',
+]);
 $testconf->write();
 
 my $cfg_result = config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');
@@ -47,242 +209,274 @@ if ($cfg_result != $CFGERR_OK) {
     die(join "\n", @errors);
 }
 
-my $changer_filename = "$AMANDA_TMPDIR/chg-test";
+# test loading by label
 
-sub setup_changer {
-    my ($changer_script) = @_;
+my $chg = Amanda::Changer->new("mychanger");
+{
+    my @labels = ( 'TAPE-02', 'TAPE-00', 'TAPE-03' );
+    my @reservations = ();
+    my $getres;
 
-    open my $chg_test, ">", $changer_filename or die("Could not create test changer");
-    
-    $changer_script =~ s/\$AMANDA_TMPDIR/$AMANDA_TMPDIR/g;
+    $getres = sub {
+	my $label = pop @labels;
 
-    print $chg_test "#! /bin/sh\n";
-    print $chg_test $changer_script;
+	$chg->load(label => $label,
+                   set_current => ($label eq "TAPE-02"),
+		   res_cb => sub {
+	    my ($err, $reservation) = @_;
+	    ok(!$err, "no error loading $label")
+		or diag($err);
 
-    close $chg_test;
-    chmod 0755, $changer_filename;
-}
+	    # keep this reservation
+	    if ($reservation) {
+		push @reservations, $reservation;
+	    }
 
-# OK, let's get started with some simple stuff
-setup_changer <<'EOC';
-case "${1}" in
-    -slot)
-        case "${2}" in
-            1) echo "1 fake:1"; exit 0;;
-            2) echo "<ignored> slot 2 is empty"; exit 1;;
-            3) echo "1"; exit 0;; # test missing 'device' portion
-        esac;;
-    -reset) echo "reset ignored";;
-    -eject) echo "eject ignored";;
-    -clean) echo "clean ignored";;
-    -label)
-        case "${2}" in
-            foo?bar) echo "1 ok"; exit 0;;
-            *) echo "<error> bad label"; exit 1;;
-        esac;;
-    -info) echo "7 10 1 1"; exit 0;;
-    -search) 
-        case "${2}" in
-            TAPE?01) echo "5 fakedev"; exit 0;;
-            *) echo "<error> not found"; exit 2;;
-        esac;;
-esac
-EOC
+	    # and start on the next
+	    if (@labels) {
+		$getres->();
+		return;
+	    } else {
+		# try to load an already-reserved volume
+		$chg->load(label => 'TAPE-00',
+			   res_cb => sub {
+		    my ($err, $reservation) = @_;
+		    ok($err, "error when requesting already-reserved volume");
+		    Amanda::MainLoop::quit();
+		});
+	    }
+	});
+    };
 
-my $chg = Amanda::Changer->new($changer_filename);
+    # start the loop
+    Amanda::MainLoop::call_later($getres);
+    Amanda::MainLoop::run();
 
-# a callback that just stores a ref to its arguments in $result.
-my $result;
-sub keep_result_cb { 
-    $result = [ @_ ]; 
-    Amanda::MainLoop::quit();
-}
+    # ditch the reservations and do it all again
+    @reservations = ();
+    @labels = ( 'TAPE-00', 'TAPE-01' );
+    is_deeply($chg->{'reserved_slots'}, [],
+	"reservations are released when the Reservation object goes out of scope");
+    Amanda::MainLoop::call_later($getres);
+    Amanda::MainLoop::run();
 
-$chg->loadslot(1, \&keep_result_cb);
-Amanda::MainLoop::run();
-is_deeply($result, [0, "1", "fake:1"],
-    "A successful loadslot() returns the right stuff");
-
-$chg->loadslot(2, \&keep_result_cb);
-Amanda::MainLoop::run();
-is($result->[0], "slot 2 is empty",
-    "A loadslot() with a benign error returns the right stuff");
-
-$chg->loadslot(3, \&keep_result_cb);
-Amanda::MainLoop::run();
-is_deeply($result, [0, "1", undef],
-    "a response without a device string returns undef");
-
-$chg->reset(\&keep_result_cb);
-Amanda::MainLoop::run();
-is_deeply($result, [ 0, "reset" ],
-    "reset() calls tapechanger -reset");
-
-$chg->eject(\&keep_result_cb);
-Amanda::MainLoop::run();
-is_deeply($result, [ 0, "eject" ],
-    "eject() calls tapechanger -eject");
-
-$chg->clean(\&keep_result_cb);
-Amanda::MainLoop::run();
-is_deeply($result, [ 0, "clean" ],
-    "clean() calls tapechanger -clean");
-
-$chg->label("foo bar", \&keep_result_cb);
-Amanda::MainLoop::run();
-is_deeply($result, [ 0 ],
-    "label('foo bar') calls tapechanger -label 'foo bar' (note spaces)");
-
-$chg->query(\&keep_result_cb);
-Amanda::MainLoop::run();
-is_deeply($result, [ 0, 7, 10, 1, 1 ],
-    "query() returns the correct values for a 4-value changer script");
-
-$chg->find("TAPE 01", \&keep_result_cb);
-Amanda::MainLoop::run();
-is_deeply($result, [ 0, "5", "fakedev" ],
-    "find on a searchable changer invokes -search");
-
-# TODO
-#eval { Amanda::Changer::find("TAPE 02") };
-#ok($@, "A searchable changer croaks when the label can't be found");
-
-# Now a simple changer that returns three values for -info
-setup_changer <<'EOC';
-case "${1}" in
-    -info) echo "11 13 0"; exit 0;;
-esac
-EOC
-
-$chg->query(\&keep_result_cb);
-Amanda::MainLoop::run();
-is_deeply($result, [ 0, 11, 13, 0, 0 ],
-    "query() returns the correct values for a 4-value changer script");
-
-# set up 5 vtapes
-for (my $i = 0; $i < 5; $i++) {
-    my $vtapedir = "$AMANDA_TMPDIR/chg-test-tapes/$i/data";
-    if (-e $vtapedir) {
-        rmtree($vtapedir) 
-            or die("Could not remove '$vtapedir'");
+    # explicitly release the reservations (without using the callback)
+    for my $res (@reservations) {
+        $res->release();
     }
-    mkpath($vtapedir)
-        or die("Could not create '$vtapedir'");
 }
 
-# label three of them (slot 2 is empty; slot 4 is unlabeled)
-for (my $i = 0; $i < 5; $i++) {
-    next if $i == 2 || $i == 4;
-    my $dev = Amanda::Device->new("file:$AMANDA_TMPDIR/chg-test-tapes/$i")
-        or die("Could not open device");
-    $dev->start($Amanda::Device::ACCESS_WRITE, "TAPE$i", "19780615010203") 
-        or die("Could not write label");
-    $dev->finish();
+# test loading by slot
+{
+    my ($start, $first_cb, $second_cb);
+
+    # reserves the current slot
+    $start = sub {
+        $chg->load(res_cb => $first_cb, slot => "current");
+    };
+
+    # gets a reservation for the "current" slot
+    $first_cb = sub {
+        my ($err, $res) = @_;
+        die $err if $err;
+
+        is($res->{'device_name'}, "test:slot-2",
+            "'current' slot loads slot 2");
+        is($res->{'next_slot'}, 3,
+            "..and the next slot is slot 3");
+        $chg->load(res_cb => $second_cb, slot => $res->{'next_slot'}, set_current => 1);
+    };
+
+    # gets a reservation for the "next" slot
+    $second_cb = sub {
+        my ($err, $res) = @_;
+        die $err if $err;
+
+        is($res->{'device_name'}, "test:slot-3",
+            "next slot loads slot 3");
+        is($chg->{'curslot'}, 3,
+            "..which is also now the current slot");
+        is($res->{'next_slot'}, 0,
+            "..and the next slot is slot 0");
+
+        Amanda::MainLoop::quit();
+    };
+
+    Amanda::MainLoop::call_later($start);
+    Amanda::MainLoop::run();
 }
 
-# And finally a "stateful" changer that can support "scan" and "find"
-setup_changer <<'EOC';
-STATEFILE="$AMANDA_TMPDIR/chg-test-state"
-SLOT=0
-[ -f "$STATEFILE" ] && . "$STATEFILE"
+# test set_label
+{
+    my ($start, $load1_cb, $set_cb, $load2_cb, $load3_cb);
 
-case "${1}" in
-    -slot)
-        case "${2}" in
-            current) ;;
-            0|1|2|3|4|5) SLOT="${2}";;
-            next|advance) SLOT=`expr $SLOT + 1`;;
-            prev) SLOT=`expr $SLOT - 1`;;
-            first) SLOT=0;;
-            last) SLOT=4;;
-        esac
+    # load TAPE-00
+    $start = sub {
+        $chg->load(res_cb => $load1_cb, label => "TAPE-00");
+    };
 
-        # normalize 0 <= $SLOT  < 5
-        while [ "$SLOT" -ge 5 ]; do SLOT=`expr $SLOT - 5`; done
-        while [ "$SLOT" -lt 0 ]; do SLOT=`expr $SLOT + 5`; done
+    # rename it to TAPE-99
+    $load1_cb = sub {
+        my ($err, $res) = @_;
+        die $err if $err;
 
-        # signal an empty slot for slot 2
-        if [ "$SLOT" = 2 ]; then
-            echo "$SLOT slot $SLOT is empty"
-            EXIT=1
-        else
-            echo "$SLOT" "file:$AMANDA_TMPDIR/chg-test-tapes/$SLOT"
-        fi
-        ;;
-    -info) echo "$SLOT 5 1 0";;
-esac
+        pass("loaded TAPE-00");
+        $res->set_label(label => "TAPE-99", finished_cb => $set_cb);
+        $res->release();
+    };
 
-echo SLOT=$SLOT > $STATEFILE
-exit $EXIT
-EOC
+    # try to load TAPE-00
+    $set_cb = sub {
+        my ($err) = @_;
+        die $err if $err;
 
+        pass("relabeled TAPE-00 to TAPE-99");
+        $chg->load(res_cb => $load2_cb, label => "TAPE-00");
+    };
 
-$chg->loadslot(0, sub {
-    my ($error, $slot, $device) = @_;
-    die("Error loading slot 0: $error") if $error;
-    $chg->find("TAPE3", \&keep_result_cb);
-});
-Amanda::MainLoop::run();
-is_deeply($result, [0, "3", "file:$AMANDA_TMPDIR/chg-test-tapes/3"],
-    "Finds a tape after skipping an empty slot");
+    # try to load TAPE-99
+    $load2_cb = sub {
+        my ($err, $res) = @_;
 
-$chg->loadslot(3, sub {
-    my ($error, $slot, $device) = @_;
-    die("Error loading slot 3: $error") if $error;
-    $chg->find("TAPE1", \&keep_result_cb);
-});
-Amanda::MainLoop::run();
-is_deeply($result, [0, "1", "file:$AMANDA_TMPDIR/chg-test-tapes/1"],
-    "Finds a tape after skipping an unlabeled but filled slot");
+        ok($err, "loading TAPE-00 is now an error");
+        $chg->load(res_cb => $load3_cb, label => "TAPE-99");
+    };
 
-my @scanresults;
-my $scan_cb;
+    # check result
+    $load3_cb = sub {
+        my ($err, $res) = @_;
+        die $err if $err;
 
-# scan the whole changer
-@scanresults = (
-    [ 0,            "0", "file:$AMANDA_TMPDIR/chg-test-tapes/0", 0, "scan starts with slot 0" ],
-    [ 0,            "1", "file:$AMANDA_TMPDIR/chg-test-tapes/1", 0, "next in slot 1" ],
-    [ "slot 2 is empty", undef, undef,                           0, "slot 2 is empty" ],
-    [ 0,            "3", "file:$AMANDA_TMPDIR/chg-test-tapes/3", 0, "next in slot 3" ],
-    [ 0,            "4", "file:$AMANDA_TMPDIR/chg-test-tapes/4", 0, "next in slot 4" ],
-);
+        pass("but loading TAPE-99 is ok");
 
-$scan_cb = sub {
-    die("Callback called too many times") if (!@scanresults);
-    my $expected = shift @scanresults;
-    my $descr = pop @$expected;
-    my $done = pop @$expected;
-    is_deeply([ @_ ], $expected, $descr);
-    return $done;
-};
+        Amanda::MainLoop::quit();
+    };
 
-my $scan_done_cb = sub {
-    my ($error) = @_;
-    die ($error) if ($error);
-    is_deeply([ @scanresults ], [], "scan_done_cb called when scan is done");
-    Amanda::MainLoop::quit();
-};
+    Amanda::MainLoop::call_later($start);
+    Amanda::MainLoop::run();
+}
 
-$chg->loadslot(0, sub {
-    my ($error, $slot, $device) = @_;
-    die("Error loading slot 0: $error") if $error;
-    $chg->scan($scan_cb, $scan_done_cb);
-});
-Amanda::MainLoop::run();
+# test reset and clean
+{
+    my ($do_reset, $do_clean);
 
-# make sure the scan stops when $scan_cb returns 1
+    $do_reset = sub {
+        $chg->reset(finished_cb => sub {
+            is($chg->{'curslot'}, 0,
+                "reset() resets to slot 0");
+            $do_clean->();
+        });
+    };
 
-@scanresults = (
-    [ 0, "0", "file:$AMANDA_TMPDIR/chg-test-tapes/0", 1, "scan starts with slot 0" ],
-);
-$chg->loadslot(0, sub {
-    my ($error, $slot, $device) = @_;
-    die("Error loading slot 0: $error") if $error;
-    $chg->scan($scan_cb, $scan_done_cb);
-});
-Amanda::MainLoop::run();
+    $do_clean = sub {
+        $chg->clean(finished_cb => sub {
+            ok($chg->{'clean'}, "clean 'cleaned' the changer");
+            Amanda::MainLoop::quit();
+        });
+    };
 
-# cleanup
-unlink("$AMANDA_TMPDIR/chg-test");
-unlink("$AMANDA_TMPDIR/chg-test-state");
-rmtree("$AMANDA_TMPDIR/chg-test-tapes");
+    Amanda::MainLoop::call_later($do_reset);
+    Amanda::MainLoop::run();
+}
+
+# Test the various permutations of configuration setup, with a patched
+# _new_from_uri so we can monitor the result
+sub my_new_from_uri {
+    my ($uri, $cc, $name) = @_;
+    return [ $uri, $cc? "cc" : undef ];
+}
+*saved_new_from_uri = *Amanda::Changer::_new_from_uri;
+*Amanda::Changer::_new_from_uri = *my_new_from_uri;
+
+sub loadconfig {
+    my ($global_tapedev, $global_tpchanger, $defn_tpchanger) = @_;
+
+    $testconf = Installcheck::Config->new();
+
+    if (defined($global_tapedev)) {
+	$testconf->add_param('tapedev', "\"$global_tapedev\"")
+    }
+
+    if (defined($global_tpchanger)) {
+	$testconf->add_param('tpchanger', "\"$global_tpchanger\"")
+    }
+
+    if (defined($defn_tpchanger)) {
+	$testconf->add_changer("mychanger", [
+	    'tpchanger' => "\"$defn_tpchanger\"",
+	]);
+    }
+
+    $testconf->write();
+
+    my $cfg_result = config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');
+    if ($cfg_result != $CFGERR_OK) {
+	my ($level, @errors) = Amanda::Config::config_errors();
+	die(join "\n", @errors);
+    }
+}
+
+sub assert_invalid {
+    my ($global_tapedev, $global_tpchanger, $defn_tpchanger, $name, $msg) = @_;
+    loadconfig($global_tapedev, $global_tpchanger, $defn_tpchanger);
+    eval { Amanda::Changer->new($name); };
+    ok($@, $msg);
+}
+
+assert_invalid(undef, undef, undef, undef,
+    "supplying a nothing is invalid");
+
+loadconfig(undef, "file:/foo", undef);
+is_deeply( Amanda::Changer->new(), [ "chg-single:file:/foo", undef ],
+    "default changer with global tpchanger naming a device");
+
+loadconfig(undef, "chg-disk:/foo", undef);
+is_deeply( Amanda::Changer->new(), [ "chg-disk:/foo", undef ],
+    "default changer with global tpchanger naming a changer");
+
+loadconfig(undef, "mychanger", "chg-disk:/bar");
+is_deeply( Amanda::Changer->new(), [ "chg-disk:/bar", "cc" ],
+    "default changer with global tpchanger naming a defined changer with a uri");
+
+loadconfig(undef, "mychanger", "chg-zd-mtx");
+is_deeply( Amanda::Changer->new(), [ "chg-compat:chg-zd-mtx", "cc" ],
+    "default changer with global tpchanger naming a defined changer with a compat script");
+
+loadconfig(undef, "chg-zd-mtx", undef);
+is_deeply( Amanda::Changer->new(), [ "chg-compat:chg-zd-mtx", undef ],
+    "default changer with global tpchanger naming a compat script");
+
+loadconfig("tape:/dev/foo", undef, undef);
+is_deeply( Amanda::Changer->new(), [ "chg-single:tape:/dev/foo", undef ],
+    "default changer with global tapedev naming a device and no tpchanger");
+
+assert_invalid("tape:/dev/foo", "tape:/dev/foo", undef, undef,
+    "supplying a device for both tpchanger and tapedev is invalid");
+
+assert_invalid("tape:/dev/foo", "chg-disk:/foo", undef, undef,
+    "supplying a device for tapedev and a changer for tpchanger is invalid");
+
+loadconfig("tape:/dev/foo", 'chg-zd-mtx', undef);
+is_deeply( Amanda::Changer->new(), [ "chg-compat:chg-zd-mtx", undef ],
+    "default changer with global tapedev naming a device and a global tpchanger naming a compat script");
+
+assert_invalid("chg-disk:/foo", "tape:/dev/foo", undef, undef,
+    "supplying a changer for tapedev and a device for tpchanger is invalid");
+
+loadconfig("chg-disk:/foo", undef, undef);
+is_deeply( Amanda::Changer->new(), [ "chg-disk:/foo", undef ],
+    "default changer with global tapedev naming a device");
+
+loadconfig("mychanger", undef, "chg-disk:/bar");
+is_deeply( Amanda::Changer->new(), [ "chg-disk:/bar", "cc" ],
+    "default changer with global tapedev naming a defined changer with a uri");
+
+loadconfig("mychanger", undef, "chg-zd-mtx");
+is_deeply( Amanda::Changer->new(), [ "chg-compat:chg-zd-mtx", "cc" ],
+    "default changer with global tapedev naming a defined changer with a compat script");
+
+loadconfig(undef, undef, "chg-disk:/foo");
+is_deeply( Amanda::Changer->new("mychanger"), [ "chg-disk:/foo", "cc" ],
+    "named changer loads the proper definition");
+
+*Amanda::Changer::_new_from_uri = *saved_new_from_uri;
