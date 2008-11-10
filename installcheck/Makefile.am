@@ -33,6 +33,7 @@ server_tests = \
 full_tests = \
 	amdevcheck \
 	amcheckdump \
+	amfetchdump \
 	amdump \
 	amservice \
 	amstatus

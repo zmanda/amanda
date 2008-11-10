@@ -199,7 +199,6 @@ sub db_param {
 	print Amanda::Debug::dbfn(), "\n";
     } elsif (($appname, $filename) = $parameter =~ /^dbclose\.([^:]*):(.*)/) {
 	fail("debug file $filename does not exist") unless (-f $filename);
-	Amanda::Util::setup_application($appname, "server", $CONTEXT_CMDLINE);
 	Amanda::Debug::dbreopen($filename, '');
 	Amanda::Debug::dbclose();
 	print "$filename\n";

@@ -1,3 +1,11 @@
+2008-11-10  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Installcheck/Run.pm: add Expect support
+	* installcheck/Makefile.am installcheck/amfetchdump.pl: amfetchdump
+	  installcheck, using Expect support
+
+2008-11-10  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/amgetconf.pl: don't setup_application() in dbclose
+
 2008-11-10  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Makefile.am: Build Amanda::Application only if WANT_CLIENT.
 

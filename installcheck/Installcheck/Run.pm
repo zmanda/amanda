@@ -37,6 +37,15 @@ Installcheck::Run - utilities to set up and run amanda dumps and restores
   # framework will clean up if your tests crash
   Installcheck::Run::cleanup();
 
+  SKIP: {
+    skip "Expect.pm not installed", 7
+	unless $Installcheck::Run::have_expect;
+
+    my $exp = Installcheck::Run::run_expect('amflush', 'TESTCONF');
+    $exp->expect(..);
+    # ..
+  }
+
 =head1 USAGE
 
 High-level tests generally depend on a full-scale run of Amanda --
@@ -104,6 +113,15 @@ The C<installcheck-test> dumptype specifies
 
 but of course, it can be modified by the test module.
 
+=head2 INTERACTIVE APPLICATIONS
+
+This package provides a rudimentary wrapper around C<Expect.pm>, which is not
+typically included in a perl installation.  Consult C<$have_expect> to see if
+this module is installed, and skip any Expect-based tests if it is not.
+
+Otherwise, C<run_expect> takes arguments just like C<run>, but returns an Expect
+object which you can use as you would like.
+
 =cut
 
 use Installcheck::Config;
@@ -120,10 +138,25 @@ require Exporter;
     run run_get run_err
     cleanup 
     $diskname $stdout $stderr);
+@EXPORT = qw(exp_continue exp_continue_timeout);
 
 # global variables
 our $stdout = '';
 our $stderr = '';
+
+our $have_expect;
+
+BEGIN {
+    eval "use Expect;";
+    if ($@) {
+	$have_expect = 0;
+	sub ignore() { };
+	*exp_continue = *ignore;
+	*exp_continue_timeout = *ignore;
+    } else {
+	$have_expect = 1;
+    }
+};
 
 # diskname is common-src, which, when full of object files, is about 7M in
 # my environment.  Consider creating a directory full of a configurable amount
@@ -287,6 +320,17 @@ sub cleanup {
     if (-d $holdingdir) {
 	rmtree($holdingdir);
     }
+}
+
+sub run_expect {
+    my $app = shift;
+    my @args = @_;
+
+    die "Expect.pm not found" unless $have_expect;
+
+    my $exp = Expect->new("$sbindir/$app", @args);
+
+    return $exp;
 }
 
 1;
