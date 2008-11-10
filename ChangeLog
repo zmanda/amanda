@@ -1,3 +1,6 @@
+2008-11-10  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Makefile.am: Build Amanda::Application only if WANT_CLIENT.
+
 2008-11-08  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Changer.pm perl/Amanda/Changer/compat.pm
 	  perl/Amanda/Changer/disk.pm perl/Amanda/Changer/single.pm

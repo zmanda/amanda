@@ -322,6 +322,7 @@ Amanda_DATA += Amanda/Script_App.pm
 EXTRA_DIST += Amanda/Script_App.pm
 DISTCLEANFILES += Amanda/Script_App.pm
 
+if WANT_CLIENT
 # PACKAGE: Amanda::Application
 libApplicationdir = $(amperldir)/auto/Amanda/Application
 libApplication_LTLIBRARIES = libApplication.la
@@ -330,8 +331,9 @@ libApplication_la_LDFLAGS = $(PERL_EXT_LDFLAGS)
 libApplication_la_LIBADD = libamglue.la \
 	$(top_builddir)/client-src/libamclient.la
 Amanda_DATA += Amanda/Application.pm
-EXTRA_DIST += Amanda/Application.swg Amanda/Application.pm
 MAINTAINERCLEANFILES += Amanda/Application.c Amanda/Application.pm
+endif
+EXTRA_DIST += Amanda/Application.swg Amanda/Application.pm
 
 # PACKAGE: Amanda::Script
 Amanda_DATA += Amanda/Script.pm
