@@ -24,6 +24,11 @@ libamar_la_LIBADD = ../common-src/libamanda.la
 noinst_HEADERS = \
 	amar.h
 
+sbin_PROGRAMS = amarchiver
+
+amarchiver_SOURCES = amarchiver.c
+amarchiver_LDADD = libamar.la
+
 # automake-style tests
 
 TESTS = amar-test

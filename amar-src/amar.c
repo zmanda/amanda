@@ -265,7 +265,7 @@ amar_close(
 amar_file_t *
 amar_new_file(
     amar_t *archive,
-    char *filename,
+    char *filename_buf,
     gsize filename_len,
     off_t *header_offset,
     GError **error)
@@ -273,11 +273,12 @@ amar_new_file(
     amar_file_t *file = NULL;
 
     g_assert(archive->mode == O_WRONLY);
-    g_assert(filename != NULL && *filename != '\0');
+    g_assert(filename_buf != NULL);
 
     /* set filename_len if it wasn't specified */
     if (!filename_len)
-	filename_len = strlen(filename);
+	filename_len = strlen(filename_buf);
+    g_assert(filename_len != 0);
 
     if (filename_len > MAX_RECORD_DATA_SIZE) {
 	g_set_error(error, amar_error_quark(), ENOSPC,
@@ -325,7 +326,7 @@ amar_new_file(
 
     /* add a filename record */
     if (!write_record(archive, file->filenum, AMAR_ATTR_FILENAME,
-		      1, filename, filename_len, error))
+		      1, filename_buf, filename_len, error))
 	goto error_exit;
 
     return file;
@@ -720,7 +721,7 @@ finish_file(
     fs->attr_states = NULL;
 
     if (hp->file_finish_cb && !fs->ignore)
-	success = success && hp->file_finish_cb(hp->user_data, fs->filenum, fs->file_data, truncated);
+	success = success && hp->file_finish_cb(hp->user_data, fs->filenum, &fs->file_data, truncated);
 
     amfree(fs);
     return success;

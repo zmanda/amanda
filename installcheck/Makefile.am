@@ -12,7 +12,8 @@ common_tests = \
 	Amanda_Debug \
 	Amanda_MainLoop \
 	Amanda_Types \
-	Amanda_Util
+	Amanda_Util \
+	amarchiver
 
 server_tests = \
 	Amanda_Changer \

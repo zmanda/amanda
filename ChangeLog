@@ -1,4 +1,10 @@
 2008-11-10  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Archive.swg amar-src/amar.c amar-src/amar.h: bugfixes
+	* man/Makefile.am man/xml-source/amarchiver.8.xml
+	  amar-src/Makefile.am amar-src/amarchiver.c: new application
+	* installcheck/Makefile.am installcheck/amarchiver.pl: tests
+
+2008-11-10  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Installcheck/Run.pm: add Expect support
 	* installcheck/Makefile.am installcheck/amfetchdump.pl: amfetchdump
 	  installcheck, using Expect support

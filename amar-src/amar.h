@@ -66,21 +66,21 @@ gboolean amar_close(amar_t *archive, GError **error);
 
 /* create a new 'file' object on the archive.  The filename is treated as a
  * binary blob, but if filename_len is zero, then its length will be calculated
- * with strlen().  A zero-length filename is not allowed.
+ * with strlen().  A zero-length filename_buf is not allowed.
  *
  * Note that a header record will only be written if header_offset is non-NULL,
  * as this represents a location to which a reader could seek.
  *
  * @param archive: the archive containing this file
- * @param filename: filename to include in the file
- * @param filename_len: length of the filename, or 0 to calculate
+ * @param filename_buf: filename to include in the file
+ * @param filename_len: length of the filename_buf, or 0 to calculate
  * @param header_offset (output): offset of the header record preceding
  *	this file; pass NULL to ignore.
  * @returns: NULL on error, otherwise a file object
  */
 amar_file_t *amar_new_file(
 	    amar_t *archive,
-	    char *filename,
+	    char *filename_buf,
 	    gsize filename_len,
 	    off_t *header_offset,
 	    GError **error);
@@ -201,7 +201,7 @@ typedef struct amar_attr_handling_s {
  *
  * @param user_data: the pointer passed to amar_read
  * @param filenum: the file number for this record
- * @param filename: the filename of this file
+ * @param filename_buf: the filename of this file
  * @param filename_len: the length of the filename
  * @param ignore (output): if set to TRUE, ignore all attributes for this file.
  * @param file_data (output): space to store file-specific data
@@ -210,7 +210,7 @@ typedef struct amar_attr_handling_s {
 typedef gboolean (*amar_file_start_callback_t)(
 	gpointer user_data,
 	uint16_t filenum,
-	gpointer filename,
+	gpointer filename_buf,
 	gsize filename_len,
 	gboolean *ignore,
 	gpointer *file_data);
