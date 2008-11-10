@@ -16,15 +16,14 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 11;
+use Test::More tests => 9;
 
 use lib "@amperldir@";
 use Installcheck::Config;
-use Installcheck::Run qw(run run_get run_err);
+use Installcheck::Run qw(run run_get run_err $diskname);
 use Amanda::Paths;
 
 my $testconf;
-my $dumpok;
 
 ##
 # First, try amgetconf out without a config
@@ -43,6 +42,7 @@ like(run_err('amcheckdump', 'this-probably-doesnt-exist'), qr(could not open con
 $testconf = Installcheck::Run::setup();
 $testconf->add_param('label_new_tapes', '"TESTCONF%%"');
 $testconf->add_param('usetimestamps', 'no');
+$testconf->add_dle("localhost $diskname installcheck-test");
 $testconf->write();
 
 ok(run('amcheckdump', 'TESTCONF'),
@@ -50,23 +50,17 @@ ok(run('amcheckdump', 'TESTCONF'),
 like($Installcheck::Run::stdout, qr(could not find)i,
      "..but finds no dumps.");
 
-ok($dumpok = run('amdump', 'TESTCONF'), "a dump runs successfully without usetimestamps");
+BAIL_OUT()
+    unless run('amdump', 'TESTCONF');
 
-SKIP: {
-    skip "Dump failed", 1 unless $dumpok;
-    like(run_get('amcheckdump', 'TESTCONF'), qr(Validating),
-	"amcheckdump succeeds, claims to validate something (usetimestamps=no)");
-}
+like(run_get('amcheckdump', 'TESTCONF'), qr(Validating),
+    "amcheckdump succeeds, claims to validate something (usetimestamps=no)");
 
 ##
 # and check command-line handling
 
-SKIP: {
-    skip "Dump failed", 1 unless $dumpok;
-
-    like(run_get('amcheckdump', 'TESTCONF', '-oorg=installcheck'), qr(Validating),
-	"amcheckdump accepts '-o' options on the command line");
-}
+like(run_get('amcheckdump', 'TESTCONF', '-oorg=installcheck'), qr(Validating),
+    "amcheckdump accepts '-o' options on the command line");
 
 ##
 # And a config with usetimestamps enabled
@@ -74,36 +68,31 @@ SKIP: {
 $testconf = Installcheck::Run::setup();
 $testconf->add_param('label_new_tapes', '"TESTCONF%%"');
 $testconf->add_param('usetimestamps', 'yes');
+$testconf->add_dle("localhost $diskname installcheck-test");
 $testconf->write();
 
-ok($dumpok = run('amdump', 'TESTCONF'), "a dump runs successfully with usetimestamps");
+BAIL_OUT()
+    unless run('amdump', 'TESTCONF');
 
-SKIP: {
-    skip "Dump failed", 1 unless $dumpok;
-    like(run_get('amcheckdump', 'TESTCONF'), qr(Validating),
-	"amcheckdump succeeds, claims to validate something (usetimestamps=yes)");
-}
+like(run_get('amcheckdump', 'TESTCONF'), qr(Validating),
+    "amcheckdump succeeds, claims to validate something (usetimestamps=yes)");
 
 ##
 # now try zeroing out the dumps
 
-SKIP: {
-    skip "Dump failed", 1 unless $dumpok;
+my $vtape1 = Installcheck::Run::vtape_dir(1);
+opendir(my $vtape_dir, $vtape1) || die "can't opendir $vtape1: $!";
+@dump1 = grep { /^0+1/ } readdir($vtape_dir);
+closedir $vtape_dir;
 
-    my $vtape1 = Installcheck::Run::vtape_dir(1);
-    opendir(my $vtape_dir, $vtape1) || die "can't opendir $vtape1: $!";
-    @dump1 = grep { /^0+1/ } readdir($vtape_dir);
-    closedir $vtape_dir;
-
-    for my $dumpfile (@dump1) {
-	open(my $dumpfh, "+<", "$vtape1/$dumpfile");
-	sysseek($dumpfh, 32768, 0); # jump past the header
-	syswrite($dumpfh, "\0" x 100); # and write some zeroes
-	close($dumpfh);
-    }
-
-    ok(!run('amcheckdump', 'TESTCONF'),
-	"amcheckdump detects a failure from a zeroed-out dumpfile");
+for my $dumpfile (@dump1) {
+    open(my $dumpfh, "+<", "$vtape1/$dumpfile");
+    sysseek($dumpfh, 32768, 0); # jump past the header
+    syswrite($dumpfh, "\0" x 100); # and write some zeroes
+    close($dumpfh);
 }
+
+ok(!run('amcheckdump', 'TESTCONF'),
+    "amcheckdump detects a failure from a zeroed-out dumpfile");
 
 Installcheck::Run::cleanup();

@@ -103,8 +103,10 @@ holding disk, with a chunksize of 1M (to help exercise the chunker).
 
 =head2 DISKLIST
 
-The disklist has a single entry:
-  localhost /path/to/build/common-src installcheck-test
+The disklist is empty by default.  Use something like the following
+to add an entry:
+
+  $testconf->add_dle("localhost $diskname installcheck-test");
 
 The C<installcheck-test> dumptype specifies
   auth "local"
@@ -158,11 +160,11 @@ BEGIN {
     }
 };
 
-# diskname is common-src, which, when full of object files, is about 7M in
+# diskname is device-src, which, when full of object files, is about 4M in
 # my environment.  Consider creating a directory full of a configurable amount
 # of junk and pointing to that, to eliminate a potential point of variation in
 # tests.
-our $diskname = abs_path(getcwd() . "/../common-src");
+our $diskname = abs_path(getcwd() . "/../device-src");
 
 # common paths
 my $taperoot = "$AMANDA_TMPDIR/installcheck-vtapes";
@@ -223,8 +225,6 @@ sub setup_holding {
 sub setup_disklist {
     my ($testconf) = @_;
     
-    $testconf->add_dle("localhost $diskname installcheck-test");
-
     $testconf->add_dumptype("installcheck-test", [
 	'auth' => '"local"',
 	'compress' => 'none',

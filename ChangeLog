@@ -1,4 +1,10 @@
 2008-11-10  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Installcheck/Run.pm: change default DLEs
+	* installcheck/amcheckdump.pl: add DLE explicitly
+	* installcheck/amdevcheck.pl: add DLE explicitly
+	* installcheck/amdump.pl: use the amgtar application in a dump
+
+2008-11-10  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Makefile.am: only test amfetchdump if it was built
 	* installcheck/amfetchdump.pl: use arguments in the right order
 

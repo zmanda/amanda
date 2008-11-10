@@ -16,11 +16,11 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 11;
+use Test::More tests => 10;
 
 use lib "@amperldir@";
 use Installcheck::Config;
-use Installcheck::Run qw(run run_get run_err);
+use Installcheck::Run qw(run run_get run_err $diskname);
 use Amanda::Paths;
 
 my $testconf;
@@ -56,6 +56,7 @@ is_deeply([ sort split "\n", $Installcheck::Run::stdout],
 # this is re-created for each test
 $testconf = Installcheck::Run::setup();
 $testconf->add_param('label_new_tapes', '"TESTCONF%%"');
+$testconf->add_dle("localhost $diskname installcheck-test");
 $testconf->write();
 
 ok(run('amdevcheck', 'TESTCONF'), "run succeeds with an unlabeled tape");
@@ -68,12 +69,12 @@ ok(run('amdevcheck', 'TESTCONF', "/dev/null"),
 is_deeply([ sort split "\n", $Installcheck::Run::stdout],
 	  [ sort "MESSAGE File /dev/null is not a tape device", "DEVICE_ERROR"],
     ".. and produce a corresponding error message");
-ok(my $dumpok = run('amdump', 'TESTCONF'), "a dump runs successfully");
 
-SKIP: {
-    skip "Dump failed", 1 unless $dumpok;
-    is_deeply([ sort split "\n", run_get('amdevcheck', 'TESTCONF') ],
-	      [ sort "SUCCESS" ],
-	"used vtape described as SUCCESS");
-}
+BAIL_OUT()
+    unless run('amdump', 'TESTCONF');
+
+is_deeply([ sort split "\n", run_get('amdevcheck', 'TESTCONF') ],
+	  [ sort "SUCCESS" ],
+    "used vtape described as SUCCESS");
+
 Installcheck::Run::cleanup();
