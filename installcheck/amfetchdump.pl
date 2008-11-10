@@ -92,7 +92,7 @@ SKIP: {
 {
     cleandir();
 
-    ok(run('amfetchdump', 'TESTCONF', '-a', 'localhost'),
+    ok(run('amfetchdump', '-a', 'TESTCONF', 'localhost'),
 	"run with -a successful");
 
     my @filenames = <localhost.*>;
@@ -107,8 +107,7 @@ SKIP: {
     cleandir();
     chdir($AMANDA_TMPDIR);
 
-    my $exp = Installcheck::Run::run_expect('amfetchdump', 'TESTCONF',
-	'-O', $testdir, 'localhost');
+    my $exp = Installcheck::Run::run_expect('amfetchdump', '-O', $testdir, 'TESTCONF', 'localhost');
     $exp->log_stdout(0);
 
     my @results;

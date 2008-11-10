@@ -34,10 +34,12 @@ server_tests = \
 full_tests = \
 	amdevcheck \
 	amcheckdump \
-	amfetchdump \
 	amdump \
 	amservice \
 	amstatus
+
+restore_tests = \
+	amfetchdump
 
 # tests requiring neither client nor server
 tests = $(common_tests)
@@ -51,6 +53,15 @@ endif
 if WANT_SERVER
 if WANT_CLIENT
 tests += $(full_tests)
+endif
+endif
+
+# tests requiring a client and a server AND restore facilities (any tests that run amdump)
+if WANT_SERVER
+if WANT_CLIENT
+if WANT_RESTORE
+tests += $(restore_tests)
+endif
 endif
 endif
 

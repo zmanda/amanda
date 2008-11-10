@@ -1,4 +1,8 @@
 2008-11-10  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Makefile.am: only test amfetchdump if it was built
+	* installcheck/amfetchdump.pl: use arguments in the right order
+
+2008-11-10  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Archive.swg amar-src/amar.c amar-src/amar.h: bugfixes
 	* man/Makefile.am man/xml-source/amarchiver.8.xml
 	  amar-src/Makefile.am amar-src/amarchiver.c: new application
