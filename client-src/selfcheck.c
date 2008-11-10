@@ -734,7 +734,12 @@ check_disk(
 	}
 	fflush(stdout);fflush(stderr);
 
-	pipe(app_err);	
+	if (pipe(app_err) < 0) {
+	    err = vstrallocf(_("Application '%s': can't create pipe"),
+			     dle->program);
+	    goto common_exit;
+	}
+
 	switch (application_api_pid = fork()) {
 	case -1:
 	    err = vstrallocf(_("fork failed: %s"), strerror(errno));

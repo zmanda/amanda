@@ -1,3 +1,7 @@
+2008-11-10  Jean-Louis Martineau <martineau@zmanda.com>
+	* client-src/sendbackup.c, client-src/selfcheck.c: Check return
+							   value of pipe.
+
 2008-11-10  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Installcheck/Run.pm: change default DLEs
 	* installcheck/amcheckdump.pl: add DLE explicitly

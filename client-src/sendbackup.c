@@ -549,7 +549,19 @@ main(
 	    return 0;
 	}
 
-	pipe(errfd);
+	if (pipe(errfd) < 0) {
+	    char  *errmsg;
+	    char  *qerrmsg;
+	    errmsg = vstrallocf(_("Application '%s': can't create pipe"),
+				    dle->program);
+	    qerrmsg = quote_string(errmsg);
+	    fdprintf(mesgfd, _("sendbackup: error [%s]\n"), errmsg);
+	    dbprintf(_("ERROR %s\n"), qerrmsg);
+	    amfree(qerrmsg);
+	    amfree(errmsg);
+	    return 0;
+	}
+
 	switch(application_api_pid=fork()) {
 	case 0:
 	    cmd = vstralloc(APPLICATION_DIR, "/", dle->program, NULL);
