@@ -1,4 +1,8 @@
 2008-11-11  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Makefile.am: Don't add Amanda/Script_App.pm and Amanda/Script.pm
+			    to DISTCLEANFILES.
+
+2008-11-11  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/amdump.pl: Set property "ATIME-PRESERVE" to "NO" in
 				  amgtar application.
 
