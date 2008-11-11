@@ -65,7 +65,7 @@ ok(run('amarchiver', '--create', '--verbose', '--file', $archfile,
 	"$sbindir/amarchiver", "$sbindir/amgetconf"),
     "archive creation with --verbose succeeds");
 like($Installcheck::Run::stdout,
-    qr{^$sbindir/amarchiver\n$sbindir/amgetconf$},
+    qr{^\Q$sbindir\E/amarchiver\n\Q$sbindir\E/amgetconf$},
     "..and output is correct");
 
 ok(run('amarchiver', '--create', '--verbose', $archfile),
@@ -79,7 +79,7 @@ ok(run('amarchiver', '--create', '--verbose', '--verbose', '--file', $archfile,
 	"$sbindir/amarchiver", "$sbindir/amgetconf", "test.tmp-1"),
     "archive creation with two --verbose args succeeds");
 like($Installcheck::Run::stdout,
-    qr{^[[:digit:]]+ $sbindir/amarchiver\n[[:digit:]]+ $sbindir/amgetconf\n2000 test.tmp-1$},
+    qr{^[[:digit:]]+ \Q$sbindir\E/amarchiver\n[[:digit:]]+ \Q$sbindir\E/amgetconf\n2000 test.tmp-1$},
     "..and output is correct");
 
 # test listing archives

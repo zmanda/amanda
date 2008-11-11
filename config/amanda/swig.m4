@@ -17,6 +17,11 @@ AC_DEFUN([AMANDA_SETUP_SWIG],
     # If we want cygwin to copy ddl to modules directory.
     WANT_CYGWIN_COPY_PERL_DLL="false"
 
+    # test for ExtUtils::Embed
+    AC_PERL_MODULE_VERSION([ExtUtils::Embed 0.0], [], [
+	AC_MSG_ERROR([*** Amanda requires the perl package ExtUtils::Embed to build its perl modules])
+    ])
+
     # get the include path for building perl extensions
     PERL_INC=`$PERL -MExtUtils::Embed -e perl_inc`
     AC_SUBST(PERL_INC)
