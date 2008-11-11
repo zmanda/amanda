@@ -4,6 +4,10 @@
 	  undetected instead of at all times
 
 2008-11-11  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Makefile.am installcheck/amfetchdump.pl: build all
+	  active test scripts; add a DLE in the amfetchdump installcheck
+
+2008-11-11  Dustin J. Mitchell <dustin@zmanda.com>
 	* config/macro-archive/ac_perl_module_version.m4: new macro
 	* config/amanda/swig.m4: check for ExtUtils::Embed
 
