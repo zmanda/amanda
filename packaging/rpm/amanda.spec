@@ -72,6 +72,11 @@
                 %{!?PKG_CONFIG_PATH: %define PKG_CONFIG_PATH /usr/lib/pkgconfig}
         %endif
     %endif
+    %if %(awk '$1 == "Fedora" && $3 ~ /9.*/ { exit 1; }' /etc/redhat-release; echo $?)
+        %define dist fedora
+        %define disttag fc
+        %define distver 9
+    %endif
     %if %(awk '$1 == "Red" && $7 ~ /3.*/ { exit 1; }' /etc/redhat-release; echo $?)
         %define dist redhat
         %define disttag rhel
@@ -101,8 +106,8 @@
         %define distver 5
     %endif
     
-    # If we get here, we didn't detect.
-    %define dist unknown
+    # If dist is undefined, we didn't detect.
+    %{!?dist:%define dist unknown}
 %endif
 # Detect Suse variants.  Suse gives us some nice macros in their rpms
 %if %{_vendor} == "suse"
@@ -122,8 +127,8 @@
         %define distver 10
     %endif
    
-    # If we get here, we didn't detect.
-    %define dist unknown
+    # If dist is undefined, we didn't detect.
+    %{!?dist:%define dist unknown}
 %endif
 
 # Set options per distribution
@@ -183,6 +188,9 @@ BuildRequires: curl >= 7.10.0
 BuildRequires: curl-devel >= 7.10.0
 BuildRequires: openssl
 BuildRequires: openssl-devel
+%if %{dist} == fedora && %{distver} == 9
+BuildRequires: perl(ExtUtils::Embed)
+%endif
 Requires: /bin/awk
 Requires: /bin/date
 Requires: /usr/bin/id
@@ -222,7 +230,7 @@ Requires: libc.so.6
 Requires: libm.so.6
 Requires: libnsl.so.1
 Requires: perl >= 5.6.0
-Requires: tar >= 1.15
+Requires: tar >= %{tarver}
 Provides: amanda-backup_client = %{amanda_version}
 Provides: libamclient-%{version}.so = %{amanda_version}
 Provides: libamanda-%{version}.so = %{amanda_version}
