@@ -100,7 +100,7 @@ do_create(char *opt_file, int opt_verbose, int argc, char **argv)
 	if (opt_verbose == 1) {
 	    g_fprintf(output,"%s\n", argv[i]);
 	} else if (opt_verbose > 1) {
-	    g_fprintf(output,"%lu %s\n", filesize, argv[i]);
+	    g_fprintf(output,"%llu %s\n", (unsigned long long)filesize, argv[i]);
 	}
 	close(fd_in);
 	i++;
