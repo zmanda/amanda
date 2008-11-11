@@ -1,3 +1,6 @@
+2008-11-11  Dustin J. Mitchell <dustin@zmanda.com>
+	* changer-src/chg-manual.sh: fix typo
+
 2008-11-11 Dan Locks <dwlocks@zmanda.com>
 	* packaging/rpm/amanda.spec: add fedora 9 detection, add
 	  BuildRequires: perl(ExtUtils::Embed), fix %{dist}=unknown when

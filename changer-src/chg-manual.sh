@@ -149,7 +149,7 @@ request_email() {
 
 request_tty_email() {
 	if > /dev/tty; then
-		reques_tty "$1"
+		request_tty "$1"
 	else
 		request_email "$1"
 	fi
