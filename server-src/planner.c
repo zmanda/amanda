@@ -1850,6 +1850,9 @@ static void handle_result(
 		skip_quoted_line(s, ch);
 		continue;
 	    }
+	    t = index(t,'\n');
+	    if (t) /* truncate after the first line */
+		 *t = '\0';
 	    errbuf = vstralloc(hostp->hostname,
 				   (pkt->type == P_NAK) ? "NAK " : "",
 				   ": ",

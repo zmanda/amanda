@@ -621,7 +621,8 @@ check_disk(
 	    while ((wpid = wait(&retstat)) != -1) {
 		if (!WIFEXITED(retstat) || WEXITSTATUS(retstat) != 0) {
 		    char *exitstr = str_exit_status("smbclient", retstat);
-		    err = newvstralloc(err, err, sep, exitstr);
+		    strappend(err, sep);
+		    strappend(err, exitstr);
 		    sep = "\n";
 		    amfree(exitstr);
 

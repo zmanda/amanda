@@ -47,6 +47,7 @@
 
 #define	REP_TIMEOUT	(6*60*60)	/* secs for service to reply */
 #define	ACK_TIMEOUT  	10		/* XXX should be configurable */
+#define STDERR_PIPE (DATA_FD_COUNT + 1)
 
 #define amandad_debug(i, ...) do {	\
 	if ((i) <= debug_amandad) {	\
@@ -73,12 +74,13 @@ static const char info_end_str[] = "sendbackup: info end\n";
 
 /* 
  * Here are the services that we allow.
+ * Must be in the same order as services[].
  */
 typedef enum {
     SERVICE_NOOP,
-    SERVICE_SELFCHECK,
     SERVICE_SENDSIZE,
     SERVICE_SENDBACKUP,
+    SERVICE_SELFCHECK,
     SERVICE_AMINDEXD,
     SERVICE_AMIDXTAPED
 } service_t;
@@ -115,9 +117,12 @@ struct active_service {
     int send_partial_reply;		/* send PREP packet */
     int reqfd;				/* pipe to write requests */
     int repfd;				/* pipe to read replies */
+    int errfd;				/* pipe to read stderr */
     event_handle_t *ev_repfd;		/* read event handle for repfd */
     event_handle_t *ev_reptimeout;	/* timeout for rep data */
+    event_handle_t *ev_errfd;		/* read event handle for errfd */
     pkt_t rep_pkt;			/* rep packet we're sending out */
+    char *errbuf;			/* buffer to read the err into */
     char *repbuf;			/* buffer to read the rep into */
     size_t bufsize;			/* length of repbuf */
     size_t repbufsize;			/* length of repbuf */
@@ -170,6 +175,7 @@ static action_t s_sendrep(struct active_service *, action_t, pkt_t *);
 static action_t s_ackwait(struct active_service *, action_t, pkt_t *);
 
 static void repfd_recv(void *);
+static void errfd_recv(void *);
 static void timeout_repfd(void *);
 static void protocol_recv(void *, pkt_t *, security_status_t);
 static void process_readnetfd(void *);
@@ -805,6 +811,8 @@ s_sendack(
     as->ev_repfd = event_register((event_id_t)as->repfd, EV_READFD, repfd_recv, as);
     as->ev_reptimeout = event_register(REP_TIMEOUT, EV_TIME,
 	timeout_repfd, as);
+    as->errbuf = NULL;
+    as->ev_errfd = event_register((event_id_t)as->errfd, EV_READFD, errfd_recv, as);
     security_recvpkt(as->security_handle, protocol_recv, as, -1);
     return (A_PENDING);
 }
@@ -887,6 +895,11 @@ s_repwait(
 	    sleep(1);
 	    t++;
 	    pid = waitpid(as->pid, &retstat, WNOHANG);
+	}
+
+	/* Process errfd before sending the REP packet */
+	if (as->ev_errfd) {
+	    errfd_recv(as);
 	}
 
 	if (pid > 0) {
@@ -1189,6 +1202,79 @@ repfd_recv(
 }
 
 /*
+ * Called when a errfd has received data
+ */
+static void
+errfd_recv(
+    void *	cookie)
+{
+    struct active_service *as = cookie;
+    char  buf[32769];
+    int   n;
+    char *r;
+
+    assert(as != NULL);
+    assert(as->ev_errfd != NULL);
+
+    n = read(as->errfd, &buf, 32768);
+    /* merge buffer */
+    if (n > 0) {
+	/* Terminate it with '\0' */
+	buf[n+1] = '\0';
+
+	if (as->errbuf) {
+	    as->errbuf = vstrextend(&as->errbuf, buf, NULL);
+	} else {
+	    as->errbuf = stralloc(buf);
+	}
+    } else if (n == 0) {
+	event_release(as->ev_errfd);
+	as->ev_errfd = NULL;
+    } else { /* n < 0 */
+	event_release(as->ev_errfd);
+	as->ev_errfd = NULL;
+	g_snprintf(buf, 32768,
+		   "error reading stderr or service: %s\n", strerror(errno));
+    }
+
+    /* for each line terminate by '\n' */
+    while (as->errbuf != NULL  && (r = index(as->errbuf, '\n')) != NULL) {
+	char *s;
+
+	*r = '\0';
+	s = vstrallocf("ERROR service %s: %s\n",
+		       services[as->service].name, as->errbuf);
+
+	/* Add to repbuf, error message will be in the REP packet if it
+	 * is not already sent
+	 */
+	n = strlen(s);
+	if (as->bufsize == 0) {
+	    as->bufsize = NETWORK_BLOCK_BYTES;
+	    as->repbuf = alloc(as->bufsize);
+	}
+	while (as->bufsize < as->repbufsize + n) {
+	    char *repbuf_temp;
+	    as->bufsize *= 2;
+	    repbuf_temp = alloc(as->bufsize);
+	    memcpy(repbuf_temp, as->repbuf, as->repbufsize + 1);
+	    amfree(as->repbuf);
+	    as->repbuf = repbuf_temp;
+	}
+	memcpy(as->repbuf + as->repbufsize, s, n);
+	as->repbufsize += n;
+
+	dbprintf("%s", s);
+
+	/* remove first line from buffer */
+	r++;
+	s = stralloc(r);
+	amfree(as->errbuf);
+	as->errbuf = s;
+    }
+}
+
+/*
  * Called when a repfd has timed out
  */
 static void
@@ -1402,8 +1488,8 @@ service_new(
     const char *	arguments)
 {
     int i;
-    int data_read[DATA_FD_COUNT + 1][2];
-    int data_write[DATA_FD_COUNT + 1][2];
+    int data_read[DATA_FD_COUNT + 2][2];
+    int data_write[DATA_FD_COUNT + 2][2];
     struct active_service *as;
     pid_t pid;
     int newfd;
@@ -1413,6 +1499,13 @@ service_new(
     assert(arguments != NULL);
 
     /* a plethora of pipes */
+    /* data_read[0]                : stdin
+     * data_write[0]               : stdout
+     * data_read[1], data_write[1] : first  stream
+     * data_read[2], data_write[2] : second stream
+     * data_read[3], data_write[3] : third stream
+     * data_write[4]               : stderr
+     */
     for (i = 0; i < DATA_FD_COUNT + 1; i++) {
 	if (pipe(data_read[i]) < 0) {
 	    error(_("pipe: %s\n"), strerror(errno));
@@ -1422,6 +1515,10 @@ service_new(
 	    error(_("pipe: %s\n"), strerror(errno));
 	    /*NOTREACHED*/
 	}
+    }
+    if (pipe(data_write[STDERR_PIPE]) < 0) {
+	error(_("pipe: %s\n"), strerror(errno));
+	/*NOTREACHED*/
     }
 
     switch(pid = fork()) {
@@ -1474,6 +1571,14 @@ service_new(
 	as->bufsize = 0;
 	as->repretry = 0;
 	as->rep_pkt.body = NULL;
+
+	/*
+	 * read from the stderr pipe
+	 */
+	as->errfd = data_write[STDERR_PIPE][0];
+	aclose(data_write[STDERR_PIPE][1]);
+	as->ev_errfd = NULL;
+	as->errbuf = NULL;
 
 	/*
 	 * read from the rest of the general-use pipes
@@ -1571,7 +1676,9 @@ service_new(
 
 	/* close all unneeded fd */
 	close(STDERR_FILENO);
-	debug_dup_stderr_to_debug();
+	dup2(data_write[STDERR_PIPE][1], 2);
+        aclose(data_write[STDERR_PIPE][0]);
+        aclose(data_write[STDERR_PIPE][1]);
 	safe_fd(DATA_FD_OFFSET, DATA_FD_COUNT*2);
 
 	execle(cmd, cmd, "amandad", auth, (char *)NULL, safe_env());

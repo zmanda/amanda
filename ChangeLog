@@ -1,3 +1,8 @@
+2008-11-11  Jean-Louis Martineau <martineau@zmanda.com>
+	* client-src/selfcheck.c: fix.
+	* amandad-src/amandad.c: Read stderr of server and report it to server.
+	* server-src/planner.c: Keep first line only.
+
 2008-11-10  Dustin J. Mitchell <dustin@zmanda.com>
 	* amar-src/amarchiver.c: fix filesize printf conversion
 
