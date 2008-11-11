@@ -899,7 +899,17 @@ s_repwait(
 
 	/* Process errfd before sending the REP packet */
 	if (as->ev_errfd) {
-	    errfd_recv(as);
+	    SELECT_ARG_TYPE readset;
+	    struct timeval  tv;
+	    int             nfound;
+
+	    memset(&tv, 0, SIZEOF(tv));
+	    FD_ZERO(&readset);
+	    FD_SET(as->errfd, &readset);
+	    nfound = select(as->errfd+1, &readset, NULL, NULL, &tv);
+	    if (nfound && FD_ISSET(as->errfd, &readset)) {
+		errfd_recv(as);
+	    }
 	}
 
 	if (pid > 0) {

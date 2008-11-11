@@ -1,3 +1,7 @@
+2008-11-11  Jean-Louis Martineau <martineau@zmanda.com>
+	* amandad-src/amandad.c: Check that something is ready to be read
+				 before calling errfd_recv.
+
 2008-11-11  Dustin J. Mitchell <dustin@zmanda.com>
 	* changer-src/chg-manual.sh: fix typo
 
