@@ -177,18 +177,16 @@ operation.</para></listitem>
 
 <para>Here's a simple case, restoring all known dumps of the host
 vanya to the current working directory.</para>
-<!-- .RS -->
-<literallayout remap='.nf'>
+<programlisting>
 $ amfetchdump SetA vanya
-</literallayout> <!-- .fi -->
+</programlisting>
 
 <para>A more likely scenario involves restoring a particular dump from
 a particular date. We'll pipe this one to &gnutar; as well, to
 automatically extract the dump.</para>
-<!-- .RS -->
-<literallayout remap='.nf'>
+<programlisting>
 $ amfetchdump -p SetA vanya /home 20051020 | gtar -xvpf -
-</literallayout> <!-- .fi -->
+</programlisting>
 
 </refsect1>
 
