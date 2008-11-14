@@ -1,3 +1,8 @@
+2008-11-14  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/s3-device.c: eliminate an extra buffer copy in the
+	  common case where the caller supplies a large enough buffer
+	* device-src/s3.h: tweak a comment
+
 2008-11-14  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/holding.h: Improve comment.
 	* server-src/reporter.c: Print holding disk size in displyaunit.

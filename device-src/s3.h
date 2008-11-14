@@ -342,8 +342,8 @@ s3_list_keys(S3Handle *hdl,
               const char *delimiter,
               GSList **list);
 
-/* Read an entire file.  The buffer returned is the responsibility of the caller.  A
- * buffer is only returned if no error occurred, and will be NULL otherwise.
+/* Read an entire file, passing the contents to write_func buffer
+ * by buffer.
  *
  * @param hdl: the S3Handle object
  * @param bucket: the bucket to read from

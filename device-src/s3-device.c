@@ -1295,11 +1295,51 @@ s3_device_seek_block(Device *pself, guint64 block) {
     return TRUE;
 }
 
+typedef struct s3_read_block_data {
+    gpointer data;
+    int size_req;
+    int size_written;
+
+    CurlBuffer curl;
+} s3_read_block_data;
+
+/* wrapper around s3_buffer_write_func to write as much data as possible to
+ * the user's buffer, and switch to a dynamically allocated buffer if that
+ * isn't large enough */
+static size_t
+s3_read_block_write_func(void *ptr, size_t size, size_t nmemb, void *stream)
+{
+    s3_read_block_data *dat = stream;
+    guint new_bytes, bytes_needed;
+
+    /* if data is NULL, call through to s3_buffer_write_func */
+    if (!dat->data) {
+	return s3_buffer_write_func(ptr, size, nmemb, (void *)(&dat->curl));
+    }
+
+    new_bytes = (guint) size * nmemb;
+    bytes_needed = dat->size_written + new_bytes;
+
+    if (bytes_needed > (guint)dat->size_written) {
+	/* this read will overflow the user's buffer, so malloc ourselves
+	 * a new buffer and keep reading */
+	dat->curl.buffer = g_malloc(bytes_needed);
+	dat->curl.buffer_len = bytes_needed;
+	dat->curl.buffer_pos = dat->size_written;
+	memcpy(dat->curl.buffer, dat->data, dat->size_written);
+	dat->data = NULL; /* signal that the user's buffer is too small */
+	return s3_buffer_write_func(ptr, size, nmemb, (void *)(&dat->curl));
+    }
+
+    memcpy(dat->data + dat->size_written, ptr, bytes_needed);
+    return new_bytes;
+}
+
 static int
 s3_device_read_block (Device * pself, gpointer data, int *size_req) {
     S3Device * self = S3_DEVICE(pself);
     char *key;
-    CurlBuffer buf = {NULL, 0, 0, S3_DEVICE_MAX_BLOCK_SIZE};
+    s3_read_block_data dat = {NULL, 0, 0, { NULL, 0, 0, S3_DEVICE_MAX_BLOCK_SIZE} };
     gboolean result;
 
     g_assert (self != NULL);
@@ -1309,75 +1349,86 @@ s3_device_read_block (Device * pself, gpointer data, int *size_req) {
     key = file_and_block_to_key(self, pself->file, pself->block);
     g_assert(key != NULL);
     if (self->cached_key && (0 == strcmp(key, self->cached_key))) {
-        /* use the cached copy and clear the cache */
-        buf.buffer = self->cached_buf;
-        buf.buffer_pos = self->cached_size;
-        buf.buffer_len = self->cached_size;
+	if (*size_req >= self->cached_size) {
+	    /* use the cached copy and clear the cache */
+	    memcpy(data, self->cached_buf, self->cached_size);
+	    *size_req = self->cached_size;
 
-        self->cached_buf = NULL;
-        g_free(self->cached_key);
-        self->cached_key = NULL;
+	    g_free(key);
+	    g_free(self->cached_key);
+	    self->cached_key = NULL;
+	    g_free(self->cached_buf);
+	    self->cached_buf = NULL;
+
+	    pself->block++;
+	    return *size_req;
+	} else {
+	    *size_req = self->cached_size;
+	    g_free(key);
+	    return 0;
+	}
+    }
+
+    /* clear the cache, as it's useless to us */
+    if (self->cached_key) {
+	g_free(self->cached_key);
+	self->cached_key = NULL;
+
+	g_free(self->cached_buf);
+	self->cached_buf = NULL;
+    }
+
+    /* set up dat for the write_func callback */
+    if (!data || *size_req <= 0) {
+	dat.data = NULL;
+	dat.size_req = 0;
     } else {
-        /* clear the cache and actually download the file */
-        if (self->cached_buf) {
-            g_free(self->cached_buf);
-            self->cached_buf = NULL;
-        }
-        if (self->cached_key) {
-            g_free(self->cached_key);
-            self->cached_key = NULL;
-        }
+	dat.data = data;
+	dat.size_req = *size_req;
+    }
 
-        result = s3_read(self->s3, self->bucket, key, s3_buffer_write_func, &buf, NULL, NULL);
-        if (!result) {
-            guint response_code;
-            s3_error_code_t s3_error_code;
-            s3_error(self->s3, NULL, &response_code, &s3_error_code, NULL, NULL, NULL);
+    result = s3_read(self->s3, self->bucket, key, s3_read_block_write_func, &dat, NULL, NULL);
+    if (!result) {
+	guint response_code;
+	s3_error_code_t s3_error_code;
+	s3_error(self->s3, NULL, &response_code, &s3_error_code, NULL, NULL, NULL);
 
-            g_free(key);
-            key = NULL;
+	g_free(key);
+	key = NULL;
 
-            /* if it's an expected error (not found), just return -1 */
-            if (response_code == 404 && s3_error_code == S3_ERROR_NoSuchKey) {
-                pself->is_eof = TRUE;
-                pself->in_file = FALSE;
-		device_set_error(pself,
-		    stralloc(_("EOF")),
-		    DEVICE_STATUS_SUCCESS);
-                return -1;
-            }
-
-            /* otherwise, log it and return FALSE */
+	/* if it's an expected error (not found), just return -1 */
+	if (response_code == 404 && s3_error_code == S3_ERROR_NoSuchKey) {
+	    pself->is_eof = TRUE;
+	    pself->in_file = FALSE;
 	    device_set_error(pself,
-		vstrallocf(_("While reading data block from S3: %s"), s3_strerror(self->s3)),
-		DEVICE_STATUS_VOLUME_ERROR);
-            return -1;
-        }
+		stralloc(_("EOF")),
+		DEVICE_STATUS_SUCCESS);
+	    return -1;
+	}
+
+	/* otherwise, log it and return FALSE */
+	device_set_error(pself,
+	    vstrallocf(_("While reading data block from S3: %s"), s3_strerror(self->s3)),
+	    DEVICE_STATUS_VOLUME_ERROR);
+	return -1;
     }
 
-    /* INVARIANT: cache is NULL */
-    g_assert(self->cached_buf == NULL);
-    g_assert(self->cached_key == NULL);
-
-    /* now see how the caller wants to deal with that */
-    if (data == NULL || *size_req < 0 || buf.buffer_pos > (guint)*size_req) {
-        /* A size query or short buffer -- load the cache and return the size*/
-        self->cached_buf = buf.buffer;
+    if (dat.data == NULL) {
+	/* data was larger than the available space, so cache it and return
+	 * the actual size */
+        self->cached_buf = dat.curl.buffer;
+        self->cached_size = dat.curl.buffer_pos;
         self->cached_key = key;
-        self->cached_size = buf.buffer_pos;
+	key = NULL;
 
-        *size_req = buf.buffer_pos;
+        *size_req = dat.curl.buffer_pos;
         return 0;
-    } else {
-        /* ok, all checks are passed -- copy the data */
-        *size_req = buf.buffer_pos;
-        g_memmove(data, buf.buffer, buf.buffer_pos);
-        g_free(key);
-        g_free(buf.buffer);
-
-        /* move on to the next block */
-        pself->block++;
-
-        return buf.buffer_pos;
     }
+
+    /* ok, the read went directly to the user's buffer, so we need only
+     * set and return the size */
+    pself->block++;
+    g_free(key);
+    *size_req = dat.size_req;
+    return dat.size_req;
 }
