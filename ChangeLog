@@ -1,3 +1,7 @@
+2008-11-14  Dustin J. Mitchell <dustin@zmanda.com>
+	* autogen: revert glib's configure-time requirement for
+	  pkg-config-0.16
+
 2008-11-14  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/holding.h: Improve comment.
 	* server-src/reporter.c: Print holding disk size in displyaunit.
