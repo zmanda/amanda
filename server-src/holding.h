@@ -110,7 +110,7 @@ holding_get_all_datestamps(void);
  * @param holding_file: full pathname of holding file
  * @param strip_headers: if true, don't count the headers in the
  * total size
- * @returns: total size of the holding file, or -1 in an error
+ * @returns: total size in kbytes of the holding file, or -1 in an error
  */
 off_t
 holding_file_size(char *holding_file,

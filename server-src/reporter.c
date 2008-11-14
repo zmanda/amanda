@@ -1047,7 +1047,7 @@ output_tapeinfo(void)
 	if (h_size > 0) {
 	    g_fprintf(mailf,
 		    _("There are %lld%s of dumps left in the holding disk.\n"),
-		    (long long)h_size, displayunit);
+		    (long long)du(h_size), displayunit);
 	    if (getconf_boolean(CNF_AUTOFLUSH)) {
 		g_fprintf(mailf, _("They will be flushed on the next run.\n"));
 	    } else {
