@@ -892,14 +892,16 @@ run_client_script(
     g_option_t   *g_options,
     dle_t	 *dle)
 {
-    pid_t   scriptpid;
-    int     scriptin, scriptout, scripterr;
-    char   *cmd;
-    char  **argvchild;
-    int     i;
-    FILE   *streamout;
-    char   *line;
-    int     argv_size;
+    pid_t     scriptpid;
+    int       scriptin, scriptout, scripterr;
+    char     *cmd;
+    char    **argvchild;
+    int       i;
+    FILE     *streamout;
+    FILE     *streamerr;
+    char     *line;
+    int       argv_size;
+    amwait_t  wait_status;
 
     if ((script->execute_on & execute_on) == 0)
 	return;
@@ -983,9 +985,8 @@ run_client_script(
     i += property_add_to_argv(&argvchild[i], script->property);
     argvchild[i++] = NULL;
 
-    scripterr = fileno(stderr);
-    scriptpid = pipespawnv(cmd, STDIN_PIPE|STDOUT_PIPE, 0, &scriptin,
-			   &scriptout, &scripterr, argvchild);
+    scriptpid = pipespawnv(cmd, STDIN_PIPE|STDOUT_PIPE|STDERR_PIPE, 0,
+			   &scriptin, &scriptout, &scripterr, argvchild);
 
     close(scriptin);
 
@@ -993,6 +994,7 @@ run_client_script(
     script->result->proplist =
 		    g_hash_table_new_full(g_str_hash, g_str_equal, NULL, NULL);
     script->result->output = g_ptr_array_new();
+    script->result->err = g_ptr_array_new();
 
     streamout = fdopen(scriptout, "r");
     if (streamout) {
@@ -1030,21 +1032,114 @@ run_client_script(
         }
     }
     fclose(streamout);
-    waitpid(scriptpid, NULL, 0);
+
+    streamerr = fdopen(scripterr, "r");
+    if (streamerr) {
+        while((line = agets(streamerr)) != NULL) {
+	    g_ptr_array_add(script->result->err,
+			    g_strdup_printf(_("Script '%s' command '%s': %s"),
+					    script->plugin, argvchild[1],
+					    line));
+	    amfree(line);
+	}
+    }
+
+    waitpid(scriptpid, &wait_status, 0);
+    if (WIFSIGNALED(wait_status)) {
+	g_ptr_array_add(script->result->err,
+			g_strdup_printf(_("Script '%s' command '%s' terminated with signal %d: see %s"),
+					script->plugin, argvchild[1],
+					WTERMSIG(wait_status),
+					dbfn()));
+    } else if (WIFEXITED(wait_status)) {
+        if (WEXITSTATUS(wait_status) != 0) {
+	    g_ptr_array_add(script->result->err,
+			    g_strdup_printf(_("Script '%s' command '%s' exited with status %d: see %s"),
+					    script->plugin, argvchild[1],
+					    WEXITSTATUS(wait_status),
+					    dbfn()));
+        } else {
+            /* Normal exit */
+        }
+    }
+    
 }
 
 void run_client_script_output(gpointer data, gpointer user_data);
+void run_client_script_err_amcheck(gpointer data, gpointer user_data);
+void run_client_script_err_estimate(gpointer data, gpointer user_data);
+void run_client_script_err_backup(gpointer data, gpointer user_data);
+void run_client_script_err_recover(gpointer data, gpointer user_data);
+
+typedef struct script_output_s {
+    FILE  *stream;
+    dle_t *dle;
+} script_output_t;
 
 void
 run_client_script_output(
     gpointer data,
     gpointer user_data)
 {
-    char *line      = data;
-    FILE *streamout = user_data;
+    char            *line = data;
+    script_output_t *so   = user_data;
 
-    if (line && streamout) {
-	g_fprintf(streamout, "%s\n", line);
+    if (line && so->stream) {
+	g_fprintf(so->stream, "%s\n", line);
+    }
+}
+
+void
+run_client_script_err_amcheck(
+    gpointer data,
+    gpointer user_data)
+{
+    char            *line  = data;
+    script_output_t *so    = user_data;
+
+    if (line && so->stream) {
+	g_fprintf(so->stream, "ERROR %s\n", line);
+    }
+}
+
+void
+run_client_script_err_estimate(
+    gpointer data,
+    gpointer user_data)
+{
+    char            *line  = data;
+    script_output_t *so    = user_data;
+
+    if (line && so->stream) {
+	char *qdisk = quote_string(so->dle->disk);
+	g_fprintf(so->stream, "%s 0 WARNING \"%s\"\n", qdisk, line);
+	amfree(qdisk);
+    }
+}
+
+void
+run_client_script_err_backup(
+    gpointer data,
+    gpointer user_data)
+{
+    char            *line  = data;
+    script_output_t *so    = user_data;
+
+    if (line && so->stream) {
+	g_fprintf(so->stream, "? %s\n", line);
+    }
+}
+
+void
+run_client_script_err_recover(
+    gpointer data,
+    gpointer user_data)
+{
+    char            *line  = data;
+    script_output_t *so    = user_data;
+
+    if (line && so->stream) {
+	g_fprintf(so->stream, "%s\n", line);
     }
 }
 
@@ -1055,8 +1150,10 @@ run_client_scripts(
     dle_t	 *dle,
     FILE         *streamout)
 {
-    GSList   *scriptlist;
-    script_t  *script;
+    GSList          *scriptlist;
+    script_t        *script;
+    GFunc            client_script_err = NULL;
+    script_output_t  so = { streamout, dle };
 
     for (scriptlist = dle->scriptlist; scriptlist != NULL;
 	 scriptlist = scriptlist->next) {
@@ -1065,9 +1162,47 @@ run_client_scripts(
 	if (script->result && script->result->output) {
 	    g_ptr_array_foreach(script->result->output,
 				run_client_script_output,
-				streamout);
+				&so);
 	    g_ptr_array_free(script->result->output, TRUE);
 	    script->result->output = NULL;
+	}
+	if (script->result && script->result->err) {
+	    switch (execute_on) {
+	    case EXECUTE_ON_PRE_DLE_AMCHECK:
+	    case EXECUTE_ON_PRE_HOST_AMCHECK:
+	    case EXECUTE_ON_POST_DLE_AMCHECK:
+	    case EXECUTE_ON_POST_HOST_AMCHECK:
+		 client_script_err = run_client_script_err_amcheck;
+		 break;
+	    case EXECUTE_ON_PRE_DLE_ESTIMATE:
+	    case EXECUTE_ON_PRE_HOST_ESTIMATE:
+	    case EXECUTE_ON_POST_DLE_ESTIMATE:
+	    case EXECUTE_ON_POST_HOST_ESTIMATE:
+		 if (am_has_feature(g_options->features,
+				    fe_sendsize_rep_warning)) {
+		     client_script_err = run_client_script_err_estimate;
+		 }
+		 break;
+	    case EXECUTE_ON_PRE_DLE_BACKUP:
+	    case EXECUTE_ON_PRE_HOST_BACKUP:
+	    case EXECUTE_ON_POST_DLE_BACKUP:
+	    case EXECUTE_ON_POST_HOST_BACKUP:
+		 client_script_err = run_client_script_err_backup;
+		 break;
+	    case EXECUTE_ON_PRE_RECOVER:
+	    case EXECUTE_ON_POST_RECOVER:
+	    case EXECUTE_ON_PRE_LEVEL_RECOVER:
+	    case EXECUTE_ON_POST_LEVEL_RECOVER:
+	    case EXECUTE_ON_INTER_LEVEL_RECOVER:
+		 client_script_err = run_client_script_err_recover;
+	    }
+	    if (client_script_err != NULL) {
+		g_ptr_array_foreach(script->result->err,
+				    client_script_err,
+				    &so);
+	    }
+	    g_ptr_array_free(script->result->err, TRUE);
+	    script->result->err = NULL;
 	}
     }
 }

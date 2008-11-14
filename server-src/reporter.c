@@ -84,6 +84,7 @@ typedef struct repdata_s {
     timedata_t taper;
     timedata_t dumper;
     timedata_t chunker;
+    timedata_t planner;
     int level;
     struct repdata_s *next;
 } repdata_t;
@@ -2665,6 +2666,8 @@ handle_failed(void)
 
 	if(curprog == P_TAPER)
 	    sp = &(repdata->taper);
+	else if (curprog == P_PLANNER)
+	    sp = &(repdata->planner);
 	else sp = &(repdata->dumper);
 
 	if(sp->result != L_SUCCESS)

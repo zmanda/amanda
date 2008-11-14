@@ -178,6 +178,7 @@ typedef enum {
     fe_amrecover_dle_in_header,
     fe_xml_estimate,
     fe_xml_property_priority,
+    fe_sendsize_rep_warning,
 
     /*
      * All new features must be inserted immediately *before* this entry.

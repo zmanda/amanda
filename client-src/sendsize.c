@@ -2230,7 +2230,9 @@ getsize_application_api(
     for (scriptlist = dle->scriptlist; scriptlist != NULL;
 	 scriptlist = scriptlist->next) {
 	script = (script_t *)scriptlist->data;
-	k += property_argv_size(script->result->proplist);
+	if (script->result && script->result->proplist) {
+	    k += property_argv_size(script->result->proplist);
+	}
     }
     argvchild = g_new0(char *, 16 + k + DUMP_LEVELS*2);
     argvchild[i++] = dle->program;

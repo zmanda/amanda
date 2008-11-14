@@ -124,6 +124,7 @@ main(
     int i;
     int ch;
     GSList *errlist;
+    FILE   *mesgstream;
 
     /* initialize */
     /*
@@ -455,7 +456,9 @@ main(
       }
     }
 
-    run_client_scripts(EXECUTE_ON_PRE_DLE_BACKUP, g_options, dle, stderr);
+    mesgstream = fdopen(mesgfd,"w");
+    run_client_scripts(EXECUTE_ON_PRE_DLE_BACKUP, g_options, dle, mesgstream);
+    fflush(mesgstream);
 
     if (dle->program_is_application_api==1) {
 	int i, j, k;
@@ -716,7 +719,8 @@ main(
 	dbprintf(_("Parsed backup messages\n"));
     }
 
-    run_client_scripts(EXECUTE_ON_POST_DLE_BACKUP, g_options, dle, stderr);
+    run_client_scripts(EXECUTE_ON_POST_DLE_BACKUP, g_options, dle, mesgstream);
+    fflush(mesgstream);
 
     amfree(qdisk);
     amfree(qamdevice);

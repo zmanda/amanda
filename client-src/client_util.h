@@ -64,6 +64,7 @@ typedef struct client_script_result_s {
     int exit_code;
     proplist_t proplist;
     GPtrArray *output;
+    GPtrArray *err;
 } client_script_result_t;
 
 char *build_exclude(dle_t *dle, int verbose);

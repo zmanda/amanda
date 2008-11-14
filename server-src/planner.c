@@ -1831,7 +1831,8 @@ static void handle_result(
 	}
 
 	t = line;
-	if(strncmp_const_skip(t, "ERROR ", t, tch) == 0) {
+	if ((strncmp_const_skip(t, "ERROR ", t, tch) == 0) ||
+	    (strncmp_const_skip(t, "WARNING ", t, tch) == 0)) { 
 	    fp = t - 1;
 	    skip_whitespace(t, tch);
 	    if (tch == '\n') {
@@ -1890,7 +1891,8 @@ static void handle_result(
 		goto bad_msg;
 	    }
 	    size = (gint64)size_;
-	} else if (strncmp_const(t-1,"ERROR ") == 0) {
+	} else if ((strncmp_const(t-1,"ERROR ") == 0) ||
+		   (strncmp_const(t-1,"WARNING ") == 0)) {
 	    skip_non_whitespace(t, tch);
 	    skip_whitespace(t, tch);
 	    msg = t-1;
@@ -2220,6 +2222,9 @@ static void analyze_estimate(
 	    ep->dump_nsize = est_size(dp, ep->dump_level);
 	    ep->dump_csize = est_tape_size(dp, ep->dump_level);
 	}
+	if (ep->degr_mesg == NULL) {
+	    ep->degr_mesg = _("Can't switch to degraded mode because a full is not planned");
+	}
     }
 
     g_fprintf(stderr,_("  curr level %d nsize %lld csize %lld "),
@@ -2243,6 +2248,16 @@ static void analyze_estimate(
 
     g_fprintf(stderr,_("total size %lld total_lev0 %1.0lf balanced-lev0size %1.0lf\n"),
 	    (long long)total_size, total_lev0, balanced_size);
+
+    /* Log errstr even if the estimate succeeded */
+    /* It can be an error from a script          */
+    if (est(dp)->errstr) {
+	char *qerrstr = quote_string(est(dp)->errstr);
+	log_add(L_FAIL, _("%s %s %s 0 %s"), dp->host->hostname, qname, 
+		planner_timestamp, qerrstr);
+	amfree(qerrstr);
+    }
+
     amfree(qname);
 }
 
