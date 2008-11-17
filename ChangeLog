@@ -1,4 +1,7 @@
 2008-11-17  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/taper.c: Fix formating.
+
+2008-11-17  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amstatus.pl: Parse "taper: using label ..." line.
 	* server-src/driver.c: Print tape size.
 	* server-src/amtoc.pl: Fix for new log format.
