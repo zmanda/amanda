@@ -1,4 +1,7 @@
 2008-11-17  Jean-Louis Martineau <martineau@zmanda.com>
+	* man/xml-source/amgtar.8.xml: Update for ATIME-PRESERVE default.
+
+2008-11-17  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/taper.c: Fix formating.
 
 2008-11-17  Jean-Louis Martineau <martineau@zmanda.com>

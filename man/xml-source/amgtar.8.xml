@@ -36,7 +36,7 @@ for information on application properties and how they are configured.</para>
 <variablelist>
  <!-- ==== -->
  <varlistentry><term>ATIME_PRESERVE</term><listitem>
-If "NO" (the default), amgtar updates the atime for all files accessed; if "YES", atimes are preserved.  To preserve atimes, tar must support the <emphasis>--atime-preserve=system</emphasis> option (gnutar 1.15.90 and newer).
+If "YES" (the default), amgtar use the <emphasis>--atime-preserve=system</emphasis> option of gnutar to not update the atime of all files accessed; if "NO", gnutar will updates the atime for all files accessed. This property works only if you have gnutar 1.15.90 or newer, if not, you must set ATIME_PRESERVE to "NO".
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>CHECK-DEVICE</term><listitem>
