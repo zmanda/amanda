@@ -677,9 +677,9 @@ static gboolean finish_part_attempt(taper_state_t * taper_state,
                 dump_info->timestamp, dump_info->current_part,
                 taper_source_predict_parts(dump_info->source),
                 dump_info->level, part_time, (uintmax_t)part_kbytes, part_kbps);
-	log_add(L_INFO, "tape %s kb %ld fm %d [OK]\n",
+	log_add(L_INFO, "tape %s kb %lld fm %d [OK]\n",
 		volume_label,
-		((taper_state->total_bytes+(off_t)1023) / (off_t)1024),
+		(long long)((taper_state->total_bytes+(off_t)1023) / (off_t)1024),
 		taper_state->device->file);
 
         /* A problem occured. */
@@ -1080,9 +1080,9 @@ static gboolean find_first_tape(taper_state_t * state) {
             g_thread_join(tape_search);
         }
 	if (state->device && state->device->volume_label) {
-	    log_add(L_INFO, "tape %s kb %ld fm %d [OK]\n",
+	    log_add(L_INFO, "tape %s kb %lld fm %d [OK]\n",
 		    state->device->volume_label,
-		    ((state->total_bytes+(off_t)1023) / (off_t)1024),
+		    (long long)((state->total_bytes+(off_t)1023) / (off_t)1024),
 		    state->device->file);
 	}
         return send_quitting(state);
