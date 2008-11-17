@@ -827,20 +827,24 @@ main(
 	double q = (b);			    \
 	if (!isnormal(q))		    \
 	    g_fprintf((fp),"  -- ");	    \
-	else if ((q = (a)/q) >= 999.95)	    \
-	    g_fprintf((fp), "###.#");	    \
+	else if ((q = (a)/q) >= 99999.95)   \
+	    g_fprintf((fp), "#####");	    \
+	else if (q >= 999.95)		    \
+	    g_fprintf((fp), "%5.0lf",q);    \
 	else				    \
-	    g_fprintf((fp), "%5.1lf",q);	    \
+	    g_fprintf((fp), "%5.1lf",q);    \
     } while(0)
 #define divzero_wide(fp,a,b)	       	    \
     do {       	       	       	       	    \
 	double q = (b);			    \
 	if (!isnormal(q))		    \
 	    g_fprintf((fp),"    -- ");	    \
-	else if ((q = (a)/q) >= 99999.95)   \
-	    g_fprintf((fp), "#####.#");	    \
+	else if ((q = (a)/q) >= 9999999.95) \
+	    g_fprintf((fp), "#######");	    \
+	else if (q >= 99999.95)		    \
+	    g_fprintf((fp), "%7.0lf",q);    \
 	else				    \
-	    g_fprintf((fp), "%7.1lf",q);	    \
+	    g_fprintf((fp), "%7.1lf",q);    \
     } while(0)
 
 static void

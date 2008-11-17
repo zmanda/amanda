@@ -61,6 +61,7 @@ typedef struct {
     char * next_tape_device;
     taper_scan_tracker_t * taper_scan_tracker;
     char * last_errmsg;
+    off_t  total_bytes;
 } taper_state_t;
 
 typedef struct {
@@ -83,6 +84,7 @@ static void init_taper_state(taper_state_t* state) {
     state->driver_start_time = NULL;
     state->taper_scan_tracker = taper_scan_tracker_new();
     state->last_errmsg = NULL;
+    state->total_bytes = 0;
 }
 
 static void cleanup(taper_state_t * state) {
@@ -461,7 +463,8 @@ static gboolean find_and_label_new_tape(taper_state_t * state,
     if (state->device != NULL) {
         return TRUE;
     }
-    
+    state->total_bytes = 0;
+ 
     if (!find_new_tape(state, dump_info)) {
         return FALSE;
     }
@@ -678,6 +681,7 @@ static gboolean finish_part_attempt(taper_state_t * taper_state,
                   dump_info->handle, taper_state->device->volume_label,
                   taper_state->device->file, (uintmax_t)part_kbytes, part_time,
 		  (uintmax_t)part_kbytes, part_kbps);
+	taper_state->total_bytes += run_bytes;
         
         if (taper_source_get_end_of_data(dump_info->source)) {
             cmd_t result_cmd;
@@ -722,6 +726,18 @@ static gboolean finish_part_attempt(taper_state_t * taper_state,
 	char *consumer_errstr = quote_string(
 				   device_error(taper_state->device));
 
+        log_add(L_PARTPARTIAL,
+                "%s %d %s %s %s %d/%d %d [sec %f kb %ju kps %f] %s",
+                volume_label, file_number, dump_info->hostname, qdiskname,
+                dump_info->timestamp, dump_info->current_part,
+                taper_source_predict_parts(dump_info->source),
+                dump_info->level, part_time, (uintmax_t)part_kbytes, part_kbps,
+		consumer_errstr);
+	log_add(L_INFO, "tape %s kb %ld fm %d [OK]\n",
+		volume_label,
+		((taper_state->total_bytes+(off_t)1023) / (off_t)1024),
+		taper_state->device->file);
+
         /* A problem occured. */
         if (queue_result & QUEUE_CONSUMER_ERROR) {
 	    /* Make a note if this was EOM (we treat EOM the same as any other error,
@@ -735,13 +751,6 @@ static gboolean finish_part_attempt(taper_state_t * taper_state,
             taper_state->device = NULL;
         }
         
-        log_add(L_PARTPARTIAL,
-                "%s %d %s %s %s %d/%d %d [sec %f kb %ju kps %f] %s",
-                volume_label, file_number, dump_info->hostname, qdiskname,
-                dump_info->timestamp, dump_info->current_part,
-                taper_source_predict_parts(dump_info->source),
-                dump_info->level, part_time, (uintmax_t)part_kbytes, part_kbps,
-		consumer_errstr);
         amfree(volume_label);
         
         if ((queue_result & QUEUE_CONSUMER_ERROR) &&
@@ -1201,6 +1210,12 @@ static gboolean process_driver_command(taper_state_t * state) {
         
     case QUIT:
 	free_cmdargs(cmdargs);
+	if (state->device && state->device->volume_label) {
+	    log_add(L_INFO, "tape %s kb %ld fm %d [OK]\n",
+		    state->device->volume_label,
+		    ((state->total_bytes+(off_t)1023) / (off_t)1024),
+		    state->device->file);
+	}
         return send_quitting(state);
     default:
         if (cmdargs->argc >= 1) {

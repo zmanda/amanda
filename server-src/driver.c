@@ -303,6 +303,7 @@ main(
     conf_runtapes = getconf_int(CNF_RUNTAPES);
     tape = lookup_tapetype(conf_tapetype);
     tape_length = tapetype_get_length(tape);
+    g_printf("driver: tape size %lld\n", (long long)tape_length);
     conf_flush_threshold_dumped = getconf_int(CNF_FLUSH_THRESHOLD_DUMPED);
     conf_flush_threshold_scheduled = getconf_int(CNF_FLUSH_THRESHOLD_SCHEDULED);
     conf_taperflush = getconf_int(CNF_TAPERFLUSH);

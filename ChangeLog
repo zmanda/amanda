@@ -1,3 +1,10 @@
+2008-11-17  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amstatus.pl: Parse "taper: using label ..." line.
+	* server-src/driver.c: Print tape size.
+	* server-src/amtoc.pl: Fix for new log format.
+	* server-src/reporter.c: Increase field width.
+	* server-src/taper.c: Print number of kbytes written to each tape.
+
 2008-11-14  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/s3-device.c: eliminate an extra buffer copy in the
 	  common case where the caller supplies a large enough buffer
