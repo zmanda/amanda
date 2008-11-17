@@ -58,6 +58,7 @@ typedef struct {
     char * next_tape_label;
     char * next_tape_device;
     taper_scan_tracker_t * taper_scan_tracker;
+    off_t  total_bytes
 } taper_state_t;
 
 typedef struct {
@@ -79,6 +80,7 @@ static void init_taper_state(taper_state_t* state) {
     state->device = NULL;
     state->driver_start_time = NULL;
     state->taper_scan_tracker = taper_scan_tracker_new();
+    state->total_bytes = 0;
 }
 
 static void cleanup(taper_state_t * state) {
@@ -434,7 +436,8 @@ static gboolean find_and_label_new_tape(taper_state_t * state,
     if (state->device != NULL) {
         return TRUE;
     }
-    
+    state->total_bytes = 0;
+ 
     if (!find_new_tape(state, dump_info)) {
         return FALSE;
     }
@@ -627,6 +630,7 @@ static gboolean finish_part_attempt(taper_state_t * taper_state,
                   dump_info->handle, taper_state->device->volume_label,
                   taper_state->device->file, (uintmax_t)part_kbytes, part_time,
 		  (uintmax_t)part_kbytes, part_kbps);
+	taper_state->total_bytes += run_bytes;
         
         if (taper_source_get_end_of_data(dump_info->source)) {
             cmd_t result_cmd;
@@ -667,6 +671,17 @@ static gboolean finish_part_attempt(taper_state_t * taper_state,
         double dump_time, dump_kbps;
         guint64 dump_kbytes;
 
+        log_add(L_PARTPARTIAL,
+                "%s %d %s %s %s %d/%d %d [sec %f kb %ju kps %f] \"\"",
+                volume_label, file_number, dump_info->hostname, qdiskname,
+                dump_info->timestamp, dump_info->current_part,
+                taper_source_predict_parts(dump_info->source),
+                dump_info->level, part_time, (uintmax_t)part_kbytes, part_kbps);
+	log_add(L_INFO, "tape %s kb %ld fm %d [OK]\n",
+		volume_label,
+		((taper_state->total_bytes+(off_t)1023) / (off_t)1024),
+		taper_state->device->file);
+
         /* A problem occured. */
         if (queue_result & QUEUE_CONSUMER_ERROR) {
             /* Close the device. */
@@ -675,12 +690,6 @@ static gboolean finish_part_attempt(taper_state_t * taper_state,
             taper_state->device = NULL;
         }
         
-        log_add(L_PARTPARTIAL,
-                "%s %d %s %s %s %d/%d %d [sec %f kb %ju kps %f] \"\"",
-                volume_label, file_number, dump_info->hostname, qdiskname,
-                dump_info->timestamp, dump_info->current_part,
-                taper_source_predict_parts(dump_info->source),
-                dump_info->level, part_time, (uintmax_t)part_kbytes, part_kbps);
         amfree(volume_label);
         
         if ((queue_result & QUEUE_CONSUMER_ERROR) &&
@@ -1070,6 +1079,12 @@ static gboolean find_first_tape(taper_state_t * state) {
         if (use_threads) {
             g_thread_join(tape_search);
         }
+	if (state->device && state->device->volume_label) {
+	    log_add(L_INFO, "tape %s kb %ld fm %d [OK]\n",
+		    state->device->volume_label,
+		    ((state->total_bytes+(off_t)1023) / (off_t)1024),
+		    state->device->file);
+	}
         return send_quitting(state);
     default:
         error("error [file_reader_side cmd %d argc %d]", cmd, cmdargs.argc);

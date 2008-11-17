@@ -162,11 +162,26 @@ while ( <$IF> ) {
   }
   if ( ! /^([A-Z]+) taper (\S+) (\S+) (\S+) (\S+) (\S+)/) { next;}
   # $_ = $1;
-  $host = $2;
-  $disk = $3;
-  $date = $4;
-  $chunk = $5;
-  $level = $6;
+  if (/PART taper/) {
+    /^([A-Z]+) taper (\S+) (\S+) (\S+) (\S+) (\S+) (\S+) (\S+)/;
+    $filenum = $3;
+    $host = $4;
+    $disk = $5;
+    $date = $6;
+    $chunk = $7;
+    $level = $8;
+    if ($filenum != $filenumber) {
+      # This should not be possible */
+      $filenumber = $filenum;
+    }
+  } else {
+    /^([A-Z]+) taper (\S+) (\S+) (\S+) (\S+) (\S+)/;
+    $host = $2;
+    $disk = $3;
+    $date = $4;
+    $chunk = $5;
+    $level = $6;
+  }
   switch: {
     /START taper/ && do {
       $tocfilename=&tfn($chunk) if ($#subs >= 0);
@@ -191,31 +206,37 @@ while ( <$IF> ) {
       &pr("#","Server","/partition","date", "level","size[Kb]","part");
       &pr("$filenumber","$chunk","","$disk","-","-","-");
       last switch; };
-    /^(?:SUCCESS|CHUNK) taper/ && do {
+    /^(?:SUCCESS|CHUNK|PART|DONE) taper/ && do {
       if(/SUCCESS/){
 	$level = $chunk;
 	$chunk = "-";
+      }
+      $filenum = $filenumber;
+      if (/DONE/) {
+	$chunk = "-";
+	$filenumber--;
+	$filenum = " ";
       }
       $mysize = 0;
       if(/ kb (\d+) /){
 	$mysize = $1;
       }
       if ( $fail{$host}{$disk} ) {
-        &pr("$filenumber","${host}","${disk}","${date}","${level}","FAIL","${chunk}");
+        &pr("$filenum","${host}","${disk}","${date}","${level}","FAIL","${chunk}");
       } else {
   	if (defined($flash_mode)) {
-          &pr("$filenumber","${host}","${disk}","${date}","${level}","$mysize","${chunk}");
+          &pr("$filenum","${host}","${disk}","${date}","${level}","$mysize","${chunk}");
 	} else {
-  	  if (defined($osize{$host}{$disk}) && !/^CHUNK/) {
-            &pr("$filenumber","${host}","${disk}","${date}","${level}","$osize{$host}{$disk}","${chunk}");
+  	  if (defined($osize{$host}{$disk}) && !/^CHUNK/ && !/^PART/) {
+            &pr("$filenum","${host}","${disk}","${date}","${level}","$osize{$host}{$disk}","${chunk}");
 	  } else {
 	    $note = "";
-	    if(!/^CHUNK/){
+	    if(!/^CHUNK/ && !/^PART/){
 		# this case should never happend: 
-	    $strange=1;
+	    } else {
 	      $note = "*";
 	    }
-            &pr("$filenumber","${host}","${disk}","${date}","${level}","$note$mysize","${chunk}");
+            &pr("$filenum","${host}","${disk}","${date}","${level}","$note$mysize","${chunk}");
 	  }
 	}
       }
@@ -229,29 +250,26 @@ while ( <$IF> ) {
       $line =~ / fm (\d+) /;
       print "\n\n" if ($vwspace);
       &pr("$1","total","on_tape","-","-","$size","-");
-      if (defined($flash_mode)) {
-	&pr("$1","total","origin","-","not","available","-");
-      } else {
-	&pr("$1","total","origin","-","-","$tot_or_size","-");
-      }
-      if (defined($strange)) {
-  	&pr("*","size","on_tape","-","-","-","-");
-      }
       last switch; };
     /FAIL taper/ && do { next; };
   }
   $filenumber += 1;
+}
+if (defined($flash_mode)) {
+  &pr("-","total","origin","-","not","available","-");
+} else {
+  &pr("-","total","origin","-","-","$tot_or_size","-");
 }
 close $IF;
 close OF;
 
 
 format OF =
-@>>  @<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< @<<<<<<<< @>> @>>>>>>>>
+@>>  @<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< @<<<<<<<<<<<<<< @>> @>>>>>>>>
 $fnbr,$hstprt,$dt,$lvl,$sz
 .
 
 format STDOUT =
-@>>  @<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< @<<<<<<<< @>> @>>>>>>>> @>>>
+@>>  @<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< @<<<<<<<<<<<<<< @>> @>>>>>>>> @>>>
 $fnbr,$hstprt,$dt,$lvl,$sz,$ch
 .
