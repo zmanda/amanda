@@ -1,3 +1,7 @@
+2008-11-18  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amstar.c: Free qdisk after the loop.
+	* application-src/amgtar.c: Free qdisk after the loop.
+
 2008-11-17  Jean-Louis Martineau <martineau@zmanda.com>
 	* man/xml-source/amgtar.8.xml: Update for ATIME-PRESERVE default.
 

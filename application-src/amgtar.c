@@ -746,7 +746,6 @@ common_exit:
 	    unlink(incrname);
 	}
 	amfree(my_argv);
-	amfree(qdisk);
 	amfree(cmd);
 
 	aclose(nullfd);
@@ -754,6 +753,7 @@ common_exit:
 
 	fprintf(stdout, "%d %lld 1\n", level, (long long)size);
     }
+    amfree(qdisk);
     return;
 
 common_error:

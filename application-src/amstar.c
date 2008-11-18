@@ -462,13 +462,13 @@ amstar_estimate(
 common_exit:
 
 	amfree(my_argv);
-	amfree(qdisk);
 
 	aclose(nullfd);
 	afclose(dumpout);
 
 	fprintf(stdout, "%d %lld 1\n", level, (long long)size);
     }
+    amfree(qdisk);
     amfree(cmd);
 }
 
