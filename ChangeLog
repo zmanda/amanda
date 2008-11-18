@@ -1,3 +1,6 @@
+2008-11-18  Satya Ganga <gsat@zmanda.com>
+	* device-src/tape-device.c: Remove O_NONBLOCK flag from all tape open calls.
+
 2008-11-18  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/amstar.c: Free qdisk after the loop.
 	* application-src/amgtar.c: Free qdisk after the loop.

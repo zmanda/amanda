@@ -490,52 +490,23 @@ void tape_device_register(void) {
     register_device(tape_device_factory, device_prefix_list);
 }
 
-/* Open the tape device, trying various combinations of O_RDWR and
-   O_NONBLOCK.  Returns -1 and calls device_set_error for errors */
 static int try_open_tape_device(TapeDevice * self, char * device_filename) {
     int fd;
     int save_errno;
     DeviceStatusFlags new_status;
 
-#ifdef O_NONBLOCK
-    fd  = robust_open(device_filename, O_RDWR | O_NONBLOCK, 0);
+    fd = robust_open(device_filename, O_RDWR,0);
     save_errno = errno;
-    if (fd < 0 && (save_errno == EWOULDBLOCK || save_errno == EINVAL)) {
-        /* Maybe we don't support O_NONBLOCK for tape devices. */
-        fd = robust_open(device_filename, O_RDWR, 0);
-	save_errno = errno;
-    }
-#else
-    fd = robust_open(device_filename, O_RDWR);
-    save_errno = errno;
-#endif
     if (fd >= 0) {
         self->write_open_errno = 0;
     } else {
         if (errno == EACCES || errno == EPERM) {
             /* Device is write-protected. */
             self->write_open_errno = errno;
-#ifdef O_NONBLOCK
-            fd = robust_open(device_filename, O_RDONLY | O_NONBLOCK, 0);
+            fd = robust_open(device_filename, O_RDONLY,0);
 	    save_errno = errno;
-            if (fd < 0 && (save_errno == EWOULDBLOCK || save_errno == EINVAL)) {
-                fd = robust_open(device_filename, O_RDONLY, 0);
-		save_errno = errno;
-            }
-#else
-            fd = robust_open(device_filename, O_RDONLY);
-	    save_errno = errno;
-#endif
         }
     }
-#ifdef O_NONBLOCK
-    /* Clear O_NONBLOCK for operations from now on. */
-    if (fd >= 0)
-	fcntl(fd, F_SETFL, fcntl(fd, F_GETFL, 0) & ~O_NONBLOCK);
-    errno = save_errno;
-    /* function continues after #endif */
-
-#endif /* O_NONBLOCK */
 
     if (fd < 0) {
 	DeviceStatusFlags status_flag = 0;
