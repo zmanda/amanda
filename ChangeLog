@@ -1,3 +1,7 @@
+2008-11-18 Dan Locks <dwlocks@zmanda.com>
+	* packaging/rpm/amanda.spec: removed conditionals around
+	  perl(ExtUtils::Embed) so that buildrequires applies to all platforms
+
 2008-11-18  Satya Ganga <gsat@zmanda.com>
 	* device-src/tape-device.c: Remove O_NONBLOCK flag from all tape open calls.
 

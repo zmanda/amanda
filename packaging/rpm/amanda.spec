@@ -188,9 +188,7 @@ BuildRequires: curl >= 7.10.0
 BuildRequires: curl-devel >= 7.10.0
 BuildRequires: openssl
 BuildRequires: openssl-devel
-%if %{dist} == fedora && %{distver} == 9
 BuildRequires: perl(ExtUtils::Embed)
-%endif
 Requires: /bin/awk
 Requires: /bin/date
 Requires: /usr/bin/id
