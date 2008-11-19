@@ -380,6 +380,7 @@ AC_CONFIG_FILES([
     example/xinetd.amandaclient
     example/xinetd.amandaserver
     example/inetd.conf.amandaclient
+    example/inetd.conf.amandaserver
     example/chg-mcutil.conf
     example/template.d/advanced.conf
     example/template.d/amanda-S3.conf
