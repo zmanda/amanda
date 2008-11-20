@@ -100,10 +100,29 @@ if test -f $errfile || test -f $logdir/log; then
 	amcleanup$SUF -p $conf
 fi
 
+gdate=`date +'%a %b %e %H:%M:%S %Z %YAAAAA%Y%m%dBBBBB%Y%m%d%H%M%SCCCCC%Y-%m-%d %H:%M:%S %Z'`
+
+#date=%a %b %e %H:%M:%S %Z %Y
+date=`echo $gdate |sed -e "s/AAAAA.*$//"`
+
+#date_datestamp="%Y%m%d"
+date_datestamp=`echo $gdate |sed -e "s/^.*AAAAA//;s/BBBBB.*$//"`
+
+#date_starttime="%Y%m%d%H%M%S"
+date_starttime=`echo $gdate |sed -e "s/^.*BBBBB//;s/CCCCC.*$//"`
+
+#date_locale_independent=%Y-%m-%d %H:%M:%S %Z
+date_locale_independent=`echo $gdate |sed -e "s/^.*CCCCC//"`
+
 if test -f $errfile || test -f $logdir/log; then
 	process_name=`grep "^INFO .* .* pid " $logdir/log | head -n 1 | awk '{print $2}'`
 	echo `_ '%s: %s is already running, or you must run amcleanup' "$0" "${process_name}"` 1>&2
-	exit 1
+	echo "INFO amdump amdump pid $$" > $logdir/log.$$
+	echo "START driver date $date_starttime" >> $logdir/log.$$
+	echo "ERROR amdump " `_ '%s is already running, or you must run amcleanup' "${process_name}"` >> $logdir/log.$$
+	$sbindir/amreport$SUF $conf -l $logdir/log.$$ "$@"
+	rm -f $logdir/log.$$
+	exit 1;
 fi
 
 umask 077
@@ -118,20 +137,6 @@ exit_code=$?
 exec </dev/null 2>>$errfile 1>&2
 exit_code=$?
 [ $exit_code -ne 0 ] && exit_status=$exit_code
-
-gdate=`date +'%a %b %e %H:%M:%S %Z %YAAAAA%Y%m%dBBBBB%Y%m%d%H%M%SCCCCC%Y-%m-%d %H:%M:%S %Z'`
-
-#date=%a %b %e %H:%M:%S %Z %Y
-date=`echo $gdate |sed -e "s/AAAAA.*$//"`
-
-#date_datestamp="%Y%m%d"
-date_datestamp=`echo $gdate |sed -e "s/^.*AAAAA//;s/BBBBB.*$//"`
-
-#date_starttime="%Y%m%d%H%M%S"
-date_starttime=`echo $gdate |sed -e "s/^.*BBBBB//;s/CCCCC.*$//"`
-
-#date_locale_independent=%Y-%m-%d %H:%M:%S %Z
-date_locale_independent=`echo $gdate |sed -e "s/^.*CCCCC//"`
 
 printf '%s: start at %s\n' "amdump" "$date"
 printf '%s: datestamp %s\n' "amdump" "$date_datestamp"

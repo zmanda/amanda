@@ -1,3 +1,6 @@
+2008-11-20  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amdump.sh: Run amreport if the 'log' file already exist.
+
 2008-11-20  Urs Schurer <urs@sitb.de>
 	* server-src/amindexd.c: remove unnecessary stralloc()/free() calls
 	  in process_ls_dump
