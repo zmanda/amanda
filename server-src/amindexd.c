@@ -301,8 +301,7 @@ process_ls_dump(
     int		recursive,
     char **	emsg)
 {
-    char line[STR_SIZE];
-    char *old_line = NULL;
+    char line[STR_SIZE], old_line[STR_SIZE];
     char *filename = NULL;
     char *filename_gz;
     char *dir_slash = NULL;
@@ -311,6 +310,7 @@ process_ls_dump(
     int ch;
     size_t len_dir_slash;
 
+    old_line[0] = '\0';
     if (strcmp(dir, "/") == 0) {
 	dir_slash = stralloc(dir);
     } else {
@@ -357,16 +357,14 @@ process_ls_dump(
 		    }
 		    s[-1] = '\0';
 		}
-		if(old_line == NULL || strcmp(line, old_line) != 0) {
+		if(strcmp(line, old_line) != 0) {
 		    add_dir_list_item(dump_item, line);
-		    amfree(old_line);
-		    old_line = stralloc(line);
+		    strcpy(old_line, line);
 		}
 	    }
 	}
     }
     afclose(fp);
-    /*@i@*/ amfree(old_line);
     amfree(filename);
     amfree(dir_slash);
     return 0;
