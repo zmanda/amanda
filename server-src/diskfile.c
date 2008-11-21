@@ -1676,8 +1676,13 @@ char *
 clean_dle_str_for_client(
     char *dle_str)
 {
-    char *rval_dle_str = stralloc(dle_str);
+    char *rval_dle_str;
     char *hack1, *hack2;
+
+    if (!dle_str)
+	return NULL;
+
+    rval_dle_str = stralloc(dle_str);
 
     /* Remove everything between "  <encrypt>SERVER-CUSTOM" and "</encrypt>\n"
      */

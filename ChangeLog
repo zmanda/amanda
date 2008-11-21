@@ -1,4 +1,9 @@
 2008-11-21  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/diskfile.c (clean_dle_str_for_client): Return NULL if
+							    argument is NULL.
+	* restore-src/restore.c: Also check for F_EMPTY.
+
+2008-11-21  Jean-Louis Martineau <martineau@zmanda.com>
 	* amandad-src/amandad.c: Wait up to 5 seconds dwfor only for process
 				 that should terminate.
 
