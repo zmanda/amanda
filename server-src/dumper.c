@@ -1056,7 +1056,10 @@ finish_tapeheader(
 	file->encrypted= 1;
       }
     }
-    file->dle_str = stralloc(dle_str);
+    if (dle_str)
+	file->dle_str = stralloc(dle_str);
+    else
+	file->dle_str = NULL;
 }
 
 /*
