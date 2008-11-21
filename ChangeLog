@@ -1,3 +1,7 @@
+2008-11-21  Dustin J. Mitchell <dustin@zmanda.com>
+	* restore-src/restore.c: Continue if setting PROPERTY_READ_BUFFER_SIZE
+				 fail.
+
 2008-11-20  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/server_util.c: Skip one field in parsing INFO pid line.
 

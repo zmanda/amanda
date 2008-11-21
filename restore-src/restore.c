@@ -1229,7 +1229,7 @@ set_restore_device_read_buffer_size(
     Device *device,
     rst_flags_t *flags)
 {
-    /* if the user specified a blocksize, use it */
+    /* if the user specified a blocksize, try to use it */
     if (flags->blocksize) {
 	GValue val;
 	gboolean success;
@@ -1241,7 +1241,14 @@ set_restore_device_read_buffer_size(
 	success = device_property_set(device, PROPERTY_READ_BUFFER_SIZE, &val);
 	g_value_unset(&val);
 	if (!success) {
-	    return FALSE;
+	    if (device->status == DEVICE_STATUS_SUCCESS) {
+		/* device doesn't have this property, so quietly ignore it */
+		g_warning(_("Device %s does not support PROPERTY_READ_BUFFER_SIZE; ignoring block size %zd"),
+			device->device_name, flags->blocksize);
+	    } else {
+		/* it's a real error */
+		return FALSE;
+	    }
 	}
     }
 
