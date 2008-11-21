@@ -1,3 +1,7 @@
+2008-11-21  Jean-Louis Martineau <martineau@zmanda.com>
+	* amandad-src/amandad.c: Wait up to 5 seconds dwfor only for process
+				 that should terminate.
+
 2008-11-21  Dustin J. Mitchell <dustin@zmanda.com>
 	* restore-src/restore.c: Continue if setting PROPERTY_READ_BUFFER_SIZE
 				 fail.

@@ -833,7 +833,6 @@ s_repwait(
     char     *what;
     char     *msg;
     int       code = 0;
-    int       t;
     int       pid;
     amwait_t  retstat;
 
@@ -889,12 +888,16 @@ s_repwait(
 
     /* If end of service, wait for process status */
     if (n == 0) {
-	t = 0;
 	pid = waitpid(as->pid, &retstat, WNOHANG);
-	while (t<5 && pid == 0) {
-	    sleep(1);
-	    t++;
-	    pid = waitpid(as->pid, &retstat, WNOHANG);
+	if (as->service  == SERVICE_NOOP ||
+	    as->service  == SERVICE_SENDSIZE ||
+	    as->service  == SERVICE_SELFCHECK) {
+	    int t = 0;
+	    while (t<5 && pid == 0) {
+		sleep(1);
+		t++;
+		pid = waitpid(as->pid, &retstat, WNOHANG);
+	    }
 	}
 
 	/* Process errfd before sending the REP packet */
@@ -911,6 +914,9 @@ s_repwait(
 		errfd_recv(as);
 	    }
 	}
+
+	if (pid == 0)
+	    pid = waitpid(as->pid, &retstat, WNOHANG);
 
 	if (pid > 0) {
 	    what = NULL;
