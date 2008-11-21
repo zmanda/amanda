@@ -366,6 +366,9 @@ get_master_process(
 	    skip_non_whitespace(s, ch);
 	    s[-1] = '\0';
 	    skip_whitespace(s, ch);
+	    skip_non_whitespace(s, ch);
+	    s[-1] = '\0';
+	    skip_whitespace(s, ch);
 	    if (strncmp_const(s-1, "pid ") == 0) {
 		process_name = stralloc(process_name);
 		fclose(log);

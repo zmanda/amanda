@@ -1,4 +1,7 @@
 2008-11-20  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/server_util.c: Skip one field in parsing INFO pid line.
+
+2008-11-20  Jean-Louis Martineau <martineau@zmanda.com>
 	* oldrecover-src/extract_list.c: Use config.
 	* server-src/dumper.c: Check dle_str for NULL.
 
