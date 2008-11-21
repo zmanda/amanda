@@ -1735,13 +1735,9 @@ s3_make_bucket(S3Handle *hdl,
                  read_func, size_func, md5_func, ptr, NULL, NULL, NULL, NULL, 
                  result_handling);
 
-    if (result == S3_RESULT_OK) {
-        /* wait for the bucket to appear before returning */
-        result = perform_request(hdl, "HEAD", bucket, NULL, NULL, NULL, 
-                                 NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,  
-                                 result_handling);
-    } else if (hdl->bucket_location && result != S3_RESULT_OK 
-        && hdl->last_s3_error_code == S3_ERROR_BucketAlreadyOwnedByYou) {
+   if (result == S3_RESULT_OK ||
+        (hdl->bucket_location && result != S3_RESULT_OK 
+         && hdl->last_s3_error_code == S3_ERROR_BucketAlreadyOwnedByYou)) {
         /* verify the that the location constraint on the existing bucket matches
          * the one that's configured.
          */
@@ -1749,7 +1745,10 @@ s3_make_bucket(S3Handle *hdl,
                                  NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 
                                  result_handling);
 
-        if (result == S3_RESULT_OK) {
+        /* note that we can check only one of the three AND conditions above 
+         * and infer that the others are true
+         */
+        if (result == S3_RESULT_OK && hdl->bucket_location) {
             /* return to the default state of failure */
             result = S3_RESULT_FAIL;
 

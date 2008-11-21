@@ -1,3 +1,7 @@
+2008-11-21  Nikolas Coukouma <atrus@zmanda.com>
+	* device-src/s3.c: work around a bug in Amazon's HTTP implementation
+	  by avoiding HEAD requests.
+
 2008-11-21  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/diskfile.c (clean_dle_str_for_client): Return NULL if
 							    argument is NULL.
