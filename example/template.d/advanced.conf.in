@@ -52,8 +52,8 @@ device_output_buffer_size 1280k
 # Use with caution.
 ## label_new_tapes "DailySet1-%%%"
 			
-maxdumpsize -1		# Maximum number of bytes the planner will schedule
-			# for a run (default: runtapes * tape_length).
+maxdumpsize -1		# Maximum total size the planner will schedule
+			# for a run (default: runtapes * tape_length) (kbytes).
 amrecover_do_fsf yes		# amrecover will call amrestore with the
 				# -f flag for faster positioning of the tape.
 amrecover_check_label yes	# amrecover will call amrestore with the

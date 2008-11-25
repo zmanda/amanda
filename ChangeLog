@@ -1,3 +1,7 @@
+2008-11-25  Dustin J. Mitchell <dustin@zmanda.com>
+	* example/template.d/advanced.conf.in: don't imply that
+	  maxdumpsize is in bytes
+
 2008-11-21  Nikolas Coukouma <atrus@zmanda.com>
 	* device-src/s3.c: work around a bug in Amazon's HTTP implementation
 	  by avoiding HEAD requests.
