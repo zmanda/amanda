@@ -1,3 +1,39 @@
+Changes in release 2.6.1
+
+   * Application API: Allow to easily write wrappers around any backup program,
+     See the 'amanda-applications' man page.
+      o amgtar: Use GNU tar, it is a lot more configurable than the GNUTAR
+        program. See 'amgtar' man page.
+      o amstar: Use star to do a backup, it work only on a partition. See
+        'amstar' man page.
+   * Script API: Allow to run script before and after amanda process, see the
+     'amanda-scripts' man page.
+      o amzfs-snapshot: Do a snapshot of a ZFS filesystem, then 'amgtar'
+        application will backup the snapshot. See 'amzfs-snapshot' man page.
+      o script-email: Simple script to send email. see 'script-email' man page.
+   * Changer API v2.0: perl-based changer interface supporting concurrent
+     use of multiple devices and changers.
+      o currently operating in "compatibility mode," calling old changer
+        shell scripts.
+      o under active development.
+   * Xfer API: generic library to move and filter data with maximal efficiency
+      o can read from and write to arbitrary devices, files, etc.
+      o only used in some applications.
+   * Amanda archive format: A simple archive format that an application can
+     use to create backup image.
+   * 'amarchiver' program to manipulate file in amanda archive format.
+   * Many improvements to report better error message to user.
+   * amtape subcommands 'slot prev' and 'slot last' are removed.
+   * Dozens more perl libraries, with more stable interfaces.
+   * Many bugs fixed and improvement.
+   * amgetconf '--client' option to retrieve config from
+     amanda-client.conf on a client.
+   * Amanda configuration file changes
+       o new application-tool section
+       o new script-tool section
+       o new device section
+       o new changer section
+
 Changes in release 2.6.0
 
    * configure --disable-shared doesn't work because perl modules require

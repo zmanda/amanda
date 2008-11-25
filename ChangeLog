@@ -1,4 +1,12 @@
 2008-11-25  Jean-Louis Martineau <martineau@zmanda.com>
+	* configure.in: AM_INIT_AUTOMAKE(amanda, "2.6.1b1")
+	* ReleaseNotes: Release notes for 2.6.1b1.
+	* NEWS: News for 2.6.1b1.
+	* packaging/deb/rules, packaging/deb/buildpkg,
+	  packaging/rpm/buildpkg,
+	  packaging/rpm/amanda.spec: Change version to 2.6.1b1.
+
+2008-11-25  Jean-Louis Martineau <martineau@zmanda.com>
 	* config/amanda/bsd-security.m4: Fix.
 	* config/amanda/bsdtcp-security.m4: Enable --with-bsdtcp-secutiy by
 	                                    default.

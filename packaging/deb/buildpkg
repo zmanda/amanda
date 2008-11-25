@@ -49,7 +49,7 @@ fi
 
 if [ -z $AMVER ]
 then
-    AMVER=amanda-2.6.1alpha
+    AMVER=amanda-2.6.1b1
 fi
 
 if [ -z $AMTARBALL ]

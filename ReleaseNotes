@@ -1,3 +1,35 @@
+		Release Notes for amanda-2.6.1
+
+amgtar, amstar
+  Two new programs implementing application-api.
+  Swithching from the program "GNUTAR" to the application "amgtar" have some
+  advantage:
+   - amgtar use by default the gtar --atime-preserve=system option, you must
+     disable it if you gtar relase doesn't have that option.
+   - Can be configured to cross filesystem.
+   - Can be configured to not check the device number on newer gtar
+     (--no-check-device of gtar).
+   - You can configure error message from gtar you don't want to see in the
+     report.
+
+zfs-snapshot, script-email
+  Two new scripts implementing script-api.
+  The 'zfs-snapshot' script must be used only with the 'amgtar' application.
+
+amarchiver
+  New program to manipulate file in amanda archive format.
+
+New perl Module:
+  Application (perl utility functions for Applications)
+  Archive (Perl access to the  amanda archive library)
+  Constants (perl access to build-time configuration values)
+  MainLoop (Perl interface to the Glib MainLoop)
+  Process (interface to process), used by amcleanup.
+  Script (perl utility functions for Scripts)
+  Tapelist (Manipulate the Amanda tapelist)
+  Xfer (Xfer-api)
+
+
 		Release Notes for amanda-2.6.0
 
 amcheckdump
