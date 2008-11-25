@@ -10,13 +10,13 @@
 #
 AC_DEFUN([AMANDA_SSH_SECURITY],
 [
-    SSH_SECURITY=no
+    SSH_SECURITY=yes
     AC_ARG_WITH(ssh-security,
         AS_HELP_STRING([--with-ssh-security], 
                 [include SSH authentication]),
         [
             case "$withval" in
-                n | no) : ;;
+                n | no) SSH_SECURITY=no ;;
                 y |  ye | yes) SSH_SECURITY=yes ;;
                 *) AC_MSG_ERROR([*** You must not supply an argument to --with-ssh-security.])
               ;;

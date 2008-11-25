@@ -12,13 +12,13 @@
 #
 AC_DEFUN([AMANDA_BSDTCP_SECURITY],
 [
-    BSDTCP_SECURITY="no"
+    BSDTCP_SECURITY="yes"
     AC_ARG_WITH(bsdtcp-security,
         AS_HELP_STRING([--with-bsdtcp-security],
                 [include BSDTCP authentication]),
         [
             case "$withval" in
-                n | no) : ;;
+                n | no) BSDTCP_SECURITY=no ;;
                 y |  ye | yes) BSDTCP_SECURITY=yes ;;
                 *) AC_MSG_ERROR([*** You must not supply an argument to --with-bsdtcp-security.])
               ;;

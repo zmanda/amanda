@@ -25,7 +25,7 @@ AC_DEFUN([AMANDA_BSD_SECURITY],
         [
             case "$withval" in
                 n | no) BSD_SECURITY=no ;;
-                y |  ye | yes) ;;
+                y |  ye | yes) BSD_SECURITY=yes ;;
                 *) AC_MSG_ERROR([*** You must not supply an argument to --without-bsd-security.])
                     ;;
             esac
@@ -38,8 +38,8 @@ AC_DEFUN([AMANDA_BSD_SECURITY],
             [use ".rhosts" instead of ".amandahosts"]),
         [
             case "$withval" in
-                n | no ) USE_AMANDAHOSTS="no" ;;
-                y |  ye | yes) : ;;
+                n | no ) USE_AMANDAHOSTS=no ;;
+                y |  ye | yes) USE_AMANDAHOSTS=yes ;;
                 *) AC_MSG_ERROR([*** You must not supply an argument to --without-amandahosts option.])
                   ;;
             esac

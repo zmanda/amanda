@@ -1,4 +1,10 @@
-2008-11-24  Dustin J. Mitchell <dustin@zmanda.com>
+2008-11-25  Jean-Louis Martineau <martineau@zmanda.com>
+	* config/amanda/bsd-security.m4: Fix.
+	* config/amanda/bsdtcp-security.m4: Enable --with-bsdtcp-secutiy by
+	                                    default.
+	* config/amanda/ssh-security.m4: Enable --with-ssh-security by default.
+
+2008-11-25  Dustin J. Mitchell <dustin@zmanda.com>
 	* changer-src/Makefile.am changer-src/chg-glue.pl:
 	  add new c-to-perl glue script
 	* server-src/changer.c: interface with new script
