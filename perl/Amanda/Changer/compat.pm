@@ -107,7 +107,7 @@ sub load {
 
     my $run_success_cb = sub {
         my ($slot, $rest) = @_;
-        my $res = Amanda::Changer::compat::Reservation->new($self, $rest);
+        my $res = Amanda::Changer::compat::Reservation->new($self, $slot, $rest);
         $cb->(undef, $res);
     };
     my $run_fail_cb = sub {
@@ -135,6 +135,8 @@ sub _manual_scan {
 
     # search manually, starting with "current".  This is complicated, because
     # it's an event-based loop.
+
+    # TODO: support the case where nslots == -1
 
     $check_slot = sub {
         my ($err, $res) = @_;
@@ -167,6 +169,40 @@ sub _manual_scan {
 
     # kick off the loop with the current slot
     $self->load(slot => "current", res_cb => $check_slot);
+}
+
+sub info {
+    my $self = shift;
+    my %params = @_;
+    my %results;
+
+    die "no info_cb supplied" unless (exists $params{'info_cb'});
+    die "no info supplied" unless (exists $params{'info'});
+
+    # make sure the info is loaded, and re-call info() if we have to wait
+    if (!defined($self->{'nslots'}) && grep(/^num_slots$/, @{$params{'info'}})) {
+	$self->_get_info(
+	    sub {
+                my ($err) = @_;
+		$self->info(%params);
+	    },
+	    sub {
+		my ($msg) = @_;
+		$params{'info_cb'}->($msg);
+	    });
+	return;
+    }
+
+    # ok, info is loaded, so call back with the results
+    for my $inf (@{$params{'info'}}) {
+        if ($inf eq 'num_slots') {
+            $results{$inf} = $self->{'nslots'};
+        } else {
+            warn "Ignoring request for info key '$inf'";
+        }
+    }
+
+    Amanda::MainLoop::call_later($params{'info_cb'}, undef, %results);
 }
 
 # run a simple op -- no arguments, no slot returned
@@ -447,12 +483,13 @@ use vars qw( @ISA );
 
 sub new {
     my $class = shift;
-    my ($chg, $device_name) = @_;
+    my ($chg, $slot, $device_name) = @_;
     my $self = Amanda::Changer::Reservation::new($class);
 
     $self->{'chg'} = $chg;
 
     $self->{'device_name'} = $device_name;
+    $self->{'this_slot'} = $slot;
     $self->{'next_slot'} = "next"; # clever, no?
 
     # mark the changer as reserved

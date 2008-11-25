@@ -53,7 +53,9 @@
 int changer_debug = 0;
 char *changer_resultstr = NULL;
 
-static char *tapechanger = NULL;
+static pid_t tpchanger_pid = -1;
+static int tpchanger_stdout = -1;
+static int tpchanger_stdin = -1;
 
 /* local functions */
 static int changer_command(char *cmd, char *arg);
@@ -63,13 +65,7 @@ static int run_changer_command(char *cmd, char *arg, char **slotstr, char **rest
 int
 changer_init(void)
 {
-    if (tapechanger == NULL)
-	tapechanger = getconf_str(CNF_TPCHANGER);
-    if (*tapechanger != '\0' && *tapechanger != '/') {
-	tapechanger = vstralloc(amlibexecdir, "/", tapechanger, versionsuffix(),
-			        NULL);
-    }
-    return strcmp(tapechanger, "") != 0;
+    return strcmp(getconf_str(CNF_TPCHANGER), "") != 0;
 }
 
 
@@ -78,7 +74,7 @@ report_bad_resultstr(char *cmd)
 {
     char *s;
 
-    s = vstrallocf(_("badly formed result from changer command %s: \"%s\""),
+    s = vstrallocf(_("<error> badly formed result from changer command %s: \"%s\""),
 		  cmd, changer_resultstr);
     amfree(changer_resultstr);
     changer_resultstr = s;
@@ -325,159 +321,130 @@ changer_current(
 /* ---------------------------- */
 
 static int
+start_chg_glue(void)
+{
+    int stdin_pipe[2] = { -1, -1 };
+    int stdout_pipe[2] = { -1, -1 };
+    char *chg_glue;
+
+    /* is it already running? */
+    if (tpchanger_pid != -1)
+	return 1;
+
+    if (pipe(stdin_pipe) == -1 || pipe(stdout_pipe) == -1) {
+	changer_resultstr = vstrallocf(
+			_("<error> could not make pipe: %s"), strerror(errno));
+	goto error;
+    }
+
+    switch(tpchanger_pid = fork()) {
+    case -1:
+	changer_resultstr = vstrallocf(
+			_("<error> could not fork: %s"), strerror(errno));
+	goto error;
+
+    case 0:
+	debug_dup_stderr_to_debug();
+	if(dup2(stdin_pipe[0], 0) == -1) {
+	    changer_resultstr = vstrallocf(
+			_("<error> could not dup2: %s"), strerror(errno));
+	    goto child_err;
+	}
+
+	if(dup2(stdout_pipe[1], 1) == -1) {
+	    changer_resultstr = vstrallocf(
+			_("<error> could not dup2: %s"), strerror(errno));
+	    goto child_err;
+	}
+	safe_fd(-1, 0);
+
+	chg_glue = g_strdup_printf("%s/chg-glue", amlibexecdir);
+
+	execl(chg_glue, chg_glue, get_config_name(), NULL);
+	changer_resultstr = vstrallocf(
+			_("<error> could not exec \"chg-glue\": %s"), strerror(errno));
+	goto child_err;
+
+child_err:
+	(void)full_write(stdout_pipe[1], changer_resultstr, strlen(changer_resultstr));
+	exit(1);
+
+    default:
+	aclose(stdin_pipe[0]);
+	aclose(stdout_pipe[1]);
+
+	tpchanger_stdout = stdout_pipe[0];
+	tpchanger_stdin = stdin_pipe[1];
+
+	return 1;
+    }
+
+error:
+    aclose(stdin_pipe[0]);
+    aclose(stdin_pipe[1]);
+    aclose(stdout_pipe[0]);
+    aclose(stdout_pipe[1]);
+
+    return 0;
+}
+
+static int
 changer_command(
      char *cmd,
      char *arg)
 {
-    int fd[2];
-    amwait_t wait_exitcode = 1;
     int exitcode = 0;
-    char *cmdstr;
-    pid_t pid, changer_pid = 0;
-    int fd_to_close[4], *pfd_to_close = fd_to_close;
-
-    cmdstr = vstralloc(tapechanger, " ",
-		       cmd, arg ? " " : "", 
-		       arg ? arg : "",
-		       NULL);
-
-    if(changer_debug) {
-	g_fprintf(stderr, _("changer: opening pipe to: %s\n"), cmdstr);
-	fflush(stderr);
-    }
+    char *cmdstr = NULL;
 
     amfree(changer_resultstr);
 
-    if(socketpair(AF_UNIX, SOCK_STREAM, 0, fd) == -1) {
-	changer_resultstr = vstrallocf(
-				_("<error> could not create pipe for \"%s\": %s"),
-				cmdstr, strerror(errno));
+    if (!start_chg_glue()) {
 	exitcode = 2;
 	goto failed;
     }
 
-    /* make sure fd[0] > 2  && fd[1] > 2 */
-    pfd_to_close = fd_to_close;
-    while(fd[0] <= 2) {
-	int a = dup(fd[0]);
-	*pfd_to_close++ = fd[0];
-	fd[0] = a;
-    }
-    while(fd[1] <= 2) {
-	int a = dup(fd[1]);
-	*pfd_to_close++ = fd[1];
-	fd[1] = a;
-    }
-    while (pfd_to_close > fd_to_close) {
-	close(*--pfd_to_close);
-    }
+    cmdstr = vstralloc(cmd,
+		       arg ? " " : "",
+		       arg ? arg : "",
+		       "\n",
+		       NULL);
 
-    if(fd[0] < 0 || fd[0] >= (int)FD_SETSIZE) {
-	changer_resultstr = vstrallocf(
-			_("<error> could not create pipe for \"%s\":"
-			"socketpair 0: descriptor %d out of range ( 0 .. %d)"),
-			cmdstr, fd[0], (int)FD_SETSIZE-1);
+    g_debug("changer: >> %s %s", cmd, arg? arg : "");
+
+    /* write the command to chg_glue */
+    if (full_write(tpchanger_stdin, cmdstr, strlen(cmdstr)) != strlen(cmdstr)) {
 	exitcode = 2;
-	goto done;
+	goto failed;
     }
-    if(fd[1] < 0 || fd[1] >= (int)FD_SETSIZE) {
-	changer_resultstr = vstrallocf(
-			_("<error> could not create pipe for \"%s\":"
-			"socketpair 1: descriptor %d out of range ( 0 .. %d)"),
-			cmdstr, fd[1], (int)FD_SETSIZE-1);
+
+    /* read the first line of the response */
+    changer_resultstr = areads(tpchanger_stdout);
+    if (!changer_resultstr) {
+        changer_resultstr = g_strdup("unexpected EOF");
+        exitcode = 2;
+        goto failed;
+    }
+    g_debug("changer: << %s", changer_resultstr);
+
+    if (strncmp_const(changer_resultstr, "EXITSTATUS ") != 0) {
+	report_bad_resultstr(cmd);
 	exitcode = 2;
-	goto done;
+	goto failed;
     }
+    exitcode = atoi(changer_resultstr + strlen("EXITSTATUS "));
 
-    switch(changer_pid = fork()) {
-    case -1:
-	changer_resultstr = vstrallocf(
-			_("<error> could not fork for \"%s\": %s"),
-			cmdstr, strerror(errno));
-	exitcode = 2;
-	goto done;
-    case 0:
-	debug_dup_stderr_to_debug();
-	if(dup2(fd[1], 1) == -1) {
-	    changer_resultstr = vstrallocf(
-			_("<error> could not open pipe to \"%s\": %s"),
-			cmdstr, strerror(errno));
-	    (void)full_write(fd[1], changer_resultstr, strlen(changer_resultstr));
-	    exit(1);
-	}
-	aclose(fd[0]);
-	aclose(fd[1]);
-	if (get_config_dir() && chdir(get_config_dir()) == -1) {
-	    changer_resultstr = vstrallocf(
-			_("<error> could not cd to \"%s\": %s"),
-			get_config_dir(), strerror(errno));
-	    (void)full_write(STDOUT_FILENO, changer_resultstr, strlen(changer_resultstr));
-	    exit(1);
-	}
-	safe_fd(-1, 0);
-	if(arg) {
-	    execle(tapechanger, tapechanger, cmd, arg, (char *)NULL,
-		   safe_env());
-	} else {
-	    execle(tapechanger, tapechanger, cmd, (char *)NULL, safe_env());
-	}
-	changer_resultstr = vstrallocf(
-			_("<error> could not exec \"%s\": %s"),
-			tapechanger, strerror(errno));
-	(void)full_write(STDOUT_FILENO, changer_resultstr, strlen(changer_resultstr));
-	exit(1);
-    default:
-	aclose(fd[1]);
+    /* and the second */
+    changer_resultstr = areads(tpchanger_stdout);
+    if (!changer_resultstr) {
+        changer_resultstr = g_strdup("unexpected EOF");
+        exitcode = 2;
+        goto failed;
     }
-
-    if((changer_resultstr = areads(fd[0])) == NULL) {
-	if (errno == 0) {
-	    changer_resultstr = vstrallocf(
-			_("<error> could not read result from \"%s\": Premature end of file, see %s"),
-			tapechanger, dbfn());
-	} else {
-	    changer_resultstr = vstrallocf(
-			_("<error> could not read result from \"%s\": %s"),
-			tapechanger, strerror(errno));
-	}
-	exitcode = 2;
-	/* fall through and perform the waitpid() anyway */
-    }
-
-    while(1) {
-	if ((pid = waitpid(changer_pid, &wait_exitcode, 0)) == -1) {
-	    if(errno == EINTR) {
-		continue;
-	    } else {
-		changer_resultstr = newvstrallocf(changer_resultstr,
-			_("<error> wait for \"%s\" failed: %s"),
-			tapechanger, strerror(errno));
-		exitcode = 2;
-		goto done;
-	    }
-	} else {
-	    break;
-	}
-    }
-
-    /* mark out-of-control changers as fatal error */
-    if(WIFSIGNALED(wait_exitcode)) {
-	changer_resultstr = newvstrallocf(changer_resultstr,
-			_("<error> %s (got signal %d)"),
-			changer_resultstr, WTERMSIG(wait_exitcode));
-	exitcode = 2;
-    } else {
-	if (!exitcode)
-	    exitcode = WEXITSTATUS(wait_exitcode);
-    }
-
-done:
-    aclose(fd[0]);
-    aclose(fd[1]);
+    g_debug("changer: << %s", changer_resultstr);
 
 failed:
     if (exitcode != 0) {
-        dbprintf(_("changer: got exit: %d str: %s\n"), exitcode, changer_resultstr); 
+	g_debug("changer: ERROR %s", changer_resultstr);
     }
 
     amfree(cmdstr);

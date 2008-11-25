@@ -79,6 +79,25 @@ sub load {
     }
 }
 
+sub info {
+    my $self = shift;
+    my %params = @_;
+    my %results;
+
+    die "no info_cb supplied" unless (exists $params{'info_cb'});
+    die "no info supplied" unless (exists $params{'info'});
+
+    for my $inf (@{$params{'info'}}) {
+        if ($inf eq 'num_slots') {
+            $results{$inf} = 1;
+        } else {
+            warn "Ignoring request for info key '$inf'";
+        }
+    }
+
+    Amanda::MainLoop::call_later($params{'info_cb'}, undef, %results);
+}
+
 package Amanda::Changer::single::Reservation;
 use vars qw( @ISA );
 @ISA = qw( Amanda::Changer::Reservation );
@@ -91,6 +110,8 @@ sub new {
     $self->{'chg'} = $chg;
 
     $self->{'device_name'} = $chg->{'device_name'};
+    $self->{'this_slot'} = '1';
+    $self->{'next_slot'} = '1';
     $chg->{'reserved'} = 1;
 
     return $self;

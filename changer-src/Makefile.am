@@ -28,6 +28,7 @@ amlibexec_PROGRAMS =	$(CHG_SCSI)
 EXTRA_PROGRAMS =	$(CHIO_SCSI)
 
 CHECK_PERL = \
+		chg-glue \
 		chg-chio \
 		chg-iomega \
 		chg-rth

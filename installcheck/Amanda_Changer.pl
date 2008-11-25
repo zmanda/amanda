@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 34;
+use Test::More tests => 35;
 use File::Path;
 use strict;
 
@@ -157,6 +157,7 @@ sub new {
     $self->{'label'} = $label;
 
     $self->{'device_name'} = "test:slot-$slot";
+    $self->{'this_slot'} = $slot;
     $self->{'next_slot'} = ($slot + 1) % (scalar @{$chg->{'slots'}});
 
     return $self;
@@ -280,8 +281,10 @@ my $chg = Amanda::Changer->new("mychanger");
         my ($err, $res) = @_;
         die $err if $err;
 
-        is($res->{'device_name'}, "test:slot-2",
+        is($res->{'this_slot'}, 2,
             "'current' slot loads slot 2");
+        is($res->{'device_name'}, "test:slot-2",
+            "..device is correct");
         is($res->{'next_slot'}, 3,
             "..and the next slot is slot 3");
         $chg->load(res_cb => $second_cb, slot => $res->{'next_slot'}, set_current => 1);
@@ -292,7 +295,7 @@ my $chg = Amanda::Changer->new("mychanger");
         my ($err, $res) = @_;
         die $err if $err;
 
-        is($res->{'device_name'}, "test:slot-3",
+        is($res->{'this_slot'}, 3,
             "next slot loads slot 3");
         is($chg->{'curslot'}, 3,
             "..which is also now the current slot");

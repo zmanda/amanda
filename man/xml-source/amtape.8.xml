@@ -148,14 +148,6 @@ then load the tape from the current slot.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>slot prev</emphasis></term>
-  <listitem>
-<para>Eject any tape in the drive and put it away,
-then load the tape from the previous slot and reset
-<emphasis remap='I'>current</emphasis>.</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
   <term><emphasis remap='B'>slot next</emphasis></term>
   <listitem>
 <para>Eject any tape in the drive and put it away,
@@ -172,20 +164,9 @@ then load the tape from the first slot and reset
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>slot last</emphasis></term>
-  <listitem>
-<para>Eject any tape in the drive and put it away,
-then load the tape from the last slot and reset
-<emphasis remap='I'>current</emphasis>.</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
   <term><emphasis remap='B'>slot advance</emphasis></term>
   <listitem>
-<para>Eject any tape in the drive and put it away.
-Advance
-<emphasis remap='I'>current</emphasis>
-to the next tape, but do not load it.</para>
+<para>Synonym for <emphasis remap='B'>slot next</emphasis>.</para>
   </listitem>
   </varlistentry>
 

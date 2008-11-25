@@ -17,9 +17,9 @@ common_tests = \
 
 server_tests = \
 	Amanda_Changer \
-	Amanda_Changer_Compat \
-	Amanda_Changer_Disk \
-	Amanda_Changer_Single \
+	Amanda_Changer_compat \
+	Amanda_Changer_disk \
+	Amanda_Changer_single \
 	Amanda_Cmdline \
 	Amanda_DB_Catalog \
 	Amanda_Device \

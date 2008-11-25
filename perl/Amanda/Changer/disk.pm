@@ -95,6 +95,26 @@ sub load {
     }
 }
 
+sub info {
+    my $self = shift;
+    my %params = @_;
+    my %results;
+
+    die "no info_cb supplied" unless (exists $params{'info_cb'});
+    die "no info supplied" unless (exists $params{'info'});
+
+    for my $inf (@{$params{'info'}}) {
+        if ($inf eq 'num_slots') {
+            my @slots = $self->_all_slots();
+            $results{$inf} = scalar @slots;
+        } else {
+            warn "Ignoring request for info key '$inf'";
+        }
+    }
+
+    Amanda::MainLoop::call_later($params{'info_cb'}, undef, %results);
+}
+
 sub reset {
     my $self = shift;
     my %params = @_;
@@ -117,6 +137,9 @@ sub _load_by_slot {
 
     if ($slot eq "current") {
         $slot = $self->_get_current();
+    } elsif ($slot eq "next") {
+        $slot = $self->_get_current();
+        $slot = $self->_get_next($slot);
     }
 
     if (!$self->_slot_exists($slot)) {
@@ -138,7 +161,7 @@ sub _load_by_slot {
     my $next_slot = $self->_get_next($slot);
 
     Amanda::MainLoop::call_later($params{'res_cb'},
-            undef, Amanda::Changer::disk::Reservation->new($self, $drive, $next_slot));
+            undef, Amanda::Changer::disk::Reservation->new($self, $drive, $slot, $next_slot));
 }
 
 sub _load_by_label {
@@ -167,7 +190,7 @@ sub _load_by_label {
     my $next_slot = $self->_get_next($slot);
 
     Amanda::MainLoop::call_later($params{'res_cb'},
-            undef, Amanda::Changer::disk::Reservation->new($self, $drive, $next_slot));
+            undef, Amanda::Changer::disk::Reservation->new($self, $drive, $slot, $next_slot));
 }
 
 # Internal function to find an unused (nonexistent) driveN subdirectory and
@@ -342,13 +365,14 @@ use vars qw( @ISA );
 
 sub new {
     my $class = shift;
-    my ($chg, $drive, $next_slot) = @_;
+    my ($chg, $drive, $slot, $next_slot) = @_;
     my $self = Amanda::Changer::Reservation::new($class);
 
     $self->{'chg'} = $chg;
     $self->{'drive'} = $drive;
 
     $self->{'device_name'} = "file:$drive";
+    $self->{'this_slot'} = $slot;
     $self->{'next_slot'} = $next_slot;
 
     return $self;

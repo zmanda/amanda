@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 3;
+use Test::More tests => 4;
 use File::Path;
 use strict;
 
@@ -48,9 +48,19 @@ my $chg = Amanda::Changer->new("chg-single:tape:/foo");
 
 {
     my ($held_res);
-    my ($get_res, $got_res, $got_second_res);
+    my ($get_info, $get_res, $got_res, $got_second_res);
+
+    $get_info = sub {
+        $chg->info(info_cb => $get_res, info => [ 'num_slots' ]);
+    };
 
     $get_res = sub {
+        my $err = shift;
+        my %results = @_;
+        die($err) if defined($err);
+
+        is($results{'num_slots'}, 1, "info() returns the correct num_slots");
+
 	$chg->load(slot => "current",
 		   res_cb => $got_res);
     };
@@ -76,6 +86,6 @@ my $chg = Amanda::Changer->new("chg-single:tape:/foo");
     };
 
     # start the loop
-    Amanda::MainLoop::call_later($get_res);
+    Amanda::MainLoop::call_later($get_info);
     Amanda::MainLoop::run();
 }

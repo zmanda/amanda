@@ -1,3 +1,16 @@
+2008-11-24  Dustin J. Mitchell <dustin@zmanda.com>
+	* changer-src/Makefile.am changer-src/chg-glue.pl:
+	  add new c-to-perl glue script
+	* server-src/changer.c: interface with new script
+	* server-src/amtape.c man/xml-source/amtape.8.xml:
+	  remove 'slot last' and 'slot prev'
+	* perl/Amanda/Changer.pm perl/Amanda/Changer/compat.pm
+	  perl/Amanda/Changer/disk.pm perl/Amanda/Changer/single.pm: updates to
+	  new Changer API
+	* installcheck/Amanda_Changer.pl installcheck/Amanda_Changer_compat.pl
+	  installcheck/Amanda_Changer_disk.pl installcheck/Amanda_Changer_single.pl
+	  installcheck/Makefile.am: tests for all of it
+
 2008-11-25  Dustin J. Mitchell <dustin@zmanda.com>
 	* example/template.d/advanced.conf.in: don't imply that
 	  maxdumpsize is in bytes

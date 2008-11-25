@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 12;
+use Test::More tests => 14;
 use File::Path;
 use strict;
 
@@ -168,11 +168,40 @@ my $chg = Amanda::Changer->new("chg-disk:$taperoot");
     Amanda::MainLoop::run();
 }
 
-# check loading by label
+# test loading slot "next"
 {
-    my ($load_label, $check_load_cb) = @_;
+    my $load_next = sub {
+        $chg->load(slot => "next",
+            res_cb => sub {
+                my ($err, $res) = @_;
+                die $err if $err;
+
+                is_pointing_to($res, 2, "loading slot 'next' loads the correct slot");
+
+                Amanda::MainLoop::quit();
+            }
+        );
+    };
+
+    Amanda::MainLoop::call_later($load_next);
+    Amanda::MainLoop::run();
+}
+
+# check num_slots and loading by label
+{
+    my ($get_info, $load_label, $check_load_cb) = @_;
+
+    $get_info = sub {
+        $chg->info(info_cb => $load_label, info => [ 'num_slots' ]);
+    };
 
     $load_label = sub {
+        my $err = shift;
+        my %results = @_;
+        die($err) if defined($err);
+
+        is($results{'num_slots'}, 5, "info() returns the correct num_slots");
+
         # note use of a glob metacharacter in the label name
         $chg->load(label => "FOO?BAR", res_cb => $check_load_cb);
     };
@@ -196,6 +225,6 @@ my $chg = Amanda::Changer->new("chg-disk:$taperoot");
         or die $dev->error_or_status();
     rmtree("$taperoot/tmp");
 
-    Amanda::MainLoop::call_later($load_label);
+    Amanda::MainLoop::call_later($get_info);
     Amanda::MainLoop::run();
 }

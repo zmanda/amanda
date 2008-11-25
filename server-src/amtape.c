@@ -74,15 +74,11 @@ static const struct {
     { "slot" , load_slot,
 	T_("slot current         load tape from current slot") },
     { "slot" , load_slot,
-	T_("slot prev            load tape from previous slot") },
-    { "slot" , load_slot,
 	T_("slot next            load tape from next slot") },
     { "slot" , load_slot,
 	T_("slot advance         advance to next slot but do not load") },
     { "slot" , load_slot,
 	T_("slot first           load tape from first slot") },
-    { "slot" , load_slot,
-	T_("slot last            load tape from last slot") },
     { "label", load_label,
 	T_("label <label>        find and load labeled tape") },
     { "taper", amtape_taper_scan,
@@ -252,7 +248,6 @@ load_slot(
     char **	argv)
 {
     char *slotstr = NULL, *devicename = NULL;
-    int is_advance;
     Device * device;
 
     if(argc != 2)
@@ -260,28 +255,25 @@ load_slot(
 
     device_api_init();
 
-    is_advance = (strcmp(argv[1], "advance") == 0);
+    if (strcmp(argv[1], "advance") == 0) {
+	argv[1] = "next";
+    }
+
     if(changer_loadslot(argv[1], &slotstr, &devicename)) {
 	error(_("could not load slot %s: %s"), slotstr, changer_resultstr);
 	/*NOTREACHED*/
     }
-    
-    if (!is_advance) {
-        device = device_open(devicename);
-	g_assert(device != NULL);
-        if (device->status != DEVICE_STATUS_SUCCESS) {
-            g_fprintf(stderr,
-                    _("%s: could not open device %s: %s"), get_pname(),
-                    devicename, device_error(device));
-        }
-	g_object_unref(device);
-    }
 
-    g_fprintf(stderr, _("%s: changed to slot %s"), get_pname(), slotstr);
-    if(! is_advance) {
-	g_fprintf(stderr, _(" on %s"), devicename);
+    device = device_open(devicename);
+    g_assert(device != NULL);
+    if (device->status != DEVICE_STATUS_SUCCESS) {
+	g_fprintf(stderr,
+		_("%s: could not open device %s: %s"), get_pname(),
+		devicename, device_error(device));
     }
-    fputc('\n', stderr);
+    g_object_unref(device);
+
+    g_fprintf(stderr, _("%s: changed to slot %s on %s\n"), get_pname(), slotstr, devicename);
     amfree(slotstr);
     amfree(devicename);
 }

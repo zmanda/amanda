@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 15;
+use Test::More tests => 17;
 use File::Path;
 use strict;
 use warnings;
@@ -237,10 +237,20 @@ if ($cfg_result != $CFGERR_OK) {
 $chg = Amanda::Changer->new();
 
 {
-    my ($load_current, $label_current, $load_next,
+    my ($get_info, $load_current, $label_current, $load_next,
         $release_next, $load_by_label, $check_by_label);
 
+    $get_info = sub {
+        $chg->info(info_cb => $load_current, info => [ 'num_slots' ]);
+    };
+
     $load_current = sub {
+        my $err = shift;
+        my %results = @_;
+        die($err) if defined($err);
+
+        is($results{'num_slots'}, 15, "info() returns the correct num_slots");
+
         $chg->load(slot => "1", res_cb => $label_current);
     };
 
@@ -256,6 +266,7 @@ $chg = Amanda::Changer->new();
         $dev->finish()
             or die $dev->error_or_status();
 
+        is($res->{'this_slot'}, "1", "this slot is '1'");
         is($res->{'next_slot'}, "next", "next slot is 'next'");
         $res->set_label(label => "TESTCONF18", finished_cb => $load_next);
     };
@@ -303,6 +314,6 @@ $chg = Amanda::Changer->new();
         Amanda::MainLoop::quit();
     };
 
-    Amanda::MainLoop::call_later($load_current);
+    Amanda::MainLoop::call_later($get_info);
     Amanda::MainLoop::run();
 }

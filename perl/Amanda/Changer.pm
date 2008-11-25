@@ -54,12 +54,6 @@ Amanda::Changer -- interface to changer scripts
     # later..
     $reservation->release(finished_cb => $start_next_volume);
 
-    # only certain devices support things like..
-    $chg->eject( .. );
-    $chg->move_media( .. );
-    $chg->get_slot_info( .. );
-    $chg->clean( .. );
-
 =head1 INTERFACE
 
 All operations in the module return immediately, and take as an argument a
@@ -102,6 +96,16 @@ in the event of an error, or
 on success. A finished_cb may be omitted if no notification of completion is
 required.
 
+=head2 CURRENT SLOT
+
+Changers maintain a global concept of a "current" slot, for
+compatibility with Amanda algorithms such as the taperscan.  However, it
+is not compatible with concurrent use of the same changer, and may be
+inefficient for some changers, so new algorithms should avoid using it,
+preferring instead to load the correct tape immediately (with C<load>),
+and to progress from tape to tape using the reservation objects'
+C<next_slot> attribute.
+
 =head2 CHANGER OBJECTS
 
 =head3 $chg->load(res_cb => $cb, label => $label, set_current => $sc)
@@ -114,18 +118,55 @@ update its current slot (but some changers will anyway - specifically,
 chg-compat).
 
 Note that the changer I<tries> to load the requested volume, but it's a mean
-world out there, and you may not get what you want.
+world out there, and you may not get what you want, so check the label on the
+loaded volume before getting started.
 
 =head3 $chg->load(res_cb => $cb, slot => "current")
 
 Reserve the volume in the "current" slot. This is used by the sequential
 taperscan algorithm to begin its search.
 
+=head3 $chg->load(res_cb => $cb, slot => "next")
+
+Reserve the volume that follows the current slot.  This may not be a
+very efficient operation on all devices.
+
 =head3 $chg->load(res_cb => $cb, slot => $slot, set_current => $sc)
 
 Reserve the volume in the given slot. $slot must be a string that appeared in a
 reservation's 'next_slot' field at some point, or a string from the user (e.g.,
 an argument to amtape).
+
+=head3 $chg->info(info_cb => $cb, info => [ $key1, $key2, .. ])
+
+Query the changer for miscellaneous information.  Any number of keys may be
+specified.  The C<info_cb> is called with C<$error> as the first argument,
+much like a C<res_cb>, but the remaining arguments form a hash giving values
+for all of the requested keys that are supported by the changer.  The preamble
+to such a callback is usually
+
+  info_cb => sub {
+    my $error = shift;
+    my %results = @_;
+    # ..
+  }
+
+Supported keys are:
+
+=over 2
+
+=item num_slots
+
+The total number of slots in the changer device.  If this key is not
+present, then the device cannot determine its slot count (for example,
+an archival device that names slots by timestamp could potentially run
+until the heat-death of the universe).
+
+=item vendor_string
+
+A string describing the name and model of the changer device.
+
+=back
 
 =head3 $chg->reset(finished_cb => $cb)
 
@@ -144,8 +185,10 @@ activities until the cleaning is complete.
 
 =head3 $chg->update(finished_cb => $cb, changed => $changed)
 
-The user has changed something -- loading or unloading tapes, reconfiguring the
-changer, etc. -- that may have invalidated the database.
+The user has changed something -- loading or unloading tapes,
+reconfiguring the changer, etc. -- that may have invalidated the
+database.  C<$changed> is a changer-specific string indicating what has
+changed; if it is omitted, the changer will check everything.
 
 =head3 $chg->import(finished_cb => $cb, slots => $slots)
 
@@ -155,7 +198,7 @@ operation, and $slots should be supplied by the user for verbatim transmission
 to the changer, and may specify which import/export slots, for example, contain
 the new volumes.
 
-=head3 $chg->import(finished_cb => $cb, slot => $slot)
+=head3 $chg->export(finished_cb => $cb, slot => $slot)
 
 =head3 $chg->export(finished_cb => $cb, label => $label)
 
@@ -173,12 +216,17 @@ user, and have meaning for the changer.
 
 This is the name of the device reserved by a reservation object.
 
+=head3 $res->{'this_slot'}
+
+This is the name of this slot.  It is an arbitrary string which will
+have some meaning to the changer's C<load()> method. It is safe to
+access this field after the reservation has been released.
+
 =head3 $res->{'next_slot'}
 
-This is the "next" slot after this one. It is an arbitrary string which will
-have some meaning to the changer's C<load()> method. It is safe to access this
-field after the reservation has been released (and, in changers with only one
-"drive", this is the only way you will get to the next volume!)
+This is the "next" slot after this one. It is safe to access this field,
+too, after the reservation has been released (and, in changers with only
+one "drive", this is the only way you will get to the next volume!)
 
 =head3 $res->release(finished_cb => $cb, eject => $eject)
 
@@ -194,7 +242,7 @@ completely.
 
 A reservation will be released automatically when the object is destroyed, but
 in this case no finished_cb is given, so the release operation may not complete
-before the process exists. Wherever possible, reservations should be explicitly
+before the process exits. Wherever possible, reservations should be explicitly
 released.
 
 =head3 $res->set_label(finished_cb => $cb, label => $label)
@@ -210,9 +258,11 @@ See the other changer packages, including:
 
 =over 2
 
-=item L<Amanda::Changer::Disk>
+=item L<Amanda::Changer::disk>
 
-=item L<Amanda::Changer::Compat>
+=item L<Amanda::Changer::compat>
+
+=item L<Amanda::Changer::single>
 
 =back
 
@@ -406,6 +456,16 @@ sub reset {
     my $class = ref($self);
     if (exists $params{'finished_cb'}) {
 	$params{'finished_cb'}->("$class does not support reset()");
+    }
+}
+
+sub info {
+    my $self = shift;
+    my %params = @_;
+
+    my $class = ref($self);
+    if (exists $params{'info_cb'}) {
+	$params{'info_cb'}->("$class does not support info()");
     }
 }
 
