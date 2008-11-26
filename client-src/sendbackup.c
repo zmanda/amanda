@@ -950,7 +950,8 @@ application_api_info_tapeheader(
 	    return;
 	}
     }
-    g_snprintf(line, 1024, "%s -f... -\n", prog);
+    g_snprintf(line, 1024, "%s/%s restore [./file-to-restore]+\n",
+	       APPLICATION_DIR, prog);
     if (full_write(mesgfd, line, strlen(line)) != strlen(line)) {
 	dbprintf(_("error writing to mesgfd socket: %s"), strerror(errno));
 	return;

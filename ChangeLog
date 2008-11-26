@@ -1,3 +1,6 @@
+2008-11-26  Jean-Louis Martineau <martineau@zmanda.com>
+	* client-src/sendbackup.c: Set application in extraction command.
+
 2008-11-25  Jean-Louis Martineau <martineau@zmanda.com>
 	* configure.in: AM_INIT_AUTOMAKE(amanda, "2.6.1b1")
 	* ReleaseNotes: Release notes for 2.6.1b1.
