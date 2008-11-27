@@ -1,3 +1,6 @@
+2008-11-27  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amstatus.pl: Correctly parse degraded size.
+
 2008-11-26  Jean-Louis Martineau <martineau@zmanda.com>
 	* client-src/sendbackup.c: Set application in extraction command.
 

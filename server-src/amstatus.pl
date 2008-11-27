@@ -321,10 +321,10 @@ while($lineX = <AMDUMP>) {
 			$esize=$line[14];	#compressed size
 			$esize=32 if $esize<32;
 			$esize{$hostpart}=$esize / $unitdivisor;
-			if(!defined($line[22])) {
+			if(!defined($line[25])) {
 				$degr_level{$hostpart}=-1;
 			} else {
-				$degr_level{$hostpart}=$line[18];
+				$degr_level{$hostpart}=$line[17];
 				$esize=$line[25];	#compressed size
 				$esize=32 if $esize<32;
 				$degr_size{$hostpart}=$esize / $unitdivisor;
