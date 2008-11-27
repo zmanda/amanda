@@ -59,6 +59,7 @@ if [ ! -f ${AMANDAHOMEDIR}/.am_passphrase ] ; then
 
         chown ${amanda_user}:${amanda_group} ${AMANDAHOMEDIR}/.am_passphrase
         chmod 0700 ${AMANDAHOMEDIR}/.am_passphrase 
+fi
 
 # Install .gnupg directory
 echo "`date +'%b %e %Y %T'`: Installing '${AMHOMEDIR}/.gnupg'." 

@@ -1,10 +1,6 @@
-amanda (2.6.1alpha-1) unstable; urgency=low
+amanda (2.6.1b1-1) unstable; urgency=low
 
   * Initial debian release: This package is based on Bdale Garbee's work as
     the official debian maintainer for amanda.
-  * Found by Daniel_p: Fixed typos in preinst and postrm.  Added permission
-    check for /tmp/amanda.  Fixed rules to append default perl site_lib to
-    .install file so that perl modules are installed.
-  * install amgtar and amstar suid root.
 
- -- Zmanda <support@zmanda.com>  Mon, 10 Mar 2008 1:00:09 -0600
+ -- Zmanda <support@zmanda.com>  Wed, 26 Nov 2008 23:00:09 -0600
