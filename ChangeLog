@@ -1,3 +1,7 @@
+2008-12-01  Nikolas Coukouma <atrus@zmanda.com>
+	* device-src/s3.c, device-src/s3.h: Fix segmentation fault within s3_make_bucket
+	  by adding some "null-op" read and write functions.
+
 2008-11-27  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amstatus.pl: Correctly parse degraded size.
 

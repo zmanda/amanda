@@ -413,6 +413,22 @@ s3_buffer_md5_func(void *stream);
 size_t
 s3_buffer_write_func(void *ptr, size_t size, size_t nmemb, void *stream);
 
+/* a CURLOPT_READFUNCTION that writes nothing. */
+size_t
+s3_empty_read_func(void *ptr, size_t size, size_t nmemb, void * stream);
+
+size_t
+s3_empty_size_func(void *stream);
+
+GByteArray*
+s3_empty_md5_func(void *stream);
+
+/* a CURLOPT_WRITEFUNCTION to write data that just counts data.
+ * s3_write_data should be NULL or a pointer to an gint64.
+ */
+size_t
+s3_counter_write_func(void *ptr, size_t size, size_t nmemb, void *stream);
+
 #ifdef _WIN32
 /* a CURLOPT_READFUNCTION to read data from a file. */
 size_t

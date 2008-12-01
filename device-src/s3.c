@@ -337,10 +337,12 @@ interpret_response(S3Handle *hdl,
  * @param query: the query string to send (not including th initial '?'),
  * or NULL for none
  * @param read_func: the callback for reading data
+ *   Will use s3_empty_read_func if NULL is passed in.
  * @param size_func: the callback to get the number of bytes to upload
  * @param md5_func: the callback to get the MD5 hash of the data to upload
  * @param read_data: pointer to pass to the above functions
- * @param write_func: the callback for writing data
+ * @param write_func: the callback for writing data.
+ *   Will use s3_counter_write_func if NULL is passed in.
  * @param write_data: pointer to pass to C{write_func}
  * @param progress_func: the callback for progress information
  * @param progress_data: pointer to pass to C{progress_func}
@@ -794,6 +796,39 @@ s3_buffer_write_func(void *ptr, size_t size, size_t nmemb, void *stream)
     return new_bytes;
 }
 
+/* a CURLOPT_READFUNCTION that writes nothing. */
+size_t
+s3_empty_read_func(G_GNUC_UNUSED void *ptr, G_GNUC_UNUSED size_t size, G_GNUC_UNUSED size_t nmemb, G_GNUC_UNUSED void * stream)
+{
+    return 0;
+}
+
+size_t
+s3_empty_size_func(G_GNUC_UNUSED void *stream)
+{
+    return 0;
+}
+
+GByteArray*
+s3_empty_md5_func(G_GNUC_UNUSED void *stream)
+{
+    static const GByteArray empty = {(gint8 *) "", 0};
+
+    return s3_compute_md5_hash(&empty);
+}
+
+/* a CURLOPT_WRITEFUNCTION to write data that just counts data.
+ * s3_write_data should be NULL or a pointer to an gint64.
+ */
+size_t
+s3_counter_write_func(G_GNUC_UNUSED void *ptr, size_t size, size_t nmemb, void *stream)
+{
+    gint64 inc = nmemb*size;
+    
+    if (stream) *((gint64*) stream) += inc;
+    return inc;
+}
+
 #ifdef _WIN32
 /* a CURLOPT_READFUNCTION to read data from a file. */
 size_t
@@ -975,9 +1010,18 @@ perform_request(S3Handle *hdl,
             g_byte_array_free(md5_hash, TRUE);
         }
     }
+    if (!read_func) {
+        /* Curl will use fread() otherwise */
+        read_func = s3_empty_read_func;
+    }
+
     if (write_func) {
         int_writedata.write_func = write_func;
         int_writedata.write_data = write_data;
+    } else {
+        /* Curl will use fwrite() otherwise */
+        int_writedata.write_func = s3_counter_write_func;
+        int_writedata.write_data = NULL;
     }
 
     while (1) {
