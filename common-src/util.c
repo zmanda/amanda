@@ -483,6 +483,9 @@ unquote_string(
 		    }
 		    if (c)
 			*(out++) = c;
+		} else if (*in == '\0') {
+		    /* trailing backslash -- ignore */
+		    break;
 		}
 	    }
 	    *(out++) = *(in++);

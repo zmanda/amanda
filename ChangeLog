@@ -1,3 +1,7 @@
+2008-12-01  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/util.c: fix mishandling of trailing backslash in
+	  unquote_string
+
 2008-12-01  Jean-Louis Martineau <martineau@zmanda.com>
 	* packaging/deb/changelog, packaging/deb/rules, packaging/deb/buildpkg,
 	  packaging/rpm/buildpkg, packaging/rpm/amanda.spec,
