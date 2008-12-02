@@ -1,3 +1,6 @@
+2008-12-01  Nikolas Coukouma <atrus@zmanda.com>
+	* device-src/s3.c: fix signedness
+
 2008-12-01  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/util.c: fix mishandling of trailing backslash in
 	  unquote_string
