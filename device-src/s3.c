@@ -812,7 +812,7 @@ s3_empty_size_func(G_GNUC_UNUSED void *stream)
 GByteArray*
 s3_empty_md5_func(G_GNUC_UNUSED void *stream)
 {
-    static const GByteArray empty = {(gint8 *) "", 0};
+    static const GByteArray empty = {(guint8 *) "", 0};
 
     return s3_compute_md5_hash(&empty);
 }
