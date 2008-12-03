@@ -1,4 +1,7 @@
 2008-12-03  Jean-Louis Martineau <martineau@zmanda.com>
+	* man/xml-source/amanda.conf.5.xml: Provide default unit.
+
+2008-12-03  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amcheckdump.pl: Use GNUTAR to validate smbclient image.
 
 2008-12-01  Nikolas Coukouma <atrus@zmanda.com>
