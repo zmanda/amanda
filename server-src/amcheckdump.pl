@@ -268,7 +268,7 @@ sub find_validation_command {
             "TAR" => "$Amanda::Constants::GNUTAR tf -",
             "GTAR" => "$Amanda::Constants::GNUTAR tf -",
             "GNUTAR" => "$Amanda::Constants::GNUTAR tf -",
-            "SMBCLIENT" => "$Amanda::Constants::SAMBA_CLIENT tf -",
+            "SMBCLIENT" => "$Amanda::Constants::GNUTAR tf -",
         );
         $validation_program = $validation_programs{$program};
     } else {

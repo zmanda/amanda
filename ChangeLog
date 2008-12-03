@@ -1,3 +1,6 @@
+2008-12-03  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amcheckdump.pl: Use GNUTAR to validate smbclient image.
+
 2008-12-01  Satya Ganga <gsat@zmanda.com>
 	* server-src/amdevcheck.pl: add ability to print device properties
 	* man/xml-source/amdevcheck.8.xml: new docs
