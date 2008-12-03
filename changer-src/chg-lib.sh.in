@@ -127,7 +127,7 @@ amdevcheck_status() {
 # be extended at some later time.
 
 try_eject_device() {
-    if echo "$1" | grep -e '^tape:' > /dev/null; then
+    if echo "$1" | grep '^tape:' > /dev/null; then
         try_eject_device_tape="`echo \"$1\" | cut -b6-`"
     elif echo "$1" | grep -v : > /dev/null; then
         try_eject_device_tape="$1"
@@ -137,7 +137,7 @@ try_eject_device() {
 
     if test -n "$try_eject_device_tape"; then
         if try_find_mt; then
-            $MT $MTF "$try_eject_device_tape" eject
+            $MT $MTF "$try_eject_device_tape" offline
         fi
     else
         # Technically we failed to eject the device, but we presume that's
