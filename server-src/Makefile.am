@@ -41,12 +41,12 @@ CHECK_PERL = \
 	    amdevcheck \
 	    amcheckdump \
 	    amcleanup \
+	    amrmtape \
 	    amstatus
 SCRIPTS_PERL = $(CHECK_PERL)
 SCRIPTS_SHELL = \
 	    amcheckdb \
-	    amdump \
-	    amrmtape
+	    amdump
 
 sbin_SCRIPTS = $(SCRIPTS_PERL) $(SCRIPTS_SHELL)
 

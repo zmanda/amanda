@@ -22,10 +22,12 @@
 <refsynopsisdiv>
 <cmdsynopsis>
   <command>amrmtape</command>    
+    <arg choice='opt'>--dryrun </arg>  
     <arg choice='opt'>-n </arg>
+    <arg choice='opt'>--verbose </arg>  
     <arg choice='opt'>-v </arg>
+    <arg choice='opt'>--quiet </arg>  
     <arg choice='opt'>-q </arg>
-    <arg choice='opt'>-d </arg>
     <arg choice='plain'><replaceable>config</replaceable></arg>
     <arg choice='plain'><replaceable>label</replaceable></arg>
 </cmdsynopsis>
@@ -48,6 +50,7 @@ man page for more details about &A;.</para>
 <refsect1><title>OPTIONS</title>
 <variablelist remap='TP'>
   <varlistentry>
+  <term><option>--dryrun</option></term>
   <term><option>-n</option></term>
   <listitem>
 <para>Generate new &tapelist; and database files with
@@ -58,22 +61,18 @@ and do not update the original copies.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
+  <term><option>--verbose</option></term>
   <term><option>-v</option></term>
   <listitem>
 <para>List backups of hosts and disks that are being discarded.  Enabled by default.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
+  <term><option>--quiet</option></term>
   <term><option>-q</option></term>
   <listitem>
 <para>Opposite of
 <option>-v</option>.</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
-  <term><option>-d</option></term>
-  <listitem>
-<para>Run in debugging mode so all executed commands are shown.</para>
   </listitem>
   </varlistentry>
 </variablelist>

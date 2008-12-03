@@ -35,6 +35,7 @@ full_tests = \
 	amdevcheck \
 	amcheckdump \
 	amdump \
+	amrmtape \
 	amservice \
 	amstatus
 
