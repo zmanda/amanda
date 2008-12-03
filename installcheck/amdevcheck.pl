@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 10;
+use Test::More tests => 17;
 
 use lib "@amperldir@";
 use Installcheck::Config;
@@ -64,14 +64,35 @@ is_deeply([ sort split "\n", $Installcheck::Run::stdout],
 	  [ sort "MESSAGE Error loading device header -- unlabeled volume?", "VOLUME_UNLABELED", "DEVICE_ERROR", "VOLUME_ERROR"],
 	  "..and output is correct");
 
-ok(run('amdevcheck', 'TESTCONF', "/dev/null"),
+ok(run('amdevcheck', 'TESTCONF', "--properties"),
+    "can list properties with --properties option");
+
+ok(run('amdevcheck', 'TESTCONF', "--properties", "BLOCK_SIZE"),
+    "check block_size property value");
+is_deeply([ sort split "\n", $Installcheck::Run::stdout],
+	  [ sort "BLOCK_SIZE=32768"],
+    ".. and confirm it is default value");
+
+ok(run('amdevcheck', 'TESTCONF', "--properties", "CANONICAL_NAME"),
+    "check canonical_name property value");
+is_deeply([ sort split "\n", $Installcheck::Run::stdout],
+	  [ sort "CANONICAL_NAME=file:" . Installcheck::Run::vtape_dir() ],
+    ".. and confirm it is set to default value");
+
+ok(run('amdevcheck', 'TESTCONF', "--properties", "BLOCK_SIZE,CANONICAL_NAME"),
+    "check a list of properties");
+is_deeply([ sort split "\n", $Installcheck::Run::stdout],
+	  [ sort "BLOCK_SIZE=32768",
+	  	 "CANONICAL_NAME=file:" . Installcheck::Run::vtape_dir() ],
+    ".. with correct results");
+
+ok(run('amdevcheck', 'TESTCONF', '/dev/null'),
     "can override device on the command line");
 is_deeply([ sort split "\n", $Installcheck::Run::stdout],
 	  [ sort "MESSAGE File /dev/null is not a tape device", "DEVICE_ERROR"],
     ".. and produce a corresponding error message");
 
-BAIL_OUT()
-    unless run('amdump', 'TESTCONF');
+BAIL_OUT("amdump with TESTCONF failed") unless run('amdump','TESTCONF');
 
 is_deeply([ sort split "\n", run_get('amdevcheck', 'TESTCONF') ],
 	  [ sort "SUCCESS" ],

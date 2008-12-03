@@ -25,6 +25,9 @@
       <group choice='opt'>
         <arg choice='plain'><replaceable>device name</replaceable></arg>
       </group>
+      <group choice='opt'>
+        <arg choice='plain'>-properties<replaceable>list</replaceable></arg>
+      </group>
       <arg choice='plain' rep='repeat'><group><arg choice='plain'>-o
       </arg><replaceable>configoption</replaceable></group></arg>
     </cmdsynopsis>
@@ -37,7 +40,8 @@
       and whether or not that volume is labeled. Some devices can't distinguish
       between all of these cases; a missing volume and an unlabeled volume might
       generate the same error code, for example. In those cases, this tool
-      reports all possible causes of the error.
+      reports all possible causes of the error. Optionally this tools lists the
+      properties for the device.
     </para>
     
     <para>See the
@@ -61,11 +65,28 @@
       </varlistentry>
 
       <varlistentry>
-        <term><replaceable> device</replaceable></term>
+        <term><replaceable>device</replaceable></term>
         <listitem>
           <para>
             &A; device to use. This option overrides any tapedev configuration
             specified in the configuration file.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><replaceable>--properties [list]</replaceable></term>
+        <listitem>
+          <para>
+	    Properties to list.  If this option is given, the usual check
+	    output is omitted, and property values are printed to stdout, one
+	    per line, as a property name, followed by '=', followed by the
+	    property value.
+          </para>
+          <para>
+	    If <replaceable>list</replaceable> is given, it is treated as a
+	    comma-separated list of properties to display.  If it is omitted,
+	    all supported properties are displayed.
           </para>
         </listitem>
       </varlistentry>

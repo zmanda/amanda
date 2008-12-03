@@ -1,3 +1,10 @@
+2008-12-01  Satya Ganga <gsat@zmanda.com>
+	* server-src/amdevcheck.pl: add ability to print device properties
+	* man/xml-source/amdevcheck.8.xml: new docs
+	* installcheck/amdevcheck.pl: new tests
+	* installcheck/Installcheck/Run.pm
+	  installcheck/Amanda_Changer_compat.pl: vtape_dir() gives vtape root
+
 2008-12-01  Nikolas Coukouma <atrus@zmanda.com>
 	* device-src/s3.c: fix signedness
 

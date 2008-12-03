@@ -29,27 +29,42 @@ use Amanda::Util qw( :constants );
 # try to open the device and read its label, returning the device_read_label
 # result (one or more of ReadLabelStatusFlags)
 sub try_read_label {
-    my ($device_name) = @_;
-
-    if ( !$device_name ) {
-	die("No device name specified.\n");
-    }
+    my ($device) = @_;
 
     my $result;
-
-    my $device = Amanda::Device->new($device_name);
-    if ( !$device ) {
-	die("Error creating $device_name");
+    $result = $device->read_label();
+    if ($device->status() != $DEVICE_STATUS_SUCCESS ) {
+        $result = $device->status();
     }
-
-    if ($device->status() == $DEVICE_STATUS_SUCCESS) {
-	$result = $device->read_label();
-    } else {
-	$result = $device->status();
-    }
-
-    print_result( $result, $device->error() );
+    print_result($result, $device->error() );
     return $result;
+}
+
+sub list_device_property {
+    my ( $device, $plist ) = @_;
+    my @proplist;
+
+    my $result;
+    if (!$plist ) {
+        if ($device->status() == $DEVICE_STATUS_SUCCESS ) {
+            my @list = $device->property_list();
+            foreach my $line (@list) {
+                push(@proplist, $line->{'name'} );
+            }
+        } else {
+            $result = $device->status();
+            print_result($result, $device->error() );
+            return $result;
+        }
+    } else {
+        @proplist = split(/,/, $plist );
+    }
+
+    foreach my $prop (sort @proplist ) {
+        my $value = $device->property_get(lc($prop) );
+        print uc($prop) . "=$value\n" if (defined($value) );
+    }
+    return;
 }
 
 # print the results, one flag per line
@@ -64,7 +79,7 @@ sub print_result {
 
 sub usage {
     print <<EOF;
-Usage: amdevcheck <config> [ <device name> ]
+Usage: amdevcheck <config> [ <device name> ] [ --properties {prop1,prop2,prop3} ]
 EOF
     exit(1);
 }
@@ -74,14 +89,17 @@ EOF
 Amanda::Util::setup_application("amdevcheck", "server", $CONTEXT_SCRIPTUTIL);
 
 my $config_overwrites = new_config_overwrites($#ARGV+1);
+my $getproplist;
+my $device_name;
 
 Getopt::Long::Configure(qw(bundling));
 GetOptions(
     'help|usage|?' => \&usage,
     'o=s' => sub { add_config_overwrite_opt($config_overwrites, $_[1]); },
+    'properties:s' => \$getproplist
 ) or usage();
 
-usage() if ( @ARGV < 1 || @ARGV > 2 );
+usage() if ( @ARGV < 1 || @ARGV > 3 );
 my $config_name = $ARGV[0];
 
 config_init($CONFIG_INIT_EXPLICIT_NAME, $config_name);
@@ -96,14 +114,28 @@ if ($cfgerr_level >= $CFGERR_WARNINGS) {
 
 Amanda::Util::finish_setup($RUNNING_AS_DUMPUSER);
 
-## Check the device
+my $result;
 
-my $device_name;
 if ( $#ARGV == 1 ) {
     $device_name = $ARGV[1];
 } else {
     $device_name = getconf($CNF_TAPEDEV);
 }
 
-try_read_label($device_name);
-exit 0;
+my $device = Amanda::Device->new($device_name);
+if ( !$device ) {
+    die("Error creating $device_name");
+}
+
+if ($device->status() == $DEVICE_STATUS_SUCCESS) {
+    if(defined $getproplist ) {
+	list_device_property($device,$getproplist);
+	exit 0;
+    }
+    try_read_label($device);
+    exit 0;
+} else {
+    $result = $device->status();
+    print $result;
+    exit 1;
+}

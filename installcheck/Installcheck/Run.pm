@@ -91,10 +91,11 @@ the proper vtape directories.  These are controlled by C<chg-disk>.
 The tapes are not labeled, and C<label_new_tapes> is not set by
 default, although C<labelstr> is set to C<TESTCONF[0-9][0-9]>.
 
-The vtapes are created in a subdirectory of C<AMANDA_TMPDIR> for ease of later
-deletion.  The subdirectory is available from C<vtape_dir($slot)>.
-C<load_vtape($slot)> will "load" the indicated slot just like chg-disk would,
-and return the resulting path.
+The vtapes are created in a subdirectory of C<AMANDA_TMPDIR> for ease of
+later deletion.  The subdirectory for each slot is available from
+C<vtape_dir($slot)>, while the parent directory is available from
+C<vtape_dir()>.  C<load_vtape($slot)> will "load" the indicated slot
+just like chg-disk would, and return the resulting path.
 
 =head2 HOLDING
 
@@ -139,7 +140,8 @@ require Exporter;
 @EXPORT_OK = qw(setup 
     run run_get run_err
     cleanup 
-    $diskname $stdout $stderr);
+    $diskname $stdout $stderr
+    load_vtape vtape_dir);
 @EXPORT = qw(exp_continue exp_continue_timeout);
 
 # global variables
@@ -199,6 +201,7 @@ sub setup_vtapes {
     $testconf->add_param("tpchanger", "\"chg-disk\"");
     $testconf->add_param("changerfile", "\"$CONFIG_DIR/TESTCONF/ignored-filename\"");
     $testconf->add_param("labelstr", "\"TESTCONF[0-9][0-9]\"");
+    $testconf->add_param("tapecycle", "$ntapes");
 
     # this overwrites the existing TEST-TAPE tapetype
     $testconf->add_tapetype('TEST-TAPE', [
@@ -234,7 +237,11 @@ sub setup_disklist {
 
 sub vtape_dir {
     my ($slot) = @_;
-    my $tapepath = "$taperoot/slot$slot";
+    if (defined($slot)) {
+        return "$taperoot/slot$slot";
+    } else {
+        return "$taperoot";
+    }
 }
 
 sub load_vtape {

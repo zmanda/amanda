@@ -249,7 +249,7 @@ $chg = Amanda::Changer->new();
         my %results = @_;
         die($err) if defined($err);
 
-        is($results{'num_slots'}, 15, "info() returns the correct num_slots");
+        is($results{'num_slots'}, 3, "info() returns the correct num_slots");
 
         $chg->load(slot => "1", res_cb => $label_current);
     };
