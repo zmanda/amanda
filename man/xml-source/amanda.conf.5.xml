@@ -119,6 +119,7 @@ some of which have a multiplier effect:</para>
   <term><emphasis remap='B'>kps kbps</emphasis></term>
   <listitem>
 <para>Some number of kilobytes per second (bytes*1024).</para>
+<para>It is the default multiplier for all size options.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
@@ -522,6 +523,7 @@ the backup image &A; was processing starts over again on the next tape.</para>
 <para>Default:
 <emphasis remap='I'>runtapes</emphasis>*<emphasis remap='I'>tape_length</emphasis>.
 Maximum number of bytes the planner will schedule for a run.</para>
+<para>The default unit is Kbytes if it is not specified.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
@@ -754,6 +756,7 @@ it will do the next level.
 The value of this parameter is used only if the parameter 
 <emphasis>bumppercent</emphasis> is set to 0.
 </para>
+<para>The default unit is Kbytes if it is not specified.</para>
 <para>
 The global setting of this parameter can be overwritten inside of a  
 dumptype-definition.  
@@ -895,11 +898,12 @@ The file name for the active &tapelist;.
   <term><emphasis remap='B'>device_output_buffer_size</emphasis> <emphasis remap='I'> int</emphasis></term>
   <listitem>
 <para>Default:
-<literal>640k</literal>.
+<literal>1280k</literal>.
 Controls the amount of memory used by &A;
 to hold data as it is read from the network or disk before it is written to
 the output device. Higher values may be
 useful on fast tape drives and optical media.</para>
+<para>The default unit is bytes if it is not specified.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
@@ -1276,6 +1280,7 @@ holding disk files. The size of each chunk will not exceed the specified value.
 However, even though dump images are split in the holding disk, they are concatenated as 
 they are written to tape, so each dump image still corresponds to a single continuous 
 tape section.</para>
+<para>The default unit is Kbytes if it is not specified.</para>
 
 <para>If 0 is specified, &A; will create holding disk chunks as large as
 ((INT_MAX/1024)-64) Kbytes.</para>
@@ -1397,6 +1402,7 @@ it will do the next level.
 The value of this parameter is used only if the parameter 
 <emphasis>bumppercent</emphasis> is set to 0.
 </para>
+<para>The default unit is Kbytes if it is not specified.</para>
 <para>
 See also the options 
 <emphasis remap='B'>bumppercent</emphasis>,
@@ -1964,6 +1970,7 @@ average dump being split), substantial tape space can be wasted.
 If too small, large dumps will be split into innumerable tiny dumpfiles,
 adding to restoration complexity.
 A good rule of thumb, usually, is 1/10 of the size of your tape.</para>
+<para>The default unit is Kbytes if it is not specified.</para>
   </listitem>
   </varlistentry>
 
@@ -1991,6 +1998,7 @@ The size of this buffer can be changed from its (very conservative) default
 to a value reflecting the amount of memory that each taper process on
 the dump server may reasonably consume.
 </para>
+<para>The default unit is Kbytes if it is not specified.</para>
   </listitem>
   </varlistentry>
 </variablelist>
@@ -2117,7 +2125,9 @@ regardless of what value is entered for <emphasis remap='B'>length</emphasis>
 (but see the section OUTPUT DRIVERS in the 
 <citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry> 
 manpage for exceptions).
- </para> </listitem>
+ </para>
+<para>The default unit is bytes if it is not specified.</para>
+  </listitem>
   </varlistentry>
 
 <varlistentry>
@@ -2127,6 +2137,7 @@ manpage for exceptions).
 <emphasis remap='I'>32 kbytes</emphasis>.
 How much data will be written in each tape record.  This is equivalent to the <emphasis remap="I">BLOCK_SIZE</emphasis> device property.
 </para>
+<para>The default unit is Kbytes if it is not specified.</para>
   </listitem>
   </varlistentry>
 <varlistentry>
@@ -2139,6 +2150,7 @@ reading a tape written with a 256k block size when Amanda is configured to use
 128k blocks.  This unusual feature is not supported by all operating systems and
 tape devices.
 </para>
+<para>The default unit is Kbytes if it is not specified.</para>
   </listitem>
   </varlistentry>
   
