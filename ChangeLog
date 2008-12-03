@@ -1,3 +1,6 @@
+2008-12-03  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amcheckdump.pl: Use GNUTAR to validate smbclient image.
+
 2008-12-01  Nikolas Coukouma <atrus@zmanda.com>
 	* device-src/s3.c: fix signedness
 
