@@ -1,4 +1,19 @@
 2008-12-04  Nikolas Coukouma <atrus@zmanda.com>
+	* device-src/device.c, device-src/device.h, perl/Amanda/Device.swg:
+	  Add erase method to the device class
+	* device-src/property.c, device-src/property.h:
+	  Add FULL_DELETION property so devices can indicate if they implement erase
+	* xml-source/amanda-devices.7.xml: document FULL_DELETION property
+	* device-src/null-device.c, device-src/rait-device.c:
+	  Indicate that these do not implement erase (via FULL_DELETION)
+	* device-src/s3-device.c, device-src/vfs-device.c: Implementation of erase
+	* device-src/s3-device.c: Add delete_all_files helper.
+	  Return FALSE on error in one place.
+	* installcheck/Amanda_Device.pl: Test erase and FULL_DELETION
+	* device-src/s3.c, device-src/s3.h: Add s3_delete_bucket.
+	  Don't usually retry when bucket is missing
+
+2008-12-04  Nikolas Coukouma <atrus@zmanda.com>
 	* device-src/device.c,
 	  device-src/s3-util.c,
 	  device-src/device.h,
