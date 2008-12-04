@@ -385,6 +385,18 @@ gboolean
 s3_make_bucket(S3Handle *hdl,
                const char *bucket);
 
+/* Delete a bucket
+ *
+ * @note A bucket can not be deleted if it still contains keys
+ *
+ * @param hdl: the S3Handle object
+ * @param bucket: the bucket to delete
+ * @returns: FALSE if an error occurs
+ */
+gboolean
+s3_delete_bucket(S3Handle *hdl,
+                 const char *bucket);
+
 /* Attempt a RefreshAWSSecurityToken on a token; if it succeeds, the old
  * token will be freed and replaced by the new. If it fails, the old
  * token is left unchanged and FALSE is returned. */

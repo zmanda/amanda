@@ -282,6 +282,10 @@ for future expansion.  Not all devices implement all of these properties.</para>
  (read-only) This property gives the amount of free space available on the current volume, if known.  This is often an estimate; for example, tape devices can only estimate the amount of tape left on a spool.
 </listitem></varlistentry>
  <!-- ==== -->
+ <varlistentry><term>FULL_DELETION</term><listitem>
+ (read-only) This property indicates whether the device supports erasing the entire volume.  Aside from S3 and VFS, most devices cannot support this feature.
+</listitem></varlistentry>
+ <!-- ==== -->
  <varlistentry><term>MAX_BLOCK_SIZE</term><listitem>
  (read-only) This property gives the maximum block size this device can support.  See BLOCK SIZES, below.
 </listitem></varlistentry>
@@ -299,7 +303,7 @@ for future expansion.  Not all devices implement all of these properties.</para>
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>PARTIAL_DELETION</term><listitem>
- (read-only) This property indicates whether the device supports deletion of specific files.  Aside from linear tapes, most devices can support this feature.  It is currently unused by Amanda.
+ (read-only) This property indicates whether the device supports deletion of specific files.  Aside from linear tapes and S3, most devices can support this feature.  It is currently unused by Amanda.
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>STREAMING</term><listitem>

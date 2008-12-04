@@ -203,6 +203,7 @@ struct _DeviceClass {
 				  PropertySurety surety,
 				  PropertySource source);
     gboolean (* recycle_file) (Device * self, guint filenum);
+    gboolean (* erase) (Device * self);
     gboolean (* finish) (Device * self);
 
     /* array of DeviceProperty objects for this class, keyed by ID */
@@ -437,6 +438,14 @@ gboolean 	device_property_set_ex	(Device * self,
  * data, too. */
 gboolean 	device_recycle_file	(Device * self,
 					guint filenum);
+
+/* On devices that support it (check PROPERTY_FULL_DELETION),
+ * this will free all space used by the device.
+ *
+ * To use this, open the device as DEVICE_MODE_APPEND. But you don't
+ * have to call device_start_file(), unless you want to write some
+ * data, too. */
+gboolean 	device_erase	(Device * self);
 
 /* Protected methods. Don't call these except in subclass implementations. */
 

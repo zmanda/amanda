@@ -107,7 +107,6 @@
 /* Results which should always be retried */
 #define RESULT_HANDLING_ALWAYS_RETRY \
         { 400,  S3_ERROR_RequestTimeout,     0,                         S3_RESULT_RETRY }, \
-        { 404,  S3_ERROR_NoSuchBucket,       0,                         S3_RESULT_RETRY }, \
         { 409,  S3_ERROR_OperationAborted,   0,                         S3_RESULT_RETRY }, \
         { 412,  S3_ERROR_PreconditionFailed, 0,                         S3_RESULT_RETRY }, \
         { 500,  S3_ERROR_InternalError,      0,                         S3_RESULT_RETRY }, \
@@ -1467,9 +1466,9 @@ s3_upload(S3Handle *hdl,
 {
     s3_result_t result = S3_RESULT_FAIL;
     static result_handling_t result_handling[] = {
-        { 200,  0,          0,                   S3_RESULT_OK },
+        { 200,  0, 0, S3_RESULT_OK },
         RESULT_HANDLING_ALWAYS_RETRY,
-        { 0, 0,    0,                /* default: */ S3_RESULT_FAIL }
+        { 0,    0, 0, /* default: */ S3_RESULT_FAIL }
         };
 
     g_assert(hdl != NULL);
@@ -1583,9 +1582,9 @@ list_fetch(S3Handle *hdl,
 {
     s3_result_t result = S3_RESULT_FAIL;
     static result_handling_t result_handling[] = {
-        { 200,  0,          0,                   S3_RESULT_OK },
+        { 200, 0, 0, S3_RESULT_OK },
         RESULT_HANDLING_ALWAYS_RETRY,
-        { 0, 0,    0,                /* default: */ S3_RESULT_FAIL  }
+        { 0,   0, 0, /* default: */ S3_RESULT_FAIL  }
         };
    const char* pos_parts[][2] = {
         {"prefix", prefix},
@@ -1701,9 +1700,9 @@ s3_read(S3Handle *hdl,
 {
     s3_result_t result = S3_RESULT_FAIL;
     static result_handling_t result_handling[] = {
-        { 200,  0,          0,                   S3_RESULT_OK },
+        { 200, 0, 0, S3_RESULT_OK },
         RESULT_HANDLING_ALWAYS_RETRY,
-        { 0, 0,    0,                /* default: */ S3_RESULT_FAIL  }
+        { 0,   0, 0, /* default: */ S3_RESULT_FAIL  }
         };
 
     g_assert(hdl != NULL);
@@ -1723,9 +1722,10 @@ s3_delete(S3Handle *hdl,
 {
     s3_result_t result = S3_RESULT_FAIL;
     static result_handling_t result_handling[] = {
-        { 204,  0,          0,                   S3_RESULT_OK },
+        { 204,  0,                     0, S3_RESULT_OK },
+        { 404,  S3_ERROR_NoSuchBucket, 0, S3_RESULT_OK },
         RESULT_HANDLING_ALWAYS_RETRY,
-        { 0, 0,    0,                /* default: */ S3_RESULT_FAIL  }
+        { 0,    0,                     0, /* default: */ S3_RESULT_FAIL  }
         };
 
     g_assert(hdl != NULL);
@@ -1744,9 +1744,10 @@ s3_make_bucket(S3Handle *hdl,
     char *body = NULL;
     s3_result_t result = S3_RESULT_FAIL;
     static result_handling_t result_handling[] = {
-        { 200,  0,          0,                   S3_RESULT_OK },
+        { 200,  0,                    0, S3_RESULT_OK },
+        { 404, S3_ERROR_NoSuchBucket, 0, S3_RESULT_RETRY },
         RESULT_HANDLING_ALWAYS_RETRY,
-        { 0, 0,    0,                /* default: */ S3_RESULT_FAIL  }
+        { 0, 0,                       0, /* default: */ S3_RESULT_FAIL  }
         };
     regmatch_t pmatch[4];
     char *loc_end_open, *loc_content;
@@ -1828,4 +1829,11 @@ cleanup:
 
     return result == S3_RESULT_OK;
 
+}
+
+gboolean
+s3_delete_bucket(S3Handle *hdl,
+                 const char *bucket)
+{
+    return s3_delete(hdl, bucket, NULL);
 }

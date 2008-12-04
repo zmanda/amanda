@@ -240,6 +240,10 @@ extern DevicePropertyBase device_property_medium_access_type;
 extern DevicePropertyBase device_property_partial_deletion;
 #define PROPERTY_PARTIAL_DELETION (device_property_partial_deletion.ID)
 
+/* Value is a gboolean. */
+extern DevicePropertyBase device_property_full_deletion;
+#define PROPERTY_FULL_DELETION (device_property_full_deletion.ID)
+
 /* Value is a QualifiedSize, though the accuracy may be SIZE_ACCURACY_NONE. */
 extern DevicePropertyBase device_property_free_space;
 #define PROPERTY_FREE_SPACE (device_property_free_space.ID)

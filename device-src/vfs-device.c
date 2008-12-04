@@ -112,6 +112,7 @@ static gboolean vfs_device_finish_file (Device * pself);
 static dumpfile_t * vfs_device_seek_file (Device * self, guint file);
 static gboolean vfs_device_seek_block (Device * self, guint64 block);
 static gboolean vfs_device_recycle_file (Device * pself, guint filenum);
+static gboolean vfs_device_erase (Device * pself);
 static Device * vfs_device_factory(char * device_name, char * device_type, char * device_node);
 static DeviceStatusFlags vfs_device_read_label(Device * dself);
 static gboolean vfs_device_write_block(Device * self, guint size, gpointer data);
@@ -224,6 +225,12 @@ vfs_device_init (VfsDevice * self) {
     g_value_unset(&response);
 
     g_value_init(&response, G_TYPE_BOOLEAN);
+    g_value_set_boolean(&response, TRUE);
+    device_set_simple_property(dself, PROPERTY_FULL_DELETION,
+	    &response, PROPERTY_SURETY_GOOD, PROPERTY_SOURCE_DETECTED);
+    g_value_unset(&response);
+
+    g_value_init(&response, G_TYPE_BOOLEAN);
     g_value_set_boolean(&response, FALSE);
     device_set_simple_property(dself, PROPERTY_COMPRESSION,
 	    &response, PROPERTY_SURETY_GOOD, PROPERTY_SOURCE_DETECTED);
@@ -254,6 +261,7 @@ vfs_device_class_init (VfsDeviceClass * c)
     device_class->seek_file = vfs_device_seek_file;
     device_class->seek_block = vfs_device_seek_block;
     device_class->recycle_file = vfs_device_recycle_file;
+    device_class->erase = vfs_device_erase;
     device_class->finish = vfs_device_finish;
     g_object_class->finalize = vfs_device_finalize;
 }
@@ -1335,6 +1343,22 @@ vfs_device_recycle_file (Device * pself, guint filenum) {
 
     self->volume_bytes -= file_size;
     release_file(self);
+    return TRUE;
+}
+
+static gboolean
+vfs_device_erase (Device * pself) {
+    VfsDevice * self;
+
+    self = VFS_DEVICE(pself);
+
+    if (!open_lock(self, 0, true))
+        return false;
+
+    delete_vfs_files(self);
+
+    release_file(self);
+
     return TRUE;
 }
 

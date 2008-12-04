@@ -348,6 +348,11 @@ device_base_init (DeviceClass * device_class)
 	    device_simple_property_get_fn,
 	    device_simple_property_set_fn);
 
+    device_class_register_property(device_class, PROPERTY_FULL_DELETION,
+	    PROPERTY_ACCESS_GET_MASK,
+	    device_simple_property_get_fn,
+	    device_simple_property_set_fn);
+
     device_class_register_property(device_class, PROPERTY_MEDIUM_ACCESS_TYPE,
 	    PROPERTY_ACCESS_GET_MASK,
 	    device_simple_property_get_fn,
@@ -1370,6 +1375,26 @@ device_recycle_file (Device * self, guint filenum)
 
     g_assert(klass->recycle_file);
     return (klass->recycle_file)(self,filenum);
+}
+
+gboolean
+device_erase (Device * self)
+{
+    DeviceClass *klass;
+
+    g_assert(IS_DEVICE (self));
+    g_assert(self->access_mode == ACCESS_APPEND);
+    g_assert(!self->in_file);
+
+    klass = DEVICE_GET_CLASS(self);
+    if(klass->erase) {
+	return (klass->erase)(self);
+    } else {
+	device_set_error(self,
+	    stralloc(_("Unimplemented method")),
+	    DEVICE_STATUS_DEVICE_ERROR);
+	return FALSE;
+    }
 }
 
 /* Property handling */

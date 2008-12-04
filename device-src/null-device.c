@@ -138,6 +138,12 @@ null_device_init (NullDevice * self)
 	    &response, PROPERTY_SURETY_GOOD, PROPERTY_SOURCE_DETECTED);
     g_value_unset(&response);
 
+    g_value_init(&response, G_TYPE_BOOLEAN);
+    g_value_set_boolean(&response, FALSE);
+    device_set_simple_property(dself, PROPERTY_FULL_DELETION,
+	    &response, PROPERTY_SURETY_GOOD, PROPERTY_SOURCE_DETECTED);
+    g_value_unset(&response);
+
     /* this device's canonical name is always "null:", regardless of
      * the name the user supplies; note that we install the simple
      * getter in null_device_class_init. */

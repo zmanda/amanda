@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 300;
+use Test::More tests => 323;
 use File::Path qw( mkpath rmtree );
 use Sys::Hostname;
 use Carp;
@@ -134,6 +134,7 @@ my @common_properties = (
     'medium_access_type',
     'min_block_size',
     'partial_deletion',
+    'full_deletion',
     'streaming',
 );
 
@@ -204,6 +205,8 @@ for my $prop ($dev->property_list()) {
 	"The most reliable device name to use to refer to this device.",
 	"property info for canonical name is correct");
 }
+ok(!$dev->property_get("full_deletion"),
+    "property_get(full_deletion) on null device");
 
 # and write a file to it
 write_file(0xabcde, 1024*256, 1);
@@ -282,6 +285,23 @@ verify_file(0x2FACE, $dev->block_size()*10+17, 3);
 
 ok($dev->finish(),
     "finish device after read")
+    or diag($dev->error_or_status());
+
+ok($dev->start($ACCESS_APPEND, undef, undef),
+   "start in append mode")
+    or diag($dev->error_or_status());
+
+# test erase
+ok($dev->erase(),
+   "erase device")
+    or diag($dev->error_or_status());
+
+ok($dev->erase(),
+   "erase device (again)")
+    or diag($dev->error_or_status());
+
+ok($dev->finish(),
+   "finish device after erase")
     or diag($dev->error_or_status());
 
 ####
@@ -472,7 +492,7 @@ my $run_devpay_tests = defined $DEVPAY_SECRET_KEY &&
 my $dev_base_name;
 my $hostname  = hostname();
 
-my $s3_make_device_count = 6;
+my $s3_make_device_count = 7;
 sub s3_make_device($) {
     my $dev_name = shift @_;
     $dev = Amanda::Device->new($dev_name);
@@ -484,6 +504,9 @@ sub s3_make_device($) {
     push @s3_props, 's3_user_token' if ($dev_name =~ /^s3zmanda:/);
     properties_include([ $dev->property_list() ], [ @common_properties, @s3_props ],
 	"necessary properties listed on s3 device");
+
+    ok($dev->property_get("full_deletion"),
+       "property_get(full_deletion) on s3 device");
 
     ok($dev->property_set('BLOCK_SIZE', 32768*2),
 	"set block size")
@@ -519,7 +542,7 @@ sub s3_make_device($) {
     return $dev;
 }
 
-my $s3_run_main_tests_count = 12
+my $s3_run_main_tests_count = 17
 	+ 4 * $write_file_count
 	+ 1 * $verify_file_count
 	+ 3 * $s3_make_device_count;
@@ -579,6 +602,28 @@ sub s3_run_main_tests($$) {
     ok($dev->finish(),
        "finish device after read")
         or diag($dev->error_or_status());    # (note: we don't use write_max_size here, as the maximum for S3 is very large)
+
+    ok($dev->start($ACCESS_APPEND, undef, undef),
+       "start in append mode")
+        or diag($dev->error_or_status());
+
+    ok($dev->erase(),
+       "erase device")
+       or diag($dev->error_or_status());
+
+    ok($dev->erase(),
+       "erase device (again)")
+       or diag($dev->error_or_status());
+
+    ok($dev->finish(),
+       "finish device after erase")
+        or diag($dev->error_or_status());
+
+    $dev->read_label();
+    $status = $dev->status();
+    ok($status & $DEVICE_STATUS_VOLUME_UNLABELED,
+       "status is unlabeled after an erase")
+        or diag($dev->error_or_status());
 
     # try a constrained bucket
     $dev_name = lc("$dev_scheme:$base_name-$dev_scheme-eu");

@@ -210,6 +210,9 @@ void device_property_init(void) {
     device_property_fill_and_register(&device_property_partial_deletion,
                                      G_TYPE_BOOLEAN, "partial_deletion",
       "Does this device support recycling just part of a volume?" );
+    device_property_fill_and_register(&device_property_full_deletion,
+                                     G_TYPE_BOOLEAN, "full_deletion",
+      "Does this device support recycling the entire volume?" );
     device_property_fill_and_register(&device_property_free_space,
                                       QUALIFIED_SIZE_TYPE, "free_space",
       "Remaining capacity of the device.");
@@ -233,6 +236,7 @@ DevicePropertyBase device_property_appendable;
 DevicePropertyBase device_property_canonical_name;
 DevicePropertyBase device_property_medium_access_type;
 DevicePropertyBase device_property_partial_deletion;
+DevicePropertyBase device_property_full_deletion;
 DevicePropertyBase device_property_free_space;
 DevicePropertyBase device_property_max_volume_usage;
 DevicePropertyBase device_property_verbose;

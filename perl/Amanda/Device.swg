@@ -60,6 +60,8 @@ are represented by accessor functions of the same name.
 
 =item C<configure($use_global_config)>
 
+=item C<erase()>
+
 =item C<read_label()>
 
 =item C<start($mode, $label, $timestamp)>
@@ -465,6 +467,11 @@ typedef struct Device {
 
 	gboolean read_to_fd(queue_fd_t *queue_fd) {
 	    return device_read_to_fd(self, queue_fd);
+	}
+
+	gboolean
+	erase() {
+	    return device_erase(self);
 	}
 
 	%typemap(out) const GSList * {

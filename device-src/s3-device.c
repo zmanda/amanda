@@ -223,6 +223,14 @@ static gboolean
 delete_file(S3Device *self,
             int file);
 
+
+/* Delete all files in the given device
+ *
+ * @param self: the S3Device object
+ */
+static gboolean
+delete_all_files(S3Device *self);
+
 /* Set up self->s3 as best as possible.
  *
  * The return value is TRUE iff self->s3 is useable.
@@ -321,6 +329,9 @@ s3_device_read_block(Device * pself,
 static gboolean
 s3_device_recycle_file(Device *pself,
                        guint file);
+
+static gboolean
+s3_device_erase(Device *pself);
 
 /*
  * Private functions
@@ -549,6 +560,44 @@ delete_file(S3Device *self,
     return TRUE;
 }
 
+static gboolean
+delete_all_files(S3Device *self)
+{
+    int file, last_file;
+
+    /*
+     * Note: this has to be allowed to retry for a while because the bucket
+     * may have been created and not yet appeared
+     */
+    last_file = find_last_file(self);
+    if (last_file < 0) {
+        guint response_code;
+        s3_error_code_t s3_error_code;
+        s3_error(self->s3, NULL, &response_code, &s3_error_code, NULL, NULL, NULL);
+
+        /*
+         * if the bucket doesn't exist, it doesn't conatin any files,
+         * so the operation is a success
+         */
+        if ((response_code == 404 && s3_error_code == S3_ERROR_NoSuchBucket)) {
+            /* find_last_file set an error; clear it */
+            device_set_error(DEVICE(self), NULL, DEVICE_STATUS_SUCCESS);
+            return TRUE;
+        } else {
+            /* find_last_file already set the error */
+            return FALSE;
+        }
+    }
+
+    for (file = 0; file <= last_file; file++) {
+        if (!delete_file(self, file))
+            /* delete_file already set our error message */
+            return FALSE;
+    }
+
+    return TRUE;
+}
+
 /*
  * Class mechanics
  */
@@ -643,6 +692,12 @@ s3_device_init(S3Device * self)
     g_value_unset(&response);
 
     g_value_init(&response, G_TYPE_BOOLEAN);
+    g_value_set_boolean(&response, TRUE);
+    device_set_simple_property(dself, PROPERTY_FULL_DELETION,
+	    &response, PROPERTY_SURETY_GOOD, PROPERTY_SOURCE_DETECTED);
+    g_value_unset(&response);
+
+    g_value_init(&response, G_TYPE_BOOLEAN);
     g_value_set_boolean(&response, FALSE);
     device_set_simple_property(dself, PROPERTY_COMPRESSION,
 	    &response, PROPERTY_SURETY_GOOD, PROPERTY_SOURCE_DETECTED);
@@ -677,6 +732,8 @@ s3_device_class_init(S3DeviceClass * c G_GNUC_UNUSED)
     device_class->seek_block = s3_device_seek_block;
     device_class->read_block = s3_device_read_block;
     device_class->recycle_file = s3_device_recycle_file;
+
+    device_class->erase = s3_device_erase;
 
     g_object_class->finalize = s3_device_finalize;
 
@@ -1018,7 +1075,6 @@ static gboolean
 s3_device_start (Device * pself, DeviceAccessMode mode,
                  char * label, char * timestamp) {
     S3Device * self;
-    int file, last_file;
 
     self = S3_DEVICE(pself);
 
@@ -1061,14 +1117,7 @@ s3_device_start (Device * pself, DeviceAccessMode mode,
             break;
 
         case ACCESS_WRITE:
-            /* delete all files */
-            last_file = find_last_file(self);
-            if (last_file < 0) return FALSE;
-            for (file = 0; file <= last_file; file++) {
-                if (!delete_file(self, file))
-		    /* delete_file already set our error message */
-		    return FALSE;
-            }
+            delete_all_files(self);
 
             /* write a new amanda header */
             if (!write_amanda_header(self, label, timestamp)) {
@@ -1200,6 +1249,47 @@ s3_device_recycle_file(Device *pself, guint file) {
 
     return delete_file(self, file);
     /* delete_file already set our error message if necessary */
+}
+
+static gboolean
+s3_device_erase(Device *pself) {
+    S3Device *self = S3_DEVICE(pself);
+    char *key = NULL;
+    const char *errmsg = NULL;
+    guint response_code;
+    s3_error_code_t s3_error_code;
+
+    key = special_file_to_key(self, "tapestart", -1);
+    if (!s3_delete(self->s3, self->bucket, key)) {
+        s3_error(self->s3, &errmsg, NULL, NULL, NULL, NULL, NULL);
+	device_set_error(pself,
+	    stralloc(errmsg),
+	    DEVICE_STATUS_DEVICE_ERROR);
+        return FALSE;
+    }
+    g_free(key);
+
+    if (!delete_all_files(self))
+        return FALSE;
+
+    if (!s3_delete_bucket(self->s3, self->bucket)) {
+        s3_error(self->s3, NULL, &response_code, &s3_error_code, NULL, NULL, NULL);
+
+        /*
+         * ignore the error if the bucket isn't empty (there may be data from elsewhere)
+         * or the bucket not existing (already deleted perhaps?)
+         */
+        if (!(
+                (response_code == 409 && s3_error_code == S3_ERROR_BucketNotEmpty) ||
+                (response_code == 404 && s3_error_code == S3_ERROR_NoSuchBucket))) {
+
+            device_set_error(pself,
+	        stralloc(errmsg),
+	        DEVICE_STATUS_DEVICE_ERROR);
+            return FALSE;
+        }
+    }
+    return TRUE;
 }
 
 /* functions for reading */
