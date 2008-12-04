@@ -1,4 +1,8 @@
 2008-12-04  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Changer/compat.pm: only call '-label' on chg-zd-mtx if
+	  the changer is not seekable (hack to make slotinfofile work)
+
+2008-12-04  Dustin J. Mitchell <dustin@zmanda.com>
 	* changer-src/chg-glue.pl: add labelling support
 	* perl/Amanda/Changer/compat.pm: call -label even for non-searchable
 	  changers
