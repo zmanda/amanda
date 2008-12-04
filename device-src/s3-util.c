@@ -1,19 +1,19 @@
 /*
  * Copyright (c) 2005-2008 Zmanda Inc.  All Rights Reserved.
- * 
+ *
  * This library is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License version 2.1 as 
+ * under the terms of the GNU Lesser General Public License version 2.1 as
  * published by the Free Software Foundation.
- * 
+ *
  * This library is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
  * License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with this library; if not, write to the Free Software Foundation,
  * Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA.
- * 
+ *
  * Contact information: Zmanda Inc., 465 S Mathlida Ave, Suite 300
  * Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
  */
@@ -108,7 +108,7 @@ s3_base64_encode(const GByteArray *to_enc) {
     long bio_b64_len;
     char *bio_b64_data = NULL, *ret = NULL;
     if (!to_enc) return NULL;
-    
+
     /* Initialize base64 encoding filter */
     bio_b64 = BIO_new(BIO_f_base64());
     g_assert(bio_b64);
@@ -129,7 +129,7 @@ s3_base64_encode(const GByteArray *to_enc) {
     g_assert(bio_b64_data);
     ret = g_strndup(bio_b64_data, bio_b64_len);
 
-    /* If bio_b64 is freed separately, freeing bio_buff will 
+    /* If bio_b64 is freed separately, freeing bio_buff will
      * invalidly free memory and potentially segfault.
      */
     BIO_free_all(bio_buff);
@@ -159,13 +159,13 @@ s3_compute_md5_hash(const GByteArray *to_hash) {
     MD5_CTX md5_ctx;
     GByteArray *ret;
     if (!to_hash) return NULL;
-    
+
     ret = g_byte_array_sized_new(S3_MD5_HASH_BYTE_LEN);
     g_byte_array_set_size(ret, S3_MD5_HASH_BYTE_LEN);
-    
+
     MD5_Init(&md5_ctx);
     MD5_Update(&md5_ctx, to_hash->data, to_hash->len);
     MD5_Final(ret->data, &md5_ctx);
-    
+
     return ret;
 }

@@ -1,19 +1,19 @@
 /*
  * Copyright (c) 2005-2008 Zmanda Inc.  All Rights Reserved.
- * 
+ *
  * This library is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License version 2.1 as 
+ * under the terms of the GNU Lesser General Public License version 2.1 as
  * published by the Free Software Foundation.
- * 
+ *
  * This library is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
  * License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with this library; if not, write to the Free Software Foundation,
  * Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA.
- * 
+ *
  * Contact information: Zmanda Inc., 465 S Mathlida Ave, Suite 300
  * Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
  */
@@ -339,7 +339,7 @@ gboolean 	device_finish_file	(Device * self);
  * filemark. Only do this when reading; opening in
  * ACCESS_WRITE will start you out at the first file, and opening in
  * ACCESS_APPEND will automatically seek to the end of the medium.
- * 
+ *
  * If the requested file doesn't exist, as might happen when a volume has
  * had files recycled, then this function will seek to the next file that
  * does exist. You can check which file this function selected by
@@ -425,7 +425,7 @@ gboolean 	device_property_set_ex	(Device * self,
 	    PROPERTY_SURETY_GOOD, PROPERTY_SOURCE_USER)
 
 /* On devices that support it (check PROPERTY_PARTIAL_DELETION),
- * this will free only the space associated with a particular file. 
+ * this will free only the space associated with a particular file.
  * This way, you can apply a different retention policy to every file
  * on the volume, appending new data at the end and recycling anywhere
  * in the middle -- even simultaneously (via different Device

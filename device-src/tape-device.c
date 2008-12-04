@@ -1,19 +1,19 @@
 /*
  * Copyright (c) 2005-2008 Zmanda Inc.  All Rights Reserved.
- * 
+ *
  * This library is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License version 2.1 as 
+ * under the terms of the GNU Lesser General Public License version 2.1 as
  * published by the Free Software Foundation.
- * 
+ *
  * This library is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
  * License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with this library; if not, write to the Free Software Foundation,
  * Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA.
- * 
+ *
  * Contact information: Zmanda Inc., 465 S Mathlida Ave, Suite 300
  * Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
  */
@@ -23,7 +23,7 @@
 #include "tape-device.h"
 #include "tape-ops.h"
 
-/* This is equal to 2*1024*1024*1024 - 16*1024*1024 - 1, but written 
+/* This is equal to 2*1024*1024*1024 - 16*1024*1024 - 1, but written
    explicitly to avoid overflow issues. */
 #define RESETOFS_THRESHOLD (0x7effffff)
 
@@ -110,7 +110,7 @@ static DeviceClass *parent_class = NULL;
 GType tape_device_get_type (void)
 {
     static GType type = 0;
-    
+
     if G_UNLIKELY(type == 0) {
         static const GTypeInfo info = {
             sizeof (TapeDeviceClass),
@@ -124,7 +124,7 @@ GType tape_device_get_type (void)
             (GInstanceInitFunc) tape_device_init,
             NULL
         };
-        
+
         type = g_type_register_static (TYPE_DEVICE, "TapeDevice",
                                        &info, (GTypeFlags)0);
     }
@@ -132,7 +132,7 @@ GType tape_device_get_type (void)
     return type;
 }
 
-static void 
+static void
 tape_device_init (TapeDevice * self) {
     Device * d_self;
     GValue response;
@@ -239,14 +239,14 @@ static void tape_device_finalize(GObject * obj_self) {
     amfree(self->private);
 }
 
-static void 
+static void
 tape_device_class_init (TapeDeviceClass * c)
 {
     DeviceClass *device_class = (DeviceClass *)c;
     GObjectClass *g_object_class = (GObjectClass *)c;
 
     parent_class = g_type_class_ref (TYPE_DEVICE);
-    
+
     device_class->open_device = tape_device_open_device;
     device_class->read_label = tape_device_read_label;
     device_class->write_block = tape_device_write_block;
@@ -257,7 +257,7 @@ tape_device_class_init (TapeDeviceClass * c)
     device_class->seek_file = tape_device_seek_file;
     device_class->seek_block = tape_device_seek_block;
     device_class->finish = tape_device_finish;
-    
+
     g_object_class->finalize = tape_device_finalize;
 }
 
@@ -760,7 +760,7 @@ static int tape_device_read_block (Device * pself, gpointer buf,
     int size;
     IoResult result;
     gssize read_block_size = tape_device_read_size(pself);
-    
+
     self = TAPE_DEVICE(pself);
 
     g_assert(self->fd >= 0);
@@ -839,7 +839,7 @@ static gboolean write_tapestart_header(TapeDevice * self, char * label,
      gboolean header_fits;
      Device * d_self = (Device*)self;
      tape_rewind(self->fd);
-    
+
      header = make_tapestart_header(d_self, label, timestamp);
      g_assert(header != NULL);
      header_buf = device_build_amanda_header(d_self, header, &header_size,
@@ -869,7 +869,7 @@ static gboolean write_tapestart_header(TapeDevice * self, char * label,
      }
 }
 
-static gboolean 
+static gboolean
 tape_device_start (Device * d_self, DeviceAccessMode mode, char * label,
                    char * timestamp) {
     TapeDevice * self;
@@ -927,7 +927,7 @@ tape_device_start (Device * d_self, DeviceAccessMode mode, char * label,
 	}
         self->first_file = TRUE;
         break;
-        
+
     case ACCESS_READ:
 	if (d_self->volume_label == NULL && device_read_label(d_self) != DEVICE_STATUS_SUCCESS) {
 	    /* device_read_label already set our error message */
@@ -1028,7 +1028,7 @@ tape_device_finish_file (Device * d_self) {
     return TRUE;
 }
 
-static dumpfile_t * 
+static dumpfile_t *
 tape_device_seek_file (Device * d_self, guint file) {
     TapeDevice * self;
     int difference;
@@ -1094,7 +1094,7 @@ tape_device_seek_file (Device * d_self, guint file) {
 	    DEVICE_STATUS_DEVICE_ERROR | DEVICE_STATUS_VOLUME_ERROR);
         return NULL;
     }
-        
+
     rval = g_new(dumpfile_t, 1);
     parse_file_header(header_buffer, rval, buffer_len);
     amfree(header_buffer);
@@ -1119,7 +1119,7 @@ tape_device_seek_file (Device * d_self, guint file) {
     return rval;
 }
 
-static gboolean 
+static gboolean
 tape_device_seek_block (Device * d_self, guint64 block) {
     TapeDevice * self;
     int difference;
@@ -1129,7 +1129,7 @@ tape_device_seek_block (Device * d_self, guint64 block) {
     if (device_in_error(self)) return FALSE;
 
     difference = block - d_self->block;
-    
+
     if (difference > 0) {
         if (!tape_device_fsr(self, difference)) {
 	    device_set_error(d_self,
@@ -1150,7 +1150,7 @@ tape_device_seek_block (Device * d_self, guint64 block) {
     return TRUE;
 }
 
-static gboolean 
+static gboolean
 tape_device_finish (Device * d_self) {
     TapeDevice * self;
 
@@ -1279,13 +1279,13 @@ static void check_resetofs(TapeDevice * self G_GNUC_UNUSED,
 #endif
 }
 
-static IoResult 
+static IoResult
 tape_device_robust_write (TapeDevice * self, void * buf, int count) {
     Device * d_self;
     int result;
 
     d_self = (Device*)self;
-    
+
     check_resetofs(self, count);
 
     for (;;) {
@@ -1410,7 +1410,7 @@ static int drain_tape_blocks(TapeDevice * self, int count) {
             }
         }
     }
-    
+
     amfree(buffer);
     return count;
 }
@@ -1418,7 +1418,7 @@ static int drain_tape_blocks(TapeDevice * self, int count) {
 /* FIXME: Make sure that there are no cycles in reimplementation
    dependencies. */
 
-static gboolean 
+static gboolean
 tape_device_fsf (TapeDevice * self, guint count) {
     if (self->fsf) {
         return tape_fsf(self->fd, count);
@@ -1433,7 +1433,7 @@ tape_device_fsf (TapeDevice * self, guint count) {
 }
 
 /* Seek back over count + 1 filemarks to the start of the given file. */
-static gboolean 
+static gboolean
 tape_device_bsf (TapeDevice * self, guint count, guint file) {
     if (self->bsf) {
         /* The BSF operation is not very smart; it includes the
@@ -1458,7 +1458,7 @@ tape_device_bsf (TapeDevice * self, guint count, guint file) {
 }
 
 
-static gboolean 
+static gboolean
 tape_device_fsr (TapeDevice * self, guint count) {
     if (self->fsr) {
         return tape_fsr(self->fd, count);
@@ -1471,7 +1471,7 @@ tape_device_fsr (TapeDevice * self, guint count) {
 /* Seek back the given number of blocks to block number block within
  * the current file, numbered file. */
 
-static gboolean 
+static gboolean
 tape_device_bsr (TapeDevice * self, guint count, guint file, guint block) {
     if (self->bsr) {
         return tape_bsr(self->fd, count);
@@ -1479,7 +1479,7 @@ tape_device_bsr (TapeDevice * self, guint count, guint file, guint block) {
         /* We BSF, then FSR. */
         if (!tape_device_bsf(self, 0, file))
             return FALSE;
-        
+
         return tape_device_fsr(self, block);
     }
     g_assert_not_reached();
@@ -1487,14 +1487,14 @@ tape_device_bsr (TapeDevice * self, guint count, guint file, guint block) {
 
 /* Go to the right place to write more data, and update the file
    number if possible. */
-static gboolean 
+static gboolean
 tape_device_eod (TapeDevice * self) {
     Device * d_self;
     d_self = (Device*)self;
 
     if (self->eom) {
         int result;
-        result = tape_eod(self->fd); 
+        result = tape_eod(self->fd);
         if (result == TAPE_OP_ERROR) {
             return FALSE;
         } else if (result == TAPE_POSITION_UNKNOWN) {
@@ -1509,7 +1509,7 @@ tape_device_eod (TapeDevice * self) {
         int count = 0;
         if (!tape_rewind(self->fd))
             return FALSE;
-        
+
         for (;;) {
             /* We alternately read a block and FSF. If the read is
                successful, then we are not there yet and should FSF

@@ -1,27 +1,27 @@
 /*
  * Copyright (c) 2005-2008 Zmanda Inc.  All Rights Reserved.
- * 
+ *
  * This library is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License version 2.1 as 
+ * under the terms of the GNU Lesser General Public License version 2.1 as
  * published by the Free Software Foundation.
- * 
+ *
  * This library is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
  * License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with this library; if not, write to the Free Software Foundation,
  * Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA.
- * 
+ *
  * Contact information: Zmanda Inc., 465 S Mathlida Ave, Suite 300
  * Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
  */
 
-/* An S3 device uses Amazon's S3 service (http://www.amazon.com/s3) to store 
+/* An S3 device uses Amazon's S3 service (http://www.amazon.com/s3) to store
  * data.  It stores data in keys named with a user-specified prefix, inside a
- * user-specified bucket.  Data is stored in the form of numbered (large) 
- * blocks. 
+ * user-specified bucket.  Data is stored in the form of numbered (large)
+ * blocks.
  */
 
 #include <string.h>
@@ -160,19 +160,19 @@ static DevicePropertyBase device_property_s3_ssl;
 
 void s3_device_register(void);
 
-/* 
+/*
  * utility functions */
 
 /* Given file and block numbers, return an S3 key.
- * 
+ *
  * @param self: the S3Device object
  * @param file: the file number
  * @param block: the block within that file
  * @returns: a newly allocated string containing an S3 key.
  */
-static char * 
-file_and_block_to_key(S3Device *self, 
-                      int file, 
+static char *
+file_and_block_to_key(S3Device *self,
+                      int file,
                       guint64 block);
 
 /* Given the name of a special file (such as 'tapestart'), generate
@@ -183,9 +183,9 @@ file_and_block_to_key(S3Device *self,
  * @param file: a file number to include; omitted if -1
  * @returns: a newly alocated string containing an S3 key.
  */
-static char * 
-special_file_to_key(S3Device *self, 
-                    char *special_name, 
+static char *
+special_file_to_key(S3Device *self,
+                    char *special_name,
                     int file);
 /* Write an amanda header file to S3.
  *
@@ -193,9 +193,9 @@ special_file_to_key(S3Device *self,
  * @param label: the volume label
  * @param timestamp: the volume timestamp
  */
-static gboolean 
-write_amanda_header(S3Device *self, 
-                    char *label, 
+static gboolean
+write_amanda_header(S3Device *self,
+                    char *label,
                     char * timestamp);
 
 /* "Fast forward" this device to the end by looking up the largest file number
@@ -203,15 +203,15 @@ write_amanda_header(S3Device *self,
  *
  * @param self: the S3Device object
  */
-static gboolean 
+static gboolean
 seek_to_end(S3Device *self);
 
-/* Find the number of the last file that contains any data (even just a header). 
+/* Find the number of the last file that contains any data (even just a header).
  *
  * @param self: the S3Device object
  * @returns: the last file, or -1 in event of an error
  */
-static int 
+static int
 find_last_file(S3Device *self);
 
 /* Delete all blocks in the given file, including the filestart block
@@ -219,8 +219,8 @@ find_last_file(S3Device *self);
  * @param self: the S3Device object
  * @param file: the file to delete
  */
-static gboolean 
-delete_file(S3Device *self, 
+static gboolean
+delete_file(S3Device *self,
             int file);
 
 /* Set up self->s3 as best as possible.
@@ -230,10 +230,10 @@ delete_file(S3Device *self,
  * @param self: the S3Device object
  * @returns: TRUE if the handle is set up
  */
-static gboolean 
+static gboolean
 setup_handle(S3Device * self);
 
-/* 
+/*
  * class mechanics */
 
 static void
@@ -275,7 +275,7 @@ static gboolean s3_device_set_ssl_fn(Device *self,
     DevicePropertyBase *base, GValue *val,
     PropertySurety surety, PropertySource source);
 
-/* 
+/*
  * virtual functions */
 
 static void
@@ -284,42 +284,42 @@ s3_device_open_device(Device *pself, char *device_name,
 
 static DeviceStatusFlags s3_device_read_label(Device * self);
 
-static gboolean 
-s3_device_start(Device * self, 
-                DeviceAccessMode mode, 
-                char * label, 
+static gboolean
+s3_device_start(Device * self,
+                DeviceAccessMode mode,
+                char * label,
                 char * timestamp);
 
 static gboolean
 s3_device_finish(Device * self);
 
-static gboolean 
+static gboolean
 s3_device_start_file(Device * self,
                      dumpfile_t * jobInfo);
 
-static gboolean 
-s3_device_write_block(Device * self, 
-                      guint size, 
+static gboolean
+s3_device_write_block(Device * self,
+                      guint size,
                       gpointer data);
 
-static gboolean 
+static gboolean
 s3_device_finish_file(Device * self);
 
-static dumpfile_t* 
-s3_device_seek_file(Device *pself, 
+static dumpfile_t*
+s3_device_seek_file(Device *pself,
                     guint file);
 
-static gboolean 
-s3_device_seek_block(Device *pself, 
+static gboolean
+s3_device_seek_block(Device *pself,
                      guint64 block);
 
 static int
-s3_device_read_block(Device * pself, 
-                     gpointer data, 
+s3_device_read_block(Device * pself,
+                     gpointer data,
                      int *size_req);
 
-static gboolean 
-s3_device_recycle_file(Device *pself, 
+static gboolean
+s3_device_recycle_file(Device *pself,
                        guint file);
 
 /*
@@ -327,8 +327,8 @@ s3_device_recycle_file(Device *pself,
  */
 
 static char *
-file_and_block_to_key(S3Device *self, 
-                      int file, 
+file_and_block_to_key(S3Device *self,
+                      int file,
                       guint64 block)
 {
     char *s3_key = g_strdup_printf("%sf%08x-b%016llx.data",
@@ -338,8 +338,8 @@ file_and_block_to_key(S3Device *self,
 }
 
 static char *
-special_file_to_key(S3Device *self, 
-                    char *special_name, 
+special_file_to_key(S3Device *self,
+                    char *special_name,
                     int file)
 {
     if (file == -1)
@@ -349,8 +349,8 @@ special_file_to_key(S3Device *self,
 }
 
 static gboolean
-write_amanda_header(S3Device *self, 
-                    char *label, 
+write_amanda_header(S3Device *self,
+                    char *label,
                     char * timestamp)
 {
     CurlBuffer amanda_header = {NULL, 0, 0, 0};
@@ -361,7 +361,7 @@ write_amanda_header(S3Device *self,
 
     /* build the header */
     dumpinfo = make_tapestart_header(DEVICE(self), label, timestamp);
-    amanda_header.buffer = device_build_amanda_header(DEVICE(self), dumpinfo, 
+    amanda_header.buffer = device_build_amanda_header(DEVICE(self), dumpinfo,
         /* casting guint* to int* */
         (int*) &amanda_header.buffer_len, &header_fits);
     if (!header_fits) {
@@ -409,7 +409,7 @@ seek_to_end(S3Device *self) {
 static int key_to_file(guint prefix_len, const char * key) {
     int file;
     int i;
-    
+
     /* skip the prefix */
     if (strlen(key) <= prefix_len)
 	return -1;
@@ -419,12 +419,12 @@ static int key_to_file(guint prefix_len, const char * key) {
     if (strncmp(key, SPECIAL_INFIX, strlen(SPECIAL_INFIX)) == 0) {
         return 0;
     }
-    
+
     /* check that key starts with 'f' */
     if (key[0] != 'f')
 	return -1;
     key++;
-    
+
     /* check that key is of the form "%08x-" */
     for (i = 0; i < 8; i++) {
         if (!(key[i] >= '0' && key[i] <= '9') &&
@@ -441,11 +441,11 @@ static int key_to_file(guint prefix_len, const char * key) {
         g_warning(_("unparseable file number '%s'"), key);
         return -1;
     }
-    
+
     return file;
 }
 
-/* Find the number of the last file that contains any data (even just a header). 
+/* Find the number of the last file that contains any data (even just a header).
  * Returns -1 in event of an error
  */
 static int
@@ -476,7 +476,7 @@ find_last_file(S3Device *self) {
     return last_file;
 }
 
-/* Find the number of the file following the requested one, if any. 
+/* Find the number of the file following the requested one, if any.
  * Returns 0 if there is no such file or -1 in event of an error
  */
 static int
@@ -524,7 +524,7 @@ delete_file(S3Device *self,
     GSList *keys;
     char *my_prefix = g_strdup_printf("%sf%08x-", self->prefix, file);
     Device *d_self = DEVICE(self);
-    
+
     result = s3_list_keys(self->s3, self->bucket, my_prefix, NULL, &keys);
     if (!result) {
 	device_set_error(d_self,
@@ -553,7 +553,7 @@ delete_file(S3Device *self,
  * Class mechanics
  */
 
-void 
+void
 s3_device_register(void)
 {
     static const char * device_prefix_list[] = { S3_DEVICE_NAME, DEVPAY_DEVICE_NAME, NULL };
@@ -585,7 +585,7 @@ static GType
 s3_device_get_type(void)
 {
     static GType type = 0;
-    
+
     if G_UNLIKELY(type == 0) {
         static const GTypeInfo info = {
             sizeof (S3DeviceClass),
@@ -599,7 +599,7 @@ s3_device_get_type(void)
             (GInstanceInitFunc) s3_device_init,
             NULL
         };
-        
+
         type = g_type_register_static (TYPE_DEVICE, "S3Device", &info,
                                        (GTypeFlags)0);
     }
@@ -607,7 +607,7 @@ s3_device_get_type(void)
     return type;
 }
 
-static void 
+static void
 s3_device_init(S3Device * self)
 {
     Device * dself = DEVICE(self);
@@ -656,7 +656,7 @@ s3_device_init(S3Device * self)
 
 }
 
-static void 
+static void
 s3_device_class_init(S3DeviceClass * c G_GNUC_UNUSED)
 {
     GObjectClass *g_object_class = (GObjectClass*) c;
@@ -829,7 +829,7 @@ s3_device_set_ssl_fn(Device *p_self, DevicePropertyBase *base,
     return device_simple_property_set_fn(p_self, base, val, surety, source);
 }
 
-static Device* 
+static Device*
 s3_device_factory(char * device_name, char * device_type, char * device_node)
 {
     Device *rval;
@@ -869,7 +869,7 @@ s3_device_open_device(Device *pself, char *device_name,
         self->bucket = g_strndup(device_node, name_colon - device_node);
         self->prefix = g_strdup(name_colon + 1);
     }
-    
+
     self->is_devpay = !strcmp(device_type, DEVPAY_DEVICE_NAME);
 
     if (self->bucket == NULL || self->bucket[0] == '\0') {
@@ -975,7 +975,7 @@ s3_device_read_label(Device *pself) {
         s3_error(self->s3, NULL, &response_code, &s3_error_code, NULL, NULL, NULL);
 
         /* if it's an expected error (not found), just return FALSE */
-        if (response_code == 404 && 
+        if (response_code == 404 &&
              (s3_error_code == S3_ERROR_NoSuchKey || s3_error_code == S3_ERROR_NoSuchBucket)) {
             g_debug(_("Amanda header not found while reading tapestart header (this is expected for empty tapes)"));
 	    device_set_error(pself,
@@ -1014,7 +1014,7 @@ s3_device_read_label(Device *pself) {
     return pself->status;
 }
 
-static gboolean 
+static gboolean
 s3_device_start (Device * pself, DeviceAccessMode mode,
                  char * label, char * timestamp) {
     S3Device * self;
@@ -1165,7 +1165,7 @@ s3_device_write_block (Device * pself, guint size, gpointer data) {
     g_assert (self != NULL);
     g_assert (data != NULL);
     if (device_in_error(self)) return FALSE;
-    
+
     filename = file_and_block_to_key(self, pself->file, pself->block);
 
     result = s3_upload(self->s3, self->bucket, filename, s3_buffer_read_func,
@@ -1224,7 +1224,7 @@ s3_device_seek_file(Device *pself, guint file) {
     key = special_file_to_key(self, "filestart", pself->file);
     result = s3_read(self->s3, self->bucket, key, s3_buffer_write_func, &buf, NULL, NULL);
     g_free(key);
- 
+
     if (!result) {
         guint response_code;
         s3_error_code_t s3_error_code;
@@ -1261,7 +1261,7 @@ s3_device_seek_file(Device *pself, guint file) {
             return NULL;
         }
     }
-   
+
     /* and make a dumpfile_t out of it */
     g_assert(buf.buffer != NULL);
     amanda_header = g_new(dumpfile_t, 1);

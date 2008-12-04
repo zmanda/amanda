@@ -1,19 +1,19 @@
 /*
  * Copyright (c) 2005-2008 Zmanda, Inc.  All Rights Reserved.
- * 
+ *
  * This library is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License version 2.1 as 
+ * under the terms of the GNU Lesser General Public License version 2.1 as
  * published by the Free Software Foundation.
- * 
+ *
  * This library is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
  * License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with this library; if not, write to the Free Software Foundation,
  * Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA.
- * 
+ *
  * Contact information: Zmanda Inc., 465 S Mathlida Ave, Suite 300
  * Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
  */
@@ -229,11 +229,11 @@ rait_device_get_type (void)
             (GInstanceInitFunc) rait_device_init,
             NULL
         };
-        
+
         type = g_type_register_static (TYPE_DEVICE, "RaitDevice", &info,
                                        (GTypeFlags)0);
 	}
-    
+
     return type;
 }
 
@@ -291,7 +291,7 @@ rait_device_finalize(GObject *obj_self)
     amfree(self->private);
 }
 
-static void 
+static void
 rait_device_init (RaitDevice * o G_GNUC_UNUSED)
 {
     PRIVATE(o) = g_new(RaitDevicePrivate, 1);
@@ -304,7 +304,7 @@ rait_device_init (RaitDevice * o G_GNUC_UNUSED)
 #endif
 }
 
-static void 
+static void
 rait_device_class_init (RaitDeviceClass * c)
 {
     GObjectClass *g_object_class = (GObjectClass*) c;
@@ -321,7 +321,7 @@ rait_device_class_init (RaitDeviceClass * c)
     device_class->seek_file = rait_device_seek_file;
     device_class->seek_block = rait_device_seek_block;
     device_class->read_block = rait_device_read_block;
-    device_class->recycle_file = rait_device_recycle_file; 
+    device_class->recycle_file = rait_device_recycle_file;
     device_class->finish = rait_device_finish;
     device_class->read_label = rait_device_read_label;
 
@@ -397,7 +397,7 @@ rait_device_base_init (RaitDeviceClass * c)
  * will probably not start any new threads at all, but rather use
  * existing ones. The func is called with two gpointer arguments: The
  * first from the array, the second is the data argument.
- * 
+ *
  * When it returns, all the operations have been successfully
  * executed. If you want results from your operations, do it yourself
  * through the array.
@@ -1127,9 +1127,9 @@ static DeviceStatusFlags rait_device_read_label(Device * dself) {
 	return FALSE;
 
     ops = make_generic_boolean_op_array(self);
-    
+
     do_rait_child_ops(self, read_label_do_op, ops);
-    
+
     for (i = 0; i < ops->len; i ++) {
         GenericOp * op = g_ptr_array_index(ops, i);
         DeviceStatusFlags result = GPOINTER_TO_INT(op->result);
@@ -1173,7 +1173,7 @@ static DeviceStatusFlags rait_device_read_label(Device * dself) {
             dself->volume_header = dumpfile_copy(first_success->volume_header);
         }
     }
-    
+
     g_ptr_array_free_full(ops);
 
     return dself->status;
@@ -1190,7 +1190,7 @@ typedef struct {
 static void start_do_op(gpointer data, gpointer user_data G_GNUC_UNUSED) {
     DeviceClass *klass;
     StartOp * param = data;
-    
+
     klass = DEVICE_GET_CLASS(param->base.child);
     if (klass->start) {
         param->base.result =
@@ -1228,7 +1228,7 @@ rait_device_configure(Device * dself, gboolean use_global_config)
     return TRUE;
 }
 
-static gboolean 
+static gboolean
 rait_device_start (Device * dself, DeviceAccessMode mode, char * label,
                    char * timestamp) {
     GPtrArray * ops;
@@ -1264,7 +1264,7 @@ rait_device_start (Device * dself, DeviceAccessMode mode, char * label,
     ops = g_ptr_array_sized_new(self->private->children->len);
     for (i = 0; i < self->private->children->len; i ++) {
         StartOp * op;
-        
+
         if ((signed)i == self->private->failed) {
             continue;
         }
@@ -1276,7 +1276,7 @@ rait_device_start (Device * dself, DeviceAccessMode mode, char * label,
         op->timestamp = g_strdup(timestamp);
         g_ptr_array_add(ops, op);
     }
-    
+
     do_rait_child_ops(self, start_do_op, ops);
 
     success = g_ptr_array_and(ops, extract_boolean_generic_op);
@@ -1385,11 +1385,11 @@ rait_device_start_file (Device * dself, dumpfile_t * info) {
         op->info = dumpfile_copy(info);
         g_ptr_array_add(ops, op);
     }
-    
+
     do_rait_child_ops(self, start_file_do_op, ops);
 
     success = g_ptr_array_and(ops, extract_boolean_generic_op);
-    
+
     for (i = 0; i < self->private->children->len && success; i ++) {
         StartFileOp * op = g_ptr_array_index(ops, i);
         if (!op->base.result)
@@ -1440,7 +1440,7 @@ static void find_simple_params(RaitDevice * self,
                                guint * num_children,
                                guint * data_children) {
     int num, data;
-    
+
     num = self->private->children->len;
     if (num > 1)
         data = num - 1;
@@ -1522,11 +1522,11 @@ static char * extract_data_block(char * data, guint size,
     } else {
         make_parity_block(data, rval, chunk_size, chunks);
     }
-    
+
     return rval;
 }
 
-static gboolean 
+static gboolean
 rait_device_write_block (Device * dself, guint size, gpointer data) {
     GPtrArray * ops;
     guint i;
@@ -1547,7 +1547,7 @@ rait_device_write_block (Device * dself, guint size, gpointer data) {
         data_children = num_children - 1;
     else
         data_children = num_children;
-    
+
     g_assert(size % data_children == 0 || last_block);
 
     /* zero out to the end of a short block -- tape devices only write
@@ -1592,7 +1592,7 @@ rait_device_write_block (Device * dself, guint size, gpointer data) {
     if (last_block) {
         amfree(data);
     }
-    
+
     g_ptr_array_free_full(ops);
 
     if (!success) {
@@ -1624,7 +1624,7 @@ static void finish_file_do_op(gpointer data,
     }
 }
 
-static gboolean 
+static gboolean
 rait_device_finish_file (Device * dself) {
     GPtrArray * ops;
     gboolean success;
@@ -1635,7 +1635,7 @@ rait_device_finish_file (Device * dself) {
     if (self->private->status != RAIT_STATUS_COMPLETE) return FALSE;
 
     ops = make_generic_boolean_op_array(self);
-    
+
     do_rait_child_ops(self, finish_file_do_op, ops);
 
     success = g_ptr_array_and(ops, extract_boolean_generic_op);
@@ -1667,7 +1667,7 @@ static void seek_file_do_op(gpointer data, gpointer user_data G_GNUC_UNUSED) {
     op->actual_file = op->base.child->file;
 }
 
-static dumpfile_t * 
+static dumpfile_t *
 rait_device_seek_file (Device * dself, guint file) {
     GPtrArray * ops;
     guint i;
@@ -1694,7 +1694,7 @@ rait_device_seek_file (Device * dself, guint file) {
         op->requested_file = file;
         g_ptr_array_add(ops, op);
     }
-    
+
     do_rait_child_ops(self, seek_file_do_op, ops);
 
     /* This checks for NULL values, but we still have to check for
@@ -1708,7 +1708,7 @@ rait_device_seek_file (Device * dself, guint file) {
         dumpfile_t * this_result;
         guint this_actual_file;
 	gboolean this_in_file;
-        
+
         this_op = (SeekFileOp*)g_ptr_array_index(ops, i);
 
         if ((signed)this_op->base.child_index == self->private->failed)
@@ -1764,7 +1764,7 @@ static void seek_block_do_op(gpointer data, gpointer user_data G_GNUC_UNUSED) {
         GINT_TO_POINTER(device_seek_block(op->base.child, op->block));
 }
 
-static gboolean 
+static gboolean
 rait_device_seek_block (Device * dself, guint64 block) {
     GPtrArray * ops;
     guint i;
@@ -1785,7 +1785,7 @@ rait_device_seek_block (Device * dself, guint64 block) {
         op->block = block;
         g_ptr_array_add(ops, op);
     }
-    
+
     do_rait_child_ops(self, seek_block_do_op, ops);
 
     success = g_ptr_array_union_robust(RAIT_DEVICE(self),
@@ -1891,7 +1891,7 @@ static gboolean raid_block_reconstruction(RaitDevice * self, GPtrArray * ops,
                does the job for the 2-device case, too. */
             gpointer constructed_parity;
             GPtrArray * data_extents;
-            
+
             constructed_parity = g_malloc(child_blocksize);
             data_extents = g_ptr_array_sized_new(data_children);
             for (i = 0; i < data_children; i ++) {
@@ -1903,7 +1903,7 @@ static gboolean raid_block_reconstruction(RaitDevice * self, GPtrArray * ops,
             }
             make_parity_block_extents(data_extents, constructed_parity,
                                       child_blocksize);
-            
+
             if (0 != memcmp(parity_block, constructed_parity,
                             child_blocksize)) {
                 device_set_error(DEVICE(self),
@@ -1922,7 +1922,7 @@ static gboolean raid_block_reconstruction(RaitDevice * self, GPtrArray * ops,
             /* do nothing. */
         } else if (num_children >= 2) {
             /* Reconstruct failed block from parity block. */
-            GPtrArray * data_extents = g_ptr_array_new();            
+            GPtrArray * data_extents = g_ptr_array_new();
 
             for (i = 0; i < data_children; i ++) {
                 ReadBlockOp * op = g_ptr_array_index(ops, i);
@@ -1988,7 +1988,7 @@ rait_device_read_block (Device * dself, gpointer buf, int * size) {
         op->desired_read_size = op->read_size = child_blocksize;
         g_ptr_array_add(ops, op);
     }
-    
+
     do_rait_child_ops(self, read_block_do_op, ops);
 
     if (g_ptr_array_count(ops, extract_boolean_read_block_op_data)) {
@@ -2617,7 +2617,7 @@ static void recycle_file_do_op(gpointer data,
         GINT_TO_POINTER(device_recycle_file(op->base.child, op->filenum));
 }
 
-static gboolean 
+static gboolean
 rait_device_recycle_file (Device * dself, guint filenum) {
     GPtrArray * ops;
     guint i;
@@ -2635,7 +2635,7 @@ rait_device_recycle_file (Device * dself, guint filenum) {
         op->filenum = filenum;
         g_ptr_array_add(ops, op);
     }
-    
+
     do_rait_child_ops(self, recycle_file_do_op, ops);
 
     success = g_ptr_array_and(ops, extract_boolean_generic_op);
@@ -2658,7 +2658,7 @@ static void finish_do_op(gpointer data, gpointer user_data G_GNUC_UNUSED) {
     op->result = GINT_TO_POINTER(device_finish(op->child));
 }
 
-static gboolean 
+static gboolean
 rait_device_finish (Device * self) {
     GPtrArray * ops;
     gboolean success;
@@ -2666,7 +2666,7 @@ rait_device_finish (Device * self) {
     if (rait_device_in_error(self)) return FALSE;
 
     ops = make_generic_boolean_op_array(RAIT_DEVICE(self));
-    
+
     do_rait_child_ops(RAIT_DEVICE(self), finish_do_op, ops);
 
     success = g_ptr_array_and(ops, extract_boolean_generic_op);
@@ -2690,7 +2690,7 @@ rait_device_factory (char * device_name, char * device_type, char * device_node)
     return rval;
 }
 
-void 
+void
 rait_device_register (void) {
     static const char * device_prefix_list[] = {"rait", NULL};
     register_device(rait_device_factory, device_prefix_list);

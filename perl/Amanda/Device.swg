@@ -44,7 +44,7 @@ Amanda::Device - interact with Amanda data-storage devices
   if ($dev->read_label() == $DEVICE_STATUS_SUCCESS) {
       print "Label on $device_name is '$dev->volume_label'\n";
   }
-  
+
 See http://wiki.zmanda.com/index.php/Device_API for details on how Devices are used.
 
 =head1 API STATUS
@@ -194,7 +194,7 @@ set_sv_from_gvalue(GValue *value)
 
 	    if (boxed_type == QUALIFIED_SIZE_TYPE) {
 		qs = *(QualifiedSize*)(g_value_get_boxed(value));
-		
+
 		/* build a hash */
 		hv = (HV *)sv_2mortal((SV *)newHV());
 		hv_store(hv, "accuracy", 8, newSViv(qs.accuracy), 0);
@@ -328,7 +328,7 @@ set_gvalue_from_sv(SV *sv, GValue *value)
 	    g_value_set_string(value, SvPV_nolen(sv));
 	    break;
 
-	case G_TYPE_ENUM: 
+	case G_TYPE_ENUM:
 	    if (!SvIOK(sv)) return FALSE;
 	    g_value_set_enum(value, SvIV(sv));
 	    break;
@@ -605,7 +605,7 @@ typedef struct Device {
 	gboolean recycle_file(guint filenum) {
 	    return device_recycle_file(self, filenum);
 	}
-	
+
 	/* accessor functions */
 
 	int file(void) { return self->file; }
@@ -661,25 +661,25 @@ amglue_add_constant_noshort(PROPERTY_PHASE_SHIFT, PropertyPhaseFlags);
 amglue_copy_to_tag(PropertyPhaseFlags, constants);
 
 amglue_add_flag_tag_fns(PropertyAccessFlags);
-amglue_add_constant_short(PROPERTY_ACCESS_GET_BEFORE_START, 
+amglue_add_constant_short(PROPERTY_ACCESS_GET_BEFORE_START,
 		    "GET_BEFORE_START", PropertyAccessFlags);
-amglue_add_constant_short(PROPERTY_ACCESS_GET_BETWEEN_FILE_WRITE, 
+amglue_add_constant_short(PROPERTY_ACCESS_GET_BETWEEN_FILE_WRITE,
 		    "GET_BETWEEN_FILE_WRITE", PropertyAccessFlags);
-amglue_add_constant_short(PROPERTY_ACCESS_GET_INSIDE_FILE_WRITE, 
+amglue_add_constant_short(PROPERTY_ACCESS_GET_INSIDE_FILE_WRITE,
 		    "GET_INSIDE_FILE_WRITE", PropertyAccessFlags);
-amglue_add_constant_short(PROPERTY_ACCESS_GET_BETWEEN_FILE_READ, 
+amglue_add_constant_short(PROPERTY_ACCESS_GET_BETWEEN_FILE_READ,
 		    "GET_BETWEEN_FILE_READ", PropertyAccessFlags);
-amglue_add_constant_short(PROPERTY_ACCESS_GET_INSIDE_FILE_READ, 
+amglue_add_constant_short(PROPERTY_ACCESS_GET_INSIDE_FILE_READ,
 		    "GET_INSIDE_FILE_READ", PropertyAccessFlags);
-amglue_add_constant_short(PROPERTY_ACCESS_SET_BEFORE_START, 
+amglue_add_constant_short(PROPERTY_ACCESS_SET_BEFORE_START,
 		    "SET_BEFORE_START", PropertyAccessFlags);
-amglue_add_constant_short(PROPERTY_ACCESS_SET_BETWEEN_FILE_WRITE, 
+amglue_add_constant_short(PROPERTY_ACCESS_SET_BETWEEN_FILE_WRITE,
 		    "SET_BETWEEN_FILE_WRITE", PropertyAccessFlags);
-amglue_add_constant_short(PROPERTY_ACCESS_SET_INSIDE_FILE_WRITE, 
+amglue_add_constant_short(PROPERTY_ACCESS_SET_INSIDE_FILE_WRITE,
 		    "SET_INSIDE_FILE_WRITE", PropertyAccessFlags);
-amglue_add_constant_short(PROPERTY_ACCESS_SET_BETWEEN_FILE_READ, 
+amglue_add_constant_short(PROPERTY_ACCESS_SET_BETWEEN_FILE_READ,
 		    "SET_BETWEEN_FILE_READ", PropertyAccessFlags);
-amglue_add_constant_short(PROPERTY_ACCESS_SET_INSIDE_FILE_READ, 
+amglue_add_constant_short(PROPERTY_ACCESS_SET_INSIDE_FILE_READ,
 		    "SET_INSIDE_FILE_READ", PropertyAccessFlags);
 amglue_add_constant_noshort(PROPERTY_ACCESS_GET_MASK, PropertyAccessFlags);
 amglue_add_constant_noshort(PROPERTY_ACCESS_SET_MASK, PropertyAccessFlags);
@@ -723,7 +723,7 @@ amglue_copy_to_tag(PropertySource, constants);
 
 %perlcode %{
 
-# SWIG produces a sub-package for the Device "class", in this case named 
+# SWIG produces a sub-package for the Device "class", in this case named
 # Amanda::Device::Device.  For user convenience, we allow Amanda::Device->new(..) to
 # do the same thing.  This is a wrapper function, and not just a typeglob assignment,
 # because we want to get the right blessing.

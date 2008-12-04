@@ -1,19 +1,19 @@
 /*
  * Copyright (c) 2005-2008 Zmanda Inc.  All Rights Reserved.
- * 
+ *
  * This library is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License version 2.1 as 
+ * under the terms of the GNU Lesser General Public License version 2.1 as
  * published by the Free Software Foundation.
- * 
+ *
  * This library is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
  * License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with this library; if not, write to the Free Software Foundation,
  * Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA.
- * 
+ *
  * Contact information: Zmanda Inc., 465 S Mathlida Ave, Suite 300
  * Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
  */
@@ -82,17 +82,16 @@ s3_regexec_wrap(regex_t *regex,
            regmatch_t pmatch[],
            int eflags);
 
-
 #ifndef HAVE_AMANDA_H
 char*
 find_regex_substring(const char* base_string,
            const regmatch_t match);
 #endif
 
-/* 
+/*
  * Encode bytes using Base-64
  *
- * @note: GLib 2.12+ has a function for this (g_base64_encode) 
+ * @note: GLib 2.12+ has a function for this (g_base64_encode)
  *     but we support much older versions. gnulib does as well, but its
  *     hard to use correctly (see its notes).
  *
@@ -102,7 +101,7 @@ find_regex_substring(const char* base_string,
 gchar*
 s3_base64_encode(const GByteArray *to_enc);
 
-/* 
+/*
  * Encode bytes using hexadecimal
  *
  * @param to_enc: The data to encode.
@@ -111,11 +110,11 @@ s3_base64_encode(const GByteArray *to_enc);
 gchar*
 s3_hex_encode(const GByteArray *to_enc);
 
-/* 
+/*
  * Compute the MD5 hash of a blob of data.
  *
  * @param to_hash: The data to compute the hash for.
- * @returns:  A new GByteArray containing the MD5 hash of data or 
+ * @returns:  A new GByteArray containing the MD5 hash of data or
  * NULL if to_hash is NULL.
  */
 GByteArray*

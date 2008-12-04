@@ -466,7 +466,7 @@ my $DEVPAY_ACCESS_KEY = $ENV{'INSTALLCHECK_DEVPAY_ACCESS_KEY'};
 my $DEVPAY_USER_TOKEN = $ENV{'INSTALLCHECK_DEVPAY_USER_TOKEN'};
 
 my $run_s3_tests = defined $S3_SECRET_KEY && defined $S3_ACCESS_KEY;
-my $run_devpay_tests = defined $DEVPAY_SECRET_KEY && 
+my $run_devpay_tests = defined $DEVPAY_SECRET_KEY &&
     defined $DEVPAY_ACCESS_KEY && $DEVPAY_USER_TOKEN;
 
 my $dev_base_name;

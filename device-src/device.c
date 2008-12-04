@@ -228,11 +228,11 @@ device_get_type (void)
             (GInstanceInitFunc) device_init,
             NULL
         };
-        
+
         type = g_type_register_static (G_TYPE_OBJECT, "Device", &info,
                                        (GTypeFlags)G_TYPE_FLAG_ABSTRACT);
     }
-    
+
     return type;
 }
 
@@ -257,7 +257,7 @@ static void device_finalize(GObject *obj_self) {
     amfree(self->private);
 }
 
-static void 
+static void
 device_init (Device * self)
 {
     self->private = malloc(sizeof(DevicePrivate));
@@ -283,13 +283,13 @@ device_init (Device * self)
                               (GDestroyNotify) simple_property_free);
 }
 
-static void 
+static void
 device_class_init (DeviceClass * device_class)
 {
     GObjectClass *g_object_class = (GObjectClass*) device_class;
-    
+
     parent_class = g_type_class_ref (G_TYPE_OBJECT);
-    
+
     device_class->open_device = default_device_open_device;
     device_class->configure = default_device_configure;
     device_class->write_from_fd = default_device_write_from_fd;
@@ -436,7 +436,7 @@ make_null_error(char *errmsg, DeviceStatusFlags status)
     return device;
 }
 
-Device* 
+Device*
 device_open (char * device_name)
 {
     char *device_type = NULL;
@@ -696,7 +696,7 @@ static void set_device_property(gpointer key_p, gpointer value_p,
 	    DEVICE_STATUS_DEVICE_ERROR);
 	return;
     }
-    
+
     bzero(&property_value, sizeof(property_value));
     g_value_init(&property_value, property_base->type);
     value = property->values->data;
@@ -1162,7 +1162,7 @@ device_configure (Device * self, gboolean use_global_config)
     }
 }
 
-gboolean 
+gboolean
 device_start (Device * self, DeviceAccessMode mode,
               char * label, char * timestamp)
 {
@@ -1216,7 +1216,7 @@ device_write_block (Device * self, guint size, gpointer block)
     return (*klass->write_block)(self,size, block);
 }
 
-gboolean 
+gboolean
 device_write_from_fd (Device * self, queue_fd_t * queue_fd)
 {
     DeviceClass *klass;
@@ -1245,7 +1245,7 @@ device_start_file (Device * self, dumpfile_t * jobInfo) {
     return (klass->start_file)(self, jobInfo );
 }
 
-gboolean 
+gboolean
 device_finish_file (Device * self)
 {
     DeviceClass *klass;
@@ -1272,7 +1272,7 @@ device_seek_file (Device * self, guint file)
     return (klass->seek_file)(self,file);
 }
 
-gboolean 
+gboolean
 device_seek_block (Device * self, guint64 block)
 {
     DeviceClass *klass;
@@ -1304,7 +1304,7 @@ device_read_block (Device * self, gpointer buffer, int * size)
     return (klass->read_block)(self,buffer,size);
 }
 
-gboolean 
+gboolean
 device_read_to_fd (Device * self, queue_fd_t *queue_fd)
 {
     DeviceClass *klass;
@@ -1319,7 +1319,7 @@ device_read_to_fd (Device * self, queue_fd_t *queue_fd)
 }
 
 
-gboolean 
+gboolean
 device_property_get_ex(
 	Device * self,
 	DevicePropertyId id,
@@ -1356,7 +1356,7 @@ device_property_set_ex(
     return (klass->property_set_ex)(self, id, val, surety, source);
 }
 
-gboolean 
+gboolean
 device_recycle_file (Device * self, guint filenum)
 {
     DeviceClass *klass;

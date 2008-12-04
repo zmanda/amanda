@@ -1,19 +1,19 @@
 /*
  * Copyright (c) 2005-2008 Zmanda Inc.  All Rights Reserved.
- * 
+ *
  * This library is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License version 2.1 as 
+ * under the terms of the GNU Lesser General Public License version 2.1 as
  * published by the Free Software Foundation.
- * 
+ *
  * This library is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
  * License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with this library; if not, write to the Free Software Foundation,
  * Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA.
- * 
+ *
  * Contact information: Zmanda Inc., 465 S Mathlida Ave, Suite 300
  * Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
  */
@@ -180,11 +180,11 @@ vfs_device_get_type (void)
         type = g_type_register_static (TYPE_DEVICE, "VfsDevice",
                                        &info, (GTypeFlags)0);
     }
-    
+
     return type;
 }
 
-static void 
+static void
 vfs_device_init (VfsDevice * self) {
     Device * dself = DEVICE(self);
     GValue response;
@@ -193,7 +193,7 @@ vfs_device_init (VfsDevice * self) {
     self->dir_name = self->file_name = NULL;
     self->file_lock_name = self->volume_lock_name = NULL;
     self->file_lock_fd = self->volume_lock_fd = self->open_file_fd = -1;
-    self->volume_bytes = 0; 
+    self->volume_bytes = 0;
     self->volume_limit = 0;
 
     /* Register Properties */
@@ -236,7 +236,7 @@ vfs_device_init (VfsDevice * self) {
     g_value_unset(&response);
 }
 
-static void 
+static void
 vfs_device_class_init (VfsDeviceClass * c)
 {
     GObjectClass *g_object_class = (GObjectClass*) c;
@@ -384,7 +384,7 @@ static Device * vfs_device_factory(char * device_name, char * device_type, char 
 
 static gboolean check_is_dir(Device * d_self, const char * name) {
     struct stat dir_status;
-    
+
     if (stat(name, &dir_status) < 0) {
 #ifdef EINTR
         if (errno == EINTR) {
@@ -417,9 +417,9 @@ static gboolean file_number_to_file_name_functor(const char * filename,
     char * result_tmp;
     struct stat file_status;
     fnfn_data *data = (fnfn_data*)datap;
-    
-    result_tmp = vstralloc(data->self->dir_name, "/", filename, NULL);    
-    
+
+    result_tmp = vstralloc(data->self->dir_name, "/", filename, NULL);
+
     /* Just to be thorough, let's check that it's a real
        file. */
     if (0 != stat(result_tmp, &file_status)) {
@@ -512,7 +512,7 @@ static gboolean open_lock(G_GNUC_UNUSED VfsDevice * self,
         close(self->file_lock_fd);
         name = self->file_lock_name = lockfile_name(self, file);
     }
-        
+
 
     fd = robust_open(name, O_CREAT | O_WRONLY, VFS_DEVICE_CREAT_MODE);
 
@@ -838,7 +838,7 @@ vfs_device_read_block(Device * pself, gpointer data, int * size_req) {
     VfsDevice * self;
     int size;
     IoResult result;
-    
+
     self = VFS_DEVICE(pself);
 
     if (device_in_error(self)) return -1;
@@ -911,7 +911,7 @@ static gboolean	vfs_device_start(Device * pself,
     }
 
     release_file(self);
- 
+
     return TRUE;
 }
 
@@ -955,7 +955,7 @@ static gint get_last_file_number(VfsDevice * self) {
     Device *d_self = DEVICE(self);
     data.self = self;
     data.rval = -1;
-    
+
     count = search_directory(self->dir_handle, "^[0-9]+\\.",
                              get_last_file_number_functor, &data);
 
@@ -968,7 +968,7 @@ static gint get_last_file_number(VfsDevice * self) {
     } else {
         g_assert(data.rval >= 0);
     }
-    
+
     return data.rval;
 }
 
@@ -1006,7 +1006,7 @@ static gint get_next_file_number(VfsDevice * self, guint request) {
     data.self = self;
     data.request = request;
     data.best_found = -1;
-    
+
     count = search_directory(self->dir_handle, "^[0-9]+\\.",
                              get_next_file_number_functor, &data);
 
@@ -1017,7 +1017,7 @@ static gint get_next_file_number(VfsDevice * self, guint request) {
 	    DEVICE_STATUS_DEVICE_ERROR | DEVICE_STATUS_VOLUME_ERROR);
         return -1;
     }
-    
+
     /* Could be -1. */
     return data.best_found;
 }
@@ -1033,7 +1033,7 @@ char * make_new_file_name(VfsDevice * self, const dumpfile_t * ji) {
         fileno = 1 + get_last_file_number(self);
         if (fileno <= 0)
             return NULL;
-    
+
         if (open_lock(self, fileno, TRUE)) {
             break;
         } else {
@@ -1053,7 +1053,7 @@ char * make_new_file_name(VfsDevice * self, const dumpfile_t * ji) {
     return rval;
 }
 
-static gboolean 
+static gboolean
 vfs_device_start_file (Device * pself, dumpfile_t * ji) {
     VfsDevice * self;
     self = VFS_DEVICE(pself);
@@ -1098,7 +1098,7 @@ vfs_device_start_file (Device * pself, dumpfile_t * ji) {
         return FALSE;
     }
 
-    
+
     if (!write_amanda_header(self, ji)) {
 	/* write_amanda_header sets error status if necessary */
         release_file(self);
@@ -1114,7 +1114,7 @@ vfs_device_start_file (Device * pself, dumpfile_t * ji) {
     return TRUE;
 }
 
-static gboolean 
+static gboolean
 vfs_device_finish_file (Device * pself) {
     VfsDevice * self;
     self = VFS_DEVICE(pself);
@@ -1131,7 +1131,7 @@ vfs_device_finish_file (Device * pself) {
  * addition to its documented behavior, we also use it to open the
  * volume label for reading at startup. In that second case, we avoid
  * FdDevice-related side effects. */
-static dumpfile_t * 
+static dumpfile_t *
 vfs_device_seek_file (Device * pself, guint requested_file) {
     VfsDevice * self;
     int file;
@@ -1147,7 +1147,7 @@ vfs_device_seek_file (Device * pself, guint requested_file) {
     pself->in_file = FALSE;
     pself->is_eof = FALSE;
     pself->block = 0;
-    
+
     release_file(self);
 
     if (requested_file > 0) {
@@ -1239,7 +1239,7 @@ vfs_device_seek_file (Device * pself, guint requested_file) {
     return rval;
 }
 
-static gboolean 
+static gboolean
 vfs_device_seek_block (Device * pself, guint64 block) {
     VfsDevice * self;
     off_t result;
@@ -1275,7 +1275,7 @@ static gboolean try_unlink(const char * file) {
     }
 }
 
-static gboolean 
+static gboolean
 vfs_device_recycle_file (Device * pself, guint filenum) {
     VfsDevice * self;
     struct stat file_status;
@@ -1316,7 +1316,7 @@ vfs_device_recycle_file (Device * pself, guint filenum) {
         return FALSE;
     }
     file_size = file_status.st_size;
-    
+
     if (!try_unlink(self->file_name)) {
 	device_set_error(pself,
 	    vstrallocf(_("Unlink of %s failed: %s"), self->file_name, strerror(errno)),

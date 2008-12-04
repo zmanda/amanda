@@ -1,19 +1,19 @@
 /*
  * Copyright (c) 2005-2008 Zmanda Inc.  All Rights Reserved.
- * 
+ *
  * This library is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License version 2.1 as 
+ * under the terms of the GNU Lesser General Public License version 2.1 as
  * published by the Free Software Foundation.
- * 
+ *
  * This library is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
  * License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with this library; if not, write to the Free Software Foundation,
  * Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA.
- * 
+ *
  * Contact information: Zmanda Inc., 465 S Mathlida Ave, Suite 300
  * Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
  */
@@ -189,7 +189,7 @@ s3_curl_location_compat(void);
  *
  * @note This doesn't guarantee that bucket name is entirely valid,
  * just that using it as one (or more) subdomain(s) of s3.amazonaws.com
- * won't fail; that would prevent the reporting of useful messages from 
+ * won't fail; that would prevent the reporting of useful messages from
  * the service.
  *
  * @param bucket: the bucket name
@@ -200,7 +200,7 @@ s3_bucket_location_compat(const char *bucket);
 
 /* Initialize S3 operation
  *
- * If an error occurs in this function, diagnostic information is 
+ * If an error occurs in this function, diagnostic information is
  * printed to stderr.
  *
  * @returns: false if an error occurred
@@ -220,7 +220,7 @@ s3_init(void);
  * @returns: the new S3Handle
  */
 S3Handle *
-s3_open(const char * access_key, const char *secret_key, const char * user_token, 
+s3_open(const char * access_key, const char *secret_key, const char * user_token,
         const char * bucket_location);
 
 /* Deallocate an S3Handle
@@ -247,7 +247,7 @@ s3_reset(S3Handle *hdl);
  * NULL, that result will not be returned.  Caller is not responsible for
  * freeing any returned strings, although the results are only valid until
  * the next call to an S3 function with this handle.
- * 
+ *
  * @param hdl: the S3Handle object
  * @param message: (result) the error message, or NULL if none exists
  * @param response_code: (result) the HTTP response code (or 0 if none exists)
@@ -296,7 +296,7 @@ char *
 s3_strerror(S3Handle *hdl);
 
 /* Perform an upload.
- * 
+ *
  * When this function returns, KEY and BUFFER remain the
  * responsibility of the caller.
  *
@@ -323,7 +323,7 @@ s3_upload(S3Handle *hdl,
           s3_progress_func progress_func,
           gpointer progress_data);
 
-/* List all of the files matching the pseudo-glob C{PREFIX*DELIMITER*}, 
+/* List all of the files matching the pseudo-glob C{PREFIX*DELIMITER*},
  * returning only that portion which matches C{PREFIX*DELIMITER}.  S3 supports
  * this particular semantics, making it quite efficient.  The returned list
  * should be freed by the caller.
