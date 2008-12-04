@@ -509,14 +509,6 @@ sub set_label {
     my $self = shift;
     my %params = @_;
 
-    # non-searchable changers don't care..
-    if (!$self->{'chg'}->{'searchable'}) {
-        if (exists $params{'finished_cb'}) {
-            Amanda::MainLoop::call_later($params{'finished_cb'}, undef);
-        }
-        return;
-    }
-
     my $run_success_cb = sub {
         if (exists $params{'finished_cb'}) {
             Amanda::MainLoop::call_later($params{'finished_cb'}, undef);

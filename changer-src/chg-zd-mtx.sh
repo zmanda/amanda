@@ -206,6 +206,9 @@
 # initial_poll_delay=NN	    #### initial delay after load before polling for
 #			    #### readiness
 #
+# slotinfofile=FILENAME	    #### record slot information to this file, in
+#			    #### the line-based format "SLOT LABEL\n"
+#
 ####
 
 ####
@@ -431,6 +434,11 @@ get_mtx_status() {
 	if [ $status -eq 0 ]; then
 		mtx_status_valid=1
 	fi
+
+	# shim this in here so that we get a completely new slotinfofile
+	# every time we run mtx status
+	regenerate_slotinfo_from_mtx
+
 	return $status
 }
 
@@ -640,6 +648,194 @@ get_slot_list() {
 	slot_list="$amanda_slot_list"
 }
 
+###
+# Read the labelfile and scan for a particular entry.
+###
+
+read_labelfile() {
+	labelfile_entry_found=0
+	labelfile_label=
+	labelfile_barcode=
+
+	lbl_search=$1
+	bc_search=$2
+
+	line=0
+	while read lbl bc junk; do
+		line=`expr $line + 1`
+		if [ -z "$lbl" -o -z "$bc" -o -n "$junk" ]; then
+			Log       `_ 'ERROR    -> Line %s malformed: %s %s %s' "$line" "$lbl" "$bc" "$junk"`
+			LogAppend `_ '         -> Remove %s and run "%s %s update"' "$labelfile" "$sbindir/amtape" "$config"`
+			Exit 2 \
+			     `_ '<none>'` \
+			     `_ 'Line %s malformed in %s: %s %s %s' "$line" "$labelfile" "$lbl" "$bc" "$junk"`
+			return $?		# in case we are internal
+		fi
+		if [ $lbl = "$lbl_search" -o $bc = "$bc_search" ]; then
+			if [ $labelfile_entry_found -ne 0 ]; then
+				Log       `_ 'ERROR    -> Duplicate entries: %s line %s' "$labelfile" "$line"`
+				LogAppend `_ '         -> Remove %s and run "%s %s update"' "$labelfile" "$sbindir/amtape" "$config"`
+				Exit 2 \
+				     `_ '<none>'` \
+				     `_ 'Duplicate entries: %s line %s' "$labelfile" "$line"`
+				return $?	# in case we are internal
+			fi
+			labelfile_entry_found=1
+			labelfile_label=$lbl
+			labelfile_barcode=$bc
+		fi
+	done
+}
+
+lookup_label_by_barcode() {
+    [ -z "$1" ] && return
+    read_labelfile "" "$1" < $labelfile
+    echo "$labelfile_label"
+}
+
+lookup_barcode_by_label() {
+    [ -z "$1" ] && return
+    read_labelfile "$1" "" < $labelfile
+    echo "$labelfile_barcode"
+}
+
+remove_from_labelfile() {
+	labelfile=$1
+	lbl_search=$2
+	bc_search=$3
+
+	internal_remove_from_labelfile "$lbl_search" "$bc_search" < $labelfile >$labelfile.new
+	if [ $labelfile_entry_found -ne 0 ]; then
+		mv -f $labelfile.new $labelfile
+		LogAppend `_ 'Removed Entry "%s %s" from barcode database' "$labelfile_label" "$labelfile_barcode"`
+	fi
+}
+
+internal_remove_from_labelfile() {
+	labelfile_entry_found=0
+	labelfile_label=
+	labelfile_barcode=
+
+	lbl_search=$1
+	bc_search=$2
+
+	line=0
+	while read lbl bc junk; do
+		line=`expr $line + 1`
+		if [ -z "$lbl" -o -z "$bc" -o -n "$junk" ]; then
+			Log       `_ 'ERROR    -> Line %s malformed: %s %s %s' "$line" "$lbl" "$bc" "$junk"`
+			LogAppend `_ '         -> Remove %s and run "%s %s update"' "$labelfile" "$sbindir/amtape" "$config"`
+			Exit 2 \
+			     `_ '<none>'` \
+			     `_ 'Line %s malformed in %s: %s %s %s' "$line" "$labelfile" "$lbl" "$bc" "$junk"`
+			return $?		# in case we are internal
+		fi
+		if [ $lbl = "$lbl_search" -o $bc = "$bc_search" ]; then
+			if [ $labelfile_entry_found -ne 0 ]; then
+				Log       `_ 'ERROR    -> Duplicate entries: %s line %s' "$labelfile" "$line"`
+				LogAppend `_ '         -> Remove %s and run "%s %s update"' "$labelfile" "$sbindir/amtape" "$config"`
+				Exit 2 \
+				     `_ '<none>'` \
+				     `_ 'Duplicate entries: %s line %s' "$labelfile" "$line"`
+				return $?	# in case we are internal
+			fi
+			labelfile_entry_found=1
+			labelfile_label=$lbl
+			labelfile_barcode=$bc
+		else
+			echo $lbl $bc
+		fi
+	done
+}
+
+###
+# Add a new slot -> label correspondance to the slotinfo file, removing any previous
+# information about that slot.
+###
+
+record_label_in_slot() {
+    [ -z "$slotinfofile" ] && return
+    newlabel="$1"
+    newslot="$2"
+
+    (
+	if [ -f "$slotinfofile" ]; then
+		grep -v "^$newslot " < "$slotinfofile"
+	fi
+	echo "$newslot $newlabel"
+    ) > "$slotinfofile~"
+    mv "$slotinfofile~" "$slotinfofile"
+}
+
+###
+# Remove a slot from the slotinfo file
+###
+
+remove_slot_from_slotinfo() {
+    [ -z "$slotinfofile" ] && return
+    emptyslot="$1"
+
+    (
+	if [ -f "$slotinfofile" ]; then
+		grep -v "^$emptyslot " < "$slotinfofile"
+	fi
+    ) > "$slotinfofile~"
+    mv "$slotinfofile~" "$slotinfofile"
+}
+
+###
+# Assuming get_mtx_status has been run,
+# - if we have barcodes, regenerate the slotinfo file completely by
+#   mapping barcodes in the status into labels using the labelfile
+# - otherwise, remove all empty slots from the slotinfo file
+###
+
+regenerate_slotinfo_from_mtx() {
+    [ -z "$slotinfofile" ] && return
+    [ "$mtx_status_valid" = "1" ] || return
+
+    if [ "$havereader" = "1" ]; then
+	# rewrite slotinfo entirely based on the status, since it has barcodes
+	:> "$slotinfofile~"
+	sed -n '/.*Storage Element \([0-9][0-9]*\).*VolumeTag *= *\([^ ]*\) *$/{
+s/.*Storage Element \([0-9][0-9]*\).*VolumeTag *= *\([^ ]*\) *$/\1 \2/
+p
+}' < $mtx_status | while read newslot newbarcode; do
+		newlabel=`lookup_label_by_barcode "$newbarcode"`
+		if [ -n "$newlabel" ]; then
+		    echo "$newslot $newlabel" >> "$slotinfofile~"
+		fi
+	    done
+	mv "$slotinfofile~" "$slotinfofile"
+    else
+	# just remove empty slots from slotinfo
+
+	# first determine which slots are not really empty, but are
+	# loaded into a data transfer element
+loadedslots=`sed -n '/.*(Storage Element \([0-9][0-9]*\) Loaded).*/{
+s/.*(Storage Element \([0-9][0-9]*\) Loaded).*/\1/g
+p
+}' < $mtx_status`
+
+	# now look for any slots which are empty, but which aren't
+	# in the set of loaded slots
+	sed -n '/.*Storage Element \([0-9][0-9]*\): *Empty.*/{
+s/.*Storage Element \([0-9][0-9]*\): *Empty.*/\1/g
+p
+}' < $mtx_status | while read emptyslot; do
+	    reallyempty=1
+	    if [ -n "$loadedslots" ]; then
+		for loadedslot in $loadedslots; do
+		    [ "$loadedslot" = "$emptyslot" ] && reallyempty=0
+		done
+	    fi
+	    if [ "$reallyempty" = "1" ]; then
+		remove_slot_from_slotinfo "$emptyslot"
+	    fi
+	done
+    fi
+}
+
 DBGFILE=`amgetconf dbopen.$myname 2>/dev/null`
 if [ -z "$DBGFILE" ]
 then
@@ -710,6 +906,7 @@ cleanfile=$changerfile-clean
 accessfile=$changerfile-access
 slotfile=$changerfile-slot
 labelfile=$changerfile-barcodes
+slotinfofile=""
 [ ! -s $cleanfile ] && echo 0 > $cleanfile
 [ ! -s $accessfile ] && echo 0 > $accessfile
 [ ! -s $slotfile ] && echo -1 > $slotfile
@@ -735,6 +932,7 @@ varlist="$varlist driveslot"
 varlist="$varlist poll_drive_ready"
 varlist="$varlist initial_poll_delay"
 varlist="$varlist max_drive_wait"
+varlist="$varlist slotinfofile"
 
 for var in $varlist
 do
@@ -843,6 +1041,8 @@ for var in $varlist; do
 		continue			# old name
 	elif [ $var = "AUTOCLEAN" ]; then
 		continue			# old name
+	elif [ $var = "slotinfofile" ]; then
+		continue			# not numeric
 	fi
 	eval val=\"'$'$var\"
 	if [ -z "$val" ]; then
@@ -1192,94 +1392,6 @@ info() {
 }
 
 ###
-# Read the labelfile and scan for a particular entry.
-###
-
-read_labelfile() {
-	labelfile_entry_found=0
-	labelfile_label=
-	labelfile_barcode=
-
-	lbl_search=$1
-	bc_search=$2
-
-	line=0
-	while read lbl bc junk; do
-		line=`expr $line + 1`
-		if [ -z "$lbl" -o -z "$bc" -o -n "$junk" ]; then
-			Log       `_ 'ERROR    -> Line %s malformed: %s %s %s' "$line" "$lbl" "$bc" "$junk"`
-			LogAppend `_ '         -> Remove %s and run "%s %s update"' "$labelfile" "$sbindir/amtape" "$config"`
-			Exit 2 \
-			     `_ '<none>'` \
-			     `_ 'Line %s malformed in %s: %s %s %s' "$line" "$labelfile" "$lbl" "$bc" "$junk"`
-			return $?		# in case we are internal
-		fi
-		if [ $lbl = "$lbl_search" -o $bc = "$bc_search" ]; then
-			if [ $labelfile_entry_found -ne 0 ]; then
-				Log       `_ 'ERROR    -> Duplicate entries: %s line %s' "$labelfile" "$line"`
-				LogAppend `_ '         -> Remove %s and run "%s %s update"' "$labelfile" "$sbindir/amtape" "$config"`
-				Exit 2 \
-				     `_ '<none>'` \
-				     `_ 'Duplicate entries: %s line %s' "$labelfile" "$line"`
-				return $?	# in case we are internal
-			fi
-			labelfile_entry_found=1
-			labelfile_label=$lbl
-			labelfile_barcode=$bc
-		fi
-	done
-}
-
-remove_from_labelfile() {
-	labelfile=$1
-	lbl_search=$2
-	bc_search=$3
-
-	internal_remove_from_labelfile "$lbl_search" "$bc_search" < $labelfile >$labelfile.new
-	if [ $labelfile_entry_found -ne 0 ]; then
-		mv -f $labelfile.new $labelfile
-		LogAppend `_ 'Removed Entry "%s %s" from barcode database' "$labelfile_label" "$labelfile_barcode"`
-	fi
-}
-
-internal_remove_from_labelfile() {
-	labelfile_entry_found=0
-	labelfile_label=
-	labelfile_barcode=
-
-	lbl_search=$1
-	bc_search=$2
-
-	line=0
-	while read lbl bc junk; do
-		line=`expr $line + 1`
-		if [ -z "$lbl" -o -z "$bc" -o -n "$junk" ]; then
-			Log       `_ 'ERROR    -> Line %s malformed: %s %s %s' "$line" "$lbl" "$bc" "$junk"`
-			LogAppend `_ '         -> Remove %s and run "%s %s update"' "$labelfile" "$sbindir/amtape" "$config"`
-			Exit 2 \
-			     `_ '<none>'` \
-			     `_ 'Line %s malformed in %s: %s %s %s' "$line" "$labelfile" "$lbl" "$bc" "$junk"`
-			return $?		# in case we are internal
-		fi
-		if [ $lbl = "$lbl_search" -o $bc = "$bc_search" ]; then
-			if [ $labelfile_entry_found -ne 0 ]; then
-				Log       `_ 'ERROR    -> Duplicate entries: %s line %s' "$labelfile" "$line"`
-				LogAppend `_ '         -> Remove %s and run "%s %s update"' "$labelfile" "$sbindir/amtape" "$config"`
-				Exit 2 \
-				     `_ '<none>'` \
-				     `_ 'Duplicate entries: %s line %s' "$labelfile" "$line"`
-				return $?	# in case we are internal
-			fi
-			labelfile_entry_found=1
-			labelfile_label=$lbl
-			labelfile_barcode=$bc
-		else
-			echo $lbl $bc
-		fi
-	done
-}
-
-###
 # Adds the label and barcode for the currently loaded tape to the
 # barcode file.  Return an error if the database is messed up.
 ###
@@ -1291,13 +1403,14 @@ addlabel() {
 		return $?			# in case we are internal
 	fi
         tapelabel=$1
-	if [ $havereader -eq 0 ]; then
-		Exit 2 `_ '<none>'` `_ 'Not configured with barcode reader'`
-		return $?			# in case we are internal
-	fi
         get_loaded_info
 	if [ $loadedslot -lt 0 ]; then
 		Exit 1 `_ '<none>'` `_ 'No tape currently loaded'`
+		return $?			# in case we are internal
+	fi
+	record_label_in_slot "$tapelabel" "$loadedslot"
+	if [ $havereader -eq 0 ]; then
+		Exit 0 "$loadedslot" "$rawtape"	# that's all we needed
 		return $?			# in case we are internal
 	fi
 	if [ -z "$loadedbarcode" ]; then
