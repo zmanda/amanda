@@ -24,6 +24,8 @@
   <command>amrmtape</command>    
     <arg choice='opt'>--dryrun </arg>  
     <arg choice='opt'>-n </arg>
+    <arg choice='opt'>--erase </arg>  
+    <arg choice='opt'>--changer <replaceable>changer-name</replaceable> </arg>  
     <arg choice='opt'>--verbose </arg>  
     <arg choice='opt'>-v </arg>
     <arg choice='opt'>--quiet </arg>  
@@ -58,6 +60,22 @@ man page for more details about &A;.</para>
 removed, but leave them in
 <filename>/tmp</filename>
 and do not update the original copies.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>--erase</option></term>
+  <listitem>
+<para>Erase the data from
+<emphasis remap='I'>label</emphasis>
+</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>--changer <replaceable>changer-name</replaceable> </option></term>
+  <listitem>
+<para>Specify which changer to use when erasing
+<emphasis remap='I'>label</emphasis>
+</para>
   </listitem>
   </varlistentry>
   <varlistentry>
