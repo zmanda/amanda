@@ -144,7 +144,7 @@ typedef enum {
     TAPE_ACTION_START_A_FLUSH = (1 << 2)
 } TapeAction;
 
-static TapeAction tape_action(void);
+static TapeAction tape_action(char **why_no_new_tape);
 
 static const char *idle_strings[] = {
 #define NOT_IDLE		0
@@ -699,15 +699,17 @@ startaflush(void)
     int extra_tapes = 0;
     char *qname;
     TapeAction result_tape_action;
+    char *why_no_new_tape;
 
-    result_tape_action = tape_action();
+    result_tape_action = tape_action(&why_no_new_tape);
 
     if (result_tape_action & TAPE_ACTION_NEW_TAPE) {
 	taper_state &= !TAPER_STATE_WAIT_FOR_TAPE;
 	taper_cmd(NEW_TAPE, NULL, NULL, 0, NULL);
     } else if (result_tape_action & TAPE_ACTION_NO_NEW_TAPE) {
 	taper_state &= !TAPER_STATE_WAIT_FOR_TAPE;
-	taper_cmd(NO_NEW_TAPE, NULL, NULL, 0, NULL);
+	taper_cmd(NO_NEW_TAPE, why_no_new_tape, NULL, 0, NULL);
+	start_degraded_mode(&runq);
     }
 
     if (!degraded_mode && !taper_busy && !empty(tapeq) &&
@@ -1296,15 +1298,33 @@ handle_taper_result(
 	    g_printf(_("driver: finished-cmd time %s taper wrote %s:%s\n"),
 		   walltime_str(curclock()), dp->host->hostname, qname);
 	    fflush(stdout);
-            amfree(qname);
 
-	    if (strcmp(result_argv[3], "INPUT-ERROR") == 0) {
-		taper_input_error = newstralloc(taper_input_error, result_argv[5]);
+	    if (strcmp(result_argv[2], "INPUT-ERROR") == 0) {
+		taper_input_error = newstralloc(taper_input_error, result_argv[4]);
+	    } else if (strcmp(result_argv[2], "INPUT-GOOD") != 0) {
+		taper_tape_error = newstralloc(taper_tape_error,
+					       _("Taper protocol error"));
+		taper_result = FAILED;
+		log_add(L_FAIL, _("%s %s %s %d [%s]"),
+		        dp->host->hostname, qname, sched(dp)->datestamp,
+		        sched(dp)->level, taper_tape_error);
+		amfree(qname);
+		break;
 	    }
-	    if (strcmp(result_argv[4], "TAPE-ERROR") == 0) {
-		taper_tape_error = newstralloc(taper_tape_error, result_argv[6]);
+	    if (strcmp(result_argv[3], "TAPE-ERROR") == 0) {
+		taper_tape_error = newstralloc(taper_tape_error, result_argv[5]);
+	    } else if (strcmp(result_argv[3], "TAPE-GOOD") != 0) {
+		taper_tape_error = newstralloc(taper_tape_error,
+					       _("Taper protocol error"));
+		taper_result = FAILED;
+		log_add(L_FAIL, _("%s %s %s %d [%s]"),
+		        dp->host->hostname, qname, sched(dp)->datestamp,
+		        sched(dp)->level, taper_tape_error);
+		amfree(qname);
+		break;
 	    }
 
+	    amfree(qname);
 	    taper_result = cmd;
 
 	    break;
@@ -1324,14 +1344,31 @@ handle_taper_result(
 	    qname = quote_string(dp->name);
 	    g_printf(_("driver: finished-cmd time %s taper wrote %s:%s\n"),
 		   walltime_str(curclock()), dp->host->hostname, qname);
-	    amfree(qname);
 	    fflush(stdout);
 
 	    if (strcmp(result_argv[2], "INPUT-ERROR") == 0) {
 		taper_input_error = newstralloc(taper_input_error, result_argv[5]);
+	    } else if (strcmp(result_argv[2], "INPUT-GOOD") != 0) {
+		taper_tape_error = newstralloc(taper_tape_error,
+					       _("Taper protocol error"));
+		taper_result = FAILED;
+		log_add(L_FAIL, _("%s %s %s %d [%s]"),
+		        dp->host->hostname, qname, sched(dp)->datestamp,
+		        sched(dp)->level, taper_tape_error);
+		amfree(qname);
+		break;
 	    }
 	    if (strcmp(result_argv[3], "TAPE-ERROR") == 0) {
 		taper_tape_error = newstralloc(taper_tape_error, result_argv[6]);
+	    } else if (strcmp(result_argv[3], "TAPE-GOOD") != 0) {
+		taper_tape_error = newstralloc(taper_tape_error,
+					       _("Taper protocol error"));
+		taper_result = FAILED;
+		log_add(L_FAIL, _("%s %s %s %d [%s]"),
+		        dp->host->hostname, qname, sched(dp)->datestamp,
+		        sched(dp)->level, taper_tape_error);
+		amfree(qname);
+		break;
 	    }
 
 	    s = strstr(result_argv[4], " kb ");
@@ -1341,6 +1378,7 @@ handle_taper_result(
 	    }
 
 	    taper_result = cmd;
+	    amfree(qname);
 
 	    break;
             
@@ -1371,21 +1409,23 @@ handle_taper_result(
 	    taper_state &= !TAPER_STATE_TAPE_STARTED;
 
 	    if (current_tape >= conf_runtapes) {
-		taper_cmd(NO_NEW_TAPE, NULL, NULL, 0, NULL);
+		taper_cmd(NO_NEW_TAPE, "runtapes volumes already written", NULL, 0, NULL);
 		log_add(L_WARNING,
 			_("Out of tapes; going into degraded mode."));
 		start_degraded_mode(&runq);
 	    } else {
 		TapeAction result_tape_action;
+		char *why_no_new_tape;
 
 		taper_state |= TAPER_STATE_WAIT_FOR_TAPE;
-		result_tape_action = tape_action();
+		result_tape_action = tape_action(&why_no_new_tape);
 		if (result_tape_action & TAPE_ACTION_NEW_TAPE) {
 		    taper_cmd(NEW_TAPE, NULL, NULL, 0, NULL);
 		    taper_state &= !TAPER_STATE_WAIT_FOR_TAPE;
 		} else if (result_tape_action & TAPE_ACTION_NO_NEW_TAPE) {
-		    taper_cmd(NO_NEW_TAPE, NULL, NULL, 0, NULL);
+		    taper_cmd(NO_NEW_TAPE, why_no_new_tape, NULL, 0, NULL);
 		    taper_state &= !TAPER_STATE_WAIT_FOR_TAPE;
+		    start_degraded_mode(&runq);
 		}
 	    }
 	    break;
@@ -1573,6 +1613,9 @@ file_taper_result(
 	    /* Re-insert into taper queue. */
 	    headqueue_disk(&tapeq, dp);
 	}
+    } else if (taper_result != DONE) {
+	g_printf("driver: taper failed %s %s without error\n",
+		   dp->host->hostname, qname);
     } else {
 	delete_diskspace(dp);
 	amfree(sched(dp)->destname);
@@ -3176,7 +3219,7 @@ short_dump_state(void)
     fflush(stdout);
 }
 
-static TapeAction tape_action(void)
+static TapeAction tape_action(char **why_no_new_tape)
 {
     TapeAction result = TAPE_ACTION_NO_ACTION;
     dumper_t *dumper;
@@ -3247,6 +3290,13 @@ static TapeAction tape_action(void)
 		 dump_to_disk_terminated))		//  or all dump to disk terminated
 	      ) {
 	result |= TAPE_ACTION_NO_NEW_TAPE;
+	if (flush_threshold_dumped >= tapeq_size) {
+	    *why_no_new_tape = _("flush-threshold-dumped criteria not met");
+	} else if (flush_threshold_scheduled >= sched_size) {
+	    *why_no_new_tape = _("flush-threshold-scheduled criteria not met");
+	} else {
+	    *why_no_new_tape = _("taperflush criteria not met");
+	}
     }
 
     // when to start a flush
