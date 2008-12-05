@@ -351,7 +351,6 @@ static gboolean find_new_tape(taper_state_t * state, dump_info_t * dump) {
     putresult(REQUEST_NEW_TAPE, "%s\n", dump->handle);
     cmdargs = getcmd();
     cmd = cmdargs->cmd;
-    free_cmdargs(cmdargs);
 
     switch (cmd) {
     default:
@@ -368,11 +367,13 @@ static gboolean find_new_tape(taper_state_t * state, dump_info_t * dump) {
         if (search_result) {
             /* We don't say NEW_TAPE until we actually write the label. */
 	    amfree(search_request.errmsg);
+	    free_cmdargs(cmdargs);
             return TRUE;
         } else {
             putresult(NO_NEW_TAPE, "%s\n", dump->handle);
             log_taper_scan_errmsg(search_request.errmsg);
 	    log_add(L_ERROR, "no-tape [%s]", "No more writable valid tape found");
+	    free_cmdargs(cmdargs);
             return FALSE;
         }
     }
@@ -381,9 +382,12 @@ static gboolean find_new_tape(taper_state_t * state, dump_info_t * dump) {
         if (use_threads) {
             g_thread_join(tape_search);
         }
-	log_add(L_ERROR, "no-tape [%s]", "runtapes tapes already written");
+	log_add(L_ERROR, "no-tape [%s]", cmdargs->argv[1]);
+	state->last_errmsg = stralloc(cmdargs->argv[1]);
+	free_cmdargs(cmdargs);
         return FALSE;
     }
+    free_cmdargs(cmdargs);
 }
 
 /* Returns TRUE if the old volume details are not the same as the new ones. */

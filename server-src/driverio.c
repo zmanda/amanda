@@ -295,6 +295,7 @@ taper_cmd(
     disk_t *dp;
     char *qname;
     char *qdest;
+    char *q;
 
     switch(cmd) {
     case START_TAPER:
@@ -357,8 +358,14 @@ taper_cmd(
 			    " ", disk2serial(dp),
 			    "\n", NULL);
 	break;
-    case NEW_TAPE:
     case NO_NEW_TAPE:
+	q = quote_string((char *)ptr);
+	cmdline = vstralloc(cmdstr[cmd],
+			    " ", q,
+			    "\n", NULL);
+	amfree(q);
+	break;
+    case NEW_TAPE:
     case QUIT:
 	cmdline = stralloc2(cmdstr[cmd], "\n");
 	break;
