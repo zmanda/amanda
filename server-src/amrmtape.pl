@@ -177,18 +177,23 @@ my $scrub_db = sub {
         }
     }
 
+    my $rollback_from_curinfo = sub {
+            unless (move($backup_tapelist_file, $tapelist_file)) {
+                printf STDERR "Failed to rollback new tapelist.\n";
+            }
+            unlink $tmp_curinfo_file;
+    };
+
     close CURINFO;
+
     unless (close AMADMIN) {
-        unlink $tmp_curinfo_file;
+        $rollback_from_curinfo->();
         die "$amadmin exited with non-zero while exporting: $! $?";
     }
 
     unless ($dry_run) {
         if (system("$amadmin $config_name import < $tmp_curinfo_file")) {
-            unless (move($backup_tapelist_file, $tapelist_file)) {
-                printf STDERR "Failed to rollback new tapelist.\n";
-            }
-            unlink $tmp_curinfo_file;
+            $rollback_from_curinfo->();
             die "$amadmin exited with non-zero while importing: $! $?";
         }
     }
@@ -212,8 +217,6 @@ my $erase_volume = sub {
                 die "Can not erase $label because the device doesn't support this feature"
                     unless $dev->property_get('full_deletion');
 		if (!$dry_run) {
-		    $dev->start($ACCESS_APPEND, undef, undef)
-			or die "Could not start device in append mode";
 		    $dev->erase()
 			or die "Failed to erase volume";
 		    $dev->finish();

@@ -1383,7 +1383,7 @@ device_erase (Device * self)
     DeviceClass *klass;
 
     g_assert(IS_DEVICE (self));
-    g_assert(self->access_mode == ACCESS_APPEND);
+    g_assert(self->access_mode == ACCESS_NULL);
     g_assert(!self->in_file);
 
     klass = DEVICE_GET_CLASS(self);

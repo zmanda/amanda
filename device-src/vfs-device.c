@@ -1355,6 +1355,7 @@ vfs_device_erase (Device * pself) {
     if (!open_lock(self, 0, true))
         return false;
 
+    open_dir_handle(pself);
     delete_vfs_files(self);
 
     release_file(self);

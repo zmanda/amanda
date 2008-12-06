@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 323;
+use Test::More tests => 320;
 use File::Path qw( mkpath rmtree );
 use Sys::Hostname;
 use Carp;
@@ -287,10 +287,6 @@ ok($dev->finish(),
     "finish device after read")
     or diag($dev->error_or_status());
 
-ok($dev->start($ACCESS_APPEND, undef, undef),
-   "start in append mode")
-    or diag($dev->error_or_status());
-
 # test erase
 ok($dev->erase(),
    "erase device")
@@ -542,7 +538,7 @@ sub s3_make_device($) {
     return $dev;
 }
 
-my $s3_run_main_tests_count = 17
+my $s3_run_main_tests_count = 16
 	+ 4 * $write_file_count
 	+ 1 * $verify_file_count
 	+ 3 * $s3_make_device_count;
@@ -602,10 +598,6 @@ sub s3_run_main_tests($$) {
     ok($dev->finish(),
        "finish device after read")
         or diag($dev->error_or_status());    # (note: we don't use write_max_size here, as the maximum for S3 is very large)
-
-    ok($dev->start($ACCESS_APPEND, undef, undef),
-       "start in append mode")
-        or diag($dev->error_or_status());
 
     ok($dev->erase(),
        "erase device")
