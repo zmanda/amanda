@@ -387,7 +387,7 @@ static gboolean find_new_tape(taper_state_t * state, dump_info_t * dump) {
 	free_cmdargs(cmdargs);
         return FALSE;
     }
-    free_cmdargs(cmdargs);
+    /* NOTREACHED */
 }
 
 /* Returns TRUE if the old volume details are not the same as the new ones. */
