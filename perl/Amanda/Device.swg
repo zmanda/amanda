@@ -141,6 +141,8 @@ constant.
 
 =item C<block_size()> (accessor function)
 
+=item C<volume_header()> (accessor function)
+
 =back
 
 =head1 CONSTANTS
@@ -620,6 +622,7 @@ typedef struct Device {
 	gsize min_block_size(void) { return self->min_block_size; }
 	gsize max_block_size(void) { return self->max_block_size; }
 	gsize block_size(void) { return self->block_size; }
+	dumpfile_t *volume_header(void) { return self->volume_header; }
     };
 
 } Device;

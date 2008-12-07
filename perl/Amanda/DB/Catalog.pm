@@ -604,7 +604,7 @@ sub add_dump {
 	     "from $last_filenum to $dump->{filenum}";
     }
 
-    my $kps = ($dump->{'kb'} + 0.0) / $dump->{'sec'};
+    my $kps = $dump->{'sec'}? (($dump->{'kb'} + 0.0) / $dump->{'sec'}) : 0.0;
 
     my $part_line = "PART taper ";
     $part_line .= "$dump->{label} ";
@@ -623,7 +623,7 @@ sub add_dump {
     if ($dump->{'partnum'} == $dump->{'nparts'}) {
 	my $secs = $last_secs + $dump->{'sec'};
 	my $kbs = $last_kbs + $dump->{'kb'};
-	$kps = ($kbs + 0.0) / $secs;
+	$kps = $secs? ($kbs + 0.0) / $secs : 0.0;
 
 	my $done_line = "DONE taper ";
 	$done_line .= quote_string($dump->{hostname}) ." ";

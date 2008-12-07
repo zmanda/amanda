@@ -1,3 +1,11 @@
+2008-12-07  Dustin J. Mitchell <dustin@zmanda.com>
+	* server-src/Makefile.am server-src/amvault.pl: new, experimental
+	  script to copy data from secondary to tertiary volumes
+	* common-src/fileheader.c: strip spurious ' ' from headers
+	* man/Makefile.am man/xml-source/amvault.8.xml: docs
+	* perl/Amanda/DB/Catalog.pm: add kbps calculation
+	* perl/Amanda/Device.swg: add volume_header() method
+
 2008-12-05  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/taper.c: remove dead code that can cause compiler errors
 

@@ -72,6 +72,29 @@ strange_header(
     file->type = F_WEIRD;
 }
 
+/* chop whitespace off of a string, in place */
+static void
+chomp(char *str)
+{
+    char *s = str;
+
+    if (!str)
+	return;
+
+    /* trim leading space */
+    while (g_ascii_isspace(*s)) { s++; }
+    if (s != str)
+	memmove(str, s, strlen(s)+1);
+
+    /* trim trailing space */
+    if (*str) {
+	for (s = str+strlen(str)-1; s >= str; s--) {
+	    if (!g_ascii_isspace(*s))
+		break;
+	    *s = '\0';
+	}
+    }
+}
 
 void
 parse_file_header(
@@ -443,6 +466,11 @@ parse_file_header(
 		*cmd3++ = '\0';
 	    }
 	   
+	    /* clean up some extra spaces in various fields */
+	    chomp(cmd1);
+	    chomp(cmd2);
+	    chomp(cmd3);
+
 	    /* three cmds: decrypt    | uncompress | recover
 	     * two   cmds: uncompress | recover
 	     * XXX note that if there are two cmds, the first one 
@@ -458,15 +486,15 @@ parse_file_header(
 			SIZEOF(file->recover_cmd) - 1);
 	      } else {
 		g_snprintf(file->uncompress_cmd,
-			 SIZEOF(file->uncompress_cmd), "%s|", cmd1);
+			 SIZEOF(file->uncompress_cmd), "%s |", cmd1);
 		strncpy(file->recover_cmd, cmd2,
 			SIZEOF(file->recover_cmd) - 1);
 	      }
 	    } else {    /* cmd3 presents:  decrypt | uncompress | recover */
 	      g_snprintf(file->decrypt_cmd,
-		       SIZEOF(file->decrypt_cmd), "%s|", cmd1);
+		       SIZEOF(file->decrypt_cmd), "%s |", cmd1);
 	      g_snprintf(file->uncompress_cmd,
-		       SIZEOF(file->uncompress_cmd), "%s|", cmd2);
+		       SIZEOF(file->uncompress_cmd), "%s |", cmd2);
 	      strncpy(file->recover_cmd, cmd3,
 		      SIZEOF(file->recover_cmd) - 1);
 	    }
@@ -664,14 +692,19 @@ build_header(const dumpfile_t * file, size_t size)
         g_string_append_printf(rval,
 	    _("To restore, position tape at start of file and run:\n"));
 
-	/* \014 == ^L == form feed */
         g_string_append_printf(rval, "\tdd if=<tape> ");
 	if (file->blocksize)
 	    g_string_append_printf(rval, "bs=%zuk ",
 				   file->blocksize / 1024);
-	g_string_append_printf(rval, "skip=1 |%s %s %s\n\014\n",
-                               file->decrypt_cmd, file->uncompress_cmd,
-                               file->recover_cmd);
+	g_string_append_printf(rval, "skip=1 | ");
+	if (*file->decrypt_cmd)
+	    g_string_append_printf(rval, "%s ", file->decrypt_cmd);
+	if (*file->uncompress_cmd)
+	    g_string_append_printf(rval, "%s ", file->uncompress_cmd);
+	if (*file->recover_cmd)
+	    g_string_append_printf(rval, "%s ", file->recover_cmd);
+	/* \014 == ^L == form feed */
+	g_string_append_printf(rval, "\n\014\n");
 	break;
 
     case F_TAPEEND:
