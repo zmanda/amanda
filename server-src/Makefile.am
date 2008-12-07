@@ -42,6 +42,7 @@ CHECK_PERL = \
 	    amcheckdump \
 	    amcleanup \
 	    amrmtape \
+	    amvault \
 	    amstatus
 SCRIPTS_PERL = $(CHECK_PERL)
 SCRIPTS_SHELL = \

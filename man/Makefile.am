@@ -46,6 +46,7 @@ SERVER_MAN_PAGES =  \
     amtape.8 \
     amtapetype.8 \
     amtoc.8 \
+    amvault.8 \
     disklist.5 \
     tapelist.5
 
