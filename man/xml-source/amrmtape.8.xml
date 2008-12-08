@@ -26,6 +26,7 @@
     <arg choice='opt'>-n </arg>
     <arg choice='opt'>--erase </arg>  
     <arg choice='opt'>--changer <replaceable>changer-name</replaceable> </arg>  
+    <arg choice='opt'>--keep-label </arg>  
     <arg choice='opt'>--verbose </arg>  
     <arg choice='opt'>-v </arg>
     <arg choice='opt'>--quiet </arg>  
@@ -75,6 +76,15 @@ and do not update the original copies.</para>
   <listitem>
 <para>Specify which changer to use when erasing
 <emphasis remap='I'>label</emphasis>
+</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>--keep-label</option></term>
+  <listitem>
+<para>Do not remove
+<emphasis remap='I'>label</emphasis>
+from the tapelist.
 </para>
   </listitem>
   </varlistentry>

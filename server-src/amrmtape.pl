@@ -40,6 +40,7 @@ my $amadmin = "$sbindir/amadmin$suf";
 my $dry_run;
 my $erase;
 my $changer_name;
+my $keep_label;
 my $verbose = 1;
 my $help;
 
@@ -50,6 +51,7 @@ $0 [-n] [-v] [-q] [-d] <configuration> <label>
 \t-n Do nothing to original files, leave new ones in database directory.
 \t--erase Erase the media, if possible
 \t--changer changer-name Specify the name of the changer to use (for --erase).
+\t--keep-label Do not remove label from the tapelist
 \t--verbose
 \t-v Verbose, list backups of hosts and disks that are being discarded.
 \t--quiet
@@ -78,6 +80,7 @@ my $opts_ok = GetOptions(
     "dryrun|n" => \$dry_run,
     "erase" => \$erase,
     "changer=s" => \$changer_name,
+    "keep-label" => \$keep_label,
     "verbose|v" => \$verbose,
     "quiet|q" => sub {undef $verbose;},
     "help|h" => \$help,
@@ -120,13 +123,23 @@ my $scrub_db = sub {
     my $tmp_tapelist_file = "$AMANDA_TMPDIR/tapelist-amrmtape-" . time();
     my $backup_tapelist_file = "$AMANDA_TMPDIR/tapelist-backup-amrmtape-" . time();
     # writing to temp and then moving is generally safer than writing directly
-    unless ($dry_run) {
+    unless ($keep_label) {
         unless (copy($tapelist_file, $backup_tapelist_file)) {
             die "Failed to copy/backup $tapelist_file to $backup_tapelist_file";
         }
-        $tapelist->write($tmp_tapelist_file);
-        unless (move($tmp_tapelist_file, $tapelist_file)) {
-            die "Failed to replace old tapelist  with new tapelist.";
+
+        $tapelist->remove_tapelabel($label);
+        my $tmp_tapelist_file = "$AMANDA_TMPDIR/tapelist-amrmtape-" . time();
+        my $backup_tapelist_file = "$AMANDA_TMPDIR/tapelist-backup-amrmtape-" . time();
+        unless (copy($tapelist_file, $backup_tapelist_file)) {
+            die "Failed to copy/backup $tapelist_file to $backup_tapelist_file";
+        }
+        # writing to temp and then moving is generally safer than writing directly
+        unless ($dry_run) {
+            $tapelist->write($tmp_tapelist_file);
+            unless (move($tmp_tapelist_file, $tapelist_file)) {
+                die "Failed to replace old tapelist  with new tapelist.";
+            }
         }
     }
 
@@ -178,10 +191,11 @@ my $scrub_db = sub {
     }
 
     my $rollback_from_curinfo = sub {
+            unlink $tmp_curinfo_file;
+            return if $keep_label;
             unless (move($backup_tapelist_file, $tapelist_file)) {
                 printf STDERR "Failed to rollback new tapelist.\n";
             }
-            unlink $tmp_curinfo_file;
     };
 
     close CURINFO;

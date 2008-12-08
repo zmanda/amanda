@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 16;
+use Test::More tests => 21;
 
 use lib "@amperldir@";
 use Installcheck::Config;
@@ -39,14 +39,15 @@ ok(run('amdump', 'TESTCONF'), "amdump ran successfully");
 
 config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');
 my $tapelist = Amanda::Tapelist::read_tapelist(config_dir_relative("tapelist"));
-ok($tapelist->lookup_tapelabel('TESTCONF01')) or diag("could not lookup tape");
+ok($tapelist->lookup_tapelabel('TESTCONF01'), "looked up tape after dump");
 
 ok(run('amrmtape', 'TESTCONF', 'TESTCONF01'), "amrmtape runs successfully")
     or diag(join("\n", 'stdout:', $Installcheck::Run::stdout, '', 'stderr:', $Installcheck::Run::stderr)
 );
 
 $tapelist = Amanda::Tapelist::read_tapelist(config_dir_relative("tapelist"));
-ok(!$tapelist->lookup_tapelabel('TESTCONF01')) or diag("should fail to look up tape that should has been removed");
+ok(!$tapelist->lookup_tapelabel('TESTCONF01'),
+     "should fail to look up tape that should has been removed");
 
 $dev = Amanda::Device->new('file:' . Installcheck::Run::vtape_dir());
 
@@ -67,7 +68,8 @@ ok(run('amrmtape', '--erase', 'TESTCONF', 'TESTCONF01'), "amrmtape runs successf
 );
 
 $tapelist = Amanda::Tapelist::read_tapelist(config_dir_relative("tapelist"));
-ok(!$tapelist->lookup_tapelabel('TESTCONF01')) or diag("succesfully looked up tape that should have been removed after --erase");
+ok(!$tapelist->lookup_tapelabel('TESTCONF01'),
+     "succesfully looked up tape that should have been removed after --erase");
 
 $dev = Amanda::Device->new('file:' . Installcheck::Run::vtape_dir());
 
@@ -80,6 +82,28 @@ ok($dev->finish(),
    "finish device (just in case)")
     or diag($dev->error_or_status());
 
+# test --keep-label
+
+ok(run('amdump', 'TESTCONF'), "amdump ran successfully");
+
+ok(run('amrmtape', '--keep-label', 'TESTCONF', 'TESTCONF01'), "amrmtape runs successfully with --keep-label")
+    or diag(join("\n", 'stdout:', $Installcheck::Run::stdout, '', 'stderr:', $Installcheck::Run::stderr)
+);
+
+$tapelist = Amanda::Tapelist::read_tapelist(config_dir_relative("tapelist"));
+ok($tapelist->lookup_tapelabel('TESTCONF01'),
+     "succesfully looked up tape that should still be there");
+
+$dev = Amanda::Device->new('file:' . Installcheck::Run::vtape_dir());
+
+ok($dev->start($ACCESS_READ, undef, undef),
+    "start device in read mode")
+    or diag($dev->error_or_status());
+
+ok($dev->finish(),
+   "finish device after starting")
+    or diag($dev->error_or_status());
+
 # test --dryrun and --erase
 
 ok(run('amdump', 'TESTCONF'), "amdump ran successfully");
@@ -89,7 +113,8 @@ ok(run('amrmtape', '--dryrun', '--erase', 'TESTCONF', 'TESTCONF01'), "amrmtape r
 );
 
 $tapelist = Amanda::Tapelist::read_tapelist(config_dir_relative("tapelist"));
-ok($tapelist->lookup_tapelabel('TESTCONF01')) or diag("succesfully looked up tape that should NOT have been removed");
+ok($tapelist->lookup_tapelabel('TESTCONF01'),
+     "succesfully looked up tape that should still be there");
 
 $dev = Amanda::Device->new('file:' . Installcheck::Run::vtape_dir());
 
