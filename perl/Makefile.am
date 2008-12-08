@@ -188,6 +188,20 @@ endif
 EXTRA_DIST += Amanda/Tapelist.swg Amanda/Tapelist.pm
 
 if WANT_SERVER
+# PACKAGE: Amanda::Disklist
+libDisklistdir = $(amperldir)/auto/Amanda/Disklist
+libDisklist_LTLIBRARIES = libDisklist.la
+libDisklist_la_SOURCES = Amanda/Disklist.c $(AMGLUE_SWG)
+libDisklist_la_LDFLAGS = $(PERL_EXT_LDFLAGS)
+libDisklist_la_LIBADD = libamglue.la \
+	$(top_builddir)/server-src/libamserver.la \
+	$(top_builddir)/common-src/libamanda.la
+Amanda_DATA += Amanda/Disklist.pm
+MAINTAINERCLEANFILES += Amanda/Disklist.c Amanda/Disklist.pm
+endif
+EXTRA_DIST += Amanda/Disklist.swg Amanda/Disklist.pm
+
+if WANT_SERVER
 # PACKAGE: Amanda::Changer
 Amanda_DATA += Amanda/Changer.pm
 endif

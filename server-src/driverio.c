@@ -442,7 +442,7 @@ dumper_cmd(
 	      error(_("problem with option string, check the dumptype definition.\n"));
 	    }
 
-	    dbprintf("security_driver %s\n", dp->security_driver);
+	    dbprintf("security_driver %s\n", dp->auth);
 	    cmdline = vstralloc(cmdstr[cmd],
 			    " ", disk2serial(dp),
 			    " ", numberport,
@@ -456,7 +456,7 @@ dumper_cmd(
 			    " ", dp->amandad_path,
 			    " ", dp->client_username,
 			    " ", dp->ssh_keys,
-			    " ", dp->security_driver,
+			    " ", dp->auth,
 			    " |", o,
 			    "\n", NULL);
 	    amfree(features);

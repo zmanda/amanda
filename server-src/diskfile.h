@@ -49,7 +49,7 @@ typedef struct amhost_s {
     int inprogress;			/* # dumps in progress */
     int maxdumps;			/* maximum dumps in parallel */
     netif_t *netif;			/* network interface this host is on */
-    time_t start_t;			/* start dump after this time */
+    time_t start_t;			/* time last dump was started on this host */
     char *up;				/* generic user pointer */
     am_feature_t *features;		/* feature set */
     int	 pre_script;
@@ -66,7 +66,7 @@ typedef struct disk_s {
     char        *hostname;		/* hostname */
     char	*name;			/* label name for disk */
     char	*device;		/* device name for disk, eg "sd0g" */
-    char	*dtype_name;		/* name of dump type   XXX shouldn't need this */
+    char	*dtype_name;		/* name of dump type */
     char	*program;		/* dump program, eg DUMP, STAR, GNUTAR */
     char	*srvcompprog;		/* custom compression server filter */
     char	*clntcompprog;		/* custom compression client filter */
@@ -87,15 +87,15 @@ typedef struct disk_s {
     off_t	fallback_splitsize;	/* size for in-RAM PORT-WRITE buffers */
     int		dumpcycle;		/* days between fulls */
     long	frequency;		/* XXX - not used */
-    char	*security_driver;	/* type of authentication (per disk) */
+    char	*auth;			/* type of authentication (per disk) */
     int		maxdumps;		/* max number of parallel dumps (per system) */
     int		maxpromoteday;		/* maximum of promote day */
     int		bumppercent;
     off_t	bumpsize;
     int		bumpdays;
     double	bumpmult;
-    time_t	starttime;		/* start this dump after this time */
-    time_t	start_t;		/* start this dump after this time */
+    time_t	starttime;		/* start this dump after this time (integer: HHMM) */
+    time_t	start_t;		/* start this dump after this time (time_t) */
     int		strategy;		/* what dump strategy to use */
     int		ignore;			/* ignore */
     int		estimate;		/* what estimate strategy to use */

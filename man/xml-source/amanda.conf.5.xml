@@ -1910,7 +1910,7 @@ level 1 incrementals in this configuration; this is probably a bug.</para>
   <listitem>
 <para>Default:
 <emphasis remap='I'>none</emphasis>.
-Backups will not start until after this time of day.
+Backup of these disks will not start until after this time of day.
 The value should be hh*100+mm, e.g. 6:30PM (18:30) would be entered as
 <literal>1830</literal>.</para>
   </listitem>

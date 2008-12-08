@@ -640,7 +640,7 @@ parse_diskline(
     disk->priority	     = dumptype_get_priority(dtype);
     disk->dumpcycle	     = dumptype_get_dumpcycle(dtype);
 /*    disk->frequency	     = dumptype_get_frequency(dtype);*/
-    disk->security_driver    = dumptype_get_security_driver(dtype);
+    disk->auth               = dumptype_get_auth(dtype);
     disk->maxdumps	     = dumptype_get_maxdumps(dtype);
     disk->tape_splitsize     = dumptype_get_tape_splitsize(dtype);
     disk->split_diskbuffer   = dumptype_get_split_diskbuffer(dtype);
@@ -893,8 +893,8 @@ optionstr(
 
     qdpname = quote_string(dp->name);
     if(am_has_feature(dp->host->features, fe_options_auth)) {
-	auth_opt = vstralloc("auth=", dp->security_driver, ";", NULL);
-    } else if(strcasecmp(dp->security_driver, "bsd") == 0) {
+	auth_opt = vstralloc("auth=", dp->auth, ";", NULL);
+    } else if(strcasecmp(dp->auth, "bsd") == 0) {
 	if(am_has_feature(dp->host->features, fe_options_bsd_auth))
 	    auth_opt = stralloc("bsd-auth;");
 	else if(fdout) {
@@ -902,7 +902,7 @@ optionstr(
 		    _("WARNING: %s:%s does not support auth or bsd-auth\n"),
 		    dp->host->hostname, qdpname);
 	}
-    } else if(strcasecmp(dp->security_driver, "krb4") == 0) {
+    } else if(strcasecmp(dp->auth, "krb4") == 0) {
 	if(am_has_feature(dp->host->features, fe_options_krb4_auth))
 	    auth_opt = stralloc("krb4-auth;");
 	else if(fdout) {
@@ -1302,7 +1302,7 @@ xml_optionstr(
 
     qdpname = quote_string(dp->name);
     if(am_has_feature(dp->host->features, fe_options_auth)) {
-	auth_opt = vstralloc("  <auth>", dp->security_driver, "</auth>\n", NULL);
+	auth_opt = vstralloc("  <auth>", dp->auth, "</auth>\n", NULL);
     } else if(fdout) {
 	fprintf(fdout,
 		_("WARNING: %s:%s does not support auth\n"),

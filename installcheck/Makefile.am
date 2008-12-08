@@ -21,6 +21,7 @@ server_tests = \
 	Amanda_Changer_disk \
 	Amanda_Changer_single \
 	Amanda_Cmdline \
+	Amanda_Disklist \
 	Amanda_DB_Catalog \
 	Amanda_Device \
 	Amanda_Logfile \

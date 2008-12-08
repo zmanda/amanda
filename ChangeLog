@@ -1,3 +1,21 @@
+2008-12-08  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/conffile.c common-src/conffile.h
+	  installcheck/Amanda_Disklist.pl perl/Amanda/Config.swg
+	  perl/Amanda/Disklist.swg server-src/amadmin.c server-src/amcheck.c
+	  server-src/diskfile.c server-src/diskfile.h server-src/driverio.c
+	  server-src/planner.c: change DUMPTYPE_SECURITY_DRIVER to
+	  DUMPTYPE_AUTH, with related changes to disk_t
+
+2008-12-08  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Makefile.am installcheck/Amanda_Disklist.pl
+	  perl/Amanda/Disklist.swg installcheck/Makefile.am:
+	  new module + tests
+	* man/xml-source/amanda.conf.5.xml: 'starttime' is a dump-specific
+	  parameter
+	* common-src/conffile.h: tag host-related parameters
+	* perl/Amanda/Config.swg: POD typo
+	* server-src/diskfile.h: comments
+
 2008-12-08  Nikolas Coukouma <atrus@zmanda.com>
 	* installcheck/amrmtape.pl,
 	  man/xml-source/amrmtape.8.xml,

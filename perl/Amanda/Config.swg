@@ -99,7 +99,7 @@ C<$CFGERR_WARNINGS>, and C<$CFGERR_ERRORS>.  C<config_init> and
 C<apply_config_overwrites> both return the current level.  The level and the
 list of error messages are available from C<config_errors>:
 
-  my ($cfgerr_level, @errors) = Amanda::Configconfig_errors();
+  my ($cfgerr_level, @errors) = Amanda::Config::config_errors();
 
 As a convenience, C<config_print_errors> will print all error messages to
 stderr.  The error state can be cleared with C<config_clear_errors>.
@@ -375,7 +375,7 @@ amglue_add_constant(DUMPTYPE_CLNT_ENCRYPT, dumptype_key);
 amglue_add_constant(DUMPTYPE_AMANDAD_PATH, dumptype_key);
 amglue_add_constant(DUMPTYPE_CLIENT_USERNAME, dumptype_key);
 amglue_add_constant(DUMPTYPE_SSH_KEYS, dumptype_key);
-amglue_add_constant(DUMPTYPE_SECURITY_DRIVER, dumptype_key);
+amglue_add_constant(DUMPTYPE_AUTH, dumptype_key);
 amglue_add_constant(DUMPTYPE_EXCLUDE, dumptype_key);
 amglue_add_constant(DUMPTYPE_INCLUDE, dumptype_key);
 amglue_add_constant(DUMPTYPE_PRIORITY, dumptype_key);

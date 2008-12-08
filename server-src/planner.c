@@ -1719,12 +1719,12 @@ static void getsize(
 	timeout = (time_t)getconf_int(CNF_CTIMEOUT);
     }
 
-    secdrv = security_getdriver(hostp->disks->security_driver);
+    secdrv = security_getdriver(hostp->disks->auth);
     if (secdrv == NULL) {
 	hostp->up = HOST_DONE;
 	log_add(L_ERROR,
 		_("Could not find security driver '%s' for host '%s'"),
-		hostp->disks->security_driver, hostp->hostname);
+		hostp->disks->auth, hostp->hostname);
 	amfree(req);
 	return;
     }

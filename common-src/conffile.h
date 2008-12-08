@@ -579,6 +579,8 @@ char *tapetype_name(tapetype_t *ttyp);
 
 /*
  * Dumptype parameter access
+ *
+ * Note that some parameters are generic to the host
  */
 
 typedef enum {
@@ -588,15 +590,15 @@ typedef enum {
     DUMPTYPE_CLNTCOMPPROG,
     DUMPTYPE_SRV_ENCRYPT,
     DUMPTYPE_CLNT_ENCRYPT,
-    DUMPTYPE_AMANDAD_PATH,
-    DUMPTYPE_CLIENT_USERNAME,
-    DUMPTYPE_SSH_KEYS,
-    DUMPTYPE_SECURITY_DRIVER,
+    DUMPTYPE_AMANDAD_PATH,		/* host parameter */
+    DUMPTYPE_CLIENT_USERNAME,		/* host parameter */
+    DUMPTYPE_SSH_KEYS,			/* host parameter */
+    DUMPTYPE_AUTH,			/* host parameter */
     DUMPTYPE_EXCLUDE,
     DUMPTYPE_INCLUDE,
     DUMPTYPE_PRIORITY,
     DUMPTYPE_DUMPCYCLE,
-    DUMPTYPE_MAXDUMPS,
+    DUMPTYPE_MAXDUMPS,		        /* host parameter */
     DUMPTYPE_MAXPROMOTEDAY,
     DUMPTYPE_BUMPPERCENT,
     DUMPTYPE_BUMPSIZE,
@@ -675,7 +677,7 @@ char *dumptype_name(dumptype_t *dtyp);
 #define dumptype_get_amandad_path(dtyp)        (val_t_to_str(dumptype_getconf((dtyp), DUMPTYPE_AMANDAD_PATH)))
 #define dumptype_get_client_username(dtyp)     (val_t_to_str(dumptype_getconf((dtyp), DUMPTYPE_CLIENT_USERNAME)))
 #define dumptype_get_ssh_keys(dtyp)            (val_t_to_str(dumptype_getconf((dtyp), DUMPTYPE_SSH_KEYS)))
-#define dumptype_get_security_driver(dtyp)     (val_t_to_str(dumptype_getconf((dtyp), DUMPTYPE_SECURITY_DRIVER)))
+#define dumptype_get_auth(dtyp)                (val_t_to_str(dumptype_getconf((dtyp), DUMPTYPE_AUTH)))
 #define dumptype_get_exclude(dtyp)             (val_t_to_exinclude(dumptype_getconf((dtyp), DUMPTYPE_EXCLUDE)))
 #define dumptype_get_include(dtyp)             (val_t_to_exinclude(dumptype_getconf((dtyp), DUMPTYPE_INCLUDE)))
 #define dumptype_get_priority(dtyp)            (val_t_to_priority(dumptype_getconf((dtyp), DUMPTYPE_PRIORITY)))

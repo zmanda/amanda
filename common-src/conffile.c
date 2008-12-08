@@ -1149,7 +1149,7 @@ conf_var_t tapetype_var [] = {
 
 conf_var_t dumptype_var [] = {
    { CONF_COMMENT           , CONFTYPE_STR      , read_str      , DUMPTYPE_COMMENT           , NULL },
-   { CONF_AUTH              , CONFTYPE_STR      , read_str      , DUMPTYPE_SECURITY_DRIVER   , NULL },
+   { CONF_AUTH              , CONFTYPE_STR      , read_str      , DUMPTYPE_AUTH              , NULL },
    { CONF_BUMPDAYS          , CONFTYPE_INT      , read_int      , DUMPTYPE_BUMPDAYS          , NULL },
    { CONF_BUMPMULT          , CONFTYPE_REAL     , read_real     , DUMPTYPE_BUMPMULT          , NULL },
    { CONF_BUMPSIZE          , CONFTYPE_INT64    , read_int64    , DUMPTYPE_BUMPSIZE          , NULL },
@@ -1994,7 +1994,7 @@ init_dumptype_defaults(void)
     conf_init_str   (&dpcur.value[DUMPTYPE_AMANDAD_PATH]      , "X");
     conf_init_str   (&dpcur.value[DUMPTYPE_CLIENT_USERNAME]   , "X");
     conf_init_str   (&dpcur.value[DUMPTYPE_SSH_KEYS]          , "X");
-    conf_init_str   (&dpcur.value[DUMPTYPE_SECURITY_DRIVER]   , "BSD");
+    conf_init_str   (&dpcur.value[DUMPTYPE_AUTH]   , "BSD");
     conf_init_exinclude(&dpcur.value[DUMPTYPE_EXCLUDE]);
     conf_init_exinclude(&dpcur.value[DUMPTYPE_INCLUDE]);
     conf_init_priority (&dpcur.value[DUMPTYPE_PRIORITY]          , 1);
@@ -4309,17 +4309,17 @@ init_defaults(
     init_dumptype_defaults();
     dpcur.name = stralloc("BSD-AUTH");
     dpcur.seen.linenum = -1;
-    free_val_t(&dpcur.value[DUMPTYPE_SECURITY_DRIVER]);
-    val_t__str(&dpcur.value[DUMPTYPE_SECURITY_DRIVER]) = stralloc("BSD");
-    val_t__seen(&dpcur.value[DUMPTYPE_SECURITY_DRIVER]).linenum = -1;
+    free_val_t(&dpcur.value[DUMPTYPE_AUTH]);
+    val_t__str(&dpcur.value[DUMPTYPE_AUTH]) = stralloc("BSD");
+    val_t__seen(&dpcur.value[DUMPTYPE_AUTH]).linenum = -1;
     save_dumptype();
 
     init_dumptype_defaults();
     dpcur.name = stralloc("KRB4-AUTH");
     dpcur.seen.linenum = -1;
-    free_val_t(&dpcur.value[DUMPTYPE_SECURITY_DRIVER]);
-    val_t__str(&dpcur.value[DUMPTYPE_SECURITY_DRIVER]) = stralloc("KRB4");
-    val_t__seen(&dpcur.value[DUMPTYPE_SECURITY_DRIVER]).linenum = -1;
+    free_val_t(&dpcur.value[DUMPTYPE_AUTH]);
+    val_t__str(&dpcur.value[DUMPTYPE_AUTH]) = stralloc("KRB4");
+    val_t__seen(&dpcur.value[DUMPTYPE_AUTH]).linenum = -1;
     save_dumptype();
 
     init_dumptype_defaults();

@@ -2120,7 +2120,7 @@ disklist_one(
 	break;
     }
 
-    g_printf("        auth %s\n", dp->security_driver);
+    g_printf("        auth %s\n", dp->auth);
     g_printf("        kencrypt %s\n", (dp->kencrypt? "YES" : "NO"));
     g_printf("        amandad_path %s\n", dp->amandad_path);
     g_printf("        client_username %s\n", dp->client_username);
