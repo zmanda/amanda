@@ -370,6 +370,8 @@ read_disklist_internal(
     }
 
     free_disklist(&list);
+
+    return 0;
 }
 %}
 

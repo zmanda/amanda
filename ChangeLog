@@ -8,6 +8,10 @@
 	  alphabetize command-line options
 
 2008-12-08  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Disklist.swg: return a value from
+	  read_disklist_internal
+
+2008-12-08  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/conffile.c common-src/conffile.h
 	  installcheck/Amanda_Disklist.pl perl/Amanda/Config.swg
 	  perl/Amanda/Disklist.swg server-src/amadmin.c server-src/amcheck.c
