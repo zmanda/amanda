@@ -16,34 +16,68 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 21;
+use Test::More tests => 31;
 
 use lib "@amperldir@";
-use Installcheck::Config;
+use File::Find;
+use Amanda::Config qw( :init :getconf config_dir_relative );
 use Amanda::Device qw( :constants );
-use Installcheck::Run qw(run run_err $diskname);
-use Amanda::Config qw( :init config_dir_relative );
 use Amanda::Paths;
 use Amanda::Tapelist;
+use Installcheck::Config;
+use Installcheck::Run qw(run run_err $diskname);
 
-my $testconf;
+sub proc_diag {
+    diag(join("\n", $?,
+        'stdout:', $Installcheck::Run::stdout, '',
+        'stderr:', $Installcheck::Run::stderr));
+}
+
+sub run_amdump {
+    my $testconf = Installcheck::Run::setup();
+    $testconf->add_param('label_new_tapes', '"TESTCONF%%"');
+    $testconf->add_param('usetimestamps', 'no');
+    $testconf->add_dle("localhost $diskname installcheck-test");
+    $testconf->write();
+
+    ok(run('amdump', 'TESTCONF'), "amdump ran successfully") or proc_diag();
+}
+
+# note: assumes the config is already loaded and takes a config param
+# to get as a directory and then count all the files in
+sub dir_file_count {
+    my $conf_param = shift @_;
+    my $dir_name = getconf($conf_param);
+
+    my $num_files = 0;
+    my $opts = {
+        'wanted' => sub {
+            # ignore directories
+            return if -d $File::Find::name;
+            $num_files++;
+        },
+    };
+
+    find($opts, $dir_name);
+    $num_files;
+}
+
 my $dev;
+my ($idx_count_pre, $idx_count_post);
 
-$testconf = Installcheck::Run::setup();
-$testconf->add_param('label_new_tapes', '"TESTCONF%%"');
-$testconf->add_param('usetimestamps', 'no');
-$testconf->add_dle("localhost $diskname installcheck-test");
-$testconf->write();
-
-ok(run('amdump', 'TESTCONF'), "amdump ran successfully");
+run_amdump();
 
 config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');
 my $tapelist = Amanda::Tapelist::read_tapelist(config_dir_relative("tapelist"));
 ok($tapelist->lookup_tapelabel('TESTCONF01'), "looked up tape after dump");
 
+$idx_count_pre = dir_file_count($CNF_INDEXDIR);
+
 ok(run('amrmtape', 'TESTCONF', 'TESTCONF01'), "amrmtape runs successfully")
-    or diag(join("\n", 'stdout:', $Installcheck::Run::stdout, '', 'stderr:', $Installcheck::Run::stderr)
-);
+    or proc_diag();
+
+$idx_count_post = dir_file_count($CNF_INDEXDIR);
+is($idx_count_post, $idx_count_pre, "number of index files before and after is the same");
 
 $tapelist = Amanda::Tapelist::read_tapelist(config_dir_relative("tapelist"));
 ok(!$tapelist->lookup_tapelabel('TESTCONF01'),
@@ -59,13 +93,45 @@ ok($dev->finish(),
    "finish device after starting")
     or diag($dev->error_or_status());
 
+# test --cleanup
+
+run_amdump();
+
+$idx_count_pre = dir_file_count($CNF_INDEXDIR);
+
+ok(run('amrmtape', '--cleanup', 'TESTCONF', 'TESTCONF01'),
+    "amrmtape runs successfully with --cleanup")
+     or proc_diag();
+
+$idx_count_post = dir_file_count($CNF_INDEXDIR);
+isnt($idx_count_post, $idx_count_pre, "number of index files before and after is different");
+
+$tapelist = Amanda::Tapelist::read_tapelist(config_dir_relative("tapelist"));
+ok(!$tapelist->lookup_tapelabel('TESTCONF01'),
+     "succesfully looked up tape that should have been removed after --cleanup");
+
+$dev = Amanda::Device->new('file:' . Installcheck::Run::vtape_dir());
+
+ok($dev->start($ACCESS_READ, undef, undef),
+    "start device in read mode")
+    or diag($dev->error_or_status());
+
+ok($dev->finish(),
+   "finish device after starting")
+    or diag($dev->error_or_status());
+
 # test --erase
 
-ok(run('amdump', 'TESTCONF'), "amdump ran successfully");
+ok(run('amdump', 'TESTCONF'), "amdump ran successfully")  or proc_diag();
 
-ok(run('amrmtape', '--erase', 'TESTCONF', 'TESTCONF01'), "amrmtape runs successfully with --erase")
-    or diag(join("\n", 'stdout:', $Installcheck::Run::stdout, '', 'stderr:', $Installcheck::Run::stderr)
-);
+$idx_count_pre = dir_file_count($CNF_INDEXDIR);
+
+ok(run('amrmtape', '--erase', 'TESTCONF', 'TESTCONF01'),
+    "amrmtape runs successfully with --erase")
+    or proc_diag();
+
+$idx_count_post = dir_file_count($CNF_INDEXDIR);
+is($idx_count_post, $idx_count_pre, "number of index files before and after is the same");
 
 $tapelist = Amanda::Tapelist::read_tapelist(config_dir_relative("tapelist"));
 ok(!$tapelist->lookup_tapelabel('TESTCONF01'),
@@ -84,11 +150,16 @@ ok($dev->finish(),
 
 # test --keep-label
 
-ok(run('amdump', 'TESTCONF'), "amdump ran successfully");
+run_amdump();
 
-ok(run('amrmtape', '--keep-label', 'TESTCONF', 'TESTCONF01'), "amrmtape runs successfully with --keep-label")
-    or diag(join("\n", 'stdout:', $Installcheck::Run::stdout, '', 'stderr:', $Installcheck::Run::stderr)
-);
+$idx_count_pre = dir_file_count($CNF_INDEXDIR);
+
+ok(run('amrmtape', '--keep-label', 'TESTCONF', 'TESTCONF01'),
+   "amrmtape runs successfully with --keep-label")
+    or proc_diag();
+
+$idx_count_post = dir_file_count($CNF_INDEXDIR);
+is($idx_count_post, $idx_count_pre, "number of index files before and after is the same");
 
 $tapelist = Amanda::Tapelist::read_tapelist(config_dir_relative("tapelist"));
 ok($tapelist->lookup_tapelabel('TESTCONF01'),
@@ -104,13 +175,18 @@ ok($dev->finish(),
    "finish device after starting")
     or diag($dev->error_or_status());
 
-# test --dryrun and --erase
+# test --dryrun --erase --cleanup
 
-ok(run('amdump', 'TESTCONF'), "amdump ran successfully");
+run_amdump();
 
-ok(run('amrmtape', '--dryrun', '--erase', 'TESTCONF', 'TESTCONF01'), "amrmtape runs successfully with --dryrun --erase")
-    or diag(join("\n", 'stdout:', $Installcheck::Run::stdout, '', 'stderr:', $Installcheck::Run::stderr)
-);
+$idx_count_pre = dir_file_count($CNF_INDEXDIR);
+
+ok(run('amrmtape', '--dryrun', '--erase', '--cleanup', 'TESTCONF', 'TESTCONF01'),
+    "amrmtape runs successfully with --dryrun --erase --cleanup")
+    or proc_diag();
+
+$idx_count_post = dir_file_count($CNF_INDEXDIR);
+is($idx_count_post, $idx_count_pre, "number of index files before and after is the same");
 
 $tapelist = Amanda::Tapelist::read_tapelist(config_dir_relative("tapelist"));
 ok($tapelist->lookup_tapelabel('TESTCONF01'),

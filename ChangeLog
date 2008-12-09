@@ -1,3 +1,9 @@
+2008-12-09  Nikolas Coukouma <atrus@zmanda.com>
+	* installcheck/amrmtape.pl,
+	  man/xml-source/amrmtape.8.xml,
+	  server-src/amrmtape.pl: add --cleanup option to amrmtape
+	  alphabetize command-line options
+
 2008-12-08  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/conffile.c common-src/conffile.h
 	  installcheck/Amanda_Disklist.pl perl/Amanda/Config.swg

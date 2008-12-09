@@ -36,8 +36,11 @@ my $USE_VERSION_SUFFIXES='@USE_VERSION_SUFFIXES@';
 my $suf = ( $USE_VERSION_SUFFIXES =~ /^yes$/i ) ? '-@VERSION@' : '';
 
 my $amadmin = "$sbindir/amadmin$suf";
+my $amtrmidx = "$amlibexecdir/amtrmidx$suf";
+my $amtrmlog = "$amlibexecdir/amtrmlog$suf";
 
 my $dry_run;
+my $cleanup;
 my $erase;
 my $changer_name;
 my $keep_label;
@@ -47,17 +50,19 @@ my $help;
 sub usage() {
     print <<EOF
 $0 [-n] [-v] [-q] [-d] <configuration> <label>
+\t--changer changer-name Specify the name of the changer to use (for --erase).
+\t--cleanup Remove indexes and logs immediately
 \t--dryrun
 \t-n Do nothing to original files, leave new ones in database directory.
 \t--erase Erase the media, if possible
-\t--changer changer-name Specify the name of the changer to use (for --erase).
-\t--keep-label Do not remove label from the tapelist
-\t--verbose
-\t-v Verbose, list backups of hosts and disks that are being discarded.
-\t--quiet
-\t-q Quiet, opposite of -v.
 \t--help
 \t-h Display this message.
+\t--keep-label Do not remove label from the tapelist
+\t--quiet
+\t-q Quiet, opposite of -v.
+\t--verbose
+\t-v Verbose, list backups of hosts and disks that are being discarded.
+
 This program allows you to invalidate the contents of an existing
 backup tape within the Amanda current tape database.  This is meant
 as a recovery mecanism for when a good backup is damaged either by
@@ -77,13 +82,14 @@ sub plog(@) {
 Amanda::Util::setup_application("amrmtape", "server", $CONTEXT_CMDLINE);
 
 my $opts_ok = GetOptions(
+    "changer=s" => \$changer_name,
+    "cleanup" => \$cleanup,
     "dryrun|n" => \$dry_run,
     "erase" => \$erase,
-    "changer=s" => \$changer_name,
-    "keep-label" => \$keep_label,
-    "verbose|v" => \$verbose,
-    "quiet|q" => sub {undef $verbose;},
     "help|h" => \$help,
+    "keep-label" => \$keep_label,
+    "quiet|q" => sub {undef $verbose;},
+    "verbose|v" => \$verbose,
     );
 
 unless ($opts_ok && scalar(@ARGV) == 2) {
@@ -214,6 +220,15 @@ my $scrub_db = sub {
 
     unlink $tmp_curinfo_file;
     unlink $backup_tapelist_file;
+
+    if ($cleanup && !$dry_run) {
+        if (system($amtrmlog, $config_name)) {
+            die "$amtrmlog exited with non-zero while scrubbing logs: $! $?";
+        }
+        if (system($amtrmidx, $config_name)) {
+            die "$amtrmidx exited with non-zero while scrubbing indexes: $! $?";
+        }
+    }
 
     Amanda::MainLoop::quit();
 };

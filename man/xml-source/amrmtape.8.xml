@@ -21,16 +21,17 @@
 <!-- body begins here -->
 <refsynopsisdiv>
 <cmdsynopsis>
-  <command>amrmtape</command>    
-    <arg choice='opt'>--dryrun </arg>  
+  <command>amrmtape</command>
+    <arg choice='opt'>--changer <replaceable>changer-name</replaceable> </arg>
+    <arg choice='opt'>--cleanup </arg>
+    <arg choice='opt'>--dryrun </arg>
     <arg choice='opt'>-n </arg>
-    <arg choice='opt'>--erase </arg>  
-    <arg choice='opt'>--changer <replaceable>changer-name</replaceable> </arg>  
-    <arg choice='opt'>--keep-label </arg>  
-    <arg choice='opt'>--verbose </arg>  
-    <arg choice='opt'>-v </arg>
-    <arg choice='opt'>--quiet </arg>  
+    <arg choice='opt'>--erase </arg>
+    <arg choice='opt'>--keep-label </arg>
+    <arg choice='opt'>--quiet </arg>
     <arg choice='opt'>-q </arg>
+    <arg choice='opt'>--verbose </arg>
+    <arg choice='opt'>-v </arg>
     <arg choice='plain'><replaceable>config</replaceable></arg>
     <arg choice='plain'><replaceable>label</replaceable></arg>
 </cmdsynopsis>
@@ -53,6 +54,23 @@ man page for more details about &A;.</para>
 <refsect1><title>OPTIONS</title>
 <variablelist remap='TP'>
   <varlistentry>
+  <term><option>--changer <replaceable>changer-name</replaceable> </option></term>
+  <listitem>
+<para>Specify which changer to use when erasing
+<emphasis remap='I'>label</emphasis>
+</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>--cleanup</option></term>
+  <listitem>
+<para>Remove logs and indexes associated with
+<emphasis remap='I'>label</emphasis>.
+Otherwise, they'll remain until the next run of amdump.
+</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
   <term><option>--dryrun</option></term>
   <term><option>-n</option></term>
   <listitem>
@@ -70,16 +88,8 @@ and do not update the original copies.</para>
 <emphasis remap='I'>label</emphasis>
 </para>
   </listitem>
-  </varlistentry>
   <varlistentry>
-  <term><option>--changer <replaceable>changer-name</replaceable> </option></term>
-  <listitem>
-<para>Specify which changer to use when erasing
-<emphasis remap='I'>label</emphasis>
-</para>
-  </listitem>
   </varlistentry>
-  <varlistentry>
   <term><option>--keep-label</option></term>
   <listitem>
 <para>Do not remove
@@ -130,4 +140,3 @@ configuration.</para>
 </para>
 </refsect1>
 </refentry>
-
