@@ -114,10 +114,8 @@ extern void delete_file(char *path, char *regex);
 
 extern void extract_files(void);
 
-#ifdef SAMBA_CLIENT
 #define SAMBA_SMBCLIENT 0
 #define SAMBA_TAR       1
-#endif
 
 extern char *get_security(void);
 extern void stop_amindexd(void);

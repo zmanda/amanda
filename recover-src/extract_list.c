@@ -93,9 +93,7 @@ pid_t extract_restore_child_pid = -1;
 static EXTRACT_LIST *extract_list = NULL;
 static const security_driver_t *amidxtaped_secdrv;
 
-#ifdef SAMBA_CLIENT
 unsigned short samba_extract_method = SAMBA_TAR;
-#endif /* SAMBA_CLIENT */
 
 #define READ_TIMEOUT	240*60
 
@@ -1732,6 +1730,8 @@ extract_files_child(
 #ifdef SAMBA_CLIENT
     char *domain = NULL, *smbpass = NULL;
 #endif
+    backup_support_option_t *bsu;
+    GPtrArray		    *errarray;
 
     /* code executed by child to do extraction */
     /* never returns */
@@ -1809,7 +1809,7 @@ extract_files_child(
 #endif
     	break;
     case IS_APPLICATION_API:
-	extra_params = 10;
+	extra_params = 12;
 	if (dump_dle) {
 	    GSList   *scriptlist;
 	    script_t *script;
@@ -1886,6 +1886,20 @@ extract_files_child(
 #endif
 	break;
     case IS_APPLICATION_API:
+	{
+	    g_option_t g_options;
+	    g_options.config = get_config_name();
+	    g_options.hostname = dump_hostname;
+	    if (dump_dle) {
+		bsu = backup_support_option(file.application, &g_options,
+					    file.disk, dump_dle->device,
+					    &errarray);
+	    } else {
+		bsu = backup_support_option(file.application, &g_options,
+					    file.disk, NULL,
+					    &errarray);
+	    }
+	}
 	restore_args[j++] = stralloc(file.application);
 	restore_args[j++] = stralloc("restore");
 	restore_args[j++] = stralloc("--config");
@@ -1895,6 +1909,10 @@ extract_files_child(
 	if (dump_dle && dump_dle->device) {
 	    restore_args[j++] = stralloc("--device");
 	    restore_args[j++] = stralloc(dump_dle->device);
+	}
+	if (bsu->smb_recover_mode && samba_extract_method == SAMBA_SMBCLIENT){
+	    restore_args[j++] = "--recover-mode";
+	    restore_args[j++] = "smb";
 	}
 	if (dump_dle) {
 	    GSList   *scriptlist;
@@ -2227,10 +2245,8 @@ extract_files(void)
     g_printf(_("Restoring files into directory %s\n"), cwd);
     check_file_overwrite(cwd);
 
-#ifdef SAMBA_CLIENT
     if (samba_extract_method == SAMBA_SMBCLIENT)
       g_printf(_("(unless it is a Samba backup, that will go through to the SMB server)\n"));
-#endif
     dbprintf(_("Checking with user before restoring into directory %s\n"), cwd);
     if (!okay_to_continue(0,0,0)) {
         amfree(cwd);

@@ -34,9 +34,7 @@
 #include "amrecover.h"
 #include "amxml.h"
 
-#ifdef SAMBA_CLIENT
 extern unsigned short samba_extract_method;
-#endif /* SAMBA_CLIENT */
 
 /* sets a date, mapping given date into standard form if needed */
 int
@@ -719,7 +717,6 @@ void
 set_mode(
     int		mode)
 {
-#ifdef SAMBA_CLIENT
   if (mode == SAMBA_SMBCLIENT) {
     g_printf (_("SAMBA dumps will be extracted using smbclient\n"));
     samba_extract_method = SAMBA_SMBCLIENT;
@@ -729,9 +726,6 @@ set_mode(
       samba_extract_method = SAMBA_TAR;
     }
   }
-#else
-  (void)mode;	/* Quiet unused parameter warning */
-#endif /* SAMBA_CLIENT */
 }
 
 void

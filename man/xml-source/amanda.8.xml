@@ -114,6 +114,9 @@ configuration files for quick reference.</para>
 <citerefentry><refentrytitle>amrmtape</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
 </listitem>
 <listitem>
+<citerefentry><refentrytitle>amsamba</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+</listitem>
+<listitem>
 <citerefentry><refentrytitle>amserverconfig</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
 </listitem>
 <listitem>

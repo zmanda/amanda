@@ -34,6 +34,12 @@
 
 </refsect2>
 
+<refsect2><title>amsamba</title>
+
+<para>The amsamba application use smbclient to backup and restore data.</para>
+
+</refsect2>
+
 <refsect2><title>amstar</title>
 
 <para>The amstar application use star to backup and restore data.</para>

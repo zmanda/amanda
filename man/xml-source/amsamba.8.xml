@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"
+[
+  <!-- entities files to use -->
+  <!ENTITY % global_entities SYSTEM '../entities/global.entities'>
+  %global_entities;
+]>
+
+<refentry id='amsamba.8'>
+
+<refmeta>
+<refentrytitle>amsamba</refentrytitle>
+<manvolnum>8</manvolnum>
+</refmeta>
+<refnamediv>
+<refname>amsamba</refname>
+<refpurpose>Amanda Application to interface with smbclient</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+
+<refsect1><title>DESCRIPTION</title>
+
+<para>Amsamba is an &A; Application API script.  It should not be run
+by users directly.  It uses smbclient to backup and restore data.</para>
+
+<para>The device name in the disklist must have the form '//HOST/SHARE/SUBDIR'
+where HOST is the CIFS host, SHARE is the share to connect and subdir is the
+subdirectory to backup.  '/subdir' can be ommited, in which case the complete
+share is archived.  The host in the disklist should be the name of an
+intermediate host that has smbclient installed, and is often the Amanda server
+itself.</para>
+
+<para>Include or exclude can be used, but not both. The path for 'exclude list'
+or 'include list' must be absolute path on the client. The estimate calculates
+the complete size of the share, without regard for include or exclude
+directives.  It will be larger than the actual dump if you use include or
+exclude.  Using 'estimate server' in the dumptype could give better
+estimate.</para>
+
+</refsect1>
+
+<refsect1><title>PROPERTIES</title>
+
+<para>This section lists the properties that control amsamba's functionality.
+See <citerefentry><refentrytitle>amanda-applications</refentrytitle><manvolnum>7</manvolnum></citerefentry>
+for information on application properties and how they are configured.</para>
+
+<!-- PLEASE KEEP THIS LIST IN ALPHABETICAL ORDER -->
+<variablelist>
+ <!-- ==== -->
+ <varlistentry><term>SMBCLIENT-PATH</term><listitem>
+The path to the smbclient binary.  The default is set when &A; is built.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>GNUTAR-PATH</term><listitem>
+The path to the gnutar binary.  The default is set when &A; is built. gnutar
+is use to create the index.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>AMANDAPASS</term><listitem>
+Location of the amandapass file, The default is "/etc/amandapass".
+The format of the file is as follow:
+<programlisting>
+  Sharename User%Password Domain
+</programlisting>
+Sharename is '//HOST/SHARE' without the SUBDIR.
+Sharename can be quoted,
+it can be '*' to match all share,
+it can be '//pc-host/*' to match all share on pc-host.
+User is the username use to connect to the share.
+Password is the password use to connect to the share.
+Domain is optional. Example:
+<programlisting>
+  //another-pc/share otheruser%otherpw domain
+</programlisting>
+</listitem></varlistentry>
+</variablelist>
+
+</refsect1>
+
+<refsect1><title>AUTHORS</title>
+
+<para>Jean-Louis Martineau &email.jlm; Original text</para>
+</refsect1>
+
+<refsect1><title>SEE ALSO</title>
+<para>
+<citerefentry><refentrytitle>amanda.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>amanda-applications</refentrytitle><manvolnum>7</manvolnum></citerefentry>
+</para>
+
+</refsect1>
+</refentry>

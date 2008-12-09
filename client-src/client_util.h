@@ -58,6 +58,7 @@ typedef struct backup_support_option_s {
     int collection;
     int calcsize;
     int multi_estimate;
+    int smb_recover_mode;
 } backup_support_option_t;
 
 typedef struct client_script_result_s {

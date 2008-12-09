@@ -233,16 +233,45 @@ escaped with a backslash and the string is surrounded by double quotes.
 
 Unquote a string as quoted with C<quote_string>.
 
-Both C<quote_string> and C<unquote_string> are available under the export tag
-C<:quoting>.
+=item C<skip_quoted_string($str)>
+
+my($q, $remaider) = skip_quoted_string($str)
+
+Return the first quoted string and the remainder of the string.
+
+Both C<quote_string>, C<unquote_string> and C<skip_quoted_string> are
+available under the export tag C<:quoting>.
 
 =cut
+
+sub skip_quoted_string {
+    my $str = shift;
+
+    chomp $str;
+    my $iq = 0;
+    my $i = 0;
+    my $c = substr $str, $i, 1;
+    while ($c ne "" && !($iq == 0 && $c =~ /\s/)) {
+	if ($c eq '"') {
+	    $iq = !$iq;
+	} elsif ($c eq '\\') {
+	    $i++;
+	}
+	$i++;
+	$c = substr $str, $i, 1;
+    }
+    my $quoted_string = substr $str, 0, $i;
+    my $remainder     = substr $str, $i+1;
+
+    return ($quoted_string, $remainder);
+}
+
 %}
 
 char *sanitise_filename(char *inp);
 char *quote_string(char *);
 char *unquote_string(char *);
-amglue_export_tag(quoting, quote_string unquote_string  sanitise_filename);
+amglue_export_tag(quoting, quote_string unquote_string skip_quoted_string sanitise_filename);
 
 %perlcode %{
 =item C<generate_timestamp()>
