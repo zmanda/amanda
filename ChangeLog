@@ -1,3 +1,6 @@
+2008-12-09  C R Ritson.
+	* server-src/reporter.c: Add threshold to small and big estimate.
+
 2008-12-09  Jean-Louis Martineau <martineau@zmanda.com>
 	* client-src/client_util.c: Parse RECOVER-MODE application support.
 	* client-src/client_util.h (backup_support_option_t):
