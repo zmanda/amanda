@@ -849,6 +849,9 @@ backup_support_option(
 		bsu->multi_estimate = 1;
 	} else if (strncmp(line,"MAX-LEVEL ", 10) == 0) {
 	    bsu->max_level  = atoi(line+10);
+	} else if (strncmp(line,"RECOVER-MODE ", 13) == 0) {
+	    if (strcasecmp(line+13, "SMB") == 0)
+		bsu->smb_recover_mode = 1;
 	} else {
 	    dbprintf(_("Invalid support line: %s\n"), line);
 	}

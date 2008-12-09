@@ -15,6 +15,7 @@ COMMON_MAN_PAGES =  amanda.8 \
 CLIENT_MAN_PAGES = \
     amanda-applications.7 \
     amgtar.8 \
+    amsamba.8 \
     amstar.8 \
     amzfs-snapshot.8
 

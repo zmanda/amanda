@@ -51,6 +51,7 @@ use Exporter;
     $amlibexecdir
     $mandir
     $datarootdir
+    $sysconfdir
 
     $AMANDA_TMPDIR
     $CONFIG_DIR
@@ -75,6 +76,7 @@ $amlibexecdir = "@amlibexecdir@";
 $mandir = "@mandir@";
 # (config.status worries if it doesn't see this:)
 $datarootdir = "@datarootdir@";
+$sysconfdir = "@sysconfdir@";
 
 ## amanda configuration directories
 

@@ -2369,7 +2369,9 @@ getsize_application_api(
 	}
 	size1 = (off_t)size1_;
 	size2 = (off_t)size2_;
-	if (size1 * size2 > 0)
+	if (size1 <= 0 || size2 <=0)
+	    size = -1;
+	else if (size1 * size2 > 0)
 	    size = size1 * size2;
 	dbprintf(_("estimate size for %s level %d: %lld KB\n"),
 		 qamdevice,
