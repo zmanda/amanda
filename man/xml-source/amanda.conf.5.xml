@@ -2342,7 +2342,7 @@ A comment string describing this script.</para>
   <varlistentry>
   <term><emphasis remap='B'>plugin</emphasis> <emphasis remap='I'>string</emphasis></term>
   <listitem>
-<para>No default. Must be set to the name of the program. This program must be in the <emphasis remap='I'>$libdir/amanda/application</emphasis> directory on the client and/or server.</para>
+<para>No default. Must be set to the name of the program. This program must be in the <emphasis remap='I'>$libexecdir/amanda/application</emphasis> directory on the client and/or server.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
