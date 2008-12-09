@@ -2748,7 +2748,7 @@ generate_bad_estimate(void)
 		    else
 			outsize  = repdata->dumper.outsize;
 
-		    if(repdata->est_csize * 0.9 > outsize) {
+		    if( (repdata->est_csize * 0.9 > outsize) && ( repdata->est_csize - outsize > 1.0e5 ) ) {
 			g_snprintf(s, 1000,
 				_("  big estimate: %s %s %d"),
 				 repdata->disk->host->hostname,
@@ -2763,7 +2763,7 @@ generate_bad_estimate(void)
 			s[999] = '\0';
 			addline(&notes, s);
 		    }
-		    else if(repdata->est_csize * 1.1 < outsize) {
+		    else if( (repdata->est_csize * 1.1 < outsize) && (outsize - repdata->est_csize > 1.0e5 ) ) {
 			g_snprintf(s, 1000,
 				_("  small estimate: %s %s %d"),
 				 repdata->disk->host->hostname,
