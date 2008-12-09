@@ -1,4 +1,7 @@
 2008-12-09  Jean-Louis Martineau <martineau@zmanda.com>
+	* man/xml-source/amstar.8.xml: Typo.
+
+2008-12-09  Jean-Louis Martineau <martineau@zmanda.com>
 	* man/xml-source/amanda.conf.5.xml: Fix plugin location.
 
 2008-12-07  Dustin J. Mitchell <dustin@zmanda.com>

@@ -21,14 +21,14 @@
 
 <refsect1><title>DESCRIPTION</title>
 
-<para>Amgtar is an &A; Application API script.  It should not be run
+<para>Amstar is an &A; Application API script.  It should not be run
 by users directly.  It uses star to backup and restore data.</para>
 
 </refsect1>
 
 <refsect1><title>PROPERTIES</title>
 
-<para>This section lists the properties that control amgtar's functionality.
+<para>This section lists the properties that control amstar's functionality.
 See <citerefentry><refentrytitle>amanda-applications</refentrytitle><manvolnum>7</manvolnum></citerefentry>
 for information on application properties and how they are configured.</para>
 
