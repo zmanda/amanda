@@ -169,9 +169,13 @@ configuration parameters
 
 =item disks
 
-a hashref containing references to all of the disks on this host.  The extra level of references is included to avoid reference loops.
+an array containing the names of all of the disks on this host.
 
 =back
+
+As a convenience, the C<Amanda::Disklist::Host> class also provides methods
+C<get_disk($disk)>, to get a disk object on the host, and C<all_disks()>, to
+get a list of all disk objects on this host.
 
 =head2 Amanda::Disklist::Interface
 
@@ -236,14 +240,12 @@ get_host(
     char *hostclass,
     HV *ifaces,
     char *ifaceclass,
-    disk_t *dp,
-    SV *diskref)
+    disk_t *dp)
 {
     HV *hostclass_stash = NULL;
     SV **svp;
     SV *sv;
-    HV *diskshash;
-    SV *diskrefref;
+    AV *disksarray;
 
     svp = hv_fetch(hosts, dp->hostname, strlen(dp->hostname), TRUE);
     if (!svp)
@@ -274,7 +276,7 @@ get_host(
 	hv_store_const(h, "ssh_keys", safe_newSVpv(dp->ssh_keys));
 	hv_store_const(h, "auth", safe_newSVpv(dp->auth));
 	hv_store_const(h, "maxdumps", newSViv(dp->host->maxdumps));
-	hv_store_const(h, "disks", newRV_noinc((SV *)newHV()));
+	hv_store_const(h, "disks", newRV_noinc((SV *)newAV()));
 
 	/* and make a link to the relevant interface object */
 	ref = get_iface(ifaces, ifaceclass, dp->host->netif);
@@ -282,18 +284,15 @@ get_host(
 	hv_store_const(h, "interface", ref);
     }
 
-    /* add a weak ref to the diskref to the "disks" array, making some
-     * assumptions about the data structure that we just built */
+    /* push the name of the disk into @{$self->{disks}}; we don't store
+     * a ref to the disk object, as that would create a circular link */
     g_assert(SvROK(*svp));
     g_assert(SvTYPE(SvRV(*svp)) == SVt_PVHV);
     sv = *hv_fetch((HV *)SvRV(*svp), "disks", sizeof("disks")-1, 0);
 
     g_assert(SvROK(sv));
-    g_assert(SvTYPE(SvRV(sv)) == SVt_PVHV);
-    diskshash = (HV *)SvRV(sv);
-
-    diskrefref = sv_rvweaken(newRV(diskref));
-    hv_store(diskshash, dp->name, strlen(dp->name), diskrefref, 0);
+    g_assert(SvTYPE(SvRV(sv)) == SVt_PVAV);
+    av_push((AV *)SvRV(sv), safe_newSVpv(dp->name));
 
     return *svp;
 }
@@ -320,7 +319,7 @@ get_host(
 static cfgerr_level_t
 read_disklist_internal(
 	char *filename,
-	AV *disks, char *diskclass,
+	HV *disks, char *diskclass,
 	HV *hosts, char *hostclass,
 	HV *ifaces, char *ifaceclass)
 {
@@ -330,7 +329,7 @@ read_disklist_internal(
     HV *diskclass_stash = NULL;
 
     hv_clear(hosts);
-    av_clear(disks);
+    hv_clear(disks);
     hv_clear(ifaces);
 
     errlev = read_diskfile(filename, &list);
@@ -339,19 +338,17 @@ read_disklist_internal(
 
     for (dp = list.head; dp; dp = dp->next) {
 	HV *h = newHV();
-	SV *ref;
+	SV *diskref;
 	SV *hostref;
+	SV **svp;
 
 	/* make a new hashref and bless it */
 	h = newHV();
-	ref = newRV_noinc((SV *)h);
+	diskref = newRV_noinc((SV *)h);
 	if (!diskclass_stash) {
 	    diskclass_stash = gv_stashpv(diskclass, GV_ADD);
 	}
-	sv_bless(ref, diskclass_stash);
-
-	/* and add this disk to the list of disks */
-	av_push(disks, ref);
+	sv_bless(diskref, diskclass_stash);
 
 	hv_store_const(h, "name", safe_newSVpv(dp->name));
 	hv_store_const(h, "device", safe_newSVpv(dp->device));
@@ -363,10 +360,29 @@ read_disklist_internal(
 			       /* can't use $descriptor here.. */
 			       SWIGTYPE_p_dumptype_t, 0)));
 
-	/* create an uplink ref to the host hash */
-	hostref = get_host(hosts, hostclass, ifaces, ifaceclass, dp, ref);
+	/* create an uplink ref to the host object */
+	hostref = get_host(hosts, hostclass, ifaces, ifaceclass, dp);
 	SvREFCNT_inc(hostref);
 	hv_store_const(h, "host", hostref);
+
+	/* and store this disk in the two-level %disks hash */
+	svp = hv_fetch(disks, dp->hostname, strlen(dp->hostname), 1);
+	if (!SvOK(*svp)) {
+	    /* make a new hash for this host */
+	    SV *href;
+	    h = newHV();
+	    href = newRV_noinc((SV *)h);
+	    sv_setsv(*svp, href);
+	} else {
+	    g_assert(SvROK(*svp));
+	    g_assert(SvTYPE(SvRV(*svp)) == SVt_PVHV);
+	    h = (HV *)SvRV(*svp);
+	}
+
+	g_assert(SvROK(*svp));
+	g_assert(SvTYPE(SvRV(*svp)) == SVt_PVHV);
+	SvREFCNT_inc(diskref);
+	hv_store(h, dp->name, strlen(dp->name), diskref, 0);
     }
 
     free_disklist(&list);
@@ -383,7 +399,15 @@ package Amanda::Disklist::Disk;
 
 package Amanda::Disklist::Host;
 
-# methods
+sub get_disk {
+    my ($self, $disk) = @_;
+    return $Amanda::Disklist::disks{$self->{'hostname'}}{$disk};
+}
+
+sub all_disks {
+    my ($self) = @_;
+    return values %{$Amanda::Disklist::disks{$self->{'hostname'}}};
+}
 
 package Amanda::Disklist::Interface;
 
@@ -391,14 +415,14 @@ package Amanda::Disklist::Interface;
 
 package Amanda::Disklist;
 
-my (@disks, %hosts, %interfaces);
+our (%disks, %hosts, %interfaces);
 
 sub read_disklist {
     my %params = @_;
 
     return read_disklist_internal(
 	($params{filename} or config_dir_relative(getconf($CNF_DISKFILE))),
-	\@disks, ($params{disk_class} or "Amanda::Disklist::Disk"),
+	\%disks, ($params{disk_class} or "Amanda::Disklist::Disk"),
 	\%hosts, ($params{host_class} or "Amanda::Disklist::Host"),
 	\%interfaces, ($params{interface_class} or "Amanda::Disklist::Interface"),
     );
@@ -415,11 +439,15 @@ sub all_hosts {
 
 sub get_disk {
     my ($hostname, $diskname) = @_;
-    return ${$hosts{$hostname}->{'disks'}->{$diskname}};
+    return $disks{$hostname}->{$diskname};
 }
 
 sub all_disks {
-    return @disks;
+    my @rv;
+    foreach my $disk (values %disks) {
+	push @rv, (values %$disk);
+    }
+    return @rv;
 }
 
 sub get_interface {

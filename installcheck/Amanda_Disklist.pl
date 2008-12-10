@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 11;
+use Test::More tests => 13;
 
 use lib "@amperldir@";
 use Amanda::Config qw( :init :getconf );
@@ -51,14 +51,23 @@ is(Amanda::Disklist::read_disklist(), $CFGERR_OK,
     "read_disklist returns CFGERR_OK")
     or die("Error loading disklist");
 
-use Data::Dumper;
-my ($x, @list);
+my ($x, $d, @list);
 
 $x = Amanda::Disklist::get_host("otherbox");
 ok($x, "get_host returns a host");
 is($x->{'auth'}, 'BSD', "..host has correct auth");
-is(scalar keys %{$x->{'disks'}}, 3, "..and three disks");
+is_deeply([ sort @{$x->{'disks'}} ],
+	  [ sort "/disk1", "/disk2", "/home" ],
+	  "..and three disks");
 is(interface_name($x->{'interface'}->{'config'}), "default", "..and correct interface");
+
+$d = $x->get_disk("/home");
+is($d->{'name'}, "/home", "host->get_disk() works");
+
+@list = $x->all_disks();
+is_deeply([ sort map { $_->{'name'} } @list ],
+	  [ sort "/disk1", "/disk2", "/home" ],
+	  "host->all_disks returns all disk objects");
 
 @list = Amanda::Disklist::all_hosts();
 is_deeply([ sort( map { $_->{'hostname'} } @list ) ],
