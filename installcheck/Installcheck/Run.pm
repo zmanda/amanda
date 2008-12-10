@@ -168,7 +168,7 @@ BEGIN {
 # tests.
 our $diskname = abs_path(getcwd() . "/../device-src");
 
-# common paths
+# common paths (note that Installcheck::Dumpcache assumes these do not change)
 my $taperoot = "$AMANDA_TMPDIR/installcheck-vtapes";
 my $holdingdir ="$AMANDA_TMPDIR/installcheck-holding";
 
@@ -321,6 +321,8 @@ sub get_stderr {
 }
 
 sub cleanup {
+    Installcheck::Config::cleanup();
+
     if (-d $taperoot) {
 	rmtree($taperoot);
     }

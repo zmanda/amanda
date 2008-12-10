@@ -21,6 +21,7 @@ use Test::More tests => 17;
 use lib "@amperldir@";
 use Installcheck::Config;
 use Installcheck::Run qw(run run_get run_err $diskname);
+use Installcheck::Dumpcache;
 use Amanda::Paths;
 
 my $testconf;
@@ -92,7 +93,7 @@ is_deeply([ sort split "\n", $Installcheck::Run::stdout],
 	  [ sort "MESSAGE File /dev/null is not a tape device", "DEVICE_ERROR"],
     ".. and produce a corresponding error message");
 
-BAIL_OUT("amdump with TESTCONF failed") unless run('amdump','TESTCONF');
+Installcheck::Dumpcache::load("basic");
 
 is_deeply([ sort split "\n", run_get('amdevcheck', 'TESTCONF') ],
 	  [ sort "SUCCESS" ],

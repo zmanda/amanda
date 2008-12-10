@@ -1,3 +1,16 @@
+2008-12-10  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Makefile.am: distribute Dumpcache.pm
+
+2008-12-10  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Installcheck/Dumpcache.pm: cache amdump runs
+	* installcheck/Installcheck/Config.pm: add cleanup()
+	* installcheck/Installcheck/Run.pm: call I::C::cleanup()
+	* installcheck/Makefile.am: add _seupcache
+	* installcheck/_setupcache.pl: set up the amdump cache first thing
+	* installcheck/amcheckdump.pl installcheck/amdevcheck.pl
+	  installcheck/amdump.pl installcheck/amfetchdump.pl
+	  installcheck/amrmtape.pl: use dumpcache
+
 2008-12-10  Nikolas Coukouma <atrus@zmanda.com>
 	* device-src/s3.c: Generate date header independently of locale
 

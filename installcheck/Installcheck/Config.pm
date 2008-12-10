@@ -256,10 +256,9 @@ files necessary to run Amanda.
 sub write {
     my $self = shift;
 
+    cleanup();
+
     my $testconf_dir = "$CONFIG_DIR/TESTCONF";
-    if (-e $testconf_dir) {
-	rmtree($testconf_dir) or die("Could not remove '$testconf_dir'");
-    }
     mkpath($testconf_dir);
 
     # set up curinfo dir, etc.
@@ -411,6 +410,19 @@ sub _write_amanda_client_config_conf {
     }
 
     close($amanda_client_conf);
+}
+
+=item C<cleanup()> (callable as a package method too)
+
+Clean up by deleting the configuration directory.
+
+=cut
+
+sub cleanup {
+    my $testconf_dir = "$CONFIG_DIR/TESTCONF";
+    if (-e $testconf_dir) {
+	rmtree($testconf_dir) or die("Could not remove '$testconf_dir'");
+    }
 }
 
 1;

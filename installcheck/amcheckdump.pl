@@ -20,6 +20,7 @@ use Test::More tests => 9;
 
 use lib "@amperldir@";
 use Installcheck::Config;
+use Installcheck::Dumpcache;
 use Installcheck::Run qw(run run_get run_err $diskname);
 use Amanda::Paths;
 
@@ -40,9 +41,6 @@ like(run_err('amcheckdump', 'this-probably-doesnt-exist'), qr(could not open con
 # Now use a config with a vtape and without usetimestamps
 
 $testconf = Installcheck::Run::setup();
-$testconf->add_param('label_new_tapes', '"TESTCONF%%"');
-$testconf->add_param('usetimestamps', 'no');
-$testconf->add_dle("localhost $diskname installcheck-test");
 $testconf->write();
 
 ok(run('amcheckdump', 'TESTCONF'),
@@ -50,8 +48,7 @@ ok(run('amcheckdump', 'TESTCONF'),
 like($Installcheck::Run::stdout, qr(could not find)i,
      "..but finds no dumps.");
 
-BAIL_OUT()
-    unless run('amdump', 'TESTCONF');
+Installcheck::Dumpcache::load("notimestamps");
 
 like(run_get('amcheckdump', 'TESTCONF'), qr(Validating),
     "amcheckdump succeeds, claims to validate something (usetimestamps=no)");
@@ -63,16 +60,9 @@ like(run_get('amcheckdump', 'TESTCONF', '-oorg=installcheck'), qr(Validating),
     "amcheckdump accepts '-o' options on the command line");
 
 ##
-# And a config with usetimestamps enabled
+# Try with usetimestamps enabled
 
-$testconf = Installcheck::Run::setup();
-$testconf->add_param('label_new_tapes', '"TESTCONF%%"');
-$testconf->add_param('usetimestamps', 'yes');
-$testconf->add_dle("localhost $diskname installcheck-test");
-$testconf->write();
-
-BAIL_OUT()
-    unless run('amdump', 'TESTCONF');
+Installcheck::Dumpcache::load("basic");
 
 like(run_get('amcheckdump', 'TESTCONF'), qr(Validating),
     "amcheckdump succeeds, claims to validate something (usetimestamps=yes)");

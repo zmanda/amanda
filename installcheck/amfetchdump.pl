@@ -21,6 +21,7 @@ use Test::More tests => 7;
 use lib "@amperldir@";
 use Installcheck::Config;
 use Installcheck::Run qw(run run_get run_err $diskname);
+use Installcheck::Dumpcache;
 use File::Path qw(rmtree mkpath);
 use Amanda::Paths;
 use Cwd;
@@ -41,13 +42,7 @@ sub cleandir {
     }
 }
 
-$testconf = Installcheck::Run::setup();
-$testconf->add_param('label_new_tapes', '"TESTCONF%%"');
-$testconf->add_dle("localhost $diskname installcheck-test");
-$testconf->write();
-
-run('amdump', 'TESTCONF')
-    or BAIL_OUT("amdump run failed");
+Installcheck::Dumpcache::load("basic");
 
 like(run_err('amfetchdump', 'TESTCONF'),
     qr{^Usage:},

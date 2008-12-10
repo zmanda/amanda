@@ -32,10 +32,12 @@ server_tests = \
 	amgetconf \
 	amtapetype
 
+# (note that _setupcache should come first here)
 full_tests = \
+	_setupcache \
+	amdump \
 	amdevcheck \
 	amcheckdump \
-	amdump \
 	amrmtape \
 	amservice \
 	amstatus
@@ -43,19 +45,22 @@ full_tests = \
 restore_tests = \
 	amfetchdump
 
-# tests requiring neither client nor server
-tests = $(common_tests)
-
-# tests requiring server
-if WANT_SERVER
-tests += $(server_tests)
-endif
+tests =
 
 # tests requiring a client and a server (any tests that run amdump)
+# these come first to catch any major problems, if possible
 if WANT_SERVER
 if WANT_CLIENT
 tests += $(full_tests)
 endif
+endif
+
+# tests requiring neither client nor server
+tests += $(common_tests)
+
+# tests requiring server
+if WANT_SERVER
+tests += $(server_tests)
 endif
 
 # tests requiring a client and a server AND restore facilities (any tests that run amdump)
@@ -69,7 +74,7 @@ endif
 
 # Add any common files (that should not be run as tests, and that do not
 # require configure-variable substitution) here:
-test_utils = Installcheck/Config.pm Installcheck/Run.pm
+test_utils = Installcheck/Config.pm Installcheck/Run.pm Installcheck/Dumpcache.pm
 EXTRA_DIST += $(test_utils)
 
 CHECK_PERL_FLAGS=-I$(top_srcdir)/installcheck

@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 31;
+use Test::More tests => 26;
 
 use lib "@amperldir@";
 use File::Find;
@@ -26,21 +26,12 @@ use Amanda::Paths;
 use Amanda::Tapelist;
 use Installcheck::Config;
 use Installcheck::Run qw(run run_err $diskname);
+use Installcheck::Dumpcache;
 
 sub proc_diag {
     diag(join("\n", $?,
         'stdout:', $Installcheck::Run::stdout, '',
         'stderr:', $Installcheck::Run::stderr));
-}
-
-sub run_amdump {
-    my $testconf = Installcheck::Run::setup();
-    $testconf->add_param('label_new_tapes', '"TESTCONF%%"');
-    $testconf->add_param('usetimestamps', 'no');
-    $testconf->add_dle("localhost $diskname installcheck-test");
-    $testconf->write();
-
-    ok(run('amdump', 'TESTCONF'), "amdump ran successfully") or proc_diag();
 }
 
 # note: assumes the config is already loaded and takes a config param
@@ -65,7 +56,7 @@ sub dir_file_count {
 my $dev;
 my ($idx_count_pre, $idx_count_post);
 
-run_amdump();
+Installcheck::Dumpcache::load("notimestamps");
 
 config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF');
 my $tapelist = Amanda::Tapelist::read_tapelist(config_dir_relative("tapelist"));
@@ -95,7 +86,7 @@ ok($dev->finish(),
 
 # test --cleanup
 
-run_amdump();
+Installcheck::Dumpcache::load("notimestamps");
 
 $idx_count_pre = dir_file_count($CNF_INDEXDIR);
 
@@ -122,7 +113,7 @@ ok($dev->finish(),
 
 # test --erase
 
-ok(run('amdump', 'TESTCONF'), "amdump ran successfully")  or proc_diag();
+Installcheck::Dumpcache::load("notimestamps");
 
 $idx_count_pre = dir_file_count($CNF_INDEXDIR);
 
@@ -150,7 +141,7 @@ ok($dev->finish(),
 
 # test --keep-label
 
-run_amdump();
+Installcheck::Dumpcache::load("notimestamps");
 
 $idx_count_pre = dir_file_count($CNF_INDEXDIR);
 
@@ -177,7 +168,7 @@ ok($dev->finish(),
 
 # test --dryrun --erase --cleanup
 
-run_amdump();
+Installcheck::Dumpcache::load("notimestamps");
 
 $idx_count_pre = dir_file_count($CNF_INDEXDIR);
 
