@@ -525,7 +525,7 @@ authenticate_request(S3Handle *hdl,
 {
     time_t t;
     struct tm tmp;
-    char date[100];
+    char *date = NULL;
     char *buf = NULL;
     HMAC_CTX ctx;
     GByteArray *md = NULL;
@@ -533,6 +533,13 @@ authenticate_request(S3Handle *hdl,
     struct curl_slist *headers = NULL;
     char *esc_bucket = NULL, *esc_key = NULL;
     GString *auth_string = NULL;
+
+    /* From RFC 2616 */
+    static const char *wkday[] = {"Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"};
+    static const char *month[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
+        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+
+
 
     /* Build the string to sign, per the S3 spec.
      * See: "Authenticating REST Requests" - API Version 2006-03-01 pg 58
@@ -554,12 +561,13 @@ authenticate_request(S3Handle *hdl,
     /* calculate the date */
     t = time(NULL);
 #ifdef _WIN32
-    if (!localtime_s(&tmp, &t)) g_debug("localtime error");
+    if (!gmtime_s(&tmp, &t)) g_debug("localtime error");
 #else
-    if (!localtime_r(&t, &tmp)) perror("localtime");
+    if (!gmtime_r(&t, &tmp)) perror("localtime");
 #endif
-    if (!strftime(date, sizeof(date), "%a, %d %b %Y %H:%M:%S %Z", &tmp))
-        perror("strftime");
+    date = g_strdup_printf("%s, %02d %s %04d %02d:%02d:%02d GMT",
+        wkday[tmp.tm_wday], tmp.tm_mday, month[tmp.tm_mon], 1900+tmp.tm_year,
+        tmp.tm_hour, tmp.tm_min, tmp.tm_sec);
 
     g_string_append(auth_string, date);
     g_string_append(auth_string, "\n");
@@ -635,6 +643,7 @@ authenticate_request(S3Handle *hdl,
     headers = curl_slist_append(headers, buf);
     g_free(buf);
 cleanup:
+    g_free(date);
     g_free(esc_bucket);
     g_free(esc_key);
     g_byte_array_free(md, TRUE);

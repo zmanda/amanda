@@ -1,3 +1,6 @@
+2008-12-10  Nikolas Coukouma <atrus@zmanda.com>
+	* device-src/s3.c: Generate date header independently of locale
+
 2008-12-10  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Disklist.swg: remove ref cycles and weakrefs
 	* installcheck/Amanda_Disklist.pl: fix tests
