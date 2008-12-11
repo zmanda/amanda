@@ -6,6 +6,7 @@ Changes in release 2.6.1
         program. See 'amgtar' man page.
       o amstar: Use star to do a backup, it work only on a partition. See
         'amstar' man page.
+      o amsamba: Use smbclient to backup a cifs share, see amsamba man page.
    * Script API: Allow to run script before and after amanda process, see the
      'amanda-scripts' man page.
       o amzfs-snapshot: Do a snapshot of a ZFS filesystem, then 'amgtar'

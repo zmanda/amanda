@@ -1,4 +1,7 @@
 2008-12-11  Jean-Louis Martineau <martineau@zmanda.com>
+	* NEWS, ReleaseNotes: Add amsamba.
+
+2008-12-11  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/driver.c: Check start_t before doing a dump to tape.
 
 2008-12-10  Dustin J. Mitchell <dustin@zmanda.com>
