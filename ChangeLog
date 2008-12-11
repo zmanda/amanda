@@ -1,3 +1,6 @@
+2008-12-11 Dan Locks <dwlocks@zmanda.com>
+	* packaging/rpm/amanda.spec: add detection for SLES11 (Beta)
+
 2008-12-11  Jean-Louis Martineau <martineau@zmanda.com>
 	* NEWS, ReleaseNotes: Add amsamba.
 
