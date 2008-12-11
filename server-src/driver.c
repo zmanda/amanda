@@ -481,7 +481,30 @@ main(
 
     /* handle any remaining dumps by dumping directly to tape, if possible */
     while(!empty(directq) && taper > 0) {
-	diskp = dequeue_disk(&directq);
+	time_t  sleep_time  = 100000000;
+	disk_t *sleep_diskp = NULL;
+	time_t  now         = time(0);
+
+	/* Find one we can do immediately or the sonner */
+	for (diskp = directq.head; diskp != NULL; diskp = diskp->next) {
+	    if (diskp->to_holdingdisk == HOLD_REQUIRED ||
+		degraded_mode) {
+		sleep_time = 0;
+		sleep_diskp = diskp;
+	    } else if (diskp->host->start_t - now < sleep_time &&
+		       diskp->start_t -now < sleep_time) {
+		if (diskp->host->start_t > diskp->start_t)
+		    sleep_time = diskp->host->start_t - now;
+		else
+		    sleep_time = diskp->start_t - now;
+		sleep_diskp = diskp;
+	    }
+	}
+	diskp = sleep_diskp;
+	if (sleep_time > 0)
+	    sleep(sleep_time);
+	remove_disk(&directq, diskp);
+
 	if (diskp->to_holdingdisk == HOLD_REQUIRED) {
 	    char *qname = quote_string(diskp->name);
 	    log_add(L_FAIL, "%s %s %s %d [%s]",
