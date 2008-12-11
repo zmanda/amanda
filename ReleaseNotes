@@ -1,7 +1,7 @@
 		Release Notes for amanda-2.6.1
 
-amgtar, amstar
-  Two new programs implementing application-api.
+amgtar, amstar, amsamb
+  Three new programs implementing application-api.
   Swithching from the program "GNUTAR" to the application "amgtar" have some
   advantage:
    - amgtar use by default the gtar --atime-preserve=system option, you must
