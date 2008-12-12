@@ -338,6 +338,14 @@ EXTRA_DIST += Amanda/Application.swg Amanda/Application.pm
 Amanda_DATA += Amanda/Script.pm
 EXTRA_DIST += Amanda/Script.pm
 
+if WANT_CLIENT
+# PACKAGE: Amanda::Application::*
+AmandaApplicationdir = $(amperldir)/Amanda/Application
+AmandaApplication_DATA = Amanda/Application/Zfs.pm
+HTML_SOURCE_FILES += $(AmandaApplication_DATA)
+endif
+EXTRA_DIST += Amanda/Application/Zfs.pm
+
 # perl doesn't use the cyg prefix and it doesn't search in the bin
 # directory, dll must be copied to their modules directories.
 if WANT_CYGWIN_COPY_PERL_DLL
@@ -350,7 +358,7 @@ install-data-hook:
 endif
 
 check-local:
-	@MODULES_TO_CHECK="$(Amanda_DATA) $(Amanda_DB_DATA) $(AmandaChanger_DATA)"; \
+	@MODULES_TO_CHECK="$(Amanda_DATA) $(Amanda_DB_DATA) $(AmandaChanger_DATA) $(AmandaApplication_DATA)"; \
 	if test -f $(top_builddir)/perl/.libs/libConfig.so -o -f $(top_builddir)/perl/libConfig.so; then \
 		if test -n "$(PERL)"; then \
 			for perlobj in $$MODULES_TO_CHECK; do \

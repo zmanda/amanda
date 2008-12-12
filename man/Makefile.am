@@ -17,7 +17,8 @@ CLIENT_MAN_PAGES = \
     amgtar.8 \
     amsamba.8 \
     amstar.8 \
-    amzfs-snapshot.8
+    amzfs-snapshot.8 \
+    amzfs-sendrecv.8
 
 SERVER_MAN_PAGES =  \
     amanda-devices.7 \

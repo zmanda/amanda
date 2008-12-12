@@ -29,7 +29,7 @@ use strict;
 use Getopt::Long;
 
 package Amanda::Script::Amzfs_snapshot;
-use base qw(Amanda::Script);
+use base qw(Amanda::Script Amanda::Application::Zfs);
 use Symbol;
 use IPC::Open3;
 use Amanda::Config qw( :getconf :init );
@@ -62,6 +62,18 @@ sub new {
     return $self;
 }
 
+sub zfs_snapshot_set_value() {
+   my $self   = shift;
+   my $action = shift;
+
+   $self->zfs_set_value($action);
+
+   if (!defined $self->{mountpoint}) {
+       $self->print_to_server($action, "$self->{disk} is not a directory", $Amanda::Script_App::ERROR);
+	
+   }
+}
+
 sub command_support {
    my $self = shift;
 
@@ -73,165 +85,21 @@ sub command_support {
    print "EXECUTE-WHERE YES\n";
 }
 
-sub set_value($) {
-    my $self = shift;
-
-    my $action = $_[0];
-
-    if ($self->{execute_where} != "client") {
-	$self->print_to_server_and_die($action, "amzfs-snapshot must be run on the client 'execute_where client'", $Amanda::Script_App::ERROR);
-    }
-    if (!defined $self->{device}) {
-	$self->print_to_server_and_die($action, "'--device' is not provided",
-			$Amanda::Script_App::ERROR);
-    }
-    if ($self->{df_path} ne "df" && !-e $self->{df_path}) {
-	$self->print_to_server_and_die($action, "Can't execute DF-PATH '$self->{df_path}' command",
-			$Amanda::Script_App::ERROR);
-    }
-    if ($self->{zfs_path} ne "zfs" && !-e $self->{zfs_path}) {
-	$self->print_to_server_and_die($action, "Can't execute ZFS-PATH '$self->{zfs_path}' command",
-			$Amanda::Script_App::ERROR);
-    }
-
-    if ($self->{pfexec} =~ /^YES$/i) {
-	$self->{pfexec_cmd} = $self->{pfexec_path};
-    }
-    if (defined $self->{pfexec_cmd} && $self->{pfexec_cmd} ne "pfexec" && !-e $self->{pfexec_cmd}) {
-	$self->print_to_server_and_die($action, "Can't execute PFEXEC-PATH '$self->{pfexec_cmd}' command",
-			$Amanda::Script_App::ERROR);
-    }
-    if (!defined $self->{pfexec_cmd}) {
-	$self->{pfexec_cmd} = "";
-    }
-
-    debug "running: $self->{df_path} $self->{device}";
-    my @ret = `$self->{df_path} $self->{device}`;
-    if( $? != 0 ) {
-	$self->print_to_server_and_die($action, 
-				"Failed to find database : $self->{device}",
-				$Amanda::Script_App::ERROR);
-    }
-    chomp @ret;
-    @ret = split /:/, $ret[0];
-    if ($ret[0] =~ /(\S*)(\s*)(\()(\S*)(\s*)(\))$/) {
-	$self->{mountpoint} = $1;
-	$self->{filesystem} = $4;
-    }
-
-    if (!defined $self->{mountpoint} || !defined $self->{filesystem}) {
-	$self->print_to_server_and_die($action,
-		"Failed to find mount point for : $self->{device}",
-		$Amanda::Script_App::ERROR);
-    }
-
-    my $cmd = "$self->{pfexec_cmd} $self->{zfs_path} get -H mountpoint $self->{filesystem}";
-    debug "running: $cmd|";
-    my $zfs;
-    open $zfs, "$cmd|";
-    my $line = <$zfs>;
-    close $zfs;
-    my ($afilesystem, $property, $amountpoint, $source) = split '\t', $line;
-
-    if (!defined $amountpoint) {
-	$self->print_to_server_and_die($action,
-		"mountpoint not found for zfs-filesystem '$self->{filesystem}'",
-		$Amanda::Script_App::ERROR);
-    }
-    if ($afilesystem != $self->{filesystem}) {
-	$self->print_to_server_and_die($action,
-		"filesystem from 'df' ($self->{filesystem}) and 'zfs list' ($afilesystem) differ",
-		$Amanda::Script_App::ERROR);
-    }
-    if ($amountpoint != $self->{mountpoint}) {
-	$self->print_to_server_and_die($action,
-		"mountpoint from 'df' ($self->{mountpoint}) and 'zfs list' ($amountpoint) differ",
-		$Amanda::Script_App::ERROR);
-    }
-
-    if (!($self->{device} =~ $self->{mountpoint})) {
-	$self->print_to_server_and_die($action,
-	"mountpoint '$self->{mountpoint}' is not a prefix of diskdevice '$self->{device}'",
-	 $Amanda::Script_App::ERROR);
-    }
-
-    $self->{dir} = $self->{device};
-    $self->{dir} =~ s,^$self->{mountpoint},,;
-    $self->{snapshot} = Amanda::Util::sanitise_filename($self->{device});
-    $self->{directory} = $self->{mountpoint} . "/.zfs/snapshot/" .
-			 $self->{snapshot} . $self->{dir};
-}
-
-sub create_snapshot {
-    my $self = shift;
-    my $action = shift;
-
-    my $cmd = "$self->{pfexec_cmd} $self->{zfs_path} snapshot $self->{filesystem}\@$self->{snapshot}";
-    debug "running: $cmd";
-    my($wtr, $rdr, $err, $pid);
-    $err = Symbol::gensym;
-    $pid = open3($wtr, $rdr, $err, $cmd);
-    close $wtr;
-    my ($msg) = <$rdr>;
-    my ($errmsg) = <$err>;
-    waitpid $pid, 0;
-    close $rdr;
-    close $err;
-    if( $? != 0 ) {
-	if(defined $msg && defined $errmsg) {
-	    $self->print_to_server_and_die($action, "$msg, $errmsg", $Amanda::Script_App::ERROR);
-	} elsif (defined $msg) {
-	    $self->print_to_server_and_die($action, $msg, $Amanda::Script_App::ERROR);
-	} elsif (defined $errmsg) {
-	    $self->print_to_server_and_die($action, $errmsg, $Amanda::Script_App::ERROR);
-	} else {
-	    $self->print_to_server_and_die($action, "cannot create snapshot '$self->{filesystem}\@$self->{snapshot}': unknown reason", $Amanda::Script_App::ERROR);
-	}
-    }
-}
-
-sub destroy_snaphot {
-    my $self = shift;
-    my $action = shift;
-
-    my $cmd = "$self->{pfexec_cmd} $self->{zfs_path} destroy $self->{filesystem}\@$self->{snapshot}";
-    debug "running: $cmd|";
-    my($wtr, $rdr, $err, $pid);
-    my($msg, $errmsg);
-    $err = Symbol::gensym;
-    $pid = open3($wtr, $rdr, $err, $cmd);
-    close $wtr;
-    $msg = <$rdr>;
-    $errmsg = <$err>;
-    waitpid $pid, 0;
-    close $rdr;
-    close $err;
-    if( $? != 0 ) {
-	if(defined $msg && defined $errmsg) {
-	    $self->print_to_server_and_die($action, "$msg, $errmsg", $Amanda::Script_App::ERROR);
-	} elsif (defined $msg) {
-	    $self->print_to_server_and_die($action, $msg, $Amanda::Script_App::ERROR);
-	} elsif (defined $errmsg) {
-	    $self->print_to_server_and_die($action, $errmsg, $Amanda::Script_App::ERROR);
-	} else {
-	    $self->print_to_server_and_die($action, "cannot destroy snapshot '$self->{filesystem}\@$self->{snapshot}': unknown reason", $Amanda::Script_App::ERROR);
-	}
-    }
-}
-
 #define a execute_on_* function for every execute_on you want the script to do
 #something
 sub command_pre_dle_amcheck {
     my $self = shift;
 
-    $self->set_value("check");
+    $self->zfs_snapshot_set_value("check");
 
     if ($self->{error_status} == $Amanda::Script_App::GOOD) {
-	$self->print_to_server("check", "mountpoint $self->{mountpoint}", $Amanda::Script_App::GOOD);
-	$self->print_to_server("check", "dir $self->{dir}", $Amanda::Script_App::GOOD);
+	if (defined $self->{mountpoint}) {
+	    $self->print_to_server("check", "mountpoint $self->{mountpoint}", $Amanda::Script_App::GOOD);
+	    $self->print_to_server("check", "directory $self->{directory}", $Amanda::Script_App::GOOD);
+	    $self->print_to_server("check", "dir $self->{dir}", $Amanda::Script_App::GOOD);
+	}
 	$self->print_to_server("check", "snapshot $self->{snapshot}", $Amanda::Script_App::GOOD);
-	$self->print_to_server("check", "directory $self->{directory}", $Amanda::Script_App::GOOD);
-	$self->create_snapshot("check");
+	$self->zfs_create_snapshot("check");
 	print "PROPERTY directory $self->{directory}\n";
     }
 }
@@ -239,16 +107,16 @@ sub command_pre_dle_amcheck {
 sub command_post_dle_amcheck {
     my $self = shift;
 
-    $self->set_value("check");
-    $self->destroy_snaphot("check");
+    $self->zfs_snapshot_set_value("check");
+    $self->zfs_destroy_snapshot("check");
 }
 
 sub command_pre_dle_estimate {
     my $self = shift;
 
-    $self->set_value("estimate");
+    $self->zfs_snapshot_set_value("estimate");
     if ($self->{error_status} == $Amanda::Script_App::GOOD) {
-	$self->create_snapshot("estimate");
+	$self->zfs_create_snapshot("estimate");
 	print "PROPERTY directory $self->{directory}\n";
     }
 }
@@ -256,16 +124,16 @@ sub command_pre_dle_estimate {
 sub command_post_dle_estimate {
     my $self = shift;
 
-    $self->set_value("estimate");
-    $self->destroy_snaphot("estimate");
+    $self->zfs_snapshot_set_value("estimate");
+    $self->zfs_destroy_snapshot("estimate");
 }
 
 sub command_pre_dle_backup {
     my $self = shift;
 
-    $self->set_value("backup");
+    $self->zfs_snapshot_set_value("backup");
     if ($self->{error_status} == $Amanda::Script_App::GOOD) {
-	$self->create_snapshot("backup");
+	$self->zfs_create_snapshot("backup");
 	print "PROPERTY directory $self->{directory}\n";
     }
 }
@@ -273,8 +141,8 @@ sub command_pre_dle_backup {
 sub command_post_dle_backup {
     my $self = shift;
 
-    $self->set_value("backup");
-    $self->destroy_snaphot("backup");
+    $self->zfs_snapshot_set_value("backup");
+    $self->zfs_destroy_snapshot("backup");
 }
 
 package main;

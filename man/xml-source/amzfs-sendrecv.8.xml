@@ -7,35 +7,29 @@
   %global_entities;
 ]>
 
-<refentry id='amzfs-snapshot.8'>
+<refentry id='amzfs-sendrecv.8'>
 
 <refmeta>
-<refentrytitle>amzfs-snapshot</refentrytitle>
+<refentrytitle>amzfs-sendrecv</refentrytitle>
 <manvolnum>8</manvolnum>
 </refmeta>
 <refnamediv>
-<refname>amzfs-snapshot</refname>
-<refpurpose>Amanda script to create zfs snapshot</refpurpose>
+<refname>amzfs-sendrecv</refname>
+<refpurpose>Amanda script to create zfs sendrecv</refpurpose>
 </refnamediv>
 <!-- body begins here -->
 
 <refsect1><title>DESCRIPTION</title>
 
-<para>amzfs-snapshot is an &A; script implementing the Script API.  It should
-not be run by users directly.  It create a zfs snapshot of the filesystem
-where the path specified is mounted.</para>
+<para>amzfs-sendrecv is an &A; application implementing the Application API.
+It should not be run by users directly.
+It create a zfs snapshot of the filesystem and backup the snapshot with 'zfs send'.
+Only full backup is done, no incremental backup.
+Only the restoration of the complete backup is allowed, it is impossible to restore a single file.</para>
 
-<para>PRE-DLE-* create a snapshot and the POST_DLE_* destroy the snapshot,
-*-DLE-AMCHECK, *-DLE-ESTIMATE and *-DLE-BACKUP must be set to be executed on the client:
+<para>The application is run as the amanda user, it must have the priviledge to create and destroy snapshot:
 <programlisting>
-    execute-on  pre-dle-amcheck, post-dle-amcheck, pre-dle-estimate, post-dle-estimate, pre-dle-backup, post-dle-backup
-    execute-where client
-</programlisting></para>
-<para>The PRE_DLE_* script output a DIRECTORY property telling where the directory is located in the snapshot. The application must be able to use the DIRECTORY property, amgtar can do it.</para>
-
-<para>The script is run as the amanda user, it must have the priviledge to create and destroy snapshot:
-<programlisting>
-    zfs allow -ldu AMANDA_USER mount,snapshot,destroy FILESYSTEM
+    zfs allow -ldu AMANDA_USER mount,snapshot,destroy,send,receive FILESYSTEM
 </programlisting></para>
 
 <para>Some system doesn't have "zfs allow", but you can give the Amanda backup user the rights to manipulate ZFS filesystems by using the following command:
@@ -49,20 +43,20 @@ This will require that your run zfs under pfexec, set the PFEXEC property to YES
 Desciption              Example
 ----------              -------
 Mountpoint              /data
-Arbitrary mounted dir   /data/interesting_dir
 ZFS pool name           datapool
 ZFS filesystem          datapool/database
 ZFS logical volume      datapool/dbvol
 </programlisting></para>
-<para>The filesystem must be mounted.</para>
+
+<para>The filesystem doesn't need to be mounted.</para>
 
 </refsect1>
 
 <refsect1><title>PROPERTIES</title>
 
-<para>This section lists the properties that control amzfs-snapshot's functionality.
-See <citerefentry><refentrytitle>amanda-scripts</refentrytitle><manvolnum>7</manvolnum></citerefentry>
-for information on the Script API, script configuration.</para>
+<para>This section lists the properties that control amzfs-sendrecv's functionality.
+See <citerefentry><refentrytitle>amanda-applications</refentrytitle><manvolnum>7</manvolnum></citerefentry>
+for information on the Application API, application configuration.</para>
 
 <!-- PLEASE KEEP THIS LIST IN ALPHABETICAL ORDER -->
 <variablelist>
@@ -88,37 +82,35 @@ If "NO" (the default), pfexec is not used, if set to "YES" then pfexec is used.
 
 <refsect1><title>EXAMPLE</title>
 
-In this example, a dumptype is defined to use amzfs-snapshot script to create a snapshot and use amgtar to backup the snapshot.
+In this example, a dumptype is defined to use amzfs-sendrecv application to backup a zfs filesystem.
 
 <programlisting>
- define script-tool amzfs_snapshot {
-   comment "backup of zfs snapshot"
-   plugin  "amzfs-snapshot"
-   execute-on  pre-dle-amcheck, post-dle-amcheck, pre-dle-estimate, post-dle-estimate, pre-dle-backup, post-dle-backup
-   execute-where client
-   #property "DF-PATH" "/usr/sbin/df"
+ define application-tool amzfs_sendrecv {
+   comment "amzfs-sendrecv"
+   plugin "amzfs-sendrecv"
+   #property "DF-PATH"  "/usr/sbin/df"
    #property "ZFS-PATH" "/usr/sbin/zfs"
    #property "PFEXEC-PATH" "/usr/sbin/pfexec"
    #property "PFEXEC" "NO"
  }
 
- define dumptype user-zfs-amgtar {
-   dt_amgtar
-   script "amzfs_snapshot"
+ define dumptype user-zfs-sendrecv {
+   program "APPLICATAION"
+   application "amzfs_sendrecv"
  }
 </programlisting>
 </refsect1>
 
 <refsect1><title>AUTHORS</title>
 
-<para>Jean-Louis Martineau &email.jlm; and Dustin Mitchell &email.dustin;: Original text</para>
+<para>Jean-Louis Martineau &email.jlm;: Original text</para>
 </refsect1>
 
 <refsect1><title>SEE ALSO</title>
 <para>
 <citerefentry><refentrytitle>amanda.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>amanda-client.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>amanda-scripts</refentrytitle><manvolnum>7</manvolnum></citerefentry>
+<citerefentry><refentrytitle>amanda-applications</refentrytitle><manvolnum>7</manvolnum></citerefentry>
 </para>
 
 </refsect1>
