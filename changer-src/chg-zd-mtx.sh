@@ -411,7 +411,7 @@ Run() {
 
 IsNumeric() {
 	test -z "$1" && return 1
-	x="`expr "$1" : '\([-0-9][0-9]*\)' 2>/dev/null`"
+	x="`expr -- "$1" : "\([-0-9][0-9]*\)" 2>/dev/null`"
 	return `expr X"$1" != X"$x"`
 }
 
@@ -809,7 +809,7 @@ initial_poll_delay=${initial_poll_delay:-'0'}		# default: zero zeconds
 max_drive_wait=${max_drive_wait:-'120'}			# default: two minutes
 
 # check MT and MTX for sanity
-if test "${MTX:0:1}" = "/"; then
+if test "${MTX%${MTX#?}}" = "/"; then
     if ! test -f "${MTX}"; then
 	Exit 2 \
 	    `_ '<none>'` \

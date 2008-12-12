@@ -377,6 +377,12 @@ start_backup(
 #endif
 	dumpkeys = vstralloc(level_str,
 			     !dle->record ? "" : "u",
+#ifdef __FreeBSD__
+			     "b",
+#if defined(__FreeBSD_version) && (__FreeBSD_version >= 500043)
+			     "L",
+#endif
+#endif
 			     "s",
 			     PARAM_HONOR_NODUMP,
 			     "f",
@@ -398,6 +404,9 @@ start_backup(
 			    cmdX, config,
 			    "dump",
 			    dumpkeys,
+#ifdef __FreeBSD__
+			    "64",
+#endif
 			    "1048576",
 #ifdef HAVE_HONOR_NODUMP
 			    "0",
