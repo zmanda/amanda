@@ -1,3 +1,7 @@
+2008-12-12  Jun Kuriyama <kuriyama@freebsd.org>, Göran Löwkran
+	* changer-src/chg-zd-mtx.sh: fix bashisms
+	* client-src/sendbackup-dump.c: use -L on systems that support it
+
 2008-12-11 Dan Locks <dwlocks@zmanda.com>
 	* packaging/rpm/amanda.spec: add detection for SLES11 (Beta)
 
