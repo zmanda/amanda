@@ -1,4 +1,21 @@
 2008-12-12  Jean-Louis Martineau <martineau@zmanda.com>
+	* NEWS, ReleaseNotes: Add amzfs-sendrecv.
+	* client-src/sendbackup.c: Fix indexd test.
+	* man/Makefile.am: Add amzfs-sendrecv.8.
+	* man/xml-source/amzfs-snapshot.8.xml: Add DLE format example.
+	* man/xml-source/amanda-applications.7.xml: Add amzfs-sendrecv.8.
+	* man/xml-source/amanda.8.xml: Add amzfs-sendrecv.8.
+	* man/xml-source/amzfs-sendrecv.8.xml: New man page.
+	* application-src/amzfs-sendrecv.pl: New application.
+	* application-src/amzfs-snapshot.pl: Fix to use
+	                                     Amanda::Application::Zfs
+	* application-src/Makefile.am: Add amzfs-sendrecv.
+	* perl/Amanda/Script_App.pm: Exit instead of die.
+	* perl/Amanda/Application/Zfs.pm: New perl module for zfs.
+	* perl/Makefile.am: Add Amanda/Application and
+			    Amanda/Application/Zfs.pm
+
+2008-12-12  Jean-Louis Martineau <martineau@zmanda.com>
 	* recover-src/extract_list.c: Wait to read at least one byte from the
 				      data stream before forking the child.
 

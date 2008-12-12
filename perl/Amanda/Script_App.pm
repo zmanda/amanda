@@ -132,7 +132,7 @@ sub print_to_server_and_die {
     if ($self->can("check_for_backup_failure")) {
 	$self->check_for_backup_failure($action);
     }
-    die();
+    exit 1;
 }
 
 

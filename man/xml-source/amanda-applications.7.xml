@@ -46,6 +46,12 @@
 
 </refsect2>
 
+<refsect2><title>amzfs-sendrecv</title>
+
+<para>The amzfs-sendrecv application use zfs to create a snapshot and use 'zfs send' to generate the backup.</para>
+
+</refsect2>
+
 </refsect1>
 
 <refsect1><title>AUTHORS</title>

@@ -1,6 +1,6 @@
 		Release Notes for amanda-2.6.1
 
-amgtar, amstar, amsamb
+amgtar, amstar, amsamba, amzfs-sendrecv
   Three new programs implementing application-api.
   Swithching from the program "GNUTAR" to the application "amgtar" have some
   advantage:
@@ -12,7 +12,7 @@ amgtar, amstar, amsamb
    - You can configure error message from gtar you don't want to see in the
      report.
 
-zfs-snapshot, script-email
+amzfs-snapshot, script-email
   Two new scripts implementing script-api.
   The 'zfs-snapshot' script must be used only with the 'amgtar' application.
 

@@ -637,7 +637,7 @@ main(
 		error(_("Can't dup2: %s"),strerror(errno));
 		/*NOTREACHED*/
 	    }
-	    if(indexfd != 0) {
+	    if(indexfd > 0) {
 		if(dup2(indexfd, 4) == -1) {
 		    error(_("Can't dup2: %s"),strerror(errno));
 		    /*NOTREACHED*/
