@@ -1,4 +1,8 @@
 2008-12-12  Jean-Louis Martineau <martineau@zmanda.com>
+	* man/xml-source/amanda.conf.5.xml: Fix use of <programlisting>, it must
+					    always be at the beginning of the line.
+
+2008-12-12  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/amgtar.c: Fix coredump if GNUTAR is not set.
 
 2008-12-12  Dustin J. Mitchell <dustin@zmanda.com>

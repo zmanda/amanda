@@ -977,7 +977,7 @@ These three parts specify:</para>
   <listitem>
       <para>the name of the column, which may be:</para>
 
-	<programlisting>
+<programlisting>
 	Compress (compression ratio)
 	Disk (client disk name)
 	DumpRate (dump rate in KBytes/sec)
@@ -988,7 +988,7 @@ These three parts specify:</para>
 	OutKB (output image size in KBytes)
 	TapeRate (tape writing rate in KBytes/sec)
 	TapeTime (total tape time in hours:minutes)
-	</programlisting>
+</programlisting>
 
   </listitem>
 
@@ -2461,7 +2461,7 @@ A comment string describing this script.</para>
       </varlistentry>
     </variablelist>
     <para>If you recover level 0 and 2 of the disk /usr with amrecover, it will execute:</para>
-    <programlisting>
+<programlisting>
 script --pre-recover
 script --pre-level-recover --level 0
 #recovering level 0
@@ -2471,7 +2471,7 @@ script --pre-level-recover --level 2
 #recovering level 2
 script --post-level-recover --level 2
 script --post-recover
-    </programlisting>
+</programlisting>
   </listitem>
   </varlistentry>
   <varlistentry>
