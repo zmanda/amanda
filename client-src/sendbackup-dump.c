@@ -375,14 +375,20 @@ start_backup(
 #else
 #  define PARAM_HONOR_NODUMP ""
 #endif
+
+#ifdef __FreeBSD__
+# if defined(__FreeBSD_version) && (__FreeBSD_version >= 500043)
+#  define FREEBSD_EXTRA_KEYS "bL"
+# else
+#  define FREEBSD_EXTRA_KEYS "b"
+# endif
+#else
+# define FREEBSD_EXTRA_KEYS ""
+#endif
+
 	dumpkeys = vstralloc(level_str,
 			     !dle->record ? "" : "u",
-#ifdef __FreeBSD__
-			     "b",
-#if defined(__FreeBSD_version) && (__FreeBSD_version >= 500043)
-			     "L",
-#endif
-#endif
+			     FREEBSD_EXTRA_KEYS,
 			     "s",
 			     PARAM_HONOR_NODUMP,
 			     "f",
