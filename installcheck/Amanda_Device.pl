@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 320;
+use Test::More tests => 336;
 use File::Path qw( mkpath rmtree );
 use Sys::Hostname;
 use Carp;
@@ -488,7 +488,7 @@ my $run_devpay_tests = defined $DEVPAY_SECRET_KEY &&
 my $dev_base_name;
 my $hostname  = hostname();
 
-my $s3_make_device_count = 7;
+my $s3_make_device_count = 8;
 sub s3_make_device($) {
     my $dev_name = shift @_;
     $dev = Amanda::Device->new($dev_name);
@@ -538,7 +538,7 @@ sub s3_make_device($) {
     return $dev;
 }
 
-my $s3_run_main_tests_count = 16
+my $s3_run_main_tests_count = 20
 	+ 4 * $write_file_count
 	+ 1 * $verify_file_count
 	+ 3 * $s3_make_device_count;
@@ -628,6 +628,18 @@ sub s3_run_main_tests($$) {
     $status = $dev->status();
     ok(($status == $DEVICE_STATUS_SUCCESS) || (($status & $DEVICE_STATUS_VOLUME_UNLABELED) != 0),
        "status is either OK or possibly unlabeled")
+        or diag($dev->error_or_status());
+
+    # test again with invalid ca_info
+    $dev = s3_make_device($dev_name);
+    ok($dev->property_set('SSL_CA_INFO', '/dev/null'),
+       "set invalid SSL/TLS CA certificate")
+        or diag($dev->error_or_status());
+
+    $dev->read_label();
+    $status = $dev->status();
+    ok(($status != $DEVICE_STATUS_SUCCESS) && (($status & $DEVICE_STATUS_VOLUME_UNLABELED) == 0),
+       "status is not OK or just unlabeled")
         or diag($dev->error_or_status());
 
     # bucket name incompatible with location constraint

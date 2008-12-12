@@ -130,6 +130,8 @@ struct S3Handle {
 
     char *bucket_location;
 
+    char *ca_info;
+
     CURL *curl;
 
     gboolean verbose;
@@ -1046,6 +1048,11 @@ perform_request(S3Handle *hdl,
         headers = authenticate_request(hdl, verb, bucket, key, subresource,
             md5_hash_b64, hdl->bucket_location? TRUE : FALSE);
 
+        if (hdl->use_ssl && hdl->ca_info) {
+            if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_CAINFO, hdl->ca_info)))
+                goto curl_error;
+        }
+
         if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_VERBOSE, hdl->verbose)))
             goto curl_error;
         if (hdl->verbose) {
@@ -1305,7 +1312,8 @@ S3Handle *
 s3_open(const char *access_key,
         const char *secret_key,
         const char *user_token,
-        const char *bucket_location
+        const char *bucket_location,
+        const char *ca_info
         ) {
     S3Handle *hdl;
 
@@ -1324,6 +1332,9 @@ s3_open(const char *access_key,
 
     /* NULL is okay */
     hdl->bucket_location = g_strdup(bucket_location);
+
+    /* NULL is okay */
+    hdl->ca_info = g_strdup(ca_info);
 
     hdl->curl = curl_easy_init();
     if (!hdl->curl) goto error;

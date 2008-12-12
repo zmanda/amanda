@@ -217,11 +217,13 @@ s3_init(void);
  * @param secret_key: the secret key for Amazon Web Services
  * @param user_token: the user token for Amazon DevPay
  * @param bucket_location: the location constraint for buckets
+ * @param ca_info: the path to pass to libcurl as the certificate authority.
+ *                 see curl_easy_setopt() CURLOPT_CAINFO for more
  * @returns: the new S3Handle
  */
 S3Handle *
 s3_open(const char * access_key, const char *secret_key, const char * user_token,
-        const char * bucket_location);
+        const char * bucket_location, const char * ca_info);
 
 /* Deallocate an S3Handle
  *

@@ -378,6 +378,17 @@ See Amazon's documentation for details and latest information
  (read-write) Whether or not to use SSL/TLS to secure communications with Amazon S3.
 </listitem></varlistentry>
  <!-- ==== -->
+ <varlistentry><term>SSL_CA_INFO</term><listitem>
+ (read-write) Path to CA certificate to use to verify the identity of the S3 server.
+Only applicable when SSL/TLS is in use. The certificate should be in PEM format
+if OpenSSL or GnuTLS is being used with libcurl. Multiple certificates can be
+bundled together simply by concatenating them.
+If NSS is being used, then it is the directory that the database resides in.
+The value is passed to
+<citerefentry><refentrytitle>curl_easy_setopt</refentrytitle><manvolnum>3</manvolnum></citerefentry>
+as CURLOPT_CAINFO.
+</listitem></varlistentry>
+ <!-- ==== -->
  <varlistentry><term>S3_USER_TOKEN</term><listitem>
  (read-write) This property specifies the user token for Amanda Enterprise Edition customers.
 </listitem></varlistentry>
