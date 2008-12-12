@@ -1,3 +1,6 @@
+2008-12-12  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amgtar.c: Fix coredump if GNUTAR is not set.
+
 2008-12-12  Dustin J. Mitchell <dustin@zmanda.com>
 	* client-src/sendbackup-dump.c: fix previous commit to not use
 	  precompiler directives in the middle of a macro invocation
