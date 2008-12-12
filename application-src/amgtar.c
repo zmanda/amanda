@@ -495,8 +495,16 @@ main(
     if (strlen(gnutar_listdir) == 0)
 	gnutar_listdir = NULL;
 
-    dbprintf("GNUTAR-PATH %s\n", gnutar_path);
-    dbprintf("GNUTAR-LISTDIR %s\n", gnutar_listdir);
+    if (gnutar_path) {
+	dbprintf("GNUTAR-PATH %s\n", gnutar_path);
+    } else {
+	dbprintf("GNUTAR-PATH is not set\n");
+    }
+    if (gnutar_listdir) {
+	    dbprintf("GNUTAR-LISTDIR %s\n", gnutar_listdir);
+    } else {
+	dbprintf("GNUTAR-LISTDIR is not set\n");
+    }
     if (gnutar_directory) {
 	dbprintf("DIRECTORY %s\n", gnutar_directory);
     }

@@ -1,3 +1,6 @@
+2008-12-12  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amgtar.c: Fix coredump if GNUTAR is not set.
+
 2008-12-12  John Hein <jhein@timing.com>
 	* server-src/amdump.sh: fix Open3 invocation to work on
 	  FreeBSD-4.x
