@@ -84,7 +84,6 @@ char *amidxtaped_client_get_security_conf(char *, void *);
 static char *dump_device_name = NULL;
 static char *errstr;
 static char *amidxtaped_line = NULL;
-
 extern char *localhost;
 
 /* global pid storage for interrupt handler */
@@ -2047,6 +2046,13 @@ extract_files_child(
     /*NOT REACHED */
 }
 
+typedef struct ctl_data_s {
+  int           header_done;
+  int           child_pipe[2];
+  int           pid;
+  EXTRACT_LIST *elist;
+} ctl_data_t;
+
 /*
  * Interpose something between the process writing out the dump (writing it to
  * some extraction program, really) and the socket from which we're reading, so
@@ -2056,35 +2062,17 @@ int
 writer_intermediary(
     EXTRACT_LIST *	elist)
 {
-    int child_pipe[2];
-    pid_t pid;
-    amwait_t extractor_status;
+    ctl_data_t ctl_data;
+    amwait_t   extractor_status;
 
-    if(pipe(child_pipe) == -1) {
-	error(_("extract_list - error setting up pipe to extractor: %s\n"),
-	      strerror(errno));
-	/*NOTREACHED*/
-    }
-
-    /* okay, ready to extract. fork a child to do the actual work */
-    if ((pid = fork()) == 0) {
-	/* this is the child process */
-	/* never gets out of this clause */
-	aclose(child_pipe[1]);
-        extract_files_child(child_pipe[0], elist);
-	/*NOTREACHED*/
-    }
-
-    /* This is the parent */
-    if (pid == -1) {
-	g_printf(_("writer_intermediary - error forking child"));
-	return -1;
-    }
-
-    aclose(child_pipe[0]);
+    ctl_data.header_done   = 0;
+    ctl_data.child_pipe[0] = -1;
+    ctl_data.child_pipe[1] = -1;
+    ctl_data.pid           = -1;
+    ctl_data.elist         = elist;
 
     security_stream_read(amidxtaped_streams[DATAFD].fd,
-			 read_amidxtaped_data, &(child_pipe[1]));
+			 read_amidxtaped_data, &ctl_data);
 
     while(get_amidxtaped_line() >= 0) {
 	char desired_tape[MAX_TAPE_LABEL_BUF];
@@ -2121,14 +2109,21 @@ writer_intermediary(
 
     /* CTL might be close before DATA */
     event_loop(0);
-    aclose(child_pipe[1]);
+    if (ctl_data.child_pipe[1] != -1)
+	aclose(ctl_data.child_pipe[1]);
 
-    waitpid(pid, &extractor_status, 0);
-    if(WEXITSTATUS(extractor_status) != 0){
-	int ret = WEXITSTATUS(extractor_status);
-        if(ret == 255) ret = -1;
-	g_printf(_("Extractor child exited with status %d\n"), ret);
-	return -1;
+    if (ctl_data.header_done == 0) {
+	g_printf(_("Got no header and data from server, check in amidxtaped.*.debug and amandad.*.debug files on server\n"));
+    }
+
+    if (ctl_data.pid != -1) {
+	waitpid(ctl_data.pid, &extractor_status, 0);
+	if(WEXITSTATUS(extractor_status) != 0){
+	    int ret = WEXITSTATUS(extractor_status);
+            if(ret == 255) ret = -1;
+	    g_printf(_("Extractor child exited with status %d\n"), ret);
+	    return -1;
+	}
     }
     return(0);
 }
@@ -2627,11 +2622,9 @@ read_amidxtaped_data(
     void *	buf,
     ssize_t	size)
 {
-    int fd;
-
+    ctl_data_t *ctl_data = (ctl_data_t *)cookie;
     assert(cookie != NULL);
 
-    fd = *(int *)cookie;
     if (size < 0) {
 	errstr = newstralloc2(errstr, _("amidxtaped read: "),
 		 security_stream_geterror(amidxtaped_streams[DATAFD].fd));
@@ -2652,10 +2645,34 @@ read_amidxtaped_data(
 
     assert(buf != NULL);
 
+    if (ctl_data->header_done == 0) {
+	ctl_data->header_done = 1;
+	if(pipe(ctl_data->child_pipe) == -1) {
+	    error(_("extract_list - error setting up pipe to extractor: %s\n"),
+		  strerror(errno));
+	    /*NOTREACHED*/
+	}
+
+	/* okay, ready to extract. fork a child to do the actual work */
+	if ((ctl_data->pid = fork()) == 0) {
+	    /* this is the child process */
+	    /* never gets out of this clause */
+	    aclose(ctl_data->child_pipe[1]);
+	    extract_files_child(ctl_data->child_pipe[0], ctl_data->elist);
+	    /*NOTREACHED*/
+	}
+	
+	if (ctl_data->pid == -1) {
+	    errstr = newstralloc(errstr, _("writer_intermediary - error forking child"));
+	    g_printf(_("writer_intermediary - error forking child"));
+	    return;
+	}
+	aclose(ctl_data->child_pipe[0]);
+    }
     /*
      * We ignore errors while writing to the index file.
      */
-    (void)full_write(fd, buf, (size_t)size);
+    (void)full_write(ctl_data->child_pipe[1], buf, (size_t)size);
     security_stream_read(amidxtaped_streams[DATAFD].fd, read_amidxtaped_data, cookie);
 }
 
