@@ -151,7 +151,7 @@ use IPC::Open3;
 use POSIX qw(WIFEXITED WEXITSTATUS);
 my ($planner, $driver, $conf, $date_starttime, @args) = @ARGV;
 
-open3(STDIN, \*PIPE, ">&STDERR", $planner, $conf, '--starttime', $date_starttime, @args)
+open3("</dev/null", \*PIPE, ">&STDERR", $planner, $conf, '--starttime', $date_starttime, @args)
     or die "Could not exec $planner: $!";
 open3("<&PIPE", ">&STDOUT", ">&STDERR", $driver, $conf, @args)
     or die "Could not exec $driver: $!";
