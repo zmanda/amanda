@@ -12,11 +12,18 @@
 <refmeta>
 <refentrytitle>amstar</refentrytitle>
 <manvolnum>8</manvolnum>
+&rmi.source;
+&rmi.version;
+&rmi.manual.8;
 </refmeta>
 <refnamediv>
 <refname>amstar</refname>
 <refpurpose>Amanda Application to interface with star</refpurpose>
 </refnamediv>
+<refentryinfo>
+&author.jlm;
+&author.dustin;
+</refentryinfo>
 <!-- body begins here -->
 
 <refsect1><title>DESCRIPTION</title>
@@ -56,11 +63,6 @@ The directory where star stores the database it uses to generate incremental dum
 </listitem></varlistentry>
 </variablelist>
 
-</refsect1>
-
-<refsect1><title>AUTHORS</title>
-
-<para>Jean-Louis Martineau &email.jlm; and Dustin Mitchell &email.dustin;: Original text</para>
 </refsect1>
 
 <refsect1><title>SEE ALSO</title>

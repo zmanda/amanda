@@ -12,11 +12,17 @@
 <refmeta>
   <refentrytitle>amcrypt-ossl-asym</refentrytitle>
   <manvolnum>8</manvolnum>
+&rmi.source;
+&rmi.version;
+&rmi.manual.8;
 </refmeta>
 <refnamediv>
   <refname>amcrypt-ossl-asym</refname>
   <refpurpose>crypt program for &A; asymmetric data encryption using OpenSSL</refpurpose>
 </refnamediv>
+<refentryinfo>
+&author.ktill;
+</refentryinfo>
 <!-- body begins here -->
 <refsynopsisdiv>
   <cmdsynopsis>
@@ -127,6 +133,7 @@ Writing RSA key
     </varlistentry>
   </variablelist>
 </refsect1>
+
 <refsect1>
   <title>SEE ALSO</title>
   <para>

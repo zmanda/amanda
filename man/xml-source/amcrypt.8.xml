@@ -11,11 +11,17 @@
 <refmeta>
 <refentrytitle>amcrypt</refentrytitle>
 <manvolnum>8</manvolnum>
+&rmi.source;
+&rmi.version;
+&rmi.manual.8;
 </refmeta>
 <refnamediv>
 <refname>amcrypt</refname>
 <refpurpose>reference crypt program for &A; symmetric data encryption</refpurpose>
 </refnamediv>
+<refentryinfo>
+&author.ktill;
+</refentryinfo>
 <!-- body begins here -->
 <refsynopsisdiv>
 <cmdsynopsis>

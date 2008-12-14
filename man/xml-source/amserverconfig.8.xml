@@ -11,11 +11,17 @@
 <refmeta>
 <refentrytitle>amserverconfig</refentrytitle>
 <manvolnum>8</manvolnum>
+&rmi.source;
+&rmi.version;
+&rmi.manual.8;
 </refmeta>
 <refnamediv>
 <refname>amserverconfig</refname>
 <refpurpose>program to setup initial &A; configuration</refpurpose>
 </refnamediv>
+<refentryinfo>
+&author.ktill;
+</refentryinfo>
 <!-- body begins here -->
 <refsynopsisdiv>
 <cmdsynopsis>
@@ -232,13 +238,6 @@ is supported.</para>
 <refsect1><title>RETURN VALUE</title>
 On success, zero is returned.  On error, 1 is returned.
 </refsect1>
-
-<refsect1><title>AUTHOR</title>
-  <para>
-    The tool and its documentation was written by Zmanda, Inc (http://www.zmanda.com/). 
-  </para>
-</refsect1>
-
 
 <refsect1><title>SEE ALSO</title>
 <para><citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>,

@@ -12,11 +12,19 @@
 <refmeta>
 <refentrytitle>tapelist</refentrytitle>
 <manvolnum>5</manvolnum>
+&rmi.source;
+&rmi.version;
+&rmi.manual.5;
 </refmeta>
 <refnamediv>
 <refname>tapelist</refname>
 <refpurpose>The list of &A; volumes in use</refpurpose>
 </refnamediv>
+<refentryinfo>
+&author.jds;
+&author.sgw.xml;
+&author.dustin;
+</refentryinfo>
 <!-- body begins here -->
 
 <refsect1><title>DESCRIPTION</title>
@@ -57,12 +65,6 @@ rotation (see the
 option) than there are runs in the backup cycle (see the
 <emphasis remap='B'>dumpcycle</emphasis>
 option) to prevent overwriting a backup image that would be needed to do a full recovery.</para>
-</refsect1>
-
-<refsect1><title>AUTHOR</title>
-<para>James da Silva, &email.jds; : Original text</para>
-<para>&maintainer.sgw;: XML-conversion, major update</para>
-<para>&email.dustin;: Separation into distinct manpage</para>
 </refsect1>
 
 </refentry>

@@ -13,11 +13,18 @@
 <refmeta>
 <refentrytitle>amtape</refentrytitle>
 <manvolnum>8</manvolnum>
+&rmi.source;
+&rmi.version;
+&rmi.manual.8;
 </refmeta>
 <refnamediv>
 <refname>amtape</refname>
 <refpurpose>user interface to &A; tape changer controls</refpurpose>
 </refnamediv>
+<refentryinfo>
+&author.jds;
+&author.sgw.xml;
+</refentryinfo>
 <!-- body begins here -->
 <refsynopsisdiv>
 <cmdsynopsis>
@@ -196,11 +203,6 @@ does an unnecessary mount.</para>
 <para>Note: most changers optimize the
 <emphasis remap='B'>slot</emphasis>
 commands to not eject the loaded tape if it is the one being requested.</para>
-</refsect1>
-
-<refsect1><title>AUTHOR</title>
-<para>James da Silva, &email.jds; : Original text</para>
-<para>&maintainer.sgw;: XML-conversion</para>
 </refsect1>
 
 <refsect1><title>SEE ALSO</title>

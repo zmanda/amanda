@@ -12,11 +12,17 @@
 <refmeta>
 <refentrytitle>amsamba</refentrytitle>
 <manvolnum>8</manvolnum>
+&rmi.source;
+&rmi.version;
+&rmi.manual.8;
 </refmeta>
 <refnamediv>
 <refname>amsamba</refname>
 <refpurpose>Amanda Application to interface with smbclient</refpurpose>
 </refnamediv>
+<refentryinfo>
+&author.jlm;
+</refentryinfo>
 <!-- body begins here -->
 
 <refsect1><title>DESCRIPTION</title>
@@ -77,11 +83,6 @@ Domain is optional. Example:
 </listitem></varlistentry>
 </variablelist>
 
-</refsect1>
-
-<refsect1><title>AUTHORS</title>
-
-<para>Jean-Louis Martineau &email.jlm; Original text</para>
 </refsect1>
 
 <refsect1><title>SEE ALSO</title>

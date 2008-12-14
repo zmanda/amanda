@@ -13,11 +13,18 @@
 <refmeta>
 <refentrytitle>amcheckdb</refentrytitle>
 <manvolnum>8</manvolnum>
+&rmi.source;
+&rmi.version;
+&rmi.manual.8;
 </refmeta>
 <refnamediv>
 <refname>amcheckdb</refname>
 <refpurpose>check &A; database for tape consistency</refpurpose>
 </refnamediv>
+<refentryinfo>
+&author.atf3r;
+&author.sgw.xml;
+</refentryinfo>
 <!-- body begins here -->
 <refsynopsisdiv>
 <cmdsynopsis>
@@ -54,11 +61,6 @@ is still listed in the database but is no longer listed in the &tapelist;:</para
 Tape DMP014 missing in /usr/local/etc/amanda//daily/tapelist
 Ready.
 </programlisting>
-</refsect1>
-
-<refsect1><title>AUTHOR</title>
-<para>Adrian T. Filipi-Martin &lt;atf3r@cs.virginia.edu&gt;: Original text</para>
-<para>&maintainer.sgw;: XML-conversion</para>
 </refsect1>
 
 <refsect1><title>SEE ALSO</title>

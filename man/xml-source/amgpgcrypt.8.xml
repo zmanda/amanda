@@ -11,11 +11,17 @@
 <refmeta>
 <refentrytitle>amgpgcrypt</refentrytitle>
 <manvolnum>8</manvolnum>
+&rmi.source;
+&rmi.version;
+&rmi.manual.8;
 </refmeta>
 <refnamediv>
 <refname>amgpgcrypt</refname>
 <refpurpose>reference crypt program for &A; public-key data encryption</refpurpose>
 </refnamediv>
+<refentryinfo>
+&author.ktill;
+</refentryinfo>
 <!-- body begins here -->
 <refsynopsisdiv>
 <cmdsynopsis>
@@ -150,12 +156,6 @@ and protect it properly during other time.</para>
 <refsect1><title>BUGS</title>
 <para>&A; has problem with gpg mdc(modification detection code) in the binary
 mode. &amgpgcrypt; calls gpg with mdc disabled</para>
-</refsect1>
-
-<refsect1><title>AUTHOR</title>
-  <para>
-    The tool and its documentation was written by Zmanda, Inc (http://www.zmanda.com/). 
-  </para>
 </refsect1>
 
 <refsect1><title>SEE ALSO</title>

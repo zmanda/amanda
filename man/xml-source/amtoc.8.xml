@@ -12,11 +12,18 @@
 <refmeta>
 <refentrytitle>amtoc</refentrytitle>
 <manvolnum>8</manvolnum>
+&rmi.source;
+&rmi.version;
+&rmi.manual.8;
 </refmeta>
 <refnamediv>
 <refname>amtoc</refname>
 <refpurpose>generate TOC (Table Of Contents) for an &A; run</refpurpose>
 </refnamediv>
+<refentryinfo>
+&author.nm;
+&author.sgw.xml;
+</refentryinfo>
 <!-- body begins here -->
 <refsynopsisdiv>
 <cmdsynopsis>
@@ -160,9 +167,5 @@ perl,
 </para>
 </refsect1>
 
-<refsect1><title>AUTHOR</title>
-<para>Nicolas Mayencourt <email>Nicolas.Mayencourt@cui.unige.ch</email>, University of Geneva/Switzerland : Original text</para>
-<para>&maintainer.sgw;: XML-conversion</para>
-</refsect1>
 </refentry>
 

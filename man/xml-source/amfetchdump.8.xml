@@ -12,11 +12,18 @@
 <refmeta>
 <refentrytitle>amfetchdump</refentrytitle>
 <manvolnum>8</manvolnum>
+&rmi.source;
+&rmi.version;
+&rmi.manual.8;
 </refmeta>
 <refnamediv>
 <refname>amfetchdump</refname>
 <refpurpose>extract backup images from multiple &A; tapes.</refpurpose>
 </refnamediv>
+<refentryinfo>
+&author.jstange;
+&author.ian;
+</refentryinfo>
 <!-- body begins here -->
 <refsynopsisdiv>
 <cmdsynopsis>
@@ -201,11 +208,6 @@ restores, look to
 or
 <citerefentry><refentrytitle>dd</refentrytitle><manvolnum>8</manvolnum></citerefentry>
 instead.</para>
-</refsect1>
-
-<refsect1><title>AUTHOR</title>
-<para>John Stange, &email.jstange;, National Academies Press</para>
-<para>Ian Turner, &email.itt;: XML-conversion</para>
 </refsect1>
 
 <refsect1><title>SEE ALSO</title>

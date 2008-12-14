@@ -13,11 +13,17 @@
 <refmeta>
 <refentrytitle>amgetconf</refentrytitle>
 <manvolnum>8</manvolnum>
+&rmi.source;
+&rmi.version;
+&rmi.manual.8;
 </refmeta>
 <refnamediv>
 <refname>amgetconf</refname>
 <refpurpose>look up configuration parameters and manipulate debug logs</refpurpose>
 </refnamediv>
+<refentryinfo>
+&author.jlm;
+</refentryinfo>
 <!-- body begins here -->
 <refsynopsisdiv>
 <cmdsynopsis>

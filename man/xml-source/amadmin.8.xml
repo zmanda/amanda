@@ -10,14 +10,22 @@
 <!-- lifted from troff+man by doclifter -->
 <refentry id='amadmin.8'>
 
+
 <refmeta>
 <refentrytitle>amadmin</refentrytitle>
 <manvolnum>8</manvolnum>
+&rmi.source;
+&rmi.version;
+&rmi.manual.8;
 </refmeta>
 <refnamediv>
 <refname>amadmin</refname>
 <refpurpose>administrative interface to control &A; backups</refpurpose>
 </refnamediv>
+<refentryinfo>
+&author.jds;
+&author.sgw.xml;
+</refentryinfo>
 <!-- body begins here -->
 <refsynopsisdiv>
 <cmdsynopsis>
@@ -426,11 +434,6 @@ TOTAL      241  12412187   7316312   731631  (estimated 8 runs per dumpcycle)
 
 <refsect1><title>FILES</title>
 <para>/usr/local/etc/amanda/<emphasis remap='I'>config</emphasis>/amanda.conf</para>
-</refsect1>
-
-<refsect1><title>AUTHOR</title>
-<para>James da Silva, &email.jds; : Original text</para>
-<para>&maintainer.sgw;: XML-conversion</para>
 </refsect1>
 
 <refsect1><title>SEE ALSO</title>

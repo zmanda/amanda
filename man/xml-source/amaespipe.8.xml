@@ -11,11 +11,17 @@
 <refmeta>
 <refentrytitle>amaespipe</refentrytitle>
 <manvolnum>8</manvolnum>
+&rmi.source;
+&rmi.version;
+&rmi.manual.8;
 </refmeta>
 <refnamediv>
 <refname>amaespipe</refname>
 <refpurpose>wrapper program for aespipe</refpurpose>
 </refnamediv>
+<refentryinfo>
+&author.ktill;
+</refentryinfo>
 <!-- body begins here -->
 <refsynopsisdiv>
 <cmdsynopsis>
@@ -37,8 +43,6 @@ hash function. GPG key should be stored in $AMANDA_HOME/.gnupg/am_key.gpg.
 During decryption, &amaespipe; autodects encryption type and hash function from
 the encrypted image.</para>
 </refsect1>
-
-
 
 <refsect1><title>SEE ALSO</title>
 <para><citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>,

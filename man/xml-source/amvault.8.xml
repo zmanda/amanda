@@ -11,11 +11,17 @@
 <refmeta>
 <refentrytitle>amvault</refentrytitle>
 <manvolnum>8</manvolnum>
+&rmi.source;
+&rmi.version;
+&rmi.manual.8;
 </refmeta>
 <refnamediv>
 <refname>amvault</refname>
 <refpurpose>Copy &A; dumps from one volume to another</refpurpose>
 </refnamediv>
+<refentryinfo>
+&author.dustin;
+</refentryinfo>
 <!-- body begins here -->
 <refsynopsisdiv>
 <cmdsynopsis>
@@ -60,10 +66,6 @@ define changer vaulting_tape {
 <para>The label template functions identically to the <emphasis
 remap='I'>label-new-tapes</emphasis> parameter in &amconf;.</para>
 
-</refsect1>
-
-<refsect1><title>AUTHOR</title>
-<para>Dustin J. Mitchell, &email.dustin; : Original text</para>
 </refsect1>
 
 <refsect1><title>SEE ALSO</title>

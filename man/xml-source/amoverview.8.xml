@@ -13,11 +13,17 @@
 <refmeta>
 <refentrytitle>amoverview</refentrytitle>
 <manvolnum>8</manvolnum>
+&rmi.source;
+&rmi.version;
+&rmi.manual.8;
 </refmeta>
 <refnamediv>
 <refname>amoverview</refname>
 <refpurpose>display file systems processed by &A; over time</refpurpose>
 </refnamediv>
+<refentryinfo>
+&author.sgw.xml;
+</refentryinfo>
 <!-- body begins here -->
 <refsynopsisdiv>
 <cmdsynopsis>

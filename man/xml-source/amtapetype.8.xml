@@ -14,37 +14,45 @@
 <refmeta>
 <refentrytitle>amtapetype</refentrytitle>
 <manvolnum>8</manvolnum>
+&rmi.source;
+&rmi.version;
+&rmi.manual.8;
 </refmeta>
 <refnamediv>
 <refname>amtapetype</refname>
-<refpurpose>generate a tapetype definition.</refpurpose>
+<refpurpose>generate a tapetype definition by testing the device directly</refpurpose>
 </refnamediv>
+<refentryinfo>
+&author.dustin;
+&author.jlm;
+</refentryinfo>
 <!-- body begins here -->
 <refsynopsisdiv>
 <cmdsynopsis>
   <command>amtapetype</command>    
     <arg choice='opt'>-h </arg>
     <arg choice='opt'>-c </arg>
-    <arg choice='opt'>-o </arg>
+    <arg choice='opt'>-f </arg>
     <arg choice='opt'>-b <replaceable>blocksize</replaceable></arg>
-    <arg choice='plain'>-e <replaceable>estsize</replaceable></arg>
-    <arg choice='opt'>-f <replaceable>tapedev</replaceable></arg>
     <arg choice='opt'>-t <replaceable>typename</replaceable></arg>
+    <arg choice='opt'>-l <replaceable>label</replaceable></arg>
+    <arg choice='opt'>-o <replaceable>config_overwrite</replaceable></arg>
+    <arg><replaceable>device</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 
-
 <refsect1><title>DESCRIPTION</title>
 <para><emphasis remap='B'>amtapetype</emphasis>
-generates a tapetype entry for &A;.</para>
+generates a tapetype entry for &A; by testing the device directly</para>
 </refsect1>
 
 <refsect1><title>OPTIONS</title>
+<note><para>The options for &amtapetype; have changed in version 2.6.1</para></note>
 <variablelist remap='TP'>
   <varlistentry>
   <term><option>-h</option></term>
   <listitem>
-<para>Display an help message.</para>
+<para>Display the help message.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
@@ -55,35 +63,34 @@ This takes a few minutes only.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-o</option></term>
+  <term><option>-f</option></term>
   <listitem>
-<para>Overwrite the tape, even if it's an &A; tape.</para>
+<para>Run amtapetype even if the loaded volume is already in use or compression
+is enabled.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
   <term><option>-b</option><replaceable> blocksize</replaceable></term>
   <listitem>
-<para>record block size (default: 32k)</para>
+<para>block size to use with the device (default: 32k)</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-e</option><replaceable> estsize</replaceable></term>
+  <term><option>-t</option> <replaceable>typename</replaceable></term>
   <listitem>
-<para>estimated tape size (No default!)</para>
+<para>Name to give to the new tapetype definition.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-f</option><replaceable> tapedev</replaceable></term>
+  <term><option>-l</option><replaceable> label</replaceable></term>
   <listitem>
-<para>tape device name (default: $TAPE)
-The device to perform the test.</para>
+<para>Label to write on the tape (default is randomly generated).</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-t</option><replaceable> typename</replaceable></term>
+  <term><option>-o</option> <replaceable>configoption</replaceable></term>
   <listitem>
-<para>tapetype name (default: unknown-tapetype)</para>
-<!-- .PD -->
+<para>See the "<emphasis remap='B'>CONFIGURATION OVERRIDE</emphasis>" section in <citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>.</para>
   </listitem>
   </varlistentry>
 </variablelist>
@@ -94,63 +101,34 @@ The device to perform the test.</para>
 
 <!-- .RS -->
 <literallayout remap='.nf'>
-% amtapetype -f /dev/nst0 -e 150G
+% amtapetype -f /dev/nst0
 </literallayout></refsect1>
 
 <refsect1><title>NOTES</title>
-<para>Hardware compression is detected by measuring
-the writing speed difference of the tape drive
-when writing an amount of compressable and uncompresseable data.
-It does not rely on the status bits of the tape drive or the OS parameters.
-If your tape drive has very large buffers or is very fast, the program
-could fail to detect hardware compression status reliably.</para>
+<para>If the device cannot reliably report its comprssion status (and as of
+this writing, no devices can do so), hardware compression is detected by
+measuring the writing speed difference of the tape drive when writing an amount
+of compressable and uncompresseable data.  If your tape drive has very large
+buffers or is very fast, the program could fail to detect hardware compression
+status reliably.</para>
 
-<para>During the first pass, it writes files that are estimated to be 1%
-of the expected tape capacity.  It gets the expected capacity from
-the -e command line flag, or defaults to 1 GByte.  In a perfect world
-(which means there is zero chance of this happening with tapes :-),
-there would be 100 files and 100 file marks.</para>
+<para>Volume capacity is determined by writing one large file until an error,
+interpereted as end-of-tape, is encountered.  In the next phase, about 100
+files are written to fill the tape.  This second phase will write less data,
+because each filemark consumes some tape.  With a little arithmetic,
+&amtapetype; calculates the size of these filemarks.</para>
 
-<para>During the second pass, the file size is cut in half.  In that same
-fairyland world, this means 200 files and 200 file marks.</para>
-
-<para>In both passes the total amount of data written is summed as well as the
-number of file marks written.  At the end of the second pass, quoting
-from the code:</para>
-
-<para>* Compute the size of a filemark as the difference in data written
-between pass 1 and pass 2 divided by the difference in number of
-file marks written between pass 1 and pass 2. ... *</para>
-
-<para>So if we wrote 1.0 GBytes on the first pass and 100 file marks, and
-0.9 GBytes on the second pass with 200 file marks, those additional 100
-file marks in the second pass took 0.1 GBytes and therefor a file mark
-is 0.001 GBytes (1 MByte).</para>
-
-<para>Note that if the estimated capacity is wrong, the only thing that happens
-is a lot more (or less, but unlikely) files, and thus, file marks,
-get written.  But the math still works out the same.  The -e flag is
-there to keep the number of file marks down because they can be slow
-(since they force the drive to flush all its buffers to physical media).</para>
-
-<para>All sorts of things might happen to cause the amount of data
-written to vary enough to generate a big file mark size guess.  A little
-more &quot;shoe shining&quot; because of the additional file marks (and flushes),
+<para>All sorts of things might happen to cause the amount of data written to
+vary enough to generate a strange file mark size guess.  A little more
+&quot;shoe shining&quot; because of the additional file marks (and flushes),
 dirt left on the heads from the first pass of a brand new tape, the
-temperature/humidity changed during the multi-hour run, a different amount
-of data was written after the last file mark before EOT was reported, etc.</para>
+temperature/humidity changed during the multi-hour run, a different amount of
+data was written after the last file mark before EOT was reported, etc.</para>
 
 <para>Note that the file mark size might really be zero for whatever device this
 is, and it was just the measured capacity variation that caused &amtapetype;
 to think those extra file marks in pass 2 actually took up space.</para>
 
-<para>It also explains why &amtapetype; used to sometimes report a negative file
-mark size if the math happened to end up that way.  When that happens
-now we just report it as zero.</para>
 </refsect1>
 
-<refsect1><title>SEE ALSO</title>
-<para><citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry></para>
-</refsect1>
 </refentry>
-

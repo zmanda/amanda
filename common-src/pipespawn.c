@@ -101,6 +101,7 @@ pipespawnv_passwd(
 	passwdvar = *my_argv++;
 	passwdfd  = (int *)*my_argv++;
     }
+    g_debug("pipespawnv: stdoutfd is %d", *stdoutfd);
     memset(inpipe, -1, SIZEOF(inpipe));
     memset(outpipe, -1, SIZEOF(outpipe));
     memset(errpipe, -1, SIZEOF(errpipe));
@@ -200,6 +201,7 @@ pipespawnv_passwd(
 	    error(_("error [spawn %s: dup2 in: %s]"), prog, strerror(errno));
 	    /*NOTREACHED*/
 	}
+	g_debug("calling dup2(%, %d)", outpipe[1], 1);
 	if(dup2(outpipe[1], 1) == -1) {
 	    error(_("error [spawn %s: dup2 out: %s]"), prog, strerror(errno));
 	    /*NOTREACHED*/

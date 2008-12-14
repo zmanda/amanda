@@ -13,11 +13,18 @@
 <refmeta>
 <refentrytitle>amlabel</refentrytitle>
 <manvolnum>8</manvolnum>
+&rmi.source;
+&rmi.version;
+&rmi.manual.8;
 </refmeta>
 <refnamediv>
 <refname>amlabel</refname>
 <refpurpose>label an &A; tape</refpurpose>
 </refnamediv>
+<refentryinfo>
+&author.jds;
+&author.sgw.xml;
+</refentryinfo>
 <!-- body begins here -->
 <refsynopsisdiv>
 <cmdsynopsis>
@@ -175,11 +182,6 @@ instead of a non-rewinding device name for
   </listitem>
   </varlistentry>
 </variablelist>
-</refsect1>
-
-<refsect1><title>AUTHOR</title>
-<para>James da Silva, &email.jds;: Original text</para>
-<para>&maintainer.sgw;: XML-conversion</para>
 </refsect1>
 
 <refsect1><title>SEE ALSO</title>

@@ -89,7 +89,7 @@ EXTRA_XML = xslt/expand-sambadoc.xsl \
             xslt/man.xsl.in \
             xslt/html.xsl.in \
             xslt/settings.xsl \
-	    entities/global.entities \
+	    entities/global.entities.in \
 	    entities/xinclude.dtd
 
 EXTRA_DIST = $(ALL_MAN_PAGES) $(MAN_XML) $(EXTRA_HTML) $(EXTRA_XML)
@@ -104,16 +104,20 @@ MAINTAINERCLEANFILES = $(ALL_MAN_PAGES)
 	$(top_builddir)/config.status --file=$@:$<
 	rm -f config.log
 
+entities/global.entities: entities/global.entities.in $(top_builddir)/config.status
+	$(top_builddir)/config.status --file=$@:$<
+	rm -f config.log
+
 if   ENABLE_MANPAGE_BUILD
 # phase one of the documentation build expands some macros.
-xml-source/%.proc.xml: $(SRCMANPAGEDIR)/%.xml $(srcdir)/xslt/expand-sambadoc.xsl
+xml-source/%.proc.xml: $(SRCMANPAGEDIR)/%.xml $(srcdir)/xslt/expand-sambadoc.xsl entities/global.entities
 	$(XSLTPROC) $(XSLTPROC_FLAGS) --path $(srcdir)/xslt/ --xinclude --stringparam latex.imagebasedir "$*/" --stringparam noreference 1 --output $@ $(srcdir)/xslt/expand-sambadoc.xsl $<
 
 # phase two generates a manpage from the resulting "expanded" docbook XML
-%: xml-source/%.proc.xml $(srcdir)/xslt/man.xsl
+%: xml-source/%.proc.xml $(srcdir)/xslt/man.xsl entities/global.entities
 	$(XSLTPROC) $(XSLTPROC_FLAGS) --path $(srcdir)/xslt/ --output $@ xslt/man.xsl $<
 
-%.html: xml-source/%.proc.xml $(srcdir)/xslt/html.xsl
+%.html: xml-source/%.proc.xml $(srcdir)/xslt/html.xsl entities/global.entities
 	$(XSLTPROC) $(XSLTPROC_FLAGS) --path $(srcdir)/xslt/ --output $@ xslt/html.xsl $<
 
 else	!ENABLE_MANPAGE_BUILD

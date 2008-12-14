@@ -12,11 +12,17 @@
 <refmeta>
 <refentrytitle>amzfs-sendrecv</refentrytitle>
 <manvolnum>8</manvolnum>
+&rmi.source;
+&rmi.version;
+&rmi.manual.8;
 </refmeta>
 <refnamediv>
 <refname>amzfs-sendrecv</refname>
 <refpurpose>Amanda script to create zfs sendrecv</refpurpose>
 </refnamediv>
+<refentryinfo>
+&author.jlm;
+</refentryinfo>
 <!-- body begins here -->
 
 <refsect1><title>DESCRIPTION</title>
@@ -99,11 +105,6 @@ In this example, a dumptype is defined to use amzfs-sendrecv application to back
    application "amzfs_sendrecv"
  }
 </programlisting>
-</refsect1>
-
-<refsect1><title>AUTHORS</title>
-
-<para>Jean-Louis Martineau &email.jlm;: Original text</para>
 </refsect1>
 
 <refsect1><title>SEE ALSO</title>

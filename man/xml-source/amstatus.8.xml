@@ -14,11 +14,17 @@
 <refmeta>
 <refentrytitle>amstatus</refentrytitle>
 <manvolnum>8</manvolnum>
+&rmi.source;
+&rmi.version;
+&rmi.manual.8;
 </refmeta>
 <refnamediv>
 <refname>amstatus</refname>
 <refpurpose>display the state of an &A; run</refpurpose>
 </refnamediv>
+<refentryinfo>
+&author.sgw.xml;
+</refentryinfo>
 <!-- body begins here -->
 <refsynopsisdiv>
 <cmdsynopsis>

@@ -13,11 +13,18 @@
 <refmeta>
 <refentrytitle>amcheck</refentrytitle>
 <manvolnum>8</manvolnum>
+&rmi.source;
+&rmi.version;
+&rmi.manual.8;
 </refmeta>
 <refnamediv>
 <refname>amcheck</refname>
 <refpurpose>run &A; self-checks</refpurpose>
 </refnamediv>
+<refentryinfo>
+&author.jds;
+&author.sgw.xml;
+</refentryinfo>
 <!-- body begins here -->
 <refsynopsisdiv>
 <cmdsynopsis>
@@ -851,11 +858,6 @@ The exit code of <command>amcheck</command> is one of:
  0  = success
  1  = error
 </programlisting>
-</refsect1>
-
-<refsect1><title>AUTHOR</title>
-<para>James da Silva, &email.jds; : Original text</para>
-<para>&maintainer.sgw;: XML-conversion</para>
 </refsect1>
 
 <refsect1><title>SEE ALSO</title>
