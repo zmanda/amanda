@@ -12,11 +12,18 @@
 <refmeta>
 <refentrytitle>amplot</refentrytitle>
 <manvolnum>8</manvolnum>
+&rmi.source;
+&rmi.version;
+&rmi.manual.8;
 </refmeta>
 <refnamediv>
 <refname>amplot</refname>
 <refpurpose>visualize the behavior of &A;</refpurpose>
 </refnamediv>
+<refentryinfo>
+&author.ogud;
+&author.sgw.xml;
+</refentryinfo>
 <!-- body begins here -->
 <refsynopsisdiv>
 <cmdsynopsis>
@@ -186,13 +193,6 @@ Percentage of active dumpers.</para>
 is asking the machines how much data they are going to dump.
 This process can take a while if hosts are down
 or it takes them a long time to generate estimates.</para>
-</refsect1>
-
-<refsect1><title>AUTHOR</title>
-<para>Olafur Gudmundsson <email>ogud@tis.com</email>,
-Trusted Information Systems,
-formerly at University of Maryland, College Park: Original text</para>
-<para>&maintainer.sgw;: XML-conversion</para>
 </refsect1>
 
 <refsect1><title>BUGS</title>

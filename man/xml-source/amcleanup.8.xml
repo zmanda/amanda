@@ -13,11 +13,18 @@
 <refmeta>
 <refentrytitle>amcleanup</refentrytitle>
 <manvolnum>8</manvolnum>
+&rmi.source;
+&rmi.version;
+&rmi.manual.8;
 </refmeta>
 <refnamediv>
 <refname>amcleanup</refname>
 <refpurpose>run the &A; cleanup process after a failure</refpurpose>
 </refnamediv>
+<refentryinfo>
+&author.jds;
+&author.sgw.xml;
+</refentryinfo>
 <!-- body begins here -->
 <refsynopsisdiv>
 <cmdsynopsis>
@@ -95,11 +102,6 @@ exits normally with the message:</para>
 <programlisting>
 amcleanup: no unprocessed logfile to clean up.
 </programlisting>
-</refsect1>
-
-<refsect1><title>AUTHOR</title>
-<para>James da Silva, &email.jds;: Original text</para>
-<para>&maintainer.sgw;: XML-conversion</para>
 </refsect1>
 
 <refsect1><title>SEE ALSO</title>

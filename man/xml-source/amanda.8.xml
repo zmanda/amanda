@@ -13,11 +13,18 @@
 <refmeta>
 <refentrytitle>amanda</refentrytitle>
 <manvolnum>8</manvolnum>
+&rmi.source;
+&rmi.version;
+&rmi.manual.8;
 </refmeta>
 <refnamediv>
 <refname>amanda</refname>
 <refpurpose>The Open Source Backup Platform</refpurpose>
 </refnamediv>
+<refentryinfo>
+&author.jds;
+&author.sgw.xml;
+</refentryinfo>
 <!-- body begins here -->
 
 <refsect1><title>DESCRIPTION</title>
@@ -665,11 +672,6 @@ amdump -otapedev=/dev/nst1 -otpchanger=''
 </programlisting>
 </para>
 
-</refsect1>
-
-<refsect1><title>AUTHOR</title>
-<para>James da Silva, &email.jds; : Original text</para>
-<para>&maintainer.sgw;: XML-conversion, major update</para>
 </refsect1>
 
 </refentry>

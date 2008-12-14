@@ -1,4 +1,3 @@
-
 <!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
                    "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"
 [
@@ -11,11 +10,17 @@
 <refmeta>
 <refentrytitle>amaddclient</refentrytitle>
 <manvolnum>8</manvolnum>
+&rmi.source;
+&rmi.version;
+&rmi.manual.8;
 </refmeta>
 <refnamediv>
 <refname>amaddclient</refname>
 <refpurpose>program to add client to an existing &A; configuration</refpurpose>
 </refnamediv>
+<refentryinfo>
+&author.ktill;
+</refentryinfo>
 <!-- body begins here -->
 <refsynopsisdiv>
 <cmdsynopsis>
@@ -265,12 +270,6 @@ Specify either --excludefile or --excludelist. </para>
 
 <refsect1><title>RETURN VALUE</title>
 On success, zero is returned.  On error, 1 is returned.
-</refsect1>
-
-<refsect1><title>AUTHOR</title>
-  <para>
-    The tool and its documentation was written by Zmanda, Inc (http://www.zmanda.com/). 
-  </para>
 </refsect1>
 
 <refsect1><title>SEE ALSO</title>

@@ -11,11 +11,17 @@
 <refmeta>
 <refentrytitle>amcheckdump</refentrytitle>
 <manvolnum>8</manvolnum>
+&rmi.source;
+&rmi.version;
+&rmi.manual.8;
 </refmeta>
 <refnamediv>
 <refname>amcheckdump</refname>
 <refpurpose>check the results of an &A; dump</refpurpose>
 </refnamediv>
+<refentryinfo>
+&author.ian;
+</refentryinfo>
 <!-- body begins here -->
 <refsynopsisdiv>
 <cmdsynopsis>

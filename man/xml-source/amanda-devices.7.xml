@@ -12,11 +12,18 @@
 <refmeta>
 <refentrytitle>amanda-devices</refentrytitle>
 <manvolnum>7</manvolnum>
+&rmi.source;
+&rmi.version;
+&rmi.manual.7;
 </refmeta>
 <refnamediv>
 <refname>amanda-devices</refname>
 <refpurpose>Configuring and Using Amanda Devices</refpurpose>
 </refnamediv>
+<refentryinfo>
+&author.ian;
+&author.dustin;
+</refentryinfo>
 <!-- body begins here -->
 
 <refsect1><title>DESCRIPTION</title>
@@ -463,11 +470,6 @@ operations can be emulated with the MTREW and read data operations.</para>
 
 </refsect2>
 
-</refsect1>
-
-<refsect1><title>AUTHORS</title>
-
-<para>Dustin J. Mitchell &email.dustin; and Ian Turner &email.ian;: Original text</para>
 </refsect1>
 
 <refsect1><title>SEE ALSO</title>

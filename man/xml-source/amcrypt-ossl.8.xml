@@ -12,11 +12,17 @@
 <refmeta>
   <refentrytitle>amcrypt-ossl</refentrytitle>
   <manvolnum>8</manvolnum>
+&rmi.source;
+&rmi.version;
+&rmi.manual.8;
 </refmeta>
 <refnamediv>
   <refname>amcrypt-ossl</refname>
   <refpurpose>crypt program for &A; symmetric data encryption using OpenSSL</refpurpose>
 </refnamediv>
+<refentryinfo>
+&author.ktill;
+</refentryinfo>
 <!-- body begins here -->
 <refsynopsisdiv>
   <cmdsynopsis>
@@ -68,6 +74,7 @@
     </varlistentry>
   </variablelist>
 </refsect1>
+
 <refsect1>
   <title>SEE ALSO</title>
   <para>

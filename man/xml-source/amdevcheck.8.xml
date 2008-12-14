@@ -12,11 +12,17 @@
   <refmeta>
     <refentrytitle>amdevcheck</refentrytitle>
     <manvolnum>8</manvolnum>
+    &rmi.source;
+    &rmi.version;
+    &rmi.manual.8;
   </refmeta>
   <refnamediv>
     <refname>amdevcheck</refname>
     <refpurpose>Validate an &A; device and volume.</refpurpose>
   </refnamediv>
+  <refentryinfo>
+    &author.ian;
+  </refentryinfo>
   <!-- body begins here -->
   <refsynopsisdiv>
     <cmdsynopsis>
@@ -138,13 +144,6 @@ malfunctioning drive and a functional but unloaded drive.
 	    <listitem><para>Where text provides a human-readable description of the problem.</para></listitem>
 	</varlistentry>
        </variablelist>
-  </refsect1>
-
-  <refsect1><title>AUTHOR</title>
-    <para>
-      Ian Turner <email>ian@zmanda.com</email> and others. Authorship of this
-      tool and its documentation was funded by Zmanda, Inc.
-    </para>
   </refsect1>
 
   <refsect1><title>SEE ALSO</title>

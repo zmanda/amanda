@@ -14,11 +14,17 @@
 <refmeta>
 <refentrytitle>amservice</refentrytitle>
 <manvolnum>8</manvolnum>
+&rmi.source;
+&rmi.version;
+&rmi.manual.8;
 </refmeta>
 <refnamediv>
 <refname>amservice</refname>
 <refpurpose>run an amanda service on a client</refpurpose>
 </refnamediv>
+<refentryinfo>
+&author.jlm;
+</refentryinfo>
 <!-- body begins here -->
 <refsynopsisdiv>
 <cmdsynopsis>
@@ -99,9 +105,9 @@ The exit code of <command>amservice</command> is one of:
  1  = error executing amandad on the client.
 </programlisting>
 <para>As <command>amservice</command> doesn't parse the REP packet,
-it can only detect failure in executing amandad on the client.
+it can only detect failures in executing amandad on the client.
 <command>amservice</command> can exit with value 0 even if the user
-is not authorized to execute the service, An error message will be printed.
+is not authorized to execute the service.  An error message will be printed.
 </para>
 </refsect1>
 

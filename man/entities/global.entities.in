@@ -1,18 +1,68 @@
 <!-- Global Entities File -->
 
-<!ENTITY email.sgw '<email>sgw@amanda.org</email>'>
-<!ENTITY email.dustin '<email>dustin@zmanda.com</email>'>
-<!ENTITY email.ian '<email>ian@zmanda.com</email>'>
-<!ENTITY maintainer.sgw 'Stefan G. Weichinger, &email.sgw;, maintainer of the
-&A;-documentation'>
-<!ENTITY email.jds '<email>jds@amanda.org</email>'>
-<!ENTITY email.jlm '<email>martineau@zmanda.com</email>'>
-<!ENTITY email.itt '<email>ian@zmanda.com</email>'>
-<!ENTITY email.jstange '<email>building@nap.edu</email>'>
+<!-- extra refmiscinfo stuff -->
+<!ENTITY rmi.source '<refmiscinfo class="source">Amanda</refmiscinfo>'>
+<!ENTITY rmi.version '<refmiscinfo class="version">@VERSION@</refmiscinfo>'>
+<!ENTITY rmi.manual.5 '<refmiscinfo class="manual">File formats and conventions</refmiscinfo>'>
+<!ENTITY rmi.manual.7 '<refmiscinfo class="manual">Miscellanea</refmiscinfo>'>
+<!ENTITY rmi.manual.8 '<refmiscinfo class="manual">System Administration Commands</refmiscinfo>'>
+
+<!-- utilities for below -->
+<!ENTITY affil.zmanda '<affiliation><org>
+		<orgname>Zmanda, Inc.</orgname>
+		<uri type="webpage">http://www.zmanda.com</uri></org></affiliation>'>
+<!ENTITY affil.nap '<affiliation><org>
+		<orgname>National Academies Press</orgname></org></affiliation>'>
+<!ENTITY affil.tis '<affiliation><org>
+		<orgname>Trusted Information Systems</orgname></org></affiliation>'>
+<!ENTITY affil.unigech '<affiliation><org>
+		<orgname>University of Geneva/Switzerland</orgname></org></affiliation>'>
+
+<!-- author IDs; use these in an <info> -->
+<!ENTITY author.dustin '<author><personname>Dustin J. Mitchell</personname>
+		    &affil.zmanda;
+		    <email>dustin@zmanda.com</email></author>'>
+<!ENTITY author.jlm '<author><personname>Jean-Louis Martineau</personname>
+		    &affil.zmanda;
+		    <email>martineau@zmanda.com</email></author>'>
+<!ENTITY author.sgw '<author><personname>Stefan G. Weichinger</personname>
+		    <email>sgw@amanda.org</email></author>'>
+<!ENTITY author.sgw.xml '<author><personname>Stefan G. Weichinger</personname>
+		    <contrib>XML-conversion</contrib>
+		    <email>sgw@amanda.org</email></author>'>
+<!ENTITY author.ian '<author><personname>Ian Turner</personname>
+		    &affil.zmanda;
+		    <email>ian@zmanda.com</email></author>'>
+<!ENTITY author.jds '<author><personname>James da Silva</personname>
+		    <email>jds@amanda.org</email></author>'>
+<!ENTITY author.jstange '<author><personname>John Stange</personname>
+		    &affil.nap;
+		    <email>building@nap.edu</email></author>'>
+<!ENTITY author.ktill '<author><personname>Kevin Till</personname>
+		    &affil.zmanda;
+		    <email>kevin.till@zmanda.com</email></author>'>
+<!ENTITY author.dwlocks '<author><personname>Dan Locks</personname>
+		    &affil.zmanda;
+		    <email>dwlocks@zmanda.com</email></author>'>
+<!ENTITY author.ncoukouma '<author><personname>Nikolas Coukouma</personname>
+		    &affil.zmanda;
+		    <email>atrus@zmanda.com</email></author>'>
+<!ENTITY author.atf3r '<author><personname>Adrian T. Filipi-Martin</personname>
+		    <email>atf3r@cs.virginia.edu</email></author>'>
+<!ENTITY author.alan '<author><personname>Alan M. McIvor</personname>
+		    <email>alan@kauri.auck.irl.cri.nz</email></author>'>
+<!ENTITY author.ogud '<author><personname>Olafur Gudmundsson</personname>
+		    &affil.tis;
+		    <email>ogud@tis.com</email></author>'>
+<!ENTITY author.nm '<author><personname>Nicolas Mayencourt</personname>
+		    &affil.unigech;
+		    <email>Nicolas.Mayencourt@cui.unige.ch</email></author>'>
+
+
+<!-- Amanda itself -->
 <!ENTITY A '<application><emphasis>Amanda</emphasis></application>'>
 
 <!-- IDs for AMANDA files-->
-<!ENTITY amandaddebug ' <filename>amandad.debug</filename>'>
 <!ENTITY amconf '<citerefentry><refentrytitle>amanda.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>'>
 <!ENTITY amclientconf '<citerefentry><refentrytitle>amanda-client.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>'>
 <!ENTITY amandahosts '<filename>.amandahosts</filename>'>
@@ -53,8 +103,6 @@
 <!ENTITY amtape ' <command>amtape</command>'>
 <!ENTITY amtapetype ' <command>amtapetype</command>'>
 <!ENTITY amtoc ' <command>amtoc</command>'>
-<!ENTITY amverify ' <command>amverify</command>'>
-<!ENTITY amverifyrun ' <command>amverifyrun</command>'>
 
 <!ENTITY amandad ' <command>amandad</command>'>
 <!ENTITY amandaidx ' <command>amandaidx</command>'>

@@ -13,11 +13,18 @@
 <refmeta>
 <refentrytitle>amrmtape</refentrytitle>
 <manvolnum>8</manvolnum>
+&rmi.source;
+&rmi.version;
+&rmi.manual.8;
 </refmeta>
 <refnamediv>
 <refname>amrmtape</refname>
 <refpurpose>remove a tape from the &A; database</refpurpose>
 </refnamediv>
+<refentryinfo>
+&author.atf3r;
+&author.sgw.xml;
+</refentryinfo>
 <!-- body begins here -->
 <refsynopsisdiv>
 <cmdsynopsis>
@@ -126,11 +133,6 @@ configuration.</para>
 <programlisting>
 # amrmtape DailySet1 DAILY034
 </programlisting>
-</refsect1>
-
-<refsect1><title>AUTHOR</title>
-<para>Adrian T. Filipi-Martin <email>atf3r@cs.virginia.edu</email>: Original text</para>
-<para>&maintainer.sgw;: XML-conversion</para>
 </refsect1>
 
 <refsect1><title>SEE ALSO</title>

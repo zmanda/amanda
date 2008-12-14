@@ -13,11 +13,18 @@
 <refmeta>
 <refentrytitle>amrestore</refentrytitle>
 <manvolnum>8</manvolnum>
+&rmi.source;
+&rmi.version;
+&rmi.manual.8;
 </refmeta>
 <refnamediv>
 <refname>amrestore</refname>
 <refpurpose>extract backup images from an &A; tape</refpurpose>
 </refnamediv>
+<refentryinfo>
+&author.jds;
+&author.sgw.xml;
+</refentryinfo>
 <!-- body begins here -->
 <refsynopsisdiv>
 <cmdsynopsis>
@@ -329,12 +336,6 @@ each image it skips.</para>
 <para>&gnutar; must be used to restore files from backup images created with
 the GNUTAR dumptype.
 Vendor tar programs sometimes fail to read GNU tar images.</para>
-</refsect1>
-
-<refsect1><title>AUTHOR</title>
-<para>James da Silva, &email.jds;, University of Maryland,
-College Park: Original text</para>
-<para>&maintainer.sgw;: XML-conversion</para>
 </refsect1>
 
 <refsect1><title>SEE ALSO</title>

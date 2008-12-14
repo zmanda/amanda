@@ -14,11 +14,18 @@
 <refmeta>
 <refentrytitle>amrecover</refentrytitle>
 <manvolnum>8</manvolnum>
+&rmi.source;
+&rmi.version;
+&rmi.manual.8;
 </refmeta>
 <refnamediv>
 <refname>amrecover</refname>
 <refpurpose>&A; index database browser</refpurpose>
 </refnamediv>
+<refentryinfo>
+&author.alan;
+&author.sgw.xml;
+</refentryinfo>
 <!-- body begins here -->
 <refsynopsisdiv>
 <cmdsynopsis>
@@ -574,11 +581,6 @@ The value will take precedence over the compiled default,
 but will be overridden by the -t switch.
 </para>
 <!-- .RE -->
-</refsect1>
-
-<refsect1><title>AUTHOR</title>
-<para>Alan M. McIvor <email>alan@kauri.auck.irl.cri.nz</email> : Original text</para>
-<para>&maintainer.sgw;: XML-conversion</para>
 </refsect1>
 
 <refsect1><title>SEE ALSO</title>

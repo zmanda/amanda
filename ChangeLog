@@ -1,3 +1,12 @@
+2008-12-14  Dustin J. Mitchell <dustin@zmanda.com>
+	* man/Makefile.am: change manpage build process
+	* man/entities/global.entities.in: generate with config.status
+	* man/xslt/html.xsl.in: new templates to handle authors
+	* man/xslt/man.xsl.in: new templates to handle authors
+	* man/xml-source/*.xml: change specification of authors
+	* man/xml-source/amanda-applications.7.xml: add links to apps
+	* man/xml-source/amanda-scripts.7.xml: add links to scripts
+
 2008-12-12  Jean-Louis Martineau <martineau@zmanda.com>
 	* man/xml-source/amanda.conf.5.xml: Fix use of <programlisting>, it must
 					    always be at the beginning of the line.

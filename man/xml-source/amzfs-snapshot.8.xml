@@ -12,11 +12,18 @@
 <refmeta>
 <refentrytitle>amzfs-snapshot</refentrytitle>
 <manvolnum>8</manvolnum>
+&rmi.source;
+&rmi.version;
+&rmi.manual.8;
 </refmeta>
 <refnamediv>
 <refname>amzfs-snapshot</refname>
 <refpurpose>Amanda script to create zfs snapshot</refpurpose>
 </refnamediv>
+<refentryinfo>
+&author.jlm;
+&author.dustin;
+</refentryinfo>
 <!-- body begins here -->
 
 <refsect1><title>DESCRIPTION</title>
@@ -107,11 +114,6 @@ In this example, a dumptype is defined to use amzfs-snapshot script to create a 
    script "amzfs_snapshot"
  }
 </programlisting>
-</refsect1>
-
-<refsect1><title>AUTHORS</title>
-
-<para>Jean-Louis Martineau &email.jlm; and Dustin Mitchell &email.dustin;: Original text</para>
 </refsect1>
 
 <refsect1><title>SEE ALSO</title>

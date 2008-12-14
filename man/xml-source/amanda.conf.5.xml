@@ -12,11 +12,18 @@
 <refmeta>
 <refentrytitle>amanda.conf</refentrytitle>
 <manvolnum>5</manvolnum>
+&rmi.source;
+&rmi.version;
+&rmi.manual.5;
 </refmeta>
 <refnamediv>
 <refname>amanda.conf</refname>
 <refpurpose>Main configuration file for &A;, the Advanced Maryland Automatic Network Disk Archiver</refpurpose>
 </refnamediv>
+<refentryinfo>
+&author.jds;
+&author.sgw.xml;
+</refentryinfo>
 <!-- body begins here -->
 
 <refsect1><title>DESCRIPTION</title>
@@ -2541,11 +2548,6 @@ device. The remaining parameters are specific to the changer type selected.
 TODO: more detail here once it's known
 </para>
 
-</refsect1>
-
-<refsect1><title>AUTHOR</title>
-<para>James da Silva, &email.jds;: Original text</para>
-<para>&maintainer.sgw;: XML-conversion, major update, splitting</para>
 </refsect1>
 
 <refsect1><title>SEE ALSO</title>
