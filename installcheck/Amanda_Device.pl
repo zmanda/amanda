@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 336;
+use Test::More tests => 262;
 use File::Path qw( mkpath rmtree );
 use Sys::Hostname;
 use Carp;
@@ -485,9 +485,6 @@ my $run_s3_tests = defined $S3_SECRET_KEY && defined $S3_ACCESS_KEY;
 my $run_devpay_tests = defined $DEVPAY_SECRET_KEY &&
     defined $DEVPAY_ACCESS_KEY && $DEVPAY_USER_TOKEN;
 
-my $dev_base_name;
-my $hostname  = hostname();
-
 my $s3_make_device_count = 8;
 sub s3_make_device($) {
     my $dev_name = shift @_;
@@ -517,8 +514,6 @@ sub s3_make_device($) {
         ok($dev->property_set('S3_SECRET_KEY', $S3_SECRET_KEY),
            "set S3 secret key")
             or diag($dev->error_or_status());
-
-	pass("(placeholder)");
     } elsif ($dev_name =~ /^s3zmanda:/) {
         # use s3zmanda credentials
         ok($dev->property_set('S3_ACCESS_KEY', $DEVPAY_ACCESS_KEY),
@@ -538,13 +533,22 @@ sub s3_make_device($) {
     return $dev;
 }
 
-my $s3_run_main_tests_count = 20
-	+ 4 * $write_file_count
-	+ 1 * $verify_file_count
-	+ 3 * $s3_make_device_count;
-sub s3_run_main_tests($$) {
-    my ($dev_scheme, $base_name) = @_;
-    $dev_name = "$dev_scheme:$base_name-$dev_scheme";
+my $base_name;
+
+SKIP: {
+    my $s3_make_device_count = 5;
+    my $verify_file_count = 1;
+    my $write_file_count = 4;
+    skip "define \$INSTALLCHECK_S3_{SECRET,ACCESS}_KEY to run S3 tests",
+            37 +
+            1 * $verify_file_count +
+            4 * $write_file_count +
+            4 * $s3_make_device_count
+	unless $run_s3_tests;
+
+    my $hostname  = hostname();
+    $base_name = "$S3_ACCESS_KEY-installcheck-$hostname";
+    $dev_name = "s3:$base_name-s3";
     $dev = s3_make_device($dev_name);
     $dev->read_label();
     my $status = $dev->status();
@@ -618,7 +622,7 @@ sub s3_run_main_tests($$) {
         or diag($dev->error_or_status());
 
     # try a constrained bucket
-    $dev_name = lc("$dev_scheme:$base_name-$dev_scheme-eu");
+    $dev_name = lc("s3:$base_name-s3-eu");
     $dev = s3_make_device($dev_name);
     ok($dev->property_set('S3_BUCKET_LOCATION', 'EU'),
        "set S3 bucket location")
@@ -643,28 +647,15 @@ sub s3_run_main_tests($$) {
         or diag($dev->error_or_status());
 
     # bucket name incompatible with location constraint
-    $dev_name = "$dev_scheme:-$base_name-$dev_scheme-eu";
+    $dev_name = "s3:-$base_name-s3-eu";
     $dev = s3_make_device($dev_name);
 
     ok(!$dev->property_set('S3_BUCKET_LOCATION', 'EU'),
        "should not be able to set S3 bucket location with an incompatible name")
         or diag($dev->error_or_status());
-}
-
-SKIP: {
-    skip "define \$INSTALLCHECK_S3_{SECRET,ACCESS}_KEY to run S3 tests",
-		    1 + $s3_run_main_tests_count + $s3_make_device_count
-	unless $run_s3_tests;
-
-    # XXX for best results, the bucket should already exist (Amazon doesn't create
-    # buckets quickly enough to pass subsequent tests), but should be empty (so that
-    # the device appears unlabeled)
-    $dev_base_name = "$S3_ACCESS_KEY-installcheck-$hostname";
-
-    s3_run_main_tests('s3', $dev_base_name);
 
     # can't set user token without devpay
-    $dev_name = "s3:$dev_base_name";
+    $dev_name = "s3:$base_name";
     $dev = s3_make_device($dev_name);
     ok(!$dev->property_set('S3_USER_TOKEN', '123'),
        "set user token, but that shouldn't be possible (not using DevPay)")
@@ -675,9 +666,10 @@ SKIP: {
 SKIP: {
     # in this case, most of our code has already been exercised
     # just make sure that authentication works as a basic sanity check
-    skip "skipping abbreviated s3zmanda tests", $s3_make_device_count + 1
-	unless ($run_s3_tests and $run_devpay_tests);
-    $dev_name = "s3zmanda:$dev_base_name";
+    my $s3_make_device_count = 1;
+    skip "skipping abbreviated s3zmanda tests", 5*$s3_make_device_count + 3
+	unless $run_devpay_tests;
+    $dev_name = "s3zmanda:base_name-s3zmanda";
     $dev = s3_make_device($dev_name);
     $dev->read_label();
     my $status = $dev->status();
@@ -686,13 +678,6 @@ SKIP: {
     ok(($status == 0) || (($status & $DEVICE_STATUS_VOLUME_UNLABELED) != 0),
        "status is either OK or possibly unlabeled")
 	or diag($dev->error_or_status());
-}
-
-SKIP: {
-    # if we're running devpay tests and not S3 tests, then we do the whole suite with devpay
-    skip "define \$INSTALLCHECK_DEVPAY_{SECRET_KEY,ACCESS_KEY,USER_TOKEN} to run full s3zmanda tests", $s3_run_main_tests_count
-	unless (!$run_s3_tests and $run_devpay_tests);
-    s3_run_main_tests('s3zmanda', $dev_base_name);
 }
 
 # Test a tape device if the proper environment variables are set

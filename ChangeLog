@@ -1,3 +1,7 @@
+2008-12-15  Nikolas Coukouma <atrus@zmanda.com>
+	* installcheck/Amanda_Device.pl: simplify S3 installcheck, removing 
+	  ability to test well with just DevPay credentials
+
 2008-12-14  Dustin J. Mitchell <dustin@zmanda.com>
 	* man/Makefile.am: change manpage build process
 	* man/entities/global.entities.in: generate with config.status
