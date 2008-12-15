@@ -59,13 +59,41 @@ my $test_num = Math::BigInt->new(1);
 our $stringify = overload::Method($test_num, '""');
 
 if ($test_num =~ /^\+/) {
-    eval '
+    eval <<'EVAL';
         package Math::BigInt;
-        use overload \'""\' => sub {
+        use overload 'eq' => sub {
+	    my ($self, $other) = @_;
+	    return "$self" eq "$other";
+        };
+
+	# stringify is already overloaded; seems to be no good way to
+	# re-overload it without triggering a warning
+	no warnings 'redefine';
+	sub stringify {
             my $str = $Amanda::BigIntCompat::stringify->(@_);
             $str =~ s/^\+//;
-        };
-    ';
+	    return $str;
+	}
+EVAL
+    die $@ if $@;
 }
 
+# the "sign" method does not exist in older versions, either, but is used
+# by bigint2uint64().
+if (!$test_num->can("sign")) {
+    eval <<'EVAL';
+	package Math::BigInt;
+	sub sign { ($_[0] =~ /^-/)? "-" : "+"; }
+EVAL
+    die $@ if $@;
+}
+
+# similarly for bstr
+if (!$test_num->can("bstr")) {
+    eval <<'EVAL';
+	package Math::BigInt;
+	sub bstr { "$_[0]"; }
+EVAL
+    die $@ if $@;
+}
 1;

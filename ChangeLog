@@ -1,3 +1,11 @@
+2008-12-15  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Amanda_Config.pl: work around buggy sort() in perl-5.6
+	* installcheck/Amanda_DB_Catalog.pl installcheck/Amanda_Logfile.pl:
+	  stringify bigints in is_deeply arguments
+	* perl/Amanda/Archive.swg: grok_number is not in perl-5.6
+	* perl/Amanda/BigIntCompat.pm: additional overloads and methods for
+	  BigIntCompat for perl-5.6 compatibility
+
 2008-12-15  Nikolas Coukouma <atrus@zmanda.com>
 	* perl/Makefile.am,
 	  perl/amglue/amglue.swg,
@@ -7,7 +15,7 @@
 	* perl/Amanda/Device.swg,
 	  perl/Amanda/Archive.swg,
 	  perl/Amanda/MainLoop.swg: update docs, make typemap apply
-  
+
 2008-12-15  Nikolas Coukouma <atrus@zmanda.com>
 	* installcheck/Amanda_Device.pl: simplify S3 installcheck, removing 
 	  ability to test well with just DevPay credentials

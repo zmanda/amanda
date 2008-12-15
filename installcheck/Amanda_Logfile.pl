@@ -148,9 +148,9 @@ sub res2arr {
 	$res->{'timestamp'},
 	$res->{'hostname'},
 	$res->{'diskname'},
-	$res->{'level'},
+	"$res->{'level'}",
 	$res->{'label'},
-	$res->{'filenum'},
+	"$res->{'filenum'}",
 	$res->{'status'},
 	$res->{'partnum'}
     ];
