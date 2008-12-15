@@ -80,7 +80,7 @@ change in future revisions.
 
 =item C<write_from_fd($queue_fd)>
 
-where C<$fd> is an integer file descriptor, not a filehandle
+where C<$fd> is an integer file descriptor or a filehandle
 
 =item C<finish_file()>
 
@@ -92,7 +92,7 @@ where C<$fd> is an integer file descriptor, not a filehandle
 
 =item C<read_to_fd($queue_fd)>
 
-where C<$fd> is an integer file descriptor, not a filehandle
+where C<$fd> is an integer file descriptor or a filehandle
 
 Note that Perl code is not expected to handle on-device data, so there
 is currently no way to access the data this function returns.  This may

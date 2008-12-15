@@ -26,3 +26,4 @@
 %include "amglue/exports.swg"
 %include "amglue/glib.swg"
 %include "amglue/integers.swg"
+%include "amglue/filehandles.swg"

@@ -168,11 +168,11 @@ possible situations.
 
   my $src = Amanda::MainLoop::fd_source($fd, G_IO_IN);
 
-This source will issuen an event whenever one of the given conditions is true
-for the given file descriptor.  The conditions are from Glib's GIOCondition,
-and are C<$G_IO_IN>, C<G_IO_OUT>, C<$G_IO_PRI>, C<$G_IO_ERR>, C<$G_IO_HUP>, and
-C<$G_IO_NVAL>.  These constants are available with the import tag
-C<:GIOCondition>.
+This source will issue an event whenever one of the given conditions is true
+for the given file (a file handle or integer file descriptor).  The conditions
+are from Glib's GIOCondition, and are C<$G_IO_IN>, C<G_IO_OUT>, C<$G_IO_PRI>,
+C<$G_IO_ERR>, C<$G_IO_HUP>, and C<$G_IO_NVAL>.  These constants are available
+with the import tag C<:GIOCondition>.
 
 Generally, when reading from a file descriptor, use C<$G_IO_IN|$G_IO_HUP> to
 ensure that an EOF triggers an event as well.  Writing to a file descriptor can
@@ -564,7 +564,7 @@ amglue_copy_to_tag(GIOCondition, constants);
 %inline %{
 amglue_Source *
 fd_source(
-    gint fd,
+    int fd,
     GIOCondition events)
 {
     GSource *fdsource = new_fdsource(fd, events);

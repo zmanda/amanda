@@ -36,12 +36,13 @@ Amanda::Archive - Perl access to the  amanda archive library
 
   use Amanda::Archive
 
-  # Write to the file descriptor $fd, and add /etc/hosts to it
+  # Write to the file descriptor or file handle $fd, and
+  # add /etc/hosts to it
   my $archive = Amanda::Archive->new($fd, ">");
   my $file = $archive->new_file("/etc/hosts");
   my $attr = $file->new_attr(16);
   open(my $fh, "<", "/etc/hosts");
-  $attr->add_data_fd(fileno($fh), 1);
+  $attr->add_data_fd($fh, 1);
   $file->close();
   $archive->close();
 
@@ -85,7 +86,7 @@ equivalent.
 =item C<new($fd, $mode)>
 
 Create a new archive for reading ("<") or writing (">") from or to file
-descriptor C<$fd>.
+C<$fd> (a file handle or integer file descriptor).
 
 =item C<new_file($filename, $want_posn)>
 
@@ -138,9 +139,9 @@ Close this file, writing an EOF record.
 
 Add C<$data> to this attribute, adding an EOA (end-of-attribute) bit if C<$eoa> is true.
 
-=item C<add_data_fd($fd, $eoa)>
+=item C<add_data_fd($fh, $eoa)>
 
-Copy data from C<$fd> to this attribute, adding an EOA (end-of-attribute) bit if C<$eoa> is true.
+Copy data from C<$fh> to this attribute, adding an EOA (end-of-attribute) bit if C<$eoa> is true.
 
 =item C<close()>
 

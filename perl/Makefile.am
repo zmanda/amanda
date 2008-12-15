@@ -91,6 +91,7 @@ AMGLUE_SWG = amglue/amglue.swg \
 	amglue/constants.swg \
 	amglue/dumpspecs.swg \
 	amglue/exports.swg \
+	amglue/filehandles.swg \
 	amglue/glib.swg \
 	amglue/integers.swg
 EXTRA_DIST += $(AMGLUE_SWG)

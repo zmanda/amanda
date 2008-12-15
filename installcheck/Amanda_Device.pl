@@ -66,7 +66,7 @@ sub make_queue_fd {
     my ($filename, $mode) = @_;
 
     open(my $fd, $mode, $filename) or die("Could not open $filename: $!");
-    return $fd, Amanda::Device::queue_fd_t->new(fileno($fd));
+    return $fd, Amanda::Device::queue_fd_t->new($fd);
 }
 
 my $write_file_count = 5;

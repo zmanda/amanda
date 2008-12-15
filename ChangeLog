@@ -1,4 +1,14 @@
 2008-12-15  Nikolas Coukouma <atrus@zmanda.com>
+	* perl/Makefile.am,
+	  perl/amglue/amglue.swg,
+	  perl/amglue/filehandles.swg: add typemap to convert perl file handles
+	  to int file descriptors
+	* installcheck/Amanda_Device.pl: update usage
+	* perl/Amanda/Device.swg,
+	  perl/Amanda/Archive.swg,
+	  perl/Amanda/MainLoop.swg: update docs, make typemap apply
+  
+2008-12-15  Nikolas Coukouma <atrus@zmanda.com>
 	* installcheck/Amanda_Device.pl: simplify S3 installcheck, removing 
 	  ability to test well with just DevPay credentials
 
