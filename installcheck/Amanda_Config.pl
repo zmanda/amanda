@@ -454,7 +454,7 @@ SKIP: { # device
           { "BLOCK_SIZE" => { 'priority' => 0, 'values' => ["128k"], 'append' => 0 }, },
         "device config proplist");
 
-    is_deeply([ sort(getconf_list("device")) ],
+    is_deeply([ sort(+getconf_list("device")) ],
 	      [ sort("my_device") ],
 	"getconf_list lists all devices");
 }
@@ -470,7 +470,7 @@ SKIP: { # changer
     is(changer_config_getconf($dc, $CHANGER_CONFIG_CHANGERDEV), '/dev/sg0',
 	"changer tapedev");
 
-    is_deeply([ sort(getconf_list("changer")) ],
+    is_deeply([ sort(+getconf_list("changer")) ],
 	      [ sort("my_changer") ],
 	"getconf_list lists all changers");
 }

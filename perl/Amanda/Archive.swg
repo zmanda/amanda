@@ -408,6 +408,29 @@ croak_gerror(GError **error)
     croak("Amanda archive: %s", errstr);
 }
 
+/* generic function to recognize when a string+len represents a number and
+ * incidentally return the resulting value.  Note that this does not handle
+ * negative numbers. */
+static gboolean
+is_number(char *str, int len, int *result)
+{
+    char *end = str+len;
+    int r = 0;
+
+    while (str < end) {
+	if (!g_ascii_isdigit(*str)) return FALSE;
+	r = r * 10 + (int)(*str - '0');
+	if (result < 0) {
+	    /* overflow */
+	    return FALSE;
+	}
+	str++;
+    }
+
+    *result = r;
+    return TRUE;
+}
+
 %}
 
 /* Rename all of the below wrapper functions (suffixed with '_') for
@@ -553,10 +576,10 @@ void amar_read_(amar_t *archive, SV *params_hashref) {
     while ((param = hv_iternext(params))) {
 	I32 keylen;
 	char *key = hv_iterkey(param, &keylen);
-	UV attrid;
+	int attrid;
 
 	/* if it's a number, it's handling information for an attrid */
-	if (grok_number(key, keylen, &attrid) == IS_NUMBER_IN_UV) {
+	if (is_number(key, keylen, &attrid)) {
 	    SV *val = hv_iterval(params, param);
 	    SV *coderef;
 	    UV bufsize = 0;

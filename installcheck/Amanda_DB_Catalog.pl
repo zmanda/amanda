@@ -122,7 +122,17 @@ sub dumps(&) {
 
 # put @_ in a canonical order
 sub sortdumps {
-    sort { $a->{'label'} cmp $b->{'label'} or $a->{'filenum'} cmp $b->{'filenum'} } @_;
+    map {
+	# convert bigints to strings so is_deeply doesn't get confused
+	$_->{'level'} = "$_->{level}";
+	$_->{'filenum'} = "$_->{filenum}";
+	$_->{'kb'} = "$_->{kb}";
+	$_;
+    } sort {
+	$a->{'label'} cmp $b->{'label'}
+	    or $a->{'filenum'} cmp $b->{'filenum'}
+    }
+    @_;
 }
 
 is_deeply([ sortdumps Amanda::DB::Catalog::get_dumps() ],
@@ -261,7 +271,7 @@ Amanda::DB::Catalog::add_dump({
 });
 
 is_deeply([ sortdumps Amanda::DB::Catalog::get_dumps(hostname => 'newbox') ],
-    [ {
+    [ sortdumps {
 	'write_timestamp' => '20080111000000',
 	'dump_timestamp' => '20080707070707',
 	'hostname' => 'newbox',
@@ -313,7 +323,7 @@ Amanda::DB::Catalog::add_dump({
 });
 
 is_deeply([ sortdumps Amanda::DB::Catalog::get_dumps(hostname => 'newlog') ],
-    [ {
+    [ sortdumps {
 	'write_timestamp' => '20080707070707',
 	'dump_timestamp' => '20080707070707',
 	'hostname' => 'newlog',
