@@ -1,3 +1,7 @@
+2008-12-16 Dan Locks <dwlocks@zmanda.com>
+	* config/amanda/changer.m4: update AC_CHECK_HEADERS to get rid of
+	  "present but cannot be compiled" warning during debian packaging.
+
 2008-12-16  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/security-util.c: Don't close if it's not open.
 
@@ -20,6 +24,7 @@
 	* server-src/changer.c changer-src/chg-glue.pl:
 	  better error handling
 
+>>>>>>> .r14655
 2008-12-15  Jean-Louis Martineau <martineau@zmanda.com>
 	* amandad-src/amandad.c: Set wait_30s to 0 for local auth.
 
