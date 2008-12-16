@@ -79,10 +79,12 @@ int check_infofile(char *infodir, disklist_t *dl, char **errmsg);
 void run_server_script(pp_script_t  *pp_script,
 		       execute_on_t  execute_on,
 		       char         *config,
-		       disk_t       *dp);
+		       disk_t       *dp,
+		       int           level);
 void run_server_scripts(execute_on_t  execute_on,
 			char         *config,
-			disk_t       *dp);
+			disk_t       *dp,
+		        int           level);
 
 void run_amcleanup(char *config_name);
 char *get_master_process(char *logfile);

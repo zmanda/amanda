@@ -207,7 +207,8 @@ run_server_script(
     pp_script_t  *pp_script,
     execute_on_t  execute_on,
     char         *config,
-    disk_t	 *dp)
+    disk_t	 *dp,
+    int           level)
 {
     pid_t   scriptpid;
     int     scriptin, scriptout, scripterr;
@@ -217,6 +218,7 @@ run_server_script(
     FILE   *streamout;
     char   *line;
     char   *plugin;
+    char    level_number[NUM_STR_SIZE];
 
     if ((pp_script_get_execute_on(pp_script) & execute_on) == 0)
 	return;
@@ -225,7 +227,7 @@ run_server_script(
 
     plugin = pp_script_get_plugin(pp_script);
     k = property_argv_size(pp_script_get_property(pp_script));
-    argvchild = g_new0(char *, 14+k);
+    argvchild = g_new0(char *, 16+k);
     cmd = vstralloc(APPLICATION_DIR, "/", plugin, NULL);
     i = 0;
     argvchild[i++] = plugin;
@@ -285,6 +287,12 @@ run_server_script(
 	argvchild[i++] = "--device";
 	argvchild[i++] = dp->device;
     }
+    if (level >= 0) {
+	g_snprintf(level_number, SIZEOF(level_number), "%d", level);
+	argvchild[i++] = "--level";
+	argvchild[i++] = level_number;
+    }
+
     i += property_add_to_argv(&argvchild[i], pp_script_get_property(pp_script));
     argvchild[i++] = NULL;
 
@@ -308,13 +316,14 @@ void
 run_server_scripts(
     execute_on_t  execute_on,
     char         *config,
-    disk_t	 *dp)
+    disk_t	 *dp,
+    int           level)
 {
     GSList   *pp_scriptlist;
 
     for (pp_scriptlist = dp->pp_scriptlist; pp_scriptlist != NULL;
 	 pp_scriptlist = pp_scriptlist->next) {
-	run_server_script(pp_scriptlist->data, execute_on, config, dp);
+	run_server_script(pp_scriptlist->data, execute_on, config, dp, level);
     }
 }
 

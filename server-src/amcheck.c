@@ -1852,11 +1852,11 @@ start_client_checks(
 	if(hostp->up == HOST_READY && dp->todo == 1) {
 	    for(dp1 = hostp->disks; dp1 != NULL; dp1 = dp1->hostnext) {
 		run_server_scripts(EXECUTE_ON_PRE_HOST_AMCHECK,
-				   get_config_name(), dp1);
+				   get_config_name(), dp1, -1);
 	    }
 	    for(dp1 = hostp->disks; dp1 != NULL; dp1 = dp1->hostnext) {
 		run_server_scripts(EXECUTE_ON_PRE_DLE_AMCHECK,
-				   get_config_name(), dp1);
+				   get_config_name(), dp1, -1);
 	    }
 	    start_host(hostp);
 	    hostcount++;
@@ -1984,11 +1984,11 @@ handle_result(
 	security_close_connection(sech, hostp->hostname);
 	for(dp = hostp->disks; dp != NULL; dp = dp->hostnext) {
 	    run_server_scripts(EXECUTE_ON_POST_DLE_AMCHECK,
-			       get_config_name(), dp);
+			       get_config_name(), dp, -1);
 	}
 	for(dp = hostp->disks; dp != NULL; dp = dp->hostnext) {
 	    run_server_scripts(EXECUTE_ON_POST_HOST_AMCHECK,
-			       get_config_name(), dp);
+			       get_config_name(), dp, -1);
 	}
     }
     /* try to clean up any defunct processes, since Amanda doesn't wait() for
