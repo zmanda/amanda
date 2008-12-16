@@ -607,7 +607,7 @@ tcpm_close_connection(
 
     (void)hostname;
 
-    if (rh && rh->rc && rh->rc->toclose == 0) {
+    if (rh && rh->rc && rh->rc->read >= 0 && rh->rc->toclose == 0) {
 	rh->rc->toclose = 1;
 	sec_tcp_conn_put(rh->rc);
     }

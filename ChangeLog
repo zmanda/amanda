@@ -1,4 +1,7 @@
 2008-12-16  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/security-util.c: Don't close if it's not open.
+
+2008-12-16  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/Makefile.am: Add amlog-script.
 	* application-src/amlog-script.pl: New scripts.
 	* server-src/amcheck.c , server-src/planner.c,
