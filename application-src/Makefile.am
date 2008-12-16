@@ -21,6 +21,7 @@ AM_LDFLAGS = $(AMANDA_STATIC_LDFLAGS)
 
 CHECK_PERL = amgtar_perl \
 	     script-email \
+	     amlog-script \
 	     amzfs-sendrecv \
 	     amzfs-snapshot \
 	     amsamba

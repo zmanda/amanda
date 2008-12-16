@@ -1103,12 +1103,13 @@ start_some_dumps(
 		if (diskp->host->pre_script == 0) {
 		    for (dp=diskp->host->disks; dp != NULL; dp = dp->hostnext) {
 			run_server_scripts(EXECUTE_ON_PRE_HOST_BACKUP,
-					   get_config_name(), dp);
+					   get_config_name(), dp, -1);
 		    }
 		    diskp->host->pre_script = 1;
 		}
 		run_server_scripts(EXECUTE_ON_PRE_DLE_BACKUP,
-				   get_config_name(), diskp);
+				   get_config_name(), diskp,
+				   sched(diskp)->level);
 		dumper_cmd(dumper, PORT_DUMP, diskp, NULL);
 	    }
 	    diskp->host->start_t = now + 15;
@@ -1941,7 +1942,7 @@ handle_dumper_result(
 	if (cmd != BOGUS) {
 	    int last_dump = 1;
 	    run_server_scripts(EXECUTE_ON_POST_DLE_BACKUP,
-			       get_config_name(), dp);
+			       get_config_name(), dp, sched(dp)->level);
 	    for (dp1=runq.head; dp1 != NULL; dp1 = dp1->next) {
 		if (dp1 != dp) last_dump = 0;
 	    }
@@ -1949,7 +1950,7 @@ handle_dumper_result(
 		if (dp->host->post_script == 0) {
 		    for (dp1=dp->host->disks; dp1 != NULL; dp1 = dp1->hostnext) {
 			run_server_scripts(EXECUTE_ON_POST_HOST_BACKUP,
-					   get_config_name(), dp1);
+					   get_config_name(), dp1, -1);
 		    }
 		    dp->host->post_script = 1;
 		}
@@ -3165,11 +3166,12 @@ dump_to_tape(
     if (dp->host->pre_script == 0) {
 	for (dp1=dp->host->disks; dp1 != NULL; dp1 = dp1->hostnext) {
 	    run_server_scripts(EXECUTE_ON_PRE_HOST_BACKUP,
-			       get_config_name(), dp1);
+			       get_config_name(), dp1, -1);
 	}
 	dp->host->pre_script = 1;
     }
-    run_server_scripts(EXECUTE_ON_PRE_DLE_BACKUP, get_config_name(), dp);
+    run_server_scripts(EXECUTE_ON_PRE_DLE_BACKUP, get_config_name(), dp,
+		       sched(dp)->level);
 
     /* tell the dumper to dump to a port */
     dumper_cmd(dumper, PORT_DUMP, dp, NULL);

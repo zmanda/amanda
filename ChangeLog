@@ -1,3 +1,13 @@
+2008-12-16  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/Makefile.am: Add amlog-script.
+	* application-src/amlog-script.pl: New scripts.
+	* server-src/amcheck.c , server-src/planner.c,
+	  server-src/server_util.c, server-src/server_util.h,
+	  server-src/driver.c: Add level argument to run_server_scripts().
+	  The script is executed with that level argument.
+	* installcheck/pp-scripts.pl: Check scripts.
+	* installcheck/Makefile.am: Add pp-scripts.
+
 2008-12-16  Dustin J. Mitchell <dustin@zmanda.com>
 	* man/Makefile.am man/xml-source/amanda-changers.7.xml
 	  man/xml-source/amanda-devices.7.xml man/xml-source/amanda.8.xml

@@ -40,7 +40,8 @@ full_tests = \
 	amcheckdump \
 	amrmtape \
 	amservice \
-	amstatus
+	amstatus \
+	pp-scripts
 
 restore_tests = \
 	amfetchdump

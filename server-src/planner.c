@@ -1234,11 +1234,13 @@ static void get_estimates(void)
 		something_started = 1;
 		for(dp1 = hostp->disks; dp1 != NULL; dp1 = dp1->hostnext) {
 		    run_server_scripts(EXECUTE_ON_PRE_HOST_ESTIMATE,
-				       get_config_name(), dp1);
+				       get_config_name(), dp1,
+				       est(dp1)->level[0]);
 		}
 		for(dp1 = hostp->disks; dp1 != NULL; dp1 = dp1->hostnext) {
 		    run_server_scripts(EXECUTE_ON_PRE_DLE_ESTIMATE,
-				       get_config_name(), dp1);
+				       get_config_name(), dp1,
+				       est(dp1)->level[0]);
 		}
 		getsize(hostp);
 		protocol_check();
@@ -2044,7 +2046,7 @@ static void handle_result(
 	      (est(dp)->level[1] == -1 || est(dp)->est_size[1] > (gint64)0) &&
 	      (est(dp)->level[2] == -1 || est(dp)->est_size[2] > (gint64)0)))) {
 	    run_server_scripts(EXECUTE_ON_POST_DLE_ESTIMATE,
-			       get_config_name(), dp);
+			       get_config_name(), dp, est(dp)->level[0]);
 	    est(dp)->post_dle = 1;
 	}
 	amfree(qname);
@@ -2054,7 +2056,7 @@ static void handle_result(
 	for(dp = hostp->disks; dp != NULL; dp = dp->hostnext) {
 	    if (pkt->type == P_REP) {
 		run_server_scripts(EXECUTE_ON_POST_HOST_ESTIMATE,
-				   get_config_name(), dp);
+				   get_config_name(), dp, est(dp)->level[0]);
 	    }
 	}
     }
