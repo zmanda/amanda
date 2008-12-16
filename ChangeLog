@@ -1,4 +1,13 @@
 2008-12-16  Dustin J. Mitchell <dustin@zmanda.com>
+	* man/Makefile.am man/xml-source/amanda-changers.7.xml
+	  man/xml-source/amanda-devices.7.xml man/xml-source/amanda.8.xml
+	  man/xml-source/amanda.conf.5.xml: new documentation
+	* perl/Amanda/Changer.pm: not finished yet!
+	* perl/Amanda/Changer/compat.pm: fix error message
+	* server-src/changer.c changer-src/chg-glue.pl:
+	  better error handling
+
+2008-12-16  Dustin J. Mitchell <dustin@zmanda.com>
 	* changer-src/chg-glue.pl: add labelling support
 	* perl/Amanda/Changer/compat.pm: only call '-label' on chg-zd-mtx if
 	  the changer is not seekable (hack to make slotinfofile work)

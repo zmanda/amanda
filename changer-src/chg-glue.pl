@@ -182,10 +182,13 @@ sub do_label {
         $res->set_label(label => $label,
             finished_cb => sub {
                 my ($err) = @_;
-                die $err if ($err);
-
-                print "EXITSTATUS 0\n";
-                print $res->{'this_slot'}, " ", $res->{'device_name'}, "\n";
+                if ($err) {
+		    print "EXITSTATUS 1\n";
+		    print "<error> $err\n";
+		} else {
+		    print "EXITSTATUS 0\n";
+		    print $res->{'this_slot'}, " ", $res->{'device_name'}, "\n";
+		}
                 Amanda::MainLoop::call_later(\&getcmd);
             }
         );

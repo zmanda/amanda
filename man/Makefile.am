@@ -22,6 +22,7 @@ CLIENT_MAN_PAGES = \
 
 SERVER_MAN_PAGES =  \
     amanda-devices.7 \
+    amanda-changers.7 \
     amaddclient.8    \
     amadmin.8 \
     amaespipe.8 \

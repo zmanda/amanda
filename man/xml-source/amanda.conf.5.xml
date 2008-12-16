@@ -2531,7 +2531,7 @@ in the form of "changer" sections, which look like this:</para>
 
 <programlisting>
 define changer <emphasis remap='I'>name</emphasis> {
-    commend "<emphasis remap='I'>comment (optional)</emphasis>"
+    comment "<emphasis remap='I'>comment (optional)</emphasis>"
     tapedev "<emphasis remap='I'>tape-device</emphasis>"
     tpchanger "<emphasis remap='I'>changer-type</emphasis>"
     changerdev "<emphasis remap='I'>device-name</emphasis>"

@@ -184,6 +184,9 @@ configuration files for quick reference.</para>
 <citerefentry><refentrytitle>amanda-applications</refentrytitle><manvolnum>7</manvolnum></citerefentry>,
 </listitem>
 <listitem>
+<citerefentry><refentrytitle>amanda-changers</refentrytitle><manvolnum>7</manvolnum></citerefentry>,
+</listitem>
+<listitem>
 <citerefentry><refentrytitle>amanda-devices</refentrytitle><manvolnum>7</manvolnum></citerefentry>,
 </listitem>
 <listitem>
