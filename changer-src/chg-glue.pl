@@ -177,11 +177,18 @@ sub do_search {
 }
 
 sub do_label {
-    # TODO
+    my ($label) = @_;
     if ($res) {
-	print "EXITSTATUS 0\n";
-	print "0 ", $res->{'device_name'}, "\n";
-	Amanda::MainLoop::call_later(\&getcmd);
+        $res->set_label(label => $label,
+            finished_cb => sub {
+                my ($err) = @_;
+                die $err if ($err);
+
+                print "EXITSTATUS 0\n";
+                print $res->{'this_slot'}, " ", $res->{'device_name'}, "\n";
+                Amanda::MainLoop::call_later(\&getcmd);
+            }
+        );
     } else {
 	print "EXITSTATUS 1\n";
 	print "<error> No volume loaded\n";

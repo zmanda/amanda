@@ -509,8 +509,10 @@ sub set_label {
     my $self = shift;
     my %params = @_;
 
-    # non-searchable changers don't care..
-    if (!$self->{'chg'}->{'searchable'}) {
+    # non-searchable changers don't get -label, except that chg-zd-mtx needs
+    # it to maintain its slotinfofile (this is a hack)
+    if (!$self->{'chg'}->{'searchable'}
+	&& $self->{'chg'}->{'script'} !~ /chg-zd-mtx$/) {
         if (exists $params{'finished_cb'}) {
             Amanda::MainLoop::call_later($params{'finished_cb'}, undef);
         }

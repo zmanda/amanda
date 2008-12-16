@@ -1,3 +1,10 @@
+2008-12-16  Dustin J. Mitchell <dustin@zmanda.com>
+	* changer-src/chg-glue.pl: add labelling support
+	* perl/Amanda/Changer/compat.pm: only call '-label' on chg-zd-mtx if
+	  the changer is not seekable (hack to make slotinfofile work)
+	* changer-src/chg-zd-mtx.sh: provide optional slotinfofile mapping
+	  slots to labels on a best-information-available basis
+
 2008-12-15  Jean-Louis Martineau <martineau@zmanda.com>
 	* amandad-src/amandad.c: Set wait_30s to 0 for local auth.
 
