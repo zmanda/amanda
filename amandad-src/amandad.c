@@ -437,6 +437,7 @@ main(
 
     if(strcasecmp(auth, "rsh") == 0 ||
        strcasecmp(auth, "ssh") == 0 ||
+       strcasecmp(auth, "local") == 0 ||
        strcasecmp(auth, "bsdtcp") == 0) {
 	wait_30s = 0;
 	exit_on_qlength = 1;

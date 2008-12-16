@@ -1,3 +1,6 @@
+2008-12-15  Jean-Louis Martineau <martineau@zmanda.com>
+	* amandad-src/amandad.c: Set wait_30s to 0 for local auth.
+
 2008-12-15  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Amanda_Config.pl: work around buggy sort() in perl-5.6
 	* installcheck/Amanda_DB_Catalog.pl installcheck/Amanda_Logfile.pl:
