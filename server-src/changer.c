@@ -413,14 +413,15 @@ changer_command(
 
     /* write the command to chg_glue */
     if (full_write(tpchanger_stdin, cmdstr, strlen(cmdstr)) != strlen(cmdstr)) {
+        changer_resultstr = g_strdup("<error> chg-glue exited unexpectedly");
 	exitcode = 2;
 	goto failed;
     }
 
     /* read the first line of the response */
     changer_resultstr = areads(tpchanger_stdout);
-    if (!changer_resultstr) {
-        changer_resultstr = g_strdup("unexpected EOF");
+    if (!changer_resultstr || !*changer_resultstr) {
+        changer_resultstr = g_strdup("<error> unexpected EOF");
         exitcode = 2;
         goto failed;
     }
@@ -436,7 +437,7 @@ changer_command(
     /* and the second */
     changer_resultstr = areads(tpchanger_stdout);
     if (!changer_resultstr) {
-        changer_resultstr = g_strdup("unexpected EOF");
+        changer_resultstr = g_strdup("<error> unexpected EOF");
         exitcode = 2;
         goto failed;
     }

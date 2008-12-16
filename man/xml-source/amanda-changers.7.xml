@@ -1,0 +1,231 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"
+[
+  <!-- entities files to use -->
+  <!ENTITY % global_entities SYSTEM '../entities/global.entities'>
+  %global_entities;
+]>
+
+<refentry id='amanda-changers.7'>
+
+<refmeta>
+<refentrytitle>amanda-changers</refentrytitle>
+<manvolnum>7</manvolnum>
+</refmeta>
+<refnamediv>
+<refname>amanda-changers</refname>
+<refpurpose>Configuring and Using Amanda Changers</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+
+<refsect1><title>DESCRIPTION</title>
+
+<para>Amanda uses changers to arbitrate access to devices
+(<citerefentry><refentrytitle>amanda-devices</refentrytitle><manvolnum>7</manvolnum></citerefentry>)
+and data volumes.  Changers provide an abstraction of tape robots, but are used
+to manage non-tape media, too.  Amanda communicates with changers through the
+Changer API.  This manpage contains a <emphasis>user-level</emphasis> overview
+of the API, and does not address details that are only of concern to
+developers.  For that purpose, consult the Amanda source code and
+http://wiki.zmanda.com.</para>
+
+</refsect1>
+
+<refsect1><title>TRANSITION</title>
+
+<para>The Amanda Changer API is in transition from version 1.0 - driven by
+shell scripts invoked for each changer operation - to version 2.0, composed of
+perl objects that can manage parallel access to multiple devices and other
+complexity.  When this transition is complete, Amanda devices will, in general,
+be specified via a changer, which will provide the necessary device specifier
+to access a requested volume.  In the interim, support for the "new" changer
+syntax is limited to the experimental
+<citerefentry><refentrytitle>amvault</refentrytitle><manvolnum>8</manvolnum></citerefentry>.</para>
+
+</refsect1>
+
+<refsect1><title>SPECIFYING CHANGERS</title>
+
+<para>Changer specifications are strings like
+<computeroutput>chg-disk:/my/vtapes</computeroutput>.  The
+<computeroutput>chg-</computeroutput> prefix serves to differentiate changers
+from devices (see
+<citerefentry><refentrytitle>amanda-devices</refentrytitle><manvolnum>7</manvolnum></citerefentry>).
+The next portion (<computeroutput>disk</computeroutput>, in this case)
+identifies the particular changer driver to use, and everything that follows
+the <computeroutput>:</computeroutput> is interpreted by the driver.</para>
+
+<para>A name which does not match this pattern, but which matches an old
+changer script (e.g., <computeroutput>chg-zd-mtx</computeroutput>), invokes the
+backward-compatibility changer driver as
+<computeroutput>chg-compat:chg-zd-mtx</computeroutput>.  If the name does not
+match an old changer, then it is treated as an Amanda device, and is wrapped by
+the single-device changer, e.g.,
+<computeroutput>chg-single:tape:/dev/rmt/0</computeroutput>.</para>
+
+<para>Changers which require additional parameters can also be described in &amconf; with "changer" sections, for example,
+<programlisting>
+define changer hp-robot {
+    tapedev "chg-robot:/dev/sg1"
+    property "drives" "0=/dev/nst0;1=/dev/nst0"
+    property "slots" "1-10"
+}
+</programlisting>
+
+(note that "chg-robot" is not yet implemented, so this is hypothetical).  A
+changer defininition creates a changer "alias", in this case named
+<emphasis>hp-robot</emphasis>, which can then be named where an application
+expects a changer - for example, the target of the <command>amvault</command> command.</para>
+</refsect1>
+
+<refsect1><title>CHANGER DRIVERS</title>
+
+<para>This section lists the changer drivers included with Amanda, and basic instructions for using them.  For complete How-To information, consult the Amanda wiki at http://wiki.zmanda.com.</para>
+
+<refsect2><title>chg-disk (new)</title>
+<programlisting>
+tpchanger "chg-disk:/u01/vtapes"
+</programlisting>
+
+<para>This changer driver replaces the old <command>chg-disk</command>,
+supporting parallel access to vtapes stored in directories named
+<computeroutput>slotN</computeroutput> in the directory specified after
+<computeroutput>chg-disk:</computeroutput>.  It does so by creating numbered
+"drives" so that simultaneous processes can access distinct slots.</para>
+
+</refsect2>
+
+<refsect2><title>chg-disk (old)</title>
+<programlisting>
+tapedev "file:/u01/vtapes"
+tpchanger "chg-disk"
+</programlisting>
+
+<para>This changer script supports sequential access to vtapes stored in
+directories named <computeroutput>slotN</computeroutput> in the directory
+specified by the <emphasis>tapedev</emphasis> parameter.</para>
+
+</refsect2>
+
+<refsect2><title>chg-multi</title>
+<programlisting>
+tpchanger "chg-multi"
+changerfile "chg-multi-state"
+</programlisting>
+
+<para>This script simply round-robins a number of distinct device names, as
+specified in its configuration file.  It is useful when all volumes for a
+configuration have different device names -- for example, with S3 devices.
+The <emphasis>changerfile</emphasis> need not exist; it is used as a prefix
+for filenames of state files.
+</para>
+
+</refsect2>
+
+<refsect2><title>chg-manual</title>
+<programlisting>
+tpchanger "chg-manual"
+changerfile "chg-manual.conf"
+</programlisting>
+
+<para>This script simply provides distinct device names in a round-robin
+fashion, as specified in its configuration file.  It is useful when all volumes
+for a configuration have different device names -- for example, with S3
+devices.  The configuration file parameters are (as listed in the script):
+<programlisting>
+resend_mail=900       # resend mail every __ seconds
+timeout_mail=604800   # time out after this many seconds (default 7 days)
+request="[type]"      # How to request a new tape (default "tty_email")
+  request="tty"       # Use the tty to ask the user to change tape.
+                      # Can't be use by cron
+  request="email"     # Send an email to ask the user to change tape.
+  request="tty_email" # Use the tty if it exist or send an email.
+</programlisting>
+</para>
+
+</refsect2>
+
+<refsect2><title>chg-zd-mtx</title>
+<programlisting>
+tpchanger "chg-zd-mtx"
+changerdev "/dev/sg0"         # used with 'mtx -f'
+changerfile "chg-zd-mtx.conf"
+tapedev "tape:/dev/nst0"
+</programlisting>
+
+<para>This script interfaces with a tape drive using the Zubkoff/Dandelion
+version of mtx.  That's the version that takes a device specifier with the
+<command>-f</command> option and has subcommands like
+<command>status</command>.  The configuration file parameters are (as listed in
+the script itself):
+<programlisting>
+firstslot=?                 #### First storage slot (element)
+lastslot=?                  #### Last storage slot (element)
+cleanslot=-1                #### Slot with cleaner tape -- default is "-1"
+                            #### Set negative to indicate no cleaner available
+driveslot=0                 #### Drive slot number.  Defaults to 0
+                            #### Use the 'Data Transfer Element' you want
+autoclean=0                 #### Set to '1' or greater to enable
+autocleancount=99           #### Number of access before a clean.
+havereader=0                #### If you have a barcode reader, set to 1.
+offline_before_unload=0     #### Does your robot require an
+                            #### 'mt offline' before mtx unload?
+poll_drive_ready=NN         #### Time (seconds) between tests to see if
+                            #### the tape drive has gone ready (default: 3).
+max_drive_wait=NN           #### Maximum time (seconds) to wait for the
+                            #### tape drive to become ready (default: 120).
+initial_poll_delay=NN       #### initial delay after load before polling for
+                            #### readiness
+slotinfofile=FILENAME       #### record slot information to this file, in
+                            #### the line-based format "SLOT LABEL\n"
+</programlisting>
+</para>
+
+</refsect2>
+
+<refsect2><title>chg-rait</title>
+<programlisting>
+tpchanger "chg-rait"
+changerfile "chg-rait.conf"
+</programlisting>
+
+<para>This changer script constructs RAIT devices out of the devices provided by several "sub-changers".  The configuration file specifies <computeroutput>nchangers</computeroutput>, the number of
+subchangers, and then provides <computeroutput>tpchanger</computeroutput>, <computeroutput>changerdev_N</computeroutput>, <computeroutput>changerfile_N</computeroutput>, and <computeroutput>tpchanger_N</computeroutput> for each sub-changer, 1 through N.</para>
+
+</refsect2>
+
+<refsect2><title>chg-null</title>
+<programlisting>
+tpchanger "chg-null"
+</programlisting>
+
+<para>This changer always provides the device "null:".  It is sometimes useful in conjunction with <command>chg-rait</command>.</para>
+
+</refsect2>
+
+<refsect2><title>Unmaintained Changers</title>
+
+<para>Amanda has many other changer scripts and programs beyond those described
+here (see the <computeroutput>changer-src/</computeroutput> in the source
+directory), but most of these scripts are unmaintained and undocumented, and
+will be removed when the new changer API is fully implemented.</para>
+
+</refsect2>
+
+</refsect1>
+
+<refsect1><title>AUTHORS</title>
+
+<para>Dustin J. Mitchell &email.dustin;: Original text</para>
+</refsect1>
+
+<refsect1><title>SEE ALSO</title>
+<para>
+<citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>amanda.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>amanda-devices</refentrytitle><manvolnum>7</manvolnum></citerefentry>,
+</para>
+
+</refsect1>
+</refentry>

@@ -54,6 +54,10 @@ Amanda::Changer -- interface to changer scripts
     # later..
     $reservation->release(finished_cb => $start_next_volume);
 
+=head1 API STATUS
+
+This interface will change before the next release.
+
 =head1 INTERFACE
 
 All operations in the module return immediately, and take as an argument a
@@ -393,11 +397,21 @@ sub _uri_to_pkgname {
     my $filename = $pkgname;
     $filename =~ s|::|/|g;
     $filename .= '.pm';
-    return 1 if (grep { $_ eq $filename } @INC);
+    return $pkgname if (exists $INC{$filename});
 
     # try loading it
     eval "use $pkgname;";
-    return 0 if ($@);
+    if ($@) {
+        my $err = $@;
+
+        # determine whether the module doesn't exist at all, or if there was an
+        # error loading it; die if we found a syntax error
+        if (exists $INC{$filename}) {
+            die($err);
+        }
+
+        return 0;
+    }
 
     return $pkgname;
 }

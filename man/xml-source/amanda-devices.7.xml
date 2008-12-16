@@ -49,7 +49,7 @@ some kind of backend storage, e.g., a tape driver.  A "device" is the
 
 <para>Device names take the form <emphasis>TYPE:NODE</emphasis>, where <emphasis>TYPE</emphasis> selects a device driver, and <emphasis>NODE</emphasis> provides further information to that driver.  The syntax for each device driver is given in the corresponding section below.</para>
 
-<para>Devices are described in <emphasis>amanda.conf</emphasis> with "device" sections, e.g.,
+<para>Devices are described in &amconf; with "device" sections, e.g.,
 <programlisting>
 define device top_drive {
     tapedev "tape:/dev/nst0"

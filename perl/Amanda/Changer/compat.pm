@@ -158,7 +158,7 @@ sub _manual_scan {
         # on to the next slot
         if (++$nchecked >= $self->{'nslots'}) {
             Amanda::MainLoop::call_later($params{'res_cb'},
-                    "Volume '{$params{label}}' not found", undef);
+                    "Volume '$params{label}' not found", undef);
             return;
         } else {
             # loop again with the next slot
