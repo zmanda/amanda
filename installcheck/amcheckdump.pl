@@ -50,7 +50,7 @@ ok(run('amcheckdump', 'TESTCONF'),
 like($Installcheck::Run::stdout, qr(could not find)i,
      "..but finds no dumps.");
 
-BAIL_OUT()
+BAIL_OUT("amdump failed")
     unless run('amdump', 'TESTCONF');
 
 like(run_get('amcheckdump', 'TESTCONF'), qr(Validating),
@@ -71,7 +71,7 @@ $testconf->add_param('usetimestamps', 'yes');
 $testconf->add_dle("localhost $diskname installcheck-test");
 $testconf->write();
 
-BAIL_OUT()
+BAIL_OUT("amdump failed")
     unless run('amdump', 'TESTCONF');
 
 like(run_get('amcheckdump', 'TESTCONF'), qr(Validating),

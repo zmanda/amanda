@@ -70,7 +70,7 @@ is_deeply([ sort split "\n", $Installcheck::Run::stdout],
 	  [ sort "MESSAGE File /dev/null is not a tape device", "DEVICE_ERROR"],
     ".. and produce a corresponding error message");
 
-BAIL_OUT()
+BAIL_OUT("amdump failed")
     unless run('amdump', 'TESTCONF');
 
 is_deeply([ sort split "\n", run_get('amdevcheck', 'TESTCONF') ],

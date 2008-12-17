@@ -1,3 +1,8 @@
+2008-12-17  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/amarchiver.pl: chdir() before rmtree().
+	* installcheck/amcheckdump.pl: Add reason to BAIL_OUT.
+	* installcheck/amdevcheck.pl: Add reason to BAIL_OUT.
+
 2008-12-07  Satya Ganga <gsat@zmanda.com>
 	* changer-src/chg-lib.sh.in: Remove dependency on ggrep and use mtx
 	  offline command instead of "eject" which is not supported on solaris.
