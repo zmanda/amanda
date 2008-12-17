@@ -147,5 +147,6 @@ SKIP: {
 # - test splits (regular, -w, -n)
 
 END {
+    chdir("$testdir/..");
     rmtree($testdir);
 }
