@@ -129,7 +129,8 @@ sub print_to_server_and_die {
 
     my $action = $_[0];
     $self->print_to_server( @_ );
-    if ($self->can("check_for_backup_failure")) {
+    if (!defined $self->{die} && $self->can("check_for_backup_failure")) {
+	$self->{die} = 1;
 	$self->check_for_backup_failure($action);
     }
     exit 1;
