@@ -1,3 +1,6 @@
+2008-12-17  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/amarchiver.pl: chdir() before rmtree().
+
 2008-12-17  Dustin J. Mitchell <dustin@zmanda.com>
 	* man/xml-source/amgtar.8.xml: atime_preserve -> atime-preserve
 	* installcheck/pp-scripts.pl: add atime-preserve property

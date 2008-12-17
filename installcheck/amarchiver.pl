@@ -109,5 +109,6 @@ ok((! -f "test.tmp-1.16" && -f "test.tmp-2.16"), "..and the file reappears")
     or diag(`find .`);
 
 END {
+    chdir("$tmpdir/..");
     rmtree($tmpdir);
 }
