@@ -34,12 +34,14 @@
 	permission to copy, distribute and modify it.
   -->
 <xsl:template match="refentry">
+  <div class="refentry">
   <xsl:apply-templates/>
   <xsl:choose>
     <xsl:when test="refentryinfo//author">
       <xsl:apply-templates select="refentryinfo" mode="authorsect"/>
     </xsl:when>
   </xsl:choose>
+  </div>
 </xsl:template>
 
 <xsl:template match="refentryinfo" mode="authorsect">

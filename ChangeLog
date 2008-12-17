@@ -1,3 +1,7 @@
+2008-12-16  Dustin J. Mitchell <dustin@zmanda.com>
+	* man/xslt/html.xsl.in: add <div class="refentry" /> for the benefit
+	  of amanda.css.
+
 2008-12-16  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/security-util.c: Don't close if it's not open.
 
