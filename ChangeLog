@@ -1,3 +1,14 @@
+2008-12-07  Satya Ganga <gsat@zmanda.com>
+	* changer-src/chg-lib.sh.in: Remove dependency on ggrep and use mtx
+	  offline command instead of "eject" which is not supported on solaris.
+
+2008-12-17 Dan Locks <dwlocks@zmanda.com>
+	* config/amanda/changer.m4: update AC_CHECK_HEADERS to get rid of
+	  "present but cannot be compiled" warning during debian packaging.
+
+2008-12-17 Dan Locks <dwlocks@zmanda.com>
+       * packaging/rpm/amanda.spec: add detection for SLES11 (Beta)
+
 2008-12-17  Dustin J. Mitchell <dustin@zmanda.com>
 	* man/xml-source/amgtar.8.xml: atime_preserve -> atime-preserve
 	* installcheck/pp-scripts.pl: add atime-preserve property, remove

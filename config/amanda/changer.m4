@@ -33,8 +33,8 @@ AC_DEFUN([AMANDA_SETUP_CHANGER], [
 	sys/scsi.h \
 	sys/scsiio.h \
 	sys/scsi/impl/uscsi.h \
-	sys/scsi/scsi/ioctl.h \
-	)
+	sys/scsi/scsi/ioctl.h, \
+	[], [], [AC_INCLUDES_DEFAULT])
 
     #
     # chio support
