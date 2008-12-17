@@ -1,4 +1,7 @@
 2008-12-17  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/amfetchdump.pl: chdir() before rmtree().
+
+2008-12-17  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/amarchiver.pl: chdir() before rmtree().
 
 2008-12-17  Dustin J. Mitchell <dustin@zmanda.com>
