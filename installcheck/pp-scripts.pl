@@ -90,6 +90,7 @@ localhost diskname1 $diskname {
     program "APPLICATION"
     application {
 	plugin "amgtar"
+	property "atime-preserve" "no"
     }
     script {
 	plugin "amlog-script"
@@ -132,6 +133,7 @@ localhost diskname2 $diskname {
     program "APPLICATION"
     application {
 	plugin "amgtar"
+	property "atime-preserve" "no"
     }
     script {
 	plugin "amlog-script"
