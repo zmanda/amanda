@@ -1,4 +1,7 @@
 2008-12-17  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/planner.c: Run script only if todo is set.
+
+2008-12-17  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/amfetchdump.pl: chdir() before rmtree().
 
 2008-12-17  Jean-Louis Martineau <martineau@zmanda.com>
