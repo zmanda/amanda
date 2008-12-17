@@ -42,7 +42,7 @@ for information on application properties and how they are configured.</para>
 <!-- PLEASE KEEP THIS LIST IN ALPHABETICAL ORDER -->
 <variablelist>
  <!-- ==== -->
- <varlistentry><term>ATIME_PRESERVE</term><listitem>
+ <varlistentry><term>ATIME-PRESERVE</term><listitem>
 If "YES" (the default), amgtar use the <emphasis>--atime-preserve=system</emphasis> option of gnutar to not update the atime of all files accessed; if "NO", gnutar will updates the atime for all files accessed. This property works only if you have gnutar 1.15.90 or newer, if not, you must set ATIME_PRESERVE to "NO".
 </listitem></varlistentry>
  <!-- ==== -->

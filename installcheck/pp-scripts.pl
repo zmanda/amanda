@@ -20,7 +20,6 @@ use Test::More tests => 8;
 
 use lib "@amperldir@";
 use Cwd qw(abs_path getcwd);
-use Installcheck::Dumpcache;
 use Installcheck::Config;
 use Installcheck::Run qw(run run_err $diskname);
 use Amanda::Config qw( :init );
@@ -90,6 +89,7 @@ localhost diskname1 $diskname {
     program "APPLICATION"
     application {
 	plugin "amgtar"
+	property "atime-preserve" "no"
     }
     script {
 	plugin "amlog-script"
@@ -111,7 +111,7 @@ verify_log("amcheck invokes correct script commands",
 
 unlink $templog;
 ok(run('amdump', 'TESTCONF'), "amdump runs successfully for client scripts.")
-    or Installcheck::Dumpcache::amdump_diag();
+    or die("amdump run failed");
 
 verify_log("amdump invokes correct script commands",
     "TESTCONF pre-dle-estimate client localhost diskname1 $diskname 0",
@@ -132,6 +132,7 @@ localhost diskname2 $diskname {
     program "APPLICATION"
     application {
 	plugin "amgtar"
+	property "atime-preserve" "no"
     }
     script {
 	plugin "amlog-script"
@@ -153,7 +154,7 @@ verify_log("amcheck invokes correct script commands",
 
 unlink $templog;
 ok(run('amdump', 'TESTCONF'), "amdump runs successfully for server scripts.")
-    or Installcheck::Dumpcache::amdump_diag();
+    or die("amdump run failed");
 
 verify_log("amdump invokes correct script commands",
     "TESTCONF pre-host-estimate server localhost diskname2 $diskname 0",

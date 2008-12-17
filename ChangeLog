@@ -1,3 +1,8 @@
+2008-12-17  Dustin J. Mitchell <dustin@zmanda.com>
+	* man/xml-source/amgtar.8.xml: atime_preserve -> atime-preserve
+	* installcheck/pp-scripts.pl: add atime-preserve property, remove
+	  references to Installcheck::Dumpcache, which isn't in this release
+
 2008-12-16  Dustin J. Mitchell <dustin@zmanda.com>
 	* man/xslt/html.xsl.in: add <div class="refentry" /> for the benefit
 	  of amanda.css.
