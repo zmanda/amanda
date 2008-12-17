@@ -1,4 +1,7 @@
 2008-12-17  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/pipespawn.c: Remove bogus g_debug().
+
+2008-12-17  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/amarchiver.pl: chdir() before rmtree().
 	* installcheck/amcheckdump.pl: Add reason to BAIL_OUT.
 	* installcheck/amdevcheck.pl: Add reason to BAIL_OUT.

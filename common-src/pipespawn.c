@@ -201,7 +201,6 @@ pipespawnv_passwd(
 	    error(_("error [spawn %s: dup2 in: %s]"), prog, strerror(errno));
 	    /*NOTREACHED*/
 	}
-	g_debug("calling dup2(%, %d)", outpipe[1], 1);
 	if(dup2(outpipe[1], 1) == -1) {
 	    error(_("error [spawn %s: dup2 out: %s]"), prog, strerror(errno));
 	    /*NOTREACHED*/
