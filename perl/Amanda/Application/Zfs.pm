@@ -97,19 +97,24 @@ sub zfs_set_value {
         $err = Symbol::gensym;
         $pid = open3($wtr, $rdr, $err, $cmd);
         close $wtr;
-        my $ret = <$rdr>;
+        my @ret;
+        while (<$rdr>) {
+            chomp;
+            push @ret,$_;
+        }
         my $errmsg = <$err>;
         waitpid $pid, 0;
         close $rdr;
         close $err;
 
         if ($? != 0) {
+	    my $ret = $ret[0];
             # invalid filesystem of ZFS dataset name
             if (defined $errmsg) {
                 chomp $errmsg;
             }
             if (defined $ret && defined $errmsg) {
-                $self->print_to_server_and_die($action, $ret, $errmsg, $Amanda::Script_App::ERROR);
+                $self->print_to_server_and_die($action, "$ret, $errmsg", $Amanda::Script_App::ERROR);
             } elsif (defined $ret) {
                 $self->print_to_server_and_die($action, $ret, $Amanda::Script_App::ERROR);
             } elsif (defined $errmsg) {
@@ -120,11 +125,29 @@ sub zfs_set_value {
                             $Amanda::Script_App::ERROR);
             }
         }
-        chomp $ret;
-        my @ret = split /:/, $ret;
-        if ($ret[0] =~ /(\S*)(\s*)(\()(\S*)(\s*)(\))$/) {
-            $self->{mountpoint} = $1;
-            $self->{filesystem} = $4;
+
+        my $size = @ret;
+        if ($size eq 1) {
+            # Solaris type df
+            @ret = split /:/, $ret[0];
+            if ($ret[0] =~ /(\S*)(\s*)(\()(\S*)(\s*)(\))$/) {
+                $self->{mountpoint} = $1;
+                $self->{filesystem} = $4;
+            } else {
+                $self->print_to_server_and_die($action,
+                            "Failed to find mount points: $self->{device}",
+                            $Amanda::Script_App::ERROR);
+            }
+        } else {
+            # FreeBSD type df with header
+            if ($ret[1] =~ /^(\S+)(\s+)((\S+)(\s+))+(\S+)(\s*)$/) {
+                $self->{mountpoint} = $6;
+                $self->{filesystem} = $1;
+            } else {
+                $self->print_to_server_and_die($action,
+                            "Failed to find mount points: $self->{device}",
+                            $Amanda::Script_App::ERROR);
+            }
         }
 
         $cmd = "$self->{pfexec_cmd} $self->{zfs_path} get -H -o value mountpoint $self->{filesystem}";
@@ -155,7 +178,7 @@ sub zfs_set_value {
                         $Amanda::Script_App::ERROR);
             }
         }
-        if ($zmountpoint ne $self->{mountpoint}) {
+        if ($zmountpoint ne 'legacy' && $zmountpoint ne $self->{mountpoint}) {
             $self->print_to_server_and_die($action,
                 "mountpoint from 'df' ($self->{mountpoint}) and 'zfs list' ($zmountpoint) differ",
                 $Amanda::Script_App::ERROR);
