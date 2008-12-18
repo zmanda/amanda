@@ -1,4 +1,7 @@
 2008-12-18  Jean-Louis Martineau <martineau@zmanda.com>
+	* man/xml-source/amgtar.8.xml: Improve documentation of regex.
+
+2008-12-18  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.h (anonymous_value): New prototype.
 	* common-src/conffile.c (anonymous_value): New function.
 	* common-src/conffile.c: Use anonymous_value.
