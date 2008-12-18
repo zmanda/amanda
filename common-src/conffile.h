@@ -1309,6 +1309,15 @@ char **val_t_display_strs(val_t *val, int str_needs_quotes);
  */
 dumptype_t *read_dumptype(char *name, FILE *from, char *fname, int *linenum);
 
+/* Every call return a pointer to a string with an increasing number; this is
+ * used by this module as well as by diskfile.c to read the disklist.
+ *
+ * Nobody else should use this function.  Seriously.
+ *
+ * @returns: a pointer to a static string.
+ */
+char *anonymous_value(void);
+
 /* Extend a relative filename with the current config_dir; if filename is already
  * absolute, this is equivalent to stralloc.
  *

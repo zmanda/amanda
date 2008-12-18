@@ -1,3 +1,9 @@
+2008-12-18  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.h (anonymous_value): New prototype.
+	* common-src/conffile.c (anonymous_value): New function.
+	* common-src/conffile.c: Use anonymous_value.
+	* server-src/diskfile.c: Use anonymous_value.
+
 2008-12-17  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Script_App.pm: Fix infinite loop.
 	* perl/Amanda/Application/Zfs.pm: Fix for freebsd.

@@ -3290,7 +3290,10 @@ read_dapplication(
 
     get_conftoken(CONF_ANY);
     if (tok == CONF_LBRACE) {
-	val->v.application = read_application(vstralloc("custom(DUMPTYPE:", dpcur.name, ")", NULL), NULL, NULL, NULL);
+	val->v.application = read_application(vstralloc("custom(DUMPTYPE:",
+							dpcur.name, ")", ".",
+							anonymous_value(),NULL),
+					      NULL, NULL, NULL);
 
     } else if (tok == CONF_STRING) {
 	val->v.application = lookup_application(tokenval.v.s);
@@ -3313,7 +3316,9 @@ read_dpp_script(
     pp_script_t *pp_script;
     get_conftoken(CONF_ANY);
     if (tok == CONF_LBRACE) {
-	pp_script = read_pp_script(vstralloc("custom(DUMPTYPE:", dpcur.name, ")", NULL), NULL, NULL, NULL);
+	pp_script = read_pp_script(vstralloc("custom(DUMPTYPE:", dpcur.name,
+					     ")", ".", anonymous_value(),NULL),
+				   NULL, NULL, NULL);
     } else if (tok == CONF_STRING) {
 	pp_script = lookup_pp_script(tokenval.v.s);
 	if (pp_script == NULL) {
@@ -6820,4 +6825,14 @@ property_add_to_argv(
     return (argv - argvchild);
 }
 
+char *
+anonymous_value(void)
+{
+    static char number[NUM_STR_SIZE];
+    static int value=1;
 
+    g_snprintf(number, sizeof(number), "%d", value);
+
+    value++;
+    return number;
+}

@@ -575,7 +575,8 @@ parse_diskline(
 	    return (-1);
 	}
 	dtype = read_dumptype(vstralloc("custom(", hostname,
-					":", disk->name, ")", NULL),
+					":", disk->name, ")",
+					".", anonymous_value(), NULL),
 			      diskf, (char*)filename, line_num_p);
 	if (dtype == NULL || dup) {
 	    disk_parserror(filename, line_num,
