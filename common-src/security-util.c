@@ -230,6 +230,7 @@ stream_sendpkt(
 
     if (security_stream_write(&rh->rs->secstr, buf, len) < 0) {
 	security_seterror(&rh->sech, "%s", security_stream_geterror(&rh->rs->secstr));
+	amfree(buf);
 	return (-1);
     }
     amfree(buf);
@@ -1507,10 +1508,13 @@ sec_tcp_conn_put(
 	amfree(rc->errmsg);
     connq_remove(rc);
     amfree(rc->pkt);
-    if(!rc->donotclose)
-	amfree(rc); /* someone might still use it           */
-		    /* eg. in sec_tcp_conn_read_callback if */
-		    /*     event_wakeup call us.            */
+    if(!rc->donotclose) {
+	/* amfree(rc) */
+	/* a memory leak occurs, but freeing it lead to memory
+	 * corruption because it can still be used.
+	 * We need to find a good place to free 'rc'.
+	 */
+    }
 }
 
 /*
