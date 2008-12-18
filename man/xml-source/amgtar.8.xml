@@ -75,33 +75,53 @@ List which exit status of gtar are good or bad. eg. "1=GOOD 2=BAD", exit status 
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>NORMAL</term><listitem>
-List all regex that are normal output from gtar. These output are in the "FAILED DUMP DETAILS" section of the email report if the dump result is STRANGE or FAILED. Default values:
+List all regex (POSIX Extended Regular Expression syntax) that are normal output from gtar. These output are in the "FAILED DUMP DETAILS" section of the email report if the dump result is STRANGE or FAILED. Default values:
 <programlisting>
-"^could not open conf file"
-"^Elapsed time:"
-"^Throughput"
-": Directory is new$"
-": Directory has been renamed"
-": socket ignored$"
-": File .* shrunk by [0-9][0-9]* bytes, padding with zeros"
-": Cannot add file .*: No such file or directory$"
-": Error exit delayed from previous errors"
+  "^could not open conf file"
+  "^Elapsed time:"
+  "^Throughput"
+  ": socket ignored$"
+  ": File .* shrunk by [0-9][0-9]* bytes, padding with zeros"
+  ": Cannot add file .*: No such file or directory$"
+  ": Error exit delayed from previous errors"
 </programlisting>
+<para>To treat one of these default patterns differently, specify it explicitly in a different property.</para>
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>IGNORE</term><listitem>
-List all regex that amanda ignore. These output are never in the email report. Default values:
+List all regex (POSIX Extended Regular Expression syntax) that amanda ignore. These output are never in the email report. Default values:
 <programlisting>
-": Directory is new$"
-": Directory has been renamed"
+  ": Directory is new$"
+  ": Directory has been renamed"
 </programlisting>
+<para>To treat one of these default patterns differently, specify it explicitly in a different property.</para>
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>STRANGE</term><listitem>
-List all regex that are strange output from gtar. All gtar output that doesn't match a normal or ignore regex are strange by default. The result of the dump is STRANGE if gtar produce a strange output. These output are in the "FAILED DUMP DETAILS" section of the email report.
+List all regex (POSIX Extended Regular Expression syntax) that are strange output from gtar. All gtar output that doesn't match a normal or ignore regex are strange by default. The result of the dump is STRANGE if gtar produce a strange output. These output are in the "FAILED DUMP DETAILS" section of the email report.
 </listitem></varlistentry>
 </variablelist>
 
+</refsect1>
+
+<refsect1><title>EXAMPLE</title>
+<programlisting>
+  define application-tool app_amgtar {
+    property "ATIME-PRESERVE" "NO"
+    property "CHECK-DEVICE" "YES"
+    property "GNUTAR-LISTDIR" "
+    property "GNUTAR-PATH" "/bin/tar"
+    property "ONE-FILE-SYSTEM" "YES"
+    property "SPARSE" "YES"
+    property "EXIT-HANDLING" "1=GOOD 2=BAD"
+    # change a default NORMAL regex to a STRANGE regex.
+    property "STRANGE" ": socket ignored$"
+    # add three new IGNORE regex
+    property "IGNORE" ": Directory is new$"
+    property append "IGNORE" ": Directory has been renamed"
+    property append "IGNORE" "file changed as we read it$"
+  }
+</programlisting>
 </refsect1>
 
 <refsect1><title>SEE ALSO</title>
