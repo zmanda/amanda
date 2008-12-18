@@ -1,4 +1,7 @@
 2008-12-18  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/security-util.c: Don't free 'rc'.
+
+2008-12-18  Jean-Louis Martineau <martineau@zmanda.com>
 	* man/xml-source/amgtar.8.xml: Improve documentation of regex.
 
 2008-12-18  Jean-Louis Martineau <martineau@zmanda.com>
