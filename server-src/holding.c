@@ -499,6 +499,7 @@ holding_get_file_chunks(char *hfile)
 {
     holding_get_datap_t data;
     data.result = NULL;
+    data.fullpaths = 1;
 
     holding_walk_file(hfile, (gpointer)&data,
 	holding_get_walk_fn);
