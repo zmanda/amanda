@@ -395,8 +395,7 @@ write_amanda_header(S3Device *self,
 
     /* write out the header and flush the uploads. */
     key = special_file_to_key(self, "tapestart", -1);
-    result = s3_upload(self->s3, self->bucket, key, s3_buffer_read_func,
-                       s3_buffer_size_func, s3_buffer_md5_func,
+    result = s3_upload(self->s3, self->bucket, key, S3_BUFFER_READ_FUNCS,
                        &amanda_header, NULL, NULL);
     g_free(amanda_header.buffer);
     g_free(key);
@@ -1066,7 +1065,7 @@ s3_device_read_label(Device *pself) {
     }
 
     key = special_file_to_key(self, "tapestart", -1);
-    if (!s3_read(self->s3, self->bucket, key, s3_buffer_write_func, &buf, NULL, NULL)) {
+    if (!s3_read(self->s3, self->bucket, key, S3_BUFFER_WRITE_FUNCS, &buf, NULL, NULL)) {
         guint response_code;
         s3_error_code_t s3_error_code;
         s3_error(self->s3, NULL, &response_code, &s3_error_code, NULL, NULL, NULL);
@@ -1229,8 +1228,7 @@ s3_device_start_file (Device *pself, dumpfile_t *jobInfo) {
 
     /* write it out as a special block (not the 0th) */
     key = special_file_to_key(self, "filestart", pself->file);
-    result = s3_upload(self->s3, self->bucket, key, s3_buffer_read_func,
-                       s3_buffer_size_func, s3_buffer_md5_func,
+    result = s3_upload(self->s3, self->bucket, key, S3_BUFFER_READ_FUNCS,
                        &amanda_header, NULL, NULL);
     g_free(amanda_header.buffer);
     g_free(key);
@@ -1257,8 +1255,8 @@ s3_device_write_block (Device * pself, guint size, gpointer data) {
 
     filename = file_and_block_to_key(self, pself->file, pself->block);
 
-    result = s3_upload(self->s3, self->bucket, filename, s3_buffer_read_func,
-                       s3_buffer_size_func, s3_buffer_md5_func, &to_write, NULL, NULL);
+    result = s3_upload(self->s3, self->bucket, filename, S3_BUFFER_READ_FUNCS,
+        &to_write, NULL, NULL);
     g_free(filename);
     if (!result) {
 	device_set_error(pself,
@@ -1352,7 +1350,8 @@ s3_device_seek_file(Device *pself, guint file) {
 
     /* read it in */
     key = special_file_to_key(self, "filestart", pself->file);
-    result = s3_read(self->s3, self->bucket, key, s3_buffer_write_func, &buf, NULL, NULL);
+    result = s3_read(self->s3, self->bucket, key, S3_BUFFER_WRITE_FUNCS,
+        &buf, NULL, NULL);
     g_free(key);
 
     if (!result) {
@@ -1371,7 +1370,7 @@ s3_device_seek_file(Device *pself, guint file) {
                 /* No next file. Check if we are one past the end. */
                 key = special_file_to_key(self, "filestart", pself->file - 1);
                 result = s3_read(self->s3, self->bucket, key,
-                                 s3_buffer_write_func, &buf, NULL, NULL);
+                    S3_BUFFER_WRITE_FUNCS, &buf, NULL, NULL);
                 g_free(key);
                 if (result) {
 		    /* pself->file, etc. are already correct */
@@ -1517,7 +1516,8 @@ s3_device_read_block (Device * pself, gpointer data, int *size_req) {
 	dat.size_req = *size_req;
     }
 
-    result = s3_read(self->s3, self->bucket, key, s3_read_block_write_func, &dat, NULL, NULL);
+    result = s3_read(self->s3, self->bucket, key, s3_read_block_write_func,
+        s3_buffer_reset_func, &dat, NULL, NULL);
     if (!result) {
 	guint response_code;
 	s3_error_code_t s3_error_code;

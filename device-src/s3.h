@@ -64,6 +64,15 @@ typedef size_t (*s3_size_func)(void *data);
  */
 typedef GByteArray* (*s3_md5_func)(void *data);
 
+/* This function is called to reset an upload or download data stream
+ * to the beginning
+ *
+ * @param data: The read_data or write_data (opaque pointer)
+ *
+ * @return The number of bytes of data, negative for error
+ */
+typedef void (*s3_reset_func)(void *data);
+
 /* Callback function to write data that's been downloaded
  * 
  * @note this is the same as CURLOPT_WRITEFUNCTION
@@ -306,6 +315,7 @@ s3_strerror(S3Handle *hdl);
  * @param bucket: the bucket to which the upload should be made
  * @param key: the key to which the upload should be made
  * @param read_func: the callback for reading data
+ * @param reset_func: the callback for to reset reading data
  * @param size_func: the callback to get the number of bytes to upload
  * @param md5_func: the callback to get the MD5 hash of the data to upload
  * @param read_data: pointer to pass to the above functions
@@ -319,6 +329,7 @@ s3_upload(S3Handle *hdl,
           const char *bucket,
           const char *key, 
           s3_read_func read_func,
+          s3_reset_func reset_func,
           s3_size_func size_func,
           s3_md5_func md5_func,
           gpointer read_data,
@@ -351,6 +362,7 @@ s3_list_keys(S3Handle *hdl,
  * @param bucket: the bucket to read from
  * @param key: the key to read from
  * @param write_func: the callback for writing data
+ * @param reset_func: the callback for to reset writing data
  * @param write_data: pointer to pass to C{write_func}
  * @param progress_func: the callback for progress information
  * @param progress_data: pointer to pass to C{progress_func}
@@ -361,6 +373,7 @@ s3_read(S3Handle *hdl,
         const char *bucket,
         const char *key,
         s3_write_func write_func,
+        s3_reset_func reset_func,
         gpointer write_data,
         s3_progress_func progress_func,
         gpointer progress_data);
@@ -413,6 +426,10 @@ typedef struct {
     guint max_buffer_size;
 } CurlBuffer;
 
+#define S3_BUFFER_READ_FUNCS s3_buffer_read_func, s3_buffer_reset_func, s3_buffer_size_func, s3_buffer_md5_func
+
+#define S3_BUFFER_WRITE_FUNCS s3_buffer_write_func, s3_buffer_reset_func
+
 /* a CURLOPT_READFUNCTION to read data from a buffer. */
 size_t
 s3_buffer_read_func(void *ptr, size_t size, size_t nmemb, void * stream);
@@ -422,6 +439,11 @@ s3_buffer_size_func(void *stream);
 
 GByteArray*
 s3_buffer_md5_func(void *stream);
+
+void
+s3_buffer_reset_func(void *stream);
+
+#define S3_EMPTY_READ_FUNCS s3_empty_read_func, NULL, s3_empty_size_func, s3_empty_md5_func
 
 /* a CURLOPT_WRITEFUNCTION to write data to a buffer. */
 size_t
@@ -437,11 +459,16 @@ s3_empty_size_func(void *stream);
 GByteArray*
 s3_empty_md5_func(void *stream);
 
+#define S3_COUNTER_WRITE_FUNCS s3_counter_write_func, s3_counter_reset_func
+
 /* a CURLOPT_WRITEFUNCTION to write data that just counts data.
  * s3_write_data should be NULL or a pointer to an gint64.
  */
 size_t
 s3_counter_write_func(void *ptr, size_t size, size_t nmemb, void *stream);
+
+void
+s3_counter_reset_func(void *stream);
 
 #ifdef _WIN32
 /* a CURLOPT_READFUNCTION to read data from a file. */
@@ -453,6 +480,9 @@ s3_file_size_func(void *stream);
 
 GByteArray*
 s3_file_md5_func(void *stream);
+
+size_t
+s3_file_reset_func(void *stream);
 
 /* a CURLOPT_WRITEFUNCTION to write data to a file. */
 size_t
