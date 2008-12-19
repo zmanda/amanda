@@ -636,15 +636,20 @@ SKIP: {
 
     # test again with invalid ca_info
     $dev = s3_make_device($dev_name);
-    ok($dev->property_set('SSL_CA_INFO', '/dev/null'),
-       "set invalid SSL/TLS CA certificate")
-        or diag($dev->error_or_status());
+    SKIP: {
+	skip "SSL not supported; can't check SSL_CA_INFO", 2
+	    unless $dev->property_get('S3_SSL');
 
-    $dev->read_label();
-    $status = $dev->status();
-    ok(($status != $DEVICE_STATUS_SUCCESS) && (($status & $DEVICE_STATUS_VOLUME_UNLABELED) == 0),
-       "status is not OK or just unlabeled")
-        or diag($dev->error_or_status());
+	ok($dev->property_set('SSL_CA_INFO', '/dev/null'),
+	   "set invalid SSL/TLS CA certificate")
+	    or diag($dev->error_or_status());
+
+	$dev->read_label();
+	$status = $dev->status();
+	ok(($status != $DEVICE_STATUS_SUCCESS) && (($status & $DEVICE_STATUS_VOLUME_UNLABELED) == 0),
+	   "status is not OK or just unlabeled")
+	    or diag($dev->error_or_status());
+    }
 
     # bucket name incompatible with location constraint
     $dev_name = "s3:-$base_name-s3-eu";
