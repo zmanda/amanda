@@ -1,3 +1,6 @@
+2008-12-19  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/holding.c (holding_get_file_chunks): Set fullpaths to 1.
+
 2008-12-18  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/security-util.c: Don't free 'rc'.
 
