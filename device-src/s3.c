@@ -149,6 +149,7 @@ struct S3Handle {
 typedef struct {
     CurlBuffer resp_buf;
     s3_write_func write_func;
+    s3_reset_func reset_func;
     gpointer write_data;
 
     gboolean headers_done;
@@ -338,11 +339,13 @@ interpret_response(S3Handle *hdl,
  * or NULL for none
  * @param read_func: the callback for reading data
  *   Will use s3_empty_read_func if NULL is passed in.
+ * @param read_reset_func: the callback for to reset reading data
  * @param size_func: the callback to get the number of bytes to upload
  * @param md5_func: the callback to get the MD5 hash of the data to upload
  * @param read_data: pointer to pass to the above functions
  * @param write_func: the callback for writing data.
  *   Will use s3_counter_write_func if NULL is passed in.
+ * @param write_reset_func: the callback for to reset writing data
  * @param write_data: pointer to pass to C{write_func}
  * @param progress_func: the callback for progress information
  * @param progress_data: pointer to pass to C{progress_func}
@@ -358,10 +361,12 @@ perform_request(S3Handle *hdl,
                 const char *subresource,
                 const char *query,
                 s3_read_func read_func,
+                s3_reset_func read_reset_func,
                 s3_size_func size_func,
                 s3_md5_func md5_func,
                 gpointer read_data,
                 s3_write_func write_func,
+                s3_reset_func write_reset_func,
                 gpointer write_data,
                 s3_progress_func progress_func,
                 gpointer progress_data,
@@ -373,6 +378,12 @@ perform_request(S3Handle *hdl,
  */
 static size_t
 s3_internal_write_func(void *ptr, size_t size, size_t nmemb, void * stream);
+
+/*
+ * a function to reset to our internal buffer
+ */
+static void
+s3_internal_reset_func(void * stream);
 
 /*
  * a CURLOPT_HEADERFUNCTION to save the ETag header only.
@@ -763,6 +774,13 @@ s3_buffer_md5_func(void *stream)
     return s3_compute_md5_hash(&req_body_gba);
 }
 
+void
+s3_buffer_reset_func(void *stream)
+{
+    CurlBuffer *data = stream;
+    data->buffer_pos = 0;
+}
+
 /* a CURLOPT_WRITEFUNCTION to write data to a buffer. */
 size_t
 s3_buffer_write_func(void *ptr, size_t size, size_t nmemb, void *stream)
@@ -823,10 +841,18 @@ s3_empty_md5_func(G_GNUC_UNUSED void *stream)
 size_t
 s3_counter_write_func(G_GNUC_UNUSED void *ptr, size_t size, size_t nmemb, void *stream)
 {
-    gint64 inc = nmemb*size;
+    gint64 *count = (gint64*) stream, inc = nmemb*size;
     
-    if (stream) *((gint64*) stream) += inc;
+    if (count) *count += inc;
     return inc;
+}
+
+void
+s3_counter_reset_func(void *stream)
+{
+    gint64 *count = (gint64*) stream;
+
+    if (count) *count = 0;
 }
 
 #ifdef _WIN32
@@ -864,10 +890,8 @@ s3_file_md5_func(void *stream)
     MD5_CTX md5_ctx;
     GByteArray *ret = NULL;
 
-    if (INVALID_SET_FILE_POINTER == SetFilePointer(hFile, 0, NULL, FILE_BEGIN)) {
-        return NULL;
-    }
-    
+    g_assert(INVALID_SET_FILE_POINTER != SetFilePointer(hFile, 0, NULL, FILE_BEGIN));
+
     ret = g_byte_array_sized_new(S3_MD5_HASH_BYTE_LEN);
     g_byte_array_set_size(ret, S3_MD5_HASH_BYTE_LEN);    
     MD5_Init(&md5_ctx);
@@ -877,12 +901,15 @@ s3_file_md5_func(void *stream)
     }
     MD5_Final(ret->data, &md5_ctx);
 
-    if (INVALID_SET_FILE_POINTER == SetFilePointer(hFile, 0, NULL, FILE_BEGIN)) {
-        g_byte_array_free(ret, TRUE);
-        ret = NULL;
-    }
+    g_assert(INVALID_SET_FILE_POINTER != SetFilePointer(hFile, 0, NULL, FILE_BEGIN));
     return ret;
 #undef S3_MD5_BUF_SIZE
+}
+
+GByteArray*
+s3_file_reset_func(void *stream)
+{
+    g_assert(INVALID_SET_FILE_POINTER != SetFilePointer(hFile, 0, NULL, FILE_BEGIN));
 }
 
 /* a CURLOPT_WRITEFUNCTION to write data to a file. */
@@ -949,10 +976,12 @@ perform_request(S3Handle *hdl,
                 const char *subresource,
                 const char *query,
                 s3_read_func read_func,
+                s3_reset_func read_reset_func,
                 s3_size_func size_func,
                 s3_md5_func md5_func,
                 gpointer read_data,
                 s3_write_func write_func,
+                s3_reset_func write_reset_func,
                 gpointer write_data,
                 s3_progress_func progress_func,
                 gpointer progress_data,
@@ -964,7 +993,7 @@ perform_request(S3Handle *hdl,
     CURLcode curl_code = CURLE_OK;
     char curl_error_buffer[CURL_ERROR_SIZE] = "";
     struct curl_slist *headers = NULL;
-    S3InternalData int_writedata = {{NULL, 0, 0, MAX_ERROR_RESPONSE_LEN}, NULL, NULL, FALSE, NULL};
+    S3InternalData int_writedata = {{NULL, 0, 0, MAX_ERROR_RESPONSE_LEN}, NULL, NULL, NULL, FALSE, NULL};
     gboolean should_retry;
     guint retries = 0;
     gulong backoff = EXPONENTIAL_BACKOFF_START_USEC;
@@ -1017,10 +1046,12 @@ perform_request(S3Handle *hdl,
 
     if (write_func) {
         int_writedata.write_func = write_func;
+        int_writedata.reset_func = write_reset_func;
         int_writedata.write_data = write_data;
     } else {
         /* Curl will use fwrite() otherwise */
         int_writedata.write_func = s3_counter_write_func;
+        int_writedata.reset_func = s3_counter_reset_func;
         int_writedata.write_data = NULL;
     }
 
@@ -1029,10 +1060,12 @@ perform_request(S3Handle *hdl,
         if (headers) {
             curl_slist_free_all(headers);
         }
-        int_writedata.resp_buf.buffer_pos = 0;
-        int_writedata.headers_done = FALSE;
-        int_writedata.etag = NULL;
         curl_error_buffer[0] = '\0';
+        if (read_reset_func) {
+            read_reset_func(read_data);
+        }
+        /* calls write_reset_func */
+        s3_internal_reset_func(&int_writedata);
 
         /* set up the request */
         headers = authenticate_request(hdl, verb, bucket, key, subresource,
@@ -1177,6 +1210,19 @@ s3_internal_write_func(void *ptr, size_t size, size_t nmemb, void * stream)
         return data->write_func(ptr, size, nmemb, data->write_data);
     } else {
         return bytes_saved;
+    }
+}
+
+static void
+s3_internal_reset_func(void * stream)
+{
+    S3InternalData *data = (S3InternalData *) stream;
+
+    s3_buffer_reset_func(&data->resp_buf);
+    data->headers_done = FALSE;
+    data->etag = NULL;
+    if (data->reset_func) {
+        data->reset_func(data->write_data);
     }
 }
 
@@ -1459,6 +1505,7 @@ s3_upload(S3Handle *hdl,
           const char *bucket,
           const char *key, 
           s3_read_func read_func,
+          s3_reset_func reset_func,
           s3_size_func size_func,
           s3_md5_func md5_func,
           gpointer read_data,
@@ -1475,8 +1522,8 @@ s3_upload(S3Handle *hdl,
     g_assert(hdl != NULL);
 
     result = perform_request(hdl, "PUT", bucket, key, NULL, NULL,
-                 read_func, size_func, md5_func, read_data,
-                 NULL, NULL, progress_func, progress_data,
+                 read_func, reset_func, size_func, md5_func, read_data,
+                 NULL, NULL, NULL, progress_func, progress_data,
                  result_handling);
 
     return result == S3_RESULT_OK;
@@ -1615,7 +1662,7 @@ list_fetch(S3Handle *hdl,
 
     /* and perform the request on that URI */
     result = perform_request(hdl, "GET", bucket, NULL, NULL, query->str,
-                             NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+                             NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
                              result_handling);
 
     if (query) g_string_free(query, TRUE);
@@ -1695,6 +1742,7 @@ s3_read(S3Handle *hdl,
         const char *bucket,
         const char *key,
         s3_write_func write_func,
+        s3_reset_func reset_func,
         gpointer write_data,
         s3_progress_func progress_func,
         gpointer progress_data)
@@ -1710,7 +1758,7 @@ s3_read(S3Handle *hdl,
     g_assert(write_func != NULL);
 
     result = perform_request(hdl, "GET", bucket, key, NULL, NULL,
-        NULL, NULL, NULL, NULL, write_func, write_data, 
+        NULL, NULL, NULL, NULL, NULL, write_func, reset_func, write_data,
         progress_func, progress_data, result_handling);
 
     return result == S3_RESULT_OK;
@@ -1731,7 +1779,7 @@ s3_delete(S3Handle *hdl,
     g_assert(hdl != NULL);
 
     result = perform_request(hdl, "DELETE", bucket, key, NULL, NULL,
-                 NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 
+                 NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
                  result_handling);
 
     return result == S3_RESULT_OK;
@@ -1752,6 +1800,7 @@ s3_make_bucket(S3Handle *hdl,
     char *loc_end_open, *loc_content;
     CurlBuffer buf = {NULL, 0, 0, 0}, *ptr = NULL;
     s3_read_func read_func = NULL;
+    s3_reset_func reset_func = NULL;
     s3_md5_func md5_func = NULL;
     s3_size_func size_func = NULL;
 
@@ -1765,6 +1814,7 @@ s3_make_bucket(S3Handle *hdl,
             buf.buffer_pos = 0;
             buf.max_buffer_size = buf.buffer_len;
             read_func = s3_buffer_read_func;
+            reset_func = s3_buffer_reset_func;
             size_func = s3_buffer_size_func;
             md5_func = s3_buffer_md5_func;
         } else {
@@ -1775,9 +1825,9 @@ s3_make_bucket(S3Handle *hdl,
         }
     }
 
-    result = perform_request(hdl, "PUT", bucket, NULL, NULL, NULL, 
-                 read_func, size_func, md5_func, ptr, NULL, NULL, NULL, NULL, 
-                 result_handling);
+    result = perform_request(hdl, "PUT", bucket, NULL, NULL, NULL,
+                 read_func, reset_func, size_func, md5_func, ptr,
+                 NULL, NULL, NULL, NULL, NULL, result_handling);
 
    if (result == S3_RESULT_OK ||
         (hdl->bucket_location && result != S3_RESULT_OK 
@@ -1785,9 +1835,9 @@ s3_make_bucket(S3Handle *hdl,
         /* verify the that the location constraint on the existing bucket matches
          * the one that's configured.
          */
-        result = perform_request(hdl, "GET", bucket, NULL, "location", NULL, 
-                                 NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 
-                                 result_handling);
+        result = perform_request(hdl, "GET", bucket, NULL, "location", NULL,
+                                 NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+                                 NULL, NULL, result_handling);
 
         /* note that we can check only one of the three AND conditions above 
          * and infer that the others are true
