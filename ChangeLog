@@ -1,3 +1,8 @@
+2008-12-21  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/s3-device.c: use devpay if the user token property is
+	  given; otherwise, regular S3
+	* installcheck/Amanda_Device.pl: adjust tests to correspond
+
 2008-12-19  Nikolas Coukouma <atrus@zmanda.com>, Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/s3-device.c, device-src/s3.c, device-src/s3.h:
 	  Reset read and write when retrying a failed request

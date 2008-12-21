@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 262;
+use Test::More tests => 259;
 use File::Path qw( mkpath rmtree );
 use Sys::Hostname;
 use Carp;
@@ -485,16 +485,16 @@ my $run_s3_tests = defined $S3_SECRET_KEY && defined $S3_ACCESS_KEY;
 my $run_devpay_tests = defined $DEVPAY_SECRET_KEY &&
     defined $DEVPAY_ACCESS_KEY && $DEVPAY_USER_TOKEN;
 
-my $s3_make_device_count = 8;
-sub s3_make_device($) {
-    my $dev_name = shift @_;
+my $s3_make_device_count = 7;
+sub s3_make_device($$) {
+    my ($dev_name, $kind) = @_;
     $dev = Amanda::Device->new($dev_name);
     is($dev->status(), $DEVICE_STATUS_SUCCESS,
        "$dev_name: create successful")
         or diag($dev->error_or_status());
 
     my @s3_props = ( 's3_access_key', 's3_secret_key' );
-    push @s3_props, 's3_user_token' if ($dev_name =~ /^s3zmanda:/);
+    push @s3_props, 's3_user_token' if ($kind eq "devpay");
     properties_include([ $dev->property_list() ], [ @common_properties, @s3_props ],
 	"necessary properties listed on s3 device");
 
@@ -505,7 +505,7 @@ sub s3_make_device($) {
 	"set block size")
 	or diag($dev->error_or_status());
 
-    if ($dev_name =~ /^s3:/) {
+    if ($kind eq "s3") {
         # use regular S3 credentials
         ok($dev->property_set('S3_ACCESS_KEY', $S3_ACCESS_KEY),
            "set S3 access key")
@@ -514,21 +514,23 @@ sub s3_make_device($) {
         ok($dev->property_set('S3_SECRET_KEY', $S3_SECRET_KEY),
            "set S3 secret key")
             or diag($dev->error_or_status());
-    } elsif ($dev_name =~ /^s3zmanda:/) {
-        # use s3zmanda credentials
+
+	pass("(placeholder)");
+    } elsif ($kind eq "devpay") {
+        # use devpay credentials
         ok($dev->property_set('S3_ACCESS_KEY', $DEVPAY_ACCESS_KEY),
-           "set s3zmanda access key")
+           "set devpay access key")
         or diag($dev->error_or_status());
 
         ok($dev->property_set('S3_SECRET_KEY', $DEVPAY_SECRET_KEY),
-           "set s3zmanda secret key")
+           "set devpay secret key")
             or diag($dev->error_or_status());
 
         ok($dev->property_set('S3_USER_TOKEN', $DEVPAY_USER_TOKEN),
-           "set s3zmanda user token")
+           "set devpay user token")
             or diag($dev->error_or_status());
     } else {
-        croak("didn't recognize the device scheme, so no credentials were set");
+        croak("didn't recognize the device kind, so no credentials were set");
     }
     return $dev;
 }
@@ -536,11 +538,8 @@ sub s3_make_device($) {
 my $base_name;
 
 SKIP: {
-    my $s3_make_device_count = 5;
-    my $verify_file_count = 1;
-    my $write_file_count = 4;
     skip "define \$INSTALLCHECK_S3_{SECRET,ACCESS}_KEY to run S3 tests",
-            37 +
+            18 +
             1 * $verify_file_count +
             4 * $write_file_count +
             4 * $s3_make_device_count
@@ -549,7 +548,7 @@ SKIP: {
     my $hostname  = hostname();
     $base_name = "$S3_ACCESS_KEY-installcheck-$hostname";
     $dev_name = "s3:$base_name-s3";
-    $dev = s3_make_device($dev_name);
+    $dev = s3_make_device($dev_name, "s3");
     $dev->read_label();
     my $status = $dev->status();
     # this test appears very liberal, but catches the case where setup_handle fails without
@@ -623,7 +622,7 @@ SKIP: {
 
     # try a constrained bucket
     $dev_name = lc("s3:$base_name-s3-eu");
-    $dev = s3_make_device($dev_name);
+    $dev = s3_make_device($dev_name, "s3");
     ok($dev->property_set('S3_BUCKET_LOCATION', 'EU'),
        "set S3 bucket location")
         or diag($dev->error_or_status());
@@ -635,7 +634,7 @@ SKIP: {
         or diag($dev->error_or_status());
 
     # test again with invalid ca_info
-    $dev = s3_make_device($dev_name);
+    $dev = s3_make_device($dev_name, "s3");
     SKIP: {
 	skip "SSL not supported; can't check SSL_CA_INFO", 2
 	    unless $dev->property_get('S3_SSL');
@@ -653,17 +652,10 @@ SKIP: {
 
     # bucket name incompatible with location constraint
     $dev_name = "s3:-$base_name-s3-eu";
-    $dev = s3_make_device($dev_name);
+    $dev = s3_make_device($dev_name, "s3");
 
     ok(!$dev->property_set('S3_BUCKET_LOCATION', 'EU'),
        "should not be able to set S3 bucket location with an incompatible name")
-        or diag($dev->error_or_status());
-
-    # can't set user token without devpay
-    $dev_name = "s3:$base_name";
-    $dev = s3_make_device($dev_name);
-    ok(!$dev->property_set('S3_USER_TOKEN', '123'),
-       "set user token, but that shouldn't be possible (not using DevPay)")
         or diag($dev->error_or_status());
 
 }
@@ -671,11 +663,10 @@ SKIP: {
 SKIP: {
     # in this case, most of our code has already been exercised
     # just make sure that authentication works as a basic sanity check
-    my $s3_make_device_count = 1;
-    skip "skipping abbreviated s3zmanda tests", 5*$s3_make_device_count + 3
+    skip "skipping abbreviated devpay tests", $s3_make_device_count + 1
 	unless $run_devpay_tests;
-    $dev_name = "s3zmanda:base_name-s3zmanda";
-    $dev = s3_make_device($dev_name);
+    $dev_name = "s3:$base_name-devpay";
+    $dev = s3_make_device($dev_name, "devpay");
     $dev->read_label();
     my $status = $dev->status();
     # this test appears very liberal, but catches the case where setup_handle fails without

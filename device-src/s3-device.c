@@ -81,7 +81,6 @@ struct _S3Device {
     char *secret_key;
     char *access_key;
     char *user_token;
-    gboolean is_devpay;
 
     char *bucket_location;
 
@@ -116,7 +115,6 @@ struct _S3DeviceClass {
  */
 
 #define S3_DEVICE_NAME "s3"
-#define DEVPAY_DEVICE_NAME "s3zmanda"
 
 /* Maximum key length as specified in the S3 documentation
  * (*excluding* null terminator) */
@@ -614,7 +612,7 @@ delete_all_files(S3Device *self)
 void
 s3_device_register(void)
 {
-    static const char * device_prefix_list[] = { S3_DEVICE_NAME, DEVPAY_DEVICE_NAME, NULL };
+    static const char * device_prefix_list[] = { S3_DEVICE_NAME, NULL };
     g_assert(s3_init());
 
     /* set up our properties */
@@ -822,13 +820,6 @@ s3_device_set_user_token_fn(Device *p_self, DevicePropertyBase *base,
 {
     S3Device *self = S3_DEVICE(p_self);
 
-    if (!self->is_devpay) {
-	device_set_error(p_self, stralloc(_(
-		   "Can't set a user token unless DevPay is in use")),
-	    DEVICE_STATUS_DEVICE_ERROR);
-	return FALSE;
-    }
-
     amfree(self->user_token);
     self->user_token = g_value_dup_string(val);
     device_clear_volume_details(p_self);
@@ -929,8 +920,7 @@ s3_device_factory(char * device_name, char * device_type, char * device_node)
 {
     Device *rval;
     S3Device * s3_rval;
-    g_assert(0 == strcmp(device_type, S3_DEVICE_NAME) ||
-             0 == strcmp(device_type, DEVPAY_DEVICE_NAME));
+    g_assert(0 == strcmp(device_type, S3_DEVICE_NAME));
     rval = DEVICE(g_object_new(TYPE_S3_DEVICE, NULL));
     s3_rval = (S3Device*)rval;
 
@@ -964,8 +954,6 @@ s3_device_open_device(Device *pself, char *device_name,
         self->bucket = g_strndup(device_node, name_colon - device_node);
         self->prefix = g_strdup(name_colon + 1);
     }
-
-    self->is_devpay = !strcmp(device_type, DEVPAY_DEVICE_NAME);
 
     if (self->bucket == NULL || self->bucket[0] == '\0') {
 	device_set_error(pself,
@@ -1016,8 +1004,6 @@ static gboolean setup_handle(S3Device * self) {
         if (self->access_key == NULL)
             return FALSE;
 	if (self->secret_key == NULL)
-            return FALSE;
-	if (self->is_devpay && self->user_token == NULL)
             return FALSE;
 
         self->s3 = s3_open(self->access_key, self->secret_key, self->user_token,
