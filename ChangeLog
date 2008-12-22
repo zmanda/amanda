@@ -1,3 +1,7 @@
+2008-12-22  Jean-Louis Martineau <martineau@zmanda.com>,
+	* man/xml-source/amarchiver.8.xml: amanda-archive-format man page is
+	                                   in section 5.
+
 2008-12-22  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Installcheck/Dumpcache.pm
 	  installcheck/Installcheck/Run.pm installcheck/amdump.pl

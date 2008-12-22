@@ -94,6 +94,6 @@ non-strings in their filenames.</para>
 
 <refsect1><title>SEE ALSO</title>
 <para><citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry></para>
-<para><citerefentry><refentrytitle>amanda-archive-format</refentrytitle><manvolnum>7</manvolnum></citerefentry></para>
+<para><citerefentry><refentrytitle>amanda-archive-format</refentrytitle><manvolnum>5</manvolnum></citerefentry></para>
 </refsect1>
 </refentry>
