@@ -611,7 +611,7 @@ amgtar_estimate(
     int    pipefd = -1;
     FILE  *dumpout = NULL;
     off_t  size = -1;
-    char  *line;
+    char   line[PATH_MAX];
     char  *errmsg = NULL;
     char  *qerrmsg = NULL;
     char  *qdisk;
@@ -679,7 +679,9 @@ amgtar_estimate(
 	}
 
 	size = (off_t)-1;
-	while (size < 0 && (line = agets(dumpout)) != NULL) {
+	while (size < 0 && (fgets(line, 32768, dumpout) != NULL)) {
+	    if (line[strlen(line)-1] == '\n') /* remove trailling \n */
+		line[strlen(line)-1] = '\0';
 	    if (line[0] == '\0')
 		continue;
 	    dbprintf("%s\n", line);
@@ -696,12 +698,10 @@ amgtar_estimate(
 		}
 	    }
 	    /*@end@*/
-	    amfree(line);
 	}
 
-	while ((line = agets(dumpout)) != NULL) {
-	    dbprintf("%s\n", line);
-	    amfree(line);
+	while (fgets(line, 32768, dumpout) != NULL) {
+	    dbprintf("%s", line);
 	}
 
 	dbprintf(".....\n");
@@ -782,7 +782,7 @@ amgtar_backup(
     char *cmd = NULL;
     char *qdisk;
     char *incrname;
-    char *line;
+    char line[32768];
     amregex_t *rp;
     off_t dump_size = -1;
     char *type;
@@ -834,7 +834,9 @@ amgtar_backup(
 	error(_("error outstream(%d): %s\n"), outf, strerror(errno));
     }
 
-    while ((line = agets(outstream)) != NULL) {
+    while (fgets(line, 32768, outstream) != NULL) {
+	if (line[strlen(line)-1] == '\n') /* remove trailling \n */
+	    line[strlen(line)-1] = '\0';
 	if (*line == '.' && *(line+1) == '/') { /* filename */
 	    if (argument->dle.create_index) {
 		fprintf(indexstream, "%s\n", &line[1]); /* remove . */
