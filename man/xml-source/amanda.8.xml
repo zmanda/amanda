@@ -145,6 +145,9 @@ configuration files for quick reference.</para>
 <citerefentry><refentrytitle>amtoc</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
 </listitem>
 <listitem>
+<citerefentry><refentrytitle>amvault</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+</listitem>
+<listitem>
 <citerefentry><refentrytitle>amzfs-sendrecv</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
 </listitem>
 <listitem>

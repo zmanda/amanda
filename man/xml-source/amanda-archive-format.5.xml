@@ -7,14 +7,14 @@
   %global_entities;
 ]>
 
-<refentry id='amanda-archive-format.7'>
+<refentry id='amanda-archive-format.5'>
 
 <refmeta>
 <refentrytitle>amanda-archive-format</refentrytitle>
-<manvolnum>7</manvolnum>
+<manvolnum>5</manvolnum>
 &rmi.source;
 &rmi.version;
-&rmi.manual.7;
+&rmi.manual.5;
 </refmeta>
 <refnamediv>
 <refname>amanda-archive-format</refname>
@@ -49,7 +49,7 @@
 <programlisting>
   28 bytes:    magic string
 </programlisting>
-The magic string is the ASCII text "AMANDA ARCHIVE FOMRAT " followed by a decimal representation of the format version number (currently '1'), padded to 28 bytes with NUL bytes.</para>
+The magic string is the ASCII text "AMANDA ARCHIVE FORMAT " followed by a decimal representation of the format version number (currently '1'), padded to 28 bytes with NUL bytes.</para>
 
 <para>A data record has a variable size, as follows:
 <programlisting>
@@ -70,7 +70,7 @@ The file number and attribute ID serve to identify the data stream to which this
 
 <refsect2><title>CONNECTION TO DATA MODEL</title>
 
-<para>Each file in an archive is assigned a file number distinct from any other active file in the archive.  The record must have attribute ID 0 (AMAR_ATTR_FILENAME), indicating a filename.  A file ends with an empty record with ID 1 (AMAR_ATTR_EOF).  For every file at which a reader might want to begin reading, the filename record should be preceded by a header record.  How often to write header records is left to the discretion of the application.</para>
+<para>Each file in an archive is assigned a file number distinct from any other active file in the archive.  The first record for a file must have attribute ID 0 (AMAR_ATTR_FILENAME), indicating a filename.  A file ends with an empty record with ID 1 (AMAR_ATTR_EOF).  For every file at which a reader might want to begin reading, the filename record should be preceded by a header record.  How often to write header records is left to the discretion of the application.</para>
 
 <para>All data records with the same file number and attribute ID are considered a part of the same attribute.  The boundaries between such records are not significant to the contents of the attribute, and both readers and writers are free to alter such boundaries as necessary.</para>
 

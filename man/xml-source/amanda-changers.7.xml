@@ -12,11 +12,17 @@
 <refmeta>
 <refentrytitle>amanda-changers</refentrytitle>
 <manvolnum>7</manvolnum>
+&rmi.source;
+&rmi.version;
+&rmi.manual.7;
 </refmeta>
 <refnamediv>
 <refname>amanda-changers</refname>
 <refpurpose>Configuring and Using Amanda Changers</refpurpose>
 </refnamediv>
+<refentryinfo>
+&author.dustin;
+</refentryinfo>
 <!-- body begins here -->
 
 <refsect1><title>DESCRIPTION</title>
@@ -213,11 +219,6 @@ will be removed when the new changer API is fully implemented.</para>
 
 </refsect2>
 
-</refsect1>
-
-<refsect1><title>AUTHORS</title>
-
-<para>Dustin J. Mitchell &email.dustin;: Original text</para>
 </refsect1>
 
 <refsect1><title>SEE ALSO</title>

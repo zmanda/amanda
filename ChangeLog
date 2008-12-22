@@ -1,4 +1,17 @@
 2008-12-22  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Installcheck/Dumpcache.pm
+	  installcheck/Installcheck/Run.pm installcheck/amdump.pl
+	  installcheck/pp-scripts.pl: move amdump_diag to Installcheck::Run, fix
+	  it, and use it in amdump and pp-scripts
+	* application-src/amlog-script.pl: don't pretend to be script-email
+	* man/Makefile.am: amanda-archive-format should be section 5
+	* man/xml-source/amanda-archive-format.5.xml: small tweaks
+	* man/xml-source/amanda-changers.7.xml: fix authorship
+	* man/xml-source/amanda.8.xml: add link to amvault(8)
+	* man/xml-source/amvault.8.xml: enumerate limitations of this version
+	* perl/Amanda/Config.swg: fix mem leak in config_dir_relative wrapper
+
+2008-12-22  Dustin J. Mitchell <dustin@zmanda.com>
 	* config/amanda/dirs.m4: add --with-amdatadir
 	* example/Makefile.am: use it for examples and templates
 	* perl/Amanda/Paths.pm.in: add $amdatadir

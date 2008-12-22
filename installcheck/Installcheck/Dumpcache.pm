@@ -58,7 +58,7 @@ Like 'basic', but with "usetimestamps" set to "no".
 
 =cut
 
-use Installcheck::Run qw(run $diskname);
+use Installcheck::Run qw(run $diskname amdump_diag);
 use Test::More;
 use Amanda::Paths;
 use Amanda::Constants;
@@ -69,40 +69,6 @@ use Carp;
 
 my $tarballdir = "$AMANDA_TMPDIR/installcheck-dumpcache";
 my %flavors;
-
-sub amdump_diag {
-    my ($flavor) = @_;
-
-    # try running amreport
-    my $report = "failure-report.txt";
-    unlink($report);
-    my @logfiles = <$CONFIG_DIR/TESTCONF/log/log.*>;
-    run('amreport', 'TESTCONF', '-f', $report, '-l', $logfiles[-1]);
-    if (-f $report) {
-	open(my $fh, "<", $report) or return;
-	for my $line (<$fh>) {
-	    diag($line);
-	}
-	unlink($report);
-	goto bail;
-    }
-
-    # maybe there was a config error
-    config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
-    my ($cfgerr_level, @cfgerr_errors) = config_errors();
-    if ($cfgerr_level >= $CFGERR_WARNINGS) {
-	foreach (@cfgerr_errors) {
-	    diag($_);
-	}
-	goto bail;
-    }
-
-    # huh.
-    diag("no amreport available, and no config errors");
-
-bail:
-    BAIL_OUT("amdump run for Dumpcache flavor '$flavor' failed");
-}
 
 $flavors{'basic'} = sub {
     my $testconf = Installcheck::Run::setup();
@@ -128,7 +94,7 @@ sub generate_and_store {
     }
 
     Installcheck::Run::run('amdump', 'TESTCONF')
-	or amdump_diag($flavor);
+	or amdump_diag("Amdump run failed for '$flavor'");
 
     # now package that up as a tarball
     mkpath($tarballdir);

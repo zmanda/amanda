@@ -21,7 +21,7 @@ use Test::More tests => 2;
 use lib "@amperldir@";
 use Installcheck::Dumpcache;
 use Installcheck::Config;
-use Installcheck::Run qw(run run_err $diskname);
+use Installcheck::Run qw(run run_err $diskname amdump_diag);
 use Amanda::Config qw( :init );
 use Amanda::Paths;
 
@@ -54,7 +54,7 @@ EODLE
 $testconf->write();
 
 ok(run('amdump', 'TESTCONF'), "amdump runs successfully")
-    or Installcheck::Dumpcache::amdump_diag();
+    or amdump_diag();
 
 # Dump a nonexistant client, and see amdump fail.
 $testconf = Installcheck::Run::setup();

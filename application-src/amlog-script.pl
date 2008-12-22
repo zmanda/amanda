@@ -22,7 +22,7 @@ use strict;
 use Getopt::Long;
 use File::Basename;
 
-package Amanda::Script::Script_email;
+package Amanda::Script::amlog_script;
 use base qw(Amanda::Script);
 use Amanda::Config qw( :getconf :init );
 use Amanda::Debug qw( :logging );
@@ -230,7 +230,7 @@ package main;
 
 sub usage {
     print <<EOF;
-Usage: script-email <command> --execute-where=<client|server> --config=<config> --host=<host> --disk=<disk> --device=<device> --level=<level> --index=<yes|no> --message=<text> --collection=<no> --record=<yes|no> --mailto=<email>.
+Usage: amlog-script <command> --execute-where=<client|server> --config=<config> --host=<host> --disk=<disk> --device=<device> --level=<level> --index=<yes|no> --message=<text> --collection=<no> --record=<yes|no> --logfile=<filename>.
 EOF
     exit(1);
 }
@@ -262,7 +262,7 @@ GetOptions(
     'logfile=s'       => \$opt_logfile
 ) or usage();
 
-my $script = Amanda::Script::Script_email->new($opt_execute_where, $opt_config, $opt_host, $opt_disk, $opt_device, \@opt_level, $opt_index, $opt_message, $opt_collection, $opt_record, $opt_logfile);
+my $script = Amanda::Script::amlog_script->new($opt_execute_where, $opt_config, $opt_host, $opt_disk, $opt_device, \@opt_level, $opt_index, $opt_message, $opt_collection, $opt_record, $opt_logfile);
 
 $script->do($ARGV[0]);
 

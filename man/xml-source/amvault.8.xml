@@ -35,8 +35,21 @@
 </refsynopsisdiv>
 
 <refsect1><title>WARNING</title>
-This application is not yet in its final form, and is subject to major revision
-in subsequent versions of Amanda.  Backward compatibility is not guaranteed.
+<para>This application is not yet in its final form, and is subject to major revision
+in subsequent versions of Amanda.  Backward compatibility is not guaranteed.</para>
+
+<para>The significant limitations of this version of amvault are: tapetypes for
+secondary and tertiary volumes much match (including length and
+device_properties); tertiary volumes must be blank (manual erasure is required
+to re-use tertiary media; restore/recover operations will request tertiary
+media by label when dumpfiles are not found on secondary media, but there is no
+provision to automatically fetch such media from a different changer; and all
+dumpfiles on a secondary volume are moved to tertiary media - there is no
+provision to filter dumps.</para>
+
+<para>Feedback on and patches to this application are invited and
+encouraged!</para>
+
 </refsect1>
 
 <refsect1><title>DESCRIPTION</title>
@@ -47,6 +60,9 @@ the changer <emphasis remap='I'>dst-changer</emphasis>, labeling new volumes
 with <emphasis remap='I'>label-template</emphasis>.  If <emphasis
 remap='I'>src-run-timestamp</emphasis> is "latest", then the most recent amdump
 or amflush run will be used.</para>
+
+<para>In a vaulting operation, the source media is referred to as "secondary
+media", while the destination is referred to as "tertiary media".</para>
 
 <para>Each source volume will be copied to a new destination volume; no
 re-assembly or splitting will be performed.  Destination volumes must be at
