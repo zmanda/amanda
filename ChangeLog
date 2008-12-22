@@ -1,3 +1,6 @@
+2008-12-22  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/reporter.c: Fix reporting of FLUSH.
+
 2008-12-21  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/s3-device.c: use devpay if the user token property is
 	  given; otherwise, regular S3
