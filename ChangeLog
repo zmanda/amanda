@@ -1,3 +1,12 @@
+2008-12-22  Dustin J. Mitchell <dustin@zmanda.com>
+	* config/amanda/dirs.m4: add --with-amdatadir
+	* example/Makefile.am: use it for examples and templates
+	* perl/Amanda/Paths.pm.in: add $amdatadir
+	* server-src/amserverconfig.pl: use it
+	* packaging/deb/rules packaging/rpm/amanda.spec: packaging changes
+	  so that built packages still put examples and templates in
+	  /var/lib/amanda
+
 2008-12-22  Jean-Louis Martineau <martineau@zmanda.com>,
 	* application-src/amstar.c: Use fgets to read star output.
 	* application-src/amgtar.c: Use fgets to read gtar output.

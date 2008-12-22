@@ -19,21 +19,17 @@
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 #
 
+use lib '@amperldir@';
 use Getopt::Long;
 use Time::Local;
 use File::Copy;
 use Socket;   # for gethostbyname
+use Amanda::Paths;
 
-my $confdir="@CONFIG_DIR@";
-my $prefix="@prefix@";
-my $tmpdir="@AMANDA_DBGDIR@";
-$prefix=$prefix;                # avoid warnings about possible typo
-my $exec_prefix="@exec_prefix@";
-$exec_prefix=$exec_prefix;      # ditto
-my $sbindir="@sbindir@";
-my $localstatedir="@localstatedir@";
+my $confdir="$CONFIG_DIR";
+my $tmpdir="$AMANDA_DBGDIR";
 my $amandahomedir="$localstatedir/lib/amanda";
-my $datadir="$amandahomedir/template.d"; #rpm install template files here
+my $templatedir="$amdatadir/template.d"; #rpm install template files here
 my $def_tapedev="file:/$amandahomedir/vtapes";
 
 my $amanda_user="@CLIENT_LOGIN@";
@@ -156,8 +152,8 @@ sub copy_template_file {
 	&log_and_die ("ERROR: template is missing\n", 1);
     }
     # create and update amanda.conf
-    open(CONF, "$datadir/amanda-$tplate.conf")
-	|| &log_and_die ("ERROR: Cannot open $datadir/amanda-$tplate.conf: $!\n", 1);
+    open(CONF, "$templatedir/amanda-$tplate.conf")
+	|| &log_and_die ("ERROR: Cannot open $templatedir/amanda-$tplate.conf: $!\n", 1);
     open(NEWCONF, ">$confdir/$config/amanda.conf") ||
 	&log_and_die ("ERROR: Cannot create $confdir/$config/amanda.conf: $!\n", 1);
     chmod ($amanda_conf_perm, "$confdir/$config/amanda.conf") ||
@@ -433,8 +429,8 @@ sub copy_chg_manual_conf {
   if ( $template eq "single-tape" && !defined $changerfile && !defined $tpchanger)
     {
       my $my_changerfile="$confdir/$config/chg-manual.conf";
-      copy("$datadir/chg-manual.conf", $my_changerfile) ||
-	&mprint ("copy $datadir/chg-manual.conf to $my_changerfile failed: $!\n");
+      copy("$templatedir/chg-manual.conf", $my_changerfile) ||
+	&mprint ("copy $templatedir/chg-manual.conf to $my_changerfile failed: $!\n");
     }
 }
 
@@ -573,20 +569,20 @@ my $dtype="$confdir/template.d/dumptypes";
 my $ttype="$confdir/template.d/tapetypes";
 
 unless ( -e $dtype ) {
-    copy("$datadir/dumptypes", $dtype ) ||
+    copy("$templatedir/dumptypes", $dtype ) ||
     &log_and_die ("ERROR: copy dumptypes failed: $!\n", 1);
 }
 
 
 unless ( -e $ttype ) {
-    copy("$datadir/tapetypes", $ttype ) ||
+    copy("$templatedir/tapetypes", $ttype ) ||
     &log_and_die ("ERROR: copy tapetypes file to $ttype failed: $!\n", 1);
 }
 
 
 
 # update $def_config value to the specified config value in advanced.conf
-    open(ADV, "$datadir/advanced.conf") || &log_and_die ("ERROR: Cannot open advanced.conf file: $!\n", 1);
+    open(ADV, "$templatedir/advanced.conf") || &log_and_die ("ERROR: Cannot open advanced.conf file: $!\n", 1);
     open(NEWADV, ">$confdir/$config/advanced.conf") || 
 	&log_and_die ("ERROR: Cannot create advanced.conf file: $!\n", 1);
     while (<ADV>) {

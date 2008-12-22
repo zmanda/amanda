@@ -3,7 +3,7 @@
 include $(top_srcdir)/config/automake/vars.am
 include $(top_srcdir)/config/automake/installperms.am
 
-amanda_dir     = $(localstatedir)/lib/amanda
+amanda_dir    = $(amdatadir)
 templatedir   = $(amanda_dir)/template.d
 exampledir    = $(amanda_dir)/example
 lbltempldir   = $(amanda_dir)/example/label-templates

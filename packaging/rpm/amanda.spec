@@ -327,6 +327,7 @@ Amanda Documentation is available at: http://wiki.zmanda.com/
 %define MANDIR          %{DATADIR}/man
 %define LOGDIR          /var/log/amanda
 %define PERLSITELIB     %(eval "`perl -V:installsitelib`"; echo $installsitelib)
+%define AMDATADIR	/var/lib/amanda
 
 # Installation directories:
 %define ROOT_SBINDIR            %{buildroot}/%{SBINDIR}
@@ -338,6 +339,7 @@ Amanda Documentation is available at: http://wiki.zmanda.com/
 %define ROOT_LIBDIR             %{buildroot}/%{LIBDIR}
 %define ROOT_MANDIR             %{buildroot}/%{MANDIR}
 %define ROOT_LOGDIR             %{buildroot}/%{LOGDIR}
+%define ROOT_AMDATADIR          %{buildroot}/%{AMDATADIR}
 
 # --- Unpack ---
 
@@ -359,6 +361,7 @@ Amanda Documentation is available at: http://wiki.zmanda.com/
         --localstatedir=%{LOCALSTATEDIR} \
         --libdir=%{LIBDIR} \
         --includedir=%{INCLUDEDIR} \
+	--with-amdatadir=%{AMDATADIR} \
         --with-gnuplot=/usr/bin/gnuplot \
         --with-gnutar-listdir=%{AMANDAHOMEDIR}/gnutar-lists \
         --with-index-server=localhost \
@@ -391,6 +394,7 @@ Amanda Documentation is available at: http://wiki.zmanda.com/
         --localstatedir=%{LOCALSTATEDIR} \
         --libdir=%{LIBDIR} \
         --includedir=%{INCLUDEDIR} \
+	--with-amdatadir=%{AMDATADIR} \
         --with-star=/usr/bin/star \
         --with-gnuplot=/usr/bin/gnuplot \
         --with-gnutar=/bin/tar \
