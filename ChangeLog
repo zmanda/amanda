@@ -1,3 +1,12 @@
+2008-12-22  Paul Yeatman <pyeatman@zmanda.com>
+	* man/entities/global.entities.in: added author/email entity for me
+	* man/xml-source/amanda-auth.7.xml: newly added man page
+	* man/Makefile.am: added amanda-auth to section 7
+	* man/xml-source/amanda.conf.5.xml: removed details on auth parameter
+	and added link to amanda-auth man page 
+	* man/xml-source/amanda.conf.5.xml: moved AUTHORIZATION section to
+	amanda-auth and added link to amanda-auth man page 
+
 2008-12-22  Nikolas Coukouma <atrus@zmanda.com>
 	* device-src/s3.c: retry on CURLE_GOT_NOTHING (52) to handle "connection reset by peer"
 
