@@ -1,0 +1,535 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"
+[
+  <!-- entities files to use -->
+  <!ENTITY % global_entities SYSTEM '../entities/global.entities'>
+  %global_entities;
+]>
+
+<refentry id='amanda-auth.7'>
+
+<refmeta>
+  <refentrytitle>amanda-auth</refentrytitle>
+  <manvolnum>7</manvolnum>
+&rmi.source;
+&rmi.version;
+&rmi.manual.7;
+</refmeta>
+<refnamediv>
+  <refname>amanda-auth</refname>
+  <refpurpose>Communication/Authentication methods between &A; server and client</refpurpose>
+</refnamediv>
+<refentryinfo>
+  &author.jlm;
+  &author.dustin;
+  &author.pby;
+</refentryinfo>
+
+<!-- body begins here -->
+
+<refsect1><title>DESCRIPTION</title>
+  <para>&A; offers 7 methods of communication between Amanda server (sometimes also called the tape server) and clients, each with its own authentication method.  The desired communication method is specified by the <emphasis remap='I'>auth</emphasis> parameter in the amanda.conf file (&amconf;) commonly as a dumptype.  Valid values to the <emphasis remap='I'>auth</emphasis> parameter are <emphasis remap='B'>bsd</emphasis>, <emphasis remap='B'>bsdudp</emphasis>, <emphasis remap='B'>bsdtcp</emphasis>, <emphasis remap='B'>krb4</emphasis>, <emphasis remap='B'>krb5</emphasis>, <emphasis remap='B'>local</emphasis>, <emphasis remap='B'>rsh</emphasis>, and <emphasis remap='B'>ssh</emphasis>. Please note that <emphasis remap='B'>krb4</emphasis> will be removed in the next release.  The authentication and communication method is used during the backup process &amdump; (amdump(8)) as well as the recovery process &amrecover; (amrecover(8)).  For detailed information, please see http://wiki.zmanda.com/index.php/Server/Client_authentication.</para>
+</refsect1>
+
+<refsect1><title>COMPILATION AND GENERAL INFORMATION</title>
+  <para>The communication method and thus type of authentication that will be used by the Amanda server is specified by the <emphasis remap='I'>auth</emphasis> parameter in the dumptype for each disklist entry (DLE).  The <emphasis remap='I'>auth</emphasis> parameter thus may be easily and globally specified in the "global" dumptype.  If <emphasis remap='I'>auth</emphasis> is not specified, the <emphasis remap='B'>bsd</emphasis> communication method is used.  See &amconf; for more information on Amanda configuration and dumptypes, and &disklist; for more information on disklists.</para>
+
+<para>On the client side, the Amanda daemon &amandad; validates the connection depending on the value of the <emphasis remap='B'>auth</emphasis> argument passed to it (see &A;(8)).  Also, when it comes to recovery, the <emphasis remap='B'>auth</emphasis> parameter can be specified in the &amclientconf; file to specify the communication method to be used by the client to the server.</para>
+
+  <para>When &A; is being built from source code, desired communication and thus authentication methods (shown as "Authentication") must be specified as configure options at compilation time.
+<programlisting>
+Authentication	  Configure option(s)
+ bsd			--with-bsd-security      --with-amandahosts (pre-2.6)
+ bsdtcp		--with-bsdtcp-security   --with-amandahosts (pre-2.6)
+ bsdudp		--with-bsdudp-security   --with-amandahosts (pre-2.6)
+ krb5		--with-krb5-security
+ local		 (always included)
+ rsh			--with-rsh-security
+ ssh			--with-ssh-security
+</programlisting>
+  </para>
+ 
+<para>There are additional configure options for <emphasis remap='B'>bsd</emphasis>, <emphasis remap='B'>bsdudp</emphasis>, and <emphasis remap='B'>bsdtcp</emphasis> to allow for specifying explicit UDP and TCP port ranges.
+
+<programlisting>
+   --with-udpportrange
+   --with-tcpportrange
+   --with-low-tcpportrange
+</programlisting>
+</para>
+
+<para>See <emphasis remap='B'>PORT USAGE</emphasis> below for more information.</para>
+
+<para>There are additional configure options for Kerberos if you so desire.  All but the last option are for Kerberos 4.  Defaults shown in square brackets.
+
+<programlisting>
+   --with-server-principal=ARG    server host principal  [amanda]
+   --with-server-instance=ARG     server host instance   []
+   --with-server-keyfile=ARG      server host key file   [/.amanda]
+   --with-client-principal=ARG    client host principal  [rcmd]
+   --with-client-instance=ARG     client host instance   [HOSTNAME_INSTANCE]
+   --with-client-keyfile=ARG      client host key file   [KEYFILE]
+   --with-ticket-lifetime=ARG     ticket lifetime        [128]
+   --with-krb4-security=DIR       where libkrb.a lives   [see below]
+   --with-krb5-security=DIR       where libkrb.a lives   [see below]
+</programlisting>
+</para>
+
+<para>If configuring with --with-krb4-security and/or --with-krb5-security, the configure script will search under /usr/kerberos/lib, /usr/cygnus/lib, /usr/lib, and /opt/kerberos/lib for the kerberos bits, libkrb.a, in this order.  Kerberos support will not be added if it does not find them.  If the kerberos bits are found under some other hierarchy, you can specify this via --with-krb5-security=DIR and/or --with-krb4-security=DIR, where DIR is where the kerberos bits live.  The configure script will then look in the 'lib' directory under this hierarchy for libkrb.a.</para>
+
+<para>The <emphasis remap='B'>auth</emphasis> parameter selects a communication/authentication method to use between the client and the backup server. These methods are described each in their own section below.</para>
+</refsect1>
+
+<refsect1><title>BSD, BSDUDP, AND BSDTCP COMMUNICATION AND AUTHENTICATION</title>
+<para>For more detail, see http://wiki.zmanda.com/index.php/Configuring_bsd/bsdudp/bsdtcp_authentication.</para>
+
+  <para>The <emphasis remap='B'>bsd</emphasis>, <emphasis remap='B'>bsdudp</emphasis>, and <emphasis remap='B'>bsdtcp</emphasis> communication methods use either UDP, TCP, or both protocols operating as a network service to authenticate and exchange data between server and clients.</para>
+
+  <para>In addition to compilation and general configuration (see <emphasis remap='B'>COMPILATION AND GENERAL INFORMATION</emphasis> above), the authentication method that the client is configured to receive is specified by the <emphasis remap='B'>auth</emphasis> parameter in the network service configuration for &A;. The authentication method used by an Amanda client to reach the server during recovery is the authentication method specified by the <emphasis remap='I'>auth</emphasis> parameter in the client's Amanda network service configuration or in its amanda-client.conf file (see amanda-client.conf(5)).</para>
+			
+  <refsect2><title>.amandahosts file</title>
+    <para> Servers and clients using the bsd, bsdudp, and bsdtcp authentication methods refer to the .amandahosts file to control access.  Amanda should be compiled for this access control if one of these methods will be used and is the default compilation option for Amanda 2.6 (use --with-amandahosts when compiling pre-2.6 versions of Amanda).</para>
+
+    <para>Amanda looks for the .amandahosts file in the Amanda user's home directory, commonly /var/lib/amanda.</para>
+
+    <para>Each authorization is on its own line in the following format</para>
+
+<para><emphasis remap='I'>hostname</emphasis> [ <emphasis remap='I'>username</emphasis> [ <emphasis remap='I'>service...</emphasis> ] ]</para>
+
+<para>If <emphasis remap='I'>username</emphasis> is ommitted, it defaults to the user running <emphasis remap='B'>amandad</emphasis>, i.e. the user listed in the <emphasis remap='B'>inetd</emphasis> or <emphasis remap='B'>xinetd</emphasis>
+configuration file.</para>
+
+<para><emphasis remap='I'>service...</emphasis> is a space-delimited list of services the client is authorized to execute:
+
+<emphasis remap='B'>noop</emphasis>,
+<emphasis remap='B'>selfcheck</emphasis>,
+<emphasis remap='B'>sendsize</emphasis>,
+
+<emphasis remap='B'>sendbackup</emphasis>,
+<emphasis remap='B'>amdump</emphasis> (a shortcut for the previous four services which are required on clients),
+<emphasis remap='B'>amindexd</emphasis>, and
+<emphasis remap='B'>amidxtaped</emphasis>.  The last two services are required on a server for clients to connect to it using <emphasis remap='B'>amrecover</emphasis>.</para>
+
+    <para>Example of the .amandahosts file on an Amanda client
+
+<programlisting>
+    <emphasis remap='B'>amandaserver.example.com   amandabackup   amdump</emphasis>
+</programlisting>
+    </para>
+
+    <para>Example of the .amandahosts file on an Amanda server
+
+<programlisting>
+    <emphasis remap='B'>amandaclient1.example.com   root   amindexd amidxtaped</emphasis>
+</programlisting>
+    </para>
+  </refsect2>
+
+  <refsect2><title>bsd communication and authentication</title>
+    <para>The authentication is done using .amandahosts file in the Amanda user's home directory. The protocol between Amanda server and client is UDP. The number of disk list entries (DLEs)--number of Amanda clients--is limited by the UDP packet size. This authentication protocol will use a different port for each data stream (see PORT USAGE below)</para>
+  </refsect2>
+
+  <refsect2><title>bsdudp communication and authentication</title>
+     <para>The authentication is done using .amandahosts files in the Amanda user's home directory. It uses UDP protocol between Amanda server and client for data and hence the number of DLEs is limited by the UDP packet size. It uses one TCP port to establish the connection and multiplexes all data streams using one port on the server (see PORT USAGE below).</para>
+  </refsect2>
+
+  <refsect2><title>bsdtcp communication and authentication</title>
+    <para>The authentication is done using .amandahosts files in the backup user's (for example: amandabackup) home directory. It uses TCP protocol between Amanda server and client. On the client, two reserved ports are used. On the server, all data streams are multiplexed to one port (see PORT USAGE below).</para>
+  </refsect2>
+
+  <refsect2><title>USING INETD SERVER</title>
+    <para>Template for Amanda client inetd service entry
+
+<programlisting>
+<emphasis remap='I'>   service_name</emphasis> <emphasis remap='I'>socket_type</emphasis> <emphasis remap='I'>protocol</emphasis> <emphasis remap='I'>wait/nowait</emphasis> <emphasis remap='I'>amanda_backup_user</emphasis> <emphasis remap='I'>absolute_path_to_amandad</emphasis> amandad <emphasis remap='I'>server_args</emphasis>
+</programlisting>
+    </para>
+    <para>Client example of using <emphasis remap='B'>bsd</emphasis> authorization for inetd server given Amanda user is "amandabackup":
+
+<programlisting>
+<emphasis remap='B'>   amanda dgram udp wait amandabackup /path/to/amandad amandad -auth=bsd amdump</emphasis>
+</programlisting>
+    </para>
+    <para>The same could be used for <emphasis remap='B'>bsdudp</emphasis> if specifying -auth=bsdudp instead of -auth=bsd.</para>
+    <para>Client example of using <emphasis remap='B'>bsdtcp</emphasis> authorization for inetd server given Amanda user is "amandabackup":
+
+<programlisting>
+<emphasis remap='B'>   amanda stream tcp nowait amanda /path/to/amandad amandad -auth=bsdtcp amdump</emphasis>
+</programlisting>
+    </para>
+    <para><emphasis remap='B'>amindexd</emphasis> and <emphasis remap='B'>amidxtaped</emphasis> would typically be added at the end of the line as &amandad; server arguments for an Amanda server.</para>
+    <para>Server example of using <emphasis remap='B'>bsdtcp</emphasis> authorization for inetd server given Amanda user is "amandabackup":
+
+<programlisting>
+<emphasis remap='B'>   amanda stream tcp nowait amanda /path/to/amandad amandad -auth=bsdtcp amdump amindexd amidxtaped</emphasis>
+</programlisting>
+    </para>
+    <para>For Amanda version 2.5.0 and earlier, remember that neither <emphasis remap='B'>bsdudp</emphasis> nor <emphasis remap='B'>bsdtcp</emphasis> are supported and the Amanda daemon &amandad; accepts no arguments.  Because of the latter, &amrecover; as of Amanda version 2.5.1  is not compatible with 2.5.0 and earlier servers.  Thus, servers that are 2.5.0 or earlier must, in addition to the <emphasis remap='I'>amanda</emphasis> service, run <emphasis remap='I'>amindexd</emphasis> and <emphasis remap='I'>amidxtaped</emphasis> Amanda services as their own network services, amandaidx and amidxtape, respectively (see below).</para>
+
+<para>There are no compatibility issues if server and clients are all 2.5.0 or earlier.  If your server is 2.5.1 or later, you can still have clients that are 2.5.0 and earlier although you must then use <emphasis remap='B'>bsd</emphasis> communication/authentication with these clients and must also run <emphasis remap='I'>amindexd</emphasis> and <emphasis remap='I'>amidxtaped</emphasis> Amanda services on the server as their own network services, amandaidx and amidxtape, respectively (see below).  If you have a server that is 2.5.0 and earlier, clients of a later version on which you wish to run &amrecover; must use <emphasis remap='B'>amoldrecover</emphasis> instead and, again, the server must be running the amandaidx and amidxtape network services.</para>
+
+<para>Example of amindexd and amidxtaped Amanda daemon services configured as their own network services for a 2.5.0 or earlier server or a newer server having 2.5.0 or earlier clients
+
+<programlisting>
+<emphasis remap='B'>   amandaidx stream tcp nowait amanda /usr/local/libexec/amanda/current/amindexd   amindexd</emphasis>
+<emphasis remap='B'>   amidxtape stream tcp nowait amanda /usr/local/libexec/amanda/current/amidxtaped amidxtaped</emphasis>
+</programlisting>
+</para>
+  </refsect2>
+
+  <refsect2><title>USING XINETD SERVER</title>
+    <para>Template for Amanda client xinetd service file
+
+<programlisting>
+service amanda
+{
+	only_from               = <emphasis remap='I'>Amanda server</emphasis>
+	socket_type             = <emphasis remap='I'>socket type</emphasis>
+	protocol                = <emphasis remap='I'>protocol</emphasis>
+	wait                    = <emphasis remap='I'>yes/no</emphasis>
+	user                    = <emphasis remap='I'>amanda backup user</emphasis>
+	group                   = <emphasis remap='I'>amanda backup user group id</emphasis>
+	groups                  = yes
+	server                  = <emphasis remap='I'>absolute path to amandad</emphasis>
+	server_args             = <emphasis remap='I'>amandad server arguments</emphasis>
+	disable                 = no
+}
+</programlisting>
+    </para>
+    <para>The <emphasis remap='I'>only_from</emphasis> parameter can be used with xinetd but is usually in addition to the primary form of access control via the .amandahosts file.</para>
+    <para>Client example of using <emphasis remap='B'>bsd</emphasis> authorization for xinetd server and for Amanda user "amandabackup":
+
+<programlisting>
+service amanda
+{
+	only_from       = amandaserver.example.com
+	socket_type     = dgram
+	protocol        = udp
+	wait            = yes
+	user            = amandabackup
+	group           = disk
+	groups          = yes
+	server          = /path/to/amandad
+	server_args     = -auth=bsd amdump
+	disable         = no 
+}
+</programlisting>
+    </para>
+    <para>The same could be used for <emphasis remap='B'>bsdudp</emphasis> if specifying -auth=bsdudp instead of -auth=bsd.</para>
+    <para>Client example of using <emphasis remap='B'>bsdtcp</emphasis> authorization for xinetd server and for Amanda user "amandabackup":
+
+<programlisting>
+service amanda
+{
+	only_from       = amandaserver.example.com amandaclient.example.com
+	socket_type     = stream
+	protocol        = tcp
+	wait            = no
+	user            = amandabackup
+	group           = disk
+	groups          = yes
+	server          = /path/to/amandad
+	server_args     = -auth=bsdtcp amdump
+	disable         = no 
+}
+</programlisting>
+    </para>
+    <para><emphasis remap='B'>amindexd</emphasis> and <emphasis remap='B'>amidxtaped</emphasis> would typically be added as additional &amandad; <emphasis remap='I'>server_args</emphasis> for an Amanda server.</para>
+    <para>For Amanda version 2.5.0 and earlier, remember that neither <emphasis remap='B'>bsdudp</emphasis> nor <emphasis remap='B'>bsdtcp</emphasis> are supported and the Amanda daemon &amandad; accepts no arguments.  Because of the latter, &amrecover; as of Amanda version 2.5.1  is not compatible with 2.5.0 and earlier servers.  Thus, servers that are 2.5.0 or earlier must, in addition to the <emphasis remap='I'>amanda</emphasis> service, run <emphasis remap='I'>amindexd</emphasis> and <emphasis remap='I'>amidxtaped</emphasis> Amanda services as their own network services, amandaidx and amidxtape, respectively (see below).</para>
+
+<para>There are no compatibility issues if server and clients are all 2.5.0 or earlier.  If your server is 2.5.1 or later, you can still have clients that are 2.5.0 and earlier although you must then use <emphasis remap='B'>bsd</emphasis> communication/authentication with these clients and must also run <emphasis remap='I'>amindexd</emphasis> and <emphasis remap='I'>amidxtaped</emphasis> Amanda services on the server as their own network services, amandaidx and amidxtape, respectively (see below).  If you have a server that is 2.5.0 and earlier, clients of a later version on which you wish to run &amrecover; must use <emphasis remap='B'>amoldrecover</emphasis> instead and, again, the server must be running the amandaidx and amidxtape network services.</para>
+
+<para>Example of amindexd and amidxtaped Amanda daemon services configured as their own network services for a 2.5.0 or earlier server or a newer server having 2.5.0 or earlier clients
+<programlisting>
+service amandaidx
+{
+	socket_type		= stream
+	protocol		= tcp
+	wait			= no
+	user			= amanda
+	group			= disk
+	server			= /usr/local/libexec/amanda/amindexd 
+	disable			= no
+}
+
+service amidxtape
+{
+	socket_type		= stream
+	protocol		= tcp
+	wait			= no
+	user			= amanda
+	group			= disk
+	server			= /usr/local/libexec/amanda/amidxtaped
+	disable			= no
+}
+
+</programlisting>
+</para>
+  </refsect2>
+
+  <refsect2><title>PORT USAGE</title>
+    <para>List of TCP/UDP ports used by network service communication methods for Amanda server and client.
+
+<programlisting>
+   Key:
+       UP = Unreserved Port
+    RPpAP = Reserved Port per Amanda Process
+   UPpDLE = Unreserved Port per DLE
+     [..] = Configure options that can be used at compile time to define port ranges
+
+Authentication	Protocol	Amanda server					Amanda client
+bsd			udp		1 RPpAP [--with-udpportrange]		10080
+			tcp		1 UP [--with-tcpportrange]		3 UPpDLE [--with-tcpportrange]
+bsdudp		udp		1 RPpAP [--with-udpportrange]		10080
+			tcp		1 UP [-with-tcpportrange]		1 UPpDLE [--with-tcpportrange]
+bsdtcp		tcp		1 RPpAP [--with-low-tcpportrange]	10080
+</programlisting>
+</para>
+    <para>Amanda server also uses two ports (dumper process) to communicate with the chunker/taper processes. These ports are in the range set by --with-tcpportrange.</para>
+<para>You can override the default port ranges that Amanda was compiled with in each configuration using the <emphasis remap='I'>reserved-udp-port</emphasis>, <emphasis remap='I'>reserved-tcp-port</emphasis>, and <emphasis remap='I'>unreserved-tcp-port</emphasis> parameters in amanda.conf and amanda-client.conf configuration files (see &amconf; and &amclientconf;).</para>
+  </refsect2>
+</refsect1>
+
+<refsect1><title>KERBEROS COMMUNICATION AND AUTHENTICATION</title>
+For more detail, see http://wiki.zmanda.com/index.php/Kerberos_authentication.
+
+<para>Amanda supports Kerberos 4 and 5 communication methods between Amanda server and client. Please note, however, that support for Kerberos 4 will be removed in the next release.</para>
+
+<para>General information including compilation are given above (see <emphasis remap='B'>COMPILATION AND GENERAL INFORMATION</emphasis> above).  Below sections give specific Kerberos 4 and 5 information.</para>
+
+<refsect2><title>KERBEROS v4</title>
+Please note that support for Kerberos 4 will be removed in the next release.
+
+Kerberos 4 uses UDP protocol and the number of DLEs is limited by UDP packet size.
+
+The kerberized AMANDA service uses a different port on the client hosts. The /etc/services line is:
+
+    kamanda      10081/udp
+
+<para>And the /etc/inetd.conf line is:
+
+<programlisting>
+    kamanda dgram udp wait root /usr/local/libexec/amanda/amandad amandad -auth=krb4
+</programlisting>
+</para>
+
+<para>Note that you're running this as root, rather than as your dump user. AMANDA will set its uid down to the dump user at times it doesn't need to read the srvtab file, and give up root permissions entirely before it goes off and runs dump. Alternately you can change your srvtab files to be readable by user amanda.</para>
+
+<para>The following dumptype options apply to krb4:
+
+<programlisting>
+auth "krb4"    # use krb4 auth for this host
+               # (you can mingle krb hosts and bsd .rhosts in one conf)
+kencrypt       # encrypt this filesystem over the net using the krb4
+               # session key.  About 2x slower.  Good for those root
+               # partitions containing your keyfiles.  Don't want to
+               # give away the keys to an ethernet sniffer!
+               # This is currently always enabled.  There is no
+               # way to disable it.  This is a bug.
+</programlisting>
+</para>
+</refsect2>
+
+<refsect2><title>KERBEROS v5</title>
+<para>Kerberos 5 uses TCP and the server uses only one TCP port and data streams are multiplexed to this port.</para>
+
+The <emphasis remap='B'>krb5</emphasis> driver script defaults to:
+
+/*
+ * The lifetime of our tickets in minutes.
+ */
+#define AMANDA_TKT_LIFETIME     (12*60)
+
+/*
+ * The name of the service in /etc/services.
+ */
+#define AMANDA_KRB5_SERVICE_NAME        "k5amanda"
+
+You can currently only override these by editing the source code.
+
+The kerberized AMANDA service uses a different port on the client hosts. The /etc/services line is:
+
+   k5amanda      10082/tcp
+
+<para>And the /etc/inetd.conf line is:
+
+<programlisting>
+   k5amanda stream tcp nowait root /usr/local/libexec/amanda/amandad amandad -auth=krb5
+</programlisting>
+</para>
+
+<para>Note that you're running this as root, rather than as your dump user.  AMANDA will set its UID down to the dump user at times it doesn't need to read the keytab file, and give up root permissions entirely before it goes off and runs dump.  Alternately you can change your keytab files to be readable by user amanda. You should understand the security implications of this before changing the permissions on the keytab.</para>
+
+<para>The following dumptype options apply to <emphasis remap='B'>krb5</emphasis>:
+
+<programlisting>
+   auth "krb5"    # use krb5 auth for this host
+                  # (you can mingle krb hosts and bsd .rhosts in one conf)
+</programlisting>
+</para>
+
+<para>The principal and keytab files that Amanda uses must be set in the amanda.conf file for kerberos 5 dumps to work. You can hardcode this in the source code if you really want to (common-src/krb5-security.c)
+
+<programlisting>
+   krb5keytab
+   krb5principal
+</programlisting>
+</para>
+
+<para>For example:
+
+<programlisting>
+   krb5keytab	  "/etc/krb5.keytab-amanda"
+   krb5principal  "amanda/saidin.omniscient.com"
+</programlisting>
+</para>
+
+<para>The principal in the second option must be contained in the first. The keytab should be readable by the amanda user (and definitely not world readable!) and is (obviously) on the server.  In MIT's kadmin, the following:
+
+<programlisting>
+   addprinc -randkey amanda/saidin.omniscient.com
+   ktadd -k /etc/krb5.keytab-amanda amanda/saidin.omniscient.com
+</programlisting>
+</para>
+
+<para>will do the trick. You will obviously want to change the principal name to reflect something appropriate for the conventions at your site.</para>
+
+<para>You must also configure each client to allow the amanda principal in for dumps.</para>
+
+<para>There are several ways to go about authorizing a server to connect to a client.</para>
+
+<para>The normal way is via a .k5amandausers file or a .k5login file in the client user's home directory. The determination of which file to use is based on the way you ran configure on AMANDA. By default, AMANDA will use .k5amandahosts, but if you configured with --without-amandahosts, AMANDA will use .k5login. (similar to the default for .rhosts/.amandahosts-style security). The .k5login file syntax is a superset of the default <emphasis remap='B'>krb5</emphasis> .k5login. The routines to check it are implemented in amanda rather than using krb5_kuserok because the connections are actually gssapi based.</para>
+
+<para>This .k5amandahosts/.k5login is a hybrid of the .amandahosts and a .k5login file. You can just list principal names, as in a .k5login file and the principal will be permitted in from any host. If you do NOT specify a realm, then there is no attempt to validate the realm (this is only really a concern if you have cross-realm authentication set up with another realm or something else that allows you multiple realms in your kdc. If you do specify a realm, only that principal@realm will be permitted to connect.</para>
+
+<para>You may prepend this with a hostname and whitespace, and only that principal (with optional realm as above) will be permitted to access from that hostname.</para>
+
+<para>Here are examples of valid entries in the .k5amandahosts:
+
+<programlisting>
+   service/amanda
+   service/amanda@TEST.COM
+   dumpmaster.test.com service/amanda
+   dumpmaster.test.com service/amanda@TEST.COM
+</programlisting>
+</para>
+
+<para>Rather than using a .k5amandahosts or .k5login file, the easiest way is to use a principal named after the destination user, (such as amanda@TEST.COM in our example) and not have either a .k5amandahosts or .k5login file in the destination user's home directory.</para>
+
+<para>There is no attempt to verify the realm in this case (only a concern if you have cross-realm authentication setup).</para>
+</refsect2>
+</refsect1>
+
+<refsect1><title>LOCAL COMMUNICATION</title>
+<para>The Amanda server communicates with the client internally versus over the network, ie. the client is also the server.</para>
+<para>This is the only method that requires no authentication as it is clearly not needed.</para>
+</refsect1>
+
+<refsect1><title>RSH COMMUNICATION AND AUTHENTICATION</title>
+For more detail, see http://wiki.zmanda.com/index.php/Configuring_rsh_authentication.
+
+<para>The Amanda server communicates with its client as the Amanda user via the RSH protocol.</para>
+
+<para>Please note that RSH protocol itself is insecure and should be used with caution especially on any servers and clients with public IPs.</para>
+
+<para>Each Amanda client communicates with the server using one TCP port and all data streams from the client are multiplexed over one port. The number of Amanda clients is limited by the number of reserved ports available on the Amanda server. Some versions of RSH do not use reserved ports and, thus, this restriction is not valid.</para>
+
+<para>General information including compilation is given above (see <emphasis remap='B'>COMPILATION AND GENERAL INFORMATION</emphasis> above).</para>
+
+<para>In addition to specifying the <emphasis remap='I'>auth</emphasis> field in dumptype definition, it might be required to specify <emphasis remap='I'>client_username</emphasis> and &amandad; fields. If the backup user name is different on the Amanda client, the user name is specified as <emphasis remap='B'>client_username</emphasis>. If the location of the Amanda daemon &amandad; is different on the Amanda client, the location is specified as <emphasis remap='I'>amandad_path</emphasis> field value.
+
+<programlisting>
+For example:
+define dumptype rsh_example {
+         ...
+         auth "rsh"
+         client_username "amandabackup"
+         amandad_path "/usr/lib/exec/amandad"
+         ...
+}
+</programlisting>
+</para>
+</refsect1>
+
+<refsect1><title>SSH COMMUNICATION AND AUTHENTICATION</title>
+For more detail, see http://wiki.zmanda.com/index.php/How_To:Set_up_transport_encryption_with_SSH.
+
+Amanda client sends data to the server using SSH. SSH keys have to be set up so that Amanda server can communicate with its clients using SSH.
+
+General information including compilation is given above (see <emphasis remap='B'>COMPILATION AND GENERAL INFORMATION</emphasis> above).
+
+SSH provides transport encryption and authentication. To set up an SSH authentication session, Amanda will run the equivalent of the following to start the backup process.
+
+<emphasis remap='B'>   /path/to/ssh -l <emphasis remap='I'>user_name</emphasis> client.zmanda.com $libexecdir/amandad</emphasis>
+
+To use SSH, you need to set up SSH keys either by storing the passphrase in cleartext, using ssh-agent, or using no passphrase at all.  All of these options have security implications which should be carefully considered before adoption.
+
+When you use a public key on the client to do data encryption (see http://wiki.zmanda.com/index.php/How_To:Set_up_data_encryption), you can lock away the private key in a secure place. Both, transport and storage will be encrypted with such a setup. See http://wiki.zmanda.com/index.php/Encryption for an overview of encryption options.
+
+Enable SSH authentication and set the ssh_keys option in all DLEs for that host by adding the following to the DLE itself or to the corresponding dumptype in amanda.conf:
+
+  auth "ssh"
+  ssh_keys "/home/amandabackup/.ssh/id_rsa_amdump"
+
+<emphasis remap='I'>ssh_keys</emphasis> is the path to the private key on the client. If the username to which Amanda should connect is different from the default, then you should also add
+
+  client_username "otherusername"
+
+If your server &amandad; path and client &amandad; path are different, you should also add
+
+  amandad_path "/client/amandad/path"
+
+<para>For a marginal increase in security, prepend the keys used for AMANDA in the clients' authorized_keys file with the following:
+
+<programlisting>
+  from="amanda_server.your.domain.com",no-port-forwarding,no-X11-forwarding,no-agent-forwarding,command="/absolute/path/to/amandad -auth=ssh amdump"
+</programlisting>
+</para>
+
+<para>This will limit that key to connect only from Amanda server and only be able to execute &amandad;(8).</para>
+
+<para>In the same way, prepend the key used for AMANDA in the server's authorized_keys file with:
+
+<programlisting>
+  from="amanda_client.your.domain.com",no-port-forwarding,no-X11-forwarding,no-agent-forwarding,command="/absolute/path/to/amandad -auth=ssh amindexd amidxtaped"
+</programlisting>
+</para>
+
+<para>You can omit the from=.. option if you have too many clients to list, although this has obvious security implications.</para>
+
+<para>Set ssh_keys and any other necessary options in /etc/amanda/amanda_client.conf:
+
+<programlisting>
+  auth "ssh"
+  ssh_keys "/root/.ssh/id_rsa_amrecover"
+  client_username "amanda"
+  amandad_path "/server/amandad/path"
+</programlisting>
+</para>
+
+<para>Besides user keys, SSH uses host keys to uniquely identify each host, to prevent one host from impersonating another. Unfortunately, the only easy way to set up these host keys is to make a connection and tell SSH that you trust the identity:
+
+<programlisting>
+  $ ssh client1.zmanda.com
+  The authenticity of host 'client1.zmanda.com (192.168.10.1)' can't be established.
+  RSA key fingerprint is 26:4e:df:a2:be:c8:cb:20:1c:68:8b:cc:c0:3b:8e:9d.
+  Are you sure you want to continue connecting (yes/no)?yes
+</programlisting>
+</para>
+
+<para>As Amanda will not answer this question itself, you must manually make every connection (server to client and client to server) that you expect Amanda to make. Note that you must use the same username that Amanda will use (that is, ssh client and ssh client.domain.com are distinct).</para>
+</refsect1>
+
+<refsect1><title>SEE ALSO</title>
+<para>
+&amconf;,
+&amclientconf;,
+&disklist;,
+&amdump;(8),
+&amrecover;(8)
+<ulink url="http://wiki.zmanda.com"/>
+</para>
+</refsect1>
+
+</refentry>

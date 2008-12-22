@@ -187,6 +187,9 @@ configuration files for quick reference.</para>
 <citerefentry><refentrytitle>amanda-applications</refentrytitle><manvolnum>7</manvolnum></citerefentry>,
 </listitem>
 <listitem>
+<citerefentry><refentrytitle>amanda-auth</refentrytitle><manvolnum>7</manvolnum></citerefentry>,
+</listitem>
+<listitem>
 <citerefentry><refentrytitle>amanda-changers</refentrytitle><manvolnum>7</manvolnum></citerefentry>,
 </listitem>
 <listitem>
@@ -289,86 +292,9 @@ are removed by
 at the end of each run.</para>
 </refsect1>
 
-<refsect1><title>AUTHORIZATION</title>
-<para>&A; processes on the tape server host run as the
-<emphasis remap='B'>dumpuser</emphasis>
-user listed in
-<emphasis remap='B'>amanda.conf</emphasis>.
-When they connect to a backup client, they do so with an &A;-specific protocol.
-They do not, for instance, use
-<emphasis remap='B'>rsh</emphasis>
-or
-<emphasis remap='B'>ssh</emphasis>
-directly.</para>
 
-<para>On the client side, the
-<emphasis remap='B'>amandad</emphasis>
-daemon validates the connection using one of several methods,
-depending on how it was compiled and on options it is passed:</para>
-
-<variablelist remap='IP'>
-  <varlistentry>
-  <term>~/.rhosts</term>
-  <listitem>
-<para>Even though &A; does not use
-<emphasis remap='B'>rsh</emphasis>,
-it can use
-<markup>~/.rhosts</markup>-style
-authentication and a
-<markup>~/.rhosts</markup>
-file.</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
-  <term>~/.amandahosts</term>
-  <listitem>
-<para>This is essentially the same as
-<markup>~/.rhosts</markup>
-authentication except a different file, with almost the same format, is used.
-This is the default mechanism built into &A;.</para>
-
-<para>The format of the
-<filename>~/.amandahosts</filename>
-file is:</para>
-
-<para><emphasis remap='I'>hostname</emphasis>
-[
-<emphasis remap='I'>username</emphasis>
-[
-<emphasis remap='I'>service</emphasis>
-]*]</para>
-
-<para>If
-<emphasis remap='I'>username</emphasis>
-is ommitted, it defaults to the user running
-<emphasis remap='B'>amandad</emphasis>,
-i.e. the user listed in the
-<emphasis remap='B'>inetd</emphasis>
-or
-<emphasis remap='B'>xinetd</emphasis>
-configuration file.</para>
-<para>The <emphasis remap='I'>service</emphasis> is a list of the service the client is authorized to execute:
-<emphasis remap='B'>amdump</emphasis>,
-<emphasis remap='B'>noop</emphasis>,
-<emphasis remap='B'>selfcheck</emphasis>,
-<emphasis remap='B'>sendsize</emphasis>,
-<emphasis remap='B'>sendbackup</emphasis>,
-<emphasis remap='B'>amindexd</emphasis>,
-<emphasis remap='B'>amidxtaped</emphasis>.
-<emphasis remap='B'>amdump</emphasis> is a shortcut for "noop selfcheck sendsize sendbackup"</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
-  <term>Kerberos</term>
-  <listitem>
-<para>&A; may use the Kerberos authentication system.
-Further information is in the
-<emphasis remap='B'>docs/KERBEROS</emphasis>
-<!-- TODO: edit link -->
-file that comes with an &A; distribution.</para>
-
-<para>For Samba access,
-&A; needs a file on the Samba server (which may
+<refsect1><title>Using Samba</title>
+<para>For Samba access, &A; needs a file on the Samba server (which may
 or may not also be the tape server) named
 <filename>/etc/amandapass</filename>
 with share names, (clear text) passwords and (optional) domain names,
@@ -385,14 +311,6 @@ For instance:</para>
 </programlisting>
 <para>With clear text passwords, this file should obviously be tightly protected.
 It only needs to be readable by the &A;-user on the Samba server.  </para>
-<para>You can find further information in the
-<emphasis remap='B'>docs/SAMBA</emphasis>
-<!-- TODO: edit link -->
-file that comes with an &A; distribution.</para>
-
-</listitem>
-</varlistentry>
-</variablelist>
 </refsect1>
 
 <refsect1><title>HOST &amp; DISK EXPRESSION</title>

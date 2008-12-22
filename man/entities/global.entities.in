@@ -57,6 +57,9 @@
 <!ENTITY author.nm '<author><personname>Nicolas Mayencourt</personname>
 		    &affil.unigech;
 		    <email>Nicolas.Mayencourt@cui.unige.ch</email></author>'>
+<!ENTITY author.pby '<author><personname>Paul Yeatman</personname>
+		    &affil.zmanda;
+		    <email>pyeatman@zmanda.com</email></author>'>
 
 
 <!-- Amanda itself -->

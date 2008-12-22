@@ -1353,24 +1353,7 @@ are defined.</para>
   <listitem>
 <para>Default:
 <emphasis remap='I'>bsd</emphasis>.
-Type of authorization to perform between tape server and backup client hosts.</para>
-<para><emphasis remap='B'>bsd</emphasis>, bsd authorization with udp initial
-connection and one tcp connection by data stream.</para>
-<para><emphasis remap='B'>bsdtcp</emphasis>, bsd authorization but use only
-one tcp connection.</para> 
-<para><emphasis remap='B'>bsdudp</emphasis>, like bsd, but will use only one
-tcp connection for all data stream.</para>
-<para><emphasis remap='B'>krb4</emphasis> to use Kerberos-IV
-authorization.</para>
-<para><emphasis remap='B'>krb5</emphasis> to use Kerberos-V
-authorization.</para>
-<para><emphasis remap='B'>local</emphasis>, if the client is the server, it 
-doesn't require authencation setup.</para>
-<para><emphasis remap='B'>rsh</emphasis> to use rsh
-authorization.</para>
-<para><emphasis remap='B'>ssh</emphasis> to use OpenSSH
-authorization.</para>
-
+Type of authorization to perform between tape server and backup client hosts.  See <citerefentry><refentrytitle>amanda-auth</refentrytitle><manvolnum>7</manvolnum></citerefentry> for more detail.</para>
   </listitem>
   </varlistentry>
 
