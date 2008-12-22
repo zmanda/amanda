@@ -611,7 +611,7 @@ amgtar_estimate(
     int    pipefd = -1;
     FILE  *dumpout = NULL;
     off_t  size = -1;
-    char   line[PATH_MAX];
+    char   line[32768];
     char  *errmsg = NULL;
     char  *qerrmsg = NULL;
     char  *qdisk;
@@ -679,7 +679,7 @@ amgtar_estimate(
 	}
 
 	size = (off_t)-1;
-	while (size < 0 && (fgets(line, 32768, dumpout) != NULL)) {
+	while (size < 0 && (fgets(line, sizeof(line), dumpout) != NULL)) {
 	    if (line[strlen(line)-1] == '\n') /* remove trailling \n */
 		line[strlen(line)-1] = '\0';
 	    if (line[0] == '\0')
@@ -700,7 +700,7 @@ amgtar_estimate(
 	    /*@end@*/
 	}
 
-	while (fgets(line, 32768, dumpout) != NULL) {
+	while (fgets(line, sizeof(line), dumpout) != NULL) {
 	    dbprintf("%s", line);
 	}
 
@@ -834,7 +834,7 @@ amgtar_backup(
 	error(_("error outstream(%d): %s\n"), outf, strerror(errno));
     }
 
-    while (fgets(line, 32768, outstream) != NULL) {
+    while (fgets(line, sizeof(line), outstream) != NULL) {
 	if (line[strlen(line)-1] == '\n') /* remove trailling \n */
 	    line[strlen(line)-1] = '\0';
 	if (*line == '.' && *(line+1) == '/') { /* filename */
