@@ -420,9 +420,6 @@ s3_error_name_from_code(s3_error_code_t s3_error_code)
     if (s3_error_code >= S3_ERROR_END)
         s3_error_code = S3_ERROR_Unknown;
 
-    if (s3_error_code == 0)
-        return NULL;
-
     return s3_error_code_names[s3_error_code];
 }
 
