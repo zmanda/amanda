@@ -395,7 +395,7 @@ amstar_estimate(
 	}
 
 	size = (off_t)-1;
-	while (size < 0 && (fgets(line, 32768, dumpout)) != NULL) {
+	while (size < 0 && (fgets(line, sizeof(line), dumpout)) != NULL) {
 	    if (line[strlen(line)-1] == '\n') /* remove trailling \n */
 		line[strlen(line)-1] = '\0';
 	    if (line[0] == '\0')
@@ -416,7 +416,7 @@ amstar_estimate(
 	    /*@end@*/
 	}
 
-	while ((fgets(line, 32768, dumpout)) != NULL) {
+	while ((fgets(line, sizeof(line), dumpout)) != NULL) {
 	    dbprintf("%s", line);
 	}
 
@@ -520,7 +520,7 @@ amstar_backup(
 	error(_("error outstream(%d): %s\n"), outf, strerror(errno));
     }
 
-    while ((fgets(line, 32768, outstream)) != NULL) {
+    while ((fgets(line, sizeof(line), outstream)) != NULL) {
 	regmatch_t regmatch[3];
 	regex_t regex;
         int got_match = 0;

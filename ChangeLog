@@ -1,3 +1,7 @@
+2008-12-22  Dustin J. Mitchell <dustin@zmanda.com>
+	* application-src/amgtar.c,
+	  application-src/amstar.c: Use sizeof(line) for argument to fgets.
+
 2008-12-22  Jean-Louis Martineau <martineau@zmanda.com>,
 	* man/xml-source/amarchiver.8.xml: amanda-archive-format man page is
 	                                   in section 5.
