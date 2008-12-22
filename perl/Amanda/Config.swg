@@ -907,6 +907,7 @@ amglue_export_tag(init,
  */
 
 void dump_configuration(void);
+%newobject config_dir_relative;
 char *config_dir_relative(char *filename);
 char *taperalgo2str(taperalgo_t taperalgo);
 gint64 find_multiplier(char * casestr);

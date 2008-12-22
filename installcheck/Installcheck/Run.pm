@@ -124,6 +124,15 @@ this module is installed, and skip any Expect-based tests if it is not.
 Otherwise, C<run_expect> takes arguments just like C<run>, but returns an Expect
 object which you can use as you would like.
 
+=head2 DIAGNOSTICS
+
+If your test runs 'amdump', a nonzero exit status may not be very helpful.  The
+function C<amdump_diag> will attempt to figure out what went wrong and display
+useful information for the user via diag().  If it is given an argument, then
+it will C<BAIL_OUT> with that message, causing L<Test::Harness> to stop running
+tests.  Otherwise, it will simply die(), which will only terminate this
+particular test script.
+
 =cut
 
 use Installcheck::Config;
@@ -132,6 +141,8 @@ use File::Path;
 use IPC::Open3;
 use Cwd qw(abs_path getcwd);
 use Carp;
+use Test::More;
+use Amanda::Config qw( :init );
 
 require Exporter;
 
@@ -139,7 +150,8 @@ require Exporter;
 @EXPORT_OK = qw(setup 
     run run_get run_err
     cleanup 
-    $diskname $stdout $stderr);
+    $diskname $stdout $stderr
+    amdump_diag);
 @EXPORT = qw(exp_continue exp_continue_timeout);
 
 # global variables
@@ -331,6 +343,46 @@ sub run_expect {
     my $exp = Expect->new("$sbindir/$app", @args);
 
     return $exp;
+}
+
+sub amdump_diag {
+    my ($msg) = @_;
+
+    # try running amreport
+    my $report = "failure-report.txt";
+    unlink($report);
+    my @logfiles = <$CONFIG_DIR/TESTCONF/log/log.*>;
+    if (@logfiles > 0) {
+	run('amreport', 'TESTCONF', '-f', $report, '-l', $logfiles[$#logfiles]);
+	if (-f $report) {
+	    open(my $fh, "<", $report) or return;
+	    for my $line (<$fh>) {
+		Test::More::diag($line);
+	    }
+	    unlink($report);
+	    goto bail;
+	}
+    }
+
+    # maybe there was a config error
+    config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
+    my ($cfgerr_level, @cfgerr_errors) = config_errors();
+    if ($cfgerr_level >= $CFGERR_WARNINGS) {
+	foreach (@cfgerr_errors) {
+	    Test::More::diag($_);
+	}
+	goto bail;
+    }
+
+    # huh.
+    Test::More::diag("no amreport available, and no config errors");
+
+bail:
+    if ($msg) {
+	Test::More::BAIL_OUT($msg);
+    } else {
+	die("amdump failed; cannot continue");
+    }
 }
 
 1;

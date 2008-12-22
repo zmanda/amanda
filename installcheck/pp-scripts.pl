@@ -21,7 +21,7 @@ use Test::More tests => 8;
 use lib "@amperldir@";
 use Cwd qw(abs_path getcwd);
 use Installcheck::Config;
-use Installcheck::Run qw(run run_err $diskname);
+use Installcheck::Run qw(run run_err $diskname amdump_diag);
 use Amanda::Config qw( :init );
 use Amanda::Paths;
 use warnings;
@@ -111,7 +111,7 @@ verify_log("amcheck invokes correct script commands",
 
 unlink $templog;
 ok(run('amdump', 'TESTCONF'), "amdump runs successfully for client scripts.")
-    or die("amdump run failed");
+    or amdump_diag();
 
 verify_log("amdump invokes correct script commands",
     "TESTCONF pre-dle-estimate client localhost diskname1 $diskname 0",
@@ -154,7 +154,7 @@ verify_log("amcheck invokes correct script commands",
 
 unlink $templog;
 ok(run('amdump', 'TESTCONF'), "amdump runs successfully for server scripts.")
-    or die("amdump run failed");
+    or amdump_diag();
 
 verify_log("amdump invokes correct script commands",
     "TESTCONF pre-host-estimate server localhost diskname2 $diskname 0",

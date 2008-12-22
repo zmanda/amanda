@@ -20,38 +20,11 @@ use Test::More tests => 2;
 
 use lib "@amperldir@";
 use Installcheck::Config;
-use Installcheck::Run qw(run run_err $diskname);
+use Installcheck::Run qw(run run_err $diskname amdump_diag);
 use Amanda::Config qw( :init );
 use Amanda::Paths;
 
 my $testconf;
-
-sub amdump_diag {
-    # try running amreport
-    my $report = "failure-report.txt";
-    unlink($report);
-    my @logfiles = <$CONFIG_DIR/TESTCONF/log/log.*>;
-    run('amreport', 'TESTCONF', '-f', $report, '-l', $logfiles[-1]);
-    if (-f $report) {
-	open(my $fh, "<", $report) or return;
-	for my $line (<$fh>) {
-	    diag($line);
-	}
-	unlink($report);
-	return;
-    }
-
-    # maybe there was a config error
-    config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
-    my ($cfgerr_level, @cfgerr_errors) = config_errors();
-    if ($cfgerr_level >= $CFGERR_WARNINGS) {
-	config_print_errors();
-	return;
-    }
-
-    # huh.
-    diag("no amreport available, and no config errors");
-}
 
 # Just run amdump.
 
