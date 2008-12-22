@@ -1,3 +1,13 @@
+2008-12-22  Jean-Louis Martineau <martineau@zmanda.com>,
+	    Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/util.c: Convert underscore in application and script
+	                     property name to dash.
+	* device-src/property.c: Make underscore and dash equal in device
+	                         property name.
+	* installcheck/Amanda_Device.pl: Check device property name with
+	                                 mixed case and dash.
+	* installcheck/pp-scripts.pl: Check property name with underscore.
+
 2008-12-22  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/reporter.c: Fix reporting of FLUSH.
 

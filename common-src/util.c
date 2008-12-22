@@ -1012,6 +1012,8 @@ void proplist_add_to_argv(
     /* convert to lower case */
     for (w=q; *w != '\0'; w++) {
 	*w = tolower(*w);
+	if (*w == '_')
+	    *w = '-';
     }
     qprop = stralloc2("--", q);
     amfree(q);

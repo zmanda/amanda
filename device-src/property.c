@@ -140,6 +140,41 @@ DevicePropertyBase* device_property_get_by_name(const char *name) {
     return NULL;
 }
 
+#define toupper_and_underscore(c) (((c)=='-')? '_' : g_ascii_toupper((c)))
+static guint
+device_property_hash(
+	gconstpointer key)
+{
+    /* modified version of glib's hash function, copyright
+     * GLib Team and others 1997-2000. */
+    const char *p = key;
+    guint h = toupper_and_underscore(*p);
+
+    if (h)
+	for (p += 1; *p != '\0'; p++)
+	    h = (h << 5) - h + toupper_and_underscore(*p);
+
+    return h;
+}
+
+static gboolean
+device_property_equal(
+	gconstpointer v1,
+	gconstpointer v2)
+{
+    const char *s1 = v1, *s2 = v2;
+
+    while (*s1 && *s2) {
+	if (toupper_and_underscore(*s1) != toupper_and_underscore(*s2))
+	    return FALSE;
+	s1++, s2++;
+    }
+    if (*s1 || *s2)
+	return FALSE;
+
+    return TRUE;
+}
+
 void
 device_property_fill_and_register(DevicePropertyBase *base,
 		    GType type, const char * name, const char * desc) {
@@ -147,7 +182,7 @@ device_property_fill_and_register(DevicePropertyBase *base,
     /* create the hash table and array if necessary */
     if (!device_property_bases) {
 	device_property_bases = g_ptr_array_new();
-	device_property_bases_by_name = g_hash_table_new(g_str_case_hash, g_str_case_equal);
+	device_property_bases_by_name = g_hash_table_new(device_property_hash, device_property_equal);
     }
 
     /* check for a duplicate */
