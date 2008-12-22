@@ -60,7 +60,8 @@ build-stamp: /sbin/dump /usr/bin/smbclient
 		--libexecdir=$(LIBEXECDIR) \
 		--enable-shared \
 		--sysconfdir=$(SYSCONFDIR) \
-		--localstatedir=$(LOCALSTATEDIR)\
+		--localstatedir=$(LOCALSTATEDIR) \
+		--with-amdatadir=$(AMHOMEDIR) \
 		--with-gnutar-listdir=$(AMHOMEDIR)/gnutar-lists \
 		--with-index-server=localhost \
 		--with-tape-server=localhost \
