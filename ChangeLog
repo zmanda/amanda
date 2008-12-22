@@ -1,3 +1,7 @@
+2008-12-22  Jean-Louis Martineau <martineau@zmanda.com>,
+	* application-src/amstar.c: Use fgets to read star output.
+	* application-src/amgtar.c: Use fgets to read gtar output.
+
 2008-12-22  Jean-Louis Martineau <martineau@zmanda.com>, 
 	    Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/util.c: Convert underscore in application and script

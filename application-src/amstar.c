@@ -349,7 +349,7 @@ amstar_estimate(
     int    pipefd;
     FILE  *dumpout = NULL;
     off_t  size = -1;
-    char  *line;
+    char   line[32768];
     char  *errmsg = NULL;
     char  *qdisk;
     amwait_t wait_status;
@@ -395,7 +395,9 @@ amstar_estimate(
 	}
 
 	size = (off_t)-1;
-	while (size < 0 && (line = agets(dumpout)) != NULL) {
+	while (size < 0 && (fgets(line, 32768, dumpout)) != NULL) {
+	    if (line[strlen(line)-1] == '\n') /* remove trailling \n */
+		line[strlen(line)-1] = '\0';
 	    if (line[0] == '\0')
 		continue;
 	    dbprintf("%s\n", line);
@@ -412,12 +414,10 @@ amstar_estimate(
 		}
 	    }
 	    /*@end@*/
-	    amfree(line);
 	}
 
-	while ((line = agets(dumpout)) != NULL) {
-	    dbprintf("%s\n", line);
-	    amfree(line);
+	while ((fgets(line, 32768, dumpout)) != NULL) {
+	    dbprintf("%s", line);
 	}
 
 	dbprintf(".....\n");
@@ -479,7 +479,7 @@ amstar_backup(
     int dumpin;
     char *cmd = NULL;
     char *qdisk;
-    char *line;
+    char  line[32768];
     amregex_t *rp;
     off_t dump_size = -1;
     char *type;
@@ -520,10 +520,13 @@ amstar_backup(
 	error(_("error outstream(%d): %s\n"), outf, strerror(errno));
     }
 
-    while ((line = agets(outstream)) != NULL) {
+    while ((fgets(line, 32768, outstream)) != NULL) {
 	regmatch_t regmatch[3];
 	regex_t regex;
         int got_match = 0;
+
+	if (line[strlen(line)-1] == '\n') /* remove trailling \n */
+	    line[strlen(line)-1] = '\0';
 
 	regcomp(&regex, "^a \\.\\/ directory$", REG_EXTENDED|REG_NEWLINE);
 	if (regexec(&regex, line, 1, regmatch, 0) == 0) {
