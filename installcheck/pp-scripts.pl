@@ -89,7 +89,7 @@ localhost diskname1 $diskname {
     program "APPLICATION"
     application {
 	plugin "amgtar"
-	property "atime-preserve" "no"
+	property "atime_preserve" "no" # note underscore
     }
     script {
 	plugin "amlog-script"

@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 300;
+use Test::More tests => 301;
 use File::Path qw( mkpath rmtree );
 use Sys::Hostname;
 use Carp;
@@ -195,6 +195,8 @@ properties_include([ $dev->property_list() ], [ @common_properties ],
     "necessary properties listed on null device");
 is($dev->property_get("canonical_name"), "null:",
     "property_get(canonical_name) on null device");
+is($dev->property_get("caNONical-name"), "null:",
+    "property_get(caNONical-name) on null device (case, dash-insensitivity)");
 is_deeply([ $dev->property_get("canonical_name") ],
     [ "null:", $PROPERTY_SURETY_GOOD, $PROPERTY_SOURCE_DEFAULT ],
     "extended property_get returns correct surety/source");
