@@ -1540,15 +1540,31 @@ output_summary(void)
 
 	    cd= &ColumnData[DumpRate];
 	    g_fprintf(mailf, "%*s", cd->PrefixSpace, "");
-	    if(repdata->dumper.result == L_SUCCESS ||
-		    repdata->dumper.result == L_CHUNKSUCCESS) {
+	    if (repdata->dumper.result == L_SUCCESS ||
+		repdata->dumper.result == L_CHUNKSUCCESS) {
 		g_fprintf(mailf, cd->Format, cd->Width, cd->Precision,
 			  repdata->dumper.kps);
-	    } else {
+	    } else if (repdata->dumper.result == L_FAIL) {
+		if (repdata->chunker.result == L_PARTIAL ||
+		    repdata->taper.result == L_PARTIAL) {
+		    int i;
+		    cdWidth += cd->Width;
+		    i = (cdWidth - strlen("PARTIAL")) / 2;
+		    g_fprintf(mailf, "%*s%*s", cdWidth-i, "PARTIAL", i, "");
+		} else {
+		    int i;
+		    cdWidth += cd->Width;
+		    i = (cdWidth - strlen("FAILED")) / 2;
+		    g_fprintf(mailf, "%*s%*s", cdWidth-i, "FAILED", i, "");
+		}
+	    } else if (repdata->dumper.result == L_BOGUS) {
 		int i;
 		cdWidth += cd->Width;
 		i = (cdWidth - strlen("FLUSH")) / 2;
 		g_fprintf(mailf, "%*s%*s", cdWidth-i, "FLUSH", i, "");
+	    } else {
+		cdWidth += cd->Width;
+		g_fprintf(mailf, "%*s", cdWidth, "");
 	    }
 
 	    cd= &ColumnData[TapeTime];
