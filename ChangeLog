@@ -1,3 +1,6 @@
+2008-12-22  Nikolas Coukouma <atrus@zmanda.com>
+	* device-src/s3.c: retry on CURLE_GOT_NOTHING (52) to handle "connection reset by peer"
+
 2008-12-22  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/s3.c: translate error code 0 to "None", not NULL
 
