@@ -1,3 +1,9 @@
+2008-12-22  Jean-Louis Martineau <martineau@zmanda.com>
+	* configure.in: AM_INIT_AUTOMAKE(amanda, "2.6.1b2")
+	* packaging/deb/rules, packaging/deb/buildpkg,
+	  packaging/deb/changelog, packaging/rpm/buildpkg,
+	  packaging/rpm/amanda.spec: Change version to 2.6.1b2.
+
 2008-12-22  Paul Yeatman <pyeatman@zmanda.com>
 	* man/entities/global.entities.in: added author/email entity for me
 	* man/xml-source/amanda-auth.7.xml: newly added man page
