@@ -112,11 +112,6 @@ main(
 	}
     } while(0);
 
-    if(get_client_uid() == (uid_t) -1) {
-	error(_("error [cannot find user %s in passwd file]\n"), CLIENT_LOGIN);
-	/*NOTREACHED*/
-    }
-
 #ifdef WANT_SETUID_CLIENT
     check_running_as(RUNNING_AS_CLIENT_LOGIN | RUNNING_AS_UID_ONLY);
     if (!become_root()) {
