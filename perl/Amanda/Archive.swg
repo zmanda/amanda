@@ -350,7 +350,7 @@ read_frag_cb(
 {
     dSP;
     perl_read_data_t *dat = user_data;
-    SV *rv, *old;
+    SV *rv;
     int count;
 
     if (!attrid_data)
@@ -421,7 +421,7 @@ is_number(char *str, int len, int *result)
     while (str < end) {
 	if (!g_ascii_isdigit(*str)) return FALSE;
 	r = r * 10 + (int)(*str - '0');
-	if (result < 0) {
+	if (r < 0) {
 	    /* overflow */
 	    return FALSE;
 	}
@@ -482,7 +482,7 @@ amar_t *amar_new_(int fd, char *modestr) {
     else
 	croak("mode must be '<' or '>'");
 
-    if (rv = amar_new(fd, mode, &error)) {
+    if ((rv = amar_new(fd, mode, &error))) {
 	return rv;
     }
 
@@ -660,7 +660,7 @@ void amar_read_(amar_t *archive, SV *params_hashref) {
 	    continue;
 	}
 #undef key_compare
-	croak("Invalid parameter named '%*s'", keylen, key);
+	croak("Invalid parameter named '%*s'", (int)keylen, key);
     }
 
     if (!dat->user_data)
