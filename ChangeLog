@@ -1,3 +1,6 @@
+2009-01-05  Jean-Louis Martineau <martineau@zmanda.com>,
+	* config/automake/scripts.am: Remove 'use lib' line before doing check.
+
 2008-12-22  Jean-Louis Martineau <martineau@zmanda.com>
 	* configure.in: AM_INIT_AUTOMAKE(amanda, "2.6.1b2")
 	* packaging/deb/rules, packaging/deb/buildpkg,
