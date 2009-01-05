@@ -1,3 +1,6 @@
+2009-01-05  Jean-Louis Martineau <martineau@zmanda.com>,
+        * config/automake/scripts.am: Remove 'use lib' line before doing check.
+
 2008-12-22  Paul Yeatman <pyeatman@zmanda.com>
 	* man/entities/global.entities.in: added author/email entity for me
 	* man/xml-source/amanda-auth.7.xml: newly added man page
