@@ -1,4 +1,7 @@
 2009-01-05  Jean-Louis Martineau <martineau@zmanda.com>,
+	* perl/Amanda/Archive.swg, perl/Amanda/Device.swg,
+	  perl/Amanda/Xfer.swg: Fix compiler warning.
+2009-01-05  Jean-Louis Martineau <martineau@zmanda.com>,
 	* config/automake/scripts.am: Remove 'use lib' line before doing check.
 
 2008-12-22  Jean-Louis Martineau <martineau@zmanda.com>

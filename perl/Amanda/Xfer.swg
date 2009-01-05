@@ -348,7 +348,6 @@ c_obj_from_sv(
     SV *sv,
     const char *derived_from)
 {
-    gpointer *result;
     SV *referent;
     IV tmp;
 
@@ -413,7 +412,6 @@ new_sv_for_xmsg(
 {
     static HV *amanda_xfer_msg_stash = NULL;
     HV *hash = newHV();
-    SV *tmp = NULL;
     SV *rv = newRV_noinc((SV *)hash);
 
     /* bless the rv as an Amanda::Xfer::Msg object */

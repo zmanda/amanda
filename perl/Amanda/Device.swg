@@ -205,7 +205,7 @@ set_sv_from_gvalue(GValue *value)
 		sv = newRV((SV *)hv);
 		return newRV((SV *)hv);
 	    } else {
-		warn("Unsupported boxed property type #%d", boxed_type);
+		warn("Unsupported boxed property type #%d", (int)boxed_type);
 
 		sv = sv_newmortal();
 		sv_setsv(sv, &PL_sv_undef);
@@ -263,7 +263,7 @@ set_sv_from_gvalue(GValue *value)
 	case G_TYPE_INTERFACE:
 	case G_TYPE_OBJECT:
 	case G_TYPE_PARAM:
-	    warn("Unsupported fundamental property type #%d", fundamental);
+	    warn("Unsupported fundamental property type #%d", (int)fundamental);
 	    sv_setsv(sv, &PL_sv_undef);
 	    break;
     }
