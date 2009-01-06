@@ -62,6 +62,7 @@ typedef struct {
     taper_scan_tracker_t * taper_scan_tracker;
     char * last_errmsg;
     off_t  total_bytes;
+    int have_changer;
 } taper_state_t;
 
 typedef struct {
@@ -545,7 +546,8 @@ static gboolean label_new_tape(taper_state_t * state, dump_info_t * dump_info) {
     update_tapelist(state);
     state->cur_tape++;
 
-    if (changer_label("UNKNOWN", state->device->volume_label) != 0) {
+    if (state->have_changer &&
+	changer_label("UNKNOWN", state->device->volume_label) != 0) {
 	error(_("couldn't update barcode database"));
 	/*NOTREACHED*/
     }
@@ -1238,7 +1240,6 @@ static gboolean process_driver_command(taper_state_t * state) {
 
 int main(int argc, char ** argv) {
     char * tapelist_name;
-    int have_changer;
     taper_state_t state;
     config_overwrites_t *cfg_ovr = NULL;
     char *cfg_opt = NULL;
@@ -1304,8 +1305,8 @@ int main(int argc, char ** argv) {
     }
     amfree(tapelist_name);
 
-    have_changer = changer_init();
-    if (have_changer < 0) {
+    state.have_changer = changer_init();
+    if (state.have_changer < 0) {
 	log_add(L_INFO, "pid-done %ld", (long)getpid());
         error("changer initialization failed: %s", strerror(errno));
         g_assert_not_reached();
