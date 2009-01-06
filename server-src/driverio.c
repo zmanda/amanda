@@ -250,6 +250,7 @@ getresult(
 	    error(_("reading result from %s: %s"), childstr(fd), strerror(errno));
 	    /*NOTREACHED*/
 	}
+	*result_argv = NULL;
 	*result_argc = 0;				/* EOF */
     } else {
 	*result_argv = split_quoted_strings(line);
