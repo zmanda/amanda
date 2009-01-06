@@ -1,4 +1,8 @@
 2009-01-06  Jean-Louis Martineau <martineau@zmanda.com>,
+	* server-src/taper.c: Don't call changer_label() if a changer is not
+	                      in use.
+
+2009-01-06  Jean-Louis Martineau <martineau@zmanda.com>,
 	* server-src/driverio.c: Set *result_argv to NULL on EOF.
 	* server-src/taper-mem-port-source.c: Set an error if the memory can't
 	  be allocated for the memory buffer.
