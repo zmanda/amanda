@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 260;
+use Test::More tests => 265;
 use File::Path qw( mkpath rmtree );
 use Sys::Hostname;
 use Carp;
@@ -682,7 +682,10 @@ SKIP: {
 my $TAPE_DEVICE = $ENV{'INSTALLCHECK_TAPE_DEVICE'};
 my $run_tape_tests = defined $TAPE_DEVICE;
 SKIP: {
-    skip "define \$INSTALLCHECK_TAPE_DEVICE to run tape tests", 37
+    skip "define \$INSTALLCHECK_TAPE_DEVICE to run tape tests",
+	    12 +
+	    2 * $verify_file_count +
+	    4 * $write_file_count
 	unless $run_tape_tests;
 
     $dev_name = "tape:$TAPE_DEVICE";
@@ -705,7 +708,7 @@ SKIP: {
 	or diag($dev->error_or_status());
 
     for (my $i = 1; $i <= 3; $i++) {
-	write_file(0x2FACE, $dev->block_size()*10+17, $i);
+	write_file(0x2FACE+$i, $dev->block_size()*10+17, $i);
     }
 
     ok($dev->finish(),
@@ -737,8 +740,8 @@ SKIP: {
             or diag($dev->error_or_status());
     }
 
-    # try reading the third file back, creating a new device
-    # object first, and skipping the read-label step.
+    # try reading the second and third files back, creating a new
+    # device object first, and skipping the read-label step.
 
     $dev = undef;
     $dev = Amanda::Device->new($dev_name);
@@ -750,7 +753,8 @@ SKIP: {
 	"start in read mode")
 	or diag($dev->error_or_status());
 
-    verify_file(0x2FACE, $dev->block_size()*10+17, 3);
+    verify_file(0x2FACE+2, $dev->block_size()*10+17, 2);
+    verify_file(0x2FACE+3, $dev->block_size()*10+17, 3);
 
     ok($dev->finish(),
 	"finish device after read")

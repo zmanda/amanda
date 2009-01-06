@@ -1,8 +1,14 @@
 2009-01-06  Jean-Louis Martineau <martineau@zmanda.com>,
+	    Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/tape-device.c (tape_device_seek_file): Set is_eof to FALSE
+	  after it is use.
+	* installcheck/Amanda_Device.pl: Add more tape check.
+
+2009-01-06  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/taper.c: Don't call changer_label() if a changer is not
 	                      in use.
 
-2009-01-06  Jean-Louis Martineau <martineau@zmanda.com>,
+2009-01-06  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/driverio.c: Set *result_argv to NULL on EOF.
 	* server-src/taper-mem-port-source.c: Set an error if the memory can't
 	  be allocated for the memory buffer.
@@ -11,11 +17,11 @@
 	* client-src/runtar.c: remove unnecessary check for existence of
 	  CLIENT_LOGIN
 
-2009-01-05  Jean-Louis Martineau <martineau@zmanda.com>,
+2009-01-05  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Archive.swg, perl/Amanda/Device.swg,
 	  perl/Amanda/Xfer.swg: Fix compiler warning.
 
-2009-01-05  Jean-Louis Martineau <martineau@zmanda.com>,
+2009-01-05  Jean-Louis Martineau <martineau@zmanda.com>
         * config/automake/scripts.am: Remove 'use lib' line before doing check.
 
 2008-12-22  Paul Yeatman <pyeatman@zmanda.com>
@@ -37,7 +43,7 @@
 	* application-src/amgtar.c,
 	  application-src/amstar.c: Use sizeof(line) for argument to fgets.
 
-2008-12-22  Jean-Louis Martineau <martineau@zmanda.com>,
+2008-12-22  Jean-Louis Martineau <martineau@zmanda.com>
 	* man/xml-source/amarchiver.8.xml: amanda-archive-format man page is
 	                                   in section 5.
 
@@ -63,7 +69,7 @@
 	  so that built packages still put examples and templates in
 	  /var/lib/amanda
 
-2008-12-22  Jean-Louis Martineau <martineau@zmanda.com>,
+2008-12-22  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/amstar.c: Use fgets to read star output.
 	* application-src/amgtar.c: Use fgets to read gtar output.
 

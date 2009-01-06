@@ -1047,16 +1047,16 @@ tape_device_seek_file (Device * d_self, guint file) {
 
     if (device_in_error(self)) return NULL;
 
-    d_self->in_file = FALSE;
-    d_self->is_eof = FALSE;
-    d_self->block = 0;
-
     difference = file - d_self->file;
 
     /* Check if we already read a filemark. */
     if (d_self->is_eof) {
         difference --;
     }
+
+    d_self->in_file = FALSE;
+    d_self->is_eof = FALSE;
+    d_self->block = 0;
 
     if (difference > 0) {
         /* Seeking forwards */
