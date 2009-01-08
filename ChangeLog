@@ -1,3 +1,6 @@
+2009-01-08  Jean-Louis Martineau <martineau@zmanda.com>
+	* restore-src/amfetchdump.c: Write to stderr.
+
 2009-01-06  Jean-Louis Martineau <martineau@zmanda.com>,
 	    Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/tape-device.c (tape_device_seek_file): Set is_eof to FALSE
