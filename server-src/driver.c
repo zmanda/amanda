@@ -1502,10 +1502,10 @@ handle_taper_result(
                    walltime_str(curclock()), dp->host->hostname, qname);
 	    amfree(qname);
             fflush(stdout);
-	    q = quote_string(result_argv[3]);
+	    q = quote_string(result_argv[2]);
             log_add(L_WARNING, _("Taper error: %s"), q);
 	    amfree(q);
-	    taper_tape_error = newstralloc(taper_tape_error, result_argv[3]);
+	    taper_tape_error = newstralloc(taper_tape_error, result_argv[2]);
             /*FALLTHROUGH*/
 
         case BOGUS:
