@@ -1,4 +1,13 @@
 2009-01-12  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/server_util.c: New get_pending_cmd function.
+	* server-src/server_util.h: get_pending_cmd prototype.
+	* server-src/driver.c: Send message to dumper in ABORT command.
+	* server-src/driverio.c: Send message to dumper in ABORT command.
+	* server-src/dumper.c: Check for ABORT cmd.
+	* server-src/reporter.c: Don't log duplicate
+	                         'Not enough holding disk space' error
+
+2009-01-12  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/driver.c: Fix result_argv subscript.
 
 2009-01-08  Jean-Louis Martineau <martineau@zmanda.com>

@@ -93,6 +93,26 @@ getcmd(void)
     return cmdargs;
 }
 
+struct cmdargs *
+get_pending_cmd(void)
+{
+    SELECT_ARG_TYPE ready;
+    struct timeval  to;
+    int             nfound;
+
+    FD_ZERO(&ready);
+    FD_SET(0, &ready);
+    to.tv_sec = 0;
+    to.tv_usec = 0;
+
+    nfound = select(1, &ready, NULL, NULL, &to);
+    if (nfound && FD_ISSET(0, &ready)) {
+        return getcmd();
+    } else {
+	return NULL;
+    }
+}
+
 void
 free_cmdargs(
     struct cmdargs *cmdargs)

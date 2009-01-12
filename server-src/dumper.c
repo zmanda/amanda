@@ -1591,7 +1591,18 @@ timeout_callback(
 static void
 stop_dump(void)
 {
-    int i;
+    int             i;
+    struct cmdargs *cmdargs = NULL;
+
+    /* Check if I have a pending ABORT command */
+    cmdargs = get_pending_cmd();
+    if (cmdargs) {
+	if (cmdargs->cmd != ABORT) {
+	    error(_("beurk"));
+	}
+	errstr = stralloc(cmdargs->argv[1]);
+	free_cmdargs(cmdargs);
+    }
 
     for (i = 0; i < NSTREAMS; i++) {
 	if (streams[i].fd != NULL) {
