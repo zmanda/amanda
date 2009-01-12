@@ -407,7 +407,7 @@ dumper_cmd(
     char *device;
     char *features;
     char *qname;
-    char *qdest;
+    char *qmesg;
 
     switch(cmd) {
     case START:
@@ -471,15 +471,9 @@ dumper_cmd(
 	break;
     case QUIT:
     case ABORT:
-	if( dp ) {
-	    qdest = quote_string(sched(dp)->destname);
-	    cmdline = vstralloc(cmdstr[cmd],
-				" ", qdest,
-				"\n", NULL );
-	    amfree(qdest);
-	} else {
-	    cmdline = stralloc2(cmdstr[cmd], "\n");
-	}
+	qmesg = quote_string(mesg);
+	cmdline = vstralloc(cmdstr[cmd], " ", qmesg, "\n", NULL );
+	amfree(qmesg);
 	break;
     default:
 	error(_("Don't know how to send %s command to dumper"), cmdstr[cmd]);

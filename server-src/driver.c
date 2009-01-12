@@ -1278,7 +1278,7 @@ continue_port_dumps(void)
 	 */
 	remove_disk( &roomq, dp );
 	chunker_cmd(sched(dp)->dumper->chunker, ABORT, NULL, _("Not enough holding disk space"));
-	dumper_cmd( sched(dp)->dumper, ABORT, NULL, NULL );
+	dumper_cmd( sched(dp)->dumper, ABORT, NULL, _("Not enough holding disk space"));
 	pending_aborts++;
     }
 }

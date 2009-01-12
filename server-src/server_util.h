@@ -60,6 +60,7 @@ struct cmdargs {
 };
 
 struct cmdargs *getcmd(void);
+struct cmdargs *get_pending_cmd(void);
 void free_cmdargs(struct cmdargs *cmdargs);
 void putresult(cmd_t result, const char *, ...) G_GNUC_PRINTF(2, 3);
 int taper_cmd(cmd_t cmd, void *ptr, char *destname, int level, char *datestamp);
