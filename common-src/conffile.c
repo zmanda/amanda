@@ -1672,6 +1672,7 @@ read_confline(
 	break;
 
     case CONF_HOLDING:
+	/* HOLDINGDISK can be define without the 'DEFINE' keyword */
 	if (is_client) {
 	    handle_invalid_keyword(tokenval.v.s);
 	} else {
@@ -1694,7 +1695,8 @@ read_confline(
 	    else if(tok == CONF_PP_SCRIPT_TOOL) get_pp_script();
 	    else if(tok == CONF_DEVICE) get_device_config();
 	    else if(tok == CONF_CHANGER) get_changer_config();
-	    else conf_parserror(_("DUMPTYPE, INTERFACE, TAPETYPE, APPLICATION-TOOL, SCRIPT-TOOL, DEVICE, or CHANGER expected"));
+	    else if(tok == CONF_HOLDING) get_holdingdisk();
+	    else conf_parserror(_("DUMPTYPE, INTERFACE, TAPETYPE, HOLDINGDISK, APPLICATION-TOOL, SCRIPT-TOOL, DEVICE, or CHANGER expected"));
 	}
 	break;
 
@@ -5758,7 +5760,7 @@ dump_configuration(void)
     }
 
     for(hp = holdinglist; hp != NULL; hp = hp->next) {
-	g_printf("\nHOLDINGDISK %s {\n", hp->name);
+	g_printf("\nDEFINE HOLDINGDISK %s {\n", hp->name);
 	for(i=0; i < HOLDING_HOLDING; i++) {
 	    for(np=holding_var; np->token != CONF_UNKNOWN; np++) {
 		if(np->parm == i)

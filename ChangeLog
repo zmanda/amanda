@@ -1,4 +1,9 @@
 2009-01-13  Jean-Louis Martineau <martineau@zmanda.com>
+	* man/xml-source/amanda.conf.5.xml: Accept 'define' keyword for
+	                                    defining an holdingdisk.
+	* common-src/conffile.c: Document it.
+
+2009-01-13  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amcheck.c: Check fallback_splitsize is smaller than
 	                        physmem_total().
 	* server-src/taper-mem-port-source.c: Dont; check physmem_available.
