@@ -50,6 +50,7 @@
 #include "property.h"
 #include "timestamp.h"
 #include "amxml.h"
+#include "physmem.h"
 
 #define BUFFER_SIZE	32768
 
@@ -1421,6 +1422,12 @@ start_server_check(
 		if (dp->tape_splitsize > tape_size) {
 		    g_fprintf(outf,
 			      _("ERROR: %s %s: tape_splitsize > tape size\n"),
+			      hostp->hostname, dp->name);
+		    pgmbad = 1;
+		}
+		if (dp->fallback_splitsize * 1024 > physmem_total()) {
+		    g_fprintf(outf,
+			      _("ERROR: %s %s: fallback_splitsize > total available memory\n"),
 			      hostp->hostname, dp->name);
 		    pgmbad = 1;
 		}

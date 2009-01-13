@@ -1,3 +1,8 @@
+2009-01-13  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amcheck.c: Check fallback_splitsize is smaller than
+	                        physmem_total().
+	* server-src/taper-mem-port-source.c: Dont; check physmem_available.
+
 2009-01-12  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/server_util.c: New get_pending_cmd function.
 	* server-src/server_util.h: get_pending_cmd prototype.

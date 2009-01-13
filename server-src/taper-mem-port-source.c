@@ -21,8 +21,6 @@
 
 #include "taper-mem-port-source.h"
 
-#include "physmem.h"
-
 struct _TaperMemPortSourcePrivate {
     /* Actual size of this buffer is given by max_part_size in TaperSource. */
     char * retry_buffer;
@@ -116,7 +114,6 @@ static gboolean
 setup_retry_buffer(TaperMemPortSource * self) {
     TaperSource *pself = TAPER_SOURCE(self);
     guint64 alloc_size;
-    guint64 max_usage;
     if (selfp->retry_buffer != NULL)
         return TRUE;
 
@@ -125,12 +122,6 @@ setup_retry_buffer(TaperMemPortSource * self) {
         g_fprintf(stderr, "Fallback split size of %lld is greater that system maximum of %lld.\n",
                 (long long)alloc_size, (long long)SIZE_MAX);
         alloc_size = SIZE_MAX;
-    }
-    
-    max_usage = physmem_available() * .95;
-    if (alloc_size > max_usage) {
-        g_fprintf(stderr, "Fallback split size of %lld is greater than 95%% of available memory (%lld bytes).\n", (long long)alloc_size, (long long)max_usage);
-        alloc_size = max_usage;
     }
     
     if (alloc_size < DISK_BLOCK_BYTES * 10) {
