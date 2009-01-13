@@ -1,3 +1,7 @@
+2009-01-13  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Paths.pm.in: add $localstatedir
+	* server-src/amserverconfig.pl: remove extraneous /
+
 2009-01-13  Jean-Louis Martineau <martineau@zmanda.com>
 	* man/xml-source/amanda.conf.5.xml: Accept 'define' keyword for
 	                                    defining an holdingdisk.

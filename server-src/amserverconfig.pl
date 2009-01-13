@@ -30,7 +30,7 @@ my $confdir="$CONFIG_DIR";
 my $tmpdir="$AMANDA_DBGDIR";
 my $amandahomedir="$localstatedir/lib/amanda";
 my $templatedir="$amdatadir/template.d"; #rpm install template files here
-my $def_tapedev="file:/$amandahomedir/vtapes";
+my $def_tapedev="file:$amandahomedir/vtapes";
 
 my $amanda_user="@CLIENT_LOGIN@";
 my $def_config="@DEFAULT_CONFIG@";
