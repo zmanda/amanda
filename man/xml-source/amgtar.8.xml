@@ -66,6 +66,10 @@ The path to the gnutar binary.  The default is set when &A; is built.
 If "YES" (the default), do not allow gnutar to cross filesystem boundaries. If "NO", gnutar will cross filesystem boundaries.  This corresponds to the <emphasis>--one-filesystem</emphasis> option of gnutar.
 </listitem></varlistentry>
  <!-- ==== -->
+ <varlistentry><term>TAR-BLOCKSIZE</term><listitem>
+Block size of Nx512 bytes (default N=20).  This corresponds to the <emphasis>--blocking-factor</emphasis> option of gnutar.
+</listitem></varlistentry>
+ <!-- ==== -->
  <varlistentry><term>SPARSE</term><listitem>
 If "YES" (the default), gnutar will store sparse files efficiently. If "NO", then the <emphasis>--sparse</emphasis> option is not given to gnutar, and it will not try to detect sparse files.
 </listitem></varlistentry>
@@ -112,6 +116,7 @@ List all regex (POSIX Extended Regular Expression syntax) that are strange outpu
     property "GNUTAR-LISTDIR" "
     property "GNUTAR-PATH" "/bin/tar"
     property "ONE-FILE-SYSTEM" "YES"
+    property "TAR_BLOCKSIZE" "20"
     property "SPARSE" "YES"
     property "EXIT-HANDLING" "1=GOOD 2=BAD"
     # change a default NORMAL regex to a STRANGE regex.
