@@ -49,6 +49,8 @@
  * IGNORE
  * STRANGE
  * EXIT-HANDLING   (1=GOOD 2=BAD)
+ * TAR-BLOCKSIZE   (default does not add --blocking-factor option,
+ *                  using tar's default)
  */
 
 #include "amanda.h"
@@ -106,6 +108,7 @@ typedef struct application_argument_s {
     int        message;
     int        collection;
     int        calcsize;
+    char      *tar_blocksize;
     GSList    *level;
     dle_t      dle;
     int        argc;
@@ -177,6 +180,7 @@ static struct option long_options[] = {
     {"strange"         , 1, NULL, 25},
     {"exit-handling"   , 1, NULL, 26},
     {"calcsize"        , 0, NULL, 27},
+    {"tar-blocksize"   , 1, NULL, 28},
     {NULL, 0, NULL, 0}
 };
 
@@ -364,6 +368,7 @@ main(
     argument.message    = 0;
     argument.collection = 0;
     argument.calcsize   = 0;
+    argument.tar_blocksize = NULL;
     argument.level      = NULL;
     init_dle(&argument.dle);
 
@@ -448,6 +453,7 @@ main(
 		 break;
 	case 27: argument.calcsize = 1;
 		 break;
+	case 28: argument.tar_blocksize = stralloc(optarg);
 	case ':':
 	case '?':
 		break;
@@ -1180,6 +1186,10 @@ char **amgtar_build_argv(
     my_argv[i++] = incrname;
     if (gnutar_sparse)
 	my_argv[i++] = "--sparse";
+    if (argument->tar_blocksize) {
+	my_argv[i++] = "--blocking-factor";
+	my_argv[i++] = argument->tar_blocksize;
+    }
     my_argv[i++] = "--ignore-failed-read";
     my_argv[i++] = "--totals";
 

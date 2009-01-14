@@ -1,3 +1,7 @@
+2009-01-14  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amgtar.c: Add TAR-BLOCKSIZE property.
+	* man/xml-source/amgtar.8.xml; document TAR-BLOCKSIZE property.
+
 2009-01-13  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Paths.pm.in: add $localstatedir
 	* server-src/amserverconfig.pl: remove extraneous /
