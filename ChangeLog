@@ -1,4 +1,8 @@
 2009-01-16  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/vfs-device.c: don't cache the dir_handle, as
+	  such caching does not work on some network filesystems
+
+2009-01-16  Dustin J. Mitchell <dustin@zmanda.com>
 	* man/xml-source/amanda.conf.5.xml: add documentation
 	  of inheritance for config sections
 

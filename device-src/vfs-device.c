@@ -44,7 +44,6 @@ typedef struct {
     Device __parent__;
 
     /*< private >*/
-    DIR * dir_handle;
     char * dir_name;
     char * file_name;
     int file_lock_fd;
@@ -145,6 +144,8 @@ static gboolean check_dir_empty_functor(const char * filename,
                                         gpointer self);
 static gboolean clear_and_prepare_label(VfsDevice * self, char * label,
                                         char * timestamp);
+static int search_vfs_directory(VfsDevice *self, const char * regex,
+			SearchDirectoryFunctor functor, gpointer user_data);
 static gint get_last_file_number(VfsDevice * self);
 static gboolean get_last_file_number_functor(const char * filename,
                                              gpointer datap);
@@ -190,7 +191,6 @@ vfs_device_init (VfsDevice * self) {
     Device * dself = DEVICE(self);
     GValue response;
 
-    self->dir_handle = NULL;
     self->dir_name = self->file_name = NULL;
     self->file_lock_name = self->volume_lock_name = NULL;
     self->file_lock_fd = self->volume_lock_fd = self->open_file_fd = -1;
@@ -367,11 +367,6 @@ static void vfs_device_finalize(GObject * obj_self) {
 
     amfree(self->dir_name);
 
-    if(self->dir_handle) {
-        closedir (self->dir_handle);
-        self->dir_handle = NULL;
-    }
-
     release_file(self);
 
     if (self->volume_lock_fd >= 0) {
@@ -459,8 +454,8 @@ static char * file_number_to_file_name(VfsDevice * self, guint device_file) {
 
     regex = g_strdup_printf("^0*%u\\.", device_file);
 
-    search_directory(self->dir_handle, regex,
-                     file_number_to_file_name_functor, &data);
+    search_vfs_directory(self, regex,
+                         file_number_to_file_name_functor, &data);
 
     amfree(regex);
 
@@ -581,8 +576,8 @@ static gboolean update_volume_size_functor(const char * filename,
 
 static void update_volume_size(VfsDevice * self) {
     self->volume_bytes = 0;
-    search_directory(self->dir_handle, "^[0-9]+\\.",
-                     update_volume_size_functor, self);
+    search_vfs_directory(self, "^[0-9]+\\.",
+                         update_volume_size_functor, self);
 
 }
 
@@ -630,11 +625,10 @@ static gboolean delete_vfs_files_functor(const char * filename,
    volume lockfile. */
 static void delete_vfs_files(VfsDevice * self) {
     g_assert(self != NULL);
-    g_assert(self->dir_handle != NULL);
 
     /* This function assumes that the volume is locked! */
-    search_directory(self->dir_handle, VFS_DEVICE_FILE_REGEX,
-                     delete_vfs_files_functor, self);
+    search_vfs_directory(self, VFS_DEVICE_FILE_REGEX,
+                         delete_vfs_files_functor, self);
 }
 
 /* This is a functor suitable for search_directory. It simply prints a
@@ -697,8 +691,8 @@ static gboolean clear_and_prepare_label(VfsDevice * self, char * label,
     delete_vfs_files(self);
 
     /* Print warnings about any remaining files. */
-    search_directory(self->dir_handle, VFS_DEVICE_FILE_REGEX,
-                     check_dir_empty_functor, self);
+    search_vfs_directory(self, VFS_DEVICE_FILE_REGEX,
+                         check_dir_empty_functor, self);
 
     self->file_name = g_strdup_printf("%s/00000.%s", self->dir_name, label);
 
@@ -723,44 +717,35 @@ static gboolean clear_and_prepare_label(VfsDevice * self, char * label,
     return TRUE;
 }
 
-static gboolean
-open_dir_handle(
-    Device *dself)
+/* Just like search_directory, but returns -1 in the event of an error */
+static int
+search_vfs_directory(
+    VfsDevice *self,
+    const char * regex,
+    SearchDirectoryFunctor functor,
+    gpointer user_data)
 {
-    VfsDevice *self = VFS_DEVICE(dself);
+    Device *dself = DEVICE(self);
+    DIR *dir_handle;
+    int result = -1;
 
-    /* close it if it's already open; this is required on some operating systems
-     * in order to see newly added files. */
-    if (self->dir_handle) {
-        closedir (self->dir_handle);
-        self->dir_handle = NULL;
-	/* TODO: unlock */
-    }
-
-    if (!check_is_dir(dself, self->dir_name)) {
-	/* error message set by check_is_dir */
-        return FALSE;
-    }
-
-    self->dir_handle = opendir(self->dir_name);
-    if (self->dir_handle == NULL) {
+    dir_handle = opendir(self->dir_name);
+    if (dir_handle == NULL) {
 	device_set_error(dself,
 		vstrallocf(_("Couldn't open device %s (directory %s) for reading: %s"),
 			dself->device_name, self->dir_name, strerror(errno)),
 		DEVICE_STATUS_DEVICE_ERROR);
-        return FALSE;
+        goto error;
     }
 
-    /* TODO: is this the right moment to acquire a lock?? It will be acquired
-     * too often, right? */
-    if (!open_lock(self, -1, FALSE)) {
-	device_set_error(dself,
-	    stralloc(_("could not acquire lock")),
-	    DEVICE_STATUS_DEVICE_ERROR);
-        return FALSE;
-    }
+    /* TODO: is this the right moment to acquire a lock?? */
 
-    return TRUE;
+    result = search_directory(dir_handle, regex, functor, user_data);
+
+error:
+    if (dir_handle)
+	closedir(dir_handle);
+    return result;
 }
 
 static DeviceStatusFlags vfs_device_read_label(Device * dself) {
@@ -770,14 +755,16 @@ static DeviceStatusFlags vfs_device_read_label(Device * dself) {
     self = VFS_DEVICE(dself);
     g_assert(self != NULL);
 
+    if (!check_is_dir(dself, self->dir_name)) {
+	/* error message set by check_is_dir */
+        return FALSE;
+    }
+
     amfree(dself->volume_label);
     amfree(dself->volume_time);
     amfree(dself->volume_header);
 
     if (device_in_error(self)) return dself->status;
-
-    if (!open_dir_handle(dself))
-	return dself->status; /* open_dir_handle sets status/error message */
 
     amanda_header = dself->volume_header = vfs_device_seek_file(dself, 0);
     if (amanda_header == NULL) {
@@ -888,8 +875,10 @@ static gboolean	vfs_device_start(Device * pself,
     VfsDevice * self;
     self = VFS_DEVICE(pself);
 
-    if (!open_dir_handle(pself))
-	return FALSE; /* open_dir_handle sets status/error message */
+    if (!check_is_dir(pself, self->dir_name)) {
+	/* error message set by check_is_dir */
+        return FALSE;
+    }
 
     pself->in_file = FALSE;
 
@@ -964,8 +953,8 @@ static gint get_last_file_number(VfsDevice * self) {
     data.self = self;
     data.rval = -1;
 
-    count = search_directory(self->dir_handle, "^[0-9]+\\.",
-                             get_last_file_number_functor, &data);
+    count = search_vfs_directory(self, "^[0-9]+\\.",
+                                 get_last_file_number_functor, &data);
 
     if (count <= 0) {
         /* Somebody deleted something important while we weren't looking. */
@@ -1015,8 +1004,8 @@ static gint get_next_file_number(VfsDevice * self, guint request) {
     data.request = request;
     data.best_found = -1;
 
-    count = search_directory(self->dir_handle, "^[0-9]+\\.",
-                             get_next_file_number_functor, &data);
+    count = search_vfs_directory(self, "^[0-9]+\\.",
+                                 get_next_file_number_functor, &data);
 
     if (count <= 0) {
         /* Somebody deleted something important while we weren't looking. */
@@ -1355,7 +1344,6 @@ vfs_device_erase (Device * pself) {
     if (!open_lock(self, 0, true))
         return false;
 
-    open_dir_handle(pself);
     delete_vfs_files(self);
 
     release_file(self);
