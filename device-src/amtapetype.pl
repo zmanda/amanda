@@ -44,6 +44,7 @@ my $opt_tapetype_name = 'unknown-tapetype';
 my $opt_force = 0;
 my $opt_label = "amtapetype-".(int rand 2**31);
 my $opt_device_name;
+my $opt_config;
 
 # global "hint" from the compression heuristic as to how fast this
 # drive is.
@@ -56,7 +57,9 @@ sub open_device {
 	die("Could not open device $opt_device_name: ".$device->error()."\n");
     }
 
-    $device->set_startup_properties_from_config();
+    if (!$device->configure(0)) {
+	die("Errors configuring $opt_device_name: " . $device->error_or_status());
+    }
 
     if (defined $opt_blocksize) {
 	$device->property_set('BLOCK_SIZE', $opt_blocksize)
@@ -186,6 +189,11 @@ sub write_one_file(%) {
     $stats->{$pattern}->{FILES} += 1;
     $stats->{$pattern}->{TIME}  += $duration;
 
+    # make sure the time is nonzero
+    if ($stats->{$pattern}->{TIME} == 0) {
+	$stats->{$pattern}->{TIME}++;
+    }
+
     if ($device->status() != $Amanda::Device::DEVICE_STATUS_SUCCESS) {
 	return $device->error_or_status();
     }
@@ -285,8 +293,10 @@ sub make_tapetype {
 		STATS => $stats,
 		PATTERN => 'RANDOM');
 
-    if ($stats->{RANDOM}->{BYTES} < 1024 * 1024 * 100) {
-	die "Wrote less than 100MB to the device: $err\n";
+    # if we wrote almost no data, then there's probably a problem
+    # with the device, so error out
+    if ($stats->{RANDOM}->{BYTES} < 1024 * 1024) {
+	die "Wrote less than 1MB to the device: $err\n";
     }
     my $volume_size_estimate = $stats->{RANDOM}->{BYTES};
     my $speed_estimate = (($stats->{RANDOM}->{BYTES}."") / 1024)
@@ -331,7 +341,7 @@ EOF
 sub usage {
     print STDERR <<EOF;
 Usage: amtapetype [-h] [-c] [-f] [-b blocksize] [-t typename] [-l label]
-		  [ [-o config_overwrite] ... ] device
+		  [ [-o config_overwrite] ... ] [config] device
         -h   Display this message
         -c   Only check hardware compression state
         -f   Run amtapetype even if the loaded volume is already in use
@@ -341,6 +351,9 @@ Usage: amtapetype [-h] [-c] [-f] [-b blocksize] [-t typename] [-l label]
         -l   Label to write to the tape (default is randomly generated)
         -o   Overwrite configuration parameter (such as device properties)
     Blocksize can include an optional suffix (k, m, or g)
+
+    If CONFIG is specified, the device and its configuration are loaded
+    from the correspnding amanda.conf.
 EOF
     exit(1);
 }
@@ -369,8 +382,12 @@ GetOptions(
     'l' => \$opt_label,
     'o=s' => sub { add_config_overwrite_opt($config_overwrites, $_[1]); },
 ) or usage();
-usage() if (@ARGV != 1);
+usage() if (@ARGV < 1 or @ARGV > 2);
 
+if (@ARGV == 2) {
+    $opt_config = shift @ARGV;
+    config_init($CONFIG_INIT_EXPLICIT_NAME, $opt_config);
+}
 $opt_device_name= shift @ARGV;
 
 apply_config_overwrites($config_overwrites);
@@ -378,7 +395,7 @@ my ($cfgerr_level, @cfgerr_errors) = config_errors();
 if ($cfgerr_level >= $CFGERR_WARNINGS) {
     config_print_errors();
     if ($cfgerr_level >= $CFGERR_ERRORS) {
-	die("errors processing configuration options");
+	die("errors processing config file");
     }
 }
 

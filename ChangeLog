@@ -1,3 +1,8 @@
+2009-01-16  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/amtapetype.pl: add a 'config' parameter
+	* man/xml-source/amtapetype.8.xml: documentation
+	* installcheck/amtapetype.pl: test with a small vtape
+
 2009-01-16  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/driver.c: Use bitwise NOT for taper_state.
 
