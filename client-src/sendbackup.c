@@ -603,7 +603,7 @@ main(
 		g_snprintf(levelstr,19,"%d",level);
 		argvchild[i++] = levelstr;
 	    }
-	    if (indexfd != 0 && bsu->index_line == 1) {
+	    if (indexfd != -1 && bsu->index_line == 1) {
 		argvchild[i++] = "--index";
 		argvchild[i++] = "line";
 	    }
