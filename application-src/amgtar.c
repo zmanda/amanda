@@ -799,7 +799,7 @@ amgtar_backup(
     int indexf = 4;
     int outf;
     FILE *mesgstream;
-    FILE *indexstream;
+    FILE *indexstream = NULL;
     FILE *outstream;
     char *errmsg = NULL;
     amwait_t wait_status;
@@ -827,9 +827,11 @@ amgtar_backup(
 
     aclose(dumpin);
     aclose(dataf);
-    indexstream = fdopen(indexf, "w");
-    if (!indexstream) {
-	error(_("error indexstream(%d): %s\n"), indexf, strerror(errno));
+    if (argument->dle.create_index) {
+	indexstream = fdopen(indexf, "w");
+	if (!indexstream) {
+	    error(_("error indexstream(%d): %s\n"), indexf, strerror(errno));
+	}
     }
     mesgstream = fdopen(mesgf, "w");
     if (!mesgstream) {

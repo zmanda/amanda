@@ -329,7 +329,11 @@ amstar_selfcheck(
     fprintf(stdout, "OK %s\n", qdisk);
     fprintf(stdout, "OK %s\n", qdevice);
 
-    check_file(star_path, X_OK);
+    if (!star_path) {
+	fprintf(stdout, "ERROR STAR-PATH not defined\n");
+    } else {
+	check_file(star_path, X_OK);
+    }
 
     {
 	char *amandates_file;
@@ -343,24 +347,24 @@ static void
 amstar_estimate(
     application_argument_t *argument)
 {
-    char **my_argv;
-    char  *cmd;
+    char **my_argv = NULL;
+    char  *cmd = NULL;
     int    nullfd;
     int    pipefd;
     FILE  *dumpout = NULL;
     off_t  size = -1;
     char   line[32768];
     char  *errmsg = NULL;
+    char  *qerrmsg;
     char  *qdisk;
     amwait_t wait_status;
     int    starpid;
     amregex_t *rp;
     times_t start_time;
-    int     level;
-    GSList *levels;
+    int     level = 0;
+    GSList *levels = NULL;
 
     qdisk = quote_string(argument->dle.disk);
-
     if (argument->calcsize) {
 	char *dirname;
 
@@ -370,6 +374,10 @@ amstar_estimate(
 	return;
     }
 
+    if (!star_path) {
+	errmsg = vstrallocf(_("STAR-PATH not defined"));
+	goto common_error;
+    }
     cmd = stralloc(star_path);
 
     start_time = curclock();
@@ -381,8 +389,7 @@ amstar_estimate(
 	if ((nullfd = open("/dev/null", O_RDWR)) == -1) {
 	    errmsg = vstrallocf(_("Cannot access /dev/null : %s"),
 				strerror(errno));
-	    dbprintf("%s\n", errmsg);
-	    goto common_exit;
+	    goto common_error;
 	}
 
 	starpid = pipespawnv(cmd, STDERR_PIPE, 1,
@@ -390,8 +397,8 @@ amstar_estimate(
 
 	dumpout = fdopen(pipefd,"r");
 	if (!dumpout) {
-	    error(_("Can't fdopen: %s"), strerror(errno));
-	    /*NOTREACHED*/
+	    errmsg = vstrallocf(_("Can't fdopen: %s"), strerror(errno));
+	    goto common_error;
 	}
 
 	size = (off_t)-1;
@@ -459,8 +466,6 @@ amstar_estimate(
 	}
 	dbprintf(_("after %s %s wait\n"), my_argv[0], qdisk);
 
-common_exit:
-
 	amfree(my_argv);
 
 	aclose(nullfd);
@@ -469,6 +474,17 @@ common_exit:
 	fprintf(stdout, "%d %lld 1\n", level, (long long)size);
     }
     amfree(qdisk);
+    amfree(cmd);
+    return;
+
+common_error:
+    dbprintf("%s\n", errmsg);
+    qerrmsg = quote_string(errmsg);
+    amfree(qdisk);
+    dbprintf("%s", errmsg);
+    fprintf(stdout, "ERROR %s\n", qerrmsg);
+    amfree(errmsg);
+    amfree(qerrmsg);
     amfree(cmd);
 }
 
@@ -491,7 +507,7 @@ amstar_backup(
     int indexf = 4;
     int outf;
     FILE *mesgstream;
-    FILE *indexstream;
+    FILE *indexstream = NULL;
     FILE *outstream;
     int level = GPOINTER_TO_INT(argument->level->data);
 
@@ -507,9 +523,11 @@ amstar_backup(
     /* close the write ends of the pipes */
     aclose(dumpin);
     aclose(dataf);
-    indexstream = fdopen(indexf, "w");
-    if (!indexstream) {
-	error(_("error indexstream(%d): %s\n"), indexf, strerror(errno));
+    if (argument->dle.create_index) {
+	indexstream = fdopen(indexf, "w");
+	if (!indexstream) {
+	    error(_("error indexstream(%d): %s\n"), indexf, strerror(errno));
+	}
     }
     mesgstream = fdopen(mesgf, "w");
     if (!mesgstream) {
