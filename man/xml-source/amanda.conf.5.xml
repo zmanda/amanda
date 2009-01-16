@@ -230,6 +230,54 @@ property "syspath" "C:\\WINDOWS\\SYSTEM"
 </programlisting>
 </para>
 </refsect2>
+
+<refsect2><title>SUBSECTIONS AND INHERITANCE</title>
+
+<para>Amanda configuration files may include various
+<emphasis>subsections</emphasis>, each defining a set of configuration
+directives.  Each type of subsection is described below.  Note that all types
+of subsections can <emphasis>inherit</emphasis> from other subsections of the
+same type by naming the "parent" section in the "child" subsection.  For
+example:
+
+<programlisting>
+define dumptype global {
+    record yes
+    index yes
+}
+
+define dumptype nocomp {
+    global      # inherit the parameters in dumptype 'global'
+    compress none
+}
+</programlisting></para>
+
+<para>Note that multiple inheritance is also supported by simply naming
+multiple parent sections in a child.  Parents are implicitly expanded in place
+in a child, and the last occurrence of each parameter takes precedence.  For
+example,
+<programlisting>
+define tapetype par1 {
+    comment "Parent 1"
+    filemark 8k
+    speed 300bps
+    length 200M
+}
+define tapetype par2 {
+    comment "Parent 2"
+    filemark 16k
+    speed 400bps
+}
+define tapetype child {
+    par1
+    par2
+    filemark 32k
+}
+</programlisting>
+In this example, 'child' will have a filemark of 32k, a speed of 400bps, and a
+length of 200M.</para>
+</refsect2>
+
 </refsect1>
 
 <refsect1>
@@ -2060,7 +2108,10 @@ file that all
 <emphasis remap='B'>dumptype</emphasis>s
 should reference.
 This provides an easy place to make changes that will affect every
-<emphasis remap='B'>dumptype</emphasis>.</para>
+<emphasis remap='B'>dumptype</emphasis>, although you must be careful
+that every dumptype explicitly inherits from the
+<emphasis remap='I'>global</emphasis>
+dumptype - &A; does not do so automatically.</para>
 </refsect1>
 
 <refsect1><title>TAPETYPE SECTION</title>

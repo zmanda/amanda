@@ -1,4 +1,8 @@
 2009-01-16  Dustin J. Mitchell <dustin@zmanda.com>
+	* man/xml-source/amanda.conf.5.xml: add documentation
+	  of inheritance for config sections
+
+2009-01-16  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/amtapetype.pl: add a 'config' parameter
 	* man/xml-source/amtapetype.8.xml: documentation
 	* installcheck/amtapetype.pl: test with a small vtape
