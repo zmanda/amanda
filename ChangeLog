@@ -1,3 +1,6 @@
+2009-01-16  Jean-Louis Martineau <martineau@zmanda.com>
+	* packaging/rpm/amanda.spec: Fix for fedora 10.
+
 2009-01-16  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/vfs-device.c: don't cache the dir_handle, as
 	  such caching does not work on some network filesystems

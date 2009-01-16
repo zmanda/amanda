@@ -77,6 +77,11 @@
         %define disttag fc
         %define distver 9
     %endif
+    %if %{?fedora}
+        %define dist fedora
+        %define disttag fc
+        %define distver %{fedora}
+    %endif
     %if %(awk '$1 == "Red" && $7 ~ /3.*/ { exit 1; }' /etc/redhat-release; echo $?)
         %define dist redhat
         %define disttag rhel
