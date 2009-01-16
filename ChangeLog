@@ -1,4 +1,7 @@
 2009-01-16  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/driver.c: Use bitwise NOT for taper_state.
+
+2009-01-16  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/taper.c: Go to next tape if device_start_file fail.
 	* device-src/tape-device.c: write a filemark when a file is finished.
 	* device-src/tape-device.h (TapeDevice): Remove first_file.

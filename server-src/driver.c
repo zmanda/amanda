@@ -517,7 +517,7 @@ main(
 	    taper_state |= TAPER_STATE_DUMP_TO_TAPE;
 	    dump_to_tape(diskp);
 	    event_loop(0);
-	    taper_state &= !TAPER_STATE_DUMP_TO_TAPE;
+	    taper_state &= ~TAPER_STATE_DUMP_TO_TAPE;
 	}
 	else {
 	    char *qname = quote_string(diskp->name);
@@ -727,10 +727,10 @@ startaflush(void)
     result_tape_action = tape_action(&why_no_new_tape);
 
     if (result_tape_action & TAPE_ACTION_NEW_TAPE) {
-	taper_state &= !TAPER_STATE_WAIT_FOR_TAPE;
+	taper_state &= ~TAPER_STATE_WAIT_FOR_TAPE;
 	taper_cmd(NEW_TAPE, NULL, NULL, 0, NULL);
     } else if (result_tape_action & TAPE_ACTION_NO_NEW_TAPE) {
-	taper_state &= !TAPER_STATE_WAIT_FOR_TAPE;
+	taper_state &= ~TAPER_STATE_WAIT_FOR_TAPE;
 	taper_cmd(NO_NEW_TAPE, why_no_new_tape, NULL, 0, NULL);
 	start_degraded_mode(&runq);
     }
@@ -821,7 +821,7 @@ startaflush(void)
 	    taper_sendresult = 0;
 	    taper_first_label = NULL;
 	    taper_written = 0;
-	    taper_state &= !TAPER_STATE_DUMP_TO_TAPE;
+	    taper_state &= ~TAPER_STATE_DUMP_TO_TAPE;
 	    taper_dumper = NULL;
 	    qname = quote_string(dp->name);
 	    taper_cmd(FILE_WRITE, dp, sched(dp)->destname, sched(dp)->level,
@@ -1430,7 +1430,7 @@ handle_taper_result(
                       result_argc);
 		/*NOTREACHED*/
             }
-	    taper_state &= !TAPER_STATE_TAPE_STARTED;
+	    taper_state &= ~TAPER_STATE_TAPE_STARTED;
 
 	    if (current_tape >= conf_runtapes) {
 		taper_cmd(NO_NEW_TAPE, "runtapes volumes already written", NULL, 0, NULL);
@@ -1445,10 +1445,10 @@ handle_taper_result(
 		result_tape_action = tape_action(&why_no_new_tape);
 		if (result_tape_action & TAPE_ACTION_NEW_TAPE) {
 		    taper_cmd(NEW_TAPE, NULL, NULL, 0, NULL);
-		    taper_state &= !TAPER_STATE_WAIT_FOR_TAPE;
+		    taper_state &= ~TAPER_STATE_WAIT_FOR_TAPE;
 		} else if (result_tape_action & TAPE_ACTION_NO_NEW_TAPE) {
 		    taper_cmd(NO_NEW_TAPE, why_no_new_tape, NULL, 0, NULL);
-		    taper_state &= !TAPER_STATE_WAIT_FOR_TAPE;
+		    taper_state &= ~TAPER_STATE_WAIT_FOR_TAPE;
 		    start_degraded_mode(&runq);
 		}
 	    }
