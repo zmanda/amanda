@@ -149,7 +149,6 @@ tape_device_init (TapeDevice * self) {
     self->broken_gmt_online = FALSE;
 
     self->fd = -1;
-    self->first_file = 0;
 
     /* set all of the feature properties to an unsure default of FALSE */
     self->broken_gmt_online = FALSE;
@@ -863,16 +862,26 @@ static gboolean write_tapestart_header(TapeDevice * self, char * label,
 
      g_assert(header_size >= (int)d_self->min_block_size);
      result = tape_device_robust_write(self, header_buf, header_size);
-     if (result == RESULT_SUCCESS) {
-	amfree(header_buf);
-	return TRUE;
-     } else {
+     if (result != RESULT_SUCCESS) {
 	 device_set_error(d_self,
 	    vstrallocf(_("Error writing tapestart header: %s"), strerror(errno)),
 	    DEVICE_STATUS_DEVICE_ERROR);
 	amfree(header_buf);
 	return FALSE;
      }
+
+     amfree(header_buf);
+
+     if (!tape_weof(self->fd, 1)) {
+	device_set_error(d_self,
+			 vstrallocf(_("Error writing filemark: %s"),
+				    strerror(errno)),
+			 DEVICE_STATUS_DEVICE_ERROR|DEVICE_STATUS_VOLUME_ERROR);
+	return FALSE;
+     }
+
+     return TRUE;
+
 }
 
 static gboolean
@@ -931,7 +940,6 @@ tape_device_start (Device * d_self, DeviceAccessMode mode, char * label,
 		DEVICE_STATUS_DEVICE_ERROR);
             return FALSE;
 	}
-        self->first_file = TRUE;
         break;
 
     case ACCESS_READ:
@@ -954,7 +962,6 @@ tape_device_start (Device * d_self, DeviceAccessMode mode, char * label,
 	    /* write_tapestart_header already set the error status */
             return FALSE;
         }
-        self->first_file = TRUE;
 
         d_self->volume_label = newstralloc(d_self->volume_label, label);
         d_self->volume_time = newstralloc(d_self->volume_time, timestamp);
@@ -987,17 +994,6 @@ static gboolean tape_device_start_file(Device * d_self,
     /* set the blocksize in the header properly */
     info->blocksize = d_self->block_size;
 
-    if (!(d_self->access_mode == ACCESS_APPEND && self->first_file)) {
-        if (!tape_weof(self->fd, 1)) {
-	    device_set_error(d_self,
-		vstrallocf(_("Error writing filemark: %s"), strerror(errno)),
-		DEVICE_STATUS_DEVICE_ERROR | DEVICE_STATUS_VOLUME_ERROR);
-            return FALSE;
-        }
-    }
-
-    self->first_file = FALSE;
-
     /* Make the Amanda header suitable for writing to the device. */
     /* Then write the damn thing. */
     amanda_header = device_build_amanda_header(d_self, info,
@@ -1028,7 +1024,17 @@ static gboolean tape_device_start_file(Device * d_self,
 
 static gboolean
 tape_device_finish_file (Device * d_self) {
+    TapeDevice * self;
+
+    self = TAPE_DEVICE(d_self);
     if (device_in_error(d_self)) return FALSE;
+
+    if (!tape_weof(self->fd, 1)) {
+	device_set_error(d_self,
+		vstrallocf(_("Error writing filemark: %s"), strerror(errno)),
+		DEVICE_STATUS_DEVICE_ERROR | DEVICE_STATUS_VOLUME_ERROR);
+        return FALSE;
+    }
 
     d_self->in_file = FALSE;
     return TRUE;
@@ -1175,6 +1181,8 @@ tape_device_finish (Device * d_self) {
 
     /* Write an extra filemark, if needed. The OS will give us one for
        sure. */
+    /* device_finish_file already wrote one for us */
+    /*
     if (self->final_filemarks > 1 &&
         IS_WRITABLE_ACCESS_MODE(d_self->access_mode)) {
         if (!tape_weof(self->fd, 1)) {
@@ -1184,6 +1192,7 @@ tape_device_finish (Device * d_self) {
             return FALSE;
         }
     }
+    */
 
     /* Rewind. */
     if (!tape_rewind(self->fd)) {

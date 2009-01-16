@@ -904,10 +904,17 @@ static void run_device_output(taper_state_t * taper_state,
             return;
         }
 
-        if (!device_start_file(taper_state->device, this_header)) {
-            bail_no_volume(dump_info, taper_state->last_errmsg);
-	    dumpfile_free(this_header);
-            return;
+	while (!device_start_file(taper_state->device, this_header)) {
+            /* Close the device. */
+            device_finish(taper_state->device);
+            g_object_unref(taper_state->device);
+            taper_state->device = NULL;
+
+            if (!find_and_label_new_tape(taper_state, dump_info)) {
+		bail_no_volume(dump_info, taper_state->last_errmsg);
+		dumpfile_free(this_header);
+		return;
+            }
         }
 	dumpfile_free(this_header);
 

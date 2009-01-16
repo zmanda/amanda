@@ -55,7 +55,6 @@ typedef struct _TapeDevice {
 
     /* 0 if we opened with O_RDWR; error otherwise. */
     gboolean write_open_errno;
-    gboolean first_file; /* Is this the first file in append mode? */
     int fd;
 
     TapeDevicePrivate * private;
