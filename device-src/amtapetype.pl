@@ -56,8 +56,6 @@ sub open_device {
 	die("Could not open device $opt_device_name: ".$device->error()."\n");
     }
 
-    $device->set_startup_properties_from_config();
-
     if (defined $opt_blocksize) {
 	$device->property_set('BLOCK_SIZE', $opt_blocksize)
 	    or die "Error setting blocksize: " . $device->error_or_status();

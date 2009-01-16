@@ -1,3 +1,6 @@
+2009-01-16  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/amtapetype.pl: remove call to old device function
+
 2009-01-16  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/driver.c: Use bitwise NOT for taper_state.
 
