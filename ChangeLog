@@ -1,3 +1,7 @@
+2009-01-17  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amstatus.pl: Don't add 'dump to tape' in the 'dumped'
+	                          result.
+
 2009-01-16 Dan Locks <dwlocks@zmanda.com>
 	* packaging/rpm/amanda.spec: fix the fedora 10 fix for other distros
 
