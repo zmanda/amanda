@@ -887,16 +887,6 @@ foreach $host (sort @hosts) {
 				}
 				if(defined $taper_started{$hostpart} &&
 						$taper_started{$hostpart}==1) {
-					if(defined $dump_started{$hostpart}) {
-						$dpartition++;
-						if(defined($size{$hostpart})) {
-							$dsize += $size{$hostpart};
-						}
-						else {
-							$dsize += $esize{$hostpart};
-						}
-						$desize += $esize{$hostpart};
-					}
 					if(defined $dump_started{$hostpart} &&
 					   	$dump_started{$hostpart} == 1 &&
 							$dump_finished{$hostpart} == -1) {
@@ -926,6 +916,7 @@ foreach $host (sort @hosts) {
 							print " dumping to tape";
 							if(defined($tapedsize{$hostpart})) {
 								printf " (%d$unit done)", $tapedsize{$hostpart};
+								$dtsize += $tapedsize{$hostpart};
 							}
 							if( defined $starttime ) {
 								print " (", &showtime($taper_time{$hostpart}), ")";
@@ -1044,12 +1035,17 @@ foreach $host (sort @hosts) {
 							}
 							print "\n";
 						}
+						$dpartition++;
 						$tpartition++;
+						$dsize += $size{$hostpart};
 						$tsize += $size{$hostpart};
+						$desize += $esize{$hostpart};
 						if(defined $esize{$hostpart} && $esize{$hostpart} > 1) {
+							$desize += $esize{$hostpart};
 							$tesize += $esize{$hostpart};
 						}
 						else {
+							$desize += $size{$hostpart};
 							$tesize += $size{$hostpart};
 						}
 					}
@@ -1196,9 +1192,16 @@ if (defined $opt_summary) {
 	printf "wait for dumping: %3d %20d$unit           (%6.2f%%)\n",
 		$wpartition , $wsize,
 		$estsize ? ($wsize * 1.0 / $estsize) * 100 : 0.0;
-	printf "dumping to tape : %3d %20d$unit           (%6.2f%%)\n",
-		$dtpartition, $dtesize,
-		$estsize ? ($dtesize * 1.0 / $estsize) * 100 : 0.0;
+	if(defined($dtsize)) {
+		printf "dumping to tape : %3d %9d$unit %9d$unit (%6.2f%%) (%6.2f%%)\n",
+			$dtpartition, $dtsize, $dtesize,
+			$dtsize ? ($dtsize * 1.0 / $dtesize) * 100 : 0.0,
+			$estsize ? ($dtesize * 1.0 / $estsize) * 100 : 0.0;
+	} else {
+		printf "dumping to tape : %3d %20d$unit           (%6.2f%%)\n",
+			$dtpartition, $dtesize,
+			$estsize ? ($dtesize * 1.0 / $estsize) * 100 : 0.0;
+	}
 	printf "dumping         : %3d %9d$unit %9d$unit (%6.2f%%) (%6.2f%%)\n",
 		$dupartition, $dusize, $duesize,
 		$duesize ? ($dusize * 1.0 / $duesize) * 100 : 0.0,
