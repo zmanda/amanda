@@ -62,25 +62,15 @@
         %define disttag fc
         %define distver 7
     %endif
-    %if %(awk '$1 == "Fedora" && $3 ~ /8.*/ { exit 1; }' /etc/redhat-release; echo $?)
+    # if macro cannot have an empty test and we're just testing the existance
+    %if %{?fedora:yes}%{!?fedora:no} == yes
         %define dist fedora
         %define disttag fc
-        %define distver 8
-        # TODO: generalize this so that any platform can cross compile
+        %define distver %{fedora}
         %if %{_host_cpu} == x86_64 && %{_target_cpu} == i686
                 # Do nothing if PKG_CONFIG_PATH was set by the user above.
                 %{!?PKG_CONFIG_PATH: %define PKG_CONFIG_PATH /usr/lib/pkgconfig}
         %endif
-    %endif
-    %if %(awk '$1 == "Fedora" && $3 ~ /9.*/ { exit 1; }' /etc/redhat-release; echo $?)
-        %define dist fedora
-        %define disttag fc
-        %define distver 9
-    %endif
-    %if %{?fedora}
-        %define dist fedora
-        %define disttag fc
-        %define distver %{fedora}
     %endif
     %if %(awk '$1 == "Red" && $7 ~ /3.*/ { exit 1; }' /etc/redhat-release; echo $?)
         %define dist redhat
@@ -153,9 +143,9 @@
     %define xinetd_reload restart
 %endif
 
-# Let's die if we haven't detected the distro.  This might save some frustration.
-%{!?distver: %{error:"Your distribution and its version were not detected."}}
-
+# Let's die if we haven't detected the distro. This might save some frustration.
+# RPM does not provide a way to  exit gracefully, hence the tag_to_cause_exit. 
+%{!?distver: %{error:"Your distribution and its version were not detected."}; %tag_to_cause_exit }
 # Set minimum tar version if it wasn't set in the per-distro section
 %{!?tarver: %define tarver 1.15}
 
