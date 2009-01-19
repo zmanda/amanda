@@ -183,7 +183,7 @@ sub command_backup {
     print $mesgout_fd "sendbackup: size $ksize\n";
     print $mesgout_fd "sendbackup: end\n";
 
-    /* destroy all snapshot of this level and higher */
+    # destroy all snapshot of this level and higher
     $self->zfs_purge_snapshot($level, 9, "backup");
 
     if ($self->{keep_snapshot} eq 'YES') {
