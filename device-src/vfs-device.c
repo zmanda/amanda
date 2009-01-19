@@ -1186,7 +1186,7 @@ vfs_device_seek_file (Device * pself, guint requested_file) {
     }
 
     self->open_file_fd = robust_open(self->file_name, O_RDONLY, 0);
-    if (self->open_file_fd <= 0) {
+    if (self->open_file_fd < 0) {
 	device_set_error(pself,
 	    vstrallocf(_("Couldn't open file %s: %s"), self->file_name, strerror(errno)),
 	    DEVICE_STATUS_DEVICE_ERROR);
