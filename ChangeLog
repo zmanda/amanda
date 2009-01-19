@@ -1,3 +1,6 @@
+2009-01-19  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/vfs-device.c: robust_open can return fd 0.
+
 2009-01-19  Tom Robinson <tom.robinson@constantstream.com>
 	* server-src/amoverview.pl: fix parsing of filenames containing colons
 
