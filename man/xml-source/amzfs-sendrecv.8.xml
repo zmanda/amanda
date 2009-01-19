@@ -30,12 +30,13 @@
 <para>amzfs-sendrecv is an &A; application implementing the Application API.
 It should not be run by users directly.
 It create a zfs snapshot of the filesystem and backup the snapshot with 'zfs send'.
-Only full backup is done, no incremental backup.
+Snapshot are kept after the backup is done, this increase the disk space use on the client but it is neccesary to be able do to incremental backup.
+If you want only full backup, you can disable this feature by setting the KEEP-SNAPSHOT property to 'NO'.
 Only the restoration of the complete backup is allowed, it is impossible to restore a single file.</para>
 
-<para>The application is run as the amanda user, it must have the priviledge to create and destroy snapshot:
+<para>The application is run as the amanda user, it must have many zfs priviledge:
 <programlisting>
-    zfs allow -ldu AMANDA_USER mount,snapshot,destroy,send,receive FILESYSTEM
+    zfs allow -ldu AMANDA_USER mount,create,rename,snapshot,destroy,send,receive FILESYSTEM
 </programlisting></para>
 
 <para>Some system doesn't have "zfs allow", but you can give the Amanda backup user the rights to manipulate ZFS filesystems by using the following command:
@@ -71,6 +72,10 @@ for information on the Application API, application configuration.</para>
 Path to the 'df' binary, search in $PATH by default.
 </listitem></varlistentry>
  <!-- ==== -->
+ <varlistentry><term>KEEP-SNAPSHOT</term><listitem>
+If "YES" (the default), snapshot are kept after the backup, if set to "NO" then snapshot are no kept and incremental backup will fail.
+</listitem></varlistentry>
+ <!-- ==== -->
  <varlistentry><term>ZFS-PATH</term><listitem>
 Path to the 'zfs' binary, search in $PATH by default.
 </listitem></varlistentry>
@@ -95,6 +100,7 @@ In this example, a dumptype is defined to use amzfs-sendrecv application to back
    comment "amzfs-sendrecv"
    plugin "amzfs-sendrecv"
    #property "DF-PATH"  "/usr/sbin/df"
+   #property "KEEP-SNAPSHOT" "YES"
    #property "ZFS-PATH" "/usr/sbin/zfs"
    #property "PFEXEC-PATH" "/usr/sbin/pfexec"
    #property "PFEXEC" "NO"

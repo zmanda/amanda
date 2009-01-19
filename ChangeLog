@@ -1,3 +1,12 @@
+2009-01-19  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amzfs-sendrecv.pl: Handle incremental,
+	                                     new KEEP-SNAPSHOT property.
+	* man/xml-source/amzfs-sendrecv.8.xml: Document it.
+	* application-src/teecount.c: New program.
+	* application-src/Makefile.am: Add teecount.
+	* perl/Amanda/Application/Zfs.pm: Work with 'current' snapshot.
+	* common-src/amanda.h: include "safe-read.h"
+
 2009-01-17  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amstatus.pl: Don't add 'dump to tape' in the 'dumped'
 	                          result.

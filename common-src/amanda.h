@@ -1070,6 +1070,7 @@ extern int vprintf(const char *format, va_list ap);
 /* gnulib-only includes (hence "" instead of <>) */
 #include "getaddrinfo.h"
 #include "inet_ntop.h"
+#include "safe-read.h"
 #include "full-read.h"
 #include "full-write.h"
 

@@ -30,6 +30,8 @@ SCRIPTS_PERL = $(CHECK_PERL)
 
 SCRIPTS_SHELL = $(amlibexec_SCRIPTS)
 
+amlibexec_PROGRAMS = teecount
+
 #We use two variables, applicationdir applicationexecdir, to segregate the
 #platform-independent (applicationdir) files installed by install-data from the
 #platform-dependent files (applicationexecdir) installed by install-exec. 
@@ -48,7 +50,8 @@ LDADD = ../common-src/libamanda.$(LIB_EXTENSION) \
 	../common-src/libamanda.$(LIB_EXTENSION) \
 	../gnulib/libgnu.$(LIB_EXTENSION)
 
-INSTALLPERMS_exec = dest=$(applicationdir) chown=amanda $(applicationexec_PROGRAMS) \
+INSTALLPERMS_exec = dest-$(amlibexecdir) chown=amanda $(amlibexec_PROGRAMS) \
+		    dest=$(applicationdir) chown=amanda $(applicationexec_PROGRAMS) \
 		    dest=$(applicationdir) chown=amanda $(applicationexec_SCRIPTS)
 
 INSTALLPERMS_data = dest=$(amlibexecdir) chown=amanda $(amlibexec_SCRIPTS)
