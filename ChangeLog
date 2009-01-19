@@ -1,3 +1,6 @@
+2009-01-19  Tom Robinson <tom.robinson@constantstream.com>
+	* server-src/amoverview.pl: fix parsing of filenames containing colons
+
 2009-01-19  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/amzfs-sendrecv.pl: Handle incremental,
 	                                     new KEEP-SNAPSHOT property.

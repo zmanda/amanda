@@ -104,7 +104,7 @@ my $dlfh = new FileHandle "$amadmin $opt_config disklist|" or
     die "$0: error in opening `$amadmin $opt_config disklist' pipe: $!\n";
 $/ = "";
 while (<$dlfh>) {
-    ($host, $disk) = m/    host (.*?):.*    disk (.*?):.*strategy (STANDARD|NOFULL|NOINC|HANOI|INCRONLY).*ignore NO/s;
+    ($host, $disk) = m/    host (.*?):\n.*    disk (.*?):\n.*strategy (STANDARD|NOFULL|NOINC|HANOI|INCRONLY).*ignore NO/ms;
     next unless $host;
     $disks{$host}{$disk}++;
 }
