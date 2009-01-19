@@ -1,4 +1,7 @@
 2009-01-19  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/diskfile.c: Use dp->hostnext to scan dles of a host.
+
+2009-01-19  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/vfs-device.c: robust_open can return fd 0.
 
 2009-01-19  Tom Robinson <tom.robinson@constantstream.com>

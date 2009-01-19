@@ -536,7 +536,7 @@ parse_diskline(
 
     if (host) {
 	sdisk = sanitise_filename(diskname);
-	for (dp = host->disks; dp != NULL; dp = dp->next) {
+	for (dp = host->disks; dp != NULL; dp = dp->hostnext) {
 	    char *sdiskp = sanitise_filename(dp->name);
 	    if (strcmp(diskname, dp->name) != 0 &&
 		 strcmp(sdisk, sdiskp) == 0) {
