@@ -1,3 +1,8 @@
+2009-01-19  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/vfs-device.c: remove bogus locking stubs that are
+	  making syscalls like close(-1); fix error handling in read_label
+	  if check_is_dir fails()
+
 2009-01-19  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/vfs-device.c: robust_open can return fd 0.
 
