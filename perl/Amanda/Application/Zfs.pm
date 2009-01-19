@@ -192,7 +192,11 @@ sub zfs_set_value {
 
     }
 
-    $self->{snapshot} = Amanda::Util::sanitise_filename($self->{device});
+    if ($action eq 'check') {
+      $self->{snapshot} = $self->zfs_build_snapshotname($self->{device}, -1);
+    } else {
+      $self->{snapshot} = $self->zfs_build_snapshotname($self->{device});
+    }
     if (defined $self->{mountpoint}) {
 	if ($self->{device} =~ /^$self->{mountpoint}/) {
             $self->{dir} = $self->{device};
@@ -261,6 +265,130 @@ sub zfs_destroy_snapshot {
             $self->print_to_server_and_die($action, "cannot destroy snapshot '$self->{filesystem}\@$self->{snapshot}': unknown reason", $Amanda::Script_App::ERROR);
         }
     }
+}
+
+sub zfs_destroy_snapshot_level {
+    my $self = shift;
+    my $level = shift;
+    my $action = shift;
+
+    my $snapshotname = $self->zfs_find_snapshot_level($level);
+    debug "zfs_destroy_snapshot_level: Current $snapshotname";
+    if ($snapshotname ne "") {
+      my $cmd = "$self->{pfexec_cmd} $self->{zfs_path} destroy  $self->{filesystem}\@$snapshotname";
+      debug "running: $cmd|";
+      my($wtr, $rdr, $err, $pid);
+      my($msg, $errmsg);
+      $err = Symbol::gensym;
+      $pid = open3($wtr, $rdr, $err, $cmd);
+      close $wtr;
+      $msg = <$rdr>;
+      $errmsg = <$err>;
+      waitpid $pid, 0;
+      close $rdr;
+      close $err;
+      if( $? != 0 ) {
+          if(defined $msg && defined $errmsg) {
+              $self->print_to_server_and_die($action, "$msg, $errmsg", $Amanda::Script_App::ERROR);
+          } elsif (defined $msg) {
+              $self->print_to_server_and_die($action, $msg, $Amanda::Script_App::ERROR);
+          } elsif (defined $errmsg) {
+              $self->print_to_server_and_die($action, $errmsg, $Amanda::Script_App::ERROR);
+          } else {
+              $self->print_to_server_and_die($action, "cannot destroy snapshot '$self->{filesystem}\@$self->{snapshot}': unknown reason", $Amanda::Script_App::ERROR);
+          }
+      }
+    }
+}
+
+sub zfs_rename_snapshot {
+    my $self = shift;
+    my $level = shift;
+    my $action = shift;
+
+    my $newsnapshotname = $self->zfs_build_snapshotname($self->{device}, $level);
+    my $cmd = "$self->{pfexec_cmd} $self->{zfs_path} rename $self->{filesystem}\@$self->{snapshot} $newsnapshotname";
+    debug "running: $cmd|";
+    my($wtr, $rdr, $err, $pid);
+    my($msg, $errmsg);
+    $err = Symbol::gensym;
+    $pid = open3($wtr, $rdr, $err, $cmd);
+    close $wtr;
+    $msg = <$rdr>;
+    $errmsg = <$err>;
+    waitpid $pid, 0;
+    close $rdr;
+    close $err;
+    if( $? != 0 ) {
+        if(defined $msg && defined $errmsg) {
+            $self->print_to_server_and_die($action, "$msg, $errmsg", $Amanda::Script_App::ERROR);
+        } elsif (defined $msg) {
+            $self->print_to_server_and_die($action, $msg, $Amanda::Script_App::ERROR);
+        } elsif (defined $errmsg) {
+            $self->print_to_server_and_die($action, $errmsg, $Amanda::Script_App::ERROR);
+        } else {
+            $self->print_to_server_and_die($action, "cannot rename snapshot '$self->{filesystem}\@$self->{snapshot}': unknown reason", $Amanda::Script_App::ERROR);
+        }
+    }
+}
+
+sub zfs_purge_snapshot {
+    my $self = shift;
+    my $minlevel = shift;
+    my $maxlevel = shift;
+    my $action = shift;
+
+    my $level;
+    for ($level = $maxlevel; $level >= $minlevel; $level--) {
+	debug "zfs_purge_snapshot: Check for existing snapshot at level $level";
+        $self->zfs_destroy_snapshot_level($level, $action);
+    }
+}
+
+sub zfs_find_snapshot_level {
+    my $self = shift;
+    my $level = shift;
+    my $action = shift;
+
+    my $snapshotname = $self->zfs_build_snapshotname($self->{device}, $level);
+
+    my $cmd =  "$self->{pfexec_cmd} $self->{zfs_path} list -t snapshot $self->{filesystem}\@$snapshotname";
+    debug "running: $cmd|";
+    my($wtr, $rdr, $err, $pid);
+    my($msg, $errmsg);
+    $err = Symbol::gensym;
+    $pid = open3($wtr, $rdr, $err, $cmd);
+    close $wtr;
+    $msg = <$rdr>;
+    $errmsg = <$err>;
+    waitpid $pid, 0;
+    close $rdr;
+    close $err;
+    if( $? != 0 ) {
+	return "";
+    }
+    return $snapshotname;
+}
+
+sub zfs_build_snapshotname {
+    my $self = shift;
+    my $device = shift;
+    my $level = shift;
+    my $action = shift;
+
+    my $snapshotname = "";
+
+    if (!defined $level) {
+      $snapshotname = "amanda-" . Amanda::Util::sanitise_filename($device) . "-current";
+    } else {
+      if ($level < 0) {
+	$snapshotname = "amanda-" . Amanda::Util::sanitise_filename($device) . "-check";
+      } else {
+        $snapshotname = "amanda-" . Amanda::Util::sanitise_filename($device) . "-" . $level;
+      }
+    } 
+
+    return $snapshotname;
 }
 
 1;
