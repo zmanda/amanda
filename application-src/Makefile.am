@@ -24,7 +24,8 @@ CHECK_PERL = amgtar_perl \
 	     amlog-script \
 	     amzfs-sendrecv \
 	     amzfs-snapshot \
-	     amsamba
+	     amsamba \
+	     amsuntar
 
 SCRIPTS_PERL = $(CHECK_PERL)
 

@@ -1,0 +1,414 @@
+#!@PERL@
+# Copyright (c) 2005-2008 Zmanda Inc.  All Rights Reserved.
+#
+# This program is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License version 2 as published
+# by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+# or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+# for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
+#
+# Contact information: Zmanda Inc., 465 S Mathlida Ave, Suite 300
+# Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
+
+use lib '@amperldir@';
+use strict;
+use Getopt::Long;
+
+package Amanda::Application::Amsuntar;
+use base qw(Amanda::Application);
+use File::Copy;
+use File::Temp qw( tempfile );
+use File::Path;
+use IPC::Open3;
+use Sys::Hostname;
+use Symbol;
+use Amanda::Constants;
+use Amanda::Config qw( :init :getconf  config_dir_relative );
+use Amanda::Debug qw( :logging );
+use Amanda::Paths;
+use Amanda::Util qw( :constants );
+
+sub new {
+    my $class = shift;
+    my ($config, $host, $disk, $device, $level, $index, $message, $collection, $record, $exclude_list, $exclude_optional,  $include_list, $include_optional,$bsize,$ext_header,$ext_attrib) = @_;
+    my $self = $class->SUPER::new();
+
+    $self->{suntar}            = "/usr/sbin/tar";
+    $self->{pfexec}            = "/usr/bin/pfexec";
+    $self->{gnutar}            = $Amanda::Constants::GNUTAR;
+
+    $self->{config}            = $config;
+    $self->{host}              = $host;
+    $self->{disk}              = $disk;
+    $self->{device}            = $device;
+    $self->{level}             = $level;
+    $self->{index}             = $index;
+    $self->{message}           = $message;
+    $self->{collection}        = $collection;
+    $self->{record}            = $record;
+    $self->{exclude_list}      = [ @{$exclude_list} ];
+    $self->{exclude_optional}  = $exclude_optional;
+    $self->{include_list}      = [ @{$include_list} ];
+    $self->{include_optional}  = $include_optional;
+    $self->{block_size}        = $bsize;
+    $self->{extended_header}   = $ext_header;
+    $self->{extended_attrib}   = $ext_attrib; 
+
+    return $self;
+}
+
+sub command_support {
+   my $self = shift;
+
+   print "CONFIG YES\n";
+   print "HOST YES\n";
+   print "DISK YES\n";
+   print "MAX-LEVEL 0\n";
+   print "INDEX-LINE YES\n";
+   print "INDEX-XML NO\n";
+   print "MESSAGE-LINE YES\n";
+   print "MESSAGE-XML NO\n";
+   print "RECORD YES\n";
+   print "EXCLUDE-FILE NO\n";
+   print "EXCLUDE-LIST YES\n";
+   print "EXCLUDE-OPTIONAL YES\n";
+   print "INCLUDE-FILE NO\n";
+   print "INCLUDE-LIST YES\n";
+   print "INCLUDE-OPTIONAL YES\n";
+   print "COLLECTION NO\n";
+   print "MULTI-ESTIMATE NO\n";
+   print "CALCSIZE NO\n";
+}
+
+sub command_selfcheck {
+   my $self = shift;
+   my $action = shift;
+   $self->{action} = 'check';
+
+   print "OK " . $self->{disk} . "\n";
+   print "OK " . $self->{device} . "\n";
+   if(!-e $self->{suntar}) {
+     $self->print_to_server_and_die($self->{action},
+                       "application binary $self->{suntar} is not a executable",
+                       $Amanda::Script_App::ERROR);
+   }
+   $self->validate_inexclude();
+}
+
+sub command_backup {
+   my $self = shift;
+   $self->{action} = 'backup';
+
+   my($listdir) = $self->{'host'} . $self->{'disk'};
+   my($verbose) = "";
+   $listdir     =~ s/\//_/g;
+   my($level) = $self->{level};
+
+   #Careful sun tar options and ordering is very very tricky 
+
+   my($cmd) = "-cp";  
+   my(@optparams) = ();  
+
+   $self->validate_inexclude();
+   my $mesgout_fd;
+   open($mesgout_fd, '>&=3') || die();
+   $self->{mesgout} = $mesgout_fd;
+
+   if($self->{extended_header} =~ /^YES$/i) {
+      $cmd .= "E";
+   }
+   if($self->{extended_attrib} =~ /^YES$/i) {
+      $cmd .= "\@";
+   }
+   if(defined($self->{index})) {
+      $cmd .= "v";
+   }
+
+   if(defined($self->{block_size})) {
+      $cmd .= "b";
+      push @optparams, $self->{block_size}; 	
+   }
+
+   if (defined($self->{exclude_tmp})) {
+      $cmd .= "fX";
+      push @optparams,"-",$self->{exclude_tmp};
+   } else {
+      $cmd .= "f";
+      push @optparams,"-";
+   }
+      push @optparams,"-C",$self->{device};
+
+   if(defined($self->{include_tmp}))  {
+      push @optparams,"-I", $self->{include_tmp};
+   } else {
+      push @optparams,".";
+   }
+
+   my(@cmd) = ($self->{pfexec}, $self->{suntar}, $cmd, @optparams);
+
+   debug("cmd:" . join(" ", @cmd));
+
+   my $wtrfh;
+   my $index_fd = Symbol::gensym;
+   my $pid = open3($wtrfh, '>&STDOUT', $index_fd, @cmd) || die();
+   close($wtrfh);
+
+   unlink($self->{include_tmp}) if(-e $self->{include_tmp});
+   unlink($self->{exclude_tmp}) if(-e $self->{exclude_tmp});
+
+   if(defined($self->{index})) {
+      my $indexout_fd;
+      open($indexout_fd, '>&=4') || die();
+      $self->parse_backup($index_fd, $mesgout_fd, $indexout_fd);
+      close($indexout_fd);
+   }
+   else {
+      $self->parse_backup($index_fd, $mesgout_fd, undef);
+   }
+   close($index_fd);
+
+   waitpid $pid, 0;
+   my $status = $?; 
+   if( $status != 0 ){
+       debug("exit status $status ?" );
+       print $mesgout_fd "? $self->{suntar} returned error\n";
+       die();
+   }
+   exit 0;
+}
+
+sub parse_backup {
+   my $self = shift;
+   my($fhin, $fhout, $indexout) = @_;
+   my $size  = -1;
+   my $ksize = -1;
+   while(<$fhin>) {
+      if ( /^\.\//) {
+         if(defined($indexout)) {
+	    if(defined($self->{index})) {
+               s/^\.//;
+               print $indexout $_;
+	    }
+         }
+      }
+      else {
+            if(defined($fhout)) {
+	       if (/: Directory is new$/ ||
+		   /: Directory has been renamed/) {
+		  # ignore we get this kind of output
+	       } else { # strange
+                  print $fhout "? $_";
+	       }
+            }
+      }
+   }
+   if(defined($fhout)) {
+      if ($size == -1) {
+	 #Workaround for size issue, send dummy size if application is not capable.
+         print $fhout "sendbackup: size 1000\n";
+         print $fhout "sendbackup: end\n";
+      }
+      else {
+         my($ksize) = int ($size/1024);
+         print $fhout "sendbackup: size $ksize\n";
+         print $fhout "sendbackup: end\n";
+      }
+   }
+}
+
+sub validate_inexclude {
+   my $self = shift;
+   my $fh;
+   my @tmp;
+
+   if ($#{$self->{exclude_list}} >= 0 && $#{$self->{include_list}} >= 0 )  {
+      $self->print_to_server_and_die($self->{action},
+                                       "Can't have both include and exclude",
+                                       $Amanda::Script_App::ERROR);
+   }
+    
+   foreach my $file (@{$self->{exclude_list}}){
+      if (!open($fh, $file)) {
+          if ($self->{action} eq "check" && !$self->{exclude_optional}) {
+                $self->print_to_server($self->{action},
+                                       "Open of '$file' failed: $!",
+                                       $Amanda::Script_App::ERROR);
+          }
+          next;
+      }
+      while (<$fh>) {
+          push @tmp, $_;
+      }
+      close($fh);
+   }
+
+   #Merging list into a single file 
+   if($self->{action} eq 'backup' && $#{$self->{exculde_list}} >= 0) {
+      ($fh, $self->{exclude_tmp}) = tempfile(DIR => $Amanda::paths::AMANDA_TMPDIR);
+      unless($fh) {
+                $self->print_to_server_and_die($self->{action},
+                                       "Open of tmp file '$self->{exclude_tmp}' failed: $!",
+                                       $Amanda::Script_App::ERROR);
+      }
+      print $fh @tmp;	
+      close $fh;
+      undef (@tmp);
+   }
+
+   foreach my $file (@{$self->{include_list}}) {
+      if (!open($fh, $file)) {
+         if ($self->{action} eq "check" && !$self->{include_optional}) {
+                $self->print_to_server($self->{action},
+                                       "Open of '$file' failed: $!",
+                                       $Amanda::Script_App::ERROR);
+         }
+         next;
+      }
+      while (<$fh>) {
+         push @tmp, $_;
+      }
+      close($fh);
+   }
+
+   if($self->{action} eq 'backup' && $#{$self->{include_list}} >= 0) {
+      ($fh, $self->{include_tmp}) = tempfile(DIR => $Amanda::paths::AMANDA_TMPDIR);
+      unless($fh) {
+                $self->print_to_server_and_die($self->{action},
+                                       "Open of tmp file '$self->{include_tmp}' failed: $!",
+                                       $Amanda::Script_App::ERROR);
+      }
+      print $fh @tmp;
+      close $fh;
+      undef (@tmp);
+   }
+}
+
+sub command_index_from_output {
+   index_from_output(0, 1);
+   exit 0;
+}
+
+sub index_from_output {
+   my($fhin, $fhout) = @_;
+   my($size) = -1;
+   while(<$fhin>) {
+      next if /^Total bytes written:/;
+      next if !/^\.\//;
+      s/^\.//;
+      print $fhout $_;
+   }
+}
+
+sub command_index_from_image {
+   my $self = shift;
+   my $index_fd;
+   open($index_fd, "$self->{suntar} -tf - |") || die();
+   index_from_output($index_fd, 1);
+}
+
+sub command_restore {
+   my $self = shift;
+   $self->{action} = 'restore'; 
+
+   chdir(Amanda::Util::get_original_cwd());
+   my $cmd = "-xpv";
+
+   if($self->{extended_header} eq "YES") {
+      $cmd .= "E";
+   }
+   if($self->{extended_attrib} eq "YES") {
+      $cmd .= "\@";
+   }
+
+   $cmd .= "f";      
+
+   my(@cmd) = ($self->{pfexec},$self->{suntar}, $cmd, "-");
+   for(my $i=1;defined $ARGV[$i]; $i++) {
+      my $param = $ARGV[$i];
+      $param =~ /^(.*)$/;
+      push @cmd, $1;
+   }
+   debug("cmd:" . join(" ", @cmd));
+   exec { $cmd[0] } @cmd;
+   die("Can't exec '", $cmd[0], "'");
+}
+
+sub command_validate {
+   my $self = shift;
+   my @cmd;
+
+   if(!-e $self->{suntar}) {
+      (@cmd) = ($self->{suntar}, "-tf", "-");
+   } elsif (!-e $self->{gnutar}) {
+      (@cmd) = ($self->{gnutar}, "-tf", "-");
+   } else {
+      (@cmd) = ("date");
+   }
+   debug("cmd:" . join(" ", @cmd));
+   my $pid = open3('>&STDIN', '>&STDOUT', '>&STDERR', @cmd) || die("validate", "Unable to run @cmd");
+   waitpid $pid, 0;
+   if( $? != 0 ){
+       die("validate", "$self->{suntar} returned error");
+   }
+   exit(0);
+}
+
+sub command_print_command {
+}
+
+package main;
+
+sub usage {
+    print <<EOF;
+Usage: Amsuntar <command> --config=<config> --host=<host> --disk=<disk> --device=<device> --level=<level> --index=<yes|no> --message=<text> --collection=<no> --record=<yes|no> --exclude-list=<fileList> --include-list=<fileList> --block-size=<size> --extended_attributes=<yes|no> --extended_headers<yes|no>.
+EOF
+    exit(1);
+}
+
+my $opt_config;
+my $opt_host;
+my $opt_disk;
+my $opt_device;
+my $opt_level;
+my $opt_index;
+my $opt_message;
+my $opt_collection;
+my $opt_record;
+my @opt_exclude_list;
+my $opt_exclude_optional;
+my @opt_include_list;
+my $opt_include_optional;
+my $opt_bsize = 256;
+my $opt_ext_attrib = "YES";
+my $opt_ext_head   = "YES";
+
+Getopt::Long::Configure(qw{bundling});
+GetOptions(
+    'config=s'     	  => \$opt_config,
+    'host=s'       	  => \$opt_host,
+    'disk=s'       	  => \$opt_disk,
+    'device=s'     	  => \$opt_device,
+    'level=s'      	  => \$opt_level,
+    'index=s'      	  => \$opt_index,
+    'message=s'    	  => \$opt_message,
+    'collection=s' 	  => \$opt_collection,
+    'exclude-list=s'      => \@opt_exclude_list,
+    'exclude-optional=s'  => \$opt_exclude_optional,
+    'include-list=s'      => \@opt_include_list,
+    'include-optional=s'  => \$opt_include_optional,
+    'record'       	  => \$opt_record,
+    'block-size=s'        => \$opt_bsize,
+    'extended-attributes=s'  => \$opt_ext_attrib,
+    'extended-headers=s'     => \$opt_ext_head,
+) or usage();
+
+my $application = Amanda::Application::Amsuntar->new($opt_config, $opt_host, $opt_disk, $opt_device, $opt_level, $opt_index, $opt_message, $opt_collection, $opt_record, \@opt_exclude_list, $opt_exclude_optional, \@opt_include_list, $opt_include_optional,$opt_bsize,$opt_ext_attrib,$opt_ext_head);
+
+$application->do($ARGV[0]);

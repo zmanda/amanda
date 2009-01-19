@@ -60,7 +60,9 @@
 <!ENTITY author.pby '<author><personname>Paul Yeatman</personname>
 		    &affil.zmanda;
 		    <email>pyeatman@zmanda.com</email></author>'>
-
+<!ENTITY author.gsat '<author><personname>Satya Ganga</personname>
+		    &affil.zmanda;
+		    <email>gast@zmanda.com</email></author>'>
 
 <!-- Amanda itself -->
 <!ENTITY A '<application><emphasis>Amanda</emphasis></application>'>

@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"
+[
+  <!-- entities files to use -->
+  <!ENTITY % global_entities SYSTEM '../entities/global.entities'>
+  %global_entities;
+]>
+
+<refentry id='amsuntar.8'>
+
+<refmeta>
+<refentrytitle>amsuntar</refentrytitle>
+<manvolnum>8</manvolnum>
+&rmi.source;
+&rmi.version;
+&rmi.manual.8;
+</refmeta>
+<refnamediv>
+<refname>amsuntar</refname>
+<refpurpose>Amanda Application to interface with native tar utility available on solaris platforms</refpurpose>
+</refnamediv>
+<refentryinfo>
+&author.gsat;
+&author.jlm;
+&author.dustin;
+</refentryinfo>
+<!-- body begins here -->
+
+<refsect1><title>DESCRIPTION</title>
+
+<para>Amsuntar is an &A; Application API script.  It should not be run
+by users directly. It uses Solaris bundled tar utility to backup and 
+restore data. Currenty ACLs from ZFS file system can only be backed up
+using the solaris supplied tar utility.</para>
+
+</refsect1>
+
+<refsect1><title>PROPERTIES</title>
+
+<para>This section lists the properties that control amsuntar's functionality.
+See <citerefentry><refentrytitle>amanda-applications</refentrytitle><manvolnum>7</manvolnum></citerefentry>
+for information on application properties and how they are configured.</para>
+
+<!-- PLEASE KEEP THIS LIST IN ALPHABETICAL ORDER -->
+<variablelist>
+ <!-- ==== -->
+ <varlistentry><term>BLOCK-SIZE</term><listitem>
+Optional tar read or write block size.  The default is set when &A; is built to 256.
+</listitem></varlistentry>
+
+ <!-- ==== -->
+ <varlistentry><term>EXTENDED-ATTRIBUTES</term><listitem>
+Include extended attributes in archive.  The default is set when &A; is built to YES.
+</listitem></varlistentry>
+
+ <!-- ==== -->
+ <varlistentry><term>EXTENDED-HEADERS</term><listitem>
+Write tar file with extended headers. With this optiion the modification time
+is maintained with a  granularity of microseconds,Long file names and file 
+sizes greater than 8GB can be archived. The default is set when &A; is built to YES.
+</listitem></varlistentry>
+</variablelist>
+
+</refsect1>
+
+<refsect1><title>SEE ALSO</title>
+<para>
+<citerefentry><refentrytitle>amanda.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>amanda-applications</refentrytitle><manvolnum>7</manvolnum></citerefentry>
+</para>
+
+</refsect1>
+</refentry>

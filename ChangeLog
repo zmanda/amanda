@@ -1,3 +1,9 @@
+2009-01-19 Satya Ganga <gsat@zmanda.com>
+	* application-src/amsuntar.pl : New amsuntar application
+	* application-src/Makefile.am : Make file updates to include amsuntar
+	* man/entities/global.entities.in : Add to gsat  to the name list
+	* man/Makefile.am  man/xml-source/amsuntar.8.xml : add new man amsuntar man page
+
 2009-01-19  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/vfs-device.c: remove bogus locking stubs that are
 	  making syscalls like close(-1); fix error handling in read_label
