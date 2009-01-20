@@ -1544,12 +1544,10 @@ echo "Amanda installation log can be found in '${INSTALL_LOG}' and errors (if an
 # Notes:  Do not use wildcards on directories not wholly owned by amanda.  An
 # uninstall of the software will attempt to delete whatever matches here.
 %files backup_client
-%defattr(0755,%{amanda_user},%{amanda_group})
-%{SYSCONFDIR}/amanda
-%{AMANDAHOMEDIR}/gnutar-lists
+%defattr(0755,%{amanda_user},%{amanda_group},0755)
 %{AMLIBEXECDIR}
 %{AMLIBDIR}
-%{LOCALSTATEDIR}/amanda
+%{PERLSITELIB}/auto/Amanda
 %defattr(4750,root,disk)
 %{AMLIBEXECDIR}/application/amgtar
 %{AMLIBEXECDIR}/application/amstar
@@ -1564,7 +1562,10 @@ echo "Amanda installation log can be found in '${INSTALL_LOG}' and errors (if an
 %{SBINDIR}/amgpgcrypt
 %{SBINDIR}/amoldrecover
 %{SBINDIR}/amrecover
-%defattr(0644,%{amanda_user},%{amanda_group})
+%defattr(0644,%{amanda_user},%{amanda_group},0755)
+%{LOCALSTATEDIR}/amanda
+%{PERLSITELIB}/Amanda
+%{SYSCONFDIR}/amanda
 %docdir %{MANDIR}
 %{MANDIR}/man5/amanda.conf.5.gz
 %{MANDIR}/man5/amanda-client.conf.5.gz
@@ -1578,6 +1579,7 @@ echo "Amanda installation log can be found in '${INSTALL_LOG}' and errors (if an
 %{MANDIR}/man8/amgpgcrypt.8.gz
 %{MANDIR}/man8/amrecover.8.gz
 %{AMLIBEXECDIR}/amcat.awk
+%{AMANDAHOMEDIR}/gnutar-lists
 %doc %{AMANDAHOMEDIR}/amanda-release
 %doc %{AMANDAHOMEDIR}/example/xinetd.amandaclient
 %doc %{AMANDAHOMEDIR}/example/xinetd.amandaserver
