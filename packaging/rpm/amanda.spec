@@ -186,6 +186,7 @@ BuildRequires: flex
 BuildRequires: gcc
 BuildRequires: glibc >= 2.2.0
 BuildRequires: readline
+BuildRequires: readline-devel
 BuildRequires: curl >= 7.10.0
 BuildRequires: curl-devel >= 7.10.0
 BuildRequires: openssl
@@ -209,8 +210,11 @@ Requires: openssl
 Requires: xinetd
 Requires: perl >= 5.6.0
 Requires: tar >= %{tarver}
+Requires: readline
 %if  %{dist} == redhat || %{dist}== fedora
+  %if %{?fedora:yes}%{!?fedora:no} == no || %{fedora} < 9
 Requires: libtermcap.so.2
+  %endif
 Requires: initscripts
 %endif
 Provides: amanda-backup_client = %{amanda_version}, amanda-backup_server = %{amanda_version}
@@ -222,7 +226,9 @@ Requires: /bin/awk
 Requires: fileutils
 Requires: grep
 %if  %{dist} == redhat || %{dist}== fedora
+  %if %{?fedora:yes}%{!?fedora:no} == no || %{fedora} < 9
 Requires: libtermcap.so.2
+  %endif
 Requires: initscripts
 %endif
 Requires: xinetd
@@ -231,6 +237,7 @@ Requires: libm.so.6
 Requires: libnsl.so.1
 Requires: perl >= 5.6.0
 Requires: tar >= %{tarver}
+Requires: readline
 Provides: amanda-backup_client = %{amanda_version}
 Provides: libamclient-%{version}.so = %{amanda_version}
 Provides: libamanda-%{version}.so = %{amanda_version}
@@ -246,20 +253,23 @@ Requires: libc.so.6
 Requires: libm.so.6
 Requires: libnsl.so.1
 %if  %{dist} == redhat || %{dist}== fedora
+  %if %{?fedora:yes}%{!?fedora:no} == no || %{fedora} < 9
 Requires: libtermcap.so.2
+  %endif
 Requires: initscripts
 %endif
 Requires: xinetd
 Requires: perl >= 5.6.0
-Requires: tar >= 1.15
+Requires: tar >= %{tarver}
 Provides: amanda-backup_server = %{amanda_version}
+Provides: amanda-backup_client = %{amanda_version}
 Provides: libamclient-%{version}.so = %{amanda_version}
 Provides: libamanda-%{version}.so = %{amanda_version}
 Provides: libamserver-%{version}.so = %{amanda_version}
 Provides: librestore-%{version}.so = %{amanda_version}
 Provides: libamtape-%{version}.so = %{amanda_version}
 Provides: libamdevice-%{version}.so = %{amanda_version}
-
+Conflicts: amanda-backup_client
 # --- Package descriptions ---
 
 %description

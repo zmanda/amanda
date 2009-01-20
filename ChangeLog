@@ -1,4 +1,8 @@
 2009-01-20 Dan Locks <dwlocks@zmanda.com>
+	* packaging/rpm/amanda.spec: add missing BuildRequires, conditionalize 
+	  libtermcap.so.2 for fedora, change tar requirement to %{tarver}
+
+2009-01-20 Dan Locks <dwlocks@zmanda.com>
 	* packaging/rpm/amanda.spec: add %{PERLSITELIB} to %files section to
 	  install perl for the client package add "directory mode" to defattr
 	  statements where appropriate.
