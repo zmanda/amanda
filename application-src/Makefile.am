@@ -50,7 +50,7 @@ LDADD = ../common-src/libamanda.$(LIB_EXTENSION) \
 	../common-src/libamanda.$(LIB_EXTENSION) \
 	../gnulib/libgnu.$(LIB_EXTENSION)
 
-INSTALLPERMS_exec = dest-$(amlibexecdir) chown=amanda $(amlibexec_PROGRAMS) \
+INSTALLPERMS_exec = dest=$(amlibexecdir) chown=amanda $(amlibexec_PROGRAMS) \
 		    dest=$(applicationdir) chown=amanda $(applicationexec_PROGRAMS) \
 		    dest=$(applicationdir) chown=amanda $(applicationexec_SCRIPTS)
 
