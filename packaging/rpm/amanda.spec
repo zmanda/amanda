@@ -211,8 +211,8 @@ Requires: xinetd
 Requires: perl >= 5.6.0
 Requires: tar >= %{tarver}
 Requires: readline
-%if  %{dist} == redhat || %{dist}== fedora
-  %if %{?fedora:yes}%{!?fedora:no} == no || %{fedora} < 9
+%if  %{dist} == redhat || %{dist} == fedora
+  %if %{distver} <= 8
 Requires: libtermcap.so.2
   %endif
 Requires: initscripts
@@ -226,7 +226,7 @@ Requires: /bin/awk
 Requires: fileutils
 Requires: grep
 %if  %{dist} == redhat || %{dist}== fedora
-  %if %{?fedora:yes}%{!?fedora:no} == no || %{fedora} < 9
+  %if %{distver} <= 8
 Requires: libtermcap.so.2
   %endif
 Requires: initscripts
@@ -253,6 +253,7 @@ Requires: libc.so.6
 Requires: libm.so.6
 Requires: libnsl.so.1
 %if  %{dist} == redhat || %{dist}== fedora
+  %if %{distver} <= 8
   %if %{?fedora:yes}%{!?fedora:no} == no || %{fedora} < 9
 Requires: libtermcap.so.2
   %endif
