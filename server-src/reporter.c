@@ -1971,6 +1971,10 @@ handle_note(void)
     char *str = NULL;
     char *pidstr;
 
+    if (curprog == P_DRIVER &&
+	BSTRNCMP(curstr, "Taper protocol error") == 0) {
+	exit_status |= STATUS_TAPE;
+    }
     pidstr = index(curstr,' ');
     if (pidstr) {
 	pidstr++;
