@@ -1,3 +1,6 @@
+2009-01-21  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/Makefile.am: Typo
+
 2009-01-21  Dustin J. Mitchell <dustin@zmanda.com>
 	Patch suggested by Ingo Schaefer <ingo@ingo-schaefer.de>
 	* packaging/rpm/amanda.spec: detect and properly support suse11.1,
