@@ -106,27 +106,32 @@
 %endif
 # Detect Suse variants.  Suse gives us some nice macros in their rpms
 %if %{_vendor} == "suse"
-    %if %{suse_version} == 910
-        %define dist SuSE
-        %define disttag sles
-        %define distver 9
-    %endif
-    %if %{suse_version} == 1010
-        %define dist SuSE
-        %define disttag sles
-        %define distver 10
-    %endif
-    # Written against SLES11-beta2, which is using SUSE11's rpm system.
-    # This will change when they release, I assume.
-    %if %{suse_version} == 1100
-	%define dist SuSE
+    %define dist SuSE
+    %if %{sles_version} == 0
+	%define disttag suse
+	%if %{suse_version} == 910
+	    %define distver 9
+	%endif
+	%if %{suse_version} == 1000
+	    %define distver 10
+	%endif
+	%if %{suse_version} == 1010
+	    %define distver 10
+	%endif
+	# Written against SLES11-beta2, which is using SUSE11's rpm system.
+	# This will change when they release, I assume.
+	%if %{suse_version} == 1100
+	    # assume it's sles11 in disguise, for now
+	    %define disttag sles
+	    %define distver 11
+	%endif
+	%if %{suse_version} == 1110
+	    %define distver 11.1
+	%endif
+    %else
 	%define disttag sles
-	%define distver 11
-    %endif
-    %if %{suse_version} == 1000
-        %define dist SuSE
-        %define disttag suse
-        %define distver 10
+	# sles versions are simple integers, just like we want
+	%define distver %{sles_version}
     %endif
    
     # If dist is undefined, we didn't detect.
