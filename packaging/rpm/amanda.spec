@@ -254,7 +254,6 @@ Requires: libm.so.6
 Requires: libnsl.so.1
 %if  %{dist} == redhat || %{dist}== fedora
   %if %{distver} <= 8
-  %if %{?fedora:yes}%{!?fedora:no} == no || %{fedora} < 9
 Requires: libtermcap.so.2
   %endif
 Requires: initscripts

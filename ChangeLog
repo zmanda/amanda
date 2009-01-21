@@ -1,4 +1,7 @@
 2009-01-21  Jean-Louis Martineau <martineau@zmanda.com>
+	* packaging/rpm/amanda.spec: Typo.
+
+2009-01-21  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amstatus.pl: Fix use of %free and %qlen keys.
 
 2009-01-20 Dan Locks <dwlocks@zmanda.com>
