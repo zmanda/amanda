@@ -537,6 +537,44 @@ split_quoted_strings(
 }
 
 char *
+strquotedstr(char **saveptr)
+{
+    char *  tok = strtok_r(NULL, " ", saveptr);
+    size_t	len;
+    int         in_quote;
+    int         in_backslash;
+    char       *p, *t;
+
+    if (!tok)
+	return tok;
+    len = strlen(tok);
+    in_quote = 0;
+    in_backslash = 0;
+    p = tok;
+    while (in_quote || in_backslash || *p != '\0') {
+	if (*p == '\0') {
+	    /* append a new token */
+	    t = strtok_r(NULL, " ", saveptr);
+	    if (!t)
+		return NULL;
+	    tok[len] = ' ';
+	    len = strlen(tok);
+	}
+	if (!in_backslash) {
+	    if (*p == '"')
+		in_quote = !in_quote;
+	    else if (*p == '\\') {
+		in_backslash = 1;
+	    }
+	} else {
+	   in_backslash = 0;
+	}
+	p++;
+    }
+    return tok;
+}
+
+char *
 sanitize_string(
     const char *str)
 {

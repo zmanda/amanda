@@ -36,7 +36,6 @@ static const char *	filetype2str(filetype_t);
 static filetype_t	str2filetype(const char *);
 static void		strange_header(dumpfile_t *, const char *,
 				size_t, const char *, const char *);
-static char *		strquotedstr(char **);
 static ssize_t 		hexdump(const char *buffer, size_t len);
 static char            *quote_heredoc(char *text, char *delimiter_prefix);
 static char            *parse_heredoc(char *line, char **saveptr);
@@ -941,27 +940,6 @@ void dumpfile_free_data(dumpfile_t* info) {
 void dumpfile_free(dumpfile_t* info) {
     dumpfile_free_data(info);
     amfree(info);
-}
-
-static char *
-strquotedstr(char **saveptr)
-{
-    char *  tok = strtok_r(NULL, " ", saveptr);
-    size_t	len;
-
-    if (tok) len = strlen(tok);
-    if ((tok != NULL) && (tok[0] == '"') &&
-	(len > 1 && (tok[len - 1] != '"') && (tok[len - 2] != '\\'))) {
-	char *	t;
-
-	do {
-	    t = strtok_r(NULL, " ", saveptr);
-	    tok[len] = ' ';
-	    len = strlen(tok);
-	} while ((t != NULL) &&
-	         (tok[len - 1] != '"') && (tok[len - 2] != '\\'));
-    }
-    return tok;
 }
 
 static ssize_t

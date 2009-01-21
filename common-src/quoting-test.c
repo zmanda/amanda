@@ -330,6 +330,146 @@ test_unquote_string(void)
     return success;
 }
 
+/****
+ * Test the strquotedstr function
+ */
+static int
+test_strquotedstr_skipping(void)
+{
+    char **iter1, **iter2;
+    gboolean success = TRUE;
+
+    /* the idea here is to loop over all pairs of strings, forming a
+     * string by quoting them with quote_string and inserting a space, then
+     * re-splitting with strquotedstr.  This should get us back to our
+     * starting point. Note that we have to begin with a non-quoted identifier,
+     * becuse strquotedstr requires that strtok_r has already been called. */
+
+    for (iter1 = quotable_strings; *iter1; iter1++) {
+	for (iter2 = quotable_strings; *iter2; iter2++) {
+	    char *q1 = quote_string(*iter1);
+	    char *q2 = quote_string(*iter2);
+	    char *combined = vstralloc("START ", q1, " ", q2, NULL);
+	    char *copy = g_strdup(combined);
+	    char *saveptr = NULL;
+	    char *tok;
+	    int i;
+
+	    tok = strtok_r(copy, " ", &saveptr);
+
+	    for (i = 1; i <= 2; i++) {
+		char *expected = (i == 1)? q1:q2;
+		tok = strquotedstr(&saveptr);
+		if (!tok) {
+		    g_fprintf(stderr, "while parsing '%s', call %d to strquotedstr returned NULL\n",
+			      combined, i);
+		    success = FALSE;
+		    goto next;
+		}
+		if (0 != strcmp(tok, expected)) {
+		    char *safe = safestr(tok);
+
+		    g_fprintf(stderr, "while parsing '%s', call %d to strquotedstr returned '%s' "
+			      "but '%s' was expected.\n",
+			      combined, i, safe, expected);
+		    success = FALSE;
+		    goto next;
+		}
+	    }
+
+	    if (strquotedstr(&saveptr) != NULL) {
+		g_fprintf(stderr, "while parsing '%s', call 3 to strquotedstr did not return NULL\n",
+			  combined);
+		success = FALSE;
+		goto next;
+	    }
+next:
+	    amfree(q1);
+	    amfree(q2);
+	    amfree(copy);
+	    amfree(combined);
+	}
+    }
+
+    return success;
+}
+
+static int
+test_strquotedstr_edge_invalid(void)
+{
+    gboolean success = TRUE;
+    char *invalid[] = {
+	"X \"abc", /* unterminated */
+	"X \"ab cd", /* unterminated second token */
+	"X a\"b cd", /* unterminated second token with internal quote */
+	"X b\\", /* trailing backslash */
+	"X \"b\\", /* trailing backslash in quote */
+	"X \"b\\\"", /* backslash'd ending quote */
+	NULL
+    };
+    char **iter;
+
+    /* run strquotedstr on a bunch of invalid tokens.  It should return NULL */
+
+    for (iter = invalid; *iter; iter++) {
+	char *copy = g_strdup(*iter);
+	char *tok;
+	char *saveptr = NULL;
+
+	tok = strtok_r(copy, " ", &saveptr);
+	tok = strquotedstr(&saveptr);
+	if (tok != NULL) {
+	    g_fprintf(stderr, "while parsing invalid '%s', strquotedstr did not return NULL\n",
+		      *iter);
+	    success = FALSE;
+	}
+
+	amfree(copy);
+    }
+
+    return success;
+}
+
+static int
+test_strquotedstr_edge_valid(void)
+{
+    gboolean success = TRUE;
+    char *valid[] = {
+	/* input */	    /* expected (omitting "X") */
+	"X abc\\ def",      "abc\\ def", /* backslashed space */
+	"X \"abc\\ def\"",  "\"abc\\ def\"", /* quoted, backslashed space */
+	"X a\"  \"b",       "a\"  \"b", /* quoted spaces */
+	NULL, NULL
+    };
+    char **iter;
+
+    /* run strquotedstr on a bunch of valid, but tricky, tokens.  It should return NULL */
+
+    for (iter = valid; *iter; iter += 2) {
+	char *copy = g_strdup(*iter);
+	char *expected = *(iter+1);
+	char *tok;
+	char *saveptr = NULL;
+
+	tok = strtok_r(copy, " ", &saveptr);
+	tok = strquotedstr(&saveptr);
+	if (tok == NULL) {
+	    g_fprintf(stderr, "while parsing valid '%s', strquotedstr returned NULL\n",
+		      *iter);
+	    success = FALSE;
+	} else if (0 != strcmp(tok, expected)) {
+	    g_fprintf(stderr, "while parsing valid '%s', strquotedstr returned '%s' while "
+		      "'%s' was expected\n",
+		      *iter, tok, expected);
+	    success = FALSE;
+	}
+
+	amfree(copy);
+    }
+
+    return success;
+}
+
 /*
  * Main driver
  */
@@ -342,6 +482,9 @@ main(int argc, char **argv)
 	TU_TEST(test_unquote_string, 5),
 	TU_TEST(test_split_quoted_strings, 5),
 	TU_TEST(test_split_quoted_strings_edge, 5),
+	TU_TEST(test_strquotedstr_skipping, 5),
+	TU_TEST(test_strquotedstr_edge_invalid, 5),
+	TU_TEST(test_strquotedstr_edge_valid, 5),
 	TU_END()
     };
 
