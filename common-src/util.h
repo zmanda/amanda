@@ -71,6 +71,13 @@ int	needs_quotes(const char * str);
  */
 gchar ** split_quoted_strings(const gchar *string);
 
+/* Like strtok_r, but consider a quoted string to be a single token.  Caller
+ * must begin parsing with strtok_r first, then pass the saveptr to this function.
+ *
+ * Returns NULL on unparseable strings (e.g., unterminated quotes, bad escapes)
+ */
+char *		strquotedstr(char **saveptr);
+
 char *	sanitize_string(const char *str);
 int     copy_file(char *dst, char *src, char **errmsg);
 

@@ -1,3 +1,10 @@
+2009-01-21  Jean-Louis Martineau <martineau@zmanda.com>,
+	    Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/fileheader.c: Remove strquotedstr function.
+	* common-src/quoting-test.c: Test strquotedstr function.
+	* common-src/util.c: Add prototype for strquotedstr function.
+	* common-src/util.h: Add new strquotedstr function.
+
 2009-01-21  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/Makefile.am: Typo
 
