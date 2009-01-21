@@ -1253,22 +1253,22 @@ if (defined $opt_summary) {
 		$c3 = ($idle_dumpers == 1) ? " " : "";
 		printf "%d dumper%s idle%s %s: %s\n", $idle_dumpers, $c1, $c2, $c3, $status_driver;
 	}
-	if($status_taper eq "writing" && defined($qlen{"tapeq:"})) {
-		printf "taper writing, tapeq: %d\n", $qlen{"tapeq:"};
+	if($status_taper eq "writing" && defined($qlen{"tapeq"})) {
+		printf "taper writing, tapeq: %d\n", $qlen{"tapeq"};
 	}
 	else {
 		printf "taper idle\n";
 	}
-	if (defined ($free{"kps:"})) {
-		printf "network free kps: %9d\n", $free{"kps:"};
+	if (defined ($free{"kps"})) {
+		printf "network free kps: %9d\n", $free{"kps"};
 	}
-	if (defined ($free{"space:"})) {
+	if (defined ($free{"space"})) {
 		if ($holding_space) {
-			$hs = ($free{"space:"} * 1.0 / $holding_space) * 100;
+			$hs = ($free{"space"} * 1.0 / $holding_space) * 100;
 		} else {
 			$hs = 0.0;
 		}
-		printf "holding space   : %9d$unit (%6.2f%%)\n", ($free{"space:"}/$unitdivisor), $hs;
+		printf "holding space   : %9d$unit (%6.2f%%)\n", ($free{"space"}/$unitdivisor), $hs;
 	}
 }
 
