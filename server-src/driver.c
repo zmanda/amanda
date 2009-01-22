@@ -839,6 +839,7 @@ startaflush(void)
 	    error(_("FATAL: Taper marked busy and no work found."));
 	    /*NOTREACHED*/
 	}
+	short_dump_state();
     } else if(!taper_busy && taper_ev_read != NULL) {
 	event_release(taper_ev_read);
 	taper_ev_read = NULL;
@@ -1116,6 +1117,7 @@ start_some_dumps(
 
 	    if (result_argv)
 		g_strfreev(result_argv);
+	    short_dump_state();
 	}
     }
 }
