@@ -1,4 +1,7 @@
 2009-01-21  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/driver.c: Add call to short_dump_state().
+
+2009-01-21  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/reporter.c: Set exit_status to STATUS_TAPE if taper crash.
 
 2009-01-21  Jean-Louis Martineau <martineau@zmanda.com>,
