@@ -43,11 +43,11 @@ for information on application properties and how they are configured.</para>
 <variablelist>
  <!-- ==== -->
  <varlistentry><term>ONE-FILE-SYSTEM</term><listitem>
-If "YES" (the default), do not allow gnutar to cross filesystem boundaries. If "NO", star will cross filesystem boundaries.  This corresponds to the <emphasis>-xdev</emphasis> option of star.
+If "YES" (the default), do not allow star to cross filesystem boundaries. If "NO", star will cross filesystem boundaries.  This corresponds to the <emphasis>-xdev</emphasis> option of star.
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>SPARSE</term><listitem>
-If "YES" (the default), gnutar will store sparse files efficiently. If "NO", then the <emphasis>-sparse</emphasis> option is not given to star, and it will not try to detect sparse files.
+If "YES" (the default), star will store sparse files efficiently. If "NO", then the <emphasis>-sparse</emphasis> option is not given to star, and it will not try to detect sparse files.
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>STAR-DLE-TARDUMP</term><listitem>

@@ -1,3 +1,6 @@
+2009-01-22  Jean-Louis Martineau <martineau@zmanda.com>
+	* man/xml-source/amstar.8.xml: Typo.
+
 2009-01-21  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/driver.c: Add call to short_dump_state().
 
