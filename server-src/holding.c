@@ -907,7 +907,9 @@ rename_tmp_holding(
 
 	    }
 	    file.is_partial = 1;
-            header = build_header(&file, DISK_BLOCK_BYTES);
+            header = build_header(&file, NULL, DISK_BLOCK_BYTES);
+	    if (!header) /* this shouldn't happen */
+		error(_("header does not fit in %zd bytes"), (size_t)DISK_BLOCK_BYTES);
 	    if (full_write(fd, header, DISK_BLOCK_BYTES) != DISK_BLOCK_BYTES) {
 		dbprintf(_("rename_tmp_holding: writing new header failed: %s"),
 			strerror(errno));

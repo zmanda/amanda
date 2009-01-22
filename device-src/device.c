@@ -590,19 +590,8 @@ device_set_error(Device *self, char *errmsg, DeviceStatusFlags new_flags)
 }
 
 char * device_build_amanda_header(Device * self, const dumpfile_t * info,
-                                  int * size, gboolean * oneblock) {
-    char *amanda_header;
-    size_t min_header_length;
-    size_t header_buffer_size;
-
-    min_header_length = self->block_size;
-    amanda_header = build_header(info, min_header_length);
-    header_buffer_size = MAX(min_header_length, strlen(amanda_header)+1);
-    if (size != NULL)
-        *size = header_buffer_size;
-    if (oneblock != NULL)
-        *oneblock = (header_buffer_size <= self->block_size);
-    return amanda_header;
+                                  size_t *size) {
+    return build_header(info, size, self->block_size);
 }
 
 dumpfile_t * make_tapestart_header(Device * self, char * label,

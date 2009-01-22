@@ -456,13 +456,14 @@ gboolean 	device_erase	(Device * self);
  * initilization to their parents. */
 void device_open_device (Device * self, char *device_name, char *device_type, char *device_node);
 
-/* Builds a proper header based on device block size possibilities.
- * If non-null, size is filled in with the number of bytes that should
- * be written.
- * If non-null, oneblock is filled in with TRUE if the header will fit
- * in a single Device block (FALSE otherwise). */
+/* Builds a proper header of between *size and self->block_size bytes.
+ * Returns NULL if the header does not fit in a single block.  The result
+ * must be free'd.  If size is NULL, the block size is used.
+ *
+ * If size is not NULL, *size is set to the actual size of the generated header.
+ */
 char * device_build_amanda_header(Device * self, const dumpfile_t * jobinfo,
-                                  int * size, gboolean * oneblock);
+                                  size_t *size);
 
 /* Does what you expect. You have to free the returned header. Ensures
    that self->volume_time matches the header written to tape. */

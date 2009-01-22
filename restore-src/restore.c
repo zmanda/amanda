@@ -866,8 +866,9 @@ void restore(RestoreSource * source,
 	    source->header->type = F_DUMPFILE;
 	}
 
-	buffer = alloc(DISK_BLOCK_BYTES);
-	buffer = build_header(source->header, DISK_BLOCK_BYTES);
+	buffer = build_header(source->header, NULL, DISK_BLOCK_BYTES);
+	if (!buffer) /* this shouldn't happen */
+	    error(_("header does not fit in %zd bytes"), (size_t)DISK_BLOCK_BYTES);
 
 	if((w = full_write(out, buffer,
                           DISK_BLOCK_BYTES)) != DISK_BLOCK_BYTES) {

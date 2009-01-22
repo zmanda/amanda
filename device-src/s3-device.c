@@ -374,16 +374,18 @@ write_amanda_header(S3Device *self,
 {
     CurlBuffer amanda_header = {NULL, 0, 0, 0};
     char * key = NULL;
-    gboolean header_fits, result;
+    gboolean result;
     dumpfile_t * dumpinfo = NULL;
     Device *d_self = DEVICE(self);
+    size_t header_size;
+
 
     /* build the header */
+    header_size = 0; /* no minimum size */
     dumpinfo = make_tapestart_header(DEVICE(self), label, timestamp);
     amanda_header.buffer = device_build_amanda_header(DEVICE(self), dumpinfo,
-        /* casting guint* to int* */
-        (int*) &amanda_header.buffer_len, &header_fits);
-    if (!header_fits) {
+        &header_size);
+    if (amanda_header.buffer == NULL) {
 	device_set_error(d_self,
 	    stralloc(_("Amanda tapestart header won't fit in a single block!")),
 	    DEVICE_STATUS_DEVICE_ERROR);
@@ -393,6 +395,8 @@ write_amanda_header(S3Device *self,
 
     /* write out the header and flush the uploads. */
     key = special_file_to_key(self, "tapestart", -1);
+    g_assert(header_size < G_MAXUINT); /* for cast to guint */
+    amanda_header.buffer_len = (guint)header_size;
     result = s3_upload(self->s3, self->bucket, key, S3_BUFFER_READ_FUNCS,
                        &amanda_header, NULL, NULL);
     g_free(amanda_header.buffer);
@@ -1075,11 +1079,16 @@ s3_device_read_label(Device *pself) {
         return pself->status;
     }
 
+    /* handle an empty file gracefully */
+    if (buf.buffer_len == 0) {
+	device_set_error(pself, stralloc(_("Empty header file")), DEVICE_STATUS_VOLUME_ERROR);
+        return pself->status;
+    }
+
     g_assert(buf.buffer != NULL);
     amanda_header = g_new(dumpfile_t, 1);
     parse_file_header(buf.buffer, amanda_header, buf.buffer_pos);
     pself->volume_header = amanda_header;
-
     g_free(buf.buffer);
 
     if (amanda_header->type != F_TAPESTART) {
@@ -1188,7 +1197,8 @@ static gboolean
 s3_device_start_file (Device *pself, dumpfile_t *jobInfo) {
     S3Device *self = S3_DEVICE(pself);
     CurlBuffer amanda_header = {NULL, 0, 0, 0};
-    gboolean header_fits, result;
+    gboolean result;
+    size_t header_size;
     char *key;
 
     if (device_in_error(self)) return FALSE;
@@ -1198,14 +1208,16 @@ s3_device_start_file (Device *pself, dumpfile_t *jobInfo) {
     jobInfo->blocksize = 0;
 
     /* Build the amanda header. */
+    header_size = 0; /* no minimum size */
     amanda_header.buffer = device_build_amanda_header(pself, jobInfo,
-        (int *) &amanda_header.buffer_len, &header_fits);
-    if (!header_fits) {
+        &header_size);
+    if (amanda_header.buffer == NULL) {
 	device_set_error(pself,
 	    stralloc(_("Amanda file header won't fit in a single block!")),
 	    DEVICE_STATUS_DEVICE_ERROR);
 	return FALSE;
     }
+    amanda_header.buffer_len = header_size;
 
     /* set the file and block numbers correctly */
     pself->file = (pself->file > 0)? pself->file+1 : 1;

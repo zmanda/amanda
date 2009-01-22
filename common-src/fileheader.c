@@ -593,17 +593,19 @@ validate_parts(
 }
 
 char *
-build_header(const dumpfile_t * file, size_t size)
+build_header(const dumpfile_t * file, size_t *size, size_t max_size)
 {
     GString *rval, *split_data;
     char *qname;
     char *program;
+    size_t min_size;
 
-    dbprintf(_("Building type %d (%s) header of size %zu using:\n"),
-		file->type, filetype2str(file->type), size);
+    min_size = size? *size : max_size;
+    dbprintf(_("Building type %d (%s) header of %zu-%zu bytes using:\n"),
+		file->type, filetype2str(file->type), min_size, max_size);
     dump_dumpfile_t(file);
 
-    rval = g_string_sized_new(size);
+    rval = g_string_sized_new(min_size);
     split_data = g_string_sized_new(10);
     
     switch (file->type) {
@@ -682,7 +684,7 @@ build_header(const dumpfile_t * file, size_t size)
 	if (file->is_partial != 0) {
             g_string_append_printf(rval, "PARTIAL=YES\n");
 	}
-	if (file->dle_str && strlen(file->dle_str) < size-2048) {
+	if (file->dle_str && strlen(file->dle_str) < max_size-2048) {
 	    char *heredoc = quote_heredoc(file->dle_str, "ENDDLE");
 	    g_string_append_printf(rval, "DLE=%s\n", heredoc);
 	    amfree(heredoc);
@@ -723,12 +725,19 @@ build_header(const dumpfile_t * file, size_t size)
     
     g_string_free(split_data, TRUE);
 
-    /* Since we don't return the length, it is an error for the header to be
-     * more than 'size' bytes */
-    assert(rval->len <= size);
+    /* is it too big? */
+    if (rval->len > max_size) {
+	g_debug("header is larger than %zu bytes -- cannot create", max_size);
+	g_string_free(rval, TRUE);
+	return NULL;
+    }
+
     /* Clear extra bytes. */
-    if (rval->len < size) {
+    if (rval->len < min_size) {
         bzero(rval->str + rval->len, rval->allocated_len - rval->len);
+    }
+    if (size) {
+	*size = (size_t)rval->len;
     }
     return g_string_free(rval, FALSE);
 }

@@ -883,7 +883,9 @@ write_tapeheader(
     size_t written;
 
     file->blocksize = DISK_BLOCK_BYTES;
-    buffer = build_header(file, DISK_BLOCK_BYTES);
+    buffer = build_header(file, NULL, DISK_BLOCK_BYTES);
+    if (!buffer) /* this shouldn't happen */
+	error(_("header does not fit in %zd bytes"), (size_t)DISK_BLOCK_BYTES);
 
     written = full_write(outfd, buffer, DISK_BLOCK_BYTES);
     amfree(buffer);

@@ -840,28 +840,21 @@ static gboolean write_tapestart_header(TapeDevice * self, char * label,
      IoResult result;
      dumpfile_t * header;
      char * header_buf;
-     int header_size;
-     gboolean header_fits;
      Device * d_self = (Device*)self;
      tape_rewind(self->fd);
 
      header = make_tapestart_header(d_self, label, timestamp);
      g_assert(header != NULL);
-     header_buf = device_build_amanda_header(d_self, header, &header_size,
-                                             &header_fits);
-     amfree(header);
-     g_assert(header_buf != NULL);
-
-     if (!header_fits) {
-         amfree(header_buf);
+     header_buf = device_build_amanda_header(d_self, header, NULL);
+     if (header_buf == NULL) {
 	 device_set_error(d_self,
 	    stralloc(_("Tapestart header won't fit in a single block!")),
 	    DEVICE_STATUS_DEVICE_ERROR);
          return FALSE;
      }
+     amfree(header);
 
-     g_assert(header_size >= (int)d_self->min_block_size);
-     result = tape_device_robust_write(self, header_buf, header_size);
+     result = tape_device_robust_write(self, header_buf, d_self->block_size);
      if (result != RESULT_SUCCESS) {
 	 device_set_error(d_self,
 	    vstrallocf(_("Error writing tapestart header: %s"), strerror(errno)),
@@ -983,8 +976,6 @@ static gboolean tape_device_start_file(Device * d_self,
     TapeDevice * self;
     IoResult result;
     char * amanda_header;
-    int header_size;
-    gboolean header_fits;
 
     self = TAPE_DEVICE(d_self);
 
@@ -996,15 +987,14 @@ static gboolean tape_device_start_file(Device * d_self,
 
     /* Make the Amanda header suitable for writing to the device. */
     /* Then write the damn thing. */
-    amanda_header = device_build_amanda_header(d_self, info,
-                                               &header_size, &header_fits);
-    if (!header_fits) {
+    amanda_header = device_build_amanda_header(d_self, info, NULL);
+    if (amanda_header == NULL) {
 	device_set_error(d_self,
 	    stralloc(_("Amanda file header won't fit in a single block!")),
 	    DEVICE_STATUS_DEVICE_ERROR);
 	return FALSE;
     }
-    result = tape_device_robust_write(self, amanda_header, header_size);
+    result = tape_device_robust_write(self, amanda_header, d_self->block_size);
     if (result != RESULT_SUCCESS) {
 	device_set_error(d_self,
 	    vstrallocf(_("Error writing file header: %s"), strerror(errno)),

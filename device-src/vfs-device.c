@@ -596,8 +596,8 @@ static gboolean write_amanda_header(VfsDevice * self,
 
     g_assert(header != NULL);
 
-    label_buffer = build_header(header, VFS_DEVICE_LABEL_SIZE);
-    if (strlen(label_buffer)+1 > VFS_DEVICE_LABEL_SIZE) {
+    label_buffer = device_build_amanda_header(d_self, header, NULL);
+    if (!label_buffer) {
         amfree(label_buffer);
 	device_set_error(d_self,
 	    stralloc(_("Amanda file header won't fit in a single block!")),
