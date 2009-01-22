@@ -1,4 +1,10 @@
 2009-01-22  Jean-Louis Martineau <martineau@zmanda.com>
+	* configure.in: AM_INIT_AUTOMAKE(amanda, "2.6.1")
+	* packaging/deb/rules, packaging/deb/buildpkg, packaging/deb/changelog,
+	  packaging/rpm/buildpkg,
+	  packaging/rpm/amanda.spec: Change version to 2.6.1.
+
+2009-01-22  Jean-Louis Martineau <martineau@zmanda.com>
 	* man/xml-source/amstar.8.xml: Typo.
 
 2009-01-21  Jean-Louis Martineau <martineau@zmanda.com>
