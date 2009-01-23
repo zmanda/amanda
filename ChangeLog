@@ -1,3 +1,10 @@
+2009-01-23  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/fileheader.h common-src/fileheader.c: add F_NOOP header,
+	  used by the tape device
+	* device-src/tape-device.c: enable appending, using F_NOOP when
+	  necessary to avoid writing a double filemark
+	* installcheck/Amanda_Device.pl: new tests
+
 2009-01-22  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/fileheader.c common-src/fileheader.h
 	  device-src/device.c device-src/device.h: make header-

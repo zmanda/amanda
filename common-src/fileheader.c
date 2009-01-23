@@ -399,9 +399,13 @@ parse_file_header(
 	}
 	break;
 
+    case F_NOOP:
+	/* nothing follows */
+	break;
+
     default:
 	strange_header(file, buffer, buflen,
-		_("TAPESTART|DUMPFILE|CONT_DUMPFILE|SPLIT_DUMPFILE|TAPEEND"), tok);
+		_("TAPESTART|DUMPFILE|CONT_DUMPFILE|SPLIT_DUMPFILE|TAPEEND|NOOP"), tok);
 	goto out;
     }
 
@@ -714,6 +718,10 @@ build_header(const dumpfile_t * file, size_t *size, size_t max_size)
                         file->datestamp);
 	break;
 
+    case F_NOOP:
+        g_string_printf(rval, "AMANDA: NOOP\n\014\n");
+	break;
+
     case F_UNKNOWN:
     case F_EMPTY:
     case F_WEIRD:
@@ -769,6 +777,10 @@ print_header(
     case F_TAPESTART:
 	g_fprintf(outf, _("start of tape: date %s label %s\n"),
 	       file->datestamp, file->name);
+	break;
+
+    case F_NOOP:
+	g_fprintf(outf, _("NOOP file\n"));
 	break;
 
     case F_DUMPFILE:
@@ -857,7 +869,8 @@ static const struct {
     { F_TAPEEND,  "TAPEEND" },
     { F_DUMPFILE, "FILE" },
     { F_CONT_DUMPFILE, "CONT_FILE" },
-    { F_SPLIT_DUMPFILE, "SPLIT_FILE" }
+    { F_SPLIT_DUMPFILE, "SPLIT_FILE" },
+    { F_NOOP, "NOOP" }
 };
 #define	NFILETYPES	(size_t)(sizeof(filetypetab) / sizeof(filetypetab[0]))
 

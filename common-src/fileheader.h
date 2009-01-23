@@ -38,8 +38,9 @@
 
 typedef char string_t[STRMAX];
 typedef enum {
-    F_UNKNOWN = 0, F_WEIRD = -1, F_TAPESTART = 1, F_TAPEEND = 2, 
-    F_DUMPFILE = 3, F_CONT_DUMPFILE = 4, F_SPLIT_DUMPFILE = 5, F_EMPTY = -2
+    F_UNKNOWN = 0, F_WEIRD = -1, F_TAPESTART = 1, F_TAPEEND = 2,
+    F_DUMPFILE = 3, F_CONT_DUMPFILE = 4, F_SPLIT_DUMPFILE = 5, F_NOOP = 6,
+    F_EMPTY = -2
 } filetype_t;
 
 typedef struct file_s {

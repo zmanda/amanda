@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 265;
+use Test::More tests => 270;
 use File::Path qw( mkpath rmtree );
 use Sys::Hostname;
 use Carp;
@@ -684,7 +684,7 @@ my $run_tape_tests = defined $TAPE_DEVICE;
 SKIP: {
     skip "define \$INSTALLCHECK_TAPE_DEVICE to run tape tests",
 	    12 +
-	    2 * $verify_file_count +
+	    3 * $verify_file_count +
 	    4 * $write_file_count
 	unless $run_tape_tests;
 
@@ -726,14 +726,19 @@ SKIP: {
 
     # append one more copy, to test ACCESS_APPEND
 
+    # if final_filemarks is 1, then the tape device will use F_NOOP,
+    # inserting an extra file, and we'll be appending at file number 5.
+    my $append_fileno = ($dev->property_get("FINAL_FILEMARKS") == 2)? 4:5;
+
     SKIP: {
         skip "APPEND not supported", $write_file_count + 2
             unless $dev->property_get("APPENDABLE");
+
         ok($dev->start($ACCESS_APPEND, undef, undef),
             "start in append mode")
             or diag($dev->error_or_status());
 
-        write_file(0xD0ED0E, $dev->block_size()*4, 4);
+        write_file(0xD0ED0E, $dev->block_size()*4, $append_fileno);
 
         ok($dev->finish(),
             "finish device after append")
@@ -755,6 +760,12 @@ SKIP: {
 
     verify_file(0x2FACE+2, $dev->block_size()*10+17, 2);
     verify_file(0x2FACE+3, $dev->block_size()*10+17, 3);
+
+    SKIP: {
+        skip "APPEND not supported", $verify_file_count
+            unless $dev->property_get("APPENDABLE");
+	verify_file(0xD0ED0E, $dev->block_size()*4, $append_fileno);
+    }
 
     ok($dev->finish(),
 	"finish device after read")

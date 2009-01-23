@@ -208,7 +208,7 @@ tape_device_init (TapeDevice * self) {
     g_value_unset(&response);
 
     g_value_init(&response, G_TYPE_BOOLEAN);
-    g_value_set_boolean(&response, FALSE);
+    g_value_set_boolean(&response, TRUE);
     device_set_simple_property(d_self, PROPERTY_APPENDABLE,
 	    &response, PROPERTY_SURETY_GOOD, PROPERTY_SOURCE_DETECTED);
     g_value_unset(&response);
@@ -477,7 +477,6 @@ void tape_device_register(void) {
                                       G_TYPE_BOOLEAN, "bsr",
       "Does this drive support the MTBSR command?");
 
-    /* FIXME: Is this feature even useful? */
     device_property_fill_and_register(&device_property_eom,
                                       G_TYPE_BOOLEAN, "eom",
       "Does this drive support the MTEOM command?");
@@ -1054,6 +1053,7 @@ tape_device_seek_file (Device * d_self, guint file) {
     d_self->is_eof = FALSE;
     d_self->block = 0;
 
+reseek:
     if (difference > 0) {
         /* Seeking forwards */
         if (!tape_device_fsf(self, difference)) {
@@ -1105,6 +1105,15 @@ tape_device_seek_file (Device * d_self, guint file) {
     case F_CONT_DUMPFILE:
     case F_SPLIT_DUMPFILE:
         break;
+
+    case F_NOOP:
+	/* a NOOP is written on QIC tapes to avoid writing two sequential
+	 * filemarks when closing a device in WRITE or APPEND mode.  In this
+	 * case, we just seek to the next file. */
+	amfree(rval);
+	file++;
+	difference = 1;
+	goto reseek;
 
     default:
         tape_rewind(self->fd);
@@ -1169,22 +1178,40 @@ tape_device_finish (Device * d_self) {
             return FALSE;
     }
 
-    /* Write an extra filemark, if needed. The OS will give us one for
-       sure. */
-    /* device_finish_file already wrote one for us */
-    /*
-    if (self->final_filemarks > 1 &&
+    /* Straighten out the filemarks.  We already wrote one in finish_file, and
+     * the device driver will write another filemark when we rewind.  This means
+     * that, if we do nothing, we'll get two filemarks.  If final_filemarks is
+     * 1, this would be wrong, so in this case we insert a F_NOOP header between
+     * the two filemarks. */
+    if (self->final_filemarks == 1 &&
         IS_WRITABLE_ACCESS_MODE(d_self->access_mode)) {
-        if (!tape_weof(self->fd, 1)) {
-	device_set_error(d_self,
-	    vstrallocf(_("Error writing final filemark: %s"), strerror(errno)),
-	    DEVICE_STATUS_DEVICE_ERROR | DEVICE_STATUS_VOLUME_ERROR);
-            return FALSE;
-        }
-    }
-    */
+	dumpfile_t file;
+	char *header;
+	int result;
 
-    /* Rewind. */
+	/* write a F_NOOP header */
+	fh_init(&file);
+	file.type = F_NOOP;
+	header = device_build_amanda_header(d_self, &file, NULL);
+	if (!header) {
+	    device_set_error(d_self,
+		stralloc(_("Amanda file header won't fit in a single block!")),
+		DEVICE_STATUS_DEVICE_ERROR);
+	    return FALSE;
+	}
+
+	result = tape_device_robust_write(self, header, d_self->block_size);
+	if (result != RESULT_SUCCESS) {
+	    device_set_error(d_self,
+		vstrallocf(_("Error writing file header: %s"), strerror(errno)),
+		DEVICE_STATUS_DEVICE_ERROR);
+	    amfree(header);
+	    return FALSE;
+	}
+	amfree(header);
+    }
+
+    /* Rewind (the kernel will write a filemark first) */
     if (!tape_rewind(self->fd)) {
 	device_set_error(d_self,
 	    vstrallocf(_("Couldn't rewind device: %s"), strerror(errno)),
@@ -1362,7 +1389,7 @@ static int drain_tape_blocks(TapeDevice * self, int count) {
 
     buffer_size = tape_device_read_size(self);
 
-    buffer = malloc(sizeof(buffer_size));
+    buffer = malloc(buffer_size);
 
     for (i = 0; i < count || count < 0;) {
         int result;
@@ -1495,6 +1522,8 @@ tape_device_bsr (TapeDevice * self, guint count, guint file, guint block) {
 static gboolean
 tape_device_eod (TapeDevice * self) {
     Device * d_self;
+    int count;
+
     d_self = (Device*)self;
 
     if (self->eom) {
@@ -1502,37 +1531,45 @@ tape_device_eod (TapeDevice * self) {
         result = tape_eod(self->fd);
         if (result == TAPE_OP_ERROR) {
             return FALSE;
-        } else if (result == TAPE_POSITION_UNKNOWN) {
-            d_self->file = -1;
+        } else if (result != TAPE_POSITION_UNKNOWN) {
+	    /* great - we just fast-forwarded to EOD, but don't know where we are, so
+	     * now we have to rewind and drain all of that data.  Warn the user so that
+	     * we can skip the fast-forward-rewind stage on the next run */
+	    g_warning("Seek to end of tape does not give an accurate tape position; set "
+		      "the EOM property to 0 to avoid useless tape movement.");
+	    /* and set the property so that next time *this* object is opened for
+	     * append, we skip this stage */
+	    self->eom = FALSE;
+            /* fall through to draining blocks, below */
         } else {
             /* We drop by 1 because Device will increment the first
                time the user does start_file. */
             d_self->file = result - 1;
+	    return TRUE;
         }
-        return TRUE;
-    } else {
-        int count = 0;
-        if (!tape_rewind(self->fd))
-            return FALSE;
+    }
 
-        for (;;) {
-            /* We alternately read a block and FSF. If the read is
-               successful, then we are not there yet and should FSF
-               again. */
-            int result;
-            result = drain_tape_blocks(self, 1);
-            if (result == 1) {
-                /* More data, FSF. */
-                tape_device_fsf(self, 1);
-                count ++;
-            } else if (result == 0) {
-                /* Finished. */
-                d_self->file = count;
-                return TRUE;
-            } else {
-                return FALSE;
-            }
-        }
+    if (!tape_rewind(self->fd))
+	return FALSE;
+
+    count = 0;
+    for (;;) {
+	/* We alternately read a block and FSF. If the read is
+	   successful, then we are not there yet and should FSF
+	   again. */
+	int result;
+	result = drain_tape_blocks(self, 1);
+	if (result == 1) {
+	    /* More data, FSF. */
+	    tape_device_fsf(self, 1);
+	    count ++;
+	} else if (result == 0) {
+	    /* Finished. */
+	    d_self->file = count - 1;
+	    return TRUE;
+	} else {
+	    return FALSE;
+	}
     }
 }
 
