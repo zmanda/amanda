@@ -26,6 +26,7 @@ use base qw(Amanda::Application);
 use File::Copy;
 use File::Temp qw( tempfile );
 use File::Path;
+use IPC::Open2;
 use IPC::Open3;
 use Sys::Hostname;
 use Symbol;
@@ -43,6 +44,7 @@ sub new {
     $self->{suntar}            = "/usr/sbin/tar";
     $self->{pfexec}            = "/usr/bin/pfexec";
     $self->{gnutar}            = $Amanda::Constants::GNUTAR;
+    $self->{teecount}          = $Amanda::Paths::amlibexecdir."/teecount";
 
     $self->{config}            = $config;
     $self->{host}              = $host;
@@ -102,63 +104,74 @@ sub command_selfcheck {
    $self->validate_inexclude();
 }
 
+sub command_estimate() {
+    my $self = shift;
+    my $action = "estimate";
+    my $size = "-1";
+    my $level = $self->{level};
+
+    my(@cmd) = $self->build_command();
+    my(@cmdwc) = ("/usr/bin/wc", "-c");
+
+    debug("cmd:" . join(" ", @cmd) . " | " . join(" ", @cmdwc));
+    my($wtr, $rdr, $err, $pid, $rdrwc, $pidwc);
+    $err = Symbol::gensym;
+    $pid = open3($wtr, \*DATA, $err, @cmd);
+    $pidwc = open2($rdrwc, '>&DATA', @cmdwc);
+    close $wtr;
+
+    my ($msgsize) = <$rdrwc>;
+    my ($errmsg) = <$err>;
+    waitpid $pid, 0;
+    close $rdrwc;
+    close $err;
+    if ($? !=  0) {
+        if (defined $errmsg) {
+            $self->print_to_server_and_die($action, $errmsg, $Amanda::Script_App::ERROR);
+        } else {
+                $self->print_to_server_and_die($action, "cannot estimate archive size': unknown reason", $Amanda::Script_App::ERROR);
+        }
+    }
+    output_size($level, $msgsize);
+    exit 0;
+}
+
+
+sub output_size {
+   my($level) = shift;
+   my($size) = shift;
+   if($size == -1) {
+      print "$level -1 -1\n";
+      #exit 2;
+   }
+   else {
+      my($ksize) = int $size / (1024);
+      $ksize=32 if ($ksize<32);
+      print "$level $ksize 1\n";
+   }
+}
+
 sub command_backup {
    my $self = shift;
    $self->{action} = 'backup';
-
-   my($listdir) = $self->{'host'} . $self->{'disk'};
-   my($verbose) = "";
-   $listdir     =~ s/\//_/g;
-   my($level) = $self->{level};
-
-   #Careful sun tar options and ordering is very very tricky 
-
-   my($cmd) = "-cp";  
-   my(@optparams) = ();  
 
    $self->validate_inexclude();
    my $mesgout_fd;
    open($mesgout_fd, '>&=3') || die();
    $self->{mesgout} = $mesgout_fd;
 
-   if($self->{extended_header} =~ /^YES$/i) {
-      $cmd .= "E";
-   }
-   if($self->{extended_attrib} =~ /^YES$/i) {
-      $cmd .= "\@";
-   }
-   if(defined($self->{index})) {
-      $cmd .= "v";
-   }
+   my(@cmd) = $self->build_command();
+   my(@cmdtc) = $self->{teecount};
 
-   if(defined($self->{block_size})) {
-      $cmd .= "b";
-      push @optparams, $self->{block_size}; 	
-   }
+   debug("cmd:" . join(" ", @cmd) . " | " . join(" ", @cmdtc));
 
-   if (defined($self->{exclude_tmp})) {
-      $cmd .= "fX";
-      push @optparams,"-",$self->{exclude_tmp};
-   } else {
-      $cmd .= "f";
-      push @optparams,"-";
-   }
-      push @optparams,"-C",$self->{device};
-
-   if(defined($self->{include_tmp}))  {
-      push @optparams,"-I", $self->{include_tmp};
-   } else {
-      push @optparams,".";
-   }
-
-   my(@cmd) = ($self->{pfexec}, $self->{suntar}, $cmd, @optparams);
-
-   debug("cmd:" . join(" ", @cmd));
-
-   my $wtrfh;
+   my($wtr, $pid, $rdrtc, $errtc, $pidtc);
    my $index_fd = Symbol::gensym;
-   my $pid = open3($wtrfh, '>&STDOUT', $index_fd, @cmd) || die();
-   close($wtrfh);
+   $errtc = Symbol::gensym;
+
+   $pid = open3($wtr, \*DATA, $index_fd, @cmd) || die();
+   $pidtc = open3('<&DATA', '>&STDOUT', $errtc, @cmdtc) || die();
+   close($wtr);
 
    unlink($self->{include_tmp}) if(-e $self->{include_tmp});
    unlink($self->{exclude_tmp}) if(-e $self->{exclude_tmp});
@@ -173,14 +186,22 @@ sub command_backup {
       $self->parse_backup($index_fd, $mesgout_fd, undef);
    }
    close($index_fd);
+   my $size = <$errtc>;
 
    waitpid $pid, 0;
-   my $status = $?; 
+
+   my $status = $?;
    if( $status != 0 ){
        debug("exit status $status ?" );
        print $mesgout_fd "? $self->{suntar} returned error\n";
        die();
    }
+
+   my($ksize) = int ($size/1024);
+   print $mesgout_fd "sendbackup: size $ksize\n";
+   print $mesgout_fd "sendbackup: end\n";
+   debug("sendbackup: size $ksize "); 
+
    exit 0;
 }
 
@@ -188,9 +209,8 @@ sub parse_backup {
    my $self = shift;
    my($fhin, $fhout, $indexout) = @_;
    my $size  = -1;
-   my $ksize = -1;
    while(<$fhin>) {
-      if ( /^\.\//) {
+      if ( /^a\s+\.\//) {
          if(defined($indexout)) {
 	    if(defined($self->{index})) {
                s/^\.//;
@@ -207,18 +227,6 @@ sub parse_backup {
                   print $fhout "? $_";
 	       }
             }
-      }
-   }
-   if(defined($fhout)) {
-      if ($size == -1) {
-	 #Workaround for size issue, send dummy size if application is not capable.
-         print $fhout "sendbackup: size 1000\n";
-         print $fhout "sendbackup: end\n";
-      }
-      else {
-         my($ksize) = int ($size/1024);
-         print $fhout "sendbackup: size $ksize\n";
-         print $fhout "sendbackup: end\n";
       }
    }
 }
@@ -360,7 +368,51 @@ sub command_validate {
    exit(0);
 }
 
-sub command_print_command {
+sub build_command {
+  my $self = shift;
+
+   #Careful sun tar options and ordering is very very tricky
+
+   my($cmd) = "-cp";
+   my(@optparams) = ();
+
+   $self->validate_inexclude();
+   my $mesgout_fd;
+   open($mesgout_fd, '>&=3') || die();
+   $self->{mesgout} = $mesgout_fd;
+
+   if($self->{extended_header} =~ /^YES$/i) {
+      $cmd .= "E";
+   }
+   if($self->{extended_attrib} =~ /^YES$/i) {
+      $cmd .= "\@";
+   }
+   if(defined($self->{index})) {
+      $cmd .= "v";
+   }
+
+   if(defined($self->{block_size})) {
+      $cmd .= "b";
+      push @optparams, $self->{block_size};
+   }
+
+   if (defined($self->{exclude_tmp})) {
+      $cmd .= "fX";
+      push @optparams,"-",$self->{exclude_tmp};
+   } else {
+      $cmd .= "f";
+      push @optparams,"-";
+   }
+      push @optparams,"-C",$self->{device};
+
+   if(defined($self->{include_tmp}))  {
+      push @optparams,"-I", $self->{include_tmp};
+   } else {
+      push @optparams,".";
+   }
+
+   my(@cmd) = ($self->{pfexec}, $self->{suntar}, $cmd, @optparams);
+   return (@cmd);
 }
 
 package main;

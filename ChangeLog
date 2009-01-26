@@ -1,3 +1,7 @@
+2009-01-26 Satya Ganga <gsat@zmanda.com>
+	* xml-source/amsuntar.8.xml : Update man page with RBAC info
+	* application-src/amsuntar.pl : Adding support for estimate
+
 2009-01-23  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/fileheader.h common-src/fileheader.c: add F_NOOP header,
 	  used by the tape device
