@@ -13,7 +13,8 @@ common_tests = \
 	Amanda_MainLoop \
 	Amanda_Types \
 	Amanda_Util \
-	amarchiver
+	amarchiver \
+	amgtar
 
 server_tests = \
 	Amanda_Changer \
@@ -75,7 +76,7 @@ endif
 
 # Add any common files (that should not be run as tests, and that do not
 # require configure-variable substitution) here:
-test_utils = Installcheck/Config.pm Installcheck/Run.pm Installcheck/Dumpcache.pm
+test_utils = Installcheck/Config.pm Installcheck/Run.pm Installcheck/Dumpcache.pm Installcheck/Application.pm
 EXTRA_DIST += $(test_utils)
 
 CHECK_PERL_FLAGS=-I$(top_srcdir)/installcheck
