@@ -1,3 +1,6 @@
+2009-01-27  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/amgtar.pl: fix typo
+
 2009-01-27  Nikolas Coukouma <atrus@zmanda.com>
 	* installcheck/Installcheck/Application.pm: Add Installcheck::Application 
 	  harness for running things via the Application API

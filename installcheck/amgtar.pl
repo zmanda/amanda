@@ -144,4 +144,4 @@ ok(-d "$rest_dir/bar", "bar/ restored");
 ok(-d "$rest_dir/bar", "bar/baz/bat/ restored");
 
 # cleanup
-rmtree($rootdir);
+rmtree($root_dir);
