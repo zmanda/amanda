@@ -1,3 +1,7 @@
+2009-01-26  Dustin J. Mitchell <dustin@zmanda.com>
+	* config/automake/scripts.am: get line numbers right when
+	  syntax-checking perl scripts
+
 2009-01-26 Satya Ganga <gsat@zmanda.com>
 	* xml-source/amsuntar.8.xml : Update man page with RBAC info
 	* application-src/amsuntar.pl : Adding support for estimate
