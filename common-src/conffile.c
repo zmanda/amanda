@@ -3995,6 +3995,13 @@ config_init(
     /* store away our client-ness for later reference */
     config_client = flags & CONFIG_INIT_CLIENT;
 
+    /* if we're using an explicit name, but the name is '.', then we're using the
+     * current directory */
+    if ((flags & CONFIG_INIT_EXPLICIT_NAME) && arg_config_name) {
+	if (0 == strcmp(arg_config_name, "."))
+	    flags = (flags & (~CONFIG_INIT_EXPLICIT_NAME)) | CONFIG_INIT_USE_CWD;
+    }
+
     if ((flags & CONFIG_INIT_EXPLICIT_NAME) && arg_config_name) {
 	config_name = newstralloc(config_name, arg_config_name);
 	config_dir = newvstralloc(config_dir, CONFIG_DIR, "/", arg_config_name, NULL);

@@ -218,7 +218,7 @@ Last is the seldom-edited &tapelist;
 file, which lists tapes that are currently active.
 These files are described in more detail in the following sections.</para>
 
-<para>All files are stored in individual configuration
+<para>All configuration files are stored in individual configuration
 directories, usually under <filename>/etc/amanda/</filename>.
 A site will often have more than
 one configuration.
@@ -232,6 +232,13 @@ The configuration files would be stored under directories
 <filename>/etc/amanda/archive/</filename>, respectively.
 Part of the job of an &A; administrator is to create,
 populate and maintain these directories.</para>
+
+<para>Most &A; applications take a "config" parameter; this is generally the
+(unqualified) name of the configuration directory, e.g.,
+<filename>normal</filename>.  If the parameter is <filename>.</filename> (dot),
+the current directory is used.  This feature is present for backward
+compatibility, but is not commonly used.</para>
+
 </refsect1>
 
 <refsect1><title>LOG FILES</title>

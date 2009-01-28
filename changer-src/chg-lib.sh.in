@@ -102,9 +102,7 @@ tape_device_filename() {
 #               amdevcheck, suitable for use in higher-level error messages
 amdevcheck_status() {
     amdevcheck_message=
-    local amdevcheck_config_dir=`pwd`
-    local amdevcheck_config_name=`basename $amdevcheck_config_dir`
-    local amdevcheck_output=`amdevcheck $amdevcheck_config_name $@`
+    local amdevcheck_output=`amdevcheck . $@`
     local amdevcheck_status=$?
 
     test "$amdevcheck_status" -ne 0 && return 0

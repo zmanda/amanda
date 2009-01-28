@@ -65,8 +65,9 @@ of flags that affect its behavior.  These flags can be OR'd together.
 
 =over
 
-=item If C<CONFIG_INIT_EXPLICIT_NAME> is given, then the C<$name>
-parameter can contain the name of a configuration to load.
+=item If C<CONFIG_INIT_EXPLICIT_NAME> is given, then the C<$name> parameter can
+contain the name of a configuration to load.  Note that if the parameter is
+C<".">, this is equivalent to C<CONFIG_INIT_USE_CWD>.
 
 =item If C<CONFIG_INIT_USE_CWD> is given, and if the current directory
 contains C<amanda.conf>, then that file is loaded.
