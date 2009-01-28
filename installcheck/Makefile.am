@@ -13,7 +13,9 @@ common_tests = \
 	Amanda_MainLoop \
 	Amanda_Types \
 	Amanda_Util \
-	amarchiver \
+	amarchiver
+
+client_tests = \
 	amgtar
 
 server_tests = \
@@ -63,6 +65,11 @@ tests += $(common_tests)
 # tests requiring server
 if WANT_SERVER
 tests += $(server_tests)
+endif
+
+# tests requiring client
+if WANT_CLIENT
+tests += $(client_tests)
 endif
 
 # tests requiring a client and a server AND restore facilities (any tests that run amdump)
