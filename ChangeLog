@@ -1,3 +1,7 @@
+2009-01-28  Jean-Louis Martineau <martineau@zmanda.com>
+	* config/automake/scripts.am: Fix another get line numbers right when
+	  syntax-checking perl scripts
+
 2009-01-27  Nikolas Coukouma <atrus@zmanda.com>
 	* installcheck/Installcheck/Application.pm: make sure all data is read
 	* installcheck/amgtar.pl: check if GNU tar is present,
