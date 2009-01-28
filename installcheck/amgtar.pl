@@ -16,22 +16,30 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 20;
+use Test::More tests => 21;
 
 use lib "@amperldir@";
 use strict;
 use warnings;
+use Amanda::Constants;
 use Amanda::Paths;
 use File::Path;
 use Installcheck::Application;
 use IO::File;
+
+unless ($Amanda::Constants::GNUTAR and -x $Amanda::Constants::GNUTAR) {
+    SKIP: {
+        skip("GNU tar is not available", Test::More->builder->expected_tests);
+    }
+    exit 0;
+}
 
 my $app = Installcheck::Application->new('amgtar');
 
 my $support = $app->support();
 is($support->{'INDEX-LINE'}, 'YES', "supports indexing");
 is($support->{'MESSAGE-LINE'}, 'YES', "supports messages");
-is($support->{'CALCSIZE'}, 'YES', "supports messages");
+is($support->{'CALCSIZE'}, 'YES', "supports calcsize");
 
 my $root_dir = "$AMANDA_TMPDIR/installcheck-amgtar";
 my $back_dir = "$root_dir/to_backup";
@@ -107,6 +115,8 @@ ok_foreach(
     @dir_struct);
 
 $app->add_property('gnutar-listdir', $list_dir);
+# GNU tar on Solaris doesn't support this, so avoid it
+$app->add_property('atime-preserve', 'no');
 
 my $selfcheck = $app->selfcheck('device' => $back_dir, 'level' => 0, 'index' => 'line');
 is($selfcheck->{'exit_status'}, 0, "error status ok");
@@ -116,6 +126,8 @@ my $backup = $app->backup('device' => $back_dir, 'level' => 0, 'index' => 'line'
 is($backup->{'exit_status'}, 0, "error status ok");
 ok(!@{$backup->{'errors'}}, "no errors during backup")
     or diag(@{$backup->{'errors'}});
+
+is(length($backup->{'data'}), $backup->{'size'}, "reported and actual size match");
 
 ok(@{$backup->{'index'}}, "index is not empty");
 ok_foreach(

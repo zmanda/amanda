@@ -1,3 +1,8 @@
+2009-01-27  Nikolas Coukouma <atrus@zmanda.com>
+	* installcheck/Installcheck/Application.pm: make sure all data is read
+	* installcheck/amgtar.pl: check if GNU tar is present,
+	  avoid using atime-preserve, make sure reported and actual size match
+
 2009-01-27  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/amgtar.pl: fix typo
 

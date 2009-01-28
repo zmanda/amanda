@@ -24,7 +24,6 @@ use Amanda::Paths;
 use Carp;
 use Fcntl;
 use IO::Handle;
-use IO::Poll qw( POLLIN POLLOUT POLLHUP );
 use POSIX qw( :errno_h :fcntl_h );
 use POSIX qw( EAGAIN );
 
@@ -274,12 +273,30 @@ sub list_properties {
 #     'parent_fd' - the file descriptor used by the parent
 #     'handle' - an anonymous filehandle (IO::Handle) for 'parent_fd'
 #     'src' - the event source (for Amanda::MainLoop)
+#     'done' - a callback (coderef) that must be called when you're done with the fd
 # returns child exit status
 sub _exec {
     my ($self, $cmd, $extra_args, $fds) = @_;
     confess 'must have a command' unless $cmd;
 
     my $fdn; # file descriptor number
+    my $exit_status;
+
+    my $all_done = sub {
+        if (defined($exit_status)) {
+            # check fds
+            my $really_done = 1;
+            foreach $fdn (keys %$fds) {
+                my $fd = $fds->{$fdn};
+                if (($fd->{'child_mode'} eq 'w') and ref($fd->{'done'})) {
+                    $really_done = 0;
+                    last;
+                }
+            }
+            Amanda::MainLoop::quit() if $really_done;
+        }
+    };
+
     # start setting up pipes
     foreach $fdn (keys %$fds) {
         my $fd = $fds->{$fdn};
@@ -304,6 +321,7 @@ sub _exec {
         } elsif ($fd->{'write'}) {
             $fd->{'cb'} = _make_write_cb($fd->{'write'}, $fd);
         }
+        $fd->{'done'} = _make_done_cb($fd, $all_done);
 
         my $events = ($fd->{'child_mode'} eq 'r') ? $G_IO_OUT : ($G_IO_IN|$G_IO_HUP);
         $fd->{'src'} = Amanda::MainLoop::fd_source($p_handle, $events);
@@ -321,7 +339,6 @@ sub _exec {
     }
 
     my $pid = fork();
-    my $exit_status;
     if ($pid) { # in parent
         # parent shouldn't use child_fd
         foreach $fdn (keys %$fds) {
@@ -331,7 +348,7 @@ sub _exec {
         my $wait_src = Amanda::MainLoop::child_watch_source($pid);
         $wait_src->set_callback(sub {
             $exit_status = $_[2];
-            Amanda::MainLoop::quit();
+            $all_done->();
         });
 
         Amanda::MainLoop::run();
@@ -406,11 +423,7 @@ sub _make_write_cb {
         }
         $offset += $rv;
 
-        # done writing?
-        if ($offset >= $len) {
-            $fd->{'handle'}->close();
-            $fd->{'src'}->remove();
-        }
+        $fd->{'done'}->() if ($offset >= $len);
     }
 }
 
@@ -431,10 +444,22 @@ sub _make_save_cb {
         $nonblock_cb->();
 
         my $rv = $fd->{'handle'}->sysread($$store, $BYTES_TO_READ, $offset);
-        if (!defined($rv)) {
+        if (defined($rv)) {
+            $fd->{'done'}->() if (0 == $rv);
+        } else {
             confess "Error reading: $!" unless $! == EAGAIN;
         }
         $offset += $rv;
+    }
+}
+
+sub _make_done_cb {
+    my ($fd, $all_done) = @_;
+    sub {
+        $fd->{'src'}->remove();
+        $fd->{'handle'}->close();
+        $fd->{'done'} = 1;
+        $all_done->();
     }
 }
 
