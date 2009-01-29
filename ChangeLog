@@ -1,3 +1,6 @@
+2009-01-29  Dustin J. Mitchell <dustin@zmanda.com>
+	* config/config.guess config/config.sub: new updates from FSF
+
 2009-01-29  Benjamin Lewis <bhlewis@purdue.edu>
 	* autogen: fix quoting error
 	* config/amanda/dumpers.m4:  use a hostname we're more confident
