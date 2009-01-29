@@ -12,7 +12,7 @@ rm -rf autom4te*.cache
 rm -f configure
 
 die() {
-    echo x"${@}" | sed s/^x//
+    echo x"${@}" | sed 's/^x//'
     exit 1
 }
 

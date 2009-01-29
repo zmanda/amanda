@@ -1,3 +1,8 @@
+2009-01-29  Benjamin Lewis <bhlewis@purdue.edu>
+	* autogen: fix quoting error
+	* config/amanda/dumpers.m4:  use a hostname we're more confident
+	  doesn't exist
+
 2009-01-28  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Installcheck/Config.pm perl/Amanda/Archive.swg
 	  perl/Amanda/DB/Catalog.pm perl/Amanda/MainLoop.swg
