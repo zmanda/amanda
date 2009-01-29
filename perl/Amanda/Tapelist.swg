@@ -58,16 +58,26 @@ following keys:
 
 =over
 
-=item C<position> -- the one-based position of the TLE in the tapelist
+=item C<position>
 
-=item C<datestamp> -- the datestamp on which this was written, or "0" for an
+the one-based position of the TLE in the tapelist
+
+=item C<datestamp>
+
+the datestamp on which this was written, or "0" for an
 unused tape
 
-=item C<reuse> -- true if this tape can be reused when it is no longer active
+=item C<reuse>
 
-=item C<label> -- tape label
+true if this tape can be reused when it is no longer active
 
-=item C<comment> -- the comment for this tape, or undef if no comment was given
+=item C<label>
+
+tape label
+
+=item C<comment>
+
+the comment for this tape, or undef if no comment was given
 
 =back
 
@@ -75,21 +85,33 @@ The following methods are available on a tapelist object C<$tl>:
 
 =over
 
-=item C<lookup_tapelabel($lbl)> -- look up and return a reference to the TLE
+=item C<lookup_tapelabel($lbl)>
+
+look up and return a reference to the TLE
 with the given label
 
-=item C<lookup_tapepos($pos)> -- look up and return a reference to the TLE in
+=item C<lookup_tapepos($pos)>
+
+look up and return a reference to the TLE in
 the given position
 
-=item C<lookup_tapedate($date)> -- look up and return a reference to the TLE
+=item C<lookup_tapedate($date)>
+
+look up and return a reference to the TLE
 with the given datestamp
 
-=item C<remove_tapelabel($lbl)> -- remove the tape with the given label
+=item C<remove_tapelabel($lbl)>
 
-=item C<add_tapelabel($date, $lbl, $comment)> -- add a tape with the given date,
+remove the tape with the given label
+
+=item C<add_tapelabel($date, $lbl, $comment)>
+
+add a tape with the given date,
 label, and comment to the end of the tapelist, marking it reusable.
 
-=item C<write($filename)> -- write the tapelist out to C<$filename>.
+=item C<write($filename)>
+
+write the tapelist out to C<$filename>.
 
 =back
 

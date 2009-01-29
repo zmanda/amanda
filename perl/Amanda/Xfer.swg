@@ -127,7 +127,7 @@ such abstract classes.
   Amanda::Xfer::Source::Device->new($device);
 
 This source reads data from a device.  The device should already be queued up
-for reading (C<$device->seek_file(..)>).  The element will read until the end
+for reading (C<< $device->seek_file(..) >>).  The element will read until the end
 of the device file.
 
 =head3 Amanda::Xfer::Source::Fd
@@ -169,7 +169,7 @@ This filter applies a bytewise XOR operation to the data flowing through it.
   Amanda::Xfer::Dest::Device->new($device, $max_memory);
 
 This source writes data to a device.  The device should already be queued up
-for writing (C<$device->start_file(..)>).  No more than C<$max_memory> will be
+for writing (C<< $device->start_file(..) >>).  No more than C<$max_memory> will be
 used for buffers.  Use zero for the default buffer size.  On completion of the
 transfer, the file will be finished.
 

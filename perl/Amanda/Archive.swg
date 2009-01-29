@@ -78,7 +78,7 @@ Amanda::Archive - Perl access to the  amanda archive library
 
 =head2 Amanda::Archive::Archive Objects
 
-Note that C<Amanda::Archive->new> and C<Amanda::Archive::Archive->new> are
+Note that C<< Amanda::Archive->new >> and C<< Amanda::Archive::Archive->new >> are
 equivalent.
 
 =over

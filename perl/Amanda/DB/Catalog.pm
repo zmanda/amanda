@@ -259,7 +259,7 @@ The following keys are available:
 
 Keys are processed from left to right: if two dumps have the same value for
 C<$key1>, then C<$key2> is examined, and so on.  Key names may be prefixed by
-"C<->" to reverse the order.
+a dash (C<->) to reverse the order.
 
 =item add_dump($dumpfile)
 

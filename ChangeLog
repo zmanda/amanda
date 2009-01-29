@@ -1,4 +1,9 @@
 2009-01-28  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Installcheck/Config.pm perl/Amanda/Archive.swg
+	  perl/Amanda/DB/Catalog.pm perl/Amanda/MainLoop.swg
+	  perl/Amanda/Tapelist.swg perl/Amanda/Xfer.swg: fix POD typos
+
+2009-01-28  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/conffile.c: support "." as a config name, indicating
 	  "this directory"
 	* changer-src/chg-lib.sh.in: use that support to run amdevcheck in

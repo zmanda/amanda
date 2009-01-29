@@ -41,7 +41,7 @@ The resulting configuration is always named "TESTCONF".  The basic
 configuration contains only a few parameters that are necessary
 just to run Amanda applications in the test environment.  It also
 contains a tapetype, C<TEST-TAPE>.  To change tapetype parameters,
-call C<$cf->add_tapetype> with a new definition of C<TEST-TAPE>.
+call C<< $cf->add_tapetype >> with a new definition of C<TEST-TAPE>.
 
 Note that it's quite possible to produce an invalid configuration with this
 package (and, in fact, some of the tests do just that).

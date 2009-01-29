@@ -106,13 +106,13 @@ MainLoop:
 An event source is responsible for producing events.  A source may produce
 multiple events over its lifetime.
 
-The method C<$src->set_callback(\&cb)> sets the function that will be called
+The method C<< $src->set_callback(\&cb) >> sets the function that will be called
 for a given source, and "attaches" the source to the main loop so that it will
 begin generating events.  The arguments to the callback depend on the event
 source, but the first argument is always the source itself.  Unless specified,
 no other arguments are provided.
 
-Event sources persist until they are removed with C<$src->remove()>, even if
+Event sources persist until they are removed with C<< $src->remove() >>, even if
 the source itself is no longer accessible from Perl.  Although Glib supports
 it, there is no provision for "automatically" removing an event source.  As an
 example:
@@ -189,10 +189,10 @@ intended as a generic wrapper for it.  Specifically:
 
 =over
 
-=item Amanda's perl-accessible main loop only runs a single C<GMainContext>, and
+=item * Amanda's perl-accessible main loop only runs a single C<GMainContext>, and
 always runs in the main thread.
 
-=item Besides idle sources, event priorities are not accessible from Perl.
+=item * Besides idle sources, event priorities are not accessible from Perl.
 
 =back
 
@@ -244,8 +244,7 @@ sources in a lexical scope and remove them at the appropriate times:
 	});
     }
 
-Both of these limitations may be lifted in future revisions of
-L<Amanda::MainLoop>.
+Both of these limitations may be lifted in future revisions of this package.
 
 =cut
 %}
