@@ -91,9 +91,11 @@ and do not update the original copies.</para>
   <varlistentry>
   <term><option>--erase</option></term>
   <listitem>
-<para>Erase the data from
-<emphasis remap='I'>label</emphasis>
-</para>
+<para>Attempt to erase the data contained on the volume with the given label.
+This requires that Amanda be able to find that volume using the tape changer.
+Erasure is not supported by all Amanda devices, and the erasure is not "secure"
+in the sense that the data can most likely be recovered by someone with the
+right tools.  </para>
   </listitem>
   <varlistentry>
   </varlistentry>

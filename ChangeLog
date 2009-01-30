@@ -1,3 +1,6 @@
+2009-01-30  Dustin J. Mitchell <dustin@zmanda.com>
+	* man/xml-source/amrmtape.8.xml: clarify meaning of --erase
+
 2009-01-30  Jean-Louis Martineau <martineau@zmanda.com>
 	* recover-src/amrecover.c: Always print error.
 	* server-src/amindexd.c: read stderr of uncompress and sort process,
