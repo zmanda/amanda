@@ -146,6 +146,8 @@ get_line(void)
 /* return -1 if error */
 /* return code returned by server always occupies first 3 bytes of global
    variable server_line */
+/* show == 0: Print the reply if it is an error */
+/* show == 1: Always print the reply            */
 int
 grab_reply(
     int show)
@@ -154,7 +156,9 @@ grab_reply(
 	if (get_line() == -1) {
 	    return -1;
 	}
-	if(show) puts(server_line);
+	if (show || server_line[0] == '5') {
+	    puts(server_line);
+	}
     } while (server_line[3] == '-');
     if(show) fflush(stdout);
 

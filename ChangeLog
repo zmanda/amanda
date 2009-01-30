@@ -1,4 +1,9 @@
 2009-01-30  Jean-Louis Martineau <martineau@zmanda.com>
+	* recover-src/amrecover.c: Always print error.
+	* server-src/amindexd.c: read stderr of uncompress and sort process,
+	  put the result in a GPtrArray, send the complete array to amrecover.
+
+2009-01-30  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.c: Typo.
 
 2009-01-30  Jean-Louis Martineau <martineau@zmanda.com>
