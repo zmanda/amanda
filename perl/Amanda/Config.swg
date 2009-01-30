@@ -353,6 +353,7 @@ amglue_add_constant(CNF_DEBUG_SENDBACKUP, confparm_key);
 amglue_add_constant(CNF_RESERVED_UDP_PORT, confparm_key);
 amglue_add_constant(CNF_RESERVED_TCP_PORT, confparm_key);
 amglue_add_constant(CNF_UNRESERVED_TCP_PORT, confparm_key);
+amglue_add_constant(CNF_HOLDINGDISK, confparm_key);
 amglue_copy_to_tag(confparm_key, getconf);
 
 amglue_add_enum_tag_fns(tapetype_key);
@@ -571,7 +572,6 @@ amglue_copy_to_tag(send_amreport_on_t, getconf);
 		sv_setiv($result, val_t__intrange($1)[1]);
 		argvi++;
 		break;
-		break;
 	    }
 
 	    case CONFTYPE_EXINCLUDE: {
@@ -666,6 +666,19 @@ amglue_copy_to_tag(send_amreport_on_t, getconf);
 		argvi++;
 		break;
 
+	    case CONFTYPE_IDENTLIST: {
+		AV *ilist = newAV();
+
+		identlist_t il;
+		for (il=val_t__identlist($1); il != NULL; il = il->next) {
+		    av_push(ilist, newSVpv((char *)il->data, 0));
+		}
+
+		$result = sv_2mortal(newRV_noinc((SV *)ilist));
+		argvi++;
+		break;
+	    }
+
 	    /* No match yet -> not one of the "complex" types */
 	    default:
 		SWIG_exception(SWIG_TypeError, "Unknown val_t conftype");
@@ -751,14 +764,13 @@ amglue_export_tag(getconf,
 );
 
 holdingdisk_t *lookup_holdingdisk(char *identifier);
-holdingdisk_t *getconf_holdingdisks(void);
-holdingdisk_t *holdingdisk_next(holdingdisk_t *hdisk);
+GSList *getconf_holdingdisks(void);
 val_t *holdingdisk_getconf(holdingdisk_t *hdisk, holdingdisk_key key);
 char *holdingdisk_name(holdingdisk_t *hdisk);
 gboolean holdingdisk_seen(holdingdisk_t *hdisk, holdingdisk_key key);
 amglue_export_tag(getconf,
     lookup_holdingdisk holdingdisk_getconf holdingdisk_name
-    getconf_holdingdisks holdingdisk_next
+    getconf_holdingdisks
     holdingdisk_seen holdingdisk_seen
 );
 

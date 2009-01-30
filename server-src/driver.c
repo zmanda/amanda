@@ -175,6 +175,7 @@ main(
     char *newdir = NULL;
     struct fs_usage fsusage;
     holdingdisk_t *hdp;
+    identlist_t    il;
     unsigned long reserve = 100;
     char *conf_diskfile;
     cmd_t cmd;
@@ -325,7 +326,10 @@ main(
     total_disksize = (off_t)0;
     ha_last = NULL;
     num_holdalloc = 0;
-    for(hdp = getconf_holdingdisks(), dsk = 0; hdp != NULL; hdp = holdingdisk_next(hdp), dsk++) {
+    for (il = getconf_identlist(CNF_HOLDINGDISK), dsk = 0;
+	 il != NULL;
+	 il = il->next, dsk++) {
+	hdp = lookup_holdingdisk(il->data);
 	ha = alloc(SIZEOF(holdalloc_t));
 	num_holdalloc++;
 

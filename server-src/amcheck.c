@@ -728,7 +728,6 @@ start_server_check(
 {
     struct fs_usage fsusage;
     FILE *outf = NULL;
-    holdingdisk_t *hdp;
     pid_t pid G_GNUC_UNUSED;
     int confbad = 0, tapebad = 0, disklow = 0, logbad = 0;
     int userbad = 0, infobad = 0, indexbad = 0, pgmbad = 0;
@@ -975,7 +974,13 @@ start_server_check(
     /* check available disk space */
 
     if(do_localchk) {
-	for(hdp = getconf_holdingdisks(); hdp != NULL; hdp = holdingdisk_next(hdp)) {
+	identlist_t    il;
+	holdingdisk_t *hdp;
+
+	for (il = getconf_identlist(CNF_HOLDINGDISK);
+		il != NULL;
+		il = il->next) {
+	    hdp = lookup_holdingdisk(il->data);
     	    quoted = quote_string(holdingdisk_get_diskdir(hdp));
 	    if(get_fs_usage(holdingdisk_get_diskdir(hdp), NULL, &fsusage) == -1) {
 		g_fprintf(outf, _("ERROR: holding dir %s (%s), "

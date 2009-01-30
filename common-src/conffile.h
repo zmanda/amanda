@@ -180,6 +180,8 @@ typedef struct {
 
 typedef GHashTable* proplist_t;
 typedef GSList* pp_scriptlist_t;
+/* A GSlist where each element is a 'char*' */
+typedef GSList* identlist_t;
 
 /* Names for the type of value in a val_t.  Mostly for internal use, but useful
  * for wrapping val_t's, too. */
@@ -207,7 +209,8 @@ typedef enum {
     CONFTYPE_EXECUTE_ON,
     CONFTYPE_EXECUTE_WHERE,
     CONFTYPE_SEND_AMREPORT_ON,
-    CONFTYPE_PP_SCRIPTLIST
+    CONFTYPE_PP_SCRIPTLIST,
+    CONFTYPE_IDENTLIST,
 } conftype_t;
 
 /* A "seen" struct.  Rather than allocate strings all over the place, this
@@ -235,6 +238,7 @@ typedef struct val_s {
         proplist_t      proplist;
 	struct application_s  *application;
 	pp_scriptlist_t pp_scriptlist;
+	identlist_t     identlist;
     } v;
     seen_t seen;
     conftype_t type;
@@ -248,6 +252,7 @@ gint64                val_t_to_int64    (val_t *);
 float                 val_t_to_real     (val_t *);
 char                 *val_t_to_str      (val_t *); /* (also converts CONFTYPE_IDENT) */
 char                 *val_t_to_ident    (val_t *); /* (also converts CONFTYPE_STR) */
+identlist_t           val_t_to_identlist(val_t *);
 time_t                val_t_to_time     (val_t *);
 ssize_t               val_t_to_size     (val_t *);
 int                   val_t_to_boolean  (val_t *);
@@ -295,6 +300,7 @@ send_amreport_t       val_t_to_send_amreport(val_t *);
 #define val_t__real(val)          ((val)->v.r)
 #define val_t__str(val)           ((val)->v.s)
 #define val_t__ident(val)         ((val)->v.s)
+#define val_t__identlist(val)     ((val)->v.identlist)
 #define val_t__time(val)          ((val)->v.t)
 #define val_t__size(val)          ((val)->v.size)
 #define val_t__boolean(val)       ((val)->v.i)
@@ -416,6 +422,7 @@ typedef enum {
     CNF_RESERVED_UDP_PORT,
     CNF_RESERVED_TCP_PORT,
     CNF_UNRESERVED_TCP_PORT,
+    CNF_HOLDINGDISK,
     CNF_CNF /* sentinel */
 } confparm_key;
 
@@ -447,6 +454,7 @@ val_t *getconf(confparm_key key);
 #define getconf_real(key)         (val_t_to_real(getconf((key))))
 #define getconf_str(key)	  (val_t_to_str(getconf((key))))
 #define getconf_ident(key)        (val_t_to_ident(getconf((key))))
+#define getconf_identlist(key)    (val_t_to_identlist(getconf((key))))
 #define getconf_time(key)         (val_t_to_time(getconf((key))))
 #define getconf_size(key)         (val_t_to_size(getconf((key))))
 #define getconf_boolean(key)      (val_t_to_boolean(getconf((key))))
@@ -788,20 +796,11 @@ typedef struct holdingdisk_s holdingdisk_t;
  */
 holdingdisk_t *lookup_holdingdisk(char *identifier);
 
-/* Return the whole linked list of holdingdisks.  Use holdingdisk_next
- * to traverse the list.
+/* Return the whole linked list of holdingdisks.
  *
  * @returns: first holding disk
  */
-holdingdisk_t *getconf_holdingdisks(void);
-
-/* Return the next holdingdisk in the list.
- *
- * @param hdisk: holding disk
- * @returns: NULL if hdisk is the last disk, otherwise the next holding
- * disk
- */
-holdingdisk_t *holdingdisk_next(holdingdisk_t *hdisk);
+GSList *getconf_holdingdisks(void);
 
 /* Given a holdingdisk and a key, return a pointer to the corresponding val_t.
  *

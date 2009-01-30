@@ -297,7 +297,6 @@ struct interface_s {
 };
 
 struct holdingdisk_s {
-    struct holdingdisk_s *next;
     seen_t seen;
     char *name;
 
@@ -406,10 +405,10 @@ static void read_block(conf_var_t *read_var, val_t *valarray,
  *  - copy_foo implements inheritance as described in read_block()
  */
 static holdingdisk_t hdcur;
-static void get_holdingdisk(void);
+static void get_holdingdisk(int is_define);
 static void init_holdingdisk_defaults(void);
 static void save_holdingdisk(void);
-/* (holdingdisks don't support inheritance) */
+static void copy_holdingdisk(void);
 
 static dumptype_t dpcur;
 static void get_dumptype(void);
@@ -482,6 +481,7 @@ static void read_dpp_script(conf_var_t *, val_t *);
 static void read_property(conf_var_t *, val_t *);
 static void read_execute_on(conf_var_t *, val_t *);
 static void read_execute_where(conf_var_t *, val_t *);
+static void read_holdingdisk(conf_var_t *, val_t *);
 
 /* Functions to get various types of values.  These are called by
  * read_functions to take care of any variations in the way that these
@@ -555,7 +555,7 @@ static config_overwrites_t *applied_config_overwrites = NULL;
 static val_t conf_data[CNF_CNF];
 
 /* Linked list of holding disks */
-static holdingdisk_t *holdinglist = NULL;
+static GSList *holdinglist = NULL;
 static dumptype_t *dumplist = NULL;
 static tapetype_t *tapelist = NULL;
 static interface_t *interface_list = NULL;
@@ -607,6 +607,7 @@ static void conf_init_int64(val_t *val, gint64 l);
 static void conf_init_real(val_t *val, float r);
 static void conf_init_str(val_t *val, char *s);
 static void conf_init_ident(val_t *val, char *s);
+static void conf_init_identlist(val_t *val, char *s);
 static void conf_init_time(val_t *val, time_t t);
 static void conf_init_size(val_t *val, ssize_t sz);
 static void conf_init_bool(val_t *val, int i);
@@ -1076,6 +1077,7 @@ conf_var_t server_var [] = {
    { CONF_LOGDIR               , CONFTYPE_STR      , read_str         , CNF_LOGDIR               , NULL },
    { CONF_INDEXDIR             , CONFTYPE_STR      , read_str         , CNF_INDEXDIR             , NULL },
    { CONF_TAPETYPE             , CONFTYPE_IDENT    , read_ident       , CNF_TAPETYPE             , NULL },
+   { CONF_HOLDING              , CONFTYPE_IDENTLIST, read_holdingdisk , CNF_HOLDINGDISK          , NULL },
    { CONF_DUMPCYCLE            , CONFTYPE_INT      , read_int         , CNF_DUMPCYCLE            , validate_nonnegative },
    { CONF_RUNSPERCYCLE         , CONFTYPE_INT      , read_int         , CNF_RUNSPERCYCLE         , validate_runspercycle },
    { CONF_RUNTAPES             , CONFTYPE_INT      , read_int         , CNF_RUNTAPES             , validate_nonnegative },
@@ -1671,15 +1673,6 @@ read_confline(
 	read_conffile(tokenval.v.s, is_client, FALSE);
 	break;
 
-    case CONF_HOLDING:
-	/* HOLDINGDISK can be define without the 'DEFINE' keyword */
-	if (is_client) {
-	    handle_invalid_keyword(tokenval.v.s);
-	} else {
-	    get_holdingdisk();
-	}
-	break;
-
     case CONF_DEFINE:
 	if (is_client) {
 	    get_conftoken(CONF_ANY);
@@ -1695,7 +1688,7 @@ read_confline(
 	    else if(tok == CONF_PP_SCRIPT_TOOL) get_pp_script();
 	    else if(tok == CONF_DEVICE) get_device_config();
 	    else if(tok == CONF_CHANGER) get_changer_config();
-	    else if(tok == CONF_HOLDING) get_holdingdisk();
+	    else if(tok == CONF_HOLDING) get_holdingdisk(1);
 	    else conf_parserror(_("DUMPTYPE, INTERFACE, TAPETYPE, HOLDINGDISK, APPLICATION-TOOL, SCRIPT-TOOL, DEVICE, or CHANGER expected"));
 	}
 	break;
@@ -1864,8 +1857,17 @@ read_block(
 }
 
 static void
+read_holdingdisk(
+    conf_var_t *np  G_GNUC_UNUSED,
+    val_t      *val)
+{
+    assert (val == &conf_data[CNF_HOLDINGDISK]);
+    get_holdingdisk(0);
+}
+
+static void
 get_holdingdisk(
-    void)
+    int is_define)
 {
     int save_overwrites;
 
@@ -1879,10 +1881,56 @@ get_holdingdisk(
     hdcur.seen.filename = current_filename;
     hdcur.seen.linenum = current_line_num;
 
-    read_block(holding_var, hdcur.value,
-	       _("holding disk parameter expected"), 1, NULL);
-    get_conftoken(CONF_NL);
-    save_holdingdisk();
+    get_conftoken(CONF_ANY);
+    if (tok == CONF_LBRACE) {
+	holdingdisk_t *hd;
+	hd = lookup_holdingdisk(hdcur.name);
+	if (hd) {
+	    conf_parserror(_("holding disk '%s' already defined"),
+			       hdcur.name);
+	} else {
+	    unget_conftoken();
+	    read_block(holding_var, hdcur.value,
+		     _("holding disk parameter expected"), 1, copy_holdingdisk);
+	    get_conftoken(CONF_NL);
+            save_holdingdisk();
+	    if (!is_define) {
+		conf_data[CNF_HOLDINGDISK].v.identlist = g_slist_append(
+				conf_data[CNF_HOLDINGDISK].v.identlist,
+				stralloc(hdcur.name));
+	    }
+	}
+    } else { /* use the already defined holding disk */
+	unget_conftoken();
+	if (is_define) {
+	    conf_parserror(_("holdingdisk definition must specify holdingdisk parameters"));
+	}
+	do {
+	    identlist_t il;
+
+	    for (il = conf_data[CNF_HOLDINGDISK].v.identlist; il != NULL;
+							      il = il->next) {
+		if (strcmp((char *)il->data, hdcur.name) == 0) {
+		    break;
+		}
+	    }
+	    if (il) {
+		conf_parserror(_("holding disk '%s' already in use"),
+			       hdcur.name);
+	    } else {
+		conf_data[CNF_HOLDINGDISK].v.identlist = g_slist_append(
+				conf_data[CNF_HOLDINGDISK].v.identlist,
+				stralloc(hdcur.name));
+	    }
+	    amfree(hdcur.name);
+	    get_conftoken(CONF_ANY);
+	    if (tok == CONF_IDENT || tok == CONF_STRING) {
+		hdcur.name = stralloc(tokenval.v.s);
+	    } else if (tok != CONF_NL) {
+		conf_parserror(_("IDENT or NL expected"));
+	    }
+	} while (tok == CONF_IDENT || tok == CONF_STRING);
+    }
 
     allow_overwrites = save_overwrites;
 }
@@ -1906,8 +1954,30 @@ save_holdingdisk(
 
     hp = alloc(sizeof(holdingdisk_t));
     *hp = hdcur;
-    hp->next = holdinglist;
-    holdinglist = hp;
+    holdinglist = g_slist_append(holdinglist, hp);
+}
+
+static void
+copy_holdingdisk(
+    void)
+{
+    holdingdisk_t *hp;
+    int i;
+
+    hp = lookup_holdingdisk(tokenval.v.s);
+
+    if (hp == NULL) {
+        conf_parserror(_("holdingdisk parameter expected"));
+        return;
+    }
+
+    for(i=0; i < HOLDING_HOLDING; i++) {
+        if(hp->value[i].seen.linenum) {
+            free_val_t(&hdcur.value[i]);
+            copy_val_t(&hdcur.value[i], &hp->value[i]);
+        }
+    }
+
 }
 
 
@@ -4056,7 +4126,8 @@ config_init(
 void
 config_uninit(void)
 {
-    holdingdisk_t    *hp, *hpnext;
+    GSList           *hp;
+    holdingdisk_t    *hd;
     dumptype_t       *dp, *dpnext;
     tapetype_t       *tp, *tpnext;
     interface_t      *ip, *ipnext;
@@ -4068,14 +4139,14 @@ config_uninit(void)
 
     if (!config_initialized) return;
 
-    for(hp=holdinglist; hp != NULL; hp = hpnext) {
-	amfree(hp->name);
+    for(hp=holdinglist; hp != NULL; hp = hp->next) {
+	hd = hp->data;
+	amfree(hd->name);
 	for(i=0; i<HOLDING_HOLDING-1; i++) {
-	   free_val_t(&hp->value[i]);
+	   free_val_t(&hd->value[i]);
 	}
-	hpnext = hp->next;
-	amfree(hp);
     }
+    g_slist_free_full(holdinglist);
     holdinglist = NULL;
 
     for(dp=dumplist; dp != NULL; dp = dpnext) {
@@ -4201,6 +4272,7 @@ init_defaults(
     conf_init_str   (&conf_data[CNF_LOGDIR]               , "/usr/adm/amanda");
     conf_init_str   (&conf_data[CNF_INDEXDIR]             , "/usr/adm/amanda/index");
     conf_init_ident    (&conf_data[CNF_TAPETYPE]             , "EXABYTE");
+    conf_init_identlist(&conf_data[CNF_HOLDINGDISK]          , NULL);
     conf_init_int      (&conf_data[CNF_DUMPCYCLE]            , 10);
     conf_init_int      (&conf_data[CNF_RUNSPERCYCLE]         , 0);
     conf_init_int      (&conf_data[CNF_TAPECYCLE]            , 15);
@@ -4395,7 +4467,9 @@ static void
 update_derived_values(
     gboolean is_client)
 {
-    interface_t *ip;
+    interface_t   *ip;
+    identlist_t    il;
+    holdingdisk_t *hd;
 
     if (!is_client) {
 	/* Add a 'default' interface if one doesn't already exist */
@@ -4436,6 +4510,16 @@ update_derived_values(
 	    } else {
 		conf_parserror(_("tapetype %s is not defined"),
 			       getconf_str(CNF_TAPETYPE));
+	    }
+	}
+
+	/* Check the holdingdisk are defined */
+	for (il = getconf_identlist(CNF_HOLDINGDISK);
+		 il != NULL; il = il->next) {
+	    hd = lookup_holdingdisk(il->data);
+	    if (!hd) {
+		conf_parserror(_("holdingdisk %s is not defined"),
+			       (char *)il->data);
 	    }
 	}
     }
@@ -4545,6 +4629,19 @@ conf_init_ident(
 	val->v.s = stralloc(s);
     else
 	val->v.s = NULL;
+}
+
+static void
+conf_init_identlist(
+    val_t *val,
+    char  *s)
+{
+    val->seen.linenum = 0;
+    val->seen.filename = NULL;
+    val->type = CONFTYPE_IDENTLIST;
+    val->v.identlist = NULL;
+    if (s)
+	val->v.identlist = g_slist_append(val->v.identlist, stralloc(s));
 }
 
 static void
@@ -4772,7 +4869,8 @@ getconf_list(
     tapetype_t *tp;
     dumptype_t *dp;
     interface_t *ip;
-    holdingdisk_t *hp;
+    holdingdisk_t *hd;
+    GSList        *hp;
     application_t *ap;
     pp_script_t   *pp;
     device_config_t *dc;
@@ -4789,7 +4887,8 @@ getconf_list(
 	}
     } else if (strcasecmp(listname,"holdingdisk") == 0) {
 	for(hp = holdinglist; hp != NULL; hp=hp->next) {
-	    rv = g_slist_append(rv, hp->name);
+	    hd = hp->data;
+	    rv = g_slist_append(rv, hd->name);
 	}
     } else if (strcasecmp(listname,"interface") == 0) {
 	for(ip = interface_list; ip != NULL; ip=ip->next) {
@@ -4936,27 +5035,21 @@ holdingdisk_t *
 lookup_holdingdisk(
     char *str)
 {
-    holdingdisk_t *p;
+    GSList        *hp;
+    holdingdisk_t *hd;
 
-    for(p = holdinglist; p != NULL; p = p->next) {
-	if(strcasecmp(p->name, str) == 0) return p;
+    for (hp = holdinglist; hp != NULL; hp = hp->next) {
+	hd = hp->data;
+	if (strcasecmp(hd->name, str) == 0) return hd;
     }
     return NULL;
 }
 
-holdingdisk_t *
+GSList *
 getconf_holdingdisks(
     void)
 {
     return holdinglist;
-}
-
-holdingdisk_t *
-holdingdisk_next(
-    holdingdisk_t *hdisk)
-{
-    if (hdisk) return hdisk->next;
-    return NULL;
 }
 
 val_t *
@@ -5334,6 +5427,17 @@ val_t_to_ident(
     return val_t__str(val);
 }
 
+identlist_t
+val_t_to_identlist(
+    val_t *val)
+{
+    if (val->type != CONFTYPE_IDENTLIST) {
+	error(_("val_t_to_ident: val.type is not CONFTYPE_IDENTLIST"));
+	/*NOTREACHED*/
+    }
+    return val_t__identlist(val);
+}
+
 time_t
 val_t_to_time(
     val_t *val)
@@ -5505,6 +5609,8 @@ copy_val_t(
     val_t *valdst,
     val_t *valsrc)
 {
+    GSList *ia;
+
     if(valsrc->seen.linenum) {
 	valdst->type = valsrc->type;
 	valdst->seen = valsrc->seen;
@@ -5544,6 +5650,14 @@ copy_val_t(
 	case CONFTYPE_IDENT:
 	case CONFTYPE_STR:
 	    valdst->v.s = stralloc(valsrc->v.s);
+	    break;
+
+	case CONFTYPE_IDENTLIST:
+	    valdst->v.identlist = NULL;
+	    for (ia = valsrc->v.identlist; ia != NULL; ia = ia->next) {
+		valdst->v.identlist = g_slist_append(valdst->v.identlist,
+						     stralloc(ia->data));
+	    }
 	    break;
 
 	case CONFTYPE_TIME:
@@ -5651,6 +5765,10 @@ free_val_t(
 	    amfree(val->v.s);
 	    break;
 
+	case CONFTYPE_IDENTLIST:
+	    g_slist_free_full(val->v.identlist);
+	    break;
+
 	case CONFTYPE_TIME:
 	    break;
 
@@ -5739,7 +5857,8 @@ dump_configuration(void)
     tapetype_t *tp;
     dumptype_t *dp;
     interface_t *ip;
-    holdingdisk_t *hp;
+    holdingdisk_t *hd;
+    GSList        *hp;
     application_t *ap;
     pp_script_t *ps;
     device_config_t *dc;
@@ -5767,7 +5886,8 @@ dump_configuration(void)
     }
 
     for(hp = holdinglist; hp != NULL; hp = hp->next) {
-	g_printf("\nDEFINE HOLDINGDISK %s {\n", hp->name);
+	hd = hp->data;
+	g_printf("\nDEFINE HOLDINGDISK %s {\n", hd->name);
 	for(i=0; i < HOLDING_HOLDING; i++) {
 	    for(np=holding_var; np->token != CONF_UNKNOWN; np++) {
 		if(np->parm == i)
@@ -5783,7 +5903,7 @@ dump_configuration(void)
 	    if(kt->token == CONF_UNKNOWN)
 		error(_("holding bad token"));
 
-            val_t_print_token(stdout, NULL, "      %-9s ", kt, &hp->value[i]);
+            val_t_print_token(stdout, NULL, "      %-9s ", kt, &hd->value[i]);
 	}
 	g_printf("}\n");
     }
@@ -6019,6 +6139,24 @@ val_t_display_strs(
 	    buf[0] = stralloc(val->v.s);
         } else {
 	    buf[0] = stralloc("");
+	}
+	break;
+
+    case CONFTYPE_IDENTLIST:
+	{
+	    GSList *ia;
+	    int     first = 1;
+
+	    buf[0] = NULL;
+	    for (ia = val->v.identlist; ia != NULL; ia = ia->next) {
+		if (first) {
+		    buf[0] = stralloc(ia->data);
+		    first = 0;
+		} else {
+		    strappend(buf[0], " ");
+		    strappend(buf[0],  ia->data);
+		}
+	    }
 	}
 	break;
 

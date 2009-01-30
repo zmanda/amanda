@@ -392,14 +392,16 @@ holding_walk(
     holding_walk_fn per_file_fn,
     holding_walk_fn per_chunk_fn)
 {
+    identlist_t    il;
     holdingdisk_t *hdisk_conf;
     char *hdisk;
     int proceed = 1;
 
-    for (hdisk_conf = getconf_holdingdisks(); 
-		hdisk_conf != NULL;
-		hdisk_conf = holdingdisk_next(hdisk_conf)) {
+    for (il = getconf_identlist(CNF_HOLDINGDISK);
+		il != NULL;
+		il = il->next) {
 	int is_cruft = 0;
+	hdisk_conf = lookup_holdingdisk(il->data);
 
 	hdisk = holdingdisk_get_diskdir(hdisk_conf);
 	if (!is_dir(hdisk))

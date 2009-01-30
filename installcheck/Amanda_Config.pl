@@ -388,13 +388,15 @@ SKIP: { # holdingdisks
 
     # only holdingdisks have this linked-list structure
     # exposed
-    $hdisk = getconf_holdingdisks();
+    my $hdisklist = getconf($CNF_HOLDINGDISK);
+    my $first_disk = @$hdisklist[0];
+    $hdisk = lookup_holdingdisk($first_disk);
     like(holdingdisk_name($hdisk), qr/hd[12]/,
 	"one disk is first in list of holdingdisks");
-    $hdisk = holdingdisk_next($hdisk);
+    $hdisk = lookup_holdingdisk(@$hdisklist[1]);
     like(holdingdisk_name($hdisk), qr/hd[12]/,
 	"another is second in list of holdingdisks");
-    ok(!holdingdisk_next($hdisk),
+    ok($#$hdisklist == 1,
 	"no third holding disk");
 
     is_deeply([ sort(+getconf_list("holdingdisk")) ],
