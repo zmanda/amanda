@@ -667,7 +667,7 @@ parse_diskline(
     }
     disk->strategy	     = dumptype_get_strategy(dtype);
     disk->ignore	     = dumptype_get_ignore(dtype);
-    disk->estimate	     = dumptype_get_estimate(dtype);
+    disk->estimatelist	     = dumptype_get_estimatelist(dtype);
     disk->compress	     = dumptype_get_compress(dtype);
     disk->srvcompprog	     = dumptype_get_srvcompprog(dtype);
     disk->clntcompprog	     = dumptype_get_clntcompprog(dtype);

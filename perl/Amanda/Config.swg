@@ -390,7 +390,7 @@ amglue_add_constant(DUMPTYPE_BUMPDAYS, dumptype_key);
 amglue_add_constant(DUMPTYPE_BUMPMULT, dumptype_key);
 amglue_add_constant(DUMPTYPE_STARTTIME, dumptype_key);
 amglue_add_constant(DUMPTYPE_STRATEGY, dumptype_key);
-amglue_add_constant(DUMPTYPE_ESTIMATE, dumptype_key);
+amglue_add_constant(DUMPTYPE_ESTIMATELIST, dumptype_key);
 amglue_add_constant(DUMPTYPE_COMPRESS, dumptype_key);
 amglue_add_constant(DUMPTYPE_ENCRYPT, dumptype_key);
 amglue_add_constant(DUMPTYPE_SRV_DECRYPT_OPT, dumptype_key);
@@ -536,7 +536,7 @@ amglue_copy_to_tag(send_amreport_on_t, getconf);
  *  - CONFTYPE_REAL -> NV
  *  - CONFTYPE_STR, CONFTYPE_IDENT -> PV
  *  - CONFTYPE_TIME -> IV (epoch timestamp)
- *  - CONFTYPE_COMPRESS, CONFTYPE_ENCRYPT, CONFTYPE_ESTIMATE, CONFTYPE_STRATEGY,
+ *  - CONFTYPE_COMPRESS, CONFTYPE_ENCRYPT, CONFTYPE_ESTIMATELIST, CONFTYPE_STRATEGY,
  *    CONFTYPE_TAPERALGO, CONFTYPE_PRIORITY, CONFTYPE_HOLDING, CONFTYPE_EXECUTE_ON,
  *    CONFTYPE_EXECUTE_WHERE, SEND_AMREPORT_ON -> IV (enums)
  *  - CONFTYPE_RATE -> list of two NVs
@@ -635,7 +635,6 @@ amglue_copy_to_tag(send_amreport_on_t, getconf);
 	    case CONFTYPE_BOOLEAN:	    /* all same as INT.. */
 	    case CONFTYPE_COMPRESS:
 	    case CONFTYPE_ENCRYPT:
-	    case CONFTYPE_ESTIMATE:
 	    case CONFTYPE_STRATEGY:
 	    case CONFTYPE_TAPERALGO:
 	    case CONFTYPE_PRIORITY:
@@ -647,6 +646,18 @@ amglue_copy_to_tag(send_amreport_on_t, getconf);
 		$result = sv_2mortal(amglue_newSVi64(val_t__int($1)));
 		argvi++;
 		break;
+
+           case CONFTYPE_ESTIMATELIST: {
+		#AV *elist = (AV *)sv_2mortal((SV *)newAV());
+		AV *elist = newAV();
+		estimatelist_t el;
+		for (el=val_t__estimatelist($1); el != NULL; el = el->next) {
+		    av_push(elist, amglue_newSVi64(GPOINTER_TO_INT(el->data)));
+		}
+		$result = sv_2mortal(newRV_noinc((SV *)elist));
+		argvi++;
+		break;
+	    }
 
 	    case CONFTYPE_TIME:
 		$result = sv_2mortal(amglue_newSVi64(val_t__time($1)));

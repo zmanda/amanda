@@ -98,7 +98,7 @@ typedef struct disk_s {
     time_t	start_t;		/* start this dump after this time (time_t) */
     int		strategy;		/* what dump strategy to use */
     int		ignore;			/* ignore */
-    int		estimate;		/* what estimate strategy to use */
+    estimatelist_t estimatelist;	/* what estimate strategy to use */
     int		compress;		/* type of compression to use */
     int		encrypt;		/* type of encryption to use */
     char	*srv_decrypt_opt;	/* server-side decryption option parameter to use */

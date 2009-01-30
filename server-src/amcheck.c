@@ -1499,6 +1499,7 @@ start_host(
     int disk_count;
     const security_driver_t *secdrv;
     char number[NUM_STR_SIZE];
+    estimate_t estimate;
 
     if(hostp->up != HOST_READY) {
 	return;
@@ -1669,16 +1670,17 @@ start_host(
 		    g_fprintf(outf, _("You must upgrade amanda on the client to use GNUTAR "
 				    "or you can use another program.\n"));	
 		}
-		if(dp->estimate == ES_CALCSIZE &&
+		estimate = (estimate_t)GPOINTER_TO_INT(dp->estimatelist->data);
+		if(estimate == ES_CALCSIZE &&
 		   !am_has_feature(hostp->features, fe_calcsize_estimate)) {
 		    g_fprintf(outf, _("ERROR: %s:%s does not support CALCSIZE for "
 				    "estimate, using CLIENT.\n"),
 			    hostp->hostname, qname);
 		    g_fprintf(outf, _("You must upgrade amanda on the client to use "
 				    "CALCSIZE for estimate or don't use CALCSIZE for estimate.\n"));
-		    dp->estimate = ES_CLIENT;
+		    estimate = ES_CLIENT;
 		}
-		if(dp->estimate == ES_CALCSIZE &&
+		if(estimate == ES_CALCSIZE &&
 		   am_has_feature(hostp->features, fe_selfcheck_calcsize))
 		    calcsize = "CALCSIZE ";
 		else

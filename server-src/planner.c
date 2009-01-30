@@ -1333,6 +1333,7 @@ static void getsize(
     char *	calcsize;
     char *	qname, *b64disk = NULL;
     char *	qdevice, *b64device = NULL;
+    estimate_t  estimate;
 
     assert(hostp->disks != NULL);
 
@@ -1397,10 +1398,11 @@ static void getsize(
 	    qname = quote_string(dp->name);
 	    b64disk = amxml_format_tag("disk", dp->name);
 	    qdevice = quote_string(dp->device);
+	    estimate = (estimate_t)GPOINTER_TO_INT(dp->estimatelist->data);
 	    if (dp->device)
 		b64device = amxml_format_tag("diskdevice", dp->device);
-	    if (dp->estimate == ES_CLIENT ||
-	        dp->estimate == ES_CALCSIZE ||
+	    if (estimate == ES_CLIENT ||
+	        estimate == ES_CALCSIZE ||
 		(am_has_feature(hostp->features, fe_req_xml) &&
 		 am_has_feature(hostp->features, fe_xml_estimate))) {
 		nb_client++;
@@ -1450,24 +1452,24 @@ static void getsize(
 		    }
 
 		    if (am_has_feature(hostp->features, fe_xml_estimate)) {
-			if (dp->estimate == ES_CLIENT) {
+			if (estimate == ES_CLIENT) {
 			    vstrextend(&l, "  <estimate>CLIENT</estimate>\n",
 				       NULL);
-			} else if (dp->estimate == ES_SERVER) {
+			} else if (estimate == ES_SERVER) {
 			    vstrextend(&l, "  <estimate>SERVER</estimate>\n",
 				       NULL);
-			} else if (dp->estimate == ES_CALCSIZE) {
+			} else if (estimate == ES_CALCSIZE) {
 			    vstrextend(&l, "  <estimate>CALCSIZE</estimate>\n",
 				       NULL);
 			}
 		    }
-		    if (dp->estimate == ES_CALCSIZE) {
+		    if (estimate == ES_CALCSIZE) {
 			if (!am_has_feature(hostp->features,
 					    fe_calcsize_estimate)) {
 			    log_add(L_WARNING,
 				    _("%s:%s does not support CALCSIZE for estimate, using CLIENT.\n"),
 				    hostp->hostname, qname);
-			    dp->estimate = ES_CLIENT;
+			    estimate = ES_CLIENT;
 			} else {
 			    vstrextend(&l, "  <calcsize>YES</calcsize>\n",
 				       NULL);
@@ -1541,15 +1543,15 @@ static void getsize(
 			    }
 			}
 
-			if (dp->estimate == ES_CALCSIZE &&
+			if (estimate == ES_CALCSIZE &&
 		   	    !am_has_feature(hostp->features,
 					    fe_calcsize_estimate)) {
 			    log_add(L_WARNING,
 				    _("%s:%s does not support CALCSIZE for estimate, using CLIENT.\n"),
 				    hostp->hostname, qname);
-			    dp->estimate = ES_CLIENT;
+			    estimate = ES_CLIENT;
 			}
-			if(dp->estimate == ES_CLIENT)
+			if(estimate == ES_CLIENT)
 			    calcsize = "";
 			else
 			    calcsize = "CALCSIZE ";
@@ -1589,7 +1591,7 @@ static void getsize(
 		    enqueue_disk(&failq, dp);
 		}
 	    }
-	    if (dp->estimate == ES_SERVER) {
+	    if (estimate == ES_SERVER) {
 		info_t info;
 		nb_server++;
 		get_info(dp->host->hostname, dp->name, &info);
@@ -1783,6 +1785,7 @@ static void handle_result(
     char *qname;
     char *disk;
     long long size_;
+    estimate_t estimate;
 
     hostp = (am_host_t *)datap;
     hostp->up = HOST_READY;
@@ -1913,7 +1916,8 @@ static void handle_result(
 
 	amfree(disk);
 
-	if (dp->estimate == ES_SERVER) {
+	estimate = (estimate_t)GPOINTER_TO_INT(dp->estimatelist->data);
+	if (estimate == ES_SERVER) {
 	    if (size == (gint64)-2) {
 		for(i = 0; i < MAX_LEVELS; i++) {
 		    if (est(dp)->level[i] == level) {

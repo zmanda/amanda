@@ -1,8 +1,17 @@
 2009-01-30  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.c, common-src/conffile.h,
+	  server-src/diskfile.h, server-src/amcheck.c,
+	  server-src/planner.c, server-src/amadmin.c,
+	  server-src/diskfile.c, perl/Amanda/Config.swg,
+	  installcheck/Amanda_Config.pl: Use a list of estimate.
+
+2009-01-30  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c, common-src/conffile.h,
 	  server-src/amcheck.c, server-src/holding.c,
 	  server-src/driver.c, perl/Amanda/Config.swg,
-	  installcheck/Amanda_Config.pl: Use a list of estimate.
+	  installcheck/Amanda_Config.pl: 'define' keyword is use only to define
+          an holding disk, you must use 'holdisgdisk' without 'define' if you
+          want to use it.
 
 2009-01-29  Dustin J. Mitchell <dustin@zmanda.com>
 	* config/config.guess config/config.sub: new updates from FSF

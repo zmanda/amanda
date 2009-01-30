@@ -1990,6 +1990,7 @@ disklist_one(
     netif_t *ip;
     sle_t *excl;
     pp_scriptlist_t pp_scriptlist;
+    estimatelist_t  estimates;
 
     hp = dp->host;
     ip = hp->netif;
@@ -2072,17 +2073,24 @@ disklist_one(
     }
     g_printf("        ignore %s\n", (dp->ignore? "YES" : "NO"));
     g_printf("        estimate ");
-    switch(dp->estimate) {
-    case ES_CLIENT:
-	g_printf("CLIENT\n");
-	break;
-    case ES_SERVER:
-	g_printf("SERVER\n");
-	break;
-    case ES_CALCSIZE:
-	g_printf("CALCSIZE\n");
-	break;
+    estimates = dp->estimatelist;
+    while (estimates) {
+	switch((estimate_t)GPOINTER_TO_INT(estimates->data)) {
+	case ES_CLIENT:
+	    g_printf("CLIENT");
+	    break;
+	case ES_SERVER:
+	    g_printf("SERVER");
+	    break;
+	case ES_CALCSIZE:
+	    g_printf("CALCSIZE");
+	    break;
+	}
+	estimates = estimates->next;
+	if (estimates)
+	    g_printf(", ");
     }
+    g_printf("\n");
 
     g_printf("        compress ");
     switch(dp->compress) {

@@ -468,7 +468,7 @@ static void read_bool(conf_var_t *, val_t *);
 static void read_compress(conf_var_t *, val_t *);
 static void read_encrypt(conf_var_t *, val_t *);
 static void read_holding(conf_var_t *, val_t *);
-static void read_estimate(conf_var_t *, val_t *);
+static void read_estimatelist(conf_var_t *, val_t *);
 static void read_strategy(conf_var_t *, val_t *);
 static void read_taperalgo(conf_var_t *, val_t *);
 static void read_send_amreport_on(conf_var_t *, val_t *);
@@ -614,7 +614,7 @@ static void conf_init_bool(val_t *val, int i);
 static void conf_init_compress(val_t *val, comp_t i);
 static void conf_init_encrypt(val_t *val, encrypt_t i);
 static void conf_init_holding(val_t *val, dump_holdingdisk_t i);
-static void conf_init_estimate(val_t *val, estimate_t i);
+static void conf_init_estimatelist(val_t *val, estimate_t i);
 static void conf_init_execute_on(val_t *, int);
 static void conf_init_execute_where(val_t *, int);
 static void conf_init_send_amreport(val_t *val, send_amreport_t i);
@@ -1178,7 +1178,7 @@ conf_var_t dumptype_var [] = {
    { CONF_STRATEGY          , CONFTYPE_INT      , read_strategy , DUMPTYPE_STRATEGY          , NULL },
    { CONF_TAPE_SPLITSIZE    , CONFTYPE_INT64    , read_int64    , DUMPTYPE_TAPE_SPLITSIZE    , validate_nonnegative },
    { CONF_SPLIT_DISKBUFFER  , CONFTYPE_STR      , read_str      , DUMPTYPE_SPLIT_DISKBUFFER  , NULL },
-   { CONF_ESTIMATE          , CONFTYPE_INT      , read_estimate , DUMPTYPE_ESTIMATE          , NULL },
+   { CONF_ESTIMATE          , CONFTYPE_ESTIMATELIST, read_estimatelist , DUMPTYPE_ESTIMATELIST  , NULL },
    { CONF_SRV_ENCRYPT       , CONFTYPE_STR      , read_str      , DUMPTYPE_SRV_ENCRYPT       , NULL },
    { CONF_CLNT_ENCRYPT      , CONFTYPE_STR      , read_str      , DUMPTYPE_CLNT_ENCRYPT      , NULL },
    { CONF_AMANDAD_PATH      , CONFTYPE_STR      , read_str      , DUMPTYPE_AMANDAD_PATH      , NULL },
@@ -2079,7 +2079,7 @@ init_dumptype_defaults(void)
     conf_init_real     (&dpcur.value[DUMPTYPE_BUMPMULT]          , conf_data[CNF_BUMPMULT].v.r);
     conf_init_time     (&dpcur.value[DUMPTYPE_STARTTIME]         , (time_t)0);
     conf_init_strategy (&dpcur.value[DUMPTYPE_STRATEGY]          , DS_STANDARD);
-    conf_init_estimate (&dpcur.value[DUMPTYPE_ESTIMATE]          , ES_CLIENT);
+    conf_init_estimatelist(&dpcur.value[DUMPTYPE_ESTIMATELIST]   , ES_CLIENT);
     conf_init_compress (&dpcur.value[DUMPTYPE_COMPRESS]          , COMP_FAST);
     conf_init_encrypt  (&dpcur.value[DUMPTYPE_ENCRYPT]           , ENCRYPT_NONE);
     conf_init_str   (&dpcur.value[DUMPTYPE_SRV_DECRYPT_OPT]   , "-d");
@@ -3049,30 +3049,34 @@ read_holding(
 }
 
 static void
-read_estimate(
+read_estimatelist(
     conf_var_t *np G_GNUC_UNUSED,
     val_t *val)
 {
-    int estime;
+    estimatelist_t estimates = NULL;
 
     ckseen(&val->seen);
 
     get_conftoken(CONF_ANY);
-    switch(tok) {
-    case CONF_CLIENT:
-	estime = ES_CLIENT;
-	break;
-    case CONF_SERVER:
-	estime = ES_SERVER;
-	break;
-    case CONF_CALCSIZE:
-	estime = ES_CALCSIZE;
-	break;
-    default:
-	conf_parserror(_("CLIENT, SERVER or CALCSIZE expected"));
-	estime = ES_CLIENT;
-    }
-    val_t__estimate(val) = estime;
+    do {
+	switch(tok) {
+	case CONF_CLIENT:
+	    estimates = g_slist_append(estimates, GINT_TO_POINTER(ES_CLIENT));
+	    break;
+	case CONF_SERVER:
+	    estimates = g_slist_append(estimates, GINT_TO_POINTER(ES_SERVER));
+	    break;
+	case CONF_CALCSIZE:
+	    estimates = g_slist_append(estimates, GINT_TO_POINTER(ES_CALCSIZE));
+	    break;
+	default:
+	    conf_parserror(_("CLIENT, SERVER or CALCSIZE expected"));
+	}
+	get_conftoken(CONF_ANY);
+	if (tok == CONF_NL)
+	    break;
+    } while (1);
+    val_t__estimatelist(val) = estimates;
 }
 
 static void
@@ -4711,14 +4715,16 @@ conf_init_holding(
 }
 
 static void
-conf_init_estimate(
+conf_init_estimatelist(
     val_t *val,
     estimate_t    i)
 {
+    GSList *estimates = NULL;
     val->seen.linenum = 0;
     val->seen.filename = NULL;
-    val->type = CONFTYPE_ESTIMATE;
-    val_t__estimate(val) = i;
+    val->type = CONFTYPE_ESTIMATELIST;
+    estimates = g_slist_append(estimates, GINT_TO_POINTER(i));
+    val_t__estimatelist(val) = estimates;
 }
 
 static void
@@ -5504,15 +5510,15 @@ val_t_to_holding(
     return val_t__holding(val);
 }
 
-estimate_t
-val_t_to_estimate(
+estimatelist_t
+val_t_to_estimatelist(
     val_t *val)
 {
-    if (val->type != CONFTYPE_ESTIMATE) {
-	error(_("val_t_to_estimate: val.type is not CONFTYPE_ESTIMATE"));
+    if (val->type != CONFTYPE_ESTIMATELIST) {
+	error(_("val_t_to_estimatelist: val.type is not CONFTYPE_ESTIMATELIST"));
 	/*NOTREACHED*/
     }
-    return val_t__estimate(val);
+    return val_t__estimatelist(val);
 }
 
 strategy_t
@@ -5620,7 +5626,6 @@ copy_val_t(
 	case CONFTYPE_COMPRESS:
 	case CONFTYPE_ENCRYPT:
 	case CONFTYPE_HOLDING:
-	case CONFTYPE_ESTIMATE:
 	case CONFTYPE_EXECUTE_ON:
 	case CONFTYPE_EXECUTE_WHERE:
 	case CONFTYPE_SEND_AMREPORT_ON:
@@ -5663,6 +5668,17 @@ copy_val_t(
 	case CONFTYPE_TIME:
 	    valdst->v.t = valsrc->v.t;
 	    break;
+
+	case CONFTYPE_ESTIMATELIST: {
+	    estimatelist_t estimates = valsrc->v.estimatelist;
+	    estimatelist_t dst_estimates = NULL;
+	    while (estimates != NULL) {
+		dst_estimates = g_slist_append(dst_estimates, estimates->data);
+		estimates = estimates->next;
+	    }
+	    valdst->v.estimatelist = dst_estimates;
+	    break;
+	}
 
 	case CONFTYPE_EXINCLUDE:
 	    valdst->v.exinclude.optional = valsrc->v.exinclude.optional;
@@ -5746,7 +5762,6 @@ free_val_t(
 	case CONFTYPE_COMPRESS:
 	case CONFTYPE_ENCRYPT:
 	case CONFTYPE_HOLDING:
-	case CONFTYPE_ESTIMATE:
 	case CONFTYPE_EXECUTE_WHERE:
 	case CONFTYPE_EXECUTE_ON:
 	case CONFTYPE_SEND_AMREPORT_ON:
@@ -5770,6 +5785,10 @@ free_val_t(
 	    break;
 
 	case CONFTYPE_TIME:
+	    break;
+
+	case CONFTYPE_ESTIMATELIST:
+	    g_slist_free(val->v.estimatelist);
 	    break;
 
 	case CONFTYPE_EXINCLUDE:
@@ -6254,21 +6273,29 @@ val_t_display_strs(
 	}
 	break;
 
-    case CONFTYPE_ESTIMATE:
-	switch(val_t__estimate(val)) {
-	case ES_CLIENT:
-	    buf[0] = vstrallocf("CLIENT");
-	    break;
+    case CONFTYPE_ESTIMATELIST: {
+	estimatelist_t es = val_t__estimatelist(val);
+	buf[0] = stralloc("");
+	while (es) {
+	    switch((estimate_t)GPOINTER_TO_INT(es->data)) {
+	    case ES_CLIENT:
+		strappend(buf[0], "CLIENT");
+		break;
 
-	case ES_SERVER:
-	    buf[0] = vstrallocf("SERVER");
-	    break;
+	    case ES_SERVER:
+		strappend(buf[0], "SERVER");
+		break;
 
-	case ES_CALCSIZE:
-	    buf[0] = vstrallocf("CALCSIZE");
-	    break;
+	    case ES_CALCSIZE:
+		strappend(buf[0], "CALCSIZE");
+		break;
+	    }
+	    es = es->next;
+	    if (es)
+		strappend(buf[0], " ");
 	}
 	break;
+    }
 
     case CONFTYPE_EXECUTE_WHERE:
 	switch(val->v.i) {

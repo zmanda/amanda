@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 113;
+use Test::More tests => 114;
 use strict;
 
 use lib "@amperldir@";
@@ -158,6 +158,7 @@ $testconf->add_dumptype('mydump-type', [    # note dash
     'include file optional' => '"rhyme"',
     'property' => '"prop" "erty"',
     'property' => '"drop" "qwerty" "asdfg"',
+    'estimate' => 'server calcsize client'
 ]);
 $testconf->add_dumptype('second_dumptype', [ # note underscore
     '' => 'mydump-type',
@@ -320,6 +321,8 @@ SKIP: { # dumptypes
 	  'list' => [ 'foo', 'bar', 'true', 'star' ],
 	  'optional' => 0 },
 	"dumptype exclude list");
+    is_deeply(dumptype_getconf($dtyp, $DUMPTYPE_ESTIMATELIST),
+	      [ $ES_SERVER, $ES_CALCSIZE, $ES_CLIENT ]);
     is_deeply(dumptype_getconf($dtyp, $DUMPTYPE_PROPERTY),
 	      { "prop" => { priority => 0, append => 0, values => ["erty"]},
 		"drop" => { priority => 0, append => 0,

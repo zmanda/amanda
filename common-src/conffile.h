@@ -111,8 +111,9 @@ typedef enum {
     ES_CLIENT,          /* client estimate */
     ES_SERVER,          /* server estimate */
     ES_CALCSIZE,        /* calcsize estimate */
-    ES_ES /* sentinel */
 } estimate_t;
+/* A GSlist where each element is a element_t */
+typedef GSList *estimatelist_t;
 
 /* Dump strategies */
 typedef enum {
@@ -197,7 +198,7 @@ typedef enum {
     CONFTYPE_COMPRESS,
     CONFTYPE_ENCRYPT,
     CONFTYPE_HOLDING,
-    CONFTYPE_ESTIMATE,
+    CONFTYPE_ESTIMATELIST,
     CONFTYPE_STRATEGY,
     CONFTYPE_TAPERALGO,
     CONFTYPE_PRIORITY,
@@ -238,6 +239,7 @@ typedef struct val_s {
         proplist_t      proplist;
 	struct application_s  *application;
 	pp_scriptlist_t pp_scriptlist;
+	estimatelist_t  estimatelist;
 	identlist_t     identlist;
     } v;
     seen_t seen;
@@ -259,7 +261,7 @@ int                   val_t_to_boolean  (val_t *);
 comp_t                val_t_to_compress (val_t *);
 encrypt_t             val_t_to_encrypt  (val_t *);
 dump_holdingdisk_t    val_t_to_holding  (val_t *);
-estimate_t            val_t_to_estimate (val_t *);
+estimatelist_t        val_t_to_estimatelist (val_t *);
 strategy_t            val_t_to_strategy (val_t *);
 taperalgo_t           val_t_to_taperalgo(val_t *);
 int                   val_t_to_priority (val_t *);
@@ -307,7 +309,7 @@ send_amreport_t       val_t_to_send_amreport(val_t *);
 #define val_t__compress(val)      ((val)->v.i)
 #define val_t__encrypt(val)       ((val)->v.i)
 #define val_t__holding(val)       ((val)->v.i)
-#define val_t__estimate(val)      ((val)->v.i)
+#define val_t__estimatelist(val)  ((val)->v.estimatelist)
 #define val_t__strategy(val)      ((val)->v.i)
 #define val_t__taperalgo(val)     ((val)->v.i)
 #define val_t__send_amreport(val) ((val)->v.i)
@@ -461,7 +463,7 @@ val_t *getconf(confparm_key key);
 #define getconf_compress(key)     (val_t_to_compress(getconf((key))))
 #define getconf_encrypt(key)      (val_t_to_encrypt(getconf((key))))
 #define getconf_holding(key)      (val_t_to_holding(getconf((key))))
-#define getconf_estimate(key)     (val_t_to_estimate(getconf((key))))
+#define getconf_estimatelist(key) (val_t_to_estimatelist(getconf((key))))
 #define getconf_strategy(key)     (val_t_to_strategy(getconf((key))))
 #define getconf_taperalgo(key)    (val_t_to_taperalgo(getconf((key))))
 #define getconf_priority(key)     (val_t_to_priority(getconf((key))))
@@ -614,7 +616,7 @@ typedef enum {
     DUMPTYPE_BUMPMULT,
     DUMPTYPE_STARTTIME,
     DUMPTYPE_STRATEGY,
-    DUMPTYPE_ESTIMATE,
+    DUMPTYPE_ESTIMATELIST,
     DUMPTYPE_COMPRESS,
     DUMPTYPE_ENCRYPT,
     DUMPTYPE_SRV_DECRYPT_OPT,
@@ -700,7 +702,7 @@ char *dumptype_name(dumptype_t *dtyp);
 #define dumptype_get_bumpmult(dtyp)            (val_t_to_real(dumptype_getconf((dtyp), DUMPTYPE_BUMPMULT)))
 #define dumptype_get_starttime(dtyp)           (val_t_to_time(dumptype_getconf((dtyp), DUMPTYPE_STARTTIME)))
 #define dumptype_get_strategy(dtyp)            (val_t_to_strategy(dumptype_getconf((dtyp), DUMPTYPE_STRATEGY)))
-#define dumptype_get_estimate(dtyp)            (val_t_to_estimate(dumptype_getconf((dtyp), DUMPTYPE_ESTIMATE)))
+#define dumptype_get_estimatelist(dtyp)        (val_t_to_estimatelist(dumptype_getconf((dtyp), DUMPTYPE_ESTIMATELIST)))
 #define dumptype_get_compress(dtyp)            (val_t_to_compress(dumptype_getconf((dtyp), DUMPTYPE_COMPRESS)))
 #define dumptype_get_encrypt(dtyp)             (val_t_to_encrypt(dumptype_getconf((dtyp), DUMPTYPE_ENCRYPT)))
 #define dumptype_get_srv_decrypt_opt(dtyp)     (val_t_to_str(dumptype_getconf((dtyp), DUMPTYPE_SRV_DECRYPT_OPT)))
