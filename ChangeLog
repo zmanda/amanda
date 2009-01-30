@@ -1,4 +1,7 @@
 2009-01-30  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c: Typo.
+
+2009-01-30  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.c, common-src/conffile.h,
 	  server-src/diskfile.h, server-src/amcheck.c,
 	  server-src/planner.c, server-src/amadmin.c,

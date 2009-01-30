@@ -1859,7 +1859,7 @@ read_block(
 static void
 read_holdingdisk(
     conf_var_t *np  G_GNUC_UNUSED,
-    val_t      *val)
+    val_t      *val G_GNUC_UNUSED)
 {
     assert (val == &conf_data[CNF_HOLDINGDISK]);
     get_holdingdisk(0);
