@@ -1039,7 +1039,6 @@ foreach $host (sort @hosts) {
 						$tpartition++;
 						$dsize += $size{$hostpart};
 						$tsize += $size{$hostpart};
-						$desize += $esize{$hostpart};
 						if(defined $esize{$hostpart} && $esize{$hostpart} > 1) {
 							$desize += $esize{$hostpart};
 							$tesize += $esize{$hostpart};
