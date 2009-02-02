@@ -107,11 +107,11 @@ AC_DEFUN([AMANDA_PROG_SAMBA_CLIENT],
       AC_PATH_PROG(SAMBA_CLIENT,smbclient,,$LOCSYSPATH)
       smbversion=0
       if test ! -z "$SAMBA_CLIENT"; then
-        case "`\"$SAMBA_CLIENT\" '\\\\not.a.host.name\\notashare' -U nosuchuser -N -Tx /dev/null 2>&1`" in
+        case "`\"$SAMBA_CLIENT\" '\\\\nosuchhost.amanda.org\\notashare' -U nosuchuser -N -Tx /dev/null 2>&1`" in
         *"Unknown host"*)
 		      smbversion=1
 		      ;;
-        *"Connection to not.a.host.name failed"*)
+        *"Connection to nosuchhost.amanda.org failed"*)
 		      smbversion=2
 		      ;;
         *)

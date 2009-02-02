@@ -1,3 +1,12 @@
+2009-02-02  Dustin J. Mitchell <dustin@zmanda.com>
+	* config/config.guess config/config.sub: new updates from FSF
+	* autogen: fix quoting error
+	* config/amanda/dumpers.m4:  use a hostname we're more confident
+	  doesn't exist
+
+2009-01-30  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amstatus.pl: Remove a bogus line.
+
 2009-01-22  Jean-Louis Martineau <martineau@zmanda.com>
 	* configure.in: AM_INIT_AUTOMAKE(amanda, "2.6.1")
 	* packaging/deb/rules, packaging/deb/buildpkg, packaging/deb/changelog,
