@@ -1,4 +1,7 @@
 2009-02-02  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c: Correctly copy pp_scriptlist.
+
+2009-02-02  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amstatus.pl: Remove a bogus line.
 
 2009-01-30  Dustin J. Mitchell <dustin@zmanda.com>

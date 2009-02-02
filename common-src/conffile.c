@@ -5708,7 +5708,7 @@ copy_val_t(
 	    valdst->v.pp_scriptlist = NULL;
 	    if (valsrc->v.pp_scriptlist) {
 		g_slist_foreach(valsrc->v.pp_scriptlist, &copy_pp_scriptlist,
-				valdst->v.pp_scriptlist);
+				&valdst->v.pp_scriptlist);
 	    }
 	    break;
 
@@ -5747,9 +5747,9 @@ copy_pp_scriptlist(
     gpointer user_data_p)
 {
     pp_script_t *pp_script   = data_p;
-    pp_scriptlist_t pp_scriptlist = user_data_p;
+    pp_scriptlist_t *pp_scriptlist = user_data_p;
 
-    pp_scriptlist = g_slist_append(pp_scriptlist, pp_script);
+    *pp_scriptlist = g_slist_append(*pp_scriptlist, pp_script);
 }
 
 static void
