@@ -1,3 +1,6 @@
+2009-02-02  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c: Correctly copy pp_scriptlist.
+
 2009-02-02  Dustin J. Mitchell <dustin@zmanda.com>
 	* config/config.guess config/config.sub: new updates from FSF
 	* autogen: fix quoting error
