@@ -1,4 +1,11 @@
 2009-02-04  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/amfeatures.c,
+	  common-src/amfeatures.h: And fe_xml_level_server amfeature.
+	* common-src/amxml.c: parse <server> tag in level tag.
+	* server-src/planner.c: Send <server> tag,
+	                Move estimate server calculation to its own function.
+
+2009-02-04  Jean-Louis Martineau <martineau@zmanda.com>
 	* client-src/client_util.c, client-src/sendbackup-gnutar.c,
 	  client-src/sendbackup.c, client-src/sendbackup-dump.c,
 	  client-src/sendsize.c,

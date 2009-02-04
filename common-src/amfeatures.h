@@ -180,6 +180,7 @@ typedef enum {
     fe_xml_property_priority,
     fe_sendsize_rep_warning,
     fe_xml_estimatelist,
+    fe_xml_level_server,
 
     /*
      * All new features must be inserted immediately *before* this entry.

@@ -260,6 +260,12 @@ amstart_element(
 	if (strcmp(element_name, "level") == 0) {
 	    data_user->alevel = g_new0(level_t, 1);
 	}
+    } else if (strcmp(element_name, "server") == 0) {
+	if (strcmp(last_element_name, "level") != 0) {
+	    g_set_error(gerror, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
+			"XML: Invalid %s element", element_name);
+	    return;
+	}
     } else if(strcmp(element_name, "custom-compress-program") == 0) {
 	if (strcmp(last_element_name, "compress") != 0) {
 	    g_set_error(gerror, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
@@ -454,6 +460,7 @@ amend_element(
 	data_user->script = NULL;
     } else if (strcmp(element_name, "level") == 0) {
 	dle->levellist = g_slist_append(dle->levellist, data_user->alevel);
+	data_user->alevel = NULL;
     }
     g_free(data_user->element_names->data);
     data_user->element_names = g_slist_delete_link(data_user->element_names,
@@ -629,6 +636,18 @@ amtext(
 	dle->auth = tt;
     } else if(strcmp(last_element_name, "level") == 0) {
 	data_user->alevel->level = atoi(tt);
+	amfree(tt);
+    } else if (strcmp(last_element_name, "server") == 0) {
+	if (strcasecmp(tt,"no") == 0) {
+	    data_user->alevel->server = 0;
+	} else if (strcasecmp(tt,"yes") == 0) {
+	    data_user->alevel->server = 1;
+	} else {
+	    g_set_error(gerror, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
+			"XML: Invalid %s (%s)", last_element_name, tt);
+	    amfree(tt);
+	    return;
+	}
 	amfree(tt);
     } else if(strcmp(last_element_name, "index") == 0) {
 	if (strcasecmp(tt,"no") == 0) {
