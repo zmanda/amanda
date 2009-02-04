@@ -439,19 +439,19 @@ function print_t(){		# printing out the labels for the graph
 	printf "set yrange[0:%d]\n",maxy >"title";
 	if( maxtime < tim && extend !=0) {
 		printf "set xrange[0:%d]\n", tim+30 >>"title";
-		second_col = tim*0.5;
-		key_col = tim;
+		second_col = tim*0.45;
+		key_col = tim + 10;
 		third_col = tim +13;
 	}
 	else {
 		printf "set xrange[0:%d]\n", maxtime >>"title";
-		second_col = (maxtime-10) * 0.5;
-		key_col = (maxtime-10) ;
+		second_col = (maxtime-10) * 0.45;
+		key_col = maxtime;
 		third_col = maxtime +3;
 	}
 	label_shift = (7 + int(no_disks/100));
 	lab = label_start = maxy+(6*label_shift) ;  # showing 6 labels
-	printf "set key %d, %d\n", key_col, lab >>"title";
+	printf "set key %d, %d\n", key_col, lab+4 >>"title";
 	printf "set label %d \"Amanda Dump %s\" at 10,%d\n", ++label,fil, 
 		lab >"title";
 	lab -= label_shift;
@@ -514,6 +514,8 @@ function print_t(){		# printing out the labels for the graph
 			if(paper==1) printf "set term postscript landscape color \"Times-Roman\" 10\n" >>"title";
 			else printf "set term postscript portrait color \"Times-Roman\" 10\n" >>"title";
 		}
+	} else {
+		printf "set term x11\n" >> "title";
 	}
 	printf "set ylabel """";" >>"title"; 	# make sure there is no ylabel
 	fmt= "set label %d \"%s\" at "third_col", %d\n";
