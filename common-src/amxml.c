@@ -58,9 +58,9 @@ typedef struct amgxml_s {
     property_t *property_data;
     proplist_t  property;
     script_t   *script;
+    level_t    *alevel;
     char       *encoding;
     char       *raw;
-
 } amgxml_t;
 
 
@@ -88,7 +88,7 @@ init_dle(
     dle->compress = COMP_NONE;
     dle->encrypt = ENCRYPT_NONE;
     dle->kencrypt = 0;
-    dle->level = NULL;
+    dle->levellist = NULL;
     dle->dumpdate = NULL;
     dle->compprog = NULL;
     dle->srv_encrypt = NULL;
@@ -200,6 +200,11 @@ amstart_element(
 	data_user->has_optional = 0;
 	data_user->property_name = NULL;
 	data_user->property_data = NULL;
+	data_user->property = NULL;
+	data_user->script = NULL;
+	data_user->alevel = NULL;
+	data_user->encoding = NULL;
+	data_user->raw = NULL;
     } else if(strcmp(element_name, "disk"          ) == 0 ||
 	      strcmp(element_name, "diskdevice"    ) == 0 ||
 	      strcmp(element_name, "calcsize"      ) == 0 ||
@@ -252,6 +257,9 @@ amstart_element(
 	if (strcmp(element_name, "include"       ) == 0) data_user->has_include        = 1;
 	if (strcmp(element_name, "exclude") == 0 || strcmp(element_name, "include") == 0)
 	   data_user->has_optional = 0;
+	if (strcmp(element_name, "level") == 0) {
+	    data_user->alevel = g_new0(level_t, 1);
+	}
     } else if(strcmp(element_name, "custom-compress-program") == 0) {
 	if (strcmp(last_element_name, "compress") != 0) {
 	    g_set_error(gerror, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
@@ -444,6 +452,8 @@ amend_element(
 	data_user->property = NULL;
 	dle->scriptlist = g_slist_append(dle->scriptlist, data_user->script);
 	data_user->script = NULL;
+    } else if (strcmp(element_name, "level") == 0) {
+	dle->levellist = g_slist_append(dle->levellist, data_user->alevel);
     }
     g_free(data_user->element_names->data);
     data_user->element_names = g_slist_delete_link(data_user->element_names,
@@ -618,7 +628,7 @@ amtext(
 	}
 	dle->auth = tt;
     } else if(strcmp(last_element_name, "level") == 0) {
-	dle->level = g_slist_append(dle->level, GINT_TO_POINTER(atoi(tt)));
+	data_user->alevel->level = atoi(tt);
 	amfree(tt);
     } else if(strcmp(last_element_name, "index") == 0) {
 	if (strcasecmp(tt,"no") == 0) {
@@ -831,7 +841,7 @@ amxml_parse_node_CHAR(
     char *txt,
     char **errmsg)
 {
-    amgxml_t             amgxml = {NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL};
+    amgxml_t             amgxml = {NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL};
     GMarkupParser        parser = {&amstart_element, &amend_element, &amtext,
 				   NULL, NULL};
     GMarkupParseFlags    flags = 0;
@@ -860,7 +870,7 @@ amxml_parse_node_FILE(
     FILE *file,
     char **errmsg)
 {
-    amgxml_t             amgxml = {NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL};
+    amgxml_t             amgxml = {NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL};
     GMarkupParser        parser = {&amstart_element, &amend_element, &amtext,
 				   NULL, NULL};
     GMarkupParseFlags    flags = 0;

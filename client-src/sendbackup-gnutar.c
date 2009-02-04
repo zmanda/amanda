@@ -157,14 +157,16 @@ start_backup(
     ssize_t nb;
     char buf[32768];
     char *amandates_file = NULL;
+    level_t *alevel = (level_t *)dle->levellist->data;
+    int      level  = alevel->level;
 
     error_pn = stralloc2(get_pname(), "-smbclient");
 
     qdisk = quote_string(dle->disk);
-    dbprintf(_("start: %s:%s lev %d\n"), host, qdisk, GPOINTER_TO_INT(dle->level->data));
+    dbprintf(_("start: %s:%s lev %d\n"), host, qdisk, level);
 
     g_fprintf(stderr, _("%s: start [%s:%s level %d]\n"),
-	    get_pname(), host, qdisk, GPOINTER_TO_INT(dle->level->data));
+	    get_pname(), host, qdisk, level);
 
      /*  apply client-side encryption here */
      if ( dle->encrypt == ENCRYPT_CUST ) {
@@ -235,7 +237,7 @@ start_backup(
 			     NULL);
 	amfree(sdisk);
 
-	g_snprintf(number, SIZEOF(number), "%d", GPOINTER_TO_INT(dle->level->data));
+	g_snprintf(number, SIZEOF(number), "%d", level);
 	incrname = vstralloc(basename, "_", number, ".new", NULL);
 	unlink(incrname);
 
@@ -244,7 +246,7 @@ start_backup(
 	 * backward until one is found.  If none are found (which will also
 	 * be true for a level 0), arrange to read from /dev/null.
 	 */
-	baselevel = GPOINTER_TO_INT(dle->level->data);
+	baselevel = level;
 	infd = -1;
 	while (infd == -1) {
 	    if (--baselevel >= 0) {
@@ -303,11 +305,11 @@ start_backup(
 	if(baselevel >= 0) {
 	    fquoted = quote_string(inputname);
 	    dbprintf(_("doing level %d dump as listed-incremental from '%s' to '%s'\n"),
-		     GPOINTER_TO_INT(dle->level->data), fquoted, tquoted);
+		     level, fquoted, tquoted);
 	    amfree(fquoted);
 	} else {
 	    dbprintf(_("doing level %d dump as listed-incremental to '%s'\n"),
-		     GPOINTER_TO_INT(dle->level->data), tquoted);
+		     level, tquoted);
 	}
 	amfree(tquoted);
 	amfree(inputname);
@@ -325,7 +327,7 @@ start_backup(
 	amdates = amandates_lookup(dle->disk);
 
 	prev_dumptime = EPOCH;
-	for(l = 0; l < GPOINTER_TO_INT(dle->level->data); l++) {
+	for(l = 0; l < level; l++) {
 	    if(amdates->dates[l] > prev_dumptime)
 		prev_dumptime = amdates->dates[l];
 	}
@@ -340,13 +342,13 @@ start_backup(
 		    gmtm->tm_hour, gmtm->tm_min, gmtm->tm_sec);
 
 	dbprintf(_("gnutar: doing level %d dump from amandates-derived date: %s\n"),
-		  GPOINTER_TO_INT(dle->level->data), dumptimestr);
+		  level, dumptimestr);
     }
 
     dirname = amname_to_dirname(dle->device);
 
     cur_dumptime = time(0);
-    cur_level = GPOINTER_TO_INT(dle->level->data);
+    cur_level = level;
     cur_disk = stralloc(dle->disk);
 #ifdef GNUTAR
 #  define PROGRAM_GNUTAR GNUTAR
@@ -436,7 +438,7 @@ start_backup(
 	strappend(taropt, "q");
 #endif
 	strappend(taropt, "c");
-	if (GPOINTER_TO_INT(dle->level->data) != 0) {
+	if (level != 0) {
 	    strappend(taropt, "g");
 	} else if (dle->record) {
 	    strappend(taropt, "a");

@@ -913,8 +913,8 @@ run_client_script(
 
     cmd = vstralloc(APPLICATION_DIR, "/", script->plugin, NULL);
     argv_size = 14 + property_argv_size(script->property);
-    if (dle->level)
-	argv_size += 2 * g_slist_length(dle->level);
+    if (dle->levellist)
+	argv_size += 2 * g_slist_length(dle->levellist);
     argvchild = g_new0(char *, argv_size);
     i = 0;
     argvchild[i++] = script->plugin;
@@ -975,13 +975,13 @@ run_client_script(
 	argvchild[i++] = "--device";
 	argvchild[i++] = stralloc(dle->device);
     }
-    if (dle->level) {
-	GSList *level;
+    if (dle->levellist) {
+	levellist_t levellist;
 	char number[NUM_STR_SIZE];
-	for (level=dle->level; level; level=level->next) {
+	for (levellist=dle->levellist; levellist; levellist=levellist->next) {
+	    level_t *alevel = (level_t *)levellist->data;
 	    argvchild[i++] = "--level";
-	    g_snprintf(number, SIZEOF(number), "%d",
-		       GPOINTER_TO_INT(level->data));
+	    g_snprintf(number, SIZEOF(number), "%d", alevel->level);
 	    argvchild[i++] = stralloc(number);
 	}
     }

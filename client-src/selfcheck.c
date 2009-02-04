@@ -94,6 +94,7 @@ main(
     dle_t *dle;
     int level;
     GSList *errlist;
+    level_t *alevel;
 
     /* initialize */
 
@@ -249,7 +250,9 @@ main(
 	if (ch == '\0' || sscanf(s - 1, "%d", &level) != 1) {
 	    goto err;				/* bad level */
 	}
-	dle->level = g_slist_append(dle->level, GINT_TO_POINTER(level));
+	alevel = g_new0(level_t, 1);
+	alevel->level = level;
+	dle->levellist = g_slist_append(dle->levellist, alevel);
 	skip_integer(s, ch);
 
 	skip_whitespace(s, ch);

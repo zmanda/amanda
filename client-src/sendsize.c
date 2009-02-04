@@ -134,6 +134,7 @@ main(
     char *qamdevice = NULL;
     dle_t *dle;
     GSList *errlist;
+    level_t *alevel;
 
     (void)argc;	/* Quiet unused parameter warning */
     (void)argv;	/* Quiet unused parameter warning */
@@ -313,7 +314,9 @@ main(
 	    goto err;
 	}
 	skip_integer(s, ch);
-	dle->level = g_slist_append(dle->level, GINT_TO_POINTER(level));
+	alevel = g_new0(level_t, 1);
+	alevel->level = level;
+	dle->levellist = g_slist_append(dle->levellist, alevel);
 
 	skip_whitespace(s, ch);			/* find the dump date */
 	if(ch == '\0') {
@@ -566,12 +569,12 @@ dle_add_diskest(
     amandates_t *amdp;
     int dumplev, estlev;
     time_t dumpdate;
-    GSList *level;
+    levellist_t levellist;
     char *amandates_file;
     gboolean need_amandates = FALSE;
 
-    level = dle->level;
-    if (level == NULL) {
+    levellist = dle->levellist;
+    if (levellist == NULL) {
 	g_printf(_("ERROR Missing level in request\n"));
 	return;
     }
@@ -606,21 +609,22 @@ dle_add_diskest(
 	}
     }
 
-    while (level != NULL) {
-	if (GPOINTER_TO_INT(level->data) < 0)
-	    level->data = GINT_TO_POINTER(0);
-	if (GPOINTER_TO_INT(level->data) >= DUMP_LEVELS)
-	    level->data = GINT_TO_POINTER(DUMP_LEVELS - 1);
-	level = g_slist_next(level);
+    while (levellist != NULL) {
+	level_t *alevel = (level_t *)levellist->data;
+	if (alevel->level < 0)
+	    alevel->level = 0;
+	if (alevel->level >= DUMP_LEVELS)
+	    alevel->level = DUMP_LEVELS - 1;
+	levellist = g_slist_next(levellist);
     }
 
     for(curp = est_list; curp != NULL; curp = curp->next) {
 	if(strcmp(curp->dle->disk, dle->disk) == 0) {
 	    /* already have disk info, just note the level request */
-	    level = dle->level;
-	    while (level != NULL) {
-		curp->est[GPOINTER_TO_INT(level->data)].needestimate = 1;
-		level = g_slist_next(level);
+	    levellist = dle->levellist;
+	    while (levellist != NULL) {
+		curp->est[((level_t *)levellist->data)->level].needestimate = 1;
+		levellist = g_slist_next(levellist);
 	    }
 
 	    return;
@@ -641,10 +645,11 @@ dle_add_diskest(
 	newp->dirname = stralloc("");
 	newp->qdirname = stralloc("");
     }
-    level = dle->level;
-    while (level != NULL) {
-	newp->est[GPOINTER_TO_INT(level->data)].needestimate = 1;
-	level = g_slist_next(level);
+    levellist = dle->levellist;
+    while (levellist != NULL) {
+	level_t *alevel = (level_t *)levellist->data;
+	newp->est[alevel->level].needestimate = 1;
+	levellist = g_slist_next(levellist);
     }
     newp->dle = dle;
 

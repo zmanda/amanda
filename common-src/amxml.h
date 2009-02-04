@@ -45,6 +45,12 @@ typedef struct script_s {
 
 typedef GSList *scriptlist_t;
 
+typedef struct level_s {
+    int level;
+    int server;			/* if server can do the estimate */
+} level_t;
+typedef GSList *levellist_t;	/* A list where each element is a (level_t *) */
+
 typedef struct a_dle_s {
     char   *disk;
     char   *device;
@@ -55,7 +61,7 @@ typedef struct a_dle_s {
     int     compress;
     int     encrypt;
     int     kencrypt;
-    GSList *level;
+    levellist_t levellist;
     int     nb_level;
     char   *dumpdate;
     char   *compprog;

@@ -125,6 +125,7 @@ main(
     int ch;
     GSList *errlist;
     FILE   *mesgstream;
+    level_t *alevel;
 
     /* initialize */
     /*
@@ -297,7 +298,9 @@ main(
 	    goto err;				/* bad level */
 	}
 	skip_integer(s, ch);
-	dle->level = g_slist_append(dle->level, GINT_TO_POINTER(level));
+	alevel = g_new0(level_t, 1);
+	alevel->level = level;
+	dle->levellist = g_slist_append(dle->levellist, alevel);
 
 	skip_whitespace(s, ch);			/* find the dump date */
 	if(ch == '\0') {
@@ -361,21 +364,22 @@ main(
     }
     gdle = dle;
 
-    if (dle->program == NULL ||
-	dle->disk    == NULL ||
-	dle->device  == NULL ||
-	dle->level   == NULL ||
-	dumpdate     == NULL) {
+    if (dle->program   == NULL ||
+	dle->disk      == NULL ||
+	dle->device    == NULL ||
+	dle->levellist == NULL ||
+	dumpdate       == NULL) {
 	err_extra = _("no valid sendbackup request");
 	goto err;
     }
 
-    if (g_slist_length(dle->level) != 1) {
+    if (g_slist_length(dle->levellist) != 1) {
 	err_extra = _("Too many level");
 	goto err;
     }
 
-    level = GPOINTER_TO_INT(dle->level->data);
+    alevel = (level_t *)dle->levellist->data;
+    level = alevel->level;
     dbprintf(_("  Parsed request as: program `%s'\n"), dle->program);
     dbprintf(_("                     disk `%s'\n"), qdisk);
     dbprintf(_("                     device `%s'\n"), qamdevice);

@@ -144,14 +144,16 @@ start_backup(
     char *encryptopt = skip_argument;
     char *qdisk;
     char *config;
+    level_t *alevel = (level_t *)dle->levellist->data;
+    int      level  = alevel->level;
 
-    g_snprintf(level_str, SIZEOF(level_str), "%d", GPOINTER_TO_INT(dle->level->data));
+    g_snprintf(level_str, SIZEOF(level_str), "%d", level);
 
     qdisk = quote_string(dle->disk);
-    dbprintf(_("start: %s:%s lev %d\n"), host, qdisk, GPOINTER_TO_INT(dle->level->data));
+    dbprintf(_("start: %s:%s lev %d\n"), host, qdisk, level);
 
     g_fprintf(stderr, _("%s: start [%s:%s level %d]\n"),
-	    get_pname(), host, qdisk, GPOINTER_TO_INT(dle->level->data));
+	    get_pname(), host, qdisk, level);
     amfree(qdisk);
 
     /*  apply client-side encryption here */

@@ -2157,7 +2157,7 @@ extract_files(void)
     int otc;
     tapelist_t *tlist = NULL, *a_tlist;
     g_option_t g_options;
-    GSList *all_level = NULL;
+    levellist_t all_level = NULL;
     int last_level;
 
     if (!is_extract_list_nonempty())
@@ -2264,11 +2264,11 @@ extract_files(void)
 	all_level = g_slist_append(all_level, GINT_TO_POINTER(elist->level));
     }
     if (dump_dle) {
-	g_slist_free(dump_dle->level);
-	dump_dle->level = all_level;
+	g_slist_free_full(dump_dle->levellist);
+	dump_dle->levellist = all_level;
 	run_client_scripts(EXECUTE_ON_PRE_RECOVER, &g_options, dump_dle,
 			   stderr);
-	dump_dle->level = NULL;
+	dump_dle->levellist = NULL;
     }
     last_level = -1;
     while ((elist = first_tape_list()) != NULL)
@@ -2301,14 +2301,19 @@ extract_files(void)
 	dump_datestamp = newstralloc(dump_datestamp, elist->date);
 
 	if (last_level != -1 && dump_dle) {
-	    dump_dle->level = g_slist_append(dump_dle->level,
-					     GINT_TO_POINTER(last_level));
-	    dump_dle->level = g_slist_append(dump_dle->level,
-					     GINT_TO_POINTER(elist->level));
+	    level_t *level;
+
+	    level = g_new0(level_t, 1);
+	    level->level = last_level;
+	    dump_dle->levellist = g_slist_append(dump_dle->levellist, level);
+
+	    level = g_new0(level_t, 1);
+	    level->level = elist->level;
+	    dump_dle->levellist = g_slist_append(dump_dle->levellist, level);
 	    run_client_scripts(EXECUTE_ON_INTER_LEVEL_RECOVER, &g_options,
 			       dump_dle, stderr);
-	    g_slist_free(dump_dle->level);
-	    dump_dle->level = NULL;
+	    g_slist_free_full(dump_dle->levellist);
+	    dump_dle->levellist = NULL;
 	}
 
 	/* connect to the tape handler daemon on the tape drive server */
@@ -2319,8 +2324,11 @@ extract_files(void)
 	    return;
 	}
 	if (dump_dle) {
-	    dump_dle->level = g_slist_append(dump_dle->level,
-					     GINT_TO_POINTER(elist->level));
+	    level_t *level;
+
+	    level = g_new0(level_t, 1);
+	    level->level = elist->level;
+	    dump_dle->levellist = g_slist_append(dump_dle->levellist, level);
 	    run_client_scripts(EXECUTE_ON_PRE_LEVEL_RECOVER, &g_options,
 			       dump_dle, stderr);
 	}
@@ -2339,17 +2347,17 @@ extract_files(void)
 	if (dump_dle) {
 	    run_client_scripts(EXECUTE_ON_POST_LEVEL_RECOVER, &g_options,
 			       dump_dle, stderr);
-	    g_slist_free(dump_dle->level);
-	    dump_dle->level = NULL;
+	    g_slist_free_full(dump_dle->levellist);
+	    dump_dle->levellist = NULL;
 	}
     }
     if (dump_dle) {
-	dump_dle->level = all_level;
+	dump_dle->levellist = all_level;
 	run_client_scripts(EXECUTE_ON_POST_RECOVER, &g_options, dump_dle,
 			   stderr);
-	g_slist_free(dump_dle->level);
+	g_slist_free_full(dump_dle->levellist);
 	all_level = NULL;
-	dump_dle->level = NULL;
+	dump_dle->levellist = NULL;
     }
 }
 

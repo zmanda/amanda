@@ -1,4 +1,13 @@
 2009-02-04  Jean-Louis Martineau <martineau@zmanda.com>
+	* client-src/client_util.c, client-src/sendbackup-gnutar.c,
+	  client-src/sendbackup.c, client-src/sendbackup-dump.c,
+	  client-src/sendsize.c,
+	  client-src/selfcheck.c, recover-src/extract_list.c,
+	  common-src/amxml.c,
+	  common-src/amxml.h: Change Change dle->level for dle->levellist,
+	                      each element is a level_t struct.
+
+2009-02-04  Jean-Louis Martineau <martineau@zmanda.com>
 	* amplot/amplot.awk: Set term to x11.
 
 2009-02-04  Jean-Louis Martineau <martineau@zmanda.com>
