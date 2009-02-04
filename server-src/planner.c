@@ -1337,7 +1337,8 @@ static void getsize(
     char *	calcsize;
     char *	qname, *b64disk = NULL;
     char *	qdevice, *b64device = NULL;
-    estimate_t  estimate;
+    estimate_t     estimate;
+    estimatelist_t el;
 
     assert(hostp->disks != NULL);
 
@@ -1406,6 +1407,43 @@ static void getsize(
 	    estimate = (estimate_t)GPOINTER_TO_INT(dp->estimatelist->data);
 	    if (dp->device)
 		b64device = amxml_format_tag("diskdevice", dp->device);
+
+	    estimate = ES_CLIENT;
+	    for (el = dp->estimatelist; el != NULL; el = el->next) {
+		estimate = (estimate_t)GPOINTER_TO_INT(el->data);
+		if (estimate == ES_SERVER)
+		    break;
+	    }
+	    if (estimate == ES_SERVER) {
+		info_t info;
+		nb_server++;
+		get_info(dp->host->hostname, dp->name, &info);
+		for(i = 0; i < MAX_LEVELS; i++) {
+		    int lev = est(dp)->level[i];
+
+		    if(lev == -1) break;
+		    est(dp)->est_size[i] = server_estimate(dp, &info, lev);
+		}
+		g_fprintf(stderr,_("%s time %s: got result for host %s disk %s:"),
+			get_pname(), walltime_str(curclock()),
+			dp->host->hostname, qname);
+		g_fprintf(stderr,_(" %d -> %lldK, %d -> %lldK, %d -> %lldK\n"),
+			est(dp)->level[0], (long long)est(dp)->est_size[0],
+			est(dp)->level[1], (long long)est(dp)->est_size[1],
+			est(dp)->level[2], (long long)est(dp)->est_size[2]);
+		if (!am_has_feature(hostp->features, fe_xml_estimate)) {
+		    est(dp)->state = DISK_DONE;
+		    remove_disk(&startq, dp);
+		    enqueue_disk(&estq, dp);
+		}
+	    }
+
+	    estimate = ES_SERVER;
+	    for (el = dp->estimatelist; el != NULL; el = el->next) {
+		estimate = (estimate_t)GPOINTER_TO_INT(el->data);
+		if (estimate == ES_CLIENT || estimate == ES_CALCSIZE)
+		    break;
+	    }
 	    if (estimate == ES_CLIENT ||
 	        estimate == ES_CALCSIZE ||
 		(am_has_feature(hostp->features, fe_req_xml) &&
@@ -1584,29 +1622,6 @@ static void getsize(
 		    enqueue_disk(&failq, dp);
 		}
 	    }
-	    if (estimate == ES_SERVER) {
-		info_t info;
-		nb_server++;
-		get_info(dp->host->hostname, dp->name, &info);
-		for(i = 0; i < MAX_LEVELS; i++) {
-		    int lev = est(dp)->level[i];
-
-		    if(lev == -1) break;
-		    est(dp)->est_size[i] = server_estimate(dp, &info, lev);
-		}
-		g_fprintf(stderr,_("%s time %s: got result for host %s disk %s:"),
-			get_pname(), walltime_str(curclock()),
-			dp->host->hostname, qname);
-		g_fprintf(stderr,_(" %d -> %lldK, %d -> %lldK, %d -> %lldK\n"),
-			est(dp)->level[0], (long long)est(dp)->est_size[0],
-			est(dp)->level[1], (long long)est(dp)->est_size[1],
-			est(dp)->level[2], (long long)est(dp)->est_size[2]);
-		if (!am_has_feature(hostp->features, fe_xml_estimate)) {
-		    est(dp)->state = DISK_DONE;
-		    remove_disk(&startq, dp);
-		    enqueue_disk(&estq, dp);
-		}
-	    }
 	    amfree(qname);
 	    amfree(qdevice);
 	}
@@ -1695,7 +1710,6 @@ static void handle_result(
     char *qname;
     char *disk;
     long long size_;
-    estimate_t estimate;
 
     hostp = (am_host_t *)datap;
     hostp->up = HOST_READY;
@@ -1795,7 +1809,6 @@ static void handle_result(
 	skip_whitespace(t, tch);
 
 	dp = lookup_hostdisk(hostp, disk);
-	dp = lookup_hostdisk(hostp, disk);
 	if(dp == NULL) {
 	    log_add(L_ERROR, _("%s: invalid reply from sendsize: `%s'\n"),
 		    hostp->hostname, line);
@@ -1826,33 +1839,22 @@ static void handle_result(
 
 	amfree(disk);
 
-	estimate = (estimate_t)GPOINTER_TO_INT(dp->estimatelist->data);
-	if (estimate == ES_SERVER) {
-	    if (size == (gint64)-2) {
-		for(i = 0; i < MAX_LEVELS; i++) {
-		    if (est(dp)->level[i] == level) {
-			est(dp)->est_size[i] = -1; /* remove estimate */
-			break;
-		    }
-		}
-		if(i == MAX_LEVELS) {
-		    goto bad_msg;		/* this est wasn't requested */
-		}
-
-	    }
-	    est(dp)->got_estimate++;
-	} else if (size > (gint64)-1) {
-	    for(i = 0; i < MAX_LEVELS; i++) {
-		if(est(dp)->level[i] == level) {
+	for (i = 0; i < MAX_LEVELS; i++) {
+	    if (est(dp)->level[i] == level) {
+		if (size == (gint64)-2) {
+		    est(dp)->est_size[i] = -1; /* remove estimate */
+		} else if (size > (gint64)-1) {
+		    /* take the size returned by the client */
 		    est(dp)->est_size[i] = size;
-		    break;
 		}
+		break;
 	    }
-	    if(i == MAX_LEVELS) {
-		goto bad_msg;			/* this est wasn't requested */
-	    }
-	    est(dp)->got_estimate++;
 	}
+	if (i == MAX_LEVELS) {
+	    goto bad_msg;		/* this est wasn't requested */
+	}
+	est(dp)->got_estimate++;
+
 	s = t;
 	ch = tch;
 	skip_quoted_line(s, ch);
@@ -1940,7 +1942,7 @@ static void handle_result(
 	    }
 	    else {
 		enqueue_disk(&failq, dp);
-		if(est(dp)->got_estimate) {
+		if(est(dp)->got_estimate && !est(dp)->errstr) {
 		    est(dp)->errstr = vstrallocf("disk %s, all estimate failed",
 						 qname);
 		}
@@ -3075,17 +3077,14 @@ internal_server_estimate(
 	if (nb_est > 0) {
 	    size = est_size;
 	    *stats = 1;
-	}
-	else if (info->inf[level].size > (gint64)1000) { /* stats */
+	} else if (info->inf[level].size > (gint64)1000) { /* stats */
 	    size = info->inf[level].size;
 	    *stats = 1;
-	}
-	else {
+	} else {
 	    size = (gint64)1000000;
 	    *stats = 0;
 	}
-    }
-    else if (level == est(dp)->last_level) {
+    } else if (level == est(dp)->last_level) {
 	/* means of all X day at the same level */
 	#define NB_DAY 30
 	int nb_day = 0;

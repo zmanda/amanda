@@ -79,6 +79,7 @@ typedef struct level_estimates_s {
     time_t dumpsince;
     int estsize;
     int needestimate;
+    int server;		/* server can do estimate */
 } level_estimate_t;
 
 typedef struct disk_estimates_s {
@@ -572,16 +573,20 @@ dle_add_diskest(
     levellist_t levellist;
     char *amandates_file;
     gboolean need_amandates = FALSE;
+    estimatelist_t el;
 
-    levellist = dle->levellist;
-    if (levellist == NULL) {
+    if (dle->levellist == NULL) {
 	g_printf(_("ERROR Missing level in request\n"));
 	return;
     }
 
     /* should we use amandates for this? */
-    if (GPOINTER_TO_INT(dle->estimatelist->data) == ES_CALCSIZE)
-	need_amandates = TRUE;
+    for (el = dle->estimatelist; el != NULL; el=el->next) {
+	estimate_t estimate = (estimate_t)GPOINTER_TO_INT(el->data);
+	if (estimate == ES_CALCSIZE)
+	    need_amandates = TRUE;
+    }
+
     if (strcmp(dle->program, "GNUTAR") == 0) {
 	/* GNUTAR only needs amandates if gnutar_list_dir is NULL */
 	char *gnutar_list_dir = getconf_str(CNF_GNUTAR_LIST_DIR);
@@ -609,6 +614,7 @@ dle_add_diskest(
 	}
     }
 
+    levellist = dle->levellist;
     while (levellist != NULL) {
 	level_t *alevel = (level_t *)levellist->data;
 	if (alevel->level < 0)
@@ -623,7 +629,10 @@ dle_add_diskest(
 	    /* already have disk info, just note the level request */
 	    levellist = dle->levellist;
 	    while (levellist != NULL) {
-		curp->est[((level_t *)levellist->data)->level].needestimate = 1;
+		level_t *alevel = (level_t *)levellist->data;
+		int      level  = alevel->level;
+		curp->est[level].needestimate = 1;
+		curp->est[level].server = alevel->server;
 		levellist = g_slist_next(levellist);
 	    }
 
@@ -649,6 +658,7 @@ dle_add_diskest(
     while (levellist != NULL) {
 	level_t *alevel = (level_t *)levellist->data;
 	newp->est[alevel->level].needestimate = 1;
+	newp->est[alevel->level].server = alevel->server;
 	levellist = g_slist_next(levellist);
     }
     newp->dle = dle;
@@ -697,36 +707,73 @@ calc_estimates(
     disk_estimates_t *	est)
 {
     dbprintf(_("calculating for amname %s, dirname %s, spindle %d %s\n"),
-	      est->qamname, est->qdirname, est->dle->spindle, est->dle->program);
+	     est->qamname, est->qdirname, est->dle->spindle, est->dle->program);
 
     if(est->dle->program_is_application_api ==  1)
 	application_api_calc_estimate(est);
-    else
-    if (GPOINTER_TO_INT(est->dle->estimatelist->data) == ES_CALCSIZE)
-	if (est->dle->device[0] == '/' && est->dle->device[1] == '/')
+    else {
+	estimatelist_t el;
+	estimate_t     estimate;
+	int            level;
+	estimate_t     estimate_method = ES_ES;
+	estimate_t     client_method = ES_ES;
+
+	/* find estimate method to use */
+	for (el = est->dle->estimatelist; el != NULL; el = el->next) {
+	    estimate = (estimate_t)GPOINTER_TO_INT(el->data);
+	    if (estimate == ES_SERVER) {
+		if (estimate_method == ES_ES)
+		    estimate_method = ES_SERVER;
+	    }
+	    if (estimate == ES_CLIENT || 
+		(estimate == ES_CALCSIZE &&
+		 (est->dle->device[0] != '/' || est->dle->device[1] != '/'))) {
+		if (client_method == ES_ES)
+		    client_method = estimate;
+		if (estimate_method == ES_ES)
+		    estimate_method = estimate;
+	    }
+	}
+
+	/* do server estimate */
+	if (estimate_method == ES_SERVER) {
+	    for (level = 0; level < DUMP_LEVELS; level++) {
+		if (est->est[level].needestimate) {
+		    if (est->est[level].server || client_method == ES_ES) {
+			g_printf(_("%s %d SIZE -1\n"), est->qamname, level);
+			est->est[level].needestimate = 0;
+		    }
+		}
+	    }
+	}
+
+	if (client_method == ES_ES && estimate_method != ES_SERVER) {
+	    g_printf(_("%s %d SIZE -2\n"), est->qamname, 0);
 	    dbprintf(_("Can't use CALCSIZE for samba estimate: %s %s\n"),
 		     est->qamname, est->qdirname);
-	else
+	} else if (client_method == ES_CALCSIZE) {
 	    generic_calc_estimates(est);
-    else
+	} else if (client_method == ES_CLIENT) {
 #ifndef USE_GENERIC_CALCSIZE
-    if(strcmp(est->dle->program, "DUMP") == 0)
-	dump_calc_estimates(est);
-    else
+	    if (strcmp(est->dle->program, "DUMP") == 0)
+		dump_calc_estimates(est);
+	    else
 #endif
 #ifdef SAMBA_CLIENT
-      if (strcmp(est->dle->program, "GNUTAR") == 0 &&
-	  est->dle->device[0] == '/' && est->dle->device[1] == '/')
-	smbtar_calc_estimates(est);
-      else
+	    if (strcmp(est->dle->program, "GNUTAR") == 0 &&
+		est->dle->device[0] == '/' && est->dle->device[1] == '/')
+		smbtar_calc_estimates(est);
+	    else
 #endif
 #ifdef GNUTAR
-	if (strcmp(est->dle->program, "GNUTAR") == 0)
-	  gnutar_calc_estimates(est);
-	else
+	    if (strcmp(est->dle->program, "GNUTAR") == 0)
+		gnutar_calc_estimates(est);
+	    else
 #endif
-	    dbprintf(_("Invalid program: %s %s %s\n"),
-		      est->qamname, est->qdirname, est->dle->program);
+		dbprintf(_("Invalid program: %s %s %s\n"),
+			 est->qamname, est->qdirname, est->dle->program);
+	}
+    }
 
     dbprintf(_("done with amname %s dirname %s spindle %d\n"),
 	      est->qamname, est->qdirname, est->dle->spindle);
@@ -741,7 +788,6 @@ calc_estimates(
 off_t getsize_dump(dle_t *dle, int level, char **errmsg);
 off_t getsize_smbtar(dle_t *dle, int level, char **errmsg);
 off_t getsize_gnutar(dle_t *dle, int level, time_t dumpsince, char **errmsg);
-off_t getsize_star(dle_t *dle, int level, time_t dumpsince, char **errmsg);
 off_t getsize_application_api(disk_estimates_t *est, int nb_level,
 			      int *levels, backup_support_option_t *bsu);
 off_t handle_dumpline(char *str);
@@ -757,6 +803,12 @@ application_api_calc_estimate(
     int    nb_level = 0;
     backup_support_option_t *bsu;
     GPtrArray               *errarray;
+    estimatelist_t el;
+    estimate_t     estimate;
+    estimate_t     estimate_method = ES_ES;
+    estimate_t     client_method = ES_ES;
+    int            has_calcsize = 0;
+    int            has_client = 0;
 
     bsu = backup_support_option(est->dle->program, g_options, est->dle->disk,
 				est->dle->device, &errarray);
@@ -808,6 +860,26 @@ application_api_calc_estimate(
 	g_ptr_array_free(errarray, TRUE);
     }
 
+    /* find estimate method to use */
+    for (el = est->dle->estimatelist; el != NULL; el = el->next) {
+	estimate = (estimate_t)GPOINTER_TO_INT(el->data);
+	if (estimate == ES_CLIENT)
+	    has_client = 1;
+	if (estimate == ES_CALCSIZE)
+	    has_calcsize = 1;
+	if (estimate == ES_SERVER) {
+	    if (estimate_method == ES_ES)
+		estimate_method = ES_SERVER;
+	}
+	if ((estimate == ES_CLIENT && bsu->client_estimate) || 
+	    (estimate == ES_CALCSIZE && bsu->calcsize)) {
+	    if (client_method == ES_ES)
+		client_method = estimate;
+	    if (estimate_method == ES_ES)
+		estimate_method = estimate;
+	}
+    }
+
     for(level = 0; level < DUMP_LEVELS; level++) {
 	if (est->est[level].needestimate) {
 	    if (level > bsu->max_level) {
@@ -815,13 +887,56 @@ application_api_calc_estimate(
 		g_printf("%s %d SIZE %lld\n", est->qamname, level,
 			 (long long)-2);
 		est->est[level].needestimate = 0;
-	    } else if (GPOINTER_TO_INT(est->dle->estimatelist->data) == ES_SERVER) {
+		if (am_has_feature(g_options->features,
+				   fe_rep_sendsize_quoted_error)) {
+		    char *errmsg, *qerrmsg;
+		    errmsg = vstrallocf(
+				_("Application '%s' can't estimate level %d"),
+				est->dle->program, level);
+		    qerrmsg = quote_string(errmsg);
+		    dbprintf(_("errmsg is %s\n"), errmsg);
+		    g_printf("%s %d ERROR %s\n",
+			     est->qamname, 0, qerrmsg);
+		    amfree(errmsg);
+		    amfree(qerrmsg);
+		}
+	    } else if (estimate_method == ES_ES) {
+		g_printf("%s %d SIZE %lld\n", est->qamname, level,
+			 (long long)-2);
+		est->est[level].needestimate = 0;
+		if (am_has_feature(g_options->features,
+				   fe_rep_sendsize_quoted_error)) {
+		    char *errmsg, *qerrmsg;
+		    if (has_client && !bsu->client_estimate &&
+			has_calcsize && !bsu->calcsize) {
+			errmsg = vstrallocf(_("Application '%s' can't do CLIENT or CALCSIZE estimate"),
+					    est->dle->program);
+		    } else if (has_client && !bsu->client_estimate) {
+			errmsg = vstrallocf(_("Application '%s' can't do CLIENT estimate"),
+					    est->dle->program);
+		    } else if (has_calcsize && !bsu->calcsize) {
+			errmsg = vstrallocf(_("Application '%s' can't do CALCSIZE estimate"),
+					    est->dle->program);
+		    } else {
+			errmsg = vstrallocf(_("Application '%s' can't do estimate"),
+					    est->dle->program);
+		    }
+		    qerrmsg = quote_string(errmsg);
+		    dbprintf(_("errmsg is %s\n"), errmsg);
+		    g_printf("%s %d ERROR %s\n",
+			     est->qamname, 0, qerrmsg);
+		    amfree(errmsg);
+		    amfree(qerrmsg);
+		}
+	    } else if (estimate_method == ES_SERVER &&
+		       (est->est[level].server || client_method == ES_ES)) {
 		/* planner will consider this level, */
 		/* but use a server-side estimate    */
-		g_printf("%s %d SIZE %lld\n", est->qamname, level,
-			 (long long)-1);
+		g_printf("%s %d SIZE -1\n", est->qamname, level);
 		est->est[level].needestimate = 0;
-	    } else {
+	    } else if (client_method == ES_CLIENT) {
+		levels[nb_level++] = level;
+	    } else if (client_method == ES_CALCSIZE) {
 		levels[nb_level++] = level;
 	    }
 	}
@@ -1228,9 +1343,6 @@ getsize_dump(
 
     if (level > 9)
 	return -2; /* planner will not even consider this level */
-    if (GPOINTER_TO_INT(dle->estimatelist->data) == ES_SERVER)
-	return -1; /* planner will consider this level, */
-		   /* but use a server-side estimate    */
 
     g_snprintf(level_str, SIZEOF(level_str), "%d", level);
 
@@ -1680,9 +1792,6 @@ getsize_smbtar(
 
     if (level > 1)
 	return -2; /* planner will not even consider this level */
-    if (GPOINTER_TO_INT(dle->estimatelist->data) == ES_SERVER)
-	return -1; /* planner will consider this level, */
-		   /* but use a server-side estimate    */
 
     parsesharename(dle->device, &share, &subdir);
     if (!share) {
@@ -1930,9 +2039,6 @@ getsize_gnutar(
 
     if (level > 9)
 	return -2; /* planner will not even consider this level */
-    if (GPOINTER_TO_INT(dle->estimatelist->data) == ES_SERVER)
-	return -1; /* planner will consider this level, */
-		   /* but use a server-side estimate    */
 
     if(dle->exclude_file) nb_exclude += dle->exclude_file->nb_element;
     if(dle->exclude_list) nb_exclude += dle->exclude_list->nb_element;
@@ -2229,6 +2335,8 @@ getsize_application_api(
     GSList   *scriptlist;
     script_t *script;
     char     *errmsg = NULL;
+    estimate_t     estimate;
+    estimatelist_t el;
 
     cmd = vstralloc(APPLICATION_DIR, "/", dle->program, NULL);
 
@@ -2267,8 +2375,16 @@ getsize_application_api(
 	g_snprintf(levelstr,SIZEOF(levelstr),"%d", levels[j]);
 	argvchild[i++] = stralloc(levelstr);
     }
-    if (GPOINTER_TO_INT(dle->estimatelist->data) == ES_CALCSIZE &&
-	bsu->calcsize) {
+    /* find the first in ES_CLIENT and ES_CALCSIZE */
+    estimate = ES_CLIENT;
+    for (el = dle->estimatelist; el != NULL; el = el->next) {
+	estimate = (estimate_t)GPOINTER_TO_INT(el->data);
+	if ((estimate == ES_CLIENT && bsu->client_estimate) ||
+	    (estimate == ES_CALCSIZE && bsu->calcsize))
+	    break;
+	estimate = ES_CLIENT;
+    }
+    if (estimate == ES_CALCSIZE && bsu->calcsize) {
 	argvchild[i++] = "--calcsize";
     }
 

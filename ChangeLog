@@ -1,4 +1,11 @@
 2009-02-04  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.h: Add ES_ES.
+	* common-src/conffile.c: Handle ES_ES in switch.
+	* server-src/amadmin.c: Handle ES_ES in switch.
+	* client-src/sendsize.c: Works with many multiple estimate method.
+	* server-src/planner.c: Works with many multiple estimate method.
+
+2009-02-04  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/amgtar.c, application-src/amgtar_perl.pl,
 	  application-src/amsamba.pl, application-src/amstar.c,
 	  application-src/amsuntar.pl,

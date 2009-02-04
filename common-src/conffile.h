@@ -111,6 +111,7 @@ typedef enum {
     ES_CLIENT,          /* client estimate */
     ES_SERVER,          /* server estimate */
     ES_CALCSIZE,        /* calcsize estimate */
+    ES_ES               /* sentinel */
 } estimate_t;
 /* A GSlist where each element is a element_t */
 typedef GSList *estimatelist_t;

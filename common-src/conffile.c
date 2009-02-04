@@ -6289,6 +6289,9 @@ val_t_display_strs(
 	    case ES_CALCSIZE:
 		strappend(buf[0], "CALCSIZE");
 		break;
+
+	    case ES_ES:
+		break;
 	    }
 	    es = es->next;
 	    if (es)

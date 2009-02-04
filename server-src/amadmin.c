@@ -2085,6 +2085,8 @@ disklist_one(
 	case ES_CALCSIZE:
 	    g_printf("CALCSIZE");
 	    break;
+	case ES_ES:
+	    break;
 	}
 	estimates = estimates->next;
 	if (estimates)
