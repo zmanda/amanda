@@ -153,6 +153,7 @@ char *optionstr(disk_t *dp, am_feature_t *their_features, FILE *fdout);
  */
 char *xml_optionstr(disk_t *dp, am_feature_t *their_features, FILE *fdout,
 		    int to_server);
+char *xml_estimate(estimatelist_t estimatelist, am_feature_t *their_features);
 char *clean_dle_str_for_client(char *dle_str);
 char *xml_application(application_t *application,
 		      am_feature_t *their_features);

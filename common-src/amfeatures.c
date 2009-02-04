@@ -154,6 +154,7 @@ am_init_feature_set(void)
 	am_add_feature(f, fe_xml_estimate);
 	am_add_feature(f, fe_xml_property_priority);
 	am_add_feature(f, fe_sendsize_rep_warning);
+	am_add_feature(f, fe_xml_estimatelist);
     }
     return f;
 }

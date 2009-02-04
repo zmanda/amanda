@@ -1,3 +1,15 @@
+2009-02-04  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/amfeatures.h: Add fe_xml_estimatelist feature.
+	* common-src/amfeatures.c: Add fe_xml_estimatelist feature.
+	* common-src/amxml.c: Parse multiple estimate value.
+	* common-src/amxml.h: Change estimate for estimatelist in dle_t.
+	* server-src/diskfile.h (xml_estimate): Protoype.
+	* server-src/diskfile.c (xml_estimate): New function.
+	* server-src/amcheck.c: Use xml_estimate.
+	* server-src/planner.c: Use xml_estimate.
+	* client-src/sendbackup.c, client-src/sendsize.c,
+	  client-src/selfcheck.c: Use first estimate in estimatelist.
+
 2009-02-02  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.c: Correctly copy pp_scriptlist.
 

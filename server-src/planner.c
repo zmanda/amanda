@@ -1383,6 +1383,7 @@ static void getsize(
 	estimates = 0;
 	for(dp = hostp->disks; dp != NULL; dp = dp->hostnext) {
 	    char *s = NULL;
+	    char *es;
 	    size_t s_len = 0;
 
 	    if(dp->todo == 0) continue;
@@ -1451,30 +1452,9 @@ static void getsize(
 			}
 		    }
 
-		    if (am_has_feature(hostp->features, fe_xml_estimate)) {
-			if (estimate == ES_CLIENT) {
-			    vstrextend(&l, "  <estimate>CLIENT</estimate>\n",
-				       NULL);
-			} else if (estimate == ES_SERVER) {
-			    vstrextend(&l, "  <estimate>SERVER</estimate>\n",
-				       NULL);
-			} else if (estimate == ES_CALCSIZE) {
-			    vstrextend(&l, "  <estimate>CALCSIZE</estimate>\n",
-				       NULL);
-			}
-		    }
-		    if (estimate == ES_CALCSIZE) {
-			if (!am_has_feature(hostp->features,
-					    fe_calcsize_estimate)) {
-			    log_add(L_WARNING,
-				    _("%s:%s does not support CALCSIZE for estimate, using CLIENT.\n"),
-				    hostp->hostname, qname);
-			    estimate = ES_CLIENT;
-			} else {
-			    vstrextend(&l, "  <calcsize>YES</calcsize>\n",
-				       NULL);
-			}
-		    }
+		    es = xml_estimate(dp->estimatelist, hostp->features);
+		    vstrextend(&l, es, "\n", NULL);
+		    amfree(es);
 		    vstrextend(&l, "  ", b64disk, "\n", NULL);
 		    if (dp->device)
 			vstrextend(&l, "  ", b64device, "\n", NULL);

@@ -1593,6 +1593,7 @@ start_host(
 	req_len += 256;                         /* room for non-disk answers */
 	for(dp = hostp->disks; dp != NULL; dp = dp->hostnext) {
 	    char *l;
+	    char *es;
 	    size_t l_len;
 	    char *o;
 	    char *calcsize;
@@ -1718,8 +1719,9 @@ start_host(
 				  "  <program>",
 				  dp->program,
 				  "</program>\n", NULL);
-                    if (strlen(calcsize) > 0)
-			vstrextend(&l, "  <calcsize>YES</calcsize>\n", NULL);
+		    es = xml_estimate(dp->estimatelist, hostp->features);
+		    vstrextend(&l, es, "\n", NULL);
+		    amfree(es);
 		    vstrextend(&l, "  ", b64disk, "\n", NULL);
 		    if (dp->device)
 			vstrextend(&l, "  ", b64device, "\n", NULL);
@@ -1767,6 +1769,9 @@ start_host(
 			      hostp->hostname, qname);
 			}
 		    }
+		    es = xml_estimate(dp->estimatelist, hostp->features);
+		    vstrextend(&l, es, "\n", NULL);
+		    amfree(es);
 		    vstrextend(&l, "  ", b64disk, "\n", NULL);
 		    if (dp->device)
 			vstrextend(&l, "  ", b64device, "\n", NULL);

@@ -1674,6 +1674,42 @@ xml_optionstr(
 }
 
 char *
+xml_estimate(
+    estimatelist_t estimatelist,
+    am_feature_t *their_features)
+{
+    estimatelist_t el;
+    char *l = NULL;
+
+    if (am_has_feature(their_features, fe_xml_estimatelist)) {
+	vstrextend(&l, "  <estimate>", NULL);
+	for (el=estimatelist; el != NULL; el = el->next) {
+	    switch (GPOINTER_TO_INT(el->data)) {
+	    case ES_CLIENT  : vstrextend(&l, "CLIENT ", NULL); break;
+	    case ES_SERVER  : vstrextend(&l, "SERVER ", NULL); break;
+	    case ES_CALCSIZE: vstrextend(&l, "CALCSIZE ", NULL); break;
+	    }
+	}
+	vstrextend(&l, "</estimate>", NULL);
+    } else { /* add the first estimate only */
+	if (am_has_feature(their_features, fe_xml_estimate)) {
+	    vstrextend(&l, "  <estimate>", NULL);
+	    switch (GPOINTER_TO_INT(estimatelist->data)) {
+	    case ES_CLIENT  : vstrextend(&l, "CLIENT", NULL); break;
+	    case ES_SERVER  : vstrextend(&l, "SERVER", NULL); break;
+	    case ES_CALCSIZE: vstrextend(&l, "CALCSIZE", NULL); break;
+	    }
+	}
+	vstrextend(&l, "</estimate>", NULL);
+	if (GPOINTER_TO_INT(estimatelist->data) == ES_CALCSIZE) {
+	    vstrextend(&l, "  <calcsize>YES</calcsize>", NULL);
+	}
+    }
+
+    return l;
+}
+
+char *
 clean_dle_str_for_client(
     char *dle_str)
 {

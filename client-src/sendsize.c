@@ -238,7 +238,8 @@ main(
 		err_extra = stralloc(_("no program name"));
 		goto err;
 	    }
-	    dle->calcsize = 1;
+	    dle->estimatelist = g_slist_append(dle->estimatelist,
+					       GINT_TO_POINTER(ES_CALCSIZE));
 	    dle->program = s - 1;
 	    skip_non_whitespace(s, ch);
 	    s[-1] = '\0';
@@ -254,7 +255,8 @@ main(
 	    }
 	}
 	else {
-	    dle->calcsize = 0;
+	    dle->estimatelist = g_slist_append(dle->estimatelist,
+					       GINT_TO_POINTER(ES_CLIENT));
 	    if (strcmp(dle->program,"APPLICATION") == 0) {
 		dle->program_is_application_api=1;
 		skip_whitespace(s, ch);		/* find dumper name */
@@ -575,7 +577,7 @@ dle_add_diskest(
     }
 
     /* should we use amandates for this? */
-    if (dle->calcsize)
+    if (GPOINTER_TO_INT(dle->estimatelist->data) == ES_CALCSIZE)
 	need_amandates = TRUE;
     if (strcmp(dle->program, "GNUTAR") == 0) {
 	/* GNUTAR only needs amandates if gnutar_list_dir is NULL */
@@ -695,7 +697,7 @@ calc_estimates(
     if(est->dle->program_is_application_api ==  1)
 	application_api_calc_estimate(est);
     else
-    if(est->dle->calcsize ==  1)
+    if (GPOINTER_TO_INT(est->dle->estimatelist->data) == ES_CALCSIZE)
 	if (est->dle->device[0] == '/' && est->dle->device[1] == '/')
 	    dbprintf(_("Can't use CALCSIZE for samba estimate: %s %s\n"),
 		     est->qamname, est->qdirname);
@@ -808,7 +810,7 @@ application_api_calc_estimate(
 		g_printf("%s %d SIZE %lld\n", est->qamname, level,
 			 (long long)-2);
 		est->est[level].needestimate = 0;
-	    } else if (est->dle->estimate == ES_SERVER) {
+	    } else if (GPOINTER_TO_INT(est->dle->estimatelist->data) == ES_SERVER) {
 		/* planner will consider this level, */
 		/* but use a server-side estimate    */
 		g_printf("%s %d SIZE %lld\n", est->qamname, level,
@@ -1221,7 +1223,7 @@ getsize_dump(
 
     if (level > 9)
 	return -2; /* planner will not even consider this level */
-    if (dle->estimate == ES_SERVER)
+    if (GPOINTER_TO_INT(dle->estimatelist->data) == ES_SERVER)
 	return -1; /* planner will consider this level, */
 		   /* but use a server-side estimate    */
 
@@ -1673,7 +1675,7 @@ getsize_smbtar(
 
     if (level > 1)
 	return -2; /* planner will not even consider this level */
-    if (dle->estimate == ES_SERVER)
+    if (GPOINTER_TO_INT(dle->estimatelist->data) == ES_SERVER)
 	return -1; /* planner will consider this level, */
 		   /* but use a server-side estimate    */
 
@@ -1923,7 +1925,7 @@ getsize_gnutar(
 
     if (level > 9)
 	return -2; /* planner will not even consider this level */
-    if (dle->estimate == ES_SERVER)
+    if (GPOINTER_TO_INT(dle->estimatelist->data) == ES_SERVER)
 	return -1; /* planner will consider this level, */
 		   /* but use a server-side estimate    */
 
@@ -2260,7 +2262,8 @@ getsize_application_api(
 	g_snprintf(levelstr,SIZEOF(levelstr),"%d", levels[j]);
 	argvchild[i++] = stralloc(levelstr);
     }
-    if (dle->calcsize && bsu->calcsize) {
+    if (GPOINTER_TO_INT(dle->estimatelist->data) == ES_CALCSIZE &&
+	bsu->calcsize) {
 	argvchild[i++] = "--calcsize";
     }
 

@@ -685,7 +685,8 @@ main(
 		finish_amandates();
 		free_amandates();
 	    } else {
-		if (dle->calcsize && bsu->calcsize) {
+		if (GPOINTER_TO_INT(dle->estimatelist->data) == ES_CALCSIZE &&
+		    bsu->calcsize) {
 		    error(_("error [opening %s for writing: %s]"),
 			  amandates_file, strerror(errno));
 		} else {

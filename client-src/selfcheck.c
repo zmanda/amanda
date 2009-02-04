@@ -211,10 +211,12 @@ main(
 	    dle->program = s - 1;
 	    skip_non_whitespace(s, ch);
 	    s[-1] = '\0';
-	    dle->calcsize = 1;
+	    dle->estimatelist = g_slist_append(dle->estimatelist,
+					       GINT_TO_POINTER(ES_CALCSIZE));
 	}
 	else {
-	    dle->calcsize = 0;
+	    dle->estimatelist = g_slist_append(dle->estimatelist,
+					       GINT_TO_POINTER(ES_CLIENT));
 	}
 
 	skip_whitespace(s, ch);			/* find disk name */
@@ -351,7 +353,7 @@ static void
 check_options(
     dle_t *dle)
 {
-    if (dle->calcsize == 1) {
+    if (GPOINTER_TO_INT(dle->estimatelist->data) == ES_CALCSIZE) {
 	need_calcsize=1;
     }
 
@@ -504,7 +506,7 @@ check_disk(
     char *qdevice = NULL;
 
     dbprintf(_("checking disk %s\n"), qdisk);
-    if (dle->calcsize == 1) {
+    if (GPOINTER_TO_INT(dle->estimatelist->data) == ES_CALCSIZE) {
 	if (dle->device[0] == '/' && dle->device[1] == '/') {
 	    err = vstrallocf(_("Can't use CALCSIZE for samba estimate, use CLIENT: %s"),
 			    dle->device);
@@ -701,7 +703,8 @@ check_disk(
 	    goto common_exit;
 	}
 
-	if (dle->calcsize && !bsu->calcsize) {
+	if (GPOINTER_TO_INT(dle->estimatelist->data) == ES_CALCSIZE &&
+			    !bsu->calcsize) {
 	    g_printf("ERROR application %s doesn't support calcsize estimate\n",
 		     dle->program);
 	}
@@ -795,7 +798,8 @@ check_disk(
 		if (dle->record && bsu->record == 1) {
 		    argvchild[j++] = "--record";
 		}
-		if (dle->calcsize && bsu->calcsize == 1) {
+		if (GPOINTER_TO_INT(dle->estimatelist->data) == ES_CALCSIZE &&
+		    bsu->calcsize == 1) {
 		    argvchild[j++] = "--calcsize";
 		}
 		j += application_property_add_to_argv(&argvchild[j], dle, bsu);

@@ -179,6 +179,7 @@ typedef enum {
     fe_xml_estimate,
     fe_xml_property_priority,
     fe_sendsize_rep_warning,
+    fe_xml_estimatelist,
 
     /*
      * All new features must be inserted immediately *before* this entry.

@@ -82,8 +82,7 @@ init_dle(
     dle->device = NULL;
     dle->program_is_application_api = 0;
     dle->program = NULL;
-    dle->calcsize = 0;
-    dle->estimate = 0;
+    dle->estimatelist = NULL;
     dle->record = 1;
     dle->spindle = 0;
     dle->compress = COMP_NONE;
@@ -423,6 +422,8 @@ amend_element(
 	}
 	if (dle->device == NULL && dle->disk)
 	    dle->device = stralloc(dle->disk);
+	if (dle->estimatelist == NULL)
+	    dle->estimatelist = g_slist_append(dle->estimatelist, ES_CLIENT);
 /* Add check of required field */
 	data_user->dle = NULL;
     } else if (strcmp(element_name, "backup-program") == 0) {
@@ -519,17 +520,33 @@ amtext(
 	dle->device = tt;
     } else if(strcmp(last_element_name, "calcsize") == 0) {
 	if (strcasecmp(tt,"yes") == 0) {
-	    dle->calcsize = 1;
+	    dle->estimatelist = g_slist_append(dle->estimatelist,
+					       GINT_TO_POINTER(ES_CALCSIZE));
 	}
 	amfree(tt);
     } else if(strcmp(last_element_name, "estimate") == 0) {
-	if (strcasecmp(tt,"client") == 0) {
-	    dle->estimate = ES_CLIENT;
-	} else if (strcasecmp(tt,"calcsize") == 0) {
-	    dle->estimate = ES_CALCSIZE;
-	    dle->calcsize = 1;
-	} else if (strcasecmp(tt,"server") == 0) {
-	    dle->estimate = ES_SERVER;
+	char *ttt = tt;
+	while (strlen(ttt) > 0) {
+	    if (BSTRNCMP(ttt,"CLIENT") == 0) {
+		dle->estimatelist = g_slist_append(dle->estimatelist,
+						   GINT_TO_POINTER(ES_CLIENT));
+		ttt += strlen("client");
+	    } else if (BSTRNCMP(ttt,"CALCSIZE") == 0) {
+		if (!data_user->has_calcsize)
+		    dle->estimatelist = g_slist_append(dle->estimatelist,
+						 GINT_TO_POINTER(ES_CALCSIZE));
+		ttt += strlen("calcsize");
+	    } else if (BSTRNCMP(ttt,"SERVER") == 0) {
+		dle->estimatelist = g_slist_append(dle->estimatelist,
+						   GINT_TO_POINTER(ES_SERVER));
+		ttt += strlen("server");
+	    } else {
+	    g_set_error(gerror, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
+			"XML: bad estimate: %s", tt);
+		return;
+	    }
+	    while (*ttt == ' ')
+		ttt++;
 	}
 	amfree(tt);
     } else if(strcmp(last_element_name, "program") == 0) {
