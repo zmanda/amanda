@@ -1,4 +1,12 @@
 2009-02-04  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amgtar.c, application-src/amgtar_perl.pl,
+	  application-src/amsamba.pl, application-src/amstar.c,
+	  application-src/amsuntar.pl,
+	  application-src/amzfs-sendrecv.pl: Output a "CLIENT-ESTIMATE" line.
+	* client-src/client_util.c: Parse "CLIENT-ESTIMATE" line.
+	* client-src/client_util.h: New field to keep its value.
+
+2009-02-04  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/amfeatures.c,
 	  common-src/amfeatures.h: And fe_xml_level_server amfeature.
 	* common-src/amxml.c: parse <server> tag in level tag.

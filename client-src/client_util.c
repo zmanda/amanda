@@ -844,6 +844,9 @@ backup_support_option(
 	} else if (strncmp(line,"CALCSIZE ", 9) == 0) {
 	    if (strcmp(line+9, "YES") == 0)
 		bsu->calcsize = 1;
+	} else if (strncmp(line,"CLIENT-ESTIMATE ", 16) == 0) {
+	    if (strcmp(line+16, "YES") == 0)
+		bsu->client_estimate = 1;
 	} else if (strncmp(line,"MULTI-ESTIMATE ", 15) == 0) {
 	    if (strcmp(line+15, "YES") == 0)
 		bsu->multi_estimate = 1;

@@ -315,6 +315,7 @@ amstar_support(
     fprintf(stdout, "COLLECTION NO\n");
     fprintf(stdout, "MULTI-ESTIMATE YES\n");
     fprintf(stdout, "CALCSIZE YES\n");
+    fprintf(stdout, "CLIENT-ESTIMATE YES\n");
 }
 
 static void

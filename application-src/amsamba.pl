@@ -210,6 +210,7 @@ sub command_support {
     print "COLLECTION NO\n";
     print "MULTI-ESTIMATE NO\n";
     print "CALCSIZE NO\n";
+    print "CLIENT-ESTIMATE YES\n";
     print "EXCLUDE-FILE YES\n";
     print "EXCLUDE-LIST YES\n";
     print "EXCLUDE-OPTIONAL YES\n";

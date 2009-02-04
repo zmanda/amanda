@@ -85,6 +85,7 @@ sub command_support {
    print "MESSAGE-XML NO\n";
    print "RECORD YES\n";
    print "COLLECTION NO\n";
+   print "CLIENT-ESTIMATE YES\n";
 }
 
 sub command_selfcheck {

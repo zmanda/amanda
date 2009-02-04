@@ -87,6 +87,7 @@ sub command_support {
    print "COLLECTION NO\n";
    print "MULTI-ESTIMATE NO\n";
    print "CALCSIZE NO\n";
+   print "CLIENT-ESTIMATE YES\n";
 }
 
 sub command_selfcheck {
