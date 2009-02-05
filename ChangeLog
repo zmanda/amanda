@@ -1,3 +1,7 @@
+2009-01-13  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Paths.pm.in: add $localstatedir
+	* server-src/amserverconfig.pl: remove extraneous /
+
 2009-02-04  Jean-Louis Martineau <martineau@zmanda.com>
 	* amplot/amplot.awk: Set term to x11.
 
