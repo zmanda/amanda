@@ -260,9 +260,8 @@ xml_check_options(
     char *errmsg = NULL;
     dle_t *dle;
 
-    char *uoptionstr = unquote_string(optionstr);
-    o = oo = vstralloc("<dle>", strchr(uoptionstr,'<'), "</dle>", NULL);
-  
+    o = oo = vstralloc("<dle>", strchr(optionstr,'<'), "</dle>", NULL);
+
     dle = amxml_parse_node_CHAR(o, &errmsg);
     if (dle == NULL) {
 	error("amxml_parse_node_CHAR failed: %s\n", errmsg);
@@ -2050,9 +2049,8 @@ startup_dump(
 
     amfree(dle_str);
     if (am_has_feature(their_features, fe_req_xml)) {
-	char *o, *p = NULL;
+	char *p = NULL;
 	char *pclean;
-	o = unquote_string(options+1);
 	vstrextend(&p, "<dle>\n", NULL);
 	if (*application_api != '\0') {
 	    vstrextend(&p, "  <program>APPLICATION</program>\n", NULL);
@@ -2065,8 +2063,7 @@ startup_dump(
 		       NULL);
 	}
 	vstrextend(&p, "  <level>", level_string, "</level>\n", NULL);
-	vstrextend(&p, o, "</dle>\n", NULL);
-	amfree(o);
+	vstrextend(&p, options+1, "</dle>\n", NULL);
 	pclean = clean_dle_str_for_client(p);
 	vstrextend(&req, pclean, NULL);
 	amfree(pclean);
