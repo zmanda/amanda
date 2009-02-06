@@ -1,3 +1,6 @@
+2009-02-06  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Amanda_Changer_compat.pl: remove debugging code
+
 2009-02-06  Jean-Louis Martineau <martineau@zmanda.com>
 	patch by Yoshihiro Ishikawa
 	* recover-src/extract_list.c: Handle application-api.

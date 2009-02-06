@@ -123,7 +123,7 @@ case "${1}" in
         esac;;
     -reset) echo "reset ignored";;
     -eject)
-	echo "eject" > /A/p/tmp/chg-test.result
+	echo "eject" > @AMANDA_TMPDIR@/chg-test.result
 	echo "eject ignored";;
     -clean) echo "clean ignored";;
     -label)
