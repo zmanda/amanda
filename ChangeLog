@@ -1,3 +1,7 @@
+2009-02-06  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/dumper.c: options is already unquoted.
+	* common-src/util.c: argument should not be quoted when added to argv.
+
 2009-02-06  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Amanda_Changer_compat.pl: remove debugging code
 

@@ -1044,9 +1044,9 @@ void proplist_add_to_argv(
     property_t   *value_s = value_p;
     char       ***argv = user_data_p;
     GSList       *value;
-    char         *q, *w, *qprop, *qvalue;
+    char         *q, *w, *qprop;
 
-    q = quote_string(property_s);
+    q = stralloc(property_s);
     /* convert to lower case */
     for (w=q; *w != '\0'; w++) {
 	*w = tolower(*w);
@@ -1056,10 +1056,9 @@ void proplist_add_to_argv(
     qprop = stralloc2("--", q);
     amfree(q);
     for(value=value_s->values; value != NULL; value = value->next) {
-	qvalue = quote_string((char *)value->data);
 	**argv = stralloc(qprop);
 	(*argv)++;
-	**argv = qvalue;
+	**argv = stralloc((char *)value->data);
 	(*argv)++;
     }
     amfree(qprop);
