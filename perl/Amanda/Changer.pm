@@ -575,14 +575,17 @@ sub release {
 
     $self->{'released'} = 1;
     $self->do_release(%params);
+}
+
+sub do_release {
+    my $self = shift;
+    my %params = @_;
+
+    # this is the one subclasses should override
 
     if (exists $params{'finished_cb'}) {
 	Amanda::MainLoop::call_later($params{'finished_cb'}, undef);
     }
-}
-
-sub do_release {
-    # this is the one subclasses should override
 }
 
 1;

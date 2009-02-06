@@ -122,4 +122,8 @@ sub do_release {
     my %params = @_;
 
     $self->{'chg'}->{'reserved'} = 0;
+
+    if (exists $params{'finished_cb'}) {
+	Amanda::MainLoop::call_later($params{'finished_cb'}, undef);
+    }
 }

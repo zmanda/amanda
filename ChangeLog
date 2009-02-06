@@ -1,3 +1,10 @@
+2009-02-06  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Amanda_Changer_compat.pl: support 'eject'
+	* perl/Amanda/Changer.pm: change release/do_relase relationship
+	* perl/Amanda/Changer/compat.pm: same
+	* perl/Amanda/Changer/disk.pm: same
+	* perl/Amanda/Changer/single.pm: same
+
 2009-01-13  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Paths.pm.in: add $localstatedir
 	* server-src/amserverconfig.pl: remove extraneous /
