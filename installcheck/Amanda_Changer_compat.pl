@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 17;
+use Test::More tests => 18;
 use File::Path;
 use strict;
 use warnings;
@@ -38,6 +38,7 @@ Amanda::Debug::dbopen("installcheck");
 Amanda::Debug::disable_die_override();
 
 my $changer_filename = "$AMANDA_TMPDIR/chg-test";
+my $result_file = "$AMANDA_TMPDIR/chg-test.result";
 
 # Set up a 'test' changer; several of these are defined below.
 sub setup_changer {
@@ -121,7 +122,9 @@ case "${1}" in
             3) echo "1"; exit 0;; # test missing 'device' portion
         esac;;
     -reset) echo "reset ignored";;
-    -eject) echo "eject ignored";;
+    -eject)
+	echo "eject" > /A/p/tmp/chg-test.result
+	echo "eject ignored";;
     -clean) echo "clean ignored";;
     -label)
         case "${2}" in
@@ -214,6 +217,11 @@ try_run_changer(
         my ($err) = @_;
 
         ok(!defined $err, "release with eject succeeds");
+
+	open(my $fh, "<", $result_file) or die("open $result_file: $!");
+	my $result = do { local $/; <$fh> };
+	close($fh);
+	like($result, qr/eject/, "and calls chg-test -eject");
 
         Amanda::MainLoop::quit();
     };

@@ -387,4 +387,8 @@ sub do_release {
 	or warn("Could not unlink '$drive/data': $!");
     rmdir("$drive")
 	or warn("Could not rmdir '$drive': $!");
+
+    if (exists $params{'finished_cb'}) {
+	Amanda::MainLoop::call_later($params{'finished_cb'}, undef);
+    }
 }

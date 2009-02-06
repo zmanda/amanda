@@ -502,7 +502,15 @@ sub do_release {
     my $self = shift;
     my %params = @_;
 
-    $self->{'chg'}->{'reserved'} = 0;
+    if (exists $params{'eject'} && $params{'eject'}) {
+	$self->{'chg'}->_simple_op("eject", %params);
+    } else {
+	$self->{'chg'}->{'reserved'} = 0;
+
+	if (exists $params{'finished_cb'}) {
+	    Amanda::MainLoop::call_later($params{'finished_cb'}, undef);
+	}
+    }
 }
 
 sub set_label {
