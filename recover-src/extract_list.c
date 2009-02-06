@@ -1753,7 +1753,7 @@ extract_files_child(
     }
 
     if (file.program != NULL) {
-	if (strcmp(file.program, "BACKUP") == 0)
+	if (strcmp(file.program, "APPLICATION") == 0)
 	    dumptype = IS_APPLICATION_API;
 #ifdef GNUTAR
 	if (strcmp(file.program, GNUTAR) == 0)
