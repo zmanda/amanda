@@ -1,3 +1,6 @@
+2009-02-07  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/event.c: use built-in child watch source on FreeBSD
+
 2009-02-06  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/dumper.c: options is already unquoted.
 	* common-src/util.c: argument should not be quoted when added to argv.

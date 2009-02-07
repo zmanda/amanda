@@ -479,8 +479,12 @@ new_fdsource(gint fd, GIOCondition events)
  * exponentially increasing interals.  Writing a smarter implementation runs into
  * some tricky race conditions and extra machinery.  Since there are few, if any,
  * users of a glib version this old, such machinery wouldn't get much testing.
+ *
+ * FreeBSD users have also reported problems with the glib child watch source,
+ * so we use the dumb version on FreeBSD, too.
  */
-#if (GLIB_MAJOR_VERSION < 2 || (GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION < 6))
+
+#if (defined(__FreeBSD__) || GLIB_MAJOR_VERSION < 2 || (GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION < 6))
 typedef struct ChildWatchSource {
     GSource source; /* must be the first element in the struct */
 
