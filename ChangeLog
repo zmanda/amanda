@@ -1,4 +1,9 @@
 2009-02-09  Dustin J. Mitchell <dustin@zmanda.com>
+	* config/amanda/debugging.m4: add --disable-syntax-checks
+	* config/automake/scripts.am: disable them
+	* configure.in: call AMANDA_DISABLE_SYNTAX_CHECKS
+
+2009-02-09  Dustin J. Mitchell <dustin@zmanda.com>
 	* man/xml-source/amanda.conf.5.xml: remove TODO
 
 2009-02-07  Dustin J. Mitchell <dustin@zmanda.com>

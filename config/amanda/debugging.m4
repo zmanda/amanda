@@ -150,3 +150,28 @@ AC_DEFUN([AMANDA_WITH_TESTING],
         [The name for the Kerberized Amanda service. ])
 ])
 
+# SYNOPSIS
+#
+#   AMANDA_DISABLE_SYNTAX_CHECKS
+#
+# OVERVIEW
+#
+#   Handles the --disable-syntax-checks flag, which un-sets the
+#   CHECK_SCRIPTS_AT_BUILD automake conditional
+
+AC_DEFUN([AMANDA_DISABLE_SYNTAX_CHECKS],
+[
+    AC_ARG_ENABLE(syntax-checks,
+	AS_HELP_STRING([--disable-syntax-checks],
+	    [Do not perform syntax checks when installing]),
+	[
+	    case "$withval" in
+		no) DISABLE_SYNTAX_CHECKS=true;;
+		*) DISABLE_SYNTAX_CHECKS=false;;
+	    esac
+	], [
+	    DISABLE_SYNTAX_CHECKS=false
+	])
+
+    AM_CONDITIONAL(CHECK_SCRIPTS_AT_BUILD, !$DISABLE_SYNTAX_CHECKS)
+])
