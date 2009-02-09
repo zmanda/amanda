@@ -1,3 +1,6 @@
+2009-02-09  Dustin J. Mitchell <dustin@zmanda.com>
+	* man/xml-source/amanda.conf.5.xml: remove TODO
+
 2009-02-07  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/event.c: use built-in child watch source on FreeBSD
 

@@ -2527,10 +2527,6 @@ define changer <emphasis remap='I'>name</emphasis> {
 device. The remaining parameters are specific to the changer type selected.
 </para>
 
-<para>
-TODO: more detail here once it's known
-</para>
-
 </refsect1>
 
 <refsect1><title>SEE ALSO</title>
