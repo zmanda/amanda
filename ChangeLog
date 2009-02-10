@@ -1,3 +1,6 @@
+2009-02-10  Dustin J. Mitchell <dustin@zmanda.com>
+	* config/amanda/debugging.m4: fix --disable-syntax-checks
+
 2009-02-09  Dustin J. Mitchell <dustin@zmanda.com>
 	* config/amanda/debugging.m4: add --disable-syntax-checks
 	* config/automake/scripts.am: disable them

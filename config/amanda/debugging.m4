@@ -152,7 +152,7 @@ AC_DEFUN([AMANDA_WITH_TESTING],
 
 # SYNOPSIS
 #
-#   AMANDA_DISABLE_SYNTAX_CHECKS
+#   AMANDA_CHECK_SCRIPTS_AT_BUILD
 #
 # OVERVIEW
 #
@@ -165,13 +165,13 @@ AC_DEFUN([AMANDA_DISABLE_SYNTAX_CHECKS],
 	AS_HELP_STRING([--disable-syntax-checks],
 	    [Do not perform syntax checks when installing]),
 	[
-	    case "$withval" in
-		no) DISABLE_SYNTAX_CHECKS=true;;
-		*) DISABLE_SYNTAX_CHECKS=false;;
+	    case "$enableval" in
+		no) CHECK_SCRIPTS_AT_BUILD=false;;
+		*) CHECK_SCRIPTS_AT_BUILD=true;;
 	    esac
 	], [
-	    DISABLE_SYNTAX_CHECKS=false
+	    CHECK_SCRIPTS_AT_BUILD=true
 	])
 
-    AM_CONDITIONAL(CHECK_SCRIPTS_AT_BUILD, !$DISABLE_SYNTAX_CHECKS)
+    AM_CONDITIONAL(CHECK_SCRIPTS_AT_BUILD, $CHECK_SCRIPTS_AT_BUILD)
 ])
