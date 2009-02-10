@@ -269,8 +269,9 @@ loadlabel_slot(void *	datap,
     Device * device;
     DeviceStatusFlags device_status;
 
-    g_return_val_if_fail(rc > 1 || device_name != NULL, 0);
-    g_return_val_if_fail(slotstr != NULL, 0);
+    /* if there was no error, we should have a device name */
+    g_assert(rc > 0 || device_name != NULL);
+    g_assert(slotstr != NULL);
 
     amfree(curslot);
 
