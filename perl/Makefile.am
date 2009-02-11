@@ -51,7 +51,7 @@ libamglue_la_SOURCES = \
 	amglue/bigint.c \
 	amglue/source.c \
 	amglue/amglue.h
-libamglue_la_LDFLAGS = $(PERL_EXT_LDFLAGS)
+libamglue_la_LDFLAGS = $(PERL_EXT_LDFLAGS) -release $(VERSION)
 EXTRA_DIST += $(libamglue_la_SOURCES)
 
 ##

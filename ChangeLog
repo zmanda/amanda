@@ -1,3 +1,6 @@
+2009-02-11  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Makefile.am: add a version number to libamglue
+
 2009-02-10  Dustin J. Mitchell <dustin@zmanda.com>
 	* restore-src/restore.c: fix incorrect assertion
 
