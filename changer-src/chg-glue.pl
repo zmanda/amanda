@@ -40,6 +40,7 @@ use Amanda::Changer;
 use Amanda::MainLoop;
 use Amanda::Config qw( :init );
 use Amanda::Util qw( :constants );
+use Amanda::Debug qw( :logging );
 
 my $chg;
 my $res;
@@ -145,14 +146,46 @@ sub do_reset {
     release_and_then([], $do_reset);
 }
 
+sub do_clean {
+    my $do_clean = sub {
+	$chg->clean(
+	    finished_cb => sub {
+		my ($error) = @_;
+		if ($error) {
+		    print "EXITSTATUS 1\n";
+		    print "<error> $error\n";
+		    Amanda::MainLoop::call_later(\&getcmd);
+		} else {
+		    print "EXITSTATUS 0\n";
+		    print "<none> cleaning operation successful\n";
+		    Amanda::MainLoop::call_later(\&getcmd);
+		}
+	    },
+	    drive => '',
+	);
+    };
+    release_and_then([], $do_clean);
+}
+
 sub do_eject {
-    release_and_then([ eject => 1 ],
-	sub {
-	    print "EXITSTATUS 0\n";
-	    print "<none> OK: no volume loaded\n";
-	    Amanda::MainLoop::call_later(\&getcmd);
-	}
-    );
+    my $do_eject = sub {
+	$chg->eject(
+	    finished_cb => sub {
+		my ($error) = @_;
+		if ($error) {
+		    print "EXITSTATUS 1\n";
+		    print "<error> $error\n";
+		    Amanda::MainLoop::call_later(\&getcmd);
+		} else {
+		    print "EXITSTATUS 0\n";
+		    print "<none> volume ejected\n";
+		    Amanda::MainLoop::call_later(\&getcmd);
+		}
+	    },
+	    drive => '',
+	);
+    };
+    release_and_then([], $do_eject);
 }
 
 sub do_search {
@@ -202,17 +235,22 @@ sub do_label {
 sub getcmd {
     my ($slot, $label);
     my $command = <STDIN>;
+    chomp $command;
+
     if (!defined($command)) {
 	finish();
 	return;
     }
 
+    debug("got command '$command'");
     if (($slot) = ($command =~ /^-slot (.*)$/)) {
 	do_slot($slot);
     } elsif ($command =~ /^-info$/) {
 	do_info();
     } elsif ($command =~ /^-reset$/) {
 	do_reset();
+    } elsif ($command =~ /^-clean$/) {
+	do_clean();
     } elsif ($command =~ /^-eject$/) {
 	do_eject();
     } elsif (($label) = ($command =~ /^-search (.*)/)) {
@@ -239,7 +277,7 @@ sub finish {
     }
 }
 
-Amanda::Util::setup_application("chg-glue", "server", $CONTEXT_SCRIPTUTIL);
+Amanda::Util::setup_application("chg-glue", "server", $CONTEXT_DAEMON);
 
 die("$0 is for internal use only") if (@ARGV < 1);
 my $config_name = $ARGV[0];
