@@ -460,6 +460,10 @@ operations can be emulated with the MTREW and read data operations.</para>
  (read-write) This boolean property specifies whether the device driver may use the MTFSR operation (forward seek record).
 </listitem></varlistentry>
  <!-- ==== -->
+ <varlistentry><term>NONBLOCKING_OPEN</term><listitem>
+ (read-write) Set this boolean property to "true" if O_NONBLOCK must be used on the open call. Default to "true" on Linux and "false" on all others machines. Witout it, Linux wait for a few seconds if no tape are loaded. Solaris have strange error it is set to "yes".
+</listitem></varlistentry>
+ <!-- ==== -->
  <varlistentry><term>READ_BUFFER_SIZE</term><listitem>
  (read-write) This property specifies the minimum buffer size that will be used for reads; this should be large enough to contain any block that may be read from the device, and must be larger than BLOCK_SIZE.  This property exists for tape devices which cannot determine the size of on-tape blocks, or which may discard data which overflows a small buffer.  The tapetype parameter <emphasis>READBLOCKSIZE</emphasis> sets this property.  See BLOCK SIZES, above.
 </listitem></varlistentry>

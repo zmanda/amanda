@@ -51,6 +51,7 @@ typedef struct _TapeDevice {
 
     /* characteristics of the device */
     gboolean fsf, bsf, fsr, bsr, eom, bsf_after_eom, broken_gmt_online;
+    gboolean nonblocking_open;
     int final_filemarks;
 
     /* 0 if we opened with O_RDWR; error otherwise. */
@@ -93,6 +94,10 @@ extern DevicePropertyBase device_property_eom;
 /* Is it necessary to perform a BSF after EOM? */
 extern DevicePropertyBase device_property_bsf_after_eom;
 #define PROPERTY_BSF_AFTER_EOM (device_property_bsf_after_eom.ID)
+
+/* Should the device be opened with O_NONBLOCK */
+extern DevicePropertyBase device_property_nonblocking_open;
+#define PROPERTY_NONBLOCKING_OPEN (device_property_nonblocking_open.ID)
 
 /* How many filemarks to write at EOD? (Default is 2).
  * This property is a G_TYPE_UINT, but can only really be set to 1 or 2. */

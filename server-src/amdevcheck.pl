@@ -128,6 +128,7 @@ if ( !$device ) {
 }
 
 if ($device->status() == $DEVICE_STATUS_SUCCESS) {
+    $device->configure(1);
     if(defined $getproplist ) {
 	list_device_property($device,$getproplist);
 	exit 0;

@@ -62,6 +62,7 @@ DevicePropertyBase device_property_fsr;
 DevicePropertyBase device_property_bsr;
 DevicePropertyBase device_property_eom;
 DevicePropertyBase device_property_bsf_after_eom;
+DevicePropertyBase device_property_nonblocking_open;
 DevicePropertyBase device_property_final_filemarks;
 
 void tape_device_register(void);
@@ -174,6 +175,15 @@ tape_device_init (TapeDevice * self) {
     device_set_simple_property(d_self, PROPERTY_EOM,
 	    &response, PROPERTY_SURETY_BAD, PROPERTY_SOURCE_DEFAULT);
     device_set_simple_property(d_self, PROPERTY_BSF_AFTER_EOM,
+	    &response, PROPERTY_SURETY_BAD, PROPERTY_SOURCE_DEFAULT);
+
+#ifdef DEFAULT_TAPE_NON_BLOCKING_OPEN
+    self->nonblocking_open = TRUE;
+#else
+    self->nonblocking_open = FALSE;
+#endif
+    g_value_set_boolean(&response, self->nonblocking_open);
+    device_set_simple_property(d_self, PROPERTY_NONBLOCKING_OPEN,
 	    &response, PROPERTY_SURETY_BAD, PROPERTY_SOURCE_DEFAULT);
     g_value_unset(&response);
 
@@ -306,6 +316,11 @@ tape_device_base_init (TapeDeviceClass * c)
 	    device_simple_property_get_fn,
 	    tape_device_set_feature_property_fn);
 
+    device_class_register_property(device_class, PROPERTY_NONBLOCKING_OPEN,
+	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
+	    device_simple_property_get_fn,
+	    tape_device_set_feature_property_fn);
+
     device_class_register_property(device_class, PROPERTY_FINAL_FILEMARKS,
 	    PROPERTY_ACCESS_GET_MASK | PROPERTY_ACCESS_SET_BEFORE_START,
 	    device_simple_property_get_fn,
@@ -370,6 +385,8 @@ tape_device_set_feature_property_fn(Device *p_self, DevicePropertyBase *base,
 	self->eom = new_bool;
     else if (base->ID == PROPERTY_BSF_AFTER_EOM)
 	self->bsf_after_eom = new_bool;
+    else if (base->ID == PROPERTY_NONBLOCKING_OPEN)
+	self->nonblocking_open = new_bool;
     else
 	return FALSE; /* shouldn't happen */
 
@@ -486,6 +503,11 @@ void tape_device_register(void) {
                                       "bsf_after_eom",
       "Does this drive require an MTBSF after MTEOM in order to append?" );
 
+    device_property_fill_and_register(&device_property_nonblocking_open,
+                                      G_TYPE_BOOLEAN,
+                                      "nonblocking_open",
+      "Does this drive require a open with O_NONBLOCK?" );
+
     device_property_fill_and_register(&device_property_final_filemarks,
                                       G_TYPE_UINT, "final_filemarks",
       "How many filemarks to write after the last tape file?" );
@@ -494,23 +516,65 @@ void tape_device_register(void) {
     register_device(tape_device_factory, device_prefix_list);
 }
 
+/* Open the tape device, trying various combinations of O_RDWR and
+   O_NONBLOCK.  Returns -1 and calls device_set_error for errors
+   On Linux, with O_NONBLOCK, the kernel just checks the state once,
+   whereas it checks it every second for ST_BLOCK_SECONDS if O_NONBLOCK is
+   not given.  Amanda already have the code to poll, we want open to check
+   the state only once. */
+
 static int try_open_tape_device(TapeDevice * self, char * device_filename) {
     int fd;
     int save_errno;
     DeviceStatusFlags new_status;
 
-    fd = robust_open(device_filename, O_RDWR,0);
+#ifdef O_NONBLOCK
+    int nonblocking = 0;
+
+    if (self->nonblocking_open) {
+	nonblocking = O_NONBLOCK;
+    }
+#endif
+
+#ifdef O_NONBLOCK
+    fd  = robust_open(device_filename, O_RDWR | nonblocking, 0);
     save_errno = errno;
+    if (fd < 0 && nonblocking && (save_errno == EWOULDBLOCK || save_errno == EINVAL)) {
+        /* Maybe we don't support O_NONBLOCK for tape devices. */
+        fd = robust_open(device_filename, O_RDWR, 0);
+	save_errno = errno;
+    }
+#else
+    fd = robust_open(device_filename, O_RDWR, 0);
+    save_errno = errno;
+#endif
     if (fd >= 0) {
         self->write_open_errno = 0;
     } else {
         if (errno == EACCES || errno == EPERM) {
             /* Device is write-protected. */
             self->write_open_errno = errno;
-            fd = robust_open(device_filename, O_RDONLY,0);
+#ifdef O_NONBLOCK
+            fd = robust_open(device_filename, O_RDONLY | nonblocking, 0);
 	    save_errno = errno;
+            if (fd < 0 && nonblocking && (save_errno == EWOULDBLOCK || save_errno == EINVAL)) {
+                fd = robust_open(device_filename, O_RDONLY, 0);
+		save_errno = errno;
+            }
+#else
+            fd = robust_open(device_filename, O_RDONLY, 0);
+	    save_errno = errno;
+#endif
         }
     }
+#ifdef O_NONBLOCK
+    /* Clear O_NONBLOCK for operations from now on. */
+    if (fd >= 0 && nonblocking)
+	fcntl(fd, F_SETFL, fcntl(fd, F_GETFL, 0) & ~O_NONBLOCK);
+    errno = save_errno;
+    /* function continues after #endif */
+
+#endif /* O_NONBLOCK */
 
     if (fd < 0) {
 	DeviceStatusFlags status_flag = 0;

@@ -1,3 +1,12 @@
+2009-02-12  Jean-Louis Martineau <martineau@zmanda.com>
+	* config/amanda/tape.m4: Define DEFAULT_TAPE_NON_BLOCKING_OPEN.
+	* device-src/tape-device.c: Use DEFAULT_TAPE_NON_BLOCKING_OPEN and
+	                            NONBLOCKING_OPEN property.
+	* device-src/tape-device.h (TapeDevice): Add nonblocking_open.
+	* man/xml-source/amanda-devices.7.xml: Document tape NONBLOCKING_OPEN
+	                                       property.
+	* server-src/amdevcheck.pl: Call $device->configure(1).
+
 2009-02-11  Dustin J. Mitchell <dustin@zmanda.com>
 	* changer-src/chg-rait.sh: get directory handling right (patch from
 	  Jim.pennino on wiki.zmanda.com)

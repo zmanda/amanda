@@ -184,4 +184,9 @@ AC_DEFUN([AMANDA_TAPE_DEVICE], [
 	],[
 	    AC_MSG_RESULT(no)
 	])
+
+    case "$target" in
+	*linux*) AC_DEFINE(DEFAULT_TAPE_NON_BLOCKING_OPEN,1,
+			[Define if open of tape device require O_NONBLOCK]);;
+    esac
 ])
