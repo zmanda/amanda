@@ -131,44 +131,52 @@ sub _manual_scan {
     my $self = shift;
     my %params = @_;
     my $nchecked = 0;
-    my $check_slot;
+    my ($run_success_cb, $run_fail_cb, $load_next);
 
-    # search manually, starting with "current".  This is complicated, because
-    # it's an event-based loop.
+    # search manually, starting with "current" and proceeding through nslots-1
+    # loads of "next"
 
     # TODO: support the case where nslots == -1
 
-    $check_slot = sub {
-        my ($err, $res) = @_;
+    $run_success_cb = sub {
+        my ($slot, $rest) = @_;
 
-        TRYSLOT: {
-            # ignore "benign" errors
-            next TRYSLOT if $err;
-
-            my $device = Amanda::Device->new($res->{'device_name'});
-            next TRYSLOT unless $device;
-            next TRYSLOT if ($device->read_label() != $DEVICE_STATUS_SUCCESS);
-            next TRYSLOT unless ($device->volume_label() eq $params{'label'});
-
+	my $device = Amanda::Device->new($rest);
+	if ($device and ($device->read_label() == $DEVICE_STATUS_SUCCESS)
+		    and ($device->volume_label() eq $params{'label'})) {
             # we found the correct slot
+	    my $res = Amanda::Changer::compat::Reservation->new($self, $slot, $rest);
             Amanda::MainLoop::call_later($params{'res_cb'}, undef, $res);
             return;
         }
 
-        # on to the next slot
+        $load_next->();
+    };
+
+    $run_fail_cb = sub {
+	my ($exitval, $message) = @_;
+
+	# don't continue scanning after a fatal error
+        if ($exitval > 1) {
+	    Amanda::MainLoop::call_later($params{'res_cb'}, $message, undef);
+	    return;
+	}
+
+	$load_next->();
+    };
+
+    $load_next = sub {
+	# if we've scanned all nslots, we haven't found the label.
         if (++$nchecked >= $self->{'nslots'}) {
             Amanda::MainLoop::call_later($params{'res_cb'},
                     "Volume '$params{label}' not found", undef);
             return;
-        } else {
-            # loop again with the next slot
-            $res->release(); # we know this completes immediately
-            $self->load(slot => "next", res_cb => $check_slot);
-        }
+	}
+
+	$self->_run_tpchanger($run_success_cb, $run_fail_cb, "-slot", "next");
     };
 
-    # kick off the loop with the current slot
-    $self->load(slot => "current", res_cb => $check_slot);
+    $self->_run_tpchanger($run_success_cb, $run_fail_cb, "-slot", "current");
 }
 
 sub info {
@@ -421,8 +429,13 @@ sub _run_tpchanger {
 	# everything is finished -- process the results and invoke the callback
 	chomp $child_output;
 
-	# handle fatal errors
-	if (!POSIX::WIFEXITED($child_exit_status) || POSIX::WEXITSTATUS($child_exit_status) > 1) {
+	# mark this object as no longer busy.  This frees the
+	# object up to begin the next operation, which may happen
+	# during the invocation of the callback
+	$self->{'busy'} = 0;
+
+	# handle unexpected exit status as a fatal error
+	if (!POSIX::WIFEXITED($child_exit_status) || POSIX::WEXITSTATUS($child_exit_status) > 2) {
 	    $failure_cb->(POSIX::WEXITSTATUS($child_exit_status),
 		"Fatal error from changer script: ".$child_output);
 	    return;
@@ -430,18 +443,19 @@ sub _run_tpchanger {
 
 	# parse the child's output
 	my @child_output = split '\n', $child_output;
-	$failure_cb->(2, "Malformed output from changer script -- no output")
-	    if (@child_output < 1);
-	$failure_cb->(2, "Malformed output from changer script -- too many lines")
-	    if (@child_output > 1);
-	$failure_cb->(2, "Malformed output from changer script: '$child_output[0]'")
-	    if ($child_output[0] !~ /\s*([^\s]+)(?:\s+(.+))?/);
+	if (@child_output < 1) {
+	    $failure_cb->(2, "Malformed output from changer script -- no output");
+	    return;
+	}
+	if (@child_output > 1) {
+	    $failure_cb->(2, "Malformed output from changer script -- too many lines");
+	    return;
+	}
+	if ($child_output[0] !~ /\s*([^\s]+)(?:\s+(.+))?/) {
+	    $failure_cb->(2, "Malformed output from changer script: '$child_output[0]'");
+	    return;
+	}
 	my ($slot, $rest) = ($1, $2);
-
-	# mark this object as no longer busy.  This frees the
-	# object up to begin the next operation, which may happen
-	# during the invocation of the callback
-	$self->{'busy'} = 0;
 
 	# let the callback take care of any further interpretation
 	my $exitval = POSIX::WEXITSTATUS($child_exit_status);
