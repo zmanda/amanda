@@ -94,6 +94,8 @@ AC_DEFUN([AMANDA_SYSHACKS], [
 		    ;;
         *-apple-darwin8*) # MacOS X 10.4.* (Tiger)
 		    ;;
+        *-apple-darwin9*) # MacOS X 10.5.* (Leopard)
+		    ;;
       *)
 		AMANDA_ADD_WARNING(
 [*****

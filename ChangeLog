@@ -1,3 +1,7 @@
+2009-02-17  Dustin J. Mitchell <dustin@zmanda.com>
+	* config/amanda/syshacks.m4: add Mac OS X Leopard on advice from
+	  Jose Hales-Garcia <jose@stat.ucla.edu>
+
 2009-02-12  Jean-Louis Martineau <martineau@zmanda.com>
 	* config/amanda/tape.m4: Define DEFAULT_TAPE_NON_BLOCKING_OPEN.
 	* device-src/tape-device.c: Use DEFAULT_TAPE_NON_BLOCKING_OPEN and
