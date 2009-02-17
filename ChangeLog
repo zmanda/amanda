@@ -1,3 +1,6 @@
+2009-02-17  Jean-Louis Martineau <martineau@zmanda.com>
+	* recover-src/extract_list.c: Set all_level with level_t.
+
 2009-02-17  Dustin J. Mitchell <dustin@zmanda.com>
 	* config/amanda/syshacks.m4: add Mac OS X Leopard on advice from
 	  Jose Hales-Garcia <jose@stat.ucla.edu>

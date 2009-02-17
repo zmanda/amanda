@@ -2261,7 +2261,9 @@ extract_files(void)
     g_options.hostname = dump_hostname;
     for (elist = first_tape_list(); elist != NULL;
 	 elist = next_tape_list(elist)) {
-	all_level = g_slist_append(all_level, GINT_TO_POINTER(elist->level));
+	level_t *level = g_new0(level_t, 1);
+	level->level = elist->level;
+	all_level = g_slist_append(all_level, level);
     }
     if (dump_dle) {
 	g_slist_free_full(dump_dle->levellist);
