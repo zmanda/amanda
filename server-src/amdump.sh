@@ -143,6 +143,13 @@ printf '%s: datestamp %s\n' "amdump" "$date_datestamp"
 printf '%s: starttime %s\n' "amdump" "$date_starttime"
 printf '%s: starttime-locale-independent %s\n' "amdump" "$date_locale_independent"
 
+if [ ! -x $amlibexecdir/planner$SUF ]; then
+    echo "ERROR amdump Can't execute $amlibexecdir/planner$SUF" >> $logdir/log
+fi
+if [ ! -x $amlibexecdir/driver$SUF ]; then
+    echo "ERROR amdump Can't execute $amlibexecdir/driver$SUF" >> $logdir/log
+fi
+
 # shells don't do well with handling exit values from pipelines, so we emulate
 # a pipeline in perl, in such a way that we can combine both exit statuses in a
 # kind of logical "OR".

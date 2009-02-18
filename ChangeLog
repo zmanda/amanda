@@ -1,3 +1,7 @@
+2009-02-18  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amdump.sh: Check if planner/driver are executable and
+	                        log error.
+
 2009-02-17  Dustin J. Mitchell <dustin@zmanda.com>
 	* restore-src/amfetchdump.c: remove unintended debugging messages
 
