@@ -1,3 +1,6 @@
+2009-02-17  Dustin J. Mitchell <dustin@zmanda.com>
+	* restore-src/amfetchdump.c: remove unintended debugging messages
+
 2009-02-17  Jean-Louis Martineau <martineau@zmanda.com>
 	* changer-src/chg-manual.sh: make messages clearer
 	* perl/Amanda/Changer/compat.pm: use _run_tpchanger directly from

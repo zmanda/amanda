@@ -146,7 +146,6 @@ list_needed_tapes(
     for(curmatch = matches; curmatch; curmatch = curmatch->next) {
 	int havetape = 0;
 
-	g_fprintf(stderr, "Examining %s %s on %s\n", curmatch->hostname, curmatch->diskname, curmatch->label);
 	/* keep only first dump if only_one */
 	if (only_one &&
 	    curmatch != matches &&
@@ -154,7 +153,6 @@ list_needed_tapes(
 	     strcmp(curmatch->diskname, matches->diskname) ||
 	     strcmp(curmatch->timestamp, matches->timestamp) ||
 	     curmatch->level != matches->level)) {
-	    g_fprintf(stderr, "only_one matched\n");
 	    continue;
 	}
 	if(strcmp("OK", curmatch->status)){
@@ -162,7 +160,6 @@ list_needed_tapes(
 		             curmatch->timestamp, curmatch->hostname,
 			     curmatch->diskname, curmatch->level,
 			     curmatch->status);
-	    g_fprintf(stderr, "!OK\n");
 	    continue;
 	}
 
