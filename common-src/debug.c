@@ -79,6 +79,9 @@ static void debug_logging_handler(const gchar *log_domain,
 	gpointer user_data);
 static void debug_setup_logging(void);
 
+/* By default, do not suppress tracebacks */
+static gboolean do_suppress_error_traceback = FALSE;
+
 /*
  * Generate a debug file name.  The name is based on the program name,
  * followed by a timestamp, an optional sequence number, and ".debug".
@@ -108,6 +111,15 @@ get_debug_name(
     result = vstralloc(get_pname(), ".", ts, number, ".debug", NULL);
     amfree(ts);
     return result;
+}
+
+/* Call this to suppress tracebacks on error() or g_critical().  This is used
+ * when a critical error is indicated in perl, and the traceback will not be
+ * useful. */
+void
+suppress_error_traceback(void)
+{
+    do_suppress_error_traceback = 1;
 }
 
 /* A GLogFunc to handle g_log calls.  This function assumes that user_data
@@ -196,7 +208,7 @@ debug_logging_handler(const gchar *log_domain G_GNUC_UNUSED,
 
 #ifdef HAVE_GLIBC_BACKTRACE
 	/* try logging a traceback to the debug log */
-	if (db_fd != -1) {
+	if (!do_suppress_error_traceback && db_fd != -1) {
 	    void *stack[32];
 	    int naddrs;
 	    naddrs = backtrace(stack, sizeof(stack)/sizeof(*stack));

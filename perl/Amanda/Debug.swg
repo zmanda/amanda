@@ -148,17 +148,18 @@ sub _my_die {
     } else {
 	my ($msg) = @_;
 	chomp $msg;
+	suppress_error_traceback();
 	critical(@_);
     }
 };
-$SIG{__DIE__} = \&my_die;
+$SIG{__DIE__} = \&_my_die;
 
 sub _my_warn {
     my ($msg) = @_;
     chomp $msg;
     warning(@_);
 };
-$SIG{__WARN__} = \&my_warn;
+$SIG{__WARN__} = \&_my_warn;
 
 # utility function for test scripts, which want to use the regular
 # perl mechanisms
@@ -185,6 +186,9 @@ void message(char *msg) { g_message("%s", msg); }
 void info(char *msg) { g_info("%s", msg); }
 void debug(char *msg) { g_debug("%s", msg); }
 %}
+
+/* used to suppress the traceback when calling from perl */
+void suppress_error_traceback(void);
 
 /*
  * Advanced

@@ -1,4 +1,9 @@
 2009-02-18  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/debug.h common-src/debug.c: add ability to supporess
+	  tracebacks
+	* perl/Amanda/Debug.swg: fix typo and suppress traceback on die()
+
+2009-02-18  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Makefile.am: actually install Amanda::Change::rait
 
 2009-02-18  Dustin J. Mitchell <dustin@zmanda.com>

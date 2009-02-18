@@ -213,6 +213,10 @@ char *	debug_fn(void);
  */
 void debug_dup_stderr_to_debug(void);
 
+/* error() and critical() will print a C stack trace if possible.  Set this to
+ * TRUE to avoid this stack trace.  This is used by perl wrappers, for example */
+void suppress_error_traceback(void);
+
 /*
  * PROCESS NAME
  */
