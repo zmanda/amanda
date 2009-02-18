@@ -1,4 +1,9 @@
 2009-02-18  Jean-Louis Martineau <martineau@zmanda.com>
+	patch by glowkrantz
+	* application-src/amzfs-sendrecv.pl: Use compression ratio for
+	                                     compressed filesystem.
+
+2009-02-18  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amdump.sh: Check if planner/driver are executable and
 	                        log error.
 
