@@ -221,6 +221,8 @@ amglue_add_constant(CONTEXT_SCRIPTUTIL, pcontext_t);
 amglue_copy_to_tag(pcontext_t, constants);
 
 %perlcode %{
+=head1 String Utilities
+
 =item C<quote_string($str)>
 
 Quote a string using Amanda's quoting algorithm.  Strings with no whitespace,
@@ -239,8 +241,24 @@ my($q, $remaider) = skip_quoted_string($str)
 
 Return the first quoted string and the remainder of the string.
 
-Both C<quote_string>, C<unquote_string> and C<skip_quoted_string> are
+All of C<quote_string>, C<unquote_string> and C<skip_quoted_string> are
 available under the export tag C<:quoting>.
+
+=item C<expand_braced_alternates($str)>
+=item C<collapse_braced_alternates(\@list)>
+
+These two functions handle "braced alternates", which is a syntax borrowed,
+partially, from shells.  Comma-separated strings enclosed in curly braces
+expand into multiple alternatives for the entire string.  For example:
+
+  "{foo,bar,bat}"   [ "foo", "bar", "bat" ]
+  "foo{1,2}bar"     [ "foo1bar", "foo2bar" ]
+  "foo{1\,2,3}bar"  [ "foo1,2bar", "foo3bar" ]
+  "{a,b}-{1,2}"     [ "a-1", "a-2", "b-1", "b-2" ]
+
+Note that nested braces are not processed.  Braces, commas, and backslashes may
+be escaped with backslashes.  On error, C<expand_braced_altnerates> returns
+undef.  These two functions are available in the export tag C<:alternates>.
 
 =cut
 
@@ -268,10 +286,52 @@ sub skip_quoted_string {
 
 %}
 
+%typemap (in) GPtrArray * {
+    AV *av;
+    guint len;
+    int i;
+
+    if (!SvROK($input) || SvTYPE(SvRV($input)) != SVt_PVAV) {
+	SWIG_exception(SWIG_TypeError, "Expected an arrayref");
+    }
+    av = (AV *)SvRV($input);
+
+    len = av_len(av)+1; /* av_len(av) is like $#av */
+    $1 = g_ptr_array_sized_new(len);
+    for (i = 0; i < len; i++) {
+	SV **elt = av_fetch(av, i, 0);
+	if (!elt || !SvPOK(*elt)) {
+	    SWIG_exception(SWIG_TypeError, "Non-string in arrayref");
+	}
+	g_ptr_array_add($1, SvPV_nolen(*elt)); /* TODO: handle unicode here */
+    }
+}
+%typemap (freearg) GPtrArray * {
+    g_ptr_array_free($1, FALSE);
+}
+
+%typemap (out) GPtrArray * {
+    if ($1) {
+	guint i;
+	for (i = 0; i < $1->len; i++) {
+	    $result = sv_2mortal(newSVpv(g_ptr_array_index($1, i), 0));
+	    argvi++;
+	}
+	g_ptr_array_free($1, TRUE);
+    } else {
+	$result = &PL_sv_undef;
+	argvi++;
+    }
+}
+
 char *sanitise_filename(char *inp);
 char *quote_string(char *);
 char *unquote_string(char *);
+GPtrArray *expand_braced_alternates(char *);
+%newobject collapse_braced_alternates;
+char *collapse_braced_alternates(GPtrArray *source);
 amglue_export_tag(quoting, quote_string unquote_string skip_quoted_string sanitise_filename);
+amglue_export_tag(alternates, expand_braced_alternates collapse_braced_alternates);
 
 %perlcode %{
 =item C<generate_timestamp()>

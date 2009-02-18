@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 28;
+use Test::More tests => 61;
 
 use lib "@amperldir@";
 use Data::Dumper;
@@ -75,4 +75,35 @@ my %unquote_checks = (
 while (my ($qstr, $uqstr) = each %unquote_checks) {
     is(Amanda::Util::unquote_string($qstr), $uqstr,
 	"unquote " . Dumper($qstr));
+}
+
+for my $a (keys %unquote_checks) {
+    for my $b ("unquoted", "\"quoted str\"") {
+	my ($a_out, $b_out) = Amanda::Util::skip_quoted_string("$a $b");
+	is_deeply([$a_out, $b_out], [$a, $b],
+	    "skip_quoted string over " . Dumper("$a $b"));
+    }
+}
+
+my @try_bracing = (
+    [ 'abc' ],
+    [ 'abc', 'def' ],
+    [ 'abc', 'def', 'ghi' ],
+    [ 'a,b', 'c' ],
+    [ 'a', 'b,c' ],
+    [ 'a', 'b,c', 'd' ],
+    [ 'a{b', 'c' ],
+    [ 'a', 'b{c' ],
+    [ 'a', 'b{c', 'd' ],
+    [ 'a}b', 'c' ],
+    [ 'a', 'b}c' ],
+    [ 'a', 'b}c', 'd' ],
+    [ 'a\\,b', 'c\\{d', 'e\\}f' ],
+);
+
+for my $strs (@try_bracing) {
+    my $rt = [ Amanda::Util::expand_braced_alternates(
+		    Amanda::Util::collapse_braced_alternates($strs)) ];
+    is_deeply($rt, $strs,
+	      "round-trip of " . Dumper($strs));
 }

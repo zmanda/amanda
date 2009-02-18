@@ -593,6 +593,152 @@ sanitize_string(
     return (ret);
 }
 
+/* Helper for expand_braced_alternates; returns a list of un-escaped strings
+ * for the first "component" of str, where a component is a plain string or a
+ * brace-enclosed set of alternatives.  str is pointing to the first character
+ * of the next component on return. */
+static GPtrArray *
+parse_braced_component(char **str)
+{
+    GPtrArray *result = g_ptr_array_new();
+
+    if (**str == '{') {
+	char *p = (*str)+1;
+	char *local = g_malloc(strlen(*str)+1);
+	char *current = local;
+	char *c = current;
+
+	while (1) {
+	    if (*p == '\0' || *p == '{') {
+		/* unterminated { .. } or extra '{' */
+		amfree(local);
+		g_ptr_array_free(result, TRUE);
+		return NULL;
+	    }
+
+	    if (*p == '}' || *p == ',') {
+		*c = '\0';
+		g_ptr_array_add(result, g_strdup(current));
+		current = ++c;
+
+		if (*p == '}')
+		    break;
+		else
+		    p++;
+	    }
+
+	    if (*p == '\\') {
+		if (*(p+1) == '{' || *(p+1) == '}' || *(p+1) == '\\' || *(p+1) == ',')
+		    p++;
+	    }
+	    *(c++) = *(p++);
+	}
+
+	amfree(local);
+
+	if (*p)
+	    *str = p+1;
+	else
+	    *str = p;
+    } else {
+	/* no braces -- just un-escape a plain string */
+	char *local = g_malloc(strlen(*str)+1);
+	char *r = local;
+	char *p = *str;
+
+	while (*p && *p != '{') {
+	    if (*p == '\\') {
+		if (*(p+1) == '{' || *(p+1) == '}' || *(p+1) == '\\' || *(p+1) == ',')
+		    p++;
+	    }
+	    *(r++) = *(p++);
+	}
+	*r = '\0';
+	g_ptr_array_add(result, local);
+	*str = p;
+    }
+
+    return result;
+}
+
+GPtrArray *
+expand_braced_alternates(
+    char * source)
+{
+    GPtrArray *rval = g_ptr_array_new();
+
+    g_ptr_array_add(rval, g_strdup(""));
+
+    while (*source) {
+	GPtrArray *new_components;
+	GPtrArray *new_rval;
+	guint i, j;
+
+	new_components = parse_braced_component(&source);
+	if (!new_components) {
+	    /* parse error */
+	    g_ptr_array_free(rval, TRUE);
+	    return NULL;
+	}
+
+	new_rval = g_ptr_array_new();
+
+	/* do a cartesian join of rval and new_components */
+	for (i = 0; i < rval->len; i++) {
+	    for (j = 0; j < new_components->len; j++) {
+		g_ptr_array_add(new_rval, g_strconcat(
+		    g_ptr_array_index(rval, i),
+		    g_ptr_array_index(new_components, j),
+		    NULL));
+	    }
+	}
+
+	g_ptr_array_free(rval, TRUE);
+	g_ptr_array_free(new_components, TRUE);
+	rval = new_rval;
+    }
+
+    return rval;
+}
+
+char *
+collapse_braced_alternates(
+    GPtrArray *source)
+{
+    GString *result = NULL;
+    guint i;
+
+    result = g_string_new("{");
+
+    for (i = 0; i < source->len; i ++) {
+	const char *str = g_ptr_array_index(source, i);
+	char *qstr = NULL;
+
+	if (strchr(str, ',') || strchr(str, '\\') ||
+	    strchr(str, '{') || strchr(str, '}')) {
+	    char *s, *d;
+
+	    s = str;
+	    qstr = d = g_malloc(strlen(str)*2+1);
+	    while (*s) {
+		if (*s == ',' || *s == '\\' || *s == '{' || *s == '}')
+		    *(d++) = '\\';
+		*(d++) = *(s++);
+	    }
+	    *(d++) = '\0';
+	}
+	g_string_append_printf(result, "%s%s", qstr? qstr : str,
+		(i < source->len-1)? "," : "");
+	if (qstr)
+	    g_free(qstr);
+    }
+
+    g_string_append(result, "}");
+    return g_string_free(result, FALSE);
+}
+
+
+
 /*
    Return 0 if the following characters are present
    * ( ) < > [ ] , ; : ! $ \ / "

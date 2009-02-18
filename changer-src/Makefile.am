@@ -42,8 +42,6 @@ SCRIPTS_SHELL = \
 		chg-chs \
 		chg-zd-mtx \
 		chg-juke \
-		chg-rait \
-		chg-null \
 		chg-mcutil \
 		chg-disk
 

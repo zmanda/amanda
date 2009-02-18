@@ -1,3 +1,18 @@
+2009-02-18  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/util.c common-src/util.h device-src/rait-device.c
+	  perl/Amanda/Util.swg installcheck/Amanda_Util.pl: move
+	  expand_braced_alternates and collapse_braced_alternates out of
+	  rait-device.c and into util.c, and make them available from Perl
+	* perl/Amanda/Changer/null.pm perl/Amanda/Changer/rait.pm
+	  perl/Makefile.am: new changers
+	* installcheck/Amanda_Changer_null.pl
+	  installcheck/Amanda_Changer_rait.pl installcheck/Makefile.am: test new
+	  changers
+	* changer-src/Makefile.am changer-src/chg-null.sh
+	  changer-src/chg-rait.sh: remove old scripts
+	* man/xml-source/amanda-changers.7.xml
+	  man/xml-source/amanda-devices.7.xml: update documentation
+
 2009-02-18  John Hein <jhein@timing.com>
 	* common-src/dgram.c: set the send buffer size when creating a new
 	  socket

@@ -99,9 +99,15 @@ generally only useful for testing purposes.</para>
 tapedev "rait:tape:/dev/rmt/tps0d{4,5,6}n"
 </programlisting>
 
-<para>The RAIT device driver mirrors or stripes data over multiple "child" devices.
-The child devices are specified using a shell-like syntax, where alternatives
-are enclosed in braces and separated by commas.</para>
+<para>The RAIT device driver mirrors or stripes data over multiple "child"
+devices.  The child devices are specified using a shell-like syntax, where
+alternatives are enclosed in braces and separated by commas.  Braces and commas
+can be escaped with a backslash.  Note that the backslash itself must be
+escaped in most contexts.  For example:
+<programlisting>
+tapedev "rait:{commandev:foo\\,bar,bracedev:foo\\}bar}"
+</programlisting>
+</para>
 
 <para>With two child devices, the RAIT device driver mirrors data such that the
 two devices contain identical data and can be used singly for

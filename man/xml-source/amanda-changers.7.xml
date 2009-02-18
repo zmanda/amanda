@@ -47,7 +47,10 @@ complexity.  When this transition is complete, Amanda devices will, in general,
 be specified via a changer, which will provide the necessary device specifier
 to access a requested volume.  In the interim, support for the "new" changer
 syntax is limited to the experimental
-<citerefentry><refentrytitle>amvault</refentrytitle><manvolnum>8</manvolnum></citerefentry>.</para>
+<citerefentry><refentrytitle>amvault</refentrytitle><manvolnum>8</manvolnum></citerefentry>.
+Older applications access the new changer API through a "glue" layer (chg-glue)
+which limits the functionality to version-1.0 features, and in many cases still
+run the old shell scripts via chg-compat.</para>
 
 </refsect1>
 
@@ -60,17 +63,20 @@ from devices (see
 <citerefentry><refentrytitle>amanda-devices</refentrytitle><manvolnum>7</manvolnum></citerefentry>).
 The next portion (<computeroutput>disk</computeroutput>, in this case)
 identifies the particular changer driver to use, and everything that follows
-the <computeroutput>:</computeroutput> is interpreted by the driver.</para>
+the <computeroutput>:</computeroutput> is interpreted by the driver.  Note that
+the <computeroutput>:</computeroutput> character is required, even when nothing
+follows it.  This is an easy way to distinguish new changer specifications from old.</para>
 
 <para>A name which does not match this pattern, but which matches an old
 changer script (e.g., <computeroutput>chg-zd-mtx</computeroutput>), invokes the
-backward-compatibility changer driver as
+backward-compatibility changer driver as e.g.,
 <computeroutput>chg-compat:chg-zd-mtx</computeroutput>.  If the name does not
 match an old changer, then it is treated as an Amanda device, and is wrapped by
 the single-device changer, e.g.,
 <computeroutput>chg-single:tape:/dev/rmt/0</computeroutput>.</para>
 
-<para>Changers which require additional parameters can also be described in &amconf; with "changer" sections, for example,
+<para>Changers which require additional parameters can also be described in
+&amconf; with "changer" sections, for example,
 <programlisting>
 define changer hp-robot {
     tapedev "chg-robot:/dev/sg1"
@@ -78,7 +84,6 @@ define changer hp-robot {
     property "slots" "1-10"
 }
 </programlisting>
-
 (note that "chg-robot" is not yet implemented, so this is hypothetical).  A
 changer defininition creates a changer "alias", in this case named
 <emphasis>hp-robot</emphasis>, which can then be named where an application
@@ -89,7 +94,7 @@ expects a changer - for example, the target of the <command>amvault</command> co
 
 <para>This section lists the changer drivers included with Amanda, and basic instructions for using them.  For complete How-To information, consult the Amanda wiki at http://wiki.zmanda.com.</para>
 
-<refsect2><title>chg-disk (new)</title>
+<refsect2><title>chg-disk:VTAPEROOT (new)</title>
 <programlisting>
 tpchanger "chg-disk:/u01/vtapes"
 </programlisting>
@@ -190,23 +195,36 @@ slotinfofile=FILENAME       #### record slot information to this file, in
 
 </refsect2>
 
-<refsect2><title>chg-rait</title>
+<refsect2><title>chg-rait:{CHILD1,CHILD2,..}</title>
 <programlisting>
-tpchanger "chg-rait"
-changerfile "chg-rait.conf"
+define changer "tapechanger" {
+    tpchanger "chg-zd-mtx"
+    changerdev "/dev/sg0"         # used with 'mtx -f'
+    changerfile "chg-zd-mtx.conf"
+    tapedev "tape:/dev/nst0"
+}
+tpchanger "chg-rait:{chg-disk:/path/to/vtape,tapechanger}"
 </programlisting>
 
-<para>This changer script constructs RAIT devices out of the devices provided by several "sub-changers".  The configuration file specifies <computeroutput>nchangers</computeroutput>, the number of
-subchangers, and then provides <computeroutput>tpchanger</computeroutput>, <computeroutput>changerdev_N</computeroutput>, <computeroutput>changerfile_N</computeroutput>, and <computeroutput>tpchanger_N</computeroutput> for each sub-changer, 1 through N.</para>
+<para>This changer script constructs RAIT devices out of the devices provided by several "sub-changers".  The sub-changers are specified using the same shell-like syntax as the RAIT device (see
+<citerefentry><refentrytitle>amanda-devices</refentrytitle><manvolnum>7</manvolnum></citerefentry>).</para>
+
+<para>Chg-rait does not require that all of the child changers have the same slot names: compound slot names are created by concatenating the slot names supplied by the child changers.  This makes it possible to, for example, mirror data on tapes in slots 1-10 to tapes in slots 11-20 of the same robot, using two <command>chg-zd-mtx</command> child changers (and, naturally, two tape drives).  In this arrangement, the first slot would be named <computeroutput>{1,11}</computeroutput>.</para>
+
+<note>The old chg-rait script is no longer supported nor shipped with Amanda, although the old script will continue to function via <command>chg-compat</command>, giving users time to upgrade their configuration.
+</note><!-- previous newline is important -->
 
 </refsect2>
 
-<refsect2><title>chg-null</title>
+<refsect2><title>chg-null:</title>
 <programlisting>
-tpchanger "chg-null"
+tpchanger "chg-null:"
 </programlisting>
 
-<para>This changer always provides the device "null:".  It is sometimes useful in conjunction with <command>chg-rait</command>.</para>
+<para>This changer always provides the device "null:".  It is sometimes useful in conjunction with <command>chg-rait:</command>.</para>
+
+<note>The old <command>chg-null</command> shell script is no longer shipped with Amanda.
+</note>
 
 </refsect2>
 
