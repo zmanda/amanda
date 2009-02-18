@@ -535,6 +535,7 @@ amglue_copy_to_tag(send_amreport_on_t, getconf);
  *    CONFTYPE_BOOLEAN -> IV
  *  - CONFTYPE_REAL -> NV
  *  - CONFTYPE_STR, CONFTYPE_IDENT -> PV
+ *  - CONFTYPE_APPLICATION -> PV
  *  - CONFTYPE_TIME -> IV (epoch timestamp)
  *  - CONFTYPE_COMPRESS, CONFTYPE_ENCRYPT, CONFTYPE_ESTIMATELIST, CONFTYPE_STRATEGY,
  *    CONFTYPE_TAPERALGO, CONFTYPE_PRIORITY, CONFTYPE_HOLDING, CONFTYPE_EXECUTE_ON,
@@ -672,6 +673,7 @@ amglue_copy_to_tag(send_amreport_on_t, getconf);
 
 	    case CONFTYPE_IDENT:	    /* same as STRING */
 	    case CONFTYPE_STR:
+	    case CONFTYPE_APPLICATION:
 		$result = sv_newmortal();
 		sv_setpv($result, val_t__str($1));
 		argvi++;
