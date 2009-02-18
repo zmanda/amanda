@@ -212,10 +212,11 @@ if WANT_SERVER
 # PACKAGE: Amanda::Changer::*
 AmandaChangerdir = $(amperldir)/Amanda/Changer
 AmandaChanger_DATA = \
-	Amanda/Changer/disk.pm \
 	Amanda/Changer/compat.pm \
-	Amanda/Changer/single.pm \
-	Amanda/Changer/null.pm
+	Amanda/Changer/disk.pm \
+	Amanda/Changer/null.pm \
+	Amanda/Changer/rait.pm \
+	Amanda/Changer/single.pm
 HTML_SOURCE_FILES += $(AmandaChanger_DATA)
 endif
 EXTRA_DIST += $(AmandaChanger_DATA)
