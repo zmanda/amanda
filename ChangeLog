@@ -1,4 +1,8 @@
 2009-02-18  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Amanda_Config.pl: installchecks for nested pp_scripts
+	  and applications
+
+2009-02-18  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/conffile.c common-src/conffile.h: use a simple
 	  identlist_t for pp_scripts
 	* server-src/amadmin.c server-src/diskfile.c server-src/diskfile.h

@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 114;
+use Test::More tests => 123;
 use strict;
 
 use lib "@amperldir@";
@@ -544,6 +544,54 @@ like($dump, qr/INCLUDE\s+LIST OPTIONAL "bing" "ting" "string" "fling"/i,
     "INCLUDE LIST is in the dump");
 like($dump, qr/INCLUDE\s+FILE OPTIONAL "rhyme"/i,
     "INCLUDE FILE is in the dump");
+
+##
+# Test nested definitions inside a dumptype
+
+$testconf = Installcheck::Config->new();
+$testconf->add_dumptype('nested_stuff', [
+    'comment' => '"contains a nested application, pp_script"',
+    'application' => '{
+	comment "my app"
+	plugin "amfun"
+}',
+    'script' => '{
+	comment "my script"
+	plugin "ppfun"
+}',
+]);
+
+$testconf->write();
+
+$cfg_result = config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
+is($cfg_result, $CFGERR_OK, 
+    "parsing nested config loaded")
+    or diag_config_errors();
+SKIP: {
+    skip "error loading config", 8 unless $cfg_result == $CFGERR_OK;
+
+    my $dtyp = lookup_dumptype("nested_stuff");
+    ok($dtyp, "found nested_stuff");
+
+    my $appname = dumptype_getconf($dtyp, $DUMPTYPE_APPLICATION);
+    like($appname, qr/^custom\(/,
+	"DUMPTYPE_APPLICATION is the generated name of an application subsection");
+
+    my $app = lookup_application($appname);
+    ok($app, ".. and that name leads to an application object");
+    is(application_getconf($app, $APPLICATION_COMMENT), "my app",
+	".. that has the right comment");
+
+    my $sc = dumptype_getconf($dtyp, $DUMPTYPE_PP_SCRIPTLIST);
+    ok(ref($sc) eq 'ARRAY' && @$sc == 1, "DUMPTYPE_PP_SCRIPTLIST returns a 1-element list");
+    like($sc->[0], qr/^custom\(/,
+	".. and the first element is the generated name of a script subsection");
+
+    $sc = lookup_pp_script($sc->[0]);
+    ok($sc, ".. and that name leads to a pp_script object");
+    is(pp_script_getconf($sc, $PP_SCRIPT_COMMENT), "my script",
+	".. that has the right comment");
+}
 
 ##
 # Explore a quirk of exinclude parsing.  Only the last
