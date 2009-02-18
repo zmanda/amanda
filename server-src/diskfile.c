@@ -1807,7 +1807,7 @@ xml_application(
  
 char *
 xml_scripts(
-    pp_scriptlist_t pp_scriptlist,
+    identlist_t pp_scriptlist,
     am_feature_t  *their_features)
 {
     char       *plugin;
@@ -1820,7 +1820,7 @@ xml_scripts(
     execute_on_t execute_on;
     int          execute_where;
     proplist_t  proplist;
-    pp_scriptlist_t pp_scriptlist1;
+    identlist_t pp_iter;
     pp_script_t *pp_script;
     xml_app_t   xml_app;
 
@@ -1828,9 +1828,11 @@ xml_scripts(
     xml_app.result   = stralloc("");
 
     xml_scr = stralloc("");
-    for (pp_scriptlist1=pp_scriptlist; pp_scriptlist1 != NULL;
-	 pp_scriptlist1 = pp_scriptlist1->next) {
-	pp_script = pp_scriptlist1->data;
+    for (pp_iter = pp_scriptlist; pp_iter != NULL;
+	 pp_iter = pp_iter->next) {
+	char *pp_script_name = pp_iter->data;
+	pp_script = lookup_pp_script(pp_script_name);
+	g_assert(pp_script != NULL);
 	plugin = pp_script_get_plugin(pp_script);
 	b64plugin = amxml_format_tag("plugin", plugin);
 	xml_scr1 = vstralloc("  <script>\n",

@@ -115,7 +115,7 @@ typedef struct disk_s {
     int		inprogress;		/* being dumped now? */
     int		todo;
     char       *application;
-    pp_scriptlist_t pp_scriptlist;
+    identlist_t pp_scriptlist;
     void	*up;			/* generic user pointer */
 } disk_t;
 
@@ -157,7 +157,7 @@ char *xml_estimate(estimatelist_t estimatelist, am_feature_t *their_features);
 char *clean_dle_str_for_client(char *dle_str);
 char *xml_application(application_t *application,
 		      am_feature_t *their_features);
-char *xml_scripts(pp_scriptlist_t pp_scriptlist, am_feature_t *their_features);
+char *xml_scripts(identlist_t pp_scriptlist, am_feature_t *their_features);
 
 char *match_disklist(disklist_t *origqp, int sargc, char **sargv);
 void free_disklist(disklist_t *dl);

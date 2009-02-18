@@ -1989,7 +1989,7 @@ disklist_one(
     am_host_t *hp;
     netif_t *ip;
     sle_t *excl;
-    pp_scriptlist_t pp_scriptlist;
+    identlist_t pp_scriptlist;
     estimatelist_t  estimates;
 
     hp = dp->host;
@@ -2168,7 +2168,7 @@ disklist_one(
     g_printf("        spindle %d\n", dp->spindle);
     pp_scriptlist = dp->pp_scriptlist;
     while (pp_scriptlist != NULL) {
-	g_printf("        script \"%s\"\n", (pp_script_name(pp_scriptlist->data)));
+	g_printf("        script \"%s\"\n", (char *)pp_scriptlist->data);
 	pp_scriptlist = pp_scriptlist->next;
     }
 

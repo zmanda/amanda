@@ -234,8 +234,6 @@ static int  conftoken_ungetc(int c);
 static void copy_proplist(gpointer key_p,
                           gpointer value_p,
                           gpointer user_data_p);
-static void copy_pp_scriptlist(gpointer data_p,
-                               gpointer user_data_p);
 
 /*
  * Parser
@@ -625,7 +623,6 @@ static void conf_init_rate(val_t *val, float r1, float r2);
 static void conf_init_exinclude(val_t *val); /* to empty list */
 static void conf_init_intrange(val_t *val, int i1, int i2);
 static void conf_init_proplist(val_t *val); /* to empty list */
-static void conf_init_pp_scriptlist(val_t *);
 static void conf_init_application(val_t *val);
 
 /*
@@ -661,7 +658,6 @@ static void free_property_t(gpointer p);
 /* Utility functions/structs for val_t_display_strs */
 static char *exinclude_display_str(val_t *val, int file);
 static void proplist_display_str_foreach_fn(gpointer key_p, gpointer value_p, gpointer user_data_p);
-static void pp_scriptlist_display_str_foreach_fn(gpointer data_p, gpointer user_data_p);
 static void val_t_print_token(FILE *output, char *prefix, char *format, keytab_t *kt, val_t *val);
 
 /* Given a key name as used in config overwrites, return a pointer to the corresponding
@@ -2099,7 +2095,7 @@ init_dumptype_defaults(void)
     conf_init_bool     (&dpcur.value[DUMPTYPE_IGNORE]            , 0);
     conf_init_bool     (&dpcur.value[DUMPTYPE_INDEX]             , 1);
     conf_init_application(&dpcur.value[DUMPTYPE_APPLICATION]);
-    conf_init_pp_scriptlist(&dpcur.value[DUMPTYPE_PP_SCRIPTLIST]);
+    conf_init_identlist(&dpcur.value[DUMPTYPE_PP_SCRIPTLIST], NULL);
     conf_init_proplist(&dpcur.value[DUMPTYPE_PROPERTY]);
 }
 
@@ -3344,14 +3340,8 @@ read_property(
 	    if (old_property->priority)
 		property->priority = 1;
 	    property->values = old_property->values;
+	    old_property->values = NULL;
 	}
-    } else {
-	property->values = g_hash_table_lookup(val->v.proplist, key);
-	if (old_property) {
-	    g_slist_free(old_property->values);
-	    amfree(old_property);
-	}
-	property->values = NULL;
     }
     while(tok == CONF_STRING) {
 	property->values = g_slist_append(property->values,
@@ -3411,7 +3401,7 @@ read_dpp_script(
 	conf_parserror(_("pp_script name expected: %d %d"), tok, CONF_STRING);
 	return;
     }
-    val->v.pp_scriptlist = g_slist_append(val->v.pp_scriptlist, pp_script);
+    val->v.identlist = g_slist_append(val->v.identlist, stralloc(pp_script->name));
     ckseen(&val->seen);
 }
 static void
@@ -4858,13 +4848,6 @@ conf_init_send_amreport(
     val->v.i = i;
 }
 
-static void conf_init_pp_scriptlist(val_t *val) {
-    val->seen.linenum = 0;
-    val->seen.filename = NULL;
-    val->type = CONFTYPE_PP_SCRIPTLIST;
-    val->v.proplist = NULL;
-}
-
 static void conf_init_application(val_t *val) {
     val->seen.linenum = 0;
     val->seen.filename = NULL;
@@ -5721,14 +5704,6 @@ copy_val_t(
 	    }
 	    break;
 
-	case CONFTYPE_PP_SCRIPTLIST:
-	    valdst->v.pp_scriptlist = NULL;
-	    if (valsrc->v.pp_scriptlist) {
-		g_slist_foreach(valsrc->v.pp_scriptlist, &copy_pp_scriptlist,
-				&valdst->v.pp_scriptlist);
-	    }
-	    break;
-
 	case CONFTYPE_APPLICATION:
 	    valdst->v.s = stralloc(valsrc->v.s);
 	    break;
@@ -5756,17 +5731,6 @@ copy_proplist(
 					      stralloc(elem->data));
     }
     g_hash_table_insert(proplist, stralloc(property_s), new_property);
-}
-
-static void
-copy_pp_scriptlist(
-    gpointer data_p,
-    gpointer user_data_p)
-{
-    pp_script_t *pp_script   = data_p;
-    pp_scriptlist_t *pp_scriptlist = user_data_p;
-
-    *pp_scriptlist = g_slist_append(*pp_scriptlist, pp_script);
 }
 
 static void
@@ -5817,10 +5781,6 @@ free_val_t(
         case CONFTYPE_PROPLIST:
             g_hash_table_destroy(val_t__proplist(val));
             break;
-
-	case CONFTYPE_PP_SCRIPTLIST:
-	    g_slist_free(val->v.pp_scriptlist);
-	    break;
     }
     val->seen.linenum = 0;
     val->seen.filename = NULL;
@@ -6411,21 +6371,6 @@ val_t_display_strs(
         break;
     }
 
-    case CONFTYPE_PP_SCRIPTLIST: {
-	int    nb_pp_scriplist;
-	char **mybuf;
-
-	nb_pp_scriplist = g_slist_length(val_t__pp_scriptlist(val));
-	amfree(buf);
-	buf = malloc((nb_pp_scriplist+1)*SIZEOF(char*));
-	buf[nb_pp_scriplist] = NULL;
-	mybuf = buf;
-	g_slist_foreach(val_t__pp_scriptlist(val),
-			pp_scriptlist_display_str_foreach_fn,
-			&mybuf);
-        break;
-    }
-
     case CONFTYPE_APPLICATION: {
 	if (val->v.s) {
 	    buf[0] = vstrallocf("\"%s\"", val->v.s);
@@ -6536,18 +6481,6 @@ val_t_to_execute_where(
     return val->v.i;
 }
 
-pp_scriptlist_t
-val_t_to_pp_scriptlist(
-    val_t *val)
-{
-    if (val->type != CONFTYPE_PP_SCRIPTLIST) {
-	error(_("get_conftype_proplist: val.type is not CONFTYPE_PP_SCRIPTLIST"));
-	/*NOTREACHED*/
-    }
-    return val->v.pp_scriptlist;
-}
-
-
 char *
 val_t_to_application(
     val_t *val)
@@ -6582,19 +6515,6 @@ proplist_display_str_foreach_fn(
     }
     (*msg)++;
 }
-
-static void
-pp_scriptlist_display_str_foreach_fn(
-    gpointer data_p,
-    gpointer user_data_p)
-{
-    pp_script_t *pp_script = data_p;
-    char ***msg      = (char ***)user_data_p;
-
-    **msg = vstralloc("\"", pp_script->name, "\"", NULL);
-    (*msg)++;
-}
-
 
 static char *
 exinclude_display_str(

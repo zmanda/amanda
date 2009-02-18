@@ -181,7 +181,6 @@ typedef struct {
 } property_t;
 
 typedef GHashTable* proplist_t;
-typedef GSList* pp_scriptlist_t;
 /* A GSlist where each element is a 'char*' */
 typedef GSList* identlist_t;
 
@@ -211,7 +210,6 @@ typedef enum {
     CONFTYPE_EXECUTE_ON,
     CONFTYPE_EXECUTE_WHERE,
     CONFTYPE_SEND_AMREPORT_ON,
-    CONFTYPE_PP_SCRIPTLIST,
     CONFTYPE_IDENTLIST,
 } conftype_t;
 
@@ -238,7 +236,6 @@ typedef struct val_s {
         exinclude_t	exinclude;
         int		intrange[2];
         proplist_t      proplist;
-	pp_scriptlist_t pp_scriptlist;
 	estimatelist_t  estimatelist;
 	identlist_t     identlist;
     } v;
@@ -270,7 +267,6 @@ exinclude_t           val_t_to_exinclude(val_t *);
 int                  *val_t_to_intrange (val_t *); /* array of two ints */
 proplist_t            val_t_to_proplist (val_t *);
 char                 *val_t_to_application(val_t *);
-pp_scriptlist_t       val_t_to_pp_scriptlist(val_t *);
 execute_on_t          val_t_to_execute_on(val_t *);
 execute_where_t       val_t_to_execute_where(val_t *);
 send_amreport_t       val_t_to_send_amreport(val_t *);
@@ -318,7 +314,6 @@ send_amreport_t       val_t_to_send_amreport(val_t *);
 #define val_t__exinclude(val)     ((val)->v.exinclude)
 #define val_t__intrange(val)      ((val)->v.intrange)
 #define val_t__proplist(val)      ((val)->v.proplist)
-#define val_t__pp_scriptlist(val) ((val)->v.pp_scriptlist)
 #define val_t__application(val)   ((val)->v.application)
 #define val_t__execute_on(val)    ((val)->v.i)
 #define val_t__execute_where(val) ((val)->v.i)
@@ -719,7 +714,7 @@ char *dumptype_name(dumptype_t *dtyp);
 #define dumptype_get_ignore(dtyp)              (val_t_to_boolean(dumptype_getconf((dtyp), DUMPTYPE_IGNORE)))
 #define dumptype_get_index(dtyp)               (val_t_to_boolean(dumptype_getconf((dtyp), DUMPTYPE_INDEX)))
 #define dumptype_get_application(dtyp)         (val_t_to_application(dumptype_getconf((dtyp), DUMPTYPE_APPLICATION)))
-#define dumptype_get_pp_scriptlist(dtyp)       (val_t_to_pp_scriptlist(dumptype_getconf((dtyp), DUMPTYPE_PP_SCRIPTLIST)))
+#define dumptype_get_pp_scriptlist(dtyp)       (val_t_to_identlist(dumptype_getconf((dtyp), DUMPTYPE_PP_SCRIPTLIST)))
 #define dumptype_get_property(dtyp)            (val_t_to_proplist(dumptype_getconf((dtyp), DUMPTYPE_PROPERTY)))
 
 /*

@@ -1,4 +1,10 @@
 2009-02-18  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/conffile.c common-src/conffile.h: use a simple
+	  identlist_t for pp_scripts
+	* server-src/amadmin.c server-src/diskfile.c server-src/diskfile.h
+	  server-src/server_util.c: use identlist_t's
+
+2009-02-18  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Config.swg: perl bindings
 
 2009-02-18  Jean-Louis Martineau <martineau@zmanda.com>

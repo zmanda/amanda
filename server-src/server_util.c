@@ -339,11 +339,13 @@ run_server_scripts(
     disk_t	 *dp,
     int           level)
 {
-    GSList   *pp_scriptlist;
+    identlist_t pp_scriptlist;
 
     for (pp_scriptlist = dp->pp_scriptlist; pp_scriptlist != NULL;
 	 pp_scriptlist = pp_scriptlist->next) {
-	run_server_script(pp_scriptlist->data, execute_on, config, dp, level);
+	pp_script_t *pp_script = lookup_pp_script((char *)pp_scriptlist->data);
+	g_assert(pp_script != NULL);
+	run_server_script(pp_script, execute_on, config, dp, level);
     }
 }
 
