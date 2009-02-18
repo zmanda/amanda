@@ -114,7 +114,7 @@ typedef struct disk_s {
     int		spindle;		/* spindle # - for parallel dumps */
     int		inprogress;		/* being dumped now? */
     int		todo;
-    application_t *application;
+    char       *application;
     pp_scriptlist_t pp_scriptlist;
     void	*up;			/* generic user pointer */
 } disk_t;

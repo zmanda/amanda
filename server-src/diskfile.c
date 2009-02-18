@@ -328,6 +328,7 @@ free_disklist(
 {
     disk_t    *dp;
     am_host_t *host, *hostnext;
+    netif_t *netif, *next_if;
 
     while (dl->head != NULL) {
 	dp = dequeue_disk(dl);
@@ -349,6 +350,12 @@ free_disklist(
 	amfree(host);
     }
     hostlist=NULL;
+
+    for (netif = all_netifs; netif != NULL; netif = next_if) {
+	next_if = netif->next;
+	amfree(netif);
+    }
+    all_netifs = NULL;
 }
 
 static char *
@@ -524,7 +531,7 @@ parse_diskline(
     if (!disk) {
 	disk = alloc(SIZEOF(disk_t));
 	disk->line = line_num;
-	disk->hostname = stralloc(hostname);
+	disk->hostname = hostname;
 	disk->name = diskname;
 	disk->device = diskdevice;
 	disk->spindle = -1;
@@ -607,7 +614,6 @@ parse_diskline(
 
 	    disk_parserror(filename, line_num, _("undefined dumptype `%s'"), qdt);
 	    amfree(qdt);
-	    amfree(dumptype);
 	    amfree(hostname);
 	    if (!dup) {
 		amfree(disk->device);
@@ -619,6 +625,7 @@ parse_diskline(
 	    }
 	    return (-1);
 	}
+	amfree(dumptype);
     }
 
     if (dup) {
@@ -781,7 +788,7 @@ parse_diskline(
 	host->next = hostlist;
 	hostlist = host;
 
-	host->hostname = hostname;
+	host->hostname = stralloc(hostname);
 	hostname = NULL;
 	host->disks = NULL;
 	host->inprogress = 0;
@@ -792,8 +799,6 @@ parse_diskline(
 	host->features = NULL;
 	host->pre_script = 0;
 	host->post_script = 0;
-    } else {
-	amfree(hostname);
     }
 
     host->netif = netif;

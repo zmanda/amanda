@@ -1,4 +1,13 @@
 2009-02-18  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c common-src/conffile.h: Change
+	  DUMPTYPE_APPLICATION to give a string val_t; remove the
+	  pointer-to-application val_t subtype; also fix many
+	  memory leaks and simplify memory management
+	* server-src/amadmin.c server-src/amcheck.c server-src/amindexd.c
+	  server-src/diskfile.c server-src/diskfile.h server-src/driverio.c
+	  server-src/planner.c: use new val_t result correctly
+
+2009-02-18  Jean-Louis Martineau <martineau@zmanda.com>
 	* client-src/selfcheck.c: Do dle check without disk.
 	* common-src/amxml.c: Accept a dle without a disk.
 	* perl/Amanda/Application/Zfs.pm, application-src/amgtar.c,

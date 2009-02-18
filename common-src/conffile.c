@@ -654,6 +654,9 @@ static void free_val_t(val_t *);
  * Utilities
  */
 
+/* memory handling */
+static void free_property_t(gpointer p);
+
 
 /* Utility functions/structs for val_t_display_strs */
 static char *exinclude_display_str(val_t *val, int file);
@@ -3335,6 +3338,8 @@ read_property(
 
     old_property = g_hash_table_lookup(val->v.proplist, key);
     if (property->append) {
+	/* old_property will be freed by g_hash_table_insert, so
+	 * steal its values */
 	if (old_property) {
 	    if (old_property->priority)
 		property->priority = 1;
@@ -3363,17 +3368,17 @@ read_dapplication(
     conf_var_t *np G_GNUC_UNUSED,
     val_t      *val)
 {
+    application_t *application;
 
     get_conftoken(CONF_ANY);
     if (tok == CONF_LBRACE) {
-	val->v.application = read_application(vstralloc("custom(DUMPTYPE:",
-							dpcur.name, ")", ".",
-							anonymous_value(),NULL),
-					      NULL, NULL, NULL);
-
+	application = read_application(vstralloc("custom(DUMPTYPE:",
+						 dpcur.name, ")", ".",
+						 anonymous_value(),NULL),
+				       NULL, NULL, NULL);
     } else if (tok == CONF_STRING) {
-	val->v.application = lookup_application(tokenval.v.s);
-	if (val->v.application == NULL) {
+	application = lookup_application(tokenval.v.s);
+	if (application == NULL) {
 	    conf_parserror(_("Unknown application named: %s"), tokenval.v.s);
 	    return;
 	}
@@ -3381,6 +3386,7 @@ read_dapplication(
 	conf_parserror(_("application name expected: %d %d"), tok, CONF_STRING);
 	return;
     }
+    val->v.s = stralloc(application->name);
     ckseen(&val->seen);
 }
 
@@ -4146,7 +4152,7 @@ config_uninit(void)
     for(hp=holdinglist; hp != NULL; hp = hp->next) {
 	hd = hp->data;
 	amfree(hd->name);
-	for(i=0; i<HOLDING_HOLDING-1; i++) {
+	for(i=0; i<HOLDING_HOLDING; i++) {
 	   free_val_t(&hd->value[i]);
 	}
     }
@@ -4155,7 +4161,7 @@ config_uninit(void)
 
     for(dp=dumplist; dp != NULL; dp = dpnext) {
 	amfree(dp->name);
-	for(i=0; i<DUMPTYPE_DUMPTYPE-1; i++) {
+	for(i=0; i<DUMPTYPE_DUMPTYPE; i++) {
 	   free_val_t(&dp->value[i]);
 	}
 	dpnext = dp->next;
@@ -4165,7 +4171,7 @@ config_uninit(void)
 
     for(tp=tapelist; tp != NULL; tp = tpnext) {
 	amfree(tp->name);
-	for(i=0; i<TAPETYPE_TAPETYPE-1; i++) {
+	for(i=0; i<TAPETYPE_TAPETYPE; i++) {
 	   free_val_t(&tp->value[i]);
 	}
 	tpnext = tp->next;
@@ -4175,7 +4181,7 @@ config_uninit(void)
 
     for(ip=interface_list; ip != NULL; ip = ipnext) {
 	amfree(ip->name);
-	for(i=0; i<INTER_INTER-1; i++) {
+	for(i=0; i<INTER_INTER; i++) {
 	   free_val_t(&ip->value[i]);
 	}
 	ipnext = ip->next;
@@ -4185,7 +4191,7 @@ config_uninit(void)
 
     for(ap=application_list; ap != NULL; ap = apnext) {
 	amfree(ap->name);
-	for(i=0; i<INTER_INTER-1; i++) {
+	for(i=0; i<APPLICATION_APPLICATION; i++) {
 	   free_val_t(&ap->value[i]);
 	}
 	apnext = ap->next;
@@ -4195,7 +4201,7 @@ config_uninit(void)
 
     for(pp=pp_script_list; pp != NULL; pp = ppnext) {
 	amfree(pp->name);
-	for(i=0; i<INTER_INTER-1; i++) {
+	for(i=0; i<PP_SCRIPT_PP_SCRIPT; i++) {
 	   free_val_t(&pp->value[i]);
 	}
 	ppnext = pp->next;
@@ -4205,7 +4211,7 @@ config_uninit(void)
 
     for(dc=device_config_list; dc != NULL; dc = dcnext) {
 	amfree(dc->name);
-	for(i=0; i<INTER_INTER-1; i++) {
+	for(i=0; i<DEVICE_CONFIG_DEVICE_CONFIG; i++) {
 	   free_val_t(&dc->value[i]);
 	}
 	dcnext = dc->next;
@@ -4215,7 +4221,7 @@ config_uninit(void)
 
     for(cc=changer_config_list; cc != NULL; cc = ccnext) {
 	amfree(cc->name);
-	for(i=0; i<INTER_INTER-1; i++) {
+	for(i=0; i<CHANGER_CONFIG_CHANGER_CONFIG; i++) {
 	   free_val_t(&cc->value[i]);
 	}
 	ccnext = cc->next;
@@ -4224,7 +4230,7 @@ config_uninit(void)
 
     changer_config_list = NULL;
 
-    for(i=0; i<CNF_CNF-1; i++)
+    for(i=0; i<CNF_CNF; i++)
 	free_val_t(&conf_data[i]);
 
     if (applied_config_overwrites) {
@@ -4234,6 +4240,7 @@ config_uninit(void)
 
     amfree(config_name);
     amfree(config_dir);
+    amfree(config_filename);
 
     g_slist_free_full(seen_filenames);
     seen_filenames = NULL;
@@ -4799,6 +4806,15 @@ conf_init_intrange(
 }
 
 static void
+free_property_t(
+    gpointer p)
+{
+    property_t *propery = (property_t *)p;
+    g_slist_free_full(propery->values);
+    amfree(propery);
+}
+
+static void
 conf_init_proplist(
     val_t *val)
 {
@@ -4806,7 +4822,7 @@ conf_init_proplist(
     val->seen.filename = NULL;
     val->type = CONFTYPE_PROPLIST;
     val_t__proplist(val) =
-        g_hash_table_new_full(g_str_hash, g_str_equal, NULL, NULL);
+        g_hash_table_new_full(g_str_hash, g_str_equal, &g_free, &free_property_t);
 }
 
 static void
@@ -4853,7 +4869,7 @@ static void conf_init_application(val_t *val) {
     val->seen.linenum = 0;
     val->seen.filename = NULL;
     val->type = CONFTYPE_APPLICATION;
-    val->v.application = NULL;
+    val->v.s = NULL;
 }
 
 
@@ -5695,7 +5711,8 @@ copy_val_t(
 	    if (valsrc->v.proplist) {
 		valdst->v.proplist = g_hash_table_new_full(g_str_hash,
 							   g_str_equal,
-							   NULL, NULL);
+							   &g_free,
+							   &free_property_t);
 
 		g_hash_table_foreach(valsrc->v.proplist, &copy_proplist,
 				     valdst->v.proplist);
@@ -5713,7 +5730,7 @@ copy_val_t(
 	    break;
 
 	case CONFTYPE_APPLICATION:
-	    valdst->v.application = valsrc->v.application;
+	    valdst->v.s = stralloc(valsrc->v.s);
 	    break;
 	}
     }
@@ -5738,7 +5755,7 @@ copy_proplist(
 	new_property->values = g_slist_append(new_property->values,
 					      stralloc(elem->data));
     }
-    g_hash_table_insert(proplist, property_s, new_property);
+    g_hash_table_insert(proplist, stralloc(property_s), new_property);
 }
 
 static void
@@ -5777,6 +5794,7 @@ free_val_t(
 
 	case CONFTYPE_IDENT:
 	case CONFTYPE_STR:
+	case CONFTYPE_APPLICATION:
 	    amfree(val->v.s);
 	    break;
 
@@ -5801,10 +5819,7 @@ free_val_t(
             break;
 
 	case CONFTYPE_PP_SCRIPTLIST:
-	    g_slist_free_full(val->v.pp_scriptlist);
-	    break;
-
-	case CONFTYPE_APPLICATION:
+	    g_slist_free(val->v.pp_scriptlist);
 	    break;
     }
     val->seen.linenum = 0;
@@ -6412,8 +6427,8 @@ val_t_display_strs(
     }
 
     case CONFTYPE_APPLICATION: {
-	if (val->v.application) {
-	    buf[0] = vstrallocf("\"%s\"", val->v.application->name);
+	if (val->v.s) {
+	    buf[0] = vstrallocf("\"%s\"", val->v.s);
 	} else {
 	    buf[0] = stralloc("");
 	}
@@ -6533,7 +6548,7 @@ val_t_to_pp_scriptlist(
 }
 
 
-application_t *
+char *
 val_t_to_application(
     val_t *val)
 {
@@ -6541,7 +6556,7 @@ val_t_to_application(
 	error(_("get_conftype_applicaiton: val.type is not CONFTYPE_APPLICATION"));
 	/*NOTREACHED*/
     }
-    return val->v.application;
+    return val->v.s;
 }
 
 

@@ -1581,8 +1581,12 @@ main(
 		l = vstralloc("<dle>\n",
 			      "  <program>", dp->program, "</program>\n", NULL);
 		if (dp->application) {
-		    char *xml_app = xml_application(dp->application,
-						    their_features);
+		    application_t *application;
+		    char *xml_app;
+
+		    application = lookup_application(dp->application);
+		    g_assert(application != NULL);
+		    xml_app = xml_application(application, their_features);
 		    vstrextend(&l, xml_app, NULL);
 		    amfree(xml_app);
 		}

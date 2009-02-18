@@ -238,7 +238,6 @@ typedef struct val_s {
         exinclude_t	exinclude;
         int		intrange[2];
         proplist_t      proplist;
-	struct application_s  *application;
 	pp_scriptlist_t pp_scriptlist;
 	estimatelist_t  estimatelist;
 	identlist_t     identlist;
@@ -270,7 +269,7 @@ float                *val_t_to_rate     (val_t *); /* array of two floats */
 exinclude_t           val_t_to_exinclude(val_t *);
 int                  *val_t_to_intrange (val_t *); /* array of two ints */
 proplist_t            val_t_to_proplist (val_t *);
-struct application_s *val_t_to_application(val_t *);
+char                 *val_t_to_application(val_t *);
 pp_scriptlist_t       val_t_to_pp_scriptlist(val_t *);
 execute_on_t          val_t_to_execute_on(val_t *);
 execute_where_t       val_t_to_execute_where(val_t *);

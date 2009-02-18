@@ -422,6 +422,14 @@ dumper_cmd(
 	}
 
 	if (dp != NULL) {
+	    application_t *application = NULL;
+	    char *plugin;
+
+	    if (dp->application != NULL) {
+		application = lookup_application(dp->application);
+		g_assert(application != NULL);
+	    }
+
 	    device = quote_string((dp->device) ? dp->device : "NODEVICE");
 	    qname = quote_string(dp->name);
 	    g_snprintf(number, SIZEOF(number), "%d", sched(dp)->level);
@@ -429,11 +437,12 @@ dumper_cmd(
 	    features = am_feature_to_string(dp->host->features);
 	    if (am_has_feature(dp->host->features, fe_req_xml)) {
 		o = xml_optionstr(dp, dp->host->features, NULL, 1);
-		if (dp->application) {
-		    char *app = xml_application(dp->application,
-						dp->host->features);
-		    vstrextend(&o, app, NULL);
-		    amfree(app);
+		if (application) {
+		    char *xml_app;
+		    xml_app = xml_application(application,
+					      dp->host->features);
+		    vstrextend(&o, xml_app, NULL);
+		    amfree(xml_app);
 		}
 		o = quote_string(o);
 	    } else {
@@ -443,7 +452,16 @@ dumper_cmd(
 	      error(_("problem with option string, check the dumptype definition.\n"));
 	    }
 
+	    g_assert(dp->program);
+	    if (0 == strcmp(dp->program, "APPLICATION")) {
+		g_assert(application != NULL);
+		plugin = application_get_plugin(application);
+	    } else {
+		plugin = dp->program;
+	    }
+
 	    dbprintf("security_driver %s\n", dp->auth);
+
 	    cmdline = vstralloc(cmdstr[cmd],
 			    " ", disk2serial(dp),
 			    " ", numberport,
@@ -453,7 +471,7 @@ dumper_cmd(
 			    " ", device,
 			    " ", number,
 			    " ", sched(dp)->dumpdate,
-			    " ", dp->program && strcmp(dp->program,"APPLICATION")!=0 ? dp->program: application_get_plugin(dp->application),
+			    " ", plugin,
 			    " ", dp->amandad_path,
 			    " ", dp->client_username,
 			    " ", dp->ssh_keys,

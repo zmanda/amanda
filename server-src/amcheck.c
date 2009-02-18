@@ -1757,10 +1757,18 @@ start_host(
 		    l = vstralloc("<dle>\n"
 				  "  <program>APPLICATION</program>\n", NULL);
 		    if (dp->application) {
-			char *xml_app = xml_application(dp->application,
-							hostp->features);
-			vstrextend(&l, xml_app, NULL);
-			amfree(xml_app);
+			application_t *application;
+			char          *xml_app;
+
+			application = lookup_application(dp->application);
+			if (!application) {
+			    g_fprintf(outf,
+			      _("ERROR: application '%s' not found.\n"), dp->application);
+			} else {
+			    xml_app = xml_application(application, hostp->features);
+			    vstrextend(&l, xml_app, NULL);
+			    amfree(xml_app);
+			}
 		    }
 		    if (dp->pp_scriptlist) {
 			if (!am_has_feature(hostp->features, fe_pp_script)) {
