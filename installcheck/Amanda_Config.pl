@@ -582,8 +582,8 @@ SKIP: {
     is(application_getconf($app, $APPLICATION_COMMENT), "my app",
 	".. that has the right comment");
 
-    my $sc = dumptype_getconf($dtyp, $DUMPTYPE_PP_SCRIPTLIST);
-    ok(ref($sc) eq 'ARRAY' && @$sc == 1, "DUMPTYPE_PP_SCRIPTLIST returns a 1-element list");
+    my $sc = dumptype_getconf($dtyp, $DUMPTYPE_SCRIPTLIST);
+    ok(ref($sc) eq 'ARRAY' && @$sc == 1, "DUMPTYPE_SCRIPTLIST returns a 1-element list");
     like($sc->[0], qr/^custom\(/,
 	".. and the first element is the generated name of a script subsection");
 

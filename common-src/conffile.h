@@ -628,7 +628,7 @@ typedef enum {
     DUMPTYPE_IGNORE,
     DUMPTYPE_INDEX,
     DUMPTYPE_APPLICATION,
-    DUMPTYPE_PP_SCRIPTLIST,
+    DUMPTYPE_SCRIPTLIST,
     DUMPTYPE_PROPERTY,
     DUMPTYPE_DUMPTYPE /* sentinel */
 } dumptype_key;
@@ -714,7 +714,7 @@ char *dumptype_name(dumptype_t *dtyp);
 #define dumptype_get_ignore(dtyp)              (val_t_to_boolean(dumptype_getconf((dtyp), DUMPTYPE_IGNORE)))
 #define dumptype_get_index(dtyp)               (val_t_to_boolean(dumptype_getconf((dtyp), DUMPTYPE_INDEX)))
 #define dumptype_get_application(dtyp)         (val_t_to_application(dumptype_getconf((dtyp), DUMPTYPE_APPLICATION)))
-#define dumptype_get_pp_scriptlist(dtyp)       (val_t_to_identlist(dumptype_getconf((dtyp), DUMPTYPE_PP_SCRIPTLIST)))
+#define dumptype_get_scriptlist(dtyp)          (val_t_to_identlist(dumptype_getconf((dtyp), DUMPTYPE_SCRIPTLIST)))
 #define dumptype_get_property(dtyp)            (val_t_to_proplist(dumptype_getconf((dtyp), DUMPTYPE_PROPERTY)))
 
 /*

@@ -660,7 +660,7 @@ parse_diskline(
     disk->bumpmult	     = dumptype_get_bumpmult(dtype);
     disk->starttime          = dumptype_get_starttime(dtype);
     disk->application        = dumptype_get_application(dtype);
-    disk->pp_scriptlist      = dumptype_get_pp_scriptlist(dtype);
+    disk->pp_scriptlist      = dumptype_get_scriptlist(dtype);
     disk->start_t = 0;
     if (disk->starttime > 0) {
 	st = time(NULL);

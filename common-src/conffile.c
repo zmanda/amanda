@@ -86,7 +86,7 @@ typedef enum {
     CONF_FLUSH_THRESHOLD_SCHEDULED,
     CONF_DEVICE_PROPERTY,      CONF_PROPERTY,          CONF_PLUGIN,
     CONF_APPLICATION,          CONF_APPLICATION_TOOL,
-    CONF_PP_SCRIPT,            CONF_PP_SCRIPT_TOOL,
+    CONF_SCRIPT,               CONF_SCRIPT_TOOL,
     CONF_EXECUTE_ON,           CONF_EXECUTE_WHERE,	CONF_SEND_AMREPORT_ON,
     CONF_DEVICE,
 
@@ -739,8 +739,8 @@ keytab_t client_keytab[] = {
     { "DEFINE", CONF_DEFINE },
     { "COMMENT", CONF_COMMENT },
     { "MAILER", CONF_MAILER },
-    { "SCRIPT", CONF_PP_SCRIPT },
-    { "SCRIPT_TOOL", CONF_PP_SCRIPT_TOOL },
+    { "SCRIPT", CONF_SCRIPT },
+    { "SCRIPT_TOOL", CONF_SCRIPT_TOOL },
     { "PLUGIN", CONF_PLUGIN },
     { "PRE_DLE_AMCHECK", CONF_PRE_DLE_AMCHECK },
     { "PRE_HOST_AMCHECK", CONF_PRE_HOST_AMCHECK },
@@ -917,8 +917,8 @@ keytab_t server_keytab[] = {
     { "RESERVED_TCP_PORT", CONF_RESERVED_TCP_PORT },
     { "RUNSPERCYCLE", CONF_RUNSPERCYCLE },
     { "RUNTAPES", CONF_RUNTAPES },
-    { "SCRIPT", CONF_PP_SCRIPT },
-    { "SCRIPT_TOOL", CONF_PP_SCRIPT_TOOL },
+    { "SCRIPT", CONF_SCRIPT },
+    { "SCRIPT_TOOL", CONF_SCRIPT_TOOL },
     { "SEND_AMREPORT_ON", CONF_SEND_AMREPORT_ON },
     { "SERVER", CONF_SERVER },
     { "SERVER_CUSTOM_COMPRESS", CONF_SRVCOMPPROG },
@@ -1052,7 +1052,7 @@ conf_var_t client_var [] = {
    { CONF_UNRESERVED_TCP_PORT, CONFTYPE_INTRANGE, read_intrange, CNF_UNRESERVED_TCP_PORT, validate_unreserved_port_range },
    { CONF_PROPERTY           , CONFTYPE_PROPLIST, read_property, CNF_PROPERTY           , NULL },
    { CONF_APPLICATION        , CONFTYPE_STR     , read_dapplication, DUMPTYPE_APPLICATION, NULL },
-   { CONF_PP_SCRIPT          , CONFTYPE_STR     , read_dpp_script, DUMPTYPE_PP_SCRIPTLIST, NULL },
+   { CONF_SCRIPT             , CONFTYPE_STR     , read_dpp_script, DUMPTYPE_SCRIPTLIST, NULL },
    { CONF_UNKNOWN            , CONFTYPE_INT     , NULL         , CNF_CNF                , NULL }
 };
 
@@ -1189,7 +1189,7 @@ conf_var_t dumptype_var [] = {
    { CONF_SRV_DECRYPT_OPT   , CONFTYPE_STR      , read_str      , DUMPTYPE_SRV_DECRYPT_OPT   , NULL },
    { CONF_CLNT_DECRYPT_OPT  , CONFTYPE_STR      , read_str      , DUMPTYPE_CLNT_DECRYPT_OPT  , NULL },
    { CONF_APPLICATION       , CONFTYPE_STR      , read_dapplication, DUMPTYPE_APPLICATION    , NULL },
-   { CONF_PP_SCRIPT         , CONFTYPE_STR      , read_dpp_script, DUMPTYPE_PP_SCRIPTLIST    , NULL },
+   { CONF_SCRIPT            , CONFTYPE_STR      , read_dpp_script, DUMPTYPE_SCRIPTLIST    , NULL },
    { CONF_UNKNOWN           , CONFTYPE_INT      , NULL          , DUMPTYPE_DUMPTYPE          , NULL }
 };
 
@@ -1676,7 +1676,7 @@ read_confline(
 	if (is_client) {
 	    get_conftoken(CONF_ANY);
 	    if(tok == CONF_APPLICATION_TOOL) get_application();
-	    else if(tok == CONF_PP_SCRIPT_TOOL) get_pp_script();
+	    else if(tok == CONF_SCRIPT_TOOL) get_pp_script();
 	    else conf_parserror(_("APPLICATION-TOOL or SCRIPT-TOOL expected"));
 	} else {
 	    get_conftoken(CONF_ANY);
@@ -1684,7 +1684,7 @@ read_confline(
 	    else if(tok == CONF_TAPETYPE) get_tapetype();
 	    else if(tok == CONF_INTERFACE) get_interface();
 	    else if(tok == CONF_APPLICATION_TOOL) get_application();
-	    else if(tok == CONF_PP_SCRIPT_TOOL) get_pp_script();
+	    else if(tok == CONF_SCRIPT_TOOL) get_pp_script();
 	    else if(tok == CONF_DEVICE) get_device_config();
 	    else if(tok == CONF_CHANGER) get_changer_config();
 	    else if(tok == CONF_HOLDING) get_holdingdisk(1);
@@ -2095,7 +2095,7 @@ init_dumptype_defaults(void)
     conf_init_bool     (&dpcur.value[DUMPTYPE_IGNORE]            , 0);
     conf_init_bool     (&dpcur.value[DUMPTYPE_INDEX]             , 1);
     conf_init_application(&dpcur.value[DUMPTYPE_APPLICATION]);
-    conf_init_identlist(&dpcur.value[DUMPTYPE_PP_SCRIPTLIST], NULL);
+    conf_init_identlist(&dpcur.value[DUMPTYPE_SCRIPTLIST], NULL);
     conf_init_proplist(&dpcur.value[DUMPTYPE_PROPERTY]);
 }
 

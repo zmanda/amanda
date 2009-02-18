@@ -407,7 +407,7 @@ amglue_add_constant(DUMPTYPE_KENCRYPT, dumptype_key);
 amglue_add_constant(DUMPTYPE_IGNORE, dumptype_key);
 amglue_add_constant(DUMPTYPE_INDEX, dumptype_key);
 amglue_add_constant(DUMPTYPE_APPLICATION, dumptype_key);
-amglue_add_constant(DUMPTYPE_PP_SCRIPTLIST, dumptype_key);
+amglue_add_constant(DUMPTYPE_SCRIPTLIST, dumptype_key);
 amglue_add_constant(DUMPTYPE_PROPERTY, dumptype_key);
 amglue_copy_to_tag(dumptype_key, getconf);
 

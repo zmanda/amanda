@@ -1,4 +1,10 @@
 2009-02-18  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/conffile.c common-src/conffile.h perl/Amanda/Config.swg:
+	  change PP_SCRIPT to SCRIPT, to match the name of the config param
+	* server-src/diskfile.c installcheck/Amanda_Config.pl:
+	  use new symbols
+
+2009-02-18  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Amanda_Config.pl: installchecks for nested pp_scripts
 	  and applications
 
