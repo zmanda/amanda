@@ -61,6 +61,7 @@ dgram_bind(
     sockaddr_union name;
     int save_errno;
     int *portrange;
+    int sndbufsize = MAX_DGRAM;
 
     portrange = getconf_intrange(CNF_RESERVED_UDP_PORT);
     *portp = (in_port_t)0;
@@ -78,6 +79,13 @@ dgram_bind(
 	aclose(s);
 	errno = EMFILE;				/* out of range */
 	return -1;
+    }
+
+    /* try setting the buffer size (= maximum allowable UDP packet size) */
+    if (setsockopt(s, SOL_SOCKET, SO_SNDBUF,
+		   (void *) &sndbufsize, sizeof(sndbufsize)) < 0) {
+       dbprintf("dgram_bind: could not set udp send buffer to %d: %s (ignored)\n",
+		 sndbufsize, strerror(errno));
     }
 
     SU_INIT(&name, family);
@@ -159,6 +167,8 @@ dgram_send_addr(
 	s = dgram->socket;
 	socket_opened = 0;
     } else {
+	int sndbufsize = MAX_DGRAM;
+
 	g_debug("dgram_send_addr: setting up a socket with family %d", SU_GET_FAMILY(addr));
 	if((s = socket(SU_GET_FAMILY(addr), SOCK_DGRAM, 0)) == -1) {
 	    save_errno = errno;
@@ -176,6 +186,13 @@ dgram_send_addr(
 		      strerror(errno));
 	}
 #endif
+
+	/* try setting the buffer size (= maximum allowable UDP packet size) */
+	if (setsockopt(s, SOL_SOCKET, SO_SNDBUF,
+		       (void *) &sndbufsize, sizeof(sndbufsize)) < 0) {
+	   dbprintf("dgram_send_addr: could not set udp send buffer to %d: %s (ignored)\n",
+		     sndbufsize, strerror(errno));
+	}
     }
 
     if(s < 0 || s >= (int)FD_SETSIZE) {

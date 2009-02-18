@@ -1,3 +1,7 @@
+2009-02-18  John Hein <jhein@timing.com>
+	* common-src/dgram.c: set the send buffer size when creating a new
+	  socket
+
 2009-02-18  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/conffile.c common-src/conffile.h perl/Amanda/Config.swg:
 	  change PP_SCRIPT to SCRIPT, to match the name of the config param
