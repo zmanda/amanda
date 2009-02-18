@@ -224,6 +224,18 @@ sub command_selfcheck {
     my $self = shift;
 
     $self->{action} = 'check';
+
+    #check binary
+    if (! -e $self->{smbclient}) {
+	$self->print_to_server($self->{action},"$self->{smbclient} doesn't exist", $Amanda::Script_App::ERROR);
+    }
+    if (! -x $self->{smbclient}) {
+	$self->print_to_server($self->{action},"$self->{smbclient} is not executable", $Amanda::Script_App::ERROR);
+    }
+    $self->print_to_server($self->{action},"$self->{smbclient}", $Amanda::Script_App::GOOD);
+    if (!defined $$self->{disk} && !defined $self->{device}) {
+	return;
+    }
     $self->parsesharename();
     $self->findpass();
     $self->validate_inexclude();
@@ -280,7 +292,6 @@ sub command_selfcheck {
     }
     close($err);
     waitpid($pid, 0);
-    #check binary
     #check statefile
     #check amdevice
 }

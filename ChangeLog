@@ -1,4 +1,14 @@
 2009-02-18  Jean-Louis Martineau <martineau@zmanda.com>
+	* client-src/selfcheck.c: Do dle check without disk.
+	* common-src/amxml.c: Accept a dle without a disk.
+	* perl/Amanda/Application/Zfs.pm, application-src/amgtar.c,
+	  application-src/amgtar_perl.pl,
+	  application-src/amsamba.pl, application-src/amstar.c,
+	  application-src/amsuntar.pl, application-src/amzfs-sendrecv.pl,
+	  application-src/amzfs-snapshot.pl: Do minimal test in selfcheck if
+	                                     a disk is not provided.
+
+2009-02-18  Jean-Louis Martineau <martineau@zmanda.com>
 	patch by glowkrantz
 	* application-src/amzfs-sendrecv.pl: Use compression ratio for
 	                                     compressed filesystem.

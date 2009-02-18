@@ -176,6 +176,9 @@ main(
     /* drop root privileges */
 
     if (!set_root_privs(0)) {
+	if (strcmp(argv[1], "selfcheck") == 0) {
+	    printf("ERROR amstar must be run setuid root\n");
+	}
 	error(_("amstar must be run setuid root"));
     }
 
@@ -322,13 +325,17 @@ static void
 amstar_selfcheck(
     application_argument_t *argument)
 {
-    char   *qdisk;
-    char   *qdevice;
-
-    qdisk = quote_string(argument->dle.disk);
-    qdevice = quote_string(argument->dle.device);
-    fprintf(stdout, "OK %s\n", qdisk);
-    fprintf(stdout, "OK %s\n", qdevice);
+    fprintf(stdout, "OK amstar\n");
+    if (argument->dle.disk) {
+	char *qdisk = quote_string(argument->dle.disk);
+	fprintf(stdout, "OK %s\n", qdisk);
+	amfree(qdisk);
+    }
+    if (argument->dle.device) {
+	char *qdevice = quote_string(argument->dle.device);
+	fprintf(stdout, "OK %s\n", qdevice);
+	amfree(qdevice);
+    }
 
     if (!star_path) {
 	fprintf(stdout, "ERROR STAR-PATH not defined\n");

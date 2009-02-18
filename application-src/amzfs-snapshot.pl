@@ -68,6 +68,10 @@ sub zfs_snapshot_set_value() {
 
    $self->zfs_set_value($action);
 
+   if (!defined $self->{device}) {
+       return;
+   }
+
    if (!defined $self->{mountpoint}) {
        $self->print_to_server($action, "$self->{disk} is not a directory", $Amanda::Script_App::ERROR);
 	
@@ -92,6 +96,10 @@ sub command_pre_dle_amcheck {
 
     $self->zfs_snapshot_set_value("check");
 
+    if (!defined $self->{device}) {
+	return;
+    }
+
     if ($self->{error_status} == $Amanda::Script_App::GOOD) {
 	if (defined $self->{mountpoint}) {
 	    $self->print_to_server("check", "mountpoint $self->{mountpoint}", $Amanda::Script_App::GOOD);
@@ -108,6 +116,11 @@ sub command_post_dle_amcheck {
     my $self = shift;
 
     $self->zfs_snapshot_set_value("check");
+
+    if (!defined $self->{device}) {
+	return;
+    }
+
     $self->zfs_destroy_snapshot("check");
 }
 

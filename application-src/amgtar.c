@@ -335,6 +335,9 @@ main(
 
     /* drop root privileges */
     if (!set_root_privs(0)) {
+	if (strcmp(argv[1], "selfcheck") == 0) {
+	    printf("ERROR amgtar must be run setuid root\n");
+	}
 	error(_("amgtar must be run setuid root"));
     }
 
@@ -583,6 +586,7 @@ amgtar_selfcheck(
 {
     amgtar_build_exinclude(&argument->dle, 1, NULL, NULL, NULL, NULL);
 
+    printf("OK amgtar\n");
     if (gnutar_path) {
 	check_file(gnutar_path, X_OK);
     } else {
@@ -598,10 +602,14 @@ amgtar_selfcheck(
 	printf(_("ERROR [No GNUTAR-LISTDIR]\n"));
     }
 
-    fprintf(stdout, "OK %s\n", argument->dle.disk);
+    if (argument->dle.disk) {
+	char *qdisk = quote_string(argument->dle.disk);
+	fprintf(stdout, "OK %s\n", qdisk);
+	amfree(qdisk);
+    }
     if (gnutar_directory) {
 	check_dir(gnutar_directory, R_OK);
-    } else {
+    } else if (argument->dle.device) {
 	check_dir(argument->dle.device, R_OK);
     }
     set_root_privs(0);

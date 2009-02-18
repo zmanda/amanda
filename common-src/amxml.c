@@ -423,11 +423,6 @@ amend_element(
 	data_user->property_name = NULL;
 	data_user->property_data = NULL;
     } else if (strcmp(element_name, "dle") == 0) {
-	if (dle->disk == NULL) {
-	    g_set_error(gerror, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,
-		    "XML: No disk provided in DLE element");
-	    return;
-	}
 	if (dle->program_is_application_api &&
 	    !dle->program) {
 	    g_set_error(gerror, G_MARKUP_ERROR, G_MARKUP_ERROR_INVALID_CONTENT,

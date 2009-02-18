@@ -77,14 +77,18 @@ sub command_support {
 }
 
 sub command_selfcheck {
-   my $self = shift;
+    my $self = shift;
 
-   print "OK " . $self->{disk} . "\n";
-   print "OK " . $self->{device} . "\n";
-   #check binary
-   #check statefile
-   #check amdevice
-   #check property include/exclude
+    if (defined $self->{disk}) {
+	print "OK " . $self->{disk} . "\n";
+    }
+    if (defined $self->{device}) {
+	print "OK " . $self->{device} . "\n";
+    }
+    #check binary
+    #check statefile
+    #check amdevice
+    #check property include/exclude
 }
 
 sub command_estimate {

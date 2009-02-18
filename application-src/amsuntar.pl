@@ -95,13 +95,21 @@ sub command_selfcheck {
    my $action = shift;
    $self->{action} = 'check';
 
-   print "OK " . $self->{disk} . "\n";
-   print "OK " . $self->{device} . "\n";
-   if(!-e $self->{suntar}) {
-     $self->print_to_server_and_die($self->{action},
+   if (!-e $self->{suntar}) {
+      $self->print_to_server_and_die($self->{action},
+                       "application binary $self->{suntar} doesn't exist",
+                       $Amanda::Script_App::ERROR);
+   }
+   if (!-x $self->{suntar}) {
+      $self->print_to_server_and_die($self->{action},
                        "application binary $self->{suntar} is not a executable",
                        $Amanda::Script_App::ERROR);
    }
+   if (!defined $self->{disk} || !defined $self->{device}) {
+      return;
+   }
+   print "OK " . $self->{disk} . "\n";
+   print "OK " . $self->{device} . "\n";
    $self->validate_inexclude();
 }
 

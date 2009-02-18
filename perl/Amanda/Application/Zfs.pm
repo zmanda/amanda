@@ -42,10 +42,6 @@ sub zfs_set_value {
     if (defined $self->{execute_where} && $self->{execute_where} ne "client") {
 	$self->print_to_server_and_die($action, " Script must be run on the client 'execute_where client'", $Amanda::Script_App::ERROR);
     }
-    if (!defined $self->{device}) {
-	$self->print_to_server_and_die($action, "'--device' is not provided",
-                        $Amanda::Script_App::ERROR);
-    }
     if ($self->{df_path} ne "df" && !-e $self->{df_path}) {
 	$self->print_to_server_and_die($action, "Can't execute DF-PATH '$self->{df_path}' command",
                         $Amanda::Script_App::ERROR);
@@ -64,6 +60,16 @@ sub zfs_set_value {
     }
     if (!defined $self->{pfexec_cmd}) {
         $self->{pfexec_cmd} = "";
+    }
+
+    if (!defined $self->{device}) {
+	if ($action eq "check") {
+	    return;
+	} else {
+	    $self->print_to_server_and_die($action,
+					   "'--device' is not provided",
+					   $Amanda::Script_App::ERROR);
+	}
     }
 
     # determine if $self->{device} is a mountpoint or ZFS dataset

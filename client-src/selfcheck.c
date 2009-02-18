@@ -63,6 +63,7 @@ int need_runtar=0;
 int need_gnutar=0;
 int need_compress_path=0;
 int need_calcsize=0;
+int need_global_check=0;
 int program_is_application_api=0;
 
 static char *amandad_auth = NULL;
@@ -287,6 +288,7 @@ main(
 	    need_gnutar=1;
 	    need_compress_path=1;
 	    need_calcsize=1;
+	    need_global_check=1;
 	    /*@ignore@*/
 	    check_disk(dle);
 	    /*@end@*/
@@ -362,7 +364,7 @@ check_options(
 
     if (strcmp(dle->program,"GNUTAR") == 0) {
 	need_gnutar=1;
-        if(dle->device[0] == '/' && dle->device[1] == '/') {
+        if(dle->device && dle->device[0] == '/' && dle->device[1] == '/') {
 	    if(dle->exclude_file && dle->exclude_file->nb_element > 1) {
 		g_printf(_("ERROR [samba support only one exclude file]\n"));
 	    }
@@ -418,7 +420,7 @@ check_options(
 #ifndef AIX_BACKUP
 #ifdef VDUMP
 #ifdef DUMP
-	if (strcmp(amname_to_fstype(dle->device), "advfs") == 0)
+	if (dle->device && strcmp(amname_to_fstype(dle->device), "advfs") == 0)
 #else
 	if (1)
 #endif
@@ -432,7 +434,7 @@ check_options(
 #endif /* VDUMP */
 #ifdef XFSDUMP
 #ifdef DUMP
-	if (strcmp(amname_to_fstype(dle->device), "xfs") == 0)
+	if (dle->device && strcmp(amname_to_fstype(dle->device), "xfs") == 0)
 #else
 	if (1)
 #endif
@@ -446,13 +448,13 @@ check_options(
 #endif /* XFSDUMP */
 #ifdef VXDUMP
 #ifdef DUMP
-	if (strcmp(amname_to_fstype(dle->device), "vxfs") == 0)
+	if (dle->device && strcmp(amname_to_fstype(dle->device), "vxfs") == 0)
 #else
 	if (1)
 #endif
 	{
 	    need_vxdump=1;
-	    if (dle->create-index)
+	    if (dle->create_index)
 		need_vxrestore=1;
 	}
 	else
@@ -494,196 +496,212 @@ static void
 check_disk(
     dle_t *dle)
 {
-    char *device = stralloc("nodevice");
+    char *device = NULL;
     char *err = NULL;
     char *user_and_password = NULL;
     char *domain = NULL;
     char *share = NULL, *subdir = NULL;
     size_t lpass = 0;
-    int amode;
+    int amode = R_OK;
     int access_result;
     char *access_type;
     char *extra_info = NULL;
-    char *qdisk = quote_string(dle->disk);
-    char *qamdevice = quote_string(dle->device);
+    char *qdisk = NULL;
+    char *qamdevice = NULL;
     char *qdevice = NULL;
 
-    dbprintf(_("checking disk %s\n"), qdisk);
-    if (GPOINTER_TO_INT(dle->estimatelist->data) == ES_CALCSIZE) {
-	if (dle->device[0] == '/' && dle->device[1] == '/') {
-	    err = vstrallocf(_("Can't use CALCSIZE for samba estimate, use CLIENT: %s"),
-			    dle->device);
-	    goto common_exit;
-	}
-    }
-
-    if (strcmp(dle->program, "GNUTAR")==0) {
-        if(dle->device[0] == '/' && dle->device[1] == '/') {
-#ifdef SAMBA_CLIENT
-	    int nullfd, checkerr;
-	    int passwdfd;
-	    char *pwtext;
-	    size_t pwtext_len;
-	    pid_t checkpid;
-	    amwait_t retstat;
-	    pid_t wpid;
-	    int rc;
-	    char *line;
-	    char *sep;
-	    FILE *ferr;
-	    char *pw_fd_env;
-	    int errdos;
-
-	    parsesharename(dle->device, &share, &subdir);
-	    if (!share) {
-		err = vstrallocf(_("cannot parse for share/subdir disk entry %s"), dle->device);
+    if (dle->disk) {
+	need_global_check=1;
+	qdisk = quote_string(dle->disk);
+	qamdevice = quote_string(dle->device);
+	device = stralloc("nodevice");
+	dbprintf(_("checking disk %s\n"), qdisk);
+	if (GPOINTER_TO_INT(dle->estimatelist->data) == ES_CALCSIZE) {
+	    if (dle->device[0] == '/' && dle->device[1] == '/') {
+		err = vstrallocf(
+		    _("Can't use CALCSIZE for samba estimate, use CLIENT: %s"),
+		    dle->device);
 		goto common_exit;
 	    }
-	    if ((subdir) && (SAMBA_VERSION < 2)) {
-		err = vstrallocf(_("subdirectory specified for share '%s' but, samba is not v2 or better"),
+	}
+
+	if (strcmp(dle->program, "GNUTAR")==0) {
+            if(dle->device[0] == '/' && dle->device[1] == '/') {
+		#ifdef SAMBA_CLIENT
+		int nullfd, checkerr;
+		int passwdfd;
+		char *pwtext;
+		size_t pwtext_len;
+		pid_t checkpid;
+		amwait_t retstat;
+		pid_t wpid;
+		int rc;
+		char *line;
+		char *sep;
+		FILE *ferr;
+		char *pw_fd_env;
+		int errdos;
+
+		parsesharename(dle->device, &share, &subdir);
+		if (!share) {
+		    err = vstrallocf(
+			      _("cannot parse for share/subdir disk entry %s"),
+			      dle->device);
+		    goto common_exit;
+		}
+		if ((subdir) && (SAMBA_VERSION < 2)) {
+		    err = vstrallocf(_("subdirectory specified for share '%s' but, samba is not v2 or better"),
+				     dle->device);
+		    goto common_exit;
+		}
+		if ((user_and_password = findpass(share, &domain)) == NULL) {
+		    err = vstrallocf(_("cannot find password for %s"),
+				     dle->device);
+		    goto common_exit;
+		}
+		lpass = strlen(user_and_password);
+		if ((pwtext = strchr(user_and_password, '%')) == NULL) {
+		    err = vstrallocf(
+				_("password field not \'user%%pass\' for %s"),
 				dle->device);
-		goto common_exit;
-	    }
-	    if ((user_and_password = findpass(share, &domain)) == NULL) {
-		err = vstrallocf(_("cannot find password for %s"), dle->device);
-		goto common_exit;
-	    }
-	    lpass = strlen(user_and_password);
-	    if ((pwtext = strchr(user_and_password, '%')) == NULL) {
-		err = vstrallocf(_("password field not \'user%%pass\' for %s"), dle->device);
-		goto common_exit;
-	    }
-	    *pwtext++ = '\0';
-	    pwtext_len = (size_t)strlen(pwtext);
-	    amfree(device);
-	    if ((device = makesharename(share, 0)) == NULL) {
-		err = vstrallocf(_("cannot make share name of %s"), share);
-		goto common_exit;
-	    }
-
-	    if ((nullfd = open("/dev/null", O_RDWR)) == -1) {
-	        err = vstrallocf(_("Cannot access /dev/null : %s"), strerror(errno));
-		goto common_exit;
-	    }
-
-	    if (pwtext_len > 0) {
-		pw_fd_env = "PASSWD_FD";
-	    } else {
-		pw_fd_env = "dummy_PASSWD_FD";
-	    }
-	    checkpid = pipespawn(SAMBA_CLIENT, STDERR_PIPE|PASSWD_PIPE, 0,
-				 &nullfd, &nullfd, &checkerr,
-				 pw_fd_env, &passwdfd,
-				 "smbclient",
-				 device,
-				 *user_and_password ? "-U" : skip_argument,
-				 *user_and_password ? user_and_password : skip_argument,
-				 "-E",
-				 domain ? "-W" : skip_argument,
-				 domain ? domain : skip_argument,
-#if SAMBA_VERSION >= 2
-				 subdir ? "-D" : skip_argument,
-				 subdir ? subdir : skip_argument,
-#endif
-				 "-c", "quit",
-				 NULL);
-	    amfree(domain);
-	    aclose(nullfd);
-	    /*@ignore@*/
-	    if ((pwtext_len > 0)
-	      && full_write(passwdfd, pwtext, pwtext_len) < pwtext_len) {
-		err = vstrallocf(_("password write failed: %s: %s"),
-				dle->device, strerror(errno));
-		aclose(passwdfd);
-		goto common_exit;
-	    }
-	    /*@end@*/
-	    memset(user_and_password, '\0', (size_t)lpass);
-	    amfree(user_and_password);
-	    aclose(passwdfd);
-	    ferr = fdopen(checkerr, "r");
-	    if (!ferr) {
-		g_printf(_("ERROR [Can't fdopen: %s]\n"), strerror(errno));
-		error(_("Can't fdopen: %s"), strerror(errno));
-		/*NOTREACHED*/
-	    }
-	    sep = "";
-	    errdos = 0;
-	    for(sep = ""; (line = agets(ferr)) != NULL; free(line)) {
-		if (line[0] == '\0')
-		    continue;
-		strappend(extra_info, sep);
-		strappend(extra_info, line);
-		sep = ": ";
-		if(strstr(line, "ERRDOS") != NULL) {
-		    errdos = 1;
+		    goto common_exit;
 		}
-	    }
-	    afclose(ferr);
-	    checkerr = -1;
-	    rc = 0;
-	    sep = "";
-	    while ((wpid = wait(&retstat)) != -1) {
-		if (!WIFEXITED(retstat) || WEXITSTATUS(retstat) != 0) {
-		    char *exitstr = str_exit_status("smbclient", retstat);
-		    strappend(err, sep);
-		    strappend(err, exitstr);
-		    sep = "\n";
-		    amfree(exitstr);
-
-		    rc = 1;
+		*pwtext++ = '\0';
+		pwtext_len = (size_t)strlen(pwtext);
+		amfree(device);
+		if ((device = makesharename(share, 0)) == NULL) {
+		    err = vstrallocf(_("cannot make share name of %s"), share);
+		    goto common_exit;
 		}
-	    }
-	    if (errdos != 0 || rc != 0) {
-		if (extra_info) {
-		    err = newvstrallocf(err,
-				   _("samba access error: %s: %s %s"),
-				   dle->device, extra_info, err);
-		    amfree(extra_info);
+
+		if ((nullfd = open("/dev/null", O_RDWR)) == -1) {
+	            err = vstrallocf(_("Cannot access /dev/null : %s"),
+				     strerror(errno));
+		    goto common_exit;
+		}
+
+		if (pwtext_len > 0) {
+		    pw_fd_env = "PASSWD_FD";
 		} else {
-		    err = newvstrallocf(err, _("samba access error: %s: %s"),
-				   dle->device, err);
+		    pw_fd_env = "dummy_PASSWD_FD";
 		}
-	    }
-#else
-	    err = vstrallocf(_("This client is not configured for samba: %s"),
-			qdisk);
+		checkpid = pipespawn(SAMBA_CLIENT, STDERR_PIPE|PASSWD_PIPE, 0,
+				     &nullfd, &nullfd, &checkerr,
+				     pw_fd_env, &passwdfd,
+				     "smbclient",
+				     device,
+				     *user_and_password ? "-U" : skip_argument,
+				     *user_and_password ? user_and_password
+							: skip_argument,
+				     "-E",
+				     domain ? "-W" : skip_argument,
+				     domain ? domain : skip_argument,
+#if SAMBA_VERSION >= 2
+				     subdir ? "-D" : skip_argument,
+				     subdir ? subdir : skip_argument,
 #endif
-	    goto common_exit;
-	}
-	amode = F_OK;
-	amfree(device);
-	device = amname_to_dirname(dle->device);
-    } else if (strcmp(dle->program, "DUMP") == 0) {
-	if(dle->device[0] == '/' && dle->device[1] == '/') {
-	    err = vstrallocf(
-		  _("The DUMP program cannot handle samba shares, use GNUTAR: %s"),
-		  qdisk);
-	    goto common_exit;
-	}
-#ifdef VDUMP								/* { */
-#ifdef DUMP								/* { */
-        if (strcmp(amname_to_fstype(dle->device), "advfs") == 0)
-#else									/* }{ */
-	if (1)
-#endif									/* } */
-	{
+				     "-c", "quit",
+				     NULL);
+		amfree(domain);
+		aclose(nullfd);
+		/*@ignore@*/
+		if ((pwtext_len > 0) &&
+		    full_write(passwdfd, pwtext, pwtext_len) < pwtext_len) {
+		    err = vstrallocf(_("password write failed: %s: %s"),
+				     dle->device, strerror(errno));
+		    aclose(passwdfd);
+		    goto common_exit;
+		}
+		/*@end@*/
+		memset(user_and_password, '\0', (size_t)lpass);
+		amfree(user_and_password);
+		aclose(passwdfd);
+		ferr = fdopen(checkerr, "r");
+		if (!ferr) {
+		    g_printf(_("ERROR [Can't fdopen: %s]\n"), strerror(errno));
+		    error(_("Can't fdopen: %s"), strerror(errno));
+		    /*NOTREACHED*/
+		}
+		sep = "";
+		errdos = 0;
+		for(sep = ""; (line = agets(ferr)) != NULL; free(line)) {
+		    if (line[0] == '\0')
+			continue;
+		    strappend(extra_info, sep);
+		    strappend(extra_info, line);
+		    sep = ": ";
+		    if(strstr(line, "ERRDOS") != NULL) {
+			errdos = 1;
+		    }
+		}
+		afclose(ferr);
+		checkerr = -1;
+		rc = 0;
+		sep = "";
+		while ((wpid = wait(&retstat)) != -1) {
+		    if (!WIFEXITED(retstat) || WEXITSTATUS(retstat) != 0) {
+			char *exitstr = str_exit_status("smbclient", retstat);
+			strappend(err, sep);
+			strappend(err, exitstr);
+			sep = "\n";
+			amfree(exitstr);
+
+			rc = 1;
+		    }
+		}
+		if (errdos != 0 || rc != 0) {
+		    if (extra_info) {
+			err = newvstrallocf(err,
+					    _("samba access error: %s: %s %s"),
+					    dle->device, extra_info, err);
+			amfree(extra_info);
+		    } else {
+			err = newvstrallocf(err,
+					    _("samba access error: %s: %s"),
+					   dle->device, err);
+		    }
+		}
+#else
+		err = vstrallocf(
+			      _("This client is not configured for samba: %s"),
+			      qdisk);
+#endif
+		goto common_exit;
+	    }
+	    amode = F_OK;
 	    amfree(device);
 	    device = amname_to_dirname(dle->device);
-	    amode = F_OK;
-	} else
+	} else if (strcmp(dle->program, "DUMP") == 0) {
+	    if(dle->device[0] == '/' && dle->device[1] == '/') {
+		err = vstrallocf(
+		  _("The DUMP program cannot handle samba shares, use GNUTAR: %s"),
+		  qdisk);
+		goto common_exit;
+	    }
+#ifdef VDUMP								/* { */
+#ifdef DUMP								/* { */
+            if (strcmp(amname_to_fstype(dle->device), "advfs") == 0)
+#else									/* }{*/
+	    if (1)
 #endif									/* } */
-	{
-	    amfree(device);
-	    device = amname_to_devname(dle->device);
+	    {
+		amfree(device);
+		device = amname_to_dirname(dle->device);
+		amode = F_OK;
+	    } else
+#endif									/* } */
+	    {
+		amfree(device);
+		device = amname_to_devname(dle->device);
 #ifdef USE_RUNDUMP
-	    amode = F_OK;
+		amode = F_OK;
 #else
-	    amode = R_OK;
+		amode = R_OK;
 #endif
+	    }
 	}
     }
-    else { /* program_is_application_api==1 */
+    if (dle->program_is_application_api) {
 	pid_t                    application_api_pid;
 	backup_support_option_t *bsu;
 	int                      app_err[2];
@@ -792,8 +810,10 @@ check_disk(
 		    argvchild[j++] = "--disk";
 		    argvchild[j++] = dle->disk;
 		}
-		argvchild[j++] = "--device";
-		argvchild[j++] = dle->device;
+		if (dle->device) {
+		    argvchild[j++] = "--device";
+		    argvchild[j++] = dle->device;
+		}
 		if (dle->create_index && bsu->index_line == 1) {
 		    argvchild[j++] = "--index";
 		    argvchild[j++] = "line";
@@ -871,25 +891,27 @@ check_disk(
 	return;
     }
 
-    qdevice = quote_string(device);
-    dbprintf(_("device %s\n"), qdevice);
+    if (device) {
+	qdevice = quote_string(device);
+	dbprintf(_("device %s\n"), qdevice);
 
-    /* skip accessability test if this is an AFS entry */
-    if(strncmp_const(device, "afs:") != 0) {
+	/* skip accessability test if this is an AFS entry */
+	if(strncmp_const(device, "afs:") != 0) {
 #ifdef CHECK_FOR_ACCESS_WITH_OPEN
-	access_result = open(device, O_RDONLY);
-	access_type = "open";
+	    access_result = open(device, O_RDONLY);
+	    access_type = "open";
 #else
-	access_result = access(device, amode);
-	access_type = "access";
+	    access_result = access(device, amode);
+	    access_type = "access";
 #endif
-	if(access_result == -1) {
-	    err = vstrallocf(_("Could not access %s (%s): %s"),
-			qdevice, qdisk, strerror(errno));
-	}
+	    if(access_result == -1) {
+		err = vstrallocf(_("Could not access %s (%s): %s"),
+				 qdevice, qdisk, strerror(errno));
+	    }
 #ifdef CHECK_FOR_ACCESS_WITH_OPEN
-	aclose(access_result);
+	    aclose(access_result);
 #endif
+	}
     }
 
 common_exit:
@@ -910,12 +932,18 @@ common_exit:
 	dbprintf(_("%s\n"), err);
 	amfree(err);
     } else {
-	g_printf("OK %s\n", qdisk);
-	dbprintf(_("disk %s OK\n"), qdisk);
-	g_printf("OK %s\n", qamdevice);
-	dbprintf(_("amdevice %s OK\n"), qamdevice);
-	g_printf("OK %s\n", qdevice);
-	dbprintf(_("device %s OK\n"), qdevice);
+	if (dle->disk) {
+	    g_printf("OK %s\n", qdisk);
+	    dbprintf(_("disk %s OK\n"), qdisk);
+	}
+	if (dle->device) {
+	    g_printf("OK %s\n", qamdevice);
+	    dbprintf(_("amdevice %s OK\n"), qamdevice);
+	}
+	if (device) {
+	    g_printf("OK %s\n", qdevice);
+	    dbprintf(_("device %s OK\n"), qdevice);
+	}
     }
     if(extra_info) {
 	dbprintf(_("extra info: %s\n"), extra_info);
@@ -1107,6 +1135,7 @@ check_overall(void)
 	}
     }
 
+    if (need_global_check) {
     check_access("/dev/null", R_OK|W_OK);
     check_space(AMANDA_TMPDIR, (off_t)64);	/* for amandad i/o */
 
@@ -1115,6 +1144,7 @@ check_overall(void)
 #endif
 
     check_space("/etc", (off_t)64);		/* for /etc/dumpdates writing */
+    }
 }
 
 static void

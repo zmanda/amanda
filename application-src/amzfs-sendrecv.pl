@@ -92,6 +92,11 @@ sub command_selfcheck {
     my $self = shift;
 
     $self->zfs_set_value("check");
+
+    if (!defined $self->{device}) {
+	return;
+    }
+
     if ($self->{error_status} == $Amanda::Script_App::GOOD) {
 	$self->zfs_create_snapshot("check");
 	$self->zfs_destroy_snapshot("check");
