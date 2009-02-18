@@ -716,7 +716,8 @@ collapse_braced_alternates(
 
 	if (strchr(str, ',') || strchr(str, '\\') ||
 	    strchr(str, '{') || strchr(str, '}')) {
-	    char *s, *d;
+	    const char *s;
+	    char *d;
 
 	    s = str;
 	    qstr = d = g_malloc(strlen(str)*2+1);
