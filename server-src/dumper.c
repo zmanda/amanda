@@ -1215,7 +1215,7 @@ do_dump(
     q = quote_string(m);
     amfree(m);
     putresult(DONE, _("%s %lld %lld %lu %s\n"), handle,
-    		(long long)origsize,
+		(long long)origsize,
 		(long long)dumpsize,
 	        (unsigned long)((double)dumptime+0.5), q);
     amfree(q);
