@@ -90,8 +90,8 @@ request_tty() {
 		echo `_ ' or type "NONE" to abort'` > /dev/tty
 		read ANSWER < /dev/tty
 		if [ X"$ANSWER" = X"NONE" ]; then
-			echo `_ 'Aborting request'` > /dev/tty
-			answer=`_ '<none> Aborting request'`
+			echo `_ 'Aborting by user request'` > /dev/tty
+			answer=`_ '<none> Aborting by user request'`
 			echo `_ 'Exit ->'` $answer >> $logfile
 			echo $answer
 			exit 2
@@ -126,7 +126,7 @@ request_email() {
 	    fi
 	    if [ -f $abort_filename ]; then
 		rm -f $abort_filename
-		answer=`_ '<none> Aborting request'`
+		answer=`_ '<none> Aborting by user request'`
 		echo `_ 'Exit ->'` $answer >> $logfile
 		echo $answer
 		exit 2

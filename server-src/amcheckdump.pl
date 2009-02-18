@@ -102,13 +102,19 @@ sub find_next_device {
 
     my $load_sub = sub {
 	my ($err) = @_;
-	die $err if $err;
+	if ($err) {
+	    print STDERR $err, "\n";
+	    exit 1;
+	}
 
 	$changer->load(
 	    label => $label,
 	    res_cb => sub {
 		(my $err, $reservation) = @_;
-		die $err if $err;
+		if ($err) {
+		    print STDERR $err, "\n";
+		    exit 1;
+		}
 		Amanda::MainLoop::quit();
 	    },
 	);
