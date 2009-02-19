@@ -1,4 +1,7 @@
 2009-02-19  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/util.h common-src/util.c: remove unneeded needs_quotes
+
+2009-02-19  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Amanda_Types.pl 
 	  installcheck/Amanda_Header.pl: rename Amanda::Types to
 	  Amanda::Header, add to_string and from_string methods

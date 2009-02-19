@@ -363,14 +363,6 @@ full_writev(
 }
 
 
-int
-needs_quotes(
-    const char * str)
-{
-    return (match("[ \t\f\r\n\"]", str) != 0);
-}
-
-
 /*
  * For backward compatibility we are trying for minimal quoting.
  * We only quote a string if it contains whitespace or is misquoted...
