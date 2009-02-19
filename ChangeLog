@@ -1,3 +1,6 @@
+2009-02-19  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Changer/compat.pm: add missing semicolon in do_release
+
 2009-02-18  John Hein <jhein@timing.com>
 	* common-src/dgram.c: set the send buffer size when creating a new
 	  socket

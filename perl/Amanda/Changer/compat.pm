@@ -529,7 +529,7 @@ sub do_release {
 	if (exists $params{'finished_cb'}) {
 	    Amanda::MainLoop::call_later($params{'finished_cb'}, $msg);
 	}
-    }
+    };
 
     if (exists $params{'eject'} && $params{'eject'}) {
 	debug("invoking -eject");
