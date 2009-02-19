@@ -35,7 +35,7 @@ use Amanda::Config qw( :init :getconf config_dir_relative );
 use Amanda::MainLoop;
 use Amanda::Xfer;
 use Amanda::Constants;
-use Amanda::Types;
+use Amanda::Header;
 
 # command-line options
 my $opt_only_compression = 0;
@@ -117,8 +117,8 @@ sub write_one_file(%) {
     my $max_time = $options{'MAX_TIME'} || 0;
 
     # start the device
-    my $hdr = Amanda::Types::dumpfile_t->new();
-    $hdr->{type} = $Amanda::Types::F_DUMPFILE;
+    my $hdr = Amanda::Header->new();
+    $hdr->{type} = $Amanda::Header::F_DUMPFILE;
     $hdr->{name} = "amtapetype";
     $hdr->{disk} = "/test";
     $hdr->{datestamp} = "X";

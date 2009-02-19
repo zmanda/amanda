@@ -1,4 +1,15 @@
 2009-02-19  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Amanda_Types.pl 
+	  installcheck/Amanda_Header.pl: rename Amanda::Types to
+	  Amanda::Header, add to_string and from_string methods
+	* common-src/fileheader.c: fix bug in returned size
+	* device-src/amtapetype.pl installcheck/Amanda_Device.pl
+	  installcheck/Amanda_Xfer.pl installcheck/Makefile.am
+	  perl/Amanda/Device.swg perl/Amanda/Header.swg perl/Amanda/Tests.swg
+	  perl/Amanda/Types.swg perl/Makefile.am server-src/amvault.pl: use
+	  Amanda::Header
+
+2009-02-19  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/Makefile.am common-src/queue.h: remove file
 	* amandad-src/amandad.c common-src/alloc.c
 	  common-src/bsdtcp-security.c common-src/krb5-security.c

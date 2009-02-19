@@ -21,15 +21,13 @@
 %module "Amanda::Device"
 %include "amglue/amglue.swg"
 %include "exception.i"
+%import "Amanda/Header.swg";
 
 %{
 #include "device.h"
 #include "property.h"
 #include "fileheader.h"
 %}
-
-/* import dumptype_t, among others */
-%import "Amanda/Types.swg";
 
 %perlcode %{
 =head1 NAME
@@ -70,7 +68,7 @@ are represented by accessor functions of the same name.
 
 =item C<start_file($jobinfo)>
 
-where C<$jobinfo> is a C<dumpfile_t> (see L<Amanda::Types>)
+where C<$jobinfo> is an Amanda header (see L<Amanda::Header>)
 
 =item C<write_block($size, $data, $short_block)>
 

@@ -27,7 +27,7 @@ use Installcheck::Config;
 use Amanda::Debug;
 use Amanda::Device qw( :constants );
 use Amanda::Config qw( :getconf :init );
-use Amanda::Types;
+use Amanda::Header;
 use Amanda::Paths;
 use Amanda::Tests;
 
@@ -52,8 +52,8 @@ sub mkvtape {
 
 
 # make up a fake dumpfile_t to write with
-my $dumpfile = Amanda::Types::dumpfile_t->new();
-$dumpfile->{type} = $Amanda::Types::F_DUMPFILE;
+my $dumpfile = Amanda::Header->new();
+$dumpfile->{type} = $Amanda::Header::F_DUMPFILE;
 $dumpfile->{datestamp} = "20070102030405";
 $dumpfile->{dumplevel} = 0;
 $dumpfile->{compressed} = 1;

@@ -291,16 +291,16 @@ Amanda_DATA += Amanda/Util.pm
 EXTRA_DIST += Amanda/Util.swg Amanda/Util.pm
 MAINTAINERCLEANFILES += Amanda/Util.c Amanda/Util.pm
 
-# PACKAGE: Amanda::Types
-libTypesdir = $(amperldir)/auto/Amanda/Types
-libTypes_LTLIBRARIES = libTypes.la
-libTypes_la_SOURCES = Amanda/Types.c $(AMGLUE_SWG)
-libTypes_la_LDFLAGS = $(PERL_EXT_LDFLAGS)
-libTypes_la_LIBADD = libamglue.la \
+# PACKAGE: Amanda::Header
+libHeaderdir = $(amperldir)/auto/Amanda/Header
+libHeader_LTLIBRARIES = libHeader.la
+libHeader_la_SOURCES = Amanda/Header.c $(AMGLUE_SWG)
+libHeader_la_LDFLAGS = $(PERL_EXT_LDFLAGS)
+libHeader_la_LIBADD = libamglue.la \
 	$(top_builddir)/common-src/libamanda.la
-Amanda_DATA += Amanda/Types.pm
-EXTRA_DIST += Amanda/Types.swg Amanda/Types.pm
-MAINTAINERCLEANFILES += Amanda/Types.c Amanda/Types.pm
+Amanda_DATA += Amanda/Header.pm
+EXTRA_DIST += Amanda/Header.swg Amanda/Header.pm
+MAINTAINERCLEANFILES += Amanda/Header.c Amanda/Header.pm
 
 # PACKAGE: Amanda::Tests
 libTestsdir = $(amperldir)/auto/Amanda/Tests

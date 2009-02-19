@@ -24,7 +24,7 @@ use lib "@amperldir@";
 use Installcheck::Run;
 use Amanda::Xfer qw( :constants );
 use Amanda::Device qw( :constants );
-use Amanda::Types;
+use Amanda::Header;
 use Amanda::Debug;
 use Amanda::MainLoop;
 use Amanda::Paths;
@@ -226,8 +226,8 @@ pass("Two simultaneous transfers run to completion");
 	unless ($device->status() == $DEVICE_STATUS_SUCCESS);
 
     # write to it
-    my $hdr = Amanda::Types::dumpfile_t->new();
-    $hdr->{type} = $Amanda::Types::F_DUMPFILE;
+    my $hdr = Amanda::Header->new();
+    $hdr->{type} = $Amanda::Header::F_DUMPFILE;
     $hdr->{name} = "installcheck";
     $hdr->{disk} = "/";
     $hdr->{datestamp} = "20080102030405";

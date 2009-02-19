@@ -11,7 +11,7 @@ common_tests = \
 	Amanda_Config \
 	Amanda_Debug \
 	Amanda_MainLoop \
-	Amanda_Types \
+	Amanda_Header \
 	Amanda_Util \
 	amarchiver
 

@@ -745,7 +745,7 @@ build_header(const dumpfile_t * file, size_t *size, size_t max_size)
         bzero(rval->str + rval->len, rval->allocated_len - rval->len);
     }
     if (size) {
-	*size = (size_t)rval->len;
+	*size = MAX(min_size, (size_t)rval->len);
     }
     return g_string_free(rval, FALSE);
 }

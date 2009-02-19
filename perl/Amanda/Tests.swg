@@ -26,9 +26,6 @@
 #include "simpleprng.h"
 %}
 
-/* import dumptype_t, among others */
-%import "Amanda/Types.swg";
-
 %perlcode %{
 =head1 NAME
 
