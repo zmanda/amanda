@@ -109,7 +109,6 @@ noinst_HEADERS =		\
 	packet.h		\
 	pipespawn.h		\
 	protocol.h		\
-	queue.h			\
 	queueing.h		\
 	semaphore.h		\
 	security.h		\

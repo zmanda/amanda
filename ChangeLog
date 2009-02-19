@@ -1,3 +1,12 @@
+2009-02-19  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/Makefile.am common-src/queue.h: remove file
+	* amandad-src/amandad.c common-src/alloc.c
+	  common-src/bsdtcp-security.c common-src/krb5-security.c
+	  common-src/local-security.c common-src/rsh-security.c
+	  common-src/security-util.c common-src/security-util.h
+	  common-src/ssh-security.c: remove includes and replace TAILQ with
+	  GSList
+
 2009-02-18  Jean-Louis Martineau <martineau@zmanda.com>
 	* config/amanda/krb4-security.m4: Remove file
 	* common-src/krb4-security.c: Remove file.

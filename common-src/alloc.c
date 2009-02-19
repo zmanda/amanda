@@ -32,7 +32,6 @@
  */
 #include "amanda.h"
 #include "arglist.h"
-#include "queue.h"
 
 #define	MIN_ALLOC	64
 

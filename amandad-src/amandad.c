@@ -39,7 +39,6 @@
 #include "amfeatures.h"
 #include "packet.h"
 #include "version.h"
-#include "queue.h"
 #include "security.h"
 #include "stream.h"
 #include "util.h"
@@ -143,18 +142,12 @@ struct active_service {
 	struct active_service *as;	/* pointer back to our enclosure */
     } data[DATA_FD_COUNT];
     char databuf[NETWORK_BLOCK_BYTES];	/* buffer to relay netfd data in */
-    TAILQ_ENTRY(active_service) tq;	/* queue handle */
 };
 
 /*
  * Queue of outstanding requests that we are running.
  */
-static struct {
-    TAILQ_HEAD(, active_service) tailq;
-    int qlength;
-} serviceq = {
-    TAILQ_HEAD_INITIALIZER(serviceq.tailq), 0
-};
+GSList *serviceq = NULL;
 
 static int wait_30s = 1;
 static int exit_on_qlength = 1;
@@ -505,7 +498,7 @@ exit_check(
     /*
      * If things are still running, then don't exit.
      */
-    if (serviceq.qlength > 0)
+    if (g_slist_length(serviceq) > 0)
 	return;
 
     /*
@@ -528,6 +521,7 @@ protocol_accept(
     pkt_t *		pkt)
 {
     pkt_t pkt_out;
+    GSList *iter;
     struct active_service *as;
     char *pktbody, *tok, *service, *arguments;
     char *service_path = NULL;
@@ -640,8 +634,8 @@ protocol_accept(
     }
 
     /* see if its already running */
-    for (as = TAILQ_FIRST(&serviceq.tailq); as != NULL;
-	as = TAILQ_NEXT(as, tq)) {
+    for (iter = serviceq; iter != NULL; iter = g_slist_next(iter)) {
+	as = (struct active_service *)iter->data;
 	    if (strcmp(as->cmd, service_path) == 0 &&
 		strcmp(as->arguments, arguments) == 0) {
 		    dbprintf(_("%s %s: already running, acking req\n"),
@@ -1605,8 +1599,7 @@ service_new(
 
 	/* add it to the service queue */
 	/* increment the active service count */
-	TAILQ_INSERT_TAIL(&serviceq.tailq, as, tq);
-	serviceq.qlength++;
+	serviceq = g_slist_append(serviceq, (gpointer)as);
 
 	return (as);
     case 0:
@@ -1749,9 +1742,7 @@ service_delete(
     kill(as->pid, SIGTERM);
     waitpid(as->pid, NULL, WNOHANG);
 
-    TAILQ_REMOVE(&serviceq.tailq, as, tq);
-    assert(serviceq.qlength > 0);
-    serviceq.qlength--;
+    serviceq = g_slist_remove(serviceq, (gpointer)as);
 
     amfree(as->cmd);
     amfree(as->arguments);
@@ -1759,7 +1750,7 @@ service_delete(
     amfree(as->rep_pkt.body);
     amfree(as);
 
-    if(exit_on_qlength == 0 && serviceq.qlength == 0) {
+    if(exit_on_qlength == 0 && g_slist_length(serviceq) == 0) {
 	dbclose();
 	exit(0);
     }

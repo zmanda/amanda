@@ -37,7 +37,6 @@
 #include "util.h"
 #include "event.h"
 #include "packet.h"
-#include "queue.h"
 #include "security.h"
 #include "security-util.h"
 #include "stream.h"

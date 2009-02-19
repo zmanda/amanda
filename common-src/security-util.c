@@ -37,7 +37,6 @@
 #include "util.h"
 #include "event.h"
 #include "packet.h"
-#include "queue.h"
 #include "security.h"
 #include "security-util.h"
 #include "stream.h"
@@ -53,9 +52,7 @@
 /*
  * This is a queue of open connections
  */
-struct connq_s connq = {
-    TAILQ_HEAD_INITIALIZER(connq.tailq), 0
-};
+GSList *connq = NULL;
 static int newhandle = 1;
 static int newevent = 1;
 
@@ -1430,12 +1427,14 @@ sec_tcp_conn_get(
     const char *hostname,
     int		want_new)
 {
-    struct tcp_conn *rc;
+    GSList *iter;
+    struct tcp_conn *rc = NULL;
 
     auth_debug(1, _("sec_tcp_conn_get: %s\n"), hostname);
 
     if (want_new == 0) {
-	for (rc = connq_first(); rc != NULL; rc = connq_next(rc)) {
+	for (iter = connq; iter != NULL; iter = iter->next) {
+	    rc = (struct tcp_conn *)iter->data;
 	    if (strcasecmp(hostname, rc->hostname) == 0)
 		break;
 	}
@@ -1473,7 +1472,7 @@ sec_tcp_conn_get(
     rc->conf_fn = NULL;
     rc->datap = NULL;
     rc->event_id = newevent++;
-    connq_append(rc);
+    connq = g_slist_append(connq, rc);
     return (rc);
 }
 
@@ -1506,7 +1505,7 @@ sec_tcp_conn_put(
 	event_release(rc->ev_read);
     if (rc->errmsg != NULL)
 	amfree(rc->errmsg);
-    connq_remove(rc);
+    connq = g_slist_remove(connq, rc);
     amfree(rc->pkt);
     if(!rc->donotclose) {
 	/* amfree(rc) */
