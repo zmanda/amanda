@@ -4402,14 +4402,6 @@ init_defaults(
     save_dumptype();
 
     init_dumptype_defaults();
-    dpcur.name = stralloc("KRB4-AUTH");
-    dpcur.seen.linenum = -1;
-    free_val_t(&dpcur.value[DUMPTYPE_AUTH]);
-    val_t__str(&dpcur.value[DUMPTYPE_AUTH]) = stralloc("KRB4");
-    val_t__seen(&dpcur.value[DUMPTYPE_AUTH]).linenum = -1;
-    save_dumptype();
-
-    init_dumptype_defaults();
     dpcur.name = stralloc("NO-RECORD");
     dpcur.seen.linenum = -1;
     free_val_t(&dpcur.value[DUMPTYPE_RECORD]);

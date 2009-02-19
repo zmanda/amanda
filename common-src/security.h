@@ -49,7 +49,7 @@ typedef enum { S_OK, S_TIMEOUT, S_ERROR } security_status_t;
  */
 typedef struct security_driver {
     /*
-     * The name of this driver, eg, "BSD", "KRB4", etc...
+     * The name of this driver, eg, "BSD", "BSDTCP", "KRB5", etc...
      */
     const char *name;
 

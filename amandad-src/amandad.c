@@ -269,18 +269,9 @@ main(
     have_services = 0;
     for (i = 1; i < argc; i++) {
 	/*
-	 * accept -krb4 as an alias for -auth=krb4 (for compatibility)
-	 */
-	if (strcmp(argv[i], "-krb4") == 0) {
-	    argv[i] = "-auth=krb4";
-	    /* FALLTHROUGH */
-	    auth = "krb4";
-	}
-
-	/*
 	 * Get a driver for a security type specified after -auth=
 	 */
-	else if (strncmp(argv[i], "-auth=", strlen("-auth=")) == 0) {
+	if (strncmp(argv[i], "-auth=", strlen("-auth=")) == 0) {
 	    argv[i] += strlen("-auth=");
 	    secdrv = security_getdriver(argv[i]);
 	    auth = argv[i];

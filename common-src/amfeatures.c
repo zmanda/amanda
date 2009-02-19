@@ -89,7 +89,6 @@ am_init_feature_set(void)
 	am_add_feature(f, fe_options_include_list);
 	am_add_feature(f, fe_options_multiple_include);
 	am_add_feature(f, fe_options_optional_include);
-	am_add_feature(f, fe_options_krb4_auth);
 	am_add_feature(f, fe_options_kencrypt);
 
 	am_add_feature(f, fe_req_options_maxdumps);
@@ -196,7 +195,6 @@ am_set_default_feature_set(void)
 	am_add_feature(f, fe_options_index);
 	am_add_feature(f, fe_options_exclude_file);
 	am_add_feature(f, fe_options_exclude_list);
-	am_add_feature(f, fe_options_krb4_auth);
 	am_add_feature(f, fe_options_kencrypt);
 
 	am_add_feature(f, fe_req_options_maxdumps);

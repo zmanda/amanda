@@ -483,16 +483,6 @@ parse_options(
 	    }
 	    dle->auth = stralloc("bsd");
 	}
-	else if (am_has_feature(fs, fe_options_krb4_auth)
-	   && BSTRNCMP(tok, "krb4-auth") == 0) {
-	    if (dle->auth != NULL) {
-		dbprintf(_("multiple auth option\n"));
-		if (verbose) {
-		    g_printf(_("ERROR [multiple auth option]\n"));
-		}
-	    }
-	    dle->auth = stralloc("krb4");
-	}
 	else if (BSTRNCMP(tok, "compress-fast") == 0) {
 	    if (dle->compress != COMP_NONE) {
 		dbprintf(_("multiple compress option\n"));

@@ -37,9 +37,6 @@
 #ifdef BSD_SECURITY
 extern const security_driver_t bsd_security_driver;
 #endif
-#ifdef KRB4_SECURITY
-extern const security_driver_t krb4_security_driver;
-#endif
 #ifdef KRB5_SECURITY
 extern const security_driver_t krb5_security_driver;
 #endif
@@ -60,9 +57,6 @@ extern const security_driver_t local_security_driver;
 static const security_driver_t *drivers[] = {
 #ifdef BSD_SECURITY
     &bsd_security_driver,
-#endif
-#ifdef KRB4_SECURITY
-    &krb4_security_driver,
 #endif
 #ifdef KRB5_SECURITY
     &krb5_security_driver,

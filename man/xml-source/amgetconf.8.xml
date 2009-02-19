@@ -160,7 +160,6 @@ below (the difference is historical).</para>
  <varlistentry><term><literal>BSD_SECURITY</literal></term>
                <term><literal>BSDUDP_SECURITY</literal></term>
                <term><literal>BSDTCP_SECURITY</literal></term>
-               <term><literal>KRB4_SECURITY</literal></term>
                <term><literal>KRB5_SECURITY</literal></term>
                <term><literal>SSH_SECURITY</literal></term>
                <term><literal>RSH_SECURITY</literal></term>

@@ -338,7 +338,7 @@ SKIP: { # dumptypes
 	      [ sort(qw(
 	        mydump-type second_dumptype third_dumptype 
 	        NO-COMPRESS COMPRESS-FAST COMPRESS-BEST COMPRESS-CUST
-		SRVCOMPRESS BSD-AUTH KRB4-AUTH NO-RECORD NO-HOLD
+		SRVCOMPRESS BSD-AUTH NO-RECORD NO-HOLD
 		NO-FULL
 		)) ],
 	"getconf_list lists all dumptypes (including defaults)");

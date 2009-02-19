@@ -908,24 +908,6 @@ optionstr(
 		    _("WARNING: %s:%s does not support auth or bsd-auth\n"),
 		    dp->host->hostname, qdpname);
 	}
-    } else if(strcasecmp(dp->auth, "krb4") == 0) {
-	if(am_has_feature(dp->host->features, fe_options_krb4_auth))
-	    auth_opt = stralloc("krb4-auth;");
-	else if(fdout) {
-	    g_fprintf(fdout,
-		    _("WARNING: %s:%s does not support auth or krb4-auth\n"),
-		    dp->host->hostname, qdpname);
-	}
-	if(dp->kencrypt) {
-	    if(am_has_feature(dp->host->features, fe_options_kencrypt)) {
-		kencrypt_opt = "kencrypt;";
-	    }
-	    else if(fdout) {
-	    g_fprintf(fdout,
-		    _("WARNING: %s:%s does not support kencrypt\n"),
-		    dp->host->hostname, qdpname);
-	    }
-	}
     }
 
     switch(dp->compress) {

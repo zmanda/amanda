@@ -1909,16 +1909,6 @@ bad_nak:
     for (i = 0; i < NSTREAMS; i++) {
 	if (streams[i].fd == NULL)
 	    continue;
-#ifdef KRB4_SECURITY
-	/*
-	 * XXX krb4 historically never authenticated the index stream!
-	 * We need to reproduce this lossage here to preserve compatibility
-	 * with old clients.
-	 * It is wrong to delve into sech, but we have no choice here.
-	 */
-	if (strcasecmp(sech->driver->name, "krb4") == 0 && i == INDEXFD)
-	    continue;
-#endif
 	if (security_stream_auth(streams[i].fd) < 0) {
 	    errstr = newvstrallocf(errstr,
 		_("[could not authenticate %s stream: %s]"),
@@ -2085,8 +2075,6 @@ startup_dump(
 		   " ", level_string,
 		   " ", dumpdate,
 		   " OPTIONS ", options,
-		   /* compat: if authopt=krb4, send krb4-auth */
-		   (strcasecmp(authopt, "krb4") ? "" : "krb4-auth"),
 		   "\n",
 		   NULL);
     }

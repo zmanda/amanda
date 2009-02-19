@@ -67,7 +67,6 @@ typedef enum {
      *
      *	auth=BSD
      *	auth=RSH
-     *	auth=KRB4
      *	auth=krb5
      *
      * and so on.

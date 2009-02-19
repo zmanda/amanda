@@ -83,9 +83,6 @@ endif
 if WANT_BSDUDP_SECURITY
 libamanda_la_SOURCES += bsdudp-security.c
 endif
-if WANT_KRB4_SECURITY
-libamanda_la_SOURCES += krb4-security.c	
-endif
 if WANT_KRB5_SECURITY
 libamanda_la_SOURCES += krb5-security.c
 endif

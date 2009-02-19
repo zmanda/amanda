@@ -1,3 +1,19 @@
+2009-02-18  Jean-Louis Martineau <martineau@zmanda.com>
+	* config/amanda/krb4-security.m4: Remove file
+	* common-src/krb4-security.c: Remove file.
+	* example/config.site, example/amanda.conf.in,
+	  client-src/client_util.c, amandad-src/amandad.c,
+	  man/xml-source/amanda-client.conf.5.xml,
+	  man/xml-source/amanda.conf.5.xml,
+	  man/xml-source/amgetconf.8.xml,
+	  configure.in, server-src/dumper.c,
+	  server-src/diskfile.c, perl/Amanda/Constants.pm.in,
+	  installcheck/Amanda_Config.pl, common-src/amfeatures.h,
+	  common-src/security.c, common-src/security.h,
+	  common-src/genversion.c, common-src/amgetconf.pl,
+	  common-src/conffile.c, common-src/Makefile.am,
+	  common-src/amfeatures.c: Remove krb4 support.
+
 2009-02-18  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Debug.swg: correctly check $^S in _my_die()
 

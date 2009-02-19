@@ -2059,9 +2059,6 @@ define dumptype "srvcompress" {
 define dumptype "bsd-auth" {
     auth bsd
 }
-define dumptype "krb4-auth" {
-    auth krb4
-}
 define dumptype "no-record" {
     record no
 }

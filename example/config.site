@@ -298,24 +298,7 @@
 # UDPPORTRANGE=512,520
 
 
-# KRB4_SECURITY		--with-krb4-security
-#			Default: no
-#			KRB4_SECURITY selects MIT Kerberos version 4 style
-#			security, which is significantly better than
-#			BSD_SECURITY, providing for mutual authentication
-#			and (optionally) encryption of backup data over the
-#			network.  Both BSD_SECURITY and KRB4_SECURITY may be
-#			defined at the same time: the type of security to be
-#			used can be selected on a per-client-host basis (in
-#			the disklist file).
-#			NOTE: Due to stupid USA export restrictions, use of
-#			KRB4_SECURITY requires source files from the separate
-#			"amanda-krb4" package.  See the KERBEROS.HOW-TO-GET
-#			instructions on the Amanda home ftp site,
-#			ftp.amanda.org.
-# KRB4_SECURITY=yes
-
-# If you turn on KRB4_SECURITY, you must set all these options below.
+# If you turn on KRB5_SECURITY, you must set all these options below.
 #
 # You can set the principle, instance, and keyfile to use seperately for
 # both the client and server.

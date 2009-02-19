@@ -355,8 +355,9 @@ define tapetype SEAGATE-ULTRIUM-LTO {
 # These are referred to by the disklist file.  The dumptype specifies
 # certain parameters for dumping including:
 #   auth	- authentication scheme to use between server and client.
-#		  Valid values are "bsd", "krb4", "krb5" and "ssh".  
-#		  Default: [auth bsd]
+#		  Valid values are "bsd", "bsdudp", "bsdtcp", "krb5", "local",
+#		  "rsh" and "ssh".  
+#		  Default: [auth "bsd"]
 #   comment	- just a comment string
 #   comprate	- set default compression rate.  Should be followed by one or
 #		  two numbers, optionally separated by a comma.  The 1st is

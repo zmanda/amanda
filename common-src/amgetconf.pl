@@ -127,7 +127,6 @@ my %build_info = (
     'bsd_security' => $Amanda::Constants::BSD_SECURITY,
     'bsdudp_security' => $Amanda::Constants::BSDUDP_SECURITY,
     'bsdtcp_security' => $Amanda::Constants::BSDTCP_SECURITY,
-    'krb4_security' => $Amanda::Constants::KRB4_SECURITY,
     'krb5_security' => $Amanda::Constants::KRB5_SECURITY,
     'ssh_security' => $Amanda::Constants::SSH_SECURITY,
     'rsh_security' => $Amanda::Constants::RSH_SECURITY,

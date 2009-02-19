@@ -403,10 +403,6 @@ main(
     prstr("BSD_SECURITY");
 #endif
 
-#ifdef KRB4_SECURITY
-    prstr("KRB4_SECURITY");
-#endif
-
 #ifdef KRB5_SECURITY
     prstr("KRB5_SECURITY");
 #endif

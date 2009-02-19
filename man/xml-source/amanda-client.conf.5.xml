@@ -102,8 +102,6 @@ connection and one tcp connection by data stream.</para>
 one tcp connection.</para>
 <para><emphasis remap='B'>bsdudp</emphasis>, like bsd, but will use only one
 tcp connection for all data stream.</para>
-<para><emphasis remap='B'>krb4</emphasis> to use Kerberos-IV
-authorization.</para>
 <para><emphasis remap='B'>krb5</emphasis> to use Kerberos-V
 authorization.</para>
 <para><emphasis remap='B'>local</emphasis>, if the client is the server, it 
