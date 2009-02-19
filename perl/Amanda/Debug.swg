@@ -141,9 +141,12 @@ int error_exit_status;
  */
 %perlcode %{
 sub _my_die {
-    # $^S is set if we're in an eval { .. }, in which case we want
-    # to use the default Perl semantics.
-    if ($^S) {
+    # $^S: (from perlvar)
+    #  undef -> parsing module/eval
+    #  1 -> executing an eval
+    #  0 -> otherwise
+    # we *only* want to call critical() in the "otherwise" case
+    if (!defined($^S) or $^S == 1) {
 	die(@_);
     } else {
 	my ($msg) = @_;

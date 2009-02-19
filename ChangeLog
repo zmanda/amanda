@@ -1,4 +1,7 @@
 2009-02-18  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Debug.swg: correctly check $^S in _my_die()
+
+2009-02-18  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/debug.h common-src/debug.c: add ability to supporess
 	  tracebacks
 	* perl/Amanda/Debug.swg: fix typo and suppress traceback on die()
