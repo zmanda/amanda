@@ -54,7 +54,7 @@ Application initialization generally looks like this:
 
 =over
 
-=item C<setup_application($name, $type, $context)>
+=item setup_application($name, $type, $context)
 
 Set up the operating environment for an application, without requiring any
 configuration.
@@ -102,6 +102,90 @@ sets the appropriate target for error messages.
 
 =back
 
+=item finish_setup($running_as_flags)
+
+Perform final initialization tasks that require a loaded configuration.
+Specifically, move the debug log into a configuration-specific
+subdirectory, and check that the current userid is appropriate for
+this applciation.
+
+The user is specified by one of the following flags, which are
+available in export tag C<:check_running_as_flags>:
+
+  $RUNNING_AS_ANY                 # any user is OK
+  $RUNNING_AS_ROOT                # root
+  $RUNNING_AS_DUMPUSER            # dumpuser, from configuration
+  $RUNNING_AS_DUMPUSER_PREFERRED  # dumpuser, but client_login is OK too
+  $RUNNING_AS_CLIENT_LOGIN        # client_login (--with-user at build time)
+
+If the flag C<$RUNNING_AS_UID_ONLY> is bit-or'd into C<$running_as_flags>, then
+the euid is ignored; this is used for programs that expect to be setuid-root.
+
+=item get_original_cwd()
+
+Return the original current directory with C<get_original_cwd>.
+
+=back
+
+=head1 Miscellaneous Utilities
+
+=over
+
+=item safe_env()
+
+Return a "safe" environment hash.  For non-setuid programs, this means filtering out any
+localization variables.
+
+=back
+
+=head1 String Utilities
+
+=over
+
+=item quote_string($str)
+
+Quote a string using Amanda's quoting algorithm.  Strings with no whitespace,
+control, or quote characters are returned unchanged.  An empty string is
+represented as the two-character string C<"">.  Otherwise, tab, newline,
+carriage return, form-feed, backslash, and double-quote (C<">) characters are
+escaped with a backslash and the string is surrounded by double quotes.
+
+=item unquote_string($str)
+
+Unquote a string as quoted with C<quote_string>.
+
+=item skip_quoted_string($str)
+
+my($q, $remaider) = skip_quoted_string($str)
+
+Return the first quoted string and the remainder of the string.
+
+All of C<quote_string>, C<unquote_string> and C<skip_quoted_string> are
+available under the export tag C<:quoting>.
+
+=item expand_braced_alternates($str)
+=item collapse_braced_alternates(\@list)
+
+These two functions handle "braced alternates", which is a syntax borrowed,
+partially, from shells.  Comma-separated strings enclosed in curly braces
+expand into multiple alternatives for the entire string.  For example:
+
+  "{foo,bar,bat}"   [ "foo", "bar", "bat" ]
+  "foo{1,2}bar"     [ "foo1bar", "foo2bar" ]
+  "foo{1\,2,3}bar"  [ "foo1,2bar", "foo3bar" ]
+  "{a,b}-{1,2}"     [ "a-1", "a-2", "b-1", "b-2" ]
+
+Note that nested braces are not processed.  Braces, commas, and backslashes may
+be escaped with backslashes.  On error, C<expand_braced_altnerates> returns
+undef.  These two functions are available in the export tag C<:alternates>.
+
+=item generate_timestamp()
+
+Generate a timestamp from the current time, obeying the 'USETIMESTAMPS'
+config parameter.  The Amanda configuration must already be loaded.
+
+=back
+
 =cut
 
 # private package variables
@@ -137,27 +221,6 @@ sub setup_application {
     $SIG{'PIPE'} = 'IGNORE';
 }
 
-=item C<finish_setup($running_as_flags)>
-
-Perform final initialization tasks that require a loaded configuration.
-Specifically, move the debug log into a configuration-specific
-subdirectory, and check that the current userid is appropriate for
-this applciation.
-
-The user is specified by one of the following flags, which are
-available in export tag C<:check_running_as_flags>:
-
-  $RUNNING_AS_ANY                 # any user is OK
-  $RUNNING_AS_ROOT                # root
-  $RUNNING_AS_DUMPUSER            # dumpuser, from configuration
-  $RUNNING_AS_DUMPUSER_PREFERRED  # dumpuser, but client_login is OK too
-  $RUNNING_AS_CLIENT_LOGIN        # client_login (--with-user at build time)
-
-If the flag C<$RUNNING_AS_UID_ONLY> is bit-or'd into C<$running_as_flags>, then
-the euid is ignored; this is used for programs that expect to be setuid-root.
-
-=cut
-
 sub finish_setup {
     my ($running_as) = @_;
 
@@ -170,25 +233,11 @@ sub finish_setup {
     check_running_as($running_as);
 }
 
-=item C<get_original_cwd()>
-
-Return the original current directory with C<get_original_cwd>.
-
-=cut
 %}
 char *get_original_cwd(void);
 amglue_export_tag(util, get_original_cwd);
 
 %perlcode %{
-=head1 Miscellaneous Utilities
-
-=item C<safe_env()>
-
-Return a "safe" environment hash.  For non-setuid programs, this means filtering out any
-localization variables.
-
-=cut
-
 sub safe_env {
     my %rv = %ENV;
 
@@ -221,46 +270,6 @@ amglue_add_constant(CONTEXT_SCRIPTUTIL, pcontext_t);
 amglue_copy_to_tag(pcontext_t, constants);
 
 %perlcode %{
-=head1 String Utilities
-
-=item C<quote_string($str)>
-
-Quote a string using Amanda's quoting algorithm.  Strings with no whitespace,
-control, or quote characters are returned unchanged.  An empty string is
-represented as the two-character string C<"">.  Otherwise, tab, newline,
-carriage return, form-feed, backslash, and double-quote (C<">) characters are
-escaped with a backslash and the string is surrounded by double quotes.
-
-=item C<unquote_string($str)>
-
-Unquote a string as quoted with C<quote_string>.
-
-=item C<skip_quoted_string($str)>
-
-my($q, $remaider) = skip_quoted_string($str)
-
-Return the first quoted string and the remainder of the string.
-
-All of C<quote_string>, C<unquote_string> and C<skip_quoted_string> are
-available under the export tag C<:quoting>.
-
-=item C<expand_braced_alternates($str)>
-=item C<collapse_braced_alternates(\@list)>
-
-These two functions handle "braced alternates", which is a syntax borrowed,
-partially, from shells.  Comma-separated strings enclosed in curly braces
-expand into multiple alternatives for the entire string.  For example:
-
-  "{foo,bar,bat}"   [ "foo", "bar", "bat" ]
-  "foo{1,2}bar"     [ "foo1bar", "foo2bar" ]
-  "foo{1\,2,3}bar"  [ "foo1,2bar", "foo3bar" ]
-  "{a,b}-{1,2}"     [ "a-1", "a-2", "b-1", "b-2" ]
-
-Note that nested braces are not processed.  Braces, commas, and backslashes may
-be escaped with backslashes.  On error, C<expand_braced_altnerates> returns
-undef.  These two functions are available in the export tag C<:alternates>.
-
-=cut
 
 sub skip_quoted_string {
     my $str = shift;
@@ -334,12 +343,6 @@ amglue_export_tag(quoting, quote_string unquote_string skip_quoted_string saniti
 amglue_export_tag(alternates, expand_braced_alternates collapse_braced_alternates);
 
 %perlcode %{
-=item C<generate_timestamp()>
-
-Generate a timestamp from the current time, obeying the 'USETIMESTAMPS'
-config parameter.  The Amanda configuration must already be loaded.
-
-=cut
 
 sub generate_timestamp {
     # this corresponds to common-src/timestamp.c's get_proper_stamp_from_time
@@ -371,7 +374,4 @@ sub check_std_fds {
     fcntl(STDERR, F_GETFD, 0) or critical("Standard error is not open");
 }
 
-=back
-
-=cut
 %}

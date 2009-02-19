@@ -1,4 +1,7 @@
 2009-02-19  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Util.swg: move POD to the top of the file, refomat
+
+2009-02-19  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/util.h common-src/util.c: remove unneeded needs_quotes
 
 2009-02-19  Dustin J. Mitchell <dustin@zmanda.com>
