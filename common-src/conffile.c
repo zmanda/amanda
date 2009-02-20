@@ -174,6 +174,7 @@ typedef enum {
     /* numbers */
     CONF_AMINFINITY,		CONF_MULT1,		CONF_MULT7,
     CONF_MULT1K,		CONF_MULT1M,		CONF_MULT1G,
+    CONF_MULT1T,
 
     /* boolean */
     CONF_ATRUE,			CONF_AFALSE
@@ -989,6 +990,14 @@ keytab_t numb_keytable[] = {
     { "GIG", CONF_MULT1G },
     { "GIGABYTE", CONF_MULT1G },
     { "GIGABYTES", CONF_MULT1G },
+    { "T", CONF_MULT1T },
+    { "TB", CONF_MULT1T },
+    { "TBPS", CONF_MULT1T },
+    { "TBYTE", CONF_MULT1T },
+    { "TBYTES", CONF_MULT1T },
+    { "TERA", CONF_MULT1T },
+    { "TERABYTE", CONF_MULT1T },
+    { "TERABYTES", CONF_MULT1T },
     { "MPS", CONF_MULT1M },
     { "TAPE", CONF_MULT1 },
     { "TAPES", CONF_MULT1 },
@@ -3589,6 +3598,14 @@ get_int(void)
 	val *= 1024 * 1024;
 	break;
 
+    case CONF_MULT1T:
+	if (val > (INT_MAX / (1024 * 1024 * 1024)))
+	    conf_parserror(_("value too large"));
+	if (val < (INT_MIN / (1024 * 1024 * 1024)))
+	    conf_parserror(_("value too small"));
+	val *= 1024 * 1024 * 1024;
+	break;
+
     default:	/* it was not a multiplier */
 	unget_conftoken();
 	break;
@@ -3677,6 +3694,14 @@ get_size(void)
 	val *= (ssize_t)(1024 * 1024);
 	break;
 
+    case CONF_MULT1T:
+	if (val > (INT_MAX / (1024 * 1024 * 1024)))
+	    conf_parserror(_("value too large"));
+	if (val < (INT_MIN / (1024 * 1024 * 1024)))
+	    conf_parserror(_("value too small"));
+	val *= 1024 * 1024 * 1024;
+	break;
+
     default:	/* it was not a multiplier */
 	unget_conftoken();
 	break;
@@ -3745,6 +3770,12 @@ get_int64(void)
 	if (val > G_MAXINT64/(1024*1024) || val < ((gint64)G_MININT64)/(1024*1024))
 	    conf_parserror(_("value too large"));
 	val *= 1024*1024;
+	break;
+
+    case CONF_MULT1T:
+	if (val > G_MAXINT64/(1024*1024*1024) || val < ((gint64)G_MININT64)/(1024*1024*1024))
+	    conf_parserror(_("value too large"));
+	val *= 1024*1024*1024;
 	break;
 
     default:	/* it was not a multiplier */
@@ -6793,6 +6824,8 @@ find_multiplier(
                 return 1024*1024;
             case CONF_MULT1G:
                 return 1024*1024*1024;
+            case CONF_MULT1T:
+                return (gint64)1024*1024*1024*1024;
             case CONF_MULT7:
                 return 7;
             case CONF_AMINFINITY:

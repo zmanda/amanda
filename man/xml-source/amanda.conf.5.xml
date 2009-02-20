@@ -148,6 +148,12 @@ some of which have a multiplier effect:</para>
   </listitem>
   </varlistentry>
   <varlistentry>
+  <term><emphasis remap='B'>t tb tbyte tbytes terabyte terabytes</emphasis></term>
+  <listitem>
+<para>Some number of terabytes (bytes*1024*1024*1024*1024).</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
   <term><emphasis remap='B'>tape tapes</emphasis></term>
   <listitem>
 <para>Some number of tapes.</para>

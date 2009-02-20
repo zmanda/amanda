@@ -1,3 +1,7 @@
+2009-02-20  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c: Add t, tb, tera, ... suffix.
+	* man/xml-source/amanda.conf.5.xml: Document it.
+
 2009-01-28  Nikolas Coukouma <atrus@zmanda.com>
 	* example/amanda-client-postgresql.conf.in,
 	  example/Makefile.am,
