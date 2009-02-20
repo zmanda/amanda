@@ -279,6 +279,10 @@ for future expansion.  Not all devices implement all of these properties.</para>
  (read-only) This property contains the full canonical name for this device.  This name may not be the same as the user-supplied name, but is a valid name by which to access this device.
 </listitem></varlistentry>
  <!-- ==== -->
+ <varlistentry><term>COMMENT</term><listitem>
+ (read-write) This string property is entirely for the user's convenience.  It is supported by all devices, but no device interprets its value in any way.
+</listitem></varlistentry>
+ <!-- ==== -->
  <varlistentry><term>COMPRESSION</term><listitem>
  (read-write) This boolean property represents the compression status of the device, and can be used to enable and disable such compression.  This applies mostly to tape devices, although many tape devices do not support setting compression from software.
 </listitem></varlistentry>

@@ -257,6 +257,9 @@ void device_property_init(void) {
     device_property_fill_and_register(&device_property_verbose,
                                      G_TYPE_BOOLEAN, "verbose",
        "Should the device produce verbose output?");
+    device_property_fill_and_register(&device_property_comment,
+                                     G_TYPE_STRING, "comment",
+       "User-specified comment for the device");
 }
 
 DevicePropertyBase device_property_concurrency;
@@ -275,3 +278,4 @@ DevicePropertyBase device_property_full_deletion;
 DevicePropertyBase device_property_free_space;
 DevicePropertyBase device_property_max_volume_usage;
 DevicePropertyBase device_property_verbose;
+DevicePropertyBase device_property_comment;

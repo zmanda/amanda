@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 270;
+use Test::More tests => 273;
 use File::Path qw( mkpath rmtree );
 use Sys::Hostname;
 use Carp;
@@ -209,6 +209,12 @@ for my $prop ($dev->property_list()) {
 }
 ok(!$dev->property_get("full_deletion"),
     "property_get(full_deletion) on null device");
+is($dev->property_get("comment"), undef,
+    "no comment by default");
+ok($dev->property_set("comment", "well, that was silly"),
+    "set comment property");
+is($dev->property_get("comment"), "well, that was silly",
+    "comment correctly stored");
 
 # and write a file to it
 write_file(0xabcde, 1024*256, 1);

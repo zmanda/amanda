@@ -260,4 +260,8 @@ extern DevicePropertyBase device_property_max_volume_usage;
 extern DevicePropertyBase device_property_verbose;
 #define PROPERTY_VERBOSE (device_property_verbose.ID)
 
+/* A comment for the use of the user. */
+extern DevicePropertyBase device_property_comment;
+#define PROPERTY_COMMENT (device_property_comment.ID)
+
 #endif
