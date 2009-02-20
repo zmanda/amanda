@@ -1,4 +1,8 @@
 2009-02-20  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Installcheck/Run.pm: create a purpose-specific 'junk'
+	  directory to test dumps
+
+2009-02-20  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Amanda_Archive.pl installcheck/Amanda_Changer_compat.pl
 	  installcheck/Amanda_Changer_disk.pl
 	  installcheck/Amanda_Changer_rait.pl installcheck/Amanda_Device.pl

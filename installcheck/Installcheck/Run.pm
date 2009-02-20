@@ -175,11 +175,7 @@ BEGIN {
     }
 };
 
-# diskname is device-src, which, when full of object files, is about 4M in
-# my environment.  Consider creating a directory full of a configurable amount
-# of junk and pointing to that, to eliminate a potential point of variation in
-# tests.
-our $diskname = abs_path(getcwd() . "/../device-src");
+our $diskname = "$Installcheck::TMP/backmeup";
 
 # common paths (note that Installcheck::Dumpcache assumes these do not change)
 my $taperoot = "$Installcheck::TMP/vtapes";
@@ -188,11 +184,74 @@ my $holdingdir ="$Installcheck::TMP/holding";
 sub setup {
     my $testconf = Installcheck::Config->new();
 
+    (-d $diskname) or setup_backmeup();
     setup_vtapes($testconf, 3);
     setup_holding($testconf, 25);
     setup_disklist($testconf);
 
     return $testconf;
+}
+
+# create the 'backmeup' data
+sub setup_backmeup {
+    my $dir_structure = {
+	'1megabyte' => 1024*1024,
+	'1kilobyte' => 1024,
+	'1byte' => 1,
+	'dir' => {
+	    'ff' => 182,
+	    'gg' => 2748,
+	    'subdir' => {
+		'subsubdir' => {
+		    '10k' => 1024*10,
+		},
+	    },
+	},
+    };
+
+    rmtree($diskname);
+    mkpath($diskname) or die("Could not create $name");
+
+    # pick a file for 'random' data -- /dev/urandom or, failing that,
+    # Amanda's ChangeLog.
+    my $randomfile = "/dev/urandom";
+    if (!-r $randomfile) {
+	$randomfile = "../ChangeLog";
+    }
+
+    my $rfd;
+    $create = sub {
+	my ($parent, $contents) = @_;
+	while (my ($name, $val) = each(%$contents)) {
+	    my $name = "$parent/$name";
+	    if (ref($val) eq 'HASH') {
+		mkpath($name) or die("Could not create $name");
+		$create->($name, $val);
+	    } else {
+		my $bytes_needed = $val+0;
+		open(my $wfd, ">", $name) or die("Could not open $name: $!");
+
+		# read bytes from a source file as a source of "random" data..
+		while ($bytes_needed) {
+		    my $buf;
+		    if (!defined($rfd)) {
+			open($rfd, "<", "$randomfile") or die("Could not open $randomfile");
+		    }
+		    my $to_read = $bytes_needed>10240? 10240:$bytes_needed;
+		    my $bytes_read = sysread($rfd, $buf, $to_read);
+		    print $wfd $buf;
+		    if ($bytes_read < $to_read) {
+			close($rfd);
+			$rfd = undef;
+		    }
+
+		    $bytes_needed -= $bytes_read;
+		}
+	    }
+	}
+    };
+
+    $create->($diskname, $dir_structure);
 }
 
 sub setup_vtapes {
