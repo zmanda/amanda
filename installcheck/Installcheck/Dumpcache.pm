@@ -58,6 +58,7 @@ Like 'basic', but with "usetimestamps" set to "no".
 
 =cut
 
+use Installcheck;
 use Installcheck::Run qw(run $diskname amdump_diag);
 use Test::More;
 use Amanda::Paths;
@@ -67,7 +68,7 @@ use IPC::Open3;
 use Cwd qw(abs_path getcwd);
 use Carp;
 
-my $tarballdir = "$AMANDA_TMPDIR/installcheck-dumpcache";
+my $tarballdir = "$Installcheck::TMP/dumpcache";
 my %flavors;
 
 $flavors{'basic'} = sub {
@@ -102,10 +103,10 @@ sub generate_and_store {
     my $conf_tarball = "$tarballdir/$flavor-conf.tgz";
 
     if (system("$Amanda::Constants::GNUTAR",
-		"-C", "$AMANDA_TMPDIR",
+		"-C", "$Installcheck::TMP",
 		"-zcf", "$tmp_tarball",
-		"installcheck-vtapes",
-		"installcheck-holding")) {
+		"vtapes",
+		"holding")) {
 	diag("Error caching dump results (ignored): $?");
 	return 0;
     }
@@ -137,7 +138,7 @@ sub load {
     } else {
 	if (system("$Amanda::Constants::GNUTAR",
 		    "-zxf", "$tmp_tarball",
-		    "-C", "$AMANDA_TMPDIR")) {
+		    "-C", "$Installcheck::TMP")) {
 	    die("Error untarring dump results: $?");
 	}
 

@@ -19,6 +19,7 @@
 use Test::More tests => 78;
 
 use lib "@amperldir@";
+use Installcheck;
 use Installcheck::Config;
 use Installcheck::Run qw(run run_get run_err);
 use Amanda::Paths;
@@ -121,7 +122,7 @@ is(run_get('amgetconf', 'TESTCONF', "build.mandir"), $mandir,
 is(run_get('amgetconf', 'TESTCONF', "build.AMANDA_DBGDIR"), $AMANDA_DBGDIR,
     "build.AMANDA_DBGDIR is correct");
 is(run_get('amgetconf', 'TESTCONF', "build.AMANDA_TMPDIR"), $AMANDA_TMPDIR,
-    "build.AMANDA_TMPDIR is correct");
+    "build.AMDNA_TMPDIR is correct");
 is(run_get('amgetconf', 'TESTCONF', "build.CONFIG_DIR"), $CONFIG_DIR,
     "build.CONFIG_DIR is correct");
 is(run_get('amgetconf', 'TESTCONF', "build.__empty"), "",

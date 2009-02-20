@@ -22,6 +22,7 @@ use strict;
 use warnings;
 
 use lib "@amperldir@";
+use Installcheck;
 use Installcheck::Config;
 use Installcheck::Run;
 use Amanda::Paths;
@@ -37,8 +38,8 @@ Amanda::Debug::dbopen("installcheck");
 # and disable Debug's die() and warn() overrides
 Amanda::Debug::disable_die_override();
 
-my $changer_filename = "$AMANDA_TMPDIR/chg-test";
-my $result_file = "$AMANDA_TMPDIR/chg-test.result";
+my $changer_filename = "$Installcheck::TMP/chg-test";
+my $result_file = "$Installcheck::TMP/chg-test.result";
 
 # Set up a 'test' changer; several of these are defined below.
 sub setup_changer {
@@ -46,7 +47,7 @@ sub setup_changer {
 
     open my $chg_test, ">", $changer_filename or die("Could not create test changer");
 
-    $changer_script =~ s/\$AMANDA_TMPDIR/$AMANDA_TMPDIR/g;
+    $changer_script =~ s/\$Installcheck::TMP/$Installcheck::TMP/g;
 
     print $chg_test "#! /bin/sh\n";
     print $chg_test $changer_script;
@@ -133,13 +134,13 @@ case "${1}" in
             3) echo "1"; exit 0;; # test missing 'device' portion
         esac;;
     -reset)
-	echo "reset" > @AMANDA_TMPDIR@/chg-test.result
+	echo "reset" > $Installcheck::TMP/chg-test.result
 	echo "reset ignored";;
     -eject)
-	echo "eject" > @AMANDA_TMPDIR@/chg-test.result
+	echo "eject" > $Installcheck::TMP/chg-test.result
 	echo "eject ignored";;
     -clean)
-	echo "clean" > @AMANDA_TMPDIR@/chg-test.result
+	echo "clean" > $Installcheck::TMP/chg-test.result
 	echo "clean ignored";;
     -label)
         case "${2}" in
@@ -344,3 +345,6 @@ $chg = Amanda::Changer->new();
     Amanda::MainLoop::call_later($get_info);
     Amanda::MainLoop::run();
 }
+
+unlink($changer_filename);
+unlink($result_file);

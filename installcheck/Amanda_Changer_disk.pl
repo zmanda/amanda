@@ -21,6 +21,7 @@ use File::Path;
 use strict;
 
 use lib "@amperldir@";
+use Installcheck;
 use Installcheck::Config;
 use Amanda::Paths;
 use Amanda::Device;
@@ -35,7 +36,7 @@ Amanda::Debug::dbopen("installcheck");
 # and disable Debug's die() and warn() overrides
 Amanda::Debug::disable_die_override();
 
-my $taperoot = "$AMANDA_TMPDIR/Amanda_Changer_Disk_test";
+my $taperoot = "$Installcheck::TMP/Amanda_Changer_Disk_test";
 
 sub reset_taperoot {
     my ($nslots) = @_;
@@ -228,3 +229,5 @@ my $chg = Amanda::Changer->new("chg-disk:$taperoot");
     Amanda::MainLoop::call_later($get_info);
     Amanda::MainLoop::run();
 }
+
+rmtree($taperoot);

@@ -91,7 +91,7 @@ the proper vtape directories.  These are controlled by C<chg-disk>.
 The tapes are not labeled, and C<label_new_tapes> is not set by
 default, although C<labelstr> is set to C<TESTCONF[0-9][0-9]>.
 
-The vtapes are created in a subdirectory of C<AMANDA_TMPDIR> for ease of
+The vtapes are created in a subdirectory of C<$Installcheck::TMP> for ease of
 later deletion.  The subdirectory for each slot is available from
 C<vtape_dir($slot)>, while the parent directory is available from
 C<vtape_dir()>.  C<load_vtape($slot)> will "load" the indicated slot
@@ -99,7 +99,7 @@ just like chg-disk would, and return the resulting path.
 
 =head2 HOLDING
 
-The holding disk is also stored under C<AMANDA_TMPDIR>.  It is a 15M
+The holding disk is also stored under C<$Installcheck::TMP>.  It is a 15M
 holding disk, with a chunksize of 1M (to help exercise the chunker).
 
 =head2 DISKLIST
@@ -136,6 +136,7 @@ particular test script.
 
 =cut
 
+use Installcheck;
 use Installcheck::Config;
 use Amanda::Paths;
 use File::Path;
@@ -181,8 +182,8 @@ BEGIN {
 our $diskname = abs_path(getcwd() . "/../device-src");
 
 # common paths (note that Installcheck::Dumpcache assumes these do not change)
-my $taperoot = "$AMANDA_TMPDIR/installcheck-vtapes";
-my $holdingdir ="$AMANDA_TMPDIR/installcheck-holding";
+my $taperoot = "$Installcheck::TMP/vtapes";
+my $holdingdir ="$Installcheck::TMP/holding";
 
 sub setup {
     my $testconf = Installcheck::Config->new();
@@ -270,7 +271,7 @@ sub load_vtape {
 sub run {
     my $app = shift;
     my @args = @_;
-    my $errtempfile = "$AMANDA_TMPDIR/stderr$$.out";
+    my $errtempfile = "$Installcheck::TMP/stderr$$.out";
 
     # use a temporary file for error output -- this eliminates synchronization
     # problems between reading stderr and stdout

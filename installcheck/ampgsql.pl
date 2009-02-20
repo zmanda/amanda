@@ -24,6 +24,7 @@ use warnings;
 use Amanda::Constants;
 use Amanda::Paths;
 use File::Path;
+use Installcheck;
 use Installcheck::Application;
 use Installcheck::Config;
 use Installcheck::Run;
@@ -46,7 +47,7 @@ skip_all("GNU tar is not available")
     unless ($Amanda::Constants::GNUTAR and -x $Amanda::Constants::GNUTAR);
 skip_all("Set INSTALLCHECK_POSTGRES_PREFIX to run tests") unless $postgres_prefix;
 
-my $root_dir = "$AMANDA_TMPDIR/installcheck/ampgsql";
+my $root_dir = "$Installcheck::TMP/ampgsql";
 my $data_dir = "$root_dir/data";
 my $config_file = "$data_dir/postgresql.conf";
 my $restore_config_file = "$data_dir/restore.conf";

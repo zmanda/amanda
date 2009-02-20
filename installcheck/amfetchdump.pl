@@ -19,6 +19,7 @@
 use Test::More tests => 7;
 
 use lib "@amperldir@";
+use Installcheck;
 use Installcheck::Config;
 use Installcheck::Run qw(run run_get run_err $diskname);
 use Installcheck::Dumpcache;
@@ -29,7 +30,7 @@ use Cwd;
 my $testconf;
 my $dumpok;
 
-my $testdir = "$AMANDA_TMPDIR/amfetchdump-installcheck";
+my $testdir = "$Installcheck::TMP/amfetchdump-installcheck";
 rmtree($testdir);
 mkpath($testdir);
 
@@ -101,7 +102,7 @@ SKIP: {
 	unless $Installcheck::Run::have_expect;
 
     cleandir();
-    chdir($AMANDA_TMPDIR);
+    chdir($Installcheck::TMP);
 
     my $exp = Installcheck::Run::run_expect('amfetchdump', '-O', $testdir, 'TESTCONF', 'localhost');
     $exp->log_stdout(0);

@@ -21,6 +21,7 @@ use Test::More tests => 21;
 use lib "@amperldir@";
 use strict;
 use warnings;
+use Installcheck;
 use Amanda::Constants;
 use Amanda::Paths;
 use File::Path;
@@ -41,7 +42,7 @@ is($support->{'INDEX-LINE'}, 'YES', "supports indexing");
 is($support->{'MESSAGE-LINE'}, 'YES', "supports messages");
 is($support->{'CALCSIZE'}, 'YES', "supports calcsize");
 
-my $root_dir = "$AMANDA_TMPDIR/installcheck-amgtar";
+my $root_dir = "$Installcheck::TMP/installcheck-amgtar";
 my $back_dir = "$root_dir/to_backup";
 my $rest_dir = "$root_dir/restore";
 my $list_dir = "$root_dir/list";

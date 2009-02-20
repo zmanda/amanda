@@ -23,6 +23,7 @@ use Carp;
 use strict;
 
 use lib "@amperldir@";
+use Installcheck;
 use Installcheck::Config;
 use Amanda::Debug;
 use Amanda::Device qw( :constants );
@@ -35,8 +36,8 @@ my $dev;
 my $dev_name;
 my ($vtape1, $vtape2);
 my ($input_filename, $output_filename) =
-    ( "$AMANDA_TMPDIR/input.tmp", "$AMANDA_TMPDIR/output.tmp" );
-my $taperoot = "$AMANDA_TMPDIR/Amanda_Device_test_tapes";
+    ( "$Installcheck::TMP/input.tmp", "$Installcheck::TMP/output.tmp" );
+my $taperoot = "$Installcheck::TMP/Amanda_Device_test_tapes";
 my $testconf;
 my $queue_fd;
 

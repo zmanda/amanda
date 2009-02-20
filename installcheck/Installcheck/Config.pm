@@ -18,6 +18,7 @@
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
 package Installcheck::Config;
+use Installcheck;
 use Amanda::Paths;
 use Amanda::Constants;
 use File::Path;
@@ -93,8 +94,8 @@ sub new {
 
 	# global client config
 	'client_params' => [
-	    'amandates' => "\"$AMANDA_TMPDIR/TESTCONF/amandates\"",
-	    'gnutar_list_dir' => "\"$AMANDA_TMPDIR/TESTCONF/gnutar_listdir\"",
+	    'amandates' => "\"$Installcheck::TMP/TESTCONF/amandates\"",
+	    'gnutar_list_dir' => "\"$Installcheck::TMP/TESTCONF/gnutar_listdir\"",
 	],
 
 	# config-specific client config
@@ -265,8 +266,8 @@ sub write {
     mkpath($self->{'infofile'}) or die("Could not create infofile directory");
     mkpath($self->{'logdir'}) or die("Could not create logdir directory");
     mkpath($self->{'indexdir'}) or die("Could not create indexdir directory");
-    my $amandates = $AMANDA_TMPDIR . "/TESTCONF/amandates";
-    my $gnutar_listdir = $AMANDA_TMPDIR . "/TESTCONF/gnutar_listdir";
+    my $amandates = $Installcheck::TMP . "/TESTCONF/amandates";
+    my $gnutar_listdir = $Installcheck::TMP . "/TESTCONF/gnutar_listdir";
     if (! -d $gnutar_listdir) {
 	mkpath($gnutar_listdir)
 	    or die("Could not create '$gnutar_listdir'");

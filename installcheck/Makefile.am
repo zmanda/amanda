@@ -86,7 +86,12 @@ endif
 
 # Add any common files (that should not be run as tests, and that do not
 # require configure-variable substitution) here:
-test_utils = Installcheck/Config.pm Installcheck/Run.pm Installcheck/Dumpcache.pm Installcheck/Application.pm
+test_utils = \
+	Installcheck.pm \
+	Installcheck/Config.pm \
+	Installcheck/Run.pm \
+	Installcheck/Dumpcache.pm \
+	Installcheck/Application.pm
 EXTRA_DIST += $(test_utils)
 
 CHECK_PERL_FLAGS=-I$(top_srcdir)/installcheck
@@ -114,7 +119,8 @@ clobber_my_config_is_ok:
 	fi
 
 installcheck-local: clobber_my_config_is_ok $(SCRIPTS_PERL)
-	@$(mkdir_p) $(AMANDA_TMPDIR)
+	rm -rf "$(AMANDA_TMPDIR)/installchecks"
+	$(mkdir_p) "$(AMANDA_TMPDIR)/installchecks"
 	@if test -f "$(CONFIG_DIR)/amanda-client.conf" -a ! -f "$(CONFIG_DIR)/amanda-client.conf.install-backup"; then \
 	    cp "$(CONFIG_DIR)/amanda-client.conf" "$(CONFIG_DIR)/amanda-client.conf.install-backup"; \
 	fi 
@@ -123,5 +129,4 @@ installcheck-local: clobber_my_config_is_ok $(SCRIPTS_PERL)
 	@if test -f "$(CONFIG_DIR)/amanda-client.conf.install-backup"; then \
 	    mv -f "$(CONFIG_DIR)/amanda-client.conf.install-backup" "$(CONFIG_DIR)/amanda-client.conf"; \
 	fi
-	rm -rf "$(AMANDA_TMPDIR)/TESTCONF/amandates"
-	rm -rf "$(AMANDA_TMPDIR)/TESTCONF/gnutar_listdir"
+	rm -rf "$(AMANDA_TMPDIR)/installchecks"

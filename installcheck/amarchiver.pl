@@ -19,12 +19,13 @@
 use Test::More tests => 18;
 
 use lib "@amperldir@";
+use Installcheck;
 use Installcheck::Run qw( run run_get );
 use Amanda::Paths;
 use Amanda::Constants;
 use File::Path qw( mkpath rmtree );
 
-my $tmpdir = "$AMANDA_TMPDIR/amarchiver-installcheck";
+my $tmpdir = "$Installcheck::TMP/amarchiver-installcheck";
 my $archfile = "$tmpdir/test.amar";
 my $data = "abcd" x 500;
 my $fh;

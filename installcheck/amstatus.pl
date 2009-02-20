@@ -19,11 +19,12 @@
 use Test::More tests => 7;
 
 use lib "@amperldir@";
+use Installcheck;
 use Installcheck::Run qw( run run_get );
 use Amanda::Paths;
 use Amanda::Constants;
 
-my $filename="$AMANDA_TMPDIR/installcheck-amdump.1";
+my $filename="$Installcheck::TMP/installcheck-amdump.1";
 my $testconf = Installcheck::Run::setup();
 $testconf->write();
 

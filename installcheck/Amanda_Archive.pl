@@ -24,12 +24,13 @@ use warnings;
 # library is well-covered by amar-test.
 
 use lib "@amperldir@";
+use Installcheck;
 use Amanda::Archive;
 use Amanda::Paths;
 use Data::Dumper;
 
-my $arch_filename = "$AMANDA_TMPDIR/amanda_archive.bin";
-my $data_filename = "$AMANDA_TMPDIR/some_data.bin";
+my $arch_filename = "$Installcheck::TMP/amanda_archive.bin";
+my $data_filename = "$Installcheck::TMP/some_data.bin";
 my ($fh, $dfh, $ar, $f1, $f2, $a1, $a2, @res, $posn);
 
 # some versions of Test::More will fail tests if the identity
@@ -244,3 +245,4 @@ is_deeply([@res], [
 $ar->close();
 
 unlink($data_filename);
+unlink($arch_filename);

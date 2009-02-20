@@ -21,6 +21,7 @@ use File::Path;
 use strict;
 
 use lib "@amperldir@";
+use Installcheck;
 use Installcheck::Config;
 use Amanda::Paths;
 use Amanda::Debug;
@@ -77,7 +78,7 @@ $Amanda_process->{ppid} = {
 };
 
 #create a log file
-my $log_filename = "$AMANDA_TMPDIR/Amanda_Logfile_test.log";
+my $log_filename = "$Installcheck::TMP/Amanda_Logfile_test.log";
 open my $logfile, ">", $log_filename or die("Could not create temporary log file '$log_filename': $!");
 print $logfile <<LOGFILE;
 INFO amdump amdump pid 30072

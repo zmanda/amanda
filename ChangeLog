@@ -1,4 +1,19 @@
 2009-02-20  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Amanda_Archive.pl installcheck/Amanda_Changer_compat.pl
+	  installcheck/Amanda_Changer_disk.pl
+	  installcheck/Amanda_Changer_rait.pl installcheck/Amanda_Device.pl
+	  installcheck/Amanda_Logfile.pl installcheck/Amanda_Process.pl
+	  installcheck/Amanda_Xfer.pl installcheck/Installcheck.pm
+	  installcheck/Installcheck/Config.pm
+	  installcheck/Installcheck/Dumpcache.pm
+	  installcheck/Installcheck/Run.pm installcheck/Makefile.am
+	  installcheck/amarchiver.pl installcheck/amfetchdump.pl
+	  installcheck/amgetconf.pl installcheck/amgtar.pl
+	  installcheck/ampgsql.pl installcheck/amservice.pl
+	  installcheck/amstatus.pl installcheck/pp-scripts.pl: use a
+	  subdirectory of AMANDA_TMPDIR for installcheck temporary files
+
+2009-02-20  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Amanda_MainLoop.pl: report "timeout" on a timeout
 	* amar-src/amar-test.c common-src/amflock-test.c
 	  common-src/event-test.c common-src/queueing-test.c

@@ -19,11 +19,12 @@
 use Test::More tests => 3;
 
 use lib "@amperldir@";
+use Installcheck;
 use Installcheck::Run qw( run run_get );
 use Amanda::Paths;
 use Amanda::Constants;
 
-my $input_filename = "$AMANDA_TMPDIR/amservice_input.txt";
+my $input_filename = "$Installcheck::TMP/amservice_input.txt";
 my $testconf = Installcheck::Run::setup();
 my $input;
 
@@ -59,7 +60,7 @@ like(run_get('amservice', '-f', '/dev/null', 'localhost', 'local', 'noop'),
 $input = <<EOF;
 <dle>
   <program>GNUTAR</program>
-  <disk>$AMANDA_TMPDIR</disk>
+  <disk>$Installcheck::TMP</disk>
 </dle>
 EOF
 
@@ -79,7 +80,7 @@ $input = <<EOF;
   <backup-program>
     <plugin>amgtar</plugin>
   </backup-program>
-  <disk>$AMANDA_TMPDIR</disk>
+  <disk>$Installcheck::TMP</disk>
 </dle>
 EOF
 
@@ -97,7 +98,7 @@ $input = <<EOF;
   <backup-program>
     <plugin>amstar</plugin>
   </backup-program>
-  <disk>$AMANDA_TMPDIR</disk>
+  <disk>$Installcheck::TMP</disk>
 </dle>
 EOF
 

@@ -21,6 +21,7 @@ use File::Path;
 use strict;
 
 use lib "@amperldir@";
+use Installcheck;
 use Installcheck::Run;
 use Amanda::Xfer qw( :constants );
 use Amanda::Device qw( :constants );
@@ -146,11 +147,11 @@ pass("Two simultaneous transfers run to completion");
 
 
 {
-    my $read_filename = "$Amanda::Paths::AMANDA_TMPDIR/xfer-junk-src.tmp";
-    my $write_filename = "$Amanda::Paths::AMANDA_TMPDIR/xfer-junk-dest.tmp";
+    my $read_filename = "$Installcheck::TMP/xfer-junk-src.tmp";
+    my $write_filename = "$Installcheck::TMP/xfer-junk-dest.tmp";
     my ($rfh, $wfh);
 
-    mkdir($Amanda::Paths::AMANDA_TMPDIR) unless (-e $Amanda::Paths::AMANDA_TMPDIR);
+    mkdir($Installcheck::TMP) unless (-e $Installcheck::TMP);
 
     # fill the file with some stuff
     open($wfh, ">", $read_filename) or die("Could not open '$read_filename' for writing");
@@ -303,7 +304,7 @@ pass("Two simultaneous transfers run to completion");
 
 {
     # build a transfer that will write to a read-only fd
-    my $read_filename = "$Amanda::Paths::AMANDA_TMPDIR/xfer-junk-src.tmp";
+    my $read_filename = "$Installcheck::TMP/xfer-junk-src.tmp";
     my $rfh;
 
     # create the file
@@ -331,4 +332,6 @@ pass("Two simultaneous transfers run to completion");
     $xfer->start();
     Amanda::MainLoop::run();
     ok($got_error, "A transfer with an error cancels itself after sending an error");
+
+    unlink($read_filename);
 }

@@ -21,6 +21,7 @@ use File::Path;
 use strict;
 
 use lib "@amperldir@";
+use Installcheck;
 use Installcheck::Config;
 use Amanda::Paths;
 use Amanda::Device;
@@ -29,7 +30,7 @@ use Amanda::MainLoop;
 use Amanda::Config qw( :init :getconf config_dir_relative );
 use Amanda::Changer;
 
-my $tapebase = "$AMANDA_TMPDIR/Amanda_Changer_rait_test";
+my $tapebase = "$Installcheck::TMP/Amanda_Changer_rait_test";
 
 sub reset_taperoot {
     for my $root (1 .. 3) {
@@ -251,3 +252,4 @@ label_vtape(3,4,"mytape");
     Amanda::MainLoop::run();
 }
 
+rmtree($tapebase);

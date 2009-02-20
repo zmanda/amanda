@@ -21,6 +21,7 @@ use File::Path;
 use strict;
 
 use lib "@amperldir@";
+use Installcheck;
 use Installcheck::Config;
 use Amanda::Paths;
 use Amanda::Tapelist;
@@ -28,14 +29,14 @@ use Amanda::Cmdline;
 use Amanda::Logfile qw(:logtype_t :program_t open_logfile get_logline close_logfile);
 use Amanda::Config qw( :init :getconf config_dir_relative );
 
-my $log_filename = "$AMANDA_TMPDIR/Amanda_Logfile_test.log";
+my $log_filename = "$Installcheck::TMP/Amanda_Logfile_test.log";
 
 # write a logfile and return the filename
 sub write_logfile {
     my ($contents) = @_;
 
-    if (!-e $AMANDA_TMPDIR) {
-	mkpath($AMANDA_TMPDIR);
+    if (!-e $Installcheck::TMP) {
+	mkpath($Installcheck::TMP);
     }
 
     open my $logfile, ">", $log_filename or die("Could not create temporary log file '$log_filename': $!");
@@ -43,10 +44,6 @@ sub write_logfile {
     close $logfile;
 
     return $log_filename;
-}
-
-sub unlink_logfile {
-    unlink($log_filename);
 }
 
 ####
@@ -370,4 +367,4 @@ is_deeply([ map { res2arr($_) } @filtered ],
 	  [ '20071109010002', 'thatbox', '/u_win',    3, 'TESTCONF004', 2,  'OK',       '4/4' ],
 	], "filter with dumpspecs '.* /var thatbox' (union of two overlapping sets includes dupes)");
 
-unlink_logfile();
+unlink($log_filename);

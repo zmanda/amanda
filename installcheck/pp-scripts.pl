@@ -20,6 +20,7 @@ use Test::More tests => 8;
 
 use lib "@amperldir@";
 use Cwd qw(abs_path getcwd);
+use Installcheck;
 use Installcheck::Dumpcache;
 use Installcheck::Config;
 use Installcheck::Run qw(run run_err $diskname amdump_diag);
@@ -32,7 +33,7 @@ my $testconf;
 
 # Run amdump with client- and server-side scripts
 
-my $templog = $Amanda::Paths::AMANDA_TMPDIR . "/check-script." . $$;
+my $templog = $Installcheck::TMP . "/check-script." . $$;
 
 sub verify_log {
     my $msg = shift;
