@@ -1,4 +1,8 @@
 2009-02-20  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/conffile.c: change the default changerfile to
+	  $CONFIG_DIR/changer
+
+2009-02-20  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/property.c device-src/property.h: add PROPERTY_COMMENT
 	* device-src/device.c: support PROPERTY_COMMENT
 	* installcheck/Amanda_Device.pl: test it
