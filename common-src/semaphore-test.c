@@ -228,10 +228,10 @@ main(int argc, char **argv)
 {
 #if defined(G_THREADS_ENABLED) && !defined(G_THREADS_IMPL_NONE)
     static TestUtilsTest tests[] = {
-	TU_TEST(test_decr_wait, 10),
-	TU_TEST(test_wait_empty, 10),
-	TU_TEST(test_force_adjust, 10),
-	TU_TEST(test_force_set, 10),
+	TU_TEST(test_decr_wait, 90),
+	TU_TEST(test_wait_empty, 90),
+	TU_TEST(test_force_adjust, 90),
+	TU_TEST(test_force_set, 90),
 	TU_END()
     };
 

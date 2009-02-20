@@ -632,16 +632,16 @@ int
 main(int argc, char **argv)
 {
     static TestUtilsTest tests[] = {
-	TU_TEST(test_ev_time, 10),
-	TU_TEST(test_ev_wait, 10),
-	TU_TEST(test_ev_wait_2, 10),
-	TU_TEST(test_ev_readfd, 60), /* runs slowly on old kernels */
-	TU_TEST(test_ev_writefd, 60),
-	TU_TEST(test_event_wait, 10),
-	TU_TEST(test_event_wait_2, 10),
-	TU_TEST(test_nonblock, 10),
-	TU_TEST(test_read_timeout, 10),
-	TU_TEST(test_child_watch_source, 5),
+	TU_TEST(test_ev_time, 90),
+	TU_TEST(test_ev_wait, 90),
+	TU_TEST(test_ev_wait_2, 90),
+	TU_TEST(test_ev_readfd, 120), /* runs slowly on old kernels */
+	TU_TEST(test_ev_writefd, 90),
+	TU_TEST(test_event_wait, 90),
+	TU_TEST(test_event_wait_2, 90),
+	TU_TEST(test_nonblock, 90),
+	TU_TEST(test_read_timeout, 90),
+	TU_TEST(test_child_watch_source, 90),
 	/* fdsource is used by ev_readfd/ev_writefd, and is sufficiently tested there */
 	TU_END()
     };

@@ -301,10 +301,10 @@ int
 main(int argc, char **argv)
 {
     static TestUtilsTest tests[] = {
-	TU_TEST(test_queue_simple_STREAMING_REQUIREMENT_NONE, 15),
-	TU_TEST(test_queue_simple_STREAMING_REQUIREMENT_DESIRED, 15),
-	TU_TEST(test_queue_simple_STREAMING_REQUIREMENT_REQUIRED, 15),
-	TU_TEST(test_fd_consumer_producer, 60), /* runs slowly on old kernels */
+	TU_TEST(test_queue_simple_STREAMING_REQUIREMENT_NONE, 90),
+	TU_TEST(test_queue_simple_STREAMING_REQUIREMENT_DESIRED, 90),
+	TU_TEST(test_queue_simple_STREAMING_REQUIREMENT_REQUIRED, 90),
+	TU_TEST(test_fd_consumer_producer, 120), /* runs slowly on old kernels */
 	TU_END()
     };
 

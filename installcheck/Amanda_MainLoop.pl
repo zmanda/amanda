@@ -171,14 +171,14 @@ use Amanda::MainLoop qw( :GIOCondition );
 	    diag("Didn't get exit status 11");
 	    return;
 	}
-	$global = 1;
+	$global = "ok";
     });
 
     my $to = Amanda::MainLoop::timeout_source(3000);
-    $to->set_callback(sub { $global = 7; Amanda::MainLoop::quit(); });
+    $to->set_callback(sub { $global = "timeout"; Amanda::MainLoop::quit(); });
 
     Amanda::MainLoop::run();
-    is($global, 1, "Child watch detects a dead child that dies before the callback is set");
+    is($global, "ok", "Child watch detects a dead child that dies before the callback is set");
 
     $cw->remove();
     $to->remove();

@@ -1,4 +1,12 @@
 2009-02-20  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Amanda_MainLoop.pl: report "timeout" on a timeout
+	* amar-src/amar-test.c common-src/amflock-test.c
+	  common-src/event-test.c common-src/queueing-test.c
+	  common-src/quoting-test.c common-src/semaphore-test.c
+	  device-src/vfs-test.c xfer-src/xfer-test.c: increase timeouts
+	  drastically
+
+2009-02-20  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/conffile.c: change the default changerfile to
 	  $CONFIG_DIR/changer
 

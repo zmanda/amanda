@@ -478,13 +478,13 @@ int
 main(int argc, char **argv)
 {
     static TestUtilsTest tests[] = {
-	TU_TEST(test_round_trip, 5),
-	TU_TEST(test_unquote_string, 5),
-	TU_TEST(test_split_quoted_strings, 5),
-	TU_TEST(test_split_quoted_strings_edge, 5),
-	TU_TEST(test_strquotedstr_skipping, 5),
-	TU_TEST(test_strquotedstr_edge_invalid, 5),
-	TU_TEST(test_strquotedstr_edge_valid, 5),
+	TU_TEST(test_round_trip, 90),
+	TU_TEST(test_unquote_string, 90),
+	TU_TEST(test_split_quoted_strings, 90),
+	TU_TEST(test_split_quoted_strings_edge, 90),
+	TU_TEST(test_strquotedstr_skipping, 90),
+	TU_TEST(test_strquotedstr_edge_invalid, 90),
+	TU_TEST(test_strquotedstr_edge_valid, 90),
 	TU_END()
     };
 

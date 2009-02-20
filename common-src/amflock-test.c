@@ -95,7 +95,7 @@ int
 main(int argc, char **argv)
 {
     static TestUtilsTest tests[] = {
-	TU_TEST(test_impls, 10),
+	TU_TEST(test_impls, 90),
 	TU_END()
     };
 

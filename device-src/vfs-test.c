@@ -137,7 +137,7 @@ main(int argc, char **argv)
 {
     int result;
     static TestUtilsTest tests[] = {
-        TU_TEST(test_vfs_free_space, 5),
+        TU_TEST(test_vfs_free_space, 90),
 	TU_END()
     };
 

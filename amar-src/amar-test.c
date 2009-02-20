@@ -1097,19 +1097,19 @@ main(int argc, char **argv)
     int rv;
     char *cwd = g_get_current_dir();
     static TestUtilsTest tests[] = {
-	TU_TEST(test_simple_read, 10),
-	TU_TEST(test_read_buffering, 10),
-	TU_TEST(test_missing_eoa, 10),
-	TU_TEST(test_ignore, 10),
-	TU_TEST(test_missing_eof, 10),
-	TU_TEST(test_extra_records, 10),
-	TU_TEST(test_early_exit, 10),
-	TU_TEST(test_writing_coverage, 10),
-	TU_TEST(test_big_attr, 20),
-	TU_TEST(test_pipe, 20),
-	TU_TEST(test_no_header, 10),
-	TU_TEST(test_invalid_eof, 10),
-	TU_TEST(test_header_vers, 10),
+	TU_TEST(test_simple_read, 90),
+	TU_TEST(test_read_buffering, 90),
+	TU_TEST(test_missing_eoa, 90),
+	TU_TEST(test_ignore, 90),
+	TU_TEST(test_missing_eof, 90),
+	TU_TEST(test_extra_records, 90),
+	TU_TEST(test_early_exit, 90),
+	TU_TEST(test_writing_coverage, 90),
+	TU_TEST(test_big_attr, 90),
+	TU_TEST(test_pipe, 90),
+	TU_TEST(test_no_header, 90),
+	TU_TEST(test_invalid_eof, 90),
+	TU_TEST(test_header_vers, 90),
 	TU_END()
     };
 
