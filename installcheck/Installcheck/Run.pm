@@ -277,8 +277,9 @@ sub run {
     local (*INFH, *OUTFH, *ERRFH);
     open(ERRFH, ">", $errtempfile);
 
+    # prepend $sbindir iff $app doesn't start with '/'
     my $pid = IPC::Open3::open3("INFH", "OUTFH", ">&ERRFH",
-	"$sbindir/$app", @args);
+	($app =~ /^\//)? $app : "$sbindir/$app", @args);
     
     # immediately close the child's stdin
     close(INFH);

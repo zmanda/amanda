@@ -26,6 +26,7 @@ dist_template_DATA = template.d/advanced.conf \
 
 dist_example_DATA = amanda.conf \
 	       amanda-client.conf \
+	       amanda-client-postgresql.conf \
 	       inetd.conf.amandaclient \
 	       inetd.conf.amandaserver \
 	       xinetd.amandaclient \

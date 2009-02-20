@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"
+[
+  <!-- entities files to use -->
+  <!ENTITY % global_entities SYSTEM '../entities/global.entities'>
+  %global_entities;
+]>
+
+<refentry id='ampgsql.8'>
+
+<refmeta>
+<refentrytitle>ampgsql</refentrytitle>
+<manvolnum>8</manvolnum>
+&rmi.source;
+&rmi.version;
+&rmi.manual.8;
+</refmeta>
+<refnamediv>
+<refname>ampgsql</refname>
+<refpurpose>Amanda Application to interface with PostgreSQL</refpurpose>
+</refnamediv>
+<refentryinfo>
+&author.ncoukouma;
+</refentryinfo>
+<!-- body begins here -->
+
+<refsect1><title>DESCRIPTION</title>
+
+<para>Ampgsql is an &A; Application API script.  It should not be run
+by users directly.  It implements on-line backups of PostgreSQL databases
+in conjunction with WAL archiving.</para>
+
+<note><para>Tablespaces are not currently supported.</para></note>
+
+</refsect1>
+
+<refsect1><title>PROPERTIES</title>
+
+<para>This section lists the <citerefentry><refentrytitle>amanda.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry> properties that control ampsql's functionality.
+See <citerefentry><refentrytitle>amanda-applications</refentrytitle><manvolnum>7</manvolnum></citerefentry>
+for information on application properties and how they are configured.</para>
+
+<!-- PLEASE KEEP THIS LIST IN ALPHABETICAL ORDER -->
+<variablelist>
+ <!-- ==== -->
+ <varlistentry><term>GNUTAR</term><listitem>
+ Path to the GNU tar executable.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>STATE_DIR</term><listitem>
+ Directory for saving state about backups already made.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>TMP_DIR</term><listitem>
+ Directory to use for temporary files during the backup process. It should
+ have enough space to store a complete copy of the database.
+</listitem></varlistentry>
+
+</variablelist>
+
+</refsect1>
+
+<refsect1><title>CLIENT PROPERTIES</title>
+
+<para>This section lists the <citerefentry><refentrytitle>amanda-client.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry> properties that control ampsql's functionality.
+If a property is prefixed with the diskname and an underscore,
+then it will be used when that diskname is being backed up.
+For example, if the properties PG_DATA and foo_PG_DATA are set,
+the value of PG_DATA will be used when bar and baz are being backed up,
+but foo_PG_DATA will be used when foo is being backed up.
+Disknames are specified in the <citerefentry><refentrytitle>disklist</refentrytitle><manvolnum>5</manvolnum></citerefentry>.
+</para>
+
+<!-- PLEASE KEEP THIS LIST IN ALPHABETICAL ORDER -->
+<variablelist>
+ <!-- ==== -->
+ <varlistentry><term>PG_ARCHIVE</term><listitem>
+ Directory that WAL sement files are archived to, as specified by the archive_command
+ in PosgreSQL's postgresql.conf .
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>PG_DATA</term><listitem>
+ Cluster data directory
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>PG_DB</term><listitem>
+ Database to connect to. Defaults to "template1" (which exists by default)
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>PG_HOST</term><listitem>
+ Host to connect to. If it starts with "/" it will be interepreted as a directory
+ that holds the socket file. PostgreSQL defaults to /tmp
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>PG_PASSFILE</term><listitem>
+ Connect using the creditials in this file. Each line should have the format
+ "hostname:port:database:username:password". The permissions must
+ permit it to be read only by the user, or the file will not be used.
+ Only usable with Postgres 8.1 and up.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>PG_PASSWORD</term><listitem>
+ Password to use when connecting. Deprecated in favor of passfiles.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>PG_PORT</term><listitem>
+ The TCP port to connect to, or the suffix of the socket file. PostgreSQL
+ defaults to 5432.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>PG_USER</term><listitem>
+ User to connect as. It must be a superuser.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>PSQL</term><listitem>
+ Path to the psql binary. If not specified, /usr/bin/psql or
+ /usr/local/bin/psql will be used (in that order).
+</listitem></varlistentry>
+</variablelist>
+
+</refsect1>
+
+<refsect1><title>SEE ALSO</title>
+<para>
+<citerefentry><refentrytitle>amanda.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>amanda-client.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>amanda-applications</refentrytitle><manvolnum>7</manvolnum></citerefentry>
+</para>
+
+</refsect1>
+</refentry>

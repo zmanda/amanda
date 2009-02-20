@@ -376,6 +376,7 @@ AC_CONFIG_FILES([
     application-src/Makefile
     example/Makefile
     example/amanda-client.conf
+    example/amanda-client-postgresql.conf
     example/amanda.conf
     example/xinetd.amandaclient
     example/xinetd.amandaserver

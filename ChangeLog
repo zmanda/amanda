@@ -1,3 +1,18 @@
+2009-01-28  Nikolas Coukouma <atrus@zmanda.com>
+	* example/amanda-client-postgresql.conf.in,
+	  example/Makefile.am,
+	  man/Makefile.am,
+	  man/xml-source/ampgsql.8.xml,
+	  configure.in,
+	  application-src/Makefile.am,
+	  application-src/ampgsql.pl,
+	  installcheck/Makefile.am,
+	  installcheck/ampgsql.pl: add PostgreSQL plugin/application (ampgsql)
+	* installcheck/Installcheck/Application.pm:
+	  fix property names in case of underscores
+	* installcheck/Installcheck/Run.pm:
+	  if application starts with /, don't assume it's in sbin
+
 2009-02-19  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Util.swg: move POD to the top of the file, refomat
 

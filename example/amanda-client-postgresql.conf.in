@@ -1,0 +1,34 @@
+# amanda-postgresql.conf - sample Amanda client configuration file for Oracle agent.
+#
+# This file normally goes in @CONFIG_DIR@/amanda-client.conf.
+#
+
+conf "@DEFAULT_CONFIG@"		# your config name
+
+index_server "@DEFAULT_SERVER@"	# your amindexd server
+tape_server  "@DEFAULT_TAPE_SERVER@"	# your amidxtaped server
+#tapedev      "@EXAMPLE_TAPEDEV@"	# your tape device
+			# if not set, Use configure or ask server.
+			# if set to empty string "", ask server
+			# amrecover will use the changer if set to the value
+			# of 'amrecover_changer' in the server amanda.conf.
+
+#   auth	- authentication scheme to use between server and client.
+#		  Valid values are "bsd", "bsdudp", "bsdtcp", "krb5", "local",
+#		  "rsh" and "ssh".  
+#		  Default: [auth "bsdtcp"]
+auth "bsdtcp"
+
+# your ssh keys file if you use ssh auth
+ssh_keys "/var/lib/amanda/.ssh/id_rsa_amrecover"
+
+PG_HOST PG_PORT PG_USER PG_PASSWORD PG_PASSFILE PSQL PG_DATA PG_ARCHIVE PG_TMP
+# Use /tmp/zmanda to store temporary backup files on this machine
+property "PG_TMP" "/tmp/zmanda"
+# Use /etc/amanda/pgpassfile for authentication credentials
+# See "The Password File" in libpq's documentation for details
+property "PG_PASSFILE" "/etc/amanda/pgpassfile"
+
+# for diskname "foo", connect to localhost and authenticate as user bar
+property "foo_PG_HOST" "localhost"
+property "foo_PG_USER" "bar"

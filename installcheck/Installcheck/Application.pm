@@ -142,10 +142,11 @@ The exit status of the application
 
 =back
 
-=item C<<restore('data' => $data_from_backup, 'objects' => ['a', 'b'])>>
+=item C<<restore('data' => $data_from_backup, 'objects' => ['a', 'b'], 'level' => 0)>>
 
 Runs the C<restore> command to restore the C<objects> to the
 current working directory, supplying it with C<data>.
+The optional C<level> argument (defaulting to 0) specifies the level of the backup
 Returns a hashref:
 
 =over
@@ -218,9 +219,16 @@ sub new {
     $self;
 }
 
+sub _propify {
+    my $str = shift @_;
+    $str = lc($str);
+    $str =~ s/_/-/;
+    $str;
+}
+
 sub add_property {
     my $self = shift @_;
-    my $name = lc(shift @_);
+    my $name = _propify(shift @_);
     my @values = @_;
 
     $self->{'props'}->{$name} ||= [];
@@ -229,21 +237,21 @@ sub add_property {
 
 sub delete_property {
     my $self = shift @_;
-    my $name = lc(shift @_);
+    my $name = _propify(shift @_);
 
     delete $self->{'props'}->{$name};
 }
 
 sub get_property {
     my $self = shift @_;
-    my $name = lc(shift @_);
+    my $name = _propify(shift @_);
 
     defined($self->{'props'}->{$name}) ? @{$self->{'props'}->{$name}} : ();
 }
 
 sub set_property {
     my $self = shift @_;
-    my $name = lc(shift @_);
+    my $name = _propify(shift @_);
     my @values = @_;
 
     @{$self->{'props'}->{$name}} = @values;
@@ -562,9 +570,10 @@ sub restore {
     foreach my $k ( qw(objects data) ) {
         confess "'$k' required" unless defined($args{$k});
     }
+    $args{'level'} ||= 0;
 
     my $msgs;
-    my $exit_status = _exec($self, 'restore', [@{$args{'objects'}}], {
+    my $exit_status = _exec($self, 'restore', ['--level', $args{'level'}, @{$args{'objects'}}], {
         0 => {'child_mode' => 'r', 'write' => $args{'data'}},
         1 => {'child_mode' => 'w', 'save_to' => \$msgs},
     });

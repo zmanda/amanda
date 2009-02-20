@@ -16,7 +16,8 @@ common_tests = \
 	amarchiver
 
 client_tests = \
-	amgtar
+	amgtar \
+	ampgsql
 
 server_tests = \
 	Amanda_Changer \
