@@ -1439,7 +1439,10 @@ handle_taper_result(
 	    taper_state &= ~TAPER_STATE_TAPE_STARTED;
 
 	    if (current_tape >= conf_runtapes) {
-		taper_cmd(NO_NEW_TAPE, "runtapes volumes already written", NULL, 0, NULL);
+		char *usermsg = g_strdup_printf(_("%d tapes filled; runtapes=%d "
+		    "does not allow additional tapes"), current_tape, conf_runtapes);
+		taper_cmd(NO_NEW_TAPE, usermsg, NULL, 0, NULL);
+		g_free(usermsg);
 		log_add(L_WARNING,
 			_("Out of tapes; going into degraded mode."));
 		start_degraded_mode(&runq);
