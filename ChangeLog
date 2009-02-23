@@ -1,4 +1,9 @@
 2009-02-23  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/rait-device.c: actually *report* mismatched child
+	  labels/timestamps; correctly detect the 'first' device; and free old
+	  device label/time
+
+2009-02-23  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/driver.c: improve confusing out-of-tapes error message
 
 2009-02-20  Jean-Louis Martineau <martineau@zmanda.com>

@@ -1146,6 +1146,8 @@ rait_device_start (Device * dself, DeviceAccessMode mode, char * label,
 
     dself->access_mode = mode;
     dself->in_file = FALSE;
+    amfree(dself->volume_label);
+    amfree(dself->volume_time);
 
     ops = g_ptr_array_sized_new(self->private->children->len);
     for (i = 0; i < self->private->children->len; i ++) {
@@ -1183,7 +1185,7 @@ rait_device_start (Device * dself, DeviceAccessMode mode, char * label,
                                            device_error_or_status(child)));
         } else {
 	    if (child->volume_label != NULL && child->volume_time != NULL) {
-                if (dself->volume_label != NULL && dself->volume_time != NULL) {
+                if (label_from_device) {
                     if (strcmp(child->volume_label, dself->volume_label) != 0 ||
                         strcmp(child->volume_time, dself->volume_time) != 0) {
                         /* Mismatch! (Two devices provided different labels) */
@@ -1199,6 +1201,7 @@ rait_device_start (Device * dself, DeviceAccessMode mode, char * label,
                                             label_from_device);
                         append_message(&failure_errmsgs, this_message);
                         total_status |= DEVICE_STATUS_DEVICE_ERROR;
+			g_warning("RAIT device children have different labels or timestamps");
                     }
                 } else {
                     /* First device with a volume. */
@@ -1211,6 +1214,7 @@ rait_device_start (Device * dself, DeviceAccessMode mode, char * label,
                 char * this_message =
                     g_strdup_printf("%s: Says label read, but no volume "
                                      "label found.", child->device_name);
+		g_warning("RAIT device child has NULL volume or label");
                 append_message(&failure_errmsgs, this_message);
                 total_status |= DEVICE_STATUS_DEVICE_ERROR;
             }
@@ -1222,7 +1226,7 @@ rait_device_start (Device * dself, DeviceAccessMode mode, char * label,
 
     dself->status = total_status;
 
-    if (!success) {
+    if (total_status != DEVICE_STATUS_SUCCESS || !success) {
 	device_set_error(dself, failure_errmsgs, total_status);
         return FALSE;
     }
