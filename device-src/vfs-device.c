@@ -46,10 +46,6 @@ typedef struct {
     /*< private >*/
     char * dir_name;
     char * file_name;
-    int file_lock_fd;
-    char * file_lock_name;
-    int volume_lock_fd;
-    char * volume_lock_name;
     int open_file_fd;
 
     /* Properties */
@@ -191,9 +187,8 @@ vfs_device_init (VfsDevice * self) {
     GValue response;
 
     self->dir_name = self->file_name = NULL;
-    self->file_lock_name = self->volume_lock_name = NULL;
-    self->file_lock_fd = self->volume_lock_fd = self->open_file_fd = -1;
-    self->volume_bytes = 0; 
+    self->open_file_fd = -1;
+    self->volume_bytes = 0;
     self->volume_limit = 0;
 
     /* Register Properties */
@@ -331,19 +326,14 @@ vfs_device_get_free_space_fn(struct Device *p_self,
     return TRUE;
 }
 
-/* Drops everything associated with the volume file: Its name and fd,
-   its lock, and its lock's name and fd. */
+/* Drops everything associated with the volume file: Its name and fd. */
 static void release_file(VfsDevice * self) {
     /* Doesn't hurt. */
-    robust_close(self->open_file_fd);
+    if (self->open_file_fd != -1)
+	robust_close(self->open_file_fd);
     amfree(self->file_name);
 
-    if (self->file_lock_fd > 0) {
-        amfunlock(self->file_lock_fd, self->file_lock_name);
-        close(self->file_lock_fd);
-        amfree(self->file_lock_name);
-    }
-    self->file_lock_fd = self->open_file_fd = -1;
+    self->open_file_fd = -1;
 }
 
 static void vfs_device_finalize(GObject * obj_self) {
@@ -360,13 +350,6 @@ static void vfs_device_finalize(GObject * obj_self) {
     amfree(self->dir_name);
 
     release_file(self);
-
-    if (self->volume_lock_fd >= 0) {
-        amfunlock(self->volume_lock_fd, self->volume_lock_name);
-        close(self->volume_lock_fd);
-    }
-
-    amfree(self->volume_lock_name);
 }
 
 static Device * vfs_device_factory(char * device_name, char * device_type, char * device_node) {
@@ -486,62 +469,13 @@ static gboolean open_lock(G_GNUC_UNUSED VfsDevice * self,
 
     /* At the moment, file locking is horribly broken. */
     return TRUE;
-
-/*
-    int fd;
-    char * name;
-    Device *d_self = DEVICE(self);
-    if (file < 0) {
-        if (self->volume_lock_name == NULL) {
-            self->volume_lock_name = lockfile_name(self, 0);
-        } else if (self->volume_lock_fd >= 0) {
-            amfunlock(self->volume_lock_fd, self->volume_lock_name);
-            close(self->volume_lock_fd);
-        }
-        name = self->volume_lock_name;
-    } else {
-        if (self->file_lock_fd >= 0 && self->file_lock_name != NULL) {
-            amfunlock(self->file_lock_fd, self->file_lock_name);
-        }
-        amfree(self->file_lock_name);
-        close(self->file_lock_fd);
-        name = self->file_lock_name = lockfile_name(self, file);
-    }
-        
-
-    fd = robust_open(name, O_CREAT | O_WRONLY, VFS_DEVICE_CREAT_MODE);
-
-    if (fd < 0) {
-	device_set_error(d_self,
-	    vstrallocf(_("Can't open lock file %s: %s"), name, strerror(errno)),
-	    DEVICE_STATUS_DEVICE_ERROR);
-        return FALSE;
-    }
-
-    if (exclusive) {
-        amflock(fd, name);
-    } else {
-        amroflock(fd, name);
-    }
-
-    if (file < 0) {
-        self->volume_lock_fd = fd;
-    } else {
-        self->file_lock_fd = fd;
-    }
-    return TRUE;
-*/
 }
 
 /* For now, does it the bad way. */
-static void promote_volume_lock(VfsDevice * self) {
-    amfunlock(self->volume_lock_fd, self->volume_lock_name);
-    amflock(self->volume_lock_fd, self->volume_lock_name);
+static void promote_volume_lock(VfsDevice * self G_GNUC_UNUSED) {
 }
 
-static void demote_volume_lock(VfsDevice * self) {
-    amfunlock(self->volume_lock_fd, self->volume_lock_name);
-    amroflock(self->volume_lock_fd, self->volume_lock_name);
+static void demote_volume_lock(VfsDevice * self G_GNUC_UNUSED) {
 }
 
 /* A SearchDirectoryFunctor */
@@ -749,7 +683,7 @@ static DeviceStatusFlags vfs_device_read_label(Device * dself) {
 
     if (!check_is_dir(dself, self->dir_name)) {
 	/* error message set by check_is_dir */
-        return FALSE;
+        return dself->status;
     }
 
     amfree(dself->volume_label);
@@ -1309,14 +1243,6 @@ vfs_device_recycle_file (Device * pself, guint filenum) {
     if (!try_unlink(self->file_name)) {
 	device_set_error(pself,
 	    vstrallocf(_("Unlink of %s failed: %s"), self->file_name, strerror(errno)),
-	    DEVICE_STATUS_VOLUME_ERROR);
-        release_file(self);
-        return FALSE;
-    }
-
-    if (!try_unlink(self->file_lock_name)) {
-	device_set_error(pself,
-	    vstrallocf(_("Unlink of %s failed: %s"), self->file_lock_name, strerror(errno)),
 	    DEVICE_STATUS_VOLUME_ERROR);
         release_file(self);
         return FALSE;
