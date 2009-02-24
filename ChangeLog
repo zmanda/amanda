@@ -1,3 +1,6 @@
+2009-02-24  Nikolas Coukouma <atrus@zmanda.com>
+	* device-src/s3.c: fix error buffer handling of overflow data
+
 2009-02-23  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/rait-device.c: actually *report* mismatched child
 	  labels/timestamps; correctly detect the 'first' device; and free old

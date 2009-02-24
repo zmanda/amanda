@@ -154,6 +154,7 @@ typedef struct {
     gpointer write_data;
 
     gboolean headers_done;
+    gboolean int_write_done;
     char *etag;
 } S3InternalData;
 
@@ -991,7 +992,7 @@ perform_request(S3Handle *hdl,
     CURLcode curl_code = CURLE_OK;
     char curl_error_buffer[CURL_ERROR_SIZE] = "";
     struct curl_slist *headers = NULL;
-    S3InternalData int_writedata = {{NULL, 0, 0, MAX_ERROR_RESPONSE_LEN}, NULL, NULL, NULL, FALSE, NULL};
+    S3InternalData int_writedata = {{NULL, 0, 0, MAX_ERROR_RESPONSE_LEN}, NULL, NULL, NULL, FALSE, FALSE, NULL};
     gboolean should_retry;
     guint retries = 0;
     gulong backoff = EXPONENTIAL_BACKOFF_START_USEC;
@@ -1203,7 +1204,16 @@ s3_internal_write_func(void *ptr, size_t size, size_t nmemb, void * stream)
     if (!data->headers_done)
         return size*nmemb;
 
-    bytes_saved = s3_buffer_write_func(ptr, size, nmemb, &data->resp_buf);
+    /* call write on internal buffer (if not full) */
+    if (data->int_write_done) {
+        bytes_saved = 0;
+    } else {
+        bytes_saved = s3_buffer_write_func(ptr, size, nmemb, &data->resp_buf);
+        if (!bytes_saved) {
+            data->int_write_done = TRUE;
+        }
+    }
+    /* call write on user buffer */
     if (data->write_func) {
         return data->write_func(ptr, size, nmemb, data->write_data);
     } else {
@@ -1218,6 +1228,7 @@ s3_internal_reset_func(void * stream)
 
     s3_buffer_reset_func(&data->resp_buf);
     data->headers_done = FALSE;
+    data->int_write_done = FALSE;
     data->etag = NULL;
     if (data->reset_func) {
         data->reset_func(data->write_data);
@@ -1475,7 +1486,7 @@ s3_strerror(S3Handle *hdl)
     s3_error(hdl, &message, &response_code, NULL, &s3_error_name, &curl_code, &num_retries);
 
     if (!message) 
-        message = "Unkonwn S3 error";
+        message = "Unknown S3 error";
     if (s3_error_name)
         g_snprintf(s3_info, sizeof(s3_info), " (%s)", s3_error_name);
     if (response_code)
