@@ -1255,7 +1255,7 @@ errfd_recv(
     }
 
     /* for each line terminate by '\n' */
-    while (as->errbuf != NULL  && (r = index(as->errbuf, '\n')) != NULL) {
+    while (as->errbuf != NULL  && (r = strchr(as->errbuf, '\n')) != NULL) {
 	char *s;
 
 	*r = '\0';

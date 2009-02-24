@@ -1006,7 +1006,7 @@ run_client_script(
             if (BSTRNCMP(line, "PROPERTY ") == 0) {
 		char *property_name, *property_value;
 		property_name = line + 9;
-		property_value = index(property_name,' ');
+		property_value = strchr(property_name,' ');
 		if (property_value == NULL) {
 		    char *msg = g_strdup_printf(
 					"ERROR %s: Bad output property: %s",

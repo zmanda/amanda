@@ -466,7 +466,7 @@ cd_dir(
 		if(dir[strlen(dir)-1] == '/')
 		    dir[strlen(dir)-1] = '\0'; /* remove last / */
 		/* remove everything before the last / */
-		dir1 = rindex(dir,'/');
+		dir1 = strrchr(dir,'/');
 		if (dir1) {
 		    dir1++;
 		    dir2 = stralloc(dir1);

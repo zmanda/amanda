@@ -860,7 +860,7 @@ s3_device_open_device(Device *pself, char *device_name,
 
     /* Device name may be bucket/prefix, to support multiple volumes in a
      * single bucket. */
-    name_colon = index(device_node, '/');
+    name_colon = strchr(device_node, '/');
     if (name_colon == NULL) {
         self->bucket = g_strdup(device_node);
         self->prefix = g_strdup("");
