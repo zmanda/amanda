@@ -305,7 +305,7 @@ uncompress_file(
 	case 0:
 	    while (fgets(line, STR_SIZE, pipe_stream) != NULL) {
 		if (line[0] != '\0') {
-		    if (index(line,'/')) {
+		    if (strchr(line,'/')) {
 			clean_backslash(line);
 			full_write(pipe_to_sort,line,strlen(line));
 		    }

@@ -1,3 +1,12 @@
+2009-02-24  Jean-Louis Martineau <martineau@zmanda.com>
+	* amandad-src/amandad.c, application-src/amgtar.c,
+	  changer-src/scsi-changer-driver.c, client-src/client_util.c,
+	  common-src/conffile.c, device-src/s3-device.c,
+	  oldrecover-src/set_commands.c, recover-src/set_commands.c,
+	  server-src/amindexd.c, server-src/planner.c,
+	  server-src/reporter.c: Replace all occurences of index by strchr,
+	                         Replace all occurences of rindex by strrchr.
+
 2009-02-24  Nikolas Coukouma <atrus@zmanda.com>
 	* device-src/s3.c: make s3_list_keys use its own buffer
 

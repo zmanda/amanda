@@ -1975,7 +1975,7 @@ handle_note(void)
 	BSTRNCMP(curstr, "Taper protocol error") == 0) {
 	exit_status |= STATUS_TAPE;
     }
-    pidstr = index(curstr,' ');
+    pidstr = strchr(curstr,' ');
     if (pidstr) {
 	pidstr++;
     }
@@ -2405,7 +2405,7 @@ handle_success(
 		origkb = 0.1;
 	}
 	if (curprog == P_TAPER && logtype == L_PARTIAL) {
-	    char *t = index(s-1,']');
+	    char *t = strchr(s-1,']');
 	    if (t) {
 		char *errmsg, *u;
 		errmsg = unquote_string(t+1);

@@ -6621,7 +6621,7 @@ printf_arglist_function2(void DebugPrint, int, level, int, section, char *, fmt)
     {
       if (section == dsection || dsection == 0)
 	{
-	  if (index(buf, '\n') != NULL && strlen(buf) > 1)
+	  if (strchr(buf, '\n') != NULL && strlen(buf) > 1)
           {
 	     dbprintf(_("%ld:%s"), (long)ti, buf);
 	  } else {

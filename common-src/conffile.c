@@ -5288,7 +5288,7 @@ add_config_overwrite_opt(
     char *value;
     assert(optarg != NULL);
 
-    value = index(optarg, '=');
+    value = strchr(optarg, '=');
     if (value == NULL) {
 	error(_("Must specify a value for %s."), optarg);
 	/* NOTREACHED */
