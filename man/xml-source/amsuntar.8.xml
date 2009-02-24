@@ -53,19 +53,19 @@ for information on application properties and how they are configured.</para>
 <variablelist>
  <!-- ==== -->
  <varlistentry><term>BLOCK-SIZE</term><listitem>
-Optional tar read or write block size.  The default is set when &A; is built to 256.
+Optional tar read or write block size.  The default is 256.
 </listitem></varlistentry>
 
  <!-- ==== -->
  <varlistentry><term>EXTENDED-ATTRIBUTES</term><listitem>
-Include extended attributes in archive.  The default is set when &A; is built to YES.
+Include extended attributes in archive.  The default is YES.
 </listitem></varlistentry>
 
  <!-- ==== -->
  <varlistentry><term>EXTENDED-HEADERS</term><listitem>
 Write tar file with extended headers. With this optiion the modification time
 is maintained with a  granularity of microseconds,Long file names and file 
-sizes greater than 8GB can be archived. The default is set when &A; is built to YES.
+sizes greater than 8GB can be archived. The default is YES.
 </listitem></varlistentry>
 </variablelist>
 

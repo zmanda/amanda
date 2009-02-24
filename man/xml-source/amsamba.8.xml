@@ -56,12 +56,13 @@ for information on application properties and how they are configured.</para>
 <variablelist>
  <!-- ==== -->
  <varlistentry><term>SMBCLIENT-PATH</term><listitem>
-The path to the smbclient binary.  The default is set when &A; is built.
+The path to the smbclient binary.  The default is set when &A; is built by the 
+--with-smbclient configure option.
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>GNUTAR-PATH</term><listitem>
-The path to the gnutar binary.  The default is set when &A; is built. gnutar
-is use to create the index.
+The path to the gnutar binary.  The default is set when &A; is built by the 
+--with-gnutar configure option. gnutar is used to create the index.
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>AMANDAPASS</term><listitem>

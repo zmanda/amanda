@@ -1,3 +1,11 @@
+2009-02-24  Nikolas Coukouma <atrus@zmanda.com>
+	* man/xml-source/ampgsql.8.xml,
+	  man/xml-source/amsamba.8.xml,
+	  man/xml-source/amstar.8.xml,
+	  man/xml-source/amsuntar.8.xml:
+	  document the mapping of configure options to default application
+	  property values
+
 2009-02-23  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/rait-device.c: actually *report* mismatched child
 	  labels/timestamps; correctly detect the 'first' device; and free old
@@ -52,7 +60,7 @@
 	* common-src/conffile.c: Add t, tb, tera, ... suffix.
 	* man/xml-source/amanda.conf.5.xml: Document it.
 
-2009-01-28  Nikolas Coukouma <atrus@zmanda.com>
+2009-02-19  Nikolas Coukouma <atrus@zmanda.com>
 	* example/amanda-client-postgresql.conf.in,
 	  example/Makefile.am,
 	  man/Makefile.am,

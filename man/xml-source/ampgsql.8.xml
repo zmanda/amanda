@@ -45,16 +45,19 @@ for information on application properties and how they are configured.</para>
 <variablelist>
  <!-- ==== -->
  <varlistentry><term>GNUTAR</term><listitem>
- Path to the GNU tar executable.
+ Path to the GNU tar executable. The default is set when &A; is built
+ by the --with-gnutar configure option.
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>STATE_DIR</term><listitem>
- Directory for saving state about backups already made.
+ Directory for saving state about backups already made. The default is set
+ when &A; is built by the --with-gnutar-listdir configure option.
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>TMP_DIR</term><listitem>
  Directory to use for temporary files during the backup process. It should
- have enough space to store a complete copy of the database.
+ have enough space to store a complete copy of the database. The default is set
+ when &A; is built by the --with-tmpdir configure option.
 </listitem></varlistentry>
 
 </variablelist>
@@ -85,12 +88,12 @@ Disknames are specified in the <citerefentry><refentrytitle>disklist</refentryti
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>PG_DB</term><listitem>
- Database to connect to. Defaults to "template1" (which exists by default)
+ Database to connect to. Defaults to "template1" (which exists by default).
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>PG_HOST</term><listitem>
  Host to connect to. If it starts with "/" it will be interepreted as a directory
- that holds the socket file. PostgreSQL defaults to /tmp
+ that holds the socket file. PostgreSQL defaults to /tmp.
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>PG_PASSFILE</term><listitem>

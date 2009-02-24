@@ -55,11 +55,13 @@ If "YES", amstar will use a different tardump file for each DLE. The default is 
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>STAR-PATH</term><listitem>
-The path to the star binary.  The default is set when &A; is built.
+The path to the star binary. The default is set when &A; is built by the
+--with-star configure option.
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>STAR-TARDUMP</term><listitem>
-The directory where star stores the database it uses to generate incremental dumps.  The default is set when &A; is built.
+The directory where star stores the database it uses to generate incremental
+dumps.  The default is /etc/tardumps.
 </listitem></varlistentry>
 </variablelist>
 
