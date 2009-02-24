@@ -1654,7 +1654,8 @@ list_fetch(S3Handle *hdl,
            const char *prefix,
            const char *delimiter,
            const char *marker,
-           const char *max_keys)
+           const char *max_keys,
+           CurlBuffer *buf)
 {
     s3_result_t result = S3_RESULT_FAIL;
     static result_handling_t result_handling[] = {
@@ -1666,7 +1667,7 @@ list_fetch(S3Handle *hdl,
         {"prefix", prefix},
         {"delimiter", delimiter},
         {"marker", marker},
-        {"make-keys", max_keys},
+        {"max-keys", max_keys},
         {NULL, NULL}
         };
     char *esc_value;
@@ -1690,7 +1691,8 @@ list_fetch(S3Handle *hdl,
 
     /* and perform the request on that URI */
     result = perform_request(hdl, "GET", bucket, NULL, NULL, query->str,
-                             NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+                             NULL, NULL, NULL, NULL, NULL,
+                             S3_BUFFER_WRITE_FUNCS, buf, NULL, NULL,
                              result_handling);
 
     if (query) g_string_free(query, TRUE);
@@ -1705,11 +1707,25 @@ s3_list_keys(S3Handle *hdl,
               const char *delimiter,
               GSList **list)
 {
+    /*
+     * max len of XML variables:
+     * bucket: 255 bytes (p12 API Version 2006-03-01)
+     * key: 1024 bytes (p15 API Version 2006-03-01)
+     * size per key: 5GB bytes (p6 API Version 2006-03-01)
+     * size of size 10 bytes (i.e. 10 decimal digits)
+     * etag: 44 (observed+assumed)
+     * owner ID: 64 (observed+assumed)
+     * owner DisplayName: 255 (assumed)
+     * StorageClass: const (p18 API Version 2006-03-01)
+     */
+    static const guint MAX_RESPONSE_LEN = 1000*2000;
+    static const char *MAX_KEYS = "1000";
     struct list_keys_thunk thunk;
     GMarkupParseContext *ctxt = NULL;
     static GMarkupParser parser = { list_start_element, list_end_element, list_text, NULL, NULL };
     GError *err = NULL;
     s3_result_t result = S3_RESULT_FAIL;
+    CurlBuffer buf = {NULL, 0, 0, MAX_RESPONSE_LEN};
 
     g_assert(list);
     *list = NULL;
@@ -1719,8 +1735,9 @@ s3_list_keys(S3Handle *hdl,
 
     /* Loop until S3 has given us the entire picture */
     do {
+        s3_buffer_reset_func(&buf);
         /* get some data from S3 */
-        result = list_fetch(hdl, bucket, prefix, delimiter, thunk.next_marker, NULL);
+        result = list_fetch(hdl, bucket, prefix, delimiter, thunk.next_marker, MAX_KEYS, &buf);
         if (result != S3_RESULT_OK) goto cleanup;
 
         /* run the parser over it */
@@ -1731,8 +1748,7 @@ s3_list_keys(S3Handle *hdl,
 
         ctxt = g_markup_parse_context_new(&parser, 0, (gpointer)&thunk, NULL);
 
-        if (!g_markup_parse_context_parse(ctxt, hdl->last_response_body,
-                                          hdl->last_response_body_size, &err)) {
+        if (!g_markup_parse_context_parse(ctxt, buf.buffer, buf.buffer_pos, &err)) {
             if (hdl->last_message) g_free(hdl->last_message);
             hdl->last_message = g_strdup(err->message);
             result = S3_RESULT_FAIL;
@@ -1755,6 +1771,7 @@ cleanup:
     if (thunk.text) g_free(thunk.text);
     if (thunk.next_marker) g_free(thunk.next_marker);
     if (ctxt) g_markup_parse_context_free(ctxt);
+    if (buf.buffer) g_free(buf.buffer);
 
     if (result != S3_RESULT_OK) {
         g_slist_free(thunk.filename_list);
