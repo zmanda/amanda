@@ -187,6 +187,13 @@ an amtape argument). Note that some changers cannot detect the completion of a
 cleaning cycle; in this case, the user will just need to delay further Amanda
 activities until the cleaning is complete.
 
+=head3 $chg->eject(finished_cb => $cb, drive => $drivename)
+
+Eject the volume in a drive, if the changer supports it.  Drivename is as
+specified to C<clean>.  If possible, applications should prefer to eject a
+reserved volume when finished with it (C<< $res->release(eject => 1) >>), to
+ensure that the correct volume is ejected from a multi-drive changer.
+
 =head3 $chg->update(finished_cb => $cb, changed => $changed)
 
 The user has changed something -- loading or unloading tapes,
@@ -490,6 +497,16 @@ sub clean {
     my $class = ref($self);
     if (exists $params{'finished_cb'}) {
 	$params{'finished_cb'}->("$class does not support clean()");
+    }
+}
+
+sub eject {
+    my $self = shift;
+    my %params = @_;
+
+    my $class = ref($self);
+    if (exists $params{'finished_cb'}) {
+	$params{'finished_cb'}->("$class does not support eject()");
     }
 }
 

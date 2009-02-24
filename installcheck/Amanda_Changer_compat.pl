@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 18;
+use Test::More tests => 22;
 use File::Path;
 use strict;
 use warnings;
@@ -53,6 +53,17 @@ sub setup_changer {
 
     close $chg_test;
     chmod 0755, $changer_filename;
+}
+
+# slurp the $result_file
+sub slurp_result {
+    return '' unless (-r $result_file);
+
+    open(my $fh, "<", $result_file) or die("open $result_file: $!");
+    my $result = do { local $/; <$fh> };
+    close($fh);
+
+    return $result;
 }
 
 # Functions to invoke the changer and later verify the result
@@ -121,11 +132,15 @@ case "${1}" in
             2) echo "<ignored> slot 2 is empty"; exit 1;;
             3) echo "1"; exit 0;; # test missing 'device' portion
         esac;;
-    -reset) echo "reset ignored";;
+    -reset)
+	echo "reset" > @AMANDA_TMPDIR@/chg-test.result
+	echo "reset ignored";;
     -eject)
 	echo "eject" > @AMANDA_TMPDIR@/chg-test.result
 	echo "eject ignored";;
-    -clean) echo "clean ignored";;
+    -clean)
+	echo "clean" > @AMANDA_TMPDIR@/chg-test.result
+	echo "clean ignored";;
     -label)
         case "${2}" in
             foo?bar) echo "1 ok"; exit 0;;
@@ -175,12 +190,19 @@ try_run_changer(
 #    undef, undef, "search by slot; invalid response");
 
 try_run_changer(
+    sub { $chg->eject(finished_cb => \&check_finished_cb); },
+    undef, undef, "chg->eject doesn't fail");
+like(slurp_result(), qr/eject/, ".. and calls chg-test -eject");
+
+try_run_changer(
     sub { $chg->reset(finished_cb => \&check_finished_cb); },
-    undef, undef, "reset doesn't fail");
+    undef, undef, "chg->reset doesn't fail");
+like(slurp_result(), qr/reset/, ".. and calls chg-test -reset");
 
 try_run_changer(
     sub { $chg->clean(finished_cb => \&check_finished_cb); },
-    undef, undef, "clean doesn't fail");
+    undef, undef, "chg->clean doesn't fail");
+like(slurp_result(), qr/clean/, ".. and calls chg-test -clean");
 
 # TODO test update()
 
@@ -218,10 +240,7 @@ try_run_changer(
 
         ok(!defined $err, "release with eject succeeds");
 
-	open(my $fh, "<", $result_file) or die("open $result_file: $!");
-	my $result = do { local $/; <$fh> };
-	close($fh);
-	like($result, qr/eject/, "and calls chg-test -eject");
+	like(slurp_result(), qr/eject/, "..and calls chg-test -eject");
 
         Amanda::MainLoop::quit();
     };

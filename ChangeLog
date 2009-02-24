@@ -1,3 +1,14 @@
+2009-02-24  Dustin J. Mitchell <dustin@zmanda.com>
+	* changer-src/chg-rait.sh: get directory handling right (patch from
+	  Jim.pennino on wiki.zmanda.com)
+	* changer-src/chg-glue.pl: produce a debug log, add do_clean, fix
+	  do_eject
+	* perl/Amanda/Changer.pm: Add a new chg->eject method, to eject a
+	  volume that's not currently reserved
+	* perl/Amanda/Changer/compat.pm: fix release(), don't load 'current'
+	  after cleaning or ejecting
+	* installcheck/Amanda_Changer_compat.pl: updated tests
+
 2009-02-24  Jean-Louis Martineau <martineau@zmanda.com>
 	* amandad-src/amandad.c, application-src/amgtar.c,
 	  changer-src/scsi-changer-driver.c, client-src/client_util.c,

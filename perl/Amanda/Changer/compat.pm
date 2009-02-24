@@ -251,6 +251,14 @@ sub clean {
     $self->_simple_op("clean", %params);
 }
 
+sub eject {
+    my $self = shift;
+    my %params = @_;
+
+    # note: parameter 'drive' is ignored
+    $self->_simple_op("eject", %params);
+}
+
 sub update {
     my $self = shift;
     my %params = @_;
@@ -532,8 +540,7 @@ sub do_release {
     };
 
     if (exists $params{'eject'} && $params{'eject'}) {
-	debug("invoking -eject");
-	$self->{'chg'}->_simple_op("eject", finished_cb => $finished);
+	$self->{'chg'}->eject(finished_cb => $finished);
     } else {
 	$finished->(undef);
     }

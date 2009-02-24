@@ -85,9 +85,10 @@ do
    eval tapedev=\$tapedev_$i
 
    mkdir -p $WORK/$i
-   cd $WORK/$i
+   (
+       cd $WORK/$i
 
-   cat >> amanda.conf <<EOF
+       cat >> amanda.conf <<EOF
 org     	"$ORG"
 mailto  	"$mailto"
 tpchanger 	"$tpchanger"
@@ -103,14 +104,14 @@ define tapetype EXABYTE {
 }
 EOF
 
-    (
-	$tpchanger "$@"
-	echo "$?"> exitcode 
-    )  > stdout 2>stderr &
+	(
+	    $tpchanger "$@"
+	    echo "$?"> exitcode
+	)  > stdout 2>stderr &
+    )
 
-   i=`expr $i + 1`
+    i=`expr $i + 1`
 done
-
 wait
 
 #
