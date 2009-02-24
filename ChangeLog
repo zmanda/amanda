@@ -1,3 +1,7 @@
+2009-02-24  Dustin J. Mitchell <dustin@zmanda.com>
+	* man/xml-source/amanda-devices.7.xml: specify behavior of VERBOSE
+	  property
+
 2009-02-24  Nikolas Coukouma <atrus@zmanda.com>
 	* man/xml-source/ampgsql.8.xml,
 	  man/xml-source/amsamba.8.xml,

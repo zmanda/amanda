@@ -181,6 +181,11 @@ If the S3_BUCKET_LOCATION is set, Amanda will check to make sure that the
 setting agrees with the constraint currently on the bucket.
 </para>
 
+<para>This driver supports the VERBOSE property, but use it carefully -- it
+produces a great deal of output, and may cause spurious failures by filling
+your debug log partition.  Its logging is generally only useful for developers
+chasing down a problem in communications with Amazon's servers.</para>
+
 </refsect2>
 
 <refsect2><title>Tape Device</title>
@@ -328,7 +333,7 @@ for future expansion.  Not all devices implement all of these properties.</para>
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>VERBOSE</term><listitem>
- (read-write) If this boolean property is set, then the device will produce verbose debugging output.  This property is not recognized by all devices.
+ (read-write) If this boolean property is set, then the device will produce verbose debugging output.  This property is not recognized by most devices.
 </listitem></varlistentry>
  <!-- ==== -->
 </variablelist>
@@ -408,6 +413,10 @@ as CURLOPT_CAINFO.
  <!-- ==== -->
  <varlistentry><term>S3_USER_TOKEN</term><listitem>
  (read-write) This property specifies the user token for Amanda Enterprise Edition customers.
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>VERBOSE</term><listitem>
+ (read-write) If true, verbose data about each HTTP transaction is sent to the debug log.
 </listitem></varlistentry>
  <!-- ==== -->
 </variablelist>
