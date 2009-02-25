@@ -1,3 +1,12 @@
+2009-02-25  Nikolas Coukouma <atrus@zmanda.com>
+	* application-src/amoracle.pl,
+	  application-src/ampgsql.pl,
+	  example/amanda-client-oracle.conf.in,
+	  example/amanda-client-postgresql.conf.in,
+	  installcheck/ampgsql.pl,
+	  man/xml-source/ampgsql.8.xml: bring amoracle and ampgsql properties
+	  in line with conventions
+
 2009-02-24  Jean-Louis Martineau <martineau@zmanda.com>
 	* amandad-src/amandad.c, application-src/amgtar.c,
 	  changer-src/scsi-changer-driver.c, client-src/client_util.c,

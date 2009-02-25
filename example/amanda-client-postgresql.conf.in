@@ -22,13 +22,12 @@ auth "bsdtcp"
 # your ssh keys file if you use ssh auth
 ssh_keys "/var/lib/amanda/.ssh/id_rsa_amrecover"
 
-PG_HOST PG_PORT PG_USER PG_PASSWORD PG_PASSFILE PSQL PG_DATA PG_ARCHIVE PG_TMP
 # Use /tmp/zmanda to store temporary backup files on this machine
-property "PG_TMP" "/tmp/zmanda"
+property "PG-TMPDIR" "/tmp/zmanda"
 # Use /etc/amanda/pgpassfile for authentication credentials
 # See "The Password File" in libpq's documentation for details
-property "PG_PASSFILE" "/etc/amanda/pgpassfile"
+property "PG-PASSFILE" "/etc/amanda/pgpassfile"
 
 # for diskname "foo", connect to localhost and authenticate as user bar
-property "foo_PG_HOST" "localhost"
-property "foo_PG_USER" "bar"
+property "foo-PG_HOST" "localhost"
+property "foo-PG_USER" "bar"

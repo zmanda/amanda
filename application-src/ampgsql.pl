@@ -52,15 +52,15 @@ sub new {
     $self->{'label-prefix'} = 'amanda';
 
     # default arguments (application properties)
-    $self->{'args'}->{'state-dir'} ||= $Amanda::Paths::GNUTAR_LISTED_INCREMENTAL_DIR;
-    $self->{'args'}->{'tmp-dir'} ||= $AMANDA_TMPDIR;
-    $self->{'args'}->{'gnutar'} ||= $Amanda::Constants::GNUTAR;
+    $self->{'args'}->{'statedir'} ||= $Amanda::Paths::GNUTAR_LISTED_INCREMENTAL_DIR;
+    $self->{'args'}->{'tmpdir'} ||= $AMANDA_TMPDIR;
+    $self->{'args'}->{'gnutar-path'} ||= $Amanda::Constants::GNUTAR;
 
     # default properties
     $self->{'props'} = {
-        'PG_DB' => 'template1',
+        'PG-DB' => 'template1',
     };
-    my @PROP_NAMES = qw(PG_HOST PG_PORT PG_DB PG_USER PG_PASSWORD PG_PASSFILE PSQL PG_DATA PG_ARCHIVE);
+    my @PROP_NAMES = qw(PG-HOST PG-PORT PG-DB PG-USER PG-PASSWORD PG-PASSFILE PSQL-PATH PG-DATADIR PG-ARCHIVEDIR);
     my $conf_props = getconf($CNF_PROPERTY);
     if ($CFGERR_OK != config_init($CONFIG_INIT_CLIENT, '')) {
         my ($level, @errors) = Amanda::Config::config_errors();
@@ -69,7 +69,7 @@ sub new {
         }
         confess "Failed to load client config";
     }
-    # check for properties like 'PG_HOST'
+    # check for properties like 'PG-HOST'
     foreach my $pname (@PROP_NAMES) {
         if ($conf_props->{$pname}) {
             debug("More than one value for $pname. Using the first.")
@@ -77,10 +77,10 @@ sub new {
             $self->{'props'}->{$pname} = $conf_props->{$pname}->{'values'}->[0];
         }
     }
-    # check for properties like 'foo_PG_HOST' where the device is 'foo'
+    # check for properties like 'foo-PG-HOST' where the device is 'foo'
     if ($self->{'args'}->{'device'}) {
         foreach my $pname (@PROP_NAMES) {
-            my $tmp = "$self->{'args'}->{'device'}_$pname";
+            my $tmp = "$self->{'args'}->{'device'}-$pname";
             if ($conf_props->{$tmp}) {
                 debug("More than one value for $tmp. Using the first.")
                     if scalar(@{$conf_props->{$tmp}->{'values'}}) > 1;
@@ -89,11 +89,11 @@ sub new {
         }
     }
 
-    unless ($self->{'props'}->{'PSQL'}) {
+    unless ($self->{'props'}->{'PSQL-PATH'}) {
         foreach my $pre (split(/:/, $ENV{PATH})) {
             my $psql = "$pre/psql";
             if (-x $psql) {
-                $self->{'props'}{'PSQL'} = $psql;
+                $self->{'props'}{'PSQL-PATH'} = $psql;
                 last;
             }
         }
@@ -154,7 +154,7 @@ sub _state_filename {
     my ($self, $level) = @_;
 
     my @parts = ("ampgsql", _encode($self->{'args'}->{'host'}), _encode($self->{'args'}->{'disk'}), $level);
-    $self->{'args'}->{'state-dir'} . '/'  . join("-", @parts);
+    $self->{'args'}->{'statedir'} . '/'  . join("-", @parts);
 }
 
 sub _write_state_file {
@@ -198,7 +198,7 @@ sub _run_tar_totals {
     local (*TAR_IN, *TAR_OUT, *TAR_ERR);
     open TAR_OUT, ">&", $out_h;
     my $pid = open3(\*TAR_IN, ">&TAR_OUT", \*TAR_ERR,
-        $self->{'args'}->{'gnutar'}, '--create', '--totals', @other_args);
+        $self->{'args'}->{'gnutar-path'}, '--create', '--totals', @other_args);
     close(TAR_IN);
     waitpid($pid, 0);
     my $status = $? >> 8;
@@ -245,20 +245,20 @@ sub _base_backup {
    my ($self, $done_cb, $die_cb, $state_cb, $out_h) = @_;
 
    my $label = "$self->{'label-prefix'}-" . time();
-   my $tmp = "$self->{'args'}->{'tmp-dir'}/$label";
+   my $tmp = "$self->{'args'}->{'tmpdir'}/$label";
 
-   -d $self->{'props'}->{'PG_DATA'} or confess("Data directory does not exist (or is not a directory)");
-   -d $self->{'props'}->{'PG_ARCHIVE'} or confess("WAL file archive directory does not exist (or is not a directory)");
+   -d $self->{'props'}->{'PG-DATADIR'} or confess("Data directory does not exist (or is not a directory)");
+   -d $self->{'props'}->{'PG-ARCHIVEDIR'} or confess("WAL file archive directory does not exist (or is not a directory)");
 
    # try to protect what we create
    my $old_umask = umask();
    umask(077);
    # n.b. deprecated, passfile recommended for better security
    my $orig_pgpassword = $ENV{'PGPASSWORD'};
-   $ENV{'PGPASSWORD'} = $self->{'props'}->{'PG_PASSWORD'} if $self->{'props'}->{'PG_PASSWORD'};
+   $ENV{'PGPASSWORD'} = $self->{'props'}->{'PG-PASSWORD'} if $self->{'props'}->{'PG-PASSWORD'};
    # n.b. supported in 8.1+
    my $orig_pgpassfile = $ENV{'PGPASSFILE'};
-   $ENV{'PGPASSFILE'} = $self->{'props'}->{'PG_PASSFILE'} if $self->{'props'}->{'PG_PASSFILE'};
+   $ENV{'PGPASSFILE'} = $self->{'props'}->{'PG-PASSFILE'} if $self->{'props'}->{'PG-PASSFILE'};
 
    my $cleanup = sub {
        $ENV{'PGPASSWORD'} = $orig_pgpassword;
@@ -275,36 +275,36 @@ sub _base_backup {
    eval {mkpath($tmp, {'mode' => 0700}); 1} or $clean_die->("Failed to create tmp directory: $!");
 
    my @args = ();
-   push @args, "-h", $self->{'props'}->{'PG_HOST'} if ($self->{'props'}->{'PG_HOST'});
-   push @args, "-p", $self->{'props'}->{'PG_PORT'} if ($self->{'props'}->{'PG_PORT'});
-   push @args, "-U", $self->{'props'}->{'PG_USER'} if ($self->{'props'}->{'PG_USER'});
+   push @args, "-h", $self->{'props'}->{'PG-HOST'} if ($self->{'props'}->{'PG-HOST'});
+   push @args, "-p", $self->{'props'}->{'PG-PORT'} if ($self->{'props'}->{'PG-PORT'});
+   push @args, "-U", $self->{'props'}->{'PG-USER'} if ($self->{'props'}->{'PG-USER'});
 
-   my $status = system($self->{'props'}->{'PSQL'}, @args, '--quiet', '--output',
+   my $status = system($self->{'props'}->{'PSQL-PATH'}, @args, '--quiet', '--output',
        '/dev/null', '--command', "SELECT pg_start_backup('$label')",
-        $self->{'props'}->{'PG_DB'}) >> 8;
+        $self->{'props'}->{'PG-DB'}) >> 8;
    0 == $status or $clean_die->("Failed to call pg_start_backup");
 
    # tar data dir, using symlink to prefix
    # XXX: tablespaces and their symlinks?
    # See: http://www.postgresql.org/docs/8.0/static/manage-ag-tablespaces.html
-   $status = system($self->{'args'}->{'gnutar'}, '--create', '--file',
-       "$tmp/$_DATA_DIR_TAR", '--directory', $self->{'props'}->{'PG_DATA'}, ".") >> 8;
+   $status = system($self->{'args'}->{'gnutar-path'}, '--create', '--file',
+       "$tmp/$_DATA_DIR_TAR", '--directory', $self->{'props'}->{'PG-DATADIR'}, ".") >> 8;
    0 == $status or $clean_die->("Failed to tar data directory (exit status $status)");
 
-   $status = system($self->{'props'}->{'PSQL'}, @args, '--quiet', '--output',
+   $status = system($self->{'props'}->{'PSQL-PATH'}, @args, '--quiet', '--output',
        '/dev/null', '--command', "SELECT pg_stop_backup()",
-        $self->{'props'}->{'PG_DB'}) >> 8;
+        $self->{'props'}->{'PG-DB'}) >> 8;
    0 == $status or $clean_die->("Failed to call pg_stop_backup (exit status $status)");
 
    # determine WAL files and append and create their tar file
    my ($fname, $bfile, $start_wal, $end_wal, @wal_files);
-   my $adir = new IO::Dir($self->{'props'}->{'PG_ARCHIVE'});
+   my $adir = new IO::Dir($self->{'props'}->{'PG-ARCHIVEDIR'});
    $adir or $clean_die->("Could not open archive WAL directory");
    until ($start_wal and $end_wal) {
        while (defined($fname = $adir->read())) {
            if ($fname =~ /\.backup$/) {
                my $blabel;
-               my $bf = new IO::File("$self->{'props'}->{'PG_ARCHIVE'}/$fname");
+               my $bf = new IO::File("$self->{'props'}->{'PG-ARCHIVEDIR'}/$fname");
                my ($start, $end, $lab);
                while (my $l = <$bf>) {
                    chomp($l);
@@ -338,9 +338,9 @@ sub _base_backup {
    @wal_files or @wal_files = ('--files-from', '/dev/null');
 
 
-   $status = system($self->{'args'}->{'gnutar'},
+   $status = system($self->{'args'}->{'gnutar-path'},
        '--create', '--file', "$tmp/$_ARCHIVE_DIR_TAR",
-       '--directory', $self->{'props'}->{'PG_ARCHIVE'}, @wal_files) >> 8;
+       '--directory', $self->{'props'}->{'PG-ARCHIVEDIR'}, @wal_files) >> 8;
    0 == $status or $clean_die->("Failed to tar archived WAL files (exit status $status)");
 
    # create the final tar file
@@ -350,7 +350,7 @@ sub _base_backup {
    $state_cb->($self, $end_wal, $clean_die);
 
    # try to cleanup a bit
-   unlink("$self->{'props'}->{'PG_ARCHIVE'}/$bfile");
+   unlink("$self->{'props'}->{'PG-ARCHIVEDIR'}/$bfile");
 
    $cleanup->();
    $done_cb->($size);
@@ -362,7 +362,7 @@ sub _incr_backup {
    my $end_wal = _get_prev_state($self);
    unless ($end_wal) { _base_backup(@_); return; }
 
-   my $adir = new IO::Dir($self->{'props'}->{'PG_ARCHIVE'});
+   my $adir = new IO::Dir($self->{'props'}->{'PG-ARCHIVEDIR'});
    $adir or $die_cb->("Could not open archive WAL directory");
    my $max_wal = "";
    my ($fname, @wal_files);
@@ -421,23 +421,23 @@ sub command_restore {
    }
    my $status;
    if ($self->{'args'}->{'level'} > 0) {
-       $status = system($self->{'args'}->{'gnutar'}, '--extract',
+       $status = system($self->{'args'}->{'gnutar-path'}, '--extract',
            '--directory', $_ARCHIVE_DIR_RESTORE) >> 8;
        (0 == $status) or confess("Failed to extract level $self->{'args'}->{'level'} backup (exit status: $status)");
    } else {
        if (!-d $_DATA_DIR_RESTORE) {
            mkdir($_DATA_DIR_RESTORE) or confess("could not create archive WAL directory: $!");
        }
-       $status = system($self->{'args'}->{'gnutar'}, '--extract') >> 8;
+       $status = system($self->{'args'}->{'gnutar-path'}, '--extract') >> 8;
        (0 == $status) or confess("Failed to extract base backup (exit status: $status)");
 
-       $status = system($self->{'args'}->{'gnutar'}, '--extract',
+       $status = system($self->{'args'}->{'gnutar-path'}, '--extract',
           '--file', $_ARCHIVE_DIR_TAR, '--directory', $_ARCHIVE_DIR_RESTORE,
           '--preserve-permissions') >> 8;
        (0 == $status) or confess("Failed to extract archived WAL files from base backup (exit status: $status)");
        unlink($_ARCHIVE_DIR_TAR);
 
-       $status = system($self->{'args'}->{'gnutar'}, '--extract',
+       $status = system($self->{'args'}->{'gnutar-path'}, '--extract',
           '--file', $_DATA_DIR_TAR, '--directory', $_DATA_DIR_RESTORE,
           '--preserve-permissions') >> 8;
        (0 == $status) or confess("Failed to extract data directory from base backup (exit status: $status)");
@@ -469,11 +469,11 @@ GetOptions(
     'record',
     'calcsize',
     # ampgsql-specific
-    'state-dir=s',
-    'tmp-dir=s',
+    'statedir=s',
+    'tmpdir=s',
     'gnutar=s',
 ) or usage();
 
-my $application = Amanda::Application::amgtar_perl->new($opts);
+my $application = Amanda::Application::ampgsql->new($opts);
 
 $application->do($ARGV[0]);

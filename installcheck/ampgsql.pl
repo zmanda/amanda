@@ -92,10 +92,10 @@ try_eval("created log_dir", \&mkpath, $log_dir);
 try_eval("created state_dir", \&mkpath, $state_dir);
 
 my $conf = Installcheck::Config->new();
-$conf->add_client_param('property', "\"PG_DATA\" \"$data_dir\"");
-$conf->add_client_param('property', "\"PG_ARCHIVE\" \"$archive_dir\"");
-$conf->add_client_param('property', "\"PG_HOST\" \"$socket_dir\"");
-$conf->add_client_param('property', "\"PSQL\" \"$postgres_prefix/bin/psql\"");
+$conf->add_client_param('property', "\"PG-DATADIR\" \"$data_dir\"");
+$conf->add_client_param('property', "\"PG-ARCHIVEDIR\" \"$archive_dir\"");
+$conf->add_client_param('property', "\"PG-HOST\" \"$socket_dir\"");
+$conf->add_client_param('property', "\"PSQL-PATH\" \"$postgres_prefix/bin/psql\"");
 $conf->write();
 
 sub do_postmaster {
@@ -131,8 +131,8 @@ $h->close();
 pass("wrote config file");
 
 my $app = new Installcheck::Application("ampgsql");
-$app->add_property('state_dir', $state_dir);
-$app->add_property('tmp_dir', $tmp_dir);
+$app->add_property('statedir', $state_dir);
+$app->add_property('tmpdir', $tmp_dir);
 
 my $backup;
 sub setup_db_and_backup {
