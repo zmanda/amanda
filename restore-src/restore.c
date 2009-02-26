@@ -1873,6 +1873,13 @@ static Device* manual_find_tape(char ** cur_tapedev, tapelist_t * cur_volume,
     LoadStatus status = LOAD_NEXT;
     Device * rval;
 
+    /* if we don't have a tapedev, it's probably because the changer failed.
+     * We'll muddle along as well as possible.  Note that if the user supplied
+     * a device (e.g., amfetchdump -d), then this won't be NULL. */
+    if (*cur_tapedev == NULL) {
+	*cur_tapedev = stralloc(getconf_str(CNF_TAPEDEV));
+    }
+
     for (;;) {
         status = load_manual_tape(cur_tapedev, prompt_out, prompt_in,
                                   flags, features, cur_volume);

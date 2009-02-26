@@ -1,3 +1,7 @@
+2009-02-26  Dustin J. Mitchell <dustin@zmanda.com>
+	* restore-src/restore.c: if the changer does not provide a device,
+	  use the configured tapedev
+
 2009-02-26  Dan Locks <dwlocks@zmanda.com>
 	* packaging/rpm/amanda.spec: update detection for sles11, opensuse11.1
 	  rpm builds will be broken for a bit longer in trunk
