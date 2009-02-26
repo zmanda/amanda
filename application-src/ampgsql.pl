@@ -271,8 +271,8 @@ sub _base_backup {
        $cleanup->();
        $die_cb->($msg);
    };
-   eval {rmtree($tmp,{'keep_root' => 1}); 1} or $clean_die->("Failed to clear tmp directory: $!");
-   eval {mkpath($tmp, {'mode' => 0700}); 1} or $clean_die->("Failed to create tmp directory: $!");
+   eval {rmtree($tmp,{'keep_root' => 1}); 1} or $clean_die->("Failed to clear tmp directory: $@");
+   eval {mkpath($tmp, {'mode' => 0700}); 1} or $clean_die->("Failed to create tmp directory: $@");
 
    my @args = ();
    push @args, "-h", $self->{'props'}->{'PG-HOST'} if ($self->{'props'}->{'PG-HOST'});

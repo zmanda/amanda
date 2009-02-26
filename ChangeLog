@@ -1,3 +1,8 @@
+2009-02-26  Nikolas Coukouma <atrus@zmanda.com>
+	* application-src/ampgsql.pl,
+	  installcheck/amgtar.pl,
+	  installcheck/ampgsql.pl: use $@ to get eval errors (not $!)
+
 2009-02-25  Nikolas Coukouma <atrus@zmanda.com>
 	* application-src/amoracle.pl,
 	  application-src/ampgsql.pl,

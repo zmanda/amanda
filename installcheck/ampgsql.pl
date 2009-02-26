@@ -80,7 +80,7 @@ sub run_and_log {
 sub try_eval {
     my ($desc, $code, @args) = @_;
     my $err_str;
-    $err_str = "$!" unless eval {$code->(@args); 1;};
+    $err_str = "$@" unless eval {$code->(@args); 1;};
     ok(!$err_str, $desc) or diag($err_str);
 }
 

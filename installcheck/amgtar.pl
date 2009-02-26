@@ -56,7 +56,7 @@ sub ok_foreach {
     my @errors;
     foreach my $elm (@list) {
         my $elm_str = $stringify? $stringify->($elm) : "$elm";
-        push @errors, "on element $elm_str: $!" unless eval {$code->($elm); 1;};
+        push @errors, "on element $elm_str: $@" unless eval {$code->($elm); 1;};
     }
     unless (ok(!@errors, $name)) {
         foreach my $err (@errors) {
