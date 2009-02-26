@@ -59,9 +59,9 @@ Amanda::Script - perl utility functions for Scripts.
 
 sub new {
     my $class = shift;
-    my $execute_where = shift;
+    my ($execute_where, $config_name) = @_;
 
-    my $self = Amanda::Script_App::new($class, $execute_where, "script", @_);
+    my $self = Amanda::Script_App::new($class, $execute_where, "script", $config_name);
 
     $self->{known_commands} = {
         support             => 1,

@@ -31,19 +31,22 @@ use Amanda::Config qw( :init :getconf  config_dir_relative );
 use Amanda::Debug qw( :logging );
 use Amanda::Paths;
 use Amanda::Util qw( :constants );
+use Carp;
 
 =head1 NAME
 
-Amanda::Script - perl utility functions for Scripts.
+Amanda::Script_App - perl utility functions for Scripts.
 
 =head1 SYNOPSIS
+
+This module should not be used directly. Instead, use C<Amanda::Application> or
+C<Amanda::Script>.
 
 =cut
 
 sub new {
     my $class = shift;
-    my $execute_where = shift;
-    my $type = shift;
+    my ($execute_where, $type, $config_name) = @_;
 
     my $self = {};
     bless ($self, $class);
@@ -64,7 +67,17 @@ sub new {
     if ($cfgerr_level >= $CFGERR_WARNINGS) {
         config_print_errors();
         if ($cfgerr_level >= $CFGERR_ERRORS) {
-            die("errors processing config file");
+            confess("errors processing config file");
+        }
+    }
+    if ($config_name) {
+        config_init($CONFIG_INIT_CLIENT | $CONFIG_INIT_EXPLICIT_NAME | $CONFIG_INIT_OVERLAY, $config_name);
+        ($cfgerr_level, @cfgerr_errors) = config_errors();
+        if ($cfgerr_level >= $CFGERR_WARNINGS) {
+            config_print_errors();
+            if ($cfgerr_level >= $CFGERR_ERRORS) {
+                confess("errors processing config file for $config_name");
+            }
         }
     }
 

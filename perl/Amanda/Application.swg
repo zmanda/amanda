@@ -29,6 +29,7 @@ require Amanda::Script_App;
 
 use strict;
 use warnings;
+use Amanda::Config qw( :init :getconf  config_dir_relative );
 
 =head1 NAME
 
@@ -66,9 +67,10 @@ Amanda::Application - perl utility functions for Applications.
 =cut
 
 sub new {
-    my $class = shift;
+    my $class = shift @_;
+    my $config_name = shift @_;
 
-    my $self = Amanda::Script_App::new($class, "client", "application", @_);
+    my $self = Amanda::Script_App::new($class, "client", "application", $config_name);
 
     $self->{known_commands} = {
         support   => 1,

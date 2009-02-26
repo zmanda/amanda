@@ -1,4 +1,18 @@
 2009-02-26  Nikolas Coukouma <atrus@zmanda.com>
+	* application-src/amgtar_perl.pl,
+          application-src/amlog-script.pl,
+          application-src/ampgsql.pl,
+          application-src/amsamba.pl,
+          application-src/amsuntar.pl,
+          application-src/amzfs-sendrecv.pl,
+          application-src/amzfs-snapshot.pl,
+          application-src/script-email.pl,
+          perl/Amanda/Application.swg,
+          perl/Amanda/Script.pm,
+          perl/Amanda/Script_App.pm:
+	  load config-name/amanda-client.conf as well as amanda-client.conf
+
+2009-02-26  Nikolas Coukouma <atrus@zmanda.com>
 	* application-src/ampgsql.pl,
 	  installcheck/amgtar.pl,
 	  installcheck/ampgsql.pl: use $@ to get eval errors (not $!)

@@ -47,8 +47,9 @@ my $_ARCHIVE_DIR_RESTORE = "archive";
 
 sub new {
     my $class = shift @_;
-    my $self = $class->SUPER::new();
-    $self->{'args'} = shift @_;
+    my $args = shift @_;
+    my $self = $class->SUPER::new($args->{'config'});
+    $self->{'args'} = $args;
     $self->{'label-prefix'} = 'amanda';
 
     # default arguments (application properties)
@@ -60,15 +61,11 @@ sub new {
     $self->{'props'} = {
         'PG-DB' => 'template1',
     };
+
     my @PROP_NAMES = qw(PG-HOST PG-PORT PG-DB PG-USER PG-PASSWORD PG-PASSFILE PSQL-PATH PG-DATADIR PG-ARCHIVEDIR);
+
+    # config is loaded by Amanda::Application (and Amanda::Script_App)
     my $conf_props = getconf($CNF_PROPERTY);
-    if ($CFGERR_OK != config_init($CONFIG_INIT_CLIENT, '')) {
-        my ($level, @errors) = Amanda::Config::config_errors();
-        for my $errmsg (@errors) {
-            debug($errmsg);
-        }
-        confess "Failed to load client config";
-    }
     # check for properties like 'PG-HOST'
     foreach my $pname (@PROP_NAMES) {
         if ($conf_props->{$pname}) {

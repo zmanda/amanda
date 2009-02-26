@@ -34,7 +34,7 @@ use Amanda::Constants;
 sub new {
     my $class = shift;
     my ($execute_where, $config, $host, $disk, $device, $level, $index, $message, $collection, $record, $logfile) = @_;
-    my $self = $class->SUPER::new($execute_where);
+    my $self = $class->SUPER::new($execute_where, $config);
 
     $self->{execute_where} = $execute_where;
     $self->{config}        = $config;

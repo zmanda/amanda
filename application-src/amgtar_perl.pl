@@ -37,7 +37,7 @@ use Amanda::Util qw( :constants );
 sub new {
     my $class = shift;
     my ($config, $host, $disk, $device, $level, $index, $message, $collection, $record, $calcsize) = @_;
-    my $self = $class->SUPER::new();
+    my $self = $class->SUPER::new($config);
 
     $self->{runtar}  = ${Amanda::Paths::amlibexecdir} ."/runtar" .
 		       $self->{'suf'};

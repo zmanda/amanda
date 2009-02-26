@@ -39,7 +39,7 @@ use Amanda::Util qw( :constants :quoting);
 sub new {
     my $class = shift;
     my ($config, $host, $disk, $device, $level, $index, $message, $collection, $record, $calcsize, $gnutar_path, $smbclient_path, $amandapass, $exclude_file, $exclude_list, $exclude_optional, $include_file, $include_list, $include_optional, $recover_mode) = @_;
-    my $self = $class->SUPER::new();
+    my $self = $class->SUPER::new($config);
 
     if (defined $gnutar_path) {
 	$self->{gnutar}     = $gnutar_path;

@@ -39,7 +39,7 @@ use Amanda::Util qw( :constants );
 sub new {
     my $class = shift;
     my ($config, $host, $disk, $device, $level, $index, $message, $collection, $record, $exclude_list, $exclude_optional,  $include_list, $include_optional,$bsize,$ext_header,$ext_attrib) = @_;
-    my $self = $class->SUPER::new();
+    my $self = $class->SUPER::new($config);
 
     $self->{suntar}            = "/usr/sbin/tar";
     $self->{pfexec}            = "/usr/bin/pfexec";
