@@ -118,15 +118,13 @@
 	%if %{suse_version} == 1010
 	    %define distver 10
 	%endif
-	# Written against SLES11-beta2, which is using SUSE11's rpm system.
-	# This will change when they release, I assume.
 	%if %{suse_version} == 1100
-	    # assume it's sles11 in disguise, for now
-	    %define disttag sles
 	    %define distver 11
 	%endif
 	%if %{suse_version} == 1110
-	    %define distver 11.1
+	    # sles_version isn't set in beta or RC versions of sles11
+	    %define disttag sles
+	    %define distver 11
 	%endif
     %else
 	%define disttag sles
