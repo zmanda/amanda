@@ -491,9 +491,9 @@ main(
 		    if (strncasecmp(r, "GOOD", 4) == 0) {
 			exit_value[j] = 0;
 		    }
-		    s = strchr(s, ' ');
 		}
 	    }
+	    s = strchr(s+1, ' ');
 	}
     }
 
