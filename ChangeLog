@@ -1,3 +1,6 @@
+2009-02-27  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Constants.pm.in: publish $MT and $MTX, too
+
 2009-02-26  Dustin J. Mitchell <dustin@zmanda.com>
 	* restore-src/restore.c: if the changer does not provide a device,
 	  use the configured tapedev
