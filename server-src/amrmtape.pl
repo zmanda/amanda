@@ -25,6 +25,7 @@ use warnings;
 use Amanda::Config qw( :init :getconf config_print_errors config_dir_relative );
 use Amanda::Changer;
 use Amanda::Device qw( :constants );
+use Amanda::Debug qw( :logging );
 use Amanda::Paths;
 use Amanda::MainLoop;
 use Amanda::Tapelist;
@@ -72,11 +73,10 @@ EOF
 }
 
 sub vlog(@) {
-    plog(@_) if $verbose;
-}
-
-sub plog(@) {
-    print "$0: " . join("\n$0: ", @_);
+    foreach my $msg (@_) {
+        message($msg);
+        print "$0: $msg\n" if $verbose;
+    }
 }
 
 Amanda::Util::setup_application("amrmtape", "server", $CONTEXT_CMDLINE);
