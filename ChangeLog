@@ -1,4 +1,8 @@
 2009-03-02  Nikolas Coukouma <atrus@zmanda.com>
+	* example/amanda-client-postgresql.conf.in:
+	  update example and make it more complete
+
+2009-03-02  Nikolas Coukouma <atrus@zmanda.com>
 	* application-src/ampgsql.pl,
 	  man/xml-source/ampgsql.8.xml: cleanup old WAL files
 

@@ -22,12 +22,25 @@ auth "bsdtcp"
 # your ssh keys file if you use ssh auth
 ssh_keys "/var/lib/amanda/.ssh/id_rsa_amrecover"
 
-# Use /tmp/zmanda to store temporary backup files on this machine
-property "PG-TMPDIR" "/tmp/zmanda"
 # Use /etc/amanda/pgpassfile for authentication credentials
-# See "The Password File" in libpq's documentation for details
+# (Note: for PostgreSQL 8.0.x, you must use PG-PASSWORD instead)
+# Should contain an appropriate line for foo (below).Example:
+#   localhost:*:*:amandabackup:my_backup_password
+# The file must be owned by the Amanda user with permissions 0600
 property "PG-PASSFILE" "/etc/amanda/pgpassfile"
 
-# for diskname "foo", connect to localhost and authenticate as user bar
-property "foo-PG_HOST" "localhost"
-property "foo-PG_USER" "bar"
+# For diskname "foo"...
+#   Connect to localhost
+property "foo-PG-HOST" "localhost"
+#   Connect to port 5432 (PostgreSQL's default)
+property "foo-PG-PORT" "5432"
+#   Connect as user amandabackup (Note: must be a superuser)
+property "foo-PG-USER" "amandabackup"
+#   Connect to database template1 (exists by default)
+property "foo-PG-DB" "template1"
+#   Database's data directory
+property "foo-PG-DATADIR" "/var/postgresql/data"
+#   Directory that archive_command (in postgresql.conf) copies WAL files to.
+#   For this example:
+#   archive_command = 'test ! -f /var/postgresql/archive/%f && cp %p /var/postgresql/archive/%f'
+property "foo-PG-ARCHIVEDIR" "/var/postgresql/archive"
