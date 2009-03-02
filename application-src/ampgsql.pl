@@ -60,9 +60,10 @@ sub new {
     # default properties
     $self->{'props'} = {
         'PG-DB' => 'template1',
+        'PG-CLEANUPWAL' => 'yes',
     };
 
-    my @PROP_NAMES = qw(PG-HOST PG-PORT PG-DB PG-USER PG-PASSWORD PG-PASSFILE PSQL-PATH PG-DATADIR PG-ARCHIVEDIR);
+    my @PROP_NAMES = qw(PG-HOST PG-PORT PG-DB PG-USER PG-PASSWORD PG-PASSFILE PSQL-PATH PG-DATADIR PG-ARCHIVEDIR PG-CLEANUPWAL);
 
     # config is loaded by Amanda::Application (and Amanda::Script_App)
     my $conf_props = getconf($CNF_PROPERTY);
@@ -190,7 +191,7 @@ sub _get_prev_state {
 }
 
 sub _run_tar_totals {
-    my ($self, $clean_die, $out_h, @other_args) = @_;
+    my ($self, $out_h, @other_args) = @_;
 
     local (*TAR_IN, *TAR_OUT, *TAR_ERR);
     open TAR_OUT, ">&", $out_h;
@@ -199,7 +200,7 @@ sub _run_tar_totals {
     close(TAR_IN);
     waitpid($pid, 0);
     my $status = $? >> 8;
-    0 == $status or $clean_die->("Tar failed (exit status $status)");
+    0 == $status or $self->{'die_cb'}->("Tar failed (exit status $status)");
 
     my $size;
     while (my $tots = <TAR_ERR>) {
@@ -217,29 +218,32 @@ sub command_estimate {
 
    my $out_h = new IO::File("/dev/null", "w");
 
-   my $done_cb = sub {
+   $self->{'done_cb'} = sub {
        my $size = shift @_;
        $size /= 1024;
        print("$self->{'args'}->{'level'} $size 1\n");
    };
-   my $die_cb = sub {
+   $self->{'die_cb'} = sub {
        my $msg = shift @_;
-       $done_cb->(-1);
+       $self->{'done_cb'}->(-1);
        confess($msg);
    };
-   my $state_cb = sub {
+   $self->{'state_cb'} = sub {
+       # do nothing
+   };
+   $self->{'unlink_cb'} = sub {
        # do nothing
    };
 
    if ($self->{'args'}->{'level'} > 0) {
-       _base_backup($self, $done_cb, $die_cb, $state_cb, $out_h);
+       _base_backup($self, $out_h);
    } else {
-       _incr_backup($self, $done_cb, $die_cb, $state_cb, $out_h);
+       _incr_backup($self, $out_h);
    }
 }
 
 sub _base_backup {
-   my ($self, $done_cb, $die_cb, $state_cb, $out_h) = @_;
+   my ($self, $out_h) = @_;
 
    my $label = "$self->{'label-prefix'}-" . time();
    my $tmp = "$self->{'args'}->{'tmpdir'}/$label";
@@ -263,13 +267,14 @@ sub _base_backup {
        umask($old_umask);
        eval {rmtree($tmp); 1}
    };
-   my $clean_die = sub {
+   my $old_die = $self->{'die_cb'};
+   $self->{'die_cb'} = sub {
        my $msg = shift @_;
        $cleanup->();
-       $die_cb->($msg);
+       $old_die->($msg);
    };
-   eval {rmtree($tmp,{'keep_root' => 1}); 1} or $clean_die->("Failed to clear tmp directory: $@");
-   eval {mkpath($tmp, {'mode' => 0700}); 1} or $clean_die->("Failed to create tmp directory: $@");
+   eval {rmtree($tmp,{'keep_root' => 1}); 1} or $self->{'die_cb'}->("Failed to clear tmp directory: $@");
+   eval {mkpath($tmp, {'mode' => 0700}); 1} or $self->{'die_cb'}->("Failed to create tmp directory: $@");
 
    my @args = ();
    push @args, "-h", $self->{'props'}->{'PG-HOST'} if ($self->{'props'}->{'PG-HOST'});
@@ -279,24 +284,24 @@ sub _base_backup {
    my $status = system($self->{'props'}->{'PSQL-PATH'}, @args, '--quiet', '--output',
        '/dev/null', '--command', "SELECT pg_start_backup('$label')",
         $self->{'props'}->{'PG-DB'}) >> 8;
-   0 == $status or $clean_die->("Failed to call pg_start_backup");
+   0 == $status or $self->{'die_cb'}->("Failed to call pg_start_backup");
 
    # tar data dir, using symlink to prefix
    # XXX: tablespaces and their symlinks?
    # See: http://www.postgresql.org/docs/8.0/static/manage-ag-tablespaces.html
    $status = system($self->{'args'}->{'gnutar-path'}, '--create', '--file',
        "$tmp/$_DATA_DIR_TAR", '--directory', $self->{'props'}->{'PG-DATADIR'}, ".") >> 8;
-   0 == $status or $clean_die->("Failed to tar data directory (exit status $status)");
+   0 == $status or $self->{'die_cb'}->("Failed to tar data directory (exit status $status)");
 
    $status = system($self->{'props'}->{'PSQL-PATH'}, @args, '--quiet', '--output',
        '/dev/null', '--command', "SELECT pg_stop_backup()",
         $self->{'props'}->{'PG-DB'}) >> 8;
-   0 == $status or $clean_die->("Failed to call pg_stop_backup (exit status $status)");
+   0 == $status or $self->{'die_cb'}->("Failed to call pg_stop_backup (exit status $status)");
 
    # determine WAL files and append and create their tar file
    my ($fname, $bfile, $start_wal, $end_wal, @wal_files);
    my $adir = new IO::Dir($self->{'props'}->{'PG-ARCHIVEDIR'});
-   $adir or $clean_die->("Could not open archive WAL directory");
+   $adir or $self->{'die_cb'}->("Could not open archive WAL directory");
    until ($start_wal and $end_wal) {
        while (defined($fname = $adir->read())) {
            if ($fname =~ /\.backup$/) {
@@ -324,11 +329,13 @@ sub _base_backup {
    }
 
    while (defined($fname = $adir->read())) {
-       if (($fname =~ /$_WAL_FILE_PAT/) and
-           ($fname ge $start_wal) and ($fname le $end_wal)) {
+       if ($fname =~ /$_WAL_FILE_PAT/) {
+           if (($fname ge $start_wal) and ($fname le $end_wal)) {
            push @wal_files, $fname;
+           } elsif ($fname lt $start_wal) {
+               $self->{'unlink_cb'}->($fname);
+           }
        }
-       # XXX: unlink old WAL files?
    }
 
    # create an empty archive for uniformity
@@ -338,29 +345,29 @@ sub _base_backup {
    $status = system($self->{'args'}->{'gnutar-path'},
        '--create', '--file', "$tmp/$_ARCHIVE_DIR_TAR",
        '--directory', $self->{'props'}->{'PG-ARCHIVEDIR'}, @wal_files) >> 8;
-   0 == $status or $clean_die->("Failed to tar archived WAL files (exit status $status)");
+   0 == $status or $self->{'die_cb'}->("Failed to tar archived WAL files (exit status $status)");
 
    # create the final tar file
-   my $size = _run_tar_totals($self, $clean_die, $out_h, '--directory', $tmp,
+   my $size = _run_tar_totals($self, $out_h, '--directory', $tmp,
        $_ARCHIVE_DIR_TAR, $_DATA_DIR_TAR);
 
-   $state_cb->($self, $end_wal, $clean_die);
+   $self->{'state_cb'}->($self, $end_wal);
 
    # try to cleanup a bit
    unlink("$self->{'props'}->{'PG-ARCHIVEDIR'}/$bfile");
 
    $cleanup->();
-   $done_cb->($size);
+   $self->{'done_cb'}->($size);
 }
 
 sub _incr_backup {
-   my ($self, $done_cb, $die_cb, $state_cb, $out_h) = @_;
+   my ($self, $out_h) = @_;
 
    my $end_wal = _get_prev_state($self);
    unless ($end_wal) { _base_backup(@_); return; }
 
    my $adir = new IO::Dir($self->{'props'}->{'PG-ARCHIVEDIR'});
-   $adir or $die_cb->("Could not open archive WAL directory");
+   $adir or $self->{'die_cb'}->("Could not open archive WAL directory");
    my $max_wal = "";
    my ($fname, @wal_files);
    while (defined($fname = $adir->read())) {
@@ -368,15 +375,14 @@ sub _incr_backup {
            $max_wal = $fname if $fname gt $max_wal;
            push @wal_files, $fname;
        }
-       # XXX: unlink old WAL files?
    }
 
-   $state_cb->($self, $max_wal ? $max_wal : $end_wal, $die_cb);
+   $self->{'state_cb'}->($self, $max_wal ? $max_wal : $end_wal);
 
    if (@wal_files) {
-       $done_cb->(_run_tar_totals($self, $die_cb, $out_h, @wal_files));
+       $self->{'done_cb'}->(_run_tar_totals($self, $out_h, @wal_files));
    } else {
-       $done_cb->(0);
+       $self->{'done_cb'}->(0);
    }
 }
 
@@ -386,26 +392,37 @@ sub command_backup {
    my $msg_fd = IO::Handle->new_from_fd(3, 'w');
    $msg_fd or confess("Could not open message fd");
 
-   my $done_cb = sub {
+   $self->{'done_cb'} = sub {
        my $size = shift @_;
        $msg_fd->print("sendbackup: size $size\n");
        $msg_fd->print("sendbackup: end\n");
    };
-   my $die_cb = sub {
+   $self->{'die_cb'} = sub {
        my $msg = shift @_;
        $msg_fd->print("! $msg\n");
-       $done_cb->(0);
+       $self->{'done_cb'}->(0);
        confess($msg);
    };
-   my $state_cb = sub {
-       my ($self, $end_wal, $clean_die) = @_;
-       _write_state_file($self, $end_wal) or $clean_die->("Failed to write state file");
+   $self->{'state_cb'} = sub {
+       my ($self, $end_wal) = @_;
+       _write_state_file($self, $end_wal) or $self->{'die_cb'}->("Failed to write state file");
    };
+   # simulate amanda.conf boolean style
+   if ($self->{'props'}->{'PG-CLEANUPWAL'} =~ /^(f|false|n|no|off)/i) {
+       $self->{'unlink_cb'} = sub {
+           # do nothing
+       };
+   } else {
+       $self->{'unlink_cb'} = sub {
+           my $filename = shift @_;
+           unlink($filename);
+       };
+   }
 
    if ($self->{'args'}->{'level'} > 0) {
-       _base_backup($self, $done_cb, $die_cb, $state_cb, \*STDOUT);
+       _base_backup($self, \*STDOUT);
    } else {
-       _incr_backup($self, $done_cb, $die_cb, $state_cb, \*STDOUT);
+       _incr_backup($self, \*STDOUT);
    }
 }
 

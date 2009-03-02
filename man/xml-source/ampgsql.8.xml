@@ -79,8 +79,13 @@ Disknames are specified in the <citerefentry><refentrytitle>disklist</refentryti
 <variablelist>
  <!-- ==== -->
  <varlistentry><term>PG-ARCHIVEDIR</term><listitem>
- Directory that WAL sement files are archived to, as specified by the archive_command
+ Directory that WAL segment files are archived to, as specified by the archive_command
  in PosgreSQL's postgresql.conf .
+</listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>PG-CLEANUPWAL</term><listitem>
+ Whether or not to remove old WAL segment files during base backups.
+ Defaults to yes.
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>PG-DATADIR</term><listitem>

@@ -1,4 +1,8 @@
 2009-03-02  Nikolas Coukouma <atrus@zmanda.com>
+	* application-src/ampgsql.pl,
+	  man/xml-source/ampgsql.8.xml: cleanup old WAL files
+
+2009-03-02  Nikolas Coukouma <atrus@zmanda.com>
 	* installcheck/amrmtape.pl,
 	  server-src/amrmtape.pl: zero datestamp with --keep-label
 
