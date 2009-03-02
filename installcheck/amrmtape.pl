@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 26;
+use Test::More tests => 27;
 
 use lib "@amperldir@";
 use File::Find;
@@ -153,8 +153,9 @@ $idx_count_post = dir_file_count($CNF_INDEXDIR);
 is($idx_count_post, $idx_count_pre, "number of index files before and after is the same");
 
 $tapelist = Amanda::Tapelist::read_tapelist(config_dir_relative("tapelist"));
-ok($tapelist->lookup_tapelabel('TESTCONF01'),
-     "succesfully looked up tape that should still be there");
+my $tape = $tapelist->lookup_tapelabel('TESTCONF01');
+ok($tape, "succesfully looked up tape that should still be there");
+is($tape->{'datestamp'}, "0", "datestamp was zeroed");
 
 $dev = Amanda::Device->new('file:' . Installcheck::Run::vtape_dir());
 

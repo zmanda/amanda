@@ -125,27 +125,22 @@ my $scrub_db = sub {
         die "Could not read the tapelist";
     }
 
-    $tapelist->remove_tapelabel($label);
+    if ($keep_label) {
+        my $t = $tapelist->lookup_tapelabel($label);
+        $t->{'datestamp'} = 0 if $t;
+    } else {
+        $tapelist->remove_tapelabel($label);
+    }
     my $tmp_tapelist_file = "$AMANDA_TMPDIR/tapelist-amrmtape-" . time();
     my $backup_tapelist_file = "$AMANDA_TMPDIR/tapelist-backup-amrmtape-" . time();
+    unless (copy($tapelist_file, $backup_tapelist_file)) {
+        die "Failed to copy/backup $tapelist_file to $backup_tapelist_file";
+    }
     # writing to temp and then moving is generally safer than writing directly
-    unless ($keep_label) {
-        unless (copy($tapelist_file, $backup_tapelist_file)) {
-            die "Failed to copy/backup $tapelist_file to $backup_tapelist_file";
-        }
-
-        $tapelist->remove_tapelabel($label);
-        my $tmp_tapelist_file = "$AMANDA_TMPDIR/tapelist-amrmtape-" . time();
-        my $backup_tapelist_file = "$AMANDA_TMPDIR/tapelist-backup-amrmtape-" . time();
-        unless (copy($tapelist_file, $backup_tapelist_file)) {
-            die "Failed to copy/backup $tapelist_file to $backup_tapelist_file";
-        }
-        # writing to temp and then moving is generally safer than writing directly
-        unless ($dry_run) {
-            $tapelist->write($tmp_tapelist_file);
-            unless (move($tmp_tapelist_file, $tapelist_file)) {
-                die "Failed to replace old tapelist  with new tapelist.";
-            }
+    unless ($dry_run) {
+        $tapelist->write($tmp_tapelist_file);
+        unless (move($tmp_tapelist_file, $tapelist_file)) {
+            die "Failed to replace old tapelist  with new tapelist.";
         }
     }
 
