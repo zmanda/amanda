@@ -300,9 +300,10 @@ sub _base_backup {
 
    # determine WAL files and append and create their tar file
    my ($fname, $bfile, $start_wal, $end_wal, @wal_files);
-   my $adir = new IO::Dir($self->{'props'}->{'PG-ARCHIVEDIR'});
-   $adir or $self->{'die_cb'}->("Could not open archive WAL directory");
-   until ($start_wal and $end_wal) {
+   # wait up to 60s for the .backup file to be copied
+   for (my $count = 0; $count < 60; $count++) {
+       my $adir = new IO::Dir($self->{'props'}->{'PG-ARCHIVEDIR'});
+       $adir or $self->{'die_cb'}->("Could not open archive WAL directory");
        while (defined($fname = $adir->read())) {
            if ($fname =~ /\.backup$/) {
                my $blabel;
@@ -325,9 +326,12 @@ sub _base_backup {
                }
            }
        }
-       $adir->rewind();
+       $adir->close();
+       last if $start_wal and $end_wal;
+       sleep(1);
    }
 
+   my $adir = new IO::Dir($self->{'props'}->{'PG-ARCHIVEDIR'});
    while (defined($fname = $adir->read())) {
        if ($fname =~ /$_WAL_FILE_PAT/) {
            if (($fname ge $start_wal) and ($fname le $end_wal)) {
@@ -337,6 +341,7 @@ sub _base_backup {
            }
        }
    }
+   $adir->close();
 
    # create an empty archive for uniformity
    @wal_files or @wal_files = ('--files-from', '/dev/null');
