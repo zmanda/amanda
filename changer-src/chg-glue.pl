@@ -45,19 +45,43 @@ use Amanda::Debug qw( :logging );
 my $chg;
 my $res;
 
+sub err_result {
+    my ($exitstatus, $msg, $continuation, @cont_args) = @_;
+
+    debug("returning exit status $exitstatus: $msg");
+
+    print "EXITSTATUS $exitstatus\n";
+    print "<error> $msg\n";
+    if (defined($continuation)) {
+	Amanda::MainLoop::call_later($continuation, @cont_args);
+    }
+}
+
+sub normal_result {
+    my ($slot, $rest, $continuation, @cont_args) = @_;
+
+    debug("returning success: $slot $rest");
+
+    print "EXITSTATUS 0\n";
+    print "$slot $rest\n";
+    if (defined($continuation)) {
+	Amanda::MainLoop::call_later($continuation, @cont_args);
+    }
+}
+
 sub release_and_then {
     my ($release_opts, $andthen) = @_;
     if ($res) {
 	# release the current reservation, then call andthen
+	debug("releasing reservation of " . $res->{'device_name'});
 	$res->release(@$release_opts,
 	    finished_cb => sub {
 		my ($error) = @_;
 		$res = undef;
 
+		debug("release completed");
 		if ($error) {
-		    print "EXITSTATUS 1\n";
-		    print "<error> $error\n";
-		    Amanda::MainLoop::call_later(\&getcmd);
+		    err_result(1, $error, \&getcmd);
 		} else {
 		    $andthen->();
 		}
@@ -83,9 +107,7 @@ sub do_slot {
 	do_reset();
 	return;
     } elsif ($slot eq "prev" or $slot eq "last") {
-	print "EXITSTATUS 1\n";
-	print "<error> slot specifier '$slot' is not valid\n";
-	Amanda::MainLoop::call_later(\&getcmd);
+	err_result(1, "slot specifier '$slot' is not valid", \&getcmd);
 	return;
     }
 
@@ -94,13 +116,10 @@ sub do_slot {
 	    res_cb => sub {
 		(my $error, $res) = @_;
 		if ($error) {
-		    print "EXITSTATUS 1\n";
-		    print "<error> $error\n";
+		    err_result(1, $error, \&getcmd);
 		} else {
-		    print "EXITSTATUS 0\n";
-		    print $res->{'this_slot'}, " ", $res->{'device_name'}, "\n";
+		    normal_result($res->{'this_slot'}, $res->{'device_name'}, \&getcmd);
 		}
-		Amanda::MainLoop::call_later(\&getcmd);
 	    }
 	);
     };
@@ -115,15 +134,12 @@ sub do_info {
             my %results = @_;
 
             if ($error) {
-                print "EXITSTATUS 1\n";
-                print "<error> $error\n";
+		err_result(1, $error, \&getcmd);
             } else {
                 my $nslots = $results{'num_slots'};
                 $nslots = 0 unless defined $nslots;
-                print "EXITSTATUS 0\n";
-                print "current $nslots 0 1\n";
+		normal_result("current", "$nslots 0 1", \&getcmd);
             }
-            Amanda::MainLoop::call_later(\&getcmd);
         }
     );
 }
@@ -134,9 +150,7 @@ sub do_reset {
 	    finished_cb => sub {
 		my ($error) = @_;
 		if ($error) {
-		    print "EXITSTATUS 1\n";
-		    print "<error> $error\n";
-		    Amanda::MainLoop::call_later(\&getcmd);
+		    err_result(1, $error, \&getcmd);
 		} else {
 		    do_slot("current");
 		}
@@ -152,13 +166,9 @@ sub do_clean {
 	    finished_cb => sub {
 		my ($error) = @_;
 		if ($error) {
-		    print "EXITSTATUS 1\n";
-		    print "<error> $error\n";
-		    Amanda::MainLoop::call_later(\&getcmd);
+		    err_result(1, $error, \&getcmd);
 		} else {
-		    print "EXITSTATUS 0\n";
-		    print "<none> cleaning operation successful\n";
-		    Amanda::MainLoop::call_later(\&getcmd);
+		    normal_result("<none>", "cleaning operation successful", \&getcmd);
 		}
 	    },
 	    drive => '',
@@ -173,13 +183,9 @@ sub do_eject {
 	    finished_cb => sub {
 		my ($error) = @_;
 		if ($error) {
-		    print "EXITSTATUS 1\n";
-		    print "<error> $error\n";
-		    Amanda::MainLoop::call_later(\&getcmd);
+		    err_result(1, $error, \&getcmd);
 		} else {
-		    print "EXITSTATUS 0\n";
-		    print "<none> volume ejected\n";
-		    Amanda::MainLoop::call_later(\&getcmd);
+		    normal_result("<none>", "volume ejected", \&getcmd);
 		}
 	    },
 	    drive => '',
@@ -195,13 +201,10 @@ sub do_search {
 	    res_cb => sub {
 		(my $error, $res) = @_;
 		if ($error) {
-		    print "EXITSTATUS 1\n";
-		    print "<error> $error\n";
+		    err_result(1, $error, \&getcmd);
 		} else {
-		    print "EXITSTATUS 0\n";
-		    print $res->{'this_slot'}, " ", $res->{'device_name'}, "\n";
+		    normal_result($res->{'this_slot'}, $res->{'device_name'}, \&getcmd);
 		}
-		Amanda::MainLoop::call_later(\&getcmd);
 	    }
 	);
     };
@@ -214,21 +217,16 @@ sub do_label {
     if ($res) {
         $res->set_label(label => $label,
             finished_cb => sub {
-                my ($err) = @_;
-                if ($err) {
-		    print "EXITSTATUS 1\n";
-		    print "<error> $err\n";
+                my ($error) = @_;
+                if ($error) {
+		    err_result(1, $error, \&getcmd);
 		} else {
-		    print "EXITSTATUS 0\n";
-		    print $res->{'this_slot'}, " ", $res->{'device_name'}, "\n";
+		    normal_result($res->{'this_slot'}, $res->{'device_name'}, \&getcmd);
 		}
-                Amanda::MainLoop::call_later(\&getcmd);
             }
         );
     } else {
-	print "EXITSTATUS 1\n";
-	print "<error> No volume loaded\n";
-	Amanda::MainLoop::call_later(\&getcmd);
+	err_result(1, "No volume loaded", \&getcmd);
     }
 }
 
@@ -243,6 +241,7 @@ sub getcmd {
     }
 
     debug("got command '$command'");
+
     if (($slot) = ($command =~ /^-slot (.*)$/)) {
 	do_slot($slot);
     } elsif ($command =~ /^-info$/) {
@@ -258,23 +257,12 @@ sub getcmd {
     } elsif (($label) = ($command =~ /^-label (.*)/)) {
 	do_label($label);
     } else {
-	print "EXITSTATUS 2\n";
-	print "<error> unknown command '$command'\n";
-	finish();
+	err_exit(2, "unknown command '$command'", \&finish);
     }
 }
 
 sub finish {
-    if ($res) {
-	$res->release(
-	    finished_cb => sub {
-		$res = undef;
-		Amanda::MainLoop::quit();
-	    }
-	);
-    } else {
-	Amanda::MainLoop::quit();
-    }
+    release_and_then([], \&Amanda::MainLoop::quit);
 }
 
 Amanda::Util::setup_application("chg-glue", "server", $CONTEXT_DAEMON);
@@ -286,8 +274,7 @@ my $config_name = $ARGV[0];
 $SIG{__DIE__} = sub {
     my ($msg) = @_;
     die $msg unless defined $^S;
-    print "EXITSTATUS 2\n";
-    print "<error> $msg\n";
+    err_result(2, $msg, undef);
     exit 1;
 };
 

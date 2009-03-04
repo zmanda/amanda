@@ -29,7 +29,7 @@ use File::Path;
 use Amanda::Paths;
 use Amanda::MainLoop qw( :GIOCondition );
 use Amanda::Config qw( :getconf );
-use Amanda::Debug;
+use Amanda::Debug qw( debug );
 use Amanda::Device qw( :constants );
 use Amanda::Changer;
 
@@ -75,6 +75,8 @@ sub new {
     bless ($self, $class);
 
     $self->_make_cfg_dir($cc);
+
+    debug("$class initialized with script $script, run in temporary directory $self->{cfg_dir}");
 
     return $self;
 }
@@ -138,6 +140,7 @@ sub _manual_scan {
 
     # TODO: support the case where nslots == -1
 
+    debug("Amanda::Changer::compat: beginning manual scan");
     $run_success_cb = sub {
         my ($slot, $rest) = @_;
 
@@ -173,9 +176,11 @@ sub _manual_scan {
             return;
 	}
 
+	debug("Amanda::Changer::compat: manual scanning next slot");
 	$self->_run_tpchanger($run_success_cb, $run_fail_cb, "-slot", "next");
     };
 
+    debug("Amanda::Changer::compat: manual scanning current slot");
     $self->_run_tpchanger($run_success_cb, $run_fail_cb, "-slot", "current");
 }
 
@@ -365,6 +370,8 @@ sub _run_tpchanger {
 	croak("Changer is already in use");
     }
 
+    debug("Amanda::Changer::compat: invoking $self->{script} with " . join(" ", @args));
+
     my ($readfd, $writefd) = POSIX::pipe();
     if (!defined($writefd)) {
 	croak("Error creating pipe to run changer script: $!");
@@ -501,6 +508,7 @@ sub _run_tpchanger {
 
 package Amanda::Changer::compat::Reservation;
 use vars qw( @ISA );
+use Amanda::Debug qw( debug );
 @ISA = qw( Amanda::Changer::Reservation );
 
 sub new {
@@ -549,6 +557,7 @@ sub set_label {
     # it to maintain its slotinfofile (this is a hack)
     if (!$self->{'chg'}->{'searchable'}
 	&& $self->{'chg'}->{'script'} !~ /chg-zd-mtx$/) {
+	debug("Amanda::Changer::compat - changer script is not searchable, so not invoking -label for set_label");
         if (exists $params{'finished_cb'}) {
             Amanda::MainLoop::call_later($params{'finished_cb'}, undef);
         }
