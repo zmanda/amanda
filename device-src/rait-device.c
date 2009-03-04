@@ -1773,9 +1773,9 @@ static gboolean raid_block_reconstruction(RaitDevice * self, GPtrArray * ops,
                    child_blocksize);
         }
     }
-    g_assert(parity_block != NULL); /* should have found parity_child */
-
     if (self->private->status == RAIT_STATUS_COMPLETE) {
+	g_assert(parity_block != NULL); /* should have found parity_child */
+
         if (num_children >= 2) {
             /* Verify the parity block. This code is inefficient but
                does the job for the 2-device case, too. */

@@ -412,7 +412,7 @@ ok(!($dev->start($ACCESS_WRITE, "TESTCONF29", undef)),
 
 undef $dev;
 
-$dev_name = "rait:{MISSING,file:$vtape2}";
+$dev_name = "rait:{file:$vtape2,MISSING}";
 $dev = Amanda::Device->new($dev_name);
 
 ok($dev->start($ACCESS_READ, undef, undef),

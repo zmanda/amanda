@@ -1,4 +1,9 @@
 2009-03-04  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/rait-device.c: fix failure when parity (last) child
+	  has failed
+	* installcheck/Amanda_Device.pl: test the fix
+
+2009-03-04  Dustin J. Mitchell <dustin@zmanda.com>
 	* changer-src/chg-glue.pl: add debugging
 	* perl/Amanda/Changer/compat.pm: add debugging
 
