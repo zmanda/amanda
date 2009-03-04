@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 23;
+use Test::More tests => 29;
 use File::Path;
 use strict;
 
@@ -85,6 +85,8 @@ label_vtape(3,4,"mytape");
 	$do_load_current, $got_res_current,
 	$do_load_next, $got_res_next,
 	$do_load_label, $got_res_label,
+	$do_load_slot, $got_res_slot,
+	$do_load_slot_nobraces, $got_res_slot_nobraces,
     );
 
     $get_info = sub {
@@ -158,6 +160,47 @@ label_vtape(3,4,"mytape");
 	    "returns correct device name");
 	is($res->{'this_slot'}, '{1,3,4}',
 	    "returns correct 'this_slot' name, even with different slots");
+
+	$res->release(finished_cb => $do_load_slot);
+    };
+
+    $do_load_slot = sub {
+	my ($err) = @_;
+	die $err if $err;
+
+	$chg->load(slot => "{1,2,3}", res_cb => $got_res_slot);
+    };
+
+    $got_res_slot = sub {
+	my ($err, $res) = @_;
+	ok(!$err, "no error loading slot '{1,2,3}'")
+	    or diag($err);
+	is($res->{'device_name'},
+	   "rait:{file:$tapebase/1/drive0,file:$tapebase/2/drive0,file:$tapebase/3/drive0}",
+	    "returns correct device name");
+	is($res->{'this_slot'}, '{1,2,3}',
+	    "returns the 'this_slot' I requested");
+
+	$res->release(finished_cb => $do_load_slot_nobraces);
+    };
+
+    $do_load_slot_nobraces = sub {
+	my ($err) = @_;
+	die $err if $err;
+
+	# test the shorthand "2" -> "{2,2,2}"
+	$chg->load(slot => "2", res_cb => $got_res_slot_nobraces);
+    };
+
+    $got_res_slot_nobraces = sub {
+	my ($err, $res) = @_;
+	ok(!$err, "no error loading slot '2'")
+	    or diag($err);
+	is($res->{'device_name'},
+	   "rait:{file:$tapebase/1/drive0,file:$tapebase/2/drive0,file:$tapebase/3/drive0}",
+	    "returns correct device name");
+	is($res->{'this_slot'}, '{2,2,2}',
+	    "returns an expanded 'this_slot' in response to my shorthand");
 
 	Amanda::MainLoop::quit();
     };

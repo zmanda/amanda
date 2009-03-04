@@ -106,8 +106,14 @@ sub load {
 	    @kid_slots = ( $slot ) x $self->{'num_children'};
 	} else {
 	    @kid_slots = expand_braced_alternates($slot);
-	    die "slot '$slot' does not specify the right number of child slots"
-		unless(@kid_slots == $self->{'num_children'});
+	    if (@kid_slots != $self->{'num_children'}) {
+		# as a convenience, expand a single slot into the same slot for each child
+		if (@kid_slots == 1) {
+		    @kid_slots = ( $kid_slots[0] ) x $self->{'num_children'};
+		} else {
+		    die "slot '$slot' does not specify the right number of child slots"
+		}
+	    }
 	}
 
 	$self->_for_each_child(sub {
