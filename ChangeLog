@@ -1,4 +1,8 @@
 2009-03-05  Nikolas Coukouma <atrus@zmanda.com>
+	* application-src/ampgsql.pl: call pg_stop_backup() if a problem occurs
+	  while backing up data dir
+
+2009-03-05  Nikolas Coukouma <atrus@zmanda.com>
 	* application-src/ampgsql.pl, man/xml-source/ampgsql.8.xml:
 	  make ampgsql use runtar (so it can access PostgreSQL's files)
 

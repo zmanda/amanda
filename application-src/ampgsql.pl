@@ -293,15 +293,19 @@ sub _base_backup {
    # tar data dir, using symlink to prefix
    # XXX: tablespaces and their symlinks?
    # See: http://www.postgresql.org/docs/8.0/static/manage-ag-tablespaces.html
-   $status = system($self->{'runtar'}, $self->{'args'}->{'config'},
+   my $tar_status = system($self->{'runtar'}, $self->{'args'}->{'config'},
         $Amanda::Constants::GNUTAR, '--create', '--file',
        "$tmp/$_DATA_DIR_TAR", '--directory', $self->{'props'}->{'PG-DATADIR'}, ".") >> 8;
-   0 == $status or $self->{'die_cb'}->("Failed to tar data directory (exit status $status)");
 
    $status = system($self->{'props'}->{'PSQL-PATH'}, @args, '--quiet', '--output',
        '/dev/null', '--command', "SELECT pg_stop_backup()",
         $self->{'props'}->{'PG-DB'}) >> 8;
-   0 == $status or $self->{'die_cb'}->("Failed to call pg_stop_backup (exit status $status)");
+   unless (0 == $tar_status and 0 == $status) {
+       my @errs = ();
+       0 == $tar_status or push(@errs, "Failed to tar data directory (exit status $tar_status)");
+       0 == $status or push(@errs, "Failed to call pg_stop_backup (exit status $status)");
+       $self->{'die_cb'}->(join(' and ', @errs));
+   }
 
    # determine WAL files and append and create their tar file
    my ($fname, $bfile, $start_wal, $end_wal, @wal_files);
