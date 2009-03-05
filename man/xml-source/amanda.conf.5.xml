@@ -176,6 +176,7 @@ may be used in most places where an integer is expected
 to mean an infinite amount.</para>
 
 <para>Boolean arguments may have any of the values
+<emphasis remap='B'>1</emphasis>,
 <emphasis remap='B'>y</emphasis>,
 <emphasis remap='B'>yes</emphasis>,
 <emphasis remap='B'>t</emphasis>,
@@ -183,6 +184,7 @@ to mean an infinite amount.</para>
 or
 <emphasis remap='B'>on</emphasis>
 to indicate a true state, or
+<emphasis remap='B'>0</emphasis>,
 <emphasis remap='B'>n</emphasis>,
 <emphasis remap='B'>no</emphasis>,
 <emphasis remap='B'>f</emphasis>,

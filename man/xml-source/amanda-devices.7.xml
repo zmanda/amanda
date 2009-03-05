@@ -243,7 +243,7 @@ device_property "USE_QUBITS" "no"
 values are given as simple strings, like FROBNICATOR_PATH in the example above.
 Integer values can be specified with any of the suffixes given in the "VALUE
 SUFFIXES" section of &amconf;, like BYTES_PER_FORTNIGHT, above.  Boolean values
-can be specified as any of "true", "yes", "1", "0", "no", "false", like
+can be specified using the same names as in &amconf;, like
 USE_QUBITS, above.  Some properties have special formats, as described
 below.</para>
 

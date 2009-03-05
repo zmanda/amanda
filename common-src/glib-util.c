@@ -175,19 +175,17 @@ gboolean g_value_compare(GValue * a, GValue * b) {
     g_assert_not_reached();
 }
 
-static gboolean g_value_set_boolean_from_string(GValue * val, char * string) {
-    if (strcasecmp(string, "true") == 0 ||
-        strcasecmp(string, "yes") == 0 ||
-        strcmp(string, "1") == 0) {
-        g_value_set_boolean(val, TRUE);
-    } else if (strcasecmp(string, "false") == 0 ||
-               strcasecmp(string, "no") == 0 ||
-               strcmp(string, "0") == 0) {
-        g_value_set_boolean(val, FALSE);
-    } else {
-        return FALSE;
-    }
+static gboolean
+g_value_set_boolean_from_string(
+    GValue * val,
+    char * str)
+{
+    int b = string_to_boolean(str);
 
+    if (b == -1)
+	return FALSE;
+
+    g_value_set_boolean(val, b);
     return TRUE;
 }
 

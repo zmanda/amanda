@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 273;
+use Test::More tests => 293;
 use File::Path qw( mkpath rmtree );
 use Sys::Hostname;
 use Carp;
@@ -494,6 +494,53 @@ my $run_s3_tests = defined $S3_SECRET_KEY && defined $S3_ACCESS_KEY;
 my $run_devpay_tests = defined $DEVPAY_SECRET_KEY &&
     defined $DEVPAY_ACCESS_KEY && $DEVPAY_USER_TOKEN;
 
+$dev_name = "s3:foo";
+$dev = Amanda::Device->new($dev_name);
+
+ok($dev->property_get("full_deletion"),
+   "property_get(full_deletion) on s3 device");
+
+## test parsing of boolean values
+#
+# s3 is the only device driver that has a writable boolean property at the moment
+
+my @verbose_vals = (
+    {'val' => '1', 'true' => 1},
+    {'val' => '0', 'true' => 0},
+    {'val' => 't', 'true' => 1},
+    {'val' => 'true', 'true' => 1},
+    {'val' => 'f', 'true' => 0},
+    {'val' => 'false', 'true' => 0},
+    {'val' => 'y', 'true' => 1},
+    {'val' => 'yes', 'true' => 1},
+    {'val' => 'n', 'true' => 0},
+    {'val' => 'no', 'true' => 0},
+    {'val' => 'on', 'true' => 1},
+    {'val' => 'off', 'true' => 0},
+    {'val' => 'oFf', 'true' => 0},
+    );
+
+foreach my $v (@verbose_vals) {
+    $dev_name = "s3:foo";
+    $dev = Amanda::Device->new($dev_name);
+
+    $testconf = Installcheck::Config->new();
+    $testconf->add_param("device_property", "\"verbose\" \"$v->{'val'}\"");
+    $testconf->write();
+    config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF') == $CFGERR_OK
+        or die("Could not load configuration");
+
+    ok($dev->configure(1),
+       "configured device with verbose set to $v->{'val'}")
+        or diag($dev->error_or_status());
+
+    my $get_val = $dev->property_get('verbose');
+    # see if truth-iness matches
+    my $expec = $v->{'true'}? "true" : "false";
+    is(!!$dev->property_get('verbose'), !!$v->{'true'},
+       "device_property 'VERBOSE' '$v->{'val'}' => property_get(verbose) returning $expec");
+}
+
 my $s3_make_device_count = 7;
 sub s3_make_device($$) {
     my ($dev_name, $kind) = @_;
@@ -506,9 +553,6 @@ sub s3_make_device($$) {
     push @s3_props, 's3_user_token' if ($kind eq "devpay");
     properties_include([ $dev->property_list() ], [ @common_properties, @s3_props ],
 	"necessary properties listed on s3 device");
-
-    ok($dev->property_get("full_deletion"),
-       "property_get(full_deletion) on s3 device");
 
     ok($dev->property_set('BLOCK_SIZE', 32768*2),
 	"set block size")
@@ -551,7 +595,7 @@ SKIP: {
             18 +
             1 * $verify_file_count +
             4 * $write_file_count +
-            4 * $s3_make_device_count
+            3 * $s3_make_device_count
 	unless $run_s3_tests;
 
     my $hostname  = hostname();

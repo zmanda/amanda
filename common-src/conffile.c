@@ -3836,7 +3836,7 @@ get_bool(void)
     default:
 	unget_conftoken();
 	val = 3; /* a bad argument - most likely TRUE */
-	conf_parserror(_("YES, NO, TRUE, FALSE, ON, OFF expected"));
+	conf_parserror(_("YES, NO, TRUE, FALSE, ON, OFF, 0, 1 expected"));
 	break;
     }
 
@@ -6843,6 +6843,39 @@ find_multiplier(
     /* None found; this is an error. */
     g_free(str);
     return 0;
+}
+
+int
+string_to_boolean(
+    const char *str)
+{
+    keytab_t * table_entry;
+
+    if (str == NULL || *str == '\0') {
+        return -1;
+    }
+
+    /* 0 and 1 are not in the table, as they are parsed as ints */
+    if (0 == strcmp(str, "0"))
+	return 0;
+    if (0 == strcmp(str, "1"))
+	return 1;
+
+    for (table_entry = bool_keytable; table_entry->keyword != NULL;
+         table_entry ++) {
+        if (strcasecmp(str, table_entry->keyword) == 0) {
+            switch (table_entry->token) {
+            case CONF_ATRUE:
+                return 1;
+            case CONF_AFALSE:
+                return 0;
+            default:
+                return -1;
+            }
+        }
+    }
+
+    return -1;
 }
 
 /*

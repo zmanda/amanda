@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 123;
+use Test::More tests => 124;
 use strict;
 
 use lib "@amperldir@";
@@ -125,6 +125,7 @@ if (Amanda::Tests::sizeof_size_t() > 4) {
 $testconf = Installcheck::Config->new();
 $testconf->add_param('reserve', '75');
 $testconf->add_param('autoflush', 'yes');
+$testconf->add_param('usetimestamps', '0');
 $testconf->add_param('tapedev', '"/dev/foo"');
 $testconf->add_param('bumpsize', $int64_num);
 $testconf->add_param('bumpmult', '1.4');
@@ -227,7 +228,7 @@ SKIP: {
 }
 
 SKIP: { # global parameters
-    skip "error loading config", 11 unless $cfg_result == $CFGERR_OK;
+    skip "error loading config", 12 unless $cfg_result == $CFGERR_OK;
 
     is(getconf($CNF_RESERVE), 75,
 	"integer global confparm");
@@ -239,6 +240,8 @@ SKIP: { # global parameters
 	"size global confparm");
     ok(getconf($CNF_AUTOFLUSH),
 	"boolean global confparm");
+    is(getconf($CNF_USETIMESTAMPS), 0,
+	"boolean global confparm, passing an integer (0)");
     is(getconf($CNF_TAPERALGO), $Amanda::Config::ALGO_LAST,
 	"taperalgo global confparam");
     is_deeply([getconf($CNF_RESERVED_UDP_PORT)], [100,200],
@@ -287,7 +290,7 @@ SKIP: { # tapetypes
 }
 
 SKIP: { # dumptypes
-    skip "error loading config", 17 unless $cfg_result == $CFGERR_OK;
+    skip "error loading config", 18 unless $cfg_result == $CFGERR_OK;
 
     my $dtyp = lookup_dumptype("mydump-type");
     ok($dtyp, "found mydump-type");
@@ -445,7 +448,7 @@ SKIP: { # script
 }
 
 SKIP: { # device
-    skip "error loading config", 7 unless $cfg_result == $CFGERR_OK;
+    skip "error loading config", 6 unless $cfg_result == $CFGERR_OK;
     my $dc = lookup_device_config("my_device");
     ok($dc, "found my_device");
     is(device_config_name($dc), "my_device",
@@ -465,7 +468,7 @@ SKIP: { # device
 }
 
 SKIP: { # changer
-    skip "error loading config", 7 unless $cfg_result == $CFGERR_OK;
+    skip "error loading config", 5 unless $cfg_result == $CFGERR_OK;
     my $dc = lookup_changer_config("my_changer");
     ok($dc, "found my_changer");
     is(changer_config_name($dc), "my_changer",

@@ -1,3 +1,16 @@
+2009-03-05  Dustin J. Mitchell <dustin@zmanda.com>, Nikolas Coukouma <atrus@zmanda.com>
+	* man/xml-source/amanda.conf.5.xml,
+	  man/xml-source/amanda-devices.7.xml,
+	  installcheck/Amanda_Config.pl,
+	  installcheck/Amanda_Device.pl,
+	  common-src/util.c,
+	  common-src/glib-util.c,
+	  common-src/conffile.c,
+	  common-src/conffile.h:
+	  be consistent in the various names for 'true' and 'false' we allow,
+	  specifically in device properties
+
+
 2009-03-05  Nikolas Coukouma <atrus@zmanda.com>
 	* application-src/ampgsql.pl: call pg_stop_backup() if a problem occurs
 	  while backing up data dir

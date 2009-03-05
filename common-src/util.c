@@ -730,8 +730,6 @@ collapse_braced_alternates(
     return g_string_free(result, FALSE);
 }
 
-
-
 /*
    Return 0 if the following characters are present
    * ( ) < > [ ] , ; : ! $ \ / "

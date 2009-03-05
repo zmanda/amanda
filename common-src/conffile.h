@@ -1343,6 +1343,14 @@ char *taperalgo2str(taperalgo_t taperalgo);
  */
 gint64 find_multiplier(char * casestr);
 
+/* Converts a string matching any of Amanda's names for "true" or
+ * "false" to a boolean value.
+ *
+ * @param str: string to match
+ * @returns: 0 or 1 (boolean) or -1 (no match)
+ */
+int string_to_boolean(const char *str);
+
 /* Compute the size needed in an ARGV to pass all properties
  *
  * @param proplist: The property list
