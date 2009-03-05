@@ -1,3 +1,7 @@
+2009-03-05  Nikolas Coukouma <atrus@zmanda.com>
+	* application-src/ampgsql.pl, man/xml-source/ampgsql.8.xml:
+	  make ampgsql use runtar (so it can access PostgreSQL's files)
+
 2009-03-04  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Changer/rait.pm: add a slot-name shorthand
 	* installcheck/Amanda_Changer_rait.pl: test it

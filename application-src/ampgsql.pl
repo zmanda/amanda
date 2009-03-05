@@ -51,10 +51,13 @@ sub new {
     my $self = $class->SUPER::new($args->{'config'});
     $self->{'args'} = $args;
     $self->{'label-prefix'} = 'amanda';
+    $self->{'runtar'}  = "$Amanda::Paths::amlibexecdir/runtar$self->{'suf'}";
 
     # default arguments (application properties)
     $self->{'args'}->{'statedir'} ||= $Amanda::Paths::GNUTAR_LISTED_INCREMENTAL_DIR;
     $self->{'args'}->{'tmpdir'} ||= $AMANDA_TMPDIR;
+    # XXX: when using runtar, this is not actually honored.
+    # So, this only works for restore at the moment
     $self->{'args'}->{'gnutar-path'} ||= $Amanda::Constants::GNUTAR;
 
     # default properties
@@ -196,7 +199,8 @@ sub _run_tar_totals {
     local (*TAR_IN, *TAR_OUT, *TAR_ERR);
     open TAR_OUT, ">&", $out_h;
     my $pid = open3(\*TAR_IN, ">&TAR_OUT", \*TAR_ERR,
-        $self->{'args'}->{'gnutar-path'}, '--create', '--totals', @other_args);
+        $self->{'runtar'}, $self->{'args'}->{'config'},
+        $Amanda::Constants::GNUTAR, '--create', '--totals', @other_args);
     close(TAR_IN);
     waitpid($pid, 0);
     my $status = $? >> 8;
@@ -289,7 +293,8 @@ sub _base_backup {
    # tar data dir, using symlink to prefix
    # XXX: tablespaces and their symlinks?
    # See: http://www.postgresql.org/docs/8.0/static/manage-ag-tablespaces.html
-   $status = system($self->{'args'}->{'gnutar-path'}, '--create', '--file',
+   $status = system($self->{'runtar'}, $self->{'args'}->{'config'},
+        $Amanda::Constants::GNUTAR, '--create', '--file',
        "$tmp/$_DATA_DIR_TAR", '--directory', $self->{'props'}->{'PG-DATADIR'}, ".") >> 8;
    0 == $status or $self->{'die_cb'}->("Failed to tar data directory (exit status $status)");
 
@@ -347,7 +352,8 @@ sub _base_backup {
    @wal_files or @wal_files = ('--files-from', '/dev/null');
 
 
-   $status = system($self->{'args'}->{'gnutar-path'},
+   $status = system($self->{'runtar'}, $self->{'args'}->{'config'},
+        $Amanda::Constants::GNUTAR,
        '--create', '--file', "$tmp/$_ARCHIVE_DIR_TAR",
        '--directory', $self->{'props'}->{'PG-ARCHIVEDIR'}, @wal_files) >> 8;
    0 == $status or $self->{'die_cb'}->("Failed to tar archived WAL files (exit status $status)");
