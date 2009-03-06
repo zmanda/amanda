@@ -318,7 +318,6 @@ loadlabel_slot(void *	datap,
         return 0;
     }
 
-    g_assert(device->volume_label != NULL);
     if (device->volume_label == NULL) {
         g_fprintf(stderr, "%s: slot %s: Could not read tape label.\n",
                 get_pname(), slotstr);

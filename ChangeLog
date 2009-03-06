@@ -1,4 +1,7 @@
 2009-03-06  Dustin J. Mitchell <dustin@zmanda.com>
+	* restore-src/restore.c: remove incorrect assertion
+
+2009-03-06  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/amfeatures.c: fix am_string_to_feature to fail correctly
 	  on a bad feature string
 
