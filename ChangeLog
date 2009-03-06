@@ -1,4 +1,8 @@
 2009-03-06  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/amfeatures.c: fix am_string_to_feature to fail correctly
+	  on a bad feature string
+
+2009-03-06  Dustin J. Mitchell <dustin@zmanda.com>
 	* Makefile.am: always build xfer-src, on client or server
 	* xfer-src/Makefile.am xfer-src/xfer-element.h device-src/Makefile.am
 	  device-src/xfer-device.h device-src/xfer-dest-device.c
