@@ -1,3 +1,7 @@
+2009-03-05  Nikolas Coukouma <atrus@zmanda.com>
+	* application-src/ampgsql.pl: use older-style (<perl 5.10) mkpath
+	  options so we don't print "mkdir ..." lines into our backup data
+
 2009-03-05  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Amanda_Device.pl: only perform property tests when we
 	  have a working S3 device; and get test counts right
@@ -13,7 +17,6 @@
 	  common-src/conffile.h:
 	  be consistent in the various names for 'true' and 'false' we allow,
 	  specifically in device properties
-
 
 2009-03-05  Nikolas Coukouma <atrus@zmanda.com>
 	* application-src/ampgsql.pl: call pg_stop_backup() if a problem occurs
