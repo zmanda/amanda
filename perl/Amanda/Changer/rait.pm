@@ -111,7 +111,10 @@ sub load {
 		if (@kid_slots == 1) {
 		    @kid_slots = ( $kid_slots[0] ) x $self->{'num_children'};
 		} else {
-		    die "slot '$slot' does not specify the right number of child slots"
+		    $params{'res_cb'}->(
+			"slot '$slot' does not specify the right number of child slots",
+			undef);
+		    return;
 		}
 	    }
 	}
