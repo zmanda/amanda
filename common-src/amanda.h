@@ -60,8 +60,9 @@
 #  include <sys/types.h>
 #endif
 
-/* gnulib creates this header locally if the system doesn't provide it */
-#include <stdint.h>
+/* gnulib creates this header locally if the system doesn't provide it,
+ * so it uses a local ("") include */
+#include "stdint.h"
 
 /*
  * I would prefer that each Amanda module include only those system headers
@@ -138,10 +139,6 @@
 #endif
 #endif
 #endif
-#endif
-
-#ifdef HAVE_NETDB_H
-#  include <netdb.h>
 #endif
 
 #ifdef TIME_WITH_SYS_TIME
@@ -294,10 +291,6 @@ struct iovec {
 #include <stdio.h>
 #include <sys/resource.h>
 #include <sys/socket.h>
-
-#ifdef HAVE_ARPA_INET_H
-#include <arpa/inet.h>
-#endif
 
 #ifdef WORKING_IPV6
 #define INET6
@@ -1067,9 +1060,12 @@ extern int vfprintf(FILE *stream, const char *format, va_list ap);
 extern int vprintf(const char *format, va_list ap);
 #endif
 
-/* gnulib-only includes (hence "" instead of <>) */
-#include "getaddrinfo.h"
-#include "inet_ntop.h"
+/* these system headers are added by gnulib if they
+ * do not exist */
+#include "netdb.h"
+#include "arpa/inet.h"
+
+/* gnulib-only includes */
 #include "safe-read.h"
 #include "full-read.h"
 #include "full-write.h"

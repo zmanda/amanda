@@ -1,6 +1,7 @@
 AC_INIT
 AC_CONFIG_SRCDIR([common-src/amanda.h])
 AC_CONFIG_AUX_DIR(config)
+AC_CONFIG_MACRO_DIR(config)
 AC_CANONICAL_TARGET([])
 
 PACKAGE=amanda
@@ -191,13 +192,11 @@ AC_HEADER_DIRENT
 AC_HEADER_STDC
 AC_HEADER_TIME
 AC_CHECK_HEADERS(
-	arpa/inet.h \
 	grp.h \
 	libc.h \
 	libgen.h \
 	limits.h \
 	math.h \
-	netdb.h \
 	netinet/in.h \
 	regex.h \
 	stdarg.h \

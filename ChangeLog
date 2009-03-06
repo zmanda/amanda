@@ -1,4 +1,13 @@
 2009-03-06  Dustin J. Mitchell <dustin@zmanda.com>
+	* config/config.guess config/config.sub: latest from savannah.gnu.org
+	* common-src/amanda.h config/depcomp config/gnulib/* config/install-sh
+	  config/ylwrap gnulib/*: upgrade gnulib to latest, along with
+	  automake-1.10.2 
+	* Makefile.am config/libtool.m4 config/ltmain.sh config/ltoptions.m4
+	  config/ltsugar.m4 config/ltversion.m4 config/lt~obsolete.m4
+	  configure.in: upgrade to libtool-2.2.4
+
+2009-03-06  Dustin J. Mitchell <dustin@zmanda.com>
 	* restore-src/restore.c: remove incorrect assertion
 
 2009-03-06  Dustin J. Mitchell <dustin@zmanda.com>

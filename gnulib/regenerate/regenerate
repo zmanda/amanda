@@ -4,7 +4,7 @@
 # same version as was used to generate the source in the repository,
 # run the following in your git repository:
 #
-#   git checkout 03400ebfaa064922caf3767d6641d7e1cdc8cd1b
+#   git checkout 8d2524ce78ca107074727cbd8780c26a203a107c
 
 # get to the project root
 cd `dirname $0`/../..
@@ -62,12 +62,7 @@ PATCH_DIR="`pwd`/gnulib/regenerate"
 
 # Patch Makefile.am to not error out on warnings
 patch -p0 < "${PATCH_DIR}/no-error.patch" || exit 1
-
-# Add John's patches to getaddrinfo.c for use in cygwin
-patch -p0 < "${PATCH_DIR}/getaddrinfo-cygwin.patch" || exit 1
-
-# Add John's patches to eliminate restrict attributes.
-patch -p0 < "${PATCH_DIR}/no-restrict.patch" || exit 1
+rm -f gnulib/Makefile.am.orig
 
 # Add info to the makefile to ensure all this stuff gets put in
 # the distribution tarball
@@ -75,6 +70,10 @@ patch -p0 < "${PATCH_DIR}/no-restrict.patch" || exit 1
     echo "# Make sure regenerate/* are in the distribution tarball"
     echo "EXTRA_DIST += "`cd gnulib; find regenerate -name .svn -prune -o -type f -print | sort`
 ) >> gnulib/Makefile.am
+
+# remove .gitignore files, which ignore things we would like to see
+rm -f config/gnulib/.gitignore
+rm -f gnulib/.gitignore
 
 ######################################################################
 ## End patches                                                      ##
