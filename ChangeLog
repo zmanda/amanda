@@ -1,3 +1,7 @@
+2009-03-05  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Amanda_Device.pl: only perform property tests when we
+	  have a working S3 device; and get test counts right
+
 2009-03-05  Dustin J. Mitchell <dustin@zmanda.com>, Nikolas Coukouma <atrus@zmanda.com>
 	* man/xml-source/amanda.conf.5.xml,
 	  man/xml-source/amanda-devices.7.xml,
