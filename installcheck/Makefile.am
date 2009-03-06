@@ -13,6 +13,7 @@ common_tests = \
 	Amanda_MainLoop \
 	Amanda_Header \
 	Amanda_Util \
+	Amanda_Xfer \
 	amarchiver
 
 client_tests = \
@@ -33,7 +34,7 @@ server_tests = \
 	Amanda_Logfile \
 	Amanda_Tapelist \
 	Amanda_Process \
-	Amanda_Xfer \
+	Amanda_Xfer_serveronly \
 	bigint \
 	amgetconf \
 	amtapetype

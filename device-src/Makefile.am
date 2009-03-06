@@ -6,6 +6,7 @@ include $(top_srcdir)/config/automake/precompile.am
 
 INCLUDES =	-I$(top_builddir)/common-src \
 		-I$(top_srcdir)/common-src \
+		-I$(top_srcdir)/xfer-src \
 		-I$(top_srcdir)/gnulib
 
 AM_CFLAGS = $(AMANDA_WARNING_CFLAGS)
@@ -22,8 +23,11 @@ sbin_SCRIPTS = $(SCRIPTS_PERL)
 amlib_LTLIBRARIES = 	libamdevice.la
 libamdevice_la_LDFLAGS = -release $(VERSION) 
 libamdevice_la_SOURCES = property.c device.c device-queueing.c \
-	null-device.c rait-device.c vfs-device.c 
-libamdevice_la_LIBADD = ../common-src/libamanda.la
+	null-device.c rait-device.c vfs-device.c \
+	xfer-source-device.c xfer-dest-device.c
+libamdevice_la_LIBADD = \
+	../common-src/libamanda.la \
+	../xfer-src/libamxfer.la
 
 # tape-device has *lots* of conditionals; the first is whether to support
 # the device at all, and the remainder select a particular kind of OS-specific
@@ -77,6 +81,7 @@ noinst_HEADERS = \
 	s3.h \
 	s3-util.h \
 	tape-device.h \
-	tape-ops.h
+	tape-ops.h \
+	xfer-device.h
 	
 aminclude_HEADERS = 

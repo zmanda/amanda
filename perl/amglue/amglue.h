@@ -132,6 +132,66 @@ gint8 amglue_SvI8(SV *sv);
 guint8 amglue_SvU8(SV *sv);
 
 /*
+ * prototypes for objwrap.c
+ */
+
+/* Return a new SV with refcount 1 representing the given C object
+ * with the given class.
+ *
+ * @param c_obj: the object to represent
+ * @param perl_class: the perl with which to bless and tie the SV
+ */
+SV * new_sv_for_c_obj(gpointer c_obj, const char *perl_class);
+
+/* Return the C object buried in an SV, asserting that the perl SV is
+ * derived from derived_from.  Returns NULL for undefined perl values.
+ *
+ * This function is based on SWIG's SWIG_Perl_ConvertPtr.  The INT2PTR
+ * situation certainly looks strange, but is documented in perlxs.
+ *
+ * @param sv: the SV to convert
+ * @param derived_from: perl class from which the SV should be derived
+ * @return: underlying pointer
+ */
+gpointer c_obj_from_sv(SV *sv, const char *derived_from);
+
+/*
+ * prototypes for xferwrap.c
+ */
+
+/* declare structs */
+struct Xfer;
+struct XferElement;
+
+/* Return a new SV representing a transfer.
+ *
+ * @param xfer: the transfer to represent
+ */
+SV *new_sv_for_xfer(struct Xfer *xfer);
+
+/* Return a new SV representing a transfer element.
+ *
+ * @param xe: the transfer element to represent
+ */
+SV *new_sv_for_xfer_element(struct XferElement *xe);
+
+/* Convert an SV to an Xfer.  The Xfer's reference count is not
+ * incremented -- this is a "borrowed" reference.
+ *
+ * @param sv: the perl value
+ * @returns: pointer to the corresponding transfer, or NULL
+ */
+struct Xfer *xfer_from_sv(SV *sv);
+
+/* Convert an SV to an XferElement.  The element's reference count is
+ * not incremented -- this is a "borrowed" reference.
+ *
+ * @param sv: the perl value
+ * @returns: pointer to the corresponding transfer element, or NULL.
+ */
+struct XferElement *xfer_element_from_sv(SV *sv);
+
+/*
  * prototypes for source.c
  */
 

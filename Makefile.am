@@ -10,7 +10,7 @@ if WANT_CLIENT
 CLIENT_SUBDIRS = client-src application-src
 endif
 if WANT_SERVER
-SERVER_SUBDIRS = device-src server-src changer-src xfer-src
+SERVER_SUBDIRS = device-src server-src changer-src
 endif
 if WANT_RESTORE
 RESTORE_SUBDIRS = restore-src
@@ -28,6 +28,7 @@ SUBDIRS = . \
 	common-src \
 	amar-src \
 	amandad-src \
+	xfer-src \
 	$(TAPE_SUBDIRS) \
 	$(CLIENT_SUBDIRS) \
 	$(SERVER_SUBDIRS) \

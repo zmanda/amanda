@@ -20,6 +20,8 @@
 #include "amxfer.h"
 #include "amanda.h"
 #include "device.h"
+#include "property.h"
+#include "xfer-device.h"
 
 /*
  * Class declaration
@@ -163,7 +165,7 @@ xfer_source_device_get_type (void)
     return type;
 }
 
-/* create an element of this class; prototype is in xfer-element.h */
+/* create an element of this class; prototype is in xfer-device.h */
 XferElement *
 xfer_source_device(
     Device *device)

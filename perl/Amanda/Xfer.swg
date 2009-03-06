@@ -22,7 +22,6 @@
 %include "amglue/amglue.swg"
 %include "exception.i"
 %import "Amanda/MainLoop.swg"
-%import "Amanda/Device.swg"
 
 %{
 #include "glib-util.h"
@@ -122,7 +121,7 @@ such abstract classes.
 
 =head2 Transfer Sources
 
-=head3 Amanda::Xfer::Source::Device
+=head3 Amanda::Xfer::Source::Device (SERVER-ONLY)
 
   Amanda::Xfer::Source::Device->new($device);
 
@@ -164,7 +163,7 @@ This filter applies a bytewise XOR operation to the data flowing through it.
 
 =head2 Transfer Destinations
 
-=head3 Amanda::Xfer::Dest::Device
+=head3 Amanda::Xfer::Dest::Device (SERVER ONLY)
 
   Amanda::Xfer::Dest::Device->new($device, $max_memory);
 
@@ -281,118 +280,6 @@ amglue_copy_to_tag(xmsg_type, constants);
  */
 
 %{
-/* Return a new SV with refcount 1 representing the given C object
- * with the given class.
- *
- * @param c_obj: the object to represent
- * @param perl_class: the perl with which to bless and tie the SV
- */
-static SV *
-new_sv_for_c_obj(
-    gpointer c_obj,
-    const char *perl_class)
-{
-    SV *sv = newSV(0);
-
-    /* Make an SV that contains a pointer to the object, and bless it
-     * with the appropriate class. */
-    sv_setref_pv(sv, perl_class, c_obj);
-
-    return sv;
-}
-
-/* Return a new SV representing a transfer.
- *
- * @param xfer: the transfer to represent
- */
-static SV *
-new_sv_for_xfer(
-    Xfer *xfer)
-{
-    if (!xfer) return &PL_sv_undef;
-
-    xfer_ref(xfer);
-    return new_sv_for_c_obj(xfer, "Amanda::Xfer::Xfer");
-}
-
-/* Return a new SV representing a transfer element.
- *
- * @param xe: the transfer element to represent
- */
-static SV *
-new_sv_for_xfer_element(
-    XferElement *xe)
-{
-    const char *perl_class;
-
-    if (!xe) return &PL_sv_undef;
-
-    perl_class = XFER_ELEMENT_GET_CLASS(xe)->perl_class;
-    if (!perl_class) die("Attempt to wrap an XferElementClass with no perl class!");
-    g_object_ref(xe);
-    return new_sv_for_c_obj(xe, perl_class);
-}
-
-/* Return the C object buried in an SV, asserting that the perl SV is
- * derived from derived_from.  Returns NULL for undefined perl values.
- *
- * This function is based on SWIG's SWIG_Perl_ConvertPtr.  The INT2PTR
- * situation certainly looks strange, but is documented in perlxs.
- *
- * @param sv: the SV to convert
- * @param derived_from: perl class from which the SV should be derived
- * @return: underlying pointer
- */
-static gpointer
-c_obj_from_sv(
-    SV *sv,
-    const char *derived_from)
-{
-    SV *referent;
-    IV tmp;
-
-    if (!sv) return NULL;
-    if (!SvOK(sv)) return NULL;
-
-    /* Peel back the layers.  The sv should be a blessed reference to a PV,
-     * and we check the class against derived_from to ensure we have the right
-     * stuff. */
-    if (!sv_isobject(sv) || !sv_derived_from(sv, derived_from)) {
-	croak("Value is not an object of type %s", derived_from);
-	return NULL;
-    }
-
-    referent = (SV *)SvRV(sv);
-    tmp = SvIV(referent);
-    return INT2PTR(gpointer, tmp);
-}
-
-/* Convert an SV to an Xfer.  The Xfer's reference count is not
- * incremented -- this is a "borrowed" reference.
- *
- * @param sv: the perl value
- * @returns: pointer to the corresponding transfer, or NULL
- */
-static Xfer *
-xfer_from_sv(
-    SV *sv)
-{
-    return (Xfer *)c_obj_from_sv(sv, "Amanda::Xfer::Xfer");
-}
-
-/* Convert an SV to an XferElement.  The element's reference count is
- * not incremented -- this is a "borrowed" reference.
- *
- * @param sv: the perl value
- * @returns: pointer to the corresponding transfer element, or NULL.
- */
-static XferElement *
-xfer_element_from_sv(
-    SV *sv)
-{
-    return (XferElement *)c_obj_from_sv(sv, "Amanda::Xfer::Element");
-}
-
 /* Given an XMsg, return a hashref representing the message as a pure-perl
  * object.  The object is new, has refcount 1, and is totally independent of
  * the underlying XMsg.
@@ -535,10 +422,6 @@ char *xfer_element_repr(XferElement *elt);
 /* N.B. When adding new classes, ensure that the class_init function
  * sets perl_class to the appropriate value. */
 
-%newobject xfer_source_device;
-XferElement *xfer_source_device(
-    Device *device);
-
 %newobject xfer_source_random;
 XferElement *xfer_source_random(
     guint64 length,
@@ -566,11 +449,6 @@ XferElement *xfer_source_fd(
 %newobject xfer_filter_xor;
 XferElement *xfer_filter_xor(
     unsigned char xor_key);
-
-%newobject xfer_dest_device;
-XferElement *xfer_dest_device(
-    Device *device,
-    size_t max_memory);
 
 %newobject xfer_dest_null;
 XferElement *xfer_dest_null(
@@ -678,7 +556,7 @@ sub new {
     my $pkg = shift;
     # The C function adds the proper blessing -- this function
     # just gets $pkg out of the way.
-    Amanda::Xfer::C_CONSTRUCTOR(@_);
+    C_CONSTRUCTOR(@_);
 }
 }
 %enddef
@@ -689,28 +567,28 @@ sub new {
 %enddef
 
 %define DECLARE_METHOD(METHOD_NAME, C_FUNCTION)
-%perlcode {*METHOD_NAME = *Amanda::Xfer::C_FUNCTION;
+%perlcode {*METHOD_NAME = *C_FUNCTION;
 }
 %enddef
 
 /* And now define the required perl classes */
 
 PACKAGE(Amanda::Xfer::Xfer)
-DECLARE_CONSTRUCTOR(xfer_new);
-DECLARE_METHOD(DESTROY, xfer_unref);
+DECLARE_CONSTRUCTOR(Amanda::Xfer::xfer_new);
+DECLARE_METHOD(DESTROY, Amanda::Xfer::xfer_unref);
 OVERLOAD_REPR()
-DECLARE_METHOD(repr, xfer_repr);
-DECLARE_METHOD(get_status, xfer_get_status);
-DECLARE_METHOD(get_source, xfer_get_amglue_source);
-DECLARE_METHOD(start, xfer_start);
-DECLARE_METHOD(cancel, xfer_cancel);
+DECLARE_METHOD(repr, Amanda::Xfer::xfer_repr);
+DECLARE_METHOD(get_status, Amanda::Xfer::xfer_get_status);
+DECLARE_METHOD(get_source, Amanda::Xfer::xfer_get_amglue_source);
+DECLARE_METHOD(start, Amanda::Xfer::xfer_start);
+DECLARE_METHOD(cancel, Amanda::Xfer::xfer_cancel);
 
 /* ---- */
 
 PACKAGE(Amanda::Xfer::Element)
-DECLARE_METHOD(DESTROY, xfer_element_unref);
+DECLARE_METHOD(DESTROY, Amanda::Xfer::xfer_element_unref);
 OVERLOAD_REPR()
-DECLARE_METHOD(repr, xfer_element_repr);
+DECLARE_METHOD(repr, Amanda::Xfer::xfer_element_repr);
 
 /* ---- */
 
@@ -720,51 +598,39 @@ XFER_ELEMENT_SUBCLASS()
 
 /* ---- */
 
-PACKAGE(Amanda::Xfer::Source::Device)
-XFER_ELEMENT_SUBCLASS()
-DECLARE_CONSTRUCTOR(xfer_source_device)
-
-/* ---- */
-
 PACKAGE(Amanda::Xfer::Source::Fd)
 XFER_ELEMENT_SUBCLASS()
-DECLARE_CONSTRUCTOR(xfer_source_fd)
+DECLARE_CONSTRUCTOR(Amanda::Xfer::xfer_source_fd)
 
 /* ---- */
 
 PACKAGE(Amanda::Xfer::Source::Random)
 XFER_ELEMENT_SUBCLASS()
-DECLARE_CONSTRUCTOR(xfer_source_random)
+DECLARE_CONSTRUCTOR(Amanda::Xfer::xfer_source_random)
 
 /* ---- */
 
 PACKAGE(Amanda::Xfer::Source::Pattern)
 XFER_ELEMENT_SUBCLASS()
-DECLARE_CONSTRUCTOR(xfer_source_pattern)
+DECLARE_CONSTRUCTOR(Amanda::Xfer::xfer_source_pattern)
 
 /* ---- */
 
 PACKAGE(Amanda::Xfer::Filter::Xor)
 XFER_ELEMENT_SUBCLASS()
-DECLARE_CONSTRUCTOR(xfer_filter_xor)
-
-/* ---- */
-
-PACKAGE(Amanda::Xfer::Dest::Device)
-XFER_ELEMENT_SUBCLASS()
-DECLARE_CONSTRUCTOR(xfer_dest_device)
+DECLARE_CONSTRUCTOR(Amanda::Xfer::xfer_filter_xor)
 
 /* ---- */
 
 PACKAGE(Amanda::Xfer::Dest::Fd)
 XFER_ELEMENT_SUBCLASS()
-DECLARE_CONSTRUCTOR(xfer_dest_fd)
+DECLARE_CONSTRUCTOR(Amanda::Xfer::xfer_dest_fd)
 
 /* ---- */
 
 PACKAGE(Amanda::Xfer::Dest::Null)
 XFER_ELEMENT_SUBCLASS()
-DECLARE_CONSTRUCTOR(xfer_dest_null)
+DECLARE_CONSTRUCTOR(Amanda::Xfer::xfer_dest_null)
 
 /* ---- */
 
@@ -802,4 +668,10 @@ PACKAGE(Amanda::Xfer)
 # make Amanda::Xfer->new equivalent to Amanda::Xfer::Xfer->new (don't
 # worry, the blessings work out just fine)
 *new = *Amanda::Xfer::Xfer::new;
+
+# try to load Amanda::XferDevice, which is server-only.  If it's not found, then
+# its classes just remain undefined.
+BEGIN {
+    eval "use Amanda::XferDevice;";
+}
 %}

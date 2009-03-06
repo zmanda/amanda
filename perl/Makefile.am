@@ -50,6 +50,8 @@ libamglue_la_SOURCES = \
 	amglue/ghashtable.c \
 	amglue/bigint.c \
 	amglue/source.c \
+	amglue/objwrap.c \
+	amglue/xferwrap.c \
 	amglue/amglue.h
 libamglue_la_LDFLAGS = $(PERL_EXT_LDFLAGS) -release $(VERSION)
 EXTRA_DIST += $(libamglue_la_SOURCES)
@@ -240,19 +242,29 @@ Amanda_DB_DATA += Amanda/DB/Catalog.pm
 endif
 EXTRA_DIST += Amanda/DB/Catalog.pm
 
-if WANT_SERVER
 # PACKAGE: Amanda::Xfer
 libXferdir = $(amperldir)/auto/Amanda/Xfer
 libXfer_LTLIBRARIES = libXfer.la
 libXfer_la_SOURCES = Amanda/Xfer.c $(AMGLUE_SWG)
 libXfer_la_LDFLAGS = $(PERL_EXT_LDFLAGS)
 libXfer_la_LIBADD = libamglue.la \
-	$(top_builddir)/xfer-src/libamxfer.la \
-	$(top_builddir)/common-src/libamanda.la
+	$(top_builddir)/xfer-src/libamxfer.la
 Amanda_DATA += Amanda/Xfer.pm
 MAINTAINERCLEANFILES += Amanda/Xfer.c Amanda/Xfer.pm
-endif
 EXTRA_DIST += Amanda/Xfer.swg Amanda/Xfer.pm
+
+if WANT_SERVER
+# PACKAGE: Amanda::XferDevice
+libXferDevicedir = $(amperldir)/auto/Amanda/XferDevice
+libXferDevice_LTLIBRARIES = libXferDevice.la
+libXferDevice_la_SOURCES = Amanda/XferDevice.c $(AMGLUE_SWG)
+libXferDevice_la_LDFLAGS = $(PERL_EXT_LDFLAGS)
+libXferDevice_la_LIBADD = libamglue.la \
+	$(top_builddir)/device-src/libamdevice.la
+Amanda_DATA += Amanda/XferDevice.pm
+MAINTAINERCLEANFILES += Amanda/XferDevice.c Amanda/XferDevice.pm
+EXTRA_DIST += Amanda/XferDevice.swg Amanda/XferDevice.pm
+endif
 
 # PACKAGE: Amanda::BigIntCompat
 Amanda_DATA += Amanda/BigIntCompat.pm

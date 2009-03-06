@@ -18,12 +18,10 @@ LINT=$(AMLINT)
 LINTFLAGS=$(AMLINTFLAGS)
 
 libamxfer_la_SOURCES = \
-	dest-device.c \
 	dest-fd.c \
 	dest-null.c \
 	element-glue.c \
 	filter-xor.c \
-	source-device.c \
 	source-random.c \
 	source-fd.c \
 	source-pattern.c \
@@ -32,7 +30,6 @@ libamxfer_la_SOURCES = \
 	xmsg.c
 
 libamxfer_la_LIBADD = \
-	../device-src/libamdevice.la \
 	../common-src/libamanda.la
 
 noinst_HEADERS = \

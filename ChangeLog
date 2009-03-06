@@ -1,3 +1,17 @@
+2009-03-06  Dustin J. Mitchell <dustin@zmanda.com>
+	* Makefile.am: always build xfer-src, on client or server
+	* xfer-src/Makefile.am xfer-src/xfer-element.h device-src/Makefile.am
+	  device-src/xfer-device.h device-src/xfer-dest-device.c
+	  device-src/xfer-source-device.c: move device-specific xfer elts to
+	  device-src
+	* perl/amglue/amglue.h perl/amglue/objwrap.c perl/amglue/xferwrap.c:
+	  generic glue
+	* perl/Makefile.am perl/Amanda/Xfer.swg perl/Amanda/XferDevice.swg:
+	  only import server-specific symbols if they are available
+	* installcheck/Makefile.am installcheck/Amanda_Xfer.pl
+	  installcheck/Amanda_Xfer_serveronly.pl: split into general and
+	  server-specific checks
+
 2009-03-05  Nikolas Coukouma <atrus@zmanda.com>
 	* application-src/ampgsql.pl: use older-style (<perl 5.10) mkpath
 	  options so we don't print "mkdir ..." lines into our backup data
