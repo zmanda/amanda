@@ -1,3 +1,6 @@
+2009-03-07  Nikolas Coukouma <atrus@zmanda.com>
+	* application-src/ampgsql.pl: add selfcheck to ampgsql
+
 2009-03-06  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Changer/rait.pm: replace die() with a proper error
 	  return

@@ -123,18 +123,84 @@ CALCSIZE NO
 EOF
 }
 
+sub _check {
+    my ($desc, $err_suf, $check, @check_args) = @_;
+    my $ret = $check->(@check_args);
+    if ($ret) {
+        print "OK $desc\n";
+    } else {
+        print "ERROR $desc $err_suf\n";
+    }
+    $ret;
+}
+
+sub _ok_passfile_perms {
+    my $passfile = shift @_;
+    # libpq uses stat, so we use stat
+    my @fstat = stat($passfile);
+    return 0 unless @fstat;
+    return 0 if 077 & $fstat[2];
+    return -r $passfile;
+}
+
+sub _run_psql_command {
+    my ($self, $cmd) = @_;
+
+   my @args = ();
+   push @args, "-h", $self->{'props'}->{'PG-HOST'} if ($self->{'props'}->{'PG-HOST'});
+   push @args, "-p", $self->{'props'}->{'PG-PORT'} if ($self->{'props'}->{'PG-PORT'});
+   push @args, "-U", $self->{'props'}->{'PG-USER'} if ($self->{'props'}->{'PG-USER'});
+
+    my $status = system($self->{'props'}->{'PSQL-PATH'}, @args, '--quiet', 
+           '--output', '/dev/null', '--command', $cmd,
+           $self->{'props'}->{'PG-DB'});
+   return 0 == ($status >>8)
+}
+
 sub command_selfcheck {
    my $self = shift;
 
-   # XXX: TODO:
-   # * GNU tar
-   # * temp dir
-   # * state dir
-   # if have a diskname:
-   # * data dir
-   # * archive dir
-   # * passfile perms
-   # * try to connect
+   for my $k (keys %{$self->{'args'}}) {
+       print "OK application property: $k = $self->{'args'}->{$k}\n";
+   }
+
+   _check("GNUTAR-PATH $self->{'args'}->{'gnutar-path'}", "is not executable",
+          sub {-x $_[0]}, $self->{'args'}->{'gnutar-path'});
+   _check("GNUTAR $Amanda::Constants::GNUTAR", "is not executable",
+          sub {-x $_[0]}, $Amanda::Constants::GNUTAR);
+   _check("TMPDIR $self->{'args'}->{'tmpdir'}", "is not an acessible directory",
+          sub {-d $_[0] && -r $_[0] && -w $_[0] && -x $_[0]},
+          $self->{'args'}->{'tmpdir'});
+   _check("STATEDIR $self->{'args'}->{'statedir'}", "is not an acessible directory",
+          sub {-d $_[0] && -r $_[0] && -w $_[0] && -x $_[0]},
+          $self->{'args'}->{'statedir'});
+
+   if ($self->{'args'}->{'device'}) {
+       for my $k (keys %{$self->{'props'}}) {
+           print "OK client property: $k = $self->{'props'}->{$k}\n";
+       }
+
+       _check("PG-DATADIR $self->{'props'}->{'PG-DATADIR'}", "is not a directory",
+              sub {-d $_[0]}, $self->{'props'}->{'PG-DATADIR'});
+       _check("PG-ARCHIVEDIR $self->{'props'}->{'PG-ARCHIVEDIR'}", "is not a directory",
+              sub {-d $_[0]}, $self->{'props'}->{'PG-ARCHIVEDIR'});
+       if ($self->{'props'}->{'PG-PASSFILE'}) {
+           _check("PG-PASSFILE $self->{'props'}->{'PG-PASSFILE'}",
+                  "does not have correct permissions",
+                  \&_ok_passfile_perms, $self->{'props'}->{'PG-PASSFILE'});
+       }
+       _check("PSQL-PATH $self->{'args'}->{'gnutar-path'}", "is not executable",
+              sub {-x $_[0]}, $self->{'props'}->{'PSQL-PATH'});
+       _check("connect to database server", "failed",
+              \&_run_psql_command, $self, '');
+
+       my $label = "$self->{'label-prefix'}-selfcheck-" . time();
+       if (_check("call pg_start_backup", "failed (is another backup running?)",
+                  \&_run_psql_command, $self, "SELECT pg_start_backup('$label')")) {
+           _check("call pg_stop_backup", "failed",
+                  \&_run_psql_command, $self, "SELECT pg_stop_backup()");
+       }
+   }
 }
 
 sub _encode {
@@ -280,15 +346,8 @@ sub _base_backup {
    eval {rmtree($tmp,{'keep_root' => 1}); 1} or $self->{'die_cb'}->("Failed to clear tmp directory: $@");
    eval {mkpath($tmp, 0, 0700); 1} or $self->{'die_cb'}->("Failed to create tmp directory: $@");
 
-   my @args = ();
-   push @args, "-h", $self->{'props'}->{'PG-HOST'} if ($self->{'props'}->{'PG-HOST'});
-   push @args, "-p", $self->{'props'}->{'PG-PORT'} if ($self->{'props'}->{'PG-PORT'});
-   push @args, "-U", $self->{'props'}->{'PG-USER'} if ($self->{'props'}->{'PG-USER'});
-
-   my $status = system($self->{'props'}->{'PSQL-PATH'}, @args, '--quiet', '--output',
-       '/dev/null', '--command', "SELECT pg_start_backup('$label')",
-        $self->{'props'}->{'PG-DB'}) >> 8;
-   0 == $status or $self->{'die_cb'}->("Failed to call pg_start_backup");
+   _run_psql_command($self, "SELECT pg_start_backup('$label')") or
+       $self->{'die_cb'}->("Failed to call pg_start_backup");
 
    # tar data dir, using symlink to prefix
    # XXX: tablespaces and their symlinks?
@@ -297,13 +356,11 @@ sub _base_backup {
         $Amanda::Constants::GNUTAR, '--create', '--file',
        "$tmp/$_DATA_DIR_TAR", '--directory', $self->{'props'}->{'PG-DATADIR'}, ".") >> 8;
 
-   $status = system($self->{'props'}->{'PSQL-PATH'}, @args, '--quiet', '--output',
-       '/dev/null', '--command', "SELECT pg_stop_backup()",
-        $self->{'props'}->{'PG-DB'}) >> 8;
-   unless (0 == $tar_status and 0 == $status) {
+   my $stop_ok = _run_psql_command($self, "SELECT pg_stop_backup()");
+   unless (0 == $tar_status and $stop_ok) {
        my @errs = ();
        0 == $tar_status or push(@errs, "Failed to tar data directory (exit status $tar_status)");
-       0 == $status or push(@errs, "Failed to call pg_stop_backup (exit status $status)");
+       $stop_ok or push(@errs, "Failed to call pg_stop_backup");
        $self->{'die_cb'}->(join(' and ', @errs));
    }
 
@@ -356,7 +413,7 @@ sub _base_backup {
    @wal_files or @wal_files = ('--files-from', '/dev/null');
 
 
-   $status = system($self->{'runtar'}, $self->{'args'}->{'config'},
+   my $status = system($self->{'runtar'}, $self->{'args'}->{'config'},
         $Amanda::Constants::GNUTAR,
        '--create', '--file', "$tmp/$_ARCHIVE_DIR_TAR",
        '--directory', $self->{'props'}->{'PG-ARCHIVEDIR'}, @wal_files) >> 8;
