@@ -1,4 +1,7 @@
 2009-03-09  Nikolas Coukouma <atrus@zmanda.com>
+	* man/xslt/html.xsl.in: use UTF-8 when generating man page HTML
+
+2009-03-09  Nikolas Coukouma <atrus@zmanda.com>
 	* application-src/ampgsql.pl:
 	  set environment variables when running psql (from selfcheck)
 

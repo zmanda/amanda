@@ -21,6 +21,10 @@
 <xsl:param name="use.role.as.xrefstyle" select="1"/>
 <xsl:param name="refentry.generate.title" select="1"/>
 
+<xsl:output method="html" 
+            encoding="UTF-8"
+            indent="no" />
+
 <!-- generate correct links to other manpages -->
 <xsl:template name="generate.citerefentry.link">
   <xsl:value-of select="refentrytitle"/><xsl:text>.</xsl:text><xsl:value-of select="manvolnum"/><xsl:text>.html</xsl:text>
