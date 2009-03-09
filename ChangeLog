@@ -1,3 +1,7 @@
+2009-03-09  Nikolas Coukouma <atrus@zmanda.com>
+	* application-src/ampgsql.pl:
+	  set environment variables when running psql (from selfcheck)
+
 2009-03-07  Nikolas Coukouma <atrus@zmanda.com>
 	* application-src/ampgsql.pl: add selfcheck to ampgsql
 
