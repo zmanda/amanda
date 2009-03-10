@@ -1,3 +1,6 @@
+2009-03-10  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/conffile.c: Set default TAPETYPE_FILEMARK to 1.
+
 2009-03-09  Nikolas Coukouma <atrus@zmanda.com>
 	* man/xslt/html.xsl.in: use UTF-8 when generating man page HTML
 
