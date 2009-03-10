@@ -1,4 +1,7 @@
 2009-03-10  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/taper.c: return DONE if input file is partial.
+
+2009-03-10  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/amgtar.c, application-src/amstar.c: Validate YES/NO
 	  value for boolean properties.
 

@@ -639,8 +639,14 @@ skip_volume:
 static void find_completion_tags(dump_info_t * dump_info, /* IN */
                                  cmd_t * result_cmd,      /* OUT */
                                  logtype_t * result_log   /* OUT */) {
+    /* result_cmd is always DONE because the taper wrote all the input to
+     * the output. driver need to know if the taper completed its job.
+     * result_log is set to L_PARTIAL if the image is partial, the log
+     * must tell if the image is partial or complete.
+     */
+       
     if (taper_source_is_partial(dump_info->source)) {
-        *result_cmd = PARTIAL;
+        *result_cmd = DONE;
         *result_log = L_PARTIAL;
     } else {
         *result_cmd = DONE;
