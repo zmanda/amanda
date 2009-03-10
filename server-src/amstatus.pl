@@ -1072,7 +1072,11 @@ foreach $host (sort @hosts) {
 								printf "%8s ", $datestamp if defined $opt_date;
 								printf "%-${maxnamelength}s%2d ", "$host:$qpartition", $level{$hostpart};
 								printf "%9d$unit", $esize{$hostpart};
-								print " wait for dumping $error{$hostpart}\n";
+								if ($dead_run) {
+									print " failed: process terminated while";
+									$exit_status |= $STATUS_FAILED;
+								}
+								print " waiting for dumping $error{$hostpart}\n";
 							}
 							if($driver_finished == 1) {
 								$exit_status |= $STATUS_MISSING;
@@ -1133,7 +1137,11 @@ foreach $host (sort @hosts) {
 							if( defined $starttime ) {
 								print " (", &showtime($dump_time{$hostpart}), ")";
 							}
-							print ", wait for writing to tape";
+							print ",";
+							if ($dead_run) {
+								print " process terminated while";
+							}
+							print " waiting for writing to tape";
 							if(defined $partial{$hostpart} && $partial{$hostpart} == 1) {
 								print ", PARTIAL";
 								$exit_status |= $STATUS_FAILED;
@@ -1158,6 +1166,9 @@ foreach $host (sort @hosts) {
 						printf "%8s ", $datestamp if defined $opt_date;
 						printf "%-${maxnamelength}s%2d ", "$host:$qpartition", $level{$hostpart};
 						printf "%9d$unit", $size{$hostpart};
+						if ($dead_run) {
+							print " process terminated while";
+						}
 						print " waiting to flush";
 						if(defined $partial{$hostpart} && $partial{$hostpart} == 1) {
 							print ", PARTIAL";

@@ -1,4 +1,8 @@
 2009-03-10  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amstatus.pl: Print "failed: process terminated while" for
+				  dead run. Change "wait for" for "waiting for".
+
+2009-03-10  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/amstar.c: ONE-FILE-SYSTEM is deprecated.
 	* man/xml-source/amstar.8.xml: Document it.
 
