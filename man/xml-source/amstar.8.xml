@@ -43,7 +43,7 @@ for information on application properties and how they are configured.</para>
 <variablelist>
  <!-- ==== -->
  <varlistentry><term>ONE-FILE-SYSTEM</term><listitem>
-If "YES" (the default), do not allow star to cross filesystem boundaries. If "NO", star will cross filesystem boundaries.  This corresponds to the <emphasis>-xdev</emphasis> option of star.
+The default is "YES". This property is deprecated and the default value can't be changed. star requires it when it works in dump mode.  This corresponds to the <emphasis>-xdev</emphasis> option of star.
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>SPARSE</term><listitem>

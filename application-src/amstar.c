@@ -249,8 +249,10 @@ main(
 	case 12: if (optarg && strcasecmp(optarg, "YES") == 0)
 		     star_dle_tardumps = 1;
 		 break;
-	case 13: if (optarg && strcasecmp(optarg, "YES") != 0)
-		     star_onefilesystem = 0;
+	case 13: if (optarg && strcasecmp(optarg, "YES") != 0) {
+		     /* This option is required to be YES */
+		     /* star_onefilesystem = 0; */
+		 }
 		 break;
 	case 14: if (optarg && strcasecmp(optarg, "YES") != 0)
 		     star_sparse = 1;

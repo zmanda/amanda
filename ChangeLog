@@ -1,3 +1,7 @@
+2009-03-10  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amstar.c: ONE-FILE-SYSTEM is deprecated.
+	* man/xml-source/amstar.8.xml: Document it.
+
 2009-03-10  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/conffile.c: Set default TAPETYPE_FILEMARK to 1.
 
