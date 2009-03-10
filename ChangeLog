@@ -1,4 +1,8 @@
 2009-03-10  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amgtar.c, application-src/amstar.c: Validate YES/NO
+	  value for boolean properties.
+
+2009-03-10  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amstatus.pl: Print "failed: process terminated while" for
 				  dead run. Change "wait for" for "waiting for".
 

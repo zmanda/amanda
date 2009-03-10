@@ -246,16 +246,24 @@ main(
 		 break;
 	case 11: star_tardumps = stralloc(optarg);
 		 break;
-	case 12: if (optarg && strcasecmp(optarg, "YES") == 0)
+	case 12: if (optarg && strcasecmp(optarg, "NO") == 0)
+		     star_dle_tardumps = 0;
+		 else if (optarg && strcasecmp(optarg, "YES") == 0)
 		     star_dle_tardumps = 1;
+		 else if (strcasecmp(command, "selfcheck") == 0)
+		     printf(_("ERROR [%s: bad STAR-DLE-TARDUMP property value (%s)]\n"), get_pname(), optarg);
 		 break;
 	case 13: if (optarg && strcasecmp(optarg, "YES") != 0) {
 		     /* This option is required to be YES */
 		     /* star_onefilesystem = 0; */
 		 }
 		 break;
-	case 14: if (optarg && strcasecmp(optarg, "YES") != 0)
+	case 14: if (optarg && strcasecmp(optarg, "NO") == 0)
+		     star_sparse = 0;
+		 else if (optarg && strcasecmp(optarg, "YES") == 0)
 		     star_sparse = 1;
+		 else if (strcasecmp(command, "selfcheck") == 0)
+		     printf(_("ERROR [%s: bad SPARSE property value (%s)]\n"), get_pname(), optarg);
 		 break;
 	case 15: argument.calcsize = 1;
 		 break;

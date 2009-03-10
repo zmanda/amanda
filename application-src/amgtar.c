@@ -405,17 +405,33 @@ main(
 		 break;
 	case 11: gnutar_listdir = stralloc(optarg);
 		 break;
-	case 12: if (optarg && strcasecmp(optarg, "YES") != 0)
+	case 12: if (optarg && strcasecmp(optarg, "NO") == 0)
 		     gnutar_onefilesystem = 0;
+		 else if (optarg && strcasecmp(optarg, "YES") == 0)
+		     gnutar_onefilesystem = 1;
+		 else if (strcasecmp(command, "selfcheck") == 0)
+		     printf(_("ERROR [%s: bad ONE-FILE-SYSTEM property value (%s)]\n"), get_pname(), optarg);
 		 break;
-	case 13: if (optarg && strcasecmp(optarg, "YES") != 0)
+	case 13: if (optarg && strcasecmp(optarg, "NO") == 0)
 		     gnutar_sparse = 0;
+		 else if (optarg && strcasecmp(optarg, "YES") == 0)
+		     gnutar_sparse = 1;
+		 else if (strcasecmp(command, "selfcheck") == 0)
+		     printf(_("ERROR [%s: bad SPARSE property value (%s)]\n"), get_pname(), optarg);
 		 break;
-	case 14: if (optarg && strcasecmp(optarg, "YES") != 0)
+	case 14: if (optarg && strcasecmp(optarg, "NO") == 0)
 		     gnutar_atimepreserve = 0;
+		 else if (optarg && strcasecmp(optarg, "YES") == 0)
+		     gnutar_atimepreserve = 1;
+		 else if (strcasecmp(command, "selfcheck") == 0)
+		     printf(_("ERROR [%s: bad ATIME-PRESERVE property value (%s)]\n"), get_pname(), optarg);
 		 break;
-	case 15: if (optarg && strcasecmp(optarg, "YES") != 0)
+	case 15: if (optarg && strcasecmp(optarg, "NO") == 0)
 		     gnutar_checkdevice = 0;
+		 else if (optarg && strcasecmp(optarg, "YES") != 0)
+		     gnutar_checkdevice = 1;
+		 else if (strcasecmp(command, "selfcheck") == 0)
+		     printf(_("ERROR [%s: bad CHECK-DEVICE property value (%s)]\n"), get_pname(), optarg);
 		 break;
 	case 16: if (optarg)
 		     argument.dle.include_file =
