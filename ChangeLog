@@ -1,3 +1,6 @@
+2009-03-10  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/conffile.c: Set default TAPETYPE_FILEMARK to 1.
+
 2009-02-27  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/amgtar.c: Fix parsing of EXIT-HANDLING property.
 

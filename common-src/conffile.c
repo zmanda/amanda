@@ -2118,7 +2118,7 @@ init_tapetype_defaults(void)
     conf_init_size  (&tpcur.value[TAPETYPE_BLOCKSIZE]    , DISK_BLOCK_KB);
     conf_init_size  (&tpcur.value[TAPETYPE_READBLOCKSIZE], DISK_BLOCK_KB);
     conf_init_int64 (&tpcur.value[TAPETYPE_LENGTH]       , ((gint64)2000 * 1024));
-    conf_init_int64 (&tpcur.value[TAPETYPE_FILEMARK]     , (gint64)1000);
+    conf_init_int64 (&tpcur.value[TAPETYPE_FILEMARK]     , (gint64)1);
     conf_init_int   (&tpcur.value[TAPETYPE_SPEED]        , 200);
     conf_init_bool  (&tpcur.value[TAPETYPE_FILE_PAD]     , 1);
 }
