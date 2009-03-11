@@ -1,3 +1,7 @@
+2009-03-11  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/amfeatures.c: fix am_string_to_feature to fail correctly
+	  on a bad feature string
+
 2009-03-10  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/taper.c: return DONE if input file is partial.
 
