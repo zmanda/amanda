@@ -534,14 +534,18 @@ main(
     {
 	char *their_feature_string = NULL;
 
+	indexsrv_features = NULL;
+
 	line = vstrallocf("FEATURES %s", our_features_string);
 	if(exchange(line) == 0) {
 	    their_feature_string = stralloc(server_line+13);
 	    indexsrv_features = am_string_to_feature(their_feature_string);
+	    if (!indexsrv_features)
+		g_printf(_("Bad feature string from server: %s"), their_feature_string);
 	}
-	else {
+	if (!indexsrv_features)
 	    indexsrv_features = am_set_default_feature_set();
-        }
+
 	amfree(their_feature_string);
 	amfree(line);
     }

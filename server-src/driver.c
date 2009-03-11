@@ -2626,6 +2626,12 @@ read_schedule(
 	dp->up = (char *) sp;
 	if(dp->host->features == NULL) {
 	    dp->host->features = am_string_to_feature(features);
+	    if (!dp->host->features) {
+		log_add(L_WARNING,
+		    _("Invalid feature string from client '%s'"),
+		    features);
+		dp->host->features = am_set_default_feature_set();
+	    }
 	}
 	remove_disk(&waitq, dp);
 	if (dp->to_holdingdisk == HOLD_NEVER) {

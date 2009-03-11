@@ -238,6 +238,10 @@ main(
 	    }
 	    am_release_feature_set(their_features);
 	    their_features = am_string_to_feature(cmdargs->argv[a++]);
+	    if (!their_features) {
+		error(_("error [chunker PORT-WRITE: invalid feature string]"));
+		/*NOTREACHED*/
+	    }
 
 	    if(a >= cmdargs->argc) {
 		error(_("error [chunker PORT-WRITE: not enough args: diskname]"));

@@ -64,18 +64,24 @@ parse_g_options(
 
     while (tok != NULL) {
 	if(strncmp(tok,"features=", 9) == 0) {
+	    char *t = tok+9;
+	    char *u = strchr(t, ';');
+	    if (u)
+	       *u = '\0';
 	    if(g_options->features != NULL) {
 		dbprintf(_("multiple features option\n"));
 		if(verbose) {
 		    g_printf(_("ERROR [multiple features option]\n"));
 		}
 	    }
-	    if((g_options->features = am_string_to_feature(tok+9)) == NULL) {
-		dbprintf(_("bad features value \"%s\"\n"), tok+10);
+	    if((g_options->features = am_string_to_feature(t)) == NULL) {
+		dbprintf(_("bad features value \"%s\"\n"), t);
 		if(verbose) {
-		    g_printf(_("ERROR [bad features value \"%s\"]\n"), tok+10);
+		    g_printf(_("ERROR [bad features value \"%s\"]\n"), t);
 		}
 	    }
+	    if (u)
+	       *u = ';';
 	}
 	else if(strncmp(tok,"hostname=", 9) == 0) {
 	    if(g_options->hostname != NULL) {

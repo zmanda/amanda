@@ -315,14 +315,28 @@ sub make_tapetype {
     my $comment = "Created by amtapetype; compression "
 	. ($compression_enabled? "enabled" : "disabled");
 
-    print <<EOF;
-    define tapetype $opt_tapetype_name {
-	comment "$comment"
-	length $volume_size_estimate bytes
-	filemark $filemark_estimate bytes
-	speed $speed_estimate kps
-	blocksize $blocksize bytes
+    # round these parameters to the nearest kb, since the parameters' units
+    # are kb, not bytes
+    my $volume_size_estimate_kb = $volume_size_estimate/1024;
+    my $filemark_kb = $filemark_estimate/1024;
+
+    # and suggest using device_property for blocksize if it's not an even multiple
+    # of 1kb
+    my $blocksize_line;
+    if ($blocksize % 1024 == 0) {
+	$blocksize_line = "blocksize " . $blocksize/1024 . " kbytes";
+    } else {
+	$blocksize_line = "# add device_property \"BLOCK_SIZE\" \"$blocksize\" to the device";
     }
+
+    print <<EOF;
+define tapetype $opt_tapetype_name {
+    comment "$comment"
+    length $volume_size_estimate_kb kbytes
+    filemark $filemark_kb kbytes
+    speed $speed_estimate kps
+    $blocksize_line
+}
 EOF
 }
 
