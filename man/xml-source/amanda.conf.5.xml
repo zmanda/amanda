@@ -2163,16 +2163,13 @@ convert it to kbytes using the device density.</para>
   <term><emphasis remap='B'>length</emphasis> <emphasis remap='I'> int</emphasis></term>
   <listitem>
 <para>Default:
-<emphasis remap='I'>2000 kbytes</emphasis>. How much data will fit on a tape.</para>
+<emphasis remap='I'>2000 kbytes</emphasis>. How much data will fit on a tape, expressed in kbytes.</para>
 
 <para>Note that this value is only used by &A; to schedule which backups will be run.
 Once the backups start, &A; will continue to write to a tape until it gets an error, 
 regardless of what value is entered for <emphasis remap='B'>length</emphasis>
-(but see the section OUTPUT DRIVERS in the 
-<citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry> 
-manpage for exceptions).
+(but see <citerefentry><refentrytitle>amanda-devices</refentrytitle><manvolnum>7</manvolnum></citerefentry> for exceptions).
  </para>
-<para>The default unit is bytes if it is not specified.</para>
   </listitem>
   </varlistentry>
 
@@ -2181,9 +2178,7 @@ manpage for exceptions).
 <listitem>
 <para>Default:
 <emphasis remap='I'>32 kbytes</emphasis>.
-How much data will be written in each tape record.  This is equivalent to the <emphasis remap="I">BLOCK_SIZE</emphasis> device property.
-</para>
-<para>The default unit is Kbytes if it is not specified.</para>
+How much data will be written in each tape record, expressed in kbytes.  This is similar to the <emphasis remap="I">BLOCK_SIZE</emphasis> device property, but if the blocksize is not a multiple of 1024 bytes, then this parameter cannot be used to specify it, and the property must be used instead.</para>
   </listitem>
   </varlistentry>
 <varlistentry>

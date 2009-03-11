@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 3;
+use Test::More tests => 4;
 
 use lib "@amperldir@";
 use Installcheck::Run qw(run run_get run_err vtape_dir);
@@ -41,5 +41,9 @@ $testconf->add_device("smallvtape", [
 $testconf->write();
 
 like(run_get('amtapetype', 'TESTCONF', 'smallvtape'),
-    qr/define tapetype unknown-tapetype/,
+    qr/define tapetype unknown-tapetype.*blocksize 32 kbytes/s,
     "amtapetype runs successfully on a small vtape");
+
+like(run_get('amtapetype', 'TESTCONF', '-b', '33000', 'smallvtape'),
+    qr/add device_property/,
+    "with a non-kilobyte block size, directs user to add a device_property");

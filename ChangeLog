@@ -1,4 +1,10 @@
 2009-03-11  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/amtapetype.pl: do not produce broken 'bytes' units
+	* installcheck/amtapetype.pl: test changes
+	* man/xml-source/amanda.conf.5.xml: tapetype:length is not in bytes!
+	* common-src/conffile.c: fix default for tapetype:length
+
+2009-03-11  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/amfeatures.c: improve error handling in
 	  am_string_to_feature, return NULL on error
 	* amandad-src/amandad_util.c recover-src/amrecover.c
