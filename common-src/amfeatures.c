@@ -433,6 +433,9 @@ am_string_to_feature(
 	    } else if (ch2 >= 'A' && ch2 <= 'F') {
 		ch2 -= 'A';
 		ch2 += 10;
+	    } else if (ch2 == '\0') {
+		g_warning("odd number of digits in amfeature string; truncating");
+		break;
 	    } else {
 		goto bad;
 	    }
@@ -440,8 +443,11 @@ am_string_to_feature(
 	}
     }
     return f;
+
 bad:
-    error(_("Bad feature string '%s'"), orig);
+    g_warning("Bad feature string '%s'", orig);
+    am_release_feature_set(f);
+    return NULL;
 }
 
 #if defined(TEST)

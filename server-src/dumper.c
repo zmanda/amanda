@@ -1866,6 +1866,9 @@ bad_nak:
 		char ch;
 		*p++ = '\0';
 		if(strncmp_const_skip(tok, "features=", tok, ch) == 0) {
+		    char *u = strchr(tok, ';');
+		    if (u)
+		       *u = '\0';
 		    am_release_feature_set(their_features);
 		    if((their_features = am_string_to_feature(tok)) == NULL) {
 			errstr = newvstrallocf(errstr,
@@ -1873,6 +1876,8 @@ bad_nak:
 					      tok);
 			goto parse_error;
 		    }
+		    if (u)
+		       *u = ';';
 		}
 		tok = p;
 	    }

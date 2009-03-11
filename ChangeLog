@@ -1,3 +1,11 @@
+2009-03-11  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/amfeatures.c: improve error handling in
+	  am_string_to_feature, return NULL on error
+	* amandad-src/amandad_util.c recover-src/amrecover.c
+	  server-src/amcheck.c server-src/amindexd.c server-src/chunker.c
+	  server-src/driver.c server-src/dumper.c server-src/planner.c: always
+	  terminate the string passed to am_string_to_feature
+
 2009-03-10  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/taper.c: return DONE if input file is partial.
 

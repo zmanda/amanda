@@ -1951,13 +1951,20 @@ handle_result(
 
 	    t = strstr(line, "features=");
 	    if(t != NULL && (g_ascii_isspace((int)t[-1]) || t[-1] == ';')) {
+		char *u = strchr(t, ';');
+		if (u)
+		   *u = '\0';
 		t += SIZEOF("features=")-1;
 		am_release_feature_set(hostp->features);
 		if((hostp->features = am_string_to_feature(t)) == NULL) {
-		    g_fprintf(outf, _("ERROR: %s: bad features value: %s\n"),
-			    hostp->hostname, line);
+		    g_fprintf(outf, _("ERROR: %s: bad features value: '%s'\n"),
+			    hostp->hostname, t);
 		    g_fprintf(outf, _("The amfeature in the reply packet is invalid\n"));
+		    remote_errors++;
+		    hostp->up = HOST_DONE;
 		}
+		if (u)
+		   *u = ';';
 	    }
 
 	    continue;
