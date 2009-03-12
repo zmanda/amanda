@@ -70,6 +70,7 @@ sub new {
     my $infofile = "$CONFIG_DIR/TESTCONF/curinfo";
     my $logdir = "$CONFIG_DIR/TESTCONF/log";
     my $indexdir = "$CONFIG_DIR/TESTCONF/index";
+    my $org = "DailySet1";
 
     my $self = {
 	'infofile' => $infofile,
@@ -86,6 +87,7 @@ sub new {
 	    'infofile' => "\"$infofile\"",
 	    'logdir' => "\"$logdir\"",
 	    'indexdir' => "\"$indexdir\"",
+	    'org' => "\"$org\"",
 
 	    # (this is actually added while writing the config file, if not
 	    # overridden by the caller)

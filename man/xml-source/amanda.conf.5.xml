@@ -1029,16 +1029,17 @@ is the same as the amrecover_changer setting.</para>
   <varlistentry>
   <term><emphasis remap='B'>columnspec</emphasis> <emphasis remap='I'> string</emphasis></term>
   <listitem>
+<para> default: "HostName=0:12:12,Disk=1:11:11,Level=1:1:1,OrigKB=1:-7:0,OutKB=1:-7:0,Compress=1:-6:1,DumpTime=1:-7:7,Dumprate=1:-6:1,TapeTime=1:-6:6,TapeRate=1:-6:1"</para>
 <para>Defines the width of columns <emphasis remap='B'>amreport</emphasis>
 should use.
 <emphasis remap='I'>String</emphasis>
 is a comma (',') separated list of triples. Each triple consists
 of three parts which are separated by a equal sign ('=') and a colon (':') (see the example).
-These three parts specify:</para>
-  
+These four parts specify:
+
   <orderedlist>
   <listitem>
-      <para>the name of the column, which may be:</para>
+      <para>the name of the column, which may be:
 
 <programlisting>
 	Compress (compression ratio)
@@ -1051,28 +1052,31 @@ These three parts specify:</para>
 	OutKB (output image size in KBytes)
 	TapeRate (tape writing rate in KBytes/sec)
 	TapeTime (total tape time in hours:minutes)
-</programlisting>
+</programlisting></para>
 
   </listitem>
 
   <listitem>
-<para>the amount of space to display before the column (used to get whitespace between columns).</para><para/>
+<para>the amount of space to display before the column (used to get whitespace between columns).</para>
   </listitem>
   <listitem>
 <para>the width of the column itself.
 If set to a negative value, the width will be calculated on demand to fit the largest entry in
 this column.</para>
   </listitem>
-  </orderedlist>
+  <listitem>
+<para>the precision of the column, number of digit after the decimal point for number.</para>
+  </listitem>
+  </orderedlist></para>
 
 <para>Here is an example:
 <programlisting>
-columnspec &quot;Disk=1:18,HostName=0:10,OutKB=1:7&quot;
+columnspec &quot;Disk=1:18,HostName=0:10,OrigKB=::2,OutKB=1:7&quot;
 </programlisting></para>
 <para>
 The above will display the disk information in 18 characters
 and put one space before it. The hostname column will be 10 characters wide with
-no space to the left. The output KBytes column is seven characters wide
+no space to the left. The Original KBytes print 2 decimal digit. The output KBytes column is seven characters wide
 with one space before it.</para>
   </listitem>
   </varlistentry>

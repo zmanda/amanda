@@ -632,7 +632,7 @@ $testconf = Installcheck::Config->new();
 $testconf->add_param('tapetype', 'TEST-TAPE'); # unquoted (Installcheck::Config uses quoted)
 
 # strings can optionally be quoted
-$testconf->add_param('org', '"MyOrg"');
+$testconf->add_param('dumporder', '"STSTST"');
 
 # enumerations (e.g., taperalgo) must not be quoted; implicitly tested above
 

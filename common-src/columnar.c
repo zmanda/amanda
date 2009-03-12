@@ -36,13 +36,13 @@ ColumnInfo ColumnData[] = {
     { "HostName",   0, 12, 12, 0, "%-*.*s", "HOSTNAME" },
     { "Disk",       1, 11, 11, 0, "%-*.*s", "DISK" },
     { "Level",      1, 1,  1,  0, "%*.*d",  "L" },
-    { "OrigKB",     1, 7,  0,  0, "%*.*lf", "ORIG-KB" },
-    { "OutKB",      1, 7,  0,  0, "%*.*lf", "OUT-KB" },
-    { "Compress",   1, 6,  1,  0, "%*.*lf", "COMP%" },
-    { "DumpTime",   1, 7,  7,  0, "%*.*s",  "MMM:SS" },
-    { "DumpRate",   1, 6,  1,  0, "%*.*lf", "KB/s" },
-    { "TapeTime",   1, 6,  6,  0, "%*.*s",  "MMM:SS" },
-    { "TapeRate",   1, 6,  1,  0, "%*.*lf", "KB/s" },
+    { "OrigKB",     1, 7,  0,  1, "%*.*lf", "ORIG-KB" },
+    { "OutKB",      1, 7,  0,  1, "%*.*lf", "OUT-KB" },
+    { "Compress",   1, 6,  1,  1, "%*.*lf", "COMP%" },
+    { "DumpTime",   1, 7,  7,  1, "%*.*s",  "MMM:SS" },
+    { "DumpRate",   1, 6,  1,  1, "%*.*lf", "KB/s" },
+    { "TapeTime",   1, 6,  6,  1, "%*.*s",  "MMM:SS" },
+    { "TapeRate",   1, 6,  1,  1, "%*.*lf", "KB/s" },
     { NULL,         0, 0,  0,  0, NULL,     NULL }
 };
 
@@ -97,7 +97,8 @@ SetColumnDataFromString(
      *   -prefix before the column
      *   -the width of the column
      *       if set to -1 it will be recalculated
-     *	 to the maximum length of a line to print.
+     *       to the maximum length of a line to print.
+     *   -the precision (number of digit after the dot)
      * Example:
      * 	"Disk=1:17,HostName=1:10,OutKB=1:7"
      * or
@@ -111,7 +112,7 @@ SetColumnDataFromString(
      */
 
     while (s && *s) {
-	int Space, Width;
+	int Space, Width, Precision;
 	int cn;
     	char *eon= strchr(s, '=');
 
@@ -125,25 +126,46 @@ SetColumnDataFromString(
 	    *errstr = stralloc2(_("invalid column name: "), s);
 	    return -1;
 	}
-	if (sscanf(eon+1, "%d:%d", &Space, &Width) != 2) {
+	if (sscanf(eon+1, "%d:%d:%d", &Space, &Width, &Precision) == 3) {
+	    ColumnData[cn].PrefixSpace = Space;
+	    ColumnData[cn].Width = Width;
+	    ColumnData[cn].Precision = Precision;
+	    if (Width > 0)
+		ColumnData[cn].MaxWidth = 0;
+	} else if (sscanf(eon+1, ":%d:%d", &Width, &Precision) == 2) {
+	    ColumnData[cn].Width = Width;
+	    ColumnData[cn].Precision = Precision;
+	    if (Width > 0)
+		ColumnData[cn].MaxWidth = 0;
+	} else if (sscanf(eon+1, "%d::%d", &Space, &Precision) == 2) {
+	    ColumnData[cn].PrefixSpace = Space;
+	    ColumnData[cn].Precision = Precision;
+	} else if (sscanf(eon+1, "%d:%d", &Space, &Width) == 2) {
+	    ColumnData[cn].PrefixSpace = Space;
+	    ColumnData[cn].Width = Width;
+	} else if (sscanf(eon+1, "::%d", &Precision) == 1) {
+	    ColumnData[cn].Precision = Precision;
+	} else if (sscanf(eon+1, ":%d", &Width) == 1) {
+	    ColumnData[cn].Width = Width;
+	    if (Width > 0)
+		ColumnData[cn].MaxWidth = 0;
+	} else if (sscanf(eon+1, "%d", &Space) == 1) {
+	    ColumnData[cn].PrefixSpace = Space;
+	} else {
 	    *errstr = stralloc2(_("invalid format: "), eon + 1);
 	    return -1;
 	}
-	ColumnData[cn].Width= Width;
-	ColumnData[cn].PrefixSpace = Space;
-	if (LastChar(ColumnData[cn].Format) == 's') {
-	    if (Width < 0)
-		ColumnData[cn].MaxWidth= 1;
-	    else
-		if (Width > ColumnData[cn].Precision)
-		    ColumnData[cn].Precision= Width;
-	}
-	else {
-	    if (Width < 0) {
-		ColumnData[cn].MaxWidth= 1;
+
+	if (ColumnData[cn].Width < 0) {
+	    ColumnData[cn].MaxWidth = 1;
+	    ColumnData[cn].Width = abs(ColumnData[cn].MaxWidth);
+	} else {
+	    if (LastChar(ColumnData[cn].Format) == 's') {
+		if (ColumnData[cn].Width > ColumnData[cn].Precision)
+		    ColumnData[cn].Precision = ColumnData[cn].Width;
+	    } else if (ColumnData[cn].Width < ColumnData[cn].Precision) {
+		ColumnData[cn].Precision = ColumnData[cn].Width;
 	    }
-	    else if (Width < ColumnData[cn].Precision)
-		ColumnData[cn].Precision = Width;
 	}
 	s= strchr(eon+1, ',');
 	if (s != NULL)
