@@ -712,7 +712,7 @@ setup_estimate(
 
     if(get_info(dp->host->hostname, dp->name, &info)) {
 	/* no record for this disk, make a note of it */
-	log_add(L_INFO, _("Adding new disk %s:%s."), dp->host->hostname, dp->name);
+	log_add(L_INFO, _("Adding new disk %s:%s."), dp->host->hostname, qname);
     }
 
     /* setup working data struct for disk */
