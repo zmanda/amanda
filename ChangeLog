@@ -1,4 +1,7 @@
 2009-03-12  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/amreport.pl: New file.
+
+2009-03-12  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/columnar.c: New defaults, allow precision to be set.
 	* man/xml-source/amanda.conf.5.xml: Document new columnspec format.
 	* installcheck/Installcheck/Config.pm: Always set org to "DailySet1".
