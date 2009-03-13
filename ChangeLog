@@ -1,4 +1,8 @@
 2009-03-13  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amstatus.pl: dump in "writing to tape" mode should also
+	                          be included in the "dumped" summary.
+
+2009-03-13  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/find.c: Fix listing of partial dump in holding disk.
 
 2009-03-12  Jean-Louis Martineau <martineau@zmanda.com>
