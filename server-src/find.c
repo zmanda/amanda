@@ -248,7 +248,10 @@ search_holding_disk(
 	    new_output_find->label=stralloc(holding_file);
 	    new_output_find->partnum=stralloc("--");
 	    new_output_find->filenum=0;
-	    new_output_find->status=stralloc("OK");
+	    if (file.is_partial)
+		new_output_find->status=stralloc("PARTIAL");
+	    else
+		new_output_find->status=stralloc("OK");
 	    *output_find=new_output_find;
 	}
 	dumpfile_free_data(&file);
