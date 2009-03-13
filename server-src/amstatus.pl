@@ -948,8 +948,8 @@ foreach $host (sort @hosts) {
 							if( defined $starttime ) {
 								print " (", &showtime($taper_time{$hostpart}), ")";
 							}
-							print ", ", $error{$hostpart} if defined($error{$hostpart} &&
-																	   $error{$hostpart} ne "");
+							print ", ", $error{$hostpart} if (defined($error{$hostpart}) &&
+																	    $error{$hostpart} ne "");
 							print "\n";
 						}
 						$tapartition++;
@@ -959,6 +959,15 @@ foreach $host (sort @hosts) {
 						}
 						else {
 							$taesize += $size{$hostpart};
+						}
+						if (defined $dump_finished{$hostpart} && $dump_finished{$hostpart} == 1) {
+							$dpartition++;
+							$dsize += $size{$hostpart};
+							if(defined $esize{$hostpart} && $esize{$hostpart} > 1) {
+								$desize += $esize{$hostpart};
+							} else {
+								$desize += $size{$hostpart};
+							}
 						}
 					}
 					elsif($taper_finished{$hostpart} < 0) {
@@ -1014,6 +1023,15 @@ foreach $host (sort @hosts) {
 							$wfpartition++;
 							$wfsize += $xsize;
 						}
+						if (defined $dump_finished{$hostpart} && $dump_finished{$hostpart} == 1) {
+							$dpartition++;
+							$dsize += $size{$hostpart};
+							if(defined $esize{$hostpart} && $esize{$hostpart} > 1) {
+								$desize += $esize{$hostpart};
+							} else {
+								$desize += $size{$hostpart};
+							}
+						}
 					}
 					elsif($taper_finished{$hostpart} == 1) {
 						if( defined $opt_finished ) {
@@ -1035,16 +1053,21 @@ foreach $host (sort @hosts) {
 							}
 							print "\n";
 						}
-						$dpartition++;
+						if (defined $dump_finished{$hostpart} && $dump_finished{$hostpart} == 1) {
+							$dpartition++;
+							$dsize += $size{$hostpart};
+							if(defined $esize{$hostpart} && $esize{$hostpart} > 1) {
+								$desize += $esize{$hostpart};
+							} else {
+								$desize += $size{$hostpart};
+							}
+						}
 						$tpartition++;
-						$dsize += $size{$hostpart};
 						$tsize += $size{$hostpart};
 						if(defined $esize{$hostpart} && $esize{$hostpart} > 1) {
-							$desize += $esize{$hostpart};
 							$tesize += $esize{$hostpart};
 						}
 						else {
-							$desize += $size{$hostpart};
 							$tesize += $size{$hostpart};
 						}
 					}
