@@ -428,7 +428,7 @@ main(
 		 break;
 	case 15: if (optarg && strcasecmp(optarg, "NO") == 0)
 		     gnutar_checkdevice = 0;
-		 else if (optarg && strcasecmp(optarg, "YES") != 0)
+		 else if (optarg && strcasecmp(optarg, "YES") == 0)
 		     gnutar_checkdevice = 1;
 		 else if (strcasecmp(command, "selfcheck") == 0)
 		     printf(_("ERROR [%s: bad CHECK-DEVICE property value (%s)]\n"), get_pname(), optarg);

@@ -1,3 +1,7 @@
+2009-03-17  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amgtar.c: fix typo causing check-device to be
+	  interpreted incorrectly
+
 2009-03-17  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Changer.pm: introduce info_key and info_setup to ease
 	  implementation of the info() method
