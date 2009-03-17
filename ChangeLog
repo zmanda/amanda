@@ -1,3 +1,6 @@
+2009-03-17  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amlabel.c: give correct exit status on failure
+
 2009-03-13  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amstatus.pl: dump in "writing to tape" mode should also
 	                          be included in the "dumped" summary.

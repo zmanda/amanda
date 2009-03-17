@@ -281,6 +281,7 @@ main(
         g_printf(_("Success!\n"));
     } else {
 	g_printf(_("\ntape not labeled\n"));
+	exit(EXIT_FAILURE);
     }
     
     g_object_unref(device);
