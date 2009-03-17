@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 29;
+use Test::More tests => 30;
 use File::Path;
 use strict;
 
@@ -90,15 +90,17 @@ label_vtape(3,4,"mytape");
     );
 
     $get_info = sub {
-        $chg->info(info_cb => $check_info, info => [ 'num_slots' ]);
+        $chg->info(info_cb => $check_info, info => [ 'num_slots', 'vendor_string' ]);
     };
 
     $check_info = sub {
-        my $err = shift;
-        my %results = @_;
+        my ($err, %results) = @_;
         die($err) if defined($err);
 
-        is($results{'num_slots'}, 4, "info() returns the correct num_slots");
+        is($results{'num_slots'}, 4,
+	    "info() returns the correct num_slots");
+        is($results{'vendor_string'}, '{chg-disk,chg-disk,chg-disk}',
+	    "info() returns the correct vendor string");
 
 	$do_load_current->();
     };

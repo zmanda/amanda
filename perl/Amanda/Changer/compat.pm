@@ -184,35 +184,31 @@ sub _manual_scan {
     $self->_run_tpchanger($run_success_cb, $run_fail_cb, "-slot", "current");
 }
 
-sub info {
+sub info_setup {
     my $self = shift;
     my %params = @_;
-    my %results;
 
-    die "no info_cb supplied" unless (exists $params{'info_cb'});
-    die "no info supplied" unless (exists $params{'info'});
-
-    # make sure the info is loaded, and re-call info() if we have to wait
     if (!defined($self->{'nslots'}) && grep(/^num_slots$/, @{$params{'info'}})) {
 	$self->_get_info(
 	    sub {
-                my ($err) = @_;
-		$self->info(%params);
+		$params{'finished_cb'}->();
 	    },
 	    sub {
-		my ($msg) = @_;
-		$params{'info_cb'}->($msg);
+		my ($err) = @_;
+		$params{'finished_cb'}->($err);
 	    });
-	return;
+    } else {
+	$params{'finished_cb'}->();
     }
+}
 
-    # ok, info is loaded, so call back with the results
-    for my $inf (@{$params{'info'}}) {
-        if ($inf eq 'num_slots') {
-            $results{$inf} = $self->{'nslots'};
-        } else {
-            warn "Ignoring request for info key '$inf'";
-        }
+sub info_key {
+    my $self = shift;
+    my ($key, %params) = @_;
+    my %results;
+
+    if ($key eq 'num_slots') {
+	$results{$key} = $self->{'nslots'};
     }
 
     Amanda::MainLoop::call_later($params{'info_cb'}, undef, %results);

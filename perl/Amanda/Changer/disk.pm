@@ -95,21 +95,16 @@ sub load {
     }
 }
 
-sub info {
+sub info_key {
     my $self = shift;
-    my %params = @_;
+    my ($key, %params) = @_;
     my %results;
 
-    die "no info_cb supplied" unless (exists $params{'info_cb'});
-    die "no info supplied" unless (exists $params{'info'});
-
-    for my $inf (@{$params{'info'}}) {
-        if ($inf eq 'num_slots') {
-            my @slots = $self->_all_slots();
-            $results{$inf} = scalar @slots;
-        } else {
-            warn "Ignoring request for info key '$inf'";
-        }
+    if ($key eq 'num_slots') {
+	my @slots = $self->_all_slots();
+	$results{$key} = scalar @slots;
+    } elsif ($key eq 'vendor_string') {
+	$results{$key} = 'chg-disk'; # mostly just for testing
     }
 
     Amanda::MainLoop::call_later($params{'info_cb'}, undef, %results);

@@ -1,3 +1,12 @@
+2009-03-17  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Changer.pm: introduce info_key and info_setup to ease
+	  implementation of the info() method
+	* perl/Amanda/Changer/compat.pm perl/Amanda/Changer/disk.pm
+	  perl/Amanda/Changer/null.pm perl/Amanda/Changer/rait.pm
+	  perl/Amanda/Changer/single.pm: use them
+	* installcheck/Amanda_Changer.pl installcheck/Amanda_Changer_rait.pl:
+	  test the results
+
 2009-03-17  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amlabel.c: give correct exit status on failure
 

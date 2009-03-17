@@ -139,92 +139,68 @@ sub load {
 
 }
 
-sub info {
+sub info_key {
     my $self = shift;
-    my %params = @_;
-    my $num_waiting = 1; # number of outstanding calculations waiting
-    my %outer_results;
-    my $outer_err;
+    my ($key, %params) = @_;
 
-    die "no info_cb supplied" unless (exists $params{'info_cb'});
-    die "no info supplied" unless (exists $params{'info'});
-
-    # called when each info key is done; when they are all done, this
-    # calls our own info_cb
-
-    my $maybe_finished = sub {
-	if (--$num_waiting == 0) {
-	    if (defined $outer_err) {
-		$params{'info_cb'}->($outer_err, undef);
-	    } else {
-		$params{'info_cb'}->(undef, %outer_results);
+    if ($key eq 'num_slots') {
+	my $all_kids_done_cb = sub {
+	    my ($err, $per_kid_results) = @_;
+	    if ($err) {
+		Amanda::MainLoop::call_later($params{'info_cb'}, $err);
+		return;
 	    }
-	}
-    };
 
-    for my $inf (@{$params{'info'}}) {
-        if ($inf eq 'num_slots') {
-	    my $all_kids_done_cb = sub {
-		my ($err, $per_kid_results) = @_;
-		if ($err) {
-		    $outer_err = $err;
-		    $maybe_finished->();
-		    return;
+	    # aggregate the results: the consensus if the children agree,
+	    # otherwise -1
+	    my $num_slots;
+	    for (@$per_kid_results) {
+		my %kid_info = @$_;
+		next unless exists($kid_info{'num_slots'});
+		my $kid_num_slots = $kid_info{'num_slots'};
+		if (defined $num_slots and $num_slots != $kid_num_slots) {
+		    $num_slots = -1;
+		} else {
+		    $num_slots = $kid_num_slots;
 		}
+	    }
 
-		# aggregate the results: the consensus if the children agree,
-		# otherwise -1
-		my $num_slots;
-		for (@$per_kid_results) {
-		    my %kid_info = @$_;
-		    next unless exists($kid_info{'num_slots'});
-		    my $kid_num_slots = $kid_info{'num_slots'};
-		    if (defined $num_slots and $num_slots != $kid_num_slots) {
-			$num_slots = -1;
-		    } else {
-			$num_slots = $kid_num_slots;
-		    }
-		}
-		$outer_results{'num_slots'} = $num_slots;
+	    Amanda::MainLoop::call_later($params{'info_cb'}, undef,
+		num_slots => $num_slots);
+	};
 
-		# and, if this is the only info item, we're done.
-		$maybe_finished->();
-	    };
+	$self->_for_each_child(sub {
+	    my ($kid_chg, $kid_cb) = @_;
+	    $kid_chg->info(info => [ 'num_slots' ], info_cb => $kid_cb);
+	}, undef, $all_kids_done_cb, undef);
+    } elsif ($key eq "vendor_string") {
+	my $all_kids_done_cb = sub {
+	    my ($err, $per_kid_results) = @_;
+	    if ($err) {
+		Amanda::MainLoop::call_later($params{'info_cb'}, $err);
+		return;
+	    }
 
-	    $self->_for_each_child(sub {
-		my ($kid_chg, $kid_cb) = @_;
-		$kid_chg->info(info => [ 'num_slots' ], info_cb => $kid_cb);
-	    }, undef, $all_kids_done_cb, undef);
+	    my @kid_vendors =
+		grep { defined($_) }
+		map { my %r = @$_; $r{'vendor_string'} }
+		@$per_kid_results;
+	    my $vendor_string;
+	    if (@kid_vendors) {
+		$vendor_string = collapse_braced_alternates([@kid_vendors]);
+		Amanda::MainLoop::call_later($params{'info_cb'}, undef,
+		    vendor_string => $vendor_string);
+	    } else {
+		Amanda::MainLoop::call_later($params{'info_cb'}, undef);
+	    }
 
-	    $num_waiting++;
-        } elsif ($inf eq "vendor_string") {
-	    my $all_kids_done_cb = sub {
-		my ($err, $per_kid_results) = @_;
-		if ($err) {
-		    $outer_err = $err;
-		    $maybe_finished->();
-		    return;
-		}
+	};
 
-		my @kid_vendors = grep { defined($_) } map { $_->[0] } @$per_kid_results;
-		$outer_results{'vendor_string'} = collapse_braced_alternates([@kid_vendors]);
-
-		# and, if this is the only info item, we're done.
-		$maybe_finished->();
-	    };
-
-	    $self->_for_each_child(sub {
-		my ($kid_chg, $kid_cb) = @_;
-		$kid_chg->info(info => [ 'vendor_string' ], info_cb => $kid_cb);
-	    }, undef, $all_kids_done_cb, undef);
-
-	    $num_waiting++;
-        } else {
-            warn "Ignoring request for info key '$inf'";
-        }
+	$self->_for_each_child(sub {
+	    my ($kid_chg, $kid_cb) = @_;
+	    $kid_chg->info(info => [ 'vendor_string' ], info_cb => $kid_cb);
+	}, undef, $all_kids_done_cb, undef);
     }
-
-    $maybe_finished->();
 }
 
 # reset, clean, etc. are all *very* similar to one another, so we create them

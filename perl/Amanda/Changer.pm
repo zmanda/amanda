@@ -150,8 +150,7 @@ for all of the requested keys that are supported by the changer.  The preamble
 to such a callback is usually
 
   info_cb => sub {
-    my $error = shift;
-    my %results = @_;
+    my ($error, %results) = @_;
     # ..
   }
 
@@ -161,10 +160,10 @@ Supported keys are:
 
 =item num_slots
 
-The total number of slots in the changer device.  If this key is not
-present, then the device cannot determine its slot count (for example,
-an archival device that names slots by timestamp could potentially run
-until the heat-death of the universe).
+The total number of slots in the changer device.  If this key is not present or
+-1, then the device cannot determine its slot count (for example, an archival
+device that names slots by timestamp could potentially run until the heat-death
+of the universe).
 
 =item vendor_string
 
@@ -262,6 +261,21 @@ This is how Amanda indicates to the changer that the volume in the device has
 been (re-)labeled. Changers can keep a database of volume labels by slot or by
 barcode, or just ignore this function and call $cb immediately. Note that the
 reservation must still be held when this function is called.
+
+=head1 SUBCLASS HELPERS
+
+Implementing the C<info> method can be tricky, because it can potentially request
+a number of keys that require asynchronous access.  The C<info> implementation in
+this class may make the process a bit easier.
+
+First, if the method C<info_setup> is defined, C<info> calls it, passing it a
+C<finished_cb> and the list of desired keys, C<info>.  This method is useful to
+gather information that is useful for several info keys.
+
+Next, for each requested key, C<info> calls C<< $self->info_key($key, %params)
+>>, including a regular C<info_cb> callback.  The C<info> method will wait for
+all C<info_key> invocations to finish, then collect the results or errors that
+occur.
 
 =head1 SEE ALSO
 
@@ -480,16 +494,6 @@ sub reset {
     }
 }
 
-sub info {
-    my $self = shift;
-    my %params = @_;
-
-    my $class = ref($self);
-    if (exists $params{'info_cb'}) {
-	$params{'info_cb'}->("$class does not support info()");
-    }
-}
-
 sub clean {
     my $self = shift;
     my %params = @_;
@@ -548,6 +552,96 @@ sub move {
     if (exists $params{'finished_cb'}) {
 	$params{'finished_cb'}->("$class does not support move()");
     }
+}
+
+# info tries to help subclasses
+sub info {
+    my $self = shift;
+    my %params = @_;
+
+    if (!$self->can('info_key')) {
+	my $class = ref($self);
+	$params{'info_cb'}->("$class does not support info()");
+	return;
+    }
+
+    my ($do_setup, $start_keys, $all_done);
+
+    $do_setup = sub {
+	if ($self->can('info_setup')) {
+	    $self->info_setup(info => $params{'info'},
+			      finished_cb => sub {
+		my ($err) = @_;
+		if ($err) {
+		    $params{'info_cb'}->($err);
+		} else {
+		    $start_keys->();
+		}
+	    });
+	} else {
+	    $start_keys->();
+	}
+    };
+
+    $start_keys = sub {
+	my $remaining_keys = 1;
+	my %key_results;
+
+	my $maybe_done = sub {
+	    return if (--$remaining_keys);
+	    $all_done->(%key_results);
+	};
+
+	for my $key (@{$params{'info'}}) {
+	    $remaining_keys++;
+	    $self->info_key($key, info_cb => sub {
+		$key_results{$key} = [ @_ ];
+		$maybe_done->();
+	    });
+	}
+
+	# we started with $remaining_keys = 1, so decrement it now
+	$maybe_done->();
+    };
+
+    $all_done = sub {
+	my %key_results = @_;
+
+	# if there are *any* errors, handle them
+	my @annotated_errs =
+	    map { [ sprintf("While finding '%s'", $_), $key_results{$_}->[0] ] }
+	    grep { defined($key_results{$_}->[0]) }
+	    keys %key_results;
+
+	if (@annotated_errs) {
+	    my $err;
+	    if (@annotated_errs > 1) {
+		$err = join("; ",
+		    map { sprintf("%s: %s", @$_) }
+		    @annotated_errs);
+	    } else {
+		$err = $annotated_errs[0]->[1];
+	    }
+
+	    $params{'info_cb'}->($err);
+	    return;
+	}
+
+	# no errors, so combine the results and return them
+	my %info;
+	while (my ($key, $result) = each(%key_results)) {
+	    my ($err, %key_info) = @$result;
+	    if (exists $key_info{$key}) {
+		$info{$key} = $key_info{$key};
+	    } else {
+		warn("No value available for $key");
+	    }
+	}
+
+	$params{'info_cb'}->(undef, %info);
+    };
+
+    $do_setup->();
 }
 
 package Amanda::Changer::Reservation;

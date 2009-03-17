@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 35;
+use Test::More tests => 37;
 use File::Path;
 use strict;
 
@@ -118,6 +118,22 @@ sub load {
     } else {
 	die "No label or slot parameter given";
     }
+}
+
+sub info_key {
+    my $self = shift;
+    my ($key, %params) = @_;
+    my %results;
+
+    if ($key eq 'num_slots') {
+	$results{$key} = 13;
+    } elsif ($key eq 'mkerror1') {
+	Amanda::MainLoop::call_later($params{'info_cb'}, "err1");
+    } elsif ($key eq 'mkerror2') {
+	Amanda::MainLoop::call_later($params{'info_cb'}, "err2");
+    }
+
+    Amanda::MainLoop::call_later($params{'info_cb'}, undef, %results);
 }
 
 sub reset {
@@ -379,6 +395,39 @@ my $chg = Amanda::Changer->new("mychanger");
     };
 
     Amanda::MainLoop::call_later($do_reset);
+    Amanda::MainLoop::run();
+}
+
+# test info
+{
+    my ($do_info, $check_info, $do_info_err, $check_info_err);
+
+    $do_info = sub {
+        $chg->info(info_cb => $check_info,
+	    info => [ 'num_slots' ]);
+    };
+
+    $check_info = sub {
+	my ($err, %results) = @_;
+	die($err) if $err;
+	is_deeply(\%results, { 'num_slots' => 13 },
+	    "info() works");
+	$do_info_err->();
+    };
+
+    $do_info_err = sub {
+        $chg->info(info_cb => $check_info_err,
+	    info => [ 'mkerror1', 'mkerror2' ]);
+    };
+
+    $check_info_err = sub {
+	my ($err, %results) = @_;
+	# TODO: should return both errors..
+	is($err, "err2", "info errors are handled correctly");
+	Amanda::MainLoop::quit();
+    };
+
+    Amanda::MainLoop::call_later($do_info);
     Amanda::MainLoop::run();
 }
 
