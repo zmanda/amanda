@@ -30,6 +30,7 @@ use File::Path;
 use IO::Dir;
 use IO::File;
 use IPC::Open3;
+use POSIX qw( ceil );
 use Sys::Hostname;
 use Symbol;
 use Amanda::Constants;
@@ -146,15 +147,26 @@ sub _ok_passfile_perms {
 sub _run_psql_command {
     my ($self, $cmd) = @_;
 
-   my @args = ();
-   push @args, "-h", $self->{'props'}->{'PG-HOST'} if ($self->{'props'}->{'PG-HOST'});
-   push @args, "-p", $self->{'props'}->{'PG-PORT'} if ($self->{'props'}->{'PG-PORT'});
-   push @args, "-U", $self->{'props'}->{'PG-USER'} if ($self->{'props'}->{'PG-USER'});
+    # n.b. deprecated, passfile recommended for better security
+    my $orig_pgpassword = $ENV{'PGPASSWORD'};
+   $ENV{'PGPASSWORD'} = $self->{'props'}->{'PG-PASSWORD'} if $self->{'props'}->{'PG-PASSWORD'};
+    # n.b. supported in 8.1+
+    my $orig_pgpassfile = $ENV{'PGPASSFILE'};
+    $ENV{'PGPASSFILE'} = $self->{'props'}->{'PG-PASSFILE'} if $self->{'props'}->{'PG-PASSFILE'};
 
-    my $status = system($self->{'props'}->{'PSQL-PATH'}, @args, '--quiet', 
-           '--output', '/dev/null', '--command', $cmd,
-           $self->{'props'}->{'PG-DB'});
-   return 0 == ($status >>8)
+    my @cmd = ($self->{'props'}->{'PSQL-PATH'});
+    push @cmd, "-h", $self->{'props'}->{'PG-HOST'} if ($self->{'props'}->{'PG-HOST'});
+    push @cmd, "-p", $self->{'props'}->{'PG-PORT'} if ($self->{'props'}->{'PG-PORT'});
+    push @cmd, "-U", $self->{'props'}->{'PG-USER'} if ($self->{'props'}->{'PG-USER'});
+
+    push @cmd, '--quiet', '--output', '/dev/null', '--command', $cmd, $self->{'props'}->{'PG-DB'};
+    debug("running " . join(" ", @cmd));
+    my $status = system(@cmd);
+
+    $ENV{'PGPASSWORD'} = $orig_pgpassword || '';
+    $ENV{'PGPASSFILE'} = $orig_pgpassfile || '';
+
+    return 0 == ($status >>8)
 }
 
 sub command_selfcheck {
@@ -196,9 +208,12 @@ sub command_selfcheck {
 
        my $label = "$self->{'label-prefix'}-selfcheck-" . time();
        if (_check("call pg_start_backup", "failed (is another backup running?)",
-                  \&_run_psql_command, $self, "SELECT pg_start_backup('$label')")) {
-           _check("call pg_stop_backup", "failed",
-                  \&_run_psql_command, $self, "SELECT pg_stop_backup()");
+                  \&_run_psql_command, $self, "SELECT pg_start_backup('$label')")
+           and _check("call pg_stop_backup", "failed",
+                  \&_run_psql_command, $self, "SELECT pg_stop_backup()")) {
+
+           _check("get info from .backup file", "failed",
+                  sub {my ($start, $end) = _get_backup_info($self, $label); $start and $end});
        }
    }
 }
@@ -241,7 +256,9 @@ sub _get_prev_state {
 
     my $end_wal;
     for (my $level = $self->{'args'}->{'level'} - 1; $level >= 0; $level--) {
-        my $h = new IO::File(_state_filename($self, $level-1), "r");
+        my $fn = _state_filename($self, $level);
+        debug("reading state file: $fn");
+        my $h = new IO::File($fn, "r");
         next unless $h;
         while (my $l = <$h>) {
             if ($l =~ /^VERSION: (\d+)/) {
@@ -262,15 +279,17 @@ sub _get_prev_state {
 sub _run_tar_totals {
     my ($self, $out_h, @other_args) = @_;
 
+    my @cmd = ($self->{'runtar'}, $self->{'args'}->{'config'},
+        $Amanda::Constants::GNUTAR, '--create', '--totals', @other_args);
+    debug("running " . join(" ", @cmd));
+
     local (*TAR_IN, *TAR_OUT, *TAR_ERR);
     open TAR_OUT, ">&", $out_h;
-    my $pid = open3(\*TAR_IN, ">&TAR_OUT", \*TAR_ERR,
-        $self->{'runtar'}, $self->{'args'}->{'config'},
-        $Amanda::Constants::GNUTAR, '--create', '--totals', @other_args);
+    my $pid = open3(\*TAR_IN, ">&TAR_OUT", \*TAR_ERR, @cmd);
     close(TAR_IN);
     waitpid($pid, 0);
     my $status = $? >> 8;
-    0 == $status or $self->{'die_cb'}->("Tar failed (exit status $status)");
+    (0 == $status) or $self->{'die_cb'}->("Tar failed (exit status $status)");
 
     my $size;
     while (my $tots = <TAR_ERR>) {
@@ -280,6 +299,7 @@ sub _run_tar_totals {
         }
     }
     close(TAR_ERR);
+    debug("size of generated tar file: " . (defined($size)? $size : "undef"));
     $size;
 }
 
@@ -290,7 +310,9 @@ sub command_estimate {
 
    $self->{'done_cb'} = sub {
        my $size = shift @_;
-       $size /= 1024;
+       debug("done. size $size");
+       $size = ceil($size/1024);
+       debug("sending $self->{'args'}->{'level'} $size 1");
        print("$self->{'args'}->{'level'} $size 1\n");
    };
    $self->{'die_cb'} = sub {
@@ -306,14 +328,61 @@ sub command_estimate {
    };
 
    if ($self->{'args'}->{'level'} > 0) {
-       _base_backup($self, $out_h);
-   } else {
        _incr_backup($self, $out_h);
+   } else {
+       _base_backup($self, $out_h);
    }
+}
+
+sub _get_backup_info {
+    my ($self, $label) = @_;
+
+   my ($fname, $bfile, $start_wal, $end_wal);
+   # wait up to 60s for the .backup file to be copied
+   for (my $count = 0; $count < 60; $count++) {
+       my $adir = new IO::Dir($self->{'props'}->{'PG-ARCHIVEDIR'});
+       $adir or $self->{'die_cb'}->("Could not open archive WAL directory");
+       while (defined($fname = $adir->read())) {
+           if ($fname =~ /\.backup$/) {
+               my $blabel;
+               # use runtar to read protected file
+               local *TAROUT;
+               open(TAROUT, "$self->{'runtar'} $self->{'args'}->{'config'} $Amanda::Constants::GNUTAR --create --directory $self->{'props'}->{'PG-ARCHIVEDIR'} $fname | $Amanda::Constants::GNUTAR --extract --to-stdout |");
+               my ($start, $end, $lab);
+               while (my $l = <TAROUT>) {
+                   chomp($l);
+                   if ($l =~ /^START WAL LOCATION:.*?\(file ($_WAL_FILE_PAT)\)$/) {
+                       $start = $1;
+                   } elsif($l =~ /^STOP WAL LOCATION:.*?\(file ($_WAL_FILE_PAT)\)$/) {
+                       $end = $1;
+                   } elsif ($l =~ /^LABEL: (.*)$/) {
+                       $lab = $1;
+                   }
+               }
+               if ($lab and $lab eq $label) {
+                   $start_wal = $start;
+                   $end_wal = $end;
+                   $bfile = $fname;
+                   last;
+               }
+           }
+       }
+       $adir->close();
+       if ($start_wal and $end_wal) {
+           # try to cleanup a bit
+           unlink("$self->{'props'}->{'PG-ARCHIVEDIR'}/$bfile");
+           last;
+       }
+       sleep(1);
+   }
+
+   ($start_wal, $end_wal);
 }
 
 sub _base_backup {
    my ($self, $out_h) = @_;
+
+   debug("running _base_backup");
 
    my $label = "$self->{'label-prefix'}-" . time();
    my $tmp = "$self->{'args'}->{'tmpdir'}/$label";
@@ -324,16 +393,8 @@ sub _base_backup {
    # try to protect what we create
    my $old_umask = umask();
    umask(077);
-   # n.b. deprecated, passfile recommended for better security
-   my $orig_pgpassword = $ENV{'PGPASSWORD'};
-   $ENV{'PGPASSWORD'} = $self->{'props'}->{'PG-PASSWORD'} if $self->{'props'}->{'PG-PASSWORD'};
-   # n.b. supported in 8.1+
-   my $orig_pgpassfile = $ENV{'PGPASSFILE'};
-   $ENV{'PGPASSFILE'} = $self->{'props'}->{'PG-PASSFILE'} if $self->{'props'}->{'PG-PASSFILE'};
 
    my $cleanup = sub {
-       $ENV{'PGPASSWORD'} = $orig_pgpassword;
-       $ENV{'PGPASSFILE'} = $orig_pgpassfile;
        umask($old_umask);
        eval {rmtree($tmp); 1}
    };
@@ -352,56 +413,35 @@ sub _base_backup {
    # tar data dir, using symlink to prefix
    # XXX: tablespaces and their symlinks?
    # See: http://www.postgresql.org/docs/8.0/static/manage-ag-tablespaces.html
-   my $tar_status = system($self->{'runtar'}, $self->{'args'}->{'config'},
-        $Amanda::Constants::GNUTAR, '--create', '--file',
-       "$tmp/$_DATA_DIR_TAR", '--directory', $self->{'props'}->{'PG-DATADIR'}, ".") >> 8;
+   my $old_die_cb = $self->{'die_cb'};
+   $self->{'die_cb'} = sub {
+       my $msg = shift @_;
+       unless(_run_psql_command($self, "SELECT pg_stop_backup()")) {
+           $msg .= " and failed to call pg_stop_backup";
+       }
+       $old_die_cb->($msg);
+   };
+   _run_tar_totals($self, $out_h, '--file', "$tmp/$_DATA_DIR_TAR",
+       '--directory', $self->{'props'}->{'PG-DATADIR'}, ".");
+   $self->{'die_cb'} = $old_die_cb;
 
-   my $stop_ok = _run_psql_command($self, "SELECT pg_stop_backup()");
-   unless (0 == $tar_status and $stop_ok) {
-       my @errs = ();
-       0 == $tar_status or push(@errs, "Failed to tar data directory (exit status $tar_status)");
-       $stop_ok or push(@errs, "Failed to call pg_stop_backup");
-       $self->{'die_cb'}->(join(' and ', @errs));
+   unless (_run_psql_command($self, "SELECT pg_stop_backup()")) {
+       $self->{'die_cb'}->("Failed to call pg_stop_backup");
    }
 
    # determine WAL files and append and create their tar file
-   my ($fname, $bfile, $start_wal, $end_wal, @wal_files);
-   # wait up to 60s for the .backup file to be copied
-   for (my $count = 0; $count < 60; $count++) {
-       my $adir = new IO::Dir($self->{'props'}->{'PG-ARCHIVEDIR'});
-       $adir or $self->{'die_cb'}->("Could not open archive WAL directory");
-       while (defined($fname = $adir->read())) {
-           if ($fname =~ /\.backup$/) {
-               my $blabel;
-               my $bf = new IO::File("$self->{'props'}->{'PG-ARCHIVEDIR'}/$fname");
-               my ($start, $end, $lab);
-               while (my $l = <$bf>) {
-                   chomp($l);
-                   if ($l =~ /^START WAL LOCATION:.*?\(file ($_WAL_FILE_PAT)\)$/) {
-                       $start = $1;
-                   } elsif($l =~ /^STOP WAL LOCATION:.*?\(file ($_WAL_FILE_PAT)\)$/) {
-                       $end = $1;
-                   } elsif ($l =~ /^LABEL: (.*)$/) {
-                       $lab = $1;
-                   }
-               }
-               if ($lab and $lab eq $label) {
-                   $start_wal = $start;
-                   $end_wal = $end;
-                   $bfile = $fname;
-               }
-           }
-       }
-       $adir->close();
-       last if $start_wal and $end_wal;
-       sleep(1);
-   }
+   my ($start_wal, $end_wal) = _get_backup_info($self, $label);
 
+   ($start_wal and $end_wal) or $self->{'die_cb'}->("A .backup file was never found in the archive dir $self->{'props'}->{'PG-ARCHIVEDIR'}");
+   debug("WAL start: $start_wal end: $end_wal");
+
+   my @wal_files;
    my $adir = new IO::Dir($self->{'props'}->{'PG-ARCHIVEDIR'});
-   while (defined($fname = $adir->read())) {
-       if ($fname =~ /$_WAL_FILE_PAT/) {
+   while (defined(my $fname = $adir->read())) {
+       if ($fname =~ /^$_WAL_FILE_PAT$/) {
            if (($fname ge $start_wal) and ($fname le $end_wal)) {
-           push @wal_files, $fname;
+               push @wal_files, $fname;
+               debug("will store: $fname");
            } elsif ($fname lt $start_wal) {
                $self->{'unlink_cb'}->($fname);
            }
@@ -412,21 +452,14 @@ sub _base_backup {
    # create an empty archive for uniformity
    @wal_files or @wal_files = ('--files-from', '/dev/null');
 
-
-   my $status = system($self->{'runtar'}, $self->{'args'}->{'config'},
-        $Amanda::Constants::GNUTAR,
-       '--create', '--file', "$tmp/$_ARCHIVE_DIR_TAR",
-       '--directory', $self->{'props'}->{'PG-ARCHIVEDIR'}, @wal_files) >> 8;
-   0 == $status or $self->{'die_cb'}->("Failed to tar archived WAL files (exit status $status)");
+   _run_tar_totals($self, $out_h, '--file', "$tmp/$_ARCHIVE_DIR_TAR",
+       '--directory', $self->{'props'}->{'PG-ARCHIVEDIR'}, @wal_files);
 
    # create the final tar file
    my $size = _run_tar_totals($self, $out_h, '--directory', $tmp,
        $_ARCHIVE_DIR_TAR, $_DATA_DIR_TAR);
 
    $self->{'state_cb'}->($self, $end_wal);
-
-   # try to cleanup a bit
-   unlink("$self->{'props'}->{'PG-ARCHIVEDIR'}/$bfile");
 
    $cleanup->();
    $self->{'done_cb'}->($size);
@@ -435,24 +468,33 @@ sub _base_backup {
 sub _incr_backup {
    my ($self, $out_h) = @_;
 
+   debug("running _incr_backup");
+
    my $end_wal = _get_prev_state($self);
-   unless ($end_wal) { _base_backup(@_); return; }
+   if ($end_wal) {
+       debug("previously ended at: $end_wal");
+   } else {
+       debug("no previous state found!");
+       return _base_backup(@_);
+   }
 
    my $adir = new IO::Dir($self->{'props'}->{'PG-ARCHIVEDIR'});
    $adir or $self->{'die_cb'}->("Could not open archive WAL directory");
    my $max_wal = "";
    my ($fname, @wal_files);
    while (defined($fname = $adir->read())) {
-       if (($fname =~ /$_WAL_FILE_PAT/) and ($fname ge $end_wal)) {
+       if (($fname =~ /^$_WAL_FILE_PAT$/) and ($fname ge $end_wal)) {
            $max_wal = $fname if $fname gt $max_wal;
            push @wal_files, $fname;
+           debug("will store: $fname");
        }
    }
 
    $self->{'state_cb'}->($self, $max_wal ? $max_wal : $end_wal);
 
    if (@wal_files) {
-       $self->{'done_cb'}->(_run_tar_totals($self, $out_h, @wal_files));
+       $self->{'done_cb'}->(_run_tar_totals($self, $out_h,
+           '--directory', $self->{'props'}->{'PG-ARCHIVEDIR'}, @wal_files));
    } else {
        $self->{'done_cb'}->(0);
    }
@@ -463,9 +505,15 @@ sub command_backup {
 
    my $msg_fd = IO::Handle->new_from_fd(3, 'w');
    $msg_fd or confess("Could not open message fd");
+   my $index_fd = IO::Handle->new_from_fd(4, 'w');
+   $index_fd or confess("Could not open message fd");
 
    $self->{'done_cb'} = sub {
        my $size = shift @_;
+       debug("done. size $size");
+       $size = ceil($size/1024);
+       debug("sending size $size");
+       $index_fd->print("./\n");
        $msg_fd->print("sendbackup: size $size\n");
        $msg_fd->print("sendbackup: end\n");
    };
@@ -492,9 +540,9 @@ sub command_backup {
    }
 
    if ($self->{'args'}->{'level'} > 0) {
-       _base_backup($self, \*STDOUT);
-   } else {
        _incr_backup($self, \*STDOUT);
+   } else {
+       _base_backup($self, \*STDOUT);
    }
 }
 
@@ -518,14 +566,12 @@ sub command_restore {
        (0 == $status) or confess("Failed to extract base backup (exit status: $status)");
 
        $status = system($self->{'args'}->{'gnutar-path'}, '--extract',
-          '--file', $_ARCHIVE_DIR_TAR, '--directory', $_ARCHIVE_DIR_RESTORE,
-          '--preserve-permissions') >> 8;
+          '--file', $_ARCHIVE_DIR_TAR, '--directory', $_ARCHIVE_DIR_RESTORE) >> 8;
        (0 == $status) or confess("Failed to extract archived WAL files from base backup (exit status: $status)");
        unlink($_ARCHIVE_DIR_TAR);
 
        $status = system($self->{'args'}->{'gnutar-path'}, '--extract',
-          '--file', $_DATA_DIR_TAR, '--directory', $_DATA_DIR_RESTORE,
-          '--preserve-permissions') >> 8;
+          '--file', $_DATA_DIR_TAR, '--directory', $_DATA_DIR_RESTORE) >> 8;
        (0 == $status) or confess("Failed to extract data directory from base backup (exit status: $status)");
        unlink($_DATA_DIR_TAR);
    }

@@ -1,3 +1,6 @@
+2009-03-18  Nikolas Coukouma <atrus@zmanda.com>
+	* application-src/ampgsql.pl: fix numerous bugs, improve debug info
+
 2009-03-17  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/amgtar.c: fix typo causing check-device to be
 	  interpreted incorrectly
