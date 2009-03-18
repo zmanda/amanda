@@ -181,9 +181,14 @@ sub load_ps_table() {
 	    chomp $psline;
 	    my ($pid, $ppid, $pname, $arg1, $arg2) = split " ", $psline;
 	    $pname = basename($pname);
-	    if ($pname =~ /^perl/) {
-		$arg1 = $arg2 if $arg1 =~ /^\-/;
-		$pname = $arg1;
+	    if ($pname =~ /^perl/ && defined $arg1) {
+		if ($arg1 !~ /^\-/) {
+		    $pname = $arg1;
+		} elsif (defined $arg2) {
+		    if ($arg2 !~ /^\-/) {
+			$pname = $arg2;
+		    }
+		}
 		$pname = basename($pname);
 	    }
 	    $self->{pstable}->{$pid} = $pname;
@@ -226,6 +231,9 @@ sub scan_log($) {
 		$first = 0;
 	    }
 	    if (defined $self->{pstable}->{$pid} && $pname eq $self->{pstable}->{$pid}) {
+		$self->{pids}->{$pid} = $pname;
+	    } elsif (defined $self->{pstable}->{$pid} && $self->{pstable}->{$pid} =~ /^perl/) {
+		# We can get 'perl' for a perl script.
 		$self->{pids}->{$pid} = $pname;
 	    } elsif (defined $self->{pstable}->{$pid}) {
 		print "pid $pid doesn't match: ", $pname, " != ", $self->{pstable}->{$pid}, "\n" if $self->{verbose};

@@ -1,4 +1,8 @@
 2009-03-18  Jean-Louis Martineau <martineau@zmanda.com>
+	* perl/Amanda/Process.pm: Better match of argument.
+	                          Match 'perl' to any process name.
+
+2009-03-18  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/Amanda_Process.pl: Check second argument if first
 	                                  argument start with a dash.
 	* perl/Amanda/Process.pm: The process name is now returned, not perl.
