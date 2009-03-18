@@ -1,4 +1,7 @@
 2009-03-18  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/Amanda_Process.pl: Fix for OS return perl.
+
+2009-03-18  Jean-Louis Martineau <martineau@zmanda.com>
 	* perl/Amanda/Process.pm: Better match of argument.
 	                          Match 'perl' to any process name.
 

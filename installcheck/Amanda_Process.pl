@@ -38,7 +38,7 @@ my $Amanda_process = Amanda::Process->new(0);
 
 $Amanda_process->load_ps_table();
 
-like($Amanda_process->{pstable}->{$$}, qr/Amanda_Process/,
+like($Amanda_process->{pstable}->{$$}, qr/(Amanda_Process|perl)/,
    "find program name for perl script");
 is($Amanda_process->{ppid}->{$$}, getppid,
    "load_ps_table get correct ppid for Amanda_Process");
