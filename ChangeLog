@@ -1,3 +1,7 @@
+2009-03-18  Nikolas Coukouma <atrus@zmanda.com>
+	* server-src/amrmtape.pl, installcheck/amrmtape.pl:
+	  re-label tapes if we --erase them and --keep-label is present
+
 2009-03-18  Jean-Louis Martineau <martineau@zmanda.com>
 	* installcheck/Amanda_Process.pl: Fix for OS return perl.
 

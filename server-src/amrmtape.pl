@@ -282,19 +282,25 @@ my $erase_volume = sub {
 		my ($err, $resv) = @_;
 		die $err if $err;
 
-		my $dev = Amanda::Device->new($resv->{device_name});
+                my $dev = Amanda::Device->new($resv->{device_name});
                 die "Can not erase $label because the device doesn't support this feature"
                     unless $dev->property_get('full_deletion');
-		if (!$dry_run) {
-		    $dev->erase()
-			or die "Failed to erase volume";
-		    $dev->finish();
-		}
+                if (!$dry_run) {
+                    $dev->erase()
+                        or die "Failed to erase volume";
+                    $dev->finish();
 
-		$scrub_db->();
-	    });
+                    # label the tape with the same label it had
+                    if ($keep_label) {
+                        $dev->start($ACCESS_WRITE, $label, undef)
+                            or die "Failed to write tape label";
+                    }
+                }
+
+                $scrub_db->();
+            });
     } else {
-	$scrub_db->();
+        $scrub_db->();
     }
 };
 
