@@ -1,4 +1,9 @@
 2009-03-18  Jean-Louis Martineau <martineau@zmanda.com>
+	* installcheck/Amanda_Process.pl: Check second argument if first
+	                                  argument start with a dash.
+	* perl/Amanda/Process.pm: The process name is now returned, not perl.
+
+2009-03-18  Jean-Louis Martineau <martineau@zmanda.com>
 	* man/xml-source/amrmtape.8.xml: Fix.
 	* perl/Amanda/Process.pm: Find the process name if it is a perl script.
 	* server-src/amrmtape.pl: Check and create the "log" file if --erase.

@@ -38,10 +38,10 @@ my $Amanda_process = Amanda::Process->new(0);
 
 $Amanda_process->load_ps_table();
 
-like($Amanda_process->{pstable}->{$$}, qr/perl/,
-   "installcheck is a perl program");
+like($Amanda_process->{pstable}->{$$}, qr/Amanda_Process/,
+   "find program name for perl script");
 is($Amanda_process->{ppid}->{$$}, getppid,
-   "load_ps_table get correct ppid for installcheck");
+   "load_ps_table get correct ppid for Amanda_Process");
 
 #override works done by load_ps_table, override pstable
 $Amanda_process->{pstable} = {
