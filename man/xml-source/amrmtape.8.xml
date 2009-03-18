@@ -97,8 +97,8 @@ Erasure is not supported by all Amanda devices, and the erasure is not "secure"
 in the sense that the data can most likely be recovered by someone with the
 right tools.  </para>
   </listitem>
-  <varlistentry>
   </varlistentry>
+  <varlistentry>
   <term><option>--keep-label</option></term>
   <listitem>
 <para>Do not remove

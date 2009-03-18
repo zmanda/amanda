@@ -47,6 +47,26 @@ my $changer_name;
 my $keep_label;
 my $verbose = 1;
 my $help;
+my $logdir;
+my $log_file;
+my $log_created = 0;
+
+sub die_handler {
+    if ($log_created == 1) {
+        unlink $log_file;
+        $log_created = 0;
+    }
+}
+$SIG{__DIE__} = \&die_handler;
+
+sub int_handler {
+    if ($log_created == 1) {
+        unlink $log_file;
+        $log_created = 0;
+    }
+    die "Interrupted\n";
+}
+$SIG{INT} = \&int_handler;
 
 sub usage() {
     print <<EOF
@@ -117,6 +137,26 @@ if ($cfgerr_level >= $CFGERR_WARNINGS) {
 }
 
 Amanda::Util::finish_setup($RUNNING_AS_DUMPUSER);
+$logdir = config_dir_relative(getconf($CNF_LOGDIR));
+$log_file = "$logdir/log";
+
+if ($erase) {
+    # Check for log file inexistance
+    if (-e $log_file) {
+        `amcleanup -p $config_name`;
+    }
+
+    if (-e $log_file) {
+        local *LOG;
+        open(LOG,  $log_file);
+        my $info_line = <LOG>;
+        close LOG;
+        $info_line =~ /^INFO (.*) .* pid .*$/;
+        my $process_name = $1;
+        print "$process_name is running, or you must run amcleanup\n";
+        exit 1;
+    }
+}
 
 my $scrub_db = sub {
     my $tapelist_file = config_dir_relative(getconf($CNF_TAPELIST));
@@ -230,6 +270,11 @@ my $scrub_db = sub {
 
 my $erase_volume = sub {
     if ($erase) {
+        $log_created = 1;
+        local *LOG;
+        open(LOG, ">$log_file");
+        print LOG "INFO amrmtape amrmtape pid $$\n";
+        close LOG;
 	my $chg = Amanda::Changer->new($changer_name);
 	$chg->load(
 	    'label' => $label,
@@ -256,3 +301,8 @@ my $erase_volume = sub {
 # kick things off
 Amanda::MainLoop::call_later($erase_volume);
 Amanda::MainLoop::run();
+
+if ($log_created == 1) {
+    unlink $log_file;
+    $log_created = 0;
+}

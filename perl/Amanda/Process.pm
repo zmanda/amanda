@@ -179,8 +179,12 @@ sub load_ps_table() {
 	my $psline = <PSTABLE>; #header line
 	while($psline = <PSTABLE>) {
 	    chomp $psline;
-	    my ($pid, $ppid, $pname) = split " ", $psline;
+	    my ($pid, $ppid, $pname, $arg) = split " ", $psline;
 	    $pname = basename($pname);
+	    if ($pname =~ /^perl/) {
+		$pname = $arg;
+		$pname = basename($pname);
+	    }
 	    $self->{pstable}->{$pid} = $pname;
 	    $self->{ppid}->{$pid} = $ppid;
 	}
