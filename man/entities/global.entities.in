@@ -68,13 +68,13 @@
 <!ENTITY A '<application><emphasis>Amanda</emphasis></application>'>
 
 <!-- IDs for AMANDA files-->
-<!ENTITY amconf '<citerefentry><refentrytitle>amanda.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>'>
-<!ENTITY amclientconf '<citerefentry><refentrytitle>amanda-client.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>'>
+<!ENTITY amconf '<manref name="amanda.conf" vol="5"/>'>
+<!ENTITY amclientconf '<manref name="amanda-client.conf" vol="5"/>'>
 <!ENTITY amandahosts '<filename>.amandahosts</filename>'>
-<!ENTITY disklist '<citerefentry><refentrytitle>disklist</refentrytitle><manvolnum>5</manvolnum></citerefentry>'>
+<!ENTITY disklist '<manref name="disklist" vol="5"/>'>
 <!ENTITY amandapass '<filename>/etc/amandapass</filename>'>
 <!ENTITY inetdconf '<filename>/etc/inetd.conf</filename>'>
-<!ENTITY tapelist '<citerefentry><refentrytitle>tapelist</refentrytitle><manvolnum>5</manvolnum></citerefentry>'>
+<!ENTITY tapelist '<manref name="tapelist" vol="5"/>'>
 
 <!-- IDs for files used by AMANDA-->
 <!ENTITY dumpdates '<filename>/etc/dumpdates</filename>'>

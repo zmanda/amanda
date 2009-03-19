@@ -80,10 +80,8 @@ The file number and attribute ID serve to identify the data stream to which this
 
 </refsect1>
 
-<refsect1><title>SEE ALSO</title>
-<para>
-<citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-</para>
-</refsect1>
+<seealso>
+<manref name="amanda" vol="8"/>,
+</seealso>
 
 </refentry>

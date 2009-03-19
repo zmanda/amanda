@@ -37,29 +37,27 @@
 
 <itemizedlist>
 <listitem>
-<citerefentry><refentrytitle>amgtar</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+<manref name="amgtar" vol="8"/>,
 - use GNU Tar to backup and restore data.
 </listitem>
 <listitem>
-<citerefentry><refentrytitle>amsamba</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+<manref name="amsamba" vol="8"/>,
 - use smbclient to backup and restore data.
 </listitem>
 <listitem>
-<citerefentry><refentrytitle>amstar</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+<manref name="amstar" vol="8"/>,
 - use star to backup and restore data.
 </listitem>
 <listitem>
-<citerefentry><refentrytitle>amzfs-sendrecv</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+<manref name="amzfs-sendrecv" vol="8"/>,
 - use zfs to create a snapshot and use 'zfs send' to generate the backup.
 </listitem>
 </itemizedlist>
 
 </refsect1>
 
-<refsect1><title>SEE ALSO</title>
-<para>
-<citerefentry><refentrytitle>amanda.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>
-</para>
+<seealso>
+<manref name="amanda.conf" vol="5"/>
+</seealso>
 
-</refsect1>
 </refentry>

@@ -504,4 +504,43 @@
 	</xsl:copy>
 </xsl:template>
 
+<!-- <manref name="" vol="" /> - makes a link to another manpage -->
+<xsl:template match="manref">
+  <xsl:element name="citerefentry">
+    <xsl:element name="refentrytitle">
+      <xsl:value-of select="@name"/>
+    </xsl:element>
+    <xsl:element name="manvolnum">
+      <xsl:value-of select="@vol"/>
+    </xsl:element>
+  </xsl:element>
+</xsl:template>
+
+<!-- <seealso> .., .., .. </seealso> - creates a see-also section. Note
+  that amanda(8) is always included first, and that spurious text between
+  contained elements will be discarded.  -->
+<xsl:template match="seealso">
+  <xsl:element name="refsect1">
+    <xsl:element name="title">
+      <xsl:text>SEE ALSO</xsl:text>
+    </xsl:element>
+    <xsl:element name="para">
+      <xsl:element name="citerefentry">
+        <xsl:element name="refentrytitle">amanda</xsl:element>
+        <xsl:element name="manvolnum">8</xsl:element>
+      </xsl:element>
+      <xsl:for-each select="*">
+	<xsl:text>, </xsl:text>
+	<xsl:apply-templates select="." />
+      </xsl:for-each>
+    </xsl:element>
+    <xsl:element name="para">
+      <xsl:text>The Amanda Wiki: </xsl:text>
+      <xsl:element name="ulink">
+        <xsl:attribute name="url">http://wiki.zmanda.com/</xsl:attribute>
+      </xsl:element>
+    </xsl:element>
+  </xsl:element>
+</xsl:template>
+
 </xsl:stylesheet>

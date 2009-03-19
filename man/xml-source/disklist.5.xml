@@ -173,4 +173,8 @@ a new dumptype:</para>
 
 </refsect1>
 
+<seealso>
+<manref name="amanda.conf" vol="5"/>
+</seealso>
+
 </refentry>

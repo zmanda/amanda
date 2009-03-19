@@ -92,8 +92,8 @@ non-strings in their filenames.</para>
 </variablelist>
 </refsect1>
 
-<refsect1><title>SEE ALSO</title>
-<para><citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry></para>
-<para><citerefentry><refentrytitle>amanda-archive-format</refentrytitle><manvolnum>5</manvolnum></citerefentry></para>
-</refsect1>
+<seealso>
+<manref name="amanda-archive-format" vol="5"/>
+</seealso>
+
 </refentry>

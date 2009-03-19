@@ -64,7 +64,7 @@ match an expression will be checked. All disks are checked if no
 expressions are given.</para>
 
 <para>See the
-<citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+<manref name="amanda" vol="8"/>
 man page for more details about &A;.</para>
 </refsect1>
 
@@ -159,7 +159,7 @@ Implies
   <varlistentry>
   <term><emphasis remap='B'>-o</emphasis> <replaceable>configoption</replaceable></term>
   <listitem>
-<para>See the "<emphasis remap='B'>CONFIGURATION OVERRIDE</emphasis>" section in <citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>.</para>
+<para>See the "<emphasis remap='B'>CONFIGURATION OVERRIDE</emphasis>" section in <manref name="amanda" vol="8"/>.</para>
   </listitem>
   </varlistentry>
 </variablelist>
@@ -860,11 +860,10 @@ The exit code of <command>amcheck</command> is one of:
 </programlisting>
 </refsect1>
 
-<refsect1><title>SEE ALSO</title>
-<para><citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>amdump</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-<ulink url="http://wiki.zmanda.com"/>
-</para>
-</refsect1>
+<seealso>
+<manref name="amanda.conf" vol="5"/>
+<manref name="amdump" vol="8"/>
+</seealso>
+
 </refentry>
 

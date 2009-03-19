@@ -272,15 +272,13 @@ Specify either --excludefile or --excludelist. </para>
 On success, zero is returned.  On error, 1 is returned.
 </refsect1>
 
-<refsect1><title>SEE ALSO</title>
-<para><citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>amanda.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>amserverconfig</refentrytitle><manvolnum>8</manvolnum></citerefentry>
-<citerefentry><refentrytitle>ssh-keygen</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-<citerefentry><refentrytitle>ssh-add</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-<citerefentry><refentrytitle>scp</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-<ulink url="http://wiki.zmanda.com"/>
-</para>
-</refsect1>
+<seealso>
+<manref name="amanda.conf" vol="5"/>,
+<manref name="amserverconfig" vol="8"/>,
+<manref name="ssh-keygen" vol="1"/>,
+<manref name="ssh-add" vol="1"/>,
+<manref name="scp" vol="1"/>
+</seealso>
+
 </refentry>
 

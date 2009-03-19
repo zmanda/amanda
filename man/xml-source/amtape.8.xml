@@ -59,7 +59,7 @@ it is likely the next tape needed is in the next slot
 rather than at some random position in the storage slots.</para>
 
 <para>See the
-<citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+<manref name="amanda" vol="8"/>
 man page for more details about &A;.</para>
 </refsect1>
 
@@ -181,7 +181,7 @@ then load the tape from the first slot and reset
   <term><emphasis remap='B'>-o</emphasis> <replaceable>configoption</replaceable></term>
   <listitem>
 <para>See the "<emphasis remap='B'>CONFIGURATION OVERRIDE</emphasis>"
- section in <citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>.</para>
+ section in <manref name="amanda" vol="8"/>.</para>
   </listitem>
   </varlistentry>
 
@@ -205,10 +205,9 @@ does an unnecessary mount.</para>
 commands to not eject the loaded tape if it is the one being requested.</para>
 </refsect1>
 
-<refsect1><title>SEE ALSO</title>
-<para><citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-<ulink url="http://wiki.zmanda.com"/>
-</para>
-</refsect1>
+<seealso>
+<manref name="amanda-devices" vol="7"/>
+</seealso>
+
 </refentry>
 

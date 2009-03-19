@@ -62,7 +62,7 @@ ZFS logical volume      datapool/dbvol
 <refsect1><title>PROPERTIES</title>
 
 <para>This section lists the properties that control amzfs-sendrecv's functionality.
-See <citerefentry><refentrytitle>amanda-applications</refentrytitle><manvolnum>7</manvolnum></citerefentry>
+See <manref name="amanda-applications" vol="7"/>
 for information on the Application API, application configuration.</para>
 
 <!-- PLEASE KEEP THIS LIST IN ALPHABETICAL ORDER -->
@@ -113,12 +113,10 @@ In this example, a dumptype is defined to use amzfs-sendrecv application to back
 </programlisting>
 </refsect1>
 
-<refsect1><title>SEE ALSO</title>
-<para>
-<citerefentry><refentrytitle>amanda.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>amanda-client.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>amanda-applications</refentrytitle><manvolnum>7</manvolnum></citerefentry>
-</para>
+<seealso>
+<manref name="amanda.conf" vol="5"/>,
+<manref name="amanda-client.conf" vol="5"/>,
+<manref name="amanda-applications" vol="7"/>
+</seealso>
 
-</refsect1>
 </refentry>

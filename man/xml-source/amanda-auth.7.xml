@@ -521,15 +521,13 @@ If your server &amandad; path and client &amandad; path are different, you shoul
 <para>As Amanda will not answer this question itself, you must manually make every connection (server to client and client to server) that you expect Amanda to make. Note that you must use the same username that Amanda will use (that is, ssh client and ssh client.domain.com are distinct).</para>
 </refsect1>
 
-<refsect1><title>SEE ALSO</title>
-<para>
-&amconf;,
-&amclientconf;,
-&disklist;,
-&amdump;(8),
-&amrecover;(8)
-<ulink url="http://wiki.zmanda.com"/>
-</para>
-</refsect1>
+<seealso>
+<manref name="amanda.conf" vol="5" />
+<manref name="amanda-client.conf" vol="5" />
+<manref name="disklist" vol="5" />
+<manref name="amdump" vol="8" />
+<manref name="amrecover" vol="8" />
+</seealso>
+
 
 </refentry>

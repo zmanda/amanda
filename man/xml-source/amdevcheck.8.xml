@@ -51,9 +51,9 @@
     </para>
     
     <para>See the
-      <citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+      <manref name="amanda" vol="8"/>
       man page for more details about &A;.  See
-      <citerefentry><refentrytitle>amanda-devices</refentrytitle><manvolnum>7</manvolnum></citerefentry>
+      <manref name="amanda-devices" vol="7"/>
       for more information on devices.
   </para>
   </refsect1>
@@ -102,7 +102,7 @@
         <listitem>
           <para>See the "<emphasis remap='B'>CONFIGURATION OVERRIDE</emphasis>"
             section in
-            <citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>.</para>
+            <manref name="amanda" vol="8"/>.</para>
         </listitem>
       </varlistentry>
     </variablelist>
@@ -146,11 +146,8 @@ malfunctioning drive and a functional but unloaded drive.
        </variablelist>
   </refsect1>
 
-  <refsect1><title>SEE ALSO</title>
-    <para>
-      <citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-      <citerefentry><refentrytitle>ammt</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-      <ulink url="http://wiki.zmanda.com"/>
-    </para>
-  </refsect1>
+<seealso>
+<manref name="amanda-devices" vol="7"/>
+</seealso>
+
 </refentry>

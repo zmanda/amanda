@@ -51,7 +51,7 @@ cannot complete for some reason (usually because of a tape server host crash),
 must be run some time later (usually during system boot).</para>
 
 <para>See the
-<citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+<manref name="amanda" vol="8"/>
 man page for more details about &A;.</para>
 </refsect1>
 
@@ -104,11 +104,9 @@ amcleanup: no unprocessed logfile to clean up.
 </programlisting>
 </refsect1>
 
-<refsect1><title>SEE ALSO</title>
-<para><citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>amdump</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-<ulink url="http://wiki.zmanda.com"/>
-</para>
-</refsect1>
+<seealso>
+<manref name="amdump" vol="8"/>
+</seealso>
+
 </refentry>
 

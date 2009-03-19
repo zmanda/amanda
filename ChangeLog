@@ -1,4 +1,12 @@
 2009-03-19  Dustin J. Mitchell <dustin@zmanda.com>
+	* man/xslt/expand-sambadoc.xsl:
+	* man/entities/global.entities.in
+	  man/xml-source/*.xml: add a handy <manref> tag and a <seealso> tag
+	  for 'SEE ALSO' sections
+	* man/xml-source/amanda.conf.5.xml: remove bogus unicode "times"
+	  symbol; tweak tapecycle description
+
+2009-03-19  Dustin J. Mitchell <dustin@zmanda.com>
 	* xfer-src/Makefile.am: add -release to libamxfer
 
 2009-03-18  Nikolas Coukouma <atrus@zmanda.com>

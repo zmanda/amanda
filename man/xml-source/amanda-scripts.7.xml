@@ -41,21 +41,19 @@ see http://wiki.zmanda.com/index.php/Script_API.</para>
 
 <itemizedlist>
 <listitem>
-<citerefentry><refentrytitle>amzfs-snapshot</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+<manref name="amzfs-snapshot" vol="8"/>,
 - create/destroy zfs snapshot.
 </listitem>
 <listitem>
-<citerefentry><refentrytitle>script-email</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+<manref name="script-email" vol="8"/>,
 - send email.
 </listitem>
 </itemizedlist>
 
 </refsect1>
 
-<refsect1><title>SEE ALSO</title>
-<para>
-<citerefentry><refentrytitle>amanda.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>
-</para>
+<seealso>
+<manref name="amanda.conf" vol="5"/>
+</seealso>
 
-</refsect1>
 </refentry>

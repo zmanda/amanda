@@ -55,7 +55,7 @@ See the examples below for details.</para>
 <para>Amrecover will read the <emphasis remap='B'>amanda-client.conf</emphasis> file and the <replaceable>config</replaceable><emphasis remap='B'>/amanda-client.conf</emphasis> file.  If no configuration name is supplied on the command line, Amrecover will try the compiled-in default configuration ,usually <emphasis remap='B'>DailySet1</emphasis>.</para>
 
 <para>See the
-<citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+<manref name="amanda" vol="8"/>
 man page for more details about &A;.</para>
 </refsect1>
 
@@ -94,7 +94,7 @@ client-custom-compressed tapes.</para>
   <term><emphasis remap='B'>-o</emphasis> <replaceable>clientconfigoption</replaceable></term>
   <listitem>
 <para>See the "<emphasis remap='B'>CONFIGURATION OVERRIDE</emphasis>"
- section in <citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>.</para>
+ section in <manref name="amanda" vol="8"/>.</para>
   </listitem>
   </varlistentry>
 
@@ -583,14 +583,11 @@ but will be overridden by the -t switch.
 <!-- .RE -->
 </refsect1>
 
-<refsect1><title>SEE ALSO</title>
-<para><citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>amanda-client.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>amrestore</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>amfetchdump</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>readline</refentrytitle><manvolnum>3</manvolnum></citerefentry>,
-<ulink url="http://wiki.zmanda.com"/>
-</para>
-</refsect1>
-</refentry>
+<seealso>
+<manref name="amanda-client.conf" vol="5"/>
+<manref name="amrestore" vol="8"/>
+<manref name="amfetchdump" vol="8"/>
+<manref name="readline" vol="3"/>
+</seealso>
 
+</refentry>

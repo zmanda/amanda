@@ -49,7 +49,7 @@ estimate.</para>
 <refsect1><title>PROPERTIES</title>
 
 <para>This section lists the properties that control amsamba's functionality.
-See <citerefentry><refentrytitle>amanda-applications</refentrytitle><manvolnum>7</manvolnum></citerefentry>
+See <manref name="amanda-applications" vol="7"/>
 for information on application properties and how they are configured.</para>
 
 <!-- PLEASE KEEP THIS LIST IN ALPHABETICAL ORDER -->
@@ -86,11 +86,8 @@ Domain is optional. Example:
 
 </refsect1>
 
-<refsect1><title>SEE ALSO</title>
-<para>
-<citerefentry><refentrytitle>amanda.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>amanda-applications</refentrytitle><manvolnum>7</manvolnum></citerefentry>
-</para>
-
-</refsect1>
+<seealso>
+<manref name="amanda.conf" vol="5"/>,
+<manref name="amanda-applications" vol="7"/>
+</seealso>
 </refentry>

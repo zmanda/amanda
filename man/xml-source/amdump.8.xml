@@ -64,7 +64,7 @@ While waiting,
 checks for the hold file every minute.</para>
 
 <para>See the
-<citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+<manref name="amanda" vol="8"/>
 man page for more details about &A;.</para>
 </refsect1>
 
@@ -81,7 +81,7 @@ man page for more details about &A;.</para>
   <varlistentry>
   <term><emphasis remap='B'>-o</emphasis> <replaceable>configoption</replaceable></term>
   <listitem>
-<para>See the "<emphasis remap='B'>CONFIGURATION OVERRIDE</emphasis>" section in <citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>.</para>
+<para>See the "<emphasis remap='B'>CONFIGURATION OVERRIDE</emphasis>" section in <manref name="amanda" vol="8"/>.</para>
   </listitem>
   </varlistentry>
 
@@ -99,9 +99,9 @@ every weeknight at 1 a.m. as user
 </programlisting>
 
 <para>Please see the 
-<citerefentry><refentrytitle>crontab</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+<manref name="crontab" vol="5"/>
 or
-<citerefentry><refentrytitle>crontab</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+<manref name="crontab" vol="1"/>
 manual page for the correct crontab format for your system.</para>
 </refsect1>
 
@@ -122,7 +122,7 @@ or the remains of a previous incomplete &amdump; or &amflush; run.
 This run is terminated.
 If the problem is caused by the remains of a previous run,
 you must execute
-<citerefentry><refentrytitle>amcleanup</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+<manref name="amcleanup" vol="8"/>
 and then rerun
 <command>amdump</command>.</para>
   </listitem>
@@ -142,16 +142,13 @@ The exit code of <command>amdump</command> is the ORed value of:
 </programlisting>
 </refsect1>
 
-<refsect1><title>SEE ALSO</title>
-<para>
-  <citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-  <citerefentry><refentrytitle>amcheck</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-  <citerefentry><refentrytitle>amcleanup</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-  <citerefentry><refentrytitle>amrestore</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-  <citerefentry><refentrytitle>amflush</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-  <citerefentry><refentrytitle>cron</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-  <ulink url="http://wiki.zmanda.com"/>
-</para>
-</refsect1>
+<seealso>
+<manref name="amcheck" vol="8"/>,
+<manref name="amcleanup" vol="8"/>,
+<manref name="amrestore" vol="8"/>,
+<manref name="amflush" vol="8"/>,
+<manref name="cron" vol="8"/>
+</seealso>
+
 </refentry>
 

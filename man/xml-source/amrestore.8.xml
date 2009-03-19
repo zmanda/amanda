@@ -83,11 +83,11 @@ and
 <emphasis remap='I'>diskname</emphasis>
 are special expressions described in the &quot;HOST &amp; DISK EXPRESSION&quot; section
 of
-<citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>.
+<manref name="amanda" vol="8"/>.
 <emphasis remap='I'>Datestamp</emphasis>
 are special expression described in the &quot;DATESTAMP EXPRESSION&quot; section
 of
-<citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>.
+<manref name="amanda" vol="8"/>.
 For example, if
 <emphasis remap='I'>diskname</emphasis>
 is &quot;rz[23]a&quot;, it would match disks
@@ -253,7 +253,7 @@ This makes the resulting image usable as a holding file.</para>
   <varlistentry>
   <term><emphasis remap='B'>-o</emphasis> <replaceable>configoption</replaceable></term>
   <listitem>
-<para>See the "<emphasis remap='B'>CONFIGURATION OVERRIDE</emphasis>" section in <citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>.</para>
+<para>See the "<emphasis remap='B'>CONFIGURATION OVERRIDE</emphasis>" section in <manref name="amanda" vol="8"/>.</para>
   </listitem>
   </varlistentry>
 </variablelist>
@@ -338,14 +338,12 @@ the GNUTAR dumptype.
 Vendor tar programs sometimes fail to read GNU tar images.</para>
 </refsect1>
 
-<refsect1><title>SEE ALSO</title>
-<para><citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>amdump</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>amflush</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>tar</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>restore</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-<ulink url="http://wiki.zmanda.com"/>
-</para>
-</refsect1>
+<seealso>
+<manref name="amdump" vol="8"/>,
+<manref name="amflush" vol="8"/>,
+<manref name="tar" vol="1"/>,
+<manref name="restore" vol="8"/>
+</seealso>
+
 </refentry>
 

@@ -36,7 +36,7 @@ by users directly.  It uses GNU Tar to backup and restore data.</para>
 <refsect1><title>PROPERTIES</title>
 
 <para>This section lists the properties that control amgtar's functionality.
-See <citerefentry><refentrytitle>amanda-applications</refentrytitle><manvolnum>7</manvolnum></citerefentry>
+See <manref name="amanda-applications" vol="7"/>
 for information on application properties and how they are configured.</para>
 
 <!-- PLEASE KEEP THIS LIST IN ALPHABETICAL ORDER -->
@@ -129,11 +129,10 @@ List all regex (POSIX Extended Regular Expression syntax) that are strange outpu
 </programlisting>
 </refsect1>
 
-<refsect1><title>SEE ALSO</title>
-<para>
-<citerefentry><refentrytitle>amanda.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>amanda-applications</refentrytitle><manvolnum>7</manvolnum></citerefentry>
-</para>
+<seealso>
+<manref name="tar" vol="1"/>,
+<manref name="amanda.conf" vol="5"/>,
+<manref name="amanda-applications" vol="7"/>
+</seealso>
 
-</refsect1>
 </refentry>

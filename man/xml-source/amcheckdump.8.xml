@@ -51,7 +51,7 @@ tapes.  Otherwise, the application interactively requests the tapes.</para>
 
 <para>See the "<emphasis
 remap='B'>CONFIGURATION OVERRIDE</emphasis>" section in
-<citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+<manref name="amanda" vol="8"/>
 for information on the <literal>-o</literal> option.</para>
 </refsect1>
 
@@ -69,5 +69,9 @@ amcheckdump MYCONFIG --timestamp 19780615
  <ulink url="http://wiki.zmanda.com"/>
  </para>
  </refsect1> 
+
+<seealso>
+<manref name="amcheck" vol="8" />
+</seealso>
 
 </refentry>

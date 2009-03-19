@@ -42,13 +42,13 @@
 <refsect1><title>DESCRIPTION</title>
 <para><emphasis remap='B'>Amreport</emphasis>
 generates a summary report of an
-<citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+<manref name="amanda" vol="8"/>
 backup run.
 If no configuration name is specified, amanda.conf is
 read from the current directory.</para>
 
 <para>See the
-<citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+<manref name="amanda" vol="8"/>
 man page for more details about &A;.</para>
 </refsect1>
 
@@ -117,7 +117,7 @@ is specified, then the report is put in
 <para>Send the postscript output to the file
 <emphasis remap='I'>postscriptfile</emphasis>
 instead of to the
-<citerefentry><refentrytitle>lpr</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+<manref name="lpr" vol="1"/>
 command.
 This option has an effect only if the
 <emphasis remap='I'>lbl-templ</emphasis>
@@ -128,7 +128,7 @@ directive is specified in amanda.conf.</para>
   <varlistentry>
   <term><emphasis remap='B'>-o</emphasis> <replaceable>configoption</replaceable></term>
   <listitem>
-<para>See the "<emphasis remap='B'>CONFIGURATION OVERRIDE</emphasis>" section in <citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>.</para>
+<para>See the "<emphasis remap='B'>CONFIGURATION OVERRIDE</emphasis>" section in <manref name="amanda" vol="8"/>.</para>
   </listitem>
   </varlistentry>
 
@@ -197,11 +197,9 @@ The exit code of <command>amreport</command> is the ORed value of:
 </programlisting>
 </refsect1>
 
-<refsect1><title>SEE ALSO</title>
-<para><citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>amflush</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-<ulink url="http://wiki.zmanda.com"/>
-</para>
-</refsect1>
+<seealso>
+<manref name="amflush" vol="8"/>
+</seealso>
+
 </refentry>
 

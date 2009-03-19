@@ -66,7 +66,7 @@ Writing RSA key
   <para>
     To generate a private key without a passphrase, omit the
     <option>-aes128</option> option. See
-    <citerefentry><refentrytitle>openssl_genrsa</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+    <manref name="openssl_genrsa" vol="1"/>
     for more key generation options.
   </para>
   <para>
@@ -134,27 +134,11 @@ Writing RSA key
   </variablelist>
 </refsect1>
 
-<refsect1>
-  <title>SEE ALSO</title>
-  <para>
-    <citerefentry>
-      <refentrytitle>amanda</refentrytitle>
-      <manvolnum>8</manvolnum>
-    </citerefentry>,
-    <citerefentry>
-      <refentrytitle>amanda.conf</refentrytitle>
-      <manvolnum>5</manvolnum>
-    </citerefentry>,
-    <citerefentry>
-      <refentrytitle>openssl</refentrytitle>
-      <manvolnum>1</manvolnum>
-    </citerefentry>,
-    <citerefentry>
-      <refentrytitle>amcrypt-ossl</refentrytitle>
-      <manvolnum>8</manvolnum>
-    </citerefentry>,
-    <ulink url="http://wiki.zmanda.com"/>
-  </para>
-</refsect1>
+<seealso>
+<manref name="amanda.conf" vol="5"/>,
+<manref name="openssl" vol="1"/>,
+<manref name="amcrypt-ossl" vol="8"/>
+</seealso>
+
 
 </refentry>

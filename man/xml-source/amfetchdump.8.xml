@@ -59,10 +59,10 @@ handling the reassembly of multi-tape split dump files as well as any
 tape autochanger operations.</para>
 
 <para>It will automatically use the logs created by
-<citerefentry><refentrytitle>amdump</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+<manref name="amdump" vol="8"/>
 to locate available dumps on tape, in the same way that the <emphasis
 remap='B'>find</emphasis> feature of
-<citerefentry><refentrytitle>amadmin</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+<manref name="amadmin" vol="8"/>
 lists available dumps. If these logs are unavailable, it can search
 tape-by-tape to find what it needs, and can generate new logs to serve
 as an emergency tape inventory.</para>
@@ -73,7 +73,7 @@ as an emergency tape inventory.</para>
 <emphasis remap='I'>datestamp</emphasis>,
 and
 <emphasis remap='I'>level</emphasis> dump pattern-matching works as in
-<citerefentry><refentrytitle>amrestore</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+<manref name="amrestore" vol="8"/>,
 with the added requirement that at minimum a <emphasis
 remap='I'>hostname</emphasis> must be specified when not in inventory mode.</para>
 
@@ -171,7 +171,7 @@ operation.</para></listitem>
   <term><emphasis remap='B'>-o</emphasis> <replaceable>configoption</replaceable></term>
   <listitem>
 <para>See the "<emphasis remap='B'>CONFIGURATION OVERRIDE</emphasis>"
- section in <citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>.</para>
+ section in <manref name="amanda" vol="8"/>.</para>
   </listitem>
   </varlistentry>
 
@@ -204,20 +204,18 @@ the most useful tool when those have all been wiped out and you
 desperately need to pull things from your tape. Pains have been taken
 to make it as capable as possible, but for seriously minimialist
 restores, look to
-<citerefentry><refentrytitle>amrestore</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+<manref name="amrestore" vol="8"/>
 or
-<citerefentry><refentrytitle>dd</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+<manref name="dd" vol="8"/>
 instead.</para>
 </refsect1>
 
-<refsect1><title>SEE ALSO</title>
-<para><citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>amadmin</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>amrestore</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>tar</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>restore</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-<ulink url="http://wiki.zmanda.com"/>
-</para>
-</refsect1>
+<seealso>
+<manref name="amadmin" vol="8"/>,
+<manref name="amrestore" vol="8"/>,
+<manref name="tar" vol="1"/>
+<manref name="restore" vol="8"/>
+</seealso>
+
 </refentry>
 

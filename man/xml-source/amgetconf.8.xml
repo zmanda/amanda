@@ -51,18 +51,17 @@ being run from the configuration directory and that <emphasis
 remap='I'>amanda.conf</emphasis> is present. The order of options and
 arguments does not matter.  <emphasis remap='I'>parameter</emphasis>
 is always case-insensitive, and '-' and '_' are treated as identical, just
-as in <citerefentry><refentrytitle>amanda.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+as in <manref name="amanda.conf" vol="5"/>.</para>
 
 <para>See the "<emphasis
 remap='B'>CONFIGURATION OVERRIDE</emphasis>" section in
-<citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+<manref name="amanda" vol="8"/>
 for information on the <literal>-o</literal> option.</para>
 
 <refsect2><title>AMANDA CONFIGURATION</title>
 
 <para>If <emphasis remap='I'>parameter</emphasis> is a configuration
-keyword (from <citerefentry> <refentrytitle>amanda.conf</refentrytitle>
-<manvolnum>5</manvolnum> </citerefentry>), then amgetconf will return
+keyword (from <manref name="amanda.conf" vol="5"/>), then amgetconf will return
 the corresponding value.  For keywords which can take multiple values,
 amgetconf will return all values, one on each line.</para>
 
@@ -302,10 +301,9 @@ AMANDA_DEBUG_DAYS
 </variablelist>
 </refsect1>
 
-<refsect1><title>SEE ALSO</title>
-<para>
-  <citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-  <ulink url="http://wiki.zmanda.com"/>
-</para>
-</refsect1>
+<seealso>
+<manref name="amanda.conf" vol="5"/>,
+<manref name="amanda-client.conf" vol="5"/>
+</seealso>
+
 </refentry>

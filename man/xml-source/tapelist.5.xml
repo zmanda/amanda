@@ -50,7 +50,7 @@ A non-reusable tape will not be overwritten, even if it is older than <emphasis
 remap='B'>dumpcycle</emphasis> dumps.  See the
 <emphasis remap='B'>reuse</emphasis>
 options of
-<citerefentry><refentrytitle>amadmin</refentrytitle><manvolnum>8</manvolnum></citerefentry>.
+<manref name="amadmin" vol="8"/>.
 The optional comment is prefixed with a '#' and continues to the end of the line.  Amanda
 will maintain this comment until the tape is overwritten.  Note that comments are not
 allowed on blank lines.</para>
@@ -66,5 +66,9 @@ option) than there are runs in the backup cycle (see the
 <emphasis remap='B'>dumpcycle</emphasis>
 option) to prevent overwriting a backup image that would be needed to do a full recovery.</para>
 </refsect1>
+
+<seealso>
+<manref name="amanda.conf" vol="5"/>
+</seealso>
 
 </refentry>

@@ -37,8 +37,8 @@ in conjunction with WAL archiving.</para>
 
 <refsect1><title>PROPERTIES</title>
 
-<para>This section lists the <citerefentry><refentrytitle>amanda.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry> properties that control ampsql's functionality.
-See <citerefentry><refentrytitle>amanda-applications</refentrytitle><manvolnum>7</manvolnum></citerefentry>
+<para>This section lists the <manref name="amanda.conf" vol="5"/> properties that control ampsql's functionality.
+See <manref name="amanda-applications" vol="7"/>
 for information on application properties and how they are configured.</para>
 
 <!-- PLEASE KEEP THIS LIST IN ALPHABETICAL ORDER -->
@@ -66,13 +66,13 @@ for information on application properties and how they are configured.</para>
 
 <refsect1><title>CLIENT PROPERTIES</title>
 
-<para>This section lists the <citerefentry><refentrytitle>amanda-client.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry> properties that control ampsql's functionality.
+<para>This section lists the <manref name="amanda-client.conf" vol="5"/> properties that control ampsql's functionality.
 If a property is prefixed with the diskname and an underscore,
 then it will be used when that diskname is being backed up.
 For example, if the properties PG-DATA and foo-PG-DATA are set,
 the value of PG-DATA will be used when bar and baz are being backed up,
 but foo-PG-DATA will be used when foo is being backed up.
-Disknames are specified in the <citerefentry><refentrytitle>disklist</refentrytitle><manvolnum>5</manvolnum></citerefentry>.
+Disknames are specified in the <manref name="disklist" vol="5"/>.
 </para>
 
 <!-- PLEASE KEEP THIS LIST IN ALPHABETICAL ORDER -->
@@ -129,12 +129,11 @@ Disknames are specified in the <citerefentry><refentrytitle>disklist</refentryti
 
 </refsect1>
 
-<refsect1><title>SEE ALSO</title>
-<para>
-<citerefentry><refentrytitle>amanda.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>amanda-client.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>amanda-applications</refentrytitle><manvolnum>7</manvolnum></citerefentry>
-</para>
+<seealso>
+<manref name="amanda.conf" vol="5"/>,
+<manref name="amanda-client.conf" vol="5"/>,
+<manref name="amanda-applications" vol="7"/>
+</seealso>
 
-</refsect1>
+
 </refentry>

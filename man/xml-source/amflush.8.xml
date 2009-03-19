@@ -99,7 +99,7 @@ option.</para>
   <listitem>
 <para>specify a  datestamp expression you want to flush, see the 
 &quot;DATESTAMP EXPRESSION&quot; section of
-<citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+<manref name="amanda" vol="8"/>
 for a description.
 <option>-D 20001225-7</option>
 will flush all
@@ -117,7 +117,7 @@ dumps from 25 december 2000 to 27 december 2000.</para>
   <varlistentry>
   <term><emphasis remap='B'>-o</emphasis> <replaceable>configoption</replaceable></term>
   <listitem>
-<para>See the "<emphasis remap='B'>CONFIGURATION OVERRIDE</emphasis>" section in <citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>.</para>
+<para>See the "<emphasis remap='B'>CONFIGURATION OVERRIDE</emphasis>" section in <manref name="amanda" vol="8"/>.</para>
   </listitem>
   </varlistentry>
 
@@ -126,7 +126,7 @@ dumps from 25 december 2000 to 27 december 2000.</para>
 <para>You can specify many host/disk expressions, only disks that
 match an expression will be flushed. All disks are flushed if no
 expressions are given. see the &quot;HOST &amp; DISK EXPRESSION&quot; section of
-<citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+<manref name="amanda" vol="8"/>
 for a description.</para>
 
 <para><emphasis remap='B'>Amflush</emphasis>
@@ -142,7 +142,7 @@ was run, e.g.
 <literal>19910215</literal>.</para>
 
 <para>See the
-<citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+<manref name="amanda" vol="8"/>
 man page for more details about &A;.</para>
 </refsect1>
 
@@ -155,7 +155,7 @@ After you select which holding area to flush,
 <command>amflush</command>
 writes the data to tape, updates the databases and sends
 a mail report similar to
-<citerefentry><refentrytitle>amdump</refentrytitle><manvolnum>8</manvolnum></citerefentry>.</para>
+<manref name="amdump" vol="8"/>.</para>
 
 <programlisting>
 % amflush MyConfig
@@ -196,12 +196,9 @@ The exit code of <command>amflush</command> is the ORed value of:
 </programlisting>
 </refsect1>
 
-<refsect1><title>SEE ALSO</title>
-<para>
-  <citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-  <citerefentry><refentrytitle>amdump</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-  <ulink url="http://wiki.zmanda.com"/>
-</para>
-</refsect1>
+<seealso>
+<manref name="amdump" vol="8"/>
+</seealso>
+
 </refentry>
 

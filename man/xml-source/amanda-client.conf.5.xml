@@ -35,7 +35,7 @@ relevant sections and parameters of this file for quick reference.</para>
 <refsect1><title>SYNTAX</title>
 
 The syntax of &amclientconf; is identical to that for
-<citerefentry><refentrytitle>amanda.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>.
+<manref name="amanda.conf" vol="5"/>.
 
 </refsect1>
 
@@ -516,14 +516,11 @@ the property to set, and the others contains its values.
 </variablelist>
 </refsect1>
 
-<refsect1><title>SEE ALSO</title>
-<para>
-<citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>amanda.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>amcrypt</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>aespipe</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-<ulink url="http://wiki.zmanda.com"/>
-</para>
-</refsect1>
+<seealso>
+<manref name="amanda.conf" vol="5"/>,
+<manref name="amcrypt" vol="8"/>,
+<manref name="aespipe" vol="1"/>,
+</seealso>
+
 </refentry>
 

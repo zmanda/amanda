@@ -84,8 +84,9 @@ remap='I'>label-new-tapes</emphasis> parameter in &amconf;.</para>
 
 </refsect1>
 
-<refsect1><title>SEE ALSO</title>
-<para><citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry></para>
-</refsect1>
+<seealso>
+<manref name="amanda-changers" vol="7"/>
+</seealso>
+
 </refentry>
 

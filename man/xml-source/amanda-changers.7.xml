@@ -28,7 +28,7 @@
 <refsect1><title>DESCRIPTION</title>
 
 <para>Amanda uses changers to arbitrate access to devices
-(<citerefentry><refentrytitle>amanda-devices</refentrytitle><manvolnum>7</manvolnum></citerefentry>)
+(<manref name="amanda-devices" vol="7"/>)
 and data volumes.  Changers provide an abstraction of tape robots, but are used
 to manage non-tape media, too.  Amanda communicates with changers through the
 Changer API.  This manpage contains a <emphasis>user-level</emphasis> overview
@@ -47,7 +47,7 @@ complexity.  When this transition is complete, Amanda devices will, in general,
 be specified via a changer, which will provide the necessary device specifier
 to access a requested volume.  In the interim, support for the "new" changer
 syntax is limited to the experimental
-<citerefentry><refentrytitle>amvault</refentrytitle><manvolnum>8</manvolnum></citerefentry>.
+<manref name="amvault" vol="8"/>.
 Older applications access the new changer API through a "glue" layer (chg-glue)
 which limits the functionality to version-1.0 features, and in many cases still
 run the old shell scripts via chg-compat.</para>
@@ -60,7 +60,7 @@ run the old shell scripts via chg-compat.</para>
 <computeroutput>chg-disk:/my/vtapes</computeroutput>.  The
 <computeroutput>chg-</computeroutput> prefix serves to differentiate changers
 from devices (see
-<citerefentry><refentrytitle>amanda-devices</refentrytitle><manvolnum>7</manvolnum></citerefentry>).
+<manref name="amanda-devices" vol="7"/>).
 The next portion (<computeroutput>disk</computeroutput>, in this case)
 identifies the particular changer driver to use, and everything that follows
 the <computeroutput>:</computeroutput> is interpreted by the driver.  Note that
@@ -207,7 +207,7 @@ tpchanger "chg-rait:{chg-disk:/path/to/vtape,tapechanger}"
 </programlisting>
 
 <para>This changer script constructs RAIT devices out of the devices provided by several "sub-changers".  The sub-changers are specified using the same shell-like syntax as the RAIT device (see
-<citerefentry><refentrytitle>amanda-devices</refentrytitle><manvolnum>7</manvolnum></citerefentry>).</para>
+<manref name="amanda-devices" vol="7"/>).</para>
 
 <para>Chg-rait does not require that all of the child changers have the same slot names: compound slot names are created by combining the slot names supplied by the child changers using the same shell-like syntax.  For example, if the child changers return slots "<computeroutput>top</computeroutput>", "<computeroutput>strange</computeroutput>", and "<computeroutput>3</computeroutput>", then the RAIT changer will return "<computeroutput>{top,strange,3}</computeroutput>".  This makes it possible to, for example, mirror data on tapes in slots 1-10 to tapes in slots 11-20 of the same robot, using two <command>chg-zd-mtx</command> child changers (and, naturally, two tape drives).  In this arrangement, the first slot would be named <computeroutput>{1,11}</computeroutput>.</para>
 
@@ -241,12 +241,10 @@ will be removed when the new changer API is fully implemented.</para>
 
 </refsect1>
 
-<refsect1><title>SEE ALSO</title>
-<para>
-<citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>amanda.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>amanda-devices</refentrytitle><manvolnum>7</manvolnum></citerefentry>,
-</para>
+<seealso>
+<manref name="amanda.conf" vol="5"/>,
+<manref name="amanda-devices" vol="7"/>,
+</seealso>
 
-</refsect1>
+
 </refentry>

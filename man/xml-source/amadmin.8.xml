@@ -45,7 +45,7 @@ performs various administrative tasks on the
 &A; configuration.</para>
 
 <para>See the
-<citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+<manref name="amanda" vol="8"/>
 man page for more details about &A;.</para>
 </refsect1>
 
@@ -57,13 +57,13 @@ parameter pair operate on all disks in the &disklist; for that
 the command operates on all hosts and disks in the &disklist;.
 Both <emphasis remap='I'>hostname</emphasis> and <emphasis remap='I'>disks</emphasis>
 are special expressions; see the &quot;HOST &amp; DISK EXPRESSION&quot; section
-of <citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+of <manref name="amanda" vol="8"/>
 for a description.</para>
 
 <para>Commands that take one or more <emphasis remap='I'>dumpspec</emphasis> parameters operate
 on the set of dumps specified by all of the expressions.  See the &quot;DUMP SPECIFICATIONS&quot;
 section of
-<citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+<manref name="amanda" vol="8"/>
 for a description.</para>
 
 <variablelist remap='TP'>
@@ -225,7 +225,7 @@ file, &A; will treat it as a new disk during the next run.</para>
   <listitem>
 <para>Display the tape(s) &A; expects to write to during the next run.
 See also
-<citerefentry><refentrytitle>amcheck</refentrytitle><manvolnum>8</manvolnum></citerefentry>.</para>
+<manref name="amcheck" vol="8"/>.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
@@ -287,7 +287,7 @@ Mostly used for debugging.</para>
   <term><emphasis remap='B'>-o</emphasis> <replaceable>configoption</replaceable></term>
   <listitem>
 <para>See the "<emphasis remap='B'>CONFIGURATION OVERRIDE</emphasis>"
- section in <citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>.</para>
+ section in <manref name="amanda" vol="8"/>.</para>
   </listitem>
   </varlistentry>
 
@@ -436,13 +436,12 @@ TOTAL      241  12412187   7316312   731631  (estimated 8 runs per dumpcycle)
 <para>/usr/local/etc/amanda/<emphasis remap='I'>config</emphasis>/amanda.conf</para>
 </refsect1>
 
-<refsect1><title>SEE ALSO</title>
-<para><citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>amcheck</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>amdump</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>amrestore</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>amfetchdump</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-<ulink url="http://wiki.zmanda.com"/>
-</para>
-</refsect1>
+<seealso>
+<manref name="amanda" vol="8"/>,
+<manref name="amcheck" vol="8"/>,
+<manref name="amdump" vol="8"/>,
+<manref name="amrestore" vol="8"/>,
+<manref name="amfetchdump" vol="8"/>
+</seealso>
+
 </refentry>

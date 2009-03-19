@@ -397,14 +397,25 @@ days /
 <para>Default:
 <emphasis remap='I'>15 tapes</emphasis>.
 Typically tapes are used by &A; in an ordered rotation. The <emphasis remap='B'>tapecycle</emphasis> parameter 
-defines the size of that rotation. The number of tapes in rotation must be larger than the number of tapes 
-required for a complete dump cycle (see the <emphasis remap='B'>dumpcycle</emphasis> parameter). 
-</para>
+defines the size of that rotation. This parameter must be be larger than the number of tapes
+used in a dumpcycle.</para>
 <para>
-This is calculated by multiplying the number of &amdump; runs per dump cycle
-(<emphasis remap='B'>runspercycle</emphasis> parameter) times the number of tapes used per run 
-(<emphasis remap='B'>runtapes</emphasis> parameter). Typically two to four times this calculated number of tapes are in rotation.
-While &A; is always willing to use a new tape in its rotation, it refuses to reuse a tape until at 
+The number of tapes per dumpcycle is calculated by multiplying the number of
+&amdump; runs per dump cycle <emphasis remap='B'>runspercycle</emphasis> (the
+number of &amdump; runs per dump cycle) and <emphasis
+remap='B'>runtapes</emphasis> (the number of tapes used per run). Typically
+<emphasis remap='B'>tapecycle</emphasis> is set to two or four times the tapes
+per dumpcycle.</para>
+
+<note>&A; is commonly misconfigured with <emphasis
+remap='B'>tapecycle</emphasis> equal to the number of tapes per dumpcycle.  In
+this misconfiguration, when all <emphasis remap='B'>tapecycle</emphasis> tapes
+are used, &A; has no free tape to which it can write the next backup, and the
+dump will fail.  <emphasis remap='B'>tapecycle</emphasis> must be at least one
+tape larger than the tapes per dumpcycle.
+</note>
+
+<para>While &A; is always willing to use a new tape in its rotation, it refuses to reuse a tape until at
 least '<emphasis remap='B'>tapecycle</emphasis> -1' number of other tapes have been used. 
 </para>
 <para>
@@ -477,7 +488,7 @@ option.</para>
 <para>Default:
 <filename>null:</filename>.
 The device name, referencing the name of a "device" section in the configuration file.  See
-<citerefentry><refentrytitle>amanda-devices</refentrytitle><manvolnum>7</manvolnum></citerefentry>
+<manref name="amanda-devices" vol="7"/>
 for more information on device names.</para>
 
 <para>If a tape changer is configured
@@ -502,7 +513,7 @@ option set to
   <term><emphasis remap='B'>device_property</emphasis> string string</term>
   <listitem>
 <para>These options can set various device properties.  See
-<citerefentry><refentrytitle>amanda-devices</refentrytitle><manvolnum>7</manvolnum></citerefentry>
+<manref name="amanda-devices" vol="7"/>
 for more information on device properties and their syntax.
 Both strings are always quoted; the first string contains the name of
 the property to set, and the second contains its value. For example, to set
@@ -644,7 +655,7 @@ The algorithm used to choose which dump image to send to the taper.</para>
 <emphasis remap='I'>.*</emphasis>.
 The tape label constraint regular expression.
 All tape labels generated (see
-<citerefentry><refentrytitle>amlabel</refentrytitle><manvolnum>8</manvolnum></citerefentry>)
+<manref name="amlabel" vol="8"/>)
 and used by this configuration must match the regular expression.
 If multiple configurations are run from the same tape server host,
 it is helpful to set their labels to different strings
@@ -1181,12 +1192,9 @@ Debug level of the taper process</para>
   &A; will not begin writing data to a new volume until the amount of
   data on the holding disk is at least this percentage of the volume
   size. In other words, &A; will not begin until the
-  inequality <inlineequation><mathphrase>h &gt; t &#215;
-  d</mathphrase></inlineequation> is satisfied,
-  where <mathphrase>h</mathphrase> is the amount of data on the
-  holding disk, <mathphrase>t</mathphrase> is the capacity of a
-  volume, and <mathphrase>d</mathphrase> is this parameter, expressed as a
-  percentage.  This parameter may be larger than 100%, for example to keep
+  amount of data on the holding disk is greater than the tape
+  length times this parameter.
+  This parameter may be larger than 100%, for example to keep
   more recent dumps on the holding disk for faster recovery.</para>
 <para> Needless to say, your holding disk must be big enough
   that this criterion could be satisfied. If the holding disk cannot
@@ -1413,7 +1421,7 @@ are defined.</para>
   <listitem>
 <para>Default:
 <emphasis remap='I'>bsd</emphasis>.
-Type of authorization to perform between tape server and backup client hosts.  See <citerefentry><refentrytitle>amanda-auth</refentrytitle><manvolnum>7</manvolnum></citerefentry> for more detail.</para>
+Type of authorization to perform between tape server and backup client hosts.  See <manref name="amanda-auth" vol="7"/> for more detail.</para>
   </listitem>
   </varlistentry>
 
@@ -2172,7 +2180,7 @@ convert it to kbytes using the device density.</para>
 <para>Note that this value is only used by &A; to schedule which backups will be run.
 Once the backups start, &A; will continue to write to a tape until it gets an error, 
 regardless of what value is entered for <emphasis remap='B'>length</emphasis>
-(but see <citerefentry><refentrytitle>amanda-devices</refentrytitle><manvolnum>7</manvolnum></citerefentry> for exceptions).
+(but see <manref name="amanda-devices" vol="7" /> for exceptions).
  </para>
   </listitem>
   </varlistentry>
@@ -2216,7 +2224,7 @@ This parameter is NOT currently used by &A;.</para>
 to generate labels. Several sample files are provided with the &A; sources in the
 <emphasis remap='I'>example</emphasis> directory.
 See the
-<citerefentry><refentrytitle>amreport</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+<manref name="amreport" vol="8"/>
 man page for more information.</para>
   </listitem>
   </varlistentry>
@@ -2550,14 +2558,14 @@ define device <emphasis remap='I'>name</emphasis> {
 this device. It is referenced from the global <emphasis
 remap='I'>tapedev</emphasis> parameter.  The <emphasis
 remap='I'>device-specifier</emphasis> specifies the device name to use;
-see <citerefentry><refentrytitle>amanda-devices</refentrytitle><manvolnum>7</manvolnum></citerefentry>.
+see <manref name="amanda-devices" vol="7"/>.
 As with most sections, the <emphasis remap='I'>comment</emphasis>
 parmeter is optional and only for the user's convenience.</para>
 
 <para>An arbitrary number of <emphasis
 remap='I'>device_property</emphasis> parameters can be specified.
 Again, see
-<citerefentry><refentrytitle>amanda-devices</refentrytitle><manvolnum>7</manvolnum></citerefentry>
+<manref name="amanda-devices" vol="7"/>
 for information on device properties.</para>
 
 </refsect1>
@@ -2584,15 +2592,15 @@ device. The remaining parameters are specific to the changer type selected.
 
 </refsect1>
 
-<refsect1><title>SEE ALSO</title>
-<para>
-<citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>amanda-client.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>amcrypt</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>aespipe</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-<ulink url="http://wiki.zmanda.com"/>
-</para>
+<seealso>
+<manref name="amanda-client.conf" vol="5"/>,
+<manref name="amanda-applications" vol="7"/>,
+<manref name="amanda-auth" vol="7"/>,
+<manref name="amanda-changers" vol="7"/>,
+<manref name="amanda-devices" vol="7"/>,
+<manref name="amanda-scripts" vol="7"/>
+</seealso>
 
-</refsect1>
+
 </refentry>
 

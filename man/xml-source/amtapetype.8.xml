@@ -93,7 +93,7 @@ is enabled.</para>
   <varlistentry>
   <term><option>-o</option> <replaceable>configoption</replaceable></term>
   <listitem>
-<para>See the "<emphasis remap='B'>CONFIGURATION OVERRIDE</emphasis>" section in <citerefentry><refentrytitle>amanda</refentrytitle><manvolnum>8</manvolnum></citerefentry>.</para>
+<para>See the "<emphasis remap='B'>CONFIGURATION OVERRIDE</emphasis>" section in <manref name="amanda" vol="8"/>.</para>
   </listitem>
   </varlistentry>
 </variablelist>
@@ -141,5 +141,9 @@ is, and it was just the measured capacity variation that caused &amtapetype;
 to think those extra file marks in pass 2 actually took up space.</para>
 
 </refsect1>
+
+<seealso>
+<manref name="amanda.conf" vol="5" />
+</seealso>
 
 </refentry>
