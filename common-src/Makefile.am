@@ -133,7 +133,7 @@ EXTRA_PROGRAMS = genversion $(TEST_PROGS)
 # 4. Makefile runs genversion to create version.c
 # 5. version.c is compiled into libamanda normally
 
-genversion_SOURCES = genversion.c genversion.h svn-info.h
+genversion_SOURCES = genversion.c svn-info.h
 genversion_LDADD = $(libamanda_la_LIBADD)	\
     	versuff.lo				\
 	../gnulib/libgnu.la
