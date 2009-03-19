@@ -1,5 +1,7 @@
 # Makefile for amanda man-pages
 
+.SECONDARY:
+
 transform =	s,x,x,;
 
 AMPLOT_MAN_PAGES =  amplot.8
