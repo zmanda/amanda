@@ -1,4 +1,9 @@
 2009-03-19  Dustin J. Mitchell <dustin@zmanda.com>
+	(thanks to Peter Kunst <peter.kunst@swissrisk.com>)
+	* common-src/Makefile.am: don't include genversion.h in distribution
+	  tarballs
+
+2009-03-19  Dustin J. Mitchell <dustin@zmanda.com>
 	* xfer-src/Makefile.am: add -release to libamxfer
 
 2009-03-17  Jean-Louis Martineau <martineau@zmanda.com>
