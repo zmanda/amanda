@@ -1,3 +1,6 @@
+2009-03-19  Dustin J. Mitchell <dustin@zmanda.com>
+	* xfer-src/Makefile.am: add -release to libamxfer
+
 2009-03-18  Nikolas Coukouma <atrus@zmanda.com>
 	* server-src/amrmtape.pl, installcheck/amrmtape.pl:
 	  re-label tapes if we --erase them and --keep-label is present

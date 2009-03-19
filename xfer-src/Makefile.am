@@ -29,6 +29,7 @@ libamxfer_la_SOURCES = \
 	xfer.c \
 	xmsg.c
 
+libamxfer_la_LDFLAGS = -release $(VERSION)
 libamxfer_la_LIBADD = \
 	../common-src/libamanda.la
 
