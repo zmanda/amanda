@@ -397,6 +397,19 @@ clean_tape_list(
 }
 
 
+static char *
+file_of_path(
+    char *path,
+    char **dir)
+{
+    char *npath = g_path_get_basename(path);
+    *dir = g_path_get_dirname(path);
+    if (strcmp(*dir, ".") == 0) {
+	amfree(*dir);
+    }
+    return npath;
+}
+
 void
 clean_extract_list(void)
 {
@@ -686,9 +699,23 @@ add_glob(
     char *regex;
     char *regex_path;
     char *s;
-    char *uqglob = unquote_string(glob);
- 
-    regex = glob_to_regex(uqglob);
+    char *uqglob;
+    char *dir;
+    char *sdir = NULL;
+
+    if (disk_path == NULL) {
+	g_printf(_("Must select directory before adding files\n"));
+	return;
+    }
+
+    uqglob = unquote_string(glob);
+    glob = file_of_path(uqglob, &dir);
+    if (dir) {
+	sdir = stralloc2(mount_point, disk_path);
+	cd_glob(dir, 0);
+	amfree(dir);
+    }
+    regex = glob_to_regex(glob);
     dbprintf(_("add_glob (%s) -> %s\n"), uqglob, regex);
     if ((s = validate_regexp(regex)) != NULL) {
 	g_printf(_("%s is not a valid shell wildcard pattern: "), glob);
@@ -707,8 +734,13 @@ add_glob(
         add_file(uqglob, regex_path);
         amfree(regex_path);
     }
+    if (sdir) {
+	set_directory(sdir, 0);
+	amfree(sdir);
+    }
     amfree(regex);
     amfree(uqglob);
+    amfree(glob);
 }
 
 void
@@ -716,15 +748,36 @@ add_regex(
     char *	regex)
 {
     char *s;
-    char *uqregex = unquote_string(regex);
+    char *dir;
+    char *sdir = NULL;
+    char *uqregex;
+    char *newregex;
+
+    if (disk_path == NULL) {
+	g_printf(_("Must select directory before adding files\n"));
+	return;
+    }
+
+    uqregex = unquote_string(regex);
+    newregex = file_of_path(uqregex, &dir);
+    if (dir) {
+	sdir = stralloc2(mount_point, disk_path);
+	cd_regex(dir, 0);
+	amfree(dir);
+    }
  
-    if ((s = validate_regexp(uqregex)) != NULL) {
-	g_printf(_("\"%s\" is not a valid regular expression: "), regex);
+    if ((s = validate_regexp(newregex)) != NULL) {
+	g_printf(_("\"%s\" is not a valid regular expression: "), newregex);
 	puts(s);
     } else {
-        add_file(uqregex, regex);
+        add_file(uqregex, newregex);
+    }
+    if (sdir) {
+	set_directory(sdir, 0);
+	amfree(sdir);
     }
     amfree(uqregex);
+    amfree(newregex);
 }
 
 void
@@ -996,12 +1049,27 @@ delete_glob(
     char *regex;
     char *regex_path;
     char *s;
-    char *uqglob = unquote_string(glob);
- 
-    regex = glob_to_regex(uqglob);
-    dbprintf(_("delete_glob (%s) -> %s\n"), uqglob, regex);
+    char *uqglob;
+    char *newglob;
+    char *dir;
+    char *sdir = NULL;
+
+    if (disk_path == NULL) {
+	g_printf(_("Must select directory before adding files\n"));
+	return;
+    }
+
+    uqglob = unquote_string(glob);
+    newglob = file_of_path(uqglob, &dir);
+    if (dir) {
+	sdir = stralloc2(mount_point, disk_path);
+	cd_glob(dir, 0);
+	amfree(dir);
+    }
+    regex = glob_to_regex(newglob);
+    dbprintf(_("delete_glob (%s) -> %s\n"), newglob, regex);
     if ((s = validate_regexp(regex)) != NULL) {
-	g_printf(_("\"%s\" is not a valid shell wildcard pattern: "), glob);
+	g_printf(_("\"%s\" is not a valid shell wildcard pattern: "), newglob);
 	puts(s);
     } else {
         /*
@@ -1017,8 +1085,13 @@ delete_glob(
         delete_file(uqglob, regex_path);
         amfree(regex_path);
     }
+    if (sdir) {
+	set_directory(sdir, 0);
+	amfree(sdir);
+    }
     amfree(regex);
     amfree(uqglob);
+    amfree(newglob);
 }
 
 void
@@ -1026,15 +1099,36 @@ delete_regex(
     char *	regex)
 {
     char *s;
-    char *uqregex = unquote_string(regex);
+    char *dir;
+    char *sdir = NULL;
+    char *uqregex;
+    char *newregex;
 
-    if ((s = validate_regexp(regex)) != NULL) {
-	g_printf(_("\"%s\" is not a valid regular expression: "), regex);
+    if (disk_path == NULL) {
+	g_printf(_("Must select directory before adding files\n"));
+	return;
+    }
+
+    uqregex = unquote_string(regex);
+    newregex = file_of_path(uqregex, &dir);
+    if (dir) {
+	sdir = stralloc2(mount_point, disk_path);
+	cd_regex(dir, 0);
+	amfree(dir);
+    }
+
+    if ((s = validate_regexp(newregex)) != NULL) {
+	g_printf(_("\"%s\" is not a valid regular expression: "), newregex);
 	puts(s);
     } else {
-	delete_file(uqregex, uqregex);
+	delete_file(newregex, regex);
+    }
+    if (sdir) {
+	set_directory(sdir, 0);
+	amfree(sdir);
     }
     amfree(uqregex);
+    amfree(newregex);
 }
 
 void

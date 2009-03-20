@@ -1,3 +1,10 @@
+2009-03-20  Jean-Louis Martineau <martineau@zmanda.com>
+	* recover-src/Makefile.am: Add dependencies for uscan.o and uparse.o
+	* recover-src/amrecover.h: Add verbose to many prototype.
+	* recover-src/extract_list.c: Allow to use path for many command.
+	* recover-src/set_commands.c: Add verbose to many function.
+	* recover-src/uparse.y, recover-src/uscan.l: Improve parser.
+
 2009-03-19  Dustin J. Mitchell <dustin@zmanda.com>
 	(thanks to Peter Kunst <peter.kunst@swissrisk.com>)
 	* common-src/Makefile.am: don't include genversion.h in distribution

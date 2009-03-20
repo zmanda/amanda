@@ -283,6 +283,7 @@ set_disk(
 	} else {
 	    dle_str = unquote_string(dle_str+4);
 	    dump_dle = amxml_parse_node_CHAR(dle_str, &errmsg);
+	    amfree(dle_str);
 	}
     }
 }
@@ -325,7 +326,8 @@ local_cd(
 
 void
 cd_glob(
-    char *	glob)
+    char *	glob,
+    int		verbose)
 {
     char *regex;
     char *regex_path;
@@ -371,7 +373,7 @@ cd_glob(
         amfree(clean_disk_path);
     }
 
-    cd_dir(path_on_disk, uqglob);
+    cd_dir(path_on_disk, uqglob, verbose);
 
     amfree(regex_path);
     amfree(path_on_disk);
@@ -380,7 +382,8 @@ cd_glob(
 
 void
 cd_regex(
-    char *	regex)
+    char *	regex,
+    int		verbose)
 {
     char *s;
     char *uq_orig_regex;
@@ -425,7 +428,7 @@ cd_regex(
         amfree(clean_disk_path);
     }
 
-    cd_dir(path_on_disk, uq_orig_regex);
+    cd_dir(path_on_disk, uq_orig_regex, verbose);
 
     amfree(path_on_disk);
     amfree(uqregex);
@@ -435,7 +438,8 @@ cd_regex(
 void
 cd_dir(
     char *	path_on_disk,
-    char *	default_dir)
+    char *	default_dir,
+    int		verbose)
 {
     char *dir = NULL;
     char *s;
@@ -445,7 +449,7 @@ cd_dir(
     DIR_ITEM *ditem;
 
     if ((s = validate_regexp(path_on_disk)) != NULL) {
-	set_directory(default_dir);
+	set_directory(default_dir, verbose);
 	return;
     }
 
@@ -478,20 +482,21 @@ cd_dir(
     }
 
     if(nb_found==0) {
-	set_directory(default_dir);
+	set_directory(default_dir, verbose);
     }
     else if(nb_found==1) {
-	set_directory(dir);
+	set_directory(dir, verbose);
     }
     else {
-	g_printf(_("Too many directories\n"));
+	g_printf(_("Too many directories matching '%s'\n"), default_dir);
     }
     amfree(dir);
 }
 
 void
 set_directory(
-    char *	dir)
+    char *	dir,
+    int		verbose)
 {
     char *cmd = NULL;
     char *new_dir = NULL;
@@ -605,7 +610,8 @@ set_directory(
     {
 	disk_path = newstralloc(disk_path, new_dir);
 	suck_dir_list_from_server();	/* get list of directory contents */
-	show_directory();		/* say where we moved to */
+	if (verbose)
+	    show_directory();		/* say where we moved to */
     }
     else
     {

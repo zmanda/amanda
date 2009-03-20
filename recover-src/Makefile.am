@@ -49,10 +49,10 @@ uscan.c: uparse.h
 
 # these two commands are specially defined to omit $(AMANDA_WARNING_CFLAGS)
 # since we don't want warnings for generated code
-uscan.$(OBJEXT): uscan.c
+uscan.$(OBJEXT): uscan.c ../common-src/amanda.h uparse.h
 	$(CC) $(CFLAGS) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(CPPFLAGS) -c $<
 
-uparse.$(OBJEXT): uparse.c
+uparse.$(OBJEXT): uparse.c ../common-src/amanda.h amrecover.h
 	$(CC) $(CFLAGS) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(CPPFLAGS) -c $<
 
 INSTALLPERMS_exec = \
