@@ -1,3 +1,6 @@
+2009-03-21  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/security-util.c: Fix sec_tcp_conn_get ot not always match.
+
 2009-03-20  Jean-Louis Martineau <martineau@zmanda.com>
 	* recover-src/Makefile.am: Add dependencies for uscan.o and uparse.o
 	* recover-src/amrecover.h: Add verbose to many prototype.

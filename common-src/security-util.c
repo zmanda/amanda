@@ -1439,7 +1439,7 @@ sec_tcp_conn_get(
 		break;
 	}
 
-	if (rc != NULL) {
+	if (iter != NULL) {
 	    rc->refcnt++;
 	    auth_debug(1,
 		      _("sec_tcp_conn_get: exists, refcnt to %s is now %d\n"),
