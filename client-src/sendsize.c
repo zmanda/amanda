@@ -2164,7 +2164,6 @@ getsize_gnutar(
     /* use --numeric-owner for estimates, to reduce the number of user/group
      * lookups required */
     g_ptr_array_add(argv_ptr, stralloc("--numeric-owner"));
-    g_ptr_array_add(argv_ptr, stralloc("--no-unquote"));
     g_ptr_array_add(argv_ptr, stralloc("--directory"));
     canonicalize_pathname(dirname, tmppath);
     g_ptr_array_add(argv_ptr, stralloc(tmppath));

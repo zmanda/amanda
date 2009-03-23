@@ -539,7 +539,6 @@ start_backup(
 	g_ptr_array_add(argv_ptr, stralloc("--create"));
 	g_ptr_array_add(argv_ptr, stralloc("--file"));
 	g_ptr_array_add(argv_ptr, stralloc("-"));
-	g_ptr_array_add(argv_ptr, stralloc("--no-unquote"));
 	g_ptr_array_add(argv_ptr, stralloc("--directory"));
 	canonicalize_pathname(dirname, tmppath);
 	g_ptr_array_add(argv_ptr, stralloc(tmppath));

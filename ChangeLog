@@ -1,3 +1,10 @@
+2009-03-23  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amgtar.c, application-src/amgtar_perl.pl,
+	  client-src/sendbackup-gnutar.c, client-src/sendsize.c,
+	  recover-src/extract_list.c: Undo: '--no-unquote' to gtar arguments.
+	* application-src/amgtar.c: add NO-UNQUOTE property.
+	* man/xml-source/amgtar.8.xml: Document NO-UNQUOTE property.
+
 2009-03-23  Nikolas Coukouma <atrus@zmanda.com>
 	* application-src/ampgsql.pl, installcheck/ampgsql.pl:
 	  fix ampgsql installchecks

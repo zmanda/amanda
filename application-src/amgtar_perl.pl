@@ -119,7 +119,7 @@ sub command_estimate {
          }
       }
       my($size) = -1;
-      my(@cmd) = ($self->{runtar}, $self->{'config'}, $self->{'gnutar'}, "--create", "--no-unquote", "--directory", $self->{'device'}, "--listed-incremental", "$self->{gnulist}/${listdir}_${level}.new", "--sparse", "--one-file-system", "--ignore-failed-read", "--totals", "--file", "/dev/null", ".");
+      my(@cmd) = ($self->{runtar}, $self->{'config'}, $self->{'gnutar'}, "--create", "--directory", $self->{'device'}, "--listed-incremental", "$self->{gnulist}/${listdir}_${level}.new", "--sparse", "--one-file-system", "--ignore-failed-read", "--totals", "--file", "/dev/null", ".");
       debug("cmd:" . join(" ", @cmd));
       my $wtrfh;
       my $estimate_fd = Symbol::gensym;
@@ -185,7 +185,7 @@ sub command_backup {
    if(defined($self->{index})) {
       $verbose = "--verbose";
    }
-   my(@cmd) = ($self->{runtar}, $self->{config}, $self->{gnutar}, "--create", $verbose, "--no-unquote", "--directory", $self->{device}, "--listed-incremental", "$self->{gnulist}/${listdir}_${level}.new", "--sparse", "--one-file-system", "--ignore-failed-read", "--totals", "--file", "-", ".");
+   my(@cmd) = ($self->{runtar}, $self->{config}, $self->{gnutar}, "--create", $verbose, "--directory", $self->{device}, "--listed-incremental", "$self->{gnulist}/${listdir}_${level}.new", "--sparse", "--one-file-system", "--ignore-failed-read", "--totals", "--file", "-", ".");
 
    debug("cmd:" . join(" ", @cmd));
 
@@ -289,7 +289,7 @@ sub command_restore {
    my $self = shift;
 
    chdir(Amanda::Util::get_original_cwd());
-   my(@cmd) = ($self->{gnutar}, "--numeric-owner", "--no-unquote", "-xpGvf", "-");
+   my(@cmd) = ($self->{gnutar}, "--numeric-owner", "-xpGvf", "-");
    for(my $i=1;defined $ARGV[$i]; $i++) {
       my $param = $ARGV[$i];
       $param =~ /^(.*)$/;

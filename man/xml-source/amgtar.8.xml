@@ -74,6 +74,10 @@ Block size of Nx512 bytes (default N=20).  This corresponds to the <emphasis>--b
 If "YES" (the default), gnutar will store sparse files efficiently. If "NO", then the <emphasis>--sparse</emphasis> option is not given to gnutar, and it will not try to detect sparse files.
 </listitem></varlistentry>
  <!-- ==== -->
+ <varlistentry><term>NO-UNQUOTE</term><listitem>
+If "NO" (the default), gnutar doesn't get the <emphasis>--no-unquote</emphasis> option and the diskname can't have some characters, eg. '\'. If "YES", then the <emphasis>--no-unquote</emphasis> option is given to gnutar and the diskname can have any characters.  This option is available only if you are using tar-1.16 or newer.
+</listitem></varlistentry>
+ <!-- ==== -->
  <varlistentry><term>EXIT-HANDLING</term><listitem>
 List which exit status of gtar are good or bad. eg. "1=GOOD 2=BAD", exit status of 1 will produce a good backup, exit status of 2 will give an error.
 </listitem></varlistentry>

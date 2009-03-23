@@ -39,6 +39,7 @@
  * SPARSE          (default YES)
  * ATIME-PRESERVE  (default YES)
  * CHECK-DEVICE    (default YES)
+ * NO-UNQUOTE      (default YES)
  * INCLUDE-FILE
  * INCLUDE-LIST
  * INCLUDE-OPTIONAL
@@ -145,6 +146,7 @@ static char *gnutar_directory;
 static int gnutar_onefilesystem;
 static int gnutar_atimepreserve;
 static int gnutar_checkdevice;
+static int gnutar_no_unquote;
 static int gnutar_sparse;
 static GSList *normal_message = NULL;
 static GSList *ignore_message = NULL;
@@ -181,6 +183,7 @@ static struct option long_options[] = {
     {"exit-handling"   , 1, NULL, 26},
     {"calcsize"        , 0, NULL, 27},
     {"tar-blocksize"   , 1, NULL, 28},
+    {"no-unquote"      , 1, NULL, 29},
     {NULL, 0, NULL, 0}
 };
 
@@ -320,6 +323,7 @@ main(
     gnutar_atimepreserve = 1;
     gnutar_checkdevice = 1;
     gnutar_sparse = 1;
+    gnutar_no_unquote = 0;
     exit_handling = NULL;
 
     /* initialize */
@@ -473,6 +477,13 @@ main(
 	case 27: argument.calcsize = 1;
 		 break;
 	case 28: argument.tar_blocksize = stralloc(optarg);
+	case 29: if (optarg && strcasecmp(optarg, "NO") == 0)
+		     gnutar_no_unquote = 0;
+		 else if (optarg && strcasecmp(optarg, "YES") == 0)
+		     gnutar_no_unquote = 1;
+		 else if (strcasecmp(command, "selfcheck") == 0)
+		     printf(_("ERROR [%s: bad No_UNQUOTE property value (%s)]\n"), get_pname(), optarg);
+		 break;
 	case ':':
 	case '?':
 		break;
@@ -535,6 +546,7 @@ main(
     }
     dbprintf("ONE-FILE-SYSTEM %s\n", gnutar_onefilesystem? "yes":"no");
     dbprintf("SPARSE %s\n", gnutar_sparse? "yes":"no");
+    dbprintf("NO-UNQUOTE %s\n", gnutar_no_unquote? "yes":"no");
     dbprintf("ATIME-PRESERVE %s\n", gnutar_atimepreserve? "yes":"no");
     dbprintf("CHECK-DEVICE %s\n", gnutar_checkdevice? "yes":"no");
     {
@@ -978,7 +990,6 @@ amgtar_restore(
     cmd = stralloc(gnutar_path);
     g_ptr_array_add(argv_ptr, stralloc(gnutar_path));
     g_ptr_array_add(argv_ptr, stralloc("--numeric-owner"));
-    g_ptr_array_add(argv_ptr, stralloc("--no-unquote"));
     g_ptr_array_add(argv_ptr, stralloc("-xpGvf"));
     g_ptr_array_add(argv_ptr, stralloc("-"));
 
@@ -1191,7 +1202,8 @@ GPtrArray *amgtar_build_argv(
     } else {
         g_ptr_array_add(argv_ptr, stralloc("-"));
     }
-    g_ptr_array_add(argv_ptr, stralloc("--no-unquote"));
+    if (gnutar_no_unquote)
+	g_ptr_array_add(argv_ptr, stralloc("--no-unquote"));
     g_ptr_array_add(argv_ptr, stralloc("--directory"));
     canonicalize_pathname(dirname, tmppath);
     g_ptr_array_add(argv_ptr, stralloc(tmppath));
