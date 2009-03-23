@@ -1,4 +1,7 @@
 2009-03-23  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amgtar.c: Add NO-UNQUOTE to restore.
+
+2009-03-23  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/amgtar.c, application-src/amgtar_perl.pl,
 	  client-src/sendbackup-gnutar.c, client-src/sendsize.c,
 	  recover-src/extract_list.c: Undo: '--no-unquote' to gtar arguments.

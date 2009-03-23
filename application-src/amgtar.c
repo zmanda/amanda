@@ -39,7 +39,7 @@
  * SPARSE          (default YES)
  * ATIME-PRESERVE  (default YES)
  * CHECK-DEVICE    (default YES)
- * NO-UNQUOTE      (default YES)
+ * NO-UNQUOTE      (default NO)
  * INCLUDE-FILE
  * INCLUDE-LIST
  * INCLUDE-OPTIONAL
@@ -990,6 +990,8 @@ amgtar_restore(
     cmd = stralloc(gnutar_path);
     g_ptr_array_add(argv_ptr, stralloc(gnutar_path));
     g_ptr_array_add(argv_ptr, stralloc("--numeric-owner"));
+    if (gnutar_no_unquote)
+	g_ptr_array_add(argv_ptr, stralloc("--no-unquote"));
     g_ptr_array_add(argv_ptr, stralloc("-xpGvf"));
     g_ptr_array_add(argv_ptr, stralloc("-"));
 
