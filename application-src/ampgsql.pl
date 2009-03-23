@@ -347,7 +347,10 @@ sub _get_backup_info {
                my $blabel;
                # use runtar to read protected file
                local *TAROUT;
-               open(TAROUT, "$self->{'runtar'} $self->{'args'}->{'config'} $Amanda::Constants::GNUTAR --create --directory $self->{'props'}->{'PG-ARCHIVEDIR'} $fname | $Amanda::Constants::GNUTAR --extract --to-stdout |");
+               my $conf = $self->{'args'}->{'config'} || 'NOCONFIG';
+               my $cmd = "$self->{'runtar'} $conf $Amanda::Constants::GNUTAR --create --directory $self->{'props'}->{'PG-ARCHIVEDIR'} $fname | $Amanda::Constants::GNUTAR --extract --to-stdout";
+               debug("running: $cmd");
+               open(TAROUT, "$cmd |");
                my ($start, $end, $lab);
                while (my $l = <TAROUT>) {
                    chomp($l);

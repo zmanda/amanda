@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 27;
+use Test::More tests => 28;
 
 use lib "@amperldir@";
 use strict;
@@ -175,6 +175,8 @@ $h->close();
 pass("wrote restore config file");
 
 ok(chdir($orig_cur_dir), "changed working directory (back to original)");
+
+is(system('chmod', '-R', 'go-rwx', $archive_dir, $data_dir) >> 8, 0, 'chmod restored files');
 
 do_postmaster();
 pass("ran postmaster to recover");
