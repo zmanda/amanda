@@ -1,4 +1,14 @@
 2009-03-23  Jean-Louis Martineau <martineau@zmanda.com>
+        * application-src/amgtar.c, application-src/amstar.c,
+          client-src/client_util.c, client-src/client_util.h,
+          client-src/selfcheck.c, client-src/sendbackup-gnutar.c,
+          client-src/sendbackup.c, client-src/sendsize.c,
+	  common-src/conffile.c, common-src/conffile.h,
+	  common-src/util.c, oldrecover-src/extract_list.c,
+	  recover-src/extract_list.c,
+          server-src/server_util.c: Use GPtrArray instead of my_argv[].
+
+2009-03-23  Jean-Louis Martineau <martineau@zmanda.com>
 	* man/xml-source/amanda.conf.5.xml, man/xml-source/disklist.5.xml:
 	  Document the fact that: The { must appear at the end of a line,
 	                          and the } on its own line.

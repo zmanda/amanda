@@ -1179,7 +1179,7 @@ void proplist_add_to_argv(
 {
     char         *property_s = key_p;
     property_t   *value_s = value_p;
-    char       ***argv = user_data_p;
+    GPtrArray    *argv_ptr = user_data_p;
     GSList       *value;
     char         *q, *w, *qprop;
 
@@ -1193,10 +1193,8 @@ void proplist_add_to_argv(
     qprop = stralloc2("--", q);
     amfree(q);
     for(value=value_s->values; value != NULL; value = value->next) {
-	**argv = stralloc(qprop);
-	(*argv)++;
-	**argv = stralloc((char *)value->data);
-	(*argv)++;
+	g_ptr_array_add(argv_ptr, stralloc(qprop));
+	g_ptr_array_add(argv_ptr, stralloc((char *)value->data));
     }
     amfree(qprop);
 }

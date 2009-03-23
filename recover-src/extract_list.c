@@ -24,7 +24,7 @@
  * file named AUTHORS, in the root directory of this distribution.
  */
 /*
- * $Id: extract_list.c,v 1.117 2006/08/24 01:57:15 paddy_s Exp $
+ * $Id$
  *
  * implements the "extract" command in amrecover
  */
@@ -247,7 +247,7 @@ clear_tape_list(
     EXTRACT_LIST *	tape_list)
 {
     EXTRACT_LIST_ITEM *this, *next;
-    
+
 
     this = tape_list->files;
     while (this != NULL)
@@ -608,7 +608,7 @@ add_extract_item(
     /* add this in date increasing order          */
     /* because restore must be done in this order */
     /* add at begining */
-    if(extract_list==NULL || strcmp(this->date,extract_list->date) < 0) 
+    if(extract_list==NULL || strcmp(this->date,extract_list->date) < 0)
     {
 	this->next = extract_list;
 	extract_list = this;
@@ -1809,9 +1809,9 @@ extract_files_child(
     EXTRACT_LIST *	elist)
 {
     int save_errno;
-    int extra_params = 0;
-    int i,j=0;
-    char **restore_args = NULL;
+    int   i;
+    guint j;
+    GPtrArray *argv_ptr = g_ptr_array_new();
     int files_off_tape;
     EXTRACT_LIST_ITEM *fn;
     enum dumptypes dumptype = IS_UNKNOWN;
@@ -1819,7 +1819,7 @@ extract_files_child(
     dumpfile_t file;
     size_t len_program;
     char *cmd = NULL;
-    int passwd_field = -1;
+    guint passwd_field = 999999999;
 #ifdef SAMBA_CLIENT
     char *domain = NULL, *smbpass = NULL;
 #endif
@@ -1873,108 +1873,61 @@ extract_files_child(
 
     /* form the arguments to restore */
     files_off_tape = length_of_tape_list(elist);
-    switch (dumptype) {
-    case IS_SAMBA:
-#ifdef SAMBA_CLIENT
-    	extra_params = 10;
-    	break;
-#endif
-    case IS_TAR:
-    case IS_GNUTAR:
-        extra_params = 4;
-        break;
-    case IS_SAMBA_TAR:
-        extra_params = 3;
-        break;
-    case IS_UNKNOWN:
-    case IS_DUMP:
-#ifdef AIX_BACKUP
-        extra_params = 2;
-#else
-#if defined(XFSDUMP)
-	if (strcmp(file.program, XFSDUMP) == 0) {
-            extra_params = 4 + files_off_tape;
-	} else
-#endif
-	{
-        extra_params = 4;
-	}
-#endif
-    	break;
-    case IS_APPLICATION_API:
-	extra_params = 12;
-	if (dump_dle) {
-	    GSList   *scriptlist;
-	    script_t *script;
-	    extra_params += application_property_argv_size(dump_dle);
-	    for (scriptlist = dump_dle->scriptlist; scriptlist != NULL;
-		 scriptlist = scriptlist->next) {
-		script = (script_t *)scriptlist->data;
-		if (script->result && script->result->proplist) {
-		    extra_params += property_argv_size(script->result->proplist);
-		}
-	    }
-	}
-	break;
-    }
-    restore_args = (char **)alloc((size_t)((extra_params + files_off_tape + 1)
-				  * sizeof(char *)));
     switch(dumptype) {
     case IS_SAMBA:
 #ifdef SAMBA_CLIENT
-    	restore_args[j++] = stralloc("smbclient");
-    	smbpass = findpass(file.disk, &domain);
-    	if (smbpass) {
-            restore_args[j++] = stralloc(file.disk);
-	    passwd_field=j;
-    	    restore_args[j++] = stralloc("-U");
-    	    restore_args[j++] = smbpass;
-    	    if (domain) {
-            	restore_args[j++] = stralloc("-W");
-    	    	restore_args[j++] = stralloc(domain);
-   	    } else
-		extra_params -= 2;
-    	} else
-	    extra_params -= 6;
-    	restore_args[j++] = stralloc("-d0");
-    	restore_args[j++] = stralloc("-Tx");
-	restore_args[j++] = stralloc("-");	/* data on stdin */
-    	break;
+	g_ptr_array_add(argv_ptr, stralloc("smbclient"));
+	smbpass = findpass(file.disk, &domain);
+	if (smbpass) {
+	    g_ptr_array_add(argv_ptr, stralloc(file.disk));
+	    g_ptr_array_add(argv_ptr, stralloc("-U"));
+	    passwd_field = argv_ptr->len;
+	    g_ptr_array_add(argv_ptr, stralloc(smbpass));
+	    if (domain) {
+		g_ptr_array_add(argv_ptr, stralloc("-W"));
+		g_ptr_array_add(argv_ptr, stralloc(domain));
+	    }
+	}
+	g_ptr_array_add(argv_ptr, stralloc("-d0"));
+	g_ptr_array_add(argv_ptr, stralloc("-Tx"));
+	g_ptr_array_add(argv_ptr, stralloc("-"));	/* data on stdin */
+	break;
 #endif
     case IS_TAR:
     case IS_GNUTAR:
-    	restore_args[j++] = stralloc("tar");
-	restore_args[j++] = stralloc("--numeric-owner");
-	restore_args[j++] = stralloc("-xpGvf");
-	restore_args[j++] = stralloc("-");	/* data on stdin */
+	g_ptr_array_add(argv_ptr, stralloc("tar"));
+	g_ptr_array_add(argv_ptr, stralloc("--numeric-owner"));
+	g_ptr_array_add(argv_ptr, stralloc("-xpGvf"));
+	g_ptr_array_add(argv_ptr, stralloc("-"));	/* data on stdin */
 	break;
     case IS_SAMBA_TAR:
-    	restore_args[j++] = stralloc("tar");
-	restore_args[j++] = stralloc("-xpvf");
-	restore_args[j++] = stralloc("-");	/* data on stdin */
+	g_ptr_array_add(argv_ptr, stralloc("tar"));
+	g_ptr_array_add(argv_ptr, stralloc("-xpvf"));
+	g_ptr_array_add(argv_ptr, stralloc("-"));	/* data on stdin */
 	break;
     case IS_UNKNOWN:
     case IS_DUMP:
-        restore_args[j++] = stralloc("restore");
+	g_ptr_array_add(argv_ptr, stralloc("restore"));
 #ifdef AIX_BACKUP
         restore_args[j++] = stralloc("-xB");
+	g_ptr_array_add(argv_ptr, stralloc("-xB"));
 #else
 #if defined(XFSDUMP)
 	if (strcmp(file.program, XFSDUMP) == 0) {
-            restore_args[j++] = stralloc("-v");
-            restore_args[j++] = stralloc("silent");
+	    g_ptr_array_add(argv_ptr, stralloc("-v"));
+	    g_ptr_array_add(argv_ptr, stralloc("silent"));
 	} else
 #endif
 #if defined(VDUMP)
 	if (strcmp(file.program, VDUMP) == 0) {
-            restore_args[j++] = stralloc("xf");
-            restore_args[j++] = stralloc("-");	/* data on stdin */
+	    g_ptr_array_add(argv_ptr, stralloc("xf"));
+	    g_ptr_array_add(argv_ptr, stralloc("-"));	/* data on stdin */
 	} else
 #endif
 	{
-        restore_args[j++] = stralloc("xbf");
-        restore_args[j++] = stralloc("2");	/* read in units of 1K */
-        restore_args[j++] = stralloc("-");	/* data on stdin */
+	g_ptr_array_add(argv_ptr, stralloc("xbf"));
+	g_ptr_array_add(argv_ptr, stralloc("2")); /* read in units of 1K */
+	g_ptr_array_add(argv_ptr, stralloc("-"));	/* data on stdin */
 	}
 #endif
 	break;
@@ -1993,50 +1946,49 @@ extract_files_child(
 					    &errarray);
 	    }
 	}
-	restore_args[j++] = stralloc(file.application);
-	restore_args[j++] = stralloc("restore");
-	restore_args[j++] = stralloc("--config");
-	restore_args[j++] = stralloc(get_config_name());
-	restore_args[j++] = stralloc("--disk");
-	restore_args[j++] = stralloc(file.disk);
+	g_ptr_array_add(argv_ptr, stralloc(file.application));
+	g_ptr_array_add(argv_ptr, stralloc("restore"));
+	g_ptr_array_add(argv_ptr, stralloc("--config"));
+	g_ptr_array_add(argv_ptr, stralloc(get_config_name()));
+	g_ptr_array_add(argv_ptr, stralloc("--disk"));
+	g_ptr_array_add(argv_ptr, stralloc(file.disk));
 	if (dump_dle && dump_dle->device) {
-	    restore_args[j++] = stralloc("--device");
-	    restore_args[j++] = stralloc(dump_dle->device);
+	    g_ptr_array_add(argv_ptr, stralloc("--device"));
+	    g_ptr_array_add(argv_ptr, stralloc(dump_dle->device));
 	}
 	if (bsu->smb_recover_mode && samba_extract_method == SAMBA_SMBCLIENT){
-	    restore_args[j++] = "--recover-mode";
-	    restore_args[j++] = "smb";
+	    g_ptr_array_add(argv_ptr, stralloc("--recover-mode"));
+	    g_ptr_array_add(argv_ptr, stralloc("smb"));
 	}
 	if (dump_dle) {
 	    GSList   *scriptlist;
 	    script_t *script;
 
-	    j += application_property_add_to_argv(&restore_args[j], dump_dle, NULL);
+	    application_property_add_to_argv(argv_ptr, dump_dle, NULL);
 	    for (scriptlist = dump_dle->scriptlist; scriptlist != NULL;
 		 scriptlist = scriptlist->next) {
 		script = (script_t *)scriptlist->data;
 		if (script->result && script->result->proplist) {
-		    j += property_add_to_argv(&restore_args[j],
-					      script->result->proplist);
+		    property_add_to_argv(argv_ptr, script->result->proplist);
 		}
 	    }
 
 	}
 	break;
     }
-  
+
     for (i = 0, fn = elist->files; i < files_off_tape; i++, fn = fn->next)
     {
 	switch (dumptype) {
-    	case IS_APPLICATION_API:
+	case IS_APPLICATION_API:
     	case IS_TAR:
     	case IS_GNUTAR:
     	case IS_SAMBA_TAR:
     	case IS_SAMBA:
 	    if (strcmp(fn->path, "/") == 0)
-	        restore_args[j++] = stralloc(".");
+		g_ptr_array_add(argv_ptr, stralloc("."));
 	    else
-	        restore_args[j++] = stralloc2(".", fn->path);
+		g_ptr_array_add(argv_ptr, stralloc2(".", fn->path));
 	    break;
 	case IS_UNKNOWN:
 	case IS_DUMP:
@@ -2046,23 +1998,23 @@ extract_files_child(
 		 * xfsrestore needs a -s option before each file to be
 		 * restored, and also wants them to be relative paths.
 		 */
-		restore_args[j++] = stralloc("-s");
-		restore_args[j++] = stralloc(fn->path + 1);
+		g_ptr_array_add(argv_ptr, stralloc("-s"));
+		g_ptr_array_add(argv_ptr, stralloc(fn->path + 1));
 	    } else
 #endif
 	    {
-	    restore_args[j++] = stralloc(fn->path);
+	    g_ptr_array_add(argv_ptr, stralloc(fn->path));
 	    }
 	    break;
   	}
     }
 #if defined(XFSDUMP)
     if (strcmp(file.program, XFSDUMP) == 0) {
-	restore_args[j++] = stralloc("-");
-	restore_args[j++] = stralloc(".");
+	g_ptr_array_add(argv_ptr, stralloc("-"));
+	g_ptr_array_add(argv_ptr, stralloc("."));
     }
 #endif
-    restore_args[j] = NULL;
+    g_ptr_array_add(argv_ptr, NULL);
 
     switch (dumptype) {
     case IS_SAMBA:
@@ -2117,20 +2069,17 @@ extract_files_child(
     }
     if (cmd) {
         dbprintf(_("Exec'ing %s with arguments:\n"), cmd);
-	for (i = 0; i < j; i++) {
-	    if( i == passwd_field)
+	for (j = 0; j < argv_ptr->len - 1; j++) {
+	    if (j == passwd_field)
 		dbprintf("\tXXXXX\n");
 	    else
-  	        dbprintf(_("\t%s\n"), restore_args[i]);
+		dbprintf(_("\t%s\n"), (char *)g_ptr_array_index(argv_ptr, j));
 	}
 	safe_fd(-1, 0);
-        (void)execv(cmd, restore_args);
+        (void)execv(cmd, (char **)argv_ptr->pdata);
 	/* only get here if exec failed */
 	save_errno = errno;
-	for (i = 0; i < j; i++) {
-  	    amfree(restore_args[i]);
-  	}
-  	amfree(restore_args);
+	g_ptr_array_free_full(argv_ptr);
 	errno = save_errno;
         perror(_("amrecover couldn't exec"));
         g_fprintf(stderr, _(" problem executing %s\n"), cmd);
@@ -2170,7 +2119,7 @@ writer_intermediary(
 
     while(get_amidxtaped_line() >= 0) {
 	char desired_tape[MAX_TAPE_LABEL_BUF];
-                
+
 	/* if prompted for a tape, relay said prompt to the user */
 	if(sscanf(amidxtaped_line, "FEEDME %132s\n", desired_tape) == 1) {
 	    int done;
@@ -2298,7 +2247,7 @@ extract_files(void)
 	    }
 	    else
 		g_printf("                               ");
-	    tlist = unmarshal_tapelist_str(elist->tape); 
+	    tlist = unmarshal_tapelist_str(elist->tape);
 	    for(a_tlist = tlist ; a_tlist != NULL; a_tlist = a_tlist->next)
 		g_printf(" %s", a_tlist->label);
 	    g_printf("\n");
@@ -2316,7 +2265,7 @@ extract_files(void)
 	    }
 	    else
 		g_printf("                               ");
-	    tlist = unmarshal_tapelist_str(elist->tape); 
+	    tlist = unmarshal_tapelist_str(elist->tape);
 	    for(a_tlist = tlist; a_tlist != NULL; a_tlist = a_tlist->next)
 		g_printf(" %s", a_tlist->label);
 	    g_printf("\n");
@@ -2372,7 +2321,7 @@ extract_files(void)
 	if(elist->tape[0]=='/') {
 	    dump_device_name = newstralloc(dump_device_name, elist->tape);
 	    g_printf(_("Extracting from file "));
-	    tlist = unmarshal_tapelist_str(dump_device_name); 
+	    tlist = unmarshal_tapelist_str(dump_device_name);
 	    for(a_tlist = tlist; a_tlist != NULL; a_tlist = a_tlist->next)
 		g_printf(" %s", a_tlist->label);
 	    g_printf("\n");
@@ -2381,7 +2330,7 @@ extract_files(void)
 	else {
 	    g_printf(_("Extracting files using tape drive %s on host %s.\n"),
 		   tape_device_name, tape_server_name);
-	    tlist = unmarshal_tapelist_str(elist->tape); 
+	    tlist = unmarshal_tapelist_str(elist->tape);
 	    g_printf(_("Load tape %s now\n"), tlist->label);
 	    dbprintf(_("Requesting tape %s from user\n"), tlist->label);
 	    free_tapelist(tlist);

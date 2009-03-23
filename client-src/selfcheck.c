@@ -772,75 +772,66 @@ check_disk(
 
 	case 0: /* child */
 	    {
-		char **argvchild, **arg;
+		GPtrArray *argv_ptr = g_ptr_array_new();
+		guint i;
 		char *cmd = vstralloc(APPLICATION_DIR, "/", dle->program, NULL);
 		GSList   *scriptlist;
 		script_t *script;
 		char *cmdline;
-		int j=0;
-		int k;
 
 		aclose(app_err[0]);
 		dup2(app_err[1], 2);
 
-		k = application_property_argv_size(dle);
-		for (scriptlist = dle->scriptlist; scriptlist != NULL;
-		     scriptlist = scriptlist->next) {
-		    script = (script_t *)scriptlist->data;
-		    if (script->result && script->result->proplist) {
-			k += property_argv_size(script->result->proplist);
-		    }
-		}
-		argvchild = g_new0(char *, 18 + k);
-		argvchild[j++] = dle->program;
-		argvchild[j++] = "selfcheck";
+		g_ptr_array_add(argv_ptr, stralloc(dle->program));
+		g_ptr_array_add(argv_ptr, stralloc("selfcheck"));
 		if (bsu->message_line == 1) {
-		    argvchild[j++] = "--message";
-		    argvchild[j++] = "line";
+		    g_ptr_array_add(argv_ptr, stralloc("--message"));
+		    g_ptr_array_add(argv_ptr, stralloc("line"));
 		}
 		if (g_options->config != NULL && bsu->config == 1) {
-		    argvchild[j++] = "--config";
-		    argvchild[j++] = g_options->config;
+		    g_ptr_array_add(argv_ptr, stralloc("--config"));
+		    g_ptr_array_add(argv_ptr, stralloc(g_options->config));
 		}
 		if (g_options->hostname != NULL && bsu->host == 1) {
-		    argvchild[j++] = "--host";
-		    argvchild[j++] = g_options->hostname;
+		    g_ptr_array_add(argv_ptr, stralloc("--host"));
+		    g_ptr_array_add(argv_ptr, stralloc(g_options->hostname));
 		}
 		if (dle->disk != NULL && bsu->disk == 1) {
-		    argvchild[j++] = "--disk";
-		    argvchild[j++] = dle->disk;
+		    g_ptr_array_add(argv_ptr, stralloc("--disk"));
+		    g_ptr_array_add(argv_ptr, stralloc(dle->disk));
 		}
 		if (dle->device) {
-		    argvchild[j++] = "--device";
-		    argvchild[j++] = dle->device;
+		    g_ptr_array_add(argv_ptr, stralloc("--device"));
+		    g_ptr_array_add(argv_ptr, stralloc(dle->device));
 		}
 		if (dle->create_index && bsu->index_line == 1) {
-		    argvchild[j++] = "--index";
-		    argvchild[j++] = "line";
+		    g_ptr_array_add(argv_ptr, stralloc("--index"));
+		    g_ptr_array_add(argv_ptr, stralloc("line"));
 		}
 		if (dle->record && bsu->record == 1) {
-		    argvchild[j++] = "--record";
+		    g_ptr_array_add(argv_ptr, stralloc("--record"));
 		}
 		if (GPOINTER_TO_INT(dle->estimatelist->data) == ES_CALCSIZE &&
 		    bsu->calcsize == 1) {
-		    argvchild[j++] = "--calcsize";
+		    g_ptr_array_add(argv_ptr, stralloc("--calcsize"));
 		}
-		j += application_property_add_to_argv(&argvchild[j], dle, bsu);
+		application_property_add_to_argv(argv_ptr, dle, bsu);
 
 		for (scriptlist = dle->scriptlist; scriptlist != NULL;
 		     scriptlist = scriptlist->next) {
 		    script = (script_t *)scriptlist->data;
 		    if (script->result && script->result->proplist) {
-			j += property_add_to_argv(&argvchild[j],
-						  script->result->proplist);
+			property_add_to_argv(argv_ptr,
+					     script->result->proplist);
 		    }
 		}
 
-		argvchild[j++] = NULL;
+		g_ptr_array_add(argv_ptr, NULL);
 
 		cmdline = stralloc(cmd);
-		for(arg = argvchild; *arg != NULL; arg++) {
-		    char *quoted = quote_string(*arg);
+		for (i = 0; i < argv_ptr->len-1; i++) {
+		    char *quoted = quote_string(
+					(char *)g_ptr_array_index(argv_ptr,i));
 		    cmdline = vstrextend(&cmdline, " ", quoted, NULL);
 		    amfree(quoted);
 		}
@@ -848,7 +839,7 @@ check_disk(
 		amfree(cmdline);
 
 		safe_fd(-1, 0);
-		execve(cmd, argvchild, safe_env());
+		execve(cmd, (char **)argv_ptr->pdata, safe_env());
 		g_printf(_("ERROR [Can't execute %s: %s]\n"), cmd, strerror(errno));
 		exit(127);
 	    }

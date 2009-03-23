@@ -114,7 +114,7 @@ static void amstar_estimate(application_argument_t *argument);
 static void amstar_backup(application_argument_t *argument);
 static void amstar_restore(application_argument_t *argument);
 static void amstar_validate(application_argument_t *argument);
-static char **amstar_build_argv(application_argument_t *argument,
+static GPtrArray *amstar_build_argv(application_argument_t *argument,
 				int level,
 				int command);
 char *star_path;
@@ -169,9 +169,9 @@ main(
      *   1) Only set the message locale for now.
      *   2) Set textdomain for all amanda related programs to "amanda"
      *      We don't want to be forced to support dozens of message catalogs.
-     */  
+     */
     setlocale(LC_MESSAGES, "C");
-    textdomain("amanda"); 
+    textdomain("amanda");
 
     /* drop root privileges */
 
@@ -365,22 +365,22 @@ static void
 amstar_estimate(
     application_argument_t *argument)
 {
-    char **my_argv = NULL;
-    char  *cmd = NULL;
-    int    nullfd;
-    int    pipefd;
-    FILE  *dumpout = NULL;
-    off_t  size = -1;
-    char   line[32768];
-    char  *errmsg = NULL;
-    char  *qerrmsg;
-    char  *qdisk;
-    amwait_t wait_status;
-    int    starpid;
-    amregex_t *rp;
-    times_t start_time;
-    int     level = 0;
-    GSList *levels = NULL;
+    GPtrArray  *argv_ptr;
+    char       *cmd = NULL;
+    int         nullfd;
+    int         pipefd;
+    FILE       *dumpout = NULL;
+    off_t       size = -1;
+    char        line[32768];
+    char       *errmsg = NULL;
+    char       *qerrmsg;
+    char       *qdisk;
+    amwait_t    wait_status;
+    int         starpid;
+    amregex_t  *rp;
+    times_t     start_time;
+    int         level = 0;
+    GSList     *levels = NULL;
 
     qdisk = quote_string(argument->dle.disk);
     if (argument->calcsize) {
@@ -402,7 +402,7 @@ amstar_estimate(
 
     for (levels = argument->level; levels != NULL; levels = levels->next) {
 	level = GPOINTER_TO_INT(levels->data);
-	my_argv = amstar_build_argv(argument, level, CMD_ESTIMATE);
+	argv_ptr = amstar_build_argv(argument, level, CMD_ESTIMATE);
 
 	if ((nullfd = open("/dev/null", O_RDWR)) == -1) {
 	    errmsg = vstrallocf(_("Cannot access /dev/null : %s"),
@@ -411,7 +411,8 @@ amstar_estimate(
 	}
 
 	starpid = pipespawnv(cmd, STDERR_PIPE, 1,
-			     &nullfd, &nullfd, &pipefd, my_argv);
+			     &nullfd, &nullfd, &pipefd,
+			     (char **)argv_ptr->pdata);
 
 	dumpout = fdopen(pipefd,"r");
 	if (!dumpout) {
@@ -452,12 +453,12 @@ amstar_estimate(
 		 walltime_str(timessub(curclock(), start_time)));
 	if(size == (off_t)-1) {
 	    errmsg = vstrallocf(_("no size line match in %s output"),
-				my_argv[0]);
+				cmd);
 	    dbprintf(_("%s for %s\n"), errmsg, qdisk);
 	    dbprintf(".....\n");
 	} else if(size == (off_t)0 && argument->level == 0) {
 	    dbprintf(_("possible %s problem -- is \"%s\" really empty?\n"),
-		      my_argv[0], argument->dle.disk);
+		     cmd, argument->dle.disk);
 	    dbprintf(".....\n");
 	}
 	dbprintf(_("estimate size for %s level %d: %lld KB\n"),
@@ -467,7 +468,7 @@ amstar_estimate(
 
 	kill(-starpid, SIGTERM);
 
-	dbprintf(_("waiting for %s \"%s\" child\n"), my_argv[0], qdisk);
+	dbprintf(_("waiting for %s \"%s\" child\n"), cmd, qdisk);
 	waitpid(starpid, &wait_status, 0);
 	if (WIFSIGNALED(wait_status)) {
 	    errmsg = vstrallocf(_("%s terminated with signal %d: see %s"),
@@ -482,9 +483,9 @@ amstar_estimate(
 	} else {
 	    errmsg = vstrallocf(_("%s got bad exit: see %s"), cmd, dbfn());
 	}
-	dbprintf(_("after %s %s wait\n"), my_argv[0], qdisk);
+	dbprintf(_("after %s %s wait\n"), cmd, qdisk);
 
-	amfree(my_argv);
+	g_ptr_array_free_full(argv_ptr);
 
 	aclose(nullfd);
 	afclose(dumpout);
@@ -510,34 +511,35 @@ static void
 amstar_backup(
     application_argument_t *argument)
 {
-    int dumpin;
-    char *cmd = NULL;
-    char *qdisk;
-    char  line[32768];
+    int        dumpin;
+    char      *cmd = NULL;
+    char      *qdisk;
+    char       line[32768];
     amregex_t *rp;
-    off_t dump_size = -1;
-    char *type;
-    char startchr;
-    char **my_argv;
-    int starpid;
-    int dataf = 1;
-    int mesgf = 3;
-    int indexf = 4;
-    int outf;
-    FILE *mesgstream;
-    FILE *indexstream = NULL;
-    FILE *outstream;
-    int level = GPOINTER_TO_INT(argument->level->data);
+    off_t      dump_size = -1;
+    char      *type;
+    char       startchr;
+    GPtrArray *argv_ptr;
+    int        starpid;
+    int        dataf = 1;
+    int        mesgf = 3;
+    int        indexf = 4;
+    int        outf;
+    FILE      *mesgstream;
+    FILE      *indexstream = NULL;
+    FILE      *outstream;
+    int        level = GPOINTER_TO_INT(argument->level->data);
 
     qdisk = quote_string(argument->dle.disk);
 
-    my_argv = amstar_build_argv(argument, level, CMD_BACKUP);
+    argv_ptr = amstar_build_argv(argument, level, CMD_BACKUP);
 
     cmd = stralloc(star_path);
 
     starpid = pipespawnv(cmd, STDIN_PIPE|STDERR_PIPE, 1,
-			 &dumpin, &dataf, &outf, my_argv);
+			 &dumpin, &dataf, &outf, (char **)argv_ptr->pdata);
 
+    g_ptr_array_free_full(argv_ptr);
     /* close the write ends of the pipes */
     aclose(dumpin);
     aclose(dataf);
@@ -667,36 +669,35 @@ static void
 amstar_restore(
     application_argument_t *argument)
 {
-    char  *cmd;
-    char **my_argv;
-    char **env;
-    int    i, j;
-    char  *e;
+    char       *cmd;
+    GPtrArray  *argv_ptr = g_ptr_array_new();
+    char      **env;
+    int         j;
+    char       *e;
 
     if (!star_path) {
 	error(_("STAR-PATH not defined"));
     }
 
     cmd = stralloc(star_path);
-    my_argv = alloc(SIZEOF(char *) * (11 + argument->argc));
-    i = 0;
-    my_argv[i++] = stralloc(star_path);
-    my_argv[i++] = stralloc("-x");
-    my_argv[i++] = stralloc("-v");
-    my_argv[i++] = stralloc("-xattr");
-    my_argv[i++] = stralloc("-acl");
-    my_argv[i++] = stralloc("errctl=WARN|SAMEFILE|SETTIME|DIFF|SETACL|SETXATTR|SETMODE|BADACL *");
-    my_argv[i++] = stralloc("-no-fifo");
-    my_argv[i++] = stralloc("-f");
-    my_argv[i++] = stralloc("-");
+
+    g_ptr_array_add(argv_ptr, stralloc(star_path));
+    g_ptr_array_add(argv_ptr, stralloc("-x"));
+    g_ptr_array_add(argv_ptr, stralloc("-v"));
+    g_ptr_array_add(argv_ptr, stralloc("-xattr"));
+    g_ptr_array_add(argv_ptr, stralloc("-acl"));
+    g_ptr_array_add(argv_ptr, stralloc("errctl=WARN|SAMEFILE|SETTIME|DIFF|SETACL|SETXATTR|SETMODE|BADACL *"));
+    g_ptr_array_add(argv_ptr, stralloc("-no-fifo"));
+    g_ptr_array_add(argv_ptr, stralloc("-f"));
+    g_ptr_array_add(argv_ptr, stralloc("-"));
 
     for (j=1; j< argument->argc; j++)
-	my_argv[i++] = stralloc(argument->argv[j]+2); /* remove ./ */
-    my_argv[i++] = NULL;
+	g_ptr_array_add(argv_ptr, stralloc(argument->argv[j]+2));/*remove ./ */
+    g_ptr_array_add(argv_ptr, NULL);
 
     env = safe_env();
     become_root();
-    execve(cmd, my_argv, env);
+    execve(cmd, (char **)argv_ptr->pdata, env);
     e = strerror(errno);
     error(_("error [exec %s: %s]"), cmd, e);
 
@@ -706,44 +707,41 @@ static void
 amstar_validate(
     application_argument_t *argument G_GNUC_UNUSED)
 {
-    char  *cmd;
-    char **my_argv;
-    char **env;
-    int    i;
-    char  *e;
+    char       *cmd;
+    GPtrArray  *argv_ptr = g_ptr_array_new();
+    char      **env;
+    char       *e;
 
     if (!star_path) {
 	error(_("STAR-PATH not defined"));
     }
 
     cmd = stralloc(star_path);
-    my_argv = alloc(SIZEOF(char *) * 5);
-    i = 0;
-    my_argv[i++] = stralloc(star_path);
-    my_argv[i++] = stralloc("-t");
-    my_argv[i++] = stralloc("-f");
-    my_argv[i++] = stralloc("-");
-    my_argv[i++] = NULL;
+
+    g_ptr_array_add(argv_ptr, stralloc(star_path));
+    g_ptr_array_add(argv_ptr, stralloc("-t"));
+    g_ptr_array_add(argv_ptr, stralloc("-f"));
+    g_ptr_array_add(argv_ptr, stralloc("-"));
+    g_ptr_array_add(argv_ptr, NULL);
 
     env = safe_env();
-    execve(cmd, my_argv, env);
+    execve(cmd, (char **)argv_ptr->pdata, env);
     e = strerror(errno);
     error(_("error [exec %s: %s]"), cmd, e);
 
 }
 
-char **amstar_build_argv(
+static GPtrArray *amstar_build_argv(
     application_argument_t *argument,
     int   level,
     int   command)
 {
-    int    i;
-    char  *dirname;
-    char  *fsname;
-    char  levelstr[NUM_STR_SIZE+7];
-    char **my_argv;
-    char *s;
-    char *tardumpfile;
+    char      *dirname;
+    char      *fsname;
+    char       levelstr[NUM_STR_SIZE+7];
+    GPtrArray *argv_ptr = g_ptr_array_new();
+    char      *s;
+    char      *tardumpfile;
 
     dirname = amname_to_dirname(argument->dle.device);
     fsname = vstralloc("fs-name=", dirname, NULL);
@@ -761,55 +759,52 @@ char **amstar_build_argv(
 	tardumpfile = stralloc(star_tardumps);
     }
 
-    my_argv = alloc(SIZEOF(char *) * 32);
-    i = 0;
-    
-    my_argv[i++] = star_path;
+    g_ptr_array_add(argv_ptr, stralloc(star_path));
 
-    my_argv[i++] = stralloc("-c");
-    my_argv[i++] = stralloc("-f");
+    g_ptr_array_add(argv_ptr, stralloc("-c"));
+    g_ptr_array_add(argv_ptr, stralloc("-f"));
     if (command == CMD_ESTIMATE) {
-	my_argv[i++] = stralloc("/dev/null");
+	g_ptr_array_add(argv_ptr, stralloc("/dev/null"));
     } else {
-	my_argv[i++] = stralloc("-");
+	g_ptr_array_add(argv_ptr, stralloc("-"));
     }
-    my_argv[i++] = stralloc("-C");
+    g_ptr_array_add(argv_ptr, stralloc("-C"));
 #if defined(__CYGWIN__)
     {
 	char tmppath[PATH_MAX];
 
 	cygwin_conv_to_full_posix_path(dirname, tmppath);
-	my_argv[i++] = stralloc(tmppath);
+	g_ptr_array_add(argv_ptr, stralloc(tmppath));
     }
 #else
-    my_argv[i++] = stralloc(dirname);
+    g_ptr_array_add(argv_ptr, stralloc(dirname));
 #endif
-    my_argv[i++] = stralloc(fsname);
+    g_ptr_array_add(argv_ptr, stralloc(fsname));
     if (star_onefilesystem)
-	my_argv[i++] = stralloc("-xdev");
-    my_argv[i++] = stralloc("-link-dirs");
-    my_argv[i++] = stralloc(levelstr);
-    my_argv[i++] = stralloc2("tardumps=", tardumpfile);
+	g_ptr_array_add(argv_ptr, stralloc("-xdev"));
+    g_ptr_array_add(argv_ptr, stralloc("-link-dirs"));
+    g_ptr_array_add(argv_ptr, stralloc(levelstr));
+    g_ptr_array_add(argv_ptr, stralloc2("tardumps=", tardumpfile));
     if (command == CMD_BACKUP)
-	my_argv[i++] = stralloc("-wtardumps");
-    my_argv[i++] = stralloc("-xattr");
-    my_argv[i++] = stralloc("-acl");
-    my_argv[i++] = stralloc("H=exustar");
-    my_argv[i++] = stralloc("errctl=WARN|SAMEFILE|DIFF|GROW|SHRINK|SPECIALFILE|GETXATTR|BADACL *");
+	g_ptr_array_add(argv_ptr, stralloc("-wtardumps"));
+    g_ptr_array_add(argv_ptr, stralloc("-xattr"));
+    g_ptr_array_add(argv_ptr, stralloc("-acl"));
+    g_ptr_array_add(argv_ptr, stralloc("H=exustar"));
+    g_ptr_array_add(argv_ptr, stralloc("errctl=WARN|SAMEFILE|DIFF|GROW|SHRINK|SPECIALFILE|GETXATTR|BADACL *"));
     if (star_sparse)
-	my_argv[i++] = stralloc("-sparse");
-    my_argv[i++] = stralloc("-dodesc");
+	g_ptr_array_add(argv_ptr, stralloc("-sparse"));
+    g_ptr_array_add(argv_ptr, stralloc("-dodesc"));
 
     if (command == CMD_BACKUP && argument->dle.create_index)
-	my_argv[i++] = stralloc("-v");
+	g_ptr_array_add(argv_ptr, stralloc("-v"));
 
-    my_argv[i++] = stralloc(".");
+    g_ptr_array_add(argv_ptr, stralloc("."));
 
-    my_argv[i] = NULL;
+    g_ptr_array_add(argv_ptr, NULL);
 
     amfree(tardumpfile);
     amfree(fsname);
     amfree(dirname);
 
-    return(my_argv);
+    return(argv_ptr);
 }

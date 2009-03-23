@@ -230,15 +230,15 @@ run_server_script(
     disk_t	 *dp,
     int           level)
 {
-    pid_t   scriptpid;
-    int     scriptin, scriptout, scripterr;
-    char   *cmd;
-    char  **argvchild;
-    int     i, k;
-    FILE   *streamout;
-    char   *line;
-    char   *plugin;
-    char    level_number[NUM_STR_SIZE];
+    pid_t      scriptpid;
+    int        scriptin, scriptout, scripterr;
+    char      *cmd;
+    char      *command = NULL;
+    GPtrArray *argv_ptr = g_ptr_array_new();
+    FILE      *streamout;
+    char      *line;
+    char      *plugin;
+    char       level_number[NUM_STR_SIZE];
 
     if ((pp_script_get_execute_on(pp_script) & execute_on) == 0)
 	return;
@@ -246,37 +246,46 @@ run_server_script(
 	return;
 
     plugin = pp_script_get_plugin(pp_script);
-    k = property_argv_size(pp_script_get_property(pp_script));
-    argvchild = g_new0(char *, 16+k);
     cmd = vstralloc(APPLICATION_DIR, "/", plugin, NULL);
-    i = 0;
-    argvchild[i++] = plugin;
+    g_ptr_array_add(argv_ptr, stralloc(plugin));
 
     switch (execute_on) {
     case EXECUTE_ON_PRE_DLE_AMCHECK:
-	argvchild[i++] = "PRE-DLE-AMCHECK"; break;
+	command = "PRE-DLE-AMCHECK";
+	break;
     case EXECUTE_ON_PRE_HOST_AMCHECK:
-	argvchild[i++] = "PRE-HOST-AMCHECK"; break;
+	command = "PRE-HOST-AMCHECK";
+	break;
     case EXECUTE_ON_POST_DLE_AMCHECK:
-	argvchild[i++] = "POST-DLE-AMCHECK"; break;
+	command = "POST-DLE-AMCHECK";
+	break;
     case EXECUTE_ON_POST_HOST_AMCHECK:
-	argvchild[i++] = "POST-HOST-AMCHECK"; break;
+	command = "POST-HOST-AMCHECK";
+	break;
     case EXECUTE_ON_PRE_DLE_ESTIMATE:
-	argvchild[i++] = "PRE-DLE-ESTIMATE"; break;
+	command = "PRE-DLE-ESTIMATE";
+	break;
     case EXECUTE_ON_PRE_HOST_ESTIMATE:
-	argvchild[i++] = "PRE-HOST-ESTIMATE"; break;
+	command = "PRE-HOST-ESTIMATE";
+	break;
     case EXECUTE_ON_POST_DLE_ESTIMATE:
-	argvchild[i++] = "POST-DLE-ESTIMATE"; break;
+	command = "POST-DLE-ESTIMATE";
+	break;
     case EXECUTE_ON_POST_HOST_ESTIMATE:
-	argvchild[i++] = "POST-HOST-ESTIMATE"; break;
+	command = "POST-HOST-ESTIMATE";
+	break;
     case EXECUTE_ON_PRE_DLE_BACKUP:
-	argvchild[i++] = "PRE-DLE-BACKUP"; break;
+	command = "PRE-DLE-BACKUP";
+	break;
     case EXECUTE_ON_PRE_HOST_BACKUP:
-	argvchild[i++] = "PRE-HOST-BACKUP"; break;
+	command = "PRE-HOST-BACKUP";
+	break;
     case EXECUTE_ON_POST_DLE_BACKUP:
-	argvchild[i++] = "POST-DLE-BACKUP"; break;
+	command = "POST-DLE-BACKUP";
+	break;
     case EXECUTE_ON_POST_HOST_BACKUP:
-	argvchild[i++] = "POST-HOST-BACKUP"; break;
+	command = "POST-HOST-BACKUP";
+	break;
     case EXECUTE_ON_PRE_RECOVER:
     case EXECUTE_ON_POST_RECOVER:
     case EXECUTE_ON_PRE_LEVEL_RECOVER:
@@ -288,37 +297,39 @@ run_server_script(
 	}
     }
 
-    argvchild[i++] = "--execute-where";
-    argvchild[i++] = "server";
+    g_ptr_array_add(argv_ptr, stralloc(command));
+    g_ptr_array_add(argv_ptr, stralloc("--execute-where"));
+    g_ptr_array_add(argv_ptr, stralloc("server"));
 
     if (config) {
-	argvchild[i++] = "--config";
-	argvchild[i++] = config;
+	g_ptr_array_add(argv_ptr, stralloc("--config"));
+	g_ptr_array_add(argv_ptr, stralloc(config));
     }
     if (dp->host->hostname) {
-	argvchild[i++] = "--host";
-	argvchild[i++] = dp->host->hostname;
+	g_ptr_array_add(argv_ptr, stralloc("--host"));
+	g_ptr_array_add(argv_ptr, stralloc(dp->host->hostname));
     }
     if (dp->name) {
-	argvchild[i++] = "--disk";
-	argvchild[i++] = dp->name;
+	g_ptr_array_add(argv_ptr, stralloc("--disk"));
+	g_ptr_array_add(argv_ptr, stralloc(dp->name));
     }
     if (dp->device) {
-	argvchild[i++] = "--device";
-	argvchild[i++] = dp->device;
+	g_ptr_array_add(argv_ptr, stralloc("--device"));
+	g_ptr_array_add(argv_ptr, stralloc(dp->device));
     }
     if (level >= 0) {
 	g_snprintf(level_number, SIZEOF(level_number), "%d", level);
-	argvchild[i++] = "--level";
-	argvchild[i++] = level_number;
+	g_ptr_array_add(argv_ptr, stralloc("--level"));
+	g_ptr_array_add(argv_ptr, stralloc(level_number));
     }
 
-    i += property_add_to_argv(&argvchild[i], pp_script_get_property(pp_script));
-    argvchild[i++] = NULL;
+    property_add_to_argv(argv_ptr, pp_script_get_property(pp_script));
+    g_ptr_array_add(argv_ptr, NULL);
 
     scripterr = fileno(stderr);
     scriptpid = pipespawnv(cmd, STDIN_PIPE|STDOUT_PIPE, 0, &scriptin,
-			   &scriptout, &scripterr, argvchild);
+			   &scriptout, &scripterr,
+			   (char **)argv_ptr->pdata);
     close(scriptin);
 
     streamout = fdopen(scriptout, "r");
@@ -329,6 +340,7 @@ run_server_script(
     }
     fclose(streamout);
     waitpid(scriptpid, NULL, 0);
+    g_ptr_array_free_full(argv_ptr);
 }
 
 

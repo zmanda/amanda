@@ -509,8 +509,7 @@ start_backup(
 
 	int nb_exclude = 0;
 	int nb_include = 0;
-	char **my_argv;
-	int i = 0;
+	GPtrArray *argv_ptr = g_ptr_array_new();
 	char *file_exclude = NULL;
 	char *file_include = NULL;
 
@@ -522,37 +521,35 @@ start_backup(
 	if (nb_exclude > 0) file_exclude = build_exclude(dle, 0);
 	if (nb_include > 0) file_include = build_include(dle, 0);
 
-	my_argv = alloc(SIZEOF(char *) * (22 + (nb_exclude*2)+(nb_include*2)));
-
 	cmd = vstralloc(amlibexecdir, "/", "runtar", versionsuffix(), NULL);
 	info_tapeheader(dle);
 
 	start_index(dle->create_index, dumpout, mesgf, indexf, indexcmd);
 
-        my_argv[i++] = "runtar";
+	g_ptr_array_add(argv_ptr, stralloc("runtar"));
 	if (g_options->config)
-	    my_argv[i++] = g_options->config;
+	    g_ptr_array_add(argv_ptr, stralloc(g_options->config));
 	else
-	    my_argv[i++] = "NOCONFIG";
+	    g_ptr_array_add(argv_ptr, stralloc("NOCONFIG"));
 #ifdef GNUTAR
-	my_argv[i++] = GNUTAR;
+	g_ptr_array_add(argv_ptr, stralloc(GNUTAR));
 #else
-	my_argv[i++] = "tar";
+	g_ptr_array_add(argv_ptr, stralloc("tar"));
 #endif
-	my_argv[i++] = "--create";
-	my_argv[i++] = "--file";
-	my_argv[i++] = "-";
-	my_argv[i++] = "--directory";
+	g_ptr_array_add(argv_ptr, stralloc("--create"));
+	g_ptr_array_add(argv_ptr, stralloc("--file"));
+	g_ptr_array_add(argv_ptr, stralloc("-"));
+	g_ptr_array_add(argv_ptr, stralloc("--directory"));
 	canonicalize_pathname(dirname, tmppath);
-	my_argv[i++] = tmppath;
-	my_argv[i++] = "--one-file-system";
+	g_ptr_array_add(argv_ptr, stralloc(tmppath));
+	g_ptr_array_add(argv_ptr, stralloc("--one-file-system"));
 	if (gnutar_list_dir && incrname) {
-	    my_argv[i++] = "--listed-incremental";
-	    my_argv[i++] = incrname;
+	    g_ptr_array_add(argv_ptr, stralloc("--listed-incremental"));
+	    g_ptr_array_add(argv_ptr, stralloc(incrname));
 	} else {
-	    my_argv[i++] = "--incremental";
-	    my_argv[i++] = "--newer";
-	    my_argv[i++] = dumptimestr;
+	    g_ptr_array_add(argv_ptr, stralloc("--incremental"));
+	    g_ptr_array_add(argv_ptr, stralloc("--newer"));
+	    g_ptr_array_add(argv_ptr, stralloc(dumptimestr));
 	}
 #ifdef ENABLE_GNUTAR_ATIME_PRESERVE
 	/* --atime-preserve causes gnutar to call
@@ -560,31 +557,32 @@ start_backup(
 	 * adjust their atime.  However, utime()
 	 * updates the file's ctime, so incremental
 	 * dumps will think the file has changed. */
-	my_argv[i++] = "--atime-preserve";
+	g_ptr_array_add(argv_ptr, stralloc("--atime-preserve"));
 #endif
-	my_argv[i++] = "--sparse";
-	my_argv[i++] = "--ignore-failed-read";
-	my_argv[i++] = "--totals";
+	g_ptr_array_add(argv_ptr, stralloc("--sparse"));
+	g_ptr_array_add(argv_ptr, stralloc("--ignore-failed-read"));
+	g_ptr_array_add(argv_ptr, stralloc("--totals"));
 
 	if(file_exclude) {
-	    my_argv[i++] = "--exclude-from";
-	    my_argv[i++] = file_exclude;
+	    g_ptr_array_add(argv_ptr, stralloc("--exclude-from"));
+	    g_ptr_array_add(argv_ptr, stralloc(file_exclude));
 	}
 
 	if(file_include) {
-	    my_argv[i++] = "--files-from";
-	    my_argv[i++] = file_include;
+	    g_ptr_array_add(argv_ptr, stralloc("--files-from"));
+	    g_ptr_array_add(argv_ptr, stralloc(file_include));
 	}
 	else {
-	    my_argv[i++] = ".";
+	    g_ptr_array_add(argv_ptr, stralloc("."));
 	}
-	my_argv[i++] = NULL;
+	    g_ptr_array_add(argv_ptr, NULL);
 	dumppid = pipespawnv(cmd, STDIN_PIPE, 0,
-			     &dumpin, &dumpout, &mesgf, my_argv);
+			     &dumpin, &dumpout, &mesgf,
+			     (char **)argv_ptr->pdata);
 	tarpid = dumppid;
 	amfree(file_exclude);
 	amfree(file_include);
-	amfree(my_argv);
+	g_ptr_array_free_full(argv_ptr);
     }
     dbprintf(_("gnutar: %s: pid %ld\n"), cmd, (long)dumppid);
 

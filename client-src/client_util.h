@@ -87,13 +87,13 @@ int application_property_argv_size(dle_t *dle);
 /* Add all properties of an application for a dle to an ARGV.
  * include/exclude options are converted to properties.
  *
- * @param argvchild: the ARGV where to store properties.
+ * @param argv_ptr: the ARGV where to store properties.
  * @param dle: the dle.
  * @returns: Number of argument added to ARGV.
  */
-int application_property_add_to_argv(char **argvchild,
-				     dle_t *dle,
-				     backup_support_option_t *bsu);
+void application_property_add_to_argv(GPtrArray *argv_ptr,
+				      dle_t *dle,
+				      backup_support_option_t *bsu);
 
 char *fixup_relative(char *name, char *device);
 backup_support_option_t *backup_support_option(char *program,

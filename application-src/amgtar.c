@@ -127,7 +127,7 @@ static void amgtar_build_exinclude(dle_t *dle, int verbose,
 				   int *nb_exclude, char **file_exclude,
 				   int *nb_include, char **file_include);
 static char *amgtar_get_incrname(application_argument_t *argument, int level);
-static char **amgtar_build_argv(application_argument_t *argument,
+static GPtrArray *amgtar_build_argv(application_argument_t *argument,
 				char *incrname, int command);
 static amregex_t *build_re_table(amregex_t *orig_re_table,
 				 GSList *normal_message,
@@ -329,9 +329,9 @@ main(
      *   1) Only set the message locale for now.
      *   2) Set textdomain for all amanda related programs to "amanda"
      *      We don't want to be forced to support dozens of message catalogs.
-     */  
+     */
     setlocale(LC_MESSAGES, "C");
-    textdomain("amanda"); 
+    textdomain("amanda");
 
     /* drop root privileges */
     if (!set_root_privs(0)) {
@@ -635,23 +635,23 @@ static void
 amgtar_estimate(
     application_argument_t *argument)
 {
-    char  *incrname = NULL;
-    char **my_argv = NULL;
-    char  *cmd = NULL;
-    int    nullfd = -1;
-    int    pipefd = -1;
-    FILE  *dumpout = NULL;
-    off_t  size = -1;
-    char   line[32768];
-    char  *errmsg = NULL;
-    char  *qerrmsg = NULL;
-    char  *qdisk;
-    amwait_t wait_status;
-    int tarpid;
+    char      *incrname = NULL;
+    GPtrArray *argv_ptr;
+    char      *cmd = NULL;
+    int        nullfd = -1;
+    int        pipefd = -1;
+    FILE      *dumpout = NULL;
+    off_t      size = -1;
+    char       line[32768];
+    char      *errmsg = NULL;
+    char      *qerrmsg = NULL;
+    char      *qdisk;
+    amwait_t   wait_status;
+    int        tarpid;
     amregex_t *rp;
-    times_t start_time;
-    int     level;
-    GSList *levels;
+    times_t    start_time;
+    int        level;
+    GSList    *levels;
 
     qdisk = quote_string(argument->dle.disk);
 
@@ -690,7 +690,7 @@ amgtar_estimate(
 	level = GPOINTER_TO_INT(levels->data);
 	incrname = amgtar_get_incrname(argument, level);
 	cmd = stralloc(gnutar_path);
-	my_argv = amgtar_build_argv(argument, incrname, CMD_ESTIMATE);
+	argv_ptr = amgtar_build_argv(argument, incrname, CMD_ESTIMATE);
 
 	start_time = curclock();
 
@@ -701,7 +701,8 @@ amgtar_estimate(
 	}
 
 	tarpid = pipespawnv(cmd, STDERR_PIPE, 1,
-			    &nullfd, &nullfd, &pipefd, my_argv);
+			    &nullfd, &nullfd, &pipefd,
+			    (char **)argv_ptr->pdata);
 
 	dumpout = fdopen(pipefd,"r");
 	if (!dumpout) {
@@ -741,13 +742,12 @@ amgtar_estimate(
 		 level,
 		 walltime_str(timessub(curclock(), start_time)));
 	if(size == (off_t)-1) {
-	    errmsg = vstrallocf(_("no size line match in %s output"),
-				my_argv[0]);
+	    errmsg = vstrallocf(_("no size line match in %s output"), cmd);
 	    dbprintf(_("%s for %s\n"), errmsg, qdisk);
 	    dbprintf(".....\n");
 	} else if(size == (off_t)0 && argument->level == 0) {
 	    dbprintf(_("possible %s problem -- is \"%s\" really empty?\n"),
-		      my_argv[0], argument->dle.disk);
+		     cmd, argument->dle.disk);
 	    dbprintf(".....\n");
 	}
 	dbprintf(_("estimate size for %s level %d: %lld KB\n"),
@@ -757,7 +757,7 @@ amgtar_estimate(
 
 	kill(-tarpid, SIGTERM);
 
-	dbprintf(_("waiting for %s \"%s\" child\n"), my_argv[0], qdisk);
+	dbprintf(_("waiting for %s \"%s\" child\n"), cmd, qdisk);
 	waitpid(tarpid, &wait_status, 0);
 	if (WIFSIGNALED(wait_status)) {
 	    errmsg = vstrallocf(_("%s terminated with signal %d: see %s"),
@@ -773,7 +773,7 @@ amgtar_estimate(
 	    errmsg = vstrallocf(_("%s got bad exit: see %s"),
 				cmd, dbfn());
 	}
-	dbprintf(_("after %s %s wait\n"), my_argv[0], qdisk);
+	dbprintf(_("after %s %s wait\n"), cmd, qdisk);
 
 common_exit:
 	if (errmsg) {
@@ -784,7 +784,7 @@ common_exit:
 	if (incrname) {
 	    unlink(incrname);
 	}
-	amfree(my_argv);
+	g_ptr_array_free_full(argv_ptr);
 	amfree(cmd);
 
 	aclose(nullfd);
@@ -809,28 +809,26 @@ static void
 amgtar_backup(
     application_argument_t *argument)
 {
-    int dumpin;
-    char *cmd = NULL;
-    char *qdisk;
-    char *incrname;
-    char line[32768];
+    int         dumpin;
+    char      *cmd = NULL;
+    char      *qdisk;
+    char      *incrname;
+    char       line[32768];
     amregex_t *rp;
-    off_t dump_size = -1;
-    char *type;
-    char startchr;
-
-    int dataf = 1;
-    int mesgf = 3;
-    int indexf = 4;
-    int outf;
-    FILE *mesgstream;
-    FILE *indexstream = NULL;
-    FILE *outstream;
-    char *errmsg = NULL;
-    amwait_t wait_status;
-
-    char **my_argv;
-    int tarpid;
+    off_t      dump_size = -1;
+    char      *type;
+    char       startchr;
+    int        dataf = 1;
+    int        mesgf = 3;
+    int        indexf = 4;
+    int        outf;
+    FILE      *mesgstream;
+    FILE      *indexstream = NULL;
+    FILE      *outstream;
+    char      *errmsg = NULL;
+    amwait_t   wait_status;
+    GPtrArray *argv_ptr;
+    int        tarpid;
 
     if (!gnutar_path) {
 	error(_("GNUTAR-PATH not defined"));
@@ -844,10 +842,10 @@ amgtar_backup(
     incrname = amgtar_get_incrname(argument,
 				   GPOINTER_TO_INT(argument->level->data));
     cmd = stralloc(gnutar_path);
-    my_argv = amgtar_build_argv(argument, incrname, CMD_BACKUP);
+    argv_ptr = amgtar_build_argv(argument, incrname, CMD_BACKUP);
 
     tarpid = pipespawnv(cmd, STDIN_PIPE|STDERR_PIPE, 1,
-			&dumpin, &dataf, &outf, my_argv);
+			&dumpin, &dataf, &outf, (char **)argv_ptr->pdata);
     /* close the write ends of the pipes */
 
     aclose(dumpin);
@@ -927,7 +925,7 @@ amgtar_backup(
 	errmsg = vstrallocf(_("%s got bad exit: see %s"),
 			    cmd, dbfn());
     }
-    dbprintf(_("after %s %s wait\n"), my_argv[0], qdisk);
+    dbprintf(_("after %s %s wait\n"), cmd, qdisk);
     dbprintf(_("amgtar: %s: pid %ld\n"), cmd, (long)tarpid);
     if (errmsg) {
 	dbprintf("%s", errmsg);
@@ -960,38 +958,37 @@ amgtar_backup(
     amfree(incrname);
     amfree(qdisk);
     amfree(cmd);
+    g_ptr_array_free_full(argv_ptr);
 }
 
 static void
 amgtar_restore(
     application_argument_t *argument)
 {
-    char  *cmd;
-    char **my_argv;
-    char **env;
-    int    i, j;
-    char  *e;
+    char       *cmd;
+    GPtrArray  *argv_ptr = g_ptr_array_new();
+    char      **env;
+    int         j;
+    char       *e;
 
     if (!gnutar_path) {
 	error(_("GNUTAR-PATH not defined"));
     }
 
     cmd = stralloc(gnutar_path);
-    my_argv = alloc(SIZEOF(char *) * (6 + argument->argc));
-    i = 0;
-    my_argv[i++] = stralloc(gnutar_path);
-    my_argv[i++] = stralloc("--numeric-owner");
-    my_argv[i++] = stralloc("-xpGvf");
-    my_argv[i++] = stralloc("-");
+    g_ptr_array_add(argv_ptr, stralloc(gnutar_path));
+    g_ptr_array_add(argv_ptr, stralloc("--numeric-owner"));
+    g_ptr_array_add(argv_ptr, stralloc("-xpGvf"));
+    g_ptr_array_add(argv_ptr, stralloc("-"));
 
     for (j=1; j< argument->argc; j++) {
-	my_argv[i++] = stralloc(argument->argv[j]);
+	g_ptr_array_add(argv_ptr, stralloc(argument->argv[j]));
     }
-    my_argv[i++] = NULL;
+    g_ptr_array_add(argv_ptr, NULL);
 
     env = safe_env();
     become_root();
-    execve(cmd, my_argv, env);
+    execve(cmd, (char **)argv_ptr->pdata, env);
     e = strerror(errno);
     error(_("error [exec %s: %s]"), cmd, e);
 }
@@ -1000,26 +997,23 @@ static void
 amgtar_validate(
     application_argument_t *argument G_GNUC_UNUSED)
 {
-    char  *cmd;
-    char **my_argv;
-    char **env;
-    int    i;
-    char  *e;
+    char       *cmd;
+    GPtrArray  *argv_ptr = g_ptr_array_new();
+    char      **env;
+    char       *e;
 
     if (!gnutar_path) {
 	error(_("GNUTAR-PATH not defined"));
     }
 
     cmd = stralloc(gnutar_path);
-    my_argv = alloc(SIZEOF(char *) * 4);
-    i = 0;
-    my_argv[i++] = stralloc(gnutar_path);
-    my_argv[i++] = stralloc("-tf");
-    my_argv[i++] = stralloc("-");
-    my_argv[i++] = NULL;
+    g_ptr_array_add(argv_ptr, stralloc(gnutar_path));
+    g_ptr_array_add(argv_ptr, stralloc("-tf"));
+    g_ptr_array_add(argv_ptr, stralloc("-"));
+    g_ptr_array_add(argv_ptr, NULL);
 
     env = safe_env();
-    execve(cmd, my_argv, env);
+    execve(cmd, (char **)argv_ptr->pdata, env);
     e = strerror(errno);
     error(_("error [exec %s: %s]"), cmd, e);
 }
@@ -1162,19 +1156,18 @@ amgtar_get_incrname(
     return incrname;
 }
 
-char **amgtar_build_argv(
+GPtrArray *amgtar_build_argv(
     application_argument_t *argument,
     char *incrname,
     int   command)
 {
-    int    i;
     int    nb_exclude;
     int    nb_include;
     char  *file_exclude;
     char  *file_include;
     char  *dirname;
     char   tmppath[PATH_MAX];
-    char **my_argv;
+    GPtrArray *argv_ptr = g_ptr_array_new();
 
     amgtar_build_exinclude(&argument->dle, 1,
 			   &nb_exclude, &file_exclude,
@@ -1186,54 +1179,51 @@ char **amgtar_build_argv(
 	dirname = amname_to_dirname(argument->dle.device);
     }
 
-    my_argv = alloc(SIZEOF(char *) * 23);
-    i = 0;
+    g_ptr_array_add(argv_ptr, stralloc(gnutar_path));
 
-    my_argv[i++] = gnutar_path;
-
-    my_argv[i++] = "--create";
+    g_ptr_array_add(argv_ptr, stralloc("--create"));
     if (command == CMD_BACKUP && argument->dle.create_index)
-	my_argv[i++] = "--verbose";
-    my_argv[i++] = "--file";
+        g_ptr_array_add(argv_ptr, stralloc("--verbose"));
+    g_ptr_array_add(argv_ptr, stralloc("--file"));
     if (command == CMD_ESTIMATE) {
-	my_argv[i++] = "/dev/null";
+        g_ptr_array_add(argv_ptr, stralloc("/dev/null"));
     } else {
-	my_argv[i++] = "-";
+        g_ptr_array_add(argv_ptr, stralloc("-"));
     }
-    my_argv[i++] = "--directory";
+    g_ptr_array_add(argv_ptr, stralloc("--directory"));
     canonicalize_pathname(dirname, tmppath);
-    my_argv[i++] = stralloc(tmppath);
+    g_ptr_array_add(argv_ptr, stralloc(tmppath));
     if (gnutar_onefilesystem)
-	my_argv[i++] = "--one-file-system";
+	g_ptr_array_add(argv_ptr, stralloc("--one-file-system"));
     if (gnutar_atimepreserve)
-	my_argv[i++] = "--atime-preserve=system";
+	g_ptr_array_add(argv_ptr, stralloc("--atime-preserve=system"));
     if (!gnutar_checkdevice)
-	my_argv[i++] = "--no-check-device";
-    my_argv[i++] = "--listed-incremental";
-    my_argv[i++] = incrname;
+	g_ptr_array_add(argv_ptr, stralloc("--no-check-device"));
+    g_ptr_array_add(argv_ptr, stralloc("--listed-incremental"));
+    g_ptr_array_add(argv_ptr, stralloc(incrname));
     if (gnutar_sparse)
-	my_argv[i++] = "--sparse";
+	g_ptr_array_add(argv_ptr, stralloc("--sparse"));
     if (argument->tar_blocksize) {
-	my_argv[i++] = "--blocking-factor";
-	my_argv[i++] = argument->tar_blocksize;
+	g_ptr_array_add(argv_ptr, stralloc("--blocking-factor"));
+	g_ptr_array_add(argv_ptr, stralloc(argument->tar_blocksize));
     }
-    my_argv[i++] = "--ignore-failed-read";
-    my_argv[i++] = "--totals";
+    g_ptr_array_add(argv_ptr, stralloc("--ignore-failed-read"));
+    g_ptr_array_add(argv_ptr, stralloc("--totals"));
 
     if(file_exclude) {
-	my_argv[i++] = "--exclude-from";
-	my_argv[i++] = file_exclude;
+	g_ptr_array_add(argv_ptr, stralloc("--exclude-from"));
+	g_ptr_array_add(argv_ptr, stralloc(file_exclude));
     }
 
     if(file_include) {
-	my_argv[i++] = "--files-from";
-	my_argv[i++] = file_include;
+	g_ptr_array_add(argv_ptr, stralloc("--files-from"));
+	g_ptr_array_add(argv_ptr, stralloc(file_include));
     }
     else {
-	my_argv[i++] = ".";
+	g_ptr_array_add(argv_ptr, stralloc("."));
     }
-    my_argv[i++] = NULL;
+    g_ptr_array_add(argv_ptr, NULL);
 
-    return(my_argv);
+    return(argv_ptr);
 }
 
