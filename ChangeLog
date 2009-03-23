@@ -1,3 +1,8 @@
+2009-03-23  Nikolas Coukouma <atrus@zmanda.com>
+	* AUTHORS: remove "active" status if not committed in over 2 years
+	* ChangeLog: clean up some messiness
+	* contrib/changelog_parse.pl: simple parser for ChangeLog
+
 2009-03-23  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/amgtar.c: Add NO-UNQUOTE to restore.
 
@@ -1622,7 +1627,7 @@
 2008-10-24  Dustin J. Mitchell <dustin@zmanda.com>
 	* amar-src/amar-test.c: don't ignore the return value of write()
 
-2008-08-14  Nikolas Coukouma <atrus@zmanda.com>
+2008-10-24  Nikolas Coukouma <atrus@zmanda.com>
             Jean-Louis Martineau <martineau@zmanda.com>
 	* amar-src/amar.c: fix mis-aligned memory accesses
 	* amar-src/amar-test.c: fix test_pipe
@@ -2455,7 +2460,7 @@
 	* device-src/rait-device.c: Ditto; also properly handle properties
 	  that change device labels.
 
-2007-07-09 Nikolas Coukouma <nikolas@zmanda.com>
+2007-07-09 Nikolas Coukouma <atrus@zmanda.com>
 	* man/xml-source/amanda-devices.7.xml: Document the S3_BUCKET_LOCATION
 	  property (for setting location constraints).
 
@@ -2464,7 +2469,7 @@
 	  when EOF occurs on writing
 
 2008-07-08  Dustin J. Mitchell <dustin@zmanda.com>, 
-	    Nikolas Coukouma <nikolas@zmanda.com>,
+	    Nikolas Coukouma <atrus@zmanda.com>,
 	    Ian Turner <ian@zmanda.com>,
 	    Jean-Louis Martineau <martineau@zmanda.com>
 	Amanda has been analyzed with Klocwork source code analysis, the most
@@ -2489,11 +2494,11 @@
 	   - better handling of incorrect commandline arguments
 	   - better resource management (file descriptors, etc.)
 
-2008-07-07 Nikolas Coukouma <nikolas@zmanda.com>
+2008-07-07 Nikolas Coukouma <atrus@zmanda.com>
 	* device-src/Makefile.am: conditionalize activate-devpay on
 	  WANT_S3_DEVICE
 
-2007-07-06 Nikolas Coukouma <nikolas@zmanda.com>
+2007-07-06 Nikolas Coukouma <atrus@zmanda.com>
 	* device-src/s3-device.c, device-src/s3.c, device-src/s3.h,
 	  device-src/activate-devpay.c, device-src/Makefile.am:
 	  Allow both regular S3 and S3-with-DevPay to be used in
@@ -2507,7 +2512,7 @@
 	* installcheck/Amanda_Device.pl: add tests for DevPay, refactor
 	  other S3 tests.
 
-2007-07-06 Nikolas Coukouma <nikolas@zmanda.com>
+2007-07-06 Nikolas Coukouma <atrus@zmanda.com>
 	* device-src/s3.c: wait for bucket to appear after creation, treat
 	  missing bucket as temporary error, increase retries from 5 to 14
 	  (about 3min), explicitly handle HTTP verbs as libcurl expects.
@@ -3354,7 +3359,7 @@
 	  deprecated in ./configure --help
 
 
-2008-04-24  Jean-Louis Martineau <martineau@zmanda.com>
+2008-04-28  Jean-Louis Martineau <martineau@zmanda.com>
 	* restore-src/restore.c: Fix test for DEVICE_STATUS_SUCCESS.
 
 2008-04-28  Dustin J. Mitchell <dustin@zmanda.com>
@@ -3911,7 +3916,7 @@
 	* installcheck/Makefile.am: Use CONFIG_CLOBBER_MY_CONFIG for Makefile
 				    variable.
 
-2008-03-11  Dan Locks <dwlocks@zmanda.com>
+2008-03-12  Dan Locks <dwlocks@zmanda.com>
 	* packaging/rpm/buildpkg: made the script quieter
 
 2008-03-12  Dan Locks <dwlocks@zmanda.com>

@@ -10,18 +10,17 @@ them to the Amanda Users mailing list: amanda-users@amanda.org
 
 - Mike Grupenhoff <kashmir@munge.com>: ex-UMIACS hacker
 
-- Todd Kover <kovert@omniscient.com>: lists & ex-UMIACS hacker, active developer and
-supporter
+- Todd Kover <kovert@omniscient.com>: lists & ex-UMIACS hacker, developer and supporter
 
 - James Mathiesen <James-Mathiesen@deshaw.com>: numerous bug fixes
 
 - Alan McIvor <a.mcivor@irl.cri.nz>: original developer of amindex
 feature, various bug fixes
 
-- George Scott <George.Scott@cc.monash.edu.au>: active developer and
+- George Scott <George.Scott@cc.monash.edu.au>: developer and
 supporter in the 2.4.0 release cycle
 
-- Alexandre Oliva <oliva@lsd.ic.unicamp.br>: active developer and
+- Alexandre Oliva <oliva@lsd.ic.unicamp.br>: developer and
 supporter
 
 - Blair Zajac <blair@gps.caltech.edu>: de-facto maintainer between
@@ -30,26 +29,34 @@ point after release 2.3.0.4.
 
 - Curtis Varner <cvarner@cs.ucr.edu>: planned features, bug fixes
 
-- John R. Jackson <jrj@gandalf.cc.purdue.edu>: security fixes, active
+- John R. Jackson <jrj@gandalf.cc.purdue.edu>: security fixes,
 developer and supporter
 
 - Jean-Louis Martineau <martineau@amanda.com>: active developer and supporter
 
-- Thomas Hepper <th@ant.han.de>: active developer of changer-src
+- Thomas Hepper <th@ant.han.de>: developer of changer-src
 
 - Jon LaBadie <jon@jgcomp.com>: active supporter
 
 - Stefan G. Weichinger <monitor@oops.co.at>: documentation, active supporter
 
-- John Franks (jrfranks@zmanda.com>: active developer and supporter
+- John Franks <jrfranks@zmanda.com>: active developer and supporter
 
-- Paddy Sreenivasan (paddy@zmanda.com>: active developer and supporter
+- Paddy Sreenivasan <paddy@zmanda.com>: active developer and supporter
 
-- Kevin Till (kevin.till@zmanda.com>: active developer and supporter
+- Kevin Till <kevin.till@zmanda.com>: active developer and supporter
 
-- Ian Turner (ian@zmanda.com>: active developer and supporter
+- Ian Turner <ian@zmanda.com>: active developer and supporter
 
-- Dustin J. Mitchell (dustin@zmanda.com>: active developer and supporter
+- Dustin J. Mitchell <dustin@zmanda.com>: active developer and supporter
+
+- Nikolas Coukouma <atrus@zmanda.com>: active developer and supporter
+
+- John Hein <jhein@timing.com>: active developer and supporter
+
+- Nick Smith <nick.smith@techop.ch>: active developer and supporter
+
+- Satya Ganga <gsat@zmanda.com>: active developer and supporter
 
 Many other people have contributed to the development of Amanda; check
 the ChangeLog for their names and e-mail addresses.
