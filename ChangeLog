@@ -1,4 +1,9 @@
 2009-03-23  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amgtar.c, application-src/amgtar_perl.pl,
+	  client-src/sendbackup-gnutar.c, client-src/sendsize.c,
+	  recover-src/extract_list.c: Add '--no-unquote' to gtar arguments.
+
+2009-03-23  Jean-Louis Martineau <martineau@zmanda.com>
         * application-src/amgtar.c, application-src/amstar.c,
           client-src/client_util.c, client-src/client_util.h,
           client-src/selfcheck.c, client-src/sendbackup-gnutar.c,

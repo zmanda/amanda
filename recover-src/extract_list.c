@@ -1896,12 +1896,14 @@ extract_files_child(
     case IS_TAR:
     case IS_GNUTAR:
 	g_ptr_array_add(argv_ptr, stralloc("tar"));
+	g_ptr_array_add(argv_ptr, stralloc("--no-unquote"));
 	g_ptr_array_add(argv_ptr, stralloc("--numeric-owner"));
 	g_ptr_array_add(argv_ptr, stralloc("-xpGvf"));
 	g_ptr_array_add(argv_ptr, stralloc("-"));	/* data on stdin */
 	break;
     case IS_SAMBA_TAR:
 	g_ptr_array_add(argv_ptr, stralloc("tar"));
+	g_ptr_array_add(argv_ptr, stralloc("--no-unquote"));
 	g_ptr_array_add(argv_ptr, stralloc("-xpvf"));
 	g_ptr_array_add(argv_ptr, stralloc("-"));	/* data on stdin */
 	break;

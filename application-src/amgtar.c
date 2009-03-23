@@ -978,6 +978,7 @@ amgtar_restore(
     cmd = stralloc(gnutar_path);
     g_ptr_array_add(argv_ptr, stralloc(gnutar_path));
     g_ptr_array_add(argv_ptr, stralloc("--numeric-owner"));
+    g_ptr_array_add(argv_ptr, stralloc("--no-unquote"));
     g_ptr_array_add(argv_ptr, stralloc("-xpGvf"));
     g_ptr_array_add(argv_ptr, stralloc("-"));
 
@@ -1190,6 +1191,7 @@ GPtrArray *amgtar_build_argv(
     } else {
         g_ptr_array_add(argv_ptr, stralloc("-"));
     }
+    g_ptr_array_add(argv_ptr, stralloc("--no-unquote"));
     g_ptr_array_add(argv_ptr, stralloc("--directory"));
     canonicalize_pathname(dirname, tmppath);
     g_ptr_array_add(argv_ptr, stralloc(tmppath));
