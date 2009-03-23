@@ -1,3 +1,8 @@
+2009-03-23  Jean-Louis Martineau <martineau@zmanda.com>
+	* man/xml-source/amanda.conf.5.xml, man/xml-source/disklist.5.xml:
+	  Document the fact that: The { must appear at the end of a line,
+	                          and the } on its own line.
+
 2009-03-21  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/security-util.c: Fix sec_tcp_conn_get ot not always match.
 

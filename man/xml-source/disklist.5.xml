@@ -171,6 +171,7 @@ a new dumptype:</para>
 } [ <emphasis remap='I'>spindle</emphasis> [ <emphasis remap='I'>interface</emphasis> ] ]
 </programlisting>
 
+<para>The { must appear at the end of a line, and the } on its own line possibly followed by the spindle and interface.</para>
 </refsect1>
 
 <seealso>

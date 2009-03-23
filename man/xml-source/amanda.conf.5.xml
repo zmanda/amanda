@@ -1310,6 +1310,7 @@ define holdingdisk <emphasis remap='I'>name</emphasis> {
 }
 </programlisting>
 
+<para>The { must appear at the end of a line, and the } on its own line.</para>
 <para><emphasis remap='I'>Name</emphasis>
 is a logical name for this holding disk.</para>
 
@@ -1393,6 +1394,7 @@ define dumptype "<emphasis remap='I'>name</emphasis>" {
 }
 </programlisting>
 
+<para>The { must appear at the end of a line, and the } on its own line.</para>
 <para><emphasis remap='I'>Name</emphasis>
 is the name of this set of backup options.
 It is referenced from the &disklist; file.</para>
@@ -2145,6 +2147,7 @@ define tapetype "<emphasis remap='I'>name</emphasis>" {
 }
 </programlisting>
 
+<para>The { must appear at the end of a line, and the } on its own line.</para>
 <para><emphasis remap='I'>Name</emphasis>
 is the name of this type of tape medium/device.
 It is referenced from the
@@ -2275,6 +2278,7 @@ define interface "<emphasis remap='I'>name</emphasis>" {
 }
 </programlisting>
 
+<para>The { must appear at the end of a line, and the } on its own line.</para>
 <para><emphasis remap='I'>name</emphasis>
 is the name of this type of network interface. It is referenced from the
 <emphasis remap='I'>disklist</emphasis> file.</para>
@@ -2330,6 +2334,7 @@ define application-tool "<emphasis remap='I'>name</emphasis>" {
     <literal>...</literal>
 }
 </programlisting>
+<para>The { must appear at the end of a line, and the } on its own line.</para>
 
 <para><emphasis remap='I'>name</emphasis>
 is the name of this type of application. It is referenced from the
@@ -2377,6 +2382,7 @@ define script-tool "<emphasis remap='I'>name</emphasis>" {
     <literal>...</literal>
 }
 </programlisting>
+<para>The { must appear at the end of a line, and the } on its own line.</para>
 
 <para><emphasis remap='I'>name</emphasis>
 is the name of this type of script. It is referenced from the
@@ -2554,6 +2560,7 @@ define device <emphasis remap='I'>name</emphasis> {
 }
 </programlisting>
 
+<para>The { must appear at the end of a line, and the } on its own line.</para>
 <para><emphasis remap='I'>name</emphasis> is the user-specified name of
 this device. It is referenced from the global <emphasis
 remap='I'>tapedev</emphasis> parameter.  The <emphasis
@@ -2586,6 +2593,7 @@ define changer <emphasis remap='I'>name</emphasis> {
 }
 </programlisting>
 
+<para>The { must appear at the end of a line, and the } on its own line.</para>
 <para><emphasis remap='I'>name</emphasis> is the user-specified name of this
 device. The remaining parameters are specific to the changer type selected.
 </para>
