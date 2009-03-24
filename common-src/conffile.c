@@ -2377,11 +2377,6 @@ read_application(
     if(!name)
 	get_conftoken(CONF_NL);
 
-    if (!application_get_plugin(&apcur) ||
-	strlen(application_get_plugin(&apcur)) == 0) {
-	conf_parserror("plugin not set for application");
-    }
-
     save_application();
 
     allow_overwrites = save_overwrites;
@@ -2507,11 +2502,6 @@ read_pp_script(
 	       (name == NULL), *copy_pp_script);
     if(!name)
 	get_conftoken(CONF_NL);
-
-    if (!pp_script_get_plugin(&pscur) ||
-	strlen(pp_script_get_plugin(&pscur)) == 0) {
-	conf_parserror("plugin not set for script");
-    }
 
     save_pp_script();
 
@@ -3371,10 +3361,12 @@ read_dapplication(
 
     get_conftoken(CONF_ANY);
     if (tok == CONF_LBRACE) {
+	current_line_num -= 1;
 	application = read_application(vstralloc("custom(DUMPTYPE:",
 						 dpcur.name, ")", ".",
 						 anonymous_value(),NULL),
 				       NULL, NULL, NULL);
+	current_line_num -= 1;
     } else if (tok == CONF_STRING) {
 	application = lookup_application(tokenval.v.s);
 	if (application == NULL) {
@@ -3397,9 +3389,11 @@ read_dpp_script(
     pp_script_t *pp_script;
     get_conftoken(CONF_ANY);
     if (tok == CONF_LBRACE) {
+	current_line_num -= 1;
 	pp_script = read_pp_script(vstralloc("custom(DUMPTYPE:", dpcur.name,
 					     ")", ".", anonymous_value(),NULL),
 				   NULL, NULL, NULL);
+	current_line_num -= 1;
     } else if (tok == CONF_STRING) {
 	pp_script = lookup_pp_script(tokenval.v.s);
 	if (pp_script == NULL) {

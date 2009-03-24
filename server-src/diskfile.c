@@ -399,6 +399,7 @@ parse_diskline(
     char *shost, *sdisk;
     am_host_t *p;
     disk_t *dp;
+    identlist_t pp_iter;
 
     assert(filename != NULL);
     assert(line_num > 0);
@@ -775,6 +776,34 @@ parse_diskline(
 	!disk->application) {
 	disk_parserror(filename, line_num,
 		       _("program set to APPLICATION but no application set"));
+    }
+
+    if (disk->application) {
+	application_t *application;
+	char          *plugin;
+
+	application = lookup_application(disk->application);
+	g_assert(application != NULL);
+	plugin = application_get_plugin(application);
+	if (!plugin || strlen(plugin) == 0) {
+	    disk_parserror(filename, line_num,
+			   _("plugin not set for application"));
+	}
+    }
+
+    for (pp_iter = disk->pp_scriptlist; pp_iter != NULL;
+	 pp_iter = pp_iter->next) {
+	pp_script_t *pp_script;
+	char        *plugin;
+	char        *pp_script_name;
+
+	pp_script_name = (char*)pp_iter->data;
+	pp_script = lookup_pp_script(pp_script_name);
+	g_assert(pp_script != NULL);
+	plugin = pp_script_get_plugin(pp_script);
+	if (!plugin || strlen(plugin) == 0) {
+	    disk_parserror(filename, line_num, _("plugin not set for script"));
+	}
     }
 
     if(dumptype_get_ignore(dtype) || dumptype_get_strategy(dtype) == DS_SKIP) {

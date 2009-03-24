@@ -1,4 +1,8 @@
 2009-03-24  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c: Fix line counting, Remove check for plugin.
+	* server-src/diskfile.c: Add check for plugin.
+
+2009-03-24  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/planner.c: Default server estimate not larger than half
 	                        a tape. log a warning.
 
