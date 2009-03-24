@@ -337,6 +337,11 @@ main(
     setlocale(LC_MESSAGES, "C");
     textdomain("amanda");
 
+    if (argc < 2) {
+        printf("ERROR no command given to amgtar\n");
+        error(_("No command given to amgtar"));
+    }
+
     /* drop root privileges */
     if (!set_root_privs(0)) {
 	if (strcmp(argv[1], "selfcheck") == 0) {
@@ -665,6 +670,19 @@ amgtar_estimate(
     int        level;
     GSList    *levels;
 
+    if (!argument->level) {
+        fprintf(stderr, "ERROR No level argument\n");
+        error(_("No level argument"));
+    }
+    if (!argument->dle.disk) {
+        fprintf(stderr, "ERROR No disk argument\n");
+        error(_("No disk argument"));
+    }
+    if (!argument->dle.device) {
+        fprintf(stderr, "ERROR No device argument\n");
+        error(_("No device argument"));
+    }
+
     qdisk = quote_string(argument->dle.disk);
 
     if (argument->calcsize) {
@@ -842,11 +860,29 @@ amgtar_backup(
     GPtrArray *argv_ptr;
     int        tarpid;
 
+    mesgstream = fdopen(mesgf, "w");
+    if (!mesgstream) {
+	error(_("error mesgstream(%d): %s\n"), mesgf, strerror(errno));
+    }
+
     if (!gnutar_path) {
 	error(_("GNUTAR-PATH not defined"));
     }
     if (!gnutar_listdir) {
 	error(_("GNUTAR-LISTDIR not defined"));
+    }
+
+    if (!argument->level) {
+        fprintf(mesgstream, "? No level argument\n");
+        error(_("No level argument"));
+    }
+    if (!argument->dle.disk) {
+        fprintf(mesgstream, "? No disk argument\n");
+        error(_("No disk argument"));
+    }
+    if (!argument->dle.device) {
+        fprintf(mesgstream, "? No device argument\n");
+        error(_("No device argument"));
     }
 
     qdisk = quote_string(argument->dle.disk);
@@ -867,10 +903,6 @@ amgtar_backup(
 	if (!indexstream) {
 	    error(_("error indexstream(%d): %s\n"), indexf, strerror(errno));
 	}
-    }
-    mesgstream = fdopen(mesgf, "w");
-    if (!mesgstream) {
-	error(_("error mesgstream(%d): %s\n"), mesgf, strerror(errno));
     }
     outstream = fdopen(outf, "r");
     if (!outstream) {

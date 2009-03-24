@@ -173,8 +173,12 @@ main(
     setlocale(LC_MESSAGES, "C");
     textdomain("amanda");
 
-    /* drop root privileges */
+    if (argc < 2) {
+	printf("ERROR no command given to amstar\n");
+	error(_("No command given to amstar"));
+    }
 
+    /* drop root privileges */
     if (!set_root_privs(0)) {
 	if (strcmp(argv[1], "selfcheck") == 0) {
 	    printf("ERROR amstar must be run setuid root\n");
@@ -382,6 +386,19 @@ amstar_estimate(
     int         level = 0;
     GSList     *levels = NULL;
 
+    if (!argument->level) {
+	fprintf(stderr, "ERROR No level argument\n");
+	error(_("No level argument"));
+    }
+    if (!argument->dle.disk) {
+	fprintf(stderr, "ERROR No disk argument\n");
+	error(_("No disk argument"));
+    }
+    if (!argument->dle.device) {
+	fprintf(stderr, "ERROR No device argument\n");
+	error(_("No device argument"));
+    }
+
     qdisk = quote_string(argument->dle.disk);
     if (argument->calcsize) {
 	char *dirname;
@@ -528,7 +545,27 @@ amstar_backup(
     FILE      *mesgstream;
     FILE      *indexstream = NULL;
     FILE      *outstream;
-    int        level = GPOINTER_TO_INT(argument->level->data);
+    int        level;
+
+    mesgstream = fdopen(mesgf, "w");
+    if (!mesgstream) {
+	error(_("error mesgstream(%d): %s\n"), mesgf, strerror(errno));
+    }
+
+    if (!argument->level) {
+	fprintf(mesgstream, "? No level argument\n");
+	error(_("No level argument"));
+    }
+    if (!argument->dle.disk) {
+	fprintf(mesgstream, "? No disk argument\n");
+	error(_("No disk argument"));
+    }
+    if (!argument->dle.device) {
+	fprintf(mesgstream, "? No device argument\n");
+	error(_("No device argument"));
+    }
+
+    level = GPOINTER_TO_INT(argument->level->data);
 
     qdisk = quote_string(argument->dle.disk);
 
@@ -548,10 +585,6 @@ amstar_backup(
 	if (!indexstream) {
 	    error(_("error indexstream(%d): %s\n"), indexf, strerror(errno));
 	}
-    }
-    mesgstream = fdopen(mesgf, "w");
-    if (!mesgstream) {
-	error(_("error mesgstream(%d): %s\n"), mesgf, strerror(errno));
     }
     outstream = fdopen(outf, "r");
     if (!outstream) {
