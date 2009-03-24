@@ -226,14 +226,17 @@ sub command_selfcheck {
     $self->{action} = 'check';
 
     #check binary
-    if (! -e $self->{smbclient}) {
+    if (!defined($self->{smbclient}) || $self->{smbclient} eq "") {
+	$self->print_to_server($self->{action},"sbmclient not set; you must define the SMBCLIENT-PATH property", $Amanda::Script_App::ERROR);
+    }
+    elsif (! -e $self->{smbclient}) {
 	$self->print_to_server($self->{action},"$self->{smbclient} doesn't exist", $Amanda::Script_App::ERROR);
     }
-    if (! -x $self->{smbclient}) {
+    elsif (! -x $self->{smbclient}) {
 	$self->print_to_server($self->{action},"$self->{smbclient} is not executable", $Amanda::Script_App::ERROR);
     }
     $self->print_to_server($self->{action},"$self->{smbclient}", $Amanda::Script_App::GOOD);
-    if (!defined $$self->{disk} && !defined $self->{device}) {
+    if (!defined $self->{disk} && !defined $self->{device}) {
 	return;
     }
     $self->parsesharename();

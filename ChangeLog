@@ -1,3 +1,10 @@
+2009-03-24  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amsamba.pl: Fix typo and check if smbclient is set.
+
+2009-03-24  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amgtar.c, application-src/amstar.c:
+	  Do sanity check if required arguments are not provided.
+
 2009-03-23  Nikolas Coukouma <atrus@zmanda.com>
 	* AUTHORS: remove "active" status if not committed in over 2 years
 	* ChangeLog: clean up some messiness
