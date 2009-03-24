@@ -3092,6 +3092,8 @@ internal_server_estimate(
 	    *stats = 1;
 	} else {
 	    size = (gint64)1000000;
+	    if (size > tapetype_get_length(tape)/2)
+		size = tapetype_get_length(tape)/2;
 	    *stats = 0;
 	}
     } else if (level == est(dp)->last_level) {
@@ -3132,6 +3134,8 @@ internal_server_estimate(
 	}
 	else {
 	    size = (gint64)10000;
+	    if (size > tapetype_get_length(tape)/2)
+		size = tapetype_get_length(tape)/2;
 	    *stats = 0;
 	}
     }
@@ -3156,6 +3160,8 @@ internal_server_estimate(
 	    *stats = 1;
 	} else {
 	    size = (gint64)100000;
+	    if (size > tapetype_get_length(tape)/2)
+		size = tapetype_get_length(tape)/2;
 	    *stats = 0;
 	}
     }
@@ -3169,9 +3175,17 @@ server_estimate(
     info_t *info,
     int     level)
 {
-    int stats;
+    int    stats;
+    gint64 size; 
 
-    return internal_server_estimate(dp, info, level, &stats);
+    size = internal_server_estimate(dp, info, level, &stats);
+
+    if (stats == 0) {
+	char *qname = quote_string(dp->name);
+	log_add(L_WARNING, _("WARNING: no history available for %s:%s; guessing that size will be %lld KB\n"), dp->host->hostname, qname, (long long)size);
+	amfree(qname);
+    }
+    return size;
 }
 
 static int
