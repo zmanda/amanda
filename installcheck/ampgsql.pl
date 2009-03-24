@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 28;
+use Test::More tests => 29;
 
 use lib "@amperldir@";
 use strict;
@@ -149,6 +149,8 @@ EOF
     is($backup->{'exit_status'}, 0, "backup error status ok");
     ok(!@{$backup->{'errors'}}, "no errors during backup")
         or diag(@{$backup->{'errors'}});
+    ok(grep(/^\.\/data/, @{$backup->{'index'}}), "contains some index entries for data")
+        or diag(@{$backup->{'index'}});
 }
 
 do_postmaster(\&setup_db_and_backup);

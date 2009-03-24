@@ -27,10 +27,11 @@ use base qw(Amanda::Application);
 use Carp;
 use File::Copy;
 use File::Path;
+use Fcntl;
 use IO::Dir;
 use IO::File;
 use IPC::Open3;
-use POSIX qw( ceil );
+use POSIX qw( ceil :errno_h :sys_wait_h );
 use Sys::Hostname;
 use Symbol;
 use Amanda::Constants;
@@ -98,6 +99,22 @@ sub new {
                 $self->{'props'}{'PSQL-PATH'} = $psql;
                 last;
             }
+        }
+    }
+
+    foreach my $aname (keys %{$self->{'args'}}) {
+        if (defined($self->{'props'}->{$aname})) {
+            debug("property: $aname (undef)");
+        } else {
+            debug("property: $aname $self->{'args'}->{$aname}");
+        }
+    }
+
+    foreach my $pname (keys %{$self->{'props'}}) {
+        if (defined($self->{'props'}->{$pname})) {
+            debug("property: $pname (undef)");
+        } else {
+            debug("property: $pname $self->{'props'}->{$pname}");
         }
     }
 
@@ -276,37 +293,108 @@ sub _get_prev_state {
     $end_wal;
 }
 
+sub _read_lines_nonblock {
+    my ($self, $fh, $done, $buf) = @_;
+
+    my $READ_SIZE = 8*1024;
+    my $NEWLINE_PAT = qr/\r|\n|\r\n/;
+
+    return if $$done;
+
+    my $ret = sysread($fh, $$buf, $READ_SIZE, length($$buf));
+    my @lines;
+    if ($ret) {
+        @lines = split($NEWLINE_PAT, $$buf);
+        # handle ("foo\nbar", "more bar\nbaz\n") versus ("foo\nbar\n", "baz\n")
+        $$buf = ($$buf =~ /$NEWLINE_PAT$/)? '' : pop(@lines);
+        $$buf ||= '';
+    } elsif (defined($ret)) {
+        $$done = 1;
+    } elsif ($! != EAGAIN) {
+        $self->{'die_cb'}->("error while reading: $!");
+    }
+
+    @lines;
+}
+
 sub _run_tar_totals {
-    my ($self, $out_h, @other_args) = @_;
+    my ($self, $index, @other_args) = @_;
 
     my @cmd = ($self->{'runtar'}, $self->{'args'}->{'config'},
-        $Amanda::Constants::GNUTAR, '--create', '--totals', @other_args);
+        $Amanda::Constants::GNUTAR, '--create', '--verbose', '--totals', @other_args);
     debug("running " . join(" ", @cmd));
+    my $use_file = grep /^--file$/, @other_args;
 
     local (*TAR_IN, *TAR_OUT, *TAR_ERR);
-    open TAR_OUT, ">&", $out_h;
-    my $pid = open3(\*TAR_IN, ">&TAR_OUT", \*TAR_ERR, @cmd);
+    open TAR_OUT, ">&", $self->{'out_h'} unless $use_file;
+    my $pid;
+    eval { $pid = open3(\*TAR_IN, ($use_file? \*TAR_OUT : ">&TAR_OUT"), \*TAR_ERR, @cmd); 1;} or
+        $self->{'die_cb'}->("failed to run tar. error was $@");
     close(TAR_IN);
-    waitpid($pid, 0);
-    my $status = $? >> 8;
-    (0 == $status) or $self->{'die_cb'}->("Tar failed (exit status $status)");
 
-    my $size;
-    while (my $tots = <TAR_ERR>) {
-        if ($tots =~ /Total bytes written: (\d+)/) {
-            $size = $1;
-            last;
+    my $status;
+    my $old_die_cb = $self->{'die_cb'};
+    $self->{'die_cb'} = sub {
+        my $msg = shift @_;
+        waitpid($pid, 0);
+        $status = $? >> 8;
+        $msg .= " and tar exited with status $status" if ($status);
+        $old_die_cb->($msg);
+    };
+
+    my $flags;
+    if ($use_file) {
+        $flags = fcntl(TAR_OUT, F_GETFL, 0) or
+            $self->{'die_cb'}->("failed to get flags for tar's stdout: $!");
+        $flags = fcntl(TAR_OUT, F_SETFL, $flags | O_NONBLOCK) or
+            $self->{'die_cb'}->("failed to set flags for tar's stdout: $!");
+    }
+    $flags = fcntl(TAR_ERR, F_GETFL, 0) or
+            $self->{'die_cb'}->("failed to get flags for tar's stderr: $!");
+    $flags = fcntl(TAR_ERR, F_SETFL, $flags | O_NONBLOCK) or
+            $self->{'die_cb'}->("failed to set flags for tar's stderr: $!");
+
+    my ($size, $out_done, $err_done);
+    my ($out_buf, $err_buf) = ('', '');
+    until (defined($status) and (!$use_file or $out_done) and $err_done) {
+        # dead yet? don't block if we still have more data to read
+        my $wait_flags = ((!$use_file or $out_done) and $err_done)? 0 : WNOHANG;
+        if (waitpid($pid, $wait_flags) > 0) {
+            $status = $? >> 8;
+        }
+        # read stdout
+        if ($use_file) {
+            foreach my $l (_read_lines_nonblock($self, \*TAR_OUT, \$out_done, \$out_buf)) {
+                if ($l =~ /^\.\/(.*)/) {
+                    $self->{'index_h'}->print("./$index/$1\n") if $index;
+                }
+            }
+        }
+        # read stderr
+        foreach my $l (_read_lines_nonblock($self, \*TAR_ERR, \$err_done, \$err_buf)) {
+            if ($l =~ /^Total bytes written: (\d+)/) {
+                $size = $1;
+            } elsif ($l =~ /^\.\/(.*)/) {
+                $self->{'index_h'}->print("./$index/$1\n") if $index;
+            }
         }
     }
+    $self->{'die_cb'} = $old_die_cb;
+
+    close(TAR_OUT) if $use_file;
     close(TAR_ERR);
     debug("size of generated tar file: " . (defined($size)? $size : "undef"));
+    (0 == $status) or $self->{'die_cb'}->("Tar failed (exit status $status)");
     $size;
 }
 
 sub command_estimate {
    my $self = shift;
 
-   my $out_h = new IO::File("/dev/null", "w");
+   $self->{'out_h'} = new IO::File("/dev/null", "w");
+   $self->{'out_h'} or confess("Could not /dev/null");
+   $self->{'index_h'} = new IO::File("/dev/null", "w");
+   $self->{'index_h'} or confess("Could not /dev/null");
 
    $self->{'done_cb'} = sub {
        my $size = shift @_;
@@ -328,9 +416,9 @@ sub command_estimate {
    };
 
    if ($self->{'args'}->{'level'} > 0) {
-       _incr_backup($self, $out_h);
+       _incr_backup($self);
    } else {
-       _base_backup($self, $out_h);
+       _base_backup($self);
    }
 }
 
@@ -383,7 +471,7 @@ sub _get_backup_info {
 }
 
 sub _base_backup {
-   my ($self, $out_h) = @_;
+   my ($self) = @_;
 
    debug("running _base_backup");
 
@@ -424,7 +512,7 @@ sub _base_backup {
        }
        $old_die_cb->($msg);
    };
-   _run_tar_totals($self, $out_h, '--file', "$tmp/$_DATA_DIR_TAR",
+   _run_tar_totals($self, $_DATA_DIR_RESTORE, '--file', "$tmp/$_DATA_DIR_TAR",
        '--directory', $self->{'props'}->{'PG-DATADIR'}, ".");
    $self->{'die_cb'} = $old_die_cb;
 
@@ -455,11 +543,11 @@ sub _base_backup {
    # create an empty archive for uniformity
    @wal_files or @wal_files = ('--files-from', '/dev/null');
 
-   _run_tar_totals($self, $out_h, '--file', "$tmp/$_ARCHIVE_DIR_TAR",
+   _run_tar_totals($self, $_ARCHIVE_DIR_RESTORE, '--file', "$tmp/$_ARCHIVE_DIR_TAR",
        '--directory', $self->{'props'}->{'PG-ARCHIVEDIR'}, @wal_files);
 
    # create the final tar file
-   my $size = _run_tar_totals($self, $out_h, '--directory', $tmp,
+   my $size = _run_tar_totals($self, undef, '--directory', $tmp,
        $_ARCHIVE_DIR_TAR, $_DATA_DIR_TAR);
 
    $self->{'state_cb'}->($self, $end_wal);
@@ -469,7 +557,7 @@ sub _base_backup {
 }
 
 sub _incr_backup {
-   my ($self, $out_h) = @_;
+   my ($self) = @_;
 
    debug("running _incr_backup");
 
@@ -496,7 +584,7 @@ sub _incr_backup {
    $self->{'state_cb'}->($self, $max_wal ? $max_wal : $end_wal);
 
    if (@wal_files) {
-       $self->{'done_cb'}->(_run_tar_totals($self, $out_h,
+       $self->{'done_cb'}->(_run_tar_totals($self, $_ARCHIVE_DIR_RESTORE,
            '--directory', $self->{'props'}->{'PG-ARCHIVEDIR'}, @wal_files));
    } else {
        $self->{'done_cb'}->(0);
@@ -506,17 +594,18 @@ sub _incr_backup {
 sub command_backup {
    my $self = shift;
 
+   $self->{'out_h'} = IO::Handle->new_from_fd(1, 'w');
+   $self->{'out_h'} or confess("Could not open data fd");
    my $msg_fd = IO::Handle->new_from_fd(3, 'w');
    $msg_fd or confess("Could not open message fd");
-   my $index_fd = IO::Handle->new_from_fd(4, 'w');
-   $index_fd or confess("Could not open message fd");
+   $self->{'index_h'} = IO::Handle->new_from_fd(4, 'w');
+   $self->{'index_h'} or confess("Could not open index fd");
 
    $self->{'done_cb'} = sub {
        my $size = shift @_;
        debug("done. size $size");
        $size = ceil($size/1024);
        debug("sending size $size");
-       $index_fd->print("./\n");
        $msg_fd->print("sendbackup: size $size\n");
        $msg_fd->print("sendbackup: end\n");
    };
