@@ -1,4 +1,8 @@
 2009-03-24  Nikolas Coukouma <atrus@zmanda.com>
+	* application-src/ampgsql.pl: older versions of perl don't like
+	  mixing functions and export tags
+
+2009-03-24  Nikolas Coukouma <atrus@zmanda.com>
 	* application-src/ampgsql.pl, installcheck/ampgsql.pl:
 	  generate more-complete index, improve debugging and error handling
 
