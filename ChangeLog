@@ -1,3 +1,7 @@
+2009-03-25  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/s3.c: fix segfault in s3_make_bucket with location
+	  constraint
+
 2009-03-19  Dustin J. Mitchell <dustin@zmanda.com>
 	(thanks to Peter Kunst <peter.kunst@swissrisk.com>)
 	* common-src/Makefile.am: don't include genversion.h in distribution
