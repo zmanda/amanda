@@ -200,21 +200,6 @@ reconfiguring the changer, etc. -- that may have invalidated the
 database.  C<$changed> is a changer-specific string indicating what has
 changed; if it is omitted, the changer will check everything.
 
-=head3 $chg->import(finished_cb => $cb, slots => $slots)
-
-The user has placed volumes in the import/export slots, and would like the
-changer to place them in storage slots. This is a very changer-specific
-operation, and $slots should be supplied by the user for verbatim transmission
-to the changer, and may specify which import/export slots, for example, contain
-the new volumes.
-
-=head3 $chg->export(finished_cb => $cb, slot => $slot)
-
-=head3 $chg->export(finished_cb => $cb, label => $label)
-
-Place the indicated volume (by $label, or in $slot) into an available
-import/export slot. This, too, is a very changer-specific operation.
-
 =head3 $chg->move(finished_cb => $cb, from_slot => $from, to_slot => $to)
 
 Move a volume between two slots in the changer. These slots are provided by the
@@ -296,6 +281,7 @@ See the other changer packages, including:
  - support loading by barcode, showing barcodes in reservations
  - support deadlock avoidance by returning more information in load errors
  - Amanda::Changer::Single
+ - support import and export for robots with import/export slots
 
 =cut
 
@@ -521,26 +507,6 @@ sub update {
     my $class = ref($self);
     if (exists $params{'finished_cb'}) {
 	$params{'finished_cb'}->("$class does not support update()");
-    }
-}
-
-sub import {
-    my $self = shift;
-    my %params = @_;
-
-    my $class = ref($self);
-    if (exists $params{'finished_cb'}) {
-	$params{'finished_cb'}->("$class does not support import()");
-    }
-}
-
-sub export {
-    my $self = shift;
-    my %params = @_;
-
-    my $class = ref($self);
-    if (exists $params{'finished_cb'}) {
-	$params{'finished_cb'}->("$class does not support export()");
     }
 }
 

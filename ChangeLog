@@ -1,4 +1,7 @@
 2009-03-25  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Changer.pm: remove unused import() and export()
+
+2009-03-25  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/s3.c: fix segfault in s3_make_bucket with location
 	  constraint
 
