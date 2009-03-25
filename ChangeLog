@@ -1,4 +1,8 @@
 2009-03-25  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/s3.c: fix segfault in s3_make_bucket with location
+	  constraint
+
+2009-03-25  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Util.swg: add full_read and full_write
 	* installcheck/Amanda_Util.pl: test 'em
 

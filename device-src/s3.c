@@ -1857,7 +1857,7 @@ s3_make_bucket(S3Handle *hdl,
         if (s3_bucket_location_compat(bucket)) {
             ptr = &buf;
             buf.buffer = g_strdup_printf(AMAZON_BUCKET_CONF_TEMPLATE, hdl->bucket_location);
-            buf.buffer_len = (guint) strlen(body);
+            buf.buffer_len = (guint) strlen(buf.buffer);
             buf.buffer_pos = 0;
             buf.max_buffer_size = buf.buffer_len;
             read_func = s3_buffer_read_func;
