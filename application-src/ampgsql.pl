@@ -670,6 +670,24 @@ sub command_restore {
    }
 }
 
+sub command_validate {
+   my $self = shift;
+
+   if (!defined($self->{'args'}->{'gnutar-path'}) ||
+       !-x $self->{'args'}->{'gnutar-path'}) {
+      return $self->default_validate();
+   }
+
+   my(@cmd) = ($self->{'args'}->{'gnutar-path'}, "-tf", "-");
+   debug("cmd:" . join(" ", @cmd));
+   my $pid = open3('>&STDIN', '>&STDOUT', '>&STDERR', @cmd) || $self->print_to_server_and_die( "validate", "Unable to run @cmd", $Amanda::Application::ERROR);
+   waitpid $pid, 0;
+   if ($? != 0){
+       $self->print_to_server_and_die("validate", "$self->{gnutar} returned error", $Amanda::Application::ERROR);
+   }
+   exit($self->{error_status});
+}
+
 package main;
 
 sub usage {

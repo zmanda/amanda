@@ -367,7 +367,7 @@ sub command_validate {
    } elsif (!-e $self->{gnutar}) {
       (@cmd) = ($self->{gnutar}, "-tf", "-");
    } else {
-      (@cmd) = ("date");
+      return $self->default_validate();
    }
    debug("cmd:" . join(" ", @cmd));
    my $pid = open3('>&STDIN', '>&STDOUT', '>&STDERR', @cmd) || die("validate", "Unable to run @cmd");

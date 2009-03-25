@@ -171,11 +171,16 @@ sub do {
     # now convert it to a function name and see if it's
     # defined
     my $function_name = "command_$command";
+    my $default_name = "default_$command";
 
     if (!$self->can($function_name)) {
-        print STDERR "command `$command' is not supported by the '" .
-                     $self->{name} . "' " . $self->{type} . ".\n";
-        exit 1;
+        if (!$self->can($default_name)) {
+            print STDERR "Ycommand `$command' is not supported by the '" .
+                         $self->{name} . "' " . $self->{type} . ".\n";
+            exit 1;
+	}
+	$self->$default_name();
+	return;
     }
 
     # it exists -- call it

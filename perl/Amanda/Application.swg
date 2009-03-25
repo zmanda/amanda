@@ -90,6 +90,12 @@ sub run_calcsize {
     run_calcsize_C($self->{config}, $program, $self->{disk}, $self->{device}, $self->{level}, undef, undef);
 
 }
+
+sub default_validate {
+    my $self = shift;
+
+    while (<STDIN>) {}
+}
 %}
 
 /* C interfaces used by the above */

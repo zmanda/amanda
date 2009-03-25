@@ -1,3 +1,11 @@
+2009-03-25  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/ampgsql.pl: Add command_validate.
+	* application-src/amgtar_perl.pl, application-src/amsamba.pl,
+	  application-src/amsuntar.pl: Sanity check for command_validate.
+	* perl/Amanda/Application.swg: Add a default_validate function.
+	* perl/Amanda/Script_App.pm: Execute defulat_validate if
+	                             command_validate is not defined.
+
 2009-03-25  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Changer.pm: add a 'cmp' operator for
 	  Amanda::Changer::Error objects, to make testing easier

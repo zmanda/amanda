@@ -626,6 +626,10 @@ sub command_restore {
 sub command_validate {
    my $self = shift;
 
+   if (!defined($self->{gnutar}) || !-x $self->{gnutar}) {
+      return $self->default_validate();
+   }
+
    $self->{validate} = 'backup';
    my(@cmd) = ($self->{gnutar}, "-tf", "-");
    debug("cmd:" . join(" ", @cmd));
