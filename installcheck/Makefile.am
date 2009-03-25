@@ -93,7 +93,8 @@ test_utils = \
 	Installcheck/Config.pm \
 	Installcheck/Run.pm \
 	Installcheck/Dumpcache.pm \
-	Installcheck/Application.pm
+	Installcheck/Application.pm \
+	Installcheck/Changer.pm
 EXTRA_DIST += $(test_utils)
 
 CHECK_PERL_FLAGS=-I$(top_srcdir)/installcheck

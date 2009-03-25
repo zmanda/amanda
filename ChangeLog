@@ -1,4 +1,20 @@
 2009-03-25  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Changer.pm: add Amanda::Changer::Error
+	  class to give more detail in changer errors
+	* perl/Amanda/Changer/compat.pm perl/Amanda/Changer/disk.pm
+	  perl/Amanda/Changer/null.pm perl/Amanda/Changer/rait.pm
+	  perl/Amanda/Changer/single.pm: use it
+	* changer-src/chg-glue.pl: handle new errors
+	* installcheck/Makefile.am installcheck/Installcheck/Changer.pm:
+	  (chg_err_like) utility function
+	* installcheck/Amanda_Changer.pl
+	  installcheck/Amanda_Changer_compat.pl
+	  installcheck/Amanda_Changer_disk.pl
+	  installcheck/Amanda_Changer_null.pl
+	  installcheck/Amanda_Changer_rait.pl
+	  installcheck/Amanda_Changer_single.pl: change tests
+
+2009-03-25  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Changer.pm: remove unused import() and export()
 
 2009-03-25  Dustin J. Mitchell <dustin@zmanda.com>

@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 37;
+use Test::More tests => 43;
 use File::Path;
 use strict;
 
@@ -128,9 +128,13 @@ sub info_key {
     if ($key eq 'num_slots') {
 	$results{$key} = 13;
     } elsif ($key eq 'mkerror1') {
-	Amanda::MainLoop::call_later($params{'info_cb'}, "err1");
+	return $self->make_error("failed", $params{'info_cb'},
+	    reason => "unknown",
+	    message => "err1");
     } elsif ($key eq 'mkerror2') {
-	Amanda::MainLoop::call_later($params{'info_cb'}, "err2");
+	return $self->make_error("failed", $params{'info_cb'},
+	    reason => "unknown",
+	    message => "err2");
     }
 
     Amanda::MainLoop::call_later($params{'info_cb'}, undef, %results);
@@ -422,8 +426,15 @@ my $chg = Amanda::Changer->new("mychanger");
 
     $check_info_err = sub {
 	my ($err, %results) = @_;
-	# TODO: should return both errors..
-	is($err, "err2", "info errors are handled correctly");
+	is($err,
+	  "While getting info key 'mkerror1': err1; While getting info key 'mkerror2': err2",
+	  "info errors are handled correctly");
+	is($err->{'type'}, 'failed', "error has type 'failed'");
+	ok($err->failed, "\$err->failed is true");
+	ok(!$err->fatal, "\$err->fatal is false");
+	is($err->{'reason'}, 'unknown', "\$err->{'reason'} is 'unknown'");
+	ok($err->unknown, "\$err->unknown is true");
+	ok(!$err->notimpl, "\$err->notimpl is false");
 	Amanda::MainLoop::quit();
     };
 
@@ -469,13 +480,20 @@ sub loadconfig {
 }
 
 sub assert_invalid {
-    my ($global_tapedev, $global_tpchanger, $defn_tpchanger, $name, $msg) = @_;
+    my ($global_tapedev, $global_tpchanger, $defn_tpchanger,
+	$name, $regexp, $msg) = @_;
     loadconfig($global_tapedev, $global_tpchanger, $defn_tpchanger);
-    eval { Amanda::Changer->new($name); };
-    ok($@, $msg);
+    my $err = Amanda::Changer->new($name);
+    if ($err->isa("Amanda::Changer::Error")) {
+	like($err->{'message'}, $regexp, $msg);
+    } else {
+	diag("Amanda::Changer->new did not return an Error object");
+	fail($msg);
+    }
 }
 
 assert_invalid(undef, undef, undef, undef,
+    qr/You must specify one of 'tapedev' or 'tpchanger'/,
     "supplying a nothing is invalid");
 
 loadconfig(undef, "file:/foo", undef);
@@ -503,9 +521,11 @@ is_deeply( Amanda::Changer->new(), [ "chg-single:tape:/dev/foo", undef ],
     "default changer with global tapedev naming a device and no tpchanger");
 
 assert_invalid("tape:/dev/foo", "tape:/dev/foo", undef, undef,
+    qr/Cannot specify both 'tapedev' and 'tpchanger'/,
     "supplying a device for both tpchanger and tapedev is invalid");
 
 assert_invalid("tape:/dev/foo", "chg-disk:/foo", undef, undef,
+    qr/Cannot specify both 'tapedev' and 'tpchanger'/,
     "supplying a device for tapedev and a changer for tpchanger is invalid");
 
 loadconfig("tape:/dev/foo", 'chg-zd-mtx', undef);
@@ -513,6 +533,7 @@ is_deeply( Amanda::Changer->new(), [ "chg-compat:chg-zd-mtx", undef ],
     "default changer with global tapedev naming a device and a global tpchanger naming a compat script");
 
 assert_invalid("chg-disk:/foo", "tape:/dev/foo", undef, undef,
+    qr/Cannot specify both 'tapedev' and 'tpchanger'/,
     "supplying a changer for tapedev and a device for tpchanger is invalid");
 
 loadconfig("chg-disk:/foo", undef, undef);

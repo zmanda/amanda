@@ -46,12 +46,21 @@ my $chg;
 my $res;
 
 sub err_result {
-    my ($exitstatus, $msg, $continuation, @cont_args) = @_;
+    my ($err, $continuation, @cont_args) = @_;
 
-    debug("returning exit status $exitstatus: $msg");
+    my $exitstatus = 1;
+
+    if ($err->isa("Amanda:Changer::Error")) {
+	$exitstatus = 2 if $err->fatal;
+    } else {
+	# if $err is a string, then the error is fatal.
+	$exitstatus = 2;
+    }
+
+    debug("returning exit status $exitstatus: $err");
 
     print "EXITSTATUS $exitstatus\n";
-    print "<error> $msg\n";
+    print "<error> $err\n";
     if (defined($continuation)) {
 	Amanda::MainLoop::call_later($continuation, @cont_args);
     }
@@ -81,7 +90,7 @@ sub release_and_then {
 
 		debug("release completed");
 		if ($error) {
-		    err_result(1, $error, \&getcmd);
+		    err_result($error, \&getcmd);
 		} else {
 		    $andthen->();
 		}
@@ -107,7 +116,7 @@ sub do_slot {
 	do_reset();
 	return;
     } elsif ($slot eq "prev" or $slot eq "last") {
-	err_result(1, "slot specifier '$slot' is not valid", \&getcmd);
+	err_result("slot specifier '$slot' is not valid", \&getcmd);
 	return;
     }
 
@@ -116,7 +125,7 @@ sub do_slot {
 	    res_cb => sub {
 		(my $error, $res) = @_;
 		if ($error) {
-		    err_result(1, $error, \&getcmd);
+		    err_result($error, \&getcmd);
 		} else {
 		    normal_result($res->{'this_slot'}, $res->{'device_name'}, \&getcmd);
 		}
@@ -134,7 +143,7 @@ sub do_info {
             my %results = @_;
 
             if ($error) {
-		err_result(1, $error, \&getcmd);
+		err_result($error, \&getcmd);
             } else {
                 my $nslots = $results{'num_slots'};
                 $nslots = 0 unless defined $nslots;
@@ -150,7 +159,7 @@ sub do_reset {
 	    finished_cb => sub {
 		my ($error) = @_;
 		if ($error) {
-		    err_result(1, $error, \&getcmd);
+		    err_result($error, \&getcmd);
 		} else {
 		    do_slot("current");
 		}
@@ -166,7 +175,7 @@ sub do_clean {
 	    finished_cb => sub {
 		my ($error) = @_;
 		if ($error) {
-		    err_result(1, $error, \&getcmd);
+		    err_result($error, \&getcmd);
 		} else {
 		    normal_result("<none>", "cleaning operation successful", \&getcmd);
 		}
@@ -183,7 +192,7 @@ sub do_eject {
 	    finished_cb => sub {
 		my ($error) = @_;
 		if ($error) {
-		    err_result(1, $error, \&getcmd);
+		    err_result($error, \&getcmd);
 		} else {
 		    normal_result("<none>", "volume ejected", \&getcmd);
 		}
@@ -201,7 +210,7 @@ sub do_search {
 	    res_cb => sub {
 		(my $error, $res) = @_;
 		if ($error) {
-		    err_result(1, $error, \&getcmd);
+		    err_result($error, \&getcmd);
 		} else {
 		    normal_result($res->{'this_slot'}, $res->{'device_name'}, \&getcmd);
 		}
@@ -219,14 +228,14 @@ sub do_label {
             finished_cb => sub {
                 my ($error) = @_;
                 if ($error) {
-		    err_result(1, $error, \&getcmd);
+		    err_result($error, \&getcmd);
 		} else {
 		    normal_result($res->{'this_slot'}, $res->{'device_name'}, \&getcmd);
 		}
             }
         );
     } else {
-	err_result(1, "No volume loaded", \&getcmd);
+	err_result("No volume loaded", \&getcmd);
     }
 }
 
@@ -274,8 +283,8 @@ my $config_name = $ARGV[0];
 $SIG{__DIE__} = sub {
     my ($msg) = @_;
     die $msg unless defined $^S;
-    err_result(2, $msg, undef);
-    exit 1;
+    err_result($msg, undef);
+    exit 2; # just in case
 };
 
 config_init($CONFIG_INIT_EXPLICIT_NAME, $config_name);

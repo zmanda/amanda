@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 22;
+use Test::More tests => 25;
 use File::Path;
 use strict;
 use warnings;
@@ -25,9 +25,10 @@ use lib "@amperldir@";
 use Installcheck;
 use Installcheck::Config;
 use Installcheck::Run;
+use Installcheck::Changer;
 use Amanda::Paths;
 use Amanda::Device;
-use Amanda::Debug;
+use Amanda::Debug qw( :logging );
 use Amanda::MainLoop;
 use Amanda::Config qw( :init :getconf config_dir_relative );
 use Amanda::Changer;
@@ -69,7 +70,7 @@ sub slurp_result {
 
 # Functions to invoke the changer and later verify the result
 {
-    my $expected_err_re;
+    my $expected_err_info;
     my $expected_dev;
     my $msg;
 
@@ -78,11 +79,11 @@ sub slurp_result {
 	Amanda::MainLoop::quit();
 
 	if ($err) {
-	    if (defined($expected_err_re)) {
-		like($err, $expected_err_re, $msg);
+	    if (defined($expected_err_info)) {
+		chg_err_like($err, $expected_err_info, $msg);
 	    } else {
 		fail($msg);
-		debug("Unexpected error: $err");
+		diag("Unexpected error: $err");
 	    }
 	} else {
 	    if (defined($expected_dev)) {
@@ -99,14 +100,14 @@ sub slurp_result {
 	Amanda::MainLoop::quit();
 
 	if ($err) {
-	    if (defined($expected_err_re)) {
-		like($err, $expected_err_re, $msg);
+	    if (defined($expected_err_info)) {
+		chg_err_like($err, $expected_err_info, $msg);
 	    } else {
 		fail($msg);
 		diag("Unexpected error: $err");
 	    }
 	} else {
-	    if (!defined($expected_err_re)) {
+	    if (!defined($expected_err_info)) {
 		pass($msg);
 	    } else {
 		fail($msg);
@@ -117,7 +118,7 @@ sub slurp_result {
 
     sub try_run_changer {
 	my $sub;
-	($sub, $expected_err_re, $expected_dev, $msg) = @_;
+	($sub, $expected_err_info, $expected_dev, $msg) = @_;
 
 	Amanda::MainLoop::call_later($sub);
 	Amanda::MainLoop::run();
@@ -151,6 +152,7 @@ case "${1}" in
     -search)
         case "${2}" in
             TAPE?01) echo "5 fakedev"; exit 0;;
+	    fatal) echo "<error> game over"; exit 2;;
             *) echo "<error> not found"; exit 1;;
         esac;;
 esac
@@ -169,26 +171,55 @@ if ($cfg_result != $CFGERR_OK) {
 }
 
 my $chg = Amanda::Changer->new();
+die($chg) if $chg->isa("Amanda::Changer::Error");
+
 try_run_changer(
     sub { $chg->load(label => 'TAPE-01', res_cb => \&check_res_cb); },
-    undef, "fakedev", "search by label");
+    undef,
+    "fakedev",
+    "search by label succeeds");
 
 try_run_changer(
     sub { $chg->load(label => 'TAPE-99', res_cb => \&check_res_cb); },
-    qr/^not found$/, undef, "search by label; nonexistent tape");
+    { message => "not found", type => 'failed', reason => 'notfound' },
+    undef,
+    "search by label; nonexistent tape");
 
 try_run_changer(
     sub { $chg->load(slot => '1', res_cb => \&check_res_cb); },
-    undef, "fake:1", "search by slot");
+    undef,
+    "fake:1",
+    "search by slot");
 
 try_run_changer(
     sub { $chg->load(slot => '2', res_cb => \&check_res_cb); },
-    qr/^slot 2 is empty$/, undef, "search by slot; empty slot");
+    { message => "slot 2 is empty", type => 'failed', reason => 'notfound' },
+    undef,
+    "search by slot; empty slot");
 
-# TODO: what *should* happen here?
-#try_run_changer(
-#    sub { $chg->load(slot => '3', res_cb => \&check_res_cb); },
-#    undef, undef, "search by slot; invalid response");
+try_run_changer(
+    sub { $chg->load(slot => '3', res_cb => \&check_res_cb); },
+    { message => "changer script did not provide a device name", type => 'fatal' },
+    undef,
+    "search by slot; no device in response");
+
+try_run_changer(
+    sub { $chg->load(slot => '1', res_cb => \&check_res_cb); },
+    { message => "changer script did not provide a device name", type => 'fatal' },
+    undef,
+    "fatal error is sticky");
+
+# reset the fatal error
+$chg->{'fatal_error'} = undef;
+
+try_run_changer(
+    sub { $chg->load(label => 'fatal', res_cb => \&check_res_cb); },
+    { message => "game over", type => 'fatal' },
+    undef,
+    "search by label with fatal error");
+
+# reset the fatal error
+$chg->{'fatal_error'} = undef;
 
 try_run_changer(
     sub { $chg->eject(finished_cb => \&check_finished_cb); },
@@ -263,6 +294,7 @@ if ($cfg_result != $CFGERR_OK) {
 }
 
 $chg = Amanda::Changer->new();
+die($chg) if $chg->isa("Amanda::Changer::Error");
 
 {
     my ($get_info, $load_current, $label_current, $load_next,

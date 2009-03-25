@@ -29,6 +29,7 @@ use Amanda::Config qw( :getconf );
 use Amanda::Debug;
 use Amanda::Changer;
 use Amanda::MainLoop;
+use Amanda::Device qw( :constants );
 
 =head1 NAME
 
@@ -55,6 +56,14 @@ sub new {
     my ($cc, $tpchanger) = @_;
     my ($device_name) = ($tpchanger =~ /chg-single:(.*)/);
 
+    # check that $device_name is an honest-to-goodness device
+    my $tmpdev = Amanda::Device->new($device_name);
+    if ($tmpdev->status() != $DEVICE_STATUS_SUCCESS) {
+	return Amanda::Changer->make_error("fatal", undef,
+	    message => "chg-single: error opening device '$device_name': " .
+			$tmpdev->error_or_status());
+    }
+
     my $self = {
 	device_name => $device_name,
 	reserved => 0,
@@ -68,21 +77,26 @@ sub load {
     my $self = shift;
     my %params = @_;
 
+    return if $self->check_error($params{'res_cb'});
+
     die "no res_cb supplied" unless (exists $params{'res_cb'});
 
     if ($self->{'reserved'}) {
-	Amanda::MainLoop::call_later($params{'res_cb'},
-	    "'{$self->{device_name}}' is already reserved", undef);
-    } else {
-	Amanda::MainLoop::call_later($params{'res_cb'},
-		undef, Amanda::Changer::single::Reservation->new($self));
+	return $self->make_error("failed", $params{'res_cb'},
+	    reason => "inuse",
+	    message => "'$self->{device_name}' is already reserved");
     }
+
+    Amanda::MainLoop::call_later($params{'res_cb'},
+	    undef, Amanda::Changer::single::Reservation->new($self));
 }
 
 sub info_key {
     my $self = shift;
     my ($key, %params) = @_;
     my %results;
+
+    return if $self->check_error($params{'info_cb'});
 
     if ($key eq 'num_slots') {
 	$results{$key} = 1;

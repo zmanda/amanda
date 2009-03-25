@@ -22,6 +22,7 @@ use strict;
 
 use lib "@amperldir@";
 use Installcheck::Config;
+use Installcheck::Changer;
 use Amanda::Paths;
 use Amanda::Device;
 use Amanda::Debug;
@@ -80,7 +81,11 @@ my $chg = Amanda::Changer->new("chg-single:tape:/foo");
 
     $got_second_res = sub {
 	my ($err, $res) = @_;
-	ok($err, "second simultaneous reservation rejected");
+	chg_err_like($err,
+	    { message => qr{'tape:/foo' is already reserved},
+	      type => 'failed',
+	      reason => 'inuse' },
+	    "second simultaneous reservation rejected");
 
 	Amanda::MainLoop::quit();
     };

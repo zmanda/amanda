@@ -41,7 +41,7 @@ a null device to a RAIT device configuration.  It takes no arguments.
 
 =head1 USAGE
 
-Specify this changer as C<chg-null>.
+Specify this changer as C<chg-null:>.
 
 =cut
 
@@ -55,6 +55,7 @@ sub new {
 sub load {
     my $self = shift;
     my %params = @_;
+    return if $self->check_error($params{'res_cb'});
 
     Amanda::MainLoop::call_later($params{'res_cb'},
             undef, Amanda::Changer::null::Reservation->new());
@@ -64,6 +65,7 @@ sub info_key {
     my $self = shift;
     my ($key, %params) = @_;
     my %results;
+    return if $self->check_error($params{'info_cb'});
 
     if ($key eq 'num_slots') {
 	$results{$key} = 1;
@@ -75,6 +77,7 @@ sub info_key {
 sub reset {
     my $self = shift;
     my %params = @_;
+    return if $self->check_error($params{'finished_cb'});
 
     if (exists $params{'finished_cb'}) {
 	Amanda::MainLoop::call_later($params{'finished_cb'});

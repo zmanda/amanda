@@ -70,6 +70,11 @@ sub new {
     my ($cc, $tpchanger) = @_;
     my ($dir) = ($tpchanger =~ /chg-disk:(.*)/);
 
+    unless (-d $dir) {
+	return Amanda::Changer->make_error("fatal", undef,
+	    message => "directory '$dir' does not exist");
+    }
+
     # note that we don't track outstanding Reservation objects -- we know
     # they're gone when they delete their drive directory
     my $self = {
@@ -84,7 +89,7 @@ sub load {
     my $self = shift;
     my %params = @_;
 
-    die "no res_cb supplied" unless (exists $params{'res_cb'});
+    return if $self->check_error($params{'res_cb'});
 
     if (exists $params{'slot'}) {
         $self->_load_by_slot(%params);
@@ -99,6 +104,8 @@ sub info_key {
     my $self = shift;
     my ($key, %params) = @_;
     my %results;
+
+    return if $self->check_error($params{'info_cb'});
 
     if ($key eq 'num_slots') {
 	my @slots = $self->_all_slots();
@@ -115,6 +122,8 @@ sub reset {
     my %params = @_;
     my $slot;
     my @slots = $self->_all_slots();
+
+    return if $self->check_error($params{'finished_cb'});
 
     $slot = (scalar @slots)? $slots[0] : 0;
     $self->_set_current($slot);
@@ -138,15 +147,15 @@ sub _load_by_slot {
     }
 
     if (!$self->_slot_exists($slot)) {
-        Amanda::MainLoop::call_later($params{'res_cb'},
-                "Slot $slot not found", undef);
-        return;
+	return $self->make_error("failed", $params{'res_cb'},
+	    reason => "notfound",
+	    message => "Slot $slot not found");
     }
 
     if ($drive = $self->_is_slot_in_use($slot)) {
-        Amanda::MainLoop::call_later($params{'res_cb'},
-                "Slot $slot is already in use by drive '$drive'", undef);
-        return;
+	return $self->make_error("failed", $params{'res_cb'},
+	    reason => "inuse",
+	    message => "Slot $slot is already in use by drive '$drive'");
     }
 
     $drive = $self->_alloc_drive();
@@ -155,8 +164,8 @@ sub _load_by_slot {
 
     my $next_slot = $self->_get_next($slot);
 
-    Amanda::MainLoop::call_later($params{'res_cb'},
-            undef, Amanda::Changer::disk::Reservation->new($self, $drive, $slot, $next_slot));
+    Amanda::MainLoop::call_later($params{'res_cb'}, undef,
+	Amanda::Changer::disk::Reservation->new($self, $drive, $slot, $next_slot));
 }
 
 sub _load_by_label {
@@ -168,14 +177,16 @@ sub _load_by_label {
 
     $slot = $self->_find_label($label);
     if (!defined $slot) {
-        Amanda::MainLoop::call_later($params{'res_cb'},
-            "Label '$label' not found", undef);
-	return;
+	return $self->make_error("failed", $params{'res_cb'},
+	    reason => "notfound",
+	    message => "Label '$label' not found");
     }
 
     if ($drive = $self->_is_slot_in_use($slot)) {
-        Amanda::MainLoop::call_later($params{'res_cb'},
-	    "Slot $slot, containing '$label', is already in use by drive '$drive'", undef);
+	return $self->make_error("failed", $params{'res_cb'},
+	    reason => "notfound",
+	    message => "Slot $slot, containing '$label', is already " .
+			"in use by drive '$drive'");
     }
 
     $drive = $self->_alloc_drive();
@@ -184,8 +195,8 @@ sub _load_by_label {
 
     my $next_slot = $self->_get_next($slot);
 
-    Amanda::MainLoop::call_later($params{'res_cb'},
-            undef, Amanda::Changer::disk::Reservation->new($self, $drive, $slot, $next_slot));
+    Amanda::MainLoop::call_later($params{'res_cb'}, undef,
+	Amanda::Changer::disk::Reservation->new($self, $drive, $slot, $next_slot));
 }
 
 # Internal function to find an unused (nonexistent) driveN subdirectory and
@@ -340,7 +351,7 @@ sub _set_current {
 
     if (-e $curlink) {
         unlink($curlink)
-            or die("Could not unlink '$curlink'");
+            or warn("Could not unlink '$curlink'");
     }
 
     # TODO: locking

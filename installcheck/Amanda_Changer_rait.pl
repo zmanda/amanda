@@ -16,13 +16,14 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 30;
+use Test::More tests => 34;
 use File::Path;
 use strict;
 
 use lib "@amperldir@";
 use Installcheck;
 use Installcheck::Config;
+use Installcheck::Changer;
 use Amanda::Paths;
 use Amanda::Device;
 use Amanda::Debug;
@@ -79,6 +80,20 @@ label_vtape(1,1,"mytape");
 label_vtape(2,3,"mytape");
 label_vtape(3,4,"mytape");
 {
+    my $err = Amanda::Changer->new("chg-rait:chg-disk:$tapebase/1");
+    chg_err_like($err,
+	{ message => "chg-rait needs at least two child changers",
+	  type => 'fatal' },
+	"single child device detected and handled");
+
+    $err = Amanda::Changer->new("chg-rait:chg-disk:{$tapebase/13,$tapebase/14}");
+    chg_err_like($err,
+	{ message => qr/chg-disk.*13: directory.*; chg-disk.*14: directory.*/,
+	  type => 'fatal' },
+	"constructor errors in child devices detected and handled");
+}
+
+{
     my $chg = Amanda::Changer->new("chg-rait:chg-disk:$tapebase/{1,2,3}");
     pass("Create 3-way RAIT of vtapes");
     my ($get_info, $check_info,
@@ -87,6 +102,8 @@ label_vtape(3,4,"mytape");
 	$do_load_label, $got_res_label,
 	$do_load_slot, $got_res_slot,
 	$do_load_slot_nobraces, $got_res_slot_nobraces,
+	$do_load_slot_failure, $got_res_slot_failure,
+	$do_load_slot_multifailure, $got_res_slot_multifailure,
     );
 
     $get_info = sub {
@@ -202,7 +219,43 @@ label_vtape(3,4,"mytape");
 	   "rait:{file:$tapebase/1/drive0,file:$tapebase/2/drive0,file:$tapebase/3/drive0}",
 	    "returns correct device name");
 	is($res->{'this_slot'}, '{2,2,2}',
-	    "returns an expanded 'this_slot' in response to my shorthand");
+	    "returns an expanded 'this_slot' of {2,2,2} in response to the shorthand '2'");
+
+	$res->release(finished_cb => $do_load_slot_failure);
+    };
+
+    $do_load_slot_failure = sub {
+	my ($err) = @_;
+	die $err if $err;
+
+	$chg->load(slot => "{1,99,1}", res_cb => $got_res_slot_failure);
+    };
+
+    $got_res_slot_failure = sub {
+	my ($err, $res) = @_;
+	chg_err_like($err,
+	    { message => qr/from chg-disk.*2: Slot 99 not found/,
+	      type => 'failed',
+	      reason => 'notfound' },
+	    "failure of a child to load a slot is correctly propagated");
+
+	$do_load_slot_multifailure->();
+    };
+
+    $do_load_slot_multifailure = sub {
+	my ($err) = @_;
+	die $err if $err;
+
+	$chg->load(slot => "{99,1,99}", res_cb => $got_res_slot_multifailure);
+    };
+
+    $got_res_slot_multifailure = sub {
+	my ($err, $res) = @_;
+	chg_err_like($err,
+	    { message => qr/from chg-disk.*1: Slot 99 not found; from chg-disk.*3: /,
+	      type => 'failed',
+	      reason => 'notfound' },
+	    "failure of multiple chilren to load a slot is correctly propagated");
 
 	Amanda::MainLoop::quit();
     };
@@ -286,8 +339,7 @@ label_vtape(3,4,"mytape");
 
     $finished_reset = sub {
 	my ($err, $res) = @_;
-	ok(!$err, "no error resetting")
-	    or diag($err);
+	ok(!$err, "no error resetting");
 
 	Amanda::MainLoop::quit();
     };

@@ -20,7 +20,6 @@ package Amanda::Changer;
 
 use strict;
 use warnings;
-use Carp;
 use POSIX ();
 use vars qw( @ISA );
 
@@ -28,6 +27,7 @@ use Amanda::Paths;
 use Amanda::Util;
 use Amanda::Config qw( :getconf );
 use Amanda::Device qw( :constants );
+use Amanda::Debug qw( debug );
 
 =head1 NAME
 
@@ -68,7 +68,7 @@ continue.
 
 A new object is created with the C<new> function as follows:
 
-  my $chg = Amanda::Changer->new($changer);
+  my $chg = Amanda::Changer->new($changer_name);
 
 to create a named changer (a name provided by the user, either specifying a
 changer directly or specifying a changer definition), or
@@ -78,7 +78,20 @@ changer directly or specifying a changer definition), or
 to run the default changer.  This function handles the many ways a user can
 configure a changer.
 
+If there is a problem creating the new object, then the resulting object will
+be a fatal C<Error> object (described below).  Thus the usual recipe for
+creating a new changer is
+
+  my $chg = Amanda::Changer->new($changer_name);
+  if ($chg->isa("Amanda::Changer::Error")) {
+    die("Error creating changer $changer_name: $chg");
+  }
+
 =head2 CALLBACKS
+
+All changer callbacks take an error object as the first parameter.  If no error
+occurred, then this parameter is C<undef> and the remaining parameters are
+defined.
 
 A res_cb C<$cb> is called back as:
 
@@ -99,6 +112,51 @@ in the event of an error, or
 
 on success. A finished_cb may be omitted if no notification of completion is
 required.
+
+Other callback types are defined below.
+
+=head2 ERRORS
+
+When a callback is made with an error, it is an object of type
+C<Amanda::Changer::Error>.  When interpolated into a string, this object turns
+into a simple error message.  However, it has some additional methods that can
+be used to determine how to respond to the error.  First, the error message is
+available explicitly as C<< $err->message >>.  The error type is available as
+C<< $err->{'type'} >>, although checks for particular error types should use
+the C<TYPE> methods instead, as perl is better able to detect typos with this
+syntax:
+
+  if ($err->failed) { ... }
+
+The error types are:
+  fatal		    Changer is no longer useable
+  failed	    Operation failed, but the changer is OK
+
+The API may add other error types in the future (for example, to indicate
+that a required resource is already reserved).
+
+Errors of the type C<fatal> indicate that the changer should not be used any
+longer, and in most cases the caller should terminate abnormally.  For example,
+configuration or hardware errors are generally fatal.
+
+If an operation fails, but the changer remains viable, then the error type is
+C<failed>.  The reason for the failure is usually clear to the user from the
+message, but for callers who may need to distinguish, C<< $err->{'reason'} >>
+has one of the following values:
+
+  notfound	    The requested volume was not found
+  invalid	    The caller's request was invalid (e.g., bad slot)
+  notimpl	    The requested operation is not supported
+  inuse		    A required resource is already in use
+  unknown	    Unknown reason
+
+Like types, checks for particular reasons should use the methods, to avoid
+undetected typos:
+
+  if ($err->failed and $err->notimpl) { ... }
+
+Other reasons may be added in the future, so a caller should check for the
+reasons it expects, and treat any other failures as of unknown cause.
 
 =head2 CURRENT SLOT
 
@@ -249,6 +307,11 @@ reservation must still be held when this function is called.
 
 =head1 SUBCLASS HELPERS
 
+C<Amanda::Changer> implements some methods and attributes to help subclass
+implementers.
+
+=head2 INFO
+
 Implementing the C<info> method can be tricky, because it can potentially request
 a number of keys that require asynchronous access.  The C<info> implementation in
 this class may make the process a bit easier.
@@ -261,6 +324,54 @@ Next, for each requested key, C<info> calls C<< $self->info_key($key, %params)
 >>, including a regular C<info_cb> callback.  The C<info> method will wait for
 all C<info_key> invocations to finish, then collect the results or errors that
 occur.
+
+=head2 ERROR HANDLING
+
+To create a new error object, use C<< $self->make_error($type, $cb, %args) >>.  This
+method will create a new C<Amanda::Changer::Error> object and optionally invoke
+a callback with it.  If C<$type> is C<fatal>, then C<< $chg->{'fatal_error'} >>
+is made a reference to the new error object.  The callback C<$cb> is called
+(using C<Amanda::MainLoop::call_later>) with the new error object.  The C<%args>
+are added to the new error object.  In use, this looks something like
+
+  if (!$success) {
+    return $self->make_error("failed", $params{'res_cb'},
+	    reason => "notfound",
+	    message => "Volume '$label' not found");
+  }
+
+This method can also be called as a class method, e.g., from a constructor.
+In this case, it returns the resulting error object, which should be fatal.
+
+  if (!$config_ok) {
+    return Amanda::Changer->make_error("fatal", undef,
+	    message => "config error");
+  }
+
+For cases where a number of errors have occurred, it is helpful to make a
+"combined" error.  The method C<make_combined_error> takes care of this
+operation, given a callback and an array of tuples C<[ $description, $err ]>
+for each error.  This method uses some heuristics to figure out the
+appropriate type and reason for the combined error.
+
+  if ($left_err and $right_err) {
+    return $self->make_combined_error($params{'finished_cb'},
+	[ [ "from the left", $left_err ],
+	  [ "from the right", $right_err ] ]);
+  }
+
+The method C<< $self->check_error($cb) >> is a useful method for subclasses to
+avoid doing anything after a fatal error.  This method checks C<<
+$self->{'fatal_error'} >>.  If the error is defined, the method calls C<$cb>
+and returns true.  The usual recipe is
+
+  sub load {
+    my $self = shift;
+    my %params = @_;
+
+    return if $self->check_error($params{'res_cb'});
+    # ...
+  }
 
 =head1 SEE ALSO
 
@@ -318,7 +429,9 @@ sub new {
 
 	    # if not, then there had better be no tapdev
 	    if (getconf_seen($CNF_TAPEDEV)) {
-		die "Cannot specify both 'tapedev' and 'tpchanger' unless using an old-style changer script";
+		return Amanda::Changer::Error->new('fatal',
+		    message => "Cannot specify both 'tapedev' and 'tpchanger' " .
+			"unless using an old-style changer script");
 	    }
 
 	    # maybe a changer alias?
@@ -346,10 +459,13 @@ sub new {
 		return _new_from_uri($tapedev, undef, $name);
 	    }
 
-	    # assume it's a device name or alias, and invoke the single-changer
+	    # assume it's a device name or alias, and invoke chg-single.
+	    # chg-single will check the device immediately and error out
+	    # if the device name is invalid.
 	    return _new_from_uri("chg-single:$tapedev", undef, $name);
 	} else {
-	    die "Must specify one of 'tapedev' or 'tpchanger'";
+	    return Amanda::Changer::Error->new('fatal',
+		message => "You must specify one of 'tapedev' or 'tpchanger'");
 	}
     }
 }
@@ -451,76 +567,40 @@ sub _new_from_uri { # (note: this sub is patched by the installcheck)
     }
 
     my $rv = $pkgname->new($cc, $uri);
-    die "$pkgname->new did not return an Amanda::Changer object"
-	unless ($rv->isa("Amanda::Changer"));
+    die "$pkgname->new did not return an Amanda::Changer object or an Amanda::Changer::Error"
+	unless ($rv->isa("Amanda::Changer") or $rv->isa("Amanda::Changer::Error"));
 
-    # store this in our cache for next time
-    $changers_by_uri_cc{$uri_cc} = $rv;
+    if ($rv->isa("Amanda::Changer")) {
+	# add an instance variable or two
+	$rv->{'fatal_error'} = undef;
+
+	# store this in our cache for next time
+	$changers_by_uri_cc{$uri_cc} = $rv;
+    }
 
     return $rv;
 }
 
-# parent-class methods; mostly "unimplemented method"
+# method stubs that return a "notimpl" error
 
-sub load {
-    my $self = shift;
-    my %params = @_;
-
-    my $class = ref($self);
-    $params{'res_cb'}->("$class does not support load()", undef);
-}
-
-sub reset {
-    my $self = shift;
-    my %params = @_;
+sub _stubop {
+    my ($op, $cbname, $self, %params) = @_;
+    return if $self->check_error($params{$cbname});
 
     my $class = ref($self);
-    if (exists $params{'finished_cb'}) {
-	$params{'finished_cb'}->("$class does not support reset()");
-    }
+    $self->make_error("failed", $params{$cbname},
+	reason => "notimpl",
+	message => "$class does not support $op");
 }
 
-sub clean {
-    my $self = shift;
-    my %params = @_;
+sub load { _stubop("loading volumes", "res_cb", @_); }
+sub reset { _stubop("reset", "finished_cb", @_); }
+sub clean { _stubop("clean", "finished_cb", @_); }
+sub eject { _stubop("eject", "finished_cb", @_); }
+sub update { _stubop("update", "finished_cb", @_); }
+sub move { _stubop("move", "finished_cb", @_); }
 
-    my $class = ref($self);
-    if (exists $params{'finished_cb'}) {
-	$params{'finished_cb'}->("$class does not support clean()");
-    }
-}
-
-sub eject {
-    my $self = shift;
-    my %params = @_;
-
-    my $class = ref($self);
-    if (exists $params{'finished_cb'}) {
-	$params{'finished_cb'}->("$class does not support eject()");
-    }
-}
-
-sub update {
-    my $self = shift;
-    my %params = @_;
-
-    my $class = ref($self);
-    if (exists $params{'finished_cb'}) {
-	$params{'finished_cb'}->("$class does not support update()");
-    }
-}
-
-sub move {
-    my $self = shift;
-    my %params = @_;
-
-    my $class = ref($self);
-    if (exists $params{'finished_cb'}) {
-	$params{'finished_cb'}->("$class does not support move()");
-    }
-}
-
-# info tries to help subclasses
+# info calls out to info_setup and info_key; see POD above
 sub info {
     my $self = shift;
     my %params = @_;
@@ -575,22 +655,13 @@ sub info {
 
 	# if there are *any* errors, handle them
 	my @annotated_errs =
-	    map { [ sprintf("While finding '%s'", $_), $key_results{$_}->[0] ] }
+	    map { [ sprintf("While getting info key '%s'", $_), $key_results{$_}->[0] ] }
 	    grep { defined($key_results{$_}->[0]) }
 	    keys %key_results;
 
 	if (@annotated_errs) {
-	    my $err;
-	    if (@annotated_errs > 1) {
-		$err = join("; ",
-		    map { sprintf("%s: %s", @$_) }
-		    @annotated_errs);
-	    } else {
-		$err = $annotated_errs[0]->[1];
-	    }
-
-	    $params{'info_cb'}->($err);
-	    return;
+	    return $self->make_combined_error(
+		$params{'info_cb'}, [ @annotated_errs ]);
 	}
 
 	# no errors, so combine the results and return them
@@ -609,6 +680,157 @@ sub info {
 
     $do_setup->();
 }
+
+# subclass helpers
+
+sub make_error {
+    my $self = shift;
+    my ($type, $cb, %args) = @_;
+
+    my $classmeth = $self eq "Amanda::Changer";
+
+    if ($classmeth and $type ne 'fatal') {
+	cluck("type must be fatal when calling make_error as a class method");
+	$type = 'fatal';
+    }
+
+    my $err = Amanda::Changer::Error->new($type, %args);
+
+    if (!$classmeth) {
+	$self->{'fatal_error'} = $err
+	    if ($err->fatal);
+
+	Amanda::MainLoop::call_later($cb, $err)
+	    if ($cb);
+    }
+
+    return $err;
+}
+
+sub make_combined_error {
+    my $self = shift;
+    my ($cb, $suberrors) = @_;
+    my $err;
+
+    if (@$suberrors == 0) {
+	die("make_combined_error called with no errors");
+    }
+
+    my $classmeth = $self eq "Amanda::Changer";
+
+    # if there's only one suberror, just use it directly
+    if (@$suberrors == 1) {
+	$err = $suberrors->[0][1];
+	die("$err is not an Error object")
+	    unless defined($err) and $err->isa("Amanda::Changer::Error");
+
+	$err = Amanda::Changer::Error->new(
+	    $err->{'type'},
+	    reason => $err->{'reason'},
+	    message => $suberrors->[0][0] . ": " . $err->{'message'});
+    } else {
+	my $fatal = $classmeth or grep { $err->[1]{'fatal'} } @$suberrors;
+
+	my $reason;
+	if (!$fatal) {
+	    my %reasons =
+		map { ($_->[1]{'reason'}, undef) }
+		grep { $_->[1]{'reason'} }
+		@$suberrors;
+	    if ((keys %reasons) == 1) {
+		$reason = (keys %reasons)[0];
+	    } else {
+		$reason = 'unknown'; # multiple or 0 "source" reasons
+	    }
+	}
+
+	my $message = join("; ",
+	    map { sprintf("%s: %s", @$_) }
+	    @$suberrors);
+
+	my %errargs = ( message => $message );
+	$errargs{'reason'} = $reason unless ($fatal);
+	$err = Amanda::Changer::Error->new(
+	    $fatal? "fatal" : "failed",
+	    %errargs);
+    }
+
+    if (!$classmeth) {
+	$self->{'fatal_error'} = $err
+	    if ($err->fatal);
+
+	Amanda::MainLoop::call_later($cb, $err)
+	    if ($cb);
+    }
+
+    return $err;
+}
+
+sub check_error {
+    my $self = shift;
+    my ($cb) = @_;
+
+    if (defined $self->{'fatal_error'}) {
+	Amanda::MainLoop::call_later($cb, $self->{'fatal_error'});
+	return 1;
+    }
+}
+
+package Amanda::Changer::Error;
+use overload '""' => sub { $_[0]->{'message'}; };
+use Amanda::Debug qw( :logging );
+use Carp qw( cluck );
+
+my %known_err_types = map { ($_, 1) } qw( fatal failed );
+my %known_err_reasons = map { ($_, 1) } qw( notfound invalid notimpl inuse unknown );
+
+sub new {
+    my $class = shift; # ignore class
+    my ($type, %info) = @_;
+
+    debug("new Amanda::Changer::Error: type='$type', message='$info{message}'");
+
+    $info{'type'} = $type;
+
+    # do some sanity checks.  Note that these sanity checks issue a warning
+    # with cluck, but add default values to the error.  This is in the hope
+    # that an unusual Amanda error is not obscured by a problem in the
+    # make_error invocation.  The stack trace produced by cluck should help to
+    # track down the bad make_error invocation.
+
+    if (!exists $info{'message'}) {
+	cluck("no message given to A::C::make_error");
+	$info{'message'} = "unknown error";
+    }
+
+    if (!exists $known_err_types{$type}) {
+	cluck("invalid Amanda::Changer::Error type '$type'");
+	$type = 'fatal';
+    }
+
+    if ($type eq 'failed' and !exists $info{'reason'}) {
+	cluck("no reason given to A::C::make_error");
+	$info{'reason'} = "unknown";
+    }
+
+    if ($type eq 'failed' and !exists $known_err_reasons{$info{'reason'}}) {
+	cluck("invalid Amanda::Changer::Error reason '$info{reason}'");
+	$info{'reason'} = 'unknown';
+    }
+
+    return bless (\%info, $class);
+}
+
+# types
+sub fatal { $_[0]->{'type'} eq 'fatal'; }
+sub failed { $_[0]->{'type'} eq 'failed'; }
+
+# reasons
+sub notfound { $_[0]->{'reason'} eq 'notfound'; }
+sub invalid { $_[0]->{'reason'} eq 'invalid'; }
+sub notimpl { $_[0]->{'reason'} eq 'notimpl'; }
+sub inuse { $_[0]->{'reason'} eq 'inuse'; }
+sub unknown { $_[0]->{'reason'} eq 'unknown'; }
 
 package Amanda::Changer::Reservation;
 
@@ -638,7 +860,7 @@ sub set_label {
     my $self = shift;
     my %params = @_;
 
-    # nothing to do: just call the finished callback
+    # nothing to do by default: just call the finished callback
     if (exists $params{'finished_cb'}) {
 	Amanda::MainLoop::call_later($params{'finished_cb'}, undef);
     }

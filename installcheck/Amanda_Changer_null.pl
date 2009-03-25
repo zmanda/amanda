@@ -16,12 +16,13 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 3;
+use Test::More tests => 4;
 use File::Path;
 use strict;
 
 use lib "@amperldir@";
 use Installcheck::Config;
+use Installcheck::Changer;
 use Amanda::Paths;
 use Amanda::Device;
 use Amanda::Debug;
@@ -45,7 +46,6 @@ if ($cfg_result != $CFGERR_OK) {
 }
 
 my $chg = Amanda::Changer->new("chg-null:");
-print ref($chg), "\n";
 {
     my ($get_info, $check_info, $do_load, $got_res);
 
@@ -80,5 +80,22 @@ print ref($chg), "\n";
 
     # start the loop
     Amanda::MainLoop::call_later($get_info);
+    Amanda::MainLoop::run();
+}
+
+# eject is not implemented
+{
+    my $try_eject = sub {
+        $chg->eject(finished_cb => sub {
+	    my ($err, $res) = @_;
+	    chg_err_like($err,
+		{ type => 'failed', reason => 'notimpl' },
+		"eject returns a failed/notimpl error");
+
+	    Amanda::MainLoop::quit();
+	});
+    };
+
+    Amanda::MainLoop::call_later($try_eject);
     Amanda::MainLoop::run();
 }

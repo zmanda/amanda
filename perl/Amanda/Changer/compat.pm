@@ -65,6 +65,15 @@ sub new {
     my ($cc, $tpchanger) = @_;
     my ($script) = ($tpchanger =~ /chg-compat:(.*)/);
 
+    unless (-e $script) {
+	$script = "$amlibexecdir/$script";
+    }
+
+    if (! -x $script) {
+	return Amanda::Changer->make_error("fatal", undef,
+	    message => "'$script' is not executable");
+    }
+
     my $self = {
         script => $script,
 	reserved => 0,
@@ -76,7 +85,7 @@ sub new {
 
     $self->_make_cfg_dir($cc);
 
-    debug("$class initialized with script $script, run in temporary directory $self->{cfg_dir}");
+    debug("$class initialized with script $script, temporary directory $self->{cfg_dir}");
 
     return $self;
 }
@@ -84,13 +93,12 @@ sub new {
 sub load {
     my $self = shift;
     my %params = @_;
-
-    die "no callback supplied" unless (exists $params{'res_cb'});
-    my $cb = $params{'res_cb'};
+    return if $self->check_error($params{'res_cb'});
 
     if ($self->{'reserved'}) {
-	$cb->("Changer is already reserved: '" . $self->{'reserved'} . "'", undef);
-	return;
+	return $self->make_error("failed", $params{'res_cb'},
+	    reason => "inuse",
+	    message => "Changer is already reserved: '" . $self->{'reserved'} . "'");
     }
 
     # make sure the info is loaded, and re-call load() if we have to wait
@@ -101,20 +109,33 @@ sub load {
 		$self->load(%params);
 	    },
 	    sub {
-		my ($msg) = @_;
-		$cb->($msg, undef);
+		my ($exitval, $message) = @_;
+		# this is always fatal - we can't load without info
+		return $self->make_error("fatal", $params{'res_cb'},
+		    message => $message);
 	    });
 	return;
     }
 
     my $run_success_cb = sub {
         my ($slot, $rest) = @_;
+	if (!$rest) {
+	    return $self->make_error("fatal", $params{'res_cb'},
+		message => "changer script did not provide a device name");
+	}
         my $res = Amanda::Changer::compat::Reservation->new($self, $slot, $rest);
-        $cb->(undef, $res);
+        $params{'res_cb'}->(undef, $res);
     };
     my $run_fail_cb = sub {
         my ($exitval, $message) = @_;
-        $cb->($message, undef);
+	if ($exitval >= 2) {
+	    return $self->make_error("fatal", $params{'res_cb'},
+		message => $message);
+	} else {
+	    return $self->make_error("failed", $params{'res_cb'},
+		reason => "notfound",
+		message => $message);
+	}
     };
 
     if (exists $params{'label'}) {
@@ -160,9 +181,9 @@ sub _manual_scan {
 	my ($exitval, $message) = @_;
 
 	# don't continue scanning after a fatal error
-        if ($exitval > 1) {
-	    Amanda::MainLoop::call_later($params{'res_cb'}, $message, undef);
-	    return;
+        if ($exitval >= 2) {
+	    return $self->make_error("fatal", $params{'res_cb'},
+		message => $message);
 	}
 
 	$load_next->();
@@ -171,9 +192,9 @@ sub _manual_scan {
     $load_next = sub {
 	# if we've scanned all nslots, we haven't found the label.
         if (++$nchecked >= $self->{'nslots'}) {
-            Amanda::MainLoop::call_later($params{'res_cb'},
-                    "Volume '$params{label}' not found", undef);
-            return;
+	    return $self->make_error("failed", $params{'res_cb'},
+		reason => "notfound",
+		message => "Volume '$params{label}' not found");
 	}
 
 	debug("Amanda::Changer::compat: manual scanning next slot");
@@ -194,8 +215,15 @@ sub info_setup {
 		$params{'finished_cb'}->();
 	    },
 	    sub {
-		my ($err) = @_;
-		$params{'finished_cb'}->($err);
+		my ($exitval, $message) = @_;
+		if ($exitval >= 2) {
+		    return $self->make_error("fatal", $params{'finished_cb'},
+			message => $message);
+		} else {
+		    return $self->make_error("failed", $params{'finished_cb'},
+			reason => "notfound",
+			message => $message);
+		}
 	    });
     } else {
 	$params{'finished_cb'}->();
@@ -227,9 +255,14 @@ sub _simple_op {
     };
     my $run_fail_cb = sub {
 	my ($exitval, $message) = @_;
-        if (exists $params{'finished_cb'}) {
-            $params{'finished_cb'}->($message);
-        }
+	if ($exitval >= 2) {
+	    return $self->make_error("fatal", $params{'finished_cb'},
+		message => $message);
+	} else {
+	    return $self->make_error("failed", $params{'finished_cb'},
+		reason => "unknown",
+		message => $message);
+	}
     };
     $self->_run_tpchanger($run_success_cb, $run_fail_cb, "-$op");
 }
@@ -261,16 +294,14 @@ sub update {
     my $self = shift;
     my %params = @_;
 
-    # TODO: not implemented
-    # -- need to shuffle the driver over every slot
-    if (exists $params{'finished_cb'}) {
-	$params{'finished_cb'}->(undef);
-    }
+    return $self->make_error("failed", $params{'finished_cb'},
+	reason => "notimpl",
+	message => "chg-compat does not implement 'update'");
 }
 
 # Internal function to call the script's -info, store the results in $self, and
-# call either $success_cb (with no arguments) or $error_cb (with an error
-# message).
+# call either $success_cb (with no arguments) or $error_cb (with an exitval and
+# error message).
 sub _get_info {
     my ($self, $success_cb, $error_cb) = @_;
 
@@ -278,8 +309,10 @@ sub _get_info {
 	my ($slot, $rest) = @_;
 	# old, unsearchable changers don't return the third result, so it's
 	# optional in the regex
-	$rest =~ /(\d+) (\d+) ?(\d+)?/ or
-	    croak("Malformed response from changer -info: $rest");
+	unless ($rest =~ /(\d+) (\d+) ?(\d+)?/) {
+	    $error_cb->(2, "Malformed response from changer -info: $rest");
+	    return;
+	}
 
 	$self->{'nslots'} = $1;
 	$self->{'backward'} = $2;
@@ -287,11 +320,7 @@ sub _get_info {
 
 	$success_cb->();
     };
-    my $run_fail_cb = sub {
-	my ($exitval, $message) = @_;
-	$error_cb->($message);
-    };
-    $self->_run_tpchanger($run_success_cb, $run_fail_cb, "-info");
+    $self->_run_tpchanger($run_success_cb, $error_cb, "-info");
 }
 
 # Internal function to create a temporary configuration directory, which persists
@@ -395,9 +424,6 @@ sub _run_tpchanger {
         %ENV = Amanda::Util::safe_env();
 
 	my $script = $self->{'script'};
-        unless (-x $script) {
-            $script = "$amlibexecdir/$script";
-        }
         { exec { $script } $script, @args; } # braces protect against warning
 
 	my $err = "<error> Could not exec $script: $!\n";
@@ -446,6 +472,9 @@ sub _run_tpchanger {
 
 	# parse the child's output
 	my @child_output = split '\n', $child_output;
+	my $exitval = POSIX::WEXITSTATUS($child_exit_status);
+
+	debug("Got response '$child_output' with exit status $exitval");
 	if (@child_output < 1) {
 	    $failure_cb->(2, "Malformed output from changer script -- no output");
 	    return;
@@ -461,7 +490,6 @@ sub _run_tpchanger {
 	my ($slot, $rest) = ($1, $2);
 
 	# let the callback take care of any further interpretation
-	my $exitval = POSIX::WEXITSTATUS($child_exit_status);
 	if ($exitval == 0) {
 	    $success_cb->($slot, $rest);
 	} else {
@@ -529,12 +557,12 @@ sub do_release {
     my %params = @_;
 
     my $finished = sub {
-	my ($msg) = @_;
+	my ($message) = @_;
 
 	$self->{'chg'}->{'reserved'} = 0;
 
 	if (exists $params{'finished_cb'}) {
-	    Amanda::MainLoop::call_later($params{'finished_cb'}, $msg);
+	    Amanda::MainLoop::call_later($params{'finished_cb'}, $message);
 	}
     };
 
@@ -567,9 +595,14 @@ sub set_label {
     };
     my $run_fail_cb = sub {
 	my ($exitval, $message) = @_;
-        if (exists $params{'finished_cb'}) {
-            Amanda::MainLoop::call_later($params{'finished_cb'}, $message);
-        }
+	if ($exitval >= 2) {
+	    return $self->{'chg'}->make_error("fatal", $params{'finished_cb'},
+		message => $message);
+	} else {
+	    return $self->{'chg'}->make_error("failed", $params{'finished_cb'},
+		reason => "unknown",
+		message => $message);
+	}
     };
     $self->{'chg'}->_run_tpchanger(
         $run_success_cb, $run_fail_cb, "-label", $params{'label'});

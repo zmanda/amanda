@@ -16,13 +16,15 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 14;
+use Test::More tests => 16;
 use File::Path;
 use strict;
+use warnings;
 
 use lib "@amperldir@";
 use Installcheck;
 use Installcheck::Config;
+use Installcheck::Changer;
 use Amanda::Paths;
 use Amanda::Device;
 use Amanda::Debug;
@@ -71,8 +73,16 @@ if ($cfg_result != $CFGERR_OK) {
 }
 
 reset_taperoot(5);
-my $chg = Amanda::Changer->new("chg-disk:$taperoot");
 
+# first try an error
+my $chg = Amanda::Changer->new("chg-disk:$taperoot/foo");
+chg_err_like($chg,
+    { message => qr/directory '.*' does not exist/,
+      type => 'fatal' },
+    "detects nonexistent directory");
+
+$chg = Amanda::Changer->new("chg-disk:$taperoot");
+die($chg) if $chg->isa("Amanda::Changer::Error");
 {
     my @slots = ( 1, 3, 5 );
     my @reservations = ();
@@ -102,7 +112,11 @@ my $chg = Amanda::Changer->new("chg-disk:$taperoot");
 		$chg->load(slot => 3,
 			   res_cb => sub {
 		    my ($err, $reservation) = @_;
-		    ok($err, "error when requesting already-reserved slot");
+		    chg_err_like($err,
+			{ message => qr/Slot 3 is already in use by drive/,
+			  type => 'failed',
+			  reason => 'inuse' },
+			"error when requesting already-reserved slot");
 		    Amanda::MainLoop::quit();
 		});
 	    }
@@ -185,6 +199,23 @@ my $chg = Amanda::Changer->new("chg-disk:$taperoot");
     };
 
     Amanda::MainLoop::call_later($load_next);
+    Amanda::MainLoop::run();
+}
+
+# eject is not implemented
+{
+    my $try_eject = sub {
+        $chg->eject(finished_cb => sub {
+	    my ($err, $res) = @_;
+	    chg_err_like($err,
+		{ type => 'failed', reason => 'notimpl' },
+		"eject returns a failed/notimpl error");
+
+	    Amanda::MainLoop::quit();
+	});
+    };
+
+    Amanda::MainLoop::call_later($try_eject);
     Amanda::MainLoop::run();
 }
 
