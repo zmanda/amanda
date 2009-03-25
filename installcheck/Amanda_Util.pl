@@ -16,11 +16,13 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 61;
+use Test::More tests => 71;
 
 use lib "@amperldir@";
 use Data::Dumper;
 use Amanda::Util;
+use Installcheck;
+use POSIX;
 
 # Data::Dumper is used to output strings with control characters
 # in them, below
@@ -107,3 +109,53 @@ for my $strs (@try_bracing) {
     is_deeply($rt, $strs,
 	      "round-trip of " . Dumper($strs));
 }
+
+## test full_read and full_write
+
+my $testfile = "$Installcheck::TMP/Amanda_Util";
+my $fd;
+my $buf;
+
+# set up a 1K test file
+{
+    open (my $fh, ">", $testfile) or die("Opening $testfile: $!");
+    print $fh 'abcd' x 256;
+    close($fh);
+}
+
+$! = 0;
+my $rv = Amanda::Util::full_read(-1, 13);
+isnt($!, '', "bad full_read gives a nonzero errno ($!)");
+
+$! = 0;
+my $rv = Amanda::Util::full_write(-1, "hello", 5);
+isnt($!, '', "bad full_write gives a nonzero errno ($!)");
+
+$fd = POSIX::open($testfile, POSIX::O_RDONLY);
+die "Could not open '$testfile'" unless defined $fd;
+
+$! = 0;
+$buf = Amanda::Util::full_read($fd, 1000);
+is(length($buf), 1000, "a valid read gets the right number of bytes");
+is(substr($buf, 0, 8), "abcdabcd", "..and what looks like the right data");
+is($!, '', "..and no error");
+
+$! = 0;
+$buf = Amanda::Util::full_read($fd, 1000);
+is(length($buf), 24, "a second read, to EOF, gets the right number of bytes");
+is(substr($buf, 0, 8), "abcdabcd", "..and what looks like the right data");
+is($!, '', "..and no error");
+
+POSIX::close($fd);
+
+$fd = POSIX::open($testfile, POSIX::O_WRONLY);
+die "Could not open '$testfile'" unless defined $fd;
+
+$! = 0;
+$rv = Amanda::Util::full_write($fd, "swank!", 6);
+is($rv, 6, "full_write returns number of bytes written");
+is($!, '', "..and no error");
+
+POSIX::close($fd);
+
+unlink($testfile);

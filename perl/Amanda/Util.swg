@@ -24,6 +24,8 @@
 
 %{
 #include "debug.h"
+#include "full-read.h"
+#include "full-write.h"
 /* use a relative path here to avoid conflicting with Perl's util.h. */
 #include "../common-src/util.h"
 #include "file.h"
@@ -124,6 +126,28 @@ the euid is ignored; this is used for programs that expect to be setuid-root.
 =item get_original_cwd()
 
 Return the original current directory with C<get_original_cwd>.
+
+=back
+
+=head1 File Handling
+
+These functions read and write the entire requested size to a file descriptor,
+even if the underlying syscall returns early.  Note that they do not operate on
+Perl file handles.
+
+If fewer than C<$size> bytes are written, C<full_write> returns the number of
+bytes actually written and sets C<$!> appropriately.  When reading, if fewer
+than C<$size> bytes are read due to a normal EOF, then C<$!> is zero;
+otherwise, it contains the appropriate error message.
+
+Unlike C<POSIX::read>, C<full_read> returns a scalar containing the bytes it
+read from the file descriptor.
+
+=over
+
+=item full_read($fd, $size)
+
+=item full_write($fd, $buf, $size)
 
 =back
 
@@ -270,6 +294,49 @@ amglue_add_constant(CONTEXT_SCRIPTUTIL, pcontext_t);
 amglue_copy_to_tag(pcontext_t, constants);
 
 %perlcode %{
+sub full_read {
+    my ($fd, $count) = @_;
+    my @bufs;
+
+    while ($count > 0) {
+	my $b;
+	my $n_read = POSIX::read($fd, $b, $count);
+	if (!defined $n_read) {
+	    next if ($! == POSIX::EINTR);
+	    return undef;
+	} elsif ($n_read == 0) {
+	    last;
+	}
+	push @bufs, $b;
+	$count -= $n_read;
+    }
+
+    return join('', @bufs);
+}
+
+sub full_write {
+    my ($fd, $buf, $count) = @_;
+    my $total = 0;
+
+    while ($count > 0) {
+	my $n_written = POSIX::write($fd, $buf, $count);
+	if (!defined $n_written) {
+	    next if ($! == POSIX::EINTR);
+	    return undef;
+	} elsif ($n_written == 0) {
+	    last;
+	}
+
+	$count -= $n_written;
+	$total += $n_written;
+
+	if ($count) {
+	    $buf = substr($buf, $n_written);
+	}
+    }
+
+    return $total;
+}
 
 sub skip_quoted_string {
     my $str = shift;

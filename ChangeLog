@@ -1,3 +1,7 @@
+2009-03-25  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Util.swg: add full_read and full_write
+	* installcheck/Amanda_Util.pl: test 'em
+
 2009-03-25  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/amsuntar.pl: Generate valid index stream.
 
