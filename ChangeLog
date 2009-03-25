@@ -1,4 +1,8 @@
 2009-03-24  Nikolas Coukouma <atrus@zmanda.com>
+	* man/xml-source/amanda-applications.7.xml,
+	  man/xml-source/amanda.8.xml: add missing references to applications
+
+2009-03-24  Nikolas Coukouma <atrus@zmanda.com>
 	* application-src/ampgsql.pl: older versions of perl don't like
 	  mixing functions and export tags
 

@@ -106,6 +106,9 @@ configuration files for quick reference.</para>
 <manref name="amoverview" vol="8"/>,
 </listitem>
 <listitem>
+<manref name="ampgsql" vol="8"/>,
+</listitem>
+<listitem>
 <manref name="amplot" vol="8"/>,
 </listitem>
 <listitem>
@@ -134,6 +137,9 @@ configuration files for quick reference.</para>
 </listitem>
 <listitem>
 <manref name="amstatus" vol="8"/>,
+</listitem>
+<listitem>
+<manref name="amsuntar" vol="8"/>,
 </listitem>
 <listitem>
 <manref name="amtape" vol="8"/>,
