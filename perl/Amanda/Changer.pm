@@ -777,9 +777,11 @@ sub check_error {
 }
 
 package Amanda::Changer::Error;
-use overload '""' => sub { $_[0]->{'message'}; };
 use Amanda::Debug qw( :logging );
 use Carp qw( cluck );
+use overload
+    '""' => sub { $_[0]->{'message'}; },
+    'cmp' => sub { $_[0]->{'message'} cmp $_[1]; };
 
 my %known_err_types = map { ($_, 1) } qw( fatal failed );
 my %known_err_reasons = map { ($_, 1) } qw( notfound invalid notimpl inuse unknown );

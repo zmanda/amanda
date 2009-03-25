@@ -1,4 +1,8 @@
 2009-03-25  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Changer.pm: add a 'cmp' operator for
+	  Amanda::Changer::Error objects, to make testing easier
+
+2009-03-25  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Changer.pm: add Amanda::Changer::Error
 	  class to give more detail in changer errors
 	* perl/Amanda/Changer/compat.pm perl/Amanda/Changer/disk.pm
