@@ -1,3 +1,7 @@
+2009-03-26  Dustin J. Mitchell <dustin@zmanda.com>
+	* man/xml-source/amanda.conf.5.xml: document new estimate changes made
+	  2009-02-04
+
 2009-03-26  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/planner.c: Remove logging of guessed estimate.
 

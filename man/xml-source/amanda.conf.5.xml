@@ -1662,30 +1662,34 @@ client-encryption AND server-compression is not supported.
 
 
   <varlistentry>
-  <term><emphasis remap='B'>estimate</emphasis> <emphasis remap='I'>client|calcsize|server</emphasis></term>
+  <term><emphasis remap='B'>estimate</emphasis> <emphasis remap='I'>client|calcsize|server [client|calcsize|server ..]</emphasis></term>
   <listitem>
 <para>Default: <emphasis remap='I'>client</emphasis>.
-Determine the way &A; does it's estimate.</para>
+Determine the way &A; estimates the size of each DLE before beginning a backup.  This is a list of acceptable estimate methods, and Amanda applies the first method supported by the application.  The methods are:</para>
 <variablelist remap='TP'>
   <varlistentry>
     <term>client</term>
     <listitem>
-      <para>Use the same program as the dumping program, this is the most
-	    accurate way to do estimates, but it can take a long time.</para>
+      <para>Use the same program as the dumping program. This is the most
+	    accurate method to do estimates, but it can take a long time.</para>
     </listitem>
   </varlistentry>
   <varlistentry>
     <term>calcsize</term>
     <listitem>
-      <para>Use a faster program to do estimates, but the result is less accurate.</para>
+      <para>Use a faster program to do estimates, but the result is less
+      accurate.</para>
     </listitem>
   </varlistentry>
   <varlistentry>
     <term>server</term>
     <listitem>
-      <para>Use only statistics from the previous run to give an estimate, 
-            it takes only a few seconds but the result is not accurate if your disk 
-            usage changes from day to day.</para>
+      <para>Use only statistics from the previous few runs to give an estimate.
+            This very quick, but the result is not accurate if your disk
+            usage changes from day to day.  If this method is specified, but the
+	    server does not have enough data to make an estimate, then the option
+	    is internally moved to the end of the list, thereby preferring 'client'
+	    or 'calcsize' in this case.</para>
     </listitem>
   </varlistentry>
 </variablelist>
