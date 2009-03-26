@@ -3176,16 +3176,8 @@ server_estimate(
     int     level)
 {
     int    stats;
-    gint64 size; 
 
-    size = internal_server_estimate(dp, info, level, &stats);
-
-    if (stats == 0) {
-	char *qname = quote_string(dp->name);
-	log_add(L_WARNING, _("WARNING: no history available for %s:%s; guessing that size will be %lld KB\n"), dp->host->hostname, qname, (long long)size);
-	amfree(qname);
-    }
-    return size;
+    return internal_server_estimate(dp, info, level, &stats);
 }
 
 static int
