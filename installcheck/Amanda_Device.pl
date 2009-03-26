@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 295;
+use Test::More tests => 303;
 use File::Path qw( mkpath rmtree );
 use Sys::Hostname;
 use Carp;
@@ -494,7 +494,7 @@ my $run_s3_tests = defined $S3_SECRET_KEY && defined $S3_ACCESS_KEY;
 my $run_devpay_tests = defined $DEVPAY_SECRET_KEY &&
     defined $DEVPAY_ACCESS_KEY && $DEVPAY_USER_TOKEN;
 
-my $s3_make_device_count = 6;
+my $s3_make_device_count = 5;
 sub s3_make_device($$) {
     my ($dev_name, $kind) = @_;
     $dev = Amanda::Device->new($dev_name);
@@ -545,10 +545,10 @@ my $base_name;
 
 SKIP: {
     skip "define \$INSTALLCHECK_S3_{SECRET,ACCESS}_KEY to run S3 tests",
-            45 +
+            47 +
             1 * $verify_file_count +
             4 * $write_file_count +
-            4 * $s3_make_device_count
+            5 * $s3_make_device_count
 	unless $run_s3_tests;
 
     $dev_name = "s3:foo";
@@ -671,6 +671,20 @@ SKIP: {
     $status = $dev->status();
     ok($status & $DEVICE_STATUS_VOLUME_UNLABELED,
        "status is unlabeled after an erase")
+        or diag($dev->error_or_status());
+
+
+    # try with empty user token
+    $dev_name = lc("s3:$base_name-s3");
+    $dev = s3_make_device($dev_name, "s3");
+    ok($dev->property_set('S3_USER_TOKEN', ''),
+       "set devpay user token")
+        or diag($dev->error_or_status());
+
+    $dev->read_label();
+    $status = $dev->status();
+    ok(($status == $DEVICE_STATUS_SUCCESS) || (($status & $DEVICE_STATUS_VOLUME_UNLABELED) != 0),
+       "status is either OK or possibly unlabeled")
         or diag($dev->error_or_status());
 
     # try a constrained bucket

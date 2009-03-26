@@ -254,6 +254,13 @@ static regex_t etag_regex, error_name_regex, message_regex, subdomain_regex,
  * Utility functions
  */
 
+/* Check if a string is non-empty
+ *
+ * @param str: string to check
+ * @returns: true iff str is non-NULL and not "\0"
+ */
+static gboolean is_non_empty_string(const char *str);
+
 /* Construct the URL for an Amazon S3 REST request.
  *
  * A new string is allocated and returned; it is the responsiblity of the caller.
@@ -467,6 +474,12 @@ lookup_result(const result_handling_t *result_handling,
     return result_handling->result;
 }
 
+static gboolean
+is_non_empty_string(const char *str)
+{
+    return str && str[0] != '\0';
+}
+
 static char *
 build_url(const char *bucket,
       const char *key,
@@ -584,7 +597,7 @@ authenticate_request(S3Handle *hdl,
     g_string_append(auth_string, date);
     g_string_append(auth_string, "\n");
 
-    if (hdl->user_token) {
+    if (is_non_empty_string(hdl->user_token)) {
         g_string_append(auth_string, AMAZON_SECURITY_HEADER);
         g_string_append(auth_string, ":");
         g_string_append(auth_string, hdl->user_token);
@@ -629,7 +642,7 @@ authenticate_request(S3Handle *hdl,
     auth_base64 = s3_base64_encode(md);
 
     /* append the new headers */
-    if (hdl->user_token) {
+    if (is_non_empty_string(hdl->user_token)) {
         /* Devpay headers are included in hash. */
         buf = g_strdup_printf(AMAZON_SECURITY_HEADER ": %s", hdl->user_token);
         headers = curl_slist_append(headers, buf);
