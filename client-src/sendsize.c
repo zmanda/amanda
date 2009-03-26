@@ -2360,7 +2360,7 @@ getsize_application_api(
     g_ptr_array_add(argv_ptr, stralloc(dle->device));
     if (dle->disk && bsu->disk == 1) {
 	g_ptr_array_add(argv_ptr, stralloc("--disk"));
-	g_ptr_array_add(argv_ptr, stralloc("dle->disk"));
+	g_ptr_array_add(argv_ptr, stralloc(dle->disk));
     }
     for (j=0; j < nb_level; j++) {
 	g_ptr_array_add(argv_ptr, stralloc("--level"));
