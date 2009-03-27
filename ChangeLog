@@ -1,4 +1,7 @@
 2009-03-27  Jean-Louis Martineau <martineau@zmanda.com>
+	* recover-src/extract_list.c: Add --level argument to application.
+
+2009-03-27  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/amsuntar.pl: Check for 'symbolic link' in index.
 
 2009-03-27  Dustin J. Mitchell <dustin@zmanda.com>

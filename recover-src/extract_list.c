@@ -1960,6 +1960,8 @@ extract_files_child(
 	    g_ptr_array_add(argv_ptr, stralloc("--recover-mode"));
 	    g_ptr_array_add(argv_ptr, stralloc("smb"));
 	}
+	g_ptr_array_add(argv_ptr, stralloc("--level"));
+	g_ptr_array_add(argv_ptr, g_strdup_printf("%d", elist->level));
 	if (dump_dle) {
 	    GSList   *scriptlist;
 	    script_t *script;
