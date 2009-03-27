@@ -1,3 +1,8 @@
+2009-03-27  Nikolas Coukouma <atrus@zmanda.com>
+	* device-src/s3.c, installcheck/Amanda_Device.pl:
+	  ignore s3_bucket_location if set to "", pass "*" as "" (wildcard),
+	  pass others as-is
+
 2009-03-27  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Amanda_Util.pl: fix warning
 	* perl/Amanda/Util.swg: fix typos

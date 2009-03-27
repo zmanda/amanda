@@ -92,6 +92,8 @@
     <LocationConstraint>%s</LocationConstraint>\n\
   </CreateBucketConfiguration>"
 
+#define AMAZON_WILDCARD_LOCATION "*"
+
 /* parameters for exponential backoff in the face of retriable errors */
 
 /* start at 0.01s */
@@ -1032,7 +1034,7 @@ perform_request(S3Handle *hdl,
 
     s3_reset(hdl);
 
-    use_subdomain = hdl->bucket_location? TRUE : FALSE;
+    use_subdomain = is_non_empty_string(hdl->bucket_location);
     url = build_url(bucket, key, subresource, query, use_subdomain, hdl->use_ssl);
     if (!url) goto cleanup;
 
@@ -1091,7 +1093,7 @@ perform_request(S3Handle *hdl,
 
         /* set up the request */
         headers = authenticate_request(hdl, verb, bucket, key, subresource,
-            md5_hash_b64, hdl->bucket_location? TRUE : FALSE);
+            md5_hash_b64, is_non_empty_string(hdl->bucket_location));
 
         if (hdl->use_ssl && hdl->ca_info) {
             if ((curl_code = curl_easy_setopt(hdl->curl, CURLOPT_CAINFO, hdl->ca_info)))
@@ -1866,10 +1868,14 @@ s3_make_bucket(S3Handle *hdl,
 
     g_assert(hdl != NULL);
 
-    if (hdl->bucket_location) {
+    if (is_non_empty_string(hdl->bucket_location)) {
         if (s3_bucket_location_compat(bucket)) {
             ptr = &buf;
-            buf.buffer = g_strdup_printf(AMAZON_BUCKET_CONF_TEMPLATE, hdl->bucket_location);
+            if (0 == strcmp(AMAZON_WILDCARD_LOCATION, hdl->bucket_location)) {
+                buf.buffer = g_strdup_printf(AMAZON_BUCKET_CONF_TEMPLATE, "");
+            } else {
+               buf.buffer = g_strdup_printf(AMAZON_BUCKET_CONF_TEMPLATE, hdl->bucket_location);
+            }
             buf.buffer_len = (guint) strlen(buf.buffer);
             buf.buffer_pos = 0;
             buf.max_buffer_size = buf.buffer_len;
@@ -1890,7 +1896,7 @@ s3_make_bucket(S3Handle *hdl,
                  NULL, NULL, NULL, NULL, NULL, result_handling);
 
    if (result == S3_RESULT_OK ||
-        (hdl->bucket_location && result != S3_RESULT_OK 
+       (is_non_empty_string(hdl->bucket_location) && result != S3_RESULT_OK
          && hdl->last_s3_error_code == S3_ERROR_BucketAlreadyOwnedByYou)) {
         /* verify the that the location constraint on the existing bucket matches
          * the one that's configured.
@@ -1902,7 +1908,7 @@ s3_make_bucket(S3Handle *hdl,
         /* note that we can check only one of the three AND conditions above 
          * and infer that the others are true
          */
-        if (result == S3_RESULT_OK && hdl->bucket_location) {
+        if (result == S3_RESULT_OK && is_non_empty_string(hdl->bucket_location)) {
             /* return to the default state of failure */
             result = S3_RESULT_FAIL;
 
@@ -1918,7 +1924,7 @@ s3_make_bucket(S3Handle *hdl,
                 /* The case of an empty string is special because XML allows
                  * "self-closing" tags
                  */
-                if ('\0' == hdl->bucket_location[0] &&
+                if (0 == strcmp(AMAZON_WILDCARD_LOCATION, hdl->bucket_location) &&
                     '/' != loc_end_open[0] && '\0' != hdl->bucket_location[0])
                     hdl->last_message = _("An empty location constraint is "
                         "configured, but the bucket has a non-empty location constraint");

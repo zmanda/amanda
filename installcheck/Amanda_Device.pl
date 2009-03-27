@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 303;
+use Test::More tests => 311;
 use File::Path qw( mkpath rmtree );
 use Sys::Hostname;
 use Carp;
@@ -545,10 +545,10 @@ my $base_name;
 
 SKIP: {
     skip "define \$INSTALLCHECK_S3_{SECRET,ACCESS}_KEY to run S3 tests",
-            47 +
+            49 +
             1 * $verify_file_count +
             4 * $write_file_count +
-            5 * $s3_make_device_count
+            6 * $s3_make_device_count
 	unless $run_s3_tests;
 
     $dev_name = "s3:foo";
@@ -687,10 +687,23 @@ SKIP: {
        "status is either OK or possibly unlabeled")
         or diag($dev->error_or_status());
 
-    # try a constrained bucket
+    # try a eu-constrained bucket
     $dev_name = lc("s3:$base_name-s3-eu");
     $dev = s3_make_device($dev_name, "s3");
     ok($dev->property_set('S3_BUCKET_LOCATION', 'EU'),
+       "set S3 bucket location")
+        or diag($dev->error_or_status());
+
+    $dev->read_label();
+    $status = $dev->status();
+    ok(($status == $DEVICE_STATUS_SUCCESS) || (($status & $DEVICE_STATUS_VOLUME_UNLABELED) != 0),
+       "status is either OK or possibly unlabeled")
+        or diag($dev->error_or_status());
+
+    # try a wildcard-constrained bucket
+    $dev_name = lc("s3:$base_name-s3-wild");
+    $dev = s3_make_device($dev_name, "s3");
+    ok($dev->property_set('S3_BUCKET_LOCATION', '*'),
        "set S3 bucket location")
         or diag($dev->error_or_status());
 
