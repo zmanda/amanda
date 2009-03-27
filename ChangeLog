@@ -1,3 +1,7 @@
+2009-03-27  Nikolas Coukouma <atrus@zmanda.com>
+	* application-src/ampgsql.pl, installcheck/ampgsql.pl:
+	  use a different dummy entry
+
 2009-03-27  Jean-Louis Martineau <martineau@zmanda.com>
 	* recover-src/extract_list.c: Add --level argument to application.
 

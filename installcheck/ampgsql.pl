@@ -149,7 +149,7 @@ EOF
     is($backup->{'exit_status'}, 0, "backup error status ok");
     ok(!@{$backup->{'errors'}}, "no errors during backup")
         or diag(@{$backup->{'errors'}});
-    ok(grep(/^\.\/data/, @{$backup->{'index'}}), "contains some index entries for data")
+    ok(grep(/^\/PostgreSQL-Database-0$/, @{$backup->{'index'}}), "contains an index entry")
         or diag(@{$backup->{'index'}});
 }
 
