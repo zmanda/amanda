@@ -494,7 +494,7 @@ my $run_s3_tests = defined $S3_SECRET_KEY && defined $S3_ACCESS_KEY;
 my $run_devpay_tests = defined $DEVPAY_SECRET_KEY &&
     defined $DEVPAY_ACCESS_KEY && $DEVPAY_USER_TOKEN;
 
-my $s3_make_device_count = 5;
+my $s3_make_device_count = 6;
 sub s3_make_device($$) {
     my ($dev_name, $kind) = @_;
     $dev = Amanda::Device->new($dev_name);
@@ -545,7 +545,7 @@ my $base_name;
 
 SKIP: {
     skip "define \$INSTALLCHECK_S3_{SECRET,ACCESS}_KEY to run S3 tests",
-            53 +
+            47 +
             1 * $verify_file_count +
             4 * $write_file_count +
             5 * $s3_make_device_count

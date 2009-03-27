@@ -1,3 +1,6 @@
+2009-03-27  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Amanda_Device.pl: counting Amanda_Device tests is hard.
+
 2009-03-26  Nikolas Coukouma <atrus@zmanda.com>
 	* installcheck/Amanda_Device.pl: fix test counts
 	* installcheck/Amanda_Util.pl: fix shadow variable warning
