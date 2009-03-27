@@ -128,7 +128,7 @@ my $rv = Amanda::Util::full_read(-1, 13);
 isnt($!, '', "bad full_read gives a nonzero errno ($!)");
 
 $! = 0;
-my $rv = Amanda::Util::full_write(-1, "hello", 5);
+$rv = Amanda::Util::full_write(-1, "hello", 5);
 isnt($!, '', "bad full_write gives a nonzero errno ($!)");
 
 $fd = POSIX::open($testfile, POSIX::O_RDONLY);

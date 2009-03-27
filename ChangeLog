@@ -1,4 +1,8 @@
 2009-03-26  Nikolas Coukouma <atrus@zmanda.com>
+	* installcheck/Amanda_Device.pl: fix test counts
+	* installcheck/Amanda_Util.pl: fix shadow variable warning
+
+2009-03-26  Nikolas Coukouma <atrus@zmanda.com>
 	* device-src/s3.c: ignore empty s3_user_token
 	* installcheck/Amanda_Device.pl: test empty s3_user_token
 
