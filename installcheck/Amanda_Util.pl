@@ -19,6 +19,8 @@
 use Test::More tests => 71;
 
 use lib "@amperldir@";
+use warnings;
+use strict;
 use Data::Dumper;
 use Amanda::Util;
 use Installcheck;

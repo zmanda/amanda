@@ -1,3 +1,7 @@
+2009-03-27  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Amanda_Util.pl: fix warning
+	* perl/Amanda/Util.swg: fix typos
+
 2009-03-27  Nikolas Coukouma <atrus@zmanda.com>
 	* application-src/ampgsql.pl, installcheck/ampgsql.pl:
 	  use a different dummy entry

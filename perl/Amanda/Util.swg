@@ -34,8 +34,10 @@
 %perlcode %{
 use Amanda::Debug qw(:init);
 use Amanda::Config qw(:getconf);
+use warnings;
 use Carp;
-use POSIX qw( :fcntl_h strftime );
+use POSIX qw( :fcntl_h :errno_h );
+use POSIX qw( strftime );
 
 =head1 NAME
 
@@ -302,7 +304,7 @@ sub full_read {
 	my $b;
 	my $n_read = POSIX::read($fd, $b, $count);
 	if (!defined $n_read) {
-	    next if ($! == POSIX::EINTR);
+	    next if ($! == EINTR);
 	    return undef;
 	} elsif ($n_read == 0) {
 	    last;
@@ -321,7 +323,7 @@ sub full_write {
     while ($count > 0) {
 	my $n_written = POSIX::write($fd, $buf, $count);
 	if (!defined $n_written) {
-	    next if ($! == POSIX::EINTR);
+	    next if ($! == EINTR);
 	    return undef;
 	} elsif ($n_written == 0) {
 	    last;
