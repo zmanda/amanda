@@ -219,7 +219,8 @@ sub parse_backup {
    my($fhin, $fhout, $indexout) = @_;
    my $size  = -1;
    while(<$fhin>) {
-      if ( /^a\s+(\.\/.*) \d*K/) {
+      if ( /^a\s+(\.\/.*) \d*K/ ||
+	   /^a\s+(\.\/.*) symbolic link to/ ) {
 	 my $name = $1;
          if(defined($indexout)) {
 	    if(defined($self->{index})) {
