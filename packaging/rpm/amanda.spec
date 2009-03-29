@@ -41,32 +41,40 @@
         %define dist fedora
         %define disttag fc
         %define distver 3
+	%define requires_libtermcap Requires: libtermcap.so.2
     %endif
     %if %(awk '$1 == "Fedora" && $4 ~ /4.*/ { exit 1; }' /etc/redhat-release; echo $?)
         %define dist fedora
         %define disttag fc
         %define distver 4
+	%define requires_libtermcap Requires: libtermcap.so.2
     %endif
     %if %(awk '$1 == "Fedora" && $4 ~ /5.*/ { exit 1; }' /etc/redhat-release; echo $?)
         %define dist fedora
         %define disttag fc
         %define distver 5
+	%define requires_libtermcap Requires: libtermcap.so.2
     %endif
     %if %(awk '$1 == "Fedora" && $4 ~ /6.*/ { exit 1; }' /etc/redhat-release; echo $?)
         %define dist fedora
         %define disttag fc
         %define distver 6
+	%define requires_libtermcap Requires: libtermcap.so.2
     %endif
     %if %(awk '$1 == "Fedora" && $3 ~ /7.*/ { exit 1; }' /etc/redhat-release; echo $?)
         %define dist fedora
         %define disttag fc
         %define distver 7
+	%define requires_libtermcap Requires: libtermcap.so.2
     %endif
     # if macro cannot have an empty test and we're just testing the existance
     %if %{?fedora:yes}%{!?fedora:no} == yes
         %define dist fedora
         %define disttag fc
         %define distver %{fedora}
+	%if %{distver} <= 8
+	    %define requires_libtermcap Requires: libtermcap.so.2
+	%endif
         %if %{_host_cpu} == x86_64 && %{_target_cpu} == i686
                 # Do nothing if PKG_CONFIG_PATH was set by the user above.
                 %{!?PKG_CONFIG_PATH: %define PKG_CONFIG_PATH /usr/lib/pkgconfig}
@@ -77,71 +85,51 @@
         %define disttag rhel
         %define distver 3
         %define tarver 1.14
+	%define requires_libtermcap Requires: libtermcap.so.2
+	%define without_ipv6 --without-ipv6
     %endif
     %if %(awk '$1 == "Red" && $7 ~ /4.*/ { exit 1; }' /etc/redhat-release; echo $?)
         %define dist redhat
         %define disttag rhel
         %define distver 4
         %define tarver 1.14
+	%define requires_libtermcap Requires: libtermcap.so.2
     %endif
     %if %(awk '$1 == "CentOS" && $3 ~ /4.*/ { exit 1; }' /etc/redhat-release; echo $?)
 	%define dist redhat
 	%define disttag rhel
 	%define distver 4
 	%define tarver 1.14
+	%define requires_libtermcap Requires: libtermcap.so.2
     %endif
     %if %(awk '$1 == "Red" && $7 ~ /5.*/ { exit 1; }' /etc/redhat-release; echo $?)
         %define dist redhat
         %define disttag rhel
         %define distver 5
+	%define requires_libtermcap Requires: libtermcap.so.2
     %endif
     %if %(awk '$1 == "CentOS" && $3 ~ /5.*/ { exit 1; }' /etc/redhat-release; echo $?)
         %define dist redhat
         %define disttag rhel
         %define distver 5
+	%define requires_libtermcap Requires: libtermcap.so.2
     %endif
     
     # If dist is undefined, we didn't detect.
     %{!?dist:%define dist unknown}
 %endif
-# Detect Suse variants.  Suse gives us some nice macros in their rpms
+# Detect Suse variants.  
 %if %{_vendor} == "suse"
     %define dist SuSE
-    %if %{sles_version} == 0
-	%define disttag suse
-	%if %{suse_version} == 910
-	    %define distver 9
-	%endif
-	%if %{suse_version} == 1000
-	    %define distver 10
-	%endif
-	%if %{suse_version} == 1010
-	    %define distver 10
-	%endif
-	# Written against SLES11-beta2, which is using SUSE11's rpm system.
-	# This will change when they release, I assume.
-	%if %{suse_version} == 1100
-	    # assume it's sles11 in disguise, for now
-	    %define disttag sles
-	    %define distver 11
-	%endif
-	%if %{suse_version} == 1110
-	    %define distver 11.1
-	%endif
-    %else
-	%define disttag sles
-	# sles versions are simple integers, just like we want
-	%define distver %{sles_version}
-    %endif
-   
-    # If dist is undefined, we didn't detect.
-    %{!?dist:%define dist unknown}
+    %define disttag %(awk '$1=="SUSE" {$3=="Enterprise" ? TAG="sles" : TAG="suse" ; print TAG}' /etc/SuSE-release)
+    %define distver %(awk '$1=="SUSE" {$3=="Enterprise" ? VER=$5 : VER=$3 ; print VER}' /etc/SuSE-release)
 %endif
 
 # Set options per distribution
 %if %{dist} == redhat || %{dist} == fedora
     %define rpm_group Applications/Archiving
     %define xinetd_reload restart
+    %define requires_initscripts Requires: initscripts
 %endif
 %if %{dist} == SuSE
     %define rpm_group Productivity/Archiving/Backup
@@ -190,6 +178,8 @@ BuildRequires: bison
 BuildRequires: flex
 BuildRequires: gcc
 BuildRequires: glibc >= 2.2.0
+# Note: newer distros have changed most *-devel to lib*-devel, and added a
+# provides tag for backwards compat.
 BuildRequires: readline
 BuildRequires: readline-devel
 BuildRequires: curl >= 7.10.0
@@ -216,12 +206,8 @@ Requires: xinetd
 Requires: perl >= 5.6.0
 Requires: tar >= %{tarver}
 Requires: readline
-%if  %{dist} == redhat || %{dist} == fedora
-  %if %{distver} <= 8
-Requires: libtermcap.so.2
-  %endif
-Requires: initscripts
-%endif
+%{?requires_libtermcap}
+%{?requires_initscripts}
 Provides: amanda-backup_client = %{amanda_version}, amanda-backup_server = %{amanda_version}
 
 %package backup_client
@@ -230,12 +216,8 @@ Group: %{rpm_group}
 Requires: /bin/awk
 Requires: fileutils
 Requires: grep
-%if  %{dist} == redhat || %{dist}== fedora
-  %if %{distver} <= 8
-Requires: libtermcap.so.2
-  %endif
-Requires: initscripts
-%endif
+%{?requires_libtermcap}
+%{?requires_initscripts}
 Requires: xinetd
 Requires: libc.so.6
 Requires: libm.so.6
@@ -257,12 +239,8 @@ Requires: grep
 Requires: libc.so.6
 Requires: libm.so.6
 Requires: libnsl.so.1
-%if  %{dist} == redhat || %{dist}== fedora
-  %if %{distver} <= 8
-Requires: libtermcap.so.2
-  %endif
-Requires: initscripts
-%endif
+%{?requires_libtermcap}
+%{?requires_initscripts}
 Requires: xinetd
 Requires: perl >= 5.6.0
 Requires: tar >= %{tarver}
@@ -360,39 +338,9 @@ Amanda Documentation is available at: http://wiki.zmanda.com/
 %define config_user %{amanda_user}
 %define config_group %{amanda_group}
 
-%if  %{disttag} == rhel && %{distver} == 3
-./configure \
-        CFLAGS="%{optflags} -g" CXXFLAGS="%{optflags}" \
-        --quiet \
-        --prefix=%{PREFIX} \
-        --sysconfdir=%{SYSCONFDIR} \
-        --sharedstatedir=%{LOCALSTATEDIR} \
-        --localstatedir=%{LOCALSTATEDIR} \
-        --libdir=%{LIBDIR} \
-        --includedir=%{INCLUDEDIR} \
-	--with-amdatadir=%{AMDATADIR} \
-        --with-gnuplot=/usr/bin/gnuplot \
-        --with-gnutar-listdir=%{AMANDAHOMEDIR}/gnutar-lists \
-        --with-index-server=localhost \
-        --with-tape-server=localhost \
-        --with-user=%{config_user} \
-        --with-group=%{config_group} \
-        --with-owner=%{packer} \
-        --with-fqdn \
-        --with-bsd-security \
-        --with-bsdtcp-security \
-        --with-bsdudp-security \
-        --with-ssh-security \
-        --with-udpportrange=%{udpportrange} \
-        --with-tcpportrange=%{tcpportrange} \
-        --with-low-tcpportrange=%{low_tcpportrange} \
-        --with-debugging=%{LOGDIR} \
-        --with-assertions \
-        --disable-installperms \
-        --without-ipv6 
-%else
-# This confusing macro results in PKG_CONFIG_PATH=some/path if some/path
-# was set on the command line, or by the platform detection bits.
+# Set PKG_CONFIG_PATH=some/path if some/path was set on the command line, or by 
+# the platform detection bits.
+# without_ipv6 should only be defined on rhel3.
 ./configure \
         %{?PKG_CONFIG_PATH: PKG_CONFIG_PATH=%PKG_CONFIG_PATH} \
         CFLAGS="%{optflags} -g" CXXFLAGS="%{optflags}" \
@@ -404,7 +352,6 @@ Amanda Documentation is available at: http://wiki.zmanda.com/
         --libdir=%{LIBDIR} \
         --includedir=%{INCLUDEDIR} \
 	--with-amdatadir=%{AMDATADIR} \
-        --with-star=/usr/bin/star \
         --with-gnuplot=/usr/bin/gnuplot \
         --with-gnutar=/bin/tar \
         --with-gnutar-listdir=%{AMANDAHOMEDIR}/gnutar-lists \
@@ -423,8 +370,8 @@ Amanda Documentation is available at: http://wiki.zmanda.com/
         --with-low-tcpportrange=%{low_tcpportrange} \
         --with-debugging=%{LOGDIR} \
         --with-assertions \
-        --disable-installperms
-%endif
+        --disable-installperms \
+        %{?without_ipv6}
 
 make
 
