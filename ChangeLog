@@ -1,3 +1,6 @@
+2009-03-29 Dan Locks <dwlocks@zmanda.com>
+	  macros which expand if they are defined.
+
 2009-03-29  Nikolas Coukouma <atrus@zmanda.com>
 	* man/xml-source/amanda-devices.7.xml: add more notes
 
