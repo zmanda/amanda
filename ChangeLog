@@ -1,3 +1,6 @@
+2009-03-29  Nikolas Coukouma <atrus@zmanda.com>
+	* man/xml-source/amanda-devices.7.xml: add more notes
+
 2009-03-27  Nikolas Coukouma <atrus@zmanda.com>
 	* device-src/s3.c, installcheck/Amanda_Device.pl:
 	  ignore s3_bucket_location if set to "", pass "*" as "" (wildcard),
