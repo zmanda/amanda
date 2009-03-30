@@ -1,4 +1,7 @@
 2009-03-30  Jean-Louis Martineau <martineau@zmanda.com>
+	* man/xml-source/amsamba.8.xml: Document amandapass file location.
+
+2009-03-30  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/amsamba.pl: allow relative AMANDAPASS property.
 	* man/xml-source/amsamba.8.xml: Document amandapass file location.
 	* ReleaseNotes: amsamba

@@ -66,7 +66,10 @@ The path to the gnutar binary.  The default is set when &A; is built by the
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>AMANDAPASS</term><listitem>
-Location of the amandapass file, The default is "$CONFIG_DIR/amandapass". If set relative, it is relative to "$CONFIG_DIR/&lt;config&gt;".
+Location of the amandapass file, defaulting to "$CONFIG_DIR/amandapass".
+Relative pathnames are relative to the configuration directory,
+"$CONFIG_DIR/&lt;config&gt;". 
+Note that this file is located on the client, not on the server.
 The format of the file is as follow:
 <programlisting>
   Sharename User%Password Domain
