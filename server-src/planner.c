@@ -283,27 +283,6 @@ main(
 	/*NOTREACHED*/
     }
 
-    errstr = match_disklist(&origq, argc-diskarg_offset,
-				    argv+diskarg_offset);
-    if (errstr) {
-	g_fprintf(stderr,"%s",errstr);
-	amfree(errstr);
-        exit_status = EXIT_FAILURE;
-    }
-    nb_disk = 0;
-    for(dp = origq.head; dp != NULL; dp = dp->next) {
-	if(dp->todo) {
-	    qname = quote_string(dp->name);
-	    log_add(L_DISK, "%s %s", dp->host->hostname, qname);
-	    amfree(qname);
-	    nb_disk++;
-	}
-    }
-
-    if(nb_disk == 0) {
-	error(_("no DLE to backup"));
-	/*NOTREACHED*/
-    }
     amfree(conf_diskfile);
 
     conf_tapelist = config_dir_relative(getconf_str(CNF_TAPELIST));
@@ -351,6 +330,34 @@ main(
     fflush(stdout);
     g_fprintf(stderr, _("%s: timestamp %s\n"),
 		    get_pname(), planner_timestamp);
+
+    errstr = match_disklist(&origq, argc-diskarg_offset,
+				    argv+diskarg_offset);
+    if (errstr) {
+	g_fprintf(stderr,"%s",errstr);
+        exit_status = EXIT_FAILURE;
+    }
+    nb_disk = 0;
+    for (dp = origq.head; dp != NULL; dp = dp->next) {
+	if (dp->todo) {
+	    qname = quote_string(dp->name);
+	    log_add(L_DISK, "%s %s", dp->host->hostname, qname);
+	    amfree(qname);
+	    nb_disk++;
+	}
+    }
+
+    if (nb_disk == 0) {
+	if (errstr) {
+	    error(_("no DLE to backup; %s"), errstr);
+	} else {
+	    error(_("no DLE to backup"));
+	}
+	/*NOTREACHED*/
+    } else if (errstr) {
+	log_add(L_WARNING, "WARNING: %s", errstr);
+    }
+    amfree(errstr);
 
     /* some initializations */
 

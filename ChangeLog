@@ -1,4 +1,9 @@
 2009-03-30  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amcheck.c: exit(1) if match_disklist() return an error.
+	* server-src/planner.c: Better logging if match_disklist() return an
+	                        error.
+
+2009-03-30  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/planner.c: Use new one_est_t,
 	                        print warning for server guessed estimate.
 
