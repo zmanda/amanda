@@ -52,7 +52,7 @@ sub new {
 	$self->{smbclient}  = $Amanda::Constants::SAMBA_CLIENT;
     }
     if (defined $amandapass) {
-	$self->{amandapass}  = $amandapass;
+	$self->{amandapass}  = config_dir_relative($amandapass);
     } else {
 	$self->{amandapass}  = "$Amanda::Paths::sysconfdir/amandapass";
     }
@@ -172,7 +172,9 @@ sub findpass {
     my $amandapass;
     my $line;
 
-    open($amandapass, $self->{amandapass});
+    open($amandapass, $self->{amandapass}) ||
+	$self->print_to_server_and_die($self->{action},"cannot open password file '$self->{amandapass}': $!", $Amanda::Script_App::ERROR);
+
     while ($line = <$amandapass>) {
 	chomp $line;
 	next if $line =~ /^#/;
@@ -688,9 +690,9 @@ GetOptions(
     'collection=s'       => \$opt_collection,
     'record'             => \$opt_record,
     'calcsize'           => \$opt_calcsize,
-    'gnutar_path'        => \$opt_gnutar_path,
-    'smbclient_path'     => \$opt_smbclient_path,
-    'amandapass'         => \$opt_amandapass,
+    'gnutar_path=s'      => \$opt_gnutar_path,
+    'smbclient_path=s'   => \$opt_smbclient_path,
+    'amandapass=s'       => \$opt_amandapass,
     'exclude-file=s'     => \@opt_exclude_file,
     'exclude-list=s'     => \@opt_exclude_list,
     'exclude-optional=s' => \$opt_exclude_optional,

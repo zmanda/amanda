@@ -1,4 +1,9 @@
 2009-03-30  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amsamba.pl: allow relative AMANDAPASS property.
+	* man/xml-source/amsamba.8.xml: Document amandapass file location.
+	* ReleaseNotes: amsamba
+
+2009-03-30  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amcheck.c: exit(1) if match_disklist() return an error.
 	* server-src/planner.c: Better logging if match_disklist() return an
 	                        error.

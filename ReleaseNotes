@@ -1,3 +1,10 @@
+		Release Notes for amanda-2.6.2
+
+amsamba
+  The default amandapass file for the amsamba application is
+  $CONFIG_DIR/amandapass, but it is /etc/amandapass for program GNUTAR.
+  Don't forget to move the file if you switch to the amsamba application.
+
 		Release Notes for amanda-2.6.1
 
 amgtar, amstar, amsamba, amzfs-sendrecv
