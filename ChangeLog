@@ -1,3 +1,7 @@
+2009-03-30  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/planner.c: Use new one_est_t,
+	                        print warning for server guessed estimate.
+
 2009-03-29 Dan Locks <dwlocks@zmanda.com>
 	* packaging/rpm/amanda.spec: change a number of %if conditionals to
 	  macros which expand if they are defined.
