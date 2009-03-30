@@ -1,3 +1,16 @@
+Changes in release 2.6.1p1
+
+   * amplot: better output
+   * Don't include genversion.h in distribution tarballs.
+   * Many bugs fixed
+         o S3 device driver
+         o rait device driver
+         o amstatus
+         o configure
+         o application-api
+         o compilation on some platform
+         o others small bug
+
 Changes in release 2.6.1
 
    * Application API: Allow to easily write wrappers around any backup program,
