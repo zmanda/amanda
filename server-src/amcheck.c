@@ -1754,6 +1754,7 @@ start_host(
 			    hostp->hostname, qname);
 		    g_fprintf(outf, _("Dumptype configuration is not GNUTAR or DUMP."
 				    " It is case sensitive\n"));
+		    l = stralloc("");
 		} else {
 		    l = vstralloc("<dle>\n"
 				  "  <program>APPLICATION</program>\n", NULL);

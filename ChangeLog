@@ -1,3 +1,6 @@
+2009-03-31  Jean-Louis Martineau <martineau@zmanda.com>
+        * server-src/amcheck.c: Set l on error path.
+
 2009-03-31  Nikolas Coukouma <atrus@zmanda.com>
 	* device-src/s3.c: don't send empty location constraint,
 	  allocate error messages, fix constraint check in case of wildcard
