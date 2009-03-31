@@ -19,8 +19,7 @@ LIB_EXTENSION = la
 AM_CFLAGS = $(AMANDA_WARNING_CFLAGS)
 AM_LDFLAGS = $(AMANDA_STATIC_LDFLAGS)
 
-CHECK_PERL = amgtar_perl \
-	     script-email \
+CHECK_PERL = script-email \
 	     amlog-script \
 	     ampgsql \
 	     amzfs-sendrecv \
