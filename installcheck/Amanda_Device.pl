@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 311;
+use Test::More tests => 313;
 use File::Path qw( mkpath rmtree );
 use Sys::Hostname;
 use Carp;
@@ -545,7 +545,7 @@ my $base_name;
 
 SKIP: {
     skip "define \$INSTALLCHECK_S3_{SECRET,ACCESS}_KEY to run S3 tests",
-            49 +
+            51 +
             1 * $verify_file_count +
             4 * $write_file_count +
             6 * $s3_make_device_count
@@ -691,27 +691,35 @@ SKIP: {
     $dev_name = lc("s3:$base_name-s3-eu");
     $dev = s3_make_device($dev_name, "s3");
     ok($dev->property_set('S3_BUCKET_LOCATION', 'EU'),
-       "set S3 bucket location")
+       "set S3 bucket location to 'EU'")
         or diag($dev->error_or_status());
 
-    $dev->read_label();
-    $status = $dev->status();
-    ok(($status == $DEVICE_STATUS_SUCCESS) || (($status & $DEVICE_STATUS_VOLUME_UNLABELED) != 0),
-       "status is either OK or possibly unlabeled")
+    ok($dev->start($ACCESS_WRITE, "TESTCONF13", undef),
+       "start in write mode")
         or diag($dev->error_or_status());
+
+    is($dev->status(), $DEVICE_STATUS_SUCCESS,
+       "status is OK")
+        or diag($dev->error_or_status());
+
+    $dev->finish();
 
     # try a wildcard-constrained bucket
     $dev_name = lc("s3:$base_name-s3-wild");
     $dev = s3_make_device($dev_name, "s3");
     ok($dev->property_set('S3_BUCKET_LOCATION', '*'),
-       "set S3 bucket location")
+       "set S3 bucket location to ''")
         or diag($dev->error_or_status());
 
-    $dev->read_label();
-    $status = $dev->status();
-    ok(($status == $DEVICE_STATUS_SUCCESS) || (($status & $DEVICE_STATUS_VOLUME_UNLABELED) != 0),
-       "status is either OK or possibly unlabeled")
+    ok($dev->start($ACCESS_WRITE, "TESTCONF13", undef),
+       "start in write mode")
         or diag($dev->error_or_status());
+
+    is($dev->status(), $DEVICE_STATUS_SUCCESS,
+       "status is OK")
+        or diag($dev->error_or_status());
+
+    $dev->finish();
 
     # test again with invalid ca_info
     $dev = s3_make_device($dev_name, "s3");
