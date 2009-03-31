@@ -1,4 +1,7 @@
-i2009-03-31  Jean-Louis Martineau <martineau@zmanda.com>
+2009-03-31  Nikolas Coukouma <atrus@zmanda.com>
+	* application-src/ampgsql.pl: add newline to end of index entry
+
+2009-03-31  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/amsamba.pl: Set $self->{mesgout} before calling
 	                              method that use it.
 

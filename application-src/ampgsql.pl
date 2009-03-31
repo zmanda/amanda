@@ -542,7 +542,7 @@ sub command_backup {
        debug("sending size $size");
        $msg_fd->print("sendbackup: size $size\n");
 
-       $self->{'index_h'}->print("/PostgreSQL-Database-$self->{'args'}->{'level'}");
+       $self->{'index_h'}->print("/PostgreSQL-Database-$self->{'args'}->{'level'}\n");
 
        $msg_fd->print("sendbackup: end\n");
    };
