@@ -402,14 +402,15 @@ sub command_backup {
     my $self = shift;
 
     $self->{action} = 'backup';
-    $self->parsesharename();
-    $self->findpass();
-    $self->validate_inexclude();
 
     my $level = $self->{level}[0];
     my $mesgout_fd;
     open($mesgout_fd, '>&=3') || die();
     $self->{mesgout} = $mesgout_fd;
+
+    $self->parsesharename();
+    $self->findpass();
+    $self->validate_inexclude();
 
     my $pid_tee = open3(\*INDEX_IN, '>&STDOUT', \*INDEX_TEE, "-");
     if ($pid_tee == 0) {

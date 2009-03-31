@@ -1,3 +1,7 @@
+i2009-03-31  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amsamba.pl: Set $self->{mesgout} before calling
+	                              method that use it.
+
 2009-03-31  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/Makefile.am: Remove amgtar_perl.
 	* application-src/amgtar_perl.pl: Remove file.
