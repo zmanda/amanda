@@ -29,7 +29,7 @@ use File::Path;
 use Amanda::Paths;
 use Amanda::MainLoop qw( :GIOCondition );
 use Amanda::Config qw( :getconf );
-use Amanda::Debug qw( :logging );
+use Amanda::Debug qw( debug );
 use Amanda::Device qw( :constants );
 use Amanda::Changer;
 
