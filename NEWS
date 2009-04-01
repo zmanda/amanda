@@ -1,3 +1,9 @@
+Changes in release 2.6.2alpha
+   * Device API
+      o changed wildcard setting for S3_BUCKET_LOCATION from "" to "*"
+   * Application API
+      o ampgsql: Backup PostgreSQL using continuous WAL archiving
+
 Changes in release 2.6.1
 
    * Application API: Allow to easily write wrappers around any backup program,
