@@ -72,6 +72,35 @@ This function executes until a call to C<Amanda::MainLoop::quit()> occurs, at
 which point C<run()> returns.  You can check whether the loop is running with
 C<Amanda::MainLoop::is_running()>.
 
+In some cases, a sub should only run after the loop has started.  The
+most common case is when a callback may call C<Amanda::MainLoop::quit>
+immediately.  In this circumstance, use C<call_later>, which takes a
+subref and an arbitrary number of arguments for that sub:
+
+    my $cb = sub {
+	my ($letters, $digits) = @_;
+	# ..
+	Amanda::MainLoop::quit();
+    };
+    Amanda::MainLoop::call_later($cb, "abc", 123);
+    # ..
+    Amanda::MainLoop::run();
+
+Similarly, a tight loop of callbacks with no blocking operations can
+lead to excessive stack consumption.  In this case, C<call_later()> is
+useful, too. It queues the callback to run at the next cycle of the
+MainLoop:
+
+    sub might_delay {
+        my ($cb) = @_;
+        if (can_do_it_now()) {
+            my $result = do_it();
+            Amanda::MainLoop::call_later($cb, $result)
+        } else {
+            # ..
+        }
+    }
+
 =head2 EVENT SOURCES
 
 An event source is responsible for producing events.  A source may produce
@@ -148,67 +177,6 @@ with the import tag C<:GIOCondition>.
 Generally, when reading from a file descriptor, use C<$G_IO_IN|$G_IO_HUP> to
 ensure that an EOF triggers an event as well.  Writing to a file descriptor can
 simply use C<$G_IO_OUT>.
-
-=head2 UTILITIES
-
-The functions in this section are based on the event sources given above, but
-are useful in common scenarios.
-
-=head3 call_later
-
-In some cases, a sub should only run after the loop has started.  The
-most common case is when a callback may call C<Amanda::MainLoop::quit>
-immediately.  In this circumstance, use C<call_later>, which takes a
-subref and an arbitrary number of arguments for that sub:
-
-    my $cb = sub {
-	my ($letters, $digits) = @_;
-	# ..
-	Amanda::MainLoop::quit();
-    };
-    Amanda::MainLoop::call_later($cb, "abc", 123);
-    # ..
-    Amanda::MainLoop::run();
-
-Similarly, a tight loop of callbacks with no blocking operations can
-lead to excessive stack consumption.  In this case, C<call_later()> is
-useful, too. It queues the callback to run at the next cycle of the
-MainLoop:
-
-    sub might_delay {
-        my ($cb) = @_;
-        if (can_do_it_now()) {
-            my $result = do_it();
-            Amanda::MainLoop::call_later($cb, $result)
-        } else {
-            # ..
-        }
-    }
-
-=head3 call_after
-
-Sometimes you need the MainLoop equivalent of C<sleep()>.  That comes in the
-form of C<call_later>, which takes a delay (in milliseconds), a sub, and an
-arbitrary number of arguments.  The sub is called with the arguments after the
-delay has elapsed.
-
-    sub countdown {
-	my $counter;
-	$counter = sub {
-	    print "$i..\n";
-	    if ($i) {
-		Amanda::MainLoop::call_after(1000, $counter, $i-1);
-	    }
-	}
-	$counter->(10);
-    }
-
-The function returns the underlying timeout source, enabling the caller to
-cancel the pending call:
-
-    my $tosrc = Amanda::MainLoop::call_after(15000, $timeout):
-    # ...data arrives before timeout...
-    $tosrc->remove();
 
 =head1 RELATION TO GLIB
 
@@ -308,18 +276,6 @@ sub call_later {
     }
 
     push @waiting_to_call_later, [ $sub, @args ];
-}
-
-sub call_after {
-    my ($delay_ms, $sub, @args) = @_;
-
-    my $src = timeout_source($delay_ms);
-    $src->set_callback(sub {
-	$src->remove();
-	$sub->(@args);
-    });
-
-    return $src;
 }
 
 sub run {
