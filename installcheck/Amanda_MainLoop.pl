@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 17;
+use Test::More tests => 19;
 use strict;
 use warnings;
 use POSIX qw(WIFEXITED WEXITSTATUS EINTR);
@@ -348,6 +348,8 @@ $src->remove();
 $src->remove();
 pass("Calling remove twice is ok");
 
+# call_later
+
 {
     my ($cb1, $cb2);
     my $gothere = 0;
@@ -392,4 +394,38 @@ pass("Calling remove twice is ok");
     is_deeply([ @actions ],
               [ "cb1 start", "cb1 end", "cb2 start hello", "cb2 end" ],
               "call_later doesn't call its argument immediately");
+}
+
+# call_after
+
+{
+    my ($cb1, $cb2, $cb3);
+    my $src2;
+    my @events = ();
+
+    $cb1 = sub {
+	push @events, "cb1";
+	$src2->remove();
+    };
+
+    $cb2 = sub {
+	push @events, "cb2";
+	fail("Shouldn't get here!");
+    };
+
+    $cb3 = sub {
+	my ($a, $b) = @_;
+	is($a+$b, 10,
+	    "call_after passes arguments correctly");
+	push @events, "cb3";
+	Amanda::MainLoop::quit();
+    };
+
+    Amanda::MainLoop::call_after(200, $cb3, 7, 3);
+    Amanda::MainLoop::call_after(100, $cb1);
+    $src2 = Amanda::MainLoop::call_after(150, $cb2);
+
+    Amanda::MainLoop::run();
+    is_deeply([@events], ["cb1","cb3"],
+	"call_after makes callbacks in the correct order");
 }
