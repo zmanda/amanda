@@ -1050,7 +1050,7 @@ s3_device_read_label(Device *pself) {
     if (device_in_error(self)) return pself->status;
 
     if (!setup_handle(self)) {
-	device_set_error(pself, stralloc(_("Error setting up S3 interface")), DEVICE_STATUS_DEVICE_ERROR);
+        /* setup_handle already set our error message */
 	return pself->status;
     }
 
@@ -1115,9 +1115,7 @@ s3_device_start (Device * pself, DeviceAccessMode mode,
     if (device_in_error(self)) return FALSE;
 
     if (!setup_handle(self)) {
-	device_set_error(pself,
-	    stralloc(_("Error setting up S3 interface")),
-	    DEVICE_STATUS_DEVICE_ERROR);
+        /* setup_handle already set our error message */
 	return FALSE;
     }
 
