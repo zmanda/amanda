@@ -916,12 +916,27 @@ static void s3_device_finalize(GObject * obj_self) {
 static gboolean setup_handle(S3Device * self) {
     Device *d_self = DEVICE(self);
     if (self->s3 == NULL) {
-        if (self->access_key == NULL)
+
+        if (self->access_key == NULL || self->access_key[0] == '\0') {
+	    device_set_error(d_self,
+		stralloc(_("No Amazon access key specified")),
+		DEVICE_STATUS_DEVICE_ERROR);
             return FALSE;
-	if (self->secret_key == NULL)
+	}
+
+	if (self->secret_key == NULL || self->secret_key[0] == '\0') {
+	    device_set_error(d_self,
+		stralloc(_("No Amazon secret key specified")),
+		DEVICE_STATUS_DEVICE_ERROR);
             return FALSE;
-	if (self->is_devpay && self->user_token == NULL)
+	}
+
+	if (self->is_devpay && self->user_token == NULL) {
+	    device_set_error(d_self,
+		stralloc(_("No Amazon user token specified")),
+		DEVICE_STATUS_DEVICE_ERROR);
             return FALSE;
+	}
 
         self->s3 = s3_open(self->access_key, self->secret_key, self->user_token,
             self->bucket_location);
