@@ -1105,7 +1105,7 @@ foreach $host (sort @hosts) {
 						if( defined $opt_failed ) {
 							printf "%8s ", $datestamp if defined $opt_date;
 							printf "%-${maxnamelength}s%2d ", "$host:$qpartition", $level{$hostpart};
-							printf " " . $error{$hostpart} . "\n";
+							printf "failed: " . $error{$hostpart} . "\n";
 						}
 						$exit_status |= $STATUS_FAILED;
 
@@ -1136,7 +1136,7 @@ foreach $host (sort @hosts) {
 						if( defined $opt_failed ) {
 							printf "%8s ", $datestamp if defined $opt_date;
 							printf "%-${maxnamelength}s%2d ", "$host:$qpartition", $level{$hostpart};
-							print " ", $error{$hostpart};
+							print "backup failed: ", $error{$hostpart};
 							if( defined $starttime ) {
 								print " (", &showtime($dump_time{$hostpart}), ")";
 							}
