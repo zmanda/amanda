@@ -1153,7 +1153,8 @@ static gboolean find_first_tape(taper_state_t * state) {
         if (search_result) {
             putresult(TAPER_OK, "\n");
         } else {
-            putresult(TAPE_ERROR, "Could not find a tape to use.\n");
+	    char *msg = quote_string(_("Could not find a tape to use"));
+            putresult(TAPE_ERROR, "99-99999 %s\n", msg);
 	    log_add(L_ERROR, "no-tape [%s]", "Could not find a tape to use");
 	    if (search_request.errmsg != NULL) {
 		char *c, *c1;

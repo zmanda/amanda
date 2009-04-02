@@ -1,3 +1,7 @@
+2009-04-02  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amstatus.pl: Print a taper status.
+	* server-src/taper.c: Quote TAPE-ERROR reply.
+
 2009-04-02  Dustin J. Mitchell <dustin@zmanda.com>
 	* man/xml-source/amsamba.8.xml: clarify "CIFS host" vs. "client"
 
