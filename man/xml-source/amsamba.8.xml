@@ -30,19 +30,27 @@
 <para>Amsamba is an &A; Application API script.  It should not be run
 by users directly.  It uses smbclient to backup and restore data.</para>
 
-<para>The device name in the disklist must have the form '//HOST/SHARE/SUBDIR'
-where HOST is the CIFS host, SHARE is the share to connect and subdir is the
-subdirectory to backup.  '/subdir' can be ommited, in which case the complete
-share is archived.  The host in the disklist should be the name of an
-intermediate host that has smbclient installed, and is often the Amanda server
-itself.</para>
+<para> The device name in the disklist must have the form
+'//CIFSHOST/SHARE/SUBDIR' where CIFSHOST is the CIFS host containing the data
+to be backed up, SHARE is the share to connect, and subdir is the subdirectory
+to backup. '/subdir' can be ommited, in which case the complete share is
+archived.  </para>
 
-<para>Include or exclude can be used, but not both. The path for 'exclude list'
-or 'include list' must be absolute path on the client. The estimate calculates
-the complete size of the share, without regard for include or exclude
-directives.  It will be larger than the actual dump if you use include or
-exclude.  Using 'estimate server' in the dumptype could give better
-estimate.</para>
+<para> Unlike most applications, amsamba backs up and restores data located on
+a different system from that where amsamba itself runs.  The host containing
+the data is the CIFS host.  In practice, amsamba is usually run on the same
+system as the Amanda server, with a DLE like
+<programlisting>
+localhost "//CIFSHOST/SHARENAME" amsamba-dumptype
+</programlisting>
+</para>
+
+<para> Include or exclude can be used, but not both. The path for 'exclude
+list' or 'include list' must be absolute path on the CIFS host. The estimate
+calculates the complete size of the share, without regard for include or
+exclude directives.  It will be larger than the actual dump if you use include
+or exclude. Using 'estimate server' in the dumptype could give better estimate.
+</para>
 
 </refsect1>
 
