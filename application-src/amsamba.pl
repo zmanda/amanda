@@ -229,7 +229,7 @@ sub command_selfcheck {
 
     #check binary
     if (!defined($self->{smbclient}) || $self->{smbclient} eq "") {
-	$self->print_to_server($self->{action},"sbmclient not set; you must define the SMBCLIENT-PATH property", $Amanda::Script_App::ERROR);
+	$self->print_to_server($self->{action},"smbclient not set; you must define the SMBCLIENT-PATH property", $Amanda::Script_App::ERROR);
     }
     elsif (! -e $self->{smbclient}) {
 	$self->print_to_server($self->{action},"$self->{smbclient} doesn't exist", $Amanda::Script_App::ERROR);
