@@ -1832,7 +1832,7 @@ s3_make_bucket(S3Handle *hdl,
 
     g_assert(hdl != NULL);
     
-    if (hdl->bucket_location) {
+    if (hdl->bucket_location && hdl->bucket_location[0]) {
         if (s3_bucket_location_compat(bucket)) {
             ptr = &buf;
             buf.buffer = g_strdup_printf(AMAZON_BUCKET_CONF_TEMPLATE, hdl->bucket_location);
@@ -1875,7 +1875,10 @@ s3_make_bucket(S3Handle *hdl,
             if (body) g_free(body);
             /* use strndup to get a null-terminated string */
             body = g_strndup(hdl->last_response_body, hdl->last_response_body_size);
-            if (!body) goto cleanup;
+            if (!body) {
+                hdl->last_message = g_strdup(_("No body received for location request"));
+                goto cleanup;
+            }
             
             if (!s3_regexec_wrap(&location_con_regex, body, 4, pmatch, 0)) {
                 loc_end_open = find_regex_substring(body, pmatch[1]);
@@ -1886,18 +1889,18 @@ s3_make_bucket(S3Handle *hdl,
                  */
                 if ('\0' == hdl->bucket_location[0] &&
                     '/' != loc_end_open[0] && '\0' != hdl->bucket_location[0])
-                    hdl->last_message = _("An empty location constraint is "
-                        "configured, but the bucket has a non-empty location constraint");
+                    hdl->last_message = g_strdup(_("An empty location constraint is "
+                        "configured, but the bucket has a non-empty location constraint"));
                 else if (strncmp(loc_content, hdl->bucket_location, strlen(hdl->bucket_location)))
-                    hdl->last_message = _("The location constraint configured "
-                        "does not match the constraint currently on the bucket");
+                    hdl->last_message = g_strdup(_("The location constraint configured "
+                        "does not match the constraint currently on the bucket"));
                 else
                     result = S3_RESULT_OK;
-      } else {
-              hdl->last_message = _("Unexpected location response from Amazon S3");
-          }
-      }
-    }
+            } else {
+                hdl->last_message = g_strdup(_("Unexpected location response from Amazon S3"));
+            }
+        }
+   }
 
 cleanup:
     if (body) g_free(body);
