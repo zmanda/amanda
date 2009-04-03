@@ -1,3 +1,8 @@
+2009-04-03  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amsamba.pl: Allow empty password.
+	* perl/Amanda/Util.swg: Small fix in skip_quoted_string.
+	* installcheck/Amanda_Util.pl: Check skip_quoted_string fix.
+
 2009-04-02  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amstatus.pl: prefix error message with "backup failed:"
 	  if a dump to holding disk failed.

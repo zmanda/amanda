@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 71;
+use Test::More tests => 73;
 
 use lib "@amperldir@";
 use warnings;
@@ -87,6 +87,14 @@ for my $a (keys %unquote_checks) {
 	is_deeply([$a_out, $b_out], [$a, $b],
 	    "skip_quoted string over " . Dumper("$a $b"));
     }
+}
+
+{
+    my ($a, $b) = Amanda::Util::skip_quoted_string("foobar");
+    is($a, "foobar",
+       "skip_quoted_string with one quoted string (first argument)\n");
+    is($b, undef,
+       "skip_quoted_string with one quoted string (second argument)\n");
 }
 
 my @try_bracing = (

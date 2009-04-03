@@ -357,7 +357,10 @@ sub skip_quoted_string {
 	$c = substr $str, $i, 1;
     }
     my $quoted_string = substr $str, 0, $i;
-    my $remainder     = substr $str, $i+1;
+    my $remainder     = undef;
+    if (length($str) > $i) {
+	$remainder    = substr $str, $i+1;
+    }
 
     return ($quoted_string, $remainder);
 }

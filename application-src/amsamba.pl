@@ -250,23 +250,30 @@ sub command_selfcheck {
     print "OK " . $self->{device} . "\n";
 
     my ($child_rdr, $parent_wtr);
-    $^F=10;
-    pipe($child_rdr,  $parent_wtr);
-    $parent_wtr->autoflush(1);
+    if (defined $self->{password}) {
+	# Don't set close-on-exec
+        $^F=10;
+        pipe($child_rdr, $parent_wtr);
+        $^F=2;
+        $parent_wtr->autoflush(1);
+    }
     my($wtr, $rdr, $err);
     $err = Symbol::gensym;
     my $pid = open3($wtr, $rdr, $err, "-");
     if ($pid == 0) {
 	#child
-	my $ff = $child_rdr->fileno;
-	debug("child_rdr $ff");
-	$parent_wtr->close();
-	$ENV{PASSWD_FD} = $child_rdr->fileno;
+        if (defined $self->{password}) {
+	    my $ff = $child_rdr->fileno;
+	    debug("child_rdr $ff");
+	    $parent_wtr->close();
+	    $ENV{PASSWD_FD} = $child_rdr->fileno;
+	}
 	close(1);
 	close(2);
 	my @ARGV = ();
-	push @ARGV, $self->{smbclient}, $self->{share},
-		    "-U", $self->{username},
+	push @ARGV, $self->{smbclient}, $self->{share};
+	push @ARGV, "" if (!defined $self->{password});
+	push @ARGV, "-U", $self->{username},
 		    "-E";
 	if (defined $self->{domain}) {
 	    push @ARGV, "-W", $self->{domain},
@@ -280,12 +287,16 @@ sub command_selfcheck {
 	exec {$self->{smbclient}} @ARGV;
     }
     #parent
-    my $ff = $parent_wtr->fileno;
-    debug("parent_wtr $ff");
-    debug("password $self->{password}");
-    $parent_wtr->print($self->{password});
-    $parent_wtr->close();
-    $child_rdr->close();
+    if (defined $self->{password}) {
+        my $ff = $parent_wtr->fileno;
+        debug("parent_wtr $ff");
+        debug("password $self->{password}");
+        $parent_wtr->print($self->{password});
+        $parent_wtr->close();
+        $child_rdr->close();
+    } else {
+	debug("No password");
+    }
     close($wtr);
     close($rdr);
     while (<$err>) {
@@ -311,23 +322,30 @@ sub command_estimate {
 
     my $level = $self->{level}[0];
     my ($child_rdr, $parent_wtr);
-    $^F=10;
-    pipe($child_rdr,  $parent_wtr);
-    $parent_wtr->autoflush(1);
+    if (defined $self->{password}) {
+	# Don't set close-on-exec
+        $^F=10;
+        pipe($child_rdr,  $parent_wtr);
+        $^F=2;
+        $parent_wtr->autoflush(1);
+    }
     my($wtr, $rdr, $err);
     $err = Symbol::gensym;
     my $pid = open3($wtr, $rdr, $err, "-");
     if ($pid == 0) {
 	#child
-	my $ff = $child_rdr->fileno;
-	debug("child_rdr $ff");
-	$parent_wtr->close();
-	$ENV{PASSWD_FD} = $child_rdr->fileno;
+        if (defined $self->{password}) {
+	    my $ff = $child_rdr->fileno;
+	    debug("child_rdr $ff");
+	    $parent_wtr->close();
+	    $ENV{PASSWD_FD} = $child_rdr->fileno;
+	}
 	close(0);
 	close(1);
 	my @ARGV = ();
-	push @ARGV, $self->{smbclient}, $self->{share},
-		    "-d", "0",
+	push @ARGV, $self->{smbclient}, $self->{share};
+	push @ARGV, "" if (!defined($self->{password}));
+	push @ARGV, "-d", "0",
 		    "-U", $self->{username},
 		    "-E";
 	if (defined $self->{domain}) {
@@ -346,12 +364,14 @@ sub command_estimate {
 	exec {$self->{smbclient}} @ARGV;
     }
     #parent
-    my $ff = $parent_wtr->fileno;
-    debug("parent_wtr $ff");
-    debug("password $self->{password}");
-    $parent_wtr->print($self->{password});
-    $parent_wtr->close();
-    $child_rdr->close();
+    if (defined $self->{password}) {
+        my $ff = $parent_wtr->fileno;
+        debug("parent_wtr $ff");
+        debug("password $self->{password}");
+        $parent_wtr->print($self->{password});
+        $parent_wtr->close();
+        $child_rdr->close();
+    }
     close($wtr);
     close($rdr);
     my $size = $self->parse_estimate($err);
@@ -425,23 +445,29 @@ sub command_backup {
 	exit 0;
     }
     my ($child_rdr, $parent_wtr);
-    $^F=10;
-    pipe($child_rdr,  $parent_wtr);
-    $^F=2;
-    $parent_wtr->autoflush(1);
+    if (defined $self->{password}) {
+	# Don't set close-on-exec
+        $^F=10;
+        pipe($child_rdr,  $parent_wtr);
+        $^F=2;
+        $parent_wtr->autoflush(1);
+    }
     my($wtr, $err);
     $err = Symbol::gensym;
     my $pid = open3($wtr, ">&INDEX_IN", $err, "-");
     if ($pid == 0) {
 	#child
-	my $ff = $child_rdr->fileno;
-	debug("child_rdr $ff");
-	$parent_wtr->close();
-	$ENV{PASSWD_FD} = $child_rdr->fileno;
+	if (defined $self->{password}) {
+	    my $ff = $child_rdr->fileno;
+	    debug("child_rdr $ff");
+	    $parent_wtr->close();
+	    $ENV{PASSWD_FD} = $child_rdr->fileno;
+	}
 	close(0);
 	my @ARGV = ();
-	push @ARGV, $self->{smbclient}, $self->{share},
-		    "-d", "0",
+	push @ARGV, $self->{smbclient}, $self->{share};
+	push @ARGV, "" if (!defined($self->{password}));
+	push @ARGV, "-d", "0",
 		    "-U", $self->{username},
 		    "-E";
 	if (defined $self->{domain}) {
@@ -474,12 +500,16 @@ sub command_backup {
 	exec {$self->{smbclient}} @ARGV;
     }
 
-    my $ff = $parent_wtr->fileno;
-    debug("parent_wtr $ff");
-    debug("password $self->{password}");
-    $parent_wtr->print($self->{password});
-    $parent_wtr->close();
-    $child_rdr->close();
+    if (defined $self->{password}) {
+        my $ff = $parent_wtr->fileno;
+        debug("parent_wtr $ff");
+        debug("password $self->{password}");
+        $parent_wtr->print($self->{password});
+        $parent_wtr->close();
+        $child_rdr->close();
+    } else {
+	debug("No password");
+    }
     close($wtr);
 
     #index process 
@@ -583,8 +613,9 @@ sub command_restore {
 
     if ($self->{recover_mode} eq "smb") {
 	$self->findpass();
-	push @cmd, $self->{smbclient}, $self->{share},
-		   "-d", "0",
+	push @cmd, $self->{smbclient}, $self->{share};
+	push @cmd, "" if (!defined $self->{password});
+	push @cmd, "-d", "0",
 		   "-U", $self->{username};
 	
 	if (defined $self->{domain}) {
@@ -597,9 +628,13 @@ sub command_restore {
 	    push @cmd, $1;
 	}
 	my ($parent_rdr, $child_wtr);
-	$^F=10;
-	pipe($parent_rdr,  $child_wtr);
-	$child_wtr->autoflush(1);
+	if (defined $self->{password}) {
+	    # Don't set close-on-exec
+	    $^F=10;
+	    pipe($parent_rdr,  $child_wtr);
+            $^F=2;
+	    $child_wtr->autoflush(1);
+	}
 	my($wtr, $rdr, $err);
 	$err = Symbol::gensym;
 	my $pid = open3($wtr, $rdr, $err, "-");
@@ -608,8 +643,10 @@ sub command_restore {
 	    $child_wtr->close();
 	    exit 0;
 	}
-	$child_wtr->close();
-	$ENV{PASSWD_FD} = $parent_rdr->fileno;
+	if (defined $self->{password}) {
+	    $child_wtr->close();
+	    $ENV{PASSWD_FD} = $parent_rdr->fileno;
+	}
 	debug("cmd:" . join(" ", @cmd));
 	exec { $cmd[0] } @cmd;
 	die("Can't exec '", $cmd[0], "'");
