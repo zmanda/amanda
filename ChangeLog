@@ -1,4 +1,7 @@
 2009-04-03  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/security-util.c: Fix isdigit use.
+
+2009-04-03  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.c: New client_port option.
 	* common-src/conffile.h: New client_port option.
 	* man/xml-source/amanda-auth.7.xml,

@@ -2581,7 +2581,7 @@ find_port_for_service(
     int        all_numeric = 1;
 
     for (s=service; *s != '\0'; s++) {
-	if (!isdigit(*s)) {
+	if (!isdigit((int)*s)) {
 	    all_numeric = 0;
 	}
     }
