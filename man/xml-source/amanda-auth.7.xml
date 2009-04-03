@@ -87,7 +87,11 @@ Authentication	  Configure option(s)
   <para>The <emphasis remap='B'>bsd</emphasis>, <emphasis remap='B'>bsdudp</emphasis>, and <emphasis remap='B'>bsdtcp</emphasis> communication methods use either UDP, TCP, or both protocols operating as a network service to authenticate and exchange data between server and clients.</para>
 
   <para>In addition to compilation and general configuration (see <emphasis remap='B'>COMPILATION AND GENERAL INFORMATION</emphasis> above), the authentication method that the client is configured to receive is specified by the <emphasis remap='B'>auth</emphasis> parameter in the network service configuration for &A;. The authentication method used by an Amanda client to reach the server during recovery is the authentication method specified by the <emphasis remap='I'>auth</emphasis> parameter in the client's Amanda network service configuration or in its amanda-client.conf file (see amanda-client.conf(5)).</para>
-			
+
+  <para>By default, &A; use the "amanda" service name and associated port set in /etc/services. It can be changed by setting the dumptype <emphasis remap='I'>client_port</emphasis> option to a different port number or a different service name.
+  All examples are for the service name "amanda" that uses the default port 10080.</para>
+
+
   <refsect2><title>.amandahosts file</title>
     <para> Servers and clients using the bsd, bsdudp, and bsdtcp authentication methods refer to the .amandahosts file to control access.  Amanda should be compiled for this access control if one of these methods will be used and is the default compilation option for Amanda 2.6 (use --with-amandahosts when compiling pre-2.6 versions of Amanda).</para>
 

@@ -101,6 +101,7 @@ static char *options = NULL;
 static char *progname = NULL;
 static char *amandad_path=NULL;
 static char *client_username=NULL;
+static char *client_port=NULL;
 static char *ssh_keys=NULL;
 static char *auth=NULL;
 static int level;
@@ -160,7 +161,7 @@ static void	sendbackup_response(void *, pkt_t *, security_handle_t *);
 static int	startup_dump(const char *, const char *, const char *, int,
 			const char *, const char *, const char *,
 			const char *, const char *, const char *,
-			const char *);
+			const char *, const char *);
 static void	stop_dump(void);
 
 static void	read_indexfd(void *, void *, ssize_t);
@@ -407,6 +408,7 @@ main(
 	     *   progname
 	     *   amandad_path
 	     *   client_username
+	     *   client_port
 	     *   ssh_keys
 	     *   security_driver
 	     *   options
@@ -487,6 +489,11 @@ main(
 	    client_username = newstralloc(client_username, cmdargs->argv[a++]);
 
 	    if(a >= cmdargs->argc) {
+		error(_("error [dumper PORT-DUMP: not enough args: client_port]"));
+	    }
+	    client_port = newstralloc(client_port, cmdargs->argv[a++]);
+
+	    if(a >= cmdargs->argc) {
 		error(_("error [dumper PORT-DUMP: not enough args: ssh_keys]"));
 	    }
 	    ssh_keys = newstralloc(ssh_keys, cmdargs->argv[a++]);
@@ -550,6 +557,7 @@ main(
 			      progname,
 			      amandad_path,
 			      client_username,
+			      client_port,
 			      ssh_keys,
 			      auth,
 			      options);
@@ -570,6 +578,7 @@ main(
 
 	    amfree(amandad_path);
 	    amfree(client_username);
+	    amfree(client_port);
 
 	    break;
 
@@ -1967,6 +1976,8 @@ dumper_get_security_conf(
                 return (amandad_path);
         } else if(strcmp(string, "client_username")==0) {
                 return (client_username);
+        } else if(strcmp(string, "client_port")==0) {
+                return (client_port);
         } else if(strcmp(string, "ssh_keys")==0) {
                 return (ssh_keys);
         } else if(strcmp(string, "kencrypt")==0) {
@@ -1988,6 +1999,7 @@ startup_dump(
     const char *progname,
     const char *amandad_path,
     const char *client_username,
+    const char *client_port,
     const char *ssh_keys,
     const char *auth,
     const char *options)
@@ -2006,6 +2018,7 @@ startup_dump(
     (void)disk;			/* Quiet unused parameter warning */
     (void)amandad_path;		/* Quiet unused parameter warning */
     (void)client_username;	/* Quiet unused parameter warning */
+    (void)client_port;		/* Quiet unused parameter warning */
     (void)ssh_keys;		/* Quiet unused parameter warning */
     (void)auth;			/* Quiet unused parameter warning */
 

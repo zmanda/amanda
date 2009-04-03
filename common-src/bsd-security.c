@@ -124,7 +124,6 @@ bsd_connect(
     void *		datap)
 {
     struct sec_handle *bh;
-    struct servent *se;
     in_port_t port = 0;
     struct timeval sequence_time;
     int sequence;
@@ -133,6 +132,7 @@ bsd_connect(
     struct addrinfo *res, *res_addr;
     char *canonname;
     int result_bind;
+    char *service;
 
     assert(hostname != NULL);
 
@@ -270,10 +270,22 @@ bsd_connect(
 	bh->udp = &netfd4;
 
     auth_debug(1, _("Resolved hostname=%s\n"), canonname);
-    if ((se = getservbyname(AMANDA_SERVICE_NAME, "udp")) == NULL)
-	port = AMANDA_SERVICE_DEFAULT;
-    else
-	port = (in_port_t)ntohs(se->s_port);
+
+    if (conf_fn) {
+        service = conf_fn("client_port", datap);
+        if (strlen(service) <= 1)
+            service = "amanda";
+    } else {
+        service = "amanda";
+    }
+    port = find_port_for_service(service, "udp");
+    if (port == 0) {
+        security_seterror(&bh->sech, _("%s/udp unknown protocol"), service);
+	(*fn)(arg, &bh->sech, S_ERROR);
+        amfree(canonname);
+	return;
+    }
+
     amanda_gettimeofday(&sequence_time);
     sequence = (int)sequence_time.tv_sec ^ (int)sequence_time.tv_usec;
     handle=alloc(15);

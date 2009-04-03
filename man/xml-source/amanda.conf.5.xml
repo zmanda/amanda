@@ -1447,6 +1447,16 @@ Specify the username to connect on the client, only use with rsh/ssh authentific
   </listitem>
   </varlistentry>
 
+  <varlistentry>
+  <term><emphasis remap='B'>client_port</emphasis> <emphasis remap='I'>int</emphasis>|<emphasis remap='I'>string</emphasis></term>
+  <listitem>
+<para>Default:
+<emphasis remap='I'>"amanda"</emphasis>.
+Specifies the port to connect to on the client.  It can be a service name or a numeric port number.
+</para>
+  </listitem>
+  </varlistentry>
+
 <!-- bumping parameters yanked from the global section above -->
 
   <varlistentry>

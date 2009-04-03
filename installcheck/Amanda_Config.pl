@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 124;
+use Test::More tests => 131;
 use strict;
 
 use lib "@amperldir@";
@@ -662,3 +662,42 @@ SKIP: {
     is(dumptype_getconf($dtyp, $DUMPTYPE_BUMPSIZE), 10240,
 	"child dumptype correctly inherited bumpsize");
 }
+
+##
+# Explore a quirk of read_int_or_str parsing.
+
+$testconf = Installcheck::Config->new();
+$testconf->add_dumptype('mydump-type1', [
+    'client_port' => '12345',
+]);
+$testconf->add_dumptype('mydump-type2', [
+    'client_port' => '"newamanda"',
+]);
+$testconf->add_dumptype('mydump-type3', [
+    'client_port' => '"67890"',
+]);
+$testconf->write();
+
+$cfg_result = config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
+is($cfg_result, $CFGERR_OK, 
+    "read_int_or_str parsing config loaded")
+    or diag_config_errors();
+SKIP: {
+    skip "error loading config", 6 unless $cfg_result == $CFGERR_OK;
+
+    my $dtyp = lookup_dumptype("mydump-type1");
+    ok($dtyp, "found mydump-type1");
+    is(dumptype_getconf($dtyp, $DUMPTYPE_CLIENT_PORT), "12345",
+	"client_port set to 12345");
+
+    $dtyp = lookup_dumptype("mydump-type2");
+    ok($dtyp, "found mydump-type1");
+    is(dumptype_getconf($dtyp, $DUMPTYPE_CLIENT_PORT), "newamanda",
+	"client_port set to \"newamanda\"");
+
+    $dtyp = lookup_dumptype("mydump-type3");
+    ok($dtyp, "found mydump-type1");
+    is(dumptype_getconf($dtyp, $DUMPTYPE_CLIENT_PORT), "67890",
+	"client_port set to \"67890\"");
+}
+

@@ -337,6 +337,7 @@ typedef enum {
     CNF_SSH_KEYS,
     CNF_AMANDAD_PATH,
     CNF_CLIENT_USERNAME,
+    CNF_CLIENT_PORT,
     CNF_GNUTAR_LIST_DIR,
     CNF_AMANDATES,
     CNF_MAILTO,
@@ -630,6 +631,7 @@ typedef enum {
     DUMPTYPE_APPLICATION,
     DUMPTYPE_SCRIPTLIST,
     DUMPTYPE_PROPERTY,
+    DUMPTYPE_CLIENT_PORT,
     DUMPTYPE_DUMPTYPE /* sentinel */
 } dumptype_key;
 
@@ -716,6 +718,7 @@ char *dumptype_name(dumptype_t *dtyp);
 #define dumptype_get_application(dtyp)         (val_t_to_application(dumptype_getconf((dtyp), DUMPTYPE_APPLICATION)))
 #define dumptype_get_scriptlist(dtyp)          (val_t_to_identlist(dumptype_getconf((dtyp), DUMPTYPE_SCRIPTLIST)))
 #define dumptype_get_property(dtyp)            (val_t_to_proplist(dumptype_getconf((dtyp), DUMPTYPE_PROPERTY)))
+#define dumptype_get_client_port(dtyp)             (val_t_to_str(dumptype_getconf((dtyp), DUMPTYPE_CLIENT_PORT)))
 
 /*
  * Interface parameter access

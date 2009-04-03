@@ -74,6 +74,7 @@ typedef struct disk_s {
     char	*clnt_encrypt;		/* custom encryption client filter */
     char	*amandad_path;		/* amandad path on the client */
     char	*client_username;	/* username to connect on the client */
+    char	*client_port;		/* port to connect on the client */
     char	*ssh_keys;		/* ssh_key file to use */
     sl_t	*exclude_file;		/* file exclude spec */
     sl_t	*exclude_list;		/* exclude list */

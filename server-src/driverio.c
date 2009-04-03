@@ -424,6 +424,11 @@ dumper_cmd(
 	if (dp != NULL) {
 	    application_t *application = NULL;
 	    char *plugin;
+	    char *qplugin;
+	    char *qamandad_path;
+	    char *qclient_username;
+	    char *qclient_port;
+	    char *qssh_keys;
 
 	    if (dp->application != NULL) {
 		application = lookup_application(dp->application);
@@ -459,7 +464,11 @@ dumper_cmd(
 	    } else {
 		plugin = dp->program;
 	    }
-
+	    qplugin = quote_string(plugin);
+	    qamandad_path = quote_string(dp->amandad_path);
+	    qclient_username = quote_string(dp->client_username);
+	    qclient_port = quote_string(dp->client_port);
+	    qssh_keys = quote_string(dp->ssh_keys);
 	    dbprintf("security_driver %s\n", dp->auth);
 
 	    cmdline = vstralloc(cmdstr[cmd],
@@ -471,13 +480,19 @@ dumper_cmd(
 			    " ", device,
 			    " ", number,
 			    " ", sched(dp)->dumpdate,
-			    " ", plugin,
-			    " ", dp->amandad_path,
-			    " ", dp->client_username,
-			    " ", dp->ssh_keys,
+			    " ", qplugin,
+			    " ", qamandad_path,
+			    " ", qclient_username,
+			    " ", qclient_port,
+			    " ", qssh_keys,
 			    " ", dp->auth,
 			    " |", o,
 			    "\n", NULL);
+	    amfree(qplugin);
+	    amfree(qamandad_path);
+	    amfree(qclient_username);
+	    amfree(qclient_port);
+	    amfree(qssh_keys);
 	    amfree(features);
 	    amfree(o);
 	    amfree(qname);

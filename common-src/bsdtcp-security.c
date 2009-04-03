@@ -91,7 +91,7 @@ static int newhandle = 1;
 /*
  * Local functions
  */
-static int runbsdtcp(struct sec_handle *);
+static int runbsdtcp(struct sec_handle *, in_port_t port);
 
 
 /*
@@ -109,6 +109,8 @@ bsdtcp_connect(
     struct sec_handle *rh;
     int result;
     char *canonname;
+    char *service;
+    in_port_t port;
 
     assert(fn != NULL);
     assert(hostname != NULL);
@@ -152,13 +154,26 @@ bsdtcp_connect(
     amfree(rh->hostname);
     rh->hostname = stralloc(rh->rs->rc->hostname);
 
+    if (conf_fn) {
+	service = conf_fn("client_port", datap);
+	if (strlen(service) <= 1)
+	    service = "amanda";
+    } else {
+	service = "amanda";
+    }
+    port = find_port_for_service(service, "tcp");
+    if (port == 0) {
+	security_seterror(&rh->sech, _("%s/tcp unknown protocol"), service);
+	goto error;
+    }
+
     /*
      * We need to open a new connection.
      *
      * XXX need to eventually limit number of outgoing connections here.
      */
     if(rh->rc->read == -1) {
-	if (runbsdtcp(rh) < 0)
+	if (runbsdtcp(rh, port) < 0)
 	    goto error;
 	rh->rc->refcnt++;
     }
@@ -239,21 +254,17 @@ bsdtcp_accept(
  */
 static int
 runbsdtcp(
-    struct sec_handle *	rh)
+    struct sec_handle *	rh,
+    in_port_t port)
 {
-    struct servent *	sp;
     int			server_socket;
     in_port_t		my_port;
     struct tcp_conn *	rc = rh->rc;
 
-    if ((sp = getservbyname(AMANDA_SERVICE_NAME, "tcp")) == NULL) {
-	error(_("%s/tcp unknown protocol"), "amanda");
-    }
-
     set_root_privs(1);
 
     server_socket = stream_client_privileged(rc->hostname,
-				     (in_port_t)(ntohs((in_port_t)sp->s_port)),
+				     port,
 				     STREAM_BUFSIZE,
 				     STREAM_BUFSIZE,
 				     &my_port,

@@ -89,7 +89,6 @@ static struct {
 
 static void amindexd_response(void *, pkt_t *, security_handle_t *);
 void stop_amindexd(void);
-char *amindexd_client_get_security_conf(char *, void *);
 
 static char* mesg_buffer = NULL;
 /* gets a "line" from server and put in server_line */
@@ -820,23 +819,4 @@ stop_amindexd(void)
             streams[i].fd = NULL;
         }
     }
-}
-
-char *
-amindexd_client_get_security_conf(
-    char *	string,
-    void *	arg)
-{
-    (void)arg;	/* Quiet unused parameter warning */
-
-    if(!string || !*string)
-	return(NULL);
-
-    if(strcmp(string, "auth")==0) {
-	return(getconf_str(CNF_AUTH));
-    }
-    else if(strcmp(string, "ssh_keys")==0) {
-	return(getconf_str(CNF_SSH_KEYS));
-    }
-    return(NULL);
 }

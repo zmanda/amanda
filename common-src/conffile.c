@@ -121,7 +121,7 @@ typedef enum {
     CONF_SPLIT_DISKBUFFER,	CONF_FALLBACK_SPLITSIZE,CONF_SRVCOMPPROG,
     CONF_CLNTCOMPPROG,		CONF_SRV_ENCRYPT,	CONF_CLNT_ENCRYPT,
     CONF_SRV_DECRYPT_OPT,	CONF_CLNT_DECRYPT_OPT,	CONF_AMANDAD_PATH,
-    CONF_CLIENT_USERNAME,
+    CONF_CLIENT_USERNAME,	CONF_CLIENT_PORT,
 
     /* tape type */
     /*COMMENT,*/		CONF_BLOCKSIZE,		CONF_FILE_PAD,
@@ -481,6 +481,7 @@ static void read_property(conf_var_t *, val_t *);
 static void read_execute_on(conf_var_t *, val_t *);
 static void read_execute_where(conf_var_t *, val_t *);
 static void read_holdingdisk(conf_var_t *, val_t *);
+static void read_int_or_str(conf_var_t *, val_t *);
 
 /* Functions to get various types of values.  These are called by
  * read_functions to take care of any variations in the way that these
@@ -707,6 +708,7 @@ keytab_t client_keytab[] = {
     { "SSH_KEYS", CONF_SSH_KEYS },
     { "AMANDAD_PATH", CONF_AMANDAD_PATH },
     { "CLIENT_USERNAME", CONF_CLIENT_USERNAME },
+    { "CLIENT_PORT", CONF_CLIENT_PORT },
     { "GNUTAR_LIST_DIR", CONF_GNUTAR_LIST_DIR },
     { "AMANDATES", CONF_AMANDATES },
     { "KRB5KEYTAB", CONF_KRB5KEYTAB },
@@ -921,6 +923,7 @@ keytab_t server_keytab[] = {
     { "SCRIPT", CONF_SCRIPT },
     { "SCRIPT_TOOL", CONF_SCRIPT_TOOL },
     { "SEND_AMREPORT_ON", CONF_SEND_AMREPORT_ON },
+    { "CLIENT_PORT", CONF_CLIENT_PORT },
     { "SERVER", CONF_SERVER },
     { "SERVER_CUSTOM_COMPRESS", CONF_SRVCOMPPROG },
     { "SERVER_DECRYPT_OPTION", CONF_SRV_DECRYPT_OPT },
@@ -1032,6 +1035,7 @@ conf_var_t client_var [] = {
    { CONF_SSH_KEYS           , CONFTYPE_STR     , read_str     , CNF_SSH_KEYS           , NULL },
    { CONF_AMANDAD_PATH       , CONFTYPE_STR     , read_str     , CNF_AMANDAD_PATH       , NULL },
    { CONF_CLIENT_USERNAME    , CONFTYPE_STR     , read_str     , CNF_CLIENT_USERNAME    , NULL },
+   { CONF_CLIENT_PORT        , CONFTYPE_STR     , read_int_or_str, CNF_CLIENT_PORT      , NULL },
    { CONF_GNUTAR_LIST_DIR    , CONFTYPE_STR     , read_str     , CNF_GNUTAR_LIST_DIR    , NULL },
    { CONF_AMANDATES          , CONFTYPE_STR     , read_str     , CNF_AMANDATES          , NULL },
    { CONF_MAILER             , CONFTYPE_STR     , read_str     , CNF_MAILER             , NULL },
@@ -1191,6 +1195,7 @@ conf_var_t dumptype_var [] = {
    { CONF_CLNT_ENCRYPT      , CONFTYPE_STR      , read_str      , DUMPTYPE_CLNT_ENCRYPT      , NULL },
    { CONF_AMANDAD_PATH      , CONFTYPE_STR      , read_str      , DUMPTYPE_AMANDAD_PATH      , NULL },
    { CONF_CLIENT_USERNAME   , CONFTYPE_STR      , read_str      , DUMPTYPE_CLIENT_USERNAME   , NULL },
+   { CONF_CLIENT_PORT       , CONFTYPE_STR      , read_int_or_str, DUMPTYPE_CLIENT_PORT      , NULL },
    { CONF_SSH_KEYS          , CONFTYPE_STR      , read_str      , DUMPTYPE_SSH_KEYS          , NULL },
    { CONF_SRVCOMPPROG       , CONFTYPE_STR      , read_str      , DUMPTYPE_SRVCOMPPROG       , NULL },
    { CONF_CLNTCOMPPROG      , CONFTYPE_STR      , read_str      , DUMPTYPE_CLNTCOMPPROG      , NULL },
@@ -2071,9 +2076,10 @@ init_dumptype_defaults(void)
     conf_init_str   (&dpcur.value[DUMPTYPE_CLNTCOMPPROG]      , "");
     conf_init_str   (&dpcur.value[DUMPTYPE_SRV_ENCRYPT]       , "");
     conf_init_str   (&dpcur.value[DUMPTYPE_CLNT_ENCRYPT]      , "");
-    conf_init_str   (&dpcur.value[DUMPTYPE_AMANDAD_PATH]      , "X");
-    conf_init_str   (&dpcur.value[DUMPTYPE_CLIENT_USERNAME]   , "X");
-    conf_init_str   (&dpcur.value[DUMPTYPE_SSH_KEYS]          , "X");
+    conf_init_str   (&dpcur.value[DUMPTYPE_AMANDAD_PATH]      , "");
+    conf_init_str   (&dpcur.value[DUMPTYPE_CLIENT_USERNAME]   , "");
+    conf_init_str   (&dpcur.value[DUMPTYPE_CLIENT_PORT]       , "");
+    conf_init_str   (&dpcur.value[DUMPTYPE_SSH_KEYS]          , "");
     conf_init_str   (&dpcur.value[DUMPTYPE_AUTH]   , "BSD");
     conf_init_exinclude(&dpcur.value[DUMPTYPE_EXCLUDE]);
     conf_init_exinclude(&dpcur.value[DUMPTYPE_INCLUDE]);
@@ -3463,6 +3469,38 @@ read_execute_where(
     }
 }
 
+static void
+read_int_or_str(
+    conf_var_t *np G_GNUC_UNUSED,
+    val_t *val)
+{
+    ckseen(&val->seen);
+
+    get_conftoken(CONF_ANY);
+    switch(tok) {
+    case CONF_INT:
+	amfree(val->v.s);
+	val->v.s = g_strdup_printf("%d", tokenval.v.i);
+	break;
+
+    case CONF_SIZE:
+	amfree(val->v.s);
+	val->v.s = g_strdup_printf("%zu", tokenval.v.size);
+	break;
+
+    case CONF_INT64:
+	amfree(val->v.s);
+	val->v.s = g_strdup_printf("%jd", (intmax_t)tokenval.v.int64);
+	break;
+
+    case CONF_STRING:
+	val->v.s = newstralloc(val->v.s, tokenval.v.s);
+	break;
+    default:
+	conf_parserror(_("CLIENT or SERVER expected"));
+    }
+}
+
 /* get_* functions */
 
 /* these functions use precompiler conditionals to skip useless size checks
@@ -4281,6 +4319,7 @@ init_defaults(
     conf_init_str(&conf_data[CNF_SSH_KEYS], "");
     conf_init_str(&conf_data[CNF_AMANDAD_PATH], "");
     conf_init_str(&conf_data[CNF_CLIENT_USERNAME], "");
+    conf_init_str(&conf_data[CNF_CLIENT_PORT], "");
     conf_init_str(&conf_data[CNF_GNUTAR_LIST_DIR], GNUTAR_LISTED_INCREMENTAL_DIR);
     conf_init_str(&conf_data[CNF_AMANDATES], DEFAULT_AMANDATES_FILE);
     conf_init_str(&conf_data[CNF_MAILTO], "operators");
@@ -4983,7 +5022,6 @@ validate_program(
     	strcmp(val->v.s, "APPLICATION") != 0)
        conf_parserror("program must be \"DUMP\", \"GNUTAR\", \"STAR\" or \"APPLICATION\"");
 }
-
 
 char *
 tapetype_name(
@@ -5850,6 +5888,8 @@ generic_client_get_security_conf(
 		return(getconf_str(CNF_AMANDAD_PATH));
 	} else if(strcmp(string, "client_username")==0) {
 		return(getconf_str(CNF_CLIENT_USERNAME));
+	} else if(strcmp(string, "client_port")==0) {
+		return(getconf_str(CNF_CLIENT_PORT));
 	} else if(strcmp(string, "gnutar_list_dir")==0) {
 		return(getconf_str(CNF_GNUTAR_LIST_DIR));
 	} else if(strcmp(string, "amandates")==0) {

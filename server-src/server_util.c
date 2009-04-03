@@ -155,6 +155,8 @@ amhost_get_security_conf(
 	return ((am_host_t *)arg)->disks->amandad_path;
     else if(strcmp(string, "client_username")==0)
 	return ((am_host_t *)arg)->disks->client_username;
+    else if(strcmp(string, "client_port")==0)
+	return ((am_host_t *)arg)->disks->client_port;
     else if(strcmp(string, "ssh_keys")==0)
 	return ((am_host_t *)arg)->disks->ssh_keys;
 

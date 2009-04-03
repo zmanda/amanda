@@ -686,6 +686,7 @@ parse_diskline(
     disk->clnt_encrypt       = dumptype_get_clnt_encrypt(dtype);
     disk->amandad_path       = dumptype_get_amandad_path(dtype);
     disk->client_username    = dumptype_get_client_username(dtype);
+    disk->client_port        = dumptype_get_client_port(dtype);
     disk->ssh_keys           = dumptype_get_ssh_keys(dtype);
     disk->comprate[0]	     = dumptype_get_comprate(dtype)[0];
     disk->comprate[1]	     = dumptype_get_comprate(dtype)[1];

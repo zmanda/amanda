@@ -1,3 +1,26 @@
+2009-04-03  Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/conffile.c: New client_port option.
+	* common-src/conffile.h: New client_port option.
+	* man/xml-source/amanda-auth.7.xml,
+	  man/xml-source/amanda-client.conf.5.xml,
+	  man/xml-source/amanda.conf.5.xml: New client_port option.
+	* perl/Amanda/Config.swg: Add CNF_CLIENT_PORT and DUMPTYPE_CLIENT_PORT.
+	* common-src/bsd-security.c,
+	  common-src/bsdtcp-security.c,
+	  common-src/bsdudp-security.c: Use client_port option.
+	* common-src/security-util.c: New find_port_for_service function.
+	* common-src/security-util.h: Prototype for find_port_for_service.
+	* installcheck/Amanda_Config.pl: Check reaad_int_or_str function.
+	* recover-src/amrecover.c: Remove amindexd_client_get_security_conf.
+	* recover-src/extract_list.c: Remove amidxtaped_client_get_security_conf
+	* server-src/amadmin.c (disklist_one): Print client_port.
+	* server-src/amcheck.c: Fix remote_errors;
+	* server-src/diskfile.h (disk_t): Add client_port.
+	* server-src/diskfile.c: Set client_port.
+	* server-src/driverio.c: Send client_port to dumper.
+	* server-src/dumper.c: Parse client_port.
+	* server-src/server_util.c: return client_port.
+
 2009-04-03  Nikolas Coukouma <atrus@zmanda.com>
 	* device-src/s3-device.c, installcheck/Amanda_Device.pl:
 	  don't require location-compatible name for ignored value

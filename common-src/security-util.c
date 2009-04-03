@@ -2570,3 +2570,33 @@ error:
     amfree(canonname);
     return -1;
 }
+
+in_port_t
+find_port_for_service(
+    char *service,
+    char *proto)
+{
+    in_port_t  port;
+    char      *s;
+    int        all_numeric = 1;
+
+    for (s=service; *s != '\0'; s++) {
+	if (!isdigit(*s)) {
+	    all_numeric = 0;
+	}
+    }
+
+    if (all_numeric == 1) {
+	port = atoi(service);
+    } else {
+        struct servent *sp;
+
+	if ((sp = getservbyname(service, proto)) == NULL) {
+	    port = 0;
+	} else {
+	    port = (in_port_t)(ntohs((in_port_t)sp->s_port));
+	}
+    }
+
+    return port;
+}
