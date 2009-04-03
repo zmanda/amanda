@@ -836,22 +836,23 @@ s3_device_set_bucket_location_fn(Device *p_self, DevicePropertyBase *base,
     GValue *val, PropertySurety surety, PropertySource source)
 {
     S3Device *self = S3_DEVICE(p_self);
+    char *str_val = g_value_dup_string(val);
 
-    if (self->use_ssl && !s3_curl_location_compat()) {
+    if (str_val[0] && self->use_ssl && !s3_curl_location_compat()) {
 	device_set_error(p_self, stralloc(_(
 		"Location constraint given for Amazon S3 bucket, "
 		"but libcurl is too old support wildcard certificates.")),
 	    DEVICE_STATUS_DEVICE_ERROR);
-       return FALSE;
+        goto fail;
     }
 
-    if (!s3_bucket_location_compat(self->bucket)) {
+    if (str_val[0] && !s3_bucket_location_compat(self->bucket)) {
 	device_set_error(p_self, g_strdup_printf(_(
 		"Location constraint given for Amazon S3 bucket, "
 		"but the bucket name (%s) is not usable as a subdomain."),
 		self->bucket),
 	    DEVICE_STATUS_DEVICE_ERROR);
-       return FALSE;
+        goto fail;
     }
 
     amfree(self->bucket_location);
@@ -859,6 +860,9 @@ s3_device_set_bucket_location_fn(Device *p_self, DevicePropertyBase *base,
     device_clear_volume_details(p_self);
 
     return device_simple_property_set_fn(p_self, base, val, surety, source);
+fail:
+    g_free(str_val);
+    return FALSE;
 }
 
 static gboolean

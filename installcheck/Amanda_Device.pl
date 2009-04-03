@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 313;
+use Test::More tests => 320;
 use File::Path qw( mkpath rmtree );
 use Sys::Hostname;
 use Carp;
@@ -545,10 +545,10 @@ my $base_name;
 
 SKIP: {
     skip "define \$INSTALLCHECK_S3_{SECRET,ACCESS}_KEY to run S3 tests",
-            51 +
+            52 +
             1 * $verify_file_count +
             4 * $write_file_count +
-            6 * $s3_make_device_count
+            7 * $s3_make_device_count
 	unless $run_s3_tests;
 
     $dev_name = "s3:foo";
@@ -739,6 +739,13 @@ SKIP: {
     }
 
     # bucket name incompatible with location constraint
+    $dev_name = "s3:-$base_name-s3-eu";
+    $dev = s3_make_device($dev_name, "s3");
+
+    ok($dev->property_set('S3_BUCKET_LOCATION', ''),
+       "should be able to set an empty S3 bucket location with an incompatible name")
+        or diag($dev->error_or_status());
+
     $dev_name = "s3:-$base_name-s3-eu";
     $dev = s3_make_device($dev_name, "s3");
 

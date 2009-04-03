@@ -1,3 +1,7 @@
+2009-04-03  Nikolas Coukouma <atrus@zmanda.com>
+	* device-src/s3-device.c, installcheck/Amanda_Device.pl:
+	  don't require location-compatible name for ignored value
+
 2009-04-03  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/amsamba.pl: Allow empty password.
 	* perl/Amanda/Util.swg: Small fix in skip_quoted_string.
