@@ -184,11 +184,17 @@ sub findpass {
 	     ($diskname =~ m,^(//[^/]+)/\*$, && $1 eq $self->{cifshost}) ||
 	     $diskname eq $self->{share} ||
 	     $diskname eq $self->{sambashare})) {
-	    my ($userpasswd, $domain) = split ' ', $userdomain;
-	    $self->{domain} = $domain;
-	    my ($username, $password) = split('%', $userpasswd);
-	    $self->{username} = $username;
-	    $self->{password} = $password;
+	    if (defined $userdomain && $userdomain ne "") {
+	        my ($userpasswd, $domain) = split ' ', $userdomain;
+	        $self->{domain} = $domain;
+	        my ($username, $password) = split('%', $userpasswd);
+	        $self->{username} = $username;
+	        $self->{password} = $password;
+            } else {
+	        $self->{domain} = undef;
+	        $self->{username} = "guest";
+	        $self->{password} = undef;
+            }
 	    close($amandapass);
 	    return;
 	}

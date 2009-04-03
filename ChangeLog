@@ -1,4 +1,8 @@
 2009-04-03  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amsamba.pl: Allow empty username.
+	* man/xml-source/amsamba.8.xml: Document empty username and password.
+
+2009-04-03  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/security-util.c: Fix isdigit use.
 
 2009-04-03  Jean-Louis Martineau <martineau@zmanda.com>

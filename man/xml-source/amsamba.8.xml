@@ -88,9 +88,15 @@ it can be '*' to match all share,
 it can be '//pc-host/*' to match all share on pc-host.
 User is the username use to connect to the share.
 Password is the password use to connect to the share.
+'%Password' is optional if the user can connect to the share without password.
+'User%Password' is optional, the user 'guest' without password is use to connect to the share.
 Domain is optional. Example:
 <programlisting>
   //another-pc/share otheruser%otherpw domain
+  //another-pc/share otheruser%otherpw
+  //another-pc/share myuser mydomain
+  //another-pc/share myuser
+  //another-pc/share
 </programlisting>
 </listitem></varlistentry>
 </variablelist>
