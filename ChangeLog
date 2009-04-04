@@ -1,3 +1,9 @@
+2009-04-03  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Changer/compat.pm: always configure devices while
+	  scanning
+	* server-src/amcheckdump.pl: configure devices returned from the
+	  changer
+
 2009-04-01  Nikolas Coukouma <atrus@zmanda.com>
 	* device-src/s3.c: don't send empty location constraint,
 	  allocate error messages
