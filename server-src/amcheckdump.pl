@@ -158,6 +158,11 @@ sub try_open_device {
 	      $device->error(), ".\n";
 	return undef;
     }
+    if (!$device->configure(1)) {
+	print "Could not configure device $device_name: ",
+	      $device->error(), ".\n";
+	return undef;
+    }
 
     my $label_status = $device->read_label();
     if ($label_status != $DEVICE_STATUS_SUCCESS) {

@@ -166,8 +166,9 @@ sub _manual_scan {
         my ($slot, $rest) = @_;
 
 	my $device = Amanda::Device->new($rest);
-	if ($device and ($device->read_label() == $DEVICE_STATUS_SUCCESS)
-		    and ($device->volume_label() eq $params{'label'})) {
+	if ($device and $device->configure(1)
+		    and $device->read_label() == $DEVICE_STATUS_SUCCESS
+		    and $device->volume_label() eq $params{'label'}) {
             # we found the correct slot
 	    my $res = Amanda::Changer::compat::Reservation->new($self, $slot, $rest);
             Amanda::MainLoop::call_later($params{'res_cb'}, undef, $res);
