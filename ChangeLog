@@ -1,3 +1,14 @@
+2009-04-07  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/taper-source.c (default_taper_source_seek_to_part_start):
+	  returns FALSE on not splitted dump.
+	* server-src/driverio.c: info.last_level should not be set on error
+	                 if level >= info.last_level.
+	* server-src/driver.c: Rename update_failed_dump_to_tape to
+	  update_failed_dump.
+	  Call update_failed_dump on failed dump to holding disk.
+	* application-src/amgtar.c: Don't update statefile if the backup failed.
+	* client-drc/sendbackup.c: Don't update amandates if backup failed.
+
 2009-04-03  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Changer/compat.pm: always configure devices while
 	  scanning

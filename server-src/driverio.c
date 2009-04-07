@@ -808,13 +808,13 @@ update_info_dumper(
 	    newperf(perfp->rate, (double)dumpsize/(double)dumptime);
     }
 
-    if(getconf_int(CNF_RESERVE)<100) {
+    if(origsize >= (off_t)0 && getconf_int(CNF_RESERVE)<100) {
 	info.command = NO_COMMAND;
     }
 
-    if(level == info.last_level)
+    if (origsize >= (off_t)0 && level == info.last_level) {
 	info.consecutive_runs++;
-    else {
+    } else if (origsize >= (off_t)0 || level < info.last_level) {
 	info.last_level = level;
 	info.consecutive_runs = 1;
     }
