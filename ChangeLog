@@ -1,3 +1,7 @@
+2009-04-07  Jean-Louis Martineau <martineau@zmanda.com>
+	* man/xml-source/amanda-changers.7.xml: Document changerfile for
+	                                        chg-disk.
+
 2009-04-03  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Changer/compat.pm: always configure devices while
 	  scanning

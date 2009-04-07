@@ -111,11 +111,17 @@ supporting parallel access to vtapes stored in directories named
 <programlisting>
 tapedev "file:/u01/vtapes"
 tpchanger "chg-disk"
+changerfile "chg-disk.conf"     # optional file
 </programlisting>
 
 <para>This changer script supports sequential access to vtapes stored in
 directories named <computeroutput>slotN</computeroutput> in the directory
-specified by the <emphasis>tapedev</emphasis> parameter.</para>
+specified by the <emphasis>tapedev</emphasis> parameter.
+The configuration file parameter is:
+<programlisting>
+LASTSLOT=number    # The number of slots, default to tapecycle setting.
+</programlisting>
+</para>
 
 </refsect2>
 
