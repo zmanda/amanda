@@ -24,7 +24,7 @@ amlib_LTLIBRARIES = 	libamdevice.la
 libamdevice_la_LDFLAGS = -release $(VERSION) 
 libamdevice_la_SOURCES = property.c device.c device-queueing.c \
 	null-device.c rait-device.c vfs-device.c \
-	xfer-source-device.c xfer-dest-device.c
+	xfer-source-device.c xfer-dest-device.c xfer-dest-taper.c
 libamdevice_la_LIBADD = \
 	../common-src/libamanda.la \
 	../xfer-src/libamxfer.la

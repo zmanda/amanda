@@ -72,8 +72,25 @@ typedef enum {
     /* XMSG_CANCEL: this transfer is being cancelled, but data may still be
      * "draining" from buffers.  A subsequent XMSG_DONE indicates that the
      * transfer has actually completed.
+     * Attributes:
+     *  (none)
      */
     XMSG_CANCEL = 4,
+
+    /* XMSG_PART_DONE: a split part is finished; used by XferDestTaper to
+     * indicate that it is paused and awaiting instructions to start a new
+     * part.
+     *
+     * Attributes:
+     *  - successful (true if the whole part was written)
+     *  - eof (recipient should not call start_part)
+     *  - size (bytes written to tape)
+     *  - duration (time spent writing, not counting changer ops, etc.)
+     *  - partnum (the zero-based number of this part in the overall dumpfile)
+     *  - fileno (the on-media file number used for this part, or 0 if no file
+     *		  was used)
+     */
+    XMSG_PART_DONE = 5,
 
 } xmsg_type;
 
@@ -104,8 +121,14 @@ typedef struct XMsg {
      * by the XMsg object, and will be freed in xmsg_free.  The use of stralloc()
      * is advised for strings.
      *
-     * N.B. When adding new attributes, also edit perl/Amanda/Xfer.swg:xmsg_to_sv
-     * so that they will be accessible from Perl. */
+     * NOTE TO IMPLEMENTERS:
+     *
+     * When adding a new attribute, make changes in the following places:
+     *  - add the attribute to the XMsg struct in xmsg.h
+     *  - add the attribute to the comments for the appropriate xmsg_types
+     *  - free the attribute in xmsg_free.
+     *  - edit perl/Amanda/Xfer.swg:xmsg_to_sv
+     */
 
     /* free-form string message for display to the users
      *
@@ -114,6 +137,24 @@ typedef struct XMsg {
      * quoted-printable.
      */
     char *message;
+
+    /* true indicates a successful operation */
+    gboolean successful;
+
+    /* true if an EOF condition has occurred */
+    gboolean eof;
+
+    /* size, in bytes */
+    guint64 size;
+
+    /* duration, in seconds */
+    double duration;
+
+    /* split-part number */
+    guint64 partnum;
+
+    /* file number on a volume */
+    guint64 fileno;
 } XMsg;
 
 /*

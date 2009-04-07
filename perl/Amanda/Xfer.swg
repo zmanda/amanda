@@ -121,7 +121,7 @@ such abstract classes.
 
 =head2 Transfer Sources
 
-=head3 Amanda::Xfer::Source::Device (SERVER-ONLY)
+=head3 Amanda::Xfer::Source::Device (SERVER ONLY)
 
   Amanda::Xfer::Source::Device->new($device);
 
@@ -167,7 +167,7 @@ This filter applies a bytewise XOR operation to the data flowing through it.
 
   Amanda::Xfer::Dest::Device->new($device, $max_memory);
 
-This source writes data to a device.  The device should already be queued up
+This source writes data to a device.  The device should be ready
 for writing (C<< $device->start_file(..) >>).  No more than C<$max_memory> will be
 used for buffers.  Use zero for the default buffer size.  On completion of the
 transfer, the file will be finished.
@@ -189,6 +189,64 @@ the element will validate that it receives the data that
 C<Amanda::Xfer::Source::Random> produced with the same seed.  No validation is
 performed if C<$seed> is zero.
 
+=head3 Amanda::Xfer::Dest::Taper (SERVER ONLY)
+
+  Amanda::Xfer::Dest::Taper->new($max_memory, $part_size,
+			    $use_mem_cache, $disk_cache_filename);
+
+This is C<Amanda::Xfer::Dest::Device>'s big cousin.  C<Taper> allows a single
+transfer to write to multiple files (parts) on a device, and even spread those
+parts over multiple devices, without interrupting the transfer itself.  It
+caches data from each part in one of a variety of ways, and supports
+"rewinding" to retry a failed part (e.g., one that does not fit on a device).
+
+The desired part size is C<$part_size>, although this value will be rounded up
+internally as necessary.  If C<$use_mem_cache> is true, each part will be
+cached in memory (using C<$part_size> bytes of memory; plan accordingly!).  If
+C<$disk_cache_filename> is defined, then each part will be cached on-disk in
+the indicated file.  It is an error to specify both in-memory and on-disk
+caching.  If neither option is specified, the element will operate
+successfully, but will not be able to retry a part unless C<cache_inform> has
+been used properly (see below).
+
+When a transfer using this element is first started, nothing happens until the
+element's C<start_part> method is called:
+
+  $dest->start_part($retry_part, $device);
+
+where C<$device> is the device to which the part should be written, with a file
+open and ready to write (that is, C<< $device->start_file(..) >> has already
+been called).  If C<$retry_part> is true, then the previous, unsuccessful part
+will be retried.
+
+As each part is completed, the element sends an C<$XMSG_DONE>
+C<Amanda::Xfer::Msg>, with the following keys:
+
+ successful true if the whole part was written
+ eof	    recipient should not call start_part
+ size	    bytes written to tape
+ duration   time spent writing, not counting changer ops, etc.
+ partnum    the zero-based number of this part in the overall dumpfile
+ fileno     the on-media file number used for this part, or 0 if no file
+            was used
+
+If C<eof> is not true, then C<start_part> should be called again, with
+C<$retry_part = !successful>.
+
+If neither the memory nor disk caches are in use, but the dumpfile is available
+on disk, then the C<cache_inform> method allows the element to use that on-disk
+data to support retries.  This is intended to support transfers from Amanda's
+holding disk, but may be useful for other purposes.
+
+  $dest->cache_inform($filename, $offset, $length);
+
+This function indictes that C<$filename> contains C<$length> bytes of data,
+beginning at offset C<$offset> from the beginning of the file.  These bytes are
+assumed to follow immediately after any bytes previously specified to
+C<cache_inform>.  That is, no gaps or overlaps are allowed in the data stream
+described to C<cache_inform>.  Furthermore, the location of each byte must be
+specified to this method I<before> it is sent through the transfer.
+
 =head1 Amanda::Xfer::Msg objects
 
 Messages are simple hashrefs, with a few convenience methods.  Like transfers,
@@ -196,7 +254,9 @@ they have a C<repr()> method that formats the message nicely, and is available
 through string interpolation:
   print "Received message $msg\n";
 
-Every message has the following keys:
+The canonical description of the message types and keys is in
+C<xfer-src/xmsg.h>, and is not duplicated here.  Every message has the
+following basic keys.
 
 =over
 
@@ -214,9 +274,6 @@ The transfer element that sent the message.
 The version of the message.  This is used to support extensibility of the protocol.
 
 =back
-
-The canonical description of the message types and keys is in C<xfer-src/xmsg.h>, and is
-not duplicated here.
 
 =cut
 %}
@@ -273,6 +330,7 @@ amglue_add_constant(XMSG_INFO, xmsg_type);
 amglue_add_constant(XMSG_ERROR, xmsg_type);
 amglue_add_constant(XMSG_DONE, xmsg_type);
 amglue_add_constant(XMSG_CANCEL, xmsg_type);
+amglue_add_constant(XMSG_PART_DONE, xmsg_type);
 amglue_copy_to_tag(xmsg_type, constants);
 
 /*
@@ -322,6 +380,24 @@ new_sv_for_xmsg(
     /* message */
     if (msg->message)
 	hv_store(hash, "message", 7, newSVpv(msg->message, 0), 0);
+
+    /* successful */
+    hv_store(hash, "successful", 10, newSViv(msg->successful), 0);
+
+    /* eof */
+    hv_store(hash, "eof", 3, newSViv(msg->eof), 0);
+
+    /* size */
+    hv_store(hash, "size", 4, amglue_newSVu64(msg->size), 0);
+
+    /* duration */
+    hv_store(hash, "duration", 8, newSVnv(msg->duration), 0);
+
+    /* partnum */
+    hv_store(hash, "partnum", 7, amglue_newSVu64(msg->partnum), 0);
+
+    /* fileno */
+    hv_store(hash, "fileno", 6, amglue_newSVu64(msg->fileno), 0);
 
     return rv;
 }
@@ -473,6 +549,8 @@ xmsgsource_perl_callback(
     dSP;
     amglue_Source *src = (amglue_Source *)data;
     SV *src_sv = NULL;
+    SV *msg_sv = NULL;
+    SV *xfer_sv = NULL;
 
     g_assert(src->callback_sv != NULL);
 
@@ -480,16 +558,19 @@ xmsgsource_perl_callback(
     SAVETMPS;
 
     /* create a new SV pointing to 'src', and increase its refcount
-     * accordingly.  The SV is mortal, so FREETMPS will decrease the 
-     * refcount, unless the callee keeps a copy of it somewhere */
+     * accordingly. */
     amglue_source_ref(src);
     src_sv = SWIG_NewPointerObj(src, SWIGTYPE_p_amglue_Source,
 				 SWIG_OWNER | SWIG_SHADOW);
+    SvREFCNT_inc(src_sv);
+
+    msg_sv = new_sv_for_xmsg(msg);
+    xfer_sv = new_sv_for_xfer(xfer);
 
     PUSHMARK(SP);
-    XPUSHs(src_sv);
-    XPUSHs(sv_2mortal(new_sv_for_xmsg(msg)));
-    XPUSHs(sv_2mortal(new_sv_for_xfer(xfer)));
+    XPUSHs(sv_2mortal(src_sv));
+    XPUSHs(sv_2mortal(msg_sv));
+    XPUSHs(sv_2mortal(xfer_sv));
     PUTBACK;
 
     call_sv(src->callback_sv, G_EVAL|G_DISCARD);
@@ -497,9 +578,11 @@ xmsgsource_perl_callback(
     FREETMPS;
     LEAVE;
 
-    /* these may have been freed, so don't use them after this point */
+    /* these may be gone, so NULL them out */
     src_sv = NULL;
     src = NULL;
+    msg_sv = NULL;
+    xfer_sv = NULL;
 
     /* check for an uncaught 'die'.  If we don't do this, then Perl will longjmp()
      * over the GMainLoop mechanics, leaving GMainLoop in an inconsistent (locked)

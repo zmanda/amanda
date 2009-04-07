@@ -1,3 +1,14 @@
+2009-04-07  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/xfer-dest-taper.c: new xfer element to handle splitting
+	  dumpfiles over multiple volumes, with retry of failed split parts
+	* device-src/Makefile.am: new file
+	* device-src/xfer-device.h: new prototype
+	* installcheck/Amanda_Xfer_serveronly.pl: new tests
+	* installcheck/Installcheck/Run.pm: increase default vtape size
+	* perl/Amanda/Xfer.swg: POD for new element
+	* perl/Amanda/XferDevice.swg: wrap new element
+	* xfer-src/xmsg.h xfer-src/xmsg.c: add XMSG_PART_DONE
+
 2009-04-07  Jean-Louis Martineau <martineau@zmanda.com>
 	* client-drc/sendbackup.c: Init result.
 

@@ -86,7 +86,7 @@ to call this before your test script exits.
 
 =head2 VTAPES
 
-This module sets up a configuration with three 10M vtapes, replete with
+This module sets up a configuration with three 30M vtapes, replete with
 the proper vtape directories.  These are controlled by C<chg-disk>.
 The tapes are not labeled, and C<label_new_tapes> is not set by
 default, although C<labelstr> is set to C<TESTCONF[0-9][0-9]>.
@@ -277,7 +277,7 @@ sub setup_vtapes {
 
     # this overwrites the existing TEST-TAPE tapetype
     $testconf->add_tapetype('TEST-TAPE', [
-	'length' => '20 mbytes',
+	'length' => '30 mbytes',
 	'filemark' => '4 kbytes',
     ]);
 }

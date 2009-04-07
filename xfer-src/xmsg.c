@@ -23,14 +23,6 @@
 
 /* TODO: use glib chunk allocator */
 
-/* NOTE TO IMPLEMENTERS:
- *
- * When adding a new attribute, make changes in the following places:
- *  - add the attribute to the XMsg struct in xmsg.h
- *  - add the attribute to the comments for the appropriate xmsg_types
- *  - free the attribute in xmsg_free.
- */
-
 /*
  * Methods
  */
@@ -82,6 +74,7 @@ xmsg_repr(
 	    case XMSG_ERROR: typ = "ERROR"; break;
 	    case XMSG_DONE: typ = "DONE"; break;
 	    case XMSG_CANCEL: typ = "CANCEL"; break;
+	    case XMSG_PART_DONE: typ = "PART_DONE"; break;
 	    default: typ = "**UNKNOWN**"; break;
 	}
 

@@ -23,6 +23,7 @@
 %include "exception.i"
 %import "Amanda/Xfer.swg"
 %import "Amanda/Device.swg"
+%import "Amanda/Header.swg"
 
 %{
 #include "glib-util.h"
@@ -50,6 +51,25 @@ XferElement *xfer_dest_device(
     Device *device,
     size_t max_memory);
 
+%newobject xfer_dest_taper;
+XferElement *xfer_dest_taper(
+    size_t max_memory,
+    guint64 part_size,
+    gboolean use_mem_cache,
+    const char *disk_cache_filename);
+
+void xfer_dest_taper_start_part(
+    XferElement *self,
+    gboolean retry_part,
+    Device *device,
+    dumpfile_t *header);
+
+void xfer_dest_taper_cache_inform(
+    XferElement *self,
+    const char *filename,
+    off_t offset,
+    off_t length);
+
 /* ---- */
 
 PACKAGE(Amanda::Xfer::Source::Device)
@@ -61,3 +81,11 @@ DECLARE_CONSTRUCTOR(Amanda::XferDevice::xfer_source_device)
 PACKAGE(Amanda::Xfer::Dest::Device)
 XFER_ELEMENT_SUBCLASS()
 DECLARE_CONSTRUCTOR(Amanda::XferDevice::xfer_dest_device)
+
+/* ---- */
+
+PACKAGE(Amanda::Xfer::Dest::Taper)
+XFER_ELEMENT_SUBCLASS()
+DECLARE_CONSTRUCTOR(Amanda::XferDevice::xfer_dest_taper)
+DECLARE_METHOD(start_part, Amanda::XferDevice::xfer_dest_taper_start_part)
+DECLARE_METHOD(cache_inform, Amanda::XferDevice::xfer_dest_taper_cache_inform)

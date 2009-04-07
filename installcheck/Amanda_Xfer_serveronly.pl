@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 4;
+use Test::More tests => 12;
 use File::Path;
 use strict;
 
@@ -46,8 +46,8 @@ Amanda::Config::config_init(0, undef);
 
     my $quit_cb = sub {
 	my ($src, $msg, $xfer) = @_;
-	if ($msg->{type} == $XMSG_ERROR) {
-	    die $msg->{elt} . " failed: " . $msg->{message};
+	if ($msg->{'type'} == $XMSG_ERROR) {
+	    die $msg->{'elt'} . " failed: " . $msg->{'message'};
 	}
 	if ($xfer->get_status() == $Amanda::Xfer::XFER_DONE) {
 	    $xfer->get_source()->remove();
@@ -66,10 +66,10 @@ Amanda::Config::config_init(0, undef);
 
     # write to it
     my $hdr = Amanda::Header->new();
-    $hdr->{type} = $Amanda::Header::F_DUMPFILE;
-    $hdr->{name} = "installcheck";
-    $hdr->{disk} = "/";
-    $hdr->{datestamp} = "20080102030405";
+    $hdr->{'type'} = $Amanda::Header::F_DUMPFILE;
+    $hdr->{'name'} = "installcheck";
+    $hdr->{'disk'} = "/";
+    $hdr->{'datestamp'} = "20080102030405";
 
     $device->finish();
     $device->start($ACCESS_WRITE, "TESTCONF01", "20080102030405");
@@ -105,3 +105,290 @@ Amanda::Config::config_init(0, undef);
     Amanda::MainLoop::run();
     pass("read from a device succeeded, too, and data was correct");
 }
+
+my $disk_cache = "$AMANDA_TMPDIR/disk_cache";
+my $RANDOM_SEED = 0xFACADE;
+
+# extra params:
+#   cancel_after_partnum - after this partnum is completed, cancel the xfer
+#   do_not_retry - do not retry a failed part - cancel the xfer instead
+sub test_taper_dest {
+    my ($src, $dest, $expected_messages, $msg_prefix, %params) = @_;
+    my $xfer;
+    my $device;
+
+    # set up vtapes
+    my $testconf = Installcheck::Run::setup();
+    $testconf->write();
+
+    my $hdr = Amanda::Header->new();
+    $hdr->{'type'} = $Amanda::Header::F_DUMPFILE;
+    $hdr->{'name'} = "installcheck";
+    $hdr->{'disk'} = "/";
+    $hdr->{'datestamp'} = "20080102030405";
+
+    $xfer = Amanda::Xfer->new([ $src, $dest ]);
+
+    my $vtape_num = 1;
+    my @messages;
+    my $start_new_part = sub {
+	my ($successful, $eof, $partnum) = @_;
+
+	if ($device) {
+	    $device->finish_file();
+	}
+
+	if (exists $params{'cancel_after_partnum'}
+		and $params{'cancel_after_partnum'} == $partnum) {
+	    push @messages, "CANCEL";
+	    $xfer->cancel();
+	    return;
+	}
+
+	if (!$device || !$successful) {
+	    # set up a device and start writing a part to it
+	    $device->finish() if $device;
+	    $device = Amanda::Device->new("file:" . Installcheck::Run::load_vtape($vtape_num++));
+	    die("Could not open VFS device: " . $device->error())
+		unless ($device->status() == $DEVICE_STATUS_SUCCESS);
+	    $device->start($ACCESS_WRITE, "TESTCONF01", "20080102030405");
+	    $device->property_set("MAX_VOLUME_USAGE", 1024*1024*2.5);
+	}
+
+	# bail out if we shouldn't retry this part
+	if (!$successful and $params{'do_not_retry'}) {
+	    push @messages, "NOT-RETRYING";
+	    $xfer->cancel();
+	    return;
+	}
+
+	if (!$eof) {
+	    $device->start_file($hdr);
+	    if ($successful) {
+		$dest->start_part(0, $device);
+	    } else {
+		$dest->start_part(1, $device);
+	    }
+	}
+    };
+
+    $xfer->get_source()->set_callback(sub {
+	my ($src, $msg, $xfer) = @_;
+
+	if ($msg->{'type'} == $XMSG_ERROR) {
+	    die $msg->{'elt'} . " failed: " . $msg->{'message'};
+	} elsif ($msg->{'type'} == $XMSG_PART_DONE) {
+	    push @messages, "PART-" . $msg->{'partnum'} . '-' . ($msg->{'successful'}? "OK" : "FAILED");
+	    $start_new_part->($msg->{'successful'}, $msg->{'eof'}, $msg->{'partnum'});
+	} elsif ($msg->{'type'} == $XMSG_DONE) {
+	    push @messages, "DONE";
+	} elsif ($msg->{'type'} == $XMSG_CANCEL) {
+	    push @messages, "CANCELLED";
+	} else {
+	    push @messages, "$msg";
+	}
+
+	if ($xfer->get_status() == $Amanda::Xfer::XFER_DONE) {
+	    $xfer->get_source()->remove();
+	    Amanda::MainLoop::quit();
+	}
+    });
+    $xfer->start();
+
+    Amanda::MainLoop::call_later(sub { $start_new_part->(1, 0); });
+    Amanda::MainLoop::run();
+
+    is_deeply([@messages],
+	$expected_messages,
+	"$msg_prefix: element produces the correct series of messages");
+}
+
+# run this test in each of a few different cache permutations
+test_taper_dest(
+    Amanda::Xfer::Source::Random->new(1024*1024*4.1, $RANDOM_SEED),
+    Amanda::Xfer::Dest::Taper->new(128*1024, 1024*1024, 1, undef),
+    [ "PART-1-OK", "PART-2-OK", "PART-3-FAILED",
+      "PART-3-OK", "PART-4-OK", "PART-5-OK",
+      "DONE" ],
+    "mem cache");
+test_taper_dest(
+    Amanda::Xfer::Source::Random->new(1024*1024*4.1, $RANDOM_SEED),
+    Amanda::Xfer::Dest::Taper->new(128*1024, 1024*1024, 0, $disk_cache),
+    [ "PART-1-OK", "PART-2-OK", "PART-3-FAILED",
+      "PART-3-OK", "PART-4-OK", "PART-5-OK",
+      "DONE" ],
+    "disk cache");
+test_taper_dest(
+    Amanda::Xfer::Source::Random->new(1024*1024*2, $RANDOM_SEED),
+    Amanda::Xfer::Dest::Taper->new(128*1024, 1024*1024, 0, undef),
+    [ "PART-1-OK", "PART-2-OK", "PART-3-OK",
+      "DONE" ],
+    "no cache (no failed parts)");
+test_taper_dest(
+    Amanda::Xfer::Source::Random->new(1024*1024*2, $RANDOM_SEED),
+    Amanda::Xfer::Dest::Taper->new(128*1024, 0, 0, undef),
+    [ "PART-1-OK", "DONE" ],
+    "no splitting (fits on volume)");
+test_taper_dest(
+    Amanda::Xfer::Source::Random->new(1024*1024*4.1, $RANDOM_SEED),
+    Amanda::Xfer::Dest::Taper->new(128*1024, 0, 0, undef),
+    [ "PART-1-FAILED", "NOT-RETRYING", "CANCELLED", "DONE" ],
+    "no splitting (doesn't fit on volume -> fails)",
+    do_not_retry => 1);
+test_taper_dest(
+    Amanda::Xfer::Source::Random->new(1024*1024*4.1, $RANDOM_SEED),
+    Amanda::Xfer::Dest::Taper->new(128*1024, 1024*1024, 0, $disk_cache),
+    [ "PART-1-OK", "PART-2-OK", "PART-3-FAILED",
+      "PART-3-OK", "PART-4-OK", "CANCEL",
+      "CANCELLED", "DONE" ],
+    "cancellation after success",
+    cancel_after_partnum => 4);
+
+sub test_taper_dest_cache_inform {
+    my %params = @_;
+    my $xfer;
+    my $device;
+    my $fh;
+    my $part_size = 1024*1024;
+    my $file_size = $part_size * 4 + 100 * 1024;
+
+    # set up our "cache", cleverly using an Amanda::Xfer::Dest::Fd
+    open($fh, ">", "$disk_cache") or die("Could not open '$disk_cache' for writing");
+    $xfer = Amanda::Xfer->new([
+	Amanda::Xfer::Source::Random->new($file_size, $RANDOM_SEED),
+	Amanda::Xfer::Dest::Fd->new(fileno($fh)),
+    ]);
+
+    $xfer->get_source()->set_callback(sub {
+	my ($src, $msg, $xfer) = @_;
+	if ($msg->{'type'} == $XMSG_ERROR) {
+	    die $msg->{'elt'} . " failed: " . $msg->{'message'};
+	}
+	if ($xfer->get_status() == $Amanda::Xfer::XFER_DONE) {
+	    $xfer->get_source()->remove();
+	    Amanda::MainLoop::quit();
+	}
+    });
+    $xfer->start();
+    Amanda::MainLoop::run();
+    close($fh);
+
+    # create a list of holding chuunks, some slab-aligned, some part-aligned,
+    # some not
+    my @holding_chunks;
+    if (!$params{'omit_chunks'}) {
+	my $offset = 0;
+	my $do_chunk = sub {
+	    my ($break) = @_;
+	    die unless $break > $offset;
+	    push @holding_chunks, [ $disk_cache, $offset, $break - $offset ];
+	    $offset = $break;
+	};
+	$do_chunk->(277);
+	$do_chunk->($part_size);
+	$do_chunk->($part_size+128*1024);
+	$do_chunk->($part_size*3);
+	$do_chunk->($part_size*3+1024);
+	$do_chunk->($part_size*3+1024*2);
+	$do_chunk->($part_size*3+1024*3);
+	$do_chunk->($part_size*4);
+	$do_chunk->($part_size*4 + 77);
+	$do_chunk->($file_size - 1);
+	$do_chunk->($file_size);
+    }
+
+    # set up vtapes
+    my $testconf = Installcheck::Run::setup();
+    $testconf->write();
+
+    my $hdr = Amanda::Header->new();
+    $hdr->{'type'} = $Amanda::Header::F_DUMPFILE;
+    $hdr->{'name'} = "installcheck";
+    $hdr->{'disk'} = "/";
+    $hdr->{'datestamp'} = "20080102030405";
+
+    open($fh, "<", "$disk_cache") or die("Could not open '$disk_cache' for reading");
+    my $dest = Amanda::Xfer::Dest::Taper->new(128*1024, 1024*1024, 0, undef);
+    $xfer = Amanda::Xfer->new([
+	Amanda::Xfer::Source::Fd->new(fileno($fh)),
+	$dest,
+    ]);
+
+    my $vtape_num = 1;
+    my $start_new_part = sub {
+	my ($successful, $eof, $last_partnum) = @_;
+
+	if ($device) {
+	    $device->finish_file();
+	}
+
+	if (!$device || !$successful) {
+	    # set up a device and start writing a part to it
+	    $device->finish() if $device;
+	    $device = Amanda::Device->new("file:" . Installcheck::Run::load_vtape($vtape_num++));
+	    die("Could not open VFS device: " . $device->error())
+		unless ($device->status() == $DEVICE_STATUS_SUCCESS);
+	    $device->start($ACCESS_WRITE, "TESTCONF01", "20080102030405");
+	    $device->property_set("MAX_VOLUME_USAGE", 1024*1024*2.5);
+	}
+
+	# feed enough chunks to cache_inform
+	my $upto = ($last_partnum+2) * $part_size;
+	while (@holding_chunks and $holding_chunks[0]->[1] < $upto) {
+	    my ($filename, $offset, $length) = @{shift @holding_chunks};
+	    $dest->cache_inform($filename, $offset, $length);
+	}
+
+	if (!$eof) {
+	    $device->start_file($hdr);
+	    if ($successful) {
+		$dest->start_part(0, $device);
+	    } else {
+		$dest->start_part(1, $device);
+	    }
+	}
+    };
+
+    my @messages;
+    $xfer->get_source()->set_callback(sub {
+	my ($src, $msg, $xfer) = @_;
+
+	if ($msg->{'type'} == $XMSG_ERROR) {
+	    push @messages, "ERROR: $msg->{message}";
+	} elsif ($msg->{'type'} == $XMSG_PART_DONE) {
+	    push @messages, "PART-" . ($msg->{'successful'}? "OK" : "FAILED");
+	    $start_new_part->($msg->{'successful'}, $msg->{'eof'}, $msg->{'partnum'});
+	} elsif ($msg->{'type'} == $XMSG_DONE) {
+	    push @messages, "DONE";
+	} elsif ($msg->{'type'} == $XMSG_CANCEL) {
+	    push @messages, "CANCELLED";
+	} else {
+	    push @messages, $msg->{'type'};
+	}
+
+	if ($xfer->get_status() == $Amanda::Xfer::XFER_DONE) {
+	    $xfer->get_source()->remove();
+	    Amanda::MainLoop::quit();
+	}
+    });
+    $xfer->start();
+
+    Amanda::MainLoop::call_later(sub { $start_new_part->(1, 0, -1); });
+    Amanda::MainLoop::run();
+
+    return @messages;
+}
+
+is_deeply([ test_taper_dest_cache_inform() ],
+    [ "PART-OK", "PART-OK", "PART-FAILED",
+      "PART-OK", "PART-OK", "PART-OK",
+      "DONE" ],
+    "cache_inform: element produces the correct series of messages");
+
+is_deeply([ test_taper_dest_cache_inform(omit_chunks => 1) ],
+    [ "PART-OK", "PART-OK", "PART-FAILED",
+      "ERROR: Failed part was not cached; cannot retry", "CANCELLED",
+      "DONE" ],
+    "cache_inform: element produces the correct series of messages");
+
+unlink($disk_cache);
