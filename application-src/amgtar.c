@@ -976,7 +976,7 @@ amgtar_backup(
 	g_fprintf(mesgstream, "sendbackup: error [%s]\n", errmsg);
     }
 
-    if (incrname && strlen(incrname) > 4) {
+    if (!errmsg && incrname && strlen(incrname) > 4) {
 	char *nodotnew;
 	nodotnew = stralloc(incrname);
 	nodotnew[strlen(nodotnew)-4] = '\0';

@@ -193,7 +193,7 @@ static gboolean
 default_taper_source_seek_to_part_start(TaperSource * self) {
     self->end_of_data = self->end_of_part = FALSE;
 
-    return TRUE;
+    return self->max_part_size > 0;
 }
 
 static gboolean
