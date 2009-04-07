@@ -1,4 +1,7 @@
 2009-04-07  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Amanda_Xfer_serveronly.pl: unmerged test tweaks
+
+2009-04-07  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/xfer-dest-taper.c: new xfer element to handle splitting
 	  dumpfiles over multiple volumes, with retry of failed split parts
 	* device-src/Makefile.am: new file

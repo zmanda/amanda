@@ -19,6 +19,7 @@
 use Test::More tests => 12;
 use File::Path;
 use strict;
+use warnings;
 
 use lib "@amperldir@";
 use Installcheck::Run;
@@ -134,10 +135,6 @@ sub test_taper_dest {
     my $start_new_part = sub {
 	my ($successful, $eof, $partnum) = @_;
 
-	if ($device) {
-	    $device->finish_file();
-	}
-
 	if (exists $params{'cancel_after_partnum'}
 		and $params{'cancel_after_partnum'} == $partnum) {
 	    push @messages, "CANCEL";
@@ -163,11 +160,10 @@ sub test_taper_dest {
 	}
 
 	if (!$eof) {
-	    $device->start_file($hdr);
 	    if ($successful) {
-		$dest->start_part(0, $device);
+		$dest->start_part(0, $device, $hdr);
 	    } else {
-		$dest->start_part(1, $device);
+		$dest->start_part(1, $device, $hdr);
 	    }
 	}
     };
@@ -195,7 +191,7 @@ sub test_taper_dest {
     });
     $xfer->start();
 
-    Amanda::MainLoop::call_later(sub { $start_new_part->(1, 0); });
+    Amanda::MainLoop::call_later(sub { $start_new_part->(1, 0, -1); });
     Amanda::MainLoop::run();
 
     is_deeply([@messages],
@@ -318,10 +314,6 @@ sub test_taper_dest_cache_inform {
     my $start_new_part = sub {
 	my ($successful, $eof, $last_partnum) = @_;
 
-	if ($device) {
-	    $device->finish_file();
-	}
-
 	if (!$device || !$successful) {
 	    # set up a device and start writing a part to it
 	    $device->finish() if $device;
@@ -340,11 +332,10 @@ sub test_taper_dest_cache_inform {
 	}
 
 	if (!$eof) {
-	    $device->start_file($hdr);
 	    if ($successful) {
-		$dest->start_part(0, $device);
+		$dest->start_part(0, $device, $hdr);
 	    } else {
-		$dest->start_part(1, $device);
+		$dest->start_part(1, $device, $hdr);
 	    }
 	}
     };
