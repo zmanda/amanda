@@ -662,6 +662,7 @@ main(
 	    /*NOTREACHED*/
 	}
 
+	result = 0;
 	while ((line = agets(dumperr)) != NULL) {
 	    if (strlen(line) > 0) {
 		fdprintf(mesgfd, "sendbackup: error [%s]\n", line);
