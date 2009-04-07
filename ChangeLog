@@ -1,4 +1,7 @@
 2009-04-07  Jean-Louis Martineau <martineau@zmanda.com>
+	* client-drc/sendbackup.c: Init result.
+
+2009-04-07  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/taper-source.c (default_taper_source_seek_to_part_start):
 	  returns FALSE on not splitted dump.
 	* server-src/driverio.c: info.last_level should not be set on error
