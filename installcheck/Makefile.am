@@ -31,6 +31,7 @@ server_tests = \
 	Amanda_Disklist \
 	Amanda_DB_Catalog \
 	Amanda_Device \
+	Amanda_Holding \
 	Amanda_Logfile \
 	Amanda_Tapelist \
 	Amanda_Process \

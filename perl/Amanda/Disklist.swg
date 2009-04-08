@@ -385,7 +385,9 @@ read_disklist_internal(
 	hv_store(h, dp->name, strlen(dp->name), diskref, 0);
     }
 
-    free_disklist(&list);
+    /* free_disklist frees the globals, too, which is not what we want.
+     * So this leaks memory. */
+    /* free_disklist(&list); */
 
     return 0;
 }

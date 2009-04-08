@@ -268,9 +268,7 @@ parse_file_header(
 	tok = strtok_r(NULL, " ", &saveptr);
         /* "program" is optional */
         if (tok == NULL || strcmp(tok, "program") != 0) {
-	    amfree(buf);
-	    amfree(line1);
-            return;
+	    break;
 	}
 
         tok = strtok_r(NULL, " ", &saveptr);

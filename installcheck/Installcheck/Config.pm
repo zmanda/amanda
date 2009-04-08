@@ -34,7 +34,9 @@ Installcheck::Config - set up amanda configurations for installcheck testing
 
   my $testconf = Installcheck::Config->new();
   $testconf->add_param("runtapes", "5");
-  $testconf->add_subsec("tapetype", "DUCKTAPE", { length => "10G", filemark => "4096k" });
+  $testconf->add_tapetype("DUCKTAPE", [
+    length => "10G", filemark => "4096k",
+  ]);
   # ...
   $testconf->write();
 
@@ -174,67 +176,85 @@ sub add_client_config_param {
 =item C<add_tapetype($name, $values_arrayref)>
 =item C<add_dumptype($name, $values_arrayref)>
 =item C<add_holdingdisk($name, $values_arrayref)>
+=item C<add_holdingdisk_def($name, $values_arrayref)>
 =item C<add_interface($name, $values_arrayref)>
 =item C<add_application($name, $values_arrayref)>
 =item C<add_script($name, $values_arrayref)>
 =item C<add_device($name, $values_arrayref)>
 =item C<add_changer($name, $values_arrayref)>
 
-Add the given subsection to the configuration file, including all
-values in the arrayref.  The values should be specified as alternating
-key/value pairs.
+Add the given subsection to the configuration file, including all values in the
+arrayref.  The values should be specified as alternating key/value pairs.
+Since holdingdisk definitions usually don't have a "define" keyword,
+C<add_holdingdisk> does not add one, but C<add_holdingdisk_def> does.
 
 =cut
 
 sub _add_subsec {
     my $self = shift;
-    my ($subsec, $name, $values_arrayref) = @_;
+    my ($subsec, $name, $use_define, $values) = @_;
 
     # first delete any existing subsections with that name
     @{$self->{$subsec}} = grep { $_->[0] ne $name } @{$self->{$subsec}};
     
     # and now push the new subsection definition on the end
-    push @{$self->{$subsec}}, [$name, @$values_arrayref];
+    push @{$self->{$subsec}}, [$name, $use_define, $values];
 }
 
 sub add_tapetype {
     my $self = shift;
-    $self->_add_subsec("tapetypes", @_);
+    my ($name, $values) = @_;
+    $self->_add_subsec("tapetypes", $name, 1, $values);
 }
 
 sub add_dumptype {
     my $self = shift;
-    $self->_add_subsec("dumptypes", @_);
+    my ($name, $values) = @_;
+    $self->_add_subsec("dumptypes", $name, 1, $values);
 }
 
+# by default, holdingdisks don't have the "define" keyword
 sub add_holdingdisk {
     my $self = shift;
-    $self->_add_subsec("holdingdisks", @_);
+    my ($name, $values) = @_;
+    $self->_add_subsec("holdingdisks", $name, 0, $values);
+}
+
+# add a holdingdisk definition only (use "define" keyword)
+sub add_holdingdisk_def {
+    my $self = shift;
+    my ($name, $values) = @_;
+    $self->_add_subsec("holdingdisks", $name, 1, $values);
 }
 
 sub add_interface {
     my $self = shift;
-    $self->_add_subsec("interfaces", @_);
+    my ($name, $values) = @_;
+    $self->_add_subsec("interfaces", $name, 1, $values);
 }
 
 sub add_application {
     my $self = shift;
-    $self->_add_subsec("application-tool", @_);
+    my ($name, $values) = @_;
+    $self->_add_subsec("application-tool", $name, 1, $values);
 }
 
 sub add_script {
     my $self = shift;
-    $self->_add_subsec("script-tool", @_);
+    my ($name, $values) = @_;
+    $self->_add_subsec("script-tool", $name, 1, $values);
 }
 
 sub add_device {
     my $self = shift;
-    $self->_add_subsec("devices", @_);
+    my ($name, $values) = @_;
+    $self->_add_subsec("devices", $name, 1, $values);
 }
 
 sub add_changer {
     my $self = shift;
-    $self->_add_subsec("changers", @_);
+    my ($name, $values) = @_;
+    $self->_add_subsec("changers", $name, 1, $values);
 }
 
 =item C<add_dle($line)>
@@ -348,17 +368,14 @@ sub _write_amanda_conf_subsection {
     my ($amanda_conf, $subsec_type, $subsec_ref) = @_;
 
     for my $subsec_info (@$subsec_ref) {
-	my ($subsec_name, @values) = @$subsec_info;
+	my ($subsec_name, $use_define, $values) = @$subsec_info;
 	
-	if ($subsec_type eq "holdingdisk") {
-	    print $amanda_conf "\nholdingdisk $subsec_name {\n";
-	} else {
-	    print $amanda_conf "\ndefine $subsec_type $subsec_name {\n";
-	}
+	my $define = $use_define? "define " : "";
+	print $amanda_conf "\n$define$subsec_type $subsec_name {\n";
 
-	while (@values) {
-	    $param = shift @values;
-	    $value = shift @values;
+	while (@$values) {
+	    $param = shift @$values;
+	    $value = shift @$values;
 	    print $amanda_conf "$param $value\n";
 	}
 	print $amanda_conf "}\n";

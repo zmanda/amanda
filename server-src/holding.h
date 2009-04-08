@@ -38,11 +38,11 @@
  *
  * Example:
  *
- * /data/holding                                     <-- holding disk
- * /data/holding/200703061234                        <-- holding dir
- * /data/holding/200703061234/videoserver._video_a   <-- holding file,
-                                                         holding file chunk
- * /data/holding/200703061234/videoserver._video_a.1 <-- holding file chunk
+ * /data/holding                                       <-- holding disk
+ * /data/holding/20070306123456                        <-- holding dir
+ * /data/holding/20070306123456/videoserver._video_a   <-- holding file,
+                                                           holding file chunk
+ * /data/holding/20070306123456/videoserver._video_a.1 <-- holding file chunk
  *
  */
 

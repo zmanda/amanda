@@ -1,4 +1,13 @@
 2009-04-08  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/fileheader.c: fix early return if PROGRAM not given
+	* perl/Amanda/Disklist.swg: do not free the C disklist
+	* perl/Makefile.am perl/Amanda/Holding.pm: new pure-perl package with
+	  functionality similar to server-src/holding.[ch]
+	* server-src/holding.h: clarify comments
+	* installcheck/Amanda_Holding.pl installcheck/Installcheck/Config.pm
+	  installcheck/Makefile.am: tests
+
+2009-04-08  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/xfer-dest-taper.c: fix uninitialized-value warnings
 
 2009-04-07  Dustin J. Mitchell <dustin@zmanda.com>

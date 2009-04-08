@@ -350,6 +350,12 @@ DISTCLEANFILES += Amanda/Constants.pm
 Amanda_DATA += Amanda/Script_App.pm
 EXTRA_DIST += Amanda/Script_App.pm
 
+if WANT_SERVER
+# PACKAGE: Amanda::Holding
+Amanda_DATA += Amanda/Holding.pm
+endif
+EXTRA_DIST += Amanda/Holding.pm
+
 if WANT_CLIENT
 # PACKAGE: Amanda::Application
 libApplicationdir = $(amperldir)/auto/Amanda/Application
