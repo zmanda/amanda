@@ -1,3 +1,6 @@
+2009-04-08  Nikolas Coukouma <atrus@zmanda.com>, Dustin J. Mitchell <dustin@zmanda.com>
+	* man/xml-source/amanda-devices.7.xml: clarify meaning of s3_bucket location
+
 2009-04-08  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/fileheader.c: fix early return if PROGRAM not given
 	* perl/Amanda/Disklist.swg: do not free the C disklist

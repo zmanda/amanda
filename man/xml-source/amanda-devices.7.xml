@@ -173,22 +173,26 @@ as properties.</para>
 high HTTP overhead for each request, use of larger than normal block
   sizes (&gt; 1 megabyte) is reccomended with the S3 device.</para>
 
-<para>You can control where your data is physically stored by Amazon S3 using 
-a location constraint. Setting this affects can affect both billing and legal 
-concerns, so you are encouraged to consult Amazon's documentation for details.
+<para>
+Amanda automatically creates a bucket when writing, if the bucket doesn't
+already exist. At that time, it specifies where Amazon should store the data
+based on the S3_BUCKET_LOCATION property. Currently, there are two valid settings:
+"*" (any location, probably US) and "EU" (Europe). If this property is not set,
+Amazon's default value of "*" is used. The bucket location has both billing and
+legal concerns, so you are encouraged to consult Amazon's documentation for details.
 </para>
 
 <para>
-To control location constraints, set the S3_BUCKET_LOCATION property.
-Currently, there are two valid settings: "*" (any location, probably US)
-and "EU" (Europe). If the S3_BUCKET_LOCATION is set, Amanda will check to
-make sure that the setting agrees with the constraint currently on the bucket.
+Amazon does not permit changes to bucket locations, so this is a permanent
+specification. If the bucket already exists and the property is set,
+then Amanda checks the property against the location of the bucket, and
+produces an error if they do not match.
 </para>
+
 <note><para>
-If a location constraint is set, the bucket name will need to consist only of
+If a location constraint is set, the bucket name must consist only of
 lower-case letters, numbers, dashes, and dots.
 </para></note>
-
 
 <para>This driver supports the VERBOSE property, but use it carefully -- it
 produces a great deal of output, and may cause spurious failures by filling
@@ -396,7 +400,7 @@ size.</para></note>
  <!-- ==== -->
  <varlistentry><term>S3_BUCKET_LOCATION</term><listitem>
  (read-write) Location constraint for buckets on Amazon S3.
-Currently, it can be set to "", for no constraint (i.e. store data in the US), 
+Currently, it can be set to "", for no constraint (i.e. store data in the US),
 or "EU" (i.e. store data in the EU).
 See Amazon's documentation for details and latest information
 </listitem></varlistentry>
