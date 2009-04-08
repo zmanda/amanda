@@ -592,6 +592,9 @@ slab_source_setup(
 {
     state->tmp_slab = NULL;
     state->slice_fd = -1;
+    state->slice = NULL;
+    state->slice_remaining = 0;
+    state->next_serial = G_MAXUINT64;
 
     /* if we're to retry the part, rewind to the beginning */
     if (self->retry_part) {

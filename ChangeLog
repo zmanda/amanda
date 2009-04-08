@@ -1,3 +1,6 @@
+2009-04-08  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/xfer-dest-taper.c: fix uninitialized-value warnings
+
 2009-04-07  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Amanda_Xfer_serveronly.pl: unmerged test tweaks
 
