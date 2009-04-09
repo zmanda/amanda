@@ -1,3 +1,6 @@
+2009-04-09  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/dumper.c: Check authopt before using it.
+
 2009-04-07  Jean-Louis Martineau <martineau@zmanda.com>
 	* client-drc/sendbackup.c: Init result.
 

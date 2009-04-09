@@ -2089,7 +2089,7 @@ startup_dump(
 		   " ", dumpdate,
 		   " OPTIONS ", options,
 		   /* compat: if authopt=krb4, send krb4-auth */
-		   (strcasecmp(authopt, "krb4") ? "" : "krb4-auth"),
+		   (authopt && strcasecmp(authopt, "krb4") ? "" : "krb4-auth"),
 		   "\n",
 		   NULL);
     }
