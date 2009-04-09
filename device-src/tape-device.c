@@ -625,8 +625,8 @@ static int try_open_tape_device(TapeDevice * self, char * device_filename) {
 }
 
 static void
-tape_device_open_device (Device * d_self, char * device_name G_GNUC_UNUSED,
-			char * device_type G_GNUC_UNUSED, char * device_node) {
+tape_device_open_device (Device * d_self, char * device_name,
+			char * device_type, char * device_node) {
     TapeDevice * self;
 
     self = TAPE_DEVICE(d_self);
@@ -639,7 +639,7 @@ tape_device_open_device (Device * d_self, char * device_name G_GNUC_UNUSED,
 
     /* Chain up */
     if (parent_class->open_device) {
-        parent_class->open_device(d_self, device_node, device_type, device_node);
+        parent_class->open_device(d_self, device_name, device_type, device_node);
     }
 }
 
