@@ -482,6 +482,7 @@ main(
 	case 27: argument.calcsize = 1;
 		 break;
 	case 28: argument.tar_blocksize = stralloc(optarg);
+		 break;
 	case 29: if (optarg && strcasecmp(optarg, "NO") == 0)
 		     gnutar_no_unquote = 0;
 		 else if (optarg && strcasecmp(optarg, "YES") == 0)

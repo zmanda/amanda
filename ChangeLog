@@ -1,3 +1,6 @@
+2009-04-09  Ray Tracer <RayTracer@irc.freenode.net>
+	* application-src/amgtar.c: add missing 'break'
+
 2009-04-09  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/conffile.c: store properties in lower-case
 	* perl/Amanda/Config.swg: document data formats for config values
