@@ -90,10 +90,11 @@ is(config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF"), $CFGERR_ERRORS,
 ##
 # try a client configuration
 
+# (note use of uppercase letters to test lower-casing of property names)
 $testconf = Installcheck::Config->new();
 $testconf->add_client_param('property', '"client-prop" "yep"');
-$testconf->add_client_param('property', 'priority "client-prop1" "foo"');
-$testconf->add_client_param('property', 'append "client-prop" "bar"');
+$testconf->add_client_param('property', 'priority "clIent-prop1" "foo"');
+$testconf->add_client_param('property', 'append "clieNt-prop" "bar"');
 $testconf->write();
 
 my $cfg_result = config_init($CONFIG_INIT_CLIENT, undef);
@@ -133,7 +134,7 @@ $testconf->add_param('reserved_udp-port', '100,200'); # note use of '-' and '_'
 $testconf->add_param('device_output_buffer_size', $size_t_num);
 $testconf->add_param('taperalgo', 'last');
 $testconf->add_param('device_property', '"foo" "bar"');
-$testconf->add_param('device_property', '"blue" "car" "tar"');
+$testconf->add_param('device_property', '"blUE" "car" "tar"');
 $testconf->add_param('displayunit', '"m"');
 $testconf->add_param('debug_auth', '1');
 $testconf->add_tapetype('mytapetype', [
@@ -158,7 +159,7 @@ $testconf->add_dumptype('mydump-type', [    # note dash
     'include list append' => '"string" "fling"',
     'include file optional' => '"rhyme"',
     'property' => '"prop" "erty"',
-    'property' => '"drop" "qwerty" "asdfg"',
+    'property' => '"DROP" "qwerty" "asdfg"',
     'estimate' => 'server calcsize client'
 ]);
 $testconf->add_dumptype('second_dumptype', [ # note underscore
@@ -459,7 +460,7 @@ SKIP: { # device
 	"device tapedev");
     # TODO do we really need all of this equipment for device properties?
     is_deeply(device_config_getconf($dc, $DEVICE_CONFIG_DEVICE_PROPERTY),
-          { "BLOCK_SIZE" => { 'priority' => 0, 'values' => ["128k"], 'append' => 0 }, },
+          { "block_size" => { 'priority' => 0, 'values' => ["128k"], 'append' => 0 }, },
         "device config proplist");
 
     is_deeply([ sort(+getconf_list("device")) ],

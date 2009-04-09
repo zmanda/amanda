@@ -3319,7 +3319,7 @@ read_property(
 	conf_parserror(_("key expected"));
 	return;
     }
-    key = strdup(tokenval.v.s);
+    key = g_ascii_strdown(tokenval.v.s, -1);
 
     get_conftoken(CONF_ANY);
     if (tok == CONF_NL ||  tok == CONF_END) {

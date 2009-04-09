@@ -1,4 +1,9 @@
 2009-04-09  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/conffile.c: store properties in lower-case
+	* perl/Amanda/Config.swg: document data formats for config values
+	* installcheck/Amanda_Config.pl: test case-sensitivity
+
+2009-04-09  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/rait-device.c: add rait_device_new_from_children
 	* device-src/device.h: prototype
 	* perl/Amanda/Device.swg: wrap into perl

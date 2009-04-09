@@ -33,19 +33,23 @@ Amanda::Config - access to Amanda configuration parameters
 
 =head1 SYNOPSIS
 
-  use Amanda::Config qw( :init :getconf );
+    use Amanda::Config qw( :init :getconf );
 
-  config_init($CONFIG_INIT_EXPLICIT_NAME, $ARGV[1])
-    or die("errors processing config file " . $Amanda::Config::get_config_filename());
+    my $config_name = shift @ARGV;
+    config_init($CONFIG_INIT_EXPLICIT_NAME, $config_name);
+    apply_config_overwrites($config_overwrites);
+    my ($cfgerr_level, @cfgerr_errors) = config_errors();
+    if ($cfgerr_level >= $CFGERR_WARNINGS) {
+	config_print_errors();
+	if ($cfgerr_level >= $CFGERR_ERRORS) {
+	    die("errors processing config file");
+	}
+    }
 
-  print "tape device is ", getconf($CNF_TAPEDEV), "\n";
+    print "tape device is ", getconf($CNF_TAPEDEV), "\n";
 
-This API closely parallels the C API.  See F<conffile.h> for details
-on the functions and constants available here.
-
-=head1 API STATUS
-
-Stable
+This API closely parallels the C API.  See F<conffile.h> for details on the
+configuration parameter constants.
 
 =head1 INITIALIZATION
 
@@ -144,12 +148,12 @@ Amanda configurations consist of "global" parameters and several
 sets of "subsections" -- one set for dumptypes, one for tapetypes,
 and so on.
 
-All of the global parameters are represented by a constant beginning
-with C<$CNF_>, e.g., C<$CNF_LABELSTR>.  The function C<getconf($cnf)>
-returns the value of parameter C<$cnf>, in whatever format is
-appropriate for the parameter.  C<getconf_seen($cnf)> returns a true
-value if C<$cnf> was seen in the configuration file.  If it was not
-seen, then it will have its default value.
+All of the global parameters are represented by a constant beginning with
+C<$CNF_>, e.g., C<$CNF_LABELSTR>.  The function C<getconf($cnf)> returns the
+value of parameter C<$cnf>, in whatever format is appropriate for the parameter
+(see DATA FORMATS, below).  C<getconf_seen($cnf)> returns a true value if
+C<$cnf> was seen in the configuration file.  If it was not seen, then it will
+have its default value.
 
 Some parameters have enumerated types.  The values for those
 enumerations are available from this module with the same name as
@@ -157,7 +161,7 @@ in C<conffile.h>.  For example, C<$CNF_TAPERALGO> will yield a value
 from the enumeration C<taperalgo_t>, the constants for which all
 begin with C<$ALGO_>.  See C<conffile.h> for the details.
 
-Each subsection type has the following functions:
+Each subsection type C<TYP> has the following functions:
 
 =over
 
@@ -221,16 +225,69 @@ with constants beginning with C<$CHANGER_CONFIG_>.
 
 See C<conffile.h> for the names of the constants themselves.
 
+=head2 DATA FORMATS
+
+Each configuration parameter has a "conftype", as assigned in
+C<common-src/conffile.c>.  The translation of most of these types into Perl
+values is straightforward:
+
+  CONFTYPE_INT                        Math::BigInt
+  CONFTYPE_INT64                      Math::BigInt
+  CONFTYPE_REAL                       floating-point value
+  CONFTYPE_STR                        string
+  CONFTYPE_IDENT                      string
+  CONFTYPE_TIME                       Math::BigInt (epoch value)
+  CONFTYPE_SIZE                       Math::BigInt
+  CONFTYPE_BOOLEAN                    Math::BigInt
+  CONFTYPE_COMPRESS                   Math::BigInt
+  CONFTYPE_ENCRYPT                    Math::BigInt
+  CONFTYPE_HOLDING                    Math::BigInt
+  CONFTYPE_ESTIMATELIST               [ Math::BigInt, .. ]
+  CONFTYPE_STRATEGY                   Math::BigInt
+  CONFTYPE_TAPERALGO                  Math::BigInt
+  CONFTYPE_PRIORITY                   Math::BigInt
+  CONFTYPE_RATE                       float, float
+  CONFTYPE_INTRANGE                   Math::BigInt, Math::BigInt
+  CONFTYPE_APPLICATION                string
+  CONFTYPE_EXECUTE_ON                 string
+  CONFTYPE_EXECUTE_WHERE              Math::BigInt
+  CONFTYPE_SEND_AMREPORT_ON           Math::BigInt
+  CONFTYPE_IDENTLIST                  [ string, .. ]
+
+Note that C<CONFTYPE_INTRANGE> and C<CONFTYPE_RATE> each return two values, not
+an array reference.
+
+Include and exclude lists with type C<CONFTYPE_EXINCLUDE> return a hash giving
+all listed filenames (in the C<list> key), include/exclude files (C<files>),
+and a boolean indicating that the list is optional (C<optional>):
+
+  { list => [ str, .. ], file => [ str, .. ], optional => Math::BigInt }
+
+Properties are represented as a hash of hashes.  The keys are the property
+names, converted to ASCII lowercase.  Each property has a C<values> array
+giving all values specified for this property, as well as booleans C<priority>
+and C<append> that are true if the corresponding keyword was supplied.
+
+  { prop1 => { values => [ str, .. ] priority => int, append => int },
+    prop2 => { .. } .. }
+
+Note that integer types of all sizes become C<Math::BigInt> objects rather than
+Perl integers, as is the habit throughout Amanda.
+
+=head2 OTHER ACCESS
+
 Parameter values are available by name from C<getconf_byname($name)> and
 C<getconf_byname_strs($name, $str_needs_quotes)>.  These functions implement
 the C<TYP:NAME:PARAM> syntax advertised by C<amgetconf> to access values in
-subsections.  The first function returns a perl value, while the second returns
-a string suitable for use in C<amanda.conf>, including quotes around strings if
-C<$str_needs_quotes> is true.
+subsections.  The first function returns a Perl value (see DATA FORMATS,
+above), while the second returns a string suitable for use in C<amanda.conf>,
+including quotes around strings if C<$str_needs_quotes> is true.
 
 C<getconf_list($typ)> returns a list of the names of all subsections of the
 given type.  C<%subsection_names> is a hash whose keys are allowed subsection
 names.
+
+=head2 DERIVED VALUES
 
 The C<$CNF_DISPLAYUNIT> implies a certain divisor to convert from
 kilobytes to the desired unit.  This divisor is available from
