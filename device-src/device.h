@@ -229,6 +229,11 @@ struct _DeviceClass {
  */
 Device*		device_open	(char * device_name);
 
+/* As a special case, a RAIT device can be created from a collection of child
+ * devices.  This is used by the RAIT changer, for example.  This function is
+ * implemented in rait-device.c.  */
+Device*		rait_device_open_from_children(GSList *child_devices);
+
 /* Once you have a new device, you should configure it.  This sets properties
  * on the device based on the user's configuation.  If USE_GLOBAL_CONFIG is
  * true, then any global device_property parameters are processed, along with

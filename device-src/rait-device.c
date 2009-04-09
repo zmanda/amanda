@@ -136,6 +136,10 @@ typedef struct ThreadInfo {
 } ThreadInfo;
 #endif
 
+/* This device uses a special sentinel node to indicate that the child devices
+ * will be set later (in rait_device_open).  It contains a control character to
+ * make it difficult to enter accidentally in an Amanda config. */
+#define DEFER_CHILDREN_SENTINEL "DEFER\1"
 
 #define PRIVATE(o) (o->private)
 
@@ -891,9 +895,9 @@ static void append_message(char ** old_message, char * new_message) {
     *old_message = rval;
 }
 
-static void
-rait_device_open_device (Device * dself, char * device_name,
-	    char * device_type G_GNUC_UNUSED, char * device_node) {
+static gboolean
+open_child_devices (Device * dself, char * device_name,
+	    char * device_node) {
     GPtrArray *device_names;
     GPtrArray * device_open_ops;
     guint i;
@@ -910,7 +914,7 @@ rait_device_open_device (Device * dself, char * device_name,
 	device_set_error(dself,
 	    vstrallocf(_("Invalid RAIT device name '%s'"), device_name),
 	    DEVICE_STATUS_DEVICE_ERROR);
-        return;
+        return FALSE;
     }
 
     /* Open devices in a separate thread, in case they have to rewind etc. */
@@ -974,14 +978,89 @@ rait_device_open_device (Device * dself, char * device_name,
     if (failure) {
         self->private->status = RAIT_STATUS_FAILED;
 	device_set_error(dself, failure_errmsgs, failure_flags);
-        return;
+        return FALSE;
     }
 
-    /* Chain up. */
-    if (parent_class->open_device) {
-        parent_class->open_device(dself, device_name, device_type, device_node);
+    return TRUE;
+}
+
+static void
+rait_device_open_device (Device * dself, char * device_name,
+	    char * device_type G_GNUC_UNUSED, char * device_node) {
+
+    if (0 != strcmp(device_node, DEFER_CHILDREN_SENTINEL)) {
+	if (!open_child_devices(dself, device_name, device_node))
+	    return;
+
+	/* Chain up. */
+	if (parent_class->open_device) {
+	    parent_class->open_device(dself, device_name, device_type, device_node);
+	}
     }
-    return;
+}
+
+Device *
+rait_device_open_from_children (GSList *child_devices) {
+    Device *dself;
+    RaitDevice *self;
+    GSList *iter;
+    char *device_name;
+    int nfailures;
+    int i;
+
+    /* first, open a RAIT device using the DEFER_CHILDREN_SENTINEL */
+    dself = device_open("rait:" DEFER_CHILDREN_SENTINEL);
+    if (!IS_RAIT_DEVICE(dself)) {
+	return dself;
+    }
+
+    /* set its children */
+    self = RAIT_DEVICE(dself);
+    nfailures = 0;
+    for (i=0, iter = child_devices; iter; i++, iter = iter->next) {
+	Device *kid = iter->data;
+
+	/* a NULL kid is OK -- it opens the device in degraded mode */
+	if (!kid) {
+	    nfailures++;
+	    self->private->failed = i;
+	} else {
+	    g_assert(IS_DEVICE(kid));
+	    g_object_ref((GObject *)kid);
+	}
+
+	g_ptr_array_add(self->private->children, kid);
+    }
+
+    /* and set the status based on the children */
+    switch (nfailures) {
+	case 0:
+	    self->private->status = RAIT_STATUS_COMPLETE;
+	    break;
+
+	case 1:
+	    self->private->status = RAIT_STATUS_DEGRADED;
+	    break;
+
+	default:
+	    self->private->status = RAIT_STATUS_FAILED;
+	    device_set_error(dself,
+		    _("more than one child device is missing"),
+		    DEVICE_STATUS_DEVICE_ERROR);
+	    break;
+    }
+
+    /* create a name from the children's names and use it to chain up
+     * to open_device (we skipped this step in rait_device_open_device) */
+    device_name = child_device_names_to_rait_name(self);
+
+    if (parent_class->open_device) {
+	parent_class->open_device(dself,
+	    device_name, "rait",
+	    device_name+5); /* (+5 skips "rait:") */
+    }
+
+    return dself;
 }
 
 /* A GFunc. */

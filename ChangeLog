@@ -1,3 +1,9 @@
+2009-04-09  Dustin J. Mitchell <dustin@zmanda.com>
+	* device-src/rait-device.c: add rait_device_new_from_children
+	* device-src/device.h: prototype
+	* perl/Amanda/Device.swg: wrap into perl
+	* installcheck/Amanda_Device.pl: test
+
 2009-04-08  Dustin J. Mitchell <dustin@zmanda.com>
 	* device-src/tape-device.c: fix typo to get device_name right
 

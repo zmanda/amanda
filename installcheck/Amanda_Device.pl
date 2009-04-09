@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 320;
+use Test::More tests => 321;
 use File::Path qw( mkpath rmtree );
 use Sys::Hostname;
 use Carp;
@@ -433,6 +433,13 @@ ok(!($dev->start($ACCESS_WRITE, "TESTCONF29", undef)),
 
 undef $dev;
 
+$dev = Amanda::Device->new_rait_from_children(
+    Amanda::Device->new("file:$vtape2"), undef);
+
+ok(!($dev->start($ACCESS_WRITE, "TESTCONF29", undef)),
+   "start a RAIT device in write mode fails, when created with 'undef'")
+    or diag($dev->error_or_status());
+
 # Make two devices with different labels, should get a
 # message accordingly.
 ($vtape1, $vtape2) = (mkvtape(1), mkvtape(2));
@@ -449,10 +456,11 @@ for $dev_name ("file:$vtape1", "file:$vtape2") {
     $n++;
 }
 
-$dev_name = "rait:{file:$vtape1,file:$vtape2}";
-$dev = Amanda::Device->new($dev_name);
+$dev = Amanda::Device->new_rait_from_children(
+    Amanda::Device->new("file:$vtape1"),
+    Amanda::Device->new("file:$vtape2"));
 is($dev->status(), $DEVICE_STATUS_SUCCESS,
-   "$dev_name: Open successful")
+   "new_rait_from_children: Open successful")
     or diag($dev->error_or_status());
 
 $dev->read_label();
