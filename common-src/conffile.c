@@ -1439,7 +1439,7 @@ negative_number: /* look for goto negative_number below sign is set there */
 			break;
 		    escape = 0;
 		    buf--; /* Consume escape in buffer */
-		} else if (ch == '\\') {
+		} else if (ch == '\\' && !escape) {
 		    escape = 1;
 		} else {
 		    if (ch == '"') {
