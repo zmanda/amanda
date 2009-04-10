@@ -1,3 +1,7 @@
+2009-04-10  Dustin J. Mitchell <dustin@zmanda.com>
+	* common-src/conffile.c: fix handling of double-backslash in quoted
+	  strings
+
 2009-04-09  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/dumper.c: Check authopt before using it.
 
