@@ -1,4 +1,9 @@
 2009-04-11  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amsamba.pl: Add ALLOW-ANONYMOUS property.
+	                              Allow '\' in diskname and amandapass.
+	* man/xml-source/amsamba.8.xml: Document ALLOW-ANONYMOUS property.
+
+2009-04-11  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/amsuntar.pl: Exit gracefully if suntar exit with != 0
 	                               Parse hard link in index.
 	* server-src/amstatus.pl: Fix amstatus for partial chunker.

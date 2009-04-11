@@ -38,7 +38,7 @@ use Amanda::Util qw( :constants :quoting);
 
 sub new {
     my $class = shift;
-    my ($config, $host, $disk, $device, $level, $index, $message, $collection, $record, $calcsize, $gnutar_path, $smbclient_path, $amandapass, $exclude_file, $exclude_list, $exclude_optional, $include_file, $include_list, $include_optional, $recover_mode) = @_;
+    my ($config, $host, $disk, $device, $level, $index, $message, $collection, $record, $calcsize, $gnutar_path, $smbclient_path, $amandapass, $exclude_file, $exclude_list, $exclude_optional, $include_file, $include_list, $include_optional, $recover_mode, $allow_anonymous) = @_;
     my $self = $class->SUPER::new($config);
 
     if (defined $gnutar_path) {
@@ -59,6 +59,11 @@ sub new {
 
     $self->{config}           = $config;
     $self->{host}             = $host;
+    if ($disk =~ /^\\\\/) {
+	$self->{unc}          = 1;
+    } else {
+	$self->{unc}          = 0;
+    }
     $self->{disk}             = $disk;
     $self->{device}           = $device;
     $self->{level}            = [ @{$level} ];
@@ -74,6 +79,7 @@ sub new {
     $self->{include_list}     = [ @{$include_list} ];
     $self->{include_optional} = $include_optional;
     $self->{recover_mode}     = $recover_mode;
+    $self->{allow_anonymous}  = $allow_anonymous;
 
     return $self;
 }
@@ -135,27 +141,39 @@ sub validate_inexclude {
 }
 
 # on entry:
-#   $self->disk == //host/share/subdir
+#   self->{disk}       == //host/share/subdir		\\host\share\subdir
 # on exit:
-#   self->{cifshost} = //host
-#   $self->{share} = //host/share
-#   $self->{sambashare} = \\host\share
-#   $self->{subdir} = subdir
+#   self->{cifshost}    = //host			\\host
+#   $self->{share}      = //host/share			\\host\share
+#   $self->{sambashare} = \\host\share			\\host\share
+#   $self->{subdir}     = subdir			subdir
 sub parsesharename {
     my $self = shift;
 
     return if !defined $self->{disk};
 
-    if ($self->{disk} =~ m,^(//[^/]+/[^/]+)/(.*)$,) {
-	$self->{share} = $1;
-	$self->{subdir} = $2
+    if ($self->{unc}) {
+	if ($self->{disk} =~ m,^(\\\\[^\\]+\\[^\\]+)\\(.*)$,) {
+	    $self->{share} = $1;
+	    $self->{subdir} = $2
+	} else {
+	    $self->{share} = $self->{disk};
+	}
+	$self->{sambashare} = $self->{share};
+	$self->{disk} =~ m,^(\\\\[^\\]+)\\[^\\]+,;
+	$self->{cifshost} = $1;
     } else {
-	$self->{share} = $self->{disk};
+	if ($self->{disk} =~ m,^(//[^/]+/[^/]+)/(.*)$,) {
+	    $self->{share} = $1;
+	    $self->{subdir} = $2
+	} else {
+	    $self->{share} = $self->{disk};
+	}
+	$self->{sambashare} = $self->{share};
+	$self->{sambashare} =~ s,/,\\,g;
+	$self->{disk} =~ m,^(//[^/]+)/[^/]+,;
+	$self->{cifshost} = $1;
     }
-    $self->{sambashare} = $self->{share};
-    $self->{sambashare} =~ s,/,\\,g;
-    $self->{disk} =~ m,^(//[^/]+)/[^/]+,;
-    $self->{cifshost} = $1;
 }
 
 
@@ -172,16 +190,34 @@ sub findpass {
     my $amandapass;
     my $line;
 
-    open($amandapass, $self->{amandapass}) ||
-	$self->print_to_server_and_die($self->{action},"cannot open password file '$self->{amandapass}': $!", $Amanda::Script_App::ERROR);
+    $self->{domain} = undef;
+    $self->{username} = undef;
+    $self->{password} = undef;
+
+    if (open($amandapass, $self->{amandapass}) == 0) {
+	if ($self->{allow_anonymous}) {
+	    $self->{username} = $self->{allow_anonymous};
+	    debug("cannot open password file '$self->{amandapass}': $!\n");
+	    return;
+	} else {
+	    $self->print_to_server_and_die($self->{action},"cannot open password file '$self->{amandapass}': $!", $Amanda::Script_App::ERROR);
+	}
+    }
 
     while ($line = <$amandapass>) {
 	chomp $line;
 	next if $line =~ /^#/;
 	my ($diskname, $userdomain) = Amanda::Util::skip_quoted_string($line);
+	$diskname = Amanda::Util::unquote_string($diskname);
+	$userdomain = Amanda::Util::unquote_string($userdomain);
+	if ($diskname =~ /^\/\//) {
+	    $diskname =~ s/\\/\//g;
+	    $userdomain =~ s/\\/\//g;
+	}
 	if (defined $diskname &&
 	    ($diskname eq '*' ||
-	     ($diskname =~ m,^(//[^/]+)/\*$, && $1 eq $self->{cifshost}) ||
+	     ($self->{unc}==0 && $diskname =~ m,^(//[^/]+)/\*$, && $1 eq $self->{cifshost}) ||
+	     ($self->{unc}==1 && $diskname =~ m,^(\\\\[^\\]+)\\\*$, && $1 eq $self->{cifshost}) ||
 	     $diskname eq $self->{share} ||
 	     $diskname eq $self->{sambashare})) {
 	    if (defined $userdomain && $userdomain ne "") {
@@ -191,15 +227,18 @@ sub findpass {
 	        $self->{username} = $username;
 	        $self->{password} = $password;
             } else {
-	        $self->{domain} = undef;
 	        $self->{username} = "guest";
-	        $self->{password} = undef;
             }
 	    close($amandapass);
 	    return;
 	}
     }
     close($amandapass);
+    if ($self->{allow_anonymous}) {
+	$self->{username} = $self->{allow_anonymous};
+	debug("Cannot find password for share $self->{share} in $self->{amandapass}");
+	return;
+    }
     $self->print_to_server_and_die($self->{action},"Cannot find password for share $self->{share} in $self->{amandapass}", $Amanda::Script_App::ERROR);
 }
 
@@ -296,7 +335,6 @@ sub command_selfcheck {
     if (defined $self->{password}) {
         my $ff = $parent_wtr->fileno;
         debug("parent_wtr $ff");
-        debug("password $self->{password}");
         $parent_wtr->print($self->{password});
         $parent_wtr->close();
         $child_rdr->close();
@@ -720,6 +758,7 @@ my @opt_include_file;
 my @opt_include_list;
 my $opt_include_optional;
 my $opt_recover_mode;
+my $opt_allow_anonymous;
 
 Getopt::Long::Configure(qw{bundling});
 GetOptions(
@@ -744,6 +783,7 @@ GetOptions(
     'include-list=s'     => \@opt_include_list,
     'include-optional=s' => \$opt_include_optional,
     'recover-mode=s'     => \$opt_recover_mode,
+    'allow-anonymous=s'  => \$opt_allow_anonymous,
 ) or usage();
 
 if (defined $opt_version) {
@@ -751,6 +791,6 @@ if (defined $opt_version) {
     exit(0);
 }
 
-my $application = Amanda::Application::Amsamba->new($opt_config, $opt_host, $opt_disk, $opt_device, \@opt_level, $opt_index, $opt_message, $opt_collection, $opt_record, $opt_calcsize, $opt_gnutar_path, $opt_smbclient_path, $opt_amandapass, \@opt_exclude_file, \@opt_exclude_list, $opt_exclude_optional, \@opt_include_file, \@opt_include_list, $opt_include_optional, $opt_recover_mode);
+my $application = Amanda::Application::Amsamba->new($opt_config, $opt_host, $opt_disk, $opt_device, \@opt_level, $opt_index, $opt_message, $opt_collection, $opt_record, $opt_calcsize, $opt_gnutar_path, $opt_smbclient_path, $opt_amandapass, \@opt_exclude_file, \@opt_exclude_list, $opt_exclude_optional, \@opt_include_file, \@opt_include_list, $opt_include_optional, $opt_recover_mode, $opt_allow_anonymous);
 
 $application->do($ARGV[0]);

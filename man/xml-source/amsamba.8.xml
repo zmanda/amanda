@@ -99,8 +99,23 @@ Domain is optional. Example:
   //another-pc/share
 </programlisting>
 </listitem></varlistentry>
+ <!-- ==== -->
+ <varlistentry><term>ALLOW-ANONYMOUS</term><listitem>
+This username without password is used to connect to the share if no matching entry is found in the amandapass file.
+</listitem></varlistentry>
 </variablelist>
 
+</refsect1>
+
+<refsect1><title>EXAMPLE</title>
+<programlisting>
+  define application app_amsamba {
+    property "SMBCLIENT-PATH" "/usr/bin/smbclient"
+    property "GNUTAR-PATH" "/bin/tar"
+    property "AMANDAPASS" /etc/amandapass"
+    property "ALLOW-ANONYMOUS" "guest"
+  }
+</programlisting>
 </refsect1>
 
 <seealso>
