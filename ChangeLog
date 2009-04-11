@@ -1,3 +1,10 @@
+2009-04-11  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amsuntar.pl: Exit gracefully if suntar exit with != 0
+	                               Parse hard link in index.
+	* server-src/amstatus.pl: Fix amstatus for partial chunker.
+	* installcheck/amstatus.pl: Test it.
+	* installcheck/Installcheck/Run.pm: export an $exit_code variable.
+
 2009-04-10  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/conffile.c: fix handling of double-backslash in quoted
 	  strings

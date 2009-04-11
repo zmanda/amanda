@@ -202,8 +202,8 @@ sub command_backup {
    my $status = $?;
    if( $status != 0 ){
        debug("exit status $status ?" );
-       print $mesgout_fd "? $self->{suntar} returned error\n";
-       die();
+       print $mesgout_fd "sendbackup: error [$self->{suntar} returned error]\n";
+       exit;
    }
 
    my($ksize) = int ($size/1024);
@@ -219,8 +219,9 @@ sub parse_backup {
    my($fhin, $fhout, $indexout) = @_;
    my $size  = -1;
    while(<$fhin>) {
-      if ( /^a\s+(\.\/.*) \d*K/ ||
-	   /^a\s+(\.\/.*) symbolic link to/ ) {
+      if ( /^ ?a\s+(\.\/.*) \d*K/ ||
+	   /^a\s+(\.\/.*) symbolic link to/ ||
+	   /^a\s+(\.\/.*) link to/ ) {
 	 my $name = $1;
          if(defined($indexout)) {
 	    if(defined($self->{index})) {

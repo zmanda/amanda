@@ -152,7 +152,7 @@ require Exporter;
 @EXPORT_OK = qw(setup 
     run run_get run_err
     cleanup 
-    $diskname $stdout $stderr
+    $diskname $stdout $stderr $exit_code
     load_vtape vtape_dir
     amdump_diag);
 @EXPORT = qw(exp_continue exp_continue_timeout);
@@ -360,7 +360,8 @@ sub run {
     unlink($errtempfile);
 
     # and return true if the exit status was zero
-    return ($status >> 8) == 0;
+    $exit_code = $status >> 8;
+    return $exit_code == 0;
 }
 
 sub run_get {
