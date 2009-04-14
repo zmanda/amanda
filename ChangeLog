@@ -1,4 +1,8 @@
 2009-04-14  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amsamba.pl: Default amandapass file is
+	                              CONFIG_DIR/amandapass.
+
+2009-04-14  Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/conffile.c: Fix inheriting properties.
 	* installcheck/Amanda_Config.pl: Test it.
 

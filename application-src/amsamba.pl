@@ -54,7 +54,7 @@ sub new {
     if (defined $amandapass) {
 	$self->{amandapass}  = config_dir_relative($amandapass);
     } else {
-	$self->{amandapass}  = "$Amanda::Paths::sysconfdir/amandapass";
+	$self->{amandapass}  = "$Amanda::Paths::CONFIG_DIR/amandapass";
     }
 
     $self->{config}           = $config;
