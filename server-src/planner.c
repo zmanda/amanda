@@ -2790,8 +2790,9 @@ static int promote_highest_priority_incremental(void)
     }
 
     if(dp_promote) {
-	one_est_t *level0_est = est_for_level(dp, 0);
+	one_est_t *level0_est;
 	dp = dp_promote;
+	level0_est = est_for_level(dp, 0);
 
 	qname = quote_string(dp->name);
 	new_total = total_size - est(dp)->dump_est->csize + level0_est->csize;
