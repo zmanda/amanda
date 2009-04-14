@@ -1,4 +1,7 @@
 2009-04-14  Jean-Louis Martineau <martineau@zmanda.com>
+	* amandad-src/amandad.c: Improve error message.
+
+2009-04-14  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amstatus.pl: Remove spurious debug message.
 
 2009-04-14  Jean-Louis Martineau <martineau@zmanda.com>,

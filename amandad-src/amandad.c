@@ -429,12 +429,12 @@ main(
 
     if (getuid() == 0) {
 	if (strcasecmp(auth, "krb5") != 0) {
-	    error(_("Amanda must be run as user '%s' when using '%s' authentication"),
+	    error(_("'amandad' must be run as user '%s' when using '%s' authentication"),
 		  CLIENT_LOGIN, auth);
 	}
     } else {
 	if (strcasecmp(auth, "krb5") == 0) {
-	    error(_("Amanda must be run as user 'root' when using 'krb5' authentication"));
+	    error(_("'amandad' must be run as user 'root' when using 'krb5' authentication"));
 	}
     }
 
