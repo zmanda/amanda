@@ -900,10 +900,6 @@ foreach $host (sort @hosts) {
 				}
 			}
 			else {
-print "dump_started ", $dump_started{$hostpart}, "\n";
-print "dump_finished ", $dump_finished{$hostpart}, "\n";
-print "taper_started ", $taper_started{$hostpart}, "\n";
-print "taper_finished ", $taper_finished{$hostpart}, "\n";
 				if(defined $estimate{$hostpart}) {
 					if($estimate{$hostpart} == 1) {
 						$epartition++;

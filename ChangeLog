@@ -1,3 +1,6 @@
+2009-04-14  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amstatus.pl: Remove spurious debug message.
+
 2009-04-14  Jean-Louis Martineau <martineau@zmanda.com>,
 	    Satya Ganga <gsat@zmanda.com>
 	* application-src/amzfs-sendrecv.pl: Use complete compress ratio.
