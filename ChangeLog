@@ -1,4 +1,8 @@
 2009-04-14  Jean-Louis Martineau <martineau@zmanda.com>,
+	    Satya Ganga <gsat@zmanda.com>
+	* application-src/amzfs-sendrecv.pl: Use complete compress ratio.
+
+2009-04-14  Jean-Louis Martineau <martineau@zmanda.com>,
 	    Dustin J. Mitchell <dustin@zmanda.com>
 	Bug found by Gene Heskett.
 	* server-src/planner.c: Set dp before using it.

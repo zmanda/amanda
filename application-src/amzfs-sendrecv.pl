@@ -246,7 +246,8 @@ sub estimate_snapshot
     }
     if ($level == 0) {
 	my $compratio = $self->get_compratio();
-	$msg *= int $compratio;
+	chop($compratio);
+	$msg *= $compratio;
     }
 
     return $msg;
