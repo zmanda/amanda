@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 131;
+use Test::More tests => 147;
 use strict;
 
 use lib "@amperldir@";
@@ -700,5 +700,123 @@ SKIP: {
     ok($dtyp, "found mydump-type1");
     is(dumptype_getconf($dtyp, $DUMPTYPE_CLIENT_PORT), "67890",
 	"client_port set to \"67890\"");
+}
+
+##
+# Check property inheritance
+
+$testconf = Installcheck::Config->new();
+$testconf->add_application('app1', [
+    'property' => '"prop1" "val1"'
+]);
+$testconf->add_application('app2', [
+    'property' => 'append "prop2" "val2"'
+]);
+$testconf->add_application('app3', [
+    'property' => '"prop3" "val3"'
+]);
+$testconf->add_application('app1a', [
+    'property' => '"prop4" "val4"',
+    'property' => '"prop1" "val1a"',
+    'app1' => undef
+]);
+$testconf->add_application('app2a', [
+    'property' => '"prop5" "val5"',
+    'property' => '"prop2" "val2a"',
+    'app2' => undef
+]);
+$testconf->add_application('app3a', [
+    'property' => '"prop6" "val6"',
+    'app3' => undef,
+    'property' => '"prop7" "val7"'
+]);
+$testconf->add_application('app1b', [
+    'property' => '"prop4" "val4"',
+    'property' => '"prop1" "val1a"',
+    'app1' => undef,
+    'property' => '"prop1" "val1b"',
+]);
+$testconf->add_application('app2b', [
+    'property' => '"prop5" "val5"',
+    'property' => '"prop2" "val2a"',
+    'app2' => undef,
+    'property' => 'append "prop2" "val2b"',
+]);
+$testconf->write();
+
+$cfg_result = config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF");
+is($cfg_result, $CFGERR_OK, 
+    "application properties inheritance")
+    or diag_config_errors();
+SKIP: {
+    skip "error loading config", 15 unless $cfg_result == $CFGERR_OK;
+
+    my $app = lookup_application("app1a");
+    ok($app, "found app1a");
+    is(application_name($app), "app1a",
+	"app1a knows its name");
+    my $prop = application_getconf($app, $APPLICATION_PROPERTY);
+    is_deeply($prop, { "prop4" => { priority => 0,
+				    append   => 0,
+				    values => [ "val4" ]},
+		       "prop1" => { priority => 0,
+				    append   => 0,
+				    values => [ "val1" ] }},
+    "PROPERTY parameter of app1a parsed correctly");
+
+    $app = lookup_application("app2a");
+    ok($app, "found app2a");
+    is(application_name($app), "app2a",
+	"app2a knows its name");
+    $prop = application_getconf($app, $APPLICATION_PROPERTY);
+    is_deeply($prop, { "prop5" => { priority => 0,
+				    append   => 0,
+				    values => [ "val5" ]},
+		       "prop2" => { priority => 0,
+				    append   => 0,
+				    values => [ "val2a", "val2" ] }},
+    "PROPERTY parameter of app2a parsed correctly");
+
+    $app = lookup_application("app3a");
+    ok($app, "found app3a");
+    is(application_name($app), "app3a",
+	"app3a knows its name");
+    $prop = application_getconf($app, $APPLICATION_PROPERTY);
+    is_deeply($prop, { "prop3" => { priority => 0,
+				    append   => 0,
+				    values => [ "val3" ]},
+		       "prop6" => { priority => 0,
+				    append   => 0,
+				    values => [ "val6" ] },
+		       "prop7" => { priority => 0,
+				    append   => 0,
+				    values => [ "val7" ] }},
+    "PROPERTY parameter of app3a parsed correctly");
+
+    $app = lookup_application("app1b");
+    ok($app, "found app1b");
+    is(application_name($app), "app1b",
+	"app1b knows its name");
+    $prop = application_getconf($app, $APPLICATION_PROPERTY);
+    is_deeply($prop, { "prop4" => { priority => 0,
+				    append   => 0,
+				    values => [ "val4" ]},
+		       "prop1" => { priority => 0,
+				    append   => 0,
+				    values => [ "val1b" ] }},
+    "PROPERTY parameter of app1b parsed correctly");
+
+    $app = lookup_application("app2b");
+    ok($app, "found app2b");
+    is(application_name($app), "app2b",
+	"app2b knows its name");
+    $prop = application_getconf($app, $APPLICATION_PROPERTY);
+    is_deeply($prop, { "prop5" => { priority => 0,
+				    append   => 0,
+				    values => [ "val5" ]},
+		       "prop2" => { priority => 0,
+				    append   => 1,
+				    values => [ "val2a", "val2", "val2b" ] }},
+    "PROPERTY parameter of app2b parsed correctly");
 }
 

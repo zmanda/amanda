@@ -232,9 +232,12 @@ static void unget_conftoken(void);
 static int  conftoken_getc(void);
 static int  conftoken_ungetc(int c);
 
-static void copy_proplist(gpointer key_p,
-                          gpointer value_p,
-                          gpointer user_data_p);
+static void merge_proplist_foreach_fn(gpointer key_p,
+                                      gpointer value_p,
+                                      gpointer user_data_p);
+static void copy_proplist_foreach_fn(gpointer key_p,
+                                     gpointer value_p,
+                                     gpointer user_data_p);
 
 /*
  * Parser
@@ -646,6 +649,7 @@ struct config_overwrites_s {
  * val_t Management
  */
 
+static void merge_val_t(val_t *, val_t *);
 static void copy_val_t(val_t *, val_t *);
 static void free_val_t(val_t *);
 
@@ -1986,8 +1990,7 @@ copy_holdingdisk(
 
     for(i=0; i < HOLDING_HOLDING; i++) {
         if(hp->value[i].seen.linenum) {
-            free_val_t(&hdcur.value[i]);
-            copy_val_t(&hdcur.value[i], &hp->value[i]);
+            merge_val_t(&hdcur.value[i], &hp->value[i]);
         }
     }
 
@@ -2161,8 +2164,7 @@ copy_dumptype(void)
 
     for(i=0; i < DUMPTYPE_DUMPTYPE; i++) {
 	if(dt->value[i].seen.linenum) {
-	    free_val_t(&dpcur.value[i]);
-	    copy_val_t(&dpcur.value[i], &dt->value[i]);
+	    merge_val_t(&dpcur.value[i], &dt->value[i]);
 	}
     }
 }
@@ -2252,8 +2254,7 @@ copy_tapetype(void)
 
     for(i=0; i < TAPETYPE_TAPETYPE; i++) {
 	if(tp->value[i].seen.linenum) {
-	    free_val_t(&tpcur.value[i]);
-	    copy_val_t(&tpcur.value[i], &tp->value[i]);
+	    merge_val_t(&tpcur.value[i], &tp->value[i]);
 	}
     }
 }
@@ -2333,8 +2334,7 @@ copy_interface(void)
 
     for(i=0; i < INTER_INTER; i++) {
 	if(ip->value[i].seen.linenum) {
-	    free_val_t(&ifcur.value[i]);
-	    copy_val_t(&ifcur.value[i], &ip->value[i]);
+	    merge_val_t(&ifcur.value[i], &ip->value[i]);
 	}
     }
 }
@@ -2460,8 +2460,7 @@ copy_application(void)
 
     for(i=0; i < APPLICATION_APPLICATION; i++) {
 	if(ap->value[i].seen.linenum) {
-	    free_val_t(&apcur.value[i]);
-	copy_val_t(&apcur.value[i], &ap->value[i]);
+	    merge_val_t(&apcur.value[i], &ap->value[i]);
 	}
     }
 }
@@ -2588,8 +2587,7 @@ copy_pp_script(void)
 
     for(i=0; i < PP_SCRIPT_PP_SCRIPT; i++) {
 	if(ps->value[i].seen.linenum) {
-	    free_val_t(&pscur.value[i]);
-	    copy_val_t(&pscur.value[i], &ps->value[i]);
+	    merge_val_t(&pscur.value[i], &ps->value[i]);
 	}
     }
 }
@@ -2714,8 +2712,7 @@ copy_device_config(void)
 
     for(i=0; i < DEVICE_CONFIG_DEVICE_CONFIG; i++) {
 	if(dc->value[i].seen.linenum) {
-	    free_val_t(&dccur.value[i]);
-	    copy_val_t(&dccur.value[i], &dc->value[i]);
+	    merge_val_t(&dccur.value[i], &dc->value[i]);
 	}
     }
 }
@@ -2841,8 +2838,7 @@ copy_changer_config(void)
 
     for(i=0; i < CHANGER_CONFIG_CHANGER_CONFIG; i++) {
 	if(dc->value[i].seen.linenum) {
-	    free_val_t(&cccur.value[i]);
-	    copy_val_t(&cccur.value[i], &dc->value[i]);
+	    merge_val_t(&cccur.value[i], &dc->value[i]);
 	}
     }
 }
@@ -5665,6 +5661,33 @@ val_t_to_proplist(
 }
 
 static void
+merge_val_t(
+    val_t *valdst,
+    val_t *valsrc)
+{
+    if (valsrc->type == CONFTYPE_PROPLIST) {
+	if (valsrc->v.proplist) {
+	    if (valdst->v.proplist == NULL) {
+	        valdst->v.proplist = g_hash_table_new_full(g_str_hash,
+							   g_str_equal,
+							   &g_free,
+							   &free_property_t);
+	        g_hash_table_foreach(valsrc->v.proplist,
+				     &copy_proplist_foreach_fn,
+				     valdst->v.proplist);
+	    } else {
+		g_hash_table_foreach(valsrc->v.proplist,
+				     &merge_proplist_foreach_fn,
+				     valdst->v.proplist);
+	    }
+	}
+    } else {
+	free_val_t(valdst);
+	copy_val_t(valdst, valsrc);
+    }
+}
+
+static void
 copy_val_t(
     val_t *valdst,
     val_t *valsrc)
@@ -5752,7 +5775,8 @@ copy_val_t(
 							   &g_free,
 							   &free_property_t);
 
-		g_hash_table_foreach(valsrc->v.proplist, &copy_proplist,
+		g_hash_table_foreach(valsrc->v.proplist,
+				     &copy_proplist_foreach_fn,
 				     valdst->v.proplist);
 	    } else {
 		valdst->v.proplist = NULL;
@@ -5767,7 +5791,39 @@ copy_val_t(
 }
 
 static void
-copy_proplist(
+merge_proplist_foreach_fn(
+    gpointer key_p,
+    gpointer value_p,
+    gpointer user_data_p)
+{
+    char *property_s = key_p;
+    property_t *property = value_p;
+    proplist_t proplist = user_data_p;
+    GSList *elem = NULL;
+    int new_prop = 0;
+    property_t *new_property = g_hash_table_lookup(proplist, property_s);
+    if (new_property && !property->append) {
+	g_hash_table_remove(proplist, property_s);
+	new_property = NULL;
+    }
+    if (!new_property) {
+        new_property = malloc(sizeof(property_t));
+	new_property->append = property->append;
+	new_property->priority = property->priority;
+	new_property->values = NULL;
+	new_prop = 1;
+    }
+
+    for(elem = property->values;elem != NULL; elem=elem->next) {
+	new_property->values = g_slist_append(new_property->values,
+					      stralloc(elem->data));
+    }
+    if (new_prop)
+	g_hash_table_insert(proplist, stralloc(property_s), new_property);
+}
+
+static void
+copy_proplist_foreach_fn(
     gpointer key_p,
     gpointer value_p,
     gpointer user_data_p)
