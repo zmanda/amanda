@@ -57,8 +57,7 @@ sub load {
     my %params = @_;
     return if $self->check_error($params{'res_cb'});
 
-    Amanda::MainLoop::call_later($params{'res_cb'},
-            undef, Amanda::Changer::null::Reservation->new());
+    $params{'res_cb'}->(undef, Amanda::Changer::null::Reservation->new()) if $params{'res_cb'};
 }
 
 sub info_key {
@@ -71,7 +70,7 @@ sub info_key {
 	$results{$key} = 1;
     }
 
-    Amanda::MainLoop::call_later($params{'info_cb'}, undef, %results);
+    $params{'info_cb'}->(undef, %results) if $params{'info_cb'};
 }
 
 sub reset {
@@ -79,9 +78,7 @@ sub reset {
     my %params = @_;
     return if $self->check_error($params{'finished_cb'});
 
-    if (exists $params{'finished_cb'}) {
-	Amanda::MainLoop::call_later($params{'finished_cb'});
-    }
+    $params{'finished_cb'}->() if $params{'finished_cb'};
 }
 
 package Amanda::Changer::null::Reservation;

@@ -114,7 +114,7 @@ sub info_key {
 	$results{$key} = 'chg-disk'; # mostly just for testing
     }
 
-    Amanda::MainLoop::call_later($params{'info_cb'}, undef, %results);
+    $params{'info_cb'}->(undef, %results) if $params{'info_cb'};
 }
 
 sub reset {
@@ -128,9 +128,7 @@ sub reset {
     $slot = (scalar @slots)? $slots[0] : 0;
     $self->_set_current($slot);
 
-    if (exists $params{'finished_cb'}) {
-	Amanda::MainLoop::call_later($params{'finished_cb'});
-    }
+    $params{'finished_cb'}->() if $params{'finished_cb'};
 }
 
 sub _load_by_slot {
@@ -164,7 +162,7 @@ sub _load_by_slot {
 
     my $next_slot = $self->_get_next($slot);
 
-    Amanda::MainLoop::call_later($params{'res_cb'}, undef,
+    $params{'res_cb'} and $params{'res_cb'}->(undef,
 	Amanda::Changer::disk::Reservation->new($self, $drive, $slot, $next_slot));
 }
 
@@ -195,7 +193,7 @@ sub _load_by_label {
 
     my $next_slot = $self->_get_next($slot);
 
-    Amanda::MainLoop::call_later($params{'res_cb'}, undef,
+    $params{'res_cb'} and $params{'res_cb'}->(undef,
 	Amanda::Changer::disk::Reservation->new($self, $drive, $slot, $next_slot));
 }
 
@@ -394,7 +392,5 @@ sub do_release {
     rmdir("$drive")
 	or warn("Could not rmdir '$drive': $!");
 
-    if (exists $params{'finished_cb'}) {
-	Amanda::MainLoop::call_later($params{'finished_cb'}, undef);
-    }
+    $params{'finished_cb'}->(undef) if $params{'finished_cb'};
 }

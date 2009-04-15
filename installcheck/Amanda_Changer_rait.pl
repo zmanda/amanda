@@ -106,11 +106,11 @@ label_vtape(3,4,"mytape");
 	$do_load_slot_multifailure, $got_res_slot_multifailure,
     );
 
-    $get_info = sub {
+    $get_info = make_cb('get_info' => sub {
         $chg->info(info_cb => $check_info, info => [ 'num_slots', 'vendor_string' ]);
-    };
+    });
 
-    $check_info = sub {
+    $check_info = make_cb('check_info' => sub {
         my ($err, %results) = @_;
         die($err) if defined($err);
 
@@ -120,13 +120,13 @@ label_vtape(3,4,"mytape");
 	    "info() returns the correct vendor string");
 
 	$do_load_current->();
-    };
+    });
 
-    $do_load_current = sub {
+    $do_load_current = make_cb('do_load_current' => sub {
 	$chg->load(slot => "current", res_cb => $got_res_current);
-    };
+    });
 
-    $got_res_current = sub {
+    $got_res_current = make_cb('got_res_current' => sub {
 	my ($err, $res) = @_;
 	ok(!$err, "no error loading slot 'current'")
 	    or diag($err);
@@ -139,16 +139,16 @@ label_vtape(3,4,"mytape");
 	    "returns correct 'next_slot' name");
 
 	$res->release(finished_cb => $do_load_next);
-    };
+    });
 
-    $do_load_next = sub {
+    $do_load_next = make_cb('do_load_next' => sub {
 	my ($err) = @_;
 	die $err if $err;
 
 	$chg->load(slot => "next", res_cb => $got_res_next);
-    };
+    });
 
-    $got_res_next = sub {
+    $got_res_next = make_cb('got_res_next' => sub {
 	my ($err, $res) = @_;
 	ok(!$err, "no error loading slot 'next'")
 	    or diag($err);
@@ -161,16 +161,16 @@ label_vtape(3,4,"mytape");
 	    "returns correct 'next_slot' name");
 
 	$res->release(finished_cb => $do_load_label);
-    };
+    });
 
-    $do_load_label = sub {
+    $do_load_label = make_cb('do_load_label' => sub {
 	my ($err) = @_;
 	die $err if $err;
 
 	$chg->load(label => "mytape", res_cb => $got_res_label);
-    };
+    });
 
-    $got_res_label = sub {
+    $got_res_label = make_cb('got_res_label' => sub {
 	my ($err, $res) = @_;
 	ok(!$err, "no error loading slot 'label'")
 	    or diag($err);
@@ -181,16 +181,16 @@ label_vtape(3,4,"mytape");
 	    "returns correct 'this_slot' name, even with different slots");
 
 	$res->release(finished_cb => $do_load_slot);
-    };
+    });
 
-    $do_load_slot = sub {
+    $do_load_slot = make_cb('do_load_slot' => sub {
 	my ($err) = @_;
 	die $err if $err;
 
 	$chg->load(slot => "{1,2,3}", res_cb => $got_res_slot);
-    };
+    });
 
-    $got_res_slot = sub {
+    $got_res_slot = make_cb('got_res_slot' => sub {
 	my ($err, $res) = @_;
 	ok(!$err, "no error loading slot '{1,2,3}'")
 	    or diag($err);
@@ -201,17 +201,17 @@ label_vtape(3,4,"mytape");
 	    "returns the 'this_slot' I requested");
 
 	$res->release(finished_cb => $do_load_slot_nobraces);
-    };
+    });
 
-    $do_load_slot_nobraces = sub {
+    $do_load_slot_nobraces = make_cb('do_load_slot_nobraces' => sub {
 	my ($err) = @_;
 	die $err if $err;
 
 	# test the shorthand "2" -> "{2,2,2}"
 	$chg->load(slot => "2", res_cb => $got_res_slot_nobraces);
-    };
+    });
 
-    $got_res_slot_nobraces = sub {
+    $got_res_slot_nobraces = make_cb('got_res_slot_nobraces' => sub {
 	my ($err, $res) = @_;
 	ok(!$err, "no error loading slot '2'")
 	    or diag($err);
@@ -222,16 +222,16 @@ label_vtape(3,4,"mytape");
 	    "returns an expanded 'this_slot' of {2,2,2} in response to the shorthand '2'");
 
 	$res->release(finished_cb => $do_load_slot_failure);
-    };
+    });
 
-    $do_load_slot_failure = sub {
+    $do_load_slot_failure = make_cb('do_load_slot_failure' => sub {
 	my ($err) = @_;
 	die $err if $err;
 
 	$chg->load(slot => "{1,99,1}", res_cb => $got_res_slot_failure);
-    };
+    });
 
-    $got_res_slot_failure = sub {
+    $got_res_slot_failure = make_cb('got_res_slot_failure' => sub {
 	my ($err, $res) = @_;
 	chg_err_like($err,
 	    { message => qr/from chg-disk.*2: Slot 99 not found/,
@@ -240,16 +240,16 @@ label_vtape(3,4,"mytape");
 	    "failure of a child to load a slot is correctly propagated");
 
 	$do_load_slot_multifailure->();
-    };
+    });
 
-    $do_load_slot_multifailure = sub {
+    $do_load_slot_multifailure = make_cb('do_load_slot_multifailure' => sub {
 	my ($err) = @_;
 	die $err if $err;
 
 	$chg->load(slot => "{99,1,99}", res_cb => $got_res_slot_multifailure);
-    };
+    });
 
-    $got_res_slot_multifailure = sub {
+    $got_res_slot_multifailure = make_cb('got_res_slot_multifailure' => sub {
 	my ($err, $res) = @_;
 	chg_err_like($err,
 	    { message => qr/from chg-disk.*1: Slot 99 not found; from chg-disk.*3: /,
@@ -258,10 +258,10 @@ label_vtape(3,4,"mytape");
 	    "failure of multiple chilren to load a slot is correctly propagated");
 
 	Amanda::MainLoop::quit();
-    };
+    });
 
     # start the loop
-    Amanda::MainLoop::call_later($get_info);
+    $get_info->();
     Amanda::MainLoop::run();
 }
 
@@ -274,11 +274,11 @@ label_vtape(3,4,"mytape");
 	$do_reset, $finished_reset,
     );
 
-    $get_info = sub {
+    $get_info = make_cb('get_info' => sub {
         $chg->info(info_cb => $check_info, info => [ 'num_slots' ]);
-    };
+    });
 
-    $check_info = sub {
+    $check_info = make_cb('check_info' => sub {
         my $err = shift;
         my %results = @_;
         die($err) if defined($err);
@@ -286,13 +286,13 @@ label_vtape(3,4,"mytape");
         is($results{'num_slots'}, 4, "info() returns the correct num_slots");
 
 	$do_load_current->();
-    };
+    });
 
-    $do_load_current = sub {
+    $do_load_current = make_cb('do_load_current' => sub {
 	$chg->load(slot => "current", res_cb => $got_res_current);
-    };
+    });
 
-    $got_res_current = sub {
+    $got_res_current = make_cb('got_res_current' => sub {
 	my ($err, $res) = @_;
 	ok(!$err, "no error loading slot 'current'")
 	    or diag($err);
@@ -305,16 +305,16 @@ label_vtape(3,4,"mytape");
 	    "returns correct 'next_slot' name");
 
 	$res->release(finished_cb => $do_load_label);
-    };
+    });
 
-    $do_load_label = sub {
+    $do_load_label = make_cb('do_load_label' => sub {
 	my ($err) = @_;
 	die $err if $err;
 
 	$chg->load(label => "mytape", res_cb => $got_res_label);
-    };
+    });
 
-    $got_res_label = sub {
+    $got_res_label = make_cb('got_res_label' => sub {
 	my ($err, $res) = @_;
 	ok(!$err, "no error loading slot 'label'")
 	    or diag($err);
@@ -325,27 +325,27 @@ label_vtape(3,4,"mytape");
 	    "returns correct 'this_slot' name, even with different slots");
 
 	$do_reset->();
-    };
+    });
 
     # unfortunately, reset, clean, and update are pretty boring with vtapes, so
     # it's hard to test them effectively.
 
-    $do_reset = sub {
+    $do_reset = make_cb('do_reset' => sub {
 	my ($err) = @_;
 	die $err if $err;
 
 	$chg->reset(finished_cb => $finished_reset);
-    };
+    });
 
-    $finished_reset = sub {
+    $finished_reset = make_cb('finished_reset' => sub {
 	my ($err, $res) = @_;
 	ok(!$err, "no error resetting");
 
 	Amanda::MainLoop::quit();
-    };
+    });
 
     # start the loop
-    Amanda::MainLoop::call_later($get_info);
+    $get_info->();
     Amanda::MainLoop::run();
 }
 

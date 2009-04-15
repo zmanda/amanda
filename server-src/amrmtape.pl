@@ -268,7 +268,7 @@ my $scrub_db = sub {
     Amanda::MainLoop::quit();
 };
 
-my $erase_volume = sub {
+my $erase_volume = make_cb('erase_volume' => sub {
     if ($erase) {
         $log_created = 1;
         local *LOG;
@@ -302,10 +302,10 @@ my $erase_volume = sub {
     } else {
         $scrub_db->();
     }
-};
+});
 
 # kick things off
-Amanda::MainLoop::call_later($erase_volume);
+$erase_volume->();
 Amanda::MainLoop::run();
 
 if ($log_created == 1) {

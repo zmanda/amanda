@@ -327,12 +327,13 @@ occur.
 
 =head2 ERROR HANDLING
 
-To create a new error object, use C<< $self->make_error($type, $cb, %args) >>.  This
-method will create a new C<Amanda::Changer::Error> object and optionally invoke
-a callback with it.  If C<$type> is C<fatal>, then C<< $chg->{'fatal_error'} >>
-is made a reference to the new error object.  The callback C<$cb> is called
-(using C<Amanda::MainLoop::call_later>) with the new error object.  The C<%args>
-are added to the new error object.  In use, this looks something like
+To create a new error object, use C<< $self->make_error($type, $cb, %args) >>.
+This method will create a new C<Amanda::Changer::Error> object and optionally
+invoke a callback with it.  If C<$type> is C<fatal>, then C<<
+$chg->{'fatal_error'} >> is made a reference to the new error object.  The
+callback C<$cb> (which should be made using C<make_cb()> from
+C<Amanda::MainLoop>) is called with the new error object.  The C<%args> are
+added to the new error object.  In use, this looks something like:
 
   if (!$success) {
     return $self->make_error("failed", $params{'res_cb'},
@@ -700,8 +701,7 @@ sub make_error {
 	$self->{'fatal_error'} = $err
 	    if ($err->fatal);
 
-	Amanda::MainLoop::call_later($cb, $err)
-	    if ($cb);
+	$cb->($err);
     }
 
     return $err;
@@ -759,8 +759,7 @@ sub make_combined_error {
 	$self->{'fatal_error'} = $err
 	    if ($err->fatal);
 
-	Amanda::MainLoop::call_later($cb, $err)
-	    if ($cb);
+	$cb->($err) if $cb;
     }
 
     return $err;
@@ -771,7 +770,7 @@ sub check_error {
     my ($cb) = @_;
 
     if (defined $self->{'fatal_error'}) {
-	Amanda::MainLoop::call_later($cb, $self->{'fatal_error'});
+	$cb->($self->{'fatal_error'}) if $cb;
 	return 1;
     }
 }
@@ -864,7 +863,7 @@ sub set_label {
 
     # nothing to do by default: just call the finished callback
     if (exists $params{'finished_cb'}) {
-	Amanda::MainLoop::call_later($params{'finished_cb'}, undef);
+	$params{'finished_cb'}->(undef) if $params{'finished_cb'};
     }
 }
 
@@ -885,7 +884,7 @@ sub do_release {
     # this is the one subclasses should override
 
     if (exists $params{'finished_cb'}) {
-	Amanda::MainLoop::call_later($params{'finished_cb'}, undef);
+	$params{'finished_cb'}->(undef) if $params{'finished_cb'};
     }
 }
 

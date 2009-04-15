@@ -69,12 +69,13 @@ sub slurp_result {
 }
 
 # Functions to invoke the changer and later verify the result
+my ($check_res_cb, $check_finished_cb);
 {
     my $expected_err_info;
     my $expected_dev;
     my $msg;
 
-    sub check_res_cb {
+    $check_res_cb = make_cb('check_res_cb' => sub {
 	my ($err, $res) = @_;
 	Amanda::MainLoop::quit();
 
@@ -93,9 +94,9 @@ sub slurp_result {
 		diag("Unexpected reservation");
 	    }
 	}
-    }
+    });
 
-    sub check_finished_cb {
+    $check_finished_cb = make_cb('check_finished_cb' => sub {
 	my ($err) = @_;
 	Amanda::MainLoop::quit();
 
@@ -114,7 +115,7 @@ sub slurp_result {
 		diag("Unexpected success");
 	    }
 	}
-    }
+    });
 
     sub try_run_changer {
 	my $sub;
@@ -174,37 +175,37 @@ my $chg = Amanda::Changer->new();
 die($chg) if $chg->isa("Amanda::Changer::Error");
 
 try_run_changer(
-    sub { $chg->load(label => 'TAPE-01', res_cb => \&check_res_cb); },
+    sub { $chg->load(label => 'TAPE-01', res_cb => $check_res_cb); },
     undef,
     "fakedev",
     "search by label succeeds");
 
 try_run_changer(
-    sub { $chg->load(label => 'TAPE-99', res_cb => \&check_res_cb); },
+    sub { $chg->load(label => 'TAPE-99', res_cb => $check_res_cb); },
     { message => "not found", type => 'failed', reason => 'notfound' },
     undef,
     "search by label; nonexistent tape");
 
 try_run_changer(
-    sub { $chg->load(slot => '1', res_cb => \&check_res_cb); },
+    sub { $chg->load(slot => '1', res_cb => $check_res_cb); },
     undef,
     "fake:1",
     "search by slot");
 
 try_run_changer(
-    sub { $chg->load(slot => '2', res_cb => \&check_res_cb); },
+    sub { $chg->load(slot => '2', res_cb => $check_res_cb); },
     { message => "slot 2 is empty", type => 'failed', reason => 'notfound' },
     undef,
     "search by slot; empty slot");
 
 try_run_changer(
-    sub { $chg->load(slot => '3', res_cb => \&check_res_cb); },
+    sub { $chg->load(slot => '3', res_cb => $check_res_cb); },
     { message => "changer script did not provide a device name", type => 'fatal' },
     undef,
     "search by slot; no device in response");
 
 try_run_changer(
-    sub { $chg->load(slot => '1', res_cb => \&check_res_cb); },
+    sub { $chg->load(slot => '1', res_cb => $check_res_cb); },
     { message => "changer script did not provide a device name", type => 'fatal' },
     undef,
     "fatal error is sticky");
@@ -213,7 +214,7 @@ try_run_changer(
 $chg->{'fatal_error'} = undef;
 
 try_run_changer(
-    sub { $chg->load(label => 'fatal', res_cb => \&check_res_cb); },
+    sub { $chg->load(label => 'fatal', res_cb => $check_res_cb); },
     { message => "game over", type => 'fatal' },
     undef,
     "search by label with fatal error");
@@ -222,17 +223,17 @@ try_run_changer(
 $chg->{'fatal_error'} = undef;
 
 try_run_changer(
-    sub { $chg->eject(finished_cb => \&check_finished_cb); },
+    sub { $chg->eject(finished_cb => $check_finished_cb); },
     undef, undef, "chg->eject doesn't fail");
 like(slurp_result(), qr/eject/, ".. and calls chg-test -eject");
 
 try_run_changer(
-    sub { $chg->reset(finished_cb => \&check_finished_cb); },
+    sub { $chg->reset(finished_cb => $check_finished_cb); },
     undef, undef, "chg->reset doesn't fail");
 like(slurp_result(), qr/reset/, ".. and calls chg-test -reset");
 
 try_run_changer(
-    sub { $chg->clean(finished_cb => \&check_finished_cb); },
+    sub { $chg->clean(finished_cb => $check_finished_cb); },
     undef, undef, "chg->clean doesn't fail");
 like(slurp_result(), qr/clean/, ".. and calls chg-test -clean");
 
@@ -244,11 +245,11 @@ like(slurp_result(), qr/clean/, ".. and calls chg-test -clean");
 
     my ($load_1, $load_2, $check_load_2, $check_eject);
 
-    $load_1 = sub {
+    $load_1 = make_cb('load_1' => sub {
         $chg->load(slot => 1, res_cb => $load_2);
-    };
+    });
 
-    $load_2 = sub {
+    $load_2 = make_cb('load_2' => sub {
         my ($err, $res) = @_;
         die $err if ($err);
 
@@ -256,18 +257,18 @@ like(slurp_result(), qr/clean/, ".. and calls chg-test -clean");
         $first_res = $res;
 
         $chg->load(slot => 2, res_cb => $check_load_2);
-    };
+    });
 
-    $check_load_2 = sub {
+    $check_load_2 = make_cb('check_load_2' => sub {
         my ($err, $res) = @_;
 
         like($err, qr/Changer is already reserved/,
             "mulitple simultaneous reservations not alowed");
 
         $first_res->release(eject => 1, finished_cb => $check_eject);
-    };
+    });
 
-    $check_eject = sub {
+    $check_eject = make_cb('check_eject' => sub {
         my ($err) = @_;
 
         ok(!defined $err, "release with eject succeeds");
@@ -275,9 +276,9 @@ like(slurp_result(), qr/clean/, ".. and calls chg-test -clean");
 	like(slurp_result(), qr/eject/, "..and calls chg-test -eject");
 
         Amanda::MainLoop::quit();
-    };
+    });
 
-    Amanda::MainLoop::call_later($load_1);
+    $load_1->();
     Amanda::MainLoop::run();
 }
 
@@ -300,11 +301,11 @@ die($chg) if $chg->isa("Amanda::Changer::Error");
     my ($get_info, $load_current, $label_current, $load_next,
         $release_next, $load_by_label, $check_by_label);
 
-    $get_info = sub {
+    $get_info = make_cb('get_info' => sub {
         $chg->info(info_cb => $load_current, info => [ 'num_slots' ]);
-    };
+    });
 
-    $load_current = sub {
+    $load_current = make_cb('load_current' => sub {
         my $err = shift;
         my %results = @_;
         die($err) if defined($err);
@@ -312,9 +313,9 @@ die($chg) if $chg->isa("Amanda::Changer::Error");
         is($results{'num_slots'}, 3, "info() returns the correct num_slots");
 
         $chg->load(slot => "1", res_cb => $label_current);
-    };
+    });
 
-    $label_current = sub {
+    $label_current = make_cb('label_current' => sub {
         my ($err, $res) = @_;
         die $err if ($err);
 
@@ -329,36 +330,36 @@ die($chg) if $chg->isa("Amanda::Changer::Error");
         is($res->{'this_slot'}, "1", "this slot is '1'");
         is($res->{'next_slot'}, "next", "next slot is 'next'");
         $res->set_label(label => "TESTCONF18", finished_cb => $load_next);
-    };
+    });
 
-    $load_next = sub {
+    $load_next = make_cb('load_next' => sub {
         my ($err) = @_;
         die $err if ($err);
 
         pass("set_label succeeded");
 
         $chg->load(slot => "next", res_cb => $release_next);
-    };
+    });
 
-    $release_next = sub {
+    $release_next = make_cb('release_next' => sub {
         my ($err, $res) = @_;
         die $err if ($err);
 
         pass("load 'next' succeeded");
 
         $res->release(finished_cb => $load_by_label);
-    };
+    });
 
-    $load_by_label = sub {
+    $load_by_label = make_cb('load_by_label' => sub {
         my ($err) = @_;
         die $err if ($err);
 
         pass("release loaded");
 
         $chg->load(label => "TESTCONF18", res_cb => $check_by_label);
-    };
+    });
 
-    $check_by_label = sub {
+    $check_by_label = make_cb('check_by_label' => sub {
         my ($err, $res) = @_;
         die $err if ($err);
 
@@ -372,9 +373,9 @@ die($chg) if $chg->isa("Amanda::Changer::Error");
             "..and finds the right volume");
 
         Amanda::MainLoop::quit();
-    };
+    });
 
-    Amanda::MainLoop::call_later($get_info);
+    $get_info->();
     Amanda::MainLoop::run();
 }
 

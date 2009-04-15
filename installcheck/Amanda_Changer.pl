@@ -137,7 +137,7 @@ sub info_key {
 	    message => "err2");
     }
 
-    Amanda::MainLoop::call_later($params{'info_cb'}, undef, %results);
+    $params{'info_cb'}->(undef, %results) if $params{'info_cb'};
 }
 
 sub reset {
@@ -146,9 +146,7 @@ sub reset {
 
     $self->{'curslot'} = 0;
 
-    if (exists $params{'finished_cb'}) {
-	Amanda::MainLoop::call_later($params{'finished_cb'}, undef);
-    }
+    $params{'finished_cb'}->(undef) if $params{'finished_cb'};
 }
 
 sub clean {
@@ -157,9 +155,7 @@ sub clean {
 
     $self->{'clean'} = 1;
 
-    if (exists $params{'finished_cb'}) {
-	Amanda::MainLoop::call_later($params{'finished_cb'}, undef);
-    }
+    $params{'finished_cb'}->(undef) if $params{'finished_cb'};
 }
 
 
@@ -191,9 +187,7 @@ sub release {
 
     $chg->{'reserved_slots'} = [ grep { $_ != $slot } @{$chg->{'reserved_slots'}} ];
 
-    if (exists $params{'finished_cb'}) {
-	Amanda::MainLoop::call_later($params{'finished_cb'}, undef);
-    }
+    $params{'finished_cb'}->(undef) if $params{'finished_cb'};
 }
 
 sub set_label {
@@ -205,9 +199,7 @@ sub set_label {
     $self->{'chg'}->{'slots'}->[$self->{'slot'}] = $params{'label'};
     $self->{'label'} = $params{'label'};
 
-    if (exists $params{'finished_cb'}) {
-	Amanda::MainLoop::call_later($params{'finished_cb'}, undef);
-    }
+    $params{'finished_cb'}->(undef) if $params{'finished_cb'};
 }
 
 # --------
@@ -238,7 +230,7 @@ my $chg = Amanda::Changer->new("mychanger");
     my @reservations = ();
     my $getres;
 
-    $getres = sub {
+    $getres = make_cb('getres' => sub {
 	my $label = pop @labels;
 
 	$chg->load(label => $label,
@@ -267,10 +259,10 @@ my $chg = Amanda::Changer->new("mychanger");
 		});
 	    }
 	});
-    };
+    });
 
     # start the loop
-    Amanda::MainLoop::call_later($getres);
+    $getres->();
     Amanda::MainLoop::run();
 
     # ditch the reservations and do it all again
@@ -292,12 +284,12 @@ my $chg = Amanda::Changer->new("mychanger");
     my ($start, $first_cb, $second_cb);
 
     # reserves the current slot
-    $start = sub {
+    $start = make_cb('start' => sub {
         $chg->load(res_cb => $first_cb, slot => "current");
-    };
+    });
 
     # gets a reservation for the "current" slot
-    $first_cb = sub {
+    $first_cb = make_cb('first_cb' => sub {
         my ($err, $res) = @_;
         die $err if $err;
 
@@ -308,10 +300,10 @@ my $chg = Amanda::Changer->new("mychanger");
         is($res->{'next_slot'}, 3,
             "..and the next slot is slot 3");
         $chg->load(res_cb => $second_cb, slot => $res->{'next_slot'}, set_current => 1);
-    };
+    });
 
     # gets a reservation for the "next" slot
-    $second_cb = sub {
+    $second_cb = make_cb('second_cb' => sub {
         my ($err, $res) = @_;
         die $err if $err;
 
@@ -323,9 +315,9 @@ my $chg = Amanda::Changer->new("mychanger");
             "..and the next slot is slot 0");
 
         Amanda::MainLoop::quit();
-    };
+    });
 
-    Amanda::MainLoop::call_later($start);
+    $start->();
     Amanda::MainLoop::run();
 }
 
@@ -334,48 +326,48 @@ my $chg = Amanda::Changer->new("mychanger");
     my ($start, $load1_cb, $set_cb, $load2_cb, $load3_cb);
 
     # load TAPE-00
-    $start = sub {
+    $start = make_cb('start' => sub {
         $chg->load(res_cb => $load1_cb, label => "TAPE-00");
-    };
+    });
 
     # rename it to TAPE-99
-    $load1_cb = sub {
+    $load1_cb = make_cb('load1_cb' => sub {
         my ($err, $res) = @_;
         die $err if $err;
 
         pass("loaded TAPE-00");
         $res->set_label(label => "TAPE-99", finished_cb => $set_cb);
         $res->release();
-    };
+    });
 
     # try to load TAPE-00
-    $set_cb = sub {
+    $set_cb = make_cb('set_cb' => sub {
         my ($err) = @_;
         die $err if $err;
 
         pass("relabeled TAPE-00 to TAPE-99");
         $chg->load(res_cb => $load2_cb, label => "TAPE-00");
-    };
+    });
 
     # try to load TAPE-99
-    $load2_cb = sub {
+    $load2_cb = make_cb('load2_cb' => sub {
         my ($err, $res) = @_;
 
         ok($err, "loading TAPE-00 is now an error");
         $chg->load(res_cb => $load3_cb, label => "TAPE-99");
-    };
+    });
 
     # check result
-    $load3_cb = sub {
+    $load3_cb = make_cb('load3_cb' => sub {
         my ($err, $res) = @_;
         die $err if $err;
 
         pass("but loading TAPE-99 is ok");
 
         Amanda::MainLoop::quit();
-    };
+    });
 
-    Amanda::MainLoop::call_later($start);
+    $start->();
     Amanda::MainLoop::run();
 }
 
@@ -383,22 +375,22 @@ my $chg = Amanda::Changer->new("mychanger");
 {
     my ($do_reset, $do_clean);
 
-    $do_reset = sub {
+    $do_reset = make_cb('do_reset' => sub {
         $chg->reset(finished_cb => sub {
             is($chg->{'curslot'}, 0,
                 "reset() resets to slot 0");
             $do_clean->();
         });
-    };
+    });
 
-    $do_clean = sub {
+    $do_clean = make_cb('do_clean' => sub {
         $chg->clean(finished_cb => sub {
             ok($chg->{'clean'}, "clean 'cleaned' the changer");
             Amanda::MainLoop::quit();
         });
-    };
+    });
 
-    Amanda::MainLoop::call_later($do_reset);
+    $do_reset->();
     Amanda::MainLoop::run();
 }
 
@@ -406,25 +398,25 @@ my $chg = Amanda::Changer->new("mychanger");
 {
     my ($do_info, $check_info, $do_info_err, $check_info_err);
 
-    $do_info = sub {
+    $do_info = make_cb('do_info' => sub {
         $chg->info(info_cb => $check_info,
 	    info => [ 'num_slots' ]);
-    };
+    });
 
-    $check_info = sub {
+    $check_info = make_cb('check_info' => sub {
 	my ($err, %results) = @_;
 	die($err) if $err;
 	is_deeply(\%results, { 'num_slots' => 13 },
 	    "info() works");
 	$do_info_err->();
-    };
+    });
 
-    $do_info_err = sub {
+    $do_info_err = make_cb('do_info_err' => sub {
         $chg->info(info_cb => $check_info_err,
 	    info => [ 'mkerror1', 'mkerror2' ]);
-    };
+    });
 
-    $check_info_err = sub {
+    $check_info_err = make_cb('check_info_err' => sub {
 	my ($err, %results) = @_;
 	is($err,
 	  "While getting info key 'mkerror1': err1; While getting info key 'mkerror2': err2",
@@ -436,9 +428,9 @@ my $chg = Amanda::Changer->new("mychanger");
 	ok($err->unknown, "\$err->unknown is true");
 	ok(!$err->notimpl, "\$err->notimpl is false");
 	Amanda::MainLoop::quit();
-    };
+    });
 
-    Amanda::MainLoop::call_later($do_info);
+    $do_info->();
     Amanda::MainLoop::run();
 }
 

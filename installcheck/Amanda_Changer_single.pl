@@ -51,11 +51,11 @@ my $chg = Amanda::Changer->new("chg-single:tape:/foo");
     my ($held_res);
     my ($get_info, $get_res, $got_res, $got_second_res);
 
-    $get_info = sub {
+    $get_info = make_cb('get_info' => sub {
         $chg->info(info_cb => $get_res, info => [ 'num_slots' ]);
-    };
+    });
 
-    $get_res = sub {
+    $get_res = make_cb('get_res' => sub {
         my $err = shift;
         my %results = @_;
         die($err) if defined($err);
@@ -64,9 +64,9 @@ my $chg = Amanda::Changer->new("chg-single:tape:/foo");
 
 	$chg->load(slot => "current",
 		   res_cb => $got_res);
-    };
+    });
 
-    $got_res = sub {
+    $got_res = make_cb('got_res' => sub {
 	my ($err, $res) = @_;
 	ok(!$err, "no error loading slot 'current'")
 	    or diag($err);
@@ -77,9 +77,9 @@ my $chg = Amanda::Changer->new("chg-single:tape:/foo");
 
 	$chg->load(label => "FOO!",
 		   res_cb => $got_second_res);
-    };
+    });
 
-    $got_second_res = sub {
+    $got_second_res = make_cb('got_second_res' => sub {
 	my ($err, $res) = @_;
 	chg_err_like($err,
 	    { message => qr{'tape:/foo' is already reserved},
@@ -88,9 +88,9 @@ my $chg = Amanda::Changer->new("chg-single:tape:/foo");
 	    "second simultaneous reservation rejected");
 
 	Amanda::MainLoop::quit();
-    };
+    });
 
     # start the loop
-    Amanda::MainLoop::call_later($get_info);
+    $get_info->();
     Amanda::MainLoop::run();
 }

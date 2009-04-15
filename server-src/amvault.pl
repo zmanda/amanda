@@ -182,7 +182,7 @@ sub load_next_volumes {
     # For the source changer, we release the previous device, load the next
     # volume by its label, and open the device.
 
-    $release_src = sub {
+    $release_src = make_cb('release_src' => sub {
 	if ($self->{'src_dev'}) {
 	    $self->{'src_dev'}->finish()
 		or fail $self->{'src_dev'}->error_or_status();
@@ -194,9 +194,9 @@ sub load_next_volumes {
 	} else {
 	    $load_src->(undef);
 	}
-    };
+    });
 
-    $load_src = sub {
+    $load_src = make_cb('load_src' => sub {
 	my ($err) = @_;
 	fail $err if $err;
 	vlog("Loading source volume $next_file->{label}");
@@ -204,9 +204,9 @@ sub load_next_volumes {
 	$self->{'src_chg'}->load(
 	    label => $next_file->{'label'},
 	    res_cb => $open_src);
-    };
+    });
 
-    $open_src = sub {
+    $open_src = make_cb('open_src' => sub {
 	my ($err, $res) = @_;
 	fail $err if $err;
 	debug("Opening source device $res->{device_name}");
@@ -238,13 +238,13 @@ sub load_next_volumes {
 	$src_loaded = 1;
 
 	$maybe_done->();
-    };
+    });
 
     # For the destination, we release the reservation after noting the 'next'
     # slot, and either load that slot or "current".  When the slot is loaded,
     # check that there is no label, invent a label, and write it to the volume.
 
-    $release_dst = sub {
+    $release_dst = make_cb('release_dst' => sub {
 	if ($self->{'dst_dev'}) {
 	    $self->{'dst_dev'}->finish()
 		or fail $self->{'dst_dev'}->error_or_status();
@@ -257,9 +257,9 @@ sub load_next_volumes {
 	    $self->{'dst_next'} = "current";
 	    $load_dst->(undef);
 	}
-    };
+    });
 
-    $load_dst = sub {
+    $load_dst = make_cb('load_dst' => sub {
 	my ($err) = @_;
 	fail $err if $err;
 	vlog("Loading destination slot $self->{dst_next}");
@@ -268,9 +268,9 @@ sub load_next_volumes {
 	    slot => $self->{'dst_next'},
 	    set_current => 1,
 	    res_cb => $open_dst);
-    };
+    });
 
-    $open_dst = sub {
+    $open_dst = make_cb('open_dst' => sub {
 	my ($err, $res) = @_;
 	fail $err if $err;
 	debug("Opening destination device $res->{device_name}");
@@ -325,16 +325,16 @@ sub load_next_volumes {
 	$dst_loaded = 1;
 
 	$maybe_done->();
-    };
+    });
 
     # and finally, when both src and dst are finished, we move on to
     # the next step.
-    $maybe_done = sub {
+    $maybe_done = make_cb('maybe_done' => sub {
 	return if (!$src_loaded or !$dst_loaded);
 
 	vlog("Volumes loaded; starting copy");
 	$self->seek_and_copy($next_file);
-    };
+    });
 
     # kick it off
     $release_src->();
@@ -369,7 +369,7 @@ sub seek_and_copy {
 
     # now put together a transfer to copy that data.
     my $xfer;
-    my $xfer_cb = sub {
+    my $xfer_cb = make_cb('xfer_cb' => sub {
 	my ($src, $msg, $elt) = @_;
 	if ($msg->{type} == $XMSG_INFO) {
 	    vlog("while transferring: $msg->{message}\n");
@@ -387,7 +387,7 @@ sub seek_and_copy {
 	    # start up the next copy
 	    $self->start_next_file();
 	}
-    };
+    });
 
     $xfer = Amanda::Xfer->new([
 	Amanda::Xfer::Source::Device->new($self->{'src_dev'}),

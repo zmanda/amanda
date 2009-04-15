@@ -87,19 +87,30 @@ subref and an arbitrary number of arguments for that sub:
     Amanda::MainLoop::run();
 
 Similarly, a tight loop of callbacks with no blocking operations can
-lead to excessive stack consumption.  In this case, C<call_later()> is
-useful, too. It queues the callback to run at the next cycle of the
-MainLoop:
-
+lead to excessive stack consumption. C<call_later()> queues the callback
+to run at the next cycle of the MainLoop. To avoid problems, you should always
+use C<make_cb()> (exported automatically) to produce anonymous subs that
+automatically C<call_later()>:
+    
     sub might_delay {
         my ($cb) = @_;
         if (can_do_it_now()) {
             my $result = do_it();
-            Amanda::MainLoop::call_later($cb, $result)
+            $cb->($result)
         } else {
             # ..
         }
     }
+
+    my $my_cb = make_cb('my_cb' => sub {
+        # ..
+    });
+
+    might_delay($my_cb)
+
+The first argument to C<make_cb()> (a name) is optional, but will provide a
+more pleasant debugging experience if the C<Sub::Name> module (from CPAN) is
+installed.
 
 =head2 EVENT SOURCES
 
@@ -270,13 +281,37 @@ sub call_later {
 
             while (@waiting_to_call_later) {
                 my ($sub, @args) = @{pop @waiting_to_call_later};
-                $sub->(@args);
+                $sub->(@args) if $sub;
             }
         });
     }
 
     push @waiting_to_call_later, [ $sub, @args ];
 }
+
+BEGIN {
+    my $have_sub_name = eval "use Sub::Name; 1";
+    if (!$have_sub_name) {
+	eval <<'EOF'
+	    sub subname {
+		my ($name, $sub) = @_;
+		$sub;
+	    }
+EOF
+    }
+}
+
+sub make_cb {
+    my ($name, $sub) = @_;
+
+    ($name, $sub) = ('__ANON__', $name) unless ($sub);
+    $sub = subname($name => $sub);
+
+    sub {
+        Amanda::MainLoop::call_later($sub, @_);
+    };
+}
+push @EXPORT, 'make_cb';
 
 sub run {
     $mainloop_running = 1;

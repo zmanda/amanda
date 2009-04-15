@@ -88,12 +88,12 @@ die($chg) if $chg->isa("Amanda::Changer::Error");
     my @reservations = ();
     my $getres;
 
-    $getres = sub {
+    $getres = make_cb('getres' => sub {
 	my $slot = pop @slots;
 
 	$chg->load(slot => $slot,
                    set_current => ($slot == 5),
-		   res_cb => sub {
+		   res_cb => make_cb(sub {
 	    my ($err, $reservation) = @_;
 	    ok(!$err, "no error loading slot $slot")
 		or diag($err);
@@ -120,17 +120,17 @@ die($chg) if $chg->isa("Amanda::Changer::Error");
 		    Amanda::MainLoop::quit();
 		});
 	    }
-	});
-    };
+	}));
+    });
 
     # start the loop
-    Amanda::MainLoop::call_later($getres);
+    $getres->();
     Amanda::MainLoop::run();
 
     # ditch the reservations and do it all again
     @reservations = ();
     @slots = ( 4, 2, 3 );
-    Amanda::MainLoop::call_later($getres);
+    $getres->();
     Amanda::MainLoop::run();
 
     @reservations = ();
@@ -141,51 +141,51 @@ die($chg) if $chg->isa("Amanda::Changer::Error");
     # load the "current" slot, which should be 3
     my ($load_current, $check_current_cb, $check_next_cb, $reset_finished_cb, $check_reset_cb);
 
-    $load_current = sub {
+    $load_current = make_cb('load_current' => sub {
 	$chg->load(slot => "current", res_cb => $check_current_cb);
-    };
+    });
 
-    $check_current_cb = sub {
+    $check_current_cb = make_cb('check_current_cb' => sub {
         my ($err, $res) = @_;
         die $err if $err;
 
         is_pointing_to($res, 5, "'current' is slot 5");
 
         $chg->load(slot => $res->{'next_slot'}, res_cb => $check_next_cb);
-    };
+    });
 
-    $check_next_cb = sub {
+    $check_next_cb = make_cb('check_next_cb' => sub {
         my ($err, $res) = @_;
         die $err if $err;
 
         is_pointing_to($res, 1, "'next' from there is slot 1");
 
         $chg->reset(finished_cb => $reset_finished_cb);
-    };
+    });
 
-    $reset_finished_cb = sub {
+    $reset_finished_cb = make_cb('reset_finished_cb' => sub {
         my ($err) = @_;
         die $err if $err;
 
 	$chg->load(slot => "current", res_cb => $check_reset_cb);
-    };
+    });
 
-    $check_reset_cb = sub {
+    $check_reset_cb = make_cb('check_reset_cb' => sub {
         my ($err, $res) = @_;
         die $err if $err;
 
         is_pointing_to($res, 1, "after reset, 'current' is slot 1");
 
         Amanda::MainLoop::quit();
-    };
+    });
 
-    Amanda::MainLoop::call_later($load_current);
+    $load_current->();
     Amanda::MainLoop::run();
 }
 
 # test loading slot "next"
 {
-    my $load_next = sub {
+    my $load_next = make_cb('load_next' => sub {
         $chg->load(slot => "next",
             res_cb => sub {
                 my ($err, $res) = @_;
@@ -196,26 +196,26 @@ die($chg) if $chg->isa("Amanda::Changer::Error");
                 Amanda::MainLoop::quit();
             }
         );
-    };
+    });
 
-    Amanda::MainLoop::call_later($load_next);
+    $load_next->();
     Amanda::MainLoop::run();
 }
 
 # eject is not implemented
 {
-    my $try_eject = sub {
-        $chg->eject(finished_cb => sub {
+    my $try_eject = make_cb('try_eject' => sub {
+        $chg->eject(finished_cb => make_cb(sub {
 	    my ($err, $res) = @_;
 	    chg_err_like($err,
 		{ type => 'failed', reason => 'notimpl' },
 		"eject returns a failed/notimpl error");
 
 	    Amanda::MainLoop::quit();
-	});
-    };
+	}));
+    });
 
-    Amanda::MainLoop::call_later($try_eject);
+    $try_eject->();
     Amanda::MainLoop::run();
 }
 
@@ -223,11 +223,11 @@ die($chg) if $chg->isa("Amanda::Changer::Error");
 {
     my ($get_info, $load_label, $check_load_cb) = @_;
 
-    $get_info = sub {
+    $get_info = make_cb('get_info' => sub {
         $chg->info(info_cb => $load_label, info => [ 'num_slots' ]);
-    };
+    });
 
-    $load_label = sub {
+    $load_label = make_cb('load_label' => sub {
         my $err = shift;
         my %results = @_;
         die($err) if defined($err);
@@ -236,16 +236,16 @@ die($chg) if $chg->isa("Amanda::Changer::Error");
 
         # note use of a glob metacharacter in the label name
         $chg->load(label => "FOO?BAR", res_cb => $check_load_cb);
-    };
+    });
 
-    $check_load_cb = sub {
+    $check_load_cb = make_cb('check_load_cb' => sub {
         my ($err, $res) = @_;
         die $err if $err;
 
         is_pointing_to($res, 4, "labeled volume found in slot 4");
 
         Amanda::MainLoop::quit();
-    };
+    });
 
     # label slot 4, using our own symlink
     mkpath("$taperoot/tmp");
@@ -257,7 +257,7 @@ die($chg) if $chg->isa("Amanda::Changer::Error");
         or die $dev->error_or_status();
     rmtree("$taperoot/tmp");
 
-    Amanda::MainLoop::call_later($get_info);
+    $get_info->();
     Amanda::MainLoop::run();
 }
 

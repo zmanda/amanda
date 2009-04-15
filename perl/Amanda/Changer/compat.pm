@@ -171,7 +171,7 @@ sub _manual_scan {
 		    and $device->volume_label() eq $params{'label'}) {
             # we found the correct slot
 	    my $res = Amanda::Changer::compat::Reservation->new($self, $slot, $rest);
-            Amanda::MainLoop::call_later($params{'res_cb'}, undef, $res);
+            $params{'res_cb'}->(undef, $res) if $params{'res_cb'};
             return;
         }
 
@@ -240,7 +240,7 @@ sub info_key {
 	$results{$key} = $self->{'nslots'};
     }
 
-    Amanda::MainLoop::call_later($params{'info_cb'}, undef, %results);
+    $params{'info_cb'}->(undef, %results) if $params{'info_cb'};
 }
 
 # run a simple op -- no arguments, no slot returned
@@ -562,9 +562,7 @@ sub do_release {
 
 	$self->{'chg'}->{'reserved'} = 0;
 
-	if (exists $params{'finished_cb'}) {
-	    Amanda::MainLoop::call_later($params{'finished_cb'}, $message);
-	}
+	$params{'finished_cb'}->($message) if $params{'finished_cb'};
     };
 
     if (exists $params{'eject'} && $params{'eject'}) {
@@ -583,16 +581,12 @@ sub set_label {
     if (!$self->{'chg'}->{'searchable'}
 	&& $self->{'chg'}->{'script'} !~ /chg-zd-mtx$/) {
 	debug("Amanda::Changer::compat - changer script is not searchable, so not invoking -label for set_label");
-        if (exists $params{'finished_cb'}) {
-            Amanda::MainLoop::call_later($params{'finished_cb'}, undef);
-        }
+        $params{'finished_cb'}->(undef) if $params{'finished_cb'};
         return;
     }
 
     my $run_success_cb = sub {
-        if (exists $params{'finished_cb'}) {
-            Amanda::MainLoop::call_later($params{'finished_cb'}, undef);
-        }
+        $params{'finished_cb'}->(undef) if $params{'finished_cb'};
     };
     my $run_fail_cb = sub {
 	my ($exitval, $message) = @_;

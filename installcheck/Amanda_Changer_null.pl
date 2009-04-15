@@ -49,11 +49,11 @@ my $chg = Amanda::Changer->new("chg-null:");
 {
     my ($get_info, $check_info, $do_load, $got_res);
 
-    $get_info = sub {
+    $get_info = make_cb('get_info' => sub {
         $chg->info(info_cb => $check_info, info => [ 'num_slots' ]);
-    };
+    });
 
-    $check_info = sub {
+    $check_info = make_cb('check_info' => sub {
         my $err = shift;
         my %results = @_;
         die($err) if defined($err);
@@ -61,14 +61,14 @@ my $chg = Amanda::Changer->new("chg-null:");
         is($results{'num_slots'}, 1, "info() returns the correct num_slots");
 
 	$do_load->();
-    };
+    });
 
-    $do_load = sub {
+    $do_load = make_cb('do_load' => sub {
 	$chg->load(slot => "current",
 		   res_cb => $got_res);
-    };
+    });
 
-    $got_res = sub {
+    $got_res = make_cb('got_res' => sub {
 	my ($err, $res) = @_;
 	ok(!$err, "no error loading slot 'current'")
 	    or diag($err);
@@ -76,16 +76,16 @@ my $chg = Amanda::Changer->new("chg-null:");
 	    "returns correct device name");
 
 	Amanda::MainLoop::quit();
-    };
+    });
 
     # start the loop
-    Amanda::MainLoop::call_later($get_info);
+    $get_info->();
     Amanda::MainLoop::run();
 }
 
 # eject is not implemented
 {
-    my $try_eject = sub {
+    my $try_eject = make_cb('try_eject' => sub {
         $chg->eject(finished_cb => sub {
 	    my ($err, $res) = @_;
 	    chg_err_like($err,
@@ -94,8 +94,8 @@ my $chg = Amanda::Changer->new("chg-null:");
 
 	    Amanda::MainLoop::quit();
 	});
-    };
+    });
 
-    Amanda::MainLoop::call_later($try_eject);
+    $try_eject->();
     Amanda::MainLoop::run();
 }

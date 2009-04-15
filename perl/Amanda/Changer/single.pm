@@ -87,7 +87,7 @@ sub load {
 	    message => "'$self->{device_name}' is already reserved");
     }
 
-    Amanda::MainLoop::call_later($params{'res_cb'},
+    $params{'res_cb'} and $params{'res_cb'}->(
 	    undef, Amanda::Changer::single::Reservation->new($self));
 }
 
@@ -102,7 +102,7 @@ sub info_key {
 	$results{$key} = 1;
     }
 
-    Amanda::MainLoop::call_later($params{'info_cb'}, undef, %results);
+    $params{'info_cb'}->(undef, %results) if $params{'info_cb'};
 }
 
 package Amanda::Changer::single::Reservation;
@@ -130,7 +130,5 @@ sub do_release {
 
     $self->{'chg'}->{'reserved'} = 0;
 
-    if (exists $params{'finished_cb'}) {
-	Amanda::MainLoop::call_later($params{'finished_cb'}, undef);
-    }
+    $params{'finished_cb'}->(undef) if $params{'finished_cb'};
 }

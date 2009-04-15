@@ -237,8 +237,7 @@ sub info_key {
 		    $num_slots = $kid_num_slots;
 		}
 	    }
-	    Amanda::MainLoop::call_later($params{'info_cb'}, undef,
-		num_slots => $num_slots);
+	    $params{'info_cb'}->(undef, num_slots => $num_slots) if $params{'info_cb'};
 	};
 
 	$self->_for_each_child(sub {
@@ -257,10 +256,9 @@ sub info_key {
 	    my $vendor_string;
 	    if (@kid_vendors) {
 		$vendor_string = collapse_braced_alternates([@kid_vendors]);
-		Amanda::MainLoop::call_later($params{'info_cb'}, undef,
-		    vendor_string => $vendor_string);
+		$params{'info_cb'}->(undef, vendor_string => $vendor_string) if $params{'info_cb'};
 	    } else {
-		Amanda::MainLoop::call_later($params{'info_cb'}, undef);
+		$params{'info_cb'}->(undef) if $params{'info_cb'};
 	    }
 	};
 
@@ -296,7 +294,7 @@ sub _mk_simple_op {
 		    $params{'finished_cb'}, [ @annotated_errs ]);
 		return 1;
 	    }
-	    Amanda::MainLoop::call_later($params{'finished_cb'});
+	    $params{'finished_cb'}->() if $params{'finished_cb'};
 	};
 
 	$self->_for_each_child(sub {
@@ -346,13 +344,13 @@ sub _for_each_child {
 
 	if ($child eq "ERROR") {
 	    if (defined $errsub) {
-		Amanda::MainLoop::call_later($errsub, "ERROR", $child_cb, $arg);
+		$errsub->("ERROR", $child_cb, $arg);
 	    } else {
 		# no errsub; just call $child_cb directly
-		Amanda::MainLoop::call_later($child_cb, undef);
+		$child_cb->(undef) if $child_cb;
 	    }
 	} else {
-	    Amanda::MainLoop::call_later($sub, $child, $child_cb, $arg);
+	    $sub->($child, $child_cb, $arg) if $sub;
 	}
     }
 }
@@ -395,14 +393,12 @@ sub do_release {
 	push @outer_errors, $err if ($err);
 	return if (--$remaining);
 
-	if (exists $params{'finished_cb'}) {
-	    my $errstr;
-	    if (@outer_errors) {
-		$errstr = join("; ", @outer_errors);
-	    }
-
-	    Amanda::MainLoop::call_later($params{'finished_cb'}, $errstr);
+	my $errstr;
+	if (@outer_errors) {
+	    $errstr = join("; ", @outer_errors);
 	}
+
+	$params{'finished_cb'}->($errstr) if $params{'finished_cb'};
     };
 
     for my $res (@{$self->{'child_reservations'}}) {
