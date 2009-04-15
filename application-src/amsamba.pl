@@ -207,23 +207,20 @@ sub findpass {
     while ($line = <$amandapass>) {
 	chomp $line;
 	next if $line =~ /^#/;
-	my ($diskname, $userdomain) = Amanda::Util::skip_quoted_string($line);
+	my ($diskname, $userpasswd, $domain) = 
+				Amanda::Util::skip_quoted_string($line);
 	$diskname = Amanda::Util::unquote_string($diskname);
-	$userdomain = Amanda::Util::unquote_string($userdomain);
-	if ($diskname =~ /^\/\//) {
-	    $diskname =~ s/\\/\//g;
-	    $userdomain =~ s/\\/\//g;
-	}
+	$userpasswd = Amanda::Util::unquote_string($userpasswd);
+	$domain = Amanda::Util::unquote_string($domain);
 	if (defined $diskname &&
 	    ($diskname eq '*' ||
 	     ($self->{unc}==0 && $diskname =~ m,^(//[^/]+)/\*$, && $1 eq $self->{cifshost}) ||
 	     ($self->{unc}==1 && $diskname =~ m,^(\\\\[^\\]+)\\\*$, && $1 eq $self->{cifshost}) ||
 	     $diskname eq $self->{share} ||
 	     $diskname eq $self->{sambashare})) {
-	    if (defined $userdomain && $userdomain ne "") {
-	        my ($userpasswd, $domain) = split ' ', $userdomain;
-	        $self->{domain} = $domain;
-	        my ($username, $password) = split('%', $userpasswd);
+	    if (defined $userpasswd && $userpasswd ne "") {
+	        $self->{domain} = $domain if ($domain ne "");
+	        my ($username, $password) = split('%', $userpasswd, 2);
 	        $self->{username} = $username;
 	        $self->{password} = $password;
             } else {

@@ -1,4 +1,7 @@
 2009-04-15  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amsamba.pl: Fix parsing of username...
+
+2009-04-15  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amcheckdump.pl: Validate image if all part are available.
 
 2009-04-15  Jean-Louis Martineau <martineau@zmanda.com>
