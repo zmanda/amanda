@@ -26,6 +26,7 @@ use Getopt::Long;
 use Amanda::Device qw( :constants );
 use Amanda::Debug qw( :logging );
 use Amanda::Config qw( :init :getconf config_dir_relative );
+use Amanda::Tapelist;
 use Amanda::Logfile;
 use Amanda::Util qw( :constants );
 use Amanda::Changer;
@@ -50,36 +51,6 @@ to anything; it just validates that the archive stream is valid.
 	-o configoption	- see the CONFIGURATION OVERRIDE section of amanda(8)
 EOF
     exit(1);
-}
-
-# Find the most recent logfile name matching the given timestamp
-sub find_logfile_name($) {
-    my $timestamp = shift @_;
-    my $rval;
-    my $config_dir = config_dir_relative(getconf($CNF_LOGDIR));
-    # First try log.$datestamp.$seq
-    for (my $seq = 0;; $seq ++) {
-        my $logfile = sprintf("%s/log.%s.%u", $config_dir, $timestamp, $seq);
-        if (-f $logfile) {
-            $rval = $logfile;
-        } else {
-            last;
-        }
-    }
-    return $rval if defined $rval;
-
-    # Next try log.$datestamp.amflush
-    $rval = sprintf("%s/log.%s.amflush", $config_dir, $timestamp);
-
-    return $rval if -f $rval;
-
-    # Finally try log.datestamp.
-    $rval = sprintf("%s/log.%s.amflush", $config_dir, $timestamp);
-    
-    return $rval if -f $rval;
-
-    # No dice.
-    return undef;
 }
 
 ## Device management
@@ -136,7 +107,7 @@ sub find_next_device {
 # Try to open a device containing a volume with the given label.  Returns undef
 # if there is a problem.
 sub try_open_device {
-    my ($label) = @_;
+    my ($label, $timestamp) = @_;
 
     # can we use the same device as last time?
     if ($current_device_label eq $label) {
@@ -180,6 +151,12 @@ sub try_open_device {
     if ($device->volume_label() ne $label) {
 	printf("Labels do not match: Expected '%s', but the device contains '%s'.\n",
 		     $label, $device->volume_label());
+	return undef;
+    }
+
+    if ($device->volume_time() ne $timestamp) {
+	printf("Timestamp do not match: Expected '%s', but the device contains '%s'.\n",
+		     $timestamp, $device->volume_time());
 	return undef;
     }
 
@@ -419,16 +396,39 @@ for my $logfile (@logfiles) {
     push @images, Amanda::Logfile::search_logfile(undef, $timestamp,
                                                   "$logfile_dir/$logfile", 1);
 }
+my $nb_images = @images;
 
 # filter only "ok" dumps, removing partial and failed dumps
 @images = Amanda::Logfile::dumps_match([@images],
 	undef, undef, undef, undef, 1);
 
+# filter tape still alive
+my $tapelist_file = config_dir_relative(getconf($CNF_TAPELIST));
+my $tl = Amanda::Tapelist::read_tapelist($tapelist_file);
+my %to_remove;
+for my $image (@images) {
+    my $tle = $tl->lookup_tapelabel($image->{label});
+    if (!$tle || $tle->{datestamp} ne $timestamp) {
+	$to_remove{$image->{hostname}}{$image->{diskname}}{$image->{level}}{$image->{timestamp}} = 1
+    }
+}
+
+#remove all parts if a part is removed
+@images = grep { !defined $to_remove{$_->{hostname}}{$_->{diskname}}{$_->{level}}{$_->{timestamp}} } @images;
+
 if (!@images) {
-    if ($timestamp_argument) {
-	print STDERR "No backup written on timestamp $timestamp.\n";
+    if ($nb_images == 0) {
+        if ($timestamp_argument) {
+	    print STDERR "No backup written on timestamp $timestamp.\n";
+        } else {
+	    print STDERR "No backup written on latest run.\n";
+        }
     } else {
-	print STDERR "No backup written on latest run.\n";
+        if ($timestamp_argument) {
+	    print STDERR "No complete backup available on timestamp $timestamp.\n";
+        } else {
+	    print STDERR "No complete backup available on latest run.\n";
+        }
     }
     exit 1;
 }
@@ -464,7 +464,7 @@ for my $image (@images) {
     # note that if there is a device failure, we may try the same device
     # again for the next image.  That's OK -- it may give a user with an
     # intermittent drive some indication of such.
-    my $device = try_open_device($image->{label});
+    my $device = try_open_device($image->{label}, $timestamp);
     if (!defined $device) {
 	# error message already printed
 	$all_success = 0;
