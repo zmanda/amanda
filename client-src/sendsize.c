@@ -887,19 +887,8 @@ application_api_calc_estimate(
 		g_printf("%s %d SIZE %lld\n", est->qamname, level,
 			 (long long)-2);
 		est->est[level].needestimate = 0;
-		if (am_has_feature(g_options->features,
-				   fe_rep_sendsize_quoted_error)) {
-		    char *errmsg, *qerrmsg;
-		    errmsg = vstrallocf(
-				_("Application '%s' can't estimate level %d"),
-				est->dle->program, level);
-		    qerrmsg = quote_string(errmsg);
-		    dbprintf(_("errmsg is %s\n"), errmsg);
-		    g_printf("%s %d ERROR %s\n",
-			     est->qamname, 0, qerrmsg);
-		    amfree(errmsg);
-		    amfree(qerrmsg);
-		}
+		dbprintf(_("Application '%s' can't estimate level %d"),
+                         est->dle->program, level);
 	    } else if (estimate_method == ES_ES) {
 		g_printf("%s %d SIZE %lld\n", est->qamname, level,
 			 (long long)-2);
