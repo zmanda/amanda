@@ -1,3 +1,8 @@
+2009-04-15  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/taperscan.c: Make find_brand_new_tape_label return an
+	  error message instead of printing it to stderr.  Make scan_read_label
+	  use the error message from find_brand_new_tape_label.
+
 2009-04-15  Dustin J. Mitchell <dustin@zmanda.com>
 	* restore-src/amfetchdump.c: keep the order of tapes within a
 	  particular run of Amanda

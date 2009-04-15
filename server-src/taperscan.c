@@ -47,7 +47,7 @@ int changer_taper_scan (char *wantlabel, char** gotlabel, char** timestamp,
                         TaperscanProlongFunctor prolong_functor,
                         void *prolong_data);
 int scan_slot (void *data, int rc, char *slotstr, char *device);
-char *find_brand_new_tape_label (void);
+char *find_brand_new_tape_label (char **errmsg);
 void FILE_taperscan_output_callback (void *data, char *msg);
 void CHAR_taperscan_output_callback (void *data, char *msg);
 
@@ -81,6 +81,7 @@ int scan_read_label(
     Device * device;
     char *labelstr;
     DeviceStatusFlags device_status;
+    char *new_label_errmsg;
 
     g_return_val_if_fail(dev != NULL, -1);
 
@@ -138,7 +139,7 @@ int scan_read_label(
 	}
 	g_object_unref(device);
 
-        *label = find_brand_new_tape_label();
+        *label = find_brand_new_tape_label(&new_label_errmsg);
         if (*label != NULL) {
             *timestamp = stralloc("X");
             *error_message = newvstrallocf(*error_message,
@@ -148,8 +149,8 @@ int scan_read_label(
             return 3;
         }
         *error_message = newvstrallocf(*error_message,
-                 _("%sFound an empty tape, but have no labels left.\n"),
-                                       *error_message);
+				       _("%s%s.\n"),
+                                       *error_message, new_label_errmsg);
 
         return -1;
     } else {
@@ -450,7 +451,7 @@ int taper_scan(char* wantlabel,
 
 #define AUTO_LABEL_MAX_LEN 1024
 char *
-find_brand_new_tape_label(void)
+find_brand_new_tape_label(char **errmsg)
 {
     char *format;
     char newlabel[AUTO_LABEL_MAX_LEN];
@@ -461,6 +462,7 @@ find_brand_new_tape_label(void)
     ssize_t label_len, auto_len;
     tape_t *tp;
 
+    *errmsg = NULL;
     if (!getconf_seen(CNF_LABEL_NEW_TAPES)) {
         return NULL;
     }
@@ -471,7 +473,7 @@ find_brand_new_tape_label(void)
     auto_len = -1; /* Only find the first '%' */
     while (*format != '\0') {
         if (label_len + 4 > AUTO_LABEL_MAX_LEN) {
-            g_fprintf(stderr, _("Auto label format is too long!\n"));
+	    *errmsg = _("Auto label format is too long!");
             return NULL;
         }
 
@@ -500,7 +502,7 @@ find_brand_new_tape_label(void)
     }
 
     if (auto_pos == NULL) {
-        g_fprintf(stderr, _("Auto label template contains no '%%'!\n"));
+	*errmsg = _("Auto label template contains no '%%'!");
         return NULL;
     }
 
@@ -510,7 +512,7 @@ find_brand_new_tape_label(void)
     for (i = 1; i < INT_MAX; i ++) {
         g_snprintf(tmpnum, SIZEOF(tmpnum), tmpfmt, i);
         if (strlen(tmpnum) != (size_t)auto_len) {
-            g_fprintf(stderr, _("All possible auto-labels used.\n"));
+	    *errmsg = _("All possible auto-labels used.");
             return NULL;
         }
 
@@ -520,16 +522,16 @@ find_brand_new_tape_label(void)
         if (tp == NULL) {
             /* Got it. Double-check that this is a labelstr match. */
             if (!match(getconf_str(CNF_LABELSTR), newlabel)) {
-                g_fprintf(stderr, _("New label %s does not match labelstr %s from amanda.conf\n"),
+	        *errmsg = g_strdup_printf(_("New label %s does not match labelstr %s from amanda.conf"),
                         newlabel, getconf_str(CNF_LABELSTR));
-                return 0;
+                return NULL;
             }
             return stralloc(newlabel);
         }
     }
 
     /* Should not get here unless you have over two billion tapes. */
-    g_fprintf(stderr, _("Taper internal error in find_brand_new_tape_label."));
+    *errmsg = _("Taper internal error in find_brand_new_tape_label.");
     return 0;
 }
 
