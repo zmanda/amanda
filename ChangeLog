@@ -1,3 +1,7 @@
+2009-04-15  Dustin J. Mitchell <dustin@zmanda.com>
+	* restore-src/amfetchdump.c: keep the order of tapes within a
+	  particular run of Amanda
+
 2009-04-10  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/conffile.c: fix handling of double-backslash in quoted
 	  strings
