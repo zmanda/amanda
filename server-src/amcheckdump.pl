@@ -155,7 +155,7 @@ sub try_open_device {
     }
 
     if ($device->volume_time() ne $timestamp) {
-	printf("Timestamp do not match: Expected '%s', but the device contains '%s'.\n",
+	printf("Timestamps do not match: Expected '%s', but the device contains '%s'.\n",
 		     $timestamp, $device->volume_time());
 	return undef;
     }
