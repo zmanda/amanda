@@ -51,6 +51,11 @@ typedef struct needed_tapes_s {
     char *label;
     int isafile;
     GSList *files;
+
+    /* usage_order helps to determine the order in which multiple tapes were
+     * used in a single run; it is set as the tapes are added, as sorted by
+     * dumpfile part number */
+    int usage_order;
 } needed_tape_t;
 
 /* local functions */
@@ -102,7 +107,9 @@ sort_needed_tapes_by_write_timestamp(
     char *a_ds = a_t? a_t->datestamp : "none";
     char *b_ds = b_t? b_t->datestamp : "none";
 
-    return strcmp(a_ds, b_ds);
+    /* if the tape timestamps match, sort them by usage_order, which is derived
+     * from the order the tapes were written in a single run */
+    return strcmp(a_ds, b_ds) || (a_nt->usage_order > b_nt->usage_order)? 1 : -1;
 }
 
 /*
@@ -123,6 +130,7 @@ list_needed_tapes(
     find_result_t *curmatch = NULL;
     find_result_t *matches = NULL;
     tapelist_t *tapes = NULL;
+    int usage_order_counter = 0;
     char *conf_tapelist;
 
     /* Load the tape list */
@@ -142,7 +150,15 @@ list_needed_tapes(
 
     /* Compare all known dumps to our match list, note what we'll need */
     matches = dumps_match_dumpspecs(alldumps, dumpspecs, 1);
+
+    /* D = dump_timestamp, newest first
+     * h = hostname
+     * k = diskname
+     * l = level
+     * p = partnum
+     * w = write_timestamp */
     sort_find_result("Dhklpw", &matches);
+
     for(curmatch = matches; curmatch; curmatch = curmatch->next) {
 	int havetape = 0;
 
@@ -191,6 +207,7 @@ list_needed_tapes(
 	}
 	if (!havetape) {
 	    needed_tape_t *newtape = g_new0(needed_tape_t, 1);
+	    newtape->usage_order = usage_order_counter++;
 	    newtape->files = g_slist_prepend(newtape->files, curmatch);
 	    newtape->isafile = (curmatch->filenum < 1);
 	    newtape->label = curmatch->label;

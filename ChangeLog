@@ -1,3 +1,7 @@
+2009-04-15  Dustin J. Mitchell <dustin@zmanda.com>
+	* restore-src/amfetchdump.c: keep the order of tapes within a
+	  particular run of Amanda
+
 2009-04-15  Nikolas Coukouma <atrus@zmanda.com>
 	* perl/Amanda/MainLoop.swg: add make_cb to make callbacks easier to use
 	  and more pleasant to debug.
