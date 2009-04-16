@@ -451,7 +451,6 @@ IMAGE:
 for my $image (@images) {
     my $check = sub {
 	my ($ok, $msg) = @_;
-	my $msg;
 	if (!$ok) {
 	    $all_success = 0;
 	    print "Dump was not successfully validated: $msg.\n";
@@ -474,7 +473,7 @@ for my $image (@images) {
     # note that if there is a device failure, we may try the same device
     # again for the next image.  That's OK -- it may give a user with an
     # intermittent drive some indication of such.
-    my $device = try_open_device($image->{label});
+    my $device = try_open_device($image->{label}, $timestamp);
     # device error message already printed by try_open_device()
     $check->(defined $device, "Could not open device");
 
@@ -508,7 +507,7 @@ for my $image (@images) {
     # send the datastream from the device straight to the application
     my $queue_fd = Amanda::Device::queue_fd_t->new(fileno($pipeline));
     my $read_ok = $device->read_to_fd($queue_fd);
-    $check->($device->status() != $DEVICE_STATUS_SUCCESS,
+    $check->($device->status() == $DEVICE_STATUS_SUCCESS,
       "Error reading device: " . $device->error_or_status());
     # if we make it here, the device was ok, but the read perhaps wasn't
     $check->($read_ok, "Error writing data to validation command");
