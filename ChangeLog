@@ -1,10 +1,15 @@
+2009-04-16  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amsuntar.pl: New NORMAL, IGNORE, STRANGE and ERROR
+	                               properties.
+	* man/xml-source/amsuntar.8.xml: Document them.
+
 2009-04-16  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/MainLoop.swg: get call_later order right, more useful
 	  sub names
 	* installcheck/Amanda_MainLoop.pl: tests for same
 
 2009-04-16  Jean-Louis Martineau <martineau@zmanda.com>
-	* server-src/amcheckdump.pl: Fix tree typos.
+	* server-src/amcheckdump.pl: Fix three typos.
 
 2009-04-16  Nikolas Coukouma <atrus@zmanda.com>
 	* server-src/amcheckdump.pl: Print per-image status messages,

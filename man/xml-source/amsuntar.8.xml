@@ -67,6 +67,36 @@ Write tar file with extended headers. With this optiion the modification time
 is maintained with a  granularity of microseconds,Long file names and file 
 sizes greater than 8GB can be archived. The default is YES.
 </listitem></varlistentry>
+
+ <!-- ==== -->
+ <varlistentry><term>NORMAL</term><listitem>
+<para>List all regex (Perl Regular Expression syntax) that are normal output from sun tar. These output are in the "FAILED DUMP DETAILS" section of the email report if the dump result is STRANGE or FAILED. Default values:
+<programlisting>
+is not a file. Not dumped\$
+same as archive file\$
+</programlisting></para>
+<para>To treat one of these default patterns differently, specify it explicitly in a different property.</para>
+</listitem></varlistentry>
+
+ <!-- ==== -->
+ <varlistentry><term>IGNORE</term><listitem>
+<para>List all regex (Perl Regular Expression syntax) that amanda ignore. These output are never in the email report.</para>
+</listitem></varlistentry>
+
+ <!-- ==== -->
+ <varlistentry><term>STRANGE</term><listitem>
+<para>List all regex (Perl Regular Expression syntax) that are strange output from sun tar. The result of the dump is STRANGE if sun tar produce a strange output. These output are in the "FAILED DUMP DETAILS" section of the email report.</para>
+</listitem></varlistentry>
+
+ <!-- ==== -->
+ <varlistentry><term>ERROR</term><listitem>
+<para>
+List all regex (perl Regular Expression syntax) that are error output from sun tar. All sun tar output that doesn't match a normal, ignore or strange regex are error by default. The result of the dump is FAILED if sun tar produce an error output. These output are in the "FAILED DUMP DETAILS" section of the email report. Default values:
+<programlisting>
+: Permission denied\$
+</programlisting></para>
+<para>To treat one of these default patterns differently, specify it explicitly in a different property.</para>
+</listitem></varlistentry>
 </variablelist>
 
 </refsect1>

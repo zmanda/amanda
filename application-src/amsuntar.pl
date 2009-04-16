@@ -38,7 +38,7 @@ use Amanda::Util qw( :constants );
 
 sub new {
     my $class = shift;
-    my ($config, $host, $disk, $device, $level, $index, $message, $collection, $record, $exclude_list, $exclude_optional,  $include_list, $include_optional,$bsize,$ext_header,$ext_attrib) = @_;
+    my ($config, $host, $disk, $device, $level, $index, $message, $collection, $record, $exclude_list, $exclude_optional,  $include_list, $include_optional,$bsize,$ext_header,$ext_attrib, $ignore, $normal, $strange, $error_exp) = @_;
     my $self = $class->SUPER::new($config);
 
     $self->{suntar}            = "/usr/sbin/tar";
@@ -62,6 +62,40 @@ sub new {
     $self->{block_size}        = $bsize;
     $self->{extended_header}   = $ext_header;
     $self->{extended_attrib}   = $ext_attrib; 
+
+    $self->{regex} = ();
+    my $regex;
+    for $regex (@{$ignore}) {
+	my $a = { regex => $regex, type => "IGNORE" };
+	push @{$self->{regex}}, $a;
+    }
+
+    for $regex (@{$normal}) {
+	my $a = { regex => $regex, type => "NORMAL" };
+	push @{$self->{regex}}, $a;
+    }
+
+    for $regex (@{$strange}) {
+	my $a = { regex => $regex, type => "STRANGE" };
+	push @{$self->{regex}}, $a;
+    }
+
+    for $regex (@{$error_exp}) {
+	my $a = { regex => $regex, type => "ERROR" };
+	push @{$self->{regex}}, $a;
+    }
+
+    #type can be IGNORE/NORMAL/STRANGE/ERROR
+    push @{$self->{regex}}, { regex => "is not a file. Not dumped\$",
+			      type  => "NORMAL" };
+    push @{$self->{regex}}, { regex => "same as archive file\$",
+			      type  => "NORMAL" };
+    push @{$self->{regex}}, { regex => ": Permission denied\$",
+			      type  => "ERROR" };
+
+    for $regex (@{$self->{regex}}) {
+	debug ($regex->{type} . ": " . $regex->{regex});
+    }
 
     return $self;
 }
@@ -185,14 +219,15 @@ sub command_backup {
    unlink($self->{include_tmp}) if(-e $self->{include_tmp});
    unlink($self->{exclude_tmp}) if(-e $self->{exclude_tmp});
 
+   my $result;
    if(defined($self->{index})) {
       my $indexout_fd;
       open($indexout_fd, '>&=4') || die();
-      $self->parse_backup($index_fd, $mesgout_fd, $indexout_fd);
+      $result = $self->parse_backup($index_fd, $mesgout_fd, $indexout_fd);
       close($indexout_fd);
    }
    else {
-      $self->parse_backup($index_fd, $mesgout_fd, undef);
+      $result = $self->parse_backup($index_fd, $mesgout_fd, undef);
    }
    close($index_fd);
    my $size = <$errtc>;
@@ -202,8 +237,11 @@ sub command_backup {
    my $status = $?;
    if( $status != 0 ){
        debug("exit status $status ?" );
+   }
+
+   if ($result == 1) {
+       debug("$self->{suntar} returned error" );
        print $mesgout_fd "sendbackup: error [$self->{suntar} returned error]\n";
-       exit;
    }
 
    my($ksize) = int ($size/1024);
@@ -218,6 +256,7 @@ sub parse_backup {
    my $self = shift;
    my($fhin, $fhout, $indexout) = @_;
    my $size  = -1;
+   my $result = 0;
    while(<$fhin>) {
       if ( /^ ?a\s+(\.\/.*) \d*K/ ||
 	   /^a\s+(\.\/.*) symbolic link to/ ||
@@ -231,16 +270,37 @@ sub parse_backup {
          }
       }
       else {
-            if(defined($fhout)) {
-	       if (/: Directory is new$/ ||
-		   /: Directory has been renamed/) {
-		  # ignore we get this kind of output
-	       } else { # strange
-                  print $fhout "? $_";
+	 my $matched = 0;
+	 for my $regex (@{$self->{regex}}) {
+	    my $regex1 = $regex->{regex};
+debug ("regex: $regex1");
+	    if (/$regex1/) {
+	       debug ("match " . $_);
+	       $result = 1 if ($regex->{type} eq "ERROR");
+	       if (defined($fhout)) {
+	          if ($regex->{type} eq "IGNORE") {
+	          } elsif ($regex->{type} eq "NORMAL") {
+		     print $fhout "| $_";
+	          } elsif ($regex->{type} eq "STRANGE") {
+		     print $fhout "? $_";
+	          } else {
+		     print $fhout "? $_";
+	          }
 	       }
-            }
+	       $matched = 1;
+	       last;
+	    }
+	 }
+	 if ($matched == 0) {
+	    debug ("doesn't match " . $_);
+	    $result = 1;
+	    if (defined($fhout)) {
+               print $fhout "? $_";
+	    }
+	 }
       }
    }
+   return $result;
 }
 
 sub validate_inexclude {
@@ -431,7 +491,7 @@ package main;
 
 sub usage {
     print <<EOF;
-Usage: Amsuntar <command> --config=<config> --host=<host> --disk=<disk> --device=<device> --level=<level> --index=<yes|no> --message=<text> --collection=<no> --record=<yes|no> --exclude-list=<fileList> --include-list=<fileList> --block-size=<size> --extended_attributes=<yes|no> --extended_headers<yes|no>.
+Usage: Amsuntar <command> --config=<config> --host=<host> --disk=<disk> --device=<device> --level=<level> --index=<yes|no> --message=<text> --collection=<no> --record=<yes|no> --exclude-list=<fileList> --include-list=<fileList> --block-size=<size> --extended_attributes=<yes|no> --extended_headers<yes|no> --ignore=<regex> --normal=<regex> --strange=<regex> --error=<regex>.
 EOF
     exit(1);
 }
@@ -452,6 +512,10 @@ my $opt_include_optional;
 my $opt_bsize = 256;
 my $opt_ext_attrib = "YES";
 my $opt_ext_head   = "YES";
+my @opt_ignore;
+my @opt_normal;
+my @opt_strange;
+my @opt_error;
 
 Getopt::Long::Configure(qw{bundling});
 GetOptions(
@@ -471,8 +535,12 @@ GetOptions(
     'block-size=s'        => \$opt_bsize,
     'extended-attributes=s'  => \$opt_ext_attrib,
     'extended-headers=s'     => \$opt_ext_head,
+    'ignore=s'               => \@opt_ignore,
+    'normal=s'               => \@opt_normal,
+    'strange=s'              => \@opt_strange,
+    'error=s'                => \@opt_error,
 ) or usage();
 
-my $application = Amanda::Application::Amsuntar->new($opt_config, $opt_host, $opt_disk, $opt_device, $opt_level, $opt_index, $opt_message, $opt_collection, $opt_record, \@opt_exclude_list, $opt_exclude_optional, \@opt_include_list, $opt_include_optional,$opt_bsize,$opt_ext_attrib,$opt_ext_head);
+my $application = Amanda::Application::Amsuntar->new($opt_config, $opt_host, $opt_disk, $opt_device, $opt_level, $opt_index, $opt_message, $opt_collection, $opt_record, \@opt_exclude_list, $opt_exclude_optional, \@opt_include_list, $opt_include_optional,$opt_bsize,$opt_ext_attrib,$opt_ext_head, \@opt_ignore, \@opt_normal, \@opt_strange, \@opt_error);
 
 $application->do($ARGV[0]);
