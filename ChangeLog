@@ -1,3 +1,7 @@
+2009-04-16  Nikolas Coukouma <atrus@zmanda.com>
+	* server-src/amcheckdump.pl: Print per-image status messages,
+	  with detailed error info
+
 2009-04-15  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/amsamba.pl: Fix parsing of username...
 

@@ -126,20 +126,20 @@ sub try_open_device {
     my $device = Amanda::Device->new($device_name);
     if ($device->status() != $DEVICE_STATUS_SUCCESS) {
 	print "Could not open device $device_name: ",
-	      $device->error(), ".\n";
+	      $device->error_or_status(), ".\n";
 	return undef;
     }
     if (!$device->configure(1)) {
 	print "Could not configure device $device_name: ",
-	      $device->error(), ".\n";
+	      $device->error_or_status(), ".\n";
 	return undef;
     }
 
     my $label_status = $device->read_label();
     if ($label_status != $DEVICE_STATUS_SUCCESS) {
-	if ($device->error() ) {
+	if ($device->error_or_status() ) {
 	    print "Could not read device $device_name: ",
-		  $device->error(), ".\n";
+		  $device->error_or_status(), ".\n";
 	} else {
 	    print "Could not read device $device_name: one of ",
 	         join(", ", DevicestatusFlags_to_strings($label_status)),
@@ -162,7 +162,7 @@ sub try_open_device {
 
     if (!$device->start($ACCESS_READ, undef, undef)) {
 	printf("Error reading device %s: %s.\n", $device_name,
-	       $device->error_message());
+	       $device->error_or_status());
 	return undef;
     }
 
@@ -449,6 +449,16 @@ printf("You will need the following tape%s: %s\n", (@tapes > 1) ? "s" : "",
 
 IMAGE:
 for my $image (@images) {
+    my $check = sub {
+	my ($ok, $msg) = @_;
+	my $msg;
+	if (!$ok) {
+	    $all_success = 0;
+	    print "Dump was not successfully validated: $msg.\n";
+	    next IMAGE;
+	}
+    };
+
     # Currently, L_PART results will be n/x, n >= 1, x >= -1
     # In the past (before split dumps), L_PART could be --
     # Headers can give partnum >= 0, where 0 means not split.
@@ -464,21 +474,15 @@ for my $image (@images) {
     # note that if there is a device failure, we may try the same device
     # again for the next image.  That's OK -- it may give a user with an
     # intermittent drive some indication of such.
-    my $device = try_open_device($image->{label}, $timestamp);
-    if (!defined $device) {
-	# error message already printed
-	$all_success = 0;
-	next IMAGE;
-    }
+    my $device = try_open_device($image->{label});
+    # device error message already printed by try_open_device()
+    $check->(defined $device, "Could not open device");
 
     # Now get the header from the device
     my $header = $device->seek_file($image->{filenum});
-    if (!defined $header) {
-        printf("Could not seek to file %d of volume %s.\n",
-                     $image->{filenum}, $image->{label});
-	$all_success = 0;
-        next IMAGE;
-    }
+    $check->(defined $header,
+      "Could not seek to file $image->{filenum} of volume $image->{label}: " .
+        $device->error_or_status());
 
     # Make sure that the on-device header matches what the logfile
     # told us we'd find.
@@ -488,15 +492,14 @@ for my $image (@images) {
         $volume_part = 1;
     }
 
+    
     if ($image->{timestamp} ne $header->{datestamp} ||
         $image->{hostname} ne $header->{name} ||
         $image->{diskname} ne $header->{disk} ||
         $image->{level} != $header->{dumplevel} ||
         $logfile_part != $volume_part) {
-        printf("Details of dump at file %d of volume %s do not match logfile.\n",
-                     $image->{filenum}, $image->{label});
-	$all_success = 0;
-        next IMAGE;
+        $check->(0, sprintf("Details of dump at file %d of volume %s do not match logfile",
+                     $image->{filenum}, $image->{label}));
     }
     
     # get the validation application pipeline that will process this dump.
@@ -504,11 +507,13 @@ for my $image (@images) {
 
     # send the datastream from the device straight to the application
     my $queue_fd = Amanda::Device::queue_fd_t->new(fileno($pipeline));
-    if (!$device->read_to_fd($queue_fd)) {
-        print "Error reading device or writing data to validation command.\n";
-	$all_success = 0;
-	next IMAGE;
-    }
+    my $read_ok = $device->read_to_fd($queue_fd);
+    $check->($device->status() != $DEVICE_STATUS_SUCCESS,
+      "Error reading device: " . $device->error_or_status());
+    # if we make it here, the device was ok, but the read perhaps wasn't
+    $check->($read_ok, "Error writing data to validation command");
+
+    print("Dump was successfully validated.\n");
 }
 
 if (defined $reservation) {
