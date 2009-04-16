@@ -280,7 +280,7 @@ sub call_later {
             $src->remove();
 
             while (@waiting_to_call_later) {
-                my ($sub, @args) = @{pop @waiting_to_call_later};
+                my ($sub, @args) = @{shift @waiting_to_call_later};
                 $sub->(@args) if $sub;
             }
         });
@@ -304,8 +304,13 @@ EOF
 sub make_cb {
     my ($name, $sub) = @_;
 
-    ($name, $sub) = ('__ANON__', $name) unless ($sub);
-    $sub = subname($name => $sub);
+    if ($sub) {
+	my ($pkg, $filename, $line) = caller;
+	my $newname = sprintf('$%s::%s@l%s', $pkg, $name, $line);
+	$sub = subname($newname => $sub);
+    } else {
+	$sub = $name; # no name => sub is actually in first parameter
+    }
 
     sub {
         Amanda::MainLoop::call_later($sub, @_);

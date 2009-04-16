@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 17;
+use Test::More tests => 18;
 use strict;
 use warnings;
 use POSIX qw(WIFEXITED WEXITSTATUS EINTR);
@@ -392,4 +392,13 @@ pass("Calling remove twice is ok");
     is_deeply([ @actions ],
               [ "cb1 start", "cb1 end", "cb2 start hello", "cb2 end" ],
               "call_later doesn't call its argument immediately");
+
+    my @calls;
+    Amanda::MainLoop::call_later(sub { push @calls, "call1"; });
+    Amanda::MainLoop::call_later(sub { push @calls, "call2"; });
+    Amanda::MainLoop::call_later(sub { Amanda::MainLoop::quit(); });
+    Amanda::MainLoop::run();
+    is_deeply([ @calls ],
+	      [ "call1", "call2" ],
+	      "call_later preserves the order of its invocations");
 }
