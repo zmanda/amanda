@@ -1,3 +1,7 @@
+2009-04-17  Nikolas Coukouma <atrus@zmanda.com>
+	* device-src/device.c: fix error message for unparsable property
+	* installcheck/Amanda_Device.pl: test error message
+
 2009-04-17  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/cmdline.c: host, disk and timestamp argument are not regex
 

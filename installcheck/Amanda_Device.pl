@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 321;
+use Test::More tests => 325;
 use File::Path qw( mkpath rmtree );
 use Sys::Hostname;
 use Carp;
@@ -553,7 +553,7 @@ my $base_name;
 
 SKIP: {
     skip "define \$INSTALLCHECK_S3_{SECRET,ACCESS}_KEY to run S3 tests",
-            52 +
+            56 +
             1 * $verify_file_count +
             4 * $write_file_count +
             7 * $s3_make_device_count
@@ -605,6 +605,28 @@ SKIP: {
 	is(!!$dev->property_get('verbose'), !!$v->{'true'},
 	   "device_property 'VERBOSE' '$v->{'val'}' => property_get(verbose) returning $expec");
     }
+
+    # test unparsable property
+    $dev_name = "s3:foo";
+    $dev = Amanda::Device->new($dev_name);
+
+    $testconf = Installcheck::Config->new();
+    $testconf->add_param("device_property", "\"verbose\" \"foo\"");
+    $testconf->write();
+    config_init($CONFIG_INIT_EXPLICIT_NAME, 'TESTCONF') == $CFGERR_OK
+	or die("Could not load configuration");
+
+    ok(!$dev->configure(1),
+       "failed to configure device with verbose set to foo");
+
+    like($dev->error_or_status(), qr/'verbose'/,
+         "error message mentions property name");
+
+    like($dev->error_or_status(), qr/'foo'/,
+         "error message mentions property value");
+
+    like($dev->error_or_status(), qr/gboolean/,
+         "error message mentions property type");
 
     my $hostname  = hostname();
     $base_name = "$S3_ACCESS_KEY-installcheck-$hostname";
