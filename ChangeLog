@@ -1,4 +1,7 @@
 2009-04-17  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/cmdline.c: host, disk and timestamp argument are not regex
+
+2009-04-17  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amcheckdump.pl: Print 'volume image' if it doesn't match.
 
 2009-04-16  Jean-Louis Martineau <martineau@zmanda.com>

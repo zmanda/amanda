@@ -89,30 +89,18 @@ cmdline_parse_dumpspecs(
         switch (arg_state) {
             case ARG_GET_HOST:
                 arg_state = ARG_GET_DISK;
-                if (name[0] != '\0'
-                    && (errstr=validate_regexp(name)) != NULL) {
-                    error(_("bad hostname regex \"%s\": %s\n"), name, errstr);
-                }
                 dumpspec = dumpspec_new(name, NULL, NULL, NULL);
 		list = g_slist_append(list, (gpointer)dumpspec);
                 break;
 
             case ARG_GET_DISK:
                 arg_state = ARG_GET_DATESTAMP;
-                if (name[0] != '\0'
-                    && (errstr=validate_regexp(name)) != NULL) {
-                    error(_("bad diskname regex \"%s\": %s\n"), name, errstr);
-                }
                 dumpspec->disk = stralloc(name);
                 break;
 
             case ARG_GET_DATESTAMP:
                 arg_state = ARG_GET_LEVEL;
 		if (!(flags & CMDLINE_PARSE_DATESTAMP)) continue;
-                if (name[0] != '\0'
-                    && (errstr=validate_regexp(name)) != NULL) {
-                    error(_("bad datestamp regex \"%s\": %s\n"), name, errstr);
-                }
                 dumpspec->datestamp = stralloc(name);
                 break;
 
