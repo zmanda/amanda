@@ -703,8 +703,8 @@ static void set_device_property(gpointer key_p, gpointer value_p,
     if (!g_value_set_from_string(&property_value, value)) {
         /* Value type could not be interpreted. */
 	device_set_error(device,
-	    vstrallocf(_("Could not parse property value '%s' for property '%s'"),
-			value, g_type_name(property_base->type)),
+	    vstrallocf(_("Could not parse property value '%s' for property '%s' (property type %s)"),
+                        value, property_base->name, g_type_name(property_base->type)),
 	    DEVICE_STATUS_DEVICE_ERROR);
         return;
     } else {
