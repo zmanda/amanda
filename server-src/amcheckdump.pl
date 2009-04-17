@@ -497,6 +497,9 @@ for my $image (@images) {
         $image->{diskname} ne $header->{disk} ||
         $image->{level} != $header->{dumplevel} ||
         $logfile_part != $volume_part) {
+        printf("Volume image is %s:%s datestamp %s level %s part %s\n",
+               $header->{name}, $header->{disk}, $header->{datestamp},
+               $header->{dumplevel}, $volume_part);
         $check->(0, sprintf("Details of dump at file %d of volume %s do not match logfile",
                      $image->{filenum}, $image->{label}));
     }
