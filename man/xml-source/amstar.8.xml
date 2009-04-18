@@ -28,7 +28,7 @@
 
 <refsect1><title>DESCRIPTION</title>
 
-<para>Amstar is an &A; Application API script.  It should not be run
+<para>Amstar is an Amanda Application API script.  It should not be run
 by users directly.  It uses star to backup and restore data.</para>
 
 </refsect1>
@@ -55,7 +55,7 @@ If "YES", amstar will use a different tardump file for each DLE. The default is 
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>STAR-PATH</term><listitem>
-The path to the star binary. The default is set when &A; is built by the
+The path to the star binary. The default is set when Amanda is built by the
 --with-star configure option.
 </listitem></varlistentry>
  <!-- ==== -->

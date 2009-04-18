@@ -27,7 +27,7 @@
 
 <refsect1><title>DESCRIPTION</title>
 
-<para>The &A; archive format is designed to be a simple, efficient means of interleaving multiple simultaneous files, allowing an arbitrary number of data streams for a file.  It is a streaming format in the sense that the writer need not know the size of files until they are completely written to the archive, and the reader can process the archive in constant space.</para>
+<para>The Amanda archive format is designed to be a simple, efficient means of interleaving multiple simultaneous files, allowing an arbitrary number of data streams for a file.  It is a streaming format in the sense that the writer need not know the size of files until they are completely written to the archive, and the reader can process the archive in constant space.</para>
 
 </refsect1>
 

@@ -37,7 +37,7 @@ see http://wiki.zmanda.com/index.php/Script_API.</para>
 
 <refsect1><title>SCRIPTS</title>
 
-<para>This section lists the scripts included with &A;, see the individual man page for instructions on using them.  For complete How-To information, consult the Amanda wiki at http://wiki.zmanda.com.</para>
+<para>This section lists the scripts included with Amanda, see the individual man page for instructions on using them.  For complete How-To information, consult the Amanda wiki at http://wiki.zmanda.com.</para>
 
 <itemizedlist>
 <listitem>

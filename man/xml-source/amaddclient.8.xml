@@ -16,7 +16,7 @@
 </refmeta>
 <refnamediv>
 <refname>amaddclient</refname>
-<refpurpose>program to add client to an existing &A; configuration</refpurpose>
+<refpurpose>program to add client to an existing Amanda configuration</refpurpose>
 </refnamediv>
 <refentryinfo>
 &author.ktill;
@@ -50,8 +50,8 @@
 <refsect1><title>DESCRIPTION</title>
 <para>After Amanda rpms are successfully installed and
 &amserverconfig; is run,
-	  &amaddclient; will add client to the  &A; configuration.
-&amaddclient; create or update &A;  &disklist;
+	  &amaddclient; will add client to the  Amanda configuration.
+&amaddclient; create or update Amanda  &disklist;
 file and create or update
 /var/lib/amanda/.amandahosts file on the server.</para>
 <para> If --no-client-update is not specified,
@@ -78,7 +78,7 @@ Example: --conf=v253, --client client8.zmanda.com
   <varlistentry>
   <term><option>--config config</option></term>
   <listitem>
-<para>&A; configuration which this program will add the client to.  </para>
+<para>Amanda configuration which this program will add the client to.  </para>
   </listitem>
   </varlistentry>
 
@@ -92,7 +92,7 @@ Example: --conf=v253, --client client8.zmanda.com
   <varlistentry>
   <term><option>--diskdev diskdev</option></term>
   <listitem>
-<para>Directory for this &A; configuration to backup.</para>
+<para>Directory for this Amanda configuration to backup.</para>
   </listitem>
   </varlistentry>
 
@@ -225,7 +225,7 @@ Specify either --excludefile or --excludelist. </para>
  <varlistentry>
  <term><option>/var/lib/amanda/.amandahosts</option></term>
   <listitem>
-<para>&A; authentication file.</para>
+<para>Amanda authentication file.</para>
   </listitem>
   </varlistentry>
 
@@ -239,14 +239,14 @@ Specify either --excludefile or --excludelist. </para>
  <varlistentry>
  <term><option>/etc/amanda/$config</option></term>
   <listitem>
-<para>&A; configuration files location for $config(e.g: DailySet1).</para>
+<para>Amanda configuration files location for $config(e.g: DailySet1).</para>
   </listitem>
   </varlistentry>
 
  <varlistentry>
  <term><option>/etc/amanda/template.d</option></term>
   <listitem>
-<para>A directory contains dumptypes and tapetypes files used by all &A; configurations.</para>
+<para>A directory contains dumptypes and tapetypes files used by all Amanda configurations.</para>
   </listitem>
   </varlistentry>
 
@@ -254,14 +254,14 @@ Specify either --excludefile or --excludelist. </para>
  <varlistentry>
  <term><option>/etc/amandates</option></term>
   <listitem>
-<para>&A; file on the client. It keeps track of structures of previous dumps.</para>
+<para>Amanda file on the client. It keeps track of structures of previous dumps.</para>
   </listitem>
   </varlistentry>
 
  <varlistentry>
  <term><option>/tmp/amanda</option></term>
   <listitem>
-<para>directory contains &A; debug log files.</para>
+<para>directory contains Amanda debug log files.</para>
   </listitem>
   </varlistentry>
 

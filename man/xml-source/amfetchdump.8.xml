@@ -18,7 +18,7 @@
 </refmeta>
 <refnamediv>
 <refname>amfetchdump</refname>
-<refpurpose>extract backup images from multiple &A; tapes.</refpurpose>
+<refpurpose>extract backup images from multiple Amanda tapes.</refpurpose>
 </refnamediv>
 <refentryinfo>
 &author.jstange;

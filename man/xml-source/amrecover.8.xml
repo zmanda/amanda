@@ -20,7 +20,7 @@
 </refmeta>
 <refnamediv>
 <refname>amrecover</refname>
-<refpurpose>&A; index database browser</refpurpose>
+<refpurpose>Amanda index database browser</refpurpose>
 </refnamediv>
 <refentryinfo>
 &author.alan;
@@ -41,7 +41,7 @@
 
 <refsect1><title>DESCRIPTION</title>
 <para><emphasis remap='B'>Amrecover</emphasis>
-browses the database of &A; index files to determine which tapes
+browses the database of Amanda index files to determine which tapes
 contain files to recover.  Furthermore, it is able to recover files.</para>
 
 <para>In order to restore files in place, you must invoke
@@ -56,7 +56,7 @@ See the examples below for details.</para>
 
 <para>See the
 <manref name="amanda" vol="8"/>
-man page for more details about &A;.</para>
+man page for more details about Amanda.</para>
 </refsect1>
 
 <refsect1><title>OPTIONS</title>
@@ -68,7 +68,7 @@ client-custom-compressed tapes.</para>
   <varlistentry>
   <term><emphasis remap='B'>[ -C ] config</emphasis></term>
   <listitem>
-<para>&A; configuration.</para>
+<para>Amanda configuration.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
@@ -363,7 +363,7 @@ Each item may be a regular expression.</para>
 <para>Display the contents of the restore list.
 If a file name is specified,
 the restore list is written to that file.
-This can be used to manually extract the files from the &A; tapes with
+This can be used to manually extract the files from the Amanda tapes with
 <emphasis remap='B'>amrestore</emphasis>.</para>
   </listitem>
   </varlistentry>
@@ -417,7 +417,7 @@ file.</para>
 syslog.7: No such file or directory
 # amrecover MyConfig
 AMRECOVER Version 2.4.2. Contacting server on oops ...
-220 oops &A; index server (2.4.2) ready.
+220 oops Amanda index server (2.4.2) ready.
 Setting restore date to today (1997-12-09)
 200 Working date set to 1997-12-09.
 200 Config set to MyConfig.

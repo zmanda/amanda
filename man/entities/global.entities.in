@@ -64,9 +64,6 @@
 		    &affil.zmanda;
 		    <email>gast@zmanda.com</email></author>'>
 
-<!-- Amanda itself -->
-<!ENTITY A '<application><emphasis>Amanda</emphasis></application>'>
-
 <!-- IDs for AMANDA files-->
 <!ENTITY amconf '<manref name="amanda.conf" vol="5"/>'>
 <!ENTITY amclientconf '<manref name="amanda-client.conf" vol="5"/>'>

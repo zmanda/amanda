@@ -19,7 +19,7 @@
 </refmeta>
 <refnamediv>
 <refname>amtape</refname>
-<refpurpose>user interface to &A; tape changer controls</refpurpose>
+<refpurpose>user interface to Amanda tape changer controls</refpurpose>
 </refnamediv>
 <refentryinfo>
 &author.jds;
@@ -42,7 +42,7 @@
 performs tape changer control operations.
 It uses the underlying tape changer script defined by the
 <emphasis remap='B'>tpchanger</emphasis>
-option for a particular &A;
+option for a particular Amanda
 configuration as specified by the
 <emphasis remap='I'>config</emphasis>
 argument.</para>
@@ -60,7 +60,7 @@ rather than at some random position in the storage slots.</para>
 
 <para>See the
 <manref name="amanda" vol="8"/>
-man page for more details about &A;.</para>
+man page for more details about Amanda.</para>
 </refsect1>
 
 <refsect1><title>COMMANDS</title>
@@ -76,7 +76,7 @@ slot is set to the
 slot.
 Other device-specific side effects may occur.
 Some gravity stackers need to be reset to the top position by hand.
-This command notifies &A; the stacker is back in that position.</para>
+This command notifies Amanda the stacker is back in that position.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
@@ -103,7 +103,7 @@ This can be slow.</para>
   <varlistentry>
   <term><emphasis remap='B'>label</emphasis> <emphasis remap='I'>label</emphasis></term>
   <listitem>
-<para>Search for and load the &A; tape with label
+<para>Search for and load the Amanda tape with label
 <emphasis remap='I'>label</emphasis>.</para>
   </listitem>
   </varlistentry>
@@ -188,7 +188,7 @@ then load the tape from the first slot and reset
 </variablelist>
 
 <para>This is useful with non-gravity stackers to unload the last tape used
-and set up &A; for the next run.
+and set up Amanda for the next run.
 If you just use
 <emphasis remap='B'>eject</emphasis>,
 the current tape will be mounted again in the next run,

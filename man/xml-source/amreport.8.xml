@@ -19,7 +19,7 @@
 </refmeta>
 <refnamediv>
 <refname>amreport</refname>
-<refpurpose>generate a formatted output of statistics for an &A; run</refpurpose>
+<refpurpose>generate a formatted output of statistics for an Amanda run</refpurpose>
 </refnamediv>
 <refentryinfo>
 &author.sgw.xml;
@@ -49,7 +49,7 @@ read from the current directory.</para>
 
 <para>See the
 <manref name="amanda" vol="8"/>
-man page for more details about &A;.</para>
+man page for more details about Amanda.</para>
 </refsect1>
 
 <refsect1><title>OPTIONS</title>
@@ -136,7 +136,7 @@ directive is specified in amanda.conf.</para>
 </refsect1>
 
 <refsect1><title>LABEL PRINTING</title>
-<para>&A; can print postscript labels describing the contents
+<para>Amanda can print postscript labels describing the contents
 of tape(s) written in a run.
 The labels are designed to be folded and
 inserted into the tape case along with the tape or hole punched and put 
@@ -168,7 +168,7 @@ keyword in amanda.conf to print to other than the system default printer.</para>
 
 <refsect1><title>TEMPLATES</title>
 
-<para>&A; provides label templates for the following tape types.
+<para>Amanda provides label templates for the following tape types.
 These are pretty generic labels and should be easy to customize for
 other tape types or particular site needs.</para>
 

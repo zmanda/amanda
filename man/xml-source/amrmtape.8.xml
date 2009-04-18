@@ -19,7 +19,7 @@
 </refmeta>
 <refnamediv>
 <refname>amrmtape</refname>
-<refpurpose>remove a tape from the &A; database</refpurpose>
+<refpurpose>remove a tape from the Amanda database</refpurpose>
 </refnamediv>
 <refentryinfo>
 &author.atf3r;
@@ -55,7 +55,7 @@ e.g. the tape is eaten by the drive or is overwritten.</para>
 
 <para>See the
 <manref name="amanda" vol="8"/>
-man page for more details about &A;.</para>
+man page for more details about Amanda.</para>
 </refsect1>
 
 <refsect1><title>OPTIONS</title>

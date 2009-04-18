@@ -17,7 +17,7 @@
 </refmeta>
 <refnamediv>
 <refname>amcrypt</refname>
-<refpurpose>reference crypt program for &A; symmetric data encryption</refpurpose>
+<refpurpose>reference crypt program for Amanda symmetric data encryption</refpurpose>
 </refnamediv>
 <refentryinfo>
 &author.ktill;

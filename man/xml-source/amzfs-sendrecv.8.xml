@@ -27,7 +27,7 @@
 
 <refsect1><title>DESCRIPTION</title>
 
-<para>amzfs-sendrecv is an &A; application implementing the Application API.
+<para>amzfs-sendrecv is an Amanda application implementing the Application API.
 It should not be run by users directly.
 It create a zfs snapshot of the filesystem and backup the snapshot with 'zfs send'.
 Snapshot are kept after the backup is done, this increase the disk space use on the client but it is neccesary to be able do to incremental backup.

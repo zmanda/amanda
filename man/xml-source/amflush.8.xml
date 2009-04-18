@@ -19,7 +19,7 @@
 </refmeta>
 <refnamediv>
 <refname>amflush</refname>
-<refpurpose>flush &A; backup files from holding disk to tape</refpurpose>
+<refpurpose>flush Amanda backup files from holding disk to tape</refpurpose>
 </refnamediv>
 <refentryinfo>
 &author.jds;
@@ -45,8 +45,8 @@
 
 <refsect1><title>DESCRIPTION</title>
 <para><emphasis remap='B'>Amflush</emphasis>
-writes &A; backups from the holding disks to tape,
-and updates the &A; info database and &tapelist; accordingly.
+writes Amanda backups from the holding disks to tape,
+and updates the Amanda info database and &tapelist; accordingly.
 Backups may stay in a holding disk when something is wrong with the tape
 at the time
 <emphasis remap='B'>amdump</emphasis>
@@ -133,7 +133,7 @@ for a description.</para>
 will look in the holding disks specified by the
 <emphasis remap='I'>amanda.conf</emphasis>
 file in /usr/local/etc/amanda/<emphasis remap='I'>config</emphasis>
-for any non-empty &A; work directories.
+for any non-empty Amanda work directories.
 It then prompts you to select a directory
 or to process all of the directories.
 The work directories in the holding disks are named by the date at the time
@@ -143,7 +143,7 @@ was run, e.g.
 
 <para>See the
 <manref name="amanda" vol="8"/>
-man page for more details about &A;.</para>
+man page for more details about Amanda.</para>
 </refsect1>
 
 <refsect1><title>EXAMPLE</title>
@@ -160,10 +160,10 @@ a mail report similar to
 <programlisting>
 % amflush MyConfig
 Scanning /amanda-hold...
-  20001113: found &A; directory.
-  20001114: found &A; directory.
+  20001113: found Amanda directory.
+  20001114: found Amanda directory.
 
-Multiple &A; directories, please pick one by letter:
+Multiple Amanda directories, please pick one by letter:
   A. 20001113
   B. 20001114
 Select directories to flush [A..B]: [ALL] all

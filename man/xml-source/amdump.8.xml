@@ -19,7 +19,7 @@
 </refmeta>
 <refnamediv>
 <refname>amdump</refname>
-<refpurpose>back up all disks in an &A; configuration</refpurpose>
+<refpurpose>back up all disks in an Amanda configuration</refpurpose>
 </refnamediv>
 <refentryinfo>
 &author.jds;
@@ -41,7 +41,7 @@
 
 <refsect1><title>DESCRIPTION</title>
 <para><emphasis remap='B'>Amdump</emphasis>
-switches to the appropriate &A; configuration directory,
+switches to the appropriate Amanda configuration directory,
 e.g. /usr/local/etc/amanda/<emphasis remap='I'>config</emphasis>,
 then attempts to back up every disk specified by the
 <emphasis remap='I'>amanda.conf</emphasis>
@@ -65,7 +65,7 @@ checks for the hold file every minute.</para>
 
 <para>See the
 <manref name="amanda" vol="8"/>
-man page for more details about &A;.</para>
+man page for more details about Amanda.</para>
 </refsect1>
 
 <refsect1><title>OPTIONS</title>

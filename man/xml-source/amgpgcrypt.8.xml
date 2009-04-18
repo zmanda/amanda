@@ -17,7 +17,7 @@
 </refmeta>
 <refnamediv>
 <refname>amgpgcrypt</refname>
-<refpurpose>reference crypt program for &A; public-key data encryption</refpurpose>
+<refpurpose>reference crypt program for Amanda public-key data encryption</refpurpose>
 </refnamediv>
 <refentryinfo>
 &author.ktill;
@@ -25,26 +25,26 @@
 <!-- body begins here -->
 <refsynopsisdiv>
 <cmdsynopsis>
-  <command>amgpgcrypt</command>  to be called by &A; only 
+  <command>amgpgcrypt</command>  to be called by Amanda only 
 </cmdsynopsis>
 </refsynopsisdiv>
 
 <refsect1><title>DESCRIPTION</title>
 <para>&amgpgcrypt;
 calls <emphasis remap='B'>gpg</emphasis> to perform public-key data encryption
-on &A; backup.
+on Amanda backup.
 &amgpgcrypt; will search for the gpg program in the following directories:
 /usr/local/bin:/usr/bin:/usr/sbin:/bin:/sbin</para>
 <para>&amgpgcrypt; sets GNUPGHOME to $AMANDA_HOME/.gnupg where gpg will look for the
 gpg keys.
-&amgpgcrypt; uses the public key to encrypt the &A; data
-and uses the private key to decrypt the &A; backup data. Thus, passphrase is only
+&amgpgcrypt; uses the public key to encrypt the Amanda data
+and uses the private key to decrypt the Amanda backup data. Thus, passphrase is only
 required at the time of data restore.</para> 
 </refsect1>
 
 
 <refsect1><title>Key and Passphrase</title>
-<para>&amgpgcrypt; uses the  private key to decrypt &A; backup data.</para>
+<para>&amgpgcrypt; uses the  private key to decrypt Amanda backup data.</para>
 It is very important to store, manage and  protect the key and the passphrase
 properly. Encrypted backup data can <emphasis remap='B'>only</emphasis> be recovered with the correct key and
 passphrase.
@@ -154,7 +154,7 @@ and protect it properly during other time.</para>
 
 
 <refsect1><title>BUGS</title>
-<para>&A; has problem with gpg mdc(modification detection code) in the binary
+<para>Amanda has problem with gpg mdc(modification detection code) in the binary
 mode. &amgpgcrypt; calls gpg with mdc disabled</para>
 </refsect1>
 

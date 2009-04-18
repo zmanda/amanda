@@ -18,7 +18,7 @@
 </refmeta>
 <refnamediv>
 <refname>disklist</refname>
-<refpurpose>List of partitions to back up for &A;</refpurpose>
+<refpurpose>List of partitions to back up for Amanda</refpurpose>
 </refnamediv>
 <refentryinfo>
 &author.jds;
@@ -30,7 +30,7 @@
 <refsect1><title>DESCRIPTION</title>
 <para>The
 <emphasis remap='I'>disklist</emphasis>
-file determines which disks will be backed up by &A;.
+file determines which disks will be backed up by Amanda.
 The file usually contains one line per disk:</para>
 
 <programlisting>
@@ -48,7 +48,7 @@ The fields have the following meanings:</para>
 <para>The name of the host to be backed up.
 If
 <emphasis remap='B'>diskdevice</emphasis>
-refers to a PC share, this is the host &A; will run the Samba
+refers to a PC share, this is the host Amanda will run the Samba
 <emphasis remap='B'>smbclient</emphasis> program on to back up the share.</para>
   </listitem>
   </varlistentry>
@@ -68,7 +68,7 @@ you must set a different
 <emphasis remap='B'>diskname</emphasis>
 for each entry. It's the
 <emphasis remap='B'>diskname</emphasis>
-that you use on the commandline for any &A; command.
+that you use on the commandline for any Amanda command.
 Look at the example/disklist file for example.</para>
   </listitem>
   </varlistentry>
@@ -121,7 +121,7 @@ whether to record backup results in
 <para>Default:
 <option>-1</option>.
 A number used to balance backup load on a host.
-&A; will not run multiple backups at the same time
+Amanda will not run multiple backups at the same time
 on the same spindle, unless the spindle number is -1,
 which means there is no spindle restriction.</para>
   </listitem>

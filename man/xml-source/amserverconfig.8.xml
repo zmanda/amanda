@@ -17,7 +17,7 @@
 </refmeta>
 <refnamediv>
 <refname>amserverconfig</refname>
-<refpurpose>program to setup initial &A; configuration</refpurpose>
+<refpurpose>program to setup initial Amanda configuration</refpurpose>
 </refnamediv>
 <refentryinfo>
 &author.ktill;
@@ -46,10 +46,10 @@
 
 <refsect1><title>DESCRIPTION</title>
 <para>After Amanda rpms are successfully installed,
-	  &amserverconfig; will setup initial &A; configuration files.
+	  &amserverconfig; will setup initial Amanda configuration files.
 It will create /var/lib/amanda/guntar-lists directory if one does
 	  not exist.
-&amserverconfig; does not change existing &A; configurations.
+&amserverconfig; does not change existing Amanda configurations.
 &amserverconfig; must be run by user amandabackup.
 </para> 
 </refsect1>
@@ -59,13 +59,13 @@ It will create /var/lib/amanda/guntar-lists directory if one does
 <para>Options may be abbreviated, as long as the abbreviation is not ambiguous. Option argument can either separated by '=' or a space.
 Example:  --templ=harddisk --tapedev /dev/nst0</para>
 
-<para>&amserverconfig; builds a new "config" &A; configuration. Customize the configuration with the options below.</para>
+<para>&amserverconfig; builds a new "config" Amanda configuration. Customize the configuration with the options below.</para>
 
 <variablelist remap='TP'>
   <varlistentry>
   <term><option>--template template</option></term>
   <listitem>
-<para>build &A; configuration with pre-configured template files. Currently,
+<para>build Amanda configuration with pre-configured template files. Currently,
 		 <emphasis remap='B'>harddisk</emphasis>, <emphasis
 		remap='B'>single-tape</emphasis>, <emphasis remap='B'>tape-changer</emphasis> and <emphasis remap='B'>S3</emphasis> 
 		are the valid inputs for this option. Pre-configured template files can be found in 
@@ -207,28 +207,28 @@ is supported.</para>
  <varlistentry>
  <term><option>/etc/amanda/$config</option></term>
   <listitem>
-<para>&A; configuration files location for $config(e.g: DailySet1).</para>
+<para>Amanda configuration files location for $config(e.g: DailySet1).</para>
   </listitem>
   </varlistentry>
 
  <varlistentry>
  <term><option>/etc/amanda/template.d</option></term>
   <listitem>
-<para>A directory contains dumptypes and tapetypes files used by all &A; configurations.</para>
+<para>A directory contains dumptypes and tapetypes files used by all Amanda configurations.</para>
   </listitem>
   </varlistentry>
 
  <varlistentry>
  <term><option>/etc/amandates</option></term>
   <listitem>
-<para>&A; file on the client. It keeps track of structures of previous dumps.</para>
+<para>Amanda file on the client. It keeps track of structures of previous dumps.</para>
   </listitem>
   </varlistentry>
 
  <varlistentry>
  <term><option>/tmp/amanda</option></term>
   <listitem>
-<para>directory contains &A; debug log files.</para>
+<para>directory contains Amanda debug log files.</para>
   </listitem>
   </varlistentry>
 

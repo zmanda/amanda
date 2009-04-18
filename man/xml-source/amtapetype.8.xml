@@ -46,7 +46,7 @@
 
 <refsect1><title>DESCRIPTION</title>
 <para><emphasis remap='B'>amtapetype</emphasis>
-generates a tapetype entry for &A; by testing the device directly.</para>
+generates a tapetype entry for Amanda by testing the device directly.</para>
 </refsect1>
 
 <refsect1><title>OPTIONS</title>

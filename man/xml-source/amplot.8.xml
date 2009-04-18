@@ -18,7 +18,7 @@
 </refmeta>
 <refnamediv>
 <refname>amplot</refname>
-<refpurpose>visualize the behavior of &A;</refpurpose>
+<refpurpose>visualize the behavior of Amanda</refpurpose>
 </refnamediv>
 <refentryinfo>
 &author.ogud;
@@ -45,7 +45,7 @@
 <para><emphasis remap='B'>Amplot</emphasis>
 reads an
 <emphasis remap='B'>amdump</emphasis>
-output file that &A; generates each run (e.g.
+output file that Amanda generates each run (e.g.
 <emphasis remap='I'>amdump.1</emphasis>)
 and translates the information into a
 picture format that may be used to determine how your installation
@@ -84,7 +84,7 @@ These files are deleted at the end of execution.</para>
 
 <para>See the
 <manref name="amanda" vol="8"/>
-man page for more details about &A;.</para>
+man page for more details about Amanda.</para>
 </refsect1>
 
 <refsect1><title>OPTIONS</title>

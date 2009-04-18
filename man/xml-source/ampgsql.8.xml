@@ -27,7 +27,7 @@
 
 <refsect1><title>DESCRIPTION</title>
 
-<para>Ampgsql is an &A; Application API script.  It should not be run
+<para>Ampgsql is an Amanda Application API script.  It should not be run
 by users directly.  It implements on-line backups of PostgreSQL databases
 in conjunction with WAL archiving.</para>
 
@@ -46,18 +46,18 @@ for information on application properties and how they are configured.</para>
  <!-- ==== -->
  <varlistentry><term>GNUTAR-PATH</term><listitem>
  Path to the GNU tar executable. This option only has an effect during restore.
- The default is set when &A; is built by the --with-gnutar configure option.
+ The default is set when Amanda is built by the --with-gnutar configure option.
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>STATEDIR</term><listitem>
  Directory for saving state about backups already made. The default is set
- when &A; is built by the --with-gnutar-listdir configure option.
+ when Amanda is built by the --with-gnutar-listdir configure option.
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>TMPDIR</term><listitem>
  Directory to use for temporary files during the backup process. It should
  have enough space to store a complete copy of the database. The default is set
- when &A; is built by the --with-tmpdir configure option.
+ when Amanda is built by the --with-tmpdir configure option.
 </listitem></varlistentry>
 
 </variablelist>

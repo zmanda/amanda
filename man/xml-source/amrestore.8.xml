@@ -19,7 +19,7 @@
 </refmeta>
 <refnamediv>
 <refname>amrestore</refname>
-<refpurpose>extract backup images from an &A; tape</refpurpose>
+<refpurpose>extract backup images from an Amanda tape</refpurpose>
 </refnamediv>
 <refentryinfo>
 &author.jds;

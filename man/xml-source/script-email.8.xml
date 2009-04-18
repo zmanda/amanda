@@ -28,7 +28,7 @@
 
 <refsect1><title>DESCRIPTION</title>
 
-<para>script-email is an &A; script implementing the Script API.  It should not
+<para>script-email is an Amanda script implementing the Script API.  It should not
 be run by users directly.  It sends a notification email to the addresses
 specified in the MAILTO property.</para>
 

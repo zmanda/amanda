@@ -17,7 +17,7 @@
 </refmeta>
 <refnamediv>
 <refname>amvault</refname>
-<refpurpose>Copy &A; dumps from one volume to another</refpurpose>
+<refpurpose>Copy Amanda dumps from one volume to another</refpurpose>
 </refnamediv>
 <refentryinfo>
 &author.dustin;

@@ -29,7 +29,7 @@
 
 <refsect1><title>DESCRIPTION</title>
 
-<para>Amsuntar is an &A; Application API script.  It should not be run
+<para>Amsuntar is an Amanda Application API script.  It should not be run
 by users directly. It uses Solaris bundled tar utility to backup and 
 restore data. Currenty ACLs from ZFS file system can only be backed up
 using the solaris supplied tar utility.</para>

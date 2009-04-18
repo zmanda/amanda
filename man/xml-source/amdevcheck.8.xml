@@ -18,7 +18,7 @@
   </refmeta>
   <refnamediv>
     <refname>amdevcheck</refname>
-    <refpurpose>Validate an &A; device and volume.</refpurpose>
+    <refpurpose>Validate an Amanda device and volume.</refpurpose>
   </refnamediv>
   <refentryinfo>
     &author.ian;
@@ -42,7 +42,7 @@
   <refsect1><title>DESCRIPTION</title>
     <para>
       <emphasis remap='B'>Amdevcheck</emphasis> provides a way to check that a
-      particular &A; device is accessible, whether or not it contains a volume,
+      particular Amanda device is accessible, whether or not it contains a volume,
       and whether or not that volume is labeled. Some devices can't distinguish
       between all of these cases; a missing volume and an unlabeled volume might
       generate the same error code, for example. In those cases, this tool
@@ -52,7 +52,7 @@
     
     <para>See the
       <manref name="amanda" vol="8"/>
-      man page for more details about &A;.  See
+      man page for more details about Amanda.  See
       <manref name="amanda-devices" vol="7"/>
       for more information on devices.
   </para>
@@ -64,7 +64,7 @@
         <term><replaceable>config</replaceable></term>
         <listitem>
           <para>
-            &A; configuration to use. Note that <command>amdevcheck</command>
+            Amanda configuration to use. Note that <command>amdevcheck</command>
             ignores any tape changer configuration.
           </para>
         </listitem>
@@ -74,7 +74,7 @@
         <term><replaceable>device</replaceable></term>
         <listitem>
           <para>
-            &A; device to use. This option overrides any tapedev configuration
+            Amanda device to use. This option overrides any tapedev configuration
             specified in the configuration file.
           </para>
         </listitem>

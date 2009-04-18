@@ -18,7 +18,7 @@
 </refmeta>
 <refnamediv>
   <refname>amcrypt-ossl</refname>
-  <refpurpose>crypt program for &A; symmetric data encryption using OpenSSL</refpurpose>
+  <refpurpose>crypt program for Amanda symmetric data encryption using OpenSSL</refpurpose>
 </refnamediv>
 <refentryinfo>
 &author.ktill;
@@ -68,7 +68,7 @@
       <term>/var/lib/amanda/.am_passphrase</term>
       <listitem>
 	<para>
-	  File containing the pass phrase. It should not be readable by any user other than the &A; user.
+	  File containing the pass phrase. It should not be readable by any user other than the Amanda user.
 	</para>
       </listitem>
     </varlistentry>

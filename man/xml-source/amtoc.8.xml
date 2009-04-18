@@ -18,7 +18,7 @@
 </refmeta>
 <refnamediv>
 <refname>amtoc</refname>
-<refpurpose>generate TOC (Table Of Contents) for an &A; run</refpurpose>
+<refpurpose>generate TOC (Table Of Contents) for an Amanda run</refpurpose>
 </refnamediv>
 <refentryinfo>
 &author.nm;
@@ -42,7 +42,7 @@
 
 <refsect1><title>DESCRIPTION</title>
 <para><emphasis remap='I'>Amtoc</emphasis>
-generates a table of contents for an &A; run.
+generates a table of contents for an Amanda run.
 It's a perl script (if you don't have perl, install it first!).</para>
 </refsect1>
 

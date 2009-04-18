@@ -19,7 +19,7 @@
 </refmeta>
 <refnamediv>
 <refname>amcheckdb</refname>
-<refpurpose>check &A; database for tape consistency</refpurpose>
+<refpurpose>check Amanda database for tape consistency</refpurpose>
 </refnamediv>
 <refentryinfo>
 &author.atf3r;
@@ -36,12 +36,12 @@
 
 <refsect1><title>DESCRIPTION</title>
 <para><emphasis remap='B'>Amcheckdb</emphasis>
-verifies that every tape mentioned in the &A; database
+verifies that every tape mentioned in the Amanda database
 is still valid in the &tapelist;.</para>
 
 <para>See the
 <manref name="amanda" vol="8"/>
-man page for more details about &A;.</para>
+man page for more details about Amanda.</para>
 </refsect1>
 
 <refsect1><title>EXAMPLE</title>

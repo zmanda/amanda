@@ -19,7 +19,7 @@
 </refmeta>
 <refnamediv>
 <refname>amoverview</refname>
-<refpurpose>display file systems processed by &A; over time</refpurpose>
+<refpurpose>display file systems processed by Amanda over time</refpurpose>
 </refnamediv>
 <refentryinfo>
 &author.sgw.xml;
@@ -42,12 +42,12 @@
 
 <refsect1><title>DESCRIPTION</title>
 <para><emphasis remap='B'>Amoverview</emphasis>
-displays a chart showing hosts and file systems processed by &A;
+displays a chart showing hosts and file systems processed by Amanda
 along with the backup level performed each day.</para>
 
 <para>See the
 <manref name="amanda" vol="8"/>
-man page for more details about &A;.</para>
+man page for more details about Amanda.</para>
 </refsect1>
 
 <refsect1><title>OPTIONS</title>
@@ -84,7 +84,7 @@ characters instead of 20.</para>
   <term><option>-skipmissed</option></term>
   <listitem>
 <para>Compacts the output by only printing stats 
-for the days &A; actually ran.
+for the days Amanda actually ran.
 </para>
   </listitem>
   </varlistentry>
@@ -149,7 +149,7 @@ second tape (a number: the level, indicating success).  If the flush
 failed too, you get a double &quot;EE&quot; for that day.</para>
 
 <para>You can also have a double code if you have two tapes in the changer and
-&A; failed to write to tape the first time because it hit end of tape
+Amanda failed to write to tape the first time because it hit end of tape
 (resulting in &quot;E0&quot;, for a full, &quot;E1&quot; for an
 incremental etc.)
 or twice with error (&quot;EE&quot;), and may a successful flush afterwards

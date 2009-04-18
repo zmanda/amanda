@@ -28,7 +28,7 @@
 
 <refsect1><title>DESCRIPTION</title>
 
-<para>amzfs-snapshot is an &A; script implementing the Script API.  It should
+<para>amzfs-snapshot is an Amanda script implementing the Script API.  It should
 not be run by users directly.  It create a zfs snapshot of the filesystem
 where the path specified is mounted.</para>
 

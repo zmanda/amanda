@@ -223,7 +223,7 @@ historical quirk, but the functionality is widely used.</note>
 
 <para>If <emphasis remap='I'>parameter</emphasis> begins with <emphasis
 remap='I'>dbopen.</emphasis>, the string following the period is a
-program name and an &A; debug file will be created for the caller.
+program name and an Amanda debug file will be created for the caller.
 The name of the logfile is returned.</para>
 
 <para>If <emphasis remap='I'>parameter</emphasis> begins with

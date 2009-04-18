@@ -40,13 +40,13 @@
 
 <refsect1><title>DESCRIPTION</title>
 <para><emphasis remap='B'>Amservice</emphasis>
-execute an &A; service on a client.
+execute an Amanda service on a client.
 It can be used without amanda server configuration (amanda.conf and disklist).
 It can be used to check communication between a server and a client.
 Amservice reads stdin to capture the REQ packet to send to the client.</para>
 <para>See the
 <manref name="amanda" vol="8"/>
-man page for more details about &A;.</para>
+man page for more details about Amanda.</para>
 </refsect1>
 
 <refsect1><title>OPTIONS</title>

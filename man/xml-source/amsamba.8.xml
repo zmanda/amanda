@@ -27,7 +27,7 @@
 
 <refsect1><title>DESCRIPTION</title>
 
-<para>Amsamba is an &A; Application API script.  It should not be run
+<para>Amsamba is an Amanda Application API script.  It should not be run
 by users directly.  It uses smbclient to backup and restore data.</para>
 
 <para> The device name in the disklist must have the form
@@ -64,12 +64,12 @@ for information on application properties and how they are configured.</para>
 <variablelist>
  <!-- ==== -->
  <varlistentry><term>SMBCLIENT-PATH</term><listitem>
-The path to the smbclient binary.  The default is set when &A; is built by the 
+The path to the smbclient binary.  The default is set when Amanda is built by the 
 --with-smbclient configure option.
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>GNUTAR-PATH</term><listitem>
-The path to the gnutar binary.  The default is set when &A; is built by the 
+The path to the gnutar binary.  The default is set when Amanda is built by the 
 --with-gnutar configure option. gnutar is used to create the index.
 </listitem></varlistentry>
  <!-- ==== -->

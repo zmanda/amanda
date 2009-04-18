@@ -18,7 +18,7 @@
 </refmeta>
 <refnamediv>
 <refname>amanda-client.conf</refname>
-<refpurpose>Client configuration file for &A;, the Advanced Maryland Automatic Network Disk Archiver</refpurpose>
+<refpurpose>Client configuration file for Amanda, the Advanced Maryland Automatic Network Disk Archiver</refpurpose>
 </refnamediv>
 <refentryinfo>
 &author.jds;
@@ -27,7 +27,7 @@
 <!-- body begins here -->
 
 <refsect1><title>DESCRIPTION</title>
-<para>&amclientconf; is the client configuration file for &A;. This manpage lists the
+<para>&amclientconf; is the client configuration file for Amanda. This manpage lists the
 relevant sections and parameters of this file for quick reference.</para> 
 <para> The files <emphasis remap='B'>&lt;CONFIG_DIR&gt;/amanda-client.conf</emphasis> and <emphasis remap='B'>&lt;CONFIG_DIR&gt;/&lt;config&gt;/amanda-client.conf</emphasis> are loaded.</para>
 </refsect1>

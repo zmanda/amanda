@@ -17,7 +17,7 @@
 </refmeta>
 <refnamediv>
 <refname>amcryptsimple</refname>
-<refpurpose>reference simple crypt program for &A; symmetric data encryption</refpurpose>
+<refpurpose>reference simple crypt program for Amanda symmetric data encryption</refpurpose>
 </refnamediv>
 <refentryinfo>
 &author.ktill;
@@ -25,18 +25,18 @@
 <!-- body begins here -->
 <refsynopsisdiv>
 <cmdsynopsis>
-  <command>amcryptsimple</command>  to be called by &A; only 
+  <command>amcryptsimple</command>  to be called by Amanda only 
 </cmdsynopsis>
 </refsynopsisdiv>
 
 <refsect1><title>DESCRIPTION</title>
 <para>&amcryptsimple;
 calls <emphasis remap='B'>gpg</emphasis> to perform symmetric data encryption
-on &A; backup.
+on Amanda backup.
 &amcryptsimple; will search for the gpg program in the following directories:
 /usr/local/bin:/usr/bin:/usr/sbin:/bin:/sbin</para>
-<para>&amcryptsimple; uses one passphrase to encrypt the &A; data
-and uses the same passphrase to decrypt the &A; backup data. &amcryptsimple; uses
+<para>&amcryptsimple; uses one passphrase to encrypt the Amanda data
+and uses the same passphrase to decrypt the Amanda backup data. &amcryptsimple; uses
 AES256 as the symmetric cipher.</para> 
 </refsect1>
 
@@ -54,7 +54,7 @@ Store  the  passphrase  inside the home-directory of the AMANDA-user($amanda_use
 <para>Choose a good passphrase and protect it properly. Backup data can only be
 restored with the passphrase. There is no backdoor.</para>
 <para>If storing and securing passphrase in your environment presents challenges,
-&A; provide public-key data encryption through &amgpgcrypt;. Public-key
+Amanda provide public-key data encryption through &amgpgcrypt;. Public-key
 encryption uses the public key to encrypt and uses the private key to decrypt.</para>
 </refsect1>
 

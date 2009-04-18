@@ -18,7 +18,7 @@
 </refmeta>
 <refnamediv>
   <refname>amanda-auth</refname>
-  <refpurpose>Communication/Authentication methods between &A; server and client</refpurpose>
+  <refpurpose>Communication/Authentication methods between Amanda server and client</refpurpose>
 </refnamediv>
 <refentryinfo>
   &author.jlm;
@@ -29,15 +29,15 @@
 <!-- body begins here -->
 
 <refsect1><title>DESCRIPTION</title>
-  <para>&A; offers 7 methods of communication between Amanda server (sometimes also called the tape server) and clients, each with its own authentication method.  The desired communication method is specified by the <emphasis remap='I'>auth</emphasis> parameter in the amanda.conf file (&amconf;) commonly as a dumptype.  Valid values to the <emphasis remap='I'>auth</emphasis> parameter are <emphasis remap='B'>bsd</emphasis>, <emphasis remap='B'>bsdudp</emphasis>, <emphasis remap='B'>bsdtcp</emphasis>, <emphasis remap='B'>krb4</emphasis>, <emphasis remap='B'>krb5</emphasis>, <emphasis remap='B'>local</emphasis>, <emphasis remap='B'>rsh</emphasis>, and <emphasis remap='B'>ssh</emphasis>. Please note that <emphasis remap='B'>krb4</emphasis> will be removed in the next release.  The authentication and communication method is used during the backup process &amdump; (amdump(8)) as well as the recovery process &amrecover; (amrecover(8)).  For detailed information, please see http://wiki.zmanda.com/index.php/Server/Client_authentication.</para>
+  <para>Amanda offers 7 methods of communication between Amanda server (sometimes also called the tape server) and clients, each with its own authentication method.  The desired communication method is specified by the <emphasis remap='I'>auth</emphasis> parameter in the amanda.conf file (&amconf;) commonly as a dumptype.  Valid values to the <emphasis remap='I'>auth</emphasis> parameter are <emphasis remap='B'>bsd</emphasis>, <emphasis remap='B'>bsdudp</emphasis>, <emphasis remap='B'>bsdtcp</emphasis>, <emphasis remap='B'>krb4</emphasis>, <emphasis remap='B'>krb5</emphasis>, <emphasis remap='B'>local</emphasis>, <emphasis remap='B'>rsh</emphasis>, and <emphasis remap='B'>ssh</emphasis>. Please note that <emphasis remap='B'>krb4</emphasis> will be removed in the next release.  The authentication and communication method is used during the backup process &amdump; (amdump(8)) as well as the recovery process &amrecover; (amrecover(8)).  For detailed information, please see http://wiki.zmanda.com/index.php/Server/Client_authentication.</para>
 </refsect1>
 
 <refsect1><title>COMPILATION AND GENERAL INFORMATION</title>
   <para>The communication method and thus type of authentication that will be used by the Amanda server is specified by the <emphasis remap='I'>auth</emphasis> parameter in the dumptype for each disklist entry (DLE).  The <emphasis remap='I'>auth</emphasis> parameter thus may be easily and globally specified in the "global" dumptype.  If <emphasis remap='I'>auth</emphasis> is not specified, the <emphasis remap='B'>bsd</emphasis> communication method is used.  See &amconf; for more information on Amanda configuration and dumptypes, and &disklist; for more information on disklists.</para>
 
-<para>On the client side, the Amanda daemon &amandad; validates the connection depending on the value of the <emphasis remap='B'>auth</emphasis> argument passed to it (see &A;(8)).  Also, when it comes to recovery, the <emphasis remap='B'>auth</emphasis> parameter can be specified in the &amclientconf; file to specify the communication method to be used by the client to the server.</para>
+<para>On the client side, the Amanda daemon &amandad; validates the connection depending on the value of the <emphasis remap='B'>auth</emphasis> argument passed to it (see Amanda(8)).  Also, when it comes to recovery, the <emphasis remap='B'>auth</emphasis> parameter can be specified in the &amclientconf; file to specify the communication method to be used by the client to the server.</para>
 
-  <para>When &A; is being built from source code, desired communication and thus authentication methods (shown as "Authentication") must be specified as configure options at compilation time.
+  <para>When Amanda is being built from source code, desired communication and thus authentication methods (shown as "Authentication") must be specified as configure options at compilation time.
 <programlisting>
 Authentication	  Configure option(s)
  bsd			--with-bsd-security      --with-amandahosts (pre-2.6)
@@ -86,9 +86,9 @@ Authentication	  Configure option(s)
 
   <para>The <emphasis remap='B'>bsd</emphasis>, <emphasis remap='B'>bsdudp</emphasis>, and <emphasis remap='B'>bsdtcp</emphasis> communication methods use either UDP, TCP, or both protocols operating as a network service to authenticate and exchange data between server and clients.</para>
 
-  <para>In addition to compilation and general configuration (see <emphasis remap='B'>COMPILATION AND GENERAL INFORMATION</emphasis> above), the authentication method that the client is configured to receive is specified by the <emphasis remap='B'>auth</emphasis> parameter in the network service configuration for &A;. The authentication method used by an Amanda client to reach the server during recovery is the authentication method specified by the <emphasis remap='I'>auth</emphasis> parameter in the client's Amanda network service configuration or in its amanda-client.conf file (see amanda-client.conf(5)).</para>
+  <para>In addition to compilation and general configuration (see <emphasis remap='B'>COMPILATION AND GENERAL INFORMATION</emphasis> above), the authentication method that the client is configured to receive is specified by the <emphasis remap='B'>auth</emphasis> parameter in the network service configuration for Amanda. The authentication method used by an Amanda client to reach the server during recovery is the authentication method specified by the <emphasis remap='I'>auth</emphasis> parameter in the client's Amanda network service configuration or in its amanda-client.conf file (see amanda-client.conf(5)).</para>
 
-  <para>By default, &A; use the "amanda" service name and associated port set in /etc/services. It can be changed by setting the dumptype <emphasis remap='I'>client_port</emphasis> option to a different port number or a different service name.
+  <para>By default, Amanda use the "amanda" service name and associated port set in /etc/services. It can be changed by setting the dumptype <emphasis remap='I'>client_port</emphasis> option to a different port number or a different service name.
   All examples are for the service name "amanda" that uses the default port 10080.</para>
 
 

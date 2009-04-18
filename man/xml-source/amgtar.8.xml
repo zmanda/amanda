@@ -28,7 +28,7 @@
 
 <refsect1><title>DESCRIPTION</title>
 
-<para>Amgtar is an &A; Application API script.  It should not be run
+<para>Amgtar is an Amanda Application API script.  It should not be run
 by users directly.  It uses GNU Tar to backup and restore data.</para>
 
 </refsect1>
@@ -55,11 +55,11 @@ If set, gnutar will backup from that directory instead of the <emphasis>diskdevi
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>GNUTAR-LISTDIR</term><listitem>
-The directory where gnutar stores the database it uses to generate incremental dumps.  The default is set when &A; is built.
+The directory where gnutar stores the database it uses to generate incremental dumps.  The default is set when Amanda is built.
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>GNUTAR-PATH</term><listitem>
-The path to the gnutar binary.  The default is set when &A; is built.
+The path to the gnutar binary.  The default is set when Amanda is built.
 </listitem></varlistentry>
  <!-- ==== -->
  <varlistentry><term>ONE-FILE-SYSTEM</term><listitem>

@@ -18,7 +18,7 @@
 </refmeta>
 <refnamediv>
 <refname>amanda.conf</refname>
-<refpurpose>Main configuration file for &A;, the Advanced Maryland Automatic Network Disk Archiver</refpurpose>
+<refpurpose>Main configuration file for Amanda, the Advanced Maryland Automatic Network Disk Archiver</refpurpose>
 </refnamediv>
 <refentryinfo>
 &author.jds;
@@ -27,7 +27,7 @@
 <!-- body begins here -->
 
 <refsect1><title>DESCRIPTION</title>
-<para>&amconf; is the main configuration file for &A;. This manpage lists the
+<para>&amconf; is the main configuration file for Amanda. This manpage lists the
 relevant sections and parameters of this file for quick reference.</para> 
 <para> The file <emphasis remap='B'>&lt;CONFIG_DIR&gt;/&lt;config&gt;/amanda.conf</emphasis> is loaded.</para>
 </refsect1>
@@ -35,7 +35,7 @@ relevant sections and parameters of this file for quick reference.</para>
 <refsect1><title>SYNTAX</title>
 
 <para>There are a number of configuration parameters that control the
-behavior of the &A; programs.
+behavior of the Amanda programs.
 All have default values,
 so you need not specify the parameter in
 <emphasis remap='B'>amanda.conf</emphasis>
@@ -59,7 +59,7 @@ are treated the same.  Also, the characters
 <emphasis remap='B'>'-'</emphasis>
 and
 <emphasis remap='B'>'_'</emphasis>
-are interchangeable in all predefined &A; keywords:
+are interchangeable in all predefined Amanda keywords:
 <emphasis remap='B'>device_property</emphasis>
 and
 <emphasis remap='B'>device-property</emphasis>
@@ -299,7 +299,7 @@ length of 200M.</para>
 <emphasis remap='I'>daily</emphasis>.
 A descriptive name for the configuration.
 This string appears in the Subject line of mail reports.
-Each &A; configuration should have a different string to keep
+Each Amanda configuration should have a different string to keep
 mail reports distinct.</para>
   </listitem>
   </varlistentry>
@@ -334,7 +334,7 @@ Specify which types of messages will trigger an email from amreport. amreport is
       <varlistentry>
       <term><emphasis remap='B'>strange</emphasis></term>
       <listitem>
-<para>Send an email on strange or error message. A strange message occurs when the dump succeeded, but returned one or more errors unknown to &A;.</para>
+<para>Send an email on strange or error message. A strange message occurs when the dump succeeded, but returned one or more errors unknown to Amanda.</para>
       </listitem>
       </varlistentry>
       <varlistentry>
@@ -396,7 +396,7 @@ days /
   <listitem>
 <para>Default:
 <emphasis remap='I'>15 tapes</emphasis>.
-Typically tapes are used by &A; in an ordered rotation. The <emphasis remap='B'>tapecycle</emphasis> parameter 
+Typically tapes are used by Amanda in an ordered rotation. The <emphasis remap='B'>tapecycle</emphasis> parameter 
 defines the size of that rotation. This parameter must be be larger than the number of tapes
 used in a dumpcycle.</para>
 <para>
@@ -407,15 +407,15 @@ remap='B'>runtapes</emphasis> (the number of tapes used per run). Typically
 <emphasis remap='B'>tapecycle</emphasis> is set to two or four times the tapes
 per dumpcycle.</para>
 
-<note>&A; is commonly misconfigured with <emphasis
+<note>Amanda is commonly misconfigured with <emphasis
 remap='B'>tapecycle</emphasis> equal to the number of tapes per dumpcycle.  In
 this misconfiguration, when all <emphasis remap='B'>tapecycle</emphasis> tapes
-are used, &A; has no free tape to which it can write the next backup, and the
+are used, Amanda has no free tape to which it can write the next backup, and the
 dump will fail.  <emphasis remap='B'>tapecycle</emphasis> must be at least one
 tape larger than the tapes per dumpcycle.
 </note>
 
-<para>While &A; is always willing to use a new tape in its rotation, it refuses to reuse a tape until at
+<para>While Amanda is always willing to use a new tape in its rotation, it refuses to reuse a tape until at
 least '<emphasis remap='B'>tapecycle</emphasis> -1' number of other tapes have been used. 
 </para>
 <para>
@@ -443,9 +443,9 @@ can't read logfiles written when this option was enabled.
         <emphasis remap='I'> string</emphasis></term>
 <listitem>
     <para>Default: not set.
-When set, this directive will cause &A; to automatically write an &A;
+When set, this directive will cause Amanda to automatically write an Amanda
 tape label to any blank tape she encounters. This option is DANGEROUS 
-because when set, &A; will ERASE any non-&A; tapes you may have, and may 
+because when set, Amanda will ERASE any non-Amanda tapes you may have, and may 
 also ERASE any near-failing tapes. Use with caution.</para>
 <para>When using this directive, specify the template for new tape 
 labels. The template should contain some number of contiguous '%' 
@@ -462,13 +462,13 @@ Example:
   <listitem>
 <para>Default:
 <emphasis remap='I'>amanda</emphasis>.
-The login name &A; uses to run the backups.
+The login name Amanda uses to run the backups.
 The backup client hosts must allow access
 from the tape server host as this user via
 <markup>.rhosts</markup>
 or
 <markup>.amandahosts</markup>,
-depending on how the &A; software was built.</para>
+depending on how the Amanda software was built.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
@@ -582,12 +582,12 @@ The maximum number of tapes used in a single run.
 If a tape changer is not configured, this option is not used
 and should be commented out of the configuration file.</para>
 <para>If a tape changer is configured, this may be set larger than one to
-let &A; write to more than one tape.</para>
+let Amanda write to more than one tape.</para>
 <para>Note that this is an upper bound on the number of tapes,
-and &A; may use less.</para>
-<para>Also note that as of this release, &A; does not support true tape overflow.
+and Amanda may use less.</para>
+<para>Also note that as of this release, Amanda does not support true tape overflow.
 When it reaches the end of one tape,
-the backup image &A; was processing starts over again on the next tape.</para>
+the backup image Amanda was processing starts over again on the next tape.</para>
   </listitem>
   </varlistentry>
 
@@ -746,7 +746,7 @@ How many times the server will resend a REQ packet if it doesn't get the ACK pac
   <listitem>
 <para>Default:
 <emphasis remap='I'>8000 Kbps</emphasis>.
-The maximum network bandwidth allocated to &A;, in Kbytes per second.
+The maximum network bandwidth allocated to Amanda, in Kbytes per second.
 See also the
 <emphasis remap='B'>interface</emphasis>
 section.</para>
@@ -757,8 +757,8 @@ section.</para>
   <listitem>
 <para>Default:
 <literal>10</literal>.
-The maximum number of backups that &A; will attempt to run in parallel.
-&A; will stay within the constraints of network bandwidth and
+The maximum number of backups that Amanda will attempt to run in parallel.
+Amanda will stay within the constraints of network bandwidth and
 holding disk space available, so it doesn't hurt to set
 this number a bit high. Some contention can occur with larger numbers
 of backups, but this effect is relatively small on most systems.</para>
@@ -799,7 +799,7 @@ B: largest bandwidth
   <listitem>
 <para>Default:
 <literal>1</literal>.
-The maximum number of backups from a single host that &A; will
+The maximum number of backups from a single host that Amanda will
 attempt to run in parallel. See also the
 <emphasis remap='B'>inparallel</emphasis>
 option.</para>
@@ -824,7 +824,7 @@ are defined.</para>
 <emphasis remap='I'>10 Mbytes</emphasis>.
 The minimum savings required to trigger an automatic
 bump from one incremental level to the next, expressed as size.
-If &A; determines that the next higher backup level
+If Amanda determines that the next higher backup level
 will be this much smaller than the current level,
 it will do the next level.
 The value of this parameter is used only if the parameter 
@@ -851,7 +851,7 @@ See also the options
 The minimum savings required to trigger an automatic
 bump from one incremental level to the next, expressed as percentage of the
 current size of the DLE (size of current level 0).
-If &A; determines that the next higher backup level
+If Amanda determines that the next higher backup level
 will be this much smaller than the current level,
 it will do the next level.
 </para>
@@ -877,7 +877,7 @@ See also the options
 <para>Default:
 <literal>1.5</literal>.
 The bump size multiplier.
-&A; multiplies
+Amanda multiplies
 <emphasis remap='B'>bumpsize</emphasis>
 by this factor for each level.
 This prevents active filesystems from
@@ -899,7 +899,7 @@ dumptype-definition.
   <listitem>
 <para>Default:
 <emphasis remap='I'>2 days</emphasis>.
-To insure redundancy in the dumps, &A; keeps filesystems at the
+To insure redundancy in the dumps, Amanda keeps filesystems at the
 same incremental level for at least
 <emphasis remap='B'>bumpdays</emphasis>
 days, even if the other bump threshold criteria are met.</para>
@@ -926,7 +926,7 @@ file holding client hosts, disks and other client dumping information.</para>
 <para>Default:
 <filename>/usr/adm/amanda/curinfo</filename>.
 The file or directory name for the historical information database.
-If &A; was configured to use DBM databases, this is the base file
+If Amanda was configured to use DBM databases, this is the base file
 name for them.
 If it was configured to use text formated databases (the default),
 this is the base directory and within here will be a directory per
@@ -965,7 +965,7 @@ option enabled.</para>
 <para>Default:
 <emphasis remap='I'>tapelist</emphasis>.
 The file name for the active &tapelist;.
-&A; maintains this file with information about the active set of tapes.</para>
+Amanda maintains this file with information about the active set of tapes.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
@@ -973,7 +973,7 @@ The file name for the active &tapelist;.
   <listitem>
 <para>Default:
 <literal>1280k</literal>.
-Controls the amount of memory used by &A;
+Controls the amount of memory used by Amanda
 to hold data as it is read from the network or disk before it is written to
 the output device. Higher values may be
 useful on fast tape drives and optical media.</para>
@@ -1097,7 +1097,7 @@ with one space before it.</para>
   <listitem>
 <para>Default:
 <emphasis remap='I'>none</emphasis>.
-The name of an &A; configuration file to include within the current file.
+The name of an Amanda configuration file to include within the current file.
 Useful for sharing dumptypes, tapetypes and interface definitions among several configurations.
 Relative pathnames are relative to the configuration directory.
 </para>
@@ -1189,9 +1189,9 @@ Debug level of the taper process</para>
   <term><emphasis remap='B'>flush-threshold-dumped</emphasis> int</term>
   <listitem>
 <para>Default: <emphasis remap='I'>0</emphasis>.
-  &A; will not begin writing data to a new volume until the amount of
+  Amanda will not begin writing data to a new volume until the amount of
   data on the holding disk is at least this percentage of the volume
-  size. In other words, &A; will not begin until the
+  size. In other words, Amanda will not begin until the
   amount of data on the holding disk is greater than the tape
   length times this parameter.
   This parameter may be larger than 100%, for example to keep
@@ -1199,7 +1199,7 @@ Debug level of the taper process</para>
 <para> Needless to say, your holding disk must be big enough
   that this criterion could be satisfied. If the holding disk cannot
   be used for a particular dump (because, for example, there is no
-  remaining holding space) then &A; will disregard the constraint
+  remaining holding space) then Amanda will disregard the constraint
   specified by this setting and start a new volume anyway. Once
   writing to a volume has begun, this constraint is not applied unless
   and until a new volume is needed.</para>
@@ -1213,10 +1213,10 @@ Debug level of the taper process</para>
   <term><emphasis remap='B'>flush-threshold-scheduled</emphasis> int</term>
   <listitem>
 <para>Default: <emphasis remap='I'>0</emphasis>.
-  &A; will not begin writing data to a new volume until the sum of the
+  Amanda will not begin writing data to a new volume until the sum of the
   amount of data on the holding disk and the estimated amount of data
   remaining to be dumped during this run is at least this percentage
-  of the volume size. In other words, &A; will not begin until the
+  of the volume size. In other words, Amanda will not begin until the
   inequality <inlineequation><mathphrase>h + s &gt; t &#215;
   d</mathphrase></inlineequation> is satisfied,
   where <mathphrase>h</mathphrase> is the amount of data on the
@@ -1228,7 +1228,7 @@ Debug level of the taper process</para>
 <para>  Needless to say, your holding disk must be big enough
   that this criterion could be satisfied. If the holding disk cannot
   be used for a particular dump (because, for example, there is no
-  remaining holding space) then &A; will disregard the constraint
+  remaining holding space) then Amanda will disregard the constraint
   specified by this setting and start a new volume anyway.  Once
   writing to a volume has begun, this constraint is not applied unless
   and until a new volume is needed.</para>
@@ -1244,11 +1244,11 @@ Debug level of the taper process</para>
   <term><emphasis remap='B'>taperflush</emphasis> int</term>
   <listitem>
 <para>Default: <emphasis remap='I'>0</emphasis>.
-  At the end of a run, &A; will start a new tape to flush remaining
+  At the end of a run, Amanda will start a new tape to flush remaining
   data if there is more data on the holding disk at the end of a run
   than this setting allows; the amount is specified as a percentage of
   the capacity of a single
-  volume. In other words, at the end of a run, &A; will begin
+  volume. In other words, at the end of a run, Amanda will begin
   a new tape if the 
   inequality <inlineequation><mathphrase>h &gt; t &#215;
   f</mathphrase></inlineequation> is satisfied,
@@ -1342,7 +1342,7 @@ The path to this holding area.</para>
 <emphasis remap='I'>0 Gb</emphasis>.
 Amount of space that can be used in this holding disk area.
 If the value is zero, all available space on the file system is used.
-If the value is negative, &A; will use all available space minus that value.</para>
+If the value is negative, Amanda will use all available space minus that value.</para>
   </listitem>
   </varlistentry>
 
@@ -1358,7 +1358,7 @@ they are written to tape, so each dump image still corresponds to a single conti
 tape section.</para>
 <para>The default unit is Kbytes if it is not specified.</para>
 
-<para>If 0 is specified, &A; will create holding disk chunks as large as
+<para>If 0 is specified, Amanda will create holding disk chunks as large as
 ((INT_MAX/1024)-64) Kbytes.</para>
 
 <para>Each holding disk chunk includes a 32 Kbyte header, so the minimum
@@ -1367,7 +1367,7 @@ chunk size is 64 Kbytes (but that would be really silly).</para>
 <para>Operating systems that are limited to a maximum file size of 2 Gbytes
 actually cannot handle files that large.
 They must be at least one byte less than 2 Gbytes.
-Since &A; works with 32 Kbyte blocks, and
+Since Amanda works with 32 Kbyte blocks, and
 to handle the final read at the end of the chunk, the chunk size
 should be at least 64 Kbytes (2 * 32 Kbytes) smaller than the maximum
 file size, e.g. 2047 Mbytes.</para>
@@ -1466,7 +1466,7 @@ Specifies the port to connect to on the client.  It can be a service name or a n
 <emphasis remap='I'>10 Mbytes</emphasis>.
 The minimum savings required to trigger an automatic
 bump from one incremental level to the next, expressed as size.
-If &A; determines that the next higher backup level
+If Amanda determines that the next higher backup level
 will be this much smaller than the current level,
 it will do the next level.
 The value of this parameter is used only if the parameter 
@@ -1489,7 +1489,7 @@ See also the options
 The minimum savings required to trigger an automatic
 bump from one incremental level to the next, expressed as percentage of the
 current size of the DLE (size of current level 0).
-If &A; determines that the next higher backup level
+If Amanda determines that the next higher backup level
 will be this much smaller than the current level,
 it will do the next level.
 </para>
@@ -1511,7 +1511,7 @@ See also the options
 <para>Default:
 <literal>1.5</literal>.
 The bump size multiplier.
-&A; multiplies
+Amanda multiplies
 <emphasis remap='B'>bumpsize</emphasis>
 by this factor for each level.
 This prevents active filesystems from
@@ -1529,7 +1529,7 @@ Mbytes for level two, 40 Mbytes for level three, and so on.</para>
   <listitem>
 <para>Default:
 <emphasis remap='I'>2 days</emphasis>.
-To insure redundancy in the dumps, &A; keeps filesystems at the
+To insure redundancy in the dumps, Amanda keeps filesystems at the
 same incremental level for at least
 <emphasis remap='B'>bumpdays</emphasis>
 days, even if the other bump threshold criteria are met.</para>
@@ -1551,7 +1551,7 @@ A comment string describing this set of backup options.</para>
 <literal>0.50</literal>,
 <literal>0.50</literal>.
 The expected full and incremental compression factor for dumps.
-It is only used if &A; does not have any history information on
+It is only used if Amanda does not have any history information on
 compression rates for a filesystem, so should not usually need to be set.
 However, it may be useful for the first time a very large filesystem that 
 compresses very little is backed up.</para>
@@ -1562,13 +1562,13 @@ compresses very little is backed up.</para>
   <listitem>
 <para>Default:
 <emphasis remap='I'>client fast</emphasis>.
-If &A; does compression of the backup images, it can do so either on the backup client 
+If Amanda does compression of the backup images, it can do so either on the backup client 
 host before it crosses the network or on the tape server host as it goes from the
 network into the holding disk or to tape.  Which place to do compression (if at all) depends on how well the
 dump image usually compresses, the speed and load on the client or server, network capacity, 
 holding disk capacity, availability of tape hardware compression, etc.</para>
 
-<para>For either type of compression, &A; also allows the selection
+<para>For either type of compression, Amanda also allows the selection
 of three styles of compression.
 <emphasis remap='B'>Best</emphasis>
 is the best compression available, often at the expense of CPU overhead.
@@ -1613,7 +1613,7 @@ to use your own compression method. (See dumptype custom-compress in example/ama
 </variablelist>
 <para>Note that some tape devices do compression and this option has nothing
 to do with whether that is used. If hardware compression is used (usually via a particular tape device name
-or <emphasis remap='B'>mt</emphasis> option), &A; (software) compression should be disabled.</para>
+or <emphasis remap='B'>mt</emphasis> option), Amanda (software) compression should be disabled.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
@@ -1675,7 +1675,7 @@ client-encryption AND server-compression is not supported.
   <term><emphasis remap='B'>estimate</emphasis> <emphasis remap='I'>client|calcsize|server [client|calcsize|server ..]</emphasis></term>
   <listitem>
 <para>Default: <emphasis remap='I'>client</emphasis>.
-Determine the way &A; estimates the size of each DLE before beginning a backup.  This is a list of acceptable estimate methods, and Amanda applies the first method supported by the application.  The methods are:</para>
+Determine the way Amanda estimates the size of each DLE before beginning a backup.  This is a list of acceptable estimate methods, and Amanda applies the first method supported by the application.  The methods are:</para>
 <variablelist remap='TP'>
   <varlistentry>
     <term>client</term>
@@ -1726,7 +1726,7 @@ is a &gnutar; exclude expression. With
 <emphasis remap='I'>string</emphasis>
 is a file name on the client containing &gnutar; exclude expressions.
 The path to the specified exclude list file, if present (see description of
-'optional' below), must be readable by the &A; user.</para>
+'optional' below), must be readable by the Amanda user.</para>
 
 <para>All exclude expressions are concatenated in one file and passed to &gnutar;
 as an <option>--exclude-from</option> argument.</para>
@@ -1765,7 +1765,7 @@ for a backup of <filename>/var</filename>,
 <para>Default:
 <emphasis remap='I'>auto</emphasis>.
 Whether a holding disk should be used for these backups or whether they should go directly to tape.
-If the holding disk is a portion of another file system that &A;
+If the holding disk is a portion of another file system that Amanda
 is backing up, that file system should refer to a dumptype with
 <emphasis remap='B'>holdingdisk</emphasis>
 set to
@@ -1828,14 +1828,14 @@ is a glob expression. With
 <emphasis remap='I'>string</emphasis>
 is a file name on the client containing glob expressions.</para>
 
-<para>All include expressions are expanded by &A;, concatenated in one file and passed to &gnutar; as a
+<para>All include expressions are expanded by Amanda, concatenated in one file and passed to &gnutar; as a
 <option>--files-from</option> argument. They must start with &quot;./&quot; and contain no other &quot;/&quot;.</para>
 
 <para>Include expressions must always be specified as relative to the
 head directory of the DLE.</para>
 
 <note><para>For globbing to work at all, even the limited single level, 
-the top level directory of the DLE must be readable by the &A; user.</para>
+the top level directory of the DLE must be readable by the Amanda user.</para>
 </note>
 
 <para>With the <emphasis remap='B'>append</emphasis> keyword, the
@@ -1876,7 +1876,7 @@ across the network from the backup client host to the tape server host.</para>
   <listitem>
 <para>Default:
 <literal>1</literal>.
-The maximum number of backups from a single host that &A; will attempt to run in parallel.
+The maximum number of backups from a single host that Amanda will attempt to run in parallel.
 See also the main section parameter <emphasis remap='B'>inparallel</emphasis>.</para>
   </listitem>
   </varlistentry>
@@ -1893,7 +1893,7 @@ promotion, set it to 1 or 2 if your disks get overpromoted.</para>
   <term><emphasis remap='B'>priority</emphasis> <emphasis remap='I'> string</emphasis></term>
   <listitem>
 <para>Default: <emphasis remap='I'>medium</emphasis>.
-When there is no tape to write to, &A; will do incremental backups
+When there is no tape to write to, Amanda will do incremental backups
 in priority order to the holding disk. The priority may be
 high (2), medium (1), low (0) or a number of your choice.</para>
   </listitem>
@@ -1967,7 +1967,7 @@ This is normally enabled for daily backups and turned off for periodic archival 
 <para>Default:
 <emphasis remap='I'>no</emphasis>. If <emphasis remap='I'>true</emphasis> and
 <emphasis remap='B'>planner</emphasis> has scheduled a full backup, these disks will be skipped, and
-full backups should be run off-line on these days. It was reported that &A; only schedules 
+full backups should be run off-line on these days. It was reported that Amanda only schedules 
 level 1 incrementals in this configuration; this is probably a bug.</para>
   </listitem>
   </varlistentry>
@@ -1999,7 +1999,7 @@ The value should be hh*100+mm, e.g. 6:30PM (18:30) would be entered as
   <varlistentry>
   <term><emphasis remap='B'>standard</emphasis></term>
   <listitem>
-  <para>The standard &A; schedule.</para>
+  <para>The standard Amanda schedule.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
@@ -2024,7 +2024,7 @@ The value should be hh*100+mm, e.g. 6:30PM (18:30) would be entered as
   <term><emphasis remap='B'>incronly</emphasis></term>
   <listitem>
   <para>Only do incremental dumps. <command>amadmin force</command> should be used to tell
-  &A; that a full dump has been performed off-line, so that it resets to level 1.</para>
+  Amanda that a full dump has been performed off-line, so that it resets to level 1.</para>
   </listitem>
   </varlistentry>
   </variablelist>
@@ -2077,7 +2077,7 @@ the dump server may reasonably consume.
   </varlistentry>
 </variablelist>
 
-<para>The following <emphasis remap='B'>dumptype</emphasis> entries are predefined by &A;:</para>
+<para>The following <emphasis remap='B'>dumptype</emphasis> entries are predefined by Amanda:</para>
 
 <programlisting remap='.nf'>
 define dumptype "no-compress" {
@@ -2131,7 +2131,7 @@ define dumptype "testing" {
 }
 </programlisting>
 
-<para>&A; provides a
+<para>Amanda provides a
 <emphasis remap='B'>dumptype</emphasis>
 named
 <emphasis remap='I'>global</emphasis>
@@ -2144,7 +2144,7 @@ This provides an easy place to make changes that will affect every
 <emphasis remap='B'>dumptype</emphasis>, although you must be careful
 that every dumptype explicitly inherits from the
 <emphasis remap='I'>global</emphasis>
-dumptype - &A; does not do so automatically.</para>
+dumptype - Amanda does not do so automatically.</para>
 </refsect1>
 
 <refsect1><title>TAPETYPE SECTION</title>
@@ -2194,8 +2194,8 @@ convert it to kbytes using the device density.</para>
 <para>Default:
 <emphasis remap='I'>2000 kbytes</emphasis>. How much data will fit on a tape, expressed in kbytes.</para>
 
-<para>Note that this value is only used by &A; to schedule which backups will be run.
-Once the backups start, &A; will continue to write to a tape until it gets an error, 
+<para>Note that this value is only used by Amanda to schedule which backups will be run.
+Once the backups start, Amanda will continue to write to a tape until it gets an error, 
 regardless of what value is entered for <emphasis remap='B'>length</emphasis>
 (but see <manref name="amanda-devices" vol="7" /> for exceptions).
  </para>
@@ -2230,7 +2230,7 @@ tape devices.
 <para>Default:
 <emphasis remap='I'>200 bps</emphasis>.
 How fast the drive will accept data, in bytes per second.
-This parameter is NOT currently used by &A;.</para>
+This parameter is NOT currently used by Amanda.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
@@ -2238,7 +2238,7 @@ This parameter is NOT currently used by &A;.</para>
   <listitem>
 <para>A PostScript template file used by
 <emphasis remap='B'>amreport</emphasis>
-to generate labels. Several sample files are provided with the &A; sources in the
+to generate labels. Several sample files are provided with the Amanda sources in the
 <emphasis remap='I'>example</emphasis> directory.
 See the
 <manref name="amreport" vol="8"/>
@@ -2299,11 +2299,11 @@ is the name of this type of network interface. It is referenced from the
 
 <para>Note that these sections define network interface characteristics,
 not the actual interface that will be used. Nor do they impose limits on the bandwidth that will 
-actually be taken up by &A;.
-&A; computes the estimated bandwidth each file system backup will take
+actually be taken up by Amanda.
+Amanda computes the estimated bandwidth each file system backup will take
 based on the estimated size and time, then compares that plus any other running
 backups with the limit as another of the criteria when deciding whether
-to start the backup. Once a backup starts, &A; will use as much of the network as it can
+to start the backup. Once a backup starts, Amanda will use as much of the network as it can
 leaving throttling up to the operating system and network hardware.</para>
 
 <para>The interface options and values are:</para>

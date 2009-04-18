@@ -28,12 +28,12 @@
 
 <refsect1><title>DESCRIPTION</title>
 
-<para>Describe how to use application with &A;</para>
+<para>Describe how to use application with Amanda</para>
 </refsect1>
 
 <refsect1><title>APPLICATIONS</title>
 
-<para>This section lists the applications included with &A;. See the individual man pages for instructions on using them.  For complete How-To information, consult the Amanda wiki at http://wiki.zmanda.com.</para>
+<para>This section lists the applications included with Amanda. See the individual man pages for instructions on using them.  For complete How-To information, consult the Amanda wiki at http://wiki.zmanda.com.</para>
 
 <itemizedlist>
 <listitem>
