@@ -41,7 +41,7 @@ struct TapeDevicePrivate_s {
 /* Possible (abstracted) results from a system I/O operation. */
 typedef enum {
     RESULT_SUCCESS,
-    RESULT_ERROR,        /* Undefined error. */
+    RESULT_ERROR,        /* Undefined error (*errmsg set) */
     RESULT_SMALL_BUFFER, /* Tried to read with a buffer that is too
                             small. */
     RESULT_NO_DATA,      /* End of File, while reading */
@@ -97,8 +97,8 @@ static dumpfile_t * tape_device_seek_file (Device * self, guint file);
 static gboolean tape_device_seek_block (Device * self, guint64 block);
 static gboolean tape_device_finish (Device * self);
 static IoResult tape_device_robust_read (TapeDevice * self, void * buf,
-                                               int * count);
-static IoResult tape_device_robust_write (TapeDevice * self, void * buf, int count);
+                                               int * count, char **errmsg);
+static IoResult tape_device_robust_write (TapeDevice * self, void * buf, int count, char **errmsg);
 static gboolean tape_device_fsf (TapeDevice * self, guint count);
 static gboolean tape_device_bsf (TapeDevice * self, guint count, guint file);
 static gboolean tape_device_fsr (TapeDevice * self, guint count);
@@ -705,6 +705,7 @@ static DeviceStatusFlags tape_device_read_label(Device * dself) {
     IoResult result;
     dumpfile_t *header;
     DeviceStatusFlags new_status;
+    char *msg = NULL;
 
     self = TAPE_DEVICE(dself);
 
@@ -728,7 +729,8 @@ static DeviceStatusFlags tape_device_read_label(Device * dself) {
     /* Rewind it. */
     if (!tape_rewind(self->fd)) {
 	device_set_error(dself,
-	    vstrallocf(_("Error rewinding device %s"), self->private->device_filename),
+	    vstrallocf(_("Error rewinding device %s: %s"),
+		    self->private->device_filename, strerror(errno)),
 	      DEVICE_STATUS_DEVICE_ERROR
 	    | DEVICE_STATUS_VOLUME_ERROR);
         robust_close(self->fd);
@@ -737,21 +739,38 @@ static DeviceStatusFlags tape_device_read_label(Device * dself) {
 
     buffer_len = tape_device_read_size(self);
     header_buffer = malloc(buffer_len);
-    result = tape_device_robust_read(self, header_buffer, &buffer_len);
+    result = tape_device_robust_read(self, header_buffer, &buffer_len, &msg);
 
     if (result != RESULT_SUCCESS) {
         free(header_buffer);
         tape_rewind(self->fd);
         /* I/O error. */
-        if (result == RESULT_NO_DATA) {
+	switch (result) {
+	case RESULT_NO_DATA:
+	    msg = stralloc(_("no data"));
             new_status = (DEVICE_STATUS_VOLUME_ERROR |
 	                  DEVICE_STATUS_VOLUME_UNLABELED);
-        } else {
+	    break;
+
+	case RESULT_SMALL_BUFFER:
+	    msg = stralloc(_("block size too small"));
+            new_status = (DEVICE_STATUS_DEVICE_ERROR |
+	                  DEVICE_STATUS_VOLUME_ERROR);
+	    break;
+
+	default:
+	    msg = stralloc(_("unknown error"));
+	case RESULT_ERROR:
             new_status = (DEVICE_STATUS_DEVICE_ERROR |
 	                  DEVICE_STATUS_VOLUME_ERROR |
 	                  DEVICE_STATUS_VOLUME_UNLABELED);
+	    break;
         }
-	device_set_error(dself, stralloc(_("Error reading Amanda header")), new_status);
+	device_set_error(dself,
+		 g_strdup_printf(_("Error reading Amanda header: %s"),
+			msg? msg : _("unknown error")),
+		 new_status);
+	amfree(msg);
 	return dself->status;
     }
 
@@ -778,6 +797,7 @@ tape_device_write_block(Device * pself, guint size, gpointer data) {
     TapeDevice * self;
     char *replacement_buffer = NULL;
     IoResult result;
+    char *msg = NULL;
 
     self = TAPE_DEVICE(pself);
 
@@ -795,7 +815,7 @@ tape_device_write_block(Device * pself, guint size, gpointer data) {
         size = pself->block_size;
     }
 
-    result = tape_device_robust_write(self, data, size);
+    result = tape_device_robust_write(self, data, size, &msg);
     amfree(replacement_buffer);
 
     switch (result) {
@@ -810,10 +830,12 @@ tape_device_write_block(Device * pself, guint size, gpointer data) {
 	    return FALSE;
 
 	default:
+	    msg = stralloc(_("unknown error"));
 	case RESULT_ERROR:
 	    device_set_error(pself,
-		vstrallocf(_("Error writing block: %s"), strerror(errno)),
+		g_strdup_printf(_("Error writing block: %s"), msg),
 		DEVICE_STATUS_DEVICE_ERROR);
+	    amfree(msg);
 	    return FALSE;
     }
 
@@ -828,6 +850,7 @@ static int tape_device_read_block (Device * pself, gpointer buf,
     int size;
     IoResult result;
     gssize read_block_size = tape_device_read_size(pself);
+    char *msg = NULL;
 
     self = TAPE_DEVICE(pself);
 
@@ -842,7 +865,7 @@ static int tape_device_read_block (Device * pself, gpointer buf,
     }
 
     size = *size_req;
-    result = tape_device_robust_read(self, buf, &size);
+    result = tape_device_robust_read(self, buf, &size, &msg);
     switch (result) {
     case RESULT_SUCCESS:
         *size_req = size;
@@ -865,7 +888,7 @@ static int tape_device_read_block (Device * pself, gpointer buf,
         }
         g_assert (new_size > (gsize)*size_req);
 
-	g_warning("Device %s indicated blocksize %zd was too small; using %zd.",
+	g_info("Device %s indicated blocksize %zd was too small; using %zd.",
 	    pself->device_name, (gsize)*size_req, new_size);
 	*size_req = (int)new_size;
 	self->private->read_buffer_size = new_size;
@@ -888,9 +911,12 @@ static int tape_device_read_block (Device * pself, gpointer buf,
         return -1;
 
     default:
+	msg = stralloc(_("unknown error"));
+    case RESULT_ERROR:
 	device_set_error(pself,
-	    vstrallocf(_("Error reading from tape device: %s"), strerror(errno)),
+	    vstrallocf(_("Error reading from tape device: %s"), msg),
 	    DEVICE_STATUS_VOLUME_ERROR | DEVICE_STATUS_DEVICE_ERROR);
+	amfree(msg);
         return -1;
     }
 
@@ -904,6 +930,8 @@ static gboolean write_tapestart_header(TapeDevice * self, char * label,
      dumpfile_t * header;
      char * header_buf;
      Device * d_self = (Device*)self;
+     char *msg = NULL;
+
      tape_rewind(self->fd);
 
      header = make_tapestart_header(d_self, label, timestamp);
@@ -917,11 +945,13 @@ static gboolean write_tapestart_header(TapeDevice * self, char * label,
      }
      amfree(header);
 
-     result = tape_device_robust_write(self, header_buf, d_self->block_size);
+     result = tape_device_robust_write(self, header_buf, d_self->block_size, &msg);
      if (result != RESULT_SUCCESS) {
 	 device_set_error(d_self,
-	    vstrallocf(_("Error writing tapestart header: %s"), strerror(errno)),
+	    g_strdup_printf(_("Error writing tapestart header: %s"),
+			(result == RESULT_ERROR)? msg : _("out of space")),
 	    DEVICE_STATUS_DEVICE_ERROR);
+	amfree(msg);
 	amfree(header_buf);
 	return FALSE;
      }
@@ -1039,6 +1069,7 @@ static gboolean tape_device_start_file(Device * d_self,
     TapeDevice * self;
     IoResult result;
     char * amanda_header;
+    char *msg = NULL;
 
     self = TAPE_DEVICE(d_self);
 
@@ -1057,12 +1088,15 @@ static gboolean tape_device_start_file(Device * d_self,
 	    DEVICE_STATUS_DEVICE_ERROR);
 	return FALSE;
     }
-    result = tape_device_robust_write(self, amanda_header, d_self->block_size);
+
+    result = tape_device_robust_write(self, amanda_header, d_self->block_size, &msg);
     if (result != RESULT_SUCCESS) {
 	device_set_error(d_self,
-	    vstrallocf(_("Error writing file header: %s"), strerror(errno)),
+	    vstrallocf(_("Error writing file header: %s"),
+			(result == RESULT_ERROR)? msg : _("out of space")),
 	    DEVICE_STATUS_DEVICE_ERROR);
 	amfree(amanda_header);
+	amfree(msg);
         return FALSE;
     }
     amfree(amanda_header);
@@ -1101,6 +1135,7 @@ tape_device_seek_file (Device * d_self, guint file) {
     dumpfile_t * rval;
     int buffer_len;
     IoResult result;
+    char *msg;
 
     self = TAPE_DEVICE(d_self);
 
@@ -1141,23 +1176,33 @@ reseek:
     buffer_len = tape_device_read_size(d_self);
     header_buffer = malloc(buffer_len);
     d_self->is_eof = FALSE;
-    result = tape_device_robust_read(self, header_buffer, &buffer_len);
+    result = tape_device_robust_read(self, header_buffer, &buffer_len, &msg);
 
     if (result != RESULT_SUCCESS) {
         free(header_buffer);
         tape_rewind(self->fd);
-        if (result == RESULT_NO_DATA) {
+	switch (result) {
+	case RESULT_NO_DATA:
             /* If we read 0 bytes, that means we encountered a double
              * filemark, which indicates end of tape. This should
              * work even with QIC tapes on operating systems with
              * proper support. */
 	    d_self->file = file; /* other attributes are already correct */
             return make_tapeend_header();
+
+	case RESULT_SMALL_BUFFER:
+	    msg = stralloc(_("block size too small"));
+	    break;
+
+	default:
+	    msg = stralloc(_("unknown error"));
+	case RESULT_ERROR:
+	    break;
         }
-        /* I/O error. */
 	device_set_error(d_self,
-	    stralloc(_("Error reading Amanda header")),
+	    g_strdup_printf(_("Error reading Amanda header: %s"), msg),
 	    DEVICE_STATUS_DEVICE_ERROR | DEVICE_STATUS_VOLUME_ERROR);
+	amfree(msg);
         return NULL;
     }
 
@@ -1208,14 +1253,14 @@ tape_device_seek_block (Device * d_self, guint64 block) {
     if (difference > 0) {
         if (!tape_device_fsr(self, difference)) {
 	    device_set_error(d_self,
-		vstrallocf(_("Could not seek forward to block %ju"), (uintmax_t)block),
+		vstrallocf(_("Could not seek forward to block %ju: %s"), (uintmax_t)block, strerror(errno)),
 		DEVICE_STATUS_VOLUME_ERROR | DEVICE_STATUS_DEVICE_ERROR);
             return FALSE;
 	}
     } else if (difference < 0) {
         if (!tape_device_bsr(self, difference, d_self->file, d_self->block)) {
 	    device_set_error(d_self,
-		vstrallocf(_("Could not seek backward to block %ju"), (uintmax_t)block),
+		vstrallocf(_("Could not seek backward to block %ju: %s"), (uintmax_t)block, strerror(errno)),
 		DEVICE_STATUS_VOLUME_ERROR | DEVICE_STATUS_DEVICE_ERROR);
             return FALSE;
 	}
@@ -1228,6 +1273,7 @@ tape_device_seek_block (Device * d_self, guint64 block) {
 static gboolean
 tape_device_finish (Device * d_self) {
     TapeDevice * self;
+    char *msg = NULL;
 
     self = TAPE_DEVICE(d_self);
 
@@ -1264,12 +1310,14 @@ tape_device_finish (Device * d_self) {
 	    return FALSE;
 	}
 
-	result = tape_device_robust_write(self, header, d_self->block_size);
+	result = tape_device_robust_write(self, header, d_self->block_size, &msg);
 	if (result != RESULT_SUCCESS) {
 	    device_set_error(d_self,
-		vstrallocf(_("Error writing file header: %s"), strerror(errno)),
+		vstrallocf(_("Error writing file header: %s"),
+			    (result == RESULT_ERROR)? msg : _("out of space")),
 		DEVICE_STATUS_DEVICE_ERROR);
 	    amfree(header);
+	    amfree(msg);
 	    return FALSE;
 	}
 	amfree(header);
@@ -1291,9 +1339,11 @@ tape_device_finish (Device * d_self) {
 /* Works just like read(), except for the following:
  * 1) Retries on EINTR & friends.
  * 2) Stores count in parameter, not return value.
- * 3) Provides explicit return result. */
+ * 3) Provides explicit return result.
+ * *errmsg is only set on RESULT_ERROR.
+ */
 static IoResult
-tape_device_robust_read (TapeDevice * self, void * buf, int * count) {
+tape_device_robust_read (TapeDevice * self, void * buf, int * count, char **errmsg) {
     Device * d_self;
     int result;
 
@@ -1336,16 +1386,15 @@ tape_device_robust_read (TapeDevice * self, void * buf, int * count) {
 #endif
                         )) {
                 /* Buffer too small. */
+		g_warning("Buffer is too small (%d bytes) from %s: %s",
+			*count, self->private->device_filename, strerror(errno));
                 return RESULT_SMALL_BUFFER;
             } else {
-		device_set_error(d_self,
-		    vstrallocf(_("Error reading %d bytes from %s: %s"),
-				*count, self->private->device_filename, strerror(errno)),
-		    DEVICE_STATUS_DEVICE_ERROR | DEVICE_STATUS_VOLUME_ERROR);
+		*errmsg = g_strdup_printf(_("Error reading %d bytes from %s: %s"),
+			*count, self->private->device_filename, strerror(errno));
                 return RESULT_ERROR;
             }
         }
-
     }
 
     g_assert_not_reached();
@@ -1375,8 +1424,9 @@ static void check_resetofs(TapeDevice * self G_GNUC_UNUSED,
 #endif
 }
 
+/* *errmsg is only set on RESULT_ERROR */
 static IoResult
-tape_device_robust_write (TapeDevice * self, void * buf, int count) {
+tape_device_robust_write (TapeDevice * self, void * buf, int count, char **errmsg) {
     Device * d_self;
     int result;
 
@@ -1394,10 +1444,8 @@ tape_device_robust_write (TapeDevice * self, void * buf, int count) {
             return RESULT_SUCCESS;
         } else if (result >= 0) {
             /* write() returned a short count. This should not happen. */
-	    device_set_error(d_self,
-		     vstrallocf(_("Mysterious short write on tape device: Tried %d, got %d"),
-				count, result),
-		    DEVICE_STATUS_DEVICE_ERROR);
+	    *errmsg = g_strdup_printf("Mysterious short write on tape device: Tried %d, got %d",
+				count, result);
             return RESULT_ERROR;
         } else if (0
 #ifdef EAGAIN
@@ -1430,10 +1478,8 @@ tape_device_robust_write (TapeDevice * self, void * buf, int count) {
             return RESULT_NO_SPACE;
         } else {
             /* WTF */
-	    device_set_error(d_self,
-		    vstrallocf(_("Kernel gave unexpected write() result of \"%s\" on device %s"),
-					strerror(errno), self->private->device_filename),
-		    DEVICE_STATUS_DEVICE_ERROR);
+	    *errmsg = vstrallocf(_("Kernel gave unexpected write() result of \"%s\" on device %s"),
+			    strerror(errno), self->private->device_filename);
             return RESULT_ERROR;
         }
     }
