@@ -551,7 +551,11 @@ static int try_open_tape_device(TapeDevice * self, char * device_filename) {
     if (fd >= 0) {
         self->write_open_errno = 0;
     } else {
-        if (errno == EACCES || errno == EPERM) {
+        if (errno == EACCES || errno == EPERM
+#ifdef EROFS
+			    || errno == EROFS
+#endif
+	   ) {
             /* Device is write-protected. */
             self->write_open_errno = errno;
 #ifdef O_NONBLOCK
