@@ -1,4 +1,8 @@
 2009-04-20  Jean-Louis Martineau <martineau@zmanda.com>
+	* client-src/sendsize.c: Typo
+	* server-src/planner.c: Don't log failed estimate message.
+
+2009-04-20  Jean-Louis Martineau <martineau@zmanda.com>
 	* device-src/tape-device.c: handle EROFS in open.
 
 2009-04-20  Jean-Louis Martineau <martineau@zmanda.com>

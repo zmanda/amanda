@@ -887,7 +887,7 @@ application_api_calc_estimate(
 		g_printf("%s %d SIZE %lld\n", est->qamname, level,
 			 (long long)-2);
 		est->est[level].needestimate = 0;
-		dbprintf(_("Application '%s' can't estimate level %d"),
+		dbprintf(_("Application '%s' can't estimate level %d\n"),
                          est->dle->program, level);
 	    } else if (estimate_method == ES_ES) {
 		g_printf("%s %d SIZE %lld\n", est->qamname, level,

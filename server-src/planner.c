@@ -689,8 +689,8 @@ static void askfor(
     if (lev == -1) {
 	ep->estimate[seq].level = -1;
 	ep->estimate[seq].dumpdate = (char *)0;
-	ep->estimate[seq].nsize = (gint64)-2;
-	ep->estimate[seq].csize = (gint64)-2;
+	ep->estimate[seq].nsize = (gint64)-3;
+	ep->estimate[seq].csize = (gint64)-3;
 	ep->estimate[seq].guessed = 0;
 	return;
     }
@@ -699,8 +699,8 @@ static void askfor(
 
     ep->estimate[seq].dumpdate = stralloc(get_dumpdate(info,lev));
 
-    ep->estimate[seq].nsize = (gint64)-2;
-    ep->estimate[seq].csize = (gint64)-2;
+    ep->estimate[seq].nsize = (gint64)-3;
+    ep->estimate[seq].csize = (gint64)-3;
     ep->estimate[seq].guessed = 0;
 
     return;
@@ -1306,12 +1306,7 @@ static void get_estimates(void)
 	for (i=0; i < MAX_LEVELS; i++) {
 	    if (est(dp)->estimate[i].level != -1 &&
 	        est(dp)->estimate[i].nsize < (gint64)0) {
-	        if (est(dp)->estimate[i].nsize == (gint64)-1) {
-		    log_add(L_WARNING,
-			    _("disk %s:%s, estimate of level %d failed."),
-			    dp->host->hostname, qname,
-			    est(dp)->estimate[i].level);
-	        } else {
+	        if (est(dp)->estimate[i].nsize == (gint64)-3) {
 		    log_add(L_WARNING,
 			    _("disk %s:%s, estimate of level %d timed out."),
 			    dp->host->hostname, qname, est(dp)->estimate[i].level);
@@ -1958,10 +1953,6 @@ static void handle_result(
                     for (i=MAX_LEVELS; i >=0; i--) {
 		        if (est(dp)->estimate[i].level != -1 &&
                             est(dp)->estimate[i].nsize < (gint64)0) {
-			    log_add(L_WARNING,
-				_("disk %s:%s, estimate of level %d failed."),
-				dp->host->hostname, qname,
-                                est(dp)->estimate[i].level);
 			    est(dp)->estimate[i].level = -1;
 		        }
 		    }
