@@ -1220,10 +1220,17 @@ loadslot() {
 		shift
 	done
 	if [ $# -le 0 ]; then
-		Exit 2 \
-		     `_ '<none>'` \
-		     `_ 'Cannot find slot %s in slot list (%s)' "$find_slot " "$slot_list"`
-		return $?			# in case we are internal
+		if [ $find_slot -ge $firstslot -a $find_slot -le $lastslot ]; then
+			Exit 2 \
+			     `_ '<none>'` \
+			     `_ 'Cannot find a tape in slot %s' "$find_slot "`
+			return $?			# in case we are internal
+		else
+			Exit 2 \
+			     `_ '<none>'` \
+			     `_ 'Cannot find slot %s in slot list (%s)' "$find_slot " "$slot_list"`
+			return $?			# in case we are internal
+		fi
 	fi
 
 	# Determine the slot to load.
