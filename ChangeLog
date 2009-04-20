@@ -1,3 +1,6 @@
+2009-04-20  Jean-Louis Martineau <martineau@zmanda.com>
+	* device-src/tape-device.c: handle EROFS in open.
+
 2009-04-17  Nikolas Coukouma <atrus@zmanda.com>
 	* device-src/device.c: fix error message for unparsable property
 
