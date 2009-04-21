@@ -2008,7 +2008,7 @@ match_disklist(
 	    else {
 		char *errstr1;
 		if (strchr(sargv[i], (int)'\\')) {
-		    errstr1 = vstrallocf(_("Argument '%s' matches neither a host nor a disk, quoting may not be correct.\n"), sargv[i]);
+		    errstr1 = vstrallocf(_("Argument '%s' matches neither a host nor a disk; quoting may not be correct.\n"), sargv[i]);
 		} else {
 		    errstr1 = vstrallocf(_("Argument '%s' matches neither a host nor a disk.\n"), sargv[i]);
 		}
