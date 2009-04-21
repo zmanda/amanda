@@ -1,3 +1,19 @@
+2009-04-21  Jean-Louis Martineau <martineau@zmanda.com>
+	* man/xml-source/amanda-devices.7.xml: Add 'FSF_AFTER_FILEMARK'
+	  property to 'tape:' driver.
+	* device-src/tape-device.c: Add code for new 'FSF_AFTER_FILEMARK'
+	  property, set is_eof to FLASE where needed.
+	* device-src/tape-device.h: Add fsf_after_filemark to _TapeDevice.
+	* device-src/tape-aix.c, device-src/tape-uware.c,
+	  device-src/tape-xenix.c, device-src/tape-posix.c: Set default value
+	  for FSF_AFTER_FILEMARK.
+	* config/amanda/defaults.m4: Find default value for 'FSF_AFTER_FILEMARK'
+	  property.
+	* xfer-src/dest-null.c: Remove bogus assert.
+	* device-src/amtapetype.pl: New -p option to discover driver properties,
+	  it can find value for the 'FSF_AFTER_FILEMARK' property.
+	* man/xml-source/amtapetype.8.xml: Document -p options
+
 2009-04-20  Jean-Louis Martineau <martineau@zmanda.com>
 	* client-src/sendsize.c: Typo
 	* server-src/planner.c: Don't log failed estimate message.

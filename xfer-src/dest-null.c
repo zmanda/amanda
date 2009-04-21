@@ -150,7 +150,6 @@ xfer_dest_null(
 	self->do_verify = TRUE;
 	simpleprng_seed(&self->prng, prng_seed);
     } else {
-	g_assert(0);
 	self->do_verify = FALSE;
     }
 

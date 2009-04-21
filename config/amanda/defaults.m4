@@ -139,4 +139,12 @@ AC_DEFUN([AMANDA_SETUP_DEFAULTS],
 
     AC_DEFINE_DIR([DEFAULT_AMANDATES_FILE], [amandates],
         [Default location for 'amandates'])
+
+    DEFAULT_FSF_AFTER_FILEMARK="FALSE"
+    case "$target" in
+	*-solaris*) DEFAULT_FSF_AFTER_FILEMARK="TRUE"
+		    ;;
+    esac
+    AC_DEFINE_UNQUOTED(DEFAULT_FSF_AFTER_FILEMARK, $DEFAULT_FSF_AFTER_FILEMARK,
+	[Define if a FSF is needed on filemark.])
 ])

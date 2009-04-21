@@ -488,6 +488,10 @@ operations can be emulated with the MTREW and read data operations.</para>
  (read-write) This boolean property specifies whether the device driver may use the MTFSF operation (forward seek file).
 </listitem></varlistentry>
  <!-- ==== -->
+ <varlistentry><term>FSF_AFTER_FILEMARK</term><listitem>
+ (read-write) This boolean property specifies whether the device driver needs a FSF to go the next file after the filemark is read. Default to "TRUE" on Solaris and "FALSE" on all others machines.
+</listitem></varlistentry>
+ <!-- ==== -->
  <varlistentry><term>FSR</term><listitem>
  (read-write) This boolean property specifies whether the device driver may use the MTFSR operation (forward seek record).
 </listitem></varlistentry>
