@@ -44,6 +44,7 @@ my $opt_tapetype_name = 'unknown-tapetype';
 my $opt_force = 0;
 my $opt_label = "amtapetype-".(int rand 2**31);
 my $opt_device_name;
+my $opt_property;
 
 # global "hint" from the compression heuristic as to how fast this
 # drive is.
@@ -270,6 +271,252 @@ sub check_compression {
     return $compression_enabled;
 }
 
+sub data_to_null {
+    my ($device) = @_;
+    my $got_error = 0;
+
+    my $xfer = Amanda::Xfer->new([
+        Amanda::Xfer::Source::Device->new($device),
+        Amanda::Xfer::Dest::Null->new(0),
+    ]); 
+
+    $xfer->get_source()->set_callback(sub {
+	my ($src, $xmsg, $xfer) = @_;
+	if ($xmsg->{type} == $Amanda::Xfer::XMSG_ERROR) {
+	    $got_error = $xmsg->{message};
+	}
+	if ($xfer->get_status() == $Amanda::Xfer::XFER_DONE) {
+	    Amanda::MainLoop::quit();
+	}
+    });
+    $xfer->start();
+
+    Amanda::MainLoop::run();
+}
+
+sub check_property {
+    my ($device) = @_;
+
+    my $fsf_after_filemark = $device->property_get("FSF_AFTER_FILEMARK");
+
+    # not a 'tape:' device
+    return if !defined $fsf_after_filemark;
+
+    $device->start($ACCESS_WRITE, "TEST-001", "20080706050403");
+
+    my $hdr = new Amanda::Header;
+
+    $hdr->{type} = $Amanda::Header::F_DUMPFILE;
+    $hdr->{name} = "localhost";
+    $hdr->{disk} = "/test1";
+    $hdr->{datestamp} = "20080706050403";
+    $device->start_file($hdr);
+    $device->finish_file();
+
+    $hdr->{type} = $Amanda::Header::F_DUMPFILE;
+    $hdr->{name} = "localhost";
+    $hdr->{disk} = "/test2";
+    $hdr->{datestamp} = "20080706050403";
+    $device->start_file($hdr);
+    $device->finish_file();
+
+    $hdr->{type} = $Amanda::Header::F_DUMPFILE;
+    $hdr->{name} = "localhost";
+    $hdr->{disk} = "/test3";
+    $hdr->{datestamp} = "20080706050403";
+    $device->start_file($hdr);
+    $device->finish_file();
+
+    $device->finish();
+
+    #set fsf_after_filemark to false
+    $device->property_set('FSF_AFTER_FILEMARK', 0)
+	    or die "Error setting FSF_AFTER_FILEMARK: " . $device->error_or_status();
+
+    my $need_fsf_after_filemark = 0;
+
+    if ($device->read_label() != $DEVICE_STATUS_SUCCESS) {
+	die ("Could not read label from: " . $device->error_or_status());
+    }
+    if ($device->volume_label != "TEST-001") {
+	die ("wrong label: ", $device->volume_label);
+    }
+    $device->start($ACCESS_READ, undef, undef)
+	or die ("Could not start device: " . $device->error_or_status());
+
+    $hdr = $device->seek_file(1);
+    if ($device->status() != $DEVICE_STATUS_SUCCESS) {
+	die ("seek_file(1) failed");
+    }
+    if ($hdr->{disk} ne "/test1") {
+	die ("Wrong disk: " . $hdr->{disk} . " expected /test1");
+    }
+    data_to_null($device);
+
+    $hdr = $device->seek_file(2);
+    if ($device->status() == $DEVICE_STATUS_SUCCESS) {
+	if ($hdr->{disk} ne "/test2") {
+	    die ("Wrong disk: " . $hdr->{disk} . " expected /test2");
+	}
+	data_to_null($device);
+
+	$hdr = $device->seek_file(3);
+	if ($device->status() != $DEVICE_STATUS_SUCCESS) {
+            die("seek_file(3) failed");
+	}
+	if ($hdr->{disk} ne "/test3") {
+	    die ("Wrong disk: " . $hdr->{disk} . " expected /test3");
+	}
+	data_to_null($device);
+    } else {
+	$need_fsf_after_filemark = 1;
+    }
+
+    $device->finish();
+
+    #verify need_fsf_after_filemark
+    my $fsf_after_filemark_works = 0;
+    if ($need_fsf_after_filemark) {
+	#set fsf_after_filemark to true
+	$device->property_set('FSF_AFTER_FILEMARK', 1)
+	    or die "Error setting FSF_AFTER_FILEMARK: " . $device->error_or_status();
+
+	if ($device->read_label() != $DEVICE_STATUS_SUCCESS) {
+	    die ("Could not read label from: " . $device->error_or_status());
+	}
+	if ($device->volume_label != "TEST-001") {
+	    die ("wrong label: ", $device->volume_label);
+	}
+	$device->start($ACCESS_READ, undef, undef)
+	    or die ("Could not start device: " . $device->error_or_status());
+
+	$hdr = $device->seek_file(1);
+	if ($device->status() != $DEVICE_STATUS_SUCCESS) {
+	    die ("seek_file(1) failed");
+	}
+	if ($hdr->{disk} ne "/test1") {
+	    die ("Wrong disk: " . $hdr->{disk} . " expected /test1");
+	}
+	data_to_null($device);
+
+	$hdr = $device->seek_file(2);
+	if ($device->status() == $DEVICE_STATUS_SUCCESS) {
+	    if ($hdr->{disk} ne "/test2") {
+		die ("Wrong disk: " . $hdr->{disk} . " expected /test2");
+	    }
+	    data_to_null($device);
+
+	    $hdr = $device->seek_file(3);
+	    if ($device->status() != $DEVICE_STATUS_SUCCESS) {
+	        die("seek_file(3) failed");
+	    }
+	    if ($hdr->{disk} ne "/test3") {
+		die ("Wrong disk: " . $hdr->{disk} . " expected /test3");
+	    }
+	    data_to_null($device);
+	    $fsf_after_filemark_works = 1;
+        } else {
+	    die("seek_file(2) failed");
+        }
+	$device->finish();
+    }
+
+    if ($need_fsf_after_filemark == 0 && $fsf_after_filemark_works == 0) {
+	if (defined $opt_property || $fsf_after_filemark) {
+	    print STDOUT "device_property \"FSF_AFTER_FILEMARK\" \"false\"\n";
+	}
+	$device->property_set('FSF_AFTER_FILEMARK', 0);
+    } elsif ($need_fsf_after_filemark == 1 && $fsf_after_filemark_works == 1) {
+	if (defined $opt_property || !$fsf_after_filemark) {
+	    print STDOUT "device_property \"FSF_AFTER_FILEMARK\" \"true\"\n";
+	}
+	$device->property_set('FSF_AFTER_FILEMARK', 1);
+    } else {
+	die ("Broken seek_file");
+    }
+
+    #Check seek to file 1 from header
+    if ($device->read_label() != $DEVICE_STATUS_SUCCESS) {
+	die ("Could not read label from: " . $device->error_or_status());
+    }
+    if ($device->volume_label != "TEST-001") {
+	die ("wrong label: ", $device->volume_label);
+    }
+    $device->start($ACCESS_READ, undef, undef)
+	or die ("Could not start device: " . $device->error_or_status());
+
+    $hdr = $device->seek_file(1);
+    if ($device->status() != $DEVICE_STATUS_SUCCESS) {
+	die ("seek_file(1) failed");
+    }
+    if ($hdr->{disk} ne "/test1") {
+	die ("Wrong disk: " . $hdr->{disk} . " expected /test1");
+    }
+    $device->finish();
+
+    #Check seek to file 2 from header
+    if ($device->read_label() != $DEVICE_STATUS_SUCCESS) {
+	die ("Could not read label from: " . $device->error_or_status());
+    }
+    if ($device->volume_label != "TEST-001") {
+	die ("wrong label: ", $device->volume_label);
+    }
+    $device->start($ACCESS_READ, undef, undef)
+	or die ("Could not start device: " . $device->error_or_status());
+
+    $hdr = $device->seek_file(2);
+    if ($device->status() != $DEVICE_STATUS_SUCCESS) {
+	die ("seek_file(2) failed");
+    }
+    if ($hdr->{disk} ne "/test2") {
+	die ("Wrong disk: " . $hdr->{disk} . " expected /test1");
+    }
+    $device->finish();
+
+    #Check seek to file 3 from header
+    if ($device->read_label() != $DEVICE_STATUS_SUCCESS) {
+	die ("Could not read label from: " . $device->error_or_status());
+    }
+    if ($device->volume_label != "TEST-001") {
+	die ("wrong label: ", $device->volume_label);
+    }
+    $device->start($ACCESS_READ, undef, undef)
+	or die ("Could not start device: " . $device->error_or_status());
+
+    $hdr = $device->seek_file(3);
+    if ($device->status() != $DEVICE_STATUS_SUCCESS) {
+	die ("seek_file(3) failed");
+    }
+    if ($hdr->{disk} ne "/test3") {
+	die ("Wrong disk: " . $hdr->{disk} . " expected /test1");
+    }
+    $device->finish();
+
+    #Check seek to file 3 from eof of 1
+    if ($device->read_label() != $DEVICE_STATUS_SUCCESS) {
+	die ("Could not read label from: " . $device->error_or_status());
+    }
+    if ($device->volume_label != "TEST-001") {
+	die ("wrong label: ", $device->volume_label);
+    }
+    $device->start($ACCESS_READ, undef, undef)
+	or die ("Could not start device: " . $device->error_or_status());
+
+    $hdr = $device->seek_file(1);
+    if ($device->status() != $DEVICE_STATUS_SUCCESS) {
+	die ("seek_file(1) failed");
+    }
+    data_to_null($device);
+    $hdr = $device->seek_file(3);
+    if ($device->status() != $DEVICE_STATUS_SUCCESS) {
+	die ("seek_file(3) failed");
+    }
+    if ($hdr->{disk} ne "/test3") {
+	die ("Wrong disk: " . $hdr->{disk} . " expected /test3");
+    }
+    $device->finish();
+}
+
 sub make_tapetype {
     my ($device, $compression_enabled) = @_;
     my $blocksize = $device->property_get("BLOCK_SIZE");
@@ -351,6 +598,7 @@ Usage: amtapetype [-h] [-c] [-f] [-b blocksize] [-t typename] [-l label]
         -b   Blocksize to use (default 32k)
         -t   Name to give to the new tapetype definition
         -l   Label to write to the tape (default is randomly generated)
+        -p   Check property of the device.
         -o   Overwrite configuration parameter (such as device properties)
     Blocksize can include an optional suffix (k, m, or g)
 EOF
@@ -379,6 +627,7 @@ GetOptions(
     't=s' => \$opt_tapetype_name,
     'f' => \$opt_force,
     'l' => \$opt_label,
+    'p' => \$opt_property,
     'o=s' => sub { add_config_overwrite_opt($config_overwrites, $_[1]); },
 ) or usage();
 usage() if (@ARGV != 1);
@@ -398,16 +647,21 @@ Amanda::Util::finish_setup($RUNNING_AS_ANY);
 
 my $device = open_device();
 
-my $compression_enabled = check_compression($device);
-print STDERR "Compression: ",
-    $compression_enabled? "enabled" : "disabled",
-    "\n";
+# Find property of the device.
+check_property($device);
 
-if ($compression_enabled and !$opt_force) {
-    print STDERR "Turn off compression or run amtapetype with the -f option\n";
-    exit(1);
-}
+if (!defined $opt_property) {
+    my $compression_enabled = check_compression($device);
+    print STDERR "Compression: ",
+        $compression_enabled? "enabled" : "disabled",
+        "\n";
 
-if (!$opt_only_compression) {
-    make_tapetype($device, $compression_enabled);
+    if ($compression_enabled and !$opt_force) {
+        print STDERR "Turn off compression or run amtapetype with the -f option\n";
+        exit(1);
+    }
+
+    if (!$opt_only_compression) {
+        make_tapetype($device, $compression_enabled);
+    }
 }

@@ -102,6 +102,7 @@ DeviceStatusFlags tape_is_ready(int fd G_GNUC_UNUSED, TapeDevice *t_self G_GNUC_
 void tape_device_detect_capabilities(TapeDevice * t_self) {
     tape_device_set_capabilities(t_self,
 	TRUE,  PROPERTY_SURETY_BAD,  PROPERTY_SOURCE_DEFAULT, /* fsf*/
+	DEFAULT_FSF_AFTER_FILEMARK, PROPERTY_SURETY_BAD,  PROPERTY_SOURCE_DEFAULT, /* fsf_after_filemark*/
 	TRUE,  PROPERTY_SURETY_BAD,  PROPERTY_SOURCE_DEFAULT, /* bsf*/
 	TRUE,  PROPERTY_SURETY_BAD,  PROPERTY_SOURCE_DEFAULT, /* fsr*/
 	TRUE,  PROPERTY_SURETY_BAD,  PROPERTY_SOURCE_DEFAULT, /* bsr*/

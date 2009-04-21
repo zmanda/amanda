@@ -33,6 +33,7 @@
     <arg choice='opt'>-h </arg>
     <arg choice='opt'>-c </arg>
     <arg choice='opt'>-f </arg>
+    <arg choice='opt'>-p </arg>
     <arg choice='opt'>-b <replaceable>blocksize</replaceable></arg>
     <arg choice='opt'>-t <replaceable>typename</replaceable></arg>
     <arg choice='opt'>-l <replaceable>label</replaceable></arg>
@@ -67,6 +68,13 @@ This takes a few minutes only.</para>
   <listitem>
 <para>Run amtapetype even if the loaded volume is already in use or compression
 is enabled.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-p</option></term>
+  <listitem>
+<para>Run only the device property discovery.
+</para>
   </listitem>
   </varlistentry>
   <varlistentry>
