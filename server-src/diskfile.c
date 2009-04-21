@@ -2006,8 +2006,14 @@ match_disklist(
 		prev_match = 1;
 	    }
 	    else {
-		char *errstr1 = vstrallocf(_("Argument '%s' matches neither a host nor a disk.\n"), sargv[i]);
+		char *errstr1;
+		if (strchr(sargv[i], (int)'\\')) {
+		    errstr1 = vstrallocf(_("Argument '%s' matches neither a host nor a disk, quoting may not be correct.\n"), sargv[i]);
+		} else {
+		    errstr1 = vstrallocf(_("Argument '%s' matches neither a host nor a disk.\n"), sargv[i]);
+		}
 		vstrextend(&errstr, errstr1, NULL);
+		amfree(errstr1);
 		prev_match = 0;
 	    }
 	}

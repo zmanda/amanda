@@ -1,4 +1,7 @@
 2009-04-21  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/diskfile.c: Print ", quoting may not be correct".
+
+2009-04-21  Jean-Louis Martineau <martineau@zmanda.com>
 	* man/xml-source/amanda-devices.7.xml: Add 'FSF_AFTER_FILEMARK'
 	  property to 'tape:' driver.
 	* device-src/tape-device.c: Add code for new 'FSF_AFTER_FILEMARK'
