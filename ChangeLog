@@ -1,3 +1,7 @@
+2009-04-22  Sam Couter <sam@couter.id.au>
+	* changer-src/chg-glue.pl: return a helpful error message when
+	  Amanda::Changer->new() fails
+
 2009-04-21  Jean-Louis Martineau <martineau@zmanda.com>
 	* man/xml-source/amanda-devices.7.xml: Add 'FSF_AFTER_FILEMARK'
 	  property to 'tape:' driver.
