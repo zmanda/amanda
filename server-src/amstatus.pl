@@ -338,6 +338,7 @@ while($lineX = <AMDUMP>) {
 		$holding_file = $line[5];
 		$hostpart=&make_hostpart($host,$partition,$datestamp);
 		$flush{$hostpart}=0;
+		$dump_finished{$hostpart}=0;
 		$holding_file{$hostpart}=$holding_file;
 		$level{$hostpart}=$level;
 	} elsif($line[0] eq "driver") {
@@ -952,7 +953,7 @@ foreach $host (sort @hosts) {
 							}
 							print " dumping to tape";
 							if(defined($tapedsize{$hostpart})) {
-								printf " (%d$unit done)", $tapedsize{$hostpart};
+								printf " (%d$unit done (%0.2f%%))", $tapedsize{$hostpart}, 100.0 * $tapedsize{$hostpart}/$esize{$hostpart};
 								$dtsize += $tapedsize{$hostpart};
 							}
 							if( defined $starttime ) {
@@ -980,7 +981,7 @@ foreach $host (sort @hosts) {
 								print " flushing to tape";
 							}
 							if(defined($tapedsize{$hostpart})) {
-								printf " (%d$unit done)", $tapedsize{$hostpart};
+								printf " (%d$unit done (%0.2f%%))", $tapedsize{$hostpart}, 100.0 * $tapedsize{$hostpart}/$size{$hostpart};
 							}
 							if( defined $starttime ) {
 								print " (", &showtime($taper_time{$hostpart}), ")";

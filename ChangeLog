@@ -1,3 +1,6 @@
+2009-04-22  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amstatus.pl: Print percentage done when writing to tape.
+
 2009-04-21  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/Makefile.am server-src/xfer-server.h
 	  server-src/xfer-source-holding.c: new module reading from holding
