@@ -444,6 +444,8 @@ if (!@tapes) {
 
 printf("You will need the following tape%s: %s\n", (@tapes > 1) ? "s" : "",
        join(", ", @tapes));
+print "Press enter when ready\n";
+<STDIN>;
 
 # Now loop over the images, verifying each one.  
 

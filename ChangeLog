@@ -1,4 +1,7 @@
 2009-04-22  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amcheckdump.pl: Wait for an input before reading tape.
+
+2009-04-22  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/amsamba.pl: Parse username ending with '%'.
 
 2009-04-22  Sam Couter <sam@couter.id.au>
