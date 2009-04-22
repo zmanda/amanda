@@ -223,6 +223,7 @@ sub findpass {
 	        my ($username, $password) = split('%', $userpasswd, 2);
 	        $self->{username} = $username;
 	        $self->{password} = $password;
+		$self->{password} = undef if (defined $password && $password eq "");
             } else {
 	        $self->{username} = "guest";
             }

@@ -1,3 +1,6 @@
+2009-04-22  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amsamba.pl: Parse username ending with '%'.
+
 2009-04-22  Sam Couter <sam@couter.id.au>
 	* changer-src/chg-glue.pl: return a helpful error message when
 	  Amanda::Changer->new() fails
