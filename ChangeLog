@@ -1,3 +1,7 @@
+2009-04-22  Sam Couter <sam@couter.id.au>
+	* changer-src/chg-glue.pl: return a helpful error message when
+	  Amanda::Changer->new() fails
+
 2009-04-22  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amstatus.pl: Print percentage done when writing to tape.
 

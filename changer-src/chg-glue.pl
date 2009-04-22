@@ -301,6 +301,9 @@ Amanda::Util::finish_setup($RUNNING_AS_DUMPUSER);
 $| = 1;
 
 $chg = Amanda::Changer->new();
+if ($chg->isa("Amanda::Changer::Error")) {
+    die("Error creating changer: $chg");
+}
 
 Amanda::MainLoop::call_later(\&getcmd);
 Amanda::MainLoop::run();
