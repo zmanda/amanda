@@ -136,6 +136,16 @@ of the device file.
 This source reads data from a file descriptor.  It reads until EOF, but does
 not close the descriptor.  Be careful not to let Perl close the file for you!
 
+=head3 Amanda::Xfer::Source::Holding (SERVER-ONLY)
+
+  Amanda::Xfer::Source::Holding->new($filename);
+
+This source reads data from a holding file (see L<Amanda::Holding>).
+If the transfer only consists of a C<Amanda::Xfer::Source::Holding> and
+an C<Amanda::Xfer::Dest::Taper> (with no filters), then the source will call
+the destination's C<cache_inform> method so that it can use holding chunks for
+a split-part cache.
+
 =head3 Amanda::Xfer::Source::Random
 
   Amanda::Xfer::Source::Random->new($length, $seed);
@@ -236,7 +246,8 @@ C<$retry_part = !successful>.
 If neither the memory nor disk caches are in use, but the dumpfile is available
 on disk, then the C<cache_inform> method allows the element to use that on-disk
 data to support retries.  This is intended to support transfers from Amanda's
-holding disk, but may be useful for other purposes.
+holding disk (see C<Amanda::Xfer::Source::Holding>), but may be useful for
+other purposes.
 
   $dest->cache_inform($filename, $offset, $length);
 
@@ -752,9 +763,9 @@ PACKAGE(Amanda::Xfer)
 # worry, the blessings work out just fine)
 *new = *Amanda::Xfer::Xfer::new;
 
-# try to load Amanda::XferDevice, which is server-only.  If it's not found, then
+# try to load Amanda::XferServer, which is server-only.  If it's not found, then
 # its classes just remain undefined.
 BEGIN {
-    eval "use Amanda::XferDevice;";
+    eval "use Amanda::XferServer;";
 }
 %}

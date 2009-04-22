@@ -90,14 +90,6 @@ typedef struct FileSlice {
 
 static GObjectClass *parent_class = NULL;
 
-GType xfer_dest_taper_get_type(void);
-#define XFER_DEST_TAPER_TYPE (xfer_dest_taper_get_type())
-#define XFER_DEST_TAPER(obj) G_TYPE_CHECK_INSTANCE_CAST((obj), xfer_dest_taper_get_type(), XferDestTaper)
-#define XFER_DEST_TAPER_CONST(obj) G_TYPE_CHECK_INSTANCE_CAST((obj), xfer_dest_taper_get_type(), XferDestTaper const)
-#define XFER_DEST_TAPER_CLASS(klass) G_TYPE_CHECK_CLASS_CAST((klass), xfer_dest_taper_get_type(), XferDestTaperClass)
-#define IS_XFER_DEST_TAPER(obj) G_TYPE_CHECK_INSTANCE_TYPE((obj), xfer_dest_taper_get_type ())
-#define XFER_DEST_TAPER_GET_CLASS(obj) G_TYPE_INSTANCE_GET_CLASS((obj), xfer_dest_taper_get_type(), XferDestTaperClass)
-
 typedef struct XferDestTaper {
     XferElement __parent__;
 
@@ -1294,7 +1286,7 @@ cache_inform_impl(
     FileSlice *slice, *iter;
 
     /* do we even need this info? */
-    if (self->disk_cache_filename || self->use_mem_cache)
+    if (self->disk_cache_filename || self->use_mem_cache || self->part_size == 0)
 	return;
 
     /* handle the (admittedly unlikely) event that length is larger than gsize.

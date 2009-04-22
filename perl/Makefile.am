@@ -254,16 +254,16 @@ MAINTAINERCLEANFILES += Amanda/Xfer.c Amanda/Xfer.pm
 EXTRA_DIST += Amanda/Xfer.swg Amanda/Xfer.pm
 
 if WANT_SERVER
-# PACKAGE: Amanda::XferDevice
-libXferDevicedir = $(amperldir)/auto/Amanda/XferDevice
-libXferDevice_LTLIBRARIES = libXferDevice.la
-libXferDevice_la_SOURCES = Amanda/XferDevice.c $(AMGLUE_SWG)
-libXferDevice_la_LDFLAGS = $(PERL_EXT_LDFLAGS)
-libXferDevice_la_LIBADD = libamglue.la \
-	$(top_builddir)/device-src/libamdevice.la
-Amanda_DATA += Amanda/XferDevice.pm
-MAINTAINERCLEANFILES += Amanda/XferDevice.c Amanda/XferDevice.pm
-EXTRA_DIST += Amanda/XferDevice.swg Amanda/XferDevice.pm
+# PACKAGE: Amanda::XferServer
+libXferServerdir = $(amperldir)/auto/Amanda/XferServer
+libXferServer_LTLIBRARIES = libXferServer.la
+libXferServer_la_SOURCES = Amanda/XferServer.c $(AMGLUE_SWG)
+libXferServer_la_LDFLAGS = $(PERL_EXT_LDFLAGS)
+libXferServer_la_LIBADD = libamglue.la \
+	$(top_builddir)/server-src/libamserver.la
+Amanda_DATA += Amanda/XferServer.pm
+MAINTAINERCLEANFILES += Amanda/XferServer.c Amanda/XferServer.pm
+EXTRA_DIST += Amanda/XferServer.swg Amanda/XferServer.pm
 endif
 
 # PACKAGE: Amanda::BigIntCompat

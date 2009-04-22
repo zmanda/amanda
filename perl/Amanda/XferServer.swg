@@ -18,7 +18,7 @@
  * Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
  */
 
-%module "Amanda::XferDevice"
+%module "Amanda::XferServer"
 %include "amglue/amglue.swg"
 %include "exception.i"
 %import "Amanda/Xfer.swg"
@@ -34,7 +34,7 @@
 %perlcode %{
 =head1 NAME
 
-Amanda::XferDevice - server-only parts of Amanda::Xfer
+Amanda::XferServer - server-only parts of Amanda::Xfer
 
 This package is automatically imported into L<Amanda::Xfer> if it exists; it
 is completely documented there.
@@ -58,6 +58,10 @@ XferElement *xfer_dest_taper(
     gboolean use_mem_cache,
     const char *disk_cache_filename);
 
+%newobject xfer_source_holding;
+XferElement * xfer_source_holding(
+    const char *filename);
+
 void xfer_dest_taper_start_part(
     XferElement *self,
     gboolean retry_part,
@@ -74,18 +78,24 @@ void xfer_dest_taper_cache_inform(
 
 PACKAGE(Amanda::Xfer::Source::Device)
 XFER_ELEMENT_SUBCLASS()
-DECLARE_CONSTRUCTOR(Amanda::XferDevice::xfer_source_device)
+DECLARE_CONSTRUCTOR(Amanda::XferServer::xfer_source_device)
 
 /* ---- */
 
 PACKAGE(Amanda::Xfer::Dest::Device)
 XFER_ELEMENT_SUBCLASS()
-DECLARE_CONSTRUCTOR(Amanda::XferDevice::xfer_dest_device)
+DECLARE_CONSTRUCTOR(Amanda::XferServer::xfer_dest_device)
+
+/* ---- */
+
+PACKAGE(Amanda::Xfer::Source::Holding)
+XFER_ELEMENT_SUBCLASS()
+DECLARE_CONSTRUCTOR(Amanda::XferServer::xfer_source_holding)
 
 /* ---- */
 
 PACKAGE(Amanda::Xfer::Dest::Taper)
 XFER_ELEMENT_SUBCLASS()
-DECLARE_CONSTRUCTOR(Amanda::XferDevice::xfer_dest_taper)
-DECLARE_METHOD(start_part, Amanda::XferDevice::xfer_dest_taper_start_part)
-DECLARE_METHOD(cache_inform, Amanda::XferDevice::xfer_dest_taper_cache_inform)
+DECLARE_CONSTRUCTOR(Amanda::XferServer::xfer_dest_taper)
+DECLARE_METHOD(start_part, Amanda::XferServer::xfer_dest_taper_start_part)
+DECLARE_METHOD(cache_inform, Amanda::XferServer::xfer_dest_taper_cache_inform)

@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 12;
+use Test::More tests => 13;
 use File::Path;
 use strict;
 use warnings;
@@ -45,7 +45,7 @@ Amanda::Config::config_init(0, undef);
     my $RANDOM_SEED = 0xFACADE;
     my $xfer;
 
-    my $quit_cb = sub {
+    my $quit_cb = make_cb(quit_cb => sub {
 	my ($src, $msg, $xfer) = @_;
 	if ($msg->{'type'} == $XMSG_ERROR) {
 	    die $msg->{'elt'} . " failed: " . $msg->{'message'};
@@ -54,7 +54,7 @@ Amanda::Config::config_init(0, undef);
 	    $xfer->get_source()->remove();
 	    Amanda::MainLoop::quit();
 	}
-    };
+    });
 
     # set up vtapes
     my $testconf = Installcheck::Run::setup();
@@ -194,9 +194,48 @@ sub test_taper_dest {
     Amanda::MainLoop::call_later(sub { $start_new_part->(1, 0, -1); });
     Amanda::MainLoop::run();
 
+    use Data::Dumper;
     is_deeply([@messages],
 	$expected_messages,
-	"$msg_prefix: element produces the correct series of messages");
+	"$msg_prefix: element produces the correct series of messages")
+    or diag(Dumper([@messages]));
+}
+
+my $holding_base = "$Installcheck::TMP/source-holding";
+my $holding_file;
+# create a sequence of holding chunks, each 2MB.
+sub make_holding_files {
+    my ($nchunks) = @_;
+    my $block = 'a' x 32768;
+
+    rmtree($holding_base);
+    mkpath($holding_base);
+    for (my $i = 0; $i < $nchunks; $i++) {
+	my $filename = "$holding_base/file$i";
+	open(my $fh, ">", "$filename");
+
+	my $hdr = Amanda::Header->new();
+	$hdr->{'type'} = ($i == 0)?
+	    $Amanda::Header::F_DUMPFILE : $Amanda::Header::F_CONT_DUMPFILE;
+	$hdr->{'datestamp'} = "20070102030405";
+	$hdr->{'dumplevel'} = 0;
+	$hdr->{'compressed'} = 1;
+	$hdr->{'name'} = "localhost";
+	$hdr->{'disk'} = "/home";
+	$hdr->{'program'} = "INSTALLCHECK";
+	if ($i != $nchunks-1) {
+	    $hdr->{'cont_filename'} = "$holding_base/file" . ($i+1);
+	}
+
+	print $fh $hdr->to_string(32768,32768);
+
+	for (my $b = 0; $b < 64; $b++) {
+	    print $fh $block;
+	}
+	close($fh);
+    }
+
+    return "$holding_base/file0";
 }
 
 # run this test in each of a few different cache permutations
@@ -239,6 +278,20 @@ test_taper_dest(
       "CANCELLED", "DONE" ],
     "cancellation after success",
     cancel_after_partnum => 4);
+
+# set up a few holding chunks and read from those
+$holding_file = make_holding_files(3);
+test_taper_dest(
+    Amanda::Xfer::Source::Holding->new($holding_file),
+    Amanda::Xfer::Dest::Taper->new(128*1024, 1024*1024, 0, undef),
+    [ "PART-1-OK", "PART-2-OK", "PART-3-FAILED",
+      "PART-3-OK", "PART-4-OK", "PART-5-FAILED",
+      "PART-5-OK", "PART-6-OK", "PART-7-OK",
+      "DONE" ],
+    "Amanda::Xfer::Source::Holding acts as a source and supplies cache_inform");
+
+##
+# test the cache_inform method
 
 sub test_taper_dest_cache_inform {
     my %params = @_;
@@ -380,6 +433,7 @@ is_deeply([ test_taper_dest_cache_inform(omit_chunks => 1) ],
     [ "PART-OK", "PART-OK", "PART-FAILED",
       "ERROR: Failed part was not cached; cannot retry", "CANCELLED",
       "DONE" ],
-    "cache_inform: element produces the correct series of messages");
+    "cache_inform: element produces the correct series of messages when a chunk is missing");
 
 unlink($disk_cache);
+rmtree($holding_base);

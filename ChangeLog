@@ -1,3 +1,16 @@
+2009-04-21  Dustin J. Mitchell <dustin@zmanda.com>
+	* server-src/Makefile.am server-src/xfer-server.h
+	  server-src/xfer-source-holding.c: new module reading from holding
+	  files
+	* perl/Makefile.am perl/Amanda/Xfer.swg perl/Amanda/XferDevice.swg
+	  perl/Amanda/XferServer.swg: rename XferDevice to XferServer; add
+	  Amanda::Xfer::Source::Holding
+	* device-src/xfer-dest-taper.c: make class macros public; ignore
+	  cache_inform when part_size == 0
+	* device-src/xfer-device.h: xfer-dest-taper class macros
+	* xfer-src/amxfer.h: include element-glue.h
+	* installcheck/Amanda_Xfer_serveronly.pl: updated tests
+
 2009-04-21  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/diskfile.c: Typo.
 

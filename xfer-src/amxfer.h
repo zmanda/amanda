@@ -25,6 +25,7 @@
 
 #include "xfer.h"
 #include "xfer-element.h"
+#include "element-glue.h"
 #include "xmsg.h"
 
 #endif /* AMXFER_H */

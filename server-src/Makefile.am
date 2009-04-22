@@ -10,6 +10,7 @@ INCLUDES =	-I$(top_builddir)/common-src \
 		-I$(top_srcdir)/restore-src  \
 		-I$(top_srcdir)/amandad-src  \
 		-I$(top_srcdir)/device-src   \
+		-I$(top_srcdir)/xfer-src   \
 		-I$(top_srcdir)/gnulib
 
 AM_CFLAGS = $(AMANDA_WARNING_CFLAGS)
@@ -84,7 +85,7 @@ libamserver_la_SOURCES=	amindex.c	changer.c			\
 			diskfile.c	driverio.c	cmdline.c  \
 			holding.c	infofile.c	logfile.c	\
 			tapefile.c	find.c		server_util.c   \
-                        taperscan.c
+                        taperscan.c	xfer-source-holding.c
 
 libamserver_la_LDFLAGS= -release $(VERSION)
 libamserver_la_LIBADD= ../device-src/libamdevice.la \
@@ -131,7 +132,7 @@ noinst_HEADERS = 	amindex.h	changer.h	cmdline.h	\
 			tapefile.h	find.h		server_util.h	\
 			taperscan.h taper-disk-port-source.h \
 			taper-mem-port-source.h  taper-file-source.h \
-			taper-port-source.h taper-source.h
+			taper-port-source.h taper-source.h xfer-server.h
 
 lint:
 	@ for p in $(amlibexec_PROGRAMS) $(sbin_PROGRAMS); do			\
