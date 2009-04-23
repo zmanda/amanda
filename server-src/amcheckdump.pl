@@ -71,6 +71,14 @@ sub find_next_device {
 	$changer = Amanda::Changer->new();
     }
 
+    # as a temporary hack until "chg-single:" is improved to communicate
+    # with the user, prompt for a tape if we're using that particular changer
+    if ($changer->isa("Amanda::Changer::single")) {
+        my $devname = $changer->{'device_name'};
+        print "Insert volume with label $label in device $devname and press ENTER:\n";
+        <STDIN>;
+    }
+
     my $load_sub = sub {
 	my ($err) = @_;
 	if ($err) {

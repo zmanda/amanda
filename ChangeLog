@@ -1,3 +1,7 @@
+2009-04-23  Dustin J. Mitchell <dustin@zmanda.com>
+	* server-src/amcheckdump.pl: request tapes manually when using
+	  Amanda::Changer::single
+
 2009-04-23  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/amsuntar.pl: Fix validate command.
 
