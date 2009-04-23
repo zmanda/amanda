@@ -38,7 +38,7 @@ use Amanda::Util qw( :constants );
 
 sub new {
     my $class = shift;
-    my ($config, $host, $disk, $device, $level, $index, $message, $collection, $record, $exclude_list, $exclude_optional,  $include_list, $include_optional,$bsize,$ext_header,$ext_attrib, $ignore, $normal, $strange, $error_exp) = @_;
+    my ($config, $host, $disk, $device, $level, $index, $message, $collection, $record, $exclude_list, $exclude_optional,  $include_list, $include_optional, $bsize, $ext_attrib, $ext_header, $ignore, $normal, $strange, $error_exp) = @_;
     my $self = $class->SUPER::new($config);
 
     $self->{suntar}            = "/usr/sbin/tar";
@@ -90,6 +90,10 @@ sub new {
 			      type  => "NORMAL" };
     push @{$self->{regex}}, { regex => "same as archive file\$",
 			      type  => "NORMAL" };
+    push @{$self->{regex}}, { regex => ": invalid character in UTF-8 conversion of ",
+			      type  => "STRANGE" };
+    push @{$self->{regex}}, { regex => ": UTF-8 conversion failed.\$",
+			      type  => "STRANGE" };
     push @{$self->{regex}}, { regex => ": Permission denied\$",
 			      type  => "ERROR" };
 
@@ -153,6 +157,7 @@ sub command_estimate() {
     my $size = "-1";
     my $level = $self->{level};
 
+    $self->{index} = undef;	#remove verbose flag to suntar.
     my(@cmd) = $self->build_command();
     my(@cmdwc) = ("/usr/bin/wc", "-c");
 
@@ -164,11 +169,25 @@ sub command_estimate() {
     close $wtr;
 
     my ($msgsize) = <$rdrwc>;
-    my ($errmsg) = <$err>;
+    my $errmsg;
+    my $result;
+    while (<$err>) {
+	my $matched = 0;
+	for my $regex (@{$self->{regex}}) {
+	    my $regex1 = $regex->{regex};
+	    if (/$regex1/) {
+		$result = 1 if ($regex->{type} eq "ERROR");
+		$matched = 1;
+		last;
+	    }
+	}
+	$result = 1 if ($matched == 0);
+	$errmsg = $_ if (!defined $errmsg);
+    }
     waitpid $pid, 0;
     close $rdrwc;
     close $err;
-    if ($? !=  0) {
+    if ($result ==  1) {
         if (defined $errmsg) {
             $self->print_to_server_and_die($action, $errmsg, $Amanda::Script_App::ERROR);
         } else {
@@ -273,9 +292,7 @@ sub parse_backup {
 	 my $matched = 0;
 	 for my $regex (@{$self->{regex}}) {
 	    my $regex1 = $regex->{regex};
-debug ("regex: $regex1");
 	    if (/$regex1/) {
-	       debug ("match " . $_);
 	       $result = 1 if ($regex->{type} eq "ERROR");
 	       if (defined($fhout)) {
 	          if ($regex->{type} eq "IGNORE") {
@@ -292,7 +309,6 @@ debug ("regex: $regex1");
 	    }
 	 }
 	 if ($matched == 0) {
-	    debug ("doesn't match " . $_);
 	    $result = 1;
 	    if (defined($fhout)) {
                print $fhout "? $_";

@@ -1,3 +1,8 @@
+2009-04-23  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amsuntar.pl: Fix order of $ext_attrib and $ext_header,
+	  add strange regex for UTF-8, estimate fail only if an output match
+	  an error regex or if an output match nothing.
+
 2009-04-23  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/amcheckdump.pl: request tapes manually when using
 	  Amanda::Changer::single
