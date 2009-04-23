@@ -1,3 +1,6 @@
+2009-04-23  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amsuntar.pl: Fix validate command.
+
 2009-04-22  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amcheckdump.pl: Wait for an input before reading tape.
 

@@ -422,20 +422,26 @@ sub command_restore {
 
 sub command_validate {
    my $self = shift;
+   $self->{action} = 'validate';
    my @cmd;
+   my $program;
 
-   if(!-e $self->{suntar}) {
-      (@cmd) = ($self->{suntar}, "-tf", "-");
-   } elsif (!-e $self->{gnutar}) {
-      (@cmd) = ($self->{gnutar}, "-tf", "-");
+   if (-e $self->{suntar}) {
+      $program = $self->{suntar};
+   } elsif (-e $self->{gnutar}) {
+      $program = $self->{gnutar};
    } else {
       return $self->default_validate();
    }
+   @cmd = ($program, "-tf", "-");
    debug("cmd:" . join(" ", @cmd));
-   my $pid = open3('>&STDIN', '>&STDOUT', '>&STDERR', @cmd) || die("validate", "Unable to run @cmd");
+   my($wtr, $rdr, $err);
+   $err = Symbol::gensym;
+   my $pid = open3($wtr, $rdr, $err, @cmd) || $self->print_server_and_die($self->{action}, "Unable to run @cmd", $Amanda::Script_App::ERROR);
+   my $errmsg = <$err>;
    waitpid $pid, 0;
    if( $? != 0 ){
-       die("validate", "$self->{suntar} returned error");
+	$self->print_server_and_die($self->{action}, "$program returned error: $errmsg", $Amanda::Script_App::ERROR);
    }
    exit(0);
 }
