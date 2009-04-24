@@ -1,3 +1,7 @@
+2009-04-24  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amsuntar.pl: Add LANG property.
+	* man/xml-source/amsuntar.8.xml: Document LANG property.
+
 2009-04-23  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/amsuntar.pl: Fix order of $ext_attrib and $ext_header,
 	  add strange regex for UTF-8, estimate fail only if an output match

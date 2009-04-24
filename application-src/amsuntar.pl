@@ -513,7 +513,7 @@ package main;
 
 sub usage {
     print <<EOF;
-Usage: Amsuntar <command> --config=<config> --host=<host> --disk=<disk> --device=<device> --level=<level> --index=<yes|no> --message=<text> --collection=<no> --record=<yes|no> --exclude-list=<fileList> --include-list=<fileList> --block-size=<size> --extended_attributes=<yes|no> --extended_headers<yes|no> --ignore=<regex> --normal=<regex> --strange=<regex> --error=<regex>.
+Usage: Amsuntar <command> --config=<config> --host=<host> --disk=<disk> --device=<device> --level=<level> --index=<yes|no> --message=<text> --collection=<no> --record=<yes|no> --exclude-list=<fileList> --include-list=<fileList> --block-size=<size> --extended_attributes=<yes|no> --extended_headers<yes|no> --ignore=<regex> --normal=<regex> --strange=<regex> --error=<regex> --lang=<lang>.
 EOF
     exit(1);
 }
@@ -538,6 +538,7 @@ my @opt_ignore;
 my @opt_normal;
 my @opt_strange;
 my @opt_error;
+my $opt_lang;
 
 Getopt::Long::Configure(qw{bundling});
 GetOptions(
@@ -561,7 +562,12 @@ GetOptions(
     'normal=s'               => \@opt_normal,
     'strange=s'              => \@opt_strange,
     'error=s'                => \@opt_error,
+    'lang=s'                 => \$opt_lang,
 ) or usage();
+
+if (defined $opt_lang) {
+    $ENV{LANG} = $opt_lang;
+}
 
 my $application = Amanda::Application::Amsuntar->new($opt_config, $opt_host, $opt_disk, $opt_device, $opt_level, $opt_index, $opt_message, $opt_collection, $opt_record, \@opt_exclude_list, $opt_exclude_optional, \@opt_include_list, $opt_include_optional,$opt_bsize,$opt_ext_attrib,$opt_ext_head, \@opt_ignore, \@opt_normal, \@opt_strange, \@opt_error);
 

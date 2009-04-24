@@ -69,6 +69,11 @@ sizes greater than 8GB can be archived. The default is YES.
 </listitem></varlistentry>
 
  <!-- ==== -->
+ <varlistentry><term>LANG</term><listitem>
+Default LANG is "C". suntar require an UTF-8 LANG if you have UTF-8 filename and it is configured for extended headers. A good value can be "en_US.UTF-8" if that locale is installed on your machine.
+</listitem></varlistentry>
+
+ <!-- ==== -->
  <varlistentry><term>NORMAL</term><listitem>
 <para>List all regex (Perl Regular Expression syntax) that are normal output from sun tar. These output are in the "FAILED DUMP DETAILS" section of the email report if the dump result is STRANGE or FAILED. Default values:
 <programlisting>
@@ -85,7 +90,12 @@ same as archive file\$
 
  <!-- ==== -->
  <varlistentry><term>STRANGE</term><listitem>
-<para>List all regex (Perl Regular Expression syntax) that are strange output from sun tar. The result of the dump is STRANGE if sun tar produce a strange output. These output are in the "FAILED DUMP DETAILS" section of the email report.</para>
+<para>List all regex (Perl Regular Expression syntax) that are strange output from sun tar. The result of the dump is STRANGE if sun tar produce a strange output. These output are in the "FAILED DUMP DETAILS" section of the email report.  Default values:
+<programlisting>
+: invalid character in UTF-8 conversion of 
+: UTF-8 conversion failed.\$
+</programlisting></para>
+<para>To treat one of these default patterns differently, specify it explicitly in a different property.</para>
 </listitem></varlistentry>
 
  <!-- ==== -->
