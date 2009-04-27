@@ -65,7 +65,11 @@ sub new {
 	$self->{unc}          = 0;
     }
     $self->{disk}             = $disk;
-    $self->{device}           = $device;
+    if (defined $device) {
+	$self->{device}       = $device;
+    } else {
+	$self->{device}       = $disk;
+    }
     $self->{level}            = [ @{$level} ];
     $self->{index}            = $index;
     $self->{message}          = $message;
@@ -141,7 +145,7 @@ sub validate_inexclude {
 }
 
 # on entry:
-#   self->{disk}       == //host/share/subdir		\\host\share\subdir
+#   self->{device}     == //host/share/subdir		\\host\share\subdir
 # on exit:
 #   self->{cifshost}    = //host			\\host
 #   $self->{share}      = //host/share			\\host\share
@@ -150,28 +154,28 @@ sub validate_inexclude {
 sub parsesharename {
     my $self = shift;
 
-    return if !defined $self->{disk};
+    return if !defined $self->{device};
 
     if ($self->{unc}) {
-	if ($self->{disk} =~ m,^(\\\\[^\\]+\\[^\\]+)\\(.*)$,) {
+	if ($self->{device} =~ m,^(\\\\[^\\]+\\[^\\]+)\\(.*)$,) {
 	    $self->{share} = $1;
 	    $self->{subdir} = $2
 	} else {
-	    $self->{share} = $self->{disk};
+	    $self->{share} = $self->{device};
 	}
 	$self->{sambashare} = $self->{share};
-	$self->{disk} =~ m,^(\\\\[^\\]+)\\[^\\]+,;
+	$self->{device} =~ m,^(\\\\[^\\]+)\\[^\\]+,;
 	$self->{cifshost} = $1;
     } else {
-	if ($self->{disk} =~ m,^(//[^/]+/[^/]+)/(.*)$,) {
+	if ($self->{device} =~ m,^(//[^/]+/[^/]+)/(.*)$,) {
 	    $self->{share} = $1;
 	    $self->{subdir} = $2
 	} else {
-	    $self->{share} = $self->{disk};
+	    $self->{share} = $self->{device};
 	}
 	$self->{sambashare} = $self->{share};
 	$self->{sambashare} =~ s,/,\\,g;
-	$self->{disk} =~ m,^(//[^/]+)/[^/]+,;
+	$self->{device} =~ m,^(//[^/]+)/[^/]+,;
 	$self->{cifshost} = $1;
     }
 }
@@ -281,7 +285,7 @@ sub command_selfcheck {
 	$self->print_to_server($self->{action},"$self->{smbclient} is not executable", $Amanda::Script_App::ERROR);
     }
     $self->print_to_server($self->{action},"$self->{smbclient}", $Amanda::Script_App::GOOD);
-    if (!defined $self->{disk} && !defined $self->{device}) {
+    if (!defined $self->{disk} || !defined $self->{device}) {
 	return;
     }
     $self->parsesharename();
