@@ -1506,12 +1506,6 @@ start_host(
 	return;
     }
 
-    if (strcmp(hostp->hostname,"localhost") == 0) {
-	g_fprintf(outf,
-                    _("WARNING: Usage of fully qualified hostname recommended for Client %s.\n"),
-                    hostp->hostname);
-    }
-
     /*
      * The first time through here we send a "noop" request.  This will
      * return the feature list from the client if it supports that.

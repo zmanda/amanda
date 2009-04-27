@@ -1,4 +1,8 @@
 2009-04-27  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amcheck.c: Remove "Usage of fully qualified hostname
+	  recommended for Client" warning.
+
+2009-04-27  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/amsamba.pl: Use device if specified.
 
 2009-04-27  Jean-Louis Martineau <martineau@zmanda.com>
