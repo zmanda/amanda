@@ -505,12 +505,11 @@ main(
 	    comppid = pipespawn(COMPRESS_PATH, STDIN_PIPE, 0,
 				&dumpout, &compout, &mesgfd,
 				COMPRESS_PATH, compopt, NULL);
-	    dbprintf(_("gnutar: pid %ld: %s"), (long)comppid, COMPRESS_PATH);
 	    if(compopt != skip_argument) {
-		dbprintf(_("pid %ld: %s %s\n"),
+		dbprintf(_("compress pid %ld: %s %s\n"),
 			 (long)comppid, COMPRESS_PATH, compopt);
 	    } else {
-		dbprintf(_("pid %ld: %s\n"), (long)comppid, COMPRESS_PATH);
+		dbprintf(_("compress pid %ld: %s\n"), (long)comppid, COMPRESS_PATH);
 	    }
 	} else if (dle->compress == COMP_CUST) {
 	    compopt = skip_argument;
