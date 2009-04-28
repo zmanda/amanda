@@ -451,13 +451,10 @@ sub command_validate {
    }
    @cmd = ($program, "-tf", "-");
    debug("cmd:" . join(" ", @cmd));
-   my($wtr, $rdr, $err);
-   $err = Symbol::gensym;
-   my $pid = open3($wtr, $rdr, $err, @cmd) || $self->print_server_and_die($self->{action}, "Unable to run @cmd", $Amanda::Script_App::ERROR);
-   my $errmsg = <$err>;
+   my $pid = open3('>&STDIN', '>&STDOUT', '>&STDERR', @cmd) || $self->print_server_and_die($self->{action}, "Unable to run @cmd", $Amanda::Script_App::ERROR);
    waitpid $pid, 0;
    if( $? != 0 ){
-	$self->print_server_and_die($self->{action}, "$program returned error: $errmsg", $Amanda::Script_App::ERROR);
+	$self->print_server_and_die($self->{action}, "$program returned error", $Amanda::Script_App::ERROR);
    }
    exit(0);
 }

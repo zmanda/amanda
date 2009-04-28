@@ -1,4 +1,7 @@
 2009-04-28  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amsuntar.pl: Fix redirection in validate command.
+
+2009-04-28  Jean-Louis Martineau <martineau@zmanda.com>
 	* man/xml-source/amcheck.8.xml, man/xml-source/amfetchdump.8.xml,
 	  man/xml-source/amflush.8.xml,
 	  man/xml-source/amrestore.8.xml: Fix order of -o argument.
