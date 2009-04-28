@@ -102,18 +102,18 @@ sub new {
     }
 
     foreach my $aname (keys %{$self->{'args'}}) {
-        if (defined($self->{'props'}->{$aname})) {
-            debug("property: $aname (undef)");
+        if (defined($self->{'args'}->{$aname})) {
+            debug("app property: $aname $self->{'args'}->{$aname}");
         } else {
-            debug("property: $aname $self->{'args'}->{$aname}");
+            debug("app property: $aname (undef)");
         }
     }
 
     foreach my $pname (keys %{$self->{'props'}}) {
         if (defined($self->{'props'}->{$pname})) {
-            debug("property: $pname (undef)");
+            debug("client property: $pname $self->{'props'}->{$pname}");
         } else {
-            debug("property: $pname $self->{'props'}->{$pname}");
+            debug("client property: $pname (undef)");
         }
     }
 
@@ -141,14 +141,30 @@ EOF
 }
 
 sub _check {
-    my ($desc, $err_suf, $check, @check_args) = @_;
+    my ($desc, $succ_suf, $err_suf, $check, @check_args) = @_;
     my $ret = $check->(@check_args);
-    if ($ret) {
-        print "OK $desc\n";
-    } else {
-        print "ERROR $desc $err_suf\n";
-    }
+    my $msg = $ret? "OK $desc $succ_suf" :  "ERROR $desc $err_suf";
+    debug($msg);
+    print "$msg\n";
     $ret;
+}
+
+sub _check_parent_dirs {
+    my ($dir) = @_;
+    my $is_abs = substr($dir, 0, 1) eq "/";
+    _check("$dir is an absolute path?", "Yes", "No. It should start with '/'",
+       sub {$is_abs});
+
+    my @parts = split('/', $dir);
+    pop @parts; # don't test the last part
+    my $partial_path = '';
+    for my $path_part (@parts) {
+        $partial_path .= $path_part . (($partial_path || $is_abs)? '/' : '');
+        _check("$partial_path is executable?", "Yes", "No",
+               sub {-x $_[0]}, $partial_path);
+        _check("$partial_path is a directory?", "Yes", "No",
+               sub {-d $_[0]}, $partial_path);
+    }
 }
 
 sub _ok_passfile_perms {
@@ -186,52 +202,83 @@ sub _run_psql_command {
 }
 
 sub command_selfcheck {
-   my $self = shift;
+    my $self = shift;
 
-   for my $k (keys %{$self->{'args'}}) {
-       print "OK application property: $k = $self->{'args'}->{$k}\n";
-   }
+    for my $k (keys %{$self->{'args'}}) {
+        print "OK application property: $k = $self->{'args'}->{$k}\n";
+    }
 
-   _check("GNUTAR-PATH $self->{'args'}->{'gnutar-path'}", "is not executable",
-          sub {-x $_[0]}, $self->{'args'}->{'gnutar-path'});
-   _check("GNUTAR $Amanda::Constants::GNUTAR", "is not executable",
-          sub {-x $_[0]}, $Amanda::Constants::GNUTAR);
-   _check("TMPDIR $self->{'args'}->{'tmpdir'}", "is not an acessible directory",
-          sub {-d $_[0] && -r $_[0] && -w $_[0] && -x $_[0]},
-          $self->{'args'}->{'tmpdir'});
-   _check("STATEDIR $self->{'args'}->{'statedir'}", "is not an acessible directory",
-          sub {-d $_[0] && -r $_[0] && -w $_[0] && -x $_[0]},
-          $self->{'args'}->{'statedir'});
+    _check("GNUTAR-PATH $self->{'args'}->{'gnutar-path'}",
+           "is executable", "is NOT executable",
+           sub {-x $_[0]}, $self->{'args'}->{'gnutar-path'});
+    _check("GNUTAR-PATH $self->{'args'}->{'gnutar-path'}",
+           "is not a directory (okay)", "is a directory (it shouldn't be)",
+           sub {!(-d $_[0])}, $self->{'args'}->{'gnutar-path'});
+    _check_parent_dirs($self->{'args'}->{'gnutar-path'});
 
-   if ($self->{'args'}->{'device'}) {
-       for my $k (keys %{$self->{'props'}}) {
-           print "OK client property: $k = $self->{'props'}->{$k}\n";
-       }
+    _check("GNUTAR $Amanda::Constants::GNUTAR",
+           "is executable", "is NOT executable",
+           sub {-x $_[0]}, $Amanda::Constants::GNUTAR);
+    _check("GNUTAR $Amanda::Constants::GNUTAR",
+           "is not a directory (okay)", "is a directory (it shouldn't be)",
+           sub {!(-d $_[0])}, $Amanda::Constants::GNUTAR);
+    _check_parent_dirs($Amanda::Constants::GNUTAR);
 
-       _check("PG-DATADIR $self->{'props'}->{'PG-DATADIR'}", "is not a directory",
-              sub {-d $_[0]}, $self->{'props'}->{'PG-DATADIR'});
-       _check("PG-ARCHIVEDIR $self->{'props'}->{'PG-ARCHIVEDIR'}", "is not a directory",
-              sub {-d $_[0]}, $self->{'props'}->{'PG-ARCHIVEDIR'});
-       if ($self->{'props'}->{'PG-PASSFILE'}) {
-           _check("PG-PASSFILE $self->{'props'}->{'PG-PASSFILE'}",
-                  "does not have correct permissions",
-                  \&_ok_passfile_perms, $self->{'props'}->{'PG-PASSFILE'});
-       }
-       _check("PSQL-PATH $self->{'args'}->{'gnutar-path'}", "is not executable",
-              sub {-x $_[0]}, $self->{'props'}->{'PSQL-PATH'});
-       _check("connect to database server", "failed",
-              \&_run_psql_command, $self, '');
+    _check("TMPDIR $self->{'args'}->{'tmpdir'}",
+           "is an acessible directory", "is NOT an acessible directory",
+           sub {-d $_[0] && -r $_[0] && -w $_[0] && -x $_[0]},
+           $self->{'args'}->{'tmpdir'});
+    _check("STATEDIR $self->{'args'}->{'statedir'}",
+           "is an acessible directory", "is NOT an acessible directory",
+           sub {-d $_[0] && -r $_[0] && -w $_[0] && -x $_[0]},
+           $self->{'args'}->{'statedir'});
+    _check_parent_dirs($self->{'args'}->{'statedir'});
 
-       my $label = "$self->{'label-prefix'}-selfcheck-" . time();
-       if (_check("call pg_start_backup", "failed (is another backup running?)",
-                  \&_run_psql_command, $self, "SELECT pg_start_backup('$label')")
-           and _check("call pg_stop_backup", "failed",
-                  \&_run_psql_command, $self, "SELECT pg_stop_backup()")) {
+    if ($self->{'args'}->{'device'}) {
+        for my $k (keys %{$self->{'props'}}) {
+            print "OK client property: $k = $self->{'props'}->{$k}\n";
+        }
 
-           _check("get info from .backup file", "failed",
-                  sub {my ($start, $end) = _get_backup_info($self, $label); $start and $end});
-       }
-   }
+        _check("PG-DATADIR $self->{'props'}->{'PG-DATADIR'}",
+               "is a directory", "is NOT a directory",
+               sub {-d $_[0]}, $self->{'props'}->{'PG-DATADIR'});
+        _check_parent_dirs($self->{'props'}->{'PG-DATADIR'});
+        _check("PG-ARCHIVEDIR $self->{'props'}->{'PG-ARCHIVEDIR'}",
+               "is a directory", "is NOT a directory",
+               sub {-d $_[0]}, $self->{'props'}->{'PG-ARCHIVEDIR'});
+        _check_parent_dirs($self->{'props'}->{'PG-ARCHIVEDIR'});
+        _check("Are both PG-PASSFILE and PG-PASSWORD set?",
+               "No (okay)",
+               "Yes. Please set only one or the other",
+               sub {!($self->{'props'}->{'PG-PASSFILE'} and
+                      $self->{'props'}->{'PG-PASSWORD'})});
+        if ($self->{'props'}->{'PG-PASSFILE'}) {
+            _check("PG-PASSFILE $self->{'props'}->{'PG-PASSFILE'}",
+                   "has correct permissions", "does not have correct permissions",
+                   \&_ok_passfile_perms, $self->{'props'}->{'PG-PASSFILE'});
+            _check_parent_dirs($self->{'props'}->{'PG-PASSFILE'});
+        }
+        _check("PSQL-PATH $self->{'props'}->{'PSQL-PATH'}",
+               "is executable", "is NOT executable",
+               sub {-x $_[0]}, $self->{'props'}->{'PSQL-PATH'});
+        _check("PSQL-PATH $self->{'props'}->{'PSQL-PATH'}",
+               "is not a directory (okay)", "is a directory (it shouldn't be)",
+               sub {!(-d $_[0])}, $self->{'props'}->{'PSQL-PATH'});
+        _check_parent_dirs($self->{'props'}->{'PSQL-PATH'});
+        _check("Connecting to database server", "succeeded", "failed",
+               \&_run_psql_command, $self, '');
+        
+        my $label = "$self->{'label-prefix'}-selfcheck-" . time();
+        if (_check("Call pg_start_backup", "succeeded",
+                   "failed (is another backup running?)",
+                   \&_run_psql_command, $self, "SELECT pg_start_backup('$label')")
+            and _check("Call pg_stop_backup", "succeeded", "failed",
+                       \&_run_psql_command, $self, "SELECT pg_stop_backup()")) {
+
+            _check("Get info from .backup file", "succeeded", "failed",
+                   sub {my ($start, $end) = _get_backup_info($self, $label); $start and $end});
+        }
+    }
 }
 
 sub _encode {

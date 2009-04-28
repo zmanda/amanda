@@ -60,9 +60,9 @@ Installcheck::Application - driver Application API programs and scripts
 
 =over
 
-=item C<new($app_name)>
+=item C< new($app_name) >
 
-Create a new C<Installcheck::Application> object that will run C<$app_name>.
+Create a new C< Installcheck::Application > object that will run C< $app_name >.
 
 =back
 
@@ -73,23 +73,23 @@ Their names will be lowercase.
 
 =over
 
-=item C<add_property($prop_name, 'val1', 'val2')>
+=item C< add_property($prop_name, 'val1', 'val2') >
 
-Add one or more values for property C<$prop_name>.
+Add one or more values for property C< $prop_name >.
 
-=item C<delete_property($prop_name)>
+=item C< delete_property($prop_name) >
 
-Delete all values for property C<$prop_name>.
+Delete all values for property C< $prop_name >.
 
-=item C<get_property($prop_name)>
+=item C< get_property($prop_name) >
 
-Get all values for property C<$prop_name>.
+Get all values for property C< $prop_name >.
 
-=item C<set_property($prop_name, 'val1', 'val2')>
+=item C< set_property($prop_name, 'val1', 'val2') >
 
-Set the values for property C<$prop_name>, removing any previous values.
+Set the values for property C< $prop_name >, removing any previous values.
 
-=item C<list_properties()>
+=item C< list_properties() >
 
 Returns all properties that have a value.
 
@@ -99,105 +99,105 @@ Returns all properties that have a value.
 
 =over
 
-=item C<support()>
+=item C< support() >
 
-Runs the C<support> command and returns the output as a hashref,
+Runs the C< support > command and returns the output as a hashref,
 with all keys in uppercase.
 
-=item C<<backup('disk' => '/some/path', 'device' => '/some/path, 'level' => 0)>>
+=item C<< backup('disk' => '/some/path', 'device' => '/some/path, 'level' => 0) >>
 
-Runs the C<backup()> command on the given device.
-If a C<disk> argument is not given, it defaults to the C<device>.
+Runs the C< backup() > command on the given device.
+If a C< disk > argument is not given, it defaults to the C< device >.
 Returns a hashref:
 
 =over
 
-=item C<data>
+=item C< data >
 
 The data stream produced by the application
 
-=item C<index>
+=item C< index >
 
 An array of index lines produced by the application
 
-=item C<size>
+=item C< size >
 
-The size of the backup (C<data>)
+The size of the backup (C< data >)
 
-=item C<info>
+=item C< info >
 
 Any normal/informative messages
 
-=item C<errors>
+=item C< errors >
 
 Any error messages
 
-=item C<unknowns>
+=item C< unknowns >
 
 Any 'unknown' output
 
-=item C<exit_status>
+=item C< exit_status >
 
 The exit status of the application
 
 =back
 
-=item C<<restore('data' => $data_from_backup, 'objects' => ['a', 'b'], 'level' => 0)>>
+=item C<< restore('data' => $data_from_backup, 'objects' => ['a', 'b'], 'level' => 0) >>
 
-Runs the C<restore> command to restore the C<objects> to the
-current working directory, supplying it with C<data>.
-The optional C<level> argument (defaulting to 0) specifies the level of the backup
+Runs the C< restore > command to restore the C< objects > to the
+current working directory, supplying it with C< data >.
+The optional C< level > argument (defaulting to 0) specifies the level of the backup
 Returns a hashref:
 
 =over
 
-=item C<msgs>
+=item C< msgs >
 
 Any output from the application
 
-=item C<exit_status>
+=item C< exit_status >
 
 The exit status of the application
 
 =back
 
-=item C<<estimate('device' => '/some/path, 'level' => 0)>>
+=item C<< estimate('device' => '/some/path, 'level' => 0) >>
 
 Returns a hashref:
 
 =over
 
-=item C<level>
+=item C< level >
 
 The level of the backup that would result
 
-=item C<size>
+=item C< size >
 
 The size of the backup that would result
 
-=item C<exit_status>
+=item C< exit_status >
 
 The exit status of the application
 
 =back
 
-=item C<<selfcheck('device' => '/some/path, 'disk' => '/some/path', 'level' => 0)>>
+=item C<< selfcheck('device' => '/some/path, 'disk' => '/some/path') >>
 
-Runs the C<selfcheck> command on the given device.
-If a C<disk> argument is not given, it defaults to the C<device>.)
+Runs the C< selfcheck > command on the given device.
+If a C< disk > argument is not given, it defaults to the C< device >.)
 Returns a hashref:
 
 =over
 
-=item C<oks>
+=item C< oks >
 
 OK messages
 
-=item C<errors>
+=item C< errors >
 
 ERROR messages
 
-=item C<exit_status>
+=item C< exit_status >
 
 The exit status of the application
 
@@ -615,7 +615,7 @@ sub selfcheck {
     my $self = shift @_;
     my %nargs = @_;
 
-    foreach my $k ( qw(device level) ) {
+    foreach my $k ( qw(device) ) {
         confess "$k required" unless defined($nargs{$k});
     }
     $nargs{'disk'} ||=  $nargs{'device'};

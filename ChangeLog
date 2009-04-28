@@ -1,3 +1,12 @@
+2009-04-27  Nikolas Coukouma <atrus@zmanda.com>
+	* application-src/ampgsql.pl: fix debug printing of property names,
+	  add parent directory checks to selfcheck command,
+	  check psql binary path, fix whitespace
+	* perl/Amanda/Application.swg: update usage docs
+	* installcheck/Installcheck/Application.pm: fix formatting tags
+	  remove 'level' argument from selfcheck command
+	* installcheck/ampgsql.pl: test selfcheck command a bit
+
 2009-04-27  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amcheck.c: Remove "Usage of fully qualified hostname
 	  recommended for Client" warning.

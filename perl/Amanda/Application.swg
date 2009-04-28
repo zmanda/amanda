@@ -41,9 +41,8 @@ Amanda::Application - perl utility functions for Applications.
   use base qw(Amanda::Application);
 
   sub new {
-    my $class = shift;
-    my ($foo, $bar) = @_;
-    my $self = $class->SUPER::new();
+    my ($class, $config, $foo) = @_;
+    my $self = $class->SUPER::new($config);
 
     $self->{'foo'} = $foo;
     $self->{'bar'} = $bar;

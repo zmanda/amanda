@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 29;
+use Test::More tests => 40;
 
 use lib "@amperldir@";
 use strict;
@@ -145,7 +145,7 @@ INSERT INTO foo (bar, baz) VALUES (1, 2);
 EOF
     pass("created test data (table and a row)");
 
-    $backup = $app->backup('device' => $data_dir, 'level' => 0);
+    $backup = $app->backup('device' => $data_dir, 'level' => 0, 'config' => 'TESTCONF');
     is($backup->{'exit_status'}, 0, "backup error status ok");
     ok(!@{$backup->{'errors'}}, "no errors during backup")
         or diag(@{$backup->{'errors'}});
@@ -155,6 +155,37 @@ EOF
 
 do_postmaster(\&setup_db_and_backup);
 pass("finished setting up db");
+
+sub try_selfcheck {
+    my $sc;
+
+    $sc = $app->selfcheck('device' => $data_dir, 'config' => 'TESTCONF');
+    is($sc->{'exit_status'}, 0, "selfcheck error status ok");
+    ok(!@{$sc->{'errors'}}, "no errors reported");
+    ok(@{$sc->{'oks'}}, "got one or more OK messages");
+
+    $app->set_property('statedir', "$state_dir/foo");
+    $sc = $app->selfcheck('device' => $data_dir, 'config' => 'TESTCONF');
+    is($sc->{'exit_status'}, 0, "selfcheck error status ok");
+    ok(grep(/STATEDIR/, @{$sc->{'errors'}}), "got STATEDIR error");
+
+    my $test_state_dir_par = "$root_dir/parent-to-strip";
+    my $test_state_dir = "$test_state_dir_par/state";
+    $app->set_property('statedir', $test_state_dir);
+    try_eval("created state_dir", \&mkpath, $test_state_dir);
+    my @par_stat = stat($test_state_dir_par);
+    my $old_perms = $par_stat[2] & 0777;
+    ok(chmod(0, $test_state_dir_par), "stripped permissions from parent of statedir");
+    $sc = $app->selfcheck('device' => $data_dir, 'config' => 'TESTCONF');
+    is($sc->{'exit_status'}, 0, "selfcheck error status ok");
+    ok(grep(/STATEDIR/, @{$sc->{'errors'}}), "got STATEDIR error");
+    ok(grep(/$test_state_dir_par\/ /, @{$sc->{'errors'}}), "got perms error for parent of statedir");
+    # repair
+    ok(chmod($old_perms, $test_state_dir_par), "restored permissions on parent of statedir");
+    $app->set_property('statedir', $state_dir); 
+}
+
+do_postmaster(\&try_selfcheck);
 
 try_eval("emptied data_dir", \&rmtree, $data_dir);
 try_eval("emptied archive_dir", \&rmtree, $archive_dir);
