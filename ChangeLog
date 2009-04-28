@@ -1,4 +1,7 @@
 2009-04-27  Nikolas Coukouma <atrus@zmanda.com>
+	* application-src/ampgsql.pl: lowercase property names when accessing them
+
+2009-04-27  Nikolas Coukouma <atrus@zmanda.com>
 	* application-src/ampgsql.pl: fix debug printing of property names,
 	  add parent directory checks to selfcheck command,
 	  check psql binary path, fix whitespace
