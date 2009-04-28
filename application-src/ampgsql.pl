@@ -239,10 +239,6 @@ sub command_selfcheck {
             print "OK client property: $k = $self->{'props'}->{$k}\n";
         }
 
-        _check("PG-DATADIR $self->{'props'}->{'pg-datadir'}",
-               "is a directory", "is NOT a directory",
-               sub {-d $_[0]}, $self->{'props'}->{'pg-datadir'});
-        _check_parent_dirs($self->{'props'}->{'pg-datadir'});
         _check("PG-ARCHIVEDIR $self->{'props'}->{'pg-archivedir'}",
                "is a directory", "is NOT a directory",
                sub {-d $_[0]}, $self->{'props'}->{'pg-archivedir'});
@@ -459,7 +455,6 @@ sub _base_backup {
    my $label = "$self->{'label-prefix'}-" . time();
    my $tmp = "$self->{'args'}->{'tmpdir'}/$label";
 
-   -d $self->{'props'}->{'pg-datadir'} or confess("Data directory does not exist (or is not a directory)");
    -d $self->{'props'}->{'pg-archivedir'} or confess("WAL file archive directory does not exist (or is not a directory)");
 
    # try to protect what we create
