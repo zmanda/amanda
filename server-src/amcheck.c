@@ -73,7 +73,7 @@ int test_server_pgm(FILE *outf, char *dir, char *pgm, int suid, uid_t dumpuid);
 void
 usage(void)
 {
-    error(_("Usage: amcheck%s [-am] [-w] [-sclt] [-M <address>] <conf> [host [disk]* ]* [-o configoption]*"), versionsuffix());
+    error(_("Usage: amcheck%s [-am] [-w] [-sclt] [-M <address>] [-o configoption]* <conf> [host [disk]* ]*"), versionsuffix());
     /*NOTREACHED*/
 }
 

@@ -56,8 +56,8 @@ static void
 usage(void)
 {
     error(_("Usage: amrestore [-b blocksize] [-r|-c] [-p] [-h] [-f fileno] "
-    	  "[-l label] tape-device|holdingfile [hostname [diskname [datestamp "
-	  "[hostname [diskname [datestamp ... ]]]]]]"));
+    	  "[-l label] [-o configoption]* tape-device|holdingfile"
+	  "[hostname [diskname [datestamp [hostname [diskname [datestamp ... ]]]]]]"));
     /*NOTREACHED*/
 }
 

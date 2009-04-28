@@ -76,7 +76,7 @@ static void cleanup(void);
 void
 usage(void)
 {
-    g_fprintf(stderr, _("Usage: amfetchdump [options] config hostname [diskname [datestamp [level [hostname [diskname [datestamp [level ... ]]]]]]] [-o configoption]*\n\n"));
+    g_fprintf(stderr, _("Usage: amfetchdump [options] [-o configoption]* config hostname [diskname [datestamp [level [hostname [diskname [datestamp [level ... ]]]]]]]\n\n"));
     g_fprintf(stderr, _("Goes and grabs a dump from tape, moving tapes around and assembling parts as\n"));
     g_fprintf(stderr, _("necessary.  Files are restored to the current directory, unless otherwise\nspecified.\n\n"));
     g_fprintf(stderr, _("  -p Pipe exactly *one* complete dumpfile to stdout, instead of to disk.\n"));

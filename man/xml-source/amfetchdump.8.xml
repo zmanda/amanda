@@ -32,6 +32,7 @@
     <arg choice='opt'>-d <replaceable>device</replaceable></arg>
     <arg choice='opt'>-O <replaceable>directory</replaceable></arg>
     <arg choice='opt'>-b <replaceable>blocksize</replaceable></arg>
+    <arg choice='plain' rep='repeat'><group><arg choice='plain'>-o </arg><replaceable>configoption</replaceable></group></arg>
     <arg choice='plain'><replaceable>config</replaceable></arg>
     <arg choice='plain'><replaceable>hostname</replaceable></arg>
     <arg choice='opt'>
@@ -47,7 +48,6 @@
         </arg>
       </arg>
     </arg>
-    <arg choice='plain' rep='repeat'><group><arg choice='plain'>-o </arg><replaceable>configoption</replaceable></group></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 

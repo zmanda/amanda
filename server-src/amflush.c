@@ -149,7 +149,7 @@ main(
     }
 
     if(argc < 1) {
-	error(_("Usage: amflush%s [-b] [-f] [-s] [-D date]* <confdir> [host [disk]* ]* [-o configoption]*"), versionsuffix());
+	error(_("Usage: amflush%s [-b] [-f] [-s] [-D date]* [-o configoption]* <confdir> [host [disk]* ]*"), versionsuffix());
 	/*NOTREACHED*/
     }
 

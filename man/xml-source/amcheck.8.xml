@@ -33,12 +33,12 @@
     <arg choice='opt'>-w</arg>
     <arg choice='opt'>-sclt</arg>
     <arg choice='opt'>-M <replaceable>address</replaceable></arg>
+    <arg choice='plain' rep='repeat'><group><arg choice='plain'>-o </arg><replaceable>configoption</replaceable></group></arg>
     <arg choice='plain'><replaceable>config</replaceable></arg>
     <arg choice='opt' rep='repeat'>
        <arg choice='plain'><replaceable>host</replaceable></arg>
        <arg choice='opt' rep='repeat'><replaceable>disk</replaceable></arg>
     </arg>
-    <arg choice='plain' rep='repeat'><group><arg choice='plain'>-o </arg><replaceable>configoption</replaceable></group></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 

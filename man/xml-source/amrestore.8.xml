@@ -30,11 +30,12 @@
 <cmdsynopsis>
   <command>amrestore</command>    
     <group choice='opt'><arg choice='plain'>-r </arg><arg choice='plain'>-c </arg><arg choice='plain'>-C </arg></group>
-    <group><arg choice='plain'>-b</arg><arg choice='plain'><replaceable>blocksize</replaceable></arg></group>
-    <group><arg choice='plain'>-f</arg><arg choice='plain'><replaceable>fileno</replaceable></arg></group>
-    <group><arg choice='plain'>-l </arg><arg choice='plain'><replaceable>label</replaceable></arg></group>
+    <arg choice='opt'>-b <replaceable>blocksize</replaceable></arg>
+    <arg choice='opt'>-f <replaceable>fileno</replaceable></arg>
+    <arg choice='opt'>-l <replaceable>label</replaceable></arg>
     <arg choice='opt'>-p</arg>
     <arg choice='opt'>-h</arg>
+    <arg choice='plain' rep='repeat'><group><arg choice='plain'>-o </arg><replaceable>configoption</replaceable></group></arg>
     <arg choice='plain'><arg choice='plain'><replaceable>tapedevice</replaceable></arg>|<arg choice='plain'><replaceable>holdingfile</replaceable></arg></arg>
     <group><arg choice='plain'><replaceable>hostname</replaceable></arg><group><arg choice='plain'><replaceable>diskname</replaceable></arg><group><arg choice='plain'><replaceable>datestamp</replaceable></arg><group><arg choice='plain'><replaceable>hostname</replaceable></arg><group><arg choice='plain'><replaceable>diskname</replaceable></arg><group><arg choice='plain'><replaceable>datestamp</replaceable></arg><arg choice='plain'>...</arg></group></group></group></group></group></group>
 </cmdsynopsis>
