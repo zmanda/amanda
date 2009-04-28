@@ -1,4 +1,7 @@
 2009-04-28  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/amadmin.c: Fix error reporting in find subcommand.
+
+2009-04-28  Jean-Louis Martineau <martineau@zmanda.com>
 	* recover-src/amrecover.h: Change prototype.
 	* recover-src/extract_list.c: merge_path, abort if cd_* failed.
 	* recover-src/set_commands.c: Many functions return 0 or 1.

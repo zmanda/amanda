@@ -1083,13 +1083,10 @@ find(
 	start_argc=4;
     }
     errstr = match_disklist(&diskq, argc-(start_argc-1), argv+(start_argc-1));
-    if (errstr) {
-	g_printf("%s", errstr);
-	amfree(errstr);
-    }
 
-    output_find = find_dump(&diskq);
+    output_find = find_dump(&diskq); /* Add deleted dump to diskq */
     if(argc-(start_argc-1) > 0) {
+	amfree(errstr);
 	free_find_result(&output_find);
 	errstr = match_disklist(&diskq, argc-(start_argc-1),
 					argv+(start_argc-1));
@@ -1098,6 +1095,9 @@ find(
 	    amfree(errstr);
 	}
 	output_find = find_dump(NULL);
+    } else if (errstr) {
+	g_printf("%s", errstr);
+	amfree(errstr);
     }
 
     sort_find_result(sort_order, &output_find);
