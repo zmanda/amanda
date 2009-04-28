@@ -1,3 +1,7 @@
+2009-04-28  Jean-Louis Martineau <martineau@zmanda.com>
+	* man/xml-source/amanda.8.xml: Document [...] and [!...] in host & disk
+				       expression section.
+
 2009-04-28  Nikolas Coukouma <atrus@zmanda.com>
 	* application-src/ampgsql.pl: remove checks for PG-DATADIR
 

@@ -328,7 +328,7 @@ It only needs to be readable by the Amanda-user on the Samba server.  </para>
 
 <refsect1><title>HOST &amp; DISK EXPRESSION</title>
 <para>All host and disk arguments to programs are special expressions.
-The command applies to all disks that match your arguments.
+The command applies to all DLEs that match the arguments.
 This section describes the matcher.</para>
 
 <para>The matcher matches by word, each word is a glob expression, words
@@ -377,7 +377,21 @@ the host or disk.</para>
     <listitem><para>match zero or more characters including the separator</para></listitem>
     </varlistentry>
 
+    <varlistentry>
+    <term>[...]</term>
+    <listitem><para>match a single character, namely any of the characters
+        enclosed  by the brackets.</para></listitem>
+    </varlistentry>
+
+    <varlistentry>
+    <term>[!...]</term>
+    <listitem><para>match a single character, namely any characters that is not
+         enclosed by the brackets.</para></listitem>
+    </varlistentry>
+
 </variablelist>
+
+<para>The shell interpret some of these characters, they must be escaped by a backslash '\' and/or the expression must be enclosed in simple or double quote.</para>
 
 <para>Some examples:</para>
 
