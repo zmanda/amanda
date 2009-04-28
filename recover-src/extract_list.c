@@ -133,6 +133,7 @@ static void send_to_tape_server(security_stream_t *stream, char *cmd);
 int writer_intermediary(EXTRACT_LIST *elist);
 int get_amidxtaped_line(void);
 static void read_amidxtaped_data(void *, void *, ssize_t);
+static char *merge_path(char *path1, char *path2);
 
 /*
  * Function:  ssize_t read_buffer(datafd, buffer, buflen, timeout_s)
@@ -690,6 +691,22 @@ delete_extract_item(
     return 1;
 }
 
+static char *
+merge_path(
+    char *path1,
+    char *path2)
+{
+    char *result;
+    int len = strlen(path1);
+    if (path1[len-1] == '/' && path2[0] == '/') {
+	result = stralloc2(path1, path2+1);
+    } else if (path1[len-1] != '/' && path2[0] != '/') {
+	result = vstralloc(path1, "/", path2, NULL);
+    } else {
+	result = stralloc2(path1, path2);
+    }
+    return result;
+}
 
 void
 add_glob(
@@ -701,6 +718,7 @@ add_glob(
     char *uqglob;
     char *dir;
     char *sdir = NULL;
+    int   result = 1;
 
     if (disk_path == NULL) {
 	g_printf(_("Must select directory before adding files\n"));
@@ -710,34 +728,36 @@ add_glob(
     uqglob = unquote_string(glob);
     glob = file_of_path(uqglob, &dir);
     if (dir) {
-	sdir = stralloc2(mount_point, disk_path);
-	cd_glob(dir, 0);
+	sdir = merge_path(mount_point, disk_path);
+	result = cd_glob(dir, 0);
 	amfree(dir);
     }
-    regex = glob_to_regex(glob);
-    dbprintf(_("add_glob (%s) -> %s\n"), uqglob, regex);
-    if ((s = validate_regexp(regex)) != NULL) {
-	g_printf(_("%s is not a valid shell wildcard pattern: "), glob);
-	puts(s);
-    } else {
-        /*
-         * glob_to_regex() anchors the beginning of the pattern with ^,
-         * but we will be tacking it onto the end of the current directory
-         * in add_file, so strip that off.  Also, it anchors the end with
-         * $, but we need to match an optional trailing /, so tack that on
-         * the end.
-         */
-        regex_path = stralloc(regex + 1);
-        regex_path[strlen(regex_path) - 1] = '\0';
-        strappend(regex_path, "[/]*$");
-        add_file(uqglob, regex_path);
-        amfree(regex_path);
+    if (result) {
+	regex = glob_to_regex(glob);
+	dbprintf(_("add_glob (%s) -> %s\n"), uqglob, regex);
+	if ((s = validate_regexp(regex)) != NULL) {
+	    g_printf(_("%s is not a valid shell wildcard pattern: "), glob);
+	    puts(s);
+	} else {
+            /*
+             * glob_to_regex() anchors the beginning of the pattern with ^,
+             * but we will be tacking it onto the end of the current directory
+             * in add_file, so strip that off.  Also, it anchors the end with
+             * $, but we need to match an optional trailing /, so tack that on
+             * the end.
+             */
+            regex_path = stralloc(regex + 1);
+            regex_path[strlen(regex_path) - 1] = '\0';
+            strappend(regex_path, "[/]*$");
+            add_file(uqglob, regex_path);
+            amfree(regex_path);
+	}
+	if (sdir) {
+	    set_directory(sdir, 0);
+	}
+	amfree(regex);
     }
-    if (sdir) {
-	set_directory(sdir, 0);
-	amfree(sdir);
-    }
-    amfree(regex);
+    amfree(sdir);
     amfree(uqglob);
     amfree(glob);
 }
@@ -751,6 +771,7 @@ add_regex(
     char *sdir = NULL;
     char *uqregex;
     char *newregex;
+    int   result = 1;
 
     if (disk_path == NULL) {
 	g_printf(_("Must select directory before adding files\n"));
@@ -760,21 +781,23 @@ add_regex(
     uqregex = unquote_string(regex);
     newregex = file_of_path(uqregex, &dir);
     if (dir) {
-	sdir = stralloc2(mount_point, disk_path);
-	cd_regex(dir, 0);
+	sdir = merge_path(mount_point, disk_path);
+	result = cd_regex(dir, 0);
 	amfree(dir);
     }
- 
-    if ((s = validate_regexp(newregex)) != NULL) {
-	g_printf(_("\"%s\" is not a valid regular expression: "), newregex);
-	puts(s);
-    } else {
-        add_file(uqregex, newregex);
+
+    if (result) { 
+	if ((s = validate_regexp(newregex)) != NULL) {
+	    g_printf(_("\"%s\" is not a valid regular expression: "), newregex);
+	    puts(s);
+	} else {
+            add_file(uqregex, newregex);
+	}
+	if (sdir) {
+	    set_directory(sdir, 0);
+	}
     }
-    if (sdir) {
-	set_directory(sdir, 0);
-	amfree(sdir);
-    }
+    amfree(sdir);
     amfree(uqregex);
     amfree(newregex);
 }
@@ -1052,6 +1075,7 @@ delete_glob(
     char *newglob;
     char *dir;
     char *sdir = NULL;
+    int   result = 1;
 
     if (disk_path == NULL) {
 	g_printf(_("Must select directory before adding files\n"));
@@ -1061,34 +1085,37 @@ delete_glob(
     uqglob = unquote_string(glob);
     newglob = file_of_path(uqglob, &dir);
     if (dir) {
-	sdir = stralloc2(mount_point, disk_path);
-	cd_glob(dir, 0);
+	sdir = merge_path(mount_point, disk_path);
+	result = cd_glob(dir, 0);
 	amfree(dir);
     }
-    regex = glob_to_regex(newglob);
-    dbprintf(_("delete_glob (%s) -> %s\n"), newglob, regex);
-    if ((s = validate_regexp(regex)) != NULL) {
-	g_printf(_("\"%s\" is not a valid shell wildcard pattern: "), newglob);
-	puts(s);
-    } else {
-        /*
-         * glob_to_regex() anchors the beginning of the pattern with ^,
-         * but we will be tacking it onto the end of the current directory
-         * in add_file, so strip that off.  Also, it anchors the end with
-         * $, but we need to match an optional trailing /, so tack that on
-         * the end.
-         */
-        regex_path = stralloc(regex + 1);
-        regex_path[strlen(regex_path) - 1] = '\0';
-        strappend(regex_path, "[/]*$");
-        delete_file(uqglob, regex_path);
-        amfree(regex_path);
+    if (result) {
+	regex = glob_to_regex(newglob);
+	dbprintf(_("delete_glob (%s) -> %s\n"), newglob, regex);
+	if ((s = validate_regexp(regex)) != NULL) {
+	    g_printf(_("\"%s\" is not a valid shell wildcard pattern: "),
+		     newglob);
+	    puts(s);
+} else {
+            /*
+             * glob_to_regex() anchors the beginning of the pattern with ^,
+             * but we will be tacking it onto the end of the current directory
+             * in add_file, so strip that off.  Also, it anchors the end with
+             * $, but we need to match an optional trailing /, so tack that on
+             * the end.
+             */
+            regex_path = stralloc(regex + 1);
+            regex_path[strlen(regex_path) - 1] = '\0';
+            strappend(regex_path, "[/]*$");
+            delete_file(uqglob, regex_path);
+            amfree(regex_path);
+	}
+	if (sdir) {
+	    set_directory(sdir, 0);
+	}
+	amfree(regex);
     }
-    if (sdir) {
-	set_directory(sdir, 0);
-	amfree(sdir);
-    }
-    amfree(regex);
+    amfree(sdir);
     amfree(uqglob);
     amfree(newglob);
 }
@@ -1102,6 +1129,7 @@ delete_regex(
     char *sdir = NULL;
     char *uqregex;
     char *newregex;
+    int   result = 1;
 
     if (disk_path == NULL) {
 	g_printf(_("Must select directory before adding files\n"));
@@ -1111,21 +1139,23 @@ delete_regex(
     uqregex = unquote_string(regex);
     newregex = file_of_path(uqregex, &dir);
     if (dir) {
-	sdir = stralloc2(mount_point, disk_path);
-	cd_regex(dir, 0);
+	sdir = merge_path(mount_point, disk_path);
+	result = cd_regex(dir, 0);
 	amfree(dir);
     }
 
-    if ((s = validate_regexp(newregex)) != NULL) {
-	g_printf(_("\"%s\" is not a valid regular expression: "), newregex);
-	puts(s);
-    } else {
-	delete_file(newregex, regex);
+    if (result == 1) {
+	if ((s = validate_regexp(newregex)) != NULL) {
+	    g_printf(_("\"%s\" is not a valid regular expression: "), newregex);
+	    puts(s);
+	} else {
+	    delete_file(newregex, regex);
+	}
+	if (sdir) {
+	    set_directory(sdir, 0);
+	}
     }
-    if (sdir) {
-	set_directory(sdir, 0);
-	amfree(sdir);
-    }
+    amfree(sdir);
     amfree(uqregex);
     amfree(newregex);
 }

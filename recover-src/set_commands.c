@@ -324,7 +324,7 @@ local_cd(
     amfree(uqdir);
 }
 
-void
+int
 cd_glob(
     char *	glob,
     int		verbose)
@@ -333,12 +333,13 @@ cd_glob(
     char *regex_path;
     char *s;
     char *uqglob;
+    int   result;
 
     char *path_on_disk = NULL;
 
     if (disk_name == NULL) {
 	g_printf(_("Must select disk before changing directory\n"));
-	return;
+	return 0;
     }
 
     uqglob = unquote_string(glob);
@@ -349,7 +350,7 @@ cd_glob(
         puts(s);
 	amfree(regex);
 	amfree(uqglob);
-        return;
+        return 0;
     }
     /*
      * glob_to_regex() anchors the beginning of the pattern with ^,
@@ -373,14 +374,16 @@ cd_glob(
         amfree(clean_disk_path);
     }
 
-    cd_dir(path_on_disk, uqglob, verbose);
+    result = cd_dir(path_on_disk, uqglob, verbose);
 
     amfree(regex_path);
     amfree(path_on_disk);
     amfree(uqglob);
+
+    return result;
 }
 
-void
+int
 cd_regex(
     char *	regex,
     int		verbose)
@@ -389,12 +392,13 @@ cd_regex(
     char *uq_orig_regex;
     char *uqregex;
     int  len_uqregex;
+    int  result;
 
     char *path_on_disk = NULL;
 
     if (disk_name == NULL) {
 	g_printf(_("Must select disk before changing directory\n"));
-	return;
+	return 0;
     }
 
     uq_orig_regex = unquote_string(regex);
@@ -416,7 +420,7 @@ cd_regex(
 	amfree(uqregex);
 	amfree(uq_orig_regex);
 	puts(s);
-	return;
+	return 0;
     }
 
     /* convert path (assumed in cwd) to one on disk */
@@ -428,14 +432,16 @@ cd_regex(
         amfree(clean_disk_path);
     }
 
-    cd_dir(path_on_disk, uq_orig_regex, verbose);
+    result = cd_dir(path_on_disk, uq_orig_regex, verbose);
 
     amfree(path_on_disk);
     amfree(uqregex);
     amfree(uq_orig_regex);
+
+    return result;
 }
 
-void
+int
 cd_dir(
     char *	path_on_disk,
     char *	default_dir,
@@ -444,13 +450,14 @@ cd_dir(
     char *dir = NULL;
     char *s;
     int nb_found;
+    int result;
     size_t i;
 
     DIR_ITEM *ditem;
 
     if ((s = validate_regexp(path_on_disk)) != NULL) {
-	set_directory(default_dir, verbose);
-	return;
+	result = set_directory(default_dir, verbose);
+	return result;
     }
 
     nb_found = 0;
@@ -482,18 +489,20 @@ cd_dir(
     }
 
     if(nb_found==0) {
-	set_directory(default_dir, verbose);
+	result = set_directory(default_dir, verbose);
     }
     else if(nb_found==1) {
-	set_directory(dir, verbose);
+	result = set_directory(dir, verbose);
     }
     else {
 	g_printf(_("Too many directories matching '%s'\n"), default_dir);
+	result = 0;
     }
     amfree(dir);
+    return result;
 }
 
-void
+int
 set_directory(
     char *	dir,
     int		verbose)
@@ -503,17 +512,18 @@ set_directory(
     char *qnew_dir;
     char *dp, *de;
     char *ldir = NULL;
+    int   result;
 
     /* do nothing if "." */
     if(strcmp(dir,".")==0) {
 	show_directory();		/* say where we are */
-	return;
+	return 1;
 	/*NOTREACHED*/
     }
 
     if (disk_name == NULL) {
 	g_printf(_("Must select disk before setting directory\n"));
-	return;
+	return 0;
 	/*NOTREACHED*/
     }
 
@@ -535,7 +545,7 @@ set_directory(
 		g_printf(_("Invalid directory - Can't cd outside mount point \"%s\"\n"),
 		       mount_point);
 		amfree(ldir);
-		return;
+		return 0;
 		/*NOTREACHED*/
 	    }
 	    new_dir = stralloc(ldir+strlen(mount_point));
@@ -574,7 +584,7 @@ set_directory(
 		amfree(new_dir);
 		/*@end@*/
 		amfree(ldir);
-		return;
+		return 0;
 		/*NOTREACHED*/
 	    }
 	    de = strrchr(new_dir, '/');	/* always at least 1 */
@@ -612,16 +622,20 @@ set_directory(
 	suck_dir_list_from_server();	/* get list of directory contents */
 	if (verbose)
 	    show_directory();		/* say where we moved to */
+	result = 1;
     }
     else
     {
 	g_printf(_("Invalid directory - %s\n"), dir);
+	result = 0;
     }
 
     /*@ignore@*/
     amfree(new_dir);
     amfree(ldir);
     /*@end@*/
+
+    return result;
 }
 
 
