@@ -41,6 +41,7 @@ use Amanda::MainLoop;
 use Amanda::Config qw( :init );
 use Amanda::Util qw( :constants );
 use Amanda::Debug qw( :logging );
+use Getopt::Long;
 
 my $chg;
 my $res;
@@ -274,6 +275,12 @@ sub finish {
     release_and_then([], \&Amanda::MainLoop::quit);
 }
 
+my $config_overwrites = new_config_overwrites($#ARGV+1);
+Getopt::Long::Configure(qw{bundling});
+GetOptions(
+    'o=s' => sub { add_config_overwrite_opt($config_overwrites, $_[1]); }
+);
+
 Amanda::Util::setup_application("chg-glue", "server", $CONTEXT_DAEMON);
 
 die("$0 is for internal use only") if (@ARGV < 1);
@@ -288,6 +295,7 @@ $SIG{__DIE__} = sub {
 };
 
 config_init($CONFIG_INIT_EXPLICIT_NAME, $config_name);
+apply_config_overwrites($config_overwrites);
 my ($cfgerr_level, @cfgerr_errors) = config_errors();
 if ($cfgerr_level >= $CFGERR_WARNINGS) {
     config_print_errors();

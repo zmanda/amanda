@@ -322,6 +322,8 @@ start_chg_glue(void)
     int stdin_pipe[2] = { -1, -1 };
     int stdout_pipe[2] = { -1, -1 };
     char *chg_glue;
+    char **config_options;
+    int    i;
 
     /* is it already running? */
     if (tpchanger_pid != -1)
@@ -352,11 +354,18 @@ start_chg_glue(void)
 			_("<error> could not dup2: %s"), strerror(errno));
 	    goto child_err;
 	}
-	safe_fd(-1, 0);
 
+	config_options = get_config_options(2);
+	config_options[0] = "chg-glue";
+	config_options[1] = get_config_name();
 	chg_glue = g_strdup_printf("%s/chg-glue", amlibexecdir);
 
-	execl(chg_glue, chg_glue, get_config_name(), NULL);
+	dbprintf("exec: chg_glue\n");
+	for (i=0; config_options[i]!=NULL; i++)
+	    dbprintf("    :    %s\n", config_options[i]);
+
+	safe_fd(-1, 0);
+	execve(chg_glue, config_options, NULL);
 	changer_resultstr = vstrallocf(
 			_("<error> could not exec \"chg-glue\": %s"), strerror(errno));
 	goto child_err;
