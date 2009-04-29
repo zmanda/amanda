@@ -365,7 +365,7 @@ start_chg_glue(void)
 	    dbprintf("    :    %s\n", config_options[i]);
 
 	safe_fd(-1, 0);
-	execve(chg_glue, config_options, NULL);
+	execv(chg_glue, config_options);
 	changer_resultstr = vstrallocf(
 			_("<error> could not exec \"chg-glue\": %s"), strerror(errno));
 	goto child_err;

@@ -1,4 +1,7 @@
 2009-04-29  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/changer.c: s/execve/execv
+
+2009-04-29  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/changer.c: Pass command override to chg-glue.
 	* changer-src/chg-glue.pl: Parse command override.
 
