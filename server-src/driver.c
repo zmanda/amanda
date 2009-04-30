@@ -2658,6 +2658,7 @@ read_schedule(
     if(need_degraded==1) start_degraded_mode(&runq);
     schedule_done = 1;
     start_some_dumps(&runq);
+    startaflush();
 }
 
 static unsigned long
