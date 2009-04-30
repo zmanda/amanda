@@ -546,6 +546,12 @@ amstar_backup(
     FILE      *indexstream = NULL;
     FILE      *outstream;
     int        level;
+    regex_t    regex_root;
+    regex_t    regex_dir;
+    regex_t    regex_file;
+    regex_t    regex_special;
+    regex_t    regex_symbolic;
+    regex_t    regex_hard;
 
     mesgstream = fdopen(mesgf, "w");
     if (!mesgstream) {
@@ -591,82 +597,53 @@ amstar_backup(
 	error(_("error outstream(%d): %s\n"), outf, strerror(errno));
     }
 
+    regcomp(&regex_root, "^a \\.\\/ directory$", REG_EXTENDED|REG_NEWLINE);
+    regcomp(&regex_dir, "^a (.*) directory$", REG_EXTENDED|REG_NEWLINE);
+    regcomp(&regex_file, "^a (.*) (.*) bytes", REG_EXTENDED|REG_NEWLINE);
+    regcomp(&regex_special, "^a (.*) special", REG_EXTENDED|REG_NEWLINE);
+    regcomp(&regex_symbolic, "^a (.*) symbolic", REG_EXTENDED|REG_NEWLINE);
+    regcomp(&regex_hard, "^a (.*) link to", REG_EXTENDED|REG_NEWLINE);
+
     while ((fgets(line, sizeof(line), outstream)) != NULL) {
 	regmatch_t regmatch[3];
-	regex_t regex;
-        int got_match = 0;
 
 	if (line[strlen(line)-1] == '\n') /* remove trailling \n */
 	    line[strlen(line)-1] = '\0';
 
-	regcomp(&regex, "^a \\.\\/ directory$", REG_EXTENDED|REG_NEWLINE);
-	if (regexec(&regex, line, 1, regmatch, 0) == 0) {
-	    got_match = 1;
+	if (regexec(&regex_root, line, 1, regmatch, 0) == 0) {
 	    if (argument->dle.create_index)
-		fprintf(indexstream, "%s\n", "/\n");
+		fprintf(indexstream, "%s\n", "/");
+	    continue;
 	}
-	regfree(&regex);
 
-	regcomp(&regex, "^a (.*) directory$", REG_EXTENDED|REG_NEWLINE);
-	if (regexec(&regex, line, 3, regmatch, 0) == 0) {
-	    got_match = 1;
+	if (regexec(&regex_dir, line, 3, regmatch, 0) == 0) {
 	    if (argument->dle.create_index && regmatch[1].rm_so == 2) {
 		line[regmatch[1].rm_eo+1]='\0';
 		fprintf(indexstream, "/%s\n", &line[regmatch[1].rm_so]);
 	    }
+	    continue;
 	}
-	regfree(&regex);
 
-	regcomp(&regex, "^a (.*) (.*) bytes", REG_EXTENDED|REG_NEWLINE);
-	if (regexec(&regex, line, 3, regmatch, 0) == 0) {
-	    got_match = 1;
+	if (regexec(&regex_file, line, 3, regmatch, 0) == 0 ||
+	    regexec(&regex_special, line, 3, regmatch, 0) == 0 ||
+	    regexec(&regex_symbolic, line, 3, regmatch, 0) == 0 ||
+	    regexec(&regex_hard, line, 3, regmatch, 0) == 0) {
 	    if (argument->dle.create_index && regmatch[1].rm_so == 2) {
 		line[regmatch[1].rm_eo]='\0';
 		fprintf(indexstream, "/%s\n", &line[regmatch[1].rm_so]);
 	    }
+	    continue;
 	}
-	regfree(&regex);
 
-	regcomp(&regex, "^a (.*) special", REG_EXTENDED|REG_NEWLINE);
-	if (regexec(&regex, line, 3, regmatch, 0) == 0) {
-	    got_match = 1;
-	    if (argument->dle.create_index && regmatch[1].rm_so == 2) {
-		line[regmatch[1].rm_eo]='\0';
-		fprintf(indexstream, "/%s\n", &line[regmatch[1].rm_so]);
+	for (rp = re_table; rp->regex != NULL; rp++) {
+	    if (match(rp->regex, line)) {
+		break;
 	    }
 	}
-	regfree(&regex);
-
-	regcomp(&regex, "^a (.*) symbolic", REG_EXTENDED|REG_NEWLINE);
-	if (regexec(&regex, line, 3, regmatch, 0) == 0) {
-	    got_match = 1;
-	    if (argument->dle.create_index && regmatch[1].rm_so == 2) {
-		line[regmatch[1].rm_eo]='\0';
-		fprintf(indexstream, "/%s\n", &line[regmatch[1].rm_so]);
-	    }
+	if (rp->typ == DMP_SIZE) {
+	    dump_size = (long)((the_num(line, rp->field)* rp->scale+1023.0)/1024.0);
 	}
-	regfree(&regex);
-
-	regcomp(&regex, "^a (.*) link to", REG_EXTENDED|REG_NEWLINE);
-	if (regexec(&regex, line, 3, regmatch, 0) == 0) {
-	    got_match = 1;
-	    if (argument->dle.create_index && regmatch[1].rm_so == 2) {
-		line[regmatch[1].rm_eo]='\0';
-		fprintf(indexstream, "/%s\n", &line[regmatch[1].rm_so]);
-	    }
-	}
-	regfree(&regex);
-
-	if (got_match == 0) { /* message */
-	    for(rp = re_table; rp->regex != NULL; rp++) {
-		if(match(rp->regex, line)) {
-		    break;
-		}
-	    }
-	    if(rp->typ == DMP_SIZE) {
-		dump_size = (long)((the_num(line, rp->field)* rp->scale+1023.0)/1024.0);
-	    }
-	    switch(rp->typ) {
+	switch (rp->typ) {
 	    case DMP_NORMAL:
 		type = "normal";
 		startchr = '|';
@@ -687,11 +664,17 @@ amstar_backup(
 		type = "unknown";
 		startchr = '!';
 		break;
-	    }
-	    dbprintf("%3d: %7s(%c): %s\n", rp->srcline, type, startchr, line);
-	    fprintf(mesgstream,"%c %s\n", startchr, line);
-        }
+	}
+	dbprintf("%3d: %7s(%c): %s\n", rp->srcline, type, startchr, line);
+	fprintf(mesgstream,"%c %s\n", startchr, line);
     }
+
+    regfree(&regex_root);
+    regfree(&regex_dir);
+    regfree(&regex_file);
+    regfree(&regex_special);
+    regfree(&regex_symbolic);
+    regfree(&regex_hard);
 
     dbprintf(_("gnutar: %s: pid %ld\n"), cmd, (long)starpid);
 
