@@ -1,3 +1,6 @@
+2009-04-30  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amstar.c: Handle hard link.
+
 2009-04-29  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/changer.c: s/execve/execv
 

@@ -647,6 +647,16 @@ amstar_backup(
 	}
 	regfree(&regex);
 
+	regcomp(&regex, "^a (.*) link to", REG_EXTENDED|REG_NEWLINE);
+	if (regexec(&regex, line, 3, regmatch, 0) == 0) {
+	    got_match = 1;
+	    if (argument->dle.create_index && regmatch[1].rm_so == 2) {
+		line[regmatch[1].rm_eo]='\0';
+		fprintf(indexstream, "/%s\n", &line[regmatch[1].rm_so]);
+	    }
+	}
+	regfree(&regex);
+
 	if (got_match == 0) { /* message */
 	    for(rp = re_table; rp->regex != NULL; rp++) {
 		if(match(rp->regex, line)) {
