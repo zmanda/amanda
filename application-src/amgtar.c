@@ -1048,9 +1048,12 @@ amgtar_validate(
     GPtrArray  *argv_ptr = g_ptr_array_new();
     char      **env;
     char       *e;
+    char        buf[32768];
 
     if (!gnutar_path) {
-	error(_("GNUTAR-PATH not defined"));
+	dbprintf("GNUTAR-PATH not set; Piping to /dev/null\n");
+	fprintf(stderr,"GNUTAR-PATH not set; Piping to /dev/null\n");
+	goto pipe_to_null;
     }
 
     cmd = stralloc(gnutar_path);
@@ -1062,7 +1065,11 @@ amgtar_validate(
     env = safe_env();
     execve(cmd, (char **)argv_ptr->pdata, env);
     e = strerror(errno);
-    error(_("error [exec %s: %s]"), cmd, e);
+    dbprintf("failed to execute %s: %s; Piping to /dev/null\n", cmd, e);
+    fprintf(stderr,"failed to execute %s: %s; Piping to /dev/null\n", cmd, e);
+pipe_to_null:
+    while (read(0, buf, 32768) > 0) {
+    }
 }
 
 static void

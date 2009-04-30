@@ -1,4 +1,8 @@
 2009-04-30  Jean-Louis Martineau <martineau@zmanda.com>
+	* application-src/amgtar.c, application-src/amstar.c: Validate if
+	  binary not available.
+
+2009-04-30  Jean-Louis Martineau <martineau@zmanda.com>
 	* application-src/amstar.c: Compile pattern once.
 	                            Remove a superfluous '\n'.
 
