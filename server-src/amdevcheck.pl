@@ -143,13 +143,19 @@ if ($result == $DEVICE_STATUS_SUCCESS) {
         if ($result == $DEVICE_STATUS_SUCCESS) {
             print $device->volume_label(), "\n";
             exit 0;
-        }
+        } else {
+            exit 1;
+	}
     } else {
         print_result($result, $device->error());
+	exit 0;
     }
 } else {
     if (!defined $getproplist && !defined $print_label) {
         print_result($result, $device->error());
+        exit 0;
+    } else {
+        exit 1;
     }
 }
-exit ($result != $DEVICE_STATUS_SUCCESS);
+exit 0;

@@ -52,7 +52,7 @@
       reports all possible causes of the error. Optionally this tools lists the
       properties for the device.
     </para>
-    
+
     <para>See the
       <manref name="amanda" vol="8"/>
       man page for more details about Amanda.  See
@@ -87,7 +87,7 @@
         <term><replaceable>--label</replaceable></term>
         <listitem>
           <para>
-	    Print the label of the loaded volume.
+	    Print to stdout the label of the loaded volume. Return with error if the label is not found.
 	  </para>
         </listitem>
       </varlistentry>
@@ -100,6 +100,7 @@
 	    output is omitted, and property values are printed to stdout, one
 	    per line, as a property name, followed by '=', followed by the
 	    property value.
+            Return with error if properties are not available.
           </para>
           <para>
 	    If <replaceable>list</replaceable> is given, it is treated as a
@@ -121,10 +122,11 @@
   </refsect1>
 
   <refsect1><title>OUTPUT</title>
-    <emphasis remap='B'>Amdevcheck</emphasis> returns one or more of the following lines. If multiple lines appear, then at least one, but not necessarily all of
+    <para><emphasis remap='B'>amdevcheck</emphasis> exit with code 0 if the device is working of if it get an expected error, look at the MESSAGE line for the error. It exit with code 1 if it get an unexpected error.</para>
+    <para><emphasis remap='B'>Amdevcheck</emphasis> returns one or more of the following lines. If multiple lines appear, then at least one, but not necessarily all of
 the messages apply.  This situation can occur when working with hardware or
 operating systems which cannot distinguish, for example, between a
-malfunctioning drive and a functional but unloaded drive.
+malfunctioning drive and a functional but unloaded drive.</para>
 <!-- .RS -->
       <variablelist remap='TP'>
         <varlistentry>

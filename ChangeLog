@@ -1,3 +1,7 @@
+2009-05-04  Jean-Louis Martineau <martineau@zmanda.com>
+	* man/xml-source/amdevcheck.8.xml: Document exit code.
+	* server-src/amdevcheck.pl: change exit code.
+
 2009-05-04  Dustin J. Mitchell <dustin@zmanda.com>
 	* installcheck/Makefile.am installcheck/taper.pl: new installcheck for
 	  taper
