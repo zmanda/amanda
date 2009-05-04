@@ -510,7 +510,8 @@ sub _base_backup {
                push @wal_files, $fname;
                debug("will store: $fname");
            } elsif ($fname lt $start_wal) {
-               $self->{'unlink_cb'}->($fname);
+               debug("will delete: $fname");
+               $self->{'unlink_cb'}->("$self->{'props'}->{'PG-ARCHIVEDIR'}/$fname");
            }
        }
    }
@@ -692,7 +693,7 @@ GetOptions(
     # ampgsql-specific
     'statedir=s',
     'tmpdir=s',
-    'gnutar=s',
+    'gnutar-path=s',
 ) or usage();
 
 my $application = Amanda::Application::ampgsql->new($opts);

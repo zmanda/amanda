@@ -1,3 +1,7 @@
+2009-05-04  Nikolas Coukouma <atrus@zmanda.com>
+	* application-src/ampgsql.pl: accept gnutar-path option;
+	  use absolute path when calling unlink()
+
 2009-05-04  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/taper.c: do not include a partial part in the size
 	  calculation
