@@ -237,13 +237,11 @@ static void store_excess(TaperDiskPortSource * self, char * buf,
 /* Handle the output of the small amount of saved in-memory data. */
 static size_t handle_excess_buffer_read(TaperDiskPortSource * self,
                                         void * buf, size_t count) {
-    TaperSource * pself = (TaperSource*)self;
     guint64 offset;
 
     /* First, do we have anything left? */
     if (selfp->retry_data_written >=
         (selfp->disk_buffered_bytes + selfp->excess_buffer_size)) {
-        pself->end_of_part = TRUE;
         return 0;
     }
     
@@ -318,6 +316,8 @@ static ssize_t write_disk_buffer(TaperDiskPortSource * self, char * buf,
 static ssize_t 
 taper_disk_port_source_read (TaperSource * pself, void * buf, size_t count) {
     TaperDiskPortSource * self = (TaperDiskPortSource*)pself;
+    int read_result;
+    int result;
 
     g_return_val_if_fail (self != NULL, -1);
     g_return_val_if_fail (TAPER_IS_DISK_PORT_SOURCE (self), -1);
@@ -345,7 +345,6 @@ taper_disk_port_source_read (TaperSource * pself, void * buf, size_t count) {
 
         if (selfp->retry_data_written < selfp->disk_buffered_bytes) {
             /* Read from disk. */
-            int result;
             count = MIN(count, selfp->disk_buffered_bytes -
                                selfp->retry_data_written);
             result = read(selfp->buffer_fd, buf, count);
@@ -358,31 +357,31 @@ taper_disk_port_source_read (TaperSource * pself, void * buf, size_t count) {
             }
         } else if (selfp->excess_buffer != NULL) {
             /* We are writing out the last bit of buffer. Handle that. */
-            return handle_excess_buffer_read(self, buf, count);
-        } else {
-            /* No more data. */
-            pself->end_of_part = TRUE;
-            return 0;
+            result = handle_excess_buffer_read(self, buf, count);
+	    if (result) {
+		return result;
+	    }
         }
-        
-        g_assert_not_reached();
-    } else {
-        /* Read from port. */
-        int read_result;
-        count = MIN(count, pself->max_part_size - selfp->disk_buffered_bytes);
-        if (count == 0) /* It was nonzero before. */ {
-            pself->end_of_part = TRUE;
-            return 0;
-        }
-        
-        read_result = source_parent_class->read(pself, buf, count);
-        /* Parent handles EOF and other goodness. */
-        if (read_result <= 0) {
-            return read_result;
-        }
-        /* Now write to disk buffer. */
-        return write_disk_buffer(self, buf, read_result);
+
+	/* No more cached data -- start reading from the part again */
+	selfp->retry_mode = FALSE;
     }
+
+    /* Read from port. */
+    count = MIN(count, pself->max_part_size - selfp->disk_buffered_bytes);
+    if (count == 0) /* It was nonzero before. */ {
+	pself->end_of_part = TRUE;
+	return 0;
+    }
+
+    read_result = source_parent_class->read(pself, buf, count);
+    /* Parent handles EOF and other goodness. */
+    if (read_result <= 0) {
+	return read_result;
+    }
+
+    /* Now write to disk buffer. */
+    return write_disk_buffer(self, buf, read_result);
 }
 
 /* Try seeking back to byte 0. If that fails, then we mark ourselves
@@ -403,12 +402,8 @@ static gboolean try_rewind(TaperDiskPortSource * self) {
 
 static gboolean 
 taper_disk_port_source_seek_to_part_start (TaperSource * pself) {
-    TaperDiskPortSource * self = (TaperDiskPortSource*)pself;
-    g_return_val_if_fail (self != NULL, FALSE);
-    g_return_val_if_fail (TAPER_IS_DISK_PORT_SOURCE (pself), FALSE);
-    g_return_val_if_fail (selfp->disk_buffered_bytes
-                          + selfp->excess_buffer_size > 0, FALSE);
-    
+    TaperDiskPortSource * self = TAPER_DISK_PORT_SOURCE(pself);
+
     if (self->_priv->fallback != NULL) {
         return taper_source_seek_to_part_start(selfp->fallback);
     }

@@ -179,7 +179,8 @@ taper_port_source_is_partial(TaperSource * pself) {
     gboolean result;
     TaperPortSource * self = (TaperPortSource*)pself;
 
-    g_return_val_if_fail(self->socket_fd < 0, FALSE);
+    if (self->socket_fd >= 0)
+	return FALSE;
 
     /* Query DRIVER about partial dump. */
     putresult(DUMPER_STATUS, "%s\n", pself->driver_handle);

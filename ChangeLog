@@ -1,3 +1,13 @@
+2009-05-04  Dustin J. Mitchell <dustin@zmanda.com>
+	* server-src/taper-mem-port-source.c
+	  server-src/taper-disk-port-source.c: continue reading from the port
+	  after the cache is exhausted, instead of terminating the part abruptly
+	  (which can lead to insertion of spurious zeros into the dumpfile);
+	  also remove some unnecessary assertions (g_return_val_if_fail)
+	* server-src/taper-file-source.c: use correct unit on part size;
+	  correctly calculate estimated number of parts
+	* server-src/taper-port-source.c: replace assertion with 'if'
+
 2009-05-04  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/amdevcheck.pl: Add '--label' option.
 	* man/xml-source/amdevcheck.8.xml: Document '--label' option.
