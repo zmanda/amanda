@@ -373,9 +373,10 @@ sub _write_amanda_conf_subsection {
 	my $define = $use_define? "define " : "";
 	print $amanda_conf "\n$define$subsec_type $subsec_name {\n";
 
-	while (@$values) {
-	    $param = shift @$values;
-	    $value = shift @$values;
+	my @values = @$values; # make a copy
+	while (@values) {
+	    $param = shift @values;
+	    $value = shift @values;
 	    print $amanda_conf "$param $value\n";
 	}
 	print $amanda_conf "}\n";

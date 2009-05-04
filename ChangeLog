@@ -1,4 +1,10 @@
 2009-05-04  Dustin J. Mitchell <dustin@zmanda.com>
+	* installcheck/Makefile.am installcheck/taper.pl: new installcheck for
+	  taper
+	* installcheck/Installcheck/Config.pm: cleanup
+	* installcheck/Installcheck/Run.pm: cleanup
+
+2009-05-04  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/taper-mem-port-source.c
 	  server-src/taper-disk-port-source.c: continue reading from the port
 	  after the cache is exhausted, instead of terminating the part abruptly

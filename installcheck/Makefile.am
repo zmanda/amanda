@@ -37,6 +37,7 @@ server_tests = \
 	Amanda_Process \
 	Amanda_Xfer_serveronly \
 	bigint \
+	taper \
 	amgetconf \
 	amtapetype
 

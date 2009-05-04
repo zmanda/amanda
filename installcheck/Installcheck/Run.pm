@@ -64,11 +64,11 @@ modify that configuration before writing it out.  The hostname
 for the DLE is "localhost", and the disk name is available in
 C<Installcheck::Run::diskname>.
 
-This module also provides a convenient Perlish interface for running
-Amanda commands: C<run($app, $args, ...)>.  This function uses the
-appropriate path to get to $app, and returns true if the application
-exited with a status of zero.  The stdout and stderr of the application
-are left in C<Installcheck::Run::stdout> and C<stderr>, respectively.
+This module also provides a convenient Perlish interface for running Amanda
+commands: C<run($app, $args, ...)>.  This function runs $app (from $sbindir if
+$app is not an absolute path), and returns true if the application exited with
+a status of zero.  The stdout and stderr of the application are left in
+C<Installcheck::Run::stdout> and C<stderr>, respectively.
 
 To check that a run is successful, and return its stdout (chomped), use
 C<run_get($app, $args, ...)>.  This function returns C<''> if the application
@@ -337,9 +337,9 @@ sub run {
     local (*INFH, *OUTFH, *ERRFH);
     open(ERRFH, ">", $errtempfile);
 
-    # prepend $sbindir iff $app doesn't start with '/'
+    $app = "$sbindir/$app" unless ($app =~ qr{^/});
     my $pid = IPC::Open3::open3("INFH", "OUTFH", ">&ERRFH",
-	($app =~ /^\//)? $app : "$sbindir/$app", @args);
+	"$app", @args);
     
     # immediately close the child's stdin
     close(INFH);
@@ -411,7 +411,8 @@ sub run_expect {
 
     die "Expect.pm not found" unless $have_expect;
 
-    my $exp = Expect->new("$sbindir/$app", @args);
+    $app = "$sbindir/$app" unless ($app =~ qr{^/});
+    my $exp = Expect->new("$app", @args);
 
     return $exp;
 }
