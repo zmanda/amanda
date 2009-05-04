@@ -162,6 +162,12 @@ taper_mem_port_source_read (TaperSource * pself, void * buf, size_t count) {
 
         memcpy(buf, selfp->retry_buffer + selfp->buffer_offset, count);
         selfp->buffer_offset += count;
+
+	/* cancel retry mode if we're at the end of the retry buffer */
+	if (selfp->buffer_offset == selfp->buffer_len) {
+	    selfp->retry_mode = 0;
+	}
+
         return count;
     } else {
         int read_result;

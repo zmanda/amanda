@@ -150,14 +150,13 @@ static void compute_splits(TaperFileSource * self) {
         return;
     }
     
-    g_fprintf(stderr, "taper: Total dump size should be %jukb, part size is %jukb\n",
+    g_fprintf(stderr, "taper: Total dump size should be %jukb, part size is %ju bytes\n",
             (uintmax_t)total_kb, (uintmax_t)pself->max_part_size);
 
-    predicted_splits = (total_kb * 1024) / pself->max_part_size;
-    if (predicted_splits == 0 ||
-        (0 != ((total_kb * 1024) % pself->max_part_size))) {
-        predicted_splits ++;
-    }
+    /* always add one here; if the max_part_size evenly divides the total
+     * dump size, taper will write an empty final part */
+    predicted_splits = (total_kb * 1024) / pself->max_part_size + 1;
+    g_fprintf(stderr, "taper: predicting %d split parts\n", predicted_splits);
     selfp->predicted_splits = predicted_splits;
 }
 
