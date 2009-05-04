@@ -1,3 +1,7 @@
+2009-05-04  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/taper.c: do not include a partial part in the size
+	  calculation
+
 2009-04-30  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/driver.c: Fix deadlock.
 

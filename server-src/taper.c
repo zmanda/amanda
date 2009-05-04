@@ -777,8 +777,6 @@ static gboolean finish_part_attempt(taper_state_t * taper_state,
             }
         }
 
-        dump_info->total_time = timesadd(run_time, dump_info->total_time);
-        dump_info->total_bytes += run_bytes;
         dump_time = g_timeval_to_double(dump_info->total_time);
         dump_kbytes = dump_info->total_bytes / 1024;
         dump_kbps = dump_info->total_bytes / (1024 * dump_time);
