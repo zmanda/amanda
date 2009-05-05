@@ -1,3 +1,7 @@
+2009-05-04  Nikolas Coukouma <atrus@zmanda.com>
+	* server-src/amrmtape.pl: try loading disklist before erasing,
+	  before amadmin tries (and possibly fails)
+
 2009-05-04  Jean-Louis Martineau <martineau@zmanda.com>
 	* man/xml-source/amdevcheck.8.xml: Document exit code.
 	* server-src/amdevcheck.pl: change exit code.

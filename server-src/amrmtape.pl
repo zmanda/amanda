@@ -26,6 +26,7 @@ use Amanda::Config qw( :init :getconf config_print_errors config_dir_relative );
 use Amanda::Changer;
 use Amanda::Device qw( :constants );
 use Amanda::Debug qw( :logging );
+use Amanda::Disklist;
 use Amanda::Paths;
 use Amanda::MainLoop;
 use Amanda::Tapelist;
@@ -141,7 +142,7 @@ $logdir = config_dir_relative(getconf($CNF_LOGDIR));
 $log_file = "$logdir/log";
 
 if ($erase) {
-    # Check for log file inexistance
+    # Check for log file existance
     if (-e $log_file) {
         `amcleanup -p $config_name`;
     }
@@ -156,6 +157,14 @@ if ($erase) {
         print "$process_name is running, or you must run amcleanup\n";
         exit 1;
     }
+}
+
+# amadmin may later try to load this and will die if it has errors
+# load it now to catch the problem sooner (before we might erase data)
+my $diskfile = config_dir_relative(getconf($CNF_DISKFILE));
+$cfgerr_level = Amanda::Disklist::read_disklist('filename' => $diskfile);
+if ($cfgerr_level >= $CFGERR_ERRORS) {
+    die "Errors processing disklist";
 }
 
 my $scrub_db = sub {
