@@ -1,3 +1,8 @@
+2009-05-06  Dustin J. Mitchell <dustin@zmanda.com>
+	* server-src/taper.c: check for division by zero and don't print 'nan'
+	  for kbps
+	* installcheck/taper.pl: don't expect 'nan'
+
 2009-05-04  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/taper-mem-port-source.c
 	  server-src/taper-disk-port-source.c: continue reading from the port
