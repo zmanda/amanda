@@ -249,6 +249,13 @@ static gboolean boolean_prolong(void * data) {
     }
 }
 
+static double get_kbps(double kb, double secs) {
+    /* avoid division by zero */
+    if (secs < 0.0001)
+	return 0.0;
+    return kb / secs;
+}
+
 /* A (simpler) wrapper around taper_scan(). */
 static gboolean simple_taper_scan(taper_state_t * state,
                                   gboolean* prolong, char ** error_message) {
@@ -662,7 +669,7 @@ static void put_partial_log(dump_info_t * dump_info, double dump_time,
     log_add(L_PARTIAL, "%s %s %s %d %d [sec %f kb %ju kps %f] %s",
             dump_info->hostname, qdiskname, dump_info->timestamp,
             dump_info->current_part, dump_info->level, dump_time,
-            (uintmax_t)dump_kbytes, dump_kbytes / dump_time,
+            (uintmax_t)dump_kbytes, get_kbps(dump_kbytes, dump_time),
 	    errstr);
     amfree(qdiskname);
 }
@@ -675,7 +682,7 @@ static gboolean finish_part_attempt(taper_state_t * taper_state,
                                     GTimeVal run_time, guint64 run_bytes) {
     double part_time = g_timeval_to_double(run_time);
     guint64 part_kbytes = run_bytes / 1024;
-    double part_kbps = run_bytes / (1024 * part_time);
+    double part_kbps = get_kbps((double)run_bytes / 1024.0, part_time);
         
     char * qdiskname = quote_string(dump_info->diskname);
 
@@ -700,7 +707,7 @@ static gboolean finish_part_attempt(taper_state_t * taper_state,
             logtype_t result_log;
             double dump_time = g_timeval_to_double(dump_info->total_time);
             guint64 dump_kbytes = dump_info->total_bytes / 1024;
-            double dump_kbps = dump_info->total_bytes / (1024 * dump_time);
+            double dump_kbps = get_kbps((double)dump_info->total_bytes / 1024.0, dump_time);
 
             find_completion_tags(dump_info, &result_cmd, &result_log);
 
@@ -779,7 +786,7 @@ static gboolean finish_part_attempt(taper_state_t * taper_state,
 
         dump_time = g_timeval_to_double(dump_info->total_time);
         dump_kbytes = dump_info->total_bytes / 1024;
-        dump_kbps = dump_info->total_bytes / (1024 * dump_time);
+        dump_kbps = get_kbps((double)dump_info->total_bytes / 1024.0, dump_time);
         
         putresult(PARTIAL,
                   "%s INPUT-%s TAPE-%s "
@@ -846,7 +853,7 @@ static void bail_no_volume(
         /* Second or later part of a split dump, so PARTIAL message. */
         double dump_time = g_timeval_to_double(dump_info->total_time);
         guint64 dump_kbytes = dump_info->total_bytes / 1024;
-        double dump_kbps = dump_kbytes / dump_time;
+        double dump_kbps = get_kbps(dump_kbytes, dump_time);
         putresult(PARTIAL,
                   "%s INPUT-GOOD TAPE-ERROR "
                   "\"[sec %f kb %ju kps %f]\" \"\" %s\n",

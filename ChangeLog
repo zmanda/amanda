@@ -1,3 +1,8 @@
+2009-05-06  Dustin J. Mitchell <dustin@zmanda.com>
+	* server-src/taper.c: check for division by zero and don't print 'nan'
+	  for kbps
+	* installcheck/taper.pl: don't expect 'nan'
+
 2009-05-04  Nikolas Coukouma <atrus@zmanda.com>
 	* server-src/amrmtape.pl: try loading disklist before erasing,
 	  before amadmin tries (and possibly fails)
