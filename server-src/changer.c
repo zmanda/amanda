@@ -321,8 +321,9 @@ start_chg_glue(void)
 {
     int stdin_pipe[2] = { -1, -1 };
     int stdout_pipe[2] = { -1, -1 };
-    char *chg_glue;
-    char **config_options;
+    char *chg_glue = NULL;
+    char **config_options = NULL;
+    char *cmdline = NULL;
     int    i;
 
     /* is it already running? */
@@ -335,6 +336,15 @@ start_chg_glue(void)
 	goto error;
     }
 
+    config_options = get_config_options(2);
+    config_options[0] = g_strdup("chg-glue");
+    config_options[1] = g_strdup(get_config_name());
+    chg_glue = g_strdup_printf("%s/chg-glue", amlibexecdir);
+
+    cmdline = g_strjoinv(" ", config_options);
+    g_debug("invoking %s: %s", chg_glue, cmdline);
+    amfree(cmdline);
+
     switch(tpchanger_pid = fork()) {
     case -1:
 	changer_resultstr = vstrallocf(
@@ -345,30 +355,20 @@ start_chg_glue(void)
 	debug_dup_stderr_to_debug();
 	if(dup2(stdin_pipe[0], 0) == -1) {
 	    changer_resultstr = vstrallocf(
-			_("<error> could not dup2: %s"), strerror(errno));
+			_("<error> could not dup2: %s\n"), strerror(errno));
 	    goto child_err;
 	}
 
 	if(dup2(stdout_pipe[1], 1) == -1) {
 	    changer_resultstr = vstrallocf(
-			_("<error> could not dup2: %s"), strerror(errno));
+			_("<error> could not dup2: %s\n"), strerror(errno));
 	    goto child_err;
 	}
-
-	config_options = get_config_options(2);
-	config_options[0] = "chg-glue";
-	config_options[1] = get_config_name();
-	chg_glue = g_strdup_printf("%s/chg-glue", amlibexecdir);
-
-	dbprintf("exec: chg_glue\n");
-	for (i=0; config_options[i]!=NULL; i++)
-	    dbprintf("    :    %s\n", config_options[i]);
 
 	safe_fd(-1, 0);
 	execv(chg_glue, config_options);
 	changer_resultstr = vstrallocf(
-			_("<error> could not exec \"chg-glue\": %s"), strerror(errno));
-	goto child_err;
+			_("<error> could not exec \"%s\": %s\n"), chg_glue, strerror(errno));
 
 child_err:
 	(void)full_write(stdout_pipe[1], changer_resultstr, strlen(changer_resultstr));
@@ -378,6 +378,10 @@ child_err:
 	aclose(stdin_pipe[0]);
 	aclose(stdout_pipe[1]);
 
+	g_strfreev(config_options);
+	amfree(chg_glue);
+	amfree(cmdline);
+
 	tpchanger_stdout = stdout_pipe[0];
 	tpchanger_stdin = stdin_pipe[1];
 
@@ -385,6 +389,8 @@ child_err:
     }
 
 error:
+    amfree(chg_glue);
+    amfree(cmdline);
     aclose(stdin_pipe[0]);
     aclose(stdin_pipe[1]);
     aclose(stdout_pipe[0]);

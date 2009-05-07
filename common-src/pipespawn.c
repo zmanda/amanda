@@ -174,6 +174,7 @@ pipespawnv_passwd(
 	}
 	break;
     case 0:		/* child process */
+	debug_dup_stderr_to_debug();
 	if ((pipedef & STDIN_PIPE) != 0) {
 	    aclose(inpipe[1]);		/* close output side of pipe */
 	} else {
@@ -197,15 +198,18 @@ pipespawnv_passwd(
 	 * Shift the pipes to the standard file descriptors as requested.
 	 */
 	if(dup2(inpipe[0], 0) == -1) {
-	    error(_("error [spawn %s: dup2 in: %s]"), prog, strerror(errno));
+	    g_fprintf(stderr, "error [spawn %s: dup2 in: %s]", prog, strerror(errno));
+	    exit(1);
 	    /*NOTREACHED*/
 	}
 	if(dup2(outpipe[1], 1) == -1) {
-	    error(_("error [spawn %s: dup2 out: %s]"), prog, strerror(errno));
+	    g_fprintf(stderr, "error [spawn %s: dup2 out: %s]", prog, strerror(errno));
+	    exit(1);
 	    /*NOTREACHED*/
 	}
 	if(dup2(errpipe[1], 2) == -1) {
-	    error(_("error [spawn %s: dup2 err: %s]"), prog, strerror(errno));
+	    g_fprintf(stderr, "error [spawn %s: dup2 err: %s]", prog, strerror(errno));
+	    exit(1);
 	    /*NOTREACHED*/
 	}
 
