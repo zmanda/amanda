@@ -1,3 +1,7 @@
+2009-05-07  Chris Hoogendyk <hoogendyk@bio.umass.edu>
+	* man/xml-source/amanda-auth.7.xml: explain default for amandahosts
+	  "service"
+
 2009-05-07  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/changer.c: remove unused variable
 

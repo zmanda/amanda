@@ -115,6 +115,8 @@ configuration file.</para>
 <emphasis remap='B'>amindexd</emphasis>, and
 <emphasis remap='B'>amidxtaped</emphasis>.  The last two services are required on a server for clients to connect to it using <emphasis remap='B'>amrecover</emphasis>.</para>
 
+<para>If service is omitted, it defaults to <emphasis remap='B'>noop selfcheck sendsize sendbackup</emphasis> (which is equivalent to <emphasis remap='B'>amdump</emphasis>).</para>
+
     <para>Example of the .amandahosts file on an Amanda client
 
 <programlisting>
