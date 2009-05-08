@@ -466,7 +466,6 @@ main(
 
     if (dle->program_is_application_api==1) {
 	guint j;
-	char *cmdline = NULL;
 	char *cmd=NULL;
 	GPtrArray *argv_ptr;
 	char levelstr[20];
@@ -569,83 +568,77 @@ main(
 	    return 0;
 	}
 
-	argv_ptr = g_ptr_array_new();
-	cmd = vstralloc(APPLICATION_DIR, "/", dle->program, NULL);
-	g_ptr_array_add(argv_ptr, stralloc(dle->program));
-	g_ptr_array_add(argv_ptr, stralloc("backup"));
-	if (bsu->message_line == 1) {
-	    g_ptr_array_add(argv_ptr, stralloc("--message"));
-	    g_ptr_array_add(argv_ptr, stralloc("line"));
-	}
-	if (g_options->config && bsu->config == 1) {
-	    g_ptr_array_add(argv_ptr, stralloc("--config"));
-	    g_ptr_array_add(argv_ptr, stralloc(g_options->config));
-	}
-	if (g_options->hostname && bsu->host == 1) {
-	    g_ptr_array_add(argv_ptr, stralloc("--host"));
-	    g_ptr_array_add(argv_ptr, stralloc(g_options->hostname));
-	}
-	if (dle->disk && bsu->disk == 1) {
-	    g_ptr_array_add(argv_ptr, stralloc("--disk"));
-	    g_ptr_array_add(argv_ptr, stralloc(dle->disk));
-	}
-	g_ptr_array_add(argv_ptr, stralloc("--device"));
-	g_ptr_array_add(argv_ptr, stralloc(dle->device));
-	if (level <= bsu->max_level) {
-	    g_ptr_array_add(argv_ptr, stralloc("--level"));
-	    g_snprintf(levelstr,19,"%d",level);
-	    g_ptr_array_add(argv_ptr, stralloc(levelstr));
-	}
-	if (indexfd != -1 && bsu->index_line == 1) {
-	    g_ptr_array_add(argv_ptr, stralloc("--index"));
-	    g_ptr_array_add(argv_ptr, stralloc("line"));
-	}
-	if (dle->record && bsu->record == 1) {
-	    g_ptr_array_add(argv_ptr, stralloc("--record"));
-	}
-	application_property_add_to_argv(argv_ptr, dle, bsu);
-
-	for (scriptlist = dle->scriptlist; scriptlist != NULL;
-	     scriptlist = scriptlist->next) {
-	    script = (script_t *)scriptlist->data;
-	    if (script->result && script->result->proplist) {
-		property_add_to_argv(argv_ptr, script->result->proplist);
-	    }
-	}
-	g_ptr_array_add(argv_ptr, NULL);
-
-	application_api_info_tapeheader(mesgfd, dle->program, dle);
-
-	cmdline = g_strjoinv(" ", (char **)argv_ptr->pdata);
-	g_debug("invoking %s: %s", cmd, cmdline);
-	g_free(cmdline);
-
 	switch(application_api_pid=fork()) {
 	case 0:
-	    debug_dup_stderr_to_debug();
+	    argv_ptr = g_ptr_array_new();
+	    cmd = vstralloc(APPLICATION_DIR, "/", dle->program, NULL);
+	    g_ptr_array_add(argv_ptr, stralloc(dle->program));
+	    g_ptr_array_add(argv_ptr, stralloc("backup"));
+	    if (bsu->message_line == 1) {
+		g_ptr_array_add(argv_ptr, stralloc("--message"));
+		g_ptr_array_add(argv_ptr, stralloc("line"));
+	    }
+	    if (g_options->config && bsu->config == 1) {
+		g_ptr_array_add(argv_ptr, stralloc("--config"));
+		g_ptr_array_add(argv_ptr, stralloc(g_options->config));
+	    }
+	    if (g_options->hostname && bsu->host == 1) {
+		g_ptr_array_add(argv_ptr, stralloc("--host"));
+		g_ptr_array_add(argv_ptr, stralloc(g_options->hostname));
+	    }
+	    if (dle->disk && bsu->disk == 1) {
+		g_ptr_array_add(argv_ptr, stralloc("--disk"));
+		g_ptr_array_add(argv_ptr, stralloc(dle->disk));
+	    }
+	    g_ptr_array_add(argv_ptr, stralloc("--device"));
+	    g_ptr_array_add(argv_ptr, stralloc(dle->device));
+	    if (level <= bsu->max_level) {
+		g_ptr_array_add(argv_ptr, stralloc("--level"));
+		g_snprintf(levelstr,19,"%d",level);
+		g_ptr_array_add(argv_ptr, stralloc(levelstr));
+	    }
+	    if (indexfd != -1 && bsu->index_line == 1) {
+		g_ptr_array_add(argv_ptr, stralloc("--index"));
+		g_ptr_array_add(argv_ptr, stralloc("line"));
+	    }
+	    if (dle->record && bsu->record == 1) {
+		g_ptr_array_add(argv_ptr, stralloc("--record"));
+	    }
+	    application_property_add_to_argv(argv_ptr, dle, bsu);
+
+	    for (scriptlist = dle->scriptlist; scriptlist != NULL;
+		 scriptlist = scriptlist->next) {
+		script = (script_t *)scriptlist->data;
+		if (script->result && script->result->proplist) {
+		    property_add_to_argv(argv_ptr, script->result->proplist);
+		}
+	    }
+
+	    g_ptr_array_add(argv_ptr, NULL);
+	    dbprintf(_("%s: running \"%s\n"), get_pname(), cmd);
+	    for (j = 1; j < argv_ptr->len - 1; j++)
+		dbprintf(" %s\n", (char *)g_ptr_array_index(argv_ptr,j));
+	    dbprintf(_("\"\n"));
 	    if(dup2(dumpout, 1) == -1) {
-		g_fprintf(stderr, "Can't dup2 dumpout: %s", strerror(errno));
-		exit(1);
+		error(_("Can't dup2: %s"),strerror(errno));
 		/*NOTREACHED*/
 	    }
 	    if (dup2(errfd[1], 2) == -1) {
-		g_fprintf(stderr, "Can't dup2 errfd[1]: %s", strerror(errno));
-		exit(1);
+		error(_("Can't dup2: %s"),strerror(errno));
 		/*NOTREACHED*/
 	    }
 	    if(dup2(mesgfd, 3) == -1) {
-		g_fprintf(stderr, "Can't dup2 mesgfd: %s", strerror(errno));
-		exit(1);
+		error(_("Can't dup2: %s"),strerror(errno));
 		/*NOTREACHED*/
 	    }
 	    if(indexfd > 0) {
 		if(dup2(indexfd, 4) == -1) {
-		    g_fprintf(stderr, "Can't dup2 indexfd: %s", strerror(errno));
-		    exit(1);
+		    error(_("Can't dup2: %s"),strerror(errno));
 		    /*NOTREACHED*/
 		}
 		fcntl(indexfd, F_SETFD, 0);
 	    }
+	    application_api_info_tapeheader(mesgfd, dle->program, dle);
 	    if (indexfd != 0) {
 		safe_fd(3, 2);
 	    } else {
@@ -660,8 +653,6 @@ main(
 	case -1:
 	    error(_("%s: fork returned: %s"), get_pname(), strerror(errno));
 	}
-
-	g_ptr_array_free_full(argv_ptr);
 
 	close(errfd[1]);
 	dumperr = fdopen(errfd[0],"r");

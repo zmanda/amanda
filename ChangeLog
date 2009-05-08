@@ -1,4 +1,7 @@
 2009-05-07  Dustin J. Mitchell <dustin@zmanda.com>
+	* client-src/sendbackup.c: revert previous change on JLM's request
+
+2009-05-07  Dustin J. Mitchell <dustin@zmanda.com>
 	    Jean-Louis Martineau <martineau@zmanda.com>
 	* common-src/debug.c: do not use a mutex in debug_printf
 	* client-src/sendbackup.c common-src/pipespawn.c server-src/changer.c:
