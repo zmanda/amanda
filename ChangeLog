@@ -1,3 +1,6 @@
+2009-05-08  Jean-Louis Martineau <martineau@zmanda.com>
+	* server-src/dumper.c: Fix for clnt_decrypt_opt == NULL.
+
 2009-05-07  Chris Hoogendyk <hoogendyk@bio.umass.edu>
 	* man/xml-source/amanda-auth.7.xml: explain default for amandahosts
 	  "service"
