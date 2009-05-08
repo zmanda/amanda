@@ -324,7 +324,6 @@ start_chg_glue(void)
     char *chg_glue = NULL;
     char **config_options = NULL;
     char *cmdline = NULL;
-    int    i;
 
     /* is it already running? */
     if (tpchanger_pid != -1)
