@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 30;
+use Test::More tests => 31;
 use File::Path;
 use strict;
 
@@ -26,7 +26,8 @@ use Installcheck::Config;
 use Amanda::Paths;
 use Amanda::Tapelist;
 use Amanda::Cmdline;
-use Amanda::Logfile qw(:logtype_t :program_t open_logfile get_logline close_logfile);
+use Amanda::Util;
+use Amanda::Logfile qw(:logtype_t :program_t open_logfile get_logline close_logfile log_add );
 use Amanda::Config qw( :init :getconf config_dir_relative );
 
 my $log_filename = "$Installcheck::TMP/Amanda_Logfile_test.log";
@@ -162,6 +163,21 @@ $testconf->write();
 config_init($CONFIG_INIT_EXPLICIT_NAME, "TESTCONF") == $CFGERR_OK
     or die("Could not load config");
 my $tapelist = config_dir_relative("tapelist");
+my $logdir = $testconf->{'logdir'};
+
+# test log_add
+{
+    my $filename = "$logdir/log";
+
+    -f "$filename" and unlink("$filename");
+    log_add($L_INFO, "This is my info");
+
+    open(my $fh, "<", $filename) or die("open $filename: $!");
+    my $logdata = do { local $/; <$fh> };
+    close($fh);
+
+    like($logdata, qr/^INFO unknown This is my info/, "log_add works");
+}
 
 # set up and read the tapelist (we don't use Amanda::Tapelist to write this,
 # in case it's broken)
@@ -177,7 +193,6 @@ Amanda::Tapelist::read_tapelist($tapelist);
 
 # set up a number of logfiles in logdir.
 my $logf;
-my $logdir = $testconf->{'logdir'};
 
 # (an old log file that should be ignored)
 open $logf, ">", "$logdir/log.20071106010002.0" or die("Could not write logfile");

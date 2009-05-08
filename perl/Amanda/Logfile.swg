@@ -82,6 +82,8 @@ C<logtype_t_to_string> and C<program_t_to_string>, respectively.
 
 =head2 FUNCTIONS
 
+Use these functions to read a logfile:
+
 =over
 
 =item C<open_logfile($filename)>
@@ -94,14 +96,20 @@ Closes a log file handle.
 
 =item C<get_logline($handle)>
 
-Return a list as described above representing the next log line in
+Returns a list as described above representing the next log line in
 C<$handle>, or nothing at the end of the logfile. 
 
 =back
 
-All of these functions can be imported by name if desired.
+To write a logfile, call C<log_add($logtype, $string)>.  On the first
+call, this function opens and locks C<$logdir/log>; subsequent calls just
+append to this file.  As such, this function is only appropriate for situations
+where C<amlogroll> will be invoked later to rename C<$logdir/log> to
+C<$logdir/log.$timestamp.$n>.
 
-=head1 Amanda::Find::find_result_t objects
+All of the functions in this section can be imported by name if desired.
+
+=head2 Amanda::Find::find_result_t objects
 
 These objects contain information about dumps, as read from logfiles.
 Instance variables are:
@@ -168,6 +176,7 @@ All of these functions can be imported by name.
 
 amglue_export_ok(
     open_logfile get_logline close_logfile
+    log_add
 );
 
 
@@ -239,6 +248,14 @@ typedef int LOGLINE_RETURN;
     /* otherwise (end of logfile) return an empty list */
 }
 LOGLINE_RETURN get_logline(FILE *logfile);
+
+%rename(log_add) log_add_;
+%inline %{
+static void log_add_(logtype_t typ, char *message)
+{
+    log_add(typ, "%s", message);
+}
+%}
 
 typedef struct {
     %extend {

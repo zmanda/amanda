@@ -1,3 +1,7 @@
+2009-05-08  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Logfile.swg: add log_add
+	* installcheck/Amanda_Logfile.pl: test it
+
 2009-05-08  Jean-Louis Martineau <martineau@zmanda.com>
 	* server-src/dumper.c: Fix for clnt_decrypt_opt == NULL.
 
