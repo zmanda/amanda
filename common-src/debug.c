@@ -692,7 +692,6 @@ printf_arglist_function(void debug_printf, const char *, format)
 {
     va_list argp;
     int save_errno;
-    static GStaticMutex mutex = G_STATIC_MUTEX_INIT;
 
     /*
      * It is common in the code to call dbprintf to write out
@@ -708,16 +707,18 @@ printf_arglist_function(void debug_printf, const char *, format)
 	db_file = stderr;
     }
     if(db_file != NULL) {
-	g_static_mutex_lock(&mutex);
+	char *prefix;
+	char *text;
+
 	if (db_file != stderr)
-	    g_fprintf(db_file, "%s: %s: ", msg_timestamp(), get_pname());
+	    prefix = g_strdup_printf("%s: %s:", msg_timestamp(), get_pname());
 	else 
-	    g_fprintf(db_file, "%s: ", get_pname());
+	    prefix = g_strdup_printf("%s:", get_pname());
 	arglist_start(argp, format);
-	g_vfprintf(db_file, format, argp);
+	text = g_strdup_vprintf(format, argp);
 	arglist_end(argp);
+	fprintf(db_file, "%s %s", prefix, text);
 	fflush(db_file);
-	g_static_mutex_unlock(&mutex);
     }
     errno = save_errno;
 }

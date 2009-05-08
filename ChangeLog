@@ -1,3 +1,9 @@
+2009-05-07  Dustin J. Mitchell <dustin@zmanda.com>
+	    Jean-Louis Martineau <martineau@zmanda.com>
+	* common-src/debug.c: do not use a mutex in debug_printf
+	* common-src/pipespawn.c server-src/changer.c:
+	  do not call debug_printf after fork()
+
 2009-05-06  Dustin J. Mitchell <dustin@zmanda.com>
 	* server-src/taper.c: check for division by zero and don't print 'nan'
 	  for kbps
