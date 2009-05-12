@@ -1,3 +1,6 @@
+2009-05-12  Jean-Louis Martineau <martineau@zmanda.com>
+	* changer-src/chg-glue.pl: Fix typo Amanda:Changer::Error
+
 2009-05-08  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Logfile.swg: add log_add
 	* installcheck/Amanda_Logfile.pl: test it

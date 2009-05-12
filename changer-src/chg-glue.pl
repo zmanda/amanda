@@ -51,7 +51,7 @@ sub err_result {
 
     my $exitstatus = 1;
 
-    if ($err->isa("Amanda:Changer::Error")) {
+    if ($err->isa("Amanda::Changer::Error")) {
 	$exitstatus = 2 if $err->fatal;
     } else {
 	# if $err is a string, then the error is fatal.
