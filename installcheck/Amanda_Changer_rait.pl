@@ -297,11 +297,11 @@ label_vtape(3,4,"mytape");
 	ok(!$err, "no error loading slot 'current'")
 	    or diag($err);
 	is($res->{'device_name'},
-	   "rait:{file:$tapebase/1/drive0,file:$tapebase/2/drive0}",
+	   "rait:{file:$tapebase/1/drive0,file:$tapebase/2/drive0,ERROR}",
 	    "returns correct device name");
-	is($res->{'this_slot'}, '{1,1}',
+	is($res->{'this_slot'}, '{1,1,ERROR}',
 	    "returns correct 'this_slot' name");
-	is($res->{'next_slot'}, '{2,2}',
+	is($res->{'next_slot'}, '{2,2,ERROR}',
 	    "returns correct 'next_slot' name");
 
 	$res->release(finished_cb => $do_load_label);
@@ -319,9 +319,9 @@ label_vtape(3,4,"mytape");
 	ok(!$err, "no error loading slot 'label'")
 	    or diag($err);
 	is($res->{'device_name'},
-	   "rait:{file:$tapebase/1/drive0,file:$tapebase/2/drive0}",
+	   "rait:{file:$tapebase/1/drive0,file:$tapebase/2/drive0,ERROR}",
 	    "returns correct device name");
-	is($res->{'this_slot'}, '{1,3}',
+	is($res->{'this_slot'}, '{1,3,ERROR}',
 	    "returns correct 'this_slot' name, even with different slots");
 
 	$do_reset->();

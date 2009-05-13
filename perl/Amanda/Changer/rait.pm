@@ -98,18 +98,8 @@ sub load {
 
     return if $self->check_error($params{'res_cb'});
 
-    my $all_kids_done_cb = sub {
+    my $release_on_error = sub {
 	my ($kid_results) = @_;
-	my $result;
-
-	# first, let's see if any changer gave an error
-	if (!grep { defined($_->[0]) } @$kid_results) {
-	    # no error .. combine the reservations and return a RAIT reservation
-	    my $combined_res = Amanda::Changer::rait::Reservation->new(
-		[ map { $_->[1] } @$kid_results ]);
-	    $params{'res_cb'}->(undef, $combined_res);
-	    return;
-	}
 
 	# an error has occurred, so we have to release all of the *non*-error
 	# reservations (and handle errors in those releases!), then construct
@@ -152,6 +142,21 @@ sub load {
 	$releases_maybe_done->();
     };
 
+    my $all_kids_done_cb = sub {
+	my ($kid_results) = @_;
+	my $result;
+
+	# first, let's see if any changer gave an error
+	if (grep { defined($_->[0]) } @$kid_results) {
+	    return $release_on_error->($kid_results);
+	}
+
+	# no error .. combine the reservations and return a RAIT reservation
+	my $combined_res = Amanda::Changer::rait::Reservation->new(
+	    [ map { $_->[1] } @$kid_results ]);
+	$params{'res_cb'}->(undef, $combined_res);
+    };
+
     if (exists $params{'slot'}) {
 	my $slot = $params{'slot'};
 
@@ -174,20 +179,35 @@ sub load {
 	    }
 	}
 
-	$self->_for_each_child(sub {
-	    my ($kid_chg, $kid_cb, $kid_slot) = @_;
-	    my %kid_params = %params;
-	    $kid_params{'slot'} = $kid_slot;
-	    $kid_params{'res_cb'} = $kid_cb;
-	    $kid_chg->load(%kid_params);
-	}, undef, $all_kids_done_cb, \@kid_slots);
+	$self->_for_each_child(
+	    oksub => sub {
+		my ($kid_chg, $kid_cb, $kid_slot) = @_;
+		my %kid_params = %params;
+		$kid_params{'slot'} = $kid_slot;
+		$kid_params{'res_cb'} = $kid_cb;
+		$kid_chg->load(%kid_params);
+	    },
+	    errsub => sub {
+		my ($kid_chg, $kid_cb, $kid_slot) = @_;
+		$kid_cb->(undef, "ERROR");
+	    },
+	    parent_cb => $all_kids_done_cb,
+	    args => \@kid_slots,
+	);
     } elsif (exists $params{'label'}) {
-	$self->_for_each_child(sub {
-	    my ($kid_chg, $kid_cb) = @_;
-	    my %kid_params = %params;
-	    $kid_params{'res_cb'} = $kid_cb;
-	    $kid_chg->load(%kid_params);
-	}, undef, $all_kids_done_cb);
+	$self->_for_each_child(
+	    oksub => sub {
+		my ($kid_chg, $kid_cb) = @_;
+		my %kid_params = %params;
+		$kid_params{'res_cb'} = $kid_cb;
+		$kid_chg->load(%kid_params);
+	    },
+	    errsub => sub {
+		my ($kid_chg, $kid_cb, $kid_slot) = @_;
+		$kid_cb->(undef, "ERROR");
+	    },
+	    parent_cb => $all_kids_done_cb,
+	);
     } else {
 	return $self->make_error("failed", $params{'res_cb'},
 		reason => "invalid",
@@ -240,10 +260,14 @@ sub info_key {
 	    $params{'info_cb'}->(undef, num_slots => $num_slots) if $params{'info_cb'};
 	};
 
-	$self->_for_each_child(sub {
-	    my ($kid_chg, $kid_cb) = @_;
-	    $kid_chg->info(info => [ 'num_slots' ], info_cb => $kid_cb);
-	}, undef, $all_kids_done_cb, undef);
+	$self->_for_each_child(
+	    oksub => sub {
+		my ($kid_chg, $kid_cb) = @_;
+		$kid_chg->info(info => [ 'num_slots' ], info_cb => $kid_cb);
+	    },
+	    errsub => undef,
+	    parent_cb => $all_kids_done_cb,
+	);
     } elsif ($key eq "vendor_string") {
 	my $all_kids_done_cb = sub {
 	    my ($kid_results) = @_;
@@ -262,10 +286,14 @@ sub info_key {
 	    }
 	};
 
-	$self->_for_each_child(sub {
-	    my ($kid_chg, $kid_cb) = @_;
-	    $kid_chg->info(info => [ 'vendor_string' ], info_cb => $kid_cb);
-	}, undef, $all_kids_done_cb, undef);
+	$self->_for_each_child(
+	    oksub => sub {
+		my ($kid_chg, $kid_cb) = @_;
+		$kid_chg->info(info => [ 'vendor_string' ], info_cb => $kid_cb);
+	    },
+	    errsub => undef,
+	    parent_cb => $all_kids_done_cb,
+	);
     }
 }
 
@@ -297,10 +325,14 @@ sub _mk_simple_op {
 	    $params{'finished_cb'}->() if $params{'finished_cb'};
 	};
 
-	$self->_for_each_child(sub {
-	    my ($kid_chg, $kid_cb) = @_;
-	    $kid_chg->$op(%params, finished_cb => $kid_cb);
-	}, undef, $all_kids_done_cb, undef);
+	$self->_for_each_child(
+	    oksub => sub {
+		my ($kid_chg, $kid_cb) = @_;
+		$kid_chg->$op(%params, finished_cb => $kid_cb);
+	    },
+	    errsub => undef,
+	    parent_cb => $all_kids_done_cb,
+	);
     };
 }
 
@@ -309,15 +341,21 @@ sub _mk_simple_op {
 *clean = _mk_simple_op("clean");
 *eject = _mk_simple_op("eject");
 
-# for each child, run $sub (or, if the child is "ERROR", $errsub), passing it
+# Takes keyword parameters 'oksub', 'errsub', 'parent_cb', and 'args'.  For
+# each child, runs $oksub (or, if the child is "ERROR", $errsub), passing it
 # the changer, an aggregating callback, and the corresponding element from
 # @$args (if specified).  The callback combines its results with the results
-# from other changes, and when all results are available, calls $parent_cb.
+# from other changers, and when all results are available, calls $parent_cb.
 #
-# The call is $parent_cb->([ [ <chg_1_results> ], [ <chg_2_results> ], .. ]).
+# This forms a kind of "AND" combinator for a parallel operation on multiple
+# changers, providing the caller with a simple collection of the results of
+# the operation. The parent_cb is called as
+#   $parent_cb->([ [ <chg_1_results> ], [ <chg_2_results> ], .. ]).
 sub _for_each_child {
     my $self = shift;
-    my ($sub, $errsub, $parent_cb, $args) = @_;
+    my %params = @_;
+    my ($oksub, $errsub, $parent_cb, $args) =
+	($params{'oksub'}, $params{'errsub'}, $params{'parent_cb'}, $params{'args'});
 
     if (defined($args)) {
 	die "number of args did not match number of children"
@@ -350,7 +388,7 @@ sub _for_each_child {
 		$child_cb->(undef) if $child_cb;
 	    }
 	} else {
-	    $sub->($child, $child_cb, $arg) if $sub;
+	    $oksub->($child, $child_cb, $arg) if $oksub;
 	}
     }
 }
@@ -361,22 +399,29 @@ use Amanda::Util qw( :alternates );
 use vars qw( @ISA );
 @ISA = qw( Amanda::Changer::Reservation );
 
+# utility function to act like 'map', but pass "ERROR" straight through
+# (this has to appear before it is used, because it has a prototype)
+sub errmap (&@) {
+    my $sub = shift;
+    return map { ($_ ne "ERROR")? $sub->($_) : "ERROR" } @_;
+}
+
 sub new {
     my $class = shift;
     my ($child_reservations) = @_;
     my $self = Amanda::Changer::Reservation::new($class);
 
-    # filter out ay undefined reservations (e.g., from ERROR devices)
-    $child_reservations = [ grep { defined($_) } @$child_reservations ];
+    # note that $child_reservations may contain "ERROR" in place of a reservation
+
     $self->{'child_reservations'} = $child_reservations;
 
-    my @device_names = map { $_->{'device_name'} } @$child_reservations;
+    my @device_names = errmap { $_->{'device_name'} } @$child_reservations;
     $self->{'device_name'} = "rait:" . collapse_braced_alternates(\@device_names);
 
     my @slot_names;
-    @slot_names = map { $_->{'this_slot'} } @$child_reservations;
+    @slot_names = errmap { $_->{'this_slot'} } @$child_reservations;
     $self->{'this_slot'} = collapse_braced_alternates(\@slot_names);
-    @slot_names = map { $_->{'next_slot'} } @$child_reservations;
+    @slot_names = errmap { $_->{'next_slot'} } @$child_reservations;
     $self->{'next_slot'} = collapse_braced_alternates(\@slot_names);
 
     return $self;
@@ -402,6 +447,12 @@ sub do_release {
     };
 
     for my $res (@{$self->{'child_reservations'}}) {
+	# short-circuit an "ERROR" reservation
+	if ($res eq "ERROR") {
+	    $maybe_finished->(undef);
+	    next;
+	}
 	$res->release(%params, finished_cb => $maybe_finished);
     }
 }
+

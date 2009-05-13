@@ -1,4 +1,9 @@
 2009-05-13  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Changer/rait.pm: better handling of "ERROR", small
+	  refactoring
+	* installcheck/Amanda_Changer_rait.pl: update tests to expect it
+
+2009-05-13  Dustin J. Mitchell <dustin@zmanda.com>
 	* perl/Amanda/Device.swg: parse string values for properties
 	* installcheck/Amanda_Device.pl: test
 
