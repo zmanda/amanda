@@ -1,3 +1,7 @@
+2009-05-13  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/Device.swg: parse string values for properties
+	* installcheck/Amanda_Device.pl: test
+
 2009-05-12  Jean-Louis Martineau <martineau@zmanda.com>
 	* changer-src/chg-glue.pl: Fix typo Amanda:Changer::Error
 

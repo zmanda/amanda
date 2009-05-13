@@ -16,7 +16,7 @@
 # Contact information: Zmanda Inc, 465 S Mathlida Ave, Suite 300
 # Sunnyvale, CA 94086, USA, or: http://www.zmanda.com
 
-use Test::More tests => 325;
+use Test::More tests => 331;
 use File::Path qw( mkpath rmtree );
 use Sys::Hostname;
 use Carp;
@@ -238,6 +238,25 @@ is($dev->status(), $DEVICE_STATUS_SUCCESS,
 properties_include([ $dev->property_list() ],
     [ @common_properties, 'max_volume_usage' ],
     "necessary properties listed on vfs device");
+
+# play with properties a little bit
+ok($dev->property_set("comment", 16),
+    "set an string property to an integer");
+
+ok($dev->property_set("comment", 16.0),
+    "set an string property to a float");
+
+ok($dev->property_set("comment", "hi mom"),
+    "set an string property to a string");
+
+ok($dev->property_set("comment", "32768"),
+    "set an integer property to a simple string");
+
+ok($dev->property_set("comment", "32k"),
+    "set an integer property to a string with a unit");
+
+ok($dev->property_set("block_size", 32768),
+    "set an integer property to an integer");
 
 $dev->read_label();
 ok($dev->status() & $DEVICE_STATUS_VOLUME_UNLABELED,

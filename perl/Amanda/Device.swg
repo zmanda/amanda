@@ -171,6 +171,11 @@ import tag.
 
 /* Utility functions for typemaps, below */
 
+/* return a new, motal SV corresponding to the given GValue
+ *
+ * @param value: the value to convert
+ * @returns: a new, mortal SV
+ */
 static SV *
 set_sv_from_gvalue(GValue *value)
 {
@@ -180,20 +185,16 @@ set_sv_from_gvalue(GValue *value)
     /* complex reference types */
     switch (fundamental) {
 	case G_TYPE_LONG:
-	    sv = sv_2mortal(amglue_newSVi64(g_value_get_long(value)));
-	    break;
+	    return sv_2mortal(amglue_newSVi64(g_value_get_long(value)));
 
 	case G_TYPE_ULONG:
-	    sv = sv_2mortal(amglue_newSVu64(g_value_get_ulong(value)));
-	    break;
+	    return sv_2mortal(amglue_newSVu64(g_value_get_ulong(value)));
 
 	case G_TYPE_INT64:
-	    sv = sv_2mortal(amglue_newSVi64(g_value_get_int64(value)));
-	    break;
+	    return sv_2mortal(amglue_newSVi64(g_value_get_int64(value)));
 
 	case G_TYPE_UINT64:
-	    sv = sv_2mortal(amglue_newSVu64(g_value_get_uint64(value)));
-	    break;
+	    return sv_2mortal(amglue_newSVu64(g_value_get_uint64(value)));
 
 	case G_TYPE_BOXED: {
 	    GType boxed_type = G_VALUE_TYPE(value);
@@ -277,86 +278,88 @@ set_sv_from_gvalue(GValue *value)
     return sv;
 }
 
+/* Given an SV and an initialized GValue, set the GValue to the value
+ * represented by the SV.  The GValue's type must already be set.
+ *
+ * For basic corresponding types (string -> string, integer -> integer),
+ * the translation is straightforward.  However, if the GValue is not a
+ * string, but the SV has a string value, then g_value_set_from_string will
+ * be used to parse the string.
+ *
+ * @param sv: SV to convert
+ * @param value: (input/output) destination
+ * @returns: TRUE on success
+ */
 static gboolean
 set_gvalue_from_sv(SV *sv, GValue *value)
 {
     GType fundamental = G_TYPE_FUNDAMENTAL(G_VALUE_TYPE(value));
+
+    /* if we got a string, use g_value_set_from_string to parse any funny
+     * values or suffixes */
+    if (SvPOK(sv)) {
+	if (g_value_set_from_string(value, SvPV_nolen(sv)))
+	    return TRUE;
+    }
+
+    /* otherwise, handle numeric types with SvIV, SvNV, or the amglue_* functions */
     switch (fundamental) {
+	case G_TYPE_BOOLEAN:
+	    g_value_set_boolean(value, SvIV(sv));
+	    return TRUE;
+
 	case G_TYPE_CHAR:
-	    if (!SvIOK(sv)) return FALSE;
-	    g_value_set_char(value, SvIV(sv));
-	    break;
+	    g_value_set_char(value, amglue_SvI8(sv));
+	    return TRUE;
 
 	case G_TYPE_UCHAR:
-	    if (!SvIOK(sv)) return FALSE;
-	    g_value_set_uchar(value, SvUV(sv));
-	    break;
-
-	case G_TYPE_BOOLEAN:
-	    if (!SvIOK(sv)) return FALSE;
-	    g_value_set_boolean(value, SvIV(sv));
-	    break;
+	    g_value_set_uchar(value, amglue_SvU8(sv));
+	    return TRUE;
 
 	case G_TYPE_INT:
 	    g_value_set_int(value, amglue_SvI32(sv));
-	    break;
+	    return TRUE;
 
 	case G_TYPE_UINT:
 	    g_value_set_uint(value, amglue_SvU32(sv));
-	    break;
+	    return TRUE;
 
 	case G_TYPE_LONG:
 	    g_value_set_int64(value, amglue_SvI64(sv));
-	    break;
+	    return TRUE;
 
 	case G_TYPE_ULONG:
 	    g_value_set_uint64(value, amglue_SvU64(sv));
-	    break;
+	    return TRUE;
 
 	case G_TYPE_INT64:
 	    g_value_set_int64(value, amglue_SvI64(sv));
-	    break;
+	    return TRUE;
 
 	case G_TYPE_UINT64:
 	    g_value_set_uint64(value, amglue_SvU64(sv));
-	    break;
+	    return TRUE;
 
 	case G_TYPE_FLOAT:
-	    if (!SvNOK(sv)) return FALSE;
 	    g_value_set_float(value, SvNV(sv));
-	    break;
+	    return TRUE;
 
 	case G_TYPE_DOUBLE:
-	    if (!SvNOK(sv)) return FALSE;
 	    g_value_set_double(value, SvNV(sv));
-	    break;
-
-	case G_TYPE_STRING:
-	    if (!SvPOK(sv)) return FALSE;
-	    g_value_set_string(value, SvPV_nolen(sv));
-	    break;
+	    return TRUE;
 
 	case G_TYPE_ENUM:
-	    if (!SvIOK(sv)) return FALSE;
 	    g_value_set_enum(value, SvIV(sv));
-	    break;
+	    return TRUE;
 
 	case G_TYPE_FLAGS:
-	    if (!SvIOK(sv)) return FALSE;
 	    g_value_set_flags(value, SvIV(sv));
-	    break;
+	    return TRUE;
 
-	/* Unsupported */
 	default:
-	case G_TYPE_POINTER:
-	case G_TYPE_INTERFACE:
-	case G_TYPE_BOXED: /* note: *getting* boxed values is supported */
-	case G_TYPE_OBJECT:
-	case G_TYPE_PARAM:
-	    return FALSE;
+	    /* for anything else, let perl stringify it for us and try parsing it */
+	    return g_value_set_from_string(value, SvPV_nolen(sv));
     }
-
-    return TRUE;
 }
 
 %}
