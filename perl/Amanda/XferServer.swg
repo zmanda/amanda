@@ -29,6 +29,7 @@
 #include "glib-util.h"
 #include "amxfer.h"
 #include "xfer-device.h"
+#include "xfer-server.h"
 %}
 
 %perlcode %{

@@ -1,4 +1,7 @@
 2009-05-15  Dustin J. Mitchell <dustin@zmanda.com>
+	* perl/Amanda/XferServer.swg: include xfer-server.h
+
+2009-05-15  Dustin J. Mitchell <dustin@zmanda.com>
 	* common-src/debug.c common-src/debug.h: refactor set_logerr
 	  and erroutput_type into a more flexible amanda_log_handler system
 	* server-src/logfile.c server-src/logfile.h: provide
